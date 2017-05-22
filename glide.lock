@@ -1,0 +1,31 @@
+hash: 8cfbb647b69678efe83c10370e033e36e49b6875e438725c49bf2deed8510411
+updated: 2017-05-19T15:14:20.187364599-04:00
+imports:
+- name: github.com/jeffail/gabs
+  version: c9fb5b700cddb62013b2ee9dfc9ce011caea55e0
+- name: github.com/mattn/go-colorable
+  version: ded68f7a9561c023e790de24279db7ebf473ea80
+- name: github.com/mattn/go-isatty
+  version: fc9e8d8ef48496124e79ae0df75490096eccf6fe
+- name: github.com/mgutz/ansi
+  version: 9520e82c474b0a04dd04f8a40959027271bab992
+- name: github.com/stretchr/testify
+  version: 4d4bfba8f1d1027c4fdbe371823030df51419987
+- name: github.com/unchartedsoftware/plog
+  version: 34d2bbd3c0a9458feb0752af2b578a23eb8ddc4f
+- name: goji.io
+  version: 0d89ff54b2c18c9c4ba530e32496aef902d3c6cd
+  subpackages:
+  - internal
+  - pat
+  - pattern
+- name: golang.org/x/sys
+  version: 9ccfe848b9db8435a24c424abbc07a921adf1df5
+  subpackages:
+  - unix
+- name: gopkg.in/olivere/elastic.v2
+  version: 54283cb278d855e562a3d20f6c5afdbe1decf25b
+  subpackages:
+  - backoff
+  - uritemplates
+testImports: []

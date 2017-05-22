@@ -1,0 +1,7 @@
+package: github.com/unchartedsoftware/distil-server
+import:
+- package: github.com/unchartedsoftware/plog
+- package: github.com/stretchr/testify
+- package: gopkg.in/olivere/elastic.v2
+- package: goji.io
+- package: github.com/jeffail/gabs
