@@ -1,5 +1,11 @@
 'use strict';
 
 import styles from '../styles/main.css'
+import Vue from 'vue'
 
-console.log('HERE BE MAGYCK MODEL INCANTATIONS MOST FOUL');
+new Vue({
+    el: "#root",
+    data: {
+        message: "HERE BE MAGYCK MODEL INCANTATIONS MOST FOUL"
+    }
+});

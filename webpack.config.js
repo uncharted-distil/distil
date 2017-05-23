@@ -22,7 +22,13 @@ module.exports = {
             }
         ] 
     },
+    resolve: {
+        alias: {
+        'vue$': 'vue/dist/vue.esm.js'
+        }
+    },
     plugins: [
+        // generates index.html based on generated bundle
         new HtmlPlugin({
             template: './public/templates/index.template.ejs',
             inject: 'body'
