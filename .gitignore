@@ -7,3 +7,6 @@ vendor
 /distil-server
 debug.test
 debug
+/node_modules
+*.log
+dist

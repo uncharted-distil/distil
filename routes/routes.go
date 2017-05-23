@@ -145,3 +145,10 @@ func VariablesHandler(client *elastic.Client) Route {
 		w.Write(js)
 	}
 }
+
+// FileHandler provides a static file lookup route using the OS file system
+func FileHandler(rootDir string) Route {
+	return func(w http.ResponseWriter, r *http.Request) {
+		http.FileServer(http.Dir(rootDir)).ServeHTTP(w, r)
+	}
+}
