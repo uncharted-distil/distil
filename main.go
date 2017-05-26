@@ -82,6 +82,6 @@ func main() {
 	registerRoute("/distil/variables/:dataset", routes.VariablesHandler(marvinClient), mux)
 	registerRoute("/*", routes.FileHandler("./dist"), mux)
 
-	// kick off the serer listen loop
-	http.ListenAndServe("localhost:8000", mux)
+	// kick off the server listen loop
+	http.ListenAndServe(":8080", mux)
 }
