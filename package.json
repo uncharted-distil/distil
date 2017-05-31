@@ -9,7 +9,7 @@
     "test": "yarn build && mocha --compilers js:babel-core/register ./public/test/**/*.js"
   },
   "dependencies": {
-    "chai": "^3.5.0",
+    "chai": "3.5.0",
     "vue": "2.3.3"
   },
   "devDependencies": {

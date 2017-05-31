@@ -2,10 +2,10 @@ const path = require('path');
 const HtmlPlugin = require('html-webpack-plugin');
 
 module.exports = {
-    entry: './public/scripts/distil_server.js',
+    entry: './public/main.js',
     output: {
         path: path.resolve(__dirname, './dist'),
-        filename: 'distil-server.bundle.js'
+        filename: 'build.js'
     },
     module: {
         rules: [
@@ -15,9 +15,15 @@ module.exports = {
                 use: ['babel-loader', 'eslint-loader']
             },
             {
-                test: /\.css$/,
-                exclude: /node_modules/,
-                use: ['style-loader','css-loader']
+                test: /\.vue/,
+                loader: 'vue-loader'
+            },
+            {
+                test: /\.(png|jpg|gif|svg)$/,
+                loader: 'file-loader',
+                options:  {
+                    name: '[name].[ext]?[hash]'
+                }
             }
         ] 
     },
