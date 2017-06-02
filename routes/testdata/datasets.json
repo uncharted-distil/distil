@@ -1,0 +1,29 @@
+{
+    "took": 14,
+    "timed_out": false,
+    "_shards": {
+        "total": 5,
+        "successful": 5,
+        "failed": 0
+    },
+    "hits": {
+        "total": 5,
+        "max_score": 2.5040774,
+        "hits": [
+            {
+                "_index": "data-redacted",
+                "_type": "default",
+                "_id": "o_196_dataset",
+                "_score": 2.5040774,
+                "_source": {}
+            },
+            {
+                "_index": "data-redacted",
+                "_type": "default",
+                "_id": "o_185_dataset",
+                "_score": 2.098612,
+                "_source": {}
+            }           
+        ]
+    }
+}

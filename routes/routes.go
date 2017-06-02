@@ -15,11 +15,8 @@ import (
 	"goji.io/pat"
 )
 
-// Route function type that all Goji route handlers must adhere to
-type Route func(w http.ResponseWriter, r *http.Request)
-
 // EchoHandler generates a route a simple echo route handler for testing purposes
-func EchoHandler() Route {
+func EchoHandler() func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		log.Info("Processing echo request")
 		fmt.Fprintf(w, "Distil - %s", pat.Param(r, "echo"))
@@ -28,7 +25,7 @@ func EchoHandler() Route {
 
 // DatasetsHandler generates a dataset listing route handler associated with the caller supplied
 // ES endpoint.
-func DatasetsHandler(client *elastic.Client) Route {
+func DatasetsHandler(client *elastic.Client) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		log.Info("Processing dataset request")
 		boolQuery := elastic.NewBoolQuery().
@@ -75,7 +72,7 @@ func DatasetsHandler(client *elastic.Client) Route {
 
 // VariablesHandler generates a variable listing route handler associated with the caller supplied
 // ES endpoint
-func VariablesHandler(client *elastic.Client) Route {
+func VariablesHandler(client *elastic.Client) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		log.Info("Processing variables request for %s", pat.Param(r, "dataset"))
 		datasetID := pat.Param(r, "dataset") + "_dataset"
@@ -147,7 +144,7 @@ func VariablesHandler(client *elastic.Client) Route {
 }
 
 // FileHandler provides a static file lookup route using the OS file system
-func FileHandler(rootDir string) Route {
+func FileHandler(rootDir string) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		http.FileServer(http.Dir(rootDir)).ServeHTTP(w, r)
 	}
