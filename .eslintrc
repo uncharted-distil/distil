@@ -66,5 +66,6 @@
   },
   "parserOptions": {
         "sourceType": "module"
-  }
+  },
+  "plugins": ["html"]
 }

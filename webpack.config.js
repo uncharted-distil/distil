@@ -7,16 +7,29 @@ module.exports = {
         path: path.resolve(__dirname, './dist'),
         filename: 'build.js'
     },
+    resolve: {
+        extensions: ['.js', '.vue', '.json'],
+        alias: {
+            'vue$': 'vue/dist/vue.esm.js',
+            '@': path.resolve('./public')
+        }
+    },
     module: {
-        rules: [
+        rules: [            
             {
-                test: /\.js/,
+                test: /\.(js|vue)$/,
                 exclude: /node_modules/,
-                use: ['babel-loader', 'eslint-loader']
+                enforce: 'pre',                
+                use: ['eslint-loader']
             },
             {
-                test: /\.vue/,
+                test: /\.vue$/,
                 loader: 'vue-loader'
+            },
+            {
+                test: /\.js$/,
+                exclude: /node_modules/,
+                use: ['babel-loader']
             },
             {
                 test: /\.(png|jpg|gif|svg)$/,
@@ -27,16 +40,12 @@ module.exports = {
             }
         ] 
     },
-    resolve: {
-        alias: {
-        'vue$': 'vue/dist/vue.esm.js'
-        }
-    },
     plugins: [
         // generates index.html based on generated bundle
         new HtmlPlugin({
             template: './public/templates/index.template.ejs',
             inject: 'body'
         })
-    ]
+    ],
+    devtool: 'source-map'
 };
