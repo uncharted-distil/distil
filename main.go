@@ -48,7 +48,7 @@ func createEsClient(endpoint string) (*elastic.Client, error) {
 	return client, nil
 }
 
-func registerRoute(pattern string, handler routes.Route, mux *goji.Mux) {
+func registerRoute(pattern string, handler func(http.ResponseWriter, *http.Request), mux *goji.Mux) {
 	log.Infof("Registering route %s", pattern)
 	mux.HandleFunc(pat.Get(pattern), handler)
 }
@@ -80,6 +80,7 @@ func main() {
 	registerRoute("/distil/echo/:echo", routes.EchoHandler(), mux)
 	registerRoute("/distil/datasets", routes.DatasetsHandler(marvinClient), mux)
 	registerRoute("/distil/variables/:dataset", routes.VariablesHandler(marvinClient), mux)
+	registerRoute("/distil/datasets/searches", routes.DatasetsSearchHandler(marvinClient), mux)
 	registerRoute("/*", routes.FileHandler("./dist"), mux)
 
 	// kick off the server listen loop
