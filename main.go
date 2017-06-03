@@ -80,7 +80,6 @@ func main() {
 	registerRoute("/distil/echo/:echo", routes.EchoHandler(), mux)
 	registerRoute("/distil/datasets", routes.DatasetsHandler(marvinClient), mux)
 	registerRoute("/distil/variables/:dataset", routes.VariablesHandler(marvinClient), mux)
-	registerRoute("/distil/datasets/searches", routes.DatasetsSearchHandler(marvinClient), mux)
 	registerRoute("/*", routes.FileHandler("./dist"), mux)
 
 	// kick off the server listen loop
