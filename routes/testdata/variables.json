@@ -11,35 +11,33 @@
         "max_score": 1.0,
         "hits": [
             {
-                "_index": "data-redacted",
-                "_type": "default",
+                "_index": "datasets",
+                "_type": "metadata",
                 "_id": "o_185_dataset",
                 "_score": 1.0,
                 "_source": {
-                    "trainData": {
-                        "trainData": [
-                            {
-                                "varName": "d3mIndex",
-                                "varType": "integer",
-                                "varRole": "index"
-                            },
-                            {
-                                "varName": "Player",
-                                "varType": "categorical",
-                                "varRole": "attribute"
-                            },
-                            {
-                                "varName": "Number_seasons",
-                                "varType": "integer",
-                                "varRole": "attribute"
-                            },
-                            {
-                                "varName": "Games_played",
-                                "varType": "integer",
-                                "varRole": "attribute"
-                            }
-                        ]
-                    }
+                    "variables": [
+                        {
+                            "varName": "d3mIndex",
+                            "varType": "integer",
+                            "varRole": "index"
+                        },
+                        {
+                            "varName": "Player",
+                            "varType": "categorical",
+                            "varRole": "attribute"
+                        },
+                        {
+                            "varName": "Number_seasons",
+                            "varType": "integer",
+                            "varRole": "attribute"
+                        },
+                        {
+                            "varName": "Games_played",
+                            "varType": "integer",
+                            "varRole": "attribute"
+                        }
+                    ]
                 }
             }
         ]

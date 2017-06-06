@@ -11,15 +11,15 @@
         "max_score": 2.5040774,
         "hits": [
             {
-                "_index": "data-redacted",
-                "_type": "default",
+                "_index": "datasets",
+                "_type": "metadata",
                 "_id": "o_196_dataset",
                 "_score": 2.5040774,
                 "_source": {}
             },
             {
-                "_index": "data-redacted",
-                "_type": "default",
+                "_index": "datasets",
+                "_type": "metadata",
                 "_id": "o_185_dataset",
                 "_score": 2.098612,
                 "_source": {}

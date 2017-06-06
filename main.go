@@ -17,6 +17,7 @@ import (
 
 const (
 	defaultEsEndpoint = "http://localhost:9200"
+	defaultAppPort    = 8080
 	defaultEsTimeout  = time.Second * 60 * 5
 )
 
@@ -61,16 +62,6 @@ func main() {
 	datasetEndpoint := getEnv("DATASET_ENDPOINT", defaultEsEndpoint)
 	dataSetClient, err = createEsClient(datasetEndpoint)
 	if err != nil {
-		log.Error("Failed to initialize dataset client")
-		log.Error(err)
-		os.Exit(1)
-	}
-
-	// Creates an ES endpoint for shared D3M ES data
-	marvinEndpoint := getEnv("MARVIN_ENDPOINT", defaultEsEndpoint)
-	marvinClient, err = createEsClient(marvinEndpoint)
-	if err != nil {
-		log.Error("Failed to initialize marvin client")
 		log.Error(err)
 		os.Exit(1)
 	}
@@ -78,10 +69,10 @@ func main() {
 	// route registration
 	mux := goji.NewMux()
 	registerRoute("/distil/echo/:echo", routes.EchoHandler(), mux)
-	registerRoute("/distil/datasets", routes.DatasetsHandler(marvinClient), mux)
-	registerRoute("/distil/variables/:dataset", routes.VariablesHandler(marvinClient), mux)
+	registerRoute("/distil/datasets", routes.DatasetsHandler(dataSetClient), mux)
+	registerRoute("/distil/variables/:dataset", routes.VariablesHandler(dataSetClient), mux)
 	registerRoute("/*", routes.FileHandler("./dist"), mux)
 
 	// kick off the server listen loop
-	http.ListenAndServe(":8080", mux)
+	http.ListenAndServe(":"+string(defaultAppPort), mux)
 }

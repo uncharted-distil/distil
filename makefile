@@ -9,6 +9,7 @@ all:
 	@echo ""
 	@echo "commands:"
 	@echo "  build         - build the source code"
+	@echo "  test          - test the source code"
 	@echo "  lint          - lint the source code"
 	@echo "  fmt           - format the source code"
 	@echo "  install       - install dependencies"
@@ -22,6 +23,9 @@ fmt:
 
 build: lint
 	@go build -i
+
+test: build
+	@go test $(NOVENDOR)
 
 install:
 	npm install -g yarn
