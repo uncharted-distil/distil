@@ -3,13 +3,17 @@ package main
 import (
 	"net/http"
 	"os"
+	"syscall"
 	"time"
 
 	elastic "gopkg.in/olivere/elastic.v2"
 
 	"github.com/unchartedsoftware/plog"
+	"github.com/zenazn/goji/graceful"
 
 	"github.com/unchartedsoftware/distil-server/routes"
+
+	"strconv"
 
 	"goji.io"
 	"goji.io/pat"
@@ -23,7 +27,6 @@ const (
 
 var (
 	dataSetClient *elastic.Client
-	marvinClient  *elastic.Client
 )
 
 func getEnv(key, fallback string) string {
@@ -73,6 +76,16 @@ func main() {
 	registerRoute("/distil/variables/:dataset", routes.VariablesHandler(dataSetClient), mux)
 	registerRoute("/*", routes.FileHandler("./dist"), mux)
 
+	// catch kill signals for graceful shutdown
+	graceful.AddSignal(syscall.SIGINT, syscall.SIGTERM)
+
 	// kick off the server listen loop
-	http.ListenAndServe(":"+string(defaultAppPort), mux)
+	err = graceful.ListenAndServe(":"+strconv.Itoa(defaultAppPort), mux)
+	if err != nil {
+		log.Error(err)
+		os.Exit(1)
+	}
+
+	// wait until server gracefully exits
+	graceful.Wait()
 }
