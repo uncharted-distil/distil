@@ -1,5 +1,5 @@
 {
-    "took": 4,
+    "took": 2,
     "timed_out": false,
     "_shards": {
         "total": 5,
@@ -8,35 +8,37 @@
     },
     "hits": {
         "total": 1,
-        "max_score": 1.0,
+        "max_score": 0.020597205,
         "hits": [
             {
                 "_index": "datasets",
                 "_type": "metadata",
                 "_id": "o_185_dataset",
-                "_score": 1.0,
+                "_score": 0.020597205,
                 "_source": {
+                    "datasetId": "o_185_dataset",
+                    "description": "**Author**: Jeffrey S. Simonoff",
                     "variables": [
                         {
                             "varName": "d3mIndex",
-                            "varType": "integer",
-                            "varRole": "index"
+                            "varRole": "index",
+                            "varType": "integer"
                         },
                         {
                             "varName": "Player",
-                            "varType": "categorical",
-                            "varRole": "attribute"
+                            "varRole": "attribute",
+                            "varType": "categorical"
                         },
                         {
                             "varName": "Number_seasons",
-                            "varType": "integer",
-                            "varRole": "attribute"
+                            "varRole": "attribute",
+                            "varType": "integer"
                         },
                         {
                             "varName": "Games_played",
-                            "varType": "integer",
-                            "varRole": "attribute"
-                        }
+                            "varRole": "attribute",
+                            "varType": "integer"
+                        }                        
                     ]
                 }
             }
