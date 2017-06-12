@@ -5,3 +5,4 @@ import:
 - package: gopkg.in/olivere/elastic.v2
 - package: goji.io
 - package: github.com/jeffail/gabs
+- package: github.com/pkg/errors

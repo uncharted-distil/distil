@@ -8,7 +8,9 @@ import (
 
 	elastic "gopkg.in/olivere/elastic.v2"
 
+	"github.com/pkg/errors"
 	"github.com/unchartedsoftware/plog"
+
 	"github.com/zenazn/goji/graceful"
 
 	"github.com/unchartedsoftware/distil-server/routes"
@@ -38,16 +40,31 @@ func getEnv(key, fallback string) string {
 	return val
 }
 
-func createEsClient(endpoint string) (*elastic.Client, error) {
+// Wraps calls to plog in the elastic.Logger interface
+type elasticPlogAdapter struct{}
+
+func (elasticPlogAdapter) Printf(format string, v ...interface{}) {
+	log.Infof(format, v)
+}
+
+func createEsClient(endpoint string, debug bool) (*elastic.Client, error) {
+	// turn on trace logs if necessary
+	var adapter *elasticPlogAdapter
+	if debug {
+		adapter = new(elasticPlogAdapter)
+	}
+
 	client, err := elastic.NewClient(
 		elastic.SetURL(endpoint),
 		elastic.SetHttpClient(&http.Client{Timeout: defaultEsTimeout}),
 		elastic.SetMaxRetries(10),
 		elastic.SetSniff(false),
-		elastic.SetGzip(false))
+		elastic.SetGzip(false),
+		elastic.SetTraceLog(adapter))
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "ES client init failed")
 	}
+
 	log.Infof("Connected to endpoint %s", endpoint)
 	return client, nil
 }
@@ -58,12 +75,9 @@ func registerRoute(pattern string, handler func(http.ResponseWriter, *http.Reque
 }
 
 func main() {
-
-	var err error
-
 	// Creates an endpoint for locally managed ES data
-	datasetEndpoint := getEnv("DATASET_ENDPOINT", defaultEsEndpoint)
-	dataSetClient, err = createEsClient(datasetEndpoint)
+	esEndpoint := getEnv("DATASET_ENDPOINT", defaultEsEndpoint)
+	dataSetClient, err := createEsClient(esEndpoint, true)
 	if err != nil {
 		log.Error(err)
 		os.Exit(1)
@@ -74,12 +88,14 @@ func main() {
 	registerRoute("/distil/echo/:echo", routes.EchoHandler(), mux)
 	registerRoute("/distil/datasets", routes.DatasetsHandler(dataSetClient), mux)
 	registerRoute("/distil/variables/:dataset", routes.VariablesHandler(dataSetClient), mux)
+	registerRoute("/distil/variable-summaries/:dataset", routes.VariableSummariesHandler(dataSetClient), mux)
 	registerRoute("/*", routes.FileHandler("./dist"), mux)
 
 	// catch kill signals for graceful shutdown
 	graceful.AddSignal(syscall.SIGINT, syscall.SIGTERM)
 
 	// kick off the server listen loop
+	log.Infof("Listening on port %d", defaultAppPort)
 	err = graceful.ListenAndServe(":"+strconv.Itoa(defaultAppPort), mux)
 	if err != nil {
 		log.Error(err)
