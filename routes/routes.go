@@ -65,26 +65,25 @@ type datasetList struct {
 	Datasets []dataset `json:"datasets"`
 }
 
-func parseVariables(searchResult *elastic.SearchResult) (*variableList, error) {
+func parseVariables(searchHit *elastic.SearchHit) (*variableList, error) {
 	var result variableList
 
-	for _, hit := range searchResult.Hits.Hits {
-		resultJSON, err := gabs.ParseJSON(*hit.Source)
-		if err != nil {
-			return nil, errors.Wrap(err, "Unable to parse search result")
-		}
-		children, err := resultJSON.Path("variables").Children()
-		if err != nil {
-			return nil, errors.Wrap(err, "Unable to parse variables from search result result")
-		}
-		for _, varData := range children {
-			d := varData.Data().(map[string]interface{})
-			result.Variables = append(result.Variables, varDesc{
-				Name: d["varName"].(string),
-				Type: d["varType"].(string),
-			})
-		}
+	resultJSON, err := gabs.ParseJSON(*searchHit.Source)
+	if err != nil {
+		return nil, errors.Wrap(err, "Unable to parse search result")
 	}
+	children, err := resultJSON.Path("variables").Children()
+	if err != nil {
+		return nil, errors.Wrap(err, "Unable to parse variables from search result result")
+	}
+	for _, varData := range children {
+		d := varData.Data().(map[string]interface{})
+		result.Variables = append(result.Variables, varDesc{
+			Name: d["varName"].(string),
+			Type: d["varType"].(string),
+		})
+	}
+
 	return &result, nil
 }
 
@@ -107,7 +106,7 @@ func parseDataset(searchResult *elastic.SearchResult) (*datasetList, error) {
 		}
 
 		// extract the variables list
-		variables, err := parseVariables(searchResult)
+		variables, err := parseVariables(hit)
 		if err != nil {
 			return nil, errors.Wrap(err, "Failed to parse dataset")
 		}
@@ -134,11 +133,14 @@ func fetchVariables(client *elastic.Client, dataset string) ([]byte, error) {
 		Do()
 
 	if err != nil {
-		return nil, errors.Wrap(err, "ElasticSearch variable fetchy query failed")
+		return nil, errors.Wrap(err, "ElasticSearch variable fetch query failed")
+	}
+	if len(searchResult.Hits.Hits) != 1 {
+		return nil, errors.New("ElasticSearch variable fetch query returned > 1 results")
 	}
 
 	// Extract output into JSON ready structs
-	variables, err := parseVariables(searchResult)
+	variables, err := parseVariables(searchResult.Hits.Hits[0])
 	if err != nil {
 		return nil, errors.Wrap(err, "Unable to parse search result JSON")
 	}

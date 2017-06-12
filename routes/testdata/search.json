@@ -41,6 +41,33 @@
                         }                        
                     ]
                 }
+            },
+            {
+                "_index": "datasets",
+                "_type": "metadata",
+                "_id": "o_196_dataset",
+                "_score": 0.020597205,
+                "_source": {
+                    "datasetId": "o_196_dataset",
+                    "description": "**Author**:",
+                    "variables": [
+                        {
+                            "varName": "d3mIndex",
+                            "varRole": "index",
+                            "varType": "integer"
+                        },
+                        {
+                            "varName": "cylinders",
+                            "varRole": "attribute",
+                            "varType": "categorical"
+                        },
+                        {
+                            "varName": "displacement",
+                            "varRole": "attribute",
+                            "varType": "categorical"
+                        }
+                    ]
+                }
             }
         ]
     }

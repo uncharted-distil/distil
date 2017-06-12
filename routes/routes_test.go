@@ -149,8 +149,18 @@ func TestDatasetsHandlerWithSearch(t *testing.T) {
 					{"name":"Number_seasons","type":"integer"},
 					{"name":"Games_played","type":"integer"}
 				]
+			},
+			{
+				"name": "o_196",
+				"description": "**Author**:",
+				"variables": [
+					{"name":"d3mIndex","type":"integer"},
+					{"name":"cylinders","type":"categorical"},
+					{"name":"displacement","type":"categorical"}
+				]
 			}			
-		]}`
+		]
+	}`
 	expectedJSON, err := gabs.ParseJSON([]byte(expected))
 	assert.NoError(t, err)
 
