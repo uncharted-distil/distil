@@ -18,12 +18,12 @@ describe('mutations', () => {
 			const state = {
 				datasets:[]
 			};
-			mutations.addDataset(state, testData);		
+			mutations.addDataset(state, testData);
 			expect(state.datasets.length).to.equal(1);
 			expect(state.datasets[0]).to.deep.equal(testData);
 		});
 	});
-	
+
 	describe('#setDatasets()', () => {
 		it('should replace the datasets map with the caller supplied map', () => {
 			const testData = createTestData(4);
@@ -32,7 +32,7 @@ describe('mutations', () => {
 			};
 			mutations.setDatasets(state, testData.slice(0, 2));
 			mutations.setDatasets(state, testData.slice(2,4));
-			expect(state.datasets.length).to.equal(2);			
+			expect(state.datasets.length).to.equal(2);
 			expect(state.datasets[0].name).to.equal('test2');
 		});
 	});
@@ -40,11 +40,11 @@ describe('mutations', () => {
 	describe('#removeDataset()', () => {
 		it('should remove a dataset from the datasets map', () => {
 			const testData = createTestData(1);
-			const state = {				
+			const state = {
 				datasets: testData
-			};						
+			};
 			const result = mutations.removeDataset(state, testData[0].name);
-			expect(state.datasets.length).to.equal(0);			
+			expect(state.datasets.length).to.equal(0);
 			expect(result).to.equal(true);
 		});
 	});

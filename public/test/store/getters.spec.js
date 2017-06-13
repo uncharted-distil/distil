@@ -37,24 +37,24 @@ describe('getters', () => {
 		const state = {
 			datasets: testData
 		};
-		
-		it('should retrieve a list of datasets from datasets map', () => {			
+
+		it('should retrieve a list of datasets from datasets map', () => {
 			expect(getters.getDatasets(state)([testData[0].name, testData[1].name])).to.deep.equals(testData);
 		});
 
 		it('should retrieve all datasets from datasets map if id list is not supplied', () => {
 			expect(getters.getDatasets(state)()).to.deep.equals(testData);
-		});		
+		});
 	});
 
 	describe('#getVariableSummaries()', () => {
 		const testData = { test: 'alpha' };
 		const state = {
 			variableSummaries: testData
-		};		
-		it('should retrieve the variable summaries object', () => {			
+		};
+		it('should retrieve the variable summaries object', () => {
 			expect(getters.getVariableSummaries(state)()).to.deep.equals(testData);
 		});
-		
+
 	});
 });
