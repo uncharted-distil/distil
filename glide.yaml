@@ -1,4 +1,4 @@
-package: github.com/unchartedsoftware/distil-server
+package: github.com/unchartedsoftware/distil
 import:
 - package: github.com/unchartedsoftware/plog
 - package: github.com/stretchr/testify

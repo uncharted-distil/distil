@@ -15,21 +15,25 @@ all:
 	@echo "  install       - install dependencies"
 
 lint:
-	@go vet $(NOVENDOR)
+	@go vet $(shell glide novendor)
 	@go list ./... | grep -v /vendor/ | xargs -L1 golint
 
 fmt:
-	@go fmt $(NOVENDOR)
+	@go fmt $(shell glide novendor)
 
 build: lint
 	@go build -i
 
+run: lint
+	@go build $(shell glide novendor)
+	@go run main.go
+
 test: build
-	@go test $(NOVENDOR)
+	@go test $(shell glide novendor)
 
 install:
-	npm install -g yarn
-	yarn install
+	@npm install -g yarn
+	@yarn install
 	@go get -u github.com/golang/lint/golint
 	@go get -u github.com/Masterminds/glide
 	@glide install

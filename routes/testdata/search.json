@@ -38,7 +38,7 @@
                             "varName": "Games_played",
                             "varRole": "attribute",
                             "varType": "integer"
-                        }                        
+                        }
                     ]
                 }
             },

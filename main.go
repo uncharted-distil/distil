@@ -3,22 +3,18 @@ package main
 import (
 	"net/http"
 	"os"
+	"strconv"
 	"syscall"
 	"time"
 
-	elastic "gopkg.in/olivere/elastic.v2"
-
 	"github.com/pkg/errors"
 	"github.com/unchartedsoftware/plog"
-
 	"github.com/zenazn/goji/graceful"
-
-	"github.com/unchartedsoftware/distil-server/routes"
-
-	"strconv"
-
 	"goji.io"
 	"goji.io/pat"
+	"gopkg.in/olivere/elastic.v2"
+
+	"github.com/unchartedsoftware/distil/routes"
 )
 
 const (

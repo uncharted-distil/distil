@@ -20,7 +20,7 @@ export default {
 
 	// data change handlers
 	watch: {
-		// issues a debounced search request to the server	
+		// issues a debounced search request to the server
 		terms: _.throttle(function (newTerms) {
 			this.$store.dispatch('searchDatasets', newTerms);
 		}, 500)
@@ -31,4 +31,3 @@ export default {
 <style>
 
 </style>
-

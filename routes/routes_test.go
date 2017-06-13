@@ -2,19 +2,16 @@ package routes
 
 import (
 	"context"
+	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 
-	"goji.io/pattern"
-
-	"github.com/stretchr/testify/assert"
-
-	"io/ioutil"
-
 	"github.com/jeffail/gabs"
-	log "github.com/unchartedsoftware/plog"
-	elastic "gopkg.in/olivere/elastic.v2"
+	"github.com/stretchr/testify/assert"
+	"github.com/unchartedsoftware/plog"
+	"goji.io/pattern"
+	"gopkg.in/olivere/elastic.v2"
 )
 
 func testElasticRoute(
@@ -158,7 +155,7 @@ func TestDatasetsHandlerWithSearch(t *testing.T) {
 					{"name":"cylinders","type":"categorical"},
 					{"name":"displacement","type":"categorical"}
 				]
-			}			
+			}
 		]
 	}`
 	expectedJSON, err := gabs.ParseJSON([]byte(expected))

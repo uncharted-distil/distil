@@ -1,7 +1,7 @@
 import _ from 'lodash';
 
-export function setDatasets(state, datasets) {		
-	state.datasets = datasets;	
+export function setDatasets(state, datasets) {
+	state.datasets = datasets;
 }
 
 export function addDataset(state, dataset) {

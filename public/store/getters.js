@@ -2,7 +2,7 @@ import _ from 'lodash';
 
 export function getVariables(state) {
 	return (id) => {
-		const dataset = state.datasets.find(d => d.name === id);		
+		const dataset = state.datasets.find(d => d.name === id);
 		if (dataset) {
 			return dataset.variables;
 		}
@@ -11,10 +11,10 @@ export function getVariables(state) {
 }
 
 export function getDataset(state) {
-	return (id) => state.datasets.find(d => d.name === id);		
+	return (id) => state.datasets.find(d => d.name === id);
 }
 
-export function getDatasets(state) {	
+export function getDatasets(state) {
 	return (ids) => {
 		if (_.isUndefined) {
 			return state.datasets;
