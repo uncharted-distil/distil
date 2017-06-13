@@ -1,12 +1,12 @@
 FROM alpine:3.5 
 
-RUN mkdir /distil-server
+RUN mkdir /distil
 
-WORKDIR /distil-server
+WORKDIR /distil
 
-COPY distil-server .
+COPY distil .
 COPY dist ./dist
 
 EXPOSE 8080
 
-ENTRYPOINT ./distil-server
+ENTRYPOINT ./distil

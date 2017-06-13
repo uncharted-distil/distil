@@ -1,4 +1,4 @@
-# distil-server
+# distil
 
 ## Dependencies
 
@@ -12,13 +12,13 @@ Clone the repository:
 ```bash
 mkdir -p $GOPATH/src/github.com/unchartedsoftware
 cd $GOPATH/src/github.com/unchartedsoftware
-git clone git@github.com:unchartedsoftware/distil-server.git
+git clone git@github.com:unchartedsoftware/distil.git
 ```
 
 Install dependencies:
 
 ```bash
-cd distil-server
+cd distil
 make install
 ```
 

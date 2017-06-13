@@ -4,7 +4,7 @@ vendor
 .glide
 .idea
 .vscode
-/distil-server
+/distil
 debug.test
 debug
 /node_modules

@@ -14,7 +14,7 @@ import (
 	"goji.io/pat"
 	"gopkg.in/olivere/elastic.v2"
 
-	"github.com/unchartedsoftware/distil-server/routes"
+	"github.com/unchartedsoftware/distil/routes"
 )
 
 const (
