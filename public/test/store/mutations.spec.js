@@ -48,4 +48,13 @@ describe('mutations', () => {
 			expect(result).to.equal(true);
 		});
 	});
+
+	describe('#setVariableSummaries()', () => {
+		it('should replace the variable summaries with the caller supplied object', () => {
+			const testData = { test: 'alpha' };
+			const state = { variableSummaries: {orig: 'bravo'} };
+			mutations.setVariableSummaries(state, testData);
+			expect(state.variableSummaries).to.deep.equal(testData);
+		});
+	});
 });

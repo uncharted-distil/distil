@@ -22,3 +22,7 @@ export function getDatasets(state) {
 		return _.intersectionWith(state.datasets, ids, (l, r) => l.name === r);
 	};
 }
+
+export function getVariableSummaries(state) {
+	return () => state.variableSummaries;
+}

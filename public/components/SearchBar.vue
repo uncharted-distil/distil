@@ -7,7 +7,6 @@
 <script>
 
 import _ from 'lodash';
-import axios from 'axios';
 
 export default {
 	name: 'search-bar',
@@ -20,19 +19,10 @@ export default {
 	},
 
 	// data change handlers
-	watch: {	
+	watch: {
 		// issues a debounced search request to the server	
-		terms: _.throttle(function(newTerms) {
-			const component = this;
-			axios.get('/distil/datasets?search=' + newTerms)
-				.then(response => {
-					if (!_.isEmpty(response.data.datasets)) {
-						 component.$store.commit('setDatasets', response.data.datasets);
-					} else {
-						component.$store.commit('setDatasets', []);
-					}
-				})
-				.catch(error => console.log(error));
+		terms: _.throttle(function (newTerms) {
+			this.$store.dispatch('searchDatasets', newTerms);
 		}, 500)
 	},
 };

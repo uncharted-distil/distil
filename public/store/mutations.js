@@ -15,3 +15,7 @@ export function removeDataset(state, id) {
 export function setActiveDataset(state, id) {
 	state.activeDataset = id;
 }
+
+export function setVariableSummaries(state, summaries) {
+	state.variableSummaries = summaries;
+}

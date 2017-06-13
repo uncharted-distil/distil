@@ -2,7 +2,7 @@
 # yarn lockfile v1
 
 
-"@uncharted.software/stories-facets@^2.5.0":
+"@uncharted.software/stories-facets@2.5.0":
   version "2.5.0"
   resolved "https://registry.yarnpkg.com/@uncharted.software/stories-facets/-/stories-facets-2.5.0.tgz#ab5d889382c844033272da9b5a95d47b067b2c5c"
 
@@ -1751,6 +1751,10 @@ follow-redirects@^1.2.3:
   dependencies:
     debug "^2.4.5"
 
+font-awesome@^4.7.0:
+  version "4.7.0"
+  resolved "https://registry.yarnpkg.com/font-awesome/-/font-awesome-4.7.0.tgz#8fa8cf0411a1a31afd07b06d2902bb9fc815a133"
+
 for-in@^1.0.1:
   version "1.0.2"
   resolved "https://registry.yarnpkg.com/for-in/-/for-in-1.0.2.tgz#81068d295a8142ec0ac726c6e2200c30fb6d5e80"
@@ -2277,7 +2281,7 @@ jodid25519@^1.0.0:
   dependencies:
     jsbn "~0.1.0"
 
-jquery@^3.2.1:
+jquery@3.2.1:
   version "3.2.1"
   resolved "https://registry.yarnpkg.com/jquery/-/jquery-3.2.1.tgz#5c4d9de652af6cd0a770154a631bba12b015c787"
 

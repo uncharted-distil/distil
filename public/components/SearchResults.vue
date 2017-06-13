@@ -1,7 +1,9 @@
 <template>
-	<div id="search-results">		
+	<div id="search-results">
 		<div v-for="dataset in datasets">
-			<div v-on:click="setActiveDataset(dataset.name)"><h3>{{dataset.name}}</h3></div>
+			<div v-on:click="setActiveDataset(dataset.name)">
+				<h3>{{dataset.name}}</h3>
+			</div>
 			<div class="description-text">{{dataset.description}}</div>
 		</div>
 	</div>
@@ -13,24 +15,24 @@ export default {
 	name: 'search-results',
 
 	//data change handlers
-	computed: {	
-	  	datasets() {
+	computed: {
+		datasets() {
 			return this.$store.getters.getDatasets();
 		}
 	},
 
-	// 
 	methods: {
 		setActiveDataset(name) {
 			this.$store.commit('setActiveDataset', name);
+			this.$store.dispatch('getVariableSummaries', name);
 		}
 	}
 };
 </script>
 
 <style>
-.description-text {	
+.description-text {
 	height: 150px;
-	overflow: auto ;
+	overflow: auto;
 }
 </style>

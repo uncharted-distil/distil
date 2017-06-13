@@ -46,4 +46,15 @@ describe('getters', () => {
 			expect(getters.getDatasets(state)()).to.deep.equals(testData);
 		});		
 	});
+
+	describe('#getVariableSummaries()', () => {
+		const testData = { test: 'alpha' };
+		const state = {
+			variableSummaries: testData
+		};		
+		it('should retrieve the variable summaries object', () => {			
+			expect(getters.getVariableSummaries(state)()).to.deep.equals(testData);
+		});
+		
+	});
 });
