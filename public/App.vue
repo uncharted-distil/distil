@@ -1,9 +1,18 @@
 <template>
-	<div id="app">
-		<h1>Distil Server</h1>
-		<search-bar></search-bar>
-		<search-results id="search-results"></search-results>
-		<variable-summaries id="variable-summaries"></variable-summaries>
+	<div id="app" class="container-fluid">		
+		<div class="row">
+			<h1>Distil</h1>
+		</div>
+		<div class="row">
+			<search-bar></search-bar class="col-md-12">
+		</div>		
+		<div class="row">
+			<search-results id="search-results" class="col-md-8"></search-results>
+			<variable-summaries id="variable-summaries" class="col-md-4"></variable-summaries>
+		</div>	
+		<div class="row">
+			<data-table class="col-md-12"></data-table>
+		</div>			
 	</div>
 </template>
 
@@ -12,39 +21,37 @@
 import SearchBar from './components/SearchBar';
 import SearchResults from './components/SearchResults';
 import VariableSummaries from './components/VariableSummaries';
+import DataTable from './components/DataTable';
+
+import 'bootstrap/dist/css/bootstrap.css';
+import 'bootstrap-vue/dist/bootstrap-vue.css';
 
 export default {
 	name: 'app',
 	components: {
 		SearchBar,
 		SearchResults,
-		VariableSummaries
+		VariableSummaries,
+		DataTable
 	}
 };
 </script>
 
 <style>
 #app {
-	font-family: 'Avenir', Helvetica, Arial, sans-serif;
-	-webkit-font-smoothing: antialiased;
-	-moz-osx-font-smoothing: grayscale;
 	text-align: left;
-	color: #2c3e50;
 	margin-top: 5px;
 }
 
 #search-results {
-	width: 80%;
 	height:100%;
 	overflow: auto;
 	float: left;
 }
 
-#variable-summaries {
-	width: 20%;
+#variable-summaries {	
 	height:100%;
 	overflow: auto;
 	float: left;
-	background-color: aqua;
 }
 </style>

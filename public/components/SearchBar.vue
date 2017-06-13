@@ -1,6 +1,6 @@
 <template>
 	<div id='search-bar'>
-		<input v-model="terms" type='search' name='datasetsearch'>
+		<b-form-input v-model="terms" type="text" placeholder="Search datasets" name="datasetsearch"/>
 	</div>
 </template>
 

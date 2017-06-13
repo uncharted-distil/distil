@@ -6,10 +6,42 @@ import * as mutations from './mutations';
 
 Vue.use(Vuex);
 
+// shared data model
 const state = {
-	datasets: [],
-	variableSummaries: {},
-	activeDataset: null
+	// description of matched datasets
+	datasets: [
+		// {
+		// 	name: '',
+		// 	description: '',
+		// 	variables: [
+		// 		{
+		// 			name: '',
+		// 			type: ''
+		// 		}
+		// 	]
+		// }
+	],
+	// variable summary data for the active dataset
+	variableSummaries: {
+		// histograms: [{
+		// 	name: '',
+		// 	buckets: [{
+		// 		key: '',
+		// 		count: 0
+		// 	}] 
+		// }]
+	},
+	// data entries for the active dataset
+	data: {
+		// name: '',	 
+		// [{
+		// 	name: '',
+		// 	type: '',
+		// }]
+	},
+	
+	// name/id of the active dataset
+	activeDataset: null 
 };
 
 export default new Vuex.Store({

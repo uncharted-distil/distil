@@ -2,7 +2,7 @@
 	<div id="search-results">
 		<div v-for="dataset in datasets">
 			<div v-on:click="setActiveDataset(dataset.name)">
-				<h3>{{dataset.name}}</h3>
+				<h4>{{dataset.name}}</h4>
 			</div>
 			<div class="description-text">{{dataset.description}}</div>
 		</div>
@@ -23,8 +23,10 @@ export default {
 
 	methods: {
 		setActiveDataset(name) {
-			this.$store.commit('setActiveDataset', name);
-			this.$store.dispatch('getVariableSummaries', name);
+			if (name !== this.$store.state.activeDataset) {
+				this.$store.commit('setActiveDataset', name);
+				this.$store.dispatch('getVariableSummaries', name);
+			}			
 		}
 	}
 };
