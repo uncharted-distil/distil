@@ -8,18 +8,15 @@ import (
 	"fmt"
 	"math"
 	"net/http"
-	"strconv"
-
-	elastic "gopkg.in/olivere/elastic.v2"
-
-	"strings"
-
 	"net/url"
+	"strconv"
+	"strings"
 
 	"github.com/jeffail/gabs"
 	"github.com/pkg/errors"
-	log "github.com/unchartedsoftware/plog"
+	"github.com/unchartedsoftware/plog"
 	"goji.io/pat"
+	"gopkg.in/olivere/elastic.v2"
 )
 
 const (
