@@ -9,11 +9,8 @@ import (
 	"github.com/jeffail/gabs"
 	"github.com/pkg/errors"
 	"github.com/unchartedsoftware/plog"
+	"goji.io/pat"
 	"gopkg.in/olivere/elastic.v2"
-)
-
-const (
-	datasetIndex = "datasets"
 )
 
 func parseDataset(searchResult *elastic.SearchResult) (*datasetList, error) {
@@ -46,7 +43,7 @@ func parseDataset(searchResult *elastic.SearchResult) (*datasetList, error) {
 	return &result, nil
 }
 
-func fetchDatasets(client *elastic.Client) ([]byte, error) {
+func fetchDatasets(client *elastic.Client, index string) ([]byte, error) {
 	log.Info("Processing dataset fetch request")
 
 	fetchContext := elastic.NewFetchSourceContext(true)
@@ -54,7 +51,7 @@ func fetchDatasets(client *elastic.Client) ([]byte, error) {
 
 	// execute the ES query
 	searchResult, err := client.Search().
-		Index("datasets").
+		Index(index).
 		FetchSource(true).
 		FetchSourceContext(fetchContext).
 		Fields("_id").
@@ -85,7 +82,7 @@ func fetchDatasets(client *elastic.Client) ([]byte, error) {
 	return js, nil
 }
 
-func searchDatasets(client *elastic.Client, terms string) ([]byte, error) {
+func searchDatasets(client *elastic.Client, index string, terms string) ([]byte, error) {
 	log.Infof("Processing datasets search request for %s", terms)
 	query := elastic.NewMultiMatchQuery(terms, "_id", "description", "variables.varName").Analyzer("standard")
 
@@ -95,7 +92,7 @@ func searchDatasets(client *elastic.Client, terms string) ([]byte, error) {
 	// execute the ES query
 	searchResult, err := client.Search().
 		Query(query).
-		Index(datasetIndex).
+		Index(index).
 		FetchSource(true).
 		FetchSourceContext(fetchContext).
 		Do()
@@ -124,6 +121,9 @@ func searchDatasets(client *elastic.Client, terms string) ([]byte, error) {
 // and variable lists will not be included.
 func DatasetsHandler(client *elastic.Client) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
+		// get index name
+		index := pat.Param(r, "index")
+
 		// check for search parameter
 		terms, err := url.QueryUnescape(r.URL.Query().Get("search"))
 		if err != nil {
@@ -134,9 +134,9 @@ func DatasetsHandler(client *elastic.Client) func(http.ResponseWriter, *http.Req
 		// if its present, forward a search, otherwise fetch all datasets
 		var result []byte
 		if terms != "" {
-			result, err = searchDatasets(client, terms)
+			result, err = searchDatasets(client, index, terms)
 		} else {
-			result, err = fetchDatasets(client)
+			result, err = fetchDatasets(client, index)
 		}
 
 		if err != nil {

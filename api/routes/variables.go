@@ -11,11 +11,6 @@ import (
 	"gopkg.in/olivere/elastic.v2"
 )
 
-func handleServerError(err error, w http.ResponseWriter) {
-	log.Error(errors.Cause(err))
-	http.Error(w, errors.Cause(err).Error(), http.StatusInternalServerError)
-}
-
 type varDesc struct {
 	Name string `json:"name"`
 	Type string `json:"type"`
@@ -57,7 +52,7 @@ func parseVariables(searchHit *elastic.SearchHit) (*variableList, error) {
 	return &result, nil
 }
 
-func fetchVariables(client *elastic.Client, dataset string) ([]byte, error) {
+func fetchVariables(client *elastic.Client, index string, dataset string) ([]byte, error) {
 	boolQuery := elastic.NewBoolQuery().
 		Must(elastic.NewMatchQuery("_id", dataset))
 
@@ -67,7 +62,7 @@ func fetchVariables(client *elastic.Client, dataset string) ([]byte, error) {
 	// execute the ES query
 	searchResult, err := client.Search().
 		Query(boolQuery).
-		Index(datasetIndex).
+		Index(index).
 		FetchSource(true).
 		FetchSourceContext(fetchContext).
 		Do()
@@ -98,10 +93,17 @@ func fetchVariables(client *elastic.Client, dataset string) ([]byte, error) {
 // ES endpoint.  The handler returns a list of name/type tuples for the given dataset.
 func VariablesHandler(client *elastic.Client) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
-		log.Infof("Processing variables request for %s", pat.Param(r, "dataset"))
-		datasetID := pat.Param(r, "dataset") + "_dataset"
 
-		js, err := fetchVariables(client, datasetID)
+		// get index name
+		index := pat.Param(r, "index")
+
+		// get dataset name
+		dataset := pat.Param(r, "dataset")
+
+		log.Infof("Processing variables request for %s", dataset)
+		datasetID := dataset + "_dataset"
+
+		js, err := fetchVariables(client, index, datasetID)
 		if err != nil {
 			handleServerError(err, w)
 			return
