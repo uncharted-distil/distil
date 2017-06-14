@@ -50,12 +50,18 @@ func parseRangeAggregation(name string, aggMsg *json.RawMessage) (float64, error
 // for each variable, but can be extended to support avg, std dev, percentiles etc.  in th future.
 func VariableSummariesHandler(client *elastic.Client) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
-		log.Infof("Processing variables summaries request for %s", pat.Param(r, "dataset"))
-		datasetName := pat.Param(r, "dataset")
-		datasetID := datasetName + "_dataset"
+
+		// get index name
+		index := pat.Param(r, "index")
+
+		// get dataset name
+		dataset := pat.Param(r, "dataset")
+
+		log.Infof("Processing variables summaries request for %s", dataset)
+		datasetID := dataset + "_dataset"
 
 		// Need list of variables to request aggregation against.
-		variablesJSON, err := fetchVariables(client, datasetID)
+		variablesJSON, err := fetchVariables(client, index, datasetID)
 		if err != nil {
 			handleServerError(errors.Wrap(err, "Failed to fetch variable list for summary generation"), w)
 			return
@@ -73,7 +79,7 @@ func VariableSummariesHandler(client *elastic.Client) func(http.ResponseWriter, 
 
 		// Create a query that does min and max aggregations for each variable
 		search := client.Search().
-			Index(datasetName).
+			Index(dataset).
 			Size(0)
 
 		var variableNames []string
@@ -109,7 +115,7 @@ func VariableSummariesHandler(client *elastic.Client) func(http.ResponseWriter, 
 		// For each returned aggregation, create a histogram aggregation.  Bucket size is derived from
 		// the min/max and desired bucket count.
 		search = client.Search().
-			Index(datasetName).
+			Index(dataset).
 			Size(0)
 
 		for _, name := range variableNames {
