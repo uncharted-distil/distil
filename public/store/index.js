@@ -28,20 +28,20 @@ const state = {
 		// 	buckets: [{
 		// 		key: '',
 		// 		count: 0
-		// 	}] 
+		// 	}]
 		// }]
 	},
 	// data entries for the active dataset
 	data: {
-		// name: '',	 
+		// name: '',
 		// [{
 		// 	name: '',
 		// 	type: '',
 		// }]
 	},
-	
+
 	// name/id of the active dataset
-	activeDataset: null 
+	activeDataset: null
 };
 
 export default new Vuex.Store({
