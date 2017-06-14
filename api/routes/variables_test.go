@@ -6,7 +6,6 @@ import (
 	"net/http"
 	"testing"
 
-	"github.com/jeffail/gabs"
 	"github.com/stretchr/testify/assert"
 	"goji.io/pattern"
 

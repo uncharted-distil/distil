@@ -1,17 +1,17 @@
 package routes
 
 import (
-	"encoding/json"
 	"fmt"
 	"math"
 	"net/http"
 	"strconv"
 
-	"github.com/jeffail/gabs"
 	"github.com/pkg/errors"
 	"github.com/unchartedsoftware/plog"
 	"goji.io/pat"
 	"gopkg.in/olivere/elastic.v2"
+
+	"github.com/unchartedsoftware/distil/api/util/json"
 )
 
 type bucketEntry struct {
@@ -32,48 +32,24 @@ func histogramVariable(varName string, varType string) bool {
 	return varName != "d3mIndex" && (varType == "integer" || varType == "float")
 }
 
-func parseRangeAggregation(name string, aggMsg *json.RawMessage) (float64, error) {
-	// extract the min / max for each variable
-	json, err := aggMsg.MarshalJSON()
-	if err != nil {
-		return math.NaN(), errors.Wrapf(err, "Failed to marshall range data for histogram %s", name)
-	}
-	aggJSON, err := gabs.ParseJSON(json)
-	if err != nil {
-		return math.NaN(), errors.Wrapf(err, "Failed to parse range data for histogram %s", name)
-	}
-	return aggJSON.Path("value").Data().(float64), nil
-}
-
 // VariableSummariesHandler generates a route handler that facilitates the creation and retrieval
 // of summary information about the variables in a datset.  Currently this consists of a histogram
 // for each variable, but can be extended to support avg, std dev, percentiles etc.  in th future.
 func VariableSummariesHandler(client *elastic.Client) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
-
 		// get index name
 		index := pat.Param(r, "index")
-
 		// get dataset name
 		dataset := pat.Param(r, "dataset")
-
-		log.Infof("Processing variables summaries request for %s", dataset)
+		// get dataset id
 		datasetID := dataset + "_dataset"
 
+		log.Infof("Processing variables summaries request for %s", dataset)
+
 		// Need list of variables to request aggregation against.
-		variablesJSON, err := fetchVariables(client, index, datasetID)
+		variables, err := fetchVariables(client, index, datasetID)
 		if err != nil {
 			handleServerError(errors.Wrap(err, "Failed to fetch variable list for summary generation"), w)
-			return
-		}
-		parsedVariables, err := gabs.ParseJSON(variablesJSON)
-		if err != nil {
-			handleServerError(errors.Wrap(err, "Failed to parse variable list for summary generation"), w)
-			return
-		}
-		variables, err := parsedVariables.Path("variables").Children()
-		if err != nil {
-			handleServerError(errors.Wrap(err, "Failed to parse variable list for summary generation"), w)
 			return
 		}
 
@@ -82,31 +58,26 @@ func VariableSummariesHandler(client *elastic.Client) func(http.ResponseWriter, 
 			Index(dataset).
 			Size(0)
 
-		var variableNames []string
+		// for each variable, create a min / max aggregation
 		for _, variable := range variables {
-			// parse out the name and type
-			name := variable.Path("name").Data().(string)
-			varType := variable.Path("type").Data().(string)
-
-			// for those that can have a histogram generated, create min and max aggregation
-			if name != "" && histogramVariable(name, varType) {
-				variableNames = append(variableNames, name)
-
-				esFieldName := fmt.Sprintf("%s.value", name)
-
-				minAggregation := elastic.NewMinAggregation().Field(esFieldName)
-				maxAggregation := elastic.NewMaxAggregation().Field(esFieldName)
-
+			if histogramVariable(variable.Name, variable.Type) {
+				// get field name
+				field := fmt.Sprintf("%s.value", name)
+				// create aggs
+				minAgg := elastic.NewMinAggregation().Field(field)
+				maxAgg := elastic.NewMaxAggregation().Field(field)
+				// create agg names
 				minAggName := fmt.Sprintf("min__%s", name)
 				maxAggName := fmt.Sprintf("max__%s", name)
-
-				search = search.Aggregation(minAggName, minAggregation).
-					Aggregation(maxAggName, maxAggregation)
+				// add aggregations
+				search.
+					Aggregation(minAggName, minAgg).
+					Aggregation(maxAggName, maxAgg)
 			}
 		}
 
-		// Execute the search
-		searchResult, err := search.Do()
+		// execute the search
+		res, err := search.Do()
 		if err != nil {
 			handleServerError(errors.Wrap(err, "Failed to execute min/max aggregation query for summary generation"), w)
 			return
@@ -118,36 +89,43 @@ func VariableSummariesHandler(client *elastic.Client) func(http.ResponseWriter, 
 			Index(dataset).
 			Size(0)
 
-		for _, name := range variableNames {
-			minAgg := searchResult.Aggregations["min__"+name]
-			maxAgg := searchResult.Aggregations["max__"+name]
+		for _, variable := range variables {
 
-			minVal, err := parseRangeAggregation(name, minAgg)
-			if err != nil {
-				log.Error(errors.Cause(err))
+			name := variable.Name
+			minAggName := fmt.Sprintf("min__%s", name)
+			maxAggName := fmt.Sprintf("max__%s", name)
+
+			minAgg, ok := res.Aggregations.Min(minAggName)
+			if !ok {
 				continue
 			}
-			maxVal, err := parseRangeAggregation(name, maxAgg)
-			if err != nil {
-				log.Error(errors.Cause(err))
+
+			maxAgg, ok := searchResult.Aggregations.Max(maxAggName)
+			if !ok {
+				continue
+			}
+
+			if minAgg.Value == nil  && maxAgg.Value == nil {
 				continue
 			}
 
 			// compute the bucket interval for the histogram
-			// TODO: ES v 5 supports float intervals for histograms.  Need to upgrade frm v2 and make this
-			// use floats.
-			interval := int64(math.Floor((maxVal - minVal) / 100))
+			// TODO: ES v5 supports float intervals for histograms. Need to
+			// upgrade frm v2 and make thisuse floats.
+			interval := int64(math.Floor((maxAgg.Value - minAgg.Value) / 100))
 			if interval < 1 {
 				interval = 1
 			}
 
 			// update the histogram aggregation request
-			histogramAggregation := elastic.NewHistogramAggregation().Field(name + ".value").Interval(interval)
-			search = search.Aggregation(name, histogramAggregation)
+			histogramAgg := elastic.NewHistogramAggregation().
+				Field(name + ".value").
+				Interval(interval)
+			search.Aggregation(name, histogramAgg)
 		}
 
 		// Execute the search
-		searchResult, err = search.Do()
+		res, err = search.Do()
 		if err != nil {
 			handleServerError(errors.Wrap(err, "Failed to fetch histograms for variables summaries"), w)
 			return
@@ -155,15 +133,16 @@ func VariableSummariesHandler(client *elastic.Client) func(http.ResponseWriter, 
 
 		// Parse the results and store in structs for marshalling to JSON
 		var result histogramList
-		for name, aggregation := range searchResult.Aggregations {
+		for name, aggregation := range res.Aggregations {
 
 			// Pull the data for each aggregation out into JSON rep
-			json, err := aggregation.MarshalJSON()
-			if err != nil {
-				log.Warnf("%+v", errors.Wrapf(err, "Failed to marshal JSON entry for %s", name))
-				continue
-			}
-			aggJSON, err := gabs.ParseJSON(json)
+			// json, err := aggregation.MarshalJSON()
+			// if err != nil {
+			// 	log.Warnf("%+v", errors.Wrapf(err, "Failed to marshal JSON entry for %s", name))
+			// 	continue
+			// }
+
+			aggJSON, err := json.Unmarshal(aggregation)
 			if err != nil {
 				log.Warnf("%+v", errors.Wrapf(err, "Failed to parse JSON entry for %s", name))
 				continue

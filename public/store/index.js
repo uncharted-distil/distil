@@ -11,35 +11,36 @@ const state = {
 	// description of matched datasets
 	datasets: [
 		// {
-		// 	name: '',
-		// 	description: '',
-		// 	variables: [
-		// 		{
-		// 			name: '',
-		// 			type: ''
-		// 		}
-		// 	]
+		//     name: '',
+		//     description: '',
+		//     variables: [
+		//         {
+		//             name: '',
+		//            type: ''
+		//         }
+		//     ]
 		// }
 	],
 	// variable summary data for the active dataset
 	variableSummaries: {
 		// histograms: [{
-		// 	name: '',
-		// 	buckets: [{
-		// 		key: '',
-		// 		count: 0
-		// 	}]
+		//     name: '',
+		//     buckets: [{
+		//         key: '',
+		//         count: 0
+		//     }]
 		// }]
 	},
 	// data entries for the active dataset
 	data: {
 		// name: '',
-		// [{
-		// 	name: '',
-		// 	type: '',
-		// }]
+		// variables: [
+		//     {
+		//         name: '',
+		//         type: '',
+		//     }
+		// ]
 	},
-
 	// name/id of the active dataset
 	activeDataset: null
 };

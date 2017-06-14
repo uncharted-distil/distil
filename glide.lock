@@ -1,8 +1,6 @@
 hash: beb4521eb186b809351acb2c438ff01f7831a9ae4f8a3759bab23a5cfc6e9a62
 updated: 2017-06-10T15:21:24.592817764-04:00
 imports:
-- name: github.com/jeffail/gabs
-  version: c9fb5b700cddb62013b2ee9dfc9ce011caea55e0
 - name: github.com/mattn/go-colorable
   version: ded68f7a9561c023e790de24279db7ebf473ea80
 - name: github.com/mattn/go-isatty
