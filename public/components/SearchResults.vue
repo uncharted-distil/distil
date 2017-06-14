@@ -26,7 +26,7 @@ export default {
 			if (name !== this.$store.state.activeDataset) {
 				this.$store.commit('setActiveDataset', name);
 				this.$store.dispatch('getVariableSummaries', name);
-			}			
+			}
 		}
 	}
 };

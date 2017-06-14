@@ -1,18 +1,18 @@
 <template>
-	<div id="app" class="container-fluid">		
+	<div id="app" class="container-fluid">
 		<div class="row">
 			<h1>Distil</h1>
 		</div>
 		<div class="row">
 			<search-bar></search-bar class="col-md-12">
-		</div>		
+		</div>
 		<div class="row">
 			<search-results id="search-results" class="col-md-8"></search-results>
 			<variable-summaries id="variable-summaries" class="col-md-4"></variable-summaries>
-		</div>	
+		</div>
 		<div class="row">
 			<data-table class="col-md-12"></data-table>
-		</div>			
+		</div>
 	</div>
 </template>
 
@@ -49,7 +49,7 @@ export default {
 	float: left;
 }
 
-#variable-summaries {	
+#variable-summaries {
 	height:100%;
 	overflow: auto;
 	float: left;

@@ -15,7 +15,7 @@ export default {
 		// instantiate the external facets widget
 		const container = document.getElementById('variable-summaries');
 		const facets = new Facets(container, []);
-		
+
 		// update it's contents when the dataset changes
 		// any event handlers would be added here as well
 		const component = this;

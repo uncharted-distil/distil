@@ -54,9 +54,9 @@ export default {
 				actions: {
 					label: 'Actions'
 				}
-			},					
+			},
 		};
-	}	
+	}
 };
 </script>
 
