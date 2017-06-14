@@ -1,8 +1,5 @@
 <template>
 	<div id='variable-summaries'>
-		<!--<div v-for='variable in variables'>
-						{{variable.name}}:{{variable.type}}
-					</div>-->
 	</div>
 </template>
 
@@ -11,13 +8,16 @@
 import Facets from '@uncharted.software/stories-facets';
 import '@uncharted.software/stories-facets/dist/facets.css';
 import 'font-awesome/css/font-awesome.css';
-//import * as getters from '../store/getters';
 
 export default {
 	name: 'variable-summaries',
 	mounted() {
+		// instantiate the external facets widget
 		const container = document.getElementById('variable-summaries');
 		const facets = new Facets(container, []);
+		
+		// update it's contents when the dataset changes
+		// any event handlers would be added here as well
 		const component = this;
 		this.$store.watch(() => component.$store.state.variableSummaries, (data) => {
 			// convert the histo data into facets data
@@ -48,7 +48,7 @@ export default {
 <style>
 #variable-summaries {
 	width: 240px;
+	height: 80vh;
 	padding: 5px;
-	font-family: Helvetica;
 }
 </style>

@@ -1,6 +1,7 @@
 import _ from 'lodash';
 import axios from 'axios';
 
+// searches dataset descriptions and column names for supplied terms
 export function searchDatasets(context, terms) {
 	if (_.isEmpty(terms)) {
 		context.commit('setDatasets', []);
@@ -20,6 +21,7 @@ export function searchDatasets(context, terms) {
 	}
 }
 
+// fetches variable summary data for the given dataset
 export function getVariableSummaries(context, name) {
 	axios.get('/distil/variable-summaries/' + name)
 		.then(response => {
@@ -28,5 +30,17 @@ export function getVariableSummaries(context, name) {
 		.catch(error => {
 			console.log(error);
 			context.commit('setVariableSummaries', {});
+		});
+}
+
+// fetches data entries for the given dataset
+export function getData(context, name) {
+	axios.get('/distil/data/' + name)
+		.then(response => {
+			context.commit('setData', response.data);
+		})
+		.catch(error => {
+			console.log(error);
+			context.commit('setData', {});
 		});
 }
