@@ -2,8 +2,6 @@ version=0.1.0
 
 .PHONY: all
 
-NOVENDOR := $(shell glide novendor)
-
 all:
 	@echo "make <cmd>"
 	@echo ""
@@ -24,9 +22,12 @@ fmt:
 build: lint
 	@go build -i
 
+compile: lint
+	@go build $(shell glide novendor)
+
 run: lint
 	@go build $(shell glide novendor)
-	@go run main.go
+	@./run.sh
 
 test: build
 	@go test $(shell glide novendor)

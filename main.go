@@ -3,7 +3,6 @@ package main
 import (
 	"net/http"
 	"os"
-	"strconv"
 	"syscall"
 	"time"
 
@@ -14,12 +13,12 @@ import (
 	"goji.io/pat"
 	"gopkg.in/olivere/elastic.v2"
 
-	"github.com/unchartedsoftware/distil/routes"
+	"github.com/unchartedsoftware/distil/api/routes"
 )
 
 const (
 	defaultEsEndpoint = "http://localhost:9200"
-	defaultAppPort    = 8080
+	defaultAppPort    = "8080"
 	defaultEsTimeout  = time.Second * 60 * 5
 )
 
@@ -91,8 +90,8 @@ func main() {
 	graceful.AddSignal(syscall.SIGINT, syscall.SIGTERM)
 
 	// kick off the server listen loop
-	log.Infof("Listening on port %d", defaultAppPort)
-	err = graceful.ListenAndServe(":"+strconv.Itoa(defaultAppPort), mux)
+	log.Infof("Listening on port %s", defaultAppPort)
+	err = graceful.ListenAndServe(":"+defaultAppPort, mux)
 	if err != nil {
 		log.Error(err)
 		os.Exit(1)
