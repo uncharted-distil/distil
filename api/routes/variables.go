@@ -54,17 +54,13 @@ func parseVariables(searchHit *elastic.SearchHit) ([]Variable, error) {
 
 func fetchVariables(client *elastic.Client, index string, dataset string) ([]Variable, error) {
 	log.Infof("Processing variables request for %s", dataset)
-
 	// get dataset id
 	datasetID := dataset + "_dataset"
-
 	// create match query
 	query := elastic.NewMatchQuery("_id", datasetID)
-
 	// create fetch context
 	fetchContext := elastic.NewFetchSourceContext(true)
 	fetchContext.Include("variables")
-
 	// execute the ES query
 	res, err := client.Search().
 		Query(query).
@@ -75,7 +71,6 @@ func fetchVariables(client *elastic.Client, index string, dataset string) ([]Var
 	if err != nil {
 		return nil, errors.Wrap(err, "elasticSearch variable fetch query failed")
 	}
-
 	// check that we have only one hit (should only ever be one matching dataset)
 	if len(res.Hits.Hits) != 1 {
 		return nil, errors.New("elasticSearch variable fetch query len(hits) != 1")
