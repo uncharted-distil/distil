@@ -26,12 +26,12 @@ func parseVariables(searchHit *elastic.SearchHit) ([]Variable, error) {
 	// unmarshal the hit source
 	src, err := json.Unmarshal(*searchHit.Source)
 	if err != nil {
-		return nil, errors.Wrap(err, "Unable to parse search result")
+		return nil, errors.Wrap(err, "unable to parse search result")
 	}
 	// get the variables array
 	children, ok := json.Array(src, "variables")
 	if !ok {
-		return nil, errors.New("Unable to parse `variables` field from search result")
+		return nil, errors.New("unable to parse variables from search result")
 	}
 	// for each variable, extract the `varName` and `varType`
 	var variables []Variable
@@ -53,11 +53,13 @@ func parseVariables(searchHit *elastic.SearchHit) ([]Variable, error) {
 }
 
 func fetchVariables(client *elastic.Client, index string, dataset string) ([]Variable, error) {
-
 	log.Infof("Processing variables request for %s", dataset)
 
+	// get dataset id
+	datasetID := dataset + "_dataset"
+
 	// create match query
-	query := elastic.NewMatchQuery("_id", dataset)
+	query := elastic.NewMatchQuery("_id", datasetID)
 
 	// create fetch context
 	fetchContext := elastic.NewFetchSourceContext(true)
@@ -71,25 +73,18 @@ func fetchVariables(client *elastic.Client, index string, dataset string) ([]Var
 		FetchSourceContext(fetchContext).
 		Do()
 	if err != nil {
-		return nil, errors.Wrap(err, "ElasticSearch variable fetch query failed")
+		return nil, errors.Wrap(err, "elasticSearch variable fetch query failed")
 	}
 
+	// check that we have only one hit (should only ever be one matching dataset)
 	if len(res.Hits.Hits) != 1 {
-		return nil, errors.New("ElasticSearch variable fetch query returned > 1 results")
+		return nil, errors.New("elasticSearch variable fetch query len(hits) != 1")
 	}
-
 	// extract output into JSON ready structs
 	variables, err := parseVariables(res.Hits.Hits[0])
 	if err != nil {
-		return nil, errors.Wrap(err, "Unable to parse search result JSON")
+		return nil, errors.Wrap(err, "unable to parse search result")
 	}
-
-	// marshall output into JSON
-	bytes, err := json.Marshal(variables)
-	if err != nil {
-		return nil, errors.Wrap(err, "Unable marshal result into JSON")
-	}
-
 	return variables, err
 }
 
@@ -102,12 +97,10 @@ func VariablesHandler(client *elastic.Client) func(http.ResponseWriter, *http.Re
 		index := pat.Param(r, "index")
 		// get dataset name
 		dataset := pat.Param(r, "dataset")
-		// get dataset id
-		datasetID := dataset + "_dataset"
 		// fetch the variables
-		variables, err := fetchVariables(client, index, datasetID)
+		variables, err := fetchVariables(client, index, dataset)
 		if err != nil {
-			handleServerError(err, w)
+			handleError(w, err)
 			return
 		}
 		// marshall output into JSON
@@ -115,7 +108,7 @@ func VariablesHandler(client *elastic.Client) func(http.ResponseWriter, *http.Re
 			Variables: variables,
 		})
 		if err != nil {
-			handleServerError(errors.Wrap(err, "Unable marshal variables result into JSON"), w)
+			handleError(w, errors.Wrap(err, "unable marshal variables result into JSON"))
 			return
 		}
 		w.Header().Set("Content-Type", "application/json")

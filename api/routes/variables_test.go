@@ -10,6 +10,7 @@ import (
 	"goji.io/pattern"
 
 	"github.com/unchartedsoftware/distil/api/util"
+	"github.com/unchartedsoftware/distil/api/util/json"
 )
 
 func TestVariablesHandler(t *testing.T) {
@@ -22,36 +23,45 @@ func TestVariablesHandler(t *testing.T) {
 		w.Write(datasetJSON)
 	}
 
+	// test index and dataset
+	testIndex := "datasets"
+	testDataset := "o_185"
+
 	// put together a stub dataset request - need to manually account for goji's
 	// parameter extraction
-	request, err := http.NewRequest("GET", "/distil/variables/o_185", nil)
-	request = request.WithContext(
-		context.WithValue(request.Context(),
-			pattern.Variable("dataset"),
-			"o_185"))
+	req, err := http.NewRequest("GET", "/distil/variables/"+testIndex+"/"+testDataset, nil)
 	assert.NoError(t, err)
+
+	// add params
+	ctx := req.Context()
+	ctx = context.WithValue(ctx, pattern.Variable("index"), testIndex)
+	ctx = context.WithValue(ctx, pattern.Variable("dataset"), testDataset)
+
+	// add context to req
+	req = req.WithContext(ctx)
 
 	// execute the test request - stubbed ES server will return the JSON
 	// loaded above
-	result, err := util.TestElasticRoute(handler, request, VariablesHandler)
+	res, err := util.TestElasticRoute(handler, req, VariablesHandler)
 	assert.NoError(t, err)
 
-	assert.Equal(t, http.StatusOK, result.Code)
+	assert.Equal(t, http.StatusOK, res.Code)
 
 	// compare expected and acutal results - unmarshall first to ensure object
 	// rather than byte equality
-	expected := `{
-		"variables":[
-			{"name":"d3mIndex","type":"integer"},
-			{"name":"Player","type":"categorical"},
-			{"name":"Number_seasons","type":"integer"},
-			{"name":"Games_played","type":"integer"}
-		]}`
-	expectedJSON, err := gabs.ParseJSON([]byte(expected))
+	expected, err := json.Unmarshal([]byte(
+		`{
+			"variables":[
+				{"name":"d3mIndex","type":"integer"},
+				{"name":"Player","type":"categorical"},
+				{"name":"Number_seasons","type":"integer"},
+				{"name":"Games_played","type":"integer"}
+			]
+		}`))
 	assert.NoError(t, err)
 
-	actualJSON, err := gabs.ParseJSON(result.Body.Bytes())
+	actual, err := json.Unmarshal(res.Body.Bytes())
 	assert.NoError(t, err)
 
-	assert.Equal(t, expectedJSON, actualJSON)
+	assert.Equal(t, expected, actual)
 }

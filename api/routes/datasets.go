@@ -31,7 +31,7 @@ func parseDatasets(res *elastic.SearchResult) ([]Dataset, error) {
 		// parse hit into JSON
 		src, err := json.Unmarshal(*hit.Source)
 		if err != nil {
-			return nil, errors.Wrap(err, "Failed to parse dataset")
+			return nil, errors.Wrap(err, "failed to parse dataset")
 		}
 		// extract dataset name (ID is mirror of name)
 		name := strings.TrimSuffix(hit.Id, "_dataset")
@@ -43,7 +43,7 @@ func parseDatasets(res *elastic.SearchResult) ([]Dataset, error) {
 		// extract the variables list
 		variables, err := parseVariables(hit)
 		if err != nil {
-			return nil, errors.Wrap(err, "Failed to parse dataset")
+			return nil, errors.Wrap(err, "failed to parse dataset")
 		}
 		// write everythign out to result struct
 		datasets = append(datasets, Dataset{
@@ -66,10 +66,9 @@ func fetchDatasets(client *elastic.Client, index string) ([]Dataset, error) {
 		Index(index).
 		FetchSource(true).
 		FetchSourceContext(fetchContext).
-		Fields("_id").
 		Do()
 	if err != nil {
-		return nil, errors.Wrap(err, "Elastic Search dataset fetch query failed")
+		return nil, errors.Wrap(err, "elasticsearch dataset fetch query failed")
 	}
 
 	return parseDatasets(res)
@@ -92,7 +91,7 @@ func searchDatasets(client *elastic.Client, index string, terms string) ([]Datas
 		FetchSourceContext(fetchContext).
 		Do()
 	if err != nil {
-		return nil, errors.Wrap(err, "Elastic search dataset search query failed")
+		return nil, errors.Wrap(err, "elasticsearch dataset search query failed")
 	}
 
 	return parseDatasets(res)
@@ -111,7 +110,7 @@ func DatasetsHandler(client *elastic.Client) func(http.ResponseWriter, *http.Req
 		// check for search terms
 		terms, err := url.QueryUnescape(r.URL.Query().Get("search"))
 		if err != nil {
-			log.Error("Malformed datasets query")
+			handleError(w, errors.Wrap(err, "Malformed datasets query"))
 			return
 		}
 		// if its present, forward a search, otherwise fetch all datasets
@@ -122,7 +121,7 @@ func DatasetsHandler(client *elastic.Client) func(http.ResponseWriter, *http.Req
 			datasets, err = fetchDatasets(client, index)
 		}
 		if err != nil {
-			handleServerError(err, w)
+			handleError(w, err)
 			return
 		}
 		// marshall data
@@ -130,7 +129,7 @@ func DatasetsHandler(client *elastic.Client) func(http.ResponseWriter, *http.Req
 			Datasets: datasets,
 		})
 		if err != nil {
-			handleServerError(errors.Wrap(err, "Unable marshal dataset result into JSON"), w)
+			handleError(w, errors.Wrap(err, "unable marshal dataset result into JSON"))
 			return
 		}
 		// send response
