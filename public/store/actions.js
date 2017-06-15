@@ -10,17 +10,17 @@ export function searchDatasets(context, terms) {
 		context.commit('setDatasets', []);
 	} else {
 		axios.get(`/distil/datasets/${ES_INDEX}?search=${terms}`)
-		.then(response => {
-			if (!_.isEmpty(response.data.datasets)) {
-				context.commit('setDatasets', response.data.datasets);
-			} else {
+			.then(response => {
+				if (!_.isEmpty(response.data.datasets)) {
+					context.commit('setDatasets', response.data.datasets);
+				} else {
+					context.commit('setDatasets', []);
+				}
+			})
+			.catch(error => {
+				console.log(error);
 				context.commit('setDatasets', []);
-			}
-		})
-		.catch(error => {
-			console.log(error);
-			context.commit('setDatasets', []);
-		});
+			});
 	}
 }
 

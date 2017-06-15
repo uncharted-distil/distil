@@ -7,7 +7,7 @@ import (
 	"github.com/unchartedsoftware/plog"
 )
 
-func handleServerError(err error, w http.ResponseWriter) {
+func handleError(w http.ResponseWriter, err error) {
 	log.Error(errors.Cause(err))
 	http.Error(w, errors.Cause(err).Error(), http.StatusInternalServerError)
 }

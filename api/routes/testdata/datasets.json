@@ -1,5 +1,5 @@
 {
-    "took": 14,
+    "took": 2,
     "timed_out": false,
     "_shards": {
         "total": 5,
@@ -7,22 +7,67 @@
         "failed": 0
     },
     "hits": {
-        "total": 5,
-        "max_score": 2.5040774,
+        "total": 1,
+        "max_score": 0.020597205,
         "hits": [
             {
                 "_index": "datasets",
                 "_type": "metadata",
-                "_id": "o_196_dataset",
-                "_score": 2.5040774,
-                "_source": {}
+                "_id": "o_185_dataset",
+                "_score": 0.020597205,
+                "_source": {
+                    "datasetId": "o_185_dataset",
+                    "description": "**Author**: Jeffrey S. Simonoff",
+                    "variables": [
+                        {
+                            "varName": "d3mIndex",
+                            "varRole": "index",
+                            "varType": "integer"
+                        },
+                        {
+                            "varName": "Player",
+                            "varRole": "attribute",
+                            "varType": "categorical"
+                        },
+                        {
+                            "varName": "Number_seasons",
+                            "varRole": "attribute",
+                            "varType": "integer"
+                        },
+                        {
+                            "varName": "Games_played",
+                            "varRole": "attribute",
+                            "varType": "integer"
+                        }
+                    ]
+                }
             },
             {
                 "_index": "datasets",
                 "_type": "metadata",
-                "_id": "o_185_dataset",
-                "_score": 2.098612,
-                "_source": {}
+                "_id": "o_196_dataset",
+                "_score": 0.020597205,
+                "_source": {
+                    "datasetId": "o_196_dataset",
+                    "description": "**Author**:",
+                    "variables": [
+                        {
+                            "varName": "d3mIndex",
+                            "varRole": "index",
+                            "varType": "integer"
+                        },
+                        {
+                            "varName": "cylinders",
+                            "varRole": "attribute",
+                            "varType": "categorical"
+                        },
+                        {
+                            "varName": "displacement",
+                            "varRole": "attribute",
+                            "varType": "categorical"
+                        }
+                    ]
+                }
             }
         ]
     }

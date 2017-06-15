@@ -1,207 +1,217 @@
 package routes
 
 import (
-	"encoding/json"
 	"fmt"
 	"math"
 	"net/http"
 	"strconv"
 
-	"github.com/jeffail/gabs"
 	"github.com/pkg/errors"
 	"github.com/unchartedsoftware/plog"
 	"goji.io/pat"
 	"gopkg.in/olivere/elastic.v2"
+
+	"github.com/unchartedsoftware/distil/api/util/json"
 )
 
-type bucketEntry struct {
+// Extrema represents the extrema for a single variable.
+type Extrema struct {
+	Name string
+	Min  float64
+	Max  float64
+}
+
+// Bucket represents a single histogram bucket.
+type Bucket struct {
 	Key   string `json:"key"`
 	Count int64  `json:"count"`
 }
 
-type histogram struct {
-	Name    string        `json:"name"`
-	Buckets []bucketEntry `json:"buckets"`
+// Histogram represents a single variable histogram.
+type Histogram struct {
+	Name    string   `json:"name"`
+	Buckets []Bucket `json:"buckets"`
 }
 
-type histogramList struct {
-	Histograms []histogram `json:"histograms"`
+// SummaryResult represents a summary response for a variable.
+type SummaryResult struct {
+	Histograms []Histogram `json:"histograms"`
 }
 
-func histogramVariable(varName string, varType string) bool {
-	return varName != "d3mIndex" && (varType == "integer" || varType == "float")
-}
-
-func parseRangeAggregation(name string, aggMsg *json.RawMessage) (float64, error) {
-	// extract the min / max for each variable
-	json, err := aggMsg.MarshalJSON()
-	if err != nil {
-		return math.NaN(), errors.Wrapf(err, "Failed to marshall range data for histogram %s", name)
+func isOrdinal(name string, typ string) bool {
+	if name == "d3mIndex" {
+		return false
 	}
-	aggJSON, err := gabs.ParseJSON(json)
-	if err != nil {
-		return math.NaN(), errors.Wrapf(err, "Failed to parse range data for histogram %s", name)
-	}
-	return aggJSON.Path("value").Data().(float64), nil
+	return typ == "long" ||
+		typ == "integer" ||
+		typ == "short" ||
+		typ == "byte" ||
+		typ == "double" ||
+		typ == "float" ||
+		typ == "date"
 }
 
-// VariableSummariesHandler generates a route handler that facilitates the creation and retrieval
-// of summary information about the variables in a datset.  Currently this consists of a histogram
-// for each variable, but can be extended to support avg, std dev, percentiles etc.  in th future.
+func parseExtrema(res *elastic.SearchResult, variables []Variable) ([]Extrema, error) {
+	// parse extrema
+	var extremas []Extrema
+	for _, variable := range variables {
+		// get min / max agg names
+		minAggName := fmt.Sprintf("min_%s", variable.Name)
+		maxAggName := fmt.Sprintf("max_%s", variable.Name)
+		// check min agg
+		minAgg, ok := res.Aggregations.Min(minAggName)
+		if !ok {
+			continue
+		}
+		// check max agg
+		maxAgg, ok := res.Aggregations.Max(maxAggName)
+		if !ok {
+			continue
+		}
+		// check values exist
+		if minAgg.Value == nil || maxAgg.Value == nil {
+			continue
+		}
+		// append to extrema
+		extremas = append(extremas, Extrema{
+			Name: variable.Name,
+			Min:  *minAgg.Value,
+			Max:  *maxAgg.Value,
+		})
+	}
+	return extremas, nil
+}
+
+func fetchExtrema(client *elastic.Client, dataset string, variables []Variable) ([]Extrema, error) {
+	// create a query that does min and max aggregations for each variable
+	search := client.Search().
+		Index(dataset).
+		Size(0)
+	// for each variable, create a min / max aggregation
+	for _, variable := range variables {
+		if isOrdinal(variable.Name, variable.Type) {
+			// get field name
+			field := fmt.Sprintf("%s.value", variable.Name)
+			// get min / max agg names
+			minAggName := fmt.Sprintf("min_%s", variable.Name)
+			maxAggName := fmt.Sprintf("max_%s", variable.Name)
+			// create aggregations
+			minAgg := elastic.NewMinAggregation().Field(field)
+			maxAgg := elastic.NewMaxAggregation().Field(field)
+			// add aggregations
+			search.
+				Aggregation(minAggName, minAgg).
+				Aggregation(maxAggName, maxAgg)
+		}
+	}
+	// execute the search
+	res, err := search.Do()
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to execute min/max aggregation query for summary generation")
+	}
+	return parseExtrema(res, variables)
+}
+
+func parseHistograms(res *elastic.SearchResult, extremas []Extrema) ([]Histogram, error) {
+	// parse histograms
+	var histograms []Histogram
+	for _, extrema := range extremas {
+		// get histogram agg
+		agg, ok := res.Aggregations.Histogram(extrema.Name)
+		if !ok {
+			continue
+		}
+		// get histogram buckets
+		var buckets []Bucket
+		for _, bucket := range agg.Buckets {
+			buckets = append(buckets, Bucket{
+				Key:   strconv.Itoa(int(bucket.Key)),
+				Count: bucket.DocCount,
+			})
+		}
+		// create histogram
+		histograms = append(histograms, Histogram{
+			Name:    extrema.Name,
+			Buckets: buckets,
+		})
+	}
+	return histograms, nil
+}
+
+func fetchHistograms(client *elastic.Client, dataset string, extremas []Extrema) ([]Histogram, error) {
+	// for each returned aggregation, create a histogram aggregation. Bucket
+	// size is derived from the min/max and desired bucket count.
+	search := client.Search().
+		Index(dataset).
+		Size(0)
+	// for each extreama, create a histogram aggregation
+	for _, extrema := range extremas {
+		name := extrema.Name
+		// compute the bucket interval for the histogram
+		// TODO: ES v5 supports float intervals for histograms. Need to
+		// upgrade frm v2 and make thisuse floats.
+		interval := int64(math.Floor((extrema.Max - extrema.Min) / 100))
+		if interval < 1 {
+			interval = 1
+		}
+		// create histogram agg
+		histogramAgg := elastic.NewHistogramAggregation().
+			Field(name + ".value").
+			Interval(interval)
+		// add histogram agg
+		search.Aggregation(name, histogramAgg)
+	}
+	// execute the search
+	res, err := search.Do()
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to fetch histograms for variables summaries")
+	}
+	return parseHistograms(res, extremas)
+}
+
+func fetchSummaries(client *elastic.Client, index string, dataset string) ([]Histogram, error) {
+	// need list of variables to request aggregation against.
+	variables, err := fetchVariables(client, index, dataset)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to fetch variables for summary generation")
+	}
+	// need the extrema of each var to calculate the histrogram interval
+	extremas, err := fetchExtrema(client, dataset, variables)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to fetch variable extrema for summary generation")
+	}
+	return fetchHistograms(client, dataset, extremas)
+}
+
+// VariableSummariesHandler generates a route handler that facilitates the
+// creation and retrieval of summary information about the variables in a
+// dataset.  Currently this consists of a histogram for each variable, but can
+// be extended to support avg, std dev, percentiles etc.  in th future.
 func VariableSummariesHandler(client *elastic.Client) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
-
 		// get index name
 		index := pat.Param(r, "index")
-
 		// get dataset name
 		dataset := pat.Param(r, "dataset")
 
 		log.Infof("Processing variables summaries request for %s", dataset)
-		datasetID := dataset + "_dataset"
 
-		// Need list of variables to request aggregation against.
-		variablesJSON, err := fetchVariables(client, index, datasetID)
+		// fetch summary histogram
+		histograms, err := fetchSummaries(client, index, dataset)
 		if err != nil {
-			handleServerError(errors.Wrap(err, "Failed to fetch variable list for summary generation"), w)
-			return
-		}
-		parsedVariables, err := gabs.ParseJSON(variablesJSON)
-		if err != nil {
-			handleServerError(errors.Wrap(err, "Failed to parse variable list for summary generation"), w)
-			return
-		}
-		variables, err := parsedVariables.Path("variables").Children()
-		if err != nil {
-			handleServerError(errors.Wrap(err, "Failed to parse variable list for summary generation"), w)
+			handleError(w, err)
 			return
 		}
 
-		// Create a query that does min and max aggregations for each variable
-		search := client.Search().
-			Index(dataset).
-			Size(0)
-
-		var variableNames []string
-		for _, variable := range variables {
-			// parse out the name and type
-			name := variable.Path("name").Data().(string)
-			varType := variable.Path("type").Data().(string)
-
-			// for those that can have a histogram generated, create min and max aggregation
-			if name != "" && histogramVariable(name, varType) {
-				variableNames = append(variableNames, name)
-
-				esFieldName := fmt.Sprintf("%s.value", name)
-
-				minAggregation := elastic.NewMinAggregation().Field(esFieldName)
-				maxAggregation := elastic.NewMaxAggregation().Field(esFieldName)
-
-				minAggName := fmt.Sprintf("min__%s", name)
-				maxAggName := fmt.Sprintf("max__%s", name)
-
-				search = search.Aggregation(minAggName, minAggregation).
-					Aggregation(maxAggName, maxAggregation)
-			}
-		}
-
-		// Execute the search
-		searchResult, err := search.Do()
+		// marshall output into JSON
+		bytes, err := json.Marshal(SummaryResult{
+			Histograms: histograms,
+		})
 		if err != nil {
-			handleServerError(errors.Wrap(err, "Failed to execute min/max aggregation query for summary generation"), w)
+			handleError(w, errors.Wrap(err, "unable marshal summary result into JSON"))
 			return
 		}
-
-		// For each returned aggregation, create a histogram aggregation.  Bucket size is derived from
-		// the min/max and desired bucket count.
-		search = client.Search().
-			Index(dataset).
-			Size(0)
-
-		for _, name := range variableNames {
-			minAgg := searchResult.Aggregations["min__"+name]
-			maxAgg := searchResult.Aggregations["max__"+name]
-
-			minVal, err := parseRangeAggregation(name, minAgg)
-			if err != nil {
-				log.Error(errors.Cause(err))
-				continue
-			}
-			maxVal, err := parseRangeAggregation(name, maxAgg)
-			if err != nil {
-				log.Error(errors.Cause(err))
-				continue
-			}
-
-			// compute the bucket interval for the histogram
-			// TODO: ES v 5 supports float intervals for histograms.  Need to upgrade frm v2 and make this
-			// use floats.
-			interval := int64(math.Floor((maxVal - minVal) / 100))
-			if interval < 1 {
-				interval = 1
-			}
-
-			// update the histogram aggregation request
-			histogramAggregation := elastic.NewHistogramAggregation().Field(name + ".value").Interval(interval)
-			search = search.Aggregation(name, histogramAggregation)
-		}
-
-		// Execute the search
-		searchResult, err = search.Do()
-		if err != nil {
-			handleServerError(errors.Wrap(err, "Failed to fetch histograms for variables summaries"), w)
-			return
-		}
-
-		// Parse the results and store in structs for marshalling to JSON
-		var result histogramList
-		for name, aggregation := range searchResult.Aggregations {
-
-			// Pull the data for each aggregation out into JSON rep
-			json, err := aggregation.MarshalJSON()
-			if err != nil {
-				log.Warnf("%+v", errors.Wrapf(err, "Failed to marshal JSON entry for %s", name))
-				continue
-			}
-			aggJSON, err := gabs.ParseJSON(json)
-			if err != nil {
-				log.Warnf("%+v", errors.Wrapf(err, "Failed to parse JSON entry for %s", name))
-				continue
-			}
-
-			buckets, err := aggJSON.Path("buckets").Children()
-			if err != nil {
-				log.Warnf("%+v", errors.Wrapf(err, "Failed to extract buckets from JSON entry %s", name))
-				continue
-			}
-
-			// Convert the JSON into the struct hierarchy we want to return to the client
-			var histogram histogram
-			histogram.Name = name
-			for _, bucket := range buckets {
-				key, ok := bucket.Path("key").Data().(float64)
-				if ok {
-					count, ok := bucket.Path("doc_count").Data().(float64)
-					if ok {
-						strKey := strconv.FormatFloat(key, 'f', -1, 64)
-						histogram.Buckets = append(histogram.Buckets, bucketEntry{strKey, int64(count)})
-					}
-				}
-				if len(histogram.Buckets) == 0 {
-					log.Warnf("Failed to find histogram data for %s", name)
-				}
-			}
-			result.Histograms = append(result.Histograms, histogram)
-		}
-
-		// Marshall output into JSON
-		js, err := json.Marshal(result)
-		if err != nil {
-			handleServerError(err, w)
-			return
-		}
-
 		w.Header().Set("Content-Type", "application/json")
-		w.Write(js)
+		w.Write(bytes)
 	}
 }
