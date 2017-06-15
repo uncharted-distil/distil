@@ -20,12 +20,19 @@ const (
 	defaultAppPort    = "8080"
 )
 
+var (
+	version   = "unset"
+	timestamp = "unset"
+)
+
 func registerRoute(mux *goji.Mux, pattern string, handler func(http.ResponseWriter, *http.Request)) {
 	log.Infof("Registering route %s", pattern)
 	mux.HandleFunc(pat.Get(pattern), handler)
 }
 
 func main() {
+	log.Infof("version: %s built: %s", version, timestamp)
+
 	// load elasticsearch endpoint
 	esEndpoint := env.Load("ES_ENDPOINT", defaultEsEndpoint)
 	// load application port

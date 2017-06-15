@@ -1,4 +1,7 @@
-version=0.1.0
+VERSION=`git describe --tags`
+TIMESTAMP=`date +%FT%T%z`
+
+LDFLAGS=-ldflags "-X main.version=${VERSION} -X main.timestamp=${TIMESTAMP}"
 
 .PHONY: all
 
@@ -20,7 +23,7 @@ fmt:
 	@go fmt $(shell glide novendor)
 
 build: lint
-	@go build -i
+	@go build -i ${LDFLAGS}
 
 compile: lint
 	@go build $(shell glide novendor)
