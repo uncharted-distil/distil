@@ -28,7 +28,10 @@ build: lint
 compile: lint
 	@go build $(shell glide novendor)
 
-run: lint
+watch:
+	@watcher -recursive=true -cmd="./swap.sh" ./api ./main.go
+
+run: lint compile
 	@go build $(shell glide novendor)
 	@./run.sh
 
@@ -40,4 +43,5 @@ install:
 	@yarn install
 	@go get -u github.com/golang/lint/golint
 	@go get -u github.com/Masterminds/glide
+	@go get -u github.com/unchartedsoftware/witch
 	@glide install
