@@ -22,9 +22,14 @@ cd distil
 make install
 ```
 
-Run build the webapp and run the server:
+Build and watch webapp:
 ```bash
-make dev
+yarn watch
+```
+
+Build, watch, and run server:
+```bash
+make watch
 ```
 
 ## Common Issues:

@@ -10,7 +10,7 @@
     "test-debug": "mocha --compilers js:babel-core/register ./public/test/**/*.js --inspect --debug-brk"
   },
   "dependencies": {
-    "@uncharted.software/stories-facets": "2.5.1",
+    "@uncharted.software/stories-facets": "2.5.2",
     "axios": "0.16.2",
     "bootstrap-vue": "0.16.1",
     "font-awesome": "4.7.0",
@@ -28,7 +28,7 @@
     "chai": "4.0.2",
     "css-loader": "0.28.4",
     "eslint": "4.0.0",
-    "eslint-loader": "1.7.1",
+    "eslint-loader": "1.8.0",
     "eslint-plugin-html": "3.0.0",
     "file-loader": "0.11.2",
     "html-webpack-plugin": "2.28.0",
