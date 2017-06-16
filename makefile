@@ -28,9 +28,6 @@ build: lint
 compile: lint
 	@go build $(shell glide novendor)
 
-watch:
-	@watcher -recursive=true -cmd="./swap.sh" ./api ./main.go
-
 run: lint compile
 	@go build $(shell glide novendor)
 	@./run.sh
