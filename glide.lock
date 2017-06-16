@@ -1,5 +1,5 @@
-hash: beb4521eb186b809351acb2c438ff01f7831a9ae4f8a3759bab23a5cfc6e9a62
-updated: 2017-06-10T15:21:24.592817764-04:00
+hash: ab49ac2cdec5b2d6feedb9d6088bbe87ba64653e5826ee18b11738f2651dc2ba
+updated: 2017-06-16T16:12:23.483228127-04:00
 imports:
 - name: github.com/mattn/go-colorable
   version: ded68f7a9561c023e790de24279db7ebf473ea80
@@ -26,12 +26,17 @@ imports:
   - internal
   - pat
   - pattern
+- name: golang.org/x/net
+  version: da118f7b8e5954f39d0d2130ab35d4bf0e3cb344
+  subpackages:
+  - context
+  - context/ctxhttp
 - name: golang.org/x/sys
   version: 9ccfe848b9db8435a24c424abbc07a921adf1df5
   subpackages:
   - unix
-- name: gopkg.in/olivere/elastic.v2
-  version: 54283cb278d855e562a3d20f6c5afdbe1decf25b
+- name: gopkg.in/olivere/elastic.v3
+  version: eb47340e05b08cae24208569de7240fecde96bd2
   subpackages:
   - backoff
   - uritemplates
