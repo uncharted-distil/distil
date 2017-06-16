@@ -2,6 +2,6 @@ package: github.com/unchartedsoftware/distil
 import:
 - package: github.com/unchartedsoftware/plog
 - package: github.com/stretchr/testify
-- package: gopkg.in/olivere/elastic.v2
+- package: gopkg.in/olivere/elastic.v3
 - package: goji.io
 - package: github.com/pkg/errors

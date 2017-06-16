@@ -6,7 +6,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/unchartedsoftware/plog"
 	"goji.io/pat"
-	"gopkg.in/olivere/elastic.v2"
+	"gopkg.in/olivere/elastic.v3"
 
 	"github.com/unchartedsoftware/distil/api/util/json"
 )
