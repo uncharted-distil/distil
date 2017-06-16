@@ -23,6 +23,12 @@ import SearchResults from './components/SearchResults';
 import VariableSummaries from './components/VariableSummaries';
 import DataTable from './components/DataTable';
 
+import './assets/favicons/apple-touch-icon.png';
+import './assets/favicons/favicon-32x32.png';
+import './assets/favicons/favicon-16x16.png';
+import './assets/favicons/manifest.json';
+import './assets/favicons/safari-pinned-tab.svg';
+
 import 'bootstrap/dist/css/bootstrap.css';
 import 'bootstrap-vue/dist/bootstrap-vue.css';
 

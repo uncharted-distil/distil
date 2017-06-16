@@ -37,14 +37,15 @@ module.exports = {
 				use: ['babel-loader']
 			},
 			{
-				test: /\.(png|jpg|gif|svg)$/,
-				loader: 'file-loader',
-				options: {
-					name: '[name].[ext]?[hash]'
-				}
+				test: /images\/.*\.(png|jpg|gif|svg)$/,
+				loader: 'file-loader?name=images/[name].[ext]'
 			},
 			{
-				test: /\.(ttf|otf|eot|svg|woff(2)?)(\?[a-z0-9]+)?$/,
+				test: /favicons\/.*\.(png|svg|xml|ico|json)$/,
+				loader: 'file-loader?name=favicons/[name].[ext]'
+			},
+			{
+				test: /fonts\/.*\.(ttf|otf|eot|svg|woff(2)?)(\?[a-z0-9]+)?$/,
 				loader: 'file-loader?name=fonts/[name].[ext]'
 			}
 		]
