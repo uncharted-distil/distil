@@ -1,25 +1,25 @@
-package routes
+package model
 
 import (
-	"net/http"
-
 	"github.com/pkg/errors"
-	"github.com/unchartedsoftware/plog"
-	"goji.io/pat"
 	"gopkg.in/olivere/elastic.v3"
 
 	"github.com/unchartedsoftware/distil/api/util/json"
+)
+
+const (
+	// Variables is the field name which stores the variables in elasticsearch.
+	Variables = "variables"
+	// VarNameField is the field name for the variable name.
+	VarNameField = "varName"
+	// VarTypeField is the field name for the variable type.
+	VarTypeField = "varType"
 )
 
 // Variable represents a single variable description within a dataset.
 type Variable struct {
 	Name string `json:"name"`
 	Type string `json:"type"`
-}
-
-// VariableResult represents the result of a datasets response.
-type VariableResult struct {
-	Variables []Variable `json:"variables"`
 }
 
 func parseVariables(searchHit *elastic.SearchHit) ([]Variable, error) {
@@ -29,18 +29,18 @@ func parseVariables(searchHit *elastic.SearchHit) ([]Variable, error) {
 		return nil, errors.Wrap(err, "unable to parse search result")
 	}
 	// get the variables array
-	children, ok := json.Array(src, "variables")
+	children, ok := json.Array(src, Variables)
 	if !ok {
 		return nil, errors.New("unable to parse variables from search result")
 	}
 	// for each variable, extract the `varName` and `varType`
 	var variables []Variable
 	for _, child := range children {
-		name, ok := json.String(child, "varName")
+		name, ok := json.String(child, VarNameField)
 		if !ok {
 			continue
 		}
-		typ, ok := json.String(child, "varType")
+		typ, ok := json.String(child, VarTypeField)
 		if !ok {
 			continue
 		}
@@ -52,15 +52,15 @@ func parseVariables(searchHit *elastic.SearchHit) ([]Variable, error) {
 	return variables, nil
 }
 
-func fetchVariables(client *elastic.Client, index string, dataset string) ([]Variable, error) {
-	log.Infof("Processing variables request for %s", dataset)
+// FetchVariables returns all the variables for the provided index and dataset.
+func FetchVariables(client *elastic.Client, index string, dataset string) ([]Variable, error) {
 	// get dataset id
-	datasetID := dataset + "_dataset"
+	datasetID := dataset + DatasetSuffix
 	// create match query
 	query := elastic.NewMatchQuery("_id", datasetID)
 	// create fetch context
 	fetchContext := elastic.NewFetchSourceContext(true)
-	fetchContext.Include("variables")
+	fetchContext.Include(Variables)
 	// execute the ES query
 	res, err := client.Search().
 		Query(query).
@@ -81,32 +81,4 @@ func fetchVariables(client *elastic.Client, index string, dataset string) ([]Var
 		return nil, errors.Wrap(err, "unable to parse search result")
 	}
 	return variables, err
-}
-
-// VariablesHandler generates a variable listing route handler associated with
-// the caller supplied ES endpoint.  The handler returns a list of name/type
-// tuples for the given dataset.
-func VariablesHandler(client *elastic.Client) func(http.ResponseWriter, *http.Request) {
-	return func(w http.ResponseWriter, r *http.Request) {
-		// get index name
-		index := pat.Param(r, "index")
-		// get dataset name
-		dataset := pat.Param(r, "dataset")
-		// fetch the variables
-		variables, err := fetchVariables(client, index, dataset)
-		if err != nil {
-			handleError(w, err)
-			return
-		}
-		// marshall output into JSON
-		bytes, err := json.Marshal(VariableResult{
-			Variables: variables,
-		})
-		if err != nil {
-			handleError(w, errors.Wrap(err, "unable marshal variables result into JSON"))
-			return
-		}
-		w.Header().Set("Content-Type", "application/json")
-		w.Write(bytes)
-	}
 }

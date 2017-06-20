@@ -73,16 +73,6 @@ func String(json map[string]interface{}, path ...string) (string, bool) {
 	return val, true
 }
 
-// StringDefault returns a string property under the given key, if it doesn't
-// exist, it will return the provided default.
-func StringDefault(json map[string]interface{}, def string, path ...string) string {
-	v, ok := String(json, path...)
-	if ok {
-		return v
-	}
-	return def
-}
-
 // Bool returns a bool property under the given key.
 func Bool(json map[string]interface{}, path ...string) (bool, bool) {
 	v, ok := get(json, path...)
@@ -94,16 +84,6 @@ func Bool(json map[string]interface{}, path ...string) (bool, bool) {
 		return false, false
 	}
 	return val, true
-}
-
-// BoolDefault returns a bool property under the given key, if it doesn't
-// exist, it will return the provided default.
-func BoolDefault(json map[string]interface{}, def bool, path ...string) bool {
-	v, ok := Bool(json, path...)
-	if ok {
-		return v
-	}
-	return def
 }
 
 // Float returns a float property under the given key.
@@ -140,16 +120,6 @@ func Int(json map[string]interface{}, path ...string) (int, bool) {
 		return 0, false
 	}
 	return int(flt), true
-}
-
-// IntDefault returns a float property under the given key, if it doesn't
-// exist, it will return the provided default.
-func IntDefault(json map[string]interface{}, def int, path ...string) int {
-	v, ok := Int(json, path...)
-	if ok {
-		return v
-	}
-	return def
 }
 
 // Array returns an []map[string]interface{} property under the given key.
