@@ -2,7 +2,6 @@ package model
 
 import (
 	"github.com/pkg/errors"
-	"github.com/unchartedsoftware/plog"
 	"gopkg.in/olivere/elastic.v3"
 
 	"github.com/unchartedsoftware/distil/api/util/json"
@@ -55,7 +54,6 @@ func parseVariables(searchHit *elastic.SearchHit) ([]Variable, error) {
 
 // FetchVariables returns all the variables for the provided index and dataset.
 func FetchVariables(client *elastic.Client, index string, dataset string) ([]Variable, error) {
-	log.Infof("Processing variables request for %s", dataset)
 	// get dataset id
 	datasetID := dataset + DatasetSuffix
 	// create match query

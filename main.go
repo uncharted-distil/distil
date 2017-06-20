@@ -12,6 +12,7 @@ import (
 
 	"github.com/unchartedsoftware/distil/api/elastic"
 	"github.com/unchartedsoftware/distil/api/env"
+	"github.com/unchartedsoftware/distil/api/middleware"
 	"github.com/unchartedsoftware/distil/api/routes"
 )
 
@@ -43,6 +44,10 @@ func main() {
 
 	// register routes
 	mux := goji.NewMux()
+
+	mux.Use(middleware.Log)
+	mux.Use(middleware.Gzip)
+
 	registerRoute(mux, "/distil/datasets/:index", routes.DatasetsHandler(esClientCtor))
 	registerRoute(mux, "/distil/variable-summaries/:index/:dataset", routes.VariableSummariesHandler(esClientCtor))
 	registerRoute(mux, "/*", routes.FileHandler("./dist"))

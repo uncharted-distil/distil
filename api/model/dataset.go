@@ -4,7 +4,6 @@ import (
 	"strings"
 
 	"github.com/pkg/errors"
-	"github.com/unchartedsoftware/plog"
 	"gopkg.in/olivere/elastic.v3"
 
 	"github.com/unchartedsoftware/distil/api/util/json"
@@ -55,8 +54,6 @@ func parseDatasets(res *elastic.SearchResult) ([]Dataset, error) {
 
 // FetchDatasets returns all datasets in the provided index.
 func FetchDatasets(client *elastic.Client, index string) ([]Dataset, error) {
-	log.Info("Processing dataset fetch request")
-
 	fetchContext := elastic.NewFetchSourceContext(true).
 		Include("_id", "description", "variables.varName", "variables.varType")
 
@@ -76,8 +73,6 @@ func FetchDatasets(client *elastic.Client, index string) ([]Dataset, error) {
 // SearchDatasets returns the datasets that match the search criteria in the
 // provided index.
 func SearchDatasets(client *elastic.Client, index string, terms string) ([]Dataset, error) {
-	log.Infof("Processing datasets search request for %s", terms)
-
 	query := elastic.NewMultiMatchQuery(terms, "_id", "description", "variables.varName").
 		Analyzer("standard")
 
