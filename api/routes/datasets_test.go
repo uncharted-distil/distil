@@ -2,26 +2,23 @@ package routes
 
 import (
 	"context"
-	"io/ioutil"
 	"net/http"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"goji.io/pattern"
 
-	"github.com/unchartedsoftware/distil/api/util"
 	"github.com/unchartedsoftware/distil/api/util/json"
+	"github.com/unchartedsoftware/distil/api/util/mock"
 )
 
 func TestDatasetsHandler(t *testing.T) {
-	// load ES result json the test server will return
-	datasetJSON, err := ioutil.ReadFile("./testdata/datasets.json")
-	assert.NoError(t, err)
-
 	// mock elasticsearch request handler
-	handler := func(w http.ResponseWriter, r *http.Request) {
-		w.Write(datasetJSON)
-	}
+	handler := mock.ElasticHandler(t, []string{
+		"./testdata/datasets.json",
+	})
+	// mock elasticsearch client
+	ctor := mock.ElasticClientCtor(t, handler)
 
 	// test index
 	testIndex := "datasets"
@@ -39,8 +36,7 @@ func TestDatasetsHandler(t *testing.T) {
 
 	// execute the test request - stubbed ES server will return the JSON
 	// loaded above
-	res, err := util.TestElasticRoute(handler, req, DatasetsHandler)
-	assert.NoError(t, err)
+	res := mock.HTTPResponse(t, req, DatasetsHandler(ctor))
 	assert.Equal(t, http.StatusOK, res.Code)
 
 	// compare expected and acutal results - unmarshall first to ensure object
@@ -78,14 +74,12 @@ func TestDatasetsHandler(t *testing.T) {
 }
 
 func TestDatasetsHandlerWithSearch(t *testing.T) {
-	// load ES result json the test server will return
-	datasetJSON, err := ioutil.ReadFile("./testdata/search.json")
-	assert.NoError(t, err)
-
 	// mock elasticsearch request handler
-	handler := func(w http.ResponseWriter, r *http.Request) {
-		w.Write(datasetJSON)
-	}
+	handler := mock.ElasticHandler(t, []string{
+		"./testdata/search.json",
+	})
+	// mock elasticsearch client
+	ctor := mock.ElasticClientCtor(t, handler)
 
 	// test index
 	testIndex := "datasets"
@@ -103,7 +97,7 @@ func TestDatasetsHandlerWithSearch(t *testing.T) {
 
 	// execute the test request - stubbed ES server will return the JSON
 	// loaded above
-	res, err := util.TestElasticRoute(handler, req, DatasetsHandler)
+	res := mock.HTTPResponse(t, req, DatasetsHandler(ctor))
 	assert.NoError(t, err)
 
 	assert.Equal(t, http.StatusOK, res.Code)

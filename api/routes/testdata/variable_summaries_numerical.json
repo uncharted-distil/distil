@@ -1,0 +1,48 @@
+{
+    "took": 3,
+    "timed_out": false,
+    "_shards": {
+        "total": 5,
+        "successful": 5,
+        "failed": 0
+    },
+    "hits": {
+        "total": 428,
+        "max_score": 0.0,
+        "hits": []
+    },
+    "aggregations": {
+        "Number_seasons": {
+            "buckets": [
+                {
+                    "key": 0,
+                    "doc_count": 1
+                },
+                {
+                    "key": 1,
+                    "doc_count": 0
+                },
+                {
+                    "key": 2,
+                    "doc_count": 0
+                }
+            ]
+        },
+        "Games_played": {
+            "buckets": [
+                {
+                    "key": 1,
+                    "doc_count": 1
+                },
+                {
+                    "key": 2,
+                    "doc_count": 0
+                },
+                {
+                    "key": 3,
+                    "doc_count": 3
+                }
+            ]
+        }
+    }
+}

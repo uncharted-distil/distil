@@ -12,6 +12,7 @@ import (
 
 	"github.com/unchartedsoftware/distil/api/elastic"
 	"github.com/unchartedsoftware/distil/api/env"
+	"github.com/unchartedsoftware/distil/api/middleware"
 	"github.com/unchartedsoftware/distil/api/routes"
 )
 
@@ -36,30 +37,28 @@ func main() {
 	// load elasticsearch endpoint
 	esEndpoint := env.Load("ES_ENDPOINT", defaultEsEndpoint)
 	// load application port
-	port := env.Load("PORT", defaultAppPort)
+	httpPort := env.Load("PORT", defaultAppPort)
 
-	// instantiate elasticsearch client
-	client, err := elastic.NewClient(esEndpoint, true)
-	if err != nil {
-		log.Error(err)
-		os.Exit(1)
-	}
+	// instantiate elasticsearch client constructor
+	esClientCtor := elastic.NewClient(esEndpoint, false)
 
 	// register routes
 	mux := goji.NewMux()
-	registerRoute(mux, "/distil/echo/:echo", routes.EchoHandler())
-	registerRoute(mux, "/distil/datasets/:index", routes.DatasetsHandler(client))
-	registerRoute(mux, "/distil/variables/:index/:dataset", routes.VariablesHandler(client))
-	registerRoute(mux, "/distil/variable-summaries/:index/:dataset", routes.VariableSummariesHandler(client))
-	registerRoute(mux, "/distil/filtered-data/:dataset", routes.FilteredDataHandler(client))
+
+	mux.Use(middleware.Log)
+	mux.Use(middleware.Gzip)
+
+	registerRoute(mux, "/distil/datasets/:index", routes.DatasetsHandler(esClientCtor))
+	registerRoute(mux, "/distil/variable-summaries/:index/:dataset", routes.VariableSummariesHandler(esClientCtor))
+	registerRoute(mux, "/distil/filtered-data/:dataset", routes.FilteredDataHandler(esClientCtor))
 	registerRoute(mux, "/*", routes.FileHandler("./dist"))
 
 	// catch kill signals for graceful shutdown
 	graceful.AddSignal(syscall.SIGINT, syscall.SIGTERM)
 
 	// kick off the server listen loop
-	log.Infof("Listening on port %s", port)
-	err = graceful.ListenAndServe(":"+port, mux)
+	log.Infof("Listening on port %s", httpPort)
+	err := graceful.ListenAndServe(":"+httpPort, mux)
 	if err != nil {
 		log.Error(err)
 		os.Exit(1)

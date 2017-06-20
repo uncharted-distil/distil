@@ -28,8 +28,7 @@ build: lint
 compile: lint
 	@go build $(shell glide novendor)
 
-watch: lint compile
-	@go build $(shell glide novendor)
+watch:
 	@./run.sh
 
 test: build
