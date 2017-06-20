@@ -11,46 +11,20 @@ import (
 	"github.com/unchartedsoftware/distil/api/util/json"
 	log "github.com/unchartedsoftware/plog"
 	"goji.io/pat"
-	elastic "gopkg.in/olivere/elastic.v3"
 )
 
 const (
-	variableParseError = "error parsing %s as %v"
 	defaultSearchSize  = 100
 	searchSizeLimit    = 1000
 )
-
-type data struct {
-	Name     string           `json:"name"`
-	Metadata []model.Variable `json:"metadata"`
-	Values   [][]interface{}  `json:"values"`
-}
-
-type variableRange struct {
-	model.Variable
-	min float64
-	max float64
-}
-
-type variableCategorical struct {
-	model.Variable
-	categories []string
-}
-
-type searchParams struct {
-	size        int
-	ranged      []variableRange
-	categorical []variableCategorical
-	none        []string
-}
 
 func handleParamParseError(key string, value []string, err error) {
 	log.Errorf("failure parsing search params [%s,%v] - %+v", key, value, err)
 }
 
-func parseSearchParams(r *http.Request) *searchParams {
-	var searchParams searchParams
-	searchParams.size = defaultSearchSize
+func parseFilterParams(r *http.Request) *model.FilterParams {
+	var filterParams model.FilterParams
+	filterParams.Size = defaultSearchSize
 
 	for key, value := range r.URL.Query() {
 		// parse out the requested search size using the default in error cases and the
@@ -65,9 +39,9 @@ func parseSearchParams(r *http.Request) *searchParams {
 				continue
 			}
 			if size < searchSizeLimit {
-				searchParams.size = size
+				filterParams.Size = size
 			} else {
-				searchParams.size = searchSizeLimit
+				filterParams.Size = searchSizeLimit
 			}
 
 		} else if value != nil && len(value) > 0 && value[0] != "" {
@@ -90,95 +64,23 @@ func parseSearchParams(r *http.Request) *searchParams {
 					handleParamParseError(key, value, errors.Wrap(err, "failed to parse max"))
 					continue
 				}
-				searchParams.ranged = append(searchParams.ranged, variableRange{model.Variable{Name: key, Type: varType}, min, max})
+				filterParams.Ranged = append(filterParams.Ranged,
+					model.VariableRange{Min: min, Max: max, Variable: model.Variable{Name: key, Type: varType}})
 			case "ordinal", "categorical":
 				if len(value) >= 2 {
 					handleParamParseError(key, value, errors.New("expected type,category_1,category_2,...,category_n"))
 					continue
 				}
-				searchParams.categorical = append(searchParams.categorical, variableCategorical{model.Variable{Name: key, Type: varType}, varParams[1:]})
+				filterParams.Categorical = append(filterParams.Categorical,
+					model.VariableCategories{Variable: model.Variable{Name: key, Type: varType}, Categories: varParams[1:]})
 			default:
 				continue
 			}
 		} else {
-			searchParams.none = append(searchParams.none, key)
+			filterParams.None = append(filterParams.None, key)
 		}
 	}
-	return &searchParams
-}
-
-func parseVariable(varType string, data interface{}) (interface{}, error) {
-	var val interface{}
-	var ok bool
-
-	switch varType {
-	case "float":
-		val, ok = json.Float(data.(map[string]interface{}), "value")
-		if !ok {
-			return nil, errors.Errorf(variableParseError, data, varType)
-		}
-	case "integer", "ordinal":
-		val, ok = json.Int(data.(map[string]interface{}), "value")
-		if !ok {
-			return nil, errors.Errorf(variableParseError, data, varType)
-		}
-	case "categorical":
-		val, ok = json.String(data.(map[string]interface{}), "value")
-		if !ok {
-			return nil, errors.Errorf(variableParseError, data, varType)
-		}
-	default:
-		return nil, errors.Errorf("unhandled var type %s for %v", data, varType)
-	}
-	return val, nil
-}
-
-func parseData(searchResults *elastic.SearchResult) (*data, error) {
-	var data data
-
-	for idx, hit := range searchResults.Hits.Hits {
-		// parse hit into JSON
-		src, err := json.Unmarshal(*hit.Source)
-		if err != nil {
-			return nil, errors.Wrap(err, "failed to parse data")
-		}
-
-		// On the first time through, parse out name/type info and store that in a header.  We also
-		// store the name/type tuples in a map for quick lookup
-		if idx == 0 {
-			data.Name = hit.Index
-			for key, value := range src {
-				varType, ok := json.String(value.(map[string]interface{}), "schemaType")
-				if !ok {
-					return nil, errors.Errorf("failed to extract type info for %s during metadata creation", key)
-				}
-				variable := model.Variable{Name: key, Type: varType}
-				data.Metadata = append(data.Metadata, variable)
-			}
-		}
-
-		// Create a temporary metadata -> index map.  Required because the variable data for each hit returned
-		//  from ES is unordered.
-		var metadataIndex = make(map[string]int, len(data.Metadata))
-		for idx, value := range data.Metadata {
-			metadataIndex[value.Name] = idx
-		}
-
-		// extract data for all variables
-		values := make([]interface{}, len(data.Metadata))
-		for key, value := range src {
-			index := metadataIndex[key]
-			varType := data.Metadata[index].Type
-			result, err := parseVariable(varType, value)
-			if err != nil {
-				log.Errorf("%+v", err)
-			}
-			values[index] = result
-		}
-		// add the row to the variable data
-		data.Values = append(data.Values, values)
-	}
-	return &data, nil
+	return &filterParams
 }
 
 // FilteredDataHandler creates a route that fetches filtered data from an elastic search instance.
@@ -187,7 +89,7 @@ func FilteredDataHandler(ctor elastic_api.ClientCtor) func(http.ResponseWriter, 
 		dataset := pat.Param(r, "dataset")
 
 		// get variable names and ranges out of the params
-		searchParams := parseSearchParams(r)
+		filterParams := parseFilterParams(r)
 
 		// get elasticsearch client
 		client, err := ctor()
@@ -196,41 +98,15 @@ func FilteredDataHandler(ctor elastic_api.ClientCtor) func(http.ResponseWriter, 
 			return
 		}
 
-		// construct an ES query that fetches documents from the dataset with the supplied variable filters applied
-		query := elastic.NewBoolQuery()
-		var keys []string
-		for _, variable := range searchParams.ranged {
-			query = query.Filter(elastic.NewRangeQuery(variable.Name + ".value").Gte(variable.min).Lte(variable.max))
-			keys = append(keys, variable.Name)
-		}
-		for _, variable := range searchParams.categorical {
-			query = query.Filter(elastic.NewTermsQuery(variable.Name+".value", variable.categories))
-			keys = append(keys, variable.Name)
-		}
-		for _, variableName := range searchParams.none {
-			keys = append(keys, variableName)
-		}
-
-		fetchContext := elastic.NewFetchSourceContext(true).Include(keys...)
-
-		// execute the ES query
-		res, err := client.Search().
-			Query(query).
-			Index(dataset).
-			Size(searchParams.size).
-			FetchSource(true).
-			FetchSourceContext(fetchContext).
-			Do()
+		// fetch filtered data based on the supplied search parameters
+		data, err := model.FetchFilteredData(client, dataset, filterParams)
 		if err != nil {
-			log.Errorf("elasticsearch filtered data query failed - %+v", err)
+			handleError(w, errors.Wrap(err, "unable marshal summary result into JSON"))
+			return
 		}
-
-		// parse the result
-		data, err := parseData(res)
 
 		// marshall output into JSON
 		bytes, err := json.Marshal(data)
-
 		if err != nil {
 			handleError(w, errors.Wrap(err, "unable marshal summary result into JSON"))
 			return

@@ -15,28 +15,28 @@ func TestParseSearchParams(t *testing.T) {
 	req, err := http.NewRequest("GET", "/distil/data/o185"+
 		"?On_base_pct=integer,0,100&Position=categorical,Catcher,Pitcher&Triples&size=100", nil)
 	assert.NoError(t, err)
-	searchParams := parseSearchParams(req)
-	assert.Equal(t, searchParams.ranged[0].Name, "On_base_pct")
-	assert.Equal(t, searchParams.ranged[0].Type, "integer")
-	assert.Equal(t, searchParams.ranged[0].min, 0.0)
-	assert.Equal(t, searchParams.ranged[0].max, 100.0)
-	assert.Equal(t, searchParams.categorical[0].Name, "Position")
-	assert.Equal(t, searchParams.categorical[0].Type, "categorical")
-	assert.Equal(t, searchParams.categorical[0].categories, []string{"Catcher", "Pitcher"})
-	assert.Equal(t, searchParams.none[0], "Triples")
-	assert.Equal(t, searchParams.size, 100)
+	filterParams := parseFilterParams(req)
+	assert.Equal(t, filterParams.Ranged[0].Name, "On_base_pct")
+	assert.Equal(t, filterParams.Ranged[0].Type, "integer")
+	assert.Equal(t, filterParams.Ranged[0].Min, 0.0)
+	assert.Equal(t, filterParams.Ranged[0].Max, 100.0)
+	assert.Equal(t, filterParams.Categorical[0].Name, "Position")
+	assert.Equal(t, filterParams.Categorical[0].Type, "categorical")
+	assert.Equal(t, filterParams.Categorical[0].Categories, []string{"Catcher", "Pitcher"})
+	assert.Equal(t, filterParams.None[0], "Triples")
+	assert.Equal(t, filterParams.Size, 100)
 }
 
 func TestParseSearchParamsMalformed(t *testing.T) {
 	req, err := http.NewRequest("GET", "/distil/data/o185"+
 		"?On_base_pct=integer,0&Position=categorical,Catcher&Triples=integer,1,2,3&size", nil)
 	assert.NoError(t, err)
-	searchParams := parseSearchParams(req)
-	assert.Equal(t, searchParams.categorical[0].Name, "Position")
-	assert.Equal(t, searchParams.categorical[0].Type, "categorical")
-	assert.Equal(t, searchParams.categorical[0].categories, []string{"Catcher"})
-	assert.Equal(t, len(searchParams.ranged), 0)
-	assert.Equal(t, searchParams.size, defaultSearchSize)
+	filterParams := parseFilterParams(req)
+	assert.Equal(t, filterParams.Categorical[0].Name, "Position")
+	assert.Equal(t, filterParams.Categorical[0].Type, "categorical")
+	assert.Equal(t, filterParams.Categorical[0].Categories, []string{"Catcher"})
+	assert.Equal(t, len(filterParams.Ranged), 0)
+	assert.Equal(t, filterParams.Size, defaultSearchSize)
 }
 
 func TestFilteredDataHandler(t *testing.T) {
