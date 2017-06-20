@@ -6,6 +6,8 @@ import (
 	"strings"
 
 	"github.com/pkg/errors"
+	elastic_api "github.com/unchartedsoftware/distil/api/elastic"
+	"github.com/unchartedsoftware/distil/api/model"
 	"github.com/unchartedsoftware/distil/api/util/json"
 	log "github.com/unchartedsoftware/plog"
 	"goji.io/pat"
@@ -19,19 +21,19 @@ const (
 )
 
 type data struct {
-	Name     string          `json:"name"`
-	Metadata []Variable      `json:"metadata"`
-	Values   [][]interface{} `json:"values"`
+	Name     string           `json:"name"`
+	Metadata []model.Variable `json:"metadata"`
+	Values   [][]interface{}  `json:"values"`
 }
 
 type variableRange struct {
-	Variable
+	model.Variable
 	min float64
 	max float64
 }
 
 type variableCategorical struct {
-	Variable
+	model.Variable
 	categories []string
 }
 
@@ -88,13 +90,13 @@ func parseSearchParams(r *http.Request) *searchParams {
 					handleParamParseError(key, value, errors.Wrap(err, "failed to parse max"))
 					continue
 				}
-				searchParams.ranged = append(searchParams.ranged, variableRange{Variable{key, varType}, min, max})
+				searchParams.ranged = append(searchParams.ranged, variableRange{model.Variable{Name: key, Type: varType}, min, max})
 			case "ordinal", "categorical":
 				if len(value) >= 2 {
 					handleParamParseError(key, value, errors.New("expected type,category_1,category_2,...,category_n"))
 					continue
 				}
-				searchParams.categorical = append(searchParams.categorical, variableCategorical{Variable{key, varType}, varParams[1:]})
+				searchParams.categorical = append(searchParams.categorical, variableCategorical{model.Variable{Name: key, Type: varType}, varParams[1:]})
 			default:
 				continue
 			}
@@ -150,7 +152,7 @@ func parseData(searchResults *elastic.SearchResult) (*data, error) {
 				if !ok {
 					return nil, errors.Errorf("failed to extract type info for %s during metadata creation", key)
 				}
-				variable := Variable{key, varType}
+				variable := model.Variable{Name: key, Type: varType}
 				data.Metadata = append(data.Metadata, variable)
 			}
 		}
@@ -180,14 +182,19 @@ func parseData(searchResults *elastic.SearchResult) (*data, error) {
 }
 
 // FilteredDataHandler creates a route that fetches filtered data from an elastic search instance.
-func FilteredDataHandler(client *elastic.Client) func(http.ResponseWriter, *http.Request) {
+func FilteredDataHandler(ctor elastic_api.ClientCtor) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		dataset := pat.Param(r, "dataset")
 
-		log.Infof("Processing data request from dataset %s", dataset)
-
 		// get variable names and ranges out of the params
 		searchParams := parseSearchParams(r)
+
+		// get elasticsearch client
+		client, err := ctor()
+		if err != nil {
+			handleError(w, err)
+			return
+		}
 
 		// construct an ES query that fetches documents from the dataset with the supplied variable filters applied
 		query := elastic.NewBoolQuery()

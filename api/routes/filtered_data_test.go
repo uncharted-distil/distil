@@ -2,14 +2,12 @@ package routes
 
 import (
 	"context"
-	"io/ioutil"
 	"net/http"
 	"testing"
 
-	"github.com/unchartedsoftware/distil/api/util/json"
-
 	"github.com/stretchr/testify/assert"
-	"github.com/unchartedsoftware/distil/api/util"
+	"github.com/unchartedsoftware/distil/api/util/json"
+	"github.com/unchartedsoftware/distil/api/util/mock"
 	"goji.io/pattern"
 )
 
@@ -42,14 +40,10 @@ func TestParseSearchParamsMalformed(t *testing.T) {
 }
 
 func TestFilteredDataHandler(t *testing.T) {
-	// load ES result json the test server will return
-	dataJSON, err := ioutil.ReadFile("./testdata/filtered_data.json")
-	assert.NoError(t, err)
-
 	// mock elasticsearch request handler
-	handler := func(w http.ResponseWriter, r *http.Request) {
-		w.Write(dataJSON)
-	}
+	handler := mock.ElasticHandler(t, []string{"./testdata/filtered_data.json"})
+	// mock elasticsearch client
+	ctor := mock.ElasticClientCtor(t, handler)
 
 	// test index and dataset
 	testDataset := "o_185"
@@ -69,7 +63,7 @@ func TestFilteredDataHandler(t *testing.T) {
 
 	// execute the test request - stubbed ES server will return the JSON
 	// loaded above
-	res, err := util.TestElasticRoute(handler, req, FilteredDataHandler)
+	res := mock.HTTPResponse(t, req, FilteredDataHandler(ctor))
 	assert.NoError(t, err)
 
 	assert.Equal(t, http.StatusOK, res.Code)
