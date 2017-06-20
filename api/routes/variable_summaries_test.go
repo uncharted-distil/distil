@@ -43,7 +43,6 @@ func TestVariableSummariesHandler(t *testing.T) {
 	// execute the test request - stubbed ES server will return the JSON
 	// loaded above
 	res := mock.HTTPResponse(t, req, VariableSummariesHandler(ctor))
-
 	assert.Equal(t, http.StatusOK, res.Code)
 
 	// compare expected and acutal results - unmarshall first to ensure object

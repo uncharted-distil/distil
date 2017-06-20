@@ -12,7 +12,7 @@
         "hits": []
     },
     "aggregations": {
-        "Number_seasons": {
+        "histogram_Number_seasons": {
             "buckets": [
                 {
                     "key": 0,
@@ -28,7 +28,7 @@
                 }
             ]
         },
-        "Games_played": {
+        "histogram_Games_played": {
             "buckets": [
                 {
                     "key": 1,

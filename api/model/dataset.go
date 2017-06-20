@@ -17,13 +17,13 @@ const (
 
 // Dataset represents a decsription of a dataset.
 type Dataset struct {
-	Name        string     `json:"name"`
-	Description string     `json:"description"`
-	Variables   []Variable `json:"variables"`
+	Name        string      `json:"name"`
+	Description string      `json:"description"`
+	Variables   []*Variable `json:"variables"`
 }
 
-func parseDatasets(res *elastic.SearchResult) ([]Dataset, error) {
-	var datasets []Dataset
+func parseDatasets(res *elastic.SearchResult) ([]*Dataset, error) {
+	var datasets []*Dataset
 	for _, hit := range res.Hits.Hits {
 		// parse hit into JSON
 		src, err := json.Unmarshal(*hit.Source)
@@ -43,7 +43,7 @@ func parseDatasets(res *elastic.SearchResult) ([]Dataset, error) {
 			return nil, errors.Wrap(err, "failed to parse dataset")
 		}
 		// write everythign out to result struct
-		datasets = append(datasets, Dataset{
+		datasets = append(datasets, &Dataset{
 			Name:        name,
 			Description: description,
 			Variables:   variables,
@@ -53,7 +53,7 @@ func parseDatasets(res *elastic.SearchResult) ([]Dataset, error) {
 }
 
 // FetchDatasets returns all datasets in the provided index.
-func FetchDatasets(client *elastic.Client, index string) ([]Dataset, error) {
+func FetchDatasets(client *elastic.Client, index string) ([]*Dataset, error) {
 	fetchContext := elastic.NewFetchSourceContext(true).
 		Include("_id", "description", "variables.varName", "variables.varType")
 
@@ -72,7 +72,7 @@ func FetchDatasets(client *elastic.Client, index string) ([]Dataset, error) {
 
 // SearchDatasets returns the datasets that match the search criteria in the
 // provided index.
-func SearchDatasets(client *elastic.Client, index string, terms string) ([]Dataset, error) {
+func SearchDatasets(client *elastic.Client, index string, terms string) ([]*Dataset, error) {
 	query := elastic.NewMultiMatchQuery(terms, "_id", "description", "variables.varName").
 		Analyzer("standard")
 
