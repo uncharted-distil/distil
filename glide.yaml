@@ -1,7 +1,17 @@
 package: github.com/unchartedsoftware/distil
 import:
-- package: github.com/unchartedsoftware/plog
-- package: github.com/stretchr/testify
-- package: gopkg.in/olivere/elastic.v3
-- package: goji.io
+- package: github.com/mattn/go-isatty
+- package: github.com/mgutz/ansi
 - package: github.com/pkg/errors
+- package: github.com/stretchr/testify
+  subpackages:
+  - assert
+- package: github.com/unchartedsoftware/plog
+- package: github.com/vova616/xxhash
+- package: github.com/zenazn/goji
+  subpackages:
+  - graceful
+- package: goji.io
+  subpackages:
+  - pat
+- package: gopkg.in/olivere/elastic.v3
