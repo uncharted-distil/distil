@@ -44,7 +44,7 @@ func isNumeric(name string, typ string) bool {
 	}
 	return typ == "integer" ||
 		typ == "float" ||
-		typ == "date"
+		typ == "dateTime"
 }
 
 func isCategorical(name string, typ string) bool {
@@ -53,7 +53,7 @@ func isCategorical(name string, typ string) bool {
 	}
 	return typ == "categorical" ||
 		typ == "ordinal" ||
-		typ == "string"
+		typ == "text"
 }
 
 func parseExtrema(res *elastic.SearchResult, variables []Variable) ([]Extrema, error) {
