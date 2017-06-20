@@ -2,7 +2,6 @@ package routes
 
 import (
 	"context"
-	"io/ioutil"
 	"net/http"
 	"testing"
 
@@ -14,14 +13,10 @@ import (
 )
 
 func TestDatasetsHandler(t *testing.T) {
-	// load ES result json the test server will return
-	datasetJSON, err := ioutil.ReadFile("./testdata/datasets.json")
-	assert.NoError(t, err)
-
 	// mock elasticsearch request handler
-	handler := func(w http.ResponseWriter, r *http.Request) {
-		w.Write(datasetJSON)
-	}
+	handler := util.MockElasticResponse(t, []string{
+		"./testdata/datasets.json",
+	})
 
 	// test index
 	testIndex := "datasets"
@@ -78,14 +73,10 @@ func TestDatasetsHandler(t *testing.T) {
 }
 
 func TestDatasetsHandlerWithSearch(t *testing.T) {
-	// load ES result json the test server will return
-	datasetJSON, err := ioutil.ReadFile("./testdata/search.json")
-	assert.NoError(t, err)
-
 	// mock elasticsearch request handler
-	handler := func(w http.ResponseWriter, r *http.Request) {
-		w.Write(datasetJSON)
-	}
+	handler := util.MockElasticResponse(t, []string{
+		"./testdata/search.json",
+	})
 
 	// test index
 	testIndex := "datasets"
