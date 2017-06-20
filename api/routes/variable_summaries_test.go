@@ -21,7 +21,7 @@ func TestVariableSummariesHandler(t *testing.T) {
 		"./testdata/variable_summaries_categorical.json",
 	})
 	// mock elasticsearch client
-	client := mock.ElasticClient(t, handler)
+	ctor := mock.ElasticClientCtor(t, handler)
 
 	// test index and dataset
 	testIndex := "datasets"
@@ -42,7 +42,7 @@ func TestVariableSummariesHandler(t *testing.T) {
 
 	// execute the test request - stubbed ES server will return the JSON
 	// loaded above
-	res := mock.HTTPResponse(t, req, VariableSummariesHandler(client))
+	res := mock.HTTPResponse(t, req, VariableSummariesHandler(ctor))
 
 	assert.Equal(t, http.StatusOK, res.Code)
 

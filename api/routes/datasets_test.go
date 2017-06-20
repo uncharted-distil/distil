@@ -18,7 +18,7 @@ func TestDatasetsHandler(t *testing.T) {
 		"./testdata/datasets.json",
 	})
 	// mock elasticsearch client
-	client := mock.ElasticClient(t, handler)
+	ctor := mock.ElasticClientCtor(t, handler)
 
 	// test index
 	testIndex := "datasets"
@@ -36,7 +36,7 @@ func TestDatasetsHandler(t *testing.T) {
 
 	// execute the test request - stubbed ES server will return the JSON
 	// loaded above
-	res := mock.HTTPResponse(t, req, DatasetsHandler(client))
+	res := mock.HTTPResponse(t, req, DatasetsHandler(ctor))
 	assert.Equal(t, http.StatusOK, res.Code)
 
 	// compare expected and acutal results - unmarshall first to ensure object
@@ -79,7 +79,7 @@ func TestDatasetsHandlerWithSearch(t *testing.T) {
 		"./testdata/search.json",
 	})
 	// mock elasticsearch client
-	client := mock.ElasticClient(t, handler)
+	ctor := mock.ElasticClientCtor(t, handler)
 
 	// test index
 	testIndex := "datasets"
@@ -97,7 +97,7 @@ func TestDatasetsHandlerWithSearch(t *testing.T) {
 
 	// execute the test request - stubbed ES server will return the JSON
 	// loaded above
-	res := mock.HTTPResponse(t, req, DatasetsHandler(client))
+	res := mock.HTTPResponse(t, req, DatasetsHandler(ctor))
 	assert.NoError(t, err)
 
 	assert.Equal(t, http.StatusOK, res.Code)

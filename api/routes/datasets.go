@@ -5,9 +5,10 @@ import (
 	"net/url"
 
 	"github.com/pkg/errors"
-	"github.com/unchartedsoftware/distil/api/model"
 	"goji.io/pat"
-	"gopkg.in/olivere/elastic.v3"
+
+	"github.com/unchartedsoftware/distil/api/elastic"
+	"github.com/unchartedsoftware/distil/api/model"
 )
 
 // DatasetResult represents the result of a datasets response.
@@ -21,7 +22,7 @@ type DatasetResult struct {
 // it contains the search terms if set, and if unset, flags that a list of all
 // datasets should be returned.  The full list will be contain names only,
 // descriptions and variable lists will not be included.
-func DatasetsHandler(client *elastic.Client) func(http.ResponseWriter, *http.Request) {
+func DatasetsHandler(ctor elastic.ClientCtor) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// get index name
 		index := pat.Param(r, "index")
@@ -29,6 +30,12 @@ func DatasetsHandler(client *elastic.Client) func(http.ResponseWriter, *http.Req
 		terms, err := url.QueryUnescape(r.URL.Query().Get("search"))
 		if err != nil {
 			handleError(w, errors.Wrap(err, "Malformed datasets query"))
+			return
+		}
+		// get elasticsearch client
+		client, err := ctor()
+		if err != nil {
+			handleError(w, err)
 			return
 		}
 		// if its present, forward a search, otherwise fetch all datasets

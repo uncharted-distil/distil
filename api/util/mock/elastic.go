@@ -7,7 +7,6 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-
 	"gopkg.in/olivere/elastic.v3"
 )
 
@@ -21,6 +20,20 @@ func ElasticClient(t *testing.T, handler http.HandlerFunc) *elastic.Client {
 	client, err := elastic.NewSimpleClient(elastic.SetURL(server.URL))
 	assert.NoError(t, err)
 	return client
+}
+
+// ElasticClientCtor mocks an elasticsearch client constructor with the provided
+// response handler.
+func ElasticClientCtor(t *testing.T, handler http.HandlerFunc) func() (*elastic.Client, error) {
+	// create a new test server to handle elasticsearch rest requests
+	server := httptest.NewServer(http.HandlerFunc(handler))
+	// create an elasticsearch rest client that will route requests to our test
+	// server
+	client, err := elastic.NewSimpleClient(elastic.SetURL(server.URL))
+	assert.NoError(t, err)
+	return func() (*elastic.Client, error) {
+		return client, nil
+	}
 }
 
 // ElasticHandler mocks the elasticsearch response handler with the provided

@@ -5,8 +5,8 @@ import (
 
 	"github.com/pkg/errors"
 	"goji.io/pat"
-	"gopkg.in/olivere/elastic.v3"
 
+	"github.com/unchartedsoftware/distil/api/elastic"
 	"github.com/unchartedsoftware/distil/api/model"
 )
 
@@ -19,12 +19,18 @@ type SummaryResult struct {
 // creation and retrieval of summary information about the variables in a
 // dataset.  Currently this consists of a histogram for each variable, but can
 // be extended to support avg, std dev, percentiles etc.  in th future.
-func VariableSummariesHandler(client *elastic.Client) func(http.ResponseWriter, *http.Request) {
+func VariableSummariesHandler(ctor elastic.ClientCtor) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// get index name
 		index := pat.Param(r, "index")
 		// get dataset name
 		dataset := pat.Param(r, "dataset")
+		// get elasticsearch client
+		client, err := ctor()
+		if err != nil {
+			handleError(w, err)
+			return
+		}
 		// fetch summary histogram
 		histograms, err := model.FetchSummaries(client, index, dataset)
 		if err != nil {
