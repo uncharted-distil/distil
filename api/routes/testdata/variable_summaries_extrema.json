@@ -1,0 +1,28 @@
+{
+    "took": 6,
+    "timed_out": false,
+    "_shards": {
+        "total": 5,
+        "successful": 5,
+        "failed": 0
+    },
+    "hits": {
+        "total": 428,
+        "max_score": 0.0,
+        "hits": []
+    },
+    "aggregations": {
+        "min_Number_seasons": {
+            "value": 0
+        },
+        "min_Games_played": {
+            "value": 1
+        },
+        "max_Number_seasons": {
+            "value": 4
+        },
+        "max_Games_played": {
+            "value": 5
+        }
+    }
+}

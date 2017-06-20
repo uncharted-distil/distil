@@ -12,10 +12,13 @@ import (
 	"github.com/unchartedsoftware/distil/api/util/json"
 )
 
-func TestVariablesHandler(t *testing.T) {
+func TestVariableSummariesHandler(t *testing.T) {
 	// mock elasticsearch request handler
 	handler := util.MockElasticResponse(t, []string{
 		"./testdata/variables.json",
+		"./testdata/variable_summaries_extrema.json",
+		"./testdata/variable_summaries_numerical.json",
+		"./testdata/variable_summaries_categorical.json",
 	})
 
 	// test index and dataset
@@ -24,7 +27,7 @@ func TestVariablesHandler(t *testing.T) {
 
 	// put together a stub dataset request - need to manually account for goji's
 	// parameter extraction
-	req, err := http.NewRequest("GET", "/distil/variables/"+testIndex+"/"+testDataset, nil)
+	req, err := http.NewRequest("GET", "/distil/variable_summaries/"+testIndex+"/"+testDataset, nil)
 	assert.NoError(t, err)
 
 	// add params
@@ -37,7 +40,7 @@ func TestVariablesHandler(t *testing.T) {
 
 	// execute the test request - stubbed ES server will return the JSON
 	// loaded above
-	res, err := util.TestElasticRoute(handler, req, VariablesHandler)
+	res, err := util.TestElasticRoute(handler, req, VariableSummariesHandler)
 	assert.NoError(t, err)
 
 	assert.Equal(t, http.StatusOK, res.Code)
@@ -46,11 +49,31 @@ func TestVariablesHandler(t *testing.T) {
 	// rather than byte equality
 	expected, err := json.Unmarshal([]byte(
 		`{
-			"variables":[
-				{"name":"d3mIndex","type":"integer"},
-				{"name":"Player","type":"categorical"},
-				{"name":"Number_seasons","type":"integer"},
-				{"name":"Games_played","type":"integer"}
+			"histograms":[
+				{
+					"name":"Number_seasons",
+					"buckets":[
+						{"key":"0", "count":1},
+						{"key":"1", "count":0},
+						{"key":"2", "count":0}
+					]
+				},
+				{
+					"name":"Games_played",
+					"buckets":[
+						{"key":"1","count":1},
+						{"key":"2","count":0},
+						{"key":"3","count":3}
+					]
+				},
+				{
+					"name":"Player",
+					"buckets":[
+						{"key":"a","count":0},
+						{"key":"b","count":0},
+						{"key":"c","count":0}
+					]
+				}
 			]
 		}`))
 	assert.NoError(t, err)
