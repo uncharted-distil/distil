@@ -39,7 +39,7 @@ func main() {
 	port := env.Load("PORT", defaultAppPort)
 
 	// instantiate elasticsearch client
-	client, err := elastic.NewClient(esEndpoint, false)
+	client, err := elastic.NewClient(esEndpoint, true)
 	if err != nil {
 		log.Error(err)
 		os.Exit(1)
@@ -51,6 +51,7 @@ func main() {
 	registerRoute(mux, "/distil/datasets/:index", routes.DatasetsHandler(client))
 	registerRoute(mux, "/distil/variables/:index/:dataset", routes.VariablesHandler(client))
 	registerRoute(mux, "/distil/variable-summaries/:index/:dataset", routes.VariableSummariesHandler(client))
+	registerRoute(mux, "/distil/filtered-data/:dataset", routes.FilteredDataHandler(client))
 	registerRoute(mux, "/*", routes.FileHandler("./dist"))
 
 	// catch kill signals for graceful shutdown
