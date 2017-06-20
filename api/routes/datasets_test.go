@@ -8,15 +8,17 @@ import (
 	"github.com/stretchr/testify/assert"
 	"goji.io/pattern"
 
-	"github.com/unchartedsoftware/distil/api/util"
 	"github.com/unchartedsoftware/distil/api/util/json"
+	"github.com/unchartedsoftware/distil/api/util/mock"
 )
 
 func TestDatasetsHandler(t *testing.T) {
 	// mock elasticsearch request handler
-	handler := util.MockElasticResponse(t, []string{
+	handler := mock.ElasticHandler(t, []string{
 		"./testdata/datasets.json",
 	})
+	// mock elasticsearch client
+	client := mock.ElasticClient(t, handler)
 
 	// test index
 	testIndex := "datasets"
@@ -34,8 +36,7 @@ func TestDatasetsHandler(t *testing.T) {
 
 	// execute the test request - stubbed ES server will return the JSON
 	// loaded above
-	res, err := util.TestElasticRoute(handler, req, DatasetsHandler)
-	assert.NoError(t, err)
+	res := mock.HTTPResponse(t, req, DatasetsHandler(client))
 	assert.Equal(t, http.StatusOK, res.Code)
 
 	// compare expected and acutal results - unmarshall first to ensure object
@@ -74,9 +75,11 @@ func TestDatasetsHandler(t *testing.T) {
 
 func TestDatasetsHandlerWithSearch(t *testing.T) {
 	// mock elasticsearch request handler
-	handler := util.MockElasticResponse(t, []string{
+	handler := mock.ElasticHandler(t, []string{
 		"./testdata/search.json",
 	})
+	// mock elasticsearch client
+	client := mock.ElasticClient(t, handler)
 
 	// test index
 	testIndex := "datasets"
@@ -94,7 +97,7 @@ func TestDatasetsHandlerWithSearch(t *testing.T) {
 
 	// execute the test request - stubbed ES server will return the JSON
 	// loaded above
-	res, err := util.TestElasticRoute(handler, req, DatasetsHandler)
+	res := mock.HTTPResponse(t, req, DatasetsHandler(client))
 	assert.NoError(t, err)
 
 	assert.Equal(t, http.StatusOK, res.Code)

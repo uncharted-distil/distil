@@ -8,18 +8,20 @@ import (
 	"github.com/stretchr/testify/assert"
 	"goji.io/pattern"
 
-	"github.com/unchartedsoftware/distil/api/util"
 	"github.com/unchartedsoftware/distil/api/util/json"
+	"github.com/unchartedsoftware/distil/api/util/mock"
 )
 
 func TestVariableSummariesHandler(t *testing.T) {
 	// mock elasticsearch request handler
-	handler := util.MockElasticResponse(t, []string{
+	handler := mock.ElasticHandler(t, []string{
 		"./testdata/variables.json",
 		"./testdata/variable_summaries_extrema.json",
 		"./testdata/variable_summaries_numerical.json",
 		"./testdata/variable_summaries_categorical.json",
 	})
+	// mock elasticsearch client
+	client := mock.ElasticClient(t, handler)
 
 	// test index and dataset
 	testIndex := "datasets"
@@ -40,8 +42,7 @@ func TestVariableSummariesHandler(t *testing.T) {
 
 	// execute the test request - stubbed ES server will return the JSON
 	// loaded above
-	res, err := util.TestElasticRoute(handler, req, VariableSummariesHandler)
-	assert.NoError(t, err)
+	res := mock.HTTPResponse(t, req, VariableSummariesHandler(client))
 
 	assert.Equal(t, http.StatusOK, res.Code)
 
@@ -52,6 +53,10 @@ func TestVariableSummariesHandler(t *testing.T) {
 			"histograms":[
 				{
 					"name":"Number_seasons",
+					"extrema": {
+						"min": 0,
+						"max": 4
+					},
 					"buckets":[
 						{"key":"0", "count":1},
 						{"key":"1", "count":0},
@@ -60,6 +65,10 @@ func TestVariableSummariesHandler(t *testing.T) {
 				},
 				{
 					"name":"Games_played",
+					"extrema": {
+						"min": 1,
+						"max": 5
+					},
 					"buckets":[
 						{"key":"1","count":1},
 						{"key":"2","count":0},

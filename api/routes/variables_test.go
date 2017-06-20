@@ -8,15 +8,17 @@ import (
 	"github.com/stretchr/testify/assert"
 	"goji.io/pattern"
 
-	"github.com/unchartedsoftware/distil/api/util"
 	"github.com/unchartedsoftware/distil/api/util/json"
+	"github.com/unchartedsoftware/distil/api/util/mock"
 )
 
 func TestVariablesHandler(t *testing.T) {
 	// mock elasticsearch request handler
-	handler := util.MockElasticResponse(t, []string{
+	handler := mock.ElasticHandler(t, []string{
 		"./testdata/variables.json",
 	})
+	// mock elasticsearch client
+	client := mock.ElasticClient(t, handler)
 
 	// test index and dataset
 	testIndex := "datasets"
@@ -37,9 +39,7 @@ func TestVariablesHandler(t *testing.T) {
 
 	// execute the test request - stubbed ES server will return the JSON
 	// loaded above
-	res, err := util.TestElasticRoute(handler, req, VariablesHandler)
-	assert.NoError(t, err)
-
+	res := mock.HTTPResponse(t, req, VariablesHandler(client))
 	assert.Equal(t, http.StatusOK, res.Code)
 
 	// compare expected and acutal results - unmarshall first to ensure object
