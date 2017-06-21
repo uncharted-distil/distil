@@ -22,23 +22,43 @@ export default {
 		this.$store.watch(() => component.$store.state.variableSummaries, (data) => {
 			// convert the histo data into facets data
 			const groups = data.histograms.map(d => {
-				return ({
-					label: d.name,
-					key: 'float',
-					facets: [
-						{
-							histogram: {
-								slices: d.buckets.map(b => {
-									return ({
-										label: b.key,
-										count: b.count
-									});
-								})
-							}
-						}
-					]
-				});
+				switch (d.type) {
+					case 'categorical':
+						return {
+							label: d.name,
+							key: 'category',
+							facets: d.buckets.map(b => {
+								return {
+									value: b.key,
+									count: b.count
+								};
+							})
+						};
+
+					case 'numerical':
+						return {
+							label: d.name,
+							key: 'float',
+							facets: [
+								{
+									histogram: {
+										slices: d.buckets.map(b => {
+											return {
+												label: b.key,
+												count: b.count
+											};
+										})
+									}
+								}
+							]
+						};
+
+					default:
+						console.warn('unrecognized histogram type', d.type);
+						return null;
+				}
 			});
+			groups.forEach(g => console.log(g));
 			facets.replace(groups);
 		});
 	}
