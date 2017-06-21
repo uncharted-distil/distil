@@ -1,5 +1,5 @@
-hash: c9d02483e1d3736baa63c94855721d83e7ecb97f82e0d75fdbd470192e6308fd
-updated: 2017-06-20T15:10:08.15932343-04:00
+hash: 0938475b6013e2fdb78da82355d405c8ce9198c0d0af7f5c4aaf5138bdafd459
+updated: 2017-06-20T15:39:48.413505803-04:00
 imports:
 - name: github.com/davecgh/go-spew
   version: 04cdfd42973bb9c8589fd6a731800cf222fde1a9
@@ -18,7 +18,7 @@ imports:
   subpackages:
   - difflib
 - name: github.com/stretchr/testify
-  version: 4d4bfba8f1d1027c4fdbe371823030df51419987
+  version: f6abca593680b2315d2075e0f5e2a9751e3f431a
   subpackages:
   - assert
 - name: github.com/unchartedsoftware/plog

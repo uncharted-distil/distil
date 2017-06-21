@@ -13,7 +13,7 @@ import (
 
 // DatasetResult represents the result of a datasets response.
 type DatasetResult struct {
-	Datasets []model.Dataset `json:"datasets"`
+	Datasets []*model.Dataset `json:"datasets"`
 }
 
 // DatasetsHandler generates a route handler that facilitates a search of
@@ -39,7 +39,7 @@ func DatasetsHandler(ctor elastic.ClientCtor) func(http.ResponseWriter, *http.Re
 			return
 		}
 		// if its present, forward a search, otherwise fetch all datasets
-		var datasets []model.Dataset
+		var datasets []*model.Dataset
 		if terms != "" {
 			datasets, err = model.SearchDatasets(client, index, terms)
 		} else {

@@ -12,13 +12,45 @@ import (
 
 // SummaryResult represents a summary response for a variable.
 type SummaryResult struct {
-	Histograms []model.Histogram `json:"histograms"`
+	Histograms []*model.Histogram `json:"histograms"`
+}
+
+// VariableSummaryHandler generates a route handler that facilitates the
+// creation and retrieval of summary information about the specified variable.
+func VariableSummaryHandler(ctor elastic.ClientCtor) func(http.ResponseWriter, *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request) {
+		// get index name
+		index := pat.Param(r, "index")
+		// get dataset name
+		dataset := pat.Param(r, "dataset")
+		// get variabloe name
+		variable := pat.Param(r, "variable")
+		// get elasticsearch client
+		client, err := ctor()
+		if err != nil {
+			handleError(w, err)
+			return
+		}
+		// fetch summary histogram
+		histogram, err := model.FetchSummary(client, index, dataset, variable)
+		if err != nil {
+			handleError(w, err)
+			return
+		}
+		// marshall output into JSON
+		err = handleJSON(w, SummaryResult{
+			Histograms: []*model.Histogram{histogram},
+		})
+		if err != nil {
+			handleError(w, errors.Wrap(err, "unable marshal summary result into JSON"))
+			return
+		}
+	}
 }
 
 // VariableSummariesHandler generates a route handler that facilitates the
 // creation and retrieval of summary information about the variables in a
-// dataset.  Currently this consists of a histogram for each variable, but can
-// be extended to support avg, std dev, percentiles etc.  in th future.
+// dataset.
 func VariableSummariesHandler(ctor elastic.ClientCtor) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// get index name
