@@ -14,6 +14,10 @@ const (
 	VarNameField = "varName"
 	// VarTypeField is the field name for the variable type.
 	VarTypeField = "varType"
+	// VariableValueField is the field which stores the variable value.
+	VariableValueField = "value"
+	// VariableSchemaTypeField is the field whichs stores teh variabel schemaType.
+	VariableSchemaTypeField = "schemaType"
 )
 
 // Variable represents a single variable description within a dataset.

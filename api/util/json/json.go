@@ -60,6 +60,11 @@ func Exists(json map[string]interface{}, path ...string) bool {
 	return ok
 }
 
+// Interface returns an interface{} under the given path.
+func Interface(json map[string]interface{}, path ...string) (interface{}, bool) {
+	return get(json, path...)
+}
+
 // String returns a string property under the given path.
 func String(json map[string]interface{}, path ...string) (string, bool) {
 	v, ok := get(json, path...)
@@ -99,16 +104,6 @@ func Float(json map[string]interface{}, path ...string) (float64, bool) {
 	return flt, true
 }
 
-// FloatDefault returns a float property under the given key, if it doesn't
-// exist, it will return the provided default.
-func FloatDefault(json map[string]interface{}, def float64, path ...string) float64 {
-	v, ok := Float(json, path...)
-	if ok {
-		return v
-	}
-	return def
-}
-
 // Int returns an int property under the given key.
 func Int(json map[string]interface{}, path ...string) (int, bool) {
 	v, ok := get(json, path...)
@@ -137,6 +132,11 @@ func Array(json map[string]interface{}, path ...string) ([]map[string]interface{
 		vals[i] = val
 	}
 	return vals, true
+}
+
+// InterfaceArray returns a []interface{} under the given path.
+func InterfaceArray(json map[string]interface{}, path ...string) ([]interface{}, bool) {
+	return array(json, path...)
 }
 
 // FloatArray returns a []float64 property under the given key.

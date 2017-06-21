@@ -1,14 +1,11 @@
 package routes
 
 import (
-	"context"
 	"net/http"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	"goji.io/pattern"
 
-	"github.com/unchartedsoftware/distil/api/util/json"
 	"github.com/unchartedsoftware/distil/api/util/mock"
 )
 
@@ -23,22 +20,11 @@ func TestVariableSummariesHandler(t *testing.T) {
 	// mock elasticsearch client
 	ctor := mock.ElasticClientCtor(t, handler)
 
-	// test index and dataset
-	testIndex := "datasets"
-	testDataset := "o_185"
-
-	// put together a stub dataset request - need to manually account for goji's
-	// parameter extraction
-	req, err := http.NewRequest("GET", "/distil/variable_summaries/"+testIndex+"/"+testDataset, nil)
-	assert.NoError(t, err)
-
-	// add params
-	ctx := req.Context()
-	ctx = context.WithValue(ctx, pattern.Variable("index"), testIndex)
-	ctx = context.WithValue(ctx, pattern.Variable("dataset"), testDataset)
-
-	// add context to req
-	req = req.WithContext(ctx)
+	// mock http request
+	req := mock.HTTPRequest(t, "GET", "/distil/variable_summaries/", map[string]string{
+		"index":   "datasets",
+		"dataset": "o_185",
+	})
 
 	// execute the test request - stubbed ES server will return the JSON
 	// loaded above
@@ -47,7 +33,7 @@ func TestVariableSummariesHandler(t *testing.T) {
 
 	// compare expected and acutal results - unmarshall first to ensure object
 	// rather than byte equality
-	expected, err := json.Unmarshal([]byte(
+	expected :=
 		`{
 			"histograms":[
 				{
@@ -83,11 +69,7 @@ func TestVariableSummariesHandler(t *testing.T) {
 					]
 				}
 			]
-		}`))
-	assert.NoError(t, err)
-
-	actual, err := json.Unmarshal(res.Body.Bytes())
-	assert.NoError(t, err)
-
-	assert.Equal(t, expected, actual)
+		}`
+	actual := string(res.Body.Bytes())
+	assert.JSONEq(t, expected, actual)
 }

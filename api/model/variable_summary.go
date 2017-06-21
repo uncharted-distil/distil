@@ -17,8 +17,6 @@ const (
 	TermsAggPrefix = "terms_"
 	// HistogramAggPrefix is the prefix used for histogram aggregations.
 	HistogramAggPrefix = "histogram_"
-	// VariableValueField is the field which stores the variable value.
-	VariableValueField = "value"
 )
 
 // Extrema represents the extrema for a single variable.
