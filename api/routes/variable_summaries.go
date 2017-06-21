@@ -23,7 +23,7 @@ func VariableSummaryHandler(ctor elastic.ClientCtor) func(http.ResponseWriter, *
 		index := pat.Param(r, "index")
 		// get dataset name
 		dataset := pat.Param(r, "dataset")
-		// get variabloe name
+		// get variable name
 		variable := pat.Param(r, "variable")
 		// get elasticsearch client
 		client, err := ctor()

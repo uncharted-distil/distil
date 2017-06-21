@@ -6,90 +6,117 @@ import (
 	"strings"
 
 	"github.com/pkg/errors"
-	elastic_api "github.com/unchartedsoftware/distil/api/elastic"
+	"goji.io/pat"
+
+	"github.com/unchartedsoftware/distil/api/elastic"
+	"github.com/unchartedsoftware/distil/api/filter"
 	"github.com/unchartedsoftware/distil/api/model"
 	"github.com/unchartedsoftware/distil/api/util/json"
-	log "github.com/unchartedsoftware/plog"
-	"goji.io/pat"
 )
 
 const (
-	defaultSearchSize  = 100
-	searchSizeLimit    = 1000
+	defaultFilterSize = 100
+	filterSizeLimit   = 1000
 )
 
-func handleParamParseError(key string, value []string, err error) {
-	log.Errorf("failure parsing search params [%s,%v] - %+v", key, value, err)
+func parseFilterSize(values []string) (int, error) {
+	// parse out the requested search size using the default in error cases
+	// and the min of requested size and limit otherwise
+	if len(values) != 1 {
+		return 0, errors.New("failure parsing filter size, expected size={size}")
+	}
+	size, err := strconv.Atoi(values[0])
+	if err != nil {
+		return 0, errors.Errorf("failed to parse size %v, value must be an integer", values[0])
+	}
+	if size > filterSizeLimit {
+		return filterSizeLimit, nil
+	}
+	return size, nil
 }
 
-func parseFilterParams(r *http.Request) *model.FilterParams {
-	var filterParams model.FilterParams
-	filterParams.Size = defaultSearchSize
+func isEmptyFilter(values []string) bool {
+	// no values, empty filter
+	return values == nil || len(values) == 0 || values[0] == ""
+}
 
-	for key, value := range r.URL.Query() {
-		// parse out the requested search size using the default in error cases and the
-		// min of requested size and limit otherwise
+func parseVariableFilter(varName string, values []string) (filter.Filter, error) {
+	// split query param values
+	split := strings.Split(values[0], ",")
+
+	// ensure we have at least the variable type and one parameter
+	if len(split) < 2 {
+		return nil, errors.Errorf("failure parsing filter params %s=%v, expected {variable}={type},{arguments...}", varName, values)
+	}
+
+	// get variable type and the filter params
+	varType := split[0]
+	params := split[1:]
+
+	switch varType {
+	case "integer", "float":
+		// range filter
+		filter := &filter.Range{}
+		err := filter.Parse(params)
+		if err != nil {
+			return nil, err
+		}
+		return filter, nil
+
+	case "ordinal", "categorical":
+		// category filter
+		filter := &filter.Category{}
+		err := filter.Parse(params)
+		if err != nil {
+			return nil, err
+		}
+		return filter, nil
+
+	default:
+		return nil, errors.Errorf("failure parsing filter params %s=%v, unsupported {type} of %v, expected {variable}={type},{arguments...}", varName, values, varType)
+	}
+}
+
+func parseFilterSet(r *http.Request) (*filter.Set, error) {
+	set := filter.NewSet(defaultFilterSize)
+	for key, values := range r.URL.Query() {
 		if key == "size" {
-			if len(value) != 1 {
-				handleParamParseError(key, value, errors.New("expected single value for size"))
-			}
-			size, err := strconv.Atoi(value[0])
+			// filter size
+			size, err := parseFilterSize(values)
 			if err != nil {
-				handleParamParseError(key, value, errors.Wrap(err, "failed to parse size"))
-				continue
+				return nil, err
 			}
-			if size < searchSizeLimit {
-				filterParams.Size = size
-			} else {
-				filterParams.Size = searchSizeLimit
-			}
+			set.Size = size
 
-		} else if value != nil && len(value) > 0 && value[0] != "" {
-			// split the value on a comma
-			varParams := strings.Split(value[0], ",")
-			varType := varParams[0]
-			switch varType {
-			case "integer", "float":
-				if len(varParams) != 3 {
-					handleParamParseError(key, value, errors.New("expected type,min,max"))
-					continue
-				}
-				min, err := strconv.ParseFloat(varParams[1], 64)
-				if err != nil {
-					handleParamParseError(key, value, errors.Wrap(err, "failed to parse min"))
-					continue
-				}
-				max, err := strconv.ParseFloat(varParams[2], 64)
-				if err != nil {
-					handleParamParseError(key, value, errors.Wrap(err, "failed to parse max"))
-					continue
-				}
-				filterParams.Ranged = append(filterParams.Ranged,
-					model.VariableRange{Min: min, Max: max, Variable: model.Variable{Name: key, Type: varType}})
-			case "ordinal", "categorical":
-				if len(value) >= 2 {
-					handleParamParseError(key, value, errors.New("expected type,category_1,category_2,...,category_n"))
-					continue
-				}
-				filterParams.Categorical = append(filterParams.Categorical,
-					model.VariableCategories{Variable: model.Variable{Name: key, Type: varType}, Categories: varParams[1:]})
-			default:
-				continue
-			}
+		} else if isEmptyFilter(values) {
+			// add empty filter
+			set.Filters[key] = &filter.Empty{}
+
 		} else {
-			filterParams.None = append(filterParams.None, key)
+			// add variable filter
+			filter, err := parseVariableFilter(key, values)
+			if err != nil {
+				return nil, err
+			}
+			set.Filters[key] = filter
 		}
 	}
-	return &filterParams
+	return set, nil
 }
 
 // FilteredDataHandler creates a route that fetches filtered data from an elastic search instance.
-func FilteredDataHandler(ctor elastic_api.ClientCtor) func(http.ResponseWriter, *http.Request) {
+func FilteredDataHandler(ctor elastic.ClientCtor) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
+
+		// get dataset name
 		dataset := pat.Param(r, "dataset")
 
 		// get variable names and ranges out of the params
-		filterParams := parseFilterParams(r)
+		set, err := parseFilterSet(r)
+		if err != nil {
+			handleError(w, err)
+			return
+		}
 
 		// get elasticsearch client
 		client, err := ctor()
@@ -99,7 +126,7 @@ func FilteredDataHandler(ctor elastic_api.ClientCtor) func(http.ResponseWriter, 
 		}
 
 		// fetch filtered data based on the supplied search parameters
-		data, err := model.FetchFilteredData(client, dataset, filterParams)
+		data, err := model.FetchFilteredData(client, dataset, set)
 		if err != nil {
 			handleError(w, errors.Wrap(err, "unable marshal summary result into JSON"))
 			return

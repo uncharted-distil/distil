@@ -1,14 +1,11 @@
 package routes
 
 import (
-	"context"
 	"net/http"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	"goji.io/pattern"
 
-	"github.com/unchartedsoftware/distil/api/util/json"
 	"github.com/unchartedsoftware/distil/api/util/mock"
 )
 
@@ -20,19 +17,10 @@ func TestDatasetsHandler(t *testing.T) {
 	// mock elasticsearch client
 	ctor := mock.ElasticClientCtor(t, handler)
 
-	// test index
-	testIndex := "datasets"
-
-	// put together a stub dataset request
-	req, err := http.NewRequest("GET", "/distil/datasets/"+testIndex, nil)
-	assert.NoError(t, err)
-
-	// add params
-	ctx := req.Context()
-	ctx = context.WithValue(ctx, pattern.Variable("index"), testIndex)
-
-	// add context to req
-	req = req.WithContext(ctx)
+	// mock http request
+	req := mock.HTTPRequest(t, "GET", "/distil/datasets/", map[string]string{
+		"index": "datasets",
+	})
 
 	// execute the test request - stubbed ES server will return the JSON
 	// loaded above
@@ -41,7 +29,7 @@ func TestDatasetsHandler(t *testing.T) {
 
 	// compare expected and acutal results - unmarshall first to ensure object
 	// rather than byte equality
-	expected, err := json.Unmarshal([]byte(
+	expected :=
 		`{
 			"datasets":[
 				{
@@ -64,13 +52,9 @@ func TestDatasetsHandler(t *testing.T) {
 					]
 				}
 			]
-		}`))
-	assert.NoError(t, err)
-
-	actual, err := json.Unmarshal(res.Body.Bytes())
-	assert.NoError(t, err)
-
-	assert.Equal(t, expected, actual)
+		}`
+	actual := string(res.Body.Bytes())
+	assert.JSONEq(t, expected, actual)
 }
 
 func TestDatasetsHandlerWithSearch(t *testing.T) {
@@ -81,30 +65,19 @@ func TestDatasetsHandlerWithSearch(t *testing.T) {
 	// mock elasticsearch client
 	ctor := mock.ElasticClientCtor(t, handler)
 
-	// test index
-	testIndex := "datasets"
-
-	// put together a stub dataset request
-	req, err := http.NewRequest("GET", "/distil/datasets/"+testIndex+"?search=baseball", nil)
-	assert.NoError(t, err)
-
-	// add params
-	ctx := req.Context()
-	ctx = context.WithValue(ctx, pattern.Variable("index"), testIndex)
-
-	// add context to req
-	req = req.WithContext(ctx)
+	// mock http request
+	req := mock.HTTPRequest(t, "GET", "/distil/datasets?search=baseball", map[string]string{
+		"index": "datasets",
+	})
 
 	// execute the test request - stubbed ES server will return the JSON
 	// loaded above
 	res := mock.HTTPResponse(t, req, DatasetsHandler(ctor))
-	assert.NoError(t, err)
-
 	assert.Equal(t, http.StatusOK, res.Code)
 
 	// compare expected and actual results - unmarshall first to ensure object
 	// rather than byte equality
-	expected, err := json.Unmarshal([]byte(
+	expected :=
 		`{
 			"datasets":[
 				{
@@ -127,11 +100,7 @@ func TestDatasetsHandlerWithSearch(t *testing.T) {
 					]
 				}
 			]
-			}`))
-	assert.NoError(t, err)
-
-	actual, err := json.Unmarshal(res.Body.Bytes())
-	assert.NoError(t, err)
-
-	assert.Equal(t, expected, actual)
+		}`
+	actual := string(res.Body.Bytes())
+	assert.JSONEq(t, expected, actual)
 }
