@@ -18,6 +18,12 @@ export function setActiveDataset(state, id) {
 
 export function setVariableSummaries(state, summaries) {
 	state.variableSummaries = summaries;
+	state.variableSummariesPage.count = 5; // reset page count
+}
+
+export function updateVariableSummaries(state, args) {
+	state.variableSummaries.splice(args.index, 1);
+	state.variableSummaries.splice(args.index, 0, args.summary);
 }
 
 export function setData(state, data) {

@@ -31,6 +31,9 @@ const state = {
 		//     }]
 		// }]
 	},
+	variableSummariesPage: {
+		count: 5
+	},
 	// data entries for the active dataset
 	data: {
 		// name: '',

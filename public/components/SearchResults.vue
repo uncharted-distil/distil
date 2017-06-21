@@ -11,6 +11,8 @@
 
 <script>
 
+import _ from 'lodash';
+
 export default {
 	name: 'search-results',
 
@@ -22,10 +24,13 @@ export default {
 	},
 
 	methods: {
-		setActiveDataset(name) {
-			if (name !== this.$store.state.activeDataset) {
-				this.$store.commit('setActiveDataset', name);
-				this.$store.dispatch('getVariableSummaries', name);
+		setActiveDataset(datasetName) {
+			if (datasetName !== this.$store.state.activeDataset) {
+				this.$store.commit('setActiveDataset', datasetName);
+				const dataset = _.find(this.$store.state.datasets, d => {
+					return d.name === datasetName;
+				});
+				this.$store.dispatch('getVariableSummaries', dataset);
 			}
 		}
 	}

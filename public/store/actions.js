@@ -18,32 +18,64 @@ export function searchDatasets(context, terms) {
 				}
 			})
 			.catch(error => {
-				console.log(error);
+				console.error(error);
 				context.commit('setDatasets', []);
 			});
 	}
 }
 
-// fetches variable summary data for the given dataset
-export function getVariableSummaries(context, name) {
-	axios.get(`/distil/variable-summaries/${ES_INDEX}/${name}`)
-		.then(response => {
-			context.commit('setVariableSummaries', response.data);
-		})
-		.catch(error => {
-			console.log(error);
-			context.commit('setVariableSummaries', {});
-		});
+// fetches variable summary data for the given dataset and variables
+export function getVariableSummaries(context, dataset) {
+	// commit empty place holders
+	const histograms = new Array(dataset.variables.length - 1);
+	dataset.variables.forEach((variable, index) => {
+		if (index > 20) {
+			return;
+		}
+		histograms[index] = {
+			pending: true,
+			histogram: {
+				name: variable.name
+			}
+		};
+	});
+	context.commit('setVariableSummaries', histograms);
+	// fill them in asynchronously
+	/*
+	dataset.variables.forEach((variable, index) => {
+		if (index > 20) {
+			return;
+		}
+		axios.get(`/distil/variable-summaries/${ES_INDEX}/${dataset.name}/${variable.name}`)
+			.then(response => {
+				context.commit('updateVariableSummaries', {
+					index: index,
+					summary: {
+						histogram: response.data.histograms[0]
+					}
+				});
+			})
+			.catch(error => {
+				console.error(error);
+				context.commit('updateVariableSummaries', {
+					index: index,
+					summary: {
+						err: new Error(error)
+					}
+				});
+			});
+	});
+	*/
 }
 
 // fetches data entries for the given dataset
-export function getData(context, name) {
-	axios.get(`/distil/data/${ES_INDEX}/${name}`)
+export function getData(context, datasetName) {
+	axios.get(`/distil/data/${ES_INDEX}/${datasetName}`)
 		.then(response => {
 			context.commit('setData', response.data);
 		})
 		.catch(error => {
-			console.log(error);
+			console.error(error);
 			context.commit('setData', {});
 		});
 }

@@ -19,30 +19,59 @@ export default {
 		// update it's contents when the dataset changes
 		// any event handlers would be added here as well
 		const component = this;
-		this.$store.watch(() => component.$store.state.variableSummaries, (data) => {
+		this.$store.watch(() => component.$store.state.variableSummaries, histograms => {
+
 			// convert the histo data into facets data
-			const groups = data.histograms.map(d => {
-				switch (d.type) {
+			const groups = [];
+
+			histograms.forEach(d => {
+
+				if (d.err) {
+					// error
+					groups.push({
+						label: `Error: ${d.err}`,
+						facets: []
+					});
+					return;
+				}
+
+				if (d.pending) {
+					// pending
+					groups.push({
+						label: d.histogram.name,
+						facets: [
+							{
+								placeholder: true
+							}
+						]
+					});
+					return;
+				}
+
+				const histogram = d.histogram;
+
+				switch (histogram.type) {
 					case 'categorical':
-						return {
-							label: d.name,
+						groups.push({
+							label: histogram.name,
 							key: 'category',
-							facets: d.buckets.map(b => {
+							facets: histogram.buckets.map(b => {
 								return {
 									value: b.key,
 									count: b.count
 								};
 							})
-						};
+						});
+						return;
 
 					case 'numerical':
-						return {
-							label: d.name,
+						groups.push({
+							label: histogram.name,
 							key: 'float',
 							facets: [
 								{
 									histogram: {
-										slices: d.buckets.map(b => {
+										slices: histogram.buckets.map(b => {
 											return {
 												label: b.key,
 												count: b.count
@@ -51,14 +80,15 @@ export default {
 									}
 								}
 							]
-						};
+						});
+						return;
 
 					default:
-						console.warn('unrecognized histogram type', d.type);
-						return null;
+						console.warn('unrecognized histogram type', histogram.type);
+						return;
 				}
 			});
-			groups.forEach(g => console.log(g));
+
 			facets.replace(groups);
 		});
 	}
