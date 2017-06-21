@@ -57,4 +57,24 @@ describe('mutations', () => {
 			expect(state.variableSummaries).to.deep.equal(testData);
 		});
 	});
+
+	describe('#setFilteredData()', () => {
+		it('should replace the filtered data with the caller supplied object', () => {
+			const testData = { 
+			metadata:[
+				{name: 'alpha', type: 'int'},
+				{name: 'bravo', type: 'text'}
+			],
+			values: [
+				[0, 'a'],
+				[1, 'b']
+			]
+		};
+		const state = {
+			data: testData
+		};
+			mutations.setFilteredData(state, testData);
+			expect(state.filteredData).to.deep.equal(testData);
+		});
+	});
 });

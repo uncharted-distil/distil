@@ -20,6 +20,6 @@ export function setVariableSummaries(state, summaries) {
 	state.variableSummaries = summaries;
 }
 
-export function setData(state, data) {
-	state.data = data;
+export function setFilteredData(state, filteredData) {
+	state.filteredData = filteredData;
 }

@@ -1,61 +1,47 @@
 <template>
 	<div id="data-table">
-		<b-table respnosive bordered hover :items="items" :fields="fields">
+		<b-table responsive bordered hover :items="items" :fields="fields">
 		</b-table>
 	</div>
 </template>
 
 <script>
 
+import _ from 'lodash';
+
 export default {
 	name: 'data-table',
-	data() {
-		return {
-			items: [
-				{
-					isActive: true,
-					age: 40,
-					name: {
-						first: 'Dickerson',
-						last: 'Macdonald'
+	computed: {
+		// extracts the table data from the store
+		items() {
+			const data = this.$store.getters.getFilteredData();
+			if (!_.isEmpty(data)) {				
+				return _.map(data.values, d => {
+					const rowObj = {};
+					for (const [idx, varMeta] of data.metadata.entries()) {
+						rowObj[varMeta.name] = d[idx];
 					}
-				},
-				{
-					isActive: false,
-					age: 21,
-					name: {
-						first: 'Larsen',
-						last: 'Shaw'
-					}
-
-				},
-				{
-					isActive: false,
-					age: 9,
-					state: 'success',
-					name: {
-						first: 'Mitzi',
-						last: 'Navarro'
-					}
-				}
-			],
-			fields: {
-				name: {
-					label: 'Person Full name',
-					sortable: true
-				},
-				age: {
-					label: 'Person age',
-					sortable: true
-				},
-				isActive: {
-					label: 'is Active'
-				},
-				actions: {
-					label: 'Actions'
-				}
-			},
-		};
+					return rowObj;
+				});				
+			} else {
+				return [];
+			}
+		},
+		// extract the table field header from the store
+		fields() {
+			const data = this.$store.getters.getFilteredData();
+			if (!_.isEmpty(data)) {
+				const result = {};
+				for (let varMeta of data.metadata) {
+					result[varMeta.name] = {
+						label: varMeta.name				
+					};
+				}				
+				return result;
+			} else {
+				return {};
+			}			
+		}
 	}
 };
 </script>
