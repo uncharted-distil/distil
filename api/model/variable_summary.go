@@ -37,6 +37,7 @@ type Bucket struct {
 // Histogram represents a single variable histogram.
 type Histogram struct {
 	Name    string    `json:"name"`
+	Type    string    `json:"type"`
 	Extrema *Extrema  `json:"extrema,omitempty"`
 	Buckets []*Bucket `json:"buckets"`
 }
@@ -186,6 +187,7 @@ func parseNumericHistogram(res *elastic.SearchResult, extrema *Extrema) (*Histog
 	// assign histogram attributes
 	return &Histogram{
 		Name:    extrema.Name,
+		Type:    "numerical",
 		Extrema: extrema,
 		Buckets: buckets,
 	}, nil
@@ -288,6 +290,7 @@ func parseCategoricalHistogram(res *elastic.SearchResult, variable *Variable) (*
 	// assign histogram attributes
 	return &Histogram{
 		Name:    variable.Name,
+		Type:    "categorical",
 		Buckets: buckets,
 	}, nil
 }
@@ -386,7 +389,7 @@ func FetchSummaries(client *elastic.Client, index string, dataset string) ([]*Hi
 		return nil, errors.Wrap(err, "failed to fetch variables for summary")
 	}
 	// fetch numeric histograms
-	numeric, err := fetchNumericalHistograms(client, dataset, getNumericalVariables(variables))
+	numerical, err := fetchNumericalHistograms(client, dataset, getNumericalVariables(variables))
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to fetch numerical histograms for summary")
 	}
@@ -396,5 +399,5 @@ func FetchSummaries(client *elastic.Client, index string, dataset string) ([]*Hi
 		return nil, errors.Wrap(err, "failed to fetch categorical histograms for summary")
 	}
 	// merge
-	return append(numeric, categorical...), nil
+	return append(numerical, categorical...), nil
 }

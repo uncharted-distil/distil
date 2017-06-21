@@ -14,8 +14,8 @@ import (
 )
 
 const (
-	defaultSearchSize  = 100
-	searchSizeLimit    = 1000
+	defaultSearchSize = 100
+	searchSizeLimit   = 1000
 )
 
 func handleParamParseError(key string, value []string, err error) {
