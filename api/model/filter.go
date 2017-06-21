@@ -42,7 +42,7 @@ type FilterParams struct {
 	None        []string
 }
 
-func parseVariable(varType string, data interface{}) (interface{}, error) {
+func parseVariableValue(varType string, data interface{}) (interface{}, error) {
 	var val interface{}
 	var ok bool
 
@@ -104,7 +104,7 @@ func parseResults(searchResults *elastic.SearchResult) (*FilteredData, error) {
 		for key, value := range src {
 			index := metadataIndex[key]
 			varType := data.Metadata[index].Type
-			result, err := parseVariable(varType, value)
+			result, err := parseVariableValue(varType, value)
 			if err != nil {
 				log.Errorf("%+v", err)
 			}
