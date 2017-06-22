@@ -26,6 +26,6 @@ export function updateVariableSummaries(state, args) {
 	state.variableSummaries.splice(args.index, 0, args.histogram);
 }
 
-export function setData(state, data) {
-	state.data = data;
+export function setFilteredData(state, filteredData) {
+	state.filteredData = filteredData;
 }

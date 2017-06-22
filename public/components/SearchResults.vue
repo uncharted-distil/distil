@@ -31,6 +31,7 @@ export default {
 					return d.name === datasetName;
 				});
 				this.$store.dispatch('getVariableSummaries', dataset);
+				this.$store.dispatch('getFilteredData', datasetName);
 			}
 		}
 	}

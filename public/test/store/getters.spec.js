@@ -57,4 +57,23 @@ describe('getters', () => {
 		});
 
 	});
+
+	describe('#getFilteredData()', () => {
+		const testData = { 
+			metadata:[
+				{name: 'alpha', type: 'int'},
+				{name: 'bravo', type: 'text'}
+			],
+			values: [
+				[0, 'a'],
+				[1, 'b']
+			]
+		};
+		const state = {
+			filteredData: testData
+		};
+		it('should retrieve the data object', () => {
+			expect(getters.getFilteredData(state)()).to.deep.equals(testData);
+		});
+	});
 });

@@ -52,6 +52,7 @@ func TestVariableSummariesHandler(t *testing.T) {
 			"histograms":[
 				{
 					"name":"Number_seasons",
+					"type":"numerical",
 					"extrema": {
 						"min": 0,
 						"max": 4
@@ -64,6 +65,7 @@ func TestVariableSummariesHandler(t *testing.T) {
 				},
 				{
 					"name":"Games_played",
+					"type":"numerical",
 					"extrema": {
 						"min": 1,
 						"max": 5
@@ -76,6 +78,7 @@ func TestVariableSummariesHandler(t *testing.T) {
 				},
 				{
 					"name":"Player",
+					"type":"categorical",
 					"buckets":[
 						{"key":"a","count":0},
 						{"key":"b","count":0},
