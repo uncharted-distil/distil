@@ -44,8 +44,7 @@ func parseFilterParams(r *http.Request) (*model.FilterParams, error) {
 			// tokenize using a comma
 			varParams := strings.Split(value[0], ",")
 			varType := varParams[0]
-			switch varType {
-			case "integer", "float":
+			if model.IsNumerical(varType) {
 				// floats and ints should have type, min, max as args
 				if len(varParams) != 3 {
 					return nil, errors.Errorf("expected {type},{min},{max} from [s%s, %v]", key, value)
@@ -60,14 +59,14 @@ func parseFilterParams(r *http.Request) (*model.FilterParams, error) {
 				}
 				filterParams.Ranged = append(filterParams.Ranged,
 					model.VariableRange{Min: min, Max: max, Variable: model.Variable{Name: key, Type: varType}})
-			case "ordinal", "categorical":
+			} else if model.IsCategorical(varType) {
 				// categorical/ordinal should have type,category, category,...,category as args
 				if len(varParams) < 2 {
 					return nil, errors.Errorf("expected {type},{category_1},{category_2},...,{category_n} from [%s, %v]", key, value)
 				}
 				filterParams.Categorical = append(filterParams.Categorical,
 					model.VariableCategories{Variable: model.Variable{Name: key, Type: varType}, Categories: varParams[1:]})
-			default:
+			} else {
 				return nil, errors.Errorf("unhandled parameter type from [%s, %v]", key, value)
 			}
 		} else {
