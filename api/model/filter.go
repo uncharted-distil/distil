@@ -1,6 +1,8 @@
 package model
 
 import (
+	"sort"
+
 	"github.com/pkg/errors"
 	"github.com/unchartedsoftware/distil/api/util/json"
 	log "github.com/unchartedsoftware/plog"
@@ -90,6 +92,10 @@ func parseResults(searchResults *elastic.SearchResult) (*FilteredData, error) {
 				variable := Variable{Name: key, Type: varType}
 				data.Metadata = append(data.Metadata, variable)
 			}
+			// sort to impose consistent ordering
+			sort.SliceStable(data.Metadata, func(i, j int) bool {
+				return data.Metadata[i].Name < data.Metadata[j].Name
+			})
 		}
 
 		// Create a temporary metadata -> index map.  Required because the variable data for each hit returned
