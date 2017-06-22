@@ -19,6 +19,8 @@ const (
 	HistogramAggPrefix = "histogram_"
 	// VariableValueField is the field which stores the variable value.
 	VariableValueField = "value"
+	// VariableTypeField is the field which stores the variable's schema type value.
+	VariableTypeField = "schemaType"
 )
 
 // Extrema represents the extrema for a single variable.
@@ -43,18 +45,12 @@ type Histogram struct {
 }
 
 func isNumerical(name string, typ string) bool {
-	if name == "d3mIndex" {
-		return false
-	}
 	return typ == "integer" ||
 		typ == "float" ||
 		typ == "dateTime"
 }
 
 func isCategorical(name string, typ string) bool {
-	if name == "d3mIndex" {
-		return false
-	}
 	return typ == "categorical" ||
 		typ == "ordinal" ||
 		typ == "text"
