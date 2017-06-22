@@ -31,15 +31,19 @@ const state = {
 		//     }]
 		// }]
 	},
-	// data entries for the active dataset
-	data: {
-		// name: '',
-		// variables: [
-		//     {
-		//         name: '',
-		//         type: '',
-		//     }
-		// ]
+	// filtered data entries for the active dataset
+	filteredData: {
+	// 	name: '',
+	// 	metadata: [
+	// 		{
+	// 			name: '',
+	// 			type: ''
+
+	// 		}
+	// 	]
+	// 	values: [
+	// 		[]
+	// 	]
 	},
 	// name/id of the active dataset
 	activeDataset: null

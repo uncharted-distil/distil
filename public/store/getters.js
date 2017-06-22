@@ -26,3 +26,7 @@ export function getDatasets(state) {
 export function getVariableSummaries(state) {
 	return () => state.variableSummaries;
 }
+
+export function getFilteredData(state) {
+	return () => state.filteredData;
+}
