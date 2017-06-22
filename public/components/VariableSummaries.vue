@@ -8,6 +8,7 @@
 import Facets from '@uncharted.software/stories-facets';
 import '@uncharted.software/stories-facets/dist/facets.css';
 import 'font-awesome/css/font-awesome.css';
+import '../styles/spinner.css';
 
 export default {
 	name: 'variable-summaries',
@@ -15,59 +16,94 @@ export default {
 		// instantiate the external facets widget
 		const container = document.getElementById('variable-summaries');
 		const facets = new Facets(container, []);
+		const groups = new Map();
+		const pending = new Map();
+		const errors = new Map();
+
+		// on dataset change, clear all the components
+		this.$store.watch(() => this.$store.state.activeDataset, () => {
+			groups.clear();
+			pending.clear();
+			errors.clear();
+			facets.replace([]);
+		});
 
 		// update it's contents when the dataset changes
 		// any event handlers would be added here as well
-		const component = this;
-		this.$store.watch(() => component.$store.state.variableSummaries, histograms => {
+		this.$store.watch(() => this.$store.state.variableSummaries, histograms => {
 
-			// convert the histo data into facets data
-			const groups = [];
+			const bulk = [];
+			// for each histogram
+			histograms.forEach(histogram => {
 
-			histograms.forEach(d => {
+				const key = histogram.name;
 
-				if (d.err) {
-					// error
-					groups.push({
-						label: `Error: ${d.err}`,
+				if (histogram.err) {
+					// check if already added as error
+					if (errors.has(key)) {
+						return;
+					}
+					// add error group
+					const group = {
+						label: `Error: ${histogram.err}`,
+						key: key,
 						facets: []
-					});
+					};
+					facets.replaceGroup(group);
+					errors.set(key, group);
+					pending.delete(key);
 					return;
 				}
 
-				if (d.pending) {
-					// pending
-					groups.push({
-						label: d.histogram.name,
+				if (histogram.pending) {
+					// check if already added as placeholder
+					if (pending.has(key)) {
+						return;
+					}
+					// add placeholder
+					const group = {
+						label: histogram.name,
+						key: key,
 						facets: [
 							{
-								placeholder: true
+								placeholder: true,
+								key: 'placeholder',
+								html: `
+									<div class="bounce1"></div>
+									<div class="bounce2"></div>
+									<div class="bounce3"></div>`
 							}
 						]
-					});
+					};
+					bulk.push(group);
+					pending.set(key, group);
 					return;
 				}
 
-				const histogram = d.histogram;
+				// check if already added
+				if (groups.has(key)) {
+					return;
+				}
 
+				let group;
 				switch (histogram.type) {
 					case 'categorical':
-						groups.push({
+						group = {
 							label: histogram.name,
-							key: 'category',
+							key: key,
 							facets: histogram.buckets.map(b => {
 								return {
 									value: b.key,
 									count: b.count
 								};
 							})
-						});
-						return;
+						};
+						break;
 
 					case 'numerical':
-						groups.push({
+						group = {
 							label: histogram.name,
-							key: 'float',
+							key: key,
 							facets: [
 								{
 									histogram: {
@@ -80,16 +116,25 @@ export default {
 									}
 								}
 							]
-						});
-						return;
+						};
+						break;
 
 					default:
 						console.warn('unrecognized histogram type', histogram.type);
 						return;
 				}
+
+				// append
+				facets.replaceGroup(group);
+				// track
+				groups.set(key, group);
+				pending.delete(key);
+				errors.delete(key);
 			});
 
-			facets.replace(groups);
+			if (bulk.length > 0) {
+				facets.replace(bulk);
+			}
 		});
 	}
 };

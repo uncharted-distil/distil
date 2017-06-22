@@ -23,7 +23,7 @@ export function setVariableSummaries(state, summaries) {
 
 export function updateVariableSummaries(state, args) {
 	state.variableSummaries.splice(args.index, 1);
-	state.variableSummaries.splice(args.index, 0, args.summary);
+	state.variableSummaries.splice(args.index, 0, args.histogram);
 }
 
 export function setData(state, data) {

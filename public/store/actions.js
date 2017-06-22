@@ -29,43 +29,34 @@ export function getVariableSummaries(context, dataset) {
 	// commit empty place holders
 	const histograms = new Array(dataset.variables.length - 1);
 	dataset.variables.forEach((variable, index) => {
-		if (index > 20) {
-			return;
-		}
 		histograms[index] = {
-			pending: true,
-			histogram: {
-				name: variable.name
-			}
+				name: variable.name,
+				pending: true
 		};
 	});
 	context.commit('setVariableSummaries', histograms);
 	// fill them in asynchronously
-	/*
 	dataset.variables.forEach((variable, index) => {
-		if (index > 20) {
-			return;
-		}
 		axios.get(`/distil/variable-summaries/${ES_INDEX}/${dataset.name}/${variable.name}`)
 			.then(response => {
 				context.commit('updateVariableSummaries', {
 					index: index,
-					summary: {
-						histogram: response.data.histograms[0]
-					}
+					histogram: response.data.histograms[0]
+
 				});
 			})
 			.catch(error => {
 				console.error(error);
 				context.commit('updateVariableSummaries', {
 					index: index,
-					summary: {
+					histogram: {
+						name: variable.name,
 						err: new Error(error)
 					}
+
 				});
 			});
 	});
-	*/
 }
 
 // fetches data entries for the given dataset
