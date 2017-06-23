@@ -15,7 +15,8 @@ func TestParseSearchParams(t *testing.T) {
 	req, err := http.NewRequest("GET", "/distil/data/o185"+
 		"?On_base_pct=integer,0,100&Position=categorical,Catcher,Pitcher&Triples&size=100", nil)
 	assert.NoError(t, err)
-	filterParams := parseFilterParams(req)
+	filterParams, err := parseFilterParams(req)
+	assert.NoError(t, err)
 	assert.Equal(t, filterParams.Ranged[0].Name, "On_base_pct")
 	assert.Equal(t, filterParams.Ranged[0].Type, "integer")
 	assert.Equal(t, filterParams.Ranged[0].Min, 0.0)
@@ -31,12 +32,9 @@ func TestParseSearchParamsMalformed(t *testing.T) {
 	req, err := http.NewRequest("GET", "/distil/data/o185"+
 		"?On_base_pct=integer,0&Position=categorical,Catcher&Triples=integer,1,2,3&size", nil)
 	assert.NoError(t, err)
-	filterParams := parseFilterParams(req)
-	assert.Equal(t, filterParams.Categorical[0].Name, "Position")
-	assert.Equal(t, filterParams.Categorical[0].Type, "categorical")
-	assert.Equal(t, filterParams.Categorical[0].Categories, []string{"Catcher"})
-	assert.Equal(t, len(filterParams.Ranged), 0)
-	assert.Equal(t, filterParams.Size, defaultSearchSize)
+	filterParams, err := parseFilterParams(req)
+	assert.Error(t, err)
+	assert.Nil(t, filterParams)
 }
 
 func TestFilteredDataHandler(t *testing.T) {
@@ -51,7 +49,7 @@ func TestFilteredDataHandler(t *testing.T) {
 	// put together a stub dataset request - need to manually account for goji's
 	// parameter extraction
 	req, err := http.NewRequest("GET", "/distil/filtered_data/"+testDataset+
-		"?On_base_pct=0,100&Position=Catcher&Triples", nil)
+		"?On_base_pct=integer,0,100&Position=categorical,Catcher&Triples", nil)
 	assert.NoError(t, err)
 
 	// add params
@@ -87,6 +85,5 @@ func TestFilteredDataHandler(t *testing.T) {
 
 	actual, err := json.Unmarshal(res.Body.Bytes())
 	assert.NoError(t, err)
-
 	assert.Equal(t, expected, actual)
 }

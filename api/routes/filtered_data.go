@@ -9,7 +9,6 @@ import (
 	elastic_api "github.com/unchartedsoftware/distil/api/elastic"
 	"github.com/unchartedsoftware/distil/api/model"
 	"github.com/unchartedsoftware/distil/api/util/json"
-	log "github.com/unchartedsoftware/plog"
 	"goji.io/pat"
 )
 
@@ -18,11 +17,8 @@ const (
 	searchSizeLimit   = 1000
 )
 
-func handleParamParseError(key string, value []string, err error) {
-	log.Errorf("failure parsing search params [%s,%v] - %+v", key, value, err)
-}
-
-func parseFilterParams(r *http.Request) *model.FilterParams {
+func parseFilterParams(r *http.Request) (*model.FilterParams, error) {
+	// parses a search parameter string formatteed as ?size=10&someIntField=integer,0,100&someCategoryFieldName=category,catA,catB,catF
 	var filterParams model.FilterParams
 	filterParams.Size = defaultSearchSize
 
@@ -31,56 +27,55 @@ func parseFilterParams(r *http.Request) *model.FilterParams {
 		// min of requested size and limit otherwise
 		if key == "size" {
 			if len(value) != 1 {
-				handleParamParseError(key, value, errors.New("expected single value for size"))
+				return nil, errors.Errorf("expected single integer value for parameter [%s, %v]", key, value)
 			}
 			size, err := strconv.Atoi(value[0])
 			if err != nil {
-				handleParamParseError(key, value, errors.Wrap(err, "failed to parse size"))
-				continue
+				return nil, errors.Wrapf(err, "failed to parse int from [%s, %v]", key, value)
 			}
 			if size < searchSizeLimit {
 				filterParams.Size = size
 			} else {
 				filterParams.Size = searchSizeLimit
 			}
-
 		} else if value != nil && len(value) > 0 && value[0] != "" {
-			// split the value on a comma
+			// the are assumed to be variable range/cateogry parameters.
+
+			// tokenize using a comma
 			varParams := strings.Split(value[0], ",")
 			varType := varParams[0]
-			switch varType {
-			case "integer", "float":
+			if model.IsNumerical(varType) {
+				// floats and ints should have type, min, max as args
 				if len(varParams) != 3 {
-					handleParamParseError(key, value, errors.New("expected type,min,max"))
-					continue
+					return nil, errors.Errorf("expected {type},{min},{max} from [s%s, %v]", key, value)
 				}
 				min, err := strconv.ParseFloat(varParams[1], 64)
 				if err != nil {
-					handleParamParseError(key, value, errors.Wrap(err, "failed to parse min"))
-					continue
+					return nil, errors.Wrapf(err, "failed to parse range min from [%s, %v]", key, value)
 				}
 				max, err := strconv.ParseFloat(varParams[2], 64)
 				if err != nil {
-					handleParamParseError(key, value, errors.Wrap(err, "failed to parse max"))
-					continue
+					return nil, errors.Wrapf(err, "failed to parse range max from [%s, %v]", key, value)
 				}
 				filterParams.Ranged = append(filterParams.Ranged,
 					model.VariableRange{Min: min, Max: max, Variable: model.Variable{Name: key, Type: varType}})
-			case "ordinal", "categorical":
-				if len(value) >= 2 {
-					handleParamParseError(key, value, errors.New("expected type,category_1,category_2,...,category_n"))
-					continue
+			} else if model.IsCategorical(varType) {
+				// categorical/ordinal should have type,category, category,...,category as args
+				if len(varParams) < 2 {
+					return nil, errors.Errorf("expected {type},{category_1},{category_2},...,{category_n} from [%s, %v]", key, value)
 				}
 				filterParams.Categorical = append(filterParams.Categorical,
 					model.VariableCategories{Variable: model.Variable{Name: key, Type: varType}, Categories: varParams[1:]})
-			default:
-				continue
+			} else {
+				return nil, errors.Errorf("unhandled parameter type from [%s, %v]", key, value)
 			}
 		} else {
+			// if we just receive a parameter key that is not 'size' we treat it as a variable flag with not
+			// associated range / category feature.
 			filterParams.None = append(filterParams.None, key)
 		}
 	}
-	return &filterParams
+	return &filterParams, nil
 }
 
 // FilteredDataHandler creates a route that fetches filtered data from an elastic search instance.
@@ -89,7 +84,11 @@ func FilteredDataHandler(ctor elastic_api.ClientCtor) func(http.ResponseWriter, 
 		dataset := pat.Param(r, "dataset")
 
 		// get variable names and ranges out of the params
-		filterParams := parseFilterParams(r)
+		filterParams, err := parseFilterParams(r)
+		if err != nil {
+			handleError(w, err)
+			return
+		}
 
 		// get elasticsearch client
 		client, err := ctor()

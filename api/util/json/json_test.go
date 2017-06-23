@@ -103,6 +103,23 @@ func TestExists(t *testing.T) {
 	assert.False(t, exists)
 }
 
+func TestInterface(t *testing.T) {
+	// should return a true value if a value exists in the provided path
+	j := JSON(t,
+		`{
+			"test": {
+				"float": 123.0
+			}
+		}`)
+	_, ok := Interface(j, "test", "float")
+	assert.True(t, ok)
+
+	// should return a false value if value does not exist in the provided path
+	j = JSON(t, `{}`)
+	_, ok = Float(j, "test", "missing")
+	assert.False(t, ok)
+}
+
 func TestFloat(t *testing.T) {
 	// should return a true value if a value exists in the provided path
 	j := JSON(t,
@@ -274,6 +291,33 @@ func TestBool(t *testing.T) {
 			}
 		}`)
 	_, ok = Bool(j, "test", "int")
+	assert.False(t, ok)
+}
+
+func TestInferfaceArray(t *testing.T) {
+	// should return a true value if a value exists in the provided path
+	j := JSON(t,
+		`{
+			"test": {
+				"array": [0, 1, 0.1, 0.2]
+			}
+		}`)
+	_, ok := InterfaceArray(j, "test", "array")
+	assert.True(t, ok)
+
+	// should return a false value if value does not exist in the provided path
+	j = JSON(t, `{}`)
+	_, ok = InterfaceArray(j, "test", "missing")
+	assert.False(t, ok)
+
+	// should return a false value if value is not an array
+	j = JSON(t,
+		`{
+			"test": {
+				"int": 5
+			}
+		}`)
+	_, ok = InterfaceArray(j, "test", "int")
 	assert.False(t, ok)
 }
 

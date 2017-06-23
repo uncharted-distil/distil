@@ -19,6 +19,8 @@ const (
 	HistogramAggPrefix = "histogram_"
 	// VariableValueField is the field which stores the variable value.
 	VariableValueField = "value"
+	// VariableTypeField is the field which stores the variable's schema type value.
+	VariableTypeField = "schemaType"
 )
 
 // Extrema represents the extrema for a single variable.
@@ -42,28 +44,10 @@ type Histogram struct {
 	Buckets []*Bucket `json:"buckets"`
 }
 
-func isNumerical(name string, typ string) bool {
-	if name == "d3mIndex" {
-		return false
-	}
-	return typ == "integer" ||
-		typ == "float" ||
-		typ == "dateTime"
-}
-
-func isCategorical(name string, typ string) bool {
-	if name == "d3mIndex" {
-		return false
-	}
-	return typ == "categorical" ||
-		typ == "ordinal" ||
-		typ == "text"
-}
-
 func getNumericalVariables(variables []*Variable) []*Variable {
 	var result []*Variable
 	for _, variable := range variables {
-		if isNumerical(variable.Name, variable.Type) {
+		if IsNumerical(variable.Type) {
 			result = append(result, variable)
 		}
 	}
@@ -73,7 +57,7 @@ func getNumericalVariables(variables []*Variable) []*Variable {
 func getCategoricalVariables(variables []*Variable) []*Variable {
 	var result []*Variable
 	for _, variable := range variables {
-		if isCategorical(variable.Name, variable.Type) {
+		if IsCategorical(variable.Type) {
 			result = append(result, variable)
 		}
 	}
@@ -361,7 +345,7 @@ func FetchSummary(client *elastic.Client, index string, dataset string, varName 
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to fetch variables for summary")
 	}
-	if isNumerical(variable.Name, variable.Type) {
+	if IsNumerical(variable.Type) {
 		// fetch numeric histograms
 		numeric, err := fetchNumericalHistogram(client, dataset, variable)
 		if err != nil {
@@ -369,7 +353,7 @@ func FetchSummary(client *elastic.Client, index string, dataset string, varName 
 		}
 		return numeric, nil
 	}
-	if isCategorical(variable.Name, variable.Type) {
+	if IsCategorical(variable.Type) {
 		// fetch categorical histograms
 		categorical, err := fetchCategoricalHistogram(client, dataset, variable)
 		if err != nil {
