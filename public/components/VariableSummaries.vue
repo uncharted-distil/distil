@@ -45,9 +45,13 @@ export default {
 					}
 					// add error group
 					const group = {
-						label: histogram.err,
+						label: histogram.name,
 						key: key,
-						facets: []
+						facets: [{
+							placeholder: true,
+							key: 'placeholder',
+							html: `<div>${histogram.err}</div>`
+						}]
 					};
 					facets.replaceGroup(group);
 					errors.set(key, group);
