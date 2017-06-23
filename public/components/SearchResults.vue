@@ -1,6 +1,6 @@
 <template>
 	<div id="search-results">
-		<div v-for="dataset in datasets">
+		<div v-for="dataset in datasets" v-bind:key="dataset.name">
 			<div v-on:click="setActiveDataset(dataset.name)">
 				<h4>{{dataset.name}}</h4>
 			</div>
