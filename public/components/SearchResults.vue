@@ -11,8 +11,6 @@
 
 <script>
 
-import _ from 'lodash';
-
 export default {
 	name: 'search-results',
 
@@ -27,9 +25,7 @@ export default {
 		setActiveDataset(datasetName) {
 			if (datasetName !== this.$store.state.activeDataset) {
 				this.$store.commit('setActiveDataset', datasetName);
-				const dataset = _.find(this.$store.state.datasets, d => {
-					return d.name === datasetName;
-				});
+				const dataset = this.$store.getters.getActiveDataset();
 				this.$store.dispatch('getVariableSummaries', dataset);
 				this.$store.dispatch('getFilteredData', datasetName);
 			}
