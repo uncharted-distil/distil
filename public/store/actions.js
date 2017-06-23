@@ -52,7 +52,7 @@ export function getVariableSummaries(context, dataset) {
 					index: index,
 					histogram: {
 						name: variable.name,
-						err: new Error(error)
+						err: error
 					}
 
 				});

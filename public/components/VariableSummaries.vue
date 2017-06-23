@@ -45,7 +45,7 @@ export default {
 					}
 					// add error group
 					const group = {
-						label: `Error: ${histogram.err}`,
+						label: histogram.err,
 						key: key,
 						facets: []
 					};
