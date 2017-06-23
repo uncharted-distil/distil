@@ -69,7 +69,7 @@ export function getFilteredData(context, name) {
 			context.commit('setFilteredData', response.data);
 		})
 		.catch(error => {
-			console.log(error);
+			console.error(error);
 			context.commit('setFilteredData', {});
 		});
 }
