@@ -1,5 +1,5 @@
-hash: 0938475b6013e2fdb78da82355d405c8ce9198c0d0af7f5c4aaf5138bdafd459
-updated: 2017-06-20T15:39:48.413505803-04:00
+hash: f5b1e9084f9b3a835ea49c80ace8bcec778405fb4d985f287e95642b3ba00881
+updated: 2017-06-22T18:55:10.817747142-04:00
 imports:
 - name: github.com/davecgh/go-spew
   version: 04cdfd42973bb9c8589fd6a731800cf222fde1a9
@@ -36,18 +36,12 @@ imports:
   - internal
   - pat
   - pattern
-- name: golang.org/x/net
-  version: da118f7b8e5954f39d0d2130ab35d4bf0e3cb344
-  subpackages:
-  - context
-  - context/ctxhttp
 - name: golang.org/x/sys
   version: 9ccfe848b9db8435a24c424abbc07a921adf1df5
   subpackages:
   - unix
-- name: gopkg.in/olivere/elastic.v3
-  version: eb47340e05b08cae24208569de7240fecde96bd2
+- name: gopkg.in/olivere/elastic.v5
+  version: 3113f9b9ad37509fe5f8a0e5e91c96fdc4435e26
   subpackages:
-  - backoff
   - uritemplates
 testImports: []

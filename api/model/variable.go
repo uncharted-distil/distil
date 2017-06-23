@@ -1,8 +1,10 @@
 package model
 
 import (
+	"context"
+
 	"github.com/pkg/errors"
-	"gopkg.in/olivere/elastic.v3"
+	"gopkg.in/olivere/elastic.v5"
 
 	"github.com/unchartedsoftware/distil/api/util/json"
 )
@@ -96,7 +98,7 @@ func FetchVariable(client *elastic.Client, index string, dataset string, varName
 		Index(index).
 		FetchSource(true).
 		FetchSourceContext(fetchContext).
-		Do()
+		Do(context.Background())
 	if err != nil {
 		return nil, errors.Wrap(err, "elasticSearch variable fetch query failed")
 	}
@@ -127,7 +129,7 @@ func FetchVariables(client *elastic.Client, index string, dataset string) ([]*Va
 		Index(index).
 		FetchSource(true).
 		FetchSourceContext(fetchContext).
-		Do()
+		Do(context.Background())
 	if err != nil {
 		return nil, errors.Wrap(err, "elasticSearch variable fetch query failed")
 	}
