@@ -11,17 +11,11 @@ export function getVariables(state) {
 }
 
 export function getDataset(state) {
-	return (id) => {
-		return state.datasets.find(d => d.name === id);
-	};
+	return (id) => state.datasets.find(d => d.name === id);
 }
 
 export function getActiveDataset(state) {
-	return () => {
-		return _.find(state.datasets, d => {
-			return d.name === state.activeDataset;
-		});
-	};
+	return () => (id) => state.datasets.find(d => d.name === id);
 }
 
 export function getDatasets(state) {
@@ -34,13 +28,9 @@ export function getDatasets(state) {
 }
 
 export function getVariableSummaries(state) {
-	return () => {
-		return state.variableSummaries;
-	};
+	return () => state.variableSummaries;
 }
 
 export function getFilteredData(state) {
-	return () => {
-		return state.filteredData;
-	};
+	return () => state.filteredData;
 }
