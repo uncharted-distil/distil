@@ -1,12 +1,12 @@
 package model
 
 import (
+	"context"
 	"strings"
 
 	"github.com/pkg/errors"
-	"gopkg.in/olivere/elastic.v3"
-
 	"github.com/unchartedsoftware/distil/api/util/json"
+	"gopkg.in/olivere/elastic.v5"
 )
 
 const (
@@ -62,7 +62,7 @@ func FetchDatasets(client *elastic.Client, index string) ([]*Dataset, error) {
 		Index(index).
 		FetchSource(true).
 		FetchSourceContext(fetchContext).
-		Do()
+		Do(context.Background())
 	if err != nil {
 		return nil, errors.Wrap(err, "elasticsearch dataset fetch query failed")
 	}
@@ -85,7 +85,7 @@ func SearchDatasets(client *elastic.Client, index string, terms string) ([]*Data
 		Index(index).
 		FetchSource(true).
 		FetchSourceContext(fetchContext).
-		Do()
+		Do(context.Background())
 	if err != nil {
 		return nil, errors.Wrap(err, "elasticsearch dataset search query failed")
 	}

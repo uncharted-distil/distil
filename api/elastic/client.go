@@ -7,7 +7,7 @@ import (
 
 	"github.com/pkg/errors"
 	"github.com/unchartedsoftware/plog"
-	"gopkg.in/olivere/elastic.v3"
+	"gopkg.in/olivere/elastic.v5"
 )
 
 const (

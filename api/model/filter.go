@@ -1,12 +1,13 @@
 package model
 
 import (
+	"context"
 	"sort"
 
 	"github.com/pkg/errors"
 	"github.com/unchartedsoftware/distil/api/util/json"
 	log "github.com/unchartedsoftware/plog"
-	elastic "gopkg.in/olivere/elastic.v3"
+	elastic "gopkg.in/olivere/elastic.v5"
 )
 
 // FilteredData provides the metadata and raw data values that match a supplied
@@ -123,7 +124,7 @@ func FetchFilteredData(client *elastic.Client, dataset string, filterParams *Fil
 		Size(filterParams.Size).
 		FetchSource(true).
 		FetchSourceContext(fetchContext).
-		Do()
+		Do(context.Background())
 	if err != nil {
 		return nil, errors.Wrap(err, "elasticsearch filtered data query failed")
 	}

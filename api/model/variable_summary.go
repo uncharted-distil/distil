@@ -1,11 +1,11 @@
 package model
 
 import (
-	"math"
+	"context"
 	"strconv"
 
 	"github.com/pkg/errors"
-	"gopkg.in/olivere/elastic.v3"
+	"gopkg.in/olivere/elastic.v5"
 )
 
 const (
@@ -21,6 +21,8 @@ const (
 	VariableValueField = "value"
 	// VariableTypeField is the field which stores the variable's schema type value.
 	VariableTypeField = "schemaType"
+	// NumBuckets is the number of buckets to use for histograms
+	NumBuckets = 50
 )
 
 // Extrema represents the extrema for a single variable.
@@ -127,7 +129,7 @@ func fetchExtrema(client *elastic.Client, dataset string, variable *Variable) (*
 	// add min / max aggregation
 	appendMinMaxAggs(search, variable)
 	// execute the search
-	res, err := search.Do()
+	res, err := search.Do(context.Background())
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to execute min/max aggregation query for summary generation")
 	}
@@ -145,9 +147,9 @@ func fetchExtremas(client *elastic.Client, dataset string, variables []*Variable
 		appendMinMaxAggs(search, variable)
 	}
 	// execute the search
-	res, err := search.Do()
+	res, err := search.Do(context.Background())
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to execute min/max aggregation query for summary generation")
+		return nil, errors.Wrap(err, "failed to execute extrema search")
 	}
 	return parseExtremas(res, variables)
 }
@@ -193,12 +195,10 @@ func parseNumericHistograms(res *elastic.SearchResult, extremas []*Extrema) ([]*
 
 func appendHistogramAgg(search *elastic.SearchService, extrema *Extrema) *elastic.SearchService {
 	// compute the bucket interval for the histogram
-	// TODO: ES v5 supports float intervals for histograms. Need to
-	// upgrade from v2 and make this use floats.
-	interval := int64(math.Floor((extrema.Max - extrema.Min) / 100))
-	if interval < 1 {
-		interval = 1
-	}
+	// TODO: We should handle discreet vs continuous data differently here.  For discrete, we should have
+	// a minimum bucket size of 1, whereas continuous can select a size to exactly match the bucket count.
+	interval := (extrema.Max - extrema.Min) / NumBuckets
+
 	// get histogram agg name
 	histogramAggName := HistogramAggPrefix + extrema.Name
 	// create histogram agg
@@ -223,7 +223,7 @@ func fetchNumericalHistogram(client *elastic.Client, dataset string, variable *V
 	// add histogram agg
 	appendHistogramAgg(search, extrema)
 	// execute the search
-	res, err := search.Do()
+	res, err := search.Do(context.Background())
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to fetch histograms for variables summaries")
 	}
@@ -234,7 +234,7 @@ func fetchNumericalHistograms(client *elastic.Client, dataset string, variables 
 	// need the extrema of each var to calculate the histrogram interval
 	extremas, err := fetchExtremas(client, dataset, variables)
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to fetch variable extrema for summary")
+		return nil, err
 	}
 	// for each returned aggregation, create a histogram aggregation. Bucket
 	// size is derived from the min/max and desired bucket count.
@@ -247,7 +247,7 @@ func fetchNumericalHistograms(client *elastic.Client, dataset string, variables 
 		appendHistogramAgg(search, extrema)
 	}
 	// execute the search
-	res, err := search.Do()
+	res, err := search.Do(context.Background())
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to fetch histograms for variables summaries")
 	}
@@ -312,7 +312,7 @@ func fetchCategoricalHistogram(client *elastic.Client, dataset string, variable 
 	// add terms aggregation
 	appendTermsAgg(search, variable)
 	// execute the search
-	res, err := search.Do()
+	res, err := search.Do(context.Background())
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to execute terms aggregation query for summary")
 	}
@@ -330,7 +330,7 @@ func fetchCategoricalHistograms(client *elastic.Client, dataset string, variable
 		appendTermsAgg(search, variable)
 	}
 	// execute the search
-	res, err := search.Do()
+	res, err := search.Do(context.Background())
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to execute terms aggregation query for summary")
 	}
@@ -349,7 +349,7 @@ func FetchSummary(client *elastic.Client, index string, dataset string, varName 
 		// fetch numeric histograms
 		numeric, err := fetchNumericalHistogram(client, dataset, variable)
 		if err != nil {
-			return nil, errors.Wrap(err, "failed to fetch numerical histograms for summary")
+			return nil, err
 		}
 		return numeric, nil
 	}
@@ -357,7 +357,7 @@ func FetchSummary(client *elastic.Client, index string, dataset string, varName 
 		// fetch categorical histograms
 		categorical, err := fetchCategoricalHistogram(client, dataset, variable)
 		if err != nil {
-			return nil, errors.Wrap(err, "failed to fetch categorical histograms for summary")
+			return nil, err
 		}
 		return categorical, nil
 	}
@@ -370,17 +370,17 @@ func FetchSummaries(client *elastic.Client, index string, dataset string) ([]*Hi
 	// need list of variables to request aggregation against.
 	variables, err := FetchVariables(client, index, dataset)
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to fetch variables for summary")
+		return nil, err
 	}
 	// fetch numeric histograms
 	numerical, err := fetchNumericalHistograms(client, dataset, getNumericalVariables(variables))
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to fetch numerical histograms for summary")
+		return nil, err
 	}
 	// fetch categorical histograms
 	categorical, err := fetchCategoricalHistograms(client, dataset, getCategoricalVariables(variables))
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to fetch categorical histograms for summary")
+		return nil, err
 	}
 	// merge
 	return append(numerical, categorical...), nil
