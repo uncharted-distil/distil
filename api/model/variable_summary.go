@@ -5,7 +5,6 @@ import (
 	"strconv"
 
 	"github.com/pkg/errors"
-	"github.com/unchartedsoftware/plog"
 	"gopkg.in/olivere/elastic.v5"
 )
 
