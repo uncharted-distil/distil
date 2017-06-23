@@ -99,7 +99,6 @@ func parseExtremas(res *elastic.SearchResult, variables []*Variable) ([]*Extrema
 		// parse extrema
 		extrema, err := parseExtrema(res, variable)
 		if err != nil {
-			log.Errorf("%+v", err)
 			continue
 		}
 		// append extrema
