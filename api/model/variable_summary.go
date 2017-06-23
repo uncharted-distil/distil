@@ -361,7 +361,7 @@ func FetchSummary(client *elastic.Client, index string, dataset string, varName 
 		}
 		return categorical, nil
 	}
-	return nil, errors.Errorf("type %s of variable does not support summary", variable.Type)
+	return nil, errors.Errorf("variable %s of type %s does not support summary", variable.Name, variable.Type)
 }
 
 // FetchSummaries returns summaries for all variables in the provided index and

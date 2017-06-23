@@ -22,11 +22,12 @@ export default {
 	},
 
 	methods: {
-		setActiveDataset(name) {
-			if (name !== this.$store.state.activeDataset) {
-				this.$store.commit('setActiveDataset', name);
-				this.$store.dispatch('getVariableSummaries', name);
-				this.$store.dispatch('getFilteredData', name);
+		setActiveDataset(datasetName) {
+			if (datasetName !== this.$store.state.activeDataset) {
+				this.$store.commit('setActiveDataset', datasetName);
+				const dataset = this.$store.getters.getActiveDataset();
+				this.$store.dispatch('getVariableSummaries', dataset);
+				this.$store.dispatch('getFilteredData', datasetName);
 			}
 		}
 	}

@@ -10,6 +10,7 @@ module.exports = {
 	},
 	resolve: {
 		extensions: ['.js', '.vue', '.json'],
+		symlinks: false,
 		alias: {
 			'vue$': 'vue/dist/vue.esm.js',
 			'@': path.resolve('./public')

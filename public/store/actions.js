@@ -19,22 +19,45 @@ export function searchDatasets(context, terms) {
 				}
 			})
 			.catch(error => {
-				console.log(error);
+				console.error(error);
 				context.commit('setDatasets', []);
 			});
 	}
 }
 
-// fetches variable summary data for the given dataset
-export function getVariableSummaries(context, name) {
-	axios.get(`/distil/variable-summaries/${ES_INDEX}/${name}`)
-		.then(response => {
-			context.commit('setVariableSummaries', response.data);
-		})
-		.catch(error => {
-			console.log(error);
-			context.commit('setVariableSummaries', {});
-		});
+// fetches variable summary data for the given dataset and variables
+export function getVariableSummaries(context, dataset) {
+	// commit empty place holders
+	const histograms = new Array(dataset.variables.length - 1);
+	dataset.variables.forEach((variable, index) => {
+		histograms[index] = {
+				name: variable.name,
+				pending: true
+		};
+	});
+	context.commit('setVariableSummaries', histograms);
+	// fill them in asynchronously
+	dataset.variables.forEach((variable, index) => {
+		axios.get(`/distil/variable-summaries/${ES_INDEX}/${dataset.name}/${variable.name}`)
+			.then(response => {
+				context.commit('updateVariableSummaries', {
+					index: index,
+					histogram: response.data.histograms[0]
+
+				});
+			})
+			.catch(error => {
+				console.error(error);
+				context.commit('updateVariableSummaries', {
+					index: index,
+					histogram: {
+						name: variable.name,
+						err: new Error(error)
+					}
+
+				});
+			});
+	});
 }
 
 // fetches data entries for the given dataset
@@ -46,7 +69,7 @@ export function getFilteredData(context, name) {
 			context.commit('setFilteredData', response.data);
 		})
 		.catch(error => {
-			console.log(error);
+			console.error(error);
 			context.commit('setFilteredData', {});
 		});
 }

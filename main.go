@@ -49,7 +49,7 @@ func main() {
 	mux.Use(middleware.Gzip)
 
 	registerRoute(mux, "/distil/datasets/:index", routes.DatasetsHandler(esClientCtor))
-	registerRoute(mux, "/distil/variable-summaries/:index/:dataset", routes.VariableSummariesHandler(esClientCtor))
+	registerRoute(mux, "/distil/variable-summaries/:index/:dataset/:variable", routes.VariableSummaryHandler(esClientCtor))
 	registerRoute(mux, "/distil/filtered-data/:dataset", routes.FilteredDataHandler(esClientCtor))
 	registerRoute(mux, "/*", routes.FileHandler("./dist"))
 
