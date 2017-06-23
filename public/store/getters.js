@@ -15,7 +15,7 @@ export function getDataset(state) {
 }
 
 export function getActiveDataset(state) {
-	return () => (id) => state.datasets.find(d => d.name === id);
+	return () => _.find(state.datasets, d => d.name === state.activeDataset);
 }
 
 export function getDatasets(state) {
