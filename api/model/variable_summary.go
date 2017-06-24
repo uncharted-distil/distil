@@ -82,7 +82,7 @@ func parseExtrema(res *elastic.SearchResult, variable *Variable) (*Extrema, erro
 	}
 	// check values exist
 	if minAgg.Value == nil || maxAgg.Value == nil {
-		return nil, errors.Errorf("aggregation values found")
+		return nil, errors.Errorf("no min / max aggregation values found")
 	}
 	// assign attributes
 	return &Extrema{
