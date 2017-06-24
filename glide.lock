@@ -1,10 +1,15 @@
-hash: f5b1e9084f9b3a835ea49c80ace8bcec778405fb4d985f287e95642b3ba00881
-updated: 2017-06-22T18:55:10.817747142-04:00
+hash: 8cd1350d0cfb7d2ccb0695c775ecc1c335d2f1e5bf35137536dff2e2c10eb699
+updated: 2017-06-23T21:11:52.193484392-04:00
 imports:
 - name: github.com/davecgh/go-spew
   version: 04cdfd42973bb9c8589fd6a731800cf222fde1a9
   subpackages:
   - spew
+- name: github.com/garyburd/redigo
+  version: 0d253a66e6e1349f4581d6d2b300ee434ee2da9f
+  subpackages:
+  - internal
+  - redis
 - name: github.com/mattn/go-colorable
   version: ded68f7a9561c023e790de24279db7ebf473ea80
 - name: github.com/mattn/go-isatty
