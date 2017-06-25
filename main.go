@@ -13,12 +13,15 @@ import (
 	"github.com/unchartedsoftware/distil/api/elastic"
 	"github.com/unchartedsoftware/distil/api/env"
 	"github.com/unchartedsoftware/distil/api/middleware"
+	"github.com/unchartedsoftware/distil/api/redis"
 	"github.com/unchartedsoftware/distil/api/routes"
 )
 
 const (
-	defaultEsEndpoint = "http://localhost:9200"
-	defaultAppPort    = "8080"
+	defaultEsEndpoint    = "http://localhost:9200"
+	defaultRedisEndpoint = "localhost:6379"
+	defaultRedisExpiry   = -1 // no expiry
+	defaultAppPort       = "8080"
 )
 
 var (
@@ -37,16 +40,22 @@ func main() {
 	// load elasticsearch endpoint
 	esEndpoint := env.Load("ES_ENDPOINT", defaultEsEndpoint)
 	// load application port
+	redisEndpoint := env.Load("REDIS_ENDPOINT", defaultRedisEndpoint)
+	// load redis endpoint
 	httpPort := env.Load("PORT", defaultAppPort)
 
 	// instantiate elasticsearch client constructor
 	esClientCtor := elastic.NewClient(esEndpoint, false)
+
+	// instantiate redis pool
+	redisPool := redis.NewPool(redisEndpoint, defaultRedisExpiry)
 
 	// register routes
 	mux := goji.NewMux()
 
 	mux.Use(middleware.Log)
 	mux.Use(middleware.Gzip)
+	mux.Use(middleware.Redis(redisPool))
 
 	registerRoute(mux, "/distil/datasets/:index", routes.DatasetsHandler(esClientCtor))
 	registerRoute(mux, "/distil/variable-summaries/:index/:dataset/:variable", routes.VariableSummaryHandler(esClientCtor))
