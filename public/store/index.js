@@ -6,6 +6,9 @@ import * as mutations from './mutations';
 
 Vue.use(Vuex);
 
+export const NUMERICAL_SUMMARY_TYPE = 'numerical';
+export const CATEGORICAL_SUMMARY_TYPE = 'categorical';
+
 // shared data model
 const state = {
 	// description of matched datasets
@@ -21,29 +24,40 @@ const state = {
 		//     ]
 		// }
 	],
-	// variable summary data for the active dataset
-	variableSummaries: {
-		// histograms: [{
+	// variable summary data for the active dataset	
+	variableSummaries: [
 		//     name: '',
 		//     buckets: [{
 		//         key: '',
 		//         count: 0
-		//     }]
-		// }]
-	},
+		//     }]		
+	],
 	// filtered data entries for the active dataset
 	filteredData: {
-	// 	name: '',
-	// 	metadata: [
-	// 		{
-	// 			name: '',
-	// 			type: ''
-
-	// 		}
-	// 	]
-	// 	values: [
-	// 		[]
-	// 	]
+		// 	name: '',
+		// 	metadata: [
+		// 		{
+		// 			name: '',
+		// 			type: ''
+		// 		}
+		// 	]
+		// 	values: [
+		// 		[]
+		// 	]
+	},
+	filterState: {
+		// On_base_pct: {
+		// 	type: 'numerical',
+		// 	enabled: true,
+		// 	min: '10',
+		// 	max: '100',
+		// },
+		// Position: {
+		// 	type: 'categorical',
+		// 	enabled: false,
+		// 	categories: ['pitcher', 'catcher']
+		// },
+		// etc...
 	},
 	// name/id of the active dataset
 	activeDataset: null
