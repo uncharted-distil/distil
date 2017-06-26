@@ -91,7 +91,7 @@ export function updateFilteredData(context, datasetName) {
 	var params = [];
 	params.push(`size=${TABLE_DATA_LIMIT}`);
 	_.forEach(filterState, varFilter => {
-		if (varFilter.enabled) {			
+		if (varFilter.enabled) {
 			// numeric types have type,min,max or no additonal args if the value is unfiltered
 			if (varFilter.type === index.NUMERICAL_SUMMARY_TYPE) {
 				if (!_.isEmpty(varFilter, 'min') && !_.isEmpty(varFilter, 'max')) {
@@ -112,14 +112,14 @@ export function updateFilteredData(context, datasetName) {
 		}
 	});
 
-	// construct the final URL 
+	// construct the final URL
 	requestUrl += params.join('&');
 
 	// request filtered data from server - no data is valid given filter settings
 	axios.get(requestUrl)
 		.then(response => {
 			if (_.isEmpty(response.data.metadata)) {
-				context.commit('setFilteredData', {});	
+				context.commit('setFilteredData', {});
 			} else {
 				context.commit('setFilteredData', response.data);
 			}

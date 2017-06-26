@@ -24,40 +24,40 @@ const state = {
 		//     ]
 		// }
 	],
-	// variable summary data for the active dataset	
+	// variable summary data for the active dataset
 	variableSummaries: [
 		//     name: '',
 		//     buckets: [{
 		//         key: '',
 		//         count: 0
-		//     }]		
+		//     }]
 	],
 	// filtered data entries for the active dataset
 	filteredData: {
-		// 	name: '',
-		// 	metadata: [
-		// 		{
-		// 			name: '',
-		// 			type: ''
-		// 		}
-		// 	]
-		// 	values: [
-		// 		[]
-		// 	]
+		// name: '',
+		// metadata: [
+		//     {
+		//         name: '',
+		//         type: ''
+		//     }
+		// ]
+		// values: [
+		//     []
+		// ]
 	},
 	filterState: {
 		// On_base_pct: {
-		// 	type: 'numerical',
-		// 	enabled: true,
-		// 	min: '10',
-		// 	max: '100',
+		//     type: 'numerical',
+		//     enabled: true,
+		//     min: '10',
+		//     max: '100',
 		// },
 		// Position: {
-		// 	type: 'categorical',
-		// 	enabled: false,
-		// 	categories: ['pitcher', 'catcher']
+		//     type: 'categorical',
+		//     enabled: false,
+		//     categories: ['pitcher', 'catcher']
 		// },
-		// etc...
+		// ...
 	},
 	// name/id of the active dataset
 	activeDataset: null

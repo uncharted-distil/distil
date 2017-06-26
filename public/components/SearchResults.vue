@@ -27,7 +27,7 @@ export default {
 				this.$store.commit('setActiveDataset', datasetName);
 				const dataset = this.$store.getters.getActiveDataset();
 				this.$store.dispatch('getVariableSummaries', dataset);
-				this.$store.dispatch('getFilteredData', datasetName);
+				this.$store.dispatch('updateFilteredData', datasetName);
 			}
 		}
 	}
