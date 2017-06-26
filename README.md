@@ -4,6 +4,7 @@
 
 - [Go](https://golang.org/) programming language binaries with the `GOPATH` environment variable specified and `$GOPATH/bin` in your `PATH`.
 - [NodeJS](http://nodejs.org/) JavaScript runtime.
+- [Docker](https://www.docker.com/) platform.
 
 ## Development
 
@@ -20,6 +21,18 @@ Install dependencies:
 ```bash
 cd distil
 make install
+```
+
+Pull docker image:
+
+```bash
+docker pull docker.uncharted.software/distil_dev_es:0.2
+```
+
+Launch docker container:
+
+```bash
+./es_run.sh
 ```
 
 Build and watch webapp:
