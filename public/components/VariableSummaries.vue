@@ -12,7 +12,10 @@ import '../styles/spinner.css';
 
 export default {
 	name: 'variable-summaries',
+
 	mounted() {
+		const component = this;
+
 		// instantiate the external facets widget
 		const container = document.getElementById('variable-summaries');
 		const facets = new Facets(container, []);
@@ -20,16 +23,41 @@ export default {
 		const pending = new Map();
 		const errors = new Map();
 
-		// on dataset change, clear all the components
-		this.$store.watch(() => this.$store.state.activeDataset, () => {
+		// handle a facet going from collapsed to expanded by updating the state in 
+		// the store
+		facets.on('facet-group:expand', (evt, key) => {
+			component.$store.commit('setVarEnabled', { name: key, enabled: true });
+			component.$store.dispatch('updateFilteredData', component.$store.getters.getActiveDataset().name);
+		});
+
+		// handle a facet going from expanded to collapsed by updating the state in
+		// the store
+		facets.on('facet-group:collapse', (evt, key) => {
+			component.$store.commit('setVarEnabled', { name: key, enabled: false });
+			component.$store.dispatch('updateFilteredData', component.$store.getters.getActiveDataset().name);
+		});
+
+		// handle a facet changing its filter range by updating the store
+		facets.on(' facet-histogram:rangechangeduser', (evt, key, value) => {			
+			component.$store.commit('setVarFilterRange', { 
+				name: key,
+				min: parseFloat(value.from.label[0]),
+				max: parseFloat(value.to.label[0])
+			});
+			component.$store.dispatch('updateFilteredData', component.$store.getters.getActiveDataset().name);
+		});
+		
+
+		// on dataset change, clear all the components and reset the filter state
+		component.$store.watch(() => component.$store.state.activeDataset, () => {
 			groups.clear();
 			pending.clear();
 			errors.clear();
 			facets.replace([]);
+			component.$store.commit('setFilterState', {});
 		});
 
-		// update it's contents when the dataset changes
-		// any event handlers would be added here as well
+		// update it's contents when the dataset changes		
 		this.$store.watch(() => this.$store.state.variableSummaries, histograms => {
 
 			const bulk = [];

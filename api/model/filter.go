@@ -108,7 +108,13 @@ func FetchFilteredData(client *elastic.Client, dataset string, filterParams *Fil
 		keys = append(keys, variable.Name)
 	}
 	for _, variable := range filterParams.Categorical {
-		query = query.Filter(elastic.NewTermsQuery(variable.Name+".value", variable.Categories))
+		// this is imposed by go's language design - []string needs explicit conversion to []interface{} before
+		// passing to interface{} ...
+		categories := make([]interface{}, len(variable.Categories))
+		for i := range variable.Categories {
+			categories[i] = variable.Categories[i]
+		}
+		query = query.Filter(elastic.NewTermsQuery(variable.Name+".value", categories...))
 		keys = append(keys, variable.Name)
 	}
 	for _, variableName := range filterParams.None {
