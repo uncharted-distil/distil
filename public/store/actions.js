@@ -90,23 +90,23 @@ export function updateFilteredData(context, datasetName) {
 	// build up the parameter list from the current filter state
 	var params = [];
 	params.push(`size=${TABLE_DATA_LIMIT}`);
-	_.forEach(filterState, varFilter => {
+	_.forEach(filterState, (varFilter, varName) => {
 		if (varFilter.enabled) {
 			// numeric types have type,min,max or no additonal args if the value is unfiltered
 			if (varFilter.type === index.NUMERICAL_SUMMARY_TYPE) {
 				if (!_.isEmpty(varFilter, 'min') && !_.isEmpty(varFilter, 'max')) {
-					params.push(varFilter.name + '=' + [encodeURIComponent(varTypes.get(varFilter.name)), varFilter.min, varFilter.max].join(','));
+					params.push(varName + '=' + [encodeURIComponent(varTypes.get(varName)), varFilter.min, varFilter.max].join(','));
 				} else {
-					params.push(varFilter.name);
+					params.push(varName);
 				}
 			// categorical type shave type,cat1,cat2...catN or no additional args if the value is unfiltered
 			} else if (varFilter.type === index.CATEGORICAL_SUMMARY_TYPE) {
 				if (!_.isEmpty(varFilter.categories)) {
-					var varParams = encodeURIComponent(varTypes.get(varFilter.name));
+					var varParams = encodeURIComponent(varTypes.get(varName));
 					varParams = ([varParams].concat(varFilter.categories)).join(',');
-					params.push(encodeURIComponent(varFilter.name) + '=' + varParams);
+					params.push(encodeURIComponent(varName) + '=' + varParams);
 				} else {
-					params.push(varFilter.name);
+					params.push(varName);
 				}
 			}
 		}
