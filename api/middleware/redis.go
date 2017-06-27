@@ -15,13 +15,23 @@ type redisResponseWriter struct {
 	http.ResponseWriter
 	key  string
 	conn *redis.Conn
+	code int
 }
 
-// Write to write the gzip response.
-func (w redisResponseWriter) Write(b []byte) (int, error) {
+// WriteHeader write the header.
+func (w *redisResponseWriter) WriteHeader(code int) {
+	w.code = code
+	w.ResponseWriter.WriteHeader(code)
+}
+
+// Write to write the response.
+func (w *redisResponseWriter) Write(b []byte) (int, error) {
 	contentType := w.Header().Get("Content-Type")
-	bs := encodeResponse(contentType, b)
-	w.conn.Set(w.key, bs)
+	if w.code == 0 || w.code == http.StatusOK {
+		// only cache if success
+		bs := encodeResponse(contentType, b)
+		w.conn.Set(w.key, bs)
+	}
 	return w.ResponseWriter.Write(b)
 }
 
@@ -115,7 +125,7 @@ func Redis(pool *redis.Pool) func(h http.Handler) http.Handler {
 			// no response cached in redis
 
 			// create redis response writer
-			rw := redisResponseWriter{
+			rw := &redisResponseWriter{
 				ResponseWriter: w,
 				conn:           conn,
 				key:            key,
