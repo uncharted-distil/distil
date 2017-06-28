@@ -1,5 +1,5 @@
 hash: 8cd1350d0cfb7d2ccb0695c775ecc1c335d2f1e5bf35137536dff2e2c10eb699
-updated: 2017-06-23T21:11:52.193484392-04:00
+updated: 2017-06-26T17:01:54.228255897-04:00
 imports:
 - name: github.com/davecgh/go-spew
   version: 04cdfd42973bb9c8589fd6a731800cf222fde1a9
@@ -42,7 +42,7 @@ imports:
   - pat
   - pattern
 - name: golang.org/x/sys
-  version: 9ccfe848b9db8435a24c424abbc07a921adf1df5
+  version: ea9bcade75cb975a0b9738936568ab388b845617
   subpackages:
   - unix
 - name: gopkg.in/olivere/elastic.v5

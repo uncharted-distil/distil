@@ -1,5 +1,7 @@
 #!/bin/bash
 docker run \
+  -t \
+  -i \
   --user elasticsearch \
   --rm \
   --name distil_dev_es \

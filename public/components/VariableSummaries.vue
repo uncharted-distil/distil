@@ -1,5 +1,9 @@
 <template>
-	<div id='variable-summaries'>
+	<div class='variable-summaries'>
+		<div class="nav bg-faded rounded-top">
+			<h6 class="nav-link">Summaries</h6>
+		</div>
+		<div id="variable-facets"></div>
 	</div>
 </template>
 
@@ -17,39 +21,38 @@ export default {
 		const component = this;
 
 		// instantiate the external facets widget
-		const container = document.getElementById('variable-summaries');
+		const container = document.getElementById('variable-facets');
 		const facets = new Facets(container, []);
 		const groups = new Map();
 		const pending = new Map();
 		const errors = new Map();
 
-		// handle a facet going from collapsed to expanded by updating the state in 
+		// handle a facet going from collapsed to expanded by updating the state in
 		// the store
 		facets.on('facet-group:expand', (evt, key) => {
 			component.$store.commit('setVarEnabled', { name: key, enabled: true });
-			component.$store.dispatch('updateFilteredData', component.$store.getters.getActiveDataset().name);
+			component.$store.dispatch('updateFilteredData', component.$store.getters.getActiveDataset());
 		});
 
 		// handle a facet going from expanded to collapsed by updating the state in
 		// the store
 		facets.on('facet-group:collapse', (evt, key) => {
 			component.$store.commit('setVarEnabled', { name: key, enabled: false });
-			component.$store.dispatch('updateFilteredData', component.$store.getters.getActiveDataset().name);
+			component.$store.dispatch('updateFilteredData', component.$store.getters.getActiveDataset());
 		});
 
 		// handle a facet changing its filter range by updating the store
-		facets.on(' facet-histogram:rangechangeduser', (evt, key, value) => {			
-			component.$store.commit('setVarFilterRange', { 
+		facets.on(' facet-histogram:rangechangeduser', (evt, key, value) => {
+			component.$store.commit('setVarFilterRange', {
 				name: key,
 				min: parseFloat(value.from.label[0]),
 				max: parseFloat(value.to.label[0])
 			});
-			component.$store.dispatch('updateFilteredData', component.$store.getters.getActiveDataset().name);
+			component.$store.dispatch('updateFilteredData', component.$store.getters.getActiveDataset());
 		});
-		
 
 		// on dataset change, clear all the components and reset the filter state
-		component.$store.watch(() => component.$store.state.activeDataset, () => {
+		this.$store.watch(() => component.$store.state.activeDataset, () => {
 			groups.clear();
 			pending.clear();
 			errors.clear();
@@ -57,7 +60,7 @@ export default {
 			component.$store.commit('setFilterState', {});
 		});
 
-		// update it's contents when the dataset changes		
+		// update it's contents when the dataset changes
 		this.$store.watch(() => this.$store.state.variableSummaries, histograms => {
 
 			const bulk = [];
@@ -173,9 +176,11 @@ export default {
 </script>
 
 <style>
-#variable-summaries {
-	width: 240px;
-	height: 80vh;
-	padding: 5px;
+.variables-header {
+	border: 1px solid #ccc;
+}
+#variable-facets {
+	overflow-x: hidden;
+	overflow-y: auto;
 }
 </style>

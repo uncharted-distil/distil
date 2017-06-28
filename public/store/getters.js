@@ -1,12 +1,20 @@
 import _ from 'lodash';
 
+export function getSearchTerms(state) {
+	return () => state.searchTerms;
+}
+
 export function getVariables(state) {
-	return (id) => {
-		const dataset = state.datasets.find(d => d.name === id);
-		if (dataset) {
-			return dataset.variables;
-		}
-		return null;
+	return () => state.variables;
+}
+
+export function getVariablesMap(state) {
+	return () => {
+		const map = new Map();
+		state.variables.forEach(variable => {
+			map.set(variable.name, variable.type);
+		});
+		return map;
 	};
 }
 
@@ -15,7 +23,7 @@ export function getDataset(state) {
 }
 
 export function getActiveDataset(state) {
-	return () => _.find(state.datasets, d => d.name === state.activeDataset);
+	return () => state.activeDataset;
 }
 
 export function getDatasets(state) {

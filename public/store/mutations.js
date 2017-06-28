@@ -1,6 +1,14 @@
 import _ from 'lodash';
 import * as index from './index';
 
+export function setSearchTerms(state, terms) {
+	state.searchTerms = terms;
+}
+
+export function setVariables(state, variables) {
+	state.variables = variables;
+}
+
 export function setDatasets(state, datasets) {
 	state.datasets = datasets;
 }
@@ -40,7 +48,7 @@ export function setVarEnabled(state, args) {
 
 // update the range/category toggle for a variable
 export function setVarFilterRange(state, args) {
-	const varState = state.filterState[args.name];	
+	const varState = state.filterState[args.name];
 	if (varState) {
 		if (varState.type === index.NUMERICAL_SUMMARY_TYPE) {
 			varState.min = args.min;
@@ -58,7 +66,7 @@ export function updateVarFilterState(state, args) {
 	state.filterState[args.name] = args.filterState;
 }
 
-// replace the entire filter state 
+// replace the entire filter state
 export function setFilterState(state, args) {
 	state.filterState = args;
 }

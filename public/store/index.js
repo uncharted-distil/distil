@@ -11,6 +11,8 @@ export const CATEGORICAL_SUMMARY_TYPE = 'categorical';
 
 // shared data model
 const state = {
+	// dataset search terms
+	searchTerms: '',
 	// description of matched datasets
 	datasets: [
 		// {
@@ -24,13 +26,20 @@ const state = {
 		//     ]
 		// }
 	],
+	// variable list for the active dataset
+	variables: [
+		// {
+		//     name: '',
+		//     type: ''
+		// }
+	],
 	// variable summary data for the active dataset
 	variableSummaries: [
-		//     name: '',
-		//     buckets: [{
-		//         key: '',
-		//         count: 0
-		//     }]
+		// name: '',
+		// buckets: [{
+		//     key: '',
+		//     count: 0
+		// }]
 	],
 	// filtered data entries for the active dataset
 	filteredData: {
