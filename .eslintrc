@@ -75,6 +75,9 @@
     "jsdoc/require-returns-description": 2,
     "jsdoc/require-returns-type": 2
   },
+
+  "parser": "typescript-eslint-parser",
+  
   "parserOptions": {
     "sourceType": "module"
   },

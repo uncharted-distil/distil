@@ -7,7 +7,7 @@ import * as mutations from './mutations';
 Vue.use(Vuex);
 
 // shared data model
-const state = {
+export const state = {
 	// description of matched datasets
 	datasets: [
 		// {
