@@ -11,8 +11,6 @@ export const CATEGORICAL_SUMMARY_TYPE = 'categorical';
 
 // shared data model
 const state = {
-	// dataset search terms
-	searchTerms: '',
 	// description of matched datasets
 	datasets: [
 		// {
@@ -53,23 +51,7 @@ const state = {
 		// values: [
 		//     []
 		// ]
-	},
-	filterState: {
-		// On_base_pct: {
-		//     type: 'numerical',
-		//     enabled: true,
-		//     min: '10',
-		//     max: '100',
-		// },
-		// Position: {
-		//     type: 'categorical',
-		//     enabled: false,
-		//     categories: ['pitcher', 'catcher']
-		// },
-		// ...
-	},
-	// name/id of the active dataset
-	activeDataset: null
+	}
 };
 
 export default new Vuex.Store({

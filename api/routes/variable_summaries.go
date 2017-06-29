@@ -12,7 +12,7 @@ import (
 
 // SummaryResult represents a summary response for a variable.
 type SummaryResult struct {
-	Histograms []*model.Histogram `json:"histograms"`
+	Histogram *model.Histogram `json:"histogram"`
 }
 
 // VariableSummaryHandler generates a route handler that facilitates the
@@ -39,7 +39,7 @@ func VariableSummaryHandler(ctor elastic.ClientCtor) func(http.ResponseWriter, *
 		}
 		// marshall output into JSON
 		err = handleJSON(w, SummaryResult{
-			Histograms: []*model.Histogram{histogram},
+			Histogram: histogram,
 		})
 		if err != nil {
 			handleError(w, errors.Wrap(err, "unable marshal summary result into JSON"))

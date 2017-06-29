@@ -1,7 +1,6 @@
 <template>
 	<div class="search-results">
 		<div class="bg-faded rounded mb-1" v-for="dataset in datasets" v-bind:key="dataset.name">
-
 			<div class="dataset-header nav rounded-top">
 				<a class="nav-link hover" v-on:click="setActiveDataset(dataset.name)">
 					{{dataset.name}}
@@ -11,19 +10,16 @@
 					<i v-if="!isExpanded(dataset.name)" class="fa fa-plus"></i>
 				</a>
 			</div>
-
 			<div class="dataset-body" v-if="isExpanded(dataset.name)">
-				<p>
+				<p class="p-2">
 					{{dataset.description}}
 				</p>
 			</div>
-
 		</div>
 	</div>
 </template>
 
 <script>
-
 import Vue from 'vue';
 
 export default {
@@ -45,7 +41,13 @@ export default {
 
 	methods: {
 		setActiveDataset(datasetName) {
-			this.$router.push({ path: '/dataset', query: { dataset: datasetName }});
+			this.$router.push({
+				path: '/dataset',
+				query: {
+					dataset: datasetName,
+					terms: this.$store.getters.getRouteTerms()
+				}
+			});
 		},
 		toggleExpansion(datasetName) {
 			Vue.set(this.expanded, datasetName, !this.expanded[datasetName]);

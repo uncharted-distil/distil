@@ -4,7 +4,10 @@
 			<h6 class="nav-link">Values</h6>
 		</div>
 		<div class="table-container">
-			<b-table
+			<div v-if="items.length===0">
+				No results
+			</div>
+			<b-table v-if="items.length>0"
 				responsive
 				bordered
 				hover
@@ -15,23 +18,10 @@
 				:current-page="currentPage">
 			</b-table>
 		</div>
-		<!--
-
-		:per-page="perPage"
-
-		<div v-if="items.length>0" class="justify-content-center row my-1">
-			<b-pagination
-				:total-rows="items.length"
-				:per-page="perPage"
-				v-model="currentPage" />
-		</div>
-		-->
 	</div>
 </template>
 
 <script>
-
-import _ from 'lodash';
 
 export default {
 	name: 'data-table',
@@ -43,44 +33,38 @@ export default {
 		};
 	},
 
+	mounted() {
+		this.$store.dispatch('updateFilteredData', this.dataset);
+	},
+
+	watch: {
+		// if dataset changes, clear filter state
+		'$route.query.dataset'() {
+		},
+		// if filters change, update data
+		'$route.query'() {
+			this.$store.dispatch('updateFilteredData', this.dataset);
+		}
+	},
+
 	computed: {
+		// get dataset from route
+		dataset() {
+			return this.$store.getters.getRouteDataset();
+		},
 		// extracts the table data from the store
 		items() {
-			const data = this.$store.getters.getFilteredData();
-			if (!_.isEmpty(data)) {
-				return _.map(data.values, d => {
-					const rowObj = {};
-					for (const [idx, varMeta] of data.metadata.entries()) {
-						rowObj[varMeta.name] = d[idx];
-					}
-					return rowObj;
-				});
-			} else {
-				return [];
-			}
+			return this.$store.getters.getFilteredDataItems(this.dataset);
 		},
 		// extract the table field header from the store
 		fields() {
-			const data = this.$store.getters.getFilteredData();
-			if (!_.isEmpty(data)) {
-				const result = {};
-				for (let varMeta of data.metadata) {
-					result[varMeta.name] = {
-						label: varMeta.name
-					};
-				}
-				return result;
-			} else {
-				return {};
-			}
+			return this.$store.getters.getFilteredDataFields(this.dataset);
 		}
 	}
 };
 </script>
 
 <style>
-.data-table {
-}
 .table-container {
 	overflow: auto;
 }

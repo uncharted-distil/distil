@@ -4171,7 +4171,7 @@ vue-loader@12.2.1:
     vue-style-loader "^3.0.0"
     vue-template-es2015-compiler "^1.2.2"
 
-vue-router@^2.6.0:
+vue-router@2.6.0:
   version "2.6.0"
   resolved "https://registry.yarnpkg.com/vue-router/-/vue-router-2.6.0.tgz#77b271f6e0ac6d57e8e556da58c6582fce0ab712"
 
@@ -4196,6 +4196,10 @@ vue-template-es2015-compiler@^1.2.2:
 vue@2.3.4, vue@^2.2.6:
   version "2.3.4"
   resolved "https://registry.yarnpkg.com/vue/-/vue-2.3.4.tgz#5ec3b87a191da8090bbef56b7cfabd4158038171"
+
+vuex-router-sync@^4.2.0:
+  version "4.2.0"
+  resolved "https://registry.yarnpkg.com/vuex-router-sync/-/vuex-router-sync-4.2.0.tgz#ebfc497d69b4018a9266a8f18b54bfca4d52125f"
 
 vuex@2.3.1:
   version "2.3.1"

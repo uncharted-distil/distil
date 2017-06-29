@@ -1,7 +1,9 @@
 import Vue from 'vue';
 import VueRouter from 'vue-router';
+import VueRouterSync from 'vuex-router-sync';
 import Dataset from './views/Dataset';
 import Search from './views/Search';
+import Navigation from './views/Navigation';
 import store from './store';
 import BootstrapVue from 'bootstrap-vue';
 
@@ -27,8 +29,18 @@ const router = new VueRouter({
 	]
 });
 
+// sync store and router
+VueRouterSync.sync(store, router);
+
 new Vue({
 	store,
 	router,
-	template: '<router-view class="view"></router-view>'
+	components: {
+		Navigation
+	},
+	template: `
+		<div id="distil-app" class="container-fluid">
+			<navigation/>
+			<router-view class="view"></router-view>
+		</div>`
 }).$mount('#app');

@@ -1,11 +1,14 @@
 <template>
 	<div class='search-bar'>
-		<b-form-input v-model="terms" type="text" placeholder="Search datasets" name="datasetsearch"></b-form-input>
+		<b-form-input
+			v-model="terms"
+			type="text"
+			placeholder="Search datasets"
+			name="datasetsearch"></b-form-input>
 	</div>
 </template>
 
 <script>
-
 import _ from 'lodash';
 
 export default {
@@ -14,16 +17,28 @@ export default {
 	computed: {
 		terms: {
 			set: _.throttle(function(terms) {
-				this.$store.commit('setSearchTerms', terms);
-				this.$store.dispatch('searchDatasets', terms);
-				this.$router.replace({ path: '/search', query: { terms: terms }});
+				this.$router.push({
+					path: '/search',
+					query: {
+						terms: terms
+					}
+				});
 			}, 500),
 			get: function() {
-				return this.$store.getters.getSearchTerms();
+				return this.$store.getters.getRouteTerms();
 			}
 		}
-	}
+	},
 
+	mounted() {
+		this.$store.dispatch('searchDatasets', this.terms);
+	},
+
+	watch: {
+		'$route.query.terms'() {
+			this.$store.dispatch('searchDatasets', this.terms);
+		}
+	}
 };
 </script>
 
