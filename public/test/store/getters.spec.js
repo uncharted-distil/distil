@@ -12,21 +12,12 @@ function createTestData(numItems) {
 }
 
 describe('getters', () => {
-	describe('#getDataset()', () => {
-		it('should retrieve a dataset from datasets map by id', () => {
-			const testData = createTestData(1);
-			const state = {
-				datasets: testData
-			};
-			expect(getters.getDataset(state)(testData[0].name)).to.deep.equal(testData[0]);
-		});
-	});
 
 	describe('#getVariables()', () => {
 		it('should retrieve a dataset\'s variables', () => {
 			const testData = createTestData(1);
 			const state = {
-				datasets: testData
+				variables: testData[0].variables
 			};
 			expect(getters.getVariables(state)(testData[0].name)).to.deep.equal(testData[0].variables);
 		});
@@ -59,7 +50,7 @@ describe('getters', () => {
 	});
 
 	describe('#getFilteredData()', () => {
-		const testData = { 
+		const testData = {
 			metadata:[
 				{name: 'alpha', type: 'int'},
 				{name: 'bravo', type: 'text'}

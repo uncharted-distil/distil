@@ -27,22 +27,6 @@
                     "doc_count": 0
                 }
             ]
-        },
-        "histogram_Games_played": {
-            "buckets": [
-                {
-                    "key": 1,
-                    "doc_count": 1
-                },
-                {
-                    "key": 2,
-                    "doc_count": 0
-                },
-                {
-                    "key": 3,
-                    "doc_count": 3
-                }
-            ]
         }
     }
 }

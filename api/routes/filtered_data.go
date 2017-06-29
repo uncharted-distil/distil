@@ -62,14 +62,21 @@ func parseFilterParams(r *http.Request) (*model.FilterParams, error) {
 					return nil, errors.Wrapf(err, "failed to parse range max from [%s, %v]", key, value)
 				}
 				filterParams.Ranged = append(filterParams.Ranged,
-					model.VariableRange{Min: min, Max: max, Variable: model.Variable{Name: key, Type: filterType}})
+					model.VariableRange{
+						Min:  min,
+						Max:  max,
+						Name: key,
+					})
 			} else if filterType == CategoricalFilter {
 				// categorical/ordinal should have type,category, category,...,category as args
 				if len(varParams) < 2 {
 					return nil, errors.Errorf("expected {type},{category_1},{category_2},...,{category_n} from [%s, %v]", key, value)
 				}
 				filterParams.Categorical = append(filterParams.Categorical,
-					model.VariableCategories{Variable: model.Variable{Name: key, Type: filterType}, Categories: varParams[1:]})
+					model.VariableCategories{
+						Name:       key,
+						Categories: varParams[1:],
+					})
 			} else {
 				return nil, errors.Errorf("unhandled parameter type from [%s, %v]", key, value)
 			}

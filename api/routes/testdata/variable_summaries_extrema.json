@@ -15,14 +15,8 @@
         "min_Number_seasons": {
             "value": 0
         },
-        "min_Games_played": {
-            "value": 1
-        },
         "max_Number_seasons": {
             "value": 4
-        },
-        "max_Games_played": {
-            "value": 5
         }
     }
 }

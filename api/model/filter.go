@@ -20,15 +20,15 @@ type FilteredData struct {
 
 // VariableRange defines the min/max value for a variable filter.
 type VariableRange struct {
-	Variable
-	Min float64
-	Max float64
+	Name string
+	Min  float64
+	Max  float64
 }
 
 // VariableCategories defines the set of allowed categories for a categorical
 // variable filter.
 type VariableCategories struct {
-	Variable
+	Name       string
 	Categories []string
 }
 
