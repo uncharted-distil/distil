@@ -51,13 +51,13 @@ We use [vue](https://github.com/vuejs/vue), [vuex](https://github.com/vuejs/vuex
 
 #### Components / Views (vue)
 
-The application is split into views, each of which are comprised of one or more components.
+The application is split into views, each comprised of one or more components.
 
 #### Routes (vue-router)
 
-Everything is based off the route. The route contains *_the entire_* reproducible state of the application. Therefore copy / pasting the current route into a new tab *_should_* result in the exact same view for a user.
+Everything is based off the route. The route contains **_entire_** reproducible state of the application. Therefore copy and pasting the current route into a new tab **_should_** result in the exact same view for a user.
 
-It is the ground truth and _everything_ must be derivable off the route. That is not to say that everything should go in the route. The route should only contain the most minimal information that is required to regenerate the state of the application. Any other data, typically pulled from the server via asynchronous requests, will be the result of actions dispatched to the store.
+The route is the ground truth and **_everything_** must be derivable from it. That is not to say that everything should go in the route. It should only contain the minimal information that is required to regenerate the state of the application. Any other data, typically pulled from the server via asynchronous requests, will be the result of actions dispatched to the store.
 
 #### Store (vuex + vuex-router-sync)
 
@@ -122,7 +122,7 @@ Therefore the overall flow is:
 - Affected components computed new values from store changes
 - View updates
 
-Any state that is shared between components should be managed by a higher level component rather than redundantly watching the route in multiple components. Ex. If components A and B both need state C which is dependent upon route query param D, a third component E should be created to watch the state and dispatch a single action upon change. Components A and B will then read from the store via computed values.
+NOTE: Any state that is shared between components should be managed by a higher level component rather than redundantly watching the route in multiple components. Ex. If components A and B both need state C which is dependent upon route query param D, a third component E should be created to watch the state and dispatch a single action upon change. Components A and B will then read from the store via computed values.
 
 ## Common Issues:
 
