@@ -38,9 +38,6 @@ export default {
 	},
 
 	watch: {
-		// if dataset changes, clear filter state
-		'$route.query.dataset'() {
-		},
 		// if filters change, update data
 		'$route.query'() {
 			this.$store.dispatch('updateFilteredData', this.dataset);

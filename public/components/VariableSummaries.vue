@@ -3,6 +3,9 @@
 		<div class="nav bg-faded rounded-top">
 			<h6 class="nav-link">Summaries</h6>
 		</div>
+		<div v-if="summaries.length===0">
+			No results
+		</div>
 		<div id="variable-facets"></div>
 	</div>
 </template>
@@ -32,6 +35,9 @@ export default {
 	computed: {
 		dataset: function() {
 			return this.$store.getters.getRouteDataset();
+		},
+		summaries: function() {
+			return this.$store.getters.getVariableSummaries();
 		}
 	},
 
@@ -237,7 +243,6 @@ export default {
 			this.pending.clear();
 			this.errors.clear();
 			this.facets.replace([]);
-			this.$store.commit('setFilterState', {});
 			this.$store.dispatch('getVariableSummaries', this.dataset);
 		}
 	}

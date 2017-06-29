@@ -14,6 +14,7 @@ export function searchDatasets(context, terms) {
 		})
 		.catch(error => {
 			console.error(error);
+			context.commit('setDatasets', []);
 		});
 }
 
@@ -25,6 +26,7 @@ export function getVariables(context, dataset) {
 		})
 		.catch(error => {
 			console.error(error);
+			context.commit('setVariables', []);
 		});
 }
 
@@ -82,5 +84,6 @@ export function updateFilteredData(context, datasetName) {
 		})
 		.catch(error => {
 			console.error(error);
+				context.commit('setFilteredData', []);
 		});
 }
