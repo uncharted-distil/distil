@@ -1,33 +1,46 @@
 <template>
-	<div id='search-bar'>
-		<b-form-input v-model="terms" type="text" placeholder="Search datasets" name="datasetsearch"></b-form-input>
+	<div class='search-bar'>
+		<b-form-input
+			v-model="terms"
+			type="text"
+			placeholder="Search datasets"
+			name="datasetsearch"></b-form-input>
 	</div>
 </template>
 
 <script>
-
 import _ from 'lodash';
 
 export default {
 	name: 'search-bar',
 
-	// control local data
-	data() {
-		return {
-			terms: ''
-		};
+	computed: {
+		terms: {
+			set: _.throttle(function(terms) {
+				this.$router.push({
+					path: '/search',
+					query: {
+						terms: terms
+					}
+				});
+			}, 500),
+			get: function() {
+				return this.$store.getters.getRouteTerms();
+			}
+		}
 	},
 
-	// data change handlers
-	watch: {
-		// issues a debounced search request to the server
-		terms: _.throttle(function (newTerms) {
-			this.$store.dispatch('searchDatasets', newTerms);
-		}, 500)
+	mounted() {
+		this.$store.dispatch('searchDatasets', this.terms);
 	},
+
+	watch: {
+		'$route.query.terms'() {
+			this.$store.dispatch('searchDatasets', this.terms);
+		}
+	}
 };
 </script>
 
 <style>
-
 </style>

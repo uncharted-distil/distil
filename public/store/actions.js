@@ -1,131 +1,89 @@
 import _ from 'lodash';
 import axios from 'axios';
-import * as index from './index';
+import { decodeFilters, encodeQueryParams } from '../util/filters';
 
 // TODO: move this somewhere more appropriate.
 const ES_INDEX = 'datasets';
-const TABLE_DATA_LIMIT = 100;
 
 // searches dataset descriptions and column names for supplied terms
 export function searchDatasets(context, terms) {
-	if (_.isEmpty(terms)) {
-		context.commit('setDatasets', []);
-	} else {
-		axios.get(`/distil/datasets/${ES_INDEX}?search=${terms}`)
-			.then(response => {
-				if (!_.isEmpty(response.data.datasets)) {
-					context.commit('setDatasets', response.data.datasets);
-				} else {
-					context.commit('setDatasets', []);
-				}
-			})
-			.catch(error => {
-				console.error(error);
-				context.commit('setDatasets', []);
-			});
-	}
+	const params = !_.isEmpty(terms) ? `?search=${terms}` : '';
+	return axios.get(`/distil/datasets/${ES_INDEX}${params}`)
+		.then(response => {
+			context.commit('setDatasets', response.data.datasets);
+		})
+		.catch(error => {
+			console.error(error);
+			context.commit('setDatasets', []);
+		});
+}
+
+// fetches all variables for a single dataset.
+export function getVariables(context, dataset) {
+	return axios.get(`/distil/variables/${ES_INDEX}/${dataset}`)
+		.then(response => {
+			context.commit('setVariables', response.data.variables);
+		})
+		.catch(error => {
+			console.error(error);
+			context.commit('setVariables', []);
+		});
 }
 
 // fetches variable summary data for the given dataset and variables
-export function getVariableSummaries(context, dataset) {
-	// commit empty place holders
-	const histograms = new Array(dataset.variables.length - 1);
-	dataset.variables.forEach((variable, idx) => {
-		histograms[idx] = {
-			name: variable.name,
-			pending: true
-		};
-	});
-	context.commit('setVariableSummaries', histograms);
-	// fill them in asynchronously
-	dataset.variables.forEach((variable, idx) => {
-		axios.get(`/distil/variable-summaries/${ES_INDEX}/${dataset.name}/${variable.name}`)
-			.then(response => {
-				// save the variable summary data
-				const histogram = response.data.histograms[0];
-				context.commit('updateVariableSummaries', {
-					index: idx,
-					histogram: histogram
-				});
-				// set the default filter state for the variable
-				const filterState = {
-					type: histogram.type,
-					enabled: true
+export function getVariableSummaries(context, datasetName) {
+	return context.dispatch('getVariables', datasetName)
+		.then(() => {
+			const variables = context.getters.getVariables();
+			// commit empty place holders
+			const histograms = variables.map(variable => {
+				return {
+					name: variable.name,
+					pending: true
 				};
-				if (_.has(histogram, 'extrema')) {
-					filterState.min = histogram.extrema.min;
-					filterState.max = histogram.extrema.max;
-				} else if (_.has(histogram, 'categories')) {
-					filterState.categories = histogram.categories;
-				}
-				context.commit('updateVarFilterState', { name: histogram.name, filterState: filterState });
-			})
-			.catch(error => {
-				console.error(error);
-				context.commit('updateVariableSummaries', {
-					index: idx,
-					histogram: {
-						name: variable.name,
-						err: error
-					}
-				});
 			});
-	});
+			context.commit('setVariableSummaries', histograms);
+			// fill them in asynchronously
+			variables.forEach((variable, idx) => {
+				axios.get(`/distil/variable-summaries/${ES_INDEX}/${datasetName}/${variable.name}`)
+					.then(response => {
+						// save the variable summary data
+						const histogram = response.data.histogram;
+						context.commit('updateVariableSummaries', {
+							index: idx,
+							histogram: histogram
+						});
+					})
+					.catch(error => {
+						console.error(error);
+						context.commit('updateVariableSummaries', {
+							index: idx,
+							histogram: {
+								name: variable.name,
+								err: error
+							}
+						});
+					});
+			});
+		})
+		.catch(error => {
+			console.error(error);
+		});
 }
 
 // update filtered data based on the  current filter state
 export function updateFilteredData(context, datasetName) {
-	// build up a map of var types so we can quickly look them up while we generate parameters
-	// TODO: this should really be availabe through the store in some convenient fashion
-	const variables = context.getters.getDataset(datasetName).variables;
-	const varTypes = new Map();
-	for (let variable of variables) {
-		varTypes.set(variable.name, variable.type);
-	}
-
-	// initialize the url
-	const filterState = context.state.filterState;
-	var requestUrl = `distil/filtered-data/${datasetName}?`;
-
-	// build up the parameter list from the current filter state
-	var params = [];
-	params.push(`size=${TABLE_DATA_LIMIT}`);
-	_.forEach(filterState, (varFilter, varName) => {
-		if (varFilter.enabled) {
-			// numeric types have type,min,max or no additonal args if the value is unfiltered
-			if (varFilter.type === index.NUMERICAL_SUMMARY_TYPE) {
-				if (!_.isEmpty(varFilter, 'min') && !_.isEmpty(varFilter, 'max')) {
-					params.push(varName + '=' + [encodeURIComponent(varTypes.get(varName)), varFilter.min, varFilter.max].join(','));
-				} else {
-					params.push(varName);
-				}
-			// categorical type shave type,cat1,cat2...catN or no additional args if the value is unfiltered
-			} else if (varFilter.type === index.CATEGORICAL_SUMMARY_TYPE) {
-				if (!_.isEmpty(varFilter.categories)) {
-					var varParams = encodeURIComponent(varTypes.get(varName));
-					varParams = ([varParams].concat(varFilter.categories)).join(',');
-					params.push(encodeURIComponent(varName) + '=' + varParams);
-				} else {
-					params.push(varName);
-				}
-			}
-		}
-	});
-
-	// construct the final URL
-	requestUrl += params.join('&');
-
+	const filters = context.getters.getRouteFilters();
+	const decoded = decodeFilters(filters);
+	const queryParams = encodeQueryParams(decoded);
+	const url = `distil/filtered-data/${datasetName}${queryParams}`;
 	// request filtered data from server - no data is valid given filter settings
-	axios.get(requestUrl)
+	return axios.get(url)
 		.then(response => {
-			if (_.isEmpty(response.data.metadata)) {
-				context.commit('setFilteredData', {});
-			} else {
-				context.commit('setFilteredData', response.data);
-			}
+			context.commit('setFilteredData', response.data);
 		})
 		.catch(error => {
 			console.error(error);
-			context.commit('setFilteredData', {});
+				context.commit('setFilteredData', []);
 		});
 }

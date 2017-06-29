@@ -20,15 +20,15 @@ type FilteredData struct {
 
 // VariableRange defines the min/max value for a variable filter.
 type VariableRange struct {
-	Variable
-	Min float64
-	Max float64
+	Name string
+	Min  float64
+	Max  float64
 }
 
 // VariableCategories defines the set of allowed categories for a categorical
 // variable filter.
 type VariableCategories struct {
-	Variable
+	Name       string
 	Categories []string
 }
 
@@ -102,10 +102,9 @@ func parseResults(searchResults *elastic.SearchResult) (*FilteredData, error) {
 func FetchFilteredData(client *elastic.Client, dataset string, filterParams *FilterParams) (*FilteredData, error) {
 	// construct an ES query that fetches documents from the dataset with the supplied variable filters applied
 	query := elastic.NewBoolQuery()
-	var keys []string
+	var excludes []string
 	for _, variable := range filterParams.Ranged {
 		query = query.Filter(elastic.NewRangeQuery(variable.Name + ".value").Gte(variable.Min).Lte(variable.Max))
-		keys = append(keys, variable.Name)
 	}
 	for _, variable := range filterParams.Categorical {
 		// this is imposed by go's language design - []string needs explicit conversion to []interface{} before
@@ -115,13 +114,12 @@ func FetchFilteredData(client *elastic.Client, dataset string, filterParams *Fil
 			categories[i] = variable.Categories[i]
 		}
 		query = query.Filter(elastic.NewTermsQuery(variable.Name+".value", categories...))
-		keys = append(keys, variable.Name)
 	}
 	for _, variableName := range filterParams.None {
-		keys = append(keys, variableName)
+		excludes = append(excludes, variableName)
 	}
 
-	fetchContext := elastic.NewFetchSourceContext(true).Include(keys...)
+	fetchContext := elastic.NewFetchSourceContext(true).Exclude(excludes...)
 
 	// execute the ES query
 	res, err := client.Search().

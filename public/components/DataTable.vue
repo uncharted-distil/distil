@@ -1,51 +1,68 @@
 <template>
-	<div id="data-table">
-		<b-table responsive bordered hover :items="items" :fields="fields">
-		</b-table>
+	<div class="data-table">
+		<div class="nav bg-faded rounded-top">
+			<h6 class="nav-link">Values</h6>
+		</div>
+		<div class="table-container">
+			<div v-if="items.length===0">
+				No results
+			</div>
+			<b-table v-if="items.length>0"
+				responsive
+				bordered
+				hover
+				striped
+				small
+				:items="items"
+				:fields="fields"
+				:current-page="currentPage">
+			</b-table>
+		</div>
 	</div>
 </template>
 
 <script>
 
-import _ from 'lodash';
-
 export default {
 	name: 'data-table',
+
+	data() {
+		return {
+			perPage: 10,
+			currentPage: 1
+		};
+	},
+
+	mounted() {
+		this.$store.dispatch('updateFilteredData', this.dataset);
+	},
+
+	watch: {
+		// if filters change, update data
+		'$route.query'() {
+			this.$store.dispatch('updateFilteredData', this.dataset);
+		}
+	},
+
 	computed: {
+		// get dataset from route
+		dataset() {
+			return this.$store.getters.getRouteDataset();
+		},
 		// extracts the table data from the store
 		items() {
-			const data = this.$store.getters.getFilteredData();
-			if (!_.isEmpty(data)) {				
-				return _.map(data.values, d => {
-					const rowObj = {};
-					for (const [idx, varMeta] of data.metadata.entries()) {
-						rowObj[varMeta.name] = d[idx];
-					}
-					return rowObj;
-				});				
-			} else {
-				return [];
-			}
+			return this.$store.getters.getFilteredDataItems(this.dataset);
 		},
 		// extract the table field header from the store
 		fields() {
-			const data = this.$store.getters.getFilteredData();
-			if (!_.isEmpty(data)) {
-				const result = {};
-				for (let varMeta of data.metadata) {
-					result[varMeta.name] = {
-						label: varMeta.name				
-					};
-				}				
-				return result;
-			} else {
-				return {};
-			}			
+			return this.$store.getters.getFilteredDataFields(this.dataset);
 		}
 	}
 };
 </script>
 
 <style>
-
+.table-container {
+	overflow: auto;
+}
 </style>

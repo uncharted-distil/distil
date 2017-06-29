@@ -2,6 +2,7 @@ package model
 
 import (
 	"context"
+	"fmt"
 	"strconv"
 
 	"github.com/pkg/errors"
@@ -92,20 +93,6 @@ func parseExtrema(res *elastic.SearchResult, variable *Variable) (*Extrema, erro
 	}, nil
 }
 
-func parseExtremas(res *elastic.SearchResult, variables []*Variable) ([]*Extrema, error) {
-	var extremas []*Extrema
-	for _, variable := range variables {
-		// parse extrema
-		extrema, err := parseExtrema(res, variable)
-		if err != nil {
-			continue
-		}
-		// append extrema
-		extremas = append(extremas, extrema)
-	}
-	return extremas, nil
-}
-
 func appendMinMaxAggs(search *elastic.SearchService, variable *Variable) *elastic.SearchService {
 	// get field name
 	field := variable.Name + "." + VariableValueField
@@ -136,24 +123,6 @@ func fetchExtrema(client *elastic.Client, dataset string, variable *Variable) (*
 	return parseExtrema(res, variable)
 }
 
-func fetchExtremas(client *elastic.Client, dataset string, variables []*Variable) ([]*Extrema, error) {
-	// create a query that does min and max aggregations for each variable
-	search := client.Search().
-		Index(dataset).
-		Size(0)
-	// for each variable, create a min / max aggregation
-	for _, variable := range variables {
-		// add min / max aggregation
-		appendMinMaxAggs(search, variable)
-	}
-	// execute the search
-	res, err := search.Do(context.Background())
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to execute extrema search")
-	}
-	return parseExtremas(res, variables)
-}
-
 func parseNumericHistogram(res *elastic.SearchResult, extrema *Extrema) (*Histogram, error) {
 	// get histogram agg name
 	histogramAggName := HistogramAggPrefix + extrema.Name
@@ -177,20 +146,6 @@ func parseNumericHistogram(res *elastic.SearchResult, extrema *Extrema) (*Histog
 		Extrema: extrema,
 		Buckets: buckets,
 	}, nil
-}
-
-func parseNumericHistograms(res *elastic.SearchResult, extremas []*Extrema) ([]*Histogram, error) {
-	var histograms []*Histogram
-	for _, extrema := range extremas {
-		// parse histogram
-		histogram, err := parseNumericHistogram(res, extrema)
-		if err != nil {
-			return nil, err
-		}
-		// append histogram
-		histograms = append(histograms, histogram)
-	}
-	return histograms, nil
 }
 
 func appendHistogramAgg(search *elastic.SearchService, extrema *Extrema) *elastic.SearchService {
@@ -230,30 +185,6 @@ func fetchNumericalHistogram(client *elastic.Client, dataset string, variable *V
 	return parseNumericHistogram(res, extrema)
 }
 
-func fetchNumericalHistograms(client *elastic.Client, dataset string, variables []*Variable) ([]*Histogram, error) {
-	// need the extrema of each var to calculate the histrogram interval
-	extremas, err := fetchExtremas(client, dataset, variables)
-	if err != nil {
-		return nil, err
-	}
-	// for each returned aggregation, create a histogram aggregation. Bucket
-	// size is derived from the min/max and desired bucket count.
-	search := client.Search().
-		Index(dataset).
-		Size(0)
-	// for each extrema, create a histogram aggregation
-	for _, extrema := range extremas {
-		// add histogram agg
-		appendHistogramAgg(search, extrema)
-	}
-	// execute the search
-	res, err := search.Do(context.Background())
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to fetch histograms for variables summaries")
-	}
-	return parseNumericHistograms(res, extremas)
-}
-
 func parseCategoricalHistogram(res *elastic.SearchResult, variable *Variable) (*Histogram, error) {
 	// get terms agg name
 	termsAggName := TermsAggPrefix + variable.Name
@@ -279,20 +210,6 @@ func parseCategoricalHistogram(res *elastic.SearchResult, variable *Variable) (*
 	}, nil
 }
 
-func parseCategoricalHistograms(res *elastic.SearchResult, variables []*Variable) ([]*Histogram, error) {
-	var histograms []*Histogram
-	for _, variable := range variables {
-		// parse histogram
-		histogram, err := parseCategoricalHistogram(res, variable)
-		if err != nil {
-			return nil, err
-		}
-		// append histogram
-		histograms = append(histograms, histogram)
-	}
-	return histograms, nil
-}
-
 func appendTermsAgg(search *elastic.SearchService, variable *Variable) *elastic.SearchService {
 	// get field name
 	field := variable.Name + "." + VariableValueField
@@ -314,36 +231,18 @@ func fetchCategoricalHistogram(client *elastic.Client, dataset string, variable 
 	// execute the search
 	res, err := search.Do(context.Background())
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to execute terms aggregation query for summary")
+		return nil, errors.Wrap(err, fmt.Sprintf("failed to execute terms aggregation query for summary, %v", res))
 	}
 	return parseCategoricalHistogram(res, variable)
-}
-
-func fetchCategoricalHistograms(client *elastic.Client, dataset string, variables []*Variable) ([]*Histogram, error) {
-	// create a query that does min and max aggregations for each variable
-	search := client.Search().
-		Index(dataset).
-		Size(0)
-	// for each variable, create a min / max aggregation
-	for _, variable := range variables {
-		// add terms aggregation
-		appendTermsAgg(search, variable)
-	}
-	// execute the search
-	res, err := search.Do(context.Background())
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to execute terms aggregation query for summary")
-	}
-	return parseCategoricalHistograms(res, variables)
 }
 
 // FetchSummary returns the summary for the provided index, dataset, and
 // variable.
 func FetchSummary(client *elastic.Client, index string, dataset string, varName string) (*Histogram, error) {
-	// need list of variables to request aggregation against.
+	// need description of the variables to request aggregation against.
 	variable, err := FetchVariable(client, index, dataset, varName)
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to fetch variables for summary")
+		return nil, errors.Wrap(err, "failed to fetch variable description for summary")
 	}
 	if IsNumerical(variable.Type) {
 		// fetch numeric histograms
@@ -362,26 +261,4 @@ func FetchSummary(client *elastic.Client, index string, dataset string, varName 
 		return categorical, nil
 	}
 	return nil, errors.Errorf("variable %s of type %s does not support summary", variable.Name, variable.Type)
-}
-
-// FetchSummaries returns summaries for all variables in the provided index and
-// dataset
-func FetchSummaries(client *elastic.Client, index string, dataset string) ([]*Histogram, error) {
-	// need list of variables to request aggregation against.
-	variables, err := FetchVariables(client, index, dataset)
-	if err != nil {
-		return nil, err
-	}
-	// fetch numeric histograms
-	numerical, err := fetchNumericalHistograms(client, dataset, getNumericalVariables(variables))
-	if err != nil {
-		return nil, err
-	}
-	// fetch categorical histograms
-	categorical, err := fetchCategoricalHistograms(client, dataset, getCategoricalVariables(variables))
-	if err != nil {
-		return nil, err
-	}
-	// merge
-	return append(numerical, categorical...), nil
 }

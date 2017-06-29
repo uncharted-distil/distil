@@ -24,13 +24,20 @@ const state = {
 		//     ]
 		// }
 	],
+	// variable list for the active dataset
+	variables: [
+		// {
+		//     name: '',
+		//     type: ''
+		// }
+	],
 	// variable summary data for the active dataset
 	variableSummaries: [
-		//     name: '',
-		//     buckets: [{
-		//         key: '',
-		//         count: 0
-		//     }]
+		// name: '',
+		// buckets: [{
+		//     key: '',
+		//     count: 0
+		// }]
 	],
 	// filtered data entries for the active dataset
 	filteredData: {
@@ -44,23 +51,7 @@ const state = {
 		// values: [
 		//     []
 		// ]
-	},
-	filterState: {
-		// On_base_pct: {
-		//     type: 'numerical',
-		//     enabled: true,
-		//     min: '10',
-		//     max: '100',
-		// },
-		// Position: {
-		//     type: 'categorical',
-		//     enabled: false,
-		//     categories: ['pitcher', 'catcher']
-		// },
-		// ...
-	},
-	// name/id of the active dataset
-	activeDataset: null
+	}
 };
 
 export default new Vuex.Store({
