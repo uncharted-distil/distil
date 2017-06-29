@@ -45,6 +45,85 @@ Build, watch, and run server:
 make watch
 ```
 
+## Vue + Vuex + Vue-Router Flow
+
+We use [vue](https://github.com/vuejs/vue), [vuex](https://github.com/vuejs/vuex), [vue-router](https://github.com/vuejs/vue-router) and [vuex-router-sync](https://github.com/vuejs/vuex-router-sync) in the frontend app.
+
+#### Components / Views (vue)
+
+The application is split into views, each of which are comprised of one or more components.
+
+#### Routes (vue-router)
+
+Everything is based off the route. The route contains *_the entire_* reproducible state of the application. Therefore copy / pasting the current route into a new tab *_should_* result in the exact same view for a user.
+
+It is the ground truth and _everything_ must be derivable off the route. That is not to say that everything should go in the route. The route should only contain the most minimal information that is required to regenerate the state of the application. Any other data, typically pulled from the server via asynchronous requests, will be the result of actions dispatched to the store.
+
+#### Store (vuex + vuex-router-sync)
+
+The store contains the route (via [vuex-router-sync](https://github.com/vuejs/vuex-router-sync)) and any auxiliary state that can be derived from the route.
+
+##### Application Architecture / Flow
+
+Views are routed based off the URL, which is registered in `public/main.js`:
+
+```javascript
+const router = new VueRouter({
+	routes: [
+		{ path: '/route0', component: View0 },
+		{ path: '/route2', component: View1 },
+	]
+});
+```
+
+Any change of state through user interaction is pushed to the router via the respective component:
+
+```javaScript
+methods: {
+	clickOnButton() {
+		this.$router.push({
+			path: '/path',
+			query: {
+				someValue: this.computedValue,
+			}
+		});
+	}
+}
+```
+
+Components retrieve their values / data from the store via computed values:
+
+```javascript
+computed: {
+	someRouteValue() {
+		return this.$store.getters.getRouteValue();
+	}
+	someOtherData() {
+		return this.$store.getters.otherData();
+	}
+}
+```
+
+Components watch the route for any change that may affect them. When a change occurs, and required action is then dispatched to the store. The store will update (via a commit), and a new value will be computed, thus updating the component.
+
+```javaScript
+watch: {
+	'$route.query.someValue'() {
+		this.$store.dispatch('someAction', this.someValue);
+	}
+}
+```
+
+Therefore the overall flow is:
+
+- User interaction
+- Component pushes to route
+- Affected components dispatch actions from route watch
+- Affected components computed new values from store changes
+- View updates
+
+Any state that is shared between components should be managed by a higher level component rather than redundantly watching the route in multiple components. Ex. If components A and B both need state C which is dependent upon route query param D, a third component E should be created to watch the state and dispatch a single action upon change. Components A and B will then read from the store via computed values.
+
 ## Common Issues:
 
 #### "glide: command not found":
