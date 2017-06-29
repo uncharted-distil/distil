@@ -49,21 +49,21 @@ make watch
 
 We use [vue](https://github.com/vuejs/vue), [vuex](https://github.com/vuejs/vuex), [vue-router](https://github.com/vuejs/vue-router) and [vuex-router-sync](https://github.com/vuejs/vuex-router-sync) in the frontend app.
 
-#### Components / Views (vue)
+### Components / Views (vue)
 
 The application is split into views, each comprised of one or more components.
 
-#### Routes (vue-router)
+### Routes (vue-router)
 
 Everything is based off the route. The route contains **_entire_** reproducible state of the application. Therefore copy and pasting the current route into a new tab **_should_** result in the exact same view for a user.
 
 The route is the ground truth and **_everything_** must be derivable from it. That is not to say that everything should go in the route. It should only contain the minimal information that is required to regenerate the state of the application. Any other data, typically pulled from the server via asynchronous requests, will be the result of actions dispatched to the store.
 
-#### Store (vuex + vuex-router-sync)
+### Store (vuex + vuex-router-sync)
 
 The store contains the route (via [vuex-router-sync](https://github.com/vuejs/vuex-router-sync)) and any auxiliary state that can be derived from the route.
 
-##### Application Architecture / Flow
+### Application Architecture / Flow
 
 Views are routed based off the URL, which is registered in `public/main.js`:
 
