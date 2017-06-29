@@ -71,7 +71,7 @@ Views are routed based off the URL, which is registered in `public/main.js`:
 const router = new VueRouter({
 	routes: [
 		{ path: '/route0', component: View0 },
-		{ path: '/route2', component: View1 },
+		{ path: '/route1', component: View1 },
 	]
 });
 ```
