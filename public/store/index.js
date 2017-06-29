@@ -6,9 +6,6 @@ import * as mutations from './mutations';
 
 Vue.use(Vuex);
 
-export const NUMERICAL_SUMMARY_TYPE = 'numerical';
-export const CATEGORICAL_SUMMARY_TYPE = 'categorical';
-
 // shared data model
 const state = {
 	// description of matched datasets
@@ -33,11 +30,15 @@ const state = {
 	],
 	// variable summary data for the active dataset
 	variableSummaries: [
-		// name: '',
-		// buckets: [{
-		//     key: '',
-		//     count: 0
-		// }]
+		// {
+		//     name: '',
+		//     buckets: [
+		//     {
+		//             key: '',
+		//             count: 0
+		//         }
+		//     ]
+		// }
 	],
 	// filtered data entries for the active dataset
 	filteredData: {
