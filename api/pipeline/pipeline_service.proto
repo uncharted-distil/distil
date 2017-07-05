@@ -1,0 +1,130 @@
+syntax = "proto3";
+package pipeline;
+
+/*
+ * This interface is based on the unified API proposal available at
+ * https://datadrivendiscovery.org/wiki/pages/viewpage.action?pageId=4260430, with changes made to
+ * account for functionality provided by GRPC. The API constitutes a threshold capability,
+ * aimed at satisfying the train/predict/subset tasks without introducing additional functions to
+ * support temporary modification of datasets, and their subsequent materialization.  Instead, we use a URI
+ * to point to locations on HDFS (or other), allowing TA3 systems to select a data subset prior to submission to TA2,
+ * as well as provide a means fro TA2 systems to write out the results of pipeline train and predict steps.  This is
+ * not meant to preclude moving to a scheme whereby TA2 takes more ownership of data, but rather,
+ * aims facilitate development of the basic API in the near term.
+ */
+
+message Header {
+    string session_id = 1;
+    string timestamp = 2;
+    string version = 3;
+}
+
+// status code could be an enum, should catpure success, error conditions with details provided
+// in the string field
+message Status {
+    int32 result = 1;
+    string info = 2;
+}
+
+message Result {
+    Header header = 1;
+    Status status = 2;
+}
+
+message SessionRequest {
+    Header header = 1;
+    string session_id = 2;
+}
+
+// enums below are based on values taken from the problem annotation schema
+
+enum Task {
+    CLASSIFICATION = 0;
+    REGRESSION = 1;
+}
+
+enum SubTask {
+    BINARY_CLASSIFICATION = 0;
+    MULTICLASS_CLASSIFICATION = 1;
+    MULTILABEL_CLASSIFICATION = 2;
+}
+
+enum Output {
+    CLASS_LABEL = 0;
+    PROBABILITY = 1;
+    GENERAL_SCORE = 2;
+    MULTILABEL = 3;
+    REGRESSION_VALUE = 4;
+}
+
+enum Metric {
+    ACCURACY = 0;
+    PRECISION = 1;
+    RECALL = 2;
+    F1 = 3;
+    F1_MICRO = 4;
+    F1_MACRO = 5;
+    ROC_AUC = 6;
+    LOG_LOSS = 7;
+    MEAN_SQUARED_ERR = 8;
+    ROOT_MEAN_SQUARED_ERR = 9;
+    MEAN_ABSOLUTE_ERR = 10;
+    MEDIAN_ABSOSLUTE_ERR = 11;
+    R2 = 12;
+}
+
+message PipelineCreateRequest {
+    Header header = 1;
+    // could also split into train_dataset_uri, train_targets_uri if training data left unjoined, would
+    // make 'target_features' field redundant in that case
+    repeated string train_dataset_uris = 2;
+    Task task = 3;
+    SubTask subTask = 4;
+    Output output = 5;
+    Metric metric = 6;
+    repeated string target_features = 7;
+    int32 num_pipelines = 8;
+}
+
+message PipelineCreateComplete {
+    repeated string result_uris = 1;
+    Output output = 2;
+    Metric metric = 3;
+    float score = 4;
+}
+
+message PipelineCreateResult {
+    Header header = 1;
+    Status status = 2;
+    string pipeline_id = 3;
+    // Will be unset if pipeline creation is still in progress - status field
+    // can be used to provide progress info
+    PipelineCreateComplete completeInfo = 4;
+}
+
+message PipelineExecuteRequest {
+    Header header = 1;
+    string pipeline_id = 2;
+    repeated string test_dataset_uris = 3;
+}
+
+message PipelineExecuteResult {
+    Header header = 1;
+    Status status = 2;
+    string pipeline_id = 3;
+    // Will be unser if pipeline execution is still in progress - status field
+    // can be used to provide progress info
+    repeated string result_uris = 4;
+}
+
+service PipelineCompute {
+    // Train step - multiple result messages returned via GRPC streaming.
+    rpc CreatePipelines(PipelineCreateRequest) returns (stream PipelineCreateResult) {}
+
+    // Predict step - multiple results messages returned via GRPC streaming.
+    rpc ExecutePipeline(PipelineExecuteRequest) returns (stream PipelineExecuteResult) {}
+
+    // Session management
+    rpc StartSession(SessionRequest) returns (Status) {}
+    rpc EndSession(SessionRequest) returns (Status) {}
+}

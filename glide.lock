@@ -1,5 +1,5 @@
-hash: 8cd1350d0cfb7d2ccb0695c775ecc1c335d2f1e5bf35137536dff2e2c10eb699
-updated: 2017-06-26T17:01:54.228255897-04:00
+hash: 0365429f13c54d3639be6b1ac75fd27e145401ef8ab6826b043485142af0a24a
+updated: 2017-07-04T10:07:42.100191664-04:00
 imports:
 - name: github.com/davecgh/go-spew
   version: 04cdfd42973bb9c8589fd6a731800cf222fde1a9
@@ -10,6 +10,12 @@ imports:
   subpackages:
   - internal
   - redis
+- name: github.com/golang/protobuf
+  version: 1f49d83d9aa00e6ce4fc8258c71cc7786aec968a
+  subpackages:
+  - proto
+  - protoc-gen-go
+  - ptypes/any
 - name: github.com/mattn/go-colorable
   version: ded68f7a9561c023e790de24279db7ebf473ea80
 - name: github.com/mattn/go-isatty
@@ -41,10 +47,47 @@ imports:
   - internal
   - pat
   - pattern
+- name: golang.org/x/net
+  version: da118f7b8e5954f39d0d2130ab35d4bf0e3cb344
+  subpackages:
+  - context
+  - http2
+  - http2/hpack
+  - idna
+  - internal/timeseries
+  - lex/httplex
+  - trace
 - name: golang.org/x/sys
   version: ea9bcade75cb975a0b9738936568ab388b845617
   subpackages:
   - unix
+- name: golang.org/x/text
+  version: 19e51611da83d6be54ddafce4a4af510cb3e9ea4
+  subpackages:
+  - secure/bidirule
+  - transform
+  - unicode/bidi
+  - unicode/norm
+- name: google.golang.org/genproto
+  version: aa2eb687b4d3e17154372564ad8d6bf11c3cf21f
+  subpackages:
+  - googleapis/rpc/status
+- name: google.golang.org/grpc
+  version: b15215fb911b24a5d61d57feec4233d610530464
+  subpackages:
+  - codes
+  - credentials
+  - grpclb/grpc_lb_v1
+  - grpclog
+  - internal
+  - keepalive
+  - metadata
+  - naming
+  - peer
+  - stats
+  - status
+  - tap
+  - transport
 - name: gopkg.in/olivere/elastic.v5
   version: 3113f9b9ad37509fe5f8a0e5e91c96fdc4435e26
   subpackages:
