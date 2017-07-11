@@ -35,7 +35,7 @@ func TestDatasetsHandler(t *testing.T) {
 			"datasets": [
 				{
 					"name": "o_185",
-					"description": "**Author**: Jeffrey S. Simonoff",
+					"description": "<p><strong>Author</strong>: Jeffrey S. Simonoff</p>\n",
 					"variables": [
 						{"name":"d3mIndex","type":"integer"},
 						{"name":"Player","type":"categorical"},
@@ -45,7 +45,7 @@ func TestDatasetsHandler(t *testing.T) {
 				},
 				{
 					"name": "o_196",
-					"description": "**Author**:",
+					"description": "<p><strong>Author</strong>: Mr. Somebody</p>\n",
 					"variables": [
 						{"name":"d3mIndex","type":"integer"},
 						{"name":"cylinders","type":"categorical"},
@@ -91,7 +91,7 @@ func TestDatasetsHandlerWithSearch(t *testing.T) {
 			"datasets": [
 				{
 					"name": "o_185",
-					"description": "**Author**: Jeffrey S. Simonoff",
+					"description": "<p><strong>Author</strong>: Jeffrey S. Simonoff</p>\n",
 					"variables": [
 						{"name":"d3mIndex","type":"integer"},
 						{"name":"Player","type":"categorical"},
@@ -101,7 +101,7 @@ func TestDatasetsHandlerWithSearch(t *testing.T) {
 				},
 				{
 					"name": "o_196",
-					"description": "**Author**:",
+					"description": "<p><strong>Author</strong>: Mr. Somebody</p>\n",
 					"variables": [
 						{"name":"d3mIndex","type":"integer"},
 						{"name":"cylinders","type":"categorical"},
