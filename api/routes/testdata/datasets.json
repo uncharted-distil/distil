@@ -49,7 +49,7 @@
                 "_score": 0.020597205,
                 "_source": {
                     "datasetId": "o_196_dataset",
-                    "description": "**Author**:",
+                    "description": "**Author**: Mr. Somebody",
                     "variables": [
                         {
                             "varName": "d3mIndex",

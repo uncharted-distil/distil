@@ -11,8 +11,7 @@
 				</a>
 			</div>
 			<div class="dataset-body" v-if="isExpanded(dataset.name)">
-				<p class="p-2">
-					{{dataset.description}}
+				<p class="p-2" v-html="dataset.description">
 				</p>
 			</div>
 		</div>
