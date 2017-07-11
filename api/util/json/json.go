@@ -250,17 +250,6 @@ func Unmarshal(data []byte) (map[string]interface{}, error) {
 	return m, nil
 }
 
-// UnmarshalArray unmarshals an array of JSON and returns a newly instantiated
-// array of maps.
-func UnmarshalArray(data []byte) ([]map[string]interface{}, error) {
-	var arr []map[string]interface{}
-	err := json.Unmarshal(data, &arr)
-	if nil != err {
-		return nil, err
-	}
-	return arr, nil
-}
-
 // Copy will copy the JSON data deeply by value, this process involves
 // marshalling and then unmarshalling the data.
 func Copy(j map[string]interface{}) (map[string]interface{}, error) {
