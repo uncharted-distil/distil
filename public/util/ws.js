@@ -31,7 +31,10 @@ function establishConnection(conn, callback) {
 	conn.socket.onclose = function() {
 		// log close only if conn was ever open
 		if (conn.isOpen) {
-			console.warn(`WebSocket conn on /${conn.url} lost, attempting to reconnect in ${RETRY_INTERVAL_MS}ms`);
+			console.warn(`WebSocket connection on /${conn.url} lost, attempting to reconnect in ${RETRY_INTERVAL_MS}ms`);
+		} else {
+			callback(new Error(`Unable to establish websocket connection on /${conn.url}`), null);
+			return;
 		}
 		// delete socket
 		conn.socket = null;

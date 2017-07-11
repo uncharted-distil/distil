@@ -1,6 +1,7 @@
 import _ from 'lodash';
 import axios from 'axios';
 import { decodeFilters, encodeQueryParams } from '../util/filters';
+import Connection from '../util/ws';
 
 // TODO: move this somewhere more appropriate.
 const ES_INDEX = 'datasets';
@@ -86,4 +87,40 @@ export function updateFilteredData(context, datasetName) {
 			console.error(error);
 				context.commit('setFilteredData', []);
 		});
+}
+
+// opens the underlying websocket connection
+export function openWebSocketConnection(context, uri) {
+	return new Promise((resolve, reject) => {
+		const conn = new Connection(uri, err => {
+			if (err) {
+				console.warn(err);
+				reject(err);
+				return;
+			}
+			resolve(conn);
+			context.commit('setWebSocketConnection', conn);
+		});
+	});
+}
+
+// closes the underlying websocket connection.
+export function closeWebSocketConnection(context) {
+	const conn = context.getters.getWebSocketConnection();
+	conn.close();
+	context.commit('setWebSocketConnection', null);
+}
+
+// opens a stream on the underlying websocket connection.
+export function openStream(context, id) {
+	const conn = context.getters.getWebSocketConnection();
+	const stream = conn.stream(id);
+	context.commit('addWebSocketStream', stream);
+}
+
+// closes a stream on the underlying websocket connection.
+export function closeStream(context, id) {
+	const stream = context.getters.getWebSocketStream(id);
+	stream.close();
+	context.commit('removeWebSocketStream', stream);
 }

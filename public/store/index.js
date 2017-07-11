@@ -52,6 +52,14 @@ const state = {
 		// values: [
 		//     []
 		// ]
+	},
+	// the underlying websocket connection
+	wsConnection : null,
+	// the individual websocket streams for each async request
+	wsStreams: {
+		// stream-id0: ...,
+		// stream-id1: ...,
+		// ...
 	}
 };
 

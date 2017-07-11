@@ -24,6 +24,13 @@ var (
 // https://github.com/zenazn/goji/blob/master/web/middleware/logger.go
 func Log(h http.Handler) http.Handler {
 	fn := func(w http.ResponseWriter, r *http.Request) {
+		if isWebsocketUpgrade(r) {
+			// do not log websocket connections
+			// TODO: intercept and log the beginning and the end of the
+			// connection.
+			h.ServeHTTP(w, r)
+			return
+		}
 		lw := wrapWriter(w)
 		t1 := time.Now()
 		h.ServeHTTP(lw, r)

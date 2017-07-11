@@ -18,3 +18,15 @@ export function updateVariableSummaries(state, args) {
 export function setFilteredData(state, filteredData) {
 	state.filteredData = filteredData;
 }
+
+export function setWebSocketConnection(state, connection) {
+	state.wsConnection = connection;
+}
+
+export function addWebSocketStream(state, stream) {
+	state.wsStreams[stream.id] = stream;
+}
+
+export function removeWebSocketStream(state, stream) {
+	delete state.wsStreams[stream.id];
+}

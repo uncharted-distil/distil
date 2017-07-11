@@ -80,3 +80,11 @@ export function getFilteredDataFields(state) {
 		}
 	};
 }
+
+export function getWebSocketConnection(state) {
+	return state.wsConnection;
+}
+
+export function getWebSocketStream(state, id) {
+	return state.wsStreams[id];
+}

@@ -44,3 +44,6 @@ new Vue({
 			<router-view class="view"></router-view>
 		</div>`
 }).$mount('#app');
+
+// init the websocket connection
+store.dispatch('openWebSocketConnection', '/ws');
