@@ -4,7 +4,9 @@ import (
 	"net/http"
 	"net/url"
 
+	"github.com/microcosm-cc/bluemonday"
 	"github.com/pkg/errors"
+	"github.com/russross/blackfriday"
 	"goji.io/pat"
 
 	"github.com/unchartedsoftware/distil/api/elastic"
@@ -49,6 +51,10 @@ func DatasetsHandler(ctor elastic.ClientCtor) func(http.ResponseWriter, *http.Re
 			handleError(w, err)
 			return
 		}
+		// render dataset description as HTML
+		for _, dataset := range datasets {
+			dataset.Description = renderMarkdown(dataset.Description)
+		}
 		// marshall data
 		err = handleJSON(w, DatasetResult{
 			Datasets: datasets,
@@ -58,4 +64,11 @@ func DatasetsHandler(ctor elastic.ClientCtor) func(http.ResponseWriter, *http.Re
 			return
 		}
 	}
+}
+
+func renderMarkdown(markdown string) string {
+	// process the markdown into HTML
+	unsafe := blackfriday.MarkdownCommon([]byte(markdown))
+	// just to be safe, sanatize the HTML
+	return string(bluemonday.UGCPolicy().SanitizeBytes(unsafe))
 }

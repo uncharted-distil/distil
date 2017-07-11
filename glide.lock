@@ -1,27 +1,31 @@
-hash: 8cd1350d0cfb7d2ccb0695c775ecc1c335d2f1e5bf35137536dff2e2c10eb699
-updated: 2017-06-26T17:01:54.228255897-04:00
+hash: 801c2afaefa62b5e7d3c2c5ccd280b31dc5ecb594d5b6e76c0288eb77260e611
+updated: 2017-07-11T16:03:32.128354773-04:00
 imports:
 - name: github.com/davecgh/go-spew
   version: 04cdfd42973bb9c8589fd6a731800cf222fde1a9
   subpackages:
   - spew
 - name: github.com/garyburd/redigo
-  version: 0d253a66e6e1349f4581d6d2b300ee434ee2da9f
+  version: 9f3a0116c9f72c5a56f958206a43dc881b502c37
   subpackages:
   - internal
   - redis
 - name: github.com/mattn/go-colorable
-  version: ded68f7a9561c023e790de24279db7ebf473ea80
+  version: 3fa8c76f9daed4067e4a806fb7e4dc86455c6d6a
 - name: github.com/mattn/go-isatty
   version: fc9e8d8ef48496124e79ae0df75490096eccf6fe
 - name: github.com/mgutz/ansi
   version: 9520e82c474b0a04dd04f8a40959027271bab992
+- name: github.com/microcosm-cc/bluemonday
+  version: e79763773ab6222ca1d5a7cbd9d62d83c1f77081
 - name: github.com/pkg/errors
   version: c605e284fe17294bda444b34710735b29d1a9d90
 - name: github.com/pmezard/go-difflib
   version: d8ed2627bdf02c080bf22230dbb337003b7aba2d
   subpackages:
   - difflib
+- name: github.com/russross/blackfriday
+  version: 067529f716f4c3f5e37c8c95ddd59df1007290ae
 - name: github.com/stretchr/testify
   version: f6abca593680b2315d2075e0f5e2a9751e3f431a
   subpackages:
@@ -41,8 +45,13 @@ imports:
   - internal
   - pat
   - pattern
+- name: golang.org/x/net
+  version: f01ecb60fe3835d80d9a0b7b2bf24b228c89260e
+  subpackages:
+  - html
+  - html/atom
 - name: golang.org/x/sys
-  version: ea9bcade75cb975a0b9738936568ab388b845617
+  version: abf9c25f54453410d0c6668e519582a9e1115027
   subpackages:
   - unix
 - name: gopkg.in/olivere/elastic.v5

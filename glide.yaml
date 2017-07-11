@@ -5,7 +5,9 @@ import:
   - redis
 - package: github.com/mattn/go-isatty
 - package: github.com/mgutz/ansi
+- package: github.com/microcosm-cc/bluemonday
 - package: github.com/pkg/errors
+- package: github.com/russross/blackfriday
 - package: github.com/stretchr/testify
   subpackages:
   - assert
@@ -17,4 +19,5 @@ import:
 - package: goji.io
   subpackages:
   - pat
+  - pattern
 - package: gopkg.in/olivere/elastic.v5
