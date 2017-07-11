@@ -1,17 +1,19 @@
-hash: 8cd1350d0cfb7d2ccb0695c775ecc1c335d2f1e5bf35137536dff2e2c10eb699
-updated: 2017-06-26T17:01:54.228255897-04:00
+hash: 129b67281a5b4579c5739d27abaca5e5cd3c6ebfd0b7a5bb700e9bd75ffcb9ba
+updated: 2017-07-11T12:00:25.486368297-04:00
 imports:
 - name: github.com/davecgh/go-spew
   version: 04cdfd42973bb9c8589fd6a731800cf222fde1a9
   subpackages:
   - spew
 - name: github.com/garyburd/redigo
-  version: 0d253a66e6e1349f4581d6d2b300ee434ee2da9f
+  version: 9f3a0116c9f72c5a56f958206a43dc881b502c37
   subpackages:
   - internal
   - redis
+- name: github.com/gorilla/websocket
+  version: 462d5c5828f6203e4047c47be2920315937be380
 - name: github.com/mattn/go-colorable
-  version: ded68f7a9561c023e790de24279db7ebf473ea80
+  version: 3fa8c76f9daed4067e4a806fb7e4dc86455c6d6a
 - name: github.com/mattn/go-isatty
   version: fc9e8d8ef48496124e79ae0df75490096eccf6fe
 - name: github.com/mgutz/ansi
@@ -42,7 +44,7 @@ imports:
   - pat
   - pattern
 - name: golang.org/x/sys
-  version: ea9bcade75cb975a0b9738936568ab388b845617
+  version: abf9c25f54453410d0c6668e519582a9e1115027
   subpackages:
   - unix
 - name: gopkg.in/olivere/elastic.v5

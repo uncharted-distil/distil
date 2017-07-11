@@ -3,6 +3,7 @@ import:
 - package: github.com/garyburd/redigo
   subpackages:
   - redis
+- package: github.com/gorilla/websocket
 - package: github.com/mattn/go-isatty
 - package: github.com/mgutz/ansi
 - package: github.com/pkg/errors
@@ -17,4 +18,5 @@ import:
 - package: goji.io
   subpackages:
   - pat
+  - pattern
 - package: gopkg.in/olivere/elastic.v5
