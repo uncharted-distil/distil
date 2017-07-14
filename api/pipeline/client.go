@@ -24,14 +24,7 @@ type Client struct {
 	client            PipelineComputeClient
 	conn              *grpc.ClientConn
 	downstreamMutex   sync.Mutex
-	downstream        map[uuid.UUID][]RequestResult
-}
-
-// RequestResult provides a channel for receiving results and another for receiving
-// errors.
-type RequestResult struct {
-	Results chan interface{}
-	Errors  chan error
+	downstream        map[uuid.UUID][]*ResultProxy
 }
 
 // NewClient creates a new pipline reuqest dispatcher instance.  This will establish
@@ -52,7 +45,7 @@ func NewClient(serverAddr string) (*Client, error) {
 	client.client = NewPipelineComputeClient(conn)
 	client.conn = conn
 
-	client.downstream = make(map[uuid.UUID][]RequestResult)
+	client.downstream = make(map[uuid.UUID][]*ResultProxy)
 
 	return &client, nil
 }
@@ -78,7 +71,7 @@ func (r *Client) IsRequestAttachable(info *RequestInfo) (uuid.UUID, bool) {
 	return uuid.Nil, false
 }
 
-// Dispatch sends a request to the compute client and returns the request ID to the caller
+// Dispatch sends a request to the compute client and returns the request ID to the caller.
 func (r *Client) Dispatch(ctx context.Context, request RequestFunc) uuid.UUID {
 	// execute the request and store the context in the pending requests map
 	requestCtx := request(&ctx, &r.client)
@@ -88,43 +81,53 @@ func (r *Client) Dispatch(ctx context.Context, request RequestFunc) uuid.UUID {
 	r.reqMutex.Unlock()
 
 	// Store results locally and forward results and errors downstream for processing.  If
-	// the source channels are closed, closed the downstream channels.
+	// the source channels are closed we nil them out and close down the downstream channels.
 	go func() {
-		for {
+		done := false
+		for !done {
 			select {
-			case err, ok := <-requestCtx.Errors:
-				if !ok {
-					requestCtx.Errors = nil
-				} else {
-					// broadcast the error downstream
-					log.Error(err)
-					r.downstreamMutex.Lock()
-					for _, downstream := range r.downstream[requestCtx.RequestID] {
-						downstream.Errors <- err
-					}
-					r.downstreamMutex.Unlock()
+			case err := <-requestCtx.Errors:
+				// broadcast the error downstream
+				log.Error(err)
+				r.downstreamMutex.Lock()
+				for _, downstream := range r.downstream[requestCtx.RequestID] {
+					downstream.Errors <- err
 				}
-			case result, ok := <-requestCtx.Results:
-				if !ok {
-					requestCtx.Results = nil
-				} else {
-					// put the results in the buffer
-					r.reqMutex.Lock()
-					if _, ok := r.results[requestCtx.RequestID]; !ok {
-						r.results[requestCtx.RequestID] = make([]interface{}, 0)
-					}
-					r.results[requestCtx.RequestID] = append(r.results[requestCtx.RequestID], result)
-					r.reqMutex.Unlock()
+				r.downstreamMutex.Unlock()
+			case result := <-requestCtx.Results:
+				// put the results in the buffer
+				r.reqMutex.Lock()
+				if _, ok := r.results[requestCtx.RequestID]; !ok {
+					r.results[requestCtx.RequestID] = make([]interface{}, 0)
+				}
+				r.results[requestCtx.RequestID] = append(r.results[requestCtx.RequestID], result)
+				r.reqMutex.Unlock()
 
-					// broadcast the result downstream
-					r.downstreamMutex.Lock()
-					for _, downstream := range r.downstream[requestCtx.RequestID] {
-						downstream.Results <- result
-					}
-					r.downstreamMutex.Unlock()
+				// broadcast the result downstream
+				r.downstreamMutex.Lock()
+				for _, downstream := range r.downstream[requestCtx.RequestID] {
+					downstream.Results <- result
 				}
-			}
-			if requestCtx.Errors == nil && requestCtx.Results == nil {
+				r.downstreamMutex.Unlock()
+			case <-requestCtx.Done:
+				// notify downstream routines that request has finished processing
+				r.downstreamMutex.Lock()
+				for _, downstream := range r.downstream[requestCtx.RequestID] {
+					downstream.Done <- struct{}{}
+					close(downstream.Results)
+					close(downstream.Errors)
+				}
+				// request is finished so don't need to track any more
+				delete(r.downstream, requestCtx.RequestID)
+				r.downstreamMutex.Unlock()
+
+				r.reqMutex.Lock()
+				delete(r.pendingRequests, requestCtx.RequestID)
+				r.completedRequests[requestCtx.RequestID] = requestCtx
+				r.reqMutex.Unlock()
+
+				done = true
+
 				break
 			}
 		}
@@ -132,19 +135,35 @@ func (r *Client) Dispatch(ctx context.Context, request RequestFunc) uuid.UUID {
 	return requestCtx.RequestID
 }
 
+// ResultProxy provides a channel for receiving results and another for receiving
+// errors.  This the main conduit for comms between the client and downstream handlers
+// that are receviing request results.
+type ResultProxy struct {
+	Results chan interface{}
+	Errors  chan error
+	Done    chan struct{}
+}
+
 // Attach to an already running request.  This provides the caller with channels to handle
 // request data and errors.
-func (r *Client) Attach(requestID uuid.UUID) (*RequestResult, []interface{}) {
+func (r *Client) Attach(requestID uuid.UUID) (*ResultProxy, []interface{}) {
 	r.reqMutex.Lock()
 	if _, ok := r.pendingRequests[requestID]; ok {
+		// make a copy of the results list so we can share - results themselves are
+		// immutable
 		results := r.results[requestID]
 		resultsCopy := make([]interface{}, len(results))
 		copy(resultsCopy, results)
 		r.reqMutex.Unlock()
 
-		requestResult := RequestResult{make(chan interface{}), make(chan error)}
+		// create a result proxy object for communicating result and request state to downstream
+		// consumer
+		requestResult := ResultProxy{make(chan interface{}), make(chan error), make(chan struct{})}
 		r.downstreamMutex.Lock()
-		r.downstream[requestID] = append(r.downstream[requestID], requestResult)
+		if _, ok := r.downstream[requestID]; !ok {
+			r.downstream[requestID] = make([]*ResultProxy, 0)
+		}
+		r.downstream[requestID] = append(r.downstream[requestID], &requestResult)
 		r.downstreamMutex.Unlock()
 
 		return &requestResult, resultsCopy
