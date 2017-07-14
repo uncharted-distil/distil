@@ -73,7 +73,6 @@ func main() {
 	registerRoute(mux, "/distil/variables/:index/:dataset", routes.VariablesHandler(esClientCtor))
 	registerRoute(mux, "/distil/variable-summaries/:index/:dataset/:variable", routes.VariableSummaryHandler(esClientCtor))
 	registerRoute(mux, "/distil/filtered-data/:dataset", routes.FilteredDataHandler(esClientCtor))
-	registerRoute(mux, "/distil/pipeline-create/:dataset", routes.PipelineCreateHandler(pipelineClient))
 	registerRoute(mux, "/distil/pipeline-session-id", routes.PipelineSessionHandler(pipelineClient))
 	registerRoute(mux, "/*", routes.FileHandler("./dist"))
 

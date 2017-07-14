@@ -4,16 +4,18 @@ import (
 	"sync"
 
 	"github.com/pkg/errors"
-	uuid "github.com/satori/go.uuid"
-	log "github.com/unchartedsoftware/plog"
-	context "golang.org/x/net/context"
+	"github.com/satori/go.uuid"
+	"github.com/unchartedsoftware/plog"
+	"golang.org/x/net/context"
 	"google.golang.org/grpc"
 )
 
 // Client provides facilities for managing GPRC pipeline requests.  Requests are
 // isssued and a context object containing rx channels is returned to the caller for consumption
 // of results.  The context for running requests can also be fetched, along with their buffered
-// results.
+// results.  Spawning a grpc.ClientConn per RPC call is not considered good practice - the system
+// is designed such that multiple go routines make RPC calls to a single shared client, and synch
+// is managed internally.
 type Client struct {
 	pendingRequests   map[uuid.UUID]*RequestContext
 	completedRequests map[uuid.UUID]*RequestContext
@@ -25,6 +27,8 @@ type Client struct {
 	downstream        map[uuid.UUID][]RequestResult
 }
 
+// RequestResult provides a channel for receiving results and another for receiving
+// errors.
 type RequestResult struct {
 	Results chan interface{}
 	Errors  chan error
@@ -38,13 +42,18 @@ func NewClient(serverAddr string) (*Client, error) {
 		return nil, errors.Wrapf(err, "failed to connect to %s", serverAddr)
 	}
 	log.Infof("connected to %s", serverAddr)
+
 	client := Client{}
+
 	client.pendingRequests = make(map[uuid.UUID]*RequestContext)
 	client.completedRequests = make(map[uuid.UUID]*RequestContext)
 	client.results = make(map[uuid.UUID][]interface{})
+
 	client.client = NewPipelineComputeClient(conn)
 	client.conn = conn
+
 	client.downstream = make(map[uuid.UUID][]RequestResult)
+
 	return &client, nil
 }
 
@@ -54,8 +63,23 @@ func (r *Client) Close() {
 	r.conn.Close()
 }
 
+// IsRequestAttachable determines if there is a running request similar to that supplied by the
+// user that we can attach to.  Internal logic will identify requests types that can't be re-used
+// by their nature, so the caller can pass any request type through.
+func (r *Client) IsRequestAttachable(info *RequestInfo) (uuid.UUID, bool) {
+	r.reqMutex.Lock()
+	for _, v := range r.pendingRequests {
+		if info.RequestHash == v.RequestHash {
+			r.reqMutex.Unlock()
+			return v.RequestID, true
+		}
+	}
+	r.reqMutex.Unlock()
+	return uuid.Nil, false
+}
+
 // Dispatch sends a request to the compute client and returns the request ID to the caller
-func (r *Client) Dispatch(ctx context.Context, request Request) uuid.UUID {
+func (r *Client) Dispatch(ctx context.Context, request RequestFunc) uuid.UUID {
 	// execute the request and store the context in the pending requests map
 	requestCtx := request(&ctx, &r.client)
 

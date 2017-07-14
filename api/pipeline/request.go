@@ -1,44 +1,58 @@
 package pipeline
 
 import (
+	"hash/fnv"
 	"io"
 
+	"github.com/mitchellh/hashstructure"
 	"github.com/pkg/errors"
 	"github.com/satori/go.uuid"
-	log "github.com/unchartedsoftware/plog"
-	context "golang.org/x/net/context"
+	"github.com/unchartedsoftware/plog"
+	"golang.org/x/net/context"
 )
 
-// Request defines a standardized pipeline request execution function.
-type Request func(ctx *context.Context, client *PipelineComputeClient) *RequestContext
+// RequestFunc defines a standardized pipeline request execution function.
+type RequestFunc func(ctx *context.Context, client *PipelineComputeClient) *RequestContext
+
+// RequestInfo provides a unique ID and hash for a request to be send, along with a function that
+// can be called to initiate the request as an RPC call.
+// TODO: Better name ?
+type RequestInfo struct {
+	RequestID   uuid.UUID
+	RequestHash uint64
+	RequestFunc RequestFunc
+}
 
 // RequestContext provides information about a in-progress or completed pipeline request,
 // as well as channels for handling results when the request is live.
+// TODO: Better name ?
 type RequestContext struct {
-	Context   *context.Context
-	RequestID uuid.UUID
-	Request   interface{}
-	Results   chan interface{}
-	Errors    chan error
+	Context     *context.Context
+	RequestID   uuid.UUID
+	RequestHash uint64
+	Request     interface{}
+	Results     chan interface{}
+	Errors      chan error
 }
 
 // GeneratePipelineCreateRequest creates a PipelineCreateRequest that will initiate pipeline creation on the server and
 // and handle a stream of PipelineCreateResult objects that are returned as work is completed.
-func GeneratePipelineCreateRequest(createReq *PipelineCreateRequest) Request {
-	return func(ctx *context.Context, client *PipelineComputeClient) *RequestContext {
-		requestID := uuid.NewV1()
-		requestContext := RequestContext{ctx, requestID, createReq, make(chan interface{}), make(chan error)}
+func GeneratePipelineCreateRequest(request *PipelineCreateRequest) *RequestInfo {
+	requestID := uuid.NewV1()
+	hash := structHash(request, requestID.Bytes())
+	requestFunc := func(ctx *context.Context, client *PipelineComputeClient) *RequestContext {
+		requestCtx := RequestContext{ctx, requestID, hash, request, make(chan interface{}), make(chan error)}
 
 		go func() {
 			defer func() {
-				close(requestContext.Results)
-				close(requestContext.Errors)
+				close(requestCtx.Results)
+				close(requestCtx.Errors)
 			}()
 			// iniitate pipeline creation
-			stream, err := (*client).CreatePipelines(*ctx, createReq)
+			stream, err := (*client).CreatePipelines(*ctx, request)
 			if err != nil {
 				log.Error(err)
-				requestContext.Errors <- errors.Wrap(err, "failed to initiate create pipeline request")
+				requestCtx.Errors <- errors.Wrap(err, "failed to initiate create pipeline request")
 				return
 			}
 			// handle the result stream
@@ -49,34 +63,36 @@ func GeneratePipelineCreateRequest(createReq *PipelineCreateRequest) Request {
 				}
 				if err != nil {
 					log.Error(err)
-					requestContext.Errors <- errors.Wrap(err, "failed to process create pipeline result")
+					requestCtx.Errors <- errors.Wrap(err, "failed to process create pipeline result")
 					break
 				}
-				requestContext.Results <- result
+				requestCtx.Results <- result
 			}
 			return
 		}()
-		return &requestContext
+		return &requestCtx
 	}
+	return &RequestInfo{requestID, hash, requestFunc}
 }
 
 // GeneratePipelineExecuteRequest creates a PipelineExecuteRequest that will execute a pipeline on the server and
 // and handle a stream of PipelineExecuteResult objects that are returned as work is completed.
-func GeneratePipelineExecuteRequest(executeReq *PipelineExecuteRequest) Request {
-	return func(ctx *context.Context, client *PipelineComputeClient) *RequestContext {
-		requestID := uuid.NewV1()
-		requestContext := RequestContext{ctx, requestID, executeReq, make(chan interface{}), make(chan error)}
+func GeneratePipelineExecuteRequest(request *PipelineExecuteRequest) *RequestInfo {
+	requestID := uuid.NewV1()
+	hash := structHash(request, requestID.Bytes())
+	requestFunc := func(ctx *context.Context, client *PipelineComputeClient) *RequestContext {
+		requestCtx := RequestContext{ctx, requestID, hash, request, make(chan interface{}), make(chan error)}
 
 		go func() {
 			defer func() {
-				close(requestContext.Results)
-				close(requestContext.Errors)
+				close(requestCtx.Results)
+				close(requestCtx.Errors)
 			}()
 			// initiate pipeline execution
-			stream, err := (*client).ExecutePipeline(*ctx, executeReq)
+			stream, err := (*client).ExecutePipeline(*ctx, request)
 			if err != nil {
 				log.Error(err)
-				requestContext.Errors <- errors.Wrap(err, "failed to initiate execute pipeline request")
+				requestCtx.Errors <- errors.Wrap(err, "failed to initiate execute pipeline request")
 				return
 			}
 			// handle the result stream
@@ -87,62 +103,96 @@ func GeneratePipelineExecuteRequest(executeReq *PipelineExecuteRequest) Request 
 				}
 				if err != nil {
 					log.Error(err)
-					requestContext.Errors <- errors.Wrap(err, "failed to process execute pipeline result")
+					requestCtx.Errors <- errors.Wrap(err, "failed to process execute pipeline result")
 					break
 				}
-				requestContext.Results <- result
+				requestCtx.Results <- result
 			}
 			return
 		}()
-
-		return &requestContext
+		return &requestCtx
 	}
+	return &RequestInfo{requestID, hash, requestFunc}
 }
 
 // GenerateStartSessionRequest creates a session start request that will return a unique session ID
 // to the caller.  This ID is then assigned to subsquent  pipeline calls via the session context field.
-func GenerateStartSessionRequest() Request {
-	return func(ctx *context.Context, client *PipelineComputeClient) *RequestContext {
-		requestID := uuid.NewV1()
-		requestContext := RequestContext{ctx, requestID, nil, make(chan interface{}), make(chan error)}
+func GenerateStartSessionRequest() *RequestInfo {
+	requestID := uuid.NewV1()
+	hash := hash(requestID.Bytes())
+	requestFunc := func(ctx *context.Context, client *PipelineComputeClient) *RequestContext {
+		requestCtx := RequestContext{ctx, requestID, hash, nil, make(chan interface{}), make(chan error)}
 
 		go func() {
 			defer func() {
-				close(requestContext.Results)
-				close(requestContext.Errors)
+				close(requestCtx.Results)
+				close(requestCtx.Errors)
 			}()
 			result, err := (*client).StartSession(*ctx, &SessionRequest{})
 			if err != nil {
-				requestContext.Errors <- errors.Wrap(err, "failed to initiate start session request")
+				requestCtx.Errors <- errors.Wrap(err, "failed to initiate start session request")
 			}
-			requestContext.Results <- result
+			requestCtx.Results <- result
 			return
 		}()
-		return &requestContext
+		return &requestCtx
 	}
+	return &RequestInfo{requestID, hash, requestFunc}
 }
 
 // GenerateEndSessionRequest creates a session end request that will mark a session as closed.  The session
 // is not avialable for further pipeline requests once called.
-func GenerateEndSessionRequest(sessionID string) Request {
-	return func(ctx *context.Context, client *PipelineComputeClient) *RequestContext {
-		sessionContext := SessionContext{sessionID}
-		requestID := uuid.NewV1()
-		requestContext := RequestContext{ctx, requestID, sessionContext, make(chan interface{}), make(chan error)}
-
+func GenerateEndSessionRequest(sessionID string) *RequestInfo {
+	requestID := uuid.NewV1()
+	hash := hash(requestID.Bytes())
+	requestFunc := func(ctx *context.Context, client *PipelineComputeClient) *RequestContext {
+		sessionCtx := SessionContext{sessionID}
+		requestCtx := RequestContext{ctx, requestID, hash, sessionCtx, make(chan interface{}), make(chan error)}
 		go func() {
 			defer func() {
-				close(requestContext.Results)
-				close(requestContext.Errors)
+				close(requestCtx.Results)
+				close(requestCtx.Errors)
 			}()
 			result, err := (*client).EndSession(*ctx, &SessionContext{sessionID})
 			if err != nil {
 				log.Error(err)
-				requestContext.Errors <- errors.Wrap(err, "failed to initiate end session request")
+				requestCtx.Errors <- errors.Wrap(err, "failed to initiate end session request")
 			}
-			requestContext.Results <- result
+			requestCtx.Results <- result
 			return
 		}()
-		return &requestContext
+		return &requestCtx
 	}
+	return &RequestInfo{requestID, hash, requestFunc}
+}
+
+// HashInclude satisifies the Includable interface from hashstructure package, and  allows
+// for the context field to be skipped when generating a hash for the PiplineCreateRequest
+// struct.
+func (PipelineCreateRequest) HashInclude(field string, v interface{}) (bool, error) {
+	return field != "Context", nil
+}
+
+// HashInclude satisifies the Includable interface from hashstructure package, and  allows
+// for the context field to be skipped when generating a hash for the PiplineExecuteRequest
+// struct.
+func (PipelineExecuteRequest) HashInclude(field string, v interface{}) (bool, error) {
+	return field != "Context", nil
+}
+
+func hash(b []byte) uint64 {
+	hash := fnv.New64a()
+	hash.Write(b)
+	return hash.Sum64()
+}
+
+// structHash generates a hash code from an input value, and falls back on the supplied
+// default if there is a problem generating the hash.
+func structHash(s interface{}, def []byte) uint64 {
+	requestHash, err := hashstructure.Hash(s, nil)
+	if err != nil {
+		log.Errorf("using ID due to hash failure - %s", err)
+		requestHash = hash(def)
+	}
+	return requestHash
 }

@@ -108,7 +108,7 @@ message PipelineCreateResult {
    Response response_info = 1;
    Progress progress_info = 2;
    string pipeline_id = 3;
-   // Will be set if progress info is a value other than COMPLETE
+   // Will be unset if progress info is a value other than COMPLETE
    PipelineCreated pipelineInfo = 4;
 }
 
@@ -137,4 +137,3 @@ service PipelineCompute {
    rpc StartSession(SessionRequest) returns (Response) {}
    rpc EndSession(SessionContext) returns (Response) {}
 }
-
