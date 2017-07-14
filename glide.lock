@@ -1,5 +1,5 @@
-hash: 49756c1f6a236c3dede525fd2e75477d53f9695f2eeb18267062318547dec98d
-updated: 2017-07-12T09:58:11.171307972-04:00
+hash: d4d04415a579213c3f9865f4e67c4ef77a22cb2c7f5d8744076f76297f3b3e07
+updated: 2017-07-14T12:12:10.602027596-04:00
 imports:
 - name: github.com/davecgh/go-spew
   version: 04cdfd42973bb9c8589fd6a731800cf222fde1a9
@@ -11,7 +11,7 @@ imports:
   - internal
   - redis
 - name: github.com/golang/protobuf
-  version: 1f49d83d9aa00e6ce4fc8258c71cc7786aec968a
+  version: 0a4f71a498b7c4812f64969510bcb4eca251e33a
   subpackages:
   - proto
   - protoc-gen-go
@@ -22,10 +22,10 @@ imports:
   version: fc9e8d8ef48496124e79ae0df75490096eccf6fe
 - name: github.com/mgutz/ansi
   version: 9520e82c474b0a04dd04f8a40959027271bab992
-- name: github.com/mitchellh/hashstructure
-  version: 2bca23e0e452137f789efbc8610126fd8b94f73b
 - name: github.com/microcosm-cc/bluemonday
   version: e79763773ab6222ca1d5a7cbd9d62d83c1f77081
+- name: github.com/mitchellh/hashstructure
+  version: 2bca23e0e452137f789efbc8610126fd8b94f73b
 - name: github.com/pkg/errors
   version: c605e284fe17294bda444b34710735b29d1a9d90
 - name: github.com/pmezard/go-difflib
@@ -34,6 +34,8 @@ imports:
   - difflib
 - name: github.com/russross/blackfriday
   version: 067529f716f4c3f5e37c8c95ddd59df1007290ae
+- name: github.com/satori/go.uuid
+  version: 5bf94b69c6b68ee1b541973bb8e1144db23a194b
 - name: github.com/stretchr/testify
   version: f6abca593680b2315d2075e0f5e2a9751e3f431a
   subpackages:
@@ -54,30 +56,30 @@ imports:
   - pat
   - pattern
 - name: golang.org/x/net
-  version: da118f7b8e5954f39d0d2130ab35d4bf0e3cb344
+  version: f01ecb60fe3835d80d9a0b7b2bf24b228c89260e
   subpackages:
   - context
+  - html
+  - html/atom
   - http2
   - http2/hpack
   - idna
   - internal/timeseries
   - lex/httplex
   - trace
-  - html
-  - html/atom
 - name: golang.org/x/sys
-  version: abf9c25f54453410d0c6668e519582a9e1115027
+  version: 4cd6d1a821c7175768725b55ca82f14683a29ea4
   subpackages:
   - unix
 - name: golang.org/x/text
-  version: 19e51611da83d6be54ddafce4a4af510cb3e9ea4
+  version: 836efe42bb4aa16aaa17b9c155d8813d336ed720
   subpackages:
   - secure/bidirule
   - transform
   - unicode/bidi
   - unicode/norm
 - name: google.golang.org/genproto
-  version: aa2eb687b4d3e17154372564ad8d6bf11c3cf21f
+  version: b0a3dcfcd1a9bd48e63634bd8802960804cf8315
   subpackages:
   - googleapis/rpc/status
 - name: google.golang.org/grpc

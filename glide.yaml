@@ -27,5 +27,3 @@ import:
 - package: github.com/golang/protobuf/protoc-gen-go
 - package: github.com/satori/go.uuid
 - package: github.com/mitchellh/hashstructure
-
-

@@ -3,7 +3,7 @@ package pipeline
 import (
 	"testing"
 
-	"github.com/cdbethune/hashstructure"
+	"github.com/mitchellh/hashstructure"
 	"github.com/stretchr/testify/assert"
 )
 
