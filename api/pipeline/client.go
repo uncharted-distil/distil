@@ -80,6 +80,9 @@ func (c *Client) GetExistingUUIDs() []uuid.UUID {
 
 // Get will return a result proxy for the provided uuid.
 func (c *Client) Get(requestID uuid.UUID) (*ResultProxy, error) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	
 	return c.attachToExistingRequest(requestID)
 }
 
