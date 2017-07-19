@@ -135,7 +135,7 @@ func GeneratePipelineExecuteRequest(request *PipelineExecuteRequest) *RequestInf
 }
 
 // GenerateStartSessionRequest creates a session start request that will return a unique session ID
-// to the caller.  This ID is then assigned to subsquent  pipeline calls via the session context field.
+// to the caller. This ID is then assigned to subsquent pipeline calls via the session context field.
 func GenerateStartSessionRequest() *RequestInfo {
 	requestID := uuid.NewV1()
 	hash := hash(requestID.Bytes())
@@ -162,8 +162,8 @@ func GenerateStartSessionRequest() *RequestInfo {
 	return &RequestInfo{requestID, hash, requestFunc}
 }
 
-// GenerateEndSessionRequest creates a session end request that will mark a session as closed.  The session
-// is not avialable for further pipeline requests once called.
+// GenerateEndSessionRequest creates a session end request that will mark a session as closed. The session
+// is not available for further pipeline requests once called.
 func GenerateEndSessionRequest(sessionID string) *RequestInfo {
 	requestID := uuid.NewV1()
 	hash := hash(requestID.Bytes())
