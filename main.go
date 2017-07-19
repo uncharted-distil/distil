@@ -13,16 +13,18 @@ import (
 	"github.com/unchartedsoftware/distil/api/elastic"
 	"github.com/unchartedsoftware/distil/api/env"
 	"github.com/unchartedsoftware/distil/api/middleware"
+	"github.com/unchartedsoftware/distil/api/pipeline"
 	"github.com/unchartedsoftware/distil/api/redis"
 	"github.com/unchartedsoftware/distil/api/routes"
 	"github.com/unchartedsoftware/distil/api/ws"
 )
 
 const (
-	defaultEsEndpoint    = "http://localhost:9200"
-	defaultRedisEndpoint = "localhost:6379"
-	defaultRedisExpiry   = -1 // no expiry
-	defaultAppPort       = "8080"
+	defaultEsEndpoint              = "http://localhost:9200"
+	defaultRedisEndpoint           = "localhost:6379"
+	defaultRedisExpiry             = -1 // no expiry
+	defaultAppPort                 = "8080"
+	defaultPipelineComputeEndPoint = "localhost:9500"
 )
 
 var (
@@ -44,9 +46,19 @@ func main() {
 	redisEndpoint := env.Load("REDIS_ENDPOINT", defaultRedisEndpoint)
 	// load redis endpoint
 	httpPort := env.Load("PORT", defaultAppPort)
+	// load compute server endpoint
+	pipelineComputeEndpoint := env.Load("PIPELINE_COMPUTE_ENDPOINT", defaultPipelineComputeEndPoint)
 
 	// instantiate elasticsearch client constructor
 	esClientCtor := elastic.NewClient(esEndpoint, false)
+
+	// instantiate the pipeline compute client
+	pipelineClient, err := pipeline.NewClient(pipelineComputeEndpoint)
+	if err != nil {
+		log.Errorf("%v", err)
+		os.Exit(1)
+	}
+	defer pipelineClient.Close()
 
 	// instantiate redis pool
 	redisPool := redis.NewPool(redisEndpoint, defaultRedisExpiry)
@@ -62,6 +74,7 @@ func main() {
 	registerRoute(mux, "/distil/variables/:index/:dataset", routes.VariablesHandler(esClientCtor))
 	registerRoute(mux, "/distil/variable-summaries/:index/:dataset/:variable", routes.VariableSummaryHandler(esClientCtor))
 	registerRoute(mux, "/distil/filtered-data/:dataset", routes.FilteredDataHandler(esClientCtor))
+	registerRoute(mux, "/distil/pipeline-session-id", routes.PipelineSessionHandler(pipelineClient))
 	registerRoute(mux, "/ws", ws.StreamHandler)
 	registerRoute(mux, "/*", routes.FileHandler("./dist"))
 
@@ -70,7 +83,7 @@ func main() {
 
 	// kick off the server listen loop
 	log.Infof("Listening on port %s", httpPort)
-	err := graceful.ListenAndServe(":"+httpPort, mux)
+	err = graceful.ListenAndServe(":"+httpPort, mux)
 	if err != nil {
 		log.Error(err)
 		os.Exit(1)
