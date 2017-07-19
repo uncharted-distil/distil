@@ -61,6 +61,28 @@ func (c *Client) Close() {
 	c.conn.Close()
 }
 
+// GetExistingUUIDs will return the uuids for all pending and completed requests.
+func (c *Client) GetExistingUUIDs() []uuid.UUID {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	var uuids []uuid.UUID
+	// add pending uuids
+	for _, req := range c.pendingRequests {
+		uuids = append(uuids, req.RequestID)
+	}
+	// add completed uuids
+	for _, req := range c.completedRequests {
+		uuids = append(uuids, req.RequestID)
+	}
+	return uuids
+}
+
+// Get will return a result proxy for the provided uuid.
+func (c *Client) Get(requestID uuid.UUID) (*ResultProxy, error) {
+	return c.attachToExistingRequest(requestID)
+}
+
 // GetOrDispatch will either get an existing result proxy, or dispatch a new
 // request and return its result proxy.
 func (c *Client) GetOrDispatch(ctx context.Context, info *RequestInfo) (*ResultProxy, error) {
