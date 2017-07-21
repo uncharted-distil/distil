@@ -29,7 +29,7 @@ func PipelineSessionHandler(pipelineService *pipeline.Client) func(http.Response
 			case result := <-proxy.Results:
 				// A session requests is single call/response, so if we already
 				// have a result, process it and we're done.
-				res := result.(*pipeline.Response)
+				res := (*result).(*pipeline.Response)
 				w.Write([]byte(res.GetContext().GetSessionId()))
 
 			case err := <-proxy.Errors:
