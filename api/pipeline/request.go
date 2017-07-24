@@ -4,7 +4,7 @@ import (
 	"hash/fnv"
 	"io"
 
-	"github.com/gogo/protobuf/proto"
+	"github.com/golang/protobuf/proto"
 	"github.com/mitchellh/hashstructure"
 	"github.com/pkg/errors"
 	"github.com/satori/go.uuid"
