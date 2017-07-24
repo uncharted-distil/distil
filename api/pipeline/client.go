@@ -3,6 +3,7 @@ package pipeline
 import (
 	"sync"
 
+	"github.com/golang/protobuf/proto"
 	"github.com/pkg/errors"
 	"github.com/satori/go.uuid"
 	"github.com/unchartedsoftware/plog"
@@ -19,7 +20,7 @@ import (
 type Client struct {
 	pendingRequests   map[uuid.UUID]*RequestContext
 	completedRequests map[uuid.UUID]*RequestContext
-	results           map[uuid.UUID][]interface{}
+	results           map[uuid.UUID][]*proto.Message
 	mu                *sync.Mutex
 	client            PipelineComputeClient
 	conn              *grpc.ClientConn
@@ -30,7 +31,7 @@ type Client struct {
 // errors. This the main conduit for comms between the client and downstream handlers
 // that are receviing request results.
 type ResultProxy struct {
-	Results chan interface{}
+	Results chan *proto.Message
 	Errors  chan error
 	Done    chan struct{}
 }
@@ -49,7 +50,7 @@ func NewClient(serverAddr string) (*Client, error) {
 	client.pendingRequests = make(map[uuid.UUID]*RequestContext)
 	client.completedRequests = make(map[uuid.UUID]*RequestContext)
 	client.downstream = make(map[uuid.UUID][]*ResultProxy)
-	client.results = make(map[uuid.UUID][]interface{})
+	client.results = make(map[uuid.UUID][]*proto.Message)
 	client.client = NewPipelineComputeClient(conn)
 	client.conn = conn
 	return &client, nil
@@ -82,7 +83,7 @@ func (c *Client) GetExistingUUIDs() []uuid.UUID {
 func (c *Client) Get(requestID uuid.UUID) (*ResultProxy, error) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
-	
+
 	return c.attachToExistingRequest(requestID)
 }
 
@@ -117,18 +118,18 @@ func (c *Client) proxyError(req *RequestContext, err error) {
 	c.mu.Unlock()
 }
 
-func (c *Client) proxyResult(req *RequestContext, result interface{}) {
+func (c *Client) proxyResult(req *RequestContext, result proto.Message) {
 	c.mu.Lock()
 	// ensure result slice exists
 	_, ok := c.results[req.RequestID]
 	if !ok {
-		c.results[req.RequestID] = make([]interface{}, 0)
+		c.results[req.RequestID] = make([]*proto.Message, 0)
 	}
 	// append to result slice
-	c.results[req.RequestID] = append(c.results[req.RequestID], result)
+	c.results[req.RequestID] = append(c.results[req.RequestID], &result)
 	// broadcast the result downstream
 	for _, downstream := range c.downstream[req.RequestID] {
-		downstream.Results <- result
+		downstream.Results <- &result
 	}
 	c.mu.Unlock()
 }
@@ -169,7 +170,7 @@ func (c *Client) dispatchRequest(ctx context.Context, request RequestFunc) uuid.
 
 			case result := <-req.Results:
 				// put the results in the buffer
-				c.proxyResult(req, result)
+				c.proxyResult(req, *result)
 
 			case <-req.Done:
 				// notify downstream routines that request has finished processing
@@ -182,13 +183,13 @@ func (c *Client) dispatchRequest(ctx context.Context, request RequestFunc) uuid.
 	return req.RequestID
 }
 
-func (c *Client) getResultsImmutable(requestID uuid.UUID) []interface{} {
+func (c *Client) getResultsImmutable(requestID uuid.UUID) []*proto.Message {
 	// NOTE: this method is not thread safe and assumes locked access
 
 	// make a copy of the results list so we can share - results themselves
 	// are immutable
 	results := c.results[requestID]
-	copied := make([]interface{}, len(results))
+	copied := make([]*proto.Message, len(results))
 	copy(copied, results)
 	return copied
 }
@@ -205,7 +206,7 @@ func (c *Client) attachToExistingRequest(requestID uuid.UUID) (*ResultProxy, err
 		// create a result proxy object for communicating result and request
 		// state to downstream consumer
 		proxy := &ResultProxy{
-			Results: make(chan interface{}, len(results)),
+			Results: make(chan *proto.Message, len(results)),
 			Errors:  make(chan error),
 			Done:    make(chan struct{}),
 		}
@@ -231,7 +232,7 @@ func (c *Client) attachToExistingRequest(requestID uuid.UUID) (*ResultProxy, err
 		// create a result proxy object for communicating result and request
 		// state to downstream consumer
 		proxy := &ResultProxy{
-			Results: make(chan interface{}),
+			Results: make(chan *proto.Message),
 			Errors:  make(chan error),
 			Done:    make(chan struct{}),
 		}
