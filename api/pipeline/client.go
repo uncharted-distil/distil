@@ -3,7 +3,7 @@ package pipeline
 import (
 	"sync"
 
-	"github.com/gogo/protobuf/proto"
+	"github.com/golang/protobuf/proto"
 	"github.com/pkg/errors"
 	"github.com/satori/go.uuid"
 	"github.com/unchartedsoftware/plog"
