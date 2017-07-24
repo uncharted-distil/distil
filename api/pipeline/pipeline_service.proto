@@ -21,15 +21,18 @@ message SessionContext {
 enum StatusCode {
     OK = 0;
     CANCELLED = 1;
-    INVALID_ARGUMENT = 2;
-    RESOURCE_EXHAUSTED = 3;
-    UNAVAILABLE = 4;
-    FAILED_PRECONDITION = 5;
-    OUT_OF_RANGE = 6;
-    UNIMPLEMENTED = 7;
-    INTERNAL = 8;
-    ABORTED = 9;
-    UNKNOWN = 10;
+    SESSION_UNKNOWN = 2;
+    SESSION_ENDED = 3;
+    SESSION_EXPIRED = 4;
+    INVALID_ARGUMENT = 5;
+    RESOURCE_EXHAUSTED = 6;
+    UNAVAILABLE = 7;
+    FAILED_PRECONDITION = 8;
+    OUT_OF_RANGE = 9;
+    UNIMPLEMENTED = 10;
+    INTERNAL = 11;
+    ABORTED = 12;
+    UNKNOWN = 13;
 }
 
 message Status {
@@ -42,6 +45,8 @@ message Response {
    Status status = 2;
 }
 
+// in the future we could also pass arguments allowing one to fork an existing session,
+// or provide resource limits on a session (asking TA2 system to terminate work if it exceeds a given limit)
 message SessionRequest {} // GRPC requests require an argument - used by StartSession() call
 
 enum Progress {
@@ -83,14 +88,13 @@ enum Metric {
 
 message PipelineCreateRequest {
    SessionContext context = 1;
-   // could also split into train_dataset_uri, train_targets_uri if training data left unjoined, would
-   // make 'target_features' field redundant in that case
-   repeated string train_dataset_uris = 2;
+   repeated string train_dataset_uris = 2;  // input path of training corpus
    Task task = 3;
-   Output output = 4;
-   repeated Metric metric = 5;  // specify a list of evaluation metrics
-   repeated string target_features = 6;
-   int32 max_pipelines = 7;
+   string task_description = 4; // textual description of the task, if available
+   Output output = 5;
+   repeated Metric metric = 6;  // specify a list of evaluation metrics
+   repeated string target_features = 7;  // specify a list of targets to predict
+   int32 max_pipelines = 8;  // maximum number of pipelines to return
 }
 
 message Score {
@@ -99,7 +103,7 @@ message Score {
 }
 
 message PipelineCreated {
-   repeated string predict_result_uris = 1;
+   repeated string predict_result_uris = 1;  // output path to predicted results on training data
    Output output = 2;
    repeated Score score = 3;
 }
@@ -108,22 +112,22 @@ message PipelineCreateResult {
    Response response_info = 1;
    Progress progress_info = 2;
    string pipeline_id = 3;
-   // Will be unset if progress info is a value other than COMPLETE
-   PipelineCreated pipelineInfo = 4;
+   // Will be set if progress info is a value other than COMPLETE
+   PipelineCreated pipeline_info = 4;
 }
 
 message PipelineExecuteRequest {
    SessionContext context = 1;
    string pipeline_id = 2;
-   repeated string predict_dataset_uris = 3;
+   repeated string predict_dataset_uris = 3;  // input path of eval data
 }
 
 message PipelineExecuteResult {
    Response response_info = 1;
    Progress progress_info = 2;
    string pipeline_id = 3;
-   // Will be set if progress info is a value other than COMPLETE
-   repeated string result_uris = 4;
+   // Will be set if progress info is value is COMPLETE
+   repeated string result_uris = 4;  // output path to predicted results on eval data
 }
 
 service PipelineCompute {

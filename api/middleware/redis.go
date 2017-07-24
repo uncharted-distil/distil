@@ -75,6 +75,11 @@ func ignoreRedisCache(r *http.Request) bool {
 	if ext != "" {
 		return true
 	}
+	// check for no-cache value being set in header
+	cache := r.Header.Get("Cache-control")
+	if cache == "no-cache" {
+		return true
+	}
 	return false
 }
 

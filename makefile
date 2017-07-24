@@ -34,6 +34,9 @@ watch:
 test: build
 	@go test $(shell glide novendor)
 
+protoc:
+	@protoc -I api/pipeline/ api/pipeline/pipeline_service.proto --go_out=plugins=grpc:api/pipeline
+
 install:
 	@npm install -g yarn
 	@yarn install

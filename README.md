@@ -40,6 +40,12 @@ unzip protoc-3.3.0-osx-x86_64.zip -d protoc3
 sudo mv protoc3/bin/protoc /usr/bin/protoc
 ```
 
+Compile protobuffers:
+
+```bash
+make protoc
+```
+
 Pull docker image:
 
 ```bash
