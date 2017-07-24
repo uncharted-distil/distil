@@ -309,11 +309,11 @@ type PipelineCreateRequest struct {
 	MaxPipelines     int32           `protobuf:"varint,8,opt,name=max_pipelines,json=maxPipelines" json:"max_pipelines,omitempty"`
 }
 
-func (m *PipelineCreateRequest) Reset()                    { *m = PipelineCreateRequest{} }
-func (m *PipelineCreateRequest) String() string            { return proto.CompactTextString(m) }
-func (*PipelineCreateRequest) ProtoMessage()               {}
-func (*PipelineCreateRequest) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{4} }
+func (m *PipelineCreateRequest) Reset()         { *m = PipelineCreateRequest{} }
+func (m *PipelineCreateRequest) String() string { return proto.CompactTextString(m) }
+func (*PipelineCreateRequest) ProtoMessage()    {}
 
+func (*PipelineCreateRequest) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{4} }
 func (m *PipelineCreateRequest) GetContext() *SessionContext {
 	if m != nil {
 		return m.Context
