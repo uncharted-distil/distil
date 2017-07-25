@@ -54,13 +54,9 @@ const state = {
 		// ]
 	},
 	// the underlying websocket connection
-	wsConnection : null,
-	// the individual websocket streams for each async request
-	wsStreams: {
-		// stream-id0: ...,
-		// stream-id1: ...,
-		// ...
-	}
+	wsConnection: null,
+	// the pipeline session id
+	pipelineSessionID: null
 };
 
 export default new Vuex.Store({

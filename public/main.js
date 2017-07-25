@@ -32,6 +32,7 @@ const router = new VueRouter({
 // sync store and router
 VueRouterSync.sync(store, router);
 
+// init app
 new Vue({
 	store,
 	router,
@@ -44,6 +45,3 @@ new Vue({
 			<router-view class="view"></router-view>
 		</div>`
 }).$mount('#app');
-
-// init the websocket connection
-store.dispatch('openWebSocketConnection', '/ws');

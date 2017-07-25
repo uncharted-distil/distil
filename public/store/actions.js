@@ -1,7 +1,6 @@
 import _ from 'lodash';
 import axios from 'axios';
 import { decodeFilters, encodeQueryParams } from '../util/filters';
-import Connection from '../util/ws';
 
 // TODO: move this somewhere more appropriate.
 const ES_INDEX = 'datasets';
@@ -89,38 +88,52 @@ export function updateFilteredData(context, datasetName) {
 		});
 }
 
-// opens the underlying websocket connection
-export function openWebSocketConnection(context, uri) {
-	return new Promise((resolve, reject) => {
-		const conn = new Connection(uri, err => {
-			if (err) {
-				console.warn(err);
-				reject(err);
-				return;
-			}
-			resolve(conn);
-			context.commit('setWebSocketConnection', conn);
+// starts a pipeline session.
+export function startPipelineSession(context) {
+	const conn = context.getters.getWebSocketConnection();
+	const sessionID = context.getters.getPipelineSessionID();
+	if (sessionID) {
+		return;
+	}
+	return conn.send({
+			type: 'start'
+		}).then(res => {
+			context.commit('setPipelineSessionID', res.session);
+		}).catch(err => {
+			console.warn(err);
 		});
-	});
 }
 
-// closes the underlying websocket connection.
-export function closeWebSocketConnection(context) {
+// resume a pipeline session.
+export function resumePipelineSession(context) {
 	const conn = context.getters.getWebSocketConnection();
-	conn.close();
-	context.commit('setWebSocketConnection', null);
+	const sessionID = context.getters.getPipelineSessionID();
+	if (!sessionID) {
+		return;
+	}
+	return conn.send({
+			type: 'resume',
+			session: sessionID
+		}).then(() => {
+
+		}).catch(err => {
+			console.warn(err);
+		});
 }
 
-// opens a stream on the underlying websocket connection.
-export function openStream(context, id) {
+// end a pipeline session.
+export function endPipelineSession(context) {
 	const conn = context.getters.getWebSocketConnection();
-	const stream = conn.stream(id);
-	context.commit('addWebSocketStream', stream);
-}
-
-// closes a stream on the underlying websocket connection.
-export function closeStream(context, id) {
-	const stream = context.getters.getWebSocketStream(id);
-	stream.close();
-	context.commit('removeWebSocketStream', stream);
+	const sessionID = context.getters.getPipelineSessionID();
+	if (!sessionID) {
+		return;
+	}
+	return conn.send({
+			type: 'end',
+			session: sessionID
+		}).then(res => {
+			context.commit('setPipelineSessionID', res.session);
+		}).catch(err => {
+			console.warn(err);
+		});
 }

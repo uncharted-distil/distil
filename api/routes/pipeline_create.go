@@ -15,7 +15,7 @@ import (
 )
 
 // PipelineCreateHandler is a thing that doesn't has the capacity to feel love
-func PipelineCreateHandler(pipelineService *pipeline.Client) func(http.ResponseWriter, *http.Request) {
+func PipelineCreateHandler(client *pipeline.Client) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 
 		sessionID := pat.Param(r, "session-id")
@@ -39,10 +39,17 @@ func PipelineCreateHandler(pipelineService *pipeline.Client) func(http.ResponseW
 		}
 		req := pipeline.GeneratePipelineCreateRequest(&createReq)
 
-		// gets an existing request or dispatchs a new one
-		proxy, err := pipelineService.GetOrDispatch(context.Background(), req)
+		session, err := client.GetSession(sessionID)
 		if err != nil {
 			handleError(w, errors.Wrap(err, "failed to issue CreatePipelineRequest"))
+			return
+		}
+
+		// gets an existing request or dispatchs a new one
+		proxy, err := session.GetOrDispatch(context.Background(), req)
+		if err != nil {
+			handleError(w, errors.Wrap(err, "failed to issue CreatePipelineRequest"))
+			return
 		}
 
 		// process the result proxy, which is replicated for completed, pending requests
@@ -55,6 +62,7 @@ func PipelineCreateHandler(pipelineService *pipeline.Client) func(http.ResponseW
 			case err := <-proxy.Errors:
 				log.Info("ERROR")
 				handleError(w, errors.Wrap(err, "failed to issue CreatePipelineRequest"))
+				return
 			case <-proxy.Done:
 				log.Info("DONE")
 				return

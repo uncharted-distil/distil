@@ -1,4 +1,5 @@
 import _ from 'lodash';
+import Connection from '../util/ws';
 
 export function getRouteTerms(state) {
 	return () => state.route.query.terms;
@@ -81,10 +82,23 @@ export function getFilteredDataFields(state) {
 	};
 }
 
-export function getWebSocketConnection(state) {
-	return state.wsConnection;
+export function getWebSocketConnection() {
+	const conn = new Connection('/ws', err => {
+		if (err) {
+			console.warn(err);
+			return;
+		}
+	});
+	return () => {
+		return conn;
+	};
 }
 
-export function getWebSocketStream(state, id) {
-	return state.wsStreams[id];
+export function getPipelineSessionID(state) {
+	return () => {
+		if (!state.pipelineSessionID) {
+			return window.localStorage.getItem('pipeline-session-id');
+		}
+		return state.pipelineSessionID;
+	};
 }

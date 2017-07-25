@@ -23,10 +23,7 @@ export function setWebSocketConnection(state, connection) {
 	state.wsConnection = connection;
 }
 
-export function addWebSocketStream(state, stream) {
-	state.wsStreams[stream.id] = stream;
-}
-
-export function removeWebSocketStream(state, stream) {
-	delete state.wsStreams[stream.id];
+export function setPipelineSessionID(state, id) {
+	state.pipelineSessionID = id;
+	window.localStorage.setItem('pipeline-session-id', id);
 }

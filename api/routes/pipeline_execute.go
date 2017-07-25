@@ -13,7 +13,7 @@ import (
 )
 
 // PipelineExecuteHandler is a thing that doesn't have the capacity to feel love
-func PipelineExecuteHandler(pipelineService *pipeline.Client) func(http.ResponseWriter, *http.Request) {
+func PipelineExecuteHandler(client *pipeline.Client) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 
 		sessionID := pat.Param(r, "session-id")
@@ -26,10 +26,17 @@ func PipelineExecuteHandler(pipelineService *pipeline.Client) func(http.Response
 		}
 		req := pipeline.GeneratePipelineExecuteRequest(&createReq)
 
+		session, err := client.GetSession(sessionID)
+		if err != nil {
+			handleError(w, errors.Wrap(err, "failed to issue CreatePipelineRequest"))
+			return
+		}
+
 		// gets an existing request or dispatchs a new one
-		proxy, err := pipelineService.GetOrDispatch(context.Background(), req)
+		proxy, err := session.GetOrDispatch(context.Background(), req)
 		if err != nil {
 			handleError(w, errors.Wrap(err, "failed to issue ExecutePipelineRequest"))
+			return
 		}
 
 		// process the result proxy, which is replicated for completed, pending requests
@@ -42,6 +49,7 @@ func PipelineExecuteHandler(pipelineService *pipeline.Client) func(http.Response
 			case err := <-proxy.Errors:
 				log.Info("ERROR")
 				handleError(w, errors.Wrap(err, "failed to issue ExecutePipelineRequest"))
+				return
 			case <-proxy.Done:
 				log.Info("DONE")
 				return

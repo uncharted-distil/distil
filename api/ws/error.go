@@ -1,9 +1,17 @@
 package ws
 
-func handleErr(conn *Connection, err error) error {
+import (
+	"github.com/unchartedsoftware/plog"
+)
+
+func handleErr(conn *Connection, id string, err error) {
+	log.Errorf("%+v", err)
 	// send error response
-	return conn.SendResponse(map[string]interface{}{
-		"success": false,
-		"error":   err,
+	err = conn.SendResponse(map[string]interface{}{
+		"id":    id,
+		"error": err,
 	})
+	if err != nil {
+		log.Errorf("%+v", err)
+	}
 }
