@@ -5,6 +5,8 @@ import (
 
 	"github.com/golang/protobuf/proto"
 	"github.com/pkg/errors"
+	"github.com/satori/go.uuid"
+	"github.com/unchartedsoftware/distil/api/middleware"
 	"github.com/unchartedsoftware/plog"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
@@ -26,7 +28,12 @@ type Client struct {
 // NewClient creates a new pipline reuqest dispatcher instance. This will establish
 // the connection to the pipeline server or return an error on fail
 func NewClient(serverAddr string) (*Client, error) {
-	conn, err := grpc.Dial(serverAddr, grpc.WithInsecure())
+	conn, err := grpc.Dial(
+		serverAddr,
+		grpc.WithInsecure(),
+		grpc.WithUnaryInterceptor(middleware.GenerateUnaryClientInterceptor()),
+		grpc.WithStreamInterceptor(middleware.GenerateStreamClientInterceptor()),
+	)
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to connect to %s", serverAddr)
 	}
