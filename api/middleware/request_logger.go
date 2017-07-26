@@ -21,8 +21,8 @@ type requestLogger struct {
 
 func newRequestLogger() *requestLogger {
 	return &requestLogger{
-		new(bytes.Buffer),
-		isatty.IsTerminal(os.Stdout.Fd()) && (runtime.GOOS != "windows"),
+		buf:      &bytes.Buffer{},
+		colorTTY: isatty.IsTerminal(os.Stdout.Fd()) && (runtime.GOOS != "windows"),
 	}
 }
 

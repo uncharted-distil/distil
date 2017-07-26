@@ -23,7 +23,11 @@ export function setWebSocketConnection(state, connection) {
 	state.wsConnection = connection;
 }
 
-export function setPipelineSessionID(state, id) {
-	state.pipelineSessionID = id;
-	window.localStorage.setItem('pipeline-session-id', id);
+export function setPipelineSession(state, session) {
+	state.pipelineSession = session;
+	if (!session) {
+		window.localStorage.removeItem('pipeline-session-id');
+	} else {
+		window.localStorage.setItem('pipeline-session-id', session.id);
+	}
 }

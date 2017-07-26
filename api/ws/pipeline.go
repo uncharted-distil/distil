@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"time"
 
 	"github.com/satori/go.uuid"
 	"github.com/unchartedsoftware/plog"
@@ -13,17 +14,9 @@ import (
 )
 
 const (
-	startSession  = "start"
-	resumeSession = "resume"
-	endSession    = "end"
+	getSession = "GET_SESSION"
+	endSession = "END_SESSION"
 )
-
-// Message represents a websocket message.
-type Message struct {
-	Type    string `json:"type"`
-	ID      string `json:"id"`
-	Session string `json:"session"`
-}
 
 // PipelineHandler represents a pipeline websocket handler.
 func PipelineHandler(client *pipeline.Client) func(http.ResponseWriter, *http.Request) {
@@ -47,12 +40,12 @@ func PipelineHandler(client *pipeline.Client) func(http.ResponseWriter, *http.Re
 func handlePipelineMessage(client *pipeline.Client) func(conn *Connection, bytes []byte) {
 	return func(conn *Connection, bytes []byte) {
 		// parse the message
-		msg, err := parseMessage(bytes)
+		msg, err := NewMessage(bytes)
 		if err != nil {
 			// parsing error, send back a failure response
 			err := fmt.Errorf("unable to parse pipeline request message: %s", string(bytes))
 			// send error response
-			handleErr(conn, "missing", err)
+			handleErr(conn, nil, err)
 			return
 		}
 		// handle message
@@ -66,80 +59,71 @@ func parseMessage(bytes []byte) (*Message, error) {
 	if err != nil {
 		return nil, err
 	}
+	msg.Timestamp = time.Now()
 	return msg, nil
 }
 
 func handleMessage(conn *Connection, client *pipeline.Client, msg *Message) {
 	switch msg.Type {
-	case startSession:
-		// start session
-		log.Debugf("START SESSION REQ")
+	case getSession:
+		// get session
+
+		// get existing session
+		if msg.Session != "" {
+			// try to get existing session
+			session, ok := client.GetSession(msg.Session)
+			if ok {
+				handleGetSessionSuccess(conn, msg, session.ID, false, true, session.GetExistingUUIDs())
+				return
+			}
+		}
+		// start a new session
 		session, err := client.StartSession(context.Background())
 		if err != nil {
-			handleErr(conn, msg.ID, err)
+			handleErr(conn, msg, err)
 			return
 		}
-		handleStartSessionSuccess(conn, msg.ID, session.ID)
-
-	case resumeSession:
-		// resume session
-		log.Debugf("RESUME SESSION REQ")
-		session, err := client.GetSession(msg.Session)
-		if err != nil {
-			handleErr(conn, msg.ID, err)
-			return
-		}
-		handleResumeSessionSuccess(conn, msg.ID, session.GetExistingUUIDs())
+		handleGetSessionSuccess(conn, msg, session.ID, true, false, session.GetExistingUUIDs())
+		return
 
 	case endSession:
 		// end session
-		log.Debugf("END SESSION REQ")
+
 		err := client.EndSession(context.Background(), msg.Session)
 		if err != nil {
-			handleErr(conn, msg.ID, err)
+			handleErr(conn, msg, err)
 			return
 		}
-		handleEndSessionSuccess(conn, msg.ID)
+		handleEndSessionSuccess(conn, msg)
+
+	default:
+		// unrecognized type
+		handleErr(conn, msg, fmt.Errorf("unrecognized message type"))
+		return
 	}
 }
 
-func handleStartSessionSuccess(conn *Connection, id string, session string) {
-	// send error response
-	err := conn.SendResponse(map[string]interface{}{
-		"id":      id,
-		"success": true,
-		"session": session,
-	})
-	if err != nil {
-		log.Errorf("%+v", err)
-	}
-}
-
-func handleResumeSessionSuccess(conn *Connection, id string, uuids []uuid.UUID) {
+func handleGetSessionSuccess(conn *Connection, msg *Message, session string, created bool, resumed bool, uuids []uuid.UUID) {
+	// convert uuids to strings
 	var strs []string
 	for _, uid := range uuids {
 		strs = append(strs, uid.String())
 	}
-	// send error response
-	err := conn.SendResponse(map[string]interface{}{
-		"id":      id,
+	// send response
+	handleSuccess(conn, msg, map[string]interface{}{
 		"success": true,
-		"uuids":   strs,
+		"session": session,
+		"created": created,
+		"resumed": resumed,
+		"uuids":   uuids,
 	})
-	if err != nil {
-		log.Errorf("%+v", err)
-	}
 }
 
-func handleEndSessionSuccess(conn *Connection, id string) {
-	// send error response
-	err := conn.SendResponse(map[string]interface{}{
-		"id":      id,
+func handleEndSessionSuccess(conn *Connection, msg *Message) {
+	// send response
+	handleSuccess(conn, msg, map[string]interface{}{
 		"success": true,
 	})
-	if err != nil {
-		log.Errorf("%+v", err)
-	}
 }
 
 /*

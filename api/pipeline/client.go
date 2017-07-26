@@ -53,15 +53,15 @@ func (c *Client) Close() {
 }
 
 // GetSession returns an existing session struct.
-func (c *Client) GetSession(id string) (*Session, error) {
+func (c *Client) GetSession(id string) (*Session, bool) {
 	// check for session
 	c.mu.Lock()
 	session, ok := c.sessions[id]
 	c.mu.Unlock()
 	if !ok {
-		return nil, errors.Errorf("session id `%s` is not recognized", id)
+		return nil, false
 	}
-	return session, nil
+	return session, true
 }
 
 // StartSession starts a new session.

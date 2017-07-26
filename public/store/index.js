@@ -56,7 +56,7 @@ const state = {
 	// the underlying websocket connection
 	wsConnection: null,
 	// the pipeline session id
-	pipelineSessionID: null
+	pipelineSession: null
 };
 
 export default new Vuex.Store({

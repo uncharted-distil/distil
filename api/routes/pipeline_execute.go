@@ -26,9 +26,9 @@ func PipelineExecuteHandler(client *pipeline.Client) func(http.ResponseWriter, *
 		}
 		req := pipeline.GeneratePipelineExecuteRequest(&createReq)
 
-		session, err := client.GetSession(sessionID)
-		if err != nil {
-			handleError(w, errors.Wrap(err, "failed to issue CreatePipelineRequest"))
+		session, ok := client.GetSession(sessionID)
+		if !ok {
+			handleError(w, errors.Errorf("pipeline session id `%s` not recognized", sessionID))
 			return
 		}
 

@@ -25,6 +25,7 @@ func NewSession(id string, client PipelineComputeClient) *Session {
 	return &Session{
 		ID:                id,
 		client:            client,
+		mu:                &sync.Mutex{},
 		pendingRequests:   make(map[uuid.UUID]*RequestContext),
 		completedRequests: make(map[uuid.UUID]*RequestContext),
 		downstream:        make(map[uuid.UUID][]*ResultProxy),

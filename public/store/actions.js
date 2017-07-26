@@ -89,33 +89,20 @@ export function updateFilteredData(context, datasetName) {
 }
 
 // starts a pipeline session.
-export function startPipelineSession(context) {
+export function getPipelineSession(context) {
 	const conn = context.getters.getWebSocketConnection();
 	const sessionID = context.getters.getPipelineSessionID();
-	if (sessionID) {
-		return;
-	}
 	return conn.send({
-			type: 'start'
-		}).then(res => {
-			context.commit('setPipelineSessionID', res.session);
-		}).catch(err => {
-			console.warn(err);
-		});
-}
-
-// resume a pipeline session.
-export function resumePipelineSession(context) {
-	const conn = context.getters.getWebSocketConnection();
-	const sessionID = context.getters.getPipelineSessionID();
-	if (!sessionID) {
-		return;
-	}
-	return conn.send({
-			type: 'resume',
+			type: 'GET_SESSION',
 			session: sessionID
-		}).then(() => {
-
+		}).then(res => {
+			if (sessionID && res.created) {
+				console.warn('previous session', sessionID, 'could not be resumed, new session created');
+			}
+			context.commit('setPipelineSession', {
+				id: res.session,
+				uuids: res.uuids
+			});
 		}).catch(err => {
 			console.warn(err);
 		});
@@ -129,10 +116,10 @@ export function endPipelineSession(context) {
 		return;
 	}
 	return conn.send({
-			type: 'end',
+			type: 'END_SESSION',
 			session: sessionID
-		}).then(res => {
-			context.commit('setPipelineSessionID', res.session);
+		}).then(() => {
+			context.commit('setPipelineSession', null);
 		}).catch(err => {
 			console.warn(err);
 		});

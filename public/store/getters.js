@@ -96,9 +96,23 @@ export function getWebSocketConnection() {
 
 export function getPipelineSessionID(state) {
 	return () => {
-		if (!state.pipelineSessionID) {
+		if (!state.pipelineSession) {
 			return window.localStorage.getItem('pipeline-session-id');
 		}
-		return state.pipelineSessionID;
+		return state.pipelineSession.id;
+	};
+}
+
+export function getPipelineSession(state) {
+	return () => {
+		return state.pipelineSession;
+	};
+}
+
+export function getPipelineSessionUUIDs(state) {
+	return () => {
+		return (state.pipelineSession && state.pipelineSession.uuids)
+			? state.pipelineSession.uuids
+			: [];
 	};
 }
