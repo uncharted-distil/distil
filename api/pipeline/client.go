@@ -5,7 +5,6 @@ import (
 
 	"github.com/golang/protobuf/proto"
 	"github.com/pkg/errors"
-	"github.com/satori/go.uuid"
 	"github.com/unchartedsoftware/distil/api/middleware"
 	"github.com/unchartedsoftware/plog"
 	"golang.org/x/net/context"
