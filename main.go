@@ -16,6 +16,7 @@ import (
 	"github.com/unchartedsoftware/distil/api/pipeline"
 	"github.com/unchartedsoftware/distil/api/redis"
 	"github.com/unchartedsoftware/distil/api/routes"
+	"github.com/unchartedsoftware/distil/api/ws"
 )
 
 const (
@@ -77,6 +78,7 @@ func main() {
 	registerRoute(mux, "/distil/pipeline-end-session/:session-id", routes.PipelineEndSessionHandler(pipelineClient))
 	registerRoute(mux, "/distil/pipeline-create/:session-id/:task/:output/:metric/:max-pipelines", routes.PipelineCreateHandler(pipelineClient))
 	registerRoute(mux, "/distil/pipeline-execute/:session-id/:pipeline-id", routes.PipelineExecuteHandler(pipelineClient))
+	registerRoute(mux, "/ws", ws.PipelineHandler(pipelineClient))
 	registerRoute(mux, "/*", routes.FileHandler("./dist"))
 
 	// catch kill signals for graceful shutdown

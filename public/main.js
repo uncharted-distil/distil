@@ -32,6 +32,7 @@ const router = new VueRouter({
 // sync store and router
 VueRouterSync.sync(store, router);
 
+// init app
 new Vue({
 	store,
 	router,

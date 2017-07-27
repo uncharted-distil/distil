@@ -18,3 +18,16 @@ export function updateVariableSummaries(state, args) {
 export function setFilteredData(state, filteredData) {
 	state.filteredData = filteredData;
 }
+
+export function setWebSocketConnection(state, connection) {
+	state.wsConnection = connection;
+}
+
+export function setPipelineSession(state, session) {
+	state.pipelineSession = session;
+	if (!session) {
+		window.localStorage.removeItem('pipeline-session-id');
+	} else {
+		window.localStorage.setItem('pipeline-session-id', session.id);
+	}
+}

@@ -87,3 +87,40 @@ export function updateFilteredData(context, datasetName) {
 				context.commit('setFilteredData', []);
 		});
 }
+
+// starts a pipeline session.
+export function getPipelineSession(context) {
+	const conn = context.getters.getWebSocketConnection();
+	const sessionID = context.getters.getPipelineSessionID();
+	return conn.send({
+			type: 'GET_SESSION',
+			session: sessionID
+		}).then(res => {
+			if (sessionID && res.created) {
+				console.warn('previous session', sessionID, 'could not be resumed, new session created');
+			}
+			context.commit('setPipelineSession', {
+				id: res.session,
+				uuids: res.uuids
+			});
+		}).catch(err => {
+			console.warn(err);
+		});
+}
+
+// end a pipeline session.
+export function endPipelineSession(context) {
+	const conn = context.getters.getWebSocketConnection();
+	const sessionID = context.getters.getPipelineSessionID();
+	if (!sessionID) {
+		return;
+	}
+	return conn.send({
+			type: 'END_SESSION',
+			session: sessionID
+		}).then(() => {
+			context.commit('setPipelineSession', null);
+		}).catch(err => {
+			console.warn(err);
+		});
+}

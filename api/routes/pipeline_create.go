@@ -3,19 +3,18 @@ package routes
 import (
 	"net/http"
 
-	"goji.io/pat"
-
-	"github.com/pkg/errors"
-	"golang.org/x/net/context"
-
 	"strconv"
 
+	"github.com/pkg/errors"
+	"github.com/unchartedsoftware/plog"
+	"goji.io/pat"
+	"golang.org/x/net/context"
+
 	"github.com/unchartedsoftware/distil/api/pipeline"
-	log "github.com/unchartedsoftware/plog"
 )
 
 // PipelineCreateHandler is a thing that doesn't has the capacity to feel love
-func PipelineCreateHandler(pipelineService *pipeline.Client) func(http.ResponseWriter, *http.Request) {
+func PipelineCreateHandler(client *pipeline.Client) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 
 		sessionID := pat.Param(r, "session-id")
@@ -39,10 +38,17 @@ func PipelineCreateHandler(pipelineService *pipeline.Client) func(http.ResponseW
 		}
 		req := pipeline.GeneratePipelineCreateRequest(&createReq)
 
+		session, ok := client.GetSession(sessionID)
+		if !ok {
+			handleError(w, errors.Errorf("pipeline session id `%s` not recognized", sessionID))
+			return
+		}
+
 		// gets an existing request or dispatchs a new one
-		proxy, err := pipelineService.GetOrDispatch(context.Background(), req)
+		proxy, err := session.GetOrDispatch(context.Background(), req)
 		if err != nil {
 			handleError(w, errors.Wrap(err, "failed to issue CreatePipelineRequest"))
+			return
 		}
 
 		// process the result proxy, which is replicated for completed, pending requests
@@ -55,6 +61,7 @@ func PipelineCreateHandler(pipelineService *pipeline.Client) func(http.ResponseW
 			case err := <-proxy.Errors:
 				log.Info("ERROR")
 				handleError(w, errors.Wrap(err, "failed to issue CreatePipelineRequest"))
+				return
 			case <-proxy.Done:
 				log.Info("DONE")
 				return

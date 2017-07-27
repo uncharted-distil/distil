@@ -21,8 +21,8 @@ type requestLogger struct {
 
 func newRequestLogger() *requestLogger {
 	return &requestLogger{
-		new(bytes.Buffer),
-		isatty.IsTerminal(os.Stdout.Fd()) && (runtime.GOOS != "windows"),
+		buf:      &bytes.Buffer{},
+		colorTTY: isatty.IsTerminal(os.Stdout.Fd()) && (runtime.GOOS != "windows"),
 	}
 }
 
@@ -108,10 +108,3 @@ func (r *requestLogger) log(success bool) {
 		log.Warn(r.buf.String())
 	}
 }
-
-// requestType(r.Method).
-// request(r.URL.String()).
-// params(r.URL.String()).
-// status(lw.Status()).
-// duration(t2.Sub(t1)).
-// log(lw.Status() < 500)
