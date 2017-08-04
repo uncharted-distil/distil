@@ -9,11 +9,11 @@ import (
 func handleErr(conn *Connection, msg *Message, err error) {
 	if msg != nil {
 		// log the response
-		logger := newMessageLogger()
-		logger.messageType(msg.Type)
-		logger.message(msg.Raw)
-		logger.duration(time.Now().Sub(msg.Timestamp))
-		logger.log(err != nil)
+		newMessageLogger().
+			messageType(msg.Type).
+			message(msg.Raw).
+			duration(time.Since(msg.Timestamp)).
+			log(err != nil)
 		// send error response if we have an id
 		errOther := conn.SendResponse(map[string]interface{}{
 			"id":      msg.ID,
