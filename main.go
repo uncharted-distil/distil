@@ -74,7 +74,7 @@ func main() {
 	registerRoute(mux, "/distil/variables/:index/:dataset", routes.VariablesHandler(esClientCtor))
 	registerRoute(mux, "/distil/variable-summaries/:index/:dataset/:variable", routes.VariableSummaryHandler(esClientCtor))
 	registerRoute(mux, "/distil/filtered-data/:dataset", routes.FilteredDataHandler(esClientCtor))
-	registerRoute(mux, "/ws", ws.PipelineHandler(pipelineClient))
+	registerRoute(mux, "/ws", ws.PipelineHandler(pipelineClient, esClientCtor))
 	registerRoute(mux, "/*", routes.FileHandler("./dist"))
 
 	// catch kill signals for graceful shutdown

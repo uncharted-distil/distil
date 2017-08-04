@@ -8,5 +8,6 @@ vendor
 debug.test
 debug
 /node_modules
+/datasets
 *.log
 dist

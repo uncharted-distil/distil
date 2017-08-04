@@ -7,25 +7,28 @@ import (
 	"strings"
 	"time"
 
+	"github.com/unchartedsoftware/distil/api/model"
+
 	"github.com/pkg/errors"
 	"github.com/satori/go.uuid"
+	es "github.com/unchartedsoftware/distil/api/elastic"
+	"github.com/unchartedsoftware/distil/api/pipeline"
 	"github.com/unchartedsoftware/plog"
 	"golang.org/x/net/context"
-
-	"github.com/unchartedsoftware/distil/api/pipeline"
 )
 
 const (
 	getSession      = "GET_SESSION"
 	endSession      = "END_SESSION"
 	createPipelines = "CREATE_PIPELINES"
+	datasetDir      = "datasets"
 )
 
 // PipelineHandler represents a pipeline websocket handler.
-func PipelineHandler(client *pipeline.Client) func(http.ResponseWriter, *http.Request) {
+func PipelineHandler(client *pipeline.Client, esClientCtor es.ClientCtor) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// create conn
-		conn, err := NewConnection(w, r, handlePipelineMessage(client))
+		conn, err := NewConnection(w, r, handlePipelineMessage(client, esClientCtor))
 		if err != nil {
 			log.Warn(err)
 			return
@@ -40,7 +43,7 @@ func PipelineHandler(client *pipeline.Client) func(http.ResponseWriter, *http.Re
 	}
 }
 
-func handlePipelineMessage(client *pipeline.Client) func(conn *Connection, bytes []byte) {
+func handlePipelineMessage(client *pipeline.Client, esClientCtor es.ClientCtor) func(conn *Connection, bytes []byte) {
 	return func(conn *Connection, bytes []byte) {
 		// parse the message
 		msg, err := NewMessage(bytes)
@@ -52,7 +55,7 @@ func handlePipelineMessage(client *pipeline.Client) func(conn *Connection, bytes
 			return
 		}
 		// handle message
-		go handleMessage(conn, client, msg)
+		go handleMessage(conn, client, esClientCtor, msg)
 	}
 }
 
@@ -66,7 +69,7 @@ func parseMessage(bytes []byte) (*Message, error) {
 	return msg, nil
 }
 
-func handleMessage(conn *Connection, client *pipeline.Client, msg *Message) {
+func handleMessage(conn *Connection, client *pipeline.Client, esClientCtor es.ClientCtor, msg *Message) {
 	switch msg.Type {
 	case getSession:
 		handleGetSession(conn, client, msg)
@@ -75,7 +78,7 @@ func handleMessage(conn *Connection, client *pipeline.Client, msg *Message) {
 		handleEndSession(conn, client, msg)
 		return
 	case createPipelines:
-		handleCreatePipelines(conn, client, msg)
+		handleCreatePipelines(conn, client, esClientCtor, msg)
 		return
 	default:
 		// unrecognized type
@@ -116,14 +119,15 @@ func handleEndSession(conn *Connection, client *pipeline.Client, msg *Message) {
 }
 
 type pipelineCreateMsg struct {
-	Dataset string `json:"dataset"`
-	Feature string `json:"feature"`
-	Task    string `json:"task"`
-	Metric  string `json:"metric"`
-	Output  string `json:"output"`
+	Dataset string          `json:"dataset"`
+	Feature string          `json:"feature"`
+	Task    string          `json:"task"`
+	Metric  string          `json:"metric"`
+	Output  string          `json:"output"`
+	Filters json.RawMessage `json:"filters"`
 }
 
-func handleCreatePipelines(conn *Connection, client *pipeline.Client, msg *Message) {
+func handleCreatePipelines(conn *Connection, client *pipeline.Client, esClientCtor es.ClientCtor, msg *Message) {
 	// unmarshall the request data
 	clientCreateMsg := &pipelineCreateMsg{}
 	err := json.Unmarshal(msg.Raw, clientCreateMsg)
@@ -131,10 +135,24 @@ func handleCreatePipelines(conn *Connection, client *pipeline.Client, msg *Messa
 		handleErr(conn, msg, err)
 		return
 	}
+
+	// persist the filtered dataset if necessary
+	fetchFilteredData := func(dataset string, filters *model.FilterParams) (*model.FilteredData, error) {
+		esClient, err := esClientCtor()
+		if err != nil {
+			return nil, err
+		}
+		return model.FetchFilteredData(esClient, dataset, filters)
+	}
+	datasetPath, err := pipeline.PersistFilteredData(fetchFilteredData, datasetDir, clientCreateMsg.Dataset, clientCreateMsg.Filters)
+	if err != nil {
+		handleErr(conn, msg, err)
+	}
+
 	// populate the protobuf pipeline create msg
 	createMsg := &pipeline.PipelineCreateRequest{
 		Context:          &pipeline.SessionContext{SessionId: msg.Session},
-		TrainDatasetUris: []string{clientCreateMsg.Dataset},
+		TrainDatasetUris: []string{datasetPath},
 		Task:             pipeline.Task(pipeline.Task_value[strings.ToUpper(clientCreateMsg.Task)]),
 		Output:           pipeline.Output(pipeline.Output_value[strings.ToUpper(clientCreateMsg.Output)]),
 		Metric:           []pipeline.Metric{pipeline.Metric(pipeline.Metric_value[strings.ToUpper(clientCreateMsg.Metric)])},
