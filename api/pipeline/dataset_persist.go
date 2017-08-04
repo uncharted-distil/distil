@@ -49,7 +49,20 @@ func parseDatasetFilters(rawFilters json.RawMessage) (*model.FilterParams, error
 		return nil, errors.Wrap(err, "failed to parse filters")
 	}
 
-	for _, filter := range filters {
+	// sort the filter values by var name to ensure consistent hashing
+	//
+	// TODO: this can possibly be circumvented by having the client pass
+	// the filter params up as a sorted list rather than a map
+	filterValues := make([]*filter, 0, len(filters))
+	for k := range filters {
+		f := filters[k]
+		filterValues = append(filterValues, &f)
+	}
+	sort.SliceStable(filterValues, func(i, j int) bool {
+		return filterValues[i].Name < filterValues[j].Name
+	})
+
+	for _, filter := range filterValues {
 		// parse out filter parameters
 		if filter.Type != nil {
 			if *filter.Type == numericalType {
@@ -62,7 +75,7 @@ func parseDatasetFilters(rawFilters json.RawMessage) (*model.FilterParams, error
 				if filter.Categories == nil {
 					return nil, errors.New("categorical filter missing categories set")
 				}
-				sort.Strings(*filter.Categories) // ensure consistent ordering for hashing
+				sort.Strings(*filter.Categories)
 				varCategories := model.VariableCategories{Name: filter.Name, Categories: *filter.Categories}
 				filterParams.Categorical = append(filterParams.Categorical, varCategories)
 			} else {
@@ -71,7 +84,7 @@ func parseDatasetFilters(rawFilters json.RawMessage) (*model.FilterParams, error
 		} else {
 			filterParams.None = append(filterParams.None, filter.Name)
 		}
-		sort.Strings(filterParams.None) // ensure consistent ordering for hashing
+		sort.Strings(filterParams.None)
 	}
 	return &filterParams, nil
 }

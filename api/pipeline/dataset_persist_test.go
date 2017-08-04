@@ -79,7 +79,7 @@ func fetchFilteredData(t *testing.T) FilteredDataProvider {
 	return func(dataset string, filters *model.FilterParams) (*model.FilteredData, error) {
 		// basic sanity to check  params are passed through and parsed
 		assert.Equal(t, 2, len(filters.Ranged))
-		assert.Equal(t, "int_a", filters.Ranged[0].Name)
+		assert.Equal(t, "float_b", filters.Ranged[0].Name)
 
 		return &model.FilteredData{
 			Name:     "test",
