@@ -46,16 +46,18 @@ Compile protobuffers:
 make protoc
 ```
 
-Pull docker image:
+The application depends on ElasticSearch for data, and a stub TA2 system for back end integration.  Docker images (with data) for both are available:
 
 ```bash
-docker pull docker.uncharted.software/distil_dev_es:0.2
+docker pull docker.uncharted.software/distil_dev_es
+docker pull docker.uncharted.software/distil-pipeline-server
 ```
 
-Launch docker container:
+Launch docker containers:
 
 ```bash
 ./es_run.sh
+./pipeline_server_run.sh
 ```
 
 Build and watch webapp:
