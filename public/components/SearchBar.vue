@@ -10,6 +10,7 @@
 
 <script>
 import _ from 'lodash';
+import {createRouteEntry} from '../util/routes';
 
 export default {
 	name: 'search-bar',
@@ -17,12 +18,8 @@ export default {
 	computed: {
 		terms: {
 			set: _.throttle(function(terms) {
-				this.$router.push({
-					path: '/search',
-					query: {
-						terms: terms
-					}
-				});
+				const routeEntry = createRouteEntry('/search', null, terms, this.$store.getters.getRouteFilters());
+				this.$router.push(routeEntry);
 			}, 500),
 			get: function() {
 				return this.$store.getters.getRouteTerms();
