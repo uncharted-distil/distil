@@ -19,7 +19,9 @@
 </template>
 
 <script>
+
 import Vue from 'vue';
+import {createRouteEntry} from '../util/routes';
 
 export default {
 	name: 'search-results',
@@ -40,13 +42,15 @@ export default {
 
 	methods: {
 		setActiveDataset(datasetName) {
-			this.$router.push({
-				path: '/dataset',
-				query: {
-					dataset: datasetName,
-					terms: this.$store.getters.getRouteTerms()
-				}
-			});
+			// clear filters when we select a new dataset
+			const filters = datasetName === this.$store.getters.getRouteDataset() ? this.$store.getters.getRouteFilters() : null;
+			const entry = createRouteEntry(
+				'/dataset',
+				datasetName,
+				this.$store.getters.getRouteTerms(),
+				filters
+			);
+			this.$router.push(entry);
 		},
 		toggleExpansion(datasetName) {
 			Vue.set(this.expanded, datasetName, !this.expanded[datasetName]);

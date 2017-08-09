@@ -11,19 +11,19 @@ export function getRouteDataset(state) {
 
 export function getRouteFilter(state) {
 	return (varName) => {
-		return state.route.query[varName] !== undefined ? `${varName}=${state.route.query[varName]}` : null;
+		return varName in state.route.query ? state.route.query[varName] : null;
 	};
 }
 
 export function getRouteFilters(state) {
 	return () => {
-		const filters = [];
-		_.forIn(state.route.query, (value, key) => {
+		const result = {};
+		_.forEach(state.route.query, (key, value) => {
 			if (key !== 'dataset' && key !== 'terms') {
-				filters.push(`${key}=${value}`);
+				result[key] = value;
 			}
 		});
-		return filters;
+		return result;
 	};
 }
 

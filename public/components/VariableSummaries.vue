@@ -16,10 +16,9 @@
 
 <script>
 
-import _ from 'lodash';
-
 import Facets from '../components/Facets';
 import { decodeFilter, updateFilter, getFilterType, isDisabled, NUMERICAL_FILTER } from '../util/filters';
+import { createRouteEntry } from '../util/routes';
 import 'font-awesome/css/font-awesome.css';
 import '../styles/spinner.css';
 
@@ -65,16 +64,10 @@ export default {
 		updateFilterRoute(key, values) {
 			// retrieve the filters from the route
 			const filters = this.$store.getters.getRouteFilters();
-			// update the filters
-			const updated = updateFilter(filters, key, values);
 			// merge the updated filters back into the route query params
-			this.$router.push({
-				path: '/dataset',
-				query: _.merge({
-					dataset: this.$store.getters.getRouteDataset(),
-					terms: this.$store.getters.getRouteTerms(),
-				}, updated)
-			});
+			const updated = updateFilter(filters, key, values);
+			const entry = createRouteEntry('/dataset', this.$store.getters.getRouteDataset(), this.$store.getters.getRouteTerms(), updated);
+			this.$router.push(entry);
 		},
 		onExpand(key) {
 			// enable filter
