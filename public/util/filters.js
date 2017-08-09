@@ -43,8 +43,7 @@ export const NUMERICAL_FILTER_ID = 'numerical';
  * @returns {Object} The decoded filter object.
  */
 export function decodeFilter(filterName, filter) {
-	if (_.isEmpty(filterName) || !filter) {
-		console.warn(`Incomplete filter definition: ${filterName}:${filter}`);
+	if (!filter) {
 		return null;
 	}
 	const values = filter.split(',');

@@ -18,7 +18,7 @@ export function getRouteFilter(state) {
 export function getRouteFilters(state) {
 	return () => {
 		const result = {};
-		_.forEach(state.route.query, (key, value) => {
+		_.forEach(state.route.query, (value, key) => {
 			if (key !== 'dataset' && key !== 'terms') {
 				result[key] = value;
 			}

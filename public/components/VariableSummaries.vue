@@ -175,7 +175,7 @@ export default {
 			return groups.map(group => {
 				// get filter
 				const filter = this.$store.getters.getRouteFilter(group.key);
-				const decoded = decodeFilter(filter);
+				const decoded = decodeFilter(group.key, filter);
 				// check if numeric filter
 				if (getFilterType(decoded) === NUMERICAL_FILTER) {
 					// add selection to facets
