@@ -17,7 +17,7 @@ type ElasticFilter struct {
 	client *elastic.Client
 }
 
-// NewElasticFilter returns an initialized ElasticFilter.
+// NewElasticFilter returns a constructor for an ElasticFilter.
 func NewElasticFilter(clientCtor es.ClientCtor) model.StorageCtor {
 	return func() (model.Filter, error) {
 		esClient, err := clientCtor()

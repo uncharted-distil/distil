@@ -14,7 +14,7 @@ type PostgresFilter struct {
 	client *pgx.ConnPool
 }
 
-// NewPostgresFilter returns an initialized PostgresFilter.
+// NewPostgresFilter returns a constructor for a PostgresFilter.
 func NewPostgresFilter() *PostgresFilter {
 	return &PostgresFilter{}
 }

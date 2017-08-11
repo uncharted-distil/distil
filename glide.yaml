@@ -4,6 +4,7 @@ import:
   subpackages:
   - redis
 - package: github.com/gorilla/websocket
+- package: github.com/jackc/pgx
 - package: github.com/mattn/go-isatty
 - package: github.com/mgutz/ansi
 - package: github.com/microcosm-cc/bluemonday
