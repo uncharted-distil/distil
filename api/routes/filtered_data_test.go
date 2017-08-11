@@ -76,6 +76,9 @@ func TestFilteredDataHandler(t *testing.T) {
 	// mock elasticsearch client
 	ctor := mock.ElasticClientCtor(t, handler)
 
+	// instantiate storage filter client constructor.
+	storageCtor := filter.NewElasticFilter(esClientCtor)
+
 	// put together a stub dataset request
 	params := map[string]string{
 		"dataset": "o_185",
@@ -89,7 +92,7 @@ func TestFilteredDataHandler(t *testing.T) {
 
 	// execute the test request - stubbed ES server will return the JSON
 	// loaded above
-	res := mock.HTTPResponse(t, req, FilteredDataHandler(ctor))
+	res := mock.HTTPResponse(t, req, FilteredDataHandler(storageCtor))
 	assert.Equal(t, http.StatusOK, res.Code)
 
 	// compare expected and acutal results - unmarshall first to ensure object
