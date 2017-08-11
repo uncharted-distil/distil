@@ -77,7 +77,7 @@ func TestFilteredDataHandler(t *testing.T) {
 	ctor := mock.ElasticClientCtor(t, handler)
 
 	// instantiate storage filter client constructor.
-	storageCtor := filter.NewElasticFilter(esClientCtor)
+	storageCtor := filter.NewElasticFilter(ctor)
 
 	// put together a stub dataset request
 	params := map[string]string{
