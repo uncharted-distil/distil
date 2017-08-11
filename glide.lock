@@ -1,53 +1,55 @@
-hash: d4d04415a579213c3f9865f4e67c4ef77a22cb2c7f5d8744076f76297f3b3e07
-updated: 2017-07-14T12:12:10.602027596-04:00
+hash: 3f8c619ca3e53989229d84ec19158244bd4921020cd91e83307edbecd12b2cd7
+updated: 2017-08-11T15:15:07.489379596-04:00
 imports:
 - name: github.com/davecgh/go-spew
   version: 04cdfd42973bb9c8589fd6a731800cf222fde1a9
   subpackages:
   - spew
 - name: github.com/garyburd/redigo
-  version: 9f3a0116c9f72c5a56f958206a43dc881b502c37
+  version: 8873b2f1995f59d4bcdd2b0dc9858e2cb9bf0c13
   subpackages:
   - internal
   - redis
 - name: github.com/golang/protobuf
-  version: 0a4f71a498b7c4812f64969510bcb4eca251e33a
+  version: 8ee79997227bf9b34611aee7946ae64735e6fd93
   subpackages:
   - proto
   - protoc-gen-go
   - ptypes/any
 - name: github.com/gorilla/websocket
-  version: 462d5c5828f6203e4047c47be2920315937be380
-- name: github.com/mattn/go-colorable
-  version: 3fa8c76f9daed4067e4a806fb7e4dc86455c6d6a
+  version: 2d1e4548da234d9cb742cc3628556fef86aafbac
+- name: github.com/jackc/pgx
+  version: 97c01fb52451c10e686fb847ad390338bf1799ae
 - name: github.com/mattn/go-isatty
   version: fc9e8d8ef48496124e79ae0df75490096eccf6fe
 - name: github.com/mgutz/ansi
-  version: 9520e82c474b0a04dd04f8a40959027271bab992
+  version: c286dcecd19ff979eeb73ea444e479b903f2cfcb
 - name: github.com/microcosm-cc/bluemonday
-  version: e79763773ab6222ca1d5a7cbd9d62d83c1f77081
+  version: f0d1606e9e60cb2428f85ddcbfcccfeb6b507586
 - name: github.com/mitchellh/hashstructure
   version: 2bca23e0e452137f789efbc8610126fd8b94f73b
 - name: github.com/pkg/errors
-  version: c605e284fe17294bda444b34710735b29d1a9d90
+  version: 645ef00459ed84a119197bfb8d8205042c6df63d
 - name: github.com/pmezard/go-difflib
   version: d8ed2627bdf02c080bf22230dbb337003b7aba2d
   subpackages:
   - difflib
 - name: github.com/russross/blackfriday
-  version: 067529f716f4c3f5e37c8c95ddd59df1007290ae
+  version: 4048872b16cc0fc2c5fd9eacf0ed2c2fedaa0c8c
 - name: github.com/satori/go.uuid
-  version: 5bf94b69c6b68ee1b541973bb8e1144db23a194b
+  version: 879c5887cd475cd7864858769793b2ceb0d44feb
+- name: github.com/Sirupsen/logrus
+  version: a283a10442df8dc09befd873fab202bf8a253d6a
 - name: github.com/stretchr/testify
-  version: f6abca593680b2315d2075e0f5e2a9751e3f431a
+  version: 890a5c3458b43e6104ff5da8dfa139d013d77544
   subpackages:
   - assert
 - name: github.com/unchartedsoftware/plog
-  version: 34d2bbd3c0a9458feb0752af2b578a23eb8ddc4f
+  version: 24c9313ea3ff2a86868f9961420e5b72fb83a019
 - name: github.com/vova616/xxhash
   version: f0a9a8b74d487f9563a527daf3bd6b4fbd3f5d00
 - name: github.com/zenazn/goji
-  version: 4d7077956293261309684d3cf1af673f773c6819
+  version: 64eb34159fe53473206c2b3e70fe396a639452f2
   subpackages:
   - graceful
   - graceful/listener
@@ -58,7 +60,7 @@ imports:
   - pat
   - pattern
 - name: golang.org/x/net
-  version: f01ecb60fe3835d80d9a0b7b2bf24b228c89260e
+  version: d212a1ef2de2f5d441c327b8f26cf3ea3ea9f265
   subpackages:
   - context
   - html
@@ -70,18 +72,18 @@ imports:
   - lex/httplex
   - trace
 - name: golang.org/x/sys
-  version: 4cd6d1a821c7175768725b55ca82f14683a29ea4
+  version: a646d33e2ee3172a661fc09bca23bb4889a41bc8
   subpackages:
   - unix
 - name: golang.org/x/text
-  version: 836efe42bb4aa16aaa17b9c155d8813d336ed720
+  version: b19bf474d317b857955b12035d2c5acb57ce8b01
   subpackages:
   - secure/bidirule
   - transform
   - unicode/bidi
   - unicode/norm
 - name: google.golang.org/genproto
-  version: b0a3dcfcd1a9bd48e63634bd8802960804cf8315
+  version: 09f6ed296fc66555a25fe4ce95173148778dfa85
   subpackages:
   - googleapis/rpc/status
 - name: google.golang.org/grpc
@@ -101,7 +103,8 @@ imports:
   - tap
   - transport
 - name: gopkg.in/olivere/elastic.v5
-  version: 3113f9b9ad37509fe5f8a0e5e91c96fdc4435e26
+  version: edbef41beaacc2ee95e61af8faff04e67c01e268
   subpackages:
+  - config
   - uritemplates
 testImports: []
