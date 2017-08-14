@@ -11,7 +11,7 @@
 				</a>
 			</div>
 			<div class="dataset-body" v-if="isExpanded(dataset.name)">
-				<p class="p-2" v-html="dataset.description">
+				<p class="p-2" v-html="highlightedDescription(dataset.description)">
 				</p>
 			</div>
 		</div>
@@ -57,12 +57,22 @@ export default {
 		},
 		isExpanded(datasetName) {
 			return this.expanded[datasetName];
+		},
+		highlightedDescription(description) {
+			const terms = this.$store.getters.getRouteTerms();
+			const split = terms.split(/[ ,]+/); // split on whitespace
+			const joined = split.join('|'); // join
+			const regex = new RegExp(`(${joined})(?![^<]*>)`, 'gm');
+			return description.replace(regex, '<span class="highlight">$1</span>');
 		}
 	}
 };
 </script>
 
 <style>
+.highlight {
+	background-color: #87CEFA;
+}
 .dataset-header {
 	border: 1px solid #ccc;
 	justify-content: space-between
