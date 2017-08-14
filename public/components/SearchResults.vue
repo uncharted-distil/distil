@@ -20,6 +20,7 @@
 
 <script>
 
+import _ from 'lodash';
 import Vue from 'vue';
 import {createRouteEntry} from '../util/routes';
 
@@ -59,6 +60,9 @@ export default {
 			return this.expanded[datasetName];
 		},
 		highlightedDescription(description) {
+			if (_.isEmpty(terms)) {
+				return description;
+			}
 			const terms = this.$store.getters.getRouteTerms();
 			const split = terms.split(/[ ,]+/); // split on whitespace
 			const joined = split.join('|'); // join
