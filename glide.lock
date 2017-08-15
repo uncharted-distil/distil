@@ -1,5 +1,5 @@
 hash: 3f8c619ca3e53989229d84ec19158244bd4921020cd91e83307edbecd12b2cd7
-updated: 2017-08-11T15:15:07.489379596-04:00
+updated: 2017-08-15T14:42:22.286606857-04:00
 imports:
 - name: github.com/davecgh/go-spew
   version: 04cdfd42973bb9c8589fd6a731800cf222fde1a9
@@ -10,6 +10,10 @@ imports:
   subpackages:
   - internal
   - redis
+- name: github.com/golang/mock
+  version: 45f67fc6bd1ec393ae6c0145e35d67b3867bbe96
+  subpackages:
+  - gomock
 - name: github.com/golang/protobuf
   version: 8ee79997227bf9b34611aee7946ae64735e6fd93
   subpackages:
