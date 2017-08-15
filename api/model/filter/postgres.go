@@ -9,40 +9,61 @@ import (
 	"github.com/unchartedsoftware/distil/api/model"
 )
 
+// DatabaseDriver defines the behaviour of the querying engine.
+type DatabaseDriver interface {
+	Query(string, ...interface{}) (*pgx.Rows, error)
+}
+
+// ClientCtor repressents a client constructor to instantiate a postgres client.
+type ClientCtor func() (DatabaseDriver, error)
+
 // PostgresFilter executes a filtered fetch on postgres data.
 type PostgresFilter struct {
-	client *pgx.ConnPool
+	client DatabaseDriver
 }
 
 // NewPostgresFilter returns a constructor for a PostgresFilter.
-func NewPostgresFilter() *PostgresFilter {
-	return &PostgresFilter{}
+func NewPostgresFilter(clientCtor ClientCtor) model.StorageCtor {
+	return func() (model.Filter, error) {
+		client, err := clientCtor()
+		if err != nil {
+			return nil, err
+		}
+
+		return &PostgresFilter{
+			client: client,
+		}, nil
+	}
 }
 
 func (f *PostgresFilter) parseResults(dataset string, rows *pgx.Rows) (*model.FilteredData, error) {
 	result := &model.FilteredData{
-		Name: dataset,
+		Name:   dataset,
+		Values: make([][]interface{}, 0),
 	}
 
 	// Parse the metadata.
-	fields := rows.FieldDescriptions()
-	metadata := make([]*model.Variable, len(fields))
-	for i := 0; i < len(fields); i++ {
-		metadata[i] = &model.Variable{
-			Name: fields[i].Name,
-			Type: fields[i].DataTypeName,
+	if rows != nil {
+		fields := rows.FieldDescriptions()
+		metadata := make([]*model.Variable, len(fields))
+		for i := 0; i < len(fields); i++ {
+			metadata[i] = &model.Variable{
+				Name: fields[i].Name,
+				Type: fields[i].DataTypeName,
+			}
 		}
-	}
-	result.Metadata = metadata
+		result.Metadata = metadata
 
-	// Parse the row data.
-	result.Values = make([][]interface{}, 0)
-	for rows.Next() {
-		columnValues, err := rows.Values()
-		if err != nil {
-			return nil, err
+		// Parse the row data.
+		for rows.Next() {
+			columnValues, err := rows.Values()
+			if err != nil {
+				return nil, err
+			}
+			result.Values = append(result.Values, columnValues)
 		}
-		result.Values = append(result.Values, columnValues)
+	} else {
+		result.Metadata = make([]*model.Variable, 0)
 	}
 
 	return result, nil
@@ -69,7 +90,7 @@ func (f *PostgresFilter) FetchData(dataset string, filterParams *model.FilterPar
 		// this is imposed by go's language design - []string needs explicit conversion to []interface{} before
 		// passing to interface{} ...
 		categories := make([]string, len(variable.Categories))
-		baseParam := len(params)
+		baseParam := len(params) + 1
 		for i := range variable.Categories {
 			categories[i] = fmt.Sprintf("$%d", baseParam+i)
 			params = append(params, variable.Categories[i])
@@ -81,7 +102,7 @@ func (f *PostgresFilter) FetchData(dataset string, filterParams *model.FilterPar
 	//}
 
 	if len(wheres) > 0 {
-		query = fmt.Sprintf("%s WHERE %s", query, strings.Join(wheres, " AND "))
+		query = fmt.Sprintf("%s WHERE %s;", query, strings.Join(wheres, " AND "))
 	}
 
 	// execute the ES query

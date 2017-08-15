@@ -1,4 +1,4 @@
-package elastic
+package postgres
 
 import (
 	"strconv"
@@ -7,6 +7,7 @@ import (
 
 	"github.com/jackc/pgx"
 	"github.com/pkg/errors"
+	"github.com/unchartedsoftware/distil/api/model/filter"
 	"github.com/unchartedsoftware/plog"
 )
 
@@ -23,12 +24,9 @@ func init() {
 	clients = make(map[string]*pgx.ConnPool)
 }
 
-// ClientCtor repressents a client constructor to instantiate a postgres client.
-type ClientCtor func() (*pgx.ConnPool, error)
-
 // NewClient instantiates and returns a new postgres client constructor.
-func NewClient(host string, port string) ClientCtor {
-	return func() (*pgx.ConnPool, error) {
+func NewClient(host, port, user, password, database string) filter.ClientCtor {
+	return func() (filter.DatabaseDriver, error) {
 		endpoint := host + ":" + port
 		portInt, err := strconv.Atoi(port)
 		if err != nil {
@@ -42,9 +40,11 @@ func NewClient(host string, port string) ClientCtor {
 		client, ok := clients[endpoint]
 		if !ok {
 			dbConfig := pgx.ConnConfig{
-				Host: host,
-				Port: uint16(portInt),
-				User: "postgres",
+				Host:     host,
+				Port:     uint16(portInt),
+				User:     user,
+				Password: password,
+				Database: database,
 			}
 
 			poolConfig := pgx.ConnPoolConfig{
