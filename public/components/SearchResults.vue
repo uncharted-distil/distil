@@ -60,10 +60,10 @@ export default {
 			return this.expanded[datasetName];
 		},
 		highlightedDescription(description) {
+			const terms = this.$store.getters.getRouteTerms();
 			if (_.isEmpty(terms)) {
 				return description;
 			}
-			const terms = this.$store.getters.getRouteTerms();
 			const split = terms.split(/[ ,]+/); // split on whitespace
 			const joined = split.join('|'); // join
 			const regex = new RegExp(`(${joined})(?![^<]*>)`, 'gm');
