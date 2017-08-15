@@ -15,11 +15,11 @@
 			<b-nav is-nav-bar class="ml-auto">
 				<b-nav-text class="session-label">Session:</b-nav-text>
 				<b-nav-text v-if="sessionID===null" class="session-not-ready">
-            		<i class="fa fa-close"></i>Unavailable
-          		</b-nav-text>
+					<i class="fa fa-close"></i>Unavailable
+				</b-nav-text>
 				<b-nav-text v-if="sessionID!==null" class="session-ready">
-            		<i class="fa fa-check"></i>{{sessionID}}
-          		</b-nav-text>
+					<i class="fa fa-check"></i>{{sessionID}}
+				</b-nav-text>
 			</b-nav>
 		</b-collapse>
 	</b-navbar>
@@ -47,7 +47,7 @@ export default {
 
 	computed: {
 		sessionID() {
-      		return this.$store.getters.getPipelineSessionID();
+			return this.$store.getters.getPipelineSessionID();
 		}
 	},
 
