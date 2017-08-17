@@ -2,19 +2,11 @@
 	<div class="create-pipelines-form">
 		Feature:
 		<b-dropdown :text="feature" class="m-md-2">
-			<b-dropdown-item :key="variable.name" v-for="variable in variables" @click="featureSelect">{{variable.name}}</b-dropdown-item>
-		</b-dropdown>
-		Task:
-		<b-dropdown :text="task" class="m-md-2">
-			<b-dropdown-item :key="task" v-for="task in tasks" @click="taskSelect">{{task}}</b-dropdown-item>
+			<b-dropdown-item :key="variable" v-for="variable in variables" @click="featureSelect">{{variable}}</b-dropdown-item>
 		</b-dropdown>
 		Metric:
 		<b-dropdown :text="metric" class="m-md-2">
-			<b-dropdown-item :key="metric" v-for="metric in metrics" @click="metricSelect">{{metric}}</b-dropdown-item>
-		</b-dropdown>
-		Output:
-		<b-dropdown :text="output" class="m-md-2">
-			<b-dropdown-item :key="output" v-for="output in outputs" @click="outputSelect">{{output}}</b-dropdown-item>
+			<b-dropdown-item :disabled="!featureSet" :key="metric" v-for="metric in metrics" @click="metricSelect">{{metric}}</b-dropdown-item>
 		</b-dropdown>
 		<b-button :variant="createVariant" @click="create" :disabled="disableCreate">
 			Create
@@ -24,6 +16,9 @@
 
 <script>
 
+import _ from 'lodash';
+import {getTask, getMetricDisplayNames, getOutputSchemaNames, getMetricSchemaName} from '../util/pipelines';
+
 export default {
 	name: 'create-pipelines-form',
 	data() {
@@ -31,36 +26,8 @@ export default {
 			descriptionText: '',
 			feature: 'Feature',
 			featureSet: false,
-			task: 'Task',
-			taskSet: false,
-			tasks: [
-				'regression',
-				'classification'
-			],
 			metric: 'Metric',
-			metricSet: false,
-			metrics: [
-				'accuracy',
-				'precision',
-				'recall',
-				'f1_micro',
-				'f1_macro',
-				'roc-auc',
-				'log_loss',
-				'mean_squared_err',
-				'mean_absolute_err',
-				'median_absolute_err',
-				'r2'
-			],
-			output: 'Output',
-			outputSet: false,
-			outputs: [
-				'class_label',
-				'probability',
-				'general_score',
-				'multilabel',
-				'regression_value'
-			]
+			metricSet: false
 		};
 	},
 	mounted() {
@@ -74,40 +41,66 @@ export default {
 		}
 	},
 	computed: {
+		// gets the variables associated with the currently selected dataset
 		variables() {
-			return this.$store.getters.getVariables();
+			return _.map(this.$store.getters.getVariables(), v => v.name);
 		},
+		// gets the metrics that are used to score predictions against the user selected variable
+		metrics() {
+			// get the variable entry from the store that matches the user selection
+			const variables = this.$store.getters.getVariables();
+			if (_.isEmpty(variables)) {
+				return [];
+			}
+			const variable = _.find(variables, v => _.toLower(v.name) === _.toLower(this.feature));
+			if (_.isEmpty(variable)) {
+				return [];
+			}
+
+			// get the task info associated with that variable type
+			const taskData = getTask(variable.type);
+
+			// grab the valid metrics from the task data to use as labels in the UI
+			return getMetricDisplayNames(taskData);
+		},
+		// determines create button status based on completeness of user input
 		disableCreate() {
-			return !(this.featureSet && this.taskSet && this.metricSet && this.outputSet);
+			return !(this.featureSet && this.metricSet);
 		},
+		// determines  create button variant based on completeness of user input
 		createVariant() {
-			const allSet = this.featureSet && this.taskSet && this.metricSet && this.outputSet;
+			const allSet = this.featureSet && this.metricSet;
 			return allSet ? 'success' : 'warning';
 		}
 	},
 	methods: {
+		// feature selection handler
 		featureSelect(evt) {
 			this.feature = evt.target.text;
 			this.featureSet = true;
 		},
-		taskSelect(evt) {
-			this.task = evt.target.text;
-			this.taskSet = true;
-		},
-		outputSelect(evt) {
-			this.output = evt.target.text;
-			this.outputSet = true;
-		},
+		// metric selection handler
 		metricSelect(evt) {
 			this.metric = evt.target.text;
 			this.metricSet = true;
 		},
+		// create button handler
 		create() {
+			// compute schema values for request
+			const variables = this.$store.getters.getVariables();
+			const variable = _.find(variables, v => _.toLower(v.name) === _.toLower(this.feature));
+
+			const taskData = getTask(variable.type);
+			const task = taskData.schemaName;
+			const output = getOutputSchemaNames(taskData)[0];
+			const metric = getMetricSchemaName(taskData, this.metric);
+
+			// dispatch action that triggers request send to server
 			this.$store.dispatch('createPipelines', {
 				feature: this.feature,
-				task: this.task,
-				metric: this.metric,
-				output: this.output
+				task: task,
+				metric: metric,
+				output: output
 			});
 		}
 	}
