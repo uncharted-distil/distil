@@ -7,6 +7,10 @@ import {
 
 // TODO: move this somewhere more appropriate.
 const ES_INDEX = 'datasets';
+const CREATE_PIPELINES_MSG = 'CREATE_PIPELINES';
+const PIPELINE_COMPLETE = 'COMPLETE';
+const STREAM_CLOSE = 'STREAM_CLOSE';
+
 
 // searches dataset descriptions and column names for supplied terms
 export function searchDatasets(context, terms) {
@@ -137,13 +141,19 @@ export function createPipelines(context, request) {
 		return;
 	}
 	const stream = conn.stream(res => {
+
+		if (_.has(res, STREAM_CLOSE)) {
+			stream.close();
+			return;
+		}
+
 		// inject the name
 		const name = `${context.getters.getRouteDataset()}-${request.feature}-${res.pipelineId.substring(1,5)}`;
 		res.name = name;
 
 		// add/update the running pipeline info
 		context.commit('addRunningPipeline', res);
-		if (res.progress === 'COMPLETE') {
+		if (res.progress === PIPELINE_COMPLETE) {
 			//move the pipeline from running to complete
 			context.commit('removeRunningPipeline', res.pipelineId);
 			context.commit('addCompletedPipeline', {
@@ -151,17 +161,18 @@ export function createPipelines(context, request) {
 				pipelineId: res.pipelineId,
 				pipeline: res.pipeline
 			});
-			stream.close();
 		}
 	});
 
 	stream.send({
-		type: 'CREATE_PIPELINES',
+		type: CREATE_PIPELINES_MSG,
 		session: sessionID,
 		dataset: context.getters.getRouteDataset(),
 		feature: request.feature,
 		task: request.task,
 		metric: request.metric,
-		output: request.output
+		output: request.output,
+		maxPipelines: 3,
+		filters: decodeFilters(context.getters.getRouteFilters())
 	});
 }
