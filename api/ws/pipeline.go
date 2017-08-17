@@ -21,6 +21,7 @@ const (
 	getSession      = "GET_SESSION"
 	endSession      = "END_SESSION"
 	createPipelines = "CREATE_PIPELINES"
+	streamClose     = "STREAM_CLOSE"
 	datasetDir      = "datasets"
 )
 
@@ -119,12 +120,13 @@ func handleEndSession(conn *Connection, client *pipeline.Client, msg *Message) {
 }
 
 type pipelineCreateMsg struct {
-	Dataset string          `json:"dataset"`
-	Feature string          `json:"feature"`
-	Task    string          `json:"task"`
-	Metric  string          `json:"metric"`
-	Output  string          `json:"output"`
-	Filters json.RawMessage `json:"filters"`
+	Dataset      string          `json:"dataset"`
+	Feature      string          `json:"feature"`
+	Task         string          `json:"task"`
+	Metric       string          `json:"metric"`
+	Output       string          `json:"output"`
+	MaxPipelines int32           `json:"maxPipelines"`
+	Filters      json.RawMessage `json:"filters"`
 }
 
 func handleCreatePipelines(conn *Connection, client *pipeline.Client, esClientCtor es.ClientCtor, msg *Message) {
@@ -157,7 +159,7 @@ func handleCreatePipelines(conn *Connection, client *pipeline.Client, esClientCt
 		Output:           pipeline.Output(pipeline.Output_value[strings.ToUpper(clientCreateMsg.Output)]),
 		Metric:           []pipeline.Metric{pipeline.Metric(pipeline.Metric_value[strings.ToUpper(clientCreateMsg.Metric)])},
 		TargetFeatures:   []string{clientCreateMsg.Feature},
-		MaxPipelines:     10,
+		MaxPipelines:     clientCreateMsg.MaxPipelines,
 	}
 
 	// kick off the pipeline creation, or re-attach to one that is already running
@@ -240,6 +242,11 @@ func handleCreatePipelinesSuccess(conn *Connection, msg *Message, proxy *pipelin
 			handleErr(conn, msg, err)
 			return
 		case <-proxy.Done:
+			// notify the downstream client that the stream is closed
+			response := map[string]interface{}{
+				streamClose: true,
+			}
+			handleSuccess(conn, msg, response)
 			return
 		}
 	}

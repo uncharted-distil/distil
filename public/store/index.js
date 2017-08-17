@@ -53,6 +53,31 @@ const state = {
 		//     []
 		// ]
 	},
+	// running pipline creation tasks
+	runningPipelines: {
+		// pipelineId: {
+		//     id: '',
+		//     pipelineId: '',
+		//     progress: '',
+		//     session: ''
+		// }
+	},
+	completedPipelines: {
+		// pipelineId: {
+		//     name: '',
+		//     id: '',
+		//     pipelineId: '',
+		//     pipeline: { // only present if progress === COMPLETE
+		//         output: '',
+		//         scores: [
+		//             {
+		//                 metric: '',
+		//                 value: 0.1
+		//             }
+		//         ]
+		//     }
+		// }
+	},
 	// the underlying websocket connection
 	wsConnection: null,
 	// the pipeline session id

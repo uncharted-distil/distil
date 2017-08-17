@@ -55,8 +55,8 @@ export function decodeFilter(filterName, filter) {
 				return {
 					name: filterName,
 					enabled: enabled,
-					min: values[2],
-					max: values[3]
+					min: _.toNumber(values[2]),
+					max: _.toNumber(values[3])
 				};
 			case CATEGORICAL_FILTER_ID:
 				return {

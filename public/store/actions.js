@@ -1,9 +1,16 @@
 import _ from 'lodash';
 import axios from 'axios';
-import { decodeFilters, encodeQueryParams } from '../util/filters';
+import {
+	decodeFilters,
+	encodeQueryParams
+} from '../util/filters';
 
 // TODO: move this somewhere more appropriate.
 const ES_INDEX = 'datasets';
+const CREATE_PIPELINES_MSG = 'CREATE_PIPELINES';
+const PIPELINE_COMPLETE = 'COMPLETE';
+const STREAM_CLOSE = 'STREAM_CLOSE';
+
 
 // searches dataset descriptions and column names for supplied terms
 export function searchDatasets(context, terms) {
@@ -84,7 +91,7 @@ export function updateFilteredData(context, datasetName) {
 		})
 		.catch(error => {
 			console.error(error);
-				context.commit('setFilteredData', []);
+			context.commit('setFilteredData', []);
 		});
 }
 
@@ -93,19 +100,19 @@ export function getPipelineSession(context) {
 	const conn = context.getters.getWebSocketConnection();
 	const sessionID = context.getters.getPipelineSessionID();
 	return conn.send({
-			type: 'GET_SESSION',
-			session: sessionID
-		}).then(res => {
-			if (sessionID && res.created) {
-				console.warn('previous session', sessionID, 'could not be resumed, new session created');
-			}
-			context.commit('setPipelineSession', {
-				id: res.session,
-				uuids: res.uuids
-			});
-		}).catch(err => {
-			console.warn(err);
+		type: 'GET_SESSION',
+		session: sessionID
+	}).then(res => {
+		if (sessionID && res.created) {
+			console.warn('previous session', sessionID, 'could not be resumed, new session created');
+		}
+		context.commit('setPipelineSession', {
+			id: res.session,
+			uuids: res.uuids
 		});
+	}).catch(err => {
+		console.warn(err);
+	});
 }
 
 // end a pipeline session.
@@ -116,11 +123,56 @@ export function endPipelineSession(context) {
 		return;
 	}
 	return conn.send({
-			type: 'END_SESSION',
-			session: sessionID
-		}).then(() => {
-			context.commit('setPipelineSession', null);
-		}).catch(err => {
-			console.warn(err);
-		});
+		type: 'END_SESSION',
+		session: sessionID
+	}).then(() => {
+		context.commit('setPipelineSession', null);
+	}).catch(err => {
+		console.warn(err);
+	});
+}
+
+// issues a pipeline create request
+export function createPipelines(context, request) {
+
+	const conn = context.getters.getWebSocketConnection();
+	const sessionID = context.getters.getPipelineSessionID();
+	if (!sessionID) {
+		return;
+	}
+	const stream = conn.stream(res => {
+
+		if (_.has(res, STREAM_CLOSE)) {
+			stream.close();
+			return;
+		}
+
+		// inject the name
+		const name = `${context.getters.getRouteDataset()}-${request.feature}-${res.pipelineId.substring(1,5)}`;
+		res.name = name;
+
+		// add/update the running pipeline info
+		context.commit('addRunningPipeline', res);
+		if (res.progress === PIPELINE_COMPLETE) {
+			//move the pipeline from running to complete
+			context.commit('removeRunningPipeline', res.pipelineId);
+			context.commit('addCompletedPipeline', {
+				name: res.name,
+				pipelineId: res.pipelineId,
+				pipeline: res.pipeline
+			});
+		}
+	});
+
+	stream.send({
+		type: CREATE_PIPELINES_MSG,
+		session: sessionID,
+		dataset: context.getters.getRouteDataset(),
+		feature: request.feature,
+		task: request.task,
+		metric: request.metric,
+		output: request.output,
+		maxPipelines: 3,
+		filters: decodeFilters(context.getters.getRouteFilters())
+	});
 }
