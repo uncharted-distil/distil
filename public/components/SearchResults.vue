@@ -11,7 +11,7 @@
 				</a>
 			</div>
 			<div class="dataset-body" v-if="isExpanded(dataset.name)">
-				<p class="p-2" v-html="dataset.description">
+				<p class="p-2" v-html="highlightedDescription(dataset.description)">
 				</p>
 			</div>
 		</div>
@@ -19,7 +19,10 @@
 </template>
 
 <script>
+
+import _ from 'lodash';
 import Vue from 'vue';
+import {createRouteEntry} from '../util/routes';
 
 export default {
 	name: 'search-results',
@@ -40,25 +43,40 @@ export default {
 
 	methods: {
 		setActiveDataset(datasetName) {
-			this.$router.push({
-				path: '/dataset',
-				query: {
-					dataset: datasetName,
-					terms: this.$store.getters.getRouteTerms()
-				}
-			});
+			// clear filters when we select a new dataset
+			const filters = datasetName === this.$store.getters.getRouteDataset() ? this.$store.getters.getRouteFilters() : null;
+			const entry = createRouteEntry(
+				'/dataset',
+				datasetName,
+				this.$store.getters.getRouteTerms(),
+				filters
+			);
+			this.$router.push(entry);
 		},
 		toggleExpansion(datasetName) {
 			Vue.set(this.expanded, datasetName, !this.expanded[datasetName]);
 		},
 		isExpanded(datasetName) {
 			return this.expanded[datasetName];
+		},
+		highlightedDescription(description) {
+			const terms = this.$store.getters.getRouteTerms();
+			if (_.isEmpty(terms)) {
+				return description;
+			}
+			const split = terms.split(/[ ,]+/); // split on whitespace
+			const joined = split.join('|'); // join
+			const regex = new RegExp(`(${joined})(?![^<]*>)`, 'gm');
+			return description.replace(regex, '<span class="highlight">$1</span>');
 		}
 	}
 };
 </script>
 
 <style>
+.highlight {
+	background-color: #87CEFA;
+}
 .dataset-header {
 	border: 1px solid #ccc;
 	justify-content: space-between

@@ -54,7 +54,7 @@ function establishConnection(conn, callback) {
 
 			case STREAM:
 				// stream
-				const stream = conn.stream.get(res.id);
+				const stream = conn.streams.get(res.id);
 				stream.fn(res);
 				break;
 		}
@@ -98,8 +98,9 @@ class Stream {
 		this.pending = [];
 	}
 	send(msg) {
+		msg.id = this.id;
 		if (this.conn.isOpen) {
-			this.conn.socket.send(JSON.stringify(msg));
+			this.conn.socket.send((JSON.stringify(msg)));
 		} else {
 			this.pending.push(msg);
 		}
@@ -146,7 +147,7 @@ export default class Connection {
 		this.messages.set(message.id, message);
 		this.tracking.set(message.id, MESSAGE);
 		if (this.isOpen) {
-			this.conn.socket.send(JSON.stringify(message.payload));
+			this.socket.send(JSON.stringify(message.payload));
 		} else {
 			this.pending.push(message);
 		}

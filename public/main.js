@@ -3,6 +3,7 @@ import VueRouter from 'vue-router';
 import VueRouterSync from 'vuex-router-sync';
 import Dataset from './views/Dataset';
 import Search from './views/Search';
+import Pipelines from './views/Pipelines';
 import Navigation from './views/Navigation';
 import store from './store';
 import BootstrapVue from 'bootstrap-vue';
@@ -26,6 +27,7 @@ const router = new VueRouter({
 		{ path: '/', redirect: '/search' },
 		{ path: '/search', component: Search },
 		{ path: '/dataset', component: Dataset },
+		{ path: '/pipelines', component: Pipelines },
 	]
 });
 

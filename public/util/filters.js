@@ -27,7 +27,8 @@ export const NUMERICAL_FILTER_ID = 'numerical';
 /**
  * Decodes the filter from the route into an object:
  * Ex:
- *     input: "VarName=1,numerical,1,9"
+ *     input: ("varName", "1,numerical,1,9")
+ *
  *     output: {
  *         name: "VarName",
  *         enabled: true,
@@ -36,49 +37,41 @@ export const NUMERICAL_FILTER_ID = 'numerical';
  *         max: 9
  *     }
  *
- * @param {string} filter - The filter route string.
+ * @param {string} filterName - The name of the filter
+ * @param {Object} filter - The filter string from the route
  *
  * @returns {Object} The decoded filter object.
  */
-export function decodeFilter(filter) {
+export function decodeFilter(filterName, filter) {
 	if (!filter) {
 		return null;
 	}
-	const nameValue = filter.split('=');
-	const name = nameValue[0];
-	if (_.isEmpty(name)) {
-		console.warn('missing filter key');
-		return null;
-	}
-	if (nameValue.length > 1) {
-		const value = nameValue[1];
-		const values = value.split(',');
-		if (values.length >= 2) {
-			const enabled = values[0] === '1';
-			const type = values[1];
-			switch (type) {
-				case NUMERICAL_FILTER_ID:
-					return {
-						name: name,
-						enabled: enabled,
-						min: values[2],
-						max: values[3]
-					};
-				case CATEGORICAL_FILTER_ID:
-					return {
-						name: name,
-						enabled: enabled,
-						categories: values.slice(2)
-					};
-				case EMPTY_FILTER_ID:
-					return {
-						name: name,
-						enabled: enabled
-					};
-				default:
-					console.warn(`invalid filter type of ${type}`);
-					return null;
-			}
+	const values = filter.split(',');
+	if (values.length >= 2) {
+		const enabled = values[0] === '1';
+		const type = values[1];
+		switch (type) {
+			case NUMERICAL_FILTER_ID:
+				return {
+					name: filterName,
+					enabled: enabled,
+					min: _.toNumber(values[2]),
+					max: _.toNumber(values[3])
+				};
+			case CATEGORICAL_FILTER_ID:
+				return {
+					name: filterName,
+					enabled: enabled,
+					categories: values.slice(2)
+				};
+			case EMPTY_FILTER_ID:
+				return {
+					name: filterName,
+					enabled: enabled
+				};
+			default:
+				console.warn(`invalid filter type of ${type}`);
+				return null;
 		}
 	}
 	// enabled empty filter
@@ -94,8 +87,8 @@ export function decodeFilter(filter) {
  */
 export function decodeFilters(filters) {
 	const results = {};
-	filters.forEach(filter => {
-		const decoded = decodeFilter(filter);
+	_.forEach(filters, (filter, filterName) => {
+		const decoded = decodeFilter(filterName, filter);
 		if (decoded) {
 			results[decoded.name] = decoded;
 		}
@@ -226,7 +219,6 @@ export function updateFilter(filters, key, values) {
 	if (getFilterType(filter) === EMPTY_FILTER && isEnabled(filter)) {
 		encoded[key] = undefined;
 	}
-	// return modified encoded filters
 	return encoded;
 }
 
@@ -261,7 +253,8 @@ export function getFilterType(filter) {
  */
 export function isEnabled(filter) {
 	if (_.isString(filter)) {
-		filter = decodeFilter(filter);
+		// name doesn't matter in this decode context
+		filter = decodeFilter('filter', filter);
 	}
 	if (filter) {
 		return filter.enabled;
