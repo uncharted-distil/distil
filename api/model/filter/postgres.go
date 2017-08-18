@@ -69,7 +69,7 @@ func (f *PostgresFilter) parseResults(dataset string, rows *pgx.Rows) (*model.Fi
 	return result, nil
 }
 
-// FetchFilteredData creates a postgres query to fetch a set of rows.  Applies filters to restrict the
+// FetchData creates a postgres query to fetch a set of rows.  Applies filters to restrict the
 // results to a user selected set of fields, with rows further filtered based on allowed ranges and
 // categories.
 func (f *PostgresFilter) FetchData(dataset string, filterParams *model.FilterParams) (*model.FilteredData, error) {

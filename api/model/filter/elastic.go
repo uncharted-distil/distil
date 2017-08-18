@@ -86,7 +86,7 @@ func (f *ElasticFilter) parseResults(searchResults *elastic.SearchResult) (*mode
 	return &data, nil
 }
 
-// FetchFilteredData creates an ES query to fetch a set of documents.  Applies filters to restrict the
+// FetchData creates an ES query to fetch a set of documents.  Applies filters to restrict the
 // results to a user selected set of fields, with documents further filtered based on allowed ranges and
 // categories.
 func (f *ElasticFilter) FetchData(dataset string, filterParams *model.FilterParams) (*model.FilteredData, error) {
