@@ -10,10 +10,8 @@
 </template>
 
 <script>
-
 import SearchBar from '../components/SearchBar';
 import SearchResults from '../components/SearchResults';
-
 export default {
 	name: 'search',
 	components: {

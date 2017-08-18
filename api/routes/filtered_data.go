@@ -6,7 +6,6 @@ import (
 	"strings"
 
 	"github.com/pkg/errors"
-	elastic_api "github.com/unchartedsoftware/distil/api/elastic"
 	"github.com/unchartedsoftware/distil/api/model"
 	"github.com/unchartedsoftware/distil/api/util/json"
 	"goji.io/pat"
@@ -89,8 +88,8 @@ func parseFilterParams(r *http.Request) (*model.FilterParams, error) {
 	return &filterParams, nil
 }
 
-// FilteredDataHandler creates a route that fetches filtered data from an elastic search instance.
-func FilteredDataHandler(ctor elastic_api.ClientCtor) func(http.ResponseWriter, *http.Request) {
+// FilteredDataHandler creates a route that fetches filtered data from backing storage instance.
+func FilteredDataHandler(ctor model.StorageCtor) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		dataset := pat.Param(r, "dataset")
 
@@ -101,7 +100,7 @@ func FilteredDataHandler(ctor elastic_api.ClientCtor) func(http.ResponseWriter, 
 			return
 		}
 
-		// get elasticsearch client
+		// get filter client
 		client, err := ctor()
 		if err != nil {
 			handleError(w, err)

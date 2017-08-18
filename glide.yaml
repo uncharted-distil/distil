@@ -4,6 +4,7 @@ import:
   subpackages:
   - redis
 - package: github.com/gorilla/websocket
+- package: github.com/jackc/pgx
 - package: github.com/mattn/go-isatty
 - package: github.com/mgutz/ansi
 - package: github.com/microcosm-cc/bluemonday
@@ -26,5 +27,6 @@ import:
   version: 1.4.2
 - package: github.com/golang/protobuf/proto
 - package: github.com/golang/protobuf/protoc-gen-go
+- package: github.com/golang/mock/gomock
 - package: github.com/satori/go.uuid
 - package: github.com/mitchellh/hashstructure

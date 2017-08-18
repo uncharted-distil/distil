@@ -4,7 +4,9 @@ import (
 	"net/http"
 	"testing"
 
+	gomock "github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
+	"github.com/unchartedsoftware/distil/api/model/filter"
 	"github.com/unchartedsoftware/distil/api/util/json"
 	"github.com/unchartedsoftware/distil/api/util/mock"
 )
@@ -76,6 +78,9 @@ func TestFilteredDataHandler(t *testing.T) {
 	// mock elasticsearch client
 	ctor := mock.ElasticClientCtor(t, handler)
 
+	// instantiate storage filter client constructor.
+	storageCtor := filter.NewElasticFilter(ctor)
+
 	// put together a stub dataset request
 	params := map[string]string{
 		"dataset": "o_185",
@@ -89,7 +94,7 @@ func TestFilteredDataHandler(t *testing.T) {
 
 	// execute the test request - stubbed ES server will return the JSON
 	// loaded above
-	res := mock.HTTPResponse(t, req, FilteredDataHandler(ctor))
+	res := mock.HTTPResponse(t, req, FilteredDataHandler(storageCtor))
 	assert.Equal(t, http.StatusOK, res.Code)
 
 	// compare expected and acutal results - unmarshall first to ensure object
@@ -112,4 +117,56 @@ func TestFilteredDataHandler(t *testing.T) {
 	actual, err := json.Unmarshal(res.Body.Bytes())
 	assert.NoError(t, err)
 	assert.Equal(t, expected, actual)
+}
+
+func TestFilteredPostgresHandler(t *testing.T) {
+	// mock postgres client
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+	mockDB := mock.NewDatabaseDriver(ctrl)
+
+	ctor := mockContructor(mockDB)
+
+	// instantiate storage filter client constructor.
+	storageCtor := filter.NewPostgresFilter(ctor)
+
+	// put together a stub dataset request
+	params := map[string]string{
+		"dataset": "o_185",
+	}
+	query := map[string]string{
+		"On_base_pct": "numerical,0,100",
+		"Position":    "categorical,Catcher",
+		"Triples":     "",
+	}
+
+	// Identify the expected behaviour.
+	// NOTE: It currently expects an empty set since pgx.Rows is hardly accessible.
+	mockDB.EXPECT().Query("SELECT * FROM o_185 WHERE On_base_pct.value >= $1 AND On_base_pct.value <= $2 AND Position.value IN ($3);", float64(0), float64(100), "Catcher").Return(nil, nil)
+	req := mock.HTTPRequest(t, "GET", "/distil/data", params, query)
+
+	// execute the test request - stubbed ES server will return the JSON
+	// loaded above
+	res := mock.HTTPResponse(t, req, FilteredDataHandler(storageCtor))
+	assert.Equal(t, http.StatusOK, res.Code)
+
+	// compare expected and acutal results - unmarshall first to ensure object
+	// rather than byte equality
+	expected, err := json.Unmarshal([]byte(
+		`{
+				"name": "o_185",
+				"metadata": [],
+				"values": []
+			}`))
+	assert.NoError(t, err)
+
+	actual, err := json.Unmarshal(res.Body.Bytes())
+	assert.NoError(t, err)
+	assert.Equal(t, expected, actual)
+}
+
+func mockContructor(mockDB *mock.DatabaseDriver) filter.ClientCtor {
+	return func() (filter.DatabaseDriver, error) {
+		return mockDB, nil
+	}
 }

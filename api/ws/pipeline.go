@@ -11,7 +11,6 @@ import (
 
 	"github.com/pkg/errors"
 	"github.com/satori/go.uuid"
-	es "github.com/unchartedsoftware/distil/api/elastic"
 	"github.com/unchartedsoftware/distil/api/pipeline"
 	"github.com/unchartedsoftware/plog"
 	"golang.org/x/net/context"
@@ -26,10 +25,10 @@ const (
 )
 
 // PipelineHandler represents a pipeline websocket handler.
-func PipelineHandler(client *pipeline.Client, esClientCtor es.ClientCtor) func(http.ResponseWriter, *http.Request) {
+func PipelineHandler(client *pipeline.Client, storageCtor model.StorageCtor) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// create conn
-		conn, err := NewConnection(w, r, handlePipelineMessage(client, esClientCtor))
+		conn, err := NewConnection(w, r, handlePipelineMessage(client, storageCtor))
 		if err != nil {
 			log.Warn(err)
 			return
@@ -44,7 +43,7 @@ func PipelineHandler(client *pipeline.Client, esClientCtor es.ClientCtor) func(h
 	}
 }
 
-func handlePipelineMessage(client *pipeline.Client, esClientCtor es.ClientCtor) func(conn *Connection, bytes []byte) {
+func handlePipelineMessage(client *pipeline.Client, storageCtor model.StorageCtor) func(conn *Connection, bytes []byte) {
 	return func(conn *Connection, bytes []byte) {
 		// parse the message
 		msg, err := NewMessage(bytes)
@@ -56,7 +55,7 @@ func handlePipelineMessage(client *pipeline.Client, esClientCtor es.ClientCtor) 
 			return
 		}
 		// handle message
-		go handleMessage(conn, client, esClientCtor, msg)
+		go handleMessage(conn, client, storageCtor, msg)
 	}
 }
 
@@ -70,7 +69,7 @@ func parseMessage(bytes []byte) (*Message, error) {
 	return msg, nil
 }
 
-func handleMessage(conn *Connection, client *pipeline.Client, esClientCtor es.ClientCtor, msg *Message) {
+func handleMessage(conn *Connection, client *pipeline.Client, storageCtor model.StorageCtor, msg *Message) {
 	switch msg.Type {
 	case getSession:
 		handleGetSession(conn, client, msg)
@@ -79,7 +78,7 @@ func handleMessage(conn *Connection, client *pipeline.Client, esClientCtor es.Cl
 		handleEndSession(conn, client, msg)
 		return
 	case createPipelines:
-		handleCreatePipelines(conn, client, esClientCtor, msg)
+		handleCreatePipelines(conn, client, storageCtor, msg)
 		return
 	default:
 		// unrecognized type
@@ -129,7 +128,7 @@ type pipelineCreateMsg struct {
 	Filters      json.RawMessage `json:"filters"`
 }
 
-func handleCreatePipelines(conn *Connection, client *pipeline.Client, esClientCtor es.ClientCtor, msg *Message) {
+func handleCreatePipelines(conn *Connection, client *pipeline.Client, storageCtor model.StorageCtor, msg *Message) {
 	// unmarshall the request data
 	clientCreateMsg := &pipelineCreateMsg{}
 	err := json.Unmarshal(msg.Raw, clientCreateMsg)
@@ -140,7 +139,7 @@ func handleCreatePipelines(conn *Connection, client *pipeline.Client, esClientCt
 
 	// persist the filtered dataset if necessary
 	fetchFilteredData := func(dataset string, filters *model.FilterParams) (*model.FilteredData, error) {
-		esClient, err := esClientCtor()
+		esClient, err := storageCtor()
 		if err != nil {
 			return nil, err
 		}
