@@ -6,6 +6,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
+	"github.com/unchartedsoftware/distil/api/model/storage/elastic"
 	"github.com/unchartedsoftware/distil/api/util/json"
 	"github.com/unchartedsoftware/distil/api/util/mock"
 )
@@ -20,6 +21,9 @@ func TestVariableSummaryHandlerNumerical(t *testing.T) {
 	// mock elasticsearch client
 	ctor := mock.ElasticClientCtor(t, handler)
 
+	// instantiate storage client constructor.
+	storageCtor := elastic.NewStorage(ctor)
+
 	// put together a stub dataset request
 	req := mock.HTTPRequest(t, "GET", "/distil/variable_summaries", map[string]string{
 		"index":    "datasets",
@@ -29,7 +33,7 @@ func TestVariableSummaryHandlerNumerical(t *testing.T) {
 
 	// execute the test request - stubbed ES server will return the JSON
 	// loaded above
-	res := mock.HTTPResponse(t, req, VariableSummaryHandler(ctor))
+	res := mock.HTTPResponse(t, req, VariableSummaryHandler(storageCtor, ctor))
 	assert.Equal(t, http.StatusOK, res.Code)
 
 	// compare expected and acutal results - unmarshall first to ensure object
@@ -67,6 +71,9 @@ func TestVariableSummaryHandlerCategorical(t *testing.T) {
 	// mock elasticsearch client
 	ctor := mock.ElasticClientCtor(t, handler)
 
+	// instantiate storage client constructor.
+	storageCtor := elastic.NewStorage(ctor)
+
 	// put together a stub dataset request
 	req := mock.HTTPRequest(t, "GET", "/distil/variable_summaries", map[string]string{
 		"index":    "datasets",
@@ -76,7 +83,7 @@ func TestVariableSummaryHandlerCategorical(t *testing.T) {
 
 	// execute the test request - stubbed ES server will return the JSON
 	// loaded above
-	res := mock.HTTPResponse(t, req, VariableSummaryHandler(ctor))
+	res := mock.HTTPResponse(t, req, VariableSummaryHandler(storageCtor, ctor))
 	assert.Equal(t, http.StatusOK, res.Code)
 
 	// compare expected and acutal results - unmarshall first to ensure object

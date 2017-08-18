@@ -13,7 +13,7 @@ import (
 	"github.com/unchartedsoftware/distil/api/elastic"
 	"github.com/unchartedsoftware/distil/api/env"
 	"github.com/unchartedsoftware/distil/api/middleware"
-	"github.com/unchartedsoftware/distil/api/model/filter"
+	es "github.com/unchartedsoftware/distil/api/model/storage/elastic"
 	"github.com/unchartedsoftware/distil/api/pipeline"
 	"github.com/unchartedsoftware/distil/api/redis"
 	"github.com/unchartedsoftware/distil/api/routes"
@@ -54,7 +54,7 @@ func main() {
 	esClientCtor := elastic.NewClient(esEndpoint, false)
 
 	// instantiate storage filter client constructor.
-	storageCtor := filter.NewElasticFilter(esClientCtor)
+	storageCtor := es.NewStorage(esClientCtor)
 
 	// instantiate the pipeline compute client
 	pipelineClient, err := pipeline.NewClient(pipelineComputeEndpoint)
@@ -76,7 +76,7 @@ func main() {
 
 	registerRoute(mux, "/distil/datasets/:index", routes.DatasetsHandler(esClientCtor))
 	registerRoute(mux, "/distil/variables/:index/:dataset", routes.VariablesHandler(esClientCtor))
-	registerRoute(mux, "/distil/variable-summaries/:index/:dataset/:variable", routes.VariableSummaryHandler(esClientCtor))
+	registerRoute(mux, "/distil/variable-summaries/:index/:dataset/:variable", routes.VariableSummaryHandler(storageCtor, esClientCtor))
 	registerRoute(mux, "/distil/filtered-data/:dataset", routes.FilteredDataHandler(storageCtor))
 	registerRoute(mux, "/ws", ws.PipelineHandler(pipelineClient, storageCtor))
 	registerRoute(mux, "/*", routes.FileHandler("./dist"))

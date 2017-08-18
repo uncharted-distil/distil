@@ -6,7 +6,9 @@ import (
 
 	gomock "github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
-	"github.com/unchartedsoftware/distil/api/model/filter"
+	"github.com/unchartedsoftware/distil/api/model/storage/elastic"
+	"github.com/unchartedsoftware/distil/api/model/storage/postgres"
+	pg "github.com/unchartedsoftware/distil/api/postgres"
 	"github.com/unchartedsoftware/distil/api/util/json"
 	"github.com/unchartedsoftware/distil/api/util/mock"
 )
@@ -78,8 +80,8 @@ func TestFilteredDataHandler(t *testing.T) {
 	// mock elasticsearch client
 	ctor := mock.ElasticClientCtor(t, handler)
 
-	// instantiate storage filter client constructor.
-	storageCtor := filter.NewElasticFilter(ctor)
+	// instantiate storage client constructor.
+	storageCtor := elastic.NewStorage(ctor)
 
 	// put together a stub dataset request
 	params := map[string]string{
@@ -128,7 +130,7 @@ func TestFilteredPostgresHandler(t *testing.T) {
 	ctor := mockContructor(mockDB)
 
 	// instantiate storage filter client constructor.
-	storageCtor := filter.NewPostgresFilter(ctor)
+	storageCtor := postgres.NewStorage(ctor)
 
 	// put together a stub dataset request
 	params := map[string]string{
@@ -165,8 +167,8 @@ func TestFilteredPostgresHandler(t *testing.T) {
 	assert.Equal(t, expected, actual)
 }
 
-func mockContructor(mockDB *mock.DatabaseDriver) filter.ClientCtor {
-	return func() (filter.DatabaseDriver, error) {
+func mockContructor(mockDB *mock.DatabaseDriver) pg.ClientCtor {
+	return func() (pg.DatabaseDriver, error) {
 		return mockDB, nil
 	}
 }
