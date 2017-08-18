@@ -123,7 +123,7 @@ func TestFilteredPostgresHandler(t *testing.T) {
 	// mock postgres client
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
-	mockDB := mock.NewMockDatabaseDriver(ctrl)
+	mockDB := mock.NewDatabaseDriver(ctrl)
 
 	ctor := mockContructor(mockDB)
 
@@ -165,7 +165,7 @@ func TestFilteredPostgresHandler(t *testing.T) {
 	assert.Equal(t, expected, actual)
 }
 
-func mockContructor(mockDB *mock.MockDatabaseDriver) filter.ClientCtor {
+func mockContructor(mockDB *mock.DatabaseDriver) filter.ClientCtor {
 	return func() (filter.DatabaseDriver, error) {
 		return mockDB, nil
 	}
