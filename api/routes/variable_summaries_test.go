@@ -161,38 +161,3 @@ func TestVariableSummaryHandlerCategoricalPostgres(t *testing.T) {
 
 	assert.Equal(t, expected, actual)
 }
-
-func TestVariableSummaryHandlerNumericalPostgres(t *testing.T) {
-	// mock postgres client
-	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
-	mockDB := mock.NewDatabaseDriver(ctrl)
-
-	ctor := mockContructor(mockDB)
-
-	// instantiate storage filter client constructor.
-	storageCtor := postgres.NewStorage(ctor)
-
-	// mock elasticsearch request handler
-	handlerES := mock.ElasticHandler(t, []string{
-		"./testdata/variables.json",
-		"./testdata/variable_summaries_categorical.json",
-	})
-	// mock elasticsearch client
-	ctorES := mock.ElasticClientCtor(t, handlerES)
-
-	// put together a stub dataset request
-	req := mock.HTTPRequest(t, "GET", "/distil/variable_summaries", map[string]string{
-		"index":    "datasets",
-		"dataset":  "o_185",
-		"variable": "Number_seasons",
-	}, nil)
-
-	// setup the expected query
-	mockDB.EXPECT().QueryRow(
-		"SELECT MIN(Number_seasons) AS min_Number_seasons, MAX(Number_seasons) AS max_Number_seasons FROM o_185;").Return(nil)
-
-	// execute the test request
-	res := mock.HTTPResponse(t, req, VariableSummaryHandler(storageCtor, ctorES))
-	assert.Equal(t, http.StatusInternalServerError, res.Code)
-}
