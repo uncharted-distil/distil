@@ -144,7 +144,9 @@ func TestFilteredPostgresHandler(t *testing.T) {
 
 	// Identify the expected behaviour.
 	// NOTE: It currently expects an empty set since pgx.Rows is hardly accessible.
-	mockDB.EXPECT().Query("SELECT * FROM o_185 WHERE On_base_pct.value >= $1 AND On_base_pct.value <= $2 AND Position.value IN ($3);", float64(0), float64(100), "Catcher").Return(nil, nil)
+	mockDB.EXPECT().Query(
+		"SELECT * FROM o_185 WHERE On_base_pct.value >= $1 AND On_base_pct.value <= $2 AND Position.value IN ($3);",
+		float64(0), float64(100), "Catcher").Return(nil, nil)
 	req := mock.HTTPRequest(t, "GET", "/distil/data", params, query)
 
 	// execute the test request - stubbed ES server will return the JSON

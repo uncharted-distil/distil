@@ -56,18 +56,20 @@ func (s *Storage) parseCategoricalHistogram(rows *pgx.Rows, variable *model.Vari
 
 	// Parse bucket results.
 	buckets := make([]*model.Bucket, 0)
-	for rows.Next() {
-		var term string
-		var bucketCount int64
-		err := rows.Scan(&term, &bucketCount)
-		if err != nil {
-			return nil, errors.Errorf("no %s histogram aggregation found", termsAggName)
-		}
+	if rows != nil {
+		for rows.Next() {
+			var term string
+			var bucketCount int64
+			err := rows.Scan(&term, &bucketCount)
+			if err != nil {
+				return nil, errors.Errorf("no %s histogram aggregation found", termsAggName)
+			}
 
-		buckets = append(buckets, &model.Bucket{
-			Key:   term,
-			Count: bucketCount,
-		})
+			buckets = append(buckets, &model.Bucket{
+				Key:   term,
+				Count: bucketCount,
+			})
+		}
 	}
 
 	// assign histogram attributes
