@@ -56,6 +56,18 @@ export function getVariableSummaries(context, datasetName) {
 					.then(response => {
 						// save the variable summary data
 						const histogram = response.data.histogram;
+						if (!histogram) {
+							context.commit('updateVariableSummaries', {
+								index: idx,
+								histogram: {
+									name: variable.name,
+									err: 'No analysis available'
+								}
+							});
+							return;
+						}
+						// ensure buckets is not nil
+						//histogram.buckets = histogram.buckets ? histogram.buckets : [];
 						context.commit('updateVariableSummaries', {
 							index: idx,
 							histogram: histogram

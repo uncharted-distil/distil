@@ -260,5 +260,9 @@ func FetchSummary(client *elastic.Client, index string, dataset string, varName 
 		}
 		return categorical, nil
 	}
-	return nil, errors.Errorf("variable %s of type %s does not support summary", variable.Name, variable.Type)
+	if IsText(variable.Type) {
+		// fetch text analysis
+		return nil, nil
+	}
+	return nil, errors.Errorf("variable `%s` of type `%s` does not support summary", variable.Name, variable.Type)
 }

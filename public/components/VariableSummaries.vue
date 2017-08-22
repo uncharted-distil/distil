@@ -85,7 +85,7 @@ export default {
 			// set range filter
 			this.updateFilterRoute(key, {
 				enabled: true,
-				min: parseFloat(value.from.label[0]),
+				min: parseFloat(value.from.index[0]),
 				max: parseFloat(value.to.label[0])
 			});
 		},
@@ -110,6 +110,7 @@ export default {
 			};
 		},
 		createSummaryFacet(summary) {
+
 			switch (summary.type) {
 
 				case 'categorical':
