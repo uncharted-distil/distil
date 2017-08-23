@@ -51,6 +51,7 @@ func (s *Storage) parseExtrema(res *elastic.SearchResult, variable *model.Variab
 	// assign attributes
 	return &model.Extrema{
 		Name: variable.Name,
+		Type: variable.Type,
 		Min:  *minAgg.Value,
 		Max:  *maxAgg.Value,
 	}, nil
@@ -97,8 +98,14 @@ func (s *Storage) parseNumericHistogram(res *elastic.SearchResult, extrema *mode
 	// get histogram buckets
 	var buckets []*model.Bucket
 	for _, bucket := range agg.Buckets {
+		var key string
+		if extrema.Type == model.FloatType {
+			key = fmt.Sprintf("%f", bucket.Key)
+		} else {
+			key = strconv.Itoa(int(bucket.Key))
+		}
 		buckets = append(buckets, &model.Bucket{
-			Key:   strconv.Itoa(int(bucket.Key)),
+			Key:   key,
 			Count: bucket.DocCount,
 		})
 	}

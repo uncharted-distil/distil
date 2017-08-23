@@ -36,8 +36,14 @@ func (s *Storage) parseNumericHistogram(rows *pgx.Rows, extrema *model.Extrema) 
 			return nil, errors.Errorf("no %s histogram aggregation found", histogramAggName)
 		}
 
+		var key string
+		if extrema.Type == model.FloatType {
+			key = fmt.Sprintf("%f", bucketValue)
+		} else {
+			key = strconv.Itoa(int(bucketValue))
+		}
 		buckets = append(buckets, &model.Bucket{
-			Key:   strconv.Itoa(int(bucketValue)),
+			Key:   key,
 			Count: bucketCount,
 		})
 	}
@@ -96,6 +102,7 @@ func (s *Storage) parseExtrema(row *pgx.Row, variable *model.Variable) (*model.E
 	// assign attributes
 	return &model.Extrema{
 		Name: variable.Name,
+		Type: variable.Type,
 		Min:  *minValue,
 		Max:  *maxValue,
 	}, nil
