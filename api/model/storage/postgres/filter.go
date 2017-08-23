@@ -1,4 +1,4 @@
-package filter
+package postgres
 
 import (
 	"fmt"
@@ -9,34 +9,7 @@ import (
 	"github.com/unchartedsoftware/distil/api/model"
 )
 
-// DatabaseDriver defines the behaviour of the querying engine.
-type DatabaseDriver interface {
-	Query(string, ...interface{}) (*pgx.Rows, error)
-}
-
-// ClientCtor repressents a client constructor to instantiate a postgres client.
-type ClientCtor func() (DatabaseDriver, error)
-
-// PostgresFilter executes a filtered fetch on postgres data.
-type PostgresFilter struct {
-	client DatabaseDriver
-}
-
-// NewPostgresFilter returns a constructor for a PostgresFilter.
-func NewPostgresFilter(clientCtor ClientCtor) model.StorageCtor {
-	return func() (model.Filter, error) {
-		client, err := clientCtor()
-		if err != nil {
-			return nil, err
-		}
-
-		return &PostgresFilter{
-			client: client,
-		}, nil
-	}
-}
-
-func (f *PostgresFilter) parseResults(dataset string, rows *pgx.Rows) (*model.FilteredData, error) {
+func (s *Storage) parseResults(dataset string, rows *pgx.Rows) (*model.FilteredData, error) {
 	result := &model.FilteredData{
 		Name:   dataset,
 		Values: make([][]interface{}, 0),
@@ -72,7 +45,7 @@ func (f *PostgresFilter) parseResults(dataset string, rows *pgx.Rows) (*model.Fi
 // FetchData creates a postgres query to fetch a set of rows.  Applies filters to restrict the
 // results to a user selected set of fields, with rows further filtered based on allowed ranges and
 // categories.
-func (f *PostgresFilter) FetchData(dataset string, filterParams *model.FilterParams) (*model.FilteredData, error) {
+func (s *Storage) FetchData(dataset string, filterParams *model.FilterParams) (*model.FilteredData, error) {
 	// construct a Postgres query that fetches documents from the dataset with the supplied variable filters applied
 	query := fmt.Sprintf("SELECT * FROM %s", dataset)
 
@@ -105,12 +78,12 @@ func (f *PostgresFilter) FetchData(dataset string, filterParams *model.FilterPar
 		query = fmt.Sprintf("%s WHERE %s;", query, strings.Join(wheres, " AND "))
 	}
 
-	// execute the ES query
-	res, err := f.client.Query(query, params...)
+	// execute the postgres query
+	res, err := s.client.Query(query, params...)
 	if err != nil {
 		return nil, errors.Wrap(err, "postgres filtered data query failed")
 	}
 
 	// parse the result
-	return f.parseResults(dataset, res)
+	return s.parseResults(dataset, res)
 }

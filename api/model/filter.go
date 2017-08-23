@@ -1,14 +1,5 @@
 package model
 
-// StorageCtor represents a client constructor to instantiate an storage
-// client.
-type StorageCtor func() (Filter, error)
-
-// Filter defines the functions necessary to retrieve filtered data.
-type Filter interface {
-	FetchData(string, *FilterParams) (*FilteredData, error)
-}
-
 // FilteredData provides the metadata and raw data values that match a supplied
 // input filter.
 type FilteredData struct {
@@ -43,6 +34,6 @@ type FilterParams struct {
 // FetchFilteredData creates a query to fetch a set of documents.  Applies filters to restrict the
 // results to a user selected set of fields, with documents further filtered based on allowed ranges and
 // categories.
-func FetchFilteredData(filter Filter, dataset string, filterParams *FilterParams) (*FilteredData, error) {
-	return filter.FetchData(dataset, filterParams)
+func FetchFilteredData(storage Storage, dataset string, filterParams *FilterParams) (*FilteredData, error) {
+	return storage.FetchData(dataset, filterParams)
 }

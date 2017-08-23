@@ -1,37 +1,17 @@
-package filter
+package elastic
 
 import (
 	"context"
 	"sort"
 
 	"github.com/pkg/errors"
-	es "github.com/unchartedsoftware/distil/api/elastic"
 	"github.com/unchartedsoftware/distil/api/model"
 	"github.com/unchartedsoftware/distil/api/util/json"
 	log "github.com/unchartedsoftware/plog"
-	elastic "gopkg.in/olivere/elastic.v5"
+	"gopkg.in/olivere/elastic.v5"
 )
 
-// ElasticFilter executes a filtered fetch on ES data.
-type ElasticFilter struct {
-	client *elastic.Client
-}
-
-// NewElasticFilter returns a constructor for an ElasticFilter.
-func NewElasticFilter(clientCtor es.ClientCtor) model.StorageCtor {
-	return func() (model.Filter, error) {
-		esClient, err := clientCtor()
-		if err != nil {
-			return nil, err
-		}
-
-		return &ElasticFilter{
-			client: esClient,
-		}, nil
-	}
-}
-
-func (f *ElasticFilter) parseResults(searchResults *elastic.SearchResult) (*model.FilteredData, error) {
+func (s *Storage) parseResults(searchResults *elastic.SearchResult) (*model.FilteredData, error) {
 	var data model.FilteredData
 
 	for idx, hit := range searchResults.Hits.Hits {
@@ -89,7 +69,7 @@ func (f *ElasticFilter) parseResults(searchResults *elastic.SearchResult) (*mode
 // FetchData creates an ES query to fetch a set of documents.  Applies filters to restrict the
 // results to a user selected set of fields, with documents further filtered based on allowed ranges and
 // categories.
-func (f *ElasticFilter) FetchData(dataset string, filterParams *model.FilterParams) (*model.FilteredData, error) {
+func (s *Storage) FetchData(dataset string, filterParams *model.FilterParams) (*model.FilteredData, error) {
 	// construct an ES query that fetches documents from the dataset with the supplied variable filters applied
 	query := elastic.NewBoolQuery()
 	var excludes []string
@@ -112,7 +92,7 @@ func (f *ElasticFilter) FetchData(dataset string, filterParams *model.FilterPara
 	fetchContext := elastic.NewFetchSourceContext(true).Exclude(excludes...)
 
 	// execute the ES query
-	res, err := f.client.Search().
+	res, err := s.client.Search().
 		Query(query).
 		Index(dataset).
 		Size(filterParams.Size).
@@ -124,5 +104,5 @@ func (f *ElasticFilter) FetchData(dataset string, filterParams *model.FilterPara
 	}
 
 	// parse the result
-	return f.parseResults(res)
+	return s.parseResults(res)
 }

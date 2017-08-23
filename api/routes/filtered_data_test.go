@@ -6,7 +6,9 @@ import (
 
 	gomock "github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
-	"github.com/unchartedsoftware/distil/api/model/filter"
+	"github.com/unchartedsoftware/distil/api/model/storage/elastic"
+	"github.com/unchartedsoftware/distil/api/model/storage/postgres"
+	pg "github.com/unchartedsoftware/distil/api/postgres"
 	"github.com/unchartedsoftware/distil/api/util/json"
 	"github.com/unchartedsoftware/distil/api/util/mock"
 )
@@ -78,8 +80,8 @@ func TestFilteredDataHandler(t *testing.T) {
 	// mock elasticsearch client
 	ctor := mock.ElasticClientCtor(t, handler)
 
-	// instantiate storage filter client constructor.
-	storageCtor := filter.NewElasticFilter(ctor)
+	// instantiate storage client constructor.
+	storageCtor := elastic.NewStorage(ctor)
 
 	// put together a stub dataset request
 	params := map[string]string{
@@ -128,7 +130,7 @@ func TestFilteredPostgresHandler(t *testing.T) {
 	ctor := mockContructor(mockDB)
 
 	// instantiate storage filter client constructor.
-	storageCtor := filter.NewPostgresFilter(ctor)
+	storageCtor := postgres.NewStorage(ctor)
 
 	// put together a stub dataset request
 	params := map[string]string{
@@ -142,7 +144,9 @@ func TestFilteredPostgresHandler(t *testing.T) {
 
 	// Identify the expected behaviour.
 	// NOTE: It currently expects an empty set since pgx.Rows is hardly accessible.
-	mockDB.EXPECT().Query("SELECT * FROM o_185 WHERE On_base_pct.value >= $1 AND On_base_pct.value <= $2 AND Position.value IN ($3);", float64(0), float64(100), "Catcher").Return(nil, nil)
+	mockDB.EXPECT().Query(
+		"SELECT * FROM o_185 WHERE On_base_pct.value >= $1 AND On_base_pct.value <= $2 AND Position.value IN ($3);",
+		float64(0), float64(100), "Catcher").Return(nil, nil)
 	req := mock.HTTPRequest(t, "GET", "/distil/data", params, query)
 
 	// execute the test request - stubbed ES server will return the JSON
@@ -165,8 +169,8 @@ func TestFilteredPostgresHandler(t *testing.T) {
 	assert.Equal(t, expected, actual)
 }
 
-func mockContructor(mockDB *mock.DatabaseDriver) filter.ClientCtor {
-	return func() (filter.DatabaseDriver, error) {
+func mockContructor(mockDB *mock.DatabaseDriver) pg.ClientCtor {
+	return func() (pg.DatabaseDriver, error) {
 		return mockDB, nil
 	}
 }

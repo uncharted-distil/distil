@@ -17,7 +17,7 @@ type SummaryResult struct {
 
 // VariableSummaryHandler generates a route handler that facilitates the
 // creation and retrieval of summary information about the specified variable.
-func VariableSummaryHandler(ctor elastic.ClientCtor) func(http.ResponseWriter, *http.Request) {
+func VariableSummaryHandler(ctorStorage model.StorageCtor, ctor elastic.ClientCtor) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// get index name
 		index := pat.Param(r, "index")
@@ -31,8 +31,14 @@ func VariableSummaryHandler(ctor elastic.ClientCtor) func(http.ResponseWriter, *
 			handleError(w, err)
 			return
 		}
+		// get storage client
+		storage, err := ctorStorage()
+		if err != nil {
+			handleError(w, err)
+			return
+		}
 		// fetch summary histogram
-		histogram, err := model.FetchSummary(client, index, dataset, variable)
+		histogram, err := model.FetchSummary(storage, client, index, dataset, variable)
 		if err != nil {
 			handleError(w, err)
 			return
