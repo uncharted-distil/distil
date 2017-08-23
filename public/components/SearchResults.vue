@@ -43,14 +43,9 @@ export default {
 
 	methods: {
 		setActiveDataset(datasetName) {
-			// clear filters when we select a new dataset
-			const filters = datasetName === this.$store.getters.getRouteDataset() ? this.$store.getters.getRouteFilters() : null;
-			const entry = createRouteEntry(
-				'/dataset',
-				datasetName,
-				this.$store.getters.getRouteTerms(),
-				filters
-			);
+			const entry = createRouteEntry('/dataset', {
+				dataset: datasetName
+			});
 			this.$router.push(entry);
 		},
 		toggleExpansion(datasetName) {

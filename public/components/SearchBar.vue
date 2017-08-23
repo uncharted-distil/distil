@@ -18,7 +18,9 @@ export default {
 	computed: {
 		terms: {
 			set: _.throttle(function(terms) {
-				const routeEntry = createRouteEntry('/search', null, terms, this.$store.getters.getRouteFilters());
+				const routeEntry = createRouteEntry('/search', {
+					terms: terms,
+				});
 				this.$router.push(routeEntry);
 			}, 500),
 			get: function() {

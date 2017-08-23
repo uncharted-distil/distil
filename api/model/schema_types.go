@@ -1,10 +1,14 @@
 package model
 
 const (
+	// IntType is the schema type for int values
+	IntType = "int"
 	// IntegerType is the schema type for int values
 	IntegerType = "integer"
 	// FloatType is the schema type for float values
 	FloatType = "float"
+	// BoolType is the schema type for bool values
+	BoolType = "boolean"
 	// DateTimeType is the schema type for date/time values
 	DateTimeType = "dateTime"
 	// OrdinalType is the schema type for ordinal values
@@ -19,6 +23,7 @@ const (
 // of analysis.
 func IsNumerical(typ string) bool {
 	return typ == IntegerType ||
+		typ == IntType ||
 		typ == FloatType ||
 		typ == DateTimeType
 }
@@ -28,5 +33,11 @@ func IsNumerical(typ string) bool {
 func IsCategorical(typ string) bool {
 	return typ == CategoricalType ||
 		typ == OrdinalType ||
-		typ == TextType
+		typ == BoolType
+}
+
+// IsText indicates whether or not a schema type is text for the purposes
+// of analysis.
+func IsText(typ string) bool {
+	return typ == TextType
 }

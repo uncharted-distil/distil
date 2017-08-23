@@ -31,6 +31,7 @@ export default {
 		this.facets.on('facet-histogram:rangechangeduser', (event, key, value) => {
 			component.$emit('range-change', key, value);
 		});
+		
 	},
 
 	watch: {

@@ -66,7 +66,10 @@ export default {
 			const filters = this.$store.getters.getRouteFilters();
 			// merge the updated filters back into the route query params
 			const updated = updateFilter(filters, key, values);
-			const entry = createRouteEntry('/dataset', this.$store.getters.getRouteDataset(), this.$store.getters.getRouteTerms(), updated);
+			const entry = createRouteEntry('/dataset', {
+				dataset: this.$store.getters.getRouteDataset(),
+				filters: updated
+			});
 			this.$router.push(entry);
 		},
 		onExpand(key) {
@@ -110,6 +113,7 @@ export default {
 			};
 		},
 		createSummaryFacet(summary) {
+
 			switch (summary.type) {
 
 				case 'categorical':
@@ -181,9 +185,10 @@ export default {
 					// add selection to facets
 					group.facets.forEach(facet => {
 						facet.selection = {
+							// NOTE: the `from` / `to` values MUST be strings.
 							range: {
-								from: decoded.min,
-								to: decoded.max
+								from: `${decoded.min}`,
+								to: `${decoded.max}`,
 							}
 						};
 					});
