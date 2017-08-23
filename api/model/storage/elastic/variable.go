@@ -217,7 +217,7 @@ func (s *Storage) FetchSummary(variable *model.Variable, dataset string) (*model
 		}
 		return categorical, nil
 	}
-	if IsText(variable.Type) {
+	if model.IsText(variable.Type) {
 		// fetch text analysis
 		return nil, nil
 	}
