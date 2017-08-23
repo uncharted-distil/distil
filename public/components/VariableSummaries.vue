@@ -85,7 +85,7 @@ export default {
 			// set range filter
 			this.updateFilterRoute(key, {
 				enabled: true,
-				min: parseFloat(value.from.index[0]),
+				min: parseFloat(value.from.label[0]),
 				max: parseFloat(value.to.label[0])
 			});
 		},
@@ -182,9 +182,10 @@ export default {
 					// add selection to facets
 					group.facets.forEach(facet => {
 						facet.selection = {
+							// NOTE: the `from` / `to` values MUST be strings.
 							range: {
-								from: decoded.min,
-								to: decoded.max
+								from: `${decoded.min}`,
+								to: `${decoded.max}`,
 							}
 						};
 					});
