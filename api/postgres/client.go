@@ -7,7 +7,6 @@ import (
 
 	"github.com/jackc/pgx"
 	"github.com/pkg/errors"
-	"github.com/unchartedsoftware/distil/api/model/filter"
 	"github.com/unchartedsoftware/plog"
 )
 
@@ -24,9 +23,18 @@ func init() {
 	clients = make(map[string]*pgx.ConnPool)
 }
 
+// DatabaseDriver defines the behaviour of the querying engine.
+type DatabaseDriver interface {
+	Query(string, ...interface{}) (*pgx.Rows, error)
+	QueryRow(string, ...interface{}) *pgx.Row
+}
+
+// ClientCtor repressents a client constructor to instantiate a postgres client.
+type ClientCtor func() (DatabaseDriver, error)
+
 // NewClient instantiates and returns a new postgres client constructor.
-func NewClient(host, port, user, password, database string) filter.ClientCtor {
-	return func() (filter.DatabaseDriver, error) {
+func NewClient(host, port, user, password, database string) ClientCtor {
+	return func() (DatabaseDriver, error) {
 		endpoint := host + ":" + port
 		portInt, err := strconv.Atoi(port)
 		if err != nil {
