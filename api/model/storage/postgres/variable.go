@@ -14,7 +14,7 @@ func (s *Storage) getHistogramAggQuery(extrema *model.Extrema) (string, string) 
 	// compute the bucket interval for the histogram
 	interval := (extrema.Max - extrema.Min) / model.MaxNumBuckets
 	if extrema.Type != model.FloatType {
-		// smallest bin for integers is 1
+		interval = math.Floor(interval)
 		interval = math.Max(1, interval)
 	}
 

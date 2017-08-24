@@ -123,7 +123,7 @@ func (s *Storage) appendHistogramAgg(search *elastic.SearchService, extrema *mod
 	// compute the bucket interval for the histogram
 	interval := (extrema.Max - extrema.Min) / model.MaxNumBuckets
 	if extrema.Type != model.FloatType {
-		// smallest bin for integers is 1
+		interval = math.Floor(interval)
 		interval = math.Max(1, interval)
 	}
 	// get histogram agg name
