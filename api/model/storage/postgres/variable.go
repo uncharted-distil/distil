@@ -2,6 +2,7 @@ package postgres
 
 import (
 	"fmt"
+	"math"
 	"strconv"
 
 	"github.com/jackc/pgx"
@@ -11,9 +12,11 @@ import (
 
 func (s *Storage) getHistogramAggQuery(extrema *model.Extrema) (string, string) {
 	// compute the bucket interval for the histogram
-	// TODO: We should handle discreet vs continuous data differently here.  For discrete, we should have
-	// a minimum bucket size of 1, whereas continuous can select a size to exactly match the bucket count.
-	interval := (extrema.Max - extrema.Min) / model.NumBuckets
+	interval := (extrema.Max - extrema.Min) / model.MaxNumBuckets
+	if extrema.Type != model.FloatType {
+		// smallest bin for integers is 1
+		interval = math.Max(1, interval)
+	}
 
 	// get histogram agg name & query string.
 	histogramAggName := model.HistogramAggPrefix + extrema.Name

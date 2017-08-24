@@ -19,8 +19,8 @@ const (
 	VariableValueField = "value"
 	// VariableTypeField is the field which stores the variable's schema type value.
 	VariableTypeField = "schemaType"
-	// NumBuckets is the number of buckets to use for histograms
-	NumBuckets = 50
+	// MaxNumBuckets is the maximum number of buckets to use for histograms
+	MaxNumBuckets = 50
 )
 
 // Extrema represents the extrema for a single variable.
