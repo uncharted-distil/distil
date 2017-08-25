@@ -3,6 +3,7 @@ package elastic
 import (
 	"context"
 	"fmt"
+	"math"
 	"strconv"
 
 	"github.com/pkg/errors"
@@ -120,10 +121,11 @@ func (s *Storage) parseNumericHistogram(res *elastic.SearchResult, extrema *mode
 
 func (s *Storage) appendHistogramAgg(search *elastic.SearchService, extrema *model.Extrema) *elastic.SearchService {
 	// compute the bucket interval for the histogram
-	// TODO: We should handle discreet vs continuous data differently here.  For discrete, we should have
-	// a minimum bucket size of 1, whereas continuous can select a size to exactly match the bucket count.
-	interval := (extrema.Max - extrema.Min) / model.NumBuckets
-
+	interval := (extrema.Max - extrema.Min) / model.MaxNumBuckets
+	if extrema.Type != model.FloatType {
+		interval = math.Floor(interval)
+		interval = math.Max(1, interval)
+	}
 	// get histogram agg name
 	histogramAggName := model.HistogramAggPrefix + extrema.Name
 	// create histogram agg
