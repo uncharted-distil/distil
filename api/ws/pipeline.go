@@ -226,7 +226,7 @@ func handleCreatePipelinesSuccess(conn *Connection, msg *Message, proxy *pipelin
 				log.Infof("Pipeline %s - %s", res.PipelineId, progress)
 
 				// on complete, fetch results as well
-				if res.ProgressInfo == pipeline.Progress_COMPLETED {
+				if res.ProgressInfo == pipeline.Progress_COMPLETED || res.ProgressInfo == pipeline.Progress_UPDATED {
 					scores := make([]map[string]interface{}, 0)
 					for _, score := range res.PipelineInfo.Scores {
 						scores = append(scores, map[string]interface{}{

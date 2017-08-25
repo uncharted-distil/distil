@@ -11,8 +11,8 @@
 				{{result.name}}
 			</div>
 			<div class="col-md-1">
-				<b-badge variant="default" v-if="result.progress==='SUBMITTED'">{{result.progress}}</b-badge>
-				<b-badge variant="info" v-if="result.progress!=='SUBMITTED'">{{result.progress}}</b-badge>
+				<b-badge variant="default" v-if="result.progress==='SUBMITTED'">{{status(result)}}</b-badge>
+				<b-badge variant="info" v-if="result.progress!=='SUBMITTED'">{{status(result)}}</b-badge>
 			</div>
 		</div>
 	</div>
@@ -20,6 +20,8 @@
 
 <script>
 import _ from 'lodash';
+import {getMetricDisplayName} from '../util/pipelines';
+
 export default {
 	name: 'running-pipelines',
 
@@ -31,6 +33,17 @@ export default {
 			} else {
 				return null;
 			}
+		}
+	},
+	methods: {
+		status(result) {
+			console.log(result.progress);
+			if (result.progress === 'UPDATED') {
+				const score = result.pipeline.scores[0];
+				const metricName = getMetricDisplayName(score.metric);
+				return metricName + ': ' + score.value;
+			}
+			return result.progress;
 		}
 	}
 };
