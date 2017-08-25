@@ -74,7 +74,7 @@ func (c *Client) StartSession(ctx context.Context) (*Session, error) {
 		return nil, errors.Wrap(err, "failed to start pipeline session")
 	}
 	// create session
-	result, ok := (*results[0]).(*Response)
+	result, ok := (*results[0]).(*SessionResponse)
 	if !ok {
 		return nil, errors.Errorf("unable to start session")
 	}

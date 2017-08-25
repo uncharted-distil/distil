@@ -93,7 +93,7 @@ export default {
 			const taskData = getTask(variable.type);
 			const task = taskData.schemaName;
 			const output = getOutputSchemaNames(taskData)[0];
-			const metric = getMetricSchemaName(taskData, this.metric);
+			const metric = getMetricSchemaName(this.metric);
 
 			// dispatch action that triggers request send to server
 			this.$store.dispatch('createPipelines', {

@@ -12,7 +12,7 @@
 			</div>
 			<div class="col-md-1">
 				<b-badge variant="primary" v-bind:key="score.metric" v-for="score in result.pipeline.scores">
-					{{score.metric}}: {{score.value}}.001
+					{{metricName(score.metric)}}: {{score.value}}
 				</b-badge>
 			</div>
 		</div>
@@ -22,6 +22,7 @@
 <script>
 
 import _ from 'lodash';
+import {getMetricDisplayName} from '../util/pipelines';
 
 export default {
 	name: 'completed-pipelines',
@@ -33,6 +34,11 @@ export default {
 				return this.$store.state.completedPipelines;
 			}
 			return null;
+		}
+	},
+	methods: {
+		metricName(metric) {
+			return getMetricDisplayName(metric);
 		}
 	}
 };
