@@ -1,16 +1,37 @@
 package pipeline
 
 import (
+	"bytes"
+	"compress/gzip"
 	"hash/fnv"
 	"io"
+	"io/ioutil"
 
 	"github.com/golang/protobuf/proto"
+	protobuf "github.com/golang/protobuf/protoc-gen-go/descriptor"
 	"github.com/mitchellh/hashstructure"
 	"github.com/pkg/errors"
 	"github.com/satori/go.uuid"
 	"github.com/unchartedsoftware/plog"
 	"golang.org/x/net/context"
 )
+
+const (
+	userAgent    = "uncharted-distil" // TODO: get version embed into string
+	versionUnset = "client-version-unset"
+)
+
+var (
+	version = versionUnset
+)
+
+// APIVersion provides the ta3-ta2 api version as defined in the protobuf def
+func APIVersion() string {
+	if version == versionUnset {
+		version = getAPIVersion()
+	}
+	return version
+}
 
 // RequestFunc defines a standardized pipeline request execution function.
 type RequestFunc func(ctx *context.Context, client *PipelineComputeClient) *RequestContext
@@ -166,7 +187,10 @@ func generateRequest(request proto.Message, grpcRequest grpcRequestFunc, hashFun
 // GenerateStartSessionRequest creates a session start request that will return a unique session ID
 // to the caller. This ID is then assigned to subsquent pipeline calls via the session context field.
 func GenerateStartSessionRequest() *RequestInfo {
-	sessionRequest := SessionRequest{}
+	sessionRequest := SessionRequest{
+		UserAgent: userAgent,
+		Version:   APIVersion(),
+	}
 	grpcFunc := func(client *PipelineComputeClient, ctx *context.Context, request proto.Message) (proto.Message, error) {
 		// execute the start session request
 		return (*client).StartSession(*ctx, &sessionRequest)
@@ -213,4 +237,45 @@ func hash(b []byte) uint64 {
 	hash := fnv.New64a()
 	hash.Write(b)
 	return hash.Sum64()
+}
+
+// Gets API version from protobuf file.  Computes once and caches the value since it is immutable.
+// Note that protobuf init must be complete before the version can be extracted so we initialize
+// lazily.
+func getAPIVersion() string {
+	// Get the raw file descriptor bytes
+	fileDesc := proto.FileDescriptor(E_ProtocolVersion.Filename)
+	if fileDesc == nil {
+		log.Errorf("failed to find file descriptor for %v", E_ProtocolVersion.Filename)
+		return versionUnset
+	}
+
+	// Open a gzip reader and decompress
+	r, err := gzip.NewReader(bytes.NewReader(fileDesc))
+	if err != nil {
+		log.Errorf("failed to open gzip reader: %v", err)
+		return versionUnset
+	}
+	defer r.Close()
+
+	b, err := ioutil.ReadAll(r)
+	if err != nil {
+		log.Errorf("failed to decompress descriptor: %v", err)
+		return versionUnset
+	}
+
+	// Unmarshall the bytes from the proto format
+	fd := &protobuf.FileDescriptorProto{}
+	if err := proto.Unmarshal(b, fd); err != nil {
+		log.Errorf("malformed FileDescriptorProto: %v", err)
+		return versionUnset
+	}
+
+	// Fetch the extension from the FileDescriptorOptions message
+	ex, err := proto.GetExtension(fd.GetOptions(), E_ProtocolVersion)
+	if err != nil {
+		log.Errorf("failed to fetch extension: %v", err)
+		return versionUnset
+	}
+	return *ex.(*string)
 }

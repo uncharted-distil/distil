@@ -8,7 +8,7 @@ import {
 // TODO: move this somewhere more appropriate.
 const ES_INDEX = 'datasets';
 const CREATE_PIPELINES_MSG = 'CREATE_PIPELINES';
-const PIPELINE_COMPLETE = 'COMPLETE';
+const PIPELINE_COMPLETE = 'COMPLETED';
 const STREAM_CLOSE = 'STREAM_CLOSE';
 
 
