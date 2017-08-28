@@ -10,7 +10,7 @@ import DataTable from '../components/DataTable';
 import VariableSummaries from '../components/VariableSummaries';
 
 export default {
-	name: 'dataset',
+	name: 'results',
 	components: {
 		DataTable,
 		VariableSummaries

@@ -43,7 +43,7 @@ export default {
 
 	methods: {
 		setActiveDataset(datasetName) {
-			const entry = createRouteEntry('/dataset', {
+			const entry = createRouteEntry('/explore', {
 				dataset: datasetName
 			});
 			this.$router.push(entry);
