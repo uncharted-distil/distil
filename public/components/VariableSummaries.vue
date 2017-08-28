@@ -65,9 +65,10 @@ export default {
 		updateFilterRoute(key, values) {
 			// retrieve the filters from the route
 			const filters = this.$store.getters.getRouteFilters();
+			const path = this.$store.getters.getRoutePath();
 			// merge the updated filters back into the route query params
 			const updated = updateFilter(filters, key, values);
-			const entry = createRouteEntry('/select', {
+			const entry = createRouteEntry(path, {
 				dataset: this.$store.getters.getRouteDataset(),
 				filters: updated
 			});
