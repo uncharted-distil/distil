@@ -1,6 +1,12 @@
 import _ from 'lodash';
 import Connection from '../util/ws';
 
+export function getRoutePath(state) {
+	return () => {
+		return state.route.path;
+	};
+}
+
 export function getRouteTerms(state) {
 	return () => state.route.query.terms;
 }

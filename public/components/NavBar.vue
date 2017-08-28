@@ -94,7 +94,8 @@ export default {
 		// switch to explore view
 		onExplore() {
 			const entry = createRouteEntry('/explore',{
-				dataset: this.$store.getters.getRouteDataset()
+				dataset: this.$store.getters.getRouteDataset(),
+				filters: this.$store.getters.getRouteFilters()
 			});
 			this.$router.push(entry);
 		},
@@ -102,7 +103,8 @@ export default {
 		// switch to data view
 		onSelect() {
 			const entry = createRouteEntry('/select',{
-				dataset: this.$store.getters.getRouteDataset()
+				dataset: this.$store.getters.getRouteDataset(),
+				filters: this.$store.getters.getRouteFilters()
 			});
 			this.$router.push(entry);
 		},
