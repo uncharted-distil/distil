@@ -8,9 +8,12 @@
 
 		<b-collapse is-nav id="nav_collapse">
 			<b-nav is-nav-bar>
+				<b-nav-item @click="onHome" :active="activeView===HOME">Home</b-nav-item>
 				<b-nav-item @click="onSearch" :active="activeView===SEARCH">Search</b-nav-item>
-				<b-nav-item @click="onData" :active="activeView===DATASETS">Data</b-nav-item>
-				<b-nav-item @click="onPipelines" :active="activeView===PIPELINES">Pipelines</b-nav-item>
+				<b-nav-item @click="onExplore" :active="activeView===EXPLORE">Explore</b-nav-item>
+				<b-nav-item @click="onSelect" :active="activeView===SELECT">Select</b-nav-item>
+				<b-nav-item @click="onBuild" :active="activeView===BUILD">Build</b-nav-item>
+				<b-nav-item @click="onResults" :active="activeView===RESULTS">Results</b-nav-item>
 			</b-nav>
 			<b-nav is-nav-bar class="ml-auto">
 				<b-nav-text class="session-label">Session:</b-nav-text>
@@ -29,13 +32,20 @@
 
 import { createRouteEntry } from '../util/routes';
 
+const HOME = Symbol();
 const SEARCH = Symbol();
-const DATASETS = Symbol();
-const PIPELINES = Symbol();
+const EXPLORE = Symbol();
+const SELECT = Symbol();
+const BUILD = Symbol();
+const RESULTS = Symbol();
+
 const ROUTE_MAPPINGS = {
+	'/home': HOME,
 	'/search': SEARCH,
-	'/dataset': DATASETS,
-	'/pipelines': PIPELINES
+	'/explore': EXPLORE,
+	'/select': SELECT,
+	'/build': BUILD,
+	'/results': RESULTS
 };
 
 export default {
@@ -43,10 +53,13 @@ export default {
 
 	data() {
 		return {
+			HOME: HOME,
 			SEARCH: SEARCH,
-			DATASETS: DATASETS,
-			PIPELINES: PIPELINES,
-			activeView: SEARCH,
+			EXPLORE: EXPLORE,
+			SELECT: SELECT,
+			BUILD: BUILD,
+			RESULTS: RESULTS,
+			activeView: SEARCH
 		};
 	},
 
@@ -63,6 +76,14 @@ export default {
 
 	methods: {
 		// switch to the search view
+		onHome() {
+			const entry = createRouteEntry('/home', {
+				terms: this.$store.getters.getRouteTerms()
+			});
+			this.$router.push(entry);
+		},
+
+		// switch to the search view
 		onSearch() {
 			const entry = createRouteEntry('/search', {
 				terms: this.$store.getters.getRouteTerms()
@@ -70,26 +91,42 @@ export default {
 			this.$router.push(entry);
 		},
 
+		// switch to explore view
+		onExplore() {
+			const entry = createRouteEntry('/explore',{
+				dataset: this.$store.getters.getRouteDataset()
+			});
+			this.$router.push(entry);
+		},
+
 		// switch to data view
-		onData() {
-			const entry = createRouteEntry('/dataset',{
+		onSelect() {
+			const entry = createRouteEntry('/select',{
 				dataset: this.$store.getters.getRouteDataset()
 			});
 			this.$router.push(entry);
 		},
 
 		// switch to the pipelines view
-		onPipelines() {
-			const entry = createRouteEntry('/pipelines', {
+		onBuild() {
+			const entry = createRouteEntry('/build', {
 				dataset: this.$store.getters.getRouteDataset(),
 				filters: this.$store.getters.getRouteFilters()
 			});
 			this.$router.push(entry);
 		},
 
+		// switch to data view
+		onResults() {
+			const entry = createRouteEntry('/results', {
+				dataset: this.$store.getters.getRouteDataset()
+			});
+			this.$router.push(entry);
+		},
+
 		updateActive() {
 			this.activeView = ROUTE_MAPPINGS[this.$route.path];
-		},
+		}
 	},
 	watch: {
 		'$route.path'() {

@@ -22,19 +22,33 @@ export function getOutputSchemaNames(task) {
 }
 
 // Gets the schema name for a metric given its display name.
-export function getMetricSchemaName(task, displayName) {
-	return _.find(task.metrics, s => s.displayName === displayName).schemaName;
+export function getMetricSchemaName(displayName) {
+	for(const m of metrics) {
+		const result = _.find(m, s => s.displayName === displayName);
+		if (!_.isEmpty(result)) {
+			return result.schemaName;
+		}
+	}
+	return undefined;
+}
+
+// Gets the display name for a metric given its schema name.
+export function getMetricDisplayName(schemaName) {
+	const lowerName = _.toLower(schemaName);
+	for(const m of metrics) {
+		const result = _.find(m, s => s.schemaName === lowerName);
+		if (!_.isEmpty(result)) {
+			return result.displayName;
+		}
+	}
+	return undefined;
 }
 
 // metrics used in classification tasks
 const classificationMetrics = {
-	precision: {
-		displayName: 'Precision',
-		schemaName: 'precision'
-	},
-	recall: {
-		displayName: 'Recall',
-		schemaName: 'recall'
+	accuracy: {
+		displayName: 'Accuracy',
+		schemaName: 'accuracy'
 	},
 	f1: {
 		displayName: 'F1',
@@ -50,33 +64,47 @@ const classificationMetrics = {
 	},
 	rocAuc: {
 		displayName: 'ROC-AUC',
-		schemaName: 'roc-auc'
+		schemaName: 'roc_auc'
+	},
+	rocAucMicro: {
+		displayName: 'ROC-AUC Micro',
+		schemaName: 'roc_auc_micro'
+	},
+	rocAucMacro: {
+		displayName: 'ROC-AUC Macro',
+		schemaName: 'roc_auc_macro'
+	},
+	jaccardSimilarityScore: {
+		displayName: 'Jaccard Similarity',
+		schemaName: 'jaccard_similarity_score'
+	},
+	normalizedMutualInformation: {
+		displayName: 'Normalized Mutual Information',
+		schemaName: 'normalized_mutual_information'
 	}
 };
 
 // metrics used in regression tasks
 const regressionMetrics = {
-	logLoss: {
-		displayName: 'Log Loss',
-		schemaName: 'log_loss'
+	rootMeanSquaredError: {
+		displayName: 'Root Mean Squared Error',
+		schemaName: 'root_mean_squared_error'
 	},
-	meanSquaredErr: {
-		displayName: 'Mean Squared Err',
-		schemaName: 'mean_squared_err'
+	rootMeanSquaredErrorAvg: {
+		displayName: 'Root Mean Squared Error Avg',
+		schemaName: 'root_mean_squared_error_avg'
 	},
 	meanAbsoluteErr: {
-		displayName: 'Mean Abs Err',
+		displayName: 'Mean Absolute Error',
 		schemaName: 'mean_abs_err'
 	},
-	medianAbsoluteErr: {
-		displayName: 'MedianAbsErr',
-		schemaName: 'median_abs_err'
-	},
-	r2: {
-		displayName: 'R2',
-		schemaName: 'r2'
+	rSquared: {
+		displayName: 'R Squared',
+		schemaName: 'r_squared'
 	}
 };
+
+const metrics = [classificationMetrics, regressionMetrics];
 
 // output types used in classification tasks
 const classificationOutputs = {
@@ -117,10 +145,12 @@ const classification = {
 // regression task info
 const regression = {
 	displayName: 'Regression',
-	schemaName: 'regession',
+	schemaName: 'regression',
 	metrics: regressionMetrics,
 	outputs: regressionOutputs
 };
+
+
 
 // variable type to task mappings
 const variableType = {

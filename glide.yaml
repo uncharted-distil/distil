@@ -30,3 +30,4 @@ import:
 - package: github.com/golang/mock/gomock
 - package: github.com/satori/go.uuid
 - package: github.com/mitchellh/hashstructure
+- package: github.com/golang/mock/gomock

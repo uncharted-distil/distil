@@ -152,13 +152,23 @@ func handleCreatePipelines(conn *Connection, client *pipeline.Client, storageCto
 
 	// populate the protobuf pipeline create msg
 	createMsg := &pipeline.PipelineCreateRequest{
-		Context:          &pipeline.SessionContext{SessionId: msg.Session},
-		TrainDatasetUris: []string{datasetPath},
-		Task:             pipeline.Task(pipeline.Task_value[strings.ToUpper(clientCreateMsg.Task)]),
-		Output:           pipeline.Output(pipeline.Output_value[strings.ToUpper(clientCreateMsg.Output)]),
-		Metric:           []pipeline.Metric{pipeline.Metric(pipeline.Metric_value[strings.ToUpper(clientCreateMsg.Metric)])},
-		TargetFeatures:   []string{clientCreateMsg.Feature},
-		MaxPipelines:     clientCreateMsg.MaxPipelines,
+		Context: &pipeline.SessionContext{SessionId: msg.Session},
+		TrainFeatures: []*pipeline.Feature{
+			&pipeline.Feature{
+				FeatureId: "",
+				DataUri:   datasetPath,
+			},
+		},
+		Task:    pipeline.TaskType(pipeline.TaskType_value[strings.ToUpper(clientCreateMsg.Task)]),
+		Output:  pipeline.OutputType(pipeline.OutputType_value[strings.ToUpper(clientCreateMsg.Output)]),
+		Metrics: []pipeline.Metric{pipeline.Metric(pipeline.Metric_value[strings.ToUpper(clientCreateMsg.Metric)])},
+		TargetFeatures: []*pipeline.Feature{
+			&pipeline.Feature{
+				FeatureId: clientCreateMsg.Feature,
+				DataUri:   datasetPath,
+			},
+		},
+		MaxPipelines: clientCreateMsg.MaxPipelines,
 	}
 
 	// kick off the pipeline creation, or re-attach to one that is already running
@@ -210,16 +220,15 @@ func handleCreatePipelinesSuccess(conn *Connection, msg *Message, proxy *pipelin
 				// extract the baseline pipeline status
 				progress := pipeline.Progress_name[int32(res.ProgressInfo)]
 				response := map[string]interface{}{
-					"session":    res.ResponseInfo.Context.SessionId,
 					"pipelineId": res.PipelineId,
 					"progress":   progress,
 				}
 				log.Infof("Pipeline %s - %s", res.PipelineId, progress)
 
 				// on complete, fetch results as well
-				if res.ProgressInfo == pipeline.Progress_COMPLETE {
+				if res.ProgressInfo == pipeline.Progress_COMPLETED || res.ProgressInfo == pipeline.Progress_UPDATED {
 					scores := make([]map[string]interface{}, 0)
-					for _, score := range res.PipelineInfo.Score {
+					for _, score := range res.PipelineInfo.Scores {
 						scores = append(scores, map[string]interface{}{
 							"metric": pipeline.Metric_name[int32(score.Metric)],
 							"value":  score.Value,
@@ -227,7 +236,7 @@ func handleCreatePipelinesSuccess(conn *Connection, msg *Message, proxy *pipelin
 					}
 					response["pipeline"] = map[string]interface{}{
 						"scores": scores,
-						"output": pipeline.Output_name[int32(res.PipelineInfo.Output)],
+						"output": pipeline.OutputType_name[int32(res.PipelineInfo.Output)],
 					}
 				}
 				handleSuccess(conn, msg, response)
