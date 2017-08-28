@@ -3,7 +3,6 @@
 </template>
 
 <script>
-// import SearchBar from '../components/SearchBar';
 import NavBar from '../components/NavBar';
 export default {
 	name: 'navigation',
