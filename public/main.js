@@ -26,15 +26,15 @@ Vue.use(VueRouter);
 Vue.use(BootstrapVue);
 
 const router = new VueRouter({
-    routes: [
-        { path: '/', redirect: '/home' },
-        { path: '/home', component: Home },
-        { path: '/search', component: Search },
-        { path: '/explore', component: Explore },
-        { path: '/select', component: Select },
-        { path: '/build', component: Build },
-        { path: '/results', component: Results }
-    ]
+	routes: [
+		{ path: '/', redirect: '/home' },
+		{ path: '/home', component: Home },
+		{ path: '/search', component: Search },
+		{ path: '/explore', component: Explore },
+		{ path: '/select', component: Select },
+		{ path: '/build', component: Build },
+		{ path: '/results', component: Results }
+	]
 });
 
 // sync store and router
@@ -42,12 +42,12 @@ VueRouterSync.sync(store, router);
 
 // init app
 new Vue({
-    store,
-    router,
-    components: {
-        Navigation
-    },
-    template: `
+	store,
+	router,
+	components: {
+		Navigation
+	},
+	template: `
 		<div id="distil-app" class="container-fluid">
 			<navigation/>
 			<router-view class="view"></router-view>

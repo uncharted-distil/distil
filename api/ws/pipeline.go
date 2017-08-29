@@ -4,9 +4,11 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"sort"
 	"strings"
 	"time"
 
+	"github.com/unchartedsoftware/distil/api/elastic"
 	"github.com/unchartedsoftware/distil/api/model"
 
 	"github.com/pkg/errors"
@@ -17,18 +19,21 @@ import (
 )
 
 const (
-	getSession      = "GET_SESSION"
-	endSession      = "END_SESSION"
-	createPipelines = "CREATE_PIPELINES"
-	streamClose     = "STREAM_CLOSE"
-	datasetDir      = "datasets"
+	getSession       = "GET_SESSION"
+	endSession       = "END_SESSION"
+	createPipelines  = "CREATE_PIPELINES"
+	streamClose      = "STREAM_CLOSE"
+	datasetDir       = "datasets"
+	categoricalType  = "categorical"
+	numericalType    = "numerical"
+	datasetSizeLimit = 10000
 )
 
 // PipelineHandler represents a pipeline websocket handler.
-func PipelineHandler(client *pipeline.Client, storageCtor model.StorageCtor) func(http.ResponseWriter, *http.Request) {
+func PipelineHandler(client *pipeline.Client, esCtor elastic.ClientCtor, storageCtor model.StorageCtor) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// create conn
-		conn, err := NewConnection(w, r, handlePipelineMessage(client, storageCtor))
+		conn, err := NewConnection(w, r, handlePipelineMessage(client, esCtor, storageCtor))
 		if err != nil {
 			log.Warn(err)
 			return
@@ -43,7 +48,7 @@ func PipelineHandler(client *pipeline.Client, storageCtor model.StorageCtor) fun
 	}
 }
 
-func handlePipelineMessage(client *pipeline.Client, storageCtor model.StorageCtor) func(conn *Connection, bytes []byte) {
+func handlePipelineMessage(client *pipeline.Client, esCtor elastic.ClientCtor, storageCtor model.StorageCtor) func(conn *Connection, bytes []byte) {
 	return func(conn *Connection, bytes []byte) {
 		// parse the message
 		msg, err := NewMessage(bytes)
@@ -55,7 +60,7 @@ func handlePipelineMessage(client *pipeline.Client, storageCtor model.StorageCto
 			return
 		}
 		// handle message
-		go handleMessage(conn, client, storageCtor, msg)
+		go handleMessage(conn, client, esCtor, storageCtor, msg)
 	}
 }
 
@@ -69,7 +74,7 @@ func parseMessage(bytes []byte) (*Message, error) {
 	return msg, nil
 }
 
-func handleMessage(conn *Connection, client *pipeline.Client, storageCtor model.StorageCtor, msg *Message) {
+func handleMessage(conn *Connection, client *pipeline.Client, esCtor elastic.ClientCtor, storageCtor model.StorageCtor, msg *Message) {
 	switch msg.Type {
 	case getSession:
 		handleGetSession(conn, client, msg)
@@ -78,7 +83,7 @@ func handleMessage(conn *Connection, client *pipeline.Client, storageCtor model.
 		handleEndSession(conn, client, msg)
 		return
 	case createPipelines:
-		handleCreatePipelines(conn, client, storageCtor, msg)
+		handleCreatePipelines(conn, client, esCtor, storageCtor, msg)
 		return
 	default:
 		// unrecognized type
@@ -120,6 +125,7 @@ func handleEndSession(conn *Connection, client *pipeline.Client, msg *Message) {
 
 type pipelineCreateMsg struct {
 	Dataset      string          `json:"dataset"`
+	Index        string          `json:"index"`
 	Feature      string          `json:"feature"`
 	Task         string          `json:"task"`
 	Metric       string          `json:"metric"`
@@ -128,7 +134,7 @@ type pipelineCreateMsg struct {
 	Filters      json.RawMessage `json:"filters"`
 }
 
-func handleCreatePipelines(conn *Connection, client *pipeline.Client, storageCtor model.StorageCtor, msg *Message) {
+func handleCreatePipelines(conn *Connection, client *pipeline.Client, esCtor elastic.ClientCtor, storageCtor model.StorageCtor, msg *Message) {
 	// unmarshall the request data
 	clientCreateMsg := &pipelineCreateMsg{}
 	err := json.Unmarshal(msg.Raw, clientCreateMsg)
@@ -137,31 +143,48 @@ func handleCreatePipelines(conn *Connection, client *pipeline.Client, storageCto
 		return
 	}
 
-	// persist the filtered dataset if necessary
-	fetchFilteredData := func(dataset string, filters *model.FilterParams) (*model.FilteredData, error) {
-		esClient, err := storageCtor()
-		if err != nil {
-			return nil, err
-		}
-		return model.FetchFilteredData(esClient, dataset, filters)
-	}
-	datasetPath, err := pipeline.PersistFilteredData(fetchFilteredData, datasetDir, clientCreateMsg.Dataset, clientCreateMsg.Filters)
+	// parse the features out of the create msg - done as a separate step because their structure isn't entirely
+	// fixed
+	filters, err := parseDatasetFilters(clientCreateMsg.Filters)
 	if err != nil {
 		handleErr(conn, msg, err)
 	}
 
+	// persist the filtered dataset if necessary
+	fetchFilteredData := func(dataset string, filters *model.FilterParams) (*model.FilteredData, error) {
+		storage, err := storageCtor()
+		if err != nil {
+			return nil, err
+		}
+		return model.FetchFilteredData(storage, dataset, filters)
+	}
+	datasetPath, err := pipeline.PersistFilteredData(fetchFilteredData, datasetDir, clientCreateMsg.Dataset, filters)
+	if err != nil {
+		handleErr(conn, msg, err)
+	}
+
+	// Create the set of training features - we already filtered that out when we persist, but needs to be specified
+	// to satisfy ta3ta2 API
+	trainFeatures := []*pipeline.Feature{}
+	filteredVars, err := fetchFilteredVariables(esCtor, clientCreateMsg.Index, clientCreateMsg.Dataset, filters)
+	if err != nil {
+		handleErr(conn, msg, err)
+	}
+	for _, featureName := range filteredVars {
+		feature := &pipeline.Feature{
+			FeatureId: featureName,
+			DataUri:   datasetPath,
+		}
+		trainFeatures = append(trainFeatures, feature)
+	}
+
 	// populate the protobuf pipeline create msg
 	createMsg := &pipeline.PipelineCreateRequest{
-		Context: &pipeline.SessionContext{SessionId: msg.Session},
-		TrainFeatures: []*pipeline.Feature{
-			&pipeline.Feature{
-				FeatureId: "",
-				DataUri:   datasetPath,
-			},
-		},
-		Task:    pipeline.TaskType(pipeline.TaskType_value[strings.ToUpper(clientCreateMsg.Task)]),
-		Output:  pipeline.OutputType(pipeline.OutputType_value[strings.ToUpper(clientCreateMsg.Output)]),
-		Metrics: []pipeline.Metric{pipeline.Metric(pipeline.Metric_value[strings.ToUpper(clientCreateMsg.Metric)])},
+		Context:       &pipeline.SessionContext{SessionId: msg.Session},
+		TrainFeatures: trainFeatures,
+		Task:          pipeline.TaskType(pipeline.TaskType_value[strings.ToUpper(clientCreateMsg.Task)]),
+		Output:        pipeline.OutputType(pipeline.OutputType_value[strings.ToUpper(clientCreateMsg.Output)]),
+		Metrics:       []pipeline.Metric{pipeline.Metric(pipeline.Metric_value[strings.ToUpper(clientCreateMsg.Metric)])},
 		TargetFeatures: []*pipeline.Feature{
 			&pipeline.Feature{
 				FeatureId: clientCreateMsg.Feature,
@@ -258,4 +281,96 @@ func handleCreatePipelinesSuccess(conn *Connection, msg *Message, proxy *pipelin
 			return
 		}
 	}
+}
+
+// TODO: We don't store this anywhere, so we end up running an ES query to get the var list.  This should
+// be cached by Redis, but still worth looking into storing some of the dataset info.
+func fetchFilteredVariables(esCtor elastic.ClientCtor, index string, dataset string, filters *model.FilterParams) ([]string, error) {
+	// put the filtered variables into a set for quick lookup
+	nameSet := map[string]bool{}
+	for _, varName := range filters.None {
+		nameSet[varName] = true
+	}
+
+	// fetch the variable set from es
+	esClient, err := esCtor()
+	if err != nil {
+		return nil, err
+	}
+	variables, err := model.FetchVariables(esClient, index, dataset)
+	if err != nil {
+		return nil, err
+	}
+
+	// create a list minus those that are in the filtered list
+	filteredVars := []string{}
+	for _, variable := range variables {
+		if _, ok := nameSet[variable.Name]; !ok {
+			filteredVars = append(filteredVars, variable.Name)
+		}
+	}
+	return filteredVars, nil
+}
+
+// pointers used to support optional field pattern
+type filter struct {
+	Name       string
+	Enabled    bool
+	Type       *string
+	Min        *float64
+	Max        *float64
+	Categories *[]string
+}
+
+// parse filter parameters out of JSON
+func parseDatasetFilters(rawFilters json.RawMessage) (*model.FilterParams, error) {
+	// filter params for subsequent store query
+	filterParams := model.FilterParams{}
+	filterParams.Size = datasetSizeLimit
+
+	// unmarshall from params porition of message
+	var filters map[string]filter
+	err := json.Unmarshal(rawFilters, &filters)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to parse filters")
+	}
+
+	// sort the filter values by var name to ensure consistent hashing
+	//
+	// TODO: this can possibly be circumvented by having the client pass
+	// the filter params up as a sorted list rather than a map
+	filterValues := make([]*filter, 0, len(filters))
+	for k := range filters {
+		f := filters[k]
+		filterValues = append(filterValues, &f)
+	}
+	sort.SliceStable(filterValues, func(i, j int) bool {
+		return filterValues[i].Name < filterValues[j].Name
+	})
+
+	for _, filter := range filterValues {
+		// parse out filter parameters
+		if filter.Type != nil {
+			if *filter.Type == numericalType {
+				if filter.Min == nil || filter.Max == nil {
+					return nil, errors.New("numerical filter missing min/max value")
+				}
+				varRange := model.VariableRange{Name: filter.Name, Min: *filter.Min, Max: *filter.Max}
+				filterParams.Ranged = append(filterParams.Ranged, varRange)
+			} else if *filter.Type == categoricalType {
+				if filter.Categories == nil {
+					return nil, errors.New("categorical filter missing categories set")
+				}
+				sort.Strings(*filter.Categories)
+				varCategories := model.VariableCategories{Name: filter.Name, Categories: *filter.Categories}
+				filterParams.Categorical = append(filterParams.Categorical, varCategories)
+			} else {
+				return nil, errors.Errorf("unknown filter type %s", *filter.Type)
+			}
+		} else {
+			filterParams.None = append(filterParams.None, filter.Name)
+		}
+		sort.Strings(filterParams.None)
+	}
+	return &filterParams, nil
 }

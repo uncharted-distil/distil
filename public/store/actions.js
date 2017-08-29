@@ -179,6 +179,7 @@ export function createPipelines(context, request) {
 	stream.send({
 		type: CREATE_PIPELINES_MSG,
 		session: sessionID,
+		index: ES_INDEX,
 		dataset: context.getters.getRouteDataset(),
 		feature: request.feature,
 		task: request.task,
