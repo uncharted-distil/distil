@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"os"
 	"path"
-	"path/filepath"
 	"strconv"
 	"time"
 
@@ -13,6 +12,13 @@ import (
 	"github.com/pkg/errors"
 	"github.com/unchartedsoftware/distil/api/model"
 	"github.com/unchartedsoftware/plog"
+)
+
+const (
+	// D3MTrainTargets provides the name of the training targets csv file as defined in the D3M schema
+	D3MTrainTargets = "trainTargets.csv"
+	// D3MTrainData provides the name of the training targets csv file as defined in the D3M schema
+	D3MTrainData = "trainData.csv"
 )
 
 // FilteredDataProvider defines a function that will fetch data from a back end source given
@@ -71,18 +77,18 @@ func PersistFilteredData(fetchData FilteredDataProvider, datasetDir string, data
 	}
 
 	// create the path for the data and target csvs
-	if err := os.MkdirAll(filepath.Dir(path), 0700); err != nil && !os.IsExist(err) {
+	if err := os.MkdirAll(path, 0700); err != nil && !os.IsExist(err) {
 		return "", errors.Wrapf(err, "unable to create dataset dir %s", datasetDir)
 	}
 
 	// write the filtered data (minus the target field) to csv file
-	err = writeData(path, datasetDir, filteredData, targetIdx)
+	err = writeTrainData(path, datasetDir, filteredData, targetIdx)
 	if err != nil {
 		return "", err
 	}
 
 	// write the target data to csv file
-	err = writeTargetData(path, datasetDir, filteredData, targetIdx)
+	err = writeTrainTargets(path, datasetDir, filteredData, targetIdx)
 	if err != nil {
 		return "", err
 	}
@@ -98,8 +104,8 @@ func dirExists(path string) bool {
 	return true
 }
 
-func writeData(dataPath string, datasetDir string, filteredData *model.FilteredData, targetIdx int) error {
-	file, err := os.Create(path.Join(dataPath, "trainData.csv"))
+func writeTrainData(dataPath string, datasetDir string, filteredData *model.FilteredData, targetIdx int) error {
+	file, err := os.Create(path.Join(dataPath, D3MTrainData))
 	if err != nil {
 		return errors.Wrapf(err, "unable to persist data to %s", datasetDir)
 	}
@@ -108,8 +114,20 @@ func writeData(dataPath string, datasetDir string, filteredData *model.FilteredD
 	writer := csv.NewWriter(file)
 	defer writer.Flush()
 
+	// write out the header, including the d3m_index field
+	variableNames := []string{"d3m_index"}
+	for i, variable := range filteredData.Metadata {
+		if i != targetIdx {
+			variableNames = append(variableNames, variable.Name)
+		}
+	}
+	err = writer.Write(variableNames)
+	if err != nil {
+		return errors.Wrapf(err, "unable to persist %v", variableNames)
+	}
+
 	for rowNum, row := range filteredData.Values {
-		// append the index as the first col
+		// append the index as the d3m_index col
 		strVals := []string{strconv.Itoa(rowNum)}
 
 		// convert vals in row to string, ignoring target feature
@@ -126,8 +144,8 @@ func writeData(dataPath string, datasetDir string, filteredData *model.FilteredD
 	return nil
 }
 
-func writeTargetData(targetPath string, datasetDir string, filteredData *model.FilteredData, targetIdx int) error {
-	file, err := os.Create(path.Join(targetPath, "targetData.csv"))
+func writeTrainTargets(targetPath string, datasetDir string, filteredData *model.FilteredData, targetIdx int) error {
+	file, err := os.Create(path.Join(targetPath, D3MTrainTargets))
 	if err != nil {
 		return errors.Wrapf(err, "unable to persist data to %s", datasetDir)
 	}
@@ -136,8 +154,15 @@ func writeTargetData(targetPath string, datasetDir string, filteredData *model.F
 	writer := csv.NewWriter(file)
 	defer writer.Flush()
 
+	// write out the variable names including the d3m_index
+	variableNames := []string{"d3m_index", filteredData.Metadata[targetIdx].Name}
+	err = writer.Write(variableNames)
+	if err != nil {
+		return errors.Wrapf(err, "unable to persist %v", variableNames)
+	}
+
 	for rowNum, row := range filteredData.Values {
-		// append the index as the first col
+		// append the index as the d3m_index value
 		targetValue := row[targetIdx]
 		strVals := []string{strconv.Itoa(rowNum), fmt.Sprintf("%v", targetValue)}
 		err := writer.Write(strVals)
