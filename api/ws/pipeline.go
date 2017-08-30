@@ -164,6 +164,12 @@ func handleCreatePipelines(conn *Connection, client *pipeline.Client, esCtor ela
 		handleErr(conn, msg, err)
 	}
 
+	// make sure the path is absolute
+	datasetPath, err = filepath.Abs(datasetPath)
+	if err != nil {
+		handleErr(conn, msg, err)
+	}
+
 	// Create the set of training features - we already filtered that out when we persist, but needs to be specified
 	// to satisfy ta3ta2 API.
 	trainFeatures := []*pipeline.Feature{}
@@ -174,7 +180,7 @@ func handleCreatePipelines(conn *Connection, client *pipeline.Client, esCtor ela
 	for _, featureName := range filteredVars {
 		feature := &pipeline.Feature{
 			FeatureId: featureName,
-			DataUri:   filepath.Dir(datasetPath),
+			DataUri:   datasetPath,
 		}
 		trainFeatures = append(trainFeatures, feature)
 	}

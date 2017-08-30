@@ -93,7 +93,7 @@ func PersistFilteredData(fetchData FilteredDataProvider, datasetDir string, data
 		return "", err
 	}
 
-	log.Infof("Persisted data for %s with hash %d to %s in %v", dataset, hash, datasetDir, time.Since(start))
+	log.Infof("Persisted data for %s to %s in %v", dataset, path, time.Since(start))
 	return path, nil
 }
 
