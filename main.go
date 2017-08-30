@@ -30,7 +30,7 @@ const (
 	defaultPipelineComputeEndPoint = "localhost:9500"
 	defaultPGHost                  = "localhost"
 	defaultPGPort                  = "5432"
-	defaultPGUser                  = "gopher"
+	defaultPGUser                  = "distil"
 	defaultPGPassword              = ""
 	defaultPGDatabase              = "distil"
 )
