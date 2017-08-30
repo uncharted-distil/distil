@@ -6,3 +6,4 @@ docker run \
   --name distil_dev_postgres \
   docker.uncharted.software/distil_dev_postgres:latest \
   -d postgres
+
