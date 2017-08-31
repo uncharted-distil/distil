@@ -57,7 +57,9 @@ export function getFilteredData(state) {
 export function getFilteredDataItems(state) {
 	return () => {
 		const data = state.filteredData;
-		if (!_.isEmpty(data)) {
+		if (!_.isEmpty(data) &&
+			!_.isEmpty(data.values) &&
+			!_.isEmpty(data.metadata)) {
 			return _.map(data.values, d => {
 				const rowObj = {};
 				for (const [idx, varMeta] of data.metadata.entries()) {
@@ -78,7 +80,8 @@ export function getFilteredDataFields(state) {
 			const result = {};
 			for (let varMeta of data.metadata) {
 				result[varMeta.name] = {
-					label: varMeta.name
+					label: varMeta.name,
+					sortable: true
 				};
 			}
 			return result;

@@ -136,6 +136,12 @@ export default {
 				// append groups
 				this.facets.append(toAdd);
 			}
+			// sort alphabetically
+			this.facets.sort((a, b) => {
+				const textA = a.key.toLowerCase();
+				const textB = b.key.toLowerCase();
+				return (textA < textB) ? -1 : (textA > textB) ? 1 : 0;
+			});
 			// return unchanged groups
 			return unchanged;
 		},

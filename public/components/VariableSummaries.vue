@@ -3,6 +3,19 @@
 		<div class="nav bg-faded rounded-top">
 			<h6 class="nav-link">Summaries</h6>
 		</div>
+		<div class="nav row">
+			<div class="col-md-6">
+				<b-form-fieldset horizontal label="Filter" :label-cols="3">
+					<b-form-input v-model="filter" placeholder="Type to Search" />
+				</b-form-fieldset>
+			</div>
+			<div class="col-md-6">
+				<b-form-fieldset horizontal label="Toggle" :label-cols="3">
+					<b-button variant="outline-secondary" @click="selectAll">All</b-button>
+					<b-button variant="outline-secondary" @click="deselectAll">None</b-button>
+				</b-form-fieldset>
+			</div>
+		</div>
 		<div v-if="groups.length===0">
 			No results
 		</div>
@@ -35,6 +48,12 @@ export default {
 		Facets
 	},
 
+	data() {
+		return {
+			filter: ''
+		};
+	},
+
 	computed: {
 		dataset() {
 			return this.$store.getters.getRouteDataset();
@@ -42,8 +61,12 @@ export default {
 		groups() {
 			// get variable summaries
 			const summaries = this.$store.getters.getVariableSummaries();
+			// filter by search
+			const filtered = summaries.filter(summary => {
+				return this.filter === '' || summary.name.toLowerCase().includes(this.filter.toLowerCase());
+			});
 			// create the groups
-			let groups = this.createGroups(summaries);
+			let groups = this.createGroups(filtered);
 			// update collapsed state
 			groups = this.updateGroupCollapses(groups);
 			// update selections
@@ -100,6 +123,36 @@ export default {
 				enabled: true,
 				categories: values
 			});
+		},
+		selectAll() {
+			// enable all filters
+			let filters = this.$store.getters.getRouteFilters();
+			this.groups.forEach(group => {
+				filters = updateFilter(filters, group.key, {
+					enabled: true
+				});
+			});
+			const path = this.$store.getters.getRoutePath();
+			const entry = createRouteEntry(path, {
+				dataset: this.$store.getters.getRouteDataset(),
+				filters: filters
+			});
+			this.$router.push(entry);
+		},
+		deselectAll() {
+			// enable all filters
+			let filters = this.$store.getters.getRouteFilters();
+			this.groups.forEach(group => {
+				filters = updateFilter(filters, group.key, {
+					enabled: false
+				});
+			});
+			const path = this.$store.getters.getRoutePath();
+			const entry = createRouteEntry(path, {
+				dataset: this.$store.getters.getRouteDataset(),
+				filters: filters
+			});
+			this.$router.push(entry);
 		},
 		createErrorFacet(summary) {
 			return {
@@ -234,5 +287,8 @@ export default {
 #variable-facets {
 	overflow-x: hidden;
 	overflow-y: auto;
+}
+button {
+	cursor: pointer;
 }
 </style>
