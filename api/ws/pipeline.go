@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"path/filepath"
 	"sort"
 	"strings"
 	"time"
@@ -158,13 +159,19 @@ func handleCreatePipelines(conn *Connection, client *pipeline.Client, esCtor ela
 		}
 		return model.FetchFilteredData(storage, dataset, filters)
 	}
-	datasetPath, err := pipeline.PersistFilteredData(fetchFilteredData, datasetDir, clientCreateMsg.Dataset, filters)
+	datasetPath, err := pipeline.PersistFilteredData(fetchFilteredData, datasetDir, clientCreateMsg.Dataset, clientCreateMsg.Feature, filters)
+	if err != nil {
+		handleErr(conn, msg, err)
+	}
+
+	// make sure the path is absolute
+	datasetPath, err = filepath.Abs(datasetPath)
 	if err != nil {
 		handleErr(conn, msg, err)
 	}
 
 	// Create the set of training features - we already filtered that out when we persist, but needs to be specified
-	// to satisfy ta3ta2 API
+	// to satisfy ta3ta2 API.
 	trainFeatures := []*pipeline.Feature{}
 	filteredVars, err := fetchFilteredVariables(esCtor, clientCreateMsg.Index, clientCreateMsg.Dataset, filters)
 	if err != nil {
