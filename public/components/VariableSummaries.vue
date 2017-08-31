@@ -10,14 +10,15 @@
 			:groups="groups"
 			v-on:expand="onExpand"
 			v-on:collapse="onCollapse"
-			v-on:range-change="onRangeChange"></facets>
+			v-on:range-change="onRangeChange"
+			v-on:facet-toggle="onFacetToggle"></facets>
 	</div>
 </template>
 
 <script>
 
 import Facets from '../components/Facets';
-import { decodeFilter, updateFilter, getFilterType, isDisabled, NUMERICAL_FILTER } from '../util/filters';
+import { decodeFilter, updateFilter, getFilterType, isDisabled, CATEGORICAL_FILTER, NUMERICAL_FILTER } from '../util/filters';
 import { createRouteEntry } from '../util/routes';
 import 'font-awesome/css/font-awesome.css';
 import '../styles/spinner.css';
@@ -64,9 +65,10 @@ export default {
 		updateFilterRoute(key, values) {
 			// retrieve the filters from the route
 			const filters = this.$store.getters.getRouteFilters();
+			const path = this.$store.getters.getRoutePath();
 			// merge the updated filters back into the route query params
 			const updated = updateFilter(filters, key, values);
-			const entry = createRouteEntry('/select', {
+			const entry = createRouteEntry(path, {
 				dataset: this.$store.getters.getRouteDataset(),
 				filters: updated
 			});
@@ -90,6 +92,13 @@ export default {
 				enabled: true,
 				min: parseFloat(value.from.label[0]),
 				max: parseFloat(value.to.label[0])
+			});
+		},
+		onFacetToggle(key, values) {
+			// set range filter
+			this.updateFilterRoute(key, {
+				enabled: true,
+				categories: values
 			});
 		},
 		createErrorFacet(summary) {
@@ -123,7 +132,10 @@ export default {
 						facets: summary.buckets.map(b => {
 							return {
 								value: b.key,
-								count: b.count
+								count: b.count,
+								selected: {
+									count: b.count
+								}
 							};
 						})
 					};
@@ -180,18 +192,33 @@ export default {
 				// get filter
 				const filter = this.$store.getters.getRouteFilter(group.key);
 				const decoded = decodeFilter(group.key, filter);
-				// check if numeric filter
-				if (getFilterType(decoded) === NUMERICAL_FILTER) {
-					// add selection to facets
-					group.facets.forEach(facet => {
-						facet.selection = {
-							// NOTE: the `from` / `to` values MUST be strings.
-							range: {
-								from: `${decoded.min}`,
-								to: `${decoded.max}`,
+				switch (getFilterType(decoded)) {
+					case NUMERICAL_FILTER:
+						// add selection to facets
+						group.facets.forEach(facet => {
+							facet.selection = {
+								// NOTE: the `from` / `to` values MUST be strings.
+								range: {
+									from: `${decoded.min}`,
+									to: `${decoded.max}`,
+								}
+							};
+						});
+						break;
+
+					case CATEGORICAL_FILTER:
+						// add selection to facets
+						group.facets.forEach(facet => {
+							if (decoded.categories.indexOf(facet.value) !== -1) {
+								// select
+								facet.selected = {
+									count: facet.count
+								};
+							} else {
+								delete facet.selected;
 							}
-						};
-					});
+						});
+						break;
 				}
 				return group;
 			});

@@ -21,6 +21,11 @@ export default {
 		this.facets = new Facets(document.querySelector('.facets'), this.groups.map(group => {
 			return _.cloneDeep(group);
 		}));
+		this.facets.getGroupIndices().forEach(key => {
+			const group = component.facets.getGroup(key);
+			// initialize selection
+			group.initializeSelection();
+		});
 		// proxy events
 		this.facets.on('facet-group:expand', (event, key) => {
 			component.$emit('expand', key);
@@ -31,7 +36,31 @@ export default {
 		this.facets.on('facet-histogram:rangechangeduser', (event, key, value) => {
 			component.$emit('range-change', key, value);
 		});
-		
+		this.facets.on('facet:click', (event, key, value) => {
+			// get group
+			const group = component.facets.getGroup(key);
+			// get facet
+			const current = group.facets.filter(facet => {
+				return facet.value === value;
+			})[0];
+			// toggle facet
+			if (current._spec.selected) {
+				current.deselect();
+			} else {
+				current.select({
+					count: current.count
+				});
+			}
+			// get all currently selected values
+			const values = [];
+			group.facets.forEach(facet => {
+				if (facet._spec.selected) {
+					// facet is selected
+					values.push(facet.value);
+				}
+			});
+			component.$emit('facet-toggle', key, values);
+		});
 	},
 
 	watch: {
@@ -52,7 +81,7 @@ export default {
 
 	methods: {
 		groupsEqual(a, b) {
-			const omittedFields = ['selection'];
+			const OMITTED_FIELDS = ['selection', 'selected'];
 			// NOTE: we dont need to check key, we assume its already equal
 			if (a.label !== b.label) {
 				return false;
@@ -62,8 +91,8 @@ export default {
 			}
 			for (let i=0; i<a.facets.length; i++) {
 				if (!_.isEqual(
-					_.omit(a.facets[i], omittedFields),
-					_.omit(b.facets[i], omittedFields))) {
+					_.omit(a.facets[i], OMITTED_FIELDS),
+					_.omit(b.facets[i], OMITTED_FIELDS))) {
 					return false;
 				}
 			}
@@ -129,14 +158,15 @@ export default {
 					const currFacets = group.facets;
 					const prevFacets = prevGroups[group.key].facets;
 					existing.facets.forEach((facet, index) => {
-						const currSelection = currFacets[index].selection;
-						const prevSelection = prevFacets[index].selection;
+						const currSelection = currFacets[index].selection || currFacets[index].selected;
+						const prevSelection = prevFacets[index].selection || prevFacets[index].selected;
 						if (_.isEqual(currSelection, prevSelection)) {
 							// selection is the same, no need to change
 							return;
 						}
 						if (currSelection) {
-							facet.select(group.facets[index]);
+							const facetSpec = group.facets[index];
+							facet.select(facetSpec.selected ? facetSpec.selected : facetSpec);
 						} else {
 							facet.deselect();
 						}
@@ -146,7 +176,7 @@ export default {
 		}
 	},
 
-	destroyed: function () {
+	destroyed: function() {
 		this.facets.destroy();
 		this.facets = null;
 	}

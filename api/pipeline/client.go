@@ -81,7 +81,7 @@ func (c *Client) StartSession(ctx context.Context) (*Session, error) {
 
 	log.Infof("Starting session with server API version [%v] and UserAgent [%v]", result.GetVersion(), result.GetUserAgent())
 	if result.GetVersion() != APIVersion() {
-		log.Warnf("Server didn't not expected version [%v]", APIVersion())
+		log.Warnf("Server did not provide expected version [%v]", APIVersion())
 	}
 
 	// create session
