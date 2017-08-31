@@ -265,8 +265,9 @@ func handleCreatePipelinesSuccess(conn *Connection, msg *Message, proxy *pipelin
 						})
 					}
 					response["pipeline"] = map[string]interface{}{
-						"scores": scores,
-						"output": pipeline.OutputType_name[int32(res.PipelineInfo.Output)],
+						"scores":    scores,
+						"output":    pipeline.OutputType_name[int32(res.PipelineInfo.Output)],
+						"resultUri": res.PipelineInfo.PredictResultUris[0],
 					}
 				}
 				handleSuccess(conn, msg, response)

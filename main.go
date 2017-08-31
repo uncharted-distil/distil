@@ -98,6 +98,7 @@ func main() {
 	registerRoute(mux, "/distil/variables/:index/:dataset", routes.VariablesHandler(esClientCtor))
 	registerRoute(mux, "/distil/variable-summaries/:index/:dataset/:variable", routes.VariableSummaryHandler(pgStorageCtor, esClientCtor))
 	registerRoute(mux, "/distil/filtered-data/:dataset", routes.FilteredDataHandler(pgStorageCtor))
+	registerRoute(mux, "/distil/pipeline-result/:index/:dataset/:pipeline-uri", routes.PipelineResultHandler(esClientCtor))
 	registerRoute(mux, "/ws", ws.PipelineHandler(pipelineClient, esClientCtor, storageCtor))
 	registerRoute(mux, "/*", routes.FileHandler("./dist"))
 
