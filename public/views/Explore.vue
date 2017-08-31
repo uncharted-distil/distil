@@ -1,7 +1,7 @@
 <template>
 	<div class="row mt-2 mb-2">
-		<data-table class="col-md-8"></data-table>
 		<variable-summaries class="col-md-4"></variable-summaries>
+		<data-table class="col-md-8"></data-table>
 	</div>
 </template>
 
