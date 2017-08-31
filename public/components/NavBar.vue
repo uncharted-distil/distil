@@ -10,9 +10,9 @@
 			<b-nav is-nav-bar>
 				<b-nav-item @click="onHome" :active="activeView===HOME">Home</b-nav-item>
 				<b-nav-item @click="onSearch" :active="activeView===SEARCH">Search</b-nav-item>
-				<b-nav-item @click="onExplore" :active="activeView===EXPLORE">Explore</b-nav-item>
-				<b-nav-item @click="onSelect" :active="activeView===SELECT">Select</b-nav-item>
-				<b-nav-item @click="onBuild" :active="activeView===BUILD">Build</b-nav-item>
+				<b-nav-item @click="onExplore" :active="activeView===EXPLORE" :disabled="!hasDataset()">Explore</b-nav-item>
+				<b-nav-item @click="onSelect" :active="activeView===SELECT" :disabled="!hasDataset()">Select</b-nav-item>
+				<b-nav-item @click="onBuild" :active="activeView===BUILD" :disabled="!hasDataset()">Build</b-nav-item>
 				<b-nav-item @click="onResults" :active="activeView===RESULTS">Results</b-nav-item>
 			</b-nav>
 			<b-nav is-nav-bar class="ml-auto">
@@ -124,6 +124,10 @@ export default {
 				dataset: this.$store.getters.getRouteDataset()
 			});
 			this.$router.push(entry);
+		},
+
+		hasDataset() {
+			return !!this.$store.getters.getRouteDataset();
 		},
 
 		updateActive() {
