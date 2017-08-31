@@ -14,7 +14,9 @@ import (
 	"github.com/unchartedsoftware/distil/api/env"
 	"github.com/unchartedsoftware/distil/api/middleware"
 	es "github.com/unchartedsoftware/distil/api/model/storage/elastic"
+	pg "github.com/unchartedsoftware/distil/api/model/storage/postgres"
 	"github.com/unchartedsoftware/distil/api/pipeline"
+	"github.com/unchartedsoftware/distil/api/postgres"
 	"github.com/unchartedsoftware/distil/api/redis"
 	"github.com/unchartedsoftware/distil/api/routes"
 	"github.com/unchartedsoftware/distil/api/ws"
@@ -26,6 +28,11 @@ const (
 	defaultRedisExpiry             = -1 // no expiry
 	defaultAppPort                 = "8080"
 	defaultPipelineComputeEndPoint = "localhost:9500"
+	defaultPGHost                  = "localhost"
+	defaultPGPort                  = "5432"
+	defaultPGUser                  = "distil"
+	defaultPGPassword              = ""
+	defaultPGDatabase              = "distil"
 )
 
 var (
@@ -50,11 +57,24 @@ func main() {
 	// load compute server endpoint
 	pipelineComputeEndpoint := env.Load("PIPELINE_COMPUTE_ENDPOINT", defaultPipelineComputeEndPoint)
 
-	// instantiate elasticsearch client constructor.
+	// instantiate elastic client constructor.
 	esClientCtor := elastic.NewClient(esEndpoint, false)
 
 	// instantiate storage filter client constructor.
 	storageCtor := es.NewStorage(esClientCtor)
+
+	// load the postgres parameters.
+	pgHost := env.Load("PG_HOST", defaultPGHost)
+	pgPort := env.Load("PG_PORT", defaultPGPort)
+	pgUser := env.Load("PG_USER", defaultPGUser)
+	pgPassword := env.Load("PG_PASSWORD", defaultPGPassword)
+	pgDatabase := env.Load("PG_DATABASE", defaultPGDatabase)
+
+	// instantiate the postgres client constructor.
+	postgresClientCtor := postgres.NewClient(pgHost, pgPort, pgUser, pgPassword, pgDatabase)
+
+	// instantiate the postgres storage constructor.
+	pgStorageCtor := pg.NewStorage(postgresClientCtor)
 
 	// instantiate the pipeline compute client
 	pipelineClient, err := pipeline.NewClient(pipelineComputeEndpoint)
@@ -76,8 +96,8 @@ func main() {
 
 	registerRoute(mux, "/distil/datasets/:index", routes.DatasetsHandler(esClientCtor))
 	registerRoute(mux, "/distil/variables/:index/:dataset", routes.VariablesHandler(esClientCtor))
-	registerRoute(mux, "/distil/variable-summaries/:index/:dataset/:variable", routes.VariableSummaryHandler(storageCtor, esClientCtor))
-	registerRoute(mux, "/distil/filtered-data/:dataset", routes.FilteredDataHandler(storageCtor))
+	registerRoute(mux, "/distil/variable-summaries/:index/:dataset/:variable", routes.VariableSummaryHandler(pgStorageCtor, esClientCtor))
+	registerRoute(mux, "/distil/filtered-data/:dataset", routes.FilteredDataHandler(pgStorageCtor))
 	registerRoute(mux, "/ws", ws.PipelineHandler(pipelineClient, esClientCtor, storageCtor))
 	registerRoute(mux, "/*", routes.FileHandler("./dist"))
 

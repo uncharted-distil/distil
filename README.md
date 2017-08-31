@@ -50,6 +50,7 @@ The application depends on ElasticSearch for data, and a stub TA2 system for bac
 
 ```bash
 docker pull docker.uncharted.software/distil_dev_es
+docker pull docker.uncharted.software/distil_dev_postgres
 docker pull docker.uncharted.software/distil-pipeline-server
 ```
 
@@ -57,6 +58,7 @@ Launch docker containers:
 
 ```bash
 ./es_run.sh
+./pg_run.sh
 ./pipeline_server_run.sh
 ```
 

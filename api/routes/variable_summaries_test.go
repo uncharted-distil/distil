@@ -138,7 +138,7 @@ func TestVariableSummaryHandlerCategoricalPostgres(t *testing.T) {
 
 	// setup the expected query
 	mockDB.EXPECT().Query(
-		"SELECT Player, COUNT(*) AS count FROM o_185 GROUP BY Player;").Return(nil, nil)
+		"SELECT \"Player\", COUNT(*) AS count FROM o_185 GROUP BY \"Player\";").Return(nil, nil)
 
 	// execute the test request
 	res := mock.HTTPResponse(t, req, VariableSummaryHandler(storageCtor, ctorES))
