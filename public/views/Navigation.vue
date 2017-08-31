@@ -1,5 +1,5 @@
 <template>
-	<nav-bar class="col-md-12"></nav-bar>
+	<nav-bar class="navbar col-md-12"></nav-bar>
 </template>
 
 <script>
@@ -13,4 +13,7 @@ export default {
 </script>
 
 <style>
+.navbar {
+	background-color: #fff;
+}
 </style>
