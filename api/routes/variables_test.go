@@ -35,9 +35,10 @@ func TestVariableHandler(t *testing.T) {
 		`{
 			"variables": [
 				{"name":"d3mIndex","type":"integer"},
-				{"name":"Player","type":"categorical"},
+				{"name":"Position","type":"categorical"},
 				{"name":"Number_seasons","type":"integer"},
-				{"name":"Games_played","type":"integer"}
+				{"name":"Games_played","type":"integer"},
+				{"name":"On_base_pct","type":"float"}
 			]
 		}`))
 	assert.NoError(t, err)

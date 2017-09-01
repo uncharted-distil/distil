@@ -9,7 +9,7 @@ import (
 	"github.com/unchartedsoftware/distil/api/util/mock"
 )
 
-func TestPipelineResultHandler(t *testing.T) {
+func TestResultsHandler(t *testing.T) {
 	// mock elasticsearch request handler
 	handler := mock.ElasticHandler(t, []string{"./testdata/variables.json"})
 	// mock elasticsearch client
@@ -21,11 +21,11 @@ func TestPipelineResultHandler(t *testing.T) {
 		"index":      "datasets",
 		"result-uri": "./testdata/results.csv",
 	}
-	req := mock.HTTPRequest(t, "GET", "/distil/pipeline-results/", params, nil)
+	req := mock.HTTPRequest(t, "GET", "/distil/results/", params, nil)
 
 	// execute the test request - stubbed ES server will return the JSON
 	// loaded above
-	res := mock.HTTPResponse(t, req, PipelineResultHandler(ctor))
+	res := mock.HTTPResponse(t, req, ResultsHandler(ctor))
 	assert.Equal(t, http.StatusOK, res.Code)
 
 	// compare expected and acutal results - unmarshall first to ensure object
@@ -39,7 +39,8 @@ func TestPipelineResultHandler(t *testing.T) {
 			"values": [
 				[10],
 				[20],
-				[30]
+				[30],
+				[10]
 			]
 		}`))
 	assert.NoError(t, err)
