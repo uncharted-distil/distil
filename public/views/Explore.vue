@@ -1,7 +1,7 @@
 <template>
-	<div class="row mt-2 mb-2">
-		<variable-summaries class="col-md-4"></variable-summaries>
-		<data-table class="col-md-8"></data-table>
+	<div class="explore">
+		<variable-summaries class="explore-variable-summaries"></variable-summaries>
+		<data-table class="explore-data-table"></data-table>
 	</div>
 </template>
 
@@ -19,4 +19,15 @@ export default {
 </script>
 
 <style>
+.explore {
+	display: flex;
+	justify-content: space-around;
+	padding: 8px;
+}
+.explore-variable-summaries {
+	width: 30%;
+}
+.explore-data-table {
+	width: 60%;
+}
 </style>

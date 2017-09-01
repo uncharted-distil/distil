@@ -1,11 +1,7 @@
 <template>
-	<div>
-		<div class="row justify-content-center mt-2 mb-2">
-			<search-bar class="col-md-6"></search-bar>
-		</div>
-		<div class="row justify-content-center mt-2 mb-2">
-			<search-results class="col-md-6"></search-results>
-		</div>
+	<div class="search-view">
+		<search-bar class="search-search-bar"></search-bar>
+		<search-results class="search-search-results"></search-results>
 	</div>
 </template>
 
@@ -22,4 +18,19 @@ export default {
 </script>
 
 <style>
+.search-view {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+}
+.search-search-bar {
+	display: flex;
+	margin: 8px;
+	width: 50%;
+}
+.search-search-results {
+	display: flex;
+	width: 50%;
+	flex-direction: column;
+}
 </style>

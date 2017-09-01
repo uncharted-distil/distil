@@ -1,15 +1,15 @@
 <template>
 	<div class='variable-summaries'>
-		<div class="nav bg-faded rounded-top">
+		<div class="bg-faded rounded-top">
 			<h6 class="nav-link">Summaries</h6>
 		</div>
-		<div class="nav row">
-			<div class="col-md-6">
+		<div>
+			<div>
 				<b-form-fieldset horizontal label="Filter" :label-cols="3">
 					<b-form-input v-model="filter" placeholder="Type to Search" />
 				</b-form-fieldset>
 			</div>
-			<div class="col-md-6">
+			<div>
 				<b-form-fieldset horizontal label="Toggle" :label-cols="3">
 					<b-button variant="outline-secondary" @click="selectAll">All</b-button>
 					<b-button variant="outline-secondary" @click="deselectAll">None</b-button>
@@ -19,7 +19,7 @@
 		<div v-if="groups.length===0">
 			No results
 		</div>
-		<facets v-if="groups.length>0"
+		<facets class="facets-container" v-if="groups.length>0"
 			:groups="groups"
 			v-on:expand="onExpand"
 			v-on:collapse="onCollapse"
@@ -285,10 +285,17 @@ export default {
 	border: 1px solid #ccc;
 }
 #variable-facets {
-	overflow-x: hidden;
-	overflow-y: auto;
 }
 button {
 	cursor: pointer;
+}
+.variable-summaries {
+	display: flex;
+	flex-direction: column;
+}
+
+.facets-container {
+	overflow-x: hidden;
+	overflow-y: auto;
 }
 </style>

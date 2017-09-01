@@ -1,5 +1,5 @@
 <template>
-	<b-navbar toggleable type="light" variant="faded" fixed="top" class="bottom-shadowed">
+	<b-navbar toggleable type="light" variant="faded" class="bottom-shadowed">
 
 		<b-nav-toggle target="nav_collapse"></b-nav-toggle>
 
@@ -93,7 +93,7 @@ export default {
 
 		// switch to explore view
 		onExplore() {
-			const entry = createRouteEntry('/explore',{
+			const entry = createRouteEntry('/explore', {
 				dataset: this.$store.getters.getRouteDataset(),
 				filters: this.$store.getters.getRouteFilters()
 			});
@@ -102,7 +102,7 @@ export default {
 
 		// switch to data view
 		onSelect() {
-			const entry = createRouteEntry('/select',{
+			const entry = createRouteEntry('/select', {
 				dataset: this.$store.getters.getRouteDataset(),
 				filters: this.$store.getters.getRouteFilters()
 			});
@@ -145,10 +145,10 @@ export default {
 
 <style>
 .session-not-ready {
-  color: #cf3835 !important;
+	color: #cf3835 !important;
 }
 .session-ready {
-  color: #00c07f !important;
+	color: #00c07f !important;
 }
 .app-icon {
 	color: #cf3835 !important;
@@ -157,8 +157,7 @@ export default {
 	padding-right: 4px
 }
 .bottom-shadowed {
-	-webkit-box-shadow: 0px 2px 5px -1px rgba(0,0,0,0.65);
-	-moz-box-shadow: 0px 2px 5px -1px rgba(0,0,0,0.65);
+	width: 100%;
 	box-shadow: 0px 2px 5px -1px rgba(0,0,0,0.65);
 }
 </style>

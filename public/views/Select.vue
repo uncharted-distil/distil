@@ -1,7 +1,7 @@
 <template>
-	<div class="row mt-2 mb-2">
-		<variable-summaries class="col-md-4"></variable-summaries>
-		<data-table class="col-md-8"></data-table>
+	<div class="select">
+		<variable-summaries class="select-variable-summaries"></variable-summaries>
+		<data-table class="select-data-table"></data-table>
 	</div>
 </template>
 
@@ -19,4 +19,15 @@ export default {
 </script>
 
 <style>
+.select {
+	display: flex;
+	justify-content: space-around;
+	padding: 8px;
+}
+.select-variable-summaries {
+	width: 30%;
+}
+.select-data-table {
+	width: 60%;
+}
 </style>
