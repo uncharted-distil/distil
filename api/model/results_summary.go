@@ -130,7 +130,7 @@ func computeIntegerCounts(data *FilteredData, numBins int64, min int64, max int6
 		keys = append(keys, key)
 	}
 	sort.SliceStable(keys, func(i, j int) bool {
-		if i < j {
+		if keys[i] < keys[j] {
 			return true
 		}
 		return false
@@ -186,7 +186,7 @@ func computeFloatCounts(data *FilteredData, numBins int64, min float64, max floa
 		keys = append(keys, key)
 	}
 	sort.SliceStable(keys, func(i, j int) bool {
-		if i < j {
+		if keys[i] < keys[j] {
 			return true
 		}
 		return false
