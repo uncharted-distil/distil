@@ -159,7 +159,7 @@ func handleCreatePipelines(conn *Connection, client *pipeline.Client, esCtor ela
 		}
 		return model.FetchFilteredData(storage, dataset, filters)
 	}
-	datasetPath, err := pipeline.PersistFilteredData(fetchFilteredData, datasetDir, clientCreateMsg.Dataset, clientCreateMsg.Feature, filters)
+	datasetPath, err := pipeline.PersistFilteredData(fetchFilteredData, client.DataDir, clientCreateMsg.Dataset, clientCreateMsg.Feature, filters)
 	if err != nil {
 		handleErr(conn, msg, err)
 	}

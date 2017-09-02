@@ -28,6 +28,7 @@ const (
 	defaultRedisExpiry             = -1 // no expiry
 	defaultAppPort                 = "8080"
 	defaultPipelineComputeEndPoint = "localhost:9500"
+	defaultPipelineDataDir         = "datasets"
 	defaultPGHost                  = "localhost"
 	defaultPGPort                  = "5432"
 	defaultPGUser                  = "distil"
@@ -56,6 +57,8 @@ func main() {
 	httpPort := env.Load("PORT", defaultAppPort)
 	// load compute server endpoint
 	pipelineComputeEndpoint := env.Load("PIPELINE_COMPUTE_ENDPOINT", defaultPipelineComputeEndPoint)
+	// load default temp dataset directory
+	pipelineDataDir := env.Load("PIPELINE_DATA_DIR", defaultPipelineDataDir)
 
 	// instantiate elastic client constructor.
 	esClientCtor := elastic.NewClient(esEndpoint, false)
@@ -77,7 +80,7 @@ func main() {
 	pgStorageCtor := pg.NewStorage(postgresClientCtor)
 
 	// instantiate the pipeline compute client
-	pipelineClient, err := pipeline.NewClient(pipelineComputeEndpoint)
+	pipelineClient, err := pipeline.NewClient(pipelineComputeEndpoint, pipelineDataDir)
 	if err != nil {
 		log.Errorf("%v", err)
 		os.Exit(1)
