@@ -32,17 +32,19 @@ func TestResultsSummaryHandlerInt(t *testing.T) {
 	// rather than byte equality
 	expected, err := json.Unmarshal([]byte(
 		`{
-			"name": "Games_played",
-			"type": "numerical",
-			"extrema": {
-				"min": 10,
-				"max": 30
-			},
-			"buckets": [
-				{"key": "10", "count": 2},
-				{"key": "20", "count": 1},
-				{"key": "30", "count": 1}
-			]
+			"histogram": {
+				"name": "Games_played",
+				"type": "numerical",
+				"extrema": {
+					"min": 10,
+					"max": 30
+				},
+				"buckets": [
+					{"key": "10", "count": 2},
+					{"key": "20", "count": 1},
+					{"key": "30", "count": 1}
+				]
+			}
 		}`))
 	assert.NoError(t, err)
 
@@ -74,17 +76,19 @@ func TestResultsSummaryHandlerFloat(t *testing.T) {
 	// rather than byte equality
 	expected, err := json.Unmarshal([]byte(
 		`{
-			"name": "On_base_pct",
-			"type": "numerical",
-			"extrema": {
-				"min": 0.1,
-				"max": 0.3
-			},
-			"buckets": [
-				{"key": "0.1", "count": 2},
-				{"key": "0.2", "count": 1},
-				{"key": "0.3", "count": 1}
-			]
+			"histogram": {
+				"name": "On_base_pct",
+				"type": "numerical",
+				"extrema": {
+					"min": 0.1,
+					"max": 0.5
+				},
+				"buckets": [
+					{"key": "0.1", "count": 2},
+					{"key": "0.196", "count": 1},
+					{"key": "0.5", "count": 1}
+				]
+			}
 		}`))
 	assert.NoError(t, err)
 
@@ -116,13 +120,15 @@ func TestResultsSummaryHandlerCategorical(t *testing.T) {
 	// rather than byte equality
 	expected, err := json.Unmarshal([]byte(
 		`{
-			"name": "Position",
-			"type": "categorical",
-			"buckets": [
-				{"key": "Pitcher", "count": 1},
-				{"key": "Catcher", "count": 2},
-				{"key": "First_base", "count": 1}
-			]
+			"histogram": {
+				"name": "Position",
+				"type": "categorical",
+				"buckets": [
+					{"key": "Catcher", "count": 2},
+					{"key": "First_base", "count": 1},
+					{"key": "Pitcher", "count": 1}
+				]
+			}
 		}`))
 	assert.NoError(t, err)
 

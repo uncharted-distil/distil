@@ -32,16 +32,18 @@ func TestResultsHandler(t *testing.T) {
 	// rather than byte equality
 	expected, err := json.Unmarshal([]byte(
 		`{
-			"name": "o_185",
-			"metadata": [
-				{"name": "Games_played", "type": "integer"}
-			],
-			"values": [
-				[10],
-				[20],
-				[30],
-				[10]
-			]
+			"results": {
+				"name": "o_185",
+				"metadata": [
+					{"name": "Games_played", "type": "integer"}
+				],
+				"values": [
+					[10],
+					[20],
+					[30],
+					[10]
+				]
+			}
 		}`))
 	assert.NoError(t, err)
 

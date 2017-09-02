@@ -11,6 +11,11 @@ import (
 	"github.com/unchartedsoftware/distil/api/model"
 )
 
+// ResultsSummary contains a fetch result histogram.
+type ResultsSummary struct {
+	ResultsSummary *model.Histogram `json:"histogram"`
+}
+
 // ResultsSummaryHandler bins predicted result data for consumption in a downstream summary view.
 func ResultsSummaryHandler(esCtor elastic.ClientCtor) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -36,7 +41,9 @@ func ResultsSummaryHandler(esCtor elastic.ClientCtor) func(http.ResponseWriter, 
 		}
 
 		// marshall data and sent the response back
-		err = handleJSON(w, histogram)
+		err = handleJSON(w, ResultsSummary{
+			ResultsSummary: histogram,
+		})
 		if err != nil {
 			handleError(w, errors.Wrap(err, "unable marshal result histogram into JSON"))
 			return

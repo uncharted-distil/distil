@@ -87,9 +87,22 @@ func computeCategoricalHistogram(data *FilteredData) (*Histogram, error) {
 		}
 	}
 
+	// sort the keys to guarantee a stable ordering
+	keys := []string{}
+	for key := range counts {
+		keys = append(keys, key)
+	}
+	sort.SliceStable(keys, func(i, j int) bool {
+		if keys[i] < keys[j] {
+			return true
+		}
+		return false
+	})
+
 	// reformat as buckets
 	bins := []*Bucket{}
-	for key, value := range counts {
+	for _, key := range keys {
+		value := counts[key]
 		bins = append(bins, &Bucket{
 			Key:   key,
 			Count: value,
@@ -172,7 +185,6 @@ func computeFloatCounts(data *FilteredData, numBins int64, min float64, max floa
 	for _, value := range data.Values {
 		bin := math.Floor((value[0].(float64) - min) / binSize)
 		key := min + bin*binSize
-
 		if val, ok := counts[key]; ok {
 			counts[key] = val + 1
 		} else {

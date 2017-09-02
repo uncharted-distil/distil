@@ -11,6 +11,11 @@ import (
 	"github.com/unchartedsoftware/distil/api/model"
 )
 
+// SummaryResult represents a summary response for a variable.
+type Results struct {
+	Results *model.FilteredData `json:"results"`
+}
+
 // ResultsHandler fetches predicted pipeline values and returns them to the client
 // in a JSON structure
 func ResultsHandler(esCtor elastic.ClientCtor) func(http.ResponseWriter, *http.Request) {
@@ -37,7 +42,9 @@ func ResultsHandler(esCtor elastic.ClientCtor) func(http.ResponseWriter, *http.R
 		}
 
 		// marshall data and sent the response back
-		err = handleJSON(w, results)
+		err = handleJSON(w, Results{
+			Results: results,
+		})
 		if err != nil {
 			handleError(w, errors.Wrap(err, "unable marshal pipeline result into JSON"))
 			return
