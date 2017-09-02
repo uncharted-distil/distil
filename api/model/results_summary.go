@@ -170,7 +170,7 @@ func computeFloatCounts(data *FilteredData, numBins int64, min float64, max floa
 	// collect the counts
 	counts := map[float64]int64{}
 	for _, value := range data.Values {
-		bin := (value[0].(float64) - min) / binSize
+		bin := math.Floor((value[0].(float64) - min) / binSize)
 		key := min + bin*binSize
 
 		if val, ok := counts[key]; ok {
