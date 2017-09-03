@@ -3,6 +3,7 @@ package model
 import (
 	"bufio"
 	"encoding/csv"
+	"math"
 	"os"
 	"strconv"
 
@@ -47,11 +48,26 @@ func FetchResults(client *elastic.Client, pipelineURI string, index string, data
 		var val interface{}
 		err = nil
 
+		// parse input values - fix up number types if ta2 returned them in an unexpected format
 		switch variable.Type {
 		case IntegerType:
 			val, err = strconv.ParseInt(records[i][1], 10, 64)
+			if err != nil {
+				var floatVal float64
+				floatVal, err = strconv.ParseFloat(records[i][1], 64)
+				if err == nil {
+					val = roundToInt(floatVal)
+				}
+			}
 		case FloatType:
 			val, err = strconv.ParseFloat(records[i][1], 64)
+			if err != nil {
+				var intVal int64
+				intVal, err = strconv.ParseInt(records[i][1], 10, 64)
+				if err == nil {
+					val = float64(intVal)
+				}
+			}
 		case CategoricalType:
 			fallthrough
 		case TextType:
@@ -83,4 +99,11 @@ func FetchResults(client *elastic.Client, pipelineURI string, index string, data
 		},
 		Values: values,
 	}, nil
+}
+
+func roundToInt(a float64) int64 {
+	if a < 0 {
+		return int64(math.Ceil(a - 0.5))
+	}
+	return int64(math.Floor(a + 0.5))
 }
