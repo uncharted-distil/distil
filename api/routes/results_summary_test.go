@@ -134,5 +134,25 @@ func TestResultsSummaryHandlerCategorical(t *testing.T) {
 
 	actual, err := json.Unmarshal(res.Body.Bytes())
 	assert.NoError(t, err)
-	assert.Equal(t, expected, actual)
+	assert.Equal(t, "Position", actual["name"])
+	assert.Equal(t, "categorical", actual["type"])
+	buckets, ok := actual["buckets"].([]interface{})
+	assert.True(t, ok)
+
+	for _, b := range buckets {
+		m, ok := b.(map[string]interface{})
+		assert.True(t, ok)
+
+		key := m["key"]
+		switch key {
+		case "Pitcher":
+			assert.Equal(t, float64(1), m["count"])
+		case "Catcher":
+			assert.Equal(t, float64(2), m["count"])
+		case "First_base":
+			assert.Equal(t, float64(1), m["count"])
+		default:
+			assert.Fail(t, "Unexpected position.")
+		}
+	}
 }
