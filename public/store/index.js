@@ -40,6 +40,18 @@ const state = {
 		//     ]
 		// }
 	],
+	// results summary data for the selected pipeline run
+	resultsSummaries: [
+		// {
+		//     name: '',
+		//     buckets: [
+		//     {
+		//             key: '',
+		//             count: 0
+		//         }
+		//     ]
+		// }
+	],
 	// filtered data entries for the active dataset
 	filteredData: {
 		// name: '',

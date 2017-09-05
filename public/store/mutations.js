@@ -19,6 +19,10 @@ export function updateVariableSummaries(state, args) {
 	state.variableSummaries.splice(args.index, 0, args.histogram);
 }
 
+export function setResultsSummaries(state, summaries) {
+	state.resultsSummaries = summaries;
+}
+
 // sets the current filtered data into the store
 export function setFilteredData(state, filteredData) {
 	state.filteredData = filteredData;

@@ -25,12 +25,16 @@ export function getRouteFilters(state) {
 	return () => {
 		const result = {};
 		_.forEach(state.route.query, (value, key) => {
-			if (key !== 'dataset' && key !== 'terms') {
+			if (key !== 'dataset' && key !== 'terms' && key !== 'results') {
 				result[key] = value;
 			}
 		});
 		return result;
 	};
+}
+
+export function getRouteResultsUri(state) {
+	return () => state.route.query.results;
 }
 
 export function getVariables(state) {

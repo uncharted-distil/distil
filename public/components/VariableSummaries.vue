@@ -11,7 +11,9 @@
 			v-on:expand="onExpand"
 			v-on:collapse="onCollapse"
 			v-on:range-change="onRangeChange"
-			v-on:facet-toggle="onFacetToggle"></facets>
+			v-on:facet-toggle="onFacetToggle"
+			root="variable-summaries">
+			</facets>
 	</div>
 </template>
 

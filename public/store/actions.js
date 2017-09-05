@@ -189,3 +189,43 @@ export function createPipelines(context, request) {
 		filters: decodeFilters(context.getters.getRouteFilters())
 	});
 }
+
+export function getResultsSummaries(context, data) {
+	const res = encodeURIComponent(data.resultsUri);
+
+	// save a placeholder histogram
+	context.commit('setResultsSummaries',  [
+		{
+			name: 'pipeline',
+			pending: true
+		}
+	]);
+
+	// dispatch a request to fetch the data
+	axios.get(`/distil/results-summary/${ES_INDEX}/${data.dataset}/${res}`)
+	.then(response => {
+		// save the histogram data
+		const histogram = response.data.histogram;
+		if (!histogram) {
+			context.commit('setResultsSummaries', [
+				{
+					name: response.data.histogram.name,
+					err: 'No analysis available'
+				}
+			]);
+			return;
+		}
+		// ensure buckets is not nil
+		histogram.buckets = histogram.buckets ? histogram.buckets : [];
+		context.commit('setResultsSummaries', [histogram]);
+	})
+	.catch(error => {
+		context.commit('setResultsSummaries', [
+			{
+				name: 'pipeline',
+				err: error
+			}
+		]);
+		return;
+	});
+}

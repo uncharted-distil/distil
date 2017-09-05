@@ -8,10 +8,6 @@
 		</div>
 		<facets v-if="groups.length>0"
 			:groups="groups"
-			v-on:expand="onExpand"
-			v-on:collapse="onCollapse"
-			v-on:range-change="onRangeChange"
-			v-on:facet-toggle="onFacetToggle"
 			root="result-summaries"></facets>
 	</div>
 </template>
@@ -19,10 +15,9 @@
 <script>
 
 import Facets from '../components/Facets';
-import { decodeFilter, updateFilter, getFilterType, isDisabled, CATEGORICAL_FILTER, NUMERICAL_FILTER } from '../util/filters';
-import { createRouteEntry } from '../util/routes';
 import 'font-awesome/css/font-awesome.css';
 import '../styles/spinner.css';
+import _ from 'lodash';
 
 const SPINNER_HTML = [
 	'<div class="bounce1"></div>',
@@ -30,102 +25,62 @@ const SPINNER_HTML = [
 	'<div class="bounce3"></div>'].join('');
 
 export default {
+
 	name: 'result-summaries',
 
 	components: {
 		Facets
 	},
 
+	mounted() {
+		// kick off a result fetch when the component is first displayed
+		this.$store.dispatch('getResultsSummaries', {
+			dataset: this.$store.getters.getRouteDataset(),
+			resultsUri: this.$store.getters.getRouteResultsUri()
+		});
+	},
+
 	computed: {
-		dataset() {
-			return this.$store.getters.getRouteDataset();
-		},
 		groups() {
-			// get variable summaries
-			const summaries = this.$store.getters.getVariableSummaries();
-			// create the groups
-			let groups = this.createGroups(summaries);
-			// update collapsed state
-			groups = this.updateGroupCollapses(groups);
-			// update selections
-			return this.updateGroupSelections(groups);
+			// get the selected result summary and create a facet from it
+			const results = this.$store.state.resultsSummaries;
+			return this.createGroups(results);
 		}
 	},
 
-	mounted() {
-		this.$store.dispatch('getVariableSummaries', this.dataset);
-	},
-
 	watch: {
-		'$route.query.dataset'() {
-			this.$store.dispatch('getVariableSummaries', this.dataset);
+		// watch the route and update the results if its modified
+		'$route.query.results'() {
+			this.$store.dispatch('getResultsSummaries', {
+				dataset: this.$store.getters.getRouteDataset(),
+				resultsUri: this.$store.getters.getRouteResultsUri()
+			});
 		}
 	},
 
 	methods: {
-		updateFilterRoute(key, values) {
-			// retrieve the filters from the route
-			const filters = this.$store.getters.getRouteFilters();
-			const path = this.$store.getters.getRoutePath();
-			// merge the updated filters back into the route query params
-			const updated = updateFilter(filters, key, values);
-			const entry = createRouteEntry(path, {
-				dataset: this.$store.getters.getRouteDataset(),
-				filters: updated
-			});
-			this.$router.push(entry);
-		},
-		onExpand(key) {
-			// enable filter
-			this.updateFilterRoute(key, {
-				enabled: true
-			});
-		},
-		onCollapse(key) {
-			// disable filter
-			this.updateFilterRoute(key, {
-				enabled: false
+		// creates facet groups based on state of summary data
+		createGroups(summaries) {
+			return summaries.map(summary => {
+				if (summary.err) {
+					// create error facet
+					return this.createErrorFacet(summary);
+				}
+				if (summary.pending) {
+					// create pending facet
+					return this.createPendingFacet(summary);
+				}
+				// create facet
+				return this.createSummaryFacet(summary);
+			}).filter(group => {
+				// remove null groups
+				return group;
 			});
 		},
-		onRangeChange(key, value) {
-			// set range filter
-			this.updateFilterRoute(key, {
-				enabled: true,
-				min: parseFloat(value.from.label[0]),
-				max: parseFloat(value.to.label[0])
-			});
-		},
-		onFacetToggle(key, values) {
-			// set range filter
-			this.updateFilterRoute(key, {
-				enabled: true,
-				categories: values
-			});
-		},
-		createErrorFacet(summary) {
-			return {
-				label: summary.name,
-				key: summary.name,
-				facets: [{
-					placeholder: true,
-					html: `<div>${summary.err}</div>`
-				}]
-			};
-		},
-		createPendingFacet(summary) {
-			return {
-				label: summary.name,
-				key: summary.name,
-				facets: [{
-					placeholder: true,
-					html: SPINNER_HTML
-				}]
-			};
-		},
+
+		// creates the summary facet when all required data is available
 		createSummaryFacet(summary) {
-
 			switch (summary.type) {
-
 				case 'categorical':
 					return {
 						label: summary.name,
@@ -140,7 +95,6 @@ export default {
 							};
 						})
 					};
-
 				case 'numerical':
 					return {
 						label: summary.name,
@@ -162,68 +116,31 @@ export default {
 			console.warn('unrecognized summary type', summary.type);
 			return null;
 		},
-		createGroups(summaries) {
-			return summaries.map(summary => {
-				if (summary.err) {
-					// create error facet
-					return this.createErrorFacet(summary);
-				}
-				if (summary.pending) {
-					// create pending facet
-					return this.createPendingFacet(summary);
-				}
-				// create facet
-				return this.createSummaryFacet(summary);
-			}).filter(group => {
-				// remove null groups
-				return group;
-			});
-		},
-		updateGroupCollapses(groups) {
-			return groups.map(group => {
-				// get filter
-				const filter = this.$store.getters.getRouteFilter(group.key);
-				// return if disabled
-				group.collapsed = isDisabled(filter);
-				return group;
-			});
-		},
-		updateGroupSelections(groups) {
-			return groups.map(group => {
-				// get filter
-				const filter = this.$store.getters.getRouteFilter(group.key);
-				const decoded = decodeFilter(group.key, filter);
-				switch (getFilterType(decoded)) {
-					case NUMERICAL_FILTER:
-						// add selection to facets
-						group.facets.forEach(facet => {
-							facet.selection = {
-								// NOTE: the `from` / `to` values MUST be strings.
-								range: {
-									from: `${decoded.min}`,
-									to: `${decoded.max}`,
-								}
-							};
-						});
-						break;
 
-					case CATEGORICAL_FILTER:
-						// add selection to facets
-						group.facets.forEach(facet => {
-							if (decoded.categories.indexOf(facet.value) !== -1) {
-								// select
-								facet.selected = {
-									count: facet.count
-								};
-							} else {
-								delete facet.selected;
-							}
-						});
-						break;
-				}
-				return group;
-			});
-		}
+		// Creates a facet to display an error status message
+		createErrorFacet(summary) {
+			return {
+				label: summary.name,
+				key: summary.name,
+				facets: [{
+					placeholder: true,
+					html: `<div>${summary.err}</div>`
+				}]
+			};
+		},
+
+		// Creates a facet to display an pending spinner while full facet
+		// data is fetched
+		createPendingFacet(summary) {
+			return {
+				label: summary.name,
+				key: summary.name,
+				facets: [{
+					placeholder: true,
+					html: SPINNER_HTML
+				}]
+			};
+		},
 	}
 };
 </script>

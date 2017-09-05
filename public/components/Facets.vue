@@ -1,5 +1,5 @@
 <template>
-	<div class="facets" v-once></div>
+	<div :class="root" v-once></div>
 </template>
 
 <script>
@@ -12,13 +12,14 @@ export default {
 	name: 'facets',
 
 	props: [
-		'groups'
+		'groups',
+		'root'
 	],
 
 	mounted() {
 		const component = this;
 		// instantiate the external facets widget
-		this.facets = new Facets(document.querySelector('.facets'), this.groups.map(group => {
+		this.facets = new Facets(document.querySelector(`.${this.root}`), this.groups.map(group => {
 			return _.cloneDeep(group);
 		}));
 		this.facets.getGroupIndices().forEach(key => {

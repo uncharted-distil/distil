@@ -37,7 +37,6 @@ export default {
 	},
 	methods: {
 		status(result) {
-			console.log(result.progress);
 			if (result.progress === 'UPDATED') {
 				const score = result.pipeline.scores[0];
 				const metricName = getMetricDisplayName(score.metric);
