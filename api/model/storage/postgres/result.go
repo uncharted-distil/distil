@@ -58,7 +58,7 @@ func (s *Storage) PersistResult(dataset string, pipelineID string, resultURI str
 }
 
 func (s *Storage) executeInsertResultStatement(dataset string, pipelineID string, resultID string, index int64, target string, value string) error {
-	statement := fmt.Sprintf("INSERT INTO %s (pipeline_id, result_id, index, target, value) VALUES (?, ?, ?, ?, ?);", dataset)
+	statement := fmt.Sprintf("INSERT INTO %s_result (pipeline_id, result_id, index, target, value) VALUES (?, ?, ?, ?, ?);", dataset)
 
 	_, err := s.client.Exec(statement, pipelineID, resultID, index, target, value)
 
