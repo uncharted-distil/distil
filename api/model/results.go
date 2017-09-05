@@ -92,7 +92,7 @@ func FetchResults(client *elastic.Client, pipelineURI string, index string, data
 	return &FilteredData{
 		Name: dataset,
 		Metadata: []*Variable{
-			&Variable{
+			{
 				Name: variable.Name,
 				Type: variable.Type,
 			},

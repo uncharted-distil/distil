@@ -27,6 +27,7 @@ func init() {
 type DatabaseDriver interface {
 	Query(string, ...interface{}) (*pgx.Rows, error)
 	QueryRow(string, ...interface{}) *pgx.Row
+	Exec(string, ...interface{}) (pgx.CommandTag, error)
 }
 
 // ClientCtor repressents a client constructor to instantiate a postgres client.

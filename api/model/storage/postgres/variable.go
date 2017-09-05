@@ -172,7 +172,7 @@ func (s *Storage) fetchCategoricalHistogram(dataset string, variable *model.Vari
 }
 
 // FetchSummary returns the summary for the provided dataset and variable.
-func (s *Storage) FetchSummary(variable *model.Variable, dataset string) (*model.Histogram, error) {
+func (s *Storage) FetchSummary(dataset string, variable *model.Variable) (*model.Histogram, error) {
 	if model.IsNumerical(variable.Type) {
 		// fetch numeric histograms
 		numeric, err := s.fetchNumericalHistogram(dataset, variable)

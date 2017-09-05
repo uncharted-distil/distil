@@ -63,3 +63,21 @@ func (_mr *DatabaseDriverMockRecorder) QueryRow(arg0 interface{}, arg1 ...interf
 	_s := append([]interface{}{arg0}, arg1...)
 	return _mr.mock.ctrl.RecordCallWithMethodType(_mr.mock, "QueryRow", reflect.TypeOf((*DatabaseDriver)(nil).QueryRow), _s...)
 }
+
+// Exec mocks base method
+func (_m *DatabaseDriver) Exec(_param0 string, _param1 ...interface{}) (pgx.CommandTag, error) {
+	_s := []interface{}{_param0}
+	for _, _x := range _param1 {
+		_s = append(_s, _x)
+	}
+	ret := _m.ctrl.Call(_m, "Exec", _s...)
+	ret0, _ := ret[0].(pgx.CommandTag)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// Exec indicates an expected call of Exec
+func (_mr *DatabaseDriverMockRecorder) Exec(arg0 interface{}, arg1 ...interface{}) *gomock.Call {
+	_s := append([]interface{}{arg0}, arg1...)
+	return _mr.mock.ctrl.RecordCallWithMethodType(_mr.mock, "Exec", reflect.TypeOf((*DatabaseDriver)(nil).Exec), _s...)
+}

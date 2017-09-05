@@ -54,5 +54,5 @@ func FetchSummary(storage Storage, client *elastic.Client, index string, dataset
 		return nil, errors.Wrap(err, "failed to fetch variable description for summary")
 	}
 
-	return storage.FetchSummary(variable, dataset)
+	return storage.FetchSummary(dataset, variable)
 }

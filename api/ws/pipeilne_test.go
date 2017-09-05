@@ -12,11 +12,11 @@ func TestParseFilterParameters(t *testing.T) {
 	expected := model.FilterParams{
 		Size: datasetSizeLimit,
 		Ranged: []model.VariableRange{
-			model.VariableRange{Name: "feature_a", Min: 0, Max: 100},
-			model.VariableRange{Name: "feature_b", Min: 5, Max: 500},
+			{Name: "feature_a", Min: 0, Max: 100},
+			{Name: "feature_b", Min: 5, Max: 500},
 		},
 		Categorical: []model.VariableCategories{
-			model.VariableCategories{Name: "feature_c", Categories: []string{"alpha", "bravo", "charlie"}},
+			{Name: "feature_c", Categories: []string{"alpha", "bravo", "charlie"}},
 		},
 		None: []string{"feature_d"},
 	}

@@ -13,13 +13,13 @@ func TestDatasetHashEqual(t *testing.T) {
 	filterParams0 := model.FilterParams{
 		Size: 0,
 		Ranged: []model.VariableRange{
-			model.VariableRange{Name: "feature_a", Min: 0, Max: 100},
+			{Name: "feature_a", Min: 0, Max: 100},
 		},
 	}
 	filterParams1 := model.FilterParams{
 		Size: 0,
 		Ranged: []model.VariableRange{
-			model.VariableRange{Name: "feature_a", Min: 0, Max: 100},
+			{Name: "feature_a", Min: 0, Max: 100},
 		},
 	}
 	hash0, err := getFilteredDatasetHash("dataset", "target", &filterParams0)
@@ -32,13 +32,13 @@ func TestDatasetHashNotEqual(t *testing.T) {
 	filterParams0 := model.FilterParams{
 		Size: 0,
 		Ranged: []model.VariableRange{
-			model.VariableRange{Name: "feature_a", Min: 0, Max: 100},
+			{Name: "feature_a", Min: 0, Max: 100},
 		},
 	}
 	filterParams1 := model.FilterParams{
 		Size: 1,
 		Ranged: []model.VariableRange{
-			model.VariableRange{Name: "feature_a", Min: 0, Max: 100},
+			{Name: "feature_a", Min: 0, Max: 100},
 		},
 	}
 	hash0, err := getFilteredDatasetHash("dataset", "target", &filterParams0)
@@ -61,15 +61,15 @@ func fetchFilteredData(t *testing.T) FilteredDataProvider {
 		return &model.FilteredData{
 			Name: "test",
 			Metadata: []*model.Variable{
-				&model.Variable{Name: "feature0", Type: "integer"},
-				&model.Variable{Name: "feature1", Type: "float"},
-				&model.Variable{Name: "feature2", Type: "boolean"},
-				&model.Variable{Name: "feature3", Type: "string"},
+				{Name: "feature0", Type: "integer"},
+				{Name: "feature1", Type: "float"},
+				{Name: "feature2", Type: "boolean"},
+				{Name: "feature3", Type: "string"},
 			},
 			Values: [][]interface{}{
-				[]interface{}{0, 1.1, false, "test_1"},
-				[]interface{}{2, 3.1245678, true, "test_2"},
-				[]interface{}{4, 3.1245678, true, "test_3"},
+				{0, 1.1, false, "test_1"},
+				{2, 3.1245678, true, "test_2"},
+				{4, 3.1245678, true, "test_3"},
 			},
 		}, nil
 	}
@@ -81,8 +81,8 @@ func TestPersistFilteredData(t *testing.T) {
 	// Stubbed out params - not actually applied to stub data
 	filterParams := &model.FilterParams{
 		Ranged: []model.VariableRange{
-			model.VariableRange{Name: "int_a", Min: 0, Max: 100},
-			model.VariableRange{Name: "float_b", Min: 5.0, Max: 500.0},
+			{Name: "int_a", Min: 0, Max: 100},
+			{Name: "float_b", Min: 5.0, Max: 500.0},
 		},
 	}
 
@@ -102,8 +102,8 @@ func TestPersistFilteredData(t *testing.T) {
 	// Verify that changed params results in a new file being used
 	filterParamsMod := &model.FilterParams{
 		Ranged: []model.VariableRange{
-			model.VariableRange{Name: "int_a", Min: 0, Max: 100},
-			model.VariableRange{Name: "float_b", Min: 10.0, Max: 11.0},
+			{Name: "int_a", Min: 0, Max: 100},
+			{Name: "float_b", Min: 10.0, Max: 11.0},
 		},
 	}
 	datasetPathMod, err := PersistFilteredData(fetchFilteredData(t), "./test_output", "test", "feature1", filterParamsMod)

@@ -151,12 +151,14 @@ func handleCreatePipelines(conn *Connection, client *pipeline.Client, esCtor ela
 		handleErr(conn, msg, err)
 	}
 
+	// initialize the storage
+	storage, err := storageCtor()
+	if err != nil {
+		handleErr(conn, msg, err)
+	}
+
 	// persist the filtered dataset if necessary
 	fetchFilteredData := func(dataset string, filters *model.FilterParams) (*model.FilteredData, error) {
-		storage, err := storageCtor()
-		if err != nil {
-			return nil, err
-		}
 		return model.FetchFilteredData(storage, dataset, filters)
 	}
 	datasetPath, err := pipeline.PersistFilteredData(fetchFilteredData, client.DataDir, clientCreateMsg.Dataset, clientCreateMsg.Feature, filters)
@@ -193,7 +195,7 @@ func handleCreatePipelines(conn *Connection, client *pipeline.Client, esCtor ela
 		Output:        pipeline.OutputType(pipeline.OutputType_value[strings.ToUpper(clientCreateMsg.Output)]),
 		Metrics:       []pipeline.Metric{pipeline.Metric(pipeline.Metric_value[strings.ToUpper(clientCreateMsg.Metric)])},
 		TargetFeatures: []*pipeline.Feature{
-			&pipeline.Feature{
+			{
 				FeatureId: clientCreateMsg.Feature,
 				DataUri:   datasetPath,
 			},
@@ -209,7 +211,7 @@ func handleCreatePipelines(conn *Connection, client *pipeline.Client, esCtor ela
 			handleErr(conn, msg, err)
 			return
 		}
-		handleCreatePipelinesSuccess(conn, msg, proxy)
+		handleCreatePipelinesSuccess(conn, msg, proxy, storage, clientCreateMsg.Dataset)
 	} else {
 		log.Warnf("Expected session %s does not exist", msg.Session)
 	}
@@ -239,7 +241,7 @@ func handleEndSessionSuccess(conn *Connection, msg *Message) {
 	})
 }
 
-func handleCreatePipelinesSuccess(conn *Connection, msg *Message, proxy *pipeline.ResultProxy) {
+func handleCreatePipelinesSuccess(conn *Connection, msg *Message, proxy *pipeline.ResultProxy, storage model.Storage, dataset string) {
 	// process the result proxy, which is replicated for completed, pending requests
 	for {
 		select {
@@ -270,6 +272,8 @@ func handleCreatePipelinesSuccess(conn *Connection, msg *Message, proxy *pipelin
 						"output":    pipeline.OutputType_name[int32(res.PipelineInfo.Output)],
 						"resultUri": res.PipelineInfo.PredictResultUris[0],
 					}
+
+					storage.PersistResult(dataset, res.PipelineId, res.PipelineInfo.PredictResultUris[0])
 				}
 				handleSuccess(conn, msg, response)
 			} else {
