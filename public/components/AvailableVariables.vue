@@ -1,11 +1,12 @@
 <template>
-	<div class='variable-summaries'>
+	<div class='available-variables'>
 		<div class="bg-faded rounded-top">
-			<h6 class="nav-link">Summaries</h6>
+			<h6 class="nav-link">Available Set</h6>
 		</div>
 		<variable-facets
 			:variables="variables"
-			:dataset="dataset"></variable-facets>
+			:dataset="dataset"
+			:drag-end="onDragEnd"></variable-facets>
 	</div>
 </template>
 
@@ -15,7 +16,7 @@ import VariableFacets from '../components/VariableFacets';
 import 'font-awesome/css/font-awesome.css';
 
 export default {
-	name: 'variable-summaries',
+	name: 'available-variables',
 
 	components: {
 		VariableFacets
@@ -26,14 +27,20 @@ export default {
 			return this.$store.getters.getRouteDataset();
 		},
 		variables() {
-			return this.$store.getters.getVariableSummaries();
+			return this.$store.getters.getAvailableVariables();
+		}
+	},
+
+	methods: {
+		onDragEnd(key) {
+			this.$store.commit('addTrainingVariable', key);
 		}
 	}
 };
 </script>
 
 <style>
-.variable-summaries {
+.available-variables {
 	display: flex;
 	flex-direction: column;
 }

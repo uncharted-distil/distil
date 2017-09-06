@@ -11,8 +11,16 @@ export function setDatasets(state, datasets) {
 
 export function setVariableSummaries(state, summaries) {
 	state.variableSummaries = summaries;
+	state.trainingVariables = {};
 }
 
+export function addTrainingVariable(state, variableName) {
+	Vue.set(state.trainingVariables, variableName.toLowerCase(), true);
+}
+
+export function removeTrainingVariable(state, variableName) {
+	Vue.set(state.trainingVariables, variableName.toLowerCase(), false);
+}
 
 export function updateVariableSummaries(state, args) {
 	state.variableSummaries.splice(args.index, 1);

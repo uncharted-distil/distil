@@ -1,5 +1,5 @@
 <template>
-	<div class="facets" v-once></div>
+	<div class="facets" v-once ref="facets"></div>
 </template>
 
 <script>
@@ -18,7 +18,7 @@ export default {
 	mounted() {
 		const component = this;
 		// instantiate the external facets widget
-		this.facets = new Facets(document.querySelector('.facets'), this.groups.map(group => {
+		this.facets = new Facets(this.$refs.facets, this.groups.map(group => {
 			return _.cloneDeep(group);
 		}));
 		this.facets.getGroupIndices().forEach(key => {
@@ -35,6 +35,9 @@ export default {
 		});
 		this.facets.on('facet-histogram:rangechangeduser', (event, key, value) => {
 			component.$emit('range-change', key, value);
+		});
+		this.facets.on('facet-group:dragging:end', (event, key) => {
+			component.$emit('drag-end', key);
 		});
 		this.facets.on('facet:click', (event, key, value) => {
 			// get group

@@ -11,9 +11,22 @@ import VariableSummaries from '../components/VariableSummaries';
 
 export default {
 	name: 'explore',
+
 	components: {
 		DataTable,
 		VariableSummaries
+	},
+
+	mounted() {
+		const dataset = this.$store.getters.getRouteDataset();
+		this.$store.dispatch('getVariableSummaries', dataset);
+	},
+
+	watch: {
+		'$route.query.dataset'() {
+			const dataset = this.$store.getters.getRouteDataset();
+			this.$store.dispatch('getVariableSummaries', dataset);
+		}
 	}
 };
 </script>

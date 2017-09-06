@@ -1,11 +1,12 @@
 <template>
-	<div class='variable-summaries'>
+	<div class='training-variables'>
 		<div class="bg-faded rounded-top">
-			<h6 class="nav-link">Summaries</h6>
+			<h6 class="nav-link">Training Set</h6>
 		</div>
 		<variable-facets
 			:variables="variables"
-			:dataset="dataset"></variable-facets>
+			:dataset="dataset"
+			:drag-end="onDragEnd"></variable-facets>
 	</div>
 </template>
 
@@ -15,7 +16,7 @@ import VariableFacets from '../components/VariableFacets';
 import 'font-awesome/css/font-awesome.css';
 
 export default {
-	name: 'variable-summaries',
+	name: 'training-variables',
 
 	components: {
 		VariableFacets
@@ -26,14 +27,20 @@ export default {
 			return this.$store.getters.getRouteDataset();
 		},
 		variables() {
-			return this.$store.getters.getVariableSummaries();
+			return this.$store.getters.getTrainingVariables();
+		}
+	},
+
+	methods: {
+		onDragEnd(key) {
+			this.$store.commit('removeTrainingVariable', key);
 		}
 	}
 };
 </script>
 
 <style>
-.variable-summaries {
+.training-variables {
 	display: flex;
 	flex-direction: column;
 }

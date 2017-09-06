@@ -40,6 +40,8 @@ const state = {
 		//     ]
 		// }
 	],
+	// variables selected for the training set
+	trainingVariables: {},
 	// filtered data entries for the active dataset
 	filteredData: {
 		// name: '',

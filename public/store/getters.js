@@ -50,6 +50,22 @@ export function getVariableSummaries(state) {
 	return () => state.variableSummaries;
 }
 
+export function getAvailableVariables(state) {
+	return () => {
+		return state.variableSummaries.filter(variable => {
+			return !state.trainingVariables[variable.name.toLowerCase()];
+		});
+	};
+}
+
+export function getTrainingVariables(state) {
+	return () => {
+		return state.variableSummaries.filter(variable => {
+			return state.trainingVariables[variable.name.toLowerCase()];
+		});
+	};
+}
+
 export function getFilteredData(state) {
 	return () => state.filteredData;
 }
