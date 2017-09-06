@@ -9,7 +9,7 @@ import (
 	"github.com/unchartedsoftware/distil/api/model"
 )
 
-func (s *Storage) parseResults(dataset string, rows *pgx.Rows) (*model.FilteredData, error) {
+func (s *Storage) parseFilteredData(dataset string, rows *pgx.Rows) (*model.FilteredData, error) {
 	result := &model.FilteredData{
 		Name:   dataset,
 		Values: make([][]interface{}, 0),
@@ -85,5 +85,5 @@ func (s *Storage) FetchData(dataset string, filterParams *model.FilterParams) (*
 	}
 
 	// parse the result
-	return s.parseResults(dataset, res)
+	return s.parseFilteredData(dataset, res)
 }

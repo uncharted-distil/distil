@@ -90,7 +90,7 @@ func main() {
 		postgresClientCtor := postgres.NewClient(pgHost, pgPort, pgUser, pgPassword, pgDatabase)
 
 		// instantiate the postgres storage constructor.
-		pgStorageCtor := pg.NewStorage(postgresClientCtor)
+		pgStorageCtor := pg.NewStorage(postgresClientCtor, esClientCtor)
 
 		dataStorageCtor = pgStorageCtor
 	} else {

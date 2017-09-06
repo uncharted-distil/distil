@@ -9,4 +9,6 @@ type Storage interface {
 	FetchData(string, *FilterParams) (*FilteredData, error)
 	FetchSummary(dataset string, variable *Variable) (*Histogram, error)
 	PersistResult(dataset string, pipelineID string, resultURI string) error
+	FetchResults(pipelineURI string, resultURI string, index string, dataset string, targetName string) (*FilteredData, error)
+	FetchResultsSummary(pipelineURI string, resultURI string, index string, dataset string, targetName string) (*Histogram, error)
 }

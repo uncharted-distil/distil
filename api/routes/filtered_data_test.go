@@ -122,6 +122,11 @@ func TestFilteredDataHandler(t *testing.T) {
 }
 
 func TestFilteredPostgresHandler(t *testing.T) {
+	// mock elasticsearch request handler
+	handler := mock.ElasticHandler(t, []string{"./testdata/filtered_data.json"})
+	// mock elasticsearch client
+	ctorES := mock.ElasticClientCtor(t, handler)
+
 	// mock postgres client
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
@@ -130,7 +135,7 @@ func TestFilteredPostgresHandler(t *testing.T) {
 	ctor := mockContructor(mockDB)
 
 	// instantiate storage filter client constructor.
-	storageCtor := postgres.NewStorage(ctor)
+	storageCtor := postgres.NewStorage(ctor, ctorES)
 
 	// put together a stub dataset request
 	params := map[string]string{

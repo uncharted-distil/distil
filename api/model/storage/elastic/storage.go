@@ -31,3 +31,13 @@ func NewStorage(clientCtor es.ClientCtor) model.StorageCtor {
 func (s *Storage) PersistResult(dataset string, pipelineID string, resultURI string) error {
 	return errors.New("ElasticSearch PersistResult not implemented")
 }
+
+// FetchResults pulls the pipeline result from ES. NOTE: Not implemented!
+func (s *Storage) FetchResults(pipelineURI string, resultURI string, index string, dataset string, targetName string) (*model.FilteredData, error) {
+	return nil, errors.New("ElasticSearch FetchResults not implemented")
+}
+
+// FetchResultsSummary pulls the pipeline result summary from ES. NOTE: Not implemented!
+func (s *Storage) FetchResultsSummary(pipelineURI string, resultURI string, index string, dataset string, targetName string) (*model.Histogram, error) {
+	return nil, errors.New("ElasticSearch FetchResultsSummary not implemented")
+}
