@@ -1,3 +1,4 @@
+mkdir -p datasets
 docker run \
   --rm \
   --name distil_pipeline_server \
