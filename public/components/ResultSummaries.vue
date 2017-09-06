@@ -17,7 +17,6 @@
 import Facets from '../components/Facets';
 import 'font-awesome/css/font-awesome.css';
 import '../styles/spinner.css';
-import _ from 'lodash';
 
 const SPINNER_HTML = [
 	'<div class="bounce1"></div>',
@@ -36,7 +35,7 @@ export default {
 		// kick off a result fetch when the component is first displayed
 		this.$store.dispatch('getResultsSummaries', {
 			dataset: this.$store.getters.getRouteDataset(),
-			resultsUri: this.$store.getters.getRouteResultsUri()
+			requestId: this.$store.getters.getRouteCreateRequestId()
 		});
 	},
 
@@ -53,7 +52,7 @@ export default {
 		'$route.query.results'() {
 			this.$store.dispatch('getResultsSummaries', {
 				dataset: this.$store.getters.getRouteDataset(),
-				resultsUri: this.$store.getters.getRouteResultsUri()
+				requestId: this.$store.getters.getRouteCreateRequestId()
 			});
 		}
 	},

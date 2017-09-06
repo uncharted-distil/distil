@@ -1,26 +1,32 @@
 <template>
-	<div class="running-pipelines">
-		<div class="row">
-			<div class="h6 col">Pending</div>
-		</div>
-		<div class="row mt-2 mb-2" v-if="pipelineResults === null">
-			<div class="col">None</div>
-		</div>
-		<div class="row mt-2 mb-2" v-bind:key="result.name" v-for="result in pipelineResults">
-			<div class="col-md-3">
-				{{result.name}}
-			</div>
-			<div class="col-md-1">
-				<b-badge variant="default" v-if="result.progress==='SUBMITTED'">{{status(result)}}</b-badge>
-				<b-badge variant="info" v-if="result.progress!=='SUBMITTED'">{{status(result)}}</b-badge>
-			</div>
-		</div>
-	</div>
+	<b-card header="Pending">
+		<div class="results" v-if="pipelineResults === null">None</div>
+		<b-list-group class="results card-text" v-bind:key="results.constructor.name" v-for="results in pipelineResults">
+			<b-list-group-item href="#" v-bind:key="result.name" v-for="result in results">
+				<div class="result" @click="onResult(result)">
+					<div class="result-name">
+						{{result.name}}
+					</div>
+					<div class="result-badge">
+						<b-badge variant="default" v-if="result.progress==='SUBMITTED'">
+							{{status(result)}}
+						</b-badge>
+					</div>
+					<div class="result-badge">
+						<b-badge variant="info" v-if="result.progress!=='SUBMITTED'">
+							{{status(result)}}
+						</b-badge>
+					</div>
+				</div>
+			</b-list-group-item>
+		</b-list-group>
+	</b-card>
 </template>
 
 <script>
 import _ from 'lodash';
 import {getMetricDisplayName} from '../util/pipelines';
+import { createRouteEntry } from '../util/routes';
 
 export default {
 	name: 'running-pipelines',
@@ -43,11 +49,42 @@ export default {
 				return metricName + ': ' + score.value;
 			}
 			return result.progress;
+			return 'score';
+		},
+		onResult(result) {
+			console.log(result);
+			const entry = createRouteEntry('/results', {
+				dataset: this.$store.getters.getRouteDataset(),
+				filters: this.$store.getters.getRouteFilters(),
+				createRequestId: result.requestId
+			});
+			this.$router.push(entry);
 		}
 	}
 };
 </script>
 
-<style>
+<style scoped>
+
+.results {
+	margin-top: 8px;
+}
+
+.result {
+	display: flex;
+	justify-content: flex-start;
+	flex-grow: 1;
+}
+
+.result-name {
+	display: flex;
+	flex-basis: 20%;
+	align-items: center;
+}
+
+.result-badge {
+	display: flex;
+	align-items: center;
+}
 
 </style>

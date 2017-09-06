@@ -25,7 +25,7 @@ export function getRouteFilters(state) {
 	return () => {
 		const result = {};
 		_.forEach(state.route.query, (value, key) => {
-			if (key !== 'dataset' && key !== 'terms' && key !== 'results') {
+			if (key !== 'dataset' && key !== 'terms' && key !== 'createRequestId') {
 				result[key] = value;
 			}
 		});
@@ -33,8 +33,8 @@ export function getRouteFilters(state) {
 	};
 }
 
-export function getRouteResultsUri(state) {
-	return () => state.route.query.results;
+export function getRouteCreateRequestId(state) {
+	return () => state.route.query.createRequestId;
 }
 
 export function getVariables(state) {
@@ -89,6 +89,14 @@ export function getFilteredDataFields(state) {
 		} else {
 			return {};
 		}
+	};
+}
+
+export function getPipelineResults(state) {
+	return (requestId) => {
+		return _.concat(
+			_.values(state.runningPipelines[requestId]),
+			_.values(state.completedPipelines[requestId]));
 	};
 }
 

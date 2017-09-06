@@ -250,6 +250,7 @@ func handleCreatePipelinesSuccess(conn *Connection, msg *Message, proxy *pipelin
 				// extract the baseline pipeline status
 				progress := pipeline.Progress_name[int32(res.ProgressInfo)]
 				response := map[string]interface{}{
+					"requestId":  proxy.RequestID,
 					"pipelineId": res.PipelineId,
 					"progress":   progress,
 				}
