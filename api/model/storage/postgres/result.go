@@ -17,8 +17,40 @@ func (s *Storage) getResultTable(dataset string) string {
 	return fmt.Sprintf("%s_result", dataset)
 }
 
+func (s *Storage) getResultTargetName(dataset string, resultURI string, index string) (string, error) {
+	// Assume only a single target / result. Read the target name from the
+	// database table.
+	sql := fmt.Sprintf("SELECT target FROM %s WHERE result_id = ? LIMIT 1;", dataset)
+
+	rows, err := s.client.Query(sql, resultURI)
+	if err != nil {
+		return "", errors.Wrap(err, "Unable to get target variable name from results")
+	}
+
+	if rows.Next() {
+		var targetName string
+		err = rows.Scan(&targetName)
+		if err != nil {
+			return "", errors.Wrap(err, "Unable to get target variable name from results")
+		}
+
+		return targetName, nil
+	}
+
+	return "", errors.New("Result URI not found")
+}
+
+func (s *Storage) getResultTargetVariable(dataset string, index string, targetName string) (*model.Variable, error) {
+	variable, err := model.FetchVariable(s.clientES, index, dataset, targetName)
+	if err != nil {
+		return nil, errors.Wrap(err, "Unable to get target variable information")
+	}
+
+	return variable, nil
+}
+
 // PersistResult stores the pipeline result to Postgres.
-func (s *Storage) PersistResult(dataset string, pipelineID string, resultURI string) error {
+func (s *Storage) PersistResult(dataset string, resultURI string) error {
 	// Read the results file.
 	file, err := os.Open(resultURI)
 	if err != nil {
@@ -57,16 +89,16 @@ func (s *Storage) PersistResult(dataset string, pipelineID string, resultURI str
 		}
 
 		// store the result to the storage
-		s.executeInsertResultStatement(dataset, pipelineID, resultURI, parsedVal, targetName, records[i][1])
+		s.executeInsertResultStatement(dataset, resultURI, parsedVal, targetName, records[i][1])
 	}
 
 	return nil
 }
 
-func (s *Storage) executeInsertResultStatement(dataset string, pipelineID string, resultID string, index int64, target string, value string) error {
-	statement := fmt.Sprintf("INSERT INTO %s (pipeline_id, result_id, index, target, value) VALUES (?, ?, ?, ?, ?);", s.getResultTable(dataset))
+func (s *Storage) executeInsertResultStatement(dataset string, resultID string, index int64, target string, value string) error {
+	statement := fmt.Sprintf("INSERT INTO %s (result_id, index, target, value) VALUES (?, ?, ?, ?);", s.getResultTable(dataset))
 
-	_, err := s.client.Exec(statement, pipelineID, resultID, index, target, value)
+	_, err := s.client.Exec(statement, resultID, index, target, value)
 
 	return err
 }
@@ -121,16 +153,18 @@ func (s *Storage) parseResults(dataset string, rows *pgx.Rows, variable *model.V
 }
 
 // FetchResults pulls the results from the Postgres database.
-func (s *Storage) FetchResults(pipelineURI string, resultURI string, index string, dataset string, targetName string) (*model.FilteredData, error) {
+func (s *Storage) FetchResults(dataset string, resultURI string, index string) (*model.FilteredData, error) {
+	datasetResult := s.getResultTable(dataset)
+	targetName, err := s.getResultTargetName(datasetResult, resultURI, index)
 	// fetch the variable info to resolve its type - skip the first column since that will be the d3m_index value
-	variable, err := model.FetchVariable(s.clientES, index, dataset, targetName)
+	variable, err := s.getResultTargetVariable(datasetResult, index, targetName)
 	if err != nil {
 		return nil, err
 	}
 
-	sql := fmt.Sprintf("SELECT value FROM %s WHERE pipeline_id = ? AND result_id = ?;", s.getResultTable(dataset))
+	sql := fmt.Sprintf("SELECT value FROM %s WHERE result_id = ? AND target = ?;", datasetResult)
 
-	rows, err := s.client.Query(sql, pipelineURI, resultURI)
+	rows, err := s.client.Query(sql, resultURI, targetName)
 	if err != nil {
 		return nil, errors.Wrap(err, "Error querying results")
 	}
@@ -138,24 +172,24 @@ func (s *Storage) FetchResults(pipelineURI string, resultURI string, index strin
 	return s.parseResults(dataset, rows, variable)
 }
 
-func (s *Storage) fetchResultExtrema(pipelineURI string, resultURI string, dataset string, variable *model.Variable) (*model.Extrema, error) {
+func (s *Storage) fetchResultExtrema(resultURI string, dataset string, variable *model.Variable) (*model.Extrema, error) {
 	// add min / max aggregation
 	aggQuery := s.getMinMaxAggsQuery(variable)
 
 	// create a query that does min and max aggregations for each variable
-	queryString := fmt.Sprintf("SELECT %s FROM %s WHERE pipeline_id = ? AND result_id = ? AND target = ?;", aggQuery, dataset)
+	queryString := fmt.Sprintf("SELECT %s FROM %s WHERE result_id = ? AND target = ?;", aggQuery, dataset)
 
 	// execute the postgres query
 	// NOTE: We may want to use the refular Query operation since QueryRow
 	// hides db exceptions.
-	res := s.client.QueryRow(queryString, pipelineURI, resultURI, variable.Name)
+	res := s.client.QueryRow(queryString, resultURI, variable.Name)
 
 	return s.parseExtrema(res, variable)
 }
 
-func (s *Storage) fetchNumericalResultHistogram(pipelineURI string, resultURI string, dataset string, variable *model.Variable) (*model.Histogram, error) {
+func (s *Storage) fetchNumericalResultHistogram(resultURI string, dataset string, variable *model.Variable) (*model.Histogram, error) {
 	// need the extrema to calculate the histogram interval
-	extrema, err := s.fetchResultExtrema(pipelineURI, resultURI, dataset, variable)
+	extrema, err := s.fetchResultExtrema(resultURI, dataset, variable)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to fetch result variable extrema for summary")
 	}
@@ -166,23 +200,23 @@ func (s *Storage) fetchNumericalResultHistogram(pipelineURI string, resultURI st
 	// Create the complete query string.
 	query := fmt.Sprintf(`
 		SELECT (%s) AS %s, COUNT(*) AS count FROM %s
-		WHERE pipeline_id = ? and result_id = ? and target = ?
+		WHERE result_id = ? AND target = ?
 		GROUP BY %s ORDER BY %s;`, histogramQuery, histogramName, dataset, histogramQuery, histogramName)
 
 	// execute the postgres query
-	res, err := s.client.Query(query, pipelineURI, resultURI, variable.Name)
+	res, err := s.client.Query(query, resultURI, variable.Name)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to fetch histograms for result variable summaries from postgres")
 	}
 	return s.parseNumericHistogram(res, extrema)
 }
 
-func (s *Storage) fetchCategoricalResultHistogram(pipelineURI string, resultURI string, dataset string, variable *model.Variable) (*model.Histogram, error) {
+func (s *Storage) fetchCategoricalResultHistogram(resultURI string, dataset string, variable *model.Variable) (*model.Histogram, error) {
 	// Get count by category.
-	query := fmt.Sprintf("SELECT value, COUNT(*) AS count FROM %s WHERE pipeline_id = ? AND result_id = ? and target = ? GROUP BY value;", dataset)
+	query := fmt.Sprintf("SELECT value, COUNT(*) AS count FROM %s WHERE result_id = ? and target = ? GROUP BY value;", dataset)
 
 	// execute the postgres query
-	res, err := s.client.Query(query, pipelineURI, resultURI, variable.Name)
+	res, err := s.client.Query(query, resultURI, variable.Name)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to fetch histograms for result summaries from postgres")
 	}
@@ -192,24 +226,28 @@ func (s *Storage) fetchCategoricalResultHistogram(pipelineURI string, resultURI 
 
 // FetchResultsSummary gets the summary data about a target variable from the
 // results table.
-func (s *Storage) FetchResultsSummary(pipelineURI string, resultURI string, index string, dataset string, targetName string) (*model.Histogram, error) {
-	variable, err := model.FetchVariable(s.clientES, index, dataset, targetName)
+func (s *Storage) FetchResultsSummary(dataset string, resultURI string, index string) (*model.Histogram, error) {
+	datasetResult := s.getResultTable(dataset)
+	targetName, err := s.getResultTargetName(datasetResult, resultURI, index)
 	if err != nil {
-		return nil, errors.Wrap(err, "Unable to get target variable information")
+		return nil, err
 	}
 
-	datasetResult := s.getResultTable(dataset)
+	variable, err := s.getResultTargetVariable(datasetResult, index, targetName)
+	if err != nil {
+		return nil, err
+	}
 
 	if model.IsNumerical(variable.Type) {
 		// fetch numeric histograms
-		numeric, err := s.fetchNumericalResultHistogram(pipelineURI, resultURI, datasetResult, variable)
+		numeric, err := s.fetchNumericalResultHistogram(resultURI, datasetResult, variable)
 		if err != nil {
 			return nil, err
 		}
 		return numeric, nil
 	} else if model.IsCategorical(variable.Type) {
 		// fetch categorical histograms
-		categorical, err := s.fetchCategoricalResultHistogram(pipelineURI, resultURI, datasetResult, variable)
+		categorical, err := s.fetchCategoricalResultHistogram(resultURI, datasetResult, variable)
 		if err != nil {
 			return nil, err
 		}

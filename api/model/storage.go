@@ -8,7 +8,7 @@ type StorageCtor func() (Storage, error)
 type Storage interface {
 	FetchData(string, *FilterParams) (*FilteredData, error)
 	FetchSummary(dataset string, variable *Variable) (*Histogram, error)
-	PersistResult(dataset string, pipelineID string, resultURI string) error
-	FetchResults(pipelineURI string, resultURI string, index string, dataset string, targetName string) (*FilteredData, error)
-	FetchResultsSummary(pipelineURI string, resultURI string, index string, dataset string, targetName string) (*Histogram, error)
+	PersistResult(dataset string, resultURI string) error
+	FetchResults(dataset string, resultURI string, index string) (*FilteredData, error)
+	FetchResultsSummary(dataset string, resultURI string, index string) (*Histogram, error)
 }

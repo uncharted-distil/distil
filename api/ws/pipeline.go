@@ -273,7 +273,10 @@ func handleCreatePipelinesSuccess(conn *Connection, msg *Message, proxy *pipelin
 						"resultUri": res.PipelineInfo.PredictResultUris[0],
 					}
 
-					storage.PersistResult(dataset, res.PipelineId, res.PipelineInfo.PredictResultUris[0])
+					err := storage.PersistResult(dataset, res.PipelineInfo.PredictResultUris[0])
+					if err != nil {
+						handleErr(conn, msg, errors.Wrap(err, "Unable to store pipeline results"))
+					}
 				}
 				handleSuccess(conn, msg, response)
 			} else {

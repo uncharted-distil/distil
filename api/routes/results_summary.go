@@ -7,7 +7,6 @@ import (
 	"github.com/pkg/errors"
 	"goji.io/pat"
 
-	"github.com/unchartedsoftware/distil/api/elastic"
 	"github.com/unchartedsoftware/distil/api/model"
 )
 
@@ -17,24 +16,24 @@ type ResultsSummary struct {
 }
 
 // ResultsSummaryHandler bins predicted result data for consumption in a downstream summary view.
-func ResultsSummaryHandler(esCtor elastic.ClientCtor) func(http.ResponseWriter, *http.Request) {
+func ResultsSummaryHandler(ctor model.StorageCtor) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// extract route parameters
 		index := pat.Param(r, "index")
 		dataset := pat.Param(r, "dataset")
-		pipelineURI, err := url.PathUnescape(pat.Param(r, "result-uri"))
+		resultURI, err := url.PathUnescape(pat.Param(r, "result-uri"))
 		if err != nil {
 			handleError(w, errors.Wrap(err, "unable to unescape result uri"))
 			return
 		}
 
-		esClient, err := esCtor()
+		client, err := ctor()
 		if err != nil {
 			handleError(w, err)
 			return
 		}
 
-		histogram, err := model.FetchResultsSummary(esClient, pipelineURI, index, dataset)
+		histogram, err := model.FetchResultsSummary(client, resultURI, index, dataset)
 		if err != nil {
 			handleError(w, err)
 			return
