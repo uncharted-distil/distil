@@ -23,7 +23,7 @@
                             "varRole": "index"
                         },
                         {
-                            "varName": "Player",
+                            "varName": "Position",
                             "varType": "categorical",
                             "varRole": "attribute"
                         },
@@ -35,6 +35,11 @@
                         {
                             "varName": "Games_played",
                             "varType": "integer",
+                            "varRole": "attribute"
+                        },
+                        {
+                            "varName": "On_base_pct",
+                            "varType": "float",
                             "varRole": "attribute"
                         }
                     ]

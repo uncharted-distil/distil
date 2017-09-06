@@ -37,9 +37,10 @@ func NewSession(id string, client PipelineComputeClient) *Session {
 // errors. This the main conduit for comms between the client and downstream handlers
 // that are receviing request results.
 type ResultProxy struct {
-	Results chan *proto.Message
-	Errors  chan error
-	Done    chan struct{}
+	RequestID uuid.UUID
+	Results   chan *proto.Message
+	Errors    chan error
+	Done      chan struct{}
 }
 
 // GetExistingUUIDs will return the uuids for all pending and completed requests.
@@ -186,9 +187,10 @@ func (s *Session) attachToExistingRequest(requestID uuid.UUID) (*ResultProxy, er
 		// create a result proxy object for communicating result and request
 		// state to downstream consumer
 		proxy := &ResultProxy{
-			Results: make(chan *proto.Message, len(results)),
-			Errors:  make(chan error),
-			Done:    make(chan struct{}),
+			RequestID: requestID,
+			Results:   make(chan *proto.Message, len(results)),
+			Errors:    make(chan error),
+			Done:      make(chan struct{}),
 		}
 
 		// write to buffered results
@@ -212,9 +214,10 @@ func (s *Session) attachToExistingRequest(requestID uuid.UUID) (*ResultProxy, er
 		// create a result proxy object for communicating result and request
 		// state to downstream consumer
 		proxy := &ResultProxy{
-			Results: make(chan *proto.Message),
-			Errors:  make(chan error),
-			Done:    make(chan struct{}),
+			RequestID: requestID,
+			Results:   make(chan *proto.Message),
+			Errors:    make(chan error),
+			Done:      make(chan struct{}),
 		}
 		// write to result channel, block so that done channel always comes
 		// last

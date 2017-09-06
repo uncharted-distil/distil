@@ -159,7 +159,7 @@ func handleCreatePipelines(conn *Connection, client *pipeline.Client, esCtor ela
 		}
 		return model.FetchFilteredData(storage, dataset, filters)
 	}
-	datasetPath, err := pipeline.PersistFilteredData(fetchFilteredData, datasetDir, clientCreateMsg.Dataset, clientCreateMsg.Feature, filters)
+	datasetPath, err := pipeline.PersistFilteredData(fetchFilteredData, client.DataDir, clientCreateMsg.Dataset, clientCreateMsg.Feature, filters)
 	if err != nil {
 		handleErr(conn, msg, err)
 	}
@@ -250,6 +250,7 @@ func handleCreatePipelinesSuccess(conn *Connection, msg *Message, proxy *pipelin
 				// extract the baseline pipeline status
 				progress := pipeline.Progress_name[int32(res.ProgressInfo)]
 				response := map[string]interface{}{
+					"requestId":  proxy.RequestID,
 					"pipelineId": res.PipelineId,
 					"progress":   progress,
 				}
@@ -265,8 +266,9 @@ func handleCreatePipelinesSuccess(conn *Connection, msg *Message, proxy *pipelin
 						})
 					}
 					response["pipeline"] = map[string]interface{}{
-						"scores": scores,
-						"output": pipeline.OutputType_name[int32(res.PipelineInfo.Output)],
+						"scores":    scores,
+						"output":    pipeline.OutputType_name[int32(res.PipelineInfo.Output)],
+						"resultUri": res.PipelineInfo.PredictResultUris[0],
 					}
 				}
 				handleSuccess(conn, msg, response)
