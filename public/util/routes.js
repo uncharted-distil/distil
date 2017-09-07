@@ -15,6 +15,8 @@ export function createRouteEntry(path, args = {}) {
 	const query = {};
 	if (args.dataset) { query.dataset = args.dataset; }
 	if (args.terms) { query.terms = args.terms; }
+	if (args.training) { query.training = args.training.join(','); }
+	if (args.target) { query.target = args.target; }
 	if (!_.isEmpty(args.filters)) { _.assign(query, args.filters);}
 	return {
 		path: path,

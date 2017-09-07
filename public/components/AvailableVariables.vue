@@ -14,6 +14,7 @@
 
 <script>
 
+import { createRouteEntry } from '../util/routes';
 import VariableFacets from '../components/VariableFacets';
 import 'font-awesome/css/font-awesome.css';
 
@@ -38,13 +39,29 @@ export default {
 				training.className += 'btn btn-sm btn-outline-secondary mr-2 mb-2';
 				training.innerHTML = 'Add to Training Set';
 				training.addEventListener('click', () => {
-					this.$store.commit('addTrainingVariable', group.key);
+					const path = this.$store.getters.getRoutePath();
+					const entry = createRouteEntry(path, {
+						dataset: this.$store.getters.getRouteDataset(),
+						filters: this.$store.getters.getRouteFilters(),
+						target: this.$store.getters.getRouteTargetVariable(),
+						training: this.$store.getters.getRouteTrainingVariables().concat([ group.key ])
+					});
+					this.$router.push(entry);
+					//this.$store.commit('addTrainingVariable', group.key);
 				});
 				const target = document.createElement('button');
 				target.className += 'btn btn-sm btn-outline-secondary mr-2 mb-2';
 				target.innerHTML = 'Set as Target';
 				target.addEventListener('click', () => {
-					this.$store.commit('setTargetVariable', group.key);
+					const path = this.$store.getters.getRoutePath();
+					const entry = createRouteEntry(path, {
+						dataset: this.$store.getters.getRouteDataset(),
+						filters: this.$store.getters.getRouteFilters(),
+						training: this.$store.getters.getRouteTrainingVariables(),
+						target: group.key,
+					});
+					this.$router.push(entry);
+					//this.$store.commit('setTargetVariable', group.key);
 				});
 				container.appendChild(training);
 				container.appendChild(target);

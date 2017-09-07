@@ -34,7 +34,17 @@ export default {
 		'$route.query.dataset'() {
 			const dataset = this.$store.getters.getRouteDataset();
 			this.$store.dispatch('getVariableSummaries', dataset);
-		}
+		}/*,
+		'$route.query.training'() {
+			const training = this.$store.getters.getRouteTrainingVariables();
+			this.$store.commit('setTrainingVariables', training);
+			//this.$store.commit('addTrainingVariable', group.key);
+		},
+		'$route.query.target'() {
+			const target = this.$store.getters.getRouteTrainingVariables();
+			this.$store.commit('setTargetVariable', target);
+			//this.$store.commit('addTrainingVariable', group.key);
+		}*/
 	}
 };
 </script>

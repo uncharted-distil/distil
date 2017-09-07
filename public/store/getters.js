@@ -21,11 +21,38 @@ export function getRouteFilter(state) {
 	};
 }
 
+export function getRouteTrainingVariables(state) {
+	return () => {
+		return state.route.query.training ? state.route.query.training.split(',') : [];
+	};
+}
+
+export function getRouteTrainingVariablesMap(state, getters) {
+	return () => {
+		const training = getters.getRouteTrainingVariables();
+		const map = {};
+		training.forEach(variable => {
+			map[variable.toLowerCase()] = true;
+		});
+		return map;
+	};
+}
+
+export function getRouteTargetVariable(state) {
+	return () => {
+		return state.route.query.target ? state.route.query.target.toLowerCase(): null;
+	};
+}
+
 export function getRouteFilters(state) {
 	return () => {
 		const result = {};
 		_.forEach(state.route.query, (value, key) => {
-			if (key !== 'dataset' && key !== 'terms') {
+			// TODO: this is awful and error prone
+			if (key !== 'dataset' &&
+				key !== 'terms' &&
+				key !== 'training' &&
+				key !== 'target') {
 				result[key] = value;
 			}
 		});
@@ -50,31 +77,36 @@ export function getVariableSummaries(state) {
 	return () => state.variableSummaries;
 }
 
-export function getAvailableVariables(state) {
+export function getAvailableVariables(state, getters) {
 	return () => {
+		const training = getters.getRouteTrainingVariablesMap();
+		const target = getters.getRouteTargetVariable();
 		return state.variableSummaries.filter(variable => {
-			return state.targetVariable !== variable.name.toLowerCase() &&
-				!state.trainingVariables[variable.name.toLowerCase()];
+			return target !== variable.name.toLowerCase() &&
+				!training[variable.name.toLowerCase()];
 		});
 	};
 }
 
-export function getTrainingVariables(state) {
+export function getTrainingVariables(state, getters) {
 	return () => {
+		const training = getters.getRouteTrainingVariablesMap();
+		const target = getters.getRouteTargetVariable();
 		return state.variableSummaries.filter(variable => {
-			return state.targetVariable !== variable.name.toLowerCase() &&
-				state.trainingVariables[variable.name.toLowerCase()];
+			return target !== variable.name.toLowerCase() &&
+				training[variable.name.toLowerCase()];
 		});
 	};
 }
 
-export function getTargetVariable(state) {
+export function getTargetVariable(state, getters) {
 	return () => {
-		if (!state.targetVariable) {
+		const target = getters.getRouteTargetVariable();
+		if (!target) {
 			return null;
 		}
 		return state.variableSummaries.filter(variable => {
-			return state.targetVariable === variable.name.toLowerCase();
+			return target === variable.name.toLowerCase();
 		})[0];
 	};
 }

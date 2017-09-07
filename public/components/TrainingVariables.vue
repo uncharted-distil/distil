@@ -14,6 +14,7 @@
 
 <script>
 
+import { createRouteEntry } from '../util/routes';
 import VariableFacets from '../components/VariableFacets';
 import 'font-awesome/css/font-awesome.css';
 
@@ -38,8 +39,19 @@ export default {
 				remove.className += 'btn btn-sm btn-outline-secondary mb-2';
 				remove.innerHTML = 'Remove';
 				remove.addEventListener('click', () => {
-					console.log('training click', group.key);
-					this.$store.commit('removeTrainingVariable', group.key);
+
+					const training = this.$store.getters.getRouteTrainingVariables();
+					training.splice(training.indexOf(group.key), 1);
+					const path = this.$store.getters.getRoutePath();
+					const entry = createRouteEntry(path, {
+						dataset: this.$store.getters.getRouteDataset(),
+						filters: this.$store.getters.getRouteFilters(),
+						target: this.$store.getters.getRouteTargetVariable(),
+						training: training
+					});
+					this.$router.push(entry);
+
+					//this.$store.commit('removeTrainingVariable', group.key);
 				});
 				container.appendChild(remove);
 				return container;

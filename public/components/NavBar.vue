@@ -95,7 +95,9 @@ export default {
 		onExplore() {
 			const entry = createRouteEntry('/explore', {
 				dataset: this.$store.getters.getRouteDataset(),
-				filters: this.$store.getters.getRouteFilters()
+				filters: this.$store.getters.getRouteFilters(),
+				target: this.$store.getters.getRouteTargetVariable(),
+				training: this.$store.getters.getRouteTrainingVariables()
 			});
 			this.$router.push(entry);
 		},
@@ -104,7 +106,9 @@ export default {
 		onSelect() {
 			const entry = createRouteEntry('/select', {
 				dataset: this.$store.getters.getRouteDataset(),
-				filters: this.$store.getters.getRouteFilters()
+				filters: this.$store.getters.getRouteFilters(),
+				target: this.$store.getters.getRouteTargetVariable(),
+				training: this.$store.getters.getRouteTrainingVariables()
 			});
 			this.$router.push(entry);
 		},
@@ -113,7 +117,9 @@ export default {
 		onBuild() {
 			const entry = createRouteEntry('/build', {
 				dataset: this.$store.getters.getRouteDataset(),
-				filters: this.$store.getters.getRouteFilters()
+				filters: this.$store.getters.getRouteFilters(),
+				target: this.$store.getters.getRouteTargetVariable(),
+				training: this.$store.getters.getRouteTrainingVariables()
 			});
 			this.$router.push(entry);
 		},

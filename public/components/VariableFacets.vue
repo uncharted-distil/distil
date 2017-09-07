@@ -80,8 +80,10 @@ export default {
 			// merge the updated filters back into the route query params
 			const updated = updateFilter(filters, key, values);
 			const entry = createRouteEntry(path, {
+				target: this.$store.getters.getRouteTargetVariable(),
+				training: this.$store.getters.getRouteTrainingVariables(),
 				dataset: this.dataset,
-				filters: updated
+				filters: updated,
 			});
 			this.$router.push(entry);
 		},
