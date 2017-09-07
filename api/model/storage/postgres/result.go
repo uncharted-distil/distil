@@ -20,7 +20,7 @@ func (s *Storage) getResultTable(dataset string) string {
 func (s *Storage) getResultTargetName(dataset string, resultURI string, index string) (string, error) {
 	// Assume only a single target / result. Read the target name from the
 	// database table.
-	sql := fmt.Sprintf("SELECT target FROM %s WHERE result_id = ? LIMIT 1;", dataset)
+	sql := fmt.Sprintf("SELECT target FROM %s WHERE result_id = $1 LIMIT 1;", dataset)
 
 	rows, err := s.client.Query(sql, resultURI)
 	if err != nil {
@@ -89,14 +89,14 @@ func (s *Storage) PersistResult(dataset string, resultURI string) error {
 		}
 
 		// store the result to the storage
-		s.executeInsertResultStatement(dataset, resultURI, parsedVal, targetName, records[i][1])
+		return s.executeInsertResultStatement(dataset, resultURI, parsedVal, targetName, records[i][1])
 	}
 
 	return nil
 }
 
 func (s *Storage) executeInsertResultStatement(dataset string, resultID string, index int64, target string, value string) error {
-	statement := fmt.Sprintf("INSERT INTO %s (result_id, index, target, value) VALUES (?, ?, ?, ?);", s.getResultTable(dataset))
+	statement := fmt.Sprintf("INSERT INTO %s (result_id, index, target, value) VALUES ($1, $2, $3, $4);", s.getResultTable(dataset))
 
 	_, err := s.client.Exec(statement, resultID, index, target, value)
 
@@ -162,7 +162,7 @@ func (s *Storage) FetchResults(dataset string, resultURI string, index string) (
 		return nil, err
 	}
 
-	sql := fmt.Sprintf("SELECT value FROM %s WHERE result_id = ? AND target = ?;", datasetResult)
+	sql := fmt.Sprintf("SELECT value FROM %s WHERE result_id = $1 AND target = $2;", datasetResult)
 
 	rows, err := s.client.Query(sql, resultURI, targetName)
 	if err != nil {
@@ -177,7 +177,7 @@ func (s *Storage) fetchResultExtrema(resultURI string, dataset string, variable 
 	aggQuery := s.getMinMaxAggsQuery(variable)
 
 	// create a query that does min and max aggregations for each variable
-	queryString := fmt.Sprintf("SELECT %s FROM %s WHERE result_id = ? AND target = ?;", aggQuery, dataset)
+	queryString := fmt.Sprintf("SELECT %s FROM %s WHERE result_id = $1 AND target = $2;", aggQuery, dataset)
 
 	// execute the postgres query
 	// NOTE: We may want to use the refular Query operation since QueryRow
@@ -200,7 +200,7 @@ func (s *Storage) fetchNumericalResultHistogram(resultURI string, dataset string
 	// Create the complete query string.
 	query := fmt.Sprintf(`
 		SELECT (%s) AS %s, COUNT(*) AS count FROM %s
-		WHERE result_id = ? AND target = ?
+		WHERE result_id = $1 AND target = $2
 		GROUP BY %s ORDER BY %s;`, histogramQuery, histogramName, dataset, histogramQuery, histogramName)
 
 	// execute the postgres query
@@ -213,7 +213,7 @@ func (s *Storage) fetchNumericalResultHistogram(resultURI string, dataset string
 
 func (s *Storage) fetchCategoricalResultHistogram(resultURI string, dataset string, variable *model.Variable) (*model.Histogram, error) {
 	// Get count by category.
-	query := fmt.Sprintf("SELECT value, COUNT(*) AS count FROM %s WHERE result_id = ? and target = ? GROUP BY value;", dataset)
+	query := fmt.Sprintf("SELECT value, COUNT(*) AS count FROM %s WHERE result_id = $1 and target = $2 GROUP BY value;", dataset)
 
 	// execute the postgres query
 	res, err := s.client.Query(query, resultURI, variable.Name)

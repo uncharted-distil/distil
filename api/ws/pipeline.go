@@ -149,12 +149,14 @@ func handleCreatePipelines(conn *Connection, client *pipeline.Client, esCtor ela
 	filters, err := parseDatasetFilters(clientCreateMsg.Filters)
 	if err != nil {
 		handleErr(conn, msg, err)
+		return
 	}
 
 	// initialize the storage
 	storage, err := storageCtor()
 	if err != nil {
 		handleErr(conn, msg, err)
+		return
 	}
 
 	// persist the filtered dataset if necessary
@@ -164,12 +166,14 @@ func handleCreatePipelines(conn *Connection, client *pipeline.Client, esCtor ela
 	datasetPath, err := pipeline.PersistFilteredData(fetchFilteredData, client.DataDir, clientCreateMsg.Dataset, clientCreateMsg.Feature, filters)
 	if err != nil {
 		handleErr(conn, msg, err)
+		return
 	}
 
 	// make sure the path is absolute
 	datasetPath, err = filepath.Abs(datasetPath)
 	if err != nil {
 		handleErr(conn, msg, err)
+		return
 	}
 
 	// Create the set of training features - we already filtered that out when we persist, but needs to be specified
@@ -178,6 +182,7 @@ func handleCreatePipelines(conn *Connection, client *pipeline.Client, esCtor ela
 	filteredVars, err := fetchFilteredVariables(esCtor, clientCreateMsg.Index, clientCreateMsg.Dataset, filters)
 	if err != nil {
 		handleErr(conn, msg, err)
+		return
 	}
 	for _, featureName := range filteredVars {
 		feature := &pipeline.Feature{
