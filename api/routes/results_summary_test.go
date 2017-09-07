@@ -128,25 +128,15 @@ func TestResultsSummaryHandlerCategorical(t *testing.T) {
 
 	// compare expected and acutal results - unmarshall first to ensure object
 	// rather than byte equality
-	expected, err := json.Unmarshal([]byte(
-		`{
-			"histogram": {
-				"name": "Position",
-				"type": "categorical",
-				"buckets": [
-					{"key": "Catcher", "count": 2},
-					{"key": "First_base", "count": 1},
-					{"key": "Pitcher", "count": 1}
-				]
-			}
-		}`))
-	assert.NoError(t, err)
-
 	actual, err := json.Unmarshal(res.Body.Bytes())
 	assert.NoError(t, err)
-	assert.Equal(t, "Position", actual["name"])
-	assert.Equal(t, "categorical", actual["type"])
-	buckets, ok := actual["buckets"].([]interface{})
+
+	histogram, ok := actual["histogram"].(map[string]interface{})
+	assert.True(t, ok)
+
+	assert.Equal(t, "Position", histogram["name"])
+	assert.Equal(t, "categorical", histogram["type"])
+	buckets, ok := histogram["buckets"].([]interface{})
 	assert.True(t, ok)
 
 	for _, b := range buckets {
