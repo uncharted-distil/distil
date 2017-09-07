@@ -2,7 +2,10 @@
 	<div class="select">
 		<available-variables class="select-available-variables"></available-variables>
 		<training-variables class="select-training-variables"></training-variables>
-		<data-table class="select-data-table"></data-table>
+		<div class="side-container">
+			<target-variable class="select-target-variables"></target-variable>
+			<data-table class="select-data-table"></data-table>
+		</div>
 	</div>
 </template>
 
@@ -10,6 +13,7 @@
 import DataTable from '../components/DataTable';
 import AvailableVariables from '../components/AvailableVariables';
 import TrainingVariables from '../components/TrainingVariables';
+import TargetVariable from '../components/TargetVariable';
 
 export default {
 	name: 'select',
@@ -17,7 +21,8 @@ export default {
 	components: {
 		DataTable,
 		AvailableVariables,
-		TrainingVariables
+		TrainingVariables,
+		TargetVariable
 	},
 
 	mounted() {
@@ -46,7 +51,9 @@ export default {
 .select-training-variables {
 	width: 30%;
 }
-.select-data-table {
+.side-container {
+	display: flex;
+	flex-direction: column;
 	width: 40%;
 }
 </style>

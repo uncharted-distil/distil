@@ -14,6 +14,14 @@ export function setVariableSummaries(state, summaries) {
 	state.trainingVariables = {};
 }
 
+export function setTargetVariable(state, variableName) {
+	state.targetVariable = variableName.toLowerCase();
+}
+
+export function removeTargetVariable(state) {
+	state.targetVariable = null;
+}
+
 export function addTrainingVariable(state, variableName) {
 	Vue.set(state.trainingVariables, variableName.toLowerCase(), true);
 }

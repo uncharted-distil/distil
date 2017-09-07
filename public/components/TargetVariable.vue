@@ -1,11 +1,11 @@
 <template>
-	<div class='training-variables'>
+	<div class='target-variables'>
 		<div class="bg-faded rounded-top">
-			<h6 class="nav-link">Training Set</h6>
+			<h6 class="nav-link">Target Variable</h6>
 		</div>
 		<variable-facets
-			enable-filter="true"
-			enable-toggle="true"
+			enable-filter="false"
+			enable-toggle="false"
 			:variables="variables"
 			:dataset="dataset"
 			:html="html"></variable-facets>
@@ -29,7 +29,11 @@ export default {
 			return this.$store.getters.getRouteDataset();
 		},
 		variables() {
-			return this.$store.getters.getTrainingVariables();
+			const target = this.$store.getters.getTargetVariable();
+			if (target) {
+				return [ target ];
+			}
+			return [];
 		},
 		html() {
 			return (group) => {
@@ -38,8 +42,7 @@ export default {
 				remove.className += 'btn btn-sm btn-outline-secondary mb-2';
 				remove.innerHTML = 'Remove';
 				remove.addEventListener('click', () => {
-					console.log('training click', group.key);
-					this.$store.commit('removeTrainingVariable', group.key);
+					this.$store.commit('removeTargetVariable', group.key);
 				});
 				container.appendChild(remove);
 				return container;

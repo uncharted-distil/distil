@@ -4,6 +4,8 @@
 			<h6 class="nav-link">Summaries</h6>
 		</div>
 		<variable-facets
+			enable-filter="true"
+			enable-toggle="true"
 			:variables="variables"
 			:dataset="dataset"></variable-facets>
 	</div>

@@ -1,12 +1,12 @@
 <template>
 	<div class='variable-facets'>
 		<div>
-			<div>
+			<div v-if="enableFilter==true">
 				<b-form-fieldset horizontal label="Filter" :label-cols="3">
 					<b-form-input v-model="filter" placeholder="Type to Search" />
 				</b-form-fieldset>
 			</div>
-			<div>
+			<div v-if="enableToggle==true">
 				<b-form-fieldset horizontal label="Toggle" :label-cols="3">
 					<b-button variant="outline-secondary" @click="selectAll">All</b-button>
 					<b-button variant="outline-secondary" @click="deselectAll">None</b-button>
@@ -15,7 +15,7 @@
 		</div>
 		<facets class="facets-container" v-if="groups.length>0"
 			:groups="groups"
-			v-on:drag-end="onDragEnd"
+			:html="html"
 			v-on:expand="onExpand"
 			v-on:collapse="onCollapse"
 			v-on:range-change="onRangeChange"
@@ -44,9 +44,11 @@ export default {
 	},
 
 	props: [
+		'enable-filter',
+		'enable-toggle',
 		'variables',
 		'dataset',
-		'dragEnd'
+		'html',
 	],
 
 	data() {
@@ -71,9 +73,6 @@ export default {
 	},
 
 	methods: {
-		onDragEnd(key) {
-			this.dragEnd(key);
-		},
 		updateFilterRoute(key, values) {
 			// retrieve the filters from the route
 			const filters = this.$store.getters.getRouteFilters();

@@ -53,7 +53,8 @@ export function getVariableSummaries(state) {
 export function getAvailableVariables(state) {
 	return () => {
 		return state.variableSummaries.filter(variable => {
-			return !state.trainingVariables[variable.name.toLowerCase()];
+			return state.targetVariable !== variable.name.toLowerCase() &&
+				!state.trainingVariables[variable.name.toLowerCase()];
 		});
 	};
 }
@@ -61,8 +62,20 @@ export function getAvailableVariables(state) {
 export function getTrainingVariables(state) {
 	return () => {
 		return state.variableSummaries.filter(variable => {
-			return state.trainingVariables[variable.name.toLowerCase()];
+			return state.targetVariable !== variable.name.toLowerCase() &&
+				state.trainingVariables[variable.name.toLowerCase()];
 		});
+	};
+}
+
+export function getTargetVariable(state) {
+	return () => {
+		if (!state.targetVariable) {
+			return null;
+		}
+		return state.variableSummaries.filter(variable => {
+			return state.targetVariable === variable.name.toLowerCase();
+		})[0];
 	};
 }
 

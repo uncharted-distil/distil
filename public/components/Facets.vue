@@ -12,7 +12,8 @@ export default {
 	name: 'facets',
 
 	props: [
-		'groups'
+		'groups',
+		'html'
 	],
 
 	mounted() {
@@ -21,6 +22,9 @@ export default {
 		this.facets = new Facets(this.$refs.facets, this.groups.map(group => {
 			return _.cloneDeep(group);
 		}));
+		this.groups.forEach(group => {
+			this.injectHTML(group, this.facets.getGroup(group.key)._element);
+		});
 		this.facets.getGroupIndices().forEach(key => {
 			const group = component.facets.getGroup(key);
 			// initialize selection
@@ -35,9 +39,6 @@ export default {
 		});
 		this.facets.on('facet-histogram:rangechangeduser', (event, key, value) => {
 			component.$emit('range-change', key, value);
-		});
-		this.facets.on('facet-group:dragging:end', (event, key) => {
-			component.$emit('drag-end', key);
 		});
 		this.facets.on('facet:click', (event, key, value) => {
 			// get group
@@ -83,6 +84,17 @@ export default {
 	},
 
 	methods: {
+		injectHTML(group, $elem) {
+			if (!this.html) {
+				return;
+			}
+			const $group = $elem.find('.facets-group');
+			if (_.isFunction(this.html)) {
+				$group.append(this.html(group));
+			} else {
+				$group.append(this.html);
+			}
+		},
 		groupsEqual(a, b) {
 			const OMITTED_FIELDS = ['selection', 'selected'];
 			// NOTE: we dont need to check key, we assume its already equal
@@ -124,6 +136,7 @@ export default {
 					}
 					// replace group if it is existing
 					this.facets.replaceGroup(_.cloneDeep(group));
+					this.injectHTML(group, this.facets.getGroup(group.key)._element);
 				} else {
 					// add to appends
 					toAdd.push(_.cloneDeep(group));
@@ -138,6 +151,9 @@ export default {
 			if (toAdd.length > 0) {
 				// append groups
 				this.facets.append(toAdd);
+				toAdd.forEach(group => {
+					this.injectHTML(group, this.facets.getGroup(group.key)._element);
+				});
 			}
 			// sort alphabetically
 			this.facets.sort((a, b) => {
