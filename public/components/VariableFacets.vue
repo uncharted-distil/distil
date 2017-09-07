@@ -13,7 +13,7 @@
 				</b-form-fieldset>
 			</div>
 		</div>
-		<facets class="facets-container" v-if="groups.length>0"
+		<facets class="facets-container"
 			:groups="groups"
 			:html="html"
 			v-on:expand="onExpand"

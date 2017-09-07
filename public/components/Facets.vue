@@ -25,11 +25,6 @@ export default {
 		this.groups.forEach(group => {
 			this.injectHTML(group, this.facets.getGroup(group.key)._element);
 		});
-		this.facets.getGroupIndices().forEach(key => {
-			const group = component.facets.getGroup(key);
-			// initialize selection
-			group.initializeSelection();
-		});
 		// proxy events
 		this.facets.on('facet-group:expand', (event, key) => {
 			component.$emit('expand', key);
@@ -189,6 +184,7 @@ export default {
 							// selection is the same, no need to change
 							return;
 						}
+						console.log('updating selection');
 						if (currSelection) {
 							const facetSpec = group.facets[index];
 							facet.select(facetSpec.selected ? facetSpec.selected : facetSpec);
