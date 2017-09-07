@@ -14,12 +14,8 @@ import (
 	"github.com/unchartedsoftware/distil/api/elastic"
 	"github.com/unchartedsoftware/distil/api/env"
 	"github.com/unchartedsoftware/distil/api/middleware"
-<<<<<<< 573cf5bffc8538d096953dac60759accdf8435eb
 	"github.com/unchartedsoftware/distil/api/model"
 	es "github.com/unchartedsoftware/distil/api/model/storage/elastic"
-=======
-	//es "github.com/unchartedsoftware/distil/api/model/storage/elastic"
->>>>>>> Fixed insert statement for results. Fixed error handling in pipeline.
 	pg "github.com/unchartedsoftware/distil/api/model/storage/postgres"
 	"github.com/unchartedsoftware/distil/api/pipeline"
 	"github.com/unchartedsoftware/distil/api/postgres"
@@ -71,11 +67,7 @@ func main() {
 	esClientCtor := elastic.NewClient(esEndpoint, false)
 
 	// instantiate storage filter client constructor.
-<<<<<<< 573cf5bffc8538d096953dac60759accdf8435eb
 	esStorageCtor := es.NewStorage(esClientCtor)
-=======
-	//storageCtor := es.NewStorage(esClientCtor)
->>>>>>> Fixed insert statement for results. Fixed error handling in pipeline.
 
 	// instantiate pg storage filter client constructor if needed
 	storageEnv := env.Load("PG_STORAGE", defaultPGStorage)
@@ -127,8 +119,8 @@ func main() {
 	registerRoute(mux, "/distil/variables/:index/:dataset", routes.VariablesHandler(esClientCtor))
 	registerRoute(mux, "/distil/variable-summaries/:index/:dataset/:variable", routes.VariableSummaryHandler(dataStorageCtor, esClientCtor))
 	registerRoute(mux, "/distil/filtered-data/:dataset", routes.FilteredDataHandler(dataStorageCtor))
-	registerRoute(mux, "/distil/results/:index/:dataset/:pipeline-uri", routes.ResultsHandler(esClientCtor))
-	registerRoute(mux, "/distil/results-summary/:index/:dataset/:result-uri", routes.ResultsSummaryHandler(esClientCtor))
+	registerRoute(mux, "/distil/results/:index/:dataset/:pipeline-uri", routes.ResultsHandler(dataStorageCtor))
+	registerRoute(mux, "/distil/results-summary/:index/:dataset/:result-uri", routes.ResultsSummaryHandler(dataStorageCtor))
 	registerRoute(mux, "/ws", ws.PipelineHandler(pipelineClient, esClientCtor, dataStorageCtor))
 	registerRoute(mux, "/*", routes.FileHandler("./dist"))
 
