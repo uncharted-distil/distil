@@ -48,7 +48,7 @@ new Vue({
 		Navigation
 	},
 	template: `
-		<div id="distil-app" class="container-fluid">
+		<div id="distil-app">
 			<navigation/>
 			<router-view class="view"></router-view>
 		</div>`

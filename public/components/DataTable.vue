@@ -1,14 +1,13 @@
 <template>
 	<div class="data-table">
-		<div class="nav bg-faded rounded-top">
+		<div class="bg-faded rounded-top">
 			<h6 class="nav-link">Values</h6>
 		</div>
-		<div class="table-container">
+		<div class="data-table-container">
 			<div v-if="items.length===0">
 				No results
 			</div>
 			<b-table v-if="items.length>0"
-				responsive
 				bordered
 				hover
 				striped
@@ -18,6 +17,7 @@
 				:current-page="currentPage">
 			</b-table>
 		</div>
+
 	</div>
 </template>
 
@@ -62,7 +62,14 @@ export default {
 </script>
 
 <style>
-.table-container {
+
+.data-table {
+	display: flex;
+	flex-direction: column;
+}
+.data-table-container {
+
+	display: flex;
 	overflow: auto;
 }
 </style>

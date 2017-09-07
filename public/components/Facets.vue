@@ -1,5 +1,5 @@
 <template>
-	<div :class="root" v-once></div>
+	<div class="facets" v-once ref="facets"></div>
 </template>
 
 <script>
@@ -13,19 +13,17 @@ export default {
 
 	props: [
 		'groups',
-		'root'
+		'html'
 	],
 
 	mounted() {
 		const component = this;
 		// instantiate the external facets widget
-		this.facets = new Facets(document.querySelector(`.${this.root}`), this.groups.map(group => {
+		this.facets = new Facets(this.$refs.facets, this.groups.map(group => {
 			return _.cloneDeep(group);
 		}));
-		this.facets.getGroupIndices().forEach(key => {
-			const group = component.facets.getGroup(key);
-			// initialize selection
-			group.initializeSelection();
+		this.groups.forEach(group => {
+			this.injectHTML(group, this.facets.getGroup(group.key)._element);
 		});
 		// proxy events
 		this.facets.on('facet-group:expand', (event, key) => {
@@ -81,6 +79,17 @@ export default {
 	},
 
 	methods: {
+		injectHTML(group, $elem) {
+			if (!this.html) {
+				return;
+			}
+			const $group = $elem.find('.facets-group');
+			if (_.isFunction(this.html)) {
+				$group.append(this.html(group));
+			} else {
+				$group.append(this.html);
+			}
+		},
 		groupsEqual(a, b) {
 			const OMITTED_FIELDS = ['selection', 'selected'];
 			// NOTE: we dont need to check key, we assume its already equal
@@ -122,6 +131,7 @@ export default {
 					}
 					// replace group if it is existing
 					this.facets.replaceGroup(_.cloneDeep(group));
+					this.injectHTML(group, this.facets.getGroup(group.key)._element);
 				} else {
 					// add to appends
 					toAdd.push(_.cloneDeep(group));
@@ -136,7 +146,16 @@ export default {
 			if (toAdd.length > 0) {
 				// append groups
 				this.facets.append(toAdd);
+				toAdd.forEach(group => {
+					this.injectHTML(group, this.facets.getGroup(group.key)._element);
+				});
 			}
+			// sort alphabetically
+			this.facets.sort((a, b) => {
+				const textA = a.key.toLowerCase();
+				const textB = b.key.toLowerCase();
+				return (textA < textB) ? -1 : (textA > textB) ? 1 : 0;
+			});
 			// return unchanged groups
 			return unchanged;
 		},
@@ -165,6 +184,7 @@ export default {
 							// selection is the same, no need to change
 							return;
 						}
+						console.log('updating selection');
 						if (currSelection) {
 							const facetSpec = group.facets[index];
 							facet.select(facetSpec.selected ? facetSpec.selected : facetSpec);

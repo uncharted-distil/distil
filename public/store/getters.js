@@ -21,11 +21,39 @@ export function getRouteFilter(state) {
 	};
 }
 
+export function getRouteTrainingVariables(state) {
+	return () => {
+		return state.route.query.training ? state.route.query.training.split(',') : [];
+	};
+}
+
+export function getRouteTrainingVariablesMap(state, getters) {
+	return () => {
+		const training = getters.getRouteTrainingVariables();
+		const map = {};
+		training.forEach(variable => {
+			map[variable.toLowerCase()] = true;
+		});
+		return map;
+	};
+}
+
+export function getRouteTargetVariable(state) {
+	return () => {
+		return state.route.query.target ? state.route.query.target.toLowerCase(): null;
+	};
+}
+
 export function getRouteFilters(state) {
 	return () => {
 		const result = {};
 		_.forEach(state.route.query, (value, key) => {
-			if (key !== 'dataset' && key !== 'terms' && key !== 'createRequestId') {
+			// TODO: this is awful and error prone
+			if (key !== 'dataset' &&
+				key !== 'terms' &&
+				key !== 'training' &&
+				key !== 'target' &&
+				key !== 'createRequestId') {
 				result[key] = value;
 			}
 		});
@@ -54,6 +82,40 @@ export function getVariableSummaries(state) {
 	return () => state.variableSummaries;
 }
 
+export function getAvailableVariables(state, getters) {
+	return () => {
+		const training = getters.getRouteTrainingVariablesMap();
+		const target = getters.getRouteTargetVariable();
+		return state.variableSummaries.filter(variable => {
+			return target !== variable.name.toLowerCase() &&
+				!training[variable.name.toLowerCase()];
+		});
+	};
+}
+
+export function getTrainingVariables(state, getters) {
+	return () => {
+		const training = getters.getRouteTrainingVariablesMap();
+		const target = getters.getRouteTargetVariable();
+		return state.variableSummaries.filter(variable => {
+			return target !== variable.name.toLowerCase() &&
+				training[variable.name.toLowerCase()];
+		});
+	};
+}
+
+export function getTargetVariable(state, getters) {
+	return () => {
+		const target = getters.getRouteTargetVariable();
+		if (!target) {
+			return null;
+		}
+		return state.variableSummaries.filter(variable => {
+			return target === variable.name.toLowerCase();
+		})[0];
+	};
+}
+
 export function getFilteredData(state) {
 	return () => state.filteredData;
 }
@@ -61,7 +123,9 @@ export function getFilteredData(state) {
 export function getFilteredDataItems(state) {
 	return () => {
 		const data = state.filteredData;
-		if (!_.isEmpty(data)) {
+		if (!_.isEmpty(data) &&
+			!_.isEmpty(data.values) &&
+			!_.isEmpty(data.metadata)) {
 			return _.map(data.values, d => {
 				const rowObj = {};
 				for (const [idx, varMeta] of data.metadata.entries()) {
@@ -82,7 +146,8 @@ export function getFilteredDataFields(state) {
 			const result = {};
 			for (let varMeta of data.metadata) {
 				result[varMeta.name] = {
-					label: varMeta.name
+					label: varMeta.name,
+					sortable: true
 				};
 			}
 			return result;

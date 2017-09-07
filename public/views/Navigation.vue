@@ -1,5 +1,7 @@
 <template>
-	<nav-bar class="col-md-12"></nav-bar>
+	<div class="navigation">
+		<nav-bar></nav-bar>
+	</div>
 </template>
 
 <script>
@@ -13,4 +15,6 @@ export default {
 </script>
 
 <style>
+.navigation {
+}
 </style>

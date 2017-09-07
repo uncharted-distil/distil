@@ -1,7 +1,7 @@
 <template>
-	<div class="row mt-2 mb-2">
-		<data-table class="col-md-8"></data-table>
-		<variable-summaries class="col-md-4"></variable-summaries>
+	<div class="explore">
+		<variable-summaries class="explore-variable-summaries"></variable-summaries>
+		<data-table class="explore-data-table"></data-table>
 	</div>
 </template>
 
@@ -11,12 +11,36 @@ import VariableSummaries from '../components/VariableSummaries';
 
 export default {
 	name: 'explore',
+
 	components: {
 		DataTable,
 		VariableSummaries
+	},
+
+	mounted() {
+		const dataset = this.$store.getters.getRouteDataset();
+		this.$store.dispatch('getVariableSummaries', dataset);
+	},
+
+	watch: {
+		'$route.query.dataset'() {
+			const dataset = this.$store.getters.getRouteDataset();
+			this.$store.dispatch('getVariableSummaries', dataset);
+		}
 	}
 };
 </script>
 
 <style>
+.explore {
+	display: flex;
+	justify-content: space-around;
+	padding: 8px;
+}
+.explore-variable-summaries {
+	width: 30%;
+}
+.explore-data-table {
+	width: 60%;
+}
 </style>

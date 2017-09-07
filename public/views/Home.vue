@@ -1,16 +1,10 @@
 <template>
-	<div>
-		<div class="row justify-content-center mt-2 mb-2">
-			<search-bar class="col-md-6"></search-bar>
-		</div>
-		<div class="row justify-content-center mt-2 mb-2">
-			<div class="col-md-6">Running Pipelines</div>
-		</div>
-		<div class="row justify-content-center mt-2 mb-2">
-			<div class="col-md-6">Recent Data Sets</div>
-		</div>
-		<div class="row justify-content-center mt-2 mb-2">
-			<div class="col-md-6">Recent Pipelines</div>
+	<div class="home-view">
+		<search-bar class="home-search-bar"></search-bar>
+		<div class="home-items">
+			<div>Running Pipelines</div>
+			<div>Recent Data Sets</div>
+			<div>Recent Pipelines</div>
 		</div>
 	</div>
 </template>
@@ -26,4 +20,19 @@ export default {
 </script>
 
 <style>
+.home-view {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+}
+.home-search-bar {
+	display: flex;
+	margin: 8px;
+	width: 50%;
+}
+.home-items {
+	display: flex;
+	width: 50%;
+	flex-direction: column;
+}
 </style>

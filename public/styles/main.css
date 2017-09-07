@@ -18,6 +18,17 @@
 	cursor: pointer;
 }
 
-body {
-	padding-top:70px
+html, body {
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    padding: 0;
+}
+
+#distil-app {
+	width: 100%;
+    height: 100%;
+
+    display: flex;
+    flex-direction: column;
 }

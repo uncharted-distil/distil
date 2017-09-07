@@ -11,6 +11,7 @@ export function setDatasets(state, datasets) {
 
 export function setVariableSummaries(state, summaries) {
 	state.variableSummaries = summaries;
+	state.trainingVariables = {};
 }
 
 export function updateVariableSummaries(state, args) {
