@@ -22,11 +22,12 @@ type Client struct {
 	client   PipelineComputeClient
 	conn     *grpc.ClientConn
 	mu       *sync.Mutex
+	DataDir  string
 }
 
 // NewClient creates a new pipline reuqest dispatcher instance. This will establish
 // the connection to the pipeline server or return an error on fail
-func NewClient(serverAddr string) (*Client, error) {
+func NewClient(serverAddr string, dataDir string) (*Client, error) {
 	conn, err := grpc.Dial(
 		serverAddr,
 		grpc.WithInsecure(),
@@ -43,6 +44,7 @@ func NewClient(serverAddr string) (*Client, error) {
 	client.sessions = make(map[string]*Session)
 	client.client = NewPipelineComputeClient(conn)
 	client.conn = conn
+	client.DataDir = dataDir
 	return &client, nil
 }
 
@@ -81,7 +83,7 @@ func (c *Client) StartSession(ctx context.Context) (*Session, error) {
 
 	log.Infof("Starting session with server API version [%v] and UserAgent [%v]", result.GetVersion(), result.GetUserAgent())
 	if result.GetVersion() != APIVersion() {
-		log.Warnf("Server didn't not expected version [%v]", APIVersion())
+		log.Warnf("Server did not provide expected version [%v]", APIVersion())
 	}
 
 	// create session

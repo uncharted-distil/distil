@@ -160,16 +160,17 @@ export function createPipelines(context, request) {
 		}
 
 		// inject the name
-		const name = `${context.getters.getRouteDataset()}-${request.feature}-${res.pipelineId.substring(1,5)}`;
+		const name = `${context.getters.getRouteDataset()}-${request.feature}-${res.pipelineId.substring(0,8)}`;
 		res.name = name;
 
 		// add/update the running pipeline info
 		context.commit('addRunningPipeline', res);
 		if (res.progress === PIPELINE_COMPLETE) {
 			//move the pipeline from running to complete
-			context.commit('removeRunningPipeline', res.pipelineId);
+			context.commit('removeRunningPipeline', {pipelineId: res.pipelineId, requestId: res.requestId});
 			context.commit('addCompletedPipeline', {
 				name: res.name,
+				requestId: res.requestId,
 				pipelineId: res.pipelineId,
 				pipeline: res.pipeline
 			});
@@ -179,6 +180,7 @@ export function createPipelines(context, request) {
 	stream.send({
 		type: CREATE_PIPELINES_MSG,
 		session: sessionID,
+		index: ES_INDEX,
 		dataset: context.getters.getRouteDataset(),
 		feature: request.feature,
 		task: request.task,
@@ -187,4 +189,54 @@ export function createPipelines(context, request) {
 		maxPipelines: 3,
 		filters: decodeFilters(context.getters.getRouteFilters())
 	});
+}
+
+// fetches results for a given pipeline create request
+export function getResultsSummaries(context, args) {
+	const results = context.getters.getPipelineResults(args.requestId);
+
+	// save a placeholder histogram
+	const pendingHistograms = _.map(results, r => {
+		return {
+			name: r.name,
+			pending: true
+		};
+	});
+	context.commit('setResultsSummaries', pendingHistograms);
+
+	const dataset = context.getters.getRouteDataset();
+
+
+	// dispatch a request to fetch the results for each pipeline
+	for (var result of results) {
+		const name = result.name;
+		const res = encodeURIComponent(result.pipeline.resultUri);
+		axios.get(`/distil/results-summary/${ES_INDEX}/${dataset}/${res}`)
+		.then(response => {
+			// save the histogram data
+			const histogram = response.data.histogram;
+			if (!histogram) {
+				context.commit('setResultsSummaries', [
+					{
+						name: name,
+						err: 'No analysis available'
+					}
+				]);
+				return;
+			}
+			// ensure buckets is not nil
+			histogram.buckets = histogram.buckets ? histogram.buckets : [];
+			histogram.name = name;
+			context.commit('updateResultsSummaries', histogram);
+		})
+		.catch(error => {
+			context.commit('setResultsSummaries', [
+				{
+					name: name,
+					err: error
+				}
+			]);
+			return;
+		});
+	}
 }

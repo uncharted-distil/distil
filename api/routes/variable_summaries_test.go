@@ -80,7 +80,7 @@ func TestVariableSummaryHandlerCategorical(t *testing.T) {
 	req := mock.HTTPRequest(t, "GET", "/distil/variable_summaries", map[string]string{
 		"index":    "datasets",
 		"dataset":  "o_185",
-		"variable": "Player",
+		"variable": "Position",
 	}, nil)
 
 	// execute the test request - stubbed ES server will return the JSON
@@ -93,7 +93,7 @@ func TestVariableSummaryHandlerCategorical(t *testing.T) {
 	expected, err := json.Unmarshal([]byte(
 		`{
 			"histogram": {
-				"name":"Player",
+				"name":"Position",
 				"type":"categorical",
 				"buckets":[
 					{"key":"a","count":0},
@@ -133,12 +133,12 @@ func TestVariableSummaryHandlerCategoricalPostgres(t *testing.T) {
 	req := mock.HTTPRequest(t, "GET", "/distil/variable_summaries", map[string]string{
 		"index":    "datasets",
 		"dataset":  "o_185",
-		"variable": "Player",
+		"variable": "Position",
 	}, nil)
 
 	// setup the expected query
 	mockDB.EXPECT().Query(
-		"SELECT Player, COUNT(*) AS count FROM o_185 GROUP BY Player;").Return(nil, nil)
+		"SELECT \"Position\", COUNT(*) AS count FROM o_185 GROUP BY \"Position\";").Return(nil, nil)
 
 	// execute the test request
 	res := mock.HTTPResponse(t, req, VariableSummaryHandler(storageCtor, ctorES))
@@ -149,7 +149,7 @@ func TestVariableSummaryHandlerCategoricalPostgres(t *testing.T) {
 	expected, err := json.Unmarshal([]byte(
 		`{
 			"histogram": {
-				"name":"Player",
+				"name":"Position",
 				"type":"categorical",
 				"buckets":[]
 			}

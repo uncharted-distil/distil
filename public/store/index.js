@@ -40,6 +40,18 @@ const state = {
 		//     ]
 		// }
 	],
+	// results summary data for the selected pipeline run
+	resultsSummaries: [
+		// {
+		//     name: '',
+		//     buckets: [
+		//     {
+		//             key: '',
+		//             count: 0
+		//         }
+		//     ]
+		// }
+	],
 	// filtered data entries for the active dataset
 	filteredData: {
 		// name: '',
@@ -53,28 +65,34 @@ const state = {
 		//     []
 		// ]
 	},
-	// running pipline creation tasks
+	// running pipline creation tasks grouped by parent create requestID
 	runningPipelines: {
-		// pipelineId: {
-		//     id: '',
-		//     pipelineId: '',
-		//     progress: '',
-		//     session: ''
+		// requestId: {
+		//     pipelineId: {
+		//         name: '',
+		//         id: '',
+		//         pipelineId: '',
+		//         progress: '',
+		//         session: ''
+		//     }
 		// }
 	},
+	// completed pipeline creation tasks grouped by parent create request ID
 	completedPipelines: {
-		// pipelineId: {
-		//     name: '',
-		//     id: '',
-		//     pipelineId: '',
-		//     pipeline: { // only present if progress === COMPLETE
-		//         output: '',
-		//         scores: [
-		//             {
-		//                 metric: '',
-		//                 value: 0.1
-		//             }
-		//         ]
+		// requestId: {
+		//     pipelineId: {
+		//         name: '',
+		//         id: '',
+		//         pipelineId: '',
+		//         pipeline: { // only present if progress === COMPLETE
+		//             output: '',
+		//             scores: [
+		//                {
+		//                    metric: '',
+		//                    value: 0.1
+		//                }
+		//             ]
+		//         }
 		//     }
 		// }
 	},

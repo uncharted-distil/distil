@@ -3,6 +3,7 @@ package main
 import (
 	"net/http"
 	"os"
+	"strconv"
 	"syscall"
 
 	"github.com/unchartedsoftware/plog"
@@ -13,8 +14,11 @@ import (
 	"github.com/unchartedsoftware/distil/api/elastic"
 	"github.com/unchartedsoftware/distil/api/env"
 	"github.com/unchartedsoftware/distil/api/middleware"
+	"github.com/unchartedsoftware/distil/api/model"
 	es "github.com/unchartedsoftware/distil/api/model/storage/elastic"
+	pg "github.com/unchartedsoftware/distil/api/model/storage/postgres"
 	"github.com/unchartedsoftware/distil/api/pipeline"
+	"github.com/unchartedsoftware/distil/api/postgres"
 	"github.com/unchartedsoftware/distil/api/redis"
 	"github.com/unchartedsoftware/distil/api/routes"
 	"github.com/unchartedsoftware/distil/api/ws"
@@ -26,6 +30,13 @@ const (
 	defaultRedisExpiry             = -1 // no expiry
 	defaultAppPort                 = "8080"
 	defaultPipelineComputeEndPoint = "localhost:9500"
+	defaultPipelineDataDir         = "datasets"
+	defaultPGStorage               = "false"
+	defaultPGHost                  = "localhost"
+	defaultPGPort                  = "5432"
+	defaultPGUser                  = "distil"
+	defaultPGPassword              = ""
+	defaultPGDatabase              = "distil"
 )
 
 var (
@@ -49,15 +60,45 @@ func main() {
 	httpPort := env.Load("PORT", defaultAppPort)
 	// load compute server endpoint
 	pipelineComputeEndpoint := env.Load("PIPELINE_COMPUTE_ENDPOINT", defaultPipelineComputeEndPoint)
+	// load default temp dataset directory
+	pipelineDataDir := env.Load("PIPELINE_DATA_DIR", defaultPipelineDataDir)
 
-	// instantiate elasticsearch client constructor.
+	// instantiate elastic client constructor.
 	esClientCtor := elastic.NewClient(esEndpoint, false)
 
 	// instantiate storage filter client constructor.
-	storageCtor := es.NewStorage(esClientCtor)
+	esStorageCtor := es.NewStorage(esClientCtor)
+
+	// instantiate pg storage filter client constructor if needed
+	storageEnv := env.Load("PG_STORAGE", defaultPGStorage)
+	pgStorage, err := strconv.ParseBool(storageEnv)
+	if err != nil {
+		log.Warnf("Failed to parse PG_STORAGE as bool: %v", err)
+		pgStorage = false
+	}
+
+	var dataStorageCtor model.StorageCtor
+	if pgStorage {
+		// load the postgres parameters.
+		pgHost := env.Load("PG_HOST", defaultPGHost)
+		pgPort := env.Load("PG_PORT", defaultPGPort)
+		pgUser := env.Load("PG_USER", defaultPGUser)
+		pgPassword := env.Load("PG_PASSWORD", defaultPGPassword)
+		pgDatabase := env.Load("PG_DATABASE", defaultPGDatabase)
+
+		// instantiate the postgres client constructor.
+		postgresClientCtor := postgres.NewClient(pgHost, pgPort, pgUser, pgPassword, pgDatabase)
+
+		// instantiate the postgres storage constructor.
+		pgStorageCtor := pg.NewStorage(postgresClientCtor)
+
+		dataStorageCtor = pgStorageCtor
+	} else {
+		dataStorageCtor = esStorageCtor
+	}
 
 	// instantiate the pipeline compute client
-	pipelineClient, err := pipeline.NewClient(pipelineComputeEndpoint)
+	pipelineClient, err := pipeline.NewClient(pipelineComputeEndpoint, pipelineDataDir)
 	if err != nil {
 		log.Errorf("%v", err)
 		os.Exit(1)
@@ -76,9 +117,11 @@ func main() {
 
 	registerRoute(mux, "/distil/datasets/:index", routes.DatasetsHandler(esClientCtor))
 	registerRoute(mux, "/distil/variables/:index/:dataset", routes.VariablesHandler(esClientCtor))
-	registerRoute(mux, "/distil/variable-summaries/:index/:dataset/:variable", routes.VariableSummaryHandler(storageCtor, esClientCtor))
-	registerRoute(mux, "/distil/filtered-data/:dataset", routes.FilteredDataHandler(storageCtor))
-	registerRoute(mux, "/ws", ws.PipelineHandler(pipelineClient, storageCtor))
+	registerRoute(mux, "/distil/variable-summaries/:index/:dataset/:variable", routes.VariableSummaryHandler(dataStorageCtor, esClientCtor))
+	registerRoute(mux, "/distil/filtered-data/:dataset", routes.FilteredDataHandler(dataStorageCtor))
+	registerRoute(mux, "/distil/results/:index/:dataset/:pipeline-uri", routes.ResultsHandler(esClientCtor))
+	registerRoute(mux, "/distil/results-summary/:index/:dataset/:result-uri", routes.ResultsSummaryHandler(esClientCtor))
+	registerRoute(mux, "/ws", ws.PipelineHandler(pipelineClient, esClientCtor, dataStorageCtor))
 	registerRoute(mux, "/*", routes.FileHandler("./dist"))
 
 	// catch kill signals for graceful shutdown

@@ -54,7 +54,7 @@ func (s *Storage) FetchData(dataset string, filterParams *model.FilterParams) (*
 	params := make([]interface{}, 0)
 	wheres := make([]string, len(filterParams.Ranged))
 	for i, variable := range filterParams.Ranged {
-		wheres[i] = fmt.Sprintf("%s.value >= $%d AND %s.value <= $%d", variable.Name, i*2+1, variable.Name, i*2+2)
+		wheres[i] = fmt.Sprintf("\"%s\" >= $%d AND \"%s\" <= $%d", variable.Name, i*2+1, variable.Name, i*2+2)
 		params = append(params, variable.Min)
 		params = append(params, variable.Max)
 	}
@@ -68,7 +68,7 @@ func (s *Storage) FetchData(dataset string, filterParams *model.FilterParams) (*
 			categories[i] = fmt.Sprintf("$%d", baseParam+i)
 			params = append(params, variable.Categories[i])
 		}
-		wheres = append(wheres, fmt.Sprintf("%s.value IN (%s)", variable.Name, strings.Join(categories, ", ")))
+		wheres = append(wheres, fmt.Sprintf("\"%s\" IN (%s)", variable.Name, strings.Join(categories, ", ")))
 	}
 	//for _, variableName := range filterParams.None {
 	//    excludes = append(excludes, variableName)

@@ -20,7 +20,7 @@ func (s *Storage) getHistogramAggQuery(extrema *model.Extrema) (string, string) 
 
 	// get histogram agg name & query string.
 	histogramAggName := model.HistogramAggPrefix + extrema.Name
-	histogramQueryString := fmt.Sprintf("(%s / %f) * %f", extrema.Name, interval, interval)
+	histogramQueryString := fmt.Sprintf("(\"%s\" / %f) * %f", extrema.Name, interval, interval)
 
 	return histogramAggName, histogramQueryString
 }
@@ -36,7 +36,7 @@ func (s *Storage) parseNumericHistogram(rows *pgx.Rows, extrema *model.Extrema) 
 		var bucketCount int64
 		err := rows.Scan(&bucketValue, &bucketCount)
 		if err != nil {
-			return nil, errors.Errorf("no %s histogram aggregation found", histogramAggName)
+			return nil, errors.Wrap(err, fmt.Sprintf("no %s histogram aggregation found", histogramAggName))
 		}
 
 		var key string
@@ -71,7 +71,7 @@ func (s *Storage) parseCategoricalHistogram(rows *pgx.Rows, variable *model.Vari
 			var bucketCount int64
 			err := rows.Scan(&term, &bucketCount)
 			if err != nil {
-				return nil, errors.Errorf("no %s histogram aggregation found", termsAggName)
+				return nil, errors.Wrap(err, fmt.Sprintf("no %s histogram aggregation found", termsAggName))
 			}
 
 			buckets = append(buckets, &model.Bucket{
@@ -95,7 +95,7 @@ func (s *Storage) parseExtrema(row *pgx.Row, variable *model.Variable) (*model.E
 	if row != nil {
 		err := row.Scan(&minValue, &maxValue)
 		if err != nil {
-			return nil, errors.Errorf("no min/max aggregation found")
+			return nil, errors.Wrap(err, "no min/max aggregation found")
 		}
 	}
 	// check values exist
@@ -117,7 +117,7 @@ func (s *Storage) getMinMaxAggsQuery(variable *model.Variable) string {
 	maxAggName := model.MaxAggPrefix + variable.Name
 
 	// create aggregations
-	queryPart := fmt.Sprintf("MIN(%s) AS %s, MAX(%s) AS %s", variable.Name, minAggName, variable.Name, maxAggName)
+	queryPart := fmt.Sprintf("MIN(\"%s\") AS %s, MAX(\"%s\") AS %s", variable.Name, minAggName, variable.Name, maxAggName)
 	// add aggregations
 	return queryPart
 }
@@ -160,7 +160,7 @@ func (s *Storage) fetchNumericalHistogram(dataset string, variable *model.Variab
 
 func (s *Storage) fetchCategoricalHistogram(dataset string, variable *model.Variable) (*model.Histogram, error) {
 	// Get count by category.
-	query := fmt.Sprintf("SELECT %s, COUNT(*) AS count FROM %s GROUP BY %s;", variable.Name, dataset, variable.Name)
+	query := fmt.Sprintf("SELECT \"%s\", COUNT(*) AS count FROM %s GROUP BY \"%s\";", variable.Name, dataset, variable.Name)
 
 	// execute the postgres query
 	res, err := s.client.Query(query)
