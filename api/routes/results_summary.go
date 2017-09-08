@@ -21,9 +21,9 @@ func ResultsSummaryHandler(ctor model.StorageCtor) func(http.ResponseWriter, *ht
 		// extract route parameters
 		index := pat.Param(r, "index")
 		dataset := pat.Param(r, "dataset")
-		resultURI, err := url.PathUnescape(pat.Param(r, "result-uri"))
+		resultURI, err := url.PathUnescape(pat.Param(r, "results-uri"))
 		if err != nil {
-			handleError(w, errors.Wrap(err, "unable to unescape result uri"))
+			handleError(w, errors.Wrap(err, "unable to unescape results uri"))
 			return
 		}
 

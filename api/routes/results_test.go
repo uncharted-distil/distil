@@ -21,9 +21,9 @@ func TestResultsHandler(t *testing.T) {
 
 	// put together a stub pipeline request
 	params := map[string]string{
-		"dataset":    "o_185",
-		"index":      "datasets",
-		"result-uri": "./testdata/results.csv",
+		"dataset":     "o_185",
+		"index":       "datasets",
+		"results-uri": "./testdata/results.csv",
 	}
 	req := mock.HTTPRequest(t, "GET", "/distil/results/", params, nil)
 
