@@ -34,6 +34,6 @@ type FilterParams struct {
 // FetchFilteredData creates a query to fetch a set of documents.  Applies filters to restrict the
 // results to a user selected set of fields, with documents further filtered based on allowed ranges and
 // categories.
-func FetchFilteredData(storage Storage, dataset string, filterParams *FilterParams) (*FilteredData, error) {
-	return storage.FetchData(dataset, filterParams)
+func FetchFilteredData(storage Storage, dataset string, index string, filterParams *FilterParams) (*FilteredData, error) {
+	return storage.FetchData(dataset, index, filterParams)
 }

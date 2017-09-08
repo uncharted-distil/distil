@@ -166,7 +166,7 @@ export function getPipelineResults(state) {
 }
 
 export function getWebSocketConnection() {
-	const conn = new Connection('/ws', err => {
+	const conn = new Connection(`/ws/${ES_INDEX}`, err => {
 		if (err) {
 			console.warn(err);
 			return;
