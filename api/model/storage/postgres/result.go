@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"encoding/csv"
 	"fmt"
+	"math"
 	"os"
 	"strconv"
 
@@ -89,7 +90,10 @@ func (s *Storage) PersistResult(dataset string, resultURI string) error {
 		}
 
 		// store the result to the storage
-		return s.executeInsertResultStatement(dataset, resultURI, parsedVal, targetName, records[i][1])
+		err = s.executeInsertResultStatement(dataset, resultURI, parsedVal, targetName, records[i][1])
+		if err != nil {
+			return errors.Wrap(err, "failed to insert result in database")
+		}
 	}
 
 	return nil
@@ -157,7 +161,7 @@ func (s *Storage) FetchResults(dataset string, resultURI string, index string) (
 	datasetResult := s.getResultTable(dataset)
 	targetName, err := s.getResultTargetName(datasetResult, resultURI, index)
 	// fetch the variable info to resolve its type - skip the first column since that will be the d3m_index value
-	variable, err := s.getResultTargetVariable(datasetResult, index, targetName)
+	variable, err := s.getResultTargetVariable(dataset, index, targetName)
 	if err != nil {
 		return nil, err
 	}
@@ -172,9 +176,57 @@ func (s *Storage) FetchResults(dataset string, resultURI string, index string) (
 	return s.parseResults(dataset, rows, variable)
 }
 
-func (s *Storage) fetchResultExtrema(resultURI string, dataset string, variable *model.Variable) (*model.Extrema, error) {
+func (s *Storage) getResultMinMaxAggsQuery(variable *model.Variable, resultVariable *model.Variable) string {
+	// get min / max agg names
+	minAggName := model.MinAggPrefix + resultVariable.Name
+	maxAggName := model.MaxAggPrefix + resultVariable.Name
+
+	// Only numeric types should occur.
+	var fieldTyped string
+	switch variable.Type {
+	case model.IntegerType:
+		fieldTyped = fmt.Sprintf("cast(\"%s\" as double precision)", resultVariable.Name)
+	case model.FloatType:
+		fieldTyped = fmt.Sprintf("cast(\"%s\" as double precision)", resultVariable.Name)
+	default:
+		fieldTyped = "error type"
+	}
+
+	// create aggregations
+	queryPart := fmt.Sprintf("MIN(%s) AS \"%s\", MAX(%s) AS \"%s\"", fieldTyped, minAggName, fieldTyped, maxAggName)
+	// add aggregations
+	return queryPart
+}
+
+func (s *Storage) getResultHistogramAggQuery(extrema *model.Extrema, variable *model.Variable, resultVariable *model.Variable) (string, string) {
+	// compute the bucket interval for the histogram
+	interval := (extrema.Max - extrema.Min) / model.MaxNumBuckets
+	if extrema.Type != model.FloatType {
+		interval = math.Floor(interval)
+		interval = math.Max(1, interval)
+	}
+
+	// Only numeric types should occur.
+	var fieldTyped string
+	switch variable.Type {
+	case model.IntegerType:
+		fieldTyped = fmt.Sprintf("cast(\"%s\" as double precision)", resultVariable.Name)
+	case model.FloatType:
+		fieldTyped = fmt.Sprintf("cast(\"%s\" as double precision)", resultVariable.Name)
+	default:
+		fieldTyped = "error type"
+	}
+
+	// get histogram agg name & query string.
+	histogramAggName := fmt.Sprintf("\"%s%s\"", model.HistogramAggPrefix, extrema.Name)
+	histogramQueryString := fmt.Sprintf("(%s / %f) * %f", fieldTyped, interval, interval)
+
+	return histogramAggName, histogramQueryString
+}
+
+func (s *Storage) fetchResultExtrema(resultURI string, dataset string, variable *model.Variable, resultVariable *model.Variable) (*model.Extrema, error) {
 	// add min / max aggregation
-	aggQuery := s.getMinMaxAggsQuery(variable)
+	aggQuery := s.getResultMinMaxAggsQuery(variable, resultVariable)
 
 	// create a query that does min and max aggregations for each variable
 	queryString := fmt.Sprintf("SELECT %s FROM %s WHERE result_id = $1 AND target = $2;", aggQuery, dataset)
@@ -188,14 +240,19 @@ func (s *Storage) fetchResultExtrema(resultURI string, dataset string, variable 
 }
 
 func (s *Storage) fetchNumericalResultHistogram(resultURI string, dataset string, variable *model.Variable) (*model.Histogram, error) {
+	resultVariable := &model.Variable{
+		Name: "value",
+		Type: model.TextType,
+	}
+
 	// need the extrema to calculate the histogram interval
-	extrema, err := s.fetchResultExtrema(resultURI, dataset, variable)
+	extrema, err := s.fetchResultExtrema(resultURI, dataset, variable, resultVariable)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to fetch result variable extrema for summary")
 	}
 	// for each returned aggregation, create a histogram aggregation. Bucket
 	// size is derived from the min/max and desired bucket count.
-	histogramName, histogramQuery := s.getHistogramAggQuery(extrema)
+	histogramName, histogramQuery := s.getResultHistogramAggQuery(extrema, variable, resultVariable)
 
 	// Create the complete query string.
 	query := fmt.Sprintf(`
@@ -233,7 +290,7 @@ func (s *Storage) FetchResultsSummary(dataset string, resultURI string, index st
 		return nil, err
 	}
 
-	variable, err := s.getResultTargetVariable(datasetResult, index, targetName)
+	variable, err := s.getResultTargetVariable(dataset, index, targetName)
 	if err != nil {
 		return nil, err
 	}

@@ -89,6 +89,13 @@ func main() {
 		// instantiate the postgres client constructor.
 		postgresClientCtor := postgres.NewClient(pgHost, pgPort, pgUser, pgPassword, pgDatabase)
 
+		// make sure a connection can be made to postgres.
+		_, err = postgresClientCtor()
+		if err != nil {
+			log.Errorf("%v", err)
+			os.Exit(1)
+		}
+
 		// instantiate the postgres storage constructor.
 		pgStorageCtor := pg.NewStorage(postgresClientCtor, esClientCtor)
 

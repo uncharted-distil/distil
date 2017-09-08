@@ -19,7 +19,7 @@ func (s *Storage) getHistogramAggQuery(extrema *model.Extrema) (string, string) 
 	}
 
 	// get histogram agg name & query string.
-	histogramAggName := model.HistogramAggPrefix + extrema.Name
+	histogramAggName := fmt.Sprintf("\"%s%s\"", model.HistogramAggPrefix, extrema.Name)
 	histogramQueryString := fmt.Sprintf("(\"%s\" / %f) * %f", extrema.Name, interval, interval)
 
 	return histogramAggName, histogramQueryString
@@ -117,7 +117,7 @@ func (s *Storage) getMinMaxAggsQuery(variable *model.Variable) string {
 	maxAggName := model.MaxAggPrefix + variable.Name
 
 	// create aggregations
-	queryPart := fmt.Sprintf("MIN(\"%s\") AS %s, MAX(\"%s\") AS %s", variable.Name, minAggName, variable.Name, maxAggName)
+	queryPart := fmt.Sprintf("MIN(\"%s\") AS \"%s\", MAX(\"%s\") AS \"%s\"", variable.Name, minAggName, variable.Name, maxAggName)
 	// add aggregations
 	return queryPart
 }
