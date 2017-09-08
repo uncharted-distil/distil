@@ -12,15 +12,15 @@
   "dependencies": {
     "@uncharted.software/stories-facets": "2.7.0",
     "axios": "0.16.2",
-    "bootstrap-vue": "0.21.0",
+    "bootstrap-vue": "1.0.0-beta.5",
     "font-awesome": "4.7.0",
     "jquery": "3.2.1",
     "lodash": "4.17.4",
     "vue": "2.4.2",
     "vue-router": "2.7.0",
     "vue-template-compiler": "2.4.2",
-    "vuex": "2.3.1",
-    "vuex-router-sync": "4.2.0"
+    "vuex": "2.4.0",
+    "vuex-router-sync": "4.3.1"
   },
   "devDependencies": {
     "babel-core": "6.25.0",

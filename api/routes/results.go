@@ -10,7 +10,7 @@ import (
 	"github.com/unchartedsoftware/distil/api/model"
 )
 
-// Results represents a summary response for a variable.
+// Results represents a results response for a variable.
 type Results struct {
 	Results *model.FilteredData `json:"results"`
 }

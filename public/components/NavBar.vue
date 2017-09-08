@@ -1,5 +1,5 @@
 <template>
-	<b-navbar toggleable type="light" variant="faded" fixed="top" class="bottom-shadowed">
+	<b-navbar toggleable type="light" variant="faded" class="bottom-shadowed">
 
 		<b-nav-toggle target="nav_collapse"></b-nav-toggle>
 
@@ -10,9 +10,9 @@
 			<b-nav is-nav-bar>
 				<b-nav-item @click="onHome" :active="activeView===HOME">Home</b-nav-item>
 				<b-nav-item @click="onSearch" :active="activeView===SEARCH">Search</b-nav-item>
-				<b-nav-item @click="onExplore" :active="activeView===EXPLORE">Explore</b-nav-item>
-				<b-nav-item @click="onSelect" :active="activeView===SELECT">Select</b-nav-item>
-				<b-nav-item @click="onBuild" :active="activeView===BUILD">Build</b-nav-item>
+				<b-nav-item @click="onExplore" :active="activeView===EXPLORE" :disabled="!hasDataset()">Explore</b-nav-item>
+				<b-nav-item @click="onSelect" :active="activeView===SELECT" :disabled="!hasDataset()">Select</b-nav-item>
+				<b-nav-item @click="onBuild" :active="activeView===BUILD" :disabled="!hasDataset()">Build</b-nav-item>
 				<b-nav-item @click="onResults" :active="activeView===RESULTS">Results</b-nav-item>
 			</b-nav>
 			<b-nav is-nav-bar class="ml-auto">
@@ -93,18 +93,22 @@ export default {
 
 		// switch to explore view
 		onExplore() {
-			const entry = createRouteEntry('/explore',{
+			const entry = createRouteEntry('/explore', {
 				dataset: this.$store.getters.getRouteDataset(),
-				filters: this.$store.getters.getRouteFilters()
+				filters: this.$store.getters.getRouteFilters(),
+				target: this.$store.getters.getRouteTargetVariable(),
+				training: this.$store.getters.getRouteTrainingVariables()
 			});
 			this.$router.push(entry);
 		},
 
 		// switch to data view
 		onSelect() {
-			const entry = createRouteEntry('/select',{
+			const entry = createRouteEntry('/select', {
 				dataset: this.$store.getters.getRouteDataset(),
-				filters: this.$store.getters.getRouteFilters()
+				filters: this.$store.getters.getRouteFilters(),
+				target: this.$store.getters.getRouteTargetVariable(),
+				training: this.$store.getters.getRouteTrainingVariables()
 			});
 			this.$router.push(entry);
 		},
@@ -113,7 +117,9 @@ export default {
 		onBuild() {
 			const entry = createRouteEntry('/build', {
 				dataset: this.$store.getters.getRouteDataset(),
-				filters: this.$store.getters.getRouteFilters()
+				filters: this.$store.getters.getRouteFilters(),
+				target: this.$store.getters.getRouteTargetVariable(),
+				training: this.$store.getters.getRouteTrainingVariables()
 			});
 			this.$router.push(entry);
 		},
@@ -124,6 +130,10 @@ export default {
 				dataset: this.$store.getters.getRouteDataset()
 			});
 			this.$router.push(entry);
+		},
+
+		hasDataset() {
+			return !!this.$store.getters.getRouteDataset();
 		},
 
 		updateActive() {
@@ -141,10 +151,10 @@ export default {
 
 <style>
 .session-not-ready {
-  color: #cf3835 !important;
+	color: #cf3835 !important;
 }
 .session-ready {
-  color: #00c07f !important;
+	color: #00c07f !important;
 }
 .app-icon {
 	color: #cf3835 !important;
@@ -153,8 +163,7 @@ export default {
 	padding-right: 4px
 }
 .bottom-shadowed {
-	-webkit-box-shadow: 0px 2px 5px -1px rgba(0,0,0,0.65);
-	-moz-box-shadow: 0px 2px 5px -1px rgba(0,0,0,0.65);
+	width: 100%;
 	box-shadow: 0px 2px 5px -1px rgba(0,0,0,0.65);
 }
 </style>
