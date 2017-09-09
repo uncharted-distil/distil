@@ -1,18 +1,5 @@
 <template>
-	<div class='variable-facets'>
-		<div>
-			<div v-if="enableFilter">
-				<b-form-fieldset horizontal label="Filter" :label-cols="3">
-					<b-form-input v-model="filter" placeholder="Type to Search" />
-				</b-form-fieldset>
-			</div>
-			<div v-if="enableToggle">
-				<b-form-fieldset horizontal label="Toggle" :label-cols="3">
-					<b-button variant="outline-secondary" @click="selectAll">All</b-button>
-					<b-button variant="outline-secondary" @click="deselectAll">None</b-button>
-				</b-form-fieldset>
-			</div>
-		</div>
+	<div class='result-facets'>
 		<facets class="facets-container"
 			:groups="groups"
 			:html="html"
@@ -25,6 +12,7 @@
 
 <script>
 
+import _ from 'lodash';
 import Facets from '../components/Facets';
 import { decodeFilters, updateFilter, getFilterType, isDisabled, CATEGORICAL_FILTER, NUMERICAL_FILTER } from '../util/filters';
 import { createRouteEntry } from '../util/routes';
@@ -33,34 +21,40 @@ import 'font-awesome/css/font-awesome.css';
 import '../styles/spinner.css';
 
 export default {
-	name: 'variable-facets',
+	name: 'result-facets',
 
 	components: {
 		Facets
 	},
 
 	props: [
-		'enable-filter',
-		'enable-toggle',
 		'variables',
 		'dataset',
 		'html'
 	],
 
-	data() {
-		return {
-			filter: ''
-		};
-	},
-
 	computed: {
 		groups() {
-			// filter by search
-			const filtered = this.variables.filter(summary => {
-				return this.filter === '' || summary.name.toLowerCase().includes(this.filter.toLowerCase());
-			});
 			// create the groups
-			let groups = this.createGroups(filtered);
+			let groups = this.createGroups(this.variables);
+			// sort alphabetically
+			groups.sort((a, b) => {
+				const textA = a.key.toLowerCase();
+				const textB = b.key.toLowerCase();
+				return (textA < textB) ? -1 : (textA > textB) ? 1 : 0;
+			});
+			const filters = this.$store.getters.getRouteResultFilters();
+			if (_.isEmpty(filters)) {
+				console.log('set initial state');
+				// disable all filters except first
+				groups.forEach((group, index) => {
+					if (index > 0) {
+						this.updateFilterRoute(group.key, {
+							enabled: false
+						});
+					}
+				});
+			}
 			// update collapsed state
 			groups = this.updateGroupCollapses(groups);
 			// update selections
@@ -70,30 +64,37 @@ export default {
 
 	methods: {
 		updateFilterRoute(key, values) {
-			// retrieve the filters from the route
-			const filters = this.$store.getters.getRouteFilters();
+			const filters = this.$store.getters.getRouteResultFilters();
 			const path = this.$store.getters.getRoutePath();
 			// merge the updated filters back into the route query params
 			const updated = updateFilter(filters, key, values);
 			const entry = createRouteEntry(path, {
+				dataset: this.dataset,
 				target: this.$store.getters.getRouteTargetVariable(),
 				training: this.$store.getters.getRouteTrainingVariables(),
-				dataset: this.dataset,
-				filters: updated,
+				filters: this.$store.getters.getRouteFilters(),
+				createRequestId: this.$store.getters.getRouteCreateRequestId(),
+				results: updated
 			});
 			this.$router.push(entry);
 		},
 		onExpand(key) {
+			// disable all filters except this one
+			this.groups.forEach(group => {
+				if (group.key !== key) {
+					this.updateFilterRoute(group.key, {
+						enabled: false
+					});
+				}
+			});
 			// enable filter
 			this.updateFilterRoute(key, {
 				enabled: true
 			});
 		},
-		onCollapse(key) {
-			// disable filter
-			this.updateFilterRoute(key, {
-				enabled: false
-			});
+		onCollapse() {
+			// TODO: prevent disabling?
+			// no-op
 		},
 		onRangeChange(key, value) {
 			// set range filter
@@ -109,36 +110,6 @@ export default {
 				enabled: true,
 				categories: values
 			});
-		},
-		selectAll() {
-			// enable all filters
-			let filters = this.$store.getters.getRouteFilters();
-			this.groups.forEach(group => {
-				filters = updateFilter(filters, group.key, {
-					enabled: true
-				});
-			});
-			const path = this.$store.getters.getRoutePath();
-			const entry = createRouteEntry(path, {
-				dataset: this.$store.getters.getRouteDataset(),
-				filters: filters
-			});
-			this.$router.push(entry);
-		},
-		deselectAll() {
-			// enable all filters
-			let filters = this.$store.getters.getRouteFilters();
-			this.groups.forEach(group => {
-				filters = updateFilter(filters, group.key, {
-					enabled: false
-				});
-			});
-			const path = this.$store.getters.getRoutePath();
-			const entry = createRouteEntry(path, {
-				dataset: this.$store.getters.getRouteDataset(),
-				filters: filters
-			});
-			this.$router.push(entry);
 		},
 		createErrorFacet(summary) {
 			return {
@@ -218,7 +189,7 @@ export default {
 			});
 		},
 		updateGroupCollapses(groups) {
-			const filters = this.$store.getters.getRouteFilters();
+			const filters = this.$store.getters.getRouteResultFilters();
 			const decoded = decodeFilters(filters);
 			return groups.map(group => {
 				// return if disabled
@@ -227,7 +198,7 @@ export default {
 			});
 		},
 		updateGroupSelections(groups) {
-			const filters = this.$store.getters.getRouteFilters();
+			const filters = this.$store.getters.getRouteResultFilters();
 			const decoded = decodeFilters(filters);
 			return groups.map(group => {
 				// get filter

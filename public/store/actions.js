@@ -206,7 +206,6 @@ export function getResultsSummaries(context, args) {
 
 	const dataset = context.getters.getRouteDataset();
 
-
 	// dispatch a request to fetch the results for each pipeline
 	for (var result of results) {
 		const name = result.name;

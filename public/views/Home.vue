@@ -26,13 +26,10 @@ export default {
 	align-items: center;
 }
 .home-search-bar {
-	display: flex;
 	margin: 8px;
 	width: 50%;
 }
 .home-items {
-	display: flex;
 	width: 50%;
-	flex-direction: column;
 }
 </style>

@@ -1,13 +1,11 @@
 <template>
-	<div>
-		<div class="row justify-content-center mt-2 mb-2">
-			<create-pipelines-form class="col-md-12"></create-pipelines-form>
+	<div class="build-view">
+		<div class="build-form">
+			<create-pipelines-form></create-pipelines-form>
 		</div>
-		<div class="row justify-content-center mt-2 mb-2">
-			<running-pipelines class="col-md-12"></running-pipelines>
-		</div>
-		<div class="row justify-content-center mt-2 mb-2">
-			<completed-pipelines class="col-md-12"></completed-pipelines>
+		<div class="build-results">
+			<running-pipelines></running-pipelines>
+			<completed-pipelines></completed-pipelines>
 		</div>
 	</div>
 </template>
@@ -28,5 +26,16 @@ export default {
 </script>
 
 <style>
-
+.build-view {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+}
+.build-form {
+	width: 50%;
+}
+.build-results {
+	width: 50%;
+	overflow: auto;
+}
 </style>

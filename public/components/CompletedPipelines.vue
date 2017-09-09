@@ -1,11 +1,11 @@
 <template>
 	<b-card header="Completed">
-		<div class="results" v-if="pipelineResults === null">None</div>
-		<b-list-group class="results card-text" v-bind:key="results.constructor.name" v-for="results in pipelineResults">
+		<div class="completed-results" v-if="pipelineResults === null">None</div>
+		<b-list-group class="completed-results card-text" v-bind:key="results.constructor.name" v-for="results in pipelineResults">
 			<b-list-group-item href="#" v-bind:key="result.name" v-for="result in results">
-				<div class="result" @click="onResult(result)">
-					<div class="result-name">{{result.name}}</div>
-					<div class="result-badge">
+				<div class="completed-result" @click="onResult(result)">
+					<div class="completed-result-name">{{result.name}}</div>
+					<div class="completed-result-badge">
 						<b-badge variant="info" v-bind:key="score.metric" v-for="score in result.pipeline.scores">
 							{{metricName(score.metric)}}: {{score.value}}
 						</b-badge>
@@ -52,26 +52,27 @@ export default {
 
 <style scoped>
 
-.results {
+.completed-results {
 	margin-top: 8px;
 }
 
-.result {
+.completed-result {
 	display: flex;
 	justify-content: flex-start;
 	flex-grow: 1;
 	margin-top: 8px;
 }
 
-.result-name {
+.completed-result-name {
 	display: flex;
-	flex-basis: 20%;
 	align-items: center;
+	margin-right: 4px;
 }
 
-.result-badge {
+.completed-result-badge {
 	display: flex;
 	align-items: center;
+	margin-right: 4px;
 }
 
 </style>
