@@ -44,20 +44,21 @@ export function getRouteTargetVariable(state) {
 	};
 }
 
+export function getRouteResultFilters(state) {
+	return () => {
+		return state.route.query.results;
+	};
+}
+
+export function getResultsSummaries(state) {
+	return () => {
+		return state.resultsSummaries;
+	};
+}
+
 export function getRouteFilters(state) {
 	return () => {
-		const result = {};
-		_.forEach(state.route.query, (value, key) => {
-			// TODO: this is awful and error prone
-			if (key !== 'dataset' &&
-				key !== 'terms' &&
-				key !== 'training' &&
-				key !== 'target' &&
-				key !== 'createRequestId') {
-				result[key] = value;
-			}
-		});
-		return result;
+		return state.route.query.filters ? state.route.query.filters : [];
 	};
 }
 

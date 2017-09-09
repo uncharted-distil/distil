@@ -1,34 +1,24 @@
 <template>
 	<div class='result-summaries'>
 		<div class="bg-faded rounded-top">
-			<h6 class="nav-link">Summaries</h6>
+			<h6 class="nav-link">Results</h6>
 		</div>
-		<variable-facets
-			enable-filter="true"
-			enable-toggle="true"
+		<result-facets
 			:variables="variables"
-			:dataset="dataset"></variable-facets>
+			:dataset="dataset"></result-facets>
 	</div>
 </template>
 
 <script>
 
-import VariableFacets from '../components/VariableFacets';
+import ResultFacets from '../components/ResultFacets';
 import 'font-awesome/css/font-awesome.css';
 
 export default {
 	name: 'result-summaries',
 
 	components: {
-		VariableFacets
-	},
-
-	mounted() {
-		// kick off a result fetch when the component is first displayed
-		this.$store.dispatch('getResultsSummaries', {
-			dataset: this.$store.getters.getRouteDataset(),
-			requestId: this.$store.getters.getRouteCreateRequestId()
-		});
+		ResultFacets
 	},
 
 	computed: {
@@ -36,17 +26,7 @@ export default {
 			return this.$store.getters.getRouteDataset();
 		},
 		variables() {
-			return this.$store.state.resultsSummaries;
-		}
-	},
-
-	watch: {
-		// watch the route and update the results if its modified
-		'$route.query.results'() {
-			this.$store.dispatch('getResultsSummaries', {
-				dataset: this.$store.getters.getRouteDataset(),
-				requestId: this.$store.getters.getRouteCreateRequestId()
-			});
+			return this.$store.getters.getResultsSummaries();
 		}
 	}
 };

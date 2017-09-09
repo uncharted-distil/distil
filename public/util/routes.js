@@ -19,7 +19,8 @@ export function createRouteEntry(path, args = {}) {
 	if (!_.isEmpty(args.training)) { query.training = args.training.join(','); }
 	if (args.target) { query.target = args.target; }
 	if (args.createRequestId) { query.createRequestId = args.createRequestId; }
-	if (!_.isEmpty(args.filters)) { _.assign(query, args.filters);}
+	if (!_.isEmpty(args.filters)) { query.filters = args.filters; }
+	if (!_.isEmpty(args.results)) { query.results = args.results; }
 	return {
 		path: path,
 		query: query

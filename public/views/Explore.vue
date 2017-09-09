@@ -41,6 +41,8 @@ export default {
 	width: 30%;
 }
 .explore-data-table {
+	display: flex;
+	flex-direction: column;
 	width: 60%;
 }
 </style>

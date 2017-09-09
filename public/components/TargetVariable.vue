@@ -4,8 +4,6 @@
 			<h6 class="nav-link">Target Variable</h6>
 		</div>
 		<variable-facets
-			enable-filter="false"
-			enable-toggle="false"
 			:variables="variables"
 			:dataset="dataset"
 			:html="html"></variable-facets>

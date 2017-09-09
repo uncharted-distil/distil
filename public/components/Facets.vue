@@ -184,7 +184,6 @@ export default {
 							// selection is the same, no need to change
 							return;
 						}
-						console.log('updating selection');
 						if (currSelection) {
 							const facetSpec = group.facets[index];
 							facet.select(facetSpec.selected ? facetSpec.selected : facetSpec);
