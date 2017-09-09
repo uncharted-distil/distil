@@ -1,6 +1,8 @@
 import _ from 'lodash';
 import Connection from '../util/ws';
 
+import ES_INDEX from './actions';
+
 export function getRoutePath(state) {
 	return () => {
 		return state.route.path;
