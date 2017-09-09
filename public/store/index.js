@@ -52,6 +52,19 @@ const state = {
 		//     ]
 		// }
 	],
+	// current set of pipeline results
+	results: {
+		// name: '',
+		// metadata: [
+		//     {
+		//         name: '',
+		//         type: ''
+		//     }
+		// ]
+		// values: [
+		//     []
+		// ]
+	},
 	// filtered data entries for the active dataset
 	filteredData: {
 		// name: '',

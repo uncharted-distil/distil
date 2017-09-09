@@ -191,7 +191,7 @@ export function createPipelines(context, request) {
 	});
 }
 
-// fetches results for a given pipeline create request
+// fetches result summaries for a given pipeline create request
 export function getResultsSummaries(context, args) {
 	const results = context.getters.getPipelineResults(args.requestId);
 
@@ -238,4 +238,17 @@ export function getResultsSummaries(context, args) {
 			return;
 		});
 	}
+}
+
+// fetches result data for create pipeline
+export function updateResults(context, args) {
+	const encodedUri = encodeURIComponent(args.resultUri);
+	axios.get(`/distil/results/${ES_INDEX}/${args.dataset}/${encodedUri}`)
+	.then(response => {
+		console.log(response);
+		context.commit('setResultData', response.data);
+	})
+	.catch(error => {
+		console.error(`Failed to fetch results from ${args.resultUri} with error ${error}`);
+	});
 }
