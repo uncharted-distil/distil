@@ -92,19 +92,23 @@ export function getVariableSummaries(context, datasetName) {
 
 // update filtered data based on the  current filter state
 export function updateFilteredData(context, datasetName) {
-	const filters = context.getters.getRouteFilters();
-	const decoded = decodeFilters(filters);
-	const queryParams = encodeQueryParams(decoded);
-	const url = `distil/filtered-data/${ES_INDEX}/${datasetName}${queryParams}`;
-	// request filtered data from server - no data is valid given filter settings
-	return axios.get(url)
-		.then(response => {
-			context.commit('setFilteredData', response.data);
-		})
-		.catch(error => {
-			console.error(error);
-			context.commit('setFilteredData', []);
-		});
+	return new Promise((resolve, reject) => {
+		const filters = context.getters.getRouteFilters();
+		const decoded = decodeFilters(filters);
+		const queryParams = encodeQueryParams(decoded);
+		const url = `distil/filtered-data/${ES_INDEX}/${datasetName}${queryParams}`;
+		// request filtered data from server - no data is valid given filter settings
+		axios.get(url)
+			.then(response => {
+				context.commit('setFilteredData', response.data);
+				resolve();
+			})
+			.catch(error => {
+				console.error(error);
+				context.commit('setFilteredData', []);
+				reject();
+			});
+	});
 }
 
 // starts a pipeline session.
@@ -159,7 +163,7 @@ export function createPipelines(context, request) {
 			return;
 		}
 
-		// inject the name
+		// inject the name and pipeline id
 		const name = `${context.getters.getRouteDataset()}-${request.feature}-${res.pipelineId.substring(0,8)}`;
 		res.name = name;
 
@@ -209,6 +213,7 @@ export function getResultsSummaries(context, args) {
 	// dispatch a request to fetch the results for each pipeline
 	for (var result of results) {
 		const name = result.name;
+		const pipelineId = result.pipelineId; 
 		const res = encodeURIComponent(result.pipeline.resultUri);
 		axios.get(`/distil/results-summary/${ES_INDEX}/${dataset}/${res}`)
 		.then(response => {
@@ -217,7 +222,8 @@ export function getResultsSummaries(context, args) {
 			if (!histogram) {
 				context.commit('setResultsSummaries', [
 					{
-						name: name,
+						name,
+						pipelineId,
 						err: 'No analysis available'
 					}
 				]);
@@ -226,12 +232,14 @@ export function getResultsSummaries(context, args) {
 			// ensure buckets is not nil
 			histogram.buckets = histogram.buckets ? histogram.buckets : [];
 			histogram.name = name;
+			histogram.pipelineId = 
 			context.commit('updateResultsSummaries', histogram);
 		})
 		.catch(error => {
 			context.commit('setResultsSummaries', [
 				{
-					name: name,
+					name,
+					pipelineId,
 					err: error
 				}
 			]);
@@ -240,7 +248,7 @@ export function getResultsSummaries(context, args) {
 	}
 }
 
-// fetches result data for create pipeline
+// fetches result data for created pipeline
 export function updateResults(context, args) {
 	const encodedUri = encodeURIComponent(args.resultUri);
 	axios.get(`/distil/results/${ES_INDEX}/${args.dataset}/${encodedUri}`)

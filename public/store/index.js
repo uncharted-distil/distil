@@ -44,6 +44,7 @@ const state = {
 	resultsSummaries: [
 		// {
 		//     name: '',
+		// 	   pipelineId: '',
 		//     buckets: [
 		//     {
 		//             key: '',
@@ -55,6 +56,7 @@ const state = {
 	// current set of pipeline results
 	results: {
 		// name: '',
+		// pipelineId: '',
 		// metadata: [
 		//     {
 		//         name: '',
@@ -86,7 +88,16 @@ const state = {
 		//         id: '',
 		//         pipelineId: '',
 		//         progress: '',
-		//         session: ''
+		//         pipeline: { // only present if progress === UPDATED,
+		//             output: '',
+		//             scores: [
+		//                {
+		//                    metric: '',
+		//                    value: 0.1
+		//                }
+		//             ],
+		//             resultUri: ''
+		//         }
 		//     }
 		// }
 	},
@@ -97,6 +108,7 @@ const state = {
 		//         name: '',
 		//         id: '',
 		//         pipelineId: '',
+		//         progress: '',
 		//         pipeline: { // only present if progress === COMPLETE
 		//             output: '',
 		//             scores: [
@@ -104,7 +116,8 @@ const state = {
 		//                    metric: '',
 		//                    value: 0.1
 		//                }
-		//             ]
+		//             ],
+		//             resultUri: ''
 		//         }
 		//     }
 		// }

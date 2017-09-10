@@ -1,20 +1,20 @@
 <template>
 	<div class="results">
 		<variable-summaries class="results-variable-summaries"></variable-summaries>
-		<data-table class="results-table"></data-table>
+		<results-data-table class="results-data-table"></results-data-table>
 		<result-summaries class="results-result-summaries"></result-summaries>
 	</div>
 </template>
 
 <script>
-import DataTable from '../components/DataTable';
+import ResultsDataTable from '../components/ResultsDataTable';
 import VariableSummaries from '../components/VariableSummaries';
 import ResultSummaries from '../components/ResultSummaries';
 
 export default {
 	name: 'results',
 	components: {
-		DataTable,
+		ResultsDataTable,
 		VariableSummaries,
 		ResultSummaries
 	},
@@ -59,7 +59,7 @@ export default {
 .results-result-summaries {
 	width: 20%;
 }
-.results-table {
+.results-data-table {
 	display: flex;
 	flex-direction: column;
 	width: 60%;

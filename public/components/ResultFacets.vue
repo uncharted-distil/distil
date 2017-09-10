@@ -1,12 +1,6 @@
 <template>
 	<div class='result-facets'>
-		<facets class="facets-container"
-			:groups="groups"
-			:html="html"
-			v-on:expand="onExpand"
-			v-on:collapse="onCollapse"
-			v-on:range-change="onRangeChange"
-			v-on:facet-toggle="onFacetToggle"></facets>
+		<facets class="facets-container" :groups="groups" :html="html" v-on:expand="onExpand" v-on:collapse="onCollapse" v-on:range-change="onRangeChange" v-on:facet-toggle="onFacetToggle"></facets>
 	</div>
 </template>
 
@@ -37,6 +31,7 @@ export default {
 		groups() {
 			// create the groups
 			let groups = this.createGroups(this.variables);
+			
 			// sort alphabetically
 			groups.sort((a, b) => {
 				const textA = a.key.toLowerCase();
@@ -45,12 +40,14 @@ export default {
 			});
 			const filters = this.$store.getters.getRouteResultFilters();
 			if (_.isEmpty(filters)) {
-				// disable all filters except first
+				// disable all filters except first, fetch data for the first
 				groups.forEach((group, index) => {
 					if (index > 0) {
 						this.updateFilterRoute(group.key, {
 							enabled: false
 						});
+					} else {
+						this.updateResults(group.key);
 					}
 				});
 			}
@@ -59,6 +56,7 @@ export default {
 			// update selections
 			return this.updateGroupSelections(groups);
 		}
+
 	},
 
 	methods: {
@@ -77,6 +75,12 @@ export default {
 			});
 			this.$router.push(entry);
 		},
+		updateResults(key) {
+			// update the result data
+			const createReqId = this.$store.getters.getRouteCreateRequestId();
+			const completedReq = _.find(_.values(this.$store.state.completedPipelines[createReqId]), p => p.name === key);
+			this.$store.dispatch('updateResults', {dataset: this.dataset, resultUri: completedReq.pipeline.resultUri});
+		},
 		onExpand(key) {
 			// disable all filters except this one
 			this.groups.forEach(group => {
@@ -90,6 +94,8 @@ export default {
 			this.updateFilterRoute(key, {
 				enabled: true
 			});
+			// update results to current
+			this.updateResults(key);
 		},
 		onCollapse() {
 			// TODO: prevent disabling?
@@ -241,6 +247,7 @@ export default {
 button {
 	cursor: pointer;
 }
+
 .variable-facets {
 	display: flex;
 	flex-direction: column;

@@ -34,6 +34,14 @@ export default {
 		metricName(metric) {
 			return getMetricDisplayName(metric);
 		},
+		onResult(result) {
+			const entry = createRouteEntry('/results', {
+				dataset: this.$store.getters.getRouteDataset(),
+				filters: this.$store.getters.getRouteFilters(),
+				createRequestId: result.requestId
+			});
+			this.$router.push(entry);
+		}
 	}
 };
 </script>
