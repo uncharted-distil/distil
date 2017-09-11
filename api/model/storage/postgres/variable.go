@@ -24,7 +24,7 @@ func (s *Storage) getHistogramAggQuery(extrema *model.Extrema) (string, string) 
 
 	// get histogram agg name & query string.
 	histogramAggName := fmt.Sprintf("\"%s%s\"", model.HistogramAggPrefix, extrema.Name)
-	histogramQueryString := fmt.Sprintf("(\"%s\" / %f) * %f", extrema.Name, interval, interval)
+	histogramQueryString := fmt.Sprintf("(\"%s\" / %g) * %g", extrema.Name, interval, interval)
 
 	return histogramAggName, histogramQueryString
 }
