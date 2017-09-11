@@ -16,6 +16,8 @@ const (
 	VarNameField = "varName"
 	// VarTypeField is the field name for the variable type.
 	VarTypeField = "varType"
+	// VarTypeIndex is the variable type of the index field.
+	VarTypeIndex = "index"
 )
 
 // Variable represents a single variable description within a dataset.
