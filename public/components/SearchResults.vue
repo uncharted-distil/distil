@@ -74,7 +74,7 @@ export default {
 }
 .dataset-header {
 	border: 1px solid #ccc;
-	justify-content: space-between
+	justify-content: space-between;
 }
 .dataset-body {
 	border-left: 1px solid #ccc;

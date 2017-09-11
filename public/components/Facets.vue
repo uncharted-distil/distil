@@ -11,10 +11,18 @@ import '@uncharted.software/stories-facets/dist/facets.css';
 export default {
 	name: 'facets',
 
-	props: [
-		'groups',
-		'html'
-	],
+	props: {
+		groups: Array,
+		html: [ String, Object, Function ],
+		sort: {
+			default: (a, b) => {
+				const textA = a.key.toLowerCase();
+				const textB = b.key.toLowerCase();
+				return (textA < textB) ? -1 : (textA > textB) ? 1 : 0;
+			},
+			type: Function
+		}
+	},
 
 	mounted() {
 		const component = this;
@@ -75,6 +83,9 @@ export default {
 			this.updateCollapsed(unchangedGroups);
 			// for the unchanged, update selection
 			this.updateSelections(unchangedGroups, prevMap);
+		},
+		sort: function(currSort) {
+			this.facets.sort(currSort);
 		}
 	},
 
@@ -151,11 +162,7 @@ export default {
 				});
 			}
 			// sort alphabetically
-			this.facets.sort((a, b) => {
-				const textA = a.key.toLowerCase();
-				const textB = b.key.toLowerCase();
-				return (textA < textB) ? -1 : (textA > textB) ? 1 : 0;
-			});
+			this.facets.sort(this.sort);
 			// return unchanged groups
 			return unchanged;
 		},
