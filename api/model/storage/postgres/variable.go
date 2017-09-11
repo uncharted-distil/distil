@@ -10,6 +10,10 @@ import (
 	"github.com/unchartedsoftware/distil/api/model"
 )
 
+const (
+	catResultLimit = 10
+)
+
 func (s *Storage) getHistogramAggQuery(extrema *model.Extrema) (string, string) {
 	// compute the bucket interval for the histogram
 	interval := (extrema.Max - extrema.Min) / model.MaxNumBuckets
@@ -160,7 +164,7 @@ func (s *Storage) fetchNumericalHistogram(dataset string, variable *model.Variab
 
 func (s *Storage) fetchCategoricalHistogram(dataset string, variable *model.Variable) (*model.Histogram, error) {
 	// Get count by category.
-	query := fmt.Sprintf("SELECT \"%s\", COUNT(*) AS count FROM %s GROUP BY \"%s\";", variable.Name, dataset, variable.Name)
+	query := fmt.Sprintf("SELECT \"%s\", COUNT(*) AS count FROM %s GROUP BY \"%s\" ORDER BY count desc, \"%s\" LIMIT %d;", variable.Name, dataset, variable.Name, variable.Name, catResultLimit)
 
 	// execute the postgres query
 	res, err := s.client.Query(query)

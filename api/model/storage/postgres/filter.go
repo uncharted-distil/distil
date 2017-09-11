@@ -9,6 +9,10 @@ import (
 	"github.com/unchartedsoftware/distil/api/model"
 )
 
+const (
+	filterLimit = 500
+)
+
 func (s *Storage) parseFilteredData(dataset string, rows *pgx.Rows) (*model.FilteredData, error) {
 	result := &model.FilteredData{
 		Name:   dataset,
@@ -54,9 +58,13 @@ func (s *Storage) FetchData(dataset string, index string, filterParams *model.Fi
 	}
 	variables, err := model.FetchVariables(s.clientES, index, dataset)
 	fieldList := make([]string, 0)
+	var indexVariable *model.Variable
 	for _, v := range variables {
 		if !excludedFields[v.Name] {
-			fieldList = append(fieldList, v.Name)
+			fieldList = append(fieldList, fmt.Sprintf("\"%s\"", v.Name))
+		}
+		if v.Type == model.VarTypeIndex {
+			indexVariable = v
 		}
 	}
 	// construct a Postgres query that fetches documents from the dataset with the supplied variable filters applied
@@ -83,13 +91,17 @@ func (s *Storage) FetchData(dataset string, index string, filterParams *model.Fi
 		}
 		wheres = append(wheres, fmt.Sprintf("\"%s\" IN (%s)", variable.Name, strings.Join(categories, ", ")))
 	}
-	//for _, variableName := range filterParams.None {
-	//    excludes = append(excludes, variableName)
-	//}
 
 	if len(wheres) > 0 {
-		query = fmt.Sprintf("%s WHERE %s;", query, strings.Join(wheres, " AND "))
+		query = fmt.Sprintf("%s WHERE %s", query, strings.Join(wheres, " AND "))
 	}
+
+	// order & limit the filtered data.
+	if indexVariable != nil {
+		query = fmt.Sprintf("%s ORDER BY %s LIMIT %d", query, indexVariable, filterLimit)
+	}
+
+	query = query + ";"
 
 	// execute the postgres query
 	res, err := s.client.Query(query, params...)
