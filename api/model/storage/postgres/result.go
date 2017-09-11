@@ -270,7 +270,7 @@ func (s *Storage) fetchNumericalResultHistogram(resultURI string, dataset string
 
 func (s *Storage) fetchCategoricalResultHistogram(resultURI string, dataset string, variable *model.Variable) (*model.Histogram, error) {
 	// Get count by category.
-	query := fmt.Sprintf("SELECT value, COUNT(*) AS count FROM %s WHERE result_id = $1 and target = $2 GROUP BY value;", dataset)
+	query := fmt.Sprintf("SELECT value, COUNT(*) AS count FROM %s WHERE result_id = $1 and target = $2 GROUP BY value ORDER BY count desc, value LIMIT %d;", dataset, catResultLimit)
 
 	// execute the postgres query
 	res, err := s.client.Query(query, resultURI, variable.Name)
