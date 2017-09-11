@@ -95,7 +95,7 @@ export function updateFilteredData(context, datasetName) {
 	const filters = context.getters.getRouteFilters();
 	const decoded = decodeFilters(filters);
 	const queryParams = encodeQueryParams(decoded);
-	const url = `distil/filtered-data/${datasetName}${queryParams}`;
+	const url = `distil/filtered-data/${ES_INDEX}/${datasetName}${queryParams}`;
 	// request filtered data from server - no data is valid given filter settings
 	return axios.get(url)
 		.then(response => {

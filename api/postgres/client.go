@@ -27,6 +27,7 @@ func init() {
 type DatabaseDriver interface {
 	Query(string, ...interface{}) (*pgx.Rows, error)
 	QueryRow(string, ...interface{}) *pgx.Row
+	Exec(string, ...interface{}) (pgx.CommandTag, error)
 }
 
 // ClientCtor repressents a client constructor to instantiate a postgres client.
@@ -38,7 +39,7 @@ func NewClient(host, port, user, password, database string) ClientCtor {
 		endpoint := host + ":" + port
 		portInt, err := strconv.Atoi(port)
 		if err != nil {
-			return nil, err
+			return nil, errors.Wrap(err, "Unable to connect to Postgres endpoint")
 		}
 
 		mu.Lock()
@@ -47,6 +48,7 @@ func NewClient(host, port, user, password, database string) ClientCtor {
 		// see if we have an existing connection
 		client, ok := clients[endpoint]
 		if !ok {
+			log.Infof("Creating new Postgres connection to endpoint %s", endpoint)
 			dbConfig := pgx.ConnConfig{
 				Host:     host,
 				Port:     uint16(portInt),
@@ -68,6 +70,7 @@ func NewClient(host, port, user, password, database string) ClientCtor {
 			log.Infof("Postgres connection established to endpoint %s", endpoint)
 			clients[endpoint] = client
 		}
+		log.Infof("Obtained Postgres connection to endpoint %s", endpoint)
 		return client, nil
 	}
 }

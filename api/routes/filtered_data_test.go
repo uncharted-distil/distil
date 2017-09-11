@@ -86,6 +86,7 @@ func TestFilteredDataHandler(t *testing.T) {
 	// put together a stub dataset request
 	params := map[string]string{
 		"dataset": "o_185",
+		"esIndex": "dataset",
 	}
 	query := map[string]string{
 		"On_base_pct": "numerical,0,100",
@@ -122,6 +123,11 @@ func TestFilteredDataHandler(t *testing.T) {
 }
 
 func TestFilteredPostgresHandler(t *testing.T) {
+	// mock elasticsearch request handler
+	handler := mock.ElasticHandler(t, []string{"./testdata/filtered_data.json"})
+	// mock elasticsearch client
+	ctorES := mock.ElasticClientCtor(t, handler)
+
 	// mock postgres client
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
@@ -130,11 +136,12 @@ func TestFilteredPostgresHandler(t *testing.T) {
 	ctor := mockContructor(mockDB)
 
 	// instantiate storage filter client constructor.
-	storageCtor := postgres.NewStorage(ctor)
+	storageCtor := postgres.NewStorage(ctor, ctorES)
 
 	// put together a stub dataset request
 	params := map[string]string{
 		"dataset": "o_185",
+		"esIndex": "dataset",
 	}
 	query := map[string]string{
 		"On_base_pct": "numerical,0,100",
@@ -145,7 +152,7 @@ func TestFilteredPostgresHandler(t *testing.T) {
 	// Identify the expected behaviour.
 	// NOTE: It currently expects an empty set since pgx.Rows is hardly accessible.
 	mockDB.EXPECT().Query(
-		"SELECT * FROM o_185 WHERE \"On_base_pct\" >= $1 AND \"On_base_pct\" <= $2 AND \"Position\" IN ($3);",
+		"SELECT  FROM o_185 WHERE \"On_base_pct\" >= $1 AND \"On_base_pct\" <= $2 AND \"Position\" IN ($3);",
 		float64(0), float64(100), "Catcher").Return(nil, nil)
 	req := mock.HTTPRequest(t, "GET", "/distil/data", params, query)
 

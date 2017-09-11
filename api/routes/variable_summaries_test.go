@@ -111,6 +111,14 @@ func TestVariableSummaryHandlerCategorical(t *testing.T) {
 }
 
 func TestVariableSummaryHandlerCategoricalPostgres(t *testing.T) {
+	// mock elasticsearch request handler
+	handlerES := mock.ElasticHandler(t, []string{
+		"./testdata/variables.json",
+		"./testdata/variable_summaries_categorical.json",
+	})
+	// mock elasticsearch client
+	ctorES := mock.ElasticClientCtor(t, handlerES)
+
 	// mock postgres client
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
@@ -119,15 +127,7 @@ func TestVariableSummaryHandlerCategoricalPostgres(t *testing.T) {
 	ctor := mockContructor(mockDB)
 
 	// instantiate storage filter client constructor.
-	storageCtor := postgres.NewStorage(ctor)
-
-	// mock elasticsearch request handler
-	handlerES := mock.ElasticHandler(t, []string{
-		"./testdata/variables.json",
-		"./testdata/variable_summaries_categorical.json",
-	})
-	// mock elasticsearch client
-	ctorES := mock.ElasticClientCtor(t, handlerES)
+	storageCtor := postgres.NewStorage(ctor, ctorES)
 
 	// put together a stub dataset request
 	req := mock.HTTPRequest(t, "GET", "/distil/variable_summaries", map[string]string{

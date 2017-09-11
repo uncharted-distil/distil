@@ -1,6 +1,8 @@
 package elastic
 
 import (
+	"errors"
+
 	es "github.com/unchartedsoftware/distil/api/elastic"
 	"github.com/unchartedsoftware/distil/api/model"
 	elastic "gopkg.in/olivere/elastic.v5"
@@ -23,4 +25,9 @@ func NewStorage(clientCtor es.ClientCtor) model.StorageCtor {
 			client: esClient,
 		}, nil
 	}
+}
+
+// PersistResult persists a pipeline result to ES. NOTE: Not implemented!
+func (s *Storage) PersistResult(dataset string, resultURI string) error {
+	return errors.New("ElasticSearch PersistResult not implemented")
 }

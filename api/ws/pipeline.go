@@ -33,6 +33,7 @@ const (
 // PipelineHandler represents a pipeline websocket handler.
 func PipelineHandler(client *pipeline.Client, esCtor elastic.ClientCtor, storageCtor model.StorageCtor) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
+
 		// create conn
 		conn, err := NewConnection(w, r, handlePipelineMessage(client, esCtor, storageCtor))
 		if err != nil {
@@ -149,25 +150,31 @@ func handleCreatePipelines(conn *Connection, client *pipeline.Client, esCtor ela
 	filters, err := parseDatasetFilters(clientCreateMsg.Filters)
 	if err != nil {
 		handleErr(conn, msg, err)
+		return
+	}
+
+	// initialize the storage
+	storage, err := storageCtor()
+	if err != nil {
+		handleErr(conn, msg, err)
+		return
 	}
 
 	// persist the filtered dataset if necessary
-	fetchFilteredData := func(dataset string, filters *model.FilterParams) (*model.FilteredData, error) {
-		storage, err := storageCtor()
-		if err != nil {
-			return nil, err
-		}
-		return model.FetchFilteredData(storage, dataset, filters)
+	fetchFilteredData := func(dataset string, index string, filters *model.FilterParams) (*model.FilteredData, error) {
+		return model.FetchFilteredData(storage, dataset, index, filters)
 	}
-	datasetPath, err := pipeline.PersistFilteredData(fetchFilteredData, client.DataDir, clientCreateMsg.Dataset, clientCreateMsg.Feature, filters)
+	datasetPath, err := pipeline.PersistFilteredData(fetchFilteredData, client.DataDir, clientCreateMsg.Dataset, clientCreateMsg.Index, clientCreateMsg.Feature, filters)
 	if err != nil {
 		handleErr(conn, msg, err)
+		return
 	}
 
 	// make sure the path is absolute
 	datasetPath, err = filepath.Abs(datasetPath)
 	if err != nil {
 		handleErr(conn, msg, err)
+		return
 	}
 
 	// Create the set of training features - we already filtered that out when we persist, but needs to be specified
@@ -176,6 +183,7 @@ func handleCreatePipelines(conn *Connection, client *pipeline.Client, esCtor ela
 	filteredVars, err := fetchFilteredVariables(esCtor, clientCreateMsg.Index, clientCreateMsg.Dataset, filters)
 	if err != nil {
 		handleErr(conn, msg, err)
+		return
 	}
 	for _, featureName := range filteredVars {
 		feature := &pipeline.Feature{
@@ -193,7 +201,7 @@ func handleCreatePipelines(conn *Connection, client *pipeline.Client, esCtor ela
 		Output:        pipeline.OutputType(pipeline.OutputType_value[strings.ToUpper(clientCreateMsg.Output)]),
 		Metrics:       []pipeline.Metric{pipeline.Metric(pipeline.Metric_value[strings.ToUpper(clientCreateMsg.Metric)])},
 		TargetFeatures: []*pipeline.Feature{
-			&pipeline.Feature{
+			{
 				FeatureId: clientCreateMsg.Feature,
 				DataUri:   datasetPath,
 			},
@@ -209,7 +217,7 @@ func handleCreatePipelines(conn *Connection, client *pipeline.Client, esCtor ela
 			handleErr(conn, msg, err)
 			return
 		}
-		handleCreatePipelinesSuccess(conn, msg, proxy)
+		handleCreatePipelinesSuccess(conn, msg, proxy, storage, clientCreateMsg.Dataset)
 	} else {
 		log.Warnf("Expected session %s does not exist", msg.Session)
 	}
@@ -239,7 +247,7 @@ func handleEndSessionSuccess(conn *Connection, msg *Message) {
 	})
 }
 
-func handleCreatePipelinesSuccess(conn *Connection, msg *Message, proxy *pipeline.ResultProxy) {
+func handleCreatePipelinesSuccess(conn *Connection, msg *Message, proxy *pipeline.ResultProxy, storage model.Storage, dataset string) {
 	// process the result proxy, which is replicated for completed, pending requests
 	for {
 		select {
@@ -269,6 +277,11 @@ func handleCreatePipelinesSuccess(conn *Connection, msg *Message, proxy *pipelin
 						"scores":    scores,
 						"output":    pipeline.OutputType_name[int32(res.PipelineInfo.Output)],
 						"resultUri": res.PipelineInfo.PredictResultUris[0],
+					}
+
+					err := storage.PersistResult(dataset, res.PipelineInfo.PredictResultUris[0])
+					if err != nil {
+						handleErr(conn, msg, errors.Wrap(err, "Unable to store pipeline results"))
 					}
 				}
 				handleSuccess(conn, msg, response)

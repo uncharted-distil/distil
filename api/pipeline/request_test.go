@@ -10,26 +10,26 @@ import (
 func TestHashPipelineCreateHashInclude(t *testing.T) {
 	request := PipelineCreateRequest{
 		&SessionContext{"12345"},
-		[]*Feature{&Feature{"feature_alpha", "location"}},
+		[]*Feature{{"feature_alpha", "location"}},
 		TaskType_CLASSIFICATION,
 		TaskSubtype_NONE,
 		"task description",
 		OutputType_PROBABILITY,
 		[]Metric{Metric_ACCURACY},
-		[]*Feature{&Feature{"target_alpha", "location"}},
+		[]*Feature{{"target_alpha", "location"}},
 		5,
 	}
 	hash, _ := hashstructure.Hash(request, nil)
 
 	request2 := PipelineCreateRequest{
 		&SessionContext{"12345678910"},
-		[]*Feature{&Feature{"feature_alpha", "location"}},
+		[]*Feature{{"feature_alpha", "location"}},
 		TaskType_CLASSIFICATION,
 		TaskSubtype_NONE,
 		"task description",
 		OutputType_PROBABILITY,
 		[]Metric{Metric_ACCURACY},
-		[]*Feature{&Feature{"target_alpha", "location"}},
+		[]*Feature{{"target_alpha", "location"}},
 		5,
 	}
 	hash2, _ := hashstructure.Hash(request2, nil)

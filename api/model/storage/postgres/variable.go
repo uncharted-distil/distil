@@ -19,7 +19,7 @@ func (s *Storage) getHistogramAggQuery(extrema *model.Extrema) (string, string) 
 	}
 
 	// get histogram agg name & query string.
-	histogramAggName := model.HistogramAggPrefix + extrema.Name
+	histogramAggName := fmt.Sprintf("\"%s%s\"", model.HistogramAggPrefix, extrema.Name)
 	histogramQueryString := fmt.Sprintf("(\"%s\" / %f) * %f", extrema.Name, interval, interval)
 
 	return histogramAggName, histogramQueryString
@@ -117,7 +117,7 @@ func (s *Storage) getMinMaxAggsQuery(variable *model.Variable) string {
 	maxAggName := model.MaxAggPrefix + variable.Name
 
 	// create aggregations
-	queryPart := fmt.Sprintf("MIN(\"%s\") AS %s, MAX(\"%s\") AS %s", variable.Name, minAggName, variable.Name, maxAggName)
+	queryPart := fmt.Sprintf("MIN(\"%s\") AS \"%s\", MAX(\"%s\") AS \"%s\"", variable.Name, minAggName, variable.Name, maxAggName)
 	// add aggregations
 	return queryPart
 }
@@ -172,7 +172,7 @@ func (s *Storage) fetchCategoricalHistogram(dataset string, variable *model.Vari
 }
 
 // FetchSummary returns the summary for the provided dataset and variable.
-func (s *Storage) FetchSummary(variable *model.Variable, dataset string) (*model.Histogram, error) {
+func (s *Storage) FetchSummary(dataset string, variable *model.Variable) (*model.Histogram, error) {
 	if model.IsNumerical(variable.Type) {
 		// fetch numeric histograms
 		numeric, err := s.fetchNumericalHistogram(dataset, variable)

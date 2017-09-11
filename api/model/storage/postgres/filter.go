@@ -9,7 +9,7 @@ import (
 	"github.com/unchartedsoftware/distil/api/model"
 )
 
-func (s *Storage) parseResults(dataset string, rows *pgx.Rows) (*model.FilteredData, error) {
+func (s *Storage) parseFilteredData(dataset string, rows *pgx.Rows) (*model.FilteredData, error) {
 	result := &model.FilteredData{
 		Name:   dataset,
 		Values: make([][]interface{}, 0),
@@ -45,9 +45,22 @@ func (s *Storage) parseResults(dataset string, rows *pgx.Rows) (*model.FilteredD
 // FetchData creates a postgres query to fetch a set of rows.  Applies filters to restrict the
 // results to a user selected set of fields, with rows further filtered based on allowed ranges and
 // categories.
-func (s *Storage) FetchData(dataset string, filterParams *model.FilterParams) (*model.FilteredData, error) {
+func (s *Storage) FetchData(dataset string, index string, filterParams *model.FilterParams) (*model.FilteredData, error) {
+	// need to get the variable list to handle field exclusion.
+	// NOTE: This should be reexamined to figure out if front end changes make more sense.
+	excludedFields := make(map[string]bool)
+	for _, f := range filterParams.None {
+		excludedFields[f] = true
+	}
+	variables, err := model.FetchVariables(s.clientES, index, dataset)
+	fieldList := make([]string, 0)
+	for _, v := range variables {
+		if !excludedFields[v.Name] {
+			fieldList = append(fieldList, v.Name)
+		}
+	}
 	// construct a Postgres query that fetches documents from the dataset with the supplied variable filters applied
-	query := fmt.Sprintf("SELECT * FROM %s", dataset)
+	query := fmt.Sprintf("SELECT %s FROM %s", strings.Join(fieldList, ","), dataset)
 
 	// Build where clauses using the filter parameters.
 	// param identifiers in the query are 1-based $x.
@@ -85,5 +98,5 @@ func (s *Storage) FetchData(dataset string, filterParams *model.FilterParams) (*
 	}
 
 	// parse the result
-	return s.parseResults(dataset, res)
+	return s.parseFilteredData(dataset, res)
 }

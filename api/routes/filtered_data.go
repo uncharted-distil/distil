@@ -92,6 +92,7 @@ func parseFilterParams(r *http.Request) (*model.FilterParams, error) {
 func FilteredDataHandler(ctor model.StorageCtor) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		dataset := pat.Param(r, "dataset")
+		esIndex := pat.Param(r, "esIndex")
 
 		// get variable names and ranges out of the params
 		filterParams, err := parseFilterParams(r)
@@ -108,7 +109,7 @@ func FilteredDataHandler(ctor model.StorageCtor) func(http.ResponseWriter, *http
 		}
 
 		// fetch filtered data based on the supplied search parameters
-		data, err := model.FetchFilteredData(client, dataset, filterParams)
+		data, err := model.FetchFilteredData(client, dataset, esIndex, filterParams)
 		if err != nil {
 			handleError(w, errors.Wrap(err, "unable marshal summary result into JSON"))
 			return
