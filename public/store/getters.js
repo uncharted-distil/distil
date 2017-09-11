@@ -1,8 +1,6 @@
 import _ from 'lodash';
 import Connection from '../util/ws';
 
-import ES_INDEX from './actions';
-
 export function getRoutePath(state) {
 	return () => {
 		return state.route.path;
@@ -168,7 +166,7 @@ export function getPipelineResults(state) {
 }
 
 export function getWebSocketConnection() {
-	const conn = new Connection(`/ws/${ES_INDEX}`, err => {
+	const conn = new Connection(`/ws`, err => {
 		if (err) {
 			console.warn(err);
 			return;
