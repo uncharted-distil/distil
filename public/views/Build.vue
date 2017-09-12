@@ -38,4 +38,7 @@ export default {
 	width: 50%;
 	overflow: auto;
 }
+.build-results .card {
+	margin-bottom: 4px;
+}
 </style>
