@@ -31,3 +31,23 @@ func NewStorage(clientCtor es.ClientCtor) model.StorageCtor {
 func (s *Storage) PersistResult(dataset string, resultURI string) error {
 	return errors.New("ElasticSearch PersistResult not implemented")
 }
+
+// PersistSession persists a session to ES. NOTE: Not implemented!
+func (s *Storage) PersistSession(sessionID string) error {
+	return errors.New("ElasticSearch PersisSession not implemented")
+}
+
+// PersistRequest persists a request to ES. NOTE: Not implemented!
+func (s *Storage) PersistRequest(sessionID string, requestID string, pipelineID string, dataset string, progress string) error {
+	return errors.New("ElasticSearch PersistRequest not implemented")
+}
+
+// UpdateRequest updates a request in ES. NOTE: Not implemented!
+func (s *Storage) UpdateRequest(requestID string, progress string) error {
+	return errors.New("ElasticSearch UpdateRequest not implemented")
+}
+
+// PersistResultMetadata persists the result metadata to ES. NOTE: Not implemented!
+func (s *Storage) PersistResultMetadata(requestID string, resultUUID string, resultURI string) error {
+	return errors.New("ElasticSearch PersistResultMetadata not implemented")
+}

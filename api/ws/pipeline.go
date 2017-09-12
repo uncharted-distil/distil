@@ -79,7 +79,7 @@ func parseMessage(bytes []byte) (*Message, error) {
 func handleMessage(conn *Connection, client *pipeline.Client, esCtor elastic.ClientCtor, storageCtor model.StorageCtor, msg *Message) {
 	switch msg.Type {
 	case getSession:
-		handleGetSession(conn, client, msg)
+		handleGetSession(conn, client, msg, storageCtor)
 		return
 	case endSession:
 		handleEndSession(conn, client, msg)
@@ -94,7 +94,7 @@ func handleMessage(conn *Connection, client *pipeline.Client, esCtor elastic.Cli
 	}
 }
 
-func handleGetSession(conn *Connection, client *pipeline.Client, msg *Message) {
+func handleGetSession(conn *Connection, client *pipeline.Client, msg *Message, storageCtor model.StorageCtor) {
 	// get existing session
 	if msg.Session != "" {
 		// try to get existing session
@@ -104,12 +104,27 @@ func handleGetSession(conn *Connection, client *pipeline.Client, msg *Message) {
 			return
 		}
 	}
+	// get the storage instance
+	storage, err := storageCtor()
+	if err != nil {
+		handleErr(conn, msg, err)
+		return
+	}
+
 	// start a new session
 	session, err := client.StartSession(context.Background())
 	if err != nil {
 		handleErr(conn, msg, err)
 		return
 	}
+
+	// store the sessions
+	err = storage.PersistSession(session.ID)
+	if err != nil {
+		handleErr(conn, msg, err)
+		return
+	}
+
 	handleGetSessionSuccess(conn, msg, session.ID, true, false, session.GetExistingUUIDs())
 	return
 }
@@ -217,6 +232,15 @@ func handleCreatePipelines(conn *Connection, client *pipeline.Client, esCtor ela
 			handleErr(conn, msg, err)
 			return
 		}
+
+		// store the request using the initial progress value
+		err = storage.PersistRequest(session.ID, fmt.Sprintf("%s", requestInfo.RequestID), "", clientCreateMsg.Dataset, pipeline.Progress_name[0])
+		if err != nil {
+			handleErr(conn, msg, err)
+			return
+		}
+
+		// handle the request
 		handleCreatePipelinesSuccess(conn, msg, proxy, storage, clientCreateMsg.Dataset)
 	} else {
 		log.Warnf("Expected session %s does not exist", msg.Session)
@@ -264,6 +288,12 @@ func handleCreatePipelinesSuccess(conn *Connection, msg *Message, proxy *pipelin
 				}
 				log.Infof("Pipeline %s - %s", res.PipelineId, progress)
 
+				// update the request progress
+				err := storage.UpdateRequest(fmt.Sprintf("%s", proxy.RequestID), progress)
+				if err != nil {
+					handleErr(conn, msg, errors.Wrap(err, "Unable to store request update"))
+				}
+
 				// on complete, fetch results as well
 				if res.ProgressInfo == pipeline.Progress_COMPLETED || res.ProgressInfo == pipeline.Progress_UPDATED {
 					scores := make([]map[string]interface{}, 0)
@@ -279,7 +309,13 @@ func handleCreatePipelinesSuccess(conn *Connection, msg *Message, proxy *pipelin
 						"resultUri": res.PipelineInfo.PredictResultUris[0],
 					}
 
-					err := storage.PersistResult(dataset, res.PipelineInfo.PredictResultUris[0])
+					// store the result data & metadata
+					err = storage.PersistResultMetadata(fmt.Sprintf("%s", proxy.RequestID), "", res.PipelineInfo.PredictResultUris[0])
+					if err != nil {
+						handleErr(conn, msg, errors.Wrap(err, "Unable to store result metadata"))
+					}
+
+					err = storage.PersistResult(dataset, res.PipelineInfo.PredictResultUris[0])
 					if err != nil {
 						handleErr(conn, msg, errors.Wrap(err, "Unable to store pipeline results"))
 					}

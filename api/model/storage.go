@@ -11,4 +11,10 @@ type Storage interface {
 	PersistResult(dataset string, resultURI string) error
 	FetchResults(dataset string, resultURI string, index string) (*FilteredData, error)
 	FetchResultsSummary(dataset string, resultURI string, index string) (*Histogram, error)
+
+	// System data operations
+	PersistSession(sessionID string) error
+	PersistRequest(sessionID string, requestID string, pipelineID string, dataset string, progress string) error
+	UpdateRequest(requestID string, progress string) error
+	PersistResultMetadata(requestID string, resultUUID string, resultURI string) error
 }
