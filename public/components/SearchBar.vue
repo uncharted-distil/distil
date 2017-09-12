@@ -23,13 +23,6 @@ export default {
 					terms: terms,
 				});
 				this.$router.push(routeEntry);
-				const component = this;
-				// maintain focus on routing
-				setTimeout(() => {
-					console.log('sdf', component);
-					component.$refs.searchbox.focus();
-				});
-
 			}, 500),
 			get: function() {
 				return this.$store.getters.getRouteTerms();
