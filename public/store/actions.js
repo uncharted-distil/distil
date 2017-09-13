@@ -250,13 +250,12 @@ export function getResultsSummaries(context, args) {
 
 // fetches result data for created pipeline
 export function updateResults(context, args) {
-	const encodedUri = encodeURIComponent(args.resultUri);
+	const encodedUri = encodeURIComponent(args.resultId); 
 	axios.get(`/distil/results/${ES_INDEX}/${args.dataset}/${encodedUri}`)
 	.then(response => {
-		console.log(response);
 		context.commit('setResultData', response.data);
 	})
 	.catch(error => {
-		console.error(`Failed to fetch results from ${args.resultUri} with error ${error}`);
+		console.error(`Failed to fetch results from ${args.resultId} with error ${error}`);
 	});
 }

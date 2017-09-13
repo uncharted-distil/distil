@@ -12,7 +12,8 @@
 <script>
 import _ from 'lodash';
 import PipelinePreview from '../components/PipelinePreview';
-import {getMetricDisplayName} from '../util/pipelines';
+import { getMetricDisplayName } from '../util/pipelines';
+import { createRouteEntry } from '../util/routes';
 
 export default {
 	name: 'running-pipelines',

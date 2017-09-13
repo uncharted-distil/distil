@@ -46,7 +46,7 @@ const state = {
 		//     name: '',
 		// 	   pipelineId: '',
 		//     buckets: [
-		//     {
+		//     	   {
 		//             key: '',
 		//             count: 0
 		//         }
@@ -80,7 +80,7 @@ const state = {
 		//     []
 		// ]
 	},
-	// running pipline creation tasks grouped by parent create requestID
+	// running pipeline creation tasks grouped by parent create requestID
 	runningPipelines: {
 		// requestId: {
 		//     pipelineId: {

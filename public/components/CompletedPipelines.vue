@@ -13,7 +13,8 @@
 
 import _ from 'lodash';
 import PipelinePreview from '../components/PipelinePreview';
-import {getMetricDisplayName} from '../util/pipelines';
+import { getMetricDisplayName } from '../util/pipelines';
+import { createRouteEntry } from '../util/routes';
 
 export default {
 	name: 'completed-pipelines',
@@ -38,7 +39,8 @@ export default {
 			const entry = createRouteEntry('/results', {
 				dataset: this.$store.getters.getRouteDataset(),
 				filters: this.$store.getters.getRouteFilters(),
-				createRequestId: result.requestId
+				createRequestId: result.requestId,
+				resultId: btoa(result.pipeline.resultUri)
 			});
 			this.$router.push(entry);
 		}

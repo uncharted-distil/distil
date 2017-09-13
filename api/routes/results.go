@@ -41,9 +41,7 @@ func ResultsHandler(storageCtor model.StorageCtor) func(http.ResponseWriter, *ht
 		}
 
 		// marshall data and sent the response back
-		err = handleJSON(w, Results{
-			Results: results,
-		})
+		err = handleJSON(w, results)
 		if err != nil {
 			handleError(w, errors.Wrap(err, "unable marshal pipeline result into JSON"))
 			return

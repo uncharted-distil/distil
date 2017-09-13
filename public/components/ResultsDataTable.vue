@@ -34,14 +34,23 @@ export default {
 	},
 
 	mounted() {
-		this.$store.dispatch('updateFilteredData', this.dataset);
-
+		this.$store.dispatch('updateFilteredData', this.dataset).then(() => {
+			this.$store.dispatch('updateResults', {
+				dataset: this.dataset,
+				resultId: atob(this.$store.getters.getRouteResultId())
+			});
+		});
 	},
 
 	watch: {
 		// if filters change, update data
 		'$route.query'() {
-			this.$store.dispatch('updateFilteredData', this.dataset);
+			this.$store.dispatch('updateFilteredData', this.dataset).then(() => {
+				this.$store.dispatch('updateResults', {
+					dataset: this.dataset,
+					resultId: atob(this.$store.getters.getRouteResultId())
+				});
+			});
 		}
 	},
 

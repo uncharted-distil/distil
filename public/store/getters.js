@@ -44,6 +44,14 @@ export function getRouteTargetVariable(state) {
 	};
 }
 
+export function getRouteCreateRequestId(state) {
+	return () => state.route.query.createRequestId;
+}
+
+export function getRouteResultId(state) {
+	return () => state.route.query.resultId;
+}
+
 export function getRouteResultFilters(state) {
 	return () => {
 		return state.route.query.results;
@@ -60,10 +68,6 @@ export function getRouteFilters(state) {
 	return () => {
 		return state.route.query.filters ? state.route.query.filters : [];
 	};
-}
-
-export function getRouteCreateRequestId(state) {
-	return () => state.route.query.createRequestId;
 }
 
 export function getVariables(state) {
@@ -164,10 +168,10 @@ export function getResultDataItems(state, getters) {
 	return () => {
 		// get the filtered data items
 		const dataRows = getters.getFilteredDataItems(state);
-		if (validateData(state.resultData.results)) {
+		if (validateData(state.resultData)) {
 			// append the result variable data to the baseline variable data
 			for (const [i, dataObj] of dataRows.entries()) {
-				const resultData = state.resultData.results;
+				const resultData = state.resultData;
 				for (const [j, resultMeta] of resultData.metadata.entries()) {
 					const label = `Predicted ${resultMeta.name}`;
 					dataObj[label] = resultData.values[i][j];
@@ -187,7 +191,7 @@ export function getResultDataFields(state, getters) {
 	return () => {
 		// const resultData = state.resultData;
 		const dataFields = getters.getFilteredDataFields();
-		const resultData = state.resultData.results;
+		const resultData = state.resultData;
 		if (!_.isEmpty(resultData)) {
 			for (let resultMeta of resultData.metadata) {
 				const label = `Predicted ${resultMeta.name}`; 
