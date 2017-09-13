@@ -3,6 +3,7 @@ package postgres
 import (
 	"fmt"
 
+	"github.com/pkg/errors"
 	es "github.com/unchartedsoftware/distil/api/elastic"
 	"github.com/unchartedsoftware/distil/api/model"
 	"github.com/unchartedsoftware/distil/api/postgres"
@@ -79,4 +80,38 @@ func (s *Storage) PersistResultMetadata(requestID string, resultUUID string, res
 	_, err := s.client.Exec(sql, requestID, resultUUID, resultURI)
 
 	return err
+}
+
+// FetchRequests pulls session request information from Postgres. NOTE: Not implemented!
+func (s *Storage) FetchRequests(sessionID string) ([]*model.Request, error) {
+	sql := fmt.Sprintf("SELECT session_id, request_id, pipeline_id, dataset, progress FROM %s WHERE session_id = $1;", requestTableName)
+
+	rows, err := s.client.Query(sql, sessionID)
+	if err != nil {
+		return nil, errors.Wrap(err, "Unable to pull session requests from Postgres")
+	}
+
+	requests := make([]*model.Request, 0)
+	for rows.Next() {
+		var sessionID string
+		var requestID string
+		var pipelineID string
+		var dataset string
+		var progress string
+
+		err = rows.Scan(&sessionID, &requestID, &pipelineID, &dataset, &progress)
+		if err != nil {
+			return nil, errors.Wrap(err, "Unable to parse session requests from Postgres")
+		}
+
+		requests = append(requests, &model.Request{
+			SessionID:  sessionID,
+			RequestID:  requestID,
+			PipelineID: pipelineID,
+			Dataset:    dataset,
+			Progress:   progress,
+		})
+	}
+
+	return requests, nil
 }

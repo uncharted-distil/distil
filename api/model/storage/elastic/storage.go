@@ -51,3 +51,8 @@ func (s *Storage) UpdateRequest(requestID string, progress string) error {
 func (s *Storage) PersistResultMetadata(requestID string, resultUUID string, resultURI string) error {
 	return errors.New("ElasticSearch PersistResultMetadata not implemented")
 }
+
+// FetchRequests pulls session request information from ES. NOTE: Not implemented!
+func (s *Storage) FetchRequests(sessionID string) ([]*model.Request, error) {
+	return nil, errors.New("ElasticSearch FetchRequests not implemented")
+}

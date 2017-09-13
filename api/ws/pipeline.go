@@ -94,21 +94,57 @@ func handleMessage(conn *Connection, client *pipeline.Client, esCtor elastic.Cli
 	}
 }
 
-func handleGetSession(conn *Connection, client *pipeline.Client, msg *Message, storageCtor model.StorageCtor) {
-	// get existing session
-	if msg.Session != "" {
-		// try to get existing session
-		session, ok := client.GetSession(msg.Session)
-		if ok {
-			handleGetSessionSuccess(conn, msg, session.ID, false, true, session.GetExistingUUIDs())
-			return
+func loadSessionRequests(msg *Message, session *pipeline.Session, storage model.Storage) error {
+	// load the stored session information.
+	reqs, err := storage.FetchRequests(msg.Session)
+	if err != nil {
+		return errors.Wrap(err, "Unable to pull session request")
+	}
+
+	// parse the requests into the session object.
+	for _, r := range reqs {
+		// get the uuid for the request.
+		requestID, err := uuid.FromString(r.RequestID)
+		if err != nil {
+			return errors.Wrap(err, "Unable to parse request uuid")
+		}
+
+		// add the request to the right collection
+		req := &pipeline.RequestContext{
+			RequestID: requestID,
+		}
+		if pipeline.Progress_value[r.Progress] != int32(pipeline.Progress_COMPLETED) {
+			session.AddPendingRequest(req)
+		} else {
+			session.AddCompletedRequest(req)
 		}
 	}
+
+	return nil
+}
+
+func handleGetSession(conn *Connection, client *pipeline.Client, msg *Message, storageCtor model.StorageCtor) {
 	// get the storage instance
 	storage, err := storageCtor()
 	if err != nil {
 		handleErr(conn, msg, err)
 		return
+	}
+
+	// get existing session
+	if msg.Session != "" {
+		// try to get existing session
+		session, ok := client.GetSession(msg.Session)
+		if ok {
+			err = loadSessionRequests(msg, session, storage)
+			if err != nil {
+				handleErr(conn, msg, err)
+				return
+			}
+
+			handleGetSessionSuccess(conn, msg, session.ID, false, true, session.GetExistingUUIDs())
+			return
+		}
 	}
 
 	// start a new session
