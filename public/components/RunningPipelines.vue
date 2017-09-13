@@ -13,7 +13,6 @@
 import _ from 'lodash';
 import PipelinePreview from '../components/PipelinePreview';
 import { getMetricDisplayName } from '../util/pipelines';
-import { createRouteEntry } from '../util/routes';
 
 export default {
 	name: 'running-pipelines',
@@ -39,14 +38,6 @@ export default {
 				return metricName + ': ' + score.value;
 			}
 			return result.progress;
-		},
-		onResult(result) {
-			const entry = createRouteEntry('/results', {
-				dataset: this.$store.getters.getRouteDataset(),
-				filters: this.$store.getters.getRouteFilters(),
-				createRequestId: result.requestId
-			});
-			this.$router.push(entry);
 		}
 	}
 };

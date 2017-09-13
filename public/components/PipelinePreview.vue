@@ -80,7 +80,8 @@ export default {
 			const entry = createRouteEntry('/results', {
 				dataset: this.$store.getters.getRouteDataset(),
 				filters: this.$store.getters.getRouteFilters(),
-				createRequestId: this.result.requestId
+				createRequestId: this.result.requestId,
+				resultId: btoa(this.result.pipeline.resultUri)
 			});
 			this.$router.push(entry);
 		}

@@ -54,7 +54,7 @@ const state = {
 		// }
 	],
 	// current set of pipeline results
-	results: {
+	resultData: {
 		// name: '',
 		// pipelineId: '',
 		// metadata: [
