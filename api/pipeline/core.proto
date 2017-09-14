@@ -19,7 +19,7 @@ extend google.protobuf.FileOptions {
 }
 
 // Semver-based version string. Use is it to populate version in SessionRequest and SessionResponse messages.
-option (protocol_version) = "2017.8.23";
+option (protocol_version) = "2017.9.11";
 
 message SessionContext {
     string session_id = 1;
@@ -27,20 +27,20 @@ message SessionContext {
 }
 
 enum StatusCode {
-    OK = 0;
-    CANCELLED = 1;
-    SESSION_UNKNOWN = 2;
-    SESSION_ENDED = 3;
-    SESSION_EXPIRED = 4;
-    INVALID_ARGUMENT = 5;
-    RESOURCE_EXHAUSTED = 6;
-    UNAVAILABLE = 7;
-    FAILED_PRECONDITION = 8;
-    OUT_OF_RANGE = 9;
-    UNIMPLEMENTED = 10;
-    INTERNAL = 11;
-    ABORTED = 12;
-    UNKNOWN = 13;
+    UNKNOWN = 0;
+    OK = 1;
+    CANCELLED = 2;
+    SESSION_UNKNOWN = 3;
+    SESSION_ENDED = 4;
+    SESSION_EXPIRED = 5;
+    INVALID_ARGUMENT = 6;
+    RESOURCE_EXHAUSTED = 7;
+    UNAVAILABLE = 8;
+    FAILED_PRECONDITION = 9;
+    OUT_OF_RANGE = 10;
+    UNIMPLEMENTED = 11;
+    INTERNAL = 12;
+    ABORTED = 13;
 }
 
 message Status {
@@ -129,6 +129,7 @@ enum Metric {                             // The evaluation metric for any poten
     R_SQUARED = 11;                       // sklearn.metrics.r2_score
     NORMALIZED_MUTUAL_INFORMATION = 12;
     JACCARD_SIMILARITY_SCORE = 13;
+    EXECUTION_TIME = 14;                  // wall clock time to run the pipeline by TA2
 }
 
 message Feature {
@@ -170,7 +171,7 @@ message PipelineCreateResult {
 message PipelineExecuteRequest {
     SessionContext context = 1;
     string pipeline_id = 2;
-    repeated string predict_dataset_uris = 3;  // input path of eval data
+    repeated Feature predict_features = 3;  // input feature data to pass to the pipeline
 }
 
 message PipelineExecuteResult {
@@ -183,6 +184,11 @@ message PipelineExecuteResult {
 
 message PipelineListRequest {
     SessionContext context = 1;
+}
+
+message PipelineDeleteRequest {
+    SessionContext context = 1;
+    repeated string delete_pipeline_ids = 2;
 }
 
 message PipelineListResult {
@@ -200,6 +206,12 @@ message PipelineExecuteResultsRequest {
     repeated string pipeline_ids = 2;
 }
 
+message PipelineExportRequest {
+    SessionContext context = 1;
+    string pipeline_id = 2;
+    string pipeline_exec_uri = 3; // uri to persist executable of requested pipeline w/ session preprocessing
+}
+
 message UpdateProblemSchemaRequest {
     message ReplaceProblemSchemaField {
         oneof update {
@@ -213,17 +225,23 @@ message UpdateProblemSchemaRequest {
     repeated ReplaceProblemSchemaField updates = 1;
 }
 
-service PipelineCompute {
+service Core {
     // Train step - multiple result messages returned via GRPC streaming.
     rpc CreatePipelines(PipelineCreateRequest) returns (stream PipelineCreateResult) {}
 
     // Predict step - multiple results messages returned via GRPC streaming.
     rpc ExecutePipeline(PipelineExecuteRequest) returns (stream PipelineExecuteResult) {}
 
-    // Get pipelines already present in the session.
+    // Manage pipelines already present in the session.
     rpc ListPipelines(PipelineListRequest) returns (PipelineListResult) {}
+    rpc DeletePipelines(PipelineDeleteRequest) returns (PipelineListResult) {}
+
+    // Obtain results
     rpc GetCreatePipelineResults(PipelineCreateResultsRequest) returns (stream PipelineCreateResult) {}
     rpc GetExecutePipelineResults(PipelineExecuteResultsRequest) returns (stream PipelineExecuteResult) {}
+
+    // Export executable of a pipeline, including any optional preprocessing used in session
+    rpc ExportPipeline(PipelineExportRequest) returns (Response) {}
 
     // Update problem schema
     rpc UpdateProblemSchema(UpdateProblemSchemaRequest) returns (Response) {}

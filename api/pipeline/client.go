@@ -19,7 +19,7 @@ import (
 // is managed internally.
 type Client struct {
 	sessions map[string]*Session
-	client   PipelineComputeClient
+	client   CoreClient
 	conn     *grpc.ClientConn
 	mu       *sync.Mutex
 	DataDir  string
@@ -42,7 +42,7 @@ func NewClient(serverAddr string, dataDir string) (*Client, error) {
 	client := Client{}
 	client.mu = &sync.Mutex{}
 	client.sessions = make(map[string]*Session)
-	client.client = NewPipelineComputeClient(conn)
+	client.client = NewCoreClient(conn)
 	client.conn = conn
 	client.DataDir = dataDir
 	return &client, nil
