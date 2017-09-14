@@ -4,7 +4,6 @@ import (
 	"bufio"
 	"encoding/csv"
 	"fmt"
-	"math"
 	"os"
 	"strconv"
 
@@ -198,13 +197,9 @@ func (s *Storage) getResultMinMaxAggsQuery(variable *model.Variable, resultVaria
 	return queryPart
 }
 
-func (s *Storage) getResultHistogramAggQuery(extrema *model.Extrema, variable *model.Variable, resultVariable *model.Variable) (string, string) {
+func (s *Storage) getResultHistogramAggQuery(extrema *model.Extrema, variable *model.Variable, resultVariable *model.Variable) (string, string, string) {
 	// compute the bucket interval for the histogram
-	interval := (extrema.Max - extrema.Min) / model.MaxNumBuckets
-	if extrema.Type != model.FloatType {
-		interval = math.Floor(interval)
-		interval = math.Max(1, interval)
-	}
+	interval := s.calculateInterval(extrema)
 
 	// Only numeric types should occur.
 	var fieldTyped string
@@ -219,9 +214,11 @@ func (s *Storage) getResultHistogramAggQuery(extrema *model.Extrema, variable *m
 
 	// get histogram agg name & query string.
 	histogramAggName := fmt.Sprintf("\"%s%s\"", model.HistogramAggPrefix, extrema.Name)
-	histogramQueryString := fmt.Sprintf("(%s / %f) * %f", fieldTyped, interval, interval)
+	bucketQueryString := fmt.Sprintf("width_bucket(\"%s\", %g, %g, %d) -1",
+		fieldTyped, extrema.Min, extrema.Max, model.MaxNumBuckets-1)
+	histogramQueryString := fmt.Sprintf("(%s) * %g + %g", bucketQueryString, interval, extrema.Min)
 
-	return histogramAggName, histogramQueryString
+	return histogramAggName, bucketQueryString, histogramQueryString
 }
 
 func (s *Storage) fetchResultExtrema(resultURI string, dataset string, variable *model.Variable, resultVariable *model.Variable) (*model.Extrema, error) {
@@ -252,13 +249,13 @@ func (s *Storage) fetchNumericalResultHistogram(resultURI string, dataset string
 	}
 	// for each returned aggregation, create a histogram aggregation. Bucket
 	// size is derived from the min/max and desired bucket count.
-	histogramName, histogramQuery := s.getResultHistogramAggQuery(extrema, variable, resultVariable)
+	histogramName, bucketQuery, histogramQuery := s.getResultHistogramAggQuery(extrema, variable, resultVariable)
 
 	// Create the complete query string.
 	query := fmt.Sprintf(`
-		SELECT (%s) AS %s, COUNT(*) AS count FROM %s
+		SELECT %s as bucket, CAST(%s as double precision) AS %s, COUNT(*) AS count FROM %s
 		WHERE result_id = $1 AND target = $2
-		GROUP BY %s ORDER BY %s;`, histogramQuery, histogramName, dataset, histogramQuery, histogramName)
+		GROUP BY %s ORDER BY %s;`, bucketQuery, histogramQuery, histogramName, dataset, bucketQuery, histogramName)
 
 	// execute the postgres query
 	res, err := s.client.Query(query, resultURI, variable.Name)
