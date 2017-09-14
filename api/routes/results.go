@@ -22,7 +22,7 @@ func ResultsHandler(storageCtor model.StorageCtor) func(http.ResponseWriter, *ht
 		// extract route parameters
 		index := pat.Param(r, "index")
 		dataset := pat.Param(r, "dataset")
-		resultURI, err := url.PathUnescape(pat.Param(r, "result-uri"))
+		resultURI, err := url.PathUnescape(pat.Param(r, "results-uri"))
 		if err != nil {
 			handleError(w, errors.Wrap(err, "unable to unescape result uri"))
 			return
@@ -41,9 +41,7 @@ func ResultsHandler(storageCtor model.StorageCtor) func(http.ResponseWriter, *ht
 		}
 
 		// marshall data and sent the response back
-		err = handleJSON(w, Results{
-			Results: results,
-		})
+		err = handleJSON(w, results)
 		if err != nil {
 			handleError(w, errors.Wrap(err, "unable marshal pipeline result into JSON"))
 			return

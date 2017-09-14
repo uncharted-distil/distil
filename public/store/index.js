@@ -44,14 +44,29 @@ const state = {
 	resultsSummaries: [
 		// {
 		//     name: '',
+		// 	   pipelineId: '',
 		//     buckets: [
-		//     {
+		//     	   {
 		//             key: '',
 		//             count: 0
 		//         }
 		//     ]
 		// }
 	],
+	// current set of pipeline results
+	resultData: {
+		// name: '',
+		// pipelineId: '',
+		// metadata: [
+		//     {
+		//         name: '',
+		//         type: ''
+		//     }
+		// ]
+		// values: [
+		//     []
+		// ]
+	},
 	// filtered data entries for the active dataset
 	filteredData: {
 		// name: '',
@@ -65,7 +80,7 @@ const state = {
 		//     []
 		// ]
 	},
-	// running pipline creation tasks grouped by parent create requestID
+	// running pipeline creation tasks grouped by parent create requestID
 	runningPipelines: {
 		// requestId: {
 		//     pipelineId: {
@@ -73,7 +88,16 @@ const state = {
 		//         id: '',
 		//         pipelineId: '',
 		//         progress: '',
-		//         session: ''
+		//         pipeline: { // only present if progress === UPDATED,
+		//             output: '',
+		//             scores: [
+		//                {
+		//                    metric: '',
+		//                    value: 0.1
+		//                }
+		//             ],
+		//             resultUri: ''
+		//         }
 		//     }
 		// }
 	},
@@ -84,6 +108,7 @@ const state = {
 		//         name: '',
 		//         id: '',
 		//         pipelineId: '',
+		//         progress: '',
 		//         pipeline: { // only present if progress === COMPLETE
 		//             output: '',
 		//             scores: [
@@ -91,7 +116,8 @@ const state = {
 		//                    metric: '',
 		//                    value: 0.1
 		//                }
-		//             ]
+		//             ],
+		//             resultUri: ''
 		//         }
 		//     }
 		// }

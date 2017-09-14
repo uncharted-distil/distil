@@ -12,7 +12,7 @@
 <script>
 import _ from 'lodash';
 import PipelinePreview from '../components/PipelinePreview';
-import {getMetricDisplayName} from '../util/pipelines';
+import { getMetricDisplayName } from '../util/pipelines';
 
 export default {
 	name: 'running-pipelines',
@@ -38,7 +38,7 @@ export default {
 				return metricName + ': ' + score.value;
 			}
 			return result.progress;
-		},
+		}
 	}
 };
 </script>

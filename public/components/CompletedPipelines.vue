@@ -13,7 +13,7 @@
 
 import _ from 'lodash';
 import PipelinePreview from '../components/PipelinePreview';
-import {getMetricDisplayName} from '../util/pipelines';
+import { getMetricDisplayName } from '../util/pipelines';
 
 export default {
 	name: 'completed-pipelines',
@@ -33,7 +33,7 @@ export default {
 	methods: {
 		metricName(metric) {
 			return getMetricDisplayName(metric);
-		},
+		}
 	}
 };
 </script>
