@@ -34,7 +34,7 @@ func APIVersion() string {
 }
 
 // RequestFunc defines a standardized pipeline request execution function.
-type RequestFunc func(ctx *context.Context, client *PipelineComputeClient) *RequestContext
+type RequestFunc func(ctx *context.Context, client *CoreClient) *RequestContext
 
 // RequestInfo provides a unique ID and hash for a request to be send, along with a function that
 // can be called to initiate the request as an RPC call.
@@ -75,7 +75,7 @@ func NewRequestContext(ctx *context.Context, requestID uuid.UUID, hash uint64, r
 }
 
 type streamReceiveFunc func() (proto.Message, error)
-type streamRequestFunc func(*PipelineComputeClient, *context.Context, proto.Message) (streamReceiveFunc, error)
+type streamRequestFunc func(*CoreClient, *context.Context, proto.Message) (streamReceiveFunc, error)
 type msgHashFunc func(proto.Message, uuid.UUID) uint64
 
 func generateStreamRequest(request proto.Message, streamReq streamRequestFunc, hashFunc msgHashFunc) *RequestInfo {
@@ -85,7 +85,7 @@ func generateStreamRequest(request proto.Message, streamReq streamRequestFunc, h
 	hashVal := hashFunc(request, requestID)
 
 	// create the function that the caller will use to execute the request
-	requestFunc := func(ctx *context.Context, client *PipelineComputeClient) *RequestContext {
+	requestFunc := func(ctx *context.Context, client *CoreClient) *RequestContext {
 		requestCtx := NewRequestContext(ctx, requestID, hashVal, request)
 
 		// start a go routine that will send the grpc request, and return streamed results and errors through
@@ -128,7 +128,7 @@ func generateStreamRequest(request proto.Message, streamReq streamRequestFunc, h
 // GeneratePipelineCreateRequest creates a PipelineCreateRequest that will initiate pipeline creation on the server and
 // and handle a stream of PipelineCreateResult objects that are returned as work is completed.
 func GeneratePipelineCreateRequest(request *PipelineCreateRequest) *RequestInfo {
-	grpcFunc := func(client *PipelineComputeClient, ctx *context.Context, request proto.Message) (streamReceiveFunc, error) {
+	grpcFunc := func(client *CoreClient, ctx *context.Context, request proto.Message) (streamReceiveFunc, error) {
 		// execute the grpc create pipeline request
 		req := request.(*PipelineCreateRequest)
 		stream, err := (*client).CreatePipelines(*ctx, req)
@@ -141,7 +141,7 @@ func GeneratePipelineCreateRequest(request *PipelineCreateRequest) *RequestInfo 
 // GeneratePipelineExecuteRequest creates a PipelineExecuteRequest that will execute a pipeline on the server and
 // and handle a stream of PipelineExecuteResult objects that are returned as work is completed.
 func GeneratePipelineExecuteRequest(request *PipelineExecuteRequest) *RequestInfo {
-	grpcFunc := func(client *PipelineComputeClient, ctx *context.Context, request proto.Message) (streamReceiveFunc, error) {
+	grpcFunc := func(client *CoreClient, ctx *context.Context, request proto.Message) (streamReceiveFunc, error) {
 		// execute the grpc execute pipeline request
 		req := request.(*PipelineExecuteRequest)
 		stream, err := (*client).ExecutePipeline(*ctx, req)
@@ -151,7 +151,7 @@ func GeneratePipelineExecuteRequest(request *PipelineExecuteRequest) *RequestInf
 	return generateStreamRequest(request, grpcFunc, msgHash)
 }
 
-type grpcRequestFunc func(*PipelineComputeClient, *context.Context, proto.Message) (proto.Message, error)
+type grpcRequestFunc func(*CoreClient, *context.Context, proto.Message) (proto.Message, error)
 
 func generateRequest(request proto.Message, grpcRequest grpcRequestFunc, hashFunc msgHashFunc) *RequestInfo {
 	// generate a timestamp/mac addr uuid for the request
@@ -161,7 +161,7 @@ func generateRequest(request proto.Message, grpcRequest grpcRequestFunc, hashFun
 	hashVal := hashFunc(request, requestID)
 
 	// create the function that the caller will use to execute the request
-	requestFunc := func(ctx *context.Context, client *PipelineComputeClient) *RequestContext {
+	requestFunc := func(ctx *context.Context, client *CoreClient) *RequestContext {
 		requestCtx := NewRequestContext(ctx, requestID, hashVal, request)
 		go func() {
 			defer func() {
@@ -191,7 +191,7 @@ func GenerateStartSessionRequest() *RequestInfo {
 		UserAgent: userAgent,
 		Version:   APIVersion(),
 	}
-	grpcFunc := func(client *PipelineComputeClient, ctx *context.Context, request proto.Message) (proto.Message, error) {
+	grpcFunc := func(client *CoreClient, ctx *context.Context, request proto.Message) (proto.Message, error) {
 		// execute the start session request
 		return (*client).StartSession(*ctx, &sessionRequest)
 	}
@@ -203,7 +203,7 @@ func GenerateStartSessionRequest() *RequestInfo {
 // is not available for further pipeline requests once called.
 func GenerateEndSessionRequest(sessionID string) *RequestInfo {
 	sessionCtx := SessionContext{sessionID}
-	grpcFunc := func(client *PipelineComputeClient, ctx *context.Context, request proto.Message) (proto.Message, error) {
+	grpcFunc := func(client *CoreClient, ctx *context.Context, request proto.Message) (proto.Message, error) {
 		// execute the end session request
 		return (*client).EndSession(*ctx, &sessionCtx)
 	}

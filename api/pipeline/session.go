@@ -9,10 +9,10 @@ import (
 	"golang.org/x/net/context"
 )
 
-// Session provides facilities for managing GPRC pipeline sessions.
+// Session provides facilities for managing GRPC pipeline sessions.
 type Session struct {
 	ID                string
-	client            PipelineComputeClient
+	client            CoreClient
 	pendingRequests   map[uuid.UUID]*RequestContext
 	completedRequests map[uuid.UUID]*RequestContext
 	results           map[uuid.UUID][]*proto.Message
@@ -21,7 +21,7 @@ type Session struct {
 }
 
 // NewSession instantiates and returns a new session.
-func NewSession(id string, client PipelineComputeClient) *Session {
+func NewSession(id string, client CoreClient) *Session {
 	return &Session{
 		ID:                id,
 		client:            client,
