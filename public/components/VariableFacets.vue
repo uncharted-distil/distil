@@ -57,7 +57,12 @@
 			v-on:expand="onExpand"
 			v-on:collapse="onCollapse"
 			v-on:range-change="onRangeChange"
-			v-on:facet-toggle="onFacetToggle"></facets>
+			v-on:facet-toggle="onFacetToggle">
+		</facets>
+		<div v-if="numRows > rowsPerPage" class="variable-page-nav">
+			<b-pagination size="sm" align="center" @change="onPageUpdate" :total-rows="numRows" :per-page="rowsPerPage" v-model="currentPage"/>
+		</div>
+
 	</div>
 </template>
 
@@ -65,8 +70,8 @@
 
 import Facets from '../components/Facets';
 import { decodeFilters, updateFilter, getFilterType, isDisabled, CATEGORICAL_FILTER, NUMERICAL_FILTER } from '../util/filters';
-import { createRouteEntry } from '../util/routes';
 import { spinnerHTML } from '../util/spinner';
+import { createRouteEntry, createRouteEntryFromRoute } from '../util/routes';
 import 'font-awesome/css/font-awesome.css';
 import '../styles/spinner.css';
 
@@ -82,22 +87,46 @@ export default {
 		'enable-toggle',
 		'variables',
 		'dataset',
-		'html'
+		'html',
+		'instance-name'
 	],
 
 	data() {
 		return {
 			filter: '',
+			currentPage: 1,
+			numRows: 1,
+			rowsPerPage: 20,
 			sortMethod: 'alphaAsc'
 		};
+	},
+
+	mounted() {
+		// initialize the pagination component's model from the route if set
+		const routeFacetPage = this.$store.getters.getRouteFacetsPage(this.pageRouteKey());
+		if (routeFacetPage) {
+			this.currentPage = parseInt(routeFacetPage);
+		}
 	},
 
 	computed: {
 		groups() {
 			// filter by search
-			const filtered = this.variables.filter(summary => {
+			const searchFiltered = this.variables.filter(summary => {
 				return this.filter === '' || summary.name.toLowerCase().includes(this.filter.toLowerCase());
 			});
+
+			// extract the number of results
+			this.numRows = searchFiltered.length;
+
+			// if necessary, refilter applying pagination rules
+			let filtered = searchFiltered;
+			if (this.numRows > this.rowsPerPage) {
+				const firstIndex = this.rowsPerPage * (this.currentPage - 1);
+				const lastIndex = Math.min(firstIndex + this.rowsPerPage, this.numRows);
+				filtered = searchFiltered.slice(firstIndex, lastIndex);
+			}
+
 			// create the groups
 			let groups = this.createGroups(filtered);
 			// update collapsed state
@@ -143,6 +172,14 @@ export default {
 		noveltyDesc(a, b) {
 			return b.novelty - a.novelty;
 		},
+		pageRouteKey() {
+			if (this.instanceName) {
+				return `${this.instanceName}Page`;
+			}
+			return 'facetPage';
+		},
+
+		// updates route with current filter state
 		updateFilterRoute(key, values) {
 			// retrieve the filters from the route
 			const filters = this.$store.getters.getRouteFilters();
@@ -157,18 +194,24 @@ export default {
 			});
 			this.$router.push(entry);
 		},
+
+		// handles facet group transition to active state
 		onExpand(key) {
 			// enable filter
 			this.updateFilterRoute(key, {
 				enabled: true
 			});
 		},
+
+		// handles facet group transitions to inactive (grayed out, reduced visuals) state
 		onCollapse(key) {
 			// disable filter
 			this.updateFilterRoute(key, {
 				enabled: false
 			});
 		},
+
+		// handles range slider change events
 		onRangeChange(key, value) {
 			// set range filter
 			this.updateFilterRoute(key, {
@@ -177,6 +220,8 @@ export default {
 				max: parseFloat(value.to.label[0])
 			});
 		},
+
+		// handles individual category toggle events within a facet group
 		onFacetToggle(key, values) {
 			// set range filter
 			this.updateFilterRoute(key, {
@@ -206,6 +251,15 @@ export default {
 					break;
 			}
 		},
+
+		// fetches facet data for currently selected page
+		onPageUpdate(newPage) {
+			const entry = createRouteEntryFromRoute(this.$route, {[this.pageRouteKey()]: newPage});
+			this.$router.push(entry);
+		},
+
+		// sets all facet groups to the active state - full size display + all controls, updates
+		// route accordingly
 		selectAll() {
 			// enable all filters
 			let filters = this.$store.getters.getRouteFilters();
@@ -221,6 +275,9 @@ export default {
 			});
 			this.$router.push(entry);
 		},
+
+		// sets all facet groups to the inactive state - minimized diplay , no controls,
+		// and updates route accordingly
 		deselectAll() {
 			// enable all filters
 			let filters = this.$store.getters.getRouteFilters();
@@ -236,6 +293,8 @@ export default {
 			});
 			this.$router.push(entry);
 		},
+
+		// creates a facet to display a data fetch error
 		createErrorFacet(summary) {
 			return {
 				label: summary.name,
@@ -246,6 +305,8 @@ export default {
 				}]
 			};
 		},
+
+		// creates a place holder facet to dispay a spinner
 		createPendingFacet(summary) {
 			return {
 				label: summary.name,
@@ -256,8 +317,9 @@ export default {
 				}]
 			};
 		},
-		createSummaryFacet(summary) {
 
+		// creates categorical or numerical summary facets
+		createSummaryFacet(summary) {
 			switch (summary.type) {
 
 				case 'categorical':
@@ -296,6 +358,8 @@ export default {
 			console.warn('unrecognized summary type', summary.type);
 			return null;
 		},
+
+		// creates the set of facets from the supplied summary data
 		createGroups(summaries) {
 			return summaries.map(summary => {
 				if (summary.err) {
@@ -313,6 +377,8 @@ export default {
 				return group;
 			});
 		},
+
+		// updates facet collapse/expand state based on route settings
 		updateGroupCollapses(groups) {
 			const filters = this.$store.getters.getRouteFilters();
 			const decoded = decodeFilters(filters);
@@ -322,6 +388,9 @@ export default {
 				return group;
 			});
 		},
+
+		// updates numerical facet range controls or categorical selected state based on
+		// route
 		updateGroupSelections(groups) {
 			const filters = this.$store.getters.getRouteFilters();
 			const decoded = decodeFilters(filters);
@@ -398,4 +467,9 @@ button {
 .sort-buttons > button {
 	margin-right: 4px;
 }
+
+.variable-page-nav {
+	margin-top: 10px;
+}
+
 </style>

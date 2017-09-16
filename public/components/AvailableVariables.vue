@@ -6,9 +6,11 @@
 		<variable-facets
 			enable-filter="true"
 			enable-toggle="true"
+			instance-name="availableVars"
 			:variables="variables"
 			:dataset="dataset"
-			:html="html"></variable-facets>
+			:html="html">
+		</variable-facets>
 	</div>
 </template>
 
