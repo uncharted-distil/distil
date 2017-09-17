@@ -25,6 +25,31 @@ export function searchDatasets(context, terms) {
 		});
 }
 
+// searches dataset descriptions and column names for supplied terms
+export function getSession(context) {
+	const sessionID = context.getters.getPipelineSessionID();
+	return axios.get(`/distil/session/${sessionID}`)
+		.then(response => {
+			response.Pipelines.forEach((pipeline, idx) => {
+				pipeline.Results.forEach((res, ids) => {
+					// add/update the running pipeline info
+					if (pipeline.Progress === PIPELINE_COMPLETE) {
+						//move the pipeline from running to complete
+						context.commit('addCompletedPipeline', {
+							name: res.name,
+							requestId: pipeline.requestId,
+							pipelineId: pipeline.pipelineId,
+							pipeline: res
+						});
+					}
+				});
+			});
+		})
+		.catch(error => {
+			console.error(error);
+		});
+}
+
 // fetches all variables for a single dataset.
 export function getVariables(context, dataset) {
 	return axios.get(`/distil/variables/${ES_INDEX}/${dataset}`)

@@ -7,4 +7,13 @@ type Request struct {
 	PipelineID string
 	Dataset    string
 	Progress   string
+
+	Results []*Result
+}
+
+// Result represents the pipeline result metadata.
+type Result struct {
+	RequestID  string
+	ResultURI  string
+	ResultUUID string
 }

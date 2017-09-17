@@ -63,11 +63,11 @@ func (s *Storage) PersistRequest(sessionID string, requestID string, pipelineID 
 }
 
 // UpdateRequest updates a request in Postgres.
-func (s *Storage) UpdateRequest(requestID string, progress string) error {
+func (s *Storage) UpdateRequest(requestID string, pipelineID string, progress string) error {
 	// Update the request.
-	sql := fmt.Sprintf("UPDATE %s SET progress = $1 WHERE request_id = $2;", requestTableName)
+	sql := fmt.Sprintf("UPDATE %s SET progress = $1, pipeline_id = $2 WHERE request_id = $3;", requestTableName)
 
-	_, err := s.client.Exec(sql, progress, requestID)
+	_, err := s.client.Exec(sql, progress, pipelineID, requestID)
 
 	return err
 }
@@ -104,14 +104,50 @@ func (s *Storage) FetchRequests(sessionID string) ([]*model.Request, error) {
 			return nil, errors.Wrap(err, "Unable to parse session requests from Postgres")
 		}
 
+		results, err := s.FetchResultMetadata(requestID)
+		if err != nil {
+			return nil, errors.Wrap(err, "Unable to get request results from Postgres")
+		}
+
 		requests = append(requests, &model.Request{
 			SessionID:  sessionID,
 			RequestID:  requestID,
 			PipelineID: pipelineID,
 			Dataset:    dataset,
 			Progress:   progress,
+			Results:    results,
 		})
 	}
 
 	return requests, nil
+}
+
+// FetchResultMetadata pulls request result information from Psotgres.
+func (s *Storage) FetchResultMetadata(requestID string) ([]*model.Result, error) {
+	sql := fmt.Sprintf("SELECT request_id, result_uuid, result_uri FROM %s WHERE request_id = $1;", resultTableName)
+
+	rows, err := s.client.Query(sql, requestID)
+	if err != nil {
+		return nil, errors.Wrap(err, "Unable to pull request resultss from Postgres")
+	}
+
+	results := make([]*model.Result, 0)
+	for rows.Next() {
+		var requestID string
+		var resultUUID string
+		var resultURI string
+
+		err = rows.Scan(&requestID, &resultUUID, &resultURI)
+		if err != nil {
+			return nil, errors.Wrap(err, "Unable to parse requests results from Postgres")
+		}
+
+		results = append(results, &model.Result{
+			RequestID:  requestID,
+			ResultURI:  resultURI,
+			ResultUUID: resultUUID,
+		})
+	}
+
+	return results, nil
 }

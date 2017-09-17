@@ -21,6 +21,11 @@ export default {
 		CreatePipelinesForm,
 		RunningPipelines,
 		CompletedPipelines
+	},
+
+	mounted() {
+		const dataset = this.$store.getters.getSession();
+		this.$store.dispatch('getSession');
 	}
 };
 </script>

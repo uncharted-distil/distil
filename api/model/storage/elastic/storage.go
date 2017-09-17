@@ -43,7 +43,7 @@ func (s *Storage) PersistRequest(sessionID string, requestID string, pipelineID 
 }
 
 // UpdateRequest updates a request in ES. NOTE: Not implemented!
-func (s *Storage) UpdateRequest(requestID string, progress string) error {
+func (s *Storage) UpdateRequest(requestID string, pipelineID string, progress string) error {
 	return errors.New("ElasticSearch UpdateRequest not implemented")
 }
 
@@ -55,4 +55,9 @@ func (s *Storage) PersistResultMetadata(requestID string, resultUUID string, res
 // FetchRequests pulls session request information from ES. NOTE: Not implemented!
 func (s *Storage) FetchRequests(sessionID string) ([]*model.Request, error) {
 	return nil, errors.New("ElasticSearch FetchRequests not implemented")
+}
+
+// FetchResultMetadata pulls request result information from ES. NOTE: Not implemented!
+func (s *Storage) FetchResultMetadata(requestID string) ([]*model.Result, error) {
+	return nil, errors.New("ElasticSearch FetchResultMetadata not implemented")
 }

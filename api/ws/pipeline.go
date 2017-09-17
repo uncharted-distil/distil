@@ -96,6 +96,7 @@ func handleMessage(conn *Connection, client *pipeline.Client, esCtor elastic.Cli
 
 func loadSessionRequests(msg *Message, session *pipeline.Session, storage model.Storage) error {
 	// load the stored session information.
+	log.Infof("Loading requests for session %v.", msg.Session)
 	reqs, err := storage.FetchRequests(msg.Session)
 	if err != nil {
 		return errors.Wrap(err, "Unable to pull session request")
@@ -119,6 +120,9 @@ func loadSessionRequests(msg *Message, session *pipeline.Session, storage model.
 			session.AddCompletedRequest(req)
 		}
 	}
+
+	log.Infof("Requests for session %v loaded successfully.", msg.Session)
+	log.Infof("Session: %v", session)
 
 	return nil
 }
@@ -325,7 +329,7 @@ func handleCreatePipelinesSuccess(conn *Connection, msg *Message, proxy *pipelin
 				log.Infof("Pipeline %s - %s", res.PipelineId, progress)
 
 				// update the request progress
-				err := storage.UpdateRequest(fmt.Sprintf("%s", proxy.RequestID), progress)
+				err := storage.UpdateRequest(fmt.Sprintf("%s", proxy.RequestID), res.PipelineId, progress)
 				if err != nil {
 					handleErr(conn, msg, errors.Wrap(err, "Unable to store request update"))
 				}

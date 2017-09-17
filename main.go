@@ -128,6 +128,7 @@ func main() {
 	registerRoute(mux, "/distil/filtered-data/:esIndex/:dataset", routes.FilteredDataHandler(dataStorageCtor))
 	registerRoute(mux, "/distil/results/:index/:dataset/:pipeline-uri", routes.ResultsHandler(dataStorageCtor))
 	registerRoute(mux, "/distil/results-summary/:index/:dataset/:result-uri", routes.ResultsSummaryHandler(dataStorageCtor))
+	registerRoute(mux, "/distil/session/:session", routes.SessionHandler(dataStorageCtor))
 	registerRoute(mux, "/ws", ws.PipelineHandler(pipelineClient, esClientCtor, dataStorageCtor))
 	registerRoute(mux, "/*", routes.FileHandler("./dist"))
 
