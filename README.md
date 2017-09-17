@@ -54,7 +54,13 @@ docker pull docker.uncharted.software/distil_dev_postgres
 docker pull docker.uncharted.software/distil-pipeline-server
 ```
 
-Launch docker containers:
+Launch docker containers via [Docker Compose](https://docs.docker.com/compose/):
+
+```bash
+docker-compose up
+```
+
+or using individual bash scripts:
 
 ```bash
 ./es_run.sh
