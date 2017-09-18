@@ -73,11 +73,11 @@ func (s *Storage) UpdateRequest(requestID string, pipelineID string, progress st
 }
 
 // PersistResultMetadata persists the result metadata to Postgres.
-func (s *Storage) PersistResultMetadata(requestID string, resultUUID string, resultURI string) error {
+func (s *Storage) PersistResultMetadata(requestID string, resultUUID string, resultURI string, progress string) error {
 	// Insert the result (metadata, not result data).
-	sql := fmt.Sprintf("INSERT INTO %s (request_id, result_uuid, result_uri) VALUES ($1, $2, $3);", resultTableName)
+	sql := fmt.Sprintf("INSERT INTO %s (request_id, result_uuid, result_uri, progress) VALUES ($1, $2, $3, $4);", resultTableName)
 
-	_, err := s.client.Exec(sql, requestID, resultUUID, resultURI)
+	_, err := s.client.Exec(sql, requestID, resultUUID, resultURI, progress)
 
 	return err
 }

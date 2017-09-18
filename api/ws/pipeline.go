@@ -350,7 +350,7 @@ func handleCreatePipelinesSuccess(conn *Connection, msg *Message, proxy *pipelin
 					}
 
 					// store the result data & metadata
-					err = storage.PersistResultMetadata(fmt.Sprintf("%s", proxy.RequestID), "", res.PipelineInfo.PredictResultUris[0])
+					err = storage.PersistResultMetadata(fmt.Sprintf("%s", proxy.RequestID), "", res.PipelineInfo.PredictResultUris[0], progress)
 					if err != nil {
 						handleErr(conn, msg, errors.Wrap(err, "Unable to store result metadata"))
 					}

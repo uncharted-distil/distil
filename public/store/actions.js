@@ -30,20 +30,22 @@ export function getSession(context) {
 	const sessionID = context.getters.getPipelineSessionID();
 	return axios.get(`/distil/session/${sessionID}`)
 		.then(response => {
-			response.Pipelines.forEach((pipeline, idx) => {
-				pipeline.Results.forEach((res, ids) => {
-					// add/update the running pipeline info
-					if (pipeline.Progress === PIPELINE_COMPLETE) {
-						//move the pipeline from running to complete
-						context.commit('addCompletedPipeline', {
-							name: res.name,
-							requestId: pipeline.requestId,
-							pipelineId: pipeline.pipelineId,
-							pipeline: res
-						});
-					}
+			if (response.data.pipelines) {
+				response.data.pipelines.forEach((pipeline) => {
+					pipeline.Results.forEach((res) => {
+						// add/update the running pipeline info
+						if (pipeline.Progress === PIPELINE_COMPLETE) {
+							//move the pipeline from running to complete
+							context.commit('addCompletedPipeline', {
+								name: res.name,
+								requestId: pipeline.requestId,
+								pipelineId: pipeline.pipelineId,
+								pipeline: res
+							});
+						}
+					});
 				});
-			});
+			}
 		})
 		.catch(error => {
 			console.error(error);

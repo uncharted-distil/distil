@@ -48,7 +48,7 @@ func (s *Storage) UpdateRequest(requestID string, pipelineID string, progress st
 }
 
 // PersistResultMetadata persists the result metadata to ES. NOTE: Not implemented!
-func (s *Storage) PersistResultMetadata(requestID string, resultUUID string, resultURI string) error {
+func (s *Storage) PersistResultMetadata(requestID string, resultUUID string, resultURI string, progress string) error {
 	return errors.New("ElasticSearch PersistResultMetadata not implemented")
 }
 

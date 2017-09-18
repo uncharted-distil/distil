@@ -24,7 +24,6 @@ export default {
 	},
 
 	mounted() {
-		const dataset = this.$store.getters.getSession();
 		this.$store.dispatch('getSession');
 	}
 };

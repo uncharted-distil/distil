@@ -16,7 +16,7 @@ type Storage interface {
 	PersistSession(sessionID string) error
 	PersistRequest(sessionID string, requestID string, pipelineID string, dataset string, progress string) error
 	UpdateRequest(requestID string, pipelineID string, progress string) error
-	PersistResultMetadata(requestID string, resultUUID string, resultURI string) error
+	PersistResultMetadata(requestID string, resultUUID string, resultURI string, progress string) error
 	FetchRequests(sessionID string) ([]*Request, error)
 	FetchResultMetadata(requestID string) ([]*Result, error)
 }
