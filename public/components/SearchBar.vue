@@ -1,6 +1,7 @@
 <template>
 	<div class='search-bar'>
 		<b-form-input
+			ref="searchbox"
 			v-model="terms"
 			type="text"
 			placeholder="Search datasets"

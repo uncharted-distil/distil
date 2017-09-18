@@ -14,7 +14,7 @@ const (
 	catResultLimit = 10
 )
 
-func (s *Storage) getHistogramAggQuery(extrema *model.Extrema) (string, string) {
+func (s *Storage) calculateInterval(extrema *model.Extrema) float64 {
 	// compute the bucket interval for the histogram
 	interval := (extrema.Max - extrema.Min) / model.MaxNumBuckets
 	if extrema.Type != model.FloatType {
@@ -22,11 +22,19 @@ func (s *Storage) getHistogramAggQuery(extrema *model.Extrema) (string, string) 
 		interval = math.Max(1, interval)
 	}
 
+	return interval
+}
+
+func (s *Storage) getHistogramAggQuery(extrema *model.Extrema) (string, string, string) {
+	interval := s.calculateInterval(extrema)
+
 	// get histogram agg name & query string.
 	histogramAggName := fmt.Sprintf("\"%s%s\"", model.HistogramAggPrefix, extrema.Name)
-	histogramQueryString := fmt.Sprintf("(\"%s\" / %g) * %g", extrema.Name, interval, interval)
+	bucketQueryString := fmt.Sprintf("width_bucket(\"%s\", %g, %g, %d) -1",
+		extrema.Name, extrema.Min, extrema.Max, model.MaxNumBuckets-1)
+	histogramQueryString := fmt.Sprintf("(%s) * %g + %g", bucketQueryString, interval, extrema.Min)
 
-	return histogramAggName, histogramQueryString
+	return histogramAggName, bucketQueryString, histogramQueryString
 }
 
 func (s *Storage) parseNumericHistogram(rows *pgx.Rows, extrema *model.Extrema) (*model.Histogram, error) {
@@ -34,25 +42,34 @@ func (s *Storage) parseNumericHistogram(rows *pgx.Rows, extrema *model.Extrema) 
 	histogramAggName := model.HistogramAggPrefix + extrema.Name
 
 	// Parse bucket results.
-	buckets := make([]*model.Bucket, 0)
+	interval := s.calculateInterval(extrema)
+
+	buckets := make([]*model.Bucket, model.MaxNumBuckets)
+	key := extrema.Min
+	for i := 0; i < len(buckets); i++ {
+		keyString := ""
+		if extrema.Type == model.FloatType {
+			keyString = fmt.Sprintf("%f", key)
+		} else {
+			keyString = strconv.Itoa(int(key))
+		}
+
+		buckets[i] = &model.Bucket{
+			Key:   keyString,
+			Count: 0,
+		}
+
+		key = key + interval
+	}
 	for rows.Next() {
 		var bucketValue float64
 		var bucketCount int64
-		err := rows.Scan(&bucketValue, &bucketCount)
+		var bucket int64
+		err := rows.Scan(&bucket, &bucketValue, &bucketCount)
 		if err != nil {
 			return nil, errors.Wrap(err, fmt.Sprintf("no %s histogram aggregation found", histogramAggName))
 		}
-
-		var key string
-		if extrema.Type == model.FloatType {
-			key = fmt.Sprintf("%f", bucketValue)
-		} else {
-			key = strconv.Itoa(int(bucketValue))
-		}
-		buckets = append(buckets, &model.Bucket{
-			Key:   key,
-			Count: bucketCount,
-		})
+		buckets[bucket].Count = bucketCount
 	}
 	// assign histogram attributes
 	return &model.Histogram{
@@ -149,10 +166,11 @@ func (s *Storage) fetchNumericalHistogram(dataset string, variable *model.Variab
 	}
 	// for each returned aggregation, create a histogram aggregation. Bucket
 	// size is derived from the min/max and desired bucket count.
-	histogramName, histogramQuery := s.getHistogramAggQuery(extrema)
+	histogramName, bucketQuery, histogramQuery := s.getHistogramAggQuery(extrema)
 
 	// Create the complete query string.
-	query := fmt.Sprintf("SELECT (%s) AS %s, COUNT(*) AS count FROM %s GROUP BY %s ORDER BY %s;", histogramQuery, histogramName, dataset, histogramQuery, histogramName)
+	query := fmt.Sprintf("SELECT %s as bucket, CAST(%s as double precision) AS %s, COUNT(*) AS count FROM %s GROUP BY %s ORDER BY %s;",
+		bucketQuery, histogramQuery, histogramName, dataset, bucketQuery, histogramName)
 
 	// execute the postgres query
 	res, err := s.client.Query(query)

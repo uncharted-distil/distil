@@ -37,6 +37,11 @@ export function setFilteredData(state, filteredData) {
 	state.filteredData = filteredData;
 }
 
+// sets the current result data into the store
+export function setResultData(state, resultData) {
+	state.resultData = resultData;
+}
+
 export function setWebSocketConnection(state, connection) {
 	state.wsConnection = connection;
 }
