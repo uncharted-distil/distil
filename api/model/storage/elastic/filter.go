@@ -5,10 +5,11 @@ import (
 	"sort"
 
 	"github.com/pkg/errors"
+	"github.com/unchartedsoftware/plog"
+	"gopkg.in/olivere/elastic.v5"
+
 	"github.com/unchartedsoftware/distil/api/model"
 	"github.com/unchartedsoftware/distil/api/util/json"
-	log "github.com/unchartedsoftware/plog"
-	"gopkg.in/olivere/elastic.v5"
 )
 
 func (s *Storage) parseResults(searchResults *elastic.SearchResult) (*model.FilteredData, error) {
@@ -35,23 +36,27 @@ func (s *Storage) parseResults(searchResults *elastic.SearchResult) (*model.Filt
 				if !ok {
 					return nil, errors.Errorf("failed to extract type info for %s during metadata creation", key)
 				}
-				data.Metadata = append(data.Metadata, &model.Variable{Name: key, Type: varType})
+				data.Columns = append(data.Columns, key)
+				data.Types = append(data.Types, varType)
 			}
 			// sort to impose consistent ordering
-			sort.SliceStable(data.Metadata, func(i, j int) bool {
-				return data.Metadata[i].Name < data.Metadata[j].Name
+			sort.SliceStable(data.Columns, func(i, j int) bool {
+				return data.Columns[i] < data.Columns[j]
+			})
+			sort.SliceStable(data.Types, func(i, j int) bool {
+				return data.Columns[i] < data.Columns[j]
 			})
 		}
 
 		// Create a temporary metadata -> index map.  Required because the variable data for each hit returned
 		//  from ES is an unordered key/value list.
-		metadataIndex := make(map[string]int, len(data.Metadata))
-		for idx, value := range data.Metadata {
-			metadataIndex[value.Name] = idx
+		metadataIndex := make(map[string]int, len(data.Columns))
+		for idx, column := range data.Columns {
+			metadataIndex[column] = idx
 		}
 
 		// extract data for all variables
-		values := make([]interface{}, len(data.Metadata))
+		values := make([]interface{}, len(data.Columns))
 		for key, variable := range variables {
 			index := metadataIndex[key]
 			result, ok := json.Interface(variable, model.VariableValueField)

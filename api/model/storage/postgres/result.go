@@ -144,14 +144,10 @@ func (s *Storage) parseResults(dataset string, rows *pgx.Rows, variable *model.V
 	}
 	// Build the filtered data.
 	return &model.FilteredData{
-		Name: dataset,
-		Metadata: []*model.Variable{
-			{
-				Name: variable.Name,
-				Type: variable.Type,
-			},
-		},
-		Values: values,
+		Name:    dataset,
+		Columns: []string{variable.Name},
+		Types:   []string{variable.Type},
+		Values:  values,
 	}, nil
 }
 

@@ -1,21 +1,59 @@
 <template>
 	<div class='variable-facets'>
-		<div>
+		<div class="facet-filters">
 			<div v-if="enableFilter">
-				<b-form-fieldset horizontal label="Filter" :label-cols="3">
-					<b-form-input v-model="filter" placeholder="Type to Search" />
+				<b-form-fieldset size="sm" horizontal label="Filter" :label-cols="2">
+					<b-form-input size="sm" v-model="filter" placeholder="Type to Search" />
 				</b-form-fieldset>
 			</div>
 			<div v-if="enableToggle">
-				<b-form-fieldset horizontal label="Toggle" :label-cols="3">
-					<b-button variant="outline-secondary" @click="selectAll">All</b-button>
-					<b-button variant="outline-secondary" @click="deselectAll">None</b-button>
+				<b-form-fieldset size="sm" horizontal label="Toggle" :label-cols="2">
+					<b-button size="sm" variant="outline-secondary" @click="selectAll">All</b-button>
+					<b-button size="sm" variant="outline-secondary" @click="deselectAll">None</b-button>
+				</b-form-fieldset>
+				<b-form-fieldset size="sm" horizontal label="Sort" :label-cols="2">
+					<div class="sort-groups">
+						<span class="sort-group">
+							alphanumeric
+							<div class="sort-buttons">
+								<b-button size="sm" variant="outline-secondary" @click="setSortMethod('alpha-asc')">
+									<i class="fa fa-sort-alpha-asc"></i>
+								</b-button>
+								<b-button size="sm" variant="outline-secondary" @click="setSortMethod('alpha-desc')">
+									<i class="fa fa-sort-alpha-desc"></i>
+								</b-button>
+							</div>
+						</span>
+						<span class="sort-group">
+							importance
+							<div class="sort-buttons">
+								<b-button size="sm" variant="outline-secondary" @click="setSortMethod('importance-asc')">
+									<i class="fa fa-sort-numeric-asc"></i>
+								</b-button>
+								<b-button size="sm" variant="outline-secondary" @click="setSortMethod('importance-desc')">
+									<i class="fa fa-sort-numeric-desc"></i>
+								</b-button>
+							</div>
+						</span>
+						<span class="sort-group">
+							novelty
+							<div class="sort-buttons">
+								<b-button size="sm" variant="outline-secondary" @click="setSortMethod('novelty-asc')">
+									<i class="fa fa-sort-amount-asc"></i>
+								</b-button>
+								<b-button size="sm" variant="outline-secondary" @click="setSortMethod('novelty-desc')">
+									<i class="fa fa-sort-amount-desc"></i>
+								</b-button>
+							</div>
+						</span>
+					</div>
 				</b-form-fieldset>
 			</div>
 		</div>
 		<facets class="facets-container"
 			:groups="groups"
 			:html="html"
+			:sort="sort"
 			v-on:expand="onExpand"
 			v-on:collapse="onCollapse"
 			v-on:range-change="onRangeChange"
@@ -49,7 +87,8 @@ export default {
 
 	data() {
 		return {
-			filter: ''
+			filter: '',
+			sortMethod: 'alphaAsc'
 		};
 	},
 
@@ -65,10 +104,45 @@ export default {
 			groups = this.updateGroupCollapses(groups);
 			// update selections
 			return this.updateGroupSelections(groups);
+		},
+		importance() {
+			const variables = this.$store.getters.getVariables();
+			const importance = {};
+			variables.forEach(variable => {
+				importance[variable.name] = variable.importance;
+			});
+			return importance;
+		},
+		sort() {
+			return this[this.sortMethod];
 		}
 	},
 
 	methods: {
+		alphaAsc(a, b) {
+			const textA = a.key.toLowerCase();
+			const textB = b.key.toLowerCase();
+			return (textA < textB) ? -1 : (textA > textB) ? 1 : 0;
+		},
+		alphaDesc(a, b) {
+			const textA = a.key.toLowerCase();
+			const textB = b.key.toLowerCase();
+			return (textA < textB) ? 1 : (textA > textB) ? -1 : 0;
+		},
+		importanceAsc(a, b) {
+			const importance = this.importance;
+			return importance[a.key] - importance[b.key];
+		},
+		importanceDesc(a, b) {
+			const importance = this.importance;
+			return importance[b.key] - importance[a.key];
+		},
+		noveltyAsc(a, b) {
+			return a.novelty - b.novelty;
+		},
+		noveltyDesc(a, b) {
+			return b.novelty - a.novelty;
+		},
 		updateFilterRoute(key, values) {
 			// retrieve the filters from the route
 			const filters = this.$store.getters.getRouteFilters();
@@ -109,6 +183,28 @@ export default {
 				enabled: true,
 				categories: values
 			});
+		},
+		setSortMethod(type) {
+			switch (type) {
+				case 'alpha-asc':
+					this.sortMethod = 'alphaAsc';
+					break;
+				case 'alpha-desc':
+					this.sortMethod = 'alphaDesc';
+					break;
+				case 'importance-asc':
+					this.sortMethod = 'importanceAsc';
+					break;
+				case 'importance-desc':
+					this.sortMethod = 'importanceDesc';
+					break;
+				case 'novelty-asc':
+					this.sortMethod = 'noveltyAsc';
+					break;
+				case 'novelty-desc':
+					this.sortMethod = 'noveltyDesc';
+					break;
+			}
 		},
 		selectAll() {
 			// enable all filters
@@ -276,9 +372,30 @@ button {
 	flex-direction: column;
 	padding: 8px;
 }
-
 .facets-container {
 	overflow-x: hidden;
 	overflow-y: auto;
+}
+.sort-groups {
+	display: flex;
+	flex-direction: row;
+	justify-content: space-between;
+	text-align: center;
+}
+.sort-group {
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+	width: 33%;
+	font-size: 12px;
+	font-weight: bold;
+}
+.sort-buttons {
+	display: flex;
+	flex-direction: row;
+	justify-content: center;
+}
+.sort-buttons > button {
+	margin-right: 4px;
 }
 </style>

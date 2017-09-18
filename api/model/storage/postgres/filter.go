@@ -19,17 +19,17 @@ func (s *Storage) parseFilteredData(dataset string, rows *pgx.Rows) (*model.Filt
 		Values: make([][]interface{}, 0),
 	}
 
-	// Parse the metadata.
+	// Parse the columns.
 	if rows != nil {
 		fields := rows.FieldDescriptions()
-		metadata := make([]*model.Variable, len(fields))
+		columns := make([]string, len(fields))
+		types := make([]string, len(fields))
 		for i := 0; i < len(fields); i++ {
-			metadata[i] = &model.Variable{
-				Name: fields[i].Name,
-				Type: fields[i].DataTypeName,
-			}
+			columns[i] = fields[i].Name
+			types[i] = fields[i].DataTypeName
 		}
-		result.Metadata = metadata
+		result.Columns = columns
+		result.Types = types
 
 		// Parse the row data.
 		for rows.Next() {
@@ -40,7 +40,8 @@ func (s *Storage) parseFilteredData(dataset string, rows *pgx.Rows) (*model.Filt
 			result.Values = append(result.Values, columnValues)
 		}
 	} else {
-		result.Metadata = make([]*model.Variable, 0)
+		result.Columns = make([]string, 0)
+		result.Types = make([]string, 0)
 	}
 
 	return result, nil
@@ -98,7 +99,7 @@ func (s *Storage) FetchData(dataset string, index string, filterParams *model.Fi
 
 	// order & limit the filtered data.
 	if indexVariable != nil {
-		query = fmt.Sprintf("%s ORDER BY %s LIMIT %d", query, indexVariable, filterLimit)
+		query = fmt.Sprintf("%s ORDER BY %s LIMIT %d", query, indexVariable.Name, filterLimit)
 	}
 
 	query = query + ";"

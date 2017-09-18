@@ -91,14 +91,10 @@ func (s *Storage) FetchResults(dataset string, resultURI string, index string) (
 
 	// write the data into the filtered data struct
 	return &model.FilteredData{
-		Name: dataset,
-		Metadata: []*model.Variable{
-			{
-				Name: variable.Name,
-				Type: variable.Type,
-			},
-		},
-		Values: values,
+		Name:    dataset,
+		Columns: []string{variable.Name},
+		Types:   []string{variable.Type},
+		Values:  values,
 	}, nil
 }
 
@@ -118,11 +114,11 @@ func (s *Storage) FetchResultsSummary(dataset string, resultURI string, index st
 	}
 
 	// currently only support a single result column.
-	if len(results.Metadata) > 1 {
-		log.Warnf("Result contains %s variables, expected 1.  Additional variables will be ignored.", len(results.Metadata))
+	if len(results.Columns) > 1 {
+		log.Warnf("Result contains %s variables, expected 1. Additional variables will be ignored.", len(results.Columns))
 	}
 
-	varType := results.Metadata[0].Type
+	varType := results.Types[0]
 	var histogram *model.Histogram
 
 	if model.IsCategorical(varType) {
@@ -142,8 +138,8 @@ func (s *Storage) FetchResultsSummary(dataset string, resultURI string, index st
 }
 
 func (s *Storage) computeNumericalHistogram(numBins int64, data *model.FilteredData) (*model.Histogram, error) {
-	varName := data.Metadata[0].Name
-	varType := data.Metadata[0].Type
+	varName := data.Columns[0]
+	varType := data.Types[0]
 
 	var min, max float64
 	var bins []*model.Bucket
@@ -208,7 +204,7 @@ func (s *Storage) computeCategoricalHistogram(data *model.FilteredData) (*model.
 	}
 
 	return &model.Histogram{
-		Name:    data.Metadata[0].Name,
+		Name:    data.Columns[0],
 		Type:    "categorical",
 		Buckets: bins,
 	}, nil

@@ -105,10 +105,15 @@ func TestFilteredDataHandler(t *testing.T) {
 	expected, err := json.Unmarshal([]byte(
 		`{
 			"name": "o_185",
-			"metadata": [
-				{"name": "On_base_pct", "type": "float"},
-				{"name": "Position", "type": "categorical"},
-				{"name": "Triples", "type": "integer"}
+			"columns": [
+				"On_base_pct",
+				"Position",
+				"Triples"
+			],
+			"types": [
+				"float",
+				"categorical",
+				"integer"
 			],
 			"values": [
 				[0.268, "Catcher", 5],
@@ -166,7 +171,8 @@ func TestFilteredPostgresHandler(t *testing.T) {
 	expected, err := json.Unmarshal([]byte(
 		`{
 				"name": "o_185",
-				"metadata": [],
+				"columns": [],
+				"types": [],
 				"values": []
 			}`))
 	assert.NoError(t, err)
