@@ -2,18 +2,25 @@
 	<div class="home-view">
 		<search-bar class="home-search-bar"></search-bar>
 		<div class="home-items">
-			<div>Running Pipelines</div>
-			<div>Recent Data Sets</div>
-			<div>Recent Pipelines</div>
+			<recent-datasets></recent-datasets>
+			<recent-pipelines></recent-pipelines>
+			<running-pipelines></running-pipelines>
 		</div>
 	</div>
 </template>
 
 <script>
+import RecentDatasets from '../components/RecentDatasets';
+import RecentPipelines from '../components/RecentPipelines';
+import RunningPipelines from '../components/RunningPipelines';
 import SearchBar from '../components/SearchBar';
+
 export default {
 	name: 'home',
 	components: {
+		RecentDatasets,
+		RecentPipelines,
+		RunningPipelines,
 		SearchBar
 	}
 };
@@ -31,5 +38,10 @@ export default {
 }
 .home-items {
 	width: 50%;
+	overflow: auto;
+	margin-bottom: 4px;
+}
+.home-items .card {
+	margin-bottom: 4px;
 }
 </style>

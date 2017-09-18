@@ -1,36 +1,34 @@
 <template>
-	<div class="search-results">
-		<div class="bg-faded rounded mb-1" v-for="dataset in datasets">
+	<b-card header="Recent Datasets">
+		<div v-if="recentDatasets === null">None</div>
+		<b-list-group v-bind:key="dataset.name" v-for="dataset in recentDatasets">
 			<dataset-preview
 				:name="dataset.name"
 				:description="dataset.description">
 			</dataset-preview>
-		</div>
-	</div>
+		</b-list-group>
+	</b-card>
 </template>
 
 <script>
-
 import DatasetPreview from '../components/DatasetPreview';
 
 export default {
-	name: 'search-results',
+	name: 'recent-datasets',
 
 	components: {
 		DatasetPreview
 	},
 
 	computed: {
-		datasets() {
-			return this.$store.getters.getDatasets();
+		recentDatasets() {
+			// TODO: implement this correctly
+			return null;
 		}
-	},
+	}
 
 };
 </script>
 
 <style>
-.search-results {
-	overflow: auto;
-}
 </style>

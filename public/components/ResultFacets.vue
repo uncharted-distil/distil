@@ -45,7 +45,6 @@ export default {
 			});
 			const filters = this.$store.getters.getRouteResultFilters();
 			if (_.isEmpty(filters)) {
-				console.log('set initial state');
 				// disable all filters except first
 				groups.forEach((group, index) => {
 					if (index > 0) {

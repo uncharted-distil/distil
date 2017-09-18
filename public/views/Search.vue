@@ -24,7 +24,6 @@ export default {
 	align-items: center;
 }
 .search-search-bar {
-	display: flex;
 	margin: 8px;
 	width: 50%;
 }
