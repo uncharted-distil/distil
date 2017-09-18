@@ -1,12 +1,6 @@
 <template>
 	<div class='result-facets'>
-		<facets class="facets-container"
-			:groups="groups"
-			:html="html"
-			v-on:expand="onExpand"
-			v-on:collapse="onCollapse"
-			v-on:range-change="onRangeChange"
-			v-on:facet-toggle="onFacetToggle"></facets>
+		<facets class="facets-container" :groups="groups" :html="html" v-on:expand="onExpand" v-on:collapse="onCollapse" v-on:range-change="onRangeChange" v-on:facet-toggle="onFacetToggle"></facets>
 	</div>
 </template>
 
@@ -37,20 +31,43 @@ export default {
 		groups() {
 			// create the groups
 			let groups = this.createGroups(this.variables);
+			
 			// sort alphabetically
 			groups.sort((a, b) => {
 				const textA = a.key.toLowerCase();
 				const textB = b.key.toLowerCase();
 				return (textA < textB) ? -1 : (textA > textB) ? 1 : 0;
 			});
+			
+			// find pipeline result with the uri specified in the route and 
+			// flag it as the currently active result
+			const requestId = this.$store.getters.getRouteCreateRequestId();
+			const pipelineResults = this.$store.getters.getPipelineResults(requestId);
+			const activeResult = _.find(pipelineResults, p => {
+				return p.pipeline.resultUri === atob(this.$store.getters.getRouteResultId());
+			});
+
 			const filters = this.$store.getters.getRouteResultFilters();
+
+			// if filters are empty this is the first group call - initialize
+			// filter and group state
 			if (_.isEmpty(filters)) {
-				// disable all filters except first
-				groups.forEach((group, index) => {
-					if (index > 0) {
-						this.updateFilterRoute(group.key, {
-							enabled: false
+				// set the selected value to the route value
+				groups.forEach((group) => {
+					if (group.key !== activeResult.name) {
+						this.updateFilterRoute({
+							key: group.key, 
+							values: {
+								enabled: false
+							}
 						});
+					} else {
+						this.updateFilterRoute({
+							key: group.key, 
+							values: {
+								enabled: true
+							}
+						}, activeResult.pipeline.resultUri);
 					}
 				});
 			}
@@ -59,37 +76,58 @@ export default {
 			// update selections
 			return this.updateGroupSelections(groups);
 		}
+
 	},
 
 	methods: {
-		updateFilterRoute(key, values) {
-			const filters = this.$store.getters.getRouteResultFilters();
+		updateFilterRoute(filterArgs, resultUri) {
 			const path = this.$store.getters.getRoutePath();
-			// merge the updated filters back into the route query params
-			const updated = updateFilter(filters, key, values);
+			
+			// merge the updated filters back into the route query params if set
+			const filters = this.$store.getters.getRouteResultFilters(); ;
+			let updatedFilters = filters;
+			if (filterArgs) {
+				updatedFilters = updateFilter(filters, filterArgs.key, filterArgs.values);	
+			} 
+
 			const entry = createRouteEntry(path, {
 				dataset: this.dataset,
 				target: this.$store.getters.getRouteTargetVariable(),
 				training: this.$store.getters.getRouteTrainingVariables(),
 				filters: this.$store.getters.getRouteFilters(),
 				createRequestId: this.$store.getters.getRouteCreateRequestId(),
-				results: updated
+				resultId: resultUri ? btoa(resultUri) : this.$store.getters.getRouteResultId(),
+				results: updatedFilters
 			});
+
 			this.$router.push(entry);
 		},
+
 		onExpand(key) {
+
+			const createReqId = this.$store.getters.getRouteCreateRequestId();
+			const pipelineRequests = this.$store.getters.getPipelineResults(createReqId);
+			const completedReq = _.find(pipelineRequests, p => p.name === key);
+						
 			// disable all filters except this one
 			this.groups.forEach(group => {
 				if (group.key !== key) {
-					this.updateFilterRoute(group.key, {
-						enabled: false
+					this.updateFilterRoute({ 
+						key: group.key, 
+						values: {
+							enabled: false
+						}
 					});
 				}
 			});
+
 			// enable filter
-			this.updateFilterRoute(key, {
-				enabled: true
-			});
+			this.updateFilterRoute({
+				key: key, 
+				values: {
+					enabled: true
+				}
+			}, completedReq.pipeline.resultUri);
 		},
 		onCollapse() {
 			// TODO: prevent disabling?
@@ -97,17 +135,23 @@ export default {
 		},
 		onRangeChange(key, value) {
 			// set range filter
-			this.updateFilterRoute(key, {
-				enabled: true,
-				min: parseFloat(value.from.label[0]),
-				max: parseFloat(value.to.label[0])
+			this.updateFilterRoute({
+				key: key, 
+				values: {
+					enabled: true,
+					min: parseFloat(value.from.label[0]),
+					max: parseFloat(value.to.label[0])
+				}
 			});
 		},
 		onFacetToggle(key, values) {
 			// set range filter
-			this.updateFilterRoute(key, {
-				enabled: true,
-				categories: values
+			this.updateFilterRoute({
+				key: key, 
+				values: {
+					enabled: true,
+					categories: values
+				}
 			});
 		},
 		createErrorFacet(summary) {
@@ -241,6 +285,7 @@ export default {
 button {
 	cursor: pointer;
 }
+
 .variable-facets {
 	display: flex;
 	flex-direction: column;

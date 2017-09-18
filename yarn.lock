@@ -2,9 +2,9 @@
 # yarn lockfile v1
 
 
-"@uncharted.software/stories-facets@2.7.0":
-  version "2.7.0"
-  resolved "https://registry.yarnpkg.com/@uncharted.software/stories-facets/-/stories-facets-2.7.0.tgz#a8b650be55a658233206aa5aa7b8ece0c381679d"
+"@uncharted.software/stories-facets@2.8.0":
+  version "2.8.0"
+  resolved "https://registry.yarnpkg.com/@uncharted.software/stories-facets/-/stories-facets-2.8.0.tgz#722d8fa3b9c97e5c6833e9259238d30bae915fba"
 
 abbrev@1:
   version "1.1.0"

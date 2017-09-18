@@ -5,6 +5,7 @@
 - [Go](https://golang.org/) programming language binaries with the `GOPATH` environment variable specified and `$GOPATH/bin` in your `PATH`.
 - [NodeJS](http://nodejs.org/) JavaScript runtime.
 - [Docker](https://www.docker.com/) platform.
+- [Docker Compose](https://docs.docker.com/compose/) (optional) for managing multi-container dev environments.
 
 ## Development
 
@@ -46,17 +47,25 @@ Compile protobuffers:
 make protoc
 ```
 
-The application depends on ElasticSearch for data, and a stub TA2 system for back end integration.  Docker images (with data) for both are available:
+The application depends on ElasticSearch for dataset indexing, PostGres for dataset access, Redis for client server caching, and a stub TA2 system for back end integration.  Docker images (with data) for all are available:
 
 ```bash
 docker pull docker.uncharted.software/distil_dev_es
 docker pull docker.uncharted.software/distil_dev_postgres
 docker pull docker.uncharted.software/distil-pipeline-server
+docker pull docker pull redis
 ```
 
-Launch docker containers:
+Launch docker containers via [Docker Compose](https://docs.docker.com/compose/):
 
 ```bash
+docker-compose up
+```
+
+or using individual bash scripts:
+
+```bash
+./redis_run.sh
 ./es_run.sh
 ./pg_run.sh
 ./pipeline_server_run.sh
