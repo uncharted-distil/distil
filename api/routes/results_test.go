@@ -37,8 +37,11 @@ func TestResultsHandler(t *testing.T) {
 	expected, err := json.Unmarshal([]byte(
 		`{
 			"name": "o_185",
-			"metadata": [
-				{"name": "Games_played", "type": "integer", "importance": 0}
+			"columns": [
+				"Games_played"
+			],
+			"types": [
+				"integer"
 			],
 			"values": [
 				[10],

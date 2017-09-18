@@ -66,8 +66,8 @@ func PersistFilteredData(fetchData FilteredDataProvider, datasetDir string, data
 
 	// find the index of the target variable
 	targetIdx := -1
-	for idx, variable := range filteredData.Metadata {
-		if variable.Name == target {
+	for idx, column := range filteredData.Columns {
+		if column == target {
 			targetIdx = idx
 			break
 		}
@@ -116,9 +116,9 @@ func writeTrainData(dataPath string, datasetDir string, filteredData *model.Filt
 
 	// write out the header, including the d3m_index field
 	variableNames := []string{"d3m_index"}
-	for i, variable := range filteredData.Metadata {
+	for i, column := range filteredData.Columns {
 		if i != targetIdx {
-			variableNames = append(variableNames, variable.Name)
+			variableNames = append(variableNames, column)
 		}
 	}
 	err = writer.Write(variableNames)
@@ -155,7 +155,7 @@ func writeTrainTargets(targetPath string, datasetDir string, filteredData *model
 	defer writer.Flush()
 
 	// write out the variable names including the d3m_index
-	variableNames := []string{"d3m_index", filteredData.Metadata[targetIdx].Name}
+	variableNames := []string{"d3m_index", filteredData.Columns[targetIdx]}
 	err = writer.Write(variableNames)
 	if err != nil {
 		return errors.Wrapf(err, "unable to persist %v", variableNames)

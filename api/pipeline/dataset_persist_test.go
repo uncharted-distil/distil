@@ -60,11 +60,17 @@ func fetchFilteredData(t *testing.T) FilteredDataProvider {
 
 		return &model.FilteredData{
 			Name: "test",
-			Metadata: []*model.Variable{
-				{Name: "feature0", Type: "integer"},
-				{Name: "feature1", Type: "float"},
-				{Name: "feature2", Type: "boolean"},
-				{Name: "feature3", Type: "string"},
+			Columns: []string{
+				"feature0",
+				"feature1",
+				"feature2",
+				"feature3",
+			},
+			Types: []string{
+				"integer",
+				"float",
+				"boolean",
+				"string",
 			},
 			Values: [][]interface{}{
 				{0, 1.1, false, "test_1"},

@@ -126,7 +126,7 @@ export function getFilteredData(state) {
 }
 
 function validateData(data) {
-	return  !_.isEmpty(data) && !_.isEmpty(data.values) && !_.isEmpty(data.metadata);
+	return  !_.isEmpty(data) && !_.isEmpty(data.values) && !_.isEmpty(data.columns);
 }
 
 export function getFilteredDataItems(state) {
@@ -135,9 +135,9 @@ export function getFilteredDataItems(state) {
 		if (validateData(data)) {
 			return _.map(data.values, d => {
 				const rowObj = {};
-				for (const [idx, varMeta] of data.metadata.entries()) {
-					rowObj[varMeta.name] = d[idx];
-				}
+				data.columns.forEach((col, index) => {
+					rowObj[col] = d[index];
+				});
 				return rowObj;
 			});
 		} else {
@@ -151,12 +151,12 @@ export function getFilteredDataFields(state) {
 		const data = state.filteredData;
 		if (!_.isEmpty(data)) {
 			const result = {};
-			for (let varMeta of data.metadata) {
-				result[varMeta.name] = {
-					label: varMeta.name,
+			data.columns.forEach(col => {
+				result[col] = {
+					label: col,
 					sortable: true
 				};
-			}
+			});
 			return result;
 		} else {
 			return {};
@@ -194,7 +194,7 @@ export function getResultDataFields(state, getters) {
 		const resultData = state.resultData;
 		if (!_.isEmpty(resultData)) {
 			for (let resultMeta of resultData.metadata) {
-				const label = `Predicted ${resultMeta.name}`; 
+				const label = `Predicted ${resultMeta.name}`;
 				dataFields[label] = {
 					label: label,
 					sortable: true
