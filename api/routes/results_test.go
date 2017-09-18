@@ -39,7 +39,7 @@ func TestResultsHandler(t *testing.T) {
 			"results": {
 				"name": "o_185",
 				"metadata": [
-					{"name": "Games_played", "type": "integer"}
+					{"name": "Games_played", "type": "integer", "importance": 0}
 				],
 				"values": [
 					[10],

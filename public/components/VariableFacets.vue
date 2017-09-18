@@ -105,6 +105,14 @@ export default {
 			// update selections
 			return this.updateGroupSelections(groups);
 		},
+		importance() {
+			const variables = this.$store.getters.getVariables();
+			const importance = {};
+			variables.forEach(variable => {
+				importance[variable.name] = variable.importance;
+			});
+			return importance;
+		},
 		sort() {
 			return this[this.sortMethod];
 		}
@@ -122,10 +130,12 @@ export default {
 			return (textA < textB) ? 1 : (textA > textB) ? -1 : 0;
 		},
 		importanceAsc(a, b) {
-			return a.importance - b.importance;
+			const importance = this.importance;
+			return importance[a.key] - importance[b.key];
 		},
 		importanceDesc(a, b) {
-			return b.importance - a.importance;
+			const importance = this.importance;
+			return importance[b.key] - importance[a.key];
 		},
 		noveltyAsc(a, b) {
 			return a.novelty - b.novelty;

@@ -5,10 +5,11 @@ import (
 	"sort"
 
 	"github.com/pkg/errors"
+	"github.com/unchartedsoftware/plog"
+	"gopkg.in/olivere/elastic.v5"
+
 	"github.com/unchartedsoftware/distil/api/model"
 	"github.com/unchartedsoftware/distil/api/util/json"
-	log "github.com/unchartedsoftware/plog"
-	"gopkg.in/olivere/elastic.v5"
 )
 
 func (s *Storage) parseResults(searchResults *elastic.SearchResult) (*model.FilteredData, error) {
@@ -35,7 +36,11 @@ func (s *Storage) parseResults(searchResults *elastic.SearchResult) (*model.Filt
 				if !ok {
 					return nil, errors.Errorf("failed to extract type info for %s during metadata creation", key)
 				}
-				data.Metadata = append(data.Metadata, &model.Variable{Name: key, Type: varType})
+				data.Metadata = append(data.Metadata, &model.Variable{
+					Name:       key,
+					Type:       varType,
+					Importance: 0,
+				})
 			}
 			// sort to impose consistent ordering
 			sort.SliceStable(data.Metadata, func(i, j int) bool {

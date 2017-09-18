@@ -98,7 +98,7 @@ func (s *Storage) FetchData(dataset string, index string, filterParams *model.Fi
 
 	// order & limit the filtered data.
 	if indexVariable != nil {
-		query = fmt.Sprintf("%s ORDER BY %s LIMIT %d", query, indexVariable, filterLimit)
+		query = fmt.Sprintf("%s ORDER BY %s LIMIT %d", query, indexVariable.Name, filterLimit)
 	}
 
 	query = query + ";"

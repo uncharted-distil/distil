@@ -106,9 +106,9 @@ func TestFilteredDataHandler(t *testing.T) {
 		`{
 			"name": "o_185",
 			"metadata": [
-				{"name": "On_base_pct", "type": "float"},
-				{"name": "Position", "type": "categorical"},
-				{"name": "Triples", "type": "integer"}
+				{"name": "On_base_pct", "type": "float", "importance": 0},
+				{"name": "Position", "type": "categorical", "importance": 0},
+				{"name": "Triples", "type": "integer", "importance": 0}
 			],
 			"values": [
 				[0.268, "Catcher", 5],

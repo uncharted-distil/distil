@@ -22,22 +22,26 @@
                         {
                             "varName": "d3mIndex",
                             "varRole": "index",
-                            "varType": "integer"
+                            "varType": "integer",
+                            "importance": 0
                         },
                         {
                             "varName": "Player",
                             "varRole": "attribute",
-                            "varType": "categorical"
+                            "varType": "categorical",
+                            "importance": 0
                         },
                         {
                             "varName": "Number_seasons",
                             "varRole": "attribute",
-                            "varType": "integer"
+                            "varType": "integer",
+                            "importance": 1
                         },
                         {
                             "varName": "Games_played",
                             "varRole": "attribute",
-                            "varType": "integer"
+                            "varType": "integer",
+                            "importance": 2
                         }
                     ]
                 }
@@ -54,17 +58,20 @@
                         {
                             "varName": "d3mIndex",
                             "varRole": "index",
-                            "varType": "integer"
+                            "varType": "integer",
+                            "importance": 0
                         },
                         {
                             "varName": "cylinders",
                             "varRole": "attribute",
-                            "varType": "categorical"
+                            "varType": "categorical",
+                            "importance": 0
                         },
                         {
                             "varName": "displacement",
                             "varRole": "attribute",
-                            "varType": "categorical"
+                            "varType": "categorical",
+                            "importance": 0
                         }
                     ]
                 }
