@@ -12,11 +12,13 @@ type Storage interface {
 	FetchResults(dataset string, resultURI string, index string) (*FilteredData, error)
 	FetchResultsSummary(dataset string, resultURI string, index string) (*Histogram, error)
 
-	// System data operations
+	// System data operations NOTE: Note sure if this should be split off in a different interface.
 	PersistSession(sessionID string) error
 	PersistRequest(sessionID string, requestID string, pipelineID string, dataset string, progress string) error
-	UpdateRequest(requestID string, pipelineID string, progress string) error
 	PersistResultMetadata(requestID string, resultUUID string, resultURI string, progress string) error
+	PersistRequestFeature(requestID string, featureName string, featureType string) error
+	UpdateRequest(requestID string, pipelineID string, progress string) error
 	FetchRequests(sessionID string) ([]*Request, error)
 	FetchResultMetadata(requestID string) ([]*Result, error)
+	FetchRequestFeature(requestID string) ([]*RequestFeature, error)
 }

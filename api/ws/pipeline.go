@@ -274,10 +274,28 @@ func handleCreatePipelines(conn *Connection, client *pipeline.Client, esCtor ela
 		}
 
 		// store the request using the initial progress value
-		err = storage.PersistRequest(session.ID, fmt.Sprintf("%s", requestInfo.RequestID), "", clientCreateMsg.Dataset, pipeline.Progress_name[0])
+		requestID := fmt.Sprintf("%s", requestInfo.RequestID)
+		err = storage.PersistRequest(session.ID, requestID, "", clientCreateMsg.Dataset, pipeline.Progress_name[0])
 		if err != nil {
 			handleErr(conn, msg, err)
 			return
+		}
+
+		// store the request features
+		for _, f := range trainFeatures {
+			err = storage.PersistRequestFeature(requestID, f.FeatureId, model.FeatureTypeTrain)
+			if err != nil {
+				handleErr(conn, msg, err)
+				return
+			}
+		}
+
+		for _, f := range createMsg.TargetFeatures {
+			err = storage.PersistRequestFeature(requestID, f.FeatureId, model.FeatureTypeTarget)
+			if err != nil {
+				handleErr(conn, msg, err)
+				return
+			}
 		}
 
 		// handle the request

@@ -8,7 +8,8 @@ type Request struct {
 	Dataset    string
 	Progress   string
 
-	Results []*Result
+	Results  []*Result
+	Features []*RequestFeature
 }
 
 // Result represents the pipeline result metadata.
@@ -17,4 +18,11 @@ type Result struct {
 	ResultURI  string
 	ResultUUID string
 	Progress   string
+}
+
+// RequestFeature represents the request feature metadata.
+type RequestFeature struct {
+	RequestID   string
+	FeatureName string
+	FeatureType string
 }

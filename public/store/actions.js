@@ -36,11 +36,12 @@ export function getSession(context) {
 						// add/update the running pipeline info
 						if (res.Progress === PIPELINE_COMPLETE) {
 							// add the pipeline to complete
+							console.log(res);
 							context.commit('addCompletedPipeline', {
-								name: res.name,
+								name: 'sadfsad',
 								requestId: pipeline.requestId,
 								pipelineId: pipeline.pipelineId,
-								pipeline: res
+								pipeline: { resultUri: res.ResultURI, output: 'tgdfgf', scores: [{metric: 'horse', value: 0.1}] }
 							});
 						}
 					});
@@ -198,6 +199,7 @@ export function createPipelines(context, request) {
 		context.commit('addRunningPipeline', res);
 		if (res.progress === PIPELINE_COMPLETE) {
 			//move the pipeline from running to complete
+			console.log(res);
 			context.commit('removeRunningPipeline', {pipelineId: res.pipelineId, requestId: res.requestId});
 			context.commit('addCompletedPipeline', {
 				name: res.name,
@@ -240,7 +242,7 @@ export function getResultsSummaries(context, args) {
 	// dispatch a request to fetch the results for each pipeline
 	for (var result of results) {
 		const name = result.name;
-		const pipelineId = result.pipelineId; 
+		const pipelineId = result.pipelineId;
 		const res = encodeURIComponent(result.pipeline.resultUri);
 		axios.get(`/distil/results-summary/${ES_INDEX}/${dataset}/${res}`)
 		.then(response => {
@@ -259,7 +261,7 @@ export function getResultsSummaries(context, args) {
 			// ensure buckets is not nil
 			histogram.buckets = histogram.buckets ? histogram.buckets : [];
 			histogram.name = name;
-			histogram.pipelineId = 
+			histogram.pipelineId =
 			context.commit('updateResultsSummaries', histogram);
 		})
 		.catch(error => {
@@ -277,7 +279,7 @@ export function getResultsSummaries(context, args) {
 
 // fetches result data for created pipeline
 export function updateResults(context, args) {
-	const encodedUri = encodeURIComponent(args.resultId); 
+	const encodedUri = encodeURIComponent(args.resultId);
 	axios.get(`/distil/results/${ES_INDEX}/${args.dataset}/${encodedUri}`)
 	.then(response => {
 		context.commit('setResultData', response.data);

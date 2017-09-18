@@ -14,6 +14,7 @@ const (
 	sessionTableName = "session"
 	requestTableName = "request"
 	resultTableName  = "result"
+	featureTableName = "requestFeature"
 )
 
 // Storage accesses the underlying postgres database.
@@ -82,6 +83,15 @@ func (s *Storage) PersistResultMetadata(requestID string, resultUUID string, res
 	return err
 }
 
+// PersistRequestFeature persists request feature information to Postgres.
+func (s *Storage) PersistRequestFeature(requestID string, featureName string, featureType string) error {
+	sql := fmt.Sprintf("INSERT INTO %s (request_id, feature_name, feature_type) VALUES ($1, $2, $3);", resultTableName)
+
+	_, err := s.client.Exec(sql, requestID, featureName, featureType)
+
+	return err
+}
+
 // FetchRequests pulls session request information from Postgres. NOTE: Not implemented!
 func (s *Storage) FetchRequests(sessionID string) ([]*model.Request, error) {
 	sql := fmt.Sprintf("SELECT session_id, request_id, pipeline_id, dataset, progress FROM %s WHERE session_id = $1;", requestTableName)
@@ -128,7 +138,7 @@ func (s *Storage) FetchResultMetadata(requestID string) ([]*model.Result, error)
 
 	rows, err := s.client.Query(sql, requestID)
 	if err != nil {
-		return nil, errors.Wrap(err, "Unable to pull request resultss from Postgres")
+		return nil, errors.Wrap(err, "Unable to pull request results from Postgres")
 	}
 
 	results := make([]*model.Result, 0)
@@ -148,6 +158,36 @@ func (s *Storage) FetchResultMetadata(requestID string) ([]*model.Result, error)
 			ResultURI:  resultURI,
 			ResultUUID: resultUUID,
 			Progress:   progress,
+		})
+	}
+
+	return results, nil
+}
+
+// FetchRequestFeature pulls request feature information from Postgres.
+func (s *Storage) FetchRequestFeature(requestID string) ([]*model.RequestFeature, error) {
+	sql := fmt.Sprintf("SELECT request_id, feature_name, feature_type FROM %s WHERE request_id = $1;", featureTableName)
+
+	rows, err := s.client.Query(sql, requestID)
+	if err != nil {
+		return nil, errors.Wrap(err, "Unable to pull request features from Postgres")
+	}
+
+	results := make([]*model.RequestFeature, 0)
+	for rows.Next() {
+		var requestID string
+		var featureName string
+		var featureType string
+
+		err = rows.Scan(&requestID, &featureName, &featureType)
+		if err != nil {
+			return nil, errors.Wrap(err, "Unable to parse requests features from Postgres")
+		}
+
+		results = append(results, &model.RequestFeature{
+			RequestID:   requestID,
+			FeatureName: featureName,
+			FeatureType: featureType,
 		})
 	}
 
