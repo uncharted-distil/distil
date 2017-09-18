@@ -1,9 +1,8 @@
-elastic_redis:
+elastic:
   image:
     docker.uncharted.software/distil_dev_es:latest
   ports:
     - "9200:9200"
-    - "6379:6379"
   user:
     elasticsearch
 pipeline_server:
@@ -24,3 +23,9 @@ postgres:
     postgres
   command:
     ["-d postgres"]
+redis:
+  image:
+    redis:latest
+  ports:
+    - "6379:6379"
+
