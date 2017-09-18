@@ -16,4 +16,5 @@ type Result struct {
 	RequestID  string
 	ResultURI  string
 	ResultUUID string
+	Progress   string
 }

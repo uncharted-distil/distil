@@ -124,7 +124,7 @@ func (s *Storage) FetchRequests(sessionID string) ([]*model.Request, error) {
 
 // FetchResultMetadata pulls request result information from Psotgres.
 func (s *Storage) FetchResultMetadata(requestID string) ([]*model.Result, error) {
-	sql := fmt.Sprintf("SELECT request_id, result_uuid, result_uri FROM %s WHERE request_id = $1;", resultTableName)
+	sql := fmt.Sprintf("SELECT request_id, result_uuid, result_uri, progress FROM %s WHERE request_id = $1;", resultTableName)
 
 	rows, err := s.client.Query(sql, requestID)
 	if err != nil {
@@ -136,8 +136,9 @@ func (s *Storage) FetchResultMetadata(requestID string) ([]*model.Result, error)
 		var requestID string
 		var resultUUID string
 		var resultURI string
+		var progress string
 
-		err = rows.Scan(&requestID, &resultUUID, &resultURI)
+		err = rows.Scan(&requestID, &resultUUID, &resultURI, &progress)
 		if err != nil {
 			return nil, errors.Wrap(err, "Unable to parse requests results from Postgres")
 		}
@@ -146,6 +147,7 @@ func (s *Storage) FetchResultMetadata(requestID string) ([]*model.Result, error)
 			RequestID:  requestID,
 			ResultURI:  resultURI,
 			ResultUUID: resultUUID,
+			Progress:   progress,
 		})
 	}
 

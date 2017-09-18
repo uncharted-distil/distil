@@ -34,8 +34,8 @@ export function getSession(context) {
 				response.data.pipelines.forEach((pipeline) => {
 					pipeline.Results.forEach((res) => {
 						// add/update the running pipeline info
-						if (pipeline.Progress === PIPELINE_COMPLETE) {
-							//move the pipeline from running to complete
+						if (res.Progress === PIPELINE_COMPLETE) {
+							// add the pipeline to complete
 							context.commit('addCompletedPipeline', {
 								name: res.name,
 								requestId: pipeline.requestId,
