@@ -1,0 +1,31 @@
+elastic:
+  image:
+    docker.uncharted.software/distil_dev_es:latest
+  ports:
+    - "9200:9200"
+  user:
+    elasticsearch
+pipeline_server:
+  image:
+    docker.uncharted.software/distil-pipeline-server:latest
+  ports:
+    - "9500:9500"
+  environment:
+    - PIPELINE_SERVER_RESULT_DIR=$PWD/datasets
+  volumes:
+    - $PWD/datasets:$PWD/datasets
+postgres:
+  image:
+    docker.uncharted.software/distil_dev_postgres:latest
+  ports:
+    - "5432:5432"
+  user:
+    postgres
+  command:
+    ["-d postgres"]
+redis:
+  image:
+    redis:latest
+  ports:
+    - "6379:6379"
+
