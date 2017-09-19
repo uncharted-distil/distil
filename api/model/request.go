@@ -2,11 +2,10 @@ package model
 
 // Request represents the pipeline request metadata.
 type Request struct {
-	SessionID  string
-	RequestID  string
-	PipelineID string
-	Dataset    string
-	Progress   string
+	SessionID string
+	RequestID string
+	Dataset   string
+	Progress  string
 
 	Results  []*Result
 	Features []*RequestFeature
@@ -15,6 +14,7 @@ type Request struct {
 // Result represents the pipeline result metadata.
 type Result struct {
 	RequestID  string
+	PipelineID string
 	ResultURI  string
 	ResultUUID string
 	Progress   string

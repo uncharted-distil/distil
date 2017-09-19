@@ -38,7 +38,7 @@ func (s *Storage) PersistSession(sessionID string) error {
 }
 
 // PersistRequest persists a request to ES. NOTE: Not implemented!
-func (s *Storage) PersistRequest(sessionID string, requestID string, pipelineID string, dataset string, progress string) error {
+func (s *Storage) PersistRequest(sessionID string, requestID string, dataset string, progress string) error {
 	return errors.New("ElasticSearch PersistRequest not implemented")
 }
 
@@ -48,12 +48,12 @@ func (s *Storage) PersistRequestFeature(requestID string, featureName string, fe
 }
 
 // UpdateRequest updates a request in ES. NOTE: Not implemented!
-func (s *Storage) UpdateRequest(requestID string, pipelineID string, progress string) error {
+func (s *Storage) UpdateRequest(requestID string, progress string) error {
 	return errors.New("ElasticSearch UpdateRequest not implemented")
 }
 
 // PersistResultMetadata persists the result metadata to ES. NOTE: Not implemented!
-func (s *Storage) PersistResultMetadata(requestID string, resultUUID string, resultURI string, progress string) error {
+func (s *Storage) PersistResultMetadata(requestID string, pipelineID string, resultUUID string, resultURI string, progress string) error {
 	return errors.New("ElasticSearch PersistResultMetadata not implemented")
 }
 
