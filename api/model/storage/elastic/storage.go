@@ -57,6 +57,11 @@ func (s *Storage) PersistResultMetadata(requestID string, pipelineID string, res
 	return errors.New("ElasticSearch PersistResultMetadata not implemented")
 }
 
+// PersistResultScore persists the result score to ES. NOTE: Not implemented!
+func (s *Storage) PersistResultScore(pipelineID string, metric string, score float64) error {
+	return errors.New("ElasticSearch PersistResultScore not implemented")
+}
+
 // FetchRequests pulls session request information from ES. NOTE: Not implemented!
 func (s *Storage) FetchRequests(sessionID string) ([]*model.Request, error) {
 	return nil, errors.New("ElasticSearch FetchRequests not implemented")
@@ -65,6 +70,11 @@ func (s *Storage) FetchRequests(sessionID string) ([]*model.Request, error) {
 // FetchResultMetadata pulls request result information from ES. NOTE: Not implemented!
 func (s *Storage) FetchResultMetadata(requestID string) ([]*model.Result, error) {
 	return nil, errors.New("ElasticSearch FetchResultMetadata not implemented")
+}
+
+// FetchResultScore pulls request result score from ES. NOTE: Not implemented!
+func (s *Storage) FetchResultScore(pipelineID string) ([]*model.ResultScore, error) {
+	return nil, errors.New("ElasticSearch FetchResultScore not implemented")
 }
 
 // FetchRequestFeature pulls request feature information from ES. NOTE: Not implemented!

@@ -66,7 +66,7 @@ func (s *Storage) PersistRequest(sessionID string, requestID string, dataset str
 // UpdateRequest updates a request in Postgres.
 func (s *Storage) UpdateRequest(requestID string, progress string) error {
 	// Update the request.
-	sql := fmt.Sprintf("UPDATE %s SET progress = $1, pipeline_id = $2 WHERE request_id = $3;", requestTableName)
+	sql := fmt.Sprintf("UPDATE %s SET progress = $1 WHERE request_id = $2;", requestTableName)
 
 	_, err := s.client.Exec(sql, progress, requestID)
 
@@ -83,6 +83,15 @@ func (s *Storage) PersistResultMetadata(requestID string, pipelineID string, res
 	return err
 }
 
+// PersistResultScore persist the result score to Postgres.
+func (s *Storage) PersistResultScore(pipelineID string, metric string, score float64) error {
+	sql := fmt.Sprintf("INSERT INTO %s (pipeline_id, metric, score) VALUES ($1, $2, $3);", resultTableName)
+
+	_, err := s.client.Exec(sql, pipelineID, metric, score)
+
+	return err
+}
+
 // PersistRequestFeature persists request feature information to Postgres.
 func (s *Storage) PersistRequestFeature(requestID string, featureName string, featureType string) error {
 	sql := fmt.Sprintf("INSERT INTO %s (request_id, feature_name, feature_type) VALUES ($1, $2, $3);", featureTableName)
@@ -94,7 +103,7 @@ func (s *Storage) PersistRequestFeature(requestID string, featureName string, fe
 
 // FetchRequests pulls session request information from Postgres. NOTE: Not implemented!
 func (s *Storage) FetchRequests(sessionID string) ([]*model.Request, error) {
-	sql := fmt.Sprintf("SELECT session_id, request_id, pipeline_id, dataset, progress FROM %s WHERE session_id = $1;", requestTableName)
+	sql := fmt.Sprintf("SELECT session_id, request_id, dataset, progress FROM %s WHERE session_id = $1;", requestTableName)
 
 	rows, err := s.client.Query(sql, sessionID)
 	if err != nil {
@@ -158,12 +167,48 @@ func (s *Storage) FetchResultMetadata(requestID string) ([]*model.Result, error)
 			return nil, errors.Wrap(err, "Unable to parse requests results from Postgres")
 		}
 
+		scores, err := s.FetchResultScore(pipelineID)
+		if err != nil {
+			return nil, errors.Wrap(err, "Unable to get result scores from Postgres")
+		}
+
 		results = append(results, &model.Result{
 			RequestID:  requestID,
 			PipelineID: pipelineID,
 			ResultURI:  resultURI,
 			ResultUUID: resultUUID,
 			Progress:   progress,
+			Scores:     scores,
+		})
+	}
+
+	return results, nil
+}
+
+// FetchResultScore pulls result score from Postgres.
+func (s *Storage) FetchResultScore(pipelineID string) ([]*model.ResultScore, error) {
+	sql := fmt.Sprintf("SELECT pipeline_id, metric, score FROM %s WHERE pipeline_id = $1;", featureTableName)
+
+	rows, err := s.client.Query(sql, pipelineID)
+	if err != nil {
+		return nil, errors.Wrap(err, "Unable to pull result score from Postgres")
+	}
+
+	results := make([]*model.ResultScore, 0)
+	for rows.Next() {
+		var pipelineID string
+		var metric string
+		var score float64
+
+		err = rows.Scan(&pipelineID, &metric, &score)
+		if err != nil {
+			return nil, errors.Wrap(err, "Unable to parse result score from Postgres")
+		}
+
+		results = append(results, &model.ResultScore{
+			PipelineID: pipelineID,
+			Metric:     metric,
+			Score:      score,
 		})
 	}
 

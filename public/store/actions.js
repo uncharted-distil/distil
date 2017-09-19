@@ -43,7 +43,7 @@ export function getSession(context) {
 
 					pipeline.Results.forEach((res) => {
 						// inject the name and pipeline id
-						const name = `${context.getters.getRouteDataset()}-${targetFeature}-${pipeline.PipelineID.substring(0,8)}`;
+						const name = `${context.getters.getRouteDataset()}-${targetFeature}-${res.PipelineID.substring(0,8)}`;
 						res.name = name;
 
 						// add/update the running pipeline info
@@ -53,7 +53,7 @@ export function getSession(context) {
 							context.commit('addCompletedPipeline', {
 								name: res.name,
 								requestId: pipeline.RequestID,
-								pipelineId: pipeline.PipelineID,
+								pipelineId: res.PipelineID,
 								pipeline: { resultUri: res.ResultURI, output: 'tgdfgf', scores: [{metric: 'horse', value: 0.1}] }
 							});
 						}

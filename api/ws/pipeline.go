@@ -356,10 +356,16 @@ func handleCreatePipelinesSuccess(conn *Connection, msg *Message, proxy *pipelin
 				if res.ProgressInfo == pipeline.Progress_COMPLETED || res.ProgressInfo == pipeline.Progress_UPDATED {
 					scores := make([]map[string]interface{}, 0)
 					for _, score := range res.PipelineInfo.Scores {
-						scores = append(scores, map[string]interface{}{
+						s := map[string]interface{}{
 							"metric": pipeline.Metric_name[int32(score.Metric)],
 							"value":  score.Value,
-						})
+						}
+						scores = append(scores, s)
+
+						// store the result score
+						if res.ProgressInfo == pipeline.Progress_COMPLETED {
+							storage.PersistResultScore(res.PipelineId, s["metric"].(string), s["value"].(float64))
+						}
 					}
 					response["pipeline"] = map[string]interface{}{
 						"scores":    scores,

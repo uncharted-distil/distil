@@ -18,6 +18,8 @@ type Result struct {
 	ResultURI  string
 	ResultUUID string
 	Progress   string
+
+	Scores []*ResultScore
 }
 
 // RequestFeature represents the request feature metadata.
@@ -25,4 +27,11 @@ type RequestFeature struct {
 	RequestID   string
 	FeatureName string
 	FeatureType string
+}
+
+// ResultScore represents the result score data.
+type ResultScore struct {
+	PipelineID string
+	Metric     string
+	Score      float64
 }
