@@ -31,21 +31,36 @@ func (s *Storage) parseResults(searchResults *elastic.SearchResult) (*model.Filt
 		// store the name/type tuples in a map for quick lookup
 		if idx == 0 {
 			data.Name = hit.Index
+
+			type colEntry struct {
+				column     string
+				columnType string
+			}
+			colData := []colEntry{}
+
+			// extract and store the col name / type tuples into a list
 			for key, variable := range variables {
 				varType, ok := json.String(variable, model.VariableTypeField)
 				if !ok {
 					return nil, errors.Errorf("failed to extract type info for %s during metadata creation", key)
 				}
-				data.Columns = append(data.Columns, key)
-				data.Types = append(data.Types, varType)
+
+				colData = append(colData, colEntry{
+					column:     key,
+					columnType: varType,
+				})
 			}
-			// sort to impose consistent ordering
-			sort.SliceStable(data.Columns, func(i, j int) bool {
-				return data.Columns[i] < data.Columns[j]
+
+			// sort by the column name
+			sort.SliceStable(colData, func(i, j int) bool {
+				return colData[i].column < colData[j].column
 			})
-			sort.SliceStable(data.Types, func(i, j int) bool {
-				return data.Columns[i] < data.Columns[j]
-			})
+
+			// extract into the individual lists that will be consumed downstream
+			for _, c := range colData {
+				data.Columns = append(data.Columns, c.column)
+				data.Types = append(data.Types, c.columnType)
+			}
 		}
 
 		// Create a temporary metadata -> index map.  Required because the variable data for each hit returned
