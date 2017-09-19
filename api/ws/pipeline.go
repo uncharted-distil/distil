@@ -364,7 +364,7 @@ func handleCreatePipelinesSuccess(conn *Connection, msg *Message, proxy *pipelin
 
 						// store the result score
 						if res.ProgressInfo == pipeline.Progress_COMPLETED {
-							storage.PersistResultScore(res.PipelineId, s["metric"].(string), s["value"].(float64))
+							storage.PersistResultScore(res.PipelineId, s["metric"].(string), float64(s["value"].(float32)))
 						}
 					}
 					response["pipeline"] = map[string]interface{}{

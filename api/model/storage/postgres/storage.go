@@ -11,10 +11,11 @@ import (
 )
 
 const (
-	sessionTableName = "session"
-	requestTableName = "request"
-	resultTableName  = "result"
-	featureTableName = "request_feature"
+	sessionTableName     = "session"
+	requestTableName     = "request"
+	resultTableName      = "result"
+	resultScoreTableName = "result_score"
+	featureTableName     = "request_feature"
 )
 
 // Storage accesses the underlying postgres database.
@@ -85,7 +86,7 @@ func (s *Storage) PersistResultMetadata(requestID string, pipelineID string, res
 
 // PersistResultScore persist the result score to Postgres.
 func (s *Storage) PersistResultScore(pipelineID string, metric string, score float64) error {
-	sql := fmt.Sprintf("INSERT INTO %s (pipeline_id, metric, score) VALUES ($1, $2, $3);", resultTableName)
+	sql := fmt.Sprintf("INSERT INTO %s (pipeline_id, metric, score) VALUES ($1, $2, $3);", resultScoreTableName)
 
 	_, err := s.client.Exec(sql, pipelineID, metric, score)
 
@@ -187,7 +188,7 @@ func (s *Storage) FetchResultMetadata(requestID string) ([]*model.Result, error)
 
 // FetchResultScore pulls result score from Postgres.
 func (s *Storage) FetchResultScore(pipelineID string) ([]*model.ResultScore, error) {
-	sql := fmt.Sprintf("SELECT pipeline_id, metric, score FROM %s WHERE pipeline_id = $1;", featureTableName)
+	sql := fmt.Sprintf("SELECT pipeline_id, metric, score FROM %s WHERE pipeline_id = $1;", resultScoreTableName)
 
 	rows, err := s.client.Query(sql, pipelineID)
 	if err != nil {

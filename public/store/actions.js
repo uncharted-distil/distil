@@ -49,12 +49,11 @@ export function getSession(context) {
 						// add/update the running pipeline info
 						if (res.Progress === PIPELINE_COMPLETE) {
 							// add the pipeline to complete
-							console.log(res);
 							context.commit('addCompletedPipeline', {
 								name: res.name,
 								requestId: pipeline.RequestID,
 								pipelineId: res.PipelineID,
-								pipeline: { resultUri: res.ResultURI, output: 'tgdfgf', scores: [{metric: 'horse', value: 0.1}] }
+								pipeline: { resultUri: res.ResultURI, output: '', scores: res.Scores }
 							});
 						}
 					});
@@ -212,7 +211,6 @@ export function createPipelines(context, request) {
 		context.commit('addRunningPipeline', res);
 		if (res.progress === PIPELINE_COMPLETE) {
 			//move the pipeline from running to complete
-			console.log(res);
 			context.commit('removeRunningPipeline', {pipelineId: res.pipelineId, requestId: res.requestId});
 			context.commit('addCompletedPipeline', {
 				name: res.name,

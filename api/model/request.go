@@ -31,7 +31,7 @@ type RequestFeature struct {
 
 // ResultScore represents the result score data.
 type ResultScore struct {
-	PipelineID string
-	Metric     string
-	Score      float64
+	PipelineID string  `json:"pipelineId"`
+	Metric     string  `json:"metric"`
+	Score      float64 `json:"value"`
 }
