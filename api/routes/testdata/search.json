@@ -18,6 +18,7 @@
                 "_source": {
                     "datasetId": "o_185_dataset",
                     "description": "**Author**: Jeffrey S. Simonoff",
+                    "summary": "",
                     "variables": [
                         {
                             "varName": "d3mIndex",
@@ -54,6 +55,7 @@
                 "_source": {
                     "datasetId": "o_196_dataset",
                     "description": "**Author**: Mr. Somebody",
+                    "summary": "",
                     "variables": [
                         {
                             "varName": "d3mIndex",
