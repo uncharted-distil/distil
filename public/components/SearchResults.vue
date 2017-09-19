@@ -3,7 +3,11 @@
 		<div class="bg-faded rounded mb-1" v-for="dataset in datasets">
 			<dataset-preview
 				:name="dataset.name"
-				:description="dataset.description">
+				:description="dataset.description"
+				:summary="dataset.summary"
+				:variables="dataset.variables"
+				:numBytes="dataset.numBytes"
+				:numRows="dataset.numRows">
 			</dataset-preview>
 		</div>
 	</div>
