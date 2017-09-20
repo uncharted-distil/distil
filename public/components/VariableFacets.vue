@@ -74,6 +74,7 @@ import { spinnerHTML } from '../util/spinner';
 import { createRouteEntry, createRouteEntryFromRoute } from '../util/routes';
 import 'font-awesome/css/font-awesome.css';
 import '../styles/spinner.css';
+import _ from 'lodash';
 
 export default {
 	name: 'variable-facets',
@@ -103,7 +104,7 @@ export default {
 
 	mounted() {
 		// initialize the pagination component's model from the route if set
-		const routeFacetPage = this.$store.getters.getRouteFacetsPage(this.pageRouteKey());
+		const routeFacetPage = this.$store.getters.getRouteFacetsPage(this.routePageKey());
 		if (routeFacetPage) {
 			this.currentPage = parseInt(routeFacetPage);
 		}
@@ -116,15 +117,18 @@ export default {
 				return this.filter === '' || summary.name.toLowerCase().includes(this.filter.toLowerCase());
 			});
 
-			// extract the number of results
-			this.numRows = searchFiltered.length;
+			// sort by current function - sort looks for key to hold sort key
+			const sorted = searchFiltered.map(v => ({ key: v.name, variable: v }))
+				.sort((a, b) => this[this.sortMethod](a, b))
+				.map(v => v.variable);
 
 			// if necessary, refilter applying pagination rules
-			let filtered = searchFiltered;
+			this.numRows = searchFiltered.length;
+			let filtered = sorted;
 			if (this.numRows > this.rowsPerPage) {
 				const firstIndex = this.rowsPerPage * (this.currentPage - 1);
 				const lastIndex = Math.min(firstIndex + this.rowsPerPage, this.numRows);
-				filtered = searchFiltered.slice(firstIndex, lastIndex);
+				filtered = sorted.slice(firstIndex, lastIndex);
 			}
 
 			// create the groups
@@ -151,12 +155,12 @@ export default {
 		alphaAsc(a, b) {
 			const textA = a.key.toLowerCase();
 			const textB = b.key.toLowerCase();
-			return (textA < textB) ? -1 : (textA > textB) ? 1 : 0;
+			return (textA <= textB) ? -1 : (textA > textB) ? 1 : 0;
 		},
 		alphaDesc(a, b) {
 			const textA = a.key.toLowerCase();
 			const textB = b.key.toLowerCase();
-			return (textA < textB) ? 1 : (textA > textB) ? -1 : 0;
+			return (textA <= textB) ? 1 : (textA > textB) ? -1 : 0;
 		},
 		importanceAsc(a, b) {
 			const importance = this.importance;
@@ -172,7 +176,10 @@ export default {
 		noveltyDesc(a, b) {
 			return b.novelty - a.novelty;
 		},
-		pageRouteKey() {
+
+		// creates a facet key for the route from the instance-name component arg
+		// or uses a default if unset
+		routePageKey() {
 			if (this.instanceName) {
 				return `${this.instanceName}Page`;
 			}
@@ -254,7 +261,7 @@ export default {
 
 		// fetches facet data for currently selected page
 		onPageUpdate(newPage) {
-			const entry = createRouteEntryFromRoute(this.$route, {[this.pageRouteKey()]: newPage});
+			const entry = createRouteEntryFromRoute(this.$route, {[this.routePageKey()]: newPage});
 			this.$router.push(entry);
 		},
 
