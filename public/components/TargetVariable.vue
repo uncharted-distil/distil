@@ -41,7 +41,6 @@ export default {
 				remove.className += 'btn btn-sm btn-outline-secondary mb-2';
 				remove.innerHTML = 'Remove';
 				remove.addEventListener('click', () => {
-					const path = this.$store.getters.getRoutePath();
 					const entry = createRouteEntryFromRoute(this.$store.getters.getRoute(), {
 						target: null,
 					});

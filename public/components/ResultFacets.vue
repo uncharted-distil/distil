@@ -81,7 +81,6 @@ export default {
 
 	methods: {
 		updateFilterRoute(filterArgs, resultUri) {
-			const path = this.$store.getters.getRoutePath();
 
 			// merge the updated filters back into the route query params if set
 			const filters = this.$store.getters.getRouteResultFilters(); ;

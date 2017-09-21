@@ -41,10 +41,9 @@ export default {
 				trainingElem.className += 'btn btn-sm btn-outline-secondary mr-2 mb-2';
 				trainingElem.innerHTML = 'Add to Training Set';
 				trainingElem.addEventListener('click', () => {
-					const path = this.$store.getters.getRoutePath();
 					const training = this.$store.getters.getRouteTrainingVariables();
 					const entry = createRouteEntryFromRoute(this.$store.getters.getRoute(), {
-						training: training.concat([ group.key ])
+						training: training.concat([ group.key ]).join(',')
 					});
 					this.$router.push(entry);
 				});
@@ -52,7 +51,6 @@ export default {
 				targetElem.className += 'btn btn-sm btn-outline-secondary mr-2 mb-2';
 				targetElem.innerHTML = 'Set as Target';
 				targetElem.addEventListener('click', () => {
-					const path = this.$store.getters.getRoutePath();
 					const entry = createRouteEntryFromRoute(this.$store.getters.getRoute(), {
 						target: group.key,
 					});

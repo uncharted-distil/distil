@@ -43,7 +43,6 @@ export default {
 				remove.addEventListener('click', () => {
 					const training = this.$store.getters.getRouteTrainingVariables();
 					training.splice(training.indexOf(group.key), 1);
-					const path = this.$store.getters.getRoutePath();
 					const entry = createRouteEntryFromRoute(this.$store.getters.getRoute(), {
 						training: training
 					});
