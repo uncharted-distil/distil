@@ -58,15 +58,21 @@ export function getRouteResultFilters(state) {
 	};
 }
 
-export function getResultsSummaries(state) {
-	return () => {
-		return state.resultsSummaries;
-	};
-}
-
 export function getRouteFilters(state) {
 	return () => {
 		return state.route.query.filters ? state.route.query.filters : [];
+	};
+}
+
+export function getRouteFacetsPage(state) {
+	return (pageKey) => {
+		return state.route.query[pageKey];
+	};
+}
+
+export function getResultsSummaries(state) {
+	return () => {
+		return state.resultsSummaries;
 	};
 }
 

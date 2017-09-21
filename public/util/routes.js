@@ -27,3 +27,16 @@ export function createRouteEntry(path, args = {}) {
 		query: query
 	};
 }
+
+export function createRouteEntryFromRoute(route, args = {}) {
+	// initialize a new object from the supplied route
+	const routeEntry = {
+		path: route.path,
+		query: _.cloneDeep(route.query)
+	};
+
+	// merge in the supplied arguments
+	_.merge(routeEntry.query, args);
+
+	return routeEntry;
+}
