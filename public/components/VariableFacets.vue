@@ -193,7 +193,6 @@ export default {
 		updateFilterRoute(key, values) {
 			// retrieve the filters from the route
 			const filters = this.$store.getters.getRouteFilters();
-			const path = this.$store.getters.getRoutePath();
 			// merge the updated filters back into the route query params
 			const updated = updateFilter(filters, key, values);
 			const entry = createRouteEntryFromRoute(this.$store.getters.getRoute(), {
@@ -269,7 +268,6 @@ export default {
 					enabled: true
 				});
 			});
-			const path = this.$store.getters.getRoutePath();
 			const entry = createRouteEntryFromRoute(this.$store.getters.getRoute(), {
 				filters: filters,
 			});
@@ -286,7 +284,6 @@ export default {
 					enabled: false
 				});
 			});
-			const path = this.$store.getters.getRoutePath();
 			const entry = createRouteEntryFromRoute(this.$store.getters.getRoute(), {
 				filters: filters
 			});
