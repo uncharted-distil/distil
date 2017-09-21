@@ -25,43 +25,6 @@ type Dataset struct {
 	NumBytes    int64       `json:"numBytes"`
 }
 
-func fetchDatasetSummary(client *elastic.Client, dataset string) (int64, int64, error) {
-	// get stats about the index
-	stats, err := client.IndexStats(dataset).Do(context.Background())
-	if err != nil {
-		return 0, 0, errors.Errorf("Error occurred while querying index stats for `%s`: %v",
-			dataset,
-			err)
-	}
-	// don't access by index name, it won't work if this is an alias to an
-	// index. Since we are doing a query for a specific index already, there
-	// should be only one index in the response.
-	if len(stats.Indices) < 1 {
-		return 0, 0, errors.Errorf("Index `%s` does not exist", dataset)
-	}
-	// grab the first index in the map (there should only be one)
-	var indexStats *elastic.IndexStats
-	for _, value := range stats.Indices {
-		indexStats = value
-		break
-	}
-	// get number of documents
-	numDocs := int64(0)
-	// ensure no nil pointers
-	if indexStats.Primaries != nil &&
-		indexStats.Primaries.Docs != nil {
-		numDocs = indexStats.Primaries.Docs.Count
-	}
-	// get the btye size
-	byteSize := int64(0)
-	// ensure no nil pointers
-	if indexStats.Primaries != nil &&
-		indexStats.Primaries.Store != nil {
-		byteSize = indexStats.Primaries.Store.SizeInBytes
-	}
-	return numDocs, byteSize, nil
-}
-
 func parseDatasets(client *elastic.Client, res *elastic.SearchResult) ([]*Dataset, error) {
 	var datasets []*Dataset
 	for _, hit := range res.Hits.Hits {
@@ -82,6 +45,16 @@ func parseDatasets(client *elastic.Client, res *elastic.SearchResult) ([]*Datase
 		if !ok {
 			summary = ""
 		}
+		// extract the number of rows
+		numRows, ok := json.Int(src, "numRows")
+		if !ok {
+			summary = ""
+		}
+		// extract the number of bytes
+		numBytes, ok := json.Int(src, "numBytes")
+		if !ok {
+			summary = ""
+		}
 		// extract the variables list
 		variables, err := parseVariables(hit)
 		if err != nil {
@@ -92,17 +65,10 @@ func parseDatasets(client *elastic.Client, res *elastic.SearchResult) ([]*Datase
 			Name:        name,
 			Description: description,
 			Summary:     summary,
+			NumRows:     int64(numRows),
+			NumBytes:    int64(numBytes),
 			Variables:   variables,
 		})
-	}
-	// get index stats
-	for _, dataset := range datasets {
-		numRows, numBytes, err := fetchDatasetSummary(client, dataset.Name)
-		if err != nil {
-			return nil, errors.Wrap(err, "elasticsearch dataset index stats failed")
-		}
-		dataset.NumRows = numRows
-		dataset.NumBytes = numBytes
 	}
 	return datasets, nil
 }
