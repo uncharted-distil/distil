@@ -12,7 +12,7 @@
 
 <script>
 
-import { createRouteEntry } from '../util/routes';
+import { createRouteEntryFromRoute } from '../util/routes';
 import VariableFacets from '../components/VariableFacets';
 import 'font-awesome/css/font-awesome.css';
 
@@ -41,17 +41,11 @@ export default {
 				remove.className += 'btn btn-sm btn-outline-secondary mb-2';
 				remove.innerHTML = 'Remove';
 				remove.addEventListener('click', () => {
-
 					const path = this.$store.getters.getRoutePath();
-					const entry = createRouteEntry(path, {
-						dataset: this.$store.getters.getRouteDataset(),
-						filters: this.$store.getters.getRouteFilters(),
-						training: this.$store.getters.getRouteTrainingVariables(),
+					const entry = createRouteEntryFromRoute(this.$store.getters.getRoute(), {
 						target: null,
 					});
 					this.$router.push(entry);
-
-					//this.$store.commit('removeTargetVariable', group.key);
 				});
 				container.appendChild(remove);
 				return container;

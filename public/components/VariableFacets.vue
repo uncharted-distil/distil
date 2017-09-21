@@ -60,7 +60,7 @@
 			v-on:facet-toggle="onFacetToggle">
 		</facets>
 		<div v-if="numRows > rowsPerPage" class="variable-page-nav">
-			<b-pagination size="sm" align="center" @change="onPageUpdate" :total-rows="numRows" :per-page="rowsPerPage" v-model="currentPage"/>
+			<b-pagination size="sm" align="center" :total-rows="numRows" :per-page="rowsPerPage" v-model="currentPage"/>
 		</div>
 
 	</div>
@@ -71,7 +71,7 @@
 import Facets from '../components/Facets';
 import { decodeFilters, updateFilter, getFilterType, isDisabled, CATEGORICAL_FILTER, NUMERICAL_FILTER } from '../util/filters';
 import { spinnerHTML } from '../util/spinner';
-import { createRouteEntry, createRouteEntryFromRoute } from '../util/routes';
+import { createRouteEntryFromRoute } from '../util/routes';
 import 'font-awesome/css/font-awesome.css';
 import '../styles/spinner.css';
 
@@ -94,22 +94,25 @@ export default {
 	data() {
 		return {
 			filter: '',
-			currentPage: 1,
 			numRows: 1,
-			rowsPerPage: 20,
+			rowsPerPage: 10,
 			sortMethod: 'alphaAsc'
 		};
 	},
 
-	mounted() {
-		// initialize the pagination component's model from the route if set
-		const routeFacetPage = this.$store.getters.getRouteFacetsPage(this.routePageKey());
-		if (routeFacetPage) {
-			this.currentPage = parseInt(routeFacetPage);
-		}
-	},
-
 	computed: {
+		currentPage: {
+			set(page) {
+				const entry = createRouteEntryFromRoute(this.$route, {
+					[this.routePageKey()]: page
+				});
+				this.$router.push(entry);
+			},
+			get() {
+				const routeFacetPage = this.$store.getters.getRouteFacetsPage(this.routePageKey());
+				return routeFacetPage ? parseInt(routeFacetPage) : 1;
+			}
+		},
 		groups() {
 			// filter by search
 			const searchFiltered = this.variables.filter(summary => {
@@ -193,10 +196,7 @@ export default {
 			const path = this.$store.getters.getRoutePath();
 			// merge the updated filters back into the route query params
 			const updated = updateFilter(filters, key, values);
-			const entry = createRouteEntry(path, {
-				target: this.$store.getters.getRouteTargetVariable(),
-				training: this.$store.getters.getRouteTrainingVariables(),
-				dataset: this.dataset,
+			const entry = createRouteEntryFromRoute(this.$store.getters.getRoute(), {
 				filters: updated,
 			});
 			this.$router.push(entry);
@@ -259,12 +259,6 @@ export default {
 			}
 		},
 
-		// fetches facet data for currently selected page
-		onPageUpdate(newPage) {
-			const entry = createRouteEntryFromRoute(this.$route, {[this.routePageKey()]: newPage});
-			this.$router.push(entry);
-		},
-
 		// sets all facet groups to the active state - full size display + all controls, updates
 		// route accordingly
 		selectAll() {
@@ -276,9 +270,8 @@ export default {
 				});
 			});
 			const path = this.$store.getters.getRoutePath();
-			const entry = createRouteEntry(path, {
-				dataset: this.$store.getters.getRouteDataset(),
-				filters: filters
+			const entry = createRouteEntryFromRoute(this.$store.getters.getRoute(), {
+				filters: filters,
 			});
 			this.$router.push(entry);
 		},
@@ -294,8 +287,7 @@ export default {
 				});
 			});
 			const path = this.$store.getters.getRoutePath();
-			const entry = createRouteEntry(path, {
-				dataset: this.$store.getters.getRouteDataset(),
+			const entry = createRouteEntryFromRoute(this.$store.getters.getRoute(), {
 				filters: filters
 			});
 			this.$router.push(entry);
@@ -447,6 +439,15 @@ button {
 	display: flex;
 	flex-direction: column;
 	padding: 8px;
+}
+.page-link {
+	color: #868e96;
+}
+.page-item.active .page-link {
+	z-index: 2;
+	color: #fff;
+	background-color: #868e96;
+	border-color: #868e96;
 }
 .facets-container {
 	overflow-x: hidden;
