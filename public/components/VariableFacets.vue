@@ -74,7 +74,6 @@ import { spinnerHTML } from '../util/spinner';
 import { createRouteEntry, createRouteEntryFromRoute } from '../util/routes';
 import 'font-awesome/css/font-awesome.css';
 import '../styles/spinner.css';
-import _ from 'lodash';
 
 export default {
 	name: 'variable-facets',
