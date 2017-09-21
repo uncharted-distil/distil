@@ -1,7 +1,6 @@
 <template>
 	<div class='card'>
-
-		<div class='dataset-header card-header hover' v-on:click='setActiveDataset()' v-bind:class='{collapsed: !expanded}'>
+		<div class='dataset-header card-header btn btn-outline-secondary hover' v-on:click='setActiveDataset()' v-bind:class='{collapsed: !expanded}'>
 			<a class='nav-link'><b>Name:</b> {{name}}</a>
 			<a class='nav-link'><b>Columns:</b> {{variables.length}}</a>
 			<a class='nav-link'><b>Rows:</b> {{numRows}}</a>
@@ -129,10 +128,10 @@ export default {
 .dataset-header {
 	display: flex;
 	padding: 4px 8px;
-	justify-content: space-between
-}
-.dataset-header.collapsed {
-	border-bottom: none;
+	color: #000;
+	justify-content: space-between;
+	border: none;
+	border-bottom: 1px solid rgba(0, 0, 0, 0.125);
 }
 .full-width {
 	width: 100%;

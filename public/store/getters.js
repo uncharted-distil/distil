@@ -1,6 +1,10 @@
 import _ from 'lodash';
 import Connection from '../util/ws';
 
+export function getRoute(state) {
+	return () => state.route;
+}
+
 export function getRoutePath(state) {
 	return () => {
 		return state.route.path;

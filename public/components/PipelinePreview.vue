@@ -33,8 +33,8 @@
 </template>
 
 <script>
-import {getMetricDisplayName} from '../util/pipelines';
-import { createRouteEntry } from '../util/routes';
+import { getMetricDisplayName } from '../util/pipelines';
+import { createRouteEntryFromRoute } from '../util/routes';
 
 export default {
 	name: 'pipeline-preview',
@@ -77,9 +77,7 @@ export default {
 			return this.result.progress !=='UPDATED' && this.result.pipeline !== undefined;
 		},
 		onResult() {
-			const entry = createRouteEntry('/results', {
-				dataset: this.$store.getters.getRouteDataset(),
-				filters: this.$store.getters.getRouteFilters(),
+			const entry = createRouteEntryFromRoute('/results', {
 				createRequestId: this.result.requestId,
 				resultId: btoa(this.result.pipeline.resultUri)
 			});
