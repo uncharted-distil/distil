@@ -118,6 +118,7 @@ export default {
 			});
 
 			// sort by current function - sort looks for key to hold sort key
+			// TODO: this only needs to happen on re-order events once it has been sorted initially
 			const sorted = searchFiltered.map(v => ({ key: v.name, variable: v }))
 				.sort((a, b) => this[this.sortMethod](a, b))
 				.map(v => v.variable);
