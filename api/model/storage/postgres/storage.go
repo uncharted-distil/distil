@@ -110,6 +110,9 @@ func (s *Storage) FetchRequests(sessionID string) ([]*model.Request, error) {
 	if err != nil {
 		return nil, errors.Wrap(err, "Unable to pull session requests from Postgres")
 	}
+	if rows != nil {
+		defer rows.Close()
+	}
 
 	requests := make([]*model.Request, 0)
 	for rows.Next() {
@@ -154,6 +157,9 @@ func (s *Storage) FetchResultMetadata(requestID string) ([]*model.Result, error)
 	if err != nil {
 		return nil, errors.Wrap(err, "Unable to pull request results from Postgres")
 	}
+	if rows != nil {
+		defer rows.Close()
+	}
 
 	results := make([]*model.Result, 0)
 	for rows.Next() {
@@ -194,6 +200,9 @@ func (s *Storage) FetchResultScore(pipelineID string) ([]*model.ResultScore, err
 	if err != nil {
 		return nil, errors.Wrap(err, "Unable to pull result score from Postgres")
 	}
+	if rows != nil {
+		defer rows.Close()
+	}
 
 	results := make([]*model.ResultScore, 0)
 	for rows.Next() {
@@ -223,6 +232,9 @@ func (s *Storage) FetchRequestFeature(requestID string) ([]*model.RequestFeature
 	rows, err := s.client.Query(sql, requestID)
 	if err != nil {
 		return nil, errors.Wrap(err, "Unable to pull request features from Postgres")
+	}
+	if rows != nil {
+		defer rows.Close()
 	}
 
 	results := make([]*model.RequestFeature, 0)
