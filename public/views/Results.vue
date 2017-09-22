@@ -1,20 +1,20 @@
 <template>
 	<div class="results">
 		<variable-summaries class="results-variable-summaries"></variable-summaries>
-		<results-data-table class="results-data-table"></results-data-table>
+		<results-comparison class="results-result-comparison"></results-comparison>
 		<result-summaries class="results-result-summaries"></result-summaries>
 	</div>
 </template>
 
 <script>
-import ResultsDataTable from '../components/ResultsDataTable';
+import ResultsComparison from '../components/ResultsComparison';
 import VariableSummaries from '../components/VariableSummaries';
 import ResultSummaries from '../components/ResultSummaries';
 
 export default {
 	name: 'results',
 	components: {
-		ResultsDataTable,
+		ResultsComparison,
 		VariableSummaries,
 		ResultSummaries
 	},
@@ -59,9 +59,7 @@ export default {
 .results-result-summaries {
 	width: 20%;
 }
-.results-data-table {
-	display: flex;
-	flex-direction: column;
+.results-result-comparison {
 	width: 60%;
 }
 </style>
