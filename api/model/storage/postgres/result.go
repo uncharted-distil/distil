@@ -26,6 +26,7 @@ func (s *Storage) getResultTargetName(dataset string, resultURI string, index st
 	if err != nil {
 		return "", errors.Wrap(err, "Unable to get target variable name from results")
 	}
+	defer rows.Close()
 
 	if rows.Next() {
 		var targetName string
@@ -118,9 +119,10 @@ func (s *Storage) parseResults(dataset string, rows *pgx.Rows, variable *model.V
 		var val interface{}
 		err = nil
 
+		// Integer types can be returned as floats.
 		switch variable.Type {
 		case model.IntegerType:
-			val, err = strconv.ParseInt(value, 10, 64)
+			val, err = strconv.ParseFloat(value, 64)
 		case model.FloatType:
 			val, err = strconv.ParseFloat(value, 64)
 		case model.CategoricalType:
@@ -167,6 +169,7 @@ func (s *Storage) FetchResults(dataset string, resultURI string, index string) (
 	if err != nil {
 		return nil, errors.Wrap(err, "Error querying results")
 	}
+	defer rows.Close()
 
 	return s.parseResults(dataset, rows, variable)
 }
@@ -227,7 +230,11 @@ func (s *Storage) fetchResultExtrema(resultURI string, dataset string, variable 
 	// execute the postgres query
 	// NOTE: We may want to use the refular Query operation since QueryRow
 	// hides db exceptions.
-	res := s.client.QueryRow(queryString, resultURI, variable.Name)
+	res, err := s.client.Query(queryString, resultURI, variable.Name)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to fetch extrema for result from postgres")
+	}
+	defer res.Close()
 
 	return s.parseExtrema(res, variable)
 }
@@ -258,6 +265,8 @@ func (s *Storage) fetchNumericalResultHistogram(resultURI string, dataset string
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to fetch histograms for result variable summaries from postgres")
 	}
+	defer res.Close()
+
 	return s.parseNumericHistogram(res, extrema)
 }
 
@@ -270,6 +279,7 @@ func (s *Storage) fetchCategoricalResultHistogram(resultURI string, dataset stri
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to fetch histograms for result summaries from postgres")
 	}
+	defer res.Close()
 
 	return s.parseCategoricalHistogram(res, variable)
 }

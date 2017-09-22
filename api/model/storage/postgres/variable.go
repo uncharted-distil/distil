@@ -110,10 +110,12 @@ func (s *Storage) parseCategoricalHistogram(rows *pgx.Rows, variable *model.Vari
 	}, nil
 }
 
-func (s *Storage) parseExtrema(row *pgx.Row, variable *model.Variable) (*model.Extrema, error) {
+func (s *Storage) parseExtrema(row *pgx.Rows, variable *model.Variable) (*model.Extrema, error) {
 	var minValue *float64
 	var maxValue *float64
 	if row != nil {
+		// Expect one row of data.
+		row.Next()
 		err := row.Scan(&minValue, &maxValue)
 		if err != nil {
 			return nil, errors.Wrap(err, "no min/max aggregation found")
@@ -153,7 +155,13 @@ func (s *Storage) fetchExtrema(dataset string, variable *model.Variable) (*model
 	// execute the postgres query
 	// NOTE: We may want to use the refular Query operation since QueryRow
 	// hides db exceptions.
-	res := s.client.QueryRow(queryString)
+	res, err := s.client.Query(queryString)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to fetch extrema for variable summaries from postgres")
+	}
+	if res != nil {
+		defer res.Close()
+	}
 
 	return s.parseExtrema(res, variable)
 }
@@ -177,6 +185,10 @@ func (s *Storage) fetchNumericalHistogram(dataset string, variable *model.Variab
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to fetch histograms for variable summaries from postgres")
 	}
+	if res != nil {
+		defer res.Close()
+	}
+
 	return s.parseNumericHistogram(res, extrema)
 }
 
@@ -188,6 +200,9 @@ func (s *Storage) fetchCategoricalHistogram(dataset string, variable *model.Vari
 	res, err := s.client.Query(query)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to fetch histograms for variable summaries from postgres")
+	}
+	if res != nil {
+		defer res.Close()
 	}
 
 	return s.parseCategoricalHistogram(res, variable)
