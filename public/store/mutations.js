@@ -32,14 +32,44 @@ export function updateResultsSummaries(state, summary) {
 	}
 }
 
+function validateData(data) {
+	return  !_.isEmpty(data) &&
+		!_.isEmpty(data.values) &&
+		!_.isEmpty(data.columns);
+}
+
 // sets the current filtered data into the store
 export function setFilteredData(state, filteredData) {
 	state.filteredData = filteredData;
+	state.filteredDataItems = [];
+	if (validateData(filteredData)) {
+		state.filteredDataItems = _.map(filteredData.values, d => {
+			const row = {};
+			for (const [index, col] of filteredData.columns.entries()) {
+				row[col] = d[index];
+			}
+			return row;
+		});
+	}
 }
 
 // sets the current result data into the store
 export function setResultData(state, resultData) {
 	state.resultData = resultData;
+	state.resultDataItems = [];
+	if (validateData(resultData)) {
+		state.resultDataItems = _.cloneDeep(state.filteredDataItems);
+		// append the result variable data to the baseline variable data
+		for (const [i, row] of state.resultDataItems.entries()) {
+			for (const [j, colName] of resultData.columns.entries()) {
+				const label = `Predicted ${colName}`;
+				row[label] = resultData.values[i][j];
+				if (row[colName] !== resultData.values[i][j]) {
+					row._cellVariants = { [label]: 'danger' };
+				}
+			}
+		}
+	}
 }
 
 export function setWebSocketConnection(state, connection) {
@@ -110,14 +140,6 @@ export function highlightFeature(state, highlight) {
 
 export function clearFeatureHighlight(state) {
 	state.highlightedFeature = null;
-}
-
-export function setFilteredDataItems(state, items) {
-	state.filteredDataItems = items;
-}
-
-export function setResultDataItems(state, items) {
-	state.resultDataItems = items;
 }
 
 function isHighlighted(highlightedFeature, row) {

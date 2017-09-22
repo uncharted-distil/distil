@@ -67,7 +67,6 @@ export function getVariableSummaries(context, datasetName) {
 							return;
 						}
 						// ensure buckets is not nil
-						//histogram.buckets = histogram.buckets ? histogram.buckets : [];
 						context.commit('updateVariableSummaries', {
 							index: idx,
 							histogram: histogram
@@ -92,25 +91,19 @@ export function getVariableSummaries(context, datasetName) {
 
 // update filtered data based on the  current filter state
 export function updateFilteredData(context, datasetName) {
-	return new Promise((resolve, reject) => {
-		const filters = context.getters.getRouteFilters();
-		const decoded = decodeFilters(filters);
-		const queryParams = encodeQueryParams(decoded);
-		const url = `distil/filtered-data/${ES_INDEX}/${datasetName}${queryParams}`;
-		// request filtered data from server - no data is valid given filter settings
-		axios.get(url)
-			.then(response => {
-				context.commit('setFilteredData', response.data);
-				context.dispatch('updateFilteredDataItems');
-				resolve();
-			})
-			.catch(error => {
-				console.error(error);
-				context.commit('setFilteredData', []);
-				context.dispatch('updateFilteredDataItems');
-				reject();
-			});
-	});
+	const filters = context.getters.getRouteFilters();
+	const decoded = decodeFilters(filters);
+	const queryParams = encodeQueryParams(decoded);
+	const url = `distil/filtered-data/${ES_INDEX}/${datasetName}${queryParams}`;
+	// request filtered data from server - no data is valid given filter settings
+	return axios.get(url)
+		.then(response => {
+			context.commit('setFilteredData', response.data);
+		})
+		.catch(error => {
+			console.error(error);
+			context.commit('setFilteredData', []);
+		});
 }
 
 // starts a pipeline session.
@@ -118,19 +111,19 @@ export function getPipelineSession(context) {
 	const conn = context.getters.getWebSocketConnection();
 	const sessionID = context.getters.getPipelineSessionID();
 	return conn.send({
-		type: 'GET_SESSION',
-		session: sessionID
-	}).then(res => {
-		if (sessionID && res.created) {
-			console.warn('previous session', sessionID, 'could not be resumed, new session created');
-		}
-		context.commit('setPipelineSession', {
-			id: res.session,
-			uuids: res.uuids
+			type: 'GET_SESSION',
+			session: sessionID
+		}).then(res => {
+			if (sessionID && res.created) {
+				console.warn('previous session', sessionID, 'could not be resumed, new session created');
+			}
+			context.commit('setPipelineSession', {
+				id: res.session,
+				uuids: res.uuids
+			});
+		}).catch(err => {
+			console.warn(err);
 		});
-	}).catch(err => {
-		console.warn(err);
-	});
 }
 
 // end a pipeline session.
@@ -141,13 +134,13 @@ export function endPipelineSession(context) {
 		return;
 	}
 	return conn.send({
-		type: 'END_SESSION',
-		session: sessionID
-	}).then(() => {
-		context.commit('setPipelineSession', null);
-	}).catch(err => {
-		console.warn(err);
-	});
+			type: 'END_SESSION',
+			session: sessionID
+		}).then(() => {
+			context.commit('setPipelineSession', null);
+		}).catch(err => {
+			console.warn(err);
+		});
 }
 
 // issues a pipeline create request
@@ -159,16 +152,13 @@ export function createPipelines(context, request) {
 		return;
 	}
 	const stream = conn.stream(res => {
-
 		if (_.has(res, STREAM_CLOSE)) {
 			stream.close();
 			return;
 		}
-
 		// inject the name and pipeline id
 		const name = `${context.getters.getRouteDataset()}-${request.feature}-${res.pipelineId.substring(0,8)}`;
 		res.name = name;
-
 		// add/update the running pipeline info
 		context.commit('addRunningPipeline', res);
 		if (res.progress === PIPELINE_COMPLETE) {
@@ -218,93 +208,54 @@ export function getResultsSummaries(context, args) {
 		const pipelineId = result.pipelineId;
 		const res = encodeURIComponent(result.pipeline.resultUri);
 		axios.get(`/distil/results-summary/${ES_INDEX}/${dataset}/${res}`)
-		.then(response => {
-			// save the histogram data
-			const histogram = response.data.histogram;
-			if (!histogram) {
+			.then(response => {
+				// save the histogram data
+				const histogram = response.data.histogram;
+				if (!histogram) {
+					context.commit('setResultsSummaries', [
+						{
+							name,
+							pipelineId,
+							err: 'No analysis available'
+						}
+					]);
+					return;
+				}
+				// ensure buckets is not nil
+				histogram.buckets = histogram.buckets ? histogram.buckets : [];
+				histogram.name = name;
+				histogram.pipelineId =
+				context.commit('updateResultsSummaries', histogram);
+			})
+			.catch(error => {
 				context.commit('setResultsSummaries', [
 					{
 						name,
 						pipelineId,
-						err: 'No analysis available'
+						err: error
 					}
 				]);
 				return;
-			}
-			// ensure buckets is not nil
-			histogram.buckets = histogram.buckets ? histogram.buckets : [];
-			histogram.name = name;
-			histogram.pipelineId =
-			context.commit('updateResultsSummaries', histogram);
-		})
-		.catch(error => {
-			context.commit('setResultsSummaries', [
-				{
-					name,
-					pipelineId,
-					err: error
-				}
-			]);
-			return;
-		});
+			});
 	}
 }
 
 // fetches result data for created pipeline
 export function updateResults(context, args) {
-	const encodedUri = encodeURIComponent(args.resultId);
-	axios.get(`/distil/results/${ES_INDEX}/${args.dataset}/${encodedUri}`)
-	.then(response => {
-		context.commit('setResultData', response.data);
-		context.dispatch('updateResultDataItems', response.data);
-	})
-	.catch(error => {
-		console.error(`Failed to fetch results from ${args.resultId} with error ${error}`);
-	});
-}
-
-function validateData(data) {
-	return  !_.isEmpty(data) && !_.isEmpty(data.values) && !_.isEmpty(data.columns);
-}
-
-export function updateFilteredDataItems(context) {
-	const data = context.getters.getFilteredData();
-	if (validateData(data)) {
-		const items = _.map(data.values, d => {
-			const row = {};
-			for (const [index, col] of data.columns.entries()) {
-				row[col] = d[index];
-			}
-			return row;
+	return context.dispatch('updateFilteredData', context.getters.getRouteDataset())
+		.then(() => {
+			const encodedUri = encodeURIComponent(args.resultId);
+			return axios.get(`/distil/results/${ES_INDEX}/${args.dataset}/${encodedUri}`)
+				.then(response => {
+					context.commit('setResultData', response.data);
+				})
+				.catch(error => {
+					console.error(`Failed to fetch results from ${args.resultId} with error ${error}`);
+				});
+		})
+		.catch(error => {
+			console.error(error);
 		});
-		context.commit('setFilteredDataItems', items);
-		context.commit('highlightFilteredDataItems');
-	} else {
-		context.commit('setFilteredDataItems', []);
-	}
-}
-
-export function updateResultDataItems(context) {
-	// get the filtered data items
-	const resultData = context.getters.getResultData();
-	if (validateData(resultData)) {
-		context.dispatch('updateFilteredDataItems');
-		const items = _.cloneDeep(context.getters.getFilteredDataItems());
-		// append the result variable data to the baseline variable data
-		for (const [i, row] of items.entries()) {
-			for (const [j, colName] of resultData.columns.entries()) {
-				const label = `Predicted ${colName}`;
-				row[label] = resultData.values[i][j];
-				if (row[colName] !== resultData.values[i][j]) {
-					row._cellVariants = { [label]: 'danger' };
-				}
-			}
-		}
-		context.commit('setResultDataItems', items);
-		context.commit('highlightResultdDataItems');
-	} else {
-		context.commit('setResultDataItems', []);
-	};
 }
 
 export function highlightFeature(context, highlight) {
