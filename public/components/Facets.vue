@@ -11,10 +11,18 @@ import '@uncharted.software/stories-facets/dist/facets.css';
 export default {
 	name: 'facets',
 
-	props: [
-		'groups',
-		'html'
-	],
+	props: {
+		groups: Array,
+		html: [ String, Object, Function ],
+		sort: {
+			default: (a, b) => {
+				const textA = a.key.toLowerCase();
+				const textB = b.key.toLowerCase();
+				return (textA < textB) ? -1 : (textA > textB) ? 1 : 0;
+			},
+			type: Function
+		}
+	},
 
 	mounted() {
 		const component = this;
@@ -34,6 +42,18 @@ export default {
 		});
 		this.facets.on('facet-histogram:rangechangeduser', (event, key, value) => {
 			component.$emit('range-change', key, value);
+		});
+		this.facets.on('facet-histogram:mouseenter', (event, key, value) => {
+			this.$store.dispatch('highlightFeature', {
+				name: key,
+				range: {
+					from: _.toNumber(value.label[0]),
+					to: _.toNumber(value.toLabel[value.toLabel.length-1])
+				}
+			});
+		});
+		this.facets.on('facet-histogram:mouseleave', () => {
+			this.$store.dispatch('clearFeatureHighlight');
 		});
 		this.facets.on('facet:click', (event, key, value) => {
 			// get group
@@ -75,6 +95,9 @@ export default {
 			this.updateCollapsed(unchangedGroups);
 			// for the unchanged, update selection
 			this.updateSelections(unchangedGroups, prevMap);
+		},
+		sort: function(currSort) {
+			this.facets.sort(currSort);
 		}
 	},
 
@@ -151,11 +174,7 @@ export default {
 				});
 			}
 			// sort alphabetically
-			this.facets.sort((a, b) => {
-				const textA = a.key.toLowerCase();
-				const textB = b.key.toLowerCase();
-				return (textA < textB) ? -1 : (textA > textB) ? 1 : 0;
-			});
+			this.facets.sort(this.sort);
 			// return unchanged groups
 			return unchanged;
 		},

@@ -14,6 +14,8 @@ func TestDatasetsHandler(t *testing.T) {
 	// mock elasticsearch request handler
 	handler := mock.ElasticHandler(t, []string{
 		"./testdata/datasets.json",
+		"./testdata/stats.json",
+		"./testdata/stats.json",
 	})
 	// mock elasticsearch client
 	ctor := mock.ElasticClientCtor(t, handler)
@@ -36,20 +38,26 @@ func TestDatasetsHandler(t *testing.T) {
 				{
 					"name": "o_185",
 					"description": "<p><strong>Author</strong>: Jeffrey S. Simonoff</p>\n",
+					"summary": "",
+					"numRows": 1073,
+					"numBytes": 744647,
 					"variables": [
-						{"name":"d3mIndex","type":"integer"},
-						{"name":"Player","type":"categorical"},
-						{"name":"Number_seasons","type":"integer"},
-						{"name":"Games_played","type":"integer"}
+						{"name":"d3mIndex","type":"integer","importance": 0},
+						{"name":"Player","type":"categorical","importance": 0},
+						{"name":"Number_seasons","type":"integer","importance": 1},
+						{"name":"Games_played","type":"integer","importance": 2}
 					]
 				},
 				{
 					"name": "o_196",
 					"description": "<p><strong>Author</strong>: Mr. Somebody</p>\n",
+					"summary": "",
+					"numRows": 1073,
+					"numBytes": 744647,
 					"variables": [
-						{"name":"d3mIndex","type":"integer"},
-						{"name":"cylinders","type":"categorical"},
-						{"name":"displacement","type":"categorical"}
+						{"name":"d3mIndex","type":"integer","importance": 0},
+						{"name":"cylinders","type":"categorical","importance": 0},
+						{"name":"displacement","type":"categorical","importance": 0}
 					]
 				}
 			]
@@ -66,6 +74,8 @@ func TestDatasetsHandlerWithSearch(t *testing.T) {
 	// mock elasticsearch request handler
 	handler := mock.ElasticHandler(t, []string{
 		"./testdata/search.json",
+		"./testdata/stats.json",
+		"./testdata/stats.json",
 	})
 	// mock elasticsearch client
 	ctor := mock.ElasticClientCtor(t, handler)
@@ -92,20 +102,26 @@ func TestDatasetsHandlerWithSearch(t *testing.T) {
 				{
 					"name": "o_185",
 					"description": "<p><strong>Author</strong>: Jeffrey S. Simonoff</p>\n",
+					"summary": "",
+					"numRows": 1073,
+					"numBytes": 744647,
 					"variables": [
-						{"name":"d3mIndex","type":"integer"},
-						{"name":"Player","type":"categorical"},
-						{"name":"Number_seasons","type":"integer"},
-						{"name":"Games_played","type":"integer"}
+						{"name":"d3mIndex","type":"integer","importance": 0},
+						{"name":"Player","type":"categorical","importance": 0},
+						{"name":"Number_seasons","type":"integer","importance": 1},
+						{"name":"Games_played","type":"integer","importance": 2}
 					]
 				},
 				{
 					"name": "o_196",
 					"description": "<p><strong>Author</strong>: Mr. Somebody</p>\n",
+					"summary": "",
+					"numRows": 1073,
+					"numBytes": 744647,
 					"variables": [
-						{"name":"d3mIndex","type":"integer"},
-						{"name":"cylinders","type":"categorical"},
-						{"name":"displacement","type":"categorical"}
+						{"name":"d3mIndex","type":"integer","importance": 0},
+						{"name":"cylinders","type":"categorical","importance": 0},
+						{"name":"displacement","type":"categorical","importance": 0}
 					]
 				}
 			]

@@ -16,6 +16,8 @@ const (
 	VarNameField = "varName"
 	// VarTypeField is the field name for the variable type.
 	VarTypeField = "varType"
+	// VarImportanceField is the field name for the variable importnace.
+	VarImportanceField = "importance"
 	// VarTypeIndex is the variable type of the index field.
 	VarTypeIndex = "index"
 	// FeatureTypeTrain is the training feature type.
@@ -26,8 +28,9 @@ const (
 
 // Variable represents a single variable description within a dataset.
 type Variable struct {
-	Name string `json:"name"`
-	Type string `json:"type"`
+	Name       string `json:"name"`
+	Type       string `json:"type"`
+	Importance int    `json:"importance"`
 }
 
 func parseVariable(searchHit *elastic.SearchHit, varName string) (*Variable, error) {
@@ -51,9 +54,14 @@ func parseVariable(searchHit *elastic.SearchHit, varName string) (*Variable, err
 		if !ok {
 			continue
 		}
+		importance, ok := json.Int(child, VarImportanceField)
+		if !ok {
+			continue
+		}
 		return &Variable{
-			Name: name,
-			Type: typ,
+			Name:       name,
+			Type:       typ,
+			Importance: importance,
 		}, nil
 	}
 	return nil, errors.Errorf("unable to find variable match name %s", varName)
@@ -81,9 +89,14 @@ func parseVariables(searchHit *elastic.SearchHit) ([]*Variable, error) {
 		if !ok {
 			continue
 		}
+		importance, ok := json.Int(child, VarImportanceField)
+		if !ok {
+			continue
+		}
 		variables = append(variables, &Variable{
-			Name: name,
-			Type: typ,
+			Name:       name,
+			Type:       typ,
+			Importance: importance,
 		})
 	}
 	return variables, nil

@@ -16,7 +16,7 @@ export function createRouteEntry(path, args = {}) {
 	const query = {};
 	if (args.dataset) { query.dataset = args.dataset; }
 	if (args.terms) { query.terms = args.terms; }
-	if (!_.isEmpty(args.training)) { query.training = args.training.join(','); }
+	if (!_.isEmpty(args.training)) { query.training = args.training; }
 	if (args.target) { query.target = args.target; }
 	if (args.createRequestId) { query.createRequestId = args.createRequestId; }
 	if (!_.isEmpty(args.filters)) { query.filters = args.filters; }
@@ -26,4 +26,17 @@ export function createRouteEntry(path, args = {}) {
 		path: path,
 		query: query
 	};
+}
+
+export function createRouteEntryFromRoute(route, args = {}) {
+	// initialize a new object from the supplied route
+	const routeEntry = {
+		path: route.path,
+		query: _.cloneDeep(route.query)
+	};
+
+	// merge in the supplied arguments
+	_.merge(routeEntry.query, args);
+
+	return routeEntry;
 }

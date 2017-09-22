@@ -1,7 +1,7 @@
 <template>
 	<div class="results-data-table">
 		<div class="bg-faded rounded-top">
-			<h6 class="nav-link">Values</h6>
+			<h6 class="nav-link">{{title}}</h6>
 		</div>
 		<div class="results-data-table-container">
 			<div v-if="items.length===0">
@@ -26,10 +26,16 @@
 export default {
 	name: 'results-data-table',
 
+	props: [
+		'title',
+		'filterFunc',
+		'decorateFunc'
+	],
+
 	data() {
 		return {
 			perPage: 10,
-			currentPage: 1
+			currentPage: 1,
 		};
 	},
 
@@ -61,7 +67,9 @@ export default {
 		},
 		// extracts the table data from the store
 		items() {
-			return this.$store.getters.getResultDataItems();
+			const items = this.$store.getters.getResultDataItems();
+			return items.filter(this.filterFunc)
+				.map(this.decorateFunc);
 		},
 		// extract the table field header from the store
 		fields() {

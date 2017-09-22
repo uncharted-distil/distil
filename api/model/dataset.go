@@ -19,10 +19,13 @@ const (
 type Dataset struct {
 	Name        string      `json:"name"`
 	Description string      `json:"description"`
+	Summary     string      `json:"summary"`
 	Variables   []*Variable `json:"variables"`
+	NumRows     int64       `json:"numRows"`
+	NumBytes    int64       `json:"numBytes"`
 }
 
-func parseDatasets(res *elastic.SearchResult) ([]*Dataset, error) {
+func parseDatasets(client *elastic.Client, res *elastic.SearchResult) ([]*Dataset, error) {
 	var datasets []*Dataset
 	for _, hit := range res.Hits.Hits {
 		// parse hit into JSON
@@ -37,6 +40,21 @@ func parseDatasets(res *elastic.SearchResult) ([]*Dataset, error) {
 		if !ok {
 			description = ""
 		}
+		// extract the summary
+		summary, ok := json.String(src, "summary")
+		if !ok {
+			summary = ""
+		}
+		// extract the number of rows
+		numRows, ok := json.Int(src, "numRows")
+		if !ok {
+			summary = ""
+		}
+		// extract the number of bytes
+		numBytes, ok := json.Int(src, "numBytes")
+		if !ok {
+			summary = ""
+		}
 		// extract the variables list
 		variables, err := parseVariables(hit)
 		if err != nil {
@@ -46,6 +64,9 @@ func parseDatasets(res *elastic.SearchResult) ([]*Dataset, error) {
 		datasets = append(datasets, &Dataset{
 			Name:        name,
 			Description: description,
+			Summary:     summary,
+			NumRows:     int64(numRows),
+			NumBytes:    int64(numBytes),
 			Variables:   variables,
 		})
 	}
@@ -54,20 +75,15 @@ func parseDatasets(res *elastic.SearchResult) ([]*Dataset, error) {
 
 // FetchDatasets returns all datasets in the provided index.
 func FetchDatasets(client *elastic.Client, index string) ([]*Dataset, error) {
-	fetchContext := elastic.NewFetchSourceContext(true).
-		Include("_id", "description", "variables.varName", "variables.varType")
-
 	// execute the ES query
 	res, err := client.Search().
 		Index(index).
 		FetchSource(true).
-		FetchSourceContext(fetchContext).
 		Do(context.Background())
 	if err != nil {
 		return nil, errors.Wrap(err, "elasticsearch dataset fetch query failed")
 	}
-
-	return parseDatasets(res)
+	return parseDatasets(client, res)
 }
 
 // SearchDatasets returns the datasets that match the search criteria in the
@@ -75,20 +91,14 @@ func FetchDatasets(client *elastic.Client, index string) ([]*Dataset, error) {
 func SearchDatasets(client *elastic.Client, index string, terms string) ([]*Dataset, error) {
 	query := elastic.NewMultiMatchQuery(terms, "_id", "description", "variables.varName").
 		Analyzer("standard")
-
-	fetchContext := elastic.NewFetchSourceContext(true).
-		Include("_id", "description", "variables.varName", "variables.varType")
-
 	// execute the ES query
 	res, err := client.Search().
 		Query(query).
 		Index(index).
 		FetchSource(true).
-		FetchSourceContext(fetchContext).
 		Do(context.Background())
 	if err != nil {
 		return nil, errors.Wrap(err, "elasticsearch dataset search query failed")
 	}
-
-	return parseDatasets(res)
+	return parseDatasets(client, res)
 }

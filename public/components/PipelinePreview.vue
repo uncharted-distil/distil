@@ -33,7 +33,7 @@
 </template>
 
 <script>
-import {getMetricDisplayName} from '../util/pipelines';
+import { getMetricDisplayName } from '../util/pipelines';
 import { createRouteEntry } from '../util/routes';
 
 export default {
@@ -77,7 +77,7 @@ export default {
 			return this.result.progress !=='UPDATED' && this.result.pipeline !== undefined;
 		},
 		onResult() {
-			const entry = createRouteEntry('/results', {
+			 const entry = createRouteEntry('/results', {
 				dataset: this.$store.getters.getRouteDataset(),
 				filters: this.$store.getters.getRouteFilters(),
 				createRequestId: this.result.requestId,

@@ -18,26 +18,33 @@
                 "_source": {
                     "datasetId": "o_185_dataset",
                     "description": "**Author**: Jeffrey S. Simonoff",
+                    "summary": "",
+                    "numRows": 1073,
+                    "numBytes": 744647,
                     "variables": [
                         {
                             "varName": "d3mIndex",
                             "varRole": "index",
-                            "varType": "integer"
+                            "varType": "integer",
+                            "importance": 0
                         },
                         {
                             "varName": "Player",
                             "varRole": "attribute",
-                            "varType": "categorical"
+                            "varType": "categorical",
+                            "importance": 0
                         },
                         {
                             "varName": "Number_seasons",
                             "varRole": "attribute",
-                            "varType": "integer"
+                            "varType": "integer",
+                            "importance": 1
                         },
                         {
                             "varName": "Games_played",
                             "varRole": "attribute",
-                            "varType": "integer"
+                            "varType": "integer",
+                            "importance": 2
                         }
                     ]
                 }
@@ -50,21 +57,27 @@
                 "_source": {
                     "datasetId": "o_196_dataset",
                     "description": "**Author**: Mr. Somebody",
+                    "summary": "",
+                    "numRows": 1073,
+                    "numBytes": 744647,
                     "variables": [
                         {
                             "varName": "d3mIndex",
                             "varRole": "index",
-                            "varType": "integer"
+                            "varType": "integer",
+                            "importance": 0
                         },
                         {
                             "varName": "cylinders",
                             "varRole": "attribute",
-                            "varType": "categorical"
+                            "varType": "categorical",
+                            "importance": 0
                         },
                         {
                             "varName": "displacement",
                             "varRole": "attribute",
-                            "varType": "categorical"
+                            "varType": "categorical",
+                            "importance": 0
                         }
                     ]
                 }

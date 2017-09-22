@@ -5,10 +5,11 @@ import (
 	"sort"
 
 	"github.com/pkg/errors"
+	"github.com/unchartedsoftware/plog"
+	"gopkg.in/olivere/elastic.v5"
+
 	"github.com/unchartedsoftware/distil/api/model"
 	"github.com/unchartedsoftware/distil/api/util/json"
-	log "github.com/unchartedsoftware/plog"
-	"gopkg.in/olivere/elastic.v5"
 )
 
 func (s *Storage) parseResults(searchResults *elastic.SearchResult) (*model.FilteredData, error) {
@@ -30,28 +31,47 @@ func (s *Storage) parseResults(searchResults *elastic.SearchResult) (*model.Filt
 		// store the name/type tuples in a map for quick lookup
 		if idx == 0 {
 			data.Name = hit.Index
+
+			type colEntry struct {
+				column     string
+				columnType string
+			}
+			colData := []colEntry{}
+
+			// extract and store the col name / type tuples into a list
 			for key, variable := range variables {
 				varType, ok := json.String(variable, model.VariableTypeField)
 				if !ok {
 					return nil, errors.Errorf("failed to extract type info for %s during metadata creation", key)
 				}
-				data.Metadata = append(data.Metadata, &model.Variable{Name: key, Type: varType})
+
+				colData = append(colData, colEntry{
+					column:     key,
+					columnType: varType,
+				})
 			}
-			// sort to impose consistent ordering
-			sort.SliceStable(data.Metadata, func(i, j int) bool {
-				return data.Metadata[i].Name < data.Metadata[j].Name
+
+			// sort by the column name
+			sort.SliceStable(colData, func(i, j int) bool {
+				return colData[i].column < colData[j].column
 			})
+
+			// extract into the individual lists that will be consumed downstream
+			for _, c := range colData {
+				data.Columns = append(data.Columns, c.column)
+				data.Types = append(data.Types, c.columnType)
+			}
 		}
 
 		// Create a temporary metadata -> index map.  Required because the variable data for each hit returned
 		//  from ES is an unordered key/value list.
-		metadataIndex := make(map[string]int, len(data.Metadata))
-		for idx, value := range data.Metadata {
-			metadataIndex[value.Name] = idx
+		metadataIndex := make(map[string]int, len(data.Columns))
+		for idx, column := range data.Columns {
+			metadataIndex[column] = idx
 		}
 
 		// extract data for all variables
-		values := make([]interface{}, len(data.Metadata))
+		values := make([]interface{}, len(data.Columns))
 		for key, variable := range variables {
 			index := metadataIndex[key]
 			result, ok := json.Interface(variable, model.VariableValueField)

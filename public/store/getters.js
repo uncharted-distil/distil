@@ -1,6 +1,10 @@
 import _ from 'lodash';
 import Connection from '../util/ws';
 
+export function getRoute(state) {
+	return () => state.route;
+}
+
 export function getRoutePath(state) {
 	return () => {
 		return state.route.path;
@@ -58,15 +62,21 @@ export function getRouteResultFilters(state) {
 	};
 }
 
-export function getResultsSummaries(state) {
-	return () => {
-		return state.resultsSummaries;
-	};
-}
-
 export function getRouteFilters(state) {
 	return () => {
 		return state.route.query.filters ? state.route.query.filters : [];
+	};
+}
+
+export function getRouteFacetsPage(state) {
+	return (pageKey) => {
+		return state.route.query[pageKey];
+	};
+}
+
+export function getResultsSummaries(state) {
+	return () => {
+		return state.resultsSummaries;
 	};
 }
 
@@ -125,24 +135,9 @@ export function getFilteredData(state) {
 	return () => state.filteredData;
 }
 
-function validateData(data) {
-	return  !_.isEmpty(data) && !_.isEmpty(data.values) && !_.isEmpty(data.metadata);
-}
-
 export function getFilteredDataItems(state) {
 	return () => {
-		const data = state.filteredData;
-		if (validateData(data)) {
-			return _.map(data.values, d => {
-				const rowObj = {};
-				for (const [idx, varMeta] of data.metadata.entries()) {
-					rowObj[varMeta.name] = d[idx];
-				}
-				return rowObj;
-			});
-		} else {
-			return [];
-		}
+		return state.filteredDataItems;
 	};
 }
 
@@ -151,9 +146,9 @@ export function getFilteredDataFields(state) {
 		const data = state.filteredData;
 		if (!_.isEmpty(data)) {
 			const result = {};
-			for (let varMeta of data.metadata) {
-				result[varMeta.name] = {
-					label: varMeta.name,
+			for (const col of data.columns) {
+				result[col] = {
+					label: col,
 					sortable: true
 				};
 			}
@@ -164,26 +159,15 @@ export function getFilteredDataFields(state) {
 	};
 }
 
-export function getResultDataItems(state, getters) {
+export function getResultData(state) {
 	return () => {
-		// get the filtered data items
-		const dataRows = getters.getFilteredDataItems(state);
-		if (validateData(state.resultData)) {
-			// append the result variable data to the baseline variable data
-			for (const [i, dataObj] of dataRows.entries()) {
-				const resultData = state.resultData;
-				for (const [j, resultMeta] of resultData.metadata.entries()) {
-					const label = `Predicted ${resultMeta.name}`;
-					dataObj[label] = resultData.values[i][j];
-					if (dataObj[resultMeta.name] !== resultData.values[i][j]) {
-						dataObj._cellVariants = { [label]: 'danger'};
-					}
-				}
-			}
-			return dataRows;
-		} else {
-			return [];
-		}
+		return state.resultData;
+	};
+}
+
+export function getResultDataItems(state) {
+	return () => {
+		return state.resultDataItems;
 	};
 }
 
@@ -193,8 +177,8 @@ export function getResultDataFields(state, getters) {
 		const dataFields = getters.getFilteredDataFields();
 		const resultData = state.resultData;
 		if (!_.isEmpty(resultData)) {
-			for (let resultMeta of resultData.metadata) {
-				const label = `Predicted ${resultMeta.name}`; 
+			for (const col of resultData.columns) {
+				const label = `Predicted ${col}`;
 				dataFields[label] = {
 					label: label,
 					sortable: true
@@ -239,5 +223,11 @@ export function getPipelineSessionID(state) {
 export function getPipelineSession(state) {
 	return () => {
 		return state.pipelineSession;
+	};
+}
+
+export function getHighlightedFeature(state) {
+	return () => {
+		return state.highlightedFeature;
 	};
 }

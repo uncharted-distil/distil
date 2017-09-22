@@ -6,8 +6,10 @@
 		<variable-facets
 			enable-filter="true"
 			enable-toggle="true"
+			instance-name="varSummaries"
 			:variables="variables"
-			:dataset="dataset"></variable-facets>
+			:dataset="dataset">
+		</variable-facets>
 	</div>
 </template>
 

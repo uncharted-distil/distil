@@ -20,27 +20,32 @@
                         {
                             "varName": "d3mIndex",
                             "varType": "integer",
-                            "varRole": "index"
+                            "varRole": "index",
+                            "importance": 0
                         },
                         {
                             "varName": "Position",
                             "varType": "categorical",
-                            "varRole": "attribute"
+                            "varRole": "attribute",
+                            "importance": 0
                         },
                         {
                             "varName": "Number_seasons",
                             "varType": "integer",
-                            "varRole": "attribute"
+                            "varRole": "attribute",
+                            "importance": 1
                         },
                         {
                             "varName": "Games_played",
                             "varType": "integer",
-                            "varRole": "attribute"
+                            "varRole": "attribute",
+                            "importance": 2
                         },
                         {
                             "varName": "On_base_pct",
                             "varType": "float",
-                            "varRole": "attribute"
+                            "varRole": "attribute",
+                            "importance": 3
                         }
                     ]
                 }

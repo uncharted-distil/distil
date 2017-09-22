@@ -3,9 +3,10 @@ package model
 // FilteredData provides the metadata and raw data values that match a supplied
 // input filter.
 type FilteredData struct {
-	Name     string          `json:"name"`
-	Metadata []*Variable     `json:"metadata"`
-	Values   [][]interface{} `json:"values"`
+	Name    string          `json:"name"`
+	Columns []string        `json:"columns"`
+	Types   []string        `json:"types"`
+	Values  [][]interface{} `json:"values"`
 }
 
 // VariableRange defines the min/max value for a variable filter.

@@ -9,7 +9,7 @@
 import _ from 'lodash';
 import Facets from '../components/Facets';
 import { decodeFilters, updateFilter, getFilterType, isDisabled, CATEGORICAL_FILTER, NUMERICAL_FILTER } from '../util/filters';
-import { createRouteEntry } from '../util/routes';
+import { createRouteEntryFromRoute } from '../util/routes';
 import { spinnerHTML } from '../util/spinner';
 import 'font-awesome/css/font-awesome.css';
 import '../styles/spinner.css';
@@ -31,15 +31,15 @@ export default {
 		groups() {
 			// create the groups
 			let groups = this.createGroups(this.variables);
-			
+
 			// sort alphabetically
 			groups.sort((a, b) => {
 				const textA = a.key.toLowerCase();
 				const textB = b.key.toLowerCase();
 				return (textA < textB) ? -1 : (textA > textB) ? 1 : 0;
 			});
-			
-			// find pipeline result with the uri specified in the route and 
+
+			// find pipeline result with the uri specified in the route and
 			// flag it as the currently active result
 			const requestId = this.$store.getters.getRouteCreateRequestId();
 			const pipelineResults = this.$store.getters.getPipelineResults(requestId);
@@ -56,14 +56,14 @@ export default {
 				groups.forEach((group) => {
 					if (group.key !== activeResult.name) {
 						this.updateFilterRoute({
-							key: group.key, 
+							key: group.key,
 							values: {
 								enabled: false
 							}
 						});
 					} else {
 						this.updateFilterRoute({
-							key: group.key, 
+							key: group.key,
 							values: {
 								enabled: true
 							}
@@ -81,21 +81,15 @@ export default {
 
 	methods: {
 		updateFilterRoute(filterArgs, resultUri) {
-			const path = this.$store.getters.getRoutePath();
-			
+
 			// merge the updated filters back into the route query params if set
 			const filters = this.$store.getters.getRouteResultFilters(); ;
 			let updatedFilters = filters;
 			if (filterArgs) {
-				updatedFilters = updateFilter(filters, filterArgs.key, filterArgs.values);	
-			} 
+				updatedFilters = updateFilter(filters, filterArgs.key, filterArgs.values);
+			}
 
-			const entry = createRouteEntry(path, {
-				dataset: this.dataset,
-				target: this.$store.getters.getRouteTargetVariable(),
-				training: this.$store.getters.getRouteTrainingVariables(),
-				filters: this.$store.getters.getRouteFilters(),
-				createRequestId: this.$store.getters.getRouteCreateRequestId(),
+			const entry = createRouteEntryFromRoute(this.$store.getters.getRoute(), {
 				resultId: resultUri ? btoa(resultUri) : this.$store.getters.getRouteResultId(),
 				results: updatedFilters
 			});
@@ -108,12 +102,12 @@ export default {
 			const createReqId = this.$store.getters.getRouteCreateRequestId();
 			const pipelineRequests = this.$store.getters.getPipelineResults(createReqId);
 			const completedReq = _.find(pipelineRequests, p => p.name === key);
-						
+
 			// disable all filters except this one
 			this.groups.forEach(group => {
 				if (group.key !== key) {
-					this.updateFilterRoute({ 
-						key: group.key, 
+					this.updateFilterRoute({
+						key: group.key,
 						values: {
 							enabled: false
 						}
@@ -123,7 +117,7 @@ export default {
 
 			// enable filter
 			this.updateFilterRoute({
-				key: key, 
+				key: key,
 				values: {
 					enabled: true
 				}
@@ -136,7 +130,7 @@ export default {
 		onRangeChange(key, value) {
 			// set range filter
 			this.updateFilterRoute({
-				key: key, 
+				key: key,
 				values: {
 					enabled: true,
 					min: parseFloat(value.from.label[0]),
@@ -147,7 +141,7 @@ export default {
 		onFacetToggle(key, values) {
 			// set range filter
 			this.updateFilterRoute({
-				key: key, 
+				key: key,
 				values: {
 					enabled: true,
 					categories: values
@@ -200,9 +194,16 @@ export default {
 						facets: [
 							{
 								histogram: {
-									slices: summary.buckets.map(b => {
+									slices: summary.buckets.map((b, i) => {
+										let toLabel;
+										if (i < summary.buckets.length-1) {
+											toLabel = summary.buckets[i+1].key;
+										} else {
+											toLabel = `${summary.extrema.max}`;
+										}
 										return {
 											label: b.key,
+											toLabel: toLabel,
 											count: b.count
 										};
 									})

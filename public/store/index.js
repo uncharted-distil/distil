@@ -56,30 +56,25 @@ const state = {
 	// current set of pipeline results
 	resultData: {
 		// name: '',
-		// pipelineId: '',
-		// metadata: [
-		//     {
-		//         name: '',
-		//         type: ''
-		//     }
-		// ]
+		// columns:'[]',
+		// types: '[]'
 		// values: [
 		//     []
 		// ]
 	},
+	// result data items for the table view
+	resultDataItems: [],
 	// filtered data entries for the active dataset
 	filteredData: {
 		// name: '',
-		// metadata: [
-		//     {
-		//         name: '',
-		//         type: ''
-		//     }
-		// ]
-		// values: [
+		// columns: [
+		// types: '[]'
+		// vaues: [
 		//     []
 		// ]
 	},
+	// filtered data items for the table view
+	filteredDataItems: [],
 	// running pipeline creation tasks grouped by parent create requestID
 	runningPipelines: {
 		// requestId: {

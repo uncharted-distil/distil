@@ -4,7 +4,11 @@
 		<b-list-group v-bind:key="dataset.name" v-for="dataset in recentDatasets">
 			<dataset-preview
 				:name="dataset.name"
-				:description="dataset.description">
+				:description="dataset.description"
+				:summary="dataset.summary"
+				:variables="dataset.variables"
+				:numBytes="dataset.numBytes"
+				:numRows="dataset.numRows">
 			</dataset-preview>
 		</b-list-group>
 	</b-card>
