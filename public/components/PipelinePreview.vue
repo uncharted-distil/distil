@@ -78,12 +78,11 @@ export default {
 		},
 		onResult() {
 			 const entry = createRouteEntry('/results', {
-        		dataset: this.$store.getters.getRouteDataset(),
-        		filters: this.$store.getters.getRouteFilters(),
+				dataset: this.$store.getters.getRouteDataset(),
+				filters: this.$store.getters.getRouteFilters(),
 				createRequestId: this.result.requestId,
 				resultId: btoa(this.result.pipeline.resultUri)
 			});
-			console.log(entry);
 			this.$router.push(entry);
 		}
 	}

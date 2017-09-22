@@ -54,12 +54,12 @@ export default {
 	padding: 8px;
 }
 .results-variable-summaries {
-	width: 20%;
+	width: 25%;
 }
 .results-result-summaries {
-	width: 20%;
+	width: 25%;
 }
 .results-result-comparison {
-	width: 60%;
+	width: 50%;
 }
 </style>
