@@ -64,9 +64,7 @@ export function setResultData(state, resultData) {
 			for (const [j, colName] of resultData.columns.entries()) {
 				const label = `Predicted ${colName}`;
 				row[label] = resultData.values[i][j];
-				if (row[colName] !== resultData.values[i][j]) {
-					row._cellVariants = { [label]: 'danger' };
-				}
+				row._target = { truth: colName, predicted: label };
 			}
 		}
 	}
