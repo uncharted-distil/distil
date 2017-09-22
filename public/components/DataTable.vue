@@ -51,11 +51,11 @@ export default {
 		},
 		// extracts the table data from the store
 		items() {
-			return this.$store.getters.getFilteredDataItems(this.dataset);
+			return this.$store.getters.getFilteredDataItems();
 		},
 		// extract the table field header from the store
 		fields() {
-			return this.$store.getters.getFilteredDataFields(this.dataset);
+			return this.$store.getters.getFilteredDataFields();
 		}
 	}
 };

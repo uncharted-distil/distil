@@ -340,9 +340,16 @@ export default {
 						facets: [
 							{
 								histogram: {
-									slices: summary.buckets.map(b => {
+									slices: summary.buckets.map((b, i) => {
+										let toLabel;
+										if (i < summary.buckets.length-1) {
+											toLabel = summary.buckets[i+1].key;
+										} else {
+											toLabel = `${summary.extrema.max}`;
+										}
 										return {
 											label: b.key,
+											toLabel: toLabel,
 											count: b.count
 										};
 									})

@@ -135,24 +135,9 @@ export function getFilteredData(state) {
 	return () => state.filteredData;
 }
 
-function validateData(data) {
-	return  !_.isEmpty(data) && !_.isEmpty(data.values) && !_.isEmpty(data.columns);
-}
-
 export function getFilteredDataItems(state) {
 	return () => {
-		const data = state.filteredData;
-		if (validateData(data)) {
-			return _.map(data.values, d => {
-				const rowObj = {};
-				for (const [index, col] of data.columns.entries()) {
-					rowObj[col] = d[index];
-				}
-				return rowObj;
-			});
-		} else {
-			return [];
-		}
+		return state.filteredDataItems;
 	};
 }
 
@@ -174,27 +159,15 @@ export function getFilteredDataFields(state) {
 	};
 }
 
-export function getResultDataItems(state, getters) {
+export function getResultData(state) {
 	return () => {
-		// get the filtered data items
-		const dataRows = getters.getFilteredDataItems(state);
-		if (validateData(state.resultData)) {
-			// append the result variable data to the baseline variable data
-			for (const [i, dataObj] of dataRows.entries()) {
-				const resultData = state.resultData;
+		return state.resultData;
+	};
+}
 
-				for (const [j, colName] of resultData.columns.entries()) {
-					const label = `Predicted ${colName}`;
-					dataObj[label] = resultData.values[i][j];
-					if (dataObj[colName] !== resultData.values[i][j]) {
-						dataObj._cellVariants = { [label]: 'danger'};
-					}
-				}
-			}
-			return dataRows;
-		} else {
-			return [];
-		}
+export function getResultDataItems(state) {
+	return () => {
+		return state.resultDataItems;
 	};
 }
 
@@ -250,5 +223,11 @@ export function getPipelineSessionID(state) {
 export function getPipelineSession(state) {
 	return () => {
 		return state.pipelineSession;
+	};
+}
+
+export function getHighlightedFeature(state) {
+	return () => {
+		return state.highlightedFeature;
 	};
 }

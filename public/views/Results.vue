@@ -54,14 +54,14 @@ export default {
 	padding: 8px;
 }
 .results-variable-summaries {
-	width: 20%;
+	width: 30%;
 }
 .results-result-summaries {
-	width: 20%;
+	width: 30%;
 }
 .results-data-table {
 	display: flex;
 	flex-direction: column;
-	width: 60%;
+	width: 40%;
 }
 </style>

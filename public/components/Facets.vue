@@ -43,6 +43,18 @@ export default {
 		this.facets.on('facet-histogram:rangechangeduser', (event, key, value) => {
 			component.$emit('range-change', key, value);
 		});
+		this.facets.on('facet-histogram:mouseenter', (event, key, value) => {
+			this.$store.dispatch('highlightFeature', {
+				name: key,
+				range: {
+					from: _.toNumber(value.label[0]),
+					to: _.toNumber(value.toLabel[value.toLabel.length-1])
+				}
+			});
+		});
+		this.facets.on('facet-histogram:mouseleave', () => {
+			this.$store.dispatch('clearFeatureHighlight');
+		});
 		this.facets.on('facet:click', (event, key, value) => {
 			// get group
 			const group = component.facets.getGroup(key);

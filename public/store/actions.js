@@ -101,11 +101,13 @@ export function updateFilteredData(context, datasetName) {
 		axios.get(url)
 			.then(response => {
 				context.commit('setFilteredData', response.data);
+				context.dispatch('updateFilteredDataItems');
 				resolve();
 			})
 			.catch(error => {
 				console.error(error);
 				context.commit('setFilteredData', []);
+				context.dispatch('updateFilteredDataItems');
 				reject();
 			});
 	});
@@ -213,7 +215,7 @@ export function getResultsSummaries(context, args) {
 	// dispatch a request to fetch the results for each pipeline
 	for (var result of results) {
 		const name = result.name;
-		const pipelineId = result.pipelineId; 
+		const pipelineId = result.pipelineId;
 		const res = encodeURIComponent(result.pipeline.resultUri);
 		axios.get(`/distil/results-summary/${ES_INDEX}/${dataset}/${res}`)
 		.then(response => {
@@ -232,7 +234,7 @@ export function getResultsSummaries(context, args) {
 			// ensure buckets is not nil
 			histogram.buckets = histogram.buckets ? histogram.buckets : [];
 			histogram.name = name;
-			histogram.pipelineId = 
+			histogram.pipelineId =
 			context.commit('updateResultsSummaries', histogram);
 		})
 		.catch(error => {
@@ -250,12 +252,69 @@ export function getResultsSummaries(context, args) {
 
 // fetches result data for created pipeline
 export function updateResults(context, args) {
-	const encodedUri = encodeURIComponent(args.resultId); 
+	const encodedUri = encodeURIComponent(args.resultId);
 	axios.get(`/distil/results/${ES_INDEX}/${args.dataset}/${encodedUri}`)
 	.then(response => {
 		context.commit('setResultData', response.data);
+		context.dispatch('updateResultDataItems', response.data);
 	})
 	.catch(error => {
 		console.error(`Failed to fetch results from ${args.resultId} with error ${error}`);
 	});
+}
+
+function validateData(data) {
+	return  !_.isEmpty(data) && !_.isEmpty(data.values) && !_.isEmpty(data.columns);
+}
+
+export function updateFilteredDataItems(context) {
+	const data = context.getters.getFilteredData();
+	if (validateData(data)) {
+		const items = _.map(data.values, d => {
+			const row = {};
+			for (const [index, col] of data.columns.entries()) {
+				row[col] = d[index];
+			}
+			return row;
+		});
+		context.commit('setFilteredDataItems', items);
+		context.commit('highlightFilteredDataItems');
+	} else {
+		context.commit('setFilteredDataItems', []);
+	}
+}
+
+export function updateResultDataItems(context) {
+	// get the filtered data items
+	const resultData = context.getters.getResultData();
+	if (validateData(resultData)) {
+		context.dispatch('updateFilteredDataItems');
+		const items = _.cloneDeep(context.getters.getFilteredDataItems());
+		// append the result variable data to the baseline variable data
+		for (const [i, row] of items.entries()) {
+			for (const [j, colName] of resultData.columns.entries()) {
+				const label = `Predicted ${colName}`;
+				row[label] = resultData.values[i][j];
+				if (row[colName] !== resultData.values[i][j]) {
+					row._cellVariants = { [label]: 'danger' };
+				}
+			}
+		}
+		context.commit('setResultDataItems', items);
+		context.commit('highlightResultdDataItems');
+	} else {
+		context.commit('setResultDataItems', []);
+	};
+}
+
+export function highlightFeature(context, highlight) {
+	context.commit('highlightFeature', highlight);
+	context.commit('highlightFilteredDataItems');
+	context.commit('highlightResultdDataItems');
+}
+
+export function clearFeatureHighlight(context) {
+	context.commit('clearFeatureHighlight');
+	context.commit('highlightFilteredDataItems');
+	context.commit('highlightResultdDataItems');
 }

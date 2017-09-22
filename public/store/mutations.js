@@ -103,3 +103,51 @@ export function removeCompletedPipeline(state, args) {
 	}
 	return false;
 }
+
+export function highlightFeature(state, highlight) {
+	state.highlightedFeature = highlight;
+}
+
+export function clearFeatureHighlight(state) {
+	state.highlightedFeature = null;
+}
+
+export function setFilteredDataItems(state, items) {
+	state.filteredDataItems = items;
+}
+
+export function setResultDataItems(state, items) {
+	state.resultDataItems = items;
+}
+
+function isHighlighted(highlightedFeature, row) {
+	if (!highlightedFeature) {
+		return false;
+	}
+	return row[highlightedFeature.name] >= highlightedFeature.range.from &&
+		row[highlightedFeature.name] <= highlightedFeature.range.to;
+}
+
+export function highlightFilteredDataItems(state) {
+	const items = state.filteredDataItems;
+	const highlightedFeature = state.highlightedFeature;
+	items.forEach(item => {
+		if (isHighlighted(highlightedFeature, item)) {
+			Vue.set(item, '_rowVariant', 'info');
+		} else {
+			Vue.set(item, '_rowVariant', undefined);
+		}
+	});
+}
+
+export function highlightResultdDataItems(state) {
+	const items = state.resultDataItems;
+	const highlightedFeature = state.highlightedFeature;
+	items.forEach(item => {
+		if (isHighlighted(highlightedFeature, item)) {
+			Vue.set(item, '_rowVariant', 'info');
+		} else {
+			Vue.set(item, '_rowVariant', undefined);
+		}
+	});
+}
