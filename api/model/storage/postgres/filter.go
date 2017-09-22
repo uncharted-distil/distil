@@ -109,6 +109,9 @@ func (s *Storage) FetchData(dataset string, index string, filterParams *model.Fi
 	if err != nil {
 		return nil, errors.Wrap(err, "postgres filtered data query failed")
 	}
+	if res != nil {
+		defer res.Close()
+	}
 
 	// parse the result
 	return s.parseFilteredData(dataset, res)
