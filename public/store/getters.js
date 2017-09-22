@@ -186,9 +186,7 @@ export function getResultDataItems(state, getters) {
 				for (const [j, colName] of resultData.columns.entries()) {
 					const label = `Predicted ${colName}`;
 					dataObj[label] = resultData.values[i][j];
-					if (dataObj[colName] !== resultData.values[i][j]) {
-						dataObj._cellVariants = { [label]: 'danger'};
-					}
+					dataObj._target = {truth: colName, predicted: label};
 				}
 			}
 			return dataRows;

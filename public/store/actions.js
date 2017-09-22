@@ -213,7 +213,7 @@ export function getResultsSummaries(context, args) {
 	// dispatch a request to fetch the results for each pipeline
 	for (var result of results) {
 		const name = result.name;
-		const pipelineId = result.pipelineId; 
+		const pipelineId = result.pipelineId;
 		const res = encodeURIComponent(result.pipeline.resultUri);
 		axios.get(`/distil/results-summary/${ES_INDEX}/${dataset}/${res}`)
 		.then(response => {
@@ -232,7 +232,7 @@ export function getResultsSummaries(context, args) {
 			// ensure buckets is not nil
 			histogram.buckets = histogram.buckets ? histogram.buckets : [];
 			histogram.name = name;
-			histogram.pipelineId = 
+			histogram.pipelineId =
 			context.commit('updateResultsSummaries', histogram);
 		})
 		.catch(error => {
@@ -250,7 +250,7 @@ export function getResultsSummaries(context, args) {
 
 // fetches result data for created pipeline
 export function updateResults(context, args) {
-	const encodedUri = encodeURIComponent(args.resultId); 
+	const encodedUri = encodeURIComponent(args.resultId);
 	axios.get(`/distil/results/${ES_INDEX}/${args.dataset}/${encodedUri}`)
 	.then(response => {
 		context.commit('setResultData', response.data);
