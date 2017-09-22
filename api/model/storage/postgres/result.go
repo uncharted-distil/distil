@@ -119,9 +119,10 @@ func (s *Storage) parseResults(dataset string, rows *pgx.Rows, variable *model.V
 		var val interface{}
 		err = nil
 
+		// Integer types can be returned as floats.
 		switch variable.Type {
 		case model.IntegerType:
-			val, err = strconv.ParseInt(value, 10, 64)
+			val, err = strconv.ParseFloat(value, 64)
 		case model.FloatType:
 			val, err = strconv.ParseFloat(value, 64)
 		case model.CategoricalType:
