@@ -145,9 +145,9 @@ export function getFilteredDataItems(state) {
 		if (validateData(data)) {
 			return _.map(data.values, d => {
 				const rowObj = {};
-				data.columns.forEach((col, index) => {
+				for (const [index, col] of data.columns.entries()) {
 					rowObj[col] = d[index];
-				});
+				}
 				return rowObj;
 			});
 		} else {
@@ -161,12 +161,12 @@ export function getFilteredDataFields(state) {
 		const data = state.filteredData;
 		if (!_.isEmpty(data)) {
 			const result = {};
-			data.columns.forEach(col => {
+			for (const col of data.columns) {
 				result[col] = {
 					label: col,
 					sortable: true
 				};
-			});
+			}
 			return result;
 		} else {
 			return {};
@@ -182,10 +182,11 @@ export function getResultDataItems(state, getters) {
 			// append the result variable data to the baseline variable data
 			for (const [i, dataObj] of dataRows.entries()) {
 				const resultData = state.resultData;
-				for (const [j, resultMeta] of resultData.metadata.entries()) {
-					const label = `Predicted ${resultMeta.name}`;
+
+				for (const [j, colName] of resultData.columns.entries()) {
+					const label = `Predicted ${colName}`;
 					dataObj[label] = resultData.values[i][j];
-					if (dataObj[resultMeta.name] !== resultData.values[i][j]) {
+					if (dataObj[colName] !== resultData.values[i][j]) {
 						dataObj._cellVariants = { [label]: 'danger'};
 					}
 				}
@@ -203,8 +204,8 @@ export function getResultDataFields(state, getters) {
 		const dataFields = getters.getFilteredDataFields();
 		const resultData = state.resultData;
 		if (!_.isEmpty(resultData)) {
-			for (let resultMeta of resultData.metadata) {
-				const label = `Predicted ${resultMeta.name}`;
+			for (const col of resultData.columns) {
+				const label = `Predicted ${col}`;
 				dataFields[label] = {
 					label: label,
 					sortable: true
