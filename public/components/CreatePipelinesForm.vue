@@ -92,7 +92,7 @@ export default {
 
 			const taskData = getTask(variable.type);
 			const task = taskData.schemaName;
-			const output = getOutputSchemaNames(taskData)[0];
+			const output = _.values(getOutputSchemaNames(taskData))[0];
 			const metric = getMetricSchemaName(this.metric);
 
 			// dispatch action that triggers request send to server
