@@ -44,6 +44,7 @@ export default {
 		this.facets.on('facet-histogram:rangechangeduser', (event, key, value) => {
 			component.$emit('range-change', key, value);
 		});
+		// hover over events
 		this.facets.on('facet-histogram:mouseenter', (event, key, value) => {
 			this.$store.dispatch('highlightFeatureRange', {
 				name: key,
@@ -54,6 +55,17 @@ export default {
 		this.facets.on('facet-histogram:mouseleave', (event, key) => {
 			this.$store.dispatch('clearFeatureHighlightRange', key);
 		});
+		this.facets.on('facet:mouseenter', (event, key, value) => {
+			this.$store.dispatch('highlightFeatureRange', {
+				name: key,
+				from: value,
+				to: value
+			});
+		});
+		this.facets.on('facet:mouseleave', (event, key) => {
+			this.$store.dispatch('clearFeatureHighlightRange', key);
+		});
+		// click events
 		this.facets.on('facet:click', (event, key, value) => {
 			// get group
 			const group = component.facets.getGroup(key);
@@ -117,10 +129,18 @@ export default {
 				if (group) {
 					group.facets.forEach(facet => {
 						if (facet._histogram && facet._histogram.highlightRange) {
+							// histogram facet
 							facet._histogram.highlightValueRange({
 								from: value,
 								to: value
 							});
+						} else {
+							// vertical facet
+							if (facet.value === value) {
+								facet.select(facet.count);
+							} else {
+								facet.deselect();
+							}
 						}
 					});
 				}

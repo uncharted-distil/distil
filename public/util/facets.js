@@ -53,6 +53,9 @@ export function createSummaryFacet(summary) {
 				key: summary.name,
 				facets: summary.buckets.map(b => {
 					return {
+						icon : {
+							class : 'fa fa-info'
+						},
 						value: b.key,
 						count: b.count,
 						selected: {
