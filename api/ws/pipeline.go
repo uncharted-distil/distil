@@ -342,6 +342,7 @@ func handleCreatePipelinesSuccess(conn *Connection, msg *Message, proxy *pipelin
 					"requestId":  proxy.RequestID,
 					"pipelineId": res.PipelineId,
 					"progress":   progress,
+					"dataset":    dataset,
 				}
 				log.Infof("Pipeline %s - %s", res.PipelineId, progress)
 

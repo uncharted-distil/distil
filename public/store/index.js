@@ -102,6 +102,7 @@ const state = {
 		//     pipelineId: {
 		//         name: '',
 		//         id: '',
+		//         dataset: '',
 		//         pipelineId: '',
 		//         progress: '',
 		//         pipeline: { // only present if progress === COMPLETE

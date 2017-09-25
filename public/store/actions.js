@@ -52,6 +52,7 @@ export function getSession(context) {
 							context.commit('addCompletedPipeline', {
 								name: res.name,
 								requestId: pipeline.RequestID,
+								dataset: pipeline.Dataset,
 								pipelineId: res.PipelineID,
 								pipeline: { resultUri: res.ResultURI, output: '', scores: res.Scores }
 							});
@@ -207,6 +208,7 @@ export function createPipelines(context, request) {
 			context.commit('addCompletedPipeline', {
 				name: res.name,
 				requestId: res.requestId,
+				dataset: res.dataset,
 				pipelineId: res.pipelineId,
 				pipeline: res.pipeline
 			});
