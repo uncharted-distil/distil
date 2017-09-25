@@ -96,7 +96,7 @@ const regressionMetrics = {
 	},
 	meanAbsoluteErr: {
 		displayName: 'Mean Absolute Error',
-		schemaName: 'mean_abs_err'
+		schemaName: 'mean_absolute_error'
 	},
 	rSquared: {
 		displayName: 'R Squared',
@@ -112,26 +112,14 @@ const classificationOutputs = {
 		displayName: 'Label',
 		schemaName: 'class_label'
 	}
-	// multilabel: {
-	// 	displayName: 'Multi Label',
-	// 	schemaName: 'multilabel'
-	// }
 };
 
 // output types used in regression tasks
 const regressionOutputs = {
 	regressionValue: {
-		displayName: 'Regression Value',
-		schemaName: 'regression_value'
+		displayName: 'Real',
+		schemaName: 'real'
 	}
-	// probability: {
-	// 	displayName: 'Probability',
-	// 	schemaName: 'probability'
-	// },
-	// generalScore: {
-	// 	displayName: 'General Score',
-	// 	schemaName: 'general_score'
-	// }
 };
 
 // classification task info
