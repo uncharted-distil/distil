@@ -70,8 +70,8 @@
 
 import Facets from '../components/Facets';
 import { decodeFilters, updateFilter, getFilterType, isDisabled, CATEGORICAL_FILTER, NUMERICAL_FILTER } from '../util/filters';
-import { spinnerHTML } from '../util/spinner';
 import { createRouteEntryFromRoute } from '../util/routes';
+import { createGroups } from '../util/facets';
 import 'font-awesome/css/font-awesome.css';
 import '../styles/spinner.css';
 
@@ -135,7 +135,8 @@ export default {
 			}
 
 			// create the groups
-			let groups = this.createGroups(filtered);
+			let groups = createGroups(filtered);
+
 			// update collapsed state
 			groups = this.updateGroupCollapses(groups);
 			// update selections
@@ -288,97 +289,6 @@ export default {
 				filters: filters
 			});
 			this.$router.push(entry);
-		},
-
-		// creates a facet to display a data fetch error
-		createErrorFacet(summary) {
-			return {
-				label: summary.name,
-				key: summary.name,
-				facets: [{
-					placeholder: true,
-					html: `<div>${summary.err}</div>`
-				}]
-			};
-		},
-
-		// creates a place holder facet to dispay a spinner
-		createPendingFacet(summary) {
-			return {
-				label: summary.name,
-				key: summary.name,
-				facets: [{
-					placeholder: true,
-					html: spinnerHTML()
-				}]
-			};
-		},
-
-		// creates categorical or numerical summary facets
-		createSummaryFacet(summary) {
-			switch (summary.type) {
-
-				case 'categorical':
-					return {
-						label: summary.name,
-						key: summary.name,
-						facets: summary.buckets.map(b => {
-							return {
-								value: b.key,
-								count: b.count,
-								selected: {
-									count: b.count
-								}
-							};
-						})
-					};
-
-				case 'numerical':
-					return {
-						label: summary.name,
-						key: summary.name,
-						facets: [
-							{
-								histogram: {
-									slices: summary.buckets.map((b, i) => {
-										let toLabel;
-										if (i < summary.buckets.length-1) {
-											toLabel = summary.buckets[i+1].key;
-										} else {
-											toLabel = `${summary.extrema.max}`;
-										}
-										return {
-											label: b.key,
-											toLabel: toLabel,
-											count: b.count
-										};
-									})
-								}
-							}
-						]
-					};
-			}
-			console.warn('unrecognized summary type', summary.type);
-			return null;
-		},
-
-		// creates the set of facets from the supplied summary data
-		createGroups(summaries) {
-			return summaries.map(summary => {
-				if (summary.err) {
-					// create error facet
-					return this.createErrorFacet(summary);
-				}
-				if (summary.pending) {
-					// create pending facet
-					return this.createPendingFacet(summary);
-				}
-				// create facet
-				return this.createSummaryFacet(summary);
-			}).filter(group => {
-				// remove null groups
-				return group;
-			});
 		},
 
 		// updates facet collapse/expand state based on route settings
