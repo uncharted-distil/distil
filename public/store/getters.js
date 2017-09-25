@@ -226,8 +226,8 @@ export function getPipelineSession(state) {
 	};
 }
 
-export function getHighlightedFeature(state) {
+export function getHighlightedFeatureValues(state) {
 	return () => {
-		return state.highlightedFeature;
+		return state.highlightedFeatureValues;
 	};
 }
