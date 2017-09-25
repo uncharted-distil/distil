@@ -43,7 +43,7 @@ export function getSession(context) {
 
 					pipeline.Results.forEach((res) => {
 						// inject the name and pipeline id
-						const name = `${context.getters.getRouteDataset()}-${targetFeature}-${res.PipelineID.substring(0,8)}`;
+						const name = `${pipeline.Dataset}-${targetFeature}-${res.PipelineID.substring(0,8)}`;
 						res.name = name;
 
 						// add/update the running pipeline info

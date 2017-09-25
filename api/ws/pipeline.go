@@ -122,7 +122,6 @@ func loadSessionRequests(msg *Message, session *pipeline.Session, storage model.
 	}
 
 	log.Infof("Requests for session %v loaded successfully.", msg.Session)
-	log.Infof("Session: %v", session)
 
 	return nil
 }
