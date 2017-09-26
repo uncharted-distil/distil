@@ -132,42 +132,67 @@ export function removeCompletedPipeline(state, args) {
 	return false;
 }
 
-export function highlightFeature(state, highlight) {
-	state.highlightedFeature = highlight;
-}
-
-export function clearFeatureHighlight(state) {
-	state.highlightedFeature = null;
-}
-
-function isHighlighted(highlightedFeature, row) {
-	if (!highlightedFeature) {
-		return false;
+export function highlightFeatureRange(state, highlight) {
+	if (!state.highlightedFeatureRanges) {
+		state.highlightedFeatureRanges = {};
 	}
-	return row[highlightedFeature.name] >= highlightedFeature.range.from &&
-		row[highlightedFeature.name] <= highlightedFeature.range.to;
+	Vue.set(state.highlightedFeatureRanges, highlight.name, {
+		from: highlight.from,
+		to: highlight.to
+	});
+}
+
+export function clearFeatureHighlightRange(state, name) {
+	Vue.delete(state.highlightedFeatureRanges, name);
+}
+
+export function highlightFeatureValues(state, highlights) {
+	Vue.set(state, 'highlightedFeatureValues', highlights);
+}
+
+export function clearFeatureHighlightValues(state) {
+	Vue.set(state, 'highlightedFeatureValues', null);
+}
+
+function highlightTableItems(highlightedFeatureRanges, items) {
+	if (_.isEmpty(highlightedFeatureRanges)) {
+		items.forEach(item => {
+			if (item._rowVariant) {
+				Vue.set(item, '_rowVariant', undefined);
+			}
+		});
+		return;
+	}
+	const highlightNames = _.keys(highlightedFeatureRanges);
+	items.forEach(item => {
+		// check if row meets all criteria
+		let shouldHighlight = true;
+		for (let i=0; i<highlightNames.length; i++) {
+			const name = highlightNames[i];
+			const range = highlightedFeatureRanges[name];
+			if (item[name] < range.from ||
+				item[name] > range.to) {
+					shouldHighlight = false;
+					break;
+			}
+		}
+		// highlight
+		if (shouldHighlight) {
+			Vue.set(item, '_rowVariant', 'info');
+		} else {
+			// remove highlight
+			if (item._rowVariant) {
+				Vue.set(item, '_rowVariant', undefined);
+			}
+		}
+	});
+	return items;
 }
 
 export function highlightFilteredDataItems(state) {
-	const items = state.filteredDataItems;
-	const highlightedFeature = state.highlightedFeature;
-	items.forEach(item => {
-		if (isHighlighted(highlightedFeature, item)) {
-			Vue.set(item, '_rowVariant', 'info');
-		} else {
-			Vue.set(item, '_rowVariant', undefined);
-		}
-	});
+	highlightTableItems(state.highlightedFeatureRanges, state.filteredDataItems);
 }
 
 export function highlightResultdDataItems(state) {
-	const items = state.resultDataItems;
-	const highlightedFeature = state.highlightedFeature;
-	items.forEach(item => {
-		if (isHighlighted(highlightedFeature, item)) {
-			Vue.set(item, '_rowVariant', 'info');
-		} else {
-			Vue.set(item, '_rowVariant', undefined);
-		}
-	});
+	highlightTableItems(state.highlightedFeatureRanges, state.resultDataItems);
 }

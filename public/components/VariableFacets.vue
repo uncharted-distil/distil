@@ -52,6 +52,7 @@
 		</div>
 		<facets class="facets-container"
 			:groups="groups"
+			:highlights="highlights"
 			:html="html"
 			:sort="sort"
 			v-on:expand="onExpand"
@@ -141,6 +142,9 @@ export default {
 			groups = this.updateGroupCollapses(groups);
 			// update selections
 			return this.updateGroupSelections(groups);
+		},
+		highlights() {
+			return this.$store.getters.getHighlightedFeatureValues();
 		},
 		importance() {
 			const variables = this.$store.getters.getVariables();

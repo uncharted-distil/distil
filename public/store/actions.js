@@ -300,14 +300,22 @@ export function updateResults(context, args) {
 		});
 }
 
-export function highlightFeature(context, highlight) {
-	context.commit('highlightFeature', highlight);
+export function highlightFeatureRange(context, highlight) {
+	context.commit('highlightFeatureRange', highlight);
 	context.commit('highlightFilteredDataItems');
 	context.commit('highlightResultdDataItems');
 }
 
-export function clearFeatureHighlight(context) {
-	context.commit('clearFeatureHighlight');
+export function clearFeatureHighlightRange(context, varName) {
+	context.commit('clearFeatureHighlightRange', varName);
 	context.commit('highlightFilteredDataItems');
 	context.commit('highlightResultdDataItems');
+}
+
+export function highlightFeatureValues(context, highlight) {
+	context.commit('highlightFeatureValues', highlight);
+}
+
+export function clearFeatureHighlightValues(context) {
+	context.commit('clearFeatureHighlightValues');
 }

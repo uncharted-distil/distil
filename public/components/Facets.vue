@@ -13,6 +13,7 @@ export default {
 
 	props: {
 		groups: Array,
+		highlights: Object,
 		html: [ String, Object, Function ],
 		sort: {
 			default: (a, b) => {
@@ -43,18 +44,28 @@ export default {
 		this.facets.on('facet-histogram:rangechangeduser', (event, key, value) => {
 			component.$emit('range-change', key, value);
 		});
+		// hover over events
 		this.facets.on('facet-histogram:mouseenter', (event, key, value) => {
-			this.$store.dispatch('highlightFeature', {
+			this.$store.dispatch('highlightFeatureRange', {
 				name: key,
-				range: {
-					from: _.toNumber(value.label[0]),
-					to: _.toNumber(value.toLabel[value.toLabel.length-1])
-				}
+				from: _.toNumber(value.label[0]),
+				to: _.toNumber(value.toLabel[value.toLabel.length-1])
 			});
 		});
-		this.facets.on('facet-histogram:mouseleave', () => {
-			this.$store.dispatch('clearFeatureHighlight');
+		this.facets.on('facet-histogram:mouseleave', (event, key) => {
+			this.$store.dispatch('clearFeatureHighlightRange', key);
 		});
+		this.facets.on('facet:mouseenter', (event, key, value) => {
+			this.$store.dispatch('highlightFeatureRange', {
+				name: key,
+				from: value,
+				to: value
+			});
+		});
+		this.facets.on('facet:mouseleave', (event, key) => {
+			this.$store.dispatch('clearFeatureHighlightRange', key);
+		});
+		// click events
 		this.facets.on('facet:click', (event, key, value) => {
 			// get group
 			const group = component.facets.getGroup(key);
@@ -95,6 +106,45 @@ export default {
 			this.updateCollapsed(unchangedGroups);
 			// for the unchanged, update selection
 			this.updateSelections(unchangedGroups, prevMap);
+		},
+		highlights: function(currHighlights) {
+			if (_.isEmpty(currHighlights)) {
+				this.groups.forEach(groupSpec => {
+					const group = this.facets.getGroup(groupSpec.key);
+					const facetSpecs = groupSpec.facets;
+					group.facets.forEach((facet, index) => {
+						const facetSpec = facetSpecs[index];
+						const selection = facetSpec.selection || facetSpec.selected;
+						if (selection) {
+							facet.select(facetSpec.selected ? facetSpec.selected : facetSpec);
+						} else {
+							facet.deselect();
+						}
+					});
+				});
+				return;
+			}
+			_.forIn(currHighlights, (value, name) => {
+				const group = this.facets.getGroup(name);
+				if (group) {
+					group.facets.forEach(facet => {
+						if (facet._histogram && facet._histogram.highlightRange) {
+							// histogram facet
+							facet._histogram.highlightValueRange({
+								from: value,
+								to: value
+							});
+						} else {
+							// vertical facet
+							if (facet.value === value) {
+								facet.select(facet.count);
+							} else {
+								facet.deselect();
+							}
+						}
+					});
+				}
+			});
 		},
 		sort: function(currSort) {
 			this.facets.sort(currSort);
@@ -190,12 +240,12 @@ export default {
 			});
 		},
 		updateSelections(unchangedGroups, prevGroups) {
-			unchangedGroups.forEach(group => {
+			unchangedGroups.forEach(groupSpec => {
 				// get the existing facet
-				const existing = this.facets.getGroup(group.key);
+				const existing = this.facets.getGroup(groupSpec.key);
 				if (existing) {
-					const currFacets = group.facets;
-					const prevFacets = prevGroups[group.key].facets;
+					const currFacets = groupSpec.facets;
+					const prevFacets = prevGroups[groupSpec.key].facets;
 					existing.facets.forEach((facet, index) => {
 						const currSelection = currFacets[index].selection || currFacets[index].selected;
 						const prevSelection = prevFacets[index].selection || prevFacets[index].selected;
@@ -204,7 +254,7 @@ export default {
 							return;
 						}
 						if (currSelection) {
-							const facetSpec = group.facets[index];
+							const facetSpec = currFacets[index];
 							facet.select(facetSpec.selected ? facetSpec.selected : facetSpec);
 						} else {
 							facet.deselect();

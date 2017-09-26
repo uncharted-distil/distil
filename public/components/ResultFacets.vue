@@ -2,6 +2,7 @@
 	<div class='result-facets'>
 		<facets class="facets-container"
 			:groups="groups"
+			:highlights="highlights"
 			:html="html"
 			v-on:expand="onExpand"
 			v-on:collapse="onCollapse"
@@ -80,8 +81,10 @@ export default {
 			groups = this.updateGroupCollapses(groups);
 			// update selections
 			return this.updateGroupSelections(groups);
+		},
+		highlights() {
+			return this.$store.getters.getHighlightedFeatureValues();
 		}
-
 	},
 
 	methods: {

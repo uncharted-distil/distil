@@ -12,6 +12,8 @@
 				hover
 				striped
 				small
+				@row-hovered="onRowHovered"
+				@mouseout.native="onMouseOut"
 				:items="items"
 				:fields="fields"
 				:current-page="currentPage">
@@ -22,6 +24,7 @@
 </template>
 
 <script>
+import _ from 'lodash';
 
 export default {
 	name: 'results-data-table',
@@ -74,6 +77,20 @@ export default {
 		// extract the table field header from the store
 		fields() {
 			return this.$store.getters.getResultDataFields();
+		}
+	},
+
+	methods: {
+		onRowHovered(event) {
+			// set new values
+			const highlights = {};
+			_.forIn(this.fields, (field, key) => {
+				highlights[key] = event[key];
+			});
+			this.$store.dispatch('highlightFeatureValues', highlights);
+		},
+		onMouseOut() {
+			this.$store.dispatch('clearFeatureHighlightValues');
 		}
 	}
 };
