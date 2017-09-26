@@ -10,7 +10,7 @@
     "test-debug": "mocha --compilers js:babel-core/register ./public/test/**/*.js --inspect --debug-brk"
   },
   "dependencies": {
-    "@uncharted.software/stories-facets": "2.10.0",
+    "@uncharted.software/stories-facets": "2.11.0",
     "axios": "0.16.2",
     "bootstrap-vue": "1.0.0-beta.9",
     "font-awesome": "4.7.0",
