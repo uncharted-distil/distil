@@ -44,7 +44,7 @@ export default {
 					const training = this.$store.getters.getRouteTrainingVariables();
 					training.splice(training.indexOf(group.key), 1);
 					const entry = createRouteEntryFromRoute(this.$store.getters.getRoute(), {
-						training: training
+						training: training.join(',')
 					});
 					this.$router.push(entry);
 				});
