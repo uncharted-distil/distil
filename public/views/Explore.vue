@@ -1,19 +1,19 @@
 <template>
 	<div class="explore">
 		<variable-summaries class="explore-variable-summaries"></variable-summaries>
-		<data-table class="explore-data-table"></data-table>
+		<explore-data-table class="explore-data-table"></explore-data-table>
 	</div>
 </template>
 
 <script>
-import DataTable from '../components/DataTable';
+import ExploreDataTable from '../components/ExploreDataTable';
 import VariableSummaries from '../components/VariableSummaries';
 
 export default {
 	name: 'explore',
 
 	components: {
-		DataTable,
+		ExploreDataTable,
 		VariableSummaries
 	},
 

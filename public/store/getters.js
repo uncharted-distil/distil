@@ -27,13 +27,18 @@ export function getRouteFilter(state) {
 
 export function getRouteTrainingVariables(state) {
 	return () => {
+		return state.route.query.training ? state.route.query.training : null;
+	};
+}
+export function getRouteTrainingVariablesArray(state) {
+	return () => {
 		return state.route.query.training ? state.route.query.training.split(',') : [];
 	};
 }
 
 export function getRouteTrainingVariablesMap(state, getters) {
 	return () => {
-		const training = getters.getRouteTrainingVariables();
+		const training = getters.getRouteTrainingVariablesArray();
 		const map = {};
 		training.forEach(variable => {
 			map[variable.toLowerCase()] = true;
@@ -44,7 +49,7 @@ export function getRouteTrainingVariablesMap(state, getters) {
 
 export function getRouteTargetVariable(state) {
 	return () => {
-		return state.route.query.target ? state.route.query.target.toLowerCase(): null;
+		return state.route.query.target ? state.route.query.target : null;
 	};
 }
 
@@ -100,9 +105,9 @@ export function getVariableSummaries(state) {
 export function getAvailableVariables(state, getters) {
 	return () => {
 		const training = getters.getRouteTrainingVariablesMap();
-		const target = getters.getRouteTargetVariable();
+		const target = getters.getRouteTargetVariable() || '';
 		return state.variableSummaries.filter(variable => {
-			return target !== variable.name.toLowerCase() &&
+			return target.toLowerCase() !== variable.name.toLowerCase() &&
 				!training[variable.name.toLowerCase()];
 		});
 	};
@@ -111,9 +116,9 @@ export function getAvailableVariables(state, getters) {
 export function getTrainingVariables(state, getters) {
 	return () => {
 		const training = getters.getRouteTrainingVariablesMap();
-		const target = getters.getRouteTargetVariable();
+		const target = getters.getRouteTargetVariable() || '';
 		return state.variableSummaries.filter(variable => {
-			return target !== variable.name.toLowerCase() &&
+			return target.toLowerCase() !== variable.name.toLowerCase() &&
 				training[variable.name.toLowerCase()];
 		});
 	};
@@ -126,7 +131,7 @@ export function getTargetVariable(state, getters) {
 			return null;
 		}
 		return state.variableSummaries.filter(variable => {
-			return target === variable.name.toLowerCase();
+			return target.toLowerCase() === variable.name.toLowerCase();
 		})[0];
 	};
 }
@@ -185,6 +190,37 @@ export function getResultDataFields(state, getters) {
 				};
 			}
 			return dataFields;
+		} else {
+			return {};
+		}
+	};
+}
+
+
+export function getSelectedData(state) {
+	return () => {
+		return state.selectedData;
+	};
+}
+
+export function getSelectedDataItems(state) {
+	return () => {
+		return state.selectedDataItems;
+	};
+}
+
+export function getSelectedDataFields(state) {
+	return () => {
+		const data = state.selectedData;
+		if (!_.isEmpty(data)) {
+			const result = {};
+			for (const col of data.columns) {
+				result[col] = {
+					label: col,
+					sortable: true
+				};
+			}
+			return result;
 		} else {
 			return {};
 		}

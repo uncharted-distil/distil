@@ -1,18 +1,18 @@
 import { spinnerHTML } from '../util/spinner';
 
 // creates the set of facets from the supplied summary data
-export function createGroups(summaries) {
+export function createGroups(summaries, enableCollapse, enableFiltering) {
 	return summaries.map(summary => {
 		if (summary.err) {
 			// create error facet
-			return createErrorFacet(summary);
+			return createErrorFacet(summary, enableCollapse);
 		}
 		if (summary.pending) {
 			// create pending facet
-			return createPendingFacet(summary);
+			return createPendingFacet(summary, enableCollapse);
 		}
 		// create facet
-		return createSummaryFacet(summary);
+		return createSummaryFacet(summary, enableCollapse, enableFiltering);
 	}).filter(group => {
 		// remove null groups
 		return group;
@@ -20,10 +20,11 @@ export function createGroups(summaries) {
 }
 
 // creates a facet to display a data fetch error
-export function createErrorFacet(summary) {
+export function createErrorFacet(summary, enableCollapse) {
 	return {
 		label: summary.name,
 		key: summary.name,
+		collapsible: enableCollapse,
 		facets: [{
 			placeholder: true,
 			html: `<div>${summary.err}</div>`
@@ -32,10 +33,11 @@ export function createErrorFacet(summary) {
 }
 
 // creates a place holder facet to dispay a spinner
-export function createPendingFacet(summary) {
+export function createPendingFacet(summary, enableCollapse) {
 	return {
 		label: summary.name,
 		key: summary.name,
+		collapsible: enableCollapse,
 		facets: [{
 			placeholder: true,
 			html: spinnerHTML()
@@ -44,13 +46,14 @@ export function createPendingFacet(summary) {
 }
 
 // creates categorical or numerical summary facets
-export function createSummaryFacet(summary) {
+export function createSummaryFacet(summary, enableCollapse, enableFiltering) {
 	switch (summary.type) {
 
 		case 'categorical':
 			return {
 				label: summary.name,
 				key: summary.name,
+				collapsible: enableCollapse,
 				facets: summary.buckets.map(b => {
 					return {
 						icon : {
@@ -60,7 +63,8 @@ export function createSummaryFacet(summary) {
 						count: b.count,
 						selected: {
 							count: b.count
-						}
+						},
+						filterable: enableFiltering
 					};
 				})
 			};
@@ -69,6 +73,7 @@ export function createSummaryFacet(summary) {
 			return {
 				label: summary.name,
 				key: summary.name,
+				collapsible: enableCollapse,
 				facets: [
 					{
 						histogram: {
@@ -85,7 +90,8 @@ export function createSummaryFacet(summary) {
 									count: b.count
 								};
 							})
-						}
+						},
+						filterable: enableFiltering
 					}
 				]
 			};

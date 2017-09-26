@@ -53,6 +53,21 @@ export function setFilteredData(state, filteredData) {
 	}
 }
 
+// sets the current selected data into the store
+export function setSelectedData(state, selectedData) {
+	state.selectedData = selectedData;
+	state.selectedDataItems = [];
+	if (validateData(selectedData)) {
+		state.selectedDataItems = _.map(selectedData.values, d => {
+			const row = {};
+			for (const [index, col] of selectedData.columns.entries()) {
+				row[col] = d[index];
+			}
+			return row;
+		});
+	}
+}
+
 // sets the current result data into the store
 export function setResultData(state, resultData) {
 	state.resultData = resultData;
@@ -193,6 +208,10 @@ export function highlightFilteredDataItems(state) {
 	highlightTableItems(state.highlightedFeatureRanges, state.filteredDataItems);
 }
 
-export function highlightResultdDataItems(state) {
+export function highlightSelectedDataItems(state) {
+	highlightTableItems(state.highlightedFeatureRanges, state.selectedDataItems);
+}
+
+export function highlightResultDataItems(state) {
 	highlightTableItems(state.highlightedFeatureRanges, state.resultDataItems);
 }

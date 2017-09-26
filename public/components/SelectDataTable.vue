@@ -1,0 +1,92 @@
+<template>
+	<div class="explore-data-table">
+		<div class="bg-faded rounded-top">
+			<h6 class="nav-link">Values</h6>
+		</div>
+		<div class="explore-data-table-container">
+			<div v-if="items.length===0">
+				No results
+			</div>
+			<b-table v-if="items.length>0"
+				bordered
+				hover
+				striped
+				small
+				@row-hovered="onRowHovered"
+				@mouseout.native="onMouseOut"
+				:items="items"
+				:fields="fields"
+				:current-page="currentPage">
+			</b-table>
+		</div>
+
+	</div>
+</template>
+
+<script>
+import _ from 'lodash';
+
+export default {
+	name: 'selected-data-table',
+
+	data() {
+		return {
+			perPage: 10,
+			currentPage: 1
+		};
+	},
+
+	mounted() {
+		this.$store.dispatch('updateSelectedData', this.dataset);
+	},
+
+	watch: {
+		// if filters change, update data
+		'$route.query'() {
+			this.$store.dispatch('updateSelectedData', this.dataset);
+		}
+	},
+
+	computed: {
+		// get dataset from route
+		dataset() {
+			return this.$store.getters.getRouteDataset();
+		},
+		// extracts the table data from the store
+		items() {
+			return this.$store.getters.getSelectedDataItems();
+		},
+		// extract the table field header from the store
+		fields() {
+			return this.$store.getters.getSelectedDataFields();
+		}
+	},
+
+	methods: {
+		onRowHovered(event) {
+			// set new values
+			const highlights = {};
+			_.forIn(this.fields, (field, key) => {
+				highlights[key] = event[key];
+			});
+			this.$store.dispatch('highlightFeatureValues', highlights);
+		},
+		onMouseOut() {
+			this.$store.dispatch('clearFeatureHighlightValues');
+		}
+	}
+};
+</script>
+
+<style>
+
+.explore-data-table {
+	display: flex;
+	flex-direction: column;
+}
+.explore-data-table-container {
+
+	display: flex;
+	overflow: auto;
+}
+</style>

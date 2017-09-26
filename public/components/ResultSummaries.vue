@@ -4,6 +4,8 @@
 			<h6 class="nav-link">Results</h6>
 		</div>
 		<result-facets
+			enable-group-collapse
+			enable-facet-filtering
 			:variables="variables"
 			:dataset="dataset"></result-facets>
 	</div>

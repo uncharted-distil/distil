@@ -1,9 +1,6 @@
 import _ from 'lodash';
 import axios from 'axios';
-import {
-	decodeFilters,
-	encodeQueryParams
-} from '../util/filters';
+import { decodeFilters, encodeQueryParams } from '../util/filters';
 
 // TODO: move this somewhere more appropriate.
 const ES_INDEX = 'datasets';
@@ -144,6 +141,42 @@ export function updateFilteredData(context, datasetName) {
 		.catch(error => {
 			console.error(error);
 			context.commit('setFilteredData', []);
+		});
+}
+
+// update filtered data based on the  current filter state
+export function updateSelectedData(context, datasetName) {
+	return context.dispatch('getVariableSummaries', datasetName)
+		.then(() => {
+			const available = context.getters.getAvailableVariables();
+			const target = context.getters.getRouteTargetVariable();
+			const filters = {};
+			available.forEach(variable => {
+				filters[variable.name] = {
+					name: variable.name,
+					enabled: false
+				};
+			});
+			if (target) {
+				filters[target] = {
+					name: target,
+					enabled: false
+				};
+			}
+			const queryParams = encodeQueryParams(filters);
+			const url = `distil/filtered-data/${ES_INDEX}/${datasetName}${queryParams}`;
+			// request filtered data from server - no data is valid given filter settings
+			return axios.get(url)
+				.then(response => {
+					context.commit('setSelectedData', response.data);
+				})
+				.catch(error => {
+					console.error(error);
+					context.commit('setSelectedData', []);
+				});
+		})
+		.catch(error => {
+			console.error(error);
 		});
 }
 
@@ -303,13 +336,15 @@ export function updateResults(context, args) {
 export function highlightFeatureRange(context, highlight) {
 	context.commit('highlightFeatureRange', highlight);
 	context.commit('highlightFilteredDataItems');
-	context.commit('highlightResultdDataItems');
+	context.commit('highlightResultDataItems');
+	context.commit('highlightSelectedDataItems');
 }
 
 export function clearFeatureHighlightRange(context, varName) {
 	context.commit('clearFeatureHighlightRange', varName);
 	context.commit('highlightFilteredDataItems');
-	context.commit('highlightResultdDataItems');
+	context.commit('highlightResultDataItems');
+	context.commit('highlightSelectedDataItems');
 }
 
 export function highlightFeatureValues(context, highlight) {

@@ -4,13 +4,13 @@
 		<training-variables class="select-training-variables"></training-variables>
 		<div class="side-container">
 			<target-variable class="select-target-variables"></target-variable>
-			<data-table class="select-data-table"></data-table>
+			<select-data-table class="select-data-table"></select-data-table>
 		</div>
 	</div>
 </template>
 
 <script>
-import DataTable from '../components/DataTable';
+import SelectDataTable from '../components/SelectDataTable';
 import AvailableVariables from '../components/AvailableVariables';
 import TrainingVariables from '../components/TrainingVariables';
 import TargetVariable from '../components/TargetVariable';
@@ -19,7 +19,7 @@ export default {
 	name: 'select',
 
 	components: {
-		DataTable,
+		SelectDataTable,
 		AvailableVariables,
 		TrainingVariables,
 		TargetVariable

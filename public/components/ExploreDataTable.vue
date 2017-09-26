@@ -1,9 +1,9 @@
 <template>
-	<div class="data-table">
+	<div class="explore-data-table">
 		<div class="bg-faded rounded-top">
 			<h6 class="nav-link">Values</h6>
 		</div>
-		<div class="data-table-container">
+		<div class="explore-data-table-container">
 			<div v-if="items.length===0">
 				No results
 			</div>
@@ -27,7 +27,7 @@
 import _ from 'lodash';
 
 export default {
-	name: 'data-table',
+	name: 'explore-data-table',
 
 	data() {
 		return {
@@ -80,11 +80,11 @@ export default {
 
 <style>
 
-.data-table {
+.explore-data-table {
 	display: flex;
 	flex-direction: column;
 }
-.data-table-container {
+.explore-data-table-container {
 
 	display: flex;
 	overflow: auto;

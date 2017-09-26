@@ -4,8 +4,9 @@
 			<h6 class="nav-link">Available Set</h6>
 		</div>
 		<variable-facets
-			enable-filter="true"
-			enable-toggle="true"
+			enable-search
+			enable-sort
+			enable-facet-filtering
 			instance-name="availableVars"
 			:variables="variables"
 			:dataset="dataset"
@@ -41,7 +42,7 @@ export default {
 				trainingElem.className += 'btn btn-sm btn-outline-secondary mr-2 mb-2';
 				trainingElem.innerHTML = 'Add to Training Set';
 				trainingElem.addEventListener('click', () => {
-					const training = this.$store.getters.getRouteTrainingVariables();
+					const training = this.$store.getters.getRouteTrainingVariablesArray();
 					const entry = createRouteEntryFromRoute(this.$store.getters.getRoute(), {
 						training: training.concat([ group.key ]).join(',')
 					});
