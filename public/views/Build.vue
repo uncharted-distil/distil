@@ -21,6 +21,10 @@ export default {
 		CreatePipelinesForm,
 		RunningPipelines,
 		CompletedPipelines
+	},
+
+	mounted() {
+		this.$store.dispatch('getSession');
 	}
 };
 </script>

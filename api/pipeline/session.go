@@ -43,6 +43,20 @@ type ResultProxy struct {
 	Done      chan struct{}
 }
 
+// AddPendingRequest adds a pending request
+func (s *Session) AddPendingRequest(request *RequestContext) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.pendingRequests[request.RequestID] = request
+}
+
+// AddCompletedRequest adds a completed request
+func (s *Session) AddCompletedRequest(request *RequestContext) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.completedRequests[request.RequestID] = request
+}
+
 // GetExistingUUIDs will return the uuids for all pending and completed requests.
 func (s *Session) GetExistingUUIDs() []uuid.UUID {
 	s.mu.Lock()

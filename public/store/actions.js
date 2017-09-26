@@ -10,6 +10,7 @@ const ES_INDEX = 'datasets';
 const CREATE_PIPELINES_MSG = 'CREATE_PIPELINES';
 const PIPELINE_COMPLETE = 'COMPLETED';
 const STREAM_CLOSE = 'STREAM_CLOSE';
+const FEATURE_TYPE_TARGET = 'target';
 
 
 // searches dataset descriptions and column names for supplied terms
@@ -22,6 +23,46 @@ export function searchDatasets(context, terms) {
 		.catch(error => {
 			console.error(error);
 			context.commit('setDatasets', []);
+		});
+}
+
+// searches dataset descriptions and column names for supplied terms
+export function getSession(context) {
+	const sessionID = context.getters.getPipelineSessionID();
+	return axios.get(`/distil/session/${sessionID}`)
+		.then(response => {
+			if (response.data.pipelines) {
+				response.data.pipelines.forEach((pipeline) => {
+					// determine the target feature for this request
+					var targetFeature = '';
+					pipeline.Features.forEach((feature) => {
+						if (feature.FeatureType === FEATURE_TYPE_TARGET) {
+							targetFeature = feature.FeatureName;
+						}
+					});
+
+					pipeline.Results.forEach((res) => {
+						// inject the name and pipeline id
+						const name = `${pipeline.Dataset}-${targetFeature}-${res.PipelineID.substring(0,8)}`;
+						res.name = name;
+
+						// add/update the running pipeline info
+						if (res.Progress === PIPELINE_COMPLETE) {
+							// add the pipeline to complete
+							context.commit('addCompletedPipeline', {
+								name: res.name,
+								requestId: pipeline.RequestID,
+								dataset: pipeline.Dataset,
+								pipelineId: res.PipelineID,
+								pipeline: { resultUri: res.ResultURI, output: '', scores: res.Scores }
+							});
+						}
+					});
+				});
+			}
+		})
+		.catch(error => {
+			console.error(error);
 		});
 }
 
@@ -167,6 +208,7 @@ export function createPipelines(context, request) {
 			context.commit('addCompletedPipeline', {
 				name: res.name,
 				requestId: res.requestId,
+				dataset: res.dataset,
 				pipelineId: res.pipelineId,
 				pipeline: res.pipeline
 			});

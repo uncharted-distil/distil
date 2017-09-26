@@ -20,6 +20,10 @@ const (
 	VarImportanceField = "importance"
 	// VarTypeIndex is the variable type of the index field.
 	VarTypeIndex = "index"
+	// FeatureTypeTrain is the training feature type.
+	FeatureTypeTrain = "train"
+	// FeatureTypeTarget is the target feature type.
+	FeatureTypeTarget = "target"
 )
 
 // Variable represents a single variable description within a dataset.
