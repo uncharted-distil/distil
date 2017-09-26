@@ -274,7 +274,7 @@ func handleCreatePipelines(conn *Connection, client *pipeline.Client, esCtor ela
 
 		// store the request using the initial progress value
 		requestID := fmt.Sprintf("%s", requestInfo.RequestID)
-		err = storage.PersistRequest(session.ID, requestID, clientCreateMsg.Dataset, pipeline.Progress_name[0])
+		err = storage.PersistRequest(session.ID, requestID, clientCreateMsg.Dataset, pipeline.Progress_name[0], time.Now())
 		if err != nil {
 			handleErr(conn, msg, err)
 			return
@@ -347,7 +347,8 @@ func handleCreatePipelinesSuccess(conn *Connection, msg *Message, proxy *pipelin
 				log.Infof("Pipeline %s - %s", res.PipelineId, progress)
 
 				// update the request progress
-				err := storage.UpdateRequest(fmt.Sprintf("%s", proxy.RequestID), progress)
+				currentTime := time.Now()
+				err := storage.UpdateRequest(fmt.Sprintf("%s", proxy.RequestID), progress, currentTime)
 				if err != nil {
 					handleErr(conn, msg, errors.Wrap(err, "Unable to store request update"))
 				}
@@ -368,13 +369,14 @@ func handleCreatePipelinesSuccess(conn *Connection, msg *Message, proxy *pipelin
 						}
 					}
 					response["pipeline"] = map[string]interface{}{
-						"scores":    scores,
-						"output":    pipeline.OutputType_name[int32(res.PipelineInfo.Output)],
-						"resultUri": res.PipelineInfo.PredictResultUris[0],
+						"scores":      scores,
+						"output":      pipeline.OutputType_name[int32(res.PipelineInfo.Output)],
+						"resultUri":   res.PipelineInfo.PredictResultUris[0],
+						"createdTime": currentTime,
 					}
 
 					// store the result data & metadata
-					err = storage.PersistResultMetadata(fmt.Sprintf("%s", proxy.RequestID), res.PipelineId, "", res.PipelineInfo.PredictResultUris[0], progress)
+					err = storage.PersistResultMetadata(fmt.Sprintf("%s", proxy.RequestID), res.PipelineId, "", res.PipelineInfo.PredictResultUris[0], progress, pipeline.OutputType_name[int32(res.PipelineInfo.Output)], currentTime)
 					if err != nil {
 						handleErr(conn, msg, errors.Wrap(err, "Unable to store result metadata"))
 					}
