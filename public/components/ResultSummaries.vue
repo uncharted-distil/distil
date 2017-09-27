@@ -79,7 +79,7 @@ export default {
 			// Get the current target variable and the summary associated with it
 			const targetVariable = this.$store.getters.getRouteTargetVariable();
 			const varSummaries = this.$store.getters.getVariableSummaries();
-			const targetSummary = _.find(varSummaries, v => v.name === targetVariable);
+			const targetSummary = _.find(varSummaries, v => _.toLower(v.name) === targetVariable);
 			// Create a facet for it - this will act as a basis of comparison for the result sets
 			if (!_.isEmpty(targetSummary)) {
 				return createGroups([targetSummary]);
@@ -93,7 +93,7 @@ export default {
 
 		regressionEnabled() {
 			const targetVarName = this.$store.getters.getRouteTargetVariable();
-			const targetVar = _.find(this.$store.getters.getVariables(), v => v.name === targetVarName);
+			const targetVar = _.find(this.$store.getters.getVariables(), v => _.toLower(v.name) === targetVarName);
 			const task = getTask(targetVar.type);
 			return task.schemaName === 'regression';
 		}

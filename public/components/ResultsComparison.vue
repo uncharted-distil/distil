@@ -90,7 +90,8 @@ export default {
 		regressionEnabled() {
 			//return isRegressionOutput(this.result.pipeline.output);
 			const targetVarName = this.$store.getters.getRouteTargetVariable();
-			const targetVar = _.find(this.$store.getters.getVariables(), v => v.name === targetVarName);
+			console.log(this.$store.getters.getVariables());
+			const targetVar = _.find(this.$store.getters.getVariables(), v => _.toLower(v.name) === targetVarName);
 			const task = getTask(targetVar.type);
 			return task.schemaName === 'regression';
 		}
