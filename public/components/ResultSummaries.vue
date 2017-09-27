@@ -3,7 +3,7 @@
 		<div class="bg-faded rounded-top">
 			<h6 class="nav-link">Results</h6>
 		</div>
-		<div class="result-summaries-error">
+		<div v-if="regressionEnabled" class="result-summaries-error">
 			<div class="result-summaries-label">
 				Error:
 			</div>
@@ -34,6 +34,7 @@ import ResultFacets from '../components/ResultFacets';
 import Facets from '../components/Facets';
 import { createGroups } from '../util/facets';
 import { createRouteEntryFromRoute } from '../util/routes';
+import { getTask } from '../util/pipelines';
 import vueSlider from 'vue-slider-component';
 import _ from 'lodash';
 import 'font-awesome/css/font-awesome.css';
@@ -46,12 +47,6 @@ export default {
 		Facets,
 		vueSlider,
 	},
-
-	// data() {
-	// 	return {
-	// 		value: (this.maxVal - this.minVal) * 0.25 + this.minVal
-	// 	};
-	// },
 
 	computed: {
 
@@ -94,6 +89,13 @@ export default {
 
 		variables() {
 			return this.$store.getters.getResultsSummaries();
+		},
+
+		regressionEnabled() {
+			const targetVarName = this.$store.getters.getRouteTargetVariable();
+			const targetVar = _.find(this.$store.getters.getVariables(), v => v.name === targetVarName);
+			const task = getTask(targetVar.type);
+			return task.schemaName === 'regression';
 		}
 	},
 
