@@ -6,9 +6,7 @@ export function getRoute(state) {
 }
 
 export function getRoutePath(state) {
-	return () => {
-		return state.route.path;
-	};
+	return () => state.route.path;
 }
 
 export function getRouteTerms(state) {
@@ -20,15 +18,11 @@ export function getRouteDataset(state) {
 }
 
 export function getRouteFilter(state) {
-	return (varName) => {
-		return varName in state.route.query ? state.route.query[varName] : null;
-	};
+	return (varName) => _.get(state.route.query, varName, null);
 }
 
 export function getRouteTrainingVariables(state) {
-	return () => {
-		return state.route.query.training ? state.route.query.training.split(',') : [];
-	};
+	return () => state.route.query.training ? state.route.query.training.split(',') : [];
 }
 
 export function getRouteTrainingVariablesMap(state, getters) {
@@ -43,9 +37,7 @@ export function getRouteTrainingVariablesMap(state, getters) {
 }
 
 export function getRouteTargetVariable(state) {
-	return () => {
-		return state.route.query.target ? state.route.query.target.toLowerCase(): null;
-	};
+	return () => state.route.query.target ? state.route.query.target.toLowerCase(): null;
 }
 
 export function getRouteCreateRequestId(state) {
@@ -57,27 +49,23 @@ export function getRouteResultId(state) {
 }
 
 export function getRouteResultFilters(state) {
-	return () => {
-		return state.route.query.results;
-	};
+	return () => state.route.query.results;
 }
 
 export function getRouteFilters(state) {
-	return () => {
-		return state.route.query.filters ? state.route.query.filters : [];
-	};
+	return () => _.get(state.route.query, 'filters', []);
 }
 
 export function getRouteFacetsPage(state) {
-	return (pageKey) => {
-		return state.route.query[pageKey];
-	};
+	return (pageKey) => state.route.query[pageKey];
+}
+
+export function getRouteResidualThreshold(state) {
+	return () => _.get(state.route.query, 'residualThreshold', 0.0);
 }
 
 export function getResultsSummaries(state) {
-	return () => {
-		return state.resultsSummaries;
-	};
+	return () => state.resultsSummaries;
 }
 
 export function getVariables(state) {
@@ -136,9 +124,7 @@ export function getFilteredData(state) {
 }
 
 export function getFilteredDataItems(state) {
-	return () => {
-		return state.filteredDataItems;
-	};
+	return () => state.filteredDataItems;
 }
 
 export function getFilteredDataFields(state) {
@@ -160,29 +146,40 @@ export function getFilteredDataFields(state) {
 }
 
 export function getResultData(state) {
-	return () => {
-		return state.resultData;
-	};
+	return () => state.resultData;
 }
 
 export function getResultDataItems(state) {
-	return () => {
-		return state.resultDataItems;
-	};
+	return () => state.resultDataItems;
 }
 
 export function getResultDataFields(state, getters) {
-	return () => {
-		// const resultData = state.resultData;
-		const dataFields = getters.getFilteredDataFields();
+	return (regression) => {
+		let dataFields = getters.getFilteredDataFields();
+
+		// target field should be last displayed in table, next to predicted value and error
+		// (if applicable)
 		const resultData = state.resultData;
 		if (!_.isEmpty(resultData)) {
+			// add the result data to the baseline data
 			for (const col of resultData.columns) {
+				const truthValue = dataFields[col];
+				dataFields = _.omit(dataFields, col);
+				dataFields[col] = truthValue;
+
 				const label = `Predicted ${col}`;
 				dataFields[label] = {
 					label: label,
 					sortable: true
 				};
+				// add a field for the residuals for numeric predictions
+				if (regression) {
+					const errorLabel = 'Error';
+					dataFields[errorLabel] = {
+						label: errorLabel,
+						sortable: true
+					};
+				}
 			}
 			return dataFields;
 		} else {
@@ -221,13 +218,9 @@ export function getPipelineSessionID(state) {
 }
 
 export function getPipelineSession(state) {
-	return () => {
-		return state.pipelineSession;
-	};
+	return () => state.pipelineSession;
 }
 
 export function getHighlightedFeatureValues(state) {
-	return () => {
-		return state.highlightedFeatureValues;
-	};
+	return () => state.highlightedFeatureValues;
 }

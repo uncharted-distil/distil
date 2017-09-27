@@ -54,17 +54,29 @@ export function setFilteredData(state, filteredData) {
 }
 
 // sets the current result data into the store
-export function setResultData(state, resultData) {
-	state.resultData = resultData;
+export function setResultData(state, args) {
+	state.resultData = args.resultData;
 	state.resultDataItems = [];
-	if (validateData(resultData)) {
+
+	if (validateData(args.resultData)) {
 		state.resultDataItems = _.cloneDeep(state.filteredDataItems);
+
 		// append the result variable data to the baseline variable data
 		for (const [i, row] of state.resultDataItems.entries()) {
-			for (const [j, colName] of resultData.columns.entries()) {
+			for (const [j, colName] of args.resultData.columns.entries()) {
+				// append the result value
 				const label = `Predicted ${colName}`;
-				row[label] = resultData.values[i][j];
-				row._target = { truth: colName, predicted: label };
+				row[label] = args.resultData.values[i][j];
+
+				// append the residual value if necessary
+				let residualLabel = null;
+				if (args.computeResiduals) {
+					residualLabel = 'Error';
+					row[residualLabel] = row[colName] - args.resultData.values[i][j];
+				}
+				// save the names of the columns related to the target and predictions as metadata
+				// for use at render time
+				row._target = { truth: colName, predicted: label, error: residualLabel };
 			}
 		}
 	}

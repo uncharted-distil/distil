@@ -44,8 +44,24 @@ export function getMetricDisplayName(schemaName) {
 	return undefined;
 }
 
+// Checks to see if a supplied schema output type is associated with a classificaiton task
+export function isClassificationOutput(schemaOutput) {
+	return checkOutput(classificationOutputs, schemaOutput);
+}
+
+// Checks to see if a supplied schema output type is associated with a regression task
+export function isRegressionOutput(schemaOutput) {
+	return checkOutput(regressionOutputs, schemaOutput);
+}
+
+function checkOutput(output, schemaOutput) {
+	const lowerName = _.toLower(schemaOutput);
+	return !_.isEmpty(_.find(output, o => o.schemaName === lowerName));
+}
+
 // metrics used in classification tasks
 const classificationMetrics = {
+
 	accuracy: {
 		displayName: 'Accuracy',
 		schemaName: 'accuracy'
@@ -82,6 +98,7 @@ const classificationMetrics = {
 		displayName: 'Normalized Mutual Information',
 		schemaName: 'normalized_mutual_information'
 	}
+
 };
 
 // metrics used in regression tasks
