@@ -3166,6 +3166,10 @@ pluralize@^7.0.0:
   version "7.0.0"
   resolved "https://registry.yarnpkg.com/pluralize/-/pluralize-7.0.0.tgz#298b89df8b93b0221dbf421ad2b1b1ea23fc6777"
 
+popper.js@^1.12.5:
+  version "1.12.5"
+  resolved "https://registry.yarnpkg.com/popper.js/-/popper.js-1.12.5.tgz#229e4dea01629e1f1a1e26991ffade5024220fa6"
+
 postcss-calc@^5.2.0:
   version "5.3.1"
   resolved "https://registry.yarnpkg.com/postcss-calc/-/postcss-calc-5.3.1.tgz#77bae7ca928ad85716e2fda42f261bf7c1d65b5e"
@@ -4273,6 +4277,10 @@ vue-loader@13.0.5:
 vue-router@2.7.0:
   version "2.7.0"
   resolved "https://registry.yarnpkg.com/vue-router/-/vue-router-2.7.0.tgz#16d424493aa51c3c8cce8b7c7210ea4c3a89aff1"
+
+vue-slider-component@^2.4.1:
+  version "2.4.1"
+  resolved "https://registry.yarnpkg.com/vue-slider-component/-/vue-slider-component-2.4.1.tgz#ad0c215c2bb56f96015244dc02fda3063aa38666"
 
 vue-style-loader@^3.0.0:
   version "3.0.1"

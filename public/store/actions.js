@@ -289,7 +289,7 @@ export function updateResults(context, args) {
 			const encodedUri = encodeURIComponent(args.resultId);
 			return axios.get(`/distil/results/${ES_INDEX}/${args.dataset}/${encodedUri}`)
 				.then(response => {
-					context.commit('setResultData', response.data);
+					context.commit('setResultData', { resultData: response.data, computeResiduals: args.generateResiduals});
 				})
 				.catch(error => {
 					console.error(`Failed to fetch results from ${args.resultId} with error ${error}`);

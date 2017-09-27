@@ -22,7 +22,6 @@ export function createRouteEntry(path, args = {}) {
 	if (!_.isEmpty(args.filters)) { query.filters = args.filters; }
 	if (!_.isEmpty(args.results)) { query.results = args.results; }
 	if (!_.isEmpty(args.resultId)) { query.resultId = args.resultId; }
-	if (!_.isEmpty(args.target)) { query.target = args.target; }
 	return {
 		path: path,
 		query: query

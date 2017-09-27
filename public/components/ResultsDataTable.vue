@@ -32,42 +32,18 @@ export default {
 	props: [
 		'title',
 		'filterFunc',
-		'decorateFunc'
+		'decorateFunc',
+		'showError'
 	],
 
 	data() {
 		return {
 			perPage: 10,
-			currentPage: 1,
+			currentPage: 1
 		};
 	},
 
-	mounted() {
-		this.$store.dispatch('updateFilteredData', this.dataset).then(() => {
-			this.$store.dispatch('updateResults', {
-				dataset: this.dataset,
-				resultId: atob(this.$store.getters.getRouteResultId())
-			});
-		});
-	},
-
-	watch: {
-		// if filters change, update data
-		'$route.query'() {
-			this.$store.dispatch('updateFilteredData', this.dataset).then(() => {
-				this.$store.dispatch('updateResults', {
-					dataset: this.dataset,
-					resultId: atob(this.$store.getters.getRouteResultId())
-				});
-			});
-		}
-	},
-
 	computed: {
-		// get dataset from route
-		dataset() {
-			return this.$store.getters.getRouteDataset();
-		},
 		// extracts the table data from the store
 		items() {
 			const items = this.$store.getters.getResultDataItems();
@@ -76,7 +52,7 @@ export default {
 		},
 		// extract the table field header from the store
 		fields() {
-			return this.$store.getters.getResultDataFields();
+			return this.$store.getters.getResultDataFields(this.showError);
 		}
 	},
 
