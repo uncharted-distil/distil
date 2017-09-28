@@ -1,11 +1,11 @@
 <template>
-	<div class="results-data-table">
+	<div class="select-data-table">
 		<div class="bg-faded rounded-top">
-			<h6 class="nav-link">{{title}}</h6>
+			<h6 class="nav-link">Values</h6>
 		</div>
-		<div class="results-data-table-container">
-			<div class="results-data-no-results" v-if="items.length===0">
-				No results
+		<div class="select-data-table-container">
+			<div class="select-data-no-results" v-if="items.length===0">
+				No training set data selected
 			</div>
 			<b-table v-if="items.length>0"
 				bordered
@@ -26,34 +26,23 @@
 import _ from 'lodash';
 
 export default {
-	name: 'results-data-table',
-
-	props: [
-		'title',
-		'filterFunc',
-		'decorateFunc',
-		'showError'
-	],
+	name: 'selected-data-table',
 
 	computed: {
+		// get dataset from route
+		dataset() {
+			return this.$store.getters.getRouteDataset();
+		},
 		// extracts the table data from the store
 		items() {
-			const items = this.$store.getters.getResultDataItems(this.showError);
-			return items.filter(this.filterFunc)
-				.map(this.decorateFunc);
+			return this.$store.getters.getSelectedDataItems();
 		},
 		// extract the table field header from the store
 		fields() {
-			return this.$store.getters.getResultDataFields(this.showError);
+			return this.$store.getters.getSelectedDataFields();
 		},
 		filters() {
-			return this.$store.getters.getFilters();
-		},
-		resultFilters() {
-			return this.$store.getters.getResultsFilters();
-		},
-		resultId() {
-			return atob(this.$store.getters.getRouteResultId());
+			return this.$store.getters.getSelectedFilters();
 		}
 	},
 
@@ -62,28 +51,22 @@ export default {
 	},
 
 	watch: {
-		'$route.query.dataset'() {
+		'$route.query.training'() {
 			this.fetch();
 		},
-		'$route.query.results'() {
+		'$route.query.target'() {
 			this.fetch();
 		},
-		'$route.query.resultId'() {
+		'$route.query.filters'() {
 			this.fetch();
 		}
 	},
 
 	methods: {
 		fetch() {
-			this.$store.dispatch('updateFilteredData', {
+			this.$store.dispatch('updateSelectedData', {
 				dataset: this.dataset,
 				filters: this.filters
-			}).then(() => {
-				this.$store.dispatch('updateResultsData', {
-					dataset: this.dataset,
-					filters: this.resultFilters,
-					resultId: this.resultId
-				});
 			});
 		},
 		onRowHovered(event) {
@@ -103,15 +86,15 @@ export default {
 
 <style>
 
-results-data-table {
+.select-data-table {
 	display: flex;
 	flex-direction: column;
 }
-.results-data-table-container {
+.select-data-table-container {
 	display: flex;
 	overflow: auto;
 }
-.results-data-no-results {
+.select-data-no-results {
 	width: 100%;
 	background-color: #eee;
 	padding: 8px;

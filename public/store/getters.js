@@ -1,5 +1,10 @@
 import _ from 'lodash';
 import Connection from '../util/ws';
+import { decodeFilters } from '../util/filters';
+
+/**
+ * ROUTE
+ */
 
 export function getRoute(state) {
 	return () => state.route;
@@ -17,27 +22,16 @@ export function getRouteDataset(state) {
 	return () => state.route.query.dataset;
 }
 
-export function getRouteFilter(state) {
-	return (varName) => _.get(state.route.query, varName, null);
-}
-
 export function getRouteTrainingVariables(state) {
-	return () => state.route.query.training ? state.route.query.training.split(',') : [];
-}
-
-export function getRouteTrainingVariablesMap(state, getters) {
 	return () => {
-		const training = getters.getRouteTrainingVariables();
-		const map = {};
-		training.forEach(variable => {
-			map[variable.toLowerCase()] = true;
-		});
-		return map;
+		return state.route.query.training ? state.route.query.training : null;
 	};
 }
 
 export function getRouteTargetVariable(state) {
-	return () => state.route.query.target ? state.route.query.target.toLowerCase(): null;
+	return () => {
+		return state.route.query.target ? state.route.query.target : null;
+	};
 }
 
 export function getRouteCreateRequestId(state) {
@@ -48,12 +42,16 @@ export function getRouteResultId(state) {
 	return () => state.route.query.resultId;
 }
 
-export function getRouteResultFilters(state) {
-	return () => state.route.query.results;
+export function getRouteFilters(state) {
+	return () => {
+		return state.route.query.filters ? state.route.query.filters : [];
+	};
 }
 
-export function getRouteFilters(state) {
-	return () => _.get(state.route.query, 'filters', []);
+export function getRouteResultFilters(state) {
+	return () => {
+		return state.route.query.results ? state.route.query.results : [];
+	};
 }
 
 export function getRouteFacetsPage(state) {
@@ -64,12 +62,30 @@ export function getRouteResidualThreshold(state) {
 	return () => _.get(state.route.query, 'residualThreshold', 0.0);
 }
 
-export function getResultsSummaries(state) {
-	return () => state.resultsSummaries;
+export function getFilters(state) {
+	return () => {
+		return decodeFilters(state.route.query.filters ? state.route.query.filters : []);
+	};
+}
+
+export function getResultsFilters(state) {
+	return () => {
+		return decodeFilters(state.route.query.results ? state.route.query.results : []);
+	};
 }
 
 export function getVariables(state) {
 	return () => state.variables;
+}
+
+export function getVariablesMap(state) {
+	return () => {
+		const map = {};
+		state.variables.forEach(variable => {
+			map[variable.name.toLowerCase()] = variable;
+		});
+		return map;
+	};
 }
 
 export function getDatasets(state) {
@@ -81,41 +97,107 @@ export function getDatasets(state) {
 	};
 }
 
+export function getAvailableVariables(state, getters) {
+	return () => {
+		const training = getters.getTrainingVariablesMap();
+		const target = getters.getTargetVariable();
+		return state.variables.filter(variable => {
+			return (!target || target.toLowerCase() !== variable.name.toLowerCase()) &&
+				!training[variable.name.toLowerCase()];
+		}).map(v => v.name);
+	};
+}
+
+export function getAvailableVariablesMap(state, getters) {
+	return () => {
+		const available = getters.getAvailableVariables();
+		const map = {};
+		available.forEach(name => {
+			map[name.toLowerCase()] = true;
+		});
+		return map;
+	};
+}
+
+export function getTrainingVariables(state) {
+	return () => {
+		return state.route.query.training ? state.route.query.training.split(',') : [];
+	};
+}
+
+export function getTrainingVariablesMap(state, getters) {
+	return () => {
+		const training = getters.getTrainingVariables();
+		const map = {};
+		training.forEach(name => {
+			map[name.toLowerCase()] = true;
+		});
+		return map;
+	};
+}
+
+export function getTargetVariable(state) {
+	return () => {
+		return state.route.query.target ? state.route.query.target : null;
+	};
+}
+
 export function getVariableSummaries(state) {
 	return () => state.variableSummaries;
 }
 
-export function getAvailableVariables(state, getters) {
+export function getResultsSummaries(state) {
 	return () => {
-		const training = getters.getRouteTrainingVariablesMap();
-		const target = getters.getRouteTargetVariable();
+		return state.resultsSummaries;
+	};
+}
+
+export function getSelectedFilters(state, getters) {
+	return () => {
+		const training = getters.getTrainingVariables();
+		const existing = getters.getFilters();
+		const filters = {};
+		training.forEach(variable => {
+			if (!existing[variable]) {
+				filters[variable] = {
+					name: variable,
+					enabled: false
+				};
+			} else {
+				filters[variable] = existing[variable];
+			}
+		});
+		return filters;
+	};
+}
+
+export function getAvailableVariableSummaries(state, getters) {
+	return () => {
+		const available = getters.getAvailableVariablesMap();
 		return state.variableSummaries.filter(variable => {
-			return target !== variable.name.toLowerCase() &&
-				!training[variable.name.toLowerCase()];
+			return available[variable.name.toLowerCase()];
 		});
 	};
 }
 
-export function getTrainingVariables(state, getters) {
+export function getTrainingVariableSummaries(state, getters) {
 	return () => {
-		const training = getters.getRouteTrainingVariablesMap();
-		const target = getters.getRouteTargetVariable();
+		const training = getters.getTrainingVariablesMap();
 		return state.variableSummaries.filter(variable => {
-			return target !== variable.name.toLowerCase() &&
-				training[variable.name.toLowerCase()];
+			return training[variable.name.toLowerCase()];
 		});
 	};
 }
 
-export function getTargetVariable(state, getters) {
+export function getTargetVariableSummaries(state, getters) {
 	return () => {
-		const target = getters.getRouteTargetVariable();
+		const target = getters.getTargetVariable();
 		if (!target) {
-			return null;
+			return [];
 		}
 		return state.variableSummaries.filter(variable => {
-			return target === variable.name.toLowerCase();
-		})[0];
+			return target.toLowerCase() === variable.name.toLowerCase();
+		});
 	};
 }
 
@@ -123,8 +205,30 @@ export function getFilteredData(state) {
 	return () => state.filteredData;
 }
 
+function validateData(data) {
+	return  !_.isEmpty(data) &&
+		!_.isEmpty(data.values) &&
+		!_.isEmpty(data.columns);
+}
+
 export function getFilteredDataItems(state) {
-	return () => state.filteredDataItems;
+	return () => {
+		if (validateData(state.filteredData)) {
+			return _.map(state.filteredData.values, d => {
+				const row = {};
+				for (const [index, col] of state.filteredData.columns.entries()) {
+					row[col] = d[index];
+				}
+				_.forIn(state.highlightedFeatureRanges, (range, name) => {
+					if (row[name] >= range.from && row[name] <= range.to) {
+						row._rowVariant = 'info';
+					}
+				});
+				return row;
+			});
+		}
+		return [];
+	};
 }
 
 export function getFilteredDataFields(state) {
@@ -149,8 +253,31 @@ export function getResultData(state) {
 	return () => state.resultData;
 }
 
-export function getResultDataItems(state) {
-	return () => state.resultDataItems;
+export function getResultDataItems(state, getters) {
+	return (computeResiduals) => {
+		if (validateData(state.resultData)) {
+			const resultDataItems = getters.getFilteredDataItems();
+			// append the result variable data to the baseline variable data
+			for (const [i, row] of resultDataItems.entries()) {
+				for (const [j, colName] of state.resultData.columns.entries()) {
+					// append the result value
+					const label = `Predicted ${colName}`;
+					row[label] = state.resultData.values[i][j];
+
+					// append the residual value if necessary
+					let residualLabel = null;
+					if (computeResiduals) {
+						residualLabel = 'Error';
+						row[residualLabel] = row[colName] - state.resultData.values[i][j];
+					}
+					// save the names of the columns related to the target and predictions as metadata
+					// for use at render time
+					row._target = { truth: colName, predicted: label, error: residualLabel };
+				}
+			}
+		}
+		return [];
+	};
 }
 
 export function getResultDataFields(state, getters) {
@@ -182,6 +309,50 @@ export function getResultDataFields(state, getters) {
 				}
 			}
 			return dataFields;
+		} else {
+			return {};
+		}
+	};
+}
+
+export function getSelectedData(state) {
+	return () => {
+		return state.selectedData;
+	};
+}
+
+export function getSelectedDataItems(state) {
+	return () => {
+		if (validateData(state.selectedData)) {
+			return _.map(state.selectedData.values, d => {
+				const row = {};
+				for (const [index, col] of state.selectedData.columns.entries()) {
+					row[col] = d[index];
+				}
+				_.forIn(state.highlightedFeatureRanges, (range, name) => {
+					if (row[name] >= range.from && row[name] <= range.to) {
+						row._rowVariant = 'info';
+					}
+				});
+				return row;
+			});
+		}
+		return [];
+	};
+}
+
+export function getSelectedDataFields(state) {
+	return () => {
+		const data = state.selectedData;
+		if (!_.isEmpty(data)) {
+			const result = {};
+			for (const col of data.columns) {
+				result[col] = {
+					label: col,
+					sortable: true
+				};
+			}
+			return result;
 		} else {
 			return {};
 		}

@@ -22,6 +22,8 @@
 		<facets class="result-summaries-target" :groups="targetVariable">
 		</facets>
 		<result-facets
+			enable-group-collapse
+			enable-facet-filtering
 			:variables="variables"
 			:dataset="dataset">
 		</result-facets>

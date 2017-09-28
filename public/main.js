@@ -5,7 +5,7 @@ import Home from './views/Home';
 import Search from './views/Search';
 import Explore from './views/Explore';
 import Select from './views/Select';
-import Build from './views/Build';
+import Pipelines from './views/Pipelines';
 import Results from './views/Results';
 import Navigation from './views/Navigation';
 import store from './store';
@@ -32,7 +32,7 @@ const router = new VueRouter({
 		{ path: '/search', component: Search },
 		{ path: '/explore', component: Explore },
 		{ path: '/select', component: Select },
-		{ path: '/build', component: Build },
+		{ path: '/pipelines', component: Pipelines },
 		{ path: '/results', component: Results }
 	]
 });

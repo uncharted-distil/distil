@@ -1,11 +1,12 @@
 <template>
-	<div class='training-variables'>
+	<div class="training-variables">
 		<div class="bg-faded rounded-top">
 			<h6 class="nav-link">Training Set</h6>
 		</div>
 		<variable-facets
-			enable-filter="true"
-			enable-toggle="true"
+			enable-search
+			enable-sort
+			enable-facet-filtering
 			instance-name="trainingVars"
 			:variables="variables"
 			:dataset="dataset"
@@ -32,7 +33,7 @@ export default {
 			return this.$store.getters.getRouteDataset();
 		},
 		variables() {
-			return this.$store.getters.getTrainingVariables();
+			return this.$store.getters.getTrainingVariableSummaries();
 		},
 		html() {
 			return (group) => {
@@ -41,7 +42,7 @@ export default {
 				remove.className += 'btn btn-sm btn-outline-secondary mb-2';
 				remove.innerHTML = 'Remove';
 				remove.addEventListener('click', () => {
-					const training = this.$store.getters.getRouteTrainingVariables();
+					const training = this.$store.getters.getTrainingVariables();
 					training.splice(training.indexOf(group.key), 1);
 					const entry = createRouteEntryFromRoute(this.$store.getters.getRoute(), {
 						training: training.join(',')

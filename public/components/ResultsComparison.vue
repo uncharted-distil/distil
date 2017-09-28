@@ -37,8 +37,7 @@ export default {
 			this.$store.dispatch('updateFilteredData', dataset).then(() => {
 				this.$store.dispatch('updateResults', {
 					dataset: dataset,
-					resultId: atob(this.$store.getters.getRouteResultId()),
-					generateResiduals: this.regressionEnabled
+					resultId: atob(this.$store.getters.getRouteResultId())
 				});
 			});
 		}
@@ -60,8 +59,6 @@ export default {
 			this.$store.dispatch('updateResults', {
 				dataset: dataset,
 				resultId: atob(this.$store.getters.getRouteResultId()),
-				// generateResiduals: isRegressionOutput(this.result.pipeline.output)
-				generateResiduals: this.regressionEnabled
 			});
 		});
 
