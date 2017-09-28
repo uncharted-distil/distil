@@ -1,5 +1,5 @@
 <template>
-	<div class='available-variables'>
+	<div class="available-variables">
 		<div class="bg-faded rounded-top">
 			<h6 class="nav-link">Available Set</h6>
 		</div>

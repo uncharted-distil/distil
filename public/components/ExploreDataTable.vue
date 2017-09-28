@@ -4,7 +4,7 @@
 			<h6 class="nav-link">Values</h6>
 		</div>
 		<div class="explore-data-table-container">
-			<div v-if="items.length===0">
+			<div class="explore-data-no-results" v-if="items.length===0">
 				No results
 			</div>
 			<b-table v-if="items.length>0"
@@ -88,8 +88,12 @@ export default {
 	flex-direction: column;
 }
 .explore-data-table-container {
-
 	display: flex;
 	overflow: auto;
+}
+.explore-data-no-results {
+	width: 100%;
+	background-color: #eee;
+	padding: 8px;
 }
 </style>

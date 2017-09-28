@@ -4,8 +4,8 @@
 			<h6 class="nav-link">Values</h6>
 		</div>
 		<div class="select-data-table-container">
-			<div v-if="items.length===0">
-				No results
+			<div class="select-data-no-results" v-if="items.length===0">
+				No training set data selected
 			</div>
 			<b-table v-if="items.length>0"
 				bordered
@@ -56,6 +56,9 @@ export default {
 		},
 		'$route.query.target'() {
 			this.fetch();
+		},
+		'$route.query.filters'() {
+			this.fetch();
 		}
 	},
 
@@ -88,8 +91,12 @@ export default {
 	flex-direction: column;
 }
 .select-data-table-container {
-
 	display: flex;
 	overflow: auto;
+}
+.select-data-no-results {
+	width: 100%;
+	background-color: #eee;
+	padding: 8px;
 }
 </style>

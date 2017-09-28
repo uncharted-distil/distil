@@ -1,5 +1,5 @@
 <template>
-	<div class='training-variables'>
+	<div class="training-variables">
 		<div class="bg-faded rounded-top">
 			<h6 class="nav-link">Training Set</h6>
 		</div>

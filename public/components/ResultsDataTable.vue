@@ -4,7 +4,7 @@
 			<h6 class="nav-link">{{title}}</h6>
 		</div>
 		<div class="results-data-table-container">
-			<div v-if="items.length===0">
+			<div class="results-data-no-results" v-if="items.length===0">
 				No results
 			</div>
 			<b-table v-if="items.length>0"
@@ -108,8 +108,12 @@ results-data-table {
 	flex-direction: column;
 }
 .results-data-table-container {
-
 	display: flex;
 	overflow: auto;
+}
+.results-data-no-results {
+	width: 100%;
+	background-color: #eee;
+	padding: 8px;
 }
 </style>

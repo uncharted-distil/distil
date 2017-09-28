@@ -155,12 +155,17 @@ export function getResultsSummaries(state) {
 export function getSelectedFilters(state, getters) {
 	return () => {
 		const training = getters.getTrainingVariables();
+		const existing = getters.getFilters();
 		const filters = {};
 		training.forEach(variable => {
-			filters[variable] = {
-				name: variable,
-				enabled: false
-			};
+			if (!existing[variable]) {
+				filters[variable] = {
+					name: variable,
+					enabled: false
+				};
+			} else {
+				filters[variable] = existing[variable];
+			}
 		});
 		return filters;
 	};
