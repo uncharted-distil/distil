@@ -221,12 +221,17 @@ func (s *Storage) FetchFilteredResults(dataset string, index string, resultURI s
 		return nil, errors.Wrap(err, "Could not build where clause")
 	}
 
-	query := fmt.Sprintf("SELECT value as %s_res, %s FROM %s as res inner join %s as data on data.\"%s\" = res.index WHERE result_id = $%d AND target = $%d AND %s;",
-		targetName, fields, datasetResult, dataset, d3mIndexFieldName, len(params)+1, len(params)+2, where)
+	query := fmt.Sprintf("SELECT value as %s_res, %s FROM %s as res inner join %s as data on data.\"%s\" = res.index WHERE result_id = $%d AND target = $%d",
+		targetName, fields, datasetResult, dataset, d3mIndexFieldName, len(params)+1, len(params)+2)
 	params = append(params, resultURI)
 	params = append(params, targetName)
 
-	rows, err := s.client.Query(query, params)
+	if len(where) > 0 {
+		query = fmt.Sprintf("%s AND %s", query, where)
+	}
+	query = query + ";"
+
+	rows, err := s.client.Query(query, params...)
 	if err != nil {
 		return nil, errors.Wrap(err, "Error querying results")
 	}
