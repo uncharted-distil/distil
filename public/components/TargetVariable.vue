@@ -28,11 +28,7 @@ export default {
 			return this.$store.getters.getRouteDataset();
 		},
 		variables() {
-			const target = this.$store.getters.getTargetVariable();
-			if (target) {
-				return [ target ];
-			}
-			return [];
+			return this.$store.getters.getTargetVariableSummaries();
 		},
 		html() {
 			return () => {

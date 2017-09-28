@@ -50,12 +50,13 @@ func (s *Storage) parseFilteredData(dataset string, rows *pgx.Rows) (*model.Filt
 // FetchData creates a postgres query to fetch a set of rows.  Applies filters to restrict the
 // results to a user selected set of fields, with rows further filtered based on allowed ranges and
 // categories.
-func (s *Storage) FetchData(dataset string, index string, filterParams *model.FilterParams) (*model.FilteredData, error) {
+func (s *Storage) FetchData(dataset string, index string, filterParams *model.FilterParams, inclusive bool) (*model.FilteredData, error) {
 	// need to get the variable list to handle field exclusion.
-	// NOTE: This should be reexamined to figure out if front end changes make more sense.
 	excludedFields := make(map[string]bool)
-	for _, f := range filterParams.None {
-		excludedFields[f] = true
+	if inclusive {
+		for _, f := range filterParams.None {
+			excludedFields[f] = true
+		}
 	}
 	variables, err := model.FetchVariables(s.clientES, index, dataset)
 	fieldList := make([]string, 0)

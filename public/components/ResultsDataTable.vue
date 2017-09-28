@@ -15,8 +15,7 @@
 				@row-hovered="onRowHovered"
 				@mouseout.native="onMouseOut"
 				:items="items"
-				:fields="fields"
-				:current-page="currentPage">
+				:fields="fields">
 			</b-table>
 		</div>
 
@@ -35,34 +34,6 @@ export default {
 		'decorateFunc'
 	],
 
-	data() {
-		return {
-			perPage: 10,
-			currentPage: 1,
-		};
-	},
-
-	mounted() {
-		this.$store.dispatch('updateFilteredData', this.dataset).then(() => {
-			this.$store.dispatch('updateResults', {
-				dataset: this.dataset,
-				resultId: atob(this.$store.getters.getRouteResultId())
-			});
-		});
-	},
-
-	watch: {
-		// if filters change, update data
-		'$route.query'() {
-			this.$store.dispatch('updateFilteredData', this.dataset).then(() => {
-				this.$store.dispatch('updateResults', {
-					dataset: this.dataset,
-					resultId: atob(this.$store.getters.getRouteResultId())
-				});
-			});
-		}
-	},
-
 	computed: {
 		// get dataset from route
 		dataset() {
@@ -77,10 +48,47 @@ export default {
 		// extract the table field header from the store
 		fields() {
 			return this.$store.getters.getResultDataFields();
+		},
+		filters() {
+			return this.$store.getters.getFilters();
+		},
+		resultFilters() {
+			return this.$store.getters.getResultsFilters();
+		},
+		resultId() {
+			return atob(this.$store.getters.getRouteResultId());
+		}
+	},
+
+	mounted() {
+		this.fetch();
+	},
+
+	watch: {
+		'$route.query.dataset'() {
+			this.fetch();
+		},
+		'$route.query.results'() {
+			this.fetch();
+		},
+		'$route.query.resultId'() {
+			this.fetch();
 		}
 	},
 
 	methods: {
+		fetch() {
+			this.$store.dispatch('updateFilteredData', {
+				dataset: this.dataset,
+				filters: this.filters
+			}).then(() => {
+				this.$store.dispatch('updateResultsData', {
+					dataset: this.dataset,
+					filters: this.resultFilters,
+					resultId: this.resultId
+				});
+			});
+		},
 		onRowHovered(event) {
 			// set new values
 			const highlights = {};

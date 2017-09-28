@@ -62,8 +62,6 @@ const state = {
 		//     []
 		// ]
 	},
-	// result data items for the table view
-	resultDataItems: [],
 	// filtered data entries for the active dataset
 	filteredData: {
 		// name: '',
@@ -73,8 +71,6 @@ const state = {
 		//     []
 		// ]
 	},
-	// filtered data items for the table view
-	filteredDataItems: [],
 	// selected data entries for the active dataset
 	selectedData: {
 		// name: '',
@@ -84,8 +80,9 @@ const state = {
 		//     []
 		// ]
 	},
-	// selected data items for the table view
-	selectedDataItems: [],
+	// highlighted features
+	highlightedFeatureRanges: {},
+	highlightedFeatureValues: null,
 	// running pipeline creation tasks grouped by parent create requestID
 	runningPipelines: {
 		// requestId: {

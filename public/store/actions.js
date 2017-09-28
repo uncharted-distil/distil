@@ -1,6 +1,6 @@
 import _ from 'lodash';
 import axios from 'axios';
-import { decodeFilters, encodeQueryParams } from '../util/filters';
+import { encodeQueryParams } from '../util/filters';
 
 // TODO: move this somewhere more appropriate.
 const ES_INDEX = 'datasets';
@@ -76,63 +76,58 @@ export function getVariables(context, dataset) {
 }
 
 // fetches variable summary data for the given dataset and variables
-export function getVariableSummaries(context, datasetName) {
-	return context.dispatch('getVariables', datasetName)
-		.then(() => {
-			const variables = context.getters.getVariables();
-			// commit empty place holders
-			const histograms = variables.map(variable => {
-				return {
-					name: variable.name,
-					pending: true
-				};
-			});
-			context.commit('setVariableSummaries', histograms);
-			// fill them in asynchronously
-			variables.forEach((variable, idx) => {
-				axios.get(`/distil/variable-summaries/${ES_INDEX}/${datasetName}/${variable.name}`)
-					.then(response => {
-						// save the variable summary data
-						const histogram = response.data.histogram;
-						if (!histogram) {
-							context.commit('updateVariableSummaries', {
-								index: idx,
-								histogram: {
-									name: variable.name,
-									err: 'No analysis available'
-								}
-							});
-							return;
+export function getVariableSummaries(context, args) {
+	const dataset = args.dataset;
+	const variables = args.variables;
+	// commit empty place holders
+	const histograms = variables.map(variable => {
+		return {
+			name: variable.name,
+			pending: true
+		};
+	});
+	context.commit('setVariableSummaries', histograms);
+	// fill them in asynchronously
+	variables.forEach((variable, idx) => {
+		axios.get(`/distil/variable-summaries/${ES_INDEX}/${dataset}/${variable.name}`)
+			.then(response => {
+				// save the variable summary data
+				const histogram = response.data.histogram;
+				if (!histogram) {
+					context.commit('updateVariableSummaries', {
+						index: idx,
+						histogram: {
+							name: variable.name,
+							err: 'No analysis available'
 						}
-						// ensure buckets is not nil
-						context.commit('updateVariableSummaries', {
-							index: idx,
-							histogram: histogram
-						});
-					})
-					.catch(error => {
-						console.error(error);
-						context.commit('updateVariableSummaries', {
-							index: idx,
-							histogram: {
-								name: variable.name,
-								err: error
-							}
-						});
 					});
+					return;
+				}
+				// ensure buckets is not nil
+				context.commit('updateVariableSummaries', {
+					index: idx,
+					histogram: histogram
+				});
+			})
+			.catch(error => {
+				console.error(error);
+				context.commit('updateVariableSummaries', {
+					index: idx,
+					histogram: {
+						name: variable.name,
+						err: error
+					}
+				});
 			});
-		})
-		.catch(error => {
-			console.error(error);
-		});
+	});
 }
 
 // update filtered data based on the  current filter state
-export function updateFilteredData(context, datasetName) {
-	const filters = context.getters.getRouteFilters();
-	const decoded = decodeFilters(filters);
-	const queryParams = encodeQueryParams(decoded);
-	const url = `distil/filtered-data/${ES_INDEX}/${datasetName}${queryParams}`;
+export function updateFilteredData(context, args) {
+	const dataset = args.dataset;
+	const filters = args.filters;
+	const queryParams = encodeQueryParams(filters);
+	const url = `distil/filtered-data/${ES_INDEX}/${dataset}/inclusive${queryParams}`;
 	// request filtered data from server - no data is valid given filter settings
 	return axios.get(url)
 		.then(response => {
@@ -145,38 +140,19 @@ export function updateFilteredData(context, datasetName) {
 }
 
 // update filtered data based on the  current filter state
-export function updateSelectedData(context, datasetName) {
-	return context.dispatch('getVariableSummaries', datasetName)
-		.then(() => {
-			const available = context.getters.getAvailableVariables();
-			const target = context.getters.getRouteTargetVariable();
-			const filters = {};
-			available.forEach(variable => {
-				filters[variable.name] = {
-					name: variable.name,
-					enabled: false
-				};
-			});
-			if (target) {
-				filters[target] = {
-					name: target,
-					enabled: false
-				};
-			}
-			const queryParams = encodeQueryParams(filters);
-			const url = `distil/filtered-data/${ES_INDEX}/${datasetName}${queryParams}`;
-			// request filtered data from server - no data is valid given filter settings
-			return axios.get(url)
-				.then(response => {
-					context.commit('setSelectedData', response.data);
-				})
-				.catch(error => {
-					console.error(error);
-					context.commit('setSelectedData', []);
-				});
+export function updateSelectedData(context, args) {
+	const dataset = args.dataset;
+	const filters = args.filters;
+	const queryParams = encodeQueryParams(filters);
+	const url = `distil/filtered-data/${ES_INDEX}/${dataset}/exclusive${queryParams}`;
+	// request filtered data from server - no data is valid given filter settings
+	return axios.get(url)
+		.then(response => {
+			context.commit('setSelectedData', response.data);
 		})
 		.catch(error => {
 			console.error(error);
+			context.commit('setSelectedData', []);
 		});
 }
 
@@ -258,13 +234,15 @@ export function createPipelines(context, request) {
 		metric: request.metric,
 		output: request.output,
 		maxPipelines: 3,
-		filters: decodeFilters(context.getters.getRouteFilters())
+		filters: context.getters.getFilters()
 	});
 }
 
 // fetches result summaries for a given pipeline create request
 export function getResultsSummaries(context, args) {
-	const results = context.getters.getPipelineResults(args.requestId);
+	const dataset = args.dataset;
+	const requestId = args.requestId;
+	const results = context.getters.getPipelineResults(requestId);
 
 	// save a placeholder histogram
 	const pendingHistograms = _.map(results, r => {
@@ -275,9 +253,7 @@ export function getResultsSummaries(context, args) {
 	});
 	context.commit('setResultsSummaries', pendingHistograms);
 
-	const dataset = context.getters.getRouteDataset();
-
-	// dispatch a request to fetch the results for each pipeline
+	// fetch the results for each pipeline
 	for (var result of results) {
 		const name = result.name;
 		const pipelineId = result.pipelineId;
@@ -299,7 +275,7 @@ export function getResultsSummaries(context, args) {
 				// ensure buckets is not nil
 				histogram.buckets = histogram.buckets ? histogram.buckets : [];
 				histogram.name = name;
-				histogram.pipelineId =
+				histogram.pipelineId = pipelineId;
 				context.commit('updateResultsSummaries', histogram);
 			})
 			.catch(error => {
@@ -316,35 +292,25 @@ export function getResultsSummaries(context, args) {
 }
 
 // fetches result data for created pipeline
-export function updateResults(context, args) {
-	return context.dispatch('updateFilteredData', context.getters.getRouteDataset())
-		.then(() => {
-			const encodedUri = encodeURIComponent(args.resultId);
-			return axios.get(`/distil/results/${ES_INDEX}/${args.dataset}/${encodedUri}`)
-				.then(response => {
-					context.commit('setResultData', response.data);
-				})
-				.catch(error => {
-					console.error(`Failed to fetch results from ${args.resultId} with error ${error}`);
-				});
+export function updateResultsData(context, args) {
+	const dataset = args.dataset;
+	const resultId = args.resultId;
+	const encodedUri = encodeURIComponent(args.resultId);
+	return axios.get(`/distil/results/${ES_INDEX}/${dataset}/${encodedUri}`)
+		.then(response => {
+			context.commit('setResultData', response.data);
 		})
 		.catch(error => {
-			console.error(error);
+			console.error(`Failed to fetch results from ${resultId} with error ${error}`);
 		});
 }
 
 export function highlightFeatureRange(context, highlight) {
 	context.commit('highlightFeatureRange', highlight);
-	context.commit('highlightFilteredDataItems');
-	context.commit('highlightResultDataItems');
-	context.commit('highlightSelectedDataItems');
 }
 
 export function clearFeatureHighlightRange(context, varName) {
 	context.commit('clearFeatureHighlightRange', varName);
-	context.commit('highlightFilteredDataItems');
-	context.commit('highlightResultDataItems');
-	context.commit('highlightSelectedDataItems');
 }
 
 export function highlightFeatureValues(context, highlight) {

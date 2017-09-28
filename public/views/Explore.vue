@@ -17,15 +17,34 @@ export default {
 		VariableSummaries
 	},
 
+	computed: {
+		dataset() {
+			return this.$store.getters.getRouteDataset();
+		},
+		variables() {
+			return this.$store.getters.getVariables();
+		}
+	},
+
 	mounted() {
-		const dataset = this.$store.getters.getRouteDataset();
-		this.$store.dispatch('getVariableSummaries', dataset);
+		this.fetch();
 	},
 
 	watch: {
 		'$route.query.dataset'() {
-			const dataset = this.$store.getters.getRouteDataset();
-			this.$store.dispatch('getVariableSummaries', dataset);
+			this.fetch();
+		}
+	},
+
+	methods: {
+		fetch() {
+			this.$store.dispatch('getVariables', this.dataset)
+				.then(() => {
+					this.$store.dispatch('getVariableSummaries', {
+						dataset: this.dataset,
+						variables: this.variables
+					});
+				});
 		}
 	}
 };

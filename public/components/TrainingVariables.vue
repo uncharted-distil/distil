@@ -33,7 +33,7 @@ export default {
 			return this.$store.getters.getRouteDataset();
 		},
 		variables() {
-			return this.$store.getters.getTrainingVariables();
+			return this.$store.getters.getTrainingVariableSummaries();
 		},
 		html() {
 			return (group) => {
@@ -42,7 +42,7 @@ export default {
 				remove.className += 'btn btn-sm btn-outline-secondary mb-2';
 				remove.innerHTML = 'Remove';
 				remove.addEventListener('click', () => {
-					const training = this.$store.getters.getRouteTrainingVariablesArray();
+					const training = this.$store.getters.getTrainingVariables();
 					training.splice(training.indexOf(group.key), 1);
 					const entry = createRouteEntryFromRoute(this.$store.getters.getRoute(), {
 						training: training.join(',')

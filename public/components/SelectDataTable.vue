@@ -1,9 +1,9 @@
 <template>
-	<div class="explore-data-table">
+	<div class="select-data-table">
 		<div class="bg-faded rounded-top">
 			<h6 class="nav-link">Values</h6>
 		</div>
-		<div class="explore-data-table-container">
+		<div class="select-data-table-container">
 			<div v-if="items.length===0">
 				No results
 			</div>
@@ -15,8 +15,7 @@
 				@row-hovered="onRowHovered"
 				@mouseout.native="onMouseOut"
 				:items="items"
-				:fields="fields"
-				:current-page="currentPage">
+				:fields="fields">
 			</b-table>
 		</div>
 
@@ -28,24 +27,6 @@ import _ from 'lodash';
 
 export default {
 	name: 'selected-data-table',
-
-	data() {
-		return {
-			perPage: 10,
-			currentPage: 1
-		};
-	},
-
-	mounted() {
-		this.$store.dispatch('updateSelectedData', this.dataset);
-	},
-
-	watch: {
-		// if filters change, update data
-		'$route.query'() {
-			this.$store.dispatch('updateSelectedData', this.dataset);
-		}
-	},
 
 	computed: {
 		// get dataset from route
@@ -59,10 +40,32 @@ export default {
 		// extract the table field header from the store
 		fields() {
 			return this.$store.getters.getSelectedDataFields();
+		},
+		filters() {
+			return this.$store.getters.getSelectedFilters();
+		}
+	},
+
+	mounted() {
+		this.fetch();
+	},
+
+	watch: {
+		'$route.query.training'() {
+			this.fetch();
+		},
+		'$route.query.target'() {
+			this.fetch();
 		}
 	},
 
 	methods: {
+		fetch() {
+			this.$store.dispatch('updateSelectedData', {
+				dataset: this.dataset,
+				filters: this.filters
+			});
+		},
 		onRowHovered(event) {
 			// set new values
 			const highlights = {};
@@ -80,11 +83,11 @@ export default {
 
 <style>
 
-.explore-data-table {
+.select-data-table {
 	display: flex;
 	flex-direction: column;
 }
-.explore-data-table-container {
+.select-data-table-container {
 
 	display: flex;
 	overflow: auto;

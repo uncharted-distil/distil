@@ -87,6 +87,7 @@ func TestFilteredDataHandler(t *testing.T) {
 	params := map[string]string{
 		"dataset": "o_185",
 		"esIndex": "dataset",
+		"inclusive": "inclusive",
 	}
 	query := map[string]string{
 		"On_base_pct": "numerical,0,100",
@@ -147,6 +148,7 @@ func TestFilteredPostgresHandler(t *testing.T) {
 	params := map[string]string{
 		"dataset": "o_185",
 		"esIndex": "dataset",
+		"inclusive": "inclusive",
 	}
 	query := map[string]string{
 		"On_base_pct": "numerical,0,100",

@@ -15,8 +15,7 @@
 				@row-hovered="onRowHovered"
 				@mouseout.native="onMouseOut"
 				:items="items"
-				:fields="fields"
-				:current-page="currentPage">
+				:fields="fields">
 			</b-table>
 		</div>
 
@@ -28,24 +27,6 @@ import _ from 'lodash';
 
 export default {
 	name: 'explore-data-table',
-
-	data() {
-		return {
-			perPage: 10,
-			currentPage: 1
-		};
-	},
-
-	mounted() {
-		this.$store.dispatch('updateFilteredData', this.dataset);
-	},
-
-	watch: {
-		// if filters change, update data
-		'$route.query'() {
-			this.$store.dispatch('updateFilteredData', this.dataset);
-		}
-	},
 
 	computed: {
 		// get dataset from route
@@ -59,10 +40,32 @@ export default {
 		// extract the table field header from the store
 		fields() {
 			return this.$store.getters.getFilteredDataFields();
+		},
+		filters() {
+			return this.$store.getters.getFilters();
+		}
+	},
+
+	mounted() {
+		this.fetch();
+	},
+
+	watch: {
+		'$route.query.filters'() {
+			this.fetch();
+		},
+		'$route.query.dataset'() {
+			this.fetch();
 		}
 	},
 
 	methods: {
+		fetch() {
+			this.$store.dispatch('updateFilteredData', {
+				dataset: this.dataset,
+				filters: this.filters
+			});
+		},
 		onRowHovered(event) {
 			// set new values
 			const highlights = {};
