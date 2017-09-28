@@ -28,13 +28,20 @@ func ResultsHandler(storageCtor model.StorageCtor) func(http.ResponseWriter, *ht
 			return
 		}
 
+		// get variable names and ranges out of the params
+		filterParams, err := ParseFilterParams(r)
+		if err != nil {
+			handleError(w, err)
+			return
+		}
+
 		client, err := storageCtor()
 		if err != nil {
 			handleError(w, err)
 			return
 		}
 
-		results, err := model.FetchResults(client, resultURI, index, dataset)
+		results, err := model.FetchResults(client, dataset, index, resultURI, filterParams)
 		if err != nil {
 			handleError(w, err)
 			return

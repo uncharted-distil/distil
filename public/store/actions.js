@@ -286,8 +286,13 @@ export function getResultsSummaries(context, args) {
 export function updateResults(context, args) {
 	return context.dispatch('updateFilteredData', context.getters.getRouteDataset())
 		.then(() => {
+			// prep the parameters
+			const filters = context.getters.getRouteResultFilters();
+			const decoded = decodeFilters(filters);
+			const queryParams = encodeQueryParams(decoded);
+
 			const encodedUri = encodeURIComponent(args.resultId);
-			return axios.get(`/distil/results/${ES_INDEX}/${args.dataset}/${encodedUri}`)
+			return axios.get(`/distil/results/${ES_INDEX}/${args.dataset}/${encodedUri}${queryParams}`)
 				.then(response => {
 					context.commit('setResultData', { resultData: response.data, computeResiduals: args.generateResiduals});
 				})

@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"strconv"
+	"strings"
 
 	"github.com/jackc/pgx"
 	"github.com/pkg/errors"
@@ -154,7 +155,7 @@ func (s *Storage) parseResults(dataset string, rows *pgx.Rows, variable *model.V
 }
 
 // FetchResults pulls the results from the Postgres database.
-func (s *Storage) FetchResults(dataset string, resultURI string, index string) (*model.FilteredData, error) {
+func (s *Storage) FetchResults(dataset string, index string, resultURI string, filterParams *model.FilterParams) (*model.FilteredData, error) {
 	datasetResult := s.getResultTable(dataset)
 	targetName, err := s.getResultTargetName(datasetResult, resultURI, index)
 	// fetch the variable info to resolve its type - skip the first column since that will be the d3m_index value
@@ -163,9 +164,42 @@ func (s *Storage) FetchResults(dataset string, resultURI string, index string) (
 		return nil, err
 	}
 
-	sql := fmt.Sprintf("SELECT value FROM %s WHERE result_id = $1 AND target = $2;", datasetResult)
+	// *************** TODO --> just copy/pasted from filtered data fetch
+	query := fmt.Sprintf("SELECT value FROM %s WHERE result_id = $1 AND target = $2;", datasetResult)
 
-	rows, err := s.client.Query(sql, resultURI, targetName)
+	params := make([]interface{}, 0)
+	wheres := make([]string, len(filterParams.Ranged))
+	for i, variable := range filterParams.Ranged {
+		wheres[i] = fmt.Sprintf("\"%s\" >= $%d AND \"%s\" <= $%d", variable.Name, i*2+1, variable.Name, i*2+2)
+		params = append(params, variable.Min)
+		params = append(params, variable.Max)
+	}
+
+	for _, variable := range filterParams.Categorical {
+		// this is imposed by go's language design - []string needs explicit conversion to []interface{} before
+		// passing to interface{} ...
+		categories := make([]string, len(variable.Categories))
+		baseParam := len(params) + 1
+		for i := range variable.Categories {
+			categories[i] = fmt.Sprintf("$%d", baseParam+i)
+			params = append(params, variable.Categories[i])
+		}
+		wheres = append(wheres, fmt.Sprintf("\"%s\" IN (%s)", variable.Name, strings.Join(categories, ", ")))
+	}
+
+	if len(wheres) > 0 {
+		query = fmt.Sprintf("%s WHERE %s", query, strings.Join(wheres, " AND "))
+	}
+
+	// order & limit the filtered data.
+	if variable != nil {
+		query = fmt.Sprintf("%s ORDER BY %s LIMIT %d", query, variable.Name, filterLimit)
+	}
+
+	query = query + ";"
+	// ***************** END TODO
+
+	rows, err := s.client.Query(query, resultURI, targetName)
 	if err != nil {
 		return nil, errors.Wrap(err, "Error querying results")
 	}
