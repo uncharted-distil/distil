@@ -292,16 +292,14 @@ export function getResultsSummaries(context, args) {
 }
 
 // fetches result data for created pipeline
-export function updateResultsData(context, args) {
-	const dataset = args.dataset;
-	const resultId = args.resultId;
+export function updateResults(context, args) {
 	const encodedUri = encodeURIComponent(args.resultId);
-	return axios.get(`/distil/results/${ES_INDEX}/${dataset}/${encodedUri}`)
+	return axios.get(`/distil/results/${ES_INDEX}/${args.dataset}/${encodedUri}`)
 		.then(response => {
-			context.commit('setResultData', response.data);
+			context.commit('setResultData', { resultData: response.data, computeResiduals: args.generateResiduals});
 		})
 		.catch(error => {
-			console.error(`Failed to fetch results from ${resultId} with error ${error}`);
+			console.error(`Failed to fetch results from ${args.resultId} with error ${error}`);
 		});
 }
 

@@ -11,9 +11,7 @@ export function getRoute(state) {
 }
 
 export function getRoutePath(state) {
-	return () => {
-		return state.route.path;
-	};
+	return () => state.route.path;
 }
 
 export function getRouteTerms(state) {
@@ -57,9 +55,11 @@ export function getRouteResultFilters(state) {
 }
 
 export function getRouteFacetsPage(state) {
-	return (pageKey) => {
-		return state.route.query[pageKey];
-	};
+	return (pageKey) => state.route.query[pageKey];
+}
+
+export function getRouteResidualThreshold(state) {
+	return () => _.get(state.route.query, 'residualThreshold', 0.0);
 }
 
 export function getFilters(state) {
@@ -163,24 +163,6 @@ export function getSelectedFilters(state, getters) {
 			};
 		});
 		return filters;
-		/*
-		const training = getters.getAvailableVariables();
-		const target = getters.getTargetVariable();
-		const filters = {};
-		training.forEach(variable => {
-			filters[variable] = {
-				name: variable,
-				enabled: false
-			};
-		});
-		if (target) {
-			filters[target] = {
-				name: target,
-				enabled: false
-			};
-		}
-		return filters;
-		*/
 	};
 }
 
@@ -263,21 +245,29 @@ export function getFilteredDataFields(state) {
 }
 
 export function getResultData(state) {
-	return () => {
-		return state.resultData;
-	};
+	return () => state.resultData;
 }
 
 export function getResultDataItems(state, getters) {
-	return () => {
+	return (computeResiduals) => {
 		if (validateData(state.resultData)) {
 			const resultDataItems = getters.getFilteredDataItems();
 			// append the result variable data to the baseline variable data
 			for (const [i, row] of resultDataItems.entries()) {
 				for (const [j, colName] of state.resultData.columns.entries()) {
+					// append the result value
 					const label = `Predicted ${colName}`;
 					row[label] = state.resultData.values[i][j];
-					row._target = { truth: colName, predicted: label };
+
+					// append the residual value if necessary
+					let residualLabel = null;
+					if (computeResiduals) {
+						residualLabel = 'Error';
+						row[residualLabel] = row[colName] - state.resultData.values[i][j];
+					}
+					// save the names of the columns related to the target and predictions as metadata
+					// for use at render time
+					row._target = { truth: colName, predicted: label, error: residualLabel };
 				}
 			}
 		}
@@ -286,16 +276,32 @@ export function getResultDataItems(state, getters) {
 }
 
 export function getResultDataFields(state, getters) {
-	return () => {
-		const dataFields = getters.getFilteredDataFields();
+	return (regression) => {
+		let dataFields = getters.getFilteredDataFields();
+
+		// target field should be last displayed in table, next to predicted value and error
+		// (if applicable)
 		const resultData = state.resultData;
 		if (!_.isEmpty(resultData)) {
+			// add the result data to the baseline data
 			for (const col of resultData.columns) {
+				const truthValue = dataFields[col];
+				dataFields = _.omit(dataFields, col);
+				dataFields[col] = truthValue;
+
 				const label = `Predicted ${col}`;
 				dataFields[label] = {
 					label: label,
 					sortable: true
 				};
+				// add a field for the residuals for numeric predictions
+				if (regression) {
+					const errorLabel = 'Error';
+					dataFields[errorLabel] = {
+						label: errorLabel,
+						sortable: true
+					};
+				}
 			}
 			return dataFields;
 		} else {
@@ -378,13 +384,9 @@ export function getPipelineSessionID(state) {
 }
 
 export function getPipelineSession(state) {
-	return () => {
-		return state.pipelineSession;
-	};
+	return () => state.pipelineSession;
 }
 
 export function getHighlightedFeatureValues(state) {
-	return () => {
-		return state.highlightedFeatureValues;
-	};
+	return () => state.highlightedFeatureValues;
 }

@@ -31,23 +31,20 @@ export default {
 	props: [
 		'title',
 		'filterFunc',
-		'decorateFunc'
+		'decorateFunc',
+		'showError'
 	],
 
 	computed: {
-		// get dataset from route
-		dataset() {
-			return this.$store.getters.getRouteDataset();
-		},
 		// extracts the table data from the store
 		items() {
-			const items = this.$store.getters.getResultDataItems();
+			const items = this.$store.getters.getResultDataItems(this.showError);
 			return items.filter(this.filterFunc)
 				.map(this.decorateFunc);
 		},
 		// extract the table field header from the store
 		fields() {
-			return this.$store.getters.getResultDataFields();
+			return this.$store.getters.getResultDataFields(this.showError);
 		},
 		filters() {
 			return this.$store.getters.getFilters();
