@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"os"
 	"strconv"
-	"strings"
 
 	"github.com/jackc/pgx"
 	"github.com/pkg/errors"
@@ -108,6 +107,70 @@ func (s *Storage) executeInsertResultStatement(dataset string, resultID string, 
 	return err
 }
 
+func (s *Storage) parseVariableValue(value string, variable *model.Variable) (interface{}, error) {
+	// Integer types can be returned as floats.
+	switch variable.Type {
+	case model.IntegerType:
+		return strconv.ParseFloat(value, 64)
+	case model.FloatType:
+		return strconv.ParseFloat(value, 64)
+	case model.CategoricalType:
+		fallthrough
+	case model.TextType:
+		fallthrough
+	case model.DateTimeType:
+		fallthrough
+	case model.OrdinalType:
+		return value, nil
+	case model.BoolType:
+		return strconv.ParseBool(value)
+	default:
+		return value, nil
+	}
+}
+
+func (s *Storage) parseFilteredResults(dataset string, rows *pgx.Rows, target *model.Variable) (*model.FilteredData, error) {
+	result := &model.FilteredData{
+		Name:   dataset,
+		Values: make([][]interface{}, 0),
+	}
+
+	// Parse the columns.
+	// Column 0 is the result column so need to change the type.
+	if rows != nil {
+		fields := rows.FieldDescriptions()
+		columns := make([]string, len(fields))
+		types := make([]string, len(fields))
+		for i := 0; i < len(fields); i++ {
+			columns[i] = fields[i].Name
+			types[i] = fields[i].DataTypeName
+		}
+		types[0] = target.Type
+		result.Columns = columns
+		result.Types = types
+
+		// Parse the row data.
+		for rows.Next() {
+			columnValues, err := rows.Values()
+			if err != nil {
+				return nil, errors.Wrap(err, "Unable to extract fields from query result")
+			}
+			parsedTargetValue, err := s.parseVariableValue(columnValues[0].(string), target)
+
+			if err != nil {
+				return nil, errors.Wrap(err, "Unable to parse result variable")
+			}
+			columnValues[0] = parsedTargetValue
+			result.Values = append(result.Values, columnValues)
+		}
+	} else {
+		result.Columns = make([]string, 0)
+		result.Types = make([]string, 0)
+	}
+
+	return result, nil
+}
+
 func (s *Storage) parseResults(dataset string, rows *pgx.Rows, variable *model.Variable) (*model.FilteredData, error) {
 	// Scan the rows. Each row has only the value as a string.
 	values := [][]interface{}{}
@@ -117,29 +180,8 @@ func (s *Storage) parseResults(dataset string, rows *pgx.Rows, variable *model.V
 		if err != nil {
 			return nil, errors.Wrap(err, "Unable to parse result row")
 		}
-		var val interface{}
-		err = nil
 
-		// Integer types can be returned as floats.
-		switch variable.Type {
-		case model.IntegerType:
-			val, err = strconv.ParseFloat(value, 64)
-		case model.FloatType:
-			val, err = strconv.ParseFloat(value, 64)
-		case model.CategoricalType:
-			fallthrough
-		case model.TextType:
-			fallthrough
-		case model.DateTimeType:
-			fallthrough
-		case model.OrdinalType:
-			val = value
-		case model.BoolType:
-			val, err = strconv.ParseBool(value)
-		default:
-			val = value
-		}
-		// handle the parsed result/error
+		val, err := s.parseVariableValue(value, variable)
 		if err != nil {
 			return nil, errors.Wrap(err, "failed string value parsing")
 		}
@@ -154,8 +196,8 @@ func (s *Storage) parseResults(dataset string, rows *pgx.Rows, variable *model.V
 	}, nil
 }
 
-// FetchResults pulls the results from the Postgres database.
-func (s *Storage) FetchResults(dataset string, index string, resultURI string, filterParams *model.FilterParams) (*model.FilteredData, error) {
+// FetchFilteredResults pulls the results from the Postgres database.
+func (s *Storage) FetchFilteredResults(dataset string, index string, resultURI string, filterParams *model.FilterParams) (*model.FilteredData, error) {
 	datasetResult := s.getResultTable(dataset)
 	targetName, err := s.getResultTargetName(datasetResult, resultURI, index)
 	// fetch the variable info to resolve its type - skip the first column since that will be the d3m_index value
@@ -164,42 +206,48 @@ func (s *Storage) FetchResults(dataset string, index string, resultURI string, f
 		return nil, err
 	}
 
-	// *************** TODO --> just copy/pasted from filtered data fetch
-	query := fmt.Sprintf("SELECT value FROM %s WHERE result_id = $1 AND target = $2;", datasetResult)
-
-	params := make([]interface{}, 0)
-	wheres := make([]string, len(filterParams.Ranged))
-	for i, variable := range filterParams.Ranged {
-		wheres[i] = fmt.Sprintf("\"%s\" >= $%d AND \"%s\" <= $%d", variable.Name, i*2+1, variable.Name, i*2+2)
-		params = append(params, variable.Min)
-		params = append(params, variable.Max)
+	variables, err := model.FetchVariables(s.clientES, index, dataset)
+	if err != nil {
+		return nil, errors.Wrap(err, "Could not pull variables from ES")
 	}
 
-	for _, variable := range filterParams.Categorical {
-		// this is imposed by go's language design - []string needs explicit conversion to []interface{} before
-		// passing to interface{} ...
-		categories := make([]string, len(variable.Categories))
-		baseParam := len(params) + 1
-		for i := range variable.Categories {
-			categories[i] = fmt.Sprintf("$%d", baseParam+i)
-			params = append(params, variable.Categories[i])
-		}
-		wheres = append(wheres, fmt.Sprintf("\"%s\" IN (%s)", variable.Name, strings.Join(categories, ", ")))
+	fields, err := s.buildFilteredQueryField(dataset, variables, filterParams)
+	if err != nil {
+		return nil, errors.Wrap(err, "Could not build field list")
 	}
 
-	if len(wheres) > 0 {
-		query = fmt.Sprintf("%s WHERE %s", query, strings.Join(wheres, " AND "))
+	where, params, err := s.buildFilteredQueryWhere(dataset, filterParams)
+	if err != nil {
+		return nil, errors.Wrap(err, "Could not build where clause")
 	}
 
-	// order & limit the filtered data.
-	if variable != nil {
-		query = fmt.Sprintf("%s ORDER BY %s LIMIT %d", query, variable.Name, filterLimit)
+	query := fmt.Sprintf("SELECT value as %s_res, %s FROM %s as res inner join %s as data on data.\"%s\" = res.index WHERE result_id = $%d AND target = $%d AND %s;",
+		targetName, fields, datasetResult, dataset, d3mIndexFieldName, len(params)+1, len(params)+2, where)
+	params = append(params, resultURI)
+	params = append(params, targetName)
+
+	rows, err := s.client.Query(query, params)
+	if err != nil {
+		return nil, errors.Wrap(err, "Error querying results")
+	}
+	defer rows.Close()
+
+	return s.parseFilteredResults(dataset, rows, variable)
+}
+
+// FetchResults pulls the results from the Postgres database.
+func (s *Storage) FetchResults(dataset string, index string, resultURI string) (*model.FilteredData, error) {
+	datasetResult := s.getResultTable(dataset)
+	targetName, err := s.getResultTargetName(datasetResult, resultURI, index)
+	// fetch the variable info to resolve its type - skip the first column since that will be the d3m_index value
+	variable, err := s.getResultTargetVariable(dataset, index, targetName)
+	if err != nil {
+		return nil, err
 	}
 
-	query = query + ";"
-	// ***************** END TODO
+	sql := fmt.Sprintf("SELECT value FROM %s WHERE result_id = $1 AND target = $2;", datasetResult)
 
-	rows, err := s.client.Query(query, resultURI, targetName)
+	rows, err := s.client.Query(sql, resultURI, targetName)
 	if err != nil {
 		return nil, errors.Wrap(err, "Error querying results")
 	}

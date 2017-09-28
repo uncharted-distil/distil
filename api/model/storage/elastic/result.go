@@ -14,8 +14,13 @@ import (
 	log "github.com/unchartedsoftware/plog"
 )
 
+// FetchFilteredResults returns the set of test predictions made by a given pipeline. NOTE: Not Implemented!
+func (s *Storage) FetchFilteredResults(dataset string, index string, resultURI string, filterParam *model.FilterParams) (*model.FilteredData, error) {
+	return nil, errors.New("ElasticSearch FetchFilteredResults not implemented")
+}
+
 // FetchResults returns the set of test predictions made by a given pipeline.
-func (s *Storage) FetchResults(dataset string, index string, resultURI string, filterParam *model.FilterParams) (*model.FilteredData, error) {
+func (s *Storage) FetchResults(dataset string, index string, resultURI string) (*model.FilteredData, error) {
 	// load the result data from CSV
 	file, err := os.Open(resultURI)
 	if err != nil {
@@ -108,7 +113,7 @@ func (s *Storage) roundToInt(a float64) int64 {
 // FetchResultsSummary returns a histogram summarizing prediction results
 func (s *Storage) FetchResultsSummary(dataset string, index string, resultURI string) (*model.Histogram, error) {
 
-	results, err := s.FetchResults(dataset, resultURI, index, nil)
+	results, err := s.FetchResults(dataset, resultURI, index)
 	if err != nil {
 		return nil, err
 	}

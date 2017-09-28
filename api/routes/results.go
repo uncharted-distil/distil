@@ -41,7 +41,7 @@ func ResultsHandler(storageCtor model.StorageCtor) func(http.ResponseWriter, *ht
 			return
 		}
 
-		results, err := model.FetchResults(client, dataset, index, resultURI, filterParams)
+		results, err := model.FetchFilteredResults(client, dataset, index, resultURI, filterParams)
 		if err != nil {
 			handleError(w, err)
 			return

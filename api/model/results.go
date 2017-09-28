@@ -1,8 +1,13 @@
 package model
 
 // FetchResults returns the set of test predictions made by a given pipeline with requested filtering applied.
-func FetchResults(client Storage, dataset string, index string, resultsURI string, filterParams *FilterParams) (*FilteredData, error) {
-	return client.FetchResults(dataset, index, resultsURI, filterParams)
+func FetchResults(client Storage, dataset string, index string, resultsURI string) (*FilteredData, error) {
+	return client.FetchResults(dataset, index, resultsURI)
+}
+
+// FetchFilteredResults returns the set of test predictions made by a given pipeline with requested filtering applied.
+func FetchFilteredResults(client Storage, dataset string, index string, resultsURI string, filterParams *FilterParams) (*FilteredData, error) {
+	return client.FetchFilteredResults(dataset, index, resultsURI, filterParams)
 }
 
 // FetchResultsSummary returns a histogram summarizing prediction results

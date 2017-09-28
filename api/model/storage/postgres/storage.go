@@ -16,6 +16,7 @@ const (
 	resultTableName      = "result"
 	resultScoreTableName = "result_score"
 	featureTableName     = "request_feature"
+	d3mIndexFieldName    = "d3mIndex"
 )
 
 // Storage accesses the underlying postgres database.
