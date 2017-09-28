@@ -116,14 +116,14 @@ func FilteredDataHandler(ctor model.StorageCtor) func(http.ResponseWriter, *http
 		// fetch filtered data based on the supplied search parameters
 		data, err := model.FetchFilteredData(client, dataset, esIndex, filterParams, inclusiveBool)
 		if err != nil {
-			handleError(w, errors.Wrap(err, "unable marshal summary result into JSON"))
+			handleError(w, errors.Wrap(err, "unable fetch filtered data"))
 			return
 		}
 
 		// marshall output into JSON
 		bytes, err := json.Marshal(data)
 		if err != nil {
-			handleError(w, errors.Wrap(err, "unable marshal summary result into JSON"))
+			handleError(w, errors.Wrap(err, "unable marshal filtered data result into JSON"))
 			return
 		}
 
