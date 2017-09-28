@@ -4,12 +4,14 @@
 		<training-variables class="select-training-variables"></training-variables>
 		<div class="side-container">
 			<target-variable class="select-target-variables"></target-variable>
+			<create-pipelines-form class="select-create-pipelines"></create-pipelines-form>
 			<select-data-table class="select-data-table"></select-data-table>
 		</div>
 	</div>
 </template>
 
 <script>
+import CreatePipelinesForm from '../components/CreatePipelinesForm';
 import SelectDataTable from '../components/SelectDataTable';
 import AvailableVariables from '../components/AvailableVariables';
 import TrainingVariables from '../components/TrainingVariables';
@@ -19,6 +21,7 @@ export default {
 	name: 'select',
 
 	components: {
+		CreatePipelinesForm,
 		SelectDataTable,
 		AvailableVariables,
 		TrainingVariables,
