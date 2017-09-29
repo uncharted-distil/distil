@@ -1,6 +1,7 @@
 import _ from 'lodash';
 import axios from 'axios';
-import { encodeQueryParams } from '../util/filters';
+import moment from 'moment';
+import {encodeQueryParams} from '../util/filters';
 
 // TODO: move this somewhere more appropriate.
 const ES_INDEX = 'datasets';
@@ -23,6 +24,11 @@ export function searchDatasets(context, terms) {
 		});
 }
 
+export function createResultName(dataset, timestamp, targetFeature) {
+	const t = moment(timestamp);
+	return `${dataset}: ${targetFeature} at ${t.format('MMMM Do YYYY, h:mm:ss.SS a')}`;
+}
+
 // searches dataset descriptions and column names for supplied terms
 export function getSession(context) {
 	const sessionID = context.getters.getPipelineSessionID();
@@ -40,7 +46,7 @@ export function getSession(context) {
 
 					pipeline.Results.forEach((res) => {
 						// inject the name and pipeline id
-						const name = `${pipeline.Dataset}-${targetFeature}-${res.PipelineID.substring(0,8)}`;
+						const name = createResultName(pipeline.Dataset, res.CreatedTime, targetFeature);
 						res.name = name;
 
 						// add/update the running pipeline info
@@ -207,7 +213,7 @@ export function createPipelines(context, request) {
 			return;
 		}
 		// inject the name and pipeline id
-		const name = `${context.getters.getRouteDataset()}-${request.feature}-${res.pipelineId.substring(0,8)}`;
+		const name = createResultName(context.getters.getRouteDataset(), res.createdTime, request.feature);
 		res.name = name;
 		// add/update the running pipeline info
 		context.commit('addRunningPipeline', res);
