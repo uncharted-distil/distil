@@ -17,6 +17,8 @@ import (
 	"github.com/unchartedsoftware/distil/api/pipeline"
 	"github.com/unchartedsoftware/plog"
 	"golang.org/x/net/context"
+
+	es "gopkg.in/olivere/elastic.v5"
 )
 
 const (
@@ -214,11 +216,21 @@ func handleCreatePipelines(conn *Connection, client *pipeline.Client, esCtor ela
 		return
 	}
 
+	// initialize ES client
+	esClient, err := esCtor()
+	if err != nil {
+		handleErr(conn, msg, err)
+		return
+	}
+
 	// persist the filtered dataset if necessary
 	fetchFilteredData := func(dataset string, index string, filters *model.FilterParams, inclusive bool) (*model.FilteredData, error) {
 		return model.FetchFilteredData(storage, dataset, index, filters, inclusive)
 	}
-	datasetPath, err := pipeline.PersistFilteredData(fetchFilteredData, client.DataDir, clientCreateMsg.Dataset, clientCreateMsg.Index, clientCreateMsg.Feature, filters, true)
+	fetchVariable := func(dataset string, index string) ([]*model.Variable, error) {
+		return model.FetchVariables(esClient, index, dataset)
+	}
+	datasetPath, err := pipeline.PersistFilteredData(fetchFilteredData, fetchVariable, client.DataDir, clientCreateMsg.Dataset, clientCreateMsg.Index, clientCreateMsg.Feature, filters, true)
 	if err != nil {
 		handleErr(conn, msg, err)
 		return
@@ -234,7 +246,7 @@ func handleCreatePipelines(conn *Connection, client *pipeline.Client, esCtor ela
 	// Create the set of training features - we already filtered that out when we persist, but needs to be specified
 	// to satisfy ta3ta2 API.
 	trainFeatures := []*pipeline.Feature{}
-	filteredVars, err := fetchFilteredVariables(esCtor, clientCreateMsg.Index, clientCreateMsg.Dataset, filters)
+	filteredVars, err := fetchFilteredVariables(esClient, clientCreateMsg.Index, clientCreateMsg.Dataset, filters)
 	if err != nil {
 		handleErr(conn, msg, err)
 		return
@@ -416,7 +428,7 @@ func handleCreatePipelinesSuccess(conn *Connection, msg *Message, proxy *pipelin
 
 // TODO: We don't store this anywhere, so we end up running an ES query to get the var list.  This should
 // be cached by Redis, but still worth looking into storing some of the dataset info.
-func fetchFilteredVariables(esCtor elastic.ClientCtor, index string, dataset string, filters *model.FilterParams) ([]string, error) {
+func fetchFilteredVariables(esClient *es.Client, index string, dataset string, filters *model.FilterParams) ([]string, error) {
 	// put the filtered variables into a set for quick lookup
 	nameSet := map[string]bool{}
 	for _, varName := range filters.None {
@@ -424,10 +436,6 @@ func fetchFilteredVariables(esCtor elastic.ClientCtor, index string, dataset str
 	}
 
 	// fetch the variable set from es
-	esClient, err := esCtor()
-	if err != nil {
-		return nil, err
-	}
 	variables, err := model.FetchVariables(esClient, index, dataset)
 	if err != nil {
 		return nil, err
