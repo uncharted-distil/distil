@@ -228,7 +228,7 @@ func handleCreatePipelines(conn *Connection, client *pipeline.Client, esCtor ela
 		return model.FetchFilteredData(storage, dataset, index, filters, inclusive)
 	}
 	fetchVariable := func(dataset string, index string) ([]*model.Variable, error) {
-		return model.FetchVariables(esClient, dataset, index)
+		return model.FetchVariables(esClient, index, dataset)
 	}
 	datasetPath, err := pipeline.PersistFilteredData(fetchFilteredData, fetchVariable, client.DataDir, clientCreateMsg.Dataset, clientCreateMsg.Index, clientCreateMsg.Feature, filters, true)
 	if err != nil {
