@@ -45,47 +45,10 @@ export default {
 		// extract the table field header from the store
 		fields() {
 			return this.$store.getters.getResultDataFields(this.showError);
-		},
-		filters() {
-			return this.$store.getters.getFilters();
-		},
-		resultFilters() {
-			return this.$store.getters.getResultsFilters();
-		},
-		resultId() {
-			return atob(this.$store.getters.getRouteResultId());
-		}
-	},
-
-	mounted() {
-		this.fetch();
-	},
-
-	watch: {
-		'$route.query.dataset'() {
-			this.fetch();
-		},
-		'$route.query.results'() {
-			this.fetch();
-		},
-		'$route.query.resultId'() {
-			this.fetch();
 		}
 	},
 
 	methods: {
-		fetch() {
-			this.$store.dispatch('updateFilteredData', {
-				dataset: this.dataset,
-				filters: this.filters
-			}).then(() => {
-				this.$store.dispatch('updateResultsData', {
-					dataset: this.dataset,
-					filters: this.resultFilters,
-					resultId: this.resultId
-				});
-			});
-		},
 		onRowHovered(event) {
 			// set new values
 			const highlights = {};
@@ -94,6 +57,7 @@ export default {
 			});
 			this.$store.dispatch('highlightFeatureValues', highlights);
 		},
+
 		onMouseOut() {
 			this.$store.dispatch('clearFeatureHighlightValues');
 		}

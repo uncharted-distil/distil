@@ -255,26 +255,30 @@ export function getResultData(state) {
 
 export function getResultDataItems(state, getters) {
 	return (computeResiduals) => {
-		if (validateData(state.resultData)) {
+		const resultData = state.resultData.resultData;
+		const mergedResults = [];
+		if (validateData(resultData)) {
 			const resultDataItems = getters.getFilteredDataItems();
 			// append the result variable data to the baseline variable data
 			for (const [i, row] of resultDataItems.entries()) {
-				for (const [j, colName] of state.resultData.columns.entries()) {
+				for (const [j, colName] of resultData.columns.entries()) {
 					// append the result value
 					const label = `Predicted ${colName}`;
-					row[label] = state.resultData.values[i][j];
+					row[label] = resultData.values[i][j];
 
 					// append the residual value if necessary
 					let residualLabel = null;
 					if (computeResiduals) {
 						residualLabel = 'Error';
-						row[residualLabel] = row[colName] - state.resultData.values[i][j];
+						row[residualLabel] = row[colName] - resultData.values[i][j];
 					}
 					// save the names of the columns related to the target and predictions as metadata
 					// for use at render time
 					row._target = { truth: colName, predicted: label, error: residualLabel };
 				}
+				mergedResults.push(row);
 			}
+			return mergedResults;
 		}
 		return [];
 	};
@@ -286,7 +290,7 @@ export function getResultDataFields(state, getters) {
 
 		// target field should be last displayed in table, next to predicted value and error
 		// (if applicable)
-		const resultData = state.resultData;
+		const resultData = state.resultData.resultData;
 		if (!_.isEmpty(resultData)) {
 			// add the result data to the baseline data
 			for (const col of resultData.columns) {

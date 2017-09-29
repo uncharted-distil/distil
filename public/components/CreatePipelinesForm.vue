@@ -62,16 +62,14 @@ export default {
 			const taskData = getTask(this.targetVariable.type);
 			const task = taskData.schemaName;
 			const output = _.values(getOutputSchemaNames(taskData))[0];
+			const metrics = _.map(this.metrics, m => getMetricSchemaName(m));
 
-			// create pipelines for each metric
-			this.metrics.forEach(metric => {
-				// dispatch action that triggers request send to server
-				this.$store.dispatch('createPipelines', {
-					feature: this.feature,
-					task: task,
-					metric: getMetricSchemaName(metric),
-					output: output
-				});
+			// dispatch action that triggers request send to server
+			this.$store.dispatch('createPipelines', {
+				feature: this.$store.getters.getRouteTargetVariable(),
+				task: task,
+				metric: metrics,
+				output: output
 			});
 
 			// transition to build screen
