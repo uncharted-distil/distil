@@ -67,12 +67,23 @@ export default {
 		});
 		// click events
 		this.facets.on('facet:click', (event, key, value) => {
+			// check that facet is filterable
+			const groupSpec = _.find(component.groups, group => {
+				return group.key === key;
+			});
+			const facetSpec = _.find(groupSpec.facets, facet => {
+				return facet.value === value;
+			});
+			if (!facetSpec.filterable) {
+				// not filterable
+				return;
+			}
 			// get group
 			const group = component.facets.getGroup(key);
 			// get facet
-			const current = group.facets.filter(facet => {
+			const current = _.find(group.facets, facet => {
 				return facet.value === value;
-			})[0];
+			});
 			// toggle facet
 			if (current._spec.selected) {
 				current.deselect();
