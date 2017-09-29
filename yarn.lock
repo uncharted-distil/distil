@@ -2,9 +2,9 @@
 # yarn lockfile v1
 
 
-"@uncharted.software/stories-facets@2.10.0":
-  version "2.10.0"
-  resolved "https://registry.yarnpkg.com/@uncharted.software/stories-facets/-/stories-facets-2.10.0.tgz#036c8294f9a532ba7852dcd78126e1642b70f50b"
+"@uncharted.software/stories-facets@2.11.0":
+  version "2.11.0"
+  resolved "https://registry.yarnpkg.com/@uncharted.software/stories-facets/-/stories-facets-2.11.0.tgz#f697977b57494fb658539e955650df60ceea90ae"
 
 abbrev@1:
   version "1.1.0"
@@ -1671,9 +1671,9 @@ eslint-plugin-html@3.2.2:
     htmlparser2 "^3.8.2"
     semver "^5.4.1"
 
-eslint-plugin-jsdoc@3.1.2:
-  version "3.1.2"
-  resolved "https://registry.yarnpkg.com/eslint-plugin-jsdoc/-/eslint-plugin-jsdoc-3.1.2.tgz#901ab61b5ad3ff3a08697a59e806698c9e1fdf51"
+eslint-plugin-jsdoc@3.1.3:
+  version "3.1.3"
+  resolved "https://registry.yarnpkg.com/eslint-plugin-jsdoc/-/eslint-plugin-jsdoc-3.1.3.tgz#fa49d493b9ca0e763d92b0c9e5cbf9891e8e3a30"
   dependencies:
     comment-parser "^0.4.0"
     lodash "^4.5.1"
@@ -3166,6 +3166,10 @@ pluralize@^7.0.0:
   version "7.0.0"
   resolved "https://registry.yarnpkg.com/pluralize/-/pluralize-7.0.0.tgz#298b89df8b93b0221dbf421ad2b1b1ea23fc6777"
 
+popper.js@^1.12.5:
+  version "1.12.5"
+  resolved "https://registry.yarnpkg.com/popper.js/-/popper.js-1.12.5.tgz#229e4dea01629e1f1a1e26991ffade5024220fa6"
+
 postcss-calc@^5.2.0:
   version "5.3.1"
   resolved "https://registry.yarnpkg.com/postcss-calc/-/postcss-calc-5.3.1.tgz#77bae7ca928ad85716e2fda42f261bf7c1d65b5e"
@@ -4274,6 +4278,10 @@ vue-router@2.7.0:
   version "2.7.0"
   resolved "https://registry.yarnpkg.com/vue-router/-/vue-router-2.7.0.tgz#16d424493aa51c3c8cce8b7c7210ea4c3a89aff1"
 
+vue-slider-component@^2.4.1:
+  version "2.4.1"
+  resolved "https://registry.yarnpkg.com/vue-slider-component/-/vue-slider-component-2.4.1.tgz#ad0c215c2bb56f96015244dc02fda3063aa38666"
+
 vue-style-loader@^3.0.0:
   version "3.0.1"
   resolved "https://registry.yarnpkg.com/vue-style-loader/-/vue-style-loader-3.0.1.tgz#c8b639bb2f24baf9d78274dc17e4f264c1deda08"
@@ -4300,9 +4308,9 @@ vuex-router-sync@4.3.2:
   version "4.3.2"
   resolved "https://registry.yarnpkg.com/vuex-router-sync/-/vuex-router-sync-4.3.2.tgz#604b61a377daaa68b2ef6e8e0326b2cad26f359e"
 
-vuex@2.4.0:
-  version "2.4.0"
-  resolved "https://registry.yarnpkg.com/vuex/-/vuex-2.4.0.tgz#e1d0430646282b40007fdd06ec6ae88a9f5a1e14"
+vuex@2.4.1:
+  version "2.4.1"
+  resolved "https://registry.yarnpkg.com/vuex/-/vuex-2.4.1.tgz#7890b650ba8565b70937b4e7670577082dfe8bc1"
 
 watchpack@^1.4.0:
   version "1.4.0"

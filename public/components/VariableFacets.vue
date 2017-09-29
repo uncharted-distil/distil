@@ -1,7 +1,7 @@
 <template>
 	<div class='variable-facets'>
 		<div class="facet-filters">
-			<div v-if="enableFilter">
+			<div v-if="enableSearch">
 				<b-form-fieldset size="sm" horizontal label="Filter" :label-cols="2">
 					<b-form-input size="sm" v-model="filter" placeholder="Type to Search" />
 				</b-form-fieldset>
@@ -11,6 +11,8 @@
 					<b-button size="sm" variant="outline-secondary" @click="selectAll">All</b-button>
 					<b-button size="sm" variant="outline-secondary" @click="deselectAll">None</b-button>
 				</b-form-fieldset>
+			</div>
+			<div v-if="enableSort">
 				<b-form-fieldset size="sm" horizontal label="Sort" :label-cols="2">
 					<div class="sort-groups">
 						<span class="sort-group">
@@ -52,6 +54,7 @@
 		</div>
 		<facets class="facets-container"
 			:groups="groups"
+			:highlights="highlights"
 			:html="html"
 			:sort="sort"
 			v-on:expand="onExpand"
@@ -82,14 +85,17 @@ export default {
 		Facets
 	},
 
-	props: [
-		'enable-filter',
-		'enable-toggle',
-		'variables',
-		'dataset',
-		'html',
-		'instance-name'
-	],
+	props: {
+		'enable-search': Boolean,
+		'enable-toggle': Boolean,
+		'enable-sort': Boolean,
+		'enable-group-collapse': Boolean,
+		'enable-facet-filtering': Boolean,
+		'variables': Array,
+		'dataset': String,
+		'html': [ String, Object, Function ],
+		'instance-name': String
+	},
 
 	data() {
 		return {
@@ -135,12 +141,15 @@ export default {
 			}
 
 			// create the groups
-			let groups = createGroups(filtered);
+			let groups = createGroups(filtered, this.enableGroupCollapse, this.enableFacetFiltering);
 
 			// update collapsed state
 			groups = this.updateGroupCollapses(groups);
 			// update selections
 			return this.updateGroupSelections(groups);
+		},
+		highlights() {
+			return this.$store.getters.getHighlightedFeatureValues();
 		},
 		importance() {
 			const variables = this.$store.getters.getVariables();
@@ -366,6 +375,9 @@ button {
 .facets-container {
 	overflow-x: hidden;
 	overflow-y: auto;
+}
+.facet-filters .form-group {
+	margin-bottom: 4px;
 }
 .sort-groups {
 	display: flex;

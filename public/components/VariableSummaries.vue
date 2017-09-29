@@ -4,8 +4,11 @@
 			<h6 class="nav-link">Summaries</h6>
 		</div>
 		<variable-facets
-			enable-filter="true"
-			enable-toggle="true"
+			enable-search
+			enable-toggle
+			enable-sort
+			enable-group-collapse
+			enable-facet-filtering
 			instance-name="varSummaries"
 			:variables="variables"
 			:dataset="dataset">

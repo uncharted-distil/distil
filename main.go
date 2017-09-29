@@ -31,7 +31,7 @@ const (
 	defaultAppPort                 = "8080"
 	defaultPipelineComputeEndPoint = "localhost:9500"
 	defaultPipelineDataDir         = "datasets"
-	defaultPGStorage               = "false"
+	defaultPGStorage               = "true"
 	defaultPGHost                  = "localhost"
 	defaultPGPort                  = "5432"
 	defaultPGUser                  = "distil"
@@ -125,7 +125,7 @@ func main() {
 	registerRoute(mux, "/distil/datasets/:index", routes.DatasetsHandler(esClientCtor))
 	registerRoute(mux, "/distil/variables/:index/:dataset", routes.VariablesHandler(esClientCtor))
 	registerRoute(mux, "/distil/variable-summaries/:index/:dataset/:variable", routes.VariableSummaryHandler(dataStorageCtor, esClientCtor))
-	registerRoute(mux, "/distil/filtered-data/:esIndex/:dataset", routes.FilteredDataHandler(dataStorageCtor))
+	registerRoute(mux, "/distil/filtered-data/:esIndex/:dataset/:inclusive", routes.FilteredDataHandler(dataStorageCtor))
 	registerRoute(mux, "/distil/results/:index/:dataset/:results-uri", routes.ResultsHandler(dataStorageCtor))
 	registerRoute(mux, "/distil/results-summary/:index/:dataset/:results-uri", routes.ResultsSummaryHandler(dataStorageCtor))
 	registerRoute(mux, "/distil/session/:session", routes.SessionHandler(dataStorageCtor))

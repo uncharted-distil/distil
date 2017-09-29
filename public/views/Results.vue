@@ -13,35 +13,52 @@ import ResultSummaries from '../components/ResultSummaries';
 
 export default {
 	name: 'results',
+
 	components: {
 		ResultsComparison,
 		VariableSummaries,
 		ResultSummaries
 	},
 
+	computed: {
+		dataset() {
+			return this.$store.getters.getRouteDataset();
+		},
+		variables() {
+			return this.$store.getters.getVariables();
+		},
+		requestId() {
+			return this.$store.getters.getRouteCreateRequestId();
+		}
+	},
+
 	mounted() {
-		// kick off a result fetch when the component is first displayed
-		this.$store.dispatch('getResultsSummaries', {
-			dataset: this.$store.getters.getRouteDataset(),
-			requestId: this.$store.getters.getRouteCreateRequestId()
-		});
-		this.$store.dispatch('getVariableSummaries', this.$store.getters.getRouteDataset());
+		this.fetch();
 	},
 
 	watch: {
 		// watch the route and update the results if its modified
 		'$route.query.dataset'() {
-			this.$store.dispatch('getResultsSummaries', {
-				dataset: this.$store.getters.getRouteDataset(),
-				requestId: this.$store.getters.getRouteCreateRequestId()
-			});
-			this.$store.dispatch('getVariableSummaries', this.$store.getters.getRouteDataset());
+			this.fetch();
 		},
 		'$route.query.requestId'() {
-			this.$store.dispatch('getResultsSummaries', {
-				dataset: this.$store.getters.getRouteDataset(),
-				requestId: this.$store.getters.getRouteCreateRequestId()
-			});
+			this.fetch();
+		}
+	},
+
+	methods: {
+		fetch() {
+			this.$store.dispatch('getVariables', this.dataset)
+				.then(() => {
+					this.$store.dispatch('getVariableSummaries', {
+						dataset: this.dataset,
+						variables: this.variables
+					});
+					this.$store.dispatch('getResultsSummaries', {
+						dataset: this.dataset,
+						requestId: this.requestId
+					});
+				});
 		}
 	}
 };

@@ -1,9 +1,12 @@
 <template>
-	<div class='target-variables'>
+	<div>
 		<div class="bg-faded rounded-top">
 			<h6 class="nav-link">Target Variable</h6>
 		</div>
-		<variable-facets
+		<div class="target-no-target" v-if="variables.length===0">
+			No target variable selected
+		</div>
+		<variable-facets v-if="variables.length>0"
 			:variables="variables"
 			:dataset="dataset"
 			:html="html"></variable-facets>
@@ -17,7 +20,7 @@ import VariableFacets from '../components/VariableFacets';
 import 'font-awesome/css/font-awesome.css';
 
 export default {
-	name: 'training-variables',
+	name: 'target-variables',
 
 	components: {
 		VariableFacets
@@ -28,11 +31,7 @@ export default {
 			return this.$store.getters.getRouteDataset();
 		},
 		variables() {
-			const target = this.$store.getters.getTargetVariable();
-			if (target) {
-				return [ target ];
-			}
-			return [];
+			return this.$store.getters.getTargetVariableSummaries();
 		},
 		html() {
 			return () => {
@@ -42,7 +41,7 @@ export default {
 				remove.innerHTML = 'Remove';
 				remove.addEventListener('click', () => {
 					const entry = createRouteEntryFromRoute(this.$store.getters.getRoute(), {
-						target: null,
+						target: '',
 					});
 					this.$router.push(entry);
 				});
@@ -55,8 +54,9 @@ export default {
 </script>
 
 <style>
-.training-variables {
-	display: flex;
-	flex-direction: column;
+.target-no-target {
+	width: 100%;
+	background-color: #eee;
+	padding: 8px;
 }
 </style>

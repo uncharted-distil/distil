@@ -1,10 +1,10 @@
 <template>
-	<div class="results-data-table">
+	<div class="explore-data-table">
 		<div class="bg-faded rounded-top">
-			<h6 class="nav-link">{{title}}</h6>
+			<h6 class="nav-link">Values</h6>
 		</div>
-		<div class="results-data-table-container">
-			<div class="results-data-no-results" v-if="items.length===0">
+		<div class="explore-data-table-container">
+			<div class="explore-data-no-results" v-if="items.length===0">
 				No results
 			</div>
 			<b-table v-if="items.length>0"
@@ -26,29 +26,46 @@
 import _ from 'lodash';
 
 export default {
-	name: 'results-data-table',
-
-	props: [
-		'title',
-		'filterFunc',
-		'decorateFunc',
-		'showError'
-	],
+	name: 'explore-data-table',
 
 	computed: {
+		// get dataset from route
+		dataset() {
+			return this.$store.getters.getRouteDataset();
+		},
 		// extracts the table data from the store
 		items() {
-			const items = this.$store.getters.getResultDataItems(this.showError);
-			return items.filter(this.filterFunc)
-				.map(this.decorateFunc);
+			return this.$store.getters.getFilteredDataItems();
 		},
 		// extract the table field header from the store
 		fields() {
-			return this.$store.getters.getResultDataFields(this.showError);
+			return this.$store.getters.getFilteredDataFields();
+		},
+		filters() {
+			return this.$store.getters.getFilters();
+		}
+	},
+
+	mounted() {
+		this.fetch();
+	},
+
+	watch: {
+		'$route.query.filters'() {
+			this.fetch();
+		},
+		'$route.query.dataset'() {
+			this.fetch();
 		}
 	},
 
 	methods: {
+		fetch() {
+			this.$store.dispatch('updateFilteredData', {
+				dataset: this.dataset,
+				filters: this.filters
+			});
+		},
 		onRowHovered(event) {
 			// set new values
 			const highlights = {};
@@ -57,7 +74,6 @@ export default {
 			});
 			this.$store.dispatch('highlightFeatureValues', highlights);
 		},
-
 		onMouseOut() {
 			this.$store.dispatch('clearFeatureHighlightValues');
 		}
@@ -67,15 +83,15 @@ export default {
 
 <style>
 
-results-data-table {
+.explore-data-table {
 	display: flex;
 	flex-direction: column;
 }
-.results-data-table-container {
+.explore-data-table-container {
 	display: flex;
 	overflow: auto;
 }
-.results-data-no-results {
+.explore-data-no-results {
 	width: 100%;
 	background-color: #eee;
 	padding: 8px;

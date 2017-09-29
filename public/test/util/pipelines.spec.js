@@ -22,7 +22,7 @@ describe('pipelines', () => {
 		it('should return a list of associated output schema names for a task', () => {
 			const task = pipelines.getTask('float');
 			expect(pipelines.getOutputSchemaNames(task).length).to.not.equal(0);
-			expect(pipelines.getOutputSchemaNames(task)).to.include('regression_value');
+			expect(pipelines.getOutputSchemaNames(task)).to.include('real');
 		});
 	});
 

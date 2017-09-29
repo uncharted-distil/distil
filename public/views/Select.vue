@@ -4,13 +4,15 @@
 		<training-variables class="select-training-variables"></training-variables>
 		<div class="side-container">
 			<target-variable class="select-target-variables"></target-variable>
-			<data-table class="select-data-table"></data-table>
+			<create-pipelines-form class="select-create-pipelines"></create-pipelines-form>
+			<select-data-table class="select-data-table"></select-data-table>
 		</div>
 	</div>
 </template>
 
 <script>
-import DataTable from '../components/DataTable';
+import CreatePipelinesForm from '../components/CreatePipelinesForm';
+import SelectDataTable from '../components/SelectDataTable';
 import AvailableVariables from '../components/AvailableVariables';
 import TrainingVariables from '../components/TrainingVariables';
 import TargetVariable from '../components/TargetVariable';
@@ -19,21 +21,43 @@ export default {
 	name: 'select',
 
 	components: {
-		DataTable,
+		CreatePipelinesForm,
+		SelectDataTable,
 		AvailableVariables,
 		TrainingVariables,
 		TargetVariable
 	},
 
+	computed: {
+		dataset() {
+			return this.$store.getters.getRouteDataset();
+		},
+		variables() {
+			return this.$store.getters.getVariables();
+		}
+	},
+
 	mounted() {
-		const dataset = this.$store.getters.getRouteDataset();
-		this.$store.dispatch('getVariableSummaries', dataset);
+		this.fetch();
 	},
 
 	watch: {
 		'$route.query.dataset'() {
-			const dataset = this.$store.getters.getRouteDataset();
-			this.$store.dispatch('getVariableSummaries', dataset);
+			this.fetch();
+		},
+		'$route.query.training'() {
+		},
+	},
+
+	methods: {
+		fetch() {
+			this.$store.dispatch('getVariables', this.dataset)
+				.then(() => {
+					this.$store.dispatch('getVariableSummaries', {
+						dataset: this.dataset,
+						variables: this.variables
+					});
+				});
 		}
 	}
 };

@@ -184,10 +184,10 @@ type pipelineCreateMsg struct {
 	Index        string          `json:"index"`
 	Feature      string          `json:"feature"`
 	Task         string          `json:"task"`
-	Metric       string          `json:"metric"`
 	Output       string          `json:"output"`
 	MaxPipelines int32           `json:"maxPipelines"`
 	Filters      json.RawMessage `json:"filters"`
+	Metrics      []string        `json:"metric"`
 }
 
 func handleCreatePipelines(conn *Connection, client *pipeline.Client, esCtor elastic.ClientCtor, storageCtor model.StorageCtor, msg *Message) {
@@ -215,10 +215,10 @@ func handleCreatePipelines(conn *Connection, client *pipeline.Client, esCtor ela
 	}
 
 	// persist the filtered dataset if necessary
-	fetchFilteredData := func(dataset string, index string, filters *model.FilterParams) (*model.FilteredData, error) {
-		return model.FetchFilteredData(storage, dataset, index, filters)
+	fetchFilteredData := func(dataset string, index string, filters *model.FilterParams, inclusive bool) (*model.FilteredData, error) {
+		return model.FetchFilteredData(storage, dataset, index, filters, inclusive)
 	}
-	datasetPath, err := pipeline.PersistFilteredData(fetchFilteredData, client.DataDir, clientCreateMsg.Dataset, clientCreateMsg.Index, clientCreateMsg.Feature, filters)
+	datasetPath, err := pipeline.PersistFilteredData(fetchFilteredData, client.DataDir, clientCreateMsg.Dataset, clientCreateMsg.Index, clientCreateMsg.Feature, filters, true)
 	if err != nil {
 		handleErr(conn, msg, err)
 		return
@@ -247,13 +247,20 @@ func handleCreatePipelines(conn *Connection, client *pipeline.Client, esCtor ela
 		trainFeatures = append(trainFeatures, feature)
 	}
 
+	// convert received metrics into the ta3ta2 format
+	metrics := []pipeline.Metric{}
+	for _, msgMetric := range clientCreateMsg.Metrics {
+		metric := pipeline.Metric(pipeline.Metric_value[strings.ToUpper(msgMetric)])
+		metrics = append(metrics, metric)
+	}
+
 	// populate the protobuf pipeline create msg
 	createMsg := &pipeline.PipelineCreateRequest{
 		Context:       &pipeline.SessionContext{SessionId: msg.Session},
 		TrainFeatures: trainFeatures,
 		Task:          pipeline.TaskType(pipeline.TaskType_value[strings.ToUpper(clientCreateMsg.Task)]),
 		Output:        pipeline.OutputType(pipeline.OutputType_value[strings.ToUpper(clientCreateMsg.Output)]),
-		Metrics:       []pipeline.Metric{pipeline.Metric(pipeline.Metric_value[strings.ToUpper(clientCreateMsg.Metric)])},
+		Metrics:       metrics,
 		TargetFeatures: []*pipeline.Feature{
 			{
 				FeatureId: clientCreateMsg.Feature,
