@@ -8,6 +8,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/golang/protobuf/proto"
 	"github.com/mattn/go-isatty"
 	"github.com/mgutz/ansi"
 	log "github.com/unchartedsoftware/plog"
@@ -56,6 +57,13 @@ func (r *requestLogger) request(request string) *requestLogger {
 			}
 		}
 	}
+	return r
+}
+
+func (r *requestLogger) message(request proto.Message) *requestLogger {
+	protoString := proto.MarshalTextString(request)
+	r.write(ansi.DefaultFG, "/")
+	r.write(ansi.Green, protoString)
 	return r
 }
 

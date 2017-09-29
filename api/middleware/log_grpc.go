@@ -3,6 +3,7 @@ package middleware
 import (
 	"time"
 
+	"github.com/golang/protobuf/proto"
 	"github.com/pkg/errors"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
@@ -20,6 +21,7 @@ func GenerateUnaryClientInterceptor() grpc.UnaryClientInterceptor {
 		newRequestLogger().
 			requestType("GRPC.UNARY").
 			request(method).
+			message(req.(proto.Message)).
 			duration(dt).
 			log(true)
 		return err
@@ -36,7 +38,7 @@ func GenerateStreamClientInterceptor() grpc.StreamClientInterceptor {
 		}
 		dt := time.Since(startTime)
 		newRequestLogger().
-			requestType("GRPC.UNARY").
+			requestType("GRPC.STREAM_CLIENT").
 			request(method).
 			duration(dt).
 			log(true)

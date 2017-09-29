@@ -12,6 +12,7 @@ import (
 	"github.com/unchartedsoftware/distil/api/elastic"
 	"github.com/unchartedsoftware/distil/api/model"
 
+	"github.com/golang/protobuf/proto"
 	"github.com/pkg/errors"
 	"github.com/satori/go.uuid"
 	"github.com/unchartedsoftware/distil/api/pipeline"
@@ -236,12 +237,13 @@ func handleCreatePipelines(conn *Connection, client *pipeline.Client, esCtor ela
 		return
 	}
 
-	// make sure the path is absolute
+	// make sure the path is absolute and contains the URI prefix
 	datasetPath, err = filepath.Abs(datasetPath)
 	if err != nil {
 		handleErr(conn, msg, err)
 		return
 	}
+	datasetPath = fmt.Sprintf("file://%s", datasetPath)
 
 	// Create the set of training features - we already filtered that out when we persist, but needs to be specified
 	// to satisfy ta3ta2 API.
@@ -281,6 +283,7 @@ func handleCreatePipelines(conn *Connection, client *pipeline.Client, esCtor ela
 		},
 		MaxPipelines: clientCreateMsg.MaxPipelines,
 	}
+	log.Info(proto.MarshalTextString(createMsg))
 
 	// kick off the pipeline creation, or re-attach to one that is already running
 	if session, ok := client.GetSession(msg.Session); ok {
@@ -476,7 +479,7 @@ func parseDatasetFilters(rawFilters json.RawMessage) (*model.FilterParams, error
 
 	// sort the filter values by var name to ensure consistent hashing
 	//
-	// TODO: this can possibly be circumvented by having the client pass
+	// TODO: this can possibly be circumvented I think the only thing that will really change visuallyby having the client pass
 	// the filter params up as a sorted list rather than a map
 	filterValues := make([]*filter, 0, len(filters))
 	for k := range filters {
