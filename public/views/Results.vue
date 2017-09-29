@@ -56,7 +56,7 @@ export default {
 					});
 					this.$store.dispatch('getResultsSummaries', {
 						dataset: this.dataset,
-						requestId: this.requestId()
+						requestId: this.requestId
 					});
 				});
 		}

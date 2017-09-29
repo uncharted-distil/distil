@@ -32,14 +32,16 @@ export default {
 
 	watch: {
 		// if filters change, update data
+		// TODO: watch needs to be finer grained
 		'$route.query'() {
 			const dataset = this.$store.getters.getRouteDataset();
-			this.$store.dispatch('updateFilteredData', dataset).then(() => {
+			this.$store.dispatch('updateFilteredData', { dataset }).then(() => {
 				this.$store.dispatch('updateResults', {
 					dataset: dataset,
 					resultId: atob(this.$store.getters.getRouteResultId())
 				});
 			});
+			this.setTableHandlers();
 		}
 	},
 
@@ -55,25 +57,14 @@ export default {
 	mounted() {
 		// get dataset from route - generate residuals if we're dealing with regression
 		const dataset = this.$store.getters.getRouteDataset();
-		this.$store.dispatch('updateFilteredData', dataset).then(() => {
+		this.$store.dispatch('updateFilteredData', { dataset }).then(() => {
 			this.$store.dispatch('updateResults', {
 				dataset: dataset,
 				resultId: atob(this.$store.getters.getRouteResultId()),
 			});
 		});
 
-		// set the filter and decorate functions based on the result type
-		if (this.regressionEnabled) {
-			this.correctFilter = this.regressionInRangeFilter;
-			this.correctDecorate = this.regressionInRangeDecorate;
-			this.incorrectFilter = this.regressionOutOfRangeFilter;
-			this.incorrectDecorate = this.regressionOutOfRangeDecorate;
-		} else {
-			this.correctFilter = this.classificationMatchFilter;
-			this.correctDecorate = this.classificationMatchDecorate;
-			this.incorrectFilter = this.classificationNoMatchFilter;
-			this.incorrectDecorate = this.classificationNoMatchDecorate;
-		}
+		this.setTableHandlers();
 	},
 
 	computed: {
@@ -85,16 +76,31 @@ export default {
 		},
 
 		regressionEnabled() {
-			//return isRegressionOutput(this.result.pipeline.output);
 			const targetVarName = this.$store.getters.getRouteTargetVariable();
-			console.log(this.$store.getters.getVariables());
 			const targetVar = _.find(this.$store.getters.getVariables(), v => _.toLower(v.name) === targetVarName);
+			if (_.isEmpty(targetVar)) {
+				return false;
+			}
 			const task = getTask(targetVar.type);
 			return task.schemaName === 'regression';
 		}
 	},
 
 	methods: {
+		setTableHandlers() {
+			// set the filter and decorate functions based on the result type
+			if (this.regressionEnabled) {
+				this.correctFilter = this.regressionInRangeFilter;
+				this.correctDecorate = this.regressionInRangeDecorate;
+				this.incorrectFilter = this.regressionOutOfRangeFilter;
+				this.incorrectDecorate = this.regressionOutOfRangeDecorate;
+			} else {
+				this.correctFilter = this.classificationMatchFilter;
+				this.correctDecorate = this.classificationMatchDecorate;
+				this.incorrectFilter = this.classificationNoMatchFilter;
+				this.incorrectDecorate = this.classificationNoMatchDecorate;
+			}
+		},
 		// Methods passed to classification result table instances to filter their displays.
 
 		classificationMatchFilter(dataItem) {
