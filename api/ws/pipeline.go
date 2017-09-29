@@ -346,10 +346,10 @@ func handleCreatePipelinesSuccess(conn *Connection, msg *Message, proxy *pipelin
 					handleErr(conn, msg, errors.Wrap(err, "Unable to store request update"))
 				}
 				response := map[string]interface{}{
-					"requestId":  proxy.RequestID,
-					"pipelineId": res.PipelineId,
-					"progress":   progress,
-					"dataset":    dataset,
+					"requestId":   proxy.RequestID,
+					"pipelineId":  res.PipelineId,
+					"progress":    progress,
+					"dataset":     dataset,
 					"createdTime": currentTime,
 				}
 				log.Infof("Pipeline %s - %s", res.PipelineId, progress)
@@ -370,9 +370,9 @@ func handleCreatePipelinesSuccess(conn *Connection, msg *Message, proxy *pipelin
 						}
 					}
 					response["pipeline"] = map[string]interface{}{
-						"scores":      scores,
-						"output":      pipeline.OutputType_name[int32(res.PipelineInfo.Output)],
-						"resultUri":   res.PipelineInfo.PredictResultUris[0],
+						"scores":    scores,
+						"output":    pipeline.OutputType_name[int32(res.PipelineInfo.Output)],
+						"resultUri": res.PipelineInfo.PredictResultUris[0],
 					}
 
 					// store the result data & metadata
