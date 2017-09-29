@@ -1,10 +1,7 @@
 import _ from 'lodash';
 import axios from 'axios';
 import moment from 'moment';
-import {
-	decodeFilters,
-	encodeQueryParams
-} from '../util/filters';
+import {encodeQueryParams} from '../util/filters';
 
 // TODO: move this somewhere more appropriate.
 const ES_INDEX = 'datasets';
