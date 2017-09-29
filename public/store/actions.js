@@ -234,7 +234,7 @@ export function createPipelines(context, request) {
 		metric: request.metric,
 		output: request.output,
 		maxPipelines: 3,
-		filters: context.getters.getFilters()
+		filters: context.getters.getSelectedFilters()
 	});
 }
 

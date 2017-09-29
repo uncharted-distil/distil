@@ -31,7 +31,7 @@ const (
 	defaultAppPort                 = "8080"
 	defaultPipelineComputeEndPoint = "localhost:9500"
 	defaultPipelineDataDir         = "datasets"
-	defaultPGStorage               = "false"
+	defaultPGStorage               = "true"
 	defaultPGHost                  = "localhost"
 	defaultPGPort                  = "5432"
 	defaultPGUser                  = "distil"
