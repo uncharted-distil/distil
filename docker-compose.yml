@@ -3,8 +3,6 @@ elastic:
     docker.uncharted.software/distil_dev_es:latest
   ports:
     - "9200:9200"
-  user:
-    elasticsearch
 pipeline_server:
   image:
     docker.uncharted.software/distil-pipeline-server:latest
@@ -19,8 +17,6 @@ postgres:
     docker.uncharted.software/distil_dev_postgres:latest
   ports:
     - "5432:5432"
-  user:
-    postgres
   command:
     -d postgres
 redis:
