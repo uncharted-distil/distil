@@ -21,9 +21,9 @@ spec:
 apiVersion: v1
 kind: Pod
 metadata:
-  name: distil
+  name: {{ eval_id }}
   labels:
-    evalId: distil
+    evalId: {{ eval_id }}
     main: "yes"
 spec:
   restartPolicy: Never
@@ -62,6 +62,10 @@ spec:
           value: {{ eval_id }}
         - name: PIPELINE_SERVER_RESULT_DIR
           value: /shared_dir
+      volumeMounts:
+      - mountPath: /shared_dir
+        name: shared-vol
+        readOnly: false
     # Redis container - caches between web-client and ta3-main
     - name: redis
       image: redis:latest
