@@ -45,6 +45,8 @@ spec:
           value: {{ eval_id }}
         - name: PIPELINE_DATA_DIR
           value: /shared_dir
+        - name: PIPELINE_COMPUTE_ENDPOINT
+          value: localhost:9500
       volumeMounts:
         - mountPath: /shared_dir
           name: shared-vol
@@ -77,15 +79,13 @@ spec:
       args: [-d postgres]
     # ElasticSearch container - provides indexing / search on pre-loaded D3M data
     - name: distil-es
-      image: docker.uncharted.software/distil_dev_es:0.5.0
+      image: docker.uncharted.software/distil_dev_es:latest
       ports:
         - name: es-port
           containerPort: 9200
-      resources:
-        limits:
-          memory: "1000Mi"
-        requests:
-          memory: "500Mi"
+      env:
+        - name: ES_JAVA_OPTS
+          value: -Xmx512m -Xms512m
   # For development debugging - not need when images are in D3M Gitlab repository
   imagePullSecrets:
     - name: uncharted-docker-repo
