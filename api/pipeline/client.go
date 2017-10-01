@@ -27,12 +27,12 @@ type Client struct {
 
 // NewClient creates a new pipline reuqest dispatcher instance. This will establish
 // the connection to the pipeline server or return an error on fail
-func NewClient(serverAddr string, dataDir string) (*Client, error) {
+func NewClient(serverAddr string, dataDir string, trace bool) (*Client, error) {
 	conn, err := grpc.Dial(
 		serverAddr,
 		grpc.WithInsecure(),
-		grpc.WithUnaryInterceptor(middleware.GenerateUnaryClientInterceptor()),
-		grpc.WithStreamInterceptor(middleware.GenerateStreamClientInterceptor()),
+		grpc.WithUnaryInterceptor(middleware.GenerateUnaryClientInterceptor(trace)),
+		grpc.WithStreamInterceptor(middleware.GenerateStreamClientInterceptor(trace)),
 	)
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to connect to %s", serverAddr)

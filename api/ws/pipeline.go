@@ -12,7 +12,6 @@ import (
 	"github.com/unchartedsoftware/distil/api/elastic"
 	"github.com/unchartedsoftware/distil/api/model"
 
-	"github.com/golang/protobuf/proto"
 	"github.com/pkg/errors"
 	"github.com/satori/go.uuid"
 	"github.com/unchartedsoftware/distil/api/pipeline"
@@ -283,7 +282,6 @@ func handleCreatePipelines(conn *Connection, client *pipeline.Client, esCtor ela
 		},
 		MaxPipelines: clientCreateMsg.MaxPipelines,
 	}
-	log.Info(proto.MarshalTextString(createMsg))
 
 	// kick off the pipeline creation, or re-attach to one that is already running
 	if session, ok := client.GetSession(msg.Session); ok {

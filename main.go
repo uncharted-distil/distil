@@ -31,6 +31,7 @@ const (
 	defaultRedisExpiry             = -1 // no expiry
 	defaultAppPort                 = "8080"
 	defaultPipelineComputeEndPoint = "localhost:9500"
+	defaultPipelineComputeTrace    = "false"
 	defaultPipelineDataDir         = "datasets"
 	defaultPGStorage               = "true"
 	defaultPGHost                  = "localhost"
@@ -63,8 +64,16 @@ func main() {
 	httpPort := env.Load("PORT", defaultAppPort)
 	// load compute server endpoint
 	pipelineComputeEndpoint := env.Load("PIPELINE_COMPUTE_ENDPOINT", defaultPipelineComputeEndPoint)
+
 	// load default temp dataset directory
 	pipelineDataDir := env.Load("PIPELINE_DATA_DIR", defaultPipelineDataDir)
+	// load trace log enable state
+	traceEnv := env.Load("PIPELINE_COMPUTE_TRACE", defaultPipelineComputeTrace)
+	pipelineComputeTrace, err := strconv.ParseBool(traceEnv)
+	if err != nil {
+		log.Warnf("Failed to parse PIPELINE_COMPUTE_TRACE as bool: %v", err)
+		pipelineComputeTrace = false
+	}
 
 	// instantiate elastic client constructor.
 	esClientCtor := elastic.NewClient(esEndpoint, false)
@@ -116,7 +125,7 @@ func main() {
 	}
 
 	// Instantiate the pipeline compute client
-	pipelineClient, err := pipeline.NewClient(pipelineComputeEndpoint, pipelineDataDir)
+	pipelineClient, err := pipeline.NewClient(pipelineComputeEndpoint, pipelineDataDir, pipelineComputeTrace)
 	if err != nil {
 		log.Errorf("%v", err)
 		os.Exit(1)
