@@ -1,6 +1,6 @@
 <template>
 	<div class='card'>
-		<div class='dataset-header card-header btn btn-outline-secondary hover' v-on:click='setActiveDataset()' v-bind:class='{collapsed: !expanded}'>
+		<div class='dataset-header card-header btn btn-outline-success hover' v-on:click='setActiveDataset()' v-bind:class='{collapsed: !expanded}'>
 			<a class='nav-link'><b>Name:</b> {{name}}</a>
 			<a class='nav-link'><b>Columns:</b> {{variables.length}}</a>
 			<a class='nav-link'><b>Rows:</b> {{numRows}}</a>
@@ -26,7 +26,7 @@
 
 			<div v-if='!expanded'>
 				<b-button class='full-width hover' variant='outline-secondary' v-on:click='toggleExpansion()'>
-					More...
+					More Details...
 				</b-button>
 			</div>
 
@@ -34,7 +34,7 @@
 				<span><b>Full Description:</b></span>
 				<p class='p-2' v-html='highlightedDescription()'></p>
 				<b-button class='full-width hover'variant='outline-secondary' v-on:click='toggleExpansion()'>
-					Less...
+					Less Details...
 				</b-button>
 			</div>
 
@@ -100,6 +100,7 @@ export default {
 		},
 		setActiveDataset() {
 			const entry = createRouteEntry('/explore', {
+				terms: this.$store.getters.getRouteTerms(),
 				dataset: this.name
 			});
 			this.$router.push(entry);
@@ -128,10 +129,14 @@ export default {
 .dataset-header {
 	display: flex;
 	padding: 4px 8px;
-	color: #000;
+	color: #28a745;
 	justify-content: space-between;
 	border: none;
 	border-bottom: 1px solid rgba(0, 0, 0, 0.125);
+	text-decoration: underline;
+}
+.dataset-header:hover {
+	text-decoration: underline;
 }
 .full-width {
 	width: 100%;

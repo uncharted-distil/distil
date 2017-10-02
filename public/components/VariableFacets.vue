@@ -361,7 +361,7 @@ button {
 .variable-facets {
 	display: flex;
 	flex-direction: column;
-	padding: 8px;
+	padding-right: 8px;
 }
 .page-link {
 	color: #868e96;

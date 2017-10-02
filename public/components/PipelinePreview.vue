@@ -78,6 +78,7 @@ export default {
 		},
 		onResult() {
 			 const entry = createRouteEntry('/results', {
+ 				terms: this.$store.getters.getRouteTerms(),
 				dataset: this.result.dataset,
 				filters: this.$store.getters.getRouteFilters(),
 				target: this.$store.getters.getRouteTargetVariable(),
