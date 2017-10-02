@@ -22,9 +22,9 @@ func ResultsHandler(storageCtor model.StorageCtor) func(http.ResponseWriter, *ht
 		// extract route parameters
 		index := pat.Param(r, "index")
 		dataset := pat.Param(r, "dataset")
-		resultURI, err := url.PathUnescape(pat.Param(r, "results-uri"))
+		resultUUID, err := url.PathUnescape(pat.Param(r, "results-uuid"))
 		if err != nil {
-			handleError(w, errors.Wrap(err, "unable to unescape result uri"))
+			handleError(w, errors.Wrap(err, "unable to unescape result uuid"))
 			return
 		}
 
@@ -32,6 +32,13 @@ func ResultsHandler(storageCtor model.StorageCtor) func(http.ResponseWriter, *ht
 		if err != nil {
 			handleError(w, err)
 			return
+		}
+
+		// get the result URI. Error ignored to make it ES compatible.
+		res, err := client.FetchResultMetadataByUUID(resultUUID)
+		resultURI := resultUUID
+		if res != nil {
+			resultURI = res.ResultURI
 		}
 
 		results, err := model.FetchResults(client, resultURI, index, dataset)

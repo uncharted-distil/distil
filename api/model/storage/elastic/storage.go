@@ -73,6 +73,11 @@ func (s *Storage) FetchResultMetadata(requestID string) ([]*model.Result, error)
 	return nil, errors.New("ElasticSearch FetchResultMetadata not implemented")
 }
 
+// FetchResultMetadataByUUID pulls request result information from ES. NOTE: Not implemented!
+func (s *Storage) FetchResultMetadataByUUID(resultUUID string) (*model.Result, error) {
+	return nil, errors.New("ElasticSearch FetchResultMetadataByUUID not implemented")
+}
+
 // FetchResultScore pulls request result score from ES. NOTE: Not implemented!
 func (s *Storage) FetchResultScore(pipelineID string) ([]*model.ResultScore, error) {
 	return nil, errors.New("ElasticSearch FetchResultScore not implemented")

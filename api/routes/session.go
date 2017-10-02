@@ -32,6 +32,13 @@ func SessionHandler(storageCtor model.StorageCtor) func(http.ResponseWriter, *ht
 			return
 		}
 
+		// Blank the result URI.
+		for _, req := range results {
+			for _, res := range req.Results {
+				res.ResultURI = ""
+			}
+		}
+
 		// marshall data and sent the response back
 		err = handleJSON(w, Session{
 			Pipelines: results,
