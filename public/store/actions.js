@@ -57,7 +57,7 @@ export function getSession(context) {
 								requestId: pipeline.RequestID,
 								dataset: pipeline.Dataset,
 								pipelineId: res.PipelineID,
-								pipeline: { resultUri: res.ResultURI, output: '', scores: res.Scores }
+								pipeline: { resultUri: res.ResultUUID, output: '', scores: res.Scores }
 							});
 						}
 					});

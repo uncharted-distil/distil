@@ -25,6 +25,7 @@ type Storage interface {
 	UpdateRequest(requestID string, progress string, updatedTime time.Time) error
 	FetchRequests(sessionID string) ([]*Request, error)
 	FetchResultMetadata(requestID string) ([]*Result, error)
+	FetchResultMetadataByUUID(resultUUID string) (*Result, error)
 	FetchResultScore(pipelineID string) ([]*ResultScore, error)
 	FetchRequestFeature(requestID string) ([]*RequestFeature, error)
 }

@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/jackc/pgx"
 	"github.com/pkg/errors"
 	es "github.com/unchartedsoftware/distil/api/elastic"
 	"github.com/unchartedsoftware/distil/api/model"
@@ -103,7 +104,7 @@ func (s *Storage) PersistRequestFeature(requestID string, featureName string, fe
 	return err
 }
 
-// FetchRequests pulls session request information from Postgres. NOTE: Not implemented!
+// FetchRequests pulls session request information from Postgres.
 func (s *Storage) FetchRequests(sessionID string) ([]*model.Request, error) {
 	sql := fmt.Sprintf("SELECT session_id, request_id, dataset, progress, created_time, last_updated_time FROM %s WHERE session_id = $1;", requestTableName)
 
@@ -154,18 +155,7 @@ func (s *Storage) FetchRequests(sessionID string) ([]*model.Request, error) {
 	return requests, nil
 }
 
-// FetchResultMetadata pulls request result information from Psotgres.
-func (s *Storage) FetchResultMetadata(requestID string) ([]*model.Result, error) {
-	sql := fmt.Sprintf("SELECT request_id, pipeline_id, result_uuid, result_uri, progress, output_type, created_time FROM %s WHERE request_id = $1;", resultTableName)
-
-	rows, err := s.client.Query(sql, requestID)
-	if err != nil {
-		return nil, errors.Wrap(err, "Unable to pull request results from Postgres")
-	}
-	if rows != nil {
-		defer rows.Close()
-	}
-
+func (s *Storage) parseResultMetadata(rows *pgx.Rows) ([]*model.Result, error) {
 	results := make([]*model.Result, 0)
 	for rows.Next() {
 		var requestID string
@@ -176,7 +166,7 @@ func (s *Storage) FetchResultMetadata(requestID string) ([]*model.Result, error)
 		var outputType string
 		var createdTime time.Time
 
-		err = rows.Scan(&requestID, &pipelineID, &resultUUID, &resultURI, &progress, &outputType, &createdTime)
+		err := rows.Scan(&requestID, &pipelineID, &resultUUID, &resultURI, &progress, &outputType, &createdTime)
 		if err != nil {
 			return nil, errors.Wrap(err, "Unable to parse requests results from Postgres")
 		}
@@ -199,6 +189,46 @@ func (s *Storage) FetchResultMetadata(requestID string) ([]*model.Result, error)
 	}
 
 	return results, nil
+}
+
+// FetchResultMetadata pulls request result information from Postgres.
+func (s *Storage) FetchResultMetadata(requestID string) ([]*model.Result, error) {
+	sql := fmt.Sprintf("SELECT request_id, pipeline_id, result_uuid, result_uri, progress, output_type, created_time FROM %s WHERE request_id = $1;", resultTableName)
+
+	rows, err := s.client.Query(sql, requestID)
+	if err != nil {
+		return nil, errors.Wrap(err, "Unable to pull request results from Postgres")
+	}
+	if rows != nil {
+		defer rows.Close()
+	}
+
+	return s.parseResultMetadata(rows)
+}
+
+// FetchResultMetadataByUUID pulls request result information from Postgres.
+func (s *Storage) FetchResultMetadataByUUID(resultUUID string) (*model.Result, error) {
+	sql := fmt.Sprintf("SELECT request_id, pipeline_id, result_uuid, result_uri, progress, output_type, created_time FROM %s WHERE result_uuid = $1;", resultTableName)
+
+	rows, err := s.client.Query(sql, resultUUID)
+	if err != nil {
+		return nil, errors.Wrap(err, "Unable to pull request results from Postgres")
+	}
+	if rows != nil {
+		defer rows.Close()
+	}
+
+	results, err := s.parseResultMetadata(rows)
+	if err != nil {
+		return nil, errors.Wrap(err, "Unable to parse request results from Postgres")
+	}
+
+	var res *model.Result
+	if results != nil && len(results) > 0 {
+		res = results[0]
+	}
+
+	return res, nil
 }
 
 // FetchResultScore pulls result score from Postgres.
