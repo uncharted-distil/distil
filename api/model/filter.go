@@ -38,3 +38,39 @@ type FilterParams struct {
 func FetchFilteredData(storage Storage, dataset string, index string, filterParams *FilterParams, inclusive bool) (*FilteredData, error) {
 	return storage.FetchData(dataset, index, filterParams, inclusive)
 }
+
+// GetFieldList builds the filtered list of fields based on the filtering parameters.
+func GetFieldList(filterParams *FilterParams, variables []*Variable, inclusive bool) []*Variable {
+	variableLookup := make(map[string]*Variable)
+	for _, v := range variables {
+		variableLookup[v.Name] = v
+	}
+
+	fieldList := make([]*Variable, 0)
+	if inclusive {
+		// if inclusive, include all fields except specifically excluded fields
+		excludedFields := make(map[string]bool)
+		for _, f := range filterParams.None {
+			excludedFields[f] = true
+		}
+
+		for _, v := range variables {
+			if !excludedFields[v.Name] {
+				fieldList = append(fieldList, v)
+			}
+		}
+	} else {
+		// if exclusive, exclude all fields except specifically included fields
+		for _, f := range filterParams.Ranged {
+			fieldList = append(fieldList, variableLookup[f.Name])
+		}
+		for _, f := range filterParams.Categorical {
+			fieldList = append(fieldList, variableLookup[f.Name])
+		}
+		for _, f := range filterParams.None {
+			fieldList = append(fieldList, variableLookup[f])
+		}
+	}
+
+	return fieldList
+}

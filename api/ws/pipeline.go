@@ -450,24 +450,18 @@ func handleCreatePipelinesSuccess(conn *Connection, msg *Message, proxy *pipelin
 // TODO: We don't store this anywhere, so we end up running an ES query to get the var list.  This should
 // be cached by Redis, but still worth looking into storing some of the dataset info.
 func fetchFilteredVariables(esClient *es.Client, index string, dataset string, filters *model.FilterParams) ([]string, error) {
-	// put the filtered variables into a set for quick lookup
-	nameSet := map[string]bool{}
-	for _, varName := range filters.None {
-		nameSet[varName] = true
-	}
-
 	// fetch the variable set from es
 	variables, err := model.FetchVariables(esClient, index, dataset)
 	if err != nil {
 		return nil, err
 	}
 
+	variablesToUse := model.GetFieldList(filters, variables, false)
+
 	// create a list minus those that are in the filtered list
 	filteredVars := []string{}
-	for _, variable := range variables {
-		if _, ok := nameSet[variable.Name]; !ok {
-			filteredVars = append(filteredVars, variable.Name)
-		}
+	for _, variable := range variablesToUse {
+		filteredVars = append(filteredVars, variable.Name)
 	}
 	return filteredVars, nil
 }
