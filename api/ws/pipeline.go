@@ -1,6 +1,7 @@
 package ws
 
 import (
+	"crypto/sha1"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -224,13 +225,27 @@ func handleCreatePipelines(conn *Connection, client *pipeline.Client, esCtor ela
 	}
 
 	// persist the filtered dataset if necessary
-	fetchFilteredData := func(dataset string, index string, filters *model.FilterParams, inclusive bool) (*model.FilteredData, error) {
-		return model.FetchFilteredData(storage, dataset, index, filters, inclusive)
+	fetchFilteredData := func(dataset string, index string, filters *model.FilterParams) (*model.FilteredData, error) {
+		// fetch the whole data and include the target feature.
+		none := make([]string, 0)
+		none = append(none, clientCreateMsg.Feature)
+		if filters.None != nil {
+			none = append(none, filters.None...)
+		}
+
+		updatedFilters := &model.FilterParams{
+			Size:        -1,
+			Ranged:      filters.Ranged,
+			Categorical: filters.Categorical,
+			None:        none,
+		}
+
+		return model.FetchFilteredData(storage, dataset, index, updatedFilters, false)
 	}
 	fetchVariable := func(dataset string, index string) ([]*model.Variable, error) {
 		return model.FetchVariables(esClient, index, dataset)
 	}
-	datasetPath, err := pipeline.PersistFilteredData(fetchFilteredData, fetchVariable, client.DataDir, clientCreateMsg.Dataset, clientCreateMsg.Index, clientCreateMsg.Feature, filters, true)
+	datasetPath, err := pipeline.PersistFilteredData(fetchFilteredData, fetchVariable, client.DataDir, clientCreateMsg.Dataset, clientCreateMsg.Index, clientCreateMsg.Feature, filters)
 	if err != nil {
 		handleErr(conn, msg, err)
 		return
@@ -388,14 +403,20 @@ func handleCreatePipelinesSuccess(conn *Connection, msg *Message, proxy *pipelin
 							storage.PersistResultScore(res.PipelineId, s["metric"].(string), float64(s["value"].(float32)))
 						}
 					}
+
+					// get the result UUID. NOTE: Doing sha1 for now.
+					hasher := sha1.New()
+					hasher.Write([]byte(res.PipelineInfo.PredictResultUris[0]))
+					bs := hasher.Sum(nil)
+					resUUIDStr := fmt.Sprintf("%x", bs)
 					response["pipeline"] = map[string]interface{}{
 						"scores":    scores,
 						"output":    pipeline.OutputType_name[int32(res.PipelineInfo.Output)],
-						"resultUri": res.PipelineInfo.PredictResultUris[0],
+						"resultUri": resUUIDStr,
 					}
 
 					// store the result data & metadata
-					err = storage.PersistResultMetadata(fmt.Sprintf("%s", proxy.RequestID), res.PipelineId, "", res.PipelineInfo.PredictResultUris[0], progress, pipeline.OutputType_name[int32(res.PipelineInfo.Output)], currentTime)
+					err = storage.PersistResultMetadata(fmt.Sprintf("%s", proxy.RequestID), res.PipelineId, resUUIDStr, res.PipelineInfo.PredictResultUris[0], progress, pipeline.OutputType_name[int32(res.PipelineInfo.Output)], currentTime)
 					if err != nil {
 						handleErr(conn, msg, errors.Wrap(err, "Unable to store result metadata"))
 					}

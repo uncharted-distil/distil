@@ -21,9 +21,9 @@ func TestResultsSummaryHandlerInt(t *testing.T) {
 
 	// put together a stub pipeline request
 	params := map[string]string{
-		"dataset":     "o_185",
-		"index":       "datasets",
-		"results-uri": "./testdata/results.csv",
+		"dataset":      "o_185",
+		"index":        "datasets",
+		"results-uuid": "./testdata/results.csv",
 	}
 	req := mock.HTTPRequest(t, "GET", "/distil/results-summary/", params, nil)
 
@@ -68,9 +68,9 @@ func TestResultsSummaryHandlerFloat(t *testing.T) {
 
 	// put together a stub pipeline request
 	params := map[string]string{
-		"dataset":     "o_185",
-		"index":       "datasets",
-		"results-uri": "./testdata/results_float.csv",
+		"dataset":      "o_185",
+		"index":        "datasets",
+		"results-uuid": "./testdata/results_float.csv",
 	}
 	req := mock.HTTPRequest(t, "GET", "/distil/results-summary/", params, nil)
 
@@ -115,9 +115,9 @@ func TestResultsSummaryHandlerCategorical(t *testing.T) {
 
 	// put together a stub pipeline request
 	params := map[string]string{
-		"dataset":     "o_185",
-		"index":       "datasets",
-		"results-uri": "./testdata/results_categorical.csv",
+		"dataset":      "o_185",
+		"index":        "datasets",
+		"results-uuid": "./testdata/results_categorical.csv",
 	}
 	req := mock.HTTPRequest(t, "GET", "/distil/results-summary/", params, nil)
 

@@ -116,7 +116,11 @@ func (s *Storage) FetchData(dataset string, index string, filterParams *model.Fi
 	}
 
 	// order & limit the filtered data.
-	query = fmt.Sprintf("%s ORDER BY \"%s\" LIMIT %d;", query, primaryKey, filterLimit)
+	query = fmt.Sprintf("%s ORDER BY \"%s\"", query, primaryKey)
+	if filterParams.Size > 0 {
+		query = fmt.Sprintf("%s LIMIT %d", query, filterParams.Size)
+	}
+	query = query + ";"
 
 	// execute the postgres query
 	res, err := s.client.Query(query, params...)
