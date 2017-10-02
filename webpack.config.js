@@ -1,6 +1,7 @@
 const path = require('path');
 const webpack = require('webpack');
 const HtmlPlugin = require('html-webpack-plugin');
+const CopyWebpackPlugin = require('copy-webpack-plugin');
 
 module.exports = {
 	entry: './public/main.js',
@@ -60,7 +61,10 @@ module.exports = {
 		new webpack.ProvidePlugin({
 			$: 'jquery',
 			jQuery: 'jquery'
-		})
+		}),
+		new CopyWebpackPlugin([
+			{ from: 'public/static' }
+		])
 	],
 	devtool: 'source-map-eval'
 };

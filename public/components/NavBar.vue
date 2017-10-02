@@ -15,6 +15,7 @@
 				<b-nav-item @click="onPipelines" :active="activeView===PIPELINES" :disabled="!hasDataset()">Pipelines</b-nav-item>
 				<b-nav-item @click="onResults" :active="activeView===RESULTS">Results</b-nav-item>
 			</b-nav>
+			<!--
 			<b-nav is-nav-bar class="ml-auto">
 				<b-nav-text class="session-label">Session:</b-nav-text>
 				<b-nav-text v-if="sessionID===null" class="session-not-ready">
@@ -24,13 +25,18 @@
 					<i class="fa fa-check"></i>{{sessionID}}
 				</b-nav-text>
 			</b-nav>
+			-->
+			<b-nav is-nav-bar class="ml-auto">
+				<b-nav is-nav-bar>
+					<b-nav-item href="/help">Help</b-nav-item>
+				</b-nav>
+			</b-nav>
 		</b-collapse>
 	</b-navbar>
 </template>
 
 <script>
-
-import { createRouteEntry } from '../util/routes';
+import { gotoHome, gotoSearch, gotoExplore, gotoSelect, gotoPipelines, gotoResults } from '../util/nav';
 
 const HOME = Symbol();
 const SEARCH = Symbol();
@@ -75,67 +81,27 @@ export default {
 	},
 
 	methods: {
-		// switch to the search view
 		onHome() {
-			const entry = createRouteEntry('/home', {
-				terms: this.$store.getters.getRouteTerms()
-			});
-			this.$router.push(entry);
+			gotoHome(this.$store, this.$router);
 		},
-
-		// switch to the search view
 		onSearch() {
-			const entry = createRouteEntry('/search', {
-				terms: this.$store.getters.getRouteTerms()
-			});
-			this.$router.push(entry);
+			gotoSearch(this.$store, this.$router);
 		},
-
-		// switch to explore view
 		onExplore() {
-			const entry = createRouteEntry('/explore', {
-				dataset: this.$store.getters.getRouteDataset(),
-				filters: this.$store.getters.getRouteFilters(),
-				target: this.$store.getters.getRouteTargetVariable(),
-				training: this.$store.getters.getRouteTrainingVariables()
-			});
-			this.$router.push(entry);
+			gotoExplore(this.$store, this.$router);
 		},
-
-		// switch to data view
 		onSelect() {
-			const entry = createRouteEntry('/select', {
-				dataset: this.$store.getters.getRouteDataset(),
-				filters: this.$store.getters.getRouteFilters(),
-				target: this.$store.getters.getRouteTargetVariable(),
-				training: this.$store.getters.getRouteTrainingVariables()
-			});
-			this.$router.push(entry);
+			gotoSelect(this.$store, this.$router);
 		},
-
-		// switch to the pipelines view
 		onPipelines() {
-			const entry = createRouteEntry('/pipelines', {
-				dataset: this.$store.getters.getRouteDataset(),
-				filters: this.$store.getters.getRouteFilters(),
-				target: this.$store.getters.getRouteTargetVariable(),
-				training: this.$store.getters.getRouteTrainingVariables()
-			});
-			this.$router.push(entry);
+			gotoPipelines(this.$store, this.$router);
 		},
-
-		// switch to data view
 		onResults() {
-			const entry = createRouteEntry('/results', {
-				dataset: this.$store.getters.getRouteDataset()
-			});
-			this.$router.push(entry);
+			gotoResults(this.$store, this.$router);
 		},
-
 		hasDataset() {
 			return !!this.$store.getters.getRouteDataset();
 		},
-
 		updateActive() {
 			this.activeView = ROUTE_MAPPINGS[this.$route.path];
 		}

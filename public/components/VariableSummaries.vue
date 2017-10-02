@@ -1,8 +1,6 @@
 <template>
 	<div class='variable-summaries'>
-		<div class="bg-faded rounded-top">
-			<h6 class="nav-link">Summaries</h6>
-		</div>
+		<h6 class="nav-link">Feature Summaries</h6>
 		<variable-facets
 			enable-search
 			enable-toggle

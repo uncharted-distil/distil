@@ -1,6 +1,12 @@
 <template>
 	<div class="create-pipelines-form">
-		<b-button class="full-width" :variant="createVariant" @click="create" :disabled="disableCreate">
+		<div class="requirement-met text-success" v-if="trainingSelected">
+			<i class="fa fa-check selected-icon"></i><strong>Training Features Selected</strong>
+		</div>
+		<div class="requirement-met text-success" v-if="targetSelected">
+			<i class="fa fa-check selected-icon"></i><strong>Target Feature Selected</strong>
+		</div>
+		<b-button class="create-button" :variant="createVariant" @click="create" :disabled="disableCreate">
 			Create Pipelines
 		</b-button>
 	</div>
@@ -38,6 +44,15 @@ export default {
 			// grab the valid metrics from the task data to use as labels in the UI
 			return getMetricDisplayNames(taskData);
 		},
+		trainingSelected() {
+			return !_.isEmpty(this.training);
+		},
+		targetSelected() {
+			return !!this.target;
+		},
+		training() {
+			return this.$store.getters.getTrainingVariables();
+		},
 		target() {
 			return this.$store.getters.getTargetVariable();
 		},
@@ -48,11 +63,11 @@ export default {
 		},
 		// determines create button status based on completeness of user input
 		disableCreate() {
-			return !this.target;
+			return !this.targetSelected || !this.trainingSelected;
 		},
 		// determines  create button variant based on completeness of user input
 		createVariant() {
-			return !this.disableCreate ? 'primary' : 'secondary';
+			return !this.disableCreate ? 'outline-success' : 'outline-secondary';
 		}
 	},
 	methods: {
@@ -74,6 +89,7 @@ export default {
 
 			// transition to build screen
 			const entry = createRouteEntry('/pipelines', {
+				terms: this.$store.getters.getRouteTerms(),
 				dataset: this.$store.getters.getRouteDataset(),
 				filters: this.$store.getters.getRouteFilters(),
 				target: this.$store.getters.getRouteTargetVariable(),
@@ -89,7 +105,13 @@ export default {
 .create-pipelines-form {
 	margin: 8px 16px;
 }
-.full-width {
+.create-button {
 	width: 100%;
+}
+.selected-icon {
+	padding-right: 4px;
+}
+.requirement-met {
+	padding: 4px 8px;
 }
 </style>

@@ -1,5 +1,6 @@
 <template>
 	<div class="build-view">
+		<h4 class="header-label">Monitor Pipeline Status</h4>
 		<div class="build-results">
 			<running-pipelines></running-pipelines>
 			<completed-pipelines></completed-pipelines>
@@ -8,12 +9,14 @@
 </template>
 
 <script>
+import FlowBar from '../components/FlowBar';
 import RunningPipelines from '../components/RunningPipelines';
 import CompletedPipelines from '../components/CompletedPipelines';
 
 export default {
 	name: 'pipelines',
 	components: {
+		FlowBar,
 		RunningPipelines,
 		CompletedPipelines
 	},
@@ -25,6 +28,10 @@ export default {
 </script>
 
 <style>
+.header-label {
+	color: #333;
+	margin: 0.75rem 0;
+}
 .build-view {
 	display: flex;
 	flex-direction: column;

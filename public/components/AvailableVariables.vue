@@ -1,8 +1,6 @@
 <template>
 	<div class="available-variables">
-		<div class="bg-faded rounded-top">
-			<h6 class="nav-link">Available Set</h6>
-		</div>
+		<h6 class="nav-link">Features</h6>
 		<variable-facets
 			enable-search
 			enable-sort
@@ -39,7 +37,7 @@ export default {
 			return (group) => {
 				const container = document.createElement('div');
 				const trainingElem = document.createElement('button');
-				trainingElem.className += 'btn btn-sm btn-outline-secondary mr-2 mb-2';
+				trainingElem.className += 'btn btn-sm btn-outline-success mr-2 mb-2';
 				trainingElem.innerHTML = 'Add to Training Set';
 				trainingElem.addEventListener('click', () => {
 					const training = this.$store.getters.getTrainingVariables();
@@ -49,7 +47,7 @@ export default {
 					this.$router.push(entry);
 				});
 				const targetElem = document.createElement('button');
-				targetElem.className += 'btn btn-sm btn-outline-secondary mr-2 mb-2';
+				targetElem.className += 'btn btn-sm btn-outline-success mr-2 mb-2';
 				targetElem.innerHTML = 'Set as Target';
 				targetElem.addEventListener('click', () => {
 					const entry = createRouteEntryFromRoute(this.$store.getters.getRoute(), {

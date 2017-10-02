@@ -1,8 +1,6 @@
 <template>
 	<div class='result-summaries'>
-		<div class="bg-faded rounded-top">
-			<h6 class="nav-link">Results</h6>
-		</div>
+		<h6 class="nav-link">Results</h6>
 		<div v-if="regressionEnabled" class="result-summaries-error">
 			<div class="result-summaries-label">
 				Error:
@@ -18,15 +16,15 @@
 					tooltip-dir="bottom"
 					@callback="onSlide"/>
 			</div>
-  		</div>
-		<facets class="result-summaries-target" :groups="targetVariable">
-		</facets>
+		</div>
+		<h6 class="nav-link">Actual</h6>
+		<facets class="result-summaries-target" :groups="targetSummaries"></facets>
+		<h6 class="nav-link">Predicted</h6>
 		<result-facets
 			enable-group-collapse
 			enable-facet-filtering
 			:variables="variables"
-			:dataset="dataset">
-		</result-facets>
+			:dataset="dataset"></result-facets>
 	</div>
 </template>
 
@@ -79,7 +77,7 @@ export default {
 			return 100.0;
 		},
 
-		targetVariable() {
+		targetSummaries() {
 			// Get the current target variable and the summary associated with it
 			const targetVariable = this.$store.getters.getRouteTargetVariable();
 			const varSummaries = this.$store.getters.getVariableSummaries();

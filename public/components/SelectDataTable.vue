@@ -1,11 +1,11 @@
 <template>
 	<div class="select-data-table">
-		<div class="bg-faded rounded-top">
-			<h6 class="nav-link">Values</h6>
-		</div>
+		<h6 class="nav-link">Training Set Samples</h6>
 		<div class="select-data-table-container">
 			<div class="select-data-no-results" v-if="items.length===0">
-				No training set data selected
+				<div class="text-danger">
+					<i class="fa fa-times missing-icon"></i><strong>No Training Features Selected</strong>
+				</div>
 			</div>
 			<b-table v-if="items.length>0"
 				bordered
@@ -98,5 +98,8 @@ export default {
 	width: 100%;
 	background-color: #eee;
 	padding: 8px;
+}
+.missing-icon {
+	padding-right: 4px;
 }
 </style>

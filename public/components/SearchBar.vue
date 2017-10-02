@@ -6,6 +6,7 @@
 			type="text"
 			placeholder="Search datasets"
 			name="datasetsearch"></b-form-input>
+		<i class="fa fa-search search-icon"></i>
 	</div>
 </template>
 
@@ -19,7 +20,8 @@ export default {
 	computed: {
 		terms: {
 			set: _.throttle(function(terms) {
-				const routeEntry = createRouteEntry('/search', {
+				const path = !_.isEmpty(terms) ? '/search' : this.$store.getters.getRoutePath();
+				const routeEntry = createRouteEntry(path, {
 					terms: terms,
 				});
 				this.$router.push(routeEntry);
@@ -32,6 +34,9 @@ export default {
 
 	mounted() {
 		this.$store.dispatch('searchDatasets', this.terms);
+		if (!_.isEmpty(this.terms)) {
+			this.$refs.searchbox.focus();
+		}
 	},
 
 	watch: {
@@ -43,4 +48,16 @@ export default {
 </script>
 
 <style>
+.search-bar {
+	position: relative;
+}
+.search-icon {
+	position: absolute;
+	padding: 0.5rem 0.75rem;
+	font-size: 1rem;
+	line-height: 1.25;
+	top: 0;
+	right: 0;
+
+}
 </style>
