@@ -67,8 +67,6 @@ func getFilteredDatasetHash(dataset string, target string, filterParams *model.F
 // state, and saves the filtered data and target data to disk if they haven't been previously.  The path to the data
 // is returned.
 func PersistFilteredData(fetchData FilteredDataProvider, fetchVariables VariableProvider, datasetDir string, dataset string, index string, target string, filters *model.FilterParams) (string, error) {
-
-	log.Infof("PARAMS: %v", filters)
 	// parse the dataset and its filter state and generate a hashcode from both
 	hash, err := getFilteredDatasetHash(dataset, target, filters)
 	if err != nil {
