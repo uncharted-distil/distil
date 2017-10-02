@@ -6,8 +6,8 @@ func FetchResults(client Storage, dataset string, index string, resultsURI strin
 }
 
 // FetchFilteredResults returns the set of test predictions made by a given pipeline with requested filtering applied.
-func FetchFilteredResults(client Storage, dataset string, index string, resultsURI string, filterParams *FilterParams) (*FilteredData, error) {
-	return client.FetchFilteredResults(dataset, index, resultsURI, filterParams)
+func FetchFilteredResults(client Storage, dataset string, index string, resultsURI string, filterParams *FilterParams, inclusive bool) (*FilteredData, error) {
+	return client.FetchFilteredResults(dataset, index, resultsURI, filterParams, inclusive)
 }
 
 // FetchResultsSummary returns a histogram summarizing prediction results

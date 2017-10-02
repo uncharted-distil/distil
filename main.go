@@ -5,6 +5,7 @@ import (
 	"os"
 	"strconv"
 	"syscall"
+	"time"
 
 	"github.com/unchartedsoftware/plog"
 	"github.com/zenazn/goji/graceful"
@@ -31,12 +32,14 @@ const (
 	defaultAppPort                 = "8080"
 	defaultPipelineComputeEndPoint = "localhost:9500"
 	defaultPipelineDataDir         = "datasets"
-	defaultPGStorage               = "false"
+	defaultPGStorage               = "true"
 	defaultPGHost                  = "localhost"
 	defaultPGPort                  = "5432"
 	defaultPGUser                  = "distil"
 	defaultPGPassword              = ""
 	defaultPGDatabase              = "distil"
+	defaultPGRetries               = 100
+	deafultPGRetryTimeout          = 4000
 )
 
 var (
@@ -89,11 +92,19 @@ func main() {
 		// instantiate the postgres client constructor.
 		postgresClientCtor := postgres.NewClient(pgHost, pgPort, pgUser, pgPassword, pgDatabase)
 
-		// make sure a connection can be made to postgres.
-		_, err = postgresClientCtor()
-		if err != nil {
+		// make sure a connection can be made to postgres - doesn't appear to be thread safe and
+		// causes panic if deferred, so we'll do it an a retry loop here.  We need to provide
+		// flexibility on startup because we can't guarantee the DB will be up before the server.
+		for i := 0; i < defaultPGRetries; i++ {
+			_, err = postgresClientCtor()
+			if err == nil {
+				break
+			} else if i == defaultPGRetries {
+				log.Errorf("%v", err)
+				os.Exit(1)
+			}
 			log.Errorf("%v", err)
-			os.Exit(1)
+			time.Sleep(deafultPGRetryTimeout * time.Millisecond)
 		}
 
 		// instantiate the postgres storage constructor.
@@ -104,7 +115,7 @@ func main() {
 		dataStorageCtor = esStorageCtor
 	}
 
-	// instantiate the pipeline compute client
+	// Instantiate the pipeline compute client
 	pipelineClient, err := pipeline.NewClient(pipelineComputeEndpoint, pipelineDataDir)
 	if err != nil {
 		log.Errorf("%v", err)
@@ -125,8 +136,8 @@ func main() {
 	registerRoute(mux, "/distil/datasets/:index", routes.DatasetsHandler(esClientCtor))
 	registerRoute(mux, "/distil/variables/:index/:dataset", routes.VariablesHandler(esClientCtor))
 	registerRoute(mux, "/distil/variable-summaries/:index/:dataset/:variable", routes.VariableSummaryHandler(dataStorageCtor, esClientCtor))
-	registerRoute(mux, "/distil/filtered-data/:esIndex/:dataset", routes.FilteredDataHandler(dataStorageCtor))
-	registerRoute(mux, "/distil/results/:index/:dataset/:results-uri", routes.ResultsHandler(dataStorageCtor))
+	registerRoute(mux, "/distil/filtered-data/:esIndex/:dataset/:inclusive", routes.FilteredDataHandler(dataStorageCtor))
+	registerRoute(mux, "/distil/results/:index/:dataset/:inclusive/:results-uri", routes.ResultsHandler(dataStorageCtor))
 	registerRoute(mux, "/distil/results-summary/:index/:dataset/:results-uri", routes.ResultsSummaryHandler(dataStorageCtor))
 	registerRoute(mux, "/distil/session/:session", routes.SessionHandler(dataStorageCtor))
 	registerRoute(mux, "/ws", ws.PipelineHandler(pipelineClient, esClientCtor, dataStorageCtor))

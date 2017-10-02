@@ -22,6 +22,9 @@ func ResultsHandler(storageCtor model.StorageCtor) func(http.ResponseWriter, *ht
 		// extract route parameters
 		index := pat.Param(r, "index")
 		dataset := pat.Param(r, "dataset")
+		inclusive := pat.Param(r, "inclusive")
+		inclusiveBool := inclusive == "inclusive"
+
 		resultURI, err := url.PathUnescape(pat.Param(r, "results-uri"))
 		if err != nil {
 			handleError(w, errors.Wrap(err, "unable to unescape result uri"))
@@ -41,7 +44,7 @@ func ResultsHandler(storageCtor model.StorageCtor) func(http.ResponseWriter, *ht
 			return
 		}
 
-		results, err := model.FetchFilteredResults(client, dataset, index, resultURI, filterParams)
+		results, err := model.FetchFilteredResults(client, dataset, index, resultURI, filterParams, inclusiveBool)
 		if err != nil {
 			handleError(w, err)
 			return

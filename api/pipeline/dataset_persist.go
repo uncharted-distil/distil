@@ -2,7 +2,9 @@ package pipeline
 
 import (
 	"encoding/csv"
+	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"os"
 	"path"
 	"strconv"
@@ -19,11 +21,38 @@ const (
 	D3MTrainTargets = "trainTargets.csv"
 	// D3MTrainData provides the name of the training targets csv file as defined in the D3M schema
 	D3MTrainData = "trainData.csv"
+	// D3MDataSchema provides the name of the D3M data schema file
+	D3MDataSchema = "dataSchema.json"
 )
 
 // FilteredDataProvider defines a function that will fetch data from a back end source given
 // a set of filter parameters.
-type FilteredDataProvider func(dataset string, index string, filters *model.FilterParams) (*model.FilteredData, error)
+type FilteredDataProvider func(dataset string, index string, filters *model.FilterParams, inclusive bool) (*model.FilteredData, error)
+
+// VariableProvider defines a function that will get the variables for a dataset.
+type VariableProvider func(dataset string, index string) ([]*model.Variable, error)
+
+// DataSchema encapsulates the data schema json structure.
+type DataSchema struct {
+	DatasetID                            string     `json:"datasetId"`
+	RawData                              bool       `json:"rawData"`
+	Redacted                             bool       `json:"redacted"`
+	TestDataSchemaMirrorsTrainDataSchema bool       `json:"testDataSchemaMirrorsTrainDataSchema"`
+	TrainData                            *TrainData `json:"trainData"`
+}
+
+// TrainData represents a set of training and target variables.
+type TrainData struct {
+	TrainData    []*DataVariable `json:"trainData"`
+	TrainTargets []*DataVariable `json:"trainTargets"`
+}
+
+// DataVariable captures the data schema representation of a variable.
+type DataVariable struct {
+	VarName string `json:"varName"`
+	VarRole string `json:"varRole"`
+	VarType string `json:"varType"`
+}
 
 // Hash the filter set
 func getFilteredDatasetHash(dataset string, target string, filterParams *model.FilterParams) (uint64, error) {
@@ -37,7 +66,7 @@ func getFilteredDatasetHash(dataset string, target string, filterParams *model.F
 // PersistFilteredData creates a hash code from the combination of the dataset name, the target name, and its filter
 // state, and saves the filtered data and target data to disk if they haven't been previously.  The path to the data
 // is returned.
-func PersistFilteredData(fetchData FilteredDataProvider, datasetDir string, dataset string, index string, target string, filters *model.FilterParams) (string, error) {
+func PersistFilteredData(fetchData FilteredDataProvider, fetchVariables VariableProvider, datasetDir string, dataset string, index string, target string, filters *model.FilterParams, inclusive bool) (string, error) {
 
 	// parse the dataset and its filter state and generate a hashcode from both
 	hash, err := getFilteredDatasetHash(dataset, target, filters)
@@ -55,7 +84,7 @@ func PersistFilteredData(fetchData FilteredDataProvider, datasetDir string, data
 
 	// get the filtered dataset from elastic search
 	start := time.Now()
-	filteredData, err := fetchData(dataset, index, filters)
+	filteredData, err := fetchData(dataset, index, filters, inclusive)
 	if err != nil {
 		return "", err
 	}
@@ -89,6 +118,17 @@ func PersistFilteredData(fetchData FilteredDataProvider, datasetDir string, data
 
 	// write the target data to csv file
 	err = writeTrainTargets(path, datasetDir, filteredData, targetIdx)
+	if err != nil {
+		return "", err
+	}
+
+	// write the target data to csv file
+	variables, err := fetchVariables(dataset, index)
+	if err != nil {
+		return "", err
+	}
+
+	err = writeDataSchema(path, dataset, filteredData, targetIdx, variables)
 	if err != nil {
 		return "", err
 	}
@@ -170,5 +210,64 @@ func writeTrainTargets(targetPath string, datasetDir string, filteredData *model
 			log.Errorf("%v", errors.Wrapf(err, "unable to persist %v", strVals))
 		}
 	}
+	return nil
+}
+
+func writeDataSchema(schemaPath string, dataset string, filteredData *model.FilteredData, targetIdx int, variables []*model.Variable) error {
+	// Build a map of variable name to variable.
+	vars := make(map[string]*model.Variable)
+	for _, v := range variables {
+		vars[v.Name] = v
+	}
+
+	// Build the schema data for output.
+	ds := &DataSchema{
+		DatasetID: dataset,
+		RawData:   false,
+		Redacted:  true,
+		TestDataSchemaMirrorsTrainDataSchema: true,
+		TrainData: &TrainData{
+			TrainData:    make([]*DataVariable, 0),
+			TrainTargets: make([]*DataVariable, 0),
+		},
+	}
+
+	// Both outputs have the index.
+	ds.TrainData.TrainData = append(ds.TrainData.TrainData, &DataVariable{
+		VarName: "d3mIndex",
+		VarRole: "index",
+		VarType: "integer",
+	})
+	ds.TrainData.TrainTargets = append(ds.TrainData.TrainTargets, &DataVariable{
+		VarName: "d3mIndex",
+		VarRole: "index",
+		VarType: "integer",
+	})
+
+	// Add all other variables.
+	for i, c := range filteredData.Columns {
+		v := &DataVariable{
+			VarName: c,
+			VarRole: "attribute",
+			VarType: vars[c].Type,
+		}
+
+		if i == targetIdx {
+			ds.TrainData.TrainTargets = append(ds.TrainData.TrainTargets, v)
+		} else {
+			ds.TrainData.TrainData = append(ds.TrainData.TrainData, v)
+		}
+	}
+
+	dsJSON, err := json.Marshal(ds)
+	if err != nil {
+		return errors.Wrap(err, "Unable to marshal data schema")
+	}
+
+	err = ioutil.WriteFile(path.Join(schemaPath, D3MDataSchema), dsJSON, 0644)
+	if err != nil {
+		return errors.Wrap(err, "Unable to write data schema")
+	}
+
 	return nil
 }

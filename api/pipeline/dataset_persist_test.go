@@ -52,7 +52,7 @@ func TestDatasetHashNotEqual(t *testing.T) {
 }
 
 func fetchFilteredData(t *testing.T) FilteredDataProvider {
-	return func(dataset string, index string, filters *model.FilterParams) (*model.FilteredData, error) {
+	return func(dataset string, index string, filters *model.FilterParams, inclusive bool) (*model.FilteredData, error) {
 		// basic sanity to check  params are passed through and parsed
 		assert.Equal(t, 2, len(filters.Ranged))
 		assert.Equal(t, "int_a", filters.Ranged[0].Name)
@@ -81,6 +81,29 @@ func fetchFilteredData(t *testing.T) FilteredDataProvider {
 	}
 }
 
+func fetchVariable(t *testing.T) VariableProvider {
+	return func(dataset string, index string) ([]*model.Variable, error) {
+		variables := make([]*model.Variable, 0)
+		variables = append(variables, &model.Variable{
+			Name: "feature0",
+			Type: "String",
+		})
+		variables = append(variables, &model.Variable{
+			Name: "feature1",
+			Type: "String",
+		})
+		variables = append(variables, &model.Variable{
+			Name: "feature2",
+			Type: "String",
+		})
+		variables = append(variables, &model.Variable{
+			Name: "feature3",
+			Type: "String",
+		})
+		return variables, nil
+	}
+}
+
 func TestPersistFilteredData(t *testing.T) {
 	defer os.RemoveAll("./test_output")
 
@@ -93,7 +116,7 @@ func TestPersistFilteredData(t *testing.T) {
 	}
 
 	// Verify that a new file is created from the call
-	datasetPath, err := PersistFilteredData(fetchFilteredData(t), "./test_output", "test", "test", "feature1", filterParams)
+	datasetPath, err := PersistFilteredData(fetchFilteredData(t), fetchVariable(t), "./test_output", "test", "test", "feature1", filterParams, true)
 	assert.NoError(t, err)
 	assert.NotEqual(t, datasetPath, "")
 	_, err = os.Stat(path.Join(datasetPath, D3MTrainData))
@@ -102,7 +125,7 @@ func TestPersistFilteredData(t *testing.T) {
 	_, err = os.Stat(path.Join(datasetPath, D3MTrainTargets))
 	assert.False(t, os.IsNotExist(err))
 
-	datasetPathUnmod, err := PersistFilteredData(fetchFilteredData(t), "./test_output", "test", "test", "feature1", filterParams)
+	datasetPathUnmod, err := PersistFilteredData(fetchFilteredData(t), fetchVariable(t), "./test_output", "test", "test", "feature1", filterParams, true)
 	assert.Equal(t, datasetPath, datasetPathUnmod)
 
 	// Verify that changed params results in a new file being used
@@ -112,6 +135,6 @@ func TestPersistFilteredData(t *testing.T) {
 			{Name: "float_b", Min: 10.0, Max: 11.0},
 		},
 	}
-	datasetPathMod, err := PersistFilteredData(fetchFilteredData(t), "./test_output", "test", "test", "feature1", filterParamsMod)
+	datasetPathMod, err := PersistFilteredData(fetchFilteredData(t), fetchVariable(t), "./test_output", "test", "test", "feature1", filterParamsMod, true)
 	assert.NotEqual(t, datasetPath, datasetPathMod)
 }

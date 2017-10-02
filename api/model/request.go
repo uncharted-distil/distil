@@ -1,11 +1,17 @@
 package model
 
+import (
+	"time"
+)
+
 // Request represents the pipeline request metadata.
 type Request struct {
-	SessionID string
-	RequestID string
-	Dataset   string
-	Progress  string
+	SessionID       string
+	RequestID       string
+	Dataset         string
+	Progress        string
+	CreatedTime     time.Time
+	LastUpdatedTime time.Time
 
 	Results  []*Result
 	Features []*RequestFeature
@@ -13,11 +19,13 @@ type Request struct {
 
 // Result represents the pipeline result metadata.
 type Result struct {
-	RequestID  string
-	PipelineID string
-	ResultURI  string
-	ResultUUID string
-	Progress   string
+	RequestID   string
+	PipelineID  string
+	ResultURI   string
+	ResultUUID  string
+	Progress    string
+	OutputType  string
+	CreatedTime time.Time
 
 	Scores []*ResultScore
 }

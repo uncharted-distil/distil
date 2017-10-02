@@ -197,7 +197,7 @@ func (s *Storage) parseResults(dataset string, rows *pgx.Rows, variable *model.V
 }
 
 // FetchFilteredResults pulls the results from the Postgres database.
-func (s *Storage) FetchFilteredResults(dataset string, index string, resultURI string, filterParams *model.FilterParams) (*model.FilteredData, error) {
+func (s *Storage) FetchFilteredResults(dataset string, index string, resultURI string, filterParams *model.FilterParams, inclusive bool) (*model.FilteredData, error) {
 	datasetResult := s.getResultTable(dataset)
 	targetName, err := s.getResultTargetName(datasetResult, resultURI, index)
 	// fetch the variable info to resolve its type - skip the first column since that will be the d3m_index value
@@ -211,7 +211,7 @@ func (s *Storage) FetchFilteredResults(dataset string, index string, resultURI s
 		return nil, errors.Wrap(err, "Could not pull variables from ES")
 	}
 
-	fields, err := s.buildFilteredQueryField(dataset, variables, filterParams)
+	fields, err := s.buildFilteredQueryField(dataset, variables, filterParams, inclusive)
 	if err != nil {
 		return nil, errors.Wrap(err, "Could not build field list")
 	}

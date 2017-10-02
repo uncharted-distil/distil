@@ -22,6 +22,8 @@
 		<facets class="result-summaries-target" :groups="targetVariable">
 		</facets>
 		<result-facets
+			enable-group-collapse
+			enable-facet-filtering
 			:variables="variables"
 			:dataset="dataset">
 		</result-facets>
@@ -48,19 +50,21 @@ export default {
 		vueSlider,
 	},
 
+	data() {
+		return {
+			value: this.minVal
+		};
+	},
+
 	computed: {
 
 		dataset() {
 			return this.$store.getters.getRouteDataset();
 		},
 
-		value() {
-			return (this.maxVal - this.minVal) * 0.25 + this.minVal;
-		},
-
 		minVal() {
-			const resultItems = this.$store.getters.getResultDataItems();
-			if (!_.isEmpty(resultItems)) {
+			const resultItems = this.$store.getters.getResultDataItems(this.regressionEnabled);
+			if (!_.isEmpty(resultItems) && _.has(resultItems[0], 'Error')) {
 				return Math.abs(_.minBy(resultItems, r => r.Error).Error);
 			}
 			return 0.0;
@@ -68,11 +72,11 @@ export default {
 
 		// computes the absolute maximum residual
 		maxVal() {
-			const resultItems = this.$store.getters.getResultDataItems();
-			if (!_.isEmpty(resultItems)) {
+			const resultItems = this.$store.getters.getResultDataItems(this.regressionEnabled);
+			if (!_.isEmpty(resultItems) && _.has(resultItems[0], 'Error')) {
 				return Math.abs(_.maxBy(resultItems, r => r.Error).Error);
 			}
-			return 0.0;
+			return 100.0;
 		},
 
 		targetVariable() {
@@ -94,6 +98,9 @@ export default {
 		regressionEnabled() {
 			const targetVarName = this.$store.getters.getRouteTargetVariable();
 			const targetVar = _.find(this.$store.getters.getVariables(), v => _.toLower(v.name) === targetVarName);
+			if (_.isEmpty(targetVar)) {
+				return false;
+			}
 			const task = getTask(targetVar.type);
 			return task.schemaName === 'regression';
 		}

@@ -11,7 +11,6 @@ export function setDatasets(state, datasets) {
 
 export function setVariableSummaries(state, summaries) {
 	state.variableSummaries = summaries;
-	state.trainingVariables = {};
 }
 
 export function updateVariableSummaries(state, args) {
@@ -31,55 +30,19 @@ export function updateResultsSummaries(state, summary) {
 		state.resultsSummaries.push(summary);
 	}
 }
-
-function validateData(data) {
-	return  !_.isEmpty(data) &&
-		!_.isEmpty(data.values) &&
-		!_.isEmpty(data.columns);
-}
-
 // sets the current filtered data into the store
 export function setFilteredData(state, filteredData) {
 	state.filteredData = filteredData;
-	state.filteredDataItems = [];
-	if (validateData(filteredData)) {
-		state.filteredDataItems = _.map(filteredData.values, d => {
-			const row = {};
-			for (const [index, col] of filteredData.columns.entries()) {
-				row[col] = d[index];
-			}
-			return row;
-		});
-	}
+}
+
+// sets the current selected data into the store
+export function setSelectedData(state, selectedData) {
+	state.selectedData = selectedData;
 }
 
 // sets the current result data into the store
-export function setResultData(state, args) {
-	state.resultData = args.resultData;
-	state.resultDataItems = [];
-
-	if (validateData(args.resultData)) {
-		state.resultDataItems = _.cloneDeep(state.filteredDataItems);
-
-		// append the result variable data to the baseline variable data
-		for (const [i, row] of state.resultDataItems.entries()) {
-			for (const [j, colName] of args.resultData.columns.entries()) {
-				// append the result value
-				const label = `Predicted ${colName}`;
-				row[label] = args.resultData.values[i][j];
-
-				// append the residual value if necessary
-				let residualLabel = null;
-				if (args.computeResiduals) {
-					residualLabel = 'Error';
-					row[residualLabel] = row[colName] - args.resultData.values[i][j];
-				}
-				// save the names of the columns related to the target and predictions as metadata
-				// for use at render time
-				row._target = { truth: colName, predicted: label, error: residualLabel };
-			}
-		}
-	}
+export function setResultData(state, resultData) {
+	state.resultData = resultData;
 }
 
 export function setWebSocketConnection(state, connection) {
@@ -145,9 +108,6 @@ export function removeCompletedPipeline(state, args) {
 }
 
 export function highlightFeatureRange(state, highlight) {
-	if (!state.highlightedFeatureRanges) {
-		state.highlightedFeatureRanges = {};
-	}
 	Vue.set(state.highlightedFeatureRanges, highlight.name, {
 		from: highlight.from,
 		to: highlight.to
@@ -163,48 +123,5 @@ export function highlightFeatureValues(state, highlights) {
 }
 
 export function clearFeatureHighlightValues(state) {
-	Vue.set(state, 'highlightedFeatureValues', null);
-}
-
-function highlightTableItems(highlightedFeatureRanges, items) {
-	if (_.isEmpty(highlightedFeatureRanges)) {
-		items.forEach(item => {
-			if (item._rowVariant) {
-				Vue.set(item, '_rowVariant', undefined);
-			}
-		});
-		return;
-	}
-	const highlightNames = _.keys(highlightedFeatureRanges);
-	items.forEach(item => {
-		// check if row meets all criteria
-		let shouldHighlight = true;
-		for (let i=0; i<highlightNames.length; i++) {
-			const name = highlightNames[i];
-			const range = highlightedFeatureRanges[name];
-			if (item[name] < range.from ||
-				item[name] > range.to) {
-					shouldHighlight = false;
-					break;
-			}
-		}
-		// highlight
-		if (shouldHighlight) {
-			Vue.set(item, '_rowVariant', 'info');
-		} else {
-			// remove highlight
-			if (item._rowVariant) {
-				Vue.set(item, '_rowVariant', undefined);
-			}
-		}
-	});
-	return items;
-}
-
-export function highlightFilteredDataItems(state) {
-	highlightTableItems(state.highlightedFeatureRanges, state.filteredDataItems);
-}
-
-export function highlightResultdDataItems(state) {
-	highlightTableItems(state.highlightedFeatureRanges, state.resultDataItems);
+	Vue.delete(state, 'highlightedFeatureValues');
 }

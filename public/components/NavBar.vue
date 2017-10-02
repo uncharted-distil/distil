@@ -12,7 +12,7 @@
 				<b-nav-item @click="onSearch" :active="activeView===SEARCH">Search</b-nav-item>
 				<b-nav-item @click="onExplore" :active="activeView===EXPLORE" :disabled="!hasDataset()">Explore</b-nav-item>
 				<b-nav-item @click="onSelect" :active="activeView===SELECT" :disabled="!hasDataset()">Select</b-nav-item>
-				<b-nav-item @click="onBuild" :active="activeView===BUILD" :disabled="!hasDataset()">Build</b-nav-item>
+				<b-nav-item @click="onPipelines" :active="activeView===PIPELINES" :disabled="!hasDataset()">Pipelines</b-nav-item>
 				<b-nav-item @click="onResults" :active="activeView===RESULTS">Results</b-nav-item>
 			</b-nav>
 			<b-nav is-nav-bar class="ml-auto">
@@ -36,7 +36,7 @@ const HOME = Symbol();
 const SEARCH = Symbol();
 const EXPLORE = Symbol();
 const SELECT = Symbol();
-const BUILD = Symbol();
+const PIPELINES = Symbol();
 const RESULTS = Symbol();
 
 const ROUTE_MAPPINGS = {
@@ -44,7 +44,7 @@ const ROUTE_MAPPINGS = {
 	'/search': SEARCH,
 	'/explore': EXPLORE,
 	'/select': SELECT,
-	'/build': BUILD,
+	'/pipelines': PIPELINES,
 	'/results': RESULTS
 };
 
@@ -57,7 +57,7 @@ export default {
 			SEARCH: SEARCH,
 			EXPLORE: EXPLORE,
 			SELECT: SELECT,
-			BUILD: BUILD,
+			PIPELINES: PIPELINES,
 			RESULTS: RESULTS,
 			activeView: SEARCH
 		};
@@ -114,8 +114,8 @@ export default {
 		},
 
 		// switch to the pipelines view
-		onBuild() {
-			const entry = createRouteEntry('/build', {
+		onPipelines() {
+			const entry = createRouteEntry('/pipelines', {
 				dataset: this.$store.getters.getRouteDataset(),
 				filters: this.$store.getters.getRouteFilters(),
 				target: this.$store.getters.getRouteTargetVariable(),

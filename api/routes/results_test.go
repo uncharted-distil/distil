@@ -24,6 +24,7 @@ func TestResultsHandler(t *testing.T) {
 		"dataset":     "o_185",
 		"index":       "datasets",
 		"results-uri": "./testdata/results.csv",
+		"inclusive":   "inclusive",
 	}
 	req := mock.HTTPRequest(t, "GET", "/distil/results/", params, nil)
 

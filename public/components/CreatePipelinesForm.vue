@@ -1,15 +1,7 @@
 <template>
 	<div class="create-pipelines-form">
-		Feature:
-		<b-dropdown :text="feature" class="m-md-2">
-			<b-dropdown-item :key="variable" v-for="variable in variables" @click="featureSelect">{{variable}}</b-dropdown-item>
-		</b-dropdown>
-		Metric:
-		<b-dropdown :text="metric" class="m-md-2">
-			<b-dropdown-item :disabled="!featureSet" :key="metric" v-for="metric in metrics" @click="metricSelect">{{metric}}</b-dropdown-item>
-		</b-dropdown>
-		<b-button :variant="createVariant" @click="create" :disabled="disableCreate">
-			Create
+		<b-button class="full-width" :variant="createVariant" @click="create" :disabled="disableCreate">
+			Create Pipelines
 		</b-button>
 	</div>
 </template>
@@ -17,7 +9,8 @@
 <script>
 
 import _ from 'lodash';
-import {getTask, getMetricDisplayNames, getOutputSchemaNames, getMetricSchemaName} from '../util/pipelines';
+import { createRouteEntry } from '../util/routes';
+import { getTask, getMetricDisplayNames, getOutputSchemaNames, getMetricSchemaName } from '../util/pipelines';
 
 export default {
 	name: 'create-pipelines-form',
@@ -30,83 +23,73 @@ export default {
 			metricSet: false
 		};
 	},
-	mounted() {
-		// make sure variables are immediately available so they can be added to the
-		// dropdown
-		this.$store.dispatch('getVariables', this.$store.getters.getRouteDataset());
-	},
-	watch: {
-		'$route.query'() {
-			this.$store.dispatch('getVariables', this.$store.getters.getRouteDataset());
-		}
-	},
 	computed: {
-		// gets the variables associated with the currently selected dataset
 		variables() {
-			return _.map(this.$store.getters.getVariables(), v => v.name);
+			return this.$store.getters.getVariables();
 		},
 		// gets the metrics that are used to score predictions against the user selected variable
 		metrics() {
 			// get the variable entry from the store that matches the user selection
-			const variables = this.$store.getters.getVariables();
-			if (_.isEmpty(variables)) {
+			if (!this.target || _.isEmpty(this.variables)) {
 				return [];
 			}
-			const variable = _.find(variables, v => _.toLower(v.name) === _.toLower(this.feature));
-			if (_.isEmpty(variable)) {
-				return [];
-			}
-
 			// get the task info associated with that variable type
-			const taskData = getTask(variable.type);
-
+			const taskData = getTask(this.targetVariable.type);
 			// grab the valid metrics from the task data to use as labels in the UI
 			return getMetricDisplayNames(taskData);
 		},
+		target() {
+			return this.$store.getters.getTargetVariable();
+		},
+		targetVariable() {
+			return _.find(this.variables, v => {
+				return _.toLower(v.name) === _.toLower(this.target);
+			});
+		},
 		// determines create button status based on completeness of user input
 		disableCreate() {
-			return !(this.featureSet && this.metricSet);
+			return !this.target;
 		},
 		// determines  create button variant based on completeness of user input
 		createVariant() {
-			const allSet = this.featureSet && this.metricSet;
-			return allSet ? 'success' : 'warning';
+			return !this.disableCreate ? 'primary' : 'secondary';
 		}
 	},
 	methods: {
-		// feature selection handler
-		featureSelect(evt) {
-			this.feature = evt.target.text;
-			this.featureSet = true;
-		},
-		// metric selection handler
-		metricSelect(evt) {
-			this.metric = evt.target.text;
-			this.metricSet = true;
-		},
 		// create button handler
 		create() {
 			// compute schema values for request
-			const variables = this.$store.getters.getVariables();
-			const variable = _.find(variables, v => _.toLower(v.name) === _.toLower(this.feature));
-
-			const taskData = getTask(variable.type);
+			const taskData = getTask(this.targetVariable.type);
 			const task = taskData.schemaName;
 			const output = _.values(getOutputSchemaNames(taskData))[0];
-			const metric = getMetricSchemaName(this.metric);
+			const metrics = _.map(this.metrics, m => getMetricSchemaName(m));
 
 			// dispatch action that triggers request send to server
 			this.$store.dispatch('createPipelines', {
-				feature: this.feature,
+				feature: this.$store.getters.getRouteTargetVariable(),
 				task: task,
-				metric: metric,
+				metric: metrics,
 				output: output
 			});
+
+			// transition to build screen
+			const entry = createRouteEntry('/pipelines', {
+				dataset: this.$store.getters.getRouteDataset(),
+				filters: this.$store.getters.getRouteFilters(),
+				target: this.$store.getters.getRouteTargetVariable(),
+				training: this.$store.getters.getRouteTrainingVariables()
+			});
+			this.$router.push(entry);
 		}
 	}
 };
 </script>
 
 <style>
-
+.create-pipelines-form {
+	margin: 8px 16px;
+}
+.full-width {
+	width: 100%;
+}
 </style>

@@ -10,7 +10,8 @@ import (
 )
 
 const (
-	filterLimit = 500
+	filterLimit = 100
+	primaryKey  = "d3mIndex"
 )
 
 func (s *Storage) parseFilteredData(dataset string, rows *pgx.Rows) (*model.FilteredData, error) {
@@ -73,17 +74,32 @@ func (s *Storage) buildFilteredQueryWhere(dataset string, filterParams *model.Fi
 	return strings.Join(wheres, " AND "), params, nil
 }
 
-func (s *Storage) buildFilteredQueryField(dataset string, variables []*model.Variable, filterParams *model.FilterParams) (string, error) {
-	// need to get the variable list to handle field exclusion.
-	// NOTE: This should be reexamined to figure out if front end changes make more sense.
-	excludedFields := make(map[string]bool)
-	for _, f := range filterParams.None {
-		excludedFields[f] = true
-	}
+func (s *Storage) buildFilteredQueryField(dataset string, variables []*model.Variable, filterParams *model.FilterParams, inclusive bool) (string, error) {
+	// fields to include
 	fieldList := make([]string, 0)
-	for _, v := range variables {
-		if !excludedFields[v.Name] {
-			fieldList = append(fieldList, fmt.Sprintf("\"%s\"", v.Name))
+
+	if inclusive {
+		// if inclusive, include all fields except specifically excluded fields
+		excludedFields := make(map[string]bool)
+		for _, f := range filterParams.None {
+			excludedFields[f] = true
+		}
+
+		for _, v := range variables {
+			if !excludedFields[v.Name] {
+				fieldList = append(fieldList, fmt.Sprintf("\"%s\"", v.Name))
+			}
+		}
+	} else {
+		// if exclusive, exclude all fields except specifically included fields
+		for _, f := range filterParams.Ranged {
+			fieldList = append(fieldList, fmt.Sprintf("\"%s\"", f.Name))
+		}
+		for _, f := range filterParams.Categorical {
+			fieldList = append(fieldList, fmt.Sprintf("\"%s\"", f.Name))
+		}
+		for _, f := range filterParams.None {
+			fieldList = append(fieldList, fmt.Sprintf("\"%s\"", f))
 		}
 	}
 
@@ -93,13 +109,13 @@ func (s *Storage) buildFilteredQueryField(dataset string, variables []*model.Var
 // FetchData creates a postgres query to fetch a set of rows.  Applies filters to restrict the
 // results to a user selected set of fields, with rows further filtered based on allowed ranges and
 // categories.
-func (s *Storage) FetchData(dataset string, index string, filterParams *model.FilterParams) (*model.FilteredData, error) {
+func (s *Storage) FetchData(dataset string, index string, filterParams *model.FilterParams, inclusive bool) (*model.FilteredData, error) {
 	variables, err := model.FetchVariables(s.clientES, index, dataset)
 	if err != nil {
 		return nil, errors.Wrap(err, "Could not pull variables from ES")
 	}
 
-	fields, err := s.buildFilteredQueryField(dataset, variables, filterParams)
+	fields, err := s.buildFilteredQueryField(dataset, variables, filterParams, inclusive)
 	if err != nil {
 		return nil, errors.Wrap(err, "Could not build field list")
 	}

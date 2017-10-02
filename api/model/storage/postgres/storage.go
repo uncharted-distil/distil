@@ -2,6 +2,7 @@ package postgres
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/pkg/errors"
 	es "github.com/unchartedsoftware/distil/api/elastic"
@@ -56,31 +57,31 @@ func (s *Storage) PersistSession(sessionID string) error {
 }
 
 // PersistRequest persists a request to Postgres.
-func (s *Storage) PersistRequest(sessionID string, requestID string, dataset string, progress string) error {
+func (s *Storage) PersistRequest(sessionID string, requestID string, dataset string, progress string, createdTime time.Time) error {
 	// Insert the request.
-	sql := fmt.Sprintf("INSERT INTO %s (session_id, request_id, dataset, progress) VALUES ($1, $2, $3, $4);", requestTableName)
+	sql := fmt.Sprintf("INSERT INTO %s (session_id, request_id, dataset, progress, created_time, last_updated_time) VALUES ($1, $2, $3, $4, $5, $5);", requestTableName)
 
-	_, err := s.client.Exec(sql, sessionID, requestID, dataset, progress)
+	_, err := s.client.Exec(sql, sessionID, requestID, dataset, progress, createdTime)
 
 	return err
 }
 
 // UpdateRequest updates a request in Postgres.
-func (s *Storage) UpdateRequest(requestID string, progress string) error {
+func (s *Storage) UpdateRequest(requestID string, progress string, updatedTime time.Time) error {
 	// Update the request.
-	sql := fmt.Sprintf("UPDATE %s SET progress = $1 WHERE request_id = $2;", requestTableName)
+	sql := fmt.Sprintf("UPDATE %s SET progress = $1, last_updated_time = $2 WHERE request_id = $3;", requestTableName)
 
-	_, err := s.client.Exec(sql, progress, requestID)
+	_, err := s.client.Exec(sql, progress, updatedTime, requestID)
 
 	return err
 }
 
 // PersistResultMetadata persists the result metadata to Postgres.
-func (s *Storage) PersistResultMetadata(requestID string, pipelineID string, resultUUID string, resultURI string, progress string) error {
+func (s *Storage) PersistResultMetadata(requestID string, pipelineID string, resultUUID string, resultURI string, progress string, outputType string, createdTime time.Time) error {
 	// Insert the result (metadata, not result data).
-	sql := fmt.Sprintf("INSERT INTO %s (request_id, pipeline_id, result_uuid, result_uri, progress) VALUES ($1, $2, $3, $4, $5);", resultTableName)
+	sql := fmt.Sprintf("INSERT INTO %s (request_id, pipeline_id, result_uuid, result_uri, progress, output_type, created_time) VALUES ($1, $2, $3, $4, $5, $6, $7);", resultTableName)
 
-	_, err := s.client.Exec(sql, requestID, pipelineID, resultUUID, resultURI, progress)
+	_, err := s.client.Exec(sql, requestID, pipelineID, resultUUID, resultURI, progress, outputType, createdTime)
 
 	return err
 }
@@ -105,7 +106,7 @@ func (s *Storage) PersistRequestFeature(requestID string, featureName string, fe
 
 // FetchRequests pulls session request information from Postgres. NOTE: Not implemented!
 func (s *Storage) FetchRequests(sessionID string) ([]*model.Request, error) {
-	sql := fmt.Sprintf("SELECT session_id, request_id, dataset, progress FROM %s WHERE session_id = $1;", requestTableName)
+	sql := fmt.Sprintf("SELECT session_id, request_id, dataset, progress, created_time, last_updated_time FROM %s WHERE session_id = $1;", requestTableName)
 
 	rows, err := s.client.Query(sql, sessionID)
 	if err != nil {
@@ -121,8 +122,10 @@ func (s *Storage) FetchRequests(sessionID string) ([]*model.Request, error) {
 		var requestID string
 		var dataset string
 		var progress string
+		var createdTime time.Time
+		var lastUpdatedTime time.Time
 
-		err = rows.Scan(&sessionID, &requestID, &dataset, &progress)
+		err = rows.Scan(&sessionID, &requestID, &dataset, &progress, &createdTime, &lastUpdatedTime)
 		if err != nil {
 			return nil, errors.Wrap(err, "Unable to parse session requests from Postgres")
 		}
@@ -138,12 +141,14 @@ func (s *Storage) FetchRequests(sessionID string) ([]*model.Request, error) {
 		}
 
 		requests = append(requests, &model.Request{
-			SessionID: sessionID,
-			RequestID: requestID,
-			Dataset:   dataset,
-			Progress:  progress,
-			Results:   results,
-			Features:  features,
+			SessionID:       sessionID,
+			RequestID:       requestID,
+			Dataset:         dataset,
+			Progress:        progress,
+			CreatedTime:     createdTime,
+			LastUpdatedTime: lastUpdatedTime,
+			Results:         results,
+			Features:        features,
 		})
 	}
 
@@ -152,7 +157,7 @@ func (s *Storage) FetchRequests(sessionID string) ([]*model.Request, error) {
 
 // FetchResultMetadata pulls request result information from Psotgres.
 func (s *Storage) FetchResultMetadata(requestID string) ([]*model.Result, error) {
-	sql := fmt.Sprintf("SELECT request_id, pipeline_id, result_uuid, result_uri, progress FROM %s WHERE request_id = $1;", resultTableName)
+	sql := fmt.Sprintf("SELECT request_id, pipeline_id, result_uuid, result_uri, progress, output_type, created_time FROM %s WHERE request_id = $1;", resultTableName)
 
 	rows, err := s.client.Query(sql, requestID)
 	if err != nil {
@@ -169,8 +174,10 @@ func (s *Storage) FetchResultMetadata(requestID string) ([]*model.Result, error)
 		var resultUUID string
 		var resultURI string
 		var progress string
+		var outputType string
+		var createdTime time.Time
 
-		err = rows.Scan(&requestID, &pipelineID, &resultUUID, &resultURI, &progress)
+		err = rows.Scan(&requestID, &pipelineID, &resultUUID, &resultURI, &progress, &outputType, &createdTime)
 		if err != nil {
 			return nil, errors.Wrap(err, "Unable to parse requests results from Postgres")
 		}
@@ -181,12 +188,14 @@ func (s *Storage) FetchResultMetadata(requestID string) ([]*model.Result, error)
 		}
 
 		results = append(results, &model.Result{
-			RequestID:  requestID,
-			PipelineID: pipelineID,
-			ResultURI:  resultURI,
-			ResultUUID: resultUUID,
-			Progress:   progress,
-			Scores:     scores,
+			RequestID:   requestID,
+			PipelineID:  pipelineID,
+			ResultURI:   resultURI,
+			ResultUUID:  resultUUID,
+			Progress:    progress,
+			OutputType:  outputType,
+			CreatedTime: createdTime,
+			Scores:      scores,
 		})
 	}
 

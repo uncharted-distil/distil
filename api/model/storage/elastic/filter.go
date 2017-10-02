@@ -89,7 +89,7 @@ func (s *Storage) parseResults(searchResults *elastic.SearchResult) (*model.Filt
 // FetchData creates an ES query to fetch a set of documents.  Applies filters to restrict the
 // results to a user selected set of fields, with documents further filtered based on allowed ranges and
 // categories.
-func (s *Storage) FetchData(dataset string, index string, filterParams *model.FilterParams) (*model.FilteredData, error) {
+func (s *Storage) FetchData(dataset string, index string, filterParams *model.FilterParams, inclusive bool) (*model.FilteredData, error) {
 	// construct an ES query that fetches documents from the dataset with the supplied variable filters applied
 	query := elastic.NewBoolQuery()
 	var excludes []string
@@ -109,7 +109,12 @@ func (s *Storage) FetchData(dataset string, index string, filterParams *model.Fi
 		excludes = append(excludes, variableName)
 	}
 
-	fetchContext := elastic.NewFetchSourceContext(true).Exclude(excludes...)
+	fetchContext := elastic.NewFetchSourceContext(true)
+	if inclusive {
+		fetchContext.Exclude(excludes...)
+	} else {
+		fetchContext.Include(excludes...)
+	}
 
 	// execute the ES query
 	res, err := s.client.Search().

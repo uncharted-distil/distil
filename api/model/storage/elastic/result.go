@@ -15,8 +15,8 @@ import (
 )
 
 // FetchFilteredResults returns the set of test predictions made by a given pipeline. NOTE: Not Implemented!
-func (s *Storage) FetchFilteredResults(dataset string, index string, resultURI string, filterParam *model.FilterParams) (*model.FilteredData, error) {
-	return nil, errors.New("ElasticSearch FetchFilteredResults not implemented")
+func (s *Storage) FetchFilteredResults(dataset string, index string, resultURI string, filterParam *model.FilterParams, inclusive bool) (*model.FilteredData, error) {
+	return s.FetchResults(dataset, index, resultURI)
 }
 
 // FetchResults returns the set of test predictions made by a given pipeline.
