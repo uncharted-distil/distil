@@ -225,12 +225,20 @@ func handleCreatePipelines(conn *Connection, client *pipeline.Client, esCtor ela
 
 	// persist the filtered dataset if necessary
 	fetchFilteredData := func(dataset string, index string, filters *model.FilterParams, inclusive bool) (*model.FilteredData, error) {
-		return model.FetchFilteredData(storage, dataset, index, filters, inclusive)
+		// fetch the whole data.
+		updatedFilters := &model.FilterParams{
+			Size:        -1,
+			Ranged:      filters.Ranged,
+			Categorical: filters.Categorical,
+			None:        filters.None,
+		}
+
+		return model.FetchFilteredData(storage, dataset, index, updatedFilters, inclusive)
 	}
 	fetchVariable := func(dataset string, index string) ([]*model.Variable, error) {
 		return model.FetchVariables(esClient, index, dataset)
 	}
-	datasetPath, err := pipeline.PersistFilteredData(fetchFilteredData, fetchVariable, client.DataDir, clientCreateMsg.Dataset, clientCreateMsg.Index, clientCreateMsg.Feature, filters, true)
+	datasetPath, err := pipeline.PersistFilteredData(fetchFilteredData, fetchVariable, client.DataDir, clientCreateMsg.Dataset, clientCreateMsg.Index, clientCreateMsg.Feature, filters, false)
 	if err != nil {
 		handleErr(conn, msg, err)
 		return
