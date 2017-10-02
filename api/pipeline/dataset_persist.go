@@ -27,7 +27,7 @@ const (
 
 // FilteredDataProvider defines a function that will fetch data from a back end source given
 // a set of filter parameters.
-type FilteredDataProvider func(dataset string, index string, filters *model.FilterParams, inclusive bool) (*model.FilteredData, error)
+type FilteredDataProvider func(dataset string, index string, filters *model.FilterParams) (*model.FilteredData, error)
 
 // VariableProvider defines a function that will get the variables for a dataset.
 type VariableProvider func(dataset string, index string) ([]*model.Variable, error)
@@ -66,8 +66,9 @@ func getFilteredDatasetHash(dataset string, target string, filterParams *model.F
 // PersistFilteredData creates a hash code from the combination of the dataset name, the target name, and its filter
 // state, and saves the filtered data and target data to disk if they haven't been previously.  The path to the data
 // is returned.
-func PersistFilteredData(fetchData FilteredDataProvider, fetchVariables VariableProvider, datasetDir string, dataset string, index string, target string, filters *model.FilterParams, inclusive bool) (string, error) {
+func PersistFilteredData(fetchData FilteredDataProvider, fetchVariables VariableProvider, datasetDir string, dataset string, index string, target string, filters *model.FilterParams) (string, error) {
 
+	log.Infof("PARAMS: %v", filters)
 	// parse the dataset and its filter state and generate a hashcode from both
 	hash, err := getFilteredDatasetHash(dataset, target, filters)
 	if err != nil {
@@ -84,7 +85,7 @@ func PersistFilteredData(fetchData FilteredDataProvider, fetchVariables Variable
 
 	// get the filtered dataset from elastic search
 	start := time.Now()
-	filteredData, err := fetchData(dataset, index, filters, inclusive)
+	filteredData, err := fetchData(dataset, index, filters)
 	if err != nil {
 		return "", err
 	}
