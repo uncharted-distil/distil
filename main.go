@@ -140,6 +140,9 @@ func main() {
 	registerRoute(mux, "/distil/results/:index/:dataset/:results-uuid", routes.ResultsHandler(dataStorageCtor))
 	registerRoute(mux, "/distil/results-summary/:index/:dataset/:results-uuid", routes.ResultsSummaryHandler(dataStorageCtor))
 	registerRoute(mux, "/distil/session/:session", routes.SessionHandler(dataStorageCtor))
+	registerRoute(mux, "/distil/abort", routes.AbortHandler())
+	registerRoute(mux, "/distil/export/:session/:pipeline-id", routes.ExportHandler(pipelineClient))
+
 	registerRoute(mux, "/ws", ws.PipelineHandler(pipelineClient, esClientCtor, dataStorageCtor))
 	registerRoute(mux, "/*", routes.FileHandler("./dist"))
 
