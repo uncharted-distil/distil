@@ -117,6 +117,25 @@ func (c *Client) EndSession(ctx context.Context, id string) error {
 	return nil
 }
 
+// ExportPipeline will issue an export pipeline call to the pipeline compute server
+func (c *Client) ExportPipeline(ctx context.Context, sessionID string, pipelineID string, pipelineURI string) error {
+	// check for session
+	c.mu.Lock()
+	_, ok := c.sessions[sessionID]
+	c.mu.Unlock()
+	if !ok {
+		return errors.Errorf("session id `%s` is not recognized", sessionID)
+	}
+	// create start session request
+	req := GenerateExportPipelineRequest(sessionID, pipelineID, pipelineURI)
+	// execute the request
+	_, err := c.dispatchRequestSync(ctx, req.RequestFunc)
+	if err != nil {
+		return errors.Wrap(err, "failed to export pipeline")
+	}
+	return nil
+}
+
 func (c *Client) dispatchRequestSync(ctx context.Context, request RequestFunc) ([]*proto.Message, error) {
 	// execute the start session request
 	req := request(&ctx, &c.client)

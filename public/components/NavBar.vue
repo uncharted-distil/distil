@@ -3,7 +3,8 @@
 
 		<b-nav-toggle target="nav_collapse"></b-nav-toggle>
 
-		<i class="fa fa-rebel navbar-brand app-icon"></i>
+		<!-- <i class="fa fa-empire navbar-brand app-icon"></i> -->
+		<img src="/favicons/favicon-32x32.png" class="app-icon"></img>
 		<span class="navbar-brand">Distil</span>
 
 		<b-collapse is-nav id="nav_collapse">
@@ -15,21 +16,15 @@
 				<b-nav-item @click="onPipelines" :active="activeView===PIPELINES" :disabled="!hasDataset()">Pipelines</b-nav-item>
 				<b-nav-item @click="onResults" :active="activeView===RESULTS">Results</b-nav-item>
 			</b-nav>
-			<!--
 			<b-nav is-nav-bar class="ml-auto">
-				<b-nav-text class="session-label">Session:</b-nav-text>
-				<b-nav-text v-if="sessionID===null" class="session-not-ready">
-					<i class="fa fa-close"></i>Unavailable
-				</b-nav-text>
-				<b-nav-text v-if="sessionID!==null" class="session-ready">
-					<i class="fa fa-check"></i>{{sessionID}}
-				</b-nav-text>
-			</b-nav>
-			-->
-			<b-nav is-nav-bar class="ml-auto">
-				<b-nav is-nav-bar>
-					<b-nav-item href="/help">Help</b-nav-item>
-				</b-nav>
+				<b-nav-item href="/help">Help</b-nav-item>
+				<b-btn v-b-modal.abort size="sm" variant="outline-danger" class="abort-button">Abort</b-btn>
+				<b-modal id="abort" title="Abort" @ok="onAbort">
+					<div>
+						<i class="fa fa-exclamation-triangle fa-3x abort-icon"></i>
+						This action will terminate the session.
+					</div>
+				</b-modal>
 			</b-nav>
 		</b-collapse>
 	</b-navbar>
@@ -74,12 +69,6 @@ export default {
 		this.$store.dispatch('getPipelineSession');
 	},
 
-	computed: {
-		sessionID() {
-			return this.$store.getters.getPipelineSessionID();
-		}
-	},
-
 	methods: {
 		onHome() {
 			gotoHome(this.$store, this.$router);
@@ -98,6 +87,10 @@ export default {
 		},
 		onResults() {
 			gotoResults(this.$store, this.$router);
+		},
+		onAbort() {
+			this.$router.replace('/');
+			this.$store.dispatch('abort');
 		},
 		hasDataset() {
 			return !!this.$store.getters.getRouteDataset();
@@ -123,7 +116,14 @@ export default {
 	color: #00c07f !important;
 }
 .app-icon {
-	color: #cf3835 !important;
+	padding-right: 5px;
+}
+.abort-icon {
+	vertical-align: middle;
+	color:#cf3835;
+}
+.abort-button {
+	margin-left: 20px;
 }
 .session-label {
 	padding-right: 4px

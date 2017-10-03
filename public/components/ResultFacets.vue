@@ -74,6 +74,7 @@ export default {
 								enabled: true
 							}
 						}, activeResult.pipeline.resultUri);
+						this.$emit('activePipelineChange', { name: activeResult.name, id: activeResult.pipelineId });
 					}
 				});
 			}
@@ -130,6 +131,8 @@ export default {
 					enabled: true
 				}
 			}, completedReq.pipeline.resultUri);
+			// let listening components know the acitive pipeline changed
+			this.$emit('activePipelineChange', { name: completedReq.name, id: completedReq.pipelineId });
 		},
 
 		onCollapse() {
