@@ -15,7 +15,7 @@
 
 
 {
-"title": "Explore",
+"title": "Step 2 - Explore",
 "tags": "",
 "keywords": "",
 "url": "explore.html",
@@ -43,14 +43,14 @@
 "tags": "",
 "keywords": "",
 "url": "index.html",
-"summary": "Distil is data-driven application for interactively building models of complex, real-world problems."
+"summary": "Distil is data-driven application for interactively guiding machine intelligence to build predictive models that classify or project complex, real-world processes."
 }
 ,
 
 
 
 {
-"title": "Pipelines",
+"title": "Step 4 - Pipelines",
 "tags": "",
 "keywords": "",
 "url": "pipelines.html",
@@ -61,7 +61,7 @@
 
 
 {
-"title": "Results",
+"title": "Step 5 - Results",
 "tags": "",
 "keywords": "",
 "url": "results.html",
@@ -74,7 +74,7 @@
 
 
 {
-"title": "Search",
+"title": "Step 1 - Search",
 "tags": "",
 "keywords": "",
 "url": "search.html",
@@ -85,7 +85,7 @@
 
 
 {
-"title": "Select",
+"title": "Step 3 - Select",
 "tags": "",
 "keywords": "",
 "url": "select.html",
