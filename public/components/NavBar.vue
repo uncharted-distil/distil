@@ -3,8 +3,7 @@
 
 		<b-nav-toggle target="nav_collapse"></b-nav-toggle>
 
-		<!-- <i class="fa fa-empire navbar-brand app-icon"></i> -->
-		<img src="/favicons/favicon-32x32.png" class="app-icon"></img>
+		<img src="/images/uncharted.svg" class="app-icon"></img>
 		<span class="navbar-brand">Distil</span>
 
 		<b-collapse is-nav id="nav_collapse">
@@ -31,6 +30,7 @@
 </template>
 
 <script>
+import '../assets/images/uncharted.svg';
 import { gotoHome, gotoSearch, gotoExplore, gotoSelect, gotoPipelines, gotoResults } from '../util/nav';
 
 const HOME = Symbol();
@@ -116,7 +116,9 @@ export default {
 	color: #00c07f !important;
 }
 .app-icon {
-	padding-right: 5px;
+	width: 36px;
+	height: 36px;
+	margin-right: 5px;
 }
 .abort-icon {
 	vertical-align: middle;
