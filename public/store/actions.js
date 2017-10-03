@@ -57,7 +57,7 @@ export function getSession(context) {
 								requestId: pipeline.RequestID,
 								dataset: pipeline.Dataset,
 								pipelineId: res.PipelineID,
-								pipeline: { resultUri: res.ResultURI, output: '', scores: res.Scores }
+								pipeline: { resultUri: res.ResultUUID, output: '', scores: res.Scores }
 							});
 						}
 					});
@@ -323,4 +323,24 @@ export function highlightFeatureValues(context, highlight) {
 
 export function clearFeatureHighlightValues(context) {
 	context.commit('clearFeatureHighlightValues');
+}
+
+export function abort() {
+	return axios.get('/distil/abort')
+	.then(() => {
+		console.log('User initiated session abort');
+	})
+	.catch(error => {
+		console.error(`Failed to abort with error ${error}`);
+	});
+}
+
+export function exportPipeline(context, args) {
+	return axios.get(`/distil/export/${args.sessionId}/${args.pipelineId}`)
+	.then(() => {
+		console.log(`User exported pipeline ${args.pipelineId}`);
+	})
+	.catch(error => {
+		console.error(`Failed to export with error ${error}`);
+	});
 }

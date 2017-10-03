@@ -77,7 +77,7 @@ export default {
 
 		regressionEnabled() {
 			const targetVarName = this.$store.getters.getRouteTargetVariable();
-			const targetVar = _.find(this.$store.getters.getVariables(), v => _.toLower(v.name) === targetVarName);
+			const targetVar = _.find(this.$store.getters.getVariables(), v => _.toLower(v.name) === _.toLower(targetVarName));
 			if (_.isEmpty(targetVar)) {
 				return false;
 			}

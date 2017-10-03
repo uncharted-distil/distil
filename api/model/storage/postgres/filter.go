@@ -11,7 +11,6 @@ import (
 
 const (
 	filterLimit = 100
-	primaryKey  = "d3mIndex"
 )
 
 func (s *Storage) parseFilteredData(dataset string, rows *pgx.Rows) (*model.FilteredData, error) {
@@ -133,7 +132,11 @@ func (s *Storage) FetchData(dataset string, index string, filterParams *model.Fi
 	}
 
 	// order & limit the filtered data.
-	query = fmt.Sprintf("%s ORDER BY \"%s\" LIMIT %d;", query, d3mIndexFieldName, filterLimit)
+	query = fmt.Sprintf("%s ORDER BY \"%s\"", query, d3mIndexFieldName)
+	if filterParams.Size > 0 {
+		query = fmt.Sprintf("%s LIMIT %d", query, filterParams.Size)
+	}
+	query = query + ";"
 
 	// execute the postgres query
 	res, err := s.client.Query(query, params...)

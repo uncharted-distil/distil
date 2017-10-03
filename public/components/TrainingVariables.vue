@@ -1,8 +1,6 @@
 <template>
 	<div class="training-variables">
-		<div class="bg-faded rounded-top">
-			<h6 class="nav-link">Training Set</h6>
-		</div>
+		<h6 class="nav-link">Training Features</h6>
 		<variable-facets
 			enable-search
 			enable-sort
@@ -39,7 +37,7 @@ export default {
 			return (group) => {
 				const container = document.createElement('div');
 				const remove = document.createElement('button');
-				remove.className += 'btn btn-sm btn-outline-secondary mb-2';
+				remove.className += 'btn btn-sm btn-outline-danger mb-2';
 				remove.innerHTML = 'Remove';
 				remove.addEventListener('click', () => {
 					const training = this.$store.getters.getTrainingVariables();

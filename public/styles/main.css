@@ -32,3 +32,7 @@ html, body {
     display: flex;
     flex-direction: column;
 }
+
+.disabled {
+	cursor: not-allowed;
+}
