@@ -81,11 +81,11 @@ export default {
 	width: 100%;
 }
 .explore-variable-summaries {
-	width: 30%;
+	width: 25%;
 }
 .explore-data-table {
 	display: flex;
 	flex-direction: column;
-	width: 70%;
+	width: 75%;
 }
 </style>

@@ -54,6 +54,8 @@ export function getSession(context) {
 							// add the pipeline to complete
 							context.commit('addCompletedPipeline', {
 								name: res.name,
+								feature: targetFeature,
+								timestamp: res.CreatedTime,
 								requestId: pipeline.RequestID,
 								dataset: pipeline.Dataset,
 								pipelineId: res.PipelineID,
@@ -215,6 +217,7 @@ export function createPipelines(context, request) {
 		// inject the name and pipeline id
 		const name = createResultName(context.getters.getRouteDataset(), res.createdTime, request.feature);
 		res.name = name;
+		res.feature = request.feature;
 		// add/update the running pipeline info
 		context.commit('addRunningPipeline', res);
 		if (res.progress === PIPELINE_COMPLETE) {
@@ -222,6 +225,8 @@ export function createPipelines(context, request) {
 			context.commit('removeRunningPipeline', {pipelineId: res.pipelineId, requestId: res.requestId});
 			context.commit('addCompletedPipeline', {
 				name: res.name,
+				feature: request.feature,
+				timestamp: res.createdTime,
 				requestId: res.requestId,
 				dataset: res.dataset,
 				pipelineId: res.pipelineId,
