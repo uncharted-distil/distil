@@ -217,6 +217,7 @@ export function createPipelines(context, request) {
 		// inject the name and pipeline id
 		const name = createResultName(context.getters.getRouteDataset(), res.createdTime, request.feature);
 		res.name = name;
+		res.feature = request.feature;
 		// add/update the running pipeline info
 		context.commit('addRunningPipeline', res);
 		if (res.progress === PIPELINE_COMPLETE) {
