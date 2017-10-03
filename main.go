@@ -76,7 +76,7 @@ func main() {
 	esStorageCtor := es.NewStorage(esClientCtor)
 
 	// read startup config
-	startupConfigFile := env.Load("STARTUP_CONFIG", defaultStartupConfigFile)
+	startupConfigFile := env.Load("CONFIG_JSON_PATH", defaultStartupConfigFile)
 	startupConfig, err := ioutil.ReadFile(startupConfigFile)
 	exportPath := ""
 	if err != nil {
