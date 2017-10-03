@@ -154,7 +154,7 @@ func writeTrainData(dataPath string, datasetDir string, filteredData *model.Filt
 	defer writer.Flush()
 
 	// write out the header, including the d3m_index field
-	variableNames := []string{"d3m_index"}
+	variableNames := []string{"d3mIndex"}
 	for i, column := range filteredData.Columns {
 		if i != targetIdx {
 			variableNames = append(variableNames, column)
@@ -194,7 +194,7 @@ func writeTrainTargets(targetPath string, datasetDir string, filteredData *model
 	defer writer.Flush()
 
 	// write out the variable names including the d3m_index
-	variableNames := []string{"d3m_index", filteredData.Columns[targetIdx]}
+	variableNames := []string{"d3mIndex", filteredData.Columns[targetIdx]}
 	err = writer.Write(variableNames)
 	if err != nil {
 		return errors.Wrapf(err, "unable to persist %v", variableNames)
