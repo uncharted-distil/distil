@@ -54,6 +54,8 @@ export function getSession(context) {
 							// add the pipeline to complete
 							context.commit('addCompletedPipeline', {
 								name: res.name,
+								feature: targetFeature,
+								timestamp: res.CreatedTime,
 								requestId: pipeline.RequestID,
 								dataset: pipeline.Dataset,
 								pipelineId: res.PipelineID,
@@ -222,6 +224,8 @@ export function createPipelines(context, request) {
 			context.commit('removeRunningPipeline', {pipelineId: res.pipelineId, requestId: res.requestId});
 			context.commit('addCompletedPipeline', {
 				name: res.name,
+				feature: request.feature,
+				timestamp: res.createdTime,
 				requestId: res.requestId,
 				dataset: res.dataset,
 				pipelineId: res.pipelineId,
