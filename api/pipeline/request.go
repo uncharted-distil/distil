@@ -210,6 +210,22 @@ func GenerateEndSessionRequest(sessionID string) *RequestInfo {
 	return generateRequest(&sessionCtx, grpcFunc, msgHash)
 }
 
+// GenerateExportPipelineRequest creates a request that signals the pipeline compute server to export the
+// pipeline indicated by caller supplied pipeline ID.
+func GenerateExportPipelineRequest(sessionID string, pipelineID string, pipelineURI string) *RequestInfo {
+	exportRequest := PipelineExportRequest{
+		Context:         &SessionContext{sessionID},
+		PipelineId:      pipelineID,
+		PipelineExecUri: pipelineURI,
+	}
+	grpcFunc := func(client *CoreClient, ctx *context.Context, request proto.Message) (proto.Message, error) {
+		// execute the export pipeline request
+		return (*client).ExportPipeline(*ctx, &exportRequest)
+	}
+	hashFunc := func(msg proto.Message, id uuid.UUID) uint64 { return hash(id.Bytes()) }
+	return generateRequest(&exportRequest, grpcFunc, hashFunc)
+}
+
 // HashInclude satisifies the Includable interface from hashstructure package, and  allows
 // for the context field to be skipped when generating a hash for the PiplineCreateRequest
 // struct.

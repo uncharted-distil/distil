@@ -5,26 +5,28 @@
 			<div class="result-summaries-label">
 				Error:
 			</div>
-			<div  class="result-summaries-slider">
-				<vue-slider
-					ref="slider"
-					:v-model="value"
-					:min="0"
-					:max="maxVal"
-					:lazy="true"
-					width=100%
-					tooltip-dir="bottom"
-					@callback="onSlide"/>
+			<div class="result-summaries-slider">
+				<vue-slider ref="slider" :v-model="value" :min="0" :max="maxVal" :lazy="true" width=100% tooltip-dir="bottom" @callback="onSlide" />
 			</div>
 		</div>
 		<h6 class="nav-link">Actual</h6>
 		<facets class="result-summaries-target" :groups="targetSummaries"></facets>
 		<h6 class="nav-link">Predicted</h6>
-		<result-facets
+		<result-facets 
+			v-on:activePipelineChange="onPipelineUpdate($event)" 
 			enable-group-collapse
 			enable-facet-filtering
 			:variables="variables"
 			:dataset="dataset"></result-facets>
+		<div class="check-button-container">
+			<b-btn v-b-modal.export variant="outline-success" class="check-button">Export Pipeline</b-btn>
+			<b-modal id="export" title="Export" @ok="onExport">
+				<div class="check-message-container">
+					<i class="fa fa-check-circle fa-3x check-icon"></i>
+					<div>This action will export pipeline <b>{{activePipelineName}}</b> and terminate the session.</div>
+				</div>
+			</b-modal>
+		</div>
 	</div>
 </template>
 
@@ -50,7 +52,9 @@ export default {
 
 	data() {
 		return {
-			value: this.minVal
+			value: this.minVal,
+			activePipelineName: null,
+			activePipelineId: null
 		};
 	},
 
@@ -101,13 +105,26 @@ export default {
 			}
 			const task = getTask(targetVar.type);
 			return task.schemaName === 'regression';
-		}
+		},
 	},
 
 	methods: {
 		onSlide(value) {
 			const entry = createRouteEntryFromRoute(this.$route, { residualThreshold: value });
 			this.$router.push(entry);
+		},
+
+		onExport() {
+			this.$router.replace('/');
+			this.$store.dispatch('exportPipeline', {
+				pipelineId: this.activePipelineId,
+				sessionId: this.$store.state.pipelineSession.id
+			});
+		},
+
+		onPipelineUpdate(args) {
+			this.activePipelineName = args.name;
+			this.activePipelineId = args.id;
 		}
 	}
 };
@@ -118,45 +135,83 @@ export default {
 	display: flex;
 	flex-direction: column;
 }
+
 .result-summaries-target {
 	margin-bottom: 12px;
 }
+
 .result-summaries-target .facets-group {
 	box-shadow: none;
 }
+
 .result-summaries-target .facets-facet-horizontal .facet-histogram-bar-highlighted {
 	fill: #00C851;
 }
+
 .result-summaries-target .facets-facet-horizontal .facet-histogram-bar-highlighted:hover {
-	  fill: #007E33;
+	fill: #007E33;
 }
+
 .result-summaries-target .facets-facet-vertical .facet-bar-selected {
 	box-shadow: inset 0 0 0 1000px #00C851;
 }
+
 .result-summaries-target .facets-facet-horizontal .facet-range-filter {
 	box-shadow: inset 0 0 0 1000px rgba(0, 225, 11, 0.15);
 }
+
 .result-summaries-error {
 	display: flex;
 	flex-direction: row;
 	justify-content: flex-start;
 	margin-bottom: 30px;
 }
+
 .result-summaries-label {
 	display: flex;
-	flex-basis:auto;
-	margin-left:10px;
-	margin-right:15px;
+	flex-basis: auto;
+	margin-left: 10px;
+	margin-right: 15px;
 }
+
 .result-summaries-slider {
 	display: flex;
 	flex-grow: 1;
 }
+
 .result-summaries-slider .vue-slider-component .vue-slider-process {
-	background-color:#00C851;
+	background-color: #00C851;
 }
+
 .result-summaries-slider .vue-slider-component .vue-slider-tooltip {
 	border: 1px solid #00C851;
-    background-color: #00C851;
+	background-color: #00C851;
+}
+
+.check-message-container {
+	display: flex;
+	justify-content: flex-start;
+	flex-direction: row;
+	align-items: center;
+}
+
+.check-icon {
+	display: flex;
+	flex-shrink: 0;
+	color:#00C851;
+	padding-right: 15px;
+}
+
+.check-button-container {
+	margin-top: 15px;
+	display: flex;
+	justify-content: center;
+}
+
+.check-button {
+	display: flex;
+	margin-top: 15px;
+	flex-basis: 60%;
+	justify-content: center;
 }
 </style>
