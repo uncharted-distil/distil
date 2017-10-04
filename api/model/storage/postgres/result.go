@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"encoding/csv"
 	"fmt"
+	"math"
 	"os"
 	"strconv"
 
@@ -138,16 +139,24 @@ func (s *Storage) parseFilteredResults(dataset string, rows *pgx.Rows, target *m
 	// Parse the columns.
 	// Column 0 is the result column so need to change the type.
 	if rows != nil {
+		var targetActual int
 		fields := rows.FieldDescriptions()
 		columns := make([]string, len(fields))
 		types := make([]string, len(fields))
 		for i := 0; i < len(fields); i++ {
 			columns[i] = fields[i].Name
 			types[i] = fields[i].DataTypeName
+			if fields[i].Name == target.Name {
+				targetActual = i
+			}
 		}
 		types[0] = target.Type
 		result.Columns = columns
 		result.Types = types
+		if model.IsNumerical(target.Type) {
+			result.Columns = append(result.Columns, "error")
+			result.Types = append(result.Types, target.Type)
+		}
 
 		// Parse the row data.
 		for rows.Next() {
@@ -156,6 +165,11 @@ func (s *Storage) parseFilteredResults(dataset string, rows *pgx.Rows, target *m
 				return nil, errors.Wrap(err, "Unable to extract fields from query result")
 			}
 			parsedTargetValue, err := s.parseVariableValue(columnValues[0].(string), target)
+			if model.IsNumerical(target.Type) {
+				// Compute the residual between the predicted value and the actual value.
+				residual := s.calculateResidual(parsedTargetValue, targetActual, target)
+				columnValues = append(columnValues, residual)
+			}
 
 			if err != nil {
 				return nil, errors.Wrap(err, "Unable to parse result variable")
@@ -405,4 +419,15 @@ func (s *Storage) FetchResultsSummary(dataset string, resultURI string, index st
 	}
 
 	return nil, errors.Errorf("variable %s of type %s does not support summary", variable.Name, variable.Type)
+}
+
+func (s *Storage) calculateResidual(actual interface{}, target interface{}, variable *model.Variable) interface{} {
+	switch variable.Type {
+	case model.IntegerType:
+		return math.Abs(actual.(float64) - target.(float64))
+	case model.FloatType:
+		return math.Abs(actual.(float64) - target.(float64))
+	default:
+		return 0
+	}
 }
