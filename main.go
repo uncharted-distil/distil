@@ -88,6 +88,9 @@ func main() {
 			log.Warnf("Failed to parse startup config file (%s): %v", startupConfigFile, err)
 		} else {
 			exportPath = startupData["executables_root"].(string)
+			log.Infof("executables_root = %s, from config json", exportPath)
+			pipelineDataDir = startupData["temp_storage_root"].(string)
+			log.Infof("temp_storage_root = %s, from config json - overrides PIPELINE_DATA_DIR", pipelineDataDir)
 		}
 	}
 
