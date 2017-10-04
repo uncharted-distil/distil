@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"path"
 	"path/filepath"
 	"sort"
 	"strings"
@@ -404,9 +405,17 @@ func handleCreatePipelinesSuccess(conn *Connection, msg *Message, proxy *pipelin
 						}
 					}
 
+					// get the result URI. The returned value is either a csv or a directory.
+					// If we get a directory back, it should match the standard structure.
+					// Look for the trainTargets.csv
+					resultURI := res.PipelineInfo.PredictResultUris[0]
+					if !strings.HasSuffix(resultURI, ".csv") {
+						resultURI = path.Join(resultURI, pipeline.D3MTrainTargets)
+					}
+
 					// get the result UUID. NOTE: Doing sha1 for now.
 					hasher := sha1.New()
-					hasher.Write([]byte(res.PipelineInfo.PredictResultUris[0]))
+					hasher.Write([]byte(resultURI))
 					bs := hasher.Sum(nil)
 					resUUIDStr := fmt.Sprintf("%x", bs)
 					response["pipeline"] = map[string]interface{}{
@@ -416,12 +425,12 @@ func handleCreatePipelinesSuccess(conn *Connection, msg *Message, proxy *pipelin
 					}
 
 					// store the result data & metadata
-					err = storage.PersistResultMetadata(fmt.Sprintf("%s", proxy.RequestID), res.PipelineId, resUUIDStr, res.PipelineInfo.PredictResultUris[0], progress, pipeline.OutputType_name[int32(res.PipelineInfo.Output)], currentTime)
+					err = storage.PersistResultMetadata(fmt.Sprintf("%s", proxy.RequestID), res.PipelineId, resUUIDStr, resultURI, progress, pipeline.OutputType_name[int32(res.PipelineInfo.Output)], currentTime)
 					if err != nil {
 						handleErr(conn, msg, errors.Wrap(err, "Unable to store result metadata"))
 					}
 
-					err = storage.PersistResult(dataset, res.PipelineInfo.PredictResultUris[0])
+					err = storage.PersistResult(dataset, resultURI)
 					if err != nil {
 						handleErr(conn, msg, errors.Wrap(err, "Unable to store pipeline results"))
 					}
