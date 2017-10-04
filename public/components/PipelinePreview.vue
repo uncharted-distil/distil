@@ -97,6 +97,7 @@ export default {
 				dataset: this.result.dataset,
 				filters: this.$store.getters.getRouteFilters(),
 				target: this.$store.getters.getRouteTargetVariable(),
+				training: this.$store.getters.getRouteTrainingVariables(),
 				createRequestId: this.result.requestId,
 				resultId: btoa(this.result.pipeline.resultUri)
 			});
