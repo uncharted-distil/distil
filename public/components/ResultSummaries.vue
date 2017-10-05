@@ -6,14 +6,22 @@
 				Error:
 			</div>
 			<div class="result-summaries-slider">
-				<vue-slider ref="slider" :v-model="value" :min="0" :max="maxVal" :lazy="true" width=100% tooltip-dir="bottom" @callback="onSlide" />
+				<vue-slider ref="slider"
+					:v-model="value"
+					:min="minVal"
+					:max="maxVal"
+					:value="defaultValue"
+					:interval="interval"
+					:lazy="true"
+					:formatter="formatter"
+					width=100% tooltip-dir="bottom" @callback="onSlide" />
 			</div>
 		</div>
 		<h6 class="nav-link">Actual</h6>
 		<facets class="result-summaries-target" :groups="targetSummaries"></facets>
 		<h6 class="nav-link">Predicted</h6>
-		<result-facets 
-			v-on:activePipelineChange="onPipelineUpdate($event)" 
+		<result-facets
+			v-on:activePipelineChange="onPipelineUpdate($event)"
 			enable-group-collapse
 			enable-facet-filtering
 			:variables="variables"
@@ -41,6 +49,8 @@ import vueSlider from 'vue-slider-component';
 import _ from 'lodash';
 import 'font-awesome/css/font-awesome.css';
 
+const DEFAULT_PERCENTILE = 0.25;
+
 export default {
 	name: 'result-summaries',
 
@@ -52,9 +62,12 @@ export default {
 
 	data() {
 		return {
-			value: this.minVal,
+			value: this.defaultValue,
 			activePipelineName: null,
-			activePipelineId: null
+			activePipelineId: null,
+			formatter(arg) {
+				return arg.toFixed(2);
+			}
 		};
 	},
 
@@ -65,20 +78,34 @@ export default {
 		},
 
 		minVal() {
-			const resultItems = this.$store.getters.getResultDataItems(this.regressionEnabled);
-			if (!_.isEmpty(resultItems) && _.has(resultItems[0], 'Error')) {
-				return Math.abs(_.minBy(resultItems, r => r.Error).Error);
-			}
+			// const resultItems = this.$store.getters.getResultDataItems(this.regressionEnabled);
+			// if (!_.isEmpty(resultItems) && _.has(resultItems[0], 'Error')) {
+			// 	return Math.abs(_.minBy(resultItems, r => Math.abs(r.Error)).Error);
+			// }
 			return 0.0;
 		},
 
-		// computes the absolute maximum residual
 		maxVal() {
 			const resultItems = this.$store.getters.getResultDataItems(this.regressionEnabled);
 			if (!_.isEmpty(resultItems) && _.has(resultItems[0], 'Error')) {
-				return Math.abs(_.maxBy(resultItems, r => r.Error).Error);
+				const maxErr = Math.abs(_.maxBy(resultItems, r => Math.abs(r.Error)).Error);
+				// round to closest 2 decimal places, otherwise interval computation makes the slider angry
+				return Math.ceil(100 * maxErr) / 100;
 			}
-			return 100.0;
+			return 1.0;
+		},
+
+		range() {
+			return this.maxVal - this.minVal;
+		},
+
+		defaultValue() {
+			return this.minVal + (this.range * DEFAULT_PERCENTILE);
+		},
+
+		interval() {
+			const interval = this.range / 100.0;
+			return interval;
 		},
 
 		targetSummaries() {
