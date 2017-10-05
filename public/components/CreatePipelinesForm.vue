@@ -1,10 +1,12 @@
 <template>
 	<div class="create-pipelines-form">
-		<div class="requirement-met text-success" v-if="trainingSelected">
-			<i class="fa fa-check selected-icon"></i><strong>Training Features Selected</strong>
-		</div>
-		<div class="requirement-met text-success" v-if="targetSelected">
-			<i class="fa fa-check selected-icon"></i><strong>Target Feature Selected</strong>
+		<div class="requirements">
+			<div class="requirement-met text-success" v-if="trainingSelected">
+				<i class="fa fa-check selected-icon"></i><strong>Training Features Selected</strong>
+			</div>
+			<div class="requirement-met text-success" v-if="targetSelected">
+				<i class="fa fa-check selected-icon"></i><strong>Target Feature Selected</strong>
+			</div>
 		</div>
 		<b-button class="create-button" :variant="createVariant" @click="create" :disabled="disableCreate">
 			Create Pipelines
@@ -30,8 +32,14 @@ export default {
 		};
 	},
 	computed: {
+		dataset() {
+			return this.$store.getters.getRouteDataset();
+		},
 		variables() {
 			return this.$store.getters.getVariables();
+		},
+		selectedFilters() {
+			return this.$store.getters.getSelectedFilters();
 		},
 		// gets the metrics that are used to score predictions against the user selected variable
 		metrics() {
@@ -61,6 +69,9 @@ export default {
 				return _.toLower(v.name) === _.toLower(this.target);
 			});
 		},
+		sessionId() {
+			return this.$store.getters.getPipelineSessionID();
+		},
 		// determines create button status based on completeness of user input
 		disableCreate() {
 			return !this.targetSelected || !this.trainingSelected;
@@ -81,6 +92,9 @@ export default {
 
 			// dispatch action that triggers request send to server
 			this.$store.dispatch('createPipelines', {
+				dataset: this.dataset,
+				filters: this.selectedFilters,
+				sessionId: this.sessionId,
 				feature: this.$store.getters.getRouteTargetVariable(),
 				task: task,
 				metric: metrics,
@@ -106,12 +120,16 @@ export default {
 	margin: 8px 16px;
 }
 .create-button {
-	width: 100%;
+	width: 60%;
+	margin: 0 20%;
 }
 .selected-icon {
 	padding-right: 4px;
 }
 .requirement-met {
 	padding: 4px 8px;
+}
+.requirements {
+	margin-bottom: 8px;
 }
 </style>

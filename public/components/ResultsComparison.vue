@@ -62,6 +62,10 @@ export default {
 			return this.$store.getters.getVariables();
 		},
 
+		residualThreshold() {
+			return this.$store.getters.getRouteResidualThreshold();
+		},
+
 		regressionEnabled() {
 			const targetVarName = this.target;
 			const variables = this.variables;
@@ -146,13 +150,11 @@ export default {
 
 		regressionInRangeFilter(dataItem) {
 			// grab the residual threshold slider value and update
-			const residualThreshold = this.$store.getters.getRouteResidualThreshold();
-			return Math.abs(dataItem[dataItem._target.error]) <= residualThreshold;
+			return Math.abs(dataItem[dataItem._target.error]) <= this.residualThreshold;
 		},
 
 		regressionOutOfRangeFilter(dataItem) {
-			const residualThreshold = this.$store.getters.getRouteResidualThreshold();
-			return Math.abs(dataItem[dataItem._target.error]) > residualThreshold;
+			return Math.abs(dataItem[dataItem._target.error]) > this.residualThreshold;
 		},
 
 		// Methods passed to classification result table instance to update their row visuals post-filter

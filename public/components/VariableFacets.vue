@@ -54,7 +54,7 @@
 				</b-form-fieldset>
 			</div>
 		</div>
-		<facets class="facets-container"
+		<facets class="variable-facets-container"
 			:groups="groups"
 			:highlights="highlights"
 			:html="html"
@@ -374,7 +374,7 @@ button {
 	background-color: #868e96;
 	border-color: #868e96;
 }
-.facets-container {
+.variable-facets-container {
 	overflow-x: hidden;
 	overflow-y: auto;
 }
