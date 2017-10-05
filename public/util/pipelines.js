@@ -107,9 +107,9 @@ const regressionMetrics = {
 		displayName: 'Root Mean Squared Error',
 		schemaName: 'root_mean_squared_error'
 	},
-	rootMeanSquaredErrorAvg: {
-		displayName: 'Root Mean Squared Error Avg',
-		schemaName: 'root_mean_squared_error_avg'
+	meanSquaredError: {
+		displayName: 'Mean Squared Error',
+		schemaName: 'mean_squared_error'
 	},
 	meanAbsoluteErr: {
 		displayName: 'Mean Absolute Error',
