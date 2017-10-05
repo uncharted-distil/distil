@@ -28,15 +28,13 @@
 			enable-facet-filtering
 			:variables="variables"
 			:dataset="dataset"></result-facets>
-		<div class="check-button-container">
-			<b-btn v-b-modal.export variant="outline-success" class="check-button">Export Pipeline</b-btn>
-			<b-modal id="export" title="Export" @ok="onExport">
-				<div class="check-message-container">
-					<i class="fa fa-check-circle fa-3x check-icon"></i>
-					<div>This action will export pipeline <b>{{activePipelineName}}</b> and terminate the session.</div>
-				</div>
-			</b-modal>
-		</div>
+		<b-btn v-b-modal.export variant="outline-success" class="check-button">Export Pipeline</b-btn>
+		<b-modal id="export" title="Export" @ok="onExport">
+			<div class="check-message-container">
+				<i class="fa fa-check-circle fa-3x check-icon"></i>
+				<div>This action will export pipeline <b>{{activePipelineName}}</b> and terminate the session.</div>
+			</div>
+		</b-modal>
 	</div>
 </template>
 
@@ -176,8 +174,7 @@ export default {
 
 <style>
 .result-summaries {
-	display: flex;
-	flex-direction: column;
+	overflow: auto;
 }
 
 .result-summaries-target {
@@ -246,16 +243,8 @@ export default {
 	padding-right: 15px;
 }
 
-.check-button-container {
-	margin-top: 15px;
-	display: flex;
-	justify-content: center;
-}
-
 .check-button {
-	display: flex;
-	margin-top: 15px;
-	flex-basis: 60%;
-	justify-content: center;
+	width: 60%;
+	margin: 0 20%;
 }
 </style>
