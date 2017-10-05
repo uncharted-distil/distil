@@ -75,14 +75,15 @@ export default {
 
 		value: {
 			set(value) {
-				const entry = createRouteEntryFromRoute(this.$route, {
-					residualThreshold: value
-				});
-				this.$router.push(entry);
+				this.updateThreshold(value);
 			},
 			get() {
 				const value = this.$store.getters.getRouteResidualThreshold();
-				return value === '' ? this.defaultValue : _.toNumber(value);
+				if (value === undefined || value === '') {
+					this.updateThreshold(this.defaultValue);
+					return this.defaultValue;
+				}
+				return _.toNumber(value);
 			}
 		},
 
@@ -149,13 +150,18 @@ export default {
 	},
 
 	methods: {
+		updateThreshold(value) {
+			const entry = createRouteEntryFromRoute(this.$route, {
+				residualThreshold: value
+			});
+			this.$router.push(entry);
+		},
 		onSlide(value) {
 			const entry = createRouteEntryFromRoute(this.$route, {
 				residualThreshold: value
 			});
 			this.$router.push(entry);
 		},
-
 		onExport() {
 			this.$router.replace('/');
 			this.$store.dispatch('exportPipeline', {
@@ -163,7 +169,6 @@ export default {
 				sessionId: this.$store.state.pipelineSession.id
 			});
 		},
-
 		onPipelineUpdate(args) {
 			this.activePipelineName = args.name;
 			this.activePipelineId = args.id;
@@ -174,7 +179,8 @@ export default {
 
 <style>
 .result-summaries {
-	overflow: auto;
+	overflow-x: hidden;
+	overflow-y: auto;
 }
 
 .result-summaries-target {

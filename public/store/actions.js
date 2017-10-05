@@ -30,14 +30,14 @@ export function createResultName(dataset, timestamp, targetFeature) {
 }
 
 // searches dataset descriptions and column names for supplied terms
-export function getSession(context) {
-	const sessionID = context.getters.getPipelineSessionID();
-	return axios.get(`/distil/session/${sessionID}`)
+export function getSession(context, args) {
+	const sessionId = args.sessionId;
+	return axios.get(`/distil/session/${sessionId}`)
 		.then(response => {
 			if (response.data.pipelines) {
 				response.data.pipelines.forEach((pipeline) => {
 					// determine the target feature for this request
-					var targetFeature = '';
+					let targetFeature = '';
 					pipeline.Features.forEach((feature) => {
 						if (feature.FeatureType === FEATURE_TYPE_TARGET) {
 							targetFeature = feature.FeatureName;
@@ -59,7 +59,11 @@ export function getSession(context) {
 								requestId: pipeline.RequestID,
 								dataset: pipeline.Dataset,
 								pipelineId: res.PipelineID,
-								pipeline: { resultUri: res.ResultUUID, output: '', scores: res.Scores }
+								pipeline: {
+									resultUri: res.ResultUUID,
+									output: '',
+									scores: res.Scores
+								}
 							});
 						}
 					});
@@ -72,7 +76,8 @@ export function getSession(context) {
 }
 
 // fetches all variables for a single dataset.
-export function getVariables(context, dataset) {
+export function getVariables(context, args) {
+	const dataset = args.dataset;
 	return axios.get(`/distil/variables/${ES_INDEX}/${dataset}`)
 		.then(response => {
 			context.commit('setVariables', response.data.variables);
@@ -165,15 +170,15 @@ export function updateSelectedData(context, args) {
 }
 
 // starts a pipeline session.
-export function getPipelineSession(context) {
+export function getPipelineSession(context, args) {
+	const sessionId = args.sessionId;
 	const conn = context.getters.getWebSocketConnection();
-	const sessionID = context.getters.getPipelineSessionID();
 	return conn.send({
 			type: 'GET_SESSION',
-			session: sessionID
+			session: sessionId
 		}).then(res => {
-			if (sessionID && res.created) {
-				console.warn('previous session', sessionID, 'could not be resumed, new session created');
+			if (sessionId && res.created) {
+				console.warn('previous session', sessionId, 'could not be resumed, new session created');
 			}
 			context.commit('setPipelineSession', {
 				id: res.session,
@@ -185,15 +190,15 @@ export function getPipelineSession(context) {
 }
 
 // end a pipeline session.
-export function endPipelineSession(context) {
+export function endPipelineSession(context, args) {
+	const sessionId = args.sessionId;
 	const conn = context.getters.getWebSocketConnection();
-	const sessionID = context.getters.getPipelineSessionID();
-	if (!sessionID) {
+	if (!sessionId) {
 		return;
 	}
 	return conn.send({
 			type: 'END_SESSION',
-			session: sessionID
+			session: sessionId
 		}).then(() => {
 			context.commit('setPipelineSession', null);
 		}).catch(err => {
@@ -203,10 +208,9 @@ export function endPipelineSession(context) {
 
 // issues a pipeline create request
 export function createPipelines(context, request) {
-
 	const conn = context.getters.getWebSocketConnection();
-	const sessionID = context.getters.getPipelineSessionID();
-	if (!sessionID) {
+	if (!request.sessionId) {
+		console.warn('Missing session id');
 		return;
 	}
 	const stream = conn.stream(res => {
@@ -215,7 +219,7 @@ export function createPipelines(context, request) {
 			return;
 		}
 		// inject the name and pipeline id
-		const name = createResultName(context.getters.getRouteDataset(), res.createdTime, request.feature);
+		const name = createResultName(request.dataset, res.createdTime, request.feature);
 		res.name = name;
 		res.feature = request.feature;
 		// add/update the running pipeline info
@@ -237,15 +241,15 @@ export function createPipelines(context, request) {
 
 	stream.send({
 		type: CREATE_PIPELINES_MSG,
-		session: sessionID,
+		session: request.sessionId,
 		index: ES_INDEX,
-		dataset: context.getters.getRouteDataset(),
+		dataset: request.dataset,
 		feature: request.feature,
 		task: request.task,
 		metric: request.metric,
 		output: request.output,
 		maxPipelines: 3,
-		filters: context.getters.getSelectedFilters()
+		filters: request.filters
 	});
 }
 

@@ -39,6 +39,9 @@ export default {
 		},
 		requestId() {
 			return this.$store.getters.getRouteCreateRequestId();
+		},
+		sessionId() {
+			return this.$store.getters.getPipelineSessionID();
 		}
 	},
 
@@ -61,7 +64,14 @@ export default {
 			gotoSelect(this.$store, this.$router);
 		},
 		fetch() {
-			this.$store.dispatch('getVariables', this.dataset)
+			Promise.all([
+					this.$store.dispatch('getVariables', {
+						dataset: this.dataset
+					}),
+					this.$store.dispatch('getSession', {
+						sessionId: this.sessionId
+					})
+				])
 				.then(() => {
 					this.$store.dispatch('getVariableSummaries', {
 						dataset: this.dataset,

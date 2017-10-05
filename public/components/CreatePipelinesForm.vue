@@ -32,8 +32,14 @@ export default {
 		};
 	},
 	computed: {
+		dataset() {
+			return this.$store.getters.getRouteDataset();
+		},
 		variables() {
 			return this.$store.getters.getVariables();
+		},
+		selectedFilters() {
+			return this.$store.getters.getSelectedFilters();
 		},
 		// gets the metrics that are used to score predictions against the user selected variable
 		metrics() {
@@ -63,6 +69,9 @@ export default {
 				return _.toLower(v.name) === _.toLower(this.target);
 			});
 		},
+		sessionId() {
+			return this.$store.getters.getPipelineSessionID();
+		},
 		// determines create button status based on completeness of user input
 		disableCreate() {
 			return !this.targetSelected || !this.trainingSelected;
@@ -83,6 +92,9 @@ export default {
 
 			// dispatch action that triggers request send to server
 			this.$store.dispatch('createPipelines', {
+				dataset: this.dataset,
+				filters: this.selectedFilters,
+				sessionId: this.sessionId,
 				feature: this.$store.getters.getRouteTargetVariable(),
 				task: task,
 				metric: metrics,
