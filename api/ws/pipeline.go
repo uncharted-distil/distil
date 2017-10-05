@@ -406,10 +406,11 @@ func handleCreatePipelinesSuccess(conn *Connection, msg *Message, proxy *pipelin
 						}
 					}
 
-					// get the result URI. The returned value is either a csv or a directory.
-					// If we get a directory back, it should match the standard structure.
+					// Get the result URI, removing the protocol portion if it exists. The returned value
+					// is either a csv or a directory.  If we get a directory back, it should match the standard structure.
 					// Look for the trainTargets.csv
 					resultURI := res.PipelineInfo.PredictResultUris[0]
+					resultURI = strings.Replace(resultURI, "file://", "", 1)
 					if !strings.HasSuffix(resultURI, ".csv") {
 						resultURI = path.Join(resultURI, pipeline.D3MTrainTargets)
 					}
