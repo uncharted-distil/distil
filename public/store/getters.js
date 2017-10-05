@@ -59,7 +59,7 @@ export function getRouteFacetsPage(state) {
 }
 
 export function getRouteResidualThreshold(state) {
-	return () => _.get(state.route.query, 'residualThreshold', 0.0);
+	return () => state.route.query.residualThreshold;
 }
 
 export function getFilters(state) {
@@ -275,6 +275,18 @@ export function getResultDataItems(state, getters) {
 					// save the names of the columns related to the target and predictions as metadata
 					// for use at render time
 					row._target = { truth: colName, predicted: label, error: residualLabel };
+
+					_.forIn(state.highlightedFeatureRanges, (range, name) => {
+						let col = row[name];
+						if (!row[name]) {
+							// row does not contain name, we ASSUME this is because it is a
+							// predicted field
+							col = row[label];
+						}
+						if (col >= range.from && col <= range.to) {
+							row._rowVariant = 'info';
+						}
+					});
 				}
 				mergedResults.push(row);
 			}
