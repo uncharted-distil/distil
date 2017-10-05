@@ -10,11 +10,13 @@
 					:v-model="value"
 					:min="minVal"
 					:max="maxVal"
-					:value="defaultValue"
 					:interval="interval"
-					:lazy="true"
+					:value="value"
 					:formatter="formatter"
-					width=100% tooltip-dir="bottom" @callback="onSlide" />
+					:lazy="true"
+					width=100%
+					tooltip-dir="bottom"
+					@callback="onSlide"/>
 			</div>
 		</div>
 		<h6 class="nav-link">Actual</h6>
@@ -50,6 +52,7 @@ import _ from 'lodash';
 import 'font-awesome/css/font-awesome.css';
 
 const DEFAULT_PERCENTILE = 0.25;
+const NUM_STEPS = 100;
 
 export default {
 	name: 'result-summaries',
@@ -62,7 +65,6 @@ export default {
 
 	data() {
 		return {
-			value: this.defaultValue,
 			activePipelineName: null,
 			activePipelineId: null,
 			formatter(arg) {
@@ -72,6 +74,19 @@ export default {
 	},
 
 	computed: {
+
+		value: {
+			set(value) {
+				const entry = createRouteEntryFromRoute(this.$route, {
+					residualThreshold: value
+				});
+				this.$router.push(entry);
+			},
+			get() {
+				const value = this.$store.getters.getRouteResidualThreshold();
+				return value === '' ? this.defaultValue : _.toNumber(value);
+			}
+		},
 
 		dataset() {
 			return this.$store.getters.getRouteDataset();
@@ -104,7 +119,7 @@ export default {
 		},
 
 		interval() {
-			const interval = this.range / 100.0;
+			const interval = this.range / NUM_STEPS;
 			return interval;
 		},
 
@@ -137,7 +152,9 @@ export default {
 
 	methods: {
 		onSlide(value) {
-			const entry = createRouteEntryFromRoute(this.$route, { residualThreshold: value });
+			const entry = createRouteEntryFromRoute(this.$route, {
+				residualThreshold: value
+			});
 			this.$router.push(entry);
 		},
 
