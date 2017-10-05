@@ -64,9 +64,17 @@ export default {
 		};
 	},
 
+	computed: {
+		sessionId() {
+			return this.$store.getters.getPipelineSessionID();
+		}
+	},
+
 	mounted() {
 		this.updateActive();
-		this.$store.dispatch('getPipelineSession');
+		this.$store.dispatch('getPipelineSession', {
+			sessionId: this.sessionId
+		});
 	},
 
 	methods: {

@@ -18,8 +18,8 @@ extend google.protobuf.FileOptions {
     string protocol_version = 54100;
 }
 
-// Semver-based version string. Use is it to populate version in SessionRequest and SessionResponse messages.
-option (protocol_version) = "2017.9.11";
+// Date-based version string. Use is it to populate version in SessionRequest and SessionResponse messages.
+option (protocol_version) = "2017.9.18_pre";
 
 message SessionContext {
     string session_id = 1;
@@ -71,6 +71,7 @@ enum Progress {
     RUNNING = 1;
     UPDATED = 2;
     COMPLETED = 3;
+    ERRORED = 4;
 }
 
 // enums below are based on values taken from the problem annotation schema defined at
@@ -130,6 +131,7 @@ enum Metric {                             // The evaluation metric for any poten
     NORMALIZED_MUTUAL_INFORMATION = 12;
     JACCARD_SIMILARITY_SCORE = 13;
     EXECUTION_TIME = 14;                  // wall clock time to run the pipeline by TA2
+    MEAN_SQUARED_ERROR = 15;              // sklearn.metrics.mean_squared_error
 }
 
 message Feature {
@@ -223,6 +225,7 @@ message UpdateProblemSchemaRequest {
         }
     }
     repeated ReplaceProblemSchemaField updates = 1;
+    SessionContext context = 2;
 }
 
 service Core {

@@ -20,9 +20,11 @@
 					<b-badge variant="info" v-if="isRunning()">
 						{{status()}}
 					</b-badge>
-					<b-badge variant="info" v-if="isUpdated()">
-						{{status()}}
-					</b-badge>
+					<div v-if="isUpdated()">
+						<b-badge variant="info" v-bind:key="score.metric" v-for="score in result.pipeline.scores">
+							{{metricName(score.metric)}}: {{score.value}}
+						</b-badge>
+					</div>
 					<div v-if="isCompleted()">
 						<b-badge variant="info" v-bind:key="score.metric" v-for="score in result.pipeline.scores">
 							{{metricName(score.metric)}}: {{score.value}}
@@ -96,7 +98,7 @@ export default {
  				terms: this.$store.getters.getRouteTerms(),
 				dataset: this.result.dataset,
 				filters: this.$store.getters.getRouteFilters(),
-				target: this.$store.getters.getRouteTargetVariable(),
+				target: this.result.feature,
 				training: this.$store.getters.getRouteTrainingVariables(),
 				createRequestId: this.result.requestId,
 				resultId: btoa(this.result.pipeline.resultUri)

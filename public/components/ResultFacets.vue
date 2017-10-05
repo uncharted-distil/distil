@@ -1,6 +1,6 @@
 <template>
 	<div class='result-facets'>
-		<facets class="facets-container"
+		<facets class="result-facets-container"
 			:groups="groups"
 			:highlights="highlights"
 			:html="html"
@@ -74,7 +74,10 @@ export default {
 								enabled: true
 							}
 						}, activeResult.pipeline.resultUri);
-						this.$emit('activePipelineChange', { name: activeResult.name, id: activeResult.pipelineId });
+						this.$emit('activePipelineChange', {
+							name: activeResult.name,
+							id: activeResult.pipelineId
+						});
 					}
 				});
 			}
@@ -213,8 +216,8 @@ button {
 	padding: 8px;
 }
 
-.facets-container {
+.result-facets-container {
 	overflow-x: hidden;
-	overflow-y: auto;
+	overflow-y: hidden;
 }
 </style>
