@@ -43,6 +43,7 @@ type DataSchema struct {
 
 // TrainData represents a set of training and target variables.
 type TrainData struct {
+	NumSamples   int             `json:"numSamples"`
 	TrainData    []*DataVariable `json:"trainData"`
 	TrainTargets []*DataVariable `json:"trainTargets"`
 }
@@ -105,7 +106,7 @@ func PersistFilteredData(fetchData FilteredDataProvider, fetchVariables Variable
 	}
 
 	// create the path for the data and target csvs
-	if err := os.MkdirAll(path, 0700); err != nil && !os.IsExist(err) {
+	if err := os.MkdirAll(path, 0777); err != nil && !os.IsExist(err) {
 		return "", errors.Wrapf(err, "unable to create dataset dir %s", datasetDir)
 	}
 
@@ -226,6 +227,7 @@ func writeDataSchema(schemaPath string, dataset string, filteredData *model.Filt
 		Redacted:  true,
 		TestDataSchemaMirrorsTrainDataSchema: true,
 		TrainData: &TrainData{
+			NumSamples:   len(filteredData.Values),
 			TrainData:    make([]*DataVariable, 0),
 			TrainTargets: make([]*DataVariable, 0),
 		},
