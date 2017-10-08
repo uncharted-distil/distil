@@ -261,6 +261,9 @@ export function getResultDataItems(state, getters) {
 			const resultDataItems = getters.getFilteredDataItems();
 			// append the result variable data to the baseline variable data
 			for (const [i, row] of resultDataItems.entries()) {
+				if (i === resultData.values.length) {
+					break;
+				}
 				for (const [j, colName] of resultData.columns.entries()) {
 					// append the result value
 					const label = `Predicted ${colName}`;
