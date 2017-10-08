@@ -60,7 +60,9 @@ export default {
 
 	methods: {
 		fetch() {
-			this.$store.dispatch('getVariables', this.dataset)
+			this.$store.dispatch('getVariables', {
+					dataset: this.dataset
+				})
 				.then(() => {
 					this.$store.dispatch('getVariableSummaries', {
 						dataset: this.dataset,

@@ -6,27 +6,35 @@
 				Error:
 			</div>
 			<div class="result-summaries-slider">
-				<vue-slider ref="slider" :v-model="value" :min="0" :max="maxVal" :lazy="true" width=100% tooltip-dir="bottom" @callback="onSlide" />
+				<vue-slider ref="slider"
+					:v-model="value"
+					:min="minVal"
+					:max="maxVal"
+					:interval="interval"
+					:value="value"
+					:formatter="formatter"
+					:lazy="true"
+					width=100%
+					tooltip-dir="bottom"
+					@callback="onSlide"/>
 			</div>
 		</div>
 		<h6 class="nav-link">Actual</h6>
 		<facets class="result-summaries-target" :groups="targetSummaries"></facets>
 		<h6 class="nav-link">Predicted</h6>
-		<result-facets 
-			v-on:activePipelineChange="onPipelineUpdate($event)" 
+		<result-facets
+			v-on:activePipelineChange="onPipelineUpdate($event)"
 			enable-group-collapse
 			enable-facet-filtering
 			:variables="variables"
 			:dataset="dataset"></result-facets>
-		<div class="check-button-container">
-			<b-btn v-b-modal.export variant="outline-success" class="check-button">Export Pipeline</b-btn>
-			<b-modal id="export" title="Export" @ok="onExport">
-				<div class="check-message-container">
-					<i class="fa fa-check-circle fa-3x check-icon"></i>
-					<div>This action will export pipeline <b>{{activePipelineName}}</b> and terminate the session.</div>
-				</div>
-			</b-modal>
-		</div>
+		<b-btn v-b-modal.export variant="outline-success" class="check-button">Export Pipeline</b-btn>
+		<b-modal id="export" title="Export" @ok="onExport">
+			<div class="check-message-container">
+				<i class="fa fa-check-circle fa-3x check-icon"></i>
+				<div>This action will export pipeline <b>{{activePipelineName}}</b> and terminate the session.</div>
+			</div>
+		</b-modal>
 	</div>
 </template>
 
@@ -41,6 +49,9 @@ import vueSlider from 'vue-slider-component';
 import _ from 'lodash';
 import 'font-awesome/css/font-awesome.css';
 
+const DEFAULT_PERCENTILE = 0.25;
+const NUM_STEPS = 100;
+
 export default {
 	name: 'result-summaries',
 
@@ -52,33 +63,63 @@ export default {
 
 	data() {
 		return {
-			value: this.minVal,
 			activePipelineName: null,
-			activePipelineId: null
+			activePipelineId: null,
+			formatter(arg) {
+				return arg.toFixed(2);
+			}
 		};
 	},
 
 	computed: {
+
+		value: {
+			set(value) {
+				this.updateThreshold(value);
+			},
+			get() {
+				const value = this.$store.getters.getRouteResidualThreshold();
+				if (value === undefined || value === '') {
+					this.updateThreshold(this.defaultValue);
+					return this.defaultValue;
+				}
+				return _.toNumber(value);
+			}
+		},
 
 		dataset() {
 			return this.$store.getters.getRouteDataset();
 		},
 
 		minVal() {
-			const resultItems = this.$store.getters.getResultDataItems(this.regressionEnabled);
-			if (!_.isEmpty(resultItems) && _.has(resultItems[0], 'Error')) {
-				return Math.abs(_.minBy(resultItems, r => r.Error).Error);
-			}
+			// const resultItems = this.$store.getters.getResultDataItems(this.regressionEnabled);
+			// if (!_.isEmpty(resultItems) && _.has(resultItems[0], 'Error')) {
+			// 	return Math.abs(_.minBy(resultItems, r => Math.abs(r.Error)).Error);
+			// }
 			return 0.0;
 		},
 
-		// computes the absolute maximum residual
 		maxVal() {
 			const resultItems = this.$store.getters.getResultDataItems(this.regressionEnabled);
 			if (!_.isEmpty(resultItems) && _.has(resultItems[0], 'Error')) {
-				return Math.abs(_.maxBy(resultItems, r => r.Error).Error);
+				const maxErr = Math.abs(_.maxBy(resultItems, r => Math.abs(r.Error)).Error);
+				// round to closest 2 decimal places, otherwise interval computation makes the slider angry
+				return Math.ceil(100 * maxErr) / 100;
 			}
-			return 100.0;
+			return 1.0;
+		},
+
+		range() {
+			return this.maxVal - this.minVal;
+		},
+
+		defaultValue() {
+			return this.minVal + (this.range * DEFAULT_PERCENTILE);
+		},
+
+		interval() {
+			const interval = this.range / NUM_STEPS;
+			return interval;
 		},
 
 		targetSummaries() {
@@ -109,11 +150,18 @@ export default {
 	},
 
 	methods: {
-		onSlide(value) {
-			const entry = createRouteEntryFromRoute(this.$route, { residualThreshold: value });
+		updateThreshold(value) {
+			const entry = createRouteEntryFromRoute(this.$route, {
+				residualThreshold: value
+			});
 			this.$router.push(entry);
 		},
-
+		onSlide(value) {
+			const entry = createRouteEntryFromRoute(this.$route, {
+				residualThreshold: value
+			});
+			this.$router.push(entry);
+		},
 		onExport() {
 			this.$router.replace('/');
 			this.$store.dispatch('exportPipeline', {
@@ -121,7 +169,6 @@ export default {
 				sessionId: this.$store.state.pipelineSession.id
 			});
 		},
-
 		onPipelineUpdate(args) {
 			this.activePipelineName = args.name;
 			this.activePipelineId = args.id;
@@ -132,8 +179,8 @@ export default {
 
 <style>
 .result-summaries {
-	display: flex;
-	flex-direction: column;
+	overflow-x: hidden;
+	overflow-y: auto;
 }
 
 .result-summaries-target {
@@ -202,16 +249,8 @@ export default {
 	padding-right: 15px;
 }
 
-.check-button-container {
-	margin-top: 15px;
-	display: flex;
-	justify-content: center;
-}
-
 .check-button {
-	display: flex;
-	margin-top: 15px;
-	flex-basis: 60%;
-	justify-content: center;
+	width: 60%;
+	margin: 0 20%;
 }
 </style>

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"path"
 
 	"goji.io/pat"
 
@@ -14,12 +15,15 @@ import (
 
 // ExportHandler exports the caller supplied pipeline by calling through to the compute
 // server export functionality.
-func ExportHandler(client *pipeline.Client) func(http.ResponseWriter, *http.Request) {
+func ExportHandler(client *pipeline.Client, exportPath string) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// extract route parameters
 		pipelineID := pat.Param(r, "pipeline-id")
 		sessionID := pat.Param(r, "session")
-		exportURI := fmt.Sprintf("file:///%s.d3m", pipelineID)
+
+		exportPath := path.Join(exportPath, pipelineID+".d3m")
+		exportURI := fmt.Sprintf("file://%s", exportPath)
+		log.Infof("Exporting to %s", exportURI)
 
 		err := client.ExportPipeline(context.Background(), sessionID, pipelineID, exportURI)
 		if err != nil {

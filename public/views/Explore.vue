@@ -56,7 +56,9 @@ export default {
 			gotoSelect(this.$store, this.$router);
 		},
 		fetch() {
-			this.$store.dispatch('getVariables', this.dataset)
+			this.$store.dispatch('getVariables', {
+					dataset: this.dataset
+				})
 				.then(() => {
 					this.$store.dispatch('getVariableSummaries', {
 						dataset: this.dataset,
@@ -81,11 +83,11 @@ export default {
 	width: 100%;
 }
 .explore-variable-summaries {
-	width: 30%;
+	width: 25%;
 }
 .explore-data-table {
 	display: flex;
 	flex-direction: column;
-	width: 70%;
+	width: 75%;
 }
 </style>

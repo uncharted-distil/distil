@@ -1,6 +1,8 @@
 package main
 
 import (
+	"encoding/json"
+	"io/ioutil"
 	"net/http"
 	"os"
 	"strconv"
@@ -31,6 +33,7 @@ const (
 	defaultRedisExpiry             = -1 // no expiry
 	defaultAppPort                 = "8080"
 	defaultPipelineComputeEndPoint = "localhost:9500"
+	defaultPipelineComputeTrace    = "false"
 	defaultPipelineDataDir         = "datasets"
 	defaultPGStorage               = "true"
 	defaultPGHost                  = "localhost"
@@ -40,6 +43,7 @@ const (
 	defaultPGDatabase              = "distil"
 	defaultPGRetries               = 100
 	deafultPGRetryTimeout          = 4000
+	defaultStartupConfigFile       = "startup.json"
 )
 
 var (
@@ -63,14 +67,41 @@ func main() {
 	httpPort := env.Load("PORT", defaultAppPort)
 	// load compute server endpoint
 	pipelineComputeEndpoint := env.Load("PIPELINE_COMPUTE_ENDPOINT", defaultPipelineComputeEndPoint)
+
 	// load default temp dataset directory
 	pipelineDataDir := env.Load("PIPELINE_DATA_DIR", defaultPipelineDataDir)
+	// load trace log enable state
+	traceEnv := env.Load("PIPELINE_COMPUTE_TRACE", defaultPipelineComputeTrace)
+	pipelineComputeTrace, err := strconv.ParseBool(traceEnv)
+	if err != nil {
+		log.Warnf("Failed to parse PIPELINE_COMPUTE_TRACE as bool: %v", err)
+		pipelineComputeTrace = false
+	}
 
 	// instantiate elastic client constructor.
 	esClientCtor := elastic.NewClient(esEndpoint, false)
 
 	// instantiate storage filter client constructor.
 	esStorageCtor := es.NewStorage(esClientCtor)
+
+	// read startup config
+	startupConfigFile := env.Load("CONFIG_JSON_PATH", defaultStartupConfigFile)
+	startupConfig, err := ioutil.ReadFile(startupConfigFile)
+	exportPath := ""
+	if err != nil {
+		log.Warnf("Failed to read startup config file (%s): %v", startupConfigFile, err)
+	} else {
+		var startupData map[string]interface{}
+		err = json.Unmarshal(startupConfig, &startupData)
+		if err != nil {
+			log.Warnf("Failed to parse startup config file (%s): %v", startupConfigFile, err)
+		} else {
+			exportPath = startupData["executables_root"].(string)
+			log.Infof("executables_root = %s, from config json", exportPath)
+			pipelineDataDir = startupData["temp_storage_root"].(string)
+			log.Infof("temp_storage_root = %s, from config json - overrides PIPELINE_DATA_DIR", pipelineDataDir)
+		}
+	}
 
 	// instantiate pg storage filter client constructor if needed
 	storageEnv := env.Load("PG_STORAGE", defaultPGStorage)
@@ -116,7 +147,7 @@ func main() {
 	}
 
 	// Instantiate the pipeline compute client
-	pipelineClient, err := pipeline.NewClient(pipelineComputeEndpoint, pipelineDataDir)
+	pipelineClient, err := pipeline.NewClient(pipelineComputeEndpoint, pipelineDataDir, pipelineComputeTrace)
 	if err != nil {
 		log.Errorf("%v", err)
 		os.Exit(1)
@@ -141,7 +172,7 @@ func main() {
 	registerRoute(mux, "/distil/results-summary/:index/:dataset/:results-uuid", routes.ResultsSummaryHandler(dataStorageCtor))
 	registerRoute(mux, "/distil/session/:session", routes.SessionHandler(dataStorageCtor))
 	registerRoute(mux, "/distil/abort", routes.AbortHandler())
-	registerRoute(mux, "/distil/export/:session/:pipeline-id", routes.ExportHandler(pipelineClient))
+	registerRoute(mux, "/distil/export/:session/:pipeline-id", routes.ExportHandler(pipelineClient, exportPath))
 
 	registerRoute(mux, "/ws", ws.PipelineHandler(pipelineClient, esClientCtor, dataStorageCtor))
 	registerRoute(mux, "/*", routes.FileHandler("./dist"))

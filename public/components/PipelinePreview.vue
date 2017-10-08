@@ -1,25 +1,37 @@
 <template>
 	<div>
 		<div class="pipeline-preview" @click="onResult()">
-			<div>
-				{{result.name}}
+			<div class="pipeline-header">
+				<div>
+					<strong>Dataset:</strong> {{result.dataset}}
+				</div>
+				<div>
+					<strong>Date:</strong> {{formattedTime}}
+				</div>
 			</div>
-			<div>
-				<b-badge v-if="isSubmitted()">
-					{{status()}}
-				</b-badge>
-				<b-badge variant="info" v-if="isRunning()">
-					{{status()}}
-				</b-badge>
-				<b-badge variant="info" v-if="isUpdated()">
-					{{status()}}
-				</b-badge>
-				<div v-if="isCompleted()">
-					<b-badge variant="success" v-bind:key="score.metric" v-for="score in result.pipeline.scores">
-						{{metricName(score.metric)}}: {{score.value}}
+			<div class="pipeline-body">
+				<div>
+					<strong>Feature:</strong> {{result.feature}}
+				</div>
+				<div>
+					<b-badge v-if="isSubmitted()">
+						{{status()}}
+					</b-badge>
+					<b-badge variant="info" v-if="isRunning()">
+						{{status()}}
+					</b-badge>
+					<div v-if="isUpdated()">
+						<b-badge variant="info" v-bind:key="score.metric" v-for="score in result.pipeline.scores">
+							{{metricName(score.metric)}}: {{score.value}}
+						</b-badge>
+					</div>
+					<div v-if="isCompleted()">
+						<b-badge variant="info" v-bind:key="score.metric" v-for="score in result.pipeline.scores">
+							{{metricName(score.metric)}}: {{score.value}}
+						</b-badge>
+					</div>
 					</b-badge>
 				</div>
-				</b-badge>
 			</div>
 		</div>
 		<div class="pipeline-progress">
@@ -33,6 +45,7 @@
 </template>
 
 <script>
+import moment from 'moment';
 import { getMetricDisplayName } from '../util/pipelines';
 import { createRouteEntry } from '../util/routes';
 
@@ -46,6 +59,10 @@ export default {
 	computed: {
 		percentComplete() {
 			return 100;
+		},
+		formattedTime() {
+			const t = moment(this.result.timestamp);
+			return t.format('MMM Do YYYY, h:mm:ss a');
 		}
 	},
 
@@ -81,7 +98,8 @@ export default {
  				terms: this.$store.getters.getRouteTerms(),
 				dataset: this.result.dataset,
 				filters: this.$store.getters.getRouteFilters(),
-				target: this.$store.getters.getRouteTargetVariable(),
+				target: this.result.feature,
+				training: this.$store.getters.getRouteTrainingVariables(),
 				createRequestId: this.result.requestId,
 				resultId: btoa(this.result.pipeline.resultUri)
 			});
@@ -91,10 +109,22 @@ export default {
 };
 </script>
 
-<style scoped>
+<style>
 .pipeline-preview {
 	display: flex;
+	flex-direction: column;
+}
+.pipeline-header {
+	display: flex;
 	justify-content: space-between;
+}
+.pipeline-body {
+	display: flex;
+	justify-content: space-between;
+}
+.pipeline-preview .badge {
+	display: block;
+	margin: 4px 0;
 }
 .pipeline-progress {
 	margin: 6px 0;

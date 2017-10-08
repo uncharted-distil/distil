@@ -1,6 +1,10 @@
 <template>
 	<div class="results-view">
-		<h4 class="header-label">Examine Pipeline Results</h4>
+		<flow-bar
+			left-text="Return to Select"
+			:on-left="gotoSelect"
+			center-text="Examine Pipeline Results">
+		</flow-bar>
 		<div class="results-items">
 			<variable-summaries class="results-variable-summaries"></variable-summaries>
 			<results-comparison class="results-result-comparison"></results-comparison>
@@ -14,6 +18,7 @@ import FlowBar from '../components/FlowBar';
 import ResultsComparison from '../components/ResultsComparison';
 import VariableSummaries from '../components/VariableSummaries';
 import ResultSummaries from '../components/ResultSummaries';
+import { gotoSelect } from '../util/nav';
 
 export default {
 	name: 'results',
@@ -34,6 +39,9 @@ export default {
 		},
 		requestId() {
 			return this.$store.getters.getRouteCreateRequestId();
+		},
+		sessionId() {
+			return this.$store.getters.getPipelineSessionID();
 		}
 	},
 
@@ -52,8 +60,18 @@ export default {
 	},
 
 	methods: {
+		gotoSelect() {
+			gotoSelect(this.$store, this.$router);
+		},
 		fetch() {
-			this.$store.dispatch('getVariables', this.dataset)
+			Promise.all([
+					this.$store.dispatch('getVariables', {
+						dataset: this.dataset
+					}),
+					this.$store.dispatch('getSession', {
+						sessionId: this.sessionId
+					})
+				])
 				.then(() => {
 					this.$store.dispatch('getVariableSummaries', {
 						dataset: this.dataset,

@@ -37,6 +37,7 @@
 								</b-button>
 							</div>
 						</span>
+						<!--
 						<span class="sort-group">
 							novelty
 							<div class="sort-buttons">
@@ -48,11 +49,12 @@
 								</b-button>
 							</div>
 						</span>
+						-->
 					</div>
 				</b-form-fieldset>
 			</div>
 		</div>
-		<facets class="facets-container"
+		<facets class="variable-facets-container"
 			:groups="groups"
 			:highlights="highlights"
 			:html="html"
@@ -372,17 +374,21 @@ button {
 	background-color: #868e96;
 	border-color: #868e96;
 }
-.facets-container {
+.variable-facets-container {
 	overflow-x: hidden;
 	overflow-y: auto;
 }
 .facet-filters .form-group {
 	margin-bottom: 4px;
+	padding-right: 16px;
+}
+.facet-filters label {
+	font-size: 0.8rem;
+	font-weight: bold;
 }
 .sort-groups {
 	display: flex;
 	flex-direction: row;
-	justify-content: space-between;
 	text-align: center;
 }
 .sort-group {

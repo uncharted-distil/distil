@@ -37,7 +37,8 @@ export default {
 		// extracts the table data from the store
 		items() {
 			const items = this.$store.getters.getResultDataItems(this.showError);
-			return items.filter(this.filterFunc)
+			return items
+				.filter(this.filterFunc)
 				.map(this.decorateFunc);
 		},
 		// extract the table field header from the store

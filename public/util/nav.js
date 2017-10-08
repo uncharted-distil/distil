@@ -49,7 +49,11 @@ export function gotoPipelines(store, router) {
 
 export function gotoResults(store, router) {
 	const entry = createRouteEntry('/results', {
-		dataset: store.getters.getRouteDataset()
+		terms: store.getters.getRouteTerms(),
+		dataset: store.getters.getRouteDataset(),
+		filters: store.getters.getRouteFilters(),
+		target: store.getters.getRouteTargetVariable(),
+		training: store.getters.getRouteTrainingVariables()
 	});
 	router.push(entry);
 }

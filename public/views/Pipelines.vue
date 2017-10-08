@@ -21,8 +21,16 @@ export default {
 		CompletedPipelines
 	},
 
+	computed: {
+		sessionId() {
+			return this.$store.getters.getPipelineSessionID();
+		}
+	},
+
 	mounted() {
-		this.$store.dispatch('getSession');
+		this.$store.dispatch('getSession', {
+			sessionId: this.sessionId
+		});
 	}
 };
 </script>

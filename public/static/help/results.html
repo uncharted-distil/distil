@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="description" content="">
 <meta name="keywords" content=" ">
-<title>Results | Distil Help</title>
+<title>Step 5 - Results | Distil Help</title>
 <link rel="stylesheet" href="css/syntax.css">
 
 
@@ -112,7 +112,7 @@
                                 searchInput: document.getElementById('search-input'),
                                 resultsContainer: document.getElementById('results-container'),
                                 dataSource: 'search.json',
-                                searchResultTemplate: '<li><a href="{url}" title="Results">{title}</a></li>',
+                                searchResultTemplate: '<li><a href="{url}" title="Step 5 - Results">{title}</a></li>',
                     noResultsText: 'No results found.',
                             limit: 10,
                             fuzzy: true,
@@ -148,7 +148,7 @@
         
     
     <li>
-        <a href="#">Overview</a>
+        <a href="#">Getting Started</a>
         <ul>
             
             
@@ -158,14 +158,6 @@
             
             
             
-        </ul>
-        
-        
-    
-    <li>
-        <a href="#">Views</a>
-        <ul>
-            
             
             
             <li><a href="home.html">Home</a></li>
@@ -173,37 +165,45 @@
             
             
             
-            
-            
-            <li><a href="search.html">Search</a></li>
-            
-            
-            
-            
-            
-            
-            <li><a href="explore.html">Explore</a></li>
+        </ul>
+        
+        
+    
+    <li>
+        <a href="#">Workflow</a>
+        <ul>
             
             
             
-            
-            
-            
-            <li><a href="select.html">Select</a></li>
+            <li><a href="search.html">1. Search</a></li>
             
             
             
             
             
             
-            <li><a href="pipelines.html">Pipelines</a></li>
+            <li><a href="explore.html">2. Explore</a></li>
             
             
             
             
             
             
-            <li class="active"><a href="results.html">Results</a></li>
+            <li><a href="select.html">3. Select</a></li>
+            
+            
+            
+            
+            
+            
+            <li><a href="pipelines.html">4. Pipelines</a></li>
+            
+            
+            
+            
+            
+            
+            <li class="active"><a href="results.html">5. Results</a></li>
             
             
             
@@ -227,7 +227,7 @@
     <!-- Content Column -->
     <div class="col-md-9">
         <div class="post-header">
-   <h1 class="post-title-main">Results</h1>
+   <h1 class="post-title-main">Step 5 - Results</h1>
 </div>
 
 
@@ -264,7 +264,7 @@ $('#toc').on('click', 'a', function() {
 
     
 
-  <p>The Results view lets you compare the different models generated from your pipeline to understand which is most accurate. Distil builds two types of models:</p>
+  <p>The Results view lets you compare the different generated models to understand which is most accurate. Distil builds two types of models:</p>
 
 <ul>
   <li><a href="#classification-models">Classification models</a> for when your target variable is a categorical feature (i.e., has a finite set of categories that are reused across records)</li>
@@ -282,6 +282,14 @@ $('#toc').on('click', 'a', function() {
 <p>Regression models allow you to configure the acceptable error (distance from the actual value) in predictions. Distil then lists the correctly and incorrectly predicted values based on your selection. Use the feature summaries to understand how different values affect the results.</p>
 
 <figure><a href="images/diagrams/results-regression.png"><img class="docimage" src="images/diagrams/results-regression.png" alt="Regression results" /><figcaption>Click to enlarge</figcaption></a></figure>
+
+<h2 id="finishing-a-problem">Finishing a Problem</h2>
+
+<p>When you are satisfied with the results of a model, click <strong>Export Pipeline</strong> to save it and move on to the next problem.</p>
+
+<p>If you want to refine the results, click <strong>Select</strong> to return to step 3 and modify your pipeline.</p>
+
+<p><strong>NOTE</strong>: If at any time you want to abandon your model configuration and move on to the next problem, click <strong>Abort</strong> in the header.</p>
 
   
   <div class="section-nav">
