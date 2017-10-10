@@ -47,6 +47,6 @@ export default {
 	width: 50%;
 }
 .search-search-results {
-	width: 50%;
+	width: 80%;
 }
 </style>

@@ -10,17 +10,46 @@
 </template>
 
 <script>
+import _ from 'lodash';
+import PipelinePreview from '../components/PipelinePreview';
 
 export default {
 	name: 'recent-pipelines',
 
+	components: {
+		PipelinePreview
+	},
+
+	props: {
+		maxPipelines: {
+			default: 20,
+			type: Number
+		}
+	},
+
 	computed: {
 		recentPipelines() {
-			// TODO: implement this correctly
+			const pipelines = this.$store.getters.getCompletedPipelines();
+			if (_.keys(pipelines).length > 0) {
+				return _.values(pipelines).sort((a, b) => {
+					return this.minResultTRimestamp(b) - this.minResultTRimestamp(a);
+				}).slice(0, this.maxPipelines);
+			}
 			return null;
 		}
-	}
+	},
 
+	methods: {
+		minResultTRimestamp(pipeline) {
+			let min = Infinity;
+			_.values(pipeline).forEach(result => {
+				if (result.createdTime < min) {
+					min = result.createdTime;
+				}
+			});
+			return min;
+		}
+	}
 };
 </script>
 

@@ -24,10 +24,17 @@ export default {
 		DatasetPreview
 	},
 
+	props: {
+		maxDatasets: {
+			default: 5,
+			type: Number
+		}
+	},
+
 	computed: {
 		recentDatasets() {
-			// TODO: implement this correctly
-			return null;
+			const names = this.$store.getters.getRecentDatasets().slice(0, this.maxDatasets);
+			return this.$store.getters.getDatasets(names);
 		}
 	}
 

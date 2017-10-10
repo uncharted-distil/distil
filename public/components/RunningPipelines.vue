@@ -12,10 +12,16 @@
 <script>
 import _ from 'lodash';
 import PipelinePreview from '../components/PipelinePreview';
-import { getMetricDisplayName } from '../util/pipelines';
 
 export default {
 	name: 'running-pipelines',
+
+	props: {
+		maxPipelines: {
+			default: 20,
+			type: Number
+		}
+	},
 
 	components: {
 		PipelinePreview
@@ -23,21 +29,25 @@ export default {
 
 	computed: {
 		pipelineResults() {
-			if (_.keys(this.$store.state.runningPipelines).length > 0) {
-				return this.$store.state.runningPipelines;
-			} else {
-				return null;
+			const pipelines = this.$store.getters.getRunningPipelines();
+			if (_.keys(pipelines).length > 0) {
+				return _.values(pipelines).sort((a, b) => {
+					return this.minResultTRimestamp(b) - this.minResultTRimestamp(a);
+				}).slice(0, this.maxPipelines);
 			}
+			return null;
 		}
 	},
+
 	methods: {
-		status(result) {
-			if (result.progress === 'UPDATED') {
-				const score = result.pipeline.scores[0];
-				const metricName = getMetricDisplayName(score.metric);
-				return metricName + ': ' + score.value;
-			}
-			return result.progress;
+		minResultTRimestamp(pipeline) {
+			let min = Infinity;
+			_.values(pipeline).forEach(result => {
+				if (result.createdTime < min) {
+					min = result.createdTime;
+				}
+			});
+			return min;
 		}
 	}
 };
