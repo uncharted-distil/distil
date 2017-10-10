@@ -271,6 +271,7 @@ export function getResultsSummaries(context, args) {
 	// fetch the results for each pipeline
 	for (var result of results) {
 		const name = result.name;
+		const feature = result.feature;
 		const pipelineId = result.pipelineId;
 		const res = encodeURIComponent(result.pipeline.resultUri);
 		axios.get(`/distil/results-summary/${ES_INDEX}/${dataset}/${res}`)
@@ -280,8 +281,9 @@ export function getResultsSummaries(context, args) {
 				if (!histogram) {
 					context.commit('setResultsSummaries', [
 						{
-							name,
-							pipelineId,
+							name: name,
+							feature: feature,
+							pipelineId: pipelineId,
 							err: 'No analysis available'
 						}
 					]);
@@ -290,14 +292,16 @@ export function getResultsSummaries(context, args) {
 				// ensure buckets is not nil
 				histogram.buckets = histogram.buckets ? histogram.buckets : [];
 				histogram.name = name;
+				histogram.feature = feature;
 				histogram.pipelineId = pipelineId;
 				context.commit('updateResultsSummaries', histogram);
 			})
 			.catch(error => {
 				context.commit('setResultsSummaries', [
 					{
-						name,
-						pipelineId,
+						name: name,
+						feature: feature,
+						pipelineId: pipelineId,
 						err: error
 					}
 				]);

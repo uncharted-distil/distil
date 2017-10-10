@@ -1,18 +1,18 @@
 import { spinnerHTML } from '../util/spinner';
 
 // creates the set of facets from the supplied summary data
-export function createGroups(summaries, enableCollapse, enableFiltering) {
+export function createGroups(summaries, enableCollapse, enableFiltering, predictedValues) {
 	return summaries.map(summary => {
 		if (summary.err) {
 			// create error facet
-			return createErrorFacet(summary, enableCollapse);
+			return createErrorFacet(summary, enableCollapse, predictedValues);
 		}
 		if (summary.pending) {
 			// create pending facet
-			return createPendingFacet(summary, enableCollapse);
+			return createPendingFacet(summary, enableCollapse, predictedValues);
 		}
 		// create facet
-		return createSummaryFacet(summary, enableCollapse, enableFiltering);
+		return createSummaryFacet(summary, enableCollapse, enableFiltering, predictedValues);
 	}).filter(group => {
 		// remove null groups
 		return group;
@@ -20,10 +20,10 @@ export function createGroups(summaries, enableCollapse, enableFiltering) {
 }
 
 // creates a facet to display a data fetch error
-export function createErrorFacet(summary, enableCollapse) {
+export function createErrorFacet(summary, enableCollapse, predictedValues) {
 	return {
 		label: summary.name,
-		key: summary.name,
+		key: predictedValues ? `Predicted ${summary.feature}` : summary.name,
 		collapsible: enableCollapse,
 		facets: [{
 			placeholder: true,
@@ -33,10 +33,10 @@ export function createErrorFacet(summary, enableCollapse) {
 }
 
 // creates a place holder facet to dispay a spinner
-export function createPendingFacet(summary, enableCollapse) {
+export function createPendingFacet(summary, enableCollapse, predictedValues) {
 	return {
 		label: summary.name,
-		key: summary.name,
+		key: predictedValues ? `Predicted ${summary.feature}` : summary.name,
 		collapsible: enableCollapse,
 		facets: [{
 			placeholder: true,
@@ -46,13 +46,13 @@ export function createPendingFacet(summary, enableCollapse) {
 }
 
 // creates categorical or numerical summary facets
-export function createSummaryFacet(summary, enableCollapse, enableFiltering) {
+export function createSummaryFacet(summary, enableCollapse, enableFiltering, predictedValues) {
 	switch (summary.type) {
 
 		case 'categorical':
 			return {
 				label: summary.name,
-				key: summary.name,
+				key: predictedValues ? `Predicted ${summary.feature}` : summary.name,
 				collapsible: enableCollapse,
 				facets: summary.buckets.map(b => {
 					return {
@@ -72,7 +72,7 @@ export function createSummaryFacet(summary, enableCollapse, enableFiltering) {
 		case 'numerical':
 			return {
 				label: summary.name,
-				key: summary.name,
+				key: predictedValues ? `Predicted ${summary.feature}` : summary.name,
 				collapsible: enableCollapse,
 				facets: [
 					{

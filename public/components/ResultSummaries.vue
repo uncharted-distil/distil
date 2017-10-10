@@ -20,14 +20,17 @@
 			</div>
 		</div>
 		<h6 class="nav-link">Actual</h6>
-		<facets class="result-summaries-target" :groups="targetSummaries"></facets>
+		<facets class="result-summaries-target"
+			:groups="targetSummaries"
+			:highlights="highlights"></facets>
 		<h6 class="nav-link">Predicted</h6>
 		<result-facets
 			v-on:activePipelineChange="onPipelineUpdate($event)"
 			enable-group-collapse
 			enable-facet-filtering
 			:variables="variables"
-			:dataset="dataset"></result-facets>
+			:dataset="dataset"
+			:groups="targetSummaries"></result-facets>
 		<b-btn v-b-modal.export variant="outline-success" class="check-button">Export Pipeline</b-btn>
 		<b-modal id="export" title="Export" @ok="onExport">
 			<div class="check-message-container">
@@ -87,6 +90,10 @@ export default {
 			}
 		},
 
+		highlights() {
+			return this.$store.getters.getHighlightedFeatureValues();
+		},
+
 		dataset() {
 			return this.$store.getters.getRouteDataset();
 		},
@@ -129,7 +136,9 @@ export default {
 			const targetSummary = _.find(varSummaries, v => _.toLower(v.name) === _.toLower(targetVariable));
 			// Create a facet for it - this will act as a basis of comparison for the result sets
 			if (!_.isEmpty(targetSummary)) {
-				return createGroups([targetSummary]);
+				return createGroups([
+					targetSummary
+				], false, false);
 			}
 			return [];
 		},
@@ -181,6 +190,19 @@ export default {
 .result-summaries {
 	overflow-x: hidden;
 	overflow-y: auto;
+}
+
+.result-summaries .facet-range,
+.result-summaries .facets-facet-horizontal {
+	height: 55px;
+}
+
+.result-summaries .facets-facet-horizontal-abbreviated {
+	height: 40px;
+}
+
+.result-summaries .facets-facet-base {
+	overflow: visible;
 }
 
 .result-summaries-target {
