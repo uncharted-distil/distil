@@ -28,13 +28,13 @@ describe('pipelines', () => {
 
 	describe('#getMetricSchemaName()', () => {
 		it('should return a metric\'s schema name given its display name', () => {
-			expect(pipelines.getMetricSchemaName('F1 Macro')).to.equal('f1_macro');
+			expect(pipelines.getMetricSchemaName('Accuracy')).to.equal('accuracy');
 		});
 	});
 
 	describe('#getMetricDisplayName()', () => {
 		it('should return a metric\'s display name given its schema name', () => {
-			expect(pipelines.getMetricDisplayName('f1_macro')).to.equal('F1 Macro');
+			expect(pipelines.getMetricDisplayName('accuracy')).to.equal('Accuracy');
 		});
 	});
 });
