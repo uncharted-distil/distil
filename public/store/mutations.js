@@ -112,6 +112,11 @@ export function highlightFeatureRange(state, highlight) {
 		from: highlight.from,
 		to: highlight.to
 	});
+	if (state.resultsSummaries) {
+		state.resultsSummaries.forEach(summary => {
+			Vue.set(state.highlightedFeatureRanges, summary.feature, highlight);
+		});
+	}
 }
 
 export function clearFeatureHighlightRange(state, name) {
@@ -120,6 +125,11 @@ export function clearFeatureHighlightRange(state, name) {
 
 export function highlightFeatureValues(state, highlights) {
 	Vue.set(state, 'highlightedFeatureValues', highlights);
+	if (state.resultsSummaries) {
+		state.resultsSummaries.forEach(summary => {
+			Vue.set(state.highlightedFeatureValues, summary.name, highlights[summary.feature]);
+		});
+	}
 }
 
 export function clearFeatureHighlightValues(state) {

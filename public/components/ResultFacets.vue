@@ -36,7 +36,7 @@ export default {
 	computed: {
 		groups() {
 			// create the groups
-			let groups = createGroups(this.variables);
+			let groups = createGroups(this.variables, true, false);
 
 			// sort alphabetically
 			groups.sort((a, b) => {
