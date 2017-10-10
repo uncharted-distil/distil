@@ -61,11 +61,11 @@ function checkOutput(output, schemaOutput) {
 
 // metrics used in classification tasks
 const classificationMetrics = {
-
+	// Limit the metrics since not all are supported.
 	accuracy: {
 		displayName: 'Accuracy',
 		schemaName: 'accuracy'
-	},
+	}/*,
 	f1: {
 		displayName: 'F1',
 		schemaName: 'f1',
@@ -97,7 +97,7 @@ const classificationMetrics = {
 	normalizedMutualInformation: {
 		displayName: 'Normalized Mutual Information',
 		schemaName: 'normalized_mutual_information'
-	}
+	}*/
 
 };
 
