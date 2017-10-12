@@ -165,15 +165,22 @@ func (s *Storage) parseFilteredResults(dataset string, rows *pgx.Rows, target *m
 				return nil, errors.Wrap(err, "Unable to extract fields from query result")
 			}
 			parsedTargetValue, err := s.parseVariableValue(columnValues[0].(string), target)
-			if model.IsNumerical(target.Type) {
-				// Compute the residual between the predicted value and the actual value.
-				residual := s.calculateResidual(parsedTargetValue, targetActual, target)
-				columnValues = append(columnValues, residual)
-			}
-
 			if err != nil {
 				return nil, errors.Wrap(err, "Unable to parse result variable")
 			}
+
+			// compute the absolute residual value
+			var residualError error
+			if model.IsNumerical(target.Type) {
+				// Compute the residual between the predicted value and the actual value.
+				residual, err := s.calculateAbsResidual(parsedTargetValue, targetActual)
+				columnValues = append(columnValues, residual)
+				residualError = err
+			}
+			if residualError != nil {
+				log.Errorf("error(s) during residual compuation - %+v", residualError)
+			}
+
 			columnValues[0] = parsedTargetValue
 			result.Values = append(result.Values, columnValues)
 		}
@@ -421,13 +428,35 @@ func (s *Storage) FetchResultsSummary(dataset string, resultURI string, index st
 	return nil, errors.Errorf("variable %s of type %s does not support summary", variable.Name, variable.Type)
 }
 
-func (s *Storage) calculateResidual(actual interface{}, target interface{}, variable *model.Variable) interface{} {
-	switch variable.Type {
-	case model.IntegerType:
-		return math.Abs(actual.(float64) - target.(float64))
-	case model.FloatType:
-		return math.Abs(actual.(float64) - target.(float64))
+func (s *Storage) calculateAbsResidual(measured interface{}, predicted interface{}) (float64, error) {
+	flMeasured, err := toFloat(measured)
+	if err != nil {
+		return 0, err
+	}
+	flPredicted, err := toFloat(predicted)
+	if err != nil {
+		return 0, err
+	}
+	return math.Abs(flMeasured - flPredicted), nil
+}
+
+func toFloat(value interface{}) (float64, error) {
+	switch t := value.(type) {
+	case int:
+		return float64(t), nil
+	case int8:
+		return float64(t), nil
+	case int16:
+		return float64(t), nil
+	case int32:
+		return float64(t), nil
+	case int64:
+		return float64(t), nil
+	case float32:
+		return float64(t), nil
+	case float64:
+		return float64(t), nil
 	default:
-		return 0
+		return math.NaN(), errors.Errorf("unhandled type %T for %v in conversion to float64", t, value)
 	}
 }
