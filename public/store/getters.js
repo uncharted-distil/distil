@@ -253,78 +253,72 @@ export function getResultData(state) {
 	return () => state.resultData;
 }
 
-export function getResultDataItems(state, getters) {
-	return (computeResiduals) => {
-		const resultData = state.resultData.resultData;
-		const mergedResults = [];
+export function getResultDataItems(state) {
+	return () => {
+		const resultData = state.resultData; 
 		if (validateData(resultData)) {
-			const resultDataItems = getters.getFilteredDataItems();
-			// append the result variable data to the baseline variable data
-			for (const [i, row] of resultDataItems.entries()) {
-				for (const [j, colName] of resultData.columns.entries()) {
-					// append the result value
-					const label = `Predicted ${colName}`;
-					row[label] = resultData.values[i][j];
+			
+			// look at first row and figure out the target, predicted, error values
+			const predictedIdx = _.findIndex(resultData.columns, col => col.endsWith('_res'));
+			const targetName = resultData.columns[predictedIdx].replace('_res', '');
+			const errorIdx = _.findIndex(resultData.columns, col => col === 'error');
+			
+			// convert fetched result data rows into table data rows 
+			return _.map(resultData.values, resultRow => {
+				const row = {};
 
-					// append the residual value if necessary
-					let residualLabel = null;
-					if (computeResiduals) {
-						residualLabel = 'Error';
-						row[residualLabel] = row[colName] - resultData.values[i][j];
-					}
-					// save the names of the columns related to the target and predictions as metadata
-					// for use at render time
-					row._target = { truth: colName, predicted: label, error: residualLabel };
-
-					_.forIn(state.highlightedFeatureRanges, (range, name) => {
-						let col = row[name];
-						if (!row[name]) {
-							// row does not contain name, we ASSUME this is because it is a
-							// predicted field
-							col = row[label];
-						}
-						if (col >= range.from && col <= range.to) {
-							row._rowVariant = 'info';
-						}
-					});
+				for (const [idx, colValues] of resultRow.entries()) {
+					const colName = resultData.columns[idx];
+					row[colName] = colValues;
 				}
-				mergedResults.push(row);
-			}
-			return mergedResults;
+				row._target = { truth: targetName, predicted: resultData.columns[predictedIdx] };
+				if (errorIdx >= 0) {
+					row._target.error = resultData.columns[errorIdx];
+				}
+
+				// _.forIn(state.highlightedFeatureRanges, (range, name) => {
+				// 	let col = row[name];
+				// 	if (!row[name]) {
+				// 		// row does not contain name, we ASSUME this is because it is a
+				// 		// predicted field
+				// 		col = row[label];
+				// 	}
+				// 	if (col >= range.from && col <= range.to) {
+				// 		row._rowVariant = 'info';
+				// 	}
+				// });
+				
+				// if row is in the current highlght range, set its style to info
+				// _.forIn(state.highlightedFeatureRanges, (range, name) => {
+				// 	if (row[name] >= range.from && row[name] <= range.to) {
+				// 		row._rowVariant = 'info';
+				// 	}
+				// });
+				return row;
+			});
 		}
 		return [];
 	};
 }
 
-export function getResultDataFields(state, getters) {
-	return (regression) => {
-		let dataFields = getters.getFilteredDataFields();
-
-		// target field should be last displayed in table, next to predicted value and error
-		// (if applicable)
-		const resultData = state.resultData.resultData;
-		if (!_.isEmpty(resultData)) {
-			// add the result data to the baseline data
-			for (const col of resultData.columns) {
-				const truthValue = dataFields[col];
-				dataFields = _.omit(dataFields, col);
-				dataFields[col] = truthValue;
-
-				const label = `Predicted ${col}`;
-				dataFields[label] = {
-					label: label,
+export function getResultDataFields(state) {
+	return (computeResiduals) => {
+		const data = state.resultData;
+		if (!_.isEmpty(data)) {
+			const result = {};
+			for (const col of data.columns) {
+				result[col] = {
+					label: col,
 					sortable: true
 				};
-				// add a field for the residuals for numeric predictions
-				if (regression) {
-					const errorLabel = 'Error';
-					dataFields[errorLabel] = {
-						label: errorLabel,
-						sortable: true
-					};
-				}
 			}
-			return dataFields;
+			if (computeResiduals) {
+				result.Error = {
+					label: 'Error', 
+					sortable: true
+				};
+			}
+			return result;
 		} else {
 			return {};
 		}

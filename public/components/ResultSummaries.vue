@@ -166,10 +166,8 @@ export default {
 			this.$router.push(entry);
 		},
 		onSlide(value) {
-			const entry = createRouteEntryFromRoute(this.$route, {
-				residualThreshold: value
-			});
-			this.$router.push(entry);
+			const entry = createRouteEntryFromRoute(this.$route, { residualThreshold: value });
+			this.$router.replace(entry);
 		},
 		onExport() {
 			this.$router.replace('/');
