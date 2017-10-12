@@ -19,7 +19,7 @@ extend google.protobuf.FileOptions {
 }
 
 // Date-based version string. Use is it to populate version in SessionRequest and SessionResponse messages.
-option (protocol_version) = "2017.9.18_pre";
+option (protocol_version) = "2017.10.10";
 
 message SessionContext {
     string session_id = 1;
@@ -45,7 +45,7 @@ enum StatusCode {
 
 message Status {
     StatusCode code = 1;
-    string details = 2;
+    string details = 2; // optional. Ignored if code = OK
 }
 
 message Response {
@@ -55,23 +55,23 @@ message Response {
 // in the future we could also pass arguments allowing one to fork an existing session,
 // or provide resource limits on a session (asking TA2 system to terminate work if it exceeds a given limit)
 message SessionRequest {
-    string user_agent = 1;
-    string version = 2;
+    string user_agent = 1; // some string identifying the name and version of the TA3 system
+    string version = 2; // shall be set to protocol_version above
 }
 
 message SessionResponse {
     Response response_info = 1;
-    string user_agent = 2;
-    string version = 3;
+    string user_agent = 2; // some string identifying the name and version of the TA2 system
+    string version = 3; // shall be set to protocol_version above
     SessionContext context = 4;
 }
 
 enum Progress {
-    SUBMITTED = 0;
-    RUNNING = 1;
-    UPDATED = 2;
-    COMPLETED = 3;
-    ERRORED = 4;
+    SUBMITTED = 0;  // the process was created and needs to run before it is completed
+    RUNNING = 1;    // the process is currently running
+    UPDATED = 2;    // the process is still running, but intermediate results are available
+    COMPLETED = 3;  // process completed and the pipeline/result is now ready for use
+    ERRORED = 4;    // the pipeline entered a failed state and shouldn't be used in ExecutePipeline and ExportPipeline (training) or didn't produce results (testing)
 }
 
 // enums below are based on values taken from the problem annotation schema defined at
@@ -148,7 +148,9 @@ message PipelineCreateRequest {
     OutputType output = 6;
     repeated Metric metrics = 7;          // specify a list of evaluation metrics
     repeated Feature target_features = 8; // specify a list of targets to predict
-    int32 max_pipelines = 9;              // maximum number of pipelines to return
+    int32 max_pipelines = 9;              // optional maximum number of pipelines to return
+                                          // Note that TA2 may still return more pipelines, so TA3 should keep a list
+                                          // of the top results sorted by the relevant metric if required
 }
 
 message Score {
@@ -163,9 +165,14 @@ message Pipeline {
 }
 
 message PipelineCreateResult {
-    Response response_info = 1;
-    Progress progress_info = 2;
-    string pipeline_id = 3;
+    Response response_info = 1; // if pipeline_id is empty, this shall be an error, fatal to the whole create process,
+                                // and the stream should be closed immediately
+                                // if pipeline_id is set and this is an error, it concerns only that single pipeline
+                                // (progress_info should be set to ERRORED) and the create process will continue to
+                                // create and train the other pipelines
+    Progress progress_info = 2; // progress of training this particular pipeline. If ERRORED, TA3 should consider this
+                                // pipeline failed and unavailable for ExecutePipeline or ExportPipeline
+    string pipeline_id = 3; // required if response_info is not an error
     // Will be set if progress info value is UPDATED or COMPLETED
     Pipeline pipeline_info = 4;
 }
@@ -177,9 +184,9 @@ message PipelineExecuteRequest {
 }
 
 message PipelineExecuteResult {
-    Response response_info = 1;
+    Response response_info = 1; // status of the overall execution. If an error, stream will be closed immediately
     Progress progress_info = 2;
-    string pipeline_id = 3;
+    string pipeline_id = 3; // always the requested pipeline
     // Will be set if progress info value is UPDATED or COMPLETED
     repeated string result_uris = 4;  // output path to predicted results on eval data
 }
@@ -190,7 +197,7 @@ message PipelineListRequest {
 
 message PipelineDeleteRequest {
     SessionContext context = 1;
-    repeated string delete_pipeline_ids = 2;
+    repeated string delete_pipeline_ids = 2; // should not be empty
 }
 
 message PipelineListResult {
@@ -200,18 +207,18 @@ message PipelineListResult {
 
 message PipelineCreateResultsRequest {
     SessionContext context = 1;
-    repeated string pipeline_ids = 2;
+    repeated string pipeline_ids = 2; // empty list means all pipelines in the session
 }
 
 message PipelineExecuteResultsRequest {
     SessionContext context = 1;
-    repeated string pipeline_ids = 2;
+    repeated string pipeline_ids = 2; // empty list means all pipelines in the session
 }
 
 message PipelineExportRequest {
     SessionContext context = 1;
     string pipeline_id = 2;
-    string pipeline_exec_uri = 3; // uri to persist executable of requested pipeline w/ session preprocessing
+    string pipeline_exec_uri = 3; // uri to the executable file where the requested pipeline is to be persisted
 }
 
 message UpdateProblemSchemaRequest {
@@ -239,7 +246,7 @@ service Core {
     rpc ListPipelines(PipelineListRequest) returns (PipelineListResult) {}
     rpc DeletePipelines(PipelineDeleteRequest) returns (PipelineListResult) {}
 
-    // Obtain results
+    // Obtain results; lists existing pipelines then streams new results as they become available
     rpc GetCreatePipelineResults(PipelineCreateResultsRequest) returns (stream PipelineCreateResult) {}
     rpc GetExecutePipelineResults(PipelineExecuteResultsRequest) returns (stream PipelineExecuteResult) {}
 
