@@ -42,6 +42,11 @@ func newLoggingClientStream(c *grpc.ClientStream, requestType string, request st
 
 // RecvMsg logs messages recieved over a GRPC stream
 func (c *LoggingClientStream) RecvMsg(m interface{}) error {
+	err := c.ClientStream.RecvMsg(m)
+	if err != nil {
+		return err
+	}
+
 	if c.trace {
 		newRequestLogger().
 			requestType(c.requestType).
@@ -54,7 +59,7 @@ func (c *LoggingClientStream) RecvMsg(m interface{}) error {
 			request(c.method).
 			log(true)
 	}
-	return c.ClientStream.RecvMsg(m)
+	return err
 }
 
 // SendMsg logs messages sent out over a GRPC stream
