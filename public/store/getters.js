@@ -253,81 +253,82 @@ export function getResultData(state) {
 	return () => state.resultData;
 }
 
-export function getResultDataItems(state, getters) {
-	return (computeResiduals) => {
-		const resultData = state.resultData.resultData;
-		const mergedResults = [];
+function getTargetIndexFromPredicted(columns, predictedIndex) {
+	const targetName = columns[predictedIndex].replace('_res', '');
+	return _.findIndex(columns, col => col === targetName);
+}
+
+function getPredictedIndex(columns) {
+	return _.findIndex(columns, col => col.endsWith('_res'));
+}
+
+function getErrorIndex(columns) {
+	return _.findIndex(columns, col => col === 'error');
+}
+
+export function getResultDataItems(state) {
+	return () => {
+		const resultData = state.resultData;
 		if (validateData(resultData)) {
-			const resultDataItems = getters.getFilteredDataItems();
-			// append the result variable data to the baseline variable data
-			for (const [i, row] of resultDataItems.entries()) {
-				if (i === resultData.values.length) {
-					break;
-				}
-				for (const [j, colName] of resultData.columns.entries()) {
-					// append the result value
-					const label = `Predicted ${colName}`;
-					row[label] = resultData.values[i][j];
 
-					// append the residual value if necessary
-					let residualLabel = null;
-					if (computeResiduals) {
-						residualLabel = 'Error';
-						row[residualLabel] = row[colName] - resultData.values[i][j];
+			// look at first row and figure out the target, predicted, error values
+			const predictedIdx = getPredictedIndex(resultData.columns);
+			const targetName = resultData.columns[getTargetIndexFromPredicted(resultData.columns, predictedIdx)];
+			const errorIdx = getErrorIndex(resultData.columns);
+
+			// convert fetched result data rows into table data rows
+			return _.map(resultData.values, resultRow => {
+				const row = {};
+
+				for (const [idx, colValues] of resultRow.entries()) {
+					const colName = resultData.columns[idx];
+					row[colName] = colValues;
+				}
+				row._target = { truth: targetName, predicted: resultData.columns[predictedIdx] };
+				if (errorIdx >= 0) {
+					row._target.error = resultData.columns[errorIdx];
+				}
+				// if row is in the current highlght range, set its style to info
+				// TODO: this shouldn't be in the getter because it causes the entire
+				// function to re-run whenever the high changes
+				_.forIn(state.highlightedFeatureRanges, (range, name) => {
+					if (row[name] >= range.from && row[name] <= range.to) {
+						row._rowVariant = 'info';
 					}
-					// save the names of the columns related to the target and predictions as metadata
-					// for use at render time
-					row._target = { truth: colName, predicted: label, error: residualLabel };
-
-					_.forIn(state.highlightedFeatureRanges, (range, name) => {
-						let col = row[name];
-						if (!row[name]) {
-							// row does not contain name, we ASSUME this is because it is a
-							// predicted field
-							col = row[label];
-						}
-						if (col >= range.from && col <= range.to) {
-							row._rowVariant = 'info';
-						}
-					});
-				}
-				mergedResults.push(row);
-			}
-			return mergedResults;
+				});
+				return row;
+			});
 		}
 		return [];
 	};
 }
 
-export function getResultDataFields(state, getters) {
-	return (regression) => {
-		let dataFields = getters.getFilteredDataFields();
+export function getResultDataFields(state) {
+	return () => {
+		const data = state.resultData;
 
-		// target field should be last displayed in table, next to predicted value and error
-		// (if applicable)
-		const resultData = state.resultData.resultData;
-		if (!_.isEmpty(resultData)) {
-			// add the result data to the baseline data
-			for (const col of resultData.columns) {
-				const truthValue = dataFields[col];
-				dataFields = _.omit(dataFields, col);
-				dataFields[col] = truthValue;
+		// look at first row and figure out the target, predicted, error values
+		const predictedIndex = getPredictedIndex(data.columns);
+		const targetIndex = getTargetIndexFromPredicted(data.columns, predictedIndex);
+		const errorIndex = getErrorIndex(data.columns);
 
-				const label = `Predicted ${col}`;
-				dataFields[label] = {
-					label: label,
-					sortable: true
-				};
-				// add a field for the residuals for numeric predictions
-				if (regression) {
-					const errorLabel = 'Error';
-					dataFields[errorLabel] = {
-						label: errorLabel,
-						sortable: true
-					};
+		if (!_.isEmpty(data)) {
+			const result = {};
+			// assign column names, ignoring target, predicted and error
+			for (const [idx, col] of data.columns.entries()) {
+				if (idx !== predictedIndex && idx !== targetIndex && idx !== errorIndex) {
+					result[col] = { label: col, sortable: true };
 				}
 			}
-			return dataFields;
+			// add target, predicted and error at end with customized labels
+			const targetName = data.columns[targetIndex];
+			result[targetName] = { label: targetName, sortable: true };
+			result[data.columns[predictedIndex]] = { label: `Predicted ${targetName}`, sortable: true };
+			if (errorIndex >= 0) {
+				result[data.columns[errorIndex]] = { label: 'Error', sortable: true };
+			}
+
+			return result;
 		} else {
 			return {};
 		}

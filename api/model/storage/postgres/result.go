@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"encoding/csv"
 	"fmt"
+	"math"
 	"os"
 	"strconv"
 
@@ -111,6 +112,90 @@ func (s *Storage) executeInsertResultStatement(dataset string, resultID string, 
 	return err
 }
 
+func (s *Storage) parseVariableValue(value string, variable *model.Variable) (interface{}, error) {
+	// Integer types can be returned as floats.
+	switch variable.Type {
+	case model.IntegerType:
+		return strconv.ParseFloat(value, 64)
+	case model.FloatType:
+		return strconv.ParseFloat(value, 64)
+	case model.CategoricalType:
+		fallthrough
+	case model.TextType:
+		fallthrough
+	case model.DateTimeType:
+		fallthrough
+	case model.OrdinalType:
+		return value, nil
+	case model.BoolType:
+		return strconv.ParseBool(value)
+	default:
+		return value, nil
+	}
+}
+
+func (s *Storage) parseFilteredResults(dataset string, rows *pgx.Rows, target *model.Variable) (*model.FilteredData, error) {
+	result := &model.FilteredData{
+		Name:   dataset,
+		Values: make([][]interface{}, 0),
+	}
+
+	// Parse the columns.
+	// Column 0 is the result column so need to change the type.
+	if rows != nil {
+		var targetActual int
+		fields := rows.FieldDescriptions()
+		columns := make([]string, len(fields))
+		types := make([]string, len(fields))
+		for i := 0; i < len(fields); i++ {
+			columns[i] = fields[i].Name
+			types[i] = fields[i].DataTypeName
+			if fields[i].Name == target.Name {
+				targetActual = i
+			}
+		}
+		types[0] = target.Type
+		result.Columns = columns
+		result.Types = types
+		if model.IsNumerical(target.Type) {
+			result.Columns = append(result.Columns, "error")
+			result.Types = append(result.Types, target.Type)
+		}
+
+		// Parse the row data.
+		for rows.Next() {
+			columnValues, err := rows.Values()
+			if err != nil {
+				return nil, errors.Wrap(err, "Unable to extract fields from query result")
+			}
+			parsedTargetValue, err := s.parseVariableValue(columnValues[0].(string), target)
+			if err != nil {
+				return nil, errors.Wrap(err, "Unable to parse result variable")
+			}
+
+			// compute the absolute residual value
+			var residualError error
+			if model.IsNumerical(target.Type) {
+				// Compute the residual between the predicted value and the actual value.
+				residual, err := s.calculateAbsResidual(parsedTargetValue, targetActual)
+				columnValues = append(columnValues, residual)
+				residualError = err
+			}
+			if residualError != nil {
+				log.Errorf("error(s) during residual compuation - %+v", residualError)
+			}
+
+			columnValues[0] = parsedTargetValue
+			result.Values = append(result.Values, columnValues)
+		}
+	} else {
+		result.Columns = make([]string, 0)
+		result.Types = make([]string, 0)
+	}
+
+	return result, nil
+}
+
 func (s *Storage) parseResults(dataset string, rows *pgx.Rows, variable *model.Variable) (*model.FilteredData, error) {
 	// Scan the rows. Each row has only the value as a string.
 	values := [][]interface{}{}
@@ -120,29 +205,8 @@ func (s *Storage) parseResults(dataset string, rows *pgx.Rows, variable *model.V
 		if err != nil {
 			return nil, errors.Wrap(err, "Unable to parse result row")
 		}
-		var val interface{}
-		err = nil
 
-		// Integer types can be returned as floats.
-		switch variable.Type {
-		case model.IntegerType:
-			val, err = strconv.ParseFloat(value, 64)
-		case model.FloatType:
-			val, err = strconv.ParseFloat(value, 64)
-		case model.CategoricalType:
-			fallthrough
-		case model.TextType:
-			fallthrough
-		case model.DateTimeType:
-			fallthrough
-		case model.OrdinalType:
-			val = value
-		case model.BoolType:
-			val, err = strconv.ParseBool(value)
-		default:
-			val = value
-		}
-		// handle the parsed result/error
+		val, err := s.parseVariableValue(value, variable)
 		if err != nil {
 			return nil, errors.Wrap(err, "failed string value parsing")
 		}
@@ -157,8 +221,52 @@ func (s *Storage) parseResults(dataset string, rows *pgx.Rows, variable *model.V
 	}, nil
 }
 
+// FetchFilteredResults pulls the results from the Postgres database.
+func (s *Storage) FetchFilteredResults(dataset string, index string, resultURI string, filterParams *model.FilterParams, inclusive bool) (*model.FilteredData, error) {
+	datasetResult := s.getResultTable(dataset)
+	targetName, err := s.getResultTargetName(datasetResult, resultURI, index)
+	// fetch the variable info to resolve its type - skip the first column since that will be the d3m_index value
+	variable, err := s.getResultTargetVariable(dataset, index, targetName)
+	if err != nil {
+		return nil, err
+	}
+
+	variables, err := model.FetchVariables(s.clientES, index, dataset)
+	if err != nil {
+		return nil, errors.Wrap(err, "Could not pull variables from ES")
+	}
+
+	fields, err := s.buildFilteredQueryField(dataset, variables, filterParams, inclusive)
+	if err != nil {
+		return nil, errors.Wrap(err, "Could not build field list")
+	}
+
+	where, params, err := s.buildFilteredQueryWhere(dataset, filterParams)
+	if err != nil {
+		return nil, errors.Wrap(err, "Could not build where clause")
+	}
+
+	query := fmt.Sprintf("SELECT value as %s_res, %s FROM %s as res inner join %s as data on data.\"%s\" = res.index WHERE result_id = $%d AND target = $%d",
+		targetName, fields, datasetResult, dataset, d3mIndexFieldName, len(params)+1, len(params)+2)
+	params = append(params, resultURI)
+	params = append(params, targetName)
+
+	if len(where) > 0 {
+		query = fmt.Sprintf("%s AND %s", query, where)
+	}
+	query = query + ";"
+
+	rows, err := s.client.Query(query, params...)
+	if err != nil {
+		return nil, errors.Wrap(err, "Error querying results")
+	}
+	defer rows.Close()
+
+	return s.parseFilteredResults(dataset, rows, variable)
+}
+
 // FetchResults pulls the results from the Postgres database.
-func (s *Storage) FetchResults(dataset string, resultURI string, index string) (*model.FilteredData, error) {
+func (s *Storage) FetchResults(dataset string, index string, resultURI string) (*model.FilteredData, error) {
 	datasetResult := s.getResultTable(dataset)
 	targetName, err := s.getResultTargetName(datasetResult, resultURI, index)
 	// fetch the variable info to resolve its type - skip the first column since that will be the d3m_index value
@@ -322,4 +430,37 @@ func (s *Storage) FetchResultsSummary(dataset string, resultURI string, index st
 	}
 
 	return nil, errors.Errorf("variable %s of type %s does not support summary", variable.Name, variable.Type)
+}
+
+func (s *Storage) calculateAbsResidual(measured interface{}, predicted interface{}) (float64, error) {
+	flMeasured, err := toFloat(measured)
+	if err != nil {
+		return 0, err
+	}
+	flPredicted, err := toFloat(predicted)
+	if err != nil {
+		return 0, err
+	}
+	return math.Abs(flMeasured - flPredicted), nil
+}
+
+func toFloat(value interface{}) (float64, error) {
+	switch t := value.(type) {
+	case int:
+		return float64(t), nil
+	case int8:
+		return float64(t), nil
+	case int16:
+		return float64(t), nil
+	case int32:
+		return float64(t), nil
+	case int64:
+		return float64(t), nil
+	case float32:
+		return float64(t), nil
+	case float64:
+		return float64(t), nil
+	default:
+		return math.NaN(), errors.Errorf("unhandled type %T for %v in conversion to float64", t, value)
+	}
 }

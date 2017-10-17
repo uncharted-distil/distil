@@ -99,17 +99,19 @@ export default {
 		},
 
 		minVal() {
-			// const resultItems = this.$store.getters.getResultDataItems(this.regressionEnabled);
-			// if (!_.isEmpty(resultItems) && _.has(resultItems[0], 'Error')) {
-			// 	return Math.abs(_.minBy(resultItems, r => Math.abs(r.Error)).Error);
-			// }
+			const resultItems = this.$store.getters.getResultDataItems(this.regressionEnabled);
+			if (!_.isEmpty(resultItems) && _.has(resultItems[0], 'error')) {
+				const minErr = Math.abs(_.minBy(resultItems, r => Math.abs(r.error)).error);
+				// round to closest 2 decimal places, otherwise interval computation makes the slider angry
+				return Math.ceil(100 * minErr) / 100;
+			}
 			return 0.0;
 		},
 
 		maxVal() {
 			const resultItems = this.$store.getters.getResultDataItems(this.regressionEnabled);
-			if (!_.isEmpty(resultItems) && _.has(resultItems[0], 'Error')) {
-				const maxErr = Math.abs(_.maxBy(resultItems, r => Math.abs(r.Error)).Error);
+			if (!_.isEmpty(resultItems) && _.has(resultItems[0], 'error')) {
+				const maxErr = Math.abs(_.maxBy(resultItems, r => Math.abs(r.error)).error);
 				// round to closest 2 decimal places, otherwise interval computation makes the slider angry
 				return Math.ceil(100 * maxErr) / 100;
 			}
@@ -166,10 +168,8 @@ export default {
 			this.$router.push(entry);
 		},
 		onSlide(value) {
-			const entry = createRouteEntryFromRoute(this.$route, {
-				residualThreshold: value
-			});
-			this.$router.push(entry);
+			const entry = createRouteEntryFromRoute(this.$route, { residualThreshold: value });
+			this.$router.replace(entry);
 		},
 		onExport() {
 			this.$router.replace('/');
