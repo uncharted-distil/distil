@@ -387,6 +387,18 @@ export function getPipelineResults(state) {
 	};
 }
 
+export function getRunningPipelines(state) {
+	return () => {
+		return state.runningPipelines;
+	};
+}
+
+export function getCompletedPipelines(state) {
+	return () => {
+		return state.completedPipelines;
+	};
+}
+
 export function getWebSocketConnection() {
 	const conn = new Connection('/ws', err => {
 		if (err) {
@@ -414,4 +426,11 @@ export function getPipelineSession(state) {
 
 export function getHighlightedFeatureValues(state) {
 	return () => state.highlightedFeatureValues;
+}
+
+export function getRecentDatasets() {
+	return () => {
+		const datasets = window.localStorage.getItem('recent-datasets');
+		return (datasets) ? datasets.split(',') : [];
+	};
 }

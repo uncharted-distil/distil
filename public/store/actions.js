@@ -340,20 +340,24 @@ export function clearFeatureHighlightValues(context) {
 
 export function abort() {
 	return axios.get('/distil/abort')
-	.then(() => {
-		console.log('User initiated session abort');
-	})
-	.catch(error => {
-		console.error(`Failed to abort with error ${error}`);
-	});
+		.then(() => {
+			console.log('User initiated session abort');
+		})
+		.catch(error => {
+			console.error(`Failed to abort with error ${error}`);
+		});
 }
 
 export function exportPipeline(context, args) {
 	return axios.get(`/distil/export/${args.sessionId}/${args.pipelineId}`)
-	.then(() => {
-		console.log(`User exported pipeline ${args.pipelineId}`);
-	})
-	.catch(error => {
-		console.error(`Failed to export with error ${error}`);
-	});
+		.then(() => {
+			console.log(`User exported pipeline ${args.pipelineId}`);
+		})
+		.catch(error => {
+			console.error(`Failed to export with error ${error}`);
+		});
+}
+
+export function addRecentDataset(context, dataset) {
+	context.commit('addRecentDataset', dataset);
 }

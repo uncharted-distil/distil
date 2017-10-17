@@ -135,3 +135,10 @@ export function highlightFeatureValues(state, highlights) {
 export function clearFeatureHighlightValues(state) {
 	Vue.delete(state, 'highlightedFeatureValues');
 }
+
+export function addRecentDataset(state, dataset) {
+	const datasetsStr = window.localStorage.getItem('recent-datasets');
+	const datasets = (datasetsStr) ?  datasetsStr.split(',') : [];
+	datasets.unshift(dataset);
+	window.localStorage.setItem('recent-datasets', datasets.join(','));
+}
