@@ -13,6 +13,11 @@ import (
 func GenerateUnaryClientInterceptor(trace bool) grpc.UnaryClientInterceptor {
 	return func(ctx context.Context, method string, req, reply interface{}, cc *grpc.ClientConn, invoker grpc.UnaryInvoker, opts ...grpc.CallOption) error {
 		startTime := time.Now()
+		newRequestLogger().
+			requestType("GRPC.UNARY").
+			request(method).
+			message(req.(proto.Message)).
+			log(true)
 		err := invoker(ctx, method, req, reply, cc, opts...)
 		if err != nil {
 			err = errors.Wrap(err, "invoker call failed")
@@ -21,10 +26,22 @@ func GenerateUnaryClientInterceptor(trace bool) grpc.UnaryClientInterceptor {
 		newRequestLogger().
 			requestType("GRPC.UNARY").
 			request(method).
-			message(req.(proto.Message)).
+			message(reply.(proto.Message)).
 			duration(dt).
 			log(true)
 		return err
+	}
+}
+
+// GenerateStreamClientInterceptor creates an interceptor function that will log grpc streaming calls.
+func GenerateStreamClientInterceptor(trace bool) grpc.StreamClientInterceptor {
+	return func(ctx context.Context, desc *grpc.StreamDesc, cc *grpc.ClientConn, method string, streamer grpc.Streamer, opts ...grpc.CallOption) (grpc.ClientStream, error) {
+		clientStream, err := streamer(ctx, desc, cc, method, opts...)
+		loggingClientStream := newLoggingClientStream(&clientStream, "GRPC.STREAM_CLIENT", method, trace)
+		if err != nil {
+			err = errors.Wrap(err, "stream create call failed")
+		}
+		return loggingClientStream, err
 	}
 }
 
@@ -42,6 +59,11 @@ func newLoggingClientStream(c *grpc.ClientStream, requestType string, request st
 
 // RecvMsg logs messages recieved over a GRPC stream
 func (c *LoggingClientStream) RecvMsg(m interface{}) error {
+	err := c.ClientStream.RecvMsg(m)
+	if err != nil {
+		return err
+	}
+
 	if c.trace {
 		newRequestLogger().
 			requestType(c.requestType).
@@ -54,7 +76,7 @@ func (c *LoggingClientStream) RecvMsg(m interface{}) error {
 			request(c.method).
 			log(true)
 	}
-	return c.ClientStream.RecvMsg(m)
+	return err
 }
 
 // SendMsg logs messages sent out over a GRPC stream
@@ -72,16 +94,4 @@ func (c *LoggingClientStream) SendMsg(m interface{}) error {
 			log(true)
 	}
 	return c.ClientStream.SendMsg(m)
-}
-
-// GenerateStreamClientInterceptor creates an interceptor function that will log grpc streaming calls.
-func GenerateStreamClientInterceptor(trace bool) grpc.StreamClientInterceptor {
-	return func(ctx context.Context, desc *grpc.StreamDesc, cc *grpc.ClientConn, method string, streamer grpc.Streamer, opts ...grpc.CallOption) (grpc.ClientStream, error) {
-		clientStream, err := streamer(ctx, desc, cc, method, opts...)
-		loggingClientStream := newLoggingClientStream(&clientStream, "GRPC.STREAM_CLIENT", method, trace)
-		if err != nil {
-			err = errors.Wrap(err, "stream create call failed")
-		}
-		return loggingClientStream, err
-	}
 }

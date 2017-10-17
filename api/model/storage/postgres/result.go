@@ -81,13 +81,17 @@ func (s *Storage) PersistResult(dataset string, resultURI string) error {
 		// Each data row is index, target.
 		err = nil
 
-		// handle the parsed result/error
+		// handle the parsed result/error - should be an int some TA2 systems return floats
 		if err != nil {
 			return errors.Wrap(err, "failed csv value parsing")
 		}
 		parsedVal, err := strconv.ParseInt(records[i][0], 10, 64)
 		if err != nil {
-			return errors.Wrap(err, "failed csv index parsing")
+			parsedValFloat, err := strconv.ParseFloat(records[i][0], 64)
+			if err != nil {
+				return errors.Wrap(err, "failed csv index parsing")
+			}
+			parsedVal = int64(parsedValFloat)
 		}
 
 		// store the result to the storage
