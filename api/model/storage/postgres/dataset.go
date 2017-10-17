@@ -9,7 +9,7 @@ import (
 )
 
 func (s *Storage) getViewField(name string, typ string, defaultValue interface{}) string {
-	return fmt.Sprintf("COALESCE(CAST(\"%s\" AS %s), %v) AS \"%s\",",
+	return fmt.Sprintf("COALESCE(CAST(\"%s\" AS %s), %v) AS \"%s\"",
 		name, typ, defaultValue, name)
 }
 
@@ -46,7 +46,7 @@ func (s *Storage) defaultValue(typ string) interface{} {
 
 func (s *Storage) getExistingFields(dataset string) (map[string]string, error) {
 	// Read the existing fields from the database.
-	sql := "SELECT column_name, data_type FROM information_schema.columns WHERE table_name = ?;"
+	sql := "SELECT column_name, data_type FROM information_schema.columns WHERE table_name = $1;"
 
 	rows, err := s.client.Query(sql, dataset)
 	if err != nil {
@@ -70,7 +70,8 @@ func (s *Storage) getExistingFields(dataset string) (map[string]string, error) {
 }
 
 func (s *Storage) createView(dataset string, fields map[string]string) error {
-	sql := "CREATE OR REPLACE VIEW %s AS SELECT %s FROM %s_base;"
+	// CREATE OR REPLACE VIEW requires the same column names and order (with additions at the end being allowed).
+	sql := "CREATE VIEW %s AS SELECT %s FROM %s_base;"
 
 	// Build the select statement of the query.
 	fieldList := make([]string, 0)
@@ -78,8 +79,15 @@ func (s *Storage) createView(dataset string, fields map[string]string) error {
 		fieldList = append(fieldList, s.getViewField(field, typ, s.defaultValue(typ)))
 	}
 
+	// Drop the existing view.
+	_, err := s.client.Exec(fmt.Sprintf("DROP VIEW %s;", dataset))
+	if err != nil {
+		return errors.Wrap(err, "Unable to drop existing view")
+	}
+
+	// Create the view with the new column type.
 	sql = fmt.Sprintf(sql, dataset, strings.Join(fieldList, ","), dataset)
-	_, err := s.client.Exec(sql)
+	_, err = s.client.Exec(sql)
 
 	return err
 }
