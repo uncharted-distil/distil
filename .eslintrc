@@ -78,5 +78,9 @@
   "parserOptions": {
     "sourceType": "module"
   },
-  "plugins": ["html", "jsdoc"]
+  "plugins": [
+    "html",
+    "jsdoc"
+  ],
+  "extends": ["plugin:vue/recommended"]
 }
