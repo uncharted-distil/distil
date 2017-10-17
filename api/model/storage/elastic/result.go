@@ -14,8 +14,13 @@ import (
 	log "github.com/unchartedsoftware/plog"
 )
 
+// FetchFilteredResults returns the set of test predictions made by a given pipeline. NOTE: Not Implemented!
+func (s *Storage) FetchFilteredResults(dataset string, index string, resultURI string, filterParam *model.FilterParams, inclusive bool) (*model.FilteredData, error) {
+	return s.FetchResults(dataset, index, resultURI)
+}
+
 // FetchResults returns the set of test predictions made by a given pipeline.
-func (s *Storage) FetchResults(dataset string, resultURI string, index string) (*model.FilteredData, error) {
+func (s *Storage) FetchResults(dataset string, index string, resultURI string) (*model.FilteredData, error) {
 	// load the result data from CSV
 	file, err := os.Open(resultURI)
 	if err != nil {
@@ -31,7 +36,7 @@ func (s *Storage) FetchResults(dataset string, resultURI string, index string) (
 		return nil, errors.Wrap(err, "pipeline csv empty")
 	}
 
-	// currently only support a single result column.
+	// currently only support a single column.
 	if len(records[0]) > 2 {
 		log.Warnf("Result contains %s columns, expected 2.  Additional columns will be ignored.", len(records[0]))
 	}
@@ -106,7 +111,7 @@ func (s *Storage) roundToInt(a float64) int64 {
 }
 
 // FetchResultsSummary returns a histogram summarizing prediction results
-func (s *Storage) FetchResultsSummary(dataset string, resultURI string, index string) (*model.Histogram, error) {
+func (s *Storage) FetchResultsSummary(dataset string, index string, resultURI string) (*model.Histogram, error) {
 
 	results, err := s.FetchResults(dataset, resultURI, index)
 	if err != nil {
