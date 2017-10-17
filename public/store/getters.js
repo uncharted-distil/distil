@@ -253,17 +253,30 @@ export function getResultData(state) {
 	return () => state.resultData;
 }
 
+function getTargetIndexFromPredicted(columns, predictedIndex) {
+	const targetName = columns[predictedIndex].replace('_res', '');
+	return _.findIndex(columns, col => col === targetName);
+}
+
+function getPredictedIndex(columns) {
+	return _.findIndex(columns, col => col.endsWith('_res'));
+}
+
+function getErrorIndex(columns) {
+	return _.findIndex(columns, col => col === 'error');
+}
+
 export function getResultDataItems(state) {
 	return () => {
-		const resultData = state.resultData; 
+		const resultData = state.resultData;
 		if (validateData(resultData)) {
-			
+
 			// look at first row and figure out the target, predicted, error values
-			const predictedIdx = _.findIndex(resultData.columns, col => col.endsWith('_res'));
-			const targetName = resultData.columns[predictedIdx].replace('_res', '');
-			const errorIdx = _.findIndex(resultData.columns, col => col === 'error');
-			
-			// convert fetched result data rows into table data rows 
+			const predictedIdx = getPredictedIndex(resultData.columns);
+			const targetName = resultData.columns[getTargetIndexFromPredicted(resultData.columns, predictedIdx)];
+			const errorIdx = getErrorIndex(resultData.columns);
+
+			// convert fetched result data rows into table data rows
 			return _.map(resultData.values, resultRow => {
 				const row = {};
 
@@ -275,25 +288,14 @@ export function getResultDataItems(state) {
 				if (errorIdx >= 0) {
 					row._target.error = resultData.columns[errorIdx];
 				}
-
-				// _.forIn(state.highlightedFeatureRanges, (range, name) => {
-				// 	let col = row[name];
-				// 	if (!row[name]) {
-				// 		// row does not contain name, we ASSUME this is because it is a
-				// 		// predicted field
-				// 		col = row[label];
-				// 	}
-				// 	if (col >= range.from && col <= range.to) {
-				// 		row._rowVariant = 'info';
-				// 	}
-				// });
-				
 				// if row is in the current highlght range, set its style to info
-				// _.forIn(state.highlightedFeatureRanges, (range, name) => {
-				// 	if (row[name] >= range.from && row[name] <= range.to) {
-				// 		row._rowVariant = 'info';
-				// 	}
-				// });
+				// TODO: this shouldn't be in the getter because it causes the entire
+				// function to re-run whenever the high changes
+				_.forIn(state.highlightedFeatureRanges, (range, name) => {
+					if (row[name] >= range.from && row[name] <= range.to) {
+						row._rowVariant = 'info';
+					}
+				});
 				return row;
 			});
 		}
@@ -302,22 +304,30 @@ export function getResultDataItems(state) {
 }
 
 export function getResultDataFields(state) {
-	return (computeResiduals) => {
+	return () => {
 		const data = state.resultData;
+
+		// look at first row and figure out the target, predicted, error values
+		const predictedIndex = getPredictedIndex(data.columns);
+		const targetIndex = getTargetIndexFromPredicted(data.columns, predictedIndex);
+		const errorIndex = getErrorIndex(data.columns);
+
 		if (!_.isEmpty(data)) {
 			const result = {};
-			for (const col of data.columns) {
-				result[col] = {
-					label: col,
-					sortable: true
-				};
+			// assign column names, ignoring target, predicted and error
+			for (const [idx, col] of data.columns.entries()) {
+				if (idx !== predictedIndex && idx !== targetIndex && idx !== errorIndex) {
+					result[col] = { label: col, sortable: true };
+				}
 			}
-			if (computeResiduals) {
-				result.Error = {
-					label: 'Error', 
-					sortable: true
-				};
+			// add target, predicted and error at end with customized labels
+			const targetName = data.columns[targetIndex];
+			result[targetName] = { label: targetName, sortable: true };
+			result[data.columns[predictedIndex]] = { label: `Predicted ${targetName}`, sortable: true };
+			if (errorIndex >= 0) {
+				result[data.columns[errorIndex]] = { label: 'Error', sortable: true };
 			}
+
 			return result;
 		} else {
 			return {};

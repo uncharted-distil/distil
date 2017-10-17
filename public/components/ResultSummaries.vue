@@ -99,10 +99,12 @@ export default {
 		},
 
 		minVal() {
-			// const resultItems = this.$store.getters.getResultDataItems(this.regressionEnabled);
-			// if (!_.isEmpty(resultItems) && _.has(resultItems[0], 'Error')) {
-			// 	return Math.abs(_.minBy(resultItems, r => Math.abs(r.Error)).Error);
-			// }
+			const resultItems = this.$store.getters.getResultDataItems(this.regressionEnabled);
+			if (!_.isEmpty(resultItems) && _.has(resultItems[0], 'Error')) {
+				const minErr = Math.abs(_.minBy(resultItems, r => Math.abs(r.Error)).Error);
+				// round to closest 2 decimal places, otherwise interval computation makes the slider angry
+				return Math.ceil(100 * minErr) / 100;
+			}
 			return 0.0;
 		},
 
