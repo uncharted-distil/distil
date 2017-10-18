@@ -105,7 +105,7 @@ func (s *Storage) parseCategoricalHistogram(rows *pgx.Rows, variable *model.Vari
 	// assign histogram attributes
 	return &model.Histogram{
 		Name:    variable.Name,
-		Type:    "categorical",
+		Type:    model.CategoricalType,
 		Buckets: buckets,
 	}, nil
 }

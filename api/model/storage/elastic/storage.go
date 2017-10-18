@@ -87,3 +87,8 @@ func (s *Storage) FetchResultScore(pipelineID string) ([]*model.ResultScore, err
 func (s *Storage) FetchRequestFeature(requestID string) ([]*model.RequestFeature, error) {
 	return nil, errors.New("ElasticSearch FetchRequestFeature not implemented")
 }
+
+// SetDataType updates the data type of the field in ES. NOTE: Not implemented!
+func (s *Storage) SetDataType(dataset string, index string, field string, fieldType string) error {
+	return errors.New("ElasticSearch SetDataType not implemented")
+}

@@ -29,4 +29,7 @@ type Storage interface {
 	FetchResultMetadataByUUID(resultUUID string) (*Result, error)
 	FetchResultScore(pipelineID string) ([]*ResultScore, error)
 	FetchRequestFeature(requestID string) ([]*RequestFeature, error)
+
+	// Dataset manipulation
+	SetDataType(dataset string, index string, field string, fieldType string) error
 }
