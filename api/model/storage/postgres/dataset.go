@@ -19,7 +19,7 @@ func (s *Storage) mapType(typ string) string {
 	case model.IntegerType:
 		fallthrough
 	case model.FloatType:
-		return "FLOAT8"
+		return dataTypeFloat
 	case model.CategoricalType:
 		fallthrough
 	case model.TextType:
@@ -27,17 +27,17 @@ func (s *Storage) mapType(typ string) string {
 	case model.DateTimeType:
 		fallthrough
 	case model.OrdinalType:
-		return "TEXT"
+		return dataTypeText
 	default:
-		return "TEXT"
+		return dataTypeText
 	}
 }
 
 func (s *Storage) defaultValue(typ string) interface{} {
 	switch typ {
-	case "double precision":
+	case dataTypeDouble:
 		return float64(0)
-	case "FLOAT8":
+	case dataTypeFloat:
 		return float64(0)
 	default:
 		return "''"

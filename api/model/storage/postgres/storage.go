@@ -18,6 +18,11 @@ const (
 	resultTableName      = "result"
 	resultScoreTableName = "result_score"
 	featureTableName     = "request_feature"
+
+	// Database data types
+	dataTypeText   = "TEXT"
+	dataTypeDouble = "double precision"
+	dataTypeFloat  = "FLOAT8"
 )
 
 // Storage accesses the underlying postgres database.
