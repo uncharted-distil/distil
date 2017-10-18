@@ -19,6 +19,11 @@ const (
 	resultScoreTableName = "result_score"
 	featureTableName     = "request_feature"
 	d3mIndexFieldName    = "d3mIndex"
+
+	// Database data types
+	dataTypeText   = "TEXT"
+	dataTypeDouble = "double precision"
+	dataTypeFloat  = "FLOAT8"
 )
 
 // Storage accesses the underlying postgres database.

@@ -93,9 +93,8 @@ export default {
 
 	methods: {
 		updateFilterRoute(filterArgs, resultUri) {
-
 			// merge the updated filters back into the route query params if set
-			const filters = this.$store.getters.getRouteResultFilters(); ;
+			const filters = this.$store.getters.getRouteResultFilters();
 			let updatedFilters = filters;
 			if (filterArgs) {
 				updatedFilters = updateFilter(filters, filterArgs.key, filterArgs.values);
@@ -110,7 +109,6 @@ export default {
 		},
 
 		onExpand(key) {
-
 			const createReqId = this.$store.getters.getRouteCreateRequestId();
 			const pipelineRequests = this.$store.getters.getPipelineResults(createReqId);
 			const completedReq = _.find(pipelineRequests, p => p.name === key);
@@ -178,12 +176,11 @@ export default {
 								// NOTE: the `from` / `to` values MUST be strings.
 								range: {
 									from: `${filter.min}`,
-									to: `${filter.max}`,
+									to: `${filter.max}`
 								}
 							};
 						});
 						break;
-
 					case CATEGORICAL_FILTER:
 						// add selection to facets
 						group.facets.forEach(facet => {

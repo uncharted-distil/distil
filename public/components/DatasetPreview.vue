@@ -46,7 +46,7 @@
 <script>
 
 import _ from 'lodash';
-import {createRouteEntry} from '../util/routes';
+import { createRouteEntry } from '../util/routes';
 
 const NUM_TOP_FEATURES = 5;
 const SUFFIXES = {
@@ -89,7 +89,7 @@ export default {
 		formatBytes(n) {
 			function formatRecursive(size, powerOfThousand) {
 				if (size > 1024) {
-					return formatRecursive(size/1024, powerOfThousand+1);
+					return formatRecursive(size / 1024, powerOfThousand + 1);
 				}
 				return `${size.toFixed(2)}${SUFFIXES[powerOfThousand]}`;
 			}

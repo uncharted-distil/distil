@@ -14,7 +14,6 @@
 import _ from 'lodash';
 import PipelinePreview from '../components/PipelinePreview';
 
-
 export default {
 	name: 'completed-pipelines',
 

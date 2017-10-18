@@ -42,7 +42,7 @@ export default {
 				trainingElem.addEventListener('click', () => {
 					const training = this.$store.getters.getTrainingVariables();
 					const entry = createRouteEntryFromRoute(this.$store.getters.getRoute(), {
-						training: training.concat([ group.key ]).join(',')
+						training: training.concat([group.key]).join(',')
 					});
 					this.$router.push(entry);
 				});
@@ -51,7 +51,7 @@ export default {
 				targetElem.innerHTML = 'Set as Target';
 				targetElem.addEventListener('click', () => {
 					const entry = createRouteEntryFromRoute(this.$store.getters.getRoute(), {
-						target: group.key,
+						target: group.key
 					});
 					this.$router.push(entry);
 				});

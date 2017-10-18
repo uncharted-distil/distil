@@ -3,7 +3,7 @@
 
 		<b-nav-toggle target="nav_collapse"></b-nav-toggle>
 
-		<img src="/images/uncharted.svg" class="app-icon"></img>
+		<img src="/images/legendary.svg" class="app-icon"></img>
 		<span class="navbar-brand">Distil</span>
 
 		<b-collapse is-nav id="nav_collapse">
@@ -30,7 +30,7 @@
 </template>
 
 <script>
-import '../assets/images/uncharted.svg';
+import '../assets/images/legendary.svg';
 import { gotoHome, gotoSearch, gotoExplore, gotoSelect, gotoPipelines, gotoResults } from '../util/nav';
 
 const HOME = Symbol();
@@ -124,9 +124,11 @@ export default {
 	color: #00c07f !important;
 }
 .app-icon {
-	width: 36px;
 	height: 36px;
 	margin-right: 5px;
+}
+.app-icon path {
+	fill:#cc9900;
 }
 .abort-icon {
 	vertical-align: middle;
