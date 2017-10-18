@@ -311,8 +311,10 @@ export function getResultsSummaries(context, args) {
 
 // fetches result data for created pipeline
 export function updateResults(context, args) {
-	const encodedUri = encodeURIComponent(args.resultId);
-	return axios.get(`/distil/results/${ES_INDEX}/${args.dataset}/inclusive/${encodedUri}`)
+	const encodedResultId = encodeURIComponent(args.resultId);
+	const filters = args.filters;
+	const queryParams = encodeQueryParams(filters);
+	return axios.get(`/distil/results/${ES_INDEX}/${args.dataset}/${encodedResultId}/inclusive${queryParams}`)
 		.then(response => {
 			context.commit('setResultData', response.data);
 		})

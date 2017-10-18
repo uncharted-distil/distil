@@ -110,13 +110,10 @@ export default {
 
 	methods: {
 		fetch() {
-			this.$store.dispatch('updateFilteredData', {
-				dataset: this.dataset
-			}).then(() => {
-				this.$store.dispatch('updateResults', {
-					dataset: this.dataset,
-					resultId: atob(this.$store.getters.getRouteResultId())
-				});
+			this.$store.dispatch('updateResults', {
+				dataset: this.dataset,
+				resultId: atob(this.$store.getters.getRouteResultId()),
+				filters: this.$store.getters.getFilters()
 			});
 		},
 
