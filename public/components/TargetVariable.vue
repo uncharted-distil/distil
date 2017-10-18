@@ -41,7 +41,7 @@ export default {
 				remove.innerHTML = 'Remove';
 				remove.addEventListener('click', () => {
 					const entry = createRouteEntryFromRoute(this.$store.getters.getRoute(), {
-						target: '',
+						target: ''
 					});
 					this.$router.push(entry);
 				});

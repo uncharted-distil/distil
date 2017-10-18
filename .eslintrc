@@ -63,6 +63,15 @@
       2,
       "inside"
     ],
+
+    "indent": [
+      "error",
+      "tab",
+      { "SwitchCase": 1 }
+    ],
+    "space-before-function-paren": ["error", "never"],
+    "no-console": ["error", { "allow": ["warn", "error"] }],
+
     "jsdoc/check-param-names": 2,
     "jsdoc/check-tag-names": 2,
     "jsdoc/check-types": 2,
@@ -73,14 +82,22 @@
     "jsdoc/require-param-description": 2,
     "jsdoc/require-param-type": 2,
     "jsdoc/require-returns-description": 2,
-    "jsdoc/require-returns-type": 2
+    "jsdoc/require-returns-type": 2,
+
+    "vue/jsx-uses-vars": 2,
+
+    "flowtype-errors/show-errors": 2
   },
+
+  "parser": "babel-eslint",
   "parserOptions": {
     "sourceType": "module"
   },
   "plugins": [
     "html",
-    "jsdoc"
+    "jsdoc",
+    "flowtype-errors",
+    "vue"
   ],
-  "extends": ["plugin:vue/recommended"]
+  "extends": ["eslint:recommended"]
 }

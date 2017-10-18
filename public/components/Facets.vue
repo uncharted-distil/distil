@@ -14,7 +14,7 @@ export default {
 	props: {
 		groups: Array,
 		highlights: Object,
-		html: [ String, Object, Function ],
+		html: [String, Object, Function],
 		sort: {
 			default: (a, b) => {
 				const textA = a.key.toLowerCase();
@@ -49,7 +49,7 @@ export default {
 			this.$store.dispatch('highlightFeatureRange', {
 				name: key,
 				from: _.toNumber(value.label[0]),
-				to: _.toNumber(value.toLabel[value.toLabel.length-1])
+				to: _.toNumber(value.toLabel[value.toLabel.length - 1])
 			});
 		});
 		this.facets.on('facet-histogram:mouseleave', (event, key) => {
@@ -181,9 +181,9 @@ export default {
 				return false;
 			}
 			if (a.facets.length !== b.facets.length) {
-				return false;;
+				return false;
 			}
-			for (let i=0; i<a.facets.length; i++) {
+			for (let i = 0; i < a.facets.length; i++) {
 				if (!_.isEqual(
 					_.omit(a.facets[i], OMITTED_FIELDS),
 					_.omit(b.facets[i], OMITTED_FIELDS))) {

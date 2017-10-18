@@ -82,20 +82,20 @@ export default {
 			return getMetricDisplayName(metric);
 		},
 		isSubmitted() {
-			return this.result.progress==='SUBMITTED';
+			return this.result.progress === 'SUBMITTED';
 		},
 		isRunning() {
-			return this.result.progress==='RUNNING';
+			return this.result.progress === 'RUNNING';
 		},
 		isUpdated() {
-			return this.result.progress==='UPDATED';
+			return this.result.progress === 'UPDATED';
 		},
 		isCompleted() {
-			return this.result.progress !=='UPDATED' && this.result.pipeline !== undefined;
+			return this.result.progress !== 'UPDATED' && this.result.pipeline !== undefined;
 		},
 		onResult() {
-			 const entry = createRouteEntry('/results', {
- 				terms: this.$store.getters.getRouteTerms(),
+			const entry = createRouteEntry('/results', {
+				terms: this.$store.getters.getRouteTerms(),
 				dataset: this.result.dataset,
 				filters: this.$store.getters.getRouteFilters(),
 				target: this.result.feature,
