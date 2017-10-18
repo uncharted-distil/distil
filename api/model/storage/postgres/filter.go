@@ -11,7 +11,6 @@ import (
 
 const (
 	filterLimit = 100
-	primaryKey  = "d3mIndex"
 )
 
 func (s *Storage) parseFilteredData(dataset string, rows *pgx.Rows) (*model.FilteredData, error) {
@@ -48,47 +47,7 @@ func (s *Storage) parseFilteredData(dataset string, rows *pgx.Rows) (*model.Filt
 	return result, nil
 }
 
-// FetchData creates a postgres query to fetch a set of rows. Applies filters to restrict the
-// results to a user selected set of fields, with rows further filtered based on allowed ranges and
-// categories. If "inclusive" is true, it will include all fields by default. If "inclusive" is false,
-// only fields with a filter will be included.
-func (s *Storage) FetchData(dataset string, index string, filterParams *model.FilterParams, inclusive bool) (*model.FilteredData, error) {
-
-	// fields to include
-	fieldList := make([]string, 0)
-
-	if inclusive {
-		// if inclusive, include all fields except specifically excluded fields
-		excludedFields := make(map[string]bool)
-		for _, f := range filterParams.None {
-			excludedFields[f] = true
-		}
-		// get all variables
-		variables, err := model.FetchVariables(s.clientES, index, dataset)
-		if err != nil {
-			return nil, errors.Wrap(err, "unable to fetch variables")
-		}
-		for _, v := range variables {
-			if !excludedFields[v.Name] {
-				fieldList = append(fieldList, fmt.Sprintf("\"%s\"", v.Name))
-			}
-		}
-	} else {
-		// if exclusive, exclude all fields except specifically included fields
-		for _, f := range filterParams.Ranged {
-			fieldList = append(fieldList, fmt.Sprintf("\"%s\"", f.Name))
-		}
-		for _, f := range filterParams.Categorical {
-			fieldList = append(fieldList, fmt.Sprintf("\"%s\"", f.Name))
-		}
-		for _, f := range filterParams.None {
-			fieldList = append(fieldList, fmt.Sprintf("\"%s\"", f))
-		}
-	}
-
-	// construct a Postgres query that fetches documents from the dataset with the supplied variable filters applied
-	query := fmt.Sprintf("SELECT %s FROM %s", strings.Join(fieldList, ","), dataset)
-
+func (s *Storage) buildFilteredQueryWhere(dataset string, filterParams *model.FilterParams) (string, []interface{}, error) {
 	// Build where clauses using the filter parameters.
 	// param identifiers in the query are 1-based $x.
 	params := make([]interface{}, 0)
@@ -111,12 +70,69 @@ func (s *Storage) FetchData(dataset string, index string, filterParams *model.Fi
 		wheres = append(wheres, fmt.Sprintf("\"%s\" IN (%s)", variable.Name, strings.Join(categories, ", ")))
 	}
 
-	if len(wheres) > 0 {
-		query = fmt.Sprintf("%s WHERE %s", query, strings.Join(wheres, " AND "))
+	return strings.Join(wheres, " AND "), params, nil
+}
+
+func (s *Storage) buildFilteredQueryField(dataset string, variables []*model.Variable, filterParams *model.FilterParams, inclusive bool) (string, error) {
+	// fields to include
+	fieldList := make([]string, 0)
+
+	if inclusive {
+		// if inclusive, include all fields except specifically excluded fields
+		excludedFields := make(map[string]bool)
+		for _, f := range filterParams.None {
+			excludedFields[f] = true
+		}
+
+		for _, v := range variables {
+			if !excludedFields[v.Name] {
+				fieldList = append(fieldList, fmt.Sprintf("\"%s\"", v.Name))
+			}
+		}
+	} else {
+		// if exclusive, exclude all fields except specifically included fields
+		for _, f := range filterParams.Ranged {
+			fieldList = append(fieldList, fmt.Sprintf("\"%s\"", f.Name))
+		}
+		for _, f := range filterParams.Categorical {
+			fieldList = append(fieldList, fmt.Sprintf("\"%s\"", f.Name))
+		}
+		for _, f := range filterParams.None {
+			fieldList = append(fieldList, fmt.Sprintf("\"%s\"", f))
+		}
+	}
+
+	return strings.Join(fieldList, ","), nil
+}
+
+// FetchData creates a postgres query to fetch a set of rows.  Applies filters to restrict the
+// results to a user selected set of fields, with rows further filtered based on allowed ranges and
+// categories.
+func (s *Storage) FetchData(dataset string, index string, filterParams *model.FilterParams, inclusive bool) (*model.FilteredData, error) {
+	variables, err := model.FetchVariables(s.clientES, index, dataset)
+	if err != nil {
+		return nil, errors.Wrap(err, "Could not pull variables from ES")
+	}
+
+	fields, err := s.buildFilteredQueryField(dataset, variables, filterParams, inclusive)
+	if err != nil {
+		return nil, errors.Wrap(err, "Could not build field list")
+	}
+
+	// construct a Postgres query that fetches documents from the dataset with the supplied variable filters applied
+	query := fmt.Sprintf("SELECT %s FROM %s", fields, dataset)
+
+	where, params, err := s.buildFilteredQueryWhere(dataset, filterParams)
+	if err != nil {
+		return nil, errors.Wrap(err, "Could not build where clause")
+	}
+
+	if len(where) > 0 {
+		query = fmt.Sprintf("%s WHERE %s", query, where)
 	}
 
 	// order & limit the filtered data.
-	query = fmt.Sprintf("%s ORDER BY \"%s\"", query, primaryKey)
+	query = fmt.Sprintf("%s ORDER BY \"%s\"", query, d3mIndexFieldName)
 	if filterParams.Size > 0 {
 		query = fmt.Sprintf("%s LIMIT %d", query, filterParams.Size)
 	}

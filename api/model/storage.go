@@ -13,7 +13,8 @@ type Storage interface {
 	FetchData(dataset string, index string, filterParams *FilterParams, inclusive bool) (*FilteredData, error)
 	FetchSummary(dataset string, variable *Variable) (*Histogram, error)
 	PersistResult(dataset string, resultURI string) error
-	FetchResults(dataset string, resultURI string, index string) (*FilteredData, error)
+	FetchResults(dataset string, index string, resultURI string) (*FilteredData, error)
+	FetchFilteredResults(dataset string, index string, resultURI string, filterParams *FilterParams, inclusive bool) (*FilteredData, error)
 	FetchResultsSummary(dataset string, resultURI string, index string) (*Histogram, error)
 
 	// System data operations NOTE: Note sure if this should be split off in a different interface.

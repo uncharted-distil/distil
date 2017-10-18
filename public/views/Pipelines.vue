@@ -50,7 +50,7 @@ export default {
 	width: 50%;
 }
 .build-results {
-	width: 50%;
+	width: 80%;
 	overflow: auto;
 }
 .build-results .card {

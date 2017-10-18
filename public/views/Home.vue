@@ -8,9 +8,12 @@
 		<search-bar class="home-search-bar"></search-bar>
 		<h4 class="header-label">Recent Activity</h4>
 		<div class="home-items">
-			<recent-datasets></recent-datasets>
-			<recent-pipelines></recent-pipelines>
-			<running-pipelines></running-pipelines>
+			<recent-datasets
+				:max-datasets="5"></recent-datasets>
+			<recent-pipelines
+				:max-pipelines="5"></recent-pipelines>
+			<running-pipelines
+				:max-pipelines="5"></running-pipelines>
 		</div>
 	</div>
 </template>
@@ -32,11 +35,22 @@ export default {
 		RunningPipelines,
 		SearchBar
 	},
+	computed: {
+		sessionId() {
+			return this.$store.getters.getPipelineSessionID();
+		}
+	},
+	mounted() {
+		this.$store.dispatch('getSession', {
+			sessionId: this.sessionId
+		});
+	},
 	methods: {
 		gotoSearch() {
 			gotoSearch(this.$store, this.$router);
 		}
 	}
+
 };
 </script>
 
@@ -55,7 +69,7 @@ export default {
 	width: 50%;
 }
 .home-items {
-	width: 50%;
+	width: 80%;
 	overflow: auto;
 	margin-bottom: 4px;
 }

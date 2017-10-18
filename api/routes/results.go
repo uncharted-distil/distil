@@ -1,6 +1,7 @@
 package routes
 
 import (
+	"fmt"
 	"net/http"
 	"net/url"
 
@@ -22,9 +23,19 @@ func ResultsHandler(storageCtor model.StorageCtor) func(http.ResponseWriter, *ht
 		// extract route parameters
 		index := pat.Param(r, "index")
 		dataset := pat.Param(r, "dataset")
+		inclusive := pat.Param(r, "inclusive")
+		inclusiveBool := inclusive == "inclusive"
+
 		resultUUID, err := url.PathUnescape(pat.Param(r, "results-uuid"))
 		if err != nil {
 			handleError(w, errors.Wrap(err, "unable to unescape result uuid"))
+			return
+		}
+
+		// get variable names and ranges out of the params
+		filterParams, err := ParseFilterParams(r)
+		if err != nil {
+			handleError(w, err)
 			return
 		}
 
@@ -40,8 +51,9 @@ func ResultsHandler(storageCtor model.StorageCtor) func(http.ResponseWriter, *ht
 		if res != nil {
 			resultURI = res.ResultURI
 		}
+		fmt.Printf("URI: %s", resultURI)
 
-		results, err := model.FetchResults(client, resultURI, index, dataset)
+		results, err := model.FetchFilteredResults(client, dataset, index, resultURI, filterParams, inclusiveBool)
 		if err != nil {
 			handleError(w, err)
 			return

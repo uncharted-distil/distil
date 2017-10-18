@@ -11,7 +11,7 @@
 				<div class='col-4'>
 					<span><b>Top Features:</b></span>
 					<ul id='example-1'>
-						<li class="small-text" v-for='variable in topVariables'>
+						<li class="small-text" :key="variable.name" v-for='variable in topVariables'>
 							{{variable.name}}
 						</li>
 					</ul>
@@ -95,15 +95,13 @@ export default {
 			}
 			return formatRecursive(n, 0);
 		},
-		datasetSummary() {
-			return 'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.';
-		},
 		setActiveDataset() {
 			const entry = createRouteEntry('/explore', {
 				terms: this.$store.getters.getRouteTerms(),
 				dataset: this.name
 			});
 			this.$router.push(entry);
+			this.$store.dispatch('addRecentDataset', this.name);
 		},
 		toggleExpansion() {
 			this.expanded = !this.expanded;

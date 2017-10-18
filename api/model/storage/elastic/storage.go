@@ -35,7 +35,7 @@ func (s *Storage) PersistResult(dataset string, resultURI string) error {
 
 // PersistSession persists a session to ES. NOTE: Not implemented!
 func (s *Storage) PersistSession(sessionID string) error {
-	return errors.New("ElasticSearch PersisSession not implemented")
+	return errors.New("ElasticSearch Pe	rsisSession not implemented")
 }
 
 // PersistRequest persists a request to ES. NOTE: Not implemented!
