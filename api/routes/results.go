@@ -1,7 +1,6 @@
 package routes
 
 import (
-	"fmt"
 	"net/http"
 	"net/url"
 
@@ -51,7 +50,6 @@ func ResultsHandler(storageCtor model.StorageCtor) func(http.ResponseWriter, *ht
 		if res != nil {
 			resultURI = res.ResultURI
 		}
-		fmt.Printf("URI: %s", resultURI)
 
 		results, err := model.FetchFilteredResults(client, dataset, index, resultURI, filterParams, inclusiveBool)
 		if err != nil {
