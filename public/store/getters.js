@@ -239,6 +239,8 @@ export function getFilteredDataFields(state) {
 			for (const col of data.columns) {
 				result[col] = {
 					label: col,
+					type: 'integer',
+					suggested: ['categorical', 'ordinal', 'string'],
 					sortable: true
 				};
 			}
