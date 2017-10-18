@@ -27,7 +27,7 @@ export default {
 	name: 'results-comparison',
 
 	components: {
-		ResultsDataTable,
+		ResultsDataTable
 	},
 
 	mounted() {
@@ -111,13 +111,13 @@ export default {
 	methods: {
 		fetch() {
 			this.$store.dispatch('updateFilteredData', {
-					dataset: this.dataset
-				}).then(() => {
-					this.$store.dispatch('updateResults', {
-						dataset: this.dataset,
-						resultId: atob(this.$store.getters.getRouteResultId()),
-					});
+				dataset: this.dataset
+			}).then(() => {
+				this.$store.dispatch('updateResults', {
+					dataset: this.dataset,
+					resultId: atob(this.$store.getters.getRouteResultId())
 				});
+			});
 		},
 
 		// Methods passed to classification result table instances to filter their displays.

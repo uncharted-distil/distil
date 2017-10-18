@@ -57,14 +57,13 @@ export default {
 		},
 		fetch() {
 			this.$store.dispatch('getVariables', {
-					dataset: this.dataset
-				})
-				.then(() => {
-					this.$store.dispatch('getVariableSummaries', {
-						dataset: this.dataset,
-						variables: this.variables
-					});
+				dataset: this.dataset
+			}).then(() => {
+				this.$store.dispatch('getVariableSummaries', {
+					dataset: this.dataset,
+					variables: this.variables
 				});
+			});
 		}
 	}
 };
