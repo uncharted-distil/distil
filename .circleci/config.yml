@@ -6,7 +6,7 @@ jobs:
         auth:
           username: $UNCHARTED_DOCKER_USERNAME
           password: $UNCHARTED_DOCKER_PW
-        working_directory: /go/src/github.com/unchartedsoftware/distil
+    working_directory: /go/src/github.com/unchartedsoftware/distil
     steps:
       - checkout
       - run:
