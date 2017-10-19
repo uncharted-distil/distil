@@ -3,9 +3,6 @@ jobs:
   build:
     docker:
       - image: docker.uncharted.software/distil-build:latest
-      - auth:
-        username: $UNCHARTED_DOCKER_USERNAME
-        password: $UNCHARTED_DOCKER_PW
     steps:
       - checkout
       - run:
