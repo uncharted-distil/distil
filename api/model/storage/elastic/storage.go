@@ -1,12 +1,19 @@
 package elastic
 
 import (
-	"errors"
+	"context"
+	"encoding/json"
 	"time"
 
+	"github.com/pkg/errors"
 	es "github.com/unchartedsoftware/distil/api/elastic"
 	"github.com/unchartedsoftware/distil/api/model"
 	elastic "gopkg.in/olivere/elastic.v5"
+)
+
+const (
+	metadataIndex = "datasets"
+	metadataType  = "metadata"
 )
 
 // Storage accesses the underlying ES instance
@@ -90,5 +97,38 @@ func (s *Storage) FetchRequestFeature(requestID string) ([]*model.RequestFeature
 
 // SetDataType updates the data type of the field in ES. NOTE: Not implemented!
 func (s *Storage) SetDataType(dataset string, index string, field string, fieldType string) error {
-	return errors.New("ElasticSearch SetDataType not implemented")
+	varOld, err := model.FetchVariable(s.client, metadataIndex, dataset, field)
+	if err != nil {
+		return errors.Wrapf(err, "failed to fetch existing variable")
+	}
+
+	varOld.Type = fieldType
+
+	// filter variables for surce object
+	vars := make([]*model.Variable, 0)
+	vars = append(vars, &model.Variable{
+		Name:       varOld.Name,
+		Type:       varOld.Type,
+		Importance: varOld.Importance,
+	})
+	source := map[string]interface{}{
+		model.Variables: vars,
+	}
+
+	bytes, err := json.Marshal(source)
+	if err != nil {
+		return errors.Wrapf(err, "failed to marshal document source")
+	}
+
+	// push the document into the metadata index
+	_, err = s.client.Index().
+		Index(metadataIndex).
+		Type(metadataType).
+		Id(dataset + model.DatasetSuffix).
+		BodyString(string(bytes)).
+		Do(context.Background())
+	if err != nil {
+		return errors.Wrapf(err, "failed to add document to index `%s`", index)
+	}
+	return nil
 }
