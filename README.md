@@ -1,6 +1,6 @@
 # distil
 
-[![CircleCI](https://circleci.com/gh/unchartedsoftware/distil/tree/master.svg?style=svg)](https://circleci.com/gh/unchartedsoftware/distil/tree/master)
+[![CircleCI](https://circleci.com/gh/unchartedsoftware/distil/tree/master.svg?style=svg&&circle-token=ff61c235865dd699cc8b923035a80e6e8d39c63a)](https://circleci.com/gh/unchartedsoftware/distil/tree/master)
 
 ## Dependencies
 
