@@ -13,6 +13,7 @@ const (
 	// DatasetSuffix is the suffix for the dataset entry when stored in
 	// elasticsearch.
 	DatasetSuffix = "_dataset"
+	metadataType  = "metadata"
 )
 
 // Dataset represents a decsription of a dataset.
@@ -101,4 +102,36 @@ func SearchDatasets(client *elastic.Client, index string, terms string) ([]*Data
 		return nil, errors.Wrap(err, "elasticsearch dataset search query failed")
 	}
 	return parseDatasets(client, res)
+}
+
+// SetDataType updates the data type of the field in ES. NOTE: Not implemented!
+func SetDataType(client *elastic.Client, dataset string, index string, field string, fieldType string) error {
+	// Fetch all existing variables
+	vars, err := FetchVariables(client, index, dataset)
+	if err != nil {
+		return errors.Wrapf(err, "failed to fetch existing variable")
+	}
+
+	// Update only the variable we care about
+	for _, v := range vars {
+		if v.Name == field {
+			v.Type = fieldType
+		}
+	}
+
+	source := map[string]interface{}{
+		Variables: vars,
+	}
+
+	// push the document into the metadata index
+	_, err = client.Update().
+		Index(index).
+		Type(metadataType).
+		Id(dataset + DatasetSuffix).
+		Doc(source).
+		Do(context.Background())
+	if err != nil {
+		return errors.Wrapf(err, "failed to add document to index `%s`", index)
+	}
+	return nil
 }

@@ -3,12 +3,40 @@ jobs:
   build:
     docker:
       - image: docker.uncharted.software/distil-build:latest
-      - auth:
-        username: $UNCHARTED_DOCKER_USERNAME
-        password: $UNCHARTED_DOCKER_PW
+        auth:
+          username: $UNCHARTED_DOCKER_USERNAME
+          password: $UNCHARTED_DOCKER_PW
+    working_directory: /go/src/github.com/unchartedsoftware/distil
     steps:
       - checkout
+      - setup_remote_docker
       - run:
           name: build app binary
           command: /bin/sh -c "/build.sh"
-      
+      - run:
+          name: run tests
+          command: /bin/sh -c 'yarn test && go test $(glide novendor)'
+      - run:
+          name: install docker client
+          command: |
+            if [ "${CIRCLE_BRANCH}" == "master" ]; then
+              set -x
+              VER="17.03.0-ce"
+              curl -L -o /tmp/docker-$VER.tgz https://get.docker.com/builds/Linux/x86_64/docker-$VER.tgz
+              tar -xz -C /tmp -f /tmp/docker-$VER.tgz
+              mv /tmp/docker/* /usr/bin
+            fi
+      # build and push Docker image
+      - run:
+          name: build and push app binary
+          command: |
+            if [ "${CIRCLE_BRANCH}" == "master" ]; then
+              TAG=dev-$CIRCLE_BUILD_NUM
+              docker login docker.uncharted.software -u "$UNCHARTED_DOCKER_USERNAME" -p "$UNCHARTED_DOCKER_PW"
+              docker build -t docker.uncharted.software/distil:$TAG -t docker.uncharted.software/distil:latest .
+              docker push docker.uncharted.software/distil:$TAG
+              docker push docker.uncharted.software/distil:latest
+            fi
+
+
+

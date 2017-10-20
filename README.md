@@ -1,5 +1,7 @@
 # distil
 
+[![CircleCI](https://circleci.com/gh/unchartedsoftware/distil/tree/master.svg?style=svg&&circle-token=ff61c235865dd699cc8b923035a80e6e8d39c63a)](https://circleci.com/gh/unchartedsoftware/distil/tree/master)
+
 ## Dependencies
 
 - [Go](https://golang.org/) programming language binaries with the `GOPATH` environment variable specified and `$GOPATH/bin` in your `PATH`.

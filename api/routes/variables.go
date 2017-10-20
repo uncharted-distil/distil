@@ -52,7 +52,7 @@ func VariablesHandler(ctor elastic.ClientCtor) func(http.ResponseWriter, *http.R
 
 // VariableTypeHandler generates a route handler that facilitates the update
 // of a variable type.
-func VariableTypeHandler(storageCtor model.StorageCtor, storageCtorES model.StorageCtor) func(http.ResponseWriter, *http.Request) {
+func VariableTypeHandler(storageCtor model.StorageCtor, ctor elastic.ClientCtor) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		params, err := getPostParameters(r)
 		if err != nil {
@@ -72,7 +72,7 @@ func VariableTypeHandler(storageCtor model.StorageCtor, storageCtorES model.Stor
 			handleError(w, err)
 			return
 		}
-		clientES, err := storageCtorES()
+		clientES, err := ctor()
 		if err != nil {
 			handleError(w, err)
 			return
@@ -86,7 +86,7 @@ func VariableTypeHandler(storageCtor model.StorageCtor, storageCtorES model.Stor
 		}
 
 		// update the variable type in the metadata
-		err = clientES.SetDataType(dataset, index, field, typ)
+		err = model.SetDataType(clientES, dataset, index, field, typ)
 		if err != nil {
 			handleError(w, errors.Wrap(err, "unable to update the data type in metadata"))
 			return
