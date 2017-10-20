@@ -30,9 +30,9 @@ const (
 
 // Variable represents a single variable description within a dataset.
 type Variable struct {
-	Name           string      `json:"varName"`
-	Type           string      `json:"varType"`
-	Role           string      `json:"varRole"`
+	Name           string      `json:"name"`
+	Type           string      `json:"type"`
+	Role           string      `json:"role"`
 	Importance     int         `json:"importance"`
 	SuggestedTypes interface{} `json:"suggestedTypes"`
 }

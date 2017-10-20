@@ -42,10 +42,10 @@ func TestDatasetsHandler(t *testing.T) {
 					"numRows": 1073,
 					"numBytes": 744647,
 					"variables": [
-						{"varName":"d3mIndex","varType":"integer","importance": 0,"varRole": "index","suggestedTypes": null},
-						{"varName":"Player","varType":"categorical","importance": 0,"varRole": "attribute","suggestedTypes": null},
-						{"varName":"Number_seasons","varType":"integer","importance": 1,"varRole": "attribute","suggestedTypes": null},
-						{"varName":"Games_played","varType":"integer","importance": 2,"varRole": "attribute","suggestedTypes": null}
+						{"name":"d3mIndex","type":"integer","importance": 0,"role": "index","suggestedTypes": null},
+						{"name":"Player","type":"categorical","importance": 0,"role": "attribute","suggestedTypes": null},
+						{"name":"Number_seasons","type":"integer","importance": 1,"role": "attribute","suggestedTypes": null},
+						{"name":"Games_played","type":"integer","importance": 2,"role": "attribute","suggestedTypes": null}
 					]
 				},
 				{
@@ -55,9 +55,9 @@ func TestDatasetsHandler(t *testing.T) {
 					"numRows": 1073,
 					"numBytes": 744647,
 					"variables": [
-						{"varName":"d3mIndex","varType":"integer","importance": 0,"varRole": "index","suggestedTypes": null},
-						{"varName":"cylinders","varType":"categorical","importance": 0,"varRole": "attribute","suggestedTypes": null},
-						{"varName":"displacement","varType":"categorical","importance": 0,"varRole": "attribute","suggestedTypes": null}
+						{"name":"d3mIndex","type":"integer","importance": 0,"role": "index","suggestedTypes": null},
+						{"name":"cylinders","type":"categorical","importance": 0,"role": "attribute","suggestedTypes": null},
+						{"name":"displacement","type":"categorical","importance": 0,"role": "attribute","suggestedTypes": null}
 					]
 				}
 			]
@@ -106,10 +106,10 @@ func TestDatasetsHandlerWithSearch(t *testing.T) {
 					"numRows": 1073,
 					"numBytes": 744647,
 					"variables": [
-						{"varName":"d3mIndex","varType":"integer","importance": 0,"varRole": "index","suggestedTypes": null},
-						{"varName":"Player","varType":"categorical","importance": 0,"varRole": "attribute","suggestedTypes": null},
-						{"varName":"Number_seasons","varType":"integer","importance": 1,"varRole": "attribute","suggestedTypes": null},
-						{"varName":"Games_played","varType":"integer","importance": 2,"varRole": "attribute","suggestedTypes": null}
+						{"name":"d3mIndex","type":"integer","importance": 0,"role": "index","suggestedTypes": null},
+						{"name":"Player","type":"categorical","importance": 0,"role": "attribute","suggestedTypes": null},
+						{"name":"Number_seasons","type":"integer","importance": 1,"role": "attribute","suggestedTypes": null},
+						{"name":"Games_played","type":"integer","importance": 2,"role": "attribute","suggestedTypes": null}
 					]
 				},
 				{
@@ -119,9 +119,9 @@ func TestDatasetsHandlerWithSearch(t *testing.T) {
 					"numRows": 1073,
 					"numBytes": 744647,
 					"variables": [
-						{"varName":"d3mIndex","varType":"integer","importance": 0,"varRole": "index","suggestedTypes": null},
-						{"varName":"cylinders","varType":"categorical","importance": 0,"varRole": "attribute","suggestedTypes": null},
-						{"varName":"displacement","varType":"categorical","importance": 0,"varRole": "attribute","suggestedTypes": null}
+						{"name":"d3mIndex","type":"integer","importance": 0,"role": "index","suggestedTypes": null},
+						{"name":"cylinders","type":"categorical","importance": 0,"role": "attribute","suggestedTypes": null},
+						{"name":"displacement","type":"categorical","importance": 0,"role": "attribute","suggestedTypes": null}
 					]
 				}
 			]
