@@ -2,7 +2,6 @@ package elastic
 
 import (
 	"context"
-	"encoding/json"
 	"time"
 
 	"github.com/pkg/errors"
@@ -97,35 +96,29 @@ func (s *Storage) FetchRequestFeature(requestID string) ([]*model.RequestFeature
 
 // SetDataType updates the data type of the field in ES. NOTE: Not implemented!
 func (s *Storage) SetDataType(dataset string, index string, field string, fieldType string) error {
-	varOld, err := model.FetchVariable(s.client, metadataIndex, dataset, field)
+	// Fetch all existing variables
+	vars, err := model.FetchVariables(s.client, metadataIndex, dataset)
 	if err != nil {
 		return errors.Wrapf(err, "failed to fetch existing variable")
 	}
 
-	varOld.Type = fieldType
+	// Update only the variable we care about
+	for _, v := range vars {
+		if v.Name == field {
+			v.Type = fieldType
+		}
+	}
 
-	// filter variables for surce object
-	vars := make([]*model.Variable, 0)
-	vars = append(vars, &model.Variable{
-		Name:       varOld.Name,
-		Type:       varOld.Type,
-		Importance: varOld.Importance,
-	})
 	source := map[string]interface{}{
 		model.Variables: vars,
 	}
 
-	bytes, err := json.Marshal(source)
-	if err != nil {
-		return errors.Wrapf(err, "failed to marshal document source")
-	}
-
 	// push the document into the metadata index
-	_, err = s.client.Index().
+	_, err = s.client.Update().
 		Index(metadataIndex).
 		Type(metadataType).
 		Id(dataset + model.DatasetSuffix).
-		BodyString(string(bytes)).
+		Doc(source).
 		Do(context.Background())
 	if err != nil {
 		return errors.Wrapf(err, "failed to add document to index `%s`", index)

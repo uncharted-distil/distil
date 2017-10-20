@@ -34,11 +34,11 @@ func TestVariableHandler(t *testing.T) {
 	expected, err := json.Unmarshal([]byte(
 		`{
 			"variables": [
-				{"name":"d3mIndex","type":"integer","importance": 0},
-				{"name":"Position","type":"categorical","importance": 0},
-				{"name":"Number_seasons","type":"integer","importance": 1},
-				{"name":"Games_played","type":"integer","importance": 2},
-				{"name":"On_base_pct","type":"float","importance": 3}
+				{"varName":"d3mIndex","varType":"integer","importance": 0,"varRole": "index","suggestedTypes": null},
+				{"varName":"Position","varType":"categorical","importance": 0,"varRole": "attribute","suggestedTypes": null},
+				{"varName":"Number_seasons","varType":"integer","importance": 1,"varRole": "attribute","suggestedTypes": null},
+				{"varName":"Games_played","varType":"integer","importance": 2,"varRole": "attribute","suggestedTypes": null},
+				{"varName":"On_base_pct","varType":"float","importance": 3,"varRole": "attribute","suggestedTypes": null}
 			]
 		}`))
 	assert.NoError(t, err)
