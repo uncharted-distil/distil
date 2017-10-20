@@ -17,10 +17,10 @@
     "font-awesome": "4.7.0",
     "jquery": "3.2.1",
     "lodash": "4.17.4",
-    "popper.js": "^1.12.5",
+    "popper.js": "1.12.5",
     "vue": "^2.5.2",
     "vue-router": "^3.0.1",
-    "vue-slider-component": "2.4.1",
+    "vue-slider-component": "^2.4.3",
     "vue-template-compiler": "^2.5.2",
     "vuex": "^3.0.0",
     "vuex-router-sync": "^5.0.0"
@@ -42,10 +42,10 @@
     "mocha": "3.5.3",
     "moment": "2.18.1",
     "style-loader": "0.18.2",
-    "vue-loader": "13.0.5",
-    "webpack": "3.6.0",
-    "ts-loader": "2.2.0",
-    "typescript": "2.4.1",
-    "typescript-eslint-parser": "^3.0.0"
+    "ts-loader": "^3.0.5",
+    "typescript": "^2.5.3",
+    "typescript-eslint-parser": "^8.0.0",
+    "vue-loader": "^13.3.0",
+    "webpack": "3.6.0"
   }
 }
