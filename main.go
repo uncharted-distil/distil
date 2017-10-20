@@ -50,8 +50,13 @@ var (
 )
 
 func registerRoute(mux *goji.Mux, pattern string, handler func(http.ResponseWriter, *http.Request)) {
-	log.Infof("Registering route %s", pattern)
+	log.Infof("Registering GET route %s", pattern)
 	mux.HandleFunc(pat.Get(pattern), handler)
+}
+
+func registerRoutePost(mux *goji.Mux, pattern string, handler func(http.ResponseWriter, *http.Request)) {
+	log.Infof("Registering POST route %s", pattern)
+	mux.HandleFunc(pat.Post(pattern), handler)
 }
 
 func main() {
@@ -148,6 +153,7 @@ func main() {
 
 	registerRoute(mux, "/distil/datasets/:index", routes.DatasetsHandler(esClientCtor))
 	registerRoute(mux, "/distil/variables/:index/:dataset", routes.VariablesHandler(esClientCtor))
+	registerRoutePost(mux, "/distil/variables/:index/:dataset/update", routes.VariableTypeHandler(dataStorageCtor, esClientCtor))
 	registerRoute(mux, "/distil/variable-summaries/:index/:dataset/:variable", routes.VariableSummaryHandler(dataStorageCtor, esClientCtor))
 	registerRoute(mux, "/distil/filtered-data/:esIndex/:dataset/:inclusive", routes.FilteredDataHandler(dataStorageCtor))
 	registerRoute(mux, "/distil/results/:index/:dataset/:results-uuid/:inclusive", routes.ResultsHandler(dataStorageCtor))

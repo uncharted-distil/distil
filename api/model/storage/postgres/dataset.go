@@ -71,23 +71,29 @@ func (s *Storage) getExistingFields(dataset string) (map[string]string, error) {
 
 func (s *Storage) createView(dataset string, fields map[string]string) error {
 	// CREATE OR REPLACE VIEW requires the same column names and order (with additions at the end being allowed).
-	sql := "CREATE VIEW %s AS SELECT %s FROM %s_base;"
+	sql := "CREATE VIEW %s_tmp AS SELECT %s FROM %s_base;"
 
 	// Build the select statement of the query.
 	fieldList := make([]string, 0)
 	for field, typ := range fields {
 		fieldList = append(fieldList, s.getViewField(field, typ, s.defaultValue(typ)))
 	}
+	sql = fmt.Sprintf(sql, dataset, strings.Join(fieldList, ","), dataset)
 
-	// Drop the existing view.
-	_, err := s.client.Exec(fmt.Sprintf("DROP VIEW %s;", dataset))
+	// Create the temporary view with the new column type.
+	_, err := s.client.Exec(sql)
 	if err != nil {
 		return errors.Wrap(err, "Unable to drop existing view")
 	}
 
-	// Create the view with the new column type.
-	sql = fmt.Sprintf(sql, dataset, strings.Join(fieldList, ","), dataset)
-	_, err = s.client.Exec(sql)
+	// Drop the existing view.
+	_, err = s.client.Exec(fmt.Sprintf("DROP VIEW %s;", dataset))
+	if err != nil {
+		return errors.Wrap(err, "Unable to drop existing view")
+	}
+
+	// Rename the temporary view to the actual view name.
+	_, err = s.client.Exec(fmt.Sprintf("ALTER VIEW %s_tmp RENAME TO %s;", dataset, dataset))
 
 	return err
 }
