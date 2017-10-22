@@ -8,7 +8,7 @@ import Select from './views/Select.vue';
 import Pipelines from './views/Pipelines.vue';
 import Results from './views/Results.vue';
 import Navigation from './views/Navigation.vue';
-import store from './store';
+import store from './store/store';
 import BootstrapVue from 'bootstrap-vue';
 
 import './assets/favicons/apple-touch-icon.png';

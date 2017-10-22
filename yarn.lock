@@ -2,6 +2,10 @@
 # yarn lockfile v1
 
 
+"@types/lodash@^4.14.78":
+  version "4.14.78"
+  resolved "https://registry.yarnpkg.com/@types/lodash/-/lodash-4.14.78.tgz#f26a0b38a44a832c652964803c7e48be05939d3f"
+
 "@uncharted.software/stories-facets@2.12.0":
   version "2.12.0"
   resolved "https://registry.yarnpkg.com/@uncharted.software/stories-facets/-/stories-facets-2.12.0.tgz#2fd14513bc399d2372250b78b5dccfb965dafee9"
@@ -4408,6 +4412,16 @@ vue@^2.5.2:
 vuex-router-sync@^5.0.0:
   version "5.0.0"
   resolved "https://registry.yarnpkg.com/vuex-router-sync/-/vuex-router-sync-5.0.0.tgz#1a225c17a1dd9e2f74af0a1b2c62072e9492b305"
+
+vuex-typescript@^0.1.0:
+  version "0.1.0"
+  resolved "https://registry.yarnpkg.com/vuex-typescript/-/vuex-typescript-0.1.0.tgz#dc70c1e48a70ebd94068e8788d8a721433a498b5"
+  dependencies:
+    vuex "^2.3.1"
+
+vuex@^2.3.1:
+  version "2.5.0"
+  resolved "https://registry.yarnpkg.com/vuex/-/vuex-2.5.0.tgz#20f0265ade6c9a5ac6724a405d3ffdb4726c9741"
 
 vuex@^3.0.0:
   version "3.0.0"
