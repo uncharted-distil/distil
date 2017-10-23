@@ -91,7 +91,7 @@ func main() {
 
 	registerRoute(mux, "/distil/datasets/:index", routes.DatasetsHandler(esClientCtor))
 	registerRoute(mux, "/distil/variables/:index/:dataset", routes.VariablesHandler(esClientCtor))
-	registerRoutePost(mux, "/distil/variables/:index/:dataset/update", routes.VariableTypeHandler(pgStorageCtor, esClientCtor))
+	registerRoutePost(mux, "/distil/variables/:index/:dataset", routes.VariableTypeHandler(pgStorageCtor, esClientCtor))
 	registerRoute(mux, "/distil/variable-summaries/:index/:dataset/:variable", routes.VariableSummaryHandler(pgStorageCtor, esClientCtor))
 	registerRoute(mux, "/distil/filtered-data/:esIndex/:dataset/:inclusive", routes.FilteredDataHandler(pgStorageCtor))
 	registerRoute(mux, "/distil/results/:index/:dataset/:results-uuid/:inclusive", routes.ResultsHandler(pgStorageCtor))
