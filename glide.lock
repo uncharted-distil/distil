@@ -1,6 +1,8 @@
-hash: 3f8c619ca3e53989229d84ec19158244bd4921020cd91e83307edbecd12b2cd7
-updated: 2017-08-15T14:42:22.286606857-04:00
+hash: b130ae18a45c2dd8f8bc719e42e0dfb24c8b0599a62ef4700d01b355c87410b6
+updated: 2017-10-23T11:42:19.178383035-04:00
 imports:
+- name: github.com/caarlos0/env
+  version: 0cf029d5748c52beb2c9d20c81880cb4bdf8f788
 - name: github.com/davecgh/go-spew
   version: 04cdfd42973bb9c8589fd6a731800cf222fde1a9
   subpackages:
@@ -19,6 +21,7 @@ imports:
   subpackages:
   - proto
   - protoc-gen-go
+  - protoc-gen-go/descriptor
   - ptypes/any
 - name: github.com/gorilla/websocket
   version: 2d1e4548da234d9cb742cc3628556fef86aafbac
