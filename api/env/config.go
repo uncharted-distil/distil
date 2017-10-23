@@ -15,27 +15,22 @@ var (
 
 // Config represents the application configuration state loaded from env vars.
 type Config struct {
-	AppPort string `env:"PORT" envDefault:"8080"`
-
-	ElasticEndpoint string `env:"ES_ENDPOINT" envDefault:"http://localhost:9200"`
-
-	RedisEndpoint string `env:"REDIS_ENDPOINT" envDefault:"localhost:6379"`
-	RedisExpiry   int    `env:"REDIS_EXPIRY" envDefault:"-1"`
-
+	AppPort                 string `env:"PORT" envDefault:"8080"`
+	ElasticEndpoint         string `env:"ES_ENDPOINT" envDefault:"http://localhost:9200"`
+	RedisEndpoint           string `env:"REDIS_ENDPOINT" envDefault:"localhost:6379"`
+	RedisExpiry             int    `env:"REDIS_EXPIRY" envDefault:"-1"`
 	PipelineComputeEndpoint string `env:"PIPELINE_COMPUTE_ENDPOINT " envDefault:"localhost:50051"`
 	PipelineDataDir         string `env:"PIPELINE_DATA_DIR" envDefault:"datasets"`
 	PipelineComputeTrace    bool   `env:"PIPELINE_COMPUTE_TRACE" envDefault:"false"`
 	ExportPath              string `env:"EXPORT_PATH"`
-
-	StartupConfigFile string `env:"CONFIG_JSON_PATH" envDefault:"startup.json"`
-
-	PostgresHost         string `env:"PG_HOST" envDefault:"localhost"`
-	PostgresPort         string `env:"PG_PORT" envDefault:"5432"`
-	PostgresUser         string `env:"PG_USER" envDefault:"distil"`
-	PostgresPassword     string `env:"PG_PASSWORD" envDefault:""`
-	PostgresDatabase     string `env:"PG_DATABASE" envDefault:"distil"`
-	PostgresRetryCount   int    `env:"PG_RETRY_COUNT" envDefault:"100"`
-	PostgresRetryTimeout int    `env:"PG_RETRY_TIMEOUT" envDefault:"4000"`
+	StartupConfigFile       string `env:"CONFIG_JSON_PATH" envDefault:"startup.json"`
+	PostgresHost            string `env:"PG_HOST" envDefault:"localhost"`
+	PostgresPort            string `env:"PG_PORT" envDefault:"5432"`
+	PostgresUser            string `env:"PG_USER" envDefault:"distil"`
+	PostgresPassword        string `env:"PG_PASSWORD" envDefault:""`
+	PostgresDatabase        string `env:"PG_DATABASE" envDefault:"distil"`
+	PostgresRetryCount      int    `env:"PG_RETRY_COUNT" envDefault:"100"`
+	PostgresRetryTimeout    int    `env:"PG_RETRY_TIMEOUT" envDefault:"4000"`
 }
 
 // LoadConfig loads the config from the environment if necessary and returns a
