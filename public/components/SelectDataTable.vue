@@ -21,7 +21,7 @@
 					{{data.label}}
 					<div>
 						<b-dropdown :text="data.type" variant="outline-primary" class="var-type-button">
-							<b-dropdown-item @click.stop="onTypeChange(data, suggested)" v-for="suggested in data.suggested">{{suggested.type}} ({{suggested.probability.toFixed(2)}})</b-dropdown-item>
+							<b-dropdown-item @click.stop="onTypeChange(data, suggested)":key="suggested.name" v-for="suggested in data.suggested">{{suggested.type}} ({{suggested.probability.toFixed(2)}})</b-dropdown-item>
 						</b-dropdown>
 					</div>
 				</template>
