@@ -15,4 +15,6 @@ export default {
 </script>
 
 <style>
+.navigation {
+}
 </style>

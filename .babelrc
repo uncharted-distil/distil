@@ -1,8 +1,3 @@
 {
-  "presets": ["es2015"],
-  "plugins": [
-    "babel-plugin-transform-class-properties",
-    "babel-plugin-syntax-flow",
-    "babel-plugin-transform-flow-strip-types"
-  ]
+  "presets": ["es2015"]
 }

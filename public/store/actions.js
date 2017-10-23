@@ -1,7 +1,7 @@
 import _ from 'lodash';
 import axios from 'axios';
 import moment from 'moment';
-import { encodeQueryParams } from '../util/filters';
+import {encodeQueryParams} from '../util/filters';
 
 // TODO: move this somewhere more appropriate.
 const ES_INDEX = 'datasets';
@@ -9,6 +9,7 @@ const CREATE_PIPELINES_MSG = 'CREATE_PIPELINES';
 const PIPELINE_COMPLETE = 'COMPLETED';
 const STREAM_CLOSE = 'STREAM_CLOSE';
 const FEATURE_TYPE_TARGET = 'target';
+
 
 // searches dataset descriptions and column names for supplied terms
 export function searchDatasets(context, terms) {
@@ -187,19 +188,19 @@ export function getPipelineSession(context, args) {
 	const sessionId = args.sessionId;
 	const conn = context.getters.getWebSocketConnection();
 	return conn.send({
-		type: 'GET_SESSION',
-		session: sessionId
-	}).then(res => {
-		if (sessionId && res.created) {
-			console.warn('previous session', sessionId, 'could not be resumed, new session created');
-		}
-		context.commit('setPipelineSession', {
-			id: res.session,
-			uuids: res.uuids
+			type: 'GET_SESSION',
+			session: sessionId
+		}).then(res => {
+			if (sessionId && res.created) {
+				console.warn('previous session', sessionId, 'could not be resumed, new session created');
+			}
+			context.commit('setPipelineSession', {
+				id: res.session,
+				uuids: res.uuids
+			});
+		}).catch(err => {
+			console.warn(err);
 		});
-	}).catch(err => {
-		console.warn(err);
-	});
 }
 
 // end a pipeline session.
@@ -210,13 +211,13 @@ export function endPipelineSession(context, args) {
 		return;
 	}
 	return conn.send({
-		type: 'END_SESSION',
-		session: sessionId
-	}).then(() => {
-		context.commit('setPipelineSession', null);
-	}).catch(err => {
-		console.warn(err);
-	});
+			type: 'END_SESSION',
+			session: sessionId
+		}).then(() => {
+			context.commit('setPipelineSession', null);
+		}).catch(err => {
+			console.warn(err);
+		});
 }
 
 // issues a pipeline create request
@@ -238,8 +239,8 @@ export function createPipelines(context, request) {
 		// add/update the running pipeline info
 		context.commit('addRunningPipeline', res);
 		if (res.progress === PIPELINE_COMPLETE) {
-			// move the pipeline from running to complete
-			context.commit('removeRunningPipeline', { pipelineId: res.pipelineId, requestId: res.requestId });
+			//move the pipeline from running to complete
+			context.commit('removeRunningPipeline', {pipelineId: res.pipelineId, requestId: res.requestId});
 			context.commit('addCompletedPipeline', {
 				name: res.name,
 				feature: request.feature,
@@ -356,7 +357,7 @@ export function clearFeatureHighlightValues(context) {
 export function abort() {
 	return axios.get('/distil/abort')
 		.then(() => {
-			console.warn('User initiated session abort');
+			console.log('User initiated session abort');
 		})
 		.catch(error => {
 			console.error(`Failed to abort with error ${error}`);
@@ -366,7 +367,7 @@ export function abort() {
 export function exportPipeline(context, args) {
 	return axios.get(`/distil/export/${args.sessionId}/${args.pipelineId}`)
 		.then(() => {
-			console.warn(`User exported pipeline ${args.pipelineId}`);
+			console.log(`User exported pipeline ${args.pipelineId}`);
 		})
 		.catch(error => {
 			console.error(`Failed to export with error ${error}`);

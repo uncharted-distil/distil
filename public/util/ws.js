@@ -17,6 +17,7 @@ function establishConnection(conn, callback) {
 	// on open
 	conn.socket.onopen = function() {
 		conn.isOpen = true;
+		console.log(`WebSocket conn established on /${conn.url}`);
 		// send pending messages
 		conn.pending.forEach(message => {
 			conn.socket.send(JSON.stringify(message.payload));
@@ -39,9 +40,9 @@ function establishConnection(conn, callback) {
 			return;
 		}
 		switch (conn.tracking.get(res.id)) {
-			case MESSAGE: {
+			case MESSAGE:
 				// message
-				const message 	= conn.messages.get(res.id);
+				const message = conn.messages.get(res.id);
 				conn.messages.delete(res.id);
 				conn.tracking.delete(res.id);
 				if (!res.success) {
@@ -50,13 +51,12 @@ function establishConnection(conn, callback) {
 				}
 				message.resolve(res);
 				break;
-			}
-			case STREAM: {
+
+			case STREAM:
 				// stream
 				const stream = conn.streams.get(res.id);
 				stream.fn(res);
 				break;
-			}
 		}
 	};
 	// on close

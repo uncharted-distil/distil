@@ -61,7 +61,7 @@ export default {
 	components: {
 		ResultFacets,
 		Facets,
-		vueSlider
+		vueSlider,
 	},
 
 	data() {
@@ -157,7 +157,7 @@ export default {
 			}
 			const task = getTask(targetVar.type);
 			return task.schemaName === 'regression';
-		}
+		},
 	},
 
 	methods: {
