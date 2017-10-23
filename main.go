@@ -17,8 +17,6 @@ import (
 	"github.com/unchartedsoftware/distil/api/elastic"
 	"github.com/unchartedsoftware/distil/api/env"
 	"github.com/unchartedsoftware/distil/api/middleware"
-	"github.com/unchartedsoftware/distil/api/model"
-	es "github.com/unchartedsoftware/distil/api/model/storage/elastic"
 	pg "github.com/unchartedsoftware/distil/api/model/storage/postgres"
 	"github.com/unchartedsoftware/distil/api/pipeline"
 	"github.com/unchartedsoftware/distil/api/postgres"
@@ -52,8 +50,13 @@ var (
 )
 
 func registerRoute(mux *goji.Mux, pattern string, handler func(http.ResponseWriter, *http.Request)) {
-	log.Infof("Registering route %s", pattern)
+	log.Infof("Registering GET route %s", pattern)
 	mux.HandleFunc(pat.Get(pattern), handler)
+}
+
+func registerRoutePost(mux *goji.Mux, pattern string, handler func(http.ResponseWriter, *http.Request)) {
+	log.Infof("Registering POST route %s", pattern)
+	mux.HandleFunc(pat.Post(pattern), handler)
 }
 
 func main() {
@@ -81,9 +84,6 @@ func main() {
 	// instantiate elastic client constructor.
 	esClientCtor := elastic.NewClient(esEndpoint, false)
 
-	// instantiate storage filter client constructor.
-	esStorageCtor := es.NewStorage(esClientCtor)
-
 	// read startup config
 	startupConfigFile := env.Load("CONFIG_JSON_PATH", defaultStartupConfigFile)
 	startupConfig, err := ioutil.ReadFile(startupConfigFile)
@@ -103,48 +103,35 @@ func main() {
 		}
 	}
 
-	// instantiate pg storage filter client constructor if needed
-	storageEnv := env.Load("PG_STORAGE", defaultPGStorage)
-	pgStorage, err := strconv.ParseBool(storageEnv)
-	if err != nil {
-		log.Warnf("Failed to parse PG_STORAGE as bool: %v", err)
-		pgStorage = false
-	}
+	// load the postgres parameters.
+	pgHost := env.Load("PG_HOST", defaultPGHost)
+	pgPort := env.Load("PG_PORT", defaultPGPort)
+	pgUser := env.Load("PG_USER", defaultPGUser)
+	pgPassword := env.Load("PG_PASSWORD", defaultPGPassword)
+	pgDatabase := env.Load("PG_DATABASE", defaultPGDatabase)
 
-	var dataStorageCtor model.StorageCtor
-	if pgStorage {
-		// load the postgres parameters.
-		pgHost := env.Load("PG_HOST", defaultPGHost)
-		pgPort := env.Load("PG_PORT", defaultPGPort)
-		pgUser := env.Load("PG_USER", defaultPGUser)
-		pgPassword := env.Load("PG_PASSWORD", defaultPGPassword)
-		pgDatabase := env.Load("PG_DATABASE", defaultPGDatabase)
+	// instantiate the postgres client constructor.
+	postgresClientCtor := postgres.NewClient(pgHost, pgPort, pgUser, pgPassword, pgDatabase)
 
-		// instantiate the postgres client constructor.
-		postgresClientCtor := postgres.NewClient(pgHost, pgPort, pgUser, pgPassword, pgDatabase)
-
-		// make sure a connection can be made to postgres - doesn't appear to be thread safe and
-		// causes panic if deferred, so we'll do it an a retry loop here.  We need to provide
-		// flexibility on startup because we can't guarantee the DB will be up before the server.
-		for i := 0; i < defaultPGRetries; i++ {
-			_, err = postgresClientCtor()
-			if err == nil {
-				break
-			} else if i == defaultPGRetries {
-				log.Errorf("%v", err)
-				os.Exit(1)
-			}
+	// make sure a connection can be made to postgres - doesn't appear to be thread safe and
+	// causes panic if deferred, so we'll do it an a retry loop here.  We need to provide
+	// flexibility on startup because we can't guarantee the DB will be up before the server.
+	for i := 0; i < defaultPGRetries; i++ {
+		_, err = postgresClientCtor()
+		if err == nil {
+			break
+		} else if i == defaultPGRetries {
 			log.Errorf("%v", err)
-			time.Sleep(deafultPGRetryTimeout * time.Millisecond)
+			os.Exit(1)
 		}
-
-		// instantiate the postgres storage constructor.
-		pgStorageCtor := pg.NewStorage(postgresClientCtor, esClientCtor)
-
-		dataStorageCtor = pgStorageCtor
-	} else {
-		dataStorageCtor = esStorageCtor
+		log.Errorf("%v", err)
+		time.Sleep(deafultPGRetryTimeout * time.Millisecond)
 	}
+
+	// instantiate the postgres storage constructor.
+	pgStorageCtor := pg.NewStorage(postgresClientCtor, esClientCtor)
+
+	dataStorageCtor := pgStorageCtor
 
 	// Instantiate the pipeline compute client
 	pipelineClient, err := pipeline.NewClient(pipelineComputeEndpoint, pipelineDataDir, pipelineComputeTrace)
@@ -166,6 +153,7 @@ func main() {
 
 	registerRoute(mux, "/distil/datasets/:index", routes.DatasetsHandler(esClientCtor))
 	registerRoute(mux, "/distil/variables/:index/:dataset", routes.VariablesHandler(esClientCtor))
+	registerRoutePost(mux, "/distil/variables/:index/:dataset/update", routes.VariableTypeHandler(dataStorageCtor, esClientCtor))
 	registerRoute(mux, "/distil/variable-summaries/:index/:dataset/:variable", routes.VariableSummaryHandler(dataStorageCtor, esClientCtor))
 	registerRoute(mux, "/distil/filtered-data/:esIndex/:dataset/:inclusive", routes.FilteredDataHandler(dataStorageCtor))
 	registerRoute(mux, "/distil/results/:index/:dataset/:results-uuid/:inclusive", routes.ResultsHandler(dataStorageCtor))

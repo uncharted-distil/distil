@@ -14,6 +14,8 @@ const (
 	Variables = "variables"
 	// VarNameField is the field name for the variable name.
 	VarNameField = "varName"
+	// VarRoleField is the field name for the variable role.
+	VarRoleField = "varRole"
 	// VarTypeField is the field name for the variable type.
 	VarTypeField = "varType"
 	// VarImportanceField is the field name for the variable importnace.
@@ -28,12 +30,15 @@ const (
 
 // Variable represents a single variable description within a dataset.
 type Variable struct {
-	Name       string `json:"name"`
-	Type       string `json:"type"`
-	Importance int    `json:"importance"`
+	Name           string      `json:"name"`
+	Type           string      `json:"type"`
+	Role           string      `json:"role"`
+	Importance     int         `json:"importance"`
+	SuggestedTypes interface{} `json:"suggestedTypes"`
 }
 
 func parseVariable(searchHit *elastic.SearchHit, varName string) (*Variable, error) {
+	//TODO: Extract the common parsing into a separate function.
 	// unmarshal the hit source
 	src, err := json.Unmarshal(*searchHit.Source)
 	if err != nil {
@@ -58,10 +63,16 @@ func parseVariable(searchHit *elastic.SearchHit, varName string) (*Variable, err
 		if !ok {
 			continue
 		}
+		role, ok := json.String(child, VarRoleField)
+		if !ok {
+			continue
+		}
+
 		return &Variable{
 			Name:       name,
 			Type:       typ,
 			Importance: importance,
+			Role:       role,
 		}, nil
 	}
 	return nil, errors.Errorf("unable to find variable match name %s", varName)
@@ -93,10 +104,15 @@ func parseVariables(searchHit *elastic.SearchHit) ([]*Variable, error) {
 		if !ok {
 			continue
 		}
+		role, ok := json.String(child, VarRoleField)
+		if !ok {
+			continue
+		}
 		variables = append(variables, &Variable{
 			Name:       name,
 			Type:       typ,
 			Importance: importance,
+			Role:       role,
 		})
 	}
 	return variables, nil
