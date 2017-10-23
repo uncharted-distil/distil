@@ -87,6 +87,20 @@ export function getVariables(context, args) {
 		});
 }
 
+export function setVariableType(context, args) {
+	return axios.post(`/distil/variables/${ES_INDEX}/${args.dataset}`,
+		{
+			field: args.field,
+			type: args.type
+		})
+		.then(() => {
+			context.commit('updateVariableType', args);
+		})
+		.catch(error => {
+			console.error(error);
+		});
+}
+
 // fetches variable summary data for the given dataset and variables
 export function getVariableSummaries(context, args) {
 	const dataset = args.dataset;

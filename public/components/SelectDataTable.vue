@@ -16,6 +16,16 @@
 				@mouseout.native="onMouseOut"
 				:items="items"
 				:fields="fields">
+
+				<template :slot="`HEAD_${data.label}`" v-for="data in fields">
+					{{data.label}}
+					<div>
+						<b-dropdown :text="data.type" variant="outline-primary" class="var-type-button">
+							<b-dropdown-item @click.stop="onTypeChange(data, suggested)" v-for="suggested in data.suggested">{{suggested.type}} ({{suggested.probability.toFixed(2)}})</b-dropdown-item>
+						</b-dropdown>
+					</div>
+				</template>
+
 			</b-table>
 		</div>
 
@@ -69,6 +79,13 @@ export default {
 				filters: this.filters
 			});
 		},
+		onTypeChange(field, suggested) {
+			this.$store.dispatch('setVariableType', {
+				dataset: this.dataset,
+				field: field.label,
+				type: suggested.type
+			});
+		},
 		onRowHovered(event) {
 			// set new values
 			const highlights = {};
@@ -101,5 +118,32 @@ export default {
 }
 .missing-icon {
 	padding-right: 4px;
+}
+.var-type-button {
+	width: 100%;
+}
+.var-type-button button {
+	border: none;
+	padding: 0;
+	width: 100%;
+	text-align: left;
+	outline: none;
+}
+.var-type-button button:hover,
+.var-type-button button:active,
+.var-type-button button:focus,
+.var-type-button.show > .dropdown-toggle  {
+	border: none;
+	border-radius: 0;
+	padding: 0;
+	color: inherit;
+	background-color: inherit;
+	border-color: inherit;
+}
+table.b-table>tfoot>tr>th.sorting:before,
+table.b-table>thead>tr>th.sorting:before,
+table.b-table>tfoot>tr>th.sorting:after,
+table.b-table>thead>tr>th.sorting:after {
+	top: 0;
 }
 </style>

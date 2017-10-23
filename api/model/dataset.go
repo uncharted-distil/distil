@@ -59,7 +59,7 @@ func parseDatasets(client *elastic.Client, res *elastic.SearchResult) ([]*Datase
 		// extract the variables list
 		variables, err := parseVariables(hit)
 		if err != nil {
-			return nil, errors.Wrap(err, "failed to parse dataset")
+			return nil, errors.Wrap(err, "failed to parse variables")
 		}
 		// write everythign out to result struct
 		datasets = append(datasets, &Dataset{
@@ -119,8 +119,20 @@ func SetDataType(client *elastic.Client, dataset string, index string, field str
 		}
 	}
 
+	// re-serialize the vars
+	var serialized []map[string]interface{}
+	for _, v := range vars {
+		serialized = append(serialized, map[string]interface{}{
+			VarNameField:           v.Name,
+			VarRoleField:           v.Role,
+			VarTypeField:           v.Type,
+			VarImportanceField:     v.Importance,
+			VarSuggestedTypesField: v.SuggestedTypes,
+		})
+	}
+
 	source := map[string]interface{}{
-		Variables: vars,
+		Variables: serialized,
 	}
 
 	// push the document into the metadata index

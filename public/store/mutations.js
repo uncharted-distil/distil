@@ -5,6 +5,13 @@ export function setVariables(state, variables) {
 	state.variables = variables;
 }
 
+export function updateVariableType(state, update) {
+	const index = _.findIndex(state.variables, elem => {
+		return elem.name === update.field;
+	});
+	state.variables[index].type = update.type;
+}
+
 export function setDatasets(state, datasets) {
 	state.datasets = datasets;
 }

@@ -19,7 +19,7 @@
 					{{data.label}}
 					<div>
 						<b-dropdown :text="data.type" variant="outline-primary" class="var-type-button">
-							<b-dropdown-item @click.stop="onTypeChange(data, suggested)" v-for="suggested in data.suggested">{{suggested}}</b-dropdown-item>
+							<b-dropdown-item @click.stop="onTypeChange(data, suggested)" v-for="suggested in data.suggested">{{suggested.type}} ({{suggested.probability.toFixed(2)}})</b-dropdown-item>
 						</b-dropdown>
 					</div>
 				</template>
@@ -74,14 +74,12 @@ export default {
 				filters: this.filters
 			});
 		},
-		onTypeChange(field, type) {
-			console.log(field, type);
-			/*
-			const index = field.suggested.indexOf(type);
-			field.suggested.splice(index, 1);
-			field.suggested.push(field.type);
-			field.type = type;
-			*/
+		onTypeChange(field, suggested) {
+			this.$store.dispatch('setVariableType', {
+				dataset: this.dataset,
+				field: field.label,
+				type: suggested.type
+			});
 		},
 		onRowHovered(event) {
 			// set new values

@@ -234,13 +234,20 @@ export function getFilteredDataItems(state) {
 export function getFilteredDataFields(state) {
 	return () => {
 		const data = state.filteredData;
+		const variables = state.variables;
+		const types = {};
+		const suggested = {};
+		variables.forEach(variable => {
+			types[variable.name] = variable.type;
+			suggested[variable.name] = variable.suggestedTypes;
+		});
 		if (!_.isEmpty(data)) {
 			const result = {};
 			for (const col of data.columns) {
 				result[col] = {
 					label: col,
-					type: 'integer',
-					suggested: ['categorical', 'ordinal', 'string'],
+					type: types[col],
+					suggested: suggested[col],
 					sortable: true
 				};
 			}
@@ -366,11 +373,20 @@ export function getSelectedDataItems(state) {
 export function getSelectedDataFields(state) {
 	return () => {
 		const data = state.selectedData;
+		const variables = state.variables;
+		const types = {};
+		const suggested = {};
+		variables.forEach(variable => {
+			types[variable.name] = variable.type;
+			suggested[variable.name] = variable.suggestedTypes;
+		});
 		if (!_.isEmpty(data)) {
 			const result = {};
 			for (const col of data.columns) {
 				result[col] = {
 					label: col,
+					type: types[col],
+					suggested: suggested[col],
 					sortable: true
 				};
 			}
