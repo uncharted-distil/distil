@@ -11,30 +11,25 @@
 </template>
 
 <script>
-
 import _ from 'lodash';
-import { createRouteEntry } from '../util/routes';
-
-function foo(s: string) {
-	return s * 10;
-}
+import {createRouteEntry} from '../util/routes';
 
 export default {
 	name: 'search-bar',
+
 	computed: {
 		terms: {
-			set: _.throttle(function(terms: number) {
+			set: _.throttle(function(terms) {
 				const path = !_.isEmpty(terms) ? '/search' : this.$store.getters.getRoutePath();
 				const routeEntry = createRouteEntry(path, {
-					terms: terms + 'hello'
+					terms: terms,
 				});
-				foo('blah');
 				this.$router.push(routeEntry);
 			}, 500),
-			get: function(): number {
+			get: function() {
 				return this.$store.getters.getRouteTerms();
 			}
-		},
+		}
 	},
 
 	mounted() {

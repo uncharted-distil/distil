@@ -27,7 +27,7 @@ export default {
 	name: 'results-comparison',
 
 	components: {
-		ResultsDataTable
+		ResultsDataTable,
 	},
 
 	mounted() {

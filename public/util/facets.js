@@ -48,6 +48,7 @@ export function createPendingFacet(summary, enableCollapse, predictedValues) {
 // creates categorical or numerical summary facets
 export function createSummaryFacet(summary, enableCollapse, enableFiltering, predictedValues) {
 	switch (summary.type) {
+
 		case 'categorical':
 			return {
 				label: summary.name,

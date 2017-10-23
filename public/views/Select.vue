@@ -55,19 +55,20 @@ export default {
 			this.fetch();
 		},
 		'$route.query.training'() {
-		}
+		},
 	},
 
 	methods: {
 		fetch() {
 			this.$store.dispatch('getVariables', {
-				dataset: this.dataset
-			}).then(() => {
-				this.$store.dispatch('getVariableSummaries', {
-					dataset: this.dataset,
-					variables: this.variables
+					dataset: this.dataset
+				})
+				.then(() => {
+					this.$store.dispatch('getVariableSummaries', {
+						dataset: this.dataset,
+						variables: this.variables
+					});
 				});
-			});
 		}
 	}
 };
