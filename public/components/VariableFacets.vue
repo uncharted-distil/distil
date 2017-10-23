@@ -95,7 +95,7 @@ export default {
 		'enable-facet-filtering': Boolean,
 		'variables': Array,
 		'dataset': String,
-		'html': [String, Object, Function],
+		'html': [ String, Object, Function ],
 		'instance-name': String
 	},
 
@@ -208,7 +208,7 @@ export default {
 			// merge the updated filters back into the route query params
 			const updated = updateFilter(filters, key, values);
 			const entry = createRouteEntryFromRoute(this.$store.getters.getRoute(), {
-				filters: updated
+				filters: updated,
 			});
 			this.$router.push(entry);
 		},
@@ -281,7 +281,7 @@ export default {
 				});
 			});
 			const entry = createRouteEntryFromRoute(this.$store.getters.getRoute(), {
-				filters: filters
+				filters: filters,
 			});
 			this.$router.push(entry);
 		},
@@ -329,7 +329,7 @@ export default {
 								// NOTE: the `from` / `to` values MUST be strings.
 								range: {
 									from: `${filter.min}`,
-									to: `${filter.max}`
+									to: `${filter.max}`,
 								}
 							};
 						});

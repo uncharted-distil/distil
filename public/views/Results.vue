@@ -65,22 +65,23 @@ export default {
 		},
 		fetch() {
 			Promise.all([
-				this.$store.dispatch('getVariables', {
-					dataset: this.dataset
-				}),
-				this.$store.dispatch('getSession', {
-					sessionId: this.sessionId
-				})
-			]).then(() => {
-				this.$store.dispatch('getVariableSummaries', {
-					dataset: this.dataset,
-					variables: this.variables
+					this.$store.dispatch('getVariables', {
+						dataset: this.dataset
+					}),
+					this.$store.dispatch('getSession', {
+						sessionId: this.sessionId
+					})
+				])
+				.then(() => {
+					this.$store.dispatch('getVariableSummaries', {
+						dataset: this.dataset,
+						variables: this.variables
+					});
+					this.$store.dispatch('getResultsSummaries', {
+						dataset: this.dataset,
+						requestId: this.requestId
+					});
 				});
-				this.$store.dispatch('getResultsSummaries', {
-					dataset: this.dataset,
-					requestId: this.requestId
-				});
-			});
 		}
 	}
 };
