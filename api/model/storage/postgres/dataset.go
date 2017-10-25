@@ -18,6 +18,8 @@ func (s *Storage) mapType(typ string) string {
 	switch typ {
 	case model.IntegerType:
 		fallthrough
+	case model.IntType:
+		fallthrough
 	case model.FloatType:
 		return dataTypeFloat
 	case model.CategoricalType:
@@ -83,7 +85,7 @@ func (s *Storage) createView(dataset string, fields map[string]string) error {
 	// Create the temporary view with the new column type.
 	_, err := s.client.Exec(sql)
 	if err != nil {
-		return errors.Wrap(err, "Unable to drop existing view")
+		return errors.Wrap(err, "Unable to create new temp view")
 	}
 
 	// Drop the existing view.
