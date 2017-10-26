@@ -96,6 +96,11 @@ export function setVariableType(context, args) {
 		})
 		.then(() => {
 			context.commit('updateVariableType', args);
+			// update variable summary
+			return context.dispatch('getVariableSummary', {
+				dataset: args.dataset,
+				variable: args.field
+			});
 		})
 		.catch(error => {
 			console.error(error);
@@ -115,38 +120,38 @@ export function getVariableSummaries(context, args) {
 	});
 	context.commit('setVariableSummaries', histograms);
 	// fill them in asynchronously
-	variables.forEach((variable, idx) => {
-		axios.get(`/distil/variable-summaries/${ES_INDEX}/${dataset}/${variable.name}`)
-			.then(response => {
-				// save the variable summary data
-				const histogram = response.data.histogram;
-				if (!histogram) {
-					context.commit('updateVariableSummaries', {
-						index: idx,
-						histogram: {
-							name: variable.name,
-							err: 'No analysis available'
-						}
-					});
-					return;
-				}
-				// ensure buckets is not nil
+	return Promise.all(variables.map(variable => {
+		return context.dispatch('getVariableSummary', {
+			dataset: dataset,
+			variable: variable.name
+		});
+	}));
+}
+
+export function getVariableSummary(context, args) {
+	const dataset = args.dataset;
+	const variable = args.variable;
+	return axios.get(`/distil/variable-summaries/${ES_INDEX}/${dataset}/${variable}`)
+		.then(response => {
+			// save the variable summary data
+			const histogram = response.data.histogram;
+			if (!histogram) {
 				context.commit('updateVariableSummaries', {
-					index: idx,
-					histogram: histogram
+					name: variable,
+					err: 'No analysis available'
 				});
-			})
-			.catch(error => {
-				console.error(error);
-				context.commit('updateVariableSummaries', {
-					index: idx,
-					histogram: {
-						name: variable.name,
-						err: error
-					}
-				});
+				return;
+			}
+			// ensure buckets is not nil
+			context.commit('updateVariableSummaries', histogram);
+		})
+		.catch(error => {
+			console.error(error);
+			context.commit('updateVariableSummaries', {
+				name: variable,
+				err: error
 			});
-	});
+		});
 }
 
 // update filtered data based on the  current filter state

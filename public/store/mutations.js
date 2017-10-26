@@ -20,9 +20,11 @@ export function setVariableSummaries(state, summaries) {
 	state.variableSummaries = summaries;
 }
 
-export function updateVariableSummaries(state, args) {
-	state.variableSummaries.splice(args.index, 1);
-	state.variableSummaries.splice(args.index, 0, args.histogram);
+export function updateVariableSummaries(state, histogram) {
+	const index = _.findIndex(state.variableSummaries, elem => {
+		return elem.name === histogram.name;
+	});
+	Vue.set(state.variableSummaries, index, histogram);
 }
 
 export function setResultsSummaries(state, summaries) {
@@ -30,9 +32,9 @@ export function setResultsSummaries(state, summaries) {
 }
 
 export function updateResultsSummaries(state, summary) {
-	const idx = _.findIndex(state.resultsSummaries, r => r.name === summary.name);
-	if (idx >=  0) {
-		state.resultsSummaries.splice(idx, 1, summary);
+	const index = _.findIndex(state.resultsSummaries, r => r.name === summary.name);
+	if (index >=  0) {
+		Vue.set(state.resultsSummaries, index, summary);
 	} else {
 		state.resultsSummaries.push(summary);
 	}

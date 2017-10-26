@@ -16,7 +16,7 @@ const state = {
 		//     variables: [
 		//         {
 		//             name: '',
-		//            type: ''
+		//             type: ''
 		//         }
 		//     ]
 		// }
@@ -67,7 +67,7 @@ const state = {
 		// name: '',
 		// columns: [
 		// types: '[]'
-		// vaues: [
+		// values: [
 		//     []
 		// ]
 	},
@@ -76,7 +76,7 @@ const state = {
 		// name: '',
 		// columns: [
 		// types: '[]'
-		// vaues: [
+		// values: [
 		//     []
 		// ]
 	},
