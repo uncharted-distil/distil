@@ -17,7 +17,7 @@ type Results struct {
 
 // ResultsHandler fetches predicted pipeline values and returns them to the client
 // in a JSON structure
-func ResultsHandler(storageCtor model.StorageCtor) func(http.ResponseWriter, *http.Request) {
+func ResultsHandler(storageCtor model.PipelineStorageCtor, storageDataCtor model.DataStorageCtor) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// extract route parameters
 		index := pat.Param(r, "index")
@@ -44,6 +44,12 @@ func ResultsHandler(storageCtor model.StorageCtor) func(http.ResponseWriter, *ht
 			return
 		}
 
+		clientData, err := storageDataCtor()
+		if err != nil {
+			handleError(w, err)
+			return
+		}
+
 		// get the result URI. Error ignored to make it ES compatible.
 		res, err := client.FetchResultMetadataByUUID(resultUUID)
 		resultURI := resultUUID
@@ -51,7 +57,7 @@ func ResultsHandler(storageCtor model.StorageCtor) func(http.ResponseWriter, *ht
 			resultURI = res.ResultURI
 		}
 
-		results, err := model.FetchFilteredResults(client, dataset, index, resultURI, filterParams, inclusiveBool)
+		results, err := clientData.FetchFilteredResults(dataset, index, resultURI, filterParams, inclusiveBool)
 		if err != nil {
 			handleError(w, err)
 			return

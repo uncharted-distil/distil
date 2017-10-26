@@ -109,7 +109,7 @@ func (s *Storage) buildFilteredQueryField(dataset string, variables []*model.Var
 // results to a user selected set of fields, with rows further filtered based on allowed ranges and
 // categories.
 func (s *Storage) FetchData(dataset string, index string, filterParams *model.FilterParams, inclusive bool) (*model.FilteredData, error) {
-	variables, err := model.FetchVariables(s.clientES, index, dataset)
+	variables, err := s.metadata.FetchVariables(dataset, index)
 	if err != nil {
 		return nil, errors.Wrap(err, "Could not pull variables from ES")
 	}

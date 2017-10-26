@@ -6,7 +6,6 @@ import (
 	"github.com/pkg/errors"
 	"goji.io/pat"
 
-	"github.com/unchartedsoftware/distil/api/elastic"
 	"github.com/unchartedsoftware/distil/api/model"
 )
 
@@ -17,7 +16,7 @@ type SummaryResult struct {
 
 // VariableSummaryHandler generates a route handler that facilitates the
 // creation and retrieval of summary information about the specified variable.
-func VariableSummaryHandler(ctorStorage model.StorageCtor, ctor elastic.ClientCtor) func(http.ResponseWriter, *http.Request) {
+func VariableSummaryHandler(ctorStorage model.DataStorageCtor) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// get index name
 		index := pat.Param(r, "index")
@@ -25,12 +24,7 @@ func VariableSummaryHandler(ctorStorage model.StorageCtor, ctor elastic.ClientCt
 		dataset := pat.Param(r, "dataset")
 		// get variabloe name
 		variable := pat.Param(r, "variable")
-		// get elasticsearch client
-		client, err := ctor()
-		if err != nil {
-			handleError(w, err)
-			return
-		}
+
 		// get storage client
 		storage, err := ctorStorage()
 		if err != nil {
@@ -38,7 +32,7 @@ func VariableSummaryHandler(ctorStorage model.StorageCtor, ctor elastic.ClientCt
 			return
 		}
 		// fetch summary histogram
-		histogram, err := model.FetchSummary(storage, client, index, dataset, variable)
+		histogram, err := storage.FetchSummary(dataset, index, variable)
 		if err != nil {
 			handleError(w, err)
 			return

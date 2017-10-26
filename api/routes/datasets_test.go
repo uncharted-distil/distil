@@ -6,6 +6,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
+	"github.com/unchartedsoftware/distil/api/model/storage/elastic"
 	"github.com/unchartedsoftware/distil/api/util/json"
 	"github.com/unchartedsoftware/distil/api/util/mock"
 )
@@ -17,8 +18,9 @@ func TestDatasetsHandler(t *testing.T) {
 		"./testdata/stats.json",
 		"./testdata/stats.json",
 	})
-	// mock elasticsearch client
+	// mock elasticsearch client & storage
 	ctor := mock.ElasticClientCtor(t, handler)
+	ctorStorage := elastic.NewMetadataStorage(ctor)
 
 	// put together a stub dataset request
 	req := mock.HTTPRequest(t, "GET", "/distil/datasets/", map[string]string{
@@ -27,7 +29,7 @@ func TestDatasetsHandler(t *testing.T) {
 
 	// execute the test request - stubbed ES server will return the JSON
 	// loaded above
-	res := mock.HTTPResponse(t, req, DatasetsHandler(ctor))
+	res := mock.HTTPResponse(t, req, DatasetsHandler(ctorStorage))
 	assert.Equal(t, http.StatusOK, res.Code)
 
 	// compare expected and acutal results - unmarshall first to ensure object
@@ -77,8 +79,9 @@ func TestDatasetsHandlerWithSearch(t *testing.T) {
 		"./testdata/stats.json",
 		"./testdata/stats.json",
 	})
-	// mock elasticsearch client
+	// mock elasticsearch client & storage
 	ctor := mock.ElasticClientCtor(t, handler)
+	ctorStorage := elastic.NewMetadataStorage(ctor)
 
 	// put together a stub dataset request
 	params := map[string]string{
@@ -91,7 +94,7 @@ func TestDatasetsHandlerWithSearch(t *testing.T) {
 
 	// execute the test request - stubbed ES server will return the JSON
 	// loaded above
-	res := mock.HTTPResponse(t, req, DatasetsHandler(ctor))
+	res := mock.HTTPResponse(t, req, DatasetsHandler(ctorStorage))
 	assert.Equal(t, http.StatusOK, res.Code)
 
 	// compare expected and actual results - unmarshall first to ensure object
