@@ -14,6 +14,7 @@ import (
 	"github.com/unchartedsoftware/distil/api/elastic"
 	"github.com/unchartedsoftware/distil/api/env"
 	"github.com/unchartedsoftware/distil/api/middleware"
+	es "github.com/unchartedsoftware/distil/api/model/storage/elastic"
 	pg "github.com/unchartedsoftware/distil/api/model/storage/postgres"
 	"github.com/unchartedsoftware/distil/api/pipeline"
 	"github.com/unchartedsoftware/distil/api/postgres"
@@ -68,8 +69,14 @@ func main() {
 		time.Sleep(time.Duration(config.PostgresRetryTimeout) * time.Millisecond)
 	}
 
-	// instantiate the postgres storage constructor.
-	pgStorageCtor := pg.NewStorage(postgresClientCtor, esClientCtor)
+	// instantiate the metadata storage (using ES).
+	metadataStorageCtor := es.NewMetadataStorage(esClientCtor)
+
+	// instantiate the postgres data storage constructor.
+	pgDataStorageCtor := pg.NewDataStorage(postgresClientCtor, metadataStorageCtor)
+
+	// instantiate the postgres pipeline storage constructor.
+	pgPipelineStorageCtor := pg.NewPipelineStorage(postgresClientCtor, metadataStorageCtor)
 
 	// Instantiate the pipeline compute client
 	pipelineClient, err := pipeline.NewClient(config.PipelineComputeEndpoint, config.PipelineDataDir, config.PipelineComputeTrace)
@@ -89,18 +96,18 @@ func main() {
 	mux.Use(middleware.Gzip)
 	mux.Use(middleware.Redis(redisPool))
 
-	registerRoute(mux, "/distil/datasets/:index", routes.DatasetsHandler(esClientCtor))
-	registerRoute(mux, "/distil/variables/:index/:dataset", routes.VariablesHandler(esClientCtor))
-	registerRoutePost(mux, "/distil/variables/:index/:dataset/update", routes.VariableTypeHandler(pgStorageCtor, esClientCtor))
-	registerRoute(mux, "/distil/variable-summaries/:index/:dataset/:variable", routes.VariableSummaryHandler(pgStorageCtor, esClientCtor))
-	registerRoute(mux, "/distil/filtered-data/:esIndex/:dataset/:inclusive", routes.FilteredDataHandler(pgStorageCtor))
-	registerRoute(mux, "/distil/results/:index/:dataset/:results-uuid/:inclusive", routes.ResultsHandler(pgStorageCtor))
-	registerRoute(mux, "/distil/results-summary/:index/:dataset/:results-uuid", routes.ResultsSummaryHandler(pgStorageCtor))
-	registerRoute(mux, "/distil/session/:session", routes.SessionHandler(pgStorageCtor))
+	registerRoute(mux, "/distil/datasets/:index", routes.DatasetsHandler(metadataStorageCtor))
+	registerRoute(mux, "/distil/variables/:index/:dataset", routes.VariablesHandler(metadataStorageCtor))
+	registerRoutePost(mux, "/distil/variables/:index/:dataset/update", routes.VariableTypeHandler(pgDataStorageCtor, metadataStorageCtor))
+	registerRoute(mux, "/distil/variable-summaries/:index/:dataset/:variable", routes.VariableSummaryHandler(pgDataStorageCtor))
+	registerRoute(mux, "/distil/filtered-data/:esIndex/:dataset/:inclusive", routes.FilteredDataHandler(pgDataStorageCtor))
+	registerRoute(mux, "/distil/results/:index/:dataset/:results-uuid/:inclusive", routes.ResultsHandler(pgPipelineStorageCtor, pgDataStorageCtor))
+	registerRoute(mux, "/distil/results-summary/:index/:dataset/:results-uuid", routes.ResultsSummaryHandler(pgPipelineStorageCtor, pgDataStorageCtor))
+	registerRoute(mux, "/distil/session/:session", routes.SessionHandler(pgPipelineStorageCtor))
 	registerRoute(mux, "/distil/abort", routes.AbortHandler())
 	registerRoute(mux, "/distil/export/:session/:pipeline-id", routes.ExportHandler(pipelineClient, config.ExportPath))
 
-	registerRoute(mux, "/ws", ws.PipelineHandler(pipelineClient, esClientCtor, pgStorageCtor))
+	registerRoute(mux, "/ws", ws.PipelineHandler(pipelineClient, metadataStorageCtor, pgDataStorageCtor, pgPipelineStorageCtor))
 	registerRoute(mux, "/*", routes.FileHandler("./dist"))
 
 	// catch kill signals for graceful shutdown

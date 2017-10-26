@@ -11,7 +11,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/unchartedsoftware/distil/api/elastic"
 	"github.com/unchartedsoftware/distil/api/model"
 
 	"github.com/pkg/errors"
@@ -19,8 +18,6 @@ import (
 	"github.com/unchartedsoftware/distil/api/pipeline"
 	"github.com/unchartedsoftware/plog"
 	"golang.org/x/net/context"
-
-	es "gopkg.in/olivere/elastic.v5"
 )
 
 const (
@@ -35,11 +32,11 @@ const (
 )
 
 // PipelineHandler represents a pipeline websocket handler.
-func PipelineHandler(client *pipeline.Client, esCtor elastic.ClientCtor, storageCtor model.StorageCtor) func(http.ResponseWriter, *http.Request) {
+func PipelineHandler(client *pipeline.Client, metadataCtor model.MetadataStorageCtor, dataCtor model.DataStorageCtor, pipelineCtor model.PipelineStorageCtor) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 
 		// create conn
-		conn, err := NewConnection(w, r, handlePipelineMessage(client, esCtor, storageCtor))
+		conn, err := NewConnection(w, r, handlePipelineMessage(client, metadataCtor, dataCtor, pipelineCtor))
 		if err != nil {
 			log.Warn(err)
 			return
@@ -54,7 +51,7 @@ func PipelineHandler(client *pipeline.Client, esCtor elastic.ClientCtor, storage
 	}
 }
 
-func handlePipelineMessage(client *pipeline.Client, esCtor elastic.ClientCtor, storageCtor model.StorageCtor) func(conn *Connection, bytes []byte) {
+func handlePipelineMessage(client *pipeline.Client, metadataCtor model.MetadataStorageCtor, dataCtor model.DataStorageCtor, pipelineCtor model.PipelineStorageCtor) func(conn *Connection, bytes []byte) {
 	return func(conn *Connection, bytes []byte) {
 		// parse the message
 		msg, err := NewMessage(bytes)
@@ -66,7 +63,7 @@ func handlePipelineMessage(client *pipeline.Client, esCtor elastic.ClientCtor, s
 			return
 		}
 		// handle message
-		go handleMessage(conn, client, esCtor, storageCtor, msg)
+		go handleMessage(conn, client, metadataCtor, dataCtor, pipelineCtor, msg)
 	}
 }
 
@@ -80,16 +77,16 @@ func parseMessage(bytes []byte) (*Message, error) {
 	return msg, nil
 }
 
-func handleMessage(conn *Connection, client *pipeline.Client, esCtor elastic.ClientCtor, storageCtor model.StorageCtor, msg *Message) {
+func handleMessage(conn *Connection, client *pipeline.Client, metadataCtor model.MetadataStorageCtor, dataCtor model.DataStorageCtor, pipelineCtor model.PipelineStorageCtor, msg *Message) {
 	switch msg.Type {
 	case getSession:
-		handleGetSession(conn, client, msg, storageCtor)
+		handleGetSession(conn, client, msg, pipelineCtor)
 		return
 	case endSession:
 		handleEndSession(conn, client, msg)
 		return
 	case createPipelines:
-		handleCreatePipelines(conn, client, esCtor, storageCtor, msg)
+		handleCreatePipelines(conn, client, metadataCtor, dataCtor, pipelineCtor, msg)
 		return
 	default:
 		// unrecognized type
@@ -98,10 +95,10 @@ func handleMessage(conn *Connection, client *pipeline.Client, esCtor elastic.Cli
 	}
 }
 
-func loadSessionRequests(msg *Message, session *pipeline.Session, storage model.Storage) error {
+func loadSessionRequests(msg *Message, session *pipeline.Session, pipelineStorage model.PipelineStorage) error {
 	// load the stored session information.
 	log.Infof("Loading requests for session %v.", msg.Session)
-	reqs, err := storage.FetchRequests(msg.Session)
+	reqs, err := pipelineStorage.FetchRequests(msg.Session)
 	if err != nil {
 		return errors.Wrap(err, "Unable to pull session request")
 	}
@@ -130,9 +127,9 @@ func loadSessionRequests(msg *Message, session *pipeline.Session, storage model.
 	return nil
 }
 
-func handleGetSession(conn *Connection, client *pipeline.Client, msg *Message, storageCtor model.StorageCtor) {
+func handleGetSession(conn *Connection, client *pipeline.Client, msg *Message, pipelineCtor model.PipelineStorageCtor) {
 	// get the storage instance
-	storage, err := storageCtor()
+	storage, err := pipelineCtor()
 	if err != nil {
 		handleErr(conn, msg, err)
 		return
@@ -194,7 +191,7 @@ type pipelineCreateMsg struct {
 	Metrics      []string        `json:"metric"`
 }
 
-func handleCreatePipelines(conn *Connection, client *pipeline.Client, esCtor elastic.ClientCtor, storageCtor model.StorageCtor, msg *Message) {
+func handleCreatePipelines(conn *Connection, client *pipeline.Client, metadataCtor model.MetadataStorageCtor, dataCtor model.DataStorageCtor, pipelineCtor model.PipelineStorageCtor, msg *Message) {
 	// unmarshall the request data
 	clientCreateMsg := &pipelineCreateMsg{}
 	err := json.Unmarshal(msg.Raw, clientCreateMsg)
@@ -212,14 +209,21 @@ func handleCreatePipelines(conn *Connection, client *pipeline.Client, esCtor ela
 	}
 
 	// initialize the storage
-	storage, err := storageCtor()
+	dataStorage, err := dataCtor()
 	if err != nil {
 		handleErr(conn, msg, err)
 		return
 	}
 
-	// initialize ES client
-	esClient, err := esCtor()
+	// initialize metadata storage
+	metadata, err := metadataCtor()
+	if err != nil {
+		handleErr(conn, msg, err)
+		return
+	}
+
+	// initialize pipeline storage
+	pipelineStorage, err := pipelineCtor()
 	if err != nil {
 		handleErr(conn, msg, err)
 		return
@@ -241,10 +245,10 @@ func handleCreatePipelines(conn *Connection, client *pipeline.Client, esCtor ela
 			None:        none,
 		}
 
-		return model.FetchFilteredData(storage, dataset, index, updatedFilters, false)
+		return dataStorage.FetchData(dataset, index, updatedFilters, false)
 	}
 	fetchVariable := func(dataset string, index string) ([]*model.Variable, error) {
-		return model.FetchVariables(esClient, index, dataset)
+		return metadata.FetchVariables(dataset, index)
 	}
 	datasetPath, err := pipeline.PersistFilteredData(fetchFilteredData, fetchVariable, client.DataDir, clientCreateMsg.Dataset, clientCreateMsg.Index, clientCreateMsg.Feature, filters)
 	if err != nil {
@@ -263,7 +267,7 @@ func handleCreatePipelines(conn *Connection, client *pipeline.Client, esCtor ela
 	// Create the set of training features - we already filtered that out when we persist, but needs to be specified
 	// to satisfy ta3ta2 API.
 	trainFeatures := []*pipeline.Feature{}
-	filteredVars, err := fetchFilteredVariables(esClient, clientCreateMsg.Index, clientCreateMsg.Dataset, filters)
+	filteredVars, err := fetchFilteredVariables(metadata, clientCreateMsg.Index, clientCreateMsg.Dataset, filters)
 	if err != nil {
 		handleErr(conn, msg, err)
 		return
@@ -310,7 +314,7 @@ func handleCreatePipelines(conn *Connection, client *pipeline.Client, esCtor ela
 
 		// store the request using the initial progress value
 		requestID := fmt.Sprintf("%s", requestInfo.RequestID)
-		err = storage.PersistRequest(session.ID, requestID, clientCreateMsg.Dataset, pipeline.Progress_name[0], time.Now())
+		err = pipelineStorage.PersistRequest(session.ID, requestID, clientCreateMsg.Dataset, pipeline.Progress_name[0], time.Now())
 		if err != nil {
 			handleErr(conn, msg, err)
 			return
@@ -318,7 +322,7 @@ func handleCreatePipelines(conn *Connection, client *pipeline.Client, esCtor ela
 
 		// store the request features
 		for _, f := range trainFeatures {
-			err = storage.PersistRequestFeature(requestID, f.FeatureId, model.FeatureTypeTrain)
+			err = pipelineStorage.PersistRequestFeature(requestID, f.FeatureId, model.FeatureTypeTrain)
 			if err != nil {
 				handleErr(conn, msg, err)
 				return
@@ -326,7 +330,7 @@ func handleCreatePipelines(conn *Connection, client *pipeline.Client, esCtor ela
 		}
 
 		for _, f := range createMsg.TargetFeatures {
-			err = storage.PersistRequestFeature(requestID, f.FeatureId, model.FeatureTypeTarget)
+			err = pipelineStorage.PersistRequestFeature(requestID, f.FeatureId, model.FeatureTypeTarget)
 			if err != nil {
 				handleErr(conn, msg, err)
 				return
@@ -334,7 +338,7 @@ func handleCreatePipelines(conn *Connection, client *pipeline.Client, esCtor ela
 		}
 
 		// handle the request
-		handleCreatePipelinesSuccess(conn, msg, proxy, storage, clientCreateMsg.Dataset)
+		handleCreatePipelinesSuccess(conn, msg, proxy, dataStorage, pipelineStorage, clientCreateMsg.Dataset)
 	} else {
 		log.Warnf("Expected session %s does not exist", msg.Session)
 	}
@@ -364,7 +368,7 @@ func handleEndSessionSuccess(conn *Connection, msg *Message) {
 	})
 }
 
-func handleCreatePipelinesSuccess(conn *Connection, msg *Message, proxy *pipeline.ResultProxy, storage model.Storage, dataset string) {
+func handleCreatePipelinesSuccess(conn *Connection, msg *Message, proxy *pipeline.ResultProxy, dataStorage model.DataStorage, pipelineStorage model.PipelineStorage, dataset string) {
 	// process the result proxy, which is replicated for completed, pending requests
 	for {
 		select {
@@ -377,7 +381,7 @@ func handleCreatePipelinesSuccess(conn *Connection, msg *Message, proxy *pipelin
 
 				// update the request progress
 				currentTime := time.Now()
-				err := storage.UpdateRequest(fmt.Sprintf("%s", proxy.RequestID), progress, currentTime)
+				err := pipelineStorage.UpdateRequest(fmt.Sprintf("%s", proxy.RequestID), progress, currentTime)
 				if err != nil {
 					handleErr(conn, msg, errors.Wrap(err, "Unable to store request update"))
 				}
@@ -402,7 +406,7 @@ func handleCreatePipelinesSuccess(conn *Connection, msg *Message, proxy *pipelin
 
 						// store the result score
 						if res.ProgressInfo == pipeline.Progress_COMPLETED {
-							storage.PersistResultScore(res.PipelineId, s["metric"].(string), float64(s["value"].(float32)))
+							pipelineStorage.PersistResultScore(res.PipelineId, s["metric"].(string), float64(s["value"].(float32)))
 						}
 					}
 
@@ -427,12 +431,12 @@ func handleCreatePipelinesSuccess(conn *Connection, msg *Message, proxy *pipelin
 					}
 
 					// store the result data & metadata
-					err = storage.PersistResultMetadata(fmt.Sprintf("%s", proxy.RequestID), res.PipelineId, resUUIDStr, resultURI, progress, pipeline.OutputType_name[int32(res.PipelineInfo.Output)], currentTime)
+					err = pipelineStorage.PersistResultMetadata(fmt.Sprintf("%s", proxy.RequestID), res.PipelineId, resUUIDStr, resultURI, progress, pipeline.OutputType_name[int32(res.PipelineInfo.Output)], currentTime)
 					if err != nil {
 						handleErr(conn, msg, errors.Wrap(err, "Unable to store result metadata"))
 					}
 
-					err = storage.PersistResult(dataset, resultURI)
+					err = dataStorage.PersistResult(dataset, resultURI)
 					if err != nil {
 						handleErr(conn, msg, errors.Wrap(err, "Unable to store pipeline results"))
 					}
@@ -460,9 +464,9 @@ func handleCreatePipelinesSuccess(conn *Connection, msg *Message, proxy *pipelin
 
 // TODO: We don't store this anywhere, so we end up running an ES query to get the var list.  This should
 // be cached by Redis, but still worth looking into storing some of the dataset info.
-func fetchFilteredVariables(esClient *es.Client, index string, dataset string, filters *model.FilterParams) ([]string, error) {
+func fetchFilteredVariables(metadata model.MetadataStorage, index string, dataset string, filters *model.FilterParams) ([]string, error) {
 	// fetch the variable set from es
-	variables, err := model.FetchVariables(esClient, index, dataset)
+	variables, err := metadata.FetchVariables(dataset, index)
 	if err != nil {
 		return nil, err
 	}

@@ -4,20 +4,30 @@ import (
 	"time"
 )
 
-// StorageCtor represents a client constructor to instantiate a storage
-// client.
-type StorageCtor func() (Storage, error)
+// DataStorageCtor represents a client constructor to instantiate a data
+// storage client.
+type DataStorageCtor func() (DataStorage, error)
 
-// Storage defines the functions available to query the underlying data storage.
-type Storage interface {
+// DataStorage defines the functions available to query the underlying data storage.
+type DataStorage interface {
 	FetchData(dataset string, index string, filterParams *FilterParams, inclusive bool) (*FilteredData, error)
-	FetchSummary(dataset string, variable *Variable) (*Histogram, error)
+	FetchSummary(dataset string, index string, varName string) (*Histogram, error)
 	PersistResult(dataset string, resultURI string) error
 	FetchResults(dataset string, index string, resultURI string) (*FilteredData, error)
 	FetchFilteredResults(dataset string, index string, resultURI string, filterParams *FilterParams, inclusive bool) (*FilteredData, error)
 	FetchResultsSummary(dataset string, resultURI string, index string) (*Histogram, error)
 
-	// System data operations NOTE: Note sure if this should be split off in a different interface.
+	// Dataset manipulation
+	SetDataType(dataset string, index string, field string, fieldType string) error
+}
+
+// PipelineStorageCtor represents a client constructor to instantiate a
+// pipeline storage client.
+type PipelineStorageCtor func() (PipelineStorage, error)
+
+// PipelineStorage defines the functions available to query the underlying
+// pipeline storage.
+type PipelineStorage interface {
 	PersistSession(sessionID string) error
 	PersistRequest(sessionID string, requestID string, dataset string, progress string, createdTime time.Time) error
 	PersistResultMetadata(requestID string, pipelineID string, resultUUID string, resultURI string, progress string, outputType string, createdTime time.Time) error
@@ -29,6 +39,19 @@ type Storage interface {
 	FetchResultMetadataByUUID(resultUUID string) (*Result, error)
 	FetchResultScore(pipelineID string) ([]*ResultScore, error)
 	FetchRequestFeature(requestID string) ([]*RequestFeature, error)
+}
+
+// MetadataStorageCtor represents a client constructor to instantiate a
+// metadata storage client.
+type MetadataStorageCtor func() (MetadataStorage, error)
+
+// MetadataStorage defines the functions available to query the underlying
+// metadata storage.
+type MetadataStorage interface {
+	FetchVariables(dataset string, index string) ([]*Variable, error)
+	FetchVariable(dataset string, index string, varName string) (*Variable, error)
+	FetchDatasets(index string) ([]*Dataset, error)
+	SearchDatasets(index string, terms string) ([]*Dataset, error)
 
 	// Dataset manipulation
 	SetDataType(dataset string, index string, field string, fieldType string) error

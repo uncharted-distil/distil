@@ -7,6 +7,7 @@ import (
 	gomock "github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
 
+	"github.com/unchartedsoftware/distil/api/model/storage/elastic"
 	"github.com/unchartedsoftware/distil/api/model/storage/postgres"
 	"github.com/unchartedsoftware/distil/api/util/json"
 	"github.com/unchartedsoftware/distil/api/util/mock"
@@ -17,8 +18,9 @@ func TestVariableSummaryHandlerCategorical(t *testing.T) {
 	handlerES := mock.ElasticHandler(t, []string{
 		"./testdata/variables.json",
 	})
-	// mock elasticsearch client
+	// mock elasticsearch client & storage
 	ctorES := mock.ElasticClientCtor(t, handlerES)
+	ctorESStorage := elastic.NewMetadataStorage(ctorES)
 
 	// mock postgres client
 	ctrl := gomock.NewController(t)
@@ -28,7 +30,7 @@ func TestVariableSummaryHandlerCategorical(t *testing.T) {
 	ctor := mockContructor(mockDB)
 
 	// instantiate storage filter client constructor.
-	storageCtor := postgres.NewStorage(ctor, ctorES)
+	storageCtor := postgres.NewDataStorage(ctor, ctorESStorage)
 
 	// put together a stub dataset request
 	req := mock.HTTPRequest(t, "GET", "/distil/variable_summaries", map[string]string{
@@ -42,7 +44,7 @@ func TestVariableSummaryHandlerCategorical(t *testing.T) {
 		"SELECT \"Position\", COUNT(*) AS count FROM o_185 GROUP BY \"Position\" ORDER BY count desc, \"Position\" LIMIT 10;").Return(nil, nil)
 
 	// execute the test request
-	res := mock.HTTPResponse(t, req, VariableSummaryHandler(storageCtor, ctorES))
+	res := mock.HTTPResponse(t, req, VariableSummaryHandler(storageCtor))
 	assert.Equal(t, http.StatusOK, res.Code)
 
 	// compare expected and acutal results - unmarshall first to ensure object

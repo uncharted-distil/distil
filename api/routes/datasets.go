@@ -9,7 +9,6 @@ import (
 	"github.com/russross/blackfriday"
 	"goji.io/pat"
 
-	"github.com/unchartedsoftware/distil/api/elastic"
 	"github.com/unchartedsoftware/distil/api/model"
 )
 
@@ -24,7 +23,7 @@ type DatasetResult struct {
 // it contains the search terms if set, and if unset, flags that a list of all
 // datasets should be returned.  The full list will be contain names only,
 // descriptions and variable lists will not be included.
-func DatasetsHandler(ctor elastic.ClientCtor) func(http.ResponseWriter, *http.Request) {
+func DatasetsHandler(ctor model.MetadataStorageCtor) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// get index name
 		index := pat.Param(r, "index")
@@ -35,7 +34,7 @@ func DatasetsHandler(ctor elastic.ClientCtor) func(http.ResponseWriter, *http.Re
 			return
 		}
 		// get elasticsearch client
-		client, err := ctor()
+		storage, err := ctor()
 		if err != nil {
 			handleError(w, err)
 			return
@@ -43,9 +42,9 @@ func DatasetsHandler(ctor elastic.ClientCtor) func(http.ResponseWriter, *http.Re
 		// if its present, forward a search, otherwise fetch all datasets
 		var datasets []*model.Dataset
 		if terms != "" {
-			datasets, err = model.SearchDatasets(client, index, terms)
+			datasets, err = storage.SearchDatasets(index, terms)
 		} else {
-			datasets, err = model.FetchDatasets(client, index)
+			datasets, err = storage.FetchDatasets(index)
 		}
 		if err != nil {
 			handleError(w, err)

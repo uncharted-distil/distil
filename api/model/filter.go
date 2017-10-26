@@ -32,13 +32,6 @@ type FilterParams struct {
 	None        []string
 }
 
-// FetchFilteredData creates a query to fetch a set of documents.  Applies filters to restrict the
-// results to a user selected set of fields, with documents further filtered based on allowed ranges and
-// categories.
-func FetchFilteredData(storage Storage, dataset string, index string, filterParams *FilterParams, inclusive bool) (*FilteredData, error) {
-	return storage.FetchData(dataset, index, filterParams, inclusive)
-}
-
 // GetFieldList builds the filtered list of fields based on the filtering parameters.
 func GetFieldList(filterParams *FilterParams, variables []*Variable, inclusive bool) []*Variable {
 	variableLookup := make(map[string]*Variable)

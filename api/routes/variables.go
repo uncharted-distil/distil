@@ -8,7 +8,6 @@ import (
 	"github.com/pkg/errors"
 	"goji.io/pat"
 
-	"github.com/unchartedsoftware/distil/api/elastic"
 	"github.com/unchartedsoftware/distil/api/model"
 	"github.com/unchartedsoftware/plog"
 )
@@ -21,7 +20,7 @@ type VariablesResult struct {
 // VariablesHandler generates a route handler that facilitates a search of
 // variable names and descriptions, returning a variable list for the specified
 // dataset.
-func VariablesHandler(ctor elastic.ClientCtor) func(http.ResponseWriter, *http.Request) {
+func VariablesHandler(ctor model.MetadataStorageCtor) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// get index name
 		index := pat.Param(r, "index")
@@ -34,7 +33,7 @@ func VariablesHandler(ctor elastic.ClientCtor) func(http.ResponseWriter, *http.R
 			return
 		}
 		// fetch variables
-		variables, err := model.FetchVariables(client, index, dataset)
+		variables, err := client.FetchVariables(dataset, index)
 		if err != nil {
 			handleError(w, err)
 			return
@@ -52,7 +51,7 @@ func VariablesHandler(ctor elastic.ClientCtor) func(http.ResponseWriter, *http.R
 
 // VariableTypeHandler generates a route handler that facilitates the update
 // of a variable type.
-func VariableTypeHandler(storageCtor model.StorageCtor, ctor elastic.ClientCtor) func(http.ResponseWriter, *http.Request) {
+func VariableTypeHandler(storageCtor model.DataStorageCtor, ctor model.MetadataStorageCtor) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		params, err := getPostParameters(r)
 		if err != nil {
@@ -86,7 +85,7 @@ func VariableTypeHandler(storageCtor model.StorageCtor, ctor elastic.ClientCtor)
 		}
 
 		// update the variable type in the metadata
-		err = model.SetDataType(clientES, dataset, index, field, typ)
+		err = clientES.SetDataType(dataset, index, field, typ)
 		if err != nil {
 			handleError(w, errors.Wrap(err, "unable to update the data type in metadata"))
 			return

@@ -16,7 +16,7 @@ type ResultsSummary struct {
 }
 
 // ResultsSummaryHandler bins predicted result data for consumption in a downstream summary view.
-func ResultsSummaryHandler(ctor model.StorageCtor) func(http.ResponseWriter, *http.Request) {
+func ResultsSummaryHandler(ctor model.PipelineStorageCtor, ctorData model.DataStorageCtor) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// extract route parameters
 		index := pat.Param(r, "index")
@@ -33,6 +33,12 @@ func ResultsSummaryHandler(ctor model.StorageCtor) func(http.ResponseWriter, *ht
 			return
 		}
 
+		clientData, err := ctorData()
+		if err != nil {
+			handleError(w, err)
+			return
+		}
+
 		// get the result URI. Error ignored to make it ES compatible.
 		res, err := client.FetchResultMetadataByUUID(resultUUID)
 		resultURI := resultUUID
@@ -40,7 +46,7 @@ func ResultsSummaryHandler(ctor model.StorageCtor) func(http.ResponseWriter, *ht
 			resultURI = res.ResultURI
 		}
 
-		histogram, err := model.FetchResultsSummary(client, resultURI, index, dataset)
+		histogram, err := clientData.FetchResultsSummary(resultURI, index, dataset)
 		if err != nil {
 			handleError(w, err)
 			return
