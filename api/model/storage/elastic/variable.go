@@ -21,6 +21,8 @@ const (
 	VarTypeField = "varType"
 	// VarImportanceField is the field name for the variable importnace.
 	VarImportanceField = "importance"
+	// VarSuggestedTypesField is the field name for the suggested variable types.
+	VarSuggestedTypesField = "suggestedTypes"
 	// VarTypeIndex is the variable type of the index field.
 	VarTypeIndex = "index"
 )

@@ -37,11 +37,11 @@ describe('mutations', () => {
 
 	describe('#updateVariableSummaries()', () => {
 		it('should overwrite the variable summary at the index from the caller supplied object', () => {
-			const testData = { index: 1, histogram: { name: 'alpha' } };
-			const state = { variableSummaries: [{ name: 'bravo' }, { name: 'charlie' }] };
+			const testData = { name: 'alpha', value: 'val' };
+			const state = { variableSummaries: [{ name: 'alpha' }, { name: 'bravo' }] };
 			mutations.updateVariableSummaries(state, testData);
-			expect(state.variableSummaries[1]).to.deep.equal(testData.histogram);
-			expect(state.variableSummaries[0]).to.deep.equal({ name: 'bravo' });
+			expect(state.variableSummaries[0]).to.deep.equal(testData);
+			expect(state.variableSummaries[1]).to.deep.equal({ name: 'bravo' });
 			expect(state.variableSummaries.length).equal(2);
 		});
 	});
