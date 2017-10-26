@@ -4,13 +4,13 @@ import (
 	"encoding/json"
 	"io/ioutil"
 	"net/http"
+	"time"
 
 	"github.com/pkg/errors"
 	"goji.io/pat"
 
 	"github.com/unchartedsoftware/distil/api/elastic"
 	"github.com/unchartedsoftware/distil/api/model"
-	"github.com/unchartedsoftware/plog"
 )
 
 // VariablesResult represents the result of a variables response.
@@ -64,8 +64,6 @@ func VariableTypeHandler(storageCtor model.StorageCtor, ctor elastic.ClientCtor)
 		index := pat.Param(r, "index")
 		dataset := pat.Param(r, "dataset")
 
-		log.Infof("index: %s\tdataset: %s\tfield: %s\ttype: %s", index, dataset, field, typ)
-
 		// get clients
 		client, err := storageCtor()
 		if err != nil {
@@ -89,6 +87,18 @@ func VariableTypeHandler(storageCtor model.StorageCtor, ctor elastic.ClientCtor)
 		err = model.SetDataType(clientES, dataset, index, field, typ)
 		if err != nil {
 			handleError(w, errors.Wrap(err, "unable to update the data type in metadata"))
+			return
+		}
+
+		// TODO: fix this, this shouldn't be necessary
+		time.Sleep(2 * time.Second)
+
+		// marshall data
+		err = handleJSON(w, map[string]interface{}{
+			"success": true,
+		})
+		if err != nil {
+			handleError(w, errors.Wrap(err, "unable marshal response into JSON"))
 			return
 		}
 	}
