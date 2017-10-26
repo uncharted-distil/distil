@@ -46,7 +46,7 @@ func ResultsSummaryHandler(ctor model.PipelineStorageCtor, ctorData model.DataSt
 			resultURI = res.ResultURI
 		}
 
-		histogram, err := clientData.FetchResultsSummary(resultURI, index, dataset)
+		histogram, err := clientData.FetchResultsSummary(dataset, resultURI, index)
 		if err != nil {
 			handleError(w, err)
 			return
