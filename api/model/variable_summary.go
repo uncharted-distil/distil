@@ -1,11 +1,5 @@
 package model
 
-import (
-	"gopkg.in/olivere/elastic.v5"
-
-	"github.com/pkg/errors"
-)
-
 const (
 	// MinAggPrefix is the prefix used for min aggregations.
 	MinAggPrefix = "min_"
@@ -43,16 +37,4 @@ type Histogram struct {
 	Type    string    `json:"type"`
 	Extrema *Extrema  `json:"extrema,omitempty"`
 	Buckets []*Bucket `json:"buckets"`
-}
-
-// FetchSummary returns the summary for the provided index, dataset, and
-// variable.
-func FetchSummary(storage Storage, client *elastic.Client, index string, dataset string, varName string) (*Histogram, error) {
-	// need description of the variables to request aggregation against.
-	variable, err := FetchVariable(client, index, dataset, varName)
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to fetch variable description for summary")
-	}
-
-	return storage.FetchSummary(dataset, variable)
 }

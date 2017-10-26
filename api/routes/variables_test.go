@@ -6,6 +6,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
+	"github.com/unchartedsoftware/distil/api/model/storage/elastic"
 	"github.com/unchartedsoftware/distil/api/util/json"
 	"github.com/unchartedsoftware/distil/api/util/mock"
 )
@@ -15,8 +16,9 @@ func TestVariableHandler(t *testing.T) {
 	handler := mock.ElasticHandler(t, []string{
 		"./testdata/variables.json",
 	})
-	// mock elasticsearch client
-	ctor := mock.ElasticClientCtor(t, handler)
+	// mock elasticsearch client & storage
+	ctorES := mock.ElasticClientCtor(t, handler)
+	ctorESStorage := elastic.NewMetadataStorage(ctorES)
 
 	// put together a stub dataset request
 	req := mock.HTTPRequest(t, "GET", "/distil/variables", map[string]string{
@@ -26,7 +28,7 @@ func TestVariableHandler(t *testing.T) {
 
 	// execute the test request - stubbed ES server will return the JSON
 	// loaded above
-	res := mock.HTTPResponse(t, req, VariablesHandler(ctor))
+	res := mock.HTTPResponse(t, req, VariablesHandler(ctorESStorage))
 	assert.Equal(t, http.StatusOK, res.Code)
 
 	// compare expected and acutal results - unmarshall first to ensure object

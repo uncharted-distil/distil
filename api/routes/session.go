@@ -15,7 +15,7 @@ type Session struct {
 }
 
 // SessionHandler fetches existing pipelines for a session.
-func SessionHandler(storageCtor model.StorageCtor) func(http.ResponseWriter, *http.Request) {
+func SessionHandler(storageCtor model.PipelineStorageCtor) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// extract route parameters
 		sessionID := pat.Param(r, "session")

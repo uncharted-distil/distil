@@ -6,10 +6,8 @@ import (
 
 	"github.com/jackc/pgx"
 	"github.com/pkg/errors"
-	es "github.com/unchartedsoftware/distil/api/elastic"
 	"github.com/unchartedsoftware/distil/api/model"
 	"github.com/unchartedsoftware/distil/api/postgres"
-	elastic "gopkg.in/olivere/elastic.v5"
 )
 
 const (
@@ -29,27 +27,38 @@ const (
 // Storage accesses the underlying postgres database.
 type Storage struct {
 	client   postgres.DatabaseDriver
-	clientES *elastic.Client
+	metadata model.MetadataStorage
 }
 
-// NewStorage returns a constructor for a Storage.
-func NewStorage(clientCtor postgres.ClientCtor, clientESCtor es.ClientCtor) model.StorageCtor {
-	return func() (model.Storage, error) {
-		client, err := clientCtor()
-		if err != nil {
-			return nil, err
-		}
-
-		clientES, err := clientESCtor()
-		if err != nil {
-			return nil, err
-		}
-
-		return &Storage{
-			client:   client,
-			clientES: clientES,
-		}, nil
+// NewDataStorage returns a constructor for a data storage.
+func NewDataStorage(clientCtor postgres.ClientCtor, metadataCtor model.MetadataStorageCtor) model.DataStorageCtor {
+	return func() (model.DataStorage, error) {
+		return newStorage(clientCtor, metadataCtor)
 	}
+}
+
+// NewPipelineStorage returns a constructor for a pipeline storage.
+func NewPipelineStorage(clientCtor postgres.ClientCtor, metadataCtor model.MetadataStorageCtor) model.PipelineStorageCtor {
+	return func() (model.PipelineStorage, error) {
+		return newStorage(clientCtor, metadataCtor)
+	}
+}
+
+func newStorage(clientCtor postgres.ClientCtor, metadataCtor model.MetadataStorageCtor) (*Storage, error) {
+	client, err := clientCtor()
+	if err != nil {
+		return nil, err
+	}
+
+	metadata, err := metadataCtor()
+	if err != nil {
+		return nil, err
+	}
+
+	return &Storage{
+		client:   client,
+		metadata: metadata,
+	}, nil
 }
 
 // PersistSession persists a session to Postgres.

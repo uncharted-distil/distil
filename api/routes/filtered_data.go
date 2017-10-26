@@ -19,7 +19,7 @@ const (
 )
 
 // FilteredDataHandler creates a route that fetches filtered data from backing storage instance.
-func FilteredDataHandler(ctor model.StorageCtor) func(http.ResponseWriter, *http.Request) {
+func FilteredDataHandler(ctor model.DataStorageCtor) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		dataset := pat.Param(r, "dataset")
 		esIndex := pat.Param(r, "esIndex")
@@ -44,7 +44,7 @@ func FilteredDataHandler(ctor model.StorageCtor) func(http.ResponseWriter, *http
 		}
 
 		// fetch filtered data based on the supplied search parameters
-		data, err := model.FetchFilteredData(client, dataset, esIndex, filterParams, inclusiveBool)
+		data, err := client.FetchData(dataset, esIndex, filterParams, inclusiveBool)
 		if err != nil {
 			handleError(w, errors.Wrap(err, "unable fetch filtered data"))
 			return

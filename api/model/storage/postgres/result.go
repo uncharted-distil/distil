@@ -43,7 +43,7 @@ func (s *Storage) getResultTargetName(dataset string, resultURI string, index st
 }
 
 func (s *Storage) getResultTargetVariable(dataset string, index string, targetName string) (*model.Variable, error) {
-	variable, err := model.FetchVariable(s.clientES, index, dataset, targetName)
+	variable, err := s.metadata.FetchVariable(dataset, index, targetName)
 	if err != nil {
 		return nil, errors.Wrap(err, "Unable to get target variable information")
 	}
@@ -231,7 +231,7 @@ func (s *Storage) FetchFilteredResults(dataset string, index string, resultURI s
 		return nil, err
 	}
 
-	variables, err := model.FetchVariables(s.clientES, index, dataset)
+	variables, err := s.metadata.FetchVariables(dataset, index)
 	if err != nil {
 		return nil, errors.Wrap(err, "Could not pull variables from ES")
 	}

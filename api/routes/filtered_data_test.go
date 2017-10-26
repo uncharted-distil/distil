@@ -6,6 +6,7 @@ import (
 
 	gomock "github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
+	"github.com/unchartedsoftware/distil/api/model/storage/elastic"
 	"github.com/unchartedsoftware/distil/api/model/storage/postgres"
 	pg "github.com/unchartedsoftware/distil/api/postgres"
 	"github.com/unchartedsoftware/distil/api/util/json"
@@ -17,8 +18,9 @@ func TestFilteredPostgresHandler(t *testing.T) {
 	handler := mock.ElasticHandler(t, []string{
 		"./testdata/variables.json",
 	})
-	// mock elasticsearch client
+	// mock elasticsearch client & storage
 	ctorES := mock.ElasticClientCtor(t, handler)
+	ctorESStorage := elastic.NewMetadataStorage(ctorES)
 
 	// mock postgres client
 	ctrl := gomock.NewController(t)
@@ -28,7 +30,7 @@ func TestFilteredPostgresHandler(t *testing.T) {
 	ctor := mockContructor(mockDB)
 
 	// instantiate storage filter client constructor.
-	storageCtor := postgres.NewStorage(ctor, ctorES)
+	storageCtor := postgres.NewDataStorage(ctor, ctorESStorage)
 
 	// put together a stub dataset request
 	params := map[string]string{
