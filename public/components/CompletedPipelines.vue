@@ -9,10 +9,10 @@
 	</b-card>
 </template>
 
-<script>
+<script lang="ts">
 
 import _ from 'lodash';
-import PipelinePreview from '../components/PipelinePreview';
+import PipelinePreview from '../components/PipelinePreview.vue';
 
 
 export default {

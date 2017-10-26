@@ -1,6 +1,6 @@
 import Vue from 'vue';
 import Vuex from 'vuex';
-import { Store, StoreOptions } from 'vuex';
+import { Store } from 'vuex';
 import { state } from './index';
 import {actions } from './actions';
 import { getters } from './getters';

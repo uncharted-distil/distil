@@ -1,3 +1,6 @@
+// TODO:  Mocha doesn't play nicely with a Typescript + Vue combo.
+// Sounds like Jest can handle it, but figuring that out is low priority given that
+// we've found the tests have somewhat limited utility.
 
 // import * as getters from '../../store/getters';
 // import {expect} from 'chai';

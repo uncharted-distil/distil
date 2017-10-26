@@ -7,10 +7,6 @@ import _ from 'lodash';
  *
  * @param {string} path - route path
  * @param {Object} args - the arguments for the route.
- * @param {string} args.terms - search terms from the route query string
- * @param {string} args.dataset - dataset name from the route query string
- * @param {Object} args.filters - filters - The list filters from the route query string.
- * @param {string} args.pipelineID - pipelineID
  */
 export function createRouteEntry(path, args = {}) {
 	const query = {};

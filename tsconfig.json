@@ -7,7 +7,9 @@
         "moduleResolution": "node",
         "allowSyntheticDefaultImports": true,
         "target": "es6",
-        "allowJs": true
+        "allowJs": true,
+        "noUnusedLocals": true,
+        "noImplicitThis": false
     },
     "include": [
         "./public/**/*"

@@ -2,7 +2,7 @@ import _ from 'lodash';
 import Connection from '../util/ws';
 import { decodeFilters } from '../util/filters';
 import { GetterTree } from 'vuex';
-import { DistilState, state, Variable, Data, Range } from './index';
+import { DistilState, Variable, Data } from './index';
 
 function getTargetIndexFromPredicted(columns: string[], predictedIndex: number) {
 	const targetName = columns[predictedIndex].replace('_res', '');
@@ -73,11 +73,11 @@ export const getters: GetterTree<DistilState, any> = {
 	},
 
 	getFilters(state) {
-		return () => decodeFilters(state.route.query.filters ? state.route.query.filters : []) as any;
+		return () => decodeFilters(state.route.query.filters ? state.route.query.filters : []) as string;
 	},
 
 	getResultsFilters(state) {
-		return decodeFilters(state.route.query.results ? state.route.query.results : []) as any;
+		return decodeFilters(state.route.query.results ? state.route.query.results : []) as string;
 	},
 
 	getVariables(state) {
