@@ -90,7 +90,7 @@ func VariableTypeHandler(storageCtor model.DataStorageCtor, ctor model.MetadataS
 		}
 
 		// TODO: fix this, this shouldn't be necessary
-		time.Sleep(2 * time.Second)
+		time.Sleep(time.Second)
 
 		// marshall data
 		err = handleJSON(w, map[string]interface{}{
