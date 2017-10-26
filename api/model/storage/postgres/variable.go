@@ -211,7 +211,7 @@ func (s *Storage) fetchCategoricalHistogram(dataset string, variable *model.Vari
 // FetchSummary returns the summary for the provided dataset and variable.
 func (s *Storage) FetchSummary(dataset string, index string, varName string) (*model.Histogram, error) {
 	// need description of the variables to request aggregation against.
-	variable, err := s.metadata.FetchVariable(index, dataset, varName)
+	variable, err := s.metadata.FetchVariable(dataset, index, varName)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to fetch variable description for summary")
 	}
