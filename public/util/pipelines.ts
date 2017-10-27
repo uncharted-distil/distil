@@ -5,24 +5,36 @@
 
 import _ from 'lodash';
 
+export interface NameInfo {
+	displayName: string,
+	schemaName: string
+}
+
+export interface Task {
+	displayName: string,
+	schemaName: string,
+	metrics: { [name: string]: NameInfo },
+	outputs: { [name: string]: NameInfo }
+};
+
 // Gets a task object based on a variable type.
-export function getTask(varType) {
+export function getTask(varType: string): Task {
 	const lowerType = _.toLower(varType);
-	return _.get(variableType, [lowerType, 'task'], {});
+	return _.get(variableType, [lowerType, 'task']);
 }
 
 // Gets the display names for the metrics from a given task.
-export function getMetricDisplayNames(task) {
-	return _.map(_.get(task, 'metrics', []), s => s.displayName);
+export function getMetricDisplayNames(task: Task): string[] {
+	return _.map(_.get(task, 'metrics', []), (s: NameInfo) => s.displayName);
 }
 
 // Gets the schema names for the output types for a given task.
-export function getOutputSchemaNames(task) {
-	return _.map(_.get(task, 'outputs', []), s => s.schemaName);
+export function getOutputSchemaNames(task): string[] {
+	return _.map(_.get(task, 'outputs', []), (s: NameInfo) => s.schemaName);
 }
 
 // Gets the schema name for a metric given its display name.
-export function getMetricSchemaName(displayName) {
+export function getMetricSchemaName(displayName: string): string {
 	for(const m of metrics) {
 		const result = _.find(m, s => s.displayName === displayName);
 		if (!_.isEmpty(result)) {
@@ -33,7 +45,7 @@ export function getMetricSchemaName(displayName) {
 }
 
 // Gets the display name for a metric given its schema name.
-export function getMetricDisplayName(schemaName) {
+export function getMetricDisplayName(schemaName: string): string {
 	const lowerName = _.toLower(schemaName);
 	for(const m of metrics) {
 		const result = _.find(m, s => s.schemaName === lowerName);
@@ -45,22 +57,22 @@ export function getMetricDisplayName(schemaName) {
 }
 
 // Checks to see if a supplied schema output type is associated with a classificaiton task
-export function isClassificationOutput(schemaOutput) {
+export function isClassificationOutput(schemaOutput: string): boolean {
 	return checkOutput(classificationOutputs, schemaOutput);
 }
 
 // Checks to see if a supplied schema output type is associated with a regression task
-export function isRegressionOutput(schemaOutput) {
+export function isRegressionOutput(schemaOutput: string): boolean {
 	return checkOutput(regressionOutputs, schemaOutput);
 }
 
-function checkOutput(output, schemaOutput) {
+function checkOutput(output: { [name: string]: NameInfo }, schemaOutput: string): boolean {
 	const lowerName = _.toLower(schemaOutput);
 	return !_.isEmpty(_.find(output, o => o.schemaName === lowerName));
 }
 
 // metrics used in classification tasks
-const classificationMetrics = {
+const classificationMetrics: { [name: string]: NameInfo } = {
 	// Limit the metrics since not all are supported.
 	accuracy: {
 		displayName: 'Accuracy',
@@ -102,7 +114,7 @@ const classificationMetrics = {
 };
 
 // metrics used in regression tasks
-const regressionMetrics = {
+const regressionMetrics: { [name: string]: NameInfo } = {
 	rootMeanSquaredError: {
 		displayName: 'Root Mean Squared Error',
 		schemaName: 'root_mean_squared_error'
@@ -124,7 +136,7 @@ const regressionMetrics = {
 const metrics = [classificationMetrics, regressionMetrics];
 
 // output types used in classification tasks
-const classificationOutputs = {
+const classificationOutputs: { [name: string]: NameInfo } = {
 	classLabel: {
 		displayName: 'Label',
 		schemaName: 'class_label'
@@ -132,7 +144,7 @@ const classificationOutputs = {
 };
 
 // output types used in regression tasks
-const regressionOutputs = {
+const regressionOutputs: { [name: string]: NameInfo } = {
 	regressionValue: {
 		displayName: 'Real',
 		schemaName: 'real'
@@ -140,7 +152,7 @@ const regressionOutputs = {
 };
 
 // classification task info
-const classification = {
+const classification: Task = {
 	displayName: 'Classification',
 	schemaName: 'classification',
 	metrics: classificationMetrics,
@@ -148,33 +160,19 @@ const classification = {
 };
 
 // regression task info
-const regression = {
+const regression: Task = {
 	displayName: 'Regression',
 	schemaName: 'regression',
 	metrics: regressionMetrics,
 	outputs: regressionOutputs
 };
 
-
-
 // variable type to task mappings
-const variableType = {
-	float: {
-		task: regression
-	},
-	integer: {
-		task: regression
-	},
-	categorical: {
-		task: classification
-	},
-	ordinal: {
-		task: classification
-	},
-	boolean: {
-		task: classification
-	},
-	text: {
-		task: classification
-	}
+const variableType: { [varType: string]: Task } = {
+	float:  regression,
+	integer: regression,
+	categorical: classification,
+	ordinal: classification,
+	boolean: classification,
+	text: classification
 };

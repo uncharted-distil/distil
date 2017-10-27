@@ -11,15 +11,24 @@ export interface Datasets {
 	variables: Variable[];
 }
 
+export interface Extrema {
+	min: number,
+	max: number
+}
+
 export interface Bucket {
 	key: string;
 	count: number;
 }
 
-export interface VariableSummaries {
+export interface VariableSummary {
 	name: string;
 	feature: string;
 	buckets: Bucket[];
+	extrema: Extrema;
+	type?: string;
+	err?: string;
+	pending?: string;
 }
 
 export interface Data {
@@ -72,8 +81,8 @@ export interface Range {
 export interface DistilState {
 	datasets: Datasets[];
 	variables: Variable[];
-	variableSummaries: VariableSummaries[];
-	resultsSummaries: VariableSummaries[];
+	variableSummaries: VariableSummary[];
+	resultsSummaries: VariableSummary[];
 	resultData: Data;
 	filteredData: Data;
 	selectedData: Data;

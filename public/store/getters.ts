@@ -1,6 +1,6 @@
 import _ from 'lodash';
 import Connection from '../util/ws';
-import { decodeFilters } from '../util/filters';
+import { decodeFilters, FilterMap } from '../util/filters';
 import { GetterTree } from 'vuex';
 import { DistilState, Variable, Data } from './index';
 
@@ -73,11 +73,11 @@ export const getters: GetterTree<DistilState, any> = {
 	},
 
 	getFilters(state) {
-		return () => decodeFilters(state.route.query.filters ? state.route.query.filters : []) as string;
+		return () => decodeFilters(state.route.query.filters ? state.route.query.filters : "") as FilterMap;
 	},
 
 	getResultsFilters(state) {
-		return decodeFilters(state.route.query.results ? state.route.query.results : []) as string;
+		return decodeFilters(state.route.query.results ? state.route.query.results : "") as FilterMap;
 	},
 
 	getVariables(state) {
