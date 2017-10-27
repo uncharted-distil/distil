@@ -26,25 +26,29 @@
                             "varName": "d3mIndex",
                             "varRole": "index",
                             "varType": "integer",
-                            "importance": 0
+                            "importance": 0,
+                            "suggestedTypes": [ { "type": "integer", "probability": 1.00 } ]
                         },
                         {
                             "varName": "Player",
                             "varRole": "attribute",
                             "varType": "categorical",
-                            "importance": 0
+                            "importance": 0,
+                            "suggestedTypes": [ { "type": "categorical", "probability": 1.00 } ]
                         },
                         {
                             "varName": "Number_seasons",
                             "varRole": "attribute",
                             "varType": "integer",
-                            "importance": 1
+                            "importance": 1,
+                            "suggestedTypes": [ { "type": "integer", "probability": 1.00 } ]
                         },
                         {
                             "varName": "Games_played",
                             "varRole": "attribute",
                             "varType": "integer",
-                            "importance": 2
+                            "importance": 2,
+                            "suggestedTypes": [ { "type": "integer", "probability": 1.00 } ]
                         }
                     ]
                 }
@@ -65,19 +69,22 @@
                             "varName": "d3mIndex",
                             "varRole": "index",
                             "varType": "integer",
-                            "importance": 0
+                            "importance": 0,
+                            "suggestedTypes": [ { "type": "integer", "probability": 1.00 } ]
                         },
                         {
                             "varName": "cylinders",
                             "varRole": "attribute",
                             "varType": "categorical",
-                            "importance": 0
+                            "importance": 0,
+                            "suggestedTypes": [ { "type": "categorical", "probability": 1.00 } ]
                         },
                         {
                             "varName": "displacement",
                             "varRole": "attribute",
                             "varType": "categorical",
-                            "importance": 0
+                            "importance": 0,
+                            "suggestedTypes": [ { "type": "categorical", "probability": 1.00 } ]
                         }
                     ]
                 }

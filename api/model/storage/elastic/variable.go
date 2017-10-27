@@ -21,6 +21,8 @@ const (
 	VarTypeField = "varType"
 	// VarImportanceField is the field name for the variable importnace.
 	VarImportanceField = "importance"
+	// VarSuggestedTypesField is the field name for the suggested variable types.
+	VarSuggestedTypesField = "suggestedTypes"
 	// VarTypeIndex is the variable type of the index field.
 	VarTypeIndex = "index"
 )
@@ -55,12 +57,16 @@ func (s *Storage) parseVariable(searchHit *elastic.SearchHit, varName string) (*
 		if !ok {
 			continue
 		}
-
+		suggestedTypes, ok := json.Array(child, VarSuggestedTypesField)
+		if !ok {
+			continue
+		}
 		return &model.Variable{
-			Name:       name,
-			Type:       typ,
-			Importance: importance,
-			Role:       role,
+			Name:           name,
+			Type:           typ,
+			Importance:     importance,
+			Role:           role,
+			SuggestedTypes: suggestedTypes,
 		}, nil
 	}
 	return nil, errors.Errorf("unable to find variable match name %s", varName)
@@ -96,11 +102,16 @@ func parseVariables(searchHit *elastic.SearchHit) ([]*model.Variable, error) {
 		if !ok {
 			continue
 		}
+		suggestedTypes, ok := json.Array(child, VarSuggestedTypesField)
+		if !ok {
+			continue
+		}
 		variables = append(variables, &model.Variable{
-			Name:       name,
-			Type:       typ,
-			Importance: importance,
-			Role:       role,
+			Name:           name,
+			Type:           typ,
+			Importance:     importance,
+			Role:           role,
+			SuggestedTypes: suggestedTypes,
 		})
 	}
 	return variables, nil

@@ -110,8 +110,20 @@ func (s *Storage) SetDataType(dataset string, index string, field string, fieldT
 		}
 	}
 
+	// re-serialize the vars
+	var serialized []map[string]interface{}
+	for _, v := range vars {
+		serialized = append(serialized, map[string]interface{}{
+			VarNameField:           v.Name,
+			VarRoleField:           v.Role,
+			VarTypeField:           v.Type,
+			VarImportanceField:     v.Importance,
+			VarSuggestedTypesField: v.SuggestedTypes,
+		})
+	}
+
 	source := map[string]interface{}{
-		Variables: vars,
+		Variables: serialized,
 	}
 
 	// push the document into the metadata index
