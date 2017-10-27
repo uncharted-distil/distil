@@ -28,7 +28,7 @@ export default {
 	mounted() {
 		const component = this;
 		// instantiate the external facets widget
-		this.facets = new Facets(this.$refs.facets, this.groups.map(group => {
+		this.facets = new Facets(this.$el, this.groups.map(group => {
 			return _.cloneDeep(group);
 		}));
 		this.groups.forEach(group => {
