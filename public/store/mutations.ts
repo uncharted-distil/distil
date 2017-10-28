@@ -4,6 +4,13 @@ import { MutationTree } from 'vuex';
 import { DistilState } from './index';
 
 export const mutations: MutationTree<DistilState> = {
+	updateVariableType(state, update) {
+		const index = _.findIndex(state.variables, elem => {
+			return elem.name === update.field;
+		});
+		state.variables[index].type = update.type;
+	},
+
 	setVariables(state, variables) {
 		state.variables = variables;
 	},
@@ -16,9 +23,11 @@ export const mutations: MutationTree<DistilState> = {
 		state.variableSummaries = summaries;
 	},
 
-	updateVariableSummaries(state, args) {
-		state.variableSummaries.splice(args.index, 1);
-		state.variableSummaries.splice(args.index, 0, args.histogram);
+	updateVariableSummaries(state, histogram) {
+		const index = _.findIndex(state.variableSummaries, elem => {
+			return elem.name === histogram.name;
+		});
+		Vue.set(state.variableSummaries, index, histogram);
 	},
 
 	setResultsSummaries(state, summaries) {
@@ -26,9 +35,9 @@ export const mutations: MutationTree<DistilState> = {
 	},
 
 	updateResultsSummaries(state, summary) {
-		const idx = _.findIndex(state.resultsSummaries, r => r.name === summary.name);
-		if (idx >=  0) {
-			state.resultsSummaries.splice(idx, 1, summary);
+		const index = _.findIndex(state.resultsSummaries, r => r.name === summary.name);
+		if (index >=  0) {
+		  Vue.set(state.resultsSummaries, index, summary);
 		} else {
 			state.resultsSummaries.push(summary);
 		}
@@ -142,7 +151,7 @@ export const mutations: MutationTree<DistilState> = {
 
 	addRecentDataset(state, dataset) {
 		const datasetsStr = window.localStorage.getItem('recent-datasets');
-		const datasets = (datasetsStr) ?  datasetsStr.split(',') : [];
+		const datasets = (datasetsStr) ? datasetsStr.split(',') : [];
 		datasets.unshift(dataset);
 		window.localStorage.setItem('recent-datasets', datasets.join(','));
 	}

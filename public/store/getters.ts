@@ -23,6 +23,13 @@ function validateData(data: Data) {
 		!_.isEmpty(data.columns);
 }
 
+export interface FieldInfo {
+	label: string,
+	type: string,
+	suggested: string[],
+	sortable: boolean
+}
+
 export const getters: GetterTree<DistilState, any> = {
 	getRoute(state) {
 		return () => state.route;
@@ -244,7 +251,7 @@ export const getters: GetterTree<DistilState, any> = {
 			});
 
 			if (!_.isEmpty(data)) {
-				const result: { [col: string]: {} } = {};
+				const result: { [col: string]: FieldInfo } = {};
 				for (const col of data.columns) {
 					result[col] = {
 						label: col,
@@ -371,7 +378,7 @@ export const getters: GetterTree<DistilState, any> = {
 			});
 
 			if (!_.isEmpty(data)) {
-				const result: { [label: string]: {label: string, sortable: boolean} } = {};
+				const result: { [label: string]: FieldInfo } = {};
 				for (const col of data.columns) {
 					result[col] = {
 						label: col,

@@ -3,6 +3,7 @@ import { Route } from 'vue-router';
 export interface Variable {
 	name: string;
 	type: string;
+	suggestedTypes: string;
 }
 
 export interface Datasets {

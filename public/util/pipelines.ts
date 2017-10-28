@@ -20,7 +20,7 @@ export interface Task {
 // Gets a task object based on a variable type.
 export function getTask(varType: string): Task {
 	const lowerType = _.toLower(varType);
-	return _.get(variableType, [lowerType, 'task']);
+	return _.get(variableType, lowerType);
 }
 
 // Gets the display names for the metrics from a given task.

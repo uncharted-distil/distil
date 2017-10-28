@@ -300,7 +300,7 @@ export const actions: ActionTree<DistilState, any> = {
 	},
 
 	// fetches result summaries for a given pipeline create request
-	getResultsSummaries(context, args) {
+	getResultsSummaries(context, args: { dataset: string, requestId: string}) {
 		const dataset = args.dataset;
 		const requestId = args.requestId;
 		const results = context.getters.getPipelineResults(requestId) as PipelineInfo[];

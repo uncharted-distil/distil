@@ -17,9 +17,9 @@
 	</div>
 </template>
 
-<script>
+<script lang="ts">
 
-import ResultsDataTable from '../components/ResultsDataTable';
+import ResultsDataTable from '../components/ResultsDataTable.vue';
 import { getTask } from '../util/pipelines';
 import _ from 'lodash';
 
