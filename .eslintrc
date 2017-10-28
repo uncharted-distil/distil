@@ -84,6 +84,5 @@
   "plugins": [
     "html",
     "jsdoc"
-  ],
-  "extends": ["plugin:vue/recommended"]
+  ]
 }
