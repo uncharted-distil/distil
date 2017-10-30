@@ -10,7 +10,7 @@
 	</div>
 </template>
 
-<script>
+<script lang="ts">
 import _ from 'lodash';
 import {createRouteEntry} from '../util/routes';
 

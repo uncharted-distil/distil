@@ -41,10 +41,10 @@
 	</div>
 </template>
 
-<script>
+<script lang="ts">
 
-import ResultFacets from '../components/ResultFacets';
-import Facets from '../components/Facets';
+import ResultFacets from '../components/ResultFacets.vue';
+import Facets from '../components/Facets.vue';
 import { createGroups } from '../util/facets';
 import { createRouteEntryFromRoute } from '../util/routes';
 import { getTask } from '../util/pipelines';
@@ -99,7 +99,7 @@ export default {
 		},
 
 		minVal() {
-			const resultItems = this.$store.getters.getResultDataItems(this.regressionEnabled);
+			const resultItems = this.$store.getters.getResultDataItems(this.regressionEnabled) as { [name: string]: any }[];
 			if (!_.isEmpty(resultItems) && _.has(resultItems[0], 'error')) {
 				const minErr = Math.abs(_.minBy(resultItems, r => Math.abs(r.error)).error);
 				// round to closest 2 decimal places, otherwise interval computation makes the slider angry
@@ -109,7 +109,7 @@ export default {
 		},
 
 		maxVal() {
-			const resultItems = this.$store.getters.getResultDataItems(this.regressionEnabled);
+			const resultItems = this.$store.getters.getResultDataItems(this.regressionEnabled) as { [name: string]: any }[]	;
 			if (!_.isEmpty(resultItems) && _.has(resultItems[0], 'error')) {
 				const maxErr = Math.abs(_.maxBy(resultItems, r => Math.abs(r.error)).error);
 				// round to closest 2 decimal places, otherwise interval computation makes the slider angry
@@ -138,9 +138,7 @@ export default {
 			const targetSummary = _.find(varSummaries, v => _.toLower(v.name) === _.toLower(targetVariable));
 			// Create a facet for it - this will act as a basis of comparison for the result sets
 			if (!_.isEmpty(targetSummary)) {
-				return createGroups([
-					targetSummary
-				], false, false);
+				return createGroups([targetSummary], false, false, '');
 			}
 			return [];
 		},

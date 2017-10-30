@@ -9,7 +9,8 @@ export interface RouteArgs {
 	target?: string,
 	createRequestId?: string,
 	results?: string,
-	resultId?: string
+	resultId?: string,
+	residualThreshold?: number
 }
 
 /**
