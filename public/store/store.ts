@@ -5,6 +5,7 @@ import { state, DistilState } from './index';
 import {actions } from './actions';
 import { getters } from './getters';
 import { mutations } from './mutations';
+import { routeModule } from './route/module';
 
 Vue.use(Vuex);
 
@@ -13,5 +14,8 @@ export default new Store<DistilState>({
 	getters,
 	actions,
 	mutations,
+	modules:  {
+		routeModule
+	},
 	strict: true
 });

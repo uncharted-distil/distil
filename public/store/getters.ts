@@ -1,6 +1,5 @@
 import _ from 'lodash';
 import Connection from '../util/ws';
-import { decodeFilters, FilterMap } from '../util/filters';
 import { DistilState, Variable, Data } from './index';
 import { GetterTree } from 'vuex';
 
@@ -31,62 +30,6 @@ export interface FieldInfo {
 }
 
 export const getters: GetterTree<DistilState, any> = {
-	getRoute(state: DistilState) {
-		return () => state.route;
-	},
-
-	getRoutePath(state: DistilState) {
-		return () => state.route.path;
-	},
-
-	getRouteTerms(state: DistilState) {
-		return () => state.route.query.terms;
-	},
-
-	getRouteDataset(state: DistilState) {
-		return () => state.route.query.dataset;
-	},
-
-	getRouteTrainingVariables(state: DistilState) {
-		return () => state.route.query.training ? state.route.query.training : null;
-	},
-
-	getRouteTargetVariable(state: DistilState) {
-		return () => state.route.query.target ? state.route.query.target : null;
-	},
-
-	getRouteCreateRequestId(state: DistilState) {
-		return () => state.route.query.createRequestId;
-	},
-
-	getRouteResultId(state: DistilState) {
-		return () => state.route.query.resultId;
-	},
-
-	getRouteFilters(state: DistilState) {
-		return () => state.route.query.filters ? state.route.query.filters : [];
-	},
-
-	getRouteResultFilters(state: DistilState) {
-		return () => state.route.query.results ? state.route.query.results : [];
-	},
-
-	getRouteFacetsPage(state: DistilState) {
-		return (pageKey: string) => state.route.query[pageKey];
-	},
-
-	getRouteResidualThreshold(state: DistilState) {
-		return () => state.route.query.residualThreshold;
-	},
-
-	getFilters(state: DistilState) {
-		return () => decodeFilters(state.route.query.filters ? state.route.query.filters : "") as FilterMap;
-	},
-
-	getResultsFilters(state: DistilState) {
-		return decodeFilters(state.route.query.results ? state.route.query.results : "") as FilterMap;
-	},
-
 	getVariables(state: DistilState) {
 		return () => state.variables;
 	},
@@ -133,10 +76,6 @@ export const getters: GetterTree<DistilState, any> = {
 		};
 	},
 
-	getTrainingVariables(state: DistilState) {
-		return () => state.route.query.training ? state.route.query.training.split(',') : [];
-	},
-
 	getTrainingVariablesMap(state: DistilState, getters: any) {
 		return () => {
 			const training = getters.getTrainingVariables() as string[];
@@ -145,12 +84,6 @@ export const getters: GetterTree<DistilState, any> = {
 				map[name.toLowerCase()] = true;
 			});
 			return map;
-		};
-	},
-
-	getTargetVariable(state: DistilState) {
-		return () => {
-			return state.route.query.target ? state.route.query.target : null;
 		};
 	},
 

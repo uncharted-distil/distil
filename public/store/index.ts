@@ -1,5 +1,3 @@
-import { Route } from 'vue-router';
-
 export type Dictionary<T> = { [key: string]: T }
 
 export interface Variable {
@@ -96,7 +94,6 @@ export interface DistilState {
 	completedPipelines: PipelineState;
 	wsConnection: WebSocket;
 	pipelineSession: Session;
-	route: Route;
 }
 
 // shared data model
@@ -138,6 +135,4 @@ export const state: DistilState = {
 
 	// the pipeline session id
 	pipelineSession: {} as any,
-
-	route: {} as any
 };
