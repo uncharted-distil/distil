@@ -1,40 +1,40 @@
 import _ from 'lodash';
 import Vue from 'vue';
 import { MutationTree } from 'vuex';
-import { DistilState } from './index';
+import { DistilState, Variable, Datasets, VariableSummary, Data, Session, PipelineInfo } from './index';
 
 export const mutations: MutationTree<DistilState> = {
-	updateVariableType(state, update) {
+	updateVariableType(state: DistilState, update) {
 		const index = _.findIndex(state.variables, elem => {
 			return elem.name === update.field;
 		});
 		state.variables[index].type = update.type;
 	},
 
-	setVariables(state, variables) {
+	setVariables(state: DistilState, variables: Variable[]) {
 		state.variables = variables;
 	},
 
-	setDatasets(state, datasets) {
+	setDatasets(state: DistilState, datasets: Datasets[]) {
 		state.datasets = datasets;
 	},
 
-	setVariableSummaries(state, summaries) {
+	setVariableSummaries(state: DistilState, summaries: VariableSummary[]) {
 		state.variableSummaries = summaries;
 	},
 
-	updateVariableSummaries(state, histogram) {
+	updateVariableSummaries(state: DistilState, histogram) {
 		const index = _.findIndex(state.variableSummaries, elem => {
 			return elem.name === histogram.name;
 		});
 		Vue.set(state.variableSummaries, index, histogram);
 	},
 
-	setResultsSummaries(state, summaries) {
+	setResultsSummaries(state: DistilState, summaries: VariableSummary[]) {
 		state.resultsSummaries = summaries;
 	},
 
-	updateResultsSummaries(state, summary) {
+	updateResultsSummaries(state: DistilState, summary: VariableSummary) {
 		const index = _.findIndex(state.resultsSummaries, r => r.name === summary.name);
 		if (index >=  0) {
 		  Vue.set(state.resultsSummaries, index, summary);
@@ -44,26 +44,26 @@ export const mutations: MutationTree<DistilState> = {
 	},
 
 	// sets the current filtered data into the store
-	setFilteredData(state, filteredData) {
+	setFilteredData(state: DistilState, filteredData: Data) {
 		state.filteredData = filteredData;
 	},
 
 	// sets the current selected data into the store
-	setSelectedData(state, selectedData) {
+	setSelectedData(state: DistilState, selectedData: Data) {
 		state.selectedData = selectedData;
 	},
 
 	// sets the current result data into the store
-	setResultData(state, resultData) {
+	setResultData(state: DistilState, resultData: Data) {
 		state.resultData = resultData;
 	},
 
-	setWebSocketConnection(state, connection) {
+	setWebSocketConnection(state: DistilState, connection: WebSocket) {
 		state.wsConnection = connection;
 	},
 
 	// sets the active session in the store as well as in the browser local storage
-	setPipelineSession(state, session) {
+	setPipelineSession(state: DistilState, session: Session) {
 		state.pipelineSession = session;
 		if (!session) {
 			window.localStorage.removeItem('pipeline-session-id');
@@ -73,7 +73,7 @@ export const mutations: MutationTree<DistilState> = {
 	},
 
 	// adds a running pipeline or replaces an existing one if the ids match
-	addRunningPipeline(state, pipelineData) {
+	addRunningPipeline(state: DistilState, pipelineData: PipelineInfo) {
 		if (!_.has(state.runningPipelines, pipelineData.requestId)) {
 			Vue.set(state.runningPipelines, pipelineData.requestId, {});
 		}
@@ -81,7 +81,7 @@ export const mutations: MutationTree<DistilState> = {
 	},
 
 	// removes a running pipeline
-	removeRunningPipeline(state, args) {
+	removeRunningPipeline(state: DistilState, args: { requestId: string, pipelineId: string }) {
 		if (_.has(state.runningPipelines, args.requestId)) {
 			// delete the pipeline from the request
 			if (_.has(state.runningPipelines[args.requestId], args.pipelineId)) {
@@ -97,7 +97,7 @@ export const mutations: MutationTree<DistilState> = {
 	},
 
 	// adds a completed pipeline or replaces an existing one if the ids match
-	addCompletedPipeline(state, pipelineData) {
+	addCompletedPipeline(state: DistilState, pipelineData: PipelineInfo) {
 		if (!_.has(state.completedPipelines, pipelineData.requestId)) {
 			Vue.set(state.completedPipelines, pipelineData.requestId, {});
 		}
@@ -105,7 +105,7 @@ export const mutations: MutationTree<DistilState> = {
 	},
 
 	// removes a completed pipeline
-	removeCompletedPipeline(state, args) {
+	removeCompletedPipeline(state: DistilState, args: { requestId: string, pipelineId: string }) {
 		if (_.has(state.runningPipelines, args.requestId)) {
 			// delete the pipeline from the request
 			if (_.has(state.completedPipelines[args.requestId], args.pipelineId)) {
@@ -120,7 +120,7 @@ export const mutations: MutationTree<DistilState> = {
 		return false;
 	},
 
-	highlightFeatureRange(state, highlight) {
+	highlightFeatureRange(state: DistilState, highlight: { name: string, to: string, from: string }) {
 		Vue.set(state.highlightedFeatureRanges, highlight.name, {
 			from: highlight.from,
 			to: highlight.to
@@ -132,11 +132,11 @@ export const mutations: MutationTree<DistilState> = {
 		}
 	},
 
-	clearFeatureHighlightRange(state, name) {
+	clearFeatureHighlightRange(state: DistilState, name: string) {
 		Vue.delete(state.highlightedFeatureRanges, name);
 	},
 
-	highlightFeatureValues(state, highlights) {
+	highlightFeatureValues(state: DistilState, highlights: { [name: string]: any }) {
 		Vue.set(state, 'highlightedFeatureValues', highlights);
 		if (state.resultsSummaries) {
 			state.resultsSummaries.forEach(summary => {
@@ -145,11 +145,11 @@ export const mutations: MutationTree<DistilState> = {
 		}
 	},
 
-	clearFeatureHighlightValues(state) {
+	clearFeatureHighlightValues(state: DistilState) {
 		Vue.delete(state, 'highlightedFeatureValues');
 	},
 
-	addRecentDataset(state, dataset) {
+	addRecentDataset(state: DistilState, dataset: string) {
 		const datasetsStr = window.localStorage.getItem('recent-datasets');
 		const datasets = (datasetsStr) ? datasetsStr.split(',') : [];
 		datasets.unshift(dataset);

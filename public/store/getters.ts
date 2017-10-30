@@ -1,8 +1,8 @@
 import _ from 'lodash';
 import Connection from '../util/ws';
 import { decodeFilters, FilterMap } from '../util/filters';
-import { GetterTree } from 'vuex';
 import { DistilState, Variable, Data } from './index';
+import { GetterTree } from 'vuex';
 
 function getTargetIndexFromPredicted(columns: string[], predictedIndex: number) {
 	const targetName = columns[predictedIndex].replace('_res', '');
@@ -26,72 +26,72 @@ function validateData(data: Data) {
 export interface FieldInfo {
 	label: string,
 	type: string,
-	suggested: string[],
+	suggested: {[type: string]: string },
 	sortable: boolean
 }
 
 export const getters: GetterTree<DistilState, any> = {
-	getRoute(state) {
+	getRoute(state: DistilState) {
 		return () => state.route;
 	},
 
-	getRoutePath(state) {
+	getRoutePath(state: DistilState) {
 		return () => state.route.path;
 	},
 
-	getRouteTerms(state) {
+	getRouteTerms(state: DistilState) {
 		return () => state.route.query.terms;
 	},
 
-	getRouteDataset(state) {
+	getRouteDataset(state: DistilState) {
 		return () => state.route.query.dataset;
 	},
 
-	getRouteTrainingVariables(state) {
+	getRouteTrainingVariables(state: DistilState) {
 		return () => state.route.query.training ? state.route.query.training : null;
 	},
 
-	getRouteTargetVariable(state) {
+	getRouteTargetVariable(state: DistilState) {
 		return () => state.route.query.target ? state.route.query.target : null;
 	},
 
-	getRouteCreateRequestId(state) {
+	getRouteCreateRequestId(state: DistilState) {
 		return () => state.route.query.createRequestId;
 	},
 
-	getRouteResultId(state) {
+	getRouteResultId(state: DistilState) {
 		return () => state.route.query.resultId;
 	},
 
-	getRouteFilters(state) {
+	getRouteFilters(state: DistilState) {
 		return () => state.route.query.filters ? state.route.query.filters : [];
 	},
 
-	getRouteResultFilters(state) {
+	getRouteResultFilters(state: DistilState) {
 		return () => state.route.query.results ? state.route.query.results : [];
 	},
 
-	getRouteFacetsPage(state) {
+	getRouteFacetsPage(state: DistilState) {
 		return (pageKey: string) => state.route.query[pageKey];
 	},
 
-	getRouteResidualThreshold(state) {
+	getRouteResidualThreshold(state: DistilState) {
 		return () => state.route.query.residualThreshold;
 	},
 
-	getFilters(state) {
+	getFilters(state: DistilState) {
 		return () => decodeFilters(state.route.query.filters ? state.route.query.filters : "") as FilterMap;
 	},
 
-	getResultsFilters(state) {
+	getResultsFilters(state: DistilState) {
 		return decodeFilters(state.route.query.results ? state.route.query.results : "") as FilterMap;
 	},
 
-	getVariables(state) {
+	getVariables(state: DistilState) {
 		return () => state.variables;
 	},
 
-	getVariablesMap(state) {
+	getVariablesMap(state: DistilState) {
 		return () => {
 			const map: { [name: string]: Variable } = {};
 			state.variables.forEach(variable => {
@@ -101,7 +101,7 @@ export const getters: GetterTree<DistilState, any> = {
 		};
 	},
 
-	getDatasets(state) {
+	getDatasets(state: DistilState) {
 		return (ids: string[]) => {
 			if (_.isUndefined(ids)) {
 				return state.datasets;
@@ -111,7 +111,7 @@ export const getters: GetterTree<DistilState, any> = {
 		};
 	},
 
-	getAvailableVariables(state, getters) {
+	getAvailableVariables(state: DistilState, getters: any) {
 		return () => {
 			const training = getters.getTrainingVariablesMap();
 			const target = getters.getTargetVariable();
@@ -122,7 +122,7 @@ export const getters: GetterTree<DistilState, any> = {
 		};
 	},
 
-	getAvailableVariablesMap(state, getters) {
+	getAvailableVariablesMap(state: DistilState, getters: any) {
 		return () => {
 			const available = getters.getAvailableVariables() as string[];
 			const map: { [name: string]: boolean } = {};
@@ -133,11 +133,11 @@ export const getters: GetterTree<DistilState, any> = {
 		};
 	},
 
-	getTrainingVariables(state) {
+	getTrainingVariables(state: DistilState) {
 		return () => state.route.query.training ? state.route.query.training.split(',') : [];
 	},
 
-	getTrainingVariablesMap(state, getters) {
+	getTrainingVariablesMap(state: DistilState, getters: any) {
 		return () => {
 			const training = getters.getTrainingVariables() as string[];
 			const map: { [name: string]: boolean } = {};
@@ -148,23 +148,23 @@ export const getters: GetterTree<DistilState, any> = {
 		};
 	},
 
-	getTargetVariable(state) {
+	getTargetVariable(state: DistilState) {
 		return () => {
 			return state.route.query.target ? state.route.query.target : null;
 		};
 	},
 
-	getVariableSummaries(state) {
+	getVariableSummaries(state: DistilState) {
 		return () => state.variableSummaries;
 	},
 
-	getResultsSummaries(state) {
+	getResultsSummaries(state: DistilState) {
 		return () => {
 			return state.resultsSummaries;
 		};
 	},
 
-	getSelectedFilters(state, getters) {
+	getSelectedFilters(state: DistilState, getters: any) {
 		return () => {
 			const training = getters.getTrainingVariables() as string[];
 			const existing = getters.getFilters();
@@ -184,7 +184,7 @@ export const getters: GetterTree<DistilState, any> = {
 		};
 	},
 
-	getAvailableVariableSummaries(state, getters) {
+	getAvailableVariableSummaries(state: DistilState, getters: any) {
 		return () => {
 			const available = getters.getAvailableVariablesMap();
 			return state.variableSummaries.filter(variable => {
@@ -193,7 +193,7 @@ export const getters: GetterTree<DistilState, any> = {
 		};
 	},
 
-	getTrainingVariableSummaries(state, getters) {
+	getTrainingVariableSummaries(state: DistilState, getters: any) {
 		return () => {
 			const training = getters.getTrainingVariablesMap();
 			return state.variableSummaries.filter(variable => {
@@ -202,7 +202,7 @@ export const getters: GetterTree<DistilState, any> = {
 		};
 	},
 
-	getTargetVariableSummaries(state, getters) {
+	getTargetVariableSummaries(state: DistilState, getters: any) {
 		return () => {
 			const target = getters.getTargetVariable();
 			if (!target) {
@@ -214,11 +214,11 @@ export const getters: GetterTree<DistilState, any> = {
 		};
 	},
 
-	getFilteredData(state) {
+	getFilteredData(state: DistilState) {
 		return () => state.filteredData;
 	},
 
-	getFilteredDataItems(state) {
+	getFilteredDataItems(state: DistilState) {
 		return () => {
 			if (validateData(state.filteredData)) {
 				return _.map(state.filteredData.values, d => {
@@ -238,7 +238,7 @@ export const getters: GetterTree<DistilState, any> = {
 		};
 	},
 
-	getFilteredDataFields(state) {
+	getFilteredDataFields(state: DistilState) {
 		return () => {
 			const data = state.filteredData;
 
@@ -267,11 +267,11 @@ export const getters: GetterTree<DistilState, any> = {
 		};
 	},
 
-	getResultData(state) {
+	getResultData(state: DistilState) {
 		return () => state.resultData;
 	},
 
-	getResultDataItems(state) {
+	getResultDataItems(state: DistilState) {
 		return () => {
 			const resultData = state.resultData;
 			if (validateData(resultData)) {
@@ -308,7 +308,7 @@ export const getters: GetterTree<DistilState, any> = {
 		};
 	},
 
-	getResultDataFields(state) {
+	getResultDataFields(state: DistilState) {
 		return () => {
 			const data = state.resultData;
 
@@ -340,13 +340,13 @@ export const getters: GetterTree<DistilState, any> = {
 		};
 	},
 
-	getSelectedData(state) {
+	getSelectedData(state: DistilState) {
 		return () => {
 			return state.selectedData;
 		};
 	},
 
-	getSelectedDataItems(state) {
+	getSelectedDataItems(state: DistilState) {
 		return () => {
 			if (validateData(state.selectedData)) {
 				return _.map(state.selectedData.values, d => {
@@ -366,12 +366,12 @@ export const getters: GetterTree<DistilState, any> = {
 		};
 	},
 
-	getSelectedDataFields(state) {
+	getSelectedDataFields(state: DistilState) {
 		return () => {
 			const data = state.selectedData;
 			const variables = state.variables;
 			const types = {};
-			const suggested = {};
+			const suggested: {} = [];
 			variables.forEach(variable => {
 			  types[variable.name] = variable.type;
 			  suggested[variable.name] = variable.suggestedTypes;
@@ -394,7 +394,7 @@ export const getters: GetterTree<DistilState, any> = {
 		};
 	},
 
-	getPipelineResults(state) {
+	getPipelineResults(state: DistilState) {
 		return (requestId: string) => {
 			return _.concat(
 				_.values(state.runningPipelines[requestId]),
@@ -402,11 +402,11 @@ export const getters: GetterTree<DistilState, any> = {
 		};
 	},
 
-	getRunningPipelines(state) {
+	getRunningPipelines(state: DistilState) {
 		return () => state.runningPipelines;
 	},
 
-	getCompletedPipelines(state) {
+	getCompletedPipelines(state: DistilState) {
 		return () => state.completedPipelines;
 	},
 
@@ -422,7 +422,7 @@ export const getters: GetterTree<DistilState, any> = {
 		};
 	},
 
-	getPipelineSessionID(state) {
+	getPipelineSessionID(state: DistilState) {
 		return () => {
 			if (!state.pipelineSession) {
 				return window.localStorage.getItem('pipeline-session-id');
@@ -431,11 +431,11 @@ export const getters: GetterTree<DistilState, any> = {
 		};
 	},
 
-	getPipelineSession(state) {
+	getPipelineSession(state: DistilState) {
 		return () => state.pipelineSession;
 	},
 
-	getHighlightedFeatureValues(state) {
+	getHighlightedFeatureValues(state: DistilState) {
 		return () => state.highlightedFeatureValues;
 	},
 

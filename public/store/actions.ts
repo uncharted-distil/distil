@@ -1,9 +1,9 @@
 import _ from 'lodash';
 import axios from 'axios';
 import moment from 'moment';
-import { encodeQueryParams } from '../util/filters';
-import { ActionTree } from 'vuex';
+import { encodeQueryParams, FilterMap } from '../util/filters';
 import { DistilState, Variable, PipelineInfo, Score } from './index';
+import { ActionTree } from 'vuex';
 import Connection from '../util/ws';
 
 // TODO: move this somewhere more appropriate.
@@ -33,6 +33,16 @@ interface Result {
 	Scores: Score[];
 }
 
+interface PipelineRequest {
+	sessionId: string,
+	dataset: string,
+	feature: string,
+	task: string,
+	metric: string,
+	output: string,
+	filters: string
+}
+
 interface PipelineResponse {
 	RequestID: string;
 	Dataset: string;
@@ -43,7 +53,7 @@ interface PipelineResponse {
 export const actions: ActionTree<DistilState, any> = {
 
 	// searches dataset descriptions and column names for supplied terms
-	searchDatasets(context, terms) {
+	searchDatasets(context: any, terms: string) {
 		const params = !_.isEmpty(terms) ? `?search=${terms}` : '';
 		return axios.get(`/distil/datasets/${ES_INDEX}${params}`)
 		.then(response => {
@@ -56,7 +66,7 @@ export const actions: ActionTree<DistilState, any> = {
 	},
 
 	// searches dataset descriptions and column names for supplied terms
-	getSession(context, args) {
+	getSession(context: any, args: { sessionId: string }) {
 		const sessionId = args.sessionId;
 		return axios.get(`/distil/session/${sessionId}`)
 		.then(response => {
@@ -103,7 +113,7 @@ export const actions: ActionTree<DistilState, any> = {
 	},
 
 	// fetches all variables for a single dataset.
-	getVariables(context, args) {
+	getVariables(context: any, args: { dataset: string }) {
 		const dataset = args.dataset;
 		return axios.get(`/distil/variables/${ES_INDEX}/${dataset}`)
 		.then(response => {
@@ -115,7 +125,7 @@ export const actions: ActionTree<DistilState, any> = {
 		});
 	},
 
-	setVariableType(context, args) {
+	setVariableType(context: any, args: { dataset: string, field: string, type: string }) {
 		return axios.post(`/distil/variables/${ES_INDEX}/${args.dataset}`,
 		{
 			field: args.field,
@@ -135,7 +145,7 @@ export const actions: ActionTree<DistilState, any> = {
 	},
 
 	// fetches variable summary data for the given dataset and variables
-	getVariableSummaries(context, args: { dataset: string, variables: Variable[]}) {
+	getVariableSummaries(context: any, args: { dataset: string, variables: Variable[]}) {
 		const dataset = args.dataset;
 		const variables = args.variables;
 		// commit empty place holders
@@ -155,7 +165,7 @@ export const actions: ActionTree<DistilState, any> = {
 		}));
 	},
 
-	getVariableSummary(context, args) {
+	getVariableSummary(context: any, args: { dataset: string, variable: string}) {
 		const dataset = args.dataset;
 		const variable = args.variable;
 		return axios.get(`/distil/variable-summaries/${ES_INDEX}/${dataset}/${variable}`)
@@ -182,7 +192,7 @@ export const actions: ActionTree<DistilState, any> = {
 	},
 
 	// update filtered data based on the  current filter state
-	updateFilteredData(context, args) {
+	updateFilteredData(context: any, args: { dataset: string, filters: FilterMap}) {
 		const dataset = args.dataset;
 		const filters = args.filters;
 		const queryParams = encodeQueryParams(filters);
@@ -199,7 +209,7 @@ export const actions: ActionTree<DistilState, any> = {
 	},
 
 	// update filtered data based on the  current filter state
-	updateSelectedData(context, args) {
+	updateSelectedData(context: any, args: { dataset: string, filters: FilterMap}) {
 		const dataset = args.dataset;
 		const filters = args.filters;
 		const queryParams = encodeQueryParams(filters);
@@ -216,7 +226,7 @@ export const actions: ActionTree<DistilState, any> = {
 	},
 
 	// starts a pipeline session.
-	getPipelineSession(context, args) {
+	getPipelineSession(context: any, args: { sessionId: string } ) {
 		const sessionId = args.sessionId;
 		const conn = context.getters.getWebSocketConnection() as Connection;
 		return conn.send({
@@ -236,7 +246,7 @@ export const actions: ActionTree<DistilState, any> = {
 	},
 
 	// end a pipeline session.
-	endPipelineSession(context, args) {
+	endPipelineSession(context: any, args: { sessionId: string }) {
 		const sessionId = args.sessionId;
 		const conn = context.getters.getWebSocketConnection();
 		if (!sessionId) {
@@ -252,8 +262,7 @@ export const actions: ActionTree<DistilState, any> = {
 		});
 	},
 
-	// issues a pipeline create request
-	createPipelines(context, request) {
+	createPipelines(context: any, request: PipelineRequest) {
 		const conn = context.getters.getWebSocketConnection() as Connection;
 		if (!request.sessionId) {
 			console.warn('Missing session id');
@@ -300,7 +309,7 @@ export const actions: ActionTree<DistilState, any> = {
 	},
 
 	// fetches result summaries for a given pipeline create request
-	getResultsSummaries(context, args: { dataset: string, requestId: string}) {
+	getResultsSummaries(context: any, args: { dataset: string, requestId: string}) {
 		const dataset = args.dataset;
 		const requestId = args.requestId;
 		const results = context.getters.getPipelineResults(requestId) as PipelineInfo[];
@@ -357,7 +366,7 @@ export const actions: ActionTree<DistilState, any> = {
 	},
 
 	// fetches result data for created pipeline
-	updateResults(context, args) {
+	updateResults(context: any, args: { resultId: string, dataset: string, filters: FilterMap}) {
 		const encodedResultId = encodeURIComponent(args.resultId);
 		const filters = args.filters;
 		const queryParams = encodeQueryParams(filters);
@@ -370,19 +379,19 @@ export const actions: ActionTree<DistilState, any> = {
 		});
 	},
 
-	highlightFeatureRange(context, highlight) {
+	highlightFeatureRange(context: any, highlight: Range) {
 		context.commit('highlightFeatureRange', highlight);
 	},
 
-	clearFeatureHighlightRange(context, varName) {
+	clearFeatureHighlightRange(context: any, varName: string) {
 		context.commit('clearFeatureHighlightRange', varName);
 	},
 
-	highlightFeatureValues(context, highlight) {
+	highlightFeatureValues(context: any, highlight: { [name: string]: any } ) {
 		context.commit('highlightFeatureValues', highlight);
 	},
 
-	clearFeatureHighlightValues(context) {
+	clearFeatureHighlightValues(context: any) {
 		context.commit('clearFeatureHighlightValues');
 	},
 
@@ -396,7 +405,7 @@ export const actions: ActionTree<DistilState, any> = {
 		});
 	},
 
-	exportPipeline(context, args) {
+	exportPipeline(context: any, args: { sessionId: string, pipelineId: string}) {
 		return axios.get(`/distil/export/${args.sessionId}/${args.pipelineId}`)
 		.then(() => {
 			console.warn(`User exported pipeline ${args.pipelineId}`);
@@ -406,7 +415,7 @@ export const actions: ActionTree<DistilState, any> = {
 		});
 	},
 
-	addRecentDataset(context, dataset) {
+	addRecentDataset(context: any, dataset: string) {
 		context.commit('addRecentDataset', dataset);
 	}
 };

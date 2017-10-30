@@ -2,14 +2,15 @@
     "compilerOptions": {
         "outDir": "./built/",
         "sourceMap": true,
-        "strict":false,
         "module": "es2015",
         "moduleResolution": "node",
         "allowSyntheticDefaultImports": true,
         "target": "es6",
         "allowJs": true,
         "noUnusedLocals": true,
-        "noImplicitThis": false
+        "noImplicitThis": false,
+        "noImplicitAny": false,
+        "strictNullChecks": false
     },
     "include": [
         "./public/**/*"

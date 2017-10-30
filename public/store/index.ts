@@ -1,5 +1,7 @@
 import { Route } from 'vue-router';
 
+export type Dictionary<T> = { [key: string]: T }
+
 export interface Variable {
 	name: string;
 	type: string;
@@ -51,6 +53,7 @@ export interface PipelineOutput {
 }
 
 export interface PipelineInfo {
+	requestId: string;
 	name: string;
 	id: string;
 	feature: string;
@@ -60,11 +63,11 @@ export interface PipelineInfo {
 }
 
 export interface PipelineRequestInfo {
-	[pipelineId: string]: PipelineInfo
+	[pipelineId: string]: PipelineInfo;
 }
 
 export interface PipelineState {
-	[requestId: string]: PipelineRequestInfo
+	[requestId: string]: PipelineRequestInfo;
 }
 
 export interface Session {

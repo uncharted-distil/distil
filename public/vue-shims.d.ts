@@ -4,3 +4,5 @@ declare module '*.vue' {
 }
 
 declare module 'bootstrap-vue';
+declare module '@uncharted.software/stories-facets';
+declare module 'vue-slider-component';
