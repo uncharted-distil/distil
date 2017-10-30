@@ -36,3 +36,52 @@ export interface Data {
 	types: string[];
 	values: any[][];
 }
+
+export interface Range {
+	[name: string]: {
+		from: number,
+		to: number
+	}
+}
+
+export type Dictionary<T> = { [key: string]: T }
+
+export interface DataState {
+	datasets: Datasets[];
+	variables: Variable[];
+	variableSummaries: VariableSummary[];
+	resultsSummaries: VariableSummary[];
+	resultData: Data;
+	filteredData: Data;
+	selectedData: Data;
+	highlightedFeatureRanges: Range;
+	highlightedFeatureValues: Dictionary<any>;
+}
+
+export const state = {
+	// description of matched datasets
+	datasets: [],
+
+	// variable list for the active dataset
+	variables: [],
+
+	// variable summary data for the active dataset
+	variableSummaries: [],
+
+	// results summary data for the selected pipeline run
+	resultsSummaries: [],
+
+	// current set of pipeline results
+	resultData: {} as any,
+
+	// filtered data entries for the active dataset
+	filteredData: {} as any,
+
+	// selected data entries for the active dataset
+	selectedData: {} as any,
+
+	// highlighted features
+	highlightedFeatureRanges: {} as any,
+
+	highlightedFeatureValues: {} as any
+}
