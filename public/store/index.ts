@@ -15,8 +15,8 @@ export interface Datasets {
 }
 
 export interface Extrema {
-	min: number,
-	max: number
+	min: number;
+	max: number;
 }
 
 export interface Bucket {
