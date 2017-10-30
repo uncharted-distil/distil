@@ -2,10 +2,9 @@ import _ from 'lodash';
 import axios from 'axios';
 import { encodeQueryParams, FilterMap } from '../../util/filters';
 import { DataState, Variable } from './index';
-import { PipelineInfo } from '../index';
+import { PipelineInfo } from '../pipelines/index';
 import { ActionTree } from 'vuex';
 
-// TODO: move this somewhere more appropriate.
 const ES_INDEX = 'datasets';
 
 export const actions: ActionTree<DataState, any> = {

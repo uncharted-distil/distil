@@ -7,6 +7,7 @@ import { getters } from './getters';
 import { mutations } from './mutations';
 import { routeModule } from './route/module';
 import { dataModule } from './data/module';
+import { pipelineModule } from './pipelines/module';
 
 Vue.use(Vuex);
 
@@ -17,7 +18,8 @@ export default new Store<DistilState>({
 	mutations,
 	modules:  {
 		routeModule,
-		dataModule
+		dataModule,
+		pipelineModule
 	},
 	strict: true
 });
