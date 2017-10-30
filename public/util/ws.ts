@@ -12,7 +12,7 @@ function getHost() {
 	return `${uri}//${loc.host}${loc.pathname}`;
 }
 
-function establishConnection(conn, callback) {
+function establishConnection(conn: Connection, callback: (x: any, c: Connection) => void) {
 	conn.socket = new WebSocket(`${getHost()}${conn.url}`);
 	// on open
 	conn.socket.onopen = function() {
@@ -91,13 +91,19 @@ function stripURL(url) {
 }
 
 class Stream {
-	constructor(conn, fn) {
+	id: string;
+	conn: Connection;
+	fn: (x: any) => void;
+	pending: Message[];
+
+	constructor(conn: Connection, fn: (x: any) => void) {
 		this.id = `${_trackedID++}`;
 		this.conn = conn;
-		this.fn = fn;
 		this.pending = [];
+		this.fn = fn;
 	}
-	send(msg) {
+
+	send(msg: any) {
 		msg.id = this.id;
 		if (this.conn.isOpen) {
 			this.conn.socket.send((JSON.stringify(msg)));
@@ -105,14 +111,27 @@ class Stream {
 			this.pending.push(msg);
 		}
 	}
+
 	close() {
 		this.conn.streams.delete(this.id);
 		this.conn.tracking.delete(this.id);
 	}
 }
 
+interface Payload {
+	id: string;
+}
+
+type PromiseFunc = (t: any) => void;
+
 class Message {
-	constructor(payload) {
+	id: string;
+	resolve: PromiseFunc;
+	reject: PromiseFunc;
+	promise: Promise<any>;
+	payload: Payload;
+
+	constructor(payload: any) {
 		this.id = `${_trackedID++}`;
 		this.payload = payload;
 		this.payload.id = this.id;
@@ -127,7 +146,15 @@ const MESSAGE = Symbol();
 const STREAM = Symbol();
 
 export default class Connection {
-	constructor(url, callback) {
+	url: string;
+	streams: Map<string, Stream>;
+	messages: Map<string, Message>;
+	pending: Message[];
+	tracking: Map<string, Symbol>;
+	isOpen: boolean;
+	socket: WebSocket | null
+
+	constructor(url: string, callback) {
 		this.url = stripURL(url);
 		this.streams = new Map();
 		this.messages = new Map();
@@ -136,13 +163,13 @@ export default class Connection {
 		this.isOpen = false;
 		establishConnection(this, callback);
 	}
-	stream(fn) {
+	stream(fn: (x: any) => void) {
 		const stream = new Stream(this, fn);
 		this.streams.set(stream.id, stream);
 		this.tracking.set(stream.id, STREAM);
 		return stream;
 	}
-	send(payload) {
+	send(payload: any) {
 		const message = new Message(payload);
 		this.messages.set(message.id, message);
 		this.tracking.set(message.id, MESSAGE);

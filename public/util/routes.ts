@@ -1,4 +1,17 @@
 import _ from 'lodash';
+import { Route, Location } from 'vue-router';
+
+export interface RouteArgs {
+	dataset?: string,
+	terms?: string,
+	filters?: string,
+	training?: string,
+	target?: string,
+	createRequestId?: string,
+	results?: string,
+	resultId?: string,
+	residualThreshold?: number
+}
 
 /**
  * Builds a route entry object that can be directly pushed onto the stack
@@ -7,13 +20,10 @@ import _ from 'lodash';
  *
  * @param {string} path - route path
  * @param {Object} args - the arguments for the route.
- * @param {string} args.terms - search terms from the route query string
- * @param {string} args.dataset - dataset name from the route query string
- * @param {Object} args.filters - filters - The list filters from the route query string.
- * @param {string} args.pipelineID - pipelineID
  */
-export function createRouteEntry(path, args = {}) {
-	const query = {};
+export function createRouteEntry(path: string, args: RouteArgs): Location {
+	const query: { [id: string]: string } = {};
+
 	if (args.dataset) { query.dataset = args.dataset; }
 	if (args.terms) { query.terms = args.terms; }
 	if (!_.isEmpty(args.training)) { query.training = args.training; }
@@ -22,15 +32,18 @@ export function createRouteEntry(path, args = {}) {
 	if (!_.isEmpty(args.filters)) { query.filters = args.filters; }
 	if (!_.isEmpty(args.results)) { query.results = args.results; }
 	if (!_.isEmpty(args.resultId)) { query.resultId = args.resultId; }
-	return {
+
+	const routeEntry: Location = {
 		path: path,
 		query: query
 	};
+
+	return routeEntry;
 }
 
-export function createRouteEntryFromRoute(route, args = {}) {
+export function createRouteEntryFromRoute(route: Route, args: RouteArgs): Location {
 	// initialize a new object from the supplied route
-	const routeEntry = {
+	const routeEntry: Location = {
 		path: route.path,
 		query: _.cloneDeep(route.query)
 	};

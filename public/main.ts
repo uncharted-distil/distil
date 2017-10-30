@@ -1,14 +1,14 @@
 import Vue from 'vue';
 import VueRouter from 'vue-router';
 import VueRouterSync from 'vuex-router-sync';
-import Home from './views/Home';
-import Search from './views/Search';
-import Explore from './views/Explore';
-import Select from './views/Select';
-import Pipelines from './views/Pipelines';
-import Results from './views/Results';
-import Navigation from './views/Navigation';
-import store from './store';
+import Home from './views/Home.vue';
+import Search from './views/Search.vue';
+import Explore from './views/Explore.vue';
+import Select from './views/Select.vue';
+import Pipelines from './views/Pipelines.vue';
+import Results from './views/Results.vue';
+import Navigation from './views/Navigation.vue';
+import store from './store/store';
 import BootstrapVue from 'bootstrap-vue';
 
 import './assets/favicons/apple-touch-icon.png';

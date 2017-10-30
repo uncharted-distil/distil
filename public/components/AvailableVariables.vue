@@ -13,10 +13,10 @@
 	</div>
 </template>
 
-<script>
+<script language="ts">
 
 import { createRouteEntryFromRoute } from '../util/routes';
-import VariableFacets from '../components/VariableFacets';
+import VariableFacets from '../components/VariableFacets.vue';
 import 'font-awesome/css/font-awesome.css';
 
 export default {

@@ -24,28 +24,45 @@ export const CATEGORICAL_FILTER_ID = 'categorical';
 export const NUMERICAL_FILTER = Symbol('numerical');
 export const NUMERICAL_FILTER_ID = 'numerical';
 
+export interface NumericalFilter {
+	name: string,
+	enabled: boolean,
+	min: number,
+	max: number
+}
+
+export interface CategoricalFilter {
+	name: string,
+	enabled: boolean,
+	categories: string[]
+}
+
+export interface FilterMap {
+	[id: string]: (NumericalFilter | CategoricalFilter)
+}
+
 /**
  * Decodes the map of filters from the route into objects.
  *
- * @param {Object} filters - The filters from the route query string.
+ * @param {string} filters - The filters from the route query string.
  *
- * @returns {Object} The decoded filter object.
+ * @returns {FilterMap} The decoded filter object.
  */
-export function decodeFilters(filters) {
+export function decodeFilters(filters: string): FilterMap {
 	if (_.isEmpty(filters)) {
 		return {};
 	}
-	return JSON.parse(atob(filters));
+	return JSON.parse(atob(filters)) as FilterMap;
 }
 
 /**
  * Encodes the map of filter objects into a map of route query strings.
  *
- * @param {Object} filters - The filter objects.
+ * @param {FilterMap} filters - The filter objects.
  *
- * @returns {Object} The encoded route query strings.
+ * @returns {string} The encoded route query strings.
  */
-export function encodeFilters(filters) {
+export function encodeFilters(filters: FilterMap): string {
 	if (_.isEmpty(filters)) {
 		return undefined;
 	}
@@ -55,20 +72,20 @@ export function encodeFilters(filters) {
 /**
  * Encodes the filter object into a query param string for an HTTP request.
  *
- * @param {Object} filter - The filter object.
+ * @param {NumericalFilter|CategoricalFilter} filter - The filter object.
  *
- * @returns {Object} The HTTP query param strings.
+ * @returns {string} The HTTP query param strings.
  */
-export function encodeQueryParam(filter) {
+export function encodeQueryParam(filter: NumericalFilter | CategoricalFilter): string {
 	if (isDisabled(filter)) {
 		return `${encodeURIComponent(filter.name)}`;
 	}
 	switch (getFilterType(filter)) {
 		case NUMERICAL_FILTER:
-			return `${encodeURIComponent(filter.name)}=${NUMERICAL_FILTER_ID},${filter.min},${filter.max}`;
+			return `${encodeURIComponent(filter.name)}=${NUMERICAL_FILTER_ID},${(<NumericalFilter>filter).min},${(<NumericalFilter>filter).max}`;
 
 		case CATEGORICAL_FILTER:
-			return `${encodeURIComponent(filter.name)}=${CATEGORICAL_FILTER_ID},${filter.categories.join(',')}`;
+			return `${encodeURIComponent(filter.name)}=${CATEGORICAL_FILTER_ID},${(<CategoricalFilter>filter).categories.join(',')}`;
 	}
 	return null;
 }
@@ -77,12 +94,12 @@ export function encodeQueryParam(filter) {
  * Encodes the filter objects into a single query param string for an HTTP
  * request.
  *
- * @param {Object} filters - The filter objects.
+ * @param {FilterMap} filters - The filter objects.
  *
  * @returns {string} The HTTP query param strings.
  */
-export function encodeQueryParams(filters) {
-	const params = [];
+export function encodeQueryParams(filters: FilterMap): string {
+	const params: string[] = [];
 	_.forEach(filters, filter => {
 		const param = encodeQueryParam(filter);
 		if (param !== null) {
@@ -96,17 +113,17 @@ export function encodeQueryParams(filters) {
  * Updates the route with the provided route filter key and value. The function
  * will add, modify, or remove the filter as necessary.
  *
- * @param {Object} filters - The route filter strings.
+ * @param {string} filters - The route filter strings.
  * @param {string} key - The filter key.
  * @param {Object} values - The filter values.
  *
- * @returns {Object} The updated route filter strings.
+ * @returns {string} The updated route filter strings.
  */
-export function updateFilter(filters, key, values) {
+export function updateFilter(filters: string, key: string, values: { [name: string]: any }): string {
 	// decode the provided filters
 	const decoded = decodeFilters(filters);
 	// get or create the filter
-	let filter = decoded[key];
+	let filter = decoded[key] as any;
 	if (!filter) {
 		filter = {
 			name: key,
@@ -129,11 +146,11 @@ export function updateFilter(filters, key, values) {
 /**
  * Returns the filter type symbol.
  *
- * @param {string|Object} filter - The filter object or string.
+ * @param {Object} filter - The filter object or string.
  *
  * @returns {Symbol} The filter type symbol.
  */
-export function getFilterType(filter) {
+export function getFilterType(filter: NumericalFilter | CategoricalFilter): Symbol {
 	if (filter) {
 		if (_.has(filter, 'categories')) {
 			return CATEGORICAL_FILTER;
@@ -148,11 +165,11 @@ export function getFilterType(filter) {
 /**
  * Returns whether or not the filter is enabled.
  *
- * @param {Object} filter - The filter object.
+ * @param {CategoricalFilter | NumericalFilter} filter - The filter object.
  *
  * @returns {bool} Whether or not the filter is enabled.
  */
-export function isEnabled(filter) {
+export function isEnabled(filter: CategoricalFilter | NumericalFilter): boolean {
 	if (filter) {
 		return filter.enabled;
 	}
@@ -162,10 +179,10 @@ export function isEnabled(filter) {
 /**
  * Returns whether or not the filter is disabled.
  *
- * @param {Object} filter - The filter object.
+ * @param {CategoricalFilter | NumericalFilter} filter - The filter object.
  *
  * @returns {bool} Whether or not the filter is disabled.
  */
-export function isDisabled(filter) {
+export function isDisabled(filter: CategoricalFilter | NumericalFilter): boolean {
 	return !isEnabled(filter);
 }

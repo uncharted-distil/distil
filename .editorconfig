@@ -9,7 +9,7 @@ charset = utf-8
 end_of_line = lf
 insert_final_newline = true
 
-[*.{vue,ejs,js,css,html,md}]
+[*.{vue,ts,ejs,js,css,html,md}]
 indent_style = tab
 indent_size = 4
 

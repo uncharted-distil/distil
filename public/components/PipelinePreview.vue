@@ -44,7 +44,7 @@
 	</div>
 </template>
 
-<script>
+<script lang="ts">
 import moment from 'moment';
 import { getMetricDisplayName } from '../util/pipelines';
 import { createRouteEntry } from '../util/routes';
@@ -101,7 +101,7 @@ export default {
 				target: this.result.feature,
 				training: this.$store.getters.getRouteTrainingVariables(),
 				createRequestId: this.result.requestId,
-				resultId: btoa(this.result.pipeline.resultUri)
+				resultId: btoa(this.result.pipeline.resultId)
 			});
 			this.$router.push(entry);
 		}

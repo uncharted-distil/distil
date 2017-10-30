@@ -14,7 +14,7 @@
 	</div>
 </template>
 
-<script>
+<script lang="ts">
 
 import _ from 'lodash';
 import { createRouteEntry } from '../util/routes';
@@ -88,7 +88,7 @@ export default {
 			const taskData = getTask(this.targetVariable.type);
 			const task = taskData.schemaName;
 			const output = _.values(getOutputSchemaNames(taskData))[0];
-			const metrics = _.map(this.metrics, m => getMetricSchemaName(m));
+			const metrics = _.map(this.metrics as string[], m => getMetricSchemaName(m));
 
 			// dispatch action that triggers request send to server
 			this.$store.dispatch('createPipelines', {

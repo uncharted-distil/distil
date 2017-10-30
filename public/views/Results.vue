@@ -13,11 +13,11 @@
 	</div>
 </template>
 
-<script>
-import FlowBar from '../components/FlowBar';
-import ResultsComparison from '../components/ResultsComparison';
-import VariableSummaries from '../components/VariableSummaries';
-import ResultSummaries from '../components/ResultSummaries';
+<script lang="ts">
+import FlowBar from '../components/FlowBar.vue';
+import ResultsComparison from '../components/ResultsComparison.vue';
+import VariableSummaries from '../components/VariableSummaries.vue';
+import ResultSummaries from '../components/ResultSummaries.vue';
 import { gotoSelect } from '../util/nav';
 
 export default {

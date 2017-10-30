@@ -10,7 +10,7 @@
 	</div>
 </template>
 
-<script>
+<script lang="ts">
 import _ from 'lodash';
 import {createRouteEntry} from '../util/routes';
 
@@ -22,7 +22,7 @@ export default {
 			set: _.throttle(function(terms) {
 				const path = !_.isEmpty(terms) ? '/search' : this.$store.getters.getRoutePath();
 				const routeEntry = createRouteEntry(path, {
-					terms: terms,
+					terms: terms
 				});
 				this.$router.push(routeEntry);
 			}, 500),
