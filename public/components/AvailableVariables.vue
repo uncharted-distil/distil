@@ -13,13 +13,16 @@
 	</div>
 </template>
 
-<script language="ts">
+<script lang="ts">
 
 import { createRouteEntryFromRoute } from '../util/routes';
+import { getAvailableVariableSummaries } from '../store/data/module';
+import { VariableSummary } from '../store/data/index';
 import VariableFacets from '../components/VariableFacets.vue';
 import 'font-awesome/css/font-awesome.css';
+import Vue from 'vue';
 
-export default {
+export default Vue.extend({
 	name: 'available-variables',
 
 	components: {
@@ -30,11 +33,13 @@ export default {
 		dataset() {
 			return this.$store.getters.getRouteDataset();
 		},
-		variables() {
-			return this.$store.getters.getAvailableVariableSummaries();
+		variables(): VariableSummary[] {
+			return getAvailableVariableSummaries(this.$store);
 		},
 		html() {
 			return (group) => {
+
+				let x = this.computed.variables();
 				const container = document.createElement('div');
 				const trainingElem = document.createElement('button');
 				trainingElem.className += 'btn btn-sm btn-outline-success mr-2 mb-2';
@@ -61,7 +66,7 @@ export default {
 			};
 		}
 	}
-};
+});
 </script>
 
 <style>
