@@ -36,11 +36,11 @@ func TestVariableHandler(t *testing.T) {
 	expected, err := json.Unmarshal([]byte(
 		`{
 			"variables": [
-				{"name":"d3mIndex","type":"integer","importance": 0,"role": "index","suggestedTypes": [{ "type": "integer", "probability": 1.00 }]},
-				{"name":"Position","type":"categorical","importance": 0,"role": "attribute","suggestedTypes": [{ "type": "categorical", "probability": 1.00 }]},
-				{"name":"Number_seasons","type":"integer","importance": 1,"role": "attribute","suggestedTypes": [ { "type": "integer", "probability": 1.00 }]},
-				{"name":"Games_played","type":"integer","importance": 2,"role": "attribute","suggestedTypes": [ { "type": "integer", "probability": 1.00 }]},
-				{"name":"On_base_pct","type":"float","importance": 3,"role": "attribute","suggestedTypes": [ { "type": "float", "probability": 1.00 }]}
+				{"name":"d3mIndex","type":"integer","importance": 0,"role": "index","suggestedTypes": [{ "type": "integer", "probability": 1.00 }], "varOriginalVariable": "", "varDisplayVariable": ""},
+				{"name":"Position","type":"categorical","importance": 0,"role": "attribute","suggestedTypes": [{ "type": "categorical", "probability": 1.00 }], "varOriginalVariable": "", "varDisplayVariable": ""},
+				{"name":"Number_seasons","type":"integer","importance": 1,"role": "attribute","suggestedTypes": [ { "type": "integer", "probability": 1.00 }], "varOriginalVariable": "", "varDisplayVariable": ""},
+				{"name":"Games_played","type":"integer","importance": 2,"role": "attribute","suggestedTypes": [ { "type": "integer", "probability": 1.00 }], "varOriginalVariable": "", "varDisplayVariable": ""},
+				{"name":"On_base_pct","type":"float","importance": 3,"role": "attribute","suggestedTypes": [ { "type": "float", "probability": 1.00 }], "varOriginalVariable": "", "varDisplayVariable": ""}
 			]
 		}`))
 	assert.NoError(t, err)

@@ -17,6 +17,10 @@ const (
 	VarNameField = "varName"
 	// VarRoleField is the field name for the variable role.
 	VarRoleField = "varRole"
+	// VarDisplayVariableField is the field name for the display variable.
+	VarDisplayVariableField = "varDisplayVariable"
+	// VarOriginalVariableField is the field name for the original variable.
+	VarOriginalVariableField = "varOriginalVariable"
 	// VarTypeField is the field name for the variable type.
 	VarTypeField = "varType"
 	// VarImportanceField is the field name for the variable importnace.
@@ -148,6 +152,23 @@ func (s *Storage) FetchVariable(dataset string, index string, varName string) (*
 	return variables, err
 }
 
+// FetchVariableDisplay returns the display variable for the provided index, dataset, and variable.
+func (s *Storage) FetchVariableDisplay(dataset string, index string, varName string) (*model.Variable, error) {
+	// get the indicated variable.
+	variable, err := s.FetchVariable(dataset, index, varName)
+	if err != nil {
+		return nil, errors.Wrap(err, "unable to fetch variable")
+	}
+
+	// DisplayVariable will identify the variable to return.
+	// If not set, no other fetch is needed.
+	if variable.DisplayVariable != "" && variable.DisplayVariable != varName {
+		return s.FetchVariable(dataset, index, variable.DisplayVariable)
+	}
+
+	return variable, nil
+}
+
 // FetchVariables returns all the variables for the provided index and dataset.
 func (s *Storage) FetchVariables(dataset string, index string) ([]*model.Variable, error) {
 	// get dataset id
@@ -177,4 +198,36 @@ func (s *Storage) FetchVariables(dataset string, index string) ([]*model.Variabl
 		return nil, errors.Wrap(err, "unable to parse search result")
 	}
 	return variables, err
+}
+
+// FetchVariablesDisplay returns all the display variables for the provided index and dataset.
+func (s *Storage) FetchVariablesDisplay(dataset string, index string) ([]*model.Variable, error) {
+	// get all variables.
+	vars, err := s.FetchVariables(dataset, index)
+	if err != nil {
+		return nil, errors.Wrap(err, "unable to fetch dataset variables")
+	}
+
+	// create a lookup for the variables.
+	varsLookup := make(map[string]*model.Variable)
+	for _, v := range vars {
+		varsLookup[v.Name] = v
+	}
+
+	// build the slice by cycling through the variables and using the lookup
+	// for the display variables. Only include a variable once.
+	resultIncludes := make(map[string]bool)
+	result := make([]*model.Variable, 0)
+	for _, v := range vars {
+		name := v.DisplayVariable
+		if name == "" {
+			name = v.Name
+		}
+		if !resultIncludes[name] {
+			result = append(result, varsLookup[name])
+			resultIncludes[name] = true
+		}
+	}
+
+	return result, nil
 }
