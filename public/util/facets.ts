@@ -1,5 +1,5 @@
 import { spinnerHTML } from '../util/spinner';
-import { VariableSummary } from '../store/index';
+import { VariableSummary } from '../store/data/index';
 
 export interface PlaceHolderFacet {
 	placeholder: boolean

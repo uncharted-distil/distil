@@ -17,7 +17,7 @@ import Facets from '../components/Facets';
 import { decodeFilters, updateFilter, getFilterType, isDisabled,
 	CATEGORICAL_FILTER, NUMERICAL_FILTER, NumericalFilter, CategoricalFilter } from '../util/filters';
 import { createRouteEntryFromRoute } from '../util/routes';
-import { PipelineRequestInfo } from '../store/index';
+import { PipelineRequestInfo } from '../store/pipelines/index';
 import { createGroups } from '../util/facets';
 import 'font-awesome/css/font-awesome.css';
 import '../styles/spinner.css';

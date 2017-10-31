@@ -1,7 +1,3 @@
-import { Route } from 'vue-router';
-
-export type Dictionary<T> = { [key: string]: T }
-
 export interface Variable {
 	name: string;
 	type: string;
@@ -41,40 +37,6 @@ export interface Data {
 	values: any[][];
 }
 
-export interface Score {
-	metric: string;
-	value: number;
-}
-
-export interface PipelineOutput {
-	output: string,
-	scores: Score[];
-	resultId: string;
-}
-
-export interface PipelineInfo {
-	requestId: string;
-	name: string;
-	id: string;
-	feature: string;
-	pipelineId: string;
-	progress: string;
-	pipeline?: PipelineOutput;
-}
-
-export interface PipelineRequestInfo {
-	[pipelineId: string]: PipelineInfo;
-}
-
-export interface PipelineState {
-	[requestId: string]: PipelineRequestInfo;
-}
-
-export interface Session {
-	id: string;
-	uuids: string[];
-}
-
 export interface Range {
 	[name: string]: {
 		from: number,
@@ -82,7 +44,9 @@ export interface Range {
 	}
 }
 
-export interface DistilState {
+export type Dictionary<T> = { [key: string]: T }
+
+export interface DataState {
 	datasets: Datasets[];
 	variables: Variable[];
 	variableSummaries: VariableSummary[];
@@ -91,16 +55,10 @@ export interface DistilState {
 	filteredData: Data;
 	selectedData: Data;
 	highlightedFeatureRanges: Range;
-	highlightedFeatureValues: { [name: string]: any };
-	runningPipelines: PipelineState;
-	completedPipelines: PipelineState;
-	wsConnection: WebSocket;
-	pipelineSession: Session;
-	route: Route;
+	highlightedFeatureValues: Dictionary<any>;
 }
 
-// shared data model
-export const state: DistilState = {
+export const state = {
 	// description of matched datasets
 	datasets: [],
 
@@ -125,19 +83,5 @@ export const state: DistilState = {
 	// highlighted features
 	highlightedFeatureRanges: {} as any,
 
-	highlightedFeatureValues: {},
-
-	// running pipeline creation tasks grouped by parent create requestID
-	runningPipelines: {} as any,
-
-	// completed pipeline creation tasks grouped by parent create request ID
-	completedPipelines: {} as any,
-
-	// the underlying websocket connection
-	wsConnection: {} as any,
-
-	// the pipeline session id
-	pipelineSession: {} as any,
-
-	route: {} as any
-};
+	highlightedFeatureValues: {} as any
+}
