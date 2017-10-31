@@ -1,23 +1,22 @@
 import VueRouter from 'vue-router';
 import { Store } from 'vuex';
-import { DistilState } from '../store/index';
 import { createRouteEntry } from '../util/routes';
 
-export function gotoHome(store: Store<DistilState>, router: VueRouter) {
+export function gotoHome(store: Store<any>, router: VueRouter) {
 	const entry = createRouteEntry('/home', {
 		terms: store.getters.getRouteTerms()
 	});
 	router.push(entry);
 }
 
-export function gotoSearch(store: Store<DistilState>, router: VueRouter) {
+export function gotoSearch(store: Store<any>, router: VueRouter) {
 	const entry = createRouteEntry('/search', {
 		terms: store.getters.getRouteTerms()
 	});
 	router.push(entry);
 }
 
-export function gotoExplore(store: Store<DistilState>, router: VueRouter) {
+export function gotoExplore(store: Store<any>, router: VueRouter) {
 	const entry = createRouteEntry('/explore', {
 		terms: store.getters.getRouteTerms(),
 		dataset: store.getters.getRouteDataset(),
@@ -28,7 +27,7 @@ export function gotoExplore(store: Store<DistilState>, router: VueRouter) {
 	router.push(entry);
 }
 
-export function gotoSelect(store: Store<DistilState>, router: VueRouter) {
+export function gotoSelect(store: Store<any>, router: VueRouter) {
 	const entry = createRouteEntry('/select', {
 		terms: store.getters.getRouteTerms(),
 		dataset: store.getters.getRouteDataset(),
@@ -39,7 +38,7 @@ export function gotoSelect(store: Store<DistilState>, router: VueRouter) {
 	router.push(entry);
 }
 
-export function gotoPipelines(store: Store<DistilState>, router: VueRouter) {
+export function gotoPipelines(store: Store<any>, router: VueRouter) {
 	const entry = createRouteEntry('/pipelines', {
 		terms: store.getters.getRouteTerms(),
 		dataset: store.getters.getRouteDataset(),
@@ -50,7 +49,7 @@ export function gotoPipelines(store: Store<DistilState>, router: VueRouter) {
 	router.push(entry);
 }
 
-export function gotoResults(store: Store<DistilState>, router: VueRouter) {
+export function gotoResults(store: Store<any>, router: VueRouter) {
 	const entry = createRouteEntry('/results', {
 		terms: store.getters.getRouteTerms(),
 		dataset: store.getters.getRouteDataset(),

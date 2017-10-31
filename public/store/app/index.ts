@@ -3,13 +3,13 @@ export interface Session {
 	uuids: string[];
 }
 
-export interface DistilState {
+export interface AppState {
 	wsConnection: WebSocket;
 	pipelineSession: Session;
 }
 
 // shared data model
-export const state: DistilState = {
+export const state: AppState = {
 	// the underlying websocket connection
 	wsConnection: {} as any,
 

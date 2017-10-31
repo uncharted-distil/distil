@@ -1,9 +1,9 @@
 import axios from 'axios';
-import { DistilState } from './index';
+import { AppState } from './index';
 import { ActionTree } from 'vuex';
-import Connection from '../util/ws';
+import Connection from '../../util/ws';
 
-export const actions: ActionTree<DistilState, any> = {
+export const actions: ActionTree<AppState, any> = {
 
 	// starts a pipeline session.
 	getPipelineSession(context: any, args: { sessionId: string } ) {

@@ -1,8 +1,8 @@
-import Connection from '../util/ws';
-import { DistilState } from './index';
+import Connection from '../../util/ws';
+import { AppState } from './index';
 import { GetterTree } from 'vuex';
 
-export const getters: GetterTree<DistilState, any> = {
+export const getters: GetterTree<AppState, any> = {
 	getWebSocketConnection() {
 		const conn = new Connection('/ws', (err: string) => {
 			if (err) {
@@ -15,7 +15,7 @@ export const getters: GetterTree<DistilState, any> = {
 		};
 	},
 
-	getPipelineSessionID(state: DistilState) {
+	getPipelineSessionID(state: AppState) {
 		return () => {
 			if (!state.pipelineSession) {
 				return window.localStorage.getItem('pipeline-session-id');
@@ -24,7 +24,7 @@ export const getters: GetterTree<DistilState, any> = {
 		};
 	},
 
-	getPipelineSession(state: DistilState) {
+	getPipelineSession(state: AppState) {
 		return () => state.pipelineSession;
 	},
 
@@ -35,4 +35,3 @@ export const getters: GetterTree<DistilState, any> = {
 		};
 	}
 };
-

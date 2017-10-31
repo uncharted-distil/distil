@@ -1,25 +1,19 @@
 import Vue from 'vue';
 import Vuex from 'vuex';
 import { Store } from 'vuex';
-import { state, DistilState } from './index';
-import { actions } from './actions';
-import { getters } from './getters';
-import { mutations } from './mutations';
 import { routeModule } from './route/module';
 import { dataModule } from './data/module';
 import { pipelineModule } from './pipelines/module';
+import { appModule } from './app/module';
 
 Vue.use(Vuex);
 
-export default new Store<DistilState>({
-	state,
-	getters,
-	actions,
-	mutations,
+export default new Store<any>({
 	modules:  {
 		routeModule,
 		dataModule,
-		pipelineModule
+		pipelineModule,
+		appModule
 	},
 	strict: true
 });
