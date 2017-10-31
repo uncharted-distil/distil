@@ -3,13 +3,13 @@ import axios from 'axios';
 import { encodeQueryParams, FilterMap } from '../../util/filters';
 import { DataState, Variable } from './index';
 import { PipelineInfo } from '../pipelines/index';
-import { ActionTree, ActionContext } from 'vuex';
+import { ActionContext } from 'vuex';
 
 const ES_INDEX = 'datasets';
 
 export type DataContext = ActionContext<DataState, any>;
 
-export const actions: ActionTree<DataState, any> = {
+export const actions = {
 
 	// searches dataset descriptions and column names for supplied terms
 	searchDatasets(context: DataContext, terms: string) {

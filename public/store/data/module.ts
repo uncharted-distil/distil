@@ -12,7 +12,7 @@ export const dataModule: Module<DataState, any> = {
 	state: state
 }
 
-const { commit, read, dispatch } = getStoreAccessors<DataState, any>(null); 
+const { commit, read, dispatch } = getStoreAccessors<DataState, any>(null);
 
 // Typed getters
 export const getVariables = read(getters.getVariables);
@@ -39,5 +39,19 @@ export const getSelectedDataFields = read(getters.getSelectedDataFields);
 export const getHighlightedFeatureValues = read(getters.getHighlightedFeatureValues);
 
 // Typed actions
+export const dispatchSearchDatasets = dispatch(actions.searchDatasets);
+export const dispatchGetVariables = dispatch(actions.getVariables);
+export const dispatchSetVariableType = dispatch(actions.setVariableType);
+export const dispatchGetVariableSummaries = dispatch(actions.getVariableSummaries);
+export const dispatchGetVariableSummary = dispatch(actions.getVariableSummary);
+export const dispatchUpdateFilteredData = dispatch(actions.updateFilteredData);
+export const dispatchUpdateSelectedData = dispatch(actions.updateSelectedData);
+export const dispatchGetResultsSummaries = dispatch(actions.getResultsSummaries);
+export const dispatchUpdateResults = dispatch(actions.updateResults);
+export const dispatchHighlightFeatureRange = dispatch(actions.highlightFeatureRange);
+export const dispatchClearFeatureHighlightRange = dispatch(actions.clearFeatureHighlightRange);
+export const dispatchHighlightFeatureValues = dispatch(actions.highlightFeatureValues);
+export const dispatchClearFeatureHighlightValues = dispatch(actions.clearFeatureHighlightValues);
+
 
 // Typed mutations

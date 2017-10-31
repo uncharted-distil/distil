@@ -1,6 +1,5 @@
 import _ from 'lodash';
 import { Variable, Data, DataState } from './index';
-import { GetterTree } from 'vuex';
 
 function getTargetIndexFromPredicted(columns: string[], predictedIndex: number) {
 	const targetName = columns[predictedIndex].replace('_res', '');

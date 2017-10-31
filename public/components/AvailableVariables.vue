@@ -38,8 +38,6 @@ export default Vue.extend({
 		},
 		html() {
 			return (group) => {
-
-				let x = this.computed.variables();
 				const container = document.createElement('div');
 				const trainingElem = document.createElement('button');
 				trainingElem.className += 'btn btn-sm btn-outline-success mr-2 mb-2';

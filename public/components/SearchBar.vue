@@ -12,7 +12,8 @@
 
 <script lang="ts">
 import _ from 'lodash';
-import {createRouteEntry} from '../util/routes';
+import { createRouteEntry } from '../util/routes';
+import { dispatchSearchDatasets } from '../store/data/module';
 
 export default {
 	name: 'search-bar',
@@ -33,7 +34,7 @@ export default {
 	},
 
 	mounted() {
-		this.$store.dispatch('searchDatasets', this.terms);
+		dispatchSearchDatasets(this.$store, this.terms);
 		if (!_.isEmpty(this.terms)) {
 			this.$refs.searchbox.focus();
 		}
@@ -41,7 +42,7 @@ export default {
 
 	watch: {
 		'$route.query.terms'() {
-			this.$store.dispatch('searchDatasets', this.terms);
+			dispatchSearchDatasets(this.$store, this.terms);
 		}
 	}
 };
