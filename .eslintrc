@@ -50,7 +50,6 @@
     "no-sequences": 2,
     "no-shadow": 2,
     "no-undef": 2,
-    "no-unused-vars": 2,
     "no-with": 2,
     "quotes": [
       2,

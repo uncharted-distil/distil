@@ -55,3 +55,17 @@ export const dispatchClearFeatureHighlightValues = dispatch(actions.clearFeature
 
 
 // Typed mutations
+export const commitUpdateVariableType = commit(mutations.updateVariableType);
+export const commitSetVariables = commit(mutations.setVariables);
+export const commitSetDatasets = commit(mutations.setDatasets);
+export const commitSetVariableSummaries = commit(mutations.setVariableSummaries);
+export const commitUpdateVariableSummaries = commit(mutations.updateVariableSummaries);
+export const commitSetResultsSummaries = commit(mutations.setResultsSummaries);
+export const commitUpdateResultsSummaries = commit(mutations.updateResultsSummaries);
+export const commitSetFilteredData = commit(mutations.setFilteredData);
+export const commitSetSelectedData = commit(mutations.setSelectedData);
+export const commitSetResultData = commit(mutations.setResultData);
+export const commitHighlightFeatureRange = commit(mutations.highlightFeatureRange);
+export const commitClearFeatureHighlightRange = commit(mutations.clearFeatureHighlightRange);
+export const commitHighlightFeatureValues = commit(mutations.highlightFeatureValues);
+export const commitClearFeatureHighlightValues = commit(mutations.clearFeatureHighlightValues);

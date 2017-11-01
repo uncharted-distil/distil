@@ -1,6 +1,7 @@
 import _ from 'lodash';
 import axios from 'axios';
 import { encodeQueryParams, FilterMap } from '../../util/filters';
+import { commitSetResultsSummaries } from './module';
 import { DataState, Variable } from './index';
 import { PipelineInfo } from '../pipelines/index';
 import { ActionContext } from 'vuex';
@@ -64,10 +65,16 @@ export const actions = {
 		const histograms = variables.map(variable => {
 			return {
 				name: variable.name,
-				pending: true
+				feature: name,
+				pending: true,
+				buckets: [],
+				extrema: {
+					min: NaN,
+					max: NaN
+				}
 			};
 		});
-		context.commit('setVariableSummaries', histograms);
+		commitSetResultsSummaries(this.$store, histograms);
 		// fill them in asynchronously
 		return Promise.all(variables.map(variable => {
 			return context.dispatch('getVariableSummary', {
