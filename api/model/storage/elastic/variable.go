@@ -18,9 +18,9 @@ const (
 	// VarRoleField is the field name for the variable role.
 	VarRoleField = "varRole"
 	// VarDisplayVariableField is the field name for the display variable.
-	VarDisplayVariableField = "varDisplayVariable"
+	VarDisplayVariableField = "varDisplayName"
 	// VarOriginalVariableField is the field name for the original variable.
-	VarOriginalVariableField = "varOriginalVariable"
+	VarOriginalVariableField = "varOriginalName"
 	// VarTypeField is the field name for the variable type.
 	VarTypeField = "varType"
 	// VarImportanceField is the field name for the variable importnace.
@@ -61,16 +61,26 @@ func (s *Storage) parseVariable(searchHit *elastic.SearchHit, varName string) (*
 		if !ok {
 			continue
 		}
+		originalVariable, ok := json.String(child, VarOriginalVariableField)
+		if !ok {
+			continue
+		}
+		displayVariable, ok := json.String(child, VarDisplayVariableField)
+		if !ok {
+			continue
+		}
 		suggestedTypes, ok := json.Array(child, VarSuggestedTypesField)
 		if !ok {
 			continue
 		}
 		return &model.Variable{
-			Name:           name,
-			Type:           typ,
-			Importance:     importance,
-			Role:           role,
-			SuggestedTypes: suggestedTypes,
+			Name:             name,
+			Type:             typ,
+			Importance:       importance,
+			Role:             role,
+			SuggestedTypes:   suggestedTypes,
+			OriginalVariable: originalVariable,
+			DisplayVariable:  displayVariable,
 		}, nil
 	}
 	return nil, errors.Errorf("unable to find variable match name %s", varName)
@@ -106,16 +116,26 @@ func parseVariables(searchHit *elastic.SearchHit) ([]*model.Variable, error) {
 		if !ok {
 			continue
 		}
+		originalVariable, ok := json.String(child, VarOriginalVariableField)
+		if !ok {
+			continue
+		}
+		displayVariable, ok := json.String(child, VarDisplayVariableField)
+		if !ok {
+			continue
+		}
 		suggestedTypes, ok := json.Array(child, VarSuggestedTypesField)
 		if !ok {
 			continue
 		}
 		variables = append(variables, &model.Variable{
-			Name:           name,
-			Type:           typ,
-			Importance:     importance,
-			Role:           role,
-			SuggestedTypes: suggestedTypes,
+			Name:             name,
+			Type:             typ,
+			Importance:       importance,
+			Role:             role,
+			SuggestedTypes:   suggestedTypes,
+			OriginalVariable: originalVariable,
+			DisplayVariable:  displayVariable,
 		})
 	}
 	return variables, nil

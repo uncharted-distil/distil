@@ -114,11 +114,13 @@ func (s *Storage) SetDataType(dataset string, index string, field string, fieldT
 	var serialized []map[string]interface{}
 	for _, v := range vars {
 		serialized = append(serialized, map[string]interface{}{
-			VarNameField:           v.Name,
-			VarRoleField:           v.Role,
-			VarTypeField:           v.Type,
-			VarImportanceField:     v.Importance,
-			VarSuggestedTypesField: v.SuggestedTypes,
+			VarNameField:             v.Name,
+			VarRoleField:             v.Role,
+			VarTypeField:             v.Type,
+			VarImportanceField:       v.Importance,
+			VarSuggestedTypesField:   v.SuggestedTypes,
+			VarOriginalVariableField: v.OriginalVariable,
+			VarDisplayVariableField:  v.DisplayVariable,
 		})
 	}
 

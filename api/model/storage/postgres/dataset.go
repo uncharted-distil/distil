@@ -100,6 +100,9 @@ func (s *Storage) SetDataType(dataset string, index string, field string, fieldT
 	}
 
 	// update field type in lookup.
+	if fields[field] == nil {
+		return fmt.Errorf("field '%s' not found in existing fields", field)
+	}
 	fields[field].Type = fieldType
 
 	// map the types to db types.
