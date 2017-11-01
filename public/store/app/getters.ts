@@ -1,8 +1,7 @@
 import Connection from '../../util/ws';
 import { AppState } from './index';
-import { GetterTree } from 'vuex';
 
-export const getters: GetterTree<AppState, any> = {
+export const getters = {
 	getWebSocketConnection() {
 		const conn = new Connection('/ws', (err: string) => {
 			if (err) {
