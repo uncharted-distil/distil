@@ -1,71 +1,77 @@
 import { Module } from 'vuex';
 import { state, DataState } from './index';
-import { getters } from './getters';
-import { actions } from './actions';
-import { mutations } from './mutations';
+import { getters as moduleGetters } from './getters';
+import { actions as moduleActions } from './actions';
+import { mutations as moduleMutations } from './mutations';
 import { getStoreAccessors } from 'vuex-typescript';
 
 export const dataModule: Module<DataState, any> = {
-	getters: getters,
-	actions: actions,
-	mutations: mutations,
+	getters: moduleGetters,
+	actions: moduleActions,
+	mutations: moduleMutations,
 	state: state
 }
 
 const { commit, read, dispatch } = getStoreAccessors<DataState, any>(null);
 
 // Typed getters
-export const getVariables = read(getters.getVariables);
-export const getVariablesMap = read(getters.getVariablesMap);
-export const getDatasets = read(getters.getDatasets);
-export const getAvailableVariables = read(getters.getAvailableVariables);
-export const getAvailableVariablesMap = read(getters.getAvailableVariablesMap);
-export const getTrainingVariablesMap = read(getters.getTrainingVariablesMap);
-export const getVariableSummaries = read(getters.getVariableSummaries);
-export const getResultsSummaries = read(getters.getResultsSummaries);
-export const getSelectedFilters = read(getters.getSelectedFilters);
-export const getAvailableVariableSummaries = read(getters.getAvailableVariableSummaries);
-export const getTrainingVariableSummaries = read(getters.getTrainingVariableSummaries);
-export const getTargetVariableSummaries = read(getters.getTargetVariableSummaries);
-export const getFilteredData = read(getters.getFilteredData);
-export const getFilteredDataItems = read(getters.getFilteredDataItems);
-export const getFilteredDataFields = read(getters.getFilteredDataFields);
-export const getResultData = read(getters.getResultData);
-export const getResultDataItems = read(getters.getResultDataItems);
-export const getResultDataFields = read(getters.getResultDataFields);
-export const getSelectedData = read(getters.getSelectedData);
-export const getSelectedDataItems = read(getters.getSelectedDataItems);
-export const getSelectedDataFields = read(getters.getSelectedDataFields);
-export const getHighlightedFeatureValues = read(getters.getHighlightedFeatureValues);
+export const getters = {
+	getVariables: read(moduleGetters.getVariables),
+	getVariablesMap: read(moduleGetters.getVariablesMap),
+	getDatasets: read(moduleGetters.getDatasets),
+	getAvailableVariables: read(moduleGetters.getAvailableVariables),
+	getAvailableVariablesMap: read(moduleGetters.getAvailableVariablesMap),
+	getTrainingVariablesMap: read(moduleGetters.getTrainingVariablesMap),
+	getVariableSummaries: read(moduleGetters.getVariableSummaries),
+	getResultsSummaries: read(moduleGetters.getResultsSummaries),
+	getSelectedFilters: read(moduleGetters.getSelectedFilters),
+	getAvailableVariableSummaries: read(moduleGetters.getAvailableVariableSummaries),
+	getTrainingVariableSummaries: read(moduleGetters.getTrainingVariableSummaries),
+	getTargetVariableSummaries: read(moduleGetters.getTargetVariableSummaries),
+	getFilteredData: read(moduleGetters.getFilteredData),
+	getFilteredDataItems: read(moduleGetters.getFilteredDataItems),
+	getFilteredDataFields: read(moduleGetters.getFilteredDataFields),
+	getResultData: read(moduleGetters.getResultData),
+	getResultDataItems: read(moduleGetters.getResultDataItems),
+	getResultDataFields: read(moduleGetters.getResultDataFields),
+	getSelectedData: read(moduleGetters.getSelectedData),
+	getSelectedDataItems: read(moduleGetters.getSelectedDataItems),
+	getSelectedDataFields: read(moduleGetters.getSelectedDataFields),
+	getHighlightedFeatureValues: read(moduleGetters.getHighlightedFeatureValues)
+}
 
 // Typed actions
-export const dispatchSearchDatasets = dispatch(actions.searchDatasets);
-export const dispatchGetVariables = dispatch(actions.getVariables);
-export const dispatchSetVariableType = dispatch(actions.setVariableType);
-export const dispatchGetVariableSummaries = dispatch(actions.getVariableSummaries);
-export const dispatchGetVariableSummary = dispatch(actions.getVariableSummary);
-export const dispatchUpdateFilteredData = dispatch(actions.updateFilteredData);
-export const dispatchUpdateSelectedData = dispatch(actions.updateSelectedData);
-export const dispatchGetResultsSummaries = dispatch(actions.getResultsSummaries);
-export const dispatchUpdateResults = dispatch(actions.updateResults);
-export const dispatchHighlightFeatureRange = dispatch(actions.highlightFeatureRange);
-export const dispatchClearFeatureHighlightRange = dispatch(actions.clearFeatureHighlightRange);
-export const dispatchHighlightFeatureValues = dispatch(actions.highlightFeatureValues);
-export const dispatchClearFeatureHighlightValues = dispatch(actions.clearFeatureHighlightValues);
+export const actions = {
+	searchDatasets: dispatch(moduleActions.searchDatasets),
+	getVariables: dispatch(moduleActions.getVariables),
+	setVariableType: dispatch(moduleActions.setVariableType),
+	setVariableSummaries: dispatch(moduleActions.getVariableSummaries),
+	getVariableSummary: dispatch(moduleActions.getVariableSummary),
+	updateFilteredData: dispatch(moduleActions.updateFilteredData),
+	updateSelectedData: dispatch(moduleActions.updateSelectedData),
+	getResultsSummaries: dispatch(moduleActions.getResultsSummaries),
+	updateResults: dispatch(moduleActions.updateResults),
+	highlightFeatureRange: dispatch(moduleActions.highlightFeatureRange),
+	clearFeatureHighlightRange: dispatch(moduleActions.clearFeatureHighlightRange),
+	highlightFeatureValues: dispatch(moduleActions.highlightFeatureValues),
+	clearFeatureHighlightValues: dispatch(moduleActions.clearFeatureHighlightValues)
+}
 
 
 // Typed mutations
-export const commitUpdateVariableType = commit(mutations.updateVariableType);
-export const commitSetVariables = commit(mutations.setVariables);
-export const commitSetDatasets = commit(mutations.setDatasets);
-export const commitSetVariableSummaries = commit(mutations.setVariableSummaries);
-export const commitUpdateVariableSummaries = commit(mutations.updateVariableSummaries);
-export const commitSetResultsSummaries = commit(mutations.setResultsSummaries);
-export const commitUpdateResultsSummaries = commit(mutations.updateResultsSummaries);
-export const commitSetFilteredData = commit(mutations.setFilteredData);
-export const commitSetSelectedData = commit(mutations.setSelectedData);
-export const commitSetResultData = commit(mutations.setResultData);
-export const commitHighlightFeatureRange = commit(mutations.highlightFeatureRange);
-export const commitClearFeatureHighlightRange = commit(mutations.clearFeatureHighlightRange);
-export const commitHighlightFeatureValues = commit(mutations.highlightFeatureValues);
-export const commitClearFeatureHighlightValues = commit(mutations.clearFeatureHighlightValues);
+export const mutations = {
+	updateVariableType: commit(moduleMutations.updateVariableType),
+	setVariables: commit(moduleMutations.setVariables),
+	setDatasets: commit(moduleMutations.setDatasets),
+	setVariableSummaries: commit(moduleMutations.setVariableSummaries),
+	updateVariableSummaries: commit(moduleMutations.updateVariableSummaries),
+	setResultsSummaries: commit(moduleMutations.setResultsSummaries),
+	updateResultsSummaries: commit(moduleMutations.updateResultsSummaries),
+	setFilteredData: commit(moduleMutations.setFilteredData),
+	setSelectedData: commit(moduleMutations.setSelectedData),
+	setResultData: commit(moduleMutations.setResultData),
+	highlightFeatureRange: commit(moduleMutations.highlightFeatureRange),
+	clearFeatureHighlightRange: commit(moduleMutations.clearFeatureHighlightRange),
+	highlightFeatureValues: commit(moduleMutations.highlightFeatureValues),
+	clearFeatureHighlightValues: commit(moduleMutations.clearFeatureHighlightValues)
+}

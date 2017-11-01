@@ -16,7 +16,7 @@
 <script lang="ts">
 
 import { createRouteEntryFromRoute } from '../util/routes';
-import { getAvailableVariableSummaries } from '../store/data/module';
+import { getters } from '../store/data/module';
 import { VariableSummary } from '../store/data/index';
 import VariableFacets from '../components/VariableFacets.vue';
 import 'font-awesome/css/font-awesome.css';
@@ -34,7 +34,7 @@ export default Vue.extend({
 			return this.$store.getters.getRouteDataset();
 		},
 		variables(): VariableSummary[] {
-			return getAvailableVariableSummaries(this.$store);
+			return getters.getAvailableVariableSummaries(this.$store);
 		},
 		html() {
 			return (group) => {

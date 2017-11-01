@@ -13,9 +13,10 @@
 <script lang="ts">
 import _ from 'lodash';
 import { createRouteEntry } from '../util/routes';
-import { dispatchSearchDatasets } from '../store/data/module';
+import { actions } from '../store/data/module';
+import Vue from 'vue';
 
-export default {
+export default Vue.extend({
 	name: 'search-bar',
 
 	computed: {
@@ -34,7 +35,7 @@ export default {
 	},
 
 	mounted() {
-		dispatchSearchDatasets(this.$store, this.terms);
+		actions.searchDatasets(this.$store, this.terms);
 		if (!_.isEmpty(this.terms)) {
 			this.$refs.searchbox.focus();
 		}
@@ -42,10 +43,10 @@ export default {
 
 	watch: {
 		'$route.query.terms'() {
-			dispatchSearchDatasets(this.$store, this.terms);
+			actions.searchDatasets(this.$store, this.terms);
 		}
 	}
-};
+});
 </script>
 
 <style>
