@@ -231,7 +231,7 @@ func (s *Storage) FetchFilteredResults(dataset string, index string, resultURI s
 		return nil, err
 	}
 
-	variables, err := s.metadata.FetchVariables(dataset, index)
+	variables, err := s.metadata.FetchVariables(dataset, index, false)
 	if err != nil {
 		return nil, errors.Wrap(err, "Could not pull variables from ES")
 	}

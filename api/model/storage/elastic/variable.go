@@ -190,7 +190,7 @@ func (s *Storage) FetchVariableDisplay(dataset string, index string, varName str
 }
 
 // FetchVariables returns all the variables for the provided index and dataset.
-func (s *Storage) FetchVariables(dataset string, index string) ([]*model.Variable, error) {
+func (s *Storage) FetchVariables(dataset string, index string, includeIndex bool) ([]*model.Variable, error) {
 	// get dataset id
 	datasetID := dataset + DatasetSuffix
 	// create match query
@@ -217,13 +217,25 @@ func (s *Storage) FetchVariables(dataset string, index string) ([]*model.Variabl
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to parse search result")
 	}
-	return variables, err
+
+	// remove index variables if necessary
+	result := variables
+	if !includeIndex {
+		result = make([]*model.Variable, 0)
+		for _, v := range variables {
+			if v.Type != VarTypeIndex {
+				result = append(result, v)
+			}
+		}
+	}
+
+	return result, err
 }
 
 // FetchVariablesDisplay returns all the display variables for the provided index and dataset.
 func (s *Storage) FetchVariablesDisplay(dataset string, index string) ([]*model.Variable, error) {
 	// get all variables.
-	vars, err := s.FetchVariables(dataset, index)
+	vars, err := s.FetchVariables(dataset, index, false)
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to fetch dataset variables")
 	}
