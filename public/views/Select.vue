@@ -17,15 +17,19 @@
 	</div>
 </template>
 
-<script>
-import FlowBar from '../components/FlowBar';
-import CreatePipelinesForm from '../components/CreatePipelinesForm';
-import SelectDataTable from '../components/SelectDataTable';
-import AvailableVariables from '../components/AvailableVariables';
-import TrainingVariables from '../components/TrainingVariables';
-import TargetVariable from '../components/TargetVariable';
+<script lang="ts">
 
-export default {
+import FlowBar from '../components/FlowBar.vue';
+import CreatePipelinesForm from '../components/CreatePipelinesForm.vue';
+import SelectDataTable from '../components/SelectDataTable.vue';
+import AvailableVariables from '../components/AvailableVariables.vue';
+import TrainingVariables from '../components/TrainingVariables.vue';
+import TargetVariable from '../components/TargetVariable.vue';
+import { getters as dataGetters } from '../store/data/module';
+import { getters as routeGetters} from '../store/route/module';
+import Vue from 'vue';
+
+export default Vue.extend({
 	name: 'select',
 
 	components: {
@@ -39,10 +43,10 @@ export default {
 
 	computed: {
 		dataset() {
-			return this.$store.getters.getRouteDataset();
+			return routeGetters.getRouteDataset(this.$store);
 		},
 		variables() {
-			return this.$store.getters.getVariables();
+			return dataGetters.getVariables(this.$store);
 		}
 	},
 
@@ -61,7 +65,7 @@ export default {
 	methods: {
 		fetch() {
 			this.$store.dispatch('getVariables', {
-					dataset: this.dataset
+				dataset: this.dataset
 				})
 				.then(() => {
 					this.$store.dispatch('getVariableSummaries', {
@@ -71,7 +75,7 @@ export default {
 				});
 		}
 	}
-};
+});
 </script>
 
 <style>

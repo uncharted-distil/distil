@@ -11,9 +11,11 @@
 </template>
 
 <script lang="ts">
+
 import _ from 'lodash';
 import { createRouteEntry } from '../util/routes';
 import { actions } from '../store/data/module';
+import { getters } from '../store/route/module';
 import Vue from 'vue';
 
 export default Vue.extend({
@@ -22,14 +24,14 @@ export default Vue.extend({
 	computed: {
 		terms: {
 			set: _.throttle(function(terms) {
-				const path = !_.isEmpty(terms) ? '/search' : this.$store.getters.getRoutePath();
+				const path = !_.isEmpty(terms) ? '/search' : getters.getRoutePath(this.$store);
 				const routeEntry = createRouteEntry(path, {
 					terms: terms
 				});
 				this.$router.push(routeEntry);
 			}, 500),
 			get: function() {
-				return this.$store.getters.getRouteTerms();
+				return getters.getRouteTerms(this.$store);
 			}
 		}
 	},

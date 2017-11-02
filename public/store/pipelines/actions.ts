@@ -3,7 +3,8 @@ import axios from 'axios';
 import moment from 'moment';
 import { PipelineState, Score } from './index';
 import { ActionContext } from 'vuex';
-import Connection from '../../util/ws';
+import { DistilState } from '../store';
+import { getWebSocketConnection } from '../../util/ws';
 
 // TODO: move this somewhere more appropriate.
 const ES_INDEX = 'datasets';
@@ -49,7 +50,7 @@ interface PipelineRequest {
 	filters: string
 }
 
-export type AppContext = ActionContext<PipelineState, any>;
+export type AppContext = ActionContext<PipelineState, DistilState>;
 
 export const actions = {
 	getSession(context: any, args: { sessionId: string }) {
@@ -83,7 +84,7 @@ export const actions = {
 								dataset: pipeline.Dataset,
 								pipelineId: res.PipelineID,
 								pipeline: {
-									resultUri: res.ResultUUID,
+									resultId: res.ResultUUID,
 									output: '',
 									scores: res.Scores
 								}
@@ -99,7 +100,7 @@ export const actions = {
 	},
 
 	createPipelines(context: any, request: PipelineRequest) {
-		const conn = context.getters.getWebSocketConnection() as Connection;
+		const conn = getWebSocketConnection();
 		if (!request.sessionId) {
 			console.warn('Missing session id');
 			return;

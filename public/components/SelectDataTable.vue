@@ -19,7 +19,7 @@
 
 				<template :slot="`HEAD_${data.label}`" v-for="data in fields">
 					{{data.label}}
-					<div>
+					<div :key="data.name">
 						<b-dropdown :text="data.type" variant="outline-primary" class="var-type-button">
 							<b-dropdown-item @click.stop="onTypeChange(data, suggested)":key="suggested.name" v-for="suggested in data.suggested">{{suggested.type}} ({{suggested.probability.toFixed(2)}})</b-dropdown-item>
 						</b-dropdown>
@@ -34,25 +34,28 @@
 
 <script>
 import _ from 'lodash';
+import Vue from 'vue';
+import { getters as dataGetters } from '../store/data/module';
+import { getters as routeGetters } from '../store/route/module';
 
-export default {
+export default Vue.extend({
 	name: 'selected-data-table',
 
 	computed: {
 		// get dataset from route
 		dataset() {
-			return this.$store.getters.getRouteDataset();
+			return routeGetters.getRouteDataset(this.$store);
 		},
 		// extracts the table data from the store
 		items() {
-			return this.$store.getters.getSelectedDataItems();
+			return dataGetters.getSelectedDataItems(this.$store);
 		},
 		// extract the table field header from the store
 		fields() {
-			return this.$store.getters.getSelectedDataFields();
+			return dataGetters.getSelectedDataFields(this.$store);
 		},
 		filters() {
-			return this.$store.getters.getSelectedFilters();
+			return dataGetters.getSelectedFilters(this.$store);
 		}
 	},
 
@@ -98,7 +101,7 @@ export default {
 			this.$store.dispatch('clearFeatureHighlightValues');
 		}
 	}
-};
+});
 </script>
 
 <style>

@@ -19,8 +19,11 @@
 import _ from 'lodash';
 import { createRouteEntry } from '../util/routes';
 import { getTask, getMetricDisplayNames, getOutputSchemaNames, getMetricSchemaName } from '../util/pipelines';
+import { getters as dataGetters } from '../store/data/module';
+import { getters as routeGetters } from '../store/route/module';
+import Vue from 'vue';
 
-export default {
+export default Vue.extend({
 	name: 'create-pipelines-form',
 	data() {
 		return {
@@ -33,13 +36,13 @@ export default {
 	},
 	computed: {
 		dataset() {
-			return this.$store.getters.getRouteDataset();
+			return routeGetters.getRouteDataset(this.$store);
 		},
 		variables() {
-			return this.$store.getters.getVariables();
+			return dataGetters.getVariables(this.$store);
 		},
 		selectedFilters() {
-			return this.$store.getters.getSelectedFilters();
+			return dataGetters.getSelectedFilters(this.$store);
 		},
 		// gets the metrics that are used to score predictions against the user selected variable
 		metrics() {
@@ -59,10 +62,10 @@ export default {
 			return !!this.target;
 		},
 		training() {
-			return this.$store.getters.getTrainingVariables();
+			return routeGetters.getRouteTrainingVariables(this.$store);
 		},
 		target() {
-			return this.$store.getters.getTargetVariable();
+			return routeGetters.getRouteTargetVariable(this.$store);
 		},
 		targetVariable() {
 			return _.find(this.variables, v => {
@@ -95,7 +98,7 @@ export default {
 				dataset: this.dataset,
 				filters: this.selectedFilters,
 				sessionId: this.sessionId,
-				feature: this.$store.getters.getRouteTargetVariable(),
+				feature: routeGetters.getRouteTargetVariable(this.$store),
 				task: task,
 				metric: metrics,
 				output: output
@@ -103,16 +106,16 @@ export default {
 
 			// transition to build screen
 			const entry = createRouteEntry('/pipelines', {
-				terms: this.$store.getters.getRouteTerms(),
-				dataset: this.$store.getters.getRouteDataset(),
-				filters: this.$store.getters.getRouteFilters(),
-				target: this.$store.getters.getRouteTargetVariable(),
-				training: this.$store.getters.getRouteTrainingVariables()
+				terms: routeGetters.getRouteTerms(this.$store),
+				dataset: routeGetters.getRouteDataset(this.$store),
+				filters: routeGetters.getRouteFilters(this.$store),
+				target: routeGetters.getRouteTargetVariable(this.$store),
+				training: routeGetters.getRouteTrainingVariables(this.$store)
 			});
 			this.$router.push(entry);
 		}
 	}
-};
+});
 </script>
 
 <style>

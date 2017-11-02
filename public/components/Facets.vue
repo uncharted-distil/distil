@@ -4,11 +4,11 @@
 
 <script lang="ts">
 import _ from 'lodash';
-
+import Vue from 'vue';
 import Facets from '@uncharted.software/stories-facets';
 import '@uncharted.software/stories-facets/dist/facets.css';
 
-export default {
+export default Vue.extend({
 	name: 'facets',
 
 	props: {
@@ -280,7 +280,7 @@ export default {
 		this.facets.destroy();
 		this.facets = null;
 	}
-};
+});
 </script>
 
 <style>

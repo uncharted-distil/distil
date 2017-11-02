@@ -22,8 +22,13 @@
 import ResultsDataTable from '../components/ResultsDataTable.vue';
 import { getTask } from '../util/pipelines';
 import _ from 'lodash';
+import Vue from 'vue';
+import { getters as dataGetters} from '../store/data/module';
+import { getters as routeGetters} from '../store/route/module';
+import { PipelineState } from '../store/pipelines/index';
+import { getPipelineResults } from '../util/pipelines';
 
-export default {
+export default Vue.extend({
 	name: 'results-comparison',
 
 	components: {
@@ -44,26 +49,26 @@ export default {
 
 	computed: {
 		result() {
-			const requestId = this.$store.getters.getRouteCreateRequestId();
-			const resultId = atob(this.$store.getters.getRouteResultId());
-			const pipelineRequest = this.$store.getters.getPipelineResults(requestId);
-			return _.find(pipelineRequest, r => r.pipeline.resultUri === resultId);
+			const requestId = routeGetters.getRouteCreateRequestId(this.$store);
+			const resultId = atob(routeGetters.getRouteResultId(this.$store));
+			const pipelineRequest = getPipelineResults(<PipelineState>this.$store.state.pipelineModule, requestId);
+			return _.find(pipelineRequest, r => r.pipeline.resultId === resultId);
 		},
 
 		dataset() {
-			return this.$store.getters.getRouteDataset();
+			return routeGetters.getRouteDataset(this.$store);
 		},
 
 		target() {
-			return this.$store.getters.getRouteTargetVariable();
+			return routeGetters.getRouteTargetVariable(this.$store);
 		},
 
 		variables() {
-			return this.$store.getters.getVariables();
+			return dataGetters.getVariables(this.$store);
 		},
 
 		residualThreshold() {
-			return this.$store.getters.getRouteResidualThreshold();
+			return routeGetters.getRouteResidualThreshold(this.$store);
 		},
 
 		regressionEnabled() {
@@ -176,7 +181,7 @@ export default {
 			return dataItem;
 		}
 	}
-};
+});
 </script>
 
 <style>

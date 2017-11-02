@@ -6,12 +6,14 @@
 
 <script lang="ts">
 import NavBar from '../components/NavBar.vue';
-export default {
+import Vue from 'vue';
+
+export default Vue.extend({
 	name: 'navigation',
 	components: {
 		NavBar
 	}
-};
+});
 </script>
 
 <style>

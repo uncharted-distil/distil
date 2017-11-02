@@ -32,6 +32,8 @@
 <script>
 import '../assets/images/legendary.svg';
 import { gotoHome, gotoSearch, gotoExplore, gotoSelect, gotoPipelines, gotoResults } from '../util/nav';
+import { getters } from '../store/route/module';
+import Vue from 'vue';
 
 const HOME = Symbol();
 const SEARCH = Symbol();
@@ -49,7 +51,7 @@ const ROUTE_MAPPINGS = {
 	'/results': RESULTS
 };
 
-export default {
+export default Vue.extend({
 	name: 'nav-bar',
 
 	data() {
@@ -101,7 +103,7 @@ export default {
 			this.$store.dispatch('abort');
 		},
 		hasDataset() {
-			return !!this.$store.getters.getRouteDataset();
+			return !!getters.getRouteDataset(this.$store);
 		},
 		updateActive() {
 			this.activeView = ROUTE_MAPPINGS[this.$route.path];
@@ -112,7 +114,7 @@ export default {
 			this.updateActive();
 		}
 	}
-};
+});
 
 </script>
 

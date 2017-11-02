@@ -4,6 +4,7 @@
  */
 
 import _ from 'lodash';
+import { PipelineState, PipelineInfo } from '../store/pipelines/index';
 
 export interface NameInfo {
 	displayName: string,
@@ -16,6 +17,13 @@ export interface Task {
 	metrics: { [name: string]: NameInfo },
 	outputs: { [name: string]: NameInfo }
 };
+
+// Utility function to return all pipeline results associated with a given request ID
+export function getPipelineResults(state: PipelineState, requestId: string): PipelineInfo[] {
+	return _.concat(
+		_.values(state.runningPipelines[requestId]),
+		_.values(state.completedPipelines[requestId]));
+}
 
 // Gets a task object based on a variable type.
 export function getTask(varType: string): Task {

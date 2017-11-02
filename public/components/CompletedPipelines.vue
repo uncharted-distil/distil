@@ -13,9 +13,10 @@
 
 import _ from 'lodash';
 import PipelinePreview from '../components/PipelinePreview.vue';
+import Vue from 'vue';
+import { getters } from '../store/pipelines/getters';
 
-
-export default {
+export default Vue.extend({
 	name: 'completed-pipelines',
 
 	components: {
@@ -31,7 +32,7 @@ export default {
 
 	computed: {
 		pipelineResults() {
-			const pipelines = this.$store.getters.getCompletedPipelines();
+			const pipelines = getters.getCompletedPipelines(this.$store);
 			if (_.keys(pipelines).length > 0) {
 				return _.values(pipelines).sort((a, b) => {
 					return this.minResultTRimestamp(b) - this.minResultTRimestamp(a);
@@ -52,7 +53,7 @@ export default {
 			return min;
 		}
 	}
-};
+});
 </script>
 
 <style>

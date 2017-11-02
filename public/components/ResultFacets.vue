@@ -17,12 +17,16 @@ import Facets from '../components/Facets';
 import { decodeFilters, updateFilter, getFilterType, isDisabled,
 	CATEGORICAL_FILTER, NUMERICAL_FILTER, NumericalFilter, CategoricalFilter } from '../util/filters';
 import { createRouteEntryFromRoute } from '../util/routes';
-import { PipelineRequestInfo } from '../store/pipelines/index';
+import { PipelineInfo, PipelineState } from '../store/pipelines/index';
+import { getters as dataGetters} from '../store/data/module';
+import { getters as routeGetters} from '../store/route/module';
 import { createGroups } from '../util/facets';
+import { getPipelineResults } from '../util/pipelines';
 import 'font-awesome/css/font-awesome.css';
 import '../styles/spinner.css';
+import Vue from 'vue';
 
-export default {
+export default Vue.extend({
 	name: 'result-facets',
 
 	components: {
@@ -49,13 +53,13 @@ export default {
 
 			// find pipeline result with the uri specified in the route and
 			// flag it as the currently active result
-			const requestId = this.$store.getters.getRouteCreateRequestId() as string;
-			const pipelineResults = this.$store.getters.getPipelineResults(requestId) as PipelineRequestInfo;
+			const requestId = routeGetters.getRouteCreateRequestId(this.$store) as string;
+			const pipelineResults = getPipelineResults(<PipelineState>this.$store.state.pipelineModule, requestId) as PipelineInfo[];
 			const activeResult = _.find(pipelineResults, p => {
-				return btoa(p.pipeline.resultId) === this.$store.getters.getRouteResultId();
+				return btoa(p.pipeline.resultId) === routeGetters.getRouteResultId(this.$store);
 			});
 
-			const filters = this.$store.getters.getRouteResultFilters();
+			const filters = routeGetters.getRouteResultFilters(this.$store);
 
 			// if filters are empty this is the first group call - initialize
 			// filter and group state
@@ -89,7 +93,7 @@ export default {
 			return this.updateGroupSelections(groups);
 		},
 		highlights() {
-			return this.$store.getters.getHighlightedFeatureValues();
+			return dataGetters.getHighlightedFeatureValues(this.$store);
 		}
 	},
 
@@ -97,14 +101,14 @@ export default {
 		updateFilterRoute(filterArgs, resultUri) {
 
 			// merge the updated filters back into the route query params if set
-			const filters = this.$store.getters.getRouteResultFilters(); ;
+			const filters = routeGetters.getRouteResultFilters(this.$store);
 			let updatedFilters = filters;
 			if (filterArgs) {
 				updatedFilters = updateFilter(filters, filterArgs.key, filterArgs.values);
 			}
 
-			const entry = createRouteEntryFromRoute(this.$store.getters.getRoute(), {
-				resultId: resultUri ? btoa(resultUri) : this.$store.getters.getRouteResultId(),
+			const entry = createRouteEntryFromRoute(routeGetters.getRoute(this.$store), {
+				resultId: resultUri ? btoa(resultUri) : routeGetters.getRouteResultId(this.$store),
 				results: updatedFilters
 			});
 
@@ -113,8 +117,8 @@ export default {
 
 		onExpand(key) {
 
-			const createReqId = this.$store.getters.getRouteCreateRequestId();
-			const pipelineRequests = this.$store.getters.getPipelineResults(createReqId);
+			const createReqId = routeGetters.getRouteCreateRequestId(this.$store);
+			const pipelineRequests = getPipelineResults(<PipelineState>this.$store.state.pipelineModule, createReqId);
 			const completedReq = _.find(pipelineRequests, p => p.name === key);
 
 			// disable all filters except this one
@@ -135,7 +139,7 @@ export default {
 				values: {
 					enabled: true
 				}
-			}, completedReq.pipeline.resultUri);
+			}, completedReq.pipeline.resultId);
 			// let listening components know the acitive pipeline changed
 			this.$emit('activePipelineChange', { name: completedReq.name, id: completedReq.pipelineId });
 		},
@@ -158,7 +162,7 @@ export default {
 		},
 
 		updateGroupCollapses(groups) {
-			const filters = this.$store.getters.getRouteResultFilters();
+			const filters = routeGetters.getRouteResultFilters(this.$store);
 			const decoded = decodeFilters(filters);
 			return groups.map(group => {
 				// return if disabled
@@ -167,7 +171,7 @@ export default {
 			});
 		},
 		updateGroupSelections(groups) {
-			const filters = this.$store.getters.getRouteResultFilters();
+			const filters = routeGetters.getRouteResultFilters(this.$store);
 			const decoded = decodeFilters(filters);
 			return groups.map(group => {
 				// get filter
@@ -204,7 +208,7 @@ export default {
 			});
 		}
 	}
-};
+});
 </script>
 
 <style>

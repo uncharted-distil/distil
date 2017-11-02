@@ -2,6 +2,8 @@ export interface Variable {
 	name: string;
 	type: string;
 	suggestedTypes: string;
+	importance: number;
+	novelty: number;
 }
 
 export interface Datasets {
@@ -37,12 +39,7 @@ export interface Data {
 	values: any[][];
 }
 
-export interface Range {
-	[name: string]: {
-		from: number,
-		to: number
-	}
-}
+export type Range = Dictionary<{ from: number, to: number }>;
 
 export type Dictionary<T> = { [key: string]: T }
 

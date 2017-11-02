@@ -48,14 +48,17 @@ import Facets from '../components/Facets.vue';
 import { createGroups } from '../util/facets';
 import { createRouteEntryFromRoute } from '../util/routes';
 import { getTask } from '../util/pipelines';
+import { getters as dataGetters} from '../store/data/module';
+import { getters as routeGetters } from '../store/route/module';
 import vueSlider from 'vue-slider-component';
+import Vue from 'vue';
 import _ from 'lodash';
 import 'font-awesome/css/font-awesome.css';
 
 const DEFAULT_PERCENTILE = 0.25;
 const NUM_STEPS = 100;
 
-export default {
+export default Vue.extend({
 	name: 'result-summaries',
 
 	components: {
@@ -81,7 +84,7 @@ export default {
 				this.updateThreshold(value);
 			},
 			get() {
-				const value = this.$store.getters.getRouteResidualThreshold();
+				const value = routeGetters.getRouteResidualThreshold(this.$store);
 				if (value === undefined || value === '') {
 					this.updateThreshold(this.defaultValue);
 					return this.defaultValue;
@@ -91,15 +94,15 @@ export default {
 		},
 
 		highlights() {
-			return this.$store.getters.getHighlightedFeatureValues();
+			return dataGetters.getHighlightedFeatureValues(this.$store);
 		},
 
 		dataset() {
-			return this.$store.getters.getRouteDataset();
+			return routeGetters.getRouteDataset(this.$store);
 		},
 
 		minVal() {
-			const resultItems = this.$store.getters.getResultDataItems(this.regressionEnabled) as { [name: string]: any }[];
+			const resultItems = dataGetters.getResultDataItems(this.$store) as { [name: string]: any }[];
 			if (!_.isEmpty(resultItems) && _.has(resultItems[0], 'error')) {
 				const minErr = Math.abs(_.minBy(resultItems, r => Math.abs(r.error)).error);
 				// round to closest 2 decimal places, otherwise interval computation makes the slider angry
@@ -109,7 +112,7 @@ export default {
 		},
 
 		maxVal() {
-			const resultItems = this.$store.getters.getResultDataItems(this.regressionEnabled) as { [name: string]: any }[]	;
+			const resultItems = dataGetters.getResultDataItems(this.$store) as { [name: string]: any }[]	;
 			if (!_.isEmpty(resultItems) && _.has(resultItems[0], 'error')) {
 				const maxErr = Math.abs(_.maxBy(resultItems, r => Math.abs(r.error)).error);
 				// round to closest 2 decimal places, otherwise interval computation makes the slider angry
@@ -133,8 +136,8 @@ export default {
 
 		targetSummaries() {
 			// Get the current target variable and the summary associated with it
-			const targetVariable = this.$store.getters.getRouteTargetVariable();
-			const varSummaries = this.$store.getters.getVariableSummaries();
+			const targetVariable = routeGetters.getRouteTargetVariable(this.$store);
+			const varSummaries = dataGetters.getVariableSummaries(this.$store);
 			const targetSummary = _.find(varSummaries, v => _.toLower(v.name) === _.toLower(targetVariable));
 			// Create a facet for it - this will act as a basis of comparison for the result sets
 			if (!_.isEmpty(targetSummary)) {
@@ -144,12 +147,12 @@ export default {
 		},
 
 		variables() {
-			return this.$store.getters.getResultsSummaries();
+			return dataGetters.getResultsSummaries(this.$store);
 		},
 
 		regressionEnabled() {
-			const targetVarName = this.$store.getters.getRouteTargetVariable();
-			const targetVar = _.find(this.$store.getters.getVariables(), v => _.toLower(v.name) === _.toLower(targetVarName));
+			const targetVarName = routeGetters.getRouteTargetVariable(this.$store);
+			const targetVar = _.find(dataGetters.getVariables(this.$store), v => _.toLower(v.name) === _.toLower(targetVarName));
 			if (_.isEmpty(targetVar)) {
 				return false;
 			}
@@ -181,7 +184,7 @@ export default {
 			this.activePipelineId = args.id;
 		}
 	}
-};
+});
 </script>
 
 <style>

@@ -1,16 +1,18 @@
 import axios from 'axios';
 import { AppState } from './index';
+import { DistilState } from '../store';
 import { ActionContext } from 'vuex';
-import Connection from '../../util/ws';
+import { getWebSocketConnection } from '../../util/ws';
+import { mutations } from '../app/mutations';
 
-export type AppContext = ActionContext<AppState, any>;
+export type AppContext = ActionContext<AppState, DistilState>;
 
 export const actions = {
 
 	// starts a pipeline session.
 	getPipelineSession(context: AppContext, args: { sessionId: string } ) {
 		const sessionId = args.sessionId;
-		const conn = context.getters.getWebSocketConnection() as Connection;
+		const conn = getWebSocketConnection();
 		return conn.send({
 			type: 'GET_SESSION',
 			session: sessionId
@@ -18,7 +20,7 @@ export const actions = {
 			if (sessionId && res.created) {
 				console.warn('previous session', sessionId, 'could not be resumed, new session created');
 			}
-			context.commit('setPipelineSession', {
+			mutations.setPipelineSession(context.rootState.appModule, {
 				id: res.session,
 				uuids: res.uuids
 			});
@@ -30,7 +32,7 @@ export const actions = {
 	// end a pipeline session.
 	endPipelineSession(context: AppContext, args: { sessionId: string }) {
 		const sessionId = args.sessionId;
-		const conn = context.getters.getWebSocketConnection();
+		const conn = getWebSocketConnection();
 		if (!sessionId) {
 			return;
 		}
@@ -62,10 +64,6 @@ export const actions = {
 		.catch(error => {
 			console.error(`Failed to export with error ${error}`);
 		});
-	},
-
-	addRecentDataset(context: AppContext, dataset: string) {
-		context.commit('addRecentDataset', dataset);
 	}
 };
 

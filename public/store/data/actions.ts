@@ -1,13 +1,14 @@
 import _ from 'lodash';
 import axios from 'axios';
 import { encodeQueryParams, FilterMap } from '../../util/filters';
+import { getPipelineResults } from '../../util/pipelines';
 import { DataState, Variable } from './index';
-import { PipelineInfo } from '../pipelines/index';
+import { DistilState } from '../store';
 import { ActionContext } from 'vuex';
 
 const ES_INDEX = 'datasets';
 
-export type DataContext = ActionContext<DataState, any>;
+export type DataContext = ActionContext<DataState, DistilState>;
 
 export const actions = {
 
@@ -147,7 +148,7 @@ export const actions = {
 	getResultsSummaries(context: DataContext, args: { dataset: string, requestId: string }) {
 		const dataset = args.dataset;
 		const requestId = args.requestId;
-		const results = context.getters.getPipelineResults(requestId) as PipelineInfo[];
+		const results = getPipelineResults(context.rootState.pipelineModule, requestId);
 
 		// save a placeholder histogram
 		const pendingHistograms = _.map(results, r => {

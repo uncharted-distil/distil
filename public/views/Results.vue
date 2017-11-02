@@ -19,8 +19,11 @@ import ResultsComparison from '../components/ResultsComparison.vue';
 import VariableSummaries from '../components/VariableSummaries.vue';
 import ResultSummaries from '../components/ResultSummaries.vue';
 import { gotoSelect } from '../util/nav';
+import { getters as dataGetters } from '../store/data/module';
+import { getters as routeGetters } from '../store/route/module';
+import Vue from 'vue';
 
-export default {
+export default Vue.extend({
 	name: 'results',
 
 	components: {
@@ -32,13 +35,13 @@ export default {
 
 	computed: {
 		dataset() {
-			return this.$store.getters.getRouteDataset();
+			return routeGetters.getRouteDataset(this.$store);
 		},
 		variables() {
-			return this.$store.getters.getVariables();
+			return dataGetters.getVariables(this.$store);
 		},
 		requestId() {
-			return this.$store.getters.getRouteCreateRequestId();
+			return routeGetters.getRouteCreateRequestId(this.$store);
 		},
 		sessionId() {
 			return this.$store.getters.getPipelineSessionID();
@@ -84,7 +87,7 @@ export default {
 				});
 		}
 	}
-};
+});
 </script>
 
 <style>

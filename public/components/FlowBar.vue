@@ -20,7 +20,9 @@
 
 <script lang="ts">
 
-export default {
+import Vue from 'vue';
+
+export default Vue.extend({
 	name: 'flow-bar',
 
 	props: {
@@ -30,7 +32,7 @@ export default {
 		onLeft: Function,
 		centerText: String
 	}
-};
+});
 
 </script>
 

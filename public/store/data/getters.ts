@@ -1,5 +1,6 @@
 import _ from 'lodash';
-import { Variable, Data, DataState } from './index';
+import { Variable, Data, DataState, Dictionary, Datasets, VariableSummary } from './index';
+import { FilterMap } from '../../util/filters';
 
 function getTargetIndexFromPredicted(columns: string[], predictedIndex: number) {
 	const targetName = columns[predictedIndex].replace('_res', '');
@@ -15,7 +16,7 @@ function getErrorIndex(columns: string[]) {
 }
 
 function validateData(data: Data) {
-	return  !_.isEmpty(data) &&
+	return !_.isEmpty(data) &&
 		!_.isEmpty(data.values) &&
 		!_.isEmpty(data.columns);
 }
@@ -23,85 +24,72 @@ function validateData(data: Data) {
 export interface FieldInfo {
 	label: string,
 	type: string,
-	suggested: {[type: string]: string },
+	suggested: Dictionary<string>,
 	sortable: boolean
 }
 
 export const getters = {
-	getVariables(state: DataState) {
-		return () => state.variables;
+	getVariables(state: DataState): Variable[] {
+		return state.variables;
 	},
 
-	getVariablesMap(state: DataState) {
-		return () => {
-			const map: { [name: string]: Variable } = {};
-			state.variables.forEach(variable => {
-				map[variable.name.toLowerCase()] = variable;
-			});
-			return map;
-		};
+	getVariablesMap(state: DataState): { [name: string]: Variable } {
+		const map: { [name: string]: Variable } = {};
+		state.variables.forEach(variable => {
+			map[variable.name.toLowerCase()] = variable;
+		});
+		return map;
 	},
 
-	getDatasets(state: DataState) {
-		return (ids: string[]) => {
-			if (_.isUndefined(ids)) {
-				return state.datasets;
-			}
-			const idSet = new Set(ids);
-			return _.filter(state.datasets, d => idSet.has(d.name));
-		};
+	getDatasets(state: DataState): Datasets[] {
+		return state.datasets;
 	},
 
-	getAvailableVariables(state: DataState, getters: any) {
-		return () => {
-			const training = getters.getTrainingVariablesMap();
-			const target = getters.getTargetVariable();
-			return state.variables.filter(variable => {
-				return (!target || target.toLowerCase() !== variable.name.toLowerCase()) &&
-					!training[variable.name.toLowerCase()];
-			}).map(v => v.name);
-		};
+	getAvailableVariablesMap(state: DataState, getters: any): Dictionary<boolean> {
+		const available = getters.getAvailableVariables as string[];
+		const map: { [name: string]: boolean } = {};
+		available.forEach(name => {
+			map[name.toLowerCase()] = true;
+		});
+		return map;
 	},
 
-	getAvailableVariablesMap(state: DataState, getters: any) {
-		return () => {
-			const available = getters.getAvailableVariables() as string[];
-			const map: { [name: string]: boolean } = {};
-			available.forEach(name => {
+	getTrainingVariablesMap(state: DataState, getters: any): Dictionary<boolean> {
+		const training = getters.getRouteTrainingVariables as string;
+		if (training) {
+			const map: Dictionary<boolean> = {};
+			training.split(',').forEach(name => {
 				map[name.toLowerCase()] = true;
 			});
 			return map;
-		};
+		}
+		return {};
 	},
 
-	getTrainingVariablesMap(state: DataState, getters: any) {
-		return () => {
-			const training = getters.getTrainingVariables() as string[];
-			const map: { [name: string]: boolean } = {};
-			training.forEach(name => {
-				map[name.toLowerCase()] = true;
-			});
-			return map;
-		};
+	getAvailableVariables(state: DataState, getters: any): string[] {
+		const training = getters.getTrainingVariablesMap as Dictionary<string>;
+		const target = getters.getRouteTargetVariable as string;
+		return state.variables.filter(variable => {
+			return (!target || target.toLowerCase() !== variable.name.toLowerCase()) &&
+				!training[variable.name.toLowerCase()];
+		}).map(v => v.name);
 	},
 
-	getVariableSummaries(state: DataState) {
-		return () => state.variableSummaries;
+	getVariableSummaries(state: DataState): VariableSummary[] {
+		return state.variableSummaries;
 	},
 
-	getResultsSummaries(state: DataState) {
-		return () => {
-			return state.resultsSummaries;
-		};
+	getResultsSummaries(state: DataState): VariableSummary[] {
+		return state.resultsSummaries;
 	},
 
-	getSelectedFilters(state: DataState, getters: any) {
-		return () => {
-			const training = getters.getTrainingVariables() as string[];
-			const existing = getters.getFilters();
-			const filters: { [name: string]: { name: string, enabled: boolean } } = {};
+	getSelectedFilters(state: DataState, getters: any): FilterMap {
+		const training = getters.getRouteTrainingVariables as string;
+		if (training) {
+			const existing = getters.getDecodedFilters as FilterMap;
+			const filters: FilterMap = {};
 
-			training.forEach(variable => {
+			training.split(',').forEach(variable => {
 				if (!existing[variable]) {
 					filters[variable] = {
 						name: variable,
@@ -112,218 +100,211 @@ export const getters = {
 				}
 			});
 			return filters;
-		};
+		}
+		return {};
 	},
 
-	getAvailableVariableSummaries(state: DataState, getters: any) {
-		const available = getters.getAvailableVariablesMap();
+	getAvailableVariableSummaries(state: DataState, getters: any): VariableSummary[] {
+		const available = getters.getAvailableVariablesMap as Dictionary<Variable>;
+		return state.variableSummaries.filter(variable => available[variable.name.toLowerCase()]);
+	},
+
+	getTrainingVariableSummaries(state: DataState, getters: any): VariableSummary[] {
+		const training = getters.getTrainingVariablesMap as Dictionary<Variable>;
+		return state.variableSummaries.filter(variable => training[variable.name.toLowerCase()]);
+	},
+
+	getTargetVariableSummaries(state: DataState, getters: any): VariableSummary[] {
+		const target = getters.getRouteTargetVariable as string;
+		if (!target) {
+			return [];
+		}
 		return state.variableSummaries.filter(variable => {
-			return available[variable.name.toLowerCase()];
+			return target.toLowerCase() === variable.name.toLowerCase();
 		});
 	},
 
-	getTrainingVariableSummaries(state: DataState, getters: any) {
-		return () => {
-			const training = getters.getTrainingVariablesMap();
-			return state.variableSummaries.filter(variable => {
-				return training[variable.name.toLowerCase()];
-			});
-		};
+	getFilteredData(state: DataState): Data {
+		return state.filteredData;
 	},
 
-	getTargetVariableSummaries(state: DataState, getters: any) {
-		return () => {
-			const target = getters.getTargetVariable();
-			if (!target) {
-				return [];
-			}
-			return state.variableSummaries.filter(variable => {
-				return target.toLowerCase() === variable.name.toLowerCase();
-			});
-		};
-	},
-
-	getFilteredData(state: DataState) {
-		return () => state.filteredData;
-	},
-
-	getFilteredDataItems(state: DataState, getters: any) {
-		return () => {
-			if (validateData(state.filteredData)) {
-				return _.map(state.filteredData.values, d => {
-					const row: { [col: string]: any } = {};
-					for (const [index, col] of state.filteredData.columns.entries()) {
-						row[col] = d[index];
+	getFilteredDataItems(state: DataState): Dictionary<any>[] {
+		if (validateData(state.filteredData)) {
+			return _.map(state.filteredData.values, d => {
+				const row: { [col: string]: any } = {};
+				for (const [index, col] of state.filteredData.columns.entries()) {
+					row[col] = d[index];
+				}
+				_.forIn(state.highlightedFeatureRanges, (range, name) => {
+					if (row[name] >= range.from && row[name] <= range.to) {
+						row._rowVariant = 'info';
 					}
-					_.forIn(state.highlightedFeatureRanges, (range, name) => {
-						if (row[name] >= range.from && row[name] <= range.to) {
-							row._rowVariant = 'info';
-						}
-					});
-					return row;
 				});
-			}
-			return [];
-		};
+				return row;
+			});
+		}
+		return [];
 	},
 
-	getFilteredDataFields(state: DataState) {
-		return () => {
-			const data = state.filteredData;
-
+	getFilteredDataFields(state: DataState): Dictionary<FieldInfo> {
+		const data = state.filteredData;
+		if (validateData(data)) {
 			const variables = state.variables;
 			const types = {};
 			const suggested = {};
 			variables.forEach(variable => {
-			  types[variable.name] = variable.type;
-			  suggested[variable.name] = variable.suggestedTypes;
+				types[variable.name] = variable.type;
+				suggested[variable.name] = variable.suggestedTypes;
 			});
 
-			if (!_.isEmpty(data)) {
-				const result: { [col: string]: FieldInfo } = {};
-				for (const col of data.columns) {
-					result[col] = {
-						label: col,
-						type: types[col],
-						suggested: suggested[col],
-						sortable: true
-					};
+			const result: Dictionary<FieldInfo> = {} as any;
+			for (const col of data.columns) {
+				result[col] = {
+					label: col,
+					type: types[col],
+					suggested: suggested[col],
+					sortable: true
+				};
+			}
+			return result;
+		}
+		return {};
+	},
+
+	getResultData(state: DataState): Data {
+		return state.resultData;
+	},
+
+	getResultDataItems(state: DataState): Dictionary<any>[] {
+		const resultData = state.resultData;
+		if (validateData(resultData)) {
+
+			// look at first row and figure out the target, predicted, error values
+			const predictedIdx = getPredictedIndex(resultData.columns);
+			const targetName = resultData.columns[getTargetIndexFromPredicted(resultData.columns, predictedIdx)];
+			const errorIdx = getErrorIndex(resultData.columns);
+
+			// convert fetched result data rows into table data rows
+			return _.map(resultData.values, resultRow => {
+				const row: { [col: string]: any } = {};
+
+				for (const [idx, colValues] of resultRow.entries()) {
+					const colName = resultData.columns[idx];
+					row[colName] = colValues;
 				}
-				return result;
-			} else {
-				return {};
-			}
-		};
-	},
-
-	getResultData(state: DataState) {
-		return () => state.resultData;
-	},
-
-	getResultDataItems(state: DataState) {
-		return () => {
-			const resultData = state.resultData;
-			if (validateData(resultData)) {
-
-				// look at first row and figure out the target, predicted, error values
-				const predictedIdx = getPredictedIndex(resultData.columns);
-				const targetName = resultData.columns[getTargetIndexFromPredicted(resultData.columns, predictedIdx)];
-				const errorIdx = getErrorIndex(resultData.columns);
-
-				// convert fetched result data rows into table data rows
-				return _.map(resultData.values, resultRow => {
-					const row: { [col: string]: any } = {};
-
-					for (const [idx, colValues] of resultRow.entries()) {
-						const colName = resultData.columns[idx];
-						row[colName] = colValues;
+				row._target = { truth: targetName, predicted: resultData.columns[predictedIdx] };
+				if (errorIdx >= 0) {
+					row._target.error = resultData.columns[errorIdx];
+				}
+				// if row is in the current highlght range, set its style to info
+				// TODO: this shouldn't be in the getter because it causes the entire
+				// function to re-run whenever the high changes
+				_.forIn(state.highlightedFeatureRanges, (range, name) => {
+					if (row[name] >= range.from && row[name] <= range.to) {
+						row._rowVariant = 'info';
 					}
-					row._target = { truth: targetName, predicted: resultData.columns[predictedIdx] };
-					if (errorIdx >= 0) {
-						row._target.error = resultData.columns[errorIdx];
-					}
-					// if row is in the current highlght range, set its style to info
-					// TODO: this shouldn't be in the getter because it causes the entire
-					// function to re-run whenever the high changes
-					_.forIn(state.highlightedFeatureRanges, (range, name) => {
-						if (row[name] >= range.from && row[name] <= range.to) {
-							row._rowVariant = 'info';
-						}
-					});
-					return row;
 				});
-			}
-			return [];
-		};
+				return row;
+			});
+		}
+		return [];
 	},
 
-	getResultDataFields(state: DataState) {
-		return () => {
-			const data = state.resultData;
-
+	getResultDataFields(state: DataState): Dictionary<FieldInfo> {
+		const data = state.resultData;
+		if (validateData(data)) {
 			// look at first row and figure out the target, predicted, error values
 			const predictedIndex = getPredictedIndex(data.columns);
 			const targetIndex = getTargetIndexFromPredicted(data.columns, predictedIndex);
 			const errorIndex = getErrorIndex(data.columns);
 
-			if (!_.isEmpty(data)) {
-				const result: { [label: string]: {label: string, sortable: boolean} } = {};
-				// assign column names, ignoring target, predicted and error
-				for (const [idx, col] of data.columns.entries()) {
-					if (idx !== predictedIndex && idx !== targetIndex && idx !== errorIndex) {
-						result[col] = { label: col, sortable: true };
-					}
+			const result: Dictionary<FieldInfo> = {} as any
+			// assign column names, ignoring target, predicted and error
+			for (const [idx, col] of data.columns.entries()) {
+				if (idx !== predictedIndex && idx !== targetIndex && idx !== errorIndex) {
+					result[col] = {
+						label: col,
+						sortable: true,
+						type: "",
+						suggested: {} as any
+					};
 				}
-				// add target, predicted and error at end with customized labels
-				const targetName = data.columns[targetIndex];
-				result[targetName] = { label: targetName, sortable: true };
-				result[data.columns[predictedIndex]] = { label: `Predicted ${targetName}`, sortable: true };
-				if (errorIndex >= 0) {
-					result[data.columns[errorIndex]] = { label: 'Error', sortable: true };
-				}
-
-				return result;
-			} else {
-				return {};
 			}
-		};
+			// add target, predicted and error at end with customized labels
+			const targetName = data.columns[targetIndex];
+			result[targetName] = {
+				label: targetName,
+				sortable: true,
+				type: "",
+				suggested: {} as any,
+			};
+			result[data.columns[predictedIndex]] = {
+				label: `Predicted ${targetName}`,
+				sortable: true,
+				type: "",
+				suggested: {} as any
+			};
+			if (errorIndex >= 0) {
+				result[data.columns[errorIndex]] = {
+					label: 'Error',
+					sortable: true,
+					type: "",
+					suggested: {} as any
+				};
+			}
+			return result;
+		}
+		return {} as Dictionary<FieldInfo>;
 	},
 
-	getSelectedData(state: DataState) {
-		return () => {
-			return state.selectedData;
-		};
+	getSelectedData(state: DataState): Data {
+		return state.selectedData;
 	},
 
-	getSelectedDataItems(state: DataState) {
-		return () => {
-			if (validateData(state.selectedData)) {
-				return _.map(state.selectedData.values, d => {
-					const row: { [col: string]: any } = {};
-					for (const [index, col] of state.selectedData.columns.entries()) {
-						row[col] = d[index];
+	getSelectedDataItems(state: DataState): Dictionary<any>[] {
+		if (validateData(state.selectedData)) {
+			return _.map(state.selectedData.values, d => {
+				const row: { [col: string]: any } = {};
+				for (const [index, col] of state.selectedData.columns.entries()) {
+					row[col] = d[index];
+				}
+				_.forIn(state.highlightedFeatureRanges, (range, name) => {
+					if (row[name] >= range.from && row[name] <= range.to) {
+						row._rowVariant = 'info';
 					}
-					_.forIn(state.highlightedFeatureRanges, (range, name) => {
-						if (row[name] >= range.from && row[name] <= range.to) {
-							row._rowVariant = 'info';
-						}
-					});
-					return row;
 				});
-			}
-			return [];
-		};
+				return row;
+			});
+		}
+		return [];
 	},
 
-	getSelectedDataFields(state: DataState) {
-		return () => {
-			const data = state.selectedData;
+	getSelectedDataFields(state: DataState): Dictionary<FieldInfo> {
+		const data = state.selectedData;
+		if (validateData(data)) {
 			const variables = state.variables;
 			const types = {};
 			const suggested: {} = [];
 			variables.forEach(variable => {
-			  types[variable.name] = variable.type;
-			  suggested[variable.name] = variable.suggestedTypes;
+				types[variable.name] = variable.type;
+				suggested[variable.name] = variable.suggestedTypes;
 			});
 
-			if (!_.isEmpty(data)) {
-				const result: { [label: string]: FieldInfo } = {};
-				for (const col of data.columns) {
-					result[col] = {
-						label: col,
-						type: types[col],
-						suggested: suggested[col],
-						sortable: true
-					};
-				}
-				return result;
-			} else {
-				return {};
+			const result: { [label: string]: FieldInfo } = {};
+			for (const col of data.columns) {
+				result[col] = {
+					label: col,
+					type: types[col],
+					suggested: suggested[col],
+					sortable: true
+				};
 			}
-		};
+			return result;
+		}
+		return {} as Dictionary<FieldInfo>;
 	},
 
-	getHighlightedFeatureValues(state: DataState) {
-		return () => state.highlightedFeatureValues;
+	getHighlightedFeatureValues(state: DataState): Dictionary<any> {
+		return state.highlightedFeatureValues;
 	}
 }

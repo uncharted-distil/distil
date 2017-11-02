@@ -11,13 +11,14 @@
 	</div>
 </template>
 
-<script>
-import FlowBar from '../components/FlowBar';
-import SearchBar from '../components/SearchBar';
-import SearchResults from '../components/SearchResults';
+<script lang="ts">
+import FlowBar from '../components/FlowBar.vue';
+import SearchBar from '../components/SearchBar.vue';
+import SearchResults from '../components/SearchResults.vue';
 import { gotoHome } from '../util/nav';
+import Vue from 'vue';
 
-export default {
+export default Vue.extend({
 	name: 'search',
 	components: {
 		FlowBar,
@@ -29,7 +30,7 @@ export default {
 			gotoHome(this.$store, this.$router);
 		}
 	}
-};
+});
 </script>
 
 <style>

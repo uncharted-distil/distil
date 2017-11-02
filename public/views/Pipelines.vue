@@ -8,12 +8,13 @@
 	</div>
 </template>
 
-<script>
+<script lange="ts">
 import FlowBar from '../components/FlowBar';
 import RunningPipelines from '../components/RunningPipelines';
 import CompletedPipelines from '../components/CompletedPipelines';
+import Vue from 'vue';
 
-export default {
+export default Vue.extend({
 	name: 'pipelines',
 	components: {
 		FlowBar,
@@ -32,7 +33,7 @@ export default {
 			sessionId: this.sessionId
 		});
 	}
-};
+});
 </script>
 
 <style>

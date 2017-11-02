@@ -14,13 +14,16 @@
 	</div>
 </template>
 
-<script>
+<script lange="ts">
 import FlowBar from '../components/FlowBar';
 import ExploreDataTable from '../components/ExploreDataTable';
 import VariableSummaries from '../components/VariableSummaries';
 import { gotoSearch, gotoSelect } from '../util/nav';
+import Vue from 'vue';
+import { getters as dataGetters } from '../store/data/module';
+import { getters as routeGetters } from '../store/route/module';
 
-export default {
+export default Vue.extend({
 	name: 'explore',
 
 	components: {
@@ -31,10 +34,10 @@ export default {
 
 	computed: {
 		dataset() {
-			return this.$store.getters.getRouteDataset();
+			return routeGetters.getRouteDataset(this.$store);
 		},
 		variables() {
-			return this.$store.getters.getVariables();
+			return dataGetters.getVariables(this.$store);
 		}
 	},
 
@@ -67,7 +70,7 @@ export default {
 				});
 		}
 	}
-};
+});
 </script>
 
 <style>
