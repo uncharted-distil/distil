@@ -29,7 +29,7 @@ export interface FieldInfo {
 
 export const getters = {
 	getVariables(state: DataState) {
-		return state.variables;
+		return () => state.variables;
 	},
 
 	getVariablesMap(state: DataState) {

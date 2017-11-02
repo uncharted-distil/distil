@@ -1,7 +1,6 @@
 import _ from 'lodash';
 import axios from 'axios';
 import { encodeQueryParams, FilterMap } from '../../util/filters';
-import { mutations } from './module';
 import { DataState, Variable } from './index';
 import { PipelineInfo } from '../pipelines/index';
 import { ActionContext } from 'vuex';
@@ -74,7 +73,7 @@ export const actions = {
 				}
 			};
 		});
-		mutations.setResultsSummaries(this.$store, histograms);
+		context.commit('setResultsSummaries', histograms);
 		// fill them in asynchronously
 		return Promise.all(variables.map(variable => {
 			return context.dispatch('getVariableSummary', {
