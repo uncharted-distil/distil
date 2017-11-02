@@ -1,7 +1,6 @@
-import { MutationTree } from 'vuex';
 import { AppState, Session } from './index';
 
-export const mutations: MutationTree<AppState> = {
+export const mutations = {
 	setWebSocketConnection(state: AppState, connection: WebSocket) {
 		state.wsConnection = connection;
 	},

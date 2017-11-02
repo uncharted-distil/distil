@@ -13,13 +13,16 @@
 	</div>
 </template>
 
-<script language="ts">
+<script lang="ts">
 
 import { createRouteEntryFromRoute } from '../util/routes';
+import { getters } from '../store/data/module';
+import { VariableSummary } from '../store/data/index';
 import VariableFacets from '../components/VariableFacets.vue';
 import 'font-awesome/css/font-awesome.css';
+import Vue from 'vue';
 
-export default {
+export default Vue.extend({
 	name: 'available-variables',
 
 	components: {
@@ -30,8 +33,8 @@ export default {
 		dataset() {
 			return this.$store.getters.getRouteDataset();
 		},
-		variables() {
-			return this.$store.getters.getAvailableVariableSummaries();
+		variables(): VariableSummary[] {
+			return getters.getAvailableVariableSummaries(this.$store);
 		},
 		html() {
 			return (group) => {
@@ -61,7 +64,7 @@ export default {
 			};
 		}
 	}
-};
+});
 </script>
 
 <style>

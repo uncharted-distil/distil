@@ -1,12 +1,14 @@
 import axios from 'axios';
 import { AppState } from './index';
-import { ActionTree } from 'vuex';
+import { ActionContext } from 'vuex';
 import Connection from '../../util/ws';
 
-export const actions: ActionTree<AppState, any> = {
+export type AppContext = ActionContext<AppState, any>;
+
+export const actions = {
 
 	// starts a pipeline session.
-	getPipelineSession(context: any, args: { sessionId: string } ) {
+	getPipelineSession(context: AppContext, args: { sessionId: string } ) {
 		const sessionId = args.sessionId;
 		const conn = context.getters.getWebSocketConnection() as Connection;
 		return conn.send({
@@ -26,7 +28,7 @@ export const actions: ActionTree<AppState, any> = {
 	},
 
 	// end a pipeline session.
-	endPipelineSession(context: any, args: { sessionId: string }) {
+	endPipelineSession(context: AppContext, args: { sessionId: string }) {
 		const sessionId = args.sessionId;
 		const conn = context.getters.getWebSocketConnection();
 		if (!sessionId) {
@@ -52,7 +54,7 @@ export const actions: ActionTree<AppState, any> = {
 		});
 	},
 
-	exportPipeline(context: any, args: { sessionId: string, pipelineId: string}) {
+	exportPipeline(context: AppContext, args: { sessionId: string, pipelineId: string}) {
 		return axios.get(`/distil/export/${args.sessionId}/${args.pipelineId}`)
 		.then(() => {
 			console.warn(`User exported pipeline ${args.pipelineId}`);
@@ -62,7 +64,7 @@ export const actions: ActionTree<AppState, any> = {
 		});
 	},
 
-	addRecentDataset(context: any, dataset: string) {
+	addRecentDataset(context: AppContext, dataset: string) {
 		context.commit('addRecentDataset', dataset);
 	}
 };

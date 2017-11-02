@@ -1,9 +1,8 @@
 import _ from 'lodash';
 import Vue from 'vue';
-import { MutationTree } from 'vuex';
 import { DataState, Variable, Datasets, VariableSummary, Data } from './index';
 
-export const mutations: MutationTree<DataState> = {
+export const mutations = {
 
 	updateVariableType(state: DataState, update) {
 		const index = _.findIndex(state.variables, elem => {

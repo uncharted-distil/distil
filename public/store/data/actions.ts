@@ -1,16 +1,19 @@
 import _ from 'lodash';
 import axios from 'axios';
 import { encodeQueryParams, FilterMap } from '../../util/filters';
+import { mutations } from './module';
 import { DataState, Variable } from './index';
 import { PipelineInfo } from '../pipelines/index';
-import { ActionTree } from 'vuex';
+import { ActionContext } from 'vuex';
 
 const ES_INDEX = 'datasets';
 
-export const actions: ActionTree<DataState, any> = {
+export type DataContext = ActionContext<DataState, any>;
+
+export const actions = {
 
 	// searches dataset descriptions and column names for supplied terms
-	searchDatasets(context: any, terms: string) {
+	searchDatasets(context: DataContext, terms: string) {
 		const params = !_.isEmpty(terms) ? `?search=${terms}` : '';
 		return axios.get(`/distil/datasets/${ES_INDEX}${params}`)
 			.then(response => {
@@ -23,7 +26,7 @@ export const actions: ActionTree<DataState, any> = {
 	},
 
 	// fetches all variables for a single dataset.
-	getVariables(context: any, args: { dataset: string }) {
+	getVariables(context: DataContext, args: { dataset: string }) {
 		const dataset = args.dataset;
 		return axios.get(`/distil/variables/${ES_INDEX}/${dataset}`)
 			.then(response => {
@@ -35,7 +38,7 @@ export const actions: ActionTree<DataState, any> = {
 			});
 	},
 
-	setVariableType(context: any, args: { dataset: string, field: string, type: string }) {
+	setVariableType(context: DataContext, args: { dataset: string, field: string, type: string }) {
 		return axios.post(`/distil/variables/${ES_INDEX}/${args.dataset}`,
 			{
 				field: args.field,
@@ -55,17 +58,23 @@ export const actions: ActionTree<DataState, any> = {
 	},
 
 	// fetches variable summary data for the given dataset and variables
-	getVariableSummaries(context: any, args: { dataset: string, variables: Variable[] }) {
+	getVariableSummaries(context: DataContext, args: { dataset: string, variables: Variable[] }) {
 		const dataset = args.dataset;
 		const variables = args.variables;
 		// commit empty place holders
 		const histograms = variables.map(variable => {
 			return {
 				name: variable.name,
-				pending: true
+				feature: name,
+				pending: true,
+				buckets: [],
+				extrema: {
+					min: NaN,
+					max: NaN
+				}
 			};
 		});
-		context.commit('setVariableSummaries', histograms);
+		mutations.setResultsSummaries(this.$store, histograms);
 		// fill them in asynchronously
 		return Promise.all(variables.map(variable => {
 			return context.dispatch('getVariableSummary', {
@@ -75,7 +84,7 @@ export const actions: ActionTree<DataState, any> = {
 		}));
 	},
 
-	getVariableSummary(context: any, args: { dataset: string, variable: string }) {
+	getVariableSummary(context: DataContext, args: { dataset: string, variable: string }) {
 		const dataset = args.dataset;
 		const variable = args.variable;
 		return axios.get(`/distil/variable-summaries/${ES_INDEX}/${dataset}/${variable}`)
@@ -102,7 +111,7 @@ export const actions: ActionTree<DataState, any> = {
 	},
 
 	// update filtered data based on the  current filter state
-	updateFilteredData(context: any, args: { dataset: string, filters: FilterMap }) {
+	updateFilteredData(context: DataContext, args: { dataset: string, filters: FilterMap }) {
 		const dataset = args.dataset;
 		const filters = args.filters;
 		const queryParams = encodeQueryParams(filters);
@@ -119,7 +128,7 @@ export const actions: ActionTree<DataState, any> = {
 	},
 
 	// update filtered data based on the  current filter state
-	updateSelectedData(context: any, args: { dataset: string, filters: FilterMap }) {
+	updateSelectedData(context: DataContext, args: { dataset: string, filters: FilterMap }) {
 		const dataset = args.dataset;
 		const filters = args.filters;
 		const queryParams = encodeQueryParams(filters);
@@ -136,7 +145,7 @@ export const actions: ActionTree<DataState, any> = {
 	},
 
 	// fetches result summaries for a given pipeline create request
-	getResultsSummaries(context: any, args: { dataset: string, requestId: string }) {
+	getResultsSummaries(context: DataContext, args: { dataset: string, requestId: string }) {
 		const dataset = args.dataset;
 		const requestId = args.requestId;
 		const results = context.getters.getPipelineResults(requestId) as PipelineInfo[];
@@ -193,7 +202,7 @@ export const actions: ActionTree<DataState, any> = {
 	},
 
 	// fetches result data for created pipeline
-	updateResults(context: any, args: { resultId: string, dataset: string, filters: FilterMap }) {
+	updateResults(context: DataContext, args: { resultId: string, dataset: string, filters: FilterMap }) {
 		const encodedResultId = encodeURIComponent(args.resultId);
 		const filters = args.filters;
 		const queryParams = encodeQueryParams(filters);
@@ -206,19 +215,19 @@ export const actions: ActionTree<DataState, any> = {
 			});
 	},
 
-	highlightFeatureRange(context: any, highlight: Range) {
+	highlightFeatureRange(context: DataContext, highlight: Range) {
 		context.commit('highlightFeatureRange', highlight);
 	},
 
-	clearFeatureHighlightRange(context: any, varName: string) {
+	clearFeatureHighlightRange(context: DataContext, varName: string) {
 		context.commit('clearFeatureHighlightRange', varName);
 	},
 
-	highlightFeatureValues(context: any, highlight: { [name: string]: any }) {
+	highlightFeatureValues(context: DataContext, highlight: { [name: string]: any }) {
 		context.commit('highlightFeatureValues', highlight);
 	},
 
-	clearFeatureHighlightValues(context: any) {
+	clearFeatureHighlightValues(context: DataContext) {
 		context.commit('clearFeatureHighlightValues');
 	}
 }

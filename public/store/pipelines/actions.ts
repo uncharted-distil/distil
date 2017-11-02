@@ -2,7 +2,7 @@ import _ from 'lodash';
 import axios from 'axios';
 import moment from 'moment';
 import { PipelineState, Score } from './index';
-import { ActionTree } from 'vuex';
+import { ActionContext } from 'vuex';
 import Connection from '../../util/ws';
 
 // TODO: move this somewhere more appropriate.
@@ -49,7 +49,9 @@ interface PipelineRequest {
 	filters: string
 }
 
-export const actions: ActionTree<PipelineState, any> = {
+export type AppContext = ActionContext<PipelineState, any>;
+
+export const actions = {
 	getSession(context: any, args: { sessionId: string }) {
 		const sessionId = args.sessionId;
 		return axios.get(`/distil/session/${sessionId}`)

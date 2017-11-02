@@ -1,6 +1,5 @@
 import _ from 'lodash';
 import { Variable, Data, DataState } from './index';
-import { GetterTree } from 'vuex';
 
 function getTargetIndexFromPredicted(columns: string[], predictedIndex: number) {
 	const targetName = columns[predictedIndex].replace('_res', '');
@@ -28,9 +27,9 @@ export interface FieldInfo {
 	sortable: boolean
 }
 
-export const getters: GetterTree<DataState, any> = {
+export const getters = {
 	getVariables(state: DataState) {
-		return () => state.variables;
+		return state.variables;
 	},
 
 	getVariablesMap(state: DataState) {
@@ -117,12 +116,10 @@ export const getters: GetterTree<DataState, any> = {
 	},
 
 	getAvailableVariableSummaries(state: DataState, getters: any) {
-		return () => {
-			const available = getters.getAvailableVariablesMap();
-			return state.variableSummaries.filter(variable => {
-				return available[variable.name.toLowerCase()];
-			});
-		};
+		const available = getters.getAvailableVariablesMap();
+		return state.variableSummaries.filter(variable => {
+			return available[variable.name.toLowerCase()];
+		});
 	},
 
 	getTrainingVariableSummaries(state: DataState, getters: any) {
@@ -328,5 +325,5 @@ export const getters: GetterTree<DataState, any> = {
 
 	getHighlightedFeatureValues(state: DataState) {
 		return () => state.highlightedFeatureValues;
-	},
+	}
 }

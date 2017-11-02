@@ -27,7 +27,7 @@ export interface VariableSummary {
 	extrema: Extrema;
 	type?: string;
 	err?: string;
-	pending?: string;
+	pending?: boolean;
 }
 
 export interface Data {
