@@ -27,8 +27,8 @@ const (
 	VarImportanceField = "importance"
 	// VarSuggestedTypesField is the field name for the suggested variable types.
 	VarSuggestedTypesField = "suggestedTypes"
-	// VarTypeIndex is the variable type of the index field.
-	VarTypeIndex = "index"
+	// VarRoleIndex is the variable role of an index field.
+	VarRoleIndex = "index"
 )
 
 func (s *Storage) parseVariable(searchHit *elastic.SearchHit, varName string) (*model.Variable, error) {
@@ -223,7 +223,7 @@ func (s *Storage) FetchVariables(dataset string, index string, includeIndex bool
 	if !includeIndex {
 		result = make([]*model.Variable, 0)
 		for _, v := range variables {
-			if v.Type != VarTypeIndex {
+			if v.Role != VarRoleIndex {
 				result = append(result, v)
 			}
 		}

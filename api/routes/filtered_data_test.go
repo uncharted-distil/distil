@@ -47,7 +47,7 @@ func TestFilteredPostgresHandler(t *testing.T) {
 	// Identify the expected behaviour.
 	// NOTE: It currently expects an empty set since pgx.Rows is hardly accessible.
 	mockDB.EXPECT().Query(
-		"SELECT \"d3mIndex\",\"Position\",\"Number_seasons\",\"Games_played\",\"On_base_pct\" FROM o_185 WHERE \"On_base_pct\" >= $1 AND \"On_base_pct\" <= $2 AND \"Position\" IN ($3) ORDER BY \"d3mIndex\" LIMIT 100;",
+		"SELECT \"Position\",\"Number_seasons\",\"Games_played\",\"On_base_pct\" FROM o_185 WHERE \"On_base_pct\" >= $1 AND \"On_base_pct\" <= $2 AND \"Position\" IN ($3) ORDER BY \"d3mIndex\" LIMIT 100;",
 		float64(0), float64(100), "Catcher").Return(nil, nil)
 	req := mock.HTTPRequest(t, "GET", "/distil/data", params, query)
 
