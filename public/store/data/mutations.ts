@@ -23,11 +23,13 @@ export const mutations = {
 		state.variableSummaries = summaries;
 	},
 
-	updateVariableSummaries(state: DataState, histogram) {
-		const index = _.findIndex(state.variableSummaries, elem => {
-			return elem.name === histogram.name;
-		});
-		Vue.set(state.variableSummaries, index, histogram);
+	updateVariableSummaries(state: DataState, histogram: VariableSummary) {
+		const index = _.findIndex(state.variableSummaries, elem => elem.name === histogram.name);
+		if (index >= 0) {
+			Vue.set(state.variableSummaries, index, histogram);
+		} else {
+			state.variableSummaries.push(histogram);
+		}
 	},
 
 	setResultsSummaries(state: DataState, summaries: VariableSummary[]) {
