@@ -1,8 +1,7 @@
 import _ from 'lodash';
 import { PipelineState } from './index';
-import { GetterTree } from 'vuex';
 
-export const getters: GetterTree<PipelineState, any> = {
+export const getters = {
 	getPipelineResults(state: PipelineState) {
 		return (requestId: string) => {
 			return _.concat(

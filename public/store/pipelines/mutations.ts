@@ -1,9 +1,8 @@
 import _ from 'lodash';
 import Vue from 'vue';
-import { MutationTree } from 'vuex';
 import { PipelineState, PipelineInfo } from './index';
 
-export const mutations: MutationTree<PipelineState> = {
+export const mutations = {
 	// adds a running pipeline or replaces an existing one if the ids match
 	addRunningPipeline(state: PipelineState, pipelineData: PipelineInfo) {
 		if (!_.has(state.runningPipelines, pipelineData.requestId)) {
