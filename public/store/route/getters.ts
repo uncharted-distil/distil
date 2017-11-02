@@ -1,8 +1,7 @@
 import { decodeFilters, FilterMap } from '../../util/filters';
 import { Route } from 'vue-router';
-import { GetterTree } from 'vuex';
 
-export const getters: GetterTree<Route, any> = {
+export const getters = {
 	getRoute(state: Route) {
 		return () => state;
 	},
