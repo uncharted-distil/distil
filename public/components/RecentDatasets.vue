@@ -14,7 +14,7 @@
 	</b-card>
 </template>
 
-<script>
+<script lang="ts">
 import DatasetPreview from '../components/DatasetPreview';
 
 export default {

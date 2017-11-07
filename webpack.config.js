@@ -4,13 +4,13 @@ const HtmlPlugin = require('html-webpack-plugin');
 const CopyWebpackPlugin = require('copy-webpack-plugin');
 
 module.exports = {
-	entry: './public/main.js',
+	entry: './public/main.ts',
 	output: {
 		path: path.resolve(__dirname, './dist'),
 		filename: 'build.js'
 	},
 	resolve: {
-		extensions: ['.js', '.vue', '.json'],
+		extensions: ['.js', '.vue', '.json', '.ts'],
 		symlinks: false,
 		alias: {
 			'vue$': 'vue/dist/vue.esm.js',
@@ -36,7 +36,15 @@ module.exports = {
 			{
 				test: /\.js$/,
 				exclude: /node_modules/,
-				use: ['babel-loader']
+				loader: 'babel-loader'
+			},
+			{
+				test: /\.tsx?$/,
+				exclude: /node_modules/,
+				loader: 'ts-loader',
+				options: {
+					appendTsSuffixTo: [/\.vue$/]
+				}
 			},
 			{
 				test: /images\/.*\.(png|jpg|gif|svg)$/,

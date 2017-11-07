@@ -2,7 +2,7 @@
 	<div class="facets" v-once ref="facets"></div>
 </template>
 
-<script>
+<script lang="ts">
 import _ from 'lodash';
 
 import Facets from '@uncharted.software/stories-facets';

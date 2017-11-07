@@ -10,6 +10,7 @@
     "test-debug": "mocha --compilers js:babel-core/register ./public/test/**/*.js --inspect --debug-brk"
   },
   "dependencies": {
+    "@types/lodash": "^4.14.78",
     "@uncharted.software/stories-facets": "2.12.0",
     "axios": "0.16.2",
     "bootstrap-vue": "1.0.0-beta.9",
@@ -17,13 +18,14 @@
     "font-awesome": "4.7.0",
     "jquery": "3.2.1",
     "lodash": "4.17.4",
-    "popper.js": "^1.12.5",
+    "popper.js": "1.12.5",
     "vue": "^2.5.2",
     "vue-router": "^3.0.1",
-    "vue-slider-component": "2.4.1",
+    "vue-slider-component": "^2.4.3",
     "vue-template-compiler": "^2.5.2",
     "vuex": "^3.0.0",
-    "vuex-router-sync": "^5.0.0"
+    "vuex-router-sync": "^5.0.0",
+    "vuex-typescript": "^0.1.0"
   },
   "devDependencies": {
     "babel-core": "6.26.0",
@@ -36,13 +38,15 @@
     "eslint-loader": "1.9.0",
     "eslint-plugin-html": "3.2.2",
     "eslint-plugin-jsdoc": "3.1.3",
-    "eslint-plugin-vue": "beta",
     "file-loader": "1.1.4",
     "html-webpack-plugin": "2.30.1",
     "mocha": "3.5.3",
     "moment": "2.18.1",
     "style-loader": "0.18.2",
-    "vue-loader": "13.0.5",
+    "ts-loader": "^3.0.5",
+    "typescript": "^2.5.3",
+    "typescript-eslint-parser": "^8.0.0",
+    "vue-loader": "^13.3.0",
     "webpack": "3.6.0"
   }
 }

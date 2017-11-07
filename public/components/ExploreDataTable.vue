@@ -30,7 +30,7 @@
 	</div>
 </template>
 
-<script>
+<script lang="ts">
 import _ from 'lodash';
 
 export default {

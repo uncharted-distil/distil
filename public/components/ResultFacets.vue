@@ -10,12 +10,14 @@
 	</div>
 </template>
 
-<script>
+<script lang="ts">
 
 import _ from 'lodash';
 import Facets from '../components/Facets';
-import { decodeFilters, updateFilter, getFilterType, isDisabled, CATEGORICAL_FILTER, NUMERICAL_FILTER } from '../util/filters';
+import { decodeFilters, updateFilter, getFilterType, isDisabled,
+	CATEGORICAL_FILTER, NUMERICAL_FILTER, NumericalFilter, CategoricalFilter } from '../util/filters';
 import { createRouteEntryFromRoute } from '../util/routes';
+import { PipelineRequestInfo } from '../store/pipelines/index';
 import { createGroups } from '../util/facets';
 import 'font-awesome/css/font-awesome.css';
 import '../styles/spinner.css';
@@ -36,7 +38,7 @@ export default {
 	computed: {
 		groups() {
 			// create the groups
-			let groups = createGroups(this.variables, true, false);
+			let groups = createGroups(this.variables, true, false, '');
 
 			// sort alphabetically
 			groups.sort((a, b) => {
@@ -47,10 +49,10 @@ export default {
 
 			// find pipeline result with the uri specified in the route and
 			// flag it as the currently active result
-			const requestId = this.$store.getters.getRouteCreateRequestId();
-			const pipelineResults = this.$store.getters.getPipelineResults(requestId);
+			const requestId = this.$store.getters.getRouteCreateRequestId() as string;
+			const pipelineResults = this.$store.getters.getPipelineResults(requestId) as PipelineRequestInfo;
 			const activeResult = _.find(pipelineResults, p => {
-				return p.pipeline.resultUri === atob(this.$store.getters.getRouteResultId());
+				return btoa(p.pipeline.resultId) === this.$store.getters.getRouteResultId();
 			});
 
 			const filters = this.$store.getters.getRouteResultFilters();
@@ -73,7 +75,7 @@ export default {
 							values: {
 								enabled: true
 							}
-						}, activeResult.pipeline.resultUri);
+						}, activeResult.pipeline.resultId);
 						this.$emit('activePipelineChange', {
 							name: activeResult.name,
 							id: activeResult.pipelineId
@@ -177,8 +179,8 @@ export default {
 							facet.selection = {
 								// NOTE: the `from` / `to` values MUST be strings.
 								range: {
-									from: `${filter.min}`,
-									to: `${filter.max}`,
+									from: `${(<NumericalFilter>filter).min}`,
+									to: `${(<NumericalFilter>filter).max}`,
 								}
 							};
 						});
@@ -187,7 +189,7 @@ export default {
 					case CATEGORICAL_FILTER:
 						// add selection to facets
 						group.facets.forEach(facet => {
-							if (filter.categories.indexOf(facet.value) !== -1) {
+							if ((<CategoricalFilter>filter).categories.indexOf(facet.value) !== -1) {
 								// select
 								facet.selected = {
 									count: facet.count

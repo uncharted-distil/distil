@@ -425,9 +425,9 @@ func handleCreatePipelinesSuccess(conn *Connection, msg *Message, proxy *pipelin
 					bs := hasher.Sum(nil)
 					resUUIDStr := fmt.Sprintf("%x", bs)
 					response["pipeline"] = map[string]interface{}{
-						"scores":    scores,
-						"output":    pipeline.OutputType_name[int32(res.PipelineInfo.Output)],
-						"resultUri": resUUIDStr,
+						"scores":   scores,
+						"output":   pipeline.OutputType_name[int32(res.PipelineInfo.Output)],
+						"resultId": resUUIDStr,
 					}
 
 					// store the result data & metadata
