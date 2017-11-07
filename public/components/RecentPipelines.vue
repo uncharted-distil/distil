@@ -12,7 +12,7 @@
 <script>
 import _ from 'lodash';
 import PipelinePreview from '../components/PipelinePreview';
-import { getters } from '../store/pipelines/getters';
+import { getters } from '../store/pipelines/module';
 import Vue from 'vue';
 
 export default Vue.extend({

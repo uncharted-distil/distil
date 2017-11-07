@@ -13,8 +13,8 @@
 
 import _ from 'lodash';
 import PipelinePreview from '../components/PipelinePreview.vue';
+import { getters } from '../store/pipelines/module';
 import Vue from 'vue';
-import { getters } from '../store/pipelines/getters';
 
 export default Vue.extend({
 	name: 'completed-pipelines',

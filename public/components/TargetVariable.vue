@@ -43,7 +43,7 @@ export default Vue.extend({
 				remove.className += 'btn btn-sm btn-outline-danger mb-2';
 				remove.innerHTML = 'Remove';
 				remove.addEventListener('click', () => {
-					const entry = createRouteEntryFromRoute(this.$store.getters.getRoute(), {
+					const entry = createRouteEntryFromRoute(routeGetters.getRoute(this.$store), {
 						target: '',
 					});
 					this.$router.push(entry);

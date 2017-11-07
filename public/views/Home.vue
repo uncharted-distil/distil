@@ -25,7 +25,8 @@ import RecentPipelines from '../components/RecentPipelines';
 import RunningPipelines from '../components/RunningPipelines';
 import SearchBar from '../components/SearchBar';
 import { gotoSearch } from '../util/nav';
-import { actions } from '../store/app/module';
+import { getters } from '../store/app/module';
+import { actions } from '../store/pipelines/module';
 import Vue from 'vue';
 
 export default Vue.extend({
@@ -39,7 +40,7 @@ export default Vue.extend({
 	},
 	computed: {
 		sessionId() {
-			return this.$store.getters.getPipelineSessionID();
+			return getters.getPipelineSessionID(this.$store);
 		}
 	},
 	mounted() {

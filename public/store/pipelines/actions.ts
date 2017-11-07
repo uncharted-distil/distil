@@ -46,7 +46,7 @@ interface PipelineRequest {
 	dataset: string,
 	feature: string,
 	task: string,
-	metric: string,
+	metric: string[],
 	output: string,
 	filters: string
 }

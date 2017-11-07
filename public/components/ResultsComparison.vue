@@ -26,7 +26,8 @@ import Vue from 'vue';
 import { getters as dataGetters} from '../store/data/module';
 import { getters as routeGetters} from '../store/route/module';
 import { actions } from '../store/data/module';
-import { PipelineState } from '../store/pipelines/index';
+import { PipelineState, PipelineInfo } from '../store/pipelines/index';
+import { Variable } from '../store/data/index';
 import { getPipelineResults } from '../util/pipelines';
 
 export default Vue.extend({
@@ -49,30 +50,30 @@ export default Vue.extend({
 	},
 
 	computed: {
-		result() {
+		result(): PipelineInfo {
 			const requestId = routeGetters.getRouteCreateRequestId(this.$store);
 			const resultId = atob(routeGetters.getRouteResultId(this.$store));
 			const pipelineRequest = getPipelineResults(<PipelineState>this.$store.state.pipelineModule, requestId);
 			return _.find(pipelineRequest, r => r.pipeline.resultId === resultId);
 		},
 
-		dataset() {
+		dataset(): string {
 			return routeGetters.getRouteDataset(this.$store);
 		},
 
-		target() {
+		target(): string {
 			return routeGetters.getRouteTargetVariable(this.$store);
 		},
 
-		variables() {
+		variables(): Variable[] {
 			return dataGetters.getVariables(this.$store);
 		},
 
-		residualThreshold() {
+		residualThreshold(): string {
 			return routeGetters.getRouteResidualThreshold(this.$store);
 		},
 
-		regressionEnabled() {
+		regressionEnabled(): boolean {
 			const targetVarName = this.target;
 			const variables = this.variables;
 			const targetVar = _.find(variables, v => {
@@ -118,17 +119,17 @@ export default Vue.extend({
 		fetch() {
 			actions.updateResults(this.$store, {
 				dataset: this.dataset,
-				resultId: atob(this.$store.getters.getRouteResultId()),
-				filters: this.$store.getters.getFilters()
+				resultId: atob(routeGetters.getRouteResultId(this.$store)),
+				filters: routeGetters.getDecodedFilters(this.$store)
 			});
 		},
 
 		// Methods passed to classification result table instances to filter their displays.
-		classificationMatchFilter(dataItem) {
+		classificationMatchFilter(dataItem): boolean {
 			return dataItem[dataItem._target.truth] === dataItem[dataItem._target.predicted];
 		},
 
-		classificationNoMatchFilter(dataItem) {
+		classificationNoMatchFilter(dataItem): boolean {
 			return dataItem[dataItem._target.truth] !== dataItem[dataItem._target.predicted];
 		},
 

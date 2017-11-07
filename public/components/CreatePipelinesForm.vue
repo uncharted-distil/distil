@@ -21,7 +21,8 @@ import { createRouteEntry } from '../util/routes';
 import { getTask, getMetricDisplayNames, getOutputSchemaNames, getMetricSchemaName } from '../util/pipelines';
 import { getters as dataGetters } from '../store/data/module';
 import { getters as routeGetters } from '../store/route/module';
-import { actions as pipelineActions} from '../store/pipelines/module';
+import { actions as pipelineActions } from '../store/pipelines/module';
+import { getters as appGetters } from '../store/app/module';
 import Vue from 'vue';
 
 export default Vue.extend({
@@ -74,7 +75,7 @@ export default Vue.extend({
 			});
 		},
 		sessionId() {
-			return this.$store.getters.getPipelineSessionID();
+			return appGetters.getPipelineSessionID(this.$store);
 		},
 		// determines create button status based on completeness of user input
 		disableCreate() {
@@ -101,7 +102,7 @@ export default Vue.extend({
 				sessionId: this.sessionId,
 				feature: routeGetters.getRouteTargetVariable(this.$store),
 				task: task,
-				metric: metrics[0],
+				metric: metrics,
 				output: output
 			});
 

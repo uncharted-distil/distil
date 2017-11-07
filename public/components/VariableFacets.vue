@@ -286,7 +286,7 @@ export default Vue.extend({
 					enabled: true
 				});
 			});
-			const entry = createRouteEntryFromRoute(this.$store.getters.getRoute(), {
+			const entry = createRouteEntryFromRoute(routeGetters.getRoute(this.$store), {
 				filters: filters,
 			});
 			this.$router.push(entry);
@@ -302,7 +302,7 @@ export default Vue.extend({
 					enabled: false
 				});
 			});
-			const entry = createRouteEntryFromRoute(this.$store.getters.getRoute(), {
+			const entry = createRouteEntryFromRoute(routeGetters.getRoute(this.$store), {
 				filters: filters
 			});
 			this.$router.push(entry);

@@ -32,7 +32,8 @@
 <script>
 import '../assets/images/legendary.svg';
 import { gotoHome, gotoSearch, gotoExplore, gotoSelect, gotoPipelines, gotoResults } from '../util/nav';
-import { getters } from '../store/route/module';
+import { getters as routeGetters } from '../store/route/module';
+import { getters as appGetters } from '../store/app/module';
 import { actions } from '../store/app/module';
 import Vue from 'vue';
 
@@ -69,7 +70,7 @@ export default Vue.extend({
 
 	computed: {
 		sessionId() {
-			return this.$store.getters.getPipelineSessionID();
+			return appGetters.getPipelineSessionID(this.$store);
 		}
 	},
 
@@ -104,7 +105,7 @@ export default Vue.extend({
 			actions.abort(this.$store);
 		},
 		hasDataset() {
-			return !!getters.getRouteDataset(this.$store);
+			return !!routeGetters.getRouteDataset(this.$store);
 		},
 		updateActive() {
 			this.activeView = ROUTE_MAPPINGS[this.$route.path];
