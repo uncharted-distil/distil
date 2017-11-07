@@ -21,6 +21,7 @@ import { createRouteEntry } from '../util/routes';
 import { getTask, getMetricDisplayNames, getOutputSchemaNames, getMetricSchemaName } from '../util/pipelines';
 import { getters as dataGetters } from '../store/data/module';
 import { getters as routeGetters } from '../store/route/module';
+import { actions as pipelineActions} from '../store/pipelines/module';
 import Vue from 'vue';
 
 export default Vue.extend({
@@ -94,13 +95,13 @@ export default Vue.extend({
 			const metrics = _.map(this.metrics as string[], m => getMetricSchemaName(m));
 
 			// dispatch action that triggers request send to server
-			this.$store.dispatch('createPipelines', {
+			pipelineActions.createPipelines(this.$store, {
 				dataset: this.dataset,
 				filters: this.selectedFilters,
 				sessionId: this.sessionId,
 				feature: routeGetters.getRouteTargetVariable(this.$store),
 				task: task,
-				metric: metrics,
+				metric: metrics[0],
 				output: output
 			});
 

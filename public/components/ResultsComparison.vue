@@ -25,6 +25,7 @@ import _ from 'lodash';
 import Vue from 'vue';
 import { getters as dataGetters} from '../store/data/module';
 import { getters as routeGetters} from '../store/route/module';
+import { actions } from '../store/data/module';
 import { PipelineState } from '../store/pipelines/index';
 import { getPipelineResults } from '../util/pipelines';
 
@@ -115,7 +116,7 @@ export default Vue.extend({
 
 	methods: {
 		fetch() {
-			this.$store.dispatch('updateResults', {
+			actions.updateResults(this.$store, {
 				dataset: this.dataset,
 				resultId: atob(this.$store.getters.getRouteResultId()),
 				filters: this.$store.getters.getFilters()

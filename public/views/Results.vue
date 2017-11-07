@@ -19,8 +19,11 @@ import ResultsComparison from '../components/ResultsComparison.vue';
 import VariableSummaries from '../components/VariableSummaries.vue';
 import ResultSummaries from '../components/ResultSummaries.vue';
 import { gotoSelect } from '../util/nav';
-import { getters as dataGetters } from '../store/data/module';
+import { getters as dataGetters, actions as dataActions } from '../store/data/module';
 import { getters as routeGetters } from '../store/route/module';
+import { actions as pipelineActions } from '../store/pipelines/module';
+import { getters as appGetters } from '../store/app/module';
+import { Variable } from '../store/data/index';
 import Vue from 'vue';
 
 export default Vue.extend({
@@ -34,17 +37,17 @@ export default Vue.extend({
 	},
 
 	computed: {
-		dataset() {
+		dataset(): string {
 			return routeGetters.getRouteDataset(this.$store);
 		},
-		variables() {
+		variables(): Variable[] {
 			return dataGetters.getVariables(this.$store);
 		},
-		requestId() {
+		requestId(): string {
 			return routeGetters.getRouteCreateRequestId(this.$store);
 		},
-		sessionId() {
-			return this.$store.getters.getPipelineSessionID();
+		sessionId(): string {
+			return appGetters.getPipelineSessionID(this.$store);
 		}
 	},
 
@@ -68,19 +71,19 @@ export default Vue.extend({
 		},
 		fetch() {
 			Promise.all([
-					this.$store.dispatch('getVariables', {
+					dataActions.getVariables(this.$store, {
 						dataset: this.dataset
 					}),
-					this.$store.dispatch('getSession', {
+					pipelineActions.getSession(this.$store, {
 						sessionId: this.sessionId
 					})
 				])
 				.then(() => {
-					this.$store.dispatch('getVariableSummaries', {
+					dataActions.getVariableSummaries(this.$store, {
 						dataset: this.dataset,
 						variables: this.variables
 					});
-					this.$store.dispatch('getResultsSummaries', {
+					dataActions.getResultsSummaries(this.$store, {
 						dataset: this.dataset,
 						requestId: this.requestId
 					});

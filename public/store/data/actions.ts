@@ -229,7 +229,7 @@ export const actions = {
 			});
 	},
 
-	highlightFeatureRange(context: DataContext, highlight: { name: string, to: string, from: string}) {
+	highlightFeatureRange(context: DataContext, highlight: { name: string, to: number, from: number}) {
 		mutations.highlightFeatureRange(context, highlight);
 	},
 

@@ -46,7 +46,7 @@ export const actions = {
 	searchDatasets: dispatch(moduleActions.searchDatasets),
 	getVariables: dispatch(moduleActions.getVariables),
 	setVariableType: dispatch(moduleActions.setVariableType),
-	setVariableSummaries: dispatch(moduleActions.getVariableSummaries),
+	getVariableSummaries: dispatch(moduleActions.getVariableSummaries),
 	getVariableSummary: dispatch(moduleActions.getVariableSummary),
 	updateFilteredData: dispatch(moduleActions.updateFilteredData),
 	updateSelectedData: dispatch(moduleActions.updateSelectedData),

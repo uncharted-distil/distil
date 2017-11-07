@@ -22,7 +22,7 @@
 
 <script>
 import _ from 'lodash';
-import { dataGetters } from '../store/data/module';
+import { getters, actions } from '../store/data/module';
 import Vue from 'vue';
 
 export default Vue.extend({
@@ -38,14 +38,14 @@ export default Vue.extend({
 	computed: {
 		// extracts the table data from the store
 		items() {
-			const items = dataGetters.getResultDataItems(this.$store);
+			const items = getters.getResultDataItems(this.$store);
 			return items
 				.filter(this.filterFunc)
 				.map(this.decorateFunc);
 		},
 		// extract the table field header from the store
 		fields() {
-			return dataGetters.getResultDataFields(this.$store);
+			return getters.getResultDataFields(this.$store);
 		}
 	},
 
@@ -56,11 +56,11 @@ export default Vue.extend({
 			_.forIn(this.fields, (field, key) => {
 				highlights[key] = event[key];
 			});
-			this.$store.dispatch('highlightFeatureValues', highlights);
+			actions.highlightFeatureValues(this.$store, highlights);
 		},
 
 		onMouseOut() {
-			this.$store.dispatch('clearFeatureHighlightValues');
+			actions.clearFeatureHighlightValues(this.$store);
 		}
 	}
 });

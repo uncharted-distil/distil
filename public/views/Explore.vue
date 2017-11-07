@@ -20,7 +20,7 @@ import ExploreDataTable from '../components/ExploreDataTable';
 import VariableSummaries from '../components/VariableSummaries';
 import { gotoSearch, gotoSelect } from '../util/nav';
 import Vue from 'vue';
-import { getters as dataGetters } from '../store/data/module';
+import { getters as dataGetters, actions } from '../store/data/module';
 import { getters as routeGetters } from '../store/route/module';
 
 export default Vue.extend({
@@ -59,11 +59,11 @@ export default Vue.extend({
 			gotoSelect(this.$store, this.$router);
 		},
 		fetch() {
-			this.$store.dispatch('getVariables', {
+			actions.getVariables(this.$store, {
 					dataset: this.dataset
 				})
 				.then(() => {
-					this.$store.dispatch('getVariableSummaries', {
+					actions.getVariableSummaries(this.$store, {
 						dataset: this.dataset,
 						variables: this.variables
 					});

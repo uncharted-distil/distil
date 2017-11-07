@@ -35,6 +35,7 @@ import _ from 'lodash';
 import Vue from 'vue';
 import { getters as dataGetters } from '../store/data/module';
 import { getters as routeGetters } from '../store/route/module';
+import { actions } from '../store/data/module';
 
 export default Vue.extend({
 	name: 'explore-data-table',
@@ -72,13 +73,13 @@ export default Vue.extend({
 
 	methods: {
 		fetch() {
-			this.$store.dispatch('updateFilteredData', {
+			actions.updateFilteredData(this.$store, {
 				dataset: this.dataset,
 				filters: this.filters
 			});
 		},
 		onTypeChange(field, suggested) {
-			this.$store.dispatch('setVariableType', {
+			actions.setVariableType(this.$store, {
 				dataset: this.dataset,
 				field: field.label,
 				type: suggested.type
@@ -90,10 +91,10 @@ export default Vue.extend({
 			_.forIn(this.fields, (field, key) => {
 				highlights[key] = event[key];
 			});
-			this.$store.dispatch('highlightFeatureValues', highlights);
+			actions.highlightFeatureValues(this.$store, highlights);
 		},
 		onMouseOut() {
-			this.$store.dispatch('clearFeatureHighlightValues');
+			actions.clearFeatureHighlightValues(this.$store);
 		}
 	}
 });

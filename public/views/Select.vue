@@ -25,7 +25,7 @@ import SelectDataTable from '../components/SelectDataTable.vue';
 import AvailableVariables from '../components/AvailableVariables.vue';
 import TrainingVariables from '../components/TrainingVariables.vue';
 import TargetVariable from '../components/TargetVariable.vue';
-import { getters as dataGetters } from '../store/data/module';
+import { getters as dataGetters, actions } from '../store/data/module';
 import { getters as routeGetters} from '../store/route/module';
 import Vue from 'vue';
 
@@ -64,11 +64,11 @@ export default Vue.extend({
 
 	methods: {
 		fetch() {
-			this.$store.dispatch('getVariables', {
+			actions.getVariables(this.$store, {
 				dataset: this.dataset
 				})
 				.then(() => {
-					this.$store.dispatch('getVariableSummaries', {
+					actions.getVariableSummaries(this.$store, {
 						dataset: this.dataset,
 						variables: this.variables
 					});

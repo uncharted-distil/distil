@@ -60,7 +60,7 @@ export const mutations = {
 		state.resultData = resultData;
 	},
 
-	highlightFeatureRange(state: DataState, highlight: { name: string, to: string, from: string }) {
+	highlightFeatureRange(state: DataState, highlight: { name: string, to: number, from: number }) {
 		Vue.set(state.highlightedFeatureRanges, highlight.name, {
 			from: highlight.from,
 			to: highlight.to

@@ -12,6 +12,7 @@
 import FlowBar from '../components/FlowBar';
 import RunningPipelines from '../components/RunningPipelines';
 import CompletedPipelines from '../components/CompletedPipelines';
+import { actions } from '../store/app/module';
 import Vue from 'vue';
 
 export default Vue.extend({
@@ -29,7 +30,7 @@ export default Vue.extend({
 	},
 
 	mounted() {
-		this.$store.dispatch('getSession', {
+		actions.getSession(this.$store, {
 			sessionId: this.sessionId
 		});
 	}

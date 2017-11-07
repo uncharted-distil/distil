@@ -33,6 +33,7 @@
 import '../assets/images/legendary.svg';
 import { gotoHome, gotoSearch, gotoExplore, gotoSelect, gotoPipelines, gotoResults } from '../util/nav';
 import { getters } from '../store/route/module';
+import { actions } from '../store/app/module';
 import Vue from 'vue';
 
 const HOME = Symbol();
@@ -74,7 +75,7 @@ export default Vue.extend({
 
 	mounted() {
 		this.updateActive();
-		this.$store.dispatch('getPipelineSession', {
+		actions.getPipelineSession(this.$store, {
 			sessionId: this.sessionId
 		});
 	},
@@ -100,7 +101,7 @@ export default Vue.extend({
 		},
 		onAbort() {
 			this.$router.replace('/');
-			this.$store.dispatch('abort');
+			actions.abort(this.$store);
 		},
 		hasDataset() {
 			return !!getters.getRouteDataset(this.$store);

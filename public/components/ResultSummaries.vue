@@ -50,6 +50,7 @@ import { createRouteEntryFromRoute } from '../util/routes';
 import { getTask } from '../util/pipelines';
 import { getters as dataGetters} from '../store/data/module';
 import { getters as routeGetters } from '../store/route/module';
+import { actions } from '../store/app/module';
 import vueSlider from 'vue-slider-component';
 import Vue from 'vue';
 import _ from 'lodash';
@@ -174,7 +175,7 @@ export default Vue.extend({
 		},
 		onExport() {
 			this.$router.replace('/');
-			this.$store.dispatch('exportPipeline', {
+			actions.exportPipeline(this.$store, {
 				pipelineId: this.activePipelineId,
 				sessionId: this.$store.state.pipelineSession.id
 			});
