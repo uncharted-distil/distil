@@ -3,7 +3,7 @@ import { AppState } from './index';
 import { DistilState } from '../store';
 import { ActionContext } from 'vuex';
 import { getWebSocketConnection } from '../../util/ws';
-import { mutations } from '../app/mutations';
+import { mutations } from '../app/module';
 
 export type AppContext = ActionContext<AppState, DistilState>;
 
@@ -20,7 +20,7 @@ export const actions = {
 			if (sessionId && res.created) {
 				console.warn('previous session', sessionId, 'could not be resumed, new session created');
 			}
-			mutations.setPipelineSession(context.rootState.appModule, {
+			mutations.setPipelineSession(context, {
 				id: res.session,
 				uuids: res.uuids
 			});
@@ -40,7 +40,7 @@ export const actions = {
 			type: 'END_SESSION',
 			session: sessionId
 		}).then(() => {
-			context.commit('setPipelineSession', null);
+			mutations.setPipelineSession(context, null);
 		}).catch(err => {
 			console.warn(err);
 		});

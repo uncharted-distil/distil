@@ -27,6 +27,7 @@ export interface VariableSummary {
 	feature: string;
 	buckets: Bucket[];
 	extrema: Extrema;
+	pipelineId?: string;
 	type?: string;
 	err?: string;
 	pending?: boolean;

@@ -4,6 +4,7 @@ import moment from 'moment';
 import { PipelineState, Score } from './index';
 import { ActionContext } from 'vuex';
 import { DistilState } from '../store';
+import { mutations } from './module';
 import { getWebSocketConnection } from '../../util/ws';
 
 // TODO: move this somewhere more appropriate.
@@ -53,7 +54,7 @@ interface PipelineRequest {
 export type AppContext = ActionContext<PipelineState, DistilState>;
 
 export const actions = {
-	getSession(context: any, args: { sessionId: string }) {
+	getSession(context: AppContext, args: { sessionId: string }) {
 		const sessionId = args.sessionId;
 		return axios.get(`/distil/session/${sessionId}`)
 		.then(response => {
@@ -76,10 +77,11 @@ export const actions = {
 						// add/update the running pipeline info
 						if (res.Progress === PIPELINE_COMPLETE) {
 							// add the pipeline to complete
-							context.commit('addCompletedPipeline', {
+							mutations.addCompletedPipeline(context, {
 								name: res.name,
 								feature: targetFeature,
 								timestamp: res.CreatedTime,
+								progress: res.Progress,
 								requestId: pipeline.RequestID,
 								dataset: pipeline.Dataset,
 								pipelineId: res.PipelineID,
@@ -115,13 +117,14 @@ export const actions = {
 			res.name = name;
 			res.feature = request.feature;
 			// add/update the running pipeline info
-			context.commit('addRunningPipeline', res);
+			mutations.addRunningPipeline(context, res);
 			if (res.progress === PIPELINE_COMPLETE) {
 				// move the pipeline from running to complete
-				context.commit('removeRunningPipeline', { pipelineId: res.pipelineId, requestId: res.requestId });
-				context.commit('addCompletedPipeline', {
+				mutations.removeRunningPipeline(context, { pipelineId: res.pipelineId, requestId: res.requestId });
+				mutations.addCompletedPipeline(context, {
 					name: res.name,
 					feature: request.feature,
+					progress: res.progress,
 					timestamp: res.createdTime,
 					requestId: res.requestId,
 					dataset: res.dataset,

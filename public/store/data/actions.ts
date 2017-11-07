@@ -2,8 +2,9 @@ import _ from 'lodash';
 import axios from 'axios';
 import { encodeQueryParams, FilterMap } from '../../util/filters';
 import { getPipelineResults } from '../../util/pipelines';
-import { DataState, Variable } from './index';
+import { DataState, Variable, Data, Extrema } from './index';
 import { DistilState } from '../store';
+import { mutations } from './module'
 import { ActionContext } from 'vuex';
 
 const ES_INDEX = 'datasets';
@@ -17,11 +18,11 @@ export const actions = {
 		const params = !_.isEmpty(terms) ? `?search=${terms}` : '';
 		return axios.get(`/distil/datasets/${ES_INDEX}${params}`)
 			.then(response => {
-				context.commit('setDatasets', response.data.datasets);
+				mutations.setDatasets(context, response.data.datasets);
 			})
 			.catch(error => {
 				console.error(error);
-				context.commit('setDatasets', []);
+				mutations.setDatasets(context, []);
 			});
 	},
 
@@ -30,11 +31,11 @@ export const actions = {
 		const dataset = args.dataset;
 		return axios.get(`/distil/variables/${ES_INDEX}/${dataset}`)
 			.then(response => {
-				context.commit('setVariables', response.data.variables);
+				mutations.setVariables(context, response.data.variables);
 			})
 			.catch(error => {
 				console.error(error);
-				context.commit('setVariables', []);
+				mutations.setVariables(context, []);
 			});
 	},
 
@@ -45,7 +46,7 @@ export const actions = {
 				type: args.type
 			})
 			.then(() => {
-				context.commit('updateVariableType', args);
+				mutations.updateVariableType(context, args);
 				// update variable summary
 				return context.dispatch('getVariableSummary', {
 					dataset: args.dataset,
@@ -74,7 +75,7 @@ export const actions = {
 				}
 			};
 		});
-		context.commit('setResultsSummaries', histograms);
+		mutations.setResultsSummaries(context, histograms);
 		// fill them in asynchronously
 		return Promise.all(variables.map(variable => {
 			return context.dispatch('getVariableSummary', {
@@ -92,19 +93,25 @@ export const actions = {
 				// save the variable summary data
 				const histogram = response.data.histogram;
 				if (!histogram) {
-					context.commit('updateVariableSummaries', {
+					mutations.updateVariableSummaries(context, {
 						name: variable,
+						feature: '',
+						buckets: [],
+						extrema: {} as any,
 						err: 'No analysis available'
 					});
 					return;
 				}
 				// ensure buckets is not nil
-				context.commit('updateVariableSummaries', histogram);
+				mutations.updateVariableSummaries(context, histogram);
 			})
 			.catch(error => {
 				console.error(error);
-				context.commit('updateVariableSummaries', {
+				mutations.updateVariableSummaries(context, {
 					name: variable,
+					feature: '',
+					buckets: [],
+					extrema: {} as any,
 					err: error
 				});
 			});
@@ -119,11 +126,11 @@ export const actions = {
 		// request filtered data from server - no data is valid given filter settings
 		return axios.get(url)
 			.then(response => {
-				context.commit('setFilteredData', response.data);
+				mutations.setFilteredData(context, response.data);
 			})
 			.catch(error => {
 				console.error(error);
-				context.commit('setFilteredData', []);
+				mutations.setFilteredData(context, {} as Data);
 			});
 	},
 
@@ -136,11 +143,11 @@ export const actions = {
 		// request filtered data from server - no data is valid given filter settings
 		return axios.get(url)
 			.then(response => {
-				context.commit('setSelectedData', response.data);
+				mutations.setSelectedData(context, response.data);
 			})
 			.catch(error => {
 				console.error(error);
-				context.commit('setSelectedData', []);
+				mutations.setSelectedData(context, {} as Data);
 			});
 	},
 
@@ -154,10 +161,13 @@ export const actions = {
 		const pendingHistograms = _.map(results, r => {
 			return {
 				name: r.name,
-				pending: true
+				feature: '',
+				pending: true,
+				buckets: [],
+				extrema: {} as Extrema
 			};
 		});
-		context.commit('setResultsSummaries', pendingHistograms);
+		mutations.setResultsSummaries(context, pendingHistograms);
 
 		// fetch the results for each pipeline
 		for (var result of results) {
@@ -170,10 +180,12 @@ export const actions = {
 					// save the histogram data
 					const histogram = response.data.histogram;
 					if (!histogram) {
-						context.commit('setResultsSummaries', [
+						mutations.setResultsSummaries(context, [
 							{
 								name: name,
 								feature: feature,
+								buckets: [],
+								extrema: {} as Extrema,
 								pipelineId: pipelineId,
 								err: 'No analysis available'
 							}
@@ -185,13 +197,15 @@ export const actions = {
 					histogram.name = name;
 					histogram.feature = feature;
 					histogram.pipelineId = pipelineId;
-					context.commit('updateResultsSummaries', histogram);
+					mutations.updateResultsSummaries(context, histogram);
 				})
 				.catch(error => {
-					context.commit('setResultsSummaries', [
+					mutations.setResultsSummaries(context, [
 						{
 							name: name,
 							feature: feature,
+							buckets: [],
+							extrema: {} as Extrema,
 							pipelineId: pipelineId,
 							err: error
 						}
@@ -208,26 +222,26 @@ export const actions = {
 		const queryParams = encodeQueryParams(filters);
 		return axios.get(`/distil/results/${ES_INDEX}/${args.dataset}/${encodedResultId}/inclusive${queryParams}`)
 			.then(response => {
-				context.commit('setResultData', response.data);
+				mutations.setResultData(context, response.data);
 			})
 			.catch(error => {
 				console.error(`Failed to fetch results from ${args.resultId} with error ${error}`);
 			});
 	},
 
-	highlightFeatureRange(context: DataContext, highlight: Range) {
-		context.commit('highlightFeatureRange', highlight);
+	highlightFeatureRange(context: DataContext, highlight: { name: string, to: string, from: string}) {
+		mutations.highlightFeatureRange(context, highlight);
 	},
 
 	clearFeatureHighlightRange(context: DataContext, varName: string) {
-		context.commit('clearFeatureHighlightRange', varName);
+		mutations.clearFeatureHighlightRange(context, varName);
 	},
 
 	highlightFeatureValues(context: DataContext, highlight: { [name: string]: any }) {
-		context.commit('highlightFeatureValues', highlight);
+		mutations.highlightFeatureValues(context, highlight);
 	},
 
 	clearFeatureHighlightValues(context: DataContext) {
-		context.commit('clearFeatureHighlightValues');
+		mutations.clearFeatureHighlightValues(context);
 	}
 }
