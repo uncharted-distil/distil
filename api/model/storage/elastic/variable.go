@@ -55,23 +55,23 @@ func (s *Storage) parseVariable(searchHit *elastic.SearchHit, varName string) (*
 		}
 		importance, ok := json.Int(child, VarImportanceField)
 		if !ok {
-			continue
+			importance = 0
 		}
 		role, ok := json.String(child, VarRoleField)
 		if !ok {
-			continue
+			role = ""
 		}
 		originalVariable, ok := json.String(child, VarOriginalVariableField)
 		if !ok {
-			continue
+			originalVariable = name
 		}
 		displayVariable, ok := json.String(child, VarDisplayVariableField)
 		if !ok {
-			continue
+			displayVariable = ""
 		}
 		suggestedTypes, ok := json.Array(child, VarSuggestedTypesField)
 		if !ok {
-			continue
+			suggestedTypes = make([]map[string]interface{}, 0)
 		}
 		return &model.Variable{
 			Name:             name,
@@ -110,23 +110,23 @@ func parseVariables(searchHit *elastic.SearchHit) ([]*model.Variable, error) {
 		}
 		importance, ok := json.Int(child, VarImportanceField)
 		if !ok {
-			continue
+			importance = 0
 		}
 		role, ok := json.String(child, VarRoleField)
 		if !ok {
-			continue
+			role = ""
 		}
 		originalVariable, ok := json.String(child, VarOriginalVariableField)
 		if !ok {
-			continue
+			originalVariable = name
 		}
 		displayVariable, ok := json.String(child, VarDisplayVariableField)
 		if !ok {
-			continue
+			displayVariable = ""
 		}
 		suggestedTypes, ok := json.Array(child, VarSuggestedTypesField)
 		if !ok {
-			continue
+			suggestedTypes = make([]map[string]interface{}, 0)
 		}
 		variables = append(variables, &model.Variable{
 			Name:             name,
