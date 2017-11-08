@@ -53,3 +53,8 @@ export function createRouteEntryFromRoute(route: Route, args: RouteArgs): Locati
 
 	return routeEntry;
 }
+
+export function getRouteFacetPage(key: string, route: Route): number {
+	const page = route.query[key];
+	return page ? parseInt(page) : 1;
+}

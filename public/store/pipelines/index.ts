@@ -12,11 +12,12 @@ export interface PipelineOutput {
 export interface PipelineInfo {
 	requestId: string;
 	name: string;
-	id: string;
 	feature: string;
 	pipelineId: string;
 	progress: string;
 	pipeline?: PipelineOutput;
+	timestamp: number;
+	dataset: string;
 }
 
 export interface PipelineRequestInfo {

@@ -2,69 +2,55 @@ import { decodeFilters, FilterMap } from '../../util/filters';
 import { Route } from 'vue-router';
 
 export const getters = {
-	getRoute(state: Route) {
-		return () => state;
+	getRoute(state: Route): Route {
+		return state;
 	},
 
-	getRoutePath(state: Route) {
-		return () => state.path;
+	getRoutePath(state: Route): string {
+		return state.path;
 	},
 
-	getRouteTerms(state: Route) {
-		return () => state.query.terms;
+	getRouteTerms(state: Route): string {
+		return state.query.terms;
 	},
 
-	getRouteDataset(state: Route) {
-		return () => state.query.dataset;
+	getRouteDataset(state: Route): string {
+		return state.query.dataset;
 	},
 
-	getRouteTrainingVariables(state: Route) {
-		return () => state.query.training ? state.query.training : null;
+	getRouteTrainingVariables(state: Route): string {
+		return state.query.training ? state.query.training : null
 	},
 
-	getRouteTargetVariable(state: Route) {
-		return () => state.query.target ? state.query.target : null;
+	getRouteTargetVariable(state: Route): string {
+		return state.query.target ? state.query.target : null;
 	},
 
-	getRouteCreateRequestId(state: Route) {
-		return () => state.query.createRequestId;
+	getRouteCreateRequestId(state: Route): string {
+		return state.query.createRequestId;
 	},
 
-	getRouteResultId(state: Route) {
-		return () => state.query.resultId;
+	getRouteResultId(state: Route): string {
+		return state.query.resultId;
 	},
 
-	getRouteFilters(state: Route) {
-		return () => state.query.filters ? state.query.filters : [];
+	getRouteFilters(state: Route): string {
+		return state.query.filters ? state.query.filters : null
 	},
 
-	getRouteResultFilters(state: Route) {
-		return () => state.query.results ? state.query.results : [];
+	getRouteResultFilters(state: Route): string {
+		return state.query.results ? state.query.results : null;
 	},
 
-	getRouteFacetsPage(state: Route) {
-		return (pageKey: string) => state.query[pageKey];
+	getRouteResidualThreshold(state: Route): string {
+		return state.query.residualThreshold;
 	},
 
-	getRouteResidualThreshold(state: Route) {
-		return () => state.query.residualThreshold;
+	getDecodedFilters(state: Route): FilterMap {
+		return decodeFilters(state.query.filters ? state.query.filters : {} as any);
 	},
 
-	getFilters(state: Route) {
-		return () => decodeFilters(state.query.filters ? state.query.filters : "") as FilterMap;
-	},
-
-	getResultsFilters(state: Route) {
-		return decodeFilters(state.query.results ? state.query.results : "") as FilterMap;
-	},
-
-	getTrainingVariables(state: Route) {
-		return () => state.query.training ? state.query.training.split(',') : [];
-	},
-
-	getTargetVariable(state: Route) {
-		return () => {
-			return state.query.target ? state.query.target : null;
-		};
+	getDecodedResultsFilters(state: Route): FilterMap {
+		return decodeFilters(state.query.results ? state.query.results : {} as any);
 	}
 }

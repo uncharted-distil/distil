@@ -46,7 +46,10 @@
 <script lang="ts">
 
 import _ from 'lodash';
-import {createRouteEntry} from '../util/routes';
+import { createRouteEntry } from '../util/routes';
+import { addRecentDataset } from '../util/data';
+import { getters } from '../store/route/module';
+import Vue from 'vue';
 
 const NUM_TOP_FEATURES = 5;
 const SUFFIXES = {
@@ -59,7 +62,7 @@ const SUFFIXES = {
 	6: 'EB'
 };
 
-export default {
+export default Vue.extend({
 	name: 'dataset-preview',
 
 	props: [
@@ -97,17 +100,17 @@ export default {
 		},
 		setActiveDataset() {
 			const entry = createRouteEntry('/explore', {
-				terms: this.$store.getters.getRouteTerms(),
+				terms: getters.getRouteTerms(this.$store),
 				dataset: this.name
 			});
 			this.$router.push(entry);
-			this.$store.dispatch('addRecentDataset', this.name);
+			addRecentDataset(this.name);
 		},
 		toggleExpansion() {
 			this.expanded = !this.expanded;
 		},
 		highlightedDescription() {
-			const terms = this.$store.getters.getRouteTerms();
+			const terms = getters.getRouteTerms(this.$store);
 			if (_.isEmpty(terms)) {
 				return this.description;
 			}
@@ -117,7 +120,7 @@ export default {
 			return this.description.replace(regex, '<span class="highlight">$1</span>');
 		}
 	}
-};
+});
 </script>
 
 <style>

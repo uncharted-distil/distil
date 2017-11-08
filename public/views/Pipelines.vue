@@ -8,12 +8,15 @@
 	</div>
 </template>
 
-<script>
+<script lange="ts">
 import FlowBar from '../components/FlowBar';
 import RunningPipelines from '../components/RunningPipelines';
 import CompletedPipelines from '../components/CompletedPipelines';
+import { getters } from '../store/app/module';
+import { actions } from '../store/pipelines/module';
+import Vue from 'vue';
 
-export default {
+export default Vue.extend({
 	name: 'pipelines',
 	components: {
 		FlowBar,
@@ -23,16 +26,16 @@ export default {
 
 	computed: {
 		sessionId() {
-			return this.$store.getters.getPipelineSessionID();
+			return getters.getPipelineSessionID(this.$store);
 		}
 	},
 
 	mounted() {
-		this.$store.dispatch('getSession', {
+		actions.getSession(this.$store, {
 			sessionId: this.sessionId
 		});
 	}
-};
+});
 </script>
 
 <style>

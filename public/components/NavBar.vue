@@ -32,6 +32,10 @@
 <script>
 import '../assets/images/legendary.svg';
 import { gotoHome, gotoSearch, gotoExplore, gotoSelect, gotoPipelines, gotoResults } from '../util/nav';
+import { getters as routeGetters } from '../store/route/module';
+import { getters as appGetters } from '../store/app/module';
+import { actions } from '../store/app/module';
+import Vue from 'vue';
 
 const HOME = Symbol();
 const SEARCH = Symbol();
@@ -49,7 +53,7 @@ const ROUTE_MAPPINGS = {
 	'/results': RESULTS
 };
 
-export default {
+export default Vue.extend({
 	name: 'nav-bar',
 
 	data() {
@@ -66,13 +70,13 @@ export default {
 
 	computed: {
 		sessionId() {
-			return this.$store.getters.getPipelineSessionID();
+			return appGetters.getPipelineSessionID(this.$store);
 		}
 	},
 
 	mounted() {
 		this.updateActive();
-		this.$store.dispatch('getPipelineSession', {
+		actions.getPipelineSession(this.$store, {
 			sessionId: this.sessionId
 		});
 	},
@@ -98,10 +102,10 @@ export default {
 		},
 		onAbort() {
 			this.$router.replace('/');
-			this.$store.dispatch('abort');
+			actions.abort(this.$store);
 		},
 		hasDataset() {
-			return !!this.$store.getters.getRouteDataset();
+			return !!routeGetters.getRouteDataset(this.$store);
 		},
 		updateActive() {
 			this.activeView = ROUTE_MAPPINGS[this.$route.path];
@@ -112,7 +116,7 @@ export default {
 			this.updateActive();
 		}
 	}
-};
+});
 
 </script>
 

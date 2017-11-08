@@ -24,21 +24,22 @@ export const CATEGORICAL_FILTER_ID = 'categorical';
 export const NUMERICAL_FILTER = Symbol('numerical');
 export const NUMERICAL_FILTER_ID = 'numerical';
 
-export interface NumericalFilter {
+export interface Filter {
 	name: string,
-	enabled: boolean,
+	enabled: boolean
+}
+
+export interface NumericalFilter extends Filter {
 	min: number,
 	max: number
 }
 
-export interface CategoricalFilter {
-	name: string,
-	enabled: boolean,
+export interface CategoricalFilter extends Filter {
 	categories: string[]
 }
 
 export interface FilterMap {
-	[id: string]: (NumericalFilter | CategoricalFilter)
+	[id: string]: Filter
 }
 
 /**
@@ -72,11 +73,11 @@ export function encodeFilters(filters: FilterMap): string {
 /**
  * Encodes the filter object into a query param string for an HTTP request.
  *
- * @param {NumericalFilter|CategoricalFilter} filter - The filter object.
+ * @param {Filter} filter - The filter object.
  *
  * @returns {string} The HTTP query param strings.
  */
-export function encodeQueryParam(filter: NumericalFilter | CategoricalFilter): string {
+export function encodeQueryParam(filter: Filter): string {
 	if (isDisabled(filter)) {
 		return `${encodeURIComponent(filter.name)}`;
 	}
@@ -150,7 +151,7 @@ export function updateFilter(filters: string, key: string, values: { [name: stri
  *
  * @returns {Symbol} The filter type symbol.
  */
-export function getFilterType(filter: NumericalFilter | CategoricalFilter): Symbol {
+export function getFilterType(filter: Filter): Symbol {
 	if (filter) {
 		if (_.has(filter, 'categories')) {
 			return CATEGORICAL_FILTER;
@@ -165,11 +166,11 @@ export function getFilterType(filter: NumericalFilter | CategoricalFilter): Symb
 /**
  * Returns whether or not the filter is enabled.
  *
- * @param {CategoricalFilter | NumericalFilter} filter - The filter object.
+ * @param {Filter} filter - The filter object.
  *
  * @returns {bool} Whether or not the filter is enabled.
  */
-export function isEnabled(filter: CategoricalFilter | NumericalFilter): boolean {
+export function isEnabled(filter: Filter): boolean {
 	if (filter) {
 		return filter.enabled;
 	}
@@ -179,10 +180,10 @@ export function isEnabled(filter: CategoricalFilter | NumericalFilter): boolean 
 /**
  * Returns whether or not the filter is disabled.
  *
- * @param {CategoricalFilter | NumericalFilter} filter - The filter object.
+ * @param {Filter} filter - The filter object.
  *
  * @returns {bool} Whether or not the filter is disabled.
  */
-export function isDisabled(filter: CategoricalFilter | NumericalFilter): boolean {
+export function isDisabled(filter: Filter): boolean {
 	return !isEnabled(filter);
 }

@@ -18,8 +18,11 @@
 import { createRouteEntryFromRoute } from '../util/routes';
 import VariableFacets from '../components/VariableFacets';
 import 'font-awesome/css/font-awesome.css';
+import Vue from 'vue';
+import { getters as dataGetters } from '../store/data/module';
+import { getters as routeGetters} from '../store/route/module';
 
-export default {
+export default Vue.extend({
 	name: 'target-variables',
 
 	components: {
@@ -28,10 +31,10 @@ export default {
 
 	computed: {
 		dataset() {
-			return this.$store.getters.getRouteDataset();
+			return routeGetters.getRouteDataset(this.$store);
 		},
 		variables() {
-			return this.$store.getters.getTargetVariableSummaries();
+			return dataGetters.getTargetVariableSummaries(this.$store);
 		},
 		html() {
 			return () => {
@@ -40,7 +43,7 @@ export default {
 				remove.className += 'btn btn-sm btn-outline-danger mb-2';
 				remove.innerHTML = 'Remove';
 				remove.addEventListener('click', () => {
-					const entry = createRouteEntryFromRoute(this.$store.getters.getRoute(), {
+					const entry = createRouteEntryFromRoute(routeGetters.getRoute(this.$store), {
 						target: '',
 					});
 					this.$router.push(entry);
@@ -50,7 +53,7 @@ export default {
 			};
 		}
 	}
-};
+});
 </script>
 
 <style>

@@ -6,6 +6,16 @@ const RETRY_INTERVAL_MS = 5000;
 
 let _trackedID = 1;
 
+export function getWebSocketConnection() {
+	const conn = new Connection('/ws', (err: string) => {
+		if (err) {
+			console.warn(err);
+			return;
+		}
+	});
+	return conn;
+}
+
 function getHost() {
 	const loc = window.location;
 	const uri = (loc.protocol === 'https:') ? 'wss:' : 'ws:';

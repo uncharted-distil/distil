@@ -1,6 +1,6 @@
 <template>
 	<div class="search-results">
-		<div class="bg-faded rounded mb-1" v-for="dataset in datasets">
+		<div class="bg-faded rounded mb-1" :key="dataset.name" v-for="dataset in datasets">
 			<dataset-preview
 				:name="dataset.name"
 				:description="dataset.description"
@@ -16,6 +16,8 @@
 <script>
 
 import DatasetPreview from '../components/DatasetPreview';
+import Vue from 'vue';
+import { getters } from '../store/data/module';
 
 export default {
 	name: 'search-results',
@@ -26,7 +28,7 @@ export default {
 
 	computed: {
 		datasets() {
-			return this.$store.getters.getDatasets();
+			return getters.getDatasets(this.$store);
 		}
 	},
 

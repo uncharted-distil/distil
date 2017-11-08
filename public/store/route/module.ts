@@ -1,13 +1,14 @@
 import { Module } from 'vuex';
 import { Route } from 'vue-router';
 import { getters as moduleGetters } from './getters';
+import { DistilState } from '../store';
 import { getStoreAccessors } from 'vuex-typescript';
 
-export const routeModule: Module<Route, any> = {
+export const routeModule: Module<Route, DistilState> = {
 	getters: moduleGetters
 };
 
-const { read } = getStoreAccessors<Route, any>(null);
+const { read } = getStoreAccessors<Route, DistilState>(null);
 
 export const getters = {
 	getRoute: read(moduleGetters.getRoute),
@@ -20,12 +21,9 @@ export const getters = {
 	getRouteResultId: read(moduleGetters.getRouteResultId),
 	getRouteFilters: read(moduleGetters.getRouteFilters),
 	getRouteResultFilters: read(moduleGetters.getRouteResultFilters),
-	getRouteFacetsPage: read(moduleGetters.getRouteFacetsPage),
 	getRouteResidualThreshold: read(moduleGetters.getRouteResidualThreshold),
-	getFilters: read(moduleGetters.getFilters),
-	getResultsFilters: read(moduleGetters.getResultsFilters),
-	getTrainingVariables: read(moduleGetters.getTrainingVariables),
-	getTargetVariable: read(moduleGetters.getTargetVariable)
+	getDecodedFilters: read(moduleGetters.getDecodedFilters),
+	getDecodedResultsFilters: read(moduleGetters.getDecodedResultsFilters),
 }
 
 

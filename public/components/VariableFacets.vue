@@ -71,16 +71,21 @@
 	</div>
 </template>
 
-<script>
+<script lang="ts">
 
 import Facets from '../components/Facets';
 import { decodeFilters, updateFilter, getFilterType, isDisabled, CATEGORICAL_FILTER, NUMERICAL_FILTER } from '../util/filters';
-import { createRouteEntryFromRoute } from '../util/routes';
+import { createRouteEntryFromRoute, getRouteFacetPage } from '../util/routes';
+import { NumericalFilter, CategoricalFilter } from '../util/filters';
+import { Dictionary } from '../store/data/index';
+import { getters as dataGetters } from '../store/data/module';
+import { getters as routeGetters } from '../store/route/module';
 import { createGroups } from '../util/facets';
 import 'font-awesome/css/font-awesome.css';
 import '../styles/spinner.css';
+import Vue from 'vue';
 
-export default {
+export default Vue.extend({
 	name: 'variable-facets',
 
 	components: {
@@ -110,15 +115,14 @@ export default {
 
 	computed: {
 		currentPage: {
-			set(page) {
+			set(page: number) {
 				const entry = createRouteEntryFromRoute(this.$route, {
 					[this.routePageKey()]: page
 				});
 				this.$router.push(entry);
 			},
-			get() {
-				const routeFacetPage = this.$store.getters.getRouteFacetsPage(this.routePageKey());
-				return routeFacetPage ? parseInt(routeFacetPage) : 1;
+			get(): number {
+				return getRouteFacetPage(this.routePageKey(), this.$route);
 			}
 		},
 		groups() {
@@ -143,19 +147,20 @@ export default {
 			}
 
 			// create the groups
-			let groups = createGroups(filtered, this.enableGroupCollapse, this.enableFacetFiltering);
+			let groups = createGroups(filtered, this.enableGroupCollapse, this.enableFacetFiltering, '');
 
 			// update collapsed state
 			groups = this.updateGroupCollapses(groups);
+
 			// update selections
 			return this.updateGroupSelections(groups);
 		},
-		highlights() {
-			return this.$store.getters.getHighlightedFeatureValues();
+		highlights(): Dictionary<string> {
+			return dataGetters.getHighlightedFeatureValues(this.$store);
 		},
-		importance() {
-			const variables = this.$store.getters.getVariables();
-			const importance = {};
+		importance(): Dictionary<number> {
+			const variables = dataGetters.getVariables(this.$store);
+			const importance: Dictionary<number> = {};
 			variables.forEach(variable => {
 				importance[variable.name] = variable.importance;
 			});
@@ -167,34 +172,34 @@ export default {
 	},
 
 	methods: {
-		alphaAsc(a, b) {
+		alphaAsc(a: { key: string }, b: { key: string }): number {
 			const textA = a.key.toLowerCase();
 			const textB = b.key.toLowerCase();
 			return (textA <= textB) ? -1 : (textA > textB) ? 1 : 0;
 		},
-		alphaDesc(a, b) {
+		alphaDesc(a: { key: string }, b: { key: string }): number {
 			const textA = a.key.toLowerCase();
 			const textB = b.key.toLowerCase();
 			return (textA <= textB) ? 1 : (textA > textB) ? -1 : 0;
 		},
-		importanceAsc(a, b) {
+		importanceAsc(a: { key: string }, b: { key: string }) {
 			const importance = this.importance;
 			return importance[a.key] - importance[b.key];
 		},
-		importanceDesc(a, b) {
+		importanceDesc(a: { key: string }, b: { key: string }): number {
 			const importance = this.importance;
 			return importance[b.key] - importance[a.key];
 		},
-		noveltyAsc(a, b) {
+		noveltyAsc(a: { novelty: number }, b: { novelty: number }): number {
 			return a.novelty - b.novelty;
 		},
-		noveltyDesc(a, b) {
+		noveltyDesc(a: { novelty: number }, b: { novelty: number }): number {
 			return b.novelty - a.novelty;
 		},
 
 		// creates a facet key for the route from the instance-name component arg
 		// or uses a default if unset
-		routePageKey() {
+		routePageKey(): string {
 			if (this.instanceName) {
 				return `${this.instanceName}Page`;
 			}
@@ -202,12 +207,12 @@ export default {
 		},
 
 		// updates route with current filter state
-		updateFilterRoute(key, values) {
+		updateFilterRoute(key: string, values: Dictionary<any>) {
 			// retrieve the filters from the route
-			const filters = this.$store.getters.getRouteFilters();
+			const filters = routeGetters.getRouteFilters(this.$store);
 			// merge the updated filters back into the route query params
 			const updated = updateFilter(filters, key, values);
-			const entry = createRouteEntryFromRoute(this.$store.getters.getRoute(), {
+			const entry = createRouteEntryFromRoute(routeGetters.getRoute(this.$store), {
 				filters: updated,
 			});
 			this.$router.push(entry);
@@ -230,7 +235,7 @@ export default {
 		},
 
 		// handles range slider change events
-		onRangeChange(key, value) {
+		onRangeChange(key: string, value: { from: { label: string[] }, to: { label: string[] } }) {
 			// set range filter
 			this.updateFilterRoute(key, {
 				enabled: true,
@@ -240,14 +245,15 @@ export default {
 		},
 
 		// handles individual category toggle events within a facet group
-		onFacetToggle(key, values) {
+		onFacetToggle(key: string, values: string[]) {
 			// set range filter
 			this.updateFilterRoute(key, {
 				enabled: true,
 				categories: values
 			});
 		},
-		setSortMethod(type) {
+
+		setSortMethod(type: string) {
 			switch (type) {
 				case 'alpha-asc':
 					this.sortMethod = 'alphaAsc';
@@ -274,13 +280,13 @@ export default {
 		// route accordingly
 		selectAll() {
 			// enable all filters
-			let filters = this.$store.getters.getRouteFilters();
+			let filters = routeGetters.getRouteFilters(this.$store);
 			this.groups.forEach(group => {
 				filters = updateFilter(filters, group.key, {
 					enabled: true
 				});
 			});
-			const entry = createRouteEntryFromRoute(this.$store.getters.getRoute(), {
+			const entry = createRouteEntryFromRoute(routeGetters.getRoute(this.$store), {
 				filters: filters,
 			});
 			this.$router.push(entry);
@@ -290,13 +296,13 @@ export default {
 		// and updates route accordingly
 		deselectAll() {
 			// enable all filters
-			let filters = this.$store.getters.getRouteFilters();
+			let filters = routeGetters.getRouteFilters(this.$store);
 			this.groups.forEach(group => {
 				filters = updateFilter(filters, group.key, {
 					enabled: false
 				});
 			});
-			const entry = createRouteEntryFromRoute(this.$store.getters.getRoute(), {
+			const entry = createRouteEntryFromRoute(routeGetters.getRoute(this.$store), {
 				filters: filters
 			});
 			this.$router.push(entry);
@@ -304,7 +310,7 @@ export default {
 
 		// updates facet collapse/expand state based on route settings
 		updateGroupCollapses(groups) {
-			const filters = this.$store.getters.getRouteFilters();
+			const filters = routeGetters.getRouteFilters(this.$store);
 			const decoded = decodeFilters(filters);
 			return groups.map(group => {
 				// return if disabled
@@ -316,29 +322,31 @@ export default {
 		// updates numerical facet range controls or categorical selected state based on
 		// route
 		updateGroupSelections(groups) {
-			const filters = this.$store.getters.getRouteFilters();
+			const filters = routeGetters.getRouteFilters(this.$store);
 			const decoded = decodeFilters(filters);
 			return groups.map(group => {
 				// get filter
 				const filter = decoded[group.key];
 				switch (getFilterType(filter)) {
 					case NUMERICAL_FILTER:
+						const numericalFilter = filter as NumericalFilter;
 						// add selection to facets
 						group.facets.forEach(facet => {
 							facet.selection = {
 								// NOTE: the `from` / `to` values MUST be strings.
 								range: {
-									from: `${filter.min}`,
-									to: `${filter.max}`,
+									from: `${numericalFilter.min}`,
+									to: `${numericalFilter.max}`,
 								}
 							};
 						});
 						break;
 
 					case CATEGORICAL_FILTER:
+						const categoricalFilter = filter as CategoricalFilter;
 						// add selection to facets
 						group.facets.forEach(facet => {
-							if (filter.categories.indexOf(facet.value) !== -1) {
+							if (categoricalFilter.categories.indexOf(facet.value) !== -1) {
 								// select
 								facet.selected = {
 									count: facet.count
@@ -353,7 +361,8 @@ export default {
 			});
 		}
 	}
-};
+});
+
 </script>
 
 <style>

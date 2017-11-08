@@ -16,7 +16,8 @@
 <script lang="ts">
 
 import { createRouteEntryFromRoute } from '../util/routes';
-import { getters } from '../store/data/module';
+import { getters as dataGetters } from '../store/data/module';
+import { getters as routeGetters } from '../store/route/module';
 import { VariableSummary } from '../store/data/index';
 import VariableFacets from '../components/VariableFacets.vue';
 import 'font-awesome/css/font-awesome.css';
@@ -31,21 +32,22 @@ export default Vue.extend({
 
 	computed: {
 		dataset() {
-			return this.$store.getters.getRouteDataset();
+			return routeGetters.getRouteDataset(this.$store);
 		},
 		variables(): VariableSummary[] {
-			return getters.getAvailableVariableSummaries(this.$store);
+			return dataGetters.getAvailableVariableSummaries(this.$store);
 		},
 		html() {
-			return (group) => {
+			return (group: { key: string }) => {
 				const container = document.createElement('div');
 				const trainingElem = document.createElement('button');
 				trainingElem.className += 'btn btn-sm btn-outline-success mr-2 mb-2';
 				trainingElem.innerHTML = 'Add to Training Set';
 				trainingElem.addEventListener('click', () => {
-					const training = this.$store.getters.getTrainingVariables();
-					const entry = createRouteEntryFromRoute(this.$store.getters.getRoute(), {
-						training: training.concat([ group.key ]).join(',')
+					const training = routeGetters.getRouteTrainingVariables(this.$store);
+					const trainingArray = training ? training.split(',') : [];
+					const entry = createRouteEntryFromRoute(routeGetters.getRoute(this.$store), {
+						training: trainingArray.concat([ group.key ]).join(',')
 					});
 					this.$router.push(entry);
 				});
@@ -53,7 +55,7 @@ export default Vue.extend({
 				targetElem.className += 'btn btn-sm btn-outline-success mr-2 mb-2';
 				targetElem.innerHTML = 'Set as Target';
 				targetElem.addEventListener('click', () => {
-					const entry = createRouteEntryFromRoute(this.$store.getters.getRoute(), {
+					const entry = createRouteEntryFromRoute(routeGetters.getRoute(this.$store), {
 						target: group.key,
 					});
 					this.$router.push(entry);

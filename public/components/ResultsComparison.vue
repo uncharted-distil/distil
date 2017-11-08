@@ -22,8 +22,15 @@
 import ResultsDataTable from '../components/ResultsDataTable.vue';
 import { getTask } from '../util/pipelines';
 import _ from 'lodash';
+import Vue from 'vue';
+import { getters as dataGetters} from '../store/data/module';
+import { getters as routeGetters} from '../store/route/module';
+import { actions } from '../store/data/module';
+import { PipelineState, PipelineInfo } from '../store/pipelines/index';
+import { Variable } from '../store/data/index';
+import { getPipelineResults } from '../util/pipelines';
 
-export default {
+export default Vue.extend({
 	name: 'results-comparison',
 
 	components: {
@@ -43,30 +50,30 @@ export default {
 	},
 
 	computed: {
-		result() {
-			const requestId = this.$store.getters.getRouteCreateRequestId();
-			const resultId = atob(this.$store.getters.getRouteResultId());
-			const pipelineRequest = this.$store.getters.getPipelineResults(requestId);
-			return _.find(pipelineRequest, r => r.pipeline.resultUri === resultId);
+		result(): PipelineInfo {
+			const requestId = routeGetters.getRouteCreateRequestId(this.$store);
+			const resultId = atob(routeGetters.getRouteResultId(this.$store));
+			const pipelineRequest = getPipelineResults(<PipelineState>this.$store.state.pipelineModule, requestId);
+			return _.find(pipelineRequest, r => r.pipeline.resultId === resultId);
 		},
 
-		dataset() {
-			return this.$store.getters.getRouteDataset();
+		dataset(): string {
+			return routeGetters.getRouteDataset(this.$store);
 		},
 
-		target() {
-			return this.$store.getters.getRouteTargetVariable();
+		target(): string {
+			return routeGetters.getRouteTargetVariable(this.$store);
 		},
 
-		variables() {
-			return this.$store.getters.getVariables();
+		variables(): Variable[] {
+			return dataGetters.getVariables(this.$store);
 		},
 
-		residualThreshold() {
-			return this.$store.getters.getRouteResidualThreshold();
+		residualThreshold(): string {
+			return routeGetters.getRouteResidualThreshold(this.$store);
 		},
 
-		regressionEnabled() {
+		regressionEnabled(): boolean {
 			const targetVarName = this.target;
 			const variables = this.variables;
 			const targetVar = _.find(variables, v => {
@@ -110,19 +117,19 @@ export default {
 
 	methods: {
 		fetch() {
-			this.$store.dispatch('updateResults', {
+			actions.updateResults(this.$store, {
 				dataset: this.dataset,
-				resultId: atob(this.$store.getters.getRouteResultId()),
-				filters: this.$store.getters.getFilters()
+				resultId: atob(routeGetters.getRouteResultId(this.$store)),
+				filters: routeGetters.getDecodedFilters(this.$store)
 			});
 		},
 
 		// Methods passed to classification result table instances to filter their displays.
-		classificationMatchFilter(dataItem) {
+		classificationMatchFilter(dataItem): boolean {
 			return dataItem[dataItem._target.truth] === dataItem[dataItem._target.predicted];
 		},
 
-		classificationNoMatchFilter(dataItem) {
+		classificationNoMatchFilter(dataItem): boolean {
 			return dataItem[dataItem._target.truth] !== dataItem[dataItem._target.predicted];
 		},
 
@@ -176,7 +183,7 @@ export default {
 			return dataItem;
 		}
 	}
-};
+});
 </script>
 
 <style>

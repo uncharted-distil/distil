@@ -17,7 +17,7 @@
 
 				<template :slot="`HEAD_${data.label}`" v-for="data in fields">
 					{{data.label}}
-					<div>
+					<div :key="data.label">
 						<b-dropdown :text="data.type" variant="outline-primary" class="var-type-button">
 							<b-dropdown-item @click.stop="onTypeChange(data, suggested)" :key="suggested.name" v-for="suggested in data.suggested">{{suggested.type}} ({{suggested.probability.toFixed(2)}})</b-dropdown-item>
 						</b-dropdown>
@@ -32,25 +32,29 @@
 
 <script lang="ts">
 import _ from 'lodash';
+import Vue from 'vue';
+import { getters as dataGetters } from '../store/data/module';
+import { getters as routeGetters } from '../store/route/module';
+import { actions } from '../store/data/module';
 
-export default {
+export default Vue.extend({
 	name: 'explore-data-table',
 
 	computed: {
 		// get dataset from route
 		dataset() {
-			return this.$store.getters.getRouteDataset();
+			return routeGetters.getRouteDataset(this.$store);
 		},
 		// extracts the table data from the store
 		items() {
-			return this.$store.getters.getFilteredDataItems();
+			return dataGetters.getFilteredDataItems(this.$store);
 		},
 		// extract the table field header from the store
 		fields() {
-			return this.$store.getters.getFilteredDataFields();
+			return dataGetters.getFilteredDataFields(this.$store);
 		},
 		filters() {
-			return this.$store.getters.getFilters();
+			return routeGetters.getDecodedFilters(this.$store);
 		}
 	},
 
@@ -69,13 +73,13 @@ export default {
 
 	methods: {
 		fetch() {
-			this.$store.dispatch('updateFilteredData', {
+			actions.updateFilteredData(this.$store, {
 				dataset: this.dataset,
 				filters: this.filters
 			});
 		},
 		onTypeChange(field, suggested) {
-			this.$store.dispatch('setVariableType', {
+			actions.setVariableType(this.$store, {
 				dataset: this.dataset,
 				field: field.label,
 				type: suggested.type
@@ -87,13 +91,13 @@ export default {
 			_.forIn(this.fields, (field, key) => {
 				highlights[key] = event[key];
 			});
-			this.$store.dispatch('highlightFeatureValues', highlights);
+			actions.highlightFeatureValues(this.$store, highlights);
 		},
 		onMouseOut() {
-			this.$store.dispatch('clearFeatureHighlightValues');
+			actions.clearFeatureHighlightValues(this.$store);
 		}
 	}
-};
+});
 </script>
 
 <style>

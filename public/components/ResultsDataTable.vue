@@ -22,8 +22,10 @@
 
 <script>
 import _ from 'lodash';
+import { getters, actions } from '../store/data/module';
+import Vue from 'vue';
 
-export default {
+export default Vue.extend({
 	name: 'results-data-table',
 
 	props: [
@@ -36,14 +38,14 @@ export default {
 	computed: {
 		// extracts the table data from the store
 		items() {
-			const items = this.$store.getters.getResultDataItems(this.showError);
+			const items = getters.getResultDataItems(this.$store);
 			return items
 				.filter(this.filterFunc)
 				.map(this.decorateFunc);
 		},
 		// extract the table field header from the store
 		fields() {
-			return this.$store.getters.getResultDataFields(this.showError);
+			return getters.getResultDataFields(this.$store);
 		}
 	},
 
@@ -54,14 +56,14 @@ export default {
 			_.forIn(this.fields, (field, key) => {
 				highlights[key] = event[key];
 			});
-			this.$store.dispatch('highlightFeatureValues', highlights);
+			actions.highlightFeatureValues(this.$store, highlights);
 		},
 
 		onMouseOut() {
-			this.$store.dispatch('clearFeatureHighlightValues');
+			actions.clearFeatureHighlightValues(this.$store);
 		}
 	}
-};
+});
 </script>
 
 <style>

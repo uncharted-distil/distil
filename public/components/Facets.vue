@@ -4,11 +4,12 @@
 
 <script lang="ts">
 import _ from 'lodash';
-
+import Vue from 'vue';
+import { actions } from '../store/data/module';
 import Facets from '@uncharted.software/stories-facets';
 import '@uncharted.software/stories-facets/dist/facets.css';
 
-export default {
+export default Vue.extend({
 	name: 'facets',
 
 	props: {
@@ -46,24 +47,24 @@ export default {
 		});
 		// hover over events
 		this.facets.on('facet-histogram:mouseenter', (event, key, value) => {
-			this.$store.dispatch('highlightFeatureRange', {
+			actions.highlightFeatureRange(this.$store, {
 				name: key,
 				from: _.toNumber(value.label[0]),
 				to: _.toNumber(value.toLabel[value.toLabel.length-1])
 			});
 		});
 		this.facets.on('facet-histogram:mouseleave', (event, key) => {
-			this.$store.dispatch('clearFeatureHighlightRange', key);
+			actions.clearFeatureHighlightRange(this.$store, key);
 		});
 		this.facets.on('facet:mouseenter', (event, key, value) => {
-			this.$store.dispatch('highlightFeatureRange', {
+			actions.highlightFeatureRange(this.$store, {
 				name: key,
 				from: value,
 				to: value
 			});
 		});
 		this.facets.on('facet:mouseleave', (event, key) => {
-			this.$store.dispatch('clearFeatureHighlightRange', key);
+			actions.clearFeatureHighlightRange(this.$store, key);
 		});
 		// click events
 		this.facets.on('facet:click', (event, key, value) => {
@@ -280,7 +281,7 @@ export default {
 		this.facets.destroy();
 		this.facets = null;
 	}
-};
+});
 </script>
 
 <style>
