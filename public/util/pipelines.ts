@@ -178,9 +178,19 @@ const regression: Task = {
 // variable type to task mappings
 const variableType: { [varType: string]: Task } = {
 	float:  regression,
+	latitude:  regression,
+	longitude:  regression,
 	integer: regression,
 	categorical: classification,
 	ordinal: classification,
-	boolean: classification,
+	address: classification,
+	city: classification,
+	state: classification,
+	country: classification,
+	email: classification,
+	phone: classification,
+	postal_code: classification,
+	uri: classification,
+	datetime: classification,
 	text: classification
 };
