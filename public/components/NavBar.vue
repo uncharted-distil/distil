@@ -7,15 +7,15 @@
 		<span class="navbar-brand">Distil</span>
 
 		<b-collapse is-nav id="nav_collapse">
-			<b-nav is-nav-bar>
+			<b-navbar-nav>
 				<b-nav-item @click="onHome" :active="activeView===HOME">Home</b-nav-item>
 				<b-nav-item @click="onSearch" :active="activeView===SEARCH">Search</b-nav-item>
 				<b-nav-item @click="onExplore" :active="activeView===EXPLORE" :disabled="!hasDataset()">Explore</b-nav-item>
 				<b-nav-item @click="onSelect" :active="activeView===SELECT" :disabled="!hasDataset()">Select</b-nav-item>
 				<b-nav-item @click="onPipelines" :active="activeView===PIPELINES" :disabled="!hasDataset()">Pipelines</b-nav-item>
 				<b-nav-item @click="onResults" :active="activeView===RESULTS">Results</b-nav-item>
-			</b-nav>
-			<b-nav is-nav-bar class="ml-auto">
+			</b-navbar-nav>
+			<b-navbar-nav class="ml-auto">
 				<b-nav-item href="/help">Help</b-nav-item>
 				<b-btn v-b-modal.abort size="sm" variant="outline-danger" class="abort-button">Abort</b-btn>
 				<b-modal id="abort" title="Abort" @ok="onAbort">
@@ -24,7 +24,7 @@
 						This action will terminate the session.
 					</div>
 				</b-modal>
-			</b-nav>
+			</b-navbar-nav>
 		</b-collapse>
 	</b-navbar>
 </template>
