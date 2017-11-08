@@ -17,14 +17,18 @@ const (
 	VarNameField = "varName"
 	// VarRoleField is the field name for the variable role.
 	VarRoleField = "varRole"
+	// VarDisplayVariableField is the field name for the display variable.
+	VarDisplayVariableField = "varDisplayName"
+	// VarOriginalVariableField is the field name for the original variable.
+	VarOriginalVariableField = "varOriginalName"
 	// VarTypeField is the field name for the variable type.
 	VarTypeField = "varType"
 	// VarImportanceField is the field name for the variable importnace.
 	VarImportanceField = "importance"
 	// VarSuggestedTypesField is the field name for the suggested variable types.
 	VarSuggestedTypesField = "suggestedTypes"
-	// VarTypeIndex is the variable type of the index field.
-	VarTypeIndex = "index"
+	// VarRoleIndex is the variable role of an index field.
+	VarRoleIndex = "index"
 )
 
 func (s *Storage) parseVariable(searchHit *elastic.SearchHit, varName string) (*model.Variable, error) {
@@ -51,22 +55,32 @@ func (s *Storage) parseVariable(searchHit *elastic.SearchHit, varName string) (*
 		}
 		importance, ok := json.Int(child, VarImportanceField)
 		if !ok {
-			continue
+			importance = 0
 		}
 		role, ok := json.String(child, VarRoleField)
 		if !ok {
-			continue
+			role = ""
+		}
+		originalVariable, ok := json.String(child, VarOriginalVariableField)
+		if !ok {
+			originalVariable = name
+		}
+		displayVariable, ok := json.String(child, VarDisplayVariableField)
+		if !ok {
+			displayVariable = ""
 		}
 		suggestedTypes, ok := json.Array(child, VarSuggestedTypesField)
 		if !ok {
-			continue
+			suggestedTypes = make([]map[string]interface{}, 0)
 		}
 		return &model.Variable{
-			Name:           name,
-			Type:           typ,
-			Importance:     importance,
-			Role:           role,
-			SuggestedTypes: suggestedTypes,
+			Name:             name,
+			Type:             typ,
+			Importance:       importance,
+			Role:             role,
+			SuggestedTypes:   suggestedTypes,
+			OriginalVariable: originalVariable,
+			DisplayVariable:  displayVariable,
 		}, nil
 	}
 	return nil, errors.Errorf("unable to find variable match name %s", varName)
@@ -96,22 +110,32 @@ func parseVariables(searchHit *elastic.SearchHit) ([]*model.Variable, error) {
 		}
 		importance, ok := json.Int(child, VarImportanceField)
 		if !ok {
-			continue
+			importance = 0
 		}
 		role, ok := json.String(child, VarRoleField)
 		if !ok {
-			continue
+			role = ""
+		}
+		originalVariable, ok := json.String(child, VarOriginalVariableField)
+		if !ok {
+			originalVariable = name
+		}
+		displayVariable, ok := json.String(child, VarDisplayVariableField)
+		if !ok {
+			displayVariable = ""
 		}
 		suggestedTypes, ok := json.Array(child, VarSuggestedTypesField)
 		if !ok {
-			continue
+			suggestedTypes = make([]map[string]interface{}, 0)
 		}
 		variables = append(variables, &model.Variable{
-			Name:           name,
-			Type:           typ,
-			Importance:     importance,
-			Role:           role,
-			SuggestedTypes: suggestedTypes,
+			Name:             name,
+			Type:             typ,
+			Importance:       importance,
+			Role:             role,
+			SuggestedTypes:   suggestedTypes,
+			OriginalVariable: originalVariable,
+			DisplayVariable:  displayVariable,
 		})
 	}
 	return variables, nil
@@ -148,8 +172,25 @@ func (s *Storage) FetchVariable(dataset string, index string, varName string) (*
 	return variables, err
 }
 
+// FetchVariableDisplay returns the display variable for the provided index, dataset, and variable.
+func (s *Storage) FetchVariableDisplay(dataset string, index string, varName string) (*model.Variable, error) {
+	// get the indicated variable.
+	variable, err := s.FetchVariable(dataset, index, varName)
+	if err != nil {
+		return nil, errors.Wrap(err, "unable to fetch variable")
+	}
+
+	// DisplayVariable will identify the variable to return.
+	// If not set, no other fetch is needed.
+	if variable.DisplayVariable != "" && variable.DisplayVariable != varName {
+		return s.FetchVariable(dataset, index, variable.DisplayVariable)
+	}
+
+	return variable, nil
+}
+
 // FetchVariables returns all the variables for the provided index and dataset.
-func (s *Storage) FetchVariables(dataset string, index string) ([]*model.Variable, error) {
+func (s *Storage) FetchVariables(dataset string, index string, includeIndex bool) ([]*model.Variable, error) {
 	// get dataset id
 	datasetID := dataset + DatasetSuffix
 	// create match query
@@ -176,5 +217,49 @@ func (s *Storage) FetchVariables(dataset string, index string) ([]*model.Variabl
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to parse search result")
 	}
-	return variables, err
+
+	// remove index variables if necessary
+	result := variables
+	if !includeIndex {
+		result = make([]*model.Variable, 0)
+		for _, v := range variables {
+			if v.Role != VarRoleIndex {
+				result = append(result, v)
+			}
+		}
+	}
+
+	return result, err
+}
+
+// FetchVariablesDisplay returns all the display variables for the provided index and dataset.
+func (s *Storage) FetchVariablesDisplay(dataset string, index string) ([]*model.Variable, error) {
+	// get all variables.
+	vars, err := s.FetchVariables(dataset, index, false)
+	if err != nil {
+		return nil, errors.Wrap(err, "unable to fetch dataset variables")
+	}
+
+	// create a lookup for the variables.
+	varsLookup := make(map[string]*model.Variable)
+	for _, v := range vars {
+		varsLookup[v.Name] = v
+	}
+
+	// build the slice by cycling through the variables and using the lookup
+	// for the display variables. Only include a variable once.
+	resultIncludes := make(map[string]bool)
+	result := make([]*model.Variable, 0)
+	for _, v := range vars {
+		name := v.DisplayVariable
+		if name == "" {
+			name = v.Name
+		}
+		if !resultIncludes[name] {
+			result = append(result, varsLookup[name])
+			resultIncludes[name] = true
+		}
+	}
+
+	return result, nil
 }

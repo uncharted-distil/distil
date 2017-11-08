@@ -20,6 +20,8 @@
                         {
                             "varName": "d3mIndex",
                             "varType": "integer",
+                            "varOriginalName": "",
+                            "varDisplayName": "",
                             "varRole": "index",
                             "importance": 0,
                             "suggestedTypes": [ { "type": "integer", "probability": 1.00 } ]
@@ -27,6 +29,8 @@
                         {
                             "varName": "Position",
                             "varType": "categorical",
+                            "varOriginalName": "",
+                            "varDisplayName": "",
                             "varRole": "attribute",
                             "importance": 0,
                             "suggestedTypes": [ { "type": "categorical", "probability": 1.00 } ]
@@ -34,6 +38,8 @@
                         {
                             "varName": "Number_seasons",
                             "varType": "integer",
+                            "varOriginalName": "",
+                            "varDisplayName": "",
                             "varRole": "attribute",
                             "importance": 1,
                             "suggestedTypes": [ { "type": "integer", "probability": 1.00 } ]
@@ -41,6 +47,8 @@
                         {
                             "varName": "Games_played",
                             "varType": "integer",
+                            "varOriginalName": "",
+                            "varDisplayName": "",
                             "varRole": "attribute",
                             "importance": 2,
                             "suggestedTypes": [ { "type": "integer", "probability": 1.00 } ]
@@ -48,6 +56,8 @@
                         {
                             "varName": "On_base_pct",
                             "varType": "float",
+                            "varOriginalName": "",
+                            "varDisplayName": "",
                             "varRole": "attribute",
                             "importance": 3,
                             "suggestedTypes": [ { "type": "float", "probability": 1.00 } ]

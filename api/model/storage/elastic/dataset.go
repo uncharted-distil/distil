@@ -98,7 +98,7 @@ func (s *Storage) SearchDatasets(index string, terms string) ([]*model.Dataset, 
 // SetDataType updates the data type of the field in ES.
 func (s *Storage) SetDataType(dataset string, index string, field string, fieldType string) error {
 	// Fetch all existing variables
-	vars, err := s.FetchVariables(dataset, index)
+	vars, err := s.FetchVariables(dataset, index, true)
 	if err != nil {
 		return errors.Wrapf(err, "failed to fetch existing variable")
 	}
@@ -114,11 +114,13 @@ func (s *Storage) SetDataType(dataset string, index string, field string, fieldT
 	var serialized []map[string]interface{}
 	for _, v := range vars {
 		serialized = append(serialized, map[string]interface{}{
-			VarNameField:           v.Name,
-			VarRoleField:           v.Role,
-			VarTypeField:           v.Type,
-			VarImportanceField:     v.Importance,
-			VarSuggestedTypesField: v.SuggestedTypes,
+			VarNameField:             v.Name,
+			VarRoleField:             v.Role,
+			VarTypeField:             v.Type,
+			VarImportanceField:       v.Importance,
+			VarSuggestedTypesField:   v.SuggestedTypes,
+			VarOriginalVariableField: v.OriginalVariable,
+			VarDisplayVariableField:  v.DisplayVariable,
 		})
 	}
 
