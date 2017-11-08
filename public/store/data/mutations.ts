@@ -77,7 +77,7 @@ export const mutations = {
 	},
 
 	highlightFeatureValues(state: DataState, highlights: { [name: string]: any }) {
-		Vue.set(state, 'highlightedFeatureValues', highlights);
+		state.highlightedFeatureValues = highlights;
 		if (state.resultsSummaries) {
 			state.resultsSummaries.forEach(summary => {
 				Vue.set(state.highlightedFeatureValues, summary.name, highlights[summary.feature]);
@@ -86,6 +86,6 @@ export const mutations = {
 	},
 
 	clearFeatureHighlightValues(state: DataState) {
-		Vue.delete(state, 'highlightedFeatureValues');
+		state.highlightedFeatureValues = {};
 	}
 }

@@ -75,7 +75,7 @@ export const actions = {
 				}
 			};
 		});
-		mutations.setResultsSummaries(context, histograms);
+		mutations.setVariableSummaries(context, histograms);
 		// fill them in asynchronously
 		return Promise.all(variables.map(variable => {
 			return context.dispatch('getVariableSummary', {
