@@ -48,7 +48,7 @@ func (s *Storage) parseDatasets(res *elastic.SearchResult) ([]*model.Dataset, er
 			summary = ""
 		}
 		// extract the variables list
-		variables, err := parseVariables(hit)
+		variables, err := s.parseVariables(hit)
 		if err != nil {
 			return nil, errors.Wrap(err, "failed to parse dataset")
 		}

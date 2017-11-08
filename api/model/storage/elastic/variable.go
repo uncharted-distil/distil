@@ -31,8 +31,47 @@ const (
 	VarRoleIndex = "index"
 )
 
+func (s *Storage) parseRawVariable(child map[string]interface{}) *model.Variable {
+	name, ok := json.String(child, VarNameField)
+	if !ok {
+		return nil
+	}
+	typ, ok := json.String(child, VarTypeField)
+	if !ok {
+		return nil
+	}
+	importance, ok := json.Int(child, VarImportanceField)
+	if !ok {
+		importance = 0
+	}
+	role, ok := json.String(child, VarRoleField)
+	if !ok {
+		role = ""
+	}
+	originalVariable, ok := json.String(child, VarOriginalVariableField)
+	if !ok {
+		originalVariable = name
+	}
+	displayVariable, ok := json.String(child, VarDisplayVariableField)
+	if !ok {
+		displayVariable = ""
+	}
+	suggestedTypes, ok := json.Array(child, VarSuggestedTypesField)
+	if !ok {
+		suggestedTypes = make([]map[string]interface{}, 0)
+	}
+	return &model.Variable{
+		Name:             name,
+		Type:             typ,
+		Importance:       importance,
+		Role:             role,
+		SuggestedTypes:   suggestedTypes,
+		OriginalVariable: originalVariable,
+		DisplayVariable:  displayVariable,
+	}
+}
+
 func (s *Storage) parseVariable(searchHit *elastic.SearchHit, varName string) (*model.Variable, error) {
-	//TODO: Extract the common parsing into a separate function.
 	// unmarshal the hit source
 	src, err := json.Unmarshal(*searchHit.Source)
 	if err != nil {
@@ -45,48 +84,17 @@ func (s *Storage) parseVariable(searchHit *elastic.SearchHit, varName string) (*
 	}
 	// find the matching var name
 	for _, child := range children {
-		name, ok := json.String(child, VarNameField)
-		if !ok || name != varName {
-			continue
+		variable := s.parseRawVariable(child)
+		if variable != nil {
+			if variable.Name == varName {
+				return variable, nil
+			}
 		}
-		typ, ok := json.String(child, VarTypeField)
-		if !ok {
-			continue
-		}
-		importance, ok := json.Int(child, VarImportanceField)
-		if !ok {
-			importance = 0
-		}
-		role, ok := json.String(child, VarRoleField)
-		if !ok {
-			role = ""
-		}
-		originalVariable, ok := json.String(child, VarOriginalVariableField)
-		if !ok {
-			originalVariable = name
-		}
-		displayVariable, ok := json.String(child, VarDisplayVariableField)
-		if !ok {
-			displayVariable = ""
-		}
-		suggestedTypes, ok := json.Array(child, VarSuggestedTypesField)
-		if !ok {
-			suggestedTypes = make([]map[string]interface{}, 0)
-		}
-		return &model.Variable{
-			Name:             name,
-			Type:             typ,
-			Importance:       importance,
-			Role:             role,
-			SuggestedTypes:   suggestedTypes,
-			OriginalVariable: originalVariable,
-			DisplayVariable:  displayVariable,
-		}, nil
 	}
 	return nil, errors.Errorf("unable to find variable match name %s", varName)
 }
 
-func parseVariables(searchHit *elastic.SearchHit) ([]*model.Variable, error) {
+func (s *Storage) parseVariables(searchHit *elastic.SearchHit) ([]*model.Variable, error) {
 	// unmarshal the hit source
 	src, err := json.Unmarshal(*searchHit.Source)
 	if err != nil {
@@ -100,43 +108,10 @@ func parseVariables(searchHit *elastic.SearchHit) ([]*model.Variable, error) {
 	// for each variable, extract the `varName` and `varType`
 	var variables []*model.Variable
 	for _, child := range children {
-		name, ok := json.String(child, VarNameField)
-		if !ok {
-			continue
+		variable := s.parseRawVariable(child)
+		if variable != nil {
+			variables = append(variables, variable)
 		}
-		typ, ok := json.String(child, VarTypeField)
-		if !ok {
-			continue
-		}
-		importance, ok := json.Int(child, VarImportanceField)
-		if !ok {
-			importance = 0
-		}
-		role, ok := json.String(child, VarRoleField)
-		if !ok {
-			role = ""
-		}
-		originalVariable, ok := json.String(child, VarOriginalVariableField)
-		if !ok {
-			originalVariable = name
-		}
-		displayVariable, ok := json.String(child, VarDisplayVariableField)
-		if !ok {
-			displayVariable = ""
-		}
-		suggestedTypes, ok := json.Array(child, VarSuggestedTypesField)
-		if !ok {
-			suggestedTypes = make([]map[string]interface{}, 0)
-		}
-		variables = append(variables, &model.Variable{
-			Name:             name,
-			Type:             typ,
-			Importance:       importance,
-			Role:             role,
-			SuggestedTypes:   suggestedTypes,
-			OriginalVariable: originalVariable,
-			DisplayVariable:  displayVariable,
-		})
 	}
 	return variables, nil
 }
@@ -213,7 +188,7 @@ func (s *Storage) FetchVariables(dataset string, index string, includeIndex bool
 		return nil, errors.New("elasticSearch variable fetch query len(hits) != 1")
 	}
 	// extract output into JSON ready structs
-	variables, err := parseVariables(res.Hits.Hits[0])
+	variables, err := s.parseVariables(res.Hits.Hits[0])
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to parse search result")
 	}
