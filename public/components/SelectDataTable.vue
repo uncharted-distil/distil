@@ -37,6 +37,7 @@ import _ from 'lodash';
 import Vue from 'vue';
 import { getters as dataGetters, actions } from '../store/data/module';
 import { getters as routeGetters } from '../store/route/module';
+import { updateTableHighlights } from '../util/highlights';
 
 export default Vue.extend({
 	name: 'selected-data-table',
@@ -48,7 +49,9 @@ export default Vue.extend({
 		},
 		// extracts the table data from the store
 		items() {
-			return dataGetters.getSelectedDataItems(this.$store);
+			const data = dataGetters.getSelectedDataItems(this.$store);
+			updateTableHighlights(data, dataGetters.getHighlightedFeatureRanges(this.$store));
+			return data;
 		},
 		// extract the table field header from the store
 		fields() {
