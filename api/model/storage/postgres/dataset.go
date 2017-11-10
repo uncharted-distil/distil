@@ -53,6 +53,13 @@ func (s *Storage) getExistingFields(dataset string, index string) (map[string]*m
 		return nil, errors.Wrap(err, "Unable to get existing fields")
 	}
 
+	// Add the d3m index variable.
+	varIndex, err := s.metadata.FetchVariable(dataset, index, d3mIndexFieldName)
+	if err != nil {
+		return nil, errors.Wrap(err, "Unable to get d3m index variable")
+	}
+	vars = append(vars, varIndex)
+
 	fields := make(map[string]*model.Variable)
 	for _, v := range vars {
 		fields[v.OriginalVariable] = v
