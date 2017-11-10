@@ -1,7 +1,7 @@
 import _ from 'lodash';
 import axios from 'axios';
 import { encodeQueryParams, FilterMap } from '../../util/filters';
-import { getPipelineResults } from '../../util/pipelines';
+import { getPipelineResultsOkay } from '../../util/pipelines';
 import { DataState, Variable, Data, Extrema } from './index';
 import { DistilState } from '../store';
 import { mutations } from './module'
@@ -155,7 +155,7 @@ export const actions = {
 	getResultsSummaries(context: DataContext, args: { dataset: string, requestId: string }) {
 		const dataset = args.dataset;
 		const requestId = args.requestId;
-		const results = getPipelineResults(context.rootState.pipelineModule, requestId);
+		const results = getPipelineResultsOkay(context.rootState.pipelineModule, requestId);
 
 		// save a placeholder histogram
 		const pendingHistograms = _.map(results, r => {
