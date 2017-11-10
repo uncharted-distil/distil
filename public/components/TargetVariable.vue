@@ -61,6 +61,7 @@ export default Vue.extend({
 	width: 100%;
 	background-color: #eee;
 	padding: 8px;
+	font-size: 1rem;
 }
 .missing-icon {
 	padding-right: 4px;
