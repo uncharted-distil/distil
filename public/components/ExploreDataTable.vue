@@ -36,24 +36,30 @@ import Vue from 'vue';
 import { getters as dataGetters } from '../store/data/module';
 import { getters as routeGetters } from '../store/route/module';
 import { actions } from '../store/data/module';
+import { Dictionary } from '../store/data/index';
+import { FilterMap } from '../util/filters';
+import { FieldInfo } from '../store/data/getters';
+import { updateTableHighlights } from '../util/highlights';
 
 export default Vue.extend({
 	name: 'explore-data-table',
 
 	computed: {
 		// get dataset from route
-		dataset() {
+		dataset(): string {
 			return routeGetters.getRouteDataset(this.$store);
 		},
 		// extracts the table data from the store
-		items() {
-			return dataGetters.getFilteredDataItems(this.$store);
+		items(): Dictionary<any> {
+			const data = dataGetters.getFilteredDataItems(this.$store);
+			updateTableHighlights(data, dataGetters.getHighlightedFeatureRanges(this.$store));
+			return data;
 		},
 		// extract the table field header from the store
-		fields() {
+		fields(): Dictionary<FieldInfo> {
 			return dataGetters.getFilteredDataFields(this.$store);
 		},
-		filters() {
+		filters(): FilterMap {
 			return routeGetters.getDecodedFilters(this.$store);
 		}
 	},
@@ -78,14 +84,16 @@ export default Vue.extend({
 				filters: this.filters
 			});
 		},
-		onTypeChange(field, suggested) {
+
+		onTypeChange(field: { label: string }, suggested: { type: string }) {
 			actions.setVariableType(this.$store, {
 				dataset: this.dataset,
 				field: field.label,
 				type: suggested.type
 			});
 		},
-		onRowHovered(event) {
+
+		onRowHovered(event: Event) {
 			// set new values
 			const highlights = {};
 			_.forIn(this.fields, (field, key) => {
@@ -93,6 +101,7 @@ export default Vue.extend({
 			});
 			actions.highlightFeatureValues(this.$store, highlights);
 		},
+
 		onMouseOut() {
 			actions.clearFeatureHighlightValues(this.$store);
 		}

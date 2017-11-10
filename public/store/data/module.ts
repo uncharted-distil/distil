@@ -38,7 +38,8 @@ export const getters = {
 	getSelectedData: read(moduleGetters.getSelectedData),
 	getSelectedDataItems: read(moduleGetters.getSelectedDataItems),
 	getSelectedDataFields: read(moduleGetters.getSelectedDataFields),
-	getHighlightedFeatureValues: read(moduleGetters.getHighlightedFeatureValues)
+	getHighlightedFeatureValues: read(moduleGetters.getHighlightedFeatureValues),
+	getHighlightedFeatureRanges: read(moduleGetters.getHighlightedFeatureRanges)
 }
 
 // Typed actions

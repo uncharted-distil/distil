@@ -1,6 +1,7 @@
 import _ from 'lodash';
 import { Variable, Data, DataState, Dictionary, Datasets, VariableSummary } from './index';
 import { FilterMap } from '../../util/filters';
+import { Range } from './index';
 
 function getTargetIndexFromPredicted(columns: string[], predictedIndex: number) {
 	const targetName = columns[predictedIndex].replace('_res', '');
@@ -135,11 +136,6 @@ export const getters = {
 				for (const [index, col] of state.filteredData.columns.entries()) {
 					row[col] = d[index];
 				}
-				_.forIn(state.highlightedFeatureRanges, (range, name) => {
-					if (row[name] >= range.from && row[name] <= range.to) {
-						row._rowVariant = 'info';
-					}
-				});
 				return row;
 			});
 		}
@@ -196,14 +192,6 @@ export const getters = {
 				if (errorIdx >= 0) {
 					row._target.error = resultData.columns[errorIdx];
 				}
-				// if row is in the current highlght range, set its style to info
-				// TODO: this shouldn't be in the getter because it causes the entire
-				// function to re-run whenever the high changes
-				_.forIn(state.highlightedFeatureRanges, (range, name) => {
-					if (row[name] >= range.from && row[name] <= range.to) {
-						row._rowVariant = 'info';
-					}
-				});
 				return row;
 			});
 		}
@@ -268,11 +256,6 @@ export const getters = {
 				for (const [index, col] of state.selectedData.columns.entries()) {
 					row[col] = d[index];
 				}
-				_.forIn(state.highlightedFeatureRanges, (range, name) => {
-					if (row[name] >= range.from && row[name] <= range.to) {
-						row._rowVariant = 'info';
-					}
-				});
 				return row;
 			});
 		}
@@ -306,5 +289,9 @@ export const getters = {
 
 	getHighlightedFeatureValues(state: DataState): Dictionary<any> {
 		return state.highlightedFeatureValues;
+	},
+
+	getHighlightedFeatureRanges(state: DataState): Range {
+		return state.highlightedFeatureRanges;
 	}
 }
