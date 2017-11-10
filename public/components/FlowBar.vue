@@ -7,7 +7,7 @@
 					<strong>{{leftText}}</strong>
 				</a>
 			</div>
-			<h4 class="flow-header-center">{{centerText}}</h4>
+			<h5 class="flow-header-center">{{centerText}}</h5>
 			<div class="flow-header-right">
 				<a class="hover text-success"  v-if="rightText" @click="onRight">
 					<strong>{{rightText}}</strong>
