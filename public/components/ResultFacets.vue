@@ -21,7 +21,7 @@ import { PipelineInfo, PipelineState } from '../store/pipelines/index';
 import { getters as dataGetters} from '../store/data/module';
 import { getters as routeGetters} from '../store/route/module';
 import { createGroups } from '../util/facets';
-import { getPipelineResults } from '../util/pipelines';
+import { getPipelineResults, getPipelineResultsOkay } from '../util/pipelines';
 import 'font-awesome/css/font-awesome.css';
 import '../styles/spinner.css';
 import Vue from 'vue';
@@ -54,7 +54,7 @@ export default Vue.extend({
 			// find pipeline result with the uri specified in the route and
 			// flag it as the currently active result
 			const requestId = routeGetters.getRouteCreateRequestId(this.$store) as string;
-			const pipelineResults = getPipelineResults(<PipelineState>this.$store.state.pipelineModule, requestId) as PipelineInfo[];
+			const pipelineResults = getPipelineResultsOkay(<PipelineState>this.$store.state.pipelineModule, requestId) as PipelineInfo[];
 			const activeResult = _.find(pipelineResults, p => {
 				return btoa(p.pipeline.resultId) === routeGetters.getRouteResultId(this.$store);
 			});

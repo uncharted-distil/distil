@@ -6,6 +6,8 @@
 import _ from 'lodash';
 import { PipelineState, PipelineInfo } from '../store/pipelines/index';
 
+const ERROR_VAL = 'ERRORED';
+
 export interface NameInfo {
 	displayName: string,
 	schemaName: string
@@ -17,6 +19,21 @@ export interface Task {
 	metrics: { [name: string]: NameInfo },
 	outputs: { [name: string]: NameInfo }
 };
+
+// Utility function to determine if a pipeline progress is in an errored state
+export function pipelineIsErrored(progress: string): boolean {
+	return progress == ERROR_VAL;
+}
+
+// Utility function to return all pipeline results that have not ERRORED
+// associated with a given request ID
+export function getPipelineResultsOkay(state: PipelineState, requestId: string): PipelineInfo[] {
+	const pipelines = _.concat(
+		_.values(state.runningPipelines[requestId]),
+		_.values(state.completedPipelines[requestId]));
+
+	return _.filter(pipelines, (p) => { return !pipelineIsErrored(p.progress); });
+}
 
 // Utility function to return all pipeline results associated with a given request ID
 export function getPipelineResults(state: PipelineState, requestId: string): PipelineInfo[] {
