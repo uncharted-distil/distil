@@ -17,11 +17,10 @@ const (
 func (s *Storage) calculateInterval(extrema *model.Extrema) float64 {
 	// compute the bucket interval for the histogram
 	interval := (extrema.Max - extrema.Min) / model.MaxNumBuckets
-	if extrema.Type != model.FloatType {
+	if model.IsFloatingPoint(extrema.Type) {
 		interval = math.Floor(interval)
 		interval = math.Max(1, interval)
 	}
-
 	return interval
 }
 
@@ -48,7 +47,7 @@ func (s *Storage) parseNumericHistogram(rows *pgx.Rows, extrema *model.Extrema) 
 	key := extrema.Min
 	for i := 0; i < len(buckets); i++ {
 		keyString := ""
-		if extrema.Type == model.FloatType {
+		if model.IsFloatingPoint(extrema.Type) {
 			keyString = fmt.Sprintf("%f", key)
 		} else {
 			keyString = strconv.Itoa(int(key))
@@ -118,7 +117,7 @@ func (s *Storage) parseExtrema(row *pgx.Rows, variable *model.Variable) (*model.
 		row.Next()
 		err := row.Scan(&minValue, &maxValue)
 		if err != nil {
-			return nil, errors.Wrap(err, "no min/max aggregation found")
+			return nil, errors.Wrap(err, "no min / max aggregation found")
 		}
 	}
 	// check values exist
@@ -153,7 +152,7 @@ func (s *Storage) fetchExtrema(dataset string, variable *model.Variable) (*model
 	queryString := fmt.Sprintf("SELECT %s FROM %s;", aggQuery, dataset)
 
 	// execute the postgres query
-	// NOTE: We may want to use the refular Query operation since QueryRow
+	// NOTE: We may want to use the regular Query operation since QueryRow
 	// hides db exceptions.
 	res, err := s.client.Query(queryString)
 	if err != nil {

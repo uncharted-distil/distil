@@ -19,9 +19,10 @@ const (
 	d3mIndexFieldName    = "d3mIndex"
 
 	// Database data types
-	dataTypeText   = "TEXT"
-	dataTypeDouble = "double precision"
-	dataTypeFloat  = "FLOAT8"
+	dataTypeText    = "TEXT"
+	dataTypeDouble  = "double precision"
+	dataTypeFloat   = "FLOAT8"
+	dataTypeInteger = "INTEGER"
 )
 
 // Storage accesses the underlying postgres database.

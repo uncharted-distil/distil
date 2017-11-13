@@ -16,19 +16,11 @@ func (s *Storage) getViewField(name string, displayName string, typ string, defa
 func (s *Storage) mapType(typ string) string {
 	// Integer types can be returned as floats.
 	switch typ {
-	case model.IntegerType:
-		fallthrough
-	case model.IntType:
-		fallthrough
-	case model.FloatType:
+	case model.IndexType:
+		return dataTypeInteger
+	case model.IntegerType, model.FloatType, model.LongitudeType, model.LatitudeType:
 		return dataTypeFloat
-	case model.CategoricalType:
-		fallthrough
-	case model.TextType:
-		fallthrough
-	case model.DateTimeType:
-		fallthrough
-	case model.OrdinalType:
+	case model.CategoricalType, model.TextType, model.DateTimeType:
 		return dataTypeText
 	default:
 		return dataTypeText
@@ -41,6 +33,8 @@ func (s *Storage) defaultValue(typ string) interface{} {
 		return float64(0)
 	case dataTypeFloat:
 		return float64(0)
+	case dataTypeInteger:
+		return int(0)
 	default:
 		return "''"
 	}

@@ -1,11 +1,10 @@
 package model
 
-//TODO: GET RID OF IntegerType IF WE CAN TO REDUCE CONFUSION!
 const (
 	// AddressType is the schema type for address values
 	AddressType = "address"
-	// IntType is the schema type for int values
-	IntType = "int"
+	// IndexType is the schema type for index values
+	IndexType = "index"
 	// IntegerType is the schema type for int values
 	IntegerType = "integer"
 	// FloatType is the schema type for float values
@@ -57,14 +56,25 @@ var (
 		LongitudeType: true,
 		LatitudeType:  true,
 		FloatType:     true,
-		IntType:       true,
+		IntegerType:   true,
+		IndexType:     true,
 		DateTimeType:  true}
+	floatingPointTypes = map[string]bool{
+		LongitudeType: true,
+		LatitudeType:  true,
+		FloatType:     true}
 )
 
 // IsNumerical indicates whether or not a schema type is numeric for the purposes
 // of analysis.
 func IsNumerical(typ string) bool {
 	return numericalTypes[typ]
+}
+
+// IsFloatingPoint indicates whether or not a schema type is a floating point
+// value.
+func IsFloatingPoint(typ string) bool {
+	return floatingPointTypes[typ]
 }
 
 // IsCategorical indicates whether or not a schema type is categorical for the purposes
