@@ -1,6 +1,6 @@
 <template>
 	<div class="build-view">
-		<h4 class="header-label">Monitor Pipeline Status</h4>
+		<h5 class="header-label">Monitor Pipeline Status</h5>
 		<div class="build-results">
 			<running-pipelines></running-pipelines>
 			<completed-pipelines></completed-pipelines>

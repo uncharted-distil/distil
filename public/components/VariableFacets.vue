@@ -387,25 +387,24 @@ button {
 	overflow-x: hidden;
 	overflow-y: auto;
 }
+.facet-filters span {
+	font-size: 0.9rem;
+}
 .facet-filters .form-group {
 	margin-bottom: 4px;
 	padding-right: 16px;
-}
-.facet-filters label {
-	font-size: 0.8rem;
-	font-weight: bold;
 }
 .sort-groups {
 	display: flex;
 	flex-direction: row;
 	text-align: center;
 }
-.sort-group {
+.sort-groups .sort-group {
 	display: flex;
 	flex-direction: column;
 	justify-content: center;
 	width: 33%;
-	font-size: 12px;
+	font-size: 0.7rem;
 	font-weight: bold;
 }
 .sort-buttons {

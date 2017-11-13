@@ -6,7 +6,7 @@
 			:on-right="gotoSearch">
 		</flow-bar>
 		<search-bar class="home-search-bar"></search-bar>
-		<h4 class="header-label">Recent Activity</h4>
+		<h5 class="header-label">Recent Activity</h5>
 		<div class="home-items">
 			<recent-datasets
 				:max-datasets="5"></recent-datasets>

@@ -285,4 +285,9 @@ export default Vue.extend({
 </script>
 
 <style>
+.facets-facet-vertical .facet-label-count,
+.facets-facet-vertical .facet-label,
+.facets-group .group-header {
+	font-family: inherit;
+}
 </style>

@@ -1,17 +1,17 @@
 <template>
 	<div class="select-view">
 		<div class="left-container">
-			<h4 class="header-label">Select the Training Features</h4>
+			<h5 class="header-label">Select the Training Features</h5>
 			<div class="select-items">
 				<available-variables class="select-available-variables"></available-variables>
 				<training-variables class="select-training-variables"></training-variables>
 			</div>
 		</div>
 		<div class="right-container">
-			<h4 class="header-label">Select the Target Feature</h4>
+			<h5 class="header-label">Select the Target Feature</h5>
 			<target-variable class="select-target-variables"></target-variable>
 			<select-data-table class="select-data-table"></select-data-table>
-			<h4 class="header-label">Create the Pipelines</h4>
+			<h5 class="header-label">Create the Pipelines</h5>
 			<create-pipelines-form class="select-create-pipelines"></create-pipelines-form>
 		</div>
 	</div>

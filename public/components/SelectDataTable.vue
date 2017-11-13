@@ -134,6 +134,10 @@ export default Vue.extend({
 	width: 100%;
 	text-align: left;
 	outline: none;
+	font-size: 0.9rem;
+}
+.table-sm th, .table-sm td {
+	font-size: 0.9rem;
 }
 .var-type-button button:hover,
 .var-type-button button:active,

@@ -6,7 +6,7 @@
 			center-text="Search for a Dataset">
 		</flow-bar>
 		<search-bar class="search-search-bar"></search-bar>
-		<h4 class="header-label">Select a Search Result</h4>
+		<h5 class="header-label">Select a Search Result</h5>
 		<search-results class="search-search-results"></search-results>
 	</div>
 </template>
