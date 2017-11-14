@@ -7,8 +7,8 @@ export const mutations = {
 		if (!session) {
 			window.localStorage.removeItem('pipeline-session-id');
 		} else {
+			console.log(`Storing session id ${session.id} in localStorage`);
 			window.localStorage.setItem('pipeline-session-id', session.id);
 		}
 	}
 };
-
