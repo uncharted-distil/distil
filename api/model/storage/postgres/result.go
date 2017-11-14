@@ -294,15 +294,6 @@ func (s *Storage) getResultMinMaxAggsQuery(variable *model.Variable, resultVaria
 	// Only numeric types should occur.
 	fieldTyped := fmt.Sprintf("cast(\"%s\" as double precision)", resultVariable.Name)
 
-	switch variable.Type {
-	case model.IntegerType:
-		fieldTyped = fmt.Sprintf("cast(\"%s\" as double precision)", resultVariable.Name)
-	case model.FloatType:
-		fieldTyped = fmt.Sprintf("cast(\"%s\" as double precision)", resultVariable.Name)
-	default:
-		fieldTyped = "error type"
-	}
-
 	// create aggregations
 	queryPart := fmt.Sprintf("MIN(%s) AS \"%s\", MAX(%s) AS \"%s\"", fieldTyped, minAggName, fieldTyped, maxAggName)
 	// add aggregations
