@@ -55,6 +55,10 @@ export type AppContext = ActionContext<PipelineState, DistilState>;
 
 export const actions = {
 	getSession(context: AppContext, args: { sessionId: string }) {
+		if (!args.sessionId) {
+			console.warn('Missing session id');
+			return;
+		}
 		const sessionId = args.sessionId;
 		return axios.get(`/distil/session/${sessionId}`)
 		.then(response => {

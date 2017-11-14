@@ -11,6 +11,10 @@ export const actions = {
 
 	// starts a pipeline session.
 	getPipelineSession(context: AppContext, args: { sessionId: string } ) {
+		if (!args.sessionId) {
+			console.warn('Missing session id');
+			return;
+		}
 		const sessionId = args.sessionId;
 		const conn = getWebSocketConnection();
 		return conn.send({
@@ -31,6 +35,10 @@ export const actions = {
 
 	// end a pipeline session.
 	endPipelineSession(context: AppContext, args: { sessionId: string }) {
+		if (!args.sessionId) {
+			console.warn('Missing session id');
+			return;
+		}
 		const sessionId = args.sessionId;
 		const conn = getWebSocketConnection();
 		if (!sessionId) {
@@ -66,5 +74,3 @@ export const actions = {
 		});
 	}
 };
-
-
