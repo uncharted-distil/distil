@@ -17,7 +17,7 @@ const (
 func (s *Storage) calculateInterval(extrema *model.Extrema) float64 {
 	// compute the bucket interval for the histogram
 	interval := (extrema.Max - extrema.Min) / model.MaxNumBuckets
-	if model.IsFloatingPoint(extrema.Type) {
+	if !model.IsFloatingPoint(extrema.Type) {
 		interval = math.Floor(interval)
 		interval = math.Max(1, interval)
 	}
