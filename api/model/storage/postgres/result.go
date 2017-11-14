@@ -292,15 +292,7 @@ func (s *Storage) getResultMinMaxAggsQuery(variable *model.Variable, resultVaria
 	maxAggName := model.MaxAggPrefix + resultVariable.Name
 
 	// Only numeric types should occur.
-	var fieldTyped string
-	switch variable.Type {
-	case model.IntegerType:
-		fieldTyped = fmt.Sprintf("cast(\"%s\" as double precision)", resultVariable.Name)
-	case model.FloatType:
-		fieldTyped = fmt.Sprintf("cast(\"%s\" as double precision)", resultVariable.Name)
-	default:
-		fieldTyped = "error type"
-	}
+	fieldTyped := fmt.Sprintf("cast(\"%s\" as double precision)", resultVariable.Name)
 
 	// create aggregations
 	queryPart := fmt.Sprintf("MIN(%s) AS \"%s\", MAX(%s) AS \"%s\"", fieldTyped, minAggName, fieldTyped, maxAggName)
@@ -313,15 +305,7 @@ func (s *Storage) getResultHistogramAggQuery(extrema *model.Extrema, variable *m
 	interval := s.calculateInterval(extrema)
 
 	// Only numeric types should occur.
-	var fieldTyped string
-	switch variable.Type {
-	case model.IntegerType:
-		fieldTyped = fmt.Sprintf("cast(\"%s\" as double precision)", resultVariable.Name)
-	case model.FloatType:
-		fieldTyped = fmt.Sprintf("cast(\"%s\" as double precision)", resultVariable.Name)
-	default:
-		fieldTyped = "error type"
-	}
+	fieldTyped := fmt.Sprintf("cast(\"%s\" as double precision)", resultVariable.Name)
 
 	// get histogram agg name & query string.
 	histogramAggName := fmt.Sprintf("\"%s%s\"", model.HistogramAggPrefix, extrema.Name)
@@ -340,7 +324,7 @@ func (s *Storage) fetchResultExtrema(resultURI string, dataset string, variable 
 	queryString := fmt.Sprintf("SELECT %s FROM %s WHERE result_id = $1 AND target = $2;", aggQuery, dataset)
 
 	// execute the postgres query
-	// NOTE: We may want to use the refular Query operation since QueryRow
+	// NOTE: We may want to use the regular Query operation since QueryRow
 	// hides db exceptions.
 	res, err := s.client.Query(queryString, resultURI, variable.Name)
 	if err != nil {
