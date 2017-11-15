@@ -5,7 +5,7 @@ import { Range } from './index';
 
 function getTargetIndexFromPredicted(columns: string[], predictedIndex: number) {
 	const targetName = columns[predictedIndex].replace('_res', '');
-	return _.findIndex(columns, col => col === targetName);
+	return _.findIndex(columns, col => col.toLowerCase() === targetName.toLowerCase());
 }
 
 function getPredictedIndex(columns: string[]) {
