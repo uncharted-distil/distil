@@ -21,7 +21,13 @@
 					{{data.label}}
 					<div :key="data.name">
 						<b-dropdown :text="data.type" variant="outline-primary" class="var-type-button">
-							<b-dropdown-item @click.stop="onTypeChange(data, suggested)":key="suggested.name" v-for="suggested in data.suggested">{{suggested.type}} ({{suggested.probability.toFixed(2)}})</b-dropdown-item>
+							<b-dropdown-item
+								v-bind:class="probabilityCategoryClass(suggested.probability)"
+								@click.stop="onTypeChange(data, suggested)"
+								:key="suggested.name"
+								v-for="suggested in data.suggested">
+									{{suggested.type}} ({{probabilityCategoryText(suggested.probability)}})
+							</b-dropdown-item>
 						</b-dropdown>
 					</div>
 				</template>
@@ -38,6 +44,9 @@ import Vue from 'vue';
 import { getters as dataGetters, actions } from '../store/data/module';
 import { getters as routeGetters } from '../store/route/module';
 import { updateTableHighlights } from '../util/highlights';
+
+const LOW_PROBABILITY = 0.33;
+const MED_PROBABILITY = 0.66;
 
 export default Vue.extend({
 	name: 'selected-data-table',
@@ -84,6 +93,24 @@ export default Vue.extend({
 				dataset: this.dataset,
 				filters: this.filters
 			});
+		},
+		probabilityCategoryText(probability) {
+			if (probability < LOW_PROBABILITY) {
+				return 'Low';
+			}
+			if (probability < MED_PROBABILITY) {
+				return 'Med';
+			}
+			return 'High';
+		},
+		probabilityCategoryClass(probability) {
+			if (probability < LOW_PROBABILITY) {
+				return 'text-danger';
+			}
+			if (probability < MED_PROBABILITY) {
+				return 'text-warning';
+			}
+			return 'text-success';
 		},
 		onTypeChange(field, suggested) {
 			actions.setVariableType(this.$store, {
