@@ -44,7 +44,6 @@ func TestDatasetsHandler(t *testing.T) {
 					"numRows": 1073,
 					"numBytes": 744647,
 					"variables": [
-						{"name":"d3mIndex","type":"integer","importance": 0,"role": "index","suggestedTypes": [{ "type": "integer", "probability": 1.00 }], "varOriginalName": "", "varDisplayName": ""},
 						{"name":"Player","type":"categorical","importance": 0,"role": "attribute","suggestedTypes": [{ "type": "categorical", "probability": 1.00 }], "varOriginalName": "", "varDisplayName": ""},
 						{"name":"Number_seasons","type":"integer","importance": 1,"role": "attribute","suggestedTypes":[ { "type": "integer", "probability": 1.00 }], "varOriginalName": "", "varDisplayName": ""},
 						{"name":"Games_played","type":"integer","importance": 2,"role": "attribute","suggestedTypes": [{ "type": "integer", "probability": 1.00 }], "varOriginalName": "", "varDisplayName": ""}
@@ -57,7 +56,6 @@ func TestDatasetsHandler(t *testing.T) {
 					"numRows": 1073,
 					"numBytes": 744647,
 					"variables": [
-						{"name":"d3mIndex","type":"integer","importance": 0,"role": "index","suggestedTypes":  [{ "type": "integer", "probability": 1.00 }], "varOriginalName": "", "varDisplayName": ""},
 						{"name":"cylinders","type":"categorical","importance": 0,"role": "attribute","suggestedTypes":  [{ "type": "categorical", "probability": 1.00 }], "varOriginalName": "", "varDisplayName": ""},
 						{"name":"displacement","type":"categorical","importance": 0,"role": "attribute","suggestedTypes":  [{ "type": "categorical", "probability": 1.00 }], "varOriginalName": "", "varDisplayName": ""}
 					]
@@ -109,7 +107,6 @@ func TestDatasetsHandlerWithSearch(t *testing.T) {
 					"numRows": 1073,
 					"numBytes": 744647,
 					"variables": [
-						{"name":"d3mIndex","type":"integer","importance": 0,"role": "index","suggestedTypes": [{ "type": "integer", "probability": 1.00 }], "varOriginalName": "", "varDisplayName": ""},
 						{"name":"Player","type":"categorical","importance": 0,"role": "attribute","suggestedTypes": [{ "type": "categorical", "probability": 1.00 }], "varOriginalName": "", "varDisplayName": ""},
 						{"name":"Number_seasons","type":"integer","importance": 1,"role": "attribute","suggestedTypes":[ { "type": "integer", "probability": 1.00 }], "varOriginalName": "", "varDisplayName": ""},
 						{"name":"Games_played","type":"integer","importance": 2,"role": "attribute","suggestedTypes": [{ "type": "integer", "probability": 1.00 }], "varOriginalName": "", "varDisplayName": ""}
@@ -122,7 +119,6 @@ func TestDatasetsHandlerWithSearch(t *testing.T) {
 					"numRows": 1073,
 					"numBytes": 744647,
 					"variables": [
-						{"name":"d3mIndex","type":"integer","importance": 0,"role": "index","suggestedTypes":  [{ "type": "integer", "probability": 1.00 }], "varOriginalName": "", "varDisplayName": ""},
 						{"name":"cylinders","type":"categorical","importance": 0,"role": "attribute","suggestedTypes":  [{ "type": "categorical", "probability": 1.00 }], "varOriginalName": "", "varDisplayName": ""},
 						{"name":"displacement","type":"categorical","importance": 0,"role": "attribute","suggestedTypes":  [{ "type": "categorical", "probability": 1.00 }], "varOriginalName": "", "varDisplayName": ""}
 					]
