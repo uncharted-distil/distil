@@ -93,7 +93,6 @@ export default Vue.extend({
 				filters: this.filters
 			});
 		},
-
 		probabilityCategoryText(probability) {
 			if (probability < LOW_PROBABILITY) {
 				return 'Low';
@@ -102,8 +101,7 @@ export default Vue.extend({
 				return 'Med';
 			}
 			return 'High';
-		}
-
+		},
 		probabilityCategoryClass(probability) {
 			if (probability < LOW_PROBABILITY) {
 				return 'text-danger';
@@ -112,8 +110,7 @@ export default Vue.extend({
 				return 'text-warning';
 			}
 			return 'text-success';
-		}
-
+		},
 		onTypeChange(field: { label: string }, suggested: { type: string }) {
 			actions.setVariableType(this.$store, {
 				dataset: this.dataset,
@@ -121,7 +118,6 @@ export default Vue.extend({
 				type: suggested.type
 			});
 		},
-
 		onRowHovered(event: Event) {
 			// set new values
 			const highlights = {};
@@ -130,7 +126,6 @@ export default Vue.extend({
 			});
 			actions.highlightFeatureValues(this.$store, highlights);
 		},
-
 		onMouseOut() {
 			actions.clearFeatureHighlightValues(this.$store);
 		}
