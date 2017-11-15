@@ -94,7 +94,7 @@ func (s *Storage) parseVariable(searchHit *elastic.SearchHit, varName string) (*
 	return nil, errors.Errorf("unable to find variable match name %s", varName)
 }
 
-func (s *Storage) parseVariables(searchHit *elastic.SearchHit) ([]*model.Variable, error) {
+func (s *Storage) parseVariables(searchHit *elastic.SearchHit, includeIndex bool) ([]*model.Variable, error) {
 	// unmarshal the hit source
 	src, err := json.Unmarshal(*searchHit.Source)
 	if err != nil {
@@ -109,6 +109,9 @@ func (s *Storage) parseVariables(searchHit *elastic.SearchHit) ([]*model.Variabl
 	var variables []*model.Variable
 	for _, child := range children {
 		variable := s.parseRawVariable(child)
+		if !includeIndex && variable.Role == VarRoleIndex {
+			continue
+		}
 		if variable != nil {
 			variables = append(variables, variable)
 		}
@@ -188,23 +191,7 @@ func (s *Storage) FetchVariables(dataset string, index string, includeIndex bool
 		return nil, errors.New("elasticSearch variable fetch query len(hits) != 1")
 	}
 	// extract output into JSON ready structs
-	variables, err := s.parseVariables(res.Hits.Hits[0])
-	if err != nil {
-		return nil, errors.Wrap(err, "unable to parse search result")
-	}
-
-	// remove index variables if necessary
-	result := variables
-	if !includeIndex {
-		result = make([]*model.Variable, 0)
-		for _, v := range variables {
-			if v.Role != VarRoleIndex {
-				result = append(result, v)
-			}
-		}
-	}
-
-	return result, err
+	return s.parseVariables(res.Hits.Hits[0], includeIndex)
 }
 
 // FetchVariablesDisplay returns all the display variables for the provided index and dataset.

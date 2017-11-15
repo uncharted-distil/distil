@@ -17,7 +17,7 @@ const (
 	metadataType  = "metadata"
 )
 
-func (s *Storage) parseDatasets(res *elastic.SearchResult) ([]*model.Dataset, error) {
+func (s *Storage) parseDatasets(res *elastic.SearchResult, includeIndex bool) ([]*model.Dataset, error) {
 	var datasets []*model.Dataset
 	for _, hit := range res.Hits.Hits {
 		// parse hit into JSON
@@ -48,7 +48,7 @@ func (s *Storage) parseDatasets(res *elastic.SearchResult) ([]*model.Dataset, er
 			summary = ""
 		}
 		// extract the variables list
-		variables, err := s.parseVariables(hit)
+		variables, err := s.parseVariables(hit, includeIndex)
 		if err != nil {
 			return nil, errors.Wrap(err, "failed to parse dataset")
 		}
@@ -66,7 +66,7 @@ func (s *Storage) parseDatasets(res *elastic.SearchResult) ([]*model.Dataset, er
 }
 
 // FetchDatasets returns all datasets in the provided index.
-func (s *Storage) FetchDatasets(index string) ([]*model.Dataset, error) {
+func (s *Storage) FetchDatasets(index string, includeIndex bool) ([]*model.Dataset, error) {
 	// execute the ES query
 	res, err := s.client.Search().
 		Index(index).
@@ -75,12 +75,12 @@ func (s *Storage) FetchDatasets(index string) ([]*model.Dataset, error) {
 	if err != nil {
 		return nil, errors.Wrap(err, "elasticsearch dataset fetch query failed")
 	}
-	return s.parseDatasets(res)
+	return s.parseDatasets(res, includeIndex)
 }
 
 // SearchDatasets returns the datasets that match the search criteria in the
 // provided index.
-func (s *Storage) SearchDatasets(index string, terms string) ([]*model.Dataset, error) {
+func (s *Storage) SearchDatasets(index string, terms string, includeIndex bool) ([]*model.Dataset, error) {
 	query := elastic.NewMultiMatchQuery(terms, "_id", "description", "variables.varName").
 		Analyzer("standard")
 	// execute the ES query
@@ -92,7 +92,7 @@ func (s *Storage) SearchDatasets(index string, terms string) ([]*model.Dataset, 
 	if err != nil {
 		return nil, errors.Wrap(err, "elasticsearch dataset search query failed")
 	}
-	return s.parseDatasets(res)
+	return s.parseDatasets(res, includeIndex)
 }
 
 // SetDataType updates the data type of the field in ES.

@@ -52,8 +52,8 @@ type MetadataStorage interface {
 	FetchVariablesDisplay(dataset string, index string) ([]*Variable, error)
 	FetchVariable(dataset string, index string, varName string) (*Variable, error)
 	FetchVariableDisplay(dataset string, index string, varName string) (*Variable, error)
-	FetchDatasets(index string) ([]*Dataset, error)
-	SearchDatasets(index string, terms string) ([]*Dataset, error)
+	FetchDatasets(index string, includeIndex bool) ([]*Dataset, error)
+	SearchDatasets(index string, terms string, includeIndex bool) ([]*Dataset, error)
 
 	// Dataset manipulation
 	SetDataType(dataset string, index string, field string, fieldType string) error
