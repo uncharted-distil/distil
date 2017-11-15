@@ -16,17 +16,6 @@
 				<b-form-fieldset size="sm" horizontal label="Sort" :label-cols="2">
 					<div class="sort-groups">
 						<span class="sort-group">
-							alphanumeric
-							<div class="sort-buttons">
-								<b-button size="sm" variant="outline-secondary" @click="setSortMethod('alpha-asc')">
-									<i class="fa fa-sort-alpha-asc"></i>
-								</b-button>
-								<b-button size="sm" variant="outline-secondary" @click="setSortMethod('alpha-desc')">
-									<i class="fa fa-sort-alpha-desc"></i>
-								</b-button>
-							</div>
-						</span>
-						<span class="sort-group">
 							importance
 							<div class="sort-buttons">
 								<b-button size="sm" variant="outline-secondary" @click="setSortMethod('importance-asc')">
@@ -34,6 +23,17 @@
 								</b-button>
 								<b-button size="sm" variant="outline-secondary" @click="setSortMethod('importance-desc')">
 									<i class="fa fa-sort-numeric-desc"></i>
+								</b-button>
+							</div>
+						</span>
+						<span class="sort-group">
+							alphanumeric
+							<div class="sort-buttons">
+								<b-button size="sm" variant="outline-secondary" @click="setSortMethod('alpha-asc')">
+									<i class="fa fa-sort-alpha-asc"></i>
+								</b-button>
+								<b-button size="sm" variant="outline-secondary" @click="setSortMethod('alpha-desc')">
+									<i class="fa fa-sort-alpha-desc"></i>
 								</b-button>
 							</div>
 						</span>
@@ -109,7 +109,7 @@ export default Vue.extend({
 			filter: '',
 			numRows: 1,
 			rowsPerPage: 10,
-			sortMethod: 'alphaAsc'
+			sortMethod: 'importanceDesc'
 		};
 	},
 
