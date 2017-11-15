@@ -18,7 +18,6 @@ import (
 	pg "github.com/unchartedsoftware/distil/api/model/storage/postgres"
 	"github.com/unchartedsoftware/distil/api/pipeline"
 	"github.com/unchartedsoftware/distil/api/postgres"
-	"github.com/unchartedsoftware/distil/api/redis"
 	"github.com/unchartedsoftware/distil/api/routes"
 	"github.com/unchartedsoftware/distil/api/ws"
 )
@@ -86,15 +85,10 @@ func main() {
 	}
 	defer pipelineClient.Close()
 
-	// instantiate redis pool
-	redisPool := redis.NewPool(config.RedisEndpoint, config.RedisExpiry)
-
 	// register routes
 	mux := goji.NewMux()
-
 	mux.Use(middleware.Log)
 	mux.Use(middleware.Gzip)
-	mux.Use(middleware.Redis(redisPool))
 
 	registerRoute(mux, "/distil/datasets/:index", routes.DatasetsHandler(metadataStorageCtor))
 	registerRoute(mux, "/distil/variables/:index/:dataset", routes.VariablesHandler(metadataStorageCtor))
