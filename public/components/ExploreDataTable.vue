@@ -23,7 +23,7 @@
 								v-bind:class="probabilityCategoryClass(suggested.probability)"
 								@click.stop="onTypeChange(data, suggested)"
 								:key="suggested.name"
-								v-for="suggested in data.suggested">
+								v-for="suggested in addMissingSuggestions(data.suggested, data.type)">
 									{{suggested.type}} ({{probabilityCategoryText(suggested.probability)}})
 							</b-dropdown-item>
 						</b-dropdown>
@@ -46,9 +46,7 @@ import { Dictionary } from '../store/data/index';
 import { FilterMap } from '../util/filters';
 import { FieldInfo } from '../store/data/getters';
 import { updateTableHighlights } from '../util/highlights';
-
-const LOW_PROBABILITY = 0.33;
-const MED_PROBABILITY = 0.66;
+import { probabilityCategoryText, probabilityCategoryClass, addMissingSuggestions } from '../util/types';
 
 export default Vue.extend({
 	name: 'explore-data-table',
@@ -94,22 +92,13 @@ export default Vue.extend({
 			});
 		},
 		probabilityCategoryText(probability) {
-			if (probability < LOW_PROBABILITY) {
-				return 'Low';
-			}
-			if (probability < MED_PROBABILITY) {
-				return 'Med';
-			}
-			return 'High';
+			return probabilityCategoryText(probability);
 		},
 		probabilityCategoryClass(probability) {
-			if (probability < LOW_PROBABILITY) {
-				return 'text-danger';
-			}
-			if (probability < MED_PROBABILITY) {
-				return 'text-warning';
-			}
-			return 'text-success';
+			return probabilityCategoryClass(probability);
+		},
+		addMissingSuggestions(suggested, type) {
+			return addMissingSuggestions(suggested, type);
 		},
 		onTypeChange(field: { label: string }, suggested: { type: string }) {
 			actions.setVariableType(this.$store, {

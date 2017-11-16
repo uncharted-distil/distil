@@ -1,9 +1,14 @@
 export interface Variable {
 	name: string;
 	type: string;
-	suggestedTypes: string;
+	suggestedTypes: SuggestedType[];
 	importance: number;
 	novelty: number;
+}
+
+export interface SuggestedType {
+	type: string;
+	probability: number;
 }
 
 export interface Datasets {
