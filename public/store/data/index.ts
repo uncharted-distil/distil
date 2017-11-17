@@ -45,6 +45,15 @@ export interface Data {
 	values: any[][];
 }
 
+export interface TargetInfo {
+	predicted: boolean;
+	truth: boolean;
+}
+
+export interface TargetRow {
+	_target: TargetInfo;
+}
+
 export type Range = Dictionary<{ from: number, to: number }>;
 
 export type Dictionary<T> = { [key: string]: T }

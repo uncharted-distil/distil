@@ -1,5 +1,5 @@
 import _ from 'lodash';
-import { Variable, Data, DataState, Dictionary, Datasets, VariableSummary } from './index';
+import { Variable, Data, DataState, Dictionary, Datasets, VariableSummary, TargetRow } from './index';
 import { FilterMap } from '../../util/filters';
 import { Range } from './index';
 
@@ -171,7 +171,7 @@ export const getters = {
 		return state.resultData;
 	},
 
-	getResultDataItems(state: DataState): Dictionary<any>[] {
+	getResultDataItems(state: DataState): TargetRow[] {
 		const resultData = state.resultData;
 		if (validateData(resultData)) {
 
@@ -192,10 +192,10 @@ export const getters = {
 				if (errorIdx >= 0) {
 					row._target.error = resultData.columns[errorIdx];
 				}
-				return row;
+				return <TargetRow>row;
 			});
 		}
-		return [];
+		return <TargetRow[]>[];
 	},
 
 	getResultDataFields(state: DataState): Dictionary<FieldInfo> {

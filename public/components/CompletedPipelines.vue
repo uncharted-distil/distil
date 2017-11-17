@@ -14,7 +14,8 @@
 import _ from 'lodash';
 import PipelinePreview from '../components/PipelinePreview.vue';
 import { getters } from '../store/pipelines/module';
-import { PipelineRequestInfo } from '../store/pipelines/index';
+import { PipelineInfo } from '../store/pipelines/index';
+import { Dictionary } from '../store/data/index';
 import Vue from 'vue';
 
 export default Vue.extend({
@@ -32,7 +33,7 @@ export default Vue.extend({
 	},
 
 	computed: {
-		pipelineResults(): PipelineRequestInfo[] {
+		pipelineResults(): Dictionary<PipelineInfo>[] {
 			const pipelines = getters.getCompletedPipelines(this.$store);
 			if (_.keys(pipelines).length > 0) {
 				return _.values(pipelines).sort((a, b) => {
@@ -44,7 +45,7 @@ export default Vue.extend({
 	},
 
 	methods: {
-		minResultTimestamp(pipeline: PipelineRequestInfo): number {
+		minResultTimestamp(pipeline: Dictionary<PipelineInfo>): number {
 			let min = Infinity;
 			_.values(pipeline).forEach(result => {
 				if (result.timestamp < min) {

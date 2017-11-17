@@ -33,6 +33,7 @@ export interface Group {
 	label: string,
 	key: string,
 	collapsible: boolean,
+	collapsed: boolean,
 	facets: (PlaceHolderFacet | CategoricalFacet | NumericalFacet)[]
 }
 
@@ -61,6 +62,7 @@ export function createErrorFacet(summary: VariableSummary, enableCollapse: boole
 		label: summary.name,
 		key: predictedValues ? `Predicted ${summary.feature}` : summary.name,
 		collapsible: enableCollapse,
+		collapsed: false,
 		facets: [{
 			placeholder: true,
 			html: `<div>${summary.err}</div>`
@@ -74,6 +76,7 @@ export function createPendingFacet(summary: VariableSummary, enableCollapse: boo
 		label: summary.name,
 		key: predictedValues ? `Predicted ${summary.feature}` : summary.name,
 		collapsible: enableCollapse,
+		collapsed: false,
 		facets: [{
 			placeholder: true,
 			html: spinnerHTML()
@@ -90,6 +93,7 @@ export function createSummaryFacet(summary: VariableSummary, enableCollapse: boo
 				label: summary.name,
 				key: predictedValues ? `Predicted ${summary.feature}` : summary.name,
 				collapsible: enableCollapse,
+				collapsed: false,
 				facets: summary.buckets.map(b => {
 					return {
 						icon : {
@@ -110,6 +114,7 @@ export function createSummaryFacet(summary: VariableSummary, enableCollapse: boo
 				label: summary.name,
 				key: predictedValues ? `Predicted ${summary.feature}` : summary.name,
 				collapsible: enableCollapse,
+				collapsed: false,
 				facets: [
 					{
 						histogram: {

@@ -3,8 +3,8 @@ import VueRouter from 'vue-router';
 import VueRouterSync from 'vuex-router-sync';
 import Home from './views/Home.vue';
 import Search from './views/Search.vue';
-// import Explore from './views/Explore.vue';
-// import Select from './views/Select.vue';
+import Explore from './views/Explore.vue';
+import Select from './views/Select.vue';
 import Pipelines from './views/Pipelines.vue';
 // import Results from './views/Results.vue';
 import Navigation from './views/Navigation.vue';
@@ -30,8 +30,8 @@ const router = new VueRouter({
 		{ path: '/', redirect: '/home' },
 		{ path: '/home', component: Home },
 		{ path: '/search', component: Search },
-		// { path: '/explore', component: Explore },
-		// { path: '/select', component: Select },
+		{ path: '/explore', component: Explore },
+		{ path: '/select', component: Select },
 		{ path: '/pipelines', component: Pipelines },
 		// { path: '/results', component: Results }
 	]

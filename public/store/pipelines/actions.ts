@@ -6,6 +6,7 @@ import { ActionContext } from 'vuex';
 import { DistilState } from '../store';
 import { mutations } from './module';
 import { getWebSocketConnection } from '../../util/ws';
+import { FilterMap } from '../../util/filters';
 
 // TODO: move this somewhere more appropriate.
 const ES_INDEX = 'datasets';
@@ -48,7 +49,7 @@ interface PipelineRequest {
 	task: string,
 	metric: string[],
 	output: string,
-	filters: string
+	filters: FilterMap
 }
 
 export type AppContext = ActionContext<PipelineState, DistilState>;

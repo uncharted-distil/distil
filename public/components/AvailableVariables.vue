@@ -31,7 +31,7 @@ export default Vue.extend({
 	},
 
 	computed: {
-		dataset() {
+		dataset(): string {
 			return routeGetters.getRouteDataset(this.$store);
 		},
 		variables(): VariableSummary[] {
