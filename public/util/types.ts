@@ -6,10 +6,8 @@ const MED_PROBABILITY = 0.66;
 
 const NUMERIC_TYPES = [
 	"integer",
-	"index",
 	"long",
 	"float",
-	"double",
 	"latitude",
 	"longitude"
 ];
