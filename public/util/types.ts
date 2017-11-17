@@ -57,8 +57,8 @@ export function probabilityCategoryClass(probability: number): string {
 	return 'text-success';
 }
 
-export function addMissingSuggestions(suggested: SuggestedType[], type: string) {
-	const all = suggested.slice();
+export function addMissingSuggestions(suggested: SuggestedType[], type: string): SuggestedType[] {
+	const all = suggested ? suggested.slice() : [];
 	if (isNumericType(type)) {
 		NUMERIC_TYPES.forEach((nt: string) => {
 			const exists = _.findIndex(suggested, (s: SuggestedType) => {
