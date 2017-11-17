@@ -49,61 +49,64 @@ import moment from 'moment';
 import { getMetricDisplayName } from '../util/pipelines';
 import { createRouteEntry } from '../util/routes';
 import { getters } from '../store/route/module';
+import { PipelineInfo } from '../store/pipelines/index';
 import Vue from 'vue';
 
 export default Vue.extend({
 	name: 'pipeline-preview',
 
-	props: [
-		'result'
-	],
+	props: {
+		'result': Object
+	},
 
 	computed: {
-		percentComplete() {
+		percentComplete(): number {
 			return 100;
 		},
-		formattedTime() {
+		formattedTime(): string {
 			const t = moment(this.result.timestamp);
 			return t.format('MMM Do YYYY, h:mm:ss a');
 		}
 	},
 
 	methods: {
-		status() {
-			if (this.result.progress === 'UPDATED') {
-				const score = this.result.pipeline.scores[0];
+		status(): string {
+			const result = <PipelineInfo>this.result;
+			if (result.progress === 'UPDATED') {
+				const score = result.pipeline.scores[0];
 				const metricName = getMetricDisplayName(score.metric);
 				if (metricName) {
 					return metricName + ': ' + score.value;
 				}
-				return score.value;
+				return score.value.toString();
 			}
-			return this.result.progress;
+			return result.progress;
 		},
-		metricName(metric) {
+		metricName(metric): string {
 			return getMetricDisplayName(metric);
 		},
-		isSubmitted() {
-			return this.result.progress==='SUBMITTED';
+		isSubmitted(): boolean {
+			return (<PipelineInfo>this.result).progress==='SUBMITTED';
 		},
-		isRunning() {
-			return this.result.progress==='RUNNING';
+		isRunning(): boolean {
+			return (<PipelineInfo>this.result).progress==='RUNNING';
 		},
-		isUpdated() {
-			return this.result.progress==='UPDATED';
+		isUpdated(): boolean {
+			return (<PipelineInfo>this.result).progress==='UPDATED';
 		},
-		isCompleted() {
-			return this.result.progress !=='UPDATED' && this.result.pipeline !== undefined;
+		isCompleted(): boolean {
+			return (<PipelineInfo>this.result).progress !=='UPDATED' && (<PipelineInfo>this.result).pipeline !== undefined;
 		},
 		onResult() {
-			 const entry = createRouteEntry('/results', {
+			const result = <PipelineInfo>this.result;
+			const entry = createRouteEntry('/results', {
  				terms: getters.getRouteTerms(this.$store),
-				dataset: this.result.dataset,
+				dataset: result.dataset,
 				filters: getters.getRouteFilters(this.$store),
-				target: this.result.feature,
+				target: result.feature,
 				training: getters.getRouteTrainingVariables(this.$store),
-				createRequestId: this.result.requestId,
-				resultId: btoa(this.result.pipeline.resultId)
+				createRequestId: result.requestId,
+				resultId: btoa(result.pipeline.resultId)
 			});
 			this.$router.push(entry);
 		}

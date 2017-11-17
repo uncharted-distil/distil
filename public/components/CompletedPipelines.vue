@@ -14,6 +14,7 @@
 import _ from 'lodash';
 import PipelinePreview from '../components/PipelinePreview.vue';
 import { getters } from '../store/pipelines/module';
+import { PipelineRequestInfo } from '../store/pipelines/index';
 import Vue from 'vue';
 
 export default Vue.extend({
@@ -31,11 +32,11 @@ export default Vue.extend({
 	},
 
 	computed: {
-		pipelineResults() {
+		pipelineResults(): PipelineRequestInfo[] {
 			const pipelines = getters.getCompletedPipelines(this.$store);
 			if (_.keys(pipelines).length > 0) {
 				return _.values(pipelines).sort((a, b) => {
-					return this.minResultTRimestamp(b) - this.minResultTRimestamp(a);
+					return this.minResultTimestamp(b) - this.minResultTimestamp(a);
 				}).slice(0, this.maxPipelines);
 			}
 			return null;
@@ -43,11 +44,11 @@ export default Vue.extend({
 	},
 
 	methods: {
-		minResultTRimestamp(pipeline) {
+		minResultTimestamp(pipeline: PipelineRequestInfo): number {
 			let min = Infinity;
 			_.values(pipeline).forEach(result => {
-				if (result.createdTime < min) {
-					min = result.createdTime;
+				if (result.timestamp < min) {
+					min = result.timestamp;
 				}
 			});
 			return min;
