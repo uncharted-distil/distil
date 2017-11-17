@@ -39,8 +39,7 @@ export default Vue.extend({
 
 	props: {
 		excludeNonTraining: Boolean
-	}
-
+	},
 
 	mounted() {
 		this.fetch();

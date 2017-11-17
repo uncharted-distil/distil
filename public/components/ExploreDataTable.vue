@@ -42,9 +42,8 @@ import Vue from 'vue';
 import { getters as dataGetters } from '../store/data/module';
 import { getters as routeGetters } from '../store/route/module';
 import { actions } from '../store/data/module';
-import { Dictionary } from '../store/data/index';
+import { Dictionary, FieldInfo } from '../store/data/index';
 import { FilterMap } from '../util/filters';
-import { FieldInfo } from '../store/data/getters';
 import { updateTableHighlights } from '../util/highlights';
 import { probabilityCategoryText, probabilityCategoryClass, addMissingSuggestions } from '../util/types';
 
