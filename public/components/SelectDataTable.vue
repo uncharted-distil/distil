@@ -57,7 +57,8 @@ export default Vue.extend({
 		// extracts the table data from the store
 		items() {
 			const data = dataGetters.getSelectedDataItems(this.$store);
-			updateTableHighlights(data, dataGetters.getHighlightedFeatureRanges(this.$store));
+			const highlights = dataGetters.getHighlightedFeatureRanges(this.$store);
+			updateTableHighlights(data, highlights);
 			return data;
 		},
 		// extract the table field header from the store

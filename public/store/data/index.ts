@@ -45,6 +45,13 @@ export interface Data {
 	values: any[][];
 }
 
+export interface FieldInfo {
+	label: string,
+	type: string,
+	suggested: Dictionary<string>,
+	sortable: boolean
+}
+
 export type Range = Dictionary<{ from: number, to: number }>;
 
 export type Dictionary<T> = { [key: string]: T }

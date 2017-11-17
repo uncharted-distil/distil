@@ -1,6 +1,7 @@
 import _ from 'lodash';
-import { Variable, Data, DataState, Dictionary, Datasets, VariableSummary } from './index';
+import { Data, DataState, Dictionary, Datasets, FieldInfo, Variable, VariableSummary } from './index';
 import { FilterMap } from '../../util/filters';
+import { getPredictedIndex, getErrorIndex } from '../../util/data';
 import { Range } from './index';
 
 function getTargetIndexFromPredicted(columns: string[], predictedIndex: number) {
@@ -8,25 +9,10 @@ function getTargetIndexFromPredicted(columns: string[], predictedIndex: number) 
 	return _.findIndex(columns, col => col.toLowerCase() === targetName.toLowerCase());
 }
 
-function getPredictedIndex(columns: string[]) {
-	return _.findIndex(columns, col => col.endsWith('_res'));
-}
-
-function getErrorIndex(columns: string[]) {
-	return _.findIndex(columns, col => col === 'error');
-}
-
 function validateData(data: Data) {
 	return !_.isEmpty(data) &&
 		!_.isEmpty(data.values) &&
 		!_.isEmpty(data.columns);
-}
-
-export interface FieldInfo {
-	label: string,
-	type: string,
-	suggested: Dictionary<string>,
-	sortable: boolean
 }
 
 export const getters = {

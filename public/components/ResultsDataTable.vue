@@ -23,29 +23,37 @@
 <script>
 import _ from 'lodash';
 import { getters, actions } from '../store/data/module';
+import { removeNonTrainingItems, removeNonTrainingFields } from '../util/data';
+import { updateTableHighlights } from '../util/highlights';
 import Vue from 'vue';
 
 export default Vue.extend({
 	name: 'results-data-table',
 
-	props: [
-		'title',
-		'filterFunc',
-		'decorateFunc',
-		'showError'
-	],
+	props: {
+		title: String,
+		filterFunc: Function,
+		decorateFunc: Function,
+		excludeNonTraining: Boolean
+	},
 
 	computed: {
 		// extracts the table data from the store
 		items() {
 			const items = getters.getResultDataItems(this.$store);
-			return items
+			const training = getters.getTrainingVariablesMap(this.$store);
+			const highlights = getters.getHighlightedFeatureRanges(this.$store);
+			const filtered = this.excludeNonTraining ? removeNonTrainingItems(items, training) : items;
+			updateTableHighlights(filtered, highlights);
+			return filtered
 				.filter(this.filterFunc)
 				.map(this.decorateFunc);
 		},
 		// extract the table field header from the store
 		fields() {
-			return getters.getResultDataFields(this.$store);
+			const fields = getters.getResultDataFields(this.$store);
+			const training = getters.getTrainingVariablesMap(this.$store);
+			return this.excludeNonTraining ? removeNonTrainingFields(fields, training) : fields;
 		}
 	},
 

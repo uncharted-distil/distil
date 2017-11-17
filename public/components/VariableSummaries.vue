@@ -18,8 +18,6 @@
 
 import VariableFacets from '../components/VariableFacets';
 import 'font-awesome/css/font-awesome.css';
-import { getters as dataGetters } from '../store/data/module';
-import { getters as routeGetters } from '../store/route/module';
 import Vue from 'vue';
 
 export default Vue.extend({
@@ -29,13 +27,9 @@ export default Vue.extend({
 		VariableFacets
 	},
 
-	computed: {
-		dataset() {
-			return routeGetters.getRouteDataset(this.$store);
-		},
-		variables() {
-			return dataGetters.getVariableSummaries(this.$store);
-		}
+	props: {
+		'variables': Array,
+		'dataset': String
 	}
 });
 </script>
