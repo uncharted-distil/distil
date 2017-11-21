@@ -289,7 +289,9 @@ func handleCreatePipelines(conn *Connection, client *pipeline.Client, metadataCt
 
 	// populate the protobuf pipeline create msg
 	createMsg := &pipeline.PipelineCreateRequest{
-		Context:       &pipeline.SessionContext{SessionId: msg.Session},
+		Context: &pipeline.SessionContext{
+			SessionId: msg.Session,
+		},
 		TrainFeatures: trainFeatures,
 		Task:          pipeline.TaskType(pipeline.TaskType_value[strings.ToUpper(clientCreateMsg.Task)]),
 		Output:        pipeline.OutputType(pipeline.OutputType_value[strings.ToUpper(clientCreateMsg.Output)]),
@@ -304,45 +306,53 @@ func handleCreatePipelines(conn *Connection, client *pipeline.Client, metadataCt
 	}
 
 	// kick off the pipeline creation, or re-attach to one that is already running
-	if session, ok := client.GetSession(msg.Session); ok {
-		requestInfo := pipeline.GeneratePipelineCreateRequest(createMsg)
-		proxy, err := session.GetOrDispatch(context.Background(), requestInfo)
-		if err != nil {
-			handleErr(conn, msg, err)
-			return
-		}
-
-		// store the request using the initial progress value
-		requestID := fmt.Sprintf("%s", requestInfo.RequestID)
-		err = pipelineStorage.PersistRequest(session.ID, requestID, clientCreateMsg.Dataset, pipeline.Progress_name[0], time.Now())
-		if err != nil {
-			handleErr(conn, msg, err)
-			return
-		}
-
-		// store the request features
-		for _, f := range trainFeatures {
-			err = pipelineStorage.PersistRequestFeature(requestID, f.FeatureId, model.FeatureTypeTrain)
-			if err != nil {
-				handleErr(conn, msg, err)
-				return
-			}
-		}
-
-		for _, f := range createMsg.TargetFeatures {
-			err = pipelineStorage.PersistRequestFeature(requestID, f.FeatureId, model.FeatureTypeTarget)
-			if err != nil {
-				handleErr(conn, msg, err)
-				return
-			}
-		}
-
-		// handle the request
-		handleCreatePipelinesSuccess(conn, msg, proxy, dataStorage, pipelineStorage, clientCreateMsg.Dataset)
-	} else {
+	session, ok := client.GetSession(msg.Session)
+	if !ok {
 		log.Warnf("Expected session %s does not exist", msg.Session)
+		return
 	}
-	return
+
+	requestInfo := pipeline.GeneratePipelineCreateRequest(createMsg)
+	proxy, err := session.GetOrDispatch(context.Background(), requestInfo)
+	if err != nil {
+		handleErr(conn, msg, err)
+		return
+	}
+
+	// store the request using the initial progress value
+	requestID := fmt.Sprintf("%s", requestInfo.RequestID)
+	err = pipelineStorage.PersistRequest(session.ID, requestID, clientCreateMsg.Dataset, pipeline.Progress_name[0], time.Now())
+	if err != nil {
+		handleErr(conn, msg, err)
+		return
+	}
+
+	// store the request features
+	for _, f := range trainFeatures {
+		err = pipelineStorage.PersistRequestFeature(requestID, f.FeatureId, model.FeatureTypeTrain)
+		if err != nil {
+			handleErr(conn, msg, err)
+			return
+		}
+	}
+
+	for _, f := range createMsg.TargetFeatures {
+		err = pipelineStorage.PersistRequestFeature(requestID, f.FeatureId, model.FeatureTypeTarget)
+		if err != nil {
+			handleErr(conn, msg, err)
+			return
+		}
+	}
+
+	// store request filters
+	err = pipelineStorage.PersistRequestFilters(requestID, filters)
+	if err != nil {
+		handleErr(conn, msg, err)
+		return
+	}
+
+	// handle the request
+	handleCreatePipelinesSuccess(conn, msg, proxy, dataStorage, pipelineStorage, clientCreateMsg.Dataset)
 }
 
 func handleGetSessionSuccess(conn *Connection, msg *Message, session string, created bool, resumed bool, uuids []uuid.UUID) {

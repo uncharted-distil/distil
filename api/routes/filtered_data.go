@@ -10,8 +10,7 @@ import (
 )
 
 const (
-	defaultSearchSize = 100
-	searchSizeLimit   = 1000
+	searchSizeLimit = 1000
 	// NumericalFilter represents a numerical type of filter.
 	NumericalFilter = "numerical"
 	// CategoricalFilter represents a categorcial type of filter.

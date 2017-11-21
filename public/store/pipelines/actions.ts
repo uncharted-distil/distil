@@ -40,7 +40,6 @@ interface PipelineResponse {
 	Results: Result[];
 }
 
-
 interface PipelineRequest {
 	sessionId: string,
 	dataset: string,
@@ -93,7 +92,7 @@ export const actions = {
 									resultId: res.ResultUUID,
 									output: '',
 									scores: res.Scores
-								}
+								},
 							});
 						}
 					});
@@ -124,7 +123,10 @@ export const actions = {
 			mutations.addRunningPipeline(context, res);
 			if (res.progress === PIPELINE_COMPLETE) {
 				// move the pipeline from running to complete
-				mutations.removeRunningPipeline(context, { pipelineId: res.pipelineId, requestId: res.requestId });
+				mutations.removeRunningPipeline(context, {
+					pipelineId: res.pipelineId,
+					requestId: res.requestId
+				});
 				mutations.addCompletedPipeline(context, {
 					name: res.name,
 					feature: request.feature,
@@ -133,7 +135,8 @@ export const actions = {
 					requestId: res.requestId,
 					dataset: res.dataset,
 					pipelineId: res.pipelineId,
-					pipeline: res.pipeline
+					pipeline: res.pipeline,
+					filters: res.filters,
 				});
 			}
 		});

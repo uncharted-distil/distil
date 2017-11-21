@@ -13,7 +13,7 @@ import (
 func ParseFilterParams(r *http.Request) (*model.FilterParams, error) {
 	// parses a search parameter string formatteed as ?size=10&someIntField=integer,0,100&someCategoryFieldName=category,catA,catB,catF
 	var filterParams model.FilterParams
-	filterParams.Size = defaultSearchSize
+	filterParams.Size = model.DefaultFilterSize
 
 	for key, value := range r.URL.Query() {
 		// parse out the requested search size using the default in error cases and the

@@ -1,5 +1,14 @@
 package model
 
+const (
+	// DefaultFilterSize represents the default filter search size
+	DefaultFilterSize = 100
+	// CategoricalFilter represents a categorical filter type
+	CategoricalFilter = "categorical"
+	// NumericalFilter represents a numerical filter type.
+	NumericalFilter = "numerical"
+)
+
 // FilteredData provides the metadata and raw data values that match a supplied
 // input filter.
 type FilteredData struct {

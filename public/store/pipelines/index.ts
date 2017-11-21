@@ -1,3 +1,5 @@
+import { Filter } from '../../util/filters';
+
 export interface Score {
 	metric: string;
 	value: number;
@@ -18,6 +20,7 @@ export interface PipelineInfo {
 	pipeline?: PipelineOutput;
 	timestamp: number;
 	dataset: string;
+	filters: Filter;
 }
 
 export interface PipelineRequestInfo {
