@@ -182,17 +182,19 @@ export const getters = {
 
 			// convert fetched result data rows into table data rows
 			return _.map(resultData.values, resultRow => {
-				const row: { [col: string]: any } = {};
+				const row: Dictionary<any> = {};
 
 				for (const [idx, colValues] of resultRow.entries()) {
 					const colName = resultData.columns[idx];
 					row[colName] = colValues;
 				}
-				row._target = { truth: targetName, predicted: resultData.columns[predictedIdx] };
+
+				const targetRow = <TargetRow>row;
+				targetRow._target = { truth: targetName, predicted: resultData.columns[predictedIdx] };
 				if (errorIdx >= 0) {
-					row._target.error = resultData.columns[errorIdx];
+					targetRow._target.error = resultData.columns[errorIdx];
 				}
-				return <TargetRow>row;
+				return targetRow;
 			});
 		}
 		return <TargetRow[]>[];

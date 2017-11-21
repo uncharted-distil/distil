@@ -46,12 +46,14 @@ export interface Data {
 }
 
 export interface TargetInfo {
-	predicted: boolean;
-	truth: boolean;
+	predicted: string;
+	truth: string;
+	error?: string;
 }
 
 export interface TargetRow {
 	_target: TargetInfo;
+	_cellVariants?: Dictionary<string>;
 }
 
 export type Range = Dictionary<{ from: number, to: number }>;

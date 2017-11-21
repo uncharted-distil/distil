@@ -2,39 +2,43 @@ import { spinnerHTML } from '../util/spinner';
 import { VariableSummary } from '../store/data/index';
 
 export interface PlaceHolderFacet {
-	placeholder: boolean
-	html: string
+	placeholder: boolean;
+	html: string;
 }
 
 export interface CategoricalFacet {
-	icon: { class: string },
-	selected: { count: number }
-	value: string,
-	count: number,
-	filterable: boolean
+	icon: { class: string };
+	selected: { count: number };
+	value: string;
+	count: number;
+	filterable: boolean;
 }
 
 export interface Slice {
-	label: string,
-	toLabel: string,
-	count: number
+	label: string;
+	toLabel: string;
+	count: number;
 }
 
-export interface Histogram {
-	slices: Slice[]
+export interface Selection {
+	range: {
+		to: string;
+		from: string;
+	}
 }
 
 export interface NumericalFacet {
-	histogram: Histogram,
-	filterable: boolean
+	histogram: { slices: Slice[] };
+	filterable: boolean;
+	selection: Selection;
 }
 
 export interface Group {
-	label: string,
-	key: string,
-	collapsible: boolean,
-	collapsed: boolean,
-	facets: (PlaceHolderFacet | CategoricalFacet | NumericalFacet)[]
+	label: string;
+	key: string;
+	collapsible: boolean;
+	collapsed: boolean;
+	facets: (PlaceHolderFacet | CategoricalFacet | NumericalFacet)[];
 }
 
 // creates the set of facets from the supplied summary data
@@ -132,7 +136,8 @@ export function createSummaryFacet(summary: VariableSummary, enableCollapse: boo
 								};
 							})
 						},
-						filterable: enableFiltering
+						filterable: enableFiltering,
+						selection: {} as any
 					}
 				]
 			};

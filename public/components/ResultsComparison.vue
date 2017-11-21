@@ -86,28 +86,28 @@ export default Vue.extend({
 			return task.schemaName === 'regression';
 		},
 
-		correctFilter() {
+		correctFilter(): (dataItem: TargetRow) => boolean {
 			if (this.regressionEnabled) {
 				return this.regressionInRangeFilter;
 			}
 			return this.classificationMatchFilter;
 		},
 
-		correctDecorate() {
+		correctDecorate(): (dataItem: TargetRow) => TargetRow {
 			if (this.regressionEnabled) {
 				return this.regressionInRangeDecorate;
 			}
 			return this.classificationMatchDecorate;
 		},
 
-		incorrectFilter() {
+		incorrectFilter(): (dataItem: TargetRow) => boolean {
 			if (this.regressionEnabled) {
 				return this.regressionOutOfRangeFilter;
 			}
 			return this.classificationNoMatchFilter;
 		},
 
-		incorrectDecorate() {
+		incorrectDecorate(): (dataItem: TargetRow) => TargetRow {
 			if (this.regressionEnabled) {
 				return this.regressionOutOfRangeDecorate;
 			}
@@ -154,11 +154,11 @@ export default Vue.extend({
 
 		regressionInRangeFilter(dataItem: TargetRow): boolean {
 			// grab the residual threshold slider value and update
-			return Math.abs(dataItem[dataItem._target.error]) <= this.residualThreshold;
+			return Math.abs(dataItem[dataItem._target.error]) <= _.toNumber(this.residualThreshold);
 		},
 
 		regressionOutOfRangeFilter(dataItem: TargetRow): boolean {
-			return Math.abs(dataItem[dataItem._target.error]) > this.residualThreshold;
+			return Math.abs(dataItem[dataItem._target.error]) > _.toNumber(this.residualThreshold);
 		},
 
 		// Methods passed to classification result table instance to update their row visuals post-filter
@@ -178,7 +178,7 @@ export default Vue.extend({
 			dataItem._cellVariants = {
 				[dataItem._target.truth]: 'primary',
 				[dataItem._target.predicted]: 'warning',
-				[dataItem._taranyget.error]: 'warning'
+				[dataItem._target.error]: 'warning'
 			};
 			return dataItem;
 		}

@@ -37,7 +37,7 @@ export default Vue.extend({
 		variables(): VariableSummary[] {
 			return dataGetters.getAvailableVariableSummaries(this.$store);
 		},
-		html() {
+		html(): ( { key: string } ) => HTMLDivElement {
 			return (group: { key: string }) => {
 				const container = document.createElement('div');
 				const trainingElem = document.createElement('button');

@@ -38,10 +38,14 @@
 	</div>
 </template>
 
-<script>
+<script lang="ts">
+
 import _ from 'lodash';
 import Vue from 'vue';
 import { getters as dataGetters, actions } from '../store/data/module';
+import { Dictionary } from '../store/data/index';
+import { FieldInfo } from '../store/data/getters';
+import { FilterMap } from '../util/filters';
 import { getters as routeGetters } from '../store/route/module';
 import { updateTableHighlights } from '../util/highlights';
 import { probabilityCategoryText, probabilityCategoryClass, addMissingSuggestions } from '../util/types';
@@ -51,20 +55,20 @@ export default Vue.extend({
 
 	computed: {
 		// get dataset from route
-		dataset() {
+		dataset(): string {
 			return routeGetters.getRouteDataset(this.$store);
 		},
 		// extracts the table data from the store
-		items() {
+		items(): Dictionary<any> {
 			const data = dataGetters.getSelectedDataItems(this.$store);
 			updateTableHighlights(data, dataGetters.getHighlightedFeatureRanges(this.$store));
 			return data;
 		},
 		// extract the table field header from the store
-		fields() {
+		fields(): Dictionary<FieldInfo> {
 			return dataGetters.getSelectedDataFields(this.$store);
 		},
-		filters() {
+		filters(): FilterMap {
 			return dataGetters.getSelectedFilters(this.$store);
 		}
 	},

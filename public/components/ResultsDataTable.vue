@@ -20,37 +20,41 @@
 	</div>
 </template>
 
-<script>
+<script lang="ts">
+
 import _ from 'lodash';
 import { getters, actions } from '../store/data/module';
+import { TargetRow, Dictionary } from '../store/data/index';
+import { FieldInfo } from '../store/data/getters';
 import Vue from 'vue';
 
 export default Vue.extend({
 	name: 'results-data-table',
 
-	props: [
-		'title',
-		'filterFunc',
-		'decorateFunc',
-		'showError'
-	],
+	props: {
+		'title': String,
+		'filterFunc': Function,
+		'decorateFunc': Function,
+		'showError': Boolean
+	},
 
 	computed: {
 		// extracts the table data from the store
-		items() {
+		items(): TargetRow[] {
 			const items = getters.getResultDataItems(this.$store);
 			return items
-				.filter(this.filterFunc)
-				.map(this.decorateFunc);
+				.filter(<any>this.filterFunc) // tried to type this function but eslint is rejecting
+				.map(<any>this.decorateFunc);
 		},
+
 		// extract the table field header from the store
-		fields() {
+		fields(): Dictionary<FieldInfo> {
 			return getters.getResultDataFields(this.$store);
 		}
 	},
 
 	methods: {
-		onRowHovered(event) {
+		onRowHovered(event: Event) {
 			// set new values
 			const highlights = {};
 			_.forIn(this.fields, (field, key) => {
