@@ -1,3 +1,4 @@
+import { Dictionary } from '../data/index';
 import { Filter } from '../../util/filters';
 
 export interface Score {
@@ -23,17 +24,9 @@ export interface PipelineInfo {
 	filters: Filter;
 }
 
-export interface PipelineRequestInfo {
-	[pipelineId: string]: PipelineInfo;
-}
-
-export interface Pipeline {
-	[requestId: string]: PipelineRequestInfo;
-}
-
 export interface PipelineState {
-	runningPipelines: Pipeline;
-	completedPipelines: Pipeline;
+	runningPipelines: Dictionary<Dictionary<PipelineInfo>>;
+	completedPipelines: Dictionary<Dictionary<PipelineInfo>>;
 }
 
 export const state: PipelineState = {

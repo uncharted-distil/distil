@@ -27,7 +27,7 @@ import { getters as dataGetters} from '../store/data/module';
 import { getters as routeGetters} from '../store/route/module';
 import { actions } from '../store/data/module';
 import { PipelineState, PipelineInfo } from '../store/pipelines/index';
-import { Variable } from '../store/data/index';
+import { Variable, TargetRow } from '../store/data/index';
 import { getPipelineResults } from '../util/pipelines';
 
 export default Vue.extend({
@@ -90,28 +90,28 @@ export default Vue.extend({
 			return task.schemaName === 'regression';
 		},
 
-		correctFilter() {
+		correctFilter(): (dataItem: TargetRow) => boolean {
 			if (this.regressionEnabled) {
 				return this.regressionInRangeFilter;
 			}
 			return this.classificationMatchFilter;
 		},
 
-		correctDecorate() {
+		correctDecorate(): (dataItem: TargetRow) => TargetRow {
 			if (this.regressionEnabled) {
 				return this.regressionInRangeDecorate;
 			}
 			return this.classificationMatchDecorate;
 		},
 
-		incorrectFilter() {
+		incorrectFilter(): (dataItem: TargetRow) => boolean {
 			if (this.regressionEnabled) {
 				return this.regressionOutOfRangeFilter;
 			}
 			return this.classificationNoMatchFilter;
 		},
 
-		incorrectDecorate() {
+		incorrectDecorate(): (dataItem: TargetRow) => TargetRow {
 			if (this.regressionEnabled) {
 				return this.regressionOutOfRangeDecorate;
 			}
@@ -129,16 +129,16 @@ export default Vue.extend({
 		},
 
 		// Methods passed to classification result table instances to filter their displays.
-		classificationMatchFilter(dataItem): boolean {
+		classificationMatchFilter(dataItem: TargetRow): boolean {
 			return dataItem[dataItem._target.truth] === dataItem[dataItem._target.predicted];
 		},
 
-		classificationNoMatchFilter(dataItem): boolean {
+		classificationNoMatchFilter(dataItem: TargetRow): boolean {
 			return dataItem[dataItem._target.truth] !== dataItem[dataItem._target.predicted];
 		},
 
 		// Methods passed to classification result table instance to update their row visuals post-filter
-		classificationMatchDecorate(dataItem) {
+		classificationMatchDecorate(dataItem: TargetRow): TargetRow {
 			dataItem._cellVariants = {
 				[dataItem._target.truth]: 'primary',
 				[dataItem._target.predicted]: 'success'
@@ -146,7 +146,7 @@ export default Vue.extend({
 			return dataItem;
 		},
 
-		classificationNoMatchDecorate(dataItem) {
+		classificationNoMatchDecorate(dataItem: TargetRow): TargetRow {
 			dataItem._cellVariants = {
 				[dataItem._target.truth]: 'primary',
 				[dataItem._target.predicted]: 'danger'
@@ -156,18 +156,18 @@ export default Vue.extend({
 
 		// Methods passed to regression result table instances to filter their displays.
 
-		regressionInRangeFilter(dataItem) {
+		regressionInRangeFilter(dataItem: TargetRow): boolean {
 			// grab the residual threshold slider value and update
-			return Math.abs(dataItem[dataItem._target.error]) <= this.residualThreshold;
+			return Math.abs(dataItem[dataItem._target.error]) <= _.toNumber(this.residualThreshold);
 		},
 
-		regressionOutOfRangeFilter(dataItem) {
-			return Math.abs(dataItem[dataItem._target.error]) > this.residualThreshold;
+		regressionOutOfRangeFilter(dataItem: TargetRow): boolean {
+			return Math.abs(dataItem[dataItem._target.error]) > _.toNumber(this.residualThreshold);
 		},
 
 		// Methods passed to classification result table instance to update their row visuals post-filter
 
-		regressionInRangeDecorate(dataItem) {
+		regressionInRangeDecorate(dataItem: TargetRow): TargetRow {
 			dataItem._cellVariants = {
 				[dataItem._target.truth]: 'primary',
 				[dataItem._target.predicted]: 'success',
@@ -178,7 +178,7 @@ export default Vue.extend({
 
 		// Methods passed to classification result table instance to update their row visuals post-filter
 
-		regressionOutOfRangeDecorate(dataItem) {
+		regressionOutOfRangeDecorate(dataItem: TargetRow): TargetRow {
 			dataItem._cellVariants = {
 				[dataItem._target.truth]: 'primary',
 				[dataItem._target.predicted]: 'warning',

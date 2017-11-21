@@ -49,6 +49,8 @@ import _ from 'lodash';
 import { createRouteEntry } from '../util/routes';
 import { addRecentDataset } from '../util/data';
 import { getters } from '../store/route/module';
+import { Variable } from '../store/data/index';
+
 import Vue from 'vue';
 
 const NUM_TOP_FEATURES = 5;
@@ -65,18 +67,18 @@ const SUFFIXES = {
 export default Vue.extend({
 	name: 'dataset-preview',
 
-	props: [
-		'name',
-		'description',
-		'summary',
-		'variables',
-		'numRows',
-		'numBytes'
-	],
+	props: {
+		'name': String,
+		'description': String,
+		'summary': String,
+		'variables': Array,
+		'numRows': Number,
+		'numBytes': Number
+	},
 
 	computed: {
-		topVariables() {
-			return this.variables.slice(0).sort((a, b) => {
+		topVariables(): Variable[] {
+			return (<Variable[]>this.variables).slice(0).sort((a, b) => {
 				return a.importance - b.importance;
 			}).slice(0, NUM_TOP_FEATURES);
 		}
@@ -89,8 +91,8 @@ export default Vue.extend({
 	},
 
 	methods: {
-		formatBytes(n) {
-			function formatRecursive(size, powerOfThousand) {
+		formatBytes(n: number): string {
+			function formatRecursive(size: number, powerOfThousand: number): string {
 				if (size > 1024) {
 					return formatRecursive(size/1024, powerOfThousand+1);
 				}
@@ -109,7 +111,7 @@ export default Vue.extend({
 		toggleExpansion() {
 			this.expanded = !this.expanded;
 		},
-		highlightedDescription() {
+		highlightedDescription(): string {
 			const terms = getters.getRouteTerms(this.$store);
 			if (_.isEmpty(terms)) {
 				return this.description;

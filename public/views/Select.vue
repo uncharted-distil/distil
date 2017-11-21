@@ -27,6 +27,7 @@ import TrainingVariables from '../components/TrainingVariables.vue';
 import TargetVariable from '../components/TargetVariable.vue';
 import { getters as dataGetters, actions } from '../store/data/module';
 import { getters as routeGetters} from '../store/route/module';
+import { Variable } from '../store/data/index';
 import Vue from 'vue';
 
 export default Vue.extend({
@@ -42,10 +43,10 @@ export default Vue.extend({
 	},
 
 	computed: {
-		dataset() {
+		dataset(): string {
 			return routeGetters.getRouteDataset(this.$store);
 		},
-		variables() {
+		variables(): Variable[] {
 			return dataGetters.getVariables(this.$store);
 		}
 	},

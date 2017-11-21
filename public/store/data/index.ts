@@ -52,6 +52,17 @@ export interface FieldInfo {
 	sortable: boolean
 }
 
+export interface TargetInfo {
+	predicted: string;
+	truth: string;
+	error?: string;
+}
+
+export interface TargetRow {
+	_target: TargetInfo;
+	_cellVariants?: Dictionary<string>;
+}
+
 export type Range = Dictionary<{ from: number, to: number }>;
 
 export type Dictionary<T> = { [key: string]: T }

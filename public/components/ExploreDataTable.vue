@@ -42,7 +42,7 @@ import Vue from 'vue';
 import { getters as dataGetters } from '../store/data/module';
 import { getters as routeGetters } from '../store/route/module';
 import { actions } from '../store/data/module';
-import { Dictionary, FieldInfo } from '../store/data/index';
+import { Dictionary, SuggestedType } from '../store/data/index';
 import { FilterMap } from '../util/filters';
 import { updateTableHighlights } from '../util/highlights';
 import { probabilityCategoryText, probabilityCategoryClass, addMissingSuggestions } from '../util/types';
@@ -91,16 +91,16 @@ export default Vue.extend({
 				filters: this.filters
 			});
 		},
-		probabilityCategoryText(probability) {
+		probabilityCategoryText(probability: number): string {
 			return probabilityCategoryText(probability);
 		},
-		probabilityCategoryClass(probability) {
+		probabilityCategoryClass(probability: number): string {
 			return probabilityCategoryClass(probability);
 		},
-		addMissingSuggestions(suggested, type) {
+		addMissingSuggestions(suggested: SuggestedType[], type: string): SuggestedType[] {
 			return addMissingSuggestions(suggested, type);
 		},
-		onTypeChange(field: { label: string }, suggested: { type: string }) {
+		onTypeChange(field: { label: string }, suggested: SuggestedType) {
 			actions.setVariableType(this.$store, {
 				dataset: this.dataset,
 				field: field.label,

@@ -45,12 +45,13 @@
 
 import ResultFacets from '../components/ResultFacets.vue';
 import Facets from '../components/Facets.vue';
-import { createGroups } from '../util/facets';
+import { createGroups, Group } from '../util/facets';
 import { createRouteEntryFromRoute } from '../util/routes';
 import { getTask } from '../util/pipelines';
 import { getters as dataGetters} from '../store/data/module';
 import { getters as routeGetters } from '../store/route/module';
 import { actions } from '../store/app/module';
+import { Dictionary, VariableSummary } from '../store/data/index';
 import vueSlider from 'vue-slider-component';
 import Vue from 'vue';
 import _ from 'lodash';
@@ -70,8 +71,8 @@ export default Vue.extend({
 
 	data() {
 		return {
-			activePipelineName: null,
-			activePipelineId: null,
+			activePipelineName: null as string,
+			activePipelineId: null as string,
 			formatter(arg) {
 				return arg.toFixed(2);
 			}
@@ -84,7 +85,7 @@ export default Vue.extend({
 			set(value) {
 				this.updateThreshold(value);
 			},
-			get() {
+			get(): number {
 				const value = routeGetters.getRouteResidualThreshold(this.$store);
 				if (value === undefined || value === '') {
 					this.updateThreshold(this.defaultValue);
@@ -94,15 +95,15 @@ export default Vue.extend({
 			}
 		},
 
-		highlights() {
+		highlights(): Dictionary<any> {
 			return dataGetters.getHighlightedFeatureValues(this.$store);
 		},
 
-		dataset() {
+		dataset(): string {
 			return routeGetters.getRouteDataset(this.$store);
 		},
 
-		minVal() {
+		minVal(): number {
 			const resultItems = dataGetters.getResultDataItems(this.$store) as { [name: string]: any }[];
 			if (!_.isEmpty(resultItems) && _.has(resultItems[0], 'error')) {
 				const minErr = Math.abs(_.minBy(resultItems, r => Math.abs(r.error)).error);
@@ -112,7 +113,7 @@ export default Vue.extend({
 			return 0.0;
 		},
 
-		maxVal() {
+		maxVal(): number {
 			const resultItems = dataGetters.getResultDataItems(this.$store) as { [name: string]: any }[]	;
 			if (!_.isEmpty(resultItems) && _.has(resultItems[0], 'error')) {
 				const maxErr = Math.abs(_.maxBy(resultItems, r => Math.abs(r.error)).error);
@@ -122,20 +123,20 @@ export default Vue.extend({
 			return 1.0;
 		},
 
-		range() {
+		range(): number {
 			return this.maxVal - this.minVal;
 		},
 
-		defaultValue() {
+		defaultValue(): number {
 			return this.minVal + (this.range * DEFAULT_PERCENTILE);
 		},
 
-		interval() {
+		interval(): number {
 			const interval = this.range / NUM_STEPS;
 			return interval;
 		},
 
-		targetSummaries() {
+		targetSummaries(): Group[] {
 			// Get the current target variable and the summary associated with it
 			const targetVariable = routeGetters.getRouteTargetVariable(this.$store);
 			const varSummaries = dataGetters.getVariableSummaries(this.$store);
@@ -147,11 +148,11 @@ export default Vue.extend({
 			return [];
 		},
 
-		variables() {
+		variables(): VariableSummary[] {
 			return dataGetters.getResultsSummaries(this.$store);
 		},
 
-		regressionEnabled() {
+		regressionEnabled(): boolean {
 			const targetVarName = routeGetters.getRouteTargetVariable(this.$store);
 			const targetVar = _.find(dataGetters.getVariables(this.$store), v => _.toLower(v.name) === _.toLower(targetVarName));
 			if (_.isEmpty(targetVar)) {
@@ -163,7 +164,7 @@ export default Vue.extend({
 	},
 
 	methods: {
-		updateThreshold(value) {
+		updateThreshold(value: number) {
 			const entry = createRouteEntryFromRoute(this.$route, {
 				residualThreshold: value
 			});

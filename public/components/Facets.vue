@@ -4,8 +4,11 @@
 
 <script lang="ts">
 import _ from 'lodash';
+import 'jquery';
 import Vue from 'vue';
 import { actions } from '../store/data/module';
+import { Group, CategoricalFacet } from '../util/facets';
+import { Dictionary } from '../store/data/index';
 import Facets from '@uncharted.software/stories-facets';
 import '@uncharted.software/stories-facets/dist/facets.css';
 
@@ -17,7 +20,7 @@ export default Vue.extend({
 		highlights: Object,
 		html: [ String, Object, Function ],
 		sort: {
-			default: (a, b) => {
+			default: (a: { key: string }, b: { key: string }) => {
 				const textA = a.key.toLowerCase();
 				const textB = b.key.toLowerCase();
 				return (textA < textB) ? -1 : (textA > textB) ? 1 : 0;
@@ -26,55 +29,60 @@ export default Vue.extend({
 		}
 	},
 
+	data() {
+		return {
+			facets: {} as any
+		};
+	},
+
 	mounted() {
 		const component = this;
+		const groups = () => <Group[]>this.groups;
+
 		// instantiate the external facets widget
-		this.facets = new Facets(this.$el, this.groups.map(group => {
+		this.facets = new Facets(this.$el, groups().map(group => {
 			return _.cloneDeep(group);
 		}));
-		this.groups.forEach(group => {
+		groups().forEach(group => {
 			this.injectHTML(group, this.facets.getGroup(group.key)._element);
 		});
 		// proxy events
-		this.facets.on('facet-group:expand', (event, key) => {
+		this.facets.on('facet-group:expand', (event: Event, key: string) => {
 			component.$emit('expand', key);
 		});
-		this.facets.on('facet-group:collapse', (event, key) => {
+		this.facets.on('facet-group:collapse', (event: Event, key: string) => {
 			component.$emit('collapse', key);
 		});
-		this.facets.on('facet-histogram:rangechangeduser', (event, key, value) => {
+		this.facets.on('facet-histogram:rangechangeduser', (event: Event, key: string, value: any) => {
 			component.$emit('range-change', key, value);
 		});
 		// hover over events
-		this.facets.on('facet-histogram:mouseenter', (event, key, value) => {
+		this.facets.on('facet-histogram:mouseenter', (event: Event, key: string, value: any) => {
 			actions.highlightFeatureRange(this.$store, {
 				name: key,
 				from: _.toNumber(value.label[0]),
 				to: _.toNumber(value.toLabel[value.toLabel.length-1])
 			});
 		});
-		this.facets.on('facet-histogram:mouseleave', (event, key) => {
+		this.facets.on('facet-histogram:mouseleave', (event: Event, key: string) => {
 			actions.clearFeatureHighlightRange(this.$store, key);
 		});
-		this.facets.on('facet:mouseenter', (event, key, value) => {
+		this.facets.on('facet:mouseenter', (event: Event, key: string, value: number) => {
 			actions.highlightFeatureRange(this.$store, {
 				name: key,
 				from: value,
 				to: value
 			});
 		});
-		this.facets.on('facet:mouseleave', (event, key) => {
+		this.facets.on('facet:mouseleave', (event: Event, key: string) => {
 			actions.clearFeatureHighlightRange(this.$store, key);
 		});
 		// click events
-		this.facets.on('facet:click', (event, key, value) => {
+		this.facets.on('facet:click', (event: Event, key: string, value: string) => {
 			// check that facet is filterable
-			const groupSpec = _.find(component.groups, group => {
-				return group.key === key;
-			});
-			const facetSpec = _.find(groupSpec.facets, facet => {
-				return facet.value === value;
-			});
+			const groupSpec = <any>(_.find(groups(), group => group.key === key ));
+			const facetSpec = _.find(groupSpec.facets, facet => facet.value ? facet.value === value : facet);
+
 			if (!facetSpec.filterable) {
 				// not filterable
 				return;
@@ -83,7 +91,10 @@ export default Vue.extend({
 			const group = component.facets.getGroup(key);
 			// get facet
 			const current = _.find(group.facets, facet => {
-				return facet.value === value;
+				if ((<CategoricalFacet>facet).value) {
+					return (<CategoricalFacet>facet).value === value;
+				}
+				return false;
 			});
 			// toggle facet
 			if (current._spec.selected) {
@@ -106,9 +117,9 @@ export default Vue.extend({
 	},
 
 	watch: {
-		groups: function(currGroups, prevGroups) {
+		groups: function(currGroups: Group[], prevGroups: Group[]) {
 			// get map of all existing group keys in facets
-			const prevMap = {};
+			const prevMap: Dictionary<Group> = {};
 			prevGroups.forEach(group => {
 				prevMap[group.key] = group;
 			});
@@ -121,11 +132,11 @@ export default Vue.extend({
 		},
 		highlights: function(currHighlights) {
 			if (_.isEmpty(currHighlights)) {
-				this.groups.forEach(groupSpec => {
+				(this.groups as Group[]).forEach(groupSpec => {
 					const group = this.facets.getGroup(groupSpec.key);
 					const facetSpecs = groupSpec.facets;
 					group.facets.forEach((facet, index) => {
-						const facetSpec = facetSpecs[index];
+						const facetSpec = <any>facetSpecs[index];
 						const selection = facetSpec.selection || facetSpec.selected;
 						if (selection) {
 							facet.select(facetSpec.selected ? facetSpec.selected : facetSpec);
@@ -164,7 +175,7 @@ export default Vue.extend({
 	},
 
 	methods: {
-		injectHTML(group, $elem) {
+		injectHTML(group: Group, $elem: JQuery) {
 			if (!this.html) {
 				return;
 			}
@@ -175,7 +186,7 @@ export default Vue.extend({
 				$group.append(this.html);
 			}
 		},
-		groupsEqual(a, b) {
+		groupsEqual(a: Group, b: Group): boolean {
 			const OMITTED_FIELDS = ['selection', 'selected'];
 			// NOTE: we dont need to check key, we assume its already equal
 			if (a.label !== b.label) {
@@ -193,11 +204,11 @@ export default Vue.extend({
 			}
 			return true;
 		},
-		updateGroups(currGroups, prevGroups) {
-			const toAdd = [];
-			const unchanged = [];
+		updateGroups(currGroups: Group[], prevGroups: Dictionary<Group>): Group[] {
+			const toAdd: Group[] = [];
+			const unchanged: Group[] = [];
 			// get map of all current, to track which groups need to be removed
-			const toRemove = {};
+			const toRemove: Dictionary<boolean> = {};
 			_.forIn(prevGroups, group => {
 				toRemove[group.key] = true;
 			});

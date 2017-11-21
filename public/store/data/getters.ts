@@ -1,5 +1,5 @@
 import _ from 'lodash';
-import { Data, DataState, Dictionary, Datasets, FieldInfo, Variable, VariableSummary } from './index';
+import { Variable, Data, DataState, Dictionary, Datasets, VariableSummary, TargetRow } from './index';
 import { FilterMap } from '../../util/filters';
 import { getPredictedIndex, getErrorIndex } from '../../util/data';
 import { Range } from './index';
@@ -157,7 +157,7 @@ export const getters = {
 		return state.resultData;
 	},
 
-	getResultDataItems(state: DataState): Dictionary<any>[] {
+	getResultDataItems(state: DataState): TargetRow[] {
 		const resultData = state.resultData;
 		if (validateData(resultData)) {
 
@@ -168,20 +168,22 @@ export const getters = {
 
 			// convert fetched result data rows into table data rows
 			return _.map(resultData.values, resultRow => {
-				const row: { [col: string]: any } = {};
+				const row: Dictionary<any> = {};
 
 				for (const [idx, colValues] of resultRow.entries()) {
 					const colName = resultData.columns[idx];
 					row[colName] = colValues;
 				}
-				row._target = { truth: targetName, predicted: resultData.columns[predictedIdx] };
+
+				const targetRow = <TargetRow>row;
+				targetRow._target = { truth: targetName, predicted: resultData.columns[predictedIdx] };
 				if (errorIdx >= 0) {
-					row._target.error = resultData.columns[errorIdx];
+					targetRow._target.error = resultData.columns[errorIdx];
 				}
-				return row;
+				return targetRow;
 			});
 		}
-		return [];
+		return <TargetRow[]>[];
 	},
 
 	getResultDataFields(state: DataState): Dictionary<FieldInfo> {

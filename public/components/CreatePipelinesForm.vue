@@ -23,6 +23,8 @@ import { getters as dataGetters } from '../store/data/module';
 import { getters as routeGetters } from '../store/route/module';
 import { actions as pipelineActions } from '../store/pipelines/module';
 import { getters as appGetters } from '../store/app/module';
+import { Variable } from '../store/data/index';
+import { FilterMap } from '../util/filters';
 import Vue from 'vue';
 
 export default Vue.extend({
@@ -37,17 +39,17 @@ export default Vue.extend({
 		};
 	},
 	computed: {
-		dataset() {
+		dataset(): string {
 			return routeGetters.getRouteDataset(this.$store);
 		},
-		variables() {
+		variables(): Variable[] {
 			return dataGetters.getVariables(this.$store);
 		},
-		selectedFilters() {
+		selectedFilters(): FilterMap {
 			return dataGetters.getSelectedFilters(this.$store);
 		},
 		// gets the metrics that are used to score predictions against the user selected variable
-		metrics() {
+		metrics(): string[] {
 			// get the variable entry from the store that matches the user selection
 			if (!this.target || _.isEmpty(this.variables)) {
 				return [];
@@ -57,32 +59,32 @@ export default Vue.extend({
 			// grab the valid metrics from the task data to use as labels in the UI
 			return getMetricDisplayNames(taskData);
 		},
-		trainingSelected() {
+		trainingSelected(): boolean {
 			return !_.isEmpty(this.training);
 		},
-		targetSelected() {
-			return !!this.target;
+		targetSelected(): boolean {
+			return !_.isEmpty(this.target);
 		},
-		training() {
+		training(): string {
 			return routeGetters.getRouteTrainingVariables(this.$store);
 		},
-		target() {
+		target(): string {
 			return routeGetters.getRouteTargetVariable(this.$store);
 		},
-		targetVariable() {
+		targetVariable(): Variable {
 			return _.find(this.variables, v => {
 				return _.toLower(v.name) === _.toLower(this.target);
 			});
 		},
-		sessionId() {
+		sessionId(): string {
 			return appGetters.getPipelineSessionID(this.$store);
 		},
 		// determines create button status based on completeness of user input
-		disableCreate() {
+		disableCreate(): boolean {
 			return !this.targetSelected || !this.trainingSelected;
 		},
 		// determines  create button variant based on completeness of user input
-		createVariant() {
+		createVariant(): string {
 			return !this.disableCreate ? 'outline-success' : 'outline-secondary';
 		}
 	},

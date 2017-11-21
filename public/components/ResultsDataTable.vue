@@ -20,9 +20,12 @@
 	</div>
 </template>
 
-<script>
+<script lang="ts">
+
 import _ from 'lodash';
 import { getters, actions } from '../store/data/module';
+import { TargetRow, Dictionary } from '../store/data/index';
+import { FieldInfo } from '../store/data/getters';
 import { removeNonTrainingItems, removeNonTrainingFields } from '../util/data';
 import { updateTableHighlights } from '../util/highlights';
 import Vue from 'vue';
@@ -31,15 +34,15 @@ export default Vue.extend({
 	name: 'results-data-table',
 
 	props: {
-		title: String,
-		filterFunc: Function,
-		decorateFunc: Function,
-		excludeNonTraining: Boolean
+		'title': String,
+		'filterFunc': Function,
+		'decorateFunc': Function,
+		'excludeNonTraining': Boolean
 	},
 
 	computed: {
 		// extracts the table data from the store
-		items() {
+		items(): TargetRow[] {
 			const items = getters.getResultDataItems(this.$store);
 			const training = getters.getTrainingVariablesMap(this.$store);
 			const highlights = getters.getHighlightedFeatureRanges(this.$store);
@@ -49,8 +52,9 @@ export default Vue.extend({
 				.filter(this.filterFunc)
 				.map(this.decorateFunc);
 		},
+
 		// extract the table field header from the store
-		fields() {
+		fields(): Dictionary<FieldInfo> {
 			const fields = getters.getResultDataFields(this.$store);
 			const training = getters.getTrainingVariablesMap(this.$store);
 			return this.excludeNonTraining ? removeNonTrainingFields(fields, training) : fields;
@@ -58,7 +62,7 @@ export default Vue.extend({
 	},
 
 	methods: {
-		onRowHovered(event) {
+		onRowHovered(event: Event) {
 			// set new values
 			const highlights = {};
 			_.forIn(this.fields, (field, key) => {

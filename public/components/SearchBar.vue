@@ -3,6 +3,7 @@
 		<b-form-input
 			ref="searchbox"
 			v-model="terms"
+			debounce="500"
 			type="text"
 			placeholder="Search datasets"
 			name="datasetsearch"></b-form-input>
@@ -23,14 +24,14 @@ export default Vue.extend({
 
 	computed: {
 		terms: {
-			set: _.throttle(function(terms) {
+			set(terms: string) {
 				const path = !_.isEmpty(terms) ? '/search' : getters.getRoutePath(this.$store);
 				const routeEntry = createRouteEntry(path, {
 					terms: terms
 				});
 				this.$router.push(routeEntry);
-			}, 500),
-			get: function() {
+			},
+			get(): string {
 				return getters.getRouteTerms(this.$store);
 			}
 		}
@@ -39,7 +40,7 @@ export default Vue.extend({
 	mounted() {
 		actions.searchDatasets(this.$store, this.terms);
 		if (!_.isEmpty(this.terms)) {
-			this.$refs.searchbox.focus();
+			(<any>this.$refs.searchbox).focus();
 		}
 	},
 

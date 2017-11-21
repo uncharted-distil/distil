@@ -18,9 +18,10 @@ import { decodeFilters, updateFilter, getFilterType, isDisabled,
 	CATEGORICAL_FILTER, NUMERICAL_FILTER, NumericalFilter, CategoricalFilter } from '../util/filters';
 import { createRouteEntryFromRoute } from '../util/routes';
 import { PipelineInfo, PipelineState } from '../store/pipelines/index';
+import { Dictionary } from '../store/data/index';
 import { getters as dataGetters} from '../store/data/module';
 import { getters as routeGetters} from '../store/route/module';
-import { createGroups } from '../util/facets';
+import { createGroups, Group, NumericalFacet, CategoricalFacet } from '../util/facets';
 import { getPipelineResults, getPipelineResultsOkay } from '../util/pipelines';
 import 'font-awesome/css/font-awesome.css';
 import '../styles/spinner.css';
@@ -33,14 +34,14 @@ export default Vue.extend({
 		Facets
 	},
 
-	props: [
-		'variables',
-		'dataset',
-		'html'
-	],
+	props: {
+		'variables': Array,
+		'dataset': String,
+		'html': String
+	},
 
 	computed: {
-		groups() {
+		groups(): Group[] {
 			// create the groups
 			let groups = createGroups(this.variables, true, false, '');
 
@@ -67,19 +68,9 @@ export default Vue.extend({
 				// set the selected value to the route value
 				groups.forEach((group) => {
 					if (group.key !== activeResult.name) {
-						this.updateFilterRoute({
-							key: group.key,
-							values: {
-								enabled: false
-							}
-						});
+						this.updateFilterRoute(group.key, { enabled: false }, null);
 					} else {
-						this.updateFilterRoute({
-							key: group.key,
-							values: {
-								enabled: true
-							}
-						}, activeResult.pipeline.resultId);
+						this.updateFilterRoute(group.key, { enabled: true}, activeResult.pipeline.resultId);
 						this.$emit('activePipelineChange', {
 							name: activeResult.name,
 							id: activeResult.pipelineId
@@ -92,19 +83,20 @@ export default Vue.extend({
 			// update selections
 			return this.updateGroupSelections(groups);
 		},
-		highlights() {
+
+		highlights(): Dictionary<any> {
 			return dataGetters.getHighlightedFeatureValues(this.$store);
 		}
 	},
 
 	methods: {
-		updateFilterRoute(filterArgs, resultUri) {
+		updateFilterRoute(key: string, values: Dictionary<any>, resultUri: string) {
 
 			// merge the updated filters back into the route query params if set
 			const filters = routeGetters.getRouteResultFilters(this.$store);
 			let updatedFilters = filters;
-			if (filterArgs) {
-				updatedFilters = updateFilter(filters, filterArgs.key, filterArgs.values);
+			if (key && values) {
+				updatedFilters = updateFilter(filters, key, values);
 			}
 
 			const entry = createRouteEntryFromRoute(routeGetters.getRoute(this.$store), {
@@ -115,7 +107,7 @@ export default Vue.extend({
 			this.$router.push(entry);
 		},
 
-		onExpand(key) {
+		onExpand(key: string) {
 
 			const createReqId = routeGetters.getRouteCreateRequestId(this.$store);
 			const pipelineRequests = getPipelineResults(<PipelineState>this.$store.state.pipelineModule, createReqId);
@@ -124,22 +116,12 @@ export default Vue.extend({
 			// disable all filters except this one
 			this.groups.forEach(group => {
 				if (group.key !== key) {
-					this.updateFilterRoute({
-						key: group.key,
-						values: {
-							enabled: false
-						}
-					});
+					this.updateFilterRoute(group.key, { enabled: false  }, null);
 				}
 			});
 
 			// enable filter
-			this.updateFilterRoute({
-				key: key,
-				values: {
-					enabled: true
-				}
-			}, completedReq.pipeline.resultId);
+			this.updateFilterRoute(key, { enabled: true }, completedReq.pipeline.resultId);
 			// let listening components know the acitive pipeline changed
 			this.$emit('activePipelineChange', { name: completedReq.name, id: completedReq.pipelineId });
 		},
@@ -149,19 +131,16 @@ export default Vue.extend({
 			// no-op
 		},
 
-		onRangeChange(key, value) {
+		onRangeChange(key: string, value: { from: { label: string[] }, to: { label: string[] } }) {
 			// set range filter
-			this.updateFilterRoute({
-				key: key,
-				values: {
+			this.updateFilterRoute(key, {
 					enabled: true,
 					min: parseFloat(value.from.label[0]),
 					max: parseFloat(value.to.label[0])
-				}
-			});
+				}, null);
 		},
 
-		updateGroupCollapses(groups) {
+		updateGroupCollapses(groups: Group[]): Group[] {
 			const filters = routeGetters.getRouteResultFilters(this.$store);
 			const decoded = decodeFilters(filters);
 			return groups.map(group => {
@@ -170,7 +149,7 @@ export default Vue.extend({
 				return group;
 			});
 		},
-		updateGroupSelections(groups) {
+		updateGroupSelections(groups: Group[]): Group[] {
 			const filters = routeGetters.getRouteResultFilters(this.$store);
 			const decoded = decodeFilters(filters);
 			return groups.map(group => {
@@ -180,26 +159,31 @@ export default Vue.extend({
 					case NUMERICAL_FILTER:
 						// add selection to facets
 						group.facets.forEach(facet => {
-							facet.selection = {
-								// NOTE: the `from` / `to` values MUST be strings.
-								range: {
-									from: `${(<NumericalFilter>filter).min}`,
-									to: `${(<NumericalFilter>filter).max}`,
-								}
-							};
+							if ((<NumericalFacet>facet).selection) {
+								(<NumericalFacet>facet).selection = {
+									// NOTE: the `from` / `to` values MUST be strings.
+									range: {
+										from: `${(<NumericalFilter>filter).min}`,
+										to: `${(<NumericalFilter>filter).max}`,
+									}
+								};
+							}
 						});
 						break;
 
 					case CATEGORICAL_FILTER:
 						// add selection to facets
 						group.facets.forEach(facet => {
-							if ((<CategoricalFilter>filter).categories.indexOf(facet.value) !== -1) {
-								// select
-								facet.selected = {
-									count: facet.count
-								};
-							} else {
-								delete facet.selected;
+							if ((<CategoricalFacet>facet).value) {
+								const categoricalFacet = <CategoricalFacet>facet;
+								if ((<CategoricalFilter>filter).categories.indexOf(categoricalFacet.value) !== -1) {
+									// select
+									categoricalFacet.selected = {
+										count: categoricalFacet.count
+									};
+								} else {
+									delete categoricalFacet.selected;
+								}
 							}
 						});
 						break;
