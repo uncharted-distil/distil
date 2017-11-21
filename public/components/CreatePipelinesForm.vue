@@ -63,7 +63,7 @@ export default Vue.extend({
 			return !_.isEmpty(this.training);
 		},
 		targetSelected(): boolean {
-			return !this.target;
+			return this.target;
 		},
 		training(): string {
 			return routeGetters.getRouteTrainingVariables(this.$store);
