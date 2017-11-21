@@ -13,13 +13,14 @@
 	</div>
 </template>
 
-<script>
+<script lang="ts">
 
 import DatasetPreview from '../components/DatasetPreview';
 import Vue from 'vue';
 import { getters } from '../store/data/module';
+import { Datasets } from '../store/data/index';
 
-export default {
+export default Vue.extend({
 	name: 'search-results',
 
 	components: {
@@ -27,12 +28,12 @@ export default {
 	},
 
 	computed: {
-		datasets() {
+		datasets(): Datasets[] {
 			return getters.getDatasets(this.$store);
 		}
 	},
 
-};
+});
 </script>
 
 <style>

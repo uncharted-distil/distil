@@ -1,4 +1,5 @@
 import _ from 'lodash';
+import { Dictionary } from '../store/data/index';
 
 /**
  * Empty filter, omitting no documents.
@@ -120,7 +121,7 @@ export function encodeQueryParams(filters: FilterMap): string {
  *
  * @returns {string} The updated route filter strings.
  */
-export function updateFilter(filters: string, key: string, values: { [name: string]: any }): string {
+export function updateFilter(filters: string, key: string, values: Dictionary<any>): string {
 	// decode the provided filters
 	const decoded = decodeFilters(filters);
 	// get or create the filter

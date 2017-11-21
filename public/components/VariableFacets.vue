@@ -77,10 +77,10 @@ import Facets from '../components/Facets';
 import { decodeFilters, updateFilter, getFilterType, isDisabled, CATEGORICAL_FILTER, NUMERICAL_FILTER } from '../util/filters';
 import { createRouteEntryFromRoute, getRouteFacetPage } from '../util/routes';
 import { NumericalFilter, CategoricalFilter } from '../util/filters';
-import { Dictionary } from '../store/data/index';
+import { Dictionary, VariableSummary } from '../store/data/index';
 import { getters as dataGetters } from '../store/data/module';
 import { getters as routeGetters } from '../store/route/module';
-import { createGroups } from '../util/facets';
+import { createGroups, Group } from '../util/facets';
 import 'font-awesome/css/font-awesome.css';
 import '../styles/spinner.css';
 import Vue from 'vue';
@@ -93,15 +93,15 @@ export default Vue.extend({
 	},
 
 	props: {
-		'enable-search': Boolean,
-		'enable-toggle': Boolean,
-		'enable-sort': Boolean,
-		'enable-group-collapse': Boolean,
-		'enable-facet-filtering': Boolean,
+		'enableSearch': Boolean,
+		'enableToggle': Boolean,
+		'enableSort': Boolean,
+		'enableGroupCollapse': Boolean,
+		'enableFacetFiltering': Boolean,
 		'variables': Array,
 		'dataset': String,
 		'html': [ String, Object, Function ],
-		'instance-name': String
+		'instanceName': String
 	},
 
 	data() {
@@ -125,9 +125,9 @@ export default Vue.extend({
 				return getRouteFacetPage(this.routePageKey(), this.$route);
 			}
 		},
-		groups() {
+		groups(): Group[] {
 			// filter by search
-			const searchFiltered = this.variables.filter(summary => {
+			const searchFiltered = (<VariableSummary[]>this.variables).filter(summary => {
 				return this.filter === '' || summary.name.toLowerCase().includes(this.filter.toLowerCase());
 			});
 
@@ -167,7 +167,7 @@ export default Vue.extend({
 			return importance;
 		},
 		sort() {
-			return this[this.sortMethod];
+			return (<any>this)[(<any>this).sortMethod];
 		}
 	},
 
@@ -219,7 +219,7 @@ export default Vue.extend({
 		},
 
 		// handles facet group transition to active state
-		onExpand(key) {
+		onExpand(key: string) {
 			// enable filter
 			this.updateFilterRoute(key, {
 				enabled: true
@@ -309,7 +309,7 @@ export default Vue.extend({
 		},
 
 		// updates facet collapse/expand state based on route settings
-		updateGroupCollapses(groups) {
+		updateGroupCollapses(groups: Group[]): Group[] {
 			const filters = routeGetters.getRouteFilters(this.$store);
 			const decoded = decodeFilters(filters);
 			return groups.map(group => {
@@ -321,7 +321,7 @@ export default Vue.extend({
 
 		// updates numerical facet range controls or categorical selected state based on
 		// route
-		updateGroupSelections(groups) {
+		updateGroupSelections(groups): Group[] {
 			const filters = routeGetters.getRouteFilters(this.$store);
 			const decoded = decodeFilters(filters);
 			return groups.map(group => {

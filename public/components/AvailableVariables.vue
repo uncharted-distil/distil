@@ -31,13 +31,13 @@ export default Vue.extend({
 	},
 
 	computed: {
-		dataset() {
+		dataset(): string {
 			return routeGetters.getRouteDataset(this.$store);
 		},
 		variables(): VariableSummary[] {
 			return dataGetters.getAvailableVariableSummaries(this.$store);
 		},
-		html() {
+		html(): ( { key: string } ) => HTMLDivElement {
 			return (group: { key: string }) => {
 				const container = document.createElement('div');
 				const trainingElem = document.createElement('button');

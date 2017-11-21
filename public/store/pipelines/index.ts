@@ -1,3 +1,5 @@
+import { Dictionary } from '../data/index';
+
 export interface Score {
 	metric: string;
 	value: number;
@@ -20,17 +22,9 @@ export interface PipelineInfo {
 	dataset: string;
 }
 
-export interface PipelineRequestInfo {
-	[pipelineId: string]: PipelineInfo;
-}
-
-export interface Pipeline {
-	[requestId: string]: PipelineRequestInfo;
-}
-
 export interface PipelineState {
-	runningPipelines: Pipeline;
-	completedPipelines: Pipeline;
+	runningPipelines: Dictionary<Dictionary<PipelineInfo>>;
+	completedPipelines: Dictionary<Dictionary<PipelineInfo>>;
 }
 
 export const state: PipelineState = {

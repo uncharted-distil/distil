@@ -13,7 +13,7 @@
 	</div>
 </template>
 
-<script>
+<script lang="ts">
 
 import { createRouteEntryFromRoute } from '../util/routes';
 import VariableFacets from '../components/VariableFacets';
@@ -21,6 +21,7 @@ import 'font-awesome/css/font-awesome.css';
 import Vue from 'vue';
 import { getters as dataGetters } from '../store/data/module';
 import { getters as routeGetters} from '../store/route/module';
+import { VariableSummary } from '../store/data/index';
 
 export default Vue.extend({
 	name: 'target-variables',
@@ -30,13 +31,13 @@ export default Vue.extend({
 	},
 
 	computed: {
-		dataset() {
+		dataset(): string {
 			return routeGetters.getRouteDataset(this.$store);
 		},
-		variables() {
+		variables(): VariableSummary[] {
 			return dataGetters.getTargetVariableSummaries(this.$store);
 		},
-		html() {
+		html(): () => HTMLDivElement {
 			return () => {
 				const container = document.createElement('div');
 				const remove = document.createElement('button');

@@ -18,6 +18,7 @@
 import DatasetPreview from '../components/DatasetPreview';
 import { getters } from '../store/data/module';
 import { filterDatasets, getRecentDatasets } from '../util/data';
+import { Datasets } from '../store/data/index';
 import Vue from 'vue';
 
 export default Vue.extend({
@@ -35,7 +36,7 @@ export default Vue.extend({
 	},
 
 	computed: {
-		recentDatasets() {
+		recentDatasets(): Datasets[] {
 			const names = getRecentDatasets().slice(0, this.maxDatasets);
 			return filterDatasets(names, getters.getDatasets(this.$store));
 		}
