@@ -1,4 +1,4 @@
-import { Dictionary } from '../data/index';
+import { Dictionary } from '../../util/dict';
 import { Filter } from '../../util/filters';
 
 export interface Score {

@@ -1,8 +1,9 @@
 import _ from 'lodash';
-import { Variable, Data, DataState, Dictionary, Datasets, VariableSummary, TargetRow } from './index';
-import { FilterMap } from '../../util/filters';
+import { Variable, Data, DataState, Datasets, VariableSummary, TargetRow } from './index';
+import { Filter } from '../../util/filters';
+import { Dictionary } from '../../util/dict';
 import { getPredictedIndex, getErrorIndex } from '../../util/data';
-import { Range } from './index';
+import { FieldInfo, Range } from './index';
 
 function getTargetIndexFromPredicted(columns: string[], predictedIndex: number) {
 	const targetName = columns[predictedIndex].replace('_res', '');
@@ -70,25 +71,29 @@ export const getters = {
 		return state.resultsSummaries;
 	},
 
-	getSelectedFilters(state: DataState, getters: any): FilterMap {
+	getSelectedFilters(state: DataState, getters: any): Filter[] {
 		const training = getters.getRouteTrainingVariables as string;
 		if (training) {
-			const existing = getters.getDecodedFilters as FilterMap;
-			const filters: FilterMap = {};
+			const existing = getters.getDecodedFilters as Filter[];
+			const filters: Filter[] = [];
 
 			training.split(',').forEach(variable => {
-				if (!existing[variable]) {
-					filters[variable] = {
+				const index = _.findIndex(existing, filter => {
+					return filter.name == variable;
+				});
+
+				if (index === -1) {
+					filters.push({
 						name: variable,
 						enabled: false
-					};
+					});
 				} else {
-					filters[variable] = existing[variable];
+					filters.push(existing[index]);
 				}
 			});
 			return filters;
 		}
-		return {};
+		return [];
 	},
 
 	getAvailableVariableSummaries(state: DataState, getters: any): VariableSummary[] {

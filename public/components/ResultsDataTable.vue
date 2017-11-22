@@ -24,7 +24,8 @@
 
 import _ from 'lodash';
 import { getters, actions } from '../store/data/module';
-import { TargetRow, Dictionary } from '../store/data/index';
+import { TargetRow } from '../store/data/index';
+import { Dictionary } from '../util/dict';
 import { FieldInfo } from '../store/data/getters';
 import { removeNonTrainingItems, removeNonTrainingFields } from '../util/data';
 import { updateTableHighlights } from '../util/highlights';

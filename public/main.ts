@@ -6,7 +6,7 @@ import Search from './views/Search.vue';
 import Explore from './views/Explore.vue';
 import Select from './views/Select.vue';
 import Pipelines from './views/Pipelines.vue';
-import Results from './views/Results.vue';
+import results from './views/results.vue';
 import Navigation from './views/Navigation.vue';
 import store from './store/store';
 import BootstrapVue from 'bootstrap-vue';
@@ -33,7 +33,7 @@ const router = new VueRouter({
 		{ path: '/explore', component: Explore },
 		{ path: '/select', component: Select },
 		{ path: '/pipelines', component: Pipelines },
-		{ path: '/results', component: Results }
+		{ path: '/results', component: results }
 	]
 });
 

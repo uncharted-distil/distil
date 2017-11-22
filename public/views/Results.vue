@@ -3,7 +3,7 @@
 		<flow-bar
 			left-text="Return to Select"
 			:on-left="gotoSelect"
-			center-text="Examine Pipeline Results">
+			center-text="Examine Pipeline results">
 		</flow-bar>
 		<div class="results-items">
 			<variable-summaries

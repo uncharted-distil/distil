@@ -8,7 +8,7 @@ import 'jquery';
 import Vue from 'vue';
 import { actions } from '../store/data/module';
 import { Group, CategoricalFacet } from '../util/facets';
-import { Dictionary } from '../store/data/index';
+import { Dictionary } from '../util/dict';
 import Facets from '@uncharted.software/stories-facets';
 import '@uncharted.software/stories-facets/dist/facets.css';
 

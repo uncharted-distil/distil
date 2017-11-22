@@ -9898,7 +9898,7 @@
 		 *  @type boolean
 		 *  @default true
 		 *
-		 *  @dtopt Features
+		 *  @dtopt features
 		 *  @name DataTable.defaults.autoWidth
 		 *
 		 *  @example
@@ -9920,7 +9920,7 @@
 		 *  @type boolean
 		 *  @default false
 		 *
-		 *  @dtopt Features
+		 *  @dtopt features
 		 *  @name DataTable.defaults.deferRender
 		 *
 		 *  @example
@@ -9973,7 +9973,7 @@
 		 *  @type boolean
 		 *  @default true
 		 *
-		 *  @dtopt Features
+		 *  @dtopt features
 		 *  @name DataTable.defaults.searching
 		 *
 		 *  @example
@@ -9993,7 +9993,7 @@
 		 *  @type boolean
 		 *  @default true
 		 *
-		 *  @dtopt Features
+		 *  @dtopt features
 		 *  @name DataTable.defaults.info
 		 *
 		 *  @example
@@ -10013,7 +10013,7 @@
 		 *  @type boolean
 		 *  @default false
 		 *
-		 *  @dtopt Features
+		 *  @dtopt features
 		 *  @name DataTable.defaults.jQueryUI
 		 *
 		 *  @example
@@ -10032,7 +10032,7 @@
 		 *  @type boolean
 		 *  @default true
 		 *
-		 *  @dtopt Features
+		 *  @dtopt features
 		 *  @name DataTable.defaults.lengthChange
 		 *
 		 *  @example
@@ -10050,7 +10050,7 @@
 		 *  @type boolean
 		 *  @default true
 		 *
-		 *  @dtopt Features
+		 *  @dtopt features
 		 *  @name DataTable.defaults.paging
 		 *
 		 *  @example
@@ -10071,7 +10071,7 @@
 		 *  @type boolean
 		 *  @default false
 		 *
-		 *  @dtopt Features
+		 *  @dtopt features
 		 *  @name DataTable.defaults.processing
 		 *
 		 *  @example
@@ -10153,7 +10153,7 @@
 		 *  @type boolean
 		 *  @default false
 		 *
-		 *  @dtopt Features
+		 *  @dtopt features
 		 *  @dtopt Server-side
 		 *  @name DataTable.defaults.serverSide
 		 *
@@ -10174,7 +10174,7 @@
 		 *  @type boolean
 		 *  @default true
 		 *
-		 *  @dtopt Features
+		 *  @dtopt features
 		 *  @name DataTable.defaults.ordering
 		 *
 		 *  @example
@@ -10236,7 +10236,7 @@
 		 *  @type boolean
 		 *  @default true
 		 *
-		 *  @dtopt Features
+		 *  @dtopt features
 		 *  @name DataTable.defaults.orderClasses
 		 *
 		 *  @example
@@ -10261,7 +10261,7 @@
 		 *  @type boolean
 		 *  @default false
 		 *
-		 *  @dtopt Features
+		 *  @dtopt features
 		 *  @name DataTable.defaults.stateSave
 		 *
 		 *  @example
@@ -11584,7 +11584,7 @@
 		 *  @type boolean|string
 		 *  @default <i>blank string - i.e. disabled</i>
 		 *
-		 *  @dtopt Features
+		 *  @dtopt features
 		 *  @name DataTable.defaults.scrollX
 		 *
 		 *  @example
@@ -11632,7 +11632,7 @@
 		 *  @type string
 		 *  @default <i>blank string - i.e. disabled</i>
 		 *
-		 *  @dtopt Features
+		 *  @dtopt features
 		 *  @name DataTable.defaults.scrollY
 		 *
 		 *  @example
@@ -13962,7 +13962,7 @@
 		/* Empty row */
 		"sRowEmpty": "dataTables_empty",
 	
-		/* Features */
+		/* features */
 		"sWrapper": "dataTables_wrapper",
 		"sFilter": "dataTables_filter",
 		"sInfo": "dataTables_info",
@@ -14029,7 +14029,7 @@
 		"sPageButtonActive":   "ui-state-disabled",
 		"sPageButtonDisabled": "ui-state-disabled",
 	
-		/* Features */
+		/* features */
 		"sPaging": "dataTables_paginate fg-buttonset ui-buttonset fg-buttonset-multi "+
 			"ui-buttonset-multi paging_", /* Note that the type is postfixed */
 	

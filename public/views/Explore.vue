@@ -3,8 +3,8 @@
 		<flow-bar
 			left-text="Return to Search"
 			:on-left="gotoSearch"
-			center-text="Explore the Dataset"
-			right-text="Continue to Select Features"
+			center-text="Explore the dataset"
+			right-text="Continue to Select features"
 			:on-right="gotoSelect">
 		</flow-bar>
 		<div class="explore-items">

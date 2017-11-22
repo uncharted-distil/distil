@@ -1,6 +1,6 @@
 <template>
 	<div class='result-summaries'>
-		<h6 class="nav-link">Results</h6>
+		<h6 class="nav-link">results</h6>
 		<div v-if="regressionEnabled" class="result-summaries-error">
 			<div class="result-summaries-label">
 				Error:
@@ -51,7 +51,8 @@ import { getTask } from '../util/pipelines';
 import { getters as dataGetters} from '../store/data/module';
 import { getters as routeGetters } from '../store/route/module';
 import { actions } from '../store/app/module';
-import { Dictionary, VariableSummary } from '../store/data/index';
+import { Dictionary } from '../util/dict';
+import { VariableSummary } from '../store/data/index';
 import vueSlider from 'vue-slider-component';
 import Vue from 'vue';
 import _ from 'lodash';

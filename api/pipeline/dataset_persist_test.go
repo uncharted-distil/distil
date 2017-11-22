@@ -12,14 +12,14 @@ import (
 func TestDatasetHashEqual(t *testing.T) {
 	filterParams0 := model.FilterParams{
 		Size: 0,
-		Ranged: []model.VariableRange{
-			{Name: "feature_a", Min: 0, Max: 100},
+		Filters: []*model.VariableFilter{
+			model.NewNumericalFilter("feature_a", 0, 100),
 		},
 	}
 	filterParams1 := model.FilterParams{
 		Size: 0,
-		Ranged: []model.VariableRange{
-			{Name: "feature_a", Min: 0, Max: 100},
+		Filters: []*model.VariableFilter{
+			model.NewNumericalFilter("feature_a", 0, 100),
 		},
 	}
 	hash0, err := getFilteredDatasetHash("dataset", "target", &filterParams0)
@@ -31,14 +31,14 @@ func TestDatasetHashEqual(t *testing.T) {
 func TestDatasetHashNotEqual(t *testing.T) {
 	filterParams0 := model.FilterParams{
 		Size: 0,
-		Ranged: []model.VariableRange{
-			{Name: "feature_a", Min: 0, Max: 100},
+		Filters: []*model.VariableFilter{
+			model.NewNumericalFilter("feature_a", 0, 100),
 		},
 	}
 	filterParams1 := model.FilterParams{
 		Size: 1,
-		Ranged: []model.VariableRange{
-			{Name: "feature_a", Min: 0, Max: 100},
+		Filters: []*model.VariableFilter{
+			model.NewNumericalFilter("feature_a", 0, 100),
 		},
 	}
 	hash0, err := getFilteredDatasetHash("dataset", "target", &filterParams0)
@@ -54,9 +54,9 @@ func TestDatasetHashNotEqual(t *testing.T) {
 func fetchFilteredData(t *testing.T) FilteredDataProvider {
 	return func(dataset string, index string, filters *model.FilterParams) (*model.FilteredData, error) {
 		// basic sanity to check  params are passed through and parsed
-		assert.Equal(t, 2, len(filters.Ranged))
-		assert.Equal(t, "int_a", filters.Ranged[0].Name)
-		assert.Equal(t, "float_b", filters.Ranged[1].Name)
+		assert.Equal(t, 2, len(filters.Filters))
+		assert.Equal(t, "int_a", filters.Filters[0].Name)
+		assert.Equal(t, "float_b", filters.Filters[1].Name)
 
 		return &model.FilteredData{
 			Name: "test",
@@ -109,9 +109,9 @@ func TestPersistFilteredData(t *testing.T) {
 
 	// Stubbed out params - not actually applied to stub data
 	filterParams := &model.FilterParams{
-		Ranged: []model.VariableRange{
-			{Name: "int_a", Min: 0, Max: 100},
-			{Name: "float_b", Min: 5.0, Max: 500.0},
+		Filters: []*model.VariableFilter{
+			model.NewNumericalFilter("int_a", 0, 100),
+			model.NewNumericalFilter("float_b", 5.0, 500.0),
 		},
 	}
 
@@ -130,9 +130,9 @@ func TestPersistFilteredData(t *testing.T) {
 
 	// Verify that changed params results in a new file being used
 	filterParamsMod := &model.FilterParams{
-		Ranged: []model.VariableRange{
-			{Name: "int_a", Min: 0, Max: 100},
-			{Name: "float_b", Min: 10.0, Max: 11.0},
+		Filters: []*model.VariableFilter{
+			model.NewNumericalFilter("int_a", 0, 100),
+			model.NewNumericalFilter("float_b", 10.0, 11.0),
 		},
 	}
 	datasetPathMod, err := PersistFilteredData(fetchFilteredData(t), fetchVariable(t), "./test_output", "test", "test", "feature1", filterParamsMod)

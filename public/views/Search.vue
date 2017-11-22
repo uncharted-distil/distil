@@ -3,7 +3,7 @@
 		<flow-bar
 			left-text="Return to Home"
 			:on-left="gotoHome"
-			center-text="Search for a Dataset">
+			center-text="Search for a dataset">
 		</flow-bar>
 		<search-bar class="search-search-bar"></search-bar>
 		<h5 class="header-label">Select a Search Result</h5>

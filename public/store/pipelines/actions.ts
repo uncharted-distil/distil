@@ -6,7 +6,8 @@ import { ActionContext } from 'vuex';
 import { DistilState } from '../store';
 import { mutations } from './module';
 import { getWebSocketConnection } from '../../util/ws';
-import { FilterMap } from '../../util/filters';
+import { Dictionary } from '../../util/dict';
+import { Filter } from '../../util/filters';
 
 // TODO: move this somewhere more appropriate.
 const ES_INDEX = 'datasets';
@@ -21,34 +22,35 @@ function createResultName(dataset: string, timestamp: number, targetFeature: str
 }
 
 interface Feature {
-	FeatureName: string;
-	FeatureType: string;
+	featureName: string;
+	featureType: string;
 }
 
 interface Result {
 	name: string;
-	ResultUUID: string;
-	PipelineID: string;
-	CreatedTime: number;
-	Progress: string;
-	Scores: Score[];
+	resultUuid: string;
+	pipelineId: string;
+	createdTime: number;
+	progress: string;
+	scores: Score[];
+	filters: Filter[];
 }
 
 interface PipelineResponse {
-	RequestID: string;
-	Dataset: string;
-	Features: Feature[];
-	Results: Result[];
+	requestId: string;
+	dataset: string;
+	features: Feature[];
+	results: Result[];
 }
 
 interface PipelineRequest {
-	sessionId: string,
-	dataset: string,
-	feature: string,
-	task: string,
-	metric: string[],
-	output: string,
-	filters: FilterMap
+	sessionId: string;
+	dataset: string;
+	feature: string;
+	task: string;
+	metric: string[];
+	output: string;
+	filters: Filter[];
 }
 
 export type AppContext = ActionContext<PipelineState, DistilState>;
@@ -67,33 +69,34 @@ export const actions = {
 				pipelineResponse.forEach((pipeline) => {
 					// determine the target feature for this request
 					let targetFeature = '';
-					pipeline.Features.forEach((feature) => {
-						if (feature.FeatureType === FEATURE_TYPE_TARGET) {
-							targetFeature = feature.FeatureName;
+					pipeline.features.forEach((feature) => {
+						if (feature.featureType === FEATURE_TYPE_TARGET) {
+							targetFeature = feature.featureName;
 						}
 					});
 
-					pipeline.Results.forEach((res) => {
+					pipeline.results.forEach((res) => {
 						// inject the name and pipeline id
-						const name = createResultName(pipeline.Dataset, res.CreatedTime, targetFeature);
+						const name = createResultName(pipeline.dataset, res.createdTime, targetFeature);
 						res.name = name;
 
 						// add/update the running pipeline info
-						if (res.Progress === PIPELINE_COMPLETE) {
+						if (res.progress === PIPELINE_COMPLETE) {
 							// add the pipeline to complete
 							mutations.addCompletedPipeline(context, {
 								name: res.name,
 								feature: targetFeature,
-								timestamp: res.CreatedTime,
-								progress: res.Progress,
-								requestId: pipeline.RequestID,
-								dataset: pipeline.Dataset,
-								pipelineId: res.PipelineID,
+								timestamp: res.createdTime,
+								progress: res.progress,
+								requestId: pipeline.requestId,
+								dataset: pipeline.dataset,
+								pipelineId: res.pipelineId,
 								pipeline: {
-									resultId: res.ResultUUID,
+									resultId: res.resultUuid,
 									output: '',
-									scores: res.Scores
+									scores: res.scores
 								},
+								filters: res.filters
 							});
 						}
 					});

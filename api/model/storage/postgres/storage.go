@@ -125,16 +125,18 @@ func (s *Storage) PersistRequestFeature(requestID string, featureName string, fe
 // PersistRequestFilters persists request filters information to Postgres.
 func (s *Storage) PersistRequestFilters(requestID string, filters *model.FilterParams) error {
 	sql := fmt.Sprintf("INSERT INTO %s (request_id, feature_name, filter_type, filter_min, filter_max, filter_categories) VALUES ($1, $2, $3, $4, $5, $6);", filterTableName)
-	for _, filter := range filters.Ranged {
-		_, err := s.client.Exec(sql, requestID, filter.Name, model.NumericalFilter, filter.Min, filter.Max, "")
-		if err != nil {
-			return err
-		}
-	}
-	for _, filter := range filters.Categorical {
-		_, err := s.client.Exec(sql, requestID, filter.Name, model.CategoricalFilter, 0, 0, strings.Join(filter.Categories, ","))
-		if err != nil {
-			return err
+	for _, filter := range filters.Filters {
+		switch filter.Type {
+		case model.NumericalFilter:
+			_, err := s.client.Exec(sql, requestID, filter.Name, model.NumericalFilter, filter.Min, filter.Max, "")
+			if err != nil {
+				return err
+			}
+		case model.CategoricalFilter:
+			_, err := s.client.Exec(sql, requestID, filter.Name, model.CategoricalFilter, 0, 0, strings.Join(filter.Categories, ","))
+			if err != nil {
+				return err
+			}
 		}
 	}
 	return nil
@@ -370,16 +372,16 @@ func (s *Storage) FetchRequestFilters(requestID string) (*model.FilterParams, er
 
 		switch filterType {
 		case model.CategoricalFilter:
-			filters.Categorical = append(filters.Categorical, model.VariableCategories{
-				Name:       featureName,
-				Categories: strings.Split(filterCategories, ","),
-			})
+			filters.Filters = append(filters.Filters, model.NewCategoricalFilter(
+				featureName,
+				strings.Split(filterCategories, ","),
+			))
 		case model.NumericalFilter:
-			filters.Ranged = append(filters.Ranged, model.VariableRange{
-				Name: featureName,
-				Min:  filterMin,
-				Max:  filterMax,
-			})
+			filters.Filters = append(filters.Filters, model.NewNumericalFilter(
+				featureName,
+				filterMin,
+				filterMax,
+			))
 		}
 	}
 

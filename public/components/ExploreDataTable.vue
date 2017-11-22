@@ -42,8 +42,9 @@ import Vue from 'vue';
 import { getters as dataGetters } from '../store/data/module';
 import { getters as routeGetters } from '../store/route/module';
 import { actions } from '../store/data/module';
-import { Dictionary, SuggestedType } from '../store/data/index';
-import { FilterMap } from '../util/filters';
+import { SuggestedType } from '../store/data/index';
+import { Dictionary } from '../util/dict';
+import { Filter } from '../util/filters';
 import { updateTableHighlights } from '../util/highlights';
 import { probabilityCategoryText, probabilityCategoryClass, addMissingSuggestions } from '../util/types';
 
@@ -66,7 +67,7 @@ export default Vue.extend({
 		fields(): Dictionary<FieldInfo> {
 			return dataGetters.getFilteredDataFields(this.$store);
 		},
-		filters(): FilterMap {
+		filters(): Filter[] {
 			return routeGetters.getDecodedFilters(this.$store);
 		}
 	},

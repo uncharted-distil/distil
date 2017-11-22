@@ -1,5 +1,5 @@
 import _ from 'lodash';
-import { Dictionary } from '../store/data/index';
+import { Dictionary } from '../util/dict';
 
 /**
  * Empty filter, omitting no documents.
@@ -39,32 +39,28 @@ export interface CategoricalFilter extends Filter {
 	categories: string[]
 }
 
-export interface FilterMap {
-	[id: string]: Filter
-}
-
 /**
  * Decodes the map of filters from the route into objects.
  *
  * @param {string} filters - The filters from the route query string.
  *
- * @returns {FilterMap} The decoded filter object.
+ * @returns {Filter[]} The decoded filter object.
  */
-export function decodeFilters(filters: string): FilterMap {
+export function decodeFilters(filters: string): Filter[] {
 	if (_.isEmpty(filters)) {
-		return {};
+		return [];
 	}
-	return JSON.parse(atob(filters)) as FilterMap;
+	return JSON.parse(atob(filters)) as Filter[];
 }
 
 /**
  * Encodes the map of filter objects into a map of route query strings.
  *
- * @param {FilterMap} filters - The filter objects.
+ * @param {Filter[]} filters - The filter objects.
  *
  * @returns {string} The encoded route query strings.
  */
-export function encodeFilters(filters: FilterMap): string {
+export function encodeFilters(filters: Filter[]): string {
 	if (_.isEmpty(filters)) {
 		return undefined;
 	}
@@ -96,11 +92,11 @@ export function encodeQueryParam(filter: Filter): string {
  * Encodes the filter objects into a single query param string for an HTTP
  * request.
  *
- * @param {FilterMap} filters - The filter objects.
+ * @param {Filter[]} filters - The filter objects.
  *
  * @returns {string} The HTTP query param strings.
  */
-export function encodeQueryParams(filters: FilterMap): string {
+export function encodeQueryParams(filters: Filter[]): string {
 	const params: string[] = [];
 	_.forEach(filters, filter => {
 		const param = encodeQueryParam(filter);

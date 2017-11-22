@@ -1,5 +1,6 @@
 import _ from 'lodash';
-import { Datasets, Dictionary, FieldInfo, Variable } from '../store/data/index';
+import { Datasets, FieldInfo, Variable } from '../store/data/index';
+import { Dictionary } from '../util/dict';
 
 // filters datasets by id
 export function filterDatasets(ids: string[], datasets: Datasets[]): Datasets[] {

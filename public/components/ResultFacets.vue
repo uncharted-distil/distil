@@ -18,7 +18,7 @@ import { decodeFilters, updateFilter, getFilterType, isDisabled,
 	CATEGORICAL_FILTER, NUMERICAL_FILTER, NumericalFilter, CategoricalFilter } from '../util/filters';
 import { createRouteEntryFromRoute } from '../util/routes';
 import { PipelineInfo, PipelineState } from '../store/pipelines/index';
-import { Dictionary } from '../store/data/index';
+import { Dictionary } from '../util/dict';
 import { getters as dataGetters} from '../store/data/module';
 import { getters as routeGetters} from '../store/route/module';
 import { createGroups, Group, NumericalFacet, CategoricalFacet } from '../util/facets';

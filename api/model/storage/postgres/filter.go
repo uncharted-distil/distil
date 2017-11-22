@@ -51,58 +51,39 @@ func (s *Storage) buildFilteredQueryWhere(dataset string, filterParams *model.Fi
 	// Build where clauses using the filter parameters.
 	// param identifiers in the query are 1-based $x.
 	params := make([]interface{}, 0)
-	wheres := make([]string, len(filterParams.Ranged))
-	for i, variable := range filterParams.Ranged {
-		wheres[i] = fmt.Sprintf("\"%s\" >= $%d AND \"%s\" <= $%d", variable.Name, i*2+1, variable.Name, i*2+2)
-		params = append(params, variable.Min)
-		params = append(params, variable.Max)
+	wheres := make([]string, 0)
+
+	for i, filter := range filterParams.Filters {
+		if filter.Type == model.NumericalFilter {
+			where := fmt.Sprintf("\"%s\" >= $%d AND \"%s\" <= $%d", filter.Name, i*2+1, filter.Name, i*2+2)
+			wheres = append(wheres, where)
+			params = append(params, *filter.Min)
+			params = append(params, *filter.Max)
+		}
 	}
 
-	for _, variable := range filterParams.Categorical {
-		// this is imposed by go's language design - []string needs explicit conversion to []interface{} before
-		// passing to interface{} ...
-		categories := make([]string, len(variable.Categories))
-		baseParam := len(params) + 1
-		for i := range variable.Categories {
-			categories[i] = fmt.Sprintf("$%d", baseParam+i)
-			params = append(params, variable.Categories[i])
+	for _, filter := range filterParams.Filters {
+		if filter.Type == model.CategoricalFilter {
+			categories := make([]string, len(filter.Categories))
+			baseParam := len(params) + 1
+			for j := range filter.Categories {
+				categories[j] = fmt.Sprintf("$%d", baseParam+j)
+				params = append(params, filter.Categories[j])
+			}
+			where := fmt.Sprintf("\"%s\" IN (%s)", filter.Name, strings.Join(categories, ", "))
+			wheres = append(wheres, where)
 		}
-		wheres = append(wheres, fmt.Sprintf("\"%s\" IN (%s)", variable.Name, strings.Join(categories, ", ")))
 	}
 
 	return strings.Join(wheres, " AND "), params, nil
 }
 
 func (s *Storage) buildFilteredQueryField(dataset string, variables []*model.Variable, filterParams *model.FilterParams, inclusive bool) (string, error) {
-	// fields to include
-	fieldList := make([]string, 0)
-
-	if inclusive {
-		// if inclusive, include all fields except specifically excluded fields
-		excludedFields := make(map[string]bool)
-		for _, f := range filterParams.None {
-			excludedFields[f] = true
-		}
-
-		for _, v := range variables {
-			if !excludedFields[v.Name] {
-				fieldList = append(fieldList, fmt.Sprintf("\"%s\"", v.Name))
-			}
-		}
-	} else {
-		// if exclusive, exclude all fields except specifically included fields
-		for _, f := range filterParams.Ranged {
-			fieldList = append(fieldList, fmt.Sprintf("\"%s\"", f.Name))
-		}
-		for _, f := range filterParams.Categorical {
-			fieldList = append(fieldList, fmt.Sprintf("\"%s\"", f.Name))
-		}
-		for _, f := range filterParams.None {
-			fieldList = append(fieldList, fmt.Sprintf("\"%s\"", f))
-		}
+	fields := make([]string, 0)
+	for _, variable := range model.GetFilterVariables(filterParams, variables, inclusive) {
+		fields = append(fields, fmt.Sprintf("\"%s\"", variable.Name))
 	}
-
-	return strings.Join(fieldList, ","), nil
+	return strings.Join(fields, ","), nil
 }
 
 // FetchData creates a postgres query to fetch a set of rows.  Applies filters to restrict the
