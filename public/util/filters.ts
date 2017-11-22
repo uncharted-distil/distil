@@ -1,42 +1,32 @@
 import _ from 'lodash';
-import { Dictionary } from '../util/dict';
 
 /**
  * Empty filter, omitting no documents.
- * @constant {Symbol}
+ * @constant {string}
  */
-export const EMPTY_FILTER = Symbol('empty');
-export const EMPTY_FILTER_ID = 'empty';
+export const EMPTY_FILTER = 'empty';
 
 /**
  * Categorical filter, omitting documents that do not contain the provided
  * categories in the variable.
- * @constant {Symbol}
+ * @constant {string}
  */
-export const CATEGORICAL_FILTER = Symbol('categorical');
-export const CATEGORICAL_FILTER_ID = 'categorical';
+export const CATEGORICAL_FILTER = 'categorical';
 
 /**
  * Numerical filter, omitting documents that do not fall within the provided
  * variable range.
- * @constant {Symbol}
+ * @constant {string}
  */
-
-export const NUMERICAL_FILTER = Symbol('numerical');
-export const NUMERICAL_FILTER_ID = 'numerical';
+export const NUMERICAL_FILTER = 'numerical';
 
 export interface Filter {
-	name: string,
-	enabled: boolean
-}
-
-export interface NumericalFilter extends Filter {
-	min: number,
-	max: number
-}
-
-export interface CategoricalFilter extends Filter {
-	categories: string[]
+	name: string;
+	type: string;
+	enabled: boolean;
+	min?: number;
+	max?: number;
+	categories?: string[];
 }
 
 /**
@@ -80,10 +70,10 @@ export function encodeQueryParam(filter: Filter): string {
 	}
 	switch (getFilterType(filter)) {
 		case NUMERICAL_FILTER:
-			return `${encodeURIComponent(filter.name)}=${NUMERICAL_FILTER_ID},${(<NumericalFilter>filter).min},${(<NumericalFilter>filter).max}`;
+			return `${encodeURIComponent(filter.name)}=${NUMERICAL_FILTER},${filter.min},${filter.max}`;
 
 		case CATEGORICAL_FILTER:
-			return `${encodeURIComponent(filter.name)}=${CATEGORICAL_FILTER_ID},${(<CategoricalFilter>filter).categories.join(',')}`;
+			return `${encodeURIComponent(filter.name)}=${CATEGORICAL_FILTER},${filter.categories.join(',')}`;
 	}
 	return null;
 }
@@ -111,34 +101,38 @@ export function encodeQueryParams(filters: Filter[]): string {
  * Updates the route with the provided route filter key and value. The function
  * will add, modify, or remove the filter as necessary.
  *
- * @param {string} filters - The route filter strings.
- * @param {string} key - The filter key.
- * @param {Object} values - The filter values.
+ * @param {string} filters - The existing route filter string.
+ * @param {Filter} filter - The filter.
  *
  * @returns {string} The updated route filter strings.
  */
-export function updateFilter(filters: string, key: string, values: Dictionary<any>): string {
+export function updateFilter(filters: string, filter: Filter): string {
 	// decode the provided filters
 	const decoded = decodeFilters(filters);
 	// get or create the filter
-	let filter = decoded[key] as any;
-	if (!filter) {
-		filter = {
-			name: key,
-			enabled: true
-		};
-		decoded[key] = filter;
+	let index = _.findIndex(decoded, existing => {
+		return existing.name === filter.name;
+	})
+	if (index === -1) {
+		// does not exist yet
+		decoded.push(filter)
+		index = decoded.length - 1;
+	} else {
+		// use existing
+		filter = decoded[index];
 	}
-	// add the filter values
-	_.forIn(values, (v, k) => {
+	// overlay the new filter values
+	_.forIn(filter, (v, k) => {
 		filter[k] = v;
 	});
-	// empty enabled filter is default, so remove it
+	// set the type field
+	filter.type = getFilterType(filter);
+	// empty enabled filter is default, remove it
 	if (getFilterType(filter) === EMPTY_FILTER && isEnabled(filter)) {
-		decoded[key] = undefined;
+		decoded.splice(index, 1);
 	}
-	const encoded = encodeFilters(decoded);
-	return encoded;
+	// encode the filters back into a url string
+	return encodeFilters(decoded);
 }
 
 /**
@@ -146,9 +140,9 @@ export function updateFilter(filters: string, key: string, values: Dictionary<an
  *
  * @param {Object} filter - The filter object or string.
  *
- * @returns {Symbol} The filter type symbol.
+ * @returns {string} The filter type.
  */
-export function getFilterType(filter: Filter): Symbol {
+export function getFilterType(filter: Filter): string {
 	if (filter) {
 		if (_.has(filter, 'categories')) {
 			return CATEGORICAL_FILTER;

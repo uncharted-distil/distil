@@ -35,7 +35,6 @@ type FilteredData struct {
 // VariableFilter defines a variable filter.
 type VariableFilter struct {
 	Name       string   `json:"name"`
-	Enabled    bool     `json:"enabled"`
 	Type       string   `json:"type"`
 	Min        *float64 `json:"min"`
 	Max        *float64 `json:"max"`
@@ -46,7 +45,6 @@ type VariableFilter struct {
 func NewNumericalFilter(name string, min float64, max float64) *VariableFilter {
 	return &VariableFilter{
 		Name:    name,
-		Enabled: true,
 		Type:    NumericalFilter,
 		Min:     &min,
 		Max:     &max,
@@ -58,7 +56,6 @@ func NewCategoricalFilter(name string, categories []string) *VariableFilter {
 	sort.Strings(categories)
 	return &VariableFilter{
 		Name:       name,
-		Enabled:    true,
 		Type:       CategoricalFilter,
 		Categories: categories,
 	}
@@ -68,7 +65,6 @@ func NewCategoricalFilter(name string, categories []string) *VariableFilter {
 func NewEmptyFilter(name string) *VariableFilter {
 	return &VariableFilter{
 		Name:    name,
-		Enabled: false,
 		Type:    EmptyFilter,
 	}
 }

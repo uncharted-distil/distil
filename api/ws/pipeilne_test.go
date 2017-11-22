@@ -22,10 +22,10 @@ func TestParseFilterParameters(t *testing.T) {
 		`{
 			"size": 123,
 			"filters": [
-				{ "name": "feature_a", "type": "numerical", "min": 0, "max": 100, "enabled": true},
-				{ "name": "feature_b", "type": "numerical", "min": 5, "max": 500, "enabled": true},
-				{ "name": "feature_c", "type": "categorical", "categories": ["alpha", "bravo", "charlie"], "enabled": true},
-				{ "name": "feature_d", "type": "empty", "enabled": false}
+				{ "name": "feature_a", "type": "numerical", "min": 0, "max": 100 },
+				{ "name": "feature_b", "type": "numerical", "min": 5, "max": 500 },
+				{ "name": "feature_c", "type": "categorical", "categories": ["alpha", "bravo", "charlie"] },
+				{ "name": "feature_d", "type": "empty" }
 			]
 		}`)
 	filterParams, err := model.ParseFilterParamsJSON(json.RawMessage(rawMsg))

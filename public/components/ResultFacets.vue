@@ -5,8 +5,7 @@
 			:highlights="highlights"
 			:html="html"
 			v-on:expand="onExpand"
-			v-on:collapse="onCollapse"
-			v-on:range-change="onRangeChange"></facets>
+			v-on:collapse="onCollapse"></facets>
 	</div>
 </template>
 
@@ -14,8 +13,7 @@
 
 import _ from 'lodash';
 import Facets from '../components/Facets';
-import { decodeFilters, updateFilter, getFilterType, isDisabled,
-	CATEGORICAL_FILTER, NUMERICAL_FILTER, NumericalFilter, CategoricalFilter } from '../util/filters';
+import { decodeFilters, updateFilter, getFilterType, isDisabled, CATEGORICAL_FILTER, NUMERICAL_FILTER } from '../util/filters';
 import { createRouteEntryFromRoute } from '../util/routes';
 import { PipelineInfo, PipelineState } from '../store/pipelines/index';
 import { Dictionary } from '../util/dict';
@@ -68,9 +66,15 @@ export default Vue.extend({
 				// set the selected value to the route value
 				groups.forEach((group) => {
 					if (group.key !== activeResult.name) {
-						this.updateFilterRoute(group.key, { enabled: false }, null);
+						this.updateFilterRoute({
+							name: group.key,
+							enabled: false
+						}, null);
 					} else {
-						this.updateFilterRoute(group.key, { enabled: true}, activeResult.pipeline.resultId);
+						this.updateFilterRoute({
+							name: group.key,
+							enabled: true
+						}, activeResult.pipeline.resultId);
 						this.$emit('activePipelineChange', {
 							name: activeResult.name,
 							id: activeResult.pipelineId
@@ -90,13 +94,13 @@ export default Vue.extend({
 	},
 
 	methods: {
-		updateFilterRoute(key: string, values: Dictionary<any>, resultUri: string) {
+		updateFilterRoute(filter: Filter, resultUri: string) {
 
 			// merge the updated filters back into the route query params if set
 			const filters = routeGetters.getRouteResultFilters(this.$store);
 			let updatedFilters = filters;
-			if (key && values) {
-				updatedFilters = updateFilter(filters, key, values);
+			if (filter) {
+				updatedFilters = updateFilter(filters, filter);
 			}
 
 			const entry = createRouteEntryFromRoute(routeGetters.getRoute(this.$store), {
@@ -116,12 +120,18 @@ export default Vue.extend({
 			// disable all filters except this one
 			this.groups.forEach(group => {
 				if (group.key !== key) {
-					this.updateFilterRoute(group.key, { enabled: false  }, null);
+					this.updateFilterRoute({
+						name: group.key,
+						enabled: false
+					}, null);
 				}
 			});
 
 			// enable filter
-			this.updateFilterRoute(key, { enabled: true }, completedReq.pipeline.resultId);
+			this.updateFilterRoute({
+				name: key,
+				enabled: true
+			}, completedReq.pipeline.resultId);
 			// let listening components know the acitive pipeline changed
 			this.$emit('activePipelineChange', { name: completedReq.name, id: completedReq.pipelineId });
 		},
@@ -129,15 +139,6 @@ export default Vue.extend({
 		onCollapse() {
 			// TODO: prevent disabling?
 			// no-op
-		},
-
-		onRangeChange(key: string, value: { from: { label: string[] }, to: { label: string[] } }) {
-			// set range filter
-			this.updateFilterRoute(key, {
-					enabled: true,
-					min: parseFloat(value.from.label[0]),
-					max: parseFloat(value.to.label[0])
-				}, null);
 		},
 
 		updateGroupCollapses(groups: Group[]): Group[] {
@@ -149,6 +150,7 @@ export default Vue.extend({
 				return group;
 			});
 		},
+
 		updateGroupSelections(groups: Group[]): Group[] {
 			const filters = routeGetters.getRouteResultFilters(this.$store);
 			const decoded = decodeFilters(filters);
@@ -163,8 +165,8 @@ export default Vue.extend({
 								(<NumericalFacet>facet).selection = {
 									// NOTE: the `from` / `to` values MUST be strings.
 									range: {
-										from: `${(<NumericalFilter>filter).min}`,
-										to: `${(<NumericalFilter>filter).max}`,
+										from: `${filter.min}`,
+										to: `${filter.max}`,
 									}
 								};
 							}
@@ -176,7 +178,7 @@ export default Vue.extend({
 						group.facets.forEach(facet => {
 							if ((<CategoricalFacet>facet).value) {
 								const categoricalFacet = <CategoricalFacet>facet;
-								if ((<CategoricalFilter>filter).categories.indexOf(categoricalFacet.value) !== -1) {
+								if (filter.categories.indexOf(categoricalFacet.value) !== -1) {
 									// select
 									categoricalFacet.selected = {
 										count: categoricalFacet.count
