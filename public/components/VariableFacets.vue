@@ -74,7 +74,7 @@
 <script lang="ts">
 
 import Facets from '../components/Facets';
-import { decodeFilters, updateFilter, getFilterType, isDisabled, CATEGORICAL_FILTER, NUMERICAL_FILTER } from '../util/filters';
+import { Filter, decodeFiltersDictionary, updateFilter, getFilterType, isDisabled, CATEGORICAL_FILTER, NUMERICAL_FILTER, EMPTY_FILTER } from '../util/filters';
 import { createRouteEntryFromRoute, getRouteFacetPage } from '../util/routes';
 import { VariableSummary } from '../store/data/index';
 import { Dictionary } from '../util/dict';
@@ -223,6 +223,7 @@ export default Vue.extend({
 			// enable filter
 			this.updateFilterRoute({
 				name: key,
+				type: EMPTY_FILTER,
 				enabled: true
 			});
 		},
@@ -232,6 +233,7 @@ export default Vue.extend({
 			// disable filter
 			this.updateFilterRoute({
 				name: key,
+				type: EMPTY_FILTER,
 				enabled: false
 			});
 		},
@@ -290,6 +292,7 @@ export default Vue.extend({
 			this.groups.forEach(group => {
 				filters = updateFilter(filters, {
 					name: group.key,
+					type: EMPTY_FILTER,
 					enabled: true
 				});
 			});
@@ -307,6 +310,7 @@ export default Vue.extend({
 			this.groups.forEach(group => {
 				filters = updateFilter(filters, {
 					name: group.key,
+					type: EMPTY_FILTER,
 					enabled: false
 				});
 			});
@@ -319,7 +323,7 @@ export default Vue.extend({
 		// updates facet collapse/expand state based on route settings
 		updateGroupCollapses(groups: Group[]): Group[] {
 			const filters = routeGetters.getRouteFilters(this.$store);
-			const decoded = decodeFilters(filters);
+			const decoded = decodeFiltersDictionary(filters);
 			return groups.map(group => {
 				// return if disabled
 				group.collapsed = isDisabled(decoded[group.key]);
@@ -331,7 +335,7 @@ export default Vue.extend({
 		// route
 		updateGroupSelections(groups): Group[] {
 			const filters = routeGetters.getRouteFilters(this.$store);
-			const decoded = decodeFilters(filters);
+			const decoded = decodeFiltersDictionary(filters);
 			return groups.map(group => {
 				// get filter
 				const filter = decoded[group.key];

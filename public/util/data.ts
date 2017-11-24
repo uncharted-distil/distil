@@ -1,5 +1,5 @@
 import _ from 'lodash';
-import { Datasets, FieldInfo, Variable } from '../store/data/index';
+import { Datasets, FieldInfo, TargetRow } from '../store/data/index';
 import { Dictionary } from '../util/dict';
 
 // filters datasets by id
@@ -25,16 +25,18 @@ export function addRecentDataset(dataset: string) {
 	window.localStorage.setItem('recent-datasets', datasets.join(','));
 }
 
-export function isInTrainingSet(col: string, training: Dictionary<Variable>) {
+export function isInTrainingSet(col: string, training: Dictionary<boolean>) {
 	return (isPredictedIndex(col) ||
 		isErrorIndex(col) ||
 		isTarget(col) ||
 		training[col]);
 }
 
-export function removeNonTrainingItems(items: Dictionary<any>[], training: Dictionary<Variable>):  Dictionary<any>[] {
+export function removeNonTrainingItems(items: TargetRow[], training: Dictionary<boolean>):  TargetRow[] {
 	return _.map(items, item => {
-		const row = {};
+		const row = {
+			_target: item._target
+		};
 		_.forIn(item, (val, col) => {
 			if (isInTrainingSet(col, training)) {
 				row[col] = val;
@@ -44,7 +46,7 @@ export function removeNonTrainingItems(items: Dictionary<any>[], training: Dicti
 	});
 }
 
-export function removeNonTrainingFields(fields: Dictionary<FieldInfo>, training: Dictionary<Variable>): Dictionary<FieldInfo> {
+export function removeNonTrainingFields(fields: Dictionary<FieldInfo>, training: Dictionary<boolean>): Dictionary<FieldInfo> {
 	const res: Dictionary<FieldInfo> = {};
 	_.forIn(fields, (val, col) => {
 		if (isInTrainingSet(col, training)) {

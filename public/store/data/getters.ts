@@ -1,6 +1,6 @@
 import _ from 'lodash';
 import { Variable, Data, DataState, Datasets, VariableSummary, TargetRow } from './index';
-import { Filter } from '../../util/filters';
+import { Filter, EMPTY_FILTER } from '../../util/filters';
 import { Dictionary } from '../../util/dict';
 import { getPredictedIndex, getErrorIndex } from '../../util/data';
 import { FieldInfo, Range } from './index';
@@ -85,6 +85,7 @@ export const getters = {
 				if (index === -1) {
 					filters.push({
 						name: variable,
+						type: EMPTY_FILTER,
 						enabled: false
 					});
 				} else {

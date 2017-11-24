@@ -13,7 +13,7 @@
 
 import _ from 'lodash';
 import Facets from '../components/Facets';
-import { decodeFilters, updateFilter, getFilterType, isDisabled, CATEGORICAL_FILTER, NUMERICAL_FILTER } from '../util/filters';
+import { decodeFiltersDictionary, updateFilter, getFilterType, isDisabled, Filter, CATEGORICAL_FILTER, NUMERICAL_FILTER, EMPTY_FILTER } from '../util/filters';
 import { createRouteEntryFromRoute } from '../util/routes';
 import { PipelineInfo, PipelineState } from '../store/pipelines/index';
 import { Dictionary } from '../util/dict';
@@ -68,11 +68,13 @@ export default Vue.extend({
 					if (group.key !== activeResult.name) {
 						this.updateFilterRoute({
 							name: group.key,
+							type: EMPTY_FILTER,
 							enabled: false
 						}, null);
 					} else {
 						this.updateFilterRoute({
 							name: group.key,
+							type: EMPTY_FILTER,
 							enabled: true
 						}, activeResult.pipeline.resultId);
 						this.$emit('activePipelineChange', {
@@ -122,6 +124,7 @@ export default Vue.extend({
 				if (group.key !== key) {
 					this.updateFilterRoute({
 						name: group.key,
+						type: EMPTY_FILTER,
 						enabled: false
 					}, null);
 				}
@@ -130,6 +133,7 @@ export default Vue.extend({
 			// enable filter
 			this.updateFilterRoute({
 				name: key,
+				type: EMPTY_FILTER,
 				enabled: true
 			}, completedReq.pipeline.resultId);
 			// let listening components know the acitive pipeline changed
@@ -143,7 +147,7 @@ export default Vue.extend({
 
 		updateGroupCollapses(groups: Group[]): Group[] {
 			const filters = routeGetters.getRouteResultFilters(this.$store);
-			const decoded = decodeFilters(filters);
+			const decoded = decodeFiltersDictionary(filters);
 			return groups.map(group => {
 				// return if disabled
 				group.collapsed = isDisabled(decoded[group.key]);
@@ -153,7 +157,7 @@ export default Vue.extend({
 
 		updateGroupSelections(groups: Group[]): Group[] {
 			const filters = routeGetters.getRouteResultFilters(this.$store);
-			const decoded = decodeFilters(filters);
+			const decoded = decodeFiltersDictionary(filters);
 			return groups.map(group => {
 				// get filter
 				const filter = decoded[group.key];

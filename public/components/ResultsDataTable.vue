@@ -24,9 +24,8 @@
 
 import _ from 'lodash';
 import { getters, actions } from '../store/data/module';
-import { TargetRow } from '../store/data/index';
+import { TargetRow, FieldInfo } from '../store/data/index';
 import { Dictionary } from '../util/dict';
-import { FieldInfo } from '../store/data/getters';
 import { removeNonTrainingItems, removeNonTrainingFields } from '../util/data';
 import { updateTableHighlights } from '../util/highlights';
 import Vue from 'vue';
@@ -50,8 +49,12 @@ export default Vue.extend({
 			const filtered = this.excludeNonTraining ? removeNonTrainingItems(items, training) : items;
 			updateTableHighlights(filtered, highlights);
 			return filtered
-				.filter(this.filterFunc)
-				.map(this.decorateFunc);
+				.filter(item => {
+					return this.filterFunc(item);
+				})
+				.map(item => {
+					return this.decorateFunc(item);
+				});
 		},
 
 		// extract the table field header from the store

@@ -42,7 +42,7 @@ import Vue from 'vue';
 import { getters as dataGetters } from '../store/data/module';
 import { getters as routeGetters } from '../store/route/module';
 import { actions } from '../store/data/module';
-import { SuggestedType } from '../store/data/index';
+import { SuggestedType, FieldInfo } from '../store/data/index';
 import { Dictionary } from '../util/dict';
 import { Filter } from '../util/filters';
 import { updateTableHighlights } from '../util/highlights';

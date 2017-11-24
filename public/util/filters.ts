@@ -1,4 +1,5 @@
 import _ from 'lodash';
+import { Dictionary } from './dict'
 
 /**
  * Empty filter, omitting no documents.
@@ -30,7 +31,7 @@ export interface Filter {
 }
 
 /**
- * Decodes the map of filters from the route into objects.
+ * Decodes the filters from the route string into an array.
  *
  * @param {string} filters - The filters from the route query string.
  *
@@ -42,6 +43,23 @@ export function decodeFilters(filters: string): Filter[] {
 	}
 	return JSON.parse(atob(filters)) as Filter[];
 }
+
+/**
+ * Decodes the filters from the route string into a dictionary.
+ *
+ * @param {string} filters - The filters from the route query string.
+ *
+ * @returns {Dictionary<Filter>} The decoded filter object.
+ */
+export function decodeFiltersDictionary(filters: string): Dictionary<Filter> {
+	const arr = decodeFilters(filters);
+	const map = {};
+	arr.forEach(filter => {
+		map[filter.name] = filter;
+	});
+	return map;
+}
+
 
 /**
  * Encodes the map of filter objects into a map of route query strings.
@@ -97,6 +115,17 @@ export function encodeQueryParams(filters: Filter[]): string {
 	return params.length > 0 ? `?${params.join('&')}` : '';
 }
 
+export function overlayFilter(dst: Filter, src: Filter): Filter {
+	// only override empty filters with typed filters
+	if (dst.type === EMPTY_FILTER && src.type !== EMPTY_FILTER) {
+		dst.type = src.type;
+	}
+	dst.min = src.min;
+	dst.max = src.max;
+	dst.categories = src.categories;
+	return dst;
+}
+
 /**
  * Updates the route with the provided route filter key and value. The function
  * will add, modify, or remove the filter as necessary.
@@ -114,19 +143,14 @@ export function updateFilter(filters: string, filter: Filter): string {
 		return existing.name === filter.name;
 	})
 	if (index === -1) {
-		// does not exist yet
+		// add filter
 		decoded.push(filter)
 		index = decoded.length - 1;
 	} else {
-		// use existing
-		filter = decoded[index];
+		// overlay onto existing
+		const existing = decoded[index];
+		overlayFilter(existing, filter);
 	}
-	// overlay the new filter values
-	_.forIn(filter, (v, k) => {
-		filter[k] = v;
-	});
-	// set the type field
-	filter.type = getFilterType(filter);
 	// empty enabled filter is default, remove it
 	if (getFilterType(filter) === EMPTY_FILTER && isEnabled(filter)) {
 		decoded.splice(index, 1);
@@ -143,15 +167,7 @@ export function updateFilter(filters: string, filter: Filter): string {
  * @returns {string} The filter type.
  */
 export function getFilterType(filter: Filter): string {
-	if (filter) {
-		if (_.has(filter, 'categories')) {
-			return CATEGORICAL_FILTER;
-		}
-		if (_.has(filter, 'min') && _.has(filter, 'max')) {
-			return NUMERICAL_FILTER;
-		}
-	}
-	return EMPTY_FILTER;
+	return (filter) ? filter.type : EMPTY_FILTER;
 }
 
 /**

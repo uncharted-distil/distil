@@ -44,10 +44,10 @@ type VariableFilter struct {
 // NewNumericalFilter instantiates a numerical filter.
 func NewNumericalFilter(name string, min float64, max float64) *VariableFilter {
 	return &VariableFilter{
-		Name:    name,
-		Type:    NumericalFilter,
-		Min:     &min,
-		Max:     &max,
+		Name: name,
+		Type: NumericalFilter,
+		Min:  &min,
+		Max:  &max,
 	}
 }
 
@@ -64,8 +64,8 @@ func NewCategoricalFilter(name string, categories []string) *VariableFilter {
 // NewEmptyFilter instantiates an empty filter.
 func NewEmptyFilter(name string) *VariableFilter {
 	return &VariableFilter{
-		Name:    name,
-		Type:    EmptyFilter,
+		Name: name,
+		Type: EmptyFilter,
 	}
 }
 
@@ -83,7 +83,7 @@ func GetFilterVariables(filterParams *FilterParams, variables []*Variable, inclu
 		variableLookup[v.Name] = v
 	}
 
-	fieldList := make([]*Variable, 0)
+	filtered := make([]*Variable, 0)
 	if inclusive {
 		// if inclusive, include all fields except specifically excluded fields
 		excludedFields := make(map[string]bool)
@@ -94,17 +94,17 @@ func GetFilterVariables(filterParams *FilterParams, variables []*Variable, inclu
 		}
 		for _, v := range variables {
 			if !excludedFields[v.Name] {
-				fieldList = append(fieldList, v)
+				filtered = append(filtered, v)
 			}
 		}
 	} else {
 		// if exclusive, exclude all fields except specifically included fields
 		for _, f := range filterParams.Filters {
-			fieldList = append(fieldList, variableLookup[f.Name])
+			filtered = append(filtered, variableLookup[f.Name])
 		}
 	}
 
-	return fieldList
+	return filtered
 }
 
 // ParseFilterParamsURL parses filter parameters out of a url.Values object.

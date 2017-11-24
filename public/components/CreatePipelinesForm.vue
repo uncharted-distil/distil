@@ -24,7 +24,6 @@ import { getters as routeGetters } from '../store/route/module';
 import { actions as pipelineActions } from '../store/pipelines/module';
 import { getters as appGetters } from '../store/app/module';
 import { Variable } from '../store/data/index';
-import { Dictionary } from '../util/dict';
 import { Filter } from '../util/filters';
 import Vue from 'vue';
 

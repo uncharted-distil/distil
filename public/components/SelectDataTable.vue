@@ -44,7 +44,7 @@ import _ from 'lodash';
 import Vue from 'vue';
 import { getters as dataGetters, actions } from '../store/data/module';
 import { Dictionary } from '../util/dict';
-import { FieldInfo } from '../store/data/getters';
+import { FieldInfo } from '../store/data/index';
 import { Filter } from '../util/filters';
 import { getters as routeGetters } from '../store/route/module';
 import { updateTableHighlights } from '../util/highlights';

@@ -6,7 +6,6 @@ import { ActionContext } from 'vuex';
 import { DistilState } from '../store';
 import { mutations } from './module';
 import { getWebSocketConnection } from '../../util/ws';
-import { Dictionary } from '../../util/dict';
 import { Filter } from '../../util/filters';
 
 // TODO: move this somewhere more appropriate.
@@ -33,13 +32,13 @@ interface Result {
 	createdTime: number;
 	progress: string;
 	scores: Score[];
-	filters: Filter[];
 }
 
 interface PipelineResponse {
 	requestId: string;
 	dataset: string;
 	features: Feature[];
+	filters: Filter[];
 	results: Result[];
 }
 
@@ -65,8 +64,8 @@ export const actions = {
 		return axios.get(`/distil/session/${sessionId}`)
 		.then(response => {
 			if (response.data.pipelines) {
-				const pipelineResponse  = response.data.pipelines as PipelineResponse[];
-				pipelineResponse.forEach((pipeline) => {
+				const pipelineResponse = response.data.pipelines as PipelineResponse[];
+				pipelineResponse.forEach(pipeline => {
 					// determine the target feature for this request
 					let targetFeature = '';
 					pipeline.features.forEach((feature) => {
@@ -96,7 +95,7 @@ export const actions = {
 									output: '',
 									scores: res.scores
 								},
-								filters: res.filters
+								filters: pipeline.filters
 							});
 						}
 					});

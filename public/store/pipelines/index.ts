@@ -21,7 +21,7 @@ export interface PipelineInfo {
 	pipeline?: PipelineOutput;
 	timestamp: number;
 	dataset: string;
-	filters: Filter;
+	filters: Filter[];
 }
 
 export interface PipelineState {

@@ -1,5 +1,4 @@
 import { decodeFilters, Filter } from '../../util/filters';
-import { Dictionary } from '../../util/dict';
 import { Route } from 'vue-router';
 
 export const getters = {
