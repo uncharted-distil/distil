@@ -53,9 +53,9 @@ func (s *Storage) buildFilteredQueryWhere(dataset string, filterParams *model.Fi
 	params := make([]interface{}, 0)
 	wheres := make([]string, 0)
 
-	for i, filter := range filterParams.Filters {
+	for _, filter := range filterParams.Filters {
 		if filter.Type == model.NumericalFilter {
-			where := fmt.Sprintf("\"%s\" >= $%d AND \"%s\" <= $%d", filter.Name, i*2+1, filter.Name, i*2+2)
+			where := fmt.Sprintf("\"%s\" >= $%d AND \"%s\" <= $%d", filter.Name, len(params)+1, filter.Name, len(params)+2)
 			wheres = append(wheres, where)
 			params = append(params, *filter.Min)
 			params = append(params, *filter.Max)
@@ -64,11 +64,11 @@ func (s *Storage) buildFilteredQueryWhere(dataset string, filterParams *model.Fi
 
 	for _, filter := range filterParams.Filters {
 		if filter.Type == model.CategoricalFilter {
-			categories := make([]string, len(filter.Categories))
-			baseParam := len(params) + 1
-			for j := range filter.Categories {
-				categories[j] = fmt.Sprintf("$%d", baseParam+j)
-				params = append(params, filter.Categories[j])
+			categories := make([]string, 0)
+			offset := len(params) + 1
+			for i, category := range filter.Categories {
+				categories = append(categories, fmt.Sprintf("$%d", offset+i))
+				params = append(params, category)
 			}
 			where := fmt.Sprintf("\"%s\" IN (%s)", filter.Name, strings.Join(categories, ", "))
 			wheres = append(wheres, where)

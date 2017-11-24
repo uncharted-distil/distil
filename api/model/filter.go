@@ -2,6 +2,7 @@ package model
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/url"
 	"sort"
 	"strconv"
@@ -23,6 +24,13 @@ const (
 	EmptyFilter = "empty"
 )
 
+// FilterParams defines the set of numeric range and categorical filters. Variables
+// with no range or category filters are also allowed.
+type FilterParams struct {
+	Size    int       `json:"size"`
+	Filters []*Filter `json:"filters"`
+}
+
 // FilteredData provides the metadata and raw data values that match a supplied
 // input filter.
 type FilteredData struct {
@@ -32,8 +40,8 @@ type FilteredData struct {
 	Values  [][]interface{} `json:"values"`
 }
 
-// VariableFilter defines a variable filter.
-type VariableFilter struct {
+// Filter defines a variable filter.
+type Filter struct {
 	Name       string   `json:"name"`
 	Type       string   `json:"type"`
 	Min        *float64 `json:"min"`
@@ -42,8 +50,8 @@ type VariableFilter struct {
 }
 
 // NewNumericalFilter instantiates a numerical filter.
-func NewNumericalFilter(name string, min float64, max float64) *VariableFilter {
-	return &VariableFilter{
+func NewNumericalFilter(name string, min float64, max float64) *Filter {
+	return &Filter{
 		Name: name,
 		Type: NumericalFilter,
 		Min:  &min,
@@ -52,9 +60,9 @@ func NewNumericalFilter(name string, min float64, max float64) *VariableFilter {
 }
 
 // NewCategoricalFilter instantiates a categorical filter.
-func NewCategoricalFilter(name string, categories []string) *VariableFilter {
+func NewCategoricalFilter(name string, categories []string) *Filter {
 	sort.Strings(categories)
-	return &VariableFilter{
+	return &Filter{
 		Name:       name,
 		Type:       CategoricalFilter,
 		Categories: categories,
@@ -62,18 +70,11 @@ func NewCategoricalFilter(name string, categories []string) *VariableFilter {
 }
 
 // NewEmptyFilter instantiates an empty filter.
-func NewEmptyFilter(name string) *VariableFilter {
-	return &VariableFilter{
+func NewEmptyFilter(name string) *Filter {
+	return &Filter{
 		Name: name,
 		Type: EmptyFilter,
 	}
-}
-
-// FilterParams defines the set of numeric range and categorical filters.  Variables
-// with no range or category filters are also allowed.
-type FilterParams struct {
-	Size    int
-	Filters []*VariableFilter
 }
 
 // GetFilterVariables builds the filtered list of fields based on the filtering parameters.
@@ -186,7 +187,7 @@ func ParseFilterParamsJSON(raw json.RawMessage) (*FilterParams, error) {
 	// unmarshall from params porition of message
 	err := json.Unmarshal(raw, &filterParams)
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to parse filter params")
+		return nil, errors.Wrap(err, fmt.Sprintf("failed to parse filter params %s", string(raw)))
 	}
 
 	for _, filter := range filterParams.Filters {

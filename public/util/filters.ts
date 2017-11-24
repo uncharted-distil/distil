@@ -30,6 +30,11 @@ export interface Filter {
 	categories?: string[];
 }
 
+export interface FilterParams {
+	filters: Filter[];
+	size?: number;
+}
+
 /**
  * Decodes the filters from the route string into an array.
  *
@@ -70,7 +75,7 @@ export function decodeFiltersDictionary(filters: string): Dictionary<Filter> {
  */
 export function encodeFilters(filters: Filter[]): string {
 	if (_.isEmpty(filters)) {
-		return undefined;
+		return null;
 	}
 	return btoa(JSON.stringify(filters));
 }
@@ -120,9 +125,10 @@ export function overlayFilter(dst: Filter, src: Filter): Filter {
 	if (dst.type === EMPTY_FILTER && src.type !== EMPTY_FILTER) {
 		dst.type = src.type;
 	}
-	dst.min = src.min;
-	dst.max = src.max;
-	dst.categories = src.categories;
+	dst.enabled = _.defaultTo(src.enabled, dst.enabled);
+	dst.min = _.defaultTo(src.min, dst.min);
+	dst.max = _.defaultTo(src.max, dst.max);
+	dst.categories = _.defaultTo(src.categories, dst.categories);
 	return dst;
 }
 
@@ -142,19 +148,24 @@ export function updateFilter(filters: string, filter: Filter): string {
 	let index = _.findIndex(decoded, existing => {
 		return existing.name === filter.name;
 	})
+
+	let target = null;
 	if (index === -1) {
 		// add filter
-		decoded.push(filter)
+		target = filter;
+		decoded.push(filter);
 		index = decoded.length - 1;
 	} else {
 		// overlay onto existing
-		const existing = decoded[index];
-		overlayFilter(existing, filter);
+		target = decoded[index];
+		overlayFilter(target, filter);
 	}
+
 	// empty enabled filter is default, remove it
-	if (getFilterType(filter) === EMPTY_FILTER && isEnabled(filter)) {
+	if (getFilterType(target) === EMPTY_FILTER && isEnabled(target)) {
 		decoded.splice(index, 1);
 	}
+
 	// encode the filters back into a url string
 	return encodeFilters(decoded);
 }

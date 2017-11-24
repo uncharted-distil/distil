@@ -125,6 +125,7 @@ func (s *Storage) PersistRequestFeature(requestID string, featureName string, fe
 // PersistRequestFilters persists request filters information to Postgres.
 func (s *Storage) PersistRequestFilters(requestID string, filters *model.FilterParams) error {
 	sql := fmt.Sprintf("INSERT INTO %s (request_id, feature_name, filter_type, filter_min, filter_max, filter_categories) VALUES ($1, $2, $3, $4, $5, $6);", filterTableName)
+
 	for _, filter := range filters.Filters {
 		switch filter.Type {
 		case model.NumericalFilter:

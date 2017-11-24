@@ -11,7 +11,7 @@ import (
 func TestParseFilterParameters(t *testing.T) {
 	expected := model.FilterParams{
 		Size: 123,
-		Filters: []*model.VariableFilter{
+		Filters: []*model.Filter{
 			model.NewNumericalFilter("feature_a", 0, 100),
 			model.NewNumericalFilter("feature_b", 5, 500),
 			model.NewCategoricalFilter("feature_c", []string{"alpha", "bravo", "charlie"}),

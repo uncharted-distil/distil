@@ -12,13 +12,13 @@ import (
 func TestDatasetHashEqual(t *testing.T) {
 	filterParams0 := model.FilterParams{
 		Size: 0,
-		Filters: []*model.VariableFilter{
+		Filters: []*model.Filter{
 			model.NewNumericalFilter("feature_a", 0, 100),
 		},
 	}
 	filterParams1 := model.FilterParams{
 		Size: 0,
-		Filters: []*model.VariableFilter{
+		Filters: []*model.Filter{
 			model.NewNumericalFilter("feature_a", 0, 100),
 		},
 	}
@@ -31,13 +31,13 @@ func TestDatasetHashEqual(t *testing.T) {
 func TestDatasetHashNotEqual(t *testing.T) {
 	filterParams0 := model.FilterParams{
 		Size: 0,
-		Filters: []*model.VariableFilter{
+		Filters: []*model.Filter{
 			model.NewNumericalFilter("feature_a", 0, 100),
 		},
 	}
 	filterParams1 := model.FilterParams{
 		Size: 1,
-		Filters: []*model.VariableFilter{
+		Filters: []*model.Filter{
 			model.NewNumericalFilter("feature_a", 0, 100),
 		},
 	}
@@ -109,7 +109,7 @@ func TestPersistFilteredData(t *testing.T) {
 
 	// Stubbed out params - not actually applied to stub data
 	filterParams := &model.FilterParams{
-		Filters: []*model.VariableFilter{
+		Filters: []*model.Filter{
 			model.NewNumericalFilter("int_a", 0, 100),
 			model.NewNumericalFilter("float_b", 5.0, 500.0),
 		},
@@ -130,7 +130,7 @@ func TestPersistFilteredData(t *testing.T) {
 
 	// Verify that changed params results in a new file being used
 	filterParamsMod := &model.FilterParams{
-		Filters: []*model.VariableFilter{
+		Filters: []*model.Filter{
 			model.NewNumericalFilter("int_a", 0, 100),
 			model.NewNumericalFilter("float_b", 10.0, 11.0),
 		},

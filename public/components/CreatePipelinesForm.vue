@@ -24,7 +24,7 @@ import { getters as routeGetters } from '../store/route/module';
 import { actions as pipelineActions } from '../store/pipelines/module';
 import { getters as appGetters } from '../store/app/module';
 import { Variable } from '../store/data/index';
-import { Filter } from '../util/filters';
+import { FilterParams } from '../util/filters';
 import Vue from 'vue';
 
 export default Vue.extend({
@@ -45,8 +45,10 @@ export default Vue.extend({
 		variables(): Variable[] {
 			return dataGetters.getVariables(this.$store);
 		},
-		selectedFilters(): Filter[] {
-			return dataGetters.getSelectedFilters(this.$store);
+		selectedFilters(): FilterParams {
+			return {
+				filters: dataGetters.getSelectedFilters(this.$store)
+			};
 		},
 		// gets the metrics that are used to score predictions against the user selected variable
 		metrics(): string[] {
