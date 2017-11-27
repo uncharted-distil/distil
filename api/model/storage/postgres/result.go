@@ -141,25 +141,13 @@ func (s *Storage) parseFilteredResults(dataset string, rows *pgx.Rows, target *m
 	}
 
 	// Parse the columns.
-	// Column 0 is the result column so need to change the type.
 	if rows != nil {
-		var targetActual int
 		fields := rows.FieldDescriptions()
 		columns := make([]string, len(fields))
 		types := make([]string, len(fields))
 		for i := 0; i < len(fields); i++ {
 			columns[i] = fields[i].Name
 			types[i] = fields[i].DataTypeName
-			if fields[i].Name == target.Name {
-				targetActual = i
-			}
-		}
-		types[0] = target.Type
-		result.Columns = columns
-		result.Types = types
-		if model.IsNumerical(target.Type) {
-			result.Columns = append(result.Columns, "error")
-			result.Types = append(result.Types, target.Type)
 		}
 
 		// Parse the row data.
@@ -168,25 +156,9 @@ func (s *Storage) parseFilteredResults(dataset string, rows *pgx.Rows, target *m
 			if err != nil {
 				return nil, errors.Wrap(err, "Unable to extract fields from query result")
 			}
-			parsedTargetValue, err := s.parseVariableValue(columnValues[0].(string), target)
-			if err != nil {
-				return nil, errors.Wrap(err, "Unable to parse result variable")
-			}
-
-			// compute the absolute residual value
-			var residualError error
-			if model.IsNumerical(target.Type) {
-				// Compute the residual between the predicted value and the actual value.
-				residual, err := s.calculateAbsResidual(parsedTargetValue, targetActual)
-				columnValues = append(columnValues, residual)
-				residualError = err
-			}
-			if residualError != nil {
-				log.Errorf("error(s) during residual compuation - %+v", residualError)
-			}
-
-			columnValues[0] = parsedTargetValue
 			result.Values = append(result.Values, columnValues)
+			result.Columns = columns
+			result.Types = types
 		}
 	} else {
 		result.Columns = make([]string, 0)
@@ -246,8 +218,16 @@ func (s *Storage) FetchFilteredResults(dataset string, index string, resultURI s
 		return nil, errors.Wrap(err, "Could not build where clause")
 	}
 
-	query := fmt.Sprintf("SELECT value as %s_res, %s FROM %s as res inner join %s as data on data.\"%s\" = res.index WHERE result_id = $%d AND target = $%d",
-		targetName, fields, datasetResult, dataset, d3mIndexFieldName, len(params)+1, len(params)+2)
+	// If our results are numerical we need to compute residuals and store them in a column called 'error'
+	residuals := ""
+	if model.IsNumerical(variable.Type) {
+		residuals = fmt.Sprintf("cast(value as double precision) - cast(\"%s\" as double precision)as error,", targetName)
+	}
+
+	query := fmt.Sprintf(
+		"SELECT cast(value as double precision) as %s_res,%s %s FROM %s as res inner join %s as data on data.\"%s\" = res.index "+
+			"WHERE result_id = $%d AND target = $%d",
+		targetName, residuals, fields, datasetResult, dataset, d3mIndexFieldName, len(params)+1, len(params)+2)
 	params = append(params, resultURI)
 	params = append(params, targetName)
 
@@ -414,18 +394,6 @@ func (s *Storage) FetchResultsSummary(dataset string, resultURI string, index st
 	}
 
 	return nil, errors.Errorf("variable %s of type %s does not support summary", variable.Name, variable.Type)
-}
-
-func (s *Storage) calculateAbsResidual(measured interface{}, predicted interface{}) (float64, error) {
-	flMeasured, err := toFloat(measured)
-	if err != nil {
-		return 0, err
-	}
-	flPredicted, err := toFloat(predicted)
-	if err != nil {
-		return 0, err
-	}
-	return math.Abs(flMeasured - flPredicted), nil
 }
 
 func toFloat(value interface{}) (float64, error) {

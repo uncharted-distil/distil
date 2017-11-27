@@ -192,7 +192,7 @@ export const getters = {
 				const targetRow = <TargetRow>row;
 				targetRow._target = { truth: targetName, predicted: resultData.columns[predictedIdx] };
 				if (errorIdx >= 0) {
-					targetRow._target.error = resultData.columns[errorIdx];
+					targetRow._target.error = Math.abs(parseFloat(resultData.columns[errorIdx])).toString();
 				}
 				return targetRow;
 			});
