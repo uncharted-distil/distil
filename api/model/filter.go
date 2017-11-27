@@ -153,6 +153,9 @@ func ParseFilterParamsURL(values url.Values) (*FilterParams, error) {
 				if err != nil {
 					return nil, errors.Wrapf(err, "failed to parse range max from [%s, %v]", key, value)
 				}
+				if max < min {
+					return nil, errors.Errorf("max must be >= min")
+				}
 				filterParams.Filters = append(filterParams.Filters, NewNumericalFilter(key, min, max))
 			} else if filterType == CategoricalFilter {
 				// categorical/ordinal should have type,category, category,...,category as args
@@ -203,7 +206,9 @@ func ParseFilterParamsJSON(raw json.RawMessage) (*FilterParams, error) {
 				filter.Max == nil {
 				return nil, errors.New("numerical filter missing min/max value")
 			}
-
+			if *filter.Max < *filter.Min {
+				return nil, errors.Errorf("max must be >= min")
+			}
 		case CategoricalFilter:
 			// categorical
 			if filter.Categories == nil {

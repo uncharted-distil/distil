@@ -54,16 +54,15 @@ func (s *Storage) buildFilteredQueryWhere(dataset string, filterParams *model.Fi
 	wheres := make([]string, 0)
 
 	for _, filter := range filterParams.Filters {
-		if filter.Type == model.NumericalFilter {
+		switch filter.Type {
+		case model.NumericalFilter:
+			// numerical
 			where := fmt.Sprintf("\"%s\" >= $%d AND \"%s\" <= $%d", filter.Name, len(params)+1, filter.Name, len(params)+2)
 			wheres = append(wheres, where)
 			params = append(params, *filter.Min)
 			params = append(params, *filter.Max)
-		}
-	}
-
-	for _, filter := range filterParams.Filters {
-		if filter.Type == model.CategoricalFilter {
+		case model.CategoricalFilter:
+			// categorical
 			categories := make([]string, 0)
 			offset := len(params) + 1
 			for i, category := range filter.Categories {
