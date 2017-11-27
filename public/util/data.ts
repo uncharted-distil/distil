@@ -38,7 +38,7 @@ export function removeNonTrainingItems(items: TargetRow[], training: Dictionary<
 			_target: item._target
 		};
 		_.forIn(item, (val, col) => {
-			if (isInTrainingSet(col, training)) {
+			if (isInTrainingSet(col.toLowerCase(), training)) {
 				row[col] = val;
 			}
 		});
@@ -49,7 +49,7 @@ export function removeNonTrainingItems(items: TargetRow[], training: Dictionary<
 export function removeNonTrainingFields(fields: Dictionary<FieldInfo>, training: Dictionary<boolean>): Dictionary<FieldInfo> {
 	const res: Dictionary<FieldInfo> = {};
 	_.forIn(fields, (val, col) => {
-		if (isInTrainingSet(col, training)) {
+		if (isInTrainingSet(col.toLowerCase(), training)) {
 			res[col] = val;
 		}
 	});
