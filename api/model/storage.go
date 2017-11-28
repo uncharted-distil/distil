@@ -16,6 +16,7 @@ type DataStorage interface {
 	FetchResults(dataset string, index string, resultURI string) (*FilteredData, error)
 	FetchFilteredResults(dataset string, index string, resultURI string, filterParams *FilterParams, inclusive bool) (*FilteredData, error)
 	FetchResultsSummary(dataset string, resultURI string, index string) (*Histogram, error)
+	FetchResidualsSummary(resultDataset string, dataset string, resultURI string, index string) (*Histogram, error)
 
 	// Dataset manipulation
 	SetDataType(dataset string, index string, field string, fieldType string) error
