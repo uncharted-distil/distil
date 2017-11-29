@@ -189,10 +189,11 @@ export const getters = {
 					row[colName] = colValues;
 				}
 
+				// display predicted error info
 				const targetRow = <TargetRow>row;
 				targetRow._target = { truth: targetName, predicted: resultData.columns[predictedIdx] };
 				if (errorIdx >= 0) {
-					targetRow._target.error = Math.abs(parseFloat(resultData.columns[errorIdx])).toString();
+					targetRow._target.error = resultData.columns[errorIdx];
 				}
 				return targetRow;
 			});
