@@ -20,7 +20,6 @@ func ResidualsSummaryHandler(ctor model.PipelineStorageCtor, ctorData model.Data
 	return func(w http.ResponseWriter, r *http.Request) {
 		// extract route parameters
 		index := pat.Param(r, "index")
-		resultsDataset := pat.Param(r, "results-dataset")
 		dataset := pat.Param(r, "dataset")
 		resultUUID, err := url.PathUnescape(pat.Param(r, "results-uuid"))
 		if err != nil {
@@ -47,7 +46,7 @@ func ResidualsSummaryHandler(ctor model.PipelineStorageCtor, ctorData model.Data
 			resultURI = res.ResultURI
 		}
 
-		histogram, err := clientData.FetchResidualsSummary(resultsDataset, dataset, resultURI, index)
+		histogram, err := clientData.FetchResidualsSummary(dataset, resultURI, index)
 		if err != nil {
 			handleError(w, err)
 			return

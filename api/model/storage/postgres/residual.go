@@ -8,27 +8,28 @@ import (
 )
 
 // FetchResidualsSummary fetches a histogram of the residuals associated with a set of numerical predictions.
-func (s *Storage) FetchResidualsSummary(resultDataset string, dataset string, resultURI string, index string) (*model.Histogram, error) {
-	datasetResult := s.getResultTable(resultDataset)
+func (s *Storage) FetchResidualsSummary(dataset string, resultURI string, index string) (*model.Histogram, error) {
+	datasetResult := s.getResultTable(dataset)
 	targetName, err := s.getResultTargetName(datasetResult, resultURI, index)
 	if err != nil {
 		return nil, err
 	}
 
-	variable, err := s.getResultTargetVariable(resultDataset, index, targetName)
+	variable, err := s.getResultTargetVariable(dataset, index, targetName)
 	if err != nil {
 		return nil, err
 	}
 
+	// Just return a nil in the case where we were asked to return residuals for a non-numeric variable.
 	if model.IsNumerical(variable.Type) {
 		// fetch numeric histograms
-		residuals, err := s.fetchResidualsHistogram(resultURI, datasetResult, dataset, variable)
+		residuals, err := s.fetchResidualsHistogram(resultURI, dataset, variable)
 		if err != nil {
 			return nil, err
 		}
 		return residuals, nil
 	}
-	return nil, errors.Errorf("variable %s of type %s does not support summary", variable.Name, variable.Type)
+	return nil, nil
 }
 
 func getErrorTyped(variableName string) string {
@@ -51,9 +52,9 @@ func (s *Storage) getResidualsHistogramAggQuery(extrema *model.Extrema, variable
 	return histogramAggName, bucketQueryString, histogramQueryString
 }
 
-func getResultJoin(resultDataset string, dataset string) string {
+func getResultJoin(dataset string) string {
 	// FROM clause to join result and base data on d3mIdex value
-	return fmt.Sprintf("%s as res inner join %s as data on data.\"d3mIndex\" = res.index", resultDataset, dataset)
+	return fmt.Sprintf("%s_result as res inner join %s as data on data.\"d3mIndex\" = res.index", dataset, dataset)
 }
 
 func getResidualsMinMaxAggsQuery(variable *model.Variable, resultVariable *model.Variable) string {
@@ -70,13 +71,13 @@ func getResidualsMinMaxAggsQuery(variable *model.Variable, resultVariable *model
 	return queryPart
 }
 
-func (s *Storage) fetchResidualsExtrema(resultURI string, resultDataset string, dataset string, variable *model.Variable,
+func (s *Storage) fetchResidualsExtrema(resultURI string, dataset string, variable *model.Variable,
 	resultVariable *model.Variable) (*model.Extrema, error) {
 	// add min / max aggregation
 	aggQuery := getResidualsMinMaxAggsQuery(variable, resultVariable)
 
 	// from clause to join result and base data
-	fromClause := getResultJoin(resultDataset, dataset)
+	fromClause := getResultJoin(dataset)
 
 	// create a query that does min and max aggregations for each variable
 	queryString := fmt.Sprintf("SELECT %s FROM %s WHERE result_id = $1 AND target = $2;", aggQuery, fromClause)
@@ -93,14 +94,14 @@ func (s *Storage) fetchResidualsExtrema(resultURI string, resultDataset string, 
 	return s.parseExtrema(res, variable)
 }
 
-func (s *Storage) fetchResidualsHistogram(resultURI string, resultDataset string, dataset string, variable *model.Variable) (*model.Histogram, error) {
+func (s *Storage) fetchResidualsHistogram(resultURI string, dataset string, variable *model.Variable) (*model.Histogram, error) {
 	resultVariable := &model.Variable{
 		Name: "value",
 		Type: model.TextType,
 	}
 
 	// need the extrema to calculate the histogram interval
-	extrema, err := s.fetchResidualsExtrema(resultURI, resultDataset, dataset, variable, resultVariable)
+	extrema, err := s.fetchResidualsExtrema(resultURI, dataset, variable, resultVariable)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to fetch result variable extrema for summary")
 	}
@@ -108,7 +109,7 @@ func (s *Storage) fetchResidualsHistogram(resultURI string, resultDataset string
 	// size is derived from the min/max and desired bucket count.
 	histogramName, bucketQuery, histogramQuery := s.getResidualsHistogramAggQuery(extrema, variable, resultVariable)
 
-	fromClause := getResultJoin(resultDataset, dataset)
+	fromClause := getResultJoin(dataset)
 
 	// Create the complete query string.
 	query := fmt.Sprintf(`
