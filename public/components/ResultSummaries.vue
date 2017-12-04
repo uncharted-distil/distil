@@ -143,7 +143,7 @@ export default Vue.extend({
 			const targetSummary = _.find(varSummaries, v => _.toLower(v.name) === _.toLower(targetVariable));
 			// Create a facet for it - this will act as a basis of comparison for the result sets
 			if (!_.isEmpty(targetSummary)) {
-				return createGroups([targetSummary], false, false, '');
+				return createGroups([targetSummary], false, false);
 			}
 			return [];
 		},

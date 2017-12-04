@@ -84,6 +84,10 @@ export const getters = {
 		return state.resultsSummaries;
 	},
 
+	getResidualsSummaries(state: DataState): VariableSummary[] {
+		return state.residualSummaries;
+	},
+
 	getSelectedFilters(state: DataState, getters: any): FilterMap {
 		const training = getters.getRouteTrainingVariables as string;
 		if (training) {

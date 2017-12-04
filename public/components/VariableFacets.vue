@@ -147,7 +147,7 @@ export default Vue.extend({
 			}
 
 			// create the groups
-			let groups = createGroups(filtered, this.enableGroupCollapse, this.enableFacetFiltering, '');
+			let groups = createGroups(filtered, this.enableGroupCollapse, this.enableFacetFiltering);
 
 			// update collapsed state
 			groups = this.updateGroupCollapses(groups);

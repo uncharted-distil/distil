@@ -1,12 +1,16 @@
 <template>
 	<div class='result-facets'>
-		<facets class="result-facets-container"
-			:groups="groups"
-			:highlights="highlights"
+		<result-group class="result-group-container" :key="group.name" v-for="group in resultGroups"
+			:name="group.groupName"
+			:result-summary="group.resultSummary"
+			:residuals-summary="group.residualsSummary">
 			:html="html"
+			:selectedId="selectedId"
+			<!--:highlights="highlights"
 			v-on:expand="onExpand"
 			v-on:collapse="onCollapse"
-			v-on:range-change="onRangeChange"></facets>
+			v-on:range-change="onRangeChange"> -->
+			</result-group>
 	</div>
 </template>
 
@@ -14,24 +18,33 @@
 
 import _ from 'lodash';
 import Facets from '../components/Facets';
+import ResultGroup from '../components/ResultGroup.vue';
 import { decodeFilters, updateFilter, getFilterType, isDisabled,
 	CATEGORICAL_FILTER, NUMERICAL_FILTER, NumericalFilter, CategoricalFilter } from '../util/filters';
 import { createRouteEntryFromRoute } from '../util/routes';
 import { PipelineInfo, PipelineState } from '../store/pipelines/index';
+import { VariableSummary } from '../store/data/index';
 import { Dictionary } from '../store/data/index';
 import { getters as dataGetters} from '../store/data/module';
 import { getters as routeGetters} from '../store/route/module';
 import { createGroups, Group, NumericalFacet, CategoricalFacet } from '../util/facets';
-import { getPipelineResults, getPipelineResultsOkay } from '../util/pipelines';
+import { getPipelineResult, getPipelineResults, getPipelineResultsOkay } from '../util/pipelines';
 import 'font-awesome/css/font-awesome.css';
 import '../styles/spinner.css';
 import Vue from 'vue';
+
+interface SummaryGroup {
+	groupName: string;
+	resultSummary: VariableSummary;
+	residualsSummary: VariableSummary;
+}
 
 export default Vue.extend({
 	name: 'result-facets',
 
 	components: {
-		Facets
+		Facets,
+		ResultGroup
 	},
 
 	props: {
@@ -40,10 +53,49 @@ export default Vue.extend({
 		'html': String
 	},
 
+	data() {
+		return {
+			selectedId: ''
+		};
+	},
+
+	created() {
+		this.$on('selected', (pipelineId: string) => {
+			this.selectedId = pipelineId;
+		});
+	},
+
 	computed: {
+		resultGroups(): SummaryGroup[] {
+			// Generate pairs of residuals and results for each pipeline.
+			const resultSummaries = dataGetters.getResultsSummaries(this.$store);
+			const residualsSummaries = dataGetters.getResidualsSummaries(this.$store);
+
+			const requestId = routeGetters.getRouteCreateRequestId(this.$store);
+
+			const summaryGroups = resultSummaries.map(s => {
+				const residuals = _.find(residualsSummaries, f => s.pipelineId === f.pipelineId);
+				const result = getPipelineResult(this.$store.state.pipelineModule, requestId, s.pipelineId);
+				return {
+					groupName: result.name,
+					resultSummary: s,
+					residualsSummary: residuals
+				};
+			});
+
+			// Sort alphabetically
+			summaryGroups.sort((a, b) => {
+				const textA = a.groupName.toLowerCase();
+				const textB = b.groupName.toLowerCase();
+				return (textA < textB) ? -1 : (textA > textB) ? 1 : 0;
+			});
+
+			return summaryGroups;
+		},
+
 		groups(): Group[] {
 			// create the groups
-			let groups = createGroups(this.variables, true, false, '');
+			let groups = createGroups(this.variables, true, false);
 
 			// sort alphabetically
 			groups.sort((a, b) => {
@@ -54,7 +106,7 @@ export default Vue.extend({
 
 			// find pipeline result with the uri specified in the route and
 			// flag it as the currently active result
-			const requestId = routeGetters.getRouteCreateRequestId(this.$store) as string;
+			const requestId = routeGetters.getRouteCreateRequestId(this.$store);
 			const pipelineResults = getPipelineResultsOkay(<PipelineState>this.$store.state.pipelineModule, requestId) as PipelineInfo[];
 			const activeResult = _.find(pipelineResults, p => {
 				return btoa(p.pipeline.resultId) === routeGetters.getRouteResultId(this.$store);
@@ -90,6 +142,10 @@ export default Vue.extend({
 	},
 
 	methods: {
+		selectionChange(pipelineId: string) {
+			this.selectedId = pipelineId;
+		},
+
 		updateFilterRoute(key: string, values: Dictionary<any>, resultUri: string) {
 
 			// merge the updated filters back into the route query params if set
@@ -206,7 +262,7 @@ button {
 	padding: 8px;
 }
 
-.result-facets-container {
+.result-group-container {
 	overflow-x: hidden;
 	overflow-y: hidden;
 }

@@ -1,6 +1,7 @@
 import _ from 'lodash';
 import Vue from 'vue';
 import { DataState, Variable, Datasets, VariableSummary, Data } from './index';
+import { updateSummaries } from '../../util/data';
 
 export const mutations = {
 
@@ -23,13 +24,8 @@ export const mutations = {
 		state.variableSummaries = summaries;
 	},
 
-	updateVariableSummaries(state: DataState, histogram: VariableSummary) {
-		const index = _.findIndex(state.variableSummaries, elem => elem.name === histogram.name);
-		if (index >= 0) {
-			Vue.set(state.variableSummaries, index, histogram);
-		} else {
-			state.variableSummaries.push(histogram);
-		}
+	updateVariableSummaries(state: DataState, summary: VariableSummary) {
+		updateSummaries(summary, state.variableSummaries, 'name');
 	},
 
 	setResultsSummaries(state: DataState, summaries: VariableSummary[]) {
@@ -37,12 +33,15 @@ export const mutations = {
 	},
 
 	updateResultsSummaries(state: DataState, summary: VariableSummary) {
-		const index = _.findIndex(state.resultsSummaries, r => r.name === summary.name);
-		if (index >= 0) {
-			Vue.set(state.resultsSummaries, index, summary);
-		} else {
-			state.resultsSummaries.push(summary);
-		}
+		updateSummaries(summary, state.resultsSummaries, 'pipelineId');
+	},
+
+	setResidualsSummaries(state: DataState, summaries: VariableSummary[]) {
+		state.residualSummaries = summaries;
+	},
+
+	updateResidualsSummaries(state: DataState, summary: VariableSummary) {
+		updateSummaries(summary, state.residualSummaries, 'pipelineId');
 	},
 
 	// sets the current filtered data into the store
