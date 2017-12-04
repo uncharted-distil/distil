@@ -119,6 +119,10 @@ func (s *Storage) parseVariableValue(value string, variable *model.Variable) (in
 		return strconv.ParseFloat(value, 64)
 	case model.FloatType:
 		return strconv.ParseFloat(value, 64)
+	case model.LongitudeType:
+		return strconv.ParseFloat(value, 64)
+	case model.LatitudeType:
+		return strconv.ParseFloat(value, 64)
 	case model.CategoricalType:
 		fallthrough
 	case model.TextType:
