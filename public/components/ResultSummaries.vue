@@ -191,11 +191,7 @@ export default Vue.extend({
 
 .result-summaries .facet-range,
 .result-summaries .facets-facet-horizontal {
-	height: 55px;
-}
-
-.result-summaries .facets-facet-horizontal-abbreviated {
-	height: 40px;
+	height: 35px;
 }
 
 .result-summaries .facets-facet-base {
