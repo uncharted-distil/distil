@@ -167,6 +167,7 @@ export default Vue.extend({
 	padding:9px;
 	border-style: solid;
 	border-color: #03c6e1;
+    box-shadow: 0 0 10px #03c6e1;
 	border-width: 1px;
 	border-radius: 2px;
 	padding-bottom: 10px;
