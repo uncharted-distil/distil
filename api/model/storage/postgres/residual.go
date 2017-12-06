@@ -7,6 +7,8 @@ import (
 	"github.com/unchartedsoftware/distil/api/model"
 )
 
+const d3mIndex = "d3mIndex"
+
 // FetchResidualsSummary fetches a histogram of the residuals associated with a set of numerical predictions.
 func (s *Storage) FetchResidualsSummary(dataset string, resultURI string, index string) (*model.Histogram, error) {
 	datasetResult := s.getResultTable(dataset)
@@ -54,7 +56,7 @@ func (s *Storage) getResidualsHistogramAggQuery(extrema *model.Extrema, variable
 
 func getResultJoin(dataset string) string {
 	// FROM clause to join result and base data on d3mIdex value
-	return fmt.Sprintf("%s_result as res inner join %s as data on data.\"d3mIndex\" = res.index", dataset, dataset)
+	return fmt.Sprintf("%s_result as res inner join %s as data on data.\"%s\" = res.index", dataset, dataset, d3mIndex)
 }
 
 func getResidualsMinMaxAggsQuery(variable *model.Variable, resultVariable *model.Variable) string {
@@ -67,7 +69,7 @@ func getResidualsMinMaxAggsQuery(variable *model.Variable, resultVariable *model
 
 	// create aggregations
 	queryPart := fmt.Sprintf("MIN(%s) AS \"%s\", MAX(%s) AS \"%s\"", errorTyped, minAggName, errorTyped, maxAggName)
-	// add aggregations
+
 	return queryPart
 }
 
@@ -83,8 +85,6 @@ func (s *Storage) fetchResidualsExtrema(resultURI string, dataset string, variab
 	queryString := fmt.Sprintf("SELECT %s FROM %s WHERE result_id = $1 AND target = $2;", aggQuery, fromClause)
 
 	// execute the postgres query
-	// NOTE: We may want to use the regular Query operation since QueryRow
-	// hides db exceptions.
 	res, err := s.client.Query(queryString, resultURI, variable.Name)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to fetch extrema for result from postgres")

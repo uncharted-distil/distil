@@ -224,7 +224,7 @@ func (s *Storage) FetchFilteredResults(dataset string, index string, resultURI s
 	// If our results are numerical we need to compute residuals and store them in a column called 'error'
 	residuals := ""
 	if model.IsNumerical(variable.Type) {
-		residuals = fmt.Sprintf("cast(value as double precision) - cast(\"%s\" as double precision)as error,", targetName)
+		residuals = fmt.Sprintf("%s as error,", getErrorTyped(variable.Name))
 	}
 
 	query := fmt.Sprintf(
@@ -307,8 +307,6 @@ func (s *Storage) fetchResultExtrema(resultURI string, dataset string, variable 
 	queryString := fmt.Sprintf("SELECT %s FROM %s WHERE result_id = $1 AND target = $2;", aggQuery, dataset)
 
 	// execute the postgres query
-	// NOTE: We may want to use the regular Query operation since QueryRow
-	// hides db exceptions.
 	res, err := s.client.Query(queryString, resultURI, variable.Name)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to fetch extrema for result from postgres")
