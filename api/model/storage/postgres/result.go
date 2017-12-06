@@ -150,6 +150,9 @@ func (s *Storage) parseFilteredResults(dataset string, rows *pgx.Rows, target *m
 			types[i] = fields[i].DataTypeName
 		}
 
+		// Result type provided by DB needs to be overridden with defined target type.
+		types[0] = target.Type
+
 		// Parse the row data.
 		for rows.Next() {
 			columnValues, err := rows.Values()
@@ -225,7 +228,7 @@ func (s *Storage) FetchFilteredResults(dataset string, index string, resultURI s
 	}
 
 	query := fmt.Sprintf(
-		"SELECT cast(value as double precision) as %s_res,%s %s FROM %s as res inner join %s as data on data.\"%s\" = res.index "+
+		"SELECT value as %s_res,%s %s FROM %s as res inner join %s as data on data.\"%s\" = res.index "+
 			"WHERE result_id = $%d AND target = $%d",
 		targetName, residuals, fields, datasetResult, dataset, d3mIndexFieldName, len(params)+1, len(params)+2)
 	params = append(params, resultURI)

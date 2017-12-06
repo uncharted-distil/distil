@@ -51,7 +51,8 @@ export function getSummaries(context: DataContext, endpoint: string, results: Pi
 			pending: true,
 			buckets: [],
 			extrema: {} as any,
-			pipelineId: r.pipelineId
+			pipelineId: r.pipelineId,
+			resultId: ''
 		};
 	});
 	setFunction(context, pendingHistograms);
@@ -61,7 +62,7 @@ export function getSummaries(context: DataContext, endpoint: string, results: Pi
 		const name = nameFunc(result);
 		const feature = result.feature;
 		const pipelineId = result.pipelineId;
-		const resultId = encodeURIComponent(result.pipeline.resultId);
+		const resultId = result.pipeline.resultId;
 		axios.get(`${endpoint}/${resultId}`)
 			.then(response => {
 				// save the histogram data
@@ -74,6 +75,7 @@ export function getSummaries(context: DataContext, endpoint: string, results: Pi
 							buckets: [],
 							extrema: {} as Extrema,
 							pipelineId: pipelineId,
+							resultId: resultId,
 							err: 'No analysis available'
 						}
 					]);
@@ -83,6 +85,7 @@ export function getSummaries(context: DataContext, endpoint: string, results: Pi
 				histogram.name = name;
 				histogram.feature = feature;
 				histogram.pipelineId = pipelineId;
+				histogram.resultId = resultId;
 				updateFunction(context, histogram);
 			})
 			.catch(error => {
@@ -93,6 +96,7 @@ export function getSummaries(context: DataContext, endpoint: string, results: Pi
 						buckets: [],
 						extrema: {} as Extrema,
 						pipelineId: pipelineId,
+						resultId: resultId,
 						err: error
 					}
 				]);

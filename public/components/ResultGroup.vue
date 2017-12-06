@@ -3,12 +3,14 @@
 		@click="click()">
 		{{ name }}
 		<facets class="result-container"
-			:groups="results">
-		</facets>
-		<facets class="residual-container"
-			:groups="residuals"
+			:groups="resultGroups"
 			:highlights="highlights"
-			:html="html">
+			:html="residualHtml">
+		</facets>
+		<facets v-if="residualsGroups.length" class="residual-container"
+			:groups="residualsGroups"
+			:highlights="highlights"
+			:html="resultHtml">
 		</facets>
 	</div>
 </template>
@@ -18,10 +20,15 @@
 // Component that contains a histogram of regression predictions, a histogram of the
 // of prediction-truth residuals, and scoring information.
 
-import { createGroups, Group } from '../util/facets';
 import Facets from '../components/Facets';
+import { createGroups, Group } from '../util/facets';
 import { VariableSummary, Dictionary } from '../store/data/index';
+import { createRouteEntryFromRoute } from '../util/routes';
+import { updateFilter } from '../util/filters';
 import { getters } from '../store/data/module';
+import { getters as routeGetters } from '../store/route/module';
+import { NUMERICAL_FILTER, CATEGORICAL_FILTER, NumericalFilter, CategoricalFilter, getFilterType, decodeFilters } from '../util/filters';
+import { NumericalFacet, CategoricalFacet } from '../util/facets';
 import Vue from 'vue';
 
 export default Vue.extend({
@@ -31,8 +38,8 @@ export default Vue.extend({
 		name: String,
 		resultSummary: Object,
 		residualsSummary: Object,
-		html: String,
-		selectedId: String
+		resultHtml: String,
+		residualHtml: String
 	},
 
 	components: {
@@ -40,12 +47,15 @@ export default Vue.extend({
 	},
 
 	computed: {
-		residuals(): Group[] {
-			return createGroups([<VariableSummary>this.residualsSummary], false, true);
+		residualsGroups(): Group[] {
+			if (this.residuals()) {
+				return createGroups([this.residuals()], false, false);
+			}
+			return [];
 		},
 
-		results(): Group[] {
-			return createGroups([<VariableSummary>this.resultSummary], false, true);
+		resultGroups(): Group[] {
+			return createGroups([this.results()], false, false);
 		},
 
 		highlights(): Dictionary<any> {
@@ -53,21 +63,100 @@ export default Vue.extend({
 		},
 
 		currentClass(): string {
-			return this.resultSummary.pipelineId === this.selectedId ? 'result-group-selected' : 'result-group';
+			const selectedResults = atob(routeGetters.getRouteResultId(this.$store));
+			return (this.results().resultId === selectedResults)
+				? 'result-group-selected result-group' : 'result-group';
 		}
 	},
 
 	methods: {
 		click() {
-			this.$emit('selected', this.residualsSummary.pipelineId);
+			const routeEntry = createRouteEntryFromRoute(this.$route, { resultId: btoa(this.results().resultId) });
+			this.$router.push(routeEntry);
 		},
+
+		results(): VariableSummary {
+			return <VariableSummary>this.resultSummary;
+		},
+
+		residuals(): VariableSummary {
+			return <VariableSummary>this.residualsSummary;
+		},
+
+		updateFilterRoute(key: string, values: Dictionary<any>, resultUri: string) {
+			// merge the updated filters back into the route query params if set
+			const filters = routeGetters.getRouteResultFilters(this.$store);
+			let updatedFilters = filters;
+			if (key && values) {
+				updatedFilters = updateFilter(filters, key, values);
+			}
+
+			const entry = createRouteEntryFromRoute(routeGetters.getRoute(this.$store), {
+				resultId: resultUri ? btoa(resultUri) : routeGetters.getRouteResultId(this.$store),
+				results: updatedFilters
+			});
+
+			this.$router.push(entry);
+		},
+
+		onRangeChange(key: string, value: { from: { label: string[] }, to: { label: string[] } }) {
+			// set range filter
+			this.updateFilterRoute(key, {
+					enabled: true,
+					min: parseFloat(value.from.label[0]),
+					max: parseFloat(value.to.label[0])
+				}, null);
+		},
+
+		updateGroupSelections(groups: Group[]): Group[] {
+			const filters = routeGetters.getRouteResultFilters(this.$store);
+			const decoded = decodeFilters(filters);
+			return groups.map(group => {
+				// get filter
+				const filter = decoded[group.key];
+				switch (getFilterType(filter)) {
+					case NUMERICAL_FILTER:
+						// add selection to facets
+						group.facets.forEach(facet => {
+							if ((<NumericalFacet>facet).selection) {
+								(<NumericalFacet>facet).selection = {
+									// NOTE: the `from` / `to` values MUST be strings.
+									range: {
+										from: `${(<NumericalFilter>filter).min}`,
+										to: `${(<NumericalFilter>filter).max}`,
+									}
+								};
+							}
+						});
+						break;
+
+					case CATEGORICAL_FILTER:
+						// add selection to facets
+						group.facets.forEach(facet => {
+							if ((<CategoricalFacet>facet).value) {
+								const categoricalFacet = <CategoricalFacet>facet;
+								if ((<CategoricalFilter>filter).categories.indexOf(categoricalFacet.value) !== -1) {
+									// select
+									categoricalFacet.selected = {
+										count: categoricalFacet.count
+									};
+								} else {
+									delete categoricalFacet.selected;
+								}
+							}
+						});
+						break;
+				}
+				return group;
+			});
+		}
 	}
 });
 </script>
 
 <style>
 .result-group {
-	margin-left: 5px;
+	margin: 5px;
 	padding: 10px;
 	border-bottom-style: solid;
 	border-bottom-color:lightgray;

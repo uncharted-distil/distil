@@ -33,6 +33,7 @@ export interface VariableSummary {
 	buckets: Bucket[];
 	extrema: Extrema;
 	pipelineId?: string;
+	resultId?: string;
 	type?: string;
 	err?: string;
 	pending?: boolean;

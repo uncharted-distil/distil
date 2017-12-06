@@ -24,13 +24,7 @@
 			:groups="targetSummaries"
 			:highlights="highlights"></facets>
 		<h6 class="nav-link">Predicted</h6>
-		<result-facets
-			v-on:activePipelineChange="onPipelineUpdate($event)"
-			enable-group-collapse
-			enable-facet-filtering
-			:variables="variables"
-			:dataset="dataset"
-			:groups="targetSummaries"></result-facets>
+		<result-facets :regression="regressionEnabled"></result-facets>
 		<b-btn v-b-modal.export variant="outline-success" class="check-button">Export Pipeline</b-btn>
 		<b-modal id="export" title="Export" @ok="onExport">
 			<div class="check-message-container">
@@ -47,11 +41,12 @@ import ResultFacets from '../components/ResultFacets.vue';
 import Facets from '../components/Facets.vue';
 import { createGroups, Group } from '../util/facets';
 import { createRouteEntryFromRoute } from '../util/routes';
+import { getPipelineResultById } from '../util/pipelines';
 import { getTask } from '../util/pipelines';
 import { getters as dataGetters} from '../store/data/module';
 import { getters as routeGetters } from '../store/route/module';
 import { actions } from '../store/app/module';
-import { Dictionary, VariableSummary } from '../store/data/index';
+import { Dictionary } from '../store/data/index';
 import vueSlider from 'vue-slider-component';
 import Vue from 'vue';
 import _ from 'lodash';
@@ -71,8 +66,6 @@ export default Vue.extend({
 
 	data() {
 		return {
-			activePipelineName: null as string,
-			activePipelineId: null as string,
 			formatter(arg) {
 				return arg.toFixed(2);
 			}
@@ -80,7 +73,6 @@ export default Vue.extend({
 	},
 
 	computed: {
-
 		value: {
 			set(value) {
 				this.updateThreshold(value);
@@ -148,10 +140,6 @@ export default Vue.extend({
 			return [];
 		},
 
-		variables(): VariableSummary[] {
-			return dataGetters.getResultsSummaries(this.$store);
-		},
-
 		regressionEnabled(): boolean {
 			const targetVarName = routeGetters.getRouteTargetVariable(this.$store);
 			const targetVar = _.find(dataGetters.getVariables(this.$store), v => _.toLower(v.name) === _.toLower(targetVarName));
@@ -161,6 +149,13 @@ export default Vue.extend({
 			const task = getTask(targetVar.type);
 			return task.schemaName === 'regression';
 		},
+
+		activePipelineName(): string {
+			const resultId = atob(routeGetters.getRouteResultId(this.$store));
+			const requestId = routeGetters.getRouteCreateRequestId(this.$store);
+			const result = getPipelineResultById(this.$store.state.pipelineModule, requestId, resultId);
+			return result ? result.name : '';
+		}
 	},
 
 	methods: {
@@ -176,14 +171,13 @@ export default Vue.extend({
 		},
 		onExport() {
 			this.$router.replace('/');
+			const resultId = atob(routeGetters.getRouteResultId(this.$store));
+			const requestId = routeGetters.getRouteCreateRequestId(this.$store);
+			const result = getPipelineResultById(this.$store.state.pipelineModule, requestId, resultId);
 			actions.exportPipeline(this.$store, {
-				pipelineId: this.activePipelineId,
+				pipelineId: result.pipelineId,
 				sessionId: this.$store.state.pipelineSession.id
 			});
-		},
-		onPipelineUpdate(args) {
-			this.activePipelineName = args.name;
-			this.activePipelineId = args.id;
 		}
 	}
 });
