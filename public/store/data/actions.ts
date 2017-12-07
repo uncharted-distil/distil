@@ -2,14 +2,13 @@ import _ from 'lodash';
 import axios from 'axios';
 import { encodeQueryParams, FilterMap } from '../../util/filters';
 import { getPipelineResultsOkay } from '../../util/pipelines';
-import { DataState, Variable, Data, Extrema } from './index';
-import { DistilState } from '../store';
+import { getSummaries } from '../../util/data';
+import { Variable, Data } from './index';
+import { PipelineInfo } from '../pipelines/index';
 import { mutations } from './module'
-import { ActionContext } from 'vuex';
+import { DataContext } from '../../util/data';
 
-const ES_INDEX = 'datasets';
-
-export type DataContext = ActionContext<DataState, DistilState>;
+export const ES_INDEX = 'datasets';
 
 export const actions = {
 
@@ -153,66 +152,18 @@ export const actions = {
 
 	// fetches result summaries for a given pipeline create request
 	getResultsSummaries(context: DataContext, args: { dataset: string, requestId: string }) {
-		const dataset = args.dataset;
-		const requestId = args.requestId;
-		const results = getPipelineResultsOkay(context.rootState.pipelineModule, requestId);
+		const results = getPipelineResultsOkay(context.rootState.pipelineModule, args.requestId);
+		const endPoint = `/distil/results-summary/${ES_INDEX}/${args.dataset}`
+		const nameFunc = (p: PipelineInfo) => `${p.feature} - predicted`;
+		getSummaries(context, endPoint, results, nameFunc, mutations.setResultsSummaries, mutations.updateResultsSummaries);
+	},
 
-		// save a placeholder histogram
-		const pendingHistograms = _.map(results, r => {
-			return {
-				name: r.name,
-				feature: '',
-				pending: true,
-				buckets: [],
-				extrema: {} as Extrema
-			};
-		});
-		mutations.setResultsSummaries(context, pendingHistograms);
-
-		// fetch the results for each pipeline
-		for (var result of results) {
-			const name = result.name;
-			const feature = result.feature;
-			const pipelineId = result.pipelineId;
-			const res = encodeURIComponent(result.pipeline.resultId);
-			axios.get(`/distil/results-summary/${ES_INDEX}/${dataset}/${res}`)
-				.then(response => {
-					// save the histogram data
-					const histogram = response.data.histogram;
-					if (!histogram) {
-						mutations.setResultsSummaries(context, [
-							{
-								name: name,
-								feature: feature,
-								buckets: [],
-								extrema: {} as Extrema,
-								pipelineId: pipelineId,
-								err: 'No analysis available'
-							}
-						]);
-						return;
-					}
-					// ensure buckets is not nil
-					histogram.buckets = histogram.buckets ? histogram.buckets : [];
-					histogram.name = name;
-					histogram.feature = feature;
-					histogram.pipelineId = pipelineId;
-					mutations.updateResultsSummaries(context, histogram);
-				})
-				.catch(error => {
-					mutations.setResultsSummaries(context, [
-						{
-							name: name,
-							feature: feature,
-							buckets: [],
-							extrema: {} as Extrema,
-							pipelineId: pipelineId,
-							err: error
-						}
-					]);
-					return;
-				});
-		}
+	// fetches result summaries for a given pipeline create request
+	getResidualsSummaries(context: DataContext, args: { dataset: string, requestId: string }) {
+		const results = getPipelineResultsOkay(context.rootState.pipelineModule, args.requestId);
+		const endPoint = `/distil/residuals-summary/${ES_INDEX}/${args.dataset}`
+		const nameFunc = (p: PipelineInfo) => `${p.feature} - error`;
+		getSummaries(context, endPoint, results, nameFunc, mutations.setResidualsSummaries, mutations.updateResidualsSummaries);
 	},
 
 	// fetches result data for created pipeline

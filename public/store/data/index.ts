@@ -33,6 +33,7 @@ export interface VariableSummary {
 	buckets: Bucket[];
 	extrema: Extrema;
 	pipelineId?: string;
+	resultId?: string;
 	type?: string;
 	err?: string;
 	pending?: boolean;
@@ -65,6 +66,7 @@ export interface DataState {
 	variables: Variable[];
 	variableSummaries: VariableSummary[];
 	resultsSummaries: VariableSummary[];
+	residualSummaries: VariableSummary[];
 	resultData: Data;
 	filteredData: Data;
 	selectedData: Data;
@@ -84,6 +86,9 @@ export const state = {
 
 	// results summary data for the selected pipeline run
 	resultsSummaries: [],
+
+	// error summary data for the selected pipeline run
+	residualSummaries: [],
 
 	// current set of pipeline results
 	resultData: {} as any,
