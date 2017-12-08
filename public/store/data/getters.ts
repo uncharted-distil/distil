@@ -1,32 +1,19 @@
 import _ from 'lodash';
-import { Variable, Data, DataState, Dictionary, Datasets, VariableSummary, TargetRow } from './index';
-import { FilterMap } from '../../util/filters';
-import { Range } from './index';
+import { Variable, Data, DataState, Datasets, VariableSummary, TargetRow } from './index';
+import { Filter, EMPTY_FILTER } from '../../util/filters';
+import { Dictionary } from '../../util/dict';
+import { getPredictedIndex, getErrorIndex } from '../../util/data';
+import { FieldInfo, Range } from './index';
 
 function getTargetIndexFromPredicted(columns: string[], predictedIndex: number) {
 	const targetName = columns[predictedIndex].replace('_res', '');
 	return _.findIndex(columns, col => col.toLowerCase() === targetName.toLowerCase());
 }
 
-function getPredictedIndex(columns: string[]) {
-	return _.findIndex(columns, col => col.endsWith('_res'));
-}
-
-function getErrorIndex(columns: string[]) {
-	return _.findIndex(columns, col => col === 'error');
-}
-
 function validateData(data: Data) {
 	return !_.isEmpty(data) &&
 		!_.isEmpty(data.values) &&
 		!_.isEmpty(data.columns);
-}
-
-export interface FieldInfo {
-	label: string,
-	type: string,
-	suggested: Dictionary<string>,
-	sortable: boolean
 }
 
 export const getters = {
@@ -88,25 +75,30 @@ export const getters = {
 		return state.residualSummaries;
 	},
 
-	getSelectedFilters(state: DataState, getters: any): FilterMap {
+	getSelectedFilters(state: DataState, getters: any): Filter[] {
 		const training = getters.getRouteTrainingVariables as string;
 		if (training) {
-			const existing = getters.getDecodedFilters as FilterMap;
-			const filters: FilterMap = {};
+			const existing = getters.getDecodedFilters as Filter[];
+			const filters: Filter[] = [];
 
 			training.split(',').forEach(variable => {
-				if (!existing[variable]) {
-					filters[variable] = {
+				const index = _.findIndex(existing, filter => {
+					return filter.name == variable;
+				});
+
+				if (index === -1) {
+					filters.push({
 						name: variable,
+						type: EMPTY_FILTER,
 						enabled: false
-					};
+					});
 				} else {
-					filters[variable] = existing[variable];
+					filters.push(existing[index]);
 				}
 			});
 			return filters;
 		}
-		return {};
+		return [];
 	},
 
 	getAvailableVariableSummaries(state: DataState, getters: any): VariableSummary[] {

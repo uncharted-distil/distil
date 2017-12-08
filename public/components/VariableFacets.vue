@@ -74,10 +74,10 @@
 <script lang="ts">
 
 import Facets from '../components/Facets';
-import { decodeFilters, updateFilter, getFilterType, isDisabled, CATEGORICAL_FILTER, NUMERICAL_FILTER } from '../util/filters';
+import { Filter, decodeFiltersDictionary, updateFilter, getFilterType, isDisabled, CATEGORICAL_FILTER, NUMERICAL_FILTER, EMPTY_FILTER } from '../util/filters';
 import { createRouteEntryFromRoute, getRouteFacetPage } from '../util/routes';
-import { NumericalFilter, CategoricalFilter } from '../util/filters';
-import { Dictionary, VariableSummary } from '../store/data/index';
+import { VariableSummary } from '../store/data/index';
+import { Dictionary } from '../util/dict';
 import { getters as dataGetters } from '../store/data/module';
 import { getters as routeGetters } from '../store/route/module';
 import { createGroups, Group } from '../util/facets';
@@ -207,11 +207,11 @@ export default Vue.extend({
 		},
 
 		// updates route with current filter state
-		updateFilterRoute(key: string, values: Dictionary<any>) {
+		updateFilterRoute(filter: Filter) {
 			// retrieve the filters from the route
 			const filters = routeGetters.getRouteFilters(this.$store);
 			// merge the updated filters back into the route query params
-			const updated = updateFilter(filters, key, values);
+			const updated = updateFilter(filters, filter);
 			const entry = createRouteEntryFromRoute(routeGetters.getRoute(this.$store), {
 				filters: updated,
 			});
@@ -221,7 +221,9 @@ export default Vue.extend({
 		// handles facet group transition to active state
 		onExpand(key: string) {
 			// enable filter
-			this.updateFilterRoute(key, {
+			this.updateFilterRoute({
+				name: key,
+				type: EMPTY_FILTER,
 				enabled: true
 			});
 		},
@@ -229,7 +231,9 @@ export default Vue.extend({
 		// handles facet group transitions to inactive (grayed out, reduced visuals) state
 		onCollapse(key) {
 			// disable filter
-			this.updateFilterRoute(key, {
+			this.updateFilterRoute({
+				name: key,
+				type: EMPTY_FILTER,
 				enabled: false
 			});
 		},
@@ -237,7 +241,9 @@ export default Vue.extend({
 		// handles range slider change events
 		onRangeChange(key: string, value: { from: { label: string[] }, to: { label: string[] } }) {
 			// set range filter
-			this.updateFilterRoute(key, {
+			this.updateFilterRoute({
+				name: key,
+				type: NUMERICAL_FILTER,
 				enabled: true,
 				min: parseFloat(value.from.label[0]),
 				max: parseFloat(value.to.label[0])
@@ -247,7 +253,9 @@ export default Vue.extend({
 		// handles individual category toggle events within a facet group
 		onFacetToggle(key: string, values: string[]) {
 			// set range filter
-			this.updateFilterRoute(key, {
+			this.updateFilterRoute({
+				name: key,
+				type: CATEGORICAL_FILTER,
 				enabled: true,
 				categories: values
 			});
@@ -282,7 +290,9 @@ export default Vue.extend({
 			// enable all filters
 			let filters = routeGetters.getRouteFilters(this.$store);
 			this.groups.forEach(group => {
-				filters = updateFilter(filters, group.key, {
+				filters = updateFilter(filters, {
+					name: group.key,
+					type: EMPTY_FILTER,
 					enabled: true
 				});
 			});
@@ -298,7 +308,9 @@ export default Vue.extend({
 			// enable all filters
 			let filters = routeGetters.getRouteFilters(this.$store);
 			this.groups.forEach(group => {
-				filters = updateFilter(filters, group.key, {
+				filters = updateFilter(filters, {
+					name: group.key,
+					type: EMPTY_FILTER,
 					enabled: false
 				});
 			});
@@ -311,7 +323,7 @@ export default Vue.extend({
 		// updates facet collapse/expand state based on route settings
 		updateGroupCollapses(groups: Group[]): Group[] {
 			const filters = routeGetters.getRouteFilters(this.$store);
-			const decoded = decodeFilters(filters);
+			const decoded = decodeFiltersDictionary(filters);
 			return groups.map(group => {
 				// return if disabled
 				group.collapsed = isDisabled(decoded[group.key]);
@@ -323,30 +335,28 @@ export default Vue.extend({
 		// route
 		updateGroupSelections(groups): Group[] {
 			const filters = routeGetters.getRouteFilters(this.$store);
-			const decoded = decodeFilters(filters);
+			const decoded = decodeFiltersDictionary(filters);
 			return groups.map(group => {
 				// get filter
 				const filter = decoded[group.key];
 				switch (getFilterType(filter)) {
 					case NUMERICAL_FILTER:
-						const numericalFilter = filter as NumericalFilter;
 						// add selection to facets
 						group.facets.forEach(facet => {
 							facet.selection = {
 								// NOTE: the `from` / `to` values MUST be strings.
 								range: {
-									from: `${numericalFilter.min}`,
-									to: `${numericalFilter.max}`,
+									from: `${filter.min}`,
+									to: `${filter.max}`,
 								}
 							};
 						});
 						break;
 
 					case CATEGORICAL_FILTER:
-						const categoricalFilter = filter as CategoricalFilter;
 						// add selection to facets
 						group.facets.forEach(facet => {
-							if (categoricalFilter.categories.indexOf(facet.value) !== -1) {
+							if (filter.categories.indexOf(facet.value) !== -1) {
 								// select
 								facet.selected = {
 									count: facet.count

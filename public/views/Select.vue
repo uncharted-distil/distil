@@ -1,7 +1,7 @@
 <template>
 	<div class="select-view">
 		<div class="left-container">
-			<h5 class="header-label">Select the Training Features</h5>
+			<h5 class="header-label">Select the Training features</h5>
 			<div class="select-items">
 				<available-variables class="select-available-variables"></available-variables>
 				<training-variables class="select-training-variables"></training-variables>

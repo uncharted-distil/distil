@@ -3,12 +3,14 @@
 		<flow-bar
 			left-text="Return to Search"
 			:on-left="gotoSearch"
-			center-text="Explore the Dataset"
-			right-text="Continue to Select Features"
+			center-text="Explore the dataset"
+			right-text="Continue to Select features"
 			:on-right="gotoSelect">
 		</flow-bar>
 		<div class="explore-items">
-			<variable-summaries class="explore-variable-summaries"></variable-summaries>
+			<variable-summaries class="explore-variable-summaries"
+				:variables="summaries"
+				:dataset="dataset"></variable-summaries>
 			<explore-data-table class="explore-data-table"></explore-data-table>
 		</div>
 	</div>
@@ -38,6 +40,9 @@ export default Vue.extend({
 		},
 		variables() {
 			return dataGetters.getVariables(this.$store);
+		},
+		summaries() {
+			return dataGetters.getVariableSummaries(this.$store);
 		}
 	},
 

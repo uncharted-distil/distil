@@ -3,12 +3,18 @@
 		<flow-bar
 			left-text="Return to Select"
 			:on-left="gotoSelect"
-			center-text="Examine Pipeline Results">
+			center-text="Examine Pipeline results">
 		</flow-bar>
 		<div class="results-items">
-			<variable-summaries class="results-variable-summaries"></variable-summaries>
-			<results-comparison class="results-result-comparison"></results-comparison>
-			<result-summaries class="results-result-summaries"></result-summaries>
+			<variable-summaries
+				class="results-variable-summaries"
+				:variables="summaries"
+				:dataset="dataset"></variable-summaries>
+			<results-comparison
+				class="results-result-comparison"
+				:exclude-non-training="excludeNonTraining"></results-comparison>
+			<result-summaries
+				class="results-result-summaries"></result-summaries>
 		</div>
 	</div>
 </template>
@@ -23,7 +29,7 @@ import { getters as dataGetters, actions as dataActions } from '../store/data/mo
 import { getters as routeGetters } from '../store/route/module';
 import { actions as pipelineActions } from '../store/pipelines/module';
 import { getters as appGetters } from '../store/app/module';
-import { Variable } from '../store/data/index';
+import { Variable, VariableSummary } from '../store/data/index';
 import Vue from 'vue';
 
 export default Vue.extend({
@@ -36,9 +42,21 @@ export default Vue.extend({
 		ResultSummaries
 	},
 
+	data() {
+		return {
+			excludeNonTraining: true
+		};
+	},
+
 	computed: {
 		dataset(): string {
 			return routeGetters.getRouteDataset(this.$store);
+		},
+		summaries(): VariableSummary[] {
+			if (this.excludeNonTraining) {
+				return dataGetters.getTrainingVariableSummaries(this.$store);
+			}
+			return dataGetters.getVariableSummaries(this.$store);
 		},
 		variables(): Variable[] {
 			return dataGetters.getVariables(this.$store);

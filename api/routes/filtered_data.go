@@ -10,8 +10,6 @@ import (
 )
 
 const (
-	defaultSearchSize = 100
-	searchSizeLimit   = 1000
 	// NumericalFilter represents a numerical type of filter.
 	NumericalFilter = "numerical"
 	// CategoricalFilter represents a categorcial type of filter.
@@ -30,7 +28,7 @@ func FilteredDataHandler(ctor model.DataStorageCtor) func(http.ResponseWriter, *
 		}
 
 		// get variable names and ranges out of the params
-		filterParams, err := ParseFilterParams(r)
+		filterParams, err := model.ParseFilterParamsURL(r.URL.Query())
 		if err != nil {
 			handleError(w, err)
 			return

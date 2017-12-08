@@ -34,12 +34,14 @@ type PipelineStorage interface {
 	PersistResultMetadata(requestID string, pipelineID string, resultUUID string, resultURI string, progress string, outputType string, createdTime time.Time) error
 	PersistResultScore(pipelineID string, metric string, score float64) error
 	PersistRequestFeature(requestID string, featureName string, featureType string) error
+	PersistRequestFilters(requestID string, filters *FilterParams) error
 	UpdateRequest(requestID string, progress string, updatedTime time.Time) error
 	FetchRequests(sessionID string) ([]*Request, error)
 	FetchResultMetadata(requestID string) ([]*Result, error)
 	FetchResultMetadataByUUID(resultUUID string) (*Result, error)
 	FetchResultScore(pipelineID string) ([]*ResultScore, error)
-	FetchRequestFeature(requestID string) ([]*RequestFeature, error)
+	FetchRequestFeatures(requestID string) ([]*RequestFeature, error)
+	FetchRequestFilters(requestID string) (*FilterParams, error)
 }
 
 // MetadataStorageCtor represents a client constructor to instantiate a

@@ -1,4 +1,4 @@
-import { decodeFilters, FilterMap } from '../../util/filters';
+import { decodeFilters, Filter } from '../../util/filters';
 import { Route } from 'vue-router';
 
 export const getters = {
@@ -46,11 +46,11 @@ export const getters = {
 		return state.query.residualThreshold;
 	},
 
-	getDecodedFilters(state: Route): FilterMap {
+	getDecodedFilters(state: Route): Filter[] {
 		return decodeFilters(state.query.filters ? state.query.filters : {} as any);
 	},
 
-	getDecodedResultsFilters(state: Route): FilterMap {
+	getDecodedResultsFilters(state: Route): Filter[] {
 		return decodeFilters(state.query.results ? state.query.results : {} as any);
 	}
 }

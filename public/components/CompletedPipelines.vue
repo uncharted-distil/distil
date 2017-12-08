@@ -15,7 +15,7 @@ import _ from 'lodash';
 import PipelinePreview from '../components/PipelinePreview.vue';
 import { getters } from '../store/pipelines/module';
 import { PipelineInfo } from '../store/pipelines/index';
-import { Dictionary } from '../store/data/index';
+import { Dictionary } from '../util/dict';
 import Vue from 'vue';
 
 export default Vue.extend({

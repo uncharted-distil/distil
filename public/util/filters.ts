@@ -1,72 +1,81 @@
 import _ from 'lodash';
-import { Dictionary } from '../store/data/index';
+import { Dictionary } from './dict'
 
 /**
  * Empty filter, omitting no documents.
- * @constant {Symbol}
+ * @constant {string}
  */
-export const EMPTY_FILTER = Symbol('empty');
-export const EMPTY_FILTER_ID = 'empty';
+export const EMPTY_FILTER = 'empty';
 
 /**
  * Categorical filter, omitting documents that do not contain the provided
  * categories in the variable.
- * @constant {Symbol}
+ * @constant {string}
  */
-export const CATEGORICAL_FILTER = Symbol('categorical');
-export const CATEGORICAL_FILTER_ID = 'categorical';
+export const CATEGORICAL_FILTER = 'categorical';
 
 /**
  * Numerical filter, omitting documents that do not fall within the provided
  * variable range.
- * @constant {Symbol}
+ * @constant {string}
  */
-
-export const NUMERICAL_FILTER = Symbol('numerical');
-export const NUMERICAL_FILTER_ID = 'numerical';
+export const NUMERICAL_FILTER = 'numerical';
 
 export interface Filter {
-	name: string,
-	enabled: boolean
+	name: string;
+	type: string;
+	enabled: boolean;
+	min?: number;
+	max?: number;
+	categories?: string[];
 }
 
-export interface NumericalFilter extends Filter {
-	min: number,
-	max: number
-}
-
-export interface CategoricalFilter extends Filter {
-	categories: string[]
-}
-
-export interface FilterMap {
-	[id: string]: Filter
+export interface FilterParams {
+	filters: Filter[];
+	size?: number;
 }
 
 /**
- * Decodes the map of filters from the route into objects.
+ * Decodes the filters from the route string into an array.
  *
  * @param {string} filters - The filters from the route query string.
  *
- * @returns {FilterMap} The decoded filter object.
+ * @returns {Filter[]} The decoded filter object.
  */
-export function decodeFilters(filters: string): FilterMap {
+export function decodeFilters(filters: string): Filter[] {
 	if (_.isEmpty(filters)) {
-		return {};
+		return [];
 	}
-	return JSON.parse(atob(filters)) as FilterMap;
+	return JSON.parse(atob(filters)) as Filter[];
 }
+
+/**
+ * Decodes the filters from the route string into a dictionary.
+ *
+ * @param {string} filters - The filters from the route query string.
+ *
+ * @returns {Dictionary<Filter>} The decoded filter object.
+ */
+export function decodeFiltersDictionary(filters: string): Dictionary<Filter> {
+	const arr = decodeFilters(filters);
+	const map = {};
+	arr.forEach(filter => {
+		map[filter.name] = filter;
+	});
+	return map;
+}
+
 
 /**
  * Encodes the map of filter objects into a map of route query strings.
  *
- * @param {FilterMap} filters - The filter objects.
+ * @param {Filter[]} filters - The filter objects.
  *
  * @returns {string} The encoded route query strings.
  */
-export function encodeFilters(filters: FilterMap): string {
+export function encodeFilters(filters: Filter[]): string {
 	if (_.isEmpty(filters)) {
-		return undefined;
+		return null;
 	}
 	return btoa(JSON.stringify(filters));
 }
@@ -84,10 +93,10 @@ export function encodeQueryParam(filter: Filter): string {
 	}
 	switch (getFilterType(filter)) {
 		case NUMERICAL_FILTER:
-			return `${encodeURIComponent(filter.name)}=${NUMERICAL_FILTER_ID},${(<NumericalFilter>filter).min},${(<NumericalFilter>filter).max}`;
+			return `${encodeURIComponent(filter.name)}=${NUMERICAL_FILTER},${filter.min},${filter.max}`;
 
 		case CATEGORICAL_FILTER:
-			return `${encodeURIComponent(filter.name)}=${CATEGORICAL_FILTER_ID},${(<CategoricalFilter>filter).categories.join(',')}`;
+			return `${encodeURIComponent(filter.name)}=${CATEGORICAL_FILTER},${filter.categories.join(',')}`;
 	}
 	return null;
 }
@@ -96,11 +105,11 @@ export function encodeQueryParam(filter: Filter): string {
  * Encodes the filter objects into a single query param string for an HTTP
  * request.
  *
- * @param {FilterMap} filters - The filter objects.
+ * @param {Filter[]} filters - The filter objects.
  *
  * @returns {string} The HTTP query param strings.
  */
-export function encodeQueryParams(filters: FilterMap): string {
+export function encodeQueryParams(filters: Filter[]): string {
 	const params: string[] = [];
 	_.forEach(filters, filter => {
 		const param = encodeQueryParam(filter);
@@ -111,38 +120,54 @@ export function encodeQueryParams(filters: FilterMap): string {
 	return params.length > 0 ? `?${params.join('&')}` : '';
 }
 
+export function overlayFilter(dst: Filter, src: Filter): Filter {
+	// only override empty filters with typed filters
+	if (dst.type === EMPTY_FILTER && src.type !== EMPTY_FILTER) {
+		dst.type = src.type;
+	}
+	dst.enabled = _.defaultTo(src.enabled, dst.enabled);
+	dst.min = _.defaultTo(src.min, dst.min);
+	dst.max = _.defaultTo(src.max, dst.max);
+	dst.categories = _.defaultTo(src.categories, dst.categories);
+	return dst;
+}
+
 /**
  * Updates the route with the provided route filter key and value. The function
  * will add, modify, or remove the filter as necessary.
  *
- * @param {string} filters - The route filter strings.
- * @param {string} key - The filter key.
- * @param {Object} values - The filter values.
+ * @param {string} filters - The existing route filter string.
+ * @param {Filter} filter - The filter.
  *
  * @returns {string} The updated route filter strings.
  */
-export function updateFilter(filters: string, key: string, values: Dictionary<any>): string {
+export function updateFilter(filters: string, filter: Filter): string {
 	// decode the provided filters
 	const decoded = decodeFilters(filters);
 	// get or create the filter
-	let filter = decoded[key] as any;
-	if (!filter) {
-		filter = {
-			name: key,
-			enabled: true
-		};
-		decoded[key] = filter;
+	let index = _.findIndex(decoded, existing => {
+		return existing.name === filter.name;
+	})
+
+	let target = null;
+	if (index === -1) {
+		// add filter
+		target = filter;
+		decoded.push(filter);
+		index = decoded.length - 1;
+	} else {
+		// overlay onto existing
+		target = decoded[index];
+		overlayFilter(target, filter);
 	}
-	// add the filter values
-	_.forIn(values, (v, k) => {
-		filter[k] = v;
-	});
-	// empty enabled filter is default, so remove it
-	if (getFilterType(filter) === EMPTY_FILTER && isEnabled(filter)) {
-		decoded[key] = undefined;
+
+	// empty enabled filter is default, remove it
+	if (getFilterType(target) === EMPTY_FILTER && isEnabled(target)) {
+		decoded.splice(index, 1);
 	}
-	const encoded = encodeFilters(decoded);
-	return encoded;
+
+	// encode the filters back into a url string
+	return encodeFilters(decoded);
 }
 
 /**
@@ -150,18 +175,10 @@ export function updateFilter(filters: string, key: string, values: Dictionary<an
  *
  * @param {Object} filter - The filter object or string.
  *
- * @returns {Symbol} The filter type symbol.
+ * @returns {string} The filter type.
  */
-export function getFilterType(filter: Filter): Symbol {
-	if (filter) {
-		if (_.has(filter, 'categories')) {
-			return CATEGORICAL_FILTER;
-		}
-		if (_.has(filter, 'min') && _.has(filter, 'max')) {
-			return NUMERICAL_FILTER;
-		}
-	}
-	return EMPTY_FILTER;
+export function getFilterType(filter: Filter): string {
+	return (filter) ? filter.type : EMPTY_FILTER;
 }
 
 /**

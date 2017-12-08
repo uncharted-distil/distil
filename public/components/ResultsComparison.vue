@@ -3,17 +3,17 @@
 		<results-data-table
 			class="results-data-table"
 			title="Correct Predictions"
+			:exclude-non-training="excludeNonTraining"
 			:filterFunc="correctFilter"
 			:decorateFunc="correctDecorate"
-			:showError="regressionEnabled"
-		></results-data-table>
+			:showError="regressionEnabled"></results-data-table>
 		<results-data-table
 			class="results-data-table"
 			title="Incorrect Predictions"
+			:exclude-non-training="excludeNonTraining"
 			:filterFunc="incorrectFilter"
 			:decorateFunc="incorrectDecorate"
-			:showError="regressionEnabled"
-		></results-data-table>
+			:showError="regressionEnabled"></results-data-table>
 	</div>
 </template>
 
@@ -35,6 +35,10 @@ export default Vue.extend({
 
 	components: {
 		ResultsDataTable,
+	},
+
+	props: {
+		excludeNonTraining: Boolean
 	},
 
 	mounted() {

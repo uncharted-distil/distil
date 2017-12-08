@@ -1,8 +1,8 @@
 <template>
 	<div class="home-view">
 		<flow-bar
-			center-text="Search for a Dataset"
-			right-text="Continue to Dataset Search"
+			center-text="Search for a dataset"
+			right-text="Continue to dataset Search"
 			:on-right="gotoSearch">
 		</flow-bar>
 		<search-bar class="home-search-bar"></search-bar>

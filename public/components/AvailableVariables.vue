@@ -1,6 +1,6 @@
 <template>
 	<div class="available-variables">
-		<h6 class="nav-link">Features</h6>
+		<h6 class="nav-link">features</h6>
 		<variable-facets
 			enable-search
 			enable-sort

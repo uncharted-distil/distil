@@ -1,4 +1,5 @@
-import { Dictionary } from '../data/index';
+import { Dictionary } from '../../util/dict';
+import { FilterParams } from '../../util/filters';
 
 export interface Score {
 	metric: string;
@@ -20,6 +21,7 @@ export interface PipelineInfo {
 	pipeline?: PipelineOutput;
 	timestamp: number;
 	dataset: string;
+	filters: FilterParams;
 }
 
 export interface PipelineState {

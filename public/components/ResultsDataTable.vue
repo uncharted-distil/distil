@@ -24,8 +24,10 @@
 
 import _ from 'lodash';
 import { getters, actions } from '../store/data/module';
-import { TargetRow, Dictionary } from '../store/data/index';
-import { FieldInfo } from '../store/data/getters';
+import { TargetRow, FieldInfo } from '../store/data/index';
+import { Dictionary } from '../util/dict';
+import { removeNonTrainingItems, removeNonTrainingFields } from '../util/data';
+import { updateTableHighlights } from '../util/highlights';
 import Vue from 'vue';
 
 export default Vue.extend({
@@ -35,21 +37,31 @@ export default Vue.extend({
 		'title': String,
 		'filterFunc': Function,
 		'decorateFunc': Function,
-		'showError': Boolean
+		'excludeNonTraining': Boolean
 	},
 
 	computed: {
 		// extracts the table data from the store
 		items(): TargetRow[] {
 			const items = getters.getResultDataItems(this.$store);
-			return items
-				.filter(<any>this.filterFunc) // tried to type this function but eslint is rejecting
-				.map(<any>this.decorateFunc);
+			const training = getters.getTrainingVariablesMap(this.$store);
+			const highlights = getters.getHighlightedFeatureRanges(this.$store);
+			const filtered = this.excludeNonTraining ? removeNonTrainingItems(items, training) : items;
+			updateTableHighlights(filtered, highlights);
+			return filtered
+				.filter(item => {
+					return this.filterFunc(item);
+				})
+				.map(item => {
+					return this.decorateFunc(item);
+				});
 		},
 
 		// extract the table field header from the store
 		fields(): Dictionary<FieldInfo> {
-			return getters.getResultDataFields(this.$store);
+			const fields = getters.getResultDataFields(this.$store);
+			const training = getters.getTrainingVariablesMap(this.$store);
+			return this.excludeNonTraining ? removeNonTrainingFields(fields, training) : fields;
 		}
 	},
 

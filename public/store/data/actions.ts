@@ -1,6 +1,6 @@
 import _ from 'lodash';
 import axios from 'axios';
-import { encodeQueryParams, FilterMap } from '../../util/filters';
+import { encodeQueryParams, Filter } from '../../util/filters';
 import { getPipelineResultsOkay } from '../../util/pipelines';
 import { getSummaries } from '../../util/data';
 import { Variable, Data } from './index';
@@ -117,7 +117,7 @@ export const actions = {
 	},
 
 	// update filtered data based on the  current filter state
-	updateFilteredData(context: DataContext, args: { dataset: string, filters: FilterMap }) {
+	updateFilteredData(context: DataContext, args: { dataset: string, filters: Filter[] }) {
 		const dataset = args.dataset;
 		const filters = args.filters;
 		const queryParams = encodeQueryParams(filters);
@@ -134,7 +134,7 @@ export const actions = {
 	},
 
 	// update filtered data based on the  current filter state
-	updateSelectedData(context: DataContext, args: { dataset: string, filters: FilterMap }) {
+	updateSelectedData(context: DataContext, args: { dataset: string, filters: Filter[] }) {
 		const dataset = args.dataset;
 		const filters = args.filters;
 		const queryParams = encodeQueryParams(filters);
@@ -167,7 +167,7 @@ export const actions = {
 	},
 
 	// fetches result data for created pipeline
-	updateResults(context: DataContext, args: { resultId: string, dataset: string, filters: FilterMap }) {
+	updateResults(context: DataContext, args: { resultId: string, dataset: string, filters: Filter[] }) {
 		const encodedResultId = encodeURIComponent(args.resultId);
 		const filters = args.filters;
 		const queryParams = encodeQueryParams(filters);

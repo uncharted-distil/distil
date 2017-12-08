@@ -7,7 +7,6 @@ import (
 	"net/http"
 	"path"
 	"path/filepath"
-	"sort"
 	"strings"
 	"time"
 
@@ -202,7 +201,7 @@ func handleCreatePipelines(conn *Connection, client *pipeline.Client, metadataCt
 
 	// parse the features out of the create msg - done as a separate step because their structure isn't entirely
 	// fixed
-	filters, err := parseDatasetFilters(clientCreateMsg.Filters)
+	filters, err := model.ParseFilterParamsJSON(clientCreateMsg.Filters)
 	if err != nil {
 		handleErr(conn, msg, err)
 		return
@@ -230,22 +229,10 @@ func handleCreatePipelines(conn *Connection, client *pipeline.Client, metadataCt
 	}
 
 	// persist the filtered dataset if necessary
-	fetchFilteredData := func(dataset string, index string, filters *model.FilterParams) (*model.FilteredData, error) {
-		// fetch the whole data and include the target feature.
-		none := make([]string, 0)
-		none = append(none, clientCreateMsg.Feature)
-		if filters.None != nil {
-			none = append(none, filters.None...)
-		}
-
-		updatedFilters := &model.FilterParams{
-			Size:        -1,
-			Ranged:      filters.Ranged,
-			Categorical: filters.Categorical,
-			None:        none,
-		}
-
-		return dataStorage.FetchData(dataset, index, updatedFilters, false)
+	fetchFilteredData := func(dataset string, index string, filterParams *model.FilterParams) (*model.FilteredData, error) {
+		// fetch the whole data and include the target feature
+		filterParams.Filters = append(filterParams.Filters, model.NewEmptyFilter(clientCreateMsg.Feature))
+		return dataStorage.FetchData(dataset, index, filterParams, false)
 	}
 	fetchVariable := func(dataset string, index string) ([]*model.Variable, error) {
 		return metadata.FetchVariables(dataset, index, false)
@@ -289,7 +276,9 @@ func handleCreatePipelines(conn *Connection, client *pipeline.Client, metadataCt
 
 	// populate the protobuf pipeline create msg
 	createMsg := &pipeline.PipelineCreateRequest{
-		Context:       &pipeline.SessionContext{SessionId: msg.Session},
+		Context: &pipeline.SessionContext{
+			SessionId: msg.Session,
+		},
 		TrainFeatures: trainFeatures,
 		Task:          pipeline.TaskType(pipeline.TaskType_value[strings.ToUpper(clientCreateMsg.Task)]),
 		Output:        pipeline.OutputType(pipeline.OutputType_value[strings.ToUpper(clientCreateMsg.Output)]),
@@ -304,45 +293,53 @@ func handleCreatePipelines(conn *Connection, client *pipeline.Client, metadataCt
 	}
 
 	// kick off the pipeline creation, or re-attach to one that is already running
-	if session, ok := client.GetSession(msg.Session); ok {
-		requestInfo := pipeline.GeneratePipelineCreateRequest(createMsg)
-		proxy, err := session.GetOrDispatch(context.Background(), requestInfo)
-		if err != nil {
-			handleErr(conn, msg, err)
-			return
-		}
-
-		// store the request using the initial progress value
-		requestID := fmt.Sprintf("%s", requestInfo.RequestID)
-		err = pipelineStorage.PersistRequest(session.ID, requestID, clientCreateMsg.Dataset, pipeline.Progress_name[0], time.Now())
-		if err != nil {
-			handleErr(conn, msg, err)
-			return
-		}
-
-		// store the request features
-		for _, f := range trainFeatures {
-			err = pipelineStorage.PersistRequestFeature(requestID, f.FeatureId, model.FeatureTypeTrain)
-			if err != nil {
-				handleErr(conn, msg, err)
-				return
-			}
-		}
-
-		for _, f := range createMsg.TargetFeatures {
-			err = pipelineStorage.PersistRequestFeature(requestID, f.FeatureId, model.FeatureTypeTarget)
-			if err != nil {
-				handleErr(conn, msg, err)
-				return
-			}
-		}
-
-		// handle the request
-		handleCreatePipelinesSuccess(conn, msg, proxy, dataStorage, pipelineStorage, clientCreateMsg.Dataset)
-	} else {
+	session, ok := client.GetSession(msg.Session)
+	if !ok {
 		log.Warnf("Expected session %s does not exist", msg.Session)
+		return
 	}
-	return
+
+	requestInfo := pipeline.GeneratePipelineCreateRequest(createMsg)
+	proxy, err := session.GetOrDispatch(context.Background(), requestInfo)
+	if err != nil {
+		handleErr(conn, msg, err)
+		return
+	}
+
+	// store the request using the initial progress value
+	requestID := fmt.Sprintf("%s", requestInfo.RequestID)
+	err = pipelineStorage.PersistRequest(session.ID, requestID, clientCreateMsg.Dataset, pipeline.Progress_name[0], time.Now())
+	if err != nil {
+		handleErr(conn, msg, err)
+		return
+	}
+
+	// store the request features
+	for _, f := range trainFeatures {
+		err = pipelineStorage.PersistRequestFeature(requestID, f.FeatureId, model.FeatureTypeTrain)
+		if err != nil {
+			handleErr(conn, msg, err)
+			return
+		}
+	}
+
+	for _, f := range createMsg.TargetFeatures {
+		err = pipelineStorage.PersistRequestFeature(requestID, f.FeatureId, model.FeatureTypeTarget)
+		if err != nil {
+			handleErr(conn, msg, err)
+			return
+		}
+	}
+
+	// store request filters
+	err = pipelineStorage.PersistRequestFilters(requestID, filters)
+	if err != nil {
+		handleErr(conn, msg, err)
+		return
+	}
+
+	// handle the request
+	handleCreatePipelinesSuccess(conn, msg, proxy, dataStorage, pipelineStorage, clientCreateMsg.Dataset)
 }
 
 func handleGetSessionSuccess(conn *Connection, msg *Message, session string, created bool, resumed bool, uuids []uuid.UUID) {
@@ -471,7 +468,7 @@ func fetchFilteredVariables(metadata model.MetadataStorage, index string, datase
 		return nil, err
 	}
 
-	variablesToUse := model.GetFieldList(filters, variables, false)
+	variablesToUse := model.GetFilterVariables(filters, variables, false)
 
 	// create a list minus those that are in the filtered list
 	filteredVars := []string{}
@@ -479,67 +476,4 @@ func fetchFilteredVariables(metadata model.MetadataStorage, index string, datase
 		filteredVars = append(filteredVars, variable.Name)
 	}
 	return filteredVars, nil
-}
-
-// pointers used to support optional field pattern
-type filter struct {
-	Name       string
-	Enabled    bool
-	Type       *string
-	Min        *float64
-	Max        *float64
-	Categories *[]string
-}
-
-// parse filter parameters out of JSON
-func parseDatasetFilters(rawFilters json.RawMessage) (*model.FilterParams, error) {
-	// filter params for subsequent store query
-	filterParams := model.FilterParams{}
-	filterParams.Size = datasetSizeLimit
-
-	// unmarshall from params porition of message
-	var filters map[string]filter
-	err := json.Unmarshal(rawFilters, &filters)
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to parse filters")
-	}
-
-	// sort the filter values by var name to ensure consistent hashing
-	//
-	// TODO: this can possibly be circumvented I think the only thing that will really change visuallyby having the client pass
-	// the filter params up as a sorted list rather than a map
-	filterValues := make([]*filter, 0, len(filters))
-	for k := range filters {
-		f := filters[k]
-		filterValues = append(filterValues, &f)
-	}
-	sort.SliceStable(filterValues, func(i, j int) bool {
-		return filterValues[i].Name < filterValues[j].Name
-	})
-
-	for _, filter := range filterValues {
-		// parse out filter parameters
-		if filter.Type != nil {
-			if *filter.Type == numericalType {
-				if filter.Min == nil || filter.Max == nil {
-					return nil, errors.New("numerical filter missing min/max value")
-				}
-				varRange := model.VariableRange{Name: filter.Name, Min: *filter.Min, Max: *filter.Max}
-				filterParams.Ranged = append(filterParams.Ranged, varRange)
-			} else if *filter.Type == categoricalType {
-				if filter.Categories == nil {
-					return nil, errors.New("categorical filter missing categories set")
-				}
-				sort.Strings(*filter.Categories)
-				varCategories := model.VariableCategories{Name: filter.Name, Categories: *filter.Categories}
-				filterParams.Categorical = append(filterParams.Categorical, varCategories)
-			} else {
-				return nil, errors.Errorf("unknown filter type %s", *filter.Type)
-			}
-		} else {
-			filterParams.None = append(filterParams.None, filter.Name)
-		}
-		sort.Strings(filterParams.None)
-	}
-	return &filterParams, nil
 }

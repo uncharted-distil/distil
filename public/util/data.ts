@@ -1,8 +1,9 @@
 import _ from 'lodash';
 import { DataState, Datasets, VariableSummary } from '../store/data/index';
-import { Extrema } from '../store/data/index';
+import { Extrema, TargetRow, FieldInfo } from '../store/data/index';
 import { PipelineInfo } from '../store/pipelines/index';
 import { DistilState } from '../store/store';
+import { Dictionary } from './dict';
 import { ActionContext } from 'vuex';
 import axios from 'axios';
 import Vue from 'vue';
@@ -30,6 +31,56 @@ export function addRecentDataset(dataset: string) {
 	const datasets = (datasetsStr) ? datasetsStr.split(',') : [];
 	datasets.unshift(dataset);
 	window.localStorage.setItem('recent-datasets', datasets.join(','));
+}
+
+export function isInTrainingSet(col: string, training: Dictionary<boolean>) {
+	return (isPredictedIndex(col) ||
+		isErrorIndex(col) ||
+		isTarget(col) ||
+		training[col]);
+}
+
+export function removeNonTrainingItems(items: TargetRow[], training: Dictionary<boolean>):  TargetRow[] {
+	return _.map(items, item => {
+		const row = {
+			_target: item._target
+		};
+		_.forIn(item, (val, col) => {
+			if (isInTrainingSet(col.toLowerCase(), training)) {
+				row[col] = val;
+			}
+		});
+		return row;
+	});
+}
+
+export function removeNonTrainingFields(fields: Dictionary<FieldInfo>, training: Dictionary<boolean>): Dictionary<FieldInfo> {
+	const res: Dictionary<FieldInfo> = {};
+	_.forIn(fields, (val, col) => {
+		if (isInTrainingSet(col.toLowerCase(), training)) {
+			res[col] = val;
+		}
+	});
+	return res;
+}
+
+export function isPredictedIndex(col: string) {
+	return col.endsWith('_res');
+}
+
+export function isErrorIndex(col: string) {
+	return col === 'error';
+}
+
+export function isTarget(col: string) {
+	return col === '_target';
+}
+export function getPredictedIndex(columns: string[]) {
+	return _.findIndex(columns, isPredictedIndex);
+}
+
+export function getErrorIndex(columns: string[]) {
+	return _.findIndex(columns, isErrorIndex);
 }
 
 export function updateSummaries(summary: VariableSummary, summaries: VariableSummary[], matchField: string) {

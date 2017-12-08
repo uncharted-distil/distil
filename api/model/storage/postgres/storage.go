@@ -2,6 +2,7 @@ package postgres
 
 import (
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/jackc/pgx"
@@ -16,6 +17,7 @@ const (
 	resultTableName      = "result"
 	resultScoreTableName = "result_score"
 	featureTableName     = "request_feature"
+	filterTableName      = "request_filter"
 	d3mIndexFieldName    = "d3mIndex"
 
 	// Database data types
@@ -120,6 +122,27 @@ func (s *Storage) PersistRequestFeature(requestID string, featureName string, fe
 	return err
 }
 
+// PersistRequestFilters persists request filters information to Postgres.
+func (s *Storage) PersistRequestFilters(requestID string, filters *model.FilterParams) error {
+	sql := fmt.Sprintf("INSERT INTO %s (request_id, feature_name, filter_type, filter_min, filter_max, filter_categories) VALUES ($1, $2, $3, $4, $5, $6);", filterTableName)
+
+	for _, filter := range filters.Filters {
+		switch filter.Type {
+		case model.NumericalFilter:
+			_, err := s.client.Exec(sql, requestID, filter.Name, model.NumericalFilter, filter.Min, filter.Max, "")
+			if err != nil {
+				return err
+			}
+		case model.CategoricalFilter:
+			_, err := s.client.Exec(sql, requestID, filter.Name, model.CategoricalFilter, 0, 0, strings.Join(filter.Categories, ","))
+			if err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
 // FetchRequests pulls session request information from Postgres.
 func (s *Storage) FetchRequests(sessionID string) ([]*model.Request, error) {
 	sql := fmt.Sprintf("SELECT session_id, request_id, dataset, progress, created_time, last_updated_time FROM %s WHERE session_id = $1;", requestTableName)
@@ -151,9 +174,14 @@ func (s *Storage) FetchRequests(sessionID string) ([]*model.Request, error) {
 			return nil, errors.Wrap(err, "Unable to get request results from Postgres")
 		}
 
-		features, err := s.FetchRequestFeature(requestID)
+		features, err := s.FetchRequestFeatures(requestID)
 		if err != nil {
 			return nil, errors.Wrap(err, "Unable to get request features from Postgres")
+		}
+
+		filters, err := s.FetchRequestFilters(requestID)
+		if err != nil {
+			return nil, errors.Wrap(err, "Unable to get request filters from Postgres")
 		}
 
 		requests = append(requests, &model.Request{
@@ -165,6 +193,7 @@ func (s *Storage) FetchRequests(sessionID string) ([]*model.Request, error) {
 			LastUpdatedTime: lastUpdatedTime,
 			Results:         results,
 			Features:        features,
+			Filters:         filters,
 		})
 	}
 
@@ -280,8 +309,8 @@ func (s *Storage) FetchResultScore(pipelineID string) ([]*model.ResultScore, err
 	return results, nil
 }
 
-// FetchRequestFeature pulls request feature information from Postgres.
-func (s *Storage) FetchRequestFeature(requestID string) ([]*model.RequestFeature, error) {
+// FetchRequestFeatures pulls request feature information from Postgres.
+func (s *Storage) FetchRequestFeatures(requestID string) ([]*model.RequestFeature, error) {
 	sql := fmt.Sprintf("SELECT request_id, feature_name, feature_type FROM %s WHERE request_id = $1;", featureTableName)
 
 	rows, err := s.client.Query(sql, requestID)
@@ -311,4 +340,51 @@ func (s *Storage) FetchRequestFeature(requestID string) ([]*model.RequestFeature
 	}
 
 	return results, nil
+}
+
+// FetchRequestFilters pulls request filter information from Postgres.
+func (s *Storage) FetchRequestFilters(requestID string) (*model.FilterParams, error) {
+	sql := fmt.Sprintf("SELECT request_id, feature_name, filter_type, filter_min, filter_max, filter_categories FROM %s WHERE request_id = $1;", filterTableName)
+
+	rows, err := s.client.Query(sql, requestID)
+	if err != nil {
+		return nil, errors.Wrap(err, "Unable to pull request filters from Postgres")
+	}
+	if rows != nil {
+		defer rows.Close()
+	}
+
+	filters := &model.FilterParams{
+		Size: model.DefaultFilterSize,
+	}
+
+	for rows.Next() {
+		var requestID string
+		var featureName string
+		var filterType string
+		var filterMin float64
+		var filterMax float64
+		var filterCategories string
+
+		err = rows.Scan(&requestID, &featureName, &filterType, &filterMin, &filterMax, &filterCategories)
+		if err != nil {
+			return nil, errors.Wrap(err, "Unable to parse requests filters from Postgres")
+		}
+
+		switch filterType {
+		case model.CategoricalFilter:
+			filters.Filters = append(filters.Filters, model.NewCategoricalFilter(
+				featureName,
+				strings.Split(filterCategories, ","),
+			))
+		case model.NumericalFilter:
+			filters.Filters = append(filters.Filters, model.NewNumericalFilter(
+				featureName,
+				filterMin,
+				filterMax,
+			))
+		}
+	}
+
+	return filters, nil
 }

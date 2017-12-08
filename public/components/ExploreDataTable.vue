@@ -42,9 +42,9 @@ import Vue from 'vue';
 import { getters as dataGetters } from '../store/data/module';
 import { getters as routeGetters } from '../store/route/module';
 import { actions } from '../store/data/module';
-import { Dictionary, SuggestedType } from '../store/data/index';
-import { FilterMap } from '../util/filters';
-import { FieldInfo } from '../store/data/getters';
+import { SuggestedType, FieldInfo } from '../store/data/index';
+import { Dictionary } from '../util/dict';
+import { Filter } from '../util/filters';
 import { updateTableHighlights } from '../util/highlights';
 import { probabilityCategoryText, probabilityCategoryClass, addMissingSuggestions } from '../util/types';
 
@@ -59,14 +59,15 @@ export default Vue.extend({
 		// extracts the table data from the store
 		items(): Dictionary<any> {
 			const data = dataGetters.getFilteredDataItems(this.$store);
-			updateTableHighlights(data, dataGetters.getHighlightedFeatureRanges(this.$store));
+			const highlights = dataGetters.getHighlightedFeatureRanges(this.$store);
+			updateTableHighlights(data, highlights);
 			return data;
 		},
 		// extract the table field header from the store
 		fields(): Dictionary<FieldInfo> {
 			return dataGetters.getFilteredDataFields(this.$store);
 		},
-		filters(): FilterMap {
+		filters(): Filter[] {
 			return routeGetters.getDecodedFilters(this.$store);
 		}
 	},

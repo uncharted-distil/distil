@@ -1,4 +1,5 @@
-import { Dictionary, Range } from '../store/data/index';
+import { Range } from '../store/data/index';
+import { Dictionary } from '../util/dict';
 import _ from 'lodash';
 
 // Updates table rows that fall into the highlight range

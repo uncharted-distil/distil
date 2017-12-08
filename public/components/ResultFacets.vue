@@ -23,6 +23,7 @@ import 'font-awesome/css/font-awesome.css';
 import '../styles/spinner.css';
 import Vue from 'vue';
 
+
 /*eslint-disable */
 interface SummaryGroup {
 	groupName: string;

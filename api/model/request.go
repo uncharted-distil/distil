@@ -6,35 +6,35 @@ import (
 
 // Request represents the pipeline request metadata.
 type Request struct {
-	SessionID       string
-	RequestID       string
-	Dataset         string
-	Progress        string
-	CreatedTime     time.Time
-	LastUpdatedTime time.Time
-
-	Results  []*Result
-	Features []*RequestFeature
+	SessionID       string            `json:"sessionId"`
+	RequestID       string            `json:"requestId"`
+	Dataset         string            `json:"dataset"`
+	Progress        string            `json:"progress"`
+	CreatedTime     time.Time         `json:"createdTime"`
+	LastUpdatedTime time.Time         `json:"lastUpdatedTime"`
+	Results         []*Result         `json:"results"`
+	Features        []*RequestFeature `json:"features"`
+	Filters         *FilterParams     `json:"filters"`
 }
 
 // Result represents the pipeline result metadata.
 type Result struct {
-	RequestID   string
-	PipelineID  string
-	ResultURI   string
-	ResultUUID  string
-	Progress    string
-	OutputType  string
-	CreatedTime time.Time
-
-	Scores []*ResultScore
+	RequestID   string         `json:"requestId"`
+	PipelineID  string         `json:"pipelineId"`
+	ResultURI   string         `json:"requestUri"`
+	ResultUUID  string         `json:"resultUuid"`
+	Progress    string         `json:"progress"`
+	OutputType  string         `json:"outputType"`
+	CreatedTime time.Time      `json:"createdTime"`
+	Scores      []*ResultScore `json:"scores"`
+	Filters     *FilterParams  `json:"filters"`
 }
 
-// RequestFeature represents the request feature metadata.
+// RequestFeature represents a request feature metadata.
 type RequestFeature struct {
-	RequestID   string
-	FeatureName string
-	FeatureType string
+	RequestID   string `json:"requestId"`
+	FeatureName string `json:"featureName"`
+	FeatureType string `json:"featureType"`
 }
 
 // ResultScore represents the result score data.

@@ -32,7 +32,7 @@ func ResultsHandler(storageCtor model.PipelineStorageCtor, storageDataCtor model
 		}
 
 		// get variable names and ranges out of the params
-		filterParams, err := ParseFilterParams(r)
+		filterParams, err := model.ParseFilterParamsURL(r.URL.Query())
 		if err != nil {
 			handleError(w, err)
 			return

@@ -46,6 +46,13 @@ export interface Data {
 	values: any[][];
 }
 
+export interface FieldInfo {
+	label: string,
+	type: string,
+	suggested: Dictionary<string>,
+	sortable: boolean
+}
+
 export interface TargetInfo {
 	predicted: string;
 	truth: string;
