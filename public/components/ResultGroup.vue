@@ -22,12 +22,13 @@
 
 import Facets from '../components/Facets';
 import { createGroups, Group } from '../util/facets';
-import { VariableSummary, Dictionary } from '../store/data/index';
+import { VariableSummary } from '../store/data/index';
+import { Dictionary } from '../util/dict';
 import { createRouteEntryFromRoute } from '../util/routes';
 import { updateFilter } from '../util/filters';
 import { getters } from '../store/data/module';
 import { getters as routeGetters } from '../store/route/module';
-import { NUMERICAL_FILTER, CATEGORICAL_FILTER, NumericalFilter, CategoricalFilter, getFilterType, decodeFilters } from '../util/filters';
+import { NUMERICAL_FILTER, CATEGORICAL_FILTER, Filter, getFilterType, decodeFiltersDictionary } from '../util/filters';
 import { NumericalFacet, CategoricalFacet } from '../util/facets';
 import Vue from 'vue';
 
@@ -83,12 +84,13 @@ export default Vue.extend({
 			return <VariableSummary>this.residualsSummary;
 		},
 
-		updateFilterRoute(key: string, values: Dictionary<any>, resultUri: string) {
+		updateFilterRoute(filter: Filter, resultUri: string) {
+
 			// merge the updated filters back into the route query params if set
 			const filters = routeGetters.getRouteResultFilters(this.$store);
 			let updatedFilters = filters;
-			if (key && values) {
-				updatedFilters = updateFilter(filters, key, values);
+			if (filter) {
+				updatedFilters = updateFilter(filters, filter);
 			}
 
 			const entry = createRouteEntryFromRoute(routeGetters.getRoute(this.$store), {
@@ -99,18 +101,9 @@ export default Vue.extend({
 			this.$router.push(entry);
 		},
 
-		onRangeChange(key: string, value: { from: { label: string[] }, to: { label: string[] } }) {
-			// set range filter
-			this.updateFilterRoute(key, {
-					enabled: true,
-					min: parseFloat(value.from.label[0]),
-					max: parseFloat(value.to.label[0])
-				}, null);
-		},
-
 		updateGroupSelections(groups: Group[]): Group[] {
 			const filters = routeGetters.getRouteResultFilters(this.$store);
-			const decoded = decodeFilters(filters);
+			const decoded = decodeFiltersDictionary(filters);
 			return groups.map(group => {
 				// get filter
 				const filter = decoded[group.key];
@@ -122,8 +115,8 @@ export default Vue.extend({
 								(<NumericalFacet>facet).selection = {
 									// NOTE: the `from` / `to` values MUST be strings.
 									range: {
-										from: `${(<NumericalFilter>filter).min}`,
-										to: `${(<NumericalFilter>filter).max}`,
+										from: `${filter.min}`,
+										to: `${filter.max}`,
 									}
 								};
 							}
@@ -135,7 +128,7 @@ export default Vue.extend({
 						group.facets.forEach(facet => {
 							if ((<CategoricalFacet>facet).value) {
 								const categoricalFacet = <CategoricalFacet>facet;
-								if ((<CategoricalFilter>filter).categories.indexOf(categoricalFacet.value) !== -1) {
+								if (filter.categories.indexOf(categoricalFacet.value) !== -1) {
 									// select
 									categoricalFacet.selected = {
 										count: categoricalFacet.count

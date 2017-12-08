@@ -75,7 +75,7 @@ export const getters = {
 		return state.residualSummaries;
 	},
 
-	getSelectedFilters(state: DataState, getters: any): FilterMap {
+	getSelectedFilters(state: DataState, getters: any): Filter[] {
 		const training = getters.getRouteTrainingVariables as string;
 		if (training) {
 			const existing = getters.getDecodedFilters as Filter[];

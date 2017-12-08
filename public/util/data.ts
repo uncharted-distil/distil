@@ -1,8 +1,9 @@
 import _ from 'lodash';
 import { DataState, Datasets, VariableSummary } from '../store/data/index';
-import { Extrema } from '../store/data/index';
+import { Extrema, TargetRow, FieldInfo } from '../store/data/index';
 import { PipelineInfo } from '../store/pipelines/index';
 import { DistilState } from '../store/store';
+import { Dictionary } from './dict';
 import { ActionContext } from 'vuex';
 import axios from 'axios';
 import Vue from 'vue';

@@ -1,5 +1,5 @@
 import { PipelineState, PipelineInfo } from './index';
-import { Dictionary } from '../data/index';
+import { Dictionary } from '../../util/dict';
 
 export const getters = {
 	// Returns a dictionary of dictionaries, where the first key is the pipeline create request ID, and the second
