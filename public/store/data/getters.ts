@@ -71,7 +71,11 @@ export const getters = {
 		return state.resultsSummaries;
 	},
 
-	getSelectedFilters(state: DataState, getters: any): Filter[] {
+	getResidualsSummaries(state: DataState): VariableSummary[] {
+		return state.residualSummaries;
+	},
+
+	getSelectedFilters(state: DataState, getters: any): FilterMap {
 		const training = getters.getRouteTrainingVariables as string;
 		if (training) {
 			const existing = getters.getDecodedFilters as Filter[];
@@ -181,6 +185,7 @@ export const getters = {
 					row[colName] = colValues;
 				}
 
+				// display predicted error info
 				const targetRow = <TargetRow>row;
 				targetRow._target = { truth: targetName, predicted: resultData.columns[predictedIdx] };
 				if (errorIdx >= 0) {

@@ -28,11 +28,8 @@ export function pipelineIsErrored(progress: string): boolean {
 // Utility function to return all pipeline results that have not ERRORED
 // associated with a given request ID
 export function getPipelineResultsOkay(state: PipelineState, requestId: string): PipelineInfo[] {
-	const pipelines = _.concat(
-		_.values(state.runningPipelines[requestId]),
-		_.values(state.completedPipelines[requestId]));
-
-	return _.filter(pipelines, (p) => { return !pipelineIsErrored(p.progress); });
+	const pipelineResults = getPipelineResults(state, requestId);
+	return _.filter(pipelineResults, p => !pipelineIsErrored(p.progress));
 }
 
 // Utility function to return all pipeline results associated with a given request ID
@@ -40,6 +37,18 @@ export function getPipelineResults(state: PipelineState, requestId: string): Pip
 	return _.concat(
 		_.values(state.runningPipelines[requestId]),
 		_.values(state.completedPipelines[requestId]));
+}
+
+// Returns a specific pipeline result given request and pipeline IDs.
+export function getPipelineResult(state: PipelineState, requestId: string, pipelineId: string): PipelineInfo {
+	const pipelineResults = getPipelineResultsOkay(state, requestId);
+	return _.find(pipelineResults, p => p.pipelineId === pipelineId);
+}
+
+// Returns a specific pipeline result given a request and its ID.
+export function getPipelineResultById(state: PipelineState, requestId: string, resultId: string): PipelineInfo {
+	const pipelineResults = getPipelineResultsOkay(state, requestId);
+	return _.find(pipelineResults, p => resultId === p.pipeline.resultId);
 }
 
 // Gets a task object based on a variable type.

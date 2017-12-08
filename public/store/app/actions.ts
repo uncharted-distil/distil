@@ -11,11 +11,7 @@ export const actions = {
 
 	// starts a pipeline session.
 	getPipelineSession(context: AppContext, args: { sessionId: string } ) {
-		if (!args.sessionId) {
-			console.warn('Missing session id');
-			return;
-		}
-		const sessionId = args.sessionId;
+		const sessionId = args.sessionId; // server creates a new session on null/undefined
 		const conn = getWebSocketConnection();
 		return conn.send({
 			type: 'GET_SESSION',

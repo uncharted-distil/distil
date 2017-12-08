@@ -42,18 +42,18 @@ export interface Group {
 }
 
 // creates the set of facets from the supplied summary data
-export function createGroups(summaries: VariableSummary[], enableCollapse: boolean, enableFiltering: boolean, predictedValues: string): Group[] {
+export function createGroups(summaries: VariableSummary[], enableCollapse: boolean, enableFiltering: boolean): Group[] {
 	return summaries.map(summary => {
 		if (summary.err) {
 			// create error facet
-			return createErrorFacet(summary, enableCollapse, predictedValues);
+			return createErrorFacet(summary, enableCollapse);
 		}
 		if (summary.pending) {
 			// create pending facet
-			return createPendingFacet(summary, enableCollapse, predictedValues);
+			return createPendingFacet(summary, enableCollapse);
 		}
 		// create facet
-		return createSummaryFacet(summary, enableCollapse, enableFiltering, predictedValues);
+		return createSummaryFacet(summary, enableCollapse, enableFiltering);
 	}).filter(group => {
 		// remove null groups
 		return group;
@@ -61,10 +61,10 @@ export function createGroups(summaries: VariableSummary[], enableCollapse: boole
 }
 
 // creates a facet to display a data fetch error
-export function createErrorFacet(summary: VariableSummary, enableCollapse: boolean, predictedValues: string): Group {
+export function createErrorFacet(summary: VariableSummary, enableCollapse: boolean): Group {
 	return {
 		label: summary.name,
-		key: predictedValues ? `Predicted ${summary.feature}` : summary.name,
+		key: summary.name,
 		collapsible: enableCollapse,
 		collapsed: false,
 		facets: [{
@@ -75,10 +75,10 @@ export function createErrorFacet(summary: VariableSummary, enableCollapse: boole
 }
 
 // creates a place holder facet to dispay a spinner
-export function createPendingFacet(summary: VariableSummary, enableCollapse: boolean, predictedValues: string): Group {
+export function createPendingFacet(summary: VariableSummary, enableCollapse: boolean): Group {
 	return {
 		label: summary.name,
-		key: predictedValues ? `Predicted ${summary.feature}` : summary.name,
+		key: summary.name,
 		collapsible: enableCollapse,
 		collapsed: false,
 		facets: [{
@@ -89,13 +89,13 @@ export function createPendingFacet(summary: VariableSummary, enableCollapse: boo
 }
 
 // creates categorical or numerical summary facets
-export function createSummaryFacet(summary: VariableSummary, enableCollapse: boolean, enableFiltering: boolean, predictedValues: string): Group {
+export function createSummaryFacet(summary: VariableSummary, enableCollapse: boolean, enableFiltering: boolean): Group {
 	switch (summary.type) {
 
 		case 'categorical':
 			return {
 				label: summary.name,
-				key: predictedValues ? `Predicted ${summary.feature}` : summary.name,
+				key: summary.name,
 				collapsible: enableCollapse,
 				collapsed: false,
 				facets: summary.buckets.map(b => {
@@ -116,7 +116,7 @@ export function createSummaryFacet(summary: VariableSummary, enableCollapse: boo
 		case 'numerical':
 			return {
 				label: summary.name,
-				key: predictedValues ? `Predicted ${summary.feature}` : summary.name,
+				key: summary.name,
 				collapsible: enableCollapse,
 				collapsed: false,
 				facets: [

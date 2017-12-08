@@ -105,6 +105,10 @@ export default Vue.extend({
 						dataset: this.dataset,
 						requestId: this.requestId
 					});
+					dataActions.getResidualsSummaries(this.$store, {
+						dataset: this.dataset,
+						requestId: this.requestId
+					});
 				});
 		}
 	}

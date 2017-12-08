@@ -1,11 +1,16 @@
-import { PipelineState } from './index';
+import { PipelineState, PipelineInfo } from './index';
+import { Dictionary } from '../data/index';
 
 export const getters = {
-	getRunningPipelines(state: PipelineState) {
+	// Returns a dictionary of dictionaries, where the first key is the pipeline create request ID, and the second
+	// key is the pipeline ID.
+	getRunningPipelines(state: PipelineState): Dictionary<Dictionary<PipelineInfo>> {
 		return state.runningPipelines;
 	},
 
-	getCompletedPipelines(state: PipelineState) {
+	// Returns a dictionary of dictionaries, where the first key is the pipeline create request ID, and the second
+	// key is the pipeline ID.
+	getCompletedPipelines(state: PipelineState): Dictionary<Dictionary<PipelineInfo>> {
 		return state.completedPipelines;
 	}
 }

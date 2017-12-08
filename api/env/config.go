@@ -19,7 +19,7 @@ type Config struct {
 	ElasticEndpoint         string `env:"ES_ENDPOINT" envDefault:"http://localhost:9200"`
 	RedisEndpoint           string `env:"REDIS_ENDPOINT" envDefault:"localhost:6379"`
 	RedisExpiry             int    `env:"REDIS_EXPIRY" envDefault:"-1"`
-	PipelineComputeEndpoint string `env:"PIPELINE_COMPUTE_ENDPOINT " envDefault:"localhost:50051"`
+	PipelineComputeEndpoint string `env:"PIPELINE_COMPUTE_ENDPOINT" envDefault:"localhost:50051"`
 	PipelineDataDir         string `env:"PIPELINE_DATA_DIR" envDefault:"datasets"`
 	PipelineComputeTrace    bool   `env:"PIPELINE_COMPUTE_TRACE" envDefault:"false"`
 	ExportPath              string `env:"EXPORT_PATH"`
