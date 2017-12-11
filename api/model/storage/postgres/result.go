@@ -215,7 +215,7 @@ func (s *Storage) FetchFilteredResults(dataset string, index string, resultURI s
 		return nil, errors.Wrap(err, "Could not pull variables from ES")
 	}
 
-	fields, err := s.buildFilteredQueryField(dataset, variables, filterParams, inclusive)
+	fields, err := s.buildFilteredResultQueryField(dataset, variables, variable, filterParams, inclusive)
 	if err != nil {
 		return nil, errors.Wrap(err, "Could not build field list")
 	}
@@ -228,13 +228,17 @@ func (s *Storage) FetchFilteredResults(dataset string, index string, resultURI s
 	// If our results are numerical we need to compute residuals and store them in a column called 'error'
 	residuals := ""
 	if model.IsNumerical(variable.Type) {
-		residuals = fmt.Sprintf("%s as error,", getErrorTyped(variable.Name))
+		residuals = fmt.Sprintf("%s as %s_error,", getErrorTyped(variable.Name), variable.Name)
 	}
 
 	query := fmt.Sprintf(
-		"SELECT value as %s_res,%s %s FROM %s as res inner join %s as data on data.\"%s\" = res.index "+
+		"SELECT value as %s_predicted, "+
+			"%s as %s_target, "+
+			"%s "+
+			"%s "+
+			"FROM %s as predicted inner join %s as data on data.\"%s\" = predicted.index "+
 			"WHERE result_id = $%d AND target = $%d",
-		targetName, residuals, fields, datasetResult, dataset, d3mIndexFieldName, len(params)+1, len(params)+2)
+		targetName, targetName, targetName, residuals, fields, datasetResult, dataset, d3mIndexFieldName, len(params)+1, len(params)+2)
 	params = append(params, resultURI)
 	params = append(params, targetName)
 
@@ -254,15 +258,16 @@ func (s *Storage) FetchFilteredResults(dataset string, index string, resultURI s
 
 // FetchResults pulls the results from the Postgres database.
 func (s *Storage) FetchResults(dataset string, index string, resultURI string) (*model.FilteredData, error) {
+
+	// fetch the variable info to resolve its type - skip the first column since that will be the d3m_index value
 	datasetResult := s.getResultTable(dataset)
 	targetName, err := s.getResultTargetName(datasetResult, resultURI, index)
-	// fetch the variable info to resolve its type - skip the first column since that will be the d3m_index value
 	variable, err := s.getResultTargetVariable(dataset, index, targetName)
 	if err != nil {
 		return nil, err
 	}
 
-	sql := fmt.Sprintf("SELECT value FROM %s WHERE result_id = $1 AND target = $2;", datasetResult)
+	sql := fmt.Sprintf("SELECT value FROM %s as %s_predicted WHERE result_id = $1 AND target = $2;", datasetResult, variable.Name)
 
 	rows, err := s.client.Query(sql, resultURI, targetName)
 	if err != nil {

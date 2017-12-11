@@ -8,6 +8,11 @@ import { ActionContext } from 'vuex';
 import axios from 'axios';
 import Vue from 'vue';
 
+
+export const PREDICTED_POSTFIX = '_predicted';
+export const TARGET_POSTFIX = '_target';
+export const ERROR_POSTFIX = '_error';
+
 export type DataContext = ActionContext<DataState, DistilState>;
 
 // filters datasets by id
@@ -34,17 +39,15 @@ export function addRecentDataset(dataset: string) {
 }
 
 export function isInTrainingSet(col: string, training: Dictionary<boolean>) {
-	return (isPredictedIndex(col) ||
-		isErrorIndex(col) ||
+	return (isPredicted(col) ||
+		isError(col) ||
 		isTarget(col) ||
 		training[col]);
 }
 
 export function removeNonTrainingItems(items: TargetRow[], training: Dictionary<boolean>):  TargetRow[] {
 	return _.map(items, item => {
-		const row = {
-			_target: item._target
-		};
+		const row: TargetRow = {};
 		_.forIn(item, (val, col) => {
 			if (isInTrainingSet(col.toLowerCase(), training)) {
 				row[col] = val;
@@ -64,23 +67,40 @@ export function removeNonTrainingFields(fields: Dictionary<FieldInfo>, training:
 	return res;
 }
 
-export function isPredictedIndex(col: string) {
-	return col.endsWith('_res');
+export function isPredicted(col: string): boolean {
+	return col.endsWith(PREDICTED_POSTFIX);
 }
 
-export function isErrorIndex(col: string) {
-	return col === 'error';
+export function isError(col: string): boolean {
+	return col.endsWith(ERROR_POSTFIX);
 }
 
-export function isTarget(col: string) {
-	return col === '_target';
-}
-export function getPredictedIndex(columns: string[]) {
-	return _.findIndex(columns, isPredictedIndex);
+export function isTarget(col: string): boolean {
+	return col.endsWith(TARGET_POSTFIX);
 }
 
-export function getErrorIndex(columns: string[]) {
-	return _.findIndex(columns, isErrorIndex);
+export function getPredictedIndex(columns: string[]): number {
+	return _.findIndex(columns, isPredicted);
+}
+
+export function getErrorIndex(columns: string[]): number {
+	return _.findIndex(columns, isError);
+}
+
+export function getTargetIndex(columns: string[]): number {
+	return _.findIndex(columns, isTarget);
+}
+
+export function getTargetCol(target: string): string {
+	return target + TARGET_POSTFIX;
+}
+
+export function getPredictedCol(target: string): string {
+	return target + PREDICTED_POSTFIX;
+}
+
+export function getErrorCol(target: string): string {
+	return target + ERROR_POSTFIX;
 }
 
 export function updateSummaries(summary: VariableSummary, summaries: VariableSummary[], matchField: string) {
