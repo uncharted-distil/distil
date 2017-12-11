@@ -51,7 +51,8 @@ func main() {
 	esClientCtor := elastic.NewClient(config.ElasticEndpoint, false)
 
 	// instantiate the postgres client constructor.
-	postgresClientCtor := postgres.NewClient(config.PostgresHost, config.PostgresPort, config.PostgresUser, config.PostgresPassword, config.PostgresDatabase)
+	postgresClientCtor := postgres.NewClient(config.PostgresHost, config.PostgresPort, config.PostgresUser, config.PostgresPassword,
+		config.PostgresDatabase, config.PostgresLogLevel)
 
 	// make sure a connection can be made to postgres - doesn't appear to be thread safe and
 	// causes panic if deferred, so we'll do it an a retry loop here.  We need to provide
