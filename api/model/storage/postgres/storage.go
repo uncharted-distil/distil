@@ -252,10 +252,10 @@ func (s *Storage) FetchResultMetadata(requestID string) ([]*model.Result, error)
 }
 
 // FetchResultMetadataByPipelineID pulls request result information from Postgres.
-func (s *Storage) FetchResultMetadataByPipelineID(resultUUID string) (*model.Result, error) {
+func (s *Storage) FetchResultMetadataByPipelineID(pipelineId string) (*model.Result, error) {
 	sql := fmt.Sprintf("SELECT request_id, pipeline_id, result_uuid, result_uri, progress, output_type, created_time FROM %s WHERE pipeline_id = $1 ORDER BY created_time desc LIMIT 1;", resultTableName)
 
-	rows, err := s.client.Query(sql, resultUUID)
+	rows, err := s.client.Query(sql, pipelineId)
 	if err != nil {
 		return nil, errors.Wrap(err, "Unable to pull request results from Postgres")
 	}
