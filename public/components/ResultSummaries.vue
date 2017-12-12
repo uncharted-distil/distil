@@ -43,6 +43,7 @@ import { createGroups, Group } from '../util/facets';
 import { createRouteEntryFromRoute } from '../util/routes';
 import { getPipelineResultById } from '../util/pipelines';
 import { getTask } from '../util/pipelines';
+import { getErrorCol } from '../util/data';
 import { getters as dataGetters} from '../store/data/module';
 import { getters as routeGetters } from '../store/route/module';
 import { actions } from '../store/app/module';
@@ -97,8 +98,10 @@ export default Vue.extend({
 
 		minVal(): number {
 			const resultItems = dataGetters.getResultDataItems(this.$store) as { [name: string]: any }[];
-			if (!_.isEmpty(resultItems) && _.has(resultItems[0], 'error')) {
-				const minErr = Math.abs(_.minBy(resultItems, r => Math.abs(r.error)).error);
+			const errorCol = getErrorCol(routeGetters.getRouteTargetVariable(this.$store));
+			if (!_.isEmpty(resultItems) && _.has(resultItems[0], errorCol)) {
+				const min = _.minBy(resultItems, r => Math.abs(<number>(r[errorCol])));
+				const minErr = Math.abs(<number>(min[errorCol]));
 				// round to closest 2 decimal places, otherwise interval computation makes the slider angry
 				return Math.ceil(100 * minErr) / 100;
 			}
@@ -106,9 +109,11 @@ export default Vue.extend({
 		},
 
 		maxVal(): number {
-			const resultItems = dataGetters.getResultDataItems(this.$store) as { [name: string]: any }[]	;
-			if (!_.isEmpty(resultItems) && _.has(resultItems[0], 'error')) {
-				const maxErr = Math.abs(_.maxBy(resultItems, r => Math.abs(r.error)).error);
+			const resultItems = dataGetters.getResultDataItems(this.$store) as { [name: string]: any }[];
+			const errorCol = getErrorCol(routeGetters.getRouteTargetVariable(this.$store));
+			if (!_.isEmpty(resultItems) && _.has(resultItems[0], errorCol)) {
+				const max = _.maxBy(resultItems, r => Math.abs(<number>(r[errorCol])));
+				const maxErr = Math.abs(<number>max[errorCol]);
 				// round to closest 2 decimal places, otherwise interval computation makes the slider angry
 				return Math.ceil(100 * maxErr) / 100;
 			}

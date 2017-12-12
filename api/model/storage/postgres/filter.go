@@ -85,6 +85,16 @@ func (s *Storage) buildFilteredQueryField(dataset string, variables []*model.Var
 	return strings.Join(fields, ","), nil
 }
 
+func (s *Storage) buildFilteredResultQueryField(dataset string, variables []*model.Variable, targetVariable *model.Variable, filterParams *model.FilterParams, inclusive bool) (string, error) {
+	fields := make([]string, 0)
+	for _, variable := range model.GetFilterVariables(filterParams, variables, inclusive) {
+		if strings.Compare(targetVariable.Name, variable.Name) != 0 {
+			fields = append(fields, fmt.Sprintf("\"%s\"", variable.Name))
+		}
+	}
+	return strings.Join(fields, ","), nil
+}
+
 // FetchData creates a postgres query to fetch a set of rows.  Applies filters to restrict the
 // results to a user selected set of fields, with rows further filtered based on allowed ranges and
 // categories.

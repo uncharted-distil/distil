@@ -53,14 +53,7 @@ export interface FieldInfo {
 	sortable: boolean
 }
 
-export interface TargetInfo {
-	predicted: string;
-	truth: string;
-	error?: string;
-}
-
 export interface TargetRow {
-	_target: TargetInfo;
 	_cellVariants?: Dictionary<string>;
 }
 
