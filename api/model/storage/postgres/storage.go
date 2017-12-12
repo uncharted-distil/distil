@@ -251,6 +251,31 @@ func (s *Storage) FetchResultMetadata(requestID string) ([]*model.Result, error)
 	return s.parseResultMetadata(rows)
 }
 
+// FetchResultMetadataByPipelineID pulls request result information from Postgres.
+func (s *Storage) FetchResultMetadataByPipelineID(resultUUID string) (*model.Result, error) {
+	sql := fmt.Sprintf("SELECT request_id, pipeline_id, result_uuid, result_uri, progress, output_type, created_time FROM %s WHERE pipeline_id = $1 ORDER BY created_time desc LIMIT 1;", resultTableName)
+
+	rows, err := s.client.Query(sql, resultUUID)
+	if err != nil {
+		return nil, errors.Wrap(err, "Unable to pull request results from Postgres")
+	}
+	if rows != nil {
+		defer rows.Close()
+	}
+
+	results, err := s.parseResultMetadata(rows)
+	if err != nil {
+		return nil, errors.Wrap(err, "Unable to parse request results from Postgres")
+	}
+
+	var res *model.Result
+	if results != nil && len(results) > 0 {
+		res = results[0]
+	}
+
+	return res, nil
+}
+
 // FetchResultMetadataByUUID pulls request result information from Postgres.
 func (s *Storage) FetchResultMetadataByUUID(resultUUID string) (*model.Result, error) {
 	sql := fmt.Sprintf("SELECT request_id, pipeline_id, result_uuid, result_uri, progress, output_type, created_time FROM %s WHERE result_uuid = $1;", resultTableName)

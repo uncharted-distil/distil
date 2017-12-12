@@ -25,7 +25,7 @@ func ResultsHandler(storageCtor model.PipelineStorageCtor, storageDataCtor model
 		inclusive := pat.Param(r, "inclusive")
 		inclusiveBool := inclusive == "inclusive"
 
-		resultUUID, err := url.PathUnescape(pat.Param(r, "results-uuid"))
+		pipelineID, err := url.PathUnescape(pat.Param(r, "pipeline-id"))
 		if err != nil {
 			handleError(w, errors.Wrap(err, "unable to unescape result uuid"))
 			return
@@ -50,14 +50,14 @@ func ResultsHandler(storageCtor model.PipelineStorageCtor, storageDataCtor model
 			return
 		}
 
-		// get the result URI. Error ignored to make it ES compatible.
-		res, err := client.FetchResultMetadataByUUID(resultUUID)
-		resultURI := resultUUID
-		if res != nil {
-			resultURI = res.ResultURI
+		// get the result URI
+		res, err := client.FetchResultMetadataByPipelineID(pipelineID)
+		if err != nil {
+			handleError(w, err)
+			return
 		}
 
-		results, err := clientData.FetchFilteredResults(dataset, index, resultURI, filterParams, inclusiveBool)
+		results, err := clientData.FetchFilteredResults(dataset, index, res.ResultURI, filterParams, inclusiveBool)
 		if err != nil {
 			handleError(w, err)
 			return

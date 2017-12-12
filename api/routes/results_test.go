@@ -24,7 +24,7 @@ func TestResultsHandler(t *testing.T) {
 	params := map[string]string{
 		"dataset":      "o_185",
 		"index":        "datasets",
-		"results-uuid": "./testdata/results.csv",
+		"pipeline-id": "./testdata/results.csv",
 		"inclusive":    "inclusive",
 	}
 	req := mock.HTTPRequest(t, "GET", "/distil/results/", params, nil)

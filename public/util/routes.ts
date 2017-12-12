@@ -9,7 +9,7 @@ export interface RouteArgs {
 	target?: string,
 	requestId?: string,
 	results?: string,
-	resultId?: string,
+	pipelineId?: string,
 	residualThreshold?: number
 }
 
@@ -26,12 +26,12 @@ export function createRouteEntry(path: string, args: RouteArgs): Location {
 
 	if (args.dataset) { query.dataset = args.dataset; }
 	if (args.terms) { query.terms = args.terms; }
-	if (!_.isEmpty(args.training)) { query.training = args.training; }
 	if (args.target) { query.target = args.target; }
 	if (args.requestId) { query.requestId = args.requestId; }
+	if (args.pipelineId) { query.pipelineId = args.pipelineId; }
 	if (!_.isEmpty(args.filters)) { query.filters = args.filters; }
+	if (!_.isEmpty(args.training)) { query.training = args.training; }
 	if (!_.isEmpty(args.results)) { query.results = args.results; }
-	if (!_.isEmpty(args.resultId)) { query.resultId = args.resultId; }
 
 	const routeEntry: Location = {
 		path: path,

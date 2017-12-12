@@ -21,7 +21,7 @@ func ResultsSummaryHandler(ctor model.PipelineStorageCtor, ctorData model.DataSt
 		// extract route parameters
 		index := pat.Param(r, "index")
 		dataset := pat.Param(r, "dataset")
-		resultUUID, err := url.PathUnescape(pat.Param(r, "results-uuid"))
+		resultUUID, err := url.PathUnescape(pat.Param(r, "pipeline-id"))
 		if err != nil {
 			handleError(w, errors.Wrap(err, "unable to unescape results uuid"))
 			return

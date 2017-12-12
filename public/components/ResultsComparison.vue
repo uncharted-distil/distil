@@ -56,9 +56,9 @@ export default Vue.extend({
 	computed: {
 		result(): PipelineInfo {
 			const requestId = routeGetters.getRouteCreateRequestId(this.$store);
-			const resultId = routeGetters.getRouteResultId(this.$store);
+			const pipelineId = routeGetters.getRoutePipelinetId(this.$store);
 			const pipelineRequest = getPipelineResults(<PipelineState>this.$store.state.pipelineModule, requestId);
-			return _.find(pipelineRequest, r => r.pipeline.resultId === resultId);
+			return _.find(pipelineRequest, r => r.pipelineId === pipelineId);
 		},
 
 		dataset(): string {
@@ -123,7 +123,7 @@ export default Vue.extend({
 		fetch() {
 			actions.updateResults(this.$store, {
 				dataset: this.dataset,
-				resultId: routeGetters.getRouteResultId(this.$store),
+				pipelineId: routeGetters.getRoutePipelinetId(this.$store),
 				filters: routeGetters.getDecodedFilters(this.$store)
 			});
 		},

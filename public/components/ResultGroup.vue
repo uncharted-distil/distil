@@ -1,7 +1,7 @@
 <template>
 	<div v-bind:class="currentClass"
 		@click="click()">
-		{{ name }}<br>Status: {{ pipelineStatus }}
+		{{ name }}<!--<br>Status: {{ pipelineStatus }}-->
 		<div v-if="pipelineStatus === 'COMPLETED' || pipelineStatus === 'UPDATED'">
 			<facets v-if="resultGroups.length" class="result-container"
 				:groups="resultGroups"
@@ -14,8 +14,8 @@
 				:html="resultHtml">
 			</facets>
 		</div>
-		<div v-if="pipelineStatus === 'COMPLETED'">
-			<b-progress v-if="pipelineStatus !== 'COMPLETED'"
+		<div v-if="pipelineStatus !== 'COMPLETED'">
+			<b-progress
 				:value="100"
 				variant="secondary"
 				striped
@@ -34,11 +34,10 @@ import { createGroups, Group } from '../util/facets';
 import { VariableSummary } from '../store/data/index';
 import { Dictionary } from '../util/dict';
 import { createRouteEntryFromRoute } from '../util/routes';
-import { updateFilter } from '../util/filters';
 import { getters } from '../store/data/module';
 import { getters as routeGetters } from '../store/route/module';
 import { getters as pipelineGetters } from '../store/pipelines/module';
-import { NUMERICAL_FILTER, CATEGORICAL_FILTER, Filter, getFilterType, decodeFiltersDictionary } from '../util/filters';
+import { NUMERICAL_FILTER, CATEGORICAL_FILTER, getFilterType, decodeFiltersDictionary } from '../util/filters';
 import { NumericalFacet, CategoricalFacet } from '../util/facets';
 import Vue from 'vue';
 
@@ -91,9 +90,9 @@ export default Vue.extend({
 		},
 
 		currentClass(): string {
-			const selectedResults = routeGetters.getRouteResultId(this.$store);
+			const selectedId = routeGetters.getRoutePipelinetId(this.$store);
 			const results = this.results();
-			return (results && results.resultId === selectedResults)
+			return (results && results.pipelineId === selectedId)
 				? 'result-group-selected result-group' : 'result-group';
 		}
 	},
@@ -101,7 +100,7 @@ export default Vue.extend({
 	methods: {
 		click() {
 			const routeEntry = createRouteEntryFromRoute(this.$route, {
-				resultId: this.results().resultId
+				pipelineId: this.results().pipelineId
 			});
 			this.$router.push(routeEntry);
 		},
@@ -112,20 +111,6 @@ export default Vue.extend({
 
 		residuals(): VariableSummary {
 			return <VariableSummary>this.residualsSummary;
-		},
-
-		updateFilterRoute(filter: Filter, resultUri: string) {
-			// merge the updated filters back into the route query params if set
-			const filters = routeGetters.getRouteResultFilters(this.$store);
-			let updatedFilters = filters;
-			if (filter) {
-				updatedFilters = updateFilter(filters, filter);
-			}
-			const entry = createRouteEntryFromRoute(routeGetters.getRoute(this.$store), {
-				resultId: resultUri ? resultUri : routeGetters.getRouteResultId(this.$store),
-				results: updatedFilters
-			});
-			this.$router.push(entry);
 		},
 
 		updateGroupSelections(groups: Group[]): Group[] {

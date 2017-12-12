@@ -151,9 +151,9 @@ export default Vue.extend({
 		},
 
 		activePipelineName(): string {
-			const resultId = routeGetters.getRouteResultId(this.$store);
+			const pipelineId = routeGetters.getRoutePipelinetId(this.$store);
 			const requestId = routeGetters.getRouteCreateRequestId(this.$store);
-			const result = getPipelineResultById(this.$store.state.pipelineModule, requestId, resultId);
+			const result = getPipelineResultById(this.$store.state.pipelineModule, requestId, pipelineId);
 			return result ? result.name : '';
 		}
 	},
@@ -171,9 +171,9 @@ export default Vue.extend({
 		},
 		onExport() {
 			this.$router.replace('/');
-			const resultId = routeGetters.getRouteResultId(this.$store);
+			const pipelineId = routeGetters.getRoutePipelinetId(this.$store);
 			const requestId = routeGetters.getRouteCreateRequestId(this.$store);
-			const result = getPipelineResultById(this.$store.state.pipelineModule, requestId, resultId);
+			const result = getPipelineResultById(this.$store.state.pipelineModule, requestId, pipelineId);
 			actions.exportPipeline(this.$store, {
 				pipelineId: result.pipelineId,
 				sessionId: this.$store.state.pipelineSession.id

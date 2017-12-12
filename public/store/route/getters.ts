@@ -30,8 +30,8 @@ export const getters = {
 		return state.query.requestId;
 	},
 
-	getRouteResultId(state: Route): string {
-		return state.query.resultId ? state.query.resultId : null;
+	getRoutePipelinetId(state: Route): string {
+		return state.query.pipelineId ? state.query.pipelineId : null;
 	},
 
 	getRouteFilters(state: Route): string {

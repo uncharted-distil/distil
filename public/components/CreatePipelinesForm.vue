@@ -117,8 +117,8 @@ export default Vue.extend({
 					filters: routeGetters.getRouteFilters(this.$store),
 					target: routeGetters.getRouteTargetVariable(this.$store),
 					training: routeGetters.getRouteTrainingVariables(this.$store),
-					requestId: res.requestId
-					//resultId: res.pipeline.resultId
+					requestId: res.requestId,
+					pipelineId: res.pipelineId
 				});
 				this.$router.push(entry);
 			});

@@ -27,7 +27,7 @@ interface Feature {
 
 interface Result {
 	name: string;
-	resultUuid: string;
+	resultId: string;
 	pipelineId: string;
 	createdTime: number;
 	progress: string;
@@ -91,7 +91,7 @@ export const actions = {
 									dataset: pipeline.dataset,
 									pipelineId: res.pipelineId,
 									pipeline: {
-										resultId: res.resultUuid,
+										resultId: res.resultId,
 										output: '',
 										scores: res.scores
 									},
