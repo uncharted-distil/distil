@@ -1,14 +1,10 @@
 import _ from 'lodash';
 import { Variable, Data, DataState, Datasets, VariableSummary, TargetRow } from './index';
 import { Filter, EMPTY_FILTER } from '../../util/filters';
+import { TARGET_POSTFIX, PREDICTED_POSTFIX } from '../../util/data';
 import { Dictionary } from '../../util/dict';
-import { getPredictedIndex, getErrorIndex } from '../../util/data';
+import { getPredictedIndex, getErrorIndex, getTargetIndex } from '../../util/data';
 import { FieldInfo, Range } from './index';
-
-function getTargetIndexFromPredicted(columns: string[], predictedIndex: number) {
-	const targetName = columns[predictedIndex].replace('_res', '');
-	return _.findIndex(columns, col => col.toLowerCase() === targetName.toLowerCase());
-}
 
 function validateData(data: Data) {
 	return !_.isEmpty(data) &&
@@ -170,12 +166,6 @@ export const getters = {
 	getResultDataItems(state: DataState): TargetRow[] {
 		const resultData = state.resultData;
 		if (validateData(resultData)) {
-
-			// look at first row and figure out the target, predicted, error values
-			const predictedIdx = getPredictedIndex(resultData.columns);
-			const targetName = resultData.columns[getTargetIndexFromPredicted(resultData.columns, predictedIdx)];
-			const errorIdx = getErrorIndex(resultData.columns);
-
 			// convert fetched result data rows into table data rows
 			return _.map(resultData.values, resultRow => {
 				const row: Dictionary<any> = {};
@@ -186,12 +176,7 @@ export const getters = {
 				}
 
 				// display predicted error info
-				const targetRow = <TargetRow>row;
-				targetRow._target = { truth: targetName, predicted: resultData.columns[predictedIdx] };
-				if (errorIdx >= 0) {
-					targetRow._target.error = resultData.columns[errorIdx];
-				}
-				return targetRow;
+				return <TargetRow>row;
 			});
 		}
 		return <TargetRow[]>[];
@@ -202,7 +187,7 @@ export const getters = {
 		if (validateData(data)) {
 			// look at first row and figure out the target, predicted, error values
 			const predictedIndex = getPredictedIndex(data.columns);
-			const targetIndex = getTargetIndexFromPredicted(data.columns, predictedIndex);
+			const targetIndex = getTargetIndex(data.columns);
 			const errorIndex = getErrorIndex(data.columns);
 
 			const result: Dictionary<FieldInfo> = {} as any
@@ -220,13 +205,14 @@ export const getters = {
 			// add target, predicted and error at end with customized labels
 			const targetName = data.columns[targetIndex];
 			result[targetName] = {
-				label: targetName,
+				label: targetName.replace(TARGET_POSTFIX, ''),
 				sortable: true,
 				type: "",
 				suggested: {} as any,
 			};
+			const predictedName = data.columns[predictedIndex];
 			result[data.columns[predictedIndex]] = {
-				label: `Predicted ${targetName}`,
+				label: `Predicted ${predictedName.replace(PREDICTED_POSTFIX, '')}`,
 				sortable: true,
 				type: "",
 				suggested: {} as any
