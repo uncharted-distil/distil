@@ -228,12 +228,12 @@ func (s *Storage) FetchFilteredResults(dataset string, index string, resultURI s
 	// If our results are numerical we need to compute residuals and store them in a column called 'error'
 	residuals := ""
 	if model.IsNumerical(variable.Type) {
-		residuals = fmt.Sprintf("%s as %s_error,", getErrorTyped(variable.Name), variable.Name)
+		residuals = fmt.Sprintf("%s as \"%s_error\",", getErrorTyped(variable.Name), variable.Name)
 	}
 
 	query := fmt.Sprintf(
-		"SELECT value as %s_predicted, "+
-			"\"%s\" as %s_target, "+
+		"SELECT value as \"%s_predicted\", "+
+			"\"%s\" as \"%s_target\", "+
 			"%s "+
 			"%s "+
 			"FROM %s as predicted inner join %s as data on data.\"%s\" = predicted.index "+
