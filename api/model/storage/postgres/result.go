@@ -233,7 +233,7 @@ func (s *Storage) FetchFilteredResults(dataset string, index string, resultURI s
 
 	query := fmt.Sprintf(
 		"SELECT value as %s_predicted, "+
-			"%s as %s_target, "+
+			"\"%s\" as %s_target, "+
 			"%s "+
 			"%s "+
 			"FROM %s as predicted inner join %s as data on data.\"%s\" = predicted.index "+
