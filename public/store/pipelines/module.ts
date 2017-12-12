@@ -17,7 +17,8 @@ const { commit, read, dispatch } = getStoreAccessors<PipelineState, DistilState>
 
 export const getters = {
 	getRunningPipelines: read(moduleGetters.getRunningPipelines),
-	getCompletedPipelines: read(moduleGetters.getCompletedPipelines)
+	getCompletedPipelines: read(moduleGetters.getCompletedPipelines),
+	getPipelines: read(moduleGetters.getPipelines)
 }
 
 export const actions = {

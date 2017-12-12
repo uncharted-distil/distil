@@ -47,6 +47,9 @@ export function getPipelineResult(state: PipelineState, requestId: string, pipel
 
 // Returns a specific pipeline result given a request and its ID.
 export function getPipelineResultById(state: PipelineState, requestId: string, resultId: string): PipelineInfo {
+	if (!resultId) {
+		return null;
+	}
 	const pipelineResults = getPipelineResultsOkay(state, requestId);
 	return _.find(pipelineResults, p => resultId === p.pipeline.resultId);
 }

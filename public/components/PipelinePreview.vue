@@ -105,8 +105,8 @@ export default Vue.extend({
 				filters: getters.getRouteFilters(this.$store),
 				target: result.feature,
 				training: getters.getRouteTrainingVariables(this.$store),
-				createRequestId: result.requestId,
-				resultId: btoa(result.pipeline.resultId)
+				requestId: result.requestId,
+				resultId: result.pipeline.resultId
 			});
 			this.$router.push(entry);
 		}

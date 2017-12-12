@@ -151,7 +151,7 @@ export default Vue.extend({
 		},
 
 		activePipelineName(): string {
-			const resultId = atob(routeGetters.getRouteResultId(this.$store));
+			const resultId = routeGetters.getRouteResultId(this.$store);
 			const requestId = routeGetters.getRouteCreateRequestId(this.$store);
 			const result = getPipelineResultById(this.$store.state.pipelineModule, requestId, resultId);
 			return result ? result.name : '';
@@ -171,7 +171,7 @@ export default Vue.extend({
 		},
 		onExport() {
 			this.$router.replace('/');
-			const resultId = atob(routeGetters.getRouteResultId(this.$store));
+			const resultId = routeGetters.getRouteResultId(this.$store);
 			const requestId = routeGetters.getRouteCreateRequestId(this.$store);
 			const result = getPipelineResultById(this.$store.state.pipelineModule, requestId, resultId);
 			actions.exportPipeline(this.$store, {
