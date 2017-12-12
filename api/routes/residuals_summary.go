@@ -21,7 +21,7 @@ func ResidualsSummaryHandler(ctor model.PipelineStorageCtor, ctorData model.Data
 		// extract route parameters
 		index := pat.Param(r, "index")
 		dataset := pat.Param(r, "dataset")
-		resultUUID, err := url.PathUnescape(pat.Param(r, "pipeline-id"))
+		resultUUID, err := url.PathUnescape(pat.Param(r, "results-uuid"))
 		if err != nil {
 			handleError(w, errors.Wrap(err, "unable to unescape results uuid"))
 			return
@@ -41,12 +41,12 @@ func ResidualsSummaryHandler(ctor model.PipelineStorageCtor, ctorData model.Data
 
 		// get the result URI. Error ignored to make it ES compatible.
 		res, err := client.FetchResultMetadataByUUID(resultUUID)
-		resultURI := resultUUID
-		if res != nil {
-			resultURI = res.ResultURI
+		if err != nil {
+			handleError(w, err)
+			return
 		}
 
-		histogram, err := clientData.FetchResidualsSummary(dataset, resultURI, index)
+		histogram, err := clientData.FetchResidualsSummary(dataset, res.ResultURI, index)
 		if err != nil {
 			handleError(w, err)
 			return
