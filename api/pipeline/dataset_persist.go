@@ -18,7 +18,9 @@ import (
 
 const (
 	// D3MLearningData provides the name of the training csv file as defined in the D3M schema
-	D3MLearningData = "tables/learningData.csv"
+	D3MLearningData = "learningData.csv"
+	// D3MDataFolder provides the name of the directory containing the dataset
+	D3MDataFolder = "tables"
 	// D3MDataSchema provides the name of the D3M data schema file
 	D3MDataSchema = "datasetDoc.json"
 )
@@ -107,18 +109,12 @@ func PersistFilteredData(fetchData FilteredDataProvider, fetchVariables Variable
 	}
 
 	// write the filtered data (minus the target field) to csv file
-	err = writeTrainData(path, datasetDir, filteredData, targetIdx)
+	err = writeData(path, datasetDir, filteredData, targetIdx)
 	if err != nil {
 		return "", err
 	}
 
-	// write the target data to csv file
-	err = writeTrainTargets(path, datasetDir, filteredData, targetIdx)
-	if err != nil {
-		return "", err
-	}
-
-	// write the target data to csv file
+	// write the data schema
 	variables, err := fetchVariables(dataset, index)
 	if err != nil {
 		return "", err
@@ -140,8 +136,15 @@ func dirExists(path string) bool {
 	return true
 }
 
-func writeTrainData(dataPath string, datasetDir string, filteredData *model.FilteredData, targetIdx int) error {
-	file, err := os.Create(path.Join(dataPath, D3MLearningData))
+func writeData(dataPath string, datasetDir string, filteredData *model.FilteredData, targetIdx int) error {
+	// make sure the output folder exists
+	dataFolder := path.Join(dataPath, D3MDataFolder)
+	err := os.MkdirAll(dataFolder, os.ModePerm)
+	if err != nil {
+		return errors.Wrapf(err, "unable to create data folder for %s", datasetDir)
+	}
+
+	file, err := os.Create(path.Join(dataFolder, D3MLearningData))
 	if err != nil {
 		return errors.Wrapf(err, "unable to persist data to %s", datasetDir)
 	}
@@ -180,35 +183,6 @@ func writeTrainData(dataPath string, datasetDir string, filteredData *model.Filt
 	return nil
 }
 
-func writeTrainTargets(targetPath string, datasetDir string, filteredData *model.FilteredData, targetIdx int) error {
-	file, err := os.Create(path.Join(targetPath, D3MLearningData))
-	if err != nil {
-		return errors.Wrapf(err, "unable to persist data to %s", datasetDir)
-	}
-	defer file.Close()
-
-	writer := csv.NewWriter(file)
-	defer writer.Flush()
-
-	// write out the variable names including the d3m_index
-	variableNames := []string{"d3mIndex", filteredData.Columns[targetIdx]}
-	err = writer.Write(variableNames)
-	if err != nil {
-		return errors.Wrapf(err, "unable to persist %v", variableNames)
-	}
-
-	for rowNum, row := range filteredData.Values {
-		// append the index as the d3m_index value
-		targetValue := row[targetIdx]
-		strVals := []string{strconv.Itoa(rowNum), fmt.Sprintf("%v", targetValue)}
-		err := writer.Write(strVals)
-		if err != nil {
-			log.Errorf("%v", errors.Wrapf(err, "unable to persist %v", strVals))
-		}
-	}
-	return nil
-}
-
 func writeDataSchema(schemaPath string, dataset string, filteredData *model.FilteredData, targetIdx int, variables []*model.Variable) error {
 	// Build a map of variable name to variable.
 	vars := make(map[string]*model.Variable)
@@ -222,7 +196,7 @@ func writeDataSchema(schemaPath string, dataset string, filteredData *model.Filt
 		Redacted:  true,
 		DataResources: &DataResource{
 			ResID:     "0",
-			ResPath:   D3MLearningData,
+			ResPath:   path.Join(D3MDataFolder, D3MLearningData),
 			Variables: make([]*DataVariable, 0),
 		},
 	}
