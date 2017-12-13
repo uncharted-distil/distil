@@ -33,13 +33,49 @@ type DatabaseDriver interface {
 // ClientCtor repressents a client constructor to instantiate a postgres client.
 type ClientCtor func() (DatabaseDriver, error)
 
-// NewClient instantiates and returns a new postgres client constructor.
-func NewClient(host, port, user, password, database string) ClientCtor {
+// Adapter for pgx logging
+type pgxLogAdapter struct {
+}
+
+func (pgxLogAdapter) Debug(msg string, ctx ...interface{}) {
+	log.Debugf("%s - %v", msg, ctx)
+}
+
+func (pgxLogAdapter) Info(msg string, ctx ...interface{}) {
+	log.Infof("%s - %v", msg, ctx)
+}
+
+func (pgxLogAdapter) Warn(msg string, ctx ...interface{}) {
+	log.Warnf("%s - %v", msg, ctx)
+}
+
+func (pgxLogAdapter) Error(msg string, ctx ...interface{}) {
+	log.Errorf("%s - %v", msg, ctx)
+}
+
+// NewClient instantiates and returns a new postgres client constructor.  Log level is one
+// of none, info, warn, error, debug.
+func NewClient(host, port, user, password, database string, logLevel string) ClientCtor {
 	return func() (DatabaseDriver, error) {
 		endpoint := host + ":" + port
 		portInt, err := strconv.Atoi(port)
 		if err != nil {
 			return nil, errors.Wrap(err, "Unable to connect to Postgres endpoint")
+		}
+
+		// Default logs to disabled - note that just setting level to 'none' is insufficient
+		// as internally pgx defaults that to Debug.
+		level := pgx.LogLevelNone
+		var logAdapter pgxLogAdapter
+		if logLevel != "" {
+			level, err = pgx.LogLevelFromString(logLevel)
+			if err != nil {
+				log.Warnf("Failed to parse log level [%s] with error [%s] - Disabling postgres logging", logLevel, err)
+				level = pgx.LogLevelNone
+			}
+			if level != pgx.LogLevelNone {
+				logAdapter = pgxLogAdapter{}
+			}
 		}
 
 		mu.Lock()
@@ -55,6 +91,8 @@ func NewClient(host, port, user, password, database string) ClientCtor {
 				User:     user,
 				Password: password,
 				Database: database,
+				Logger:   logAdapter,
+				LogLevel: level,
 			}
 
 			poolConfig := pgx.ConnPoolConfig{

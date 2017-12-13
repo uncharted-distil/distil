@@ -80,9 +80,21 @@ func (s *Storage) parseNumericHistogram(rows *pgx.Rows, extrema *model.Extrema) 
 }
 
 func (s *Storage) parseCategoricalHistogram(rows *pgx.Rows, variable *model.Variable) (*model.Histogram, error) {
-	// get terms agg name
 	termsAggName := model.TermsAggPrefix + variable.Name
 
+	// parse as either one dimension or two dimension category histogram.  This could be collapsed down into a
+	// single function.
+	dimension := len(rows.FieldDescriptions()) - 1
+	if dimension == 1 {
+		return parseUnivariateCategoricalHistogram(rows, variable, termsAggName)
+	} else if dimension == 2 {
+		return parseBivariateCategoricalHistogram(rows, variable, termsAggName)
+	} else {
+		return nil, errors.Errorf("Unhandled dimension of %d for histogram %s", dimension, termsAggName)
+	}
+}
+
+func parseUnivariateCategoricalHistogram(rows *pgx.Rows, variable *model.Variable, termsAggName string) (*model.Histogram, error) {
 	// Parse bucket results.
 	buckets := make([]*model.Bucket, 0)
 	if rows != nil {
@@ -99,6 +111,52 @@ func (s *Storage) parseCategoricalHistogram(rows *pgx.Rows, variable *model.Vari
 				Count: bucketCount,
 			})
 		}
+	}
+
+	// assign histogram attributes
+	return &model.Histogram{
+		Name:    variable.Name,
+		Type:    model.CategoricalType,
+		Buckets: buckets,
+	}, nil
+}
+
+func parseBivariateCategoricalHistogram(rows *pgx.Rows, variable *model.Variable, termsAggName string) (*model.Histogram, error) {
+	// extract the counts
+	countMap := map[string]map[string]int64{}
+	if rows != nil {
+		for rows.Next() {
+			var predictedTerm string
+			var targetTerm string
+			var bucketCount int64
+			err := rows.Scan(&predictedTerm, &targetTerm, &bucketCount)
+			if err != nil {
+				return nil, errors.Wrap(err, fmt.Sprintf("no %s histogram aggregation found", termsAggName))
+			}
+			if len(countMap[predictedTerm]) == 0 {
+				countMap[predictedTerm] = map[string]int64{}
+			}
+			countMap[predictedTerm][targetTerm] = bucketCount
+		}
+	}
+
+	// convert the extracted counts into buckets suitable for serialization
+	buckets := make([]*model.Bucket, 0)
+	for predictedKey, targetCounts := range countMap {
+		bucket := model.Bucket{
+			Key:     predictedKey,
+			Count:   0,
+			Buckets: []*model.Bucket{},
+		}
+		for targetKey, count := range targetCounts {
+			targetBucket := model.Bucket{
+				Key:   targetKey,
+				Count: count,
+			}
+			bucket.Count = bucket.Count + count
+			bucket.Buckets = append(bucket.Buckets, &targetBucket)
+		}
+		buckets = append(buckets, &bucket)
 	}
 
 	// assign histogram attributes

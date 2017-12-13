@@ -356,12 +356,17 @@ func (s *Storage) fetchNumericalResultHistogram(resultURI string, dataset string
 	return s.parseNumericHistogram(res, extrema)
 }
 
-func (s *Storage) fetchCategoricalResultHistogram(resultURI string, dataset string, variable *model.Variable) (*model.Histogram, error) {
-	// Get count by category.
-	query := fmt.Sprintf("SELECT value, COUNT(*) AS count FROM %s WHERE result_id = $1 and target = $2 GROUP BY value ORDER BY count desc, value LIMIT %d;", dataset, catResultLimit)
+func (s *Storage) fetchCategoricalResultHistogram(resultURI string, dataset string, resultDataset string, variable *model.Variable) (*model.Histogram, error) {
+	targetName := variable.Name
+
+	query := fmt.Sprintf("SELECT base.%s, result.value, COUNT(*) AS count "+
+		"FROM %s AS result INNER JOIN %s AS base ON result.index = base.\"d3mIndex\" "+
+		"WHERE result.result_id = $1 and result.target = $2 "+
+		"GROUP BY result.value, base.%s "+
+		"ORDER BY count desc;", targetName, resultDataset, dataset, targetName)
 
 	// execute the postgres query
-	res, err := s.client.Query(query, resultURI, variable.Name)
+	res, err := s.client.Query(query, resultURI, targetName)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to fetch histograms for result summaries from postgres")
 	}
@@ -393,7 +398,7 @@ func (s *Storage) FetchResultsSummary(dataset string, resultURI string, index st
 		return numeric, nil
 	} else if model.IsCategorical(variable.Type) {
 		// fetch categorical histograms
-		categorical, err := s.fetchCategoricalResultHistogram(resultURI, datasetResult, variable)
+		categorical, err := s.fetchCategoricalResultHistogram(resultURI, dataset, datasetResult, variable)
 		if err != nil {
 			return nil, err
 		}

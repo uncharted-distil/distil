@@ -31,6 +31,7 @@ type Config struct {
 	PostgresDatabase        string `env:"PG_DATABASE" envDefault:"distil"`
 	PostgresRetryCount      int    `env:"PG_RETRY_COUNT" envDefault:"100"`
 	PostgresRetryTimeout    int    `env:"PG_RETRY_TIMEOUT" envDefault:"4000"`
+	PostgresLogLevel        string `env:"PG_LOG_LEVEL" envDefault:"none"`
 }
 
 // LoadConfig loads the config from the environment if necessary and returns a
