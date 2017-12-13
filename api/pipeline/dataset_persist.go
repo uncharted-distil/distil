@@ -17,12 +17,10 @@ import (
 )
 
 const (
-	// D3MTrainTargets provides the name of the training targets csv file as defined in the D3M schema
-	D3MTrainTargets = "trainTargets.csv"
-	// D3MTrainData provides the name of the training targets csv file as defined in the D3M schema
-	D3MTrainData = "trainData.csv"
+	// D3MLearningData provides the name of the training csv file as defined in the D3M schema
+	D3MLearningData = "tables/learningData.csv"
 	// D3MDataSchema provides the name of the D3M data schema file
-	D3MDataSchema = "dataSchema.json"
+	D3MDataSchema = "datasetDoc.json"
 )
 
 // FilteredDataProvider defines a function that will fetch data from a back end source given
@@ -34,25 +32,23 @@ type VariableProvider func(dataset string, index string) ([]*model.Variable, err
 
 // DataSchema encapsulates the data schema json structure.
 type DataSchema struct {
-	DatasetID                            string     `json:"datasetId"`
-	RawData                              bool       `json:"rawData"`
-	Redacted                             bool       `json:"redacted"`
-	TestDataSchemaMirrorsTrainDataSchema bool       `json:"testDataSchemaMirrorsTrainDataSchema"`
-	TrainData                            *TrainData `json:"trainData"`
+	DatasetID     string        `json:"about.datasetID"`
+	Redacted      bool          `json:"about.redacted"`
+	DataResources *DataResource `json:"dataResources"`
 }
 
-// TrainData represents a set of training and target variables.
-type TrainData struct {
-	NumSamples   int             `json:"numSamples"`
-	TrainData    []*DataVariable `json:"trainData"`
-	TrainTargets []*DataVariable `json:"trainTargets"`
+// DataResource represents a set of variables.
+type DataResource struct {
+	ResID     string          `json:"resID"`
+	ResPath   string          `json:"resPath"`
+	Variables []*DataVariable `json:"columns"`
 }
 
 // DataVariable captures the data schema representation of a variable.
 type DataVariable struct {
-	VarName string `json:"varName"`
-	VarRole string `json:"varRole"`
-	VarType string `json:"varType"`
+	ColName string   `json:"colName"`
+	Role    []string `json:"role"`
+	ColType string   `json:"colType"`
 }
 
 // Hash the filter set
@@ -145,7 +141,7 @@ func dirExists(path string) bool {
 }
 
 func writeTrainData(dataPath string, datasetDir string, filteredData *model.FilteredData, targetIdx int) error {
-	file, err := os.Create(path.Join(dataPath, D3MTrainData))
+	file, err := os.Create(path.Join(dataPath, D3MLearningData))
 	if err != nil {
 		return errors.Wrapf(err, "unable to persist data to %s", datasetDir)
 	}
@@ -185,7 +181,7 @@ func writeTrainData(dataPath string, datasetDir string, filteredData *model.Filt
 }
 
 func writeTrainTargets(targetPath string, datasetDir string, filteredData *model.FilteredData, targetIdx int) error {
-	file, err := os.Create(path.Join(targetPath, D3MTrainTargets))
+	file, err := os.Create(path.Join(targetPath, D3MLearningData))
 	if err != nil {
 		return errors.Wrapf(err, "unable to persist data to %s", datasetDir)
 	}
@@ -223,41 +219,34 @@ func writeDataSchema(schemaPath string, dataset string, filteredData *model.Filt
 	// Build the schema data for output.
 	ds := &DataSchema{
 		DatasetID: dataset,
-		RawData:   false,
 		Redacted:  true,
-		TestDataSchemaMirrorsTrainDataSchema: true,
-		TrainData: &TrainData{
-			NumSamples:   len(filteredData.Values),
-			TrainData:    make([]*DataVariable, 0),
-			TrainTargets: make([]*DataVariable, 0),
+		DataResources: &DataResource{
+			ResID:     "0",
+			ResPath:   D3MLearningData,
+			Variables: make([]*DataVariable, 0),
 		},
 	}
 
 	// Both outputs have the index.
-	ds.TrainData.TrainData = append(ds.TrainData.TrainData, &DataVariable{
-		VarName: "d3mIndex",
-		VarRole: "index",
-		VarType: "integer",
-	})
-	ds.TrainData.TrainTargets = append(ds.TrainData.TrainTargets, &DataVariable{
-		VarName: "d3mIndex",
-		VarRole: "index",
-		VarType: "integer",
+	ds.DataResources.Variables = append(ds.DataResources.Variables, &DataVariable{
+		ColName: "d3mIndex",
+		Role:    []string{"index"},
+		ColType: "integer",
 	})
 
 	// Add all other variables.
+	// NOTE: the target is identified by the suggested target role.
 	for i, c := range filteredData.Columns {
-		v := &DataVariable{
-			VarName: c,
-			VarRole: "attribute",
-			VarType: vars[c].Type,
-		}
-
+		role := []string{"attribute"}
 		if i == targetIdx {
-			ds.TrainData.TrainTargets = append(ds.TrainData.TrainTargets, v)
-		} else {
-			ds.TrainData.TrainData = append(ds.TrainData.TrainData, v)
+			role[0] = "suggestedTarget"
 		}
+		v := &DataVariable{
+			ColName: c,
+			Role:    role,
+			ColType: vars[c].Type,
+		}
+		ds.DataResources.Variables = append(ds.DataResources.Variables, v)
 	}
 
 	dsJSON, err := json.Marshal(ds)

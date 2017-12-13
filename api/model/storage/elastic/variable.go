@@ -14,15 +14,15 @@ const (
 	// Variables is the field name which stores the variables in elasticsearch.
 	Variables = "variables"
 	// VarNameField is the field name for the variable name.
-	VarNameField = "varName"
+	VarNameField = "colName"
 	// VarRoleField is the field name for the variable role.
-	VarRoleField = "varRole"
+	VarRoleField = "selectedRole"
 	// VarDisplayVariableField is the field name for the display variable.
-	VarDisplayVariableField = "varDisplayName"
+	VarDisplayVariableField = "colDisplayName"
 	// VarOriginalVariableField is the field name for the original variable.
-	VarOriginalVariableField = "varOriginalName"
+	VarOriginalVariableField = "colOriginalName"
 	// VarTypeField is the field name for the variable type.
-	VarTypeField = "varType"
+	VarTypeField = "colType"
 	// VarImportanceField is the field name for the variable importnace.
 	VarImportanceField = "importance"
 	// VarSuggestedTypesField is the field name for the suggested variable types.
