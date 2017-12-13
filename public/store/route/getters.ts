@@ -27,11 +27,11 @@ export const getters = {
 	},
 
 	getRouteCreateRequestId(state: Route): string {
-		return state.query.createRequestId;
+		return state.query.requestId;
 	},
 
-	getRouteResultId(state: Route): string {
-		return state.query.resultId;
+	getRoutePipelinetId(state: Route): string {
+		return state.query.pipelineId ? state.query.pipelineId : null;
 	},
 
 	getRouteFilters(state: Route): string {

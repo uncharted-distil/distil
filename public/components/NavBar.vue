@@ -12,8 +12,7 @@
 				<b-nav-item @click="onSearch" :active="activeView===SEARCH">Search</b-nav-item>
 				<b-nav-item @click="onExplore" :active="activeView===EXPLORE" :disabled="!hasDataset()">Explore</b-nav-item>
 				<b-nav-item @click="onSelect" :active="activeView===SELECT" :disabled="!hasDataset()">Select</b-nav-item>
-				<b-nav-item @click="onPipelines" :active="activeView===PIPELINES" :disabled="!hasDataset()">Pipelines</b-nav-item>
-				<b-nav-item @click="onResults" :active="activeView===RESULTS" :disabled="true">results</b-nav-item>
+				<b-nav-item @click="onResults" :active="activeView===RESULTS" :disabled="true">Results</b-nav-item>
 			</b-navbar-nav>
 			<b-navbar-nav class="ml-auto">
 				<b-nav-item href="/help">Help</b-nav-item>
@@ -41,7 +40,6 @@ const HOME = Symbol();
 const SEARCH = Symbol();
 const EXPLORE = Symbol();
 const SELECT = Symbol();
-const PIPELINES = Symbol();
 const RESULTS = Symbol();
 
 const ROUTE_MAPPINGS = {
@@ -49,7 +47,6 @@ const ROUTE_MAPPINGS = {
 	'/search': SEARCH,
 	'/explore': EXPLORE,
 	'/select': SELECT,
-	'/pipelines': PIPELINES,
 	'/results': RESULTS
 };
 
@@ -62,7 +59,6 @@ export default Vue.extend({
 			SEARCH: SEARCH,
 			EXPLORE: EXPLORE,
 			SELECT: SELECT,
-			PIPELINES: PIPELINES,
 			RESULTS: RESULTS,
 			activeView: SEARCH
 		};

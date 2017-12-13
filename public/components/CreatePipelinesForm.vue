@@ -22,6 +22,7 @@ import { getTask, getMetricDisplayNames, getOutputSchemaNames, getMetricSchemaNa
 import { getters as dataGetters } from '../store/data/module';
 import { getters as routeGetters } from '../store/route/module';
 import { actions as pipelineActions } from '../store/pipelines/module';
+import { PipelineInfo } from '../store/pipelines/index';
 import { getters as appGetters } from '../store/app/module';
 import { Variable } from '../store/data/index';
 import { FilterParams } from '../util/filters';
@@ -108,17 +109,19 @@ export default Vue.extend({
 				task: task,
 				metric: metrics,
 				output: output
+			}).then((res: PipelineInfo) => {
+				// transition to result screen
+				const entry = createRouteEntry('/results', {
+					terms: routeGetters.getRouteTerms(this.$store),
+					dataset: routeGetters.getRouteDataset(this.$store),
+					filters: routeGetters.getRouteFilters(this.$store),
+					target: routeGetters.getRouteTargetVariable(this.$store),
+					training: routeGetters.getRouteTrainingVariables(this.$store),
+					requestId: res.requestId,
+					pipelineId: res.pipelineId
+				});
+				this.$router.push(entry);
 			});
-
-			// transition to build screen
-			const entry = createRouteEntry('/pipelines', {
-				terms: routeGetters.getRouteTerms(this.$store),
-				dataset: routeGetters.getRouteDataset(this.$store),
-				filters: routeGetters.getRouteFilters(this.$store),
-				target: routeGetters.getRouteTargetVariable(this.$store),
-				training: routeGetters.getRouteTrainingVariables(this.$store)
-			});
-			this.$router.push(entry);
 		}
 	}
 });

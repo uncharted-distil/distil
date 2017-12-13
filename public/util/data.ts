@@ -130,6 +130,10 @@ export function getSummaries(context: DataContext, endpoint: string, results: Pi
 
 	// fetch the results for each pipeline
 	for (var result of results) {
+		if (!result.pipeline) {
+			// skip
+			continue;
+		}
 		const name = nameFunc(result);
 		const feature = result.feature;
 		const pipelineId = result.pipelineId;

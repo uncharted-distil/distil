@@ -41,12 +41,12 @@ func ResultsSummaryHandler(ctor model.PipelineStorageCtor, ctorData model.DataSt
 
 		// get the result URI. Error ignored to make it ES compatible.
 		res, err := client.FetchResultMetadataByUUID(resultUUID)
-		resultURI := resultUUID
-		if res != nil {
-			resultURI = res.ResultURI
+		if err != nil {
+			handleError(w, err)
+			return
 		}
 
-		histogram, err := clientData.FetchResultsSummary(dataset, resultURI, index)
+		histogram, err := clientData.FetchResultsSummary(dataset, res.ResultURI, index)
 		if err != nil {
 			handleError(w, err)
 			return

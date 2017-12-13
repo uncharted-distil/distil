@@ -2,11 +2,13 @@
 	<div class='result-facets'>
 		<result-group class="result-group-container" :key="group.name" v-for="group in resultGroups"
 			:name="group.groupName"
+			:request-id="group.requestId"
+			:pipeline-id="group.pipelineId"
 			:result-summary="group.resultSummary"
 			:residuals-summary="group.residualsSummary"
 			:resultHtml="html"
 			:residualHtml="html">
-			</result-group>
+		</result-group>
 	</div>
 </template>
 
@@ -18,14 +20,15 @@ import ResultGroup from '../components/ResultGroup.vue';
 import { VariableSummary } from '../store/data/index';
 import { getters as dataGetters} from '../store/data/module';
 import { getters as routeGetters} from '../store/route/module';
-import { getPipelineResult } from '../util/pipelines';
+import { getters as pipelineGetters } from '../store/pipelines/module';
 import 'font-awesome/css/font-awesome.css';
 import '../styles/spinner.css';
 import Vue from 'vue';
 
-
 /*eslint-disable */
 interface SummaryGroup {
+	requestId: string;
+	pipelineId: string;
 	groupName: string;
 	resultSummary: VariableSummary;
 	residualsSummary: VariableSummary;
@@ -46,24 +49,33 @@ export default Vue.extend({
 	},
 
 	computed: {
+		// Generate pairs of residuals and results for each pipeline in the numerical case.
 		resultGroups(): SummaryGroup[] {
-			// Generate pairs of residuals and results for each pipeline in the numerical case.  Categorical
-			//
+
+			const pipelineGroups = pipelineGetters.getPipelines(this.$store);
+			const requestId = routeGetters.getRouteCreateRequestId(this.$store);
 			const resultSummaries = dataGetters.getResultsSummaries(this.$store);
 			const residualsSummaries = this.regression ? dataGetters.getResidualsSummaries(this.$store) : [];
+			const pipelineGroup = pipelineGroups[requestId];
 
-			const requestId = routeGetters.getRouteCreateRequestId(this.$store);
-			const summaryGroups = resultSummaries.map(s => {
-				const residuals = _.find(residualsSummaries, f => s.pipelineId === f.pipelineId);
-				const result = getPipelineResult(this.$store.state.pipelineModule, requestId, s.pipelineId);
+			const summaryGroups = _.map(pipelineGroup, pipeline => {
+				const pipelineId = pipeline.pipelineId;
+				const resultSummary = _.find(resultSummaries, summary => {
+					return summary.pipelineId === pipelineId;
+				});
+				const residualSummary = _.find(residualsSummaries, summary => {
+					return summary.pipelineId === pipelineId;
+				});
 				return {
-					groupName: result ? result.name : '',
-					resultSummary: s,
-					residualsSummary: residuals
+					requestId: requestId,
+					pipelineId: pipelineId,
+					groupName: pipeline ? pipeline.name : '',
+					resultSummary: resultSummary,
+					residualsSummary: residualSummary
 				};
 			});
 
-			// Sort alphabetically
+			// sort alphabetically
 			summaryGroups.sort((a, b) => {
 				const textA = a.groupName.toLowerCase();
 				const textB = b.groupName.toLowerCase();

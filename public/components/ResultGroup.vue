@@ -1,17 +1,26 @@
 <template>
 	<div v-bind:class="currentClass"
 		@click="click()">
-		{{ name }}
-		<facets class="result-container"
-			:groups="resultGroups"
-			:highlights="highlights"
-			:html="residualHtml">
-		</facets>
-		<facets v-if="residualsGroups.length" class="residual-container"
-			:groups="residualsGroups"
-			:highlights="highlights"
-			:html="resultHtml">
-		</facets>
+		{{ name }}<!--<br>Status: {{ pipelineStatus }}-->
+		<div v-if="pipelineStatus === 'COMPLETED' || pipelineStatus === 'UPDATED'">
+			<facets v-if="resultGroups.length" class="result-container"
+				:groups="resultGroups"
+				:highlights="highlights"
+				:html="residualHtml">
+			</facets>
+			<facets v-if="residualsGroups.length" class="residual-container"
+				:groups="residualsGroups"
+				:highlights="highlights"
+				:html="resultHtml">
+			</facets>
+		</div>
+		<div v-if="pipelineStatus !== 'COMPLETED'">
+			<b-progress
+				:value="100"
+				variant="secondary"
+				striped
+				:animated="true"></b-progress>
+		</div>
 	</div>
 </template>
 
@@ -25,10 +34,10 @@ import { createGroups, Group } from '../util/facets';
 import { VariableSummary } from '../store/data/index';
 import { Dictionary } from '../util/dict';
 import { createRouteEntryFromRoute } from '../util/routes';
-import { updateFilter } from '../util/filters';
 import { getters } from '../store/data/module';
 import { getters as routeGetters } from '../store/route/module';
-import { NUMERICAL_FILTER, CATEGORICAL_FILTER, Filter, getFilterType, decodeFiltersDictionary } from '../util/filters';
+import { getters as pipelineGetters } from '../store/pipelines/module';
+import { NUMERICAL_FILTER, CATEGORICAL_FILTER, getFilterType, decodeFiltersDictionary } from '../util/filters';
 import { NumericalFacet, CategoricalFacet } from '../util/facets';
 import Vue from 'vue';
 
@@ -37,6 +46,8 @@ export default Vue.extend({
 
 	props: {
 		name: String,
+		requestId: String,
+		pipelineId: String,
 		resultSummary: Object,
 		residualsSummary: Object,
 		resultHtml: String,
@@ -48,6 +59,18 @@ export default Vue.extend({
 	},
 
 	computed: {
+		pipelineStatus(): String {
+			const pipelines = pipelineGetters.getPipelines(this.$store);
+			let pipeline = null;
+			if (pipelines[this.requestId] && pipelines[this.requestId][this.pipelineId]) {
+				pipeline = pipelines[this.requestId][this.pipelineId];
+			}
+			if (pipeline) {
+				return pipeline.progress;
+			}
+			return 'unknown';
+		},
+
 		residualsGroups(): Group[] {
 			if (this.residuals()) {
 				return createGroups([this.residuals()], false, false);
@@ -56,7 +79,10 @@ export default Vue.extend({
 		},
 
 		resultGroups(): Group[] {
-			return createGroups([this.results()], false, false);
+			if (this.results()) {
+				return createGroups([this.results()], false, false);
+			}
+			return [];
 		},
 
 		highlights(): Dictionary<any> {
@@ -64,15 +90,18 @@ export default Vue.extend({
 		},
 
 		currentClass(): string {
-			const selectedResults = atob(routeGetters.getRouteResultId(this.$store));
-			return (this.results().resultId === selectedResults)
+			const selectedId = routeGetters.getRoutePipelinetId(this.$store);
+			const results = this.results();
+			return (results && results.pipelineId === selectedId)
 				? 'result-group-selected result-group' : 'result-group';
 		}
 	},
 
 	methods: {
 		click() {
-			const routeEntry = createRouteEntryFromRoute(this.$route, { resultId: btoa(this.results().resultId) });
+			const routeEntry = createRouteEntryFromRoute(this.$route, {
+				pipelineId: this.results().pipelineId
+			});
 			this.$router.push(routeEntry);
 		},
 
@@ -82,23 +111,6 @@ export default Vue.extend({
 
 		residuals(): VariableSummary {
 			return <VariableSummary>this.residualsSummary;
-		},
-
-		updateFilterRoute(filter: Filter, resultUri: string) {
-
-			// merge the updated filters back into the route query params if set
-			const filters = routeGetters.getRouteResultFilters(this.$store);
-			let updatedFilters = filters;
-			if (filter) {
-				updatedFilters = updateFilter(filters, filter);
-			}
-
-			const entry = createRouteEntryFromRoute(routeGetters.getRoute(this.$store), {
-				resultId: resultUri ? btoa(resultUri) : routeGetters.getRouteResultId(this.$store),
-				results: updatedFilters
-			});
-
-			this.$router.push(entry);
 		},
 
 		updateGroupSelections(groups: Group[]): Group[] {
@@ -160,7 +172,7 @@ export default Vue.extend({
 	padding:9px;
 	border-style: solid;
 	border-color: #03c6e1;
-    box-shadow: 0 0 10px #03c6e1;
+	box-shadow: 0 0 10px #03c6e1;
 	border-width: 1px;
 	border-radius: 2px;
 	padding-bottom: 10px;

@@ -22,7 +22,7 @@ type Result struct {
 	RequestID   string         `json:"requestId"`
 	PipelineID  string         `json:"pipelineId"`
 	ResultURI   string         `json:"requestUri"`
-	ResultUUID  string         `json:"resultUuid"`
+	ResultUUID  string         `json:"resultId"`
 	Progress    string         `json:"progress"`
 	OutputType  string         `json:"outputType"`
 	CreatedTime time.Time      `json:"createdTime"`

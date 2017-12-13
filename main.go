@@ -95,7 +95,7 @@ func main() {
 	registerRoutePost(mux, "/distil/variables/:index/:dataset", routes.VariableTypeHandler(pgDataStorageCtor, metadataStorageCtor))
 	registerRoute(mux, "/distil/variable-summaries/:index/:dataset/:variable", routes.VariableSummaryHandler(pgDataStorageCtor))
 	registerRoute(mux, "/distil/filtered-data/:esIndex/:dataset/:inclusive", routes.FilteredDataHandler(pgDataStorageCtor))
-	registerRoute(mux, "/distil/results/:index/:dataset/:results-uuid/:inclusive", routes.ResultsHandler(pgPipelineStorageCtor, pgDataStorageCtor))
+	registerRoute(mux, "/distil/results/:index/:dataset/:pipeline-id/:inclusive", routes.ResultsHandler(pgPipelineStorageCtor, pgDataStorageCtor))
 	registerRoute(mux, "/distil/results-summary/:index/:dataset/:results-uuid", routes.ResultsSummaryHandler(pgPipelineStorageCtor, pgDataStorageCtor))
 	registerRoute(mux, "/distil/residuals-summary/:index/:dataset/:results-uuid", routes.ResidualsSummaryHandler(pgPipelineStorageCtor, pgDataStorageCtor))
 	registerRoute(mux, "/distil/session/:session", routes.SessionHandler(pgPipelineStorageCtor))

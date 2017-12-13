@@ -26,7 +26,7 @@ func TestResultsSummaryHandlerInt(t *testing.T) {
 	params := map[string]string{
 		"dataset":      "o_185",
 		"index":        "datasets",
-		"results-uuid": "./testdata/results.csv",
+		"pipeline-id": "./testdata/results.csv",
 	}
 	req := mock.HTTPRequest(t, "GET", "/distil/results-summary/", params, nil)
 
@@ -73,7 +73,7 @@ func TestResultsSummaryHandlerFloat(t *testing.T) {
 	params := map[string]string{
 		"dataset":      "o_185",
 		"index":        "datasets",
-		"results-uuid": "./testdata/results_float.csv",
+		"pipeline-id": "./testdata/results_float.csv",
 	}
 	req := mock.HTTPRequest(t, "GET", "/distil/results-summary/", params, nil)
 
@@ -120,7 +120,7 @@ func TestResultsSummaryHandlerCategorical(t *testing.T) {
 	params := map[string]string{
 		"dataset":      "o_185",
 		"index":        "datasets",
-		"results-uuid": "./testdata/results_categorical.csv",
+		"pipeline-id": "./testdata/results_categorical.csv",
 	}
 	req := mock.HTTPRequest(t, "GET", "/distil/results-summary/", params, nil)
 

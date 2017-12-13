@@ -46,9 +46,12 @@ export function getPipelineResult(state: PipelineState, requestId: string, pipel
 }
 
 // Returns a specific pipeline result given a request and its ID.
-export function getPipelineResultById(state: PipelineState, requestId: string, resultId: string): PipelineInfo {
+export function getPipelineResultById(state: PipelineState, requestId: string, pipelineId: string): PipelineInfo {
+	if (!pipelineId) {
+		return null;
+	}
 	const pipelineResults = getPipelineResultsOkay(state, requestId);
-	return _.find(pipelineResults, p => resultId === p.pipeline.resultId);
+	return _.find(pipelineResults, p => pipelineId === p.pipelineId);
 }
 
 // Gets a task object based on a variable type.

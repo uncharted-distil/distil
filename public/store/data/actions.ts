@@ -167,16 +167,16 @@ export const actions = {
 	},
 
 	// fetches result data for created pipeline
-	updateResults(context: DataContext, args: { resultId: string, dataset: string, filters: Filter[] }) {
-		const encodedResultId = encodeURIComponent(args.resultId);
+	updateResults(context: DataContext, args: { pipelineId: string, dataset: string, filters: Filter[] }) {
+		const encodedPipelineId = encodeURIComponent(args.pipelineId);
 		const filters = args.filters;
 		const queryParams = encodeQueryParams(filters);
-		return axios.get(`/distil/results/${ES_INDEX}/${args.dataset}/${encodedResultId}/inclusive${queryParams}`)
+		return axios.get(`/distil/results/${ES_INDEX}/${args.dataset}/${encodedPipelineId}/inclusive${queryParams}`)
 			.then(response => {
 				mutations.setResultData(context, response.data);
 			})
 			.catch(error => {
-				console.error(`Failed to fetch results from ${args.resultId} with error ${error}`);
+				console.error(`Failed to fetch results from ${args.pipelineId} with error ${error}`);
 			});
 	},
 
