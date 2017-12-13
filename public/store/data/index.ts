@@ -25,6 +25,7 @@ export interface Extrema {
 export interface Bucket {
 	key: string;
 	count: number;
+	buckets?: Bucket[];
 }
 
 export interface VariableSummary {

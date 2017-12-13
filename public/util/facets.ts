@@ -1,17 +1,32 @@
 import { spinnerHTML } from '../util/spinner';
 import { VariableSummary } from '../store/data/index';
+import _ from 'lodash';
+
+export const CATEGORY_NO_MATCH_COLOR = "#e05353";
+export const CATEGORY_MATCH_COLOR = "#03c6e1";
 
 export interface PlaceHolderFacet {
 	placeholder: boolean;
 	html: string;
 }
 
+export interface Segment {
+	color: string;
+	count: number;
+}
+
+export interface SelectedSegments {
+	selected: number;
+	segments: Segment[];
+}
+
 export interface CategoricalFacet {
 	icon: { class: string };
-	selected: { count: number };
+	selected: { count: number } | SelectedSegments;
 	value: string;
 	count: number;
-	filterable: boolean;
+	filterable: boolean
+	segments: Segment[];
 }
 
 export interface Slice {
@@ -88,60 +103,95 @@ export function createPendingFacet(summary: VariableSummary, enableCollapse: boo
 	};
 }
 
-// creates categorical or numerical summary facets
+// creates categorical or numerical summary facets based on the input summary type
 export function createSummaryFacet(summary: VariableSummary, enableCollapse: boolean, enableFiltering: boolean): Group {
 	switch (summary.type) {
 
 		case 'categorical':
-			return {
-				label: summary.name,
-				key: summary.name,
-				collapsible: enableCollapse,
-				collapsed: false,
-				facets: summary.buckets.map(b => {
-					return {
-						icon : {
-							class : 'fa fa-info'
-						},
-						value: b.key,
-						count: b.count,
-						selected: {
-							count: b.count
-						},
-						filterable: enableFiltering
-					};
-				})
-			};
-
+			return createCategoricalSummaryFacet(summary, enableCollapse, enableFiltering);
 		case 'numerical':
-			return {
-				label: summary.name,
-				key: summary.name,
-				collapsible: enableCollapse,
-				collapsed: false,
-				facets: [
-					{
-						histogram: {
-							slices: summary.buckets.map((b, i) => {
-								let toLabel: string;
-								if (i < summary.buckets.length-1) {
-									toLabel = summary.buckets[i+1].key;
-								} else {
-									toLabel = `${summary.extrema.max}`;
-								}
-								return {
-									label: b.key,
-									toLabel: toLabel,
-									count: b.count
-								};
-							})
-						},
-						filterable: enableFiltering,
-						selection: {} as any
-					}
-				]
-			};
+			return createNumericalSummaryFacet(summary, enableCollapse, enableCollapse);
 	}
 	console.warn('unrecognized summary type', summary.type);
 	return null;
+}
+
+// creates a categorical facet with segments based on nest buckets counts, or no segments if buckets aren't nested
+function createCategoricalSummaryFacet(summary: VariableSummary, enableCollapse: boolean, enableFiltering: boolean): Group {
+
+	// generate facets from the supplied variable summary
+	const facets = summary.buckets.map(b => {
+
+		let segments = [];
+		let selected = null;
+
+		// Populate segments if buckets are nested.  If a nested bucket's key matches the parent bucket key, values
+		// are given a colour to signify a match, all other nested buckets are summed and displayed as not matching.
+		if (b.buckets) {
+			segments.push( { color: CATEGORY_MATCH_COLOR, count: 0 });
+			segments.push( { color: CATEGORY_NO_MATCH_COLOR, count: 0 });
+			for (const subBucket of b.buckets) {
+				if (subBucket.key === b.key) {
+					segments[0].count = subBucket.count;
+				} else {
+					segments[1].count += subBucket.count;
+				}
+			}
+			// TODO: Add proper highlight state visuals once highlighting is cleaned up
+			selected = { segments: segments, selected: b.count };
+		} else {
+			// if no segments, just use basic count selection
+			selected = { count: b.count };
+		}
+
+		const facet: CategoricalFacet = {
+			icon : { class : 'fa fa-info' },
+			value: b.key,
+			count: b.count,
+			selected: selected,
+			segments: segments,
+			filterable: enableFiltering
+		};
+
+		return facet;
+	})
+
+	// Generate a facet group
+	return {
+		label: summary.name,
+		key: summary.name,
+		collapsible: enableCollapse,
+		collapsed: false,
+		facets: facets
+	};
+}
+
+function createNumericalSummaryFacet(summary: VariableSummary, enableCollapse: boolean, enableFiltering: boolean): Group {
+	return {
+		label: summary.name,
+		key: summary.name,
+		collapsible: enableCollapse,
+		collapsed: false,
+		facets: [
+			{
+				histogram: {
+					slices: summary.buckets.map((b, i) => {
+						let toLabel: string;
+						if (i < summary.buckets.length-1) {
+							toLabel = summary.buckets[i+1].key;
+						} else {
+							toLabel = `${summary.extrema.max}`;
+						}
+						return {
+							label: b.key,
+							toLabel: toLabel,
+							count: b.count
+						};
+					})
+				},
+				filterable: enableFiltering,
+				selection: {} as any
+			}
+		]
+	};
 }
