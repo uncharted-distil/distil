@@ -1,6 +1,5 @@
 import { spinnerHTML } from '../util/spinner';
 import { VariableSummary } from '../store/data/index';
-import _ from 'lodash';
 
 export const CATEGORY_NO_MATCH_COLOR = "#e05353";
 export const CATEGORY_MATCH_COLOR = "#03c6e1";
