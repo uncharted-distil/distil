@@ -43,7 +43,7 @@ import { createGroups, Group } from '../util/facets';
 import { createRouteEntryFromRoute } from '../util/routes';
 import { getPipelineResultById } from '../util/pipelines';
 import { getTask } from '../util/pipelines';
-import { getErrorCol } from '../util/data';
+import { getErrorCol, /*isPredicted, isError,*/ isTarget, getVarFromTarget /*, getVarFromPredicted, getVarFromError*/ } from '../util/data';
 import { getters as dataGetters} from '../store/data/module';
 import { getters as routeGetters } from '../store/route/module';
 import { actions } from '../store/app/module';
@@ -89,7 +89,16 @@ export default Vue.extend({
 		},
 
 		highlights(): Dictionary<any> {
-			return dataGetters.getHighlightedFeatureValues(this.$store);
+			// find var marked as 'target' and use that name/value tuple to
+			// highlight the ground truth
+			const highlights = dataGetters.getHighlightedFeatureValues(this.$store);
+			const facetHighlights: Dictionary<string> = {};
+			_.forEach(highlights, (value, varName) => {
+				if (isTarget(varName)) {
+					facetHighlights[getVarFromTarget(varName)] = value;
+				}
+			});
+			return facetHighlights;
 		},
 
 		dataset(): string {

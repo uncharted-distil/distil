@@ -30,7 +30,8 @@
 // of prediction-truth residuals, and scoring information.
 
 import Facets from '../components/Facets';
-import { createGroups, Group } from '../util/facets';
+import { createGroups, Group, NumericalFacet, CategoricalFacet } from '../util/facets';
+import { isPredicted, isError, getVarFromPredicted, getVarFromError } from '../util/data';
 import { VariableSummary } from '../store/data/index';
 import { Dictionary } from '../util/dict';
 import { createRouteEntryFromRoute } from '../util/routes';
@@ -38,7 +39,7 @@ import { getters } from '../store/data/module';
 import { getters as routeGetters } from '../store/route/module';
 import { getters as pipelineGetters } from '../store/pipelines/module';
 import { NUMERICAL_FILTER, CATEGORICAL_FILTER, getFilterType, decodeFiltersDictionary } from '../util/filters';
-import { NumericalFacet, CategoricalFacet } from '../util/facets';
+import _ from 'lodash';
 import Vue from 'vue';
 
 export default Vue.extend({
@@ -86,7 +87,18 @@ export default Vue.extend({
 		},
 
 		highlights(): Dictionary<any> {
-			return getters.getHighlightedFeatureValues(this.$store);
+			// Facets highlights are keyed by name - map the published highligh
+			// key to the facet key
+			const highlights = getters.getHighlightedFeatureValues(this.$store);
+			const facetHighlights: Dictionary<string> = {};
+			_.forEach(highlights, (value, varName) => {
+				if (isPredicted(varName)) {
+					facetHighlights[`${getVarFromPredicted(varName)} - predicted`] = value;
+				} else if (isError(varName)) {
+					facetHighlights[`${getVarFromError(varName)} - error`] = value;
+				}
+			});
+			return facetHighlights;
 		},
 
 		currentClass(): string {

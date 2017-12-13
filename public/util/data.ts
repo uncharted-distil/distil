@@ -103,6 +103,18 @@ export function getErrorCol(target: string): string {
 	return target + ERROR_POSTFIX;
 }
 
+export function getVarFromPredicted(decorated: string) {
+	return decorated.replace(PREDICTED_POSTFIX, '');
+}
+
+export function getVarFromError(decorated: string) {
+	return decorated.replace(ERROR_POSTFIX, '');
+}
+
+export function getVarFromTarget(decorated: string) {
+	return decorated.replace(TARGET_POSTFIX, '');
+}
+
 export function updateSummaries(summary: VariableSummary, summaries: VariableSummary[], matchField: string) {
 	const index = _.findIndex(summaries, r => r[matchField] === summary[matchField]);
 	if (index >= 0) {

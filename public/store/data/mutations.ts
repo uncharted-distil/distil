@@ -64,11 +64,6 @@ export const mutations = {
 			from: highlight.from,
 			to: highlight.to
 		});
-		if (state.resultsSummaries) {
-			state.resultsSummaries.forEach(summary => {
-				Vue.set(state.highlightedFeatureRanges, summary.feature, highlight);
-			});
-		}
 	},
 
 	clearFeatureHighlightRange(state: DataState, name: string) {
@@ -77,11 +72,6 @@ export const mutations = {
 
 	highlightFeatureValues(state: DataState, highlights: { [name: string]: any }) {
 		state.highlightedFeatureValues = highlights;
-		if (state.resultsSummaries) {
-			state.resultsSummaries.forEach(summary => {
-				Vue.set(state.highlightedFeatureValues, summary.name, highlights[summary.feature]);
-			});
-		}
 	},
 
 	clearFeatureHighlightValues(state: DataState) {
