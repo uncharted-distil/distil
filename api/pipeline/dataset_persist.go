@@ -155,10 +155,8 @@ func writeData(dataPath string, datasetDir string, filteredData *model.FilteredD
 
 	// write out the header, including the d3m_index field
 	variableNames := []string{"d3mIndex"}
-	for i, column := range filteredData.Columns {
-		if i != targetIdx {
-			variableNames = append(variableNames, column)
-		}
+	for _, column := range filteredData.Columns {
+		variableNames = append(variableNames, column)
 	}
 	err = writer.Write(variableNames)
 	if err != nil {
@@ -169,11 +167,9 @@ func writeData(dataPath string, datasetDir string, filteredData *model.FilteredD
 		// append the index as the d3m_index col
 		strVals := []string{strconv.Itoa(rowNum)}
 
-		// convert vals in row to string, ignoring target feature
-		for i, value := range row {
-			if i != targetIdx {
-				strVals = append(strVals, fmt.Sprintf("%v", value))
-			}
+		// convert vals in row to string
+		for _, value := range row {
+			strVals = append(strVals, fmt.Sprintf("%v", value))
 		}
 		err := writer.Write(strVals)
 		if err != nil {
