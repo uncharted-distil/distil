@@ -21,6 +21,8 @@
 		</div>
 		<h6 class="nav-link">Actual</h6>
 		<facets class="result-summaries-target"
+			v-on:histogram-mouse-enter="histogramMouseEnter"
+			v-on:histogram-mouse-leave="histogramMouseLeave"
 			:groups="targetSummaries"
 			:highlights="highlights"></facets>
 		<h6 class="nav-link">Predicted</h6>
@@ -46,6 +48,7 @@ import { getTask } from '../util/pipelines';
 import { getErrorCol, /*isPredicted, isError,*/ isTarget, getVarFromTarget /*, getVarFromPredicted, getVarFromError*/ } from '../util/data';
 import { getters as dataGetters} from '../store/data/module';
 import { getters as routeGetters } from '../store/route/module';
+import { actions as dataActions } from '../store/data/module';
 import { actions } from '../store/app/module';
 import { Dictionary } from '../store/data/index';
 import vueSlider from 'vue-slider-component';
@@ -173,16 +176,33 @@ export default Vue.extend({
 	},
 
 	methods: {
+		histogramMouseEnter(key, value) {
+			// extract the var name from the key
+			const varName = `${key}_target`;
+			dataActions.highlightFeatureRange(this.$store, {
+				name: varName,
+				from: _.toNumber(value.label[0]),
+				to: _.toNumber(value.toLabel[value.toLabel.length-1])
+			});
+		},
+
+		histogramMouseLeave(key) {
+			const varName = `${key}_target`;
+			dataActions.clearFeatureHighlightRange(this.$store, varName);
+		},
+
 		updateThreshold(value: number) {
 			const entry = createRouteEntryFromRoute(this.$route, {
 				residualThreshold: value
 			});
 			this.$router.push(entry);
 		},
+
 		onSlide(value) {
 			const entry = createRouteEntryFromRoute(this.$route, { residualThreshold: value });
 			this.$router.replace(entry);
 		},
+
 		onExport() {
 			this.$router.replace('/');
 			const pipelineId = routeGetters.getRoutePipelinetId(this.$store);

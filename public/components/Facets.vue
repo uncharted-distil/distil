@@ -6,7 +6,6 @@
 import _ from 'lodash';
 import 'jquery';
 import Vue from 'vue';
-import { actions } from '../store/data/module';
 import { Group, CategoricalFacet } from '../util/facets';
 import { Dictionary } from '../util/dict';
 import Facets from '@uncharted.software/stories-facets';
@@ -58,24 +57,22 @@ export default Vue.extend({
 		});
 		// hover over events
 		this.facets.on('facet-histogram:mouseenter', (event: Event, key: string, value: any) => {
-			actions.highlightFeatureRange(this.$store, {
-				name: key,
-				from: _.toNumber(value.label[0]),
-				to: _.toNumber(value.toLabel[value.toLabel.length-1])
-			});
+			component.$emit('histogram-mouse-enter', key, value);
 		});
 		this.facets.on('facet-histogram:mouseleave', (event: Event, key: string) => {
-			actions.clearFeatureHighlightRange(this.$store, key);
+			component.$emit('histogram-mouse-leave', key);
 		});
 		this.facets.on('facet:mouseenter', (event: Event, key: string, value: number) => {
-			actions.highlightFeatureRange(this.$store, {
-				name: key,
-				from: value,
-				to: value
-			});
+			// actions.highlightFeatureRange(this.$store, {
+			// 	name: key,
+			// 	from: value,
+			// 	to: value
+			// });
+			component.$emit('facet-mouse-enter', key, value);
 		});
 		this.facets.on('facet:mouseleave', (event: Event, key: string) => {
-			actions.clearFeatureHighlightRange(this.$store, key);
+			// actions.clearFeatureHighlightRange(this.$store, key);
+			component.$emit('facet-mouse-leave', key);
 		});
 		// click events
 		this.facets.on('facet:click', (event: Event, key: string, value: string) => {

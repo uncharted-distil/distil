@@ -4,11 +4,15 @@
 		{{ name }}<!--<br>Status: {{ pipelineStatus }}-->
 		<div v-if="pipelineStatus === 'COMPLETED' || pipelineStatus === 'UPDATED'">
 			<facets v-if="resultGroups.length" class="result-container"
+				v-on:histogram-mouse-enter="resultHistogramMouseEnter"
+				v-on:histogram-mouse-leave="resultHistogramMouseLeave"
 				:groups="resultGroups"
 				:highlights="highlights"
 				:html="residualHtml">
 			</facets>
 			<facets v-if="residualsGroups.length" class="residual-container"
+				v-on:histogram-mouse-enter="residualsHistogramMouseEnter"
+				v-on:histogram-mouse-leave="residualsHistogramMouseLeave"
 				:groups="residualsGroups"
 				:highlights="highlights"
 				:html="resultHtml">
@@ -38,6 +42,7 @@ import { createRouteEntryFromRoute } from '../util/routes';
 import { getters } from '../store/data/module';
 import { getters as routeGetters } from '../store/route/module';
 import { getters as pipelineGetters } from '../store/pipelines/module';
+import { actions as dataActions } from '../store/data/module';
 import { NUMERICAL_FILTER, CATEGORICAL_FILTER, getFilterType, decodeFiltersDictionary } from '../util/filters';
 import _ from 'lodash';
 import Vue from 'vue';
@@ -110,6 +115,36 @@ export default Vue.extend({
 	},
 
 	methods: {
+		resultHistogramMouseEnter(key, value) {
+			// extract the var name from the key
+			const varName = key.replace(' - predicted', '_predicted');
+			dataActions.highlightFeatureRange(this.$store, {
+				name: varName,
+				from: _.toNumber(value.label[0]),
+				to: _.toNumber(value.toLabel[value.toLabel.length-1])
+			});
+		},
+
+		resultHistogramMouseLeave(key) {
+			const varName = key.replace(' - predicted', '_predicted');
+			dataActions.clearFeatureHighlightRange(this.$store, varName);
+		},
+
+		residualsHistogramMouseEnter(key, value) {
+			// extract the var name from the key
+			const varName = key.replace(' - error', '_error');
+			dataActions.highlightFeatureRange(this.$store, {
+				name: varName,
+				from: _.toNumber(value.label[0]),
+				to: _.toNumber(value.toLabel[value.toLabel.length-1])
+			});
+		},
+
+		residualsHistogramMouseLeave(key) {
+			const varName = key.replace(' - error', '_error');
+			dataActions.clearFeatureHighlightRange(this.$store, varName);
+		},
+
 		click() {
 			const routeEntry = createRouteEntryFromRoute(this.$route, {
 				pipelineId: this.results().pipelineId
