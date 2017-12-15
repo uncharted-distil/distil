@@ -26,7 +26,7 @@ imports:
 - name: github.com/gorilla/websocket
   version: 2d1e4548da234d9cb742cc3628556fef86aafbac
 - name: github.com/jackc/pgx
-  version: 97c01fb52451c10e686fb847ad390338bf1799ae
+  version: b0c3e7e8b107f61f54a6dfce6e5864b8b68131cb
 - name: github.com/mattn/go-isatty
   version: fc9e8d8ef48496124e79ae0df75490096eccf6fe
 - name: github.com/mgutz/ansi
