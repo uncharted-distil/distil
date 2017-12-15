@@ -53,6 +53,8 @@ imports:
   - assert
 - name: github.com/unchartedsoftware/plog
   version: 24c9313ea3ff2a86868f9961420e5b72fb83a019
+- name: github.com/unchartedsoftware/distil-ingest
+  version: 47ee68a4d3b281debf9ecd5af8469869f55f5ac9
 - name: github.com/vova616/xxhash
   version: f0a9a8b74d487f9563a527daf3bd6b4fbd3f5d00
 - name: github.com/zenazn/goji
