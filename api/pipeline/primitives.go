@@ -17,12 +17,14 @@ const (
 	rankingFunctionName = "pca"
 )
 
+// ImportanceRankingResult is a result from variable importance ranking.
 type ImportanceRankingResult struct {
 	DatasetID  string                `json:"datasetID"`
 	TargetName string                `json:"targetName"`
 	Importance []*VariableImportance `json:"importance"`
 }
 
+// VariableImportance captures the ranking importance of a variable.
 type VariableImportance struct {
 	ColName       string  `json:"colName"`
 	ColImportance float64 `json:"colImportance"`
@@ -35,6 +37,7 @@ func (c *Client) parseImportanceResult(data []byte) (*ImportanceRankingResult, e
 	return importance, err
 }
 
+// Rank ranks the variable importance relative to a target variable.
 func (c *Client) Rank(restClient *rest.Client, meta model.MetadataStorage, data model.DataStorage, dataset string, index string, targetName string) (*ImportanceRankingResult, error) {
 	// check if the pca request has already been made for this target
 	// folder structure is pca folder/dataset/target.csv

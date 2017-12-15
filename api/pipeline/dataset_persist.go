@@ -137,6 +137,7 @@ func PersistFilteredData(fetchData FilteredDataProvider, fetchVariables Variable
 	return path, nil
 }
 
+// PersistData writes out the data to the specified file using a csv structure.
 func PersistData(dataDir string, filename string, data *model.FilteredData) error {
 	filenameFull := path.Join(dataDir, filename)
 	file, err := os.Create(filenameFull)
