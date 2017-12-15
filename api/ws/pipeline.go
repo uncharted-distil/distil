@@ -413,7 +413,7 @@ func handleCreatePipelinesSuccess(conn *Connection, msg *Message, proxy *pipelin
 					resultURI := res.PipelineInfo.PredictResultUris[0]
 					resultURI = strings.Replace(resultURI, "file://", "", 1)
 					if !strings.HasSuffix(resultURI, ".csv") {
-						resultURI = path.Join(resultURI, pipeline.D3MTrainTargets)
+						resultURI = path.Join(resultURI, pipeline.D3MLearningData)
 					}
 
 					// get the result UUID. NOTE: Doing sha1 for now.

@@ -25,7 +25,7 @@ func (s *Storage) parseDatasets(res *elastic.SearchResult, includeIndex bool) ([
 		if err != nil {
 			return nil, errors.Wrap(err, "failed to parse dataset")
 		}
-		// extract dataset name (ID is mirror of name)
+		// extract dataset id
 		name := strings.TrimSuffix(hit.Id, DatasetSuffix)
 		// extract the description
 		description, ok := json.String(src, "description")
