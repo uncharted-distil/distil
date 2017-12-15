@@ -1,6 +1,6 @@
 <template>
-	<div class="available-variables">
-		<h6 class="nav-link">features</h6>
+	<div class="available-training-variables">
+		<h6 class="nav-link">Available features</h6>
 		<variable-facets
 			enable-search
 			enable-sort
@@ -24,7 +24,7 @@ import 'font-awesome/css/font-awesome.css';
 import Vue from 'vue';
 
 export default Vue.extend({
-	name: 'available-variables',
+	name: 'available-training-variables',
 
 	components: {
 		VariableFacets
@@ -70,7 +70,7 @@ export default Vue.extend({
 </script>
 
 <style>
-.available-variables {
+.available-training-variables {
 	display: flex;
 	flex-direction: column;
 }
