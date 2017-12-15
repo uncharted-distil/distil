@@ -101,7 +101,7 @@ export default Vue.extend({
 			return formatRecursive(n, 0);
 		},
 		setActiveDataset() {
-			const entry = createRouteEntry('/explore', {
+			const entry = createRouteEntry('/select', {
 				terms: getters.getRouteTerms(this.$store),
 				dataset: this.name
 			});

@@ -59,6 +59,7 @@
 			:highlights="highlights"
 			:html="html"
 			:sort="sort"
+			v-on:click="onClick"
 			v-on:expand="onExpand"
 			v-on:collapse="onCollapse"
 			v-on:range-change="onRangeChange"
@@ -226,6 +227,7 @@ export default Vue.extend({
 				type: EMPTY_FILTER,
 				enabled: true
 			});
+			this.$emit('expand', key);
 		},
 
 		// handles facet group transitions to inactive (grayed out, reduced visuals) state
@@ -236,6 +238,7 @@ export default Vue.extend({
 				type: EMPTY_FILTER,
 				enabled: false
 			});
+			this.$emit('collapse', key);
 		},
 
 		// handles range slider change events
@@ -248,6 +251,7 @@ export default Vue.extend({
 				min: parseFloat(value.from.label[0]),
 				max: parseFloat(value.to.label[0])
 			});
+			this.$emit('range-change', key, value);
 		},
 
 		// handles individual category toggle events within a facet group
@@ -259,6 +263,11 @@ export default Vue.extend({
 				enabled: true,
 				categories: values
 			});
+			this.$emit('facet-toggle', key, values);
+		},
+
+		onClick(key: string) {
+			this.$emit('click', key);
 		},
 
 		setSortMethod(type: string) {

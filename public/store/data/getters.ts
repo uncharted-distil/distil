@@ -72,16 +72,17 @@ export const getters = {
 	},
 
 	getSelectedFilters(state: DataState, getters: any): Filter[] {
+
+		const existing = getters.getDecodedFilters as Filter[];
+		const filters: Filter[] = [];
+
+		// add training filters
 		const training = getters.getRouteTrainingVariables as string;
 		if (training) {
-			const existing = getters.getDecodedFilters as Filter[];
-			const filters: Filter[] = [];
-
 			training.split(',').forEach(variable => {
 				const index = _.findIndex(existing, filter => {
 					return filter.name == variable;
 				});
-
 				if (index === -1) {
 					filters.push({
 						name: variable,
@@ -92,9 +93,26 @@ export const getters = {
 					filters.push(existing[index]);
 				}
 			});
-			return filters;
 		}
-		return [];
+
+		// add target filter
+		const target = getters.getRouteTargetVariable as string;
+		if (target) {
+			const index = _.findIndex(existing, filter => {
+				return filter.name == target;
+			});
+			if (index === -1) {
+				filters.push({
+					name: target,
+					type: EMPTY_FILTER,
+					enabled: false
+				});
+			} else {
+				filters.push(existing[index]);
+			}
+		}
+
+		return filters;
 	},
 
 	getAvailableVariableSummaries(state: DataState, getters: any): VariableSummary[] {

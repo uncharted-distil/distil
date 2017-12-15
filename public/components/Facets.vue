@@ -176,6 +176,9 @@ export default Vue.extend({
 
 	methods: {
 		injectHTML(group: Group, $elem: JQuery) {
+			$elem.click(() => {
+				this.$emit('click', group.key);
+			});
 			if (!this.html) {
 				return;
 			}
