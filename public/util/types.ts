@@ -108,7 +108,7 @@ export function addSuggestions(current: SuggestedType[], suggestions: string[], 
 		const index = _.findIndex(current, (s: SuggestedType) => {
 			return s.type === suggestion;
 		});
-		if (index !== -1) {
+		if (index === -1) {
 			// add
 			current.push({
 				type: suggestion,
