@@ -6,68 +6,68 @@ const MED_PROBABILITY = 0.66;
 const DEFAULT_PROBABILITY = 0.5;
 
 const INTEGER_TYPES = [
-	"integer",
-	"long"
+	'integer',
+	'long'
 ];
 
 const FLOATING_POINT_TYPES = [
-	"float",
-	"latitude",
-	"longitude"
+	'float',
+	'latitude',
+	'longitude'
 ];
 
 const NUMERIC_TYPES = INTEGER_TYPES.concat(FLOATING_POINT_TYPES);
 
 const TEXT_TYPES = [
-	"text",
-	"categorical",
-	"ordinal",
-	"address",
-	"city",
-	"state",
-	"country",
-	"email",
-	"phone",
-	"postal_code",
-	"uri",
-	"keyword",
-	"dateTime",
-	"boolean"
+	'text',
+	'categorical',
+	'ordinal',
+	'address',
+	'city',
+	'state',
+	'country',
+	'email',
+	'phone',
+	'postal_code',
+	'uri',
+	'keyword',
+	'dateTime',
+	'boolean'
 ];
 
 const INTEGER_SUGGESTIONS = [
-	"integer",
-	"long",
-	"float",
-	"latitude",
-	"longitude",
-	"categorical",
-	"ordinal"
+	'integer',
+	'long',
+	'float',
+	'latitude',
+	'longitude',
+	'categorical',
+	'ordinal'
 ];
 
 const FLOAT_SUGGESTIONS = [
-	"integer",
-	"long",
-	"float",
-	"latitude",
-	"longitude"
+	'integer',
+	'long',
+	'float',
+	'latitude',
+	'longitude'
 ];
 
 const TEXT_SUGGESTIONS = [
-	"text",
-	"categorical",
-	"ordinal",
-	"address",
-	"city",
-	"state",
-	"country",
-	"email",
-	"phone",
-	"postal_code",
-	"uri",
-	"keyword",
-	"dateTime",
-	"boolean"
+	'text',
+	'categorical',
+	'ordinal',
+	'address',
+	'city',
+	'state',
+	'country',
+	'email',
+	'phone',
+	'postal_code',
+	'uri',
+	'keyword',
+	'dateTime',
+	'boolean'
 ];
 
 export function isNumericType(type: string): boolean {
