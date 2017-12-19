@@ -43,9 +43,10 @@ func main() {
 	// load config from env
 	config, err := env.LoadConfig()
 	if err != nil {
-		log.Errorf("%v", err)
+		log.Errorf("%+v", err)
 		os.Exit(1)
 	}
+	log.Infof("%+v", config)
 
 	// instantiate elastic client constructor.
 	esClientCtor := elastic.NewClient(config.ElasticEndpoint, false)
