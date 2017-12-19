@@ -36,6 +36,7 @@ export interface VariableSummary {
 	pipelineId?: string;
 	resultId?: string;
 	type?: string;
+	varType?: string;
 	err?: string;
 	pending?: boolean;
 }

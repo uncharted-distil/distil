@@ -17,6 +17,8 @@ const (
 	OrdinalType = "ordinal"
 	// CategoricalType is the schema type for categorical values
 	CategoricalType = "categorical"
+	// NumericalType is the schema type for numerical values
+	NumericalType = "numerical"
 	// TextType is the schema type for text values
 	TextType = "text"
 	// CityType is the schema type for city values
