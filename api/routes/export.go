@@ -28,10 +28,11 @@ func ExportHandler(client *pipeline.Client, exportPath string) func(http.Respons
 		err := client.ExportPipeline(context.Background(), sessionID, pipelineID, exportURI)
 		if err != nil {
 			log.Info("Failed pipeline export request to %s", exportURI)
+			os.Exit(1)
 		} else {
 			log.Info("Completed export request to %s", exportURI)
+			os.Exit(0)
 		}
-		os.Exit(0)
 		return
 	}
 }
