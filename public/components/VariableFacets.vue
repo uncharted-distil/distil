@@ -12,47 +12,6 @@
 					<b-button size="sm" variant="outline-secondary" @click="deselectAll">None</b-button>
 				</b-form-fieldset>
 			</div>
-			<div v-if="enableSort">
-				<b-form-fieldset size="sm" horizontal label="Sort" :label-cols="2">
-					<div class="sort-groups">
-						<span class="sort-group">
-							importance
-							<div class="sort-buttons">
-								<b-button size="sm" variant="outline-secondary" @click="setSortMethod('importance-asc')">
-									<i class="fa fa-sort-numeric-asc"></i>
-								</b-button>
-								<b-button size="sm" variant="outline-secondary" @click="setSortMethod('importance-desc')">
-									<i class="fa fa-sort-numeric-desc"></i>
-								</b-button>
-							</div>
-						</span>
-						<span class="sort-group">
-							alphanumeric
-							<div class="sort-buttons">
-								<b-button size="sm" variant="outline-secondary" @click="setSortMethod('alpha-asc')">
-									<i class="fa fa-sort-alpha-asc"></i>
-								</b-button>
-								<b-button size="sm" variant="outline-secondary" @click="setSortMethod('alpha-desc')">
-									<i class="fa fa-sort-alpha-desc"></i>
-								</b-button>
-							</div>
-						</span>
-						<!--
-						<span class="sort-group">
-							novelty
-							<div class="sort-buttons">
-								<b-button size="sm" variant="outline-secondary" @click="setSortMethod('novelty-asc')">
-									<i class="fa fa-sort-amount-asc"></i>
-								</b-button>
-								<b-button size="sm" variant="outline-secondary" @click="setSortMethod('novelty-desc')">
-									<i class="fa fa-sort-amount-desc"></i>
-								</b-button>
-							</div>
-						</span>
-						-->
-					</div>
-				</b-form-fieldset>
-			</div>
 		</div>
 		<facets class="variable-facets-container"
 			:groups="groups"
@@ -96,7 +55,6 @@ export default Vue.extend({
 	props: {
 		'enableSearch': Boolean,
 		'enableToggle': Boolean,
-		'enableSort': Boolean,
 		'enableGroupCollapse': Boolean,
 		'enableFacetFiltering': Boolean,
 		'variables': Array,
@@ -173,29 +131,9 @@ export default Vue.extend({
 	},
 
 	methods: {
-		alphaAsc(a: { key: string }, b: { key: string }): number {
-			const textA = a.key.toLowerCase();
-			const textB = b.key.toLowerCase();
-			return (textA <= textB) ? -1 : (textA > textB) ? 1 : 0;
-		},
-		alphaDesc(a: { key: string }, b: { key: string }): number {
-			const textA = a.key.toLowerCase();
-			const textB = b.key.toLowerCase();
-			return (textA <= textB) ? 1 : (textA > textB) ? -1 : 0;
-		},
-		importanceAsc(a: { key: string }, b: { key: string }) {
-			const importance = this.importance;
-			return importance[a.key] - importance[b.key];
-		},
 		importanceDesc(a: { key: string }, b: { key: string }): number {
 			const importance = this.importance;
 			return importance[b.key] - importance[a.key];
-		},
-		noveltyAsc(a: { novelty: number }, b: { novelty: number }): number {
-			return a.novelty - b.novelty;
-		},
-		noveltyDesc(a: { novelty: number }, b: { novelty: number }): number {
-			return b.novelty - a.novelty;
 		},
 
 		// creates a facet key for the route from the instance-name component arg
@@ -268,29 +206,6 @@ export default Vue.extend({
 
 		onClick(key: string) {
 			this.$emit('click', key);
-		},
-
-		setSortMethod(type: string) {
-			switch (type) {
-				case 'alpha-asc':
-					this.sortMethod = 'alphaAsc';
-					break;
-				case 'alpha-desc':
-					this.sortMethod = 'alphaDesc';
-					break;
-				case 'importance-asc':
-					this.sortMethod = 'importanceAsc';
-					break;
-				case 'importance-desc':
-					this.sortMethod = 'importanceDesc';
-					break;
-				case 'novelty-asc':
-					this.sortMethod = 'noveltyAsc';
-					break;
-				case 'novelty-desc':
-					this.sortMethod = 'noveltyDesc';
-					break;
-			}
 		},
 
 		// sets all facet groups to the active state - full size display + all controls, updates
@@ -412,27 +327,6 @@ button {
 .facet-filters .form-group {
 	margin-bottom: 4px;
 	padding-right: 16px;
-}
-.sort-groups {
-	display: flex;
-	flex-direction: row;
-	text-align: center;
-}
-.sort-groups .sort-group {
-	display: flex;
-	flex-direction: column;
-	justify-content: center;
-	width: 33%;
-	font-size: 0.7rem;
-	font-weight: bold;
-}
-.sort-buttons {
-	display: flex;
-	flex-direction: row;
-	justify-content: center;
-}
-.sort-buttons > button {
-	margin-right: 4px;
 }
 
 .variable-page-nav {
