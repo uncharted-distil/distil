@@ -1,0 +1,4 @@
+{
+    "temp_storage_root": "/tmp/d3m/datasets",
+    "executables_root": "/tmp/d3m/executables"
+}
