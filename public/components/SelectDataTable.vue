@@ -22,11 +22,10 @@
 					<div :key="data.name">
 						<b-dropdown :text="data.type" variant="outline-primary" class="var-type-button">
 							<b-dropdown-item
-								v-bind:class="probabilityCategoryClass(suggested.probability)"
 								@click.stop="onTypeChange(data, suggested)"
 								:key="suggested.name"
 								v-for="suggested in addMissingSuggestions(data.suggested, data.type)">
-									{{suggested.type}} ({{probabilityCategoryText(suggested.probability)}})
+									{{suggested.type}}
 							</b-dropdown-item>
 						</b-dropdown>
 					</div>
@@ -48,7 +47,7 @@ import { FieldInfo } from '../store/data/index';
 import { Filter } from '../util/filters';
 import { getters as routeGetters } from '../store/route/module';
 import { updateTableHighlights } from '../util/highlights';
-import { probabilityCategoryText, probabilityCategoryClass, addMissingSuggestions } from '../util/types';
+import { addMissingSuggestions } from '../util/types';
 
 export default Vue.extend({
 	name: 'selected-data-table',
@@ -96,12 +95,6 @@ export default Vue.extend({
 				dataset: this.dataset,
 				filters: this.filters
 			});
-		},
-		probabilityCategoryText(probability) {
-			return probabilityCategoryText(probability);
-		},
-		probabilityCategoryClass(probability) {
-			return probabilityCategoryClass(probability);
 		},
 		addMissingSuggestions(suggested, type) {
 			return addMissingSuggestions(suggested, type);
