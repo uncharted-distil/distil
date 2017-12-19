@@ -3,7 +3,6 @@
 		<h6 class="nav-link">Training features</h6>
 		<variable-facets
 			enable-search
-			enable-sort
 			enable-facet-filtering
 			instance-name="trainingVars"
 			:variables="variables"

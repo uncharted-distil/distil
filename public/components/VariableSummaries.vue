@@ -4,7 +4,6 @@
 		<variable-facets
 			enable-search
 			enable-toggle
-			enable-sort
 			enable-group-collapse
 			enable-facet-filtering
 			instance-name="varSummaries"
