@@ -58,6 +58,11 @@ func LoadConfig() (Config, error) {
 }
 
 func overideFromStartupFile(cfg *Config) error {
+	// Override env/default value with the command line value if set.
+	if len(os.Args) > 1 {
+		cfg.StartupConfigFile = os.Args[1]
+	}
+
 	// read startup config JSON file
 	startupConfig, err := ioutil.ReadFile(cfg.StartupConfigFile)
 	if err != nil {
