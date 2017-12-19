@@ -7,12 +7,14 @@ import (
 	"github.com/unchartedsoftware/plog"
 )
 
+const d3mAbort = 148
+
 // AbortHandler terminates the server.  Yes, this is intentional.  Its part of the
 // eval protocol.  Don't look at me like that.
 func AbortHandler() func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		log.Info("Received abort request - shutting down")
-		os.Exit(0)
+		os.Exit(d3mAbort) // abort using the d3m-proscribed code
 		return
 	}
 }
