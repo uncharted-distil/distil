@@ -6,6 +6,8 @@
 			<facets v-if="resultGroups.length" class="result-container"
 				v-on:histogram-mouse-enter="resultHistogramMouseEnter"
 				v-on:histogram-mouse-leave="resultHistogramMouseLeave"
+				v-on:facet-mouse-enter="resultFacetMouseEnter"
+				v-on:facet-mouse-leave="resultFacetMouseLeave"
 				:groups="resultGroups"
 				:highlights="highlights"
 				:html="residualHtml">
@@ -35,17 +37,20 @@
 
 import Facets from '../components/Facets';
 import { createGroups, Group, NumericalFacet, CategoricalFacet } from '../util/facets';
-import { isPredicted, isError, getVarFromPredicted, getVarFromError } from '../util/data';
+import { isPredicted, isError, getVarFromPredicted, getVarFromError, getPredictedFacetKey,
+	getErrorFacetKey, getPredictedColFromFacetKey, getErrorColFromFacetKey } from '../util/data';
 import { VariableSummary } from '../store/data/index';
 import { Dictionary } from '../util/dict';
 import { createRouteEntryFromRoute } from '../util/routes';
 import { getters } from '../store/data/module';
 import { getters as routeGetters } from '../store/route/module';
 import { getters as pipelineGetters } from '../store/pipelines/module';
-import { actions as dataActions } from '../store/data/module';
+import { mutations as dataMutations } from '../store/data/module';
 import { NUMERICAL_FILTER, CATEGORICAL_FILTER, getFilterType, decodeFiltersDictionary } from '../util/filters';
 import _ from 'lodash';
 import Vue from 'vue';
+
+const RESULT_GROUP_HIGHLIGHTS = 'result-group';
 
 export default Vue.extend({
 	name: 'result-group',
@@ -95,12 +100,12 @@ export default Vue.extend({
 			// Facets highlights are keyed by name - map the published highligh
 			// key to the facet key
 			const highlights = getters.getHighlightedFeatureValues(this.$store);
-			const facetHighlights: Dictionary<string> = {};
-			_.forEach(highlights, (value, varName) => {
+			const facetHighlights = <Dictionary<any>>{};
+			_.forEach(highlights.values, (value, varName) => {
 				if (isPredicted(varName)) {
-					facetHighlights[`${getVarFromPredicted(varName)} - predicted`] = value;
+					facetHighlights[getPredictedFacetKey(getVarFromPredicted(varName))] = value;
 				} else if (isError(varName)) {
-					facetHighlights[`${getVarFromError(varName)} - error`] = value;
+					facetHighlights[getErrorFacetKey(getVarFromError(varName))] = value;
 				}
 			});
 			return facetHighlights;
@@ -115,34 +120,57 @@ export default Vue.extend({
 	},
 
 	methods: {
-		resultHistogramMouseEnter(key, value) {
+		resultHistogramMouseEnter(key: string, value: any) {
 			// extract the var name from the key
-			const varName = key.replace(' - predicted', '_predicted');
-			dataActions.highlightFeatureRange(this.$store, {
-				name: varName,
-				from: _.toNumber(value.label[0]),
-				to: _.toNumber(value.toLabel[value.toLabel.length-1])
+			const varName = getPredictedColFromFacetKey(key);
+			dataMutations.highlightFeatureRange(this.$store, {
+				context: RESULT_GROUP_HIGHLIGHTS,
+				ranges: {
+					[varName]: {
+						from: _.toNumber(value.label[0]),
+						to: _.toNumber(value.toLabel[value.toLabel.length-1])
+					}
+				}
 			});
 		},
 
-		resultHistogramMouseLeave(key) {
-			const varName = key.replace(' - predicted', '_predicted');
-			dataActions.clearFeatureHighlightRange(this.$store, varName);
+		resultHistogramMouseLeave(key: string) {
+			const varName = getPredictedColFromFacetKey(key);
+			dataMutations.clearFeatureHighlightRange(this.$store, varName);
 		},
 
-		residualsHistogramMouseEnter(key, value) {
-			// extract the var name from the key
-			const varName = key.replace(' - error', '_error');
-			dataActions.highlightFeatureRange(this.$store, {
-				name: varName,
-				from: _.toNumber(value.label[0]),
-				to: _.toNumber(value.toLabel[value.toLabel.length-1])
+		residualsHistogramMouseEnter(key: string, value: any) {
+			// convert the residual histogram key name into the proper variable ID
+			const varName =getErrorColFromFacetKey(key);
+			dataMutations.highlightFeatureRange(this.$store, {
+				context: RESULT_GROUP_HIGHLIGHTS,
+				ranges: {
+					[varName]: {
+						from: _.toNumber(value.label[0]),
+						to: _.toNumber(value.toLabel[value.toLabel.length-1])
+					}
+				}
 			});
 		},
 
-		residualsHistogramMouseLeave(key) {
-			const varName = key.replace(' - error', '_error');
-			dataActions.clearFeatureHighlightRange(this.$store, varName);
+		residualsHistogramMouseLeave(key: string) {
+			const varName = getErrorColFromFacetKey(key);
+			dataMutations.clearFeatureHighlightRange(this.$store, varName);
+		},
+
+		resultFacetMouseEnter(key: string, value: any) {
+			// extract the var name from the key
+			const varName = getPredictedColFromFacetKey(key);
+			dataMutations.highlightFeatureValues(this.$store, {
+				context: RESULT_GROUP_HIGHLIGHTS,
+				values: {
+					[varName]: value
+				}
+			});
+		},
+
+		resultFacetMouseLeave(key: string) {
+			dataMutations.clearFeatureHighlightValues(this.$store);
 		},
 
 		click() {

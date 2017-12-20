@@ -41,13 +41,16 @@
 
 import _ from 'lodash';
 import Vue from 'vue';
-import { getters as dataGetters, actions } from '../store/data/module';
+import { getters as dataGetters, actions, mutations } from '../store/data/module';
 import { Dictionary } from '../util/dict';
 import { FieldInfo } from '../store/data/index';
 import { Filter } from '../util/filters';
 import { getters as routeGetters } from '../store/route/module';
+import { ValueHighlights } from '../store/data/index';
 import { updateTableHighlights } from '../util/highlights';
 import { addMissingSuggestions } from '../util/types';
+
+const SELECT_TABLE_HIGHLIGHT = 'select_table_highlight';
 
 export default Vue.extend({
 	name: 'selected-data-table',
@@ -60,10 +63,12 @@ export default Vue.extend({
 		// extracts the table data from the store
 		items(): Dictionary<any> {
 			const data = dataGetters.getSelectedDataItems(this.$store);
-			const highlights = dataGetters.getHighlightedFeatureRanges(this.$store);
-			updateTableHighlights(data, highlights);
+			const rangeHighlights = dataGetters.getHighlightedFeatureRanges(this.$store);
+			const valueHighlights = dataGetters.getHighlightedFeatureValues(this.$store);
+			updateTableHighlights(data, rangeHighlights, valueHighlights, SELECT_TABLE_HIGHLIGHT);
 			return data;
 		},
+
 		// extract the table field header from the store
 		fields(): Dictionary<FieldInfo> {
 			return dataGetters.getSelectedDataFields(this.$store);
@@ -108,14 +113,17 @@ export default Vue.extend({
 		},
 		onRowHovered(event) {
 			// set new values
-			const highlights = {};
+			const highlights = <ValueHighlights>{
+				context: SELECT_TABLE_HIGHLIGHT,
+				values: {}
+			};
 			_.forIn(this.fields, (field, key) => {
-				highlights[key] = event[key];
+				highlights.values[key] = event[key];
 			});
-			actions.highlightFeatureValues(this.$store, highlights);
+			mutations.highlightFeatureValues(this.$store, highlights);
 		},
 		onMouseOut() {
-			actions.clearFeatureHighlightValues(this.$store);
+			mutations.clearFeatureHighlightValues(this.$store);
 		}
 	}
 });

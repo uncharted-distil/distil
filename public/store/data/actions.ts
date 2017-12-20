@@ -6,7 +6,7 @@ import { getSummaries } from '../../util/data';
 import { Variable, Data } from './index';
 import { PipelineInfo } from '../pipelines/index';
 import { mutations } from './module'
-import { DataContext } from '../../util/data';
+import { DataContext, getPredictedFacetKey, getErrorFacetKey } from '../../util/data';
 
 export const ES_INDEX = 'datasets';
 
@@ -154,7 +154,7 @@ export const actions = {
 	getResultsSummaries(context: DataContext, args: { dataset: string, requestId: string }) {
 		const results = getPipelineResultsOkay(context.rootState.pipelineModule, args.requestId);
 		const endPoint = `/distil/results-summary/${ES_INDEX}/${args.dataset}`
-		const nameFunc = (p: PipelineInfo) => `${p.feature} - predicted`;
+		const nameFunc = (p: PipelineInfo) => getPredictedFacetKey(p.feature);
 		getSummaries(context, endPoint, results, nameFunc, mutations.setResultsSummaries, mutations.updateResultsSummaries);
 	},
 
@@ -162,7 +162,7 @@ export const actions = {
 	getResidualsSummaries(context: DataContext, args: { dataset: string, requestId: string }) {
 		const results = getPipelineResultsOkay(context.rootState.pipelineModule, args.requestId);
 		const endPoint = `/distil/residuals-summary/${ES_INDEX}/${args.dataset}`
-		const nameFunc = (p: PipelineInfo) => `${p.feature} - error`;
+		const nameFunc = (p: PipelineInfo) => getErrorFacetKey(p.feature);
 		getSummaries(context, endPoint, results, nameFunc, mutations.setResidualsSummaries, mutations.updateResidualsSummaries);
 	},
 
@@ -178,21 +178,5 @@ export const actions = {
 			.catch(error => {
 				console.error(`Failed to fetch results from ${args.pipelineId} with error ${error}`);
 			});
-	},
-
-	highlightFeatureRange(context: DataContext, highlight: { name: string, to: number, from: number}) {
-		mutations.highlightFeatureRange(context, highlight);
-	},
-
-	clearFeatureHighlightRange(context: DataContext, varName: string) {
-		mutations.clearFeatureHighlightRange(context, varName);
-	},
-
-	highlightFeatureValues(context: DataContext, highlight: { [name: string]: any }) {
-		mutations.highlightFeatureValues(context, highlight);
-	},
-
-	clearFeatureHighlightValues(context: DataContext) {
-		mutations.clearFeatureHighlightValues(context);
 	}
 }

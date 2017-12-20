@@ -59,7 +59,21 @@ export interface TargetRow {
 	_cellVariants?: Dictionary<string>;
 }
 
-export type Range = Dictionary<{ from: number, to: number }>;
+export interface Highlights {
+	context: string;
+}
+
+export interface RangeHighlights extends Highlights {
+	ranges: Range;
+}
+
+export interface ValueHighlights extends Highlights {
+	values: Dictionary<any>;
+}
+
+export type Range = Dictionary<{
+	from: number, to: number
+}>;
 
 export type Dictionary<T> = { [key: string]: T }
 
@@ -72,8 +86,8 @@ export interface DataState {
 	resultData: Data;
 	filteredData: Data;
 	selectedData: Data;
-	highlightedFeatureRanges: Range;
-	highlightedFeatureValues: Dictionary<any>;
+	highlightedFeatureRanges: RangeHighlights;
+	highlightedFeatureValues: ValueHighlights;
 }
 
 export const state = {

@@ -63,15 +63,9 @@ export default Vue.extend({
 			component.$emit('histogram-mouse-leave', key);
 		});
 		this.facets.on('facet:mouseenter', (event: Event, key: string, value: number) => {
-			// actions.highlightFeatureRange(this.$store, {
-			// 	name: key,
-			// 	from: value,
-			// 	to: value
-			// });
 			component.$emit('facet-mouse-enter', key, value);
 		});
 		this.facets.on('facet:mouseleave', (event: Event, key: string) => {
-			// actions.clearFeatureHighlightRange(this.$store, key);
 			component.$emit('facet-mouse-leave', key);
 		});
 		// click events
@@ -114,7 +108,7 @@ export default Vue.extend({
 	},
 
 	watch: {
-		groups: function(currGroups: Group[], prevGroups: Group[]) {
+		groups(currGroups: Group[], prevGroups: Group[]) {
 			// get map of all existing group keys in facets
 			const prevMap: Dictionary<Group> = {};
 			prevGroups.forEach(group => {
@@ -127,7 +121,7 @@ export default Vue.extend({
 			// for the unchanged, update selection
 			this.updateSelections(unchangedGroups, prevMap);
 		},
-		highlights: function(currHighlights) {
+		highlights(currHighlights: Dictionary<any>) {
 			if (_.isEmpty(currHighlights)) {
 				(this.groups as Group[]).forEach(groupSpec => {
 					const group = this.facets.getGroup(groupSpec.key);
@@ -166,7 +160,7 @@ export default Vue.extend({
 				}
 			});
 		},
-		sort: function(currSort) {
+		sort(currSort) {
 			this.facets.sort(currSort);
 		}
 	},
@@ -186,6 +180,7 @@ export default Vue.extend({
 				$group.append(this.html);
 			}
 		},
+
 		groupsEqual(a: Group, b: Group): boolean {
 			const OMITTED_FIELDS = ['selection', 'selected'];
 			// NOTE: we dont need to check key, we assume its already equal
@@ -204,6 +199,7 @@ export default Vue.extend({
 			}
 			return true;
 		},
+
 		updateGroups(currGroups: Group[], prevGroups: Dictionary<Group>): Group[] {
 			const toAdd: Group[] = [];
 			const unchanged: Group[] = [];
@@ -251,6 +247,7 @@ export default Vue.extend({
 			// return unchanged groups
 			return unchanged;
 		},
+
 		updateCollapsed(unchangedGroups) {
 			unchangedGroups.forEach(group => {
 				// get the existing facet
@@ -262,6 +259,7 @@ export default Vue.extend({
 				}
 			});
 		},
+
 		updateSelections(unchangedGroups, prevGroups) {
 			unchangedGroups.forEach(groupSpec => {
 				// get the existing facet

@@ -48,9 +48,9 @@ import { getTask } from '../util/pipelines';
 import { getErrorCol, /*isPredicted, isError,*/ isTarget, getVarFromTarget /*, getVarFromPredicted, getVarFromError*/ } from '../util/data';
 import { getters as dataGetters} from '../store/data/module';
 import { getters as routeGetters } from '../store/route/module';
-import { actions as dataActions } from '../store/data/module';
+import { mutations as dataMutations } from '../store/data/module';
 import { actions } from '../store/app/module';
-import { Dictionary } from '../store/data/index';
+import { Dictionary } from '../util/dict';
 import vueSlider from 'vue-slider-component';
 import Vue from 'vue';
 import _ from 'lodash';
@@ -95,8 +95,8 @@ export default Vue.extend({
 			// find var marked as 'target' and use that name/value tuple to
 			// highlight the ground truth
 			const highlights = dataGetters.getHighlightedFeatureValues(this.$store);
-			const facetHighlights: Dictionary<string> = {};
-			_.forEach(highlights, (value, varName) => {
+			const facetHighlights: Dictionary<any> = {};
+			_.forEach(highlights.values, (value, varName) => {
 				if (isTarget(varName)) {
 					facetHighlights[getVarFromTarget(varName)] = value;
 				}
@@ -179,16 +179,20 @@ export default Vue.extend({
 		histogramMouseEnter(key, value) {
 			// extract the var name from the key
 			const varName = `${key}_target`;
-			dataActions.highlightFeatureRange(this.$store, {
-				name: varName,
-				from: _.toNumber(value.label[0]),
-				to: _.toNumber(value.toLabel[value.toLabel.length-1])
+			dataMutations.highlightFeatureRange(this.$store, {
+				context: 'result_summary',
+				ranges: {
+					[varName]: {
+						from: _.toNumber(value.label[0]),
+						to: _.toNumber(value.toLabel[value.toLabel.length-1])
+					}
+				}
 			});
 		},
 
 		histogramMouseLeave(key) {
 			const varName = `${key}_target`;
-			dataActions.clearFeatureHighlightRange(this.$store, varName);
+			dataMutations.clearFeatureHighlightRange(this.$store, varName);
 		},
 
 		updateThreshold(value: number) {
