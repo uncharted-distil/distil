@@ -1,10 +1,9 @@
 import _ from 'lodash';
-import { Variable, Data, DataState, Datasets, VariableSummary, TargetRow } from './index';
+import { FieldInfo, Variable, Data, DataState, Datasets, VariableSummary, TargetRow, RangeHighlights, ValueHighlights } from './index';
 import { Filter, EMPTY_FILTER } from '../../util/filters';
 import { TARGET_POSTFIX, PREDICTED_POSTFIX } from '../../util/data';
 import { Dictionary } from '../../util/dict';
 import { getPredictedIndex, getErrorIndex, getTargetIndex } from '../../util/data';
-import { FieldInfo, Range } from './index';
 
 function validateData(data: Data) {
 	return !_.isEmpty(data) &&
@@ -290,11 +289,11 @@ export const getters = {
 		return {} as Dictionary<FieldInfo>;
 	},
 
-	getHighlightedFeatureValues(state: DataState): Dictionary<any> {
+	getHighlightedFeatureValues(state: DataState): ValueHighlights {
 		return state.highlightedFeatureValues;
 	},
 
-	getHighlightedFeatureRanges(state: DataState): Range {
+	getHighlightedFeatureRanges(state: DataState): RangeHighlights {
 		return state.highlightedFeatureRanges;
 	}
 }

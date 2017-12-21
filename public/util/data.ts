@@ -8,10 +8,13 @@ import { ActionContext } from 'vuex';
 import axios from 'axios';
 import Vue from 'vue';
 
-
+// Postfixes for special variable names
 export const PREDICTED_POSTFIX = '_predicted';
 export const TARGET_POSTFIX = '_target';
 export const ERROR_POSTFIX = '_error';
+
+export const PREDICTED_FACET_KEY_POSTFIX = ' - predicted';
+export const ERROR_FACET_KEY_POSTFIX = ' - error';
 
 export type DataContext = ActionContext<DataState, DistilState>;
 
@@ -101,6 +104,34 @@ export function getPredictedCol(target: string): string {
 
 export function getErrorCol(target: string): string {
 	return target + ERROR_POSTFIX;
+}
+
+export function getVarFromPredicted(decorated: string) {
+	return decorated.replace(PREDICTED_POSTFIX, '');
+}
+
+export function getVarFromError(decorated: string) {
+	return decorated.replace(ERROR_POSTFIX, '');
+}
+
+export function getVarFromTarget(decorated: string) {
+	return decorated.replace(TARGET_POSTFIX, '');
+}
+
+export function getPredictedFacetKey(target: string) {
+	return target + PREDICTED_FACET_KEY_POSTFIX;
+}
+
+export function getErrorFacetKey(target: string) {
+	return target + ERROR_FACET_KEY_POSTFIX;
+}
+
+export function getErrorColFromFacetKey(facetKey: string) {
+	return facetKey.replace(ERROR_FACET_KEY_POSTFIX, ERROR_POSTFIX);
+}
+
+export function getPredictedColFromFacetKey(facetKey: string) {
+	return facetKey.replace(PREDICTED_FACET_KEY_POSTFIX, PREDICTED_POSTFIX);
 }
 
 export function updateSummaries(summary: VariableSummary, summaries: VariableSummary[], matchField: string) {

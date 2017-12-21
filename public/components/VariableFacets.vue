@@ -22,7 +22,11 @@
 			v-on:expand="onExpand"
 			v-on:collapse="onCollapse"
 			v-on:range-change="onRangeChange"
-			v-on:facet-toggle="onFacetToggle">
+			v-on:facet-toggle="onFacetToggle"
+			v-on:histogram-mouse-enter="onHistogramMouseEnter"
+			v-on:histogram-mouse-leave="onHistogramMouseLeave"
+			v-on:facet-mouse-enter="onFacetMouseEnter"
+			v-on:facet-mouse-leave="onFacetMouseLeave">
 		</facets>
 		<div v-if="numRows > rowsPerPage" class="variable-page-nav">
 			<b-pagination size="sm" align="center" :total-rows="numRows" :per-page="rowsPerPage" v-model="currentPage"/>
@@ -38,12 +42,15 @@ import { Filter, decodeFiltersDictionary, updateFilter, getFilterType, isDisable
 import { createRouteEntryFromRoute, getRouteFacetPage } from '../util/routes';
 import { VariableSummary } from '../store/data/index';
 import { Dictionary } from '../util/dict';
-import { getters as dataGetters } from '../store/data/module';
+import { getters as dataGetters, mutations as dataMutations } from '../store/data/module';
 import { getters as routeGetters } from '../store/route/module';
 import { createGroups, Group } from '../util/facets';
 import 'font-awesome/css/font-awesome.css';
 import '../styles/spinner.css';
+import _ from 'lodash';
 import Vue from 'vue';
+
+const VARIABLE_FACET_HIGHLIGHTS = 'variable_facets';
 
 export default Vue.extend({
 	name: 'variable-facets',
@@ -84,6 +91,7 @@ export default Vue.extend({
 				return getRouteFacetPage(this.routePageKey(), this.$route);
 			}
 		},
+
 		groups(): Group[] {
 			// filter by search
 			const searchFiltered = (<VariableSummary[]>this.variables).filter(summary => {
@@ -114,9 +122,11 @@ export default Vue.extend({
 			// update selections
 			return this.updateGroupSelections(groups);
 		},
-		highlights(): Dictionary<string> {
-			return dataGetters.getHighlightedFeatureValues(this.$store);
+
+		highlights(): Dictionary<any> {
+			return dataGetters.getHighlightedFeatureValues(this.$store).values;
 		},
+
 		importance(): Dictionary<number> {
 			const variables = dataGetters.getVariables(this.$store);
 			const importance: Dictionary<number> = {};
@@ -125,6 +135,7 @@ export default Vue.extend({
 			});
 			return importance;
 		},
+
 		sort() {
 			return (<any>this)[(<any>this).sortMethod];
 		}
@@ -206,6 +217,37 @@ export default Vue.extend({
 
 		onClick(key: string) {
 			this.$emit('click', key);
+		},
+
+		onHistogramMouseEnter(key: string, value: any) {
+			// extract the var name from the key
+			dataMutations.highlightFeatureRange(this.$store, {
+				context: VARIABLE_FACET_HIGHLIGHTS,
+				ranges: {
+					[key]: {
+						from: _.toNumber(value.label[0]),
+						to: _.toNumber(value.toLabel[value.toLabel.length-1])
+					}
+				}
+			});
+		},
+
+		onHistogramMouseLeave(key: string) {
+			dataMutations.clearFeatureHighlightRange(this.$store, key);
+		},
+
+		onFacetMouseEnter(key: string, value: any) {
+			// extract the var name from the key
+			dataMutations.highlightFeatureValues(this.$store, {
+				context: VARIABLE_FACET_HIGHLIGHTS,
+				values: {
+					[key]: value
+				}
+			});
+		},
+
+		onFacetMouseLeave(key: string) {
+			dataMutations.clearFeatureHighlightValues(this.$store);
 		},
 
 		// sets all facet groups to the active state - full size display + all controls, updates

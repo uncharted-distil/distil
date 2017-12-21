@@ -1,6 +1,5 @@
 import _ from 'lodash';
-import Vue from 'vue';
-import { DataState, Variable, Datasets, VariableSummary, Data } from './index';
+import { DataState, Variable, Datasets, VariableSummary, Data, ValueHighlights, RangeHighlights } from './index';
 import { updateSummaries } from '../../util/data';
 
 export const mutations = {
@@ -59,32 +58,19 @@ export const mutations = {
 		state.resultData = resultData;
 	},
 
-	highlightFeatureRange(state: DataState, highlight: { name: string, to: number, from: number }) {
-		Vue.set(state.highlightedFeatureRanges, highlight.name, {
-			from: highlight.from,
-			to: highlight.to
-		});
-		if (state.resultsSummaries) {
-			state.resultsSummaries.forEach(summary => {
-				Vue.set(state.highlightedFeatureRanges, summary.feature, highlight);
-			});
-		}
+	highlightFeatureRange(state: DataState, highlight: RangeHighlights) {
+		state.highlightedFeatureRanges = highlight;
 	},
 
 	clearFeatureHighlightRange(state: DataState, name: string) {
-		Vue.delete(state.highlightedFeatureRanges, name);
+		state.highlightedFeatureRanges = <RangeHighlights>{};
 	},
 
-	highlightFeatureValues(state: DataState, highlights: { [name: string]: any }) {
+	highlightFeatureValues(state: DataState, highlights: ValueHighlights) {
 		state.highlightedFeatureValues = highlights;
-		if (state.resultsSummaries) {
-			state.resultsSummaries.forEach(summary => {
-				Vue.set(state.highlightedFeatureValues, summary.name, highlights[summary.feature]);
-			});
-		}
 	},
 
 	clearFeatureHighlightValues(state: DataState) {
-		state.highlightedFeatureValues = {};
+		state.highlightedFeatureValues = <ValueHighlights>{};
 	}
 }
