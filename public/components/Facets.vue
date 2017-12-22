@@ -4,11 +4,12 @@
 
 <script lang="ts">
 import _ from 'lodash';
-import 'jquery';
+import $ from 'jquery';
 import Vue from 'vue';
 import { Group, CategoricalFacet } from '../util/facets';
 import { Dictionary } from '../util/dict';
 import Facets from '@uncharted.software/stories-facets';
+import TypeChangeMenu from '../components/TypeChangeMenu';
 import '@uncharted.software/stories-facets/dist/facets.css';
 
 export default Vue.extend({
@@ -170,6 +171,19 @@ export default Vue.extend({
 			$elem.click(() => {
 				this.$emit('click', group.key);
 			});
+
+			// inject type headers
+			const $slot = $('<span/>');
+			$elem.find('.group-header').append($slot);
+			const menu = new TypeChangeMenu(
+				{
+					store: this.$store,
+					propsData: {
+						field: group.key
+					}
+				});
+			menu.$mount($slot[0]);
+
 			if (!this.html) {
 				return;
 			}
