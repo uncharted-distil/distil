@@ -1,14 +1,8 @@
 export interface Variable {
 	name: string;
 	type: string;
-	suggestedTypes: SuggestedType[];
 	importance: number;
 	novelty: number;
-}
-
-export interface SuggestedType {
-	type: string;
-	probability: number;
 }
 
 export interface Datasets {
@@ -51,7 +45,6 @@ export interface Data {
 export interface FieldInfo {
 	label: string,
 	type: string,
-	suggested: Dictionary<string>,
 	sortable: boolean
 }
 

@@ -17,18 +17,11 @@
 				:items="items"
 				:fields="fields">
 
-				<template :slot="`HEAD_${data.label}`" v-for="data in fields">
-					{{data.label}}
-					<div :key="data.name">
-						<b-dropdown :text="data.type" variant="outline-primary" class="var-type-button">
-							<b-dropdown-item
-								@click.stop="onTypeChange(data, suggested)"
-								:key="suggested.name"
-								v-for="suggested in addMissingSuggestions(data.suggested, data.type)">
-									{{suggested.type}}
-							</b-dropdown-item>
-						</b-dropdown>
-					</div>
+				<template :slot="`HEAD_${field.label}`" v-for="field in fields">
+					{{field.label}}
+					<type-change-menu
+						:key="field.label"
+						:field="field.label"></type-change-menu>
 				</template>
 
 			</b-table>
@@ -48,12 +41,16 @@ import { Filter } from '../util/filters';
 import { getters as routeGetters } from '../store/route/module';
 import { ValueHighlights } from '../store/data/index';
 import { updateTableHighlights } from '../util/highlights';
-import { addMissingSuggestions } from '../util/types';
+import TypeChangeMenu from '../components/TypeChangeMenu';
 
 const SELECT_TABLE_HIGHLIGHT = 'select_table_highlight';
 
 export default Vue.extend({
 	name: 'selected-data-table',
+
+	components: {
+		TypeChangeMenu
+	},
 
 	computed: {
 		// get dataset from route
@@ -99,16 +96,6 @@ export default Vue.extend({
 			actions.updateSelectedData(this.$store, {
 				dataset: this.dataset,
 				filters: this.filters
-			});
-		},
-		addMissingSuggestions(suggested, type) {
-			return addMissingSuggestions(suggested, type);
-		},
-		onTypeChange(field, suggested) {
-			actions.setVariableType(this.$store, {
-				dataset: this.dataset,
-				field: field.label,
-				type: suggested.type
 			});
 		},
 		onRowHovered(event) {

@@ -156,18 +156,14 @@ export const getters = {
 		if (validateData(data)) {
 			const variables = state.variables;
 			const types = {};
-			const suggested = {};
 			variables.forEach(variable => {
 				types[variable.name] = variable.type;
-				suggested[variable.name] = variable.suggestedTypes;
 			});
-
 			const result: Dictionary<FieldInfo> = {} as any;
 			for (const col of data.columns) {
 				result[col] = {
 					label: col,
 					type: types[col],
-					suggested: suggested[col],
 					sortable: true
 				};
 			}
@@ -214,8 +210,7 @@ export const getters = {
 					result[col] = {
 						label: col,
 						sortable: true,
-						type: "",
-						suggested: {} as any
+						type: ""
 					};
 				}
 			}
@@ -224,22 +219,19 @@ export const getters = {
 			result[targetName] = {
 				label: targetName.replace(TARGET_POSTFIX, ''),
 				sortable: true,
-				type: "",
-				suggested: {} as any,
+				type: ""
 			};
 			const predictedName = data.columns[predictedIndex];
 			result[data.columns[predictedIndex]] = {
 				label: `Predicted ${predictedName.replace(PREDICTED_POSTFIX, '')}`,
 				sortable: true,
-				type: "",
-				suggested: {} as any
+				type: ""
 			};
 			if (errorIndex >= 0) {
 				result[data.columns[errorIndex]] = {
 					label: 'Error',
 					sortable: true,
-					type: "",
-					suggested: {} as any
+					type: ""
 				};
 			}
 			return result;
@@ -269,18 +261,14 @@ export const getters = {
 		if (validateData(data)) {
 			const variables = state.variables;
 			const types = {};
-			const suggested: {} = [];
 			variables.forEach(variable => {
 				types[variable.name] = variable.type;
-				suggested[variable.name] = variable.suggestedTypes;
 			});
-
 			const result: { [label: string]: FieldInfo } = {};
 			for (const col of data.columns) {
 				result[col] = {
 					label: col,
 					type: types[col],
-					suggested: suggested[col],
 					sortable: true
 				};
 			}

@@ -50,6 +50,7 @@ export interface NumericalFacet {
 export interface Group {
 	label: string;
 	key: string;
+	type: string;
 	collapsible: boolean;
 	collapsed: boolean;
 	facets: (PlaceHolderFacet | CategoricalFacet | NumericalFacet)[];
@@ -79,6 +80,7 @@ export function createErrorFacet(summary: VariableSummary, enableCollapse: boole
 	return {
 		label: summary.name,
 		key: summary.name,
+		type: summary.varType,
 		collapsible: enableCollapse,
 		collapsed: false,
 		facets: [{
@@ -93,6 +95,7 @@ export function createPendingFacet(summary: VariableSummary, enableCollapse: boo
 	return {
 		label: summary.name,
 		key: summary.name,
+		type: summary.varType,
 		collapsible: enableCollapse,
 		collapsed: false,
 		facets: [{
@@ -190,6 +193,7 @@ function createCategoricalSummaryFacet(summary: VariableSummary, enableCollapse:
 	return {
 		label: summary.name,
 		key: summary.name,
+		type: summary.varType,
 		collapsible: enableCollapse,
 		collapsed: false,
 		facets: facets
@@ -200,6 +204,7 @@ function createNumericalSummaryFacet(summary: VariableSummary, enableCollapse: b
 	return {
 		label: summary.name,
 		key: summary.name,
+		type: summary.varType,
 		collapsible: enableCollapse,
 		collapsed: false,
 		facets: [

@@ -1,5 +1,4 @@
 import _ from 'lodash';
-import { SuggestedType } from '../store/data/index';
 
 const LOW_PROBABILITY = 0.33;
 const MED_PROBABILITY = 0.66;
@@ -7,7 +6,6 @@ const DEFAULT_PROBABILITY = 0.5;
 
 const INTEGER_TYPES = [
 	'integer',
-	'long'
 ];
 
 const FLOATING_POINT_TYPES = [
@@ -37,7 +35,6 @@ const TEXT_TYPES = [
 
 const INTEGER_SUGGESTIONS = [
 	'integer',
-	'long',
 	'float',
 	'latitude',
 	'longitude',
@@ -47,7 +44,6 @@ const INTEGER_SUGGESTIONS = [
 
 const FLOAT_SUGGESTIONS = [
 	'integer',
-	'long',
 	'float',
 	'latitude',
 	'longitude'
@@ -102,26 +98,23 @@ export function probabilityCategoryClass(probability: number): string {
 	return 'text-success';
 }
 
-export function addSuggestions(current: SuggestedType[], suggestions: string[], probability: number): SuggestedType[] {
+export function addSuggestions(current: string[], suggestions: string[], probability: number): string[] {
 	suggestions.forEach((suggestion: string) => {
 		// check if already exists
-		const index = _.findIndex(current, (s: SuggestedType) => {
-			return s.type === suggestion;
+		const index = _.findIndex(current, (s: string) => {
+			return s === suggestion;
 		});
 		if (index === -1) {
 			// add
-			current.push({
-				type: suggestion,
-				probability: probability
-			})
+			current.push(suggestion);
 		}
 	});
 	return current;
 }
 
-export function addMissingSuggestions(suggested: SuggestedType[], type: string): SuggestedType[] {
+export function addMissingSuggestions(type: string): string[] {
 	// copy current suggestions by value
-	const current = suggested ? suggested.slice() : [];
+	const current = [];
 	if (isNumericType(type)) {
 		if (isFloatingPointType(type)) {
 			// float
