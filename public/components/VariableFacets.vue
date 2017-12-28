@@ -124,7 +124,11 @@ export default Vue.extend({
 		},
 
 		highlights(): Dictionary<any> {
-			return dataGetters.getHighlightedFeatureValues(this.$store).values;
+			const valueHighlights = dataGetters.getHighlightedFeatureValues(this.$store);
+			if (valueHighlights.context === VARIABLE_FACET_HIGHLIGHTS) {
+				return {};
+			}
+			return valueHighlights.values;
 		},
 
 		importance(): Dictionary<number> {
