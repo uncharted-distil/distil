@@ -39,7 +39,7 @@ import { Variable } from '../store/data/index';
 import Vue from 'vue';
 
 export default Vue.extend({
-	name: 'select',
+	name: 'select-view',
 
 	components: {
 		FlowBar,

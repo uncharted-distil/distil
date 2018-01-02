@@ -112,7 +112,7 @@ export default Vue.extend({
 		},
 
 		currentClass(): string {
-			const selectedId = routeGetters.getRoutePipelinetId(this.$store);
+			const selectedId = routeGetters.getRoutePipelineId(this.$store);
 			const results = this.results();
 			return (results && results.pipelineId === selectedId)
 				? 'result-group-selected result-group' : 'result-group';

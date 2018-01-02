@@ -30,7 +30,7 @@ export const getters = {
 		return state.query.requestId;
 	},
 
-	getRoutePipelinetId(state: Route): string {
+	getRoutePipelineId(state: Route): string {
 		return state.query.pipelineId ? state.query.pipelineId : null;
 	},
 

@@ -19,7 +19,7 @@ import { gotoHome } from '../util/nav';
 import Vue from 'vue';
 
 export default Vue.extend({
-	name: 'search',
+	name: 'search-view',
 	components: {
 		FlowBar,
 		SearchBar,

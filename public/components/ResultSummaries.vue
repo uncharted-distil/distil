@@ -168,7 +168,7 @@ export default Vue.extend({
 		},
 
 		activePipelineName(): string {
-			const pipelineId = routeGetters.getRoutePipelinetId(this.$store);
+			const pipelineId = routeGetters.getRoutePipelineId(this.$store);
 			const requestId = routeGetters.getRouteCreateRequestId(this.$store);
 			const result = getPipelineResultById(this.$store.state.pipelineModule, requestId, pipelineId);
 			return result ? result.name : '';
@@ -209,7 +209,7 @@ export default Vue.extend({
 
 		onExport() {
 			this.$router.replace('/');
-			const pipelineId = routeGetters.getRoutePipelinetId(this.$store);
+			const pipelineId = routeGetters.getRoutePipelineId(this.$store);
 			const requestId = routeGetters.getRouteCreateRequestId(this.$store);
 			const result = getPipelineResultById(this.$store.state.pipelineModule, requestId, pipelineId);
 			actions.exportPipeline(this.$store, {
