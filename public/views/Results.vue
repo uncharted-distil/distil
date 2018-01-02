@@ -33,7 +33,7 @@ import { Variable, VariableSummary } from '../store/data/index';
 import Vue from 'vue';
 
 export default Vue.extend({
-	name: 'results',
+	name: 'results-view',
 
 	components: {
 		FlowBar,
