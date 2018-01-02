@@ -8,7 +8,8 @@
 			enable-facet-filtering
 			instance-name="varSummaries"
 			:variables="variables"
-			:dataset="dataset">
+			:dataset="dataset"
+			:type-change="typeChange">
 		</variable-facets>
 	</div>
 </template>
@@ -28,7 +29,8 @@ export default Vue.extend({
 
 	props: {
 		'variables': Array,
-		'dataset': String
+		'dataset': String,
+		'typeChange': Boolean
 	}
 
 });

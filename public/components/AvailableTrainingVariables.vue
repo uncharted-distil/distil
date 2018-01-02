@@ -4,6 +4,7 @@
 		<variable-facets
 			enable-search
 			enable-facet-filtering
+			type-change
 			instance-name="availableVars"
 			:variables="variables"
 			:dataset="dataset"

@@ -18,6 +18,7 @@
 			:highlights="highlights"
 			:html="html"
 			:sort="sort"
+			:type-change="typeChange"
 			v-on:click="onClick"
 			v-on:expand="onExpand"
 			v-on:collapse="onCollapse"
@@ -67,7 +68,8 @@ export default Vue.extend({
 		'variables': Array,
 		'dataset': String,
 		'html': [ String, Object, Function ],
-		'instanceName': String
+		'instanceName': String,
+		'typeChange': Boolean
 	},
 
 	data() {

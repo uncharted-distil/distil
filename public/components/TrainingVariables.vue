@@ -4,6 +4,7 @@
 		<variable-facets
 			enable-search
 			enable-facet-filtering
+			type-change
 			instance-name="trainingVars"
 			:variables="variables"
 			:dataset="dataset"
