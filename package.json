@@ -45,10 +45,10 @@
     "mocha": "4.1.0",
     "moment": "2.20.1",
     "style-loader": "0.19.1",
-    "ts-loader": "3.1.1",
-    "typescript": "2.6.1",
+    "ts-loader": "3.2.0",
+    "typescript": "2.6.2",
     "typescript-eslint-parser": "11.0.0",
-    "vue-loader": "13.5.0",
+    "vue-loader": "13.6.2",
     "webpack": "3.10.0"
   }
 }
