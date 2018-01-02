@@ -18,6 +18,7 @@ export default Vue.extend({
 	props: {
 		groups: Array,
 		highlights: Object,
+		typeChange: Boolean,
 		html: [ String, Object, Function ],
 		sort: {
 			default: (a: { key: string }, b: { key: string }) => {
@@ -173,16 +174,18 @@ export default Vue.extend({
 			});
 
 			// inject type headers
-			const $slot = $('<span/>');
-			$elem.find('.group-header').append($slot);
-			const menu = new TypeChangeMenu(
-				{
-					store: this.$store,
-					propsData: {
-						field: group.key
-					}
-				});
-			menu.$mount($slot[0]);
+			if (this.typeChange) {
+				const $slot = $('<span/>');
+				$elem.find('.group-header').append($slot);
+				const menu = new TypeChangeMenu(
+					{
+						store: this.$store,
+						propsData: {
+							field: group.key
+						}
+					});
+				menu.$mount($slot[0]);
+			}
 
 			if (!this.html) {
 				return;

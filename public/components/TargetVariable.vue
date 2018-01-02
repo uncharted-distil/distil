@@ -7,6 +7,7 @@
 			</div>
 		</div>
 		<variable-facets v-if="variables.length>0"
+			type-change
 			:variables="variables"
 			:dataset="dataset"></variable-facets>
 	</div>
