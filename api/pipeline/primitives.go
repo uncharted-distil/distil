@@ -14,6 +14,7 @@ import (
 
 const (
 	pcaFolder           = "pca"
+	rfFolder            = "rf"
 	rankingFunctionName = "pca"
 )
 
@@ -68,7 +69,7 @@ func (c *Client) Rank(restClient *rest.Client, meta model.MetadataStorage, data 
 
 		// rank the persisted dataset
 		ranker := rest.NewRanker(rankingFunctionName, restClient)
-		rawResults, err := ranker.RankFile(rawFilePath)
+		rawResults, err := ranker.RankFileForTarget(rawFilePath, targetName)
 		if err != nil {
 			return nil, errors.Wrap(err, "unable to rank data")
 		}
