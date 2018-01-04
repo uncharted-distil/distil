@@ -12,57 +12,22 @@
 					<b-button size="sm" variant="outline-secondary" @click="deselectAll">None</b-button>
 				</b-form-fieldset>
 			</div>
-			<div v-if="enableSort">
-				<b-form-fieldset size="sm" horizontal label="Sort" :label-cols="2">
-					<div class="sort-groups">
-						<span class="sort-group">
-							importance
-							<div class="sort-buttons">
-								<b-button size="sm" variant="outline-secondary" @click="setSortMethod('importance-asc')">
-									<i class="fa fa-sort-numeric-asc"></i>
-								</b-button>
-								<b-button size="sm" variant="outline-secondary" @click="setSortMethod('importance-desc')">
-									<i class="fa fa-sort-numeric-desc"></i>
-								</b-button>
-							</div>
-						</span>
-						<span class="sort-group">
-							alphanumeric
-							<div class="sort-buttons">
-								<b-button size="sm" variant="outline-secondary" @click="setSortMethod('alpha-asc')">
-									<i class="fa fa-sort-alpha-asc"></i>
-								</b-button>
-								<b-button size="sm" variant="outline-secondary" @click="setSortMethod('alpha-desc')">
-									<i class="fa fa-sort-alpha-desc"></i>
-								</b-button>
-							</div>
-						</span>
-						<!--
-						<span class="sort-group">
-							novelty
-							<div class="sort-buttons">
-								<b-button size="sm" variant="outline-secondary" @click="setSortMethod('novelty-asc')">
-									<i class="fa fa-sort-amount-asc"></i>
-								</b-button>
-								<b-button size="sm" variant="outline-secondary" @click="setSortMethod('novelty-desc')">
-									<i class="fa fa-sort-amount-desc"></i>
-								</b-button>
-							</div>
-						</span>
-						-->
-					</div>
-				</b-form-fieldset>
-			</div>
 		</div>
 		<facets class="variable-facets-container"
 			:groups="groups"
 			:highlights="highlights"
 			:html="html"
 			:sort="sort"
+			:type-change="typeChange"
+			v-on:click="onClick"
 			v-on:expand="onExpand"
 			v-on:collapse="onCollapse"
 			v-on:range-change="onRangeChange"
-			v-on:facet-toggle="onFacetToggle">
+			v-on:facet-toggle="onFacetToggle"
+			v-on:histogram-mouse-enter="onHistogramMouseEnter"
+			v-on:histogram-mouse-leave="onHistogramMouseLeave"
+			v-on:facet-mouse-enter="onFacetMouseEnter"
+			v-on:facet-mouse-leave="onFacetMouseLeave">
 		</facets>
 		<div v-if="numRows > rowsPerPage" class="variable-page-nav">
 			<b-pagination size="sm" align="center" :total-rows="numRows" :per-page="rowsPerPage" v-model="currentPage"/>
@@ -78,12 +43,15 @@ import { Filter, decodeFiltersDictionary, updateFilter, getFilterType, isDisable
 import { createRouteEntryFromRoute, getRouteFacetPage } from '../util/routes';
 import { VariableSummary } from '../store/data/index';
 import { Dictionary } from '../util/dict';
-import { getters as dataGetters } from '../store/data/module';
+import { getters as dataGetters, mutations as dataMutations } from '../store/data/module';
 import { getters as routeGetters } from '../store/route/module';
 import { createGroups, Group } from '../util/facets';
 import 'font-awesome/css/font-awesome.css';
 import '../styles/spinner.css';
+import _ from 'lodash';
 import Vue from 'vue';
+
+const VARIABLE_FACET_HIGHLIGHTS = 'variable_facets';
 
 export default Vue.extend({
 	name: 'variable-facets',
@@ -95,13 +63,13 @@ export default Vue.extend({
 	props: {
 		'enableSearch': Boolean,
 		'enableToggle': Boolean,
-		'enableSort': Boolean,
 		'enableGroupCollapse': Boolean,
 		'enableFacetFiltering': Boolean,
 		'variables': Array,
 		'dataset': String,
 		'html': [ String, Object, Function ],
-		'instanceName': String
+		'instanceName': String,
+		'typeChange': Boolean
 	},
 
 	data() {
@@ -125,6 +93,7 @@ export default Vue.extend({
 				return getRouteFacetPage(this.routePageKey(), this.$route);
 			}
 		},
+
 		groups(): Group[] {
 			// filter by search
 			const searchFiltered = (<VariableSummary[]>this.variables).filter(summary => {
@@ -155,9 +124,15 @@ export default Vue.extend({
 			// update selections
 			return this.updateGroupSelections(groups);
 		},
-		highlights(): Dictionary<string> {
-			return dataGetters.getHighlightedFeatureValues(this.$store);
+
+		highlights(): Dictionary<any> {
+			const valueHighlights = dataGetters.getHighlightedFeatureValues(this.$store);
+			if (valueHighlights.context === VARIABLE_FACET_HIGHLIGHTS) {
+				return {};
+			}
+			return valueHighlights.values;
 		},
+
 		importance(): Dictionary<number> {
 			const variables = dataGetters.getVariables(this.$store);
 			const importance: Dictionary<number> = {};
@@ -166,35 +141,16 @@ export default Vue.extend({
 			});
 			return importance;
 		},
+
 		sort() {
 			return (<any>this)[(<any>this).sortMethod];
 		}
 	},
 
 	methods: {
-		alphaAsc(a: { key: string }, b: { key: string }): number {
-			const textA = a.key.toLowerCase();
-			const textB = b.key.toLowerCase();
-			return (textA <= textB) ? -1 : (textA > textB) ? 1 : 0;
-		},
-		alphaDesc(a: { key: string }, b: { key: string }): number {
-			const textA = a.key.toLowerCase();
-			const textB = b.key.toLowerCase();
-			return (textA <= textB) ? 1 : (textA > textB) ? -1 : 0;
-		},
-		importanceAsc(a: { key: string }, b: { key: string }) {
-			const importance = this.importance;
-			return importance[a.key] - importance[b.key];
-		},
 		importanceDesc(a: { key: string }, b: { key: string }): number {
 			const importance = this.importance;
 			return importance[b.key] - importance[a.key];
-		},
-		noveltyAsc(a: { novelty: number }, b: { novelty: number }): number {
-			return a.novelty - b.novelty;
-		},
-		noveltyDesc(a: { novelty: number }, b: { novelty: number }): number {
-			return b.novelty - a.novelty;
 		},
 
 		// creates a facet key for the route from the instance-name component arg
@@ -226,6 +182,7 @@ export default Vue.extend({
 				type: EMPTY_FILTER,
 				enabled: true
 			});
+			this.$emit('expand', key);
 		},
 
 		// handles facet group transitions to inactive (grayed out, reduced visuals) state
@@ -236,6 +193,7 @@ export default Vue.extend({
 				type: EMPTY_FILTER,
 				enabled: false
 			});
+			this.$emit('collapse', key);
 		},
 
 		// handles range slider change events
@@ -248,6 +206,7 @@ export default Vue.extend({
 				min: parseFloat(value.from.label[0]),
 				max: parseFloat(value.to.label[0])
 			});
+			this.$emit('range-change', key, value);
 		},
 
 		// handles individual category toggle events within a facet group
@@ -259,29 +218,42 @@ export default Vue.extend({
 				enabled: true,
 				categories: values
 			});
+			this.$emit('facet-toggle', key, values);
 		},
 
-		setSortMethod(type: string) {
-			switch (type) {
-				case 'alpha-asc':
-					this.sortMethod = 'alphaAsc';
-					break;
-				case 'alpha-desc':
-					this.sortMethod = 'alphaDesc';
-					break;
-				case 'importance-asc':
-					this.sortMethod = 'importanceAsc';
-					break;
-				case 'importance-desc':
-					this.sortMethod = 'importanceDesc';
-					break;
-				case 'novelty-asc':
-					this.sortMethod = 'noveltyAsc';
-					break;
-				case 'novelty-desc':
-					this.sortMethod = 'noveltyDesc';
-					break;
-			}
+		onClick(key: string) {
+			this.$emit('click', key);
+		},
+
+		onHistogramMouseEnter(key: string, value: any) {
+			// extract the var name from the key
+			dataMutations.highlightFeatureRange(this.$store, {
+				context: VARIABLE_FACET_HIGHLIGHTS,
+				ranges: {
+					[key]: {
+						from: _.toNumber(value.label[0]),
+						to: _.toNumber(value.toLabel[value.toLabel.length-1])
+					}
+				}
+			});
+		},
+
+		onHistogramMouseLeave(key: string) {
+			dataMutations.clearFeatureHighlightRange(this.$store, key);
+		},
+
+		onFacetMouseEnter(key: string, value: any) {
+			// extract the var name from the key
+			dataMutations.highlightFeatureValues(this.$store, {
+				context: VARIABLE_FACET_HIGHLIGHTS,
+				values: {
+					[key]: value
+				}
+			});
+		},
+
+		onFacetMouseLeave(key: string) {
+			dataMutations.clearFeatureHighlightValues(this.$store);
 		},
 
 		// sets all facet groups to the active state - full size display + all controls, updates
@@ -403,27 +375,6 @@ button {
 .facet-filters .form-group {
 	margin-bottom: 4px;
 	padding-right: 16px;
-}
-.sort-groups {
-	display: flex;
-	flex-direction: row;
-	text-align: center;
-}
-.sort-groups .sort-group {
-	display: flex;
-	flex-direction: column;
-	justify-content: center;
-	width: 33%;
-	font-size: 0.7rem;
-	font-weight: bold;
-}
-.sort-buttons {
-	display: flex;
-	flex-direction: row;
-	justify-content: center;
-}
-.sort-buttons > button {
-	margin-right: 4px;
 }
 
 .variable-page-nav {

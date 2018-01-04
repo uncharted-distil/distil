@@ -9,6 +9,11 @@ import (
 	"github.com/caarlos0/env"
 )
 
+const (
+	tempStorageRoot = "temp_storage_root"
+	executablesRoot = "executables_root"
+)
+
 var (
 	cfg *Config
 )
@@ -45,7 +50,7 @@ func LoadConfig() (Config, error) {
 			return Config{}, err
 		}
 		// load any overrides from startup file
-		err = overideFromStartupFile()
+		err = overideFromStartupFile(cfg)
 		if err != nil {
 			return Config{}, err
 		}
@@ -53,8 +58,13 @@ func LoadConfig() (Config, error) {
 	return *cfg, nil
 }
 
-func overideFromStartupFile() error {
-	// read startup config
+func overideFromStartupFile(cfg *Config) error {
+	// Override env/default value with the command line value if set.
+	if len(os.Args) > 1 {
+		cfg.StartupConfigFile = os.Args[1]
+	}
+
+	// read startup config JSON file
 	startupConfig, err := ioutil.ReadFile(cfg.StartupConfigFile)
 	if err != nil {
 		if !os.IsNotExist(err) {
@@ -62,11 +72,16 @@ func overideFromStartupFile() error {
 		}
 		return nil
 	}
+	// parse out the entries
 	var startupData map[string]interface{}
 	err = json.Unmarshal(startupConfig, &startupData)
 	if err != nil {
 		return fmt.Errorf("Failed to parse startup config file (%s): %v", cfg.StartupConfigFile, err)
 	}
-	// TODO: implement overrides here
+
+	// override / add values
+	cfg.PipelineDataDir = startupData[tempStorageRoot].(string)
+	cfg.ExportPath = startupData[executablesRoot].(string)
+
 	return nil
 }

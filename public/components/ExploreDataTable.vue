@@ -15,19 +15,11 @@
 				:items="items"
 				:fields="fields">
 
-				<template :slot="`HEAD_${data.label}`" v-for="data in fields">
-					{{data.label}}
-					<div :key="data.label">
-						<b-dropdown :text="data.type" variant="outline-primary" class="var-type-button">
-							<b-dropdown-item
-								v-bind:class="probabilityCategoryClass(suggested.probability)"
-								@click.stop="onTypeChange(data, suggested)"
-								:key="suggested.name"
-								v-for="suggested in addMissingSuggestions(data.suggested, data.type)">
-									{{suggested.type}} ({{probabilityCategoryText(suggested.probability)}})
-							</b-dropdown-item>
-						</b-dropdown>
-					</div>
+				<template :slot="`HEAD_${field.label}`" v-for="field in fields">
+					{{field.label}}
+					<type-change-menu
+						:key="field.label"
+						:field="field.label"></type-change-menu>
 				</template>
 
 			</b-table>
@@ -42,14 +34,18 @@ import Vue from 'vue';
 import { getters as dataGetters } from '../store/data/module';
 import { getters as routeGetters } from '../store/route/module';
 import { actions } from '../store/data/module';
-import { SuggestedType, FieldInfo } from '../store/data/index';
+import { FieldInfo } from '../store/data/index';
 import { Dictionary } from '../util/dict';
 import { Filter } from '../util/filters';
 import { updateTableHighlights } from '../util/highlights';
-import { probabilityCategoryText, probabilityCategoryClass, addMissingSuggestions } from '../util/types';
+import TypeChangeMenu from '../components/TypeChangeMenu';
 
 export default Vue.extend({
 	name: 'explore-data-table',
+
+	components: {
+		TypeChangeMenu
+	},
 
 	computed: {
 		// get dataset from route
@@ -90,22 +86,6 @@ export default Vue.extend({
 			actions.updateFilteredData(this.$store, {
 				dataset: this.dataset,
 				filters: this.filters
-			});
-		},
-		probabilityCategoryText(probability: number): string {
-			return probabilityCategoryText(probability);
-		},
-		probabilityCategoryClass(probability: number): string {
-			return probabilityCategoryClass(probability);
-		},
-		addMissingSuggestions(suggested: SuggestedType[], type: string): SuggestedType[] {
-			return addMissingSuggestions(suggested, type);
-		},
-		onTypeChange(field: { label: string }, suggested: SuggestedType) {
-			actions.setVariableType(this.$store, {
-				dataset: this.dataset,
-				field: field.label,
-				type: suggested.type
 			});
 		},
 		onRowHovered(event: Event) {

@@ -124,5 +124,5 @@ func (s *Storage) fetchResidualsHistogram(resultURI string, dataset string, vari
 	}
 	defer res.Close()
 
-	return s.parseNumericHistogram(res, extrema)
+	return s.parseNumericHistogram(variable.Type, res, extrema)
 }

@@ -1,14 +1,8 @@
 export interface Variable {
 	name: string;
 	type: string;
-	suggestedTypes: SuggestedType[];
 	importance: number;
 	novelty: number;
-}
-
-export interface SuggestedType {
-	type: string;
-	probability: number;
 }
 
 export interface Datasets {
@@ -36,6 +30,7 @@ export interface VariableSummary {
 	pipelineId?: string;
 	resultId?: string;
 	type?: string;
+	varType?: string;
 	err?: string;
 	pending?: boolean;
 }
@@ -50,7 +45,6 @@ export interface Data {
 export interface FieldInfo {
 	label: string,
 	type: string,
-	suggested: Dictionary<string>,
 	sortable: boolean
 }
 
@@ -58,7 +52,21 @@ export interface TargetRow {
 	_cellVariants?: Dictionary<string>;
 }
 
-export type Range = Dictionary<{ from: number, to: number }>;
+export interface Highlights {
+	context: string;
+}
+
+export interface RangeHighlights extends Highlights {
+	ranges: Range;
+}
+
+export interface ValueHighlights extends Highlights {
+	values: Dictionary<any>;
+}
+
+export type Range = Dictionary<{
+	from: number, to: number
+}>;
 
 export type Dictionary<T> = { [key: string]: T }
 
@@ -71,8 +79,8 @@ export interface DataState {
 	resultData: Data;
 	filteredData: Data;
 	selectedData: Data;
-	highlightedFeatureRanges: Range;
-	highlightedFeatureValues: Dictionary<any>;
+	highlightedFeatureRanges: RangeHighlights;
+	highlightedFeatureValues: ValueHighlights;
 }
 
 export const state = {

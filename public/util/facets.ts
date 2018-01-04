@@ -50,6 +50,7 @@ export interface NumericalFacet {
 export interface Group {
 	label: string;
 	key: string;
+	type: string;
 	collapsible: boolean;
 	collapsed: boolean;
 	facets: (PlaceHolderFacet | CategoricalFacet | NumericalFacet)[];
@@ -79,6 +80,7 @@ export function createErrorFacet(summary: VariableSummary, enableCollapse: boole
 	return {
 		label: summary.name,
 		key: summary.name,
+		type: summary.varType,
 		collapsible: enableCollapse,
 		collapsed: false,
 		facets: [{
@@ -93,6 +95,7 @@ export function createPendingFacet(summary: VariableSummary, enableCollapse: boo
 	return {
 		label: summary.name,
 		key: summary.name,
+		type: summary.varType,
 		collapsible: enableCollapse,
 		collapsed: false,
 		facets: [{
@@ -105,7 +108,6 @@ export function createPendingFacet(summary: VariableSummary, enableCollapse: boo
 // creates categorical or numerical summary facets based on the input summary type
 export function createSummaryFacet(summary: VariableSummary, enableCollapse: boolean, enableFiltering: boolean): Group {
 	switch (summary.type) {
-
 		case 'categorical':
 			return createCategoricalSummaryFacet(summary, enableCollapse, enableFiltering);
 		case 'numerical':
@@ -113,6 +115,38 @@ export function createSummaryFacet(summary: VariableSummary, enableCollapse: boo
 	}
 	console.warn('unrecognized summary type', summary.type);
 	return null;
+}
+
+export function getGroupIcon(summary: VariableSummary): string {
+	switch (summary.varType) {
+		case 'categorical':
+		case 'ordinal':
+		case 'boolean':
+			return 'fa fa-info';
+
+		case 'address':
+		case 'city':
+		case 'state':
+		case 'country':
+			return 'fa fa-globe';
+
+		case 'email':
+		case 'postal_code':
+			return 'fa fa-envelope';
+
+		case 'phone':
+			return 'fa fa-phone';
+
+		case 'uri':
+		case 'keyword':
+			return 'fa fa-book';
+
+		case 'dateTime':
+			return 'fa fa-calendar';
+
+		default:
+			return 'fa fa-info';
+	}
 }
 
 // creates a categorical facet with segments based on nest buckets counts, or no segments if buckets aren't nested
@@ -144,7 +178,7 @@ function createCategoricalSummaryFacet(summary: VariableSummary, enableCollapse:
 		}
 
 		const facet: CategoricalFacet = {
-			icon : { class : 'fa fa-info' },
+			icon : { class : getGroupIcon(summary) },
 			value: b.key,
 			count: b.count,
 			selected: selected,
@@ -159,6 +193,7 @@ function createCategoricalSummaryFacet(summary: VariableSummary, enableCollapse:
 	return {
 		label: summary.name,
 		key: summary.name,
+		type: summary.varType,
 		collapsible: enableCollapse,
 		collapsed: false,
 		facets: facets
@@ -169,6 +204,7 @@ function createNumericalSummaryFacet(summary: VariableSummary, enableCollapse: b
 	return {
 		label: summary.name,
 		key: summary.name,
+		type: summary.varType,
 		collapsible: enableCollapse,
 		collapsed: false,
 		facets: [

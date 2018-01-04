@@ -17,19 +17,11 @@
 				:items="items"
 				:fields="fields">
 
-				<template :slot="`HEAD_${data.label}`" v-for="data in fields">
-					{{data.label}}
-					<div :key="data.name">
-						<b-dropdown :text="data.type" variant="outline-primary" class="var-type-button">
-							<b-dropdown-item
-								v-bind:class="probabilityCategoryClass(suggested.probability)"
-								@click.stop="onTypeChange(data, suggested)"
-								:key="suggested.name"
-								v-for="suggested in addMissingSuggestions(data.suggested, data.type)">
-									{{suggested.type}} ({{probabilityCategoryText(suggested.probability)}})
-							</b-dropdown-item>
-						</b-dropdown>
-					</div>
+				<template :slot="`HEAD_${field.label}`" v-for="field in fields">
+					{{field.label}}
+					<type-change-menu
+						:key="field.label"
+						:field="field.label"></type-change-menu>
 				</template>
 
 			</b-table>
@@ -42,16 +34,23 @@
 
 import _ from 'lodash';
 import Vue from 'vue';
-import { getters as dataGetters, actions } from '../store/data/module';
+import { getters as dataGetters, actions, mutations } from '../store/data/module';
 import { Dictionary } from '../util/dict';
 import { FieldInfo } from '../store/data/index';
 import { Filter } from '../util/filters';
 import { getters as routeGetters } from '../store/route/module';
+import { ValueHighlights } from '../store/data/index';
 import { updateTableHighlights } from '../util/highlights';
-import { probabilityCategoryText, probabilityCategoryClass, addMissingSuggestions } from '../util/types';
+import TypeChangeMenu from '../components/TypeChangeMenu';
+
+const SELECT_TABLE_HIGHLIGHT = 'select_table_highlight';
 
 export default Vue.extend({
 	name: 'selected-data-table',
+
+	components: {
+		TypeChangeMenu
+	},
 
 	computed: {
 		// get dataset from route
@@ -61,10 +60,12 @@ export default Vue.extend({
 		// extracts the table data from the store
 		items(): Dictionary<any> {
 			const data = dataGetters.getSelectedDataItems(this.$store);
-			const highlights = dataGetters.getHighlightedFeatureRanges(this.$store);
-			updateTableHighlights(data, highlights);
+			const rangeHighlights = dataGetters.getHighlightedFeatureRanges(this.$store);
+			const valueHighlights = dataGetters.getHighlightedFeatureValues(this.$store);
+			updateTableHighlights(data, rangeHighlights, valueHighlights, SELECT_TABLE_HIGHLIGHT);
 			return data;
 		},
+
 		// extract the table field header from the store
 		fields(): Dictionary<FieldInfo> {
 			return dataGetters.getSelectedDataFields(this.$store);
@@ -97,32 +98,19 @@ export default Vue.extend({
 				filters: this.filters
 			});
 		},
-		probabilityCategoryText(probability) {
-			return probabilityCategoryText(probability);
-		},
-		probabilityCategoryClass(probability) {
-			return probabilityCategoryClass(probability);
-		},
-		addMissingSuggestions(suggested, type) {
-			return addMissingSuggestions(suggested, type);
-		},
-		onTypeChange(field, suggested) {
-			actions.setVariableType(this.$store, {
-				dataset: this.dataset,
-				field: field.label,
-				type: suggested.type
-			});
-		},
 		onRowHovered(event) {
 			// set new values
-			const highlights = {};
+			const highlights = <ValueHighlights>{
+				context: SELECT_TABLE_HIGHLIGHT,
+				values: {}
+			};
 			_.forIn(this.fields, (field, key) => {
-				highlights[key] = event[key];
+				highlights.values[key] = event[key];
 			});
-			actions.highlightFeatureValues(this.$store, highlights);
+			mutations.highlightFeatureValues(this.$store, highlights);
 		},
 		onMouseOut() {
-			actions.clearFeatureHighlightValues(this.$store);
+			mutations.clearFeatureHighlightValues(this.$store);
 		}
 	}
 });

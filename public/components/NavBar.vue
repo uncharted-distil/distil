@@ -10,7 +10,6 @@
 			<b-navbar-nav>
 				<b-nav-item @click="onHome" :active="activeView===HOME">Home</b-nav-item>
 				<b-nav-item @click="onSearch" :active="activeView===SEARCH">Search</b-nav-item>
-				<b-nav-item @click="onExplore" :active="activeView===EXPLORE" :disabled="!hasDataset()">Explore</b-nav-item>
 				<b-nav-item @click="onSelect" :active="activeView===SELECT" :disabled="!hasDataset()">Select</b-nav-item>
 				<b-nav-item @click="onResults" :active="activeView===RESULTS" :disabled="true">Results</b-nav-item>
 			</b-navbar-nav>
@@ -38,14 +37,12 @@ import Vue from 'vue';
 
 const HOME = Symbol();
 const SEARCH = Symbol();
-const EXPLORE = Symbol();
 const SELECT = Symbol();
 const RESULTS = Symbol();
 
 const ROUTE_MAPPINGS = {
 	'/home': HOME,
 	'/search': SEARCH,
-	'/explore': EXPLORE,
 	'/select': SELECT,
 	'/results': RESULTS
 };
@@ -57,7 +54,6 @@ export default Vue.extend({
 		return {
 			HOME: HOME,
 			SEARCH: SEARCH,
-			EXPLORE: EXPLORE,
 			SELECT: SELECT,
 			RESULTS: RESULTS,
 			activeView: SEARCH
@@ -83,9 +79,6 @@ export default Vue.extend({
 		},
 		onSearch() {
 			gotoSearch(this.$store, this.$router);
-		},
-		onExplore() {
-			gotoExplore(this.$store, this.$router);
 		},
 		onSelect() {
 			gotoSelect(this.$store, this.$router);

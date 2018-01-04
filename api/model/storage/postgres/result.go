@@ -353,7 +353,7 @@ func (s *Storage) fetchNumericalResultHistogram(resultURI string, dataset string
 	}
 	defer res.Close()
 
-	return s.parseNumericHistogram(res, extrema)
+	return s.parseNumericHistogram(variable.Type, res, extrema)
 }
 
 func (s *Storage) fetchCategoricalResultHistogram(resultURI string, dataset string, resultDataset string, variable *model.Variable) (*model.Histogram, error) {

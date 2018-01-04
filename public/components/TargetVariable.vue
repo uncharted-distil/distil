@@ -7,15 +7,14 @@
 			</div>
 		</div>
 		<variable-facets v-if="variables.length>0"
+			type-change
 			:variables="variables"
-			:dataset="dataset"
-			:html="html"></variable-facets>
+			:dataset="dataset"></variable-facets>
 	</div>
 </template>
 
 <script lang="ts">
 
-import { createRouteEntryFromRoute } from '../util/routes';
 import VariableFacets from '../components/VariableFacets';
 import 'font-awesome/css/font-awesome.css';
 import Vue from 'vue';
@@ -36,22 +35,6 @@ export default Vue.extend({
 		},
 		variables(): VariableSummary[] {
 			return dataGetters.getTargetVariableSummaries(this.$store);
-		},
-		html(): () => HTMLDivElement {
-			return () => {
-				const container = document.createElement('div');
-				const remove = document.createElement('button');
-				remove.className += 'btn btn-sm btn-outline-danger mb-2';
-				remove.innerHTML = 'Remove';
-				remove.addEventListener('click', () => {
-					const entry = createRouteEntryFromRoute(routeGetters.getRoute(this.$store), {
-						target: '',
-					});
-					this.$router.push(entry);
-				});
-				container.appendChild(remove);
-				return container;
-			};
 		}
 	}
 });

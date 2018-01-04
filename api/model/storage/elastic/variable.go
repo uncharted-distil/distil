@@ -14,15 +14,15 @@ const (
 	// Variables is the field name which stores the variables in elasticsearch.
 	Variables = "variables"
 	// VarNameField is the field name for the variable name.
-	VarNameField = "varName"
+	VarNameField = "colName"
 	// VarRoleField is the field name for the variable role.
-	VarRoleField = "varRole"
+	VarRoleField = "selectedRole"
 	// VarDisplayVariableField is the field name for the display variable.
-	VarDisplayVariableField = "varDisplayName"
+	VarDisplayVariableField = "colDisplayName"
 	// VarOriginalVariableField is the field name for the original variable.
-	VarOriginalVariableField = "varOriginalName"
+	VarOriginalVariableField = "colOriginalName"
 	// VarTypeField is the field name for the variable type.
-	VarTypeField = "varType"
+	VarTypeField = "colType"
 	// VarImportanceField is the field name for the variable importnace.
 	VarImportanceField = "importance"
 	// VarSuggestedTypesField is the field name for the suggested variable types.
@@ -31,14 +31,14 @@ const (
 	VarRoleIndex = "index"
 )
 
-func (s *Storage) parseRawVariable(child map[string]interface{}) *model.Variable {
+func (s *Storage) parseRawVariable(child map[string]interface{}) (*model.Variable, error) {
 	name, ok := json.String(child, VarNameField)
 	if !ok {
-		return nil
+		return nil, errors.New("unable to parse name from variable data")
 	}
 	typ, ok := json.String(child, VarTypeField)
 	if !ok {
-		return nil
+		return nil, errors.New("unable to parse type from variable data")
 	}
 	importance, ok := json.Int(child, VarImportanceField)
 	if !ok {
@@ -68,7 +68,7 @@ func (s *Storage) parseRawVariable(child map[string]interface{}) *model.Variable
 		SuggestedTypes:   suggestedTypes,
 		OriginalVariable: originalVariable,
 		DisplayVariable:  displayVariable,
-	}
+	}, nil
 }
 
 func (s *Storage) parseVariable(searchHit *elastic.SearchHit, varName string) (*model.Variable, error) {
@@ -84,7 +84,10 @@ func (s *Storage) parseVariable(searchHit *elastic.SearchHit, varName string) (*
 	}
 	// find the matching var name
 	for _, child := range children {
-		variable := s.parseRawVariable(child)
+		variable, err := s.parseRawVariable(child)
+		if err != nil {
+			return nil, errors.Wrap(err, "unable to parse variable")
+		}
 		if variable != nil {
 			if variable.Name == varName {
 				return variable, nil
@@ -105,10 +108,13 @@ func (s *Storage) parseVariables(searchHit *elastic.SearchHit, includeIndex bool
 	if !ok {
 		return nil, errors.New("unable to parse variables from search result")
 	}
-	// for each variable, extract the `varName` and `varType`
+	// for each variable, extract the `colName` and `colType`
 	var variables []*model.Variable
 	for _, child := range children {
-		variable := s.parseRawVariable(child)
+		variable, err := s.parseRawVariable(child)
+		if err != nil {
+			return nil, errors.Wrap(err, "unable to parse variable")
+		}
 		if !includeIndex && variable.Role == VarRoleIndex {
 			continue
 		}

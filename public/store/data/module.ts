@@ -54,11 +54,7 @@ export const actions = {
 	updateSelectedData: dispatch(moduleActions.updateSelectedData),
 	getResultsSummaries: dispatch(moduleActions.getResultsSummaries),
 	getResidualsSummaries: dispatch(moduleActions.getResidualsSummaries),
-	updateResults: dispatch(moduleActions.updateResults),
-	highlightFeatureRange: dispatch(moduleActions.highlightFeatureRange),
-	clearFeatureHighlightRange: dispatch(moduleActions.clearFeatureHighlightRange),
-	highlightFeatureValues: dispatch(moduleActions.highlightFeatureValues),
-	clearFeatureHighlightValues: dispatch(moduleActions.clearFeatureHighlightValues)
+	updateResults: dispatch(moduleActions.updateResults)
 }
 
 

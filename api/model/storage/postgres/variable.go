@@ -36,7 +36,7 @@ func (s *Storage) getHistogramAggQuery(extrema *model.Extrema) (string, string, 
 	return histogramAggName, bucketQueryString, histogramQueryString
 }
 
-func (s *Storage) parseNumericHistogram(rows *pgx.Rows, extrema *model.Extrema) (*model.Histogram, error) {
+func (s *Storage) parseNumericHistogram(varType string, rows *pgx.Rows, extrema *model.Extrema) (*model.Histogram, error) {
 	// get histogram agg name
 	histogramAggName := model.HistogramAggPrefix + extrema.Name
 
@@ -73,7 +73,8 @@ func (s *Storage) parseNumericHistogram(rows *pgx.Rows, extrema *model.Extrema) 
 	// assign histogram attributes
 	return &model.Histogram{
 		Name:    extrema.Name,
-		Type:    "numerical",
+		Type:    model.NumericalType,
+		VarType: varType,
 		Extrema: extrema,
 		Buckets: buckets,
 	}, nil
@@ -117,6 +118,7 @@ func parseUnivariateCategoricalHistogram(rows *pgx.Rows, variable *model.Variabl
 	return &model.Histogram{
 		Name:    variable.Name,
 		Type:    model.CategoricalType,
+		VarType: variable.Type,
 		Buckets: buckets,
 	}, nil
 }
@@ -162,6 +164,7 @@ func parseBivariateCategoricalHistogram(rows *pgx.Rows, variable *model.Variable
 	// assign histogram attributes
 	return &model.Histogram{
 		Name:    variable.Name,
+		VarType: variable.Type,
 		Type:    model.CategoricalType,
 		Buckets: buckets,
 	}, nil
@@ -246,7 +249,7 @@ func (s *Storage) fetchNumericalHistogram(dataset string, variable *model.Variab
 		defer res.Close()
 	}
 
-	return s.parseNumericHistogram(res, extrema)
+	return s.parseNumericHistogram(variable.Type, res, extrema)
 }
 
 func (s *Storage) fetchCategoricalHistogram(dataset string, variable *model.Variable) (*model.Histogram, error) {

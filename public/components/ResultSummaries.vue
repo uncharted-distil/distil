@@ -21,6 +21,8 @@
 		</div>
 		<h6 class="nav-link">Actual</h6>
 		<facets class="result-summaries-target"
+			v-on:histogram-mouse-enter="histogramMouseEnter"
+			v-on:histogram-mouse-leave="histogramMouseLeave"
 			:groups="targetSummaries"
 			:highlights="highlights"></facets>
 		<h6 class="nav-link">Predicted</h6>
@@ -43,11 +45,12 @@ import { createGroups, Group } from '../util/facets';
 import { createRouteEntryFromRoute } from '../util/routes';
 import { getPipelineResultById } from '../util/pipelines';
 import { getTask } from '../util/pipelines';
-import { getErrorCol } from '../util/data';
+import { getErrorCol, /*isPredicted, isError,*/ isTarget, getVarFromTarget /*, getVarFromPredicted, getVarFromError*/ } from '../util/data';
 import { getters as dataGetters} from '../store/data/module';
 import { getters as routeGetters } from '../store/route/module';
+import { mutations as dataMutations } from '../store/data/module';
 import { actions } from '../store/app/module';
-import { Dictionary } from '../store/data/index';
+import { Dictionary } from '../util/dict';
 import vueSlider from 'vue-slider-component';
 import Vue from 'vue';
 import _ from 'lodash';
@@ -89,7 +92,16 @@ export default Vue.extend({
 		},
 
 		highlights(): Dictionary<any> {
-			return dataGetters.getHighlightedFeatureValues(this.$store);
+			// find var marked as 'target' and use that name/value tuple to
+			// highlight the ground truth
+			const highlights = dataGetters.getHighlightedFeatureValues(this.$store);
+			const facetHighlights: Dictionary<any> = {};
+			_.forEach(highlights.values, (value, varName) => {
+				if (isTarget(varName)) {
+					facetHighlights[getVarFromTarget(varName)] = value;
+				}
+			});
+			return facetHighlights;
 		},
 
 		dataset(): string {
@@ -156,7 +168,7 @@ export default Vue.extend({
 		},
 
 		activePipelineName(): string {
-			const pipelineId = routeGetters.getRoutePipelinetId(this.$store);
+			const pipelineId = routeGetters.getRoutePipelineId(this.$store);
 			const requestId = routeGetters.getRouteCreateRequestId(this.$store);
 			const result = getPipelineResultById(this.$store.state.pipelineModule, requestId, pipelineId);
 			return result ? result.name : '';
@@ -164,19 +176,40 @@ export default Vue.extend({
 	},
 
 	methods: {
+		histogramMouseEnter(key, value) {
+			// extract the var name from the key
+			const varName = `${key}_target`;
+			dataMutations.highlightFeatureRange(this.$store, {
+				context: 'result_summary',
+				ranges: {
+					[varName]: {
+						from: _.toNumber(value.label[0]),
+						to: _.toNumber(value.toLabel[value.toLabel.length-1])
+					}
+				}
+			});
+		},
+
+		histogramMouseLeave(key) {
+			const varName = `${key}_target`;
+			dataMutations.clearFeatureHighlightRange(this.$store, varName);
+		},
+
 		updateThreshold(value: number) {
 			const entry = createRouteEntryFromRoute(this.$route, {
 				residualThreshold: value
 			});
 			this.$router.push(entry);
 		},
+
 		onSlide(value) {
 			const entry = createRouteEntryFromRoute(this.$route, { residualThreshold: value });
 			this.$router.replace(entry);
 		},
+
 		onExport() {
 			this.$router.replace('/');
-			const pipelineId = routeGetters.getRoutePipelinetId(this.$store);
+			const pipelineId = routeGetters.getRoutePipelineId(this.$store);
 			const requestId = routeGetters.getRouteCreateRequestId(this.$store);
 			const result = getPipelineResultById(this.$store.state.pipelineModule, requestId, pipelineId);
 			actions.exportPipeline(this.$store, {

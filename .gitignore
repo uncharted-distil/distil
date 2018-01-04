@@ -12,3 +12,4 @@ debug
 *.log
 dist
 distil.exe
+package-lock.json

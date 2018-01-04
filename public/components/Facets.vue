@@ -4,12 +4,12 @@
 
 <script lang="ts">
 import _ from 'lodash';
-import 'jquery';
+import $ from 'jquery';
 import Vue from 'vue';
-import { actions } from '../store/data/module';
 import { Group, CategoricalFacet } from '../util/facets';
 import { Dictionary } from '../util/dict';
 import Facets from '@uncharted.software/stories-facets';
+import TypeChangeMenu from '../components/TypeChangeMenu';
 import '@uncharted.software/stories-facets/dist/facets.css';
 
 export default Vue.extend({
@@ -18,6 +18,7 @@ export default Vue.extend({
 	props: {
 		groups: Array,
 		highlights: Object,
+		typeChange: Boolean,
 		html: [ String, Object, Function ],
 		sort: {
 			default: (a: { key: string }, b: { key: string }) => {
@@ -58,24 +59,16 @@ export default Vue.extend({
 		});
 		// hover over events
 		this.facets.on('facet-histogram:mouseenter', (event: Event, key: string, value: any) => {
-			actions.highlightFeatureRange(this.$store, {
-				name: key,
-				from: _.toNumber(value.label[0]),
-				to: _.toNumber(value.toLabel[value.toLabel.length-1])
-			});
+			component.$emit('histogram-mouse-enter', key, value);
 		});
 		this.facets.on('facet-histogram:mouseleave', (event: Event, key: string) => {
-			actions.clearFeatureHighlightRange(this.$store, key);
+			component.$emit('histogram-mouse-leave', key);
 		});
 		this.facets.on('facet:mouseenter', (event: Event, key: string, value: number) => {
-			actions.highlightFeatureRange(this.$store, {
-				name: key,
-				from: value,
-				to: value
-			});
+			component.$emit('facet-mouse-enter', key, value);
 		});
 		this.facets.on('facet:mouseleave', (event: Event, key: string) => {
-			actions.clearFeatureHighlightRange(this.$store, key);
+			component.$emit('facet-mouse-leave', key);
 		});
 		// click events
 		this.facets.on('facet:click', (event: Event, key: string, value: string) => {
@@ -117,7 +110,7 @@ export default Vue.extend({
 	},
 
 	watch: {
-		groups: function(currGroups: Group[], prevGroups: Group[]) {
+		groups(currGroups: Group[], prevGroups: Group[]) {
 			// get map of all existing group keys in facets
 			const prevMap: Dictionary<Group> = {};
 			prevGroups.forEach(group => {
@@ -130,7 +123,7 @@ export default Vue.extend({
 			// for the unchanged, update selection
 			this.updateSelections(unchangedGroups, prevMap);
 		},
-		highlights: function(currHighlights) {
+		highlights(currHighlights: Dictionary<any>) {
 			if (_.isEmpty(currHighlights)) {
 				(this.groups as Group[]).forEach(groupSpec => {
 					const group = this.facets.getGroup(groupSpec.key);
@@ -169,13 +162,31 @@ export default Vue.extend({
 				}
 			});
 		},
-		sort: function(currSort) {
+		sort(currSort) {
 			this.facets.sort(currSort);
 		}
 	},
 
 	methods: {
 		injectHTML(group: Group, $elem: JQuery) {
+			$elem.click(() => {
+				this.$emit('click', group.key);
+			});
+
+			// inject type headers
+			if (this.typeChange) {
+				const $slot = $('<span/>');
+				$elem.find('.group-header').append($slot);
+				const menu = new TypeChangeMenu(
+					{
+						store: this.$store,
+						propsData: {
+							field: group.key
+						}
+					});
+				menu.$mount($slot[0]);
+			}
+
 			if (!this.html) {
 				return;
 			}
@@ -186,6 +197,7 @@ export default Vue.extend({
 				$group.append(this.html);
 			}
 		},
+
 		groupsEqual(a: Group, b: Group): boolean {
 			const OMITTED_FIELDS = ['selection', 'selected'];
 			// NOTE: we dont need to check key, we assume its already equal
@@ -204,6 +216,7 @@ export default Vue.extend({
 			}
 			return true;
 		},
+
 		updateGroups(currGroups: Group[], prevGroups: Dictionary<Group>): Group[] {
 			const toAdd: Group[] = [];
 			const unchanged: Group[] = [];
@@ -251,6 +264,7 @@ export default Vue.extend({
 			// return unchanged groups
 			return unchanged;
 		},
+
 		updateCollapsed(unchangedGroups) {
 			unchangedGroups.forEach(group => {
 				// get the existing facet
@@ -262,6 +276,7 @@ export default Vue.extend({
 				}
 			});
 		},
+
 		updateSelections(unchangedGroups, prevGroups) {
 			unchangedGroups.forEach(groupSpec => {
 				// get the existing facet

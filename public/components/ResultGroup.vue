@@ -4,11 +4,17 @@
 		{{ name }}<!--<br>Status: {{ pipelineStatus }}-->
 		<div v-if="pipelineStatus === 'COMPLETED' || pipelineStatus === 'UPDATED'">
 			<facets v-if="resultGroups.length" class="result-container"
+				v-on:histogram-mouse-enter="resultHistogramMouseEnter"
+				v-on:histogram-mouse-leave="resultHistogramMouseLeave"
+				v-on:facet-mouse-enter="resultFacetMouseEnter"
+				v-on:facet-mouse-leave="resultFacetMouseLeave"
 				:groups="resultGroups"
 				:highlights="highlights"
 				:html="residualHtml">
 			</facets>
 			<facets v-if="residualsGroups.length" class="residual-container"
+				v-on:histogram-mouse-enter="residualsHistogramMouseEnter"
+				v-on:histogram-mouse-leave="residualsHistogramMouseLeave"
 				:groups="residualsGroups"
 				:highlights="highlights"
 				:html="resultHtml">
@@ -30,16 +36,21 @@
 // of prediction-truth residuals, and scoring information.
 
 import Facets from '../components/Facets';
-import { createGroups, Group } from '../util/facets';
+import { createGroups, Group, NumericalFacet, CategoricalFacet } from '../util/facets';
+import { isPredicted, isError, getVarFromPredicted, getVarFromError, getPredictedFacetKey,
+	getErrorFacetKey, getPredictedColFromFacetKey, getErrorColFromFacetKey } from '../util/data';
 import { VariableSummary } from '../store/data/index';
 import { Dictionary } from '../util/dict';
 import { createRouteEntryFromRoute } from '../util/routes';
 import { getters } from '../store/data/module';
 import { getters as routeGetters } from '../store/route/module';
 import { getters as pipelineGetters } from '../store/pipelines/module';
+import { mutations as dataMutations } from '../store/data/module';
 import { NUMERICAL_FILTER, CATEGORICAL_FILTER, getFilterType, decodeFiltersDictionary } from '../util/filters';
-import { NumericalFacet, CategoricalFacet } from '../util/facets';
+import _ from 'lodash';
 import Vue from 'vue';
+
+const RESULT_GROUP_HIGHLIGHTS = 'result-group';
 
 export default Vue.extend({
 	name: 'result-group',
@@ -86,11 +97,22 @@ export default Vue.extend({
 		},
 
 		highlights(): Dictionary<any> {
-			return getters.getHighlightedFeatureValues(this.$store);
+			// Facets highlights are keyed by name - map the published highligh
+			// key to the facet key
+			const highlights = getters.getHighlightedFeatureValues(this.$store);
+			const facetHighlights = <Dictionary<any>>{};
+			_.forEach(highlights.values, (value, varName) => {
+				if (isPredicted(varName)) {
+					facetHighlights[getPredictedFacetKey(getVarFromPredicted(varName))] = value;
+				} else if (isError(varName)) {
+					facetHighlights[getErrorFacetKey(getVarFromError(varName))] = value;
+				}
+			});
+			return facetHighlights;
 		},
 
 		currentClass(): string {
-			const selectedId = routeGetters.getRoutePipelinetId(this.$store);
+			const selectedId = routeGetters.getRoutePipelineId(this.$store);
 			const results = this.results();
 			return (results && results.pipelineId === selectedId)
 				? 'result-group-selected result-group' : 'result-group';
@@ -98,6 +120,59 @@ export default Vue.extend({
 	},
 
 	methods: {
+		resultHistogramMouseEnter(key: string, value: any) {
+			// extract the var name from the key
+			const varName = getPredictedColFromFacetKey(key);
+			dataMutations.highlightFeatureRange(this.$store, {
+				context: RESULT_GROUP_HIGHLIGHTS,
+				ranges: {
+					[varName]: {
+						from: _.toNumber(value.label[0]),
+						to: _.toNumber(value.toLabel[value.toLabel.length-1])
+					}
+				}
+			});
+		},
+
+		resultHistogramMouseLeave(key: string) {
+			const varName = getPredictedColFromFacetKey(key);
+			dataMutations.clearFeatureHighlightRange(this.$store, varName);
+		},
+
+		residualsHistogramMouseEnter(key: string, value: any) {
+			// convert the residual histogram key name into the proper variable ID
+			const varName =getErrorColFromFacetKey(key);
+			dataMutations.highlightFeatureRange(this.$store, {
+				context: RESULT_GROUP_HIGHLIGHTS,
+				ranges: {
+					[varName]: {
+						from: _.toNumber(value.label[0]),
+						to: _.toNumber(value.toLabel[value.toLabel.length-1])
+					}
+				}
+			});
+		},
+
+		residualsHistogramMouseLeave(key: string) {
+			const varName = getErrorColFromFacetKey(key);
+			dataMutations.clearFeatureHighlightRange(this.$store, varName);
+		},
+
+		resultFacetMouseEnter(key: string, value: any) {
+			// extract the var name from the key
+			const varName = getPredictedColFromFacetKey(key);
+			dataMutations.highlightFeatureValues(this.$store, {
+				context: RESULT_GROUP_HIGHLIGHTS,
+				values: {
+					[varName]: value
+				}
+			});
+		},
+
+		resultFacetMouseLeave(key: string) {
+			dataMutations.clearFeatureHighlightValues(this.$store);
+		},
+
 		click() {
 			const routeEntry = createRouteEntryFromRoute(this.$route, {
 				pipelineId: this.results().pipelineId

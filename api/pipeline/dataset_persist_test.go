@@ -119,10 +119,10 @@ func TestPersistFilteredData(t *testing.T) {
 	datasetPath, err := PersistFilteredData(fetchFilteredData(t), fetchVariable(t), "./test_output", "test", "test", "feature1", filterParams)
 	assert.NoError(t, err)
 	assert.NotEqual(t, datasetPath, "")
-	_, err = os.Stat(path.Join(datasetPath, D3MTrainData))
+	_, err = os.Stat(path.Join(datasetPath, D3MDataFolder, D3MLearningData))
 	assert.False(t, os.IsNotExist(err))
 
-	_, err = os.Stat(path.Join(datasetPath, D3MTrainTargets))
+	_, err = os.Stat(path.Join(datasetPath, D3MDataFolder, D3MLearningData))
 	assert.False(t, os.IsNotExist(err))
 
 	datasetPathUnmod, err := PersistFilteredData(fetchFilteredData(t), fetchVariable(t), "./test_output", "test", "test", "feature1", filterParams)

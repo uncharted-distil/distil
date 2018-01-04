@@ -1,9 +1,16 @@
 <template>
 	<div class="select-view">
+		<b-modal id="target-modal" ref="targetModal" title="Select Target Feature"
+			hide-header-close
+			no-close-on-backdrop
+			no-close-on-esc
+			hide-footer>
+			<available-target-variables></available-target-variables>
+		</b-modal>
 		<div class="left-container">
 			<h5 class="header-label">Select the Training features</h5>
 			<div class="select-items">
-				<available-variables class="select-available-variables"></available-variables>
+				<available-training-variables class="select-available-variables"></available-training-variables>
 				<training-variables class="select-training-variables"></training-variables>
 			</div>
 		</div>
@@ -22,7 +29,8 @@
 import FlowBar from '../components/FlowBar.vue';
 import CreatePipelinesForm from '../components/CreatePipelinesForm.vue';
 import SelectDataTable from '../components/SelectDataTable.vue';
-import AvailableVariables from '../components/AvailableVariables.vue';
+import AvailableTargetVariables from '../components/AvailableTargetVariables.vue';
+import AvailableTrainingVariables from '../components/AvailableTrainingVariables.vue';
 import TrainingVariables from '../components/TrainingVariables.vue';
 import TargetVariable from '../components/TargetVariable.vue';
 import { getters as dataGetters, actions } from '../store/data/module';
@@ -31,13 +39,14 @@ import { Variable } from '../store/data/index';
 import Vue from 'vue';
 
 export default Vue.extend({
-	name: 'select',
+	name: 'select-view',
 
 	components: {
 		FlowBar,
 		CreatePipelinesForm,
 		SelectDataTable,
-		AvailableVariables,
+		AvailableTargetVariables,
+		AvailableTrainingVariables,
 		TrainingVariables,
 		TargetVariable
 	},
@@ -53,6 +62,7 @@ export default Vue.extend({
 
 	mounted() {
 		this.fetch();
+		this.updateModal();
 	},
 
 	watch: {
@@ -61,6 +71,9 @@ export default Vue.extend({
 		},
 		'$route.query.training'() {
 		},
+		'$route.query.target'() {
+			this.updateModal();
+		}
 	},
 
 	methods: {
@@ -74,6 +87,15 @@ export default Vue.extend({
 						variables: this.variables
 					});
 				});
+		},
+		updateModal() {
+			const target = routeGetters.getRouteTargetVariable(this.$store);
+			const modal = this.$refs.targetModal as any;
+			if (target) {
+				modal.hide();
+			} else {
+				modal.show();
+			}
 		}
 	}
 });

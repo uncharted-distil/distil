@@ -23,12 +23,14 @@
 <script lang="ts">
 
 import _ from 'lodash';
-import { getters, actions } from '../store/data/module';
+import { getters, mutations } from '../store/data/module';
 import { TargetRow, FieldInfo } from '../store/data/index';
 import { Dictionary } from '../util/dict';
 import { removeNonTrainingItems, removeNonTrainingFields } from '../util/data';
 import { updateTableHighlights } from '../util/highlights';
 import Vue from 'vue';
+
+const RESULT_TABLE_HIGHLIGHTS = 'result_table';
 
 export default Vue.extend({
 	name: 'results-data-table',
@@ -45,16 +47,16 @@ export default Vue.extend({
 		items(): TargetRow[] {
 			const items = getters.getResultDataItems(this.$store);
 			const training = getters.getTrainingVariablesMap(this.$store);
-			const highlights = getters.getHighlightedFeatureRanges(this.$store);
+
 			const filtered = this.excludeNonTraining ? removeNonTrainingItems(items, training) : items;
-			updateTableHighlights(filtered, highlights);
+
+			const rangeHighlights = getters.getHighlightedFeatureRanges(this.$store);
+			const valueHighlights = getters.getHighlightedFeatureValues(this.$store);
+			updateTableHighlights(filtered, rangeHighlights, valueHighlights, RESULT_TABLE_HIGHLIGHTS);
+
 			return filtered
-				.filter(item => {
-					return this.filterFunc(item);
-				})
-				.map(item => {
-					return this.decorateFunc(item);
-				});
+				.filter(item => this.filterFunc(item))
+				.map(item => this.decorateFunc(item));
 		},
 
 		// extract the table field header from the store
@@ -68,15 +70,16 @@ export default Vue.extend({
 	methods: {
 		onRowHovered(event: Event) {
 			// set new values
-			const highlights = {};
-			_.forIn(this.fields, (field, key) => {
-				highlights[key] = event[key];
-			});
-			actions.highlightFeatureValues(this.$store, highlights);
+			const highlights = {
+				context: RESULT_TABLE_HIGHLIGHTS,
+				values: {}
+			};
+			_.forIn(this.fields, (field, key) => highlights.values[key] = event[key]);
+			mutations.highlightFeatureValues(this.$store, highlights);
 		},
 
 		onMouseOut() {
-			actions.clearFeatureHighlightValues(this.$store);
+			mutations.clearFeatureHighlightValues(this.$store);
 		}
 	}
 });

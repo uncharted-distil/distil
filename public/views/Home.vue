@@ -30,7 +30,7 @@ import { actions } from '../store/pipelines/module';
 import Vue from 'vue';
 
 export default Vue.extend({
-	name: 'home',
+	name: 'home-view',
 	components: {
 		FlowBar,
 		RecentDatasets,
