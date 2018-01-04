@@ -13,9 +13,8 @@ import (
 )
 
 const (
-	pcaFolder           = "pca"
 	rfFolder            = "rf"
-	rankingFunctionName = "pca"
+	rankingFunctionName = "rf"
 )
 
 // ImportanceRankingResult is a result from variable importance ranking.
@@ -31,7 +30,7 @@ type VariableImportance struct {
 	ColImportance float64 `json:"colImportance"`
 }
 
-func (c *Client) parseImportanceResult(data []byte) (*ImportanceRankingResult, error) {
+func parseImportanceResult(data []byte) (*ImportanceRankingResult, error) {
 	importance := &ImportanceRankingResult{}
 	err := json.Unmarshal(data, importance)
 
@@ -39,10 +38,10 @@ func (c *Client) parseImportanceResult(data []byte) (*ImportanceRankingResult, e
 }
 
 // Rank ranks the variable importance relative to a target variable.
-func (c *Client) Rank(restClient *rest.Client, meta model.MetadataStorage, data model.DataStorage, dataset string, index string, targetName string) (*ImportanceRankingResult, error) {
+func Rank(restClient *rest.Client, data model.DataStorage, dataset string, index string, dataDir string, targetName string) (*ImportanceRankingResult, error) {
 	// check if the pca request has already been made for this target
-	// folder structure is pca folder/dataset/target.csv
-	datasetFolder := path.Join(c.DataDir, pcaFolder, dataset)
+	// folder structure is rf folder/dataset/target.csv
+	datasetFolder := path.Join(dataDir, rfFolder, dataset)
 	err := os.MkdirAll(datasetFolder, os.ModePerm)
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to create dataset folder")
@@ -92,7 +91,7 @@ func (c *Client) Rank(restClient *rest.Client, meta model.MetadataStorage, data 
 		ioutil.WriteFile(resultPath, output, os.ModePerm)
 	} else {
 		// previously ranked the data so parse it
-		importance, err = c.parseImportanceResult(resultData)
+		importance, err = parseImportanceResult(resultData)
 		if err != nil {
 			return nil, errors.Wrap(err, "unable to parse existing importance ranking")
 		}
