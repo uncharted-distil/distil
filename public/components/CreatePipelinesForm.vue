@@ -18,7 +18,7 @@
 
 import _ from 'lodash';
 import { createRouteEntry } from '../util/routes';
-import { getTask, getMetricDisplayNames, getOutputSchemaNames, getMetricSchemaName } from '../util/pipelines';
+import { getTask, getMetricDisplayNames, getMetricSchemaName } from '../util/pipelines';
 import { getters as dataGetters } from '../store/data/module';
 import { getters as routeGetters } from '../store/route/module';
 import { actions as pipelineActions } from '../store/pipelines/module';
@@ -97,7 +97,6 @@ export default Vue.extend({
 			// compute schema values for request
 			const taskData = getTask(this.targetVariable.type);
 			const task = taskData.schemaName;
-			const output = _.values(getOutputSchemaNames(taskData))[0];
 			const metrics = _.map(this.metrics as string[], m => getMetricSchemaName(m));
 
 			// dispatch action that triggers request send to server
@@ -107,8 +106,7 @@ export default Vue.extend({
 				sessionId: this.sessionId,
 				feature: routeGetters.getRouteTargetVariable(this.$store),
 				task: task,
-				metric: metrics,
-				output: output
+				metric: metrics
 			}).then((res: PipelineInfo) => {
 				// transition to result screen
 				const entry = createRouteEntry('/results', {

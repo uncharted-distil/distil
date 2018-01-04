@@ -48,7 +48,6 @@ interface PipelineRequest {
 	feature: string;
 	task: string;
 	metric: string[];
-	output: string;
 	filters: FilterParams;
 }
 
@@ -176,7 +175,6 @@ export const actions = {
 				feature: request.feature,
 				task: request.task,
 				metric: request.metric,
-				output: request.output,
 				maxPipelines: 3,
 				filters: request.filters
 			});
