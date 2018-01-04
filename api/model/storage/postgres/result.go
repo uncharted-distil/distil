@@ -7,11 +7,18 @@ import (
 	"math"
 	"os"
 	"strconv"
+	"strings"
 
 	"github.com/jackc/pgx"
 	"github.com/pkg/errors"
 	"github.com/unchartedsoftware/distil/api/model"
 	log "github.com/unchartedsoftware/plog"
+)
+
+const (
+	predictedSuffix = "_predicted"
+	errorSuffix     = "_error"
+	targetSuffix    = "_target"
 )
 
 func (s *Storage) getResultTable(dataset string) string {
@@ -200,45 +207,145 @@ func (s *Storage) parseResults(dataset string, rows *pgx.Rows, variable *model.V
 	}, nil
 }
 
+type resultFilters struct {
+	Predicted *model.Filter
+	Error     *model.Filter
+}
+
+func removeResultFilters(filterParams *model.FilterParams) *resultFilters {
+	// Strip the predicted and error filters out of the list - they need special handling
+	var predictedFilter *model.Filter
+	var errorFilter *model.Filter
+	for i, filter := range filterParams.Filters {
+		if strings.HasSuffix(filter.Name, predictedSuffix) {
+			predictedFilter = filter
+			filterParams.Filters = append(filterParams.Filters[:i], filterParams.Filters[i+1:]...)
+		}
+		if strings.HasSuffix(filter.Name, errorSuffix) {
+			errorFilter = filter
+			filterParams.Filters = append(filterParams.Filters[:i], filterParams.Filters[i+1:]...)
+		}
+	}
+
+	return &resultFilters{
+		Predicted: predictedFilter,
+		Error:     errorFilter,
+	}
+}
+
+func addPredictedFilterToWhere(dataset string, predictedFilter *model.Filter, wheres string, params []interface{}) (string, []interface{}, error) {
+	// Handle the predicted column, which is accessed as `value` in the result query
+	where := ""
+	switch predictedFilter.Type {
+	case model.NumericalFilter:
+		// numerical
+		where = fmt.Sprintf("cast(value AS double precision) >= $%d AND cast(value AS double precision) <= $%d", len(params)+1, len(params)+2)
+		params = append(params, *predictedFilter.Min)
+		params = append(params, *predictedFilter.Max)
+	case model.CategoricalFilter:
+		// categorical
+		categories := make([]string, 0)
+		offset := len(params) + 1
+		for i, category := range predictedFilter.Categories {
+			categories = append(categories, fmt.Sprintf("$%d", offset+i))
+			params = append(params, category)
+		}
+		where = fmt.Sprintf("value IN (%s)", strings.Join(categories, ", "))
+	default:
+		return "", nil, errors.Errorf("unexpected type %s for variable %s", predictedFilter.Type, predictedFilter.Name)
+	}
+
+	// Append the AND clause
+	if wheres != "" {
+		wheres = " AND " + where
+	} else {
+		wheres = where
+	}
+	return wheres, params, nil
+}
+
+func addErrorFilterToWhere(dataset string, targetName string, errorFilter *model.Filter, wheres string, params []interface{}) (string, []interface{}, error) {
+	// Add a clause to filter residuals to the existing where
+	typedError := getErrorTyped(targetName)
+	where := fmt.Sprintf("%s >= $%d AND %s <= $%d", typedError, len(params)+1, typedError, len(params)+2)
+	params = append(params, *errorFilter.Min)
+	params = append(params, *errorFilter.Max)
+
+	// Append the AND clause
+	if wheres != "" {
+		wheres = " AND " + where
+	} else {
+		wheres = where
+	}
+	return wheres, params, nil
+}
+
 // FetchFilteredResults pulls the results from the Postgres database.
 func (s *Storage) FetchFilteredResults(dataset string, index string, resultURI string, filterParams *model.FilterParams, inclusive bool) (*model.FilteredData, error) {
 	datasetResult := s.getResultTable(dataset)
 	targetName, err := s.getResultTargetName(datasetResult, resultURI, index)
+
 	// fetch the variable info to resolve its type - skip the first column since that will be the d3m_index value
 	variable, err := s.getResultTargetVariable(dataset, index, targetName)
 	if err != nil {
 		return nil, err
 	}
 
+	// fetch variable metadata
 	variables, err := s.metadata.FetchVariables(dataset, index, false)
 	if err != nil {
 		return nil, errors.Wrap(err, "Could not pull variables from ES")
 	}
 
+	// remove result specific filters (predicted, error) from filters - they have their own handling
+	resultFilters := removeResultFilters(filterParams)
+
+	// generate variable list for inclusion in query select
 	fields, err := s.buildFilteredResultQueryField(dataset, variables, variable, filterParams, inclusive)
 	if err != nil {
 		return nil, errors.Wrap(err, "Could not build field list")
 	}
 
+	// Create the filter portion of the where clause.
 	where, params, err := s.buildFilteredQueryWhere(dataset, filterParams)
 	if err != nil {
 		return nil, errors.Wrap(err, "Could not build where clause")
 	}
 
-	// If our results are numerical we need to compute residuals and store them in a column called 'error'
-	residuals := ""
-	if model.IsNumerical(variable.Type) {
-		residuals = fmt.Sprintf("%s as \"%s_error\",", getErrorTyped(variable.Name), variable.Name)
+	// Add the predicted filter into the where clause if it was included in the filter set
+	if resultFilters.Predicted != nil {
+		where, params, err = addPredictedFilterToWhere(dataset, resultFilters.Predicted, where, params)
+		if err != nil {
+			return nil, errors.Wrap(err, "Could not add result to where clause")
+		}
 	}
 
+	// Add the error filter into the where clause if it was included in the filter set
+	if resultFilters.Error != nil {
+		where, params, err = addErrorFilterToWhere(dataset, targetName, resultFilters.Error, where, params)
+		if err != nil {
+			return nil, errors.Wrap(err, "Could not add error to where clause")
+		}
+	}
+
+	// If our results are numerical we need to compute residuals and store them in a column called 'error'
+	errorExpr := ""
+	errorCol := targetName + errorSuffix
+	if model.IsNumerical(variable.Type) {
+		errorExpr = fmt.Sprintf("%s as \"%s\",", getErrorTyped(variable.Name), errorCol)
+	}
+
+	predictedCol := targetName + predictedSuffix
+	targetCol := targetName + targetSuffix
+
 	query := fmt.Sprintf(
-		"SELECT value as \"%s_predicted\", "+
-			"\"%s\" as \"%s_target\", "+
+		"SELECT value as \"%s\", "+
+			"\"%s\" as \"%s\", "+
 			"%s "+
 			"%s "+
 			"FROM %s as predicted inner join %s as data on data.\"%s\" = predicted.index "+
 			"WHERE result_id = $%d AND target = $%d",
-		targetName, targetName, targetName, residuals, fields, datasetResult, dataset, d3mIndexFieldName, len(params)+1, len(params)+2)
+		predictedCol, targetName, targetCol, errorExpr, fields, datasetResult, dataset, d3mIndexFieldName, len(params)+1, len(params)+2)
 	params = append(params, resultURI)
 	params = append(params, targetName)
 
@@ -267,7 +374,8 @@ func (s *Storage) FetchResults(dataset string, index string, resultURI string) (
 		return nil, err
 	}
 
-	sql := fmt.Sprintf("SELECT value FROM %s as %s_predicted WHERE result_id = $1 AND target = $2;", datasetResult, variable.Name)
+	predictedCol := variable.Name + predictedSuffix
+	sql := fmt.Sprintf("SELECT value FROM %s as %s WHERE result_id = $1 AND target = $2;", datasetResult, predictedCol)
 
 	rows, err := s.client.Query(sql, resultURI, targetName)
 	if err != nil {
