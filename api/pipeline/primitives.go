@@ -40,16 +40,16 @@ func parseImportanceResult(data []byte) (*ImportanceRankingResult, error) {
 // Rank ranks the variable importance relative to a target variable.
 func Rank(restClient *rest.Client, data model.DataStorage, dataset string, index string, dataDir string, targetName string) (*ImportanceRankingResult, error) {
 	// check if the pca request has already been made for this target
-	// folder structure is rf folder/dataset/target.csv
+	// folder structure is rf folder/dataset/target.json
 	datasetFolder := path.Join(dataDir, rfFolder, dataset)
 	err := os.MkdirAll(datasetFolder, os.ModePerm)
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to create dataset folder")
 	}
 
-	// check if the result file exists (target.csv)
+	// check if the result file exists (target.json)
 	var importance *ImportanceRankingResult
-	resultPath := path.Join(datasetFolder, fmt.Sprintf("%s.csv", targetName))
+	resultPath := path.Join(datasetFolder, fmt.Sprintf("%s.json", targetName))
 	resultData, err := ioutil.ReadFile(resultPath)
 	if os.IsNotExist(err) {
 		// pull the dataset
@@ -79,9 +79,16 @@ func Rank(restClient *rest.Client, data model.DataStorage, dataset string, index
 			TargetName: targetName,
 			Importance: make([]*VariableImportance, len(rawResults.Features)),
 		}
+
+		// adjust for target not being in the result so need to shift
+		adjustment := 0
 		for i := 0; i < len(importance.Importance); i++ {
+			if rawData.Columns[i] == targetName {
+				adjustment = 1
+			}
+
 			importance.Importance[i] = &VariableImportance{
-				ColName:       rawData.Columns[i],
+				ColName:       rawData.Columns[i+adjustment],
 				ColImportance: rawResults.Features[i],
 			}
 		}

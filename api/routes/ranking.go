@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"github.com/pkg/errors"
+	"github.com/unchartedsoftware/plog"
 	"goji.io/pat"
 
 	"github.com/unchartedsoftware/distil-ingest/rest"
@@ -28,7 +29,8 @@ func RankingHandler(ctor model.DataStorageCtor, restClient *rest.Client, dataDir
 			return
 		}
 		// calculate importance
-		importance, err := pipeline.Rank(restClient, client, dataset, index, target, dataDir)
+		log.Infof("Calculating importance for %s target %s", dataset, target)
+		importance, err := pipeline.Rank(restClient, client, dataset, index, dataDir, target)
 		if err != nil {
 			handleError(w, err)
 			return
