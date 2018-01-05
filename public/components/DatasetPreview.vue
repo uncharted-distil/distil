@@ -50,6 +50,7 @@ import { createRouteEntry } from '../util/routes';
 import { addRecentDataset } from '../util/data';
 import { getters } from '../store/route/module';
 import { Variable } from '../store/data/index';
+import { pushRoute } from '../util/routes';
 
 import Vue from 'vue';
 
@@ -105,7 +106,7 @@ export default Vue.extend({
 				terms: getters.getRouteTerms(this.$store),
 				dataset: this.name
 			});
-			this.$router.push(entry);
+			pushRoute(this.$store, this.$router, entry);
 			addRecentDataset(this.name);
 		},
 		toggleExpansion() {

@@ -205,7 +205,7 @@ export default Vue.extend({
 				return false;
 			}
 			if (a.facets.length !== b.facets.length) {
-				return false;;
+				return false;
 			}
 			for (let i=0; i<a.facets.length; i++) {
 				if (!_.isEqual(

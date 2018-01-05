@@ -42,7 +42,7 @@
 import ResultFacets from '../components/ResultFacets.vue';
 import Facets from '../components/Facets.vue';
 import { createGroups, Group } from '../util/facets';
-import { createRouteEntryFromRoute } from '../util/routes';
+import { overlayRouteEntry } from '../util/routes';
 import { getPipelineResultById } from '../util/pipelines';
 import { getTask } from '../util/pipelines';
 import { getErrorCol, /*isPredicted, isError,*/ isTarget, getVarFromTarget /*, getVarFromPredicted, getVarFromError*/ } from '../util/data';
@@ -51,6 +51,7 @@ import { getters as routeGetters } from '../store/route/module';
 import { mutations as dataMutations } from '../store/data/module';
 import { actions } from '../store/app/module';
 import { Dictionary } from '../util/dict';
+import { pushRoute } from '../util/routes';
 import vueSlider from 'vue-slider-component';
 import Vue from 'vue';
 import _ from 'lodash';
@@ -196,14 +197,14 @@ export default Vue.extend({
 		},
 
 		updateThreshold(value: number) {
-			const entry = createRouteEntryFromRoute(this.$route, {
+			const entry = overlayRouteEntry(this.$route, {
 				residualThreshold: value
 			});
-			this.$router.push(entry);
+			pushRoute(this.$store, this.$router, entry);
 		},
 
 		onSlide(value) {
-			const entry = createRouteEntryFromRoute(this.$route, { residualThreshold: value });
+			const entry = overlayRouteEntry(this.$route, { residualThreshold: value });
 			this.$router.replace(entry);
 		},
 

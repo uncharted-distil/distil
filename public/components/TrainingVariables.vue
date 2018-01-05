@@ -15,7 +15,7 @@
 
 <script lang="ts">
 
-import { createRouteEntryFromRoute } from '../util/routes';
+import { overlayRouteEntry } from '../util/routes';
 import VariableFacets from '../components/VariableFacets';
 import 'font-awesome/css/font-awesome.css';
 import Vue from 'vue';
@@ -23,6 +23,7 @@ import { getters as dataGetters} from '../store/data/module';
 import { getters as routeGetters } from '../store/route/module';
 import { VariableSummary } from '../store/data/index';
 import { Group } from '../util/facets';
+import { pushRoute } from '../util/routes';
 
 export default Vue.extend({
 	name: 'training-variables',
@@ -47,10 +48,10 @@ export default Vue.extend({
 				remove.addEventListener('click', () => {
 					const training = routeGetters.getRouteTrainingVariables(this.$store).split(',');
 					training.splice(training.indexOf(group.key), 1);
-					const entry = createRouteEntryFromRoute(routeGetters.getRoute(this.$store), {
+					const entry = overlayRouteEntry(routeGetters.getRoute(this.$store), {
 						training: training.join(',')
 					});
-					this.$router.push(entry);
+					pushRoute(this.$store, this.$router, entry);
 				});
 				container.appendChild(remove);
 				return container;

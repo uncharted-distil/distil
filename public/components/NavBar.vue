@@ -10,8 +10,8 @@
 			<b-navbar-nav>
 				<b-nav-item @click="onHome" :active="activeView===HOME">Home</b-nav-item>
 				<b-nav-item @click="onSearch" :active="activeView===SEARCH">Search</b-nav-item>
-				<b-nav-item @click="onSelect" :active="activeView===SELECT" :disabled="!hasDataset()">Select</b-nav-item>
-				<b-nav-item @click="onResults" :active="activeView===RESULTS" :disabled="true">Results</b-nav-item>
+				<b-nav-item @click="onSelect" :active="activeView===SELECT">Select</b-nav-item>
+				<b-nav-item @click="onResults" :active="activeView===RESULTS">Results</b-nav-item>
 			</b-navbar-nav>
 			<b-navbar-nav class="ml-auto">
 				<b-nav-item href="/help">Help</b-nav-item>
@@ -92,9 +92,6 @@ export default Vue.extend({
 		onAbort() {
 			this.$router.replace('/');
 			actions.abort(this.$store);
-		},
-		hasDataset() {
-			return !!routeGetters.getRouteDataset(this.$store);
 		},
 		updateActive() {
 			this.activeView = ROUTE_MAPPINGS[this.$route.path];
