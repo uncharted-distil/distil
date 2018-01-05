@@ -25,7 +25,7 @@ export interface RouteArgs {
  * @param {string} path - route path
  * @param {RouteArgs} args - the arguments for the route.
  */
-export function createRouteEntry(path: string, args: RouteArgs): Location {
+export function createRouteEntry(path: string, args: RouteArgs = {}): Location {
 	const query: { [id: string]: string } = {};
 
 	if (args.dataset) { query.dataset = args.dataset; }
@@ -64,7 +64,7 @@ export function getRouteFacetPage(key: string, route: Route): number {
 }
 
 export function pushRoute(store: Store<any>, router: VueRouter, route: Location) {
-	const dataset = routeGetters.getRouteDataset(store);
+	const dataset = route.query ? route.query.dataset : routeGetters.getRouteDataset(store);
 	viewMutations.pushRoute(store, {
 		view: route.path,
 		dataset: dataset,
