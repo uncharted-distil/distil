@@ -1,9 +1,5 @@
 import _ from 'lodash';
-import VueRouter from 'vue-router';
-import { Store } from 'vuex';
 import { Route, Location } from 'vue-router';
-import { getters as routeGetters } from '../store/route/module';
-import { mutations as viewMutations } from '../store/view/module';
 
 export interface RouteArgs {
 	dataset?: string,
@@ -61,14 +57,4 @@ export function overlayRouteEntry(route: Route, args: RouteArgs): Location {
 export function getRouteFacetPage(key: string, route: Route): number {
 	const page = route.query[key];
 	return page ? parseInt(page) : 1;
-}
-
-export function pushRoute(store: Store<any>, router: VueRouter, route: Location) {
-	const dataset = route.query ? route.query.dataset : routeGetters.getRouteDataset(store);
-	viewMutations.pushRoute(store, {
-		view: route.path,
-		dataset: dataset,
-		route: route
-	});
-	router.push(route);
 }

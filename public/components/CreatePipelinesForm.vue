@@ -26,7 +26,6 @@ import { PipelineInfo } from '../store/pipelines/index';
 import { getters as appGetters } from '../store/app/module';
 import { Variable } from '../store/data/index';
 import { FilterParams } from '../util/filters';
-import { pushRoute } from '../util/routes';
 import Vue from 'vue';
 
 export default Vue.extend({
@@ -121,7 +120,7 @@ export default Vue.extend({
 					requestId: res.requestId,
 					pipelineId: res.pipelineId
 				});
-				pushRoute(this.$store, this.$router, entry);
+				this.$router.push(entry);
 			});
 		}
 	}

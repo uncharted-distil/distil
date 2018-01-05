@@ -31,10 +31,9 @@
 import '../assets/images/legendary.svg';
 import { gotoHome, gotoSearch, gotoSelect, gotoResults } from '../util/nav';
 import { getters as routeGetters } from '../store/route/module';
-import { getters as viewGetters } from '../store/view/module';
 import { getters as appGetters } from '../store/app/module';
 import { actions } from '../store/app/module';
-import { popViewStack } from '../util/view';
+import { restoreView } from '../util/view';
 import Vue from 'vue';
 
 const HOME = Symbol();
@@ -99,16 +98,10 @@ export default Vue.extend({
 			this.activeView = ROUTE_MAPPINGS[this.$route.path];
 		},
 		hasSelectView(): boolean {
-			return true;/*
-			const stack = viewGetters.getViewStack(this.$store);
-			const last = popViewStack(stack, '/select', this.dataset);
-			return !!last;*/
+			return !!restoreView(this.$store, '/select', this.dataset);
 		},
 		hasResultView(): boolean {
-			return true; /*
-			const stack = viewGetters.getViewStack(this.$store);
-			const last = popViewStack(stack, '/results', this.dataset);
-			return !!last;*/
+			return !!restoreView(this.$store, '/results', this.dataset);
 		}
 	},
 	watch: {

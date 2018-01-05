@@ -23,7 +23,6 @@ import { getters as dataGetters} from '../store/data/module';
 import { getters as routeGetters } from '../store/route/module';
 import { VariableSummary } from '../store/data/index';
 import { Group } from '../util/facets';
-import { pushRoute } from '../util/routes';
 
 export default Vue.extend({
 	name: 'training-variables',
@@ -51,7 +50,7 @@ export default Vue.extend({
 					const entry = overlayRouteEntry(routeGetters.getRoute(this.$store), {
 						training: training.join(',')
 					});
-					pushRoute(this.$store, this.$router, entry);
+					this.$router.push(entry);
 				});
 				container.appendChild(remove);
 				return container;

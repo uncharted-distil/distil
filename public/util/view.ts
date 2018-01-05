@@ -1,19 +1,18 @@
 import { Location } from 'vue-router';
-import { Dictionary } from './dict';
+import { Store } from 'vuex';
 import { LAST_STATE } from '../store/view/index';
+import { getters as viewGetters } from '../store/view/module';
 
-export function popViewStack(stack: Dictionary<Dictionary<Location>>, view: string, dataset: string): Location {
-	if (!stack[view]) {
-		console.log('no previous state for view', view);
+export function restoreView(store: Store<any>, view: string, dataset: string): Location {
+	const prev = viewGetters.getPrevView(store);
+	if (!prev[view]) {
 		return null;
 	}
 	if (!dataset) {
-		console.log('no dataset available for view', view, 'pull last state');
-		return stack[view][LAST_STATE];
+		return prev[view][LAST_STATE];
 	}
-	if (!stack[view][dataset]) {
-		console.log('no previous state for view', view, 'and dataset', dataset);
+	if (!prev[view][dataset]) {
 		return null;
 	}
-	return stack[view][dataset];
+	return prev[view][dataset];
 }

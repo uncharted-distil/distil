@@ -51,7 +51,6 @@ import { getters as routeGetters } from '../store/route/module';
 import { mutations as dataMutations } from '../store/data/module';
 import { actions } from '../store/app/module';
 import { Dictionary } from '../util/dict';
-import { pushRoute } from '../util/routes';
 import vueSlider from 'vue-slider-component';
 import Vue from 'vue';
 import _ from 'lodash';
@@ -200,7 +199,7 @@ export default Vue.extend({
 			const entry = overlayRouteEntry(this.$route, {
 				residualThreshold: value
 			});
-			pushRoute(this.$store, this.$router, entry);
+			this.$router.push(entry);
 		},
 
 		onSlide(value) {

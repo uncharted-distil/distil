@@ -20,7 +20,6 @@ import 'jquery';
 import { getters as dataGetters } from '../store/data/module';
 import { getters as routeGetters } from '../store/route/module';
 import { VariableSummary } from '../store/data/index';
-import { pushRoute } from '../util/routes';
 import VariableFacets from '../components/VariableFacets.vue';
 import 'font-awesome/css/font-awesome.css';
 import Vue from 'vue';
@@ -46,7 +45,7 @@ export default Vue.extend({
 			const entry = overlayRouteEntry(routeGetters.getRoute(this.$store), {
 				target: key,
 			});
-			pushRoute(this.$store, this.$router, entry);
+			this.$router.push(entry);
 		}
 	}
 });

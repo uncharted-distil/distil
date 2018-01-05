@@ -46,7 +46,6 @@ import { Dictionary } from '../util/dict';
 import { getters as dataGetters, mutations as dataMutations } from '../store/data/module';
 import { getters as routeGetters } from '../store/route/module';
 import { createGroups, Group } from '../util/facets';
-import { pushRoute } from '../util/routes';
 import 'font-awesome/css/font-awesome.css';
 import '../styles/spinner.css';
 import _ from 'lodash';
@@ -88,7 +87,7 @@ export default Vue.extend({
 				const entry = overlayRouteEntry(this.$route, {
 					[this.routePageKey()]: page
 				});
-				pushRoute(this.$store, this.$router, entry);
+				this.$router.push(entry);
 			},
 			get(): number {
 				return getRouteFacetPage(this.routePageKey(), this.$route);
@@ -172,7 +171,7 @@ export default Vue.extend({
 			const entry = overlayRouteEntry(routeGetters.getRoute(this.$store), {
 				filters: updated,
 			});
-			pushRoute(this.$store, this.$router, entry);
+			this.$router.push(entry);
 		},
 
 		// handles facet group transition to active state
@@ -272,7 +271,7 @@ export default Vue.extend({
 			const entry = overlayRouteEntry(routeGetters.getRoute(this.$store), {
 				filters: filters,
 			});
-			pushRoute(this.$store, this.$router, entry);
+			this.$router.push(entry);
 		},
 
 		// sets all facet groups to the inactive state - minimized diplay , no controls,
@@ -290,7 +289,7 @@ export default Vue.extend({
 			const entry = overlayRouteEntry(routeGetters.getRoute(this.$store), {
 				filters: filters
 			});
-			pushRoute(this.$store, this.$router, entry);
+			this.$router.push(entry);
 		},
 
 		// updates facet collapse/expand state based on route settings

@@ -50,7 +50,6 @@ import { getMetricDisplayName } from '../util/pipelines';
 import { createRouteEntry } from '../util/routes';
 import { getters } from '../store/route/module';
 import { PipelineInfo } from '../store/pipelines/index';
-import { pushRoute } from '../util/routes';
 import Vue from 'vue';
 
 export default Vue.extend({
@@ -109,7 +108,7 @@ export default Vue.extend({
 				requestId: result.requestId,
 				pipelineId: result.pipelineId
 			});
-			pushRoute(this.$store, this.$router, entry);
+			this.$router.push(entry);
 		}
 	}
 });

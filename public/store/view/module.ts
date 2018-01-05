@@ -14,9 +14,9 @@ export const viewModule: Module<ViewState, DistilState> = {
 const { commit, read } = getStoreAccessors<ViewState, DistilState>(null);
 
 export const getters = {
-	getViewStack: read(moduleGetters.getViewStack)
+	getPrevView: read(moduleGetters.getPrevView)
 };
 
 export const mutations = {
-	pushRoute: commit(moduleMutations.pushRoute)
+	saveView: commit(moduleMutations.saveView)
 };

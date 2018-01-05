@@ -1,22 +1,13 @@
 import VueRouter from 'vue-router';
 import { Store } from 'vuex';
 import { createRouteEntry } from '../util/routes';
-import { popViewStack } from '../util/view';
+import { restoreView } from '../util/view';
 import { getters as routeGetters } from '../store/route/module';
-import { getters as viewGetters, mutations as viewMutations } from '../store/view/module';
 
 export function gotoView(store: Store<any>, router: VueRouter, view: string, overrides: any) {
 	const dataset = routeGetters.getRouteDataset(store);
-	const stack = viewGetters.getViewStack(store);
-	const last = popViewStack(stack, view, dataset);
-	const entry = createRouteEntry(view, last ? last.query : overrides);
-	if (!last) {
-		viewMutations.pushRoute(store, {
-			view: view,
-			dataset: dataset,
-			route: overrides
-		});
-	}
+	const prev = restoreView(store, view, dataset);
+	const entry = createRouteEntry(view, prev ? prev.query : overrides);
 	router.push(entry);
 }
 
