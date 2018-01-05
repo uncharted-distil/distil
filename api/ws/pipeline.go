@@ -20,14 +20,15 @@ import (
 )
 
 const (
-	getSession       = "GET_SESSION"
-	endSession       = "END_SESSION"
-	createPipelines  = "CREATE_PIPELINES"
-	streamClose      = "STREAM_CLOSE"
-	datasetDir       = "datasets"
-	categoricalType  = "categorical"
-	numericalType    = "numerical"
-	datasetSizeLimit = 10000
+	getSession        = "GET_SESSION"
+	endSession        = "END_SESSION"
+	createPipelines   = "CREATE_PIPELINES"
+	streamClose       = "STREAM_CLOSE"
+	datasetDir        = "datasets"
+	categoricalType   = "categorical"
+	numericalType     = "numerical"
+	defaultResourceID = "0"
+	datasetSizeLimit  = 10000
 )
 
 // PipelineHandler represents a pipeline websocket handler.
@@ -184,7 +185,6 @@ type pipelineCreateMsg struct {
 	Index        string          `json:"index"`
 	Feature      string          `json:"feature"`
 	Task         string          `json:"task"`
-	Output       string          `json:"output"`
 	MaxPipelines int32           `json:"maxPipelines"`
 	Filters      json.RawMessage `json:"filters"`
 	Metrics      []string        `json:"metric"`
@@ -261,16 +261,16 @@ func handleCreatePipelines(conn *Connection, client *pipeline.Client, metadataCt
 	}
 	for _, featureName := range filteredVars {
 		feature := &pipeline.Feature{
-			FeatureId: featureName,
-			DataUri:   datasetPath,
+			FeatureName: featureName,
+			ResourceId:  defaultResourceID,
 		}
 		trainFeatures = append(trainFeatures, feature)
 	}
 
 	// convert received metrics into the ta3ta2 format
-	metrics := []pipeline.Metric{}
+	metrics := []pipeline.PerformanceMetric{}
 	for _, msgMetric := range clientCreateMsg.Metrics {
-		metric := pipeline.Metric(pipeline.Metric_value[strings.ToUpper(msgMetric)])
+		metric := pipeline.PerformanceMetric(pipeline.PerformanceMetric_value[strings.ToUpper(msgMetric)])
 		metrics = append(metrics, metric)
 	}
 
@@ -279,14 +279,14 @@ func handleCreatePipelines(conn *Connection, client *pipeline.Client, metadataCt
 		Context: &pipeline.SessionContext{
 			SessionId: msg.Session,
 		},
-		TrainFeatures: trainFeatures,
-		Task:          pipeline.TaskType(pipeline.TaskType_value[strings.ToUpper(clientCreateMsg.Task)]),
-		Output:        pipeline.OutputType(pipeline.OutputType_value[strings.ToUpper(clientCreateMsg.Output)]),
-		Metrics:       metrics,
+		PredictFeatures: trainFeatures,
+		Task:            pipeline.TaskType(pipeline.TaskType_value[strings.ToUpper(clientCreateMsg.Task)]),
+		Metrics:         metrics,
+		DatasetUri:      datasetPath,
 		TargetFeatures: []*pipeline.Feature{
 			{
-				FeatureId: clientCreateMsg.Feature,
-				DataUri:   datasetPath,
+				FeatureName: clientCreateMsg.Feature,
+				ResourceId:  defaultResourceID,
 			},
 		},
 		MaxPipelines: clientCreateMsg.MaxPipelines,
@@ -316,7 +316,7 @@ func handleCreatePipelines(conn *Connection, client *pipeline.Client, metadataCt
 
 	// store the request features
 	for _, f := range trainFeatures {
-		err = pipelineStorage.PersistRequestFeature(requestID, f.FeatureId, model.FeatureTypeTrain)
+		err = pipelineStorage.PersistRequestFeature(requestID, f.FeatureName, model.FeatureTypeTrain)
 		if err != nil {
 			handleErr(conn, msg, err)
 			return
@@ -324,7 +324,7 @@ func handleCreatePipelines(conn *Connection, client *pipeline.Client, metadataCt
 	}
 
 	for _, f := range createMsg.TargetFeatures {
-		err = pipelineStorage.PersistRequestFeature(requestID, f.FeatureId, model.FeatureTypeTarget)
+		err = pipelineStorage.PersistRequestFeature(requestID, f.FeatureName, model.FeatureTypeTarget)
 		if err != nil {
 			handleErr(conn, msg, err)
 			return
@@ -396,7 +396,7 @@ func handleCreatePipelinesSuccess(conn *Connection, msg *Message, proxy *pipelin
 					scores := make([]map[string]interface{}, 0)
 					for _, score := range res.PipelineInfo.Scores {
 						s := map[string]interface{}{
-							"metric": pipeline.Metric_name[int32(score.Metric)],
+							"metric": pipeline.PerformanceMetric_name[int32(score.Metric)],
 							"value":  score.Value,
 						}
 						scores = append(scores, s)
@@ -410,7 +410,7 @@ func handleCreatePipelinesSuccess(conn *Connection, msg *Message, proxy *pipelin
 					// Get the result URI, removing the protocol portion if it exists. The returned value
 					// is either a csv or a directory.  If we get a directory back, it should match the standard structure.
 					// Look for the trainTargets.csv
-					resultURI := res.PipelineInfo.PredictResultUris[0]
+					resultURI := res.PipelineInfo.PredictResultUri
 					resultURI = strings.Replace(resultURI, "file://", "", 1)
 					if !strings.HasSuffix(resultURI, ".csv") {
 						resultURI = path.Join(resultURI, pipeline.D3MLearningData)
