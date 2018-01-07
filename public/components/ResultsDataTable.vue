@@ -8,10 +8,8 @@
 			<b-table v-if="items.length>0"
 				bordered
 				hover
-				striped
 				small
-				@row-hovered="onRowHovered"
-				@mouseout.native="onMouseOut"
+				@row-clicked="onRowClick"
 				:items="items"
 				:fields="fields">
 			</b-table>
@@ -68,7 +66,10 @@ export default Vue.extend({
 	},
 
 	methods: {
-		onRowHovered(event: Event) {
+		onRowClick(event: Event) {
+			// clear existing highlights
+			mutations.clearFeatureHighlights(this.$store);
+
 			// set new values
 			const highlights = {
 				context: RESULT_TABLE_HIGHLIGHTS,
@@ -76,10 +77,6 @@ export default Vue.extend({
 			};
 			_.forIn(this.fields, (field, key) => highlights.values[key] = event[key]);
 			mutations.highlightFeatureValues(this.$store, highlights);
-		},
-
-		onMouseOut() {
-			mutations.clearFeatureHighlightValues(this.$store);
 		}
 	}
 });

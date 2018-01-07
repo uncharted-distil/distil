@@ -134,6 +134,10 @@ export function getPredictedColFromFacetKey(facetKey: string) {
 	return facetKey.replace(PREDICTED_FACET_KEY_POSTFIX, PREDICTED_POSTFIX);
 }
 
+export function getTargetColFromFacetKey(facetKey: string) {
+	return facetKey + (TARGET_POSTFIX);
+}
+
 export function updateSummaries(summary: VariableSummary, summaries: VariableSummary[], matchField: string) {
 	const index = _.findIndex(summaries, r => r[matchField] === summary[matchField]);
 	if (index >= 0) {

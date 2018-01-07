@@ -6,33 +6,35 @@ import _ from 'lodash';
 // context ID to enure that something like a table selection doesn't trigger additional table highlight
 // updates.
 export function updateTableHighlights(
-	tableData: Dictionary<any>,
+	tableData: Dictionary<any>[],
 	highlightRanges: RangeHighlights,
 	highlightValues: ValueHighlights,
 	highlightContext: string) {
 
-		// if highlights are empty, clear everything
-	if (_.isEmpty(highlightRanges.ranges) && _.isEmpty(highlightValues.values)) {
-		_.forEach(tableData, row => row._rowVariant = null);
-		return;
-	}
-
 	// skip highlighting when the context is the originating table
 	if (!_.isEmpty(highlightRanges.ranges) && highlightRanges.context !== highlightContext) {
 		// highlight any table row that has a value in the feature range
-		_.forIn(tableData, row => {
-			_.forIn(highlightRanges.ranges, (range, name) => {
-				if (row[name] >= range.from && row[name] <= range.to) {
+		_.forEach(tableData, row => {
+			_.forEach(row, (value, name) => {
+				const range = highlightRanges.ranges[name];
+				if (range && range.from <= value && range.to >= value) {
 					row._rowVariant = 'info';
-				} else {
-					row._rowVariant = null;
+					return false;
 				}
+				row._rowVariant = null;
 			});
 		});
 	} else if (!_.isEmpty(highlightValues.values) && highlightValues.context !== highlightContext) {
 		// highlight any table row that is in the value map
-		_.forIn(tableData, row => {
-			_.forIn(highlightValues.values, (value, name) => row._rowVariant = row[name] === value ? 'info' : null);
+		_.forEach(tableData, row => {
+			_.forEach(row, (value, name) => {
+				if (highlightValues.values[name] && highlightValues.values[name] === value) {
+					row._rowVariant = 'info';
+					return false;
+				} else {
+					row._rowVariant = false;
+				}
+			});
 		});
 	}
 }

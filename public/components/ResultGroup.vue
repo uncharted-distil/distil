@@ -4,17 +4,14 @@
 		{{name}} <sup>{{index}}</sup> {{timestamp}}
 		<div v-if="pipelineStatus === 'COMPLETED' || pipelineStatus === 'UPDATED'">
 			<facets v-if="resultGroups.length" class="result-container"
-				v-on:histogram-mouse-enter="resultHistogramMouseEnter"
-				v-on:histogram-mouse-leave="resultHistogramMouseLeave"
-				v-on:facet-mouse-enter="resultFacetMouseEnter"
-				v-on:facet-mouse-leave="resultFacetMouseLeave"
+				@histogram-click="onResultHistogramClick"
+				@facet-click="onResultFacetClick"
 				:groups="resultGroups"
 				:highlights="highlights"
 				:html="residualHtml">
 			</facets>
 			<facets v-if="residualsGroups.length" class="residual-container"
-				v-on:histogram-mouse-enter="residualsHistogramMouseEnter"
-				v-on:histogram-mouse-leave="residualsHistogramMouseLeave"
+				@histogram-click="onResidualsHistogramClick"
 				:groups="residualsGroups"
 				:highlights="highlights"
 				:html="resultHtml">
@@ -122,7 +119,9 @@ export default Vue.extend({
 	},
 
 	methods: {
-		resultHistogramMouseEnter(key: string, value: any) {
+		onResultHistogramClick(key: string, value: any) {
+			dataMutations.clearFeatureHighlights(this.$store);
+
 			// extract the var name from the key
 			const varName = getPredictedColFromFacetKey(key);
 			dataMutations.highlightFeatureRange(this.$store, {
@@ -136,12 +135,9 @@ export default Vue.extend({
 			});
 		},
 
-		resultHistogramMouseLeave(key: string) {
-			const varName = getPredictedColFromFacetKey(key);
-			dataMutations.clearFeatureHighlightRange(this.$store, varName);
-		},
+		onResidualsHistogramClick(key: string, value: any) {
+			dataMutations.clearFeatureHighlights(this.$store);
 
-		residualsHistogramMouseEnter(key: string, value: any) {
 			// convert the residual histogram key name into the proper variable ID
 			const varName =getErrorColFromFacetKey(key);
 			dataMutations.highlightFeatureRange(this.$store, {
@@ -155,12 +151,8 @@ export default Vue.extend({
 			});
 		},
 
-		residualsHistogramMouseLeave(key: string) {
-			const varName = getErrorColFromFacetKey(key);
-			dataMutations.clearFeatureHighlightRange(this.$store, varName);
-		},
-
-		resultFacetMouseEnter(key: string, value: any) {
+		onResultFacetClick(key: string, value: any) {
+			dataMutations.clearFeatureHighlights(this.$store);
 			// extract the var name from the key
 			const varName = getPredictedColFromFacetKey(key);
 			dataMutations.highlightFeatureValues(this.$store, {

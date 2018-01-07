@@ -6,7 +6,7 @@
 import _ from 'lodash';
 import $ from 'jquery';
 import Vue from 'vue';
-import { Group, CategoricalFacet } from '../util/facets';
+import { Group, /*CategoricalFacet*/ } from '../util/facets';
 import { Dictionary } from '../util/dict';
 import Facets from '@uncharted.software/stories-facets';
 import TypeChangeMenu from '../components/TypeChangeMenu';
@@ -71,41 +71,45 @@ export default Vue.extend({
 			component.$emit('facet-mouse-leave', key);
 		});
 		// click events
+		this.facets.on('facet-histogram:click', (event: Event, key: string, value: any) => {
+			component.$emit('histogram-click', key, value);
+		});
 		this.facets.on('facet:click', (event: Event, key: string, value: string) => {
-			// check that facet is filterable
-			const groupSpec = <any>(_.find(groups(), group => group.key === key ));
-			const facetSpec = _.find(groupSpec.facets, facet => facet.value ? facet.value === value : facet);
+			component.$emit('facet-click', key, value);
+		// 	// check that facet is filterable
+		// 	const groupSpec = <any>(_.find(groups(), group => group.key === key ));
+		// 	const facetSpec = _.find(groupSpec.facets, facet => facet.value ? facet.value === value : facet);
 
-			if (!facetSpec.filterable) {
-				// not filterable
-				return;
-			}
-			// get group
-			const group = component.facets.getGroup(key);
-			// get facet
-			const current = _.find(group.facets, facet => {
-				if ((<CategoricalFacet>facet).value) {
-					return (<CategoricalFacet>facet).value === value;
-				}
-				return false;
-			});
-			// toggle facet
-			if (current._spec.selected) {
-				current.deselect();
-			} else {
-				current.select({
-					count: current.count
-				});
-			}
-			// get all currently selected values
-			const values = [];
-			group.facets.forEach(facet => {
-				if (facet._spec.selected) {
-					// facet is selected
-					values.push(facet.value);
-				}
-			});
-			component.$emit('facet-toggle', key, values);
+		// 	if (!facetSpec.filterable) {
+		// 		// not filterable
+		// 		return;
+		// 	}
+		// 	// get group
+		// 	const group = component.facets.getGroup(key);
+		// 	// get facet
+		// 	const current = _.find(group.facets, facet => {
+		// 		if ((<CategoricalFacet>facet).value) {
+		// 			return (<CategoricalFacet>facet).value === value;
+		// 		}
+		// 		return false;
+		// 	});
+		// 	// toggle facet
+		// 	if (current._spec.selected) {
+		// 		current.deselect();
+		// 	} else {
+		// 		current.select({
+		// 			count: current.count
+		// 		});
+		// 	}
+		// 	// get all currently selected values
+		// 	const values = [];
+		// 	group.facets.forEach(facet => {
+		// 		if (facet._spec.selected) {
+		// 			// facet is selected
+		// 			values.push(facet.value);
+		// 		}
+		// 	});
+		// 	component.$emit('facet-toggle', key, values);
 		});
 	},
 

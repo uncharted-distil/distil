@@ -10,10 +10,8 @@
 			<b-table v-if="items.length>0"
 				bordered
 				hover
-				striped
 				small
-				@row-hovered="onRowHovered"
-				@mouseout.native="onMouseOut"
+				@row-clicked="onRowClick"
 				:items="items"
 				:fields="fields">
 
@@ -57,12 +55,11 @@ export default Vue.extend({
 		dataset(): string {
 			return routeGetters.getRouteDataset(this.$store);
 		},
+
 		// extracts the table data from the store
 		items(): Dictionary<any> {
+			this.updateHighlights();
 			const data = dataGetters.getSelectedDataItems(this.$store);
-			const rangeHighlights = dataGetters.getHighlightedFeatureRanges(this.$store);
-			const valueHighlights = dataGetters.getHighlightedFeatureValues(this.$store);
-			updateTableHighlights(data, rangeHighlights, valueHighlights, SELECT_TABLE_HIGHLIGHT);
 			return data;
 		},
 
@@ -70,6 +67,7 @@ export default Vue.extend({
 		fields(): Dictionary<FieldInfo> {
 			return dataGetters.getSelectedDataFields(this.$store);
 		},
+
 		filters(): Filter[] {
 			return dataGetters.getSelectedFilters(this.$store);
 		}
@@ -98,19 +96,25 @@ export default Vue.extend({
 				filters: this.filters
 			});
 		},
-		onRowHovered(event) {
+
+		updateHighlights() {
+			const data = dataGetters.getSelectedDataItems(this.$store);
+			const rangeHighlights = dataGetters.getHighlightedFeatureRanges(this.$store);
+			const valueHighlights = dataGetters.getHighlightedFeatureValues(this.$store);
+			updateTableHighlights(data, rangeHighlights, valueHighlights, SELECT_TABLE_HIGHLIGHT);
+		},
+
+		onRowClick(event) {
+			// clear existing highlights and trigger a table visuals update
+			mutations.clearFeatureHighlights(this.$store);
+
 			// set new values
 			const highlights = <ValueHighlights>{
 				context: SELECT_TABLE_HIGHLIGHT,
 				values: {}
 			};
-			_.forIn(this.fields, (field, key) => {
-				highlights.values[key] = event[key];
-			});
+			_.forEach(this.fields, (field, key) => highlights.values[key] = event[key]);
 			mutations.highlightFeatureValues(this.$store, highlights);
-		},
-		onMouseOut() {
-			mutations.clearFeatureHighlightValues(this.$store);
 		}
 	}
 });

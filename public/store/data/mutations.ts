@@ -62,7 +62,7 @@ export const mutations = {
 		state.highlightedFeatureRanges = highlight;
 	},
 
-	clearFeatureHighlightRange(state: DataState, name: string) {
+	clearFeatureHighlightRange(state: DataState) {
 		state.highlightedFeatureRanges = <RangeHighlights>{};
 	},
 
@@ -71,6 +71,11 @@ export const mutations = {
 	},
 
 	clearFeatureHighlightValues(state: DataState) {
+		state.highlightedFeatureValues = <ValueHighlights>{};
+	},
+
+	clearFeatureHighlights(state: DataState) {
+		state.highlightedFeatureRanges = <RangeHighlights>{};
 		state.highlightedFeatureValues = <ValueHighlights>{};
 	}
 }
