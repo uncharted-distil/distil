@@ -10,6 +10,7 @@
 				hover
 				small
 				@row-clicked="onRowClick"
+				:ref="refName"
 				:items="items"
 				:fields="fields">
 			</b-table>
@@ -25,7 +26,7 @@ import { getters, mutations } from '../store/data/module';
 import { TargetRow, FieldInfo } from '../store/data/index';
 import { Dictionary } from '../util/dict';
 import { removeNonTrainingItems, removeNonTrainingFields } from '../util/data';
-import { updateTableHighlights } from '../util/highlights';
+import { updateTableHighlights, scrollToFirstHighlight } from '../util/highlights';
 import Vue from 'vue';
 
 const RESULT_TABLE_HIGHLIGHTS = 'result_table';
@@ -37,7 +38,8 @@ export default Vue.extend({
 		'title': String,
 		'filterFunc': Function,
 		'decorateFunc': Function,
-		'excludeNonTraining': Boolean
+		'excludeNonTraining': Boolean,
+		'refName': String
 	},
 
 	computed: {
@@ -52,9 +54,14 @@ export default Vue.extend({
 			const valueHighlights = getters.getHighlightedFeatureValues(this.$store);
 			updateTableHighlights(filtered, rangeHighlights, valueHighlights, RESULT_TABLE_HIGHLIGHTS);
 
-			return filtered
+			const updatedItems = filtered
 				.filter(item => this.filterFunc(item))
 				.map(item => this.decorateFunc(item));
+
+			// On data / highlights change, scroll to first selected row
+			scrollToFirstHighlight(this, this.refName);
+
+			return updatedItems;
 		},
 
 		// extract the table field header from the store

@@ -3,6 +3,7 @@
 		<results-data-table
 			class="results-data-table"
 			title="Correct Predictions"
+			refName="correctTable"
 			:exclude-non-training="excludeNonTraining"
 			:filterFunc="correctFilter"
 			:decorateFunc="correctDecorate"
@@ -10,6 +11,7 @@
 		<results-data-table
 			class="results-data-table"
 			title="Incorrect Predictions"
+			refName="incorrectTable"
 			:exclude-non-training="excludeNonTraining"
 			:filterFunc="incorrectFilter"
 			:decorateFunc="incorrectDecorate"

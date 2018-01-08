@@ -7,7 +7,9 @@
 					<i class="fa fa-times missing-icon"></i><strong>No Training features Selected</strong>
 				</div>
 			</div>
-			<b-table v-if="items.length>0"
+			<b-table
+				ref="selectTable"
+				v-if="items.length>0"
 				bordered
 				hover
 				small
@@ -38,7 +40,7 @@ import { FieldInfo } from '../store/data/index';
 import { Filter } from '../util/filters';
 import { getters as routeGetters } from '../store/route/module';
 import { ValueHighlights } from '../store/data/index';
-import { updateTableHighlights } from '../util/highlights';
+import { updateTableHighlights, scrollToFirstHighlight } from '../util/highlights';
 import TypeChangeMenu from '../components/TypeChangeMenu';
 
 const SELECT_TABLE_HIGHLIGHT = 'select_table_highlight';
@@ -58,8 +60,13 @@ export default Vue.extend({
 
 		// extracts the table data from the store
 		items(): Dictionary<any> {
-			this.updateHighlights();
 			const data = dataGetters.getSelectedDataItems(this.$store);
+			const rangeHighlights = dataGetters.getHighlightedFeatureRanges(this.$store);
+			const valueHighlights = dataGetters.getHighlightedFeatureValues(this.$store);
+			updateTableHighlights(data, rangeHighlights, valueHighlights, SELECT_TABLE_HIGHLIGHT);
+
+			// On data / highlights change, scroll to first selected row
+			scrollToFirstHighlight(this, 'selectTable');
 			return data;
 		},
 
@@ -97,14 +104,7 @@ export default Vue.extend({
 			});
 		},
 
-		updateHighlights() {
-			const data = dataGetters.getSelectedDataItems(this.$store);
-			const rangeHighlights = dataGetters.getHighlightedFeatureRanges(this.$store);
-			const valueHighlights = dataGetters.getHighlightedFeatureValues(this.$store);
-			updateTableHighlights(data, rangeHighlights, valueHighlights, SELECT_TABLE_HIGHLIGHT);
-		},
-
-		onRowClick(event) {
+		onRowClick(item: Dictionary<any>) {
 			// clear existing highlights and trigger a table visuals update
 			mutations.clearFeatureHighlights(this.$store);
 
@@ -113,7 +113,7 @@ export default Vue.extend({
 				context: SELECT_TABLE_HIGHLIGHT,
 				values: {}
 			};
-			_.forEach(this.fields, (field, key) => highlights.values[key] = event[key]);
+			_.forEach(this.fields, (field, key) => highlights.values[key] = item[key]);
 			mutations.highlightFeatureValues(this.$store, highlights);
 		}
 	}
