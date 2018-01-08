@@ -15,7 +15,6 @@ import:
   - assert
 - package: github.com/unchartedsoftware/plog
 - package: github.com/unchartedsoftware/distil-ingest
-  version: 47ee68a4d3b281debf9ecd5af8469869f55f5ac9
   repo: git@github.com:unchartedsoftware/distil-ingest.git
   vcs: git
 - package: github.com/vova616/xxhash
