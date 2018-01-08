@@ -8,7 +8,6 @@ export const mutations = {
 		if (!state.stack[args.view]) {
 			Vue.set(state.stack, args.view, {});
 		}
-		console.log('store state for view', args.view, 'under dataset', args.dataset, ':', args.route);
 		Vue.set(state.stack[args.view], args.dataset, args.route);
 		Vue.set(state.stack[args.view], LAST_STATE, args.route); // store last as well in case no dataset available
 	}
