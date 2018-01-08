@@ -40,7 +40,7 @@
 
 import Facets from '../components/Facets';
 import { Filter, decodeFiltersDictionary, updateFilter, getFilterType, isDisabled, CATEGORICAL_FILTER, NUMERICAL_FILTER, EMPTY_FILTER } from '../util/filters';
-import { createRouteEntryFromRoute, getRouteFacetPage } from '../util/routes';
+import { overlayRouteEntry, getRouteFacetPage } from '../util/routes';
 import { VariableSummary } from '../store/data/index';
 import { Dictionary } from '../util/dict';
 import { getters as dataGetters, mutations as dataMutations } from '../store/data/module';
@@ -84,7 +84,7 @@ export default Vue.extend({
 	computed: {
 		currentPage: {
 			set(page: number) {
-				const entry = createRouteEntryFromRoute(this.$route, {
+				const entry = overlayRouteEntry(this.$route, {
 					[this.routePageKey()]: page
 				});
 				this.$router.push(entry);
@@ -168,7 +168,7 @@ export default Vue.extend({
 			const filters = routeGetters.getRouteFilters(this.$store);
 			// merge the updated filters back into the route query params
 			const updated = updateFilter(filters, filter);
-			const entry = createRouteEntryFromRoute(routeGetters.getRoute(this.$store), {
+			const entry = overlayRouteEntry(routeGetters.getRoute(this.$store), {
 				filters: updated,
 			});
 			this.$router.push(entry);
@@ -268,7 +268,7 @@ export default Vue.extend({
 					enabled: true
 				});
 			});
-			const entry = createRouteEntryFromRoute(routeGetters.getRoute(this.$store), {
+			const entry = overlayRouteEntry(routeGetters.getRoute(this.$store), {
 				filters: filters,
 			});
 			this.$router.push(entry);
@@ -286,7 +286,7 @@ export default Vue.extend({
 					enabled: false
 				});
 			});
-			const entry = createRouteEntryFromRoute(routeGetters.getRoute(this.$store), {
+			const entry = overlayRouteEntry(routeGetters.getRoute(this.$store), {
 				filters: filters
 			});
 			this.$router.push(entry);

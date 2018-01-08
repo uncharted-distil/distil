@@ -19,9 +19,9 @@ export interface RouteArgs {
  * nav bar navigation.
  *
  * @param {string} path - route path
- * @param {Object} args - the arguments for the route.
+ * @param {RouteArgs} args - the arguments for the route.
  */
-export function createRouteEntry(path: string, args: RouteArgs): Location {
+export function createRouteEntry(path: string, args: RouteArgs = {}): Location {
 	const query: { [id: string]: string } = {};
 
 	if (args.dataset) { query.dataset = args.dataset; }
@@ -41,7 +41,7 @@ export function createRouteEntry(path: string, args: RouteArgs): Location {
 	return routeEntry;
 }
 
-export function createRouteEntryFromRoute(route: Route, args: RouteArgs): Location {
+export function overlayRouteEntry(route: Route, args: RouteArgs): Location {
 	// initialize a new object from the supplied route
 	const routeEntry: Location = {
 		path: route.path,

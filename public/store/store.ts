@@ -7,6 +7,8 @@ import { dataModule } from './data/module';
 import { DataState } from './data/index';
 import { pipelineModule } from './pipelines/module';
 import { PipelineState } from './pipelines/index';
+import { viewModule } from './view/module';
+import { ViewState } from './view/index';
 import { appModule } from './app/module';
 import { AppState } from './app/index';
 
@@ -16,6 +18,7 @@ export interface DistilState {
 	routeModule: Route;
 	dataModule: DataState;
 	pipelineModule: PipelineState;
+	viewModule: ViewState;
 	appModule: AppState;
 }
 
@@ -24,6 +27,7 @@ export default new Store<DistilState>({
 		routeModule,
 		dataModule,
 		pipelineModule,
+		viewModule,
 		appModule
 	},
 	strict: true

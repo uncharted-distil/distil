@@ -10,8 +10,8 @@
 			<b-navbar-nav>
 				<b-nav-item @click="onHome" :active="activeView===HOME">Home</b-nav-item>
 				<b-nav-item @click="onSearch" :active="activeView===SEARCH">Search</b-nav-item>
-				<b-nav-item @click="onSelect" :active="activeView===SELECT" :disabled="!hasDataset()">Select</b-nav-item>
-				<b-nav-item @click="onResults" :active="activeView===RESULTS" :disabled="true">Results</b-nav-item>
+				<b-nav-item @click="onSelect" :active="activeView===SELECT" :disabled="!hasSelectView()">Select</b-nav-item>
+				<b-nav-item @click="onResults" :active="activeView===RESULTS" :disabled="!hasResultView()">Results</b-nav-item>
 			</b-navbar-nav>
 			<b-navbar-nav class="ml-auto">
 				<b-nav-item href="/help">Help</b-nav-item>
@@ -27,12 +27,13 @@
 	</b-navbar>
 </template>
 
-<script>
+<script lang="ts">
 import '../assets/images/legendary.svg';
-import { gotoHome, gotoSearch, gotoExplore, gotoSelect, gotoPipelines, gotoResults } from '../util/nav';
+import { gotoHome, gotoSearch, gotoSelect, gotoResults } from '../util/nav';
 import { getters as routeGetters } from '../store/route/module';
 import { getters as appGetters } from '../store/app/module';
 import { actions } from '../store/app/module';
+import { restoreView } from '../util/view';
 import Vue from 'vue';
 
 const HOME = Symbol();
@@ -61,8 +62,11 @@ export default Vue.extend({
 	},
 
 	computed: {
-		sessionId() {
+		sessionId(): string {
 			return appGetters.getPipelineSessionID(this.$store);
+		},
+		dataset(): string {
+			return routeGetters.getRouteDataset(this.$store);
 		}
 	},
 
@@ -83,9 +87,6 @@ export default Vue.extend({
 		onSelect() {
 			gotoSelect(this.$store, this.$router);
 		},
-		onPipelines() {
-			gotoPipelines(this.$store, this.$router);
-		},
 		onResults() {
 			gotoResults(this.$store, this.$router);
 		},
@@ -93,11 +94,14 @@ export default Vue.extend({
 			this.$router.replace('/');
 			actions.abort(this.$store);
 		},
-		hasDataset() {
-			return !!routeGetters.getRouteDataset(this.$store);
-		},
 		updateActive() {
 			this.activeView = ROUTE_MAPPINGS[this.$route.path];
+		},
+		hasSelectView(): boolean {
+			return !!restoreView(this.$store, '/select', this.dataset);
+		},
+		hasResultView(): boolean {
+			return !!restoreView(this.$store, '/results', this.dataset);
 		}
 	},
 	watch: {

@@ -15,7 +15,7 @@
 
 <script lang="ts">
 
-import { createRouteEntryFromRoute } from '../util/routes';
+import { overlayRouteEntry } from '../util/routes';
 import 'jquery';
 import { getters as dataGetters } from '../store/data/module';
 import { getters as routeGetters } from '../store/route/module';
@@ -42,7 +42,7 @@ export default Vue.extend({
 
 	methods: {
 		onClick(key: string) {
-			const entry = createRouteEntryFromRoute(routeGetters.getRoute(this.$store), {
+			const entry = overlayRouteEntry(routeGetters.getRoute(this.$store), {
 				target: key,
 			});
 			this.$router.push(entry);

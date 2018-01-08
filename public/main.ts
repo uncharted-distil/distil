@@ -6,6 +6,8 @@ import Search from './views/Search.vue';
 import Select from './views/Select.vue';
 import Results from './views/Results.vue';
 import Navigation from './views/Navigation.vue';
+import { getters as routeGetters } from './store/route/module';
+import { mutations as viewMutations } from './store/view/module';
 import store from './store/store';
 import BootstrapVue from 'bootstrap-vue';
 
@@ -31,6 +33,16 @@ const router = new VueRouter({
 		{ path: '/select', component: Select },
 		{ path: '/results', component: Results }
 	]
+});
+
+router.beforeEach((route, _, next) => {
+	const dataset = route.query ? route.query.dataset : routeGetters.getRouteDataset(store);
+	viewMutations.saveView(store, {
+		view: route.path,
+		dataset: dataset,
+		route: route
+	});
+	next();
 });
 
 // sync store and router

@@ -1,62 +1,44 @@
 import VueRouter from 'vue-router';
 import { Store } from 'vuex';
 import { createRouteEntry } from '../util/routes';
-import { getters } from '../store/route/module';
+import { restoreView } from '../util/view';
+import { getters as routeGetters } from '../store/route/module';
+
+export function gotoView(store: Store<any>, router: VueRouter, view: string, overrides: any) {
+	const dataset = routeGetters.getRouteDataset(store);
+	const prev = restoreView(store, view, dataset);
+	const entry = createRouteEntry(view, prev ? prev.query : overrides);
+	router.push(entry);
+}
 
 export function gotoHome(store: Store<any>, router: VueRouter) {
-	const entry = createRouteEntry('/home', {
-		terms: getters.getRouteTerms(store)
+	gotoView(store, router, '/home', {
+		terms: routeGetters.getRouteTerms(store)
 	});
-	router.push(entry);
 }
 
 export function gotoSearch(store: Store<any>, router: VueRouter) {
-	const entry = createRouteEntry('/search', {
-		terms: getters.getRouteTerms(store)
+	gotoView(store, router, '/search', {
+		terms: routeGetters.getRouteTerms(store)
 	});
-	router.push(entry);
 }
-
-// export function gotoExplore(store: Store<any>, router: VueRouter) {
-// 	const entry = createRouteEntry('/explore', {
-// 		terms: getters.getRouteTerms(store),
-// 		dataset: getters.getRouteDataset(store),
-// 		filters: getters.getRouteFilters(store),
-// 		target: getters.getRouteTargetVariable(store),
-// 		training: getters.getRouteTrainingVariables(store)
-// 	});
-// 	router.push(entry);
-// }
 
 export function gotoSelect(store: Store<any>, router: VueRouter) {
-	const entry = createRouteEntry('/select', {
-		terms: getters.getRouteTerms(store),
-		dataset: getters.getRouteDataset(store),
-		filters: getters.getRouteFilters(store),
-		target: getters.getRouteTargetVariable(store),
-		training: getters.getRouteTrainingVariables(store)
+	gotoView(store, router, '/select', {
+		terms: routeGetters.getRouteTerms(store),
+		dataset: routeGetters.getRouteDataset(store),
+		filters: routeGetters.getRouteFilters(store),
+		target: routeGetters.getRouteTargetVariable(store),
+		training: routeGetters.getRouteTrainingVariables(store)
 	});
-	router.push(entry);
 }
 
-// export function gotoPipelines(store: Store<any>, router: VueRouter) {
-// 	const entry = createRouteEntry('/pipelines', {
-// 		terms: getters.getRouteTerms(store),
-// 		dataset: getters.getRouteDataset(store),
-// 		filters: getters.getRouteFilters(store),
-// 		target: getters.getRouteTargetVariable(store),
-// 		training: getters.getRouteTrainingVariables(store)
-// 	});
-// 	router.push(entry);
-// }
-
 export function gotoResults(store: Store<any>, router: VueRouter) {
-	const entry = createRouteEntry('/results', {
-		terms: getters.getRouteTerms(store),
-		dataset: getters.getRouteDataset(store),
-		filters: getters.getRouteFilters(store),
-		target: getters.getRouteTargetVariable(store),
-		training: getters.getRouteTrainingVariables(store),
+	gotoView(store, router, '/results', {
+		terms: routeGetters.getRouteTerms(store),
+		dataset: routeGetters.getRouteDataset(store),
+		filters: routeGetters.getRouteFilters(store),
+		target: routeGetters.getRouteTargetVariable(store),
+		training: routeGetters.getRouteTrainingVariables(store),
 	});
-	router.push(entry);
 }

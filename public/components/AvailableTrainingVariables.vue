@@ -15,7 +15,7 @@
 
 <script lang="ts">
 
-import { createRouteEntryFromRoute } from '../util/routes';
+import { overlayRouteEntry } from '../util/routes';
 import { getters as dataGetters } from '../store/data/module';
 import { getters as routeGetters } from '../store/route/module';
 import { VariableSummary } from '../store/data/index';
@@ -46,7 +46,7 @@ export default Vue.extend({
 				trainingElem.addEventListener('click', () => {
 					const training = routeGetters.getRouteTrainingVariables(this.$store);
 					const trainingArray = training ? training.split(',') : [];
-					const entry = createRouteEntryFromRoute(routeGetters.getRoute(this.$store), {
+					const entry = overlayRouteEntry(routeGetters.getRoute(this.$store), {
 						training: trainingArray.concat([ group.key ]).join(',')
 					});
 					this.$router.push(entry);
@@ -55,7 +55,7 @@ export default Vue.extend({
 				targetElem.className += 'btn btn-sm btn-outline-success mr-2 mb-2';
 				targetElem.innerHTML = 'Set as Target';
 				targetElem.addEventListener('click', () => {
-					const entry = createRouteEntryFromRoute(routeGetters.getRoute(this.$store), {
+					const entry = overlayRouteEntry(routeGetters.getRoute(this.$store), {
 						target: group.key,
 					});
 					this.$router.push(entry);

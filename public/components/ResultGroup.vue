@@ -41,7 +41,7 @@ import { isPredicted, isError, getVarFromPredicted, getVarFromError, getPredicte
 	getErrorFacetKey, getPredictedColFromFacetKey, getErrorColFromFacetKey } from '../util/data';
 import { VariableSummary } from '../store/data/index';
 import { Dictionary } from '../util/dict';
-import { createRouteEntryFromRoute } from '../util/routes';
+import { overlayRouteEntry } from '../util/routes';
 import { getters } from '../store/data/module';
 import { getters as routeGetters } from '../store/route/module';
 import { getters as pipelineGetters } from '../store/pipelines/module';
@@ -174,7 +174,7 @@ export default Vue.extend({
 		},
 
 		click() {
-			const routeEntry = createRouteEntryFromRoute(this.$route, {
+			const routeEntry = overlayRouteEntry(this.$route, {
 				pipelineId: this.results().pipelineId
 			});
 			this.$router.push(routeEntry);

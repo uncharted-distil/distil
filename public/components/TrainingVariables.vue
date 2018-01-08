@@ -15,7 +15,7 @@
 
 <script lang="ts">
 
-import { createRouteEntryFromRoute } from '../util/routes';
+import { overlayRouteEntry } from '../util/routes';
 import VariableFacets from '../components/VariableFacets';
 import 'font-awesome/css/font-awesome.css';
 import Vue from 'vue';
@@ -47,7 +47,7 @@ export default Vue.extend({
 				remove.addEventListener('click', () => {
 					const training = routeGetters.getRouteTrainingVariables(this.$store).split(',');
 					training.splice(training.indexOf(group.key), 1);
-					const entry = createRouteEntryFromRoute(routeGetters.getRoute(this.$store), {
+					const entry = overlayRouteEntry(routeGetters.getRoute(this.$store), {
 						training: training.join(',')
 					});
 					this.$router.push(entry);
