@@ -129,6 +129,42 @@ func PersistFilteredData(fetchData FilteredDataProvider, fetchVariables Variable
 	return path, nil
 }
 
+// PersistData writes out the data to the specified file using a csv structure.
+func PersistData(dataDir string, filename string, data *model.FilteredData) error {
+	filenameFull := path.Join(dataDir, filename)
+	file, err := os.Create(filenameFull)
+	if err != nil {
+		return errors.Wrapf(err, "unable to persist data to %s", filenameFull)
+	}
+	defer file.Close()
+
+	writer := csv.NewWriter(file)
+	defer writer.Flush()
+
+	// write out the header, including the d3m_index field
+	variableNames := make([]string, len(data.Columns))
+	for i, column := range data.Columns {
+		variableNames[i] = column
+	}
+	err = writer.Write(variableNames)
+	if err != nil {
+		return errors.Wrapf(err, "unable to persist %v", variableNames)
+	}
+
+	for _, row := range data.Values {
+		strVals := make([]string, len(row))
+		// convert vals in row to string
+		for i, value := range row {
+			strVals[i] = fmt.Sprintf("%v", value)
+		}
+		err := writer.Write(strVals)
+		if err != nil {
+			log.Errorf("%v", errors.Wrapf(err, "unable to persist %v", strVals))
+		}
+	}
+	return nil
+}
+
 func dirExists(path string) bool {
 	if _, err := os.Stat(path); os.IsNotExist(err) {
 		return false
