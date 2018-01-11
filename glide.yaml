@@ -36,5 +36,6 @@ import:
   subpackages:
   - gomock
 - package: github.com/satori/go.uuid
+  version: 879c5887cd475cd7864858769793b2ceb0d44feb
 - package: github.com/mitchellh/hashstructure
 - package: github.com/caarlos0/env
