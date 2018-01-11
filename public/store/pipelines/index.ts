@@ -25,11 +25,16 @@ export interface PipelineInfo {
 }
 
 export interface PipelineState {
+	sessionID: string;
 	runningPipelines: Dictionary<Dictionary<PipelineInfo>>;
 	completedPipelines: Dictionary<Dictionary<PipelineInfo>>;
 }
 
 export const state: PipelineState = {
+
+	// current pipeline session id
+	sessionID: null,
+
 	// running pipeline creation tasks grouped by parent create requestID
 	runningPipelines: {} as any,
 

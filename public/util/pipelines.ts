@@ -24,13 +24,6 @@ export function pipelineIsErrored(progress: string): boolean {
 	return progress == ERROR_VAL;
 }
 
-// Utility function to return all pipeline results that have not ERRORED
-// associated with a given request ID
-export function getPipelineResultsOkay(state: PipelineState, requestId: string): PipelineInfo[] {
-	const pipelineResults = getPipelineResults(state, requestId);
-	return _.filter(pipelineResults, p => !pipelineIsErrored(p.progress));
-}
-
 // Utility function to return all pipeline results associated with a given request ID
 export function getPipelineResults(state: PipelineState, requestId: string): PipelineInfo[] {
 	return _.concat(
@@ -38,18 +31,46 @@ export function getPipelineResults(state: PipelineState, requestId: string): Pip
 		_.values(state.completedPipelines[requestId]));
 }
 
-// Returns a specific pipeline result given request and pipeline IDs.
-export function getPipelineResult(state: PipelineState, requestId: string, pipelineId: string): PipelineInfo {
-	const pipelineResults = getPipelineResultsOkay(state, requestId);
-	return _.find(pipelineResults, p => p.pipelineId === pipelineId);
+export function getRequestIdsForDatasetAndTarget(state: PipelineState, dataset: string, target: string): string[] {
+	const ids = [];
+	_.forIn(state.runningPipelines, pipelines => {
+		_.forIn(pipelines, pipeline => {
+			if (pipeline.dataset === dataset && pipeline.feature === target) {
+				if (ids.indexOf(pipeline.requestId) === -1) {
+					ids.push(pipeline.requestId);
+				}
+			}
+		});
+	});
+	_.forIn(state.completedPipelines, pipelines => {
+		_.forIn(pipelines, pipeline => {
+			if (pipeline.dataset === dataset && pipeline.feature === target) {
+				if (ids.indexOf(pipeline.requestId) === -1) {
+					ids.push(pipeline.requestId);
+				}
+			}
+		});
+	});
+	return ids;
+}
+
+// Utility function to return all pipeline results that have not ERRORED
+// associated with a given request IDs.
+export function getPipelineResultsOkay(state: PipelineState, requestIds: string[]): PipelineInfo[] {
+	let results = [];
+	requestIds.forEach(requestId => {
+		const rs = getPipelineResults(state, requestId);
+		results = results.concat(_.filter(rs, p => !pipelineIsErrored(p.progress)));
+	});
+	return results;
 }
 
 // Returns a specific pipeline result given a request and its ID.
-export function getPipelineResultById(state: PipelineState, requestId: string, pipelineId: string): PipelineInfo {
+export function getPipelineResult(state: PipelineState, requestIds: string[], pipelineId: string): PipelineInfo {
 	if (!pipelineId) {
 		return null;
 	}
-	const pipelineResults = getPipelineResultsOkay(state, requestId);
+	const pipelineResults = getPipelineResultsOkay(state, requestIds);
 	return _.find(pipelineResults, p => pipelineId === p.pipelineId);
 }
 

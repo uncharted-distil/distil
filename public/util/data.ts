@@ -6,6 +6,7 @@ import { DistilState } from '../store/store';
 import { Dictionary } from './dict';
 import { ActionContext } from 'vuex';
 import axios from 'axios';
+import localStorage from 'store';
 import Vue from 'vue';
 
 // Postfixes for special variable names
@@ -29,16 +30,16 @@ export function filterDatasets(ids: string[], datasets: Datasets[]): Datasets[] 
 
 // fetches datasets from local storage
 export function getRecentDatasets(): string[] {
-	const datasets = window.localStorage.getItem('recent-datasets');
-	return (datasets) ? datasets.split(',') : [];
+	return localStorage.get('recent-datasets') || [];
 }
 
 // adds a recent dataset to local storage
 export function addRecentDataset(dataset: string) {
-	const datasetsStr = window.localStorage.getItem('recent-datasets');
-	const datasets = (datasetsStr) ? datasetsStr.split(',') : [];
-	datasets.unshift(dataset);
-	window.localStorage.setItem('recent-datasets', datasets.join(','));
+	const datasets = getRecentDatasets();
+	if (datasets.indexOf(dataset) === -1) {
+		datasets.unshift(dataset);
+		localStorage.set('recent-datasets', datasets);
+	}
 }
 
 export function isInTrainingSet(col: string, training: Dictionary<boolean>) {

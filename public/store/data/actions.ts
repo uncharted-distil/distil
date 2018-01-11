@@ -151,16 +151,16 @@ export const actions = {
 	},
 
 	// fetches result summaries for a given pipeline create request
-	getResultsSummaries(context: DataContext, args: { dataset: string, requestId: string }) {
-		const results = getPipelineResultsOkay(context.rootState.pipelineModule, args.requestId);
+	getResultsSummaries(context: DataContext, args: { dataset: string, requestIds: string[] }) {
+		const results = getPipelineResultsOkay(context.rootState.pipelineModule, args.requestIds);
 		const endPoint = `/distil/results-summary/${ES_INDEX}/${args.dataset}`
 		const nameFunc = (p: PipelineInfo) => getPredictedFacetKey(p.feature);
 		getSummaries(context, endPoint, results, nameFunc, mutations.setResultsSummaries, mutations.updateResultsSummaries);
 	},
 
 	// fetches result summaries for a given pipeline create request
-	getResidualsSummaries(context: DataContext, args: { dataset: string, requestId: string }) {
-		const results = getPipelineResultsOkay(context.rootState.pipelineModule, args.requestId);
+	getResidualsSummaries(context: DataContext, args: { dataset: string, requestIds: string[] }) {
+		const results = getPipelineResultsOkay(context.rootState.pipelineModule, args.requestIds);
 		const endPoint = `/distil/residuals-summary/${ES_INDEX}/${args.dataset}`
 		const nameFunc = (p: PipelineInfo) => getErrorFacetKey(p.feature);
 		getSummaries(context, endPoint, results, nameFunc, mutations.setResidualsSummaries, mutations.updateResidualsSummaries);

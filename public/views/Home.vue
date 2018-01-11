@@ -44,7 +44,7 @@ export default Vue.extend({
 		}
 	},
 	mounted() {
-		actions.getSession(this.$store, {
+		actions.getSessionSummary(this.$store, {
 			sessionId: this.sessionId
 		});
 	},

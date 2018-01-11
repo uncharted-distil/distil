@@ -86,16 +86,16 @@ export default Vue.extend({
 			return getMetricDisplayName(metric);
 		},
 		isSubmitted(): boolean {
-			return (<PipelineInfo>this.result).progress==='SUBMITTED';
+			return (<PipelineInfo>this.result).progress === 'SUBMITTED';
 		},
 		isRunning(): boolean {
-			return (<PipelineInfo>this.result).progress==='RUNNING';
+			return (<PipelineInfo>this.result).progress === 'RUNNING';
 		},
 		isUpdated(): boolean {
-			return (<PipelineInfo>this.result).progress==='UPDATED';
+			return (<PipelineInfo>this.result).progress === 'UPDATED';
 		},
 		isCompleted(): boolean {
-			return (<PipelineInfo>this.result).progress !=='UPDATED' && (<PipelineInfo>this.result).pipeline !== undefined;
+			return (<PipelineInfo>this.result).progress !== 'UPDATED' && (<PipelineInfo>this.result).pipeline !== undefined;
 		},
 		onResult() {
 			const result = <PipelineInfo>this.result;
@@ -105,7 +105,6 @@ export default Vue.extend({
 				filters: getters.getRouteFilters(this.$store),
 				target: result.feature,
 				training: getters.getRouteTrainingVariables(this.$store),
-				requestId: result.requestId,
 				pipelineId: result.pipelineId
 			});
 			this.$router.push(entry);

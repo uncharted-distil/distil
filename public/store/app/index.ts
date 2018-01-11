@@ -1,14 +1,12 @@
-export interface Session {
-	id: string;
-	uuids: string[];
+export interface UserSession {
+	//sessionId: string;
 }
 
 export interface AppState {
-	pipelineSession: Session;
+	session: UserSession;
 }
 
 // shared data model
 export const state: AppState = {
-	// the pipeline session id
-	pipelineSession: {} as any,
+	session: {} as UserSession
 };

@@ -8,7 +8,6 @@ import { mutations } from './module';
 import { getWebSocketConnection } from '../../util/ws';
 import { FilterParams } from '../../util/filters';
 
-// TODO: move this somewhere more appropriate.
 const ES_INDEX = 'datasets';
 const CREATE_PIPELINES_MSG = 'CREATE_PIPELINES';
 const STREAM_CLOSE = 'STREAM_CLOSE';
@@ -54,7 +53,43 @@ interface PipelineRequest {
 export type AppContext = ActionContext<PipelineState, DistilState>;
 
 export const actions = {
-	getSession(context: AppContext, args: { sessionId: string }) {
+
+	// starts a pipeline session.
+	startPipelineSession(context: AppContext, args: { sessionId: string }) {
+		const sessionId = args.sessionId; // server creates a new session on null/undefined
+		const conn = getWebSocketConnection();
+		return conn.send({
+				type: 'GET_SESSION',
+				session: sessionId
+			}).then(res => {
+				if (sessionId && res.created) {
+					console.warn('previous session', sessionId, 'could not be resumed, new session created');
+				}
+				mutations.setPipelineSessionID(context, res.session);
+			}).catch((err: string) => {
+				console.warn(err);
+			});
+	},
+
+	// end a pipeline session.
+	endPipelineSession(context: AppContext, args: { sessionId: string }) {
+		if (!args.sessionId) {
+			console.warn('Missing session id');
+			return;
+		}
+		const sessionId = args.sessionId;
+		const conn = getWebSocketConnection();
+		return conn.send({
+				type: 'END_SESSION',
+				session: sessionId
+			}).then(() => {
+				mutations.setPipelineSessionID(context, null);
+			}).catch(err => {
+				console.warn(err);
+			});
+	},
+
+	getSessionSummary(context: AppContext, args: { sessionId: string }) {
 		if (!args.sessionId) {
 			console.warn('Missing session id');
 			return;
@@ -107,18 +142,20 @@ export const actions = {
 	},
 
 	createPipelines(context: any, request: PipelineRequest) {
-
 		return new Promise((resolve, reject) => {
-			const conn = getWebSocketConnection();
+
 			if (!request.sessionId) {
 				console.warn('Missing session id');
 				reject();
 				return;
 			}
 
+			const conn = getWebSocketConnection();
+
 			let receivedFirstResponse = false;
 
 			const stream = conn.stream(res => {
+
 				if (_.has(res, STREAM_CLOSE)) {
 					stream.close();
 					return;
@@ -134,11 +171,11 @@ export const actions = {
 				// update summaries
 				context.dispatch('getResultsSummaries', {
 					dataset: request.dataset,
-					requestId: res.requestId
+					requestIds: [ res.requestId ]
 				});
 				context.dispatch('getResidualsSummaries', {
 					dataset: request.dataset,
-					requestId: res.requestId
+					requestIds: [ res.requestId ]
 				});
 
 				// resolve promise on first response

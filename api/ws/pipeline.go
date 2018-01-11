@@ -10,13 +10,13 @@ import (
 	"strings"
 	"time"
 
-	"github.com/unchartedsoftware/distil/api/model"
-
 	"github.com/pkg/errors"
 	"github.com/satori/go.uuid"
-	"github.com/unchartedsoftware/distil/api/pipeline"
 	"github.com/unchartedsoftware/plog"
 	"golang.org/x/net/context"
+
+	"github.com/unchartedsoftware/distil/api/model"
+	"github.com/unchartedsoftware/distil/api/pipeline"
 )
 
 const (
@@ -146,7 +146,7 @@ func handleGetSession(conn *Connection, client *pipeline.Client, msg *Message, p
 				return
 			}
 
-			handleGetSessionSuccess(conn, msg, session.ID, false, true, session.GetExistingUUIDs())
+			handleGetSessionSuccess(conn, msg, session.ID, false, true)
 			return
 		}
 	}
@@ -165,7 +165,7 @@ func handleGetSession(conn *Connection, client *pipeline.Client, msg *Message, p
 		return
 	}
 
-	handleGetSessionSuccess(conn, msg, session.ID, true, false, session.GetExistingUUIDs())
+	handleGetSessionSuccess(conn, msg, session.ID, true, false)
 	return
 }
 
@@ -342,19 +342,13 @@ func handleCreatePipelines(conn *Connection, client *pipeline.Client, metadataCt
 	handleCreatePipelinesSuccess(conn, msg, proxy, dataStorage, pipelineStorage, clientCreateMsg.Dataset)
 }
 
-func handleGetSessionSuccess(conn *Connection, msg *Message, session string, created bool, resumed bool, uuids []uuid.UUID) {
-	// convert uuids to strings
-	var strs []string
-	for _, uid := range uuids {
-		strs = append(strs, uid.String())
-	}
+func handleGetSessionSuccess(conn *Connection, msg *Message, session string, created bool, resumed bool) {
 	// send response
 	handleSuccess(conn, msg, map[string]interface{}{
 		"success": true,
 		"session": session,
 		"created": created,
 		"resumed": resumed,
-		"uuids":   uuids,
 	})
 }
 
