@@ -19,7 +19,8 @@ import (
 	"github.com/unchartedsoftware/distil-ingest/rest"
 )
 
-type ImportTaskConfig struct {
+// IngestTaskConfig captures the necessary configuration for an data ingest.
+type IngestTaskConfig struct {
 	ContainerDataPath                string
 	DataPathRelative                 string
 	DatasetFolderSuffix              string
@@ -42,19 +43,20 @@ type ImportTaskConfig struct {
 	ESDatasetPrefix                  string
 }
 
-func (c *ImportTaskConfig) getRootPath(dataset string) string {
+func (c *IngestTaskConfig) getRootPath(dataset string) string {
 	return fmt.Sprintf("%s/%s/%s%s", c.ContainerDataPath, dataset, dataset, c.DatasetFolderSuffix)
 }
 
-func (c *ImportTaskConfig) getAbsolutePath(dataset string, relativePath string) string {
+func (c *IngestTaskConfig) getAbsolutePath(dataset string, relativePath string) string {
 	return fmt.Sprintf("%s/%s", c.getRootPath(dataset), relativePath)
 }
 
-func (c *ImportTaskConfig) getRawDataPath(dataset string) string {
+func (c *IngestTaskConfig) getRawDataPath(dataset string) string {
 	return fmt.Sprintf("%s/", c.getRootPath(dataset))
 }
 
-func Merge(index string, dataset string, config *ImportTaskConfig) error {
+// Merge combines all the source data files into a single datafile.
+func Merge(index string, dataset string, config *IngestTaskConfig) error {
 	// load the metadata from schema
 	meta, err := metadata.LoadMetadataFromOriginalSchema(config.getAbsolutePath(dataset, config.SchemaPathRelative))
 	if err != nil {
@@ -82,7 +84,9 @@ func Merge(index string, dataset string, config *ImportTaskConfig) error {
 	return nil
 }
 
-func Classify(index string, dataset string, config *ImportTaskConfig) error {
+// Classify uses the merged datafile and determines the data types of
+// every variable specified in the merged schema file.
+func Classify(index string, dataset string, config *IngestTaskConfig) error {
 	client := rest.NewClient(config.RESTBaseEndpoint)
 
 	// create classifier
@@ -108,7 +112,8 @@ func Classify(index string, dataset string, config *ImportTaskConfig) error {
 	return nil
 }
 
-func Rank(index string, dataset string, config *ImportTaskConfig) error {
+// Rank the importance of the variables in the dataset.
+func Rank(index string, dataset string, config *IngestTaskConfig) error {
 	// create ranker
 	client := rest.NewClient(config.RESTBaseEndpoint)
 	ranker := rest.NewRanker(config.RankingFunctionName, client)
@@ -135,7 +140,8 @@ func Rank(index string, dataset string, config *ImportTaskConfig) error {
 	return nil
 }
 
-func Ingest(index string, dataset string, config *ImportTaskConfig) error {
+// Ingest the metadata to ES and the data to Postgres.
+func Ingest(index string, dataset string, config *IngestTaskConfig) error {
 	meta, err := metadata.LoadMetadataFromClassification(
 		config.getAbsolutePath(dataset, config.MergedOutputSchemaPathRelative),
 		config.getAbsolutePath(dataset, config.ClassificationOutputPathRelative))
