@@ -25,7 +25,7 @@ type Client struct {
 	DataDir  string
 }
 
-// NewClient creates a new pipline reuqest dispatcher instance. This will establish
+// NewClient creates a new pipline request dispatcher instance. This will establish
 // the connection to the pipeline server or return an error on fail
 func NewClient(serverAddr string, dataDir string, trace bool) (*Client, error) {
 	conn, err := grpc.Dial(

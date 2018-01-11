@@ -1,5 +1,5 @@
-hash: b130ae18a45c2dd8f8bc719e42e0dfb24c8b0599a62ef4700d01b355c87410b6
-updated: 2017-10-23T11:42:19.178383035-04:00
+hash: fbe376dd7a15c1ddba9109afda2104e47a8d8a0c638f40130f667c618baf7c61
+updated: 2018-01-08T13:36:11.944471337-05:00
 imports:
 - name: github.com/caarlos0/env
   version: 0cf029d5748c52beb2c9d20c81880cb4bdf8f788
@@ -26,7 +26,13 @@ imports:
 - name: github.com/gorilla/websocket
   version: 2d1e4548da234d9cb742cc3628556fef86aafbac
 - name: github.com/jackc/pgx
-  version: 97c01fb52451c10e686fb847ad390338bf1799ae
+  version: b0c3e7e8b107f61f54a6dfce6e5864b8b68131cb
+  subpackages:
+  - chunkreader
+  - internal/sanitize
+  - pgio
+  - pgproto3
+  - pgtype
 - name: github.com/mattn/go-isatty
   version: fc9e8d8ef48496124e79ae0df75490096eccf6fe
 - name: github.com/mgutz/ansi
@@ -51,6 +57,12 @@ imports:
   version: 890a5c3458b43e6104ff5da8dfa139d013d77544
   subpackages:
   - assert
+- name: github.com/unchartedsoftware/distil-ingest
+  version: 722effd4436fb08a95a4ab6ba2881d994bd3022f
+  repo: git@github.com:unchartedsoftware/distil-ingest.git
+  vcs: git
+  subpackages:
+  - rest
 - name: github.com/unchartedsoftware/plog
   version: 24c9313ea3ff2a86868f9961420e5b72fb83a019
 - name: github.com/vova616/xxhash

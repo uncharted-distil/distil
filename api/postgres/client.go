@@ -37,6 +37,23 @@ type ClientCtor func() (DatabaseDriver, error)
 type pgxLogAdapter struct {
 }
 
+func (p pgxLogAdapter) Log(level pgx.LogLevel, msg string, data map[string]interface{}) {
+	switch level {
+	case pgx.LogLevelDebug:
+		p.Debug(msg, data)
+		break
+	case pgx.LogLevelInfo:
+		p.Info(msg, data)
+		break
+	case pgx.LogLevelWarn:
+		p.Warn(msg, data)
+		break
+	case pgx.LogLevelError:
+		p.Error(msg, data)
+		break
+	}
+}
+
 func (pgxLogAdapter) Debug(msg string, ctx ...interface{}) {
 	log.Debugf("%s - %v", msg, ctx)
 }
@@ -65,7 +82,8 @@ func NewClient(host, port, user, password, database string, logLevel string) Cli
 
 		// Default logs to disabled - note that just setting level to 'none' is insufficient
 		// as internally pgx defaults that to Debug.
-		level := pgx.LogLevelNone
+		var level pgx.LogLevel
+		level = pgx.LogLevelNone
 		var logAdapter pgxLogAdapter
 		if logLevel != "" {
 			level, err = pgx.LogLevelFromString(logLevel)
@@ -92,7 +110,7 @@ func NewClient(host, port, user, password, database string, logLevel string) Cli
 				Password: password,
 				Database: database,
 				Logger:   logAdapter,
-				LogLevel: level,
+				LogLevel: int(level),
 			}
 
 			poolConfig := pgx.ConnPoolConfig{
