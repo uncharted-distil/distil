@@ -9,37 +9,33 @@ import (
 	"github.com/unchartedsoftware/distil/api/task"
 )
 
-// ResultsSummaryHandler bins predicted result data for consumption in a downstream summary view.
-func IngestHandler(user string, password string, database string) func(http.ResponseWriter, *http.Request) {
+// IngestHandler ingests a dataset into ES & postgres. It assumes that SetHttpClient
+// raw data is on the distil instance.
+func IngestHandler(index string, database string, config *task.ImportTaskConfig) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// extract route parameters
 		index := pat.Param(r, "index")
 		dataset := pat.Param(r, "dataset")
 
-		config := &task.ImportTaskConfig{
-			Dataset:             dataset,
-			ESMetadataIndexName: index,
-		}
-
-		err := task.Merge(config)
+		err := task.Merge(index, dataset, config)
 		if err != nil {
 			handleError(w, err)
 			return
 		}
 
-		err = task.Classify(config)
+		err = task.Classify(index, dataset, config)
 		if err != nil {
 			handleError(w, err)
 			return
 		}
 
-		err = task.Rank(config)
+		err = task.Rank(index, dataset, config)
 		if err != nil {
 			handleError(w, err)
 			return
 		}
 
-		err = task.Ingest(config)
+		err = task.Ingest(index, dataset, config)
 		if err != nil {
 			handleError(w, err)
 			return
