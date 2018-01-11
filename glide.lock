@@ -1,5 +1,5 @@
 hash: fbe376dd7a15c1ddba9109afda2104e47a8d8a0c638f40130f667c618baf7c61
-updated: 2018-01-11T14:40:54.690365185-05:00
+updated: 2018-01-11T16:02:07.925642259-05:00
 imports:
 - name: github.com/caarlos0/env
   version: 7cd7992b3bc86f920394f8de92c13900da1a46b7
@@ -12,6 +12,14 @@ imports:
   subpackages:
   - internal
   - redis
+- name: github.com/go-pg/pg
+  version: 5ce58f5d6c85b9fc1a448a1eab3b7cc5df6df3b4
+  subpackages:
+  - internal
+  - internal/parser
+  - internal/pool
+  - orm
+  - types
 - name: github.com/golang/mock
   version: b3e60bcdc577185fce3cf625fc96b62857ce5574
   subpackages:
@@ -33,6 +41,10 @@ imports:
   - pgio
   - pgproto3
   - pgtype
+- name: github.com/jeffail/gabs
+  version: 44cbc27138518b15305cb3eef220d04f2d641b9b
+- name: github.com/jinzhu/inflection
+  version: 1c35d901db3da928c72a72d8458480cc9ade058f
 - name: github.com/mattn/go-colorable
   version: 586e6dcca296d085100876beb6dbf02287a247f7
 - name: github.com/mattn/go-isatty
@@ -57,10 +69,23 @@ imports:
   version: 87b1dfb5b2fa649f52695dd9eae19abe404a4308
   subpackages:
   - assert
+- name: github.com/unchartedsoftware/deluge
+  version: f967d93bead1da1df483356f0819caa2ecfb1bc8
+  subpackages:
+  - document
+  - util
 - name: github.com/unchartedsoftware/distil-ingest
   version: 05a74943bf7c41671df53da9fd0f4685b3707d7e
   repo: git@github.com:unchartedsoftware/distil-ingest.git
   vcs: git
+  subpackages:
+  - conf
+  - merge
+  - metadata
+  - postgres
+  - postgres/model
+  - rest
+  - smmry
 - name: github.com/unchartedsoftware/plog
   version: 34d2bbd3c0a9458feb0752af2b578a23eb8ddc4f
 - name: github.com/vova616/xxhash
