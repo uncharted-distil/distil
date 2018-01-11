@@ -37,6 +37,7 @@ type Config struct {
 	PostgresRetryCount      int    `env:"PG_RETRY_COUNT" envDefault:"100"`
 	PostgresRetryTimeout    int    `env:"PG_RETRY_TIMEOUT" envDefault:"4000"`
 	PostgresLogLevel        string `env:"PG_LOG_LEVEL" envDefault:"none"`
+	PrimitiveEndPoint       string `env:"PRIMITIVE_END_POINT" envDefault:"http://localhost:5000"`
 }
 
 // LoadConfig loads the config from the environment if necessary and returns a

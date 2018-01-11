@@ -14,6 +14,9 @@ import:
   subpackages:
   - assert
 - package: github.com/unchartedsoftware/plog
+- package: github.com/unchartedsoftware/distil-ingest
+  repo: git@github.com:unchartedsoftware/distil-ingest.git
+  vcs: git
 - package: github.com/vova616/xxhash
 - package: github.com/zenazn/goji
   subpackages:
