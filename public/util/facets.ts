@@ -24,7 +24,7 @@ export interface CategoricalFacet {
 	selected: { count: number } | SelectedSegments;
 	value: string;
 	count: number;
-	filterable: boolean
+	filterable: boolean;
 	segments: Segment[];
 }
 
@@ -111,7 +111,7 @@ export function createSummaryFacet(summary: VariableSummary, enableCollapse: boo
 		case 'categorical':
 			return createCategoricalSummaryFacet(summary, enableCollapse, enableFiltering);
 		case 'numerical':
-			return createNumericalSummaryFacet(summary, enableCollapse, enableCollapse);
+			return createNumericalSummaryFacet(summary, enableCollapse, enableFiltering);
 	}
 	console.warn('unrecognized summary type', summary.type);
 	return null;
@@ -229,4 +229,16 @@ function createNumericalSummaryFacet(summary: VariableSummary, enableCollapse: b
 			}
 		]
 	};
+}
+
+export function isCategoricalFacet(facet: PlaceHolderFacet | CategoricalFacet | NumericalFacet): facet is CategoricalFacet {
+	return (<CategoricalFacet>facet).value !== undefined;
+}
+
+export function isNumericalFacet(facet: PlaceHolderFacet | CategoricalFacet | NumericalFacet): facet is NumericalFacet {
+	return (<NumericalFacet>facet).histogram !== undefined;
+}
+
+export function isPlaceHolderFacet(facet: PlaceHolderFacet | CategoricalFacet | NumericalFacet): facet is PlaceHolderFacet {
+	return (<PlaceHolderFacet>facet).placeholder !== undefined;
 }

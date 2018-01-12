@@ -6,7 +6,7 @@
 import _ from 'lodash';
 import $ from 'jquery';
 import Vue from 'vue';
-import { Group, /*CategoricalFacet*/ } from '../util/facets';
+import { Group, CategoricalFacet, isCategoricalFacet } from '../util/facets';
 import { Dictionary } from '../util/dict';
 import Facets from '@uncharted.software/stories-facets';
 import TypeChangeMenu from '../components/TypeChangeMenu';
@@ -40,10 +40,14 @@ export default Vue.extend({
 		const component = this;
 		const groups = () => <Group[]>this.groups;
 
-		// instantiate the external facets widget
+		// Instantiate the external facets widget.  The facets maintain their own copies
+		// of group objects which are replaced wholesale on changes.  Elsewhere in the code
+		// we modify local copies of the group objects, then replace those in the Facet component
+		// with copies.
 		this.facets = new Facets(this.$el, groups().map(group => {
 			return _.cloneDeep(group);
 		}));
+		// Call customization hook
 		groups().forEach(group => {
 			this.injectHTML(group, this.facets.getGroup(group.key)._element);
 		});
@@ -62,7 +66,7 @@ export default Vue.extend({
 			component.$emit('histogram-mouse-enter', key, value);
 		});
 		this.facets.on('facet-histogram:mouseleave', (event: Event, key: string) => {
-			component.$emit('histogram-mouse-leave', key);
+			 component.$emit('histogram-mouse-leave', key);
 		});
 		this.facets.on('facet:mouseenter', (event: Event, key: string, value: number) => {
 			component.$emit('facet-mouse-enter', key, value);
@@ -76,40 +80,6 @@ export default Vue.extend({
 		});
 		this.facets.on('facet:click', (event: Event, key: string, value: string) => {
 			component.$emit('facet-click', key, value);
-		// 	// check that facet is filterable
-		// 	const groupSpec = <any>(_.find(groups(), group => group.key === key ));
-		// 	const facetSpec = _.find(groupSpec.facets, facet => facet.value ? facet.value === value : facet);
-
-		// 	if (!facetSpec.filterable) {
-		// 		// not filterable
-		// 		return;
-		// 	}
-		// 	// get group
-		// 	const group = component.facets.getGroup(key);
-		// 	// get facet
-		// 	const current = _.find(group.facets, facet => {
-		// 		if ((<CategoricalFacet>facet).value) {
-		// 			return (<CategoricalFacet>facet).value === value;
-		// 		}
-		// 		return false;
-		// 	});
-		// 	// toggle facet
-		// 	if (current._spec.selected) {
-		// 		current.deselect();
-		// 	} else {
-		// 		current.select({
-		// 			count: current.count
-		// 		});
-		// 	}
-		// 	// get all currently selected values
-		// 	const values = [];
-		// 	group.facets.forEach(facet => {
-		// 		if (facet._spec.selected) {
-		// 			// facet is selected
-		// 			values.push(facet.value);
-		// 		}
-		// 	});
-		// 	component.$emit('facet-toggle', key, values);
 		});
 	},
 
@@ -126,7 +96,9 @@ export default Vue.extend({
 			this.updateCollapsed(unchangedGroups);
 			// for the unchanged, update selection
 			this.updateSelections(unchangedGroups, prevMap);
+
 		},
+
 		highlights(currHighlights: Dictionary<any>) {
 			if (_.isEmpty(currHighlights)) {
 				(this.groups as Group[]).forEach(groupSpec => {
@@ -166,6 +138,7 @@ export default Vue.extend({
 				}
 			});
 		},
+
 		sort(currSort) {
 			this.facets.sort(currSort);
 		}
@@ -173,23 +146,16 @@ export default Vue.extend({
 
 	methods: {
 		injectHTML(group: Group, $elem: JQuery) {
+
 			$elem.click(() => {
 				this.$emit('click', group.key);
 			});
 
-			// inject type headers
-			if (this.typeChange) {
-				const $slot = $('<span/>');
-				$elem.find('.group-header').append($slot);
-				const menu = new TypeChangeMenu(
-					{
-						store: this.$store,
-						propsData: {
-							field: group.key
-						}
-					});
-				menu.$mount($slot[0]);
-			}
+			// inject type change header menus
+			this.injectTypeChangeHeaders(group, $elem);
+
+			// inject category toggle buttons
+			this.injectCategoryToggleButtons(group, $elem);
 
 			if (!this.html) {
 				return;
@@ -283,12 +249,14 @@ export default Vue.extend({
 
 		updateSelections(unchangedGroups, prevGroups) {
 			unchangedGroups.forEach(groupSpec => {
-				// get the existing facet
+				// get the existing facets from the Facet lib
 				const existing = this.facets.getGroup(groupSpec.key);
 				if (existing) {
+					// get the local facet specs
 					const currFacets = groupSpec.facets;
 					const prevFacets = prevGroups[groupSpec.key].facets;
 					existing.facets.forEach((facet, index) => {
+						// update the values in the Facet lib from the local specs if there's a delta
 						const currSelection = currFacets[index].selection || currFacets[index].selected;
 						const prevSelection = prevFacets[index].selection || prevFacets[index].selected;
 						if (_.isEqual(currSelection, prevSelection)) {
@@ -304,13 +272,91 @@ export default Vue.extend({
 					});
 				}
 			});
+		},
+
+		// inject type headers
+		injectTypeChangeHeaders(group: Group, $elem: JQuery) {
+			if (this.typeChange) {
+				const $slot = $('<span/>');
+				$elem.find('.group-header').append($slot);
+				const menu = new TypeChangeMenu(
+					{
+						store: this.$store,
+						propsData: {
+							field: group.key
+						}
+					});
+				menu.$mount($slot[0]);
+			}
+		},
+
+		// inject category filter buttons
+		injectCategoryToggleButtons(fgroup: Group, $elem: JQuery) {
+			if (!isCategoricalFacet(fgroup.facets[0])) {
+				return;
+			}
+
+			// find the facet nodes in the DOM
+			const $verticalFacets = $elem.find('.facets-facet-vertical');
+
+			// Add a clickable state button to each facet.
+			for (const facetElement of $verticalFacets) {
+
+				const $facet = $(facetElement).find('.facet-query-close');
+				const label = $facet.parent().find('.facet-label').text().trim();
+				const ffacet = (<CategoricalFacet[]>fgroup.facets).find(f => f.value === label);
+
+				// only add controls for filterable facets
+				if (!ffacet.filterable) {
+					continue;
+				}
+
+				// setup based on initial state
+				let $icon = null;
+				if (!ffacet.selected) {
+					$icon = $('<i class="fa fa-circle-o"></i>');
+				} else {
+					$icon = $('<i class="fa fa-circle"></i>');
+				}
+				$icon.appendTo($facet);
+
+				const key = fgroup.key;
+				const value = ffacet.value;
+
+				$icon.click(e => {
+					// get group and current facet
+					const group = this.facets.getGroup(key);
+					const current = <any>(<CategoricalFacet[]>group.facets).find(facet => facet.value === value);
+
+					// toggle facet
+					if (current._spec.selected) {
+						$icon.removeClass('fa-circle').addClass('fa-circle-o');
+						current.deselect();
+					} else {
+						$icon.removeClass('fa-circle-o').addClass('fa-circle');
+						current.select({ count: current.count });
+					}
+					// get all currently selected values
+					const values = group.facets.filter(f => f._spec.selected).map(f => f.value);
+
+					this.$emit('facet-toggle', key, values);
+				});
+
+				$icon.mouseenter(e => {
+					$icon.addClass('text-primary');
+				});
+
+				$icon.mouseleave(e => {
+					$icon.removeClass('text-primary');
+				});
+			}
 		}
 	},
 
 	destroyed: function() {
 		this.facets.destroy();
 		this.facets = null;
-	}
+	},
 });
 </script>
 
