@@ -93,28 +93,28 @@ export default Vue.extend({
 			return task.schemaName === 'regression';
 		},
 
-		correctFilter(): (dataItem: TargetRow) => boolean {
+		correctFilter(): (row: TargetRow) => boolean {
 			if (this.regressionEnabled) {
 				return this.regressionInRangeFilter;
 			}
 			return this.classificationMatchFilter;
 		},
 
-		correctDecorate(): (dataItem: TargetRow) => TargetRow {
+		correctDecorate(): (row: TargetRow) => TargetRow {
 			if (this.regressionEnabled) {
 				return this.regressionInRangeDecorate;
 			}
 			return this.classificationMatchDecorate;
 		},
 
-		incorrectFilter(): (dataItem: TargetRow) => boolean {
+		incorrectFilter(): (row: TargetRow) => boolean {
 			if (this.regressionEnabled) {
 				return this.regressionOutOfRangeFilter;
 			}
 			return this.classificationNoMatchFilter;
 		},
 
-		incorrectDecorate(): (dataItem: TargetRow) => TargetRow {
+		incorrectDecorate(): (row: TargetRow) => TargetRow {
 			if (this.regressionEnabled) {
 				return this.regressionOutOfRangeDecorate;
 			}
@@ -132,62 +132,62 @@ export default Vue.extend({
 		},
 
 		// Methods passed to classification result table instances to filter their displays.
-		classificationMatchFilter(dataItem: TargetRow): boolean {
-			return dataItem[getTargetCol(this.target)] === dataItem[getPredictedCol(this.target)];
+		classificationMatchFilter(row: TargetRow): boolean {
+			return row[getTargetCol(this.target)] === row[getPredictedCol(this.target)];
 		},
 
-		classificationNoMatchFilter(dataItem: TargetRow): boolean {
-			return dataItem[getTargetCol(this.target)] !== dataItem[getPredictedCol(this.target)];
+		classificationNoMatchFilter(row: TargetRow): boolean {
+			return row[getTargetCol(this.target)] !== row[getPredictedCol(this.target)];
 		},
 
 		// Methods passed to classification result table instance to update their row visuals post-filter
-		classificationMatchDecorate(dataItem: TargetRow): TargetRow {
-			dataItem._cellVariants = {
+		classificationMatchDecorate(row: TargetRow): TargetRow {
+			row._cellVariants = {
 				[getTargetCol(this.target)]: 'primary',
 				[getPredictedCol(this.target)]: 'success'
 			};
-			return dataItem;
+			return row;
 		},
 
-		classificationNoMatchDecorate(dataItem: TargetRow): TargetRow {
-			dataItem._cellVariants = {
+		classificationNoMatchDecorate(row: TargetRow): TargetRow {
+			row._cellVariants = {
 				[getTargetCol(this.target)]: 'primary',
 				[getPredictedCol(this.target)]: 'danger'
 			};
-			return dataItem;
+			return row;
 		},
 
 		// Methods passed to regression result table instances to filter their displays.
 
-		regressionInRangeFilter(dataItem: TargetRow): boolean {
+		regressionInRangeFilter(row: TargetRow): boolean {
 			// grab the residual threshold slider value and update
-			return Math.abs(dataItem[getErrorCol(this.target)]) <= _.toNumber(this.residualThreshold);
+			return Math.abs(row[getErrorCol(this.target)]) <= _.toNumber(this.residualThreshold);
 		},
 
-		regressionOutOfRangeFilter(dataItem: TargetRow): boolean {
-			return Math.abs(dataItem[getErrorCol(this.target)]) > _.toNumber(this.residualThreshold);
+		regressionOutOfRangeFilter(row: TargetRow): boolean {
+			return Math.abs(row[getErrorCol(this.target)]) > _.toNumber(this.residualThreshold);
 		},
 
 		// Methods passed to classification result table instance to update their row visuals post-filter
 
-		regressionInRangeDecorate(dataItem: TargetRow): TargetRow {
-			dataItem._cellVariants = {
+		regressionInRangeDecorate(row: TargetRow): TargetRow {
+			row._cellVariants = {
 				[getTargetCol(this.target)]: 'primary',
 				[getPredictedCol(this.target)]: 'success',
 				[getErrorCol(this.target)]: 'success'
 			};
-			return dataItem;
+			return row;
 		},
 
 		// Methods passed to classification result table instance to update their row visuals post-filter
 
-		regressionOutOfRangeDecorate(dataItem: TargetRow): TargetRow {
-			dataItem._cellVariants = {
+		regressionOutOfRangeDecorate(row: TargetRow): TargetRow {
+			row._cellVariants = {
 				[getTargetCol(this.target)]: 'primary',
 				[getPredictedCol(this.target)]: 'warning',
 				[getErrorCol(this.target)]: 'warning'
 			};
-			return dataItem;
+			return row;
 		}
 	}
 });

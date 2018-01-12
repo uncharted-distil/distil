@@ -48,8 +48,13 @@ export interface FieldInfo {
 	sortable: boolean
 }
 
-export interface TargetRow {
-	_cellVariants?: Dictionary<string>;
+export interface TableRow {
+	_key: number;
+	_rowVariant: string;
+}
+
+export interface TargetRow extends TableRow {
+	_cellVariants: Dictionary<string>;
 }
 
 export interface Highlights {

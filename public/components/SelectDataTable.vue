@@ -39,7 +39,7 @@ import { Dictionary } from '../util/dict';
 import { FieldInfo } from '../store/data/index';
 import { Filter } from '../util/filters';
 import { getters as routeGetters } from '../store/route/module';
-import { ValueHighlights } from '../store/data/index';
+import { ValueHighlights, TableRow } from '../store/data/index';
 import { updateTableHighlights, scrollToFirstHighlight } from '../util/highlights';
 import TypeChangeMenu from '../components/TypeChangeMenu';
 
@@ -50,6 +50,12 @@ export default Vue.extend({
 
 	components: {
 		TypeChangeMenu
+	},
+
+	data() {
+		return {
+			selectedRowKey: -1
+		};
 	},
 
 	computed: {
@@ -63,10 +69,30 @@ export default Vue.extend({
 			const data = dataGetters.getSelectedDataItems(this.$store);
 			const rangeHighlights = dataGetters.getHighlightedFeatureRanges(this.$store);
 			const valueHighlights = dataGetters.getHighlightedFeatureValues(this.$store);
-			updateTableHighlights(data, rangeHighlights, valueHighlights, SELECT_TABLE_HIGHLIGHT);
 
-			// On data / highlights change, scroll to first selected row
-			scrollToFirstHighlight(this, 'selectTable');
+			dataGetters.getSelectedDataItems(this.$store).forEach(f => f._rowVariant = null);
+
+			// if we have highlights defined and the select table is not the source then updated
+			// the highlight visuals.
+			if ((valueHighlights.context && valueHighlights.context !== SELECT_TABLE_HIGHLIGHT) ||
+				(rangeHighlights.context && rangeHighlights.context !== SELECT_TABLE_HIGHLIGHT)) {
+				updateTableHighlights(data, rangeHighlights, valueHighlights, SELECT_TABLE_HIGHLIGHT);
+
+				// On data / highlights change, scroll to first selected row
+				scrollToFirstHighlight(this, 'selectTable');
+			}
+
+			// apply the currently selected row highlight - if there were value or range highlights applied,
+			// then disable row selection
+			if (this.selectedRowKey >= 0 &&
+				valueHighlights.context === SELECT_TABLE_HIGHLIGHT ||
+				rangeHighlights.context === SELECT_TABLE_HIGHLIGHT) {
+				const toSelect = dataGetters.getSelectedDataItems(this.$store).find(r => r._key === this.selectedRowKey);
+				toSelect._rowVariant = 'primary';
+			} else {
+				this.selectedRowKey = -1;
+			}
+
 			return data;
 		},
 
@@ -104,17 +130,24 @@ export default Vue.extend({
 			});
 		},
 
-		onRowClick(item: Dictionary<any>) {
-			// clear existing highlights and trigger a table visuals update
+		onRowClick(row: TableRow) {
+			// clear out any highlights currently in the table and any app level highlights
 			mutations.clearFeatureHighlights(this.$store);
 
-			// set new values
-			const highlights = <ValueHighlights>{
-				context: SELECT_TABLE_HIGHLIGHT,
-				values: {}
-			};
-			_.forEach(this.fields, (field, key) => highlights.values[key] = item[key]);
-			mutations.highlightFeatureValues(this.$store, highlights);
+			if (row._key !== this.selectedRowKey) {
+				this.selectedRowKey = row._key;
+
+				// publish the highlight change
+				const highlights = <ValueHighlights> {
+					context: SELECT_TABLE_HIGHLIGHT,
+					values: {}
+				};
+				_.forEach(this.fields, (field, key) => highlights.values[key] = row[key]);
+				mutations.highlightFeatureValues(this.$store, highlights);
+			} else {
+				// clicked on same row - reset the selection key
+				this.selectedRowKey = -1;
+			}
 		}
 	}
 });
@@ -152,6 +185,7 @@ export default Vue.extend({
 .table-sm th, .table-sm td {
 	font-size: 0.9rem;
 }
+
 .var-type-button button:hover,
 .var-type-button button:active,
 .var-type-button button:focus,

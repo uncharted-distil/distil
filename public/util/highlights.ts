@@ -33,7 +33,7 @@ export function updateTableHighlights(
 					row._rowVariant = 'info';
 					return false;
 				} else {
-					row._rowVariant = false;
+					row._rowVariant = null;
 				}
 			});
 		});

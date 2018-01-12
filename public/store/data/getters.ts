@@ -1,5 +1,5 @@
 import _ from 'lodash';
-import { FieldInfo, Variable, Data, DataState, Datasets, VariableSummary, TargetRow, RangeHighlights, ValueHighlights } from './index';
+import { FieldInfo, Variable, Data, DataState, Datasets, VariableSummary, TargetRow, RangeHighlights, ValueHighlights, TableRow } from './index';
 import { Filter, EMPTY_FILTER } from '../../util/filters';
 import { TARGET_POSTFIX, PREDICTED_POSTFIX } from '../../util/data';
 import { Dictionary } from '../../util/dict';
@@ -180,16 +180,17 @@ export const getters = {
 		const resultData = state.resultData;
 		if (validateData(resultData)) {
 			// convert fetched result data rows into table data rows
-			return _.map(resultData.values, resultRow => {
-				const row: Dictionary<any> = {};
+			return _.map(resultData.values, (resultRow, rowIdx) => {
+				const row: TargetRow = <TargetRow>{};
 
 				for (const [idx, colValues] of resultRow.entries()) {
 					const colName = resultData.columns[idx];
 					row[colName] = colValues;
 				}
+				row._key = rowIdx;
 
 				// display predicted error info
-				return <TargetRow>row;
+				return row;
 			});
 		}
 		return <TargetRow[]>[];
@@ -243,17 +244,18 @@ export const getters = {
 		return state.selectedData;
 	},
 
-	getSelectedDataItems(state: DataState): Dictionary<any>[] {
+	getSelectedDataItems(state: DataState): TableRow[] {
 		if (validateData(state.selectedData)) {
-			return _.map(state.selectedData.values, d => {
-				const row: { [col: string]: any } = {};
+			return _.map(state.selectedData.values, (d, rowNum) => {
+				const row = <TableRow>{};
 				for (const [index, col] of state.selectedData.columns.entries()) {
 					row[col] = d[index];
 				}
+				row._key = rowNum; // unique key for a row to support lookups
 				return row;
 			});
 		}
-		return [];
+		return <TableRow[]>[];
 	},
 
 	getSelectedDataFields(state: DataState): Dictionary<FieldInfo> {
