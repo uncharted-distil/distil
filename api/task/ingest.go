@@ -28,15 +28,15 @@ type IngestTaskConfig struct {
 	MergedOutputPathRelative         string
 	MergedOutputSchemaPathRelative   string
 	SchemaPathRelative               string
-	RESTBaseEndpoint                 string
+	ClassificationRESTEndpoint       string
 	ClassificationFunctionName       string
 	ClassificationOutputPathRelative string
+	RankingRESTEndpoint              string
 	RankingFunctionName              string
 	RankingOutputPathRelative        string
 	DatabasePassword                 string
 	DatabaseUser                     string
 	Database                         string
-	DatabaseTable                    string
 	SummaryOutputPathRelative        string
 	ESEndpoint                       string
 	ESTimeout                        int
@@ -87,7 +87,7 @@ func Merge(index string, dataset string, config *IngestTaskConfig) error {
 // Classify uses the merged datafile and determines the data types of
 // every variable specified in the merged schema file.
 func Classify(index string, dataset string, config *IngestTaskConfig) error {
-	client := rest.NewClient(config.RESTBaseEndpoint)
+	client := rest.NewClient(config.ClassificationRESTEndpoint)
 
 	// create classifier
 	classifier := rest.NewClassifier(config.ClassificationFunctionName, client)
@@ -115,7 +115,7 @@ func Classify(index string, dataset string, config *IngestTaskConfig) error {
 // Rank the importance of the variables in the dataset.
 func Rank(index string, dataset string, config *IngestTaskConfig) error {
 	// create ranker
-	client := rest.NewClient(config.RESTBaseEndpoint)
+	client := rest.NewClient(config.RankingRESTEndpoint)
 	ranker := rest.NewRanker(config.RankingFunctionName, client)
 
 	// get the importance from the REST interface
@@ -205,8 +205,10 @@ func Ingest(index string, dataset string, config *IngestTaskConfig) error {
 		return errors.Wrap(err, "unable to initialize a new database")
 	}
 
+	dbTable := fmt.Sprintf("%s%s", config.ESDatasetPrefix, dataset)
+
 	// Drop the current table if requested.
-	pg.DropTable(config.DatabaseTable)
+	pg.DropTable(dbTable)
 
 	// Create the database table.
 	ds, err := pg.InitializeDataset(meta)
@@ -214,17 +216,17 @@ func Ingest(index string, dataset string, config *IngestTaskConfig) error {
 		return errors.Wrap(err, "unable to initialize a new dataset")
 	}
 
-	err = pg.InitializeTable(config.DatabaseTable, ds)
+	err = pg.InitializeTable(dbTable, ds)
 	if err != nil {
 		return errors.Wrap(err, "unable to initialize a table")
 	}
 
-	err = pg.StoreMetadata(config.DatabaseTable)
+	err = pg.StoreMetadata(dbTable)
 	if err != nil {
 		return errors.Wrap(err, "unable to store the metadata")
 	}
 
-	err = pg.CreateResultTable(config.DatabaseTable)
+	err = pg.CreateResultTable(dbTable)
 	if err != nil {
 		return errors.Wrap(err, "unable to create the result table")
 	}
@@ -239,7 +241,7 @@ func Ingest(index string, dataset string, config *IngestTaskConfig) error {
 	scanner := bufio.NewScanner(reader)
 	for scanner.Scan() {
 		line := scanner.Text()
-		err = pg.IngestRow(config.DatabaseTable, line)
+		err = pg.IngestRow(dbTable, line)
 		if err != nil {
 			return errors.Wrap(err, "unable to ingest row")
 		}

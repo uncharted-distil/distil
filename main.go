@@ -20,6 +20,7 @@ import (
 	"github.com/unchartedsoftware/distil/api/pipeline"
 	"github.com/unchartedsoftware/distil/api/postgres"
 	"github.com/unchartedsoftware/distil/api/routes"
+	"github.com/unchartedsoftware/distil/api/task"
 	"github.com/unchartedsoftware/distil/api/ws"
 )
 
@@ -91,6 +92,30 @@ func main() {
 	// instantiate the REST client for primitives.
 	restClient := rest.NewClient(config.PrimitiveEndPoint)
 
+	// build the ingest configuration.
+	ingestConfig := &task.IngestTaskConfig{
+		ContainerDataPath:                config.DataFolderPath,
+		DataPathRelative:                 config.DataFilePath,
+		DatasetFolderSuffix:              config.DatasetFolderSuffix,
+		HasHeader:                        true,
+		MergedOutputPathRelative:         config.MergedOutputDataPath,
+		MergedOutputSchemaPathRelative:   config.MergedOutputSchemaPath,
+		SchemaPathRelative:               config.SchemaPath,
+		ClassificationRESTEndpoint:       config.ClassificationEndpoint,
+		ClassificationFunctionName:       config.ClassificationFunctionName,
+		ClassificationOutputPathRelative: config.ClassificationOutputPath,
+		RankingRESTEndpoint:              config.RankingEndpoint,
+		RankingFunctionName:              config.RankingFunctionName,
+		RankingOutputPathRelative:        config.RankingOutputPath,
+		DatabasePassword:                 config.PostgresPassword,
+		DatabaseUser:                     config.PostgresUser,
+		Database:                         config.PostgresDatabase,
+		SummaryOutputPathRelative:        config.SummaryPath,
+		ESEndpoint:                       config.ElasticEndpoint,
+		ESTimeout:                        config.ElasticTimeout,
+		ESDatasetPrefix:                  config.ElasticDatasetPrefix,
+	}
+
 	// register routes
 	mux := goji.NewMux()
 	mux.Use(middleware.Log)
@@ -107,6 +132,7 @@ func main() {
 	registerRoute(mux, "/distil/ranking/:index/:dataset/:target", routes.RankingHandler(pgDataStorageCtor, restClient, config.PipelineDataDir))
 	registerRoute(mux, "/distil/session/:session", routes.SessionHandler(pgPipelineStorageCtor))
 	registerRoute(mux, "/distil/abort", routes.AbortHandler())
+	registerRoute(mux, "/distil/ingest/:index/:dataset", routes.IngestHandler(ingestConfig))
 	registerRoute(mux, "/distil/export/:session/:pipeline-id", routes.ExportHandler(pipelineClient, config.ExportPath))
 
 	registerRoute(mux, "/ws", ws.PipelineHandler(pipelineClient, metadataStorageCtor, pgDataStorageCtor, pgPipelineStorageCtor))
