@@ -30,6 +30,7 @@ import { getters as dataGetters, actions as dataActions } from '../store/data/mo
 import { getters as routeGetters } from '../store/route/module';
 import { actions as pipelineActions, getters as pipelineGetters } from '../store/pipelines/module';
 import { Variable, VariableSummary } from '../store/data/index';
+import { Dictionary } from '../util/dict';
 import Vue from 'vue';
 
 export default Vue.extend({
@@ -57,11 +58,7 @@ export default Vue.extend({
 		},
 		summaries(): VariableSummary[] {
 			if (this.excludeNonTraining) {
-				const trainingMap = {};
-				this.training.forEach(t => {
-					trainingMap[t] = true;
-				});
-				return dataGetters.getVariableSummaries(this.$store).filter(summary => trainingMap[summary.name]);
+				return dataGetters.getVariableSummaries(this.$store).filter(summary => this.training[summary.name]);
 			}
 			return dataGetters.getVariableSummaries(this.$store);
 		},
@@ -71,8 +68,13 @@ export default Vue.extend({
 		requestIds(): string[] {
 			return getRequestIdsForDatasetAndTarget(this.$store.state.pipelineModule, this.dataset, this.target);
 		},
-		training(): string[] {
-			return getTrainingVariablesForPipelineId(this.$store.state.pipelineModule, this.pipelineId);
+		training(): Dictionary<boolean> {
+			const training = getTrainingVariablesForPipelineId(this.$store.state.pipelineModule, this.pipelineId);
+			const trainingMap = {};
+			training.forEach(t => {
+				trainingMap[t] = true;
+			});
+			return trainingMap;
 		},
 		pipelineId(): string {
 			return routeGetters.getRoutePipelineId(this.$store);

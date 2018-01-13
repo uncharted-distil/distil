@@ -170,10 +170,12 @@ export default Vue.extend({
 		},
 
 		click() {
-			const routeEntry = overlayRouteEntry(this.$route, {
-				pipelineId: this.results().pipelineId
-			});
-			this.$router.push(routeEntry);
+			if (this.results()) {
+				const routeEntry = overlayRouteEntry(this.$route, {
+					pipelineId: this.results().pipelineId
+				});
+				this.$router.push(routeEntry);
+			}
 		},
 
 		results(): VariableSummary {
