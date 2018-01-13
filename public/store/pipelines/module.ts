@@ -25,14 +25,11 @@ export const getters = {
 export const actions = {
 	startPipelineSession: dispatch(moduleActions.startPipelineSession),
 	endPipelineSession: dispatch(moduleActions.endPipelineSession),
-	getSessionSummary: dispatch(moduleActions.getSessionSummary),
+	fetchPipelines: dispatch(moduleActions.fetchPipelines),
 	createPipelines: dispatch(moduleActions.createPipelines),
 }
 
 export const mutations = {
 	setPipelineSessionID: commit(moduleMutations.setPipelineSessionID),
-	addRunningPipeline: commit(moduleMutations.addRunningPipeline),
-	removeRunningPipeline: commit(moduleMutations.removeRunningPipeline),
-	addCompletedPipeline: commit(moduleMutations.addCompletedPipeline),
-	removeCompletedPipeline: commit(moduleMutations.removeCompletedPipeline)
+	updatePipelineRequest: commit(moduleMutations.updatePipelineRequest)
 }

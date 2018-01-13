@@ -43,7 +43,7 @@ import ResultFacets from '../components/ResultFacets.vue';
 import Facets from '../components/Facets.vue';
 import { createGroups, Group } from '../util/facets';
 import { overlayRouteEntry } from '../util/routes';
-import { getPipelineResult, getRequestIdsForDatasetAndTarget } from '../util/pipelines';
+import { getPipelineById } from '../util/pipelines';
 import { getTask } from '../util/pipelines';
 import { getErrorCol, isTarget, getVarFromTarget } from '../util/data';
 import { getters as dataGetters} from '../store/data/module';
@@ -173,8 +173,7 @@ export default Vue.extend({
 
 		activePipelineName(): string {
 			const pipelineId = routeGetters.getRoutePipelineId(this.$store);
-			const requestIds = getRequestIdsForDatasetAndTarget(this.$store.state.pipelineModule, this.dataset, this.target);
-			const result = getPipelineResult(this.$store.state.pipelineModule, requestIds, pipelineId);
+			const result = getPipelineById(this.$store.state.pipelineModule, pipelineId);
 			return result ? result.name : '';
 		}
 	},
@@ -214,8 +213,7 @@ export default Vue.extend({
 		onExport() {
 			this.$router.replace('/');
 			const pipelineId = routeGetters.getRoutePipelineId(this.$store);
-			const requestIds = getRequestIdsForDatasetAndTarget(this.$store.state.pipelineModule, this.dataset, this.target);
-			const result = getPipelineResult(this.$store.state.pipelineModule, requestIds, pipelineId);
+			const result = getPipelineById(this.$store.state.pipelineModule, pipelineId);
 			actions.exportPipeline(this.$store, {
 				pipelineId: result.pipelineId,
 				sessionId: this.$store.state.session.id

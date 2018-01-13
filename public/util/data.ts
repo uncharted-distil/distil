@@ -1,7 +1,7 @@
 import _ from 'lodash';
 import { DataState, Datasets, VariableSummary } from '../store/data/index';
 import { Extrema, TargetRow, FieldInfo } from '../store/data/index';
-import { PipelineInfo } from '../store/pipelines/index';
+import { PipelineInfo, PIPELINE_UPDATED, PIPELINE_COMPLETED } from '../store/pipelines/index';
 import { DistilState } from '../store/store';
 import { Dictionary } from './dict';
 import { ActionContext } from 'vuex';
@@ -144,32 +144,33 @@ export function updateSummaries(summary: VariableSummary, summaries: VariableSum
 	}
 }
 
-export function getSummaries(context: DataContext, endpoint: string, results: PipelineInfo[], nameFunc: (PipelineInfo) => string,
+export function getSummaries(context: DataContext, endpoint: string, pipelines: PipelineInfo[], nameFunc: (PipelineInfo) => string,
 	setFunction: (DataContext, VariableSummary) => void, updateFunction: (DataContext, VariableSummary) => void) {
 	// save a placeholder histogram
-	const pendingHistograms = _.map(results, r => {
+	const pendingHistograms = _.map(pipelines, pipeline => {
 		return {
-			name: nameFunc(r),
+			name: nameFunc(pipeline),
 			feature: '',
 			pending: true,
 			buckets: [],
 			extrema: {} as any,
-			pipelineId: r.pipelineId,
+			pipelineId: pipeline.pipelineId,
 			resultId: ''
 		};
 	});
 	setFunction(context, pendingHistograms);
 
 	// fetch the results for each pipeline
-	for (var result of results) {
-		if (!result.pipeline) {
+	pipelines.forEach(pipeline => {
+		if (pipeline.progress !== PIPELINE_UPDATED &&
+			pipeline.progress !== PIPELINE_COMPLETED) {
 			// skip
-			continue;
+			return;
 		}
-		const name = nameFunc(result);
-		const feature = result.feature;
-		const pipelineId = result.pipelineId;
-		const resultId = result.pipeline.resultId;
+		const name = nameFunc(pipeline);
+		const feature = pipeline.feature;
+		const pipelineId = pipeline.pipelineId;
+		const resultId = pipeline.resultId;
 		axios.get(`${endpoint}/${resultId}`)
 			.then(response => {
 				// save the histogram data
@@ -209,5 +210,5 @@ export function getSummaries(context: DataContext, endpoint: string, results: Pi
 				]);
 				return;
 			});
-	}
+	});
 }

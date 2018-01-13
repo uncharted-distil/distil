@@ -1,7 +1,7 @@
 import _ from 'lodash';
 import axios from 'axios';
 import moment from 'moment';
-import { PipelineState, Score } from './index';
+import { PipelineState, PipelineFeature, Score } from './index';
 import { ActionContext } from 'vuex';
 import { DistilState } from '../store';
 import { mutations } from './module';
@@ -11,17 +11,11 @@ import { FilterParams } from '../../util/filters';
 const ES_INDEX = 'datasets';
 const CREATE_PIPELINES_MSG = 'CREATE_PIPELINES';
 const STREAM_CLOSE = 'STREAM_CLOSE';
-const PIPELINE_COMPLETE = 'COMPLETED';
 const FEATURE_TYPE_TARGET = 'target';
 
 function createResultName(dataset: string, timestamp: number, targetFeature: string) {
 	const t = moment(timestamp);
 	return `${dataset}: ${targetFeature} at ${t.format('MMMM Do YYYY, h:mm:ss.SS a')}`;
-}
-
-interface Feature {
-	featureName: string;
-	featureType: string;
 }
 
 interface Result {
@@ -36,7 +30,7 @@ interface Result {
 interface PipelineResponse {
 	requestId: string;
 	dataset: string;
-	features: Feature[];
+	features: PipelineFeature[];
 	filters: FilterParams;
 	results: Result[];
 }
@@ -89,7 +83,7 @@ export const actions = {
 			});
 	},
 
-	getSessionSummary(context: AppContext, args: { sessionId: string }) {
+	fetchPipelines(context: AppContext, args: { sessionId: string }) {
 		if (!args.sessionId) {
 			console.warn('Missing session id');
 			return;
@@ -100,6 +94,7 @@ export const actions = {
 				if (response.data.pipelines) {
 					const pipelineResponse = response.data.pipelines as PipelineResponse[];
 					pipelineResponse.forEach(pipeline => {
+
 						// determine the target feature for this request
 						let targetFeature = '';
 						pipeline.features.forEach((feature) => {
@@ -108,30 +103,31 @@ export const actions = {
 							}
 						});
 
-						pipeline.results.forEach((res) => {
-							// inject the name and pipeline id
-							const name = createResultName(pipeline.dataset, res.createdTime, targetFeature);
-							res.name = name;
+						// for each result
+						pipeline.results.forEach(result => {
 
-							// add/update the running pipeline info
-							if (res.progress === PIPELINE_COMPLETE) {
-								// add the pipeline to complete
-								mutations.addCompletedPipeline(context, {
-									name: res.name,
-									feature: targetFeature,
-									timestamp: res.createdTime,
-									progress: res.progress,
-									requestId: pipeline.requestId,
-									dataset: pipeline.dataset,
-									pipelineId: res.pipelineId,
-									pipeline: {
-										resultId: res.resultId,
-										output: '',
-										scores: res.scores
-									},
-									filters: pipeline.filters
-								});
-							}
+							// inject the name and pipeline id
+							result.name = createResultName(
+								pipeline.dataset,
+								result.createdTime,
+								targetFeature);
+
+							// update pipeline
+							mutations.updatePipelineRequest(context, {
+								filters: pipeline.filters,
+								features: pipeline.features,
+								requestId: pipeline.requestId,
+								dataset: pipeline.dataset,
+								name: result.name,
+								feature: targetFeature,
+								timestamp: result.createdTime,
+								progress: result.progress,
+								pipelineId: result.pipelineId,
+								resultId: result.resultId,
+								scores: result.scores,
+								output: ''
+							});
+
 						});
 					});
 				}
@@ -165,9 +161,6 @@ export const actions = {
 				res.name = name;
 				res.feature = request.feature;
 
-				// add/update the running pipeline info
-				mutations.addRunningPipeline(context, res);
-
 				// update summaries
 				context.dispatch('getResultsSummaries', {
 					dataset: request.dataset,
@@ -177,30 +170,15 @@ export const actions = {
 					dataset: request.dataset,
 					requestIds: [ res.requestId ]
 				});
+				// update pipeline status
+				context.dispatch('fetchPipelines', {
+					sessionId: request.sessionId
+				});
 
 				// resolve promise on first response
 				if (!receivedFirstResponse) {
 					receivedFirstResponse = true;
 					resolve(res);
-				}
-
-				if (res.progress === PIPELINE_COMPLETE) {
-					// move the pipeline from running to complete
-					mutations.removeRunningPipeline(context, {
-						pipelineId: res.pipelineId,
-						requestId: res.requestId
-					});
-					mutations.addCompletedPipeline(context, {
-						name: res.name,
-						feature: request.feature,
-						progress: res.progress,
-						timestamp: res.createdTime,
-						requestId: res.requestId,
-						dataset: res.dataset,
-						pipelineId: res.pipelineId,
-						pipeline: res.pipeline,
-						filters: res.filters,
-					});
 				}
 			});
 

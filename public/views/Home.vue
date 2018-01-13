@@ -22,7 +22,6 @@
 import FlowBar from '../components/FlowBar';
 import RecentDatasets from '../components/RecentDatasets';
 import RecentPipelines from '../components/RecentPipelines';
-import RunningPipelines from '../components/RunningPipelines';
 import SearchBar from '../components/SearchBar';
 import { gotoSearch } from '../util/nav';
 import { getters } from '../store/app/module';
@@ -35,7 +34,6 @@ export default Vue.extend({
 		FlowBar,
 		RecentDatasets,
 		RecentPipelines,
-		RunningPipelines,
 		SearchBar
 	},
 	computed: {

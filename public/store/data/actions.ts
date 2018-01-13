@@ -1,7 +1,7 @@
 import _ from 'lodash';
 import axios from 'axios';
 import { encodeQueryParams, Filter } from '../../util/filters';
-import { getPipelineResultsOkay } from '../../util/pipelines';
+import { getPipelinesByRequestIds } from '../../util/pipelines';
 import { getSummaries } from '../../util/data';
 import { Variable, Data } from './index';
 import { PipelineInfo } from '../pipelines/index';
@@ -152,7 +152,7 @@ export const actions = {
 
 	// fetches result summaries for a given pipeline create request
 	getResultsSummaries(context: DataContext, args: { dataset: string, requestIds: string[] }) {
-		const results = getPipelineResultsOkay(context.rootState.pipelineModule, args.requestIds);
+		const results = getPipelinesByRequestIds(context.rootState.pipelineModule, args.requestIds);
 		const endPoint = `/distil/results-summary/${ES_INDEX}/${args.dataset}`
 		const nameFunc = (p: PipelineInfo) => getPredictedFacetKey(p.feature);
 		getSummaries(context, endPoint, results, nameFunc, mutations.setResultsSummaries, mutations.updateResultsSummaries);
@@ -160,7 +160,7 @@ export const actions = {
 
 	// fetches result summaries for a given pipeline create request
 	getResidualsSummaries(context: DataContext, args: { dataset: string, requestIds: string[] }) {
-		const results = getPipelineResultsOkay(context.rootState.pipelineModule, args.requestIds);
+		const results = getPipelinesByRequestIds(context.rootState.pipelineModule, args.requestIds);
 		const endPoint = `/distil/residuals-summary/${ES_INDEX}/${args.dataset}`
 		const nameFunc = (p: PipelineInfo) => getErrorFacetKey(p.feature);
 		getSummaries(context, endPoint, results, nameFunc, mutations.setResidualsSummaries, mutations.updateResidualsSummaries);

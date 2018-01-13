@@ -111,9 +111,7 @@ export default Vue.extend({
 				const entry = createRouteEntry('/results', {
 					terms: routeGetters.getRouteTerms(this.$store),
 					dataset: routeGetters.getRouteDataset(this.$store),
-					filters: routeGetters.getRouteFilters(this.$store),
 					target: routeGetters.getRouteTargetVariable(this.$store),
-					training: routeGetters.getRouteTrainingVariables(this.$store),
 					pipelineId: res.pipelineId
 				});
 				this.$router.push(entry);

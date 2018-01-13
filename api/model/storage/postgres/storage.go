@@ -233,6 +233,14 @@ func (s *Storage) parseResultMetadata(rows *pgx.Rows) ([]*model.Result, error) {
 		})
 	}
 
+	for _, result := range results {
+		features, err := s.FetchRequestFeatures(result.RequestID)
+		if err != nil {
+			return nil, err
+		}
+		result.Features = features
+	}
+
 	return results, nil
 }
 

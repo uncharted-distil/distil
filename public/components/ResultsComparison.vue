@@ -27,10 +27,9 @@ import { getters as dataGetters} from '../store/data/module';
 import { getters as routeGetters} from '../store/route/module';
 import { actions } from '../store/data/module';
 import { getTargetCol, getPredictedCol, getErrorCol } from '../util/data';
-import { getRequestIdsForDatasetAndTarget } from '../util/pipelines';
 import { PipelineInfo } from '../store/pipelines/index';
 import { Variable, TargetRow } from '../store/data/index';
-import { getPipelineResult } from '../util/pipelines';
+import { getPipelineById } from '../util/pipelines';
 
 export default Vue.extend({
 	name: 'results-comparison',
@@ -57,9 +56,8 @@ export default Vue.extend({
 
 	computed: {
 		result(): PipelineInfo {
-			const requestIds = getRequestIdsForDatasetAndTarget(this.$store.state.pipelineModule, this.dataset, this.target);
 			const pipelineId = routeGetters.getRoutePipelineId(this.$store);
-			return getPipelineResult(this.$store.state.pipelineModule, requestIds, pipelineId);
+			return getPipelineById(this.$store.state.pipelineModule, pipelineId);
 		},
 
 		dataset(): string {

@@ -25,7 +25,7 @@ import ResultsComparison from '../components/ResultsComparison.vue';
 import VariableSummaries from '../components/VariableSummaries.vue';
 import ResultSummaries from '../components/ResultSummaries.vue';
 import { gotoSelect } from '../util/nav';
-import { getRequestIdsForDatasetAndTarget } from '../util/pipelines';
+import { getRequestIdsForDatasetAndTarget, getTrainingVariablesForPipelineId } from '../util/pipelines';
 import { getters as dataGetters, actions as dataActions } from '../store/data/module';
 import { getters as routeGetters } from '../store/route/module';
 import { actions as pipelineActions, getters as pipelineGetters } from '../store/pipelines/module';
@@ -57,7 +57,11 @@ export default Vue.extend({
 		},
 		summaries(): VariableSummary[] {
 			if (this.excludeNonTraining) {
-				return dataGetters.getTrainingVariableSummaries(this.$store);
+				const trainingMap = {};
+				this.training.forEach(t => {
+					trainingMap[t] = true;
+				});
+				return dataGetters.getVariableSummaries(this.$store).filter(summary => trainingMap[summary.name]);
 			}
 			return dataGetters.getVariableSummaries(this.$store);
 		},
@@ -66,6 +70,12 @@ export default Vue.extend({
 		},
 		requestIds(): string[] {
 			return getRequestIdsForDatasetAndTarget(this.$store.state.pipelineModule, this.dataset, this.target);
+		},
+		training(): string[] {
+			return getTrainingVariablesForPipelineId(this.$store.state.pipelineModule, this.pipelineId);
+		},
+		pipelineId(): string {
+			return routeGetters.getRoutePipelineId(this.$store);
 		},
 		sessionId(): string {
 			return pipelineGetters.getPipelineSessionID(this.$store);
@@ -94,7 +104,7 @@ export default Vue.extend({
 					dataActions.getVariables(this.$store, {
 						dataset: this.dataset
 					}),
-					pipelineActions.getSessionSummary(this.$store, {
+					pipelineActions.fetchPipelines(this.$store, {
 						sessionId: this.sessionId
 					})
 				])
