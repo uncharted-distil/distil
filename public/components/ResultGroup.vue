@@ -121,46 +121,50 @@ export default Vue.extend({
 	methods: {
 		onResultHistogramClick(key: string, value: any) {
 			dataMutations.clearFeatureHighlights(this.$store);
-
-			// extract the var name from the key
-			const varName = getPredictedColFromFacetKey(key);
-			dataMutations.highlightFeatureRange(this.$store, {
-				context: RESULT_GROUP_HIGHLIGHTS,
-				ranges: {
-					[varName]: {
-						from: _.toNumber(value.label[0]),
-						to: _.toNumber(value.toLabel[value.toLabel.length-1])
+			if (key && value) {
+				// extract the var name from the key
+				const varName = getPredictedColFromFacetKey(key);
+				dataMutations.highlightFeatureRange(this.$store, {
+					context: RESULT_GROUP_HIGHLIGHTS,
+					ranges: {
+						[varName]: {
+							from: _.toNumber(value.label[0]),
+							to: _.toNumber(value.toLabel[value.toLabel.length-1])
+						}
 					}
-				}
-			});
+				});
+			}
 		},
 
 		onResidualsHistogramClick(key: string, value: any) {
 			dataMutations.clearFeatureHighlights(this.$store);
-
-			// convert the residual histogram key name into the proper variable ID
-			const varName =getErrorColFromFacetKey(key);
-			dataMutations.highlightFeatureRange(this.$store, {
-				context: RESULT_GROUP_HIGHLIGHTS,
-				ranges: {
-					[varName]: {
-						from: _.toNumber(value.label[0]),
-						to: _.toNumber(value.toLabel[value.toLabel.length-1])
+			if (key && value) {
+				// convert the residual histogram key name into the proper variable ID
+				const varName = getErrorColFromFacetKey(key);
+				dataMutations.highlightFeatureRange(this.$store, {
+					context: RESULT_GROUP_HIGHLIGHTS,
+					ranges: {
+						[varName]: {
+							from: _.toNumber(value.label[0]),
+							to: _.toNumber(value.toLabel[value.toLabel.length-1])
+						}
 					}
-				}
-			});
+				});
+			}
 		},
 
 		onResultFacetClick(key: string, value: any) {
 			dataMutations.clearFeatureHighlights(this.$store);
-			// extract the var name from the key
-			const varName = getPredictedColFromFacetKey(key);
-			dataMutations.highlightFeatureValues(this.$store, {
-				context: RESULT_GROUP_HIGHLIGHTS,
-				values: {
-					[varName]: value
-				}
-			});
+			if (key && value) {
+				// extract the var name from the key
+				const varName = getPredictedColFromFacetKey(key);
+				dataMutations.highlightFeatureValues(this.$store, {
+					context: RESULT_GROUP_HIGHLIGHTS,
+					values: {
+						[varName]: value
+					}
+				});
+			}
 		},
 
 		resultFacetMouseLeave(key: string) {
@@ -240,8 +244,8 @@ export default Vue.extend({
 .result-group-selected {
 	padding:9px;
 	border-style: solid;
-	border-color: #03c6e1;
-	box-shadow: 0 0 10px #03c6e1;
+	border-color: #007bff;
+	box-shadow: 0 0 10px #007bff;
 	border-width: 1px;
 	border-radius: 2px;
 	padding-bottom: 10px;
@@ -278,6 +282,10 @@ export default Vue.extend({
 
 .residual-container .facets-facet-horizontal .facet-histogram-bar-highlighted:hover {
 	fill: #662424;
+}
+
+.residual-container .facets-facet-horizontal .facet-histogram-bar-highlighted.select-highlight {
+	fill: #007bff;
 }
 
 .residual-container .facets-facet-vertical .facet-bar-selected {

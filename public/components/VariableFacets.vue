@@ -121,7 +121,7 @@ export default Vue.extend({
 			groups = this.updateGroupCollapses(groups);
 
 			// update selections
-			return this.updateGroupSelections(groups);
+			return this.updateGroupFilters(groups);
 		},
 
 		highlights(): Dictionary<any> {
@@ -221,32 +221,36 @@ export default Vue.extend({
 		},
 
 		onHistogramClick(key: string, value: any) {
-			// // clear exiting highlights
+			// on histogram click event, publish the highlight/clear highlight to the
+			// rest of the app
 			dataMutations.clearFeatureHighlights(this.$store);
-
-			// extract the var name from the key
-			dataMutations.highlightFeatureRange(this.$store, {
-				context: VARIABLE_FACET_HIGHLIGHTS,
-				ranges: {
-					[key]: {
-						from: _.toNumber(value.label[0]),
-						to: _.toNumber(value.toLabel[value.toLabel.length-1])
+			if (key && value) {
+				// extract the var name from the key
+				dataMutations.highlightFeatureRange(this.$store, {
+					context: VARIABLE_FACET_HIGHLIGHTS,
+					ranges: {
+						[key]: {
+							from: _.toNumber(value.label[0]),
+							to: _.toNumber(value.toLabel[value.toLabel.length-1])
+						}
 					}
-				}
-			});
+				});
+			}
 		},
 
 		onFacetClick(key: string, value: any) {
-			// clear exiting highlights
+			// clear existing highlights
 			dataMutations.clearFeatureHighlights(this.$store);
 
-			// extract the var name from the key
-			dataMutations.highlightFeatureValues(this.$store, {
-				context: VARIABLE_FACET_HIGHLIGHTS,
-				values: {
-					[key]: value
-				}
-			});
+			if (key && value) {
+				// extract the var name from the key
+				dataMutations.highlightFeatureValues(this.$store, {
+					context: VARIABLE_FACET_HIGHLIGHTS,
+					values: {
+						[key]: value
+					}
+				});
+			}
 		},
 
 		// sets all facet groups to the active state - full size display + all controls, updates
@@ -298,7 +302,7 @@ export default Vue.extend({
 
 		// updates numerical facet range controls or categorical selected state based on
 		// route
-		updateGroupSelections(groups): Group[] {
+		updateGroupFilters(groups): Group[] {
 			const filters = routeGetters.getRouteFilters(this.$store);
 			const decoded = decodeFiltersDictionary(filters);
 			return groups.map(group => {

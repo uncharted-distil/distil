@@ -179,32 +179,34 @@ export default Vue.extend({
 	methods: {
 		onHistogramClick(key: string, value: any) {
 			dataMutations.clearFeatureHighlights(this.$store);
-
-			// extract the var name from the key
-			const varName = getTargetColFromFacetKey(key);
-			dataMutations.highlightFeatureRange(this.$store, {
-				context: RESULT_SUMMARY_CONTEXT,
-				ranges: {
-					[varName]: {
-						from: _.toNumber(value.label[0]),
-						to: _.toNumber(value.toLabel[value.toLabel.length-1])
+			if (key && value) {
+				// extract the var name from the key
+				const varName = getTargetColFromFacetKey(key);
+				dataMutations.highlightFeatureRange(this.$store, {
+					context: RESULT_SUMMARY_CONTEXT,
+					ranges: {
+						[varName]: {
+							from: _.toNumber(value.label[0]),
+							to: _.toNumber(value.toLabel[value.toLabel.length-1])
+						}
 					}
-				}
-			});
+				});
+			}
 		},
 
 		onFacetClick(key: string, value: any) {
 			// clear exiting highlights
 			dataMutations.clearFeatureHighlights(this.$store);
-
-			// extract the var name from the key
-			const varName = getTargetColFromFacetKey(key);
-			dataMutations.highlightFeatureValues(this.$store, {
-				context: RESULT_SUMMARY_CONTEXT,
-				values: {
-					[varName]: value
-				}
-			});
+			if (key && value) {
+				// extract the var name from the key
+				const varName = getTargetColFromFacetKey(key);
+				dataMutations.highlightFeatureValues(this.$store, {
+					context: RESULT_SUMMARY_CONTEXT,
+					values: {
+						[varName]: value
+					}
+				});
+			}
 		},
 
 		updateThreshold(value: number) {
@@ -264,6 +266,10 @@ export default Vue.extend({
 	fill: #007E33;
 }
 
+.result-summaries-target .facets-facet-horizontal .facet-histogram-bar-highlighted.select-highlight {
+	fill: #007bff;
+}
+
 .result-summaries-target .facets-facet-vertical .facet-bar-selected {
 	box-shadow: inset 0 0 0 1000px #00C851;
 }
@@ -298,6 +304,10 @@ export default Vue.extend({
 .result-summaries-slider .vue-slider-component .vue-slider-tooltip {
 	border: 1px solid #00C851;
 	background-color: #00C851;
+}
+
+.facets-facet-vertical.select-highlight .facet-bar-selected {
+	box-shadow: inset 0 0 0 1000px #007bff;
 }
 
 .check-message-container {
