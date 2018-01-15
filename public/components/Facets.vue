@@ -18,7 +18,7 @@ export default Vue.extend({
 
 	props: {
 		groups: Array,
-		highlights: Object,
+		highlights: Object, // Dictionary<any>
 		typeChange: Boolean,
 		html: [ String, Object, Function ],
 		sort: {
@@ -172,8 +172,6 @@ export default Vue.extend({
 			const unchangedGroups = this.updateGroups(currGroups, prevMap);
 			// for the unchanged, update collapse state
 			this.updateCollapsed(unchangedGroups);
-			// for the unchanged, update selection
-			this.updateSelections(unchangedGroups, prevMap);
 
 		},
 
@@ -293,6 +291,13 @@ export default Vue.extend({
 					}
 					// replace group if it is existing
 					this.facets.replaceGroup(_.cloneDeep(group));
+					// init the internal categorical facet filter state from the supplied facet
+					// spec
+					group.facets.forEach(facetSpec => {
+						if (isCategoricalFacet(facetSpec) && !facetSpec.selected) {
+							this.facetFilteredValues.set(group.key, facetSpec.value);
+						}
+					});
 					this.injectHTML(group, this.facets.getGroup(group.key)._element);
 				} else {
 					// add to appends
@@ -308,8 +313,15 @@ export default Vue.extend({
 			if (toAdd.length > 0) {
 				// append groups
 				this.facets.append(toAdd);
-				toAdd.forEach(group => {
-					this.injectHTML(group, this.facets.getGroup(group.key)._element);
+				toAdd.forEach(groupSpec => {
+					// init the internal categorical facet filter state from the supplied facet
+					// spec
+					groupSpec.facets.forEach(facetSpec => {
+						if (isCategoricalFacet(facetSpec) && !facetSpec.selected) {
+							this.facetFilteredValues.set(groupSpec.key, facetSpec.value);
+						}
+					});
+					this.injectHTML(groupSpec, this.facets.getGroup(groupSpec.key)._element);
 				});
 			}
 			// sort alphabetically
@@ -329,33 +341,6 @@ export default Vue.extend({
 				}
 			});
 		},
-
-		updateSelections(unchangedGroups, prevGroups) {
-		// 	unchangedGroups.forEach(groupSpec => {
-		// 		// get the existing facets from the Facet lib
-		// 		const existing = this.facets.getGroup(groupSpec.key);
-		// 		if (existing) {
-		// 			// get the local facet specs
-		// 			const currFacets = groupSpec.facets;
-		// 			const prevFacets = prevGroups[groupSpec.key].facets;
-		// 			existing.facets.forEach((facet, index) => {
-		// 				// update the values in the Facet lib from the local specs if there's a delta
-		// 				const currSelection = currFacets[index].selection || currFacets[index].selected;
-		// 				const prevSelection = prevFacets[index].selection || prevFacets[index].selected;
-		// 				if (_.isEqual(currSelection, prevSelection)) {
-		// 					// selection is the same, no need to change
-		// 					return;
-		// 				}
-		// 				if (currSelection) {
-		// 					const facetSpec = currFacets[index];
-		// 					facet.select(facetSpec.selected ? facetSpec.selected : facetSpec);
-		// 				} else {
-		// 					facet.deselect();
-		// 				}
-		// 			});
-		// 		}
-		// 	});
-		// },
 
 		// inject type headers
 		injectTypeChangeHeaders(group: Group, $elem: JQuery) {
@@ -400,9 +385,9 @@ export default Vue.extend({
 
 				let $icon = null;
 				if (this.facetFilteredValues.has(key, value)) {
-					$icon = $('<i class="fa fa-circle-o"></i>');
+					$icon = $(`<i id=${key}-${value} class="fa fa-circle-o"></i>`);
 				} else {
-					$icon = $('<i class="fa fa-circle"></i>');
+					$icon = $(`<i id=${key}-${value} class="fa fa-circle"></i>`);
 				}
 				$icon.appendTo($facet);
 
