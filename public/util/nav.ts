@@ -37,8 +37,6 @@ export function gotoResults(store: Store<any>, router: VueRouter) {
 	gotoView(store, router, '/results', {
 		terms: routeGetters.getRouteTerms(store),
 		dataset: routeGetters.getRouteDataset(store),
-		filters: routeGetters.getRouteFilters(store),
-		target: routeGetters.getRouteTargetVariable(store),
-		training: routeGetters.getRouteTrainingVariables(store),
+		target: routeGetters.getRouteTargetVariable(store)
 	});
 }

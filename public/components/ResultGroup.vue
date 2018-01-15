@@ -44,7 +44,7 @@ import { Dictionary } from '../util/dict';
 import { overlayRouteEntry } from '../util/routes';
 import { getters } from '../store/data/module';
 import { getters as routeGetters } from '../store/route/module';
-import { getters as pipelineGetters } from '../store/pipelines/module';
+import { getPipelineById } from '../util/pipelines';
 import { mutations as dataMutations } from '../store/data/module';
 import { NUMERICAL_FILTER, CATEGORICAL_FILTER, getFilterType, decodeFiltersDictionary } from '../util/filters';
 import _ from 'lodash';
@@ -73,11 +73,7 @@ export default Vue.extend({
 
 	computed: {
 		pipelineStatus(): String {
-			const pipelines = pipelineGetters.getPipelines(this.$store);
-			let pipeline = null;
-			if (pipelines[this.requestId] && pipelines[this.requestId][this.pipelineId]) {
-				pipeline = pipelines[this.requestId][this.pipelineId];
-			}
+			const pipeline = getPipelineById(this.$store.state.pipelineModule, this.pipelineId);
 			if (pipeline) {
 				return pipeline.progress;
 			}
@@ -176,10 +172,12 @@ export default Vue.extend({
 		},
 
 		click() {
-			const routeEntry = overlayRouteEntry(this.$route, {
-				pipelineId: this.results().pipelineId
-			});
-			this.$router.push(routeEntry);
+			if (this.results()) {
+				const routeEntry = overlayRouteEntry(this.$route, {
+					pipelineId: this.results().pipelineId
+				});
+				this.$router.push(routeEntry);
+			}
 		},
 
 		results(): VariableSummary {

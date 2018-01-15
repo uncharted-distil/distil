@@ -1,11 +1,12 @@
 import _ from 'lodash';
 import { DataState, Datasets, VariableSummary } from '../store/data/index';
 import { Extrema, TargetRow, FieldInfo } from '../store/data/index';
-import { PipelineInfo } from '../store/pipelines/index';
+import { PipelineInfo, PIPELINE_UPDATED, PIPELINE_COMPLETED } from '../store/pipelines/index';
 import { DistilState } from '../store/store';
 import { Dictionary } from './dict';
 import { ActionContext } from 'vuex';
 import axios from 'axios';
+import localStorage from 'store';
 import Vue from 'vue';
 
 // Postfixes for special variable names
@@ -29,16 +30,16 @@ export function filterDatasets(ids: string[], datasets: Datasets[]): Datasets[] 
 
 // fetches datasets from local storage
 export function getRecentDatasets(): string[] {
-	const datasets = window.localStorage.getItem('recent-datasets');
-	return (datasets) ? datasets.split(',') : [];
+	return localStorage.get('recent-datasets') || [];
 }
 
 // adds a recent dataset to local storage
 export function addRecentDataset(dataset: string) {
-	const datasetsStr = window.localStorage.getItem('recent-datasets');
-	const datasets = (datasetsStr) ? datasetsStr.split(',') : [];
-	datasets.unshift(dataset);
-	window.localStorage.setItem('recent-datasets', datasets.join(','));
+	const datasets = getRecentDatasets();
+	if (datasets.indexOf(dataset) === -1) {
+		datasets.unshift(dataset);
+		localStorage.set('recent-datasets', datasets);
+	}
 }
 
 export function isInTrainingSet(col: string, training: Dictionary<boolean>) {
@@ -143,32 +144,33 @@ export function updateSummaries(summary: VariableSummary, summaries: VariableSum
 	}
 }
 
-export function getSummaries(context: DataContext, endpoint: string, results: PipelineInfo[], nameFunc: (PipelineInfo) => string,
+export function getSummaries(context: DataContext, endpoint: string, pipelines: PipelineInfo[], nameFunc: (PipelineInfo) => string,
 	setFunction: (DataContext, VariableSummary) => void, updateFunction: (DataContext, VariableSummary) => void) {
 	// save a placeholder histogram
-	const pendingHistograms = _.map(results, r => {
+	const pendingHistograms = _.map(pipelines, pipeline => {
 		return {
-			name: nameFunc(r),
+			name: nameFunc(pipeline),
 			feature: '',
 			pending: true,
 			buckets: [],
 			extrema: {} as any,
-			pipelineId: r.pipelineId,
+			pipelineId: pipeline.pipelineId,
 			resultId: ''
 		};
 	});
 	setFunction(context, pendingHistograms);
 
 	// fetch the results for each pipeline
-	for (var result of results) {
-		if (!result.pipeline) {
+	pipelines.forEach(pipeline => {
+		if (pipeline.progress !== PIPELINE_UPDATED &&
+			pipeline.progress !== PIPELINE_COMPLETED) {
 			// skip
-			continue;
+			return;
 		}
-		const name = nameFunc(result);
-		const feature = result.feature;
-		const pipelineId = result.pipelineId;
-		const resultId = result.pipeline.resultId;
+		const name = nameFunc(pipeline);
+		const feature = pipeline.feature;
+		const pipelineId = pipeline.pipelineId;
+		const resultId = pipeline.resultId;
 		axios.get(`${endpoint}/${resultId}`)
 			.then(response => {
 				// save the histogram data
@@ -208,5 +210,5 @@ export function getSummaries(context: DataContext, endpoint: string, results: Pi
 				]);
 				return;
 			});
-	}
+	});
 }

@@ -21,9 +21,9 @@ import moment from 'moment';
 import Facets from '../components/Facets';
 import ResultGroup from '../components/ResultGroup.vue';
 import { VariableSummary } from '../store/data/index';
-import { getters as dataGetters} from '../store/data/module';
-import { getters as routeGetters} from '../store/route/module';
-import { getters as pipelineGetters } from '../store/pipelines/module';
+import { getters as dataGetters } from '../store/data/module';
+import { getters as routeGetters } from '../store/route/module';
+import { getPipelinesForDatasetAndTarget } from '../util/pipelines';
 import 'font-awesome/css/font-awesome.css';
 import '../styles/spinner.css';
 import Vue from 'vue';
@@ -52,17 +52,24 @@ export default Vue.extend({
 	},
 
 	computed: {
+
+		dataset(): string {
+			return routeGetters.getRouteDataset(this.$store);
+		},
+		target(): string {
+			return routeGetters.getRouteTargetVariable(this.$store);
+		},
+
 		// Generate pairs of residuals and results for each pipeline in the numerical case.
 		resultGroups(): SummaryGroup[] {
 
-			const pipelineGroups = pipelineGetters.getPipelines(this.$store);
-			const requestId = routeGetters.getRouteCreateRequestId(this.$store);
+			const pipelines = getPipelinesForDatasetAndTarget(this.$store.state.pipelineModule, this.dataset, this.target);
 			const resultSummaries = dataGetters.getResultsSummaries(this.$store);
 			const residualsSummaries = this.regression ? dataGetters.getResidualsSummaries(this.$store) : [];
-			const pipelineGroup = pipelineGroups[requestId];
 
-			const summaryGroups = _.map(pipelineGroup, pipeline => {
+			const summaryGroups = pipelines.map(pipeline => {
 				const pipelineId = pipeline.pipelineId;
+				const requestId = pipeline.requestId;
 				const resultSummary = _.find(resultSummaries, summary => {
 					return summary.pipelineId === pipelineId;
 				});

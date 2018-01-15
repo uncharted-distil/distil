@@ -26,10 +26,6 @@ export const getters = {
 		return state.query.target ? state.query.target : null;
 	},
 
-	getRouteCreateRequestId(state: Route): string {
-		return state.query.requestId;
-	},
-
 	getRoutePipelineId(state: Route): string {
 		return state.query.pipelineId ? state.query.pipelineId : null;
 	},

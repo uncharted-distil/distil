@@ -25,11 +25,12 @@ import ResultsComparison from '../components/ResultsComparison.vue';
 import VariableSummaries from '../components/VariableSummaries.vue';
 import ResultSummaries from '../components/ResultSummaries.vue';
 import { gotoSelect } from '../util/nav';
+import { getRequestIdsForDatasetAndTarget, getTrainingVariablesForPipelineId } from '../util/pipelines';
 import { getters as dataGetters, actions as dataActions } from '../store/data/module';
 import { getters as routeGetters } from '../store/route/module';
-import { actions as pipelineActions } from '../store/pipelines/module';
-import { getters as appGetters } from '../store/app/module';
+import { actions as pipelineActions, getters as pipelineGetters } from '../store/pipelines/module';
 import { Variable, VariableSummary } from '../store/data/index';
+import { Dictionary } from '../util/dict';
 import Vue from 'vue';
 
 export default Vue.extend({
@@ -52,20 +53,34 @@ export default Vue.extend({
 		dataset(): string {
 			return routeGetters.getRouteDataset(this.$store);
 		},
+		target(): string {
+			return routeGetters.getRouteTargetVariable(this.$store);
+		},
 		summaries(): VariableSummary[] {
 			if (this.excludeNonTraining) {
-				return dataGetters.getTrainingVariableSummaries(this.$store);
+				return dataGetters.getVariableSummaries(this.$store).filter(summary => this.training[summary.name]);
 			}
 			return dataGetters.getVariableSummaries(this.$store);
 		},
 		variables(): Variable[] {
 			return dataGetters.getVariables(this.$store);
 		},
-		requestId(): string {
-			return routeGetters.getRouteCreateRequestId(this.$store);
+		requestIds(): string[] {
+			return getRequestIdsForDatasetAndTarget(this.$store.state.pipelineModule, this.dataset, this.target);
+		},
+		training(): Dictionary<boolean> {
+			const training = getTrainingVariablesForPipelineId(this.$store.state.pipelineModule, this.pipelineId);
+			const trainingMap = {};
+			training.forEach(t => {
+				trainingMap[t] = true;
+			});
+			return trainingMap;
+		},
+		pipelineId(): string {
+			return routeGetters.getRoutePipelineId(this.$store);
 		},
 		sessionId(): string {
-			return appGetters.getPipelineSessionID(this.$store);
+			return pipelineGetters.getPipelineSessionID(this.$store);
 		}
 	},
 
@@ -77,11 +92,10 @@ export default Vue.extend({
 		// watch the route and update the results if its modified
 		'$route.query.dataset'() {
 			this.fetch();
-		},
-		'$route.query.requestId'() {
-			this.fetch();
 		}
 	},
+
+	// need session id to pull
 
 	methods: {
 		gotoSelect() {
@@ -92,7 +106,7 @@ export default Vue.extend({
 					dataActions.getVariables(this.$store, {
 						dataset: this.dataset
 					}),
-					pipelineActions.getSession(this.$store, {
+					pipelineActions.fetchPipelines(this.$store, {
 						sessionId: this.sessionId
 					})
 				])
@@ -103,11 +117,11 @@ export default Vue.extend({
 					});
 					dataActions.getResultsSummaries(this.$store, {
 						dataset: this.dataset,
-						requestId: this.requestId
+						requestIds: this.requestIds
 					});
 					dataActions.getResidualsSummaries(this.$store, {
 						dataset: this.dataset,
-						requestId: this.requestId
+						requestIds: this.requestIds
 					});
 				});
 		}

@@ -24,33 +24,57 @@ export function pipelineIsErrored(progress: string): boolean {
 	return progress == ERROR_VAL;
 }
 
-// Utility function to return all pipeline results that have not ERRORED
-// associated with a given request ID
-export function getPipelineResultsOkay(state: PipelineState, requestId: string): PipelineInfo[] {
-	const pipelineResults = getPipelineResults(state, requestId);
-	return _.filter(pipelineResults, p => !pipelineIsErrored(p.progress));
-}
-
 // Utility function to return all pipeline results associated with a given request ID
-export function getPipelineResults(state: PipelineState, requestId: string): PipelineInfo[] {
-	return _.concat(
-		_.values(state.runningPipelines[requestId]),
-		_.values(state.completedPipelines[requestId]));
+export function getPipelinesByRequestIds(state: PipelineState, requestIds: string[]): PipelineInfo[] {
+	const ids = {};
+	requestIds.forEach(id => {
+		ids[id] = true;
+	});
+	return state.pipelineRequests.filter(pipeline => ids[pipeline.requestId]);
 }
 
-// Returns a specific pipeline result given request and pipeline IDs.
-export function getPipelineResult(state: PipelineState, requestId: string, pipelineId: string): PipelineInfo {
-	const pipelineResults = getPipelineResultsOkay(state, requestId);
-	return _.find(pipelineResults, p => p.pipelineId === pipelineId);
-}
-
-// Returns a specific pipeline result given a request and its ID.
-export function getPipelineResultById(state: PipelineState, requestId: string, pipelineId: string): PipelineInfo {
+// Returns a specific pipeline result given a request and its pipeline id.
+export function getPipelineById(state: PipelineState, pipelineId: string): PipelineInfo {
 	if (!pipelineId) {
 		return null;
 	}
-	const pipelineResults = getPipelineResultsOkay(state, requestId);
-	return _.find(pipelineResults, p => pipelineId === p.pipelineId);
+	return _.find(state.pipelineRequests, p => pipelineId === p.pipelineId);
+}
+
+// Utility function to return all request ids for the provided dataset and target variable
+export function getRequestIdsForDatasetAndTarget(state: PipelineState, dataset: string, target: string): string[] {
+	const ids = [];
+	state.pipelineRequests.forEach(pipeline => {
+		if (pipeline.dataset === dataset && pipeline.feature === target) {
+			if (ids.indexOf(pipeline.requestId) === -1) {
+				ids.push(pipeline.requestId);
+			}
+		}
+	});
+	return ids;
+}
+
+// Utility function to return all pipelines for the provided dataset and target variable
+export function getPipelinesForDatasetAndTarget(state: PipelineState, dataset: string, target: string): PipelineInfo[] {
+	const pipelines = [];
+	state.pipelineRequests.forEach(pipeline => {
+		if (pipeline.dataset === dataset && pipeline.feature === target) {
+			if (pipelines.indexOf(pipeline.requestId) === -1) {
+				pipelines.push(pipeline);
+			}
+		}
+	});
+	return pipelines;
+}
+
+export function getTrainingVariablesForPipelineId(state: PipelineState, pipelineId: string): string[] {
+	let res = null;
+	state.pipelineRequests.forEach(pipeline => {
+		if (pipeline.pipelineId === pipelineId) {
+			res = pipeline;
+		}
+	});
+	return (res && res.features) ? res.features.filter(f => f.featureType === 'train').map(f => f.featureName) : [];
 }
 
 // Gets a task object based on a variable type.
