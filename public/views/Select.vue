@@ -8,7 +8,7 @@
 			<available-target-variables></available-target-variables>
 		</b-modal>
 		<div class="left-container">
-			<h5 class="header-label">Select the Training features</h5>
+			<h5 class="header-label">Select features that may predict</h5>
 			<div class="select-items">
 				<available-training-variables class="select-available-variables"></available-training-variables>
 				<training-variables class="select-training-variables"></training-variables>
