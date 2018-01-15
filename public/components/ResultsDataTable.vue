@@ -24,9 +24,11 @@
 import _ from 'lodash';
 import { getters, mutations } from '../store/data/module';
 import { TargetRow, FieldInfo } from '../store/data/index';
+import { getters as routeGetters } from '../store/route/module';
 import { Dictionary } from '../util/dict';
 import { removeNonTrainingItems, removeNonTrainingFields } from '../util/data';
 import { updateTableHighlights, scrollToFirstHighlight } from '../util/highlights';
+import { getTrainingVariablesForPipelineId } from '../util/pipelines';
 import Vue from 'vue';
 
 const RESULT_TABLE_HIGHLIGHTS = 'result_table';
@@ -49,6 +51,9 @@ export default Vue.extend({
 	},
 
 	computed: {
+		pipelineId(): string {
+			return routeGetters.getRoutePipelineId(this.$store);
+		},
 		// extracts the table data from the store
 		items(): TargetRow[] {
 			const items = getters.getResultDataItems(this.$store);
@@ -95,9 +100,17 @@ export default Vue.extend({
 		// extract the table field header from the store
 		fields(): Dictionary<FieldInfo> {
 			const fields = getters.getResultDataFields(this.$store);
-			const training = getters.getTrainingVariablesMap(this.$store);
-			return this.excludeNonTraining ? removeNonTrainingFields(fields, training) : fields;
-		}
+			return this.excludeNonTraining ? removeNonTrainingFields(fields, this.training) : fields;
+		},
+
+		training(): Dictionary<boolean> {
+			const training = getTrainingVariablesForPipelineId(this.$store.state.pipelineModule, this.pipelineId);
+			const trainingMap = {};
+			training.forEach(t => {
+				trainingMap[t.toLowerCase()] = true;
+			});
+			return trainingMap;
+		},
 	},
 
 	methods: {

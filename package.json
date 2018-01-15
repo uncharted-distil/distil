@@ -21,6 +21,7 @@
     "lodash": "4.17.4",
     "multimap": "^1.0.2",
     "popper.js": "1.12.9",
+    "store": "^2.0.12",
     "vue": "2.5.13",
     "vue-router": "3.0.1",
     "vue-slider-component": "2.4.7",

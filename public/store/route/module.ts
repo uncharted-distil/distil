@@ -17,7 +17,6 @@ export const getters = {
 	getRouteDataset: read(moduleGetters.getRouteDataset),
 	getRouteTrainingVariables: read(moduleGetters.getRouteTrainingVariables),
 	getRouteTargetVariable: read(moduleGetters.getRouteTargetVariable),
-	getRouteCreateRequestId: read(moduleGetters.getRouteCreateRequestId),
 	getRoutePipelineId: read(moduleGetters.getRoutePipelineId),
 	getRouteFilters: read(moduleGetters.getRouteFilters),
 	getRouteResultFilters: read(moduleGetters.getRouteResultFilters),
@@ -25,5 +24,3 @@ export const getters = {
 	getDecodedFilters: read(moduleGetters.getDecodedFilters),
 	getDecodedResultsFilters: read(moduleGetters.getDecodedResultsFilters),
 }
-
-

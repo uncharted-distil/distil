@@ -10,13 +10,13 @@ import (
 	"strings"
 	"time"
 
-	"github.com/unchartedsoftware/distil/api/model"
-
 	"github.com/pkg/errors"
 	"github.com/satori/go.uuid"
-	"github.com/unchartedsoftware/distil/api/pipeline"
 	"github.com/unchartedsoftware/plog"
 	"golang.org/x/net/context"
+
+	"github.com/unchartedsoftware/distil/api/model"
+	"github.com/unchartedsoftware/distil/api/pipeline"
 )
 
 const (
@@ -146,7 +146,7 @@ func handleGetSession(conn *Connection, client *pipeline.Client, msg *Message, p
 				return
 			}
 
-			handleGetSessionSuccess(conn, msg, session.ID, false, true, session.GetExistingUUIDs())
+			handleGetSessionSuccess(conn, msg, session.ID, false, true)
 			return
 		}
 	}
@@ -165,7 +165,7 @@ func handleGetSession(conn *Connection, client *pipeline.Client, msg *Message, p
 		return
 	}
 
-	handleGetSessionSuccess(conn, msg, session.ID, true, false, session.GetExistingUUIDs())
+	handleGetSessionSuccess(conn, msg, session.ID, true, false)
 	return
 }
 
@@ -253,18 +253,20 @@ func handleCreatePipelines(conn *Connection, client *pipeline.Client, metadataCt
 
 	// Create the set of training features - we already filtered that out when we persist, but needs to be specified
 	// to satisfy ta3ta2 API.
-	trainFeatures := []*pipeline.Feature{}
 	filteredVars, err := fetchFilteredVariables(metadata, clientCreateMsg.Index, clientCreateMsg.Dataset, filters)
 	if err != nil {
 		handleErr(conn, msg, err)
 		return
 	}
+	trainFeatures := []*pipeline.Feature{}
 	for _, featureName := range filteredVars {
-		feature := &pipeline.Feature{
-			FeatureName: featureName,
-			ResourceId:  defaultResourceID,
+		if featureName != clientCreateMsg.Feature {
+			feature := &pipeline.Feature{
+				FeatureName: featureName,
+				ResourceId:  defaultResourceID,
+			}
+			trainFeatures = append(trainFeatures, feature)
 		}
-		trainFeatures = append(trainFeatures, feature)
 	}
 
 	// convert received metrics into the ta3ta2 format
@@ -342,19 +344,13 @@ func handleCreatePipelines(conn *Connection, client *pipeline.Client, metadataCt
 	handleCreatePipelinesSuccess(conn, msg, proxy, dataStorage, pipelineStorage, clientCreateMsg.Dataset)
 }
 
-func handleGetSessionSuccess(conn *Connection, msg *Message, session string, created bool, resumed bool, uuids []uuid.UUID) {
-	// convert uuids to strings
-	var strs []string
-	for _, uid := range uuids {
-		strs = append(strs, uid.String())
-	}
+func handleGetSessionSuccess(conn *Connection, msg *Message, session string, created bool, resumed bool) {
 	// send response
 	handleSuccess(conn, msg, map[string]interface{}{
 		"success": true,
 		"session": session,
 		"created": created,
 		"resumed": resumed,
-		"uuids":   uuids,
 	})
 }
 
@@ -371,83 +367,88 @@ func handleCreatePipelinesSuccess(conn *Connection, msg *Message, proxy *pipelin
 		select {
 		case result := <-proxy.Results:
 			res := (*result).(*pipeline.PipelineCreateResult)
-			// check to see if the server is handling the request successfully
-			if res.ResponseInfo.Status.Code == pipeline.StatusCode_OK {
-				// extract the baseline pipeline status
-				progress := pipeline.Progress_name[int32(res.ProgressInfo)]
 
-				// update the request progress
-				currentTime := time.Now()
-				err := pipelineStorage.UpdateRequest(fmt.Sprintf("%s", proxy.RequestID), progress, currentTime)
-				if err != nil {
-					handleErr(conn, msg, errors.Wrap(err, "Unable to store request update"))
-				}
-				response := map[string]interface{}{
-					"requestId":   proxy.RequestID,
-					"pipelineId":  res.PipelineId,
-					"progress":    progress,
-					"dataset":     dataset,
-					"createdTime": currentTime,
-				}
-				log.Infof("Pipeline %s - %s", res.PipelineId, progress)
-
-				// on complete, fetch results as well
-				if res.ProgressInfo == pipeline.Progress_COMPLETED || res.ProgressInfo == pipeline.Progress_UPDATED {
-					scores := make([]map[string]interface{}, 0)
-					for _, score := range res.PipelineInfo.Scores {
-						s := map[string]interface{}{
-							"metric": pipeline.PerformanceMetric_name[int32(score.Metric)],
-							"value":  score.Value,
-						}
-						scores = append(scores, s)
-
-						// store the result score
-						if res.ProgressInfo == pipeline.Progress_COMPLETED {
-							pipelineStorage.PersistResultScore(res.PipelineId, s["metric"].(string), float64(s["value"].(float32)))
-						}
-					}
-
-					// Get the result URI, removing the protocol portion if it exists. The returned value
-					// is either a csv or a directory.  If we get a directory back, it should match the standard structure.
-					// Look for the trainTargets.csv
-					resultURI := res.PipelineInfo.PredictResultUri
-					resultURI = strings.Replace(resultURI, "file://", "", 1)
-					if !strings.HasSuffix(resultURI, ".csv") {
-						resultURI = path.Join(resultURI, pipeline.D3MLearningData)
-					}
-
-					// get the result UUID. NOTE: Doing sha1 for now.
-					hasher := sha1.New()
-					hasher.Write([]byte(resultURI))
-					bs := hasher.Sum(nil)
-					resUUIDStr := fmt.Sprintf("%x", bs)
-					response["pipeline"] = map[string]interface{}{
-						"scores":   scores,
-						"output":   pipeline.OutputType_name[int32(res.PipelineInfo.Output)],
-						"resultId": resUUIDStr,
-					}
-
-					// store the result data & metadata
-					err = pipelineStorage.PersistResultMetadata(fmt.Sprintf("%s", proxy.RequestID), res.PipelineId, resUUIDStr, resultURI, progress, pipeline.OutputType_name[int32(res.PipelineInfo.Output)], currentTime)
-					if err != nil {
-						handleErr(conn, msg, errors.Wrap(err, "Unable to store result metadata"))
-					}
-
-					err = dataStorage.PersistResult(dataset, resultURI)
-					if err != nil {
-						handleErr(conn, msg, errors.Wrap(err, "Unable to store pipeline results"))
-					}
-				}
-				handleSuccess(conn, msg, response)
-			} else {
+			if res.ResponseInfo.Status.Code != pipeline.StatusCode_OK {
 				status := res.ResponseInfo.Status.Code
 				statusDesc := res.ResponseInfo.Status.Details
 				handleErr(conn, msg, errors.Errorf("pipeline create failed - %s: %s", status, statusDesc))
 				return
 			}
+
+			// extract the baseline pipeline status
+			progress := pipeline.Progress_name[int32(res.ProgressInfo)]
+
+			// update the request progress
+			currentTime := time.Now()
+			err := pipelineStorage.UpdateRequest(fmt.Sprintf("%s", proxy.RequestID), progress, currentTime)
+			if err != nil {
+				handleErr(conn, msg, errors.Wrap(err, "Unable to store request update"))
+			}
+			response := map[string]interface{}{
+				"requestId":  proxy.RequestID,
+				"pipelineId": res.PipelineId,
+				"progress":   progress,
+			}
+			log.Infof("Pipeline %s - %s", res.PipelineId, progress)
+
+			// on complete, fetch results as well
+			if res.ProgressInfo == pipeline.Progress_COMPLETED ||
+				res.ProgressInfo == pipeline.Progress_UPDATED {
+
+				for _, score := range res.PipelineInfo.Scores {
+
+					scoreMetric := pipeline.PerformanceMetric_name[int32(score.Metric)]
+					scoreValue := float64(score.Value)
+
+					// store the result score
+					if res.ProgressInfo == pipeline.Progress_COMPLETED {
+						pipelineStorage.PersistResultScore(res.PipelineId, scoreMetric, scoreValue)
+					}
+				}
+
+				// Get the result URI, removing the protocol portion if it exists. The returned value
+				// is either a csv or a directory.  If we get a directory back, it should match the standard structure.
+				// Look for the trainTargets.csv
+				resultURI := res.PipelineInfo.PredictResultUri
+				resultURI = strings.Replace(resultURI, "file://", "", 1)
+				if !strings.HasSuffix(resultURI, ".csv") {
+					resultURI = path.Join(resultURI, pipeline.D3MLearningData)
+				}
+
+				// get the result UUID. NOTE: Doing sha1 for now.
+				hasher := sha1.New()
+				hasher.Write([]byte(resultURI))
+				bs := hasher.Sum(nil)
+				resUUIDStr := fmt.Sprintf("%x", bs)
+
+				response["pipeline"] = map[string]interface{}{
+					"resultId": resUUIDStr,
+				}
+
+				// store the result data & metadata
+				err = pipelineStorage.PersistResultMetadata(
+					proxy.RequestID.String(),
+					res.PipelineId,
+					resUUIDStr,
+					resultURI,
+					progress,
+					pipeline.OutputType_name[int32(res.PipelineInfo.Output)],
+					currentTime)
+				if err != nil {
+					handleErr(conn, msg, errors.Wrap(err, "Unable to store result metadata"))
+				}
+
+				err = dataStorage.PersistResult(dataset, resultURI)
+				if err != nil {
+					handleErr(conn, msg, errors.Wrap(err, "Unable to store pipeline results"))
+				}
+			}
+			handleSuccess(conn, msg, response)
+
 		case err := <-proxy.Errors:
 			handleErr(conn, msg, err)
 			return
+
 		case <-proxy.Done:
 			// notify the downstream client that the stream is closed
 			response := map[string]interface{}{

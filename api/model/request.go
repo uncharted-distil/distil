@@ -19,15 +19,16 @@ type Request struct {
 
 // Result represents the pipeline result metadata.
 type Result struct {
-	RequestID   string         `json:"requestId"`
-	PipelineID  string         `json:"pipelineId"`
-	ResultURI   string         `json:"requestUri"`
-	ResultUUID  string         `json:"resultId"`
-	Progress    string         `json:"progress"`
-	OutputType  string         `json:"outputType"`
-	CreatedTime time.Time      `json:"createdTime"`
-	Scores      []*ResultScore `json:"scores"`
-	Filters     *FilterParams  `json:"filters"`
+	RequestID   string            `json:"requestId"`
+	PipelineID  string            `json:"pipelineId"`
+	ResultURI   string            `json:"requestUri"`
+	ResultUUID  string            `json:"resultId"`
+	Progress    string            `json:"progress"`
+	OutputType  string            `json:"outputType"`
+	CreatedTime time.Time         `json:"createdTime"`
+	Scores      []*ResultScore    `json:"scores"`
+	Filters     *FilterParams     `json:"filters"`
+	Features    []*RequestFeature `json:"features"`
 }
 
 // RequestFeature represents a request feature metadata.

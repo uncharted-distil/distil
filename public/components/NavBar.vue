@@ -46,9 +46,9 @@
 <script lang="ts">
 import '../assets/images/uncharted.svg';
 import { gotoHome, gotoSearch, gotoSelect, gotoResults } from '../util/nav';
+import { actions as appActions } from '../store/app/module';
 import { getters as routeGetters } from '../store/route/module';
-import { getters as appGetters } from '../store/app/module';
-import { actions } from '../store/app/module';
+import { getters as pipelineGetters, actions as pipelineActions } from '../store/pipelines/module';
 import { restoreView } from '../util/view';
 import Vue from 'vue';
 
@@ -79,7 +79,7 @@ export default Vue.extend({
 
 	computed: {
 		sessionId(): string {
-			return appGetters.getPipelineSessionID(this.$store);
+			return pipelineGetters.getPipelineSessionID(this.$store);
 		},
 		dataset(): string {
 			return routeGetters.getRouteDataset(this.$store);
@@ -88,7 +88,7 @@ export default Vue.extend({
 
 	mounted() {
 		this.updateActive();
-		actions.getPipelineSession(this.$store, {
+		pipelineActions.startPipelineSession(this.$store, {
 			sessionId: this.sessionId
 		});
 	},
@@ -111,7 +111,7 @@ export default Vue.extend({
 		},
 		onAbort() {
 			this.$router.replace('/');
-			actions.abort(this.$store);
+			appActions.abort(this.$store);
 		},
 		updateActive() {
 			this.activeView = ROUTE_MAPPINGS[this.$route.path];

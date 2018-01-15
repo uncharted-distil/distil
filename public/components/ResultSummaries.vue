@@ -43,7 +43,7 @@ import ResultFacets from '../components/ResultFacets.vue';
 import Facets from '../components/Facets.vue';
 import { createGroups, Group } from '../util/facets';
 import { overlayRouteEntry } from '../util/routes';
-import { getPipelineResultById } from '../util/pipelines';
+import { getPipelineById } from '../util/pipelines';
 import { getTask } from '../util/pipelines';
 import { getErrorCol, isTarget, getVarFromTarget, getTargetColFromFacetKey } from '../util/data';
 import { getters as dataGetters} from '../store/data/module';
@@ -78,6 +78,14 @@ export default Vue.extend({
 	},
 
 	computed: {
+		dataset(): string {
+			return routeGetters.getRouteDataset(this.$store);
+		},
+
+		target(): string {
+			return routeGetters.getRouteTargetVariable(this.$store);
+		},
+
 		value: {
 			set(value) {
 				this.updateThreshold(value);
@@ -96,7 +104,7 @@ export default Vue.extend({
 			// find var marked as 'target' and use that name/value tuple to
 			// highlight the ground truth
 			const highlights = dataGetters.getHighlightedFeatureValues(this.$store);
-			const facetHighlights: Dictionary<any> = {};
+			const facetHighlights = {};
 			_.forEach(highlights.values, (value, varName) => {
 				if (isTarget(varName)) {
 					facetHighlights[getVarFromTarget(varName)] = value;
@@ -105,16 +113,12 @@ export default Vue.extend({
 			return facetHighlights;
 		},
 
-		dataset(): string {
-			return routeGetters.getRouteDataset(this.$store);
-		},
-
 		minVal(): number {
-			const resultItems = dataGetters.getResultDataItems(this.$store) as { [name: string]: any }[];
+			const resultItems = dataGetters.getResultDataItems(this.$store);
 			const errorCol = getErrorCol(routeGetters.getRouteTargetVariable(this.$store));
 			if (!_.isEmpty(resultItems) && _.has(resultItems[0], errorCol)) {
-				const min = _.minBy(resultItems, r => Math.abs(<number>(r[errorCol])));
-				const minErr = Math.abs(<number>(min[errorCol]));
+				const min = _.minBy(resultItems, r => Math.abs(r[errorCol]));
+				const minErr = Math.abs(min[errorCol]);
 				// round to closest 2 decimal places, otherwise interval computation makes the slider angry
 				return Math.ceil(100 * minErr) / 100;
 			}
@@ -122,11 +126,11 @@ export default Vue.extend({
 		},
 
 		maxVal(): number {
-			const resultItems = dataGetters.getResultDataItems(this.$store) as { [name: string]: any }[];
+			const resultItems = dataGetters.getResultDataItems(this.$store);
 			const errorCol = getErrorCol(routeGetters.getRouteTargetVariable(this.$store));
 			if (!_.isEmpty(resultItems) && _.has(resultItems[0], errorCol)) {
-				const max = _.maxBy(resultItems, r => Math.abs(<number>(r[errorCol])));
-				const maxErr = Math.abs(<number>max[errorCol]);
+				const max = _.maxBy(resultItems, r => Math.abs(r[errorCol]));
+				const maxErr = Math.abs(max[errorCol]);
 				// round to closest 2 decimal places, otherwise interval computation makes the slider angry
 				return Math.ceil(100 * maxErr) / 100;
 			}
@@ -170,8 +174,7 @@ export default Vue.extend({
 
 		activePipelineName(): string {
 			const pipelineId = routeGetters.getRoutePipelineId(this.$store);
-			const requestId = routeGetters.getRouteCreateRequestId(this.$store);
-			const result = getPipelineResultById(this.$store.state.pipelineModule, requestId, pipelineId);
+			const result = getPipelineById(this.$store.state.pipelineModule, pipelineId);
 			return result ? result.name : '';
 		}
 	},
@@ -224,11 +227,10 @@ export default Vue.extend({
 		onExport() {
 			this.$router.replace('/');
 			const pipelineId = routeGetters.getRoutePipelineId(this.$store);
-			const requestId = routeGetters.getRouteCreateRequestId(this.$store);
-			const result = getPipelineResultById(this.$store.state.pipelineModule, requestId, pipelineId);
+			const result = getPipelineById(this.$store.state.pipelineModule, pipelineId);
 			actions.exportPipeline(this.$store, {
 				pipelineId: result.pipelineId,
-				sessionId: this.$store.state.pipelineSession.id
+				sessionId: this.$store.state.session.id
 			});
 		}
 	}
