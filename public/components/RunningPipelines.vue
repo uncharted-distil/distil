@@ -1,5 +1,5 @@
 <template>
-	<b-card header="Pending Pipelines">
+	<b-card header="Pending Models">
 		<div v-if="pipelineResults === null">None</div>
 		<b-list-group v-bind:key="results.constructor.name" v-for="results in pipelineResults">
 			<b-list-group-item href="#" v-bind:key="result.name" v-for="result in results">

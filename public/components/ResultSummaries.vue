@@ -1,6 +1,6 @@
 <template>
 	<div class='result-summaries'>
-		<h6 class="nav-link">results</h6>
+		<h6 class="nav-link">Results</h6>
 		<div v-if="regressionEnabled" class="result-summaries-error">
 			<div class="result-summaries-label">
 				Error:
@@ -25,7 +25,7 @@
 			v-on:histogram-mouse-leave="histogramMouseLeave"
 			:groups="targetSummaries"
 			:highlights="highlights"></facets>
-		<h6 class="nav-link">Predicted</h6>
+		<h6 class="nav-link">Predictions by Model</h6>
 		<result-facets :regression="regressionEnabled"></result-facets>
 		<b-btn v-b-modal.export variant="outline-success" class="check-button">Export Pipeline</b-btn>
 		<b-modal id="export" title="Export" @ok="onExport">
