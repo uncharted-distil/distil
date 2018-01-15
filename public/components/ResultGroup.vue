@@ -1,7 +1,7 @@
 <template>
 	<div v-bind:class="currentClass"
 		@click="click()">
-		{{ name }}<!--<br>Status: {{ pipelineStatus }}-->
+		{{name}} <sup>{{index}}</sup> {{timestamp}}
 		<div v-if="pipelineStatus === 'COMPLETED' || pipelineStatus === 'UPDATED'">
 			<facets v-if="resultGroups.length" class="result-container"
 				v-on:histogram-mouse-enter="resultHistogramMouseEnter"
@@ -57,6 +57,8 @@ export default Vue.extend({
 
 	props: {
 		name: String,
+		index: Number,
+		timestamp: String,
 		requestId: String,
 		pipelineId: String,
 		resultSummary: Object,

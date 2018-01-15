@@ -9,7 +9,7 @@
 			</div>
 		</div>
 		<b-button class="create-button" :variant="createVariant" @click="create" :disabled="disableCreate">
-			Create Pipelines
+			Create Models
 		</b-button>
 	</div>
 </template>

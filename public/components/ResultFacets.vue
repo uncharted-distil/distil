@@ -1,7 +1,9 @@
 <template>
 	<div class='result-facets'>
-		<result-group class="result-group-container" :key="group.name" v-for="group in resultGroups"
+		<result-group class="result-group-container" :key="group.name" v-for="(group, index) in resultGroups"
 			:name="group.groupName"
+			:index="index"
+			:timestamp="group.timestamp"
 			:request-id="group.requestId"
 			:pipeline-id="group.pipelineId"
 			:result-summary="group.resultSummary"
@@ -15,6 +17,7 @@
 <script lang="ts">
 
 import _ from 'lodash';
+import moment from 'moment';
 import Facets from '../components/Facets';
 import ResultGroup from '../components/ResultGroup.vue';
 import { VariableSummary } from '../store/data/index';
@@ -77,6 +80,7 @@ export default Vue.extend({
 					requestId: requestId,
 					pipelineId: pipelineId,
 					groupName: pipeline ? pipeline.name : '',
+					timestamp: pipeline ? moment(pipeline.timestamp).format('YYYY/MM/DD') : '',
 					resultSummary: resultSummary,
 					residualsSummary: residualSummary
 				};
