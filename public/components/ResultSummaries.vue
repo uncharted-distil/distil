@@ -1,6 +1,6 @@
 <template>
 	<div class='result-summaries'>
-		<h6 class="nav-link">results</h6>
+		<h6 class="nav-link">Results</h6>
 		<div v-if="regressionEnabled" class="result-summaries-error">
 			<div class="result-summaries-label">
 				Error:

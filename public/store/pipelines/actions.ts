@@ -1,6 +1,5 @@
 import _ from 'lodash';
 import axios from 'axios';
-import moment from 'moment';
 import { PipelineState, Score } from './index';
 import { ActionContext } from 'vuex';
 import { DistilState } from '../store';
@@ -14,11 +13,6 @@ const CREATE_PIPELINES_MSG = 'CREATE_PIPELINES';
 const STREAM_CLOSE = 'STREAM_CLOSE';
 const PIPELINE_COMPLETE = 'COMPLETED';
 const FEATURE_TYPE_TARGET = 'target';
-
-function createResultName(dataset: string, timestamp: number, targetFeature: string) {
-	const t = moment(timestamp);
-	return `${dataset}: ${targetFeature} at ${t.format('MMMM Do YYYY, h:mm:ss.SS a')}`;
-}
 
 interface Feature {
 	featureName: string;
@@ -74,15 +68,12 @@ export const actions = {
 						});
 
 						pipeline.results.forEach((res) => {
-							// inject the name and pipeline id
-							const name = createResultName(pipeline.dataset, res.createdTime, targetFeature);
-							res.name = name;
 
 							// add/update the running pipeline info
 							if (res.progress === PIPELINE_COMPLETE) {
 								// add the pipeline to complete
 								mutations.addCompletedPipeline(context, {
-									name: res.name,
+									name: targetFeature,
 									feature: targetFeature,
 									timestamp: res.createdTime,
 									progress: res.progress,
@@ -123,9 +114,8 @@ export const actions = {
 					stream.close();
 					return;
 				}
-				// inject the name and pipeline id
-				const name = createResultName(request.dataset, res.createdTime, request.feature);
-				res.name = name;
+
+				res.name = request.feature;
 				res.feature = request.feature;
 
 				// add/update the running pipeline info
