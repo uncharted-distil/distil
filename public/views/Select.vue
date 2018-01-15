@@ -8,14 +8,14 @@
 			<available-target-variables></available-target-variables>
 		</b-modal>
 		<div class="left-container">
-			<h5 class="header-label">Select features that may predict</h5>
+			<h5 class="header-label">Select Features That May Predict</h5>
 			<div class="select-items">
 				<available-training-variables class="select-available-variables"></available-training-variables>
 				<training-variables class="select-training-variables"></training-variables>
 			</div>
 		</div>
 		<div class="right-container">
-			<h5 class="header-label">Select the Target Feature</h5>
+			<h5 class="header-label">Select Feature to Predict</h5>
 			<target-variable class="select-target-variables"></target-variable>
 			<select-data-table class="select-data-table"></select-data-table>
 			<h5 class="header-label">Create the Pipelines</h5>
