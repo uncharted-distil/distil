@@ -4,17 +4,14 @@
 		{{name}} <sup>{{index}}</sup> {{timestamp}}
 		<div v-if="pipelineStatus === 'COMPLETED' || pipelineStatus === 'UPDATED'">
 			<facets v-if="resultGroups.length" class="result-container"
-				v-on:histogram-mouse-enter="resultHistogramMouseEnter"
-				v-on:histogram-mouse-leave="resultHistogramMouseLeave"
-				v-on:facet-mouse-enter="resultFacetMouseEnter"
-				v-on:facet-mouse-leave="resultFacetMouseLeave"
+				@histogram-click="onResultHistogramClick"
+				@facet-click="onResultFacetClick"
 				:groups="resultGroups"
 				:highlights="highlights"
 				:html="residualHtml">
 			</facets>
 			<facets v-if="residualsGroups.length" class="residual-container"
-				v-on:histogram-mouse-enter="residualsHistogramMouseEnter"
-				v-on:histogram-mouse-leave="residualsHistogramMouseLeave"
+				@histogram-click="onResidualsHistogramClick"
 				:groups="residualsGroups"
 				:highlights="highlights"
 				:html="resultHtml">
@@ -118,53 +115,52 @@ export default Vue.extend({
 	},
 
 	methods: {
-		resultHistogramMouseEnter(key: string, value: any) {
-			// extract the var name from the key
-			const varName = getPredictedColFromFacetKey(key);
-			dataMutations.highlightFeatureRange(this.$store, {
-				context: RESULT_GROUP_HIGHLIGHTS,
-				ranges: {
-					[varName]: {
-						from: _.toNumber(value.label[0]),
-						to: _.toNumber(value.toLabel[value.toLabel.length-1])
+		onResultHistogramClick(key: string, value: any) {
+			dataMutations.clearFeatureHighlights(this.$store);
+			if (key && value) {
+				// extract the var name from the key
+				const varName = getPredictedColFromFacetKey(key);
+				dataMutations.highlightFeatureRange(this.$store, {
+					context: RESULT_GROUP_HIGHLIGHTS,
+					ranges: {
+						[varName]: {
+							from: _.toNumber(value.label[0]),
+							to: _.toNumber(value.toLabel[value.toLabel.length-1])
+						}
 					}
-				}
-			});
+				});
+			}
 		},
 
-		resultHistogramMouseLeave(key: string) {
-			const varName = getPredictedColFromFacetKey(key);
-			dataMutations.clearFeatureHighlightRange(this.$store, varName);
-		},
-
-		residualsHistogramMouseEnter(key: string, value: any) {
-			// convert the residual histogram key name into the proper variable ID
-			const varName =getErrorColFromFacetKey(key);
-			dataMutations.highlightFeatureRange(this.$store, {
-				context: RESULT_GROUP_HIGHLIGHTS,
-				ranges: {
-					[varName]: {
-						from: _.toNumber(value.label[0]),
-						to: _.toNumber(value.toLabel[value.toLabel.length-1])
+		onResidualsHistogramClick(key: string, value: any) {
+			dataMutations.clearFeatureHighlights(this.$store);
+			if (key && value) {
+				// convert the residual histogram key name into the proper variable ID
+				const varName = getErrorColFromFacetKey(key);
+				dataMutations.highlightFeatureRange(this.$store, {
+					context: RESULT_GROUP_HIGHLIGHTS,
+					ranges: {
+						[varName]: {
+							from: _.toNumber(value.label[0]),
+							to: _.toNumber(value.toLabel[value.toLabel.length-1])
+						}
 					}
-				}
-			});
+				});
+			}
 		},
 
-		residualsHistogramMouseLeave(key: string) {
-			const varName = getErrorColFromFacetKey(key);
-			dataMutations.clearFeatureHighlightRange(this.$store, varName);
-		},
-
-		resultFacetMouseEnter(key: string, value: any) {
-			// extract the var name from the key
-			const varName = getPredictedColFromFacetKey(key);
-			dataMutations.highlightFeatureValues(this.$store, {
-				context: RESULT_GROUP_HIGHLIGHTS,
-				values: {
-					[varName]: value
-				}
-			});
+		onResultFacetClick(key: string, value: any) {
+			dataMutations.clearFeatureHighlights(this.$store);
+			if (key && value) {
+				// extract the var name from the key
+				const varName = getPredictedColFromFacetKey(key);
+				dataMutations.highlightFeatureValues(this.$store, {
+					context: RESULT_GROUP_HIGHLIGHTS,
+					values: {
+						[varName]: value
+					}
+				});
+			}
 		},
 
 		resultFacetMouseLeave(key: string) {
@@ -246,8 +242,8 @@ export default Vue.extend({
 .result-group-selected {
 	padding:9px;
 	border-style: solid;
-	border-color: #03c6e1;
-	box-shadow: 0 0 10px #03c6e1;
+	border-color: #007bff;
+	box-shadow: 0 0 10px #007bff;
 	border-width: 1px;
 	border-radius: 2px;
 	padding-bottom: 10px;
@@ -284,6 +280,10 @@ export default Vue.extend({
 
 .residual-container .facets-facet-horizontal .facet-histogram-bar-highlighted:hover {
 	fill: #662424;
+}
+
+.residual-container .facets-facet-horizontal .facet-histogram-bar-highlighted.select-highlight {
+	fill: #007bff;
 }
 
 .residual-container .facets-facet-vertical .facet-bar-selected {

@@ -19,15 +19,13 @@
 			:html="html"
 			:sort="sort"
 			:type-change="typeChange"
-			v-on:click="onClick"
-			v-on:expand="onExpand"
-			v-on:collapse="onCollapse"
-			v-on:range-change="onRangeChange"
-			v-on:facet-toggle="onFacetToggle"
-			v-on:histogram-mouse-enter="onHistogramMouseEnter"
-			v-on:histogram-mouse-leave="onHistogramMouseLeave"
-			v-on:facet-mouse-enter="onFacetMouseEnter"
-			v-on:facet-mouse-leave="onFacetMouseLeave">
+			@click="onClick"
+			@expand="onExpand"
+			@collapse="onCollapse"
+			@range-change="onRangeChange"
+			@facet-toggle="onFacetToggle"
+			@histogram-click="onHistogramClick"
+			@facet-click="onFacetClick">
 		</facets>
 		<div v-if="numRows > rowsPerPage" class="variable-page-nav">
 			<b-pagination size="sm" align="center" :total-rows="numRows" :per-page="rowsPerPage" v-model="currentPage"/>
@@ -39,7 +37,8 @@
 <script lang="ts">
 
 import Facets from '../components/Facets';
-import { Filter, decodeFiltersDictionary, updateFilter, getFilterType, isDisabled, CATEGORICAL_FILTER, NUMERICAL_FILTER, EMPTY_FILTER } from '../util/filters';
+import { Filter, decodeFiltersDictionary, updateFilter, getFilterType, isDisabled,
+	CATEGORICAL_FILTER, NUMERICAL_FILTER, EMPTY_FILTER } from '../util/filters';
 import { overlayRouteEntry, getRouteFacetPage } from '../util/routes';
 import { VariableSummary } from '../store/data/index';
 import { Dictionary } from '../util/dict';
@@ -122,15 +121,11 @@ export default Vue.extend({
 			groups = this.updateGroupCollapses(groups);
 
 			// update selections
-			return this.updateGroupSelections(groups);
+			return this.updateGroupFilters(groups);
 		},
 
 		highlights(): Dictionary<any> {
-			const valueHighlights = dataGetters.getHighlightedFeatureValues(this.$store);
-			if (valueHighlights.context === VARIABLE_FACET_HIGHLIGHTS) {
-				return {};
-			}
-			return valueHighlights.values;
+			return dataGetters.getHighlightedFeatureValues(this.$store).values;
 		},
 
 		importance(): Dictionary<number> {
@@ -225,35 +220,37 @@ export default Vue.extend({
 			this.$emit('click', key);
 		},
 
-		onHistogramMouseEnter(key: string, value: any) {
-			// extract the var name from the key
-			dataMutations.highlightFeatureRange(this.$store, {
-				context: VARIABLE_FACET_HIGHLIGHTS,
-				ranges: {
-					[key]: {
-						from: _.toNumber(value.label[0]),
-						to: _.toNumber(value.toLabel[value.toLabel.length-1])
+		onHistogramClick(key: string, value: any) {
+			// on histogram click event, publish the highlight/clear highlight to the
+			// rest of the app
+			dataMutations.clearFeatureHighlights(this.$store);
+			if (key && value) {
+				// extract the var name from the key
+				dataMutations.highlightFeatureRange(this.$store, {
+					context: VARIABLE_FACET_HIGHLIGHTS,
+					ranges: {
+						[key]: {
+							from: _.toNumber(value.label[0]),
+							to: _.toNumber(value.toLabel[value.toLabel.length-1])
+						}
 					}
-				}
-			});
+				});
+			}
 		},
 
-		onHistogramMouseLeave(key: string) {
-			dataMutations.clearFeatureHighlightRange(this.$store, key);
-		},
+		onFacetClick(key: string, value: any) {
+			// clear existing highlights
+			dataMutations.clearFeatureHighlights(this.$store);
 
-		onFacetMouseEnter(key: string, value: any) {
-			// extract the var name from the key
-			dataMutations.highlightFeatureValues(this.$store, {
-				context: VARIABLE_FACET_HIGHLIGHTS,
-				values: {
-					[key]: value
-				}
-			});
-		},
-
-		onFacetMouseLeave(key: string) {
-			dataMutations.clearFeatureHighlightValues(this.$store);
+			if (key && value) {
+				// extract the var name from the key
+				dataMutations.highlightFeatureValues(this.$store, {
+					context: VARIABLE_FACET_HIGHLIGHTS,
+					values: {
+						[key]: value
+					}
+				});
+			}
 		},
 
 		// sets all facet groups to the active state - full size display + all controls, updates
@@ -305,7 +302,7 @@ export default Vue.extend({
 
 		// updates numerical facet range controls or categorical selected state based on
 		// route
-		updateGroupSelections(groups): Group[] {
+		updateGroupFilters(groups): Group[] {
 			const filters = routeGetters.getRouteFilters(this.$store);
 			const decoded = decodeFiltersDictionary(filters);
 			return groups.map(group => {

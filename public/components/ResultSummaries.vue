@@ -21,8 +21,8 @@
 		</div>
 		<h6 class="nav-link">Actual</h6>
 		<facets class="result-summaries-target"
-			v-on:histogram-mouse-enter="histogramMouseEnter"
-			v-on:histogram-mouse-leave="histogramMouseLeave"
+			@histogram-click="onHistogramClick"
+			@facet-click="onFacetClick"
 			:groups="targetSummaries"
 			:highlights="highlights"></facets>
 		<h6 class="nav-link">Predictions by Model</h6>
@@ -45,7 +45,7 @@ import { createGroups, Group } from '../util/facets';
 import { overlayRouteEntry } from '../util/routes';
 import { getPipelineById } from '../util/pipelines';
 import { getTask } from '../util/pipelines';
-import { getErrorCol, isTarget, getVarFromTarget } from '../util/data';
+import { getErrorCol, isTarget, getVarFromTarget, getTargetColFromFacetKey } from '../util/data';
 import { getters as dataGetters} from '../store/data/module';
 import { getters as routeGetters } from '../store/route/module';
 import { mutations as dataMutations } from '../store/data/module';
@@ -58,6 +58,7 @@ import 'font-awesome/css/font-awesome.css';
 
 const DEFAULT_PERCENTILE = 0.25;
 const NUM_STEPS = 100;
+const RESULT_SUMMARY_CONTEXT = 'result_summary';
 
 export default Vue.extend({
 	name: 'result-summaries',
@@ -179,23 +180,36 @@ export default Vue.extend({
 	},
 
 	methods: {
-		histogramMouseEnter(key, value) {
-			// extract the var name from the key
-			const varName = `${key}_target`;
-			dataMutations.highlightFeatureRange(this.$store, {
-				context: 'result_summary',
-				ranges: {
-					[varName]: {
-						from: _.toNumber(value.label[0]),
-						to: _.toNumber(value.toLabel[value.toLabel.length-1])
+		onHistogramClick(key: string, value: any) {
+			dataMutations.clearFeatureHighlights(this.$store);
+			if (key && value) {
+				// extract the var name from the key
+				const varName = getTargetColFromFacetKey(key);
+				dataMutations.highlightFeatureRange(this.$store, {
+					context: RESULT_SUMMARY_CONTEXT,
+					ranges: {
+						[varName]: {
+							from: _.toNumber(value.label[0]),
+							to: _.toNumber(value.toLabel[value.toLabel.length-1])
+						}
 					}
-				}
-			});
+				});
+			}
 		},
 
-		histogramMouseLeave(key) {
-			const varName = `${key}_target`;
-			dataMutations.clearFeatureHighlightRange(this.$store, varName);
+		onFacetClick(key: string, value: any) {
+			// clear exiting highlights
+			dataMutations.clearFeatureHighlights(this.$store);
+			if (key && value) {
+				// extract the var name from the key
+				const varName = getTargetColFromFacetKey(key);
+				dataMutations.highlightFeatureValues(this.$store, {
+					context: RESULT_SUMMARY_CONTEXT,
+					values: {
+						[varName]: value
+					}
+				});
+			}
 		},
 
 		updateThreshold(value: number) {
@@ -254,6 +268,10 @@ export default Vue.extend({
 	fill: #007E33;
 }
 
+.result-summaries-target .facets-facet-horizontal .facet-histogram-bar-highlighted.select-highlight {
+	fill: #007bff;
+}
+
 .result-summaries-target .facets-facet-vertical .facet-bar-selected {
 	box-shadow: inset 0 0 0 1000px #00C851;
 }
@@ -288,6 +306,10 @@ export default Vue.extend({
 .result-summaries-slider .vue-slider-component .vue-slider-tooltip {
 	border: 1px solid #00C851;
 	background-color: #00C851;
+}
+
+.facets-facet-vertical.select-highlight .facet-bar-selected {
+	box-shadow: inset 0 0 0 1000px #007bff;
 }
 
 .check-message-container {

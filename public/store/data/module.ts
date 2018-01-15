@@ -75,5 +75,6 @@ export const mutations = {
 	highlightFeatureRange: commit(moduleMutations.highlightFeatureRange),
 	clearFeatureHighlightRange: commit(moduleMutations.clearFeatureHighlightRange),
 	highlightFeatureValues: commit(moduleMutations.highlightFeatureValues),
-	clearFeatureHighlightValues: commit(moduleMutations.clearFeatureHighlightValues)
+	clearFeatureHighlightValues: commit(moduleMutations.clearFeatureHighlightValues),
+	clearFeatureHighlights: commit(moduleMutations.clearFeatureHighlights)
 }

@@ -46,12 +46,15 @@ export function isInTrainingSet(col: string, training: Dictionary<boolean>) {
 	return (isPredicted(col) ||
 		isError(col) ||
 		isTarget(col) ||
+		isHiddenField(col) ||
 		training[col]);
 }
 
+
+
 export function removeNonTrainingItems(items: TargetRow[], training: Dictionary<boolean>):  TargetRow[] {
 	return _.map(items, item => {
-		const row: TargetRow = {};
+		const row: TargetRow = <TargetRow>{};
 		_.forIn(item, (val, col) => {
 			if (isInTrainingSet(col.toLowerCase(), training)) {
 				row[col] = val;
@@ -81,6 +84,10 @@ export function isError(col: string): boolean {
 
 export function isTarget(col: string): boolean {
 	return col.endsWith(TARGET_POSTFIX);
+}
+
+export function isHiddenField(col: string): boolean {
+	return col.startsWith('_');
 }
 
 export function getPredictedIndex(columns: string[]): number {
@@ -133,6 +140,10 @@ export function getErrorColFromFacetKey(facetKey: string) {
 
 export function getPredictedColFromFacetKey(facetKey: string) {
 	return facetKey.replace(PREDICTED_FACET_KEY_POSTFIX, PREDICTED_POSTFIX);
+}
+
+export function getTargetColFromFacetKey(facetKey: string) {
+	return facetKey + (TARGET_POSTFIX);
 }
 
 export function updateSummaries(summary: VariableSummary, summaries: VariableSummary[], matchField: string) {

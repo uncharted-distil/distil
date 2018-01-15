@@ -19,6 +19,7 @@
     "font-awesome": "4.7.0",
     "jquery": "3.2.1",
     "lodash": "4.17.4",
+    "multimap": "^1.0.2",
     "popper.js": "1.12.9",
     "store": "^2.0.12",
     "vue": "2.5.13",

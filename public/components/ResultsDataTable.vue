@@ -8,10 +8,9 @@
 			<b-table v-if="items.length>0"
 				bordered
 				hover
-				striped
 				small
-				@row-hovered="onRowHovered"
-				@mouseout.native="onMouseOut"
+				@row-clicked="onRowClick"
+				:ref="refName"
 				:items="items"
 				:fields="fields">
 			</b-table>
@@ -28,7 +27,7 @@ import { TargetRow, FieldInfo } from '../store/data/index';
 import { getters as routeGetters } from '../store/route/module';
 import { Dictionary } from '../util/dict';
 import { removeNonTrainingItems, removeNonTrainingFields } from '../util/data';
-import { updateTableHighlights } from '../util/highlights';
+import { updateTableHighlights, scrollToFirstHighlight } from '../util/highlights';
 import { getTrainingVariablesForPipelineId } from '../util/pipelines';
 import Vue from 'vue';
 
@@ -41,7 +40,14 @@ export default Vue.extend({
 		'title': String,
 		'filterFunc': Function,
 		'decorateFunc': Function,
-		'excludeNonTraining': Boolean
+		'excludeNonTraining': Boolean,
+		'refName': String
+	},
+
+	data() {
+		return {
+			selectedRowKey: -1
+		};
 	},
 
 	computed: {
@@ -51,13 +57,44 @@ export default Vue.extend({
 		// extracts the table data from the store
 		items(): TargetRow[] {
 			const items = getters.getResultDataItems(this.$store);
-			const filtered = this.excludeNonTraining ? removeNonTrainingItems(items, this.training) : items;
+
+			const training = getters.getTrainingVariablesMap(this.$store);
+			const filtered = this.excludeNonTraining ? removeNonTrainingItems(items, training) : items;
+
 			const rangeHighlights = getters.getHighlightedFeatureRanges(this.$store);
 			const valueHighlights = getters.getHighlightedFeatureValues(this.$store);
-			updateTableHighlights(filtered, rangeHighlights, valueHighlights, RESULT_TABLE_HIGHLIGHTS);
-			return filtered
+
+			// clear all selections visuals
+			items.forEach(r => r._rowVariant = null);
+
+			// if we have highlights defined and the select table is not the source then updated
+			// the highlight visuals.
+			if ((valueHighlights.context && valueHighlights.context !== RESULT_TABLE_HIGHLIGHTS) ||
+				(rangeHighlights.context && rangeHighlights.context !== RESULT_TABLE_HIGHLIGHTS)) {
+					updateTableHighlights(filtered, rangeHighlights, valueHighlights, RESULT_TABLE_HIGHLIGHTS);
+			}
+
+			const updatedItems = filtered
 				.filter(item => this.filterFunc(item))
 				.map(item => this.decorateFunc(item));
+
+			// apply the currently selected row highlight - use the key because it is invarant across filter/sort
+			// apply the currently selected row highlight - if there were value or range highlights applied,
+			// then disable row selection
+			if (this.selectedRowKey >= 0 &&
+				valueHighlights.context === RESULT_TABLE_HIGHLIGHTS ||
+				rangeHighlights.context === RESULT_TABLE_HIGHLIGHTS) {
+				const toSelect = updatedItems.find(r => r._key === this.selectedRowKey);
+				toSelect._rowVariant = 'primary';
+			} else {
+				this.selectedRowKey = -1;
+			}
+
+
+			// On data / highlights change, scroll to first selected row
+			scrollToFirstHighlight(this, this.refName);
+
+			return updatedItems;
 		},
 
 		// extract the table field header from the store
@@ -77,18 +114,26 @@ export default Vue.extend({
 	},
 
 	methods: {
-		onRowHovered(event: Event) {
-			// set new values
-			const highlights = {
-				context: RESULT_TABLE_HIGHLIGHTS,
-				values: {}
-			};
-			_.forIn(this.fields, (field, key) => highlights.values[key] = event[key]);
-			mutations.highlightFeatureValues(this.$store, highlights);
-		},
+		onRowClick(row: TargetRow) {
 
-		onMouseOut() {
-			mutations.clearFeatureHighlightValues(this.$store);
+			// clear out any highlights currently in the table and at the app level
+			mutations.clearFeatureHighlights(this.$store);
+
+			if (row._key !== this.selectedRowKey) {
+				// clicked on a different row than last time - new selection
+				this.selectedRowKey = row._key;
+
+				// publish the highlight change
+				const highlights = {
+					context: RESULT_TABLE_HIGHLIGHTS,
+					values: {}
+				};
+				_.forEach(this.fields, (field, key) => highlights.values[key] = row[key]);
+				mutations.highlightFeatureValues(this.$store, highlights);
+			} else {
+				// clicked on same row - remove the row selection visual
+				this.selectedRowKey = -1;
+			}
 		}
 	}
 });

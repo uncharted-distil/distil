@@ -3,7 +3,6 @@
 		<h6 class="nav-link">Available features</h6>
 		<variable-facets
 			enable-search
-			enable-facet-filtering
 			type-change
 			instance-name="availableVars"
 			:variables="variables"
