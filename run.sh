@@ -1,7 +1,7 @@
 #!/bin/bash
-export PIPELINE_COMPUTE_ENDPOINT=localhost:45042
+export PIPELINE_COMPUTE_ENDPOINT=localhost:50051
 export ES_ENDPOINT=http://localhost:9200
-export PIPELINE_DATA_DIR=`pwd`/datasets
+export PIPELINE_DATA_DIR=/datasets
 export PG_STORAGE=true
 export PIPELINE_COMPUTE_TRACE=true
 export PG_LOG_LEVEL=none # debug, error, warn, info, none

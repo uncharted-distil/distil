@@ -262,7 +262,7 @@ func handleCreatePipelines(conn *Connection, client *pipeline.Client, metadataCt
 	for _, featureName := range filteredVars {
 		feature := &pipeline.Feature{
 			FeatureName: featureName,
-			ResourceId:  defaultResourceID,
+			ResourceId:  datasetPath,
 		}
 		trainFeatures = append(trainFeatures, feature)
 	}
@@ -286,7 +286,7 @@ func handleCreatePipelines(conn *Connection, client *pipeline.Client, metadataCt
 		TargetFeatures: []*pipeline.Feature{
 			{
 				FeatureName: clientCreateMsg.Feature,
-				ResourceId:  defaultResourceID,
+				ResourceId:  datasetPath,
 			},
 		},
 		MaxPipelines: clientCreateMsg.MaxPipelines,
