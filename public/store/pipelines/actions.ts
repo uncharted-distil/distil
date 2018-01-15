@@ -29,7 +29,7 @@ interface Result {
 interface PipelineResponse {
 	requestId: string;
 	dataset: string;
-	features: PipelineFeature[];
+	features: Feature[];
 	filters: FilterParams;
 	results: Result[];
 }
@@ -104,13 +104,6 @@ export const actions = {
 
 						// for each result
 						pipeline.results.forEach(result => {
-
-							// inject the name and pipeline id
-							result.name = createResultName(
-								pipeline.dataset,
-								result.createdTime,
-								targetFeature);
-
 							// update pipeline
 							mutations.updatePipelineRequest(context, {
 								name: targetFeature,
@@ -118,7 +111,6 @@ export const actions = {
 								features: pipeline.features,
 								requestId: pipeline.requestId,
 								dataset: pipeline.dataset,
-								name: result.name,
 								feature: targetFeature,
 								timestamp: result.createdTime,
 								progress: result.progress,
@@ -127,7 +119,6 @@ export const actions = {
 								scores: result.scores,
 								output: ''
 							});
-
 						});
 					});
 				}
