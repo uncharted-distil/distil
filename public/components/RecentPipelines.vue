@@ -36,6 +36,7 @@ export default Vue.extend({
 				.slice()
 				.sort((a, b) => b.timestamp - a.timestamp)
 				.slice(0, this.maxPipelines);
+		}
 	}
 });
 </script>
