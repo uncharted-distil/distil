@@ -38,16 +38,16 @@ type Config struct {
 	PostgresRetryTimeout       int    `env:"PG_RETRY_TIMEOUT" envDefault:"4000"`
 	PostgresLogLevel           string `env:"PG_LOG_LEVEL" envDefault:"none"`
 	PrimitiveEndPoint          string `env:"PRIMITIVE_END_POINT" envDefault:"http://localhost:5000"`
-	DataFolderPath             string `env:"DATA_FOLDER_PATH" envDefault:"/input/d3m"`
+	DataFolderPath             string `env:"DATA_FOLDER_PATH" envDefault:"/home/phorne/data/d3m_new"`
 	DataFilePath               string `env:"DATA_FILE_PATH" envDefault:"/tables/learningData.csv"`
 	DatasetFolderSuffix        string `env:"DATASET_FOLDER_SUFFIX" envDefault:"_dataset"`
 	MergedOutputDataPath       string `env:"MERGED_OUTPUT_DATA_PATH" envDefault:"tables/merged.csv"`
 	MergedOutputSchemaPath     string `env:"MERGED_OUTPUT_SCHEMA_PATH" envDefault:"tables/mergedDataSchema.json"`
-	SchemaPath                 string `env:"SCHEMA_PATH" envDefault:"/datasetDoc.json"`
+	SchemaPath                 string `env:"SCHEMA_PATH" envDefault:"datasetDoc.json"`
 	ClassificationEndpoint     string `env:"CLASSIFICATION_ENDPOINT" envDefault:"http://localhost:5000"`
 	ClassificationFunctionName string `env:"CLASSIFICATION_FUNCTION_NAME" envDefault:"fileUpload"`
 	ClassificationOutputPath   string `env:"CLASSIFICATION_OUTPUT_PATH" envDefault:"tables/classification.json"`
-	RankingEndpoint            string `env:"RANKING_ENDPOINT" envDefault:"HTTP://localhost:5001"`
+	RankingEndpoint            string `env:"RANKING_ENDPOINT" envDefault:"http://localhost:5001"`
 	RankingFunctionName        string `env:"RANKING_FUNCTION_NAME" envDefault:"pca"`
 	RankingOutputPath          string `env:"RANKING_OUTPUT_PATH" envDefault:"tables/importance.json"`
 	SummaryPath                string `env:"SUMMARY_PATH" envDefault:"summary.txt"`

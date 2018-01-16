@@ -2,8 +2,11 @@ package task
 
 import (
 	"bufio"
+	"bytes"
+	"encoding/csv"
 	"encoding/json"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"net/http"
 	"os"
@@ -17,6 +20,7 @@ import (
 	"github.com/unchartedsoftware/distil-ingest/metadata"
 	"github.com/unchartedsoftware/distil-ingest/postgres"
 	"github.com/unchartedsoftware/distil-ingest/rest"
+	"github.com/unchartedsoftware/plog"
 )
 
 // IngestTaskConfig captures the necessary configuration for an data ingest.
@@ -60,25 +64,28 @@ func Merge(index string, dataset string, config *IngestTaskConfig) error {
 	// load the metadata from schema
 	meta, err := metadata.LoadMetadataFromOriginalSchema(config.getAbsolutePath(dataset, config.SchemaPathRelative))
 	if err != nil {
-		errors.Wrap(err, "unable to load metadata schema")
+		return errors.Wrap(err, "unable to load metadata schema")
 	}
 
 	// merge file links in dataset
 	mergedDR, output, err := merge.InjectFileLinksFromFile(meta, config.getAbsolutePath(dataset, config.DataPathRelative), config.getRawDataPath(dataset), config.HasHeader)
 	if err != nil {
-		errors.Wrap(err, "unable to merge linked files")
+		return errors.Wrap(err, "unable to merge linked files")
 	}
 
 	// write copy to disk
 	err = ioutil.WriteFile(config.getAbsolutePath(dataset, config.MergedOutputPathRelative), output, 0644)
 	if err != nil {
-		errors.Wrap(err, "unable to write merged data")
+		return errors.Wrap(err, "unable to write merged data")
 	}
 
 	// write merged metadata out to disk
+	log.Infof("META: %v", meta)
+	log.Infof("NAME: %v", config.getAbsolutePath(dataset, config.MergedOutputSchemaPathRelative))
+	log.Infof("MERGED: %v", mergedDR)
 	err = meta.WriteMergedSchema(config.getAbsolutePath(dataset, config.MergedOutputSchemaPathRelative), mergedDR)
 	if err != nil {
-		errors.Wrap(err, "unable to write merged schema")
+		return errors.Wrap(err, "unable to write merged schema")
 	}
 
 	return nil
@@ -106,7 +113,7 @@ func Classify(index string, dataset string, config *IngestTaskConfig) error {
 	// write to file
 	err = ioutil.WriteFile(config.getAbsolutePath(dataset, config.ClassificationOutputPathRelative), bytes, 0644)
 	if err != nil {
-		errors.Wrap(err, "unable to store classification result")
+		return errors.Wrap(err, "unable to store classification result")
 	}
 
 	return nil
@@ -114,12 +121,18 @@ func Classify(index string, dataset string, config *IngestTaskConfig) error {
 
 // Rank the importance of the variables in the dataset.
 func Rank(index string, dataset string, config *IngestTaskConfig) error {
+	// need to ignore rows with missing
+	err := removeMissingValues(config.getAbsolutePath(dataset, config.MergedOutputPathRelative), config.getAbsolutePath(dataset, "forrank.csv"), config.HasHeader)
+	if err != nil {
+		return errors.Wrap(err, "unable to ignore missing values")
+	}
+
 	// create ranker
 	client := rest.NewClient(config.RankingRESTEndpoint)
 	ranker := rest.NewRanker(config.RankingFunctionName, client)
 
 	// get the importance from the REST interface
-	importance, err := ranker.RankFile(config.getAbsolutePath(dataset, config.MergedOutputPathRelative))
+	importance, err := ranker.RankFile(config.getAbsolutePath(dataset, "forrank.csv"))
 	if err != nil {
 		return errors.Wrap(err, "unable to rank importance file")
 	}
@@ -155,19 +168,19 @@ func Ingest(index string, dataset string, config *IngestTaskConfig) error {
 	}
 	err = meta.LoadImportance(config.getAbsolutePath(dataset, config.RankingOutputPathRelative), indices)
 	if err != nil {
-		errors.Wrap(err, "unable to load importance from file")
+		return errors.Wrap(err, "unable to load importance from file")
 	}
 
 	// load summary
 	err = meta.LoadSummary(config.getAbsolutePath(dataset, config.SummaryOutputPathRelative), true)
 	if err != nil {
-		errors.Wrap(err, "unable to load summary")
+		return errors.Wrap(err, "unable to load summary")
 	}
 
 	// load stats
 	err = meta.LoadDatasetStats(config.getAbsolutePath(dataset, config.MergedOutputPathRelative))
 	if err != nil {
-		errors.Wrap(err, "unable to load stats")
+		return errors.Wrap(err, "unable to load stats")
 	}
 
 	// create elasticsearch client
@@ -178,20 +191,20 @@ func Ingest(index string, dataset string, config *IngestTaskConfig) error {
 		elastic.SetSniff(false),
 		elastic.SetGzip(true))
 	if err != nil {
-		errors.Wrap(err, "unable to initialize elastic client")
+		return errors.Wrap(err, "unable to initialize elastic client")
 	}
 
 	// ingest the metadata
 	// Create the metadata index if it doesn't exist
 	err = metadata.CreateMetadataIndex(elasticClient, index, false)
 	if err != nil {
-		errors.Wrap(err, "unable to create metadata index")
+		return errors.Wrap(err, "unable to create metadata index")
 	}
 
 	// Ingest the dataset info into the metadata index
 	err = metadata.IngestMetadata(elasticClient, index, config.ESDatasetPrefix, meta)
 	if err != nil {
-		errors.Wrap(err, "unable to ingest metadata")
+		return errors.Wrap(err, "unable to ingest metadata")
 	}
 
 	// Connect to the database.
@@ -249,8 +262,62 @@ func Ingest(index string, dataset string, config *IngestTaskConfig) error {
 
 	err = pg.InsertRemainingRows()
 	if err != nil {
-		errors.Wrap(err, "unable to ingest last rows")
+		return errors.Wrap(err, "unable to ingest last rows")
 	}
 
+	return nil
+}
+
+func removeMissingValues(sourceFile string, destinationFile string, hasHeader bool) error {
+	// Copy source to destination, removing rows that have missing values.
+	file, err := os.Open(sourceFile)
+	if err != nil {
+		return errors.Wrap(err, "failed to open source file")
+	}
+
+	reader := csv.NewReader(file)
+
+	// output writer
+	output := &bytes.Buffer{}
+	writer := csv.NewWriter(output)
+	count := 0
+	for {
+		skipLine := false
+		line, err := reader.Read()
+		if err == io.EOF {
+			break
+		} else if err != nil {
+			return errors.Wrap(err, "failed to read line from file")
+		}
+		if count > 0 || !hasHeader {
+			for _, col := range line {
+				// TODO: this is a temp fix for missing values
+				if col == "" {
+					skipLine = true
+				}
+			}
+			// write the csv line back out
+			if !skipLine {
+				err := writer.Write(line)
+				if err != nil {
+					return errors.Wrap(err, "failed to write line to file")
+				}
+			}
+		}
+		count++
+	}
+	// flush writer
+	writer.Flush()
+
+	err = ioutil.WriteFile(destinationFile, output.Bytes(), 0644)
+	if err != nil {
+		return errors.Wrap(err, "failed to close output file")
+	}
+
+	// close left
+	err = file.Close()
+	if err != nil {
+		return errors.Wrap(err, "failed to close input file")
+	}
 	return nil
 }
