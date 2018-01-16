@@ -43,6 +43,7 @@ proto:
 install:
 	@npm install -g yarn
 	@yarn install
+	@go get -u github.com/golang/protobuf/protoc-gen-go
 	@go get -u github.com/golang/lint/golint
 	@go get -u github.com/Masterminds/glide
 	@go get -u github.com/unchartedsoftware/witch
