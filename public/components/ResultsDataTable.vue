@@ -58,8 +58,7 @@ export default Vue.extend({
 		items(): TargetRow[] {
 			const items = getters.getResultDataItems(this.$store);
 
-			const training = getters.getTrainingVariablesMap(this.$store);
-			const filtered = this.excludeNonTraining ? removeNonTrainingItems(items, training) : items;
+			const filtered = this.excludeNonTraining ? removeNonTrainingItems(items, this.training) : items;
 
 			const rangeHighlights = getters.getHighlightedFeatureRanges(this.$store);
 			const valueHighlights = getters.getHighlightedFeatureValues(this.$store);
