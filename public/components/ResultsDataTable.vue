@@ -54,6 +54,17 @@ export default Vue.extend({
 		pipelineId(): string {
 			return routeGetters.getRoutePipelineId(this.$store);
 		},
+
+		// extracts the training set from the store
+		training(): Dictionary<boolean> {
+			const training = getTrainingVariablesForPipelineId(this.$store.state.pipelineModule, this.pipelineId);
+			const trainingMap = {};
+			training.forEach(t => {
+				trainingMap[t.toLowerCase()] = true;
+			});
+			return trainingMap;
+		},
+
 		// extracts the table data from the store
 		items(): TargetRow[] {
 			const items = getters.getResultDataItems(this.$store);
@@ -89,7 +100,6 @@ export default Vue.extend({
 				this.selectedRowKey = -1;
 			}
 
-
 			// On data / highlights change, scroll to first selected row
 			scrollToFirstHighlight(this, this.refName);
 
@@ -100,16 +110,7 @@ export default Vue.extend({
 		fields(): Dictionary<FieldInfo> {
 			const fields = getters.getResultDataFields(this.$store);
 			return this.excludeNonTraining ? removeNonTrainingFields(fields, this.training) : fields;
-		},
-
-		training(): Dictionary<boolean> {
-			const training = getTrainingVariablesForPipelineId(this.$store.state.pipelineModule, this.pipelineId);
-			const trainingMap = {};
-			training.forEach(t => {
-				trainingMap[t.toLowerCase()] = true;
-			});
-			return trainingMap;
-		},
+		}
 	},
 
 	methods: {

@@ -35,7 +35,6 @@ export function gotoSelect(store: Store<any>, router: VueRouter) {
 
 export function gotoResults(store: Store<any>, router: VueRouter) {
 	gotoView(store, router, '/results', {
-		terms: routeGetters.getRouteTerms(store),
 		dataset: routeGetters.getRouteDataset(store),
 		target: routeGetters.getRouteTargetVariable(store)
 	});

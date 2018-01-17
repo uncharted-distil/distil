@@ -60,6 +60,7 @@ export default Vue.extend({
 		pipelineId: String,
 		resultSummary: Object,
 		residualsSummary: Object,
+		summaryExtrema: Object,
 		resultHtml: String,
 		residualHtml: String
 	},
@@ -69,6 +70,7 @@ export default Vue.extend({
 	},
 
 	computed: {
+
 		pipelineStatus(): String {
 			const pipeline = getPipelineById(this.$store.state.pipelineModule, this.pipelineId);
 			if (pipeline) {
@@ -86,7 +88,7 @@ export default Vue.extend({
 
 		resultGroups(): Group[] {
 			if (this.results()) {
-				return createGroups([this.results()], false, false);
+				return createGroups([this.results()], false, false, this.summaryExtrema);
 			}
 			return [];
 		},
@@ -266,12 +268,17 @@ export default Vue.extend({
 	box-shadow: none;
 }
 
-.result-container .facets-group {
+.result-container .facets-group,
+.residual-container .facets-group {
 	box-shadow: none;
 }
 
-.residual-container .facets-group {
-	box-shadow: none;
+.result-group,
+.result-container .facets-group,
+.result-container .facets-group .group-header,
+.residual-container .facets-group,
+.residual-container .facets-group .group-header {
+	cursor: pointer !important;
 }
 
 .residual-container .facets-facet-horizontal .facet-histogram-bar-highlighted {

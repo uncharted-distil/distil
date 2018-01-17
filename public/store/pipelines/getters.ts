@@ -17,16 +17,16 @@ export const getters = {
 	// Returns a dictionary of dictionaries, where the first key is the pipeline create request ID, and the second
 	// key is the pipeline ID.
 	getRunningPipelines(state: PipelineState): PipelineInfo[] {
-		return state.pipelineRequests.filter(pipeline => pipeline.progress === PIPELINE_RUNNING);
+		return state.pipelineRequests.filter(pipeline => pipeline.progress === PIPELINE_RUNNING).sort((a, b) => b.timestamp - a.timestamp);
 	},
 
 	// Returns a dictionary of dictionaries, where the first key is the pipeline create request ID, and the second
 	// key is the pipeline ID.
 	getCompletedPipelines(state: PipelineState): PipelineInfo[] {
-		return state.pipelineRequests.filter(pipeline => pipeline.progress === PIPELINE_UPDATED || pipeline.progress === PIPELINE_COMPLETED);
+		return state.pipelineRequests.filter(pipeline => pipeline.progress === PIPELINE_UPDATED || pipeline.progress === PIPELINE_COMPLETED).sort((a, b) => b.timestamp - a.timestamp);
 	},
 
 	getPipelines(state: PipelineState): PipelineInfo[] {
-		return state.pipelineRequests;
+		return state.pipelineRequests.sort((a, b) => b.timestamp - a.timestamp);
 	}
 }

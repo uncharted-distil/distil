@@ -11,21 +11,16 @@
 
 ## Development
 
-Clone the repository:
+#### Clone the repository:
 
 ```bash
 mkdir -p $GOPATH/src/github.com/unchartedsoftware
 cd $GOPATH/src/github.com/unchartedsoftware
 git clone git@github.com:unchartedsoftware/distil.git
-```
-
-Install dependencies:
-
-```bash
 cd distil
-make install
 ```
-Install protocol buffer compiler:
+
+#### Install protocol buffer compiler:
 
 Linux
 
@@ -40,37 +35,43 @@ OSX
 ```bash
 curl -OL https://github.com/google/protobuf/releases/download/v3.3.0/protoc-3.3.0-osx-x86_64.zip
 unzip protoc-3.3.0-osx-x86_64.zip -d protoc3
-sudo mv protoc3/bin/protoc /usr/bin/protoc
+mv protoc3/bin/protoc /usr/bin/protoc
 ```
 
-Compile protobuffers:
+#### Install remaining dependencies:
 
 ```bash
-make protoc
+make install
 ```
 
-The application depends on ElasticSearch for dataset indexing, PostGres for dataset access, Redis for client server caching, and a stub TA2 system for back end integration.  Docker images (with data) for all are available:
+#### Compile the protocol buffer definitions:
 
 ```bash
-docker pull docker.uncharted.software/distil_dev_es
-docker pull docker.uncharted.software/distil_dev_postgres
-docker pull docker.uncharted.software/distil-pipeline-server
-docker pull docker pull redis
+make proto
 ```
+
+#### Docker images:
+
+The application depends on:
+- ElasticSearch for text indexing and searching
+- PostgreSQL for data storage
+- Redis for client server caching
+- A stub TA2 system for back end integration.
+
+Docker images (with data) for all are available at the `docker.uncharted.software`. Once
+
+```bash
+docker-compose pull
+```
+
+#### Running the app:
+
+Using three separate terminals:
 
 Launch docker containers via [Docker Compose](https://docs.docker.com/compose/):
 
 ```bash
 docker-compose up
-```
-
-or using individual bash scripts:
-
-```bash
-./redis_run.sh
-./es_run.sh
-./pg_run.sh
-./pipeline_server_run.sh
 ```
 
 Build and watch webapp:
