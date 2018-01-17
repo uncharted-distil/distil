@@ -48,7 +48,6 @@
 import moment from 'moment';
 import { getMetricDisplayName } from '../util/pipelines';
 import { createRouteEntry } from '../util/routes';
-import { getters } from '../store/route/module';
 import { PipelineInfo, PIPELINE_SUBMITTED, PIPELINE_RUNNING, PIPELINE_UPDATED, PIPELINE_COMPLETED } from '../store/pipelines/index';
 import Vue from 'vue';
 
@@ -100,11 +99,8 @@ export default Vue.extend({
 		onResult() {
 			const result = <PipelineInfo>this.result;
 			const entry = createRouteEntry('/results', {
- 				terms: getters.getRouteTerms(this.$store),
 				dataset: result.dataset,
-				filters: getters.getRouteFilters(this.$store),
 				target: result.feature,
-				training: getters.getRouteTrainingVariables(this.$store),
 				pipelineId: result.pipelineId
 			});
 			this.$router.push(entry);

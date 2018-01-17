@@ -109,7 +109,6 @@ export default Vue.extend({
 			}).then((res: PipelineInfo) => {
 				// transition to result screen
 				const entry = createRouteEntry('/results', {
-					terms: routeGetters.getRouteTerms(this.$store),
 					dataset: routeGetters.getRouteDataset(this.$store),
 					target: routeGetters.getRouteTargetVariable(this.$store),
 					pipelineId: res.pipelineId

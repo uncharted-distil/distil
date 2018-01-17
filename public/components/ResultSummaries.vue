@@ -23,10 +23,13 @@
 		<facets class="result-summaries-target"
 			@histogram-click="onHistogramClick"
 			@facet-click="onFacetClick"
-			:groups="targetSummaries"
+			:groups="targetGroups"
 			:highlights="highlights"></facets>
 		<h6 class="nav-link">Predictions by Model</h6>
-		<result-facets :regression="regressionEnabled"></result-facets>
+		<result-facets
+			:regression="regressionEnabled"
+			:summary-extrema="summaryExtrema">
+		</result-facets>
 		<b-btn v-b-modal.export variant="outline-success" class="check-button">Export Pipeline</b-btn>
 		<b-modal id="export" title="Export" @ok="onExport">
 			<div class="check-message-container">
@@ -46,7 +49,8 @@ import { overlayRouteEntry } from '../util/routes';
 import { getPipelineById } from '../util/pipelines';
 import { getTask } from '../util/pipelines';
 import { getErrorCol, isTarget, getVarFromTarget, getTargetColFromFacetKey } from '../util/data';
-import { getters as dataGetters} from '../store/data/module';
+import { VariableSummary, Extrema } from '../store/data/index';
+import { getters as dataGetters } from '../store/data/module';
 import { getters as routeGetters } from '../store/route/module';
 import { mutations as dataMutations } from '../store/data/module';
 import { actions } from '../store/app/module';
@@ -150,16 +154,43 @@ export default Vue.extend({
 			return interval;
 		},
 
-		targetSummaries(): Group[] {
-			// Get the current target variable and the summary associated with it
+		targetSummary() : VariableSummary {
 			const targetVariable = routeGetters.getRouteTargetVariable(this.$store);
 			const varSummaries = dataGetters.getVariableSummaries(this.$store);
-			const targetSummary = _.find(varSummaries, v => _.toLower(v.name) === _.toLower(targetVariable));
-			// Create a facet for it - this will act as a basis of comparison for the result sets
-			if (!_.isEmpty(targetSummary)) {
-				return createGroups([targetSummary], false, false);
+			return _.find(varSummaries, v => _.toLower(v.name) === _.toLower(targetVariable));
+		},
+
+		targetGroups(): Group[] {
+			if (this.targetSummary) {
+				return createGroups([ this.targetSummary ], false, false, this.summaryExtrema);
 			}
 			return [];
+		},
+
+		resultsSummaries():  VariableSummary[] {
+			return dataGetters.getResultsSummaries(this.$store);
+		},
+
+		summaryExtrema(): Extrema {
+			if (this.targetSummary || this.resultsSummaries) {
+				let min = Infinity;
+				let max = -Infinity;
+				if (this.targetSummary) {
+					min = Math.min(this.targetSummary.extrema.min, min);
+					max = Math.max(this.targetSummary.extrema.max, max);
+				}
+				if (this.resultsSummaries) {
+					this.resultsSummaries.forEach(summary => {
+						min = Math.min(summary.extrema.min, min);
+						max = Math.max(summary.extrema.max, max);
+					});
+				}
+				return {
+					min: min,
+					max: max
+				};
+			}
+			return null;
 		},
 
 		regressionEnabled(): boolean {

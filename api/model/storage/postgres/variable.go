@@ -98,6 +98,9 @@ func (s *Storage) parseCategoricalHistogram(rows *pgx.Rows, variable *model.Vari
 func parseUnivariateCategoricalHistogram(rows *pgx.Rows, variable *model.Variable, termsAggName string) (*model.Histogram, error) {
 	// Parse bucket results.
 	buckets := make([]*model.Bucket, 0)
+	min := int64(math.MaxInt32)
+	max := int64(-math.MaxInt32)
+
 	if rows != nil {
 		for rows.Next() {
 			var term string
@@ -111,6 +114,12 @@ func parseUnivariateCategoricalHistogram(rows *pgx.Rows, variable *model.Variabl
 				Key:   term,
 				Count: bucketCount,
 			})
+			if bucketCount < min {
+				min = bucketCount
+			}
+			if bucketCount > max {
+				max = bucketCount
+			}
 		}
 	}
 
@@ -120,6 +129,10 @@ func parseUnivariateCategoricalHistogram(rows *pgx.Rows, variable *model.Variabl
 		Type:    model.CategoricalType,
 		VarType: variable.Type,
 		Buckets: buckets,
+		Extrema: &model.Extrema{
+			Min: float64(min),
+			Max: float64(max),
+		},
 	}, nil
 }
 
@@ -144,6 +157,9 @@ func parseBivariateCategoricalHistogram(rows *pgx.Rows, variable *model.Variable
 
 	// convert the extracted counts into buckets suitable for serialization
 	buckets := make([]*model.Bucket, 0)
+	min := int64(math.MaxInt32)
+	max := int64(-math.MaxInt32)
+
 	for predictedKey, targetCounts := range countMap {
 		bucket := model.Bucket{
 			Key:     predictedKey,
@@ -159,14 +175,23 @@ func parseBivariateCategoricalHistogram(rows *pgx.Rows, variable *model.Variable
 			bucket.Buckets = append(bucket.Buckets, &targetBucket)
 		}
 		buckets = append(buckets, &bucket)
+		if bucket.Count < min {
+			min = bucket.Count
+		}
+		if bucket.Count > max {
+			max = bucket.Count
+		}
 	}
-
 	// assign histogram attributes
 	return &model.Histogram{
 		Name:    variable.Name,
 		VarType: variable.Type,
 		Type:    model.CategoricalType,
 		Buckets: buckets,
+		Extrema: &model.Extrema{
+			Min: float64(min),
+			Max: float64(max),
+		},
 	}, nil
 }
 

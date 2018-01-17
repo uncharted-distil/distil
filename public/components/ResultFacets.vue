@@ -8,6 +8,7 @@
 			:pipeline-id="group.pipelineId"
 			:result-summary="group.resultSummary"
 			:residuals-summary="group.residualsSummary"
+			:summary-extrema="summaryExtrema"
 			:resultHtml="html"
 			:residualHtml="html">
 		</result-group>
@@ -48,7 +49,8 @@ export default Vue.extend({
 
 	props: {
 		html: String,
-		regression: Boolean
+		regression: Boolean,
+		summaryExtrema: Object
 	},
 
 	computed: {
