@@ -75,7 +75,7 @@ imports:
   - document
   - util
 - name: github.com/unchartedsoftware/distil-ingest
-  version: 05a74943bf7c41671df53da9fd0f4685b3707d7e
+  version: 6a21dc0d4280797c0f7e49a163bc4ad251e0f74a
   repo: git@github.com:unchartedsoftware/distil-ingest.git
   vcs: git
   subpackages:
