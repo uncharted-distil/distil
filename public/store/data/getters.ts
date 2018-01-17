@@ -5,6 +5,8 @@ import { TARGET_POSTFIX, PREDICTED_POSTFIX } from '../../util/data';
 import { Dictionary } from '../../util/dict';
 import { getPredictedIndex, getErrorIndex, getTargetIndex } from '../../util/data';
 
+const NUM_DECIMALS = 4;
+
 function validateData(data: Data) {
 	return !_.isEmpty(data) &&
 		!_.isEmpty(data.values) &&
@@ -180,20 +182,17 @@ export const getters = {
 		const resultData = state.resultData;
 		if (validateData(resultData)) {
 			// convert fetched result data rows into table data rows
-			return _.map(resultData.values, (resultRow, rowIdx) => {
-				const row: TargetRow = <TargetRow>{};
-
-				for (const [idx, colValues] of resultRow.entries()) {
-					const colName = resultData.columns[idx];
-					row[colName] = colValues;
-				}
-				row._key = rowIdx;
-
-				// display predicted error info
+			return resultData.values.map((resultRow, rowIndex) => {
+				const row = {} as TargetRow;
+				resultRow.forEach((colValue, colIndex) => {
+					const colName = resultData.columns[colIndex];
+					row[colName] = _.isNumber(colValue) ? colValue.toFixed(NUM_DECIMALS) : colValue;
+				});
+				row._key = rowIndex;
 				return row;
 			});
 		}
-		return <TargetRow[]>[];
+		return [];
 	},
 
 	getResultDataFields(state: DataState): Dictionary<FieldInfo> {
