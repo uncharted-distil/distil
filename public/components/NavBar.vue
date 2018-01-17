@@ -9,24 +9,23 @@
 		<b-collapse is-nav id="nav_collapse">
 			<b-navbar-nav>
 				<b-nav-item @click="onHome" :active="isActive(HOME)">
-					<i class="fa fa-angle-right nav-selection" v-bind:class="{ active: isActive(HOME) }"></i>
 					<i class="fa fa-home nav-icon" v-bind:class="{ active: isActive(HOME) }"></i>
-					Home
+					<b-nav-text>Home</b-nav-text>
 				</b-nav-item>
+				<i class="fa fa-angle-right nav-selection"></i>
 				<b-nav-item @click="onSearch" :active="isActive(SEARCH)">
-					<i class="fa fa-angle-right nav-selection" v-bind:class="{ active: isActive(SEARCH) }"></i>
 					<i class="fa fa-dot-circle-o nav-icon" v-bind:class="{ active: isActive(SEARCH) }"></i>
-					Search
+					<b-nav-text>Search</b-nav-text>
 				</b-nav-item>
+				<i class="fa fa-angle-right nav-selection"></i>
 				<b-nav-item @click="onSelect" :active="isActive(SELECT)" :disabled="!hasSelectView()">
-					<i class="fa fa-angle-right nav-selection" v-bind:class="{ active: isActive(SELECT) }"></i>
 					<i class="fa fa-code-fork nav-icon" v-bind:class="{ active: isActive(SELECT) }"></i>
-					Select
+					<b-nav-text>Select</b-nav-text>
 				</b-nav-item>
+				<i class="fa fa-angle-right nav-selection"></i>
 				<b-nav-item @click="onResults" :active="isActive(RESULTS)" :disabled="!hasResultView()">
-					<i class="fa fa-angle-right nav-selection" v-bind:class="{ active: isActive(RESULTS) }"></i>
 					<i class="fa fa-line-chart nav-icon" v-bind:class="{ active: isActive(RESULTS) }"></i>
-					Results
+					<b-nav-text>Results</b-nav-text>
 				</b-nav-item>
 			</b-navbar-nav>
 			<b-navbar-nav class="ml-auto">
@@ -133,6 +132,34 @@ export default Vue.extend({
 </script>
 
 <style>
+.nav-selection {
+	color: rgba(0, 0, 0, 0.5);
+	padding: 12px 0 12px 5px;
+}
+.nav-icon {
+	padding: 7px;
+	width: 30px;
+	height: 30px;
+	text-align: center;
+	border-radius: 50%;
+}
+.nav-item .nav-link {
+	padding: 0;
+}
+.nav-link.active .nav-icon {
+	color: white;
+	background-color: black;
+}
+.nav-link.active .navbar-text {
+	color: rgba(0, 0, 0, 0.9);
+}
+.nav-link:hover .nav-icon {
+	color: white;
+	background-color: black;
+}
+.nav-link:hover .navbar-text {
+	color: rgba(0, 0, 0, 0.9);
+}
 .session-not-ready {
 	color: #cf3835 !important;
 }
@@ -144,36 +171,20 @@ export default Vue.extend({
 	margin-right: 5px;
 }
 .app-icon path {
-	fill:#cc9900;
+	fill: #c90;
 }
 .abort-icon {
 	vertical-align: middle;
-	color:#cf3835;
+	color: #cf3835;
 }
 .abort-button {
 	margin-left: 20px;
 }
 .session-label {
-	padding-right: 4px
+	padding-right: 4px;
 }
 .bottom-shadowed {
 	width: 100%;
-	box-shadow: 0px 2px 5px -1px rgba(0,0,0,0.65);
-}
-.nav-selection {
-	visibility: hidden;
-}
-.nav-selection.active {
-	visibility: visible;
-}
-.nav-icon {
-	width: 32px;
-	height: 32px;
-	text-align: center;
-	border-radius: 50%;
-}
-.nav-icon.active {
-	color: white;
-	background-color: black;
+	box-shadow: 0 2px 5px -1px rgba(0, 0, 0, 0.65);
 }
 </style>

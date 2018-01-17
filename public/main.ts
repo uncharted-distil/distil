@@ -17,9 +17,9 @@ import './assets/favicons/favicon-16x16.png';
 import './assets/favicons/manifest.json';
 import './assets/favicons/safari-pinned-tab.svg';
 
-import 'bootstrap/dist/css/bootstrap.css';
 import 'bootstrap-vue/dist/bootstrap-vue.css';
 
+import './styles/bootstrap-v4beta2-custom.css';
 import './styles/main.css';
 
 Vue.use(VueRouter);
