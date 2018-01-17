@@ -81,7 +81,13 @@ export default Vue.extend({
 
 		residualsGroups(): Group[] {
 			if (this.residuals()) {
-				return createGroups([this.residuals()], false, false);
+				const extrema = Math.max(
+					Math.abs(this.residuals().extrema.min),
+					Math.abs(this.residuals().extrema.max));
+				return createGroups([this.residuals()], false, false, {
+					min: -extrema,
+					max: extrema
+				});
 			}
 			return [];
 		},
@@ -179,11 +185,17 @@ export default Vue.extend({
 		},
 
 		results(): VariableSummary {
-			return <VariableSummary>this.resultSummary;
+			if (this.resultSummary) {
+				return this.resultSummary as VariableSummary;
+			}
+			return null;
 		},
 
 		residuals(): VariableSummary {
-			return <VariableSummary>this.residualsSummary;
+			if (this.residualsSummary) {
+				return this.residualsSummary as VariableSummary;
+			}
+			return null;
 		},
 
 		updateGroupSelections(groups: Group[]): Group[] {
