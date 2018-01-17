@@ -20,7 +20,10 @@ import (
 	"github.com/unchartedsoftware/distil-ingest/metadata"
 	"github.com/unchartedsoftware/distil-ingest/postgres"
 	"github.com/unchartedsoftware/distil-ingest/rest"
-	"github.com/unchartedsoftware/plog"
+)
+
+const (
+	rankingFilename = "rank-no-missing.csv"
 )
 
 // IngestTaskConfig captures the necessary configuration for an data ingest.
@@ -59,6 +62,31 @@ func (c *IngestTaskConfig) getRawDataPath(dataset string) string {
 	return fmt.Sprintf("%s/", c.getRootPath(dataset))
 }
 
+// IngestDataset executes the complete ingest process for the specified dataset.
+func IngestDataset(index string, dataset string, config *IngestTaskConfig) error {
+	err := Merge(index, dataset, config)
+	if err != nil {
+		return errors.Wrap(err, "unable to merge all data into a single file")
+	}
+
+	err = Classify(index, dataset, config)
+	if err != nil {
+		return errors.Wrap(err, "unable to classify fields")
+	}
+
+	err = Rank(index, dataset, config)
+	if err != nil {
+		return errors.Wrap(err, "unable to rank field importance")
+	}
+
+	err = Ingest(index, dataset, config)
+	if err != nil {
+		return errors.Wrap(err, "unable to ingest ranked data")
+	}
+
+	return nil
+}
+
 // Merge combines all the source data files into a single datafile.
 func Merge(index string, dataset string, config *IngestTaskConfig) error {
 	// load the metadata from schema
@@ -80,9 +108,6 @@ func Merge(index string, dataset string, config *IngestTaskConfig) error {
 	}
 
 	// write merged metadata out to disk
-	log.Infof("META: %v", meta)
-	log.Infof("NAME: %v", config.getAbsolutePath(dataset, config.MergedOutputSchemaPathRelative))
-	log.Infof("MERGED: %v", mergedDR)
 	err = meta.WriteMergedSchema(config.getAbsolutePath(dataset, config.MergedOutputSchemaPathRelative), mergedDR)
 	if err != nil {
 		return errors.Wrap(err, "unable to write merged schema")
@@ -121,8 +146,26 @@ func Classify(index string, dataset string, config *IngestTaskConfig) error {
 
 // Rank the importance of the variables in the dataset.
 func Rank(index string, dataset string, config *IngestTaskConfig) error {
+	// get the header for the rank data
+	meta, err := metadata.LoadMetadataFromClassification(
+		config.getAbsolutePath(dataset, config.MergedOutputSchemaPathRelative),
+		config.getAbsolutePath(dataset, config.ClassificationOutputPathRelative))
+	if err != nil {
+		errors.Wrap(err, "unable to load metadata")
+	}
+
+	header, err := meta.GenerateHeaders()
+	if err != nil {
+		errors.Wrap(err, "unable to load metadata")
+	}
+
+	if len(header) != 1 {
+		errors.Errorf("merge data should only have one header but found %d", len(header))
+	}
+
 	// need to ignore rows with missing
-	err := removeMissingValues(config.getAbsolutePath(dataset, config.MergedOutputPathRelative), config.getAbsolutePath(dataset, "forrank.csv"), config.HasHeader)
+	// ranking requires a header
+	err = removeMissingValues(config.getAbsolutePath(dataset, config.MergedOutputPathRelative), config.getAbsolutePath(dataset, rankingFilename), config.HasHeader, header[0])
 	if err != nil {
 		return errors.Wrap(err, "unable to ignore missing values")
 	}
@@ -132,7 +175,7 @@ func Rank(index string, dataset string, config *IngestTaskConfig) error {
 	ranker := rest.NewRanker(config.RankingFunctionName, client)
 
 	// get the importance from the REST interface
-	importance, err := ranker.RankFile(config.getAbsolutePath(dataset, "forrank.csv"))
+	importance, err := ranker.RankFile(config.getAbsolutePath(dataset, rankingFilename))
 	if err != nil {
 		return errors.Wrap(err, "unable to rank importance file")
 	}
@@ -268,7 +311,7 @@ func Ingest(index string, dataset string, config *IngestTaskConfig) error {
 	return nil
 }
 
-func removeMissingValues(sourceFile string, destinationFile string, hasHeader bool) error {
+func removeMissingValues(sourceFile string, destinationFile string, hasHeader bool, headerToWrite []string) error {
 	// Copy source to destination, removing rows that have missing values.
 	file, err := os.Open(sourceFile)
 	if err != nil {
@@ -280,6 +323,13 @@ func removeMissingValues(sourceFile string, destinationFile string, hasHeader bo
 	// output writer
 	output := &bytes.Buffer{}
 	writer := csv.NewWriter(output)
+	if headerToWrite != nil && len(headerToWrite) > 0 {
+		err := writer.Write(headerToWrite)
+		if err != nil {
+			return errors.Wrap(err, "failed to write header to file")
+		}
+	}
+
 	count := 0
 	for {
 		skipLine := false

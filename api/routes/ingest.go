@@ -17,25 +17,7 @@ func IngestHandler(config *task.IngestTaskConfig) func(http.ResponseWriter, *htt
 		index := pat.Param(r, "index")
 		dataset := pat.Param(r, "dataset")
 
-		err := task.Merge(index, dataset, config)
-		if err != nil {
-			handleError(w, err)
-			return
-		}
-
-		err = task.Classify(index, dataset, config)
-		if err != nil {
-			handleError(w, err)
-			return
-		}
-
-		err = task.Rank(index, dataset, config)
-		if err != nil {
-			handleError(w, err)
-			return
-		}
-
-		err = task.Ingest(index, dataset, config)
+		err := task.IngestDataset(index, dataset, config)
 		if err != nil {
 			handleError(w, err)
 			return

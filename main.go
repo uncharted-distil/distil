@@ -116,6 +116,15 @@ func main() {
 		ESDatasetPrefix:                  config.ElasticDatasetPrefix,
 	}
 
+	// Ingest the data specified by the environment
+	if config.InitialDataset != "" {
+		log.Infof("Loading initial dataset '%s'", config.InitialDataset)
+		err = task.IngestDataset(config.ESDatasetsIndex, config.InitialDataset, ingestConfig)
+		if err != nil {
+			log.Error(err)
+			os.Exit(1)
+		}
+	}
 	// register routes
 	mux := goji.NewMux()
 	mux.Use(middleware.Log)

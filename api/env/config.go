@@ -53,6 +53,8 @@ type Config struct {
 	SummaryPath                string `env:"SUMMARY_PATH" envDefault:"summary.txt"`
 	ElasticTimeout             int    `env:"ES_TIMEOUT" envDefault:"300"`
 	ElasticDatasetPrefix       string `env:"ES_DATASET_PREFIX" envDefault:"d_"`
+	InitialDataset             string `env:"INITIAL_DATASET" envDefault:""`
+	ESDatasetsIndex            string `env:"ES_DATASETS_INDEX" envDefault:"datasets"`
 }
 
 // LoadConfig loads the config from the environment if necessary and returns a
