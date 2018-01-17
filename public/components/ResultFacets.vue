@@ -6,6 +6,7 @@
 			:timestamp="group.timestamp"
 			:request-id="group.requestId"
 			:pipeline-id="group.pipelineId"
+			:scores="group.scores"
 			:result-summary="group.resultSummary"
 			:residuals-summary="group.residualsSummary"
 			:summary-extrema="summaryExtrema"
@@ -83,6 +84,7 @@ export default Vue.extend({
 					pipelineId: pipelineId,
 					groupName: pipeline ? pipeline.name : '',
 					timestamp: pipeline ? moment(pipeline.timestamp).format('YYYY/MM/DD') : '',
+					scores: pipeline ? pipeline.scores : [],
 					resultSummary: resultSummary,
 					residualsSummary: residualSummary
 				};

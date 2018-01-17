@@ -127,11 +127,11 @@ export function getVarFromTarget(decorated: string) {
 }
 
 export function getPredictedFacetKey(target: string) {
-	return target + PREDICTED_FACET_KEY_POSTFIX;
+	return 'Predicted'; //target + PREDICTED_FACET_KEY_POSTFIX;
 }
 
 export function getErrorFacetKey(target: string) {
-	return target + ERROR_FACET_KEY_POSTFIX;
+	return 'Error'; //target + ERROR_FACET_KEY_POSTFIX;
 }
 
 export function getErrorColFromFacetKey(facetKey: string) {
