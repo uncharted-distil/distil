@@ -68,7 +68,7 @@ export interface RangeHighlights extends Highlights {
 }
 
 export interface ValueHighlights extends Highlights {
-	values: Dictionary<any>;
+	values: Dictionary<string[]>;
 }
 
 export type Range = Dictionary<{

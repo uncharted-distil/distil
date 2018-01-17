@@ -45,6 +45,7 @@ import { Dictionary } from '../util/dict';
 import { getters as dataGetters, mutations as dataMutations } from '../store/data/module';
 import { getters as routeGetters } from '../store/route/module';
 import { createGroups, Group } from '../util/facets';
+import { updateDataHighlights } from '../util/highlights';
 import 'font-awesome/css/font-awesome.css';
 import '../styles/spinner.css';
 import _ from 'lodash';
@@ -224,32 +225,32 @@ export default Vue.extend({
 			// on histogram click event, publish the highlight/clear highlight to the
 			// rest of the app
 			dataMutations.clearFeatureHighlights(this.$store);
+
 			if (key && value) {
-				// extract the var name from the key
-				dataMutations.highlightFeatureRange(this.$store, {
-					context: VARIABLE_FACET_HIGHLIGHTS,
-					ranges: {
-						[key]: {
-							from: _.toNumber(value.label[0]),
-							to: _.toNumber(value.toLabel[value.toLabel.length-1])
-						}
-					}
-				});
+				const selectFilter = {
+					name: key,
+					type: NUMERICAL_FILTER,
+					enabled: true,
+					min:  _.toNumber(value.label[0]),
+					max: _.toNumber(value.toLabel[value.toLabel.length-1])
+				};
+				updateDataHighlights(this, key, selectFilter, VARIABLE_FACET_HIGHLIGHTS);
 			}
 		},
 
-		onFacetClick(key: string, value: any) {
+		onFacetClick(key: string, value: string) {
 			// clear existing highlights
 			dataMutations.clearFeatureHighlights(this.$store);
 
 			if (key && value) {
 				// extract the var name from the key
-				dataMutations.highlightFeatureValues(this.$store, {
-					context: VARIABLE_FACET_HIGHLIGHTS,
-					values: {
-						[key]: value
-					}
-				});
+				const selectFilter = {
+					name: key,
+					type: CATEGORICAL_FILTER,
+					enabled: true,
+					categories: [value]
+				};
+				updateDataHighlights(this, key, selectFilter, VARIABLE_FACET_HIGHLIGHTS);
 			}
 		},
 

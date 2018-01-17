@@ -6,10 +6,10 @@
 			center-text="Examine Model Results">
 		</flow-bar>
 		<div class="results-items">
-			<variable-summaries
+			<results-variable-summaries
 				class="results-variable-summaries"
 				:variables="summaries"
-				:dataset="dataset"></variable-summaries>
+				:dataset="dataset"></results-variable-summaries>
 			<results-comparison
 				class="results-result-comparison"
 				:exclude-non-training="excludeNonTraining"></results-comparison>
@@ -22,7 +22,7 @@
 <script lang="ts">
 import FlowBar from '../components/FlowBar.vue';
 import ResultsComparison from '../components/ResultsComparison.vue';
-import VariableSummaries from '../components/VariableSummaries.vue';
+import ResultsVariableSummaries from '../components/ResultsVariableSummaries.vue';
 import ResultSummaries from '../components/ResultSummaries.vue';
 import { gotoSelect } from '../util/nav';
 import { getRequestIdsForDatasetAndTarget, getTrainingVariablesForPipelineId } from '../util/pipelines';
@@ -39,7 +39,7 @@ export default Vue.extend({
 	components: {
 		FlowBar,
 		ResultsComparison,
-		VariableSummaries,
+		ResultsVariableSummaries,
 		ResultSummaries
 	},
 

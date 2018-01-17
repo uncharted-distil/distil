@@ -37,8 +37,8 @@
 
 import Facets from '../components/Facets';
 import { createGroups, Group, NumericalFacet, CategoricalFacet } from '../util/facets';
-import { isPredicted, isError, getVarFromPredicted, getVarFromError, getPredictedFacetKey,
-	getErrorFacetKey, getPredictedColFromFacetKey, getErrorColFromFacetKey } from '../util/data';
+import { isPredicted, isError, isTarget, getVarFromPredicted, getVarFromError, getVarFromTarget, getPredictedFacetKey,
+	getErrorFacetKey, getErrorCol, getPredictedCol } from '../util/data';
 import { VariableSummary } from '../store/data/index';
 import { Dictionary } from '../util/dict';
 import { overlayRouteEntry } from '../util/routes';
@@ -47,6 +47,7 @@ import { getters as routeGetters } from '../store/route/module';
 import { getPipelineById, getMetricDisplayName } from '../util/pipelines';
 import { mutations as dataMutations } from '../store/data/module';
 import { NUMERICAL_FILTER, CATEGORICAL_FILTER, getFilterType, decodeFiltersDictionary } from '../util/filters';
+import { updateResultHighlights } from '../util/highlights';
 import _ from 'lodash';
 import Vue from 'vue';
 
@@ -108,6 +109,8 @@ export default Vue.extend({
 					facetHighlights[getPredictedFacetKey(getVarFromPredicted(varName))] = value;
 				} else if (isError(varName)) {
 					facetHighlights[getErrorFacetKey(getVarFromError(varName))] = value;
+				} else if (isTarget(varName)) {
+					facetHighlights[getVarFromTarget(varName)] = value;
 				}
 			});
 			return facetHighlights;
@@ -127,50 +130,45 @@ export default Vue.extend({
 		},
 
 		onResultHistogramClick(key: string, value: any) {
-			dataMutations.clearFeatureHighlights(this.$store);
-			if (key && value) {
-				// extract the var name from the key
-				const varName = getPredictedColFromFacetKey(key);
-				dataMutations.highlightFeatureRange(this.$store, {
-					context: RESULT_GROUP_HIGHLIGHTS,
-					ranges: {
-						[varName]: {
-							from: _.toNumber(value.label[0]),
-							to: _.toNumber(value.toLabel[value.toLabel.length-1])
-						}
-					}
-				});
-			}
+			const targetVar = routeGetters.getRouteTargetVariable(this.$store);
+			this.histogramHighlights(key ? getPredictedCol(targetVar) : key, value);
 		},
 
 		onResidualsHistogramClick(key: string, value: any) {
-			dataMutations.clearFeatureHighlights(this.$store);
-			if (key && value) {
-				// convert the residual histogram key name into the proper variable ID
-				const varName = getErrorColFromFacetKey(key);
-				dataMutations.highlightFeatureRange(this.$store, {
-					context: RESULT_GROUP_HIGHLIGHTS,
-					ranges: {
-						[varName]: {
-							from: _.toNumber(value.label[0]),
-							to: _.toNumber(value.toLabel[value.toLabel.length-1])
-						}
-					}
-				});
-			}
+			const targetVar = routeGetters.getRouteTargetVariable(this.$store);
+			this.histogramHighlights(key ? getErrorCol(targetVar) : key, value);
 		},
 
-		onResultFacetClick(key: string, value: any) {
+		histogramHighlights(key: string, value: any) {
 			dataMutations.clearFeatureHighlights(this.$store);
 			if (key && value) {
 				// extract the var name from the key
-				const varName = getPredictedColFromFacetKey(key);
-				dataMutations.highlightFeatureValues(this.$store, {
+				const filter = {
+					name: key,
+					type: NUMERICAL_FILTER,
+					enabled: true,
 					context: RESULT_GROUP_HIGHLIGHTS,
-					values: {
-						[varName]: value
-					}
-				});
+					min: _.toNumber(value.label[0]),
+					max: _.toNumber(value.toLabel[value.toLabel.length-1])
+				};
+				updateResultHighlights(this, key, filter, RESULT_GROUP_HIGHLIGHTS);
+			}
+		},
+
+		onResultFacetClick(key: string, value: string) {
+			dataMutations.clearFeatureHighlights(this.$store);
+			if (key && value) {
+				// extract the var name from the key
+				const targetVar = routeGetters.getRouteTargetVariable(this.$store);
+				const varName = getPredictedCol(targetVar);
+				const filter = {
+					name: varName,
+					type: CATEGORICAL_FILTER,
+					enabled: true,
+					context: RESULT_GROUP_HIGHLIGHTS,
+					categories: [value]
+				};
+				updateResultHighlights(this, key, filter, RESULT_GROUP_HIGHLIGHTS);
 			}
 		},
 

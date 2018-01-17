@@ -18,7 +18,7 @@ export default Vue.extend({
 
 	props: {
 		groups: Array,
-		highlights: Object, // Dictionary<any>
+		highlights: Object, // Dictionary<string[]>
 		typeChange: Boolean,
 		html: [ String, Object, Function ],
 		sort: {
@@ -176,7 +176,7 @@ export default Vue.extend({
 		},
 
 		// handle external highlight changes by updating internal facet select states
-		highlights(currHighlights: Dictionary<any>) {
+		highlights(currHighlights: Dictionary<string[]>) {
 			if (_.isEmpty(currHighlights)) {
 				(<Group[]>this.groups).forEach(groupSpec => {
 					const group = this.facets.getGroup(groupSpec.key);
@@ -197,25 +197,43 @@ export default Vue.extend({
 					}
 				});
 			}
-			_.forIn(currHighlights, (value, name) => {
-				const group = this.facets.getGroup(name);
+			_.forIn(currHighlights, (values, key) => {
+				const group = this.facets.getGroup(key);
 				if (group) {
-					group.facets.forEach(facet => {
+					for(const facet of group.facets) {
 						if (facet._histogram && facet._histogram.highlightRange) {
-							// show highlight visuasls for histogram facet
-							facet._histogram.highlightValueRange({
-								from: value,
-								to: value
-							});
+							// Build up the selection structure to pass to the facets lib.  The facets library doesn't
+							// give us a good way to determine the index of a particular numeric value in the set of generated
+							// bars, so we just have to check each range ourselves.  To be more efficient we sort the values
+							// and do it one pass.
+							const sortedValues = Array.from(values).sort((a, b) => <any>a - <any>b);
+							const slices: Dictionary<number> = {};
+							let lastLabelIdx = 0;
+							for (const value of sortedValues) {
+								// iterate over the facet bars and find the one that contains the current value
+								for (let i = lastLabelIdx; i < facet._histogram.bars.length; i++) {
+									const metadata: any[] = facet._histogram.bars[i].metadata;
+									if (_.toNumber(_.first(metadata).label) <= _.toNumber(value) &&
+										_.toNumber(_.last(metadata).toLabel) >= _.toNumber(value)) {
+											// add the value to the slices so that it is included in the selection
+											const valueMetadata = _.last(metadata);
+											slices[valueMetadata.label] = valueMetadata.count;
+											lastLabelIdx = i;
+											break;
+									}
+								}
+							}
+							facet.select({ selection: { slices: slices } });
 						} else {
-							// show highlight visuals for vertical facet
-							if (facet.value === value) {
-								facet.select(facet.count);
-							} else {
-								facet.deselect();
+							facet.deselect();
+							for (const value of values) {
+								// show highlight visuals for vertical facet
+								if (facet.value === value) {
+									facet.select(facet.count);
+								}
 							}
 						}
-					});
+					};
 				}
 			});
 		},
@@ -286,8 +304,7 @@ export default Vue.extend({
 					// check if equal, if so, no need to change
 					if (this.groupsEqual(group, old)) {
 						// add to unchanged
-						unchanged.push(group);
-						return;
+						unchanged.push(group);						return;
 					}
 					// replace group if it is existing
 					this.facets.replaceGroup(_.cloneDeep(group));

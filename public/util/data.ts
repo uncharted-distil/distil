@@ -74,6 +74,9 @@ export function removeNonTrainingFields(fields: Dictionary<FieldInfo>, training:
 	return res;
 }
 
+// Identifies column names as one of the special result types.
+// Examples: weight_predicted, weight_error, weight_target
+
 export function isPredicted(col: string): boolean {
 	return col.endsWith(PREDICTED_POSTFIX);
 }
@@ -90,6 +93,8 @@ export function isHiddenField(col: string): boolean {
 	return col.startsWith('_');
 }
 
+// Finds the index of a server-side column.
+
 export function getPredictedIndex(columns: string[]): number {
 	return _.findIndex(columns, isPredicted);
 }
@@ -101,6 +106,9 @@ export function getErrorIndex(columns: string[]): number {
 export function getTargetIndex(columns: string[]): number {
 	return _.findIndex(columns, isTarget);
 }
+
+// Converts from variable name to a server-side result column name
+// Example: "weight" -> "weight_predicted"
 
 export function getTargetCol(target: string): string {
 	return target + TARGET_POSTFIX;
@@ -114,6 +122,9 @@ export function getErrorCol(target: string): string {
 	return target + ERROR_POSTFIX;
 }
 
+// Converts from a server side result column name to a variable name
+// Example: "weight_error" -> "error"
+
 export function getVarFromPredicted(decorated: string) {
 	return decorated.replace(PREDICTED_POSTFIX, '');
 }
@@ -126,25 +137,17 @@ export function getVarFromTarget(decorated: string) {
 	return decorated.replace(TARGET_POSTFIX, '');
 }
 
+// Converts from a target variable name to a facet key
+// Example: "weight" -> "weight - predicted"
+
 export function getPredictedFacetKey(target: string) {
-	return 'Predicted'; //target + PREDICTED_FACET_KEY_POSTFIX;
+	return 'Predicted';
 }
 
 export function getErrorFacetKey(target: string) {
-	return 'Error'; //target + ERROR_FACET_KEY_POSTFIX;
+	return 'Error';
 }
 
-export function getErrorColFromFacetKey(facetKey: string) {
-	return facetKey.replace(ERROR_FACET_KEY_POSTFIX, ERROR_POSTFIX);
-}
-
-export function getPredictedColFromFacetKey(facetKey: string) {
-	return facetKey.replace(PREDICTED_FACET_KEY_POSTFIX, PREDICTED_POSTFIX);
-}
-
-export function getTargetColFromFacetKey(facetKey: string) {
-	return facetKey + (TARGET_POSTFIX);
-}
 
 export function updateSummaries(summary: VariableSummary, summaries: VariableSummary[], matchField: string) {
 	const index = _.findIndex(summaries, r => r[matchField] === summary[matchField]);

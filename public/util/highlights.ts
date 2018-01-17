@@ -1,7 +1,12 @@
-import { RangeHighlights, ValueHighlights } from '../store/data/index';
+import { RangeHighlights, ValueHighlights, Data } from '../store/data/index';
 import { Dictionary } from '../util/dict';
+import { Filter } from '../util/filters';
+import { getVarFromTarget } from '../util/data';
+import { getters as routeGetters } from '../store/route/module';
+import { mutations as dataMutations, actions as dataActions } from '../store/data/module';
 import _ from 'lodash';
 import Vue from 'vue';
+import { AxiosPromise } from 'axios';
 
 // Highlights table rows with values that are currently marked as highlighted.  Uses a supplied highligh
 // context ID to enure that something like a table selection doesn't trigger additional table highlight
@@ -58,4 +63,67 @@ export function scrollToFirstHighlight(component: Vue, refName: string) {
 			}
 		}
 	});
+}
+
+// Given a key/value from a facet/histogram click event and a corresponding filter,
+// generate a set of value highlights.
+export function updateDataHighlights(component: Vue, key: string, selectFilter: Filter, context: string) {
+	const dataset = routeGetters.getRouteDataset(component.$store);
+	const filters = Array.from(routeGetters.getDecodedFilters(component.$store));
+
+	const index = _.findIndex(filters, f => f.name === key);
+	if (index < 0) {
+		filters.push(selectFilter);
+	} else {
+		filters[index] = selectFilter;
+	}
+	// fetch the data using the supplied filtered
+	const resultPromise = dataActions.fetchData(component.$store, { dataset: dataset, filters: filters, inclusive: true });
+	updateHighlights(component, resultPromise, context);
+}
+
+// Given a key/value from a facet/histogram click event and a corresponding filter,
+// generate a set of value highlights.
+export function updateResultHighlights(component: Vue, key: string, selectFilter: Filter, context: string) {
+	const dataset = routeGetters.getRouteDataset(component.$store);
+	const filters = Array.from(routeGetters.getDecodedFilters(component.$store));
+	const pipelineId = routeGetters.getRoutePipelineId(component.$store);
+
+	selectFilter.name = getVarFromTarget(selectFilter.name);
+
+	const index = _.findIndex(filters, f => f.name.toLowerCase() === selectFilter.name.toLowerCase());
+	if (index < 0) {
+		filters.push(selectFilter);
+	} else {
+		filters[index] = selectFilter;
+	}
+
+	// fetch the data using the supplied filtered
+	const resultPromise = dataActions.fetchResults(component.$store, { pipelineId: pipelineId, dataset: dataset, filters: filters });
+	updateHighlights(component, resultPromise, context);
+}
+
+// Given returned data,
+function updateHighlights(component: Vue, promise: AxiosPromise<Data>, context: string) {
+	promise.then(response => {
+		const data = response.data;
+		const highlights: Map<string, Set<any>> = new Map();
+		for (let rowIdx = 0; rowIdx < data.values.length; rowIdx++) {
+			for (const [colIdx, col] of data.columns.entries()) {
+				const val = data.values[rowIdx][colIdx];
+				let colData = highlights.get(col);
+				if (!colData) {
+					colData = new Set<string>();
+					highlights.set(col, colData);
+				}
+				colData.add(val);
+			}
+		}
+		const storeHighlights: Dictionary<string[]> = {};
+		for (const [key, values] of highlights) {
+			storeHighlights[key] = Array.from(values);
+		}
+		dataMutations.highlightFeatureValues(component.$store, { values: storeHighlights, context: context });
+	})
+	.catch(error => console.error(error));
 }

@@ -52,9 +52,11 @@ export const actions = {
 	getVariableSummary: dispatch(moduleActions.getVariableSummary),
 	updateFilteredData: dispatch(moduleActions.updateFilteredData),
 	updateSelectedData: dispatch(moduleActions.updateSelectedData),
+	fetchData: dispatch(moduleActions.fetchData),
 	getResultsSummaries: dispatch(moduleActions.getResultsSummaries),
 	getResidualsSummaries: dispatch(moduleActions.getResidualsSummaries),
-	updateResults: dispatch(moduleActions.updateResults)
+	updateResults: dispatch(moduleActions.updateResults),
+	fetchResults: dispatch(moduleActions.fetchResults)
 }
 
 

@@ -48,9 +48,11 @@ import { createGroups, Group } from '../util/facets';
 import { overlayRouteEntry } from '../util/routes';
 import { getPipelineById } from '../util/pipelines';
 import { getTask } from '../util/pipelines';
-import { isTarget, getVarFromTarget, getTargetColFromFacetKey } from '../util/data';
+import { getErrorCol, isTarget, getVarFromTarget, getTargetCol } from '../util/data';
+import { updateResultHighlights } from '../util/highlights';
 import { VariableSummary, Extrema } from '../store/data/index';
-import { getters as dataGetters } from '../store/data/module';
+import { NUMERICAL_FILTER, CATEGORICAL_FILTER } from '../util/filters';
+import { getters as dataGetters} from '../store/data/module';
 import { getters as routeGetters } from '../store/route/module';
 import { mutations as dataMutations } from '../store/data/module';
 import { actions } from '../store/app/module';
@@ -115,14 +117,13 @@ export default Vue.extend({
 			];
 		},
 
-		highlights(): Dictionary<any> {
-			// find var marked as 'target' and use that name/value tuple to
-			// highlight the ground truth
+		highlights(): Dictionary<string[]> {
+			// find var marked as 'target' and set associated values as highlights
 			const highlights = dataGetters.getHighlightedFeatureValues(this.$store);
-			const facetHighlights = {};
-			_.forEach(highlights.values, (value, varName) => {
+			const facetHighlights = <Dictionary<string[]>>{};
+			_.forEach(highlights.values, (values, varName) => {
 				if (isTarget(varName)) {
-					facetHighlights[getVarFromTarget(varName)] = value;
+					facetHighlights[getVarFromTarget(varName)] = values;
 				}
 			});
 			return facetHighlights;
@@ -224,33 +225,35 @@ export default Vue.extend({
 	methods: {
 		onHistogramClick(key: string, value: any) {
 			dataMutations.clearFeatureHighlights(this.$store);
+
 			if (key && value) {
-				// extract the var name from the key
-				const varName = getTargetColFromFacetKey(key);
-				dataMutations.highlightFeatureRange(this.$store, {
+				const colKey = getTargetCol(routeGetters.getRouteTargetVariable(this.$store));
+				const filter = {
+					name: colKey,
+					type: NUMERICAL_FILTER,
+					enabled: true,
 					context: RESULT_SUMMARY_CONTEXT,
-					ranges: {
-						[varName]: {
-							from: _.toNumber(value.label[0]),
-							to: _.toNumber(value.toLabel[value.toLabel.length-1])
-						}
-					}
-				});
+					min: _.toNumber(value.label[0]),
+					max: _.toNumber(value.toLabel[value.toLabel.length-1])
+				};
+				updateResultHighlights(this, colKey, filter, RESULT_SUMMARY_CONTEXT);
 			}
 		},
 
-		onFacetClick(key: string, value: any) {
+		onFacetClick(key: string, value: string) {
 			// clear exiting highlights
 			dataMutations.clearFeatureHighlights(this.$store);
 			if (key && value) {
 				// extract the var name from the key
-				const varName = getTargetColFromFacetKey(key);
-				dataMutations.highlightFeatureValues(this.$store, {
+				const colKey = getTargetCol(routeGetters.getRouteTargetVariable(this.$store));
+				const filter = {
+					name: colKey,
+					type: CATEGORICAL_FILTER,
+					enabled: true,
 					context: RESULT_SUMMARY_CONTEXT,
-					values: {
-						[varName]: value
-					}
-				});
+					categories: [value]
+				};
+				updateResultHighlights(this, colKey, filter, RESULT_SUMMARY_CONTEXT);
 			}
 		},
 
