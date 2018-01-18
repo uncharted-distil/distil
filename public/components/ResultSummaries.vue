@@ -28,7 +28,8 @@
 		<h6 class="nav-link">Predictions by Model</h6>
 		<result-facets
 			:regression="regressionEnabled"
-			:summary-extrema="summaryExtrema">
+			:result-extrema="resultExtrema"
+			:residual-extrema="residualExtrema">
 		</result-facets>
 		<b-btn v-b-modal.export variant="outline-success" class="check-button">Export Pipeline</b-btn>
 		<b-modal id="export" title="Export" @ok="onExport">
@@ -162,7 +163,7 @@ export default Vue.extend({
 
 		targetGroups(): Group[] {
 			if (this.targetSummary) {
-				return createGroups([ this.targetSummary ], false, false, this.summaryExtrema);
+				return createGroups([ this.targetSummary ], false, false, this.resultExtrema);
 			}
 			return [];
 		},
@@ -171,7 +172,7 @@ export default Vue.extend({
 			return dataGetters.getResultsSummaries(this.$store);
 		},
 
-		summaryExtrema(): Extrema {
+		resultExtrema(): Extrema {
 			if (this.targetSummary || this.resultsSummaries) {
 				let min = Infinity;
 				let max = -Infinity;
@@ -191,6 +192,23 @@ export default Vue.extend({
 				};
 			}
 			return null;
+		},
+
+		residualsSummaries():  VariableSummary[] {
+			return this.regressionEnabled ? dataGetters.getResidualsSummaries(this.$store) : [];
+		},
+
+		residualExtrema(): Extrema {
+			let extrema = 0;
+			this.residualsSummaries.forEach(summary => {
+				extrema = Math.max(
+					Math.abs(summary.extrema.min),
+					Math.abs(summary.extrema.max));
+			});
+			return {
+				min: -extrema,
+				max: extrema
+			};
 		},
 
 		regressionEnabled(): boolean {

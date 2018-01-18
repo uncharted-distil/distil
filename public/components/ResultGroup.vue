@@ -3,6 +3,9 @@
 		@click="click()">
 		{{name}} <sup>{{index}}</sup> {{timestamp}}
 		<div v-if="pipelineStatus === 'COMPLETED' || pipelineStatus === 'UPDATED'">
+			<b-badge variant="info" v-bind:key="score.metric" v-for="score in scores">
+				{{metricName(score.metric)}}: {{score.value}}
+			</b-badge>
 			<facets v-if="resultGroups.length" class="result-container"
 				@histogram-click="onResultHistogramClick"
 				@facet-click="onResultFacetClick"
@@ -60,7 +63,8 @@ export default Vue.extend({
 		pipelineId: String,
 		resultSummary: Object,
 		residualsSummary: Object,
-		summaryExtrema: Object,
+		resultExtrema: Object,
+		residualExtrema: Object,
 		resultHtml: String,
 		residualHtml: String
 	},
@@ -81,14 +85,14 @@ export default Vue.extend({
 
 		residualsGroups(): Group[] {
 			if (this.residuals()) {
-				return createGroups([this.residuals()], false, false);
+				return createGroups([this.residuals()], false, false, this.residualExtrema);
 			}
 			return [];
 		},
 
 		resultGroups(): Group[] {
 			if (this.results()) {
-				return createGroups([this.results()], false, false, this.summaryExtrema);
+				return createGroups([this.results()], false, false, this.resultExtrema);
 			}
 			return [];
 		},
@@ -179,11 +183,17 @@ export default Vue.extend({
 		},
 
 		results(): VariableSummary {
-			return <VariableSummary>this.resultSummary;
+			if (this.resultSummary) {
+				return this.resultSummary as VariableSummary;
+			}
+			return null;
 		},
 
 		residuals(): VariableSummary {
-			return <VariableSummary>this.residualsSummary;
+			if (this.residualsSummary) {
+				return this.residualsSummary as VariableSummary;
+			}
+			return null;
 		},
 
 		updateGroupSelections(groups: Group[]): Group[] {
