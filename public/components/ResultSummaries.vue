@@ -8,8 +8,8 @@
 			<div class="result-summaries-slider">
 				<vue-slider ref="slider"
 					:v-model="value"
-					:min="minVal"
-					:max="maxVal"
+					:min="residualExtrema.min"
+					:max="residualExtrema.max"
 					:interval="interval"
 					:value="value"
 					:formatter="formatter"
@@ -49,7 +49,7 @@ import { createGroups, Group } from '../util/facets';
 import { overlayRouteEntry } from '../util/routes';
 import { getPipelineById } from '../util/pipelines';
 import { getTask } from '../util/pipelines';
-import { getErrorCol, isTarget, getVarFromTarget, getTargetColFromFacetKey } from '../util/data';
+import { isTarget, getVarFromTarget, getTargetColFromFacetKey } from '../util/data';
 import { VariableSummary, Extrema } from '../store/data/index';
 import { getters as dataGetters } from '../store/data/module';
 import { getters as routeGetters } from '../store/route/module';
@@ -77,7 +77,7 @@ export default Vue.extend({
 	data() {
 		return {
 			formatter(arg) {
-				return arg.toFixed(2);
+				return arg ? arg.toFixed(2) : '';
 			}
 		};
 	},
@@ -92,16 +92,20 @@ export default Vue.extend({
 		},
 
 		value: {
-			set(value) {
-				this.updateThreshold(value);
+			set(values) {
+				this.updateThreshold(values[0], values[1]);
 			},
-			get(): number {
-				const value = routeGetters.getRouteResidualThreshold(this.$store);
-				if (value === undefined || value === '') {
-					this.updateThreshold(this.defaultValue);
+			get(): number[] {
+				const min = routeGetters.getRouteResidualThresholdMin(this.$store);
+				const max = routeGetters.getRouteResidualThresholdMax(this.$store);
+				if (min === undefined || min === '' || max === undefined || max === '') {
+					this.updateThreshold(this.defaultValue[0], this.defaultValue[1]);
 					return this.defaultValue;
 				}
-				return _.toNumber(value);
+				return [
+					_.toNumber(min),
+					_.toNumber(max)
+				];
 			}
 		},
 
@@ -118,36 +122,15 @@ export default Vue.extend({
 			return facetHighlights;
 		},
 
-		minVal(): number {
-			const resultItems = dataGetters.getResultDataItems(this.$store);
-			const errorCol = getErrorCol(routeGetters.getRouteTargetVariable(this.$store));
-			if (!_.isEmpty(resultItems) && _.has(resultItems[0], errorCol)) {
-				const min = _.minBy(resultItems, r => Math.abs(r[errorCol]));
-				const minErr = Math.abs(min[errorCol]);
-				// round to closest 2 decimal places, otherwise interval computation makes the slider angry
-				return Math.ceil(100 * minErr) / 100;
-			}
-			return 0.0;
-		},
-
-		maxVal(): number {
-			const resultItems = dataGetters.getResultDataItems(this.$store);
-			const errorCol = getErrorCol(routeGetters.getRouteTargetVariable(this.$store));
-			if (!_.isEmpty(resultItems) && _.has(resultItems[0], errorCol)) {
-				const max = _.maxBy(resultItems, r => Math.abs(r[errorCol]));
-				const maxErr = Math.abs(max[errorCol]);
-				// round to closest 2 decimal places, otherwise interval computation makes the slider angry
-				return Math.ceil(100 * maxErr) / 100;
-			}
-			return 1.0;
-		},
-
 		range(): number {
-			return this.maxVal - this.minVal;
+			return this.residualExtrema.max - this.residualExtrema.min;
 		},
 
-		defaultValue(): number {
-			return this.minVal + (this.range * DEFAULT_PERCENTILE);
+		defaultValue(): number[] {
+			return [
+				-this.range/2 * DEFAULT_PERCENTILE,
+				this.range/2 * DEFAULT_PERCENTILE
+			];
 		},
 
 		interval(): number {
@@ -261,16 +244,16 @@ export default Vue.extend({
 			}
 		},
 
-		updateThreshold(value: number) {
+		updateThreshold(min: number, max: number) {
 			const entry = overlayRouteEntry(this.$route, {
-				residualThreshold: value
+				residualThresholdMin: `${min}`,
+				residualThresholdMax: `${max}`
 			});
 			this.$router.push(entry);
 		},
 
 		onSlide(value) {
-			const entry = overlayRouteEntry(this.$route, { residualThreshold: value });
-			this.$router.replace(entry);
+			this.updateThreshold(value[0], value[1]);
 		},
 
 		onExport() {
