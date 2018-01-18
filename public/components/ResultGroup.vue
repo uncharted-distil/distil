@@ -44,7 +44,7 @@ import { Dictionary } from '../util/dict';
 import { overlayRouteEntry } from '../util/routes';
 import { getters } from '../store/data/module';
 import { getters as routeGetters } from '../store/route/module';
-import { getPipelineById } from '../util/pipelines';
+import { getPipelineById, getMetricDisplayName } from '../util/pipelines';
 import { mutations as dataMutations } from '../store/data/module';
 import { NUMERICAL_FILTER, CATEGORICAL_FILTER, getFilterType, decodeFiltersDictionary } from '../util/filters';
 import _ from 'lodash';
@@ -61,6 +61,7 @@ export default Vue.extend({
 		timestamp: String,
 		requestId: String,
 		pipelineId: String,
+		scores: Array,
 		resultSummary: Object,
 		residualsSummary: Object,
 		resultExtrema: Object,
@@ -121,6 +122,10 @@ export default Vue.extend({
 	},
 
 	methods: {
+		metricName(metric): string {
+			return getMetricDisplayName(metric);
+		},
+
 		onResultHistogramClick(key: string, value: any) {
 			dataMutations.clearFeatureHighlights(this.$store);
 			if (key && value) {
