@@ -157,47 +157,70 @@ func (s *Storage) FetchRequests(sessionID string) ([]*model.Request, error) {
 
 	requests := make([]*model.Request, 0)
 	for rows.Next() {
-		var sessionID string
-		var requestID string
-		var dataset string
-		var progress string
-		var createdTime time.Time
-		var lastUpdatedTime time.Time
-
-		err = rows.Scan(&sessionID, &requestID, &dataset, &progress, &createdTime, &lastUpdatedTime)
+		request, err := s.loadRequest(rows)
 		if err != nil {
-			return nil, errors.Wrap(err, "Unable to parse session requests from Postgres")
+			return nil, errors.Wrap(err, "Unable to load request from Postgres")
 		}
 
-		results, err := s.FetchResultMetadata(requestID)
-		if err != nil {
-			return nil, errors.Wrap(err, "Unable to get request results from Postgres")
-		}
-
-		features, err := s.FetchRequestFeatures(requestID)
-		if err != nil {
-			return nil, errors.Wrap(err, "Unable to get request features from Postgres")
-		}
-
-		filters, err := s.FetchRequestFilters(requestID)
-		if err != nil {
-			return nil, errors.Wrap(err, "Unable to get request filters from Postgres")
-		}
-
-		requests = append(requests, &model.Request{
-			SessionID:       sessionID,
-			RequestID:       requestID,
-			Dataset:         dataset,
-			Progress:        progress,
-			CreatedTime:     createdTime,
-			LastUpdatedTime: lastUpdatedTime,
-			Results:         results,
-			Features:        features,
-			Filters:         filters,
-		})
+		requests = append(requests, request)
 	}
 
 	return requests, nil
+}
+
+func (s *Storage) FetchRequest(requestID string) (*model.Request, error) {
+	sql := fmt.Sprintf("SELECT session_id, request_id, dataset, progress, created_time, last_updated_time FROM %s WHERE request_id = $1;", requestTableName)
+
+	rows, err := s.client.Query(sql, requestID)
+	if err != nil {
+		return nil, errors.Wrap(err, "Unable to pull request from Postgres")
+	}
+	if rows != nil {
+		defer rows.Close()
+	}
+
+	return s.loadRequest(rows)
+}
+
+func (s *Storage) loadRequest(rows *pgx.Rows) (*model.Request, error) {
+	var sessionID string
+	var requestID string
+	var dataset string
+	var progress string
+	var createdTime time.Time
+	var lastUpdatedTime time.Time
+
+	err := rows.Scan(&sessionID, &requestID, &dataset, &progress, &createdTime, &lastUpdatedTime)
+	if err != nil {
+		return nil, errors.Wrap(err, "Unable to parse session requests from Postgres")
+	}
+
+	results, err := s.FetchResultMetadata(requestID)
+	if err != nil {
+		return nil, errors.Wrap(err, "Unable to get request results from Postgres")
+	}
+
+	features, err := s.FetchRequestFeatures(requestID)
+	if err != nil {
+		return nil, errors.Wrap(err, "Unable to get request features from Postgres")
+	}
+
+	filters, err := s.FetchRequestFilters(requestID)
+	if err != nil {
+		return nil, errors.Wrap(err, "Unable to get request filters from Postgres")
+	}
+
+	return &model.Request{
+		SessionID:       sessionID,
+		RequestID:       requestID,
+		Dataset:         dataset,
+		Progress:        progress,
+		CreatedTime:     createdTime,
+		LastUpdatedTime: lastUpdatedTime,
+		Results:         results,
+		Features:        features,
+		Filters:         filters,
+	}, nil
 }
 
 func (s *Storage) parseResultMetadata(rows *pgx.Rows) ([]*model.Result, error) {

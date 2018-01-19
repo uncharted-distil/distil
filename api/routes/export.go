@@ -9,23 +9,68 @@ import (
 
 	"goji.io/pat"
 
+	"github.com/unchartedsoftware/distil/api/model"
 	"github.com/unchartedsoftware/distil/api/pipeline"
 	"github.com/unchartedsoftware/plog"
 )
 
 // ExportHandler exports the caller supplied pipeline by calling through to the compute
 // server export functionality.
-func ExportHandler(client *pipeline.Client, exportPath string) func(http.ResponseWriter, *http.Request) {
+func ExportHandler(storageCtor model.PipelineStorageCtor, metaStorageCtor model.MetadataStorageCtor, client *pipeline.Client, exportPath string) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// extract route parameters
 		pipelineID := pat.Param(r, "pipeline-id")
 		sessionID := pat.Param(r, "session")
 
+		// get the pipeline target
+		pipelineStorage, err := storageCtor()
+		if err != nil {
+			handleError(w, err)
+			return
+		}
+		res, err := pipelineStorage.FetchResultMetadataByPipelineID(pipelineID)
+		if err != nil {
+			handleError(w, err)
+			return
+		}
+
+		pipelineTarget := ""
+		for _, f := range res.Features {
+			if f.FeatureType == model.FeatureTypeTarget {
+				pipelineTarget = f.FeatureName
+			}
+		}
+
+		// get the initial target
+		request, err := pipelineStorage.FetchRequest(res.RequestID)
+		if err != nil {
+			handleError(w, err)
+			return
+		}
+
+		metaStorage, err := metaStorageCtor()
+		if err != nil {
+			handleError(w, err)
+			return
+		}
+
+		variable, err := metaStorage.FetchVariable(request.Dataset, "datasets", pipelineTarget)
+		if err != nil {
+			handleError(w, err)
+			return
+		}
+
+		// fail if the pipeline target was not the original dataset target
+		if variable.Role != "suggestedTarget" {
+			handleError(w, fmt.Errorf("Target %s is not the expected target variable", variable.Name))
+			return
+		}
+
 		exportPath := path.Join(exportPath, pipelineID+".d3m")
 		exportURI := fmt.Sprintf("file://%s", exportPath)
 		log.Infof("Exporting to %s", exportURI)
 
-		err := client.ExportPipeline(context.Background(), sessionID, pipelineID, exportURI)
+		err = client.ExportPipeline(context.Background(), sessionID, pipelineID, exportURI)
 		if err != nil {
 			log.Info("Failed pipeline export request to %s", exportURI)
 			os.Exit(1)
