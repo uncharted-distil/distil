@@ -1,3 +1,5 @@
+import { Dictionary } from '../../util/dict';
+
 export interface Variable {
 	name: string;
 	type: string;
@@ -72,8 +74,6 @@ export interface ValueHighlights extends Highlights {
 export type Range = Dictionary<{
 	from: number, to: number
 }>;
-
-export type Dictionary<T> = { [key: string]: T }
 
 export interface DataState {
 	datasets: Datasets[];

@@ -7,11 +7,10 @@
 			</div>
 			<div class="result-summaries-slider">
 				<vue-slider ref="slider"
-					:v-model="value"
-					:min="minVal"
-					:max="maxVal"
+					:min="residualExtrema.min"
+					:max="residualExtrema.max"
 					:interval="interval"
-					:value="value"
+					:value="initialValue"
 					:formatter="formatter"
 					:lazy="true"
 					width=100%
@@ -28,7 +27,8 @@
 		<h6 class="nav-link">Predictions by Model</h6>
 		<result-facets
 			:regression="regressionEnabled"
-			:summary-extrema="summaryExtrema">
+			:result-extrema="resultExtrema"
+			:residual-extrema="residualExtrema">
 		</result-facets>
 		<b-btn v-b-modal.export variant="outline-success" class="check-button">Export Pipeline</b-btn>
 		<b-modal id="export" title="Export" @ok="onExport">
@@ -48,7 +48,7 @@ import { createGroups, Group } from '../util/facets';
 import { overlayRouteEntry } from '../util/routes';
 import { getPipelineById } from '../util/pipelines';
 import { getTask } from '../util/pipelines';
-import { getErrorCol, isTarget, getVarFromTarget, getTargetColFromFacetKey } from '../util/data';
+import { isTarget, getVarFromTarget, getTargetColFromFacetKey } from '../util/data';
 import { VariableSummary, Extrema } from '../store/data/index';
 import { getters as dataGetters } from '../store/data/module';
 import { getters as routeGetters } from '../store/route/module';
@@ -76,7 +76,7 @@ export default Vue.extend({
 	data() {
 		return {
 			formatter(arg) {
-				return arg.toFixed(2);
+				return arg ? arg.toFixed(2) : '';
 			}
 		};
 	},
@@ -90,18 +90,29 @@ export default Vue.extend({
 			return routeGetters.getRouteTargetVariable(this.$store);
 		},
 
-		value: {
-			set(value) {
-				this.updateThreshold(value);
-			},
-			get(): number {
-				const value = routeGetters.getRouteResidualThreshold(this.$store);
-				if (value === undefined || value === '') {
-					this.updateThreshold(this.defaultValue);
-					return this.defaultValue;
+		initialValue(): number[] {
+			const min = routeGetters.getRouteResidualThresholdMin(this.$store);
+			const max = routeGetters.getRouteResidualThresholdMax(this.$store);
+			if (min === undefined || min === '' ||
+				max === undefined || max === '') {
+				if (!_.isNaN(this.defaultValue[0]) && !_.isNaN(this.defaultValue[1])) {
+					this.updateThreshold(this.defaultValue[0], this.defaultValue[1]);
 				}
-				return _.toNumber(value);
+				return this.defaultValue;
 			}
+			const nmin = _.toNumber(min);
+			const nmax = _.toNumber(max);
+			// NOTE: the slider component discards the values if they are
+			// not within the extrema. We have to read the extrema here so
+			// that the values are recomputed when the extrema is computed.
+			const extrema = this.residualExtrema;
+			if (nmin < extrema.min || nmax > extrema.max) {
+				return [ NaN, NaN ];
+			}
+			return [
+				nmin,
+				nmax
+			];
 		},
 
 		highlights(): Dictionary<any> {
@@ -117,36 +128,19 @@ export default Vue.extend({
 			return facetHighlights;
 		},
 
-		minVal(): number {
-			const resultItems = dataGetters.getResultDataItems(this.$store);
-			const errorCol = getErrorCol(routeGetters.getRouteTargetVariable(this.$store));
-			if (!_.isEmpty(resultItems) && _.has(resultItems[0], errorCol)) {
-				const min = _.minBy(resultItems, r => Math.abs(r[errorCol]));
-				const minErr = Math.abs(min[errorCol]);
-				// round to closest 2 decimal places, otherwise interval computation makes the slider angry
-				return Math.ceil(100 * minErr) / 100;
-			}
-			return 0.0;
-		},
-
-		maxVal(): number {
-			const resultItems = dataGetters.getResultDataItems(this.$store);
-			const errorCol = getErrorCol(routeGetters.getRouteTargetVariable(this.$store));
-			if (!_.isEmpty(resultItems) && _.has(resultItems[0], errorCol)) {
-				const max = _.maxBy(resultItems, r => Math.abs(r[errorCol]));
-				const maxErr = Math.abs(max[errorCol]);
-				// round to closest 2 decimal places, otherwise interval computation makes the slider angry
-				return Math.ceil(100 * maxErr) / 100;
-			}
-			return 1.0;
-		},
-
 		range(): number {
-			return this.maxVal - this.minVal;
+			if (_.isNaN(this.residualExtrema.min) ||
+				_.isNaN(this.residualExtrema.max)) {
+				return NaN;
+			}
+			return this.residualExtrema.max - this.residualExtrema.min;
 		},
 
-		defaultValue(): number {
-			return this.minVal + (this.range * DEFAULT_PERCENTILE);
+		defaultValue(): number[] {
+			return [
+				-this.range/2 * DEFAULT_PERCENTILE,
+				this.range/2 * DEFAULT_PERCENTILE
+			];
 		},
 
 		interval(): number {
@@ -162,7 +156,7 @@ export default Vue.extend({
 
 		targetGroups(): Group[] {
 			if (this.targetSummary) {
-				return createGroups([ this.targetSummary ], false, false, this.summaryExtrema);
+				return createGroups([ this.targetSummary ], false, false, this.resultExtrema);
 			}
 			return [];
 		},
@@ -171,7 +165,7 @@ export default Vue.extend({
 			return dataGetters.getResultsSummaries(this.$store);
 		},
 
-		summaryExtrema(): Extrema {
+		resultExtrema(): Extrema {
 			if (this.targetSummary || this.resultsSummaries) {
 				let min = Infinity;
 				let max = -Infinity;
@@ -191,6 +185,23 @@ export default Vue.extend({
 				};
 			}
 			return null;
+		},
+
+		residualsSummaries():  VariableSummary[] {
+			return this.regressionEnabled ? dataGetters.getResidualsSummaries(this.$store) : [];
+		},
+
+		residualExtrema(): Extrema {
+			let extrema = NaN;
+			this.residualsSummaries.forEach(summary => {
+				extrema = Math.max(
+					Math.abs(summary.extrema.min),
+					Math.abs(summary.extrema.max));
+			});
+			return {
+				min: -extrema,
+				max: extrema
+			};
 		},
 
 		regressionEnabled(): boolean {
@@ -243,16 +254,16 @@ export default Vue.extend({
 			}
 		},
 
-		updateThreshold(value: number) {
+		updateThreshold(min: number, max: number) {
 			const entry = overlayRouteEntry(this.$route, {
-				residualThreshold: value
+				residualThresholdMin: `${min}`,
+				residualThresholdMax: `${max}`
 			});
 			this.$router.push(entry);
 		},
 
 		onSlide(value) {
-			const entry = overlayRouteEntry(this.$route, { residualThreshold: value });
-			this.$router.replace(entry);
+			this.updateThreshold(value[0], value[1]);
 		},
 
 		onExport() {

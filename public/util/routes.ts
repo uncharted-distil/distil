@@ -1,5 +1,6 @@
 import _ from 'lodash';
 import { Route, Location } from 'vue-router';
+import { Dictionary } from './dict';
 
 export interface RouteArgs {
 	dataset?: string,
@@ -9,7 +10,8 @@ export interface RouteArgs {
 	target?: string,
 	results?: string,
 	pipelineId?: string,
-	residualThreshold?: number
+	residualThresholdMin?: string,
+	residualThresholdMax?: string
 }
 
 /**
@@ -21,7 +23,7 @@ export interface RouteArgs {
  * @param {RouteArgs} args - the arguments for the route.
  */
 export function createRouteEntry(path: string, args: RouteArgs = {}): Location {
-	const query: { [id: string]: string } = {};
+	const query: Dictionary<string> = {};
 
 	if (args.dataset) { query.dataset = args.dataset; }
 	if (args.terms) { query.terms = args.terms; }
@@ -30,6 +32,8 @@ export function createRouteEntry(path: string, args: RouteArgs = {}): Location {
 	if (!_.isEmpty(args.filters)) { query.filters = args.filters; }
 	if (!_.isEmpty(args.training)) { query.training = args.training; }
 	if (!_.isEmpty(args.results)) { query.results = args.results; }
+	if (args.residualThresholdMin) { query.residualThresholdMin = args.residualThresholdMin; }
+	if (args.residualThresholdMax) { query.residualThresholdMax = args.residualThresholdMax; }
 
 	const routeEntry: Location = {
 		path: path,

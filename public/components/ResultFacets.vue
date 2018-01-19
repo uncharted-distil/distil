@@ -6,9 +6,11 @@
 			:timestamp="group.timestamp"
 			:request-id="group.requestId"
 			:pipeline-id="group.pipelineId"
+			:scores="group.scores"
 			:result-summary="group.resultSummary"
 			:residuals-summary="group.residualsSummary"
-			:summary-extrema="summaryExtrema"
+			:result-extrema="resultExtrema"
+			:residual-extrema="residualExtrema"
 			:resultHtml="html"
 			:residualHtml="html">
 		</result-group>
@@ -50,7 +52,8 @@ export default Vue.extend({
 	props: {
 		html: String,
 		regression: Boolean,
-		summaryExtrema: Object
+		resultExtrema: Object,
+		residualExtrema: Object
 	},
 
 	computed: {
@@ -83,6 +86,7 @@ export default Vue.extend({
 					pipelineId: pipelineId,
 					groupName: pipeline ? pipeline.name : '',
 					timestamp: pipeline ? moment(pipeline.timestamp).format('YYYY/MM/DD') : '',
+					scores: pipeline ? pipeline.scores : [],
 					resultSummary: resultSummary,
 					residualsSummary: residualSummary
 				};
