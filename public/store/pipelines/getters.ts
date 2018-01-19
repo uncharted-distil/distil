@@ -27,6 +27,6 @@ export const getters = {
 	},
 
 	getPipelines(state: PipelineState): PipelineInfo[] {
-		return state.pipelineRequests.sort((a, b) => b.timestamp - a.timestamp);
+		return Array.from(state.pipelineRequests).sort((a, b) => b.timestamp - a.timestamp);
 	}
 }
