@@ -92,19 +92,29 @@ export default Vue.extend({
 		},
 
 		value: {
-			set(values) {
+			set(values: number[]) {
 				this.updateThreshold(values[0], values[1]);
 			},
 			get(): number[] {
 				const min = routeGetters.getRouteResidualThresholdMin(this.$store);
 				const max = routeGetters.getRouteResidualThresholdMax(this.$store);
-				if (min === undefined || min === '' || max === undefined || max === '') {
+				if (min === undefined || min === '' ||
+					max === undefined || max === '') {
 					this.updateThreshold(this.defaultValue[0], this.defaultValue[1]);
 					return this.defaultValue;
 				}
+				const nmin = _.toNumber(min);
+				const nmax = _.toNumber(max);
+				// NOTE: the slider component discards the values if they are
+				// not within the extrema. We have to read the extrema here so
+				// that the values are recomputed when the extrema is computed.
+				const extrema = this.residualExtrema;
+				if (nmin < extrema.min || nmax > extrema.max) {
+					return [ 0, 0 ];
+				}
 				return [
-					_.toNumber(min),
-					_.toNumber(max)
+					nmin,
+					nmax
 				];
 			}
 		},
