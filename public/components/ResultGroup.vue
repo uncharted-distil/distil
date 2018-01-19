@@ -64,7 +64,8 @@ export default Vue.extend({
 		scores: Array,
 		resultSummary: Object,
 		residualsSummary: Object,
-		summaryExtrema: Object,
+		resultExtrema: Object,
+		residualExtrema: Object,
 		resultHtml: String,
 		residualHtml: String
 	},
@@ -85,20 +86,14 @@ export default Vue.extend({
 
 		residualsGroups(): Group[] {
 			if (this.residuals()) {
-				const extrema = Math.max(
-					Math.abs(this.residuals().extrema.min),
-					Math.abs(this.residuals().extrema.max));
-				return createGroups([this.residuals()], false, false, {
-					min: -extrema,
-					max: extrema
-				});
+				return createGroups([this.residuals()], false, false, this.residualExtrema);
 			}
 			return [];
 		},
 
 		resultGroups(): Group[] {
 			if (this.results()) {
-				return createGroups([this.results()], false, false, this.summaryExtrema);
+				return createGroups([this.results()], false, false, this.resultExtrema);
 			}
 			return [];
 		},
