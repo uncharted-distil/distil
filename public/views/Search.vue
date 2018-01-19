@@ -36,7 +36,7 @@ export default Vue.extend({
 <style>
 .header-label {
 	color: #333;
-	margin: 0.75rem 0;
+	padding: 1rem 0 0.5rem 0;
 }
 .search-view {
 	display: flex;

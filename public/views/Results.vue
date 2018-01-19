@@ -134,6 +134,11 @@ export default Vue.extend({
 	color: #333;
 	margin: 0.75rem 0;
 }
+.results-view .nav-link {
+    padding: 1rem 0 0.5rem 0;
+} {
+    padding: 1rem 0 0.5rem 0;
+}
 .results-view {
 	display: flex;
 	justify-content: space-around;
@@ -143,16 +148,21 @@ export default Vue.extend({
 .results-items {
 	display: flex;
 	justify-content: space-around;
-	padding: 8px;
 	width: 100%;
 }
 .results-variable-summaries {
 	width: 25%;
+	padding: 1rem;
 }
 .results-result-summaries {
 	width: 25%;
+	padding: 1rem;
 }
 .results-result-comparison {
 	width: 50%;
+	padding: 1rem;
+}
+.results-data-table-container {
+	background-color: white;
 }
 </style>

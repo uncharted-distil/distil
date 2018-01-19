@@ -105,34 +105,39 @@ export default Vue.extend({
 .select-view {
 	display: flex;
 	justify-content: space-around;
-	padding: 8px;
+}
+.select-view .nav-link {
+    padding: 1rem 0 0.5rem 0;
 }
 .header-label {
 	color: #333;
-	margin: 0.75rem 0;
+	padding: 1rem 0 0.5rem 0;
 }
 .select-items {
 	display: flex;
 	justify-content: space-around;
-	padding: 8px;
 	width: 100%;
 }
 .select-available-variables {
 	width: 50%;
+	padding: 0.5rem;
 }
 .select-training-variables {
 	width: 50%;
+	padding: 0.5rem;
 }
 .left-container {
 	display: flex;
 	flex-direction: column;
-	justify-content: space-around;
-	padding: 8px;
+	padding: 1rem;
+	margin-right: 0.5rem;
 	width: 50%;
 }
 .right-container {
 	display: flex;
 	flex-direction: column;
 	width: 50%;
+	padding: 1rem;
+	margin-left: 0.5rem;
 }
 </style>

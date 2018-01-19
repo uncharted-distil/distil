@@ -1,5 +1,5 @@
 <template>
-	<b-navbar toggleable type="light" variant="faded" class="bottom-shadowed">
+	<b-navbar toggleable type="light" variant="faded" class="bottom-shadowed bg-white">
 
 		<b-nav-toggle target="nav_collapse"></b-nav-toggle>
 
@@ -13,17 +13,17 @@
 					<b-nav-text>Home</b-nav-text>
 				</b-nav-item>
 				<b-nav-item @click="onSearch" :active="isActive(SEARCH)" v-bind:class="{ active: isActive(SEARCH) }">
-					<i class="fa fa-angle-right nav-selection"></i>
+					<i class="fa fa-angle-right nav-arrow"></i>
 					<i class="fa fa-dot-circle-o nav-icon"></i>
 					<b-nav-text>Search</b-nav-text>
 				</b-nav-item>
 				<b-nav-item @click="onSelect" :active="isActive(SELECT)" :disabled="!hasSelectView()" v-bind:class="{ active: isActive(SELECT) }">
-					<i class="fa fa-angle-right nav-selection"></i>
+					<i class="fa fa-angle-right nav-arrow"></i>
 					<i class="fa fa-code-fork nav-icon"></i>
 					<b-nav-text>Select</b-nav-text>
 				</b-nav-item>
 				<b-nav-item @click="onResults" :active="isActive(RESULTS)" :disabled="!hasResultView()" v-bind:class="{ active: isActive(RESULTS) }">
-					<i class="fa fa-angle-right nav-selection"></i>
+					<i class="fa fa-angle-right nav-arrow"></i>
 					<i class="fa fa-line-chart nav-icon"></i>
 					<b-nav-text>Results</b-nav-text>
 				</b-nav-item>
@@ -136,8 +136,8 @@ export default Vue.extend({
 </script>
 
 <style>
-.nav-selection {
-	color: rgba(0, 0, 0, 0.5);
+.nav-arrow {
+	color: rgba(0,0,0,0.54);
 	padding-right: 5px;
 }
 .nav-icon {
@@ -152,25 +152,25 @@ export default Vue.extend({
 }
 .navbar-nav li a .nav-icon {
 	color: white;
-	background-color: #495057;
+	background-color: #616161;
 }
 .navbar-nav li.active a .nav-icon {
-	background-color: #343a40;
+	background-color: #424242;
 }
 .navbar-nav li.active a .navbar-text {
-	color: rgba(0, 0, 0, 0.9);
+	color: rgba(0,0,0,0.87);
 }
 .navbar-nav li:hover a .nav-icon {
 	transition: 0.5s all ease;
 	color: white;
-	background-color: #343a40;
+	background-color: #424242;
 }
 .navbar-nav li:hover a .navbar-text {
 	transition:0.5s all ease;
-	color: rgba(0, 0, 0, 0.9);
+	color: rgba(0,0,0,0.87);
 }
 .navbar-nav li.active ~ li a .nav-icon {
-	color: rgba(0,0,0,0.5);
+	color: rgba(0,0,0,0.54);
 	background-color:white;
 }
 .navbar-nav li.active ~ li a .navbar-text {
@@ -179,11 +179,11 @@ export default Vue.extend({
 .navbar-nav li.active ~ li a:hover .nav-icon {
 	transition:0.5s all ease;
 	color: white;
-	background-color: #343a40;
+	background-color: #424242;
 }
 .navbar-nav li.active ~ li a:hover .navbar-text {
 	transition:0.5s all ease;
-	color: rgba(0, 0, 0, 0.9);
+	color: rgba(0,0,0,0.87);
 }
 .session-not-ready {
 	color: #cf3835 !important;

@@ -59,7 +59,7 @@ export default Vue.extend({
 <style>
 .header-label {
 	color: #333;
-	margin: 0.75rem 0;
+	padding: 1rem 0 0.5rem 0;
 }
 .home-view {
 	display: flex;
@@ -73,9 +73,9 @@ export default Vue.extend({
 .home-items {
 	width: 80%;
 	overflow: auto;
-	margin-bottom: 4px;
+	margin-bottom: 1rem;
 }
 .home-items .card {
-	margin-bottom: 4px;
+	margin-bottom: 1rem;
 }
 </style>

@@ -351,7 +351,6 @@ button {
 .variable-facets {
 	display: flex;
 	flex-direction: column;
-	padding-right: 8px;
 }
 .page-link {
 	color: #868e96;
@@ -365,6 +364,20 @@ button {
 .variable-facets-container {
 	overflow-x: hidden;
 	overflow-y: auto;
+}
+.variable-facets-container .facets-root-container{
+	margin: 2px;
+}
+.variable-facets-container .facets-root-container .facets-group-container{
+	background-color: inherit;
+}
+.variable-facets-container .facets-root-container .facets-group-container .facets-group {
+	background: white;
+	margin: 2px 2px 4px 2px; 
+    font-size: 0.867rem;
+    color: rgba(0,0,0,0.87);
+    box-shadow: 0 1px 2px 0 rgba(0,0,0,0.10);
+    transition: box-shadow 0.3s ease-in-out;
 }
 .facet-filters span {
 	font-size: 0.9rem;

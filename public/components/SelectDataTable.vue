@@ -162,6 +162,7 @@ export default Vue.extend({
 .select-data-table-container {
 	display: flex;
 	overflow: auto;
+	background-color: white;
 }
 .select-data-no-results {
 	width: 100%;
