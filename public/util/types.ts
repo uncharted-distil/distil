@@ -66,6 +66,23 @@ const TEXT_SUGGESTIONS = [
 	'boolean'
 ];
 
+export function formatValue(colValue: any, colType: string): any {
+	if (!colType || colType === '') {
+		return _.isNumber(colValue) ? colValue.toFixed(4) : colValue;
+	}
+	if (isTextType(colType) || !isFloatingPointType(colType)) {
+		return colValue;
+	}
+	switch (colType) {
+		case 'float':
+			return colValue.toFixed(4);
+		case 'longitude':
+		case 'latitude':
+			return colValue.toFixed(6);
+	}
+	return colValue.toFixed(4);
+}
+
 export function isNumericType(type: string): boolean {
 	return NUMERIC_TYPES.indexOf(type) !== -1;
 }
