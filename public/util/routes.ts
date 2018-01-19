@@ -1,5 +1,6 @@
 import _ from 'lodash';
 import { Route, Location } from 'vue-router';
+import { Dictionary } from './dict';
 
 export interface RouteArgs {
 	dataset?: string,
@@ -22,7 +23,7 @@ export interface RouteArgs {
  * @param {RouteArgs} args - the arguments for the route.
  */
 export function createRouteEntry(path: string, args: RouteArgs = {}): Location {
-	const query: { [id: string]: string } = {};
+	const query: Dictionary<string> = {};
 
 	if (args.dataset) { query.dataset = args.dataset; }
 	if (args.terms) { query.terms = args.terms; }

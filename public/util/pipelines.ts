@@ -4,6 +4,7 @@
  */
 
 import _ from 'lodash';
+import { Dictionary } from './dict';
 import { PipelineState, PipelineInfo } from '../store/pipelines/index';
 
 const ERROR_VAL = 'ERRORED';
@@ -16,7 +17,7 @@ export interface NameInfo {
 export interface Task {
 	displayName: string,
 	schemaName: string,
-	metrics: { [name: string]: NameInfo }
+	metrics: Dictionary<NameInfo>
 };
 
 // Utility function to determine if a pipeline progress is in an errored state
@@ -112,7 +113,7 @@ export function getMetricDisplayName(schemaName: string): string {
 }
 
 // metrics used in classification tasks
-const classificationMetrics: { [name: string]: NameInfo } = {
+const classificationMetrics: Dictionary<NameInfo> = {
 	// Limit the metrics since not all are supported.
 	accuracy: {
 		displayName: 'Accuracy',
@@ -156,7 +157,7 @@ const classificationMetrics: { [name: string]: NameInfo } = {
 };
 
 // metrics used in regression tasks
-const regressionMetrics: { [name: string]: NameInfo } = {
+const regressionMetrics: Dictionary<NameInfo> = {
 	// Commented out because We are only using R2 for regression at the moment.
 	//
 	// rootMeanSquaredError: {
@@ -194,7 +195,7 @@ const regression: Task = {
 };
 
 // variable type to task mappings
-const variableType: { [varType: string]: Task } = {
+const variableType: Dictionary<Task> = {
 	float:  regression,
 	latitude:  regression,
 	longitude:  regression,
