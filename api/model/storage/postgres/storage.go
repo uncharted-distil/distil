@@ -168,6 +168,7 @@ func (s *Storage) FetchRequests(sessionID string) ([]*model.Request, error) {
 	return requests, nil
 }
 
+// FetchRequest pulls request information from Postgres.
 func (s *Storage) FetchRequest(requestID string) (*model.Request, error) {
 	sql := fmt.Sprintf("SELECT session_id, request_id, dataset, progress, created_time, last_updated_time FROM %s WHERE request_id = $1;", requestTableName)
 
