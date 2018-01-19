@@ -7,11 +7,10 @@
 			</div>
 			<div class="result-summaries-slider">
 				<vue-slider ref="slider"
-					:v-model="value"
 					:min="residualExtrema.min"
 					:max="residualExtrema.max"
 					:interval="interval"
-					:value="value"
+					:value="initialValue"
 					:formatter="formatter"
 					:lazy="true"
 					width=100%
@@ -91,32 +90,29 @@ export default Vue.extend({
 			return routeGetters.getRouteTargetVariable(this.$store);
 		},
 
-		value: {
-			set(values: number[]) {
-				this.updateThreshold(values[0], values[1]);
-			},
-			get(): number[] {
-				const min = routeGetters.getRouteResidualThresholdMin(this.$store);
-				const max = routeGetters.getRouteResidualThresholdMax(this.$store);
-				if (min === undefined || min === '' ||
-					max === undefined || max === '') {
+		initialValue(): number[] {
+			const min = routeGetters.getRouteResidualThresholdMin(this.$store);
+			const max = routeGetters.getRouteResidualThresholdMax(this.$store);
+			if (min === undefined || min === '' ||
+				max === undefined || max === '') {
+				if (!_.isNaN(this.defaultValue[0]) && !_.isNaN(this.defaultValue[1])) {
 					this.updateThreshold(this.defaultValue[0], this.defaultValue[1]);
-					return this.defaultValue;
 				}
-				const nmin = _.toNumber(min);
-				const nmax = _.toNumber(max);
-				// NOTE: the slider component discards the values if they are
-				// not within the extrema. We have to read the extrema here so
-				// that the values are recomputed when the extrema is computed.
-				const extrema = this.residualExtrema;
-				if (nmin < extrema.min || nmax > extrema.max) {
-					return [ 0, 0 ];
-				}
-				return [
-					nmin,
-					nmax
-				];
+				return this.defaultValue;
 			}
+			const nmin = _.toNumber(min);
+			const nmax = _.toNumber(max);
+			// NOTE: the slider component discards the values if they are
+			// not within the extrema. We have to read the extrema here so
+			// that the values are recomputed when the extrema is computed.
+			const extrema = this.residualExtrema;
+			if (nmin < extrema.min || nmax > extrema.max) {
+				return [ NaN, NaN ];
+			}
+			return [
+				nmin,
+				nmax
+			];
 		},
 
 		highlights(): Dictionary<any> {
@@ -133,6 +129,10 @@ export default Vue.extend({
 		},
 
 		range(): number {
+			if (_.isNaN(this.residualExtrema.min) ||
+				_.isNaN(this.residualExtrema.max)) {
+				return NaN;
+			}
 			return this.residualExtrema.max - this.residualExtrema.min;
 		},
 
@@ -192,7 +192,7 @@ export default Vue.extend({
 		},
 
 		residualExtrema(): Extrema {
-			let extrema = 0;
+			let extrema = NaN;
 			this.residualsSummaries.forEach(summary => {
 				extrema = Math.max(
 					Math.abs(summary.extrema.min),
