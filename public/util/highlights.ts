@@ -66,7 +66,7 @@ export function scrollToFirstHighlight(component: Vue, refName: string) {
 }
 
 // Given a key/value from a facet/histogram click event and a corresponding filter,
-// generate a set of value highlights.
+// generate a set of value highlights.  This fetches from the train/test data.
 export function updateDataHighlights(component: Vue, context: string,  key: string, value: string, selectFilter: Filter) {
 	const dataset = routeGetters.getRouteDataset(component.$store);
 	const filters = Array.from(routeGetters.getDecodedFilters(component.$store));
@@ -83,7 +83,8 @@ export function updateDataHighlights(component: Vue, context: string,  key: stri
 }
 
 // Given a key/value from a facet/histogram click event and a corresponding filter,
-// generate a set of value highlights.
+// generate a set of value highlights.  This fetches from the result data, which is a subset
+// of the train/test data including additional columns for predicted values and residuals.
 export function updateResultHighlights(component: Vue, context: string, key: string, value: string, selectFilter: Filter) {
 	const dataset = routeGetters.getRouteDataset(component.$store);
 	const filters = Array.from(routeGetters.getDecodedFilters(component.$store));

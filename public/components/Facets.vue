@@ -140,11 +140,10 @@ export default Vue.extend({
 
 			// If the new highlight state was set via a click on on another component,
 			// clear it out.
-			if (_.get(currHighlights, 'root.context') !== this.instanceName) {
+			if (_.get(currHighlights, 'root.context') !== this.instanceName || _.isEmpty(currHighlights.values)) {
 				this.histogramHighlightValue = null;
 				this.facetHighlightValue = null;
 				$(this.$el).find('.select-highlight').removeClass('select-highlight');
-				console.log('cleared select on ' + this.instanceName);
 			}
 
 			if (_.isEmpty(currHighlights.values)) {

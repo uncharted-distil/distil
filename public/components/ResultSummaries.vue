@@ -20,7 +20,6 @@
 		</div>
 		<h6 class="nav-link">Actual</h6>
 		<facets class="result-summaries-target"
-			instance-name="result-target-facets"
 			@histogram-click="onHistogramClick"
 			@facet-click="onFacetClick"
 			:groups="targetGroups"
@@ -51,7 +50,7 @@ import { getPipelineById } from '../util/pipelines';
 import { getTask } from '../util/pipelines';
 import { getErrorCol, isTarget, getVarFromTarget, getTargetCol } from '../util/data';
 import { updateResultHighlights } from '../util/highlights';
-import { VariableSummary, Extrema } from '../store/data/index';
+import { VariableSummary, Extrema, ValueHighlights } from '../store/data/index';
 import { NUMERICAL_FILTER, CATEGORICAL_FILTER } from '../util/filters';
 import { getters as dataGetters} from '../store/data/module';
 import { getters as routeGetters } from '../store/route/module';
@@ -118,15 +117,21 @@ export default Vue.extend({
 			];
 		},
 
-		highlights(): Dictionary<string[]> {
+		highlights(): ValueHighlights {
 			// find var marked as 'target' and set associated values as highlights
 			const highlights = dataGetters.getHighlightedFeatureValues(this.$store);
-			const facetHighlights = <Dictionary<string[]>>{};
+			const facetHighlights = <ValueHighlights>{
+				root: _.cloneDeep(highlights.root),
+				values: <Dictionary<string[]>>{}
+			};
 			_.forEach(highlights.values, (values, varName) => {
 				if (isTarget(varName)) {
-					facetHighlights[getVarFromTarget(varName)] = values;
+					facetHighlights.values[getVarFromTarget(varName)] = values;
 				}
 			});
+			if (highlights.root && isTarget(highlights.root.key)) {
+				facetHighlights.root.key = getVarFromTarget(highlights.root.key);
+			}
 			return facetHighlights;
 		},
 
@@ -225,8 +230,6 @@ export default Vue.extend({
 
 	methods: {
 		onHistogramClick(context: string, key: string, value: any) {
-			dataMutations.clearFeatureHighlights(this.$store);
-
 			if (key && value) {
 				const colKey = getTargetCol(routeGetters.getRouteTargetVariable(this.$store));
 				const filter = {
@@ -238,12 +241,13 @@ export default Vue.extend({
 					max: _.toNumber(value.toLabel[value.toLabel.length-1])
 				};
 				updateResultHighlights(this, context, colKey, value, filter);
+			} else {
+				dataMutations.clearFeatureHighlights(this.$store);
 			}
 		},
 
 		onFacetClick(context: string, key: string, value: string) {
 			// clear exiting highlights
-			dataMutations.clearFeatureHighlights(this.$store);
 			if (key && value) {
 				// extract the var name from the key
 				const colKey = getTargetCol(routeGetters.getRouteTargetVariable(this.$store));
@@ -255,6 +259,8 @@ export default Vue.extend({
 					categories: [value]
 				};
 				updateResultHighlights(this, context, colKey, value, filter);
+			} else {
+				dataMutations.clearFeatureHighlights(this.$store);
 			}
 		},
 

@@ -40,7 +40,7 @@ import Facets from '../components/Facets';
 import { Filter, decodeFiltersDictionary, updateFilter, getFilterType, isDisabled,
 	CATEGORICAL_FILTER, NUMERICAL_FILTER, EMPTY_FILTER } from '../util/filters';
 import { overlayRouteEntry, getRouteFacetPage } from '../util/routes';
-import { VariableSummary } from '../store/data/index';
+import { VariableSummary, ValueHighlights } from '../store/data/index';
 import { Dictionary } from '../util/dict';
 import { getters as dataGetters, mutations as dataMutations } from '../store/data/module';
 import { getters as routeGetters } from '../store/route/module';
@@ -123,7 +123,7 @@ export default Vue.extend({
 			return this.updateGroupFilters(groups);
 		},
 
-		highlights(): Dictionary<any> {
+		highlights(): ValueHighlights {
 			return dataGetters.getHighlightedFeatureValues(this.$store);
 		},
 

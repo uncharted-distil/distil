@@ -14,10 +14,6 @@ export default Vue.extend({
 
 	methods: {
 		onHistogramClick(context: string, key: string, value: any) {
-			// on histogram click event, publish the highlight/clear highlight to the
-			// rest of the app
-			dataMutations.clearFeatureHighlights(this.$store);
-
 			if (key && value) {
 				const selectFilter = {
 					name: key,
@@ -27,13 +23,12 @@ export default Vue.extend({
 					max: _.toNumber(value.toLabel[value.toLabel.length-1])
 				};
 				updateResultHighlights(this, context, key, value, selectFilter);
+			} else {
+				dataMutations.clearFeatureHighlights(this.$store);
 			}
 		},
 
 		onFacetClick(context: string, key: string, value: string) {
-			// clear existing highlights
-			dataMutations.clearFeatureHighlights(this.$store);
-
 			if (key && value) {
 				// extract the var name from the key
 				const selectFilter = {
@@ -43,6 +38,9 @@ export default Vue.extend({
 					categories: [value]
 				};
 				updateResultHighlights(this, context, key, value, selectFilter);
+			} else {
+				// clear existing highlights
+				dataMutations.clearFeatureHighlights(this.$store);
 			}
 		},
 	}

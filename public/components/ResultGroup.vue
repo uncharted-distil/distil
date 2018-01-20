@@ -37,10 +37,9 @@
 
 import Facets from '../components/Facets';
 import { createGroups, Group, NumericalFacet, CategoricalFacet } from '../util/facets';
-import { isPredicted, isError, isTarget, getVarFromPredicted, getVarFromError, getVarFromTarget, getPredictedFacetKey,
+import { isPredicted, isError, getVarFromPredicted, getVarFromError, getPredictedFacetKey,
 	getErrorFacetKey, getErrorCol, getPredictedCol } from '../util/data';
-import { VariableSummary } from '../store/data/index';
-import { Dictionary } from '../util/dict';
+import { VariableSummary, ValueHighlights } from '../store/data/index';
 import { overlayRouteEntry } from '../util/routes';
 import { getters } from '../store/data/module';
 import { getters as routeGetters } from '../store/route/module';
@@ -48,6 +47,7 @@ import { getPipelineById, getMetricDisplayName } from '../util/pipelines';
 import { mutations as dataMutations } from '../store/data/module';
 import { NUMERICAL_FILTER, CATEGORICAL_FILTER, getFilterType, decodeFiltersDictionary } from '../util/filters';
 import { updateResultHighlights } from '../util/highlights';
+import { Dictionary } from '../util/dict';
 import _ from 'lodash';
 import Vue from 'vue';
 
@@ -101,20 +101,30 @@ export default Vue.extend({
 			return [];
 		},
 
-		highlights(): Dictionary<any> {
-			// Facets highlights are keyed by name - map the published highligh
-			// key to the facet key
+		highlights(): ValueHighlights {
+			// Remap highlights to facet key names, filtering out anything other than
+			// the predicted and error values (since that's all that is displayed in this
+			// component)
 			const highlights = getters.getHighlightedFeatureValues(this.$store);
-			const facetHighlights = <Dictionary<any>>{};
-			_.forEach(highlights.values, (value, varName) => {
+			const facetHighlights = <ValueHighlights>{
+				root: _.cloneDeep(highlights.root),
+				values: <Dictionary<string[]>>{}
+			};
+			_.forEach(highlights.values, (values, varName) => {
 				if (isPredicted(varName)) {
-					facetHighlights[getPredictedFacetKey(getVarFromPredicted(varName))] = value;
+					facetHighlights.values[getPredictedFacetKey(getVarFromPredicted(varName))] = values;
 				} else if (isError(varName)) {
-					facetHighlights[getErrorFacetKey(getVarFromError(varName))] = value;
-				} else if (isTarget(varName)) {
-					facetHighlights[getVarFromTarget(varName)] = value;
+					facetHighlights.values[getErrorFacetKey(getVarFromError(varName))] = values;
 				}
 			});
+			// Remap the selection root as well.
+			if (highlights.root) {
+				if (isPredicted(highlights.root.key)) {
+					facetHighlights.root.key = 'Predicted';
+				} else if (isError(highlights.root.key)) {
+					facetHighlights.root.key = 'Error';
+				}
+			}
 			return facetHighlights;
 		},
 
@@ -142,9 +152,7 @@ export default Vue.extend({
 		},
 
 		histogramHighlights(context: string, key: string, value: any) {
-			dataMutations.clearFeatureHighlights(this.$store);
 			if (key && value) {
-				// extract the var name from the key
 				const filter = {
 					name: key,
 					type: NUMERICAL_FILTER,
@@ -154,11 +162,12 @@ export default Vue.extend({
 					max: _.toNumber(value.toLabel[value.toLabel.length-1])
 				};
 				updateResultHighlights(this, context, key, value, filter);
+			} else {
+				dataMutations.clearFeatureHighlights(this.$store);
 			}
 		},
 
 		onResultFacetClick(context: string, key: string, value: string) {
-			dataMutations.clearFeatureHighlights(this.$store);
 			if (key && value) {
 				// extract the var name from the key
 				const targetVar = routeGetters.getRouteTargetVariable(this.$store);
@@ -171,6 +180,8 @@ export default Vue.extend({
 					categories: [value]
 				};
 				updateResultHighlights(this, context, key, value, filter);
+			} else {
+				dataMutations.clearFeatureHighlights(this.$store);
 			}
 		},
 
