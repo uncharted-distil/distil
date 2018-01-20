@@ -7,15 +7,13 @@ import { updateResultHighlights } from '../util/highlights';
 import Vue from 'vue';
 import _ from 'lodash';
 
-const RESULT_VARIABLE_FACET_HIGHLIGHTS = 'result-variable-facet';
-
 export default Vue.extend({
 	extends: VariableFacets,
 
 	name: 'results-variable-facets',
 
 	methods: {
-		onHistogramClick(key: string, value: any) {
+		onHistogramClick(context: string, key: string, value: any) {
 			// on histogram click event, publish the highlight/clear highlight to the
 			// rest of the app
 			dataMutations.clearFeatureHighlights(this.$store);
@@ -28,11 +26,11 @@ export default Vue.extend({
 					min:  _.toNumber(value.label[0]),
 					max: _.toNumber(value.toLabel[value.toLabel.length-1])
 				};
-				updateResultHighlights(this, key, selectFilter, RESULT_VARIABLE_FACET_HIGHLIGHTS);
+				updateResultHighlights(this, context, key, value, selectFilter);
 			}
 		},
 
-		onFacetClick(key: string, value: string) {
+		onFacetClick(context: string, key: string, value: string) {
 			// clear existing highlights
 			dataMutations.clearFeatureHighlights(this.$store);
 
@@ -44,7 +42,7 @@ export default Vue.extend({
 					enabled: true,
 					categories: [value]
 				};
-				updateResultHighlights(this, key, selectFilter, RESULT_VARIABLE_FACET_HIGHLIGHTS);
+				updateResultHighlights(this, context, key, value, selectFilter);
 			}
 		},
 	}

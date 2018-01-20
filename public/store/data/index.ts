@@ -60,11 +60,17 @@ export interface TargetRow extends TableRow {
 }
 
 export interface Highlights {
-	context: string;
+	root: HighlightRoot;
 }
 
 export interface RangeHighlights extends Highlights {
 	ranges: Range;
+}
+
+export interface HighlightRoot {
+	context: string;
+	key: string;
+	value: string;
 }
 
 export interface ValueHighlights extends Highlights {

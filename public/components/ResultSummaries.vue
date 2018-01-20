@@ -20,6 +20,7 @@
 		</div>
 		<h6 class="nav-link">Actual</h6>
 		<facets class="result-summaries-target"
+			instance-name="result-target-facets"
 			@histogram-click="onHistogramClick"
 			@facet-click="onFacetClick"
 			:groups="targetGroups"
@@ -223,7 +224,7 @@ export default Vue.extend({
 	},
 
 	methods: {
-		onHistogramClick(key: string, value: any) {
+		onHistogramClick(context: string, key: string, value: any) {
 			dataMutations.clearFeatureHighlights(this.$store);
 
 			if (key && value) {
@@ -236,11 +237,11 @@ export default Vue.extend({
 					min: _.toNumber(value.label[0]),
 					max: _.toNumber(value.toLabel[value.toLabel.length-1])
 				};
-				updateResultHighlights(this, colKey, filter, RESULT_SUMMARY_CONTEXT);
+				updateResultHighlights(this, context, colKey, value, filter);
 			}
 		},
 
-		onFacetClick(key: string, value: string) {
+		onFacetClick(context: string, key: string, value: string) {
 			// clear exiting highlights
 			dataMutations.clearFeatureHighlights(this.$store);
 			if (key && value) {
@@ -253,7 +254,7 @@ export default Vue.extend({
 					context: RESULT_SUMMARY_CONTEXT,
 					categories: [value]
 				};
-				updateResultHighlights(this, colKey, filter, RESULT_SUMMARY_CONTEXT);
+				updateResultHighlights(this, context, colKey, value, filter);
 			}
 		},
 

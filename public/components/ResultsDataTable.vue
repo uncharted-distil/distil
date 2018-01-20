@@ -79,8 +79,8 @@ export default Vue.extend({
 
 			// if we have highlights defined and the select table is not the source then updated
 			// the highlight visuals.
-			if ((valueHighlights.context && valueHighlights.context !== RESULT_TABLE_HIGHLIGHTS) ||
-				(rangeHighlights.context && rangeHighlights.context !== RESULT_TABLE_HIGHLIGHTS)) {
+			if ((_.get(valueHighlights, 'root', 'context') !== RESULT_TABLE_HIGHLIGHTS) ||
+				(_.get(rangeHighlights, 'root', 'context') !== RESULT_TABLE_HIGHLIGHTS)) {
 					updateTableHighlights(filtered, rangeHighlights, valueHighlights, RESULT_TABLE_HIGHLIGHTS);
 			}
 
@@ -92,8 +92,8 @@ export default Vue.extend({
 			// apply the currently selected row highlight - if there were value or range highlights applied,
 			// then disable row selection
 			if (this.selectedRowKey >= 0 &&
-				valueHighlights.context === RESULT_TABLE_HIGHLIGHTS ||
-				rangeHighlights.context === RESULT_TABLE_HIGHLIGHTS) {
+				_.get(valueHighlights, 'root', 'context') === RESULT_TABLE_HIGHLIGHTS ||
+				_.get(rangeHighlights, 'root', 'context') === RESULT_TABLE_HIGHLIGHTS) {
 				const toSelect = updatedItems.find(r => r._key === this.selectedRowKey);
 				toSelect._rowVariant = 'primary';
 			} else {
@@ -125,7 +125,11 @@ export default Vue.extend({
 
 				// publish the highlight change
 				const highlights = {
-					context: RESULT_TABLE_HIGHLIGHTS,
+					root: {
+						context: RESULT_TABLE_HIGHLIGHTS,
+						key: row._key.toString(),
+						value: undefined
+					},
 					values: {}
 				};
 				_.forEach(this.fields, (field, key) => highlights.values[key] = row[key]);

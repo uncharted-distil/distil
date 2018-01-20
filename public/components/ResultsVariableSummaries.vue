@@ -6,7 +6,7 @@
 			enable-toggle
 			enable-group-collapse
 			enable-facet-filtering
-			instance-name="varSummaries"
+			instance-name="result-summary-facets"
 			:variables="variables"
 			:dataset="dataset"
 			:type-change="typeChange">

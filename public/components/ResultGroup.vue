@@ -51,8 +51,6 @@ import { updateResultHighlights } from '../util/highlights';
 import _ from 'lodash';
 import Vue from 'vue';
 
-const RESULT_GROUP_HIGHLIGHTS = 'result-group';
-
 export default Vue.extend({
 	name: 'result-group',
 
@@ -68,7 +66,11 @@ export default Vue.extend({
 		resultExtrema: Object,
 		residualExtrema: Object,
 		resultHtml: String,
-		residualHtml: String
+		residualHtml: String,
+		instanceName: {
+			type: String,
+			default: 'result-group'
+		}
 	},
 
 	components: {
@@ -129,17 +131,17 @@ export default Vue.extend({
 			return getMetricDisplayName(metric);
 		},
 
-		onResultHistogramClick(key: string, value: any) {
+		onResultHistogramClick(context: string, key: string, value: any) {
 			const targetVar = routeGetters.getRouteTargetVariable(this.$store);
-			this.histogramHighlights(key ? getPredictedCol(targetVar) : key, value);
+			this.histogramHighlights(context, key ? getPredictedCol(targetVar) : key, value);
 		},
 
-		onResidualsHistogramClick(key: string, value: any) {
+		onResidualsHistogramClick(context, key: string, value: any) {
 			const targetVar = routeGetters.getRouteTargetVariable(this.$store);
-			this.histogramHighlights(key ? getErrorCol(targetVar) : key, value);
+			this.histogramHighlights(context, key ? getErrorCol(targetVar) : key, value);
 		},
 
-		histogramHighlights(key: string, value: any) {
+		histogramHighlights(context: string, key: string, value: any) {
 			dataMutations.clearFeatureHighlights(this.$store);
 			if (key && value) {
 				// extract the var name from the key
@@ -147,15 +149,15 @@ export default Vue.extend({
 					name: key,
 					type: NUMERICAL_FILTER,
 					enabled: true,
-					context: RESULT_GROUP_HIGHLIGHTS,
+					context: this.instanceName,
 					min: _.toNumber(value.label[0]),
 					max: _.toNumber(value.toLabel[value.toLabel.length-1])
 				};
-				updateResultHighlights(this, key, filter, RESULT_GROUP_HIGHLIGHTS);
+				updateResultHighlights(this, context, key, value, filter);
 			}
 		},
 
-		onResultFacetClick(key: string, value: string) {
+		onResultFacetClick(context: string, key: string, value: string) {
 			dataMutations.clearFeatureHighlights(this.$store);
 			if (key && value) {
 				// extract the var name from the key
@@ -165,10 +167,10 @@ export default Vue.extend({
 					name: varName,
 					type: CATEGORICAL_FILTER,
 					enabled: true,
-					context: RESULT_GROUP_HIGHLIGHTS,
+					context: this.instanceName,
 					categories: [value]
 				};
-				updateResultHighlights(this, key, filter, RESULT_GROUP_HIGHLIGHTS);
+				updateResultHighlights(this, context, key, value, filter);
 			}
 		},
 

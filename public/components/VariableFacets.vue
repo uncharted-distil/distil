@@ -51,8 +51,6 @@ import '../styles/spinner.css';
 import _ from 'lodash';
 import Vue from 'vue';
 
-const VARIABLE_FACET_HIGHLIGHTS = 'variable_facets';
-
 export default Vue.extend({
 	name: 'variable-facets',
 
@@ -61,15 +59,15 @@ export default Vue.extend({
 	},
 
 	props: {
-		'enableSearch': Boolean,
-		'enableToggle': Boolean,
-		'enableGroupCollapse': Boolean,
-		'enableFacetFiltering': Boolean,
-		'variables': Array,
-		'dataset': String,
-		'html': [ String, Object, Function ],
-		'instanceName': String,
-		'typeChange': Boolean
+		enableSearch: Boolean,
+		enableToggle: Boolean,
+		enableGroupCollapse: Boolean,
+		enableFacetFiltering: Boolean,
+		variables: Array,
+		dataset: String,
+		html: [ String, Object, Function ],
+		instanceName: { type: String, default: 'variable-facets' },
+		typeChange: Boolean
 	},
 
 	data() {
@@ -126,7 +124,7 @@ export default Vue.extend({
 		},
 
 		highlights(): Dictionary<any> {
-			return dataGetters.getHighlightedFeatureValues(this.$store).values;
+			return dataGetters.getHighlightedFeatureValues(this.$store);
 		},
 
 		importance(): Dictionary<number> {
@@ -221,11 +219,7 @@ export default Vue.extend({
 			this.$emit('click', key);
 		},
 
-		onHistogramClick(key: string, value: any) {
-			// on histogram click event, publish the highlight/clear highlight to the
-			// rest of the app
-			dataMutations.clearFeatureHighlights(this.$store);
-
+		onHistogramClick(context: string, key: string, value: any) {
 			if (key && value) {
 				const selectFilter = {
 					name: key,
@@ -234,14 +228,13 @@ export default Vue.extend({
 					min:  _.toNumber(value.label[0]),
 					max: _.toNumber(value.toLabel[value.toLabel.length-1])
 				};
-				updateDataHighlights(this, key, selectFilter, VARIABLE_FACET_HIGHLIGHTS);
+				updateDataHighlights(this, context, key, value, selectFilter);
+			} else {
+				dataMutations.clearFeatureHighlights(this.$store);
 			}
 		},
 
-		onFacetClick(key: string, value: string) {
-			// clear existing highlights
-			dataMutations.clearFeatureHighlights(this.$store);
-
+		onFacetClick(context: string, key: string, value: string) {
 			if (key && value) {
 				// extract the var name from the key
 				const selectFilter = {
@@ -250,7 +243,9 @@ export default Vue.extend({
 					enabled: true,
 					categories: [value]
 				};
-				updateDataHighlights(this, key, selectFilter, VARIABLE_FACET_HIGHLIGHTS);
+				updateDataHighlights(this, context, key, value, selectFilter);
+			} else {
+				dataMutations.clearFeatureHighlights(this.$store);
 			}
 		},
 

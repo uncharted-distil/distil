@@ -18,7 +18,7 @@ export function updateTableHighlights(
 	highlightContext: string) {
 
 	// skip highlighting when the context is the originating table
-	if (!_.isEmpty(highlightRanges.ranges) && highlightRanges.context !== highlightContext) {
+	if (!_.isEmpty(highlightRanges.ranges) && highlightRanges.root.context !== highlightContext) {
 		// highlight any table row that has a value in the feature range
 		_.forEach(tableData, (row, rowNum) => {
 			_.forEach(row, (value, name) => {
@@ -30,7 +30,7 @@ export function updateTableHighlights(
 				row._rowVariant = null;
 			});
 		});
-	} else if (!_.isEmpty(highlightValues.values) && highlightValues.context !== highlightContext) {
+	} else if (!_.isEmpty(highlightValues.values) && highlightValues.root.context !== highlightContext) {
 		// highlight any table row that is in the value map
 		_.forEach(tableData, (row, rowNum) => {
 			_.forEach(row, (value, name) => {
@@ -67,7 +67,7 @@ export function scrollToFirstHighlight(component: Vue, refName: string) {
 
 // Given a key/value from a facet/histogram click event and a corresponding filter,
 // generate a set of value highlights.
-export function updateDataHighlights(component: Vue, key: string, selectFilter: Filter, context: string) {
+export function updateDataHighlights(component: Vue, context: string,  key: string, value: string, selectFilter: Filter) {
 	const dataset = routeGetters.getRouteDataset(component.$store);
 	const filters = Array.from(routeGetters.getDecodedFilters(component.$store));
 
@@ -79,12 +79,12 @@ export function updateDataHighlights(component: Vue, key: string, selectFilter: 
 	}
 	// fetch the data using the supplied filtered
 	const resultPromise = dataActions.fetchData(component.$store, { dataset: dataset, filters: filters, inclusive: true });
-	updateHighlights(component, resultPromise, context);
+	updateHighlights(component, resultPromise, context, key, value);
 }
 
 // Given a key/value from a facet/histogram click event and a corresponding filter,
 // generate a set of value highlights.
-export function updateResultHighlights(component: Vue, key: string, selectFilter: Filter, context: string) {
+export function updateResultHighlights(component: Vue, context: string, key: string, value: string, selectFilter: Filter) {
 	const dataset = routeGetters.getRouteDataset(component.$store);
 	const filters = Array.from(routeGetters.getDecodedFilters(component.$store));
 	const pipelineId = routeGetters.getRoutePipelineId(component.$store);
@@ -100,11 +100,11 @@ export function updateResultHighlights(component: Vue, key: string, selectFilter
 
 	// fetch the data using the supplied filtered
 	const resultPromise = dataActions.fetchResults(component.$store, { pipelineId: pipelineId, dataset: dataset, filters: filters });
-	updateHighlights(component, resultPromise, context);
+	updateHighlights(component, resultPromise, context, key, value);
 }
 
 // Given returned data,
-function updateHighlights(component: Vue, promise: AxiosPromise<Data>, context: string) {
+function updateHighlights(component: Vue, promise: AxiosPromise<Data>, context: string, key: string, value: string) {
 	promise.then(response => {
 		const data = response.data;
 		const highlights: Map<string, Set<any>> = new Map();
@@ -123,7 +123,14 @@ function updateHighlights(component: Vue, promise: AxiosPromise<Data>, context: 
 		for (const [key, values] of highlights) {
 			storeHighlights[key] = Array.from(values);
 		}
-		dataMutations.highlightFeatureValues(component.$store, { values: storeHighlights, context: context });
+		dataMutations.highlightFeatureValues(component.$store, {
+			root: {
+				context: context,
+				key: key,
+				value: value
+			},
+			values: storeHighlights
+		});
 	})
 	.catch(error => console.error(error));
 }

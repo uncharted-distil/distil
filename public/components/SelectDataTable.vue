@@ -74,8 +74,8 @@ export default Vue.extend({
 
 			// if we have highlights defined and the select table is not the source then updated
 			// the highlight visuals.
-			if ((valueHighlights.context && valueHighlights.context !== SELECT_TABLE_HIGHLIGHT) ||
-				(rangeHighlights.context && rangeHighlights.context !== SELECT_TABLE_HIGHLIGHT)) {
+			if ((_.get(valueHighlights, 'root', 'context') !== SELECT_TABLE_HIGHLIGHT) ||
+				(_.get(rangeHighlights, 'root', 'context') !== SELECT_TABLE_HIGHLIGHT)) {
 				updateTableHighlights(data, rangeHighlights, valueHighlights, SELECT_TABLE_HIGHLIGHT);
 
 				// On data / highlights change, scroll to first selected row
@@ -85,8 +85,8 @@ export default Vue.extend({
 			// apply the currently selected row highlight - if there were value or range highlights applied,
 			// then disable row selection
 			if (this.selectedRowKey >= 0 &&
-				valueHighlights.context === SELECT_TABLE_HIGHLIGHT ||
-				rangeHighlights.context === SELECT_TABLE_HIGHLIGHT) {
+				_.get(valueHighlights, 'root', 'context') === SELECT_TABLE_HIGHLIGHT ||
+				_.get(rangeHighlights, 'root', 'context') === SELECT_TABLE_HIGHLIGHT) {
 				const toSelect = dataGetters.getSelectedDataItems(this.$store).find(r => r._key === this.selectedRowKey);
 				toSelect._rowVariant = 'primary';
 			} else {
@@ -115,7 +115,7 @@ export default Vue.extend({
 			this.fetch();
 		},
 		'$route.query.target'() {
-			this.fetch();
+		this.fetch();
 		},
 		'$route.query.filters'() {
 			this.fetch();
@@ -139,7 +139,11 @@ export default Vue.extend({
 
 				// publish the highlight change
 				const highlights = <ValueHighlights> {
-					context: SELECT_TABLE_HIGHLIGHT,
+					root: {
+						context: SELECT_TABLE_HIGHLIGHT,
+						key: row._key.toString(),
+						value: undefined
+					},
 					values: {}
 				};
 				_.forEach(this.fields, (field, key) => highlights.values[key] = row[key]);
