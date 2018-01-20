@@ -67,16 +67,14 @@ export default Vue.extend({
 		// extracts the table data from the store
 		items(): Dictionary<any> {
 			const data = dataGetters.getSelectedDataItems(this.$store);
-			const rangeHighlights = dataGetters.getHighlightedFeatureRanges(this.$store);
 			const valueHighlights = dataGetters.getHighlightedFeatureValues(this.$store);
 
 			dataGetters.getSelectedDataItems(this.$store).forEach(f => f._rowVariant = null);
 
 			// if we have highlights defined and the select table is not the source then updated
 			// the highlight visuals.
-			if ((_.get(valueHighlights, 'root', 'context') !== SELECT_TABLE_HIGHLIGHT) ||
-				(_.get(rangeHighlights, 'root', 'context') !== SELECT_TABLE_HIGHLIGHT)) {
-				updateTableHighlights(data, rangeHighlights, valueHighlights, SELECT_TABLE_HIGHLIGHT);
+			if ((_.get(valueHighlights, 'root', 'context') !== SELECT_TABLE_HIGHLIGHT)) {
+				updateTableHighlights(data, valueHighlights, SELECT_TABLE_HIGHLIGHT);
 
 				// On data / highlights change, scroll to first selected row
 				scrollToFirstHighlight(this, 'selectTable');
@@ -85,8 +83,7 @@ export default Vue.extend({
 			// apply the currently selected row highlight - if there were value or range highlights applied,
 			// then disable row selection
 			if (this.selectedRowKey >= 0 &&
-				_.get(valueHighlights, 'root', 'context') === SELECT_TABLE_HIGHLIGHT ||
-				_.get(rangeHighlights, 'root', 'context') === SELECT_TABLE_HIGHLIGHT) {
+				_.get(valueHighlights, 'root', 'context') === SELECT_TABLE_HIGHLIGHT) {
 				const toSelect = dataGetters.getSelectedDataItems(this.$store).find(r => r._key === this.selectedRowKey);
 				toSelect._rowVariant = 'primary';
 			} else {

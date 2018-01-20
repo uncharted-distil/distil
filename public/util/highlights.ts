@@ -1,4 +1,4 @@
-import { RangeHighlights, ValueHighlights, Data } from '../store/data/index';
+import { ValueHighlights, Data } from '../store/data/index';
 import { Dictionary } from '../util/dict';
 import { Filter } from '../util/filters';
 import { getVarFromTarget } from '../util/data';
@@ -11,26 +11,10 @@ import { AxiosPromise } from 'axios';
 // Highlights table rows with values that are currently marked as highlighted.  Uses a supplied highligh
 // context ID to enure that something like a table selection doesn't trigger additional table highlight
 // updates.
-export function updateTableHighlights(
-	tableData: Dictionary<any>[],
-	highlightRanges: RangeHighlights,
-	highlightValues: ValueHighlights,
-	highlightContext: string) {
+export function updateTableHighlights(tableData: Dictionary<any>[], highlightValues: ValueHighlights, highlightContext: string) {
 
 	// skip highlighting when the context is the originating table
-	if (!_.isEmpty(highlightRanges.ranges) && highlightRanges.root.context !== highlightContext) {
-		// highlight any table row that has a value in the feature range
-		_.forEach(tableData, (row, rowNum) => {
-			_.forEach(row, (value, name) => {
-				const range = highlightRanges.ranges[name];
-				if (range && range.from <= value && range.to >= value) {
-					row._rowVariant = 'info';
-					return false;
-				}
-				row._rowVariant = null;
-			});
-		});
-	} else if (!_.isEmpty(highlightValues.values) && highlightValues.root.context !== highlightContext) {
+	if (!_.isEmpty(highlightValues.values) && highlightValues.root.context !== highlightContext) {
 		// highlight any table row that is in the value map
 		_.forEach(tableData, (row, rowNum) => {
 			_.forEach(row, (value, name) => {

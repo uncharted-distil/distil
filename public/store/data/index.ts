@@ -63,10 +63,6 @@ export interface Highlights {
 	root: HighlightRoot;
 }
 
-export interface RangeHighlights extends Highlights {
-	ranges: Range;
-}
-
 export interface HighlightRoot {
 	context: string;
 	key: string;
@@ -90,37 +86,34 @@ export interface DataState {
 	resultData: Data;
 	filteredData: Data;
 	selectedData: Data;
-	highlightedFeatureRanges: RangeHighlights;
 	highlightedFeatureValues: ValueHighlights;
 }
 
 export const state = {
 	// description of matched datasets
-	datasets: [],
+	datasets: <Datasets[]>[],
 
 	// variable list for the active dataset
-	variables: [],
+	variables: <Variable[]>[],
 
 	// variable summary data for the active dataset
-	variableSummaries: [],
+	variableSummaries: <VariableSummary[]>[],
 
 	// results summary data for the selected pipeline run
-	resultsSummaries: [],
+	resultsSummaries: <VariableSummary[]>[],
 
 	// error summary data for the selected pipeline run
-	residualSummaries: [],
+	residualSummaries: <VariableSummary[]>[],
 
 	// current set of pipeline results
-	resultData: {} as any,
+	resultData: <Data>{},
 
 	// filtered data entries for the active dataset
-	filteredData: {} as any,
+	filteredData: <Data>{},
 
 	// selected data entries for the active dataset
-	selectedData: {} as any,
+	selectedData: <Data>{},
 
 	// highlighted features
-	highlightedFeatureRanges: {} as any,
-
-	highlightedFeatureValues: {} as any
+	highlightedFeatureValues: <ValueHighlights>{}
 }

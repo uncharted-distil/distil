@@ -68,10 +68,7 @@ export default Vue.extend({
 		// extracts the table data from the store
 		items(): TargetRow[] {
 			const items = getters.getResultDataItems(this.$store);
-
 			const filtered = this.excludeNonTraining ? removeNonTrainingItems(items, this.training) : items;
-
-			const rangeHighlights = getters.getHighlightedFeatureRanges(this.$store);
 			const valueHighlights = getters.getHighlightedFeatureValues(this.$store);
 
 			// clear all selections visuals
@@ -79,9 +76,8 @@ export default Vue.extend({
 
 			// if we have highlights defined and the select table is not the source then updated
 			// the highlight visuals.
-			if ((_.get(valueHighlights, 'root', 'context') !== RESULT_TABLE_HIGHLIGHTS) ||
-				(_.get(rangeHighlights, 'root', 'context') !== RESULT_TABLE_HIGHLIGHTS)) {
-					updateTableHighlights(filtered, rangeHighlights, valueHighlights, RESULT_TABLE_HIGHLIGHTS);
+			if (_.get(valueHighlights, 'root', 'context') !== RESULT_TABLE_HIGHLIGHTS) {
+					updateTableHighlights(filtered, valueHighlights, RESULT_TABLE_HIGHLIGHTS);
 			}
 
 			const updatedItems = filtered
@@ -92,8 +88,7 @@ export default Vue.extend({
 			// apply the currently selected row highlight - if there were value or range highlights applied,
 			// then disable row selection
 			if (this.selectedRowKey >= 0 &&
-				_.get(valueHighlights, 'root', 'context') === RESULT_TABLE_HIGHLIGHTS ||
-				_.get(rangeHighlights, 'root', 'context') === RESULT_TABLE_HIGHLIGHTS) {
+				_.get(valueHighlights, 'root', 'context') === RESULT_TABLE_HIGHLIGHTS) {
 				const toSelect = updatedItems.find(r => r._key === this.selectedRowKey);
 				toSelect._rowVariant = 'primary';
 			} else {

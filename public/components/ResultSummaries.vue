@@ -48,7 +48,7 @@ import { createGroups, Group } from '../util/facets';
 import { overlayRouteEntry } from '../util/routes';
 import { getPipelineById } from '../util/pipelines';
 import { getTask } from '../util/pipelines';
-import { getErrorCol, isTarget, getVarFromTarget, getTargetCol } from '../util/data';
+import { isTarget, getVarFromTarget, getTargetCol } from '../util/data';
 import { updateResultHighlights } from '../util/highlights';
 import { VariableSummary, Extrema, ValueHighlights } from '../store/data/index';
 import { NUMERICAL_FILTER, CATEGORICAL_FILTER } from '../util/filters';

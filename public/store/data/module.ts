@@ -40,7 +40,6 @@ export const getters = {
 	getSelectedDataItems: read(moduleGetters.getSelectedDataItems),
 	getSelectedDataFields: read(moduleGetters.getSelectedDataFields),
 	getHighlightedFeatureValues: read(moduleGetters.getHighlightedFeatureValues),
-	getHighlightedFeatureRanges: read(moduleGetters.getHighlightedFeatureRanges)
 }
 
 // Typed actions
@@ -74,8 +73,6 @@ export const mutations = {
 	setFilteredData: commit(moduleMutations.setFilteredData),
 	setSelectedData: commit(moduleMutations.setSelectedData),
 	setResultData: commit(moduleMutations.setResultData),
-	highlightFeatureRange: commit(moduleMutations.highlightFeatureRange),
-	clearFeatureHighlightRange: commit(moduleMutations.clearFeatureHighlightRange),
 	highlightFeatureValues: commit(moduleMutations.highlightFeatureValues),
 	clearFeatureHighlightValues: commit(moduleMutations.clearFeatureHighlightValues),
 	clearFeatureHighlights: commit(moduleMutations.clearFeatureHighlights)
