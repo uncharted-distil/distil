@@ -40,7 +40,7 @@ import Facets from '../components/Facets';
 import { Filter, decodeFiltersDictionary, updateFilter, getFilterType, isDisabled,
 	CATEGORICAL_FILTER, NUMERICAL_FILTER, EMPTY_FILTER } from '../util/filters';
 import { overlayRouteEntry, getRouteFacetPage } from '../util/routes';
-import { VariableSummary, ValueHighlights } from '../store/data/index';
+import { VariableSummary, Highlights, Range } from '../store/data/index';
 import { Dictionary } from '../util/dict';
 import { getters as dataGetters, mutations as dataMutations } from '../store/data/module';
 import { getters as routeGetters } from '../store/route/module';
@@ -48,7 +48,6 @@ import { createGroups, Group } from '../util/facets';
 import { updateDataHighlights } from '../util/highlights';
 import 'font-awesome/css/font-awesome.css';
 import '../styles/spinner.css';
-import _ from 'lodash';
 import Vue from 'vue';
 
 export default Vue.extend({
@@ -123,7 +122,7 @@ export default Vue.extend({
 			return this.updateGroupFilters(groups);
 		},
 
-		highlights(): ValueHighlights {
+		highlights(): Highlights {
 			return dataGetters.getHighlightedFeatureValues(this.$store);
 		},
 
@@ -219,14 +218,14 @@ export default Vue.extend({
 			this.$emit('click', key);
 		},
 
-		onHistogramClick(context: string, key: string, value: any) {
+		onHistogramClick(context: string, key: string, value: Range) {
 			if (key && value) {
 				const selectFilter = {
 					name: key,
 					type: NUMERICAL_FILTER,
 					enabled: true,
-					min:  _.toNumber(value.label[0]),
-					max: _.toNumber(value.toLabel[value.toLabel.length-1])
+					min:  value.from,
+					max: value.to
 				};
 				updateDataHighlights(this, context, key, value, selectFilter);
 			} else {

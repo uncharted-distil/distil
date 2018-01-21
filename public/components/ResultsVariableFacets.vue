@@ -4,8 +4,8 @@ import VariableFacets from './VariableFacets.vue';
 import { mutations as dataMutations } from '../store/data/module';
 import { NUMERICAL_FILTER, CATEGORICAL_FILTER } from '../util/filters';
 import { updateResultHighlights } from '../util/highlights';
+import { Range } from '../store/data/index';
 import Vue from 'vue';
-import _ from 'lodash';
 
 export default Vue.extend({
 	extends: VariableFacets,
@@ -13,14 +13,14 @@ export default Vue.extend({
 	name: 'results-variable-facets',
 
 	methods: {
-		onHistogramClick(context: string, key: string, value: any) {
+		onHistogramClick(context: string, key: string, value: Range) {
 			if (key && value) {
 				const selectFilter = {
 					name: key,
 					type: NUMERICAL_FILTER,
 					enabled: true,
-					min:  _.toNumber(value.label[0]),
-					max: _.toNumber(value.toLabel[value.toLabel.length-1])
+					min:  value.from,
+					max: value.to
 				};
 				updateResultHighlights(this, context, key, value, selectFilter);
 			} else {

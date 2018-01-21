@@ -12,7 +12,7 @@ import Facets from '@uncharted.software/stories-facets';
 import TypeChangeMenu from '../components/TypeChangeMenu';
 import '@uncharted.software/stories-facets/dist/facets.css';
 import Multimap from 'multimap';
-import { ValueHighlights } from '../store/data/index';
+import { Highlights } from '../store/data/index';
 
 export default Vue.extend({
 	name: 'facets',
@@ -103,7 +103,11 @@ export default Vue.extend({
 				component.$emit('histogram-click', this.instanceName);
 			} else {
 				this.histogramHighlightValue = { key, value };
-				component.$emit('histogram-click', this.instanceName, key, value);
+				const rangeValue = {
+					from: _.toNumber(value.label),
+					to: _.toNumber(value.toLabel)
+				};
+				component.$emit('histogram-click', this.instanceName, key, rangeValue);
 			}
 		});
 
@@ -136,8 +140,7 @@ export default Vue.extend({
 		},
 
 		// handle external highlight changes by updating internal facet select states
-		highlights(currHighlights: ValueHighlights) {
-
+		highlights(currHighlights: Highlights) {
 			// If the new highlight state was set via a click on on another component,
 			// clear it out.
 			if (_.get(currHighlights, 'root.context') !== this.instanceName || _.isEmpty(currHighlights.values)) {
@@ -152,17 +155,13 @@ export default Vue.extend({
 				(<Group[]>this.groups).forEach(groupSpec => {
 					const group = this.facets.getGroup(groupSpec.key);
 					if (group) {
-						// loop through groups ensure that selection is clear on each
+						// loop through groups ensure that selection is clear on each - not that clear
+						// the selection on a categorical facet means set its selection to a full count
 						group.facets.forEach(facet => {
-							if (facet._histogram && facet._histogram.highlightRange) {
-								// clear highlight visual from histogram facet
+							if (facet._histogram) {
 								facet.deselect();
 							} else {
-								// clear highlight visuals from vertical facet -
-								// deselected in our case means all visuals in select state
-								if (!this.facetFilteredValues.has(facet.key, facet.value)) {
-									facet.select(facet.count);
-								}
+								facet.select(facet.count);
 							}
 						});
 					}

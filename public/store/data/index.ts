@@ -61,21 +61,19 @@ export interface TargetRow extends TableRow {
 
 export interface Highlights {
 	root: HighlightRoot;
+	values: Dictionary<string[]>;
+}
+
+export interface Range {
+	to: number;
+	from: number;
 }
 
 export interface HighlightRoot {
 	context: string;
 	key: string;
-	value: string;
+	value: string | Range;
 }
-
-export interface ValueHighlights extends Highlights {
-	values: Dictionary<string[]>;
-}
-
-export type Range = Dictionary<{
-	from: number, to: number
-}>;
 
 export interface DataState {
 	datasets: Datasets[];
@@ -86,7 +84,7 @@ export interface DataState {
 	resultData: Data;
 	filteredData: Data;
 	selectedData: Data;
-	highlightedFeatureValues: ValueHighlights;
+	highlightedFeatureValues: Highlights;
 }
 
 export const state = {
@@ -115,5 +113,5 @@ export const state = {
 	selectedData: <Data>{},
 
 	// highlighted features
-	highlightedFeatureValues: <ValueHighlights>{}
+	highlightedFeatureValues: <Highlights>{}
 }

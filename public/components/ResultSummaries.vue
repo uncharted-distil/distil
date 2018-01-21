@@ -50,7 +50,7 @@ import { getPipelineById } from '../util/pipelines';
 import { getTask } from '../util/pipelines';
 import { isTarget, getVarFromTarget, getTargetCol } from '../util/data';
 import { updateResultHighlights } from '../util/highlights';
-import { VariableSummary, Extrema, ValueHighlights } from '../store/data/index';
+import { VariableSummary, Extrema, Highlights, Range } from '../store/data/index';
 import { NUMERICAL_FILTER, CATEGORICAL_FILTER } from '../util/filters';
 import { getters as dataGetters} from '../store/data/module';
 import { getters as routeGetters } from '../store/route/module';
@@ -117,10 +117,10 @@ export default Vue.extend({
 			];
 		},
 
-		highlights(): ValueHighlights {
+		highlights(): Highlights {
 			// find var marked as 'target' and set associated values as highlights
 			const highlights = dataGetters.getHighlightedFeatureValues(this.$store);
-			const facetHighlights = <ValueHighlights>{
+			const facetHighlights = <Highlights>{
 				root: _.cloneDeep(highlights.root),
 				values: <Dictionary<string[]>>{}
 			};
@@ -229,7 +229,7 @@ export default Vue.extend({
 	},
 
 	methods: {
-		onHistogramClick(context: string, key: string, value: any) {
+		onHistogramClick(context: string, key: string, value: Range) {
 			if (key && value) {
 				const colKey = getTargetCol(routeGetters.getRouteTargetVariable(this.$store));
 				const filter = {
@@ -237,8 +237,8 @@ export default Vue.extend({
 					type: NUMERICAL_FILTER,
 					enabled: true,
 					context: RESULT_SUMMARY_CONTEXT,
-					min: _.toNumber(value.label[0]),
-					max: _.toNumber(value.toLabel[value.toLabel.length-1])
+					min: value.from,
+					max: value.to
 				};
 				updateResultHighlights(this, context, colKey, value, filter);
 			} else {

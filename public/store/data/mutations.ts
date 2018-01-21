@@ -1,5 +1,5 @@
 import _ from 'lodash';
-import { DataState, Variable, Datasets, VariableSummary, Data, ValueHighlights } from './index';
+import { DataState, Variable, Datasets, VariableSummary, Data, Highlights } from './index';
 import { updateSummaries } from '../../util/data';
 
 export const mutations = {
@@ -58,15 +58,15 @@ export const mutations = {
 		state.resultData = resultData;
 	},
 
-	highlightFeatureValues(state: DataState, highlights: ValueHighlights) {
+	highlightFeatureValues(state: DataState, highlights: Highlights) {
 		state.highlightedFeatureValues = highlights;
 	},
 
 	clearFeatureHighlightValues(state: DataState) {
-		state.highlightedFeatureValues = <ValueHighlights>{};
+		state.highlightedFeatureValues = <Highlights>{};
 	},
 
 	clearFeatureHighlights(state: DataState) {
-		state.highlightedFeatureValues = <ValueHighlights>{};
+		state.highlightedFeatureValues = <Highlights>{};
 	}
 }

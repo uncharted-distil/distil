@@ -1,4 +1,4 @@
-import { ValueHighlights, Data } from '../store/data/index';
+import { Highlights, Data, Range } from '../store/data/index';
 import { Dictionary } from '../util/dict';
 import { Filter } from '../util/filters';
 import { getVarFromTarget } from '../util/data';
@@ -8,29 +8,33 @@ import _ from 'lodash';
 import Vue from 'vue';
 import { AxiosPromise } from 'axios';
 
-// Highlights table rows with values that are currently marked as highlighted.  Uses a supplied highligh
+// Highlights table rows with values that are currently marked as highlighted.  Uses a supplied highlight
 // context ID to enure that something like a table selection doesn't trigger additional table highlight
 // updates.
-export function updateTableHighlights(tableData: Dictionary<any>[], highlightValues: ValueHighlights, highlightContext: string) {
+export function updateTableHighlights(tableData: Dictionary<any>[], highlightValues: Highlights, highlightContext: string) {
 
 	// skip highlighting when the context is the originating table
-	if (!_.isEmpty(highlightValues.values) && highlightValues.root.context !== highlightContext) {
-		// highlight any table row that is in the value map
+	if (_.get(highlightValues, 'root.context', highlightContext) !== highlightContext) {
+		// for the table, we're interested only in rows that have data that matches the value/range
+		// described by the highlight root
 		_.forEach(tableData, (row, rowNum) => {
-			_.forEach(row, (value, name) => {
-				if (highlightValues.values[name] && highlightValues.values[name] === value) {
-					row._rowVariant = 'info';
-					return false;
-				} else {
-					row._rowVariant = null;
-				}
-			});
+			const value = row[highlightValues.root.key];
+			// range case (root selection is numerical facet)
+			if (_.get(highlightValues, 'root.value.from', NaN) <= value &&
+				_.get(highlightValues, 'root.value.to', NaN) >= value) {
+				row._rowVariant = 'info';
+			} else if (_.get(highlightValues, 'root.value') === value) {
+				// single value case (root selection is a categorical facet)
+				row._rowVariant = 'info';
+			} else {
+				row._rowVariant = null;
+			}
 		});
 	}
 }
 
 // Scrolls table to first highlighted row
-export function scrollToFirstHighlight(component: Vue, refName: string) {
+export function scrollToFirstHighlight(component: Vue, refName: string, smoothScroll: boolean) {
 	// No support for scroll-to in the bootstrap table.  Author suggests finding the
 	// the row element and using the scrollIntoView function - we put this into a nextTick()
 	// because need it to kick off after the virtual DOM update
@@ -40,10 +44,10 @@ export function scrollToFirstHighlight(component: Vue, refName: string) {
 			const selectedElem = $(tableRef.$el).find('.table-info');
 			if (selectedElem && selectedElem.length > 0) {
 				// Enabling smooth scrolling seems to cause some sort of contention within the browser
-				// resulting in only one table scrolling.  Need to use default 'instant' scroll for now.
-				// Could also use
-				// selectedElem[0].scrollIntoView({ behavior: 'smooth'});
-				selectedElem[0].scrollIntoView();
+				// resulting in only one table scrolling.  We can enable it for the select screen, but
+				// not the result screen.
+				const args = smoothScroll ? { behavior: 'smooth' } : {};
+				selectedElem[0].scrollIntoView(args);
 			}
 		}
 	});
@@ -51,7 +55,7 @@ export function scrollToFirstHighlight(component: Vue, refName: string) {
 
 // Given a key/value from a facet/histogram click event and a corresponding filter,
 // generate a set of value highlights.  This fetches from the train/test data.
-export function updateDataHighlights(component: Vue, context: string,  key: string, value: string, selectFilter: Filter) {
+export function updateDataHighlights(component: Vue, context: string,  key: string, value: string | Range, selectFilter: Filter) {
 	const dataset = routeGetters.getRouteDataset(component.$store);
 	const filters = Array.from(routeGetters.getDecodedFilters(component.$store));
 
@@ -69,7 +73,7 @@ export function updateDataHighlights(component: Vue, context: string,  key: stri
 // Given a key/value from a facet/histogram click event and a corresponding filter,
 // generate a set of value highlights.  This fetches from the result data, which is a subset
 // of the train/test data including additional columns for predicted values and residuals.
-export function updateResultHighlights(component: Vue, context: string, key: string, value: string, selectFilter: Filter) {
+export function updateResultHighlights(component: Vue, context: string, key: string, value: string | Range, selectFilter: Filter) {
 	const dataset = routeGetters.getRouteDataset(component.$store);
 	const filters = Array.from(routeGetters.getDecodedFilters(component.$store));
 	const pipelineId = routeGetters.getRoutePipelineId(component.$store);
@@ -89,7 +93,7 @@ export function updateResultHighlights(component: Vue, context: string, key: str
 }
 
 // Given returned data,
-function updateHighlights(component: Vue, promise: AxiosPromise<Data>, context: string, key: string, value: string) {
+function updateHighlights(component: Vue, promise: AxiosPromise<Data>, context: string, key: string, value: string | Range) {
 	promise.then(response => {
 		const data = response.data;
 		const highlights: Map<string, Set<any>> = new Map();
