@@ -1,5 +1,5 @@
 <template>
-	<b-navbar toggleable type="light" variant="faded" class="bottom-shadowed bg-white">
+	<b-navbar toggleable="md" type="light" variant="faded" class="fixed-top bottom-shadowed bg-white">
 
 		<b-nav-toggle target="nav_collapse"></b-nav-toggle>
 
@@ -209,7 +209,6 @@ export default Vue.extend({
 	padding-right: 4px;
 }
 .bottom-shadowed {
-	width: 100%;
 	box-shadow: 0 6px 12px 0 rgba(0,0,0,0.10);
 }
 

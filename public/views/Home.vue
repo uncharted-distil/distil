@@ -1,19 +1,31 @@
 <template>
-	<div class="home-view">
-		<flow-bar
-			center-text="Search for a dataset"
-			right-text="Continue to dataset Search"
-			:on-right="gotoSearch">
-		</flow-bar>
-		<search-bar class="home-search-bar"></search-bar>
-		<h5 class="header-label">Recent Activity</h5>
-		<div class="home-items">
-			<recent-datasets
-				:max-datasets="5"></recent-datasets>
-			<recent-pipelines
-				:max-pipelines="5"></recent-pipelines>
-			<running-pipelines
-				:max-pipelines="5"></running-pipelines>
+	<div class="container-fluid h-100 home-view">
+		<div class="row h-30">
+			<div class="col-12 d-flex justify-content-center col-p-top">
+				<flow-bar
+					center-text="Search for a dataset"
+					right-text="Continue to dataset Search"
+					:on-right="gotoSearch">
+				</flow-bar>
+			</div>
+			<div class="col-12 d-flex justify-content-center">
+				<search-bar class="home-search-bar"></search-bar>
+			</div>
+			<div class="col-12 d-flex justify-content-center">
+				<h5 class="header-label">Recent Activity</h5>
+			</div>
+		</div>
+		<div class="row h-70">
+			<div class="col-12 d-flex justify-content-center">
+				<div class="home-items">
+					<recent-datasets
+						:max-datasets="5"></recent-datasets>
+					<recent-pipelines
+						:max-pipelines="5"></recent-pipelines>
+					<running-pipelines
+						:max-pipelines="5"></running-pipelines>
+				</div>
+			</div>
 		</div>
 	</div>
 </template>
@@ -57,14 +69,14 @@ export default Vue.extend({
 </script>
 
 <style>
+.h-70 {
+	height: 70%;
+}
+.h-30 {
+	height: 30%;
+}
 .header-label {
 	color: #333;
-	padding: 1rem 0 0.5rem 0;
-}
-.home-view {
-	display: flex;
-	flex-direction: column;
-	align-items: center;
 }
 .home-search-bar {
 	margin: 8px;

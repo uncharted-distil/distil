@@ -1,20 +1,26 @@
 <template>
-	<div class="results-view">
-		<flow-bar
-			left-text="Return to Select"
-			:on-left="gotoSelect"
-			center-text="Examine Model Results">
-		</flow-bar>
-		<div class="results-items">
-			<variable-summaries
-				class="results-variable-summaries"
-				:variables="summaries"
-				:dataset="dataset"></variable-summaries>
-			<results-comparison
-				class="results-result-comparison"
-				:exclude-non-training="excludeNonTraining"></results-comparison>
-			<result-summaries
-				class="results-result-summaries"></result-summaries>
+	<div class="container-fluid h-100 results-view">
+		<div class="row h-25">
+			<div class="col-12">
+				<flow-bar
+					left-text="Return to Select"
+					:on-left="gotoSelect"
+					center-text="Examine Model Results">
+				</flow-bar>
+			</div>
+		</div>
+		<div class="row h-75">
+			<div class="results-items col-12">
+				<variable-summaries
+					class="results-variable-summaries"
+					:variables="summaries"
+					:dataset="dataset"></variable-summaries>
+				<results-comparison
+					class="results-result-comparison"
+					:exclude-non-training="excludeNonTraining"></results-comparison>
+				<result-summaries
+					class="results-result-summaries"></result-summaries>
+			</div>
 		</div>
 	</div>
 </template>

@@ -1,13 +1,25 @@
 <template>
-	<div class="search-view">
-		<flow-bar
-			left-text="Return to Home"
-			:on-left="gotoHome"
-			center-text="Search for a dataset">
-		</flow-bar>
-		<search-bar class="search-search-bar"></search-bar>
-		<h5 class="header-label">Select a Search Result</h5>
-		<search-results class="search-search-results"></search-results>
+	<div class="container-fluid h-100 search-view">
+		<div class="row h-30">
+			<div class="col-12 d-flex justify-content-center col-p-top">
+				<flow-bar
+					left-text="Return to Home"
+					:on-left="gotoHome"
+					center-text="Search for a dataset">
+				</flow-bar>
+			</div>
+			<div class="col-12 d-flex justify-content-center">
+				<search-bar class="search-search-bar"></search-bar>
+			</div>
+			<div class="col-12 d-flex justify-content-center">
+				<h5 class="header-label">Select a Search Result</h5>
+			</div>
+		</div>
+		<div class="row d-flex h-70">
+			<div class="col-12 d-flex justify-content-center h-100">
+				<search-results class="search-search-results"></search-results>
+			</div>
+		</div>
 	</div>
 </template>
 
@@ -36,12 +48,6 @@ export default Vue.extend({
 <style>
 .header-label {
 	color: #333;
-	padding: 1rem 0 0.5rem 0;
-}
-.search-view {
-	display: flex;
-	flex-direction: column;
-	align-items: center;
 }
 .search-search-bar {
 	margin: 8px;
@@ -49,5 +55,11 @@ export default Vue.extend({
 }
 .search-search-results {
 	width: 80%;
+}
+.h-70 {
+	height: 70%;
+}
+.h-30 {
+	height: 30%;
 }
 </style>

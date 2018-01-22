@@ -1,5 +1,5 @@
 <template>
-	<div class="select-view">
+	<div class="container-fluid h-100 select-view">
 		<b-modal id="target-modal" ref="targetModal" title="Select Target Feature"
 			hide-header-close
 			no-close-on-backdrop
@@ -7,19 +7,39 @@
 			hide-footer>
 			<available-target-variables></available-target-variables>
 		</b-modal>
-		<div class="left-container">
-			<h5 class="header-label">Select Features That May Predict</h5>
-			<div class="select-items">
-				<available-training-variables class="select-available-variables"></available-training-variables>
-				<training-variables class="select-training-variables"></training-variables>
+		<div class="row h-100">
+			<div class="col-12 col-md-6 col-p-top d-flex flex-column">
+				<div class="row mh-100">
+					<div class="col-12 d-flex">
+						<h5 class="header-label">Select Features That May Predict</h5>
+					</div>
+				</div>
+				<div class="row mh-100">
+					<available-training-variables class="col-12 col-md-6 select-available-variables d-flex"></available-training-variables>
+					<training-variables class="col-12 col-md-6 select-training-variables d-flex"></training-variables>
+				</div>
 			</div>
-		</div>
-		<div class="right-container">
-			<h5 class="header-label">Select Feature to Predict</h5>
-			<target-variable class="select-target-variables"></target-variable>
-			<select-data-table class="select-data-table"></select-data-table>
-			<h5 class="header-label">Create the Pipelines</h5>
-			<create-pipelines-form class="select-create-pipelines"></create-pipelines-form>
+			<div class="col-12 col-md-6 col-p-top d-flex flex-column">
+				<div class="row mh-100">
+					<div class="col-12 d-flex flex-column">
+						<h5 class="header-label">Select Feature to Predict</h5>
+					</div>
+				</div>
+				<div class="row mh-100">
+						<target-variable class="col-12 d-flex flex-column select-target-variables"></target-variable>
+				</div>
+				<div class="row mh-45">
+						<select-data-table class="col-12 d-flex flex-column select-data-table"></select-data-table>
+				</div>
+				<div class="row mh-100">
+					<div class="col-12 d-flex flex-column">
+						<h5 class="header-label">Create the Pipelines</h5>
+					</div>
+				</div>
+				<div class="row mh-100">
+					<create-pipelines-form class="col-12 d-flex flex-column select-create-pipelines"></create-pipelines-form>
+				</div>
+			</div>
 		</div>
 	</div>
 </template>
@@ -102,42 +122,15 @@ export default Vue.extend({
 </script>
 
 <style>
-.select-view {
-	display: flex;
-	justify-content: space-around;
-}
 .select-view .nav-link {
     padding: 1rem 0 0.5rem 0;
+}
+.mh-45{
+	max-height: 35%!important;
 }
 .header-label {
 	color: #333;
 	padding: 1rem 0 0.5rem 0;
 }
-.select-items {
-	display: flex;
-	justify-content: space-around;
-	width: 100%;
-}
-.select-available-variables {
-	width: 50%;
-	padding: 0.5rem;
-}
-.select-training-variables {
-	width: 50%;
-	padding: 0.5rem;
-}
-.left-container {
-	display: flex;
-	flex-direction: column;
-	padding: 1rem;
-	margin-right: 0.5rem;
-	width: 50%;
-}
-.right-container {
-	display: flex;
-	flex-direction: column;
-	width: 50%;
-	padding: 1rem;
-	margin-left: 0.5rem;
-}
+
 </style>
