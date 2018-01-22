@@ -179,6 +179,7 @@ func (s *Storage) FetchRequest(requestID string) (*model.Request, error) {
 	if rows != nil {
 		defer rows.Close()
 	}
+	rows.Next()
 
 	return s.loadRequest(rows)
 }

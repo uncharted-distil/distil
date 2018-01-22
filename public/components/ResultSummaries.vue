@@ -59,6 +59,7 @@ import vueSlider from 'vue-slider-component';
 import Vue from 'vue';
 import _ from 'lodash';
 import 'font-awesome/css/font-awesome.css';
+import { getters as pipelineGetters } from '../store/pipelines/module';
 
 const DEFAULT_PERCENTILE = 0.25;
 const NUM_STEPS = 100;
@@ -256,12 +257,13 @@ export default Vue.extend({
 		},
 
 		onExport() {
-			this.$router.replace('/');
 			const pipelineId = routeGetters.getRoutePipelineId(this.$store);
 			const result = getPipelineById(this.$store.state.pipelineModule, pipelineId);
+			const sessionId = pipelineGetters.getPipelineSessionID(this.$store);
+			this.$router.replace('/');
 			actions.exportPipeline(this.$store, {
 				pipelineId: result.pipelineId,
-				sessionId: this.$store.state.session.id
+				sessionId: sessionId
 			});
 		}
 	}
