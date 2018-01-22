@@ -4,6 +4,7 @@
 			class="results-data-table"
 			title="Correct Predictions"
 			refName="correctTable"
+			instanceName="correct-results-data-table"
 			:exclude-non-training="excludeNonTraining"
 			:filterFunc="correctFilter"
 			:decorateFunc="correctDecorate"
@@ -12,6 +13,7 @@
 			class="results-data-table"
 			title="Incorrect Predictions"
 			refName="incorrectTable"
+			instanceName="incorrect-results-data-table"
 			:exclude-non-training="excludeNonTraining"
 			:filterFunc="incorrectFilter"
 			:decorateFunc="incorrectDecorate"
@@ -74,8 +76,12 @@ export default Vue.extend({
 			return dataGetters.getVariables(this.$store);
 		},
 
-		residualThreshold(): string {
-			return routeGetters.getRouteResidualThreshold(this.$store);
+		residualThresholdMin(): number {
+			return _.toNumber(routeGetters.getRouteResidualThresholdMin(this.$store));
+		},
+
+		residualThresholdMax(): number {
+			return _.toNumber(routeGetters.getRouteResidualThresholdMax(this.$store));
 		},
 
 		regressionEnabled(): boolean {
@@ -159,11 +165,12 @@ export default Vue.extend({
 
 		regressionInRangeFilter(row: TargetRow): boolean {
 			// grab the residual threshold slider value and update
-			return Math.abs(row[getErrorCol(this.target)]) <= _.toNumber(this.residualThreshold);
+			const err = row[getErrorCol(this.target)];
+			return err >= this.residualThresholdMin && err <= this.residualThresholdMax;
 		},
 
 		regressionOutOfRangeFilter(row: TargetRow): boolean {
-			return Math.abs(row[getErrorCol(this.target)]) > _.toNumber(this.residualThreshold);
+			return !this.regressionInRangeFilter(row);
 		},
 
 		// Methods passed to classification result table instance to update their row visuals post-filter

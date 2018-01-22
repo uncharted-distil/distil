@@ -40,17 +40,15 @@ import Facets from '../components/Facets';
 import { Filter, decodeFiltersDictionary, updateFilter, getFilterType, isDisabled,
 	CATEGORICAL_FILTER, NUMERICAL_FILTER, EMPTY_FILTER } from '../util/filters';
 import { overlayRouteEntry, getRouteFacetPage } from '../util/routes';
-import { VariableSummary } from '../store/data/index';
+import { VariableSummary, Highlights, Range } from '../store/data/index';
 import { Dictionary } from '../util/dict';
 import { getters as dataGetters, mutations as dataMutations } from '../store/data/module';
 import { getters as routeGetters } from '../store/route/module';
 import { createGroups, Group } from '../util/facets';
+import { updateDataHighlights } from '../util/highlights';
 import 'font-awesome/css/font-awesome.css';
 import '../styles/spinner.css';
-import _ from 'lodash';
 import Vue from 'vue';
-
-const VARIABLE_FACET_HIGHLIGHTS = 'variable_facets';
 
 export default Vue.extend({
 	name: 'variable-facets',
@@ -60,15 +58,15 @@ export default Vue.extend({
 	},
 
 	props: {
-		'enableSearch': Boolean,
-		'enableToggle': Boolean,
-		'enableGroupCollapse': Boolean,
-		'enableFacetFiltering': Boolean,
-		'variables': Array,
-		'dataset': String,
-		'html': [ String, Object, Function ],
-		'instanceName': String,
-		'typeChange': Boolean
+		enableSearch: Boolean,
+		enableToggle: Boolean,
+		enableGroupCollapse: Boolean,
+		enableFacetFiltering: Boolean,
+		variables: Array,
+		dataset: String,
+		html: [ String, Object, Function ],
+		instanceName: { type: String, default: 'variable-facets' },
+		typeChange: Boolean
 	},
 
 	data() {
@@ -124,8 +122,8 @@ export default Vue.extend({
 			return this.updateGroupFilters(groups);
 		},
 
-		highlights(): Dictionary<any> {
-			return dataGetters.getHighlightedFeatureValues(this.$store).values;
+		highlights(): Highlights {
+			return dataGetters.getHighlightedFeatureValues(this.$store);
 		},
 
 		importance(): Dictionary<number> {
@@ -220,36 +218,33 @@ export default Vue.extend({
 			this.$emit('click', key);
 		},
 
-		onHistogramClick(key: string, value: any) {
-			// on histogram click event, publish the highlight/clear highlight to the
-			// rest of the app
-			dataMutations.clearFeatureHighlights(this.$store);
+		onHistogramClick(context: string, key: string, value: Range) {
 			if (key && value) {
-				// extract the var name from the key
-				dataMutations.highlightFeatureRange(this.$store, {
-					context: VARIABLE_FACET_HIGHLIGHTS,
-					ranges: {
-						[key]: {
-							from: _.toNumber(value.label[0]),
-							to: _.toNumber(value.toLabel[value.toLabel.length-1])
-						}
-					}
-				});
+				const selectFilter = {
+					name: key,
+					type: NUMERICAL_FILTER,
+					enabled: true,
+					min:  value.from,
+					max: value.to
+				};
+				updateDataHighlights(this, context, key, value, selectFilter);
+			} else {
+				dataMutations.clearFeatureHighlights(this.$store);
 			}
 		},
 
-		onFacetClick(key: string, value: any) {
-			// clear existing highlights
-			dataMutations.clearFeatureHighlights(this.$store);
-
+		onFacetClick(context: string, key: string, value: string) {
 			if (key && value) {
 				// extract the var name from the key
-				dataMutations.highlightFeatureValues(this.$store, {
-					context: VARIABLE_FACET_HIGHLIGHTS,
-					values: {
-						[key]: value
-					}
-				});
+				const selectFilter = {
+					name: key,
+					type: CATEGORICAL_FILTER,
+					enabled: true,
+					categories: [value]
+				};
+				updateDataHighlights(this, context, key, value, selectFilter);
+			} else {
+				dataMutations.clearFeatureHighlights(this.$store);
 			}
 		},
 

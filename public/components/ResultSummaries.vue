@@ -7,11 +7,10 @@
 			</div>
 			<div class="result-summaries-slider">
 				<vue-slider ref="slider"
-					:v-model="value"
-					:min="minVal"
-					:max="maxVal"
+					:min="residualExtrema.min"
+					:max="residualExtrema.max"
 					:interval="interval"
-					:value="value"
+					:value="initialValue"
 					:formatter="formatter"
 					:lazy="true"
 					width=100%
@@ -28,7 +27,8 @@
 		<h6 class="nav-link">Predictions by Model</h6>
 		<result-facets
 			:regression="regressionEnabled"
-			:summary-extrema="summaryExtrema">
+			:result-extrema="resultExtrema"
+			:residual-extrema="residualExtrema">
 		</result-facets>
 		<b-btn v-b-modal.export variant="outline-success" class="check-button">Export Pipeline</b-btn>
 		<b-modal id="export" title="Export" @ok="onExport">
@@ -48,9 +48,11 @@ import { createGroups, Group } from '../util/facets';
 import { overlayRouteEntry } from '../util/routes';
 import { getPipelineById } from '../util/pipelines';
 import { getTask } from '../util/pipelines';
-import { getErrorCol, isTarget, getVarFromTarget, getTargetColFromFacetKey } from '../util/data';
-import { VariableSummary, Extrema } from '../store/data/index';
-import { getters as dataGetters } from '../store/data/module';
+import { isTarget, getVarFromTarget, getTargetCol } from '../util/data';
+import { updateResultHighlights } from '../util/highlights';
+import { VariableSummary, Extrema, Highlights, Range } from '../store/data/index';
+import { NUMERICAL_FILTER, CATEGORICAL_FILTER } from '../util/filters';
+import { getters as dataGetters} from '../store/data/module';
 import { getters as routeGetters } from '../store/route/module';
 import { mutations as dataMutations } from '../store/data/module';
 import { actions } from '../store/app/module';
@@ -77,7 +79,7 @@ export default Vue.extend({
 	data() {
 		return {
 			formatter(arg) {
-				return arg.toFixed(2);
+				return arg ? arg.toFixed(2) : '';
 			}
 		};
 	},
@@ -91,63 +93,62 @@ export default Vue.extend({
 			return routeGetters.getRouteTargetVariable(this.$store);
 		},
 
-		value: {
-			set(value) {
-				this.updateThreshold(value);
-			},
-			get(): number {
-				const value = routeGetters.getRouteResidualThreshold(this.$store);
-				if (value === undefined || value === '') {
-					this.updateThreshold(this.defaultValue);
-					return this.defaultValue;
+		initialValue(): number[] {
+			const min = routeGetters.getRouteResidualThresholdMin(this.$store);
+			const max = routeGetters.getRouteResidualThresholdMax(this.$store);
+			if (min === undefined || min === '' ||
+				max === undefined || max === '') {
+				if (!_.isNaN(this.defaultValue[0]) && !_.isNaN(this.defaultValue[1])) {
+					this.updateThreshold(this.defaultValue[0], this.defaultValue[1]);
 				}
-				return _.toNumber(value);
+				return this.defaultValue;
 			}
+			const nmin = _.toNumber(min);
+			const nmax = _.toNumber(max);
+			// NOTE: the slider component discards the values if they are
+			// not within the extrema. We have to read the extrema here so
+			// that the values are recomputed when the extrema is computed.
+			const extrema = this.residualExtrema;
+			if (nmin < extrema.min || nmax > extrema.max) {
+				return [ NaN, NaN ];
+			}
+			return [
+				nmin,
+				nmax
+			];
 		},
 
-		highlights(): Dictionary<any> {
-			// find var marked as 'target' and use that name/value tuple to
-			// highlight the ground truth
+		highlights(): Highlights {
+			// find var marked as 'target' and set associated values as highlights
 			const highlights = dataGetters.getHighlightedFeatureValues(this.$store);
-			const facetHighlights = {};
-			_.forEach(highlights.values, (value, varName) => {
+			const facetHighlights = <Highlights>{
+				root: _.cloneDeep(highlights.root),
+				values: <Dictionary<string[]>>{}
+			};
+			_.forEach(highlights.values, (values, varName) => {
 				if (isTarget(varName)) {
-					facetHighlights[getVarFromTarget(varName)] = value;
+					facetHighlights.values[getVarFromTarget(varName)] = values;
 				}
 			});
+			if (highlights.root && isTarget(highlights.root.key)) {
+				facetHighlights.root.key = getVarFromTarget(highlights.root.key);
+			}
 			return facetHighlights;
 		},
 
-		minVal(): number {
-			const resultItems = dataGetters.getResultDataItems(this.$store);
-			const errorCol = getErrorCol(routeGetters.getRouteTargetVariable(this.$store));
-			if (!_.isEmpty(resultItems) && _.has(resultItems[0], errorCol)) {
-				const min = _.minBy(resultItems, r => Math.abs(r[errorCol]));
-				const minErr = Math.abs(min[errorCol]);
-				// round to closest 2 decimal places, otherwise interval computation makes the slider angry
-				return Math.ceil(100 * minErr) / 100;
-			}
-			return 0.0;
-		},
-
-		maxVal(): number {
-			const resultItems = dataGetters.getResultDataItems(this.$store);
-			const errorCol = getErrorCol(routeGetters.getRouteTargetVariable(this.$store));
-			if (!_.isEmpty(resultItems) && _.has(resultItems[0], errorCol)) {
-				const max = _.maxBy(resultItems, r => Math.abs(r[errorCol]));
-				const maxErr = Math.abs(max[errorCol]);
-				// round to closest 2 decimal places, otherwise interval computation makes the slider angry
-				return Math.ceil(100 * maxErr) / 100;
-			}
-			return 1.0;
-		},
-
 		range(): number {
-			return this.maxVal - this.minVal;
+			if (_.isNaN(this.residualExtrema.min) ||
+				_.isNaN(this.residualExtrema.max)) {
+				return NaN;
+			}
+			return this.residualExtrema.max - this.residualExtrema.min;
 		},
 
-		defaultValue(): number {
-			return this.minVal + (this.range * DEFAULT_PERCENTILE);
+		defaultValue(): number[] {
+			return [
+				-this.range/2 * DEFAULT_PERCENTILE,
+				this.range/2 * DEFAULT_PERCENTILE
+			];
 		},
 
 		interval(): number {
@@ -163,7 +164,7 @@ export default Vue.extend({
 
 		targetGroups(): Group[] {
 			if (this.targetSummary) {
-				return createGroups([ this.targetSummary ], false, false, this.summaryExtrema);
+				return createGroups([ this.targetSummary ], false, false, this.resultExtrema);
 			}
 			return [];
 		},
@@ -172,7 +173,7 @@ export default Vue.extend({
 			return dataGetters.getResultsSummaries(this.$store);
 		},
 
-		summaryExtrema(): Extrema {
+		resultExtrema(): Extrema {
 			if (this.targetSummary || this.resultsSummaries) {
 				let min = Infinity;
 				let max = -Infinity;
@@ -194,6 +195,23 @@ export default Vue.extend({
 			return null;
 		},
 
+		residualsSummaries():  VariableSummary[] {
+			return this.regressionEnabled ? dataGetters.getResidualsSummaries(this.$store) : [];
+		},
+
+		residualExtrema(): Extrema {
+			let extrema = NaN;
+			this.residualsSummaries.forEach(summary => {
+				extrema = Math.max(
+					Math.abs(summary.extrema.min),
+					Math.abs(summary.extrema.max));
+			});
+			return {
+				min: -extrema,
+				max: extrema
+			};
+		},
+
 		regressionEnabled(): boolean {
 			const targetVarName = routeGetters.getRouteTargetVariable(this.$store);
 			const targetVar = _.find(dataGetters.getVariables(this.$store), v => _.toLower(v.name) === _.toLower(targetVarName));
@@ -212,48 +230,51 @@ export default Vue.extend({
 	},
 
 	methods: {
-		onHistogramClick(key: string, value: any) {
-			dataMutations.clearFeatureHighlights(this.$store);
+		onHistogramClick(context: string, key: string, value: Range) {
 			if (key && value) {
-				// extract the var name from the key
-				const varName = getTargetColFromFacetKey(key);
-				dataMutations.highlightFeatureRange(this.$store, {
+				const colKey = getTargetCol(routeGetters.getRouteTargetVariable(this.$store));
+				const filter = {
+					name: colKey,
+					type: NUMERICAL_FILTER,
+					enabled: true,
 					context: RESULT_SUMMARY_CONTEXT,
-					ranges: {
-						[varName]: {
-							from: _.toNumber(value.label[0]),
-							to: _.toNumber(value.toLabel[value.toLabel.length-1])
-						}
-					}
-				});
+					min: value.from,
+					max: value.to
+				};
+				updateResultHighlights(this, context, colKey, value, filter);
+			} else {
+				dataMutations.clearFeatureHighlights(this.$store);
 			}
 		},
 
-		onFacetClick(key: string, value: any) {
+		onFacetClick(context: string, key: string, value: string) {
 			// clear exiting highlights
-			dataMutations.clearFeatureHighlights(this.$store);
 			if (key && value) {
 				// extract the var name from the key
-				const varName = getTargetColFromFacetKey(key);
-				dataMutations.highlightFeatureValues(this.$store, {
+				const colKey = getTargetCol(routeGetters.getRouteTargetVariable(this.$store));
+				const filter = {
+					name: colKey,
+					type: CATEGORICAL_FILTER,
+					enabled: true,
 					context: RESULT_SUMMARY_CONTEXT,
-					values: {
-						[varName]: value
-					}
-				});
+					categories: [value]
+				};
+				updateResultHighlights(this, context, colKey, value, filter);
+			} else {
+				dataMutations.clearFeatureHighlights(this.$store);
 			}
 		},
 
-		updateThreshold(value: number) {
+		updateThreshold(min: number, max: number) {
 			const entry = overlayRouteEntry(this.$route, {
-				residualThreshold: value
+				residualThresholdMin: `${min}`,
+				residualThresholdMax: `${max}`
 			});
 			this.$router.push(entry);
 		},
 
 		onSlide(value) {
-			const entry = overlayRouteEntry(this.$route, { residualThreshold: value });
-			this.$router.replace(entry);
+			this.updateThreshold(value[0], value[1]);
 		},
 
 		onExport() {
