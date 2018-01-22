@@ -128,6 +128,60 @@ export const actions = {
 			});
 	},
 
+	fetchPipeline(context: AppContext, args: { sessionId: string, pipelineId: string }) {
+		// TODO: impl this on the backend
+		if (!args.sessionId) {
+			console.warn('Missing session id');
+			return;
+		}
+		if (!args.pipelineId) {
+			console.warn('Missing pipeline id');
+			return;
+		}
+		const sessionId = args.sessionId;
+		return axios.get(`/distil/session/${sessionId}`)
+			.then(response => {
+				if (response.data.pipelines) {
+					const pipelineResponse = response.data.pipelines as PipelineResponse[];
+					pipelineResponse.forEach(pipeline => {
+
+						// determine the target feature for this request
+						let targetFeature = '';
+						pipeline.features.forEach((feature) => {
+							if (feature.featureType === FEATURE_TYPE_TARGET) {
+								targetFeature = feature.featureName;
+							}
+						});
+
+						// for each result
+						pipeline.results.forEach(result => {
+							// only update for the provided pipeline id
+							if (result.pipelineId === args.pipelineId) {
+								// update pipeline
+								mutations.updatePipelineRequest(context, {
+									name: targetFeature,
+									filters: pipeline.filters,
+									features: pipeline.features,
+									requestId: pipeline.requestId,
+									dataset: pipeline.dataset,
+									feature: targetFeature,
+									timestamp: result.createdTime,
+									progress: result.progress,
+									pipelineId: result.pipelineId,
+									resultId: result.resultId,
+									scores: result.scores,
+									output: ''
+								});
+							}
+						});
+					});
+				}
+			})
+			.catch(error => {
+				console.error(error);
+			});
+	},
+
 	createPipelines(context: any, request: PipelineRequest) {
 		return new Promise((resolve, reject) => {
 
@@ -151,18 +205,23 @@ export const actions = {
 				res.name = request.feature;
 				res.feature = request.feature;
 
-				// update summaries
-				context.dispatch('getResultsSummaries', {
-					dataset: request.dataset,
-					requestIds: [ res.requestId ]
-				});
-				context.dispatch('getResidualsSummaries', {
-					dataset: request.dataset,
-					requestIds: [ res.requestId ]
-				});
+				// NOTE: 'fetchPipeline' must be done first to ensure the resultId
+				// is present to fetch summary
+
 				// update pipeline status
-				context.dispatch('fetchPipelines', {
-					sessionId: request.sessionId
+				context.dispatch('fetchPipeline', {
+					sessionId: request.sessionId,
+					pipelineId: res.pipelineId
+				}).then(() => {
+					// update summaries
+					context.dispatch('fetchResultsSummary', {
+						dataset: request.dataset,
+						pipelineId: res.pipelineId
+					});
+					context.dispatch('fetchResidualsSummary', {
+						dataset: request.dataset,
+						pipelineId: res.pipelineId
+					});
 				});
 
 				// resolve promise on first response

@@ -114,7 +114,7 @@ export default Vue.extend({
 			this.fetch();
 		},
 		'$route.query.target'() {
-		this.fetch();
+			this.fetch();
 		},
 		'$route.query.filters'() {
 			this.fetch();

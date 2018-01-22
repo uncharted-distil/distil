@@ -95,15 +95,13 @@ export default Vue.extend({
 		}
 	},
 
-	// need session id to pull
-
 	methods: {
 		gotoSelect() {
 			gotoSelect(this.$store, this.$router);
 		},
 		fetch() {
 			Promise.all([
-					dataActions.getVariables(this.$store, {
+					dataActions.fetchVariables(this.$store, {
 						dataset: this.dataset
 					}),
 					pipelineActions.fetchPipelines(this.$store, {
@@ -111,19 +109,20 @@ export default Vue.extend({
 					})
 				])
 				.then(() => {
-					dataActions.getVariableSummaries(this.$store, {
+					dataActions.fetchVariableSummaries(this.$store, {
 						dataset: this.dataset,
 						variables: this.variables
 					});
-					dataActions.getResultsSummaries(this.$store, {
+					dataActions.fetchResultsSummaries(this.$store, {
 						dataset: this.dataset,
 						requestIds: this.requestIds
 					});
-					dataActions.getResidualsSummaries(this.$store, {
+					dataActions.fetchResidualsSummaries(this.$store, {
 						dataset: this.dataset,
 						requestIds: this.requestIds
 					});
 				});
+
 		}
 	}
 });

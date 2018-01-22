@@ -45,15 +45,15 @@ export const getters = {
 // Typed actions
 export const actions = {
 	searchDatasets: dispatch(moduleActions.searchDatasets),
-	getVariables: dispatch(moduleActions.getVariables),
+	fetchVariables: dispatch(moduleActions.fetchVariables),
 	setVariableType: dispatch(moduleActions.setVariableType),
-	getVariableSummaries: dispatch(moduleActions.getVariableSummaries),
-	getVariableSummary: dispatch(moduleActions.getVariableSummary),
+	fetchVariableSummaries: dispatch(moduleActions.fetchVariableSummaries),
+	fetchVariableSummary: dispatch(moduleActions.fetchVariableSummary),
 	updateFilteredData: dispatch(moduleActions.updateFilteredData),
 	updateSelectedData: dispatch(moduleActions.updateSelectedData),
 	fetchData: dispatch(moduleActions.fetchData),
-	getResultsSummaries: dispatch(moduleActions.getResultsSummaries),
-	getResidualsSummaries: dispatch(moduleActions.getResidualsSummaries),
+	fetchResultsSummaries: dispatch(moduleActions.fetchResultsSummaries),
+	fetchResidualsSummaries: dispatch(moduleActions.fetchResidualsSummaries),
 	updateResults: dispatch(moduleActions.updateResults),
 	fetchResults: dispatch(moduleActions.fetchResults)
 }

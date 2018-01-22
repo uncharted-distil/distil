@@ -69,8 +69,6 @@ export default Vue.extend({
 		'$route.query.dataset'() {
 			this.fetch();
 		},
-		'$route.query.training'() {
-		},
 		'$route.query.target'() {
 			this.updateModal();
 		}
@@ -78,15 +76,14 @@ export default Vue.extend({
 
 	methods: {
 		fetch() {
-			actions.getVariables(this.$store, {
+			actions.fetchVariables(this.$store, {
 				dataset: this.dataset
-				})
-				.then(() => {
-					actions.getVariableSummaries(this.$store, {
-						dataset: this.dataset,
-						variables: this.variables
-					});
+			}).then(() => {
+				actions.fetchVariableSummaries(this.$store, {
+					dataset: this.dataset,
+					variables: this.variables
 				});
+			});
 		},
 		updateModal() {
 			const target = routeGetters.getRouteTargetVariable(this.$store);

@@ -3,7 +3,7 @@
 		<div class="pipeline-preview" @click="onResult()">
 			<div class="pipeline-header">
 				<div>
-					<strong>dataset:</strong> {{result.dataset}}
+					<strong>Dataset:</strong> {{result.dataset}}
 				</div>
 				<div>
 					<strong>Date:</strong> {{formattedTime}}
