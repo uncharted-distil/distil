@@ -40,7 +40,6 @@ export const getters = {
 	getSelectedDataItems: read(moduleGetters.getSelectedDataItems),
 	getSelectedDataFields: read(moduleGetters.getSelectedDataFields),
 	getHighlightedFeatureValues: read(moduleGetters.getHighlightedFeatureValues),
-	getHighlightedFeatureRanges: read(moduleGetters.getHighlightedFeatureRanges)
 }
 
 // Typed actions
@@ -52,9 +51,11 @@ export const actions = {
 	getVariableSummary: dispatch(moduleActions.getVariableSummary),
 	updateFilteredData: dispatch(moduleActions.updateFilteredData),
 	updateSelectedData: dispatch(moduleActions.updateSelectedData),
+	fetchData: dispatch(moduleActions.fetchData),
 	getResultsSummaries: dispatch(moduleActions.getResultsSummaries),
 	getResidualsSummaries: dispatch(moduleActions.getResidualsSummaries),
-	updateResults: dispatch(moduleActions.updateResults)
+	updateResults: dispatch(moduleActions.updateResults),
+	fetchResults: dispatch(moduleActions.fetchResults)
 }
 
 
@@ -72,8 +73,6 @@ export const mutations = {
 	setFilteredData: commit(moduleMutations.setFilteredData),
 	setSelectedData: commit(moduleMutations.setSelectedData),
 	setResultData: commit(moduleMutations.setResultData),
-	highlightFeatureRange: commit(moduleMutations.highlightFeatureRange),
-	clearFeatureHighlightRange: commit(moduleMutations.clearFeatureHighlightRange),
 	highlightFeatureValues: commit(moduleMutations.highlightFeatureValues),
 	clearFeatureHighlightValues: commit(moduleMutations.clearFeatureHighlightValues),
 	clearFeatureHighlights: commit(moduleMutations.clearFeatureHighlights)
