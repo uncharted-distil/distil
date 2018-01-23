@@ -49,7 +49,7 @@ export default Vue.extend({
 .flow-header-center {
 	color: #333;
 	margin: 0.75rem 0;
-	width: 60%;
+	width: 40%;
 	text-align: center;
 }
 .flow-header-right {
@@ -62,6 +62,6 @@ export default Vue.extend({
 }
 .flow-header-left,
 .flow-header-right {
-	width: 20%;
+	width: 30%;
 }
 </style>

@@ -1,7 +1,9 @@
 <template>
-	<div class="container-fluid h-100 results-view">
-		<div class="row h-25">
-			<div class="col-12">
+	<div class="container-fluid d-flex flex-column h-100 results-view">
+		<div class="row flex-0-nav">
+		</div>
+		<div class="row flex-1 align-items-center">
+			<div class="col-12 d-flex justify-content-center">
 				<flow-bar
 					left-text="Return to Select"
 					:on-left="gotoSelect"
@@ -9,18 +11,16 @@
 				</flow-bar>
 			</div>
 		</div>
-		<div class="row h-75">
-			<div class="results-items col-12">
+		<div class="row flex-12">
 				<variable-summaries
-					class="results-variable-summaries"
+					class="col-12 col-md-4 mb-3 results-variable-summaries"
 					:variables="summaries"
 					:dataset="dataset"></variable-summaries>
 				<results-comparison
-					class="results-result-comparison"
+					class="col-12 col-md-4 mb-3 results-result-comparison"
 					:exclude-non-training="excludeNonTraining"></results-comparison>
 				<result-summaries
-					class="results-result-summaries"></result-summaries>
-			</div>
+					class="col-12 col-md-4 mb-3 results-result-summaries"></result-summaries>
 		</div>
 	</div>
 </template>
@@ -144,10 +144,6 @@ export default Vue.extend({
     padding: 1rem 0 0.5rem 0;
 }
 .results-view {
-	display: flex;
-	justify-content: space-around;
-	flex-direction: column;
-	align-items: center;
 }
 .results-items {
 	display: flex;
@@ -155,16 +151,13 @@ export default Vue.extend({
 	width: 100%;
 }
 .results-variable-summaries {
-	width: 25%;
-	padding: 1rem;
+
 }
 .results-result-summaries {
-	width: 25%;
-	padding: 1rem;
+
 }
 .results-result-comparison {
-	width: 50%;
-	padding: 1rem;
+
 }
 .results-data-table-container {
 	background-color: white;

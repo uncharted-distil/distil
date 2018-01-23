@@ -1,22 +1,28 @@
 <template>
-	<div class="container-fluid h-100 home-view">
-		<div class="row h-30">
-			<div class="col-12 d-flex justify-content-center col-p-top">
+	<div class="container-fluid d-flex flex-column h-100 home-view">
+		<div class="row flex-0-nav">
+		</div>
+		<div class="row flex-1 align-items-center">
+			<div class="col-12 d-flex justify-content-center">
 				<flow-bar
 					center-text="Search for a dataset"
 					right-text="Continue to dataset Search"
 					:on-right="gotoSearch">
 				</flow-bar>
 			</div>
-			<div class="col-12 d-flex justify-content-center">
+		</div>	
+		<div class="row flex-1 align-items-center justify-content-center">
+			<div class="col-12 col-md-6 d-flex justify-content-center">
 				<search-bar class="home-search-bar"></search-bar>
 			</div>
-			<div class="col-12 d-flex justify-content-center">
+		</div>
+		<div class="row flex-1 align-items-center justify-content-center">
+			<div class="col-12 col-md-10 d-flex">
 				<h5 class="header-label">Recent Activity</h5>
 			</div>
 		</div>
-		<div class="row h-70">
-			<div class="col-12 d-flex justify-content-center">
+		<div class="row flex-11 justify-content-center">
+			<div class="col-12 col-md-10 d-flex mb-3">
 				<div class="home-items">
 					<recent-datasets
 						:max-datasets="5"></recent-datasets>
@@ -69,25 +75,17 @@ export default Vue.extend({
 </script>
 
 <style>
-.h-70 {
-	height: 70%;
-}
-.h-30 {
-	height: 30%;
-}
 .header-label {
 	color: #333;
 }
 .home-search-bar {
-	margin: 8px;
-	width: 50%;
+	width: 100%;
 }
 .home-items {
-	width: 80%;
 	overflow: auto;
-	margin-bottom: 1rem;
 }
 .home-items .card {
 	margin-bottom: 1rem;
 }
+
 </style>
