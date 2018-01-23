@@ -1,5 +1,5 @@
 <template>
-	<b-navbar toggleable="md" type="light" variant="faded" class="fixed-top bottom-shadowed bg-white">
+	<b-navbar toggleable="md" type="dark"  class="fixed-top bottom-shadowed">
 
 		<b-nav-toggle target="nav_collapse"></b-nav-toggle>
 
@@ -136,8 +136,14 @@ export default Vue.extend({
 </script>
 
 <style>
+.navbar {
+	background-color: #424242;
+}
+.navbar {
+	background-color: #424242;
+}
 .nav-arrow {
-	color: rgba(0,0,0,0.54);
+	color: rgba(255,255,255,1);
 	padding-right: 5px;
 }
 .nav-icon {
@@ -150,40 +156,47 @@ export default Vue.extend({
 .nav-item .nav-link {
 	padding: 2px;
 }
+.nav-item .navbar-text  {
+	letter-spacing: 0.01rem;
+}
+.navbar-nav .btn  {
+	letter-spacing: 0.01rem;
+	font-weight: bold;
+}
 .navbar-nav li a .nav-icon {
 	color: white;
 	background-color: #616161;
 }
 .navbar-nav li.active a .nav-icon {
-	background-color: #424242;
+	background-color: #1b1b1b;
 }
 .navbar-nav li.active a .navbar-text {
-	color: rgba(0,0,0,0.87);
+	color: rgba(255,255,255,1);
 }
 .navbar-nav li:hover a .nav-icon {
 	transition: 0.5s all ease;
 	color: white;
-	background-color: #424242;
+	background-color: #1b1b1b;
 }
 .navbar-nav li:hover a .navbar-text {
 	transition:0.5s all ease;
-	color: rgba(0,0,0,0.87);
+	color: rgba(255,255,255,1);
 }
 .navbar-nav li.active ~ li a .nav-icon {
-	color: rgba(0,0,0,0.54);
-	background-color:white;
+	color: hsla(0,0%,100%,.5);
+	background-color: inherit;
 }
 .navbar-nav li.active ~ li a .navbar-text {
-	background-color:white;
+	background-color: inherit;
 }
 .navbar-nav li.active ~ li a:hover .nav-icon {
 	transition:0.5s all ease;
 	color: white;
-	background-color: #424242;
+	background-color: #1b1b1b;
 }
 .navbar-nav li.active ~ li a:hover .navbar-text {
 	transition:0.5s all ease;
-	color: rgba(0,0,0,0.87);
+	color: rgba(255,255,255,1);
 }
 .session-not-ready {
 	color: #cf3835 !important;

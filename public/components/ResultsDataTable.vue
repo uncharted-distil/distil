@@ -1,6 +1,6 @@
 <template>
 	<div class="results-data-table">
-		<h6 class="nav-link">{{title}}</h6>
+		<p class="nav-link font-weight-bold">{{title}}</p>
 		<div class="results-data-table-container">
 			<div class="results-data-no-results" v-if="items.length===0">
 				No results

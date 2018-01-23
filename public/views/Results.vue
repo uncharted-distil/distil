@@ -2,31 +2,26 @@
 	<div class="container-fluid d-flex flex-column h-100 results-view">
 		<div class="row flex-0-nav">
 		</div>
-		<div class="row flex-1 align-items-center">
-			<div class="col-12 d-flex justify-content-center">
-				<flow-bar
-					left-text="Return to Select"
-					:on-left="gotoSelect"
-					center-text="Examine Model Results">
-				</flow-bar>
+		<div class="row flex-1 align-items-center bg-white">
+			<div class="col-12">
+				<h5 class="header-label">Select Features That May Predict</h5>
 			</div>
 		</div>
-		<div class="row flex-12">
+		<div class="row flex-12 pb-3">
 				<variable-summaries
-					class="col-12 col-md-4 mb-3 results-variable-summaries"
+					class="col-12 col-md-3 border-gray-right results-variable-summaries"
 					:variables="summaries"
 					:dataset="dataset"></variable-summaries>
 				<results-comparison
-					class="col-12 col-md-4 mb-3 results-result-comparison"
+					class="col-12 col-md-6 results-result-comparison"
 					:exclude-non-training="excludeNonTraining"></results-comparison>
 				<result-summaries
-					class="col-12 col-md-4 mb-3 results-result-summaries"></result-summaries>
+					class="col-12 col-md-3 border-gray-left results-result-summaries"></result-summaries>
 		</div>
 	</div>
 </template>
 
 <script lang="ts">
-import FlowBar from '../components/FlowBar.vue';
 import ResultsComparison from '../components/ResultsComparison.vue';
 import VariableSummaries from '../components/VariableSummaries.vue';
 import ResultSummaries from '../components/ResultSummaries.vue';
@@ -43,7 +38,6 @@ export default Vue.extend({
 	name: 'results-view',
 
 	components: {
-		FlowBar,
 		ResultsComparison,
 		VariableSummaries,
 		ResultSummaries
@@ -136,28 +130,13 @@ export default Vue.extend({
 </script>
 
 <style>
-.header-label {
-	color: #333;
-	margin: 0.75rem 0;
-}
 .results-view .nav-link {
-    padding: 1rem 0 0.5rem 0;
+	padding: 1rem 0 0.25rem 0;
+	border-bottom: 1px solid #E0E0E0;
 }
-.results-view {
-}
-.results-items {
-	display: flex;
-	justify-content: space-around;
-	width: 100%;
-}
-.results-variable-summaries {
-
-}
-.results-result-summaries {
-
-}
-.results-result-comparison {
-
+.header-label {
+	padding: 1rem 0 0.5rem 0;
+	font-weight: bold;
 }
 .results-data-table-container {
 	background-color: white;

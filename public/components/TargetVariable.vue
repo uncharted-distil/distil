@@ -1,6 +1,6 @@
 <template>
 	<div>
-		<h6 class="nav-link">Target Feature</h6>
+		<p class="nav-link font-weight-bold">Target Feature</p>
 		<div class="target-no-target" v-if="variables.length===0">
 			<div class="text-danger">
 				<i class="fa fa-times missing-icon"></i><strong>No Target Feature Selected</strong>

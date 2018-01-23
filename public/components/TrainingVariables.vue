@@ -1,6 +1,6 @@
 <template>
 	<div class="training-variables">
-		<h6 class="nav-link">Training features</h6>
+		<p class="nav-link font-weight-bold">Training features</p>
 		<variable-facets
 			enable-search
 			enable-facet-filtering
