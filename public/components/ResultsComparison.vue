@@ -31,6 +31,7 @@ import { getters as dataGetters} from '../store/data/module';
 import { getters as routeGetters} from '../store/route/module';
 import { actions } from '../store/data/module';
 import { getTargetCol, getPredictedCol, getErrorCol } from '../util/data';
+import { Filter } from '../util/filters';
 import { Variable, TargetRow } from '../store/data/index';
 
 export default Vue.extend({
@@ -48,21 +49,18 @@ export default Vue.extend({
 		this.fetch();
 	},
 
-	watch: {
-		// if pipeline id changes, update data
-		'$route.query.pipelineId'() {
-			this.fetch();
-		},
-		// if filters change, update data
-		'$route.query.filters'() {
-			this.fetch();
-		}
-	},
-
 	computed: {
 
 		dataset(): string {
 			return routeGetters.getRouteDataset(this.$store);
+		},
+
+		pipelineId(): string {
+			return routeGetters.getRoutePipelineId(this.$store);
+		},
+
+		filters(): Filter[] {
+			return routeGetters.getDecodedFilters(this.$store);
 		},
 
 		target(): string {
@@ -123,12 +121,23 @@ export default Vue.extend({
 		}
 	},
 
+	watch: {
+		// if pipeline id changes, update data
+		pipelineId() {
+			this.fetch();
+		},
+		// if filters change, update data
+		filters() {
+			this.fetch();
+		}
+	},
+
 	methods: {
 		fetch() {
 			actions.updateResults(this.$store, {
 				dataset: this.dataset,
-				pipelineId: routeGetters.getRoutePipelineId(this.$store),
-				filters: routeGetters.getDecodedFilters(this.$store)
+				pipelineId: this.pipelineId,
+				filters: this.filters,
 			});
 		},
 

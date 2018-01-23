@@ -28,8 +28,11 @@ export const actions = {
 
 	// fetches all variables for a single dataset.
 	fetchVariables(context: DataContext, args: { dataset: string }) {
-		const dataset = args.dataset;
-		return axios.get(`/distil/variables/${ES_INDEX}/${dataset}`)
+		if (!args.dataset) {
+			console.warn('`dataset` argument is missing');
+			return null;
+		}
+		return axios.get(`/distil/variables/${ES_INDEX}/${args.dataset}`)
 			.then(response => {
 				mutations.setVariables(context, response.data.variables);
 			})
@@ -40,6 +43,18 @@ export const actions = {
 	},
 
 	setVariableType(context: DataContext, args: { dataset: string, field: string, type: string }) {
+		if (!args.dataset) {
+			console.warn('`dataset` argument is missing');
+			return null;
+		}
+		if (!args.field) {
+			console.warn('`field` argument is missing');
+			return null;
+		}
+		if (!args.type) {
+			console.warn('`type` argument is missing');
+			return null;
+		}
 		return axios.post(`/distil/variables/${ES_INDEX}/${args.dataset}`,
 			{
 				field: args.field,
@@ -58,12 +73,33 @@ export const actions = {
 			});
 	},
 
+	fetchVariablesAndVariableSummaries(context: DataContext, args: { dataset: string }) {
+		if (!args.dataset) {
+			console.warn('`dataset` argument is missing');
+			return null;
+		}
+		return context.dispatch('fetchVariables', {
+			dataset: args.dataset
+		}).then(() => {
+			context.dispatch('fetchVariableSummaries', {
+				dataset: args.dataset,
+				variables: context.state.variables
+			});
+		});
+	},
+
 	// fetches variable summary data for the given dataset and variables
 	fetchVariableSummaries(context: DataContext, args: { dataset: string, variables: Variable[] }) {
-		const dataset = args.dataset;
-		const variables = args.variables;
+		if (!args.dataset) {
+			console.warn('`dataset` argument is missing');
+			return null;
+		}
+		if (!args.variables) {
+			console.warn('`variables` argument is missing');
+			return null;
+		}
 		// commit empty place holders
-		const histograms = variables.map(variable => {
+		const histograms = args.variables.map(variable => {
 			return {
 				name: variable.name,
 				feature: name,
@@ -77,9 +113,9 @@ export const actions = {
 		});
 		mutations.setVariableSummaries(context, histograms);
 		// fill them in asynchronously
-		return Promise.all(variables.map(variable => {
+		return Promise.all(args.variables.map(variable => {
 			return context.dispatch('fetchVariableSummary', {
-				dataset: dataset,
+				dataset: args.dataset,
 				variable: variable.name
 			});
 		}));

@@ -59,6 +59,7 @@ export const actions = {
 					console.warn('previous session', sessionId, 'could not be resumed, new session created');
 				}
 				mutations.setPipelineSessionID(context, res.session);
+				mutations.setSessionActivity(context, true);
 			}).catch((err: string) => {
 				console.warn(err);
 			});
@@ -77,6 +78,7 @@ export const actions = {
 				session: sessionId
 			}).then(() => {
 				mutations.setPipelineSessionID(context, null);
+				mutations.setSessionActivity(context, false);
 			}).catch(err => {
 				console.warn(err);
 			});
@@ -205,8 +207,8 @@ export const actions = {
 				res.name = request.feature;
 				res.feature = request.feature;
 
-				// NOTE: 'fetchPipeline' must be done first to ensure the resultId
-				// is present to fetch summary
+				// NOTE: 'fetchPipeline' must be done first to ensure the
+				// resultId is present to fetch summary
 
 				// update pipeline status
 				context.dispatch('fetchPipeline', {

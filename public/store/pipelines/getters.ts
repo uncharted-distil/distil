@@ -3,7 +3,7 @@ import localStorage from 'store';
 
 export const getters = {
 
-	getPipelineSessionID(state: PipelineState) {
+	getPipelineSessionID(state: PipelineState): string {
 		if (!state.sessionID) {
 			const id = localStorage.get('pipeline-session-id');
 			if (id) {
@@ -12,6 +12,10 @@ export const getters = {
 			return id;
 		}
 		return state.sessionID;
+	},
+
+	hasActiveSession(state: PipelineState): boolean {
+		return state.sessionIsActive;
 	},
 
 	// Returns a dictionary of dictionaries, where the first key is the pipeline create request ID, and the second

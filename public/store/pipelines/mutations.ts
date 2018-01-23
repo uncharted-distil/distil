@@ -1,4 +1,5 @@
 import _ from 'lodash';
+import moment from 'moment';
 import Vue from 'vue';
 import { PipelineState, PipelineInfo } from './index';
 import localStorage from 'store';
@@ -15,15 +16,22 @@ export const mutations = {
 		}
 	},
 
+	// flags the session as active or inactive
+	setSessionActivity(state: PipelineState, activity: boolean) {
+		state.sessionIsActive = activity;
+	},
+
 	// adds a pipeline request or replaces an existing one if the ids match.
-	updatePipelineRequest(state: PipelineState, pipelineData: PipelineInfo) {
-		const index = _.findIndex(state.pipelineRequests, pipeline => {
-			return pipeline.pipelineId === pipelineData.pipelineId;
+	updatePipelineRequest(state: PipelineState, pipeline: PipelineInfo) {
+		const index = _.findIndex(state.pipelineRequests, p => {
+			return p.pipelineId === pipeline.pipelineId;
 		});
 		if (index === -1) {
-			state.pipelineRequests.push(pipelineData);
+			state.pipelineRequests.push(pipeline);
 		} else {
-			Vue.set(state.pipelineRequests, index, pipelineData);
+			if (moment(pipeline.timestamp) >= moment(state.pipelineRequests[index].timestamp)) {
+				Vue.set(state.pipelineRequests, index, pipeline);
+			}
 		}
 	}
 }

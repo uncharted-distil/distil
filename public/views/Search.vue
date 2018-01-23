@@ -20,11 +20,13 @@ import Vue from 'vue';
 
 export default Vue.extend({
 	name: 'search-view',
+	
 	components: {
 		FlowBar,
 		SearchBar,
 		SearchResults
 	},
+
 	methods: {
 		gotoHome() {
 			gotoHome(this.$store, this.$router);

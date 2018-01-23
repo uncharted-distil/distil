@@ -1,10 +1,11 @@
 <template>
 	<div class="select-view">
-		<b-modal id="target-modal" ref="targetModal" title="Select Target Feature"
+		<b-modal id="target-modal" title="Select Target Feature"
 			hide-header-close
 			no-close-on-backdrop
 			no-close-on-esc
-			hide-footer>
+			hide-footer
+			:visible="!target">
 			<available-target-variables></available-target-variables>
 		</b-modal>
 		<div class="left-container">
@@ -57,42 +58,21 @@ export default Vue.extend({
 		},
 		variables(): Variable[] {
 			return dataGetters.getVariables(this.$store);
+		},
+		target(): string {
+			return routeGetters.getRouteTargetVariable(this.$store);
 		}
 	},
 
 	mounted() {
 		this.fetch();
-		this.updateModal();
-	},
-
-	watch: {
-		'$route.query.dataset'() {
-			this.fetch();
-		},
-		'$route.query.target'() {
-			this.updateModal();
-		}
 	},
 
 	methods: {
 		fetch() {
-			actions.fetchVariables(this.$store, {
+			actions.fetchVariablesAndVariableSummaries(this.$store, {
 				dataset: this.dataset
-			}).then(() => {
-				actions.fetchVariableSummaries(this.$store, {
-					dataset: this.dataset,
-					variables: this.variables
-				});
 			});
-		},
-		updateModal() {
-			const target = routeGetters.getRouteTargetVariable(this.$store);
-			const modal = this.$refs.targetModal as any;
-			if (target) {
-				modal.hide();
-			} else {
-				modal.show();
-			}
 		}
 	}
 });

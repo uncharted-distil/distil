@@ -40,7 +40,7 @@ import Facets from '../components/Facets';
 import { Filter, decodeFiltersDictionary, updateFilter, getFilterType, isDisabled,
 	CATEGORICAL_FILTER, NUMERICAL_FILTER, EMPTY_FILTER } from '../util/filters';
 import { overlayRouteEntry, getRouteFacetPage } from '../util/routes';
-import { VariableSummary, Highlights, Range } from '../store/data/index';
+import { Highlights, Range } from '../store/data/index';
 import { Dictionary } from '../util/dict';
 import { getters as dataGetters, mutations as dataMutations } from '../store/data/module';
 import { getters as routeGetters } from '../store/route/module';
@@ -93,7 +93,7 @@ export default Vue.extend({
 
 		groups(): Group[] {
 			// filter by search
-			const searchFiltered = (<VariableSummary[]>this.variables).filter(summary => {
+			const searchFiltered = this.variables.filter(summary => {
 				return this.filter === '' || summary.name.toLowerCase().includes(this.filter.toLowerCase());
 			});
 

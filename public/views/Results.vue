@@ -88,18 +88,15 @@ export default Vue.extend({
 		this.fetch();
 	},
 
-	watch: {
-		// watch the route and update the results if its modified
-		'$route.query.dataset'() {
-			this.fetch();
-		}
-	},
-
 	methods: {
 		gotoSelect() {
 			gotoSelect(this.$store, this.$router);
 		},
 		fetch() {
+			// dataActions.fetchVariablesAndVariableSummaries(this.$store, {
+			// 	dataset: this.dataset
+			// });
+
 			Promise.all([
 					dataActions.fetchVariables(this.$store, {
 						dataset: this.dataset
