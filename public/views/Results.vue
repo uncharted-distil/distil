@@ -93,33 +93,32 @@ export default Vue.extend({
 			gotoSelect(this.$store, this.$router);
 		},
 		fetch() {
-			// dataActions.fetchVariablesAndVariableSummaries(this.$store, {
-			// 	dataset: this.dataset
-			// });
-
-			Promise.all([
-					dataActions.fetchVariables(this.$store, {
-						dataset: this.dataset
-					}),
-					pipelineActions.fetchPipelines(this.$store, {
-						sessionId: this.sessionId
-					})
-				])
-				.then(() => {
-					dataActions.fetchVariableSummaries(this.$store, {
-						dataset: this.dataset,
-						variables: this.variables
-					});
-					dataActions.fetchResultsSummaries(this.$store, {
-						dataset: this.dataset,
-						requestIds: this.requestIds
-					});
-					dataActions.fetchResidualsSummaries(this.$store, {
-						dataset: this.dataset,
-						requestIds: this.requestIds
-					});
+			this.fetchVariableSummaries();
+			this.fetchResultsAndResiduals();
+		},
+		fetchVariableSummaries() {
+			dataActions.fetchVariables(this.$store, {
+				dataset: this.dataset
+			}).then(() => {
+				dataActions.fetchVariableSummaries(this.$store, {
+					dataset: this.dataset,
+					variables: this.variables
 				});
-
+			});
+		},
+		fetchResultsAndResiduals() {
+			pipelineActions.fetchPipelines(this.$store, {
+				sessionId: this.sessionId
+			}).then(() => {
+				dataActions.fetchResultsSummaries(this.$store, {
+					dataset: this.dataset,
+					requestIds: this.requestIds
+				});
+				dataActions.fetchResidualsSummaries(this.$store, {
+					dataset: this.dataset,
+					requestIds: this.requestIds
+				});
+			});
 		}
 	}
 });
