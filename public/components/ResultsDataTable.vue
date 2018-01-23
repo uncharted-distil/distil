@@ -31,17 +31,16 @@ import { updateTableHighlights, scrollToFirstHighlight } from '../util/highlight
 import { getTrainingVariablesForPipelineId } from '../util/pipelines';
 import Vue from 'vue';
 
-const RESULT_TABLE_HIGHLIGHTS = 'result_table';
-
 export default Vue.extend({
 	name: 'results-data-table',
 
 	props: {
-		'title': String,
-		'filterFunc': Function,
-		'decorateFunc': Function,
-		'excludeNonTraining': Boolean,
-		'refName': String
+		title: String,
+		filterFunc: Function,
+		decorateFunc: Function,
+		excludeNonTraining: Boolean,
+		refName: String,
+		instanceName: { type: String, default: 'results-table-table' }
 	},
 
 	data() {
@@ -68,10 +67,7 @@ export default Vue.extend({
 		// extracts the table data from the store
 		items(): TargetRow[] {
 			const items = getters.getResultDataItems(this.$store);
-
 			const filtered = this.excludeNonTraining ? removeNonTrainingItems(items, this.training) : items;
-
-			const rangeHighlights = getters.getHighlightedFeatureRanges(this.$store);
 			const valueHighlights = getters.getHighlightedFeatureValues(this.$store);
 
 			// clear all selections visuals
@@ -79,29 +75,27 @@ export default Vue.extend({
 
 			// if we have highlights defined and the select table is not the source then updated
 			// the highlight visuals.
-			if ((valueHighlights.context && valueHighlights.context !== RESULT_TABLE_HIGHLIGHTS) ||
-				(rangeHighlights.context && rangeHighlights.context !== RESULT_TABLE_HIGHLIGHTS)) {
-					updateTableHighlights(filtered, rangeHighlights, valueHighlights, RESULT_TABLE_HIGHLIGHTS);
+			let updatedItems = <TargetRow[]>[];
+			if (_.get(valueHighlights, 'root', 'context') !== this.instanceName) {
+				updateTableHighlights(filtered, valueHighlights, this.instanceName);
 			}
 
-			const updatedItems = filtered
+			updatedItems = filtered
 				.filter(item => this.filterFunc(item))
 				.map(item => this.decorateFunc(item));
 
-			// apply the currently selected row highlight - use the key because it is invarant across filter/sort
-			// apply the currently selected row highlight - if there were value or range highlights applied,
-			// then disable row selection
-			if (this.selectedRowKey >= 0 &&
-				valueHighlights.context === RESULT_TABLE_HIGHLIGHTS ||
-				rangeHighlights.context === RESULT_TABLE_HIGHLIGHTS) {
+			if (this.selectedRowKey >= 0) {
 				const toSelect = updatedItems.find(r => r._key === this.selectedRowKey);
-				toSelect._rowVariant = 'primary';
-			} else {
-				this.selectedRowKey = -1;
+				if (_.get(valueHighlights, 'root.context') === this.instanceName) {
+					toSelect._rowVariant = 'primary';
+				} else {
+					toSelect._rowVariant = null;
+					this.selectedRowKey = -1;
+				}
 			}
 
 			// On data / highlights change, scroll to first selected row
-			scrollToFirstHighlight(this, this.refName);
+			scrollToFirstHighlight(this, this.refName, false);
 
 			return updatedItems;
 		},
@@ -115,24 +109,25 @@ export default Vue.extend({
 
 	methods: {
 		onRowClick(row: TargetRow) {
-
-			// clear out any highlights currently in the table and at the app level
-			mutations.clearFeatureHighlights(this.$store);
-
 			if (row._key !== this.selectedRowKey) {
 				// clicked on a different row than last time - new selection
 				this.selectedRowKey = row._key;
 
 				// publish the highlight change
 				const highlights = {
-					context: RESULT_TABLE_HIGHLIGHTS,
-					values: {}
+					root: {
+						context: this.instanceName,
+						key: row._key.toString(),
+						value: ''
+					},
+					values: <Dictionary<string[]>>{}
 				};
-				_.forEach(this.fields, (field, key) => highlights.values[key] = row[key]);
+				_.forEach(this.fields, (field, key) => highlights.values[key] = [row[key]]);
 				mutations.highlightFeatureValues(this.$store, highlights);
 			} else {
 				// clicked on same row - remove the row selection visual
 				this.selectedRowKey = -1;
+				mutations.clearFeatureHighlights(this.$store);
 			}
 		}
 	}

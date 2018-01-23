@@ -8,10 +8,10 @@
 			</div>
 		</div>
 		<div class="row flex-12 pb-3">
-				<variable-summaries
+				<results-variable-summaries
 					class="col-12 col-md-3 border-gray-right results-variable-summaries"
 					:variables="summaries"
-					:dataset="dataset"></variable-summaries>
+					:dataset="dataset"></results-variable-summaries>
 				<results-comparison
 					class="col-12 col-md-6 results-result-comparison"
 					:exclude-non-training="excludeNonTraining"></results-comparison>
@@ -23,7 +23,7 @@
 
 <script lang="ts">
 import ResultsComparison from '../components/ResultsComparison.vue';
-import VariableSummaries from '../components/VariableSummaries.vue';
+import ResultsVariableSummaries from '../components/ResultsVariableSummaries.vue';
 import ResultSummaries from '../components/ResultSummaries.vue';
 import { gotoSelect } from '../util/nav';
 import { getRequestIdsForDatasetAndTarget, getTrainingVariablesForPipelineId } from '../util/pipelines';
@@ -39,7 +39,7 @@ export default Vue.extend({
 
 	components: {
 		ResultsComparison,
-		VariableSummaries,
+		ResultsVariableSummaries,
 		ResultSummaries
 	},
 

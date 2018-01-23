@@ -1,5 +1,6 @@
 import _ from 'lodash';
 import axios from 'axios';
+import { AxiosPromise } from 'axios';
 import { encodeQueryParams, Filter } from '../../util/filters';
 import { getPipelinesByRequestIds } from '../../util/pipelines';
 import { getSummaries } from '../../util/data';
@@ -118,12 +119,7 @@ export const actions = {
 
 	// update filtered data based on the  current filter state
 	updateFilteredData(context: DataContext, args: { dataset: string, filters: Filter[] }) {
-		const dataset = args.dataset;
-		const filters = args.filters;
-		const queryParams = encodeQueryParams(filters);
-		const url = `distil/filtered-data/${ES_INDEX}/${dataset}/inclusive${queryParams}`;
-		// request filtered data from server - no data is valid given filter settings
-		return axios.get(url)
+		context.dispatch('fetchData', { dataset: args.dataset, filters: args.filters, inclusive: true })
 			.then(response => {
 				mutations.setFilteredData(context, response.data);
 			})
@@ -135,12 +131,7 @@ export const actions = {
 
 	// update filtered data based on the  current filter state
 	updateSelectedData(context: DataContext, args: { dataset: string, filters: Filter[] }) {
-		const dataset = args.dataset;
-		const filters = args.filters;
-		const queryParams = encodeQueryParams(filters);
-		const url = `distil/filtered-data/${ES_INDEX}/${dataset}/exclusive${queryParams}`;
-		// request filtered data from server - no data is valid given filter settings
-		return axios.get(url)
+		context.dispatch('fetchData', { dataset: args.dataset, filters: args.filters, inclusive: false })
 			.then(response => {
 				mutations.setSelectedData(context, response.data);
 			})
@@ -148,6 +139,16 @@ export const actions = {
 				console.error(error);
 				mutations.setSelectedData(context, {} as Data);
 			});
+	},
+
+	fetchData(context: DataContext, args: { dataset: string, filters: Filter[], inclusive: boolean }): AxiosPromise<Data> {
+		const dataset = args.dataset;
+		const filters = args.filters;
+		const queryParams = encodeQueryParams(filters);
+		const inclusiveStr = args.inclusive ? 'inclusive' : 'exclusive';
+		const url = `distil/filtered-data/${ES_INDEX}/${dataset}/${inclusiveStr}${queryParams}`;
+		// request filtered data from server - no data is valid given filter settings
+		return axios.get<Data>(url);
 	},
 
 	// fetches result summaries for a given pipeline create request
@@ -168,15 +169,19 @@ export const actions = {
 
 	// fetches result data for created pipeline
 	updateResults(context: DataContext, args: { pipelineId: string, dataset: string, filters: Filter[] }) {
-		const encodedPipelineId = encodeURIComponent(args.pipelineId);
-		const filters = args.filters;
-		const queryParams = encodeQueryParams(filters);
-		return axios.get(`/distil/results/${ES_INDEX}/${args.dataset}/${encodedPipelineId}/inclusive${queryParams}`)
+		context.dispatch('fetchResults', args)
 			.then(response => {
 				mutations.setResultData(context, response.data);
 			})
 			.catch(error => {
 				console.error(`Failed to fetch results from ${args.pipelineId} with error ${error}`);
 			});
+	},
+
+	fetchResults(context: DataContext, args: { pipelineId: string, dataset: string, filters: Filter[] }): AxiosPromise<Data> {
+		const encodedPipelineId = encodeURIComponent(args.pipelineId);
+		const filters = args.filters;
+		const queryParams = encodeQueryParams(filters);
+		return axios.get<Data>(`/distil/results/${ES_INDEX}/${args.dataset}/${encodedPipelineId}/inclusive${queryParams}`);
 	}
 }
