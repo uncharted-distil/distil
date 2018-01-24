@@ -107,6 +107,7 @@ func main() {
 		RankingRESTEndpoint:              config.RankingEndpoint,
 		RankingFunctionName:              config.RankingFunctionName,
 		RankingOutputPathRelative:        config.RankingOutputPath,
+		RankingRowLimit:                  config.RankingRowLimit,
 		DatabasePassword:                 config.PostgresPassword,
 		DatabaseUser:                     config.PostgresUser,
 		Database:                         config.PostgresDatabase,

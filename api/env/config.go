@@ -50,6 +50,7 @@ type Config struct {
 	RankingEndpoint            string `env:"RANKING_ENDPOINT" envDefault:"http://localhost:5001"`
 	RankingFunctionName        string `env:"RANKING_FUNCTION_NAME" envDefault:"pca"`
 	RankingOutputPath          string `env:"RANKING_OUTPUT_PATH" envDefault:"tables/importance.json"`
+	RankingRowLimit            int    `env:"RANKING_ROW_LIMIT" envDefault:"1000"`
 	SummaryPath                string `env:"SUMMARY_PATH" envDefault:"summary.txt"`
 	ElasticTimeout             int    `env:"ES_TIMEOUT" envDefault:"300"`
 	ElasticDatasetPrefix       string `env:"ES_DATASET_PREFIX" envDefault:"d_"`
