@@ -19,24 +19,12 @@ export const mutations = {
 		state.datasets = datasets;
 	},
 
-	setVariableSummaries(state: DataState, summaries: VariableSummary[]) {
-		state.variableSummaries = summaries;
-	},
-
 	updateVariableSummaries(state: DataState, summary: VariableSummary) {
 		updateSummaries(summary, state.variableSummaries, 'name');
 	},
 
-	setResultsSummaries(state: DataState, summaries: VariableSummary[]) {
-		state.resultsSummaries = summaries;
-	},
-
 	updateResultsSummaries(state: DataState, summary: VariableSummary) {
 		updateSummaries(summary, state.resultsSummaries, 'pipelineId');
-	},
-
-	setResidualsSummaries(state: DataState, summaries: VariableSummary[]) {
-		state.residualSummaries = summaries;
 	},
 
 	updateResidualsSummaries(state: DataState, summary: VariableSummary) {

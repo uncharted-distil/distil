@@ -45,7 +45,7 @@ export default Vue.extend({
 	},
 
 	watch: {
-		'$route.query.terms'() {
+		terms() {
 			actions.searchDatasets(this.$store, this.terms);
 		}
 	}

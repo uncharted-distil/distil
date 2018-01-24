@@ -8,6 +8,7 @@ import Results from './views/Results.vue';
 import Navigation from './views/Navigation.vue';
 import { getters as routeGetters } from './store/route/module';
 import { mutations as viewMutations } from './store/view/module';
+import { actions as pipelineActions, getters as pipelineGetters } from './store/pipelines/module';
 import store from './store/store';
 import BootstrapVue from 'bootstrap-vue';
 
@@ -57,7 +58,20 @@ new Vue({
 	},
 	template: `
 		<div id="distil-app">
-			<navigation/>
-			<router-view class="view"></router-view>
-		</div>`
+			<navigation></navigation>
+			<router-view class="view" v-if="hasActiveSession"></router-view>
+		</div>`,
+	computed: {
+		sessionId(): string {
+			return pipelineGetters.getPipelineSessionID(this.$store)
+		},
+		hasActiveSession(): boolean {
+			return pipelineGetters.hasActiveSession(this.$store)
+		}
+	},
+	mounted() {
+		pipelineActions.startPipelineSession(this.$store, {
+			sessionId: this.sessionId
+		});
+	}
 }).$mount('#app');

@@ -110,13 +110,7 @@ export default Vue.extend({
 	},
 
 	watch: {
-		'$route.query.training'() {
-			this.fetch();
-		},
-		'$route.query.target'() {
-		this.fetch();
-		},
-		'$route.query.filters'() {
+		filters() {
 			this.fetch();
 		}
 	},

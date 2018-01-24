@@ -3,7 +3,7 @@
 		@click="click()">
 		{{name}} <sup>{{index}}</sup> {{timestamp}}
 		<div v-if="pipelineStatus === 'COMPLETED' || pipelineStatus === 'UPDATED'">
-			<b-badge variant="info" v-bind:key="score.metric" v-for="score in scores">
+			<b-badge variant="info" v-bind:key="`${score.metric}`" v-for="score in scores">
 				{{metricName(score.metric)}}: {{score.value}}
 			</b-badge>
 			<facets v-if="resultGroups.length" class="result-container"
@@ -20,12 +20,17 @@
 				:html="resultHtml">
 			</facets>
 		</div>
-		<div v-if="pipelineStatus !== 'COMPLETED'">
+		<div v-if="pipelineStatus !== 'COMPLETED' && pipelineStatus !== 'ERRORED'">
 			<b-progress
 				:value="100"
 				variant="secondary"
 				striped
 				:animated="true"></b-progress>
+		</div>
+		<div v-if="pipelineStatus === 'ERRORED'">
+			<b-badge variant="danger">
+				ERROR
+			</b-badge>
 		</div>
 	</div>
 </template>

@@ -8,6 +8,7 @@ import Vue from 'vue';
 
 export default Vue.extend({
 	name: 'navigation-view',
+
 	components: {
 		NavBar
 	}

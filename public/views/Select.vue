@@ -4,7 +4,8 @@
 			hide-header-close
 			no-close-on-backdrop
 			no-close-on-esc
-			hide-footer>
+			hide-footer
+			:visible="!target">
 			<available-target-variables></available-target-variables>
 		</b-modal>
 		<div class="row flex-0-nav">
@@ -81,45 +82,21 @@ export default Vue.extend({
 		},
 		variables(): Variable[] {
 			return dataGetters.getVariables(this.$store);
+		},
+		target(): string {
+			return routeGetters.getRouteTargetVariable(this.$store);
 		}
 	},
 
 	mounted() {
 		this.fetch();
-		this.updateModal();
-	},
-
-	watch: {
-		'$route.query.dataset'() {
-			this.fetch();
-		},
-		'$route.query.training'() {
-		},
-		'$route.query.target'() {
-			this.updateModal();
-		}
 	},
 
 	methods: {
 		fetch() {
-			actions.getVariables(this.$store, {
+			actions.fetchVariablesAndVariableSummaries(this.$store, {
 				dataset: this.dataset
-				})
-				.then(() => {
-					actions.getVariableSummaries(this.$store, {
-						dataset: this.dataset,
-						variables: this.variables
-					});
-				});
-		},
-		updateModal() {
-			const target = routeGetters.getRouteTargetVariable(this.$store);
-			const modal = this.$refs.targetModal as any;
-			if (target) {
-				modal.hide();
-			} else {
-				modal.show();
-			}
+			});
 		}
 	}
 });

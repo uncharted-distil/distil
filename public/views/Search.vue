@@ -28,10 +28,12 @@ import Vue from 'vue';
 
 export default Vue.extend({
 	name: 'search-view',
+	
 	components: {
 		SearchBar,
 		SearchResults
 	},
+
 	methods: {
 		gotoHome() {
 			gotoHome(this.$store, this.$router);

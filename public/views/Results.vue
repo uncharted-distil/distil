@@ -88,40 +88,37 @@ export default Vue.extend({
 		this.fetch();
 	},
 
-	watch: {
-		// watch the route and update the results if its modified
-		'$route.query.dataset'() {
-			this.fetch();
-		}
-	},
-
-	// need session id to pull
-
 	methods: {
 		gotoSelect() {
 			gotoSelect(this.$store, this.$router);
 		},
 		fetch() {
 			Promise.all([
-					dataActions.getVariables(this.$store, {
+					dataActions.fetchVariables(this.$store, {
 						dataset: this.dataset
 					}),
-					pipelineActions.fetchPipelines(this.$store, {
+					pipelineActions.startPipelineSession(this.$store, {
 						sessionId: this.sessionId
 					})
 				])
 				.then(() => {
-					dataActions.getVariableSummaries(this.$store, {
+					pipelineActions.fetchPipelines(this.$store, {
+						sessionId: this.sessionId,
 						dataset: this.dataset,
-						variables: this.variables
-					});
-					dataActions.getResultsSummaries(this.$store, {
-						dataset: this.dataset,
-						requestIds: this.requestIds
-					});
-					dataActions.getResidualsSummaries(this.$store, {
-						dataset: this.dataset,
-						requestIds: this.requestIds
+						target: this.target
+					}).then(() => {
+						dataActions.fetchVariableSummaries(this.$store, {
+							dataset: this.dataset,
+							variables: this.variables
+						});
+						dataActions.fetchResultsSummaries(this.$store, {
+							dataset: this.dataset,
+							requestIds: this.requestIds
+						});
+						dataActions.fetchResidualsSummaries(this.$store, {
+							dataset: this.dataset,
+							requestIds: this.requestIds
+						});
 					});
 				});
 		}

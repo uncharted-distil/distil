@@ -152,7 +152,7 @@ export default Vue.extend({
 			if (_.isEmpty(currHighlights.values)) {
 				// Highlights have been cleared.  Remove highlight visuals from facets managed
 				// by this component.
-				(<Group[]>this.groups).forEach(groupSpec => {
+				this.groups.forEach(groupSpec => {
 					const group = this.facets.getGroup(groupSpec.key);
 					if (group) {
 						// loop through groups ensure that selection is clear on each - not that clear
@@ -302,7 +302,8 @@ export default Vue.extend({
 					// check if equal, if so, no need to change
 					if (this.groupsEqual(group, old)) {
 						// add to unchanged
-						unchanged.push(group);						return;
+						unchanged.push(group);
+						return;
 					}
 					// replace group if it is existing
 					this.facets.replaceGroup(_.cloneDeep(group));

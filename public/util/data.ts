@@ -137,9 +137,6 @@ export function getVarFromTarget(decorated: string) {
 	return decorated.replace(TARGET_POSTFIX, '');
 }
 
-// Converts from a target variable name to a facet key
-// Example: "weight" -> "weight - predicted"
-
 export function getPredictedFacetKey(target: string) {
 	return 'Predicted';
 }
@@ -148,8 +145,8 @@ export function getErrorFacetKey(target: string) {
 	return 'Error';
 }
 
-
 export function updateSummaries(summary: VariableSummary, summaries: VariableSummary[], matchField: string) {
+	// TODO: add and check timestamps to ensure we don't overwrite old data?
 	const index = _.findIndex(summaries, r => r[matchField] === summary[matchField]);
 	if (index >= 0) {
 		Vue.set(summaries, index, summary);
@@ -158,71 +155,89 @@ export function updateSummaries(summary: VariableSummary, summaries: VariableSum
 	}
 }
 
-export function getSummaries(context: DataContext, endpoint: string, pipelines: PipelineInfo[], nameFunc: (PipelineInfo) => string,
-	setFunction: (DataContext, VariableSummary) => void, updateFunction: (DataContext, VariableSummary) => void) {
+export function getSummary(
+	context: DataContext,
+	endpoint: string,
+	pipeline: PipelineInfo,
+	nameFunc: (PipelineInfo) => string,
+	updateFunction: (DataContext, VariableSummary) => void): Promise<any> {
+
 	// save a placeholder histogram
-	const pendingHistograms = _.map(pipelines, pipeline => {
-		return {
-			name: nameFunc(pipeline),
-			feature: '',
-			pending: true,
-			buckets: [],
-			extrema: {} as any,
-			pipelineId: pipeline.pipelineId,
-			resultId: ''
-		};
-	});
-	setFunction(context, pendingHistograms);
+	const pendingHistogram = {
+		name: nameFunc(pipeline),
+		feature: '',
+		pending: true,
+		buckets: [],
+		extrema: {} as any,
+		pipelineId: pipeline.pipelineId,
+		resultId: ''
+	};
+	updateFunction(context, pendingHistogram);
 
 	// fetch the results for each pipeline
-	pipelines.forEach(pipeline => {
-		if (pipeline.progress !== PIPELINE_UPDATED &&
-			pipeline.progress !== PIPELINE_COMPLETED) {
-			// skip
-			return;
-		}
-		const name = nameFunc(pipeline);
-		const feature = pipeline.feature;
-		const pipelineId = pipeline.pipelineId;
-		const resultId = pipeline.resultId;
-		axios.get(`${endpoint}/${resultId}`)
-			.then(response => {
-				// save the histogram data
-				const histogram = response.data.histogram;
-				if (!histogram) {
-					setFunction(context, [
-						{
-							name: name,
-							feature: feature,
-							buckets: [],
-							extrema: {} as Extrema,
-							pipelineId: pipelineId,
-							resultId: resultId,
-							err: 'No analysis available'
-						}
-					]);
-					return;
-				}
-				histogram.buckets = histogram.buckets ? histogram.buckets : [];
-				histogram.name = name;
-				histogram.feature = feature;
-				histogram.pipelineId = pipelineId;
-				histogram.resultId = resultId;
-				updateFunction(context, histogram);
-			})
-			.catch(error => {
-				setFunction(context, [
-					{
-						name: name,
-						feature: feature,
-						buckets: [],
-						extrema: {} as Extrema,
-						pipelineId: pipelineId,
-						resultId: resultId,
-						err: error
-					}
-				]);
+	if (pipeline.progress !== PIPELINE_UPDATED &&
+		pipeline.progress !== PIPELINE_COMPLETED) {
+		// skip
+		return;
+	}
+	const name = nameFunc(pipeline);
+	const feature = pipeline.feature;
+	const pipelineId = pipeline.pipelineId;
+	const resultId = pipeline.resultId;
+
+	// return promise
+	return axios.get(`${endpoint}/${resultId}`)
+		.then(response => {
+			// save the histogram data
+			const histogram = response.data.histogram;
+			if (!histogram) {
+				updateFunction(context, {
+					name: name,
+					feature: feature,
+					buckets: [],
+					extrema: {} as Extrema,
+					pipelineId: pipelineId,
+					resultId: resultId,
+					err: 'No analysis available'
+				});
 				return;
+			}
+			histogram.buckets = histogram.buckets ? histogram.buckets : [];
+			histogram.name = name;
+			histogram.feature = feature;
+			histogram.pipelineId = pipelineId;
+			histogram.resultId = resultId;
+			updateFunction(context, histogram);
+		})
+		.catch(error => {
+			updateFunction(context, {
+				name: name,
+				feature: feature,
+				buckets: [],
+				extrema: {} as Extrema,
+				pipelineId: pipelineId,
+				resultId: resultId,
+				err: error
 			});
+			return;
+		});
+}
+
+export function getSummaries(
+	context: DataContext,
+	endpoint: string,
+	pipelines: PipelineInfo[],
+	nameFunc: (PipelineInfo) => string,
+	updateFunction: (DataContext, VariableSummary) => void): Promise<any> {
+
+	// return as singular promise
+	const promises = pipelines.map(pipeline => {
+		return getSummary(
+			context,
+			endpoint,
+			pipeline,
+			nameFunc,
+			updateFunction);
 	});
+	return Promise.all(promises);
 }

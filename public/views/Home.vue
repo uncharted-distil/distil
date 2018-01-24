@@ -27,7 +27,7 @@
 	</div>
 </template>
 
-<script lange="ts">
+<script lang="ts">
 import RecentDatasets from '../components/RecentDatasets';
 import RecentPipelines from '../components/RecentPipelines';
 import RunningPipelines from '../components/RunningPipelines';
@@ -38,23 +38,30 @@ import Vue from 'vue';
 
 export default Vue.extend({
 	name: 'home-view',
+
 	components: {
 		RecentDatasets,
 		RecentPipelines,
 		RunningPipelines,
 		SearchBar
 	},
+
 	computed: {
-		sessionId() {
+		sessionId(): string {
 			return getters.getPipelineSessionID(this.$store);
 		}
 	},
+
 	mounted() {
-		actions.fetchPipelines(this.$store, {
-			sessionId: this.sessionId
-		});
+		this.fetch();
 	},
+
 	methods: {
+		fetch() {
+			actions.fetchPipelines(this.$store, {
+				sessionId: this.sessionId
+			});
+		},
 		gotoSearch() {
 			gotoSearch(this.$store, this.$router);
 		}

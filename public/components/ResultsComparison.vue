@@ -31,9 +31,8 @@ import { getters as dataGetters} from '../store/data/module';
 import { getters as routeGetters} from '../store/route/module';
 import { actions } from '../store/data/module';
 import { getTargetCol, getPredictedCol, getErrorCol } from '../util/data';
-import { PipelineInfo } from '../store/pipelines/index';
+import { Filter } from '../util/filters';
 import { Variable, TargetRow } from '../store/data/index';
-import { getPipelineById } from '../util/pipelines';
 
 export default Vue.extend({
 	name: 'results-comparison',
@@ -50,22 +49,18 @@ export default Vue.extend({
 		this.fetch();
 	},
 
-	watch: {
-		// if filters change, update data
-		// TODO: watch needs to be finer grained
-		'$route.query'() {
-			this.fetch();
-		}
-	},
-
 	computed: {
-		result(): PipelineInfo {
-			const pipelineId = routeGetters.getRoutePipelineId(this.$store);
-			return getPipelineById(this.$store.state.pipelineModule, pipelineId);
-		},
 
 		dataset(): string {
 			return routeGetters.getRouteDataset(this.$store);
+		},
+
+		pipelineId(): string {
+			return routeGetters.getRoutePipelineId(this.$store);
+		},
+
+		filters(): Filter[] {
+			return routeGetters.getDecodedFilters(this.$store);
 		},
 
 		target(): string {
@@ -126,12 +121,23 @@ export default Vue.extend({
 		}
 	},
 
+	watch: {
+		// if pipeline id changes, update data
+		pipelineId() {
+			this.fetch();
+		},
+		// if filters change, update data
+		filters() {
+			this.fetch();
+		}
+	},
+
 	methods: {
 		fetch() {
 			actions.updateResults(this.$store, {
 				dataset: this.dataset,
-				pipelineId: routeGetters.getRoutePipelineId(this.$store),
-				filters: routeGetters.getDecodedFilters(this.$store)
+				pipelineId: this.pipelineId,
+				filters: this.filters,
 			});
 		},
 

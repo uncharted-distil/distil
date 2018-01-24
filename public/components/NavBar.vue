@@ -51,7 +51,6 @@ import '../assets/images/uncharted.svg';
 import { gotoHome, gotoSearch, gotoSelect, gotoResults } from '../util/nav';
 import { actions as appActions } from '../store/app/module';
 import { getters as routeGetters } from '../store/route/module';
-import { getters as pipelineGetters, actions as pipelineActions } from '../store/pipelines/module';
 import { restoreView } from '../util/view';
 import Vue from 'vue';
 
@@ -75,25 +74,20 @@ export default Vue.extend({
 			HOME: HOME,
 			SEARCH: SEARCH,
 			SELECT: SELECT,
-			RESULTS: RESULTS,
-			activeView: SEARCH
+			RESULTS: RESULTS
 		};
 	},
 
 	computed: {
-		sessionId(): string {
-			return pipelineGetters.getPipelineSessionID(this.$store);
+		path(): string {
+			return routeGetters.getRoutePath(this.$store);
 		},
 		dataset(): string {
 			return routeGetters.getRouteDataset(this.$store);
+		},
+		activeView(): string {
+			return ROUTE_MAPPINGS[this.path] || SEARCH;
 		}
-	},
-
-	mounted() {
-		this.updateActive();
-		pipelineActions.startPipelineSession(this.$store, {
-			sessionId: this.sessionId
-		});
 	},
 
 	methods: {
@@ -116,19 +110,11 @@ export default Vue.extend({
 			this.$router.replace('/');
 			appActions.abort(this.$store);
 		},
-		updateActive() {
-			this.activeView = ROUTE_MAPPINGS[this.$route.path];
-		},
 		hasSelectView(): boolean {
 			return !!restoreView(this.$store, '/select', this.dataset);
 		},
 		hasResultView(): boolean {
 			return !!restoreView(this.$store, '/results', this.dataset);
-		}
-	},
-	watch: {
-		'$route.path'() {
-			this.updateActive();
 		}
 	}
 });
