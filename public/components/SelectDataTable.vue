@@ -1,6 +1,6 @@
 <template>
 	<div class="select-data-table">
-		<h6 class="nav-link">Training Set Samples</h6>
+		<p class="nav-link font-weight-bold">Training Set Samples</p>
 		<div class="select-data-table-container">
 			<div class="select-data-no-results" v-if="items.length===0">
 				<div class="text-danger">
@@ -157,6 +157,7 @@ export default Vue.extend({
 .select-data-table-container {
 	display: flex;
 	overflow: auto;
+	background-color: white;
 }
 .select-data-no-results {
 	width: 100%;

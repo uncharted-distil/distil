@@ -1,26 +1,27 @@
 <template>
-	<div class="results-view">
-		<flow-bar
-			left-text="Return to Select"
-			:on-left="gotoSelect"
-			center-text="Examine Model Results">
-		</flow-bar>
-		<div class="results-items">
-			<results-variable-summaries
-				class="results-variable-summaries"
-				:variables="summaries"
-				:dataset="dataset"></results-variable-summaries>
-			<results-comparison
-				class="results-result-comparison"
-				:exclude-non-training="excludeNonTraining"></results-comparison>
-			<result-summaries
-				class="results-result-summaries"></result-summaries>
+	<div class="container-fluid d-flex flex-column h-100 results-view">
+		<div class="row flex-0-nav">
+		</div>
+		<div class="row flex-1 align-items-center bg-white">
+			<div class="col-12">
+				<h5 class="header-label">Select Features That May Predict</h5>
+			</div>
+		</div>
+		<div class="row flex-12 pb-3">
+				<results-variable-summaries
+					class="col-12 col-md-3 border-gray-right results-variable-summaries"
+					:variables="summaries"
+					:dataset="dataset"></results-variable-summaries>
+				<results-comparison
+					class="col-12 col-md-6 results-result-comparison"
+					:exclude-non-training="excludeNonTraining"></results-comparison>
+				<result-summaries
+					class="col-12 col-md-3 border-gray-left results-result-summaries"></result-summaries>
 		</div>
 	</div>
 </template>
 
 <script lang="ts">
-import FlowBar from '../components/FlowBar.vue';
 import ResultsComparison from '../components/ResultsComparison.vue';
 import ResultsVariableSummaries from '../components/ResultsVariableSummaries.vue';
 import ResultSummaries from '../components/ResultSummaries.vue';
@@ -37,7 +38,6 @@ export default Vue.extend({
 	name: 'results-view',
 
 	components: {
-		FlowBar,
 		ResultsComparison,
 		ResultsVariableSummaries,
 		ResultSummaries
@@ -127,29 +127,15 @@ export default Vue.extend({
 </script>
 
 <style>
+.results-view .nav-link {
+	padding: 1rem 0 0.25rem 0;
+	border-bottom: 1px solid #E0E0E0;
+}
 .header-label {
-	color: #333;
-	margin: 0.75rem 0;
+	padding: 1rem 0 0.5rem 0;
+	font-weight: bold;
 }
-.results-view {
-	display: flex;
-	justify-content: space-around;
-	flex-direction: column;
-	align-items: center;
-}
-.results-items {
-	display: flex;
-	justify-content: space-around;
-	padding: 8px;
-	width: 100%;
-}
-.results-variable-summaries {
-	width: 25%;
-}
-.results-result-summaries {
-	width: 25%;
-}
-.results-result-comparison {
-	width: 50%;
+.results-data-table-container {
+	background-color: white;
 }
 </style>

@@ -1,6 +1,6 @@
 <template>
 	<div class='result-summaries'>
-		<h6 class="nav-link">Results</h6>
+		<p class="nav-link font-weight-bold">Results<p>
 		<div v-if="regressionEnabled" class="result-summaries-error">
 			<div class="result-summaries-label">
 				Error:
@@ -18,13 +18,13 @@
 					@callback="onSlide"/>
 			</div>
 		</div>
-		<h6 class="nav-link">Actual</h6>
+		<p class="nav-link font-weight-bold">Actual</p>
 		<facets class="result-summaries-target"
 			@histogram-click="onHistogramClick"
 			@facet-click="onFacetClick"
 			:groups="targetGroups"
 			:highlights="highlights"></facets>
-		<h6 class="nav-link">Predictions by Model</h6>
+		<p class="nav-link font-weight-bold">Predictions by Model</p>
 		<result-facets
 			:regression="regressionEnabled"
 			:result-extrema="resultExtrema"

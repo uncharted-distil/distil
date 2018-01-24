@@ -1,5 +1,5 @@
 <template>
-	<b-navbar toggleable type="light" variant="faded" class="bottom-shadowed">
+	<b-navbar toggleable="md" type="dark"  class="fixed-top bottom-shadowed">
 
 		<b-nav-toggle target="nav_collapse"></b-nav-toggle>
 
@@ -8,29 +8,32 @@
 
 		<b-collapse is-nav id="nav_collapse">
 			<b-navbar-nav>
-				<b-nav-item @click="onHome" :active="isActive(HOME)">
-					<i class="fa fa-angle-right nav-selection" v-bind:class="{ active: isActive(HOME) }"></i>
-					<i class="fa fa-home nav-icon" v-bind:class="{ active: isActive(HOME) }"></i>
-					Home
+				<b-nav-item @click="onHome" :active="isActive(HOME)" v-bind:class="{ active: isActive(HOME) }">
+					<i class="fa fa-home nav-icon"></i>
+					<b-nav-text>Home</b-nav-text>
 				</b-nav-item>
-				<b-nav-item @click="onSearch" :active="isActive(SEARCH)">
-					<i class="fa fa-angle-right nav-selection" v-bind:class="{ active: isActive(SEARCH) }"></i>
-					<i class="fa fa-dot-circle-o nav-icon" v-bind:class="{ active: isActive(SEARCH) }"></i>
-					Search
+				<b-nav-item @click="onSearch" :active="isActive(SEARCH)" v-bind:class="{ active: isActive(SEARCH) }">
+					<i class="fa fa-angle-right nav-arrow"></i>
+					<i class="fa fa-dot-circle-o nav-icon"></i>
+					<b-nav-text>Search</b-nav-text>
 				</b-nav-item>
-				<b-nav-item @click="onSelect" :active="isActive(SELECT)" :disabled="!hasSelectView()">
-					<i class="fa fa-angle-right nav-selection" v-bind:class="{ active: isActive(SELECT) }"></i>
-					<i class="fa fa-code-fork nav-icon" v-bind:class="{ active: isActive(SELECT) }"></i>
-					Select
+				<b-nav-item @click="onSelect" :active="isActive(SELECT)" :disabled="!hasSelectView()" v-bind:class="{ active: isActive(SELECT) }">
+					<i class="fa fa-angle-right nav-arrow"></i>
+					<i class="fa fa-code-fork nav-icon"></i>
+					<b-nav-text>Select</b-nav-text>
 				</b-nav-item>
-				<b-nav-item @click="onResults" :active="isActive(RESULTS)" :disabled="!hasResultView()">
-					<i class="fa fa-angle-right nav-selection" v-bind:class="{ active: isActive(RESULTS) }"></i>
-					<i class="fa fa-line-chart nav-icon" v-bind:class="{ active: isActive(RESULTS) }"></i>
-					Results
+				<b-nav-item @click="onResults" :active="isActive(RESULTS)" :disabled="!hasResultView()" v-bind:class="{ active: isActive(RESULTS) }">
+					<i class="fa fa-angle-right nav-arrow"></i>
+					<i class="fa fa-line-chart nav-icon"></i>
+					<b-nav-text>Results</b-nav-text>
 				</b-nav-item>
 			</b-navbar-nav>
 			<b-navbar-nav class="ml-auto">
-				<b-nav-item href="/help">Help</b-nav-item>
+				<b-nav-item href="/help">
+					<b-nav-text>
+					Help
+					</b-nav-text>
+				</b-nav-item>
 				<b-btn v-b-modal.abort size="sm" variant="outline-danger" class="abort-button">Abort</b-btn>
 				<b-modal id="abort" title="Abort" @ok="onAbort">
 					<div>
@@ -119,6 +122,68 @@ export default Vue.extend({
 </script>
 
 <style>
+.navbar {
+	background-color: #424242;
+}
+.navbar {
+	background-color: #424242;
+}
+.nav-arrow {
+	color: rgba(255,255,255,1);
+	padding-right: 5px;
+}
+.nav-icon {
+	padding: 7px;
+	width: 30px;
+	height: 30px;
+	text-align: center;
+	border-radius: 50%;
+}
+.nav-item .nav-link {
+	padding: 2px;
+}
+.nav-item .navbar-text  {
+	letter-spacing: 0.01rem;
+}
+.navbar-nav .btn  {
+	letter-spacing: 0.01rem;
+	font-weight: bold;
+}
+.navbar-nav li a .nav-icon {
+	color: white;
+	background-color: #616161;
+}
+.navbar-nav li.active a .nav-icon {
+	background-color: #1b1b1b;
+}
+.navbar-nav li.active a .navbar-text {
+	color: rgba(255,255,255,1);
+}
+.navbar-nav li:hover a .nav-icon {
+	transition: 0.5s all ease;
+	color: white;
+	background-color: #1b1b1b;
+}
+.navbar-nav li:hover a .navbar-text {
+	transition:0.5s all ease;
+	color: rgba(255,255,255,1);
+}
+.navbar-nav li.active ~ li a .nav-icon {
+	color: hsla(0,0%,100%,.5);
+	background-color: inherit;
+}
+.navbar-nav li.active ~ li a .navbar-text {
+	background-color: inherit;
+}
+.navbar-nav li.active ~ li a:hover .nav-icon {
+	transition:0.5s all ease;
+	color: white;
+	background-color: #1b1b1b;
+}
+.navbar-nav li.active ~ li a:hover .navbar-text {
+	transition:0.5s all ease;
+	color: rgba(255,255,255,1);
+}
 .session-not-ready {
 	color: #cf3835 !important;
 }
@@ -130,36 +195,26 @@ export default Vue.extend({
 	margin-right: 5px;
 }
 .app-icon path {
-	fill:#cc9900;
+	fill: #c90;
 }
 .abort-icon {
 	vertical-align: middle;
-	color:#cf3835;
+	color: #cf3835;
 }
 .abort-button {
 	margin-left: 20px;
 }
 .session-label {
-	padding-right: 4px
+	padding-right: 4px;
 }
 .bottom-shadowed {
-	width: 100%;
-	box-shadow: 0px 2px 5px -1px rgba(0,0,0,0.65);
+	box-shadow: 0 6px 12px 0 rgba(0,0,0,0.10);
 }
-.nav-selection {
-	visibility: hidden;
+
+@media (max-width: 576px) {
+	.nav-item .nav-link {
+		padding: 5px;
+	}
 }
-.nav-selection.active {
-	visibility: visible;
-}
-.nav-icon {
-	width: 32px;
-	height: 32px;
-	text-align: center;
-	border-radius: 50%;
-}
-.nav-icon.active {
-	color: white;
-	background-color: black;
-}
+
 </style>

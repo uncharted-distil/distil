@@ -1,5 +1,5 @@
 <template>
-	<div class='card'>
+	<div class='card card-result'>
 		<div class='dataset-header card-header btn btn-outline-success hover' v-on:click='setActiveDataset()' v-bind:class='{collapsed: !expanded}'>
 			<a class='nav-link'><b>Name:</b> {{name}}</a>
 			<a class='nav-link'><b>Columns:</b> {{variables.length}}</a>
@@ -11,7 +11,7 @@
 				<div class='col-4'>
 					<span><b>Top features:</b></span>
 					<ul id='example-1'>
-						<li class="small-text" :key="variable.name" v-for='variable in topVariables'>
+						<li :key="variable.name" v-for='variable in topVariables'>
 							{{variable.name}}
 						</li>
 					</ul>
@@ -24,15 +24,15 @@
 				</div>
 			</div>
 
-			<div v-if='!expanded'>
+			<div v-if='!expanded' class='card-expanded'>
 				<b-button class='full-width hover' variant='outline-secondary' v-on:click='toggleExpansion()'>
 					More Details...
 				</b-button>
 			</div>
 
-			<div v-if='expanded'>
-				<span><b>Full Description:</b></span>
-				<p class='p-2' v-html='highlightedDescription()'></p>
+			<div v-if='expanded' class='card-expanded'>
+				<span><h3>Full Description:</h3></span>
+				<p v-html='highlightedDescription()'></p>
 				<b-button class='full-width hover'variant='outline-secondary' v-on:click='toggleExpansion()'>
 					Less Details...
 				</b-button>
@@ -144,7 +144,8 @@ export default Vue.extend({
 .full-width {
 	width: 100%;
 }
-.small-text {
-	font-size: 14px;
+.card-expanded {
+	padding-top: 15px;
 }
+
 </style>

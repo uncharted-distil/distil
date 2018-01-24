@@ -1,6 +1,6 @@
 <template>
 	<div class="available-target-variables">
-		<h6 class="nav-link">Available features</h6>
+		<p class="nav-link font-weight-bold">Available features</p>
 		<variable-facets
 			enable-search
 			instance-name="availableVars"
