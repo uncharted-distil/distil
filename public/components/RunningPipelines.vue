@@ -1,5 +1,5 @@
 <template>
-	<b-card header="Pending Pipelines">
+	<b-card header="Pending Models">
 		<div v-if="runningPipelines.length === 0">None</div>
 		<b-list-group v-bind:key="pipeline.timestamp" v-for="pipeline in runningPipelines">
 			<pipeline-preview :result="pipeline"></pipeline-preview>

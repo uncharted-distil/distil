@@ -38,7 +38,7 @@
 						</div>
 						<div class="row flex-1 bg-white align-items-center">
 							<div class="col-12 d-flex flex-column">
-								<h5 class="header-label">Create the Pipelines</h5>
+								<h5 class="header-label">Create the Models</h5>
 							</div>
 						</div>
 						<div class="row flex-3">
