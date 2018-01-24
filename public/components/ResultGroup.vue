@@ -2,14 +2,10 @@
 	<div v-bind:class="currentClass"
 		@click="click()">
 		{{name}} <sup>{{index}}</sup> {{timestamp}}
-		<div>{{pipelineId}}</div>
 		<div v-if="pipelineStatus === 'COMPLETED' || pipelineStatus === 'UPDATED'">
-			<b-badge variant="info" v-bind:key="`${score.metric}_${pipelineId}`" v-for="score in scores">
+			<b-badge variant="info" v-bind:key="`${score.metric}`" v-for="score in scores">
 				{{metricName(score.metric)}}: {{score.value}}
 			</b-badge>
-			<div>
-			Status: {{pipelineStatus}}
-			</div>
 			<facets v-if="resultGroups.length" class="result-container"
 				@histogram-click="onResultHistogramClick"
 				@facet-click="onResultFacetClick"

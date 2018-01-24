@@ -19,10 +19,6 @@ export const mutations = {
 		state.datasets = datasets;
 	},
 
-	setVariableSummaries(state: DataState, summaries: VariableSummary[]) {
-		state.variableSummaries = summaries;
-	},
-
 	updateVariableSummaries(state: DataState, summary: VariableSummary) {
 		updateSummaries(summary, state.variableSummaries, 'name');
 	},

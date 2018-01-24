@@ -98,27 +98,33 @@ export const actions = {
 			console.warn('`variables` argument is missing');
 			return null;
 		}
-		// commit empty place holders
-		const histograms = args.variables.map(variable => {
-			return {
-				name: variable.name,
-				feature: name,
-				pending: true,
-				buckets: [],
-				extrema: {
-					min: NaN,
-					max: NaN
-				}
-			};
-		});
-		mutations.setVariableSummaries(context, histograms);
-		// fill them in asynchronously
-		return Promise.all(args.variables.map(variable => {
-			return context.dispatch('fetchVariableSummary', {
-				dataset: args.dataset,
-				variable: variable.name
+		// commit empty place holders, if there is no data
+		const promises = [];
+		args.variables.forEach(variable => {
+			const exists = _.find(context.state.variableSummaries, v => {
+				return v.name === variable.name;
 			});
-		}));
+			if (!exists) {
+				// add place holder
+				mutations.updateVariableSummaries(context, {
+					name: variable.name,
+					feature: name,
+					pending: true,
+					buckets: [],
+					extrema: {
+						min: NaN,
+						max: NaN
+					}
+				});
+				// fetch summary
+				promises.push(context.dispatch('fetchVariableSummary', {
+					dataset: args.dataset,
+					variable: variable.name
+				}));
+			}
+		});
+		// fill them in asynchronously
+		return Promise.all(promises);
 	},
 
 	fetchVariableSummary(context: DataContext, args: { dataset: string, variable: string }) {

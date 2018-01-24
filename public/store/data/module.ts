@@ -65,7 +65,6 @@ export const mutations = {
 	updateVariableType: commit(moduleMutations.updateVariableType),
 	setVariables: commit(moduleMutations.setVariables),
 	setDatasets: commit(moduleMutations.setDatasets),
-	setVariableSummaries: commit(moduleMutations.setVariableSummaries),
 	updateVariableSummaries: commit(moduleMutations.updateVariableSummaries),
 	updateResultsSummaries: commit(moduleMutations.updateResultsSummaries),
 	updateResidualsSummaries: commit(moduleMutations.updateResidualsSummaries),
