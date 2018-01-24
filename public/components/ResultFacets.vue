@@ -61,6 +61,7 @@ export default Vue.extend({
 		dataset(): string {
 			return routeGetters.getRouteDataset(this.$store);
 		},
+		
 		target(): string {
 			return routeGetters.getRouteTargetVariable(this.$store);
 		},

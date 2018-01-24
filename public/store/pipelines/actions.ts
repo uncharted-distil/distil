@@ -83,7 +83,6 @@ export const actions = {
 				}
 				const pipelines = response.data.pipelines as PipelineInfo[];
 				pipelines.forEach(pipeline => {
-					console.log('fetchPipelines received pipeline-info for', pipeline.pipelineId, 'at', pipeline.progress);
 
 					let targetFeature = '';
 					pipeline.features.forEach(feature => {
@@ -108,40 +107,6 @@ export const actions = {
 						output: ''
 					});
 				});
-
-				/*
-				const pipelineResponse = response.data.pipelines as PipelineResponse[];
-				pipelineResponse.forEach(pipeline => {
-
-					// determine the target feature for this request
-					let targetFeature = '';
-					pipeline.features.forEach(feature => {
-						if (feature.featureType === FEATURE_TYPE_TARGET) {
-							targetFeature = feature.featureName;
-						}
-					});
-
-					// for each result
-					pipeline.results.forEach(result => {
-						console.log('fetchPipelines received pipeline-info for', result.pipelineId, 'at', result.progress);
-						// update pipeline
-						mutations.updatePipelineRequest(context, {
-							name: targetFeature,
-							filters: pipeline.filters,
-							features: pipeline.features,
-							requestId: pipeline.requestId,
-							dataset: pipeline.dataset,
-							feature: targetFeature,
-							timestamp: result.timestamp,
-							progress: result.progress,
-							pipelineId: result.pipelineId,
-							resultId: result.resultId,
-							scores: result.scores,
-							output: ''
-						});
-					});
-				});
-				*/
 			})
 			.catch(error => {
 				console.error(error);

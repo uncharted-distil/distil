@@ -146,7 +146,7 @@ export function getErrorFacetKey(target: string) {
 }
 
 export function updateSummaries(summary: VariableSummary, summaries: VariableSummary[], matchField: string) {
-	// TODO: check timestamps?
+	// TODO: add and check timestamps to ensure we don't overwrite old data?
 	const index = _.findIndex(summaries, r => r[matchField] === summary[matchField]);
 	if (index >= 0) {
 		Vue.set(summaries, index, summary);
@@ -160,7 +160,6 @@ export function getSummary(
 	endpoint: string,
 	pipeline: PipelineInfo,
 	nameFunc: (PipelineInfo) => string,
-	setFunction: (DataContext, VariableSummary) => void,
 	updateFunction: (DataContext, VariableSummary) => void): Promise<any> {
 
 	// save a placeholder histogram
@@ -173,13 +172,12 @@ export function getSummary(
 		pipelineId: pipeline.pipelineId,
 		resultId: ''
 	};
-	setFunction(context, [ pendingHistogram ]);
+	updateFunction(context, pendingHistogram);
 
 	// fetch the results for each pipeline
 	if (pipeline.progress !== PIPELINE_UPDATED &&
 		pipeline.progress !== PIPELINE_COMPLETED) {
 		// skip
-		console.log('aborting summary request for', pipeline.pipelineId);
 		return;
 	}
 	const name = nameFunc(pipeline);
@@ -193,20 +191,17 @@ export function getSummary(
 			// save the histogram data
 			const histogram = response.data.histogram;
 			if (!histogram) {
-				setFunction(context, [
-					{
-						name: name,
-						feature: feature,
-						buckets: [],
-						extrema: {} as Extrema,
-						pipelineId: pipelineId,
-						resultId: resultId,
-						err: 'No analysis available'
-					}
-				]);
+				updateFunction(context, {
+					name: name,
+					feature: feature,
+					buckets: [],
+					extrema: {} as Extrema,
+					pipelineId: pipelineId,
+					resultId: resultId,
+					err: 'No analysis available'
+				});
 				return;
 			}
-			console.log(`resolving ${endpoint} summary for ${pipelineId}`);
 			histogram.buckets = histogram.buckets ? histogram.buckets : [];
 			histogram.name = name;
 			histogram.feature = feature;
@@ -215,17 +210,15 @@ export function getSummary(
 			updateFunction(context, histogram);
 		})
 		.catch(error => {
-			setFunction(context, [
-				{
-					name: name,
-					feature: feature,
-					buckets: [],
-					extrema: {} as Extrema,
-					pipelineId: pipelineId,
-					resultId: resultId,
-					err: error
-				}
-			]);
+			updateFunction(context, {
+				name: name,
+				feature: feature,
+				buckets: [],
+				extrema: {} as Extrema,
+				pipelineId: pipelineId,
+				resultId: resultId,
+				err: error
+			});
 			return;
 		});
 }
@@ -235,7 +228,6 @@ export function getSummaries(
 	endpoint: string,
 	pipelines: PipelineInfo[],
 	nameFunc: (PipelineInfo) => string,
-	setFunction: (DataContext, VariableSummary) => void,
 	updateFunction: (DataContext, VariableSummary) => void): Promise<any> {
 
 	// return as singular promise
@@ -245,7 +237,6 @@ export function getSummaries(
 			endpoint,
 			pipeline,
 			nameFunc,
-			setFunction,
 			updateFunction);
 	});
 	return Promise.all(promises);
