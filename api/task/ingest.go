@@ -218,12 +218,6 @@ func Ingest(index string, dataset string, config *IngestTaskConfig) error {
 		return errors.Wrap(err, "unable to load importance from file")
 	}
 
-	// load summary
-	err = meta.LoadSummary(config.getAbsolutePath(dataset, config.SummaryOutputPathRelative), true)
-	if err != nil {
-		return errors.Wrap(err, "unable to load summary")
-	}
-
 	// load stats
 	err = meta.LoadDatasetStats(config.getAbsolutePath(dataset, config.MergedOutputPathRelative))
 	if err != nil {
