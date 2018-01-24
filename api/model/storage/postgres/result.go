@@ -284,6 +284,9 @@ func addErrorFilterToWhere(dataset string, targetName string, errorFilter *model
 func (s *Storage) FetchFilteredResults(dataset string, index string, resultURI string, filterParams *model.FilterParams, inclusive bool) (*model.FilteredData, error) {
 	datasetResult := s.getResultTable(dataset)
 	targetName, err := s.getResultTargetName(datasetResult, resultURI, index)
+	if err != nil {
+		return nil, err
+	}
 
 	// fetch the variable info to resolve its type - skip the first column since that will be the d3m_index value
 	variable, err := s.getResultTargetVariable(dataset, index, targetName)

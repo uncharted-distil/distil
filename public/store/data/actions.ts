@@ -189,6 +189,7 @@ export const actions = {
 
 	// fetches result summary for a given pipeline id.
 	fetchResultsSummary(context: DataContext, args: { dataset: string, pipelineId: string }) {
+		console.log('fetchResultsSummary', args.pipelineId);
 		const pipeline = getPipelineById(context.rootState.pipelineModule, args.pipelineId);
 		const endPoint = `/distil/results-summary/${ES_INDEX}/${args.dataset}`
 		const nameFunc = (p: PipelineInfo) => getPredictedFacetKey(p.feature);
@@ -197,6 +198,7 @@ export const actions = {
 
 	// fetches result summaries for a given pipeline create request
 	fetchResultsSummaries(context: DataContext, args: { dataset: string, requestIds: string[] }) {
+		console.log('fetchResultsSummaries', args.requestIds.join(', '));
 		const pipelines = getPipelinesByRequestIds(context.rootState.pipelineModule, args.requestIds);
 		const endPoint = `/distil/results-summary/${ES_INDEX}/${args.dataset}`
 		const nameFunc = (p: PipelineInfo) => getPredictedFacetKey(p.feature);

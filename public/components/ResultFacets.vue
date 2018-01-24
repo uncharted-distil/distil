@@ -65,12 +65,20 @@ export default Vue.extend({
 			return routeGetters.getRouteTargetVariable(this.$store);
 		},
 
+		resultSummaries(): VariableSummary[] {
+			return dataGetters.getResultsSummaries(this.$store);;
+		},
+
+		residualSummaries(): VariableSummary[] {
+			return this.regression ? dataGetters.getResidualsSummaries(this.$store) : [];
+		},
+
 		// Generate pairs of residuals and results for each pipeline in the numerical case.
 		resultGroups(): SummaryGroup[] {
 
 			const pipelines = getPipelinesForDatasetAndTarget(this.$store.state.pipelineModule, this.dataset, this.target);
-			const resultSummaries = dataGetters.getResultsSummaries(this.$store);
-			const residualsSummaries = this.regression ? dataGetters.getResidualsSummaries(this.$store) : [];
+			const resultSummaries = this.resultSummaries;
+			const residualsSummaries = this.residualSummaries;
 
 			const summaryGroups = pipelines.map(pipeline => {
 				const pipelineId = pipeline.pipelineId;

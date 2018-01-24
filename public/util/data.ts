@@ -146,6 +146,7 @@ export function getErrorFacetKey(target: string) {
 }
 
 export function updateSummaries(summary: VariableSummary, summaries: VariableSummary[], matchField: string) {
+	// TODO: check timestamps?
 	const index = _.findIndex(summaries, r => r[matchField] === summary[matchField]);
 	if (index >= 0) {
 		Vue.set(summaries, index, summary);
@@ -178,6 +179,7 @@ export function getSummary(
 	if (pipeline.progress !== PIPELINE_UPDATED &&
 		pipeline.progress !== PIPELINE_COMPLETED) {
 		// skip
+		console.log('aborting summary request for', pipeline.pipelineId);
 		return;
 	}
 	const name = nameFunc(pipeline);
@@ -204,6 +206,7 @@ export function getSummary(
 				]);
 				return;
 			}
+			console.log(`resolving ${endpoint} summary for ${pipelineId}`);
 			histogram.buckets = histogram.buckets ? histogram.buckets : [];
 			histogram.name = name;
 			histogram.feature = feature;

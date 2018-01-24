@@ -168,7 +168,7 @@ export default Vue.extend({
 			return [];
 		},
 
-		resultsSummaries():  VariableSummary[] {
+		resultsSummaries(): VariableSummary[] {
 			return dataGetters.getResultsSummaries(this.$store);
 		},
 
@@ -194,7 +194,7 @@ export default Vue.extend({
 			return null;
 		},
 
-		residualsSummaries():  VariableSummary[] {
+		residualsSummaries(): VariableSummary[] {
 			return this.regressionEnabled ? dataGetters.getResidualsSummaries(this.$store) : [];
 		},
 
