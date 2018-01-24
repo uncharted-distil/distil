@@ -391,25 +391,29 @@ func handleCreatePipelinesSuccess(conn *Connection, msg *Message, proxy *pipelin
 			}
 			log.Infof("Pipeline %s - %s", res.PipelineId, progress)
 
-			// on complete, fetch results as well
-			if res.ProgressInfo == pipeline.Progress_COMPLETED ||
-				res.ProgressInfo == pipeline.Progress_UPDATED {
-
+			// on complete, persist scores
+			if res.ProgressInfo == pipeline.Progress_COMPLETED {
 				for _, score := range res.PipelineInfo.Scores {
 
 					scoreMetric := pipeline.PerformanceMetric_name[int32(score.Metric)]
 					scoreValue := float64(score.Value)
 
 					// store the result score
-					if res.ProgressInfo == pipeline.Progress_COMPLETED {
-						pipelineStorage.PersistResultScore(res.PipelineId, scoreMetric, scoreValue)
-					}
+					pipelineStorage.PersistResultScore(res.PipelineId, scoreMetric, scoreValue)
 				}
+			}
 
+			resultURI := ""
+			resultID := ""
+			outputType := ""
+
+			// on update / complete, persist the resultURI
+			if res.ProgressInfo == pipeline.Progress_COMPLETED ||
+				res.ProgressInfo == pipeline.Progress_UPDATED {
 				// Get the result URI, removing the protocol portion if it exists. The returned value
 				// is either a csv or a directory.  If we get a directory back, it should match the standard structure.
 				// Look for the trainTargets.csv
-				resultURI := res.PipelineInfo.PredictResultUri
+				resultURI = res.PipelineInfo.PredictResultUri
 				resultURI = strings.Replace(resultURI, "file://", "", 1)
 				if !strings.HasSuffix(resultURI, ".csv") {
 					resultURI = path.Join(resultURI, pipeline.D3MLearningData)
@@ -419,24 +423,32 @@ func handleCreatePipelinesSuccess(conn *Connection, msg *Message, proxy *pipelin
 				hasher := sha1.New()
 				hasher.Write([]byte(resultURI))
 				bs := hasher.Sum(nil)
-				resUUIDStr := fmt.Sprintf("%x", bs)
+				resultID = fmt.Sprintf("%x", bs)
 
 				response["pipeline"] = map[string]interface{}{
-					"resultId": resUUIDStr,
+					"resultId": resultID,
 				}
 
-				// store the result data & metadata
-				err = pipelineStorage.PersistResultMetadata(
-					proxy.RequestID.String(),
-					res.PipelineId,
-					resUUIDStr,
-					resultURI,
-					progress,
-					pipeline.OutputType_name[int32(res.PipelineInfo.Output)],
-					currentTime)
-				if err != nil {
-					handleErr(conn, msg, errors.Wrap(err, "Unable to store result metadata"))
-				}
+				outputTypeName := int32(res.PipelineInfo.Output)
+				outputType = pipeline.OutputType_name[outputTypeName]
+			}
+
+			// store the result metadata
+			err = pipelineStorage.PersistResultMetadata(
+				proxy.RequestID.String(),
+				res.PipelineId,
+				resultID,
+				resultURI,
+				progress,
+				outputType,
+				currentTime)
+			if err != nil {
+				handleErr(conn, msg, errors.Wrap(err, "Unable to store result metadata"))
+			}
+
+			// persist results, if they are available
+			if res.ProgressInfo == pipeline.Progress_COMPLETED ||
+				res.ProgressInfo == pipeline.Progress_UPDATED {
 
 				err = dataStorage.PersistResult(dataset, resultURI)
 				if err != nil {

@@ -98,27 +98,33 @@ export const actions = {
 			console.warn('`variables` argument is missing');
 			return null;
 		}
-		// commit empty place holders
-		const histograms = args.variables.map(variable => {
-			return {
-				name: variable.name,
-				feature: name,
-				pending: true,
-				buckets: [],
-				extrema: {
-					min: NaN,
-					max: NaN
-				}
-			};
-		});
-		mutations.setVariableSummaries(context, histograms);
-		// fill them in asynchronously
-		return Promise.all(args.variables.map(variable => {
-			return context.dispatch('fetchVariableSummary', {
-				dataset: args.dataset,
-				variable: variable.name
+		// commit empty place holders, if there is no data
+		const promises = [];
+		args.variables.forEach(variable => {
+			const exists = _.find(context.state.variableSummaries, v => {
+				return v.name === variable.name;
 			});
-		}));
+			if (!exists) {
+				// add place holder
+				mutations.updateVariableSummaries(context, {
+					name: variable.name,
+					feature: name,
+					pending: true,
+					buckets: [],
+					extrema: {
+						min: NaN,
+						max: NaN
+					}
+				});
+				// fetch summary
+				promises.push(context.dispatch('fetchVariableSummary', {
+					dataset: args.dataset,
+					variable: variable.name
+				}));
+			}
+		});
+		// fill them in asynchronously
+		return Promise.all(promises);
 	},
 
 	fetchVariableSummary(context: DataContext, args: { dataset: string, variable: string }) {
@@ -192,7 +198,7 @@ export const actions = {
 		const pipeline = getPipelineById(context.rootState.pipelineModule, args.pipelineId);
 		const endPoint = `/distil/results-summary/${ES_INDEX}/${args.dataset}`
 		const nameFunc = (p: PipelineInfo) => getPredictedFacetKey(p.feature);
-		getSummary(context, endPoint, pipeline, nameFunc, mutations.setResultsSummaries, mutations.updateResultsSummaries);
+		getSummary(context, endPoint, pipeline, nameFunc, mutations.updateResultsSummaries);
 	},
 
 	// fetches result summaries for a given pipeline create request
@@ -200,7 +206,7 @@ export const actions = {
 		const pipelines = getPipelinesByRequestIds(context.rootState.pipelineModule, args.requestIds);
 		const endPoint = `/distil/results-summary/${ES_INDEX}/${args.dataset}`
 		const nameFunc = (p: PipelineInfo) => getPredictedFacetKey(p.feature);
-		getSummaries(context, endPoint, pipelines, nameFunc, mutations.setResultsSummaries, mutations.updateResultsSummaries);
+		getSummaries(context, endPoint, pipelines, nameFunc, mutations.updateResultsSummaries);
 	},
 
 	// fetches result summary for a given pipeline id.
@@ -208,7 +214,7 @@ export const actions = {
 		const pipeline = getPipelineById(context.rootState.pipelineModule, args.pipelineId);
 		const endPoint = `/distil/residuals-summary/${ES_INDEX}/${args.dataset}`
 		const nameFunc = (p: PipelineInfo) => getErrorFacetKey(p.feature);
-		getSummary(context, endPoint, pipeline, nameFunc, mutations.setResidualsSummaries, mutations.updateResidualsSummaries);
+		getSummary(context, endPoint, pipeline, nameFunc, mutations.updateResidualsSummaries);
 	},
 
 	// fetches result summaries for a given pipeline create request
@@ -216,7 +222,7 @@ export const actions = {
 		const pipelines = getPipelinesByRequestIds(context.rootState.pipelineModule, args.requestIds);
 		const endPoint = `/distil/residuals-summary/${ES_INDEX}/${args.dataset}`
 		const nameFunc = (p: PipelineInfo) => getErrorFacetKey(p.feature);
-		getSummaries(context, endPoint, pipelines, nameFunc, mutations.setResidualsSummaries, mutations.updateResidualsSummaries);
+		getSummaries(context, endPoint, pipelines, nameFunc, mutations.updateResidualsSummaries);
 	},
 
 	// fetches result data for created pipeline

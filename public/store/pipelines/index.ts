@@ -4,6 +4,7 @@ export const PIPELINE_SUBMITTED = 'SUBMITTED';
 export const PIPELINE_RUNNING = 'RUNNING';
 export const PIPELINE_UPDATED = 'UPDATED';
 export const PIPELINE_COMPLETED = 'COMPLETED';
+export const PIPELINE_ERRORED = 'ERRORED';
 
 export interface Score {
 	metric: string;

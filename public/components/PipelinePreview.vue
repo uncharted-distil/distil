@@ -30,6 +30,11 @@
 							{{metricName(score.metric)}}: {{score.value}}
 						</b-badge>
 					</div>
+					<div v-if="isErrored()">
+						<b-badge variant="danger">
+							ERROR
+						</b-badge>
+					</div>
 					</b-badge>
 				</div>
 			</div>
@@ -48,7 +53,7 @@
 import moment from 'moment';
 import { getMetricDisplayName } from '../util/pipelines';
 import { createRouteEntry } from '../util/routes';
-import { PipelineInfo, PIPELINE_SUBMITTED, PIPELINE_RUNNING, PIPELINE_UPDATED, PIPELINE_COMPLETED } from '../store/pipelines/index';
+import { PipelineInfo, PIPELINE_SUBMITTED, PIPELINE_RUNNING, PIPELINE_UPDATED, PIPELINE_COMPLETED, PIPELINE_ERRORED } from '../store/pipelines/index';
 import Vue from 'vue';
 
 export default Vue.extend({
@@ -95,6 +100,9 @@ export default Vue.extend({
 		},
 		isCompleted(): boolean {
 			return (<PipelineInfo>this.result).progress === PIPELINE_COMPLETED;
+		},
+		isErrored(): boolean {
+			return (<PipelineInfo>this.result).progress === PIPELINE_ERRORED;
 		},
 		onResult() {
 			const result = <PipelineInfo>this.result;

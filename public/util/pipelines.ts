@@ -7,8 +7,6 @@ import _ from 'lodash';
 import { Dictionary } from './dict';
 import { PipelineState, PipelineInfo } from '../store/pipelines/index';
 
-const ERROR_VAL = 'ERRORED';
-
 export interface NameInfo {
 	displayName: string,
 	schemaName: string
@@ -19,11 +17,6 @@ export interface Task {
 	schemaName: string,
 	metrics: Dictionary<NameInfo>
 };
-
-// Utility function to determine if a pipeline progress is in an errored state
-export function pipelineIsErrored(progress: string): boolean {
-	return progress == ERROR_VAL;
-}
 
 // Utility function to return all pipeline results associated with a given request ID
 export function getPipelinesByRequestIds(state: PipelineState, requestIds: string[]): PipelineInfo[] {
