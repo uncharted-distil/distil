@@ -2,8 +2,8 @@ import _ from 'lodash';
 import axios from 'axios';
 import { AxiosPromise } from 'axios';
 import { encodeQueryParams, Filter } from '../../util/filters';
-import { getPipelinesByRequestIds } from '../../util/pipelines';
-import { getSummaries } from '../../util/data';
+import { getPipelinesByRequestIds, getPipelineById } from '../../util/pipelines';
+import { getSummaries, getSummary } from '../../util/data';
 import { Variable, Data } from './index';
 import { PipelineInfo } from '../pipelines/index';
 import { mutations } from './module'
@@ -27,9 +27,12 @@ export const actions = {
 	},
 
 	// fetches all variables for a single dataset.
-	getVariables(context: DataContext, args: { dataset: string }) {
-		const dataset = args.dataset;
-		return axios.get(`/distil/variables/${ES_INDEX}/${dataset}`)
+	fetchVariables(context: DataContext, args: { dataset: string }) {
+		if (!args.dataset) {
+			console.warn('`dataset` argument is missing');
+			return null;
+		}
+		return axios.get(`/distil/variables/${ES_INDEX}/${args.dataset}`)
 			.then(response => {
 				mutations.setVariables(context, response.data.variables);
 			})
@@ -40,6 +43,18 @@ export const actions = {
 	},
 
 	setVariableType(context: DataContext, args: { dataset: string, field: string, type: string }) {
+		if (!args.dataset) {
+			console.warn('`dataset` argument is missing');
+			return null;
+		}
+		if (!args.field) {
+			console.warn('`field` argument is missing');
+			return null;
+		}
+		if (!args.type) {
+			console.warn('`type` argument is missing');
+			return null;
+		}
 		return axios.post(`/distil/variables/${ES_INDEX}/${args.dataset}`,
 			{
 				field: args.field,
@@ -48,7 +63,7 @@ export const actions = {
 			.then(() => {
 				mutations.updateVariableType(context, args);
 				// update variable summary
-				return context.dispatch('getVariableSummary', {
+				return context.dispatch('fetchVariableSummary', {
 					dataset: args.dataset,
 					variable: args.field
 				});
@@ -58,12 +73,33 @@ export const actions = {
 			});
 	},
 
+	fetchVariablesAndVariableSummaries(context: DataContext, args: { dataset: string }) {
+		if (!args.dataset) {
+			console.warn('`dataset` argument is missing');
+			return null;
+		}
+		return context.dispatch('fetchVariables', {
+			dataset: args.dataset
+		}).then(() => {
+			context.dispatch('fetchVariableSummaries', {
+				dataset: args.dataset,
+				variables: context.state.variables
+			});
+		});
+	},
+
 	// fetches variable summary data for the given dataset and variables
-	getVariableSummaries(context: DataContext, args: { dataset: string, variables: Variable[] }) {
-		const dataset = args.dataset;
-		const variables = args.variables;
+	fetchVariableSummaries(context: DataContext, args: { dataset: string, variables: Variable[] }) {
+		if (!args.dataset) {
+			console.warn('`dataset` argument is missing');
+			return null;
+		}
+		if (!args.variables) {
+			console.warn('`variables` argument is missing');
+			return null;
+		}
 		// commit empty place holders
-		const histograms = variables.map(variable => {
+		const histograms = args.variables.map(variable => {
 			return {
 				name: variable.name,
 				feature: name,
@@ -77,15 +113,15 @@ export const actions = {
 		});
 		mutations.setVariableSummaries(context, histograms);
 		// fill them in asynchronously
-		return Promise.all(variables.map(variable => {
-			return context.dispatch('getVariableSummary', {
-				dataset: dataset,
+		return Promise.all(args.variables.map(variable => {
+			return context.dispatch('fetchVariableSummary', {
+				dataset: args.dataset,
 				variable: variable.name
 			});
 		}));
 	},
 
-	getVariableSummary(context: DataContext, args: { dataset: string, variable: string }) {
+	fetchVariableSummary(context: DataContext, args: { dataset: string, variable: string }) {
 		const dataset = args.dataset;
 		const variable = args.variable;
 		return axios.get(`/distil/variable-summaries/${ES_INDEX}/${dataset}/${variable}`)
@@ -151,20 +187,36 @@ export const actions = {
 		return axios.get<Data>(url);
 	},
 
-	// fetches result summaries for a given pipeline create request
-	getResultsSummaries(context: DataContext, args: { dataset: string, requestIds: string[] }) {
-		const results = getPipelinesByRequestIds(context.rootState.pipelineModule, args.requestIds);
+	// fetches result summary for a given pipeline id.
+	fetchResultsSummary(context: DataContext, args: { dataset: string, pipelineId: string }) {
+		const pipeline = getPipelineById(context.rootState.pipelineModule, args.pipelineId);
 		const endPoint = `/distil/results-summary/${ES_INDEX}/${args.dataset}`
 		const nameFunc = (p: PipelineInfo) => getPredictedFacetKey(p.feature);
-		getSummaries(context, endPoint, results, nameFunc, mutations.setResultsSummaries, mutations.updateResultsSummaries);
+		getSummary(context, endPoint, pipeline, nameFunc, mutations.setResultsSummaries, mutations.updateResultsSummaries);
 	},
 
 	// fetches result summaries for a given pipeline create request
-	getResidualsSummaries(context: DataContext, args: { dataset: string, requestIds: string[] }) {
-		const results = getPipelinesByRequestIds(context.rootState.pipelineModule, args.requestIds);
+	fetchResultsSummaries(context: DataContext, args: { dataset: string, requestIds: string[] }) {
+		const pipelines = getPipelinesByRequestIds(context.rootState.pipelineModule, args.requestIds);
+		const endPoint = `/distil/results-summary/${ES_INDEX}/${args.dataset}`
+		const nameFunc = (p: PipelineInfo) => getPredictedFacetKey(p.feature);
+		getSummaries(context, endPoint, pipelines, nameFunc, mutations.setResultsSummaries, mutations.updateResultsSummaries);
+	},
+
+	// fetches result summary for a given pipeline id.
+	fetchResidualsSummary(context: DataContext, args: { dataset: string, pipelineId: string }) {
+		const pipeline = getPipelineById(context.rootState.pipelineModule, args.pipelineId);
 		const endPoint = `/distil/residuals-summary/${ES_INDEX}/${args.dataset}`
 		const nameFunc = (p: PipelineInfo) => getErrorFacetKey(p.feature);
-		getSummaries(context, endPoint, results, nameFunc, mutations.setResidualsSummaries, mutations.updateResidualsSummaries);
+		getSummary(context, endPoint, pipeline, nameFunc, mutations.setResidualsSummaries, mutations.updateResidualsSummaries);
+	},
+
+	// fetches result summaries for a given pipeline create request
+	fetchResidualsSummaries(context: DataContext, args: { dataset: string, requestIds: string[] }) {
+		const pipelines = getPipelinesByRequestIds(context.rootState.pipelineModule, args.requestIds);
+		const endPoint = `/distil/residuals-summary/${ES_INDEX}/${args.dataset}`
+		const nameFunc = (p: PipelineInfo) => getErrorFacetKey(p.feature);
+		getSummaries(context, endPoint, pipelines, nameFunc, mutations.setResidualsSummaries, mutations.updateResidualsSummaries);
 	},
 
 	// fetches result data for created pipeline

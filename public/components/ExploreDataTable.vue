@@ -73,10 +73,7 @@ export default Vue.extend({
 	},
 
 	watch: {
-		'$route.query.filters'() {
-			this.fetch();
-		},
-		'$route.query.dataset'() {
+		filters() {
 			this.fetch();
 		}
 	},

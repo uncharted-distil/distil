@@ -18,7 +18,7 @@
 	</div>
 </template>
 
-<script lange="ts">
+<script lang="ts">
 import FlowBar from '../components/FlowBar';
 import RecentDatasets from '../components/RecentDatasets';
 import RecentPipelines from '../components/RecentPipelines';
@@ -30,6 +30,7 @@ import Vue from 'vue';
 
 export default Vue.extend({
 	name: 'home-view',
+
 	components: {
 		FlowBar,
 		RecentDatasets,
@@ -37,17 +38,23 @@ export default Vue.extend({
 		RunningPipelines,
 		SearchBar
 	},
+
 	computed: {
-		sessionId() {
+		sessionId(): string {
 			return getters.getPipelineSessionID(this.$store);
 		}
 	},
+
 	mounted() {
-		actions.fetchPipelines(this.$store, {
-			sessionId: this.sessionId
-		});
+		this.fetch();
 	},
+
 	methods: {
+		fetch() {
+			actions.fetchPipelines(this.$store, {
+				sessionId: this.sessionId
+			});
+		},
 		gotoSearch() {
 			gotoSearch(this.$store, this.$router);
 		}
