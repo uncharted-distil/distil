@@ -38,6 +38,7 @@ export default Vue.extend({
 
 <style>
 .search-results {
+	width: 100%;
 	overflow: auto;
 }
 </style>
