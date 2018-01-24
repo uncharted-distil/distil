@@ -20,13 +20,13 @@ postgres:
     - "5432:5432"
   command:
     -d postgres
-# nk_classification_rest:
-#   image:
-#     primitives.azurecr.io/data.world_container:v1.0
-#   ports:
-#     - "5000:5000"
-# nk_ranking_rest:
-#   image:
-#     primitives.azurecr.io/http_features:0.3
-#   ports:
-#     - "5001:5000"
+ nk_classification_rest:
+   image:
+     primitives.azurecr.io/simon:1.0.0
+   ports:
+     - "5000:5000"
+ nk_ranking_rest:
+   image:
+     primitives.azurecr.io/http_features:0.4
+   ports:
+     - "5001:5000"
