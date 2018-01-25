@@ -34,7 +34,9 @@
 							</div>
 						</div>
 						<div class="row flex-3">
-							<create-pipelines-form class="col-12 d-flex flex-column select-create-pipelines"></create-pipelines-form>
+							<div class="col-12 d-flex flex-column">
+								<create-pipelines-form class="select-create-pipelines"></create-pipelines-form>
+							</div>
 						</div>
 					</div>
 				</div>
