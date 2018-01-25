@@ -12,6 +12,7 @@ type DataStorageCtor func() (DataStorage, error)
 type DataStorage interface {
 	FetchData(dataset string, index string, filterParams *FilterParams, inclusive bool) (*FilteredData, error)
 	FetchSummary(dataset string, index string, varName string) (*Histogram, error)
+	FetchSummaryByResult(dataset string, index string, varName string, resultURI string) (*Histogram, error)
 	PersistResult(dataset string, resultURI string) error
 	FetchResults(dataset string, index string, resultURI string) (*FilteredData, error)
 	FetchFilteredResults(dataset string, index string, resultURI string, filterParams *FilterParams, inclusive bool) (*FilteredData, error)
