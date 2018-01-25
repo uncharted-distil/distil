@@ -167,6 +167,10 @@ export const getters = {
 		return state.filteredData;
 	},
 
+	getFilteredDataNumRows(state: DataState): number {
+		return state.filteredData ? state.filteredData.numRows : 0;
+	},
+
 	getFilteredDataItems(state: DataState, getters: any): Dictionary<any>[] {
 		return getDataItems(state.filteredData, getters.getVariableTypesMap);
 	},
@@ -194,6 +198,10 @@ export const getters = {
 
 	getResultData(state: DataState): Data {
 		return state.resultData;
+	},
+
+	getResultDataNumRows(state: DataState): number {
+		return state.resultData ? state.resultData.numRows : 0;
 	},
 
 	getResultDataItems(state: DataState, getters: any): TargetRow[] {
@@ -246,6 +254,10 @@ export const getters = {
 
 	getSelectedData(state: DataState): Data {
 		return state.selectedData;
+	},
+
+	getSelectedDataNumRows(state: DataState): number {
+		return state.selectedData ? state.selectedData.numRows : 0;
 	},
 
 	getSelectedDataItems(state: DataState, getters: any): TableRow[] {

@@ -1,6 +1,7 @@
 <template>
 	<div class="results-data-table">
 		<p class="nav-link font-weight-bold">{{title}}</p>
+		<p><small>Displaying {{items.length}} of {{numRows}} rows</small></p>
 		<div class="results-data-table-container">
 			<div class="results-data-no-results" v-if="items.length===0">
 				No results
@@ -52,6 +53,10 @@ export default Vue.extend({
 	computed: {
 		pipelineId(): string {
 			return routeGetters.getRoutePipelineId(this.$store);
+		},
+
+		numRows(): number {
+			return getters.getResultDataNumRows(this.$store);
 		},
 
 		// extracts the training set from the store
@@ -149,7 +154,5 @@ results-data-table {
 	background-color: #eee;
 	padding: 8px;
 }
-.table-sm th, .table-sm td {
-	font-size: 0.9rem;
-}
+
 </style>
