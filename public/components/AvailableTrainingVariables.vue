@@ -50,17 +50,7 @@ export default Vue.extend({
 					});
 					this.$router.push(entry);
 				});
-				const targetElem = document.createElement('button');
-				targetElem.className += 'btn btn-sm btn-outline-success ml-2 mr-2 mb-2';
-				targetElem.innerHTML = 'Set as Target';
-				targetElem.addEventListener('click', () => {
-					const entry = overlayRouteEntry(routeGetters.getRoute(this.$store), {
-						target: group.key,
-					});
-					this.$router.push(entry);
-				});
 				container.appendChild(trainingElem);
-				container.appendChild(targetElem);
 				return container;
 			};
 		}

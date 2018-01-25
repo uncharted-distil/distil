@@ -3,12 +3,14 @@ import VueRouter from 'vue-router';
 import VueRouterSync from 'vuex-router-sync';
 import Home from './views/Home.vue';
 import Search from './views/Search.vue';
-import Select from './views/Select.vue';
+import SelectTarget from './views/SelectTarget.vue';
+import SelectTraining from './views/SelectTraining.vue';
 import Results from './views/Results.vue';
 import Navigation from './views/Navigation.vue';
 import { getters as routeGetters } from './store/route/module';
 import { mutations as viewMutations } from './store/view/module';
 import { actions as pipelineActions, getters as pipelineGetters } from './store/pipelines/module';
+import { ROOT_ROUTE, HOME_ROUTE, SEARCH_ROUTE, SELECT_ROUTE, CREATE_ROUTE, RESULTS_ROUTE } from './store/route/index';
 import store from './store/store';
 import BootstrapVue from 'bootstrap-vue';
 
@@ -28,11 +30,12 @@ Vue.use(BootstrapVue);
 
 const router = new VueRouter({
 	routes: [
-		{ path: '/', redirect: '/home' },
-		{ path: '/home', component: Home },
-		{ path: '/search', component: Search },
-		{ path: '/select', component: Select },
-		{ path: '/results', component: Results }
+		{ path: ROOT_ROUTE, redirect: HOME_ROUTE },
+		{ path: HOME_ROUTE, component: Home },
+		{ path: SEARCH_ROUTE, component: Search },
+		{ path: SELECT_ROUTE, component: SelectTarget },
+		{ path: CREATE_ROUTE, component: SelectTraining },
+		{ path: RESULTS_ROUTE, component: Results }
 	]
 });
 

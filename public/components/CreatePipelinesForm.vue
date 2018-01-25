@@ -21,6 +21,7 @@ import { createRouteEntry } from '../util/routes';
 import { getTask, getMetricDisplayNames, getMetricSchemaName } from '../util/pipelines';
 import { getters as dataGetters } from '../store/data/module';
 import { getters as routeGetters } from '../store/route/module';
+import { RESULTS_ROUTE } from '../store/route/index';
 import { actions as pipelineActions } from '../store/pipelines/module';
 import { PipelineInfo } from '../store/pipelines/index';
 import { getters as pipelineGetters } from '../store/pipelines/module';
@@ -108,7 +109,7 @@ export default Vue.extend({
 				metric: metrics
 			}).then((res: PipelineInfo) => {
 				// transition to result screen
-				const entry = createRouteEntry('/results', {
+				const entry = createRouteEntry(RESULTS_ROUTE, {
 					dataset: routeGetters.getRouteDataset(this.$store),
 					target: routeGetters.getRouteTargetVariable(this.$store),
 					pipelineId: res.pipelineId

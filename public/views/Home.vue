@@ -1,7 +1,7 @@
 <template>
 	<div class="container-fluid d-flex flex-column h-100 home-view">
 		<div class="row flex-0-nav">
-		</div>	
+		</div>
 		<div class="row flex-1 align-items-center justify-content-center bg-white">
 			<div class="col-12 col-md-10">
 				<h5 class="header-label">Recent Activity</h5>
@@ -32,7 +32,6 @@ import RecentDatasets from '../components/RecentDatasets';
 import RecentPipelines from '../components/RecentPipelines';
 import RunningPipelines from '../components/RunningPipelines';
 import SearchBar from '../components/SearchBar';
-import { gotoSearch } from '../util/nav';
 import { actions, getters } from '../store/pipelines/module';
 import Vue from 'vue';
 
@@ -61,9 +60,6 @@ export default Vue.extend({
 			actions.fetchPipelines(this.$store, {
 				sessionId: this.sessionId
 			});
-		},
-		gotoSearch() {
-			gotoSearch(this.$store, this.$router);
 		}
 	}
 
