@@ -35,6 +35,7 @@ type FilterParams struct {
 // input filter.
 type FilteredData struct {
 	Name    string          `json:"name"`
+	NumRows int             `json:"numRows"`
 	Columns []string        `json:"columns"`
 	Types   []string        `json:"types"`
 	Values  [][]interface{} `json:"values"`

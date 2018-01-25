@@ -1,6 +1,7 @@
 <template>
 	<div class="select-data-table">
 		<p class="nav-link font-weight-bold">Training Set Samples</p>
+		<p><small>Displaying {{items.length}} of {{numRows}} rows</small></p>
 		<div class="select-data-table-container">
 			<div class="select-data-no-results" v-if="items.length===0">
 				<div class="text-danger">
@@ -66,8 +67,12 @@ export default Vue.extend({
 			return routeGetters.getRouteDataset(this.$store);
 		},
 
+		numRows(): number {
+			return dataGetters.getSelectedDataNumRows(this.$store);
+		},
+
 		// extracts the table data from the store
-		items(): Dictionary<any> {
+		items(): TableRow[] {
 			const data = dataGetters.getSelectedDataItems(this.$store);
 			const valueHighlights = dataGetters.getHighlightedFeatureValues(this.$store);
 
