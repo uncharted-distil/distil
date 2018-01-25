@@ -27,7 +27,7 @@ func ResultsHandler(storageCtor model.PipelineStorageCtor, storageDataCtor model
 
 		pipelineID, err := url.PathUnescape(pat.Param(r, "pipeline-id"))
 		if err != nil {
-			handleError(w, errors.Wrap(err, "unable to unescape result uuid"))
+			handleError(w, errors.Wrap(err, "unable to unescape pipeline id"))
 			return
 		}
 
