@@ -36,6 +36,7 @@ type PipelineStorage interface {
 	PersistRequestFeature(requestID string, featureName string, featureType string) error
 	PersistRequestFilters(requestID string, filters *FilterParams) error
 	UpdateRequest(requestID string, progress string, updatedTime time.Time) error
+	FetchRequest(requestID string) (*Request, error)
 	FetchRequests(sessionID string) ([]*Request, error)
 	FetchResultMetadata(requestID string) ([]*Result, error)
 	FetchResultMetadataByUUID(resultUUID string) (*Result, error)

@@ -107,6 +107,7 @@ func main() {
 		RankingRESTEndpoint:              config.RankingEndpoint,
 		RankingFunctionName:              config.RankingFunctionName,
 		RankingOutputPathRelative:        config.RankingOutputPath,
+		RankingRowLimit:                  config.RankingRowLimit,
 		DatabasePassword:                 config.PostgresPassword,
 		DatabaseUser:                     config.PostgresUser,
 		Database:                         config.PostgresDatabase,
@@ -141,9 +142,8 @@ func main() {
 	registerRoute(mux, "/distil/ranking/:index/:dataset/:target", routes.RankingHandler(pgDataStorageCtor, restClient, config.PipelineDataDir))
 	registerRoute(mux, "/distil/session/:session/:dataset/:target/:pipeline-id", routes.SessionHandler(pgPipelineStorageCtor))
 	registerRoute(mux, "/distil/abort", routes.AbortHandler())
+	registerRoute(mux, "/distil/export/:session/:pipeline-id", routes.ExportHandler(pgPipelineStorageCtor, metadataStorageCtor, pipelineClient, config.ExportPath))
 	registerRoute(mux, "/distil/ingest/:index/:dataset", routes.IngestHandler(ingestConfig))
-	registerRoute(mux, "/distil/export/:session/:pipeline-id", routes.ExportHandler(pipelineClient, config.ExportPath))
-
 	registerRoute(mux, "/ws", ws.PipelineHandler(pipelineClient, metadataStorageCtor, pgDataStorageCtor, pgPipelineStorageCtor))
 	registerRoute(mux, "/*", routes.FileHandler("./dist"))
 

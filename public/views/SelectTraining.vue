@@ -1,13 +1,5 @@
 <template>
 	<div class="container-fluid d-flex flex-column h-100 select-view">
-		<b-modal id="target-modal" ref="targetModal" title="Select Target Feature"
-			hide-header-close
-			no-close-on-backdrop
-			no-close-on-esc
-			hide-footer
-			:visible="!target">
-			<available-target-variables></available-target-variables>
-		</b-modal>
 		<div class="row flex-0-nav">
 		</div>
 		<div class="row flex-1 pb-3">
@@ -34,11 +26,11 @@
 								<target-variable class="col-12 d-flex flex-column select-target-variables"></target-variable>
 						</div>
 						<div class="row responsive-flex pb-3">
-								<select-data-table class="col-12 d-flex flex-column select-data-table"></select-data-table>
+							<select-data-table class="col-12 d-flex flex-column select-data-table"></select-data-table>
 						</div>
 						<div class="row flex-1 bg-white align-items-center">
 							<div class="col-12 d-flex flex-column">
-								<h5 class="header-label">Create the Pipelines</h5>
+								<h5 class="header-label">Create the Models</h5>
 							</div>
 						</div>
 						<div class="row flex-3">
@@ -55,7 +47,6 @@
 
 import CreatePipelinesForm from '../components/CreatePipelinesForm.vue';
 import SelectDataTable from '../components/SelectDataTable.vue';
-import AvailableTargetVariables from '../components/AvailableTargetVariables.vue';
 import AvailableTrainingVariables from '../components/AvailableTrainingVariables.vue';
 import TrainingVariables from '../components/TrainingVariables.vue';
 import TargetVariable from '../components/TargetVariable.vue';
@@ -70,7 +61,6 @@ export default Vue.extend({
 	components: {
 		CreatePipelinesForm,
 		SelectDataTable,
-		AvailableTargetVariables,
 		AvailableTrainingVariables,
 		TrainingVariables,
 		TargetVariable

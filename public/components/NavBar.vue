@@ -8,24 +8,29 @@
 
 		<b-collapse is-nav id="nav_collapse">
 			<b-navbar-nav>
-				<b-nav-item @click="onHome" :active="isActive(HOME)" v-bind:class="{ active: isActive(HOME) }">
+				<b-nav-item @click="onHome" :active="isActive(HOME_ROUTE)" v-bind:class="{ active: isActive(HOME_ROUTE) }">
 					<i class="fa fa-home nav-icon"></i>
 					<b-nav-text>Home</b-nav-text>
 				</b-nav-item>
-				<b-nav-item @click="onSearch" :active="isActive(SEARCH)" v-bind:class="{ active: isActive(SEARCH) }">
+				<b-nav-item @click="onSearch" :active="isActive(SEARCH_ROUTE)" v-bind:class="{ active: isActive(SEARCH_ROUTE) }">
 					<i class="fa fa-angle-right nav-arrow"></i>
-					<i class="fa fa-dot-circle-o nav-icon"></i>
-					<b-nav-text>Search</b-nav-text>
+					<i class="fa fa-file-text-o nav-icon"></i>
+					<b-nav-text>Search Data</b-nav-text>
 				</b-nav-item>
-				<b-nav-item @click="onSelect" :active="isActive(SELECT)" :disabled="!hasSelectView()" v-bind:class="{ active: isActive(SELECT) }">
+				<b-nav-item @click="onSelectTarget" :active="isActive(SELECT_ROUTE)" :disabled="!hasSelectView()" v-bind:class="{ active: isActive(SELECT_ROUTE) }">
 					<i class="fa fa-angle-right nav-arrow"></i>
-					<i class="fa fa-code-fork nav-icon"></i>
-					<b-nav-text>Select</b-nav-text>
+					<i class="fa fa-dot-circle-o  nav-icon"></i>
+					<b-nav-text>Select Target</b-nav-text>
 				</b-nav-item>
-				<b-nav-item @click="onResults" :active="isActive(RESULTS)" :disabled="!hasResultView()" v-bind:class="{ active: isActive(RESULTS) }">
+				<b-nav-item @click="onSelectData" :active="isActive(CREATE_ROUTE)" :disabled="!hasCreateView()" v-bind:class="{ active: isActive(CREATE_ROUTE) }">
+					<i class="fa fa-angle-right nav-arrow"></i>
+					<i class="fa fa-code-fork  nav-icon"></i>
+					<b-nav-text>Create Models</b-nav-text>
+				</b-nav-item>
+				<b-nav-item @click="onResults" :active="isActive(RESULTS_ROUTE)" :disabled="!hasResultView()" v-bind:class="{ active: isActive(RESULTS_ROUTE) }">
 					<i class="fa fa-angle-right nav-arrow"></i>
 					<i class="fa fa-line-chart nav-icon"></i>
-					<b-nav-text>Results</b-nav-text>
+					<b-nav-text>View Models</b-nav-text>
 				</b-nav-item>
 			</b-navbar-nav>
 			<b-navbar-nav class="ml-auto">
@@ -48,33 +53,23 @@
 
 <script lang="ts">
 import '../assets/images/uncharted.svg';
-import { gotoHome, gotoSearch, gotoSelect, gotoResults } from '../util/nav';
+import { gotoHome, gotoSearch, gotoSelectTarget, gotoSelectData, gotoResults } from '../util/nav';
 import { actions as appActions } from '../store/app/module';
 import { getters as routeGetters } from '../store/route/module';
+import { HOME_ROUTE, SEARCH_ROUTE, SELECT_ROUTE, CREATE_ROUTE, RESULTS_ROUTE } from '../store/route/index';
 import { restoreView } from '../util/view';
 import Vue from 'vue';
-
-const HOME = Symbol();
-const SEARCH = Symbol();
-const SELECT = Symbol();
-const RESULTS = Symbol();
-
-const ROUTE_MAPPINGS = {
-	'/home': HOME,
-	'/search': SEARCH,
-	'/select': SELECT,
-	'/results': RESULTS
-};
 
 export default Vue.extend({
 	name: 'nav-bar',
 
 	data() {
 		return {
-			HOME: HOME,
-			SEARCH: SEARCH,
-			SELECT: SELECT,
-			RESULTS: RESULTS
+			HOME_ROUTE: HOME_ROUTE,
+			SEARCH_ROUTE: SEARCH_ROUTE,
+			SELECT_ROUTE: SELECT_ROUTE,
+			CREATE_ROUTE: CREATE_ROUTE,
+			RESULTS_ROUTE: RESULTS_ROUTE
 		};
 	},
 
@@ -84,15 +79,12 @@ export default Vue.extend({
 		},
 		dataset(): string {
 			return routeGetters.getRouteDataset(this.$store);
-		},
-		activeView(): string {
-			return ROUTE_MAPPINGS[this.path] || SEARCH;
 		}
 	},
 
 	methods: {
 		isActive(view) {
-			return view === this.activeView;
+			return view === this.path;
 		},
 		onHome() {
 			gotoHome(this.$store, this.$router);
@@ -100,8 +92,11 @@ export default Vue.extend({
 		onSearch() {
 			gotoSearch(this.$store, this.$router);
 		},
-		onSelect() {
-			gotoSelect(this.$store, this.$router);
+		onSelectTarget() {
+			gotoSelectTarget(this.$store, this.$router);
+		},
+		onSelectData() {
+			gotoSelectData(this.$store, this.$router);
 		},
 		onResults() {
 			gotoResults(this.$store, this.$router);
@@ -111,10 +106,13 @@ export default Vue.extend({
 			appActions.abort(this.$store);
 		},
 		hasSelectView(): boolean {
-			return !!restoreView(this.$store, '/select', this.dataset);
+			return !!restoreView(this.$store, SELECT_ROUTE, this.dataset);
+		},
+		hasCreateView(): boolean {
+			return !!restoreView(this.$store, CREATE_ROUTE, this.dataset);
 		},
 		hasResultView(): boolean {
-			return !!restoreView(this.$store, '/results', this.dataset);
+			return !!restoreView(this.$store, RESULTS_ROUTE, this.dataset);
 		}
 	}
 });

@@ -25,7 +25,6 @@
 import ResultsComparison from '../components/ResultsComparison.vue';
 import ResultsVariableSummaries from '../components/ResultsVariableSummaries.vue';
 import ResultSummaries from '../components/ResultSummaries.vue';
-import { gotoSelect } from '../util/nav';
 import { getRequestIdsForDatasetAndTarget, getTrainingVariablesForPipelineId } from '../util/pipelines';
 import { getters as dataGetters, actions as dataActions } from '../store/data/module';
 import { getters as routeGetters } from '../store/route/module';
@@ -89,9 +88,6 @@ export default Vue.extend({
 	},
 
 	methods: {
-		gotoSelect() {
-			gotoSelect(this.$store, this.$router);
-		},
 		fetch() {
 			Promise.all([
 					dataActions.fetchVariables(this.$store, {
