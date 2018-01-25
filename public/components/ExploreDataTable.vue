@@ -14,17 +14,14 @@
 				@mouseout.native="onMouseOut"
 				:items="items"
 				:fields="fields">
-
 				<template :slot="`HEAD_${field.label}`" v-for="field in fields">
 					{{field.label}}
 					<type-change-menu
 						:key="field.label"
 						:field="field.label"></type-change-menu>
 				</template>
-
 			</b-table>
 		</div>
-
 	</div>
 </template>
 
