@@ -17,32 +17,25 @@
 .hover {
 	cursor: pointer;
 }
-
 html, body {
     width: 100%;
     height: 100%;
     margin: 0;
     padding: 0;
 }
-
 #distil-app {
 	width: 100%;
     height: 100%;
 }
-
 .disabled {
 	cursor: not-allowed;
 }
-
 .table th, .table td {
     font-size: 0.867rem;
 }
 .table td {
     text-align: right;
 }
-
-
-
 .card-result {
     margin: 12px;
     box-shadow: 0 1px 2px 0 rgba(0,0,0,0.10);
