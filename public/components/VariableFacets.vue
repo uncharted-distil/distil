@@ -1,36 +1,43 @@
 <template>
-	<div class='variable-facets'>
-		<div class="facet-filters">
-			<div v-if="enableSearch">
-				<b-form-fieldset size="sm" horizontal label="Filter" :label-cols="2">
-					<b-form-input size="sm" v-model="filter" placeholder="Type to Search" />
-				</b-form-fieldset>
+	<div class='row variable-facets'>
+		<div class="col-12 flex-column d-flex">
+			<div v-if="enableSearch" class="row flex-1 align-items-center facet-filters">
+				<div class="col-12 flex-column d-flex">
+					<b-form-fieldset size="sm" horizontal label="Filter" :label-cols="2">
+						<b-form-input size="sm" v-model="filter" placeholder="Type to Search" />
+					</b-form-fieldset>
+				</div>
 			</div>
-			<div v-if="enableToggle">
-				<b-form-fieldset size="sm" horizontal label="Toggle" :label-cols="2">
-					<b-button size="sm" variant="outline-secondary" @click="selectAll">All</b-button>
-					<b-button size="sm" variant="outline-secondary" @click="deselectAll">None</b-button>
-				</b-form-fieldset>
+			<div v-if="enableToggle" class="row flex-1 align-items-center facet-filters">
+				<div class="col-12 flex-column d-flex">
+					<b-form-fieldset size="sm" horizontal label="Toggle" :label-cols="2">
+						<b-button size="sm" variant="outline-secondary" @click="selectAll">All</b-button>
+						<b-button size="sm" variant="outline-secondary" @click="deselectAll">None</b-button>
+					</b-form-fieldset>
+				</div>
+			</div>
+			<div class="row flex-11">
+				<facets class="col-12 flex-column d-flex variable-facets-container"
+					:groups="groups"
+					:highlights="highlights"
+					:html="html"
+					:sort="sort"
+					:type-change="typeChange"
+					@click="onClick"
+					@expand="onExpand"
+					@collapse="onCollapse"
+					@range-change="onRangeChange"
+					@facet-toggle="onFacetToggle"
+					@histogram-click="onHistogramClick"
+					@facet-click="onFacetClick">
+				</facets>
+			</div>
+			<div v-if="numRows > rowsPerPage" class="row flex-1 align-items-center variable-page-nav">
+				<div class="col-12 flex-column">
+					<b-pagination size="sm" align="center" :total-rows="numRows" :per-page="rowsPerPage" v-model="currentPage" class="mb-0"/>
+				</div>
 			</div>
 		</div>
-		<facets class="variable-facets-container"
-			:groups="groups"
-			:highlights="highlights"
-			:html="html"
-			:sort="sort"
-			:type-change="typeChange"
-			@click="onClick"
-			@expand="onExpand"
-			@collapse="onCollapse"
-			@range-change="onRangeChange"
-			@facet-toggle="onFacetToggle"
-			@histogram-click="onHistogramClick"
-			@facet-click="onFacetClick">
-		</facets>
-		<div v-if="numRows > rowsPerPage" class="variable-page-nav">
-			<b-pagination size="sm" align="center" :total-rows="numRows" :per-page="rowsPerPage" v-model="currentPage"/>
-		</div>
-
 	</div>
 </template>
 
@@ -343,10 +350,6 @@ export default Vue.extend({
 button {
 	cursor: pointer;
 }
-.variable-facets {
-	display: flex;
-	flex-direction: column;
-}
 .page-link {
 	color: #868e96;
 }
@@ -378,12 +381,10 @@ button {
 	font-size: 0.9rem;
 }
 .facet-filters .form-group {
-	margin-bottom: 4px;
-	padding-right: 16px;
+	margin: 0.25rem;
 }
-
 .variable-page-nav {
-	margin-top: 10px;
+	padding-top: 10px;
 }
 
 </style>

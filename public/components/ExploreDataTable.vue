@@ -1,6 +1,6 @@
 <template>
 	<div class="explore-data-table">
-		<h6 class="nav-link">Samples</h6>
+		<p class="nav-link font-weight-bold">Samples</p>
 		<div class="explore-data-table-container">
 			<div class="explore-data-no-results" v-if="items.length===0">
 				No results

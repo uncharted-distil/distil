@@ -65,9 +65,6 @@ export default Vue.extend({
 	display: flex;
 	flex-direction: column;
 }
-.available-target-variables .variable-facets-container {
-	overflow: visible;
-}
 .available-target-variables .facets-group,
 .available-target-variables .facets-group .group-header,
 .available-target-variables .facets-group .group-facet-container,
@@ -78,5 +75,8 @@ export default Vue.extend({
 .available-target-variables .facets-group {
 	z-index: 0;
 	margin: 5px;
+}
+.available-target-variables .facet-filters {
+	padding: 2rem;
 }
 </style>
