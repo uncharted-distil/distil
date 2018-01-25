@@ -1,31 +1,36 @@
 <template>
 	<div v-bind:class="currentClass"
 		@click="click()">
-		{{ name }}<!--<br>Status: {{ pipelineStatus }}-->
+		{{name}} <sup>{{index}}</sup> {{timestamp}}
 		<div v-if="pipelineStatus === 'COMPLETED' || pipelineStatus === 'UPDATED'">
+			<b-badge variant="info" v-bind:key="`${score.metric}`" v-for="score in scores">
+				{{metricName(score.metric)}}: {{score.value}}
+			</b-badge>
 			<facets v-if="resultGroups.length" class="result-container"
-				v-on:histogram-mouse-enter="resultHistogramMouseEnter"
-				v-on:histogram-mouse-leave="resultHistogramMouseLeave"
-				v-on:facet-mouse-enter="resultFacetMouseEnter"
-				v-on:facet-mouse-leave="resultFacetMouseLeave"
+				@histogram-click="onResultHistogramClick"
+				@facet-click="onResultFacetClick"
 				:groups="resultGroups"
 				:highlights="highlights"
 				:html="residualHtml">
 			</facets>
 			<facets v-if="residualsGroups.length" class="residual-container"
-				v-on:histogram-mouse-enter="residualsHistogramMouseEnter"
-				v-on:histogram-mouse-leave="residualsHistogramMouseLeave"
+				@histogram-click="onResidualsHistogramClick"
 				:groups="residualsGroups"
 				:highlights="highlights"
 				:html="resultHtml">
 			</facets>
 		</div>
-		<div v-if="pipelineStatus !== 'COMPLETED'">
+		<div v-if="pipelineStatus !== 'COMPLETED' && pipelineStatus !== 'ERRORED'">
 			<b-progress
 				:value="100"
 				variant="secondary"
 				striped
 				:animated="true"></b-progress>
+		</div>
+		<div v-if="pipelineStatus === 'ERRORED'">
+			<b-badge variant="danger">
+				ERROR
+			</b-badge>
 		</div>
 	</div>
 </template>
@@ -38,31 +43,39 @@
 import Facets from '../components/Facets';
 import { createGroups, Group, NumericalFacet, CategoricalFacet } from '../util/facets';
 import { isPredicted, isError, getVarFromPredicted, getVarFromError, getPredictedFacetKey,
-	getErrorFacetKey, getPredictedColFromFacetKey, getErrorColFromFacetKey } from '../util/data';
-import { VariableSummary } from '../store/data/index';
-import { Dictionary } from '../util/dict';
+	getErrorFacetKey, getErrorCol, getPredictedCol } from '../util/data';
+import { VariableSummary, Highlights, Range } from '../store/data/index';
 import { overlayRouteEntry } from '../util/routes';
 import { getters } from '../store/data/module';
 import { getters as routeGetters } from '../store/route/module';
-import { getters as pipelineGetters } from '../store/pipelines/module';
+import { getPipelineById, getMetricDisplayName } from '../util/pipelines';
 import { mutations as dataMutations } from '../store/data/module';
 import { NUMERICAL_FILTER, CATEGORICAL_FILTER, getFilterType, decodeFiltersDictionary } from '../util/filters';
+import { updateResultHighlights } from '../util/highlights';
+import { Dictionary } from '../util/dict';
 import _ from 'lodash';
 import Vue from 'vue';
-
-const RESULT_GROUP_HIGHLIGHTS = 'result-group';
 
 export default Vue.extend({
 	name: 'result-group',
 
 	props: {
 		name: String,
+		index: Number,
+		timestamp: String,
 		requestId: String,
 		pipelineId: String,
+		scores: Array,
 		resultSummary: Object,
 		residualsSummary: Object,
+		resultExtrema: Object,
+		residualExtrema: Object,
 		resultHtml: String,
-		residualHtml: String
+		residualHtml: String,
+		instanceName: {
+			type: String,
+			default: 'result-group'
+		}
 	},
 
 	components: {
@@ -70,12 +83,9 @@ export default Vue.extend({
 	},
 
 	computed: {
+
 		pipelineStatus(): String {
-			const pipelines = pipelineGetters.getPipelines(this.$store);
-			let pipeline = null;
-			if (pipelines[this.requestId] && pipelines[this.requestId][this.pipelineId]) {
-				pipeline = pipelines[this.requestId][this.pipelineId];
-			}
+			const pipeline = getPipelineById(this.$store.state.pipelineModule, this.pipelineId);
 			if (pipeline) {
 				return pipeline.progress;
 			}
@@ -84,30 +94,42 @@ export default Vue.extend({
 
 		residualsGroups(): Group[] {
 			if (this.residuals()) {
-				return createGroups([this.residuals()], false, false);
+				return createGroups([this.residuals()], false, false, this.residualExtrema);
 			}
 			return [];
 		},
 
 		resultGroups(): Group[] {
 			if (this.results()) {
-				return createGroups([this.results()], false, false);
+				return createGroups([this.results()], false, false, this.resultExtrema);
 			}
 			return [];
 		},
 
-		highlights(): Dictionary<any> {
-			// Facets highlights are keyed by name - map the published highligh
-			// key to the facet key
+		highlights(): Highlights {
+			// Remap highlights to facet key names, filtering out anything other than
+			// the predicted and error values (since that's all that is displayed in this
+			// component)
 			const highlights = getters.getHighlightedFeatureValues(this.$store);
-			const facetHighlights = <Dictionary<any>>{};
-			_.forEach(highlights.values, (value, varName) => {
+			const facetHighlights = <Highlights>{
+				root: _.cloneDeep(highlights.root),
+				values: <Dictionary<string[]>>{}
+			};
+			_.forEach(highlights.values, (values, varName) => {
 				if (isPredicted(varName)) {
-					facetHighlights[getPredictedFacetKey(getVarFromPredicted(varName))] = value;
+					facetHighlights.values[getPredictedFacetKey(getVarFromPredicted(varName))] = values;
 				} else if (isError(varName)) {
-					facetHighlights[getErrorFacetKey(getVarFromError(varName))] = value;
+					facetHighlights.values[getErrorFacetKey(getVarFromError(varName))] = values;
 				}
 			});
+			// Remap the selection root as well.
+			if (highlights.root) {
+				if (isPredicted(highlights.root.key)) {
+					facetHighlights.root.key = 'Predicted';
+				} else if (isError(highlights.root.key)) {
+					facetHighlights.root.key = 'Error';
+				}
+			}
 			return facetHighlights;
 		},
 
@@ -120,53 +142,52 @@ export default Vue.extend({
 	},
 
 	methods: {
-		resultHistogramMouseEnter(key: string, value: any) {
-			// extract the var name from the key
-			const varName = getPredictedColFromFacetKey(key);
-			dataMutations.highlightFeatureRange(this.$store, {
-				context: RESULT_GROUP_HIGHLIGHTS,
-				ranges: {
-					[varName]: {
-						from: _.toNumber(value.label[0]),
-						to: _.toNumber(value.toLabel[value.toLabel.length-1])
-					}
-				}
-			});
+		metricName(metric): string {
+			return getMetricDisplayName(metric);
 		},
 
-		resultHistogramMouseLeave(key: string) {
-			const varName = getPredictedColFromFacetKey(key);
-			dataMutations.clearFeatureHighlightRange(this.$store, varName);
+		onResultHistogramClick(context: string, key: string, value: any) {
+			const targetVar = routeGetters.getRouteTargetVariable(this.$store);
+			this.histogramHighlights(context, key ? getPredictedCol(targetVar) : key, value);
 		},
 
-		residualsHistogramMouseEnter(key: string, value: any) {
-			// convert the residual histogram key name into the proper variable ID
-			const varName =getErrorColFromFacetKey(key);
-			dataMutations.highlightFeatureRange(this.$store, {
-				context: RESULT_GROUP_HIGHLIGHTS,
-				ranges: {
-					[varName]: {
-						from: _.toNumber(value.label[0]),
-						to: _.toNumber(value.toLabel[value.toLabel.length-1])
-					}
-				}
-			});
+		onResidualsHistogramClick(context, key: string, value: any) {
+			const targetVar = routeGetters.getRouteTargetVariable(this.$store);
+			this.histogramHighlights(context, key ? getErrorCol(targetVar) : key, value);
 		},
 
-		residualsHistogramMouseLeave(key: string) {
-			const varName = getErrorColFromFacetKey(key);
-			dataMutations.clearFeatureHighlightRange(this.$store, varName);
+		histogramHighlights(context: string, key: string, value: Range) {
+			if (key && value) {
+				const filter = {
+					name: key,
+					type: NUMERICAL_FILTER,
+					enabled: true,
+					context: this.instanceName,
+					min: value.from,
+					max: value.to
+				};
+				updateResultHighlights(this, context, key, value, filter);
+			} else {
+				dataMutations.clearFeatureHighlights(this.$store);
+			}
 		},
 
-		resultFacetMouseEnter(key: string, value: any) {
-			// extract the var name from the key
-			const varName = getPredictedColFromFacetKey(key);
-			dataMutations.highlightFeatureValues(this.$store, {
-				context: RESULT_GROUP_HIGHLIGHTS,
-				values: {
-					[varName]: value
-				}
-			});
+		onResultFacetClick(context: string, key: string, value: string) {
+			if (key && value) {
+				// extract the var name from the key
+				const targetVar = routeGetters.getRouteTargetVariable(this.$store);
+				const varName = getPredictedCol(targetVar);
+				const filter = {
+					name: varName,
+					type: CATEGORICAL_FILTER,
+					enabled: true,
+					context: this.instanceName,
+					categories: [value]
+				};
+				updateResultHighlights(this, context, key, value, filter);
+			} else {
+				dataMutations.clearFeatureHighlights(this.$store);
+			}
 		},
 
 		resultFacetMouseLeave(key: string) {
@@ -174,18 +195,26 @@ export default Vue.extend({
 		},
 
 		click() {
-			const routeEntry = overlayRouteEntry(this.$route, {
-				pipelineId: this.results().pipelineId
-			});
-			this.$router.push(routeEntry);
+			if (this.results()) {
+				const routeEntry = overlayRouteEntry(this.$route, {
+					pipelineId: this.results().pipelineId
+				});
+				this.$router.push(routeEntry);
+			}
 		},
 
 		results(): VariableSummary {
-			return <VariableSummary>this.resultSummary;
+			if (this.resultSummary) {
+				return this.resultSummary as VariableSummary;
+			}
+			return null;
 		},
 
 		residuals(): VariableSummary {
-			return <VariableSummary>this.residualsSummary;
+			if (this.residualsSummary) {
+				return this.residualsSummary as VariableSummary;
+			}
+			return null;
 		},
 
 		updateGroupSelections(groups: Group[]): Group[] {
@@ -246,8 +275,8 @@ export default Vue.extend({
 .result-group-selected {
 	padding:9px;
 	border-style: solid;
-	border-color: #03c6e1;
-	box-shadow: 0 0 10px #03c6e1;
+	border-color: #007bff;
+	box-shadow: 0 0 10px #007bff;
 	border-width: 1px;
 	border-radius: 2px;
 	padding-bottom: 10px;
@@ -270,12 +299,17 @@ export default Vue.extend({
 	box-shadow: none;
 }
 
-.result-container .facets-group {
+.result-container .facets-group,
+.residual-container .facets-group {
 	box-shadow: none;
 }
 
-.residual-container .facets-group {
-	box-shadow: none;
+.result-group,
+.result-container .facets-group,
+.result-container .facets-group .group-header,
+.residual-container .facets-group,
+.residual-container .facets-group .group-header {
+	cursor: pointer !important;
 }
 
 .residual-container .facets-facet-horizontal .facet-histogram-bar-highlighted {
@@ -284,6 +318,10 @@ export default Vue.extend({
 
 .residual-container .facets-facet-horizontal .facet-histogram-bar-highlighted:hover {
 	fill: #662424;
+}
+
+.residual-container .facets-facet-horizontal .facet-histogram-bar-highlighted.select-highlight {
+	fill: #007bff;
 }
 
 .residual-container .facets-facet-vertical .facet-bar-selected {

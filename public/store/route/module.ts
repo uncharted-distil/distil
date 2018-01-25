@@ -17,13 +17,11 @@ export const getters = {
 	getRouteDataset: read(moduleGetters.getRouteDataset),
 	getRouteTrainingVariables: read(moduleGetters.getRouteTrainingVariables),
 	getRouteTargetVariable: read(moduleGetters.getRouteTargetVariable),
-	getRouteCreateRequestId: read(moduleGetters.getRouteCreateRequestId),
 	getRoutePipelineId: read(moduleGetters.getRoutePipelineId),
 	getRouteFilters: read(moduleGetters.getRouteFilters),
 	getRouteResultFilters: read(moduleGetters.getRouteResultFilters),
-	getRouteResidualThreshold: read(moduleGetters.getRouteResidualThreshold),
+	getRouteResidualThresholdMin: read(moduleGetters.getRouteResidualThresholdMin),
+	getRouteResidualThresholdMax: read(moduleGetters.getRouteResidualThresholdMax),
 	getDecodedFilters: read(moduleGetters.getDecodedFilters),
-	getDecodedResultsFilters: read(moduleGetters.getDecodedResultsFilters),
+	getDecodedResultsFilters: read(moduleGetters.getDecodedResultsFilters)
 }
-
-

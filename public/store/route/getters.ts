@@ -26,10 +26,6 @@ export const getters = {
 		return state.query.target ? state.query.target : null;
 	},
 
-	getRouteCreateRequestId(state: Route): string {
-		return state.query.requestId;
-	},
-
 	getRoutePipelineId(state: Route): string {
 		return state.query.pipelineId ? state.query.pipelineId : null;
 	},
@@ -42,8 +38,12 @@ export const getters = {
 		return state.query.results ? state.query.results : null;
 	},
 
-	getRouteResidualThreshold(state: Route): string {
-		return state.query.residualThreshold;
+	getRouteResidualThresholdMin(state: Route): string {
+		return state.query.residualThresholdMin;
+	},
+
+	getRouteResidualThresholdMax(state: Route): string {
+		return state.query.residualThresholdMax;
 	},
 
 	getDecodedFilters(state: Route): Filter[] {

@@ -6,18 +6,20 @@
 import _ from 'lodash';
 import $ from 'jquery';
 import Vue from 'vue';
-import { Group, CategoricalFacet } from '../util/facets';
+import { Group, CategoricalFacet, isCategoricalFacet } from '../util/facets';
 import { Dictionary } from '../util/dict';
 import Facets from '@uncharted.software/stories-facets';
 import TypeChangeMenu from '../components/TypeChangeMenu';
 import '@uncharted.software/stories-facets/dist/facets.css';
+import Multimap from 'multimap';
+import { Highlights } from '../store/data/index';
 
 export default Vue.extend({
 	name: 'facets',
 
 	props: {
 		groups: Array,
-		highlights: Object,
+		highlights: Object, // ValueHighlights
 		typeChange: Boolean,
 		html: [ String, Object, Function ],
 		sort: {
@@ -32,7 +34,11 @@ export default Vue.extend({
 
 	data() {
 		return {
-			facets: {} as any
+			facets: <any>{},
+			histogramHighlightValue: { key: '', value: undefined },
+			facetHighlightValue: { key: '', value: undefined },
+			facetFilteredValues: new Multimap(),
+			instanceName: _.uniqueId('facet-')
 		};
 	},
 
@@ -40,76 +46,86 @@ export default Vue.extend({
 		const component = this;
 		const groups = () => <Group[]>this.groups;
 
-		// instantiate the external facets widget
+		this.histogramHighlightValue = null;
+		this.facetHighlightValue = null;
+
+		// Instantiate the external facets widget.  The facets maintain their own copies
+		// of group objects which are replaced wholesale on changes.  Elsewhere in the code
+		// we modify local copies of the group objects, then replace those in the Facet component
+		// with copies.
 		this.facets = new Facets(this.$el, groups().map(group => {
 			return _.cloneDeep(group);
 		}));
+
+		// Call customization hook
 		groups().forEach(group => {
 			this.injectHTML(group, this.facets.getGroup(group.key)._element);
 		});
+
 		// proxy events
+
 		this.facets.on('facet-group:expand', (event: Event, key: string) => {
 			component.$emit('expand', key);
 		});
+
 		this.facets.on('facet-group:collapse', (event: Event, key: string) => {
 			component.$emit('collapse', key);
 		});
+
 		this.facets.on('facet-histogram:rangechangeduser', (event: Event, key: string, value: any) => {
 			component.$emit('range-change', key, value);
 		});
+
 		// hover over events
+
 		this.facets.on('facet-histogram:mouseenter', (event: Event, key: string, value: any) => {
 			component.$emit('histogram-mouse-enter', key, value);
 		});
+
 		this.facets.on('facet-histogram:mouseleave', (event: Event, key: string) => {
-			component.$emit('histogram-mouse-leave', key);
+			 component.$emit('histogram-mouse-leave', key);
 		});
+
 		this.facets.on('facet:mouseenter', (event: Event, key: string, value: number) => {
 			component.$emit('facet-mouse-enter', key, value);
 		});
+
 		this.facets.on('facet:mouseleave', (event: Event, key: string) => {
 			component.$emit('facet-mouse-leave', key);
 		});
-		// click events
-		this.facets.on('facet:click', (event: Event, key: string, value: string) => {
-			// check that facet is filterable
-			const groupSpec = <any>(_.find(groups(), group => group.key === key ));
-			const facetSpec = _.find(groupSpec.facets, facet => facet.value ? facet.value === value : facet);
 
-			if (!facetSpec.filterable) {
-				// not filterable
-				return;
-			}
-			// get group
-			const group = component.facets.getGroup(key);
-			// get facet
-			const current = _.find(group.facets, facet => {
-				if ((<CategoricalFacet>facet).value) {
-					return (<CategoricalFacet>facet).value === value;
-				}
-				return false;
-			});
-			// toggle facet
-			if (current._spec.selected) {
-				current.deselect();
+		// click events
+
+		this.facets.on('facet-histogram:click', (event: Event, key: string, value: any) => {
+			// if this is a click on value previously used as highlight root, clear
+			if (_.isEqual(this.histogramHighlightValue, { key, value })) {
+				this.histogramHighlightValue = null;
+				component.$emit('histogram-click', this.instanceName);
 			} else {
-				current.select({
-					count: current.count
-				});
+				this.histogramHighlightValue = { key, value };
+				const rangeValue = {
+					from: _.toNumber(value.label),
+					to: _.toNumber(value.toLabel)
+				};
+				component.$emit('histogram-click', this.instanceName, key, rangeValue);
 			}
-			// get all currently selected values
-			const values = [];
-			group.facets.forEach(facet => {
-				if (facet._spec.selected) {
-					// facet is selected
-					values.push(facet.value);
-				}
-			});
-			component.$emit('facet-toggle', key, values);
+		});
+
+		this.facets.on('facet:click', (event: Event, key: string, value: string) => {
+			// User clicked on the value that is currently the highlight root
+			if (_.isEqual(this.facetHighlightValue, { key, value })) {
+				this.facetHighlightValue = null;
+				component.$emit('facet-click', this.instanceName);
+			} else {
+				// clicked on a value that will act as the new highlght root
+				this.facetHighlightValue = { key, value };
+				component.$emit('facet-click', this.instanceName, key, value);
+			}
 		});
 	},
 
 	watch: {
+		// handle changes to the facet group list
 		groups(currGroups: Group[], prevGroups: Group[]) {
 			// get map of all existing group keys in facets
 			const prevMap: Dictionary<Group> = {};
@@ -120,48 +136,106 @@ export default Vue.extend({
 			const unchangedGroups = this.updateGroups(currGroups, prevMap);
 			// for the unchanged, update collapse state
 			this.updateCollapsed(unchangedGroups);
-			// for the unchanged, update selection
-			this.updateSelections(unchangedGroups, prevMap);
+
 		},
-		highlights(currHighlights: Dictionary<any>) {
-			if (_.isEmpty(currHighlights)) {
-				(this.groups as Group[]).forEach(groupSpec => {
+
+		// handle external highlight changes by updating internal facet select states
+		highlights(currHighlights: Highlights) {
+			// If the new highlight state was set via a click on on another component,
+			// clear it out.
+			if (_.get(currHighlights, 'root.context') !== this.instanceName || _.isEmpty(currHighlights.values)) {
+				this.histogramHighlightValue = null;
+				this.facetHighlightValue = null;
+				$(this.$el).find('.select-highlight').removeClass('select-highlight');
+			}
+
+			if (_.isEmpty(currHighlights.values)) {
+				// Highlights have been cleared.  Remove highlight visuals from facets managed
+				// by this component.
+				this.groups.forEach(groupSpec => {
 					const group = this.facets.getGroup(groupSpec.key);
-					const facetSpecs = groupSpec.facets;
-					group.facets.forEach((facet, index) => {
-						const facetSpec = <any>facetSpecs[index];
-						const selection = facetSpec.selection || facetSpec.selected;
-						if (selection) {
-							facet.select(facetSpec.selected ? facetSpec.selected : facetSpec);
+					if (group) {
+						// loop through groups ensure that selection is clear on each - not that clear
+						// the selection on a categorical facet means set its selection to a full count
+						group.facets.forEach(facet => {
+							if (facet._histogram) {
+								facet.deselect();
+							} else {
+								facet.select(facet.count);
+							}
+						});
+					}
+				});
+			}
+
+			_.forIn(currHighlights.values, (values, key) => {
+				// Highlights have been set.  We need to display highlight visuals on the corresponding
+				// facets.
+				const group = this.facets.getGroup(key);
+				if (!group) {
+					return true;
+				}
+
+				for(const facet of group.facets) {
+					if (facet._histogram) {
+						// Build up the selection structure to pass to the facets lib.  The facets library doesn't
+						// give us a good way to determine the index of a particular numeric value in the set of generated
+						// bars (they are non-contiguous), so we just have to check each range ourselves.  To be more efficient
+						// we sort the values and do it one pass.
+						const sortedValues = Array.from(values).sort((a, b) => <any>a - <any>b);
+						const slices: Dictionary<number> = {};
+						let lastLabelIdx = 0;
+						for (const value of sortedValues) {
+							// iterate over the facet bars and find the one that contains the current value
+							for (let i = lastLabelIdx; i < facet._histogram.bars.length; i++) {
+								const metadata: any[] = facet._histogram.bars[i].metadata;
+								const numValue = _.toNumber(value);
+
+								// If the current bar is the flagged highlight, make sure we have the selection
+								// tag set.
+								if (_.get(this.histogramHighlightValue, 'key') === group.key &&
+									_.toNumber(this.histogramHighlightValue.value.label) <= numValue &&
+									_.toNumber(this.histogramHighlightValue.value.toLabel) >= numValue) {
+										$(facet._histogram.bars[i]._element).addClass('select-highlight');
+								} else {
+									$(facet._histogram.bars[i]._element).removeClass('select-highlight');
+								}
+
+								// If the current bar contains the selected value, add it to the slices map so that
+								// it gets added to the selection.
+								if (_.toNumber(_.first(metadata).label) <= numValue &&
+									_.toNumber(_.last(metadata).toLabel) >= numValue) {
+										const valueMetadata = _.last(metadata);
+										slices[valueMetadata.label] = valueMetadata.count;
+										lastLabelIdx = i;
+										break;
+								}
+							}
+						}
+						// Apply the current selection set to the facet.
+						facet.select({ selection: { slices: slices } });
+					} else {
+						// See if this facet is in the values list, marking it as selected if it is.
+						const matchedValue = values.find(v => v.toLowerCase() === facet.value ? facet.value.toLowerCase(): undefined);
+						if (matchedValue) {
+							facet.select(facet.count);
+
+							// Check to see if this facet is the root selection, updating its visual state as necesary.
+							if (this.facetHighlightValue &&
+								this.facetHighlightValue.key === group.key && this.facetHighlightValue.value === matchedValue) {
+								$(facet._element).addClass('select-highlight');
+							} else {
+								$(facet._element).removeClass('select-highlight');
+							}
 						} else {
 							facet.deselect();
 						}
-					});
-				});
-				return;
-			}
-			_.forIn(currHighlights, (value, name) => {
-				const group = this.facets.getGroup(name);
-				if (group) {
-					group.facets.forEach(facet => {
-						if (facet._histogram && facet._histogram.highlightRange) {
-							// histogram facet
-							facet._histogram.highlightValueRange({
-								from: value,
-								to: value
-							});
-						} else {
-							// vertical facet
-							if (facet.value === value) {
-								facet.select(facet.count);
-							} else {
-								facet.deselect();
-							}
-						}
-					});
-				}
+					}
+				};
+
 			});
 		},
+
 		sort(currSort) {
 			this.facets.sort(currSort);
 		}
@@ -169,23 +243,16 @@ export default Vue.extend({
 
 	methods: {
 		injectHTML(group: Group, $elem: JQuery) {
+
 			$elem.click(() => {
 				this.$emit('click', group.key);
 			});
 
-			// inject type headers
-			if (this.typeChange) {
-				const $slot = $('<span/>');
-				$elem.find('.group-header').append($slot);
-				const menu = new TypeChangeMenu(
-					{
-						store: this.$store,
-						propsData: {
-							field: group.key
-						}
-					});
-				menu.$mount($slot[0]);
-			}
+			// inject type change header menus
+			this.injectTypeChangeHeaders(group, $elem);
+
+			// inject category toggle buttons
+			this.injectCategoryToggleButtons(group, $elem);
 
 			if (!this.html) {
 				return;
@@ -240,6 +307,13 @@ export default Vue.extend({
 					}
 					// replace group if it is existing
 					this.facets.replaceGroup(_.cloneDeep(group));
+					// init the internal categorical facet filter state from the supplied facet
+					// spec
+					group.facets.forEach(facetSpec => {
+						if (isCategoricalFacet(facetSpec) && !facetSpec.selected) {
+							this.facetFilteredValues.set(group.key, facetSpec.value);
+						}
+					});
 					this.injectHTML(group, this.facets.getGroup(group.key)._element);
 				} else {
 					// add to appends
@@ -255,8 +329,15 @@ export default Vue.extend({
 			if (toAdd.length > 0) {
 				// append groups
 				this.facets.append(toAdd);
-				toAdd.forEach(group => {
-					this.injectHTML(group, this.facets.getGroup(group.key)._element);
+				toAdd.forEach(groupSpec => {
+					// init the internal categorical facet filter state from the supplied facet
+					// spec
+					groupSpec.facets.forEach(facetSpec => {
+						if (isCategoricalFacet(facetSpec) && !facetSpec.selected) {
+							this.facetFilteredValues.set(groupSpec.key, facetSpec.value);
+						}
+					});
+					this.injectHTML(groupSpec, this.facets.getGroup(groupSpec.key)._element);
 				});
 			}
 			// sort alphabetically
@@ -277,36 +358,98 @@ export default Vue.extend({
 			});
 		},
 
-		updateSelections(unchangedGroups, prevGroups) {
-			unchangedGroups.forEach(groupSpec => {
-				// get the existing facet
-				const existing = this.facets.getGroup(groupSpec.key);
-				if (existing) {
-					const currFacets = groupSpec.facets;
-					const prevFacets = prevGroups[groupSpec.key].facets;
-					existing.facets.forEach((facet, index) => {
-						const currSelection = currFacets[index].selection || currFacets[index].selected;
-						const prevSelection = prevFacets[index].selection || prevFacets[index].selected;
-						if (_.isEqual(currSelection, prevSelection)) {
-							// selection is the same, no need to change
-							return;
-						}
-						if (currSelection) {
-							const facetSpec = currFacets[index];
-							facet.select(facetSpec.selected ? facetSpec.selected : facetSpec);
-						} else {
-							facet.deselect();
+		// inject type headers
+		injectTypeChangeHeaders(group: Group, $elem: JQuery) {
+			if (this.typeChange) {
+				const $slot = $('<span/>');
+				$elem.find('.group-header').append($slot);
+				const menu = new TypeChangeMenu(
+					{
+						store: this.$store,
+						propsData: {
+							field: group.key
 						}
 					});
+				menu.$mount($slot[0]);
+			}
+		},
+
+		// inject category filter buttons
+		injectCategoryToggleButtons(groupSpec: Group, $elem: JQuery) {
+			if (!isCategoricalFacet(groupSpec.facets[0])) {
+				return;
+			}
+
+			// find the facet nodes in the DOM
+			const $verticalFacets = $elem.find('.facets-facet-vertical');
+
+			// Add a clickable filter state button to each facet.
+			for (const facetElement of $verticalFacets) {
+
+				const $facet = $(facetElement).find('.facet-query-close');
+				const label = $facet.parent().find('.facet-label').text().trim();
+				const facetSpec = (<CategoricalFacet[]>groupSpec.facets).find(f => f.value === label);
+
+				// only add controls for filterable facets
+				if (!facetSpec.filterable) {
+					continue;
 				}
-			});
+
+				// setup based on the initial filter state
+				const key = groupSpec.key;
+				const value = facetSpec.value;
+
+				let $icon = null;
+				if (this.facetFilteredValues.has(key, value)) {
+					$icon = $(`<i id=${key}-${value} class="fa fa-circle-o"></i>`);
+				} else {
+					$icon = $(`<i id=${key}-${value} class="fa fa-circle"></i>`);
+				}
+				$icon.appendTo($facet);
+
+
+				$icon.click(e => {
+					// get group and current facet
+					const group = this.facets.getGroup(key);
+					const current = <any>(<CategoricalFacet[]>group.facets).find(facet => facet.value === value);
+
+					// toggle the facet filter state
+					if (!this.facetFilteredValues.has(key, value)) {
+						// switch to unfilter from filtered
+						$icon.removeClass('fa-circle').addClass('fa-circle-o');
+						current.deselect();
+						this.facetFilteredValues.set(key, value);
+					} else {
+						// switch from filtered to unfiltered, and restore highlight state if needed
+						$icon.removeClass('fa-circle-o').addClass('fa-circle');
+						if (_.isEqual(this.facetHighlightValue, { key, value })) {
+							current.select({ count: current.count });
+						}
+						this.facetFilteredValues.delete(key, value);
+					}
+					// get all currently selected values
+					const values = group.facets
+						.filter(f => !this.facetFilteredValues.has(f.key, f.value))
+						.map(f => f.value);
+
+					this.$emit('facet-toggle', key, values);
+				});
+
+				$icon.mouseenter(e => {
+					$icon.addClass('text-primary');
+				});
+
+				$icon.mouseleave(e => {
+					$icon.removeClass('text-primary');
+				});
+			}
 		}
 	},
 
 	destroyed: function() {
 		this.facets.destroy();
 		this.facets = null;
-	}
+	},
 });
 </script>
 
@@ -316,4 +459,12 @@ export default Vue.extend({
 .facets-group .group-header {
 	font-family: inherit;
 }
+.facets-facet-horizontal .facet-histogram-bar-highlighted.select-highlight {
+	fill: #007bff;
+}
+
+.facets-facet-vertical.select-highlight .facet-bar-selected {
+	box-shadow: inset 0 0 0 1000px #007bff;
+}
+
 </style>

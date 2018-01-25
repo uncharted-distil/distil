@@ -1,44 +1,44 @@
 <template>
-	<div class="results-view">
-		<flow-bar
-			left-text="Return to Select"
-			:on-left="gotoSelect"
-			center-text="Examine Pipeline results">
-		</flow-bar>
-		<div class="results-items">
-			<variable-summaries
-				class="results-variable-summaries"
-				:variables="summaries"
-				:dataset="dataset"></variable-summaries>
-			<results-comparison
-				class="results-result-comparison"
-				:exclude-non-training="excludeNonTraining"></results-comparison>
-			<result-summaries
-				class="results-result-summaries"></result-summaries>
+	<div class="container-fluid d-flex flex-column h-100 results-view">
+		<div class="row flex-0-nav">
+		</div>
+		<div class="row flex-1 align-items-center bg-white">
+			<div class="col-12">
+				<h5 class="header-label">Select Features That May Predict</h5>
+			</div>
+		</div>
+		<div class="row flex-12 pb-3">
+				<results-variable-summaries
+					class="col-12 col-md-3 border-gray-right results-variable-summaries"
+					:variables="summaries"
+					:dataset="dataset"></results-variable-summaries>
+				<results-comparison
+					class="col-12 col-md-6 results-result-comparison"
+					:exclude-non-training="excludeNonTraining"></results-comparison>
+				<result-summaries
+					class="col-12 col-md-3 border-gray-left results-result-summaries"></result-summaries>
 		</div>
 	</div>
 </template>
 
 <script lang="ts">
-import FlowBar from '../components/FlowBar.vue';
 import ResultsComparison from '../components/ResultsComparison.vue';
-import VariableSummaries from '../components/VariableSummaries.vue';
+import ResultsVariableSummaries from '../components/ResultsVariableSummaries.vue';
 import ResultSummaries from '../components/ResultSummaries.vue';
-import { gotoSelect } from '../util/nav';
+import { getRequestIdsForDatasetAndTarget, getTrainingVariablesForPipelineId } from '../util/pipelines';
 import { getters as dataGetters, actions as dataActions } from '../store/data/module';
 import { getters as routeGetters } from '../store/route/module';
-import { actions as pipelineActions } from '../store/pipelines/module';
-import { getters as appGetters } from '../store/app/module';
+import { actions as pipelineActions, getters as pipelineGetters } from '../store/pipelines/module';
 import { Variable, VariableSummary } from '../store/data/index';
+import { Dictionary } from '../util/dict';
 import Vue from 'vue';
 
 export default Vue.extend({
 	name: 'results-view',
 
 	components: {
-		FlowBar,
 		ResultsComparison,
-		VariableSummaries,
+		ResultsVariableSummaries,
 		ResultSummaries
 	},
 
@@ -52,20 +52,34 @@ export default Vue.extend({
 		dataset(): string {
 			return routeGetters.getRouteDataset(this.$store);
 		},
+		target(): string {
+			return routeGetters.getRouteTargetVariable(this.$store);
+		},
 		summaries(): VariableSummary[] {
 			if (this.excludeNonTraining) {
-				return dataGetters.getTrainingVariableSummaries(this.$store);
+				return dataGetters.getVariableSummaries(this.$store).filter(summary => this.training[summary.name]);
 			}
 			return dataGetters.getVariableSummaries(this.$store);
 		},
 		variables(): Variable[] {
 			return dataGetters.getVariables(this.$store);
 		},
-		requestId(): string {
-			return routeGetters.getRouteCreateRequestId(this.$store);
+		requestIds(): string[] {
+			return getRequestIdsForDatasetAndTarget(this.$store.state.pipelineModule, this.dataset, this.target);
+		},
+		training(): Dictionary<boolean> {
+			const training = getTrainingVariablesForPipelineId(this.$store.state.pipelineModule, this.pipelineId);
+			const trainingMap = {};
+			training.forEach(t => {
+				trainingMap[t] = true;
+			});
+			return trainingMap;
+		},
+		pipelineId(): string {
+			return routeGetters.getRoutePipelineId(this.$store);
 		},
 		sessionId(): string {
-			return appGetters.getPipelineSessionID(this.$store);
+			return pipelineGetters.getPipelineSessionID(this.$store);
 		}
 	},
 
@@ -73,41 +87,34 @@ export default Vue.extend({
 		this.fetch();
 	},
 
-	watch: {
-		// watch the route and update the results if its modified
-		'$route.query.dataset'() {
-			this.fetch();
-		},
-		'$route.query.requestId'() {
-			this.fetch();
-		}
-	},
-
 	methods: {
-		gotoSelect() {
-			gotoSelect(this.$store, this.$router);
-		},
 		fetch() {
 			Promise.all([
-					dataActions.getVariables(this.$store, {
+					dataActions.fetchVariables(this.$store, {
 						dataset: this.dataset
 					}),
-					pipelineActions.getSession(this.$store, {
+					pipelineActions.startPipelineSession(this.$store, {
 						sessionId: this.sessionId
 					})
 				])
 				.then(() => {
-					dataActions.getVariableSummaries(this.$store, {
+					pipelineActions.fetchPipelines(this.$store, {
+						sessionId: this.sessionId,
 						dataset: this.dataset,
-						variables: this.variables
-					});
-					dataActions.getResultsSummaries(this.$store, {
-						dataset: this.dataset,
-						requestId: this.requestId
-					});
-					dataActions.getResidualsSummaries(this.$store, {
-						dataset: this.dataset,
-						requestId: this.requestId
+						target: this.target
+					}).then(() => {
+						dataActions.fetchVariableSummaries(this.$store, {
+							dataset: this.dataset,
+							variables: this.variables
+						});
+						dataActions.fetchResultsSummaries(this.$store, {
+							dataset: this.dataset,
+							requestIds: this.requestIds
+						});
+						dataActions.fetchResidualsSummaries(this.$store, {
+							dataset: this.dataset,
+							requestIds: this.requestIds
+						});
 					});
 				});
 		}
@@ -116,29 +123,15 @@ export default Vue.extend({
 </script>
 
 <style>
+.results-view .nav-link {
+	padding: 1rem 0 0.25rem 0;
+	border-bottom: 1px solid #E0E0E0;
+}
 .header-label {
-	color: #333;
-	margin: 0.75rem 0;
+	padding: 1rem 0 0.5rem 0;
+	font-weight: bold;
 }
-.results-view {
-	display: flex;
-	justify-content: space-around;
-	flex-direction: column;
-	align-items: center;
-}
-.results-items {
-	display: flex;
-	justify-content: space-around;
-	padding: 8px;
-	width: 100%;
-}
-.results-variable-summaries {
-	width: 25%;
-}
-.results-result-summaries {
-	width: 25%;
-}
-.results-result-comparison {
-	width: 50%;
+.results-data-table-container {
+	background-color: white;
 }
 </style>

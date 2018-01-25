@@ -1,6 +1,6 @@
 <template>
 	<div class="search-results">
-		<div class="bg-faded rounded mb-1" :key="dataset.name" v-for="dataset in datasets">
+		<div class="bg-faded rounded mb-3" :key="dataset.name" v-for="dataset in datasets">
 			<dataset-preview
 				:name="dataset.name"
 				:description="dataset.description"
@@ -38,6 +38,7 @@ export default Vue.extend({
 
 <style>
 .search-results {
+	width: 100%;
 	overflow: auto;
 }
 </style>

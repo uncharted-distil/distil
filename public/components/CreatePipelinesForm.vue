@@ -9,7 +9,7 @@
 			</div>
 		</div>
 		<b-button class="create-button" :variant="createVariant" @click="create" :disabled="disableCreate">
-			Create Pipelines
+			Create Models
 		</b-button>
 	</div>
 </template>
@@ -21,9 +21,10 @@ import { createRouteEntry } from '../util/routes';
 import { getTask, getMetricDisplayNames, getMetricSchemaName } from '../util/pipelines';
 import { getters as dataGetters } from '../store/data/module';
 import { getters as routeGetters } from '../store/route/module';
+import { RESULTS_ROUTE } from '../store/route/index';
 import { actions as pipelineActions } from '../store/pipelines/module';
 import { PipelineInfo } from '../store/pipelines/index';
-import { getters as appGetters } from '../store/app/module';
+import { getters as pipelineGetters } from '../store/pipelines/module';
 import { Variable } from '../store/data/index';
 import { FilterParams } from '../util/filters';
 import Vue from 'vue';
@@ -80,7 +81,7 @@ export default Vue.extend({
 			});
 		},
 		sessionId(): string {
-			return appGetters.getPipelineSessionID(this.$store);
+			return pipelineGetters.getPipelineSessionID(this.$store);
 		},
 		// determines create button status based on completeness of user input
 		disableCreate(): boolean {
@@ -98,7 +99,6 @@ export default Vue.extend({
 			const taskData = getTask(this.targetVariable.type);
 			const task = taskData.schemaName;
 			const metrics = _.map(this.metrics as string[], m => getMetricSchemaName(m));
-
 			// dispatch action that triggers request send to server
 			pipelineActions.createPipelines(this.$store, {
 				dataset: this.dataset,
@@ -109,13 +109,9 @@ export default Vue.extend({
 				metric: metrics
 			}).then((res: PipelineInfo) => {
 				// transition to result screen
-				const entry = createRouteEntry('/results', {
-					terms: routeGetters.getRouteTerms(this.$store),
+				const entry = createRouteEntry(RESULTS_ROUTE, {
 					dataset: routeGetters.getRouteDataset(this.$store),
-					filters: routeGetters.getRouteFilters(this.$store),
 					target: routeGetters.getRouteTargetVariable(this.$store),
-					training: routeGetters.getRouteTrainingVariables(this.$store),
-					requestId: res.requestId,
 					pipelineId: res.pipelineId
 				});
 				this.$router.push(entry);

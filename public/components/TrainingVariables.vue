@@ -1,6 +1,6 @@
 <template>
 	<div class="training-variables">
-		<h6 class="nav-link">Training features</h6>
+		<p class="nav-link font-weight-bold">Training features</p>
 		<variable-facets
 			enable-search
 			enable-facet-filtering
@@ -42,7 +42,7 @@ export default Vue.extend({
 			return (group: Group) => {
 				const container = document.createElement('div');
 				const remove = document.createElement('button');
-				remove.className += 'btn btn-sm btn-outline-danger mb-2';
+				remove.className += 'btn btn-sm btn-outline-danger ml-2 mr-2 mb-2';
 				remove.innerHTML = 'Remove';
 				remove.addEventListener('click', () => {
 					const training = routeGetters.getRouteTrainingVariables(this.$store).split(',');

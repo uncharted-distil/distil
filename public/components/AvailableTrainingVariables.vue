@@ -1,9 +1,8 @@
 <template>
 	<div class="available-training-variables">
-		<h6 class="nav-link">Available features</h6>
+		<p class="nav-link font-weight-bold">Available features</p>
 		<variable-facets
 			enable-search
-			enable-facet-filtering
 			type-change
 			instance-name="availableVars"
 			:variables="variables"
@@ -41,7 +40,7 @@ export default Vue.extend({
 			return (group: { key: string }) => {
 				const container = document.createElement('div');
 				const trainingElem = document.createElement('button');
-				trainingElem.className += 'btn btn-sm btn-outline-success mr-2 mb-2';
+				trainingElem.className += 'btn btn-sm btn-outline-success ml-2 mr-2 mb-2';
 				trainingElem.innerHTML = 'Add to Training Set';
 				trainingElem.addEventListener('click', () => {
 					const training = routeGetters.getRouteTrainingVariables(this.$store);
@@ -51,17 +50,7 @@ export default Vue.extend({
 					});
 					this.$router.push(entry);
 				});
-				const targetElem = document.createElement('button');
-				targetElem.className += 'btn btn-sm btn-outline-success mr-2 mb-2';
-				targetElem.innerHTML = 'Set as Target';
-				targetElem.addEventListener('click', () => {
-					const entry = overlayRouteEntry(routeGetters.getRoute(this.$store), {
-						target: group.key,
-					});
-					this.$router.push(entry);
-				});
 				container.appendChild(trainingElem);
-				container.appendChild(targetElem);
 				return container;
 			};
 		}

@@ -1,11 +1,16 @@
 <template>
 	<div class='result-facets'>
-		<result-group class="result-group-container" :key="group.name" v-for="group in resultGroups"
+		<result-group class="result-group-container" :key="group.name" v-for="(group, index) in resultGroups"
 			:name="group.groupName"
+			:index="index"
+			:timestamp="group.timestamp"
 			:request-id="group.requestId"
 			:pipeline-id="group.pipelineId"
+			:scores="group.scores"
 			:result-summary="group.resultSummary"
 			:residuals-summary="group.residualsSummary"
+			:result-extrema="resultExtrema"
+			:residual-extrema="residualExtrema"
 			:resultHtml="html"
 			:residualHtml="html">
 		</result-group>
@@ -15,12 +20,13 @@
 <script lang="ts">
 
 import _ from 'lodash';
+import moment from 'moment';
 import Facets from '../components/Facets';
 import ResultGroup from '../components/ResultGroup.vue';
 import { VariableSummary } from '../store/data/index';
-import { getters as dataGetters} from '../store/data/module';
-import { getters as routeGetters} from '../store/route/module';
-import { getters as pipelineGetters } from '../store/pipelines/module';
+import { getters as dataGetters } from '../store/data/module';
+import { getters as routeGetters } from '../store/route/module';
+import { getPipelinesForDatasetAndTarget } from '../util/pipelines';
 import 'font-awesome/css/font-awesome.css';
 import '../styles/spinner.css';
 import Vue from 'vue';
@@ -45,21 +51,39 @@ export default Vue.extend({
 
 	props: {
 		html: String,
-		regression: Boolean
+		regression: Boolean,
+		resultExtrema: Object,
+		residualExtrema: Object
 	},
 
 	computed: {
+
+		dataset(): string {
+			return routeGetters.getRouteDataset(this.$store);
+		},
+		
+		target(): string {
+			return routeGetters.getRouteTargetVariable(this.$store);
+		},
+
+		resultSummaries(): VariableSummary[] {
+			return dataGetters.getResultsSummaries(this.$store);;
+		},
+
+		residualSummaries(): VariableSummary[] {
+			return this.regression ? dataGetters.getResidualsSummaries(this.$store) : [];
+		},
+
 		// Generate pairs of residuals and results for each pipeline in the numerical case.
 		resultGroups(): SummaryGroup[] {
 
-			const pipelineGroups = pipelineGetters.getPipelines(this.$store);
-			const requestId = routeGetters.getRouteCreateRequestId(this.$store);
-			const resultSummaries = dataGetters.getResultsSummaries(this.$store);
-			const residualsSummaries = this.regression ? dataGetters.getResidualsSummaries(this.$store) : [];
-			const pipelineGroup = pipelineGroups[requestId];
+			const pipelines = getPipelinesForDatasetAndTarget(this.$store.state.pipelineModule, this.dataset, this.target);
+			const resultSummaries = this.resultSummaries;
+			const residualsSummaries = this.residualSummaries;
 
-			const summaryGroups = _.map(pipelineGroup, pipeline => {
+			const summaryGroups = pipelines.map(pipeline => {
 				const pipelineId = pipeline.pipelineId;
+				const requestId = pipeline.requestId;
 				const resultSummary = _.find(resultSummaries, summary => {
 					return summary.pipelineId === pipelineId;
 				});
@@ -70,6 +94,8 @@ export default Vue.extend({
 					requestId: requestId,
 					pipelineId: pipelineId,
 					groupName: pipeline ? pipeline.name : '',
+					timestamp: pipeline ? moment(pipeline.timestamp).format('YYYY/MM/DD') : '',
+					scores: pipeline ? pipeline.scores : [],
 					resultSummary: resultSummary,
 					residualsSummary: residualSummary
 				};

@@ -17,6 +17,7 @@ import _ from 'lodash';
 import { createRouteEntry } from '../util/routes';
 import { actions } from '../store/data/module';
 import { getters } from '../store/route/module';
+import { SEARCH_ROUTE } from '../store/route/index';
 import Vue from 'vue';
 
 export default Vue.extend({
@@ -25,7 +26,7 @@ export default Vue.extend({
 	computed: {
 		terms: {
 			set(terms: string) {
-				const path = !_.isEmpty(terms) ? '/search' : getters.getRoutePath(this.$store);
+				const path = !_.isEmpty(terms) ? SEARCH_ROUTE : getters.getRoutePath(this.$store);
 				const routeEntry = createRouteEntry(path, {
 					terms: terms
 				});
@@ -45,7 +46,7 @@ export default Vue.extend({
 	},
 
 	watch: {
-		'$route.query.terms'() {
+		terms() {
 			actions.searchDatasets(this.$store, this.terms);
 		}
 	}

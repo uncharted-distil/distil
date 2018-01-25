@@ -1,17 +1,16 @@
 <template>
 	<div class='result-summaries'>
-		<h6 class="nav-link">results</h6>
+		<p class="nav-link font-weight-bold">Results<p>
 		<div v-if="regressionEnabled" class="result-summaries-error">
 			<div class="result-summaries-label">
 				Error:
 			</div>
 			<div class="result-summaries-slider">
 				<vue-slider ref="slider"
-					:v-model="value"
-					:min="minVal"
-					:max="maxVal"
+					:min="residualExtrema.min"
+					:max="residualExtrema.max"
 					:interval="interval"
-					:value="value"
+					:value="initialValue"
 					:formatter="formatter"
 					:lazy="true"
 					width=100%
@@ -19,15 +18,19 @@
 					@callback="onSlide"/>
 			</div>
 		</div>
-		<h6 class="nav-link">Actual</h6>
+		<p class="nav-link font-weight-bold">Actual</p>
 		<facets class="result-summaries-target"
-			v-on:histogram-mouse-enter="histogramMouseEnter"
-			v-on:histogram-mouse-leave="histogramMouseLeave"
-			:groups="targetSummaries"
+			@histogram-click="onHistogramClick"
+			@facet-click="onFacetClick"
+			:groups="targetGroups"
 			:highlights="highlights"></facets>
-		<h6 class="nav-link">Predicted</h6>
-		<result-facets :regression="regressionEnabled"></result-facets>
-		<b-btn v-b-modal.export variant="outline-success" class="check-button">Export Pipeline</b-btn>
+		<p class="nav-link font-weight-bold">Predictions by Model</p>
+		<result-facets
+			:regression="regressionEnabled"
+			:result-extrema="resultExtrema"
+			:residual-extrema="residualExtrema">
+		</result-facets>
+		<b-btn v-b-modal.export variant="outline-success" class="check-button">Export Model</b-btn>
 		<b-modal id="export" title="Export" @ok="onExport">
 			<div class="check-message-container">
 				<i class="fa fa-check-circle fa-3x check-icon"></i>
@@ -43,9 +46,12 @@ import ResultFacets from '../components/ResultFacets.vue';
 import Facets from '../components/Facets.vue';
 import { createGroups, Group } from '../util/facets';
 import { overlayRouteEntry } from '../util/routes';
-import { getPipelineResultById } from '../util/pipelines';
+import { getPipelineById } from '../util/pipelines';
 import { getTask } from '../util/pipelines';
-import { getErrorCol, /*isPredicted, isError,*/ isTarget, getVarFromTarget /*, getVarFromPredicted, getVarFromError*/ } from '../util/data';
+import { isTarget, getVarFromTarget, getTargetCol } from '../util/data';
+import { updateResultHighlights } from '../util/highlights';
+import { VariableSummary, Extrema, Highlights, Range } from '../store/data/index';
+import { NUMERICAL_FILTER, CATEGORICAL_FILTER } from '../util/filters';
 import { getters as dataGetters} from '../store/data/module';
 import { getters as routeGetters } from '../store/route/module';
 import { mutations as dataMutations } from '../store/data/module';
@@ -55,9 +61,11 @@ import vueSlider from 'vue-slider-component';
 import Vue from 'vue';
 import _ from 'lodash';
 import 'font-awesome/css/font-awesome.css';
+import { getters as pipelineGetters } from '../store/pipelines/module';
 
 const DEFAULT_PERCENTILE = 0.25;
 const NUM_STEPS = 100;
+const RESULT_SUMMARY_CONTEXT = 'result_summary';
 
 export default Vue.extend({
 	name: 'result-summaries',
@@ -71,73 +79,76 @@ export default Vue.extend({
 	data() {
 		return {
 			formatter(arg) {
-				return arg.toFixed(2);
+				return arg ? arg.toFixed(2) : '';
 			}
 		};
 	},
 
 	computed: {
-		value: {
-			set(value) {
-				this.updateThreshold(value);
-			},
-			get(): number {
-				const value = routeGetters.getRouteResidualThreshold(this.$store);
-				if (value === undefined || value === '') {
-					this.updateThreshold(this.defaultValue);
-					return this.defaultValue;
-				}
-				return _.toNumber(value);
-			}
-		},
-
-		highlights(): Dictionary<any> {
-			// find var marked as 'target' and use that name/value tuple to
-			// highlight the ground truth
-			const highlights = dataGetters.getHighlightedFeatureValues(this.$store);
-			const facetHighlights: Dictionary<any> = {};
-			_.forEach(highlights.values, (value, varName) => {
-				if (isTarget(varName)) {
-					facetHighlights[getVarFromTarget(varName)] = value;
-				}
-			});
-			return facetHighlights;
-		},
-
 		dataset(): string {
 			return routeGetters.getRouteDataset(this.$store);
 		},
 
-		minVal(): number {
-			const resultItems = dataGetters.getResultDataItems(this.$store) as { [name: string]: any }[];
-			const errorCol = getErrorCol(routeGetters.getRouteTargetVariable(this.$store));
-			if (!_.isEmpty(resultItems) && _.has(resultItems[0], errorCol)) {
-				const min = _.minBy(resultItems, r => Math.abs(<number>(r[errorCol])));
-				const minErr = Math.abs(<number>(min[errorCol]));
-				// round to closest 2 decimal places, otherwise interval computation makes the slider angry
-				return Math.ceil(100 * minErr) / 100;
-			}
-			return 0.0;
+		target(): string {
+			return routeGetters.getRouteTargetVariable(this.$store);
 		},
 
-		maxVal(): number {
-			const resultItems = dataGetters.getResultDataItems(this.$store) as { [name: string]: any }[];
-			const errorCol = getErrorCol(routeGetters.getRouteTargetVariable(this.$store));
-			if (!_.isEmpty(resultItems) && _.has(resultItems[0], errorCol)) {
-				const max = _.maxBy(resultItems, r => Math.abs(<number>(r[errorCol])));
-				const maxErr = Math.abs(<number>max[errorCol]);
-				// round to closest 2 decimal places, otherwise interval computation makes the slider angry
-				return Math.ceil(100 * maxErr) / 100;
+		initialValue(): number[] {
+			const min = routeGetters.getRouteResidualThresholdMin(this.$store);
+			const max = routeGetters.getRouteResidualThresholdMax(this.$store);
+			if (min === undefined || min === '' ||
+				max === undefined || max === '') {
+				if (!_.isNaN(this.defaultValue[0]) && !_.isNaN(this.defaultValue[1])) {
+					this.updateThreshold(this.defaultValue[0], this.defaultValue[1]);
+				}
+				return this.defaultValue;
 			}
-			return 1.0;
+			const nmin = _.toNumber(min);
+			const nmax = _.toNumber(max);
+			// NOTE: the slider component discards the values if they are
+			// not within the extrema. We have to read the extrema here so
+			// that the values are recomputed when the extrema is computed.
+			const extrema = this.residualExtrema;
+			if (nmin < extrema.min || nmax > extrema.max) {
+				return [ NaN, NaN ];
+			}
+			return [
+				nmin,
+				nmax
+			];
+		},
+
+		highlights(): Highlights {
+			// find var marked as 'target' and set associated values as highlights
+			const highlights = dataGetters.getHighlightedFeatureValues(this.$store);
+			const facetHighlights = <Highlights>{
+				root: _.cloneDeep(highlights.root),
+				values: <Dictionary<string[]>>{}
+			};
+			_.forEach(highlights.values, (values, varName) => {
+				if (isTarget(varName)) {
+					facetHighlights.values[getVarFromTarget(varName)] = values;
+				}
+			});
+			if (highlights.root && isTarget(highlights.root.key)) {
+				facetHighlights.root.key = getVarFromTarget(highlights.root.key);
+			}
+			return facetHighlights;
 		},
 
 		range(): number {
-			return this.maxVal - this.minVal;
+			if (_.isNaN(this.residualExtrema.min) ||
+				_.isNaN(this.residualExtrema.max)) {
+				return NaN;
+			}
+			return this.residualExtrema.max - this.residualExtrema.min;
 		},
 
-		defaultValue(): number {
-			return this.minVal + (this.range * DEFAULT_PERCENTILE);
+		defaultValue(): number[] {
+			return [
+				-this.range/2 * DEFAULT_PERCENTILE,
+				this.range/2 * DEFAULT_PERCENTILE
+			];
 		},
 
 		interval(): number {
@@ -145,16 +156,60 @@ export default Vue.extend({
 			return interval;
 		},
 
-		targetSummaries(): Group[] {
-			// Get the current target variable and the summary associated with it
+		targetSummary() : VariableSummary {
 			const targetVariable = routeGetters.getRouteTargetVariable(this.$store);
 			const varSummaries = dataGetters.getVariableSummaries(this.$store);
-			const targetSummary = _.find(varSummaries, v => _.toLower(v.name) === _.toLower(targetVariable));
-			// Create a facet for it - this will act as a basis of comparison for the result sets
-			if (!_.isEmpty(targetSummary)) {
-				return createGroups([targetSummary], false, false);
+			return _.find(varSummaries, v => _.toLower(v.name) === _.toLower(targetVariable));
+		},
+
+		targetGroups(): Group[] {
+			if (this.targetSummary) {
+				return createGroups([ this.targetSummary ], false, false, this.resultExtrema);
 			}
 			return [];
+		},
+
+		resultsSummaries(): VariableSummary[] {
+			return dataGetters.getResultsSummaries(this.$store);
+		},
+
+		resultExtrema(): Extrema {
+			if (this.targetSummary || this.resultsSummaries) {
+				let min = Infinity;
+				let max = -Infinity;
+				if (this.targetSummary) {
+					min = Math.min(this.targetSummary.extrema.min, min);
+					max = Math.max(this.targetSummary.extrema.max, max);
+				}
+				if (this.resultsSummaries) {
+					this.resultsSummaries.forEach(summary => {
+						min = Math.min(summary.extrema.min, min);
+						max = Math.max(summary.extrema.max, max);
+					});
+				}
+				return {
+					min: min,
+					max: max
+				};
+			}
+			return null;
+		},
+
+		residualsSummaries(): VariableSummary[] {
+			return this.regressionEnabled ? dataGetters.getResidualsSummaries(this.$store) : [];
+		},
+
+		residualExtrema(): Extrema {
+			let extrema = NaN;
+			this.residualsSummaries.forEach(summary => {
+				extrema = Math.max(
+					Math.abs(summary.extrema.min),
+					Math.abs(summary.extrema.max));
+			});
+			return {
+				min: -extrema,
+				max: extrema
+			};
 		},
 
 		regressionEnabled(): boolean {
@@ -169,52 +224,67 @@ export default Vue.extend({
 
 		activePipelineName(): string {
 			const pipelineId = routeGetters.getRoutePipelineId(this.$store);
-			const requestId = routeGetters.getRouteCreateRequestId(this.$store);
-			const result = getPipelineResultById(this.$store.state.pipelineModule, requestId, pipelineId);
+			const result = getPipelineById(this.$store.state.pipelineModule, pipelineId);
 			return result ? result.name : '';
 		}
 	},
 
 	methods: {
-		histogramMouseEnter(key, value) {
-			// extract the var name from the key
-			const varName = `${key}_target`;
-			dataMutations.highlightFeatureRange(this.$store, {
-				context: 'result_summary',
-				ranges: {
-					[varName]: {
-						from: _.toNumber(value.label[0]),
-						to: _.toNumber(value.toLabel[value.toLabel.length-1])
-					}
-				}
-			});
+		onHistogramClick(context: string, key: string, value: Range) {
+			if (key && value) {
+				const colKey = getTargetCol(routeGetters.getRouteTargetVariable(this.$store));
+				const filter = {
+					name: colKey,
+					type: NUMERICAL_FILTER,
+					enabled: true,
+					context: RESULT_SUMMARY_CONTEXT,
+					min: value.from,
+					max: value.to
+				};
+				updateResultHighlights(this, context, colKey, value, filter);
+			} else {
+				dataMutations.clearFeatureHighlights(this.$store);
+			}
 		},
 
-		histogramMouseLeave(key) {
-			const varName = `${key}_target`;
-			dataMutations.clearFeatureHighlightRange(this.$store, varName);
+		onFacetClick(context: string, key: string, value: string) {
+			// clear exiting highlights
+			if (key && value) {
+				// extract the var name from the key
+				const colKey = getTargetCol(routeGetters.getRouteTargetVariable(this.$store));
+				const filter = {
+					name: colKey,
+					type: CATEGORICAL_FILTER,
+					enabled: true,
+					context: RESULT_SUMMARY_CONTEXT,
+					categories: [value]
+				};
+				updateResultHighlights(this, context, colKey, value, filter);
+			} else {
+				dataMutations.clearFeatureHighlights(this.$store);
+			}
 		},
 
-		updateThreshold(value: number) {
+		updateThreshold(min: number, max: number) {
 			const entry = overlayRouteEntry(this.$route, {
-				residualThreshold: value
+				residualThresholdMin: `${min}`,
+				residualThresholdMax: `${max}`
 			});
 			this.$router.push(entry);
 		},
 
 		onSlide(value) {
-			const entry = overlayRouteEntry(this.$route, { residualThreshold: value });
-			this.$router.replace(entry);
+			this.updateThreshold(value[0], value[1]);
 		},
 
 		onExport() {
-			this.$router.replace('/');
 			const pipelineId = routeGetters.getRoutePipelineId(this.$store);
-			const requestId = routeGetters.getRouteCreateRequestId(this.$store);
-			const result = getPipelineResultById(this.$store.state.pipelineModule, requestId, pipelineId);
+			const result = getPipelineById(this.$store.state.pipelineModule, pipelineId);
+			const sessionId = pipelineGetters.getPipelineSessionID(this.$store);
+			this.$router.replace('/');
 			actions.exportPipeline(this.$store, {
 				pipelineId: result.pipelineId,
-				sessionId: this.$store.state.pipelineSession.id
+				sessionId: sessionId
 			});
 		}
 	}
@@ -252,6 +322,10 @@ export default Vue.extend({
 	fill: #007E33;
 }
 
+.result-summaries-target .facets-facet-horizontal .facet-histogram-bar-highlighted.select-highlight {
+	fill: #007bff;
+}
+
 .result-summaries-target .facets-facet-vertical .facet-bar-selected {
 	box-shadow: inset 0 0 0 1000px #00C851;
 }
@@ -286,6 +360,10 @@ export default Vue.extend({
 .result-summaries-slider .vue-slider-component .vue-slider-tooltip {
 	border: 1px solid #00C851;
 	background-color: #00C851;
+}
+
+.facets-facet-vertical.select-highlight .facet-bar-selected {
+	box-shadow: inset 0 0 0 1000px #007bff;
 }
 
 .check-message-container {

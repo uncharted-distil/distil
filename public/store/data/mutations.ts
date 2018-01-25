@@ -1,5 +1,5 @@
 import _ from 'lodash';
-import { DataState, Variable, Datasets, VariableSummary, Data, ValueHighlights, RangeHighlights } from './index';
+import { DataState, Variable, Datasets, VariableSummary, Data, Highlights } from './index';
 import { updateSummaries } from '../../util/data';
 
 export const mutations = {
@@ -19,24 +19,12 @@ export const mutations = {
 		state.datasets = datasets;
 	},
 
-	setVariableSummaries(state: DataState, summaries: VariableSummary[]) {
-		state.variableSummaries = summaries;
-	},
-
 	updateVariableSummaries(state: DataState, summary: VariableSummary) {
 		updateSummaries(summary, state.variableSummaries, 'name');
 	},
 
-	setResultsSummaries(state: DataState, summaries: VariableSummary[]) {
-		state.resultsSummaries = summaries;
-	},
-
 	updateResultsSummaries(state: DataState, summary: VariableSummary) {
 		updateSummaries(summary, state.resultsSummaries, 'pipelineId');
-	},
-
-	setResidualsSummaries(state: DataState, summaries: VariableSummary[]) {
-		state.residualSummaries = summaries;
 	},
 
 	updateResidualsSummaries(state: DataState, summary: VariableSummary) {
@@ -58,19 +46,15 @@ export const mutations = {
 		state.resultData = resultData;
 	},
 
-	highlightFeatureRange(state: DataState, highlight: RangeHighlights) {
-		state.highlightedFeatureRanges = highlight;
-	},
-
-	clearFeatureHighlightRange(state: DataState, name: string) {
-		state.highlightedFeatureRanges = <RangeHighlights>{};
-	},
-
-	highlightFeatureValues(state: DataState, highlights: ValueHighlights) {
+	highlightFeatureValues(state: DataState, highlights: Highlights) {
 		state.highlightedFeatureValues = highlights;
 	},
 
 	clearFeatureHighlightValues(state: DataState) {
-		state.highlightedFeatureValues = <ValueHighlights>{};
+		state.highlightedFeatureValues = <Highlights>{};
+	},
+
+	clearFeatureHighlights(state: DataState) {
+		state.highlightedFeatureValues = <Highlights>{};
 	}
 }

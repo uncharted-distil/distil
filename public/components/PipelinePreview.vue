@@ -3,7 +3,7 @@
 		<div class="pipeline-preview" @click="onResult()">
 			<div class="pipeline-header">
 				<div>
-					<strong>dataset:</strong> {{result.dataset}}
+					<strong>Dataset:</strong> {{result.dataset}}
 				</div>
 				<div>
 					<strong>Date:</strong> {{formattedTime}}
@@ -21,13 +21,18 @@
 						{{status()}}
 					</b-badge>
 					<div v-if="isUpdated()">
-						<b-badge variant="info" v-bind:key="score.metric" v-for="score in result.pipeline.scores">
+						<b-badge variant="info" v-bind:key="score.metric" v-for="score in result.scores">
 							{{metricName(score.metric)}}: {{score.value}}
 						</b-badge>
 					</div>
 					<div v-if="isCompleted()">
-						<b-badge variant="info" v-bind:key="score.metric" v-for="score in result.pipeline.scores">
+						<b-badge variant="info" v-bind:key="score.metric" v-for="score in result.scores">
 							{{metricName(score.metric)}}: {{score.value}}
+						</b-badge>
+					</div>
+					<div v-if="isErrored()">
+						<b-badge variant="danger">
+							ERROR
 						</b-badge>
 					</div>
 					</b-badge>
@@ -48,8 +53,8 @@
 import moment from 'moment';
 import { getMetricDisplayName } from '../util/pipelines';
 import { createRouteEntry } from '../util/routes';
-import { getters } from '../store/route/module';
-import { PipelineInfo } from '../store/pipelines/index';
+import { PipelineInfo, PIPELINE_SUBMITTED, PIPELINE_RUNNING, PIPELINE_UPDATED, PIPELINE_COMPLETED, PIPELINE_ERRORED } from '../store/pipelines/index';
+import { RESULTS_ROUTE } from '../store/route/index';
 import Vue from 'vue';
 
 export default Vue.extend({
@@ -72,8 +77,8 @@ export default Vue.extend({
 	methods: {
 		status(): string {
 			const result = <PipelineInfo>this.result;
-			if (result.progress === 'UPDATED') {
-				const score = result.pipeline.scores[0];
+			if (result.progress === PIPELINE_UPDATED) {
+				const score = result.scores[0];
 				const metricName = getMetricDisplayName(score.metric);
 				if (metricName) {
 					return metricName + ': ' + score.value;
@@ -86,26 +91,25 @@ export default Vue.extend({
 			return getMetricDisplayName(metric);
 		},
 		isSubmitted(): boolean {
-			return (<PipelineInfo>this.result).progress==='SUBMITTED';
+			return (<PipelineInfo>this.result).progress === PIPELINE_SUBMITTED;
 		},
 		isRunning(): boolean {
-			return (<PipelineInfo>this.result).progress==='RUNNING';
+			return (<PipelineInfo>this.result).progress === PIPELINE_RUNNING;
 		},
 		isUpdated(): boolean {
-			return (<PipelineInfo>this.result).progress==='UPDATED';
+			return (<PipelineInfo>this.result).progress === PIPELINE_UPDATED;
 		},
 		isCompleted(): boolean {
-			return (<PipelineInfo>this.result).progress !=='UPDATED' && (<PipelineInfo>this.result).pipeline !== undefined;
+			return (<PipelineInfo>this.result).progress === PIPELINE_COMPLETED;
+		},
+		isErrored(): boolean {
+			return (<PipelineInfo>this.result).progress === PIPELINE_ERRORED;
 		},
 		onResult() {
 			const result = <PipelineInfo>this.result;
-			const entry = createRouteEntry('/results', {
- 				terms: getters.getRouteTerms(this.$store),
+			const entry = createRouteEntry(RESULTS_ROUTE, {
 				dataset: result.dataset,
-				filters: getters.getRouteFilters(this.$store),
 				target: result.feature,
-				training: getters.getRouteTrainingVariables(this.$store),
-				requestId: result.requestId,
 				pipelineId: result.pipelineId
 			});
 			this.$router.push(entry);

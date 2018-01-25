@@ -1,7 +1,5 @@
 <template>
-	<div class="navigation">
 		<nav-bar></nav-bar>
-	</div>
 </template>
 
 <script lang="ts">
@@ -10,6 +8,7 @@ import Vue from 'vue';
 
 export default Vue.extend({
 	name: 'navigation-view',
+
 	components: {
 		NavBar
 	}

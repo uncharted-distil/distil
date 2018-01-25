@@ -1,6 +1,6 @@
 <template>
 	<b-card header="Recent Datasets">
-		<div v-if="recentDatasets === null">None</div>
+		<div v-if="recentDatasets.length === 0">None</div>
 		<b-list-group v-bind:key="dataset.name" v-for="dataset in recentDatasets">
 			<dataset-preview
 				:name="dataset.name"

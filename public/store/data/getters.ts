@@ -1,9 +1,10 @@
 import _ from 'lodash';
-import { FieldInfo, Variable, Data, DataState, Datasets, VariableSummary, TargetRow, RangeHighlights, ValueHighlights } from './index';
+import { FieldInfo, Variable, Data, DataState, Datasets, VariableSummary, TargetRow, Highlights, TableRow } from './index';
 import { Filter, EMPTY_FILTER } from '../../util/filters';
 import { TARGET_POSTFIX, PREDICTED_POSTFIX } from '../../util/data';
 import { Dictionary } from '../../util/dict';
 import { getPredictedIndex, getErrorIndex, getTargetIndex } from '../../util/data';
+import { formatValue } from '../../util/types';
 
 function validateData(data: Data) {
 	return !_.isEmpty(data) &&
@@ -11,15 +12,42 @@ function validateData(data: Data) {
 		!_.isEmpty(data.columns);
 }
 
+function getDataItems(data: Data, typeMap: Dictionary<string>): TableRow[] {
+	if (validateData(data)) {
+		// convert fetched result data rows into table data rows
+		return data.values.map((resultRow, rowIndex) => {
+			const row = {} as TargetRow;
+			resultRow.forEach((colValue, colIndex) => {
+				const colName = data.columns[colIndex];
+				const colType = typeMap[colName];
+				row[colName] = formatValue(colValue, colType);
+			});
+			row._key = rowIndex;
+			return row;
+		});
+	}
+	return [];
+}
+
 export const getters = {
 	getVariables(state: DataState): Variable[] {
 		return state.variables;
 	},
 
-	getVariablesMap(state: DataState): { [name: string]: Variable } {
-		const map: { [name: string]: Variable } = {};
+	getVariablesMap(state: DataState): Dictionary<Variable> {
+		const map = {};
 		state.variables.forEach(variable => {
+			map[variable.name] = variable;
 			map[variable.name.toLowerCase()] = variable;
+		});
+		return map;
+	},
+
+	getVariableTypesMap(state: DataState): Dictionary<string> {
+		const map = {};
+		state.variables.forEach(variable => {
+			map[variable.name] = variable.type;
+			map[variable.name.toLowerCase()] = variable.type;
 		});
 		return map;
 	},
@@ -30,8 +58,9 @@ export const getters = {
 
 	getAvailableVariablesMap(state: DataState, getters: any): Dictionary<boolean> {
 		const available = getters.getAvailableVariables as string[];
-		const map: { [name: string]: boolean } = {};
+		const map = {};
 		available.forEach(name => {
+			map[name] = true;
 			map[name.toLowerCase()] = true;
 		});
 		return map;
@@ -40,7 +69,7 @@ export const getters = {
 	getTrainingVariablesMap(state: DataState, getters: any): Dictionary<boolean> {
 		const training = getters.getRouteTrainingVariables as string;
 		if (training) {
-			const map: Dictionary<boolean> = {};
+			const map = {};
 			training.split(',').forEach(name => {
 				map[name.toLowerCase()] = true;
 			});
@@ -138,17 +167,8 @@ export const getters = {
 		return state.filteredData;
 	},
 
-	getFilteredDataItems(state: DataState): Dictionary<any>[] {
-		if (validateData(state.filteredData)) {
-			return _.map(state.filteredData.values, d => {
-				const row: { [col: string]: any } = {};
-				for (const [index, col] of state.filteredData.columns.entries()) {
-					row[col] = d[index];
-				}
-				return row;
-			});
-		}
-		return [];
+	getFilteredDataItems(state: DataState, getters: any): Dictionary<any>[] {
+		return getDataItems(state.filteredData, getters.getVariableTypesMap);
 	},
 
 	getFilteredDataFields(state: DataState): Dictionary<FieldInfo> {
@@ -176,23 +196,8 @@ export const getters = {
 		return state.resultData;
 	},
 
-	getResultDataItems(state: DataState): TargetRow[] {
-		const resultData = state.resultData;
-		if (validateData(resultData)) {
-			// convert fetched result data rows into table data rows
-			return _.map(resultData.values, resultRow => {
-				const row: Dictionary<any> = {};
-
-				for (const [idx, colValues] of resultRow.entries()) {
-					const colName = resultData.columns[idx];
-					row[colName] = colValues;
-				}
-
-				// display predicted error info
-				return <TargetRow>row;
-			});
-		}
-		return <TargetRow[]>[];
+	getResultDataItems(state: DataState, getters: any): TargetRow[] {
+		return getDataItems(state.resultData, getters.getVariableTypesMap) as TargetRow[];
 	},
 
 	getResultDataFields(state: DataState): Dictionary<FieldInfo> {
@@ -203,7 +208,7 @@ export const getters = {
 			const targetIndex = getTargetIndex(data.columns);
 			const errorIndex = getErrorIndex(data.columns);
 
-			const result: Dictionary<FieldInfo> = {} as any
+			const result = {}
 			// assign column names, ignoring target, predicted and error
 			for (const [idx, col] of data.columns.entries()) {
 				if (idx !== predictedIndex && idx !== targetIndex && idx !== errorIndex) {
@@ -236,52 +241,35 @@ export const getters = {
 			}
 			return result;
 		}
-		return {} as Dictionary<FieldInfo>;
+		return {};
 	},
 
 	getSelectedData(state: DataState): Data {
 		return state.selectedData;
 	},
 
-	getSelectedDataItems(state: DataState): Dictionary<any>[] {
-		if (validateData(state.selectedData)) {
-			return _.map(state.selectedData.values, d => {
-				const row: { [col: string]: any } = {};
-				for (const [index, col] of state.selectedData.columns.entries()) {
-					row[col] = d[index];
-				}
-				return row;
-			});
-		}
-		return [];
+	getSelectedDataItems(state: DataState, getters: any): TableRow[] {
+		return getDataItems(state.selectedData, getters.getVariableTypesMap);
 	},
 
 	getSelectedDataFields(state: DataState): Dictionary<FieldInfo> {
 		const data = state.selectedData;
 		if (validateData(data)) {
-			const variables = state.variables;
-			const types = {};
-			variables.forEach(variable => {
-				types[variable.name] = variable.type;
-			});
-			const result: { [label: string]: FieldInfo } = {};
+			const vmap = getters.getVariableTypesMap;
+			const result = {};
 			for (const col of data.columns) {
 				result[col] = {
 					label: col,
-					type: types[col],
+					type: vmap[col],
 					sortable: true
 				};
 			}
 			return result;
 		}
-		return {} as Dictionary<FieldInfo>;
+		return {};
 	},
 
-	getHighlightedFeatureValues(state: DataState): ValueHighlights {
+	getHighlightedFeatureValues(state: DataState): Highlights {
 		return state.highlightedFeatureValues;
-	},
-
-	getHighlightedFeatureRanges(state: DataState): RangeHighlights {
-		return state.highlightedFeatureRanges;
 	}
 }

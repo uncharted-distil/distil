@@ -20,6 +20,7 @@ import (
 	"github.com/unchartedsoftware/distil/api/pipeline"
 	"github.com/unchartedsoftware/distil/api/postgres"
 	"github.com/unchartedsoftware/distil/api/routes"
+	"github.com/unchartedsoftware/distil/api/task"
 	"github.com/unchartedsoftware/distil/api/ws"
 )
 
@@ -91,6 +92,40 @@ func main() {
 	// instantiate the REST client for primitives.
 	restClient := rest.NewClient(config.PrimitiveEndPoint)
 
+	// build the ingest configuration.
+	ingestConfig := &task.IngestTaskConfig{
+		ContainerDataPath:                config.DataFolderPath,
+		DataPathRelative:                 config.DataFilePath,
+		DatasetFolderSuffix:              config.DatasetFolderSuffix,
+		HasHeader:                        true,
+		MergedOutputPathRelative:         config.MergedOutputDataPath,
+		MergedOutputSchemaPathRelative:   config.MergedOutputSchemaPath,
+		SchemaPathRelative:               config.SchemaPath,
+		ClassificationRESTEndpoint:       config.ClassificationEndpoint,
+		ClassificationFunctionName:       config.ClassificationFunctionName,
+		ClassificationOutputPathRelative: config.ClassificationOutputPath,
+		RankingRESTEndpoint:              config.RankingEndpoint,
+		RankingFunctionName:              config.RankingFunctionName,
+		RankingOutputPathRelative:        config.RankingOutputPath,
+		RankingRowLimit:                  config.RankingRowLimit,
+		DatabasePassword:                 config.PostgresPassword,
+		DatabaseUser:                     config.PostgresUser,
+		Database:                         config.PostgresDatabase,
+		SummaryOutputPathRelative:        config.SummaryPath,
+		ESEndpoint:                       config.ElasticEndpoint,
+		ESTimeout:                        config.ElasticTimeout,
+		ESDatasetPrefix:                  config.ElasticDatasetPrefix,
+	}
+
+	// Ingest the data specified by the environment
+	if config.InitialDataset != "" {
+		log.Infof("Loading initial dataset '%s'", config.InitialDataset)
+		err = task.IngestDataset(config.ESDatasetsIndex, config.InitialDataset, ingestConfig)
+		if err != nil {
+			log.Error(err)
+			os.Exit(1)
+		}
+	}
 	// register routes
 	mux := goji.NewMux()
 	mux.Use(middleware.Log)
@@ -105,10 +140,10 @@ func main() {
 	registerRoute(mux, "/distil/results-summary/:index/:dataset/:results-uuid", routes.ResultsSummaryHandler(pgPipelineStorageCtor, pgDataStorageCtor))
 	registerRoute(mux, "/distil/residuals-summary/:index/:dataset/:results-uuid", routes.ResidualsSummaryHandler(pgPipelineStorageCtor, pgDataStorageCtor))
 	registerRoute(mux, "/distil/ranking/:index/:dataset/:target", routes.RankingHandler(pgDataStorageCtor, restClient, config.PipelineDataDir))
-	registerRoute(mux, "/distil/session/:session", routes.SessionHandler(pgPipelineStorageCtor))
+	registerRoute(mux, "/distil/session/:session/:dataset/:target/:pipeline-id", routes.SessionHandler(pgPipelineStorageCtor))
 	registerRoute(mux, "/distil/abort", routes.AbortHandler())
-	registerRoute(mux, "/distil/export/:session/:pipeline-id", routes.ExportHandler(pipelineClient, config.ExportPath))
-
+	registerRoute(mux, "/distil/export/:session/:pipeline-id", routes.ExportHandler(pgPipelineStorageCtor, metadataStorageCtor, pipelineClient, config.ExportPath))
+	registerRoute(mux, "/distil/ingest/:index/:dataset", routes.IngestHandler(ingestConfig))
 	registerRoute(mux, "/ws", ws.PipelineHandler(pipelineClient, metadataStorageCtor, pgDataStorageCtor, pgPipelineStorageCtor))
 	registerRoute(mux, "/*", routes.FileHandler("./dist"))
 

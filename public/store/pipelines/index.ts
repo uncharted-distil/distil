@@ -1,15 +1,19 @@
-import { Dictionary } from '../../util/dict';
 import { FilterParams } from '../../util/filters';
+
+export const PIPELINE_SUBMITTED = 'SUBMITTED';
+export const PIPELINE_RUNNING = 'RUNNING';
+export const PIPELINE_UPDATED = 'UPDATED';
+export const PIPELINE_COMPLETED = 'COMPLETED';
+export const PIPELINE_ERRORED = 'ERRORED';
 
 export interface Score {
 	metric: string;
 	value: number;
 }
 
-export interface PipelineOutput {
-	output: string,
-	scores: Score[];
-	resultId: string;
+export interface PipelineFeature {
+	featureName: string;
+	featureType: string;
 }
 
 export interface PipelineInfo {
@@ -18,21 +22,26 @@ export interface PipelineInfo {
 	feature: string;
 	pipelineId: string;
 	progress: string;
-	pipeline?: PipelineOutput;
+	output: string;
+	scores: Score[];
+	resultId: string;
 	timestamp: number;
 	dataset: string;
 	filters: FilterParams;
+	features: PipelineFeature[];
 }
 
 export interface PipelineState {
-	runningPipelines: Dictionary<Dictionary<PipelineInfo>>;
-	completedPipelines: Dictionary<Dictionary<PipelineInfo>>;
+	sessionID: string;
+	sessionIsActive: boolean;
+	pipelineRequests: PipelineInfo[];
 }
 
 export const state: PipelineState = {
-	// running pipeline creation tasks grouped by parent create requestID
-	runningPipelines: {} as any,
-
-	// completed pipeline creation tasks grouped by parent create request ID
-	completedPipelines: {} as any
+	// current pipeline session id
+	sessionID: null,
+	// if there is an active session
+	sessionIsActive: false,
+	// pipeline requests
+	pipelineRequests: [] as any
 }

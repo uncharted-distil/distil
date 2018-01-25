@@ -1,19 +1,19 @@
 <template>
 	<div class="select-data-table">
-		<h6 class="nav-link">Training Set Samples</h6>
+		<p class="nav-link font-weight-bold">Training Set Samples</p>
 		<div class="select-data-table-container">
 			<div class="select-data-no-results" v-if="items.length===0">
 				<div class="text-danger">
 					<i class="fa fa-times missing-icon"></i><strong>No Training features Selected</strong>
 				</div>
 			</div>
-			<b-table v-if="items.length>0"
+			<b-table
+				ref="selectTable"
+				v-if="items.length>0"
 				bordered
 				hover
-				striped
 				small
-				@row-hovered="onRowHovered"
-				@mouseout.native="onMouseOut"
+				@row-clicked="onRowClick"
 				:items="items"
 				:fields="fields">
 
@@ -36,14 +36,12 @@ import _ from 'lodash';
 import Vue from 'vue';
 import { getters as dataGetters, actions, mutations } from '../store/data/module';
 import { Dictionary } from '../util/dict';
-import { FieldInfo } from '../store/data/index';
 import { Filter } from '../util/filters';
+import { FieldInfo } from '../store/data/index';
 import { getters as routeGetters } from '../store/route/module';
-import { ValueHighlights } from '../store/data/index';
-import { updateTableHighlights } from '../util/highlights';
+import { Highlights, TableRow } from '../store/data/index';
+import { updateTableHighlights, scrollToFirstHighlight } from '../util/highlights';
 import TypeChangeMenu from '../components/TypeChangeMenu';
-
-const SELECT_TABLE_HIGHLIGHT = 'select_table_highlight';
 
 export default Vue.extend({
 	name: 'selected-data-table',
@@ -52,17 +50,48 @@ export default Vue.extend({
 		TypeChangeMenu
 	},
 
+	props: {
+		instanceName: { type: String, default: 'select-table-highlight' }
+	},
+
+	data() {
+		return {
+			selectedRowKey: -1
+		};
+	},
+
 	computed: {
 		// get dataset from route
 		dataset(): string {
 			return routeGetters.getRouteDataset(this.$store);
 		},
+
 		// extracts the table data from the store
 		items(): Dictionary<any> {
 			const data = dataGetters.getSelectedDataItems(this.$store);
-			const rangeHighlights = dataGetters.getHighlightedFeatureRanges(this.$store);
 			const valueHighlights = dataGetters.getHighlightedFeatureValues(this.$store);
-			updateTableHighlights(data, rangeHighlights, valueHighlights, SELECT_TABLE_HIGHLIGHT);
+
+			dataGetters.getSelectedDataItems(this.$store).forEach(f => f._rowVariant = null);
+
+			// if we have highlights defined and the select table is not the source then updated
+			// the highlight visuals.
+			if ((_.get(valueHighlights, 'root.context') !== this.instanceName)) {
+				updateTableHighlights(data, valueHighlights, this.instanceName);
+
+				// On data / highlights change, scroll to first selected row
+				scrollToFirstHighlight(this, 'selectTable', true);
+			}
+
+			if (this.selectedRowKey >= 0) {
+				const toSelect = dataGetters.getSelectedDataItems(this.$store).find(r => r._key === this.selectedRowKey);
+				if (_.get(valueHighlights, 'root.context') === this.instanceName) {
+					toSelect._rowVariant = 'primary';
+				} else {
+					toSelect._rowVariant = null;
+					this.selectedRowKey = -1;
+				}
+			}
+
 			return data;
 		},
 
@@ -70,6 +99,7 @@ export default Vue.extend({
 		fields(): Dictionary<FieldInfo> {
 			return dataGetters.getSelectedDataFields(this.$store);
 		},
+
 		filters(): Filter[] {
 			return dataGetters.getSelectedFilters(this.$store);
 		}
@@ -80,13 +110,7 @@ export default Vue.extend({
 	},
 
 	watch: {
-		'$route.query.training'() {
-			this.fetch();
-		},
-		'$route.query.target'() {
-			this.fetch();
-		},
-		'$route.query.filters'() {
+		filters() {
 			this.fetch();
 		}
 	},
@@ -98,19 +122,27 @@ export default Vue.extend({
 				filters: this.filters
 			});
 		},
-		onRowHovered(event) {
-			// set new values
-			const highlights = <ValueHighlights>{
-				context: SELECT_TABLE_HIGHLIGHT,
-				values: {}
-			};
-			_.forIn(this.fields, (field, key) => {
-				highlights.values[key] = event[key];
-			});
-			mutations.highlightFeatureValues(this.$store, highlights);
-		},
-		onMouseOut() {
-			mutations.clearFeatureHighlightValues(this.$store);
+
+		onRowClick(row: TableRow) {
+			if (row._key !== this.selectedRowKey) {
+				this.selectedRowKey = row._key;
+
+				// publish the highlight change
+				const highlights = <Highlights> {
+					root: {
+						context: this.instanceName,
+						key: row._key.toString(),
+						value: ''
+					},
+					values: <Dictionary<string[]>>{}
+				};
+				_.forEach(this.fields, (field, key) => highlights.values[key] = [row[key]]);
+				mutations.highlightFeatureValues(this.$store, highlights);
+			} else {
+				// clicked on same row - reset the selection key and clear highlights
+				mutations.clearFeatureHighlights(this.$store);
+				this.selectedRowKey = -1;
+			}
 		}
 	}
 });
@@ -125,6 +157,7 @@ export default Vue.extend({
 .select-data-table-container {
 	display: flex;
 	overflow: auto;
+	background-color: white;
 }
 .select-data-no-results {
 	width: 100%;
@@ -148,6 +181,7 @@ export default Vue.extend({
 .table-sm th, .table-sm td {
 	font-size: 0.9rem;
 }
+
 .var-type-button button:hover,
 .var-type-button button:active,
 .var-type-button button:focus,

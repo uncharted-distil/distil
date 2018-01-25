@@ -19,15 +19,13 @@
 			:html="html"
 			:sort="sort"
 			:type-change="typeChange"
-			v-on:click="onClick"
-			v-on:expand="onExpand"
-			v-on:collapse="onCollapse"
-			v-on:range-change="onRangeChange"
-			v-on:facet-toggle="onFacetToggle"
-			v-on:histogram-mouse-enter="onHistogramMouseEnter"
-			v-on:histogram-mouse-leave="onHistogramMouseLeave"
-			v-on:facet-mouse-enter="onFacetMouseEnter"
-			v-on:facet-mouse-leave="onFacetMouseLeave">
+			@click="onClick"
+			@expand="onExpand"
+			@collapse="onCollapse"
+			@range-change="onRangeChange"
+			@facet-toggle="onFacetToggle"
+			@histogram-click="onHistogramClick"
+			@facet-click="onFacetClick">
 		</facets>
 		<div v-if="numRows > rowsPerPage" class="variable-page-nav">
 			<b-pagination size="sm" align="center" :total-rows="numRows" :per-page="rowsPerPage" v-model="currentPage"/>
@@ -39,19 +37,18 @@
 <script lang="ts">
 
 import Facets from '../components/Facets';
-import { Filter, decodeFiltersDictionary, updateFilter, getFilterType, isDisabled, CATEGORICAL_FILTER, NUMERICAL_FILTER, EMPTY_FILTER } from '../util/filters';
+import { Filter, decodeFiltersDictionary, updateFilter, getFilterType, isDisabled,
+	CATEGORICAL_FILTER, NUMERICAL_FILTER, EMPTY_FILTER } from '../util/filters';
 import { overlayRouteEntry, getRouteFacetPage } from '../util/routes';
-import { VariableSummary } from '../store/data/index';
+import { Highlights, Range } from '../store/data/index';
 import { Dictionary } from '../util/dict';
 import { getters as dataGetters, mutations as dataMutations } from '../store/data/module';
 import { getters as routeGetters } from '../store/route/module';
 import { createGroups, Group } from '../util/facets';
+import { updateDataHighlights } from '../util/highlights';
 import 'font-awesome/css/font-awesome.css';
 import '../styles/spinner.css';
-import _ from 'lodash';
 import Vue from 'vue';
-
-const VARIABLE_FACET_HIGHLIGHTS = 'variable_facets';
 
 export default Vue.extend({
 	name: 'variable-facets',
@@ -61,15 +58,15 @@ export default Vue.extend({
 	},
 
 	props: {
-		'enableSearch': Boolean,
-		'enableToggle': Boolean,
-		'enableGroupCollapse': Boolean,
-		'enableFacetFiltering': Boolean,
-		'variables': Array,
-		'dataset': String,
-		'html': [ String, Object, Function ],
-		'instanceName': String,
-		'typeChange': Boolean
+		enableSearch: Boolean,
+		enableToggle: Boolean,
+		enableGroupCollapse: Boolean,
+		enableFacetFiltering: Boolean,
+		variables: Array,
+		dataset: String,
+		html: [ String, Object, Function ],
+		instanceName: { type: String, default: 'variable-facets' },
+		typeChange: Boolean
 	},
 
 	data() {
@@ -96,7 +93,7 @@ export default Vue.extend({
 
 		groups(): Group[] {
 			// filter by search
-			const searchFiltered = (<VariableSummary[]>this.variables).filter(summary => {
+			const searchFiltered = this.variables.filter(summary => {
 				return this.filter === '' || summary.name.toLowerCase().includes(this.filter.toLowerCase());
 			});
 
@@ -122,15 +119,11 @@ export default Vue.extend({
 			groups = this.updateGroupCollapses(groups);
 
 			// update selections
-			return this.updateGroupSelections(groups);
+			return this.updateGroupFilters(groups);
 		},
 
-		highlights(): Dictionary<any> {
-			const valueHighlights = dataGetters.getHighlightedFeatureValues(this.$store);
-			if (valueHighlights.context === VARIABLE_FACET_HIGHLIGHTS) {
-				return {};
-			}
-			return valueHighlights.values;
+		highlights(): Highlights {
+			return dataGetters.getHighlightedFeatureValues(this.$store);
 		},
 
 		importance(): Dictionary<number> {
@@ -225,35 +218,34 @@ export default Vue.extend({
 			this.$emit('click', key);
 		},
 
-		onHistogramMouseEnter(key: string, value: any) {
-			// extract the var name from the key
-			dataMutations.highlightFeatureRange(this.$store, {
-				context: VARIABLE_FACET_HIGHLIGHTS,
-				ranges: {
-					[key]: {
-						from: _.toNumber(value.label[0]),
-						to: _.toNumber(value.toLabel[value.toLabel.length-1])
-					}
-				}
-			});
+		onHistogramClick(context: string, key: string, value: Range) {
+			if (key && value) {
+				const selectFilter = {
+					name: key,
+					type: NUMERICAL_FILTER,
+					enabled: true,
+					min:  value.from,
+					max: value.to
+				};
+				updateDataHighlights(this, context, key, value, selectFilter);
+			} else {
+				dataMutations.clearFeatureHighlights(this.$store);
+			}
 		},
 
-		onHistogramMouseLeave(key: string) {
-			dataMutations.clearFeatureHighlightRange(this.$store, key);
-		},
-
-		onFacetMouseEnter(key: string, value: any) {
-			// extract the var name from the key
-			dataMutations.highlightFeatureValues(this.$store, {
-				context: VARIABLE_FACET_HIGHLIGHTS,
-				values: {
-					[key]: value
-				}
-			});
-		},
-
-		onFacetMouseLeave(key: string) {
-			dataMutations.clearFeatureHighlightValues(this.$store);
+		onFacetClick(context: string, key: string, value: string) {
+			if (key && value) {
+				// extract the var name from the key
+				const selectFilter = {
+					name: key,
+					type: CATEGORICAL_FILTER,
+					enabled: true,
+					categories: [value]
+				};
+				updateDataHighlights(this, context, key, value, selectFilter);
+			} else {
+				dataMutations.clearFeatureHighlights(this.$store);
+			}
 		},
 
 		// sets all facet groups to the active state - full size display + all controls, updates
@@ -305,7 +297,7 @@ export default Vue.extend({
 
 		// updates numerical facet range controls or categorical selected state based on
 		// route
-		updateGroupSelections(groups): Group[] {
+		updateGroupFilters(groups): Group[] {
 			const filters = routeGetters.getRouteFilters(this.$store);
 			const decoded = decodeFiltersDictionary(filters);
 			return groups.map(group => {
@@ -354,7 +346,6 @@ button {
 .variable-facets {
 	display: flex;
 	flex-direction: column;
-	padding-right: 8px;
 }
 .page-link {
 	color: #868e96;
@@ -368,6 +359,20 @@ button {
 .variable-facets-container {
 	overflow-x: hidden;
 	overflow-y: auto;
+}
+.variable-facets-container .facets-root-container{
+	margin: 2px;
+}
+.variable-facets-container .facets-root-container .facets-group-container{
+	background-color: inherit;
+}
+.variable-facets-container .facets-root-container .facets-group-container .facets-group {
+	background: white;
+	margin: 2px 2px 4px 2px; 
+    font-size: 0.867rem;
+    color: rgba(0,0,0,0.87);
+    box-shadow: 0 1px 2px 0 rgba(0,0,0,0.10);
+    transition: box-shadow 0.3s ease-in-out;
 }
 .facet-filters span {
 	font-size: 0.9rem;

@@ -1,26 +1,24 @@
 <template>
 	<div class="available-target-variables">
-		<h6 class="nav-link">Available features</h6>
 		<variable-facets
 			enable-search
-			enable-facet-filtering
-			type-change
 			instance-name="availableVars"
 			:variables="variables"
 			:dataset="dataset"
-			v-on:click="onClick">
+			:html="html">
 		</variable-facets>
 	</div>
 </template>
 
 <script lang="ts">
 
-import { overlayRouteEntry } from '../util/routes';
 import 'jquery';
 import { getters as dataGetters } from '../store/data/module';
 import { getters as routeGetters } from '../store/route/module';
+import { createRouteEntry } from '../util/routes';
 import { VariableSummary } from '../store/data/index';
 import VariableFacets from '../components/VariableFacets.vue';
+import { CREATE_ROUTE } from '../store/route/index';
 import 'font-awesome/css/font-awesome.css';
 import Vue from 'vue';
 
@@ -37,17 +35,28 @@ export default Vue.extend({
 		},
 		variables(): VariableSummary[] {
 			return dataGetters.getAvailableVariableSummaries(this.$store);
-		}
-	},
-
-	methods: {
-		onClick(key: string) {
-			const entry = overlayRouteEntry(routeGetters.getRoute(this.$store), {
-				target: key,
-			});
-			this.$router.push(entry);
+		},
+		html(): ( { key: string } ) => HTMLDivElement {
+			return (group: { key: string }) => {
+				const container = document.createElement('div');
+				const targetElem = document.createElement('button');
+				targetElem.className += 'btn btn-sm btn-outline-success ml-2 mr-2 mb-2';
+				targetElem.innerHTML = 'Set as Target Feature';
+				targetElem.addEventListener('click', () => {
+					const entry = createRouteEntry(CREATE_ROUTE, {
+						target: group.key,
+						dataset: routeGetters.getRouteDataset(this.$store),
+						filters: routeGetters.getRouteFilters(this.$store),
+						training: routeGetters.getRouteTrainingVariables(this.$store)
+					});
+					this.$router.push(entry);
+				});
+				container.appendChild(targetElem);
+				return container;
+			};
 		}
 	}
+
 });
 </script>
 
@@ -70,14 +79,4 @@ export default Vue.extend({
 	z-index: 0;
 	margin: 5px;
 }
-
-.available-target-variables .facets-group:hover {
-	border-style: solid;
-	border-color: #03c6e1;
-	box-shadow: 0 0 10px #03c6e1;
-	border-width: 1px;
-	border-radius: 2px;
-	z-index: 1;
-}
-
 </style>

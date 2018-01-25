@@ -1,3 +1,5 @@
+import { Dictionary } from '../../util/dict';
+
 export interface Variable {
 	name: string;
 	type: string;
@@ -48,27 +50,30 @@ export interface FieldInfo {
 	sortable: boolean
 }
 
-export interface TargetRow {
-	_cellVariants?: Dictionary<string>;
+export interface TableRow {
+	_key: number;
+	_rowVariant: string;
+}
+
+export interface TargetRow extends TableRow {
+	_cellVariants: Dictionary<string>;
 }
 
 export interface Highlights {
+	root: HighlightRoot;
+	values: Dictionary<string[]>;
+}
+
+export interface Range {
+	to: number;
+	from: number;
+}
+
+export interface HighlightRoot {
 	context: string;
+	key: string;
+	value: string | Range;
 }
-
-export interface RangeHighlights extends Highlights {
-	ranges: Range;
-}
-
-export interface ValueHighlights extends Highlights {
-	values: Dictionary<any>;
-}
-
-export type Range = Dictionary<{
-	from: number, to: number
-}>;
-
-export type Dictionary<T> = { [key: string]: T }
 
 export interface DataState {
 	datasets: Datasets[];
@@ -79,37 +84,34 @@ export interface DataState {
 	resultData: Data;
 	filteredData: Data;
 	selectedData: Data;
-	highlightedFeatureRanges: RangeHighlights;
-	highlightedFeatureValues: ValueHighlights;
+	highlightedFeatureValues: Highlights;
 }
 
 export const state = {
 	// description of matched datasets
-	datasets: [],
+	datasets: <Datasets[]>[],
 
 	// variable list for the active dataset
-	variables: [],
+	variables: <Variable[]>[],
 
 	// variable summary data for the active dataset
-	variableSummaries: [],
+	variableSummaries: <VariableSummary[]>[],
 
 	// results summary data for the selected pipeline run
-	resultsSummaries: [],
+	resultsSummaries: <VariableSummary[]>[],
 
 	// error summary data for the selected pipeline run
-	residualSummaries: [],
+	residualSummaries: <VariableSummary[]>[],
 
 	// current set of pipeline results
-	resultData: {} as any,
+	resultData: <Data>{},
 
 	// filtered data entries for the active dataset
-	filteredData: {} as any,
+	filteredData: <Data>{},
 
 	// selected data entries for the active dataset
-	selectedData: {} as any,
+	selectedData: <Data>{},
 
 	// highlighted features
-	highlightedFeatureRanges: {} as any,
-
-	highlightedFeatureValues: {} as any
+	highlightedFeatureValues: <Highlights>{}
 }

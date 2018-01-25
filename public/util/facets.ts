@@ -1,5 +1,5 @@
 import { spinnerHTML } from '../util/spinner';
-import { VariableSummary } from '../store/data/index';
+import { VariableSummary, Extrema } from '../store/data/index';
 
 export const CATEGORY_NO_MATCH_COLOR = "#e05353";
 export const CATEGORY_MATCH_COLOR = "#03c6e1";
@@ -24,7 +24,7 @@ export interface CategoricalFacet {
 	selected: { count: number } | SelectedSegments;
 	value: string;
 	count: number;
-	filterable: boolean
+	filterable: boolean;
 	segments: Segment[];
 }
 
@@ -54,10 +54,12 @@ export interface Group {
 	collapsible: boolean;
 	collapsed: boolean;
 	facets: (PlaceHolderFacet | CategoricalFacet | NumericalFacet)[];
+	total?: number,
+	count?: number
 }
 
 // creates the set of facets from the supplied summary data
-export function createGroups(summaries: VariableSummary[], enableCollapse: boolean, enableFiltering: boolean): Group[] {
+export function createGroups(summaries: VariableSummary[], enableCollapse: boolean, enableFiltering: boolean, extrema: Extrema = null): Group[] {
 	return summaries.map(summary => {
 		if (summary.err) {
 			// create error facet
@@ -68,7 +70,7 @@ export function createGroups(summaries: VariableSummary[], enableCollapse: boole
 			return createPendingFacet(summary, enableCollapse);
 		}
 		// create facet
-		return createSummaryFacet(summary, enableCollapse, enableFiltering);
+		return createSummaryFacet(summary, enableCollapse, enableFiltering, extrema);
 	}).filter(group => {
 		// remove null groups
 		return group;
@@ -106,12 +108,12 @@ export function createPendingFacet(summary: VariableSummary, enableCollapse: boo
 }
 
 // creates categorical or numerical summary facets based on the input summary type
-export function createSummaryFacet(summary: VariableSummary, enableCollapse: boolean, enableFiltering: boolean): Group {
+export function createSummaryFacet(summary: VariableSummary, enableCollapse: boolean, enableFiltering: boolean, extrema: Extrema): Group {
 	switch (summary.type) {
 		case 'categorical':
-			return createCategoricalSummaryFacet(summary, enableCollapse, enableFiltering);
+			return createCategoricalSummaryFacet(summary, enableCollapse, enableFiltering, extrema);
 		case 'numerical':
-			return createNumericalSummaryFacet(summary, enableCollapse, enableCollapse);
+			return createNumericalSummaryFacet(summary, enableCollapse, enableFiltering, extrema);
 	}
 	console.warn('unrecognized summary type', summary.type);
 	return null;
@@ -150,7 +152,7 @@ export function getGroupIcon(summary: VariableSummary): string {
 }
 
 // creates a categorical facet with segments based on nest buckets counts, or no segments if buckets aren't nested
-function createCategoricalSummaryFacet(summary: VariableSummary, enableCollapse: boolean, enableFiltering: boolean): Group {
+function createCategoricalSummaryFacet(summary: VariableSummary, enableCollapse: boolean, enableFiltering: boolean, extrema: Extrema): Group {
 
 	// generate facets from the supplied variable summary
 	const facets = summary.buckets.map(b => {
@@ -189,6 +191,13 @@ function createCategoricalSummaryFacet(summary: VariableSummary, enableCollapse:
 		return facet;
 	})
 
+	let total = undefined;
+	let count = undefined;
+	// if (extrema) {
+	// 	total = extrema.max;
+	// 	count = extrema.max;
+	// }
+
 	// Generate a facet group
 	return {
 		label: summary.name,
@@ -196,11 +205,45 @@ function createCategoricalSummaryFacet(summary: VariableSummary, enableCollapse:
 		type: summary.varType,
 		collapsible: enableCollapse,
 		collapsed: false,
-		facets: facets
+		facets: facets,
+		total: total,
+		count: count
 	};
 }
 
-function createNumericalSummaryFacet(summary: VariableSummary, enableCollapse: boolean, enableFiltering: boolean): Group {
+function createNumericalSummaryFacet(summary: VariableSummary, enableCollapse: boolean, enableFiltering: boolean, extrema: Extrema): Group {
+
+	const slices = summary.buckets.map((b, i) => {
+		let toLabel: string;
+		if (i < summary.buckets.length-1) {
+			toLabel = summary.buckets[i+1].key;
+		} else {
+			toLabel = `${summary.extrema.max}`;
+		}
+		return {
+			label: b.key,
+			toLabel: toLabel,
+			count: b.count
+		};
+	});
+
+	if (extrema) {
+		if (summary.extrema.min > extrema.min) {
+			slices.unshift({
+				label: `${extrema.min}`,
+				toLabel: `${extrema.min}`,
+				count: 0
+			});
+		}
+		if (summary.extrema.max < extrema.max) {
+			slices.push({
+				label: `${extrema.max}`,
+				toLabel: `${extrema.max}`,
+				count: 0
+			});
+		}
+	}
+
 	return {
 		label: summary.name,
 		key: summary.name,
@@ -210,23 +253,23 @@ function createNumericalSummaryFacet(summary: VariableSummary, enableCollapse: b
 		facets: [
 			{
 				histogram: {
-					slices: summary.buckets.map((b, i) => {
-						let toLabel: string;
-						if (i < summary.buckets.length-1) {
-							toLabel = summary.buckets[i+1].key;
-						} else {
-							toLabel = `${summary.extrema.max}`;
-						}
-						return {
-							label: b.key,
-							toLabel: toLabel,
-							count: b.count
-						};
-					})
+					slices: slices
 				},
 				filterable: enableFiltering,
 				selection: {} as any
 			}
 		]
 	};
+}
+
+export function isCategoricalFacet(facet: PlaceHolderFacet | CategoricalFacet | NumericalFacet): facet is CategoricalFacet {
+	return (<CategoricalFacet>facet).value !== undefined;
+}
+
+export function isNumericalFacet(facet: PlaceHolderFacet | CategoricalFacet | NumericalFacet): facet is NumericalFacet {
+	return (<NumericalFacet>facet).histogram !== undefined;
+}
+
+export function isPlaceHolderFacet(facet: PlaceHolderFacet | CategoricalFacet | NumericalFacet): facet is PlaceHolderFacet {
+	return (<PlaceHolderFacet>facet).placeholder !== undefined;
 }

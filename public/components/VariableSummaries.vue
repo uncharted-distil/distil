@@ -1,12 +1,12 @@
 <template>
 	<div class='variable-summaries'>
-		<h6 class="nav-link">Feature Summaries</h6>
+		<p class="nav-link font-weight-bold">Feature Summaries</p>
 		<variable-facets
 			enable-search
 			enable-toggle
 			enable-group-collapse
 			enable-facet-filtering
-			instance-name="varSummaries"
+			instance-name="variable-summary-facets"
 			:variables="variables"
 			:dataset="dataset"
 			:type-change="typeChange">

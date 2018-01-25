@@ -1,46 +1,16 @@
 import _ from 'lodash';
 import axios from 'axios';
-import moment from 'moment';
-import { PipelineState, Score } from './index';
+import { PipelineInfo, PipelineState, PIPELINE_UPDATED, PIPELINE_COMPLETED } from './index';
 import { ActionContext } from 'vuex';
 import { DistilState } from '../store';
 import { mutations } from './module';
 import { getWebSocketConnection } from '../../util/ws';
 import { FilterParams } from '../../util/filters';
 
-// TODO: move this somewhere more appropriate.
 const ES_INDEX = 'datasets';
 const CREATE_PIPELINES_MSG = 'CREATE_PIPELINES';
 const STREAM_CLOSE = 'STREAM_CLOSE';
-const PIPELINE_COMPLETE = 'COMPLETED';
 const FEATURE_TYPE_TARGET = 'target';
-
-function createResultName(dataset: string, timestamp: number, targetFeature: string) {
-	const t = moment(timestamp);
-	return `${dataset}: ${targetFeature} at ${t.format('MMMM Do YYYY, h:mm:ss.SS a')}`;
-}
-
-interface Feature {
-	featureName: string;
-	featureType: string;
-}
-
-interface Result {
-	name: string;
-	resultId: string;
-	pipelineId: string;
-	createdTime: number;
-	progress: string;
-	scores: Score[];
-}
-
-interface PipelineResponse {
-	requestId: string;
-	dataset: string;
-	features: Feature[];
-	filters: FilterParams;
-	results: Result[];
-}
 
 interface PipelineRequest {
 	sessionId: string;
@@ -54,52 +24,89 @@ interface PipelineRequest {
 export type AppContext = ActionContext<PipelineState, DistilState>;
 
 export const actions = {
-	getSession(context: AppContext, args: { sessionId: string }) {
+
+	// starts a pipeline session.
+	startPipelineSession(context: AppContext, args: { sessionId: string }) {
+		const sessionId = args.sessionId; // server creates a new session on null/undefined
+		const conn = getWebSocketConnection();
+		return conn.send({
+				type: 'GET_SESSION',
+				session: sessionId
+			}).then(res => {
+				if (sessionId && res.created) {
+					console.warn('previous session', sessionId, 'could not be resumed, new session created');
+				}
+				mutations.setPipelineSessionID(context, res.session);
+				mutations.setSessionActivity(context, true);
+			}).catch((err: string) => {
+				console.warn(err);
+			});
+	},
+
+	// end a pipeline session.
+	endPipelineSession(context: AppContext, args: { sessionId: string }) {
 		if (!args.sessionId) {
-			console.warn('Missing session id');
+			console.warn('`sessionId` argument is missing');
 			return;
 		}
 		const sessionId = args.sessionId;
-		return axios.get(`/distil/session/${sessionId}`)
+		const conn = getWebSocketConnection();
+		return conn.send({
+				type: 'END_SESSION',
+				session: sessionId
+			}).then(() => {
+				mutations.setPipelineSessionID(context, null);
+				mutations.setSessionActivity(context, false);
+			}).catch(err => {
+				console.warn(err);
+			});
+	},
+
+	fetchPipelines(context: AppContext, args: { sessionId: string, dataset?: string, target?: string, pipelineId?: string }) {
+		if (!args.sessionId) {
+			console.warn('`sessionId` argument is missing');
+			return;
+		}
+		if (!args.dataset) {
+			args.dataset = 'null';
+		}
+		if (!args.target) {
+			args.target = 'null';
+		}
+		if (!args.pipelineId) {
+			args.pipelineId = 'null';
+		}
+		return axios.get(`/distil/session/${args.sessionId}/${args.dataset}/${args.target}/${args.pipelineId}`)
 			.then(response => {
-				if (response.data.pipelines) {
-					const pipelineResponse = response.data.pipelines as PipelineResponse[];
-					pipelineResponse.forEach(pipeline => {
-						// determine the target feature for this request
-						let targetFeature = '';
-						pipeline.features.forEach((feature) => {
-							if (feature.featureType === FEATURE_TYPE_TARGET) {
-								targetFeature = feature.featureName;
-							}
-						});
-
-						pipeline.results.forEach((res) => {
-							// inject the name and pipeline id
-							const name = createResultName(pipeline.dataset, res.createdTime, targetFeature);
-							res.name = name;
-
-							// add/update the running pipeline info
-							if (res.progress === PIPELINE_COMPLETE) {
-								// add the pipeline to complete
-								mutations.addCompletedPipeline(context, {
-									name: res.name,
-									feature: targetFeature,
-									timestamp: res.createdTime,
-									progress: res.progress,
-									requestId: pipeline.requestId,
-									dataset: pipeline.dataset,
-									pipelineId: res.pipelineId,
-									pipeline: {
-										resultId: res.resultId,
-										output: '',
-										scores: res.scores
-									},
-									filters: pipeline.filters
-								});
-							}
-						});
-					});
+				if (!response.data.pipelines) {
+					return;
 				}
+				const pipelines = response.data.pipelines as PipelineInfo[];
+				pipelines.forEach(pipeline => {
+
+					let targetFeature = '';
+					pipeline.features.forEach(feature => {
+						if (feature.featureType === FEATURE_TYPE_TARGET) {
+							targetFeature = feature.featureName;
+						}
+					});
+
+					// update pipeline
+					mutations.updatePipelineRequest(context, {
+						name: targetFeature,
+						feature: targetFeature,
+						filters: pipeline.filters,
+						features: pipeline.features,
+						requestId: pipeline.requestId,
+						dataset: pipeline.dataset,
+						timestamp: pipeline.timestamp,
+						progress: pipeline.progress,
+						pipelineId: pipeline.pipelineId,
+						resultId: pipeline.resultId,
+						scores: pipeline.scores,
+						output: ''
+					});
+				});
 			})
 			.catch(error => {
 				console.error(error);
@@ -107,63 +114,56 @@ export const actions = {
 	},
 
 	createPipelines(context: any, request: PipelineRequest) {
-
 		return new Promise((resolve, reject) => {
-			const conn = getWebSocketConnection();
+
 			if (!request.sessionId) {
 				console.warn('Missing session id');
 				reject();
 				return;
 			}
 
+			const conn = getWebSocketConnection();
+
 			let receivedFirstResponse = false;
 
 			const stream = conn.stream(res => {
+
 				if (_.has(res, STREAM_CLOSE)) {
 					stream.close();
 					return;
 				}
-				// inject the name and pipeline id
-				const name = createResultName(request.dataset, res.createdTime, request.feature);
-				res.name = name;
+
+				res.name = request.feature;
 				res.feature = request.feature;
 
-				// add/update the running pipeline info
-				mutations.addRunningPipeline(context, res);
+				// NOTE: 'fetchPipeline' must be done first to ensure the
+				// resultId is present to fetch summary
 
-				// update summaries
-				context.dispatch('getResultsSummaries', {
+				// update pipeline status
+				context.dispatch('fetchPipelines', {
+					sessionId: request.sessionId,
 					dataset: request.dataset,
-					requestId: res.requestId
-				});
-				context.dispatch('getResidualsSummaries', {
-					dataset: request.dataset,
-					requestId: res.requestId
+					target: request.feature,
+					pipelineId: res.pipelineId,
+				}).then(() => {
+					// update summaries
+					if (res.progress === PIPELINE_UPDATED ||
+						res.progress == PIPELINE_COMPLETED) {
+						context.dispatch('fetchResultsSummary', {
+							dataset: request.dataset,
+							pipelineId: res.pipelineId
+						});
+						context.dispatch('fetchResidualsSummary', {
+							dataset: request.dataset,
+							pipelineId: res.pipelineId
+						});
+					}
 				});
 
 				// resolve promise on first response
 				if (!receivedFirstResponse) {
 					receivedFirstResponse = true;
 					resolve(res);
-				}
-
-				if (res.progress === PIPELINE_COMPLETE) {
-					// move the pipeline from running to complete
-					mutations.removeRunningPipeline(context, {
-						pipelineId: res.pipelineId,
-						requestId: res.requestId
-					});
-					mutations.addCompletedPipeline(context, {
-						name: res.name,
-						feature: request.feature,
-						progress: res.progress,
-						timestamp: res.createdTime,
-						requestId: res.requestId,
-						dataset: res.dataset,
-						pipelineId: res.pipelineId,
-						pipeline: res.pipeline,
-						filters: res.filters,
-					});
 				}
 			});
 

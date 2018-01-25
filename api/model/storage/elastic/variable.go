@@ -94,7 +94,7 @@ func (s *Storage) parseVariable(searchHit *elastic.SearchHit, varName string) (*
 			}
 		}
 	}
-	return nil, errors.Errorf("unable to find variable match name %s", varName)
+	return nil, errors.Errorf("unable to find variable `%s`", varName)
 }
 
 func (s *Storage) parseVariables(searchHit *elastic.SearchHit, includeIndex bool) ([]*model.Variable, error) {

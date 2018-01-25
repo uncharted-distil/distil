@@ -40,21 +40,23 @@ export const getters = {
 	getSelectedDataItems: read(moduleGetters.getSelectedDataItems),
 	getSelectedDataFields: read(moduleGetters.getSelectedDataFields),
 	getHighlightedFeatureValues: read(moduleGetters.getHighlightedFeatureValues),
-	getHighlightedFeatureRanges: read(moduleGetters.getHighlightedFeatureRanges)
 }
 
 // Typed actions
 export const actions = {
 	searchDatasets: dispatch(moduleActions.searchDatasets),
-	getVariables: dispatch(moduleActions.getVariables),
 	setVariableType: dispatch(moduleActions.setVariableType),
-	getVariableSummaries: dispatch(moduleActions.getVariableSummaries),
-	getVariableSummary: dispatch(moduleActions.getVariableSummary),
+	fetchVariables: dispatch(moduleActions.fetchVariables),
+	fetchVariableSummary: dispatch(moduleActions.fetchVariableSummary),
+	fetchVariableSummaries: dispatch(moduleActions.fetchVariableSummaries),
+	fetchVariablesAndVariableSummaries: dispatch(moduleActions.fetchVariablesAndVariableSummaries),
 	updateFilteredData: dispatch(moduleActions.updateFilteredData),
 	updateSelectedData: dispatch(moduleActions.updateSelectedData),
-	getResultsSummaries: dispatch(moduleActions.getResultsSummaries),
-	getResidualsSummaries: dispatch(moduleActions.getResidualsSummaries),
-	updateResults: dispatch(moduleActions.updateResults)
+	fetchData: dispatch(moduleActions.fetchData),
+	fetchResultsSummaries: dispatch(moduleActions.fetchResultsSummaries),
+	fetchResidualsSummaries: dispatch(moduleActions.fetchResidualsSummaries),
+	updateResults: dispatch(moduleActions.updateResults),
+	fetchResults: dispatch(moduleActions.fetchResults)
 }
 
 
@@ -63,17 +65,13 @@ export const mutations = {
 	updateVariableType: commit(moduleMutations.updateVariableType),
 	setVariables: commit(moduleMutations.setVariables),
 	setDatasets: commit(moduleMutations.setDatasets),
-	setVariableSummaries: commit(moduleMutations.setVariableSummaries),
 	updateVariableSummaries: commit(moduleMutations.updateVariableSummaries),
-	setResultsSummaries: commit(moduleMutations.setResultsSummaries),
 	updateResultsSummaries: commit(moduleMutations.updateResultsSummaries),
-	setResidualsSummaries: commit(moduleMutations.setResidualsSummaries),
 	updateResidualsSummaries: commit(moduleMutations.updateResidualsSummaries),
 	setFilteredData: commit(moduleMutations.setFilteredData),
 	setSelectedData: commit(moduleMutations.setSelectedData),
 	setResultData: commit(moduleMutations.setResultData),
-	highlightFeatureRange: commit(moduleMutations.highlightFeatureRange),
-	clearFeatureHighlightRange: commit(moduleMutations.clearFeatureHighlightRange),
 	highlightFeatureValues: commit(moduleMutations.highlightFeatureValues),
-	clearFeatureHighlightValues: commit(moduleMutations.clearFeatureHighlightValues)
+	clearFeatureHighlightValues: commit(moduleMutations.clearFeatureHighlightValues),
+	clearFeatureHighlights: commit(moduleMutations.clearFeatureHighlights)
 }
