@@ -154,7 +154,5 @@ results-data-table {
 	background-color: #eee;
 	padding: 8px;
 }
-.table-sm th, .table-sm td {
-	font-size: 0.9rem;
-}
+
 </style>
