@@ -34,9 +34,14 @@ html, body {
 	cursor: not-allowed;
 }
 
-.col-p-top {
-    padding-top: 58px;
+.table th, .table td {
+    font-size: 0.867rem;
 }
+.table td {
+    text-align: right;
+}
+
+
 
 .card-result {
     margin: 12px;
