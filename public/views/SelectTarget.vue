@@ -63,6 +63,7 @@ export default Vue.extend({
 .select-view .nav-link {
 	padding: 1rem 0 0.25rem 0;
 	border-bottom: 1px solid #E0E0E0;
+	color: rgba(0,0,0,.87);
 }
 .header-label {
 	padding: 1rem 0 0.5rem 0;

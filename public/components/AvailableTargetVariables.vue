@@ -40,7 +40,7 @@ export default Vue.extend({
 			return (group: { key: string }) => {
 				const container = document.createElement('div');
 				const targetElem = document.createElement('button');
-				targetElem.className += 'btn btn-sm btn-outline-success ml-2 mr-2 mb-2';
+				targetElem.className += 'btn btn-sm btn-outline-secondary ml-2 mr-2 mb-2';
 				targetElem.innerHTML = 'Set as Target Feature';
 				targetElem.addEventListener('click', () => {
 					const entry = createRouteEntry(CREATE_ROUTE, {

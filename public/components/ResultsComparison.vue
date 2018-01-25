@@ -183,9 +183,9 @@ export default Vue.extend({
 
 		regressionInRangeDecorate(row: TargetRow): TargetRow {
 			row._cellVariants = {
-				[getTargetCol(this.target)]: 'primary',
-				[getPredictedCol(this.target)]: 'success',
-				[getErrorCol(this.target)]: 'success'
+				[getTargetCol(this.target)]: 'success',
+				[getPredictedCol(this.target)]: 'primary',
+				[getErrorCol(this.target)]: 'danger'
 			};
 			return row;
 		},
@@ -194,9 +194,9 @@ export default Vue.extend({
 
 		regressionOutOfRangeDecorate(row: TargetRow): TargetRow {
 			row._cellVariants = {
-				[getTargetCol(this.target)]: 'primary',
-				[getPredictedCol(this.target)]: 'warning',
-				[getErrorCol(this.target)]: 'warning'
+				[getTargetCol(this.target)]: 'success',
+				[getPredictedCol(this.target)]: 'primary',
+				[getErrorCol(this.target)]: 'danger'
 			};
 			return row;
 		}
