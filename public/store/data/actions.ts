@@ -133,18 +133,13 @@ export const actions = {
 		return axios.get(`/distil/variable-summaries/${ES_INDEX}/${dataset}/${variable}`)
 			.then(response => {
 				// save the variable summary data
-				const histogram = response.data.histogram;
-				if (!histogram) {
-					mutations.updateVariableSummaries(context, {
-						name: variable,
-						feature: '',
-						buckets: [],
-						extrema: {} as any,
-						err: 'No analysis available'
-					});
-					return;
-				}
-				// ensure buckets is not nil
+				const histogram = response.data.histogram || {
+					name: variable,
+					feature: '',
+					buckets: [],
+					extrema: {} as any,
+					err: 'No analysis available'
+				};
 				mutations.updateVariableSummaries(context, histogram);
 			})
 			.catch(error => {

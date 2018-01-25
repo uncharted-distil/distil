@@ -58,7 +58,16 @@ The application depends on:
 - Redis for client server caching
 - A stub TA2 system for back end integration.
 
-Docker images (with data) for all are available at the `docker.uncharted.software`. Once
+Docker images (with data) for all are available at the `docker.uncharted.software`.
+
+##### Login to Docker Registries:
+
+```bash
+sudo docker login docker.uncharted.software
+sudo docker login primitives.azurecr.io
+```
+
+#### Pull Images:
 
 ```bash
 docker-compose pull
@@ -147,7 +156,7 @@ Components watch the route for any change that may affect them. When a change oc
 
 ```javaScript
 watch: {
-	'$route.query.someValue'() {
+	someRouteValue() {
 		this.$store.dispatch('someAction', this.someValue);
 	}
 }

@@ -59,7 +59,8 @@ func fetchFilteredData(t *testing.T) FilteredDataProvider {
 		assert.Equal(t, "float_b", filters.Filters[1].Name)
 
 		return &model.FilteredData{
-			Name: "test",
+			Name:    "test",
+			NumRows: 3,
 			Columns: []string{
 				"feature0",
 				"feature1",

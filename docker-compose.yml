@@ -10,7 +10,8 @@ pipeline_server:
     - "45042:45042"
   environment:
     - PIPELINE_SERVER_RESULT_DIR=$PWD/datasets
-    - PIPELINE_SEND_DELAY=1000
+    - PIPELINE_SEND_DELAY=2000
+    - PIPELINE_NUM_UPDATES=3
   volumes:
     - $PWD/datasets:$PWD/datasets
 postgres:
@@ -20,13 +21,13 @@ postgres:
     - "5432:5432"
   command:
     -d postgres
-# nk_classification_rest:
-#   image:
-#     primitives.azurecr.io/simon:1.0.0
-#   ports:
-#     - "5000:5000"
-# nk_ranking_rest:
-#   image:
-#     primitives.azurecr.io/http_features:0.4
-#   ports:
-#     - "5001:5000"
+nk_classification_rest:
+  image:
+    primitives.azurecr.io/simon:1.0.0
+  ports:
+    - "5000:5000"
+nk_ranking_rest:
+  image:
+    primitives.azurecr.io/http_features:0.4
+  ports:
+    - "5001:5000"
