@@ -1,5 +1,5 @@
 <template>
-	<div class='row variable-facets'>
+	<div class='row h-100 variable-facets'>
 		<div class="col-12 flex-column d-flex">
 			<div v-if="enableSearch" class="row flex-1 align-items-center facet-filters">
 				<div class="col-12 flex-column d-flex">

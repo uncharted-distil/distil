@@ -22,7 +22,7 @@
 				</div>
 				<div class="row flex-12">
 					<div class="col-12 d-flex flex-column">
-						<div class="row flex-3">
+						<div class="row flex-4">
 								<target-variable class="col-12 d-flex flex-column select-target-variables"></target-variable>
 						</div>
 						<div class="row responsive-flex pb-3">
@@ -33,7 +33,7 @@
 								<h5 class="header-label">Create the Models</h5>
 							</div>
 						</div>
-						<div class="row flex-3">
+						<div class="row flex-2 align-items-center">
 							<div class="col-12 d-flex flex-column">
 								<create-pipelines-form class="select-create-pipelines"></create-pipelines-form>
 							</div>
@@ -111,5 +111,4 @@ export default Vue.extend({
 		flex:6;
 	}
 }
-
 </style>

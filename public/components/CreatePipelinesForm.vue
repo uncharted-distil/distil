@@ -1,6 +1,6 @@
 <template>
 	<div class="create-pipelines-form">
-		<div class="requirements">
+		<div class="row justify-content-center requirements">
 			<div class="requirement-met text-success" v-if="trainingSelected">
 				<i class="fa fa-check selected-icon"></i><strong>Training features Selected</strong>
 			</div>
@@ -8,9 +8,11 @@
 				<i class="fa fa-check selected-icon"></i><strong>Target Feature Selected</strong>
 			</div>
 		</div>
-		<b-button class="create-button" :variant="createVariant" @click="create" :disabled="disableCreate">
-			Create Models
-		</b-button>
+		<div class="row justify-content-center">
+			<b-button class="create-button" :variant="createVariant" @click="create" :disabled="disableCreate">
+				Create Models
+			</b-button>
+		</div>
 	</div>
 </template>
 
@@ -89,7 +91,7 @@ export default Vue.extend({
 		},
 		// determines  create button variant based on completeness of user input
 		createVariant(): string {
-			return !this.disableCreate ? 'outline-success' : 'outline-secondary';
+			return !this.disableCreate ? 'success' : 'outline-secondary';
 		}
 	},
 	methods: {
@@ -122,20 +124,13 @@ export default Vue.extend({
 </script>
 
 <style>
-.create-pipelines-form {
-	margin: 8px 16px;
-}
 .create-button {
-	width: 60%;
-	margin: 0 20%;
+	width: 70%;
 }
 .selected-icon {
 	padding-right: 4px;
 }
 .requirement-met {
-	padding: 4px 8px;
-}
-.requirements {
-	margin-bottom: 8px;
+	padding: 0.5rem;
 }
 </style>
