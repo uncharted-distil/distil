@@ -13,7 +13,7 @@ import (
 // ResultVariableSummaryHandler generates a route handler that facilitates the
 // creation and retrieval of summary information about the specified variable
 // for data returned in a result set.
-func ResultVariableSummaryHandler(ctorStorage model.DataStorageCtor, ctorPipeline model.PipelineStorageCtor) func(http.ResponseWriter, *http.Request) {
+func ResultVariableSummaryHandler(ctorPipeline model.PipelineStorageCtor, ctorStorage model.DataStorageCtor) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// get index name
 		index := pat.Param(r, "index")
@@ -24,7 +24,7 @@ func ResultVariableSummaryHandler(ctorStorage model.DataStorageCtor, ctorPipelin
 		// get result id
 		resultID, err := url.PathUnescape(pat.Param(r, "result-id"))
 		if err != nil {
-			handleError(w, errors.Wrap(err, "unable to unescape pipeline id"))
+			handleError(w, errors.Wrap(err, "unable to unescape result id"))
 			return
 		}
 
@@ -59,7 +59,7 @@ func ResultVariableSummaryHandler(ctorStorage model.DataStorageCtor, ctorPipelin
 			Histogram: histogram,
 		})
 		if err != nil {
-			handleError(w, errors.Wrap(err, "unable marshal summary result into JSON"))
+			handleError(w, errors.Wrap(err, "unable marshal result variable summary into JSON"))
 			return
 		}
 	}
