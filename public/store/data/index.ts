@@ -39,6 +39,7 @@ export interface VariableSummary {
 
 export interface Data {
 	name: string;
+	numRows: number;
 	columns: string[];
 	types: string[];
 	values: any[][];
