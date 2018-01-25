@@ -2,6 +2,7 @@ import VueRouter from 'vue-router';
 import { Store } from 'vuex';
 import { createRouteEntry } from '../util/routes';
 import { restoreView } from '../util/view';
+import { HOME_ROUTE, SEARCH_ROUTE, SELECT_ROUTE, CREATE_ROUTE, RESULTS_ROUTE } from '../store/route/index';
 import { getters as routeGetters } from '../store/route/module';
 
 export function gotoView(store: Store<any>, router: VueRouter, view: string, overrides: any) {
@@ -12,20 +13,28 @@ export function gotoView(store: Store<any>, router: VueRouter, view: string, ove
 }
 
 export function gotoHome(store: Store<any>, router: VueRouter) {
-	gotoView(store, router, '/home', {
+	gotoView(store, router, HOME_ROUTE, {
 		terms: routeGetters.getRouteTerms(store)
 	});
 }
 
 export function gotoSearch(store: Store<any>, router: VueRouter) {
-	gotoView(store, router, '/search', {
+	gotoView(store, router, SEARCH_ROUTE, {
 		terms: routeGetters.getRouteTerms(store)
 	});
 }
 
-export function gotoSelect(store: Store<any>, router: VueRouter) {
-	gotoView(store, router, '/select', {
-		terms: routeGetters.getRouteTerms(store),
+export function gotoSelectTarget(store: Store<any>, router: VueRouter) {
+	gotoView(store, router, SELECT_ROUTE, {
+		dataset: routeGetters.getRouteDataset(store),
+		filters: routeGetters.getRouteFilters(store),
+		target: routeGetters.getRouteTargetVariable(store),
+		training: routeGetters.getRouteTrainingVariables(store)
+	});
+}
+
+export function gotoSelectData(store: Store<any>, router: VueRouter) {
+	gotoView(store, router, CREATE_ROUTE, {
 		dataset: routeGetters.getRouteDataset(store),
 		filters: routeGetters.getRouteFilters(store),
 		target: routeGetters.getRouteTargetVariable(store),
@@ -34,7 +43,7 @@ export function gotoSelect(store: Store<any>, router: VueRouter) {
 }
 
 export function gotoResults(store: Store<any>, router: VueRouter) {
-	gotoView(store, router, '/results', {
+	gotoView(store, router, RESULTS_ROUTE, {
 		dataset: routeGetters.getRouteDataset(store),
 		target: routeGetters.getRouteTargetVariable(store)
 	});
