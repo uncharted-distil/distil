@@ -38,7 +38,7 @@ type Config struct {
 	PostgresRetryTimeout       int    `env:"PG_RETRY_TIMEOUT" envDefault:"4000"`
 	PostgresLogLevel           string `env:"PG_LOG_LEVEL" envDefault:"none"`
 	PrimitiveEndPoint          string `env:"PRIMITIVE_END_POINT" envDefault:"http://localhost:5000"`
-	DataFolderPath             string `env:"DATA_FOLDER_PATH" envDefault:"/home/phorne/data/d3m_new"`
+	DataFolderPath             string `env:"DATA_FOLDER_PATH" envDefault:"/d3m/data"`
 	DataFilePath               string `env:"DATA_FILE_PATH" envDefault:"/tables/learningData.csv"`
 	DatasetFolderSuffix        string `env:"DATASET_FOLDER_SUFFIX" envDefault:"_dataset"`
 	MergedOutputDataPath       string `env:"MERGED_OUTPUT_DATA_PATH" envDefault:"tables/merged.csv"`
