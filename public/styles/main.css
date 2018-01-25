@@ -33,9 +33,6 @@ html, body {
 .table th, .table td {
     font-size: 0.867rem;
 }
-.table td {
-    text-align: right;
-}
 .card-result {
     margin: 12px;
     box-shadow: 0 1px 2px 0 rgba(0,0,0,0.10);

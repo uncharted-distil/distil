@@ -134,4 +134,7 @@ export default Vue.extend({
 .results-data-table-container {
 	background-color: white;
 }
+.results-view .table td {
+    text-align: right;
+}
 </style>
