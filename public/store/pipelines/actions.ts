@@ -19,6 +19,7 @@ interface PipelineRequest {
 	task: string;
 	metric: string[];
 	filters: FilterParams;
+	numPipelines: number;
 }
 
 export type AppContext = ActionContext<PipelineState, DistilState>;
