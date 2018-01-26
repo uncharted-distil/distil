@@ -249,7 +249,7 @@ func handleCreatePipelines(conn *Connection, client *pipeline.Client, metadataCt
 		handleErr(conn, msg, err)
 		return
 	}
-	datasetPath = fmt.Sprintf("%s", datasetPath)
+	datasetPath = fmt.Sprintf("%s", filepath.Join(datasetPath, pipeline.D3MDataSchema))
 
 	// Create the set of training features - we already filtered that out when we persist, but needs to be specified
 	// to satisfy ta3ta2 API.
