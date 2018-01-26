@@ -10,6 +10,7 @@ import (
 	"github.com/zenazn/goji/graceful"
 	"goji.io"
 	"goji.io/pat"
+	"github.com/davecgh/go-spew/spew"
 
 	"github.com/unchartedsoftware/distil-ingest/rest"
 	"github.com/unchartedsoftware/distil/api/elastic"
@@ -48,7 +49,7 @@ func main() {
 		log.Errorf("%+v", err)
 		os.Exit(1)
 	}
-	log.Infof("%+v", config)
+	log.Infof("%+v", spew.Sdump(config))
 
 	// instantiate elastic client constructor.
 	esClientCtor := elastic.NewClient(config.ElasticEndpoint, false)
