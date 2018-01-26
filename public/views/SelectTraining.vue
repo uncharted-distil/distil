@@ -22,7 +22,7 @@
 				</div>
 				<div class="row flex-12">
 					<div class="col-12 d-flex flex-column">
-						<div class="row flex-3">
+						<div class="row flex-4">
 								<target-variable class="col-12 d-flex flex-column select-target-variables"></target-variable>
 						</div>
 						<div class="row responsive-flex pb-3">
@@ -33,8 +33,10 @@
 								<h5 class="header-label">Create the Models</h5>
 							</div>
 						</div>
-						<div class="row flex-3">
-							<create-pipelines-form class="col-12 d-flex flex-column select-create-pipelines"></create-pipelines-form>
+						<div class="row flex-2 align-items-center">
+							<div class="col-12 d-flex flex-column">
+								<create-pipelines-form class="select-create-pipelines"></create-pipelines-form>
+							</div>
 						</div>
 					</div>
 				</div>
@@ -96,6 +98,7 @@ export default Vue.extend({
 .select-view .nav-link {
 	padding: 1rem 0 0.25rem 0;
 	border-bottom: 1px solid #E0E0E0;
+	color: rgba(0,0,0,.87);
 }
 .header-label {
 	padding: 1rem 0 0.5rem 0;
@@ -109,5 +112,4 @@ export default Vue.extend({
 		flex:6;
 	}
 }
-
 </style>

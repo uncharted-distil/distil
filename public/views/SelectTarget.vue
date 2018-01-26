@@ -8,8 +8,8 @@
 				<h5 class="header-label">Select Feature to Predict</h5>
 			</div>
 		</div>
-		<div class="row flex-10 justify-content-center pb-3">
-			<div class="col-12 col-md-10 d-flex">
+		<div class="row flex-12 justify-content-center pb-3">
+			<div class="col-12 col-md-10 flex-column d-flex">
 				<available-target-variables>
 				</available-target-variables>
 			</div>
@@ -63,6 +63,7 @@ export default Vue.extend({
 .select-view .nav-link {
 	padding: 1rem 0 0.25rem 0;
 	border-bottom: 1px solid #E0E0E0;
+	color: rgba(0,0,0,.87);
 }
 .header-label {
 	padding: 1rem 0 0.5rem 0;

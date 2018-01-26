@@ -30,7 +30,7 @@
 			:result-extrema="resultExtrema"
 			:residual-extrema="residualExtrema">
 		</result-facets>
-		<b-btn v-b-modal.export variant="outline-success" class="check-button">Export Model</b-btn>
+		<b-btn v-b-modal.export variant="success" class="check-button">Export Model</b-btn>
 		<b-modal id="export" title="Export" @ok="onExport">
 			<div class="check-message-container">
 				<i class="fa fa-check-circle fa-3x check-icon"></i>

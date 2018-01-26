@@ -454,10 +454,21 @@ export default Vue.extend({
 </script>
 
 <style>
+.facets-root-container {
+	font-size: inherit;
+}
 .facets-facet-vertical .facet-label-count,
-.facets-facet-vertical .facet-label,
+.facets-facet-vertical .facet-label {
+	font-family: inherit;
+	font-size: 0.733rem;
+    color: rgba(0,0,0,.54);
+}
 .facets-group .group-header {
 	font-family: inherit;
+	font-size: 0.867rem;
+	font-weight: bold;
+	text-transform: uppercase;
+    color: rgba(0,0,0,.54);
 }
 .facets-facet-horizontal .facet-histogram-bar-highlighted.select-highlight {
 	fill: #007bff;
@@ -466,5 +477,4 @@ export default Vue.extend({
 .facets-facet-vertical.select-highlight .facet-bar-selected {
 	box-shadow: inset 0 0 0 1000px #007bff;
 }
-
 </style>
