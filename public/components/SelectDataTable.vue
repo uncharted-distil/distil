@@ -1,7 +1,7 @@
 <template>
 	<div class="select-data-table">
 		<p class="nav-link font-weight-bold">Training Set Samples</p>
-		<p><small>Displaying {{items.length}} of {{numRows}} rows</small></p>
+		<p class="small-margin"><small>Displaying {{items.length}} of {{numRows}} rows</small></p>
 		<div class="select-data-table-container">
 			<div class="select-data-no-results" v-if="items.length===0">
 				<div class="text-danger">
@@ -200,4 +200,8 @@ table.b-table>tfoot>tr>th.sorting:after,
 table.b-table>thead>tr>th.sorting:after {
 	top: 0;
 }
+.select-data-table .small-margin {
+	margin-bottom: 0.5rem
+}
+
 </style>
