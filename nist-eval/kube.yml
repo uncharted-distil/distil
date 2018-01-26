@@ -1,0 +1,141 @@
+# ---------------------------------------------------------
+# TA3 Kubernetes Pod Stub File
+# ---------------------------------------------------------
+## Specifications
+# * Assumes a web service over ports 80 (http) and 443 https
+# * Assumes a listening port 5001 to listen to TA2 signals
+# * In this speicification, the ta3-main container has the web ports
+# but one can have a separate container handle the web ports
+# that is not the TA3-main container
+---
+# Web Port Service (perhaps Nginx)
+apiVersion: v1
+kind: Service
+metadata:
+  name: distil-001-eval-ta3-web
+  labels:
+    evalId: distil-001-eval
+    tier: ta3
+spec:
+  # NodePort type allows to expose service outside the cluster
+  type: NodePort
+  selector:
+    evalId: distil-001-eval
+    tier: ta3
+  ports:
+    - name: http
+      port: 80
+      targetPort: 80
+    - name: https
+      port: 443
+      targetPort: 443
+---
+# TA3 Service for taking requests from TA2
+apiVersion: v1
+kind: Service
+metadata:
+  name: distil-001-eval-ta3
+  labels:
+    evalId: distil-001-eval
+    tier: ta3
+spec:
+  type: ClusterIP
+  # There is a possibility of manually assigning an IP
+  ports:
+    - port: 5001
+      targetPort: 5001
+  selector:
+    evalId: distil-001-eval
+    tier: ta3
+---
+# TA3 Pod
+apiVersion: v1
+kind: Pod
+metadata:
+  name: distil-001-eval-ta3
+  labels:
+    evalId: distil-001-eval
+    main: "yes"
+    tier: ta3
+    ta3-main: "yes"
+spec:
+  restartPolicy: Never
+  volumes:
+  
+  # affinity:
+  #   # Link pod affinity with
+  #   podAffinity:
+  #     requiredDuringSchedulingIgnoredDuringExecution:
+  #     - labelSelector:
+  #         matchExpressions:
+  #         - key: evalId
+  #           operator: In
+  #           values:
+  #           - distil-001-eval
+  #       topologyKey: failure-domain.beta.kubernetes.io/zone
+  containers:
+  # TA3 container, entry point for evaluation
+  - name: ta3-main
+    image: docker.uncharted.software/distil:latest
+    imagePullPolicy: Always
+    command:
+      - /bin/sh
+    args:
+      - ta3_search
+    # web (perhaps nginx) ports
+    ports:
+      - containerPort: 80
+        name: http
+        protocol: TCP
+      - containerPort: 443
+        name: https
+        protocol: TCP
+      # Additional Port for TA3 to listen to TA2 signals
+      - containerPort: 5001
+        protocol: TCP
+    env:
+      # environment variables passed to container
+      - name: EVAL_ID
+        value: distil-001-eval
+      # Query TA2 Service with service name:
+      # distil-001-eval-ta2:45042
+      # Query TA3 Service with service name:
+      # distil-001-eval-ta3:5001
+      - name: TA2_PORT
+        value: "45042"
+      - name: TA3_PORT
+        value: "5001"
+      - name: PIPELINE_COMPUTE_ENDPOINT
+        value: distil-001-eval-ta2:45042
+      - name: PIPELINE_COMPUTE_TRACE
+        value: "true"
+
+    volumeMounts:
+      ##====|Begin| Required Code that NIST uses to pair TA2 and TA3 components |Begin|
+      - name: nfs-data
+        mountPath: /inputs
+        subPath: 
+        readOnly: true
+      - name: nfs-output
+        mountPath: /outputs
+        subPath: 
+      ##====|End| Required Code that NIST uses to pair TA2 and TA3 components |End|
+
+  # Postgres container - provides access to pre-loaded D3M data
+  - name: distil-pg
+    image: docker.uncharted.software/distil_dev_postgres:latest
+    ports:
+      - name: pg-port
+        hostPort: 5432
+        containerPort: 5432
+    args: [-d postgres]
+
+  # ElasticSearch container - provides indexing / search on pre-loaded D3M data
+  - name: distil-es
+    image: docker.uncharted.software/distil_dev_es:latest
+    ports:
+      - name: es-port
+        containerPort: 9200
+    env:
+      - name: ES_JAVA_OPTS
+        value: -Xmx512m -Xms512m
