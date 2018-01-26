@@ -9,18 +9,20 @@
 			</div>
 		</div>
 		<div class="row justify-content-center">
-			<b-dropdown
-				class="col-8"
-				text="Create Models"
-				:variant="createVariant"
-				:disabled="disableCreate">
-				<b-dropdown-header>Select Number of Models</b-dropdown-header>
-				<b-dropdown-item @click="create(1)">1</b-dropdown-item>
-				<b-dropdown-item @click="create(2)">2</b-dropdown-item>
-				<b-dropdown-item @click="create(3)">3</b-dropdown-item>
-				<b-dropdown-item @click="create(4)">4</b-dropdown-item>
-				<b-dropdown-item @click="create(5)">5</b-dropdown-item>
-			</b-dropdown>
+			<div class="col-9">
+				<b-dropdown
+					class="dropdown-button-style"
+					text="Create Models"
+					:variant="createVariant"
+					:disabled="disableCreate">
+					<b-dropdown-header>Select Number of Models</b-dropdown-header>
+					<b-dropdown-item @click="create(1)">1</b-dropdown-item>
+					<b-dropdown-item @click="create(2)">2</b-dropdown-item>
+					<b-dropdown-item @click="create(3)">3</b-dropdown-item>
+					<b-dropdown-item @click="create(4)">4</b-dropdown-item>
+					<b-dropdown-item @click="create(5)">5</b-dropdown-item>
+				</b-dropdown>
+			</div>
 		</div>
 	</div>
 </template>
@@ -142,5 +144,12 @@ export default Vue.extend({
 }
 .requirement-met {
 	padding: 0.5rem;
+}
+.dropdown-button-style {
+	position: relative !important;
+	width: 100%;
+}
+.dropdown-toggle {
+	width: 100%;
 }
 </style>
