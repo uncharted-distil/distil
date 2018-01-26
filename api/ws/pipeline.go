@@ -288,7 +288,7 @@ func handleCreatePipelines(conn *Connection, client *pipeline.Client, metadataCt
 		TargetFeatures: []*pipeline.Feature{
 			{
 				FeatureName: clientCreateMsg.Feature,
-				ResourceId:  datasetPath,
+				ResourceId:  defaultResourceID,
 			},
 		},
 		MaxPipelines: clientCreateMsg.MaxPipelines,
