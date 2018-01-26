@@ -120,7 +120,7 @@ export default Vue.extend({
 				feature: routeGetters.getRouteTargetVariable(this.$store),
 				task: task,
 				metric: metrics,
-				numPipelines: numPipelines
+				maxPipelines: numPipelines
 			}).then((res: PipelineInfo) => {
 				// transition to result screen
 				const entry = createRouteEntry(RESULTS_ROUTE, {
