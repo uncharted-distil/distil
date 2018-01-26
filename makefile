@@ -31,6 +31,9 @@ build_static:
 compile: lint
 	@go build $(shell glide novendor)
 
+deploy:
+	@./deploy.sh
+
 watch:
 	@./run.sh
 

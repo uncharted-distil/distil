@@ -53,18 +53,22 @@ make proto
 #### Docker images:
 
 The application depends on:
-- ElasticSearch for text indexing and searching
-- PostgreSQL for data storage
-- Redis for client server caching
-- A stub TA2 system for back end integration.
+- ElasticSearch
+- PostgreSQL
+- TA2 Pipline Stub
 
-Docker images (with data) for all are available at the `docker.uncharted.software`.
+Docker images (with data) for all are available at the following registries:
 
-##### Login to Docker Registries:
+```
+docker.uncharted.software
+primitives.azurecr.io
+registry.datadrivendiscovery.org
+```
+
+##### Login to Docker Registry:
 
 ```bash
 sudo docker login docker.uncharted.software
-sudo docker login primitives.azurecr.io
 ```
 
 #### Pull Images:
@@ -91,6 +95,105 @@ yarn watch
 Build, watch, and run server:
 ```bash
 make watch
+```
+
+### Deployment
+
+#### Docker Images:
+
+Deployment relies on three additional components:
+
+- New Knowledge Classification
+- New Knowledge Ranking
+- Qntfy TA2 Pipeline Server
+
+Docker images are available at the following registries:
+
+```
+primitives.azurecr.io
+registry.datadrivendiscovery.org
+```
+
+##### Login to Docker Registries:
+
+```bash
+sudo docker login primitives.azurecr.io
+sudo docker login registry.datadrivendiscovery.org
+```
+
+#### Clone TA2 Pipeline Repository:
+
+```bash
+git clone https://gitlab.datadrivendiscovery.org/uncharted_qntfy/ta3ta2_integration
+```
+
+#### Pull images:
+
+```bash
+cd ./ta3ta2_integration
+docker-compose pull
+```
+
+#### Run the Qntfy containers:
+
+```bash
+docker-compose up qntfy_ta2_worker
+```
+
+Wait ~5 seconds, then:
+
+```bash
+docker-compose up qntfy_ta2
+```
+
+### Run remaining containers:
+
+```bash
+cd $GOPATH/src/github.com/unchartedsoftware/distil
+docker-compose pull
+```
+
+#### Comment out the pipeline-server entry in docker-compose.yml
+
+```
+# pipeline_server:
+#   image:
+#     docker.uncharted.software/distil-pipeline-server:latest
+#   ports:
+#     - "45042:45042"
+#   environment:
+#     - PIPELINE_SERVER_RESULT_DIR=$PWD/datasets
+#     - PIPELINE_SEND_DELAY=2000
+#     - PIPELINE_NUM_UPDATES=3
+#   volumes:
+#     - $PWD/datasets:$PWD/datasets
+```
+
+#### Uncomment the nk containers:
+
+```
+nk_classification_rest:
+  image:
+    primitives.azurecr.io/simon:1.0.0
+  ports:
+    - "5000:5000"
+nk_ranking_rest:
+  image:
+    primitives.azurecr.io/http_features:0.4
+  ports:
+    - "5001:5000"
+```
+
+Run the containers:
+
+```bash
+docker-compose up
+```
+
+Build and run the server:
+
+```bash
+./deploy.sh
 ```
 
 ## Vue + Vuex + Vue-Router Flow

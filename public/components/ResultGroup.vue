@@ -21,6 +21,7 @@
 			</facets>
 		</div>
 		<div v-if="pipelineStatus !== 'COMPLETED' && pipelineStatus !== 'ERRORED'">
+			<b-badge variant="info">{{pipelineStatus}}</b-badge>
 			<b-progress
 				:value="100"
 				variant="secondary"

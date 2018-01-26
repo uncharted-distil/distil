@@ -249,7 +249,7 @@ func handleCreatePipelines(conn *Connection, client *pipeline.Client, metadataCt
 		handleErr(conn, msg, err)
 		return
 	}
-	datasetPath = fmt.Sprintf("file://%s", datasetPath)
+	datasetPath = fmt.Sprintf("%s", datasetPath)
 
 	// Create the set of training features - we already filtered that out when we persist, but needs to be specified
 	// to satisfy ta3ta2 API.
@@ -288,7 +288,7 @@ func handleCreatePipelines(conn *Connection, client *pipeline.Client, metadataCt
 		TargetFeatures: []*pipeline.Feature{
 			{
 				FeatureName: clientCreateMsg.Feature,
-				ResourceId:  defaultResourceID,
+				ResourceId:  datasetPath,
 			},
 		},
 		MaxPipelines: clientCreateMsg.MaxPipelines,
