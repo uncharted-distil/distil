@@ -6,11 +6,11 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/davecgh/go-spew/spew"
 	"github.com/unchartedsoftware/plog"
 	"github.com/zenazn/goji/graceful"
 	"goji.io"
 	"goji.io/pat"
-	"github.com/davecgh/go-spew/spew"
 
 	"github.com/unchartedsoftware/distil-ingest/rest"
 	"github.com/unchartedsoftware/distil/api/elastic"

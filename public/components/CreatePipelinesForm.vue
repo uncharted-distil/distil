@@ -9,9 +9,18 @@
 			</div>
 		</div>
 		<div class="row justify-content-center">
-			<b-button class="create-button" :variant="createVariant" @click="create" :disabled="disableCreate">
-				Create Models
-			</b-button>
+			<b-dropdown
+				class="col-8"
+				text="Create Models"
+				:variant="createVariant"
+				:disabled="disableCreate">
+				<b-dropdown-header>Select Number of Models</b-dropdown-header>
+				<b-dropdown-item @click="create(1)">1</b-dropdown-item>
+				<b-dropdown-item @click="create(2)">2</b-dropdown-item>
+				<b-dropdown-item @click="create(3)">3</b-dropdown-item>
+				<b-dropdown-item @click="create(4)">4</b-dropdown-item>
+				<b-dropdown-item @click="create(5)">5</b-dropdown-item>
+			</b-dropdown>
 		</div>
 	</div>
 </template>
@@ -96,7 +105,7 @@ export default Vue.extend({
 	},
 	methods: {
 		// create button handler
-		create() {
+		create(numPipelines) {
 			// compute schema values for request
 			const taskData = getTask(this.targetVariable.type);
 			const task = taskData.schemaName;
@@ -108,7 +117,8 @@ export default Vue.extend({
 				sessionId: this.sessionId,
 				feature: routeGetters.getRouteTargetVariable(this.$store),
 				task: task,
-				metric: metrics
+				metric: metrics,
+				numPipelines: numPipelines
 			}).then((res: PipelineInfo) => {
 				// transition to result screen
 				const entry = createRouteEntry(RESULTS_ROUTE, {
