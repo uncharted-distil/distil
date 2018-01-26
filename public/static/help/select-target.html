@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<head>
+    <meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="">
+<meta name="keywords" content=" ">
+<title>Step 2 - Select Features | Distil Help</title>
+<link rel="stylesheet" href="css/syntax.css">
+
+
+<link rel="stylesheet" type="text/css" href="css/lib/font-awesome-4.7.0/css/font-awesome.min.css">
+<!--<link rel="stylesheet" type="text/css" href="css/bootstrap.min.css">-->
+<link rel="stylesheet" href="css/modern-business.css">
+<link rel="stylesheet" href="css/lavish-bootstrap.css">
+<link rel="stylesheet" href="css/customstyles.css">
+<link rel="stylesheet" href="css/theme-black.css">
+
+<script src="js/lib/jquery.min.js"></script>
+<script src="js/lib/jquery.cookie.min.js"></script>
+<script src="js/jquery.navgoco.min.js"></script>
+
+
+<script src="js/lib/bootstrap.min.js"></script>
+<script src="js/lib/anchor.min.js"></script>
+<script src="js/toc.js"></script>
+<script src="js/customscripts.js"></script>
+
+<link rel="shortcut icon" href="images/favicon.ico">
+
+<link rel="alternate" type="application/rss+xml" title="" href="feed.xml">
+
+    <script>
+        $(document).ready(function() {
+            // Initialize navgoco with default options
+            $("#mysidebar").navgoco({
+                caretHtml: '',
+                accordion: false,
+                openClass: 'active', // open
+                save: false, // leave false or nav highlighting doesn't work right
+                cookie: {
+                    name: 'navgoco',
+                    expires: false,
+                    path: '/'
+                },
+                slide: {
+                    duration: 400,
+                    easing: 'swing'
+                }
+            });
+
+            $("#collapseAll").click(function(e) {
+                e.preventDefault();
+                $("#mysidebar").navgoco('toggle', false);
+            });
+
+            $("#expandAll").click(function(e) {
+                e.preventDefault();
+                $("#mysidebar").navgoco('toggle', true);
+            });
+
+        });
+
+    </script>
+    <script>
+        $(function () {
+            $('[data-toggle="tooltip"]').tooltip()
+        })
+    </script>
+    
+
+</head>
+<body>
+<!-- Navigation -->
+<nav class="navbar navbar-inverse navbar-fixed-top">
+    <div class="container topnavlinks">
+        <div class="navbar-header">
+            <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+            <a class="navbar-brand" href="index.html"><img class="navbar-logo" src="images/logo.png" alt="Distil">&nbsp;<span class="projectTitle"> Distil Help</span></a>
+        </div>
+        <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+            <ul class="nav navbar-nav navbar-right">
+                <!-- entries without drop-downs appear here -->
+                
+                
+                
+                <li><a href="index.html">Topics</a></li>
+                
+                
+                
+                <li><a href="glossary.html">Glossary</a></li>
+                
+                
+                
+                <!-- entries with drop-downs appear here -->
+                <!-- conditional logic to control which topnav appears for the audience defined in the configuration file.-->
+                
+                <!--comment out this block if you want to hide search
+                <li>
+                    <!--start search
+                    <div id="search-demo-container">
+                        <input type="text" id="search-input" placeholder="search...">
+                        <ul id="results-container"></ul>
+                    </div>
+                    <script src="js/jekyll-search.js" type="text/javascript"></script>
+                    <script type="text/javascript">
+                            SimpleJekyllSearch.init({
+                                searchInput: document.getElementById('search-input'),
+                                resultsContainer: document.getElementById('results-container'),
+                                dataSource: 'search.json',
+                                searchResultTemplate: '<li><a href="{url}" title="Step 2 - Select Features">{title}</a></li>',
+                    noResultsText: 'No results found.',
+                            limit: 10,
+                            fuzzy: true,
+                    })
+                    </script>
+                    <!--end search
+                </li>-->
+            </ul>
+        </div>
+        </div>
+        <!-- /.container -->
+</nav>
+
+<!-- Page Content -->
+<div class="container">
+    <div class="col-lg-12">&nbsp;</div>
+    <!-- Content Row -->
+    <div class="row">
+        <!-- Sidebar Column -->
+        <div class="col-md-3">
+
+          
+
+
+
+
+
+<ul id="mysidebar" class="nav">
+    <li class="sidebarTitle">Getting Started </li>
+    
+    
+    
+        
+    
+    <li>
+        <a href="#">Getting Started</a>
+        <ul>
+            
+            
+            
+            <li><a href="index.html">Introduction</a></li>
+            
+            
+            
+            
+            
+            
+            <li><a href="home.html">Home</a></li>
+            
+            
+            
+            
+        </ul>
+        
+        
+    
+    <li>
+        <a href="#">Workflow</a>
+        <ul>
+            
+            
+            
+            <li><a href="workflow-overview.html">Overview</a></li>
+            
+            
+            
+            
+            
+            
+            <li><a href="search.html">1. Search for a Dataset</a></li>
+            
+            
+            
+            
+            
+            
+            <li class="active"><a href="select-target.html">2. Select Target</a></li>
+            
+            
+            
+            
+            
+            
+            <li><a href="create-models.html">3. Create Models</a></li>
+            
+            
+            
+            
+            
+            
+            <li><a href="results.html">4. Review Results</a></li>
+            
+            
+            
+            
+        </ul>
+        
+        
+        
+           <p class="external">
+               <a href="#" id="collapseAll">Collapse All</a> | <a href="#" id="expandAll">Expand All</a>
+           </p>
+    </li>
+</ul>
+</div>
+
+<!-- this highlights the active parent class in the navgoco sidebar. this is critical so that the parent expands when you're viewing a page. This must appear below the sidebar code above. Otherwise, if placed inside customscripts.js, the script runs before the sidebar code runs and the class never gets inserted.-->
+<script>$("li.active").parents('li').toggleClass("active");</script>
+    <!-- Content Column -->
+    <div class="col-md-9">
+        <div class="post-header">
+   <h1 class="post-title-main">Step 2 - Select Features</h1>
+</div>
+
+
+
+<div class="post-content">
+
+   
+
+    
+    
+<!-- this handles the automatic toc. use ## for subheads to auto-generate the on-page minitoc. if you use html tags, you must supply an ID for the heading element in order for it to appear in the minitoc. -->
+<script>
+$( document ).ready(function() {
+  // Handler for .ready() called.
+
+$('#toc').toc({ minimumHeaders: 0, listType: 'ul', showSpeed: 0, headers: 'h2' });
+
+/* this offset helps account for the space taken up by the floating toolbar. */
+$('#toc').on('click', 'a', function() {
+  var target = $(this.getAttribute('href'))
+    , scroll_target = target.offset().top
+
+  $(window).scrollTop(scroll_target - 10);
+  return false
+})
+  
+});
+</script>
+
+<div id="toc"></div>
+
+    
+
+
+    
+
+  <p>Once you have identified a relevant dataset, you must choose the target feature that you want to predict.</p>
+
+<h2 id="target-selection-view-summary">Target Selection View Summary</h2>
+
+<figure href="#select-view-target-close"><a href="#select-view-target"><img class="diagram" src="images/diagrams/select-target.png" alt="Select target feature" /><figcaption>Click to enlarge</figcaption></a></figure>
+<div class="lightbox-target" id="select-view-target"><img src="images/diagrams/select-target.png" /><a class="lightbox-close" href="#select-view-target-close"></a></div>
+
+<h2 id="selecting-the-target-feature-to-predict">Selecting the Target Feature to Predict</h2>
+
+<h5 class="procedure">To choose the target feature that you want to predict:</h5>
+
+<ol>
+  <li>
+    <p>Review the list of available features in the Select Target Feature dialog. Use the <strong>Filter</strong> field to search for <em>acceleration</em>.</p>
+
+    <figure><img class="docimage" src="images/workflow/select-target-feature.png" alt="Set acceleration feature as target" /></figure>
+
+    <div class="alert alert-info" role="alert"><i class="fa fa-info-circle"></i> <b>Note:</b> Feature summaries visualize the values for each column/field in the dataset. Distil automatically infers the type of data stored for each feature. To change the inferred value, use the <span class="feature-type">type <sup class="fa fa-sort-desc" aria-hidden="true" style="display: inline;"></sup></span> drop-down.</div>
+  </li>
+  <li>
+    <p>Click anywhere on the <strong>acceleration</strong> feature summary. Distil adds the feature to the model definition and lists a sample of actual acceleration values.</p>
+
+    <figure><img class="docimage" src="images/workflow/select-target-feature-set.png" alt="Sample of values for selected target (acceleration)" /></figure>
+
+    <div class="alert alert-info" role="alert"><i class="fa fa-info-circle"></i> <b>Note:</b> You can change the target at any time by clicking <strong>Select New Target Feature</strong> under the current target on the Create Models view.</div>
+  </li>
+</ol>
+
+<p>The target you select determines the type of results the model will generate.</p>
+
+<table>
+  <thead>
+    <tr class="header">
+      <th>Feature Type</th>
+      <th>Model Type</th>
+      <th>Prediction</th>
+      <th>Results</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><a href="#" data-toggle="tooltip" data-original-title="Has values that are real numbers">Continuous</a></td>
+      <td>Regression</td>
+      <td>Numerical value</td>
+      <td>Correct and incorrect predictions based on a configurable distance from the actual target feature values</td>
+    </tr>
+    <tr>
+      <td><a href="#" data-toggle="tooltip" data-original-title="Has a finite set of categories reused across records">Categorical</a></td>
+      <td>Classification</td>
+      <td>Category</td>
+      <td>Correct and incorrect predictions based the actual target feature category</td>
+    </tr>
+  </tbody>
+</table>
+
+<p><strong>Acceleration</strong> is a continuous feature that will produce regression results.</p>
+
+<h2 id="next-steps">Next Steps</h2>
+
+<p>Select the training features that the model should use to predict the target feature.</p>
+
+  
+  <div class="section-nav">
+    <div class="nav-left align-right">
+        
+          <a href="search.html" class="prev-pg">Back</a>
+        
+    </div>
+    <div class="nav-right align-left">
+        
+          <a href="create-models.html" class="next-pg">Next</a>
+        
+    </div>
+  </div>
+  <div class="clear-nav"></div>
+
+
+    <div class="tags">
+        
+    </div>
+</div>
+
+<hr class="shaded"/>
+
+<footer>
+            <div class="row">
+                <div class="col-lg-12 footer">
+               &copy;2018 Uncharted Software Inc.<br />
+<p><img class="logo" src="images/uncharted.png" alt="Uncharted Software Inc."/></p>
+                </div>
+            </div>
+</footer>
+
+
+    </div>
+    <!-- /.row -->
+</div>
+<!-- /.container -->
+    </div>
+
+</body>
+
+</html>
