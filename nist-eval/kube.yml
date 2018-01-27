@@ -12,15 +12,15 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: distil-001-eval-ta3-web
+  name: local-test-ta3-web
   labels:
-    evalId: distil-001-eval
+    evalId:  local-test
     tier: ta3
 spec:
   # NodePort type allows to expose service outside the cluster
   type: NodePort
   selector:
-    evalId: distil-001-eval
+    evalId: local-test
     tier: ta3
   ports:
     - name: http
@@ -34,9 +34,9 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: distil-001-eval-ta3
+  name: local-test-ta3
   labels:
-    evalId: distil-001-eval
+    evalId: local-test
     tier: ta3
 spec:
   type: ClusterIP
@@ -45,43 +45,34 @@ spec:
     - port: 5001
       targetPort: 5001
   selector:
-    evalId: distil-001-eval
+    evalId: local-test
     tier: ta3
 ---
 # TA3 Pod
 apiVersion: v1
 kind: Pod
 metadata:
-  name: distil-001-eval-ta3
+  name: local-test-ta3
   labels:
-    evalId: distil-001-eval
+    evalId: local-test
     main: "yes"
     tier: ta3
     ta3-main: "yes"
 spec:
   restartPolicy: Never
   volumes:
-  
-  # affinity:
-  #   # Link pod affinity with
-  #   podAffinity:
-  #     requiredDuringSchedulingIgnoredDuringExecution:
-  #     - labelSelector:
-  #         matchExpressions:
-  #         - key: evalId
-  #           operator: In
-  #           values:
-  #           - distil-001-eval
-  #       topologyKey: failure-domain.beta.kubernetes.io/zone
+
+    - name: shared-data
+      emptyDir: {}
+
   containers:
   # TA3 container, entry point for evaluation
   - name: ta3-main
-    image: docker.uncharted.software/distil:latest
-    imagePullPolicy: Always
+    image: docker.uncharted.software/distil:test
+    imagePullPolicy: IfNotPresent
     command:
-      - /bin/sh
-    args:
-      - ta3_search
+      - /bin/bash
+
     # web (perhaps nginx) ports
     ports:
       - containerPort: 80
@@ -96,34 +87,29 @@ spec:
     env:
       # environment variables passed to container
       - name: EVAL_ID
-        value: distil-001-eval
+        value: local-test
       # Query TA2 Service with service name:
-      # distil-001-eval-ta2:45042
+      # local-test-ta2:45042
       # Query TA3 Service with service name:
-      # distil-001-eval-ta3:5001
+      # local-test-ta3:5001
       - name: TA2_PORT
         value: "45042"
       - name: TA3_PORT
         value: "5001"
       - name: PIPELINE_COMPUTE_ENDPOINT
-        value: distil-001-eval-ta2:45042
+        value: "localhost:45042"
       - name: PIPELINE_COMPUTE_TRACE
         value: "true"
-
     volumeMounts:
-      ##====|Begin| Required Code that NIST uses to pair TA2 and TA3 components |Begin|
-      - name: nfs-data
-        mountPath: /inputs
-        subPath: 
-        readOnly: true
-      - name: nfs-output
-        mountPath: /outputs
-        subPath: 
-      ##====|End| Required Code that NIST uses to pair TA2 and TA3 components |End|
+
+      - name: shared-data
+        mountPath: /tmp/d3m/datasets
+
 
   # Postgres container - provides access to pre-loaded D3M data
   - name: distil-pg
     image: docker.uncharted.software/distil_dev_postgres:latest
+    imagePullPolicy: IfNotPresent
     ports:
       - name: pg-port
         hostPort: 5432
@@ -133,9 +119,31 @@ spec:
   # ElasticSearch container - provides indexing / search on pre-loaded D3M data
   - name: distil-es
     image: docker.uncharted.software/distil_dev_es:latest
+    imagePullPolicy: IfNotPresent
     ports:
       - name: es-port
         containerPort: 9200
     env:
       - name: ES_JAVA_OPTS
         value: -Xmx512m -Xms512m
+
+
+  # Stub ta2 container
+  - name: ta2-main
+    image: docker.uncharted.software/distil-pipeline-server:latest
+    imagePullPolicy: IfNotPresent
+    # environment variables passed to container
+    env:
+      # NIST eval id
+      - name: EVAL_ID
+        value: local-test
+      - name: PIPELINE_SERVER_RESULT_DIR
+        value: /tmp/d3m/datasets
+    ports:
+      # gRPC port
+      - containerPort: 45042
+        protocol: TCP
+    volumeMounts:
+      - name: shared-data
+        mountPath: /tmp/d3m/datasets
+

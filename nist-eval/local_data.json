@@ -1,0 +1,10 @@
+{
+    "nist_deploy": false,
+    "eval_id": "local-test",
+    "command": "/bin/bash",
+    "command_args": "",
+    "distil_image": "docker.uncharted.software/distil:latest",
+    "pg_image": "docker.uncharted.software/distil_dev_postgres:latest",
+    "es_image": "docker.uncharted.software/distil_dev_es:latest",
+    "ta2_image": "docker.uncharted.software/distil-pipeline-server:latest"
+}

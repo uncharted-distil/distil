@@ -1,0 +1,49 @@
+# TA2 Service for taking requests from TA3
+apiVersion: v1
+kind: Service
+metadata:
+  name: test-001-ta2
+  labels:
+    evalId: test-001
+    tier: ta2
+spec:
+  type: ClusterIP
+  # There is a possibility of manually assigning an IP
+  ports:
+    - port: 45042
+      targetPort: 45042
+  selector:
+    evalId: test-001
+    tier: ta2
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: test-001-ta2
+  labels:
+    evalId: test-001
+    ta2-main: "yes"
+spec:
+  restartPolicy: Never
+  volumes:
+    - name: shared-data
+      emptyDir: {}
+  containers:
+    # -------------------------
+    # Main TA2 Container
+    # -------------------------
+    - name: ta2-main
+      image: 
+      imagePullPolicy: Always
+      # environment variables passed to container
+      env:
+        # NIST eval id
+        - name: EVAL_ID
+          value: test-001
+      ports:
+        # gRPC port
+        - containerPort: 45042
+          protocol: TCP
+      volumeMounts:
+        - name: shared-data
+          mountPath: /shared_temp
