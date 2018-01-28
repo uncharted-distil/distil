@@ -79,20 +79,23 @@ spec:
   #         - key: evalId
   #           operator: In
   #           values:
-  #           - {{ eval_id }}
+  #           - {{ '{{ eval_id }}' }}'
   #       topologyKey: failure-domain.beta.kubernetes.io/zone
 {% else %}
     - name: shared-data
       emptyDir: {}
+    - name: shared-config
+      hostPath:
+        path: /tmp/d3m/config
 {% endif %}
   containers:
   # TA3 container, entry point for evaluation
   - name: ta3-main
     image: {{ distil_image }}
     imagePullPolicy: {% if nist_deploy %}Always{% else %}IfNotPresent{% endif %}
-    command:
-      - {{ command }}
 {% if nist_deploy %}
+    command:
+      - {{ '{{ command }}' }}
     args:
       - {{ '{{ command_args }}' }}
 {% endif %}
@@ -112,9 +115,9 @@ spec:
       - name: EVAL_ID
         value: {% if nist_deploy %}{{ '{{ eval_id }}' }}{% else %}{{ eval_id }}{% endif %}
       # Query TA2 Service with service name:
-      # {{ eval_id }}-ta2:45042
+      # {{ '{{ eval_id }}' }}-ta2:45042
       # Query TA3 Service with service name:
-      # {{ eval_id }}-ta3:5001
+      # {{ '{{ eval_id }}' }}-ta3:5001
       - name: TA2_PORT
         value: "45042"
       - name: TA3_PORT
@@ -123,6 +126,12 @@ spec:
         value: {% if nist_deploy %}{{ '{{ eval_id }}-ta2:45042' }}{% else %}"localhost:45042"{% endif %}
       - name: PIPELINE_COMPUTE_TRACE
         value: "true"
+      - name: PORT
+        value: "80"
+{% if not nist_deploy %}
+      - name: JSON_CONFIG_PATH
+        value: /tmp/d3m/config/config.json
+{% endif %}
     volumeMounts:
 {% if not nist_deploy %}
       - name: shared-data
@@ -140,7 +149,6 @@ spec:
       ##====|End| Required Code that NIST uses to pair TA2 and TA3 components |End|
 {% endraw %}
 {% endif %}
-
   # Postgres container - provides access to pre-loaded D3M data
   - name: distil-pg
     image: {{ pg_image }}
@@ -161,7 +169,6 @@ spec:
     env:
       - name: ES_JAVA_OPTS
         value: -Xmx512m -Xms512m
-
 {% if not nist_deploy %}
   # Stub ta2 container
   - name: ta2-main
