@@ -28,7 +28,7 @@ type Config struct {
 	PipelineDataDir            string `env:"PIPELINE_DATA_DIR" envDefault:"datasets"`
 	PipelineComputeTrace       bool   `env:"PIPELINE_COMPUTE_TRACE" envDefault:"false"`
 	ExportPath                 string `env:"EXPORT_PATH"`
-	StartupConfigFile          string `env:"CONFIG_JSON_PATH" envDefault:"startup.json"`
+	StartupConfigFile          string `env:"JSON_CONFIG_PATH" envDefault:"/d3m/config"`
 	PostgresHost               string `env:"PG_HOST" envDefault:"localhost"`
 	PostgresPort               string `env:"PG_PORT" envDefault:"5432"`
 	PostgresUser               string `env:"PG_USER" envDefault:"distil"`
