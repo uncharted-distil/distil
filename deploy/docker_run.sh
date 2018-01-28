@@ -1,8 +1,6 @@
 #!/bin/bash
 docker run \
-    --entrypoint ta3_search \
-    docker.uncharted.software/distil:latest \
-    --name distil \
+   --name distil \
     --rm \
     -d \
     -p 8080:8080 \
@@ -11,4 +9,7 @@ docker run \
     -e PIPELINE_DATA_DIR=`pwd`/datasets \
     -e PG_STORAGE=true \
     -e PIPELINE_COMPUTE_TRACE=true \
-    -e PG_LOG_LEVEL=none # debug, error, warn, info, none
+    -e PG_LOG_LEVEL=none \
+    --entrypoint ta3_search \
+    docker.uncharted.software/distil:latest
+ 
