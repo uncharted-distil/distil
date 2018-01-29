@@ -19,6 +19,7 @@
 			<div class="row flex-11">
 				<facets class="col-12 flex-column d-flex variable-facets-container"
 					:groups="groups"
+					:filters="filters"
 					:highlights="highlights"
 					:html="html"
 					:sort="sort"
@@ -133,6 +134,10 @@ export default Vue.extend({
 			return routeGetters.getDecodedHighlightedFeatureValues(this.$store);
 		},
 
+		filters(): Filter[] {
+			return routeGetters.getDecodedFilters(this.$store);
+		},
+
 		importance(): Dictionary<number> {
 			const variables = dataGetters.getVariables(this.$store);
 			const importance: Dictionary<number> = {};
@@ -211,6 +216,7 @@ export default Vue.extend({
 
 		// handles individual category toggle events within a facet group
 		onFacetToggle(key: string, values: string[]) {
+			console.log('update filter', key, values);
 			// set range filter
 			this.updateFilterRoute({
 				name: key,

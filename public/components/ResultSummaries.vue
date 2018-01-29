@@ -23,6 +23,7 @@
 			@histogram-click="onHistogramClick"
 			@facet-click="onFacetClick"
 			:groups="targetGroups"
+			:filters="filters"
 			:highlights="highlights"></facets>
 		<p class="nav-link font-weight-bold">Predictions by Model</p>
 		<result-facets
@@ -48,6 +49,7 @@ import { createGroups, Group } from '../util/facets';
 import { overlayRouteEntry } from '../util/routes';
 import { getPipelineById } from '../util/pipelines';
 import { getTask } from '../util/pipelines';
+import { Filter } from '../util/filters';
 import { isTarget, getVarFromTarget, getTargetCol } from '../util/data';
 import { updateResultHighlights, clearFeatureHighlightValues } from '../util/highlights';
 import { VariableSummary, Extrema } from '../store/data/index';
@@ -134,6 +136,10 @@ export default Vue.extend({
 				facetHighlights.root.key = getVarFromTarget(highlights.root.key);
 			}
 			return facetHighlights;
+		},
+
+		filters(): Filter[] {
+			return routeGetters.getDecodedResultsFilters(this.$store);
 		},
 
 		range(): number {

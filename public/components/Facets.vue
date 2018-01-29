@@ -11,7 +11,6 @@ import { Dictionary } from '../util/dict';
 import Facets from '@uncharted.software/stories-facets';
 import TypeChangeMenu from '../components/TypeChangeMenu';
 import '@uncharted.software/stories-facets/dist/facets.css';
-import Multimap from 'multimap';
 import { Highlights } from '../util/highlights';
 
 export default Vue.extend({
@@ -19,6 +18,7 @@ export default Vue.extend({
 
 	props: {
 		groups: Array,
+		filters: Array,
 		highlights: Object, // ValueHighlights
 		typeChange: Boolean,
 		html: [ String, Object, Function ],
@@ -35,7 +35,6 @@ export default Vue.extend({
 	data() {
 		return {
 			facets: <any>{},
-			facetFilteredValues: new Multimap(),
 			instanceName: _.uniqueId('facet-')
 		};
 	},
@@ -118,6 +117,22 @@ export default Vue.extend({
 		});
 	},
 
+	computed: {
+		filtersByKey(): Dictionary<string[]> {
+			const m = {};
+			this.filters.forEach(filter => {
+				if (filter.enabled && filter.categories) {
+					const categories = {};
+					filter.categories.forEach(category => {
+						categories[category] = true;
+					});
+					m[filter.name] = categories;
+				}
+			});
+			return m;
+		}
+	},
+
 	watch: {
 		// handle changes to the facet group list
 		groups(currGroups: Group[], prevGroups: Group[]) {
@@ -144,6 +159,10 @@ export default Vue.extend({
 	},
 
 	methods: {
+		isFiltered(key, value): boolean {
+			return this.filtersByKey[key] ? !this.filtersByKey[key][value] : false;
+		},
+
 		injectHTML(group: Group, $elem: JQuery) {
 
 			$elem.click(() => {
@@ -176,7 +195,7 @@ export default Vue.extend({
 				_.get(highlights, 'root.key') === key;
 		},
 
-		isHighlightedValue(highlights: Highlights, key: string, value: string | Range): boolean {
+		isHighlightedValue(highlights: any, key: string, value: string | {from: number, to: number}): boolean {
 			// if not instance, return false
 			if (!this.isHighlightedGroup(highlights, key)) {
 				return false;
@@ -268,9 +287,6 @@ export default Vue.extend({
 			// Clear highlight state incase it was set via a click on on another
 			// component
 			$(this.$el).find('.select-highlight').removeClass('select-highlight');
-			// if (this.isHighlightedInstance(highlights) || _.isEmpty(highlights.values)) {
-			// 	$(this.$el).find('.select-highlight').removeClass('select-highlight');
-			// }
 			/// Update highlights
 			this.groups.forEach(g => {
 				const group = this.facets.getGroup(g.key);
@@ -323,13 +339,6 @@ export default Vue.extend({
 					}
 					// replace group if it is existing
 					this.facets.replaceGroup(_.cloneDeep(group));
-					// init the internal categorical facet filter state from the supplied facet
-					// spec
-					group.facets.forEach(facetSpec => {
-						if (isCategoricalFacet(facetSpec) && !facetSpec.selected) {
-							this.facetFilteredValues.set(group.key, facetSpec.value);
-						}
-					});
 					this.injectHTML(group, this.facets.getGroup(group.key)._element);
 					this.injectHighlightsIntoGroup(this.facets.getGroup(group.key), this.highlights);
 				} else {
@@ -347,13 +356,6 @@ export default Vue.extend({
 				// append groups
 				this.facets.append(toAdd);
 				toAdd.forEach(groupSpec => {
-					// init the internal categorical facet filter state from the supplied facet
-					// spec
-					groupSpec.facets.forEach(facetSpec => {
-						if (isCategoricalFacet(facetSpec) && !facetSpec.selected) {
-							this.facetFilteredValues.set(groupSpec.key, facetSpec.value);
-						}
-					});
 					this.injectHTML(groupSpec, this.facets.getGroup(groupSpec.key)._element);
 					this.injectHighlightsIntoGroup(this.facets.getGroup(groupSpec.key), this.highlights);
 				});
@@ -418,7 +420,8 @@ export default Vue.extend({
 				const value = facetSpec.value;
 
 				let $icon = null;
-				if (this.facetFilteredValues.has(key, value)) {
+
+				if (this.isFiltered(key, value)) {
 					$icon = $(`<i id=${key}-${value} class="fa fa-circle-o"></i>`);
 				} else {
 					$icon = $(`<i id=${key}-${value} class="fa fa-circle"></i>`);
@@ -431,26 +434,30 @@ export default Vue.extend({
 					const group = this.facets.getGroup(key);
 					const current = <any>(<CategoricalFacet[]>group.facets).find(facet => facet.value === value);
 
+					// selected values
+					const values = [];
+
 					// toggle the facet filter state
-					if (!this.facetFilteredValues.has(key, value)) {
+					if (!this.isFiltered(key, value)) {
 						// switch to unfilter from filtered
 						$icon.removeClass('fa-circle').addClass('fa-circle-o');
+						// add newly selected value
 						current.deselect();
-						this.facetFilteredValues.set(key, value);
 					} else {
 						// switch from filtered to unfiltered, and restore highlight state if needed
 						$icon.removeClass('fa-circle-o').addClass('fa-circle');
-						if (_.isEqual(this.facetHighlightValue, { key, value })) {
+						if (this.isHighlightedValue(this.highlights, key, value)) {
 							current.select({ count: current.count });
 						}
-						this.facetFilteredValues.delete(key, value);
+						values.push(value);
 					}
-					// get all currently selected values
-					const values = group.facets
-						.filter(f => !this.facetFilteredValues.has(f.key, f.value))
+
+					// add all currently selected values
+					const selected = group.facets
+						.filter(f => !this.isFiltered(f.key, f.value) && value !== f.value)
 						.map(f => f.value);
 
-					this.$emit('facet-toggle', key, values);
+					this.$emit('facet-toggle', key, values.concat(selected));
 				});
 
 				$icon.mouseenter(e => {

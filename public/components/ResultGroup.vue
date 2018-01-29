@@ -11,12 +11,14 @@
 				@facet-click="onResultFacetClick"
 				:groups="resultGroups"
 				:highlights="highlights"
+				:filters="filters"
 				:html="residualHtml">
 			</facets>
 			<facets v-if="residualsGroups.length" class="residual-container"
 				@histogram-click="onResidualsHistogramClick"
 				:groups="residualsGroups"
 				:highlights="highlights"
+				:filters="filters"
 				:html="resultHtml">
 			</facets>
 		</div>
@@ -48,6 +50,7 @@ import { isPredicted, isError, getVarFromPredicted, getVarFromError, getPredicte
 import { VariableSummary } from '../store/data/index';
 import { Highlights, Range } from '../util/highlights';
 import { overlayRouteEntry } from '../util/routes';
+import { Filter } from '../util/filters';
 import { getters as routeGetters } from '../store/route/module';
 import { getPipelineById, getMetricDisplayName } from '../util/pipelines';
 import { NUMERICAL_FILTER, CATEGORICAL_FILTER, getFilterType, decodeFiltersDictionary } from '../util/filters';
@@ -131,6 +134,10 @@ export default Vue.extend({
 				}
 			}
 			return facetHighlights;
+		},
+
+		filters(): Filter[] {
+			return routeGetters.getDecodedResultsFilters(this.$store);
 		},
 
 		currentClass(): string {
