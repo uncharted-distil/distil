@@ -177,7 +177,7 @@ export default Vue.extend({
 			}
 		},
 
-		injectHighlightsIntoGroup(group: Group, highlights: Highlights) {
+		injectHighlightsIntoGroup(group: any, highlights: Highlights) {
 
 			// loop through groups ensure that selection is clear on each - not that clear
 			// the selection on a categorical facet means set its selection to a full count
