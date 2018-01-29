@@ -6,11 +6,11 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/davecgh/go-spew/spew"
 	"github.com/unchartedsoftware/plog"
 	"github.com/zenazn/goji/graceful"
 	"goji.io"
 	"goji.io/pat"
-	"github.com/davecgh/go-spew/spew"
 
 	"github.com/unchartedsoftware/distil-ingest/rest"
 	"github.com/unchartedsoftware/distil/api/elastic"
@@ -135,6 +135,7 @@ func main() {
 	registerRoute(mux, "/distil/datasets/:index", routes.DatasetsHandler(metadataStorageCtor))
 	registerRoute(mux, "/distil/variables/:index/:dataset", routes.VariablesHandler(metadataStorageCtor))
 	registerRoutePost(mux, "/distil/variables/:index/:dataset", routes.VariableTypeHandler(pgDataStorageCtor, metadataStorageCtor))
+	registerRoutePost(mux, "/distil/discovery/:index/:dataset/:target", routes.ProblemDiscoveryHandler(pgDataStorageCtor, metadataStorageCtor, config.PipelineDataDir))
 	registerRoute(mux, "/distil/variable-summaries/:index/:dataset/:variable", routes.VariableSummaryHandler(pgDataStorageCtor))
 	registerRoute(mux, "/distil/filtered-data/:esIndex/:dataset/:inclusive", routes.FilteredDataHandler(pgDataStorageCtor))
 	registerRoute(mux, "/distil/results/:index/:dataset/:pipeline-id/:inclusive", routes.ResultsHandler(pgPipelineStorageCtor, pgDataStorageCtor))
