@@ -3,7 +3,7 @@
     <meta charset="utf-8">
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="description" content="Distil is data-driven application for interactively guiding machine intelligence to build predictive models that classify or project complex, real-world proc...">
+<meta name="description" content="Distil is a data-driven application for interactively guiding machine intelligence to build predictive models that classify or project complex, real-world pr...">
 <meta name="keywords" content=" ">
 <title>Introduction | Distil Help</title>
 <link rel="stylesheet" href="css/syntax.css">
@@ -14,7 +14,7 @@
 <link rel="stylesheet" href="css/modern-business.css">
 <link rel="stylesheet" href="css/lavish-bootstrap.css">
 <link rel="stylesheet" href="css/customstyles.css">
-<link rel="stylesheet" href="css/theme-blue.css">
+<link rel="stylesheet" href="css/theme-black.css">
 
 <script src="js/lib/jquery.min.js"></script>
 <script src="js/lib/jquery.cookie.min.js"></script>
@@ -28,13 +28,6 @@
 
 <link rel="shortcut icon" href="images/favicon.ico">
 
-<!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
-<!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
-<!--[if lt IE 9]>
-<script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
-<script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
-<![endif]-->
-
 <link rel="alternate" type="application/rss+xml" title="" href="feed.xml">
 
     <script>
@@ -42,7 +35,7 @@
             // Initialize navgoco with default options
             $("#mysidebar").navgoco({
                 caretHtml: '',
-                accordion: true,
+                accordion: false,
                 openClass: 'active', // open
                 save: false, // leave false or nav highlighting doesn't work right
                 cookie: {
@@ -93,6 +86,14 @@
         <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
             <ul class="nav navbar-nav navbar-right">
                 <!-- entries without drop-downs appear here -->
+                
+                
+                
+                <li class="active"><a href="index.html">Topics</a></li>
+                
+                
+                
+                <li><a href="glossary.html">Glossary</a></li>
                 
                 
                 
@@ -175,35 +176,35 @@
             
             
             
-            <li><a href="search.html">1. Search</a></li>
+            <li><a href="workflow-overview.html">Overview</a></li>
             
             
             
             
             
             
-            <li><a href="explore.html">2. Explore</a></li>
+            <li><a href="search.html">1. Search for a Dataset</a></li>
             
             
             
             
             
             
-            <li><a href="select.html">3. Select</a></li>
+            <li><a href="select-target.html">2. Select Target</a></li>
             
             
             
             
             
             
-            <li><a href="pipelines.html">4. Pipelines</a></li>
+            <li><a href="create-models.html">3. Create Models</a></li>
             
             
             
             
             
             
-            <li><a href="results.html">5. results</a></li>
+            <li><a href="results.html">4. Review Results</a></li>
             
             
             
@@ -212,18 +213,15 @@
         
         
         
-        <!-- if you aren't using the accordion, uncomment this block:
            <p class="external">
                <a href="#" id="collapseAll">Collapse All</a> | <a href="#" id="expandAll">Expand All</a>
            </p>
-           -->
     </li>
 </ul>
 </div>
 
 <!-- this highlights the active parent class in the navgoco sidebar. this is critical so that the parent expands when you're viewing a page. This must appear below the sidebar code above. Otherwise, if placed inside customscripts.js, the script runs before the sidebar code runs and the class never gets inserted.-->
 <script>$("li.active").parents('li').toggleClass("active");</script>
-
     <!-- Content Column -->
     <div class="col-md-9">
         <div class="post-header">
@@ -235,7 +233,7 @@
 <div class="post-content">
 
    
-    <div class="summary">Distil is data-driven application for interactively guiding machine intelligence to build predictive models that classify or project complex, real-world processes.</div>
+    <div class="summary">Distil is a data-driven application for interactively guiding machine intelligence to build predictive models that classify or project complex, real-world processes.</div>
    
 
     
@@ -245,7 +243,7 @@
 $( document ).ready(function() {
   // Handler for .ready() called.
 
-$('#toc').toc({ minimumHeaders: 0, listType: 'ul', showSpeed: 0, headers: 'h2,h3,h4' });
+$('#toc').toc({ minimumHeaders: 0, listType: 'ul', showSpeed: 0, headers: 'h2' });
 
 /* this offset helps account for the space taken up by the floating toolbar. */
 $('#toc').on('click', 'a', function() {
@@ -268,11 +266,12 @@ $('#toc').on('click', 'a', function() {
 
   <p>With Distil, you can combine your domain expertise with machine intelligence to solve real-world problems. Distil requires no data science knowledge.</p>
 
-<figure><a href="images/diagrams/overview.png"><img class="docimage" src="images/diagrams/overview.png" alt="Overview" /><figcaption>Click to enlarge</figcaption></a></figure>
+<figure href="#distil-overview-close"><a href="#distil-overview"><img class="diagram" src="images/diagrams/overview.png" alt="Overview" /><figcaption>Click to enlarge</figcaption></a></figure>
+<div class="lightbox-target" id="distil-overview"><img src="images/diagrams/overview.png" /><a class="lightbox-close" href="#distil-overview-close"></a></div>
 
 <h2 id="sample-workflow">Sample Workflow</h2>
 
-<p>The following video walks through a sample Distil workflow.</p>
+<p>The following video demonstrates a sample Distil workflow.</p>
 
 <div style="text-align:center">
   <video width="850" height="476" controls="">
@@ -307,7 +306,7 @@ $('#toc').on('click', 'a', function() {
 <footer>
             <div class="row">
                 <div class="col-lg-12 footer">
-               &copy;2017 Uncharted Software Inc.<br />
+               &copy;2018 Uncharted Software Inc.<br />
 <p><img class="logo" src="images/uncharted.png" alt="Uncharted Software Inc."/></p>
                 </div>
             </div>
