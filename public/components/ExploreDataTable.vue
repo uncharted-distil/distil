@@ -34,7 +34,8 @@ import { actions } from '../store/data/module';
 import { FieldInfo } from '../store/data/index';
 import { Dictionary } from '../util/dict';
 import { Filter } from '../util/filters';
-import { updateTableHighlights } from '../util/highlights';
+import { encodeHighlights } from '../util/highlights';
+import { updateTableHighlights, highlightFeatureValues, clearFeatureHighlightValues } from '../util/highlights';
 import TypeChangeMenu from '../components/TypeChangeMenu';
 
 export default Vue.extend({
@@ -88,10 +89,13 @@ export default Vue.extend({
 			_.forIn(this.fields, (field, key) => {
 				highlights[key] = event[key];
 			});
-			actions.highlightFeatureValues(this.$store, highlights);
+			highlightFeatureValues(this, highlights);
 		},
 		onMouseOut() {
-			actions.clearFeatureHighlightValues(this.$store);
+			const entry = overlayRouteEntry(routeGetters.getRoute(this.$store), {
+				highlights: null
+			});
+			this.$router.push(entry);
 		}
 	}
 });

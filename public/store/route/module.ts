@@ -23,5 +23,6 @@ export const getters = {
 	getRouteResidualThresholdMin: read(moduleGetters.getRouteResidualThresholdMin),
 	getRouteResidualThresholdMax: read(moduleGetters.getRouteResidualThresholdMax),
 	getDecodedFilters: read(moduleGetters.getDecodedFilters),
-	getDecodedResultsFilters: read(moduleGetters.getDecodedResultsFilters)
+	getDecodedResultsFilters: read(moduleGetters.getDecodedResultsFilters),
+	getDecodedHighlightedFeatureValues: read(moduleGetters.getDecodedHighlightedFeatureValues)
 }

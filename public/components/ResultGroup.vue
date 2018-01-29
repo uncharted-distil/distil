@@ -45,14 +45,13 @@ import Facets from '../components/Facets';
 import { createGroups, Group, NumericalFacet, CategoricalFacet } from '../util/facets';
 import { isPredicted, isError, getVarFromPredicted, getVarFromError, getPredictedFacetKey,
 	getErrorFacetKey, getErrorCol, getPredictedCol } from '../util/data';
-import { VariableSummary, Highlights, Range } from '../store/data/index';
+import { VariableSummary } from '../store/data/index';
+import { Highlights, Range } from '../util/highlights';
 import { overlayRouteEntry } from '../util/routes';
-import { getters } from '../store/data/module';
 import { getters as routeGetters } from '../store/route/module';
 import { getPipelineById, getMetricDisplayName } from '../util/pipelines';
-import { mutations as dataMutations } from '../store/data/module';
 import { NUMERICAL_FILTER, CATEGORICAL_FILTER, getFilterType, decodeFiltersDictionary } from '../util/filters';
-import { updateResultHighlights } from '../util/highlights';
+import { updateResultHighlights, clearFeatureHighlightValues } from '../util/highlights';
 import { Dictionary } from '../util/dict';
 import _ from 'lodash';
 import Vue from 'vue';
@@ -111,7 +110,7 @@ export default Vue.extend({
 			// Remap highlights to facet key names, filtering out anything other than
 			// the predicted and error values (since that's all that is displayed in this
 			// component)
-			const highlights = getters.getHighlightedFeatureValues(this.$store);
+			const highlights = routeGetters.getDecodedHighlightedFeatureValues(this.$store);
 			const facetHighlights = <Highlights>{
 				root: _.cloneDeep(highlights.root),
 				values: <Dictionary<string[]>>{}
@@ -169,7 +168,7 @@ export default Vue.extend({
 				};
 				updateResultHighlights(this, context, key, value, filter);
 			} else {
-				dataMutations.clearFeatureHighlights(this.$store);
+				clearFeatureHighlightValues(this);
 			}
 		},
 
@@ -187,12 +186,12 @@ export default Vue.extend({
 				};
 				updateResultHighlights(this, context, key, value, filter);
 			} else {
-				dataMutations.clearFeatureHighlights(this.$store);
+				clearFeatureHighlightValues(this);
 			}
 		},
 
 		resultFacetMouseLeave(key: string) {
-			dataMutations.clearFeatureHighlightValues(this.$store);
+			clearFeatureHighlightValues(this);
 		},
 
 		click() {

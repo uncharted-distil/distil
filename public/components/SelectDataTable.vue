@@ -35,13 +35,14 @@
 
 import _ from 'lodash';
 import Vue from 'vue';
-import { getters as dataGetters, actions, mutations } from '../store/data/module';
+import { getters as dataGetters, actions } from '../store/data/module';
 import { Dictionary } from '../util/dict';
 import { Filter } from '../util/filters';
 import { FieldInfo } from '../store/data/index';
 import { getters as routeGetters } from '../store/route/module';
-import { Highlights, TableRow } from '../store/data/index';
-import { updateTableHighlights, scrollToFirstHighlight } from '../util/highlights';
+import { TableRow } from '../store/data/index';
+import { Highlights } from '../util/highlights';
+import { updateTableHighlights, highlightFeatureValues, clearFeatureHighlightValues, scrollToFirstHighlight } from '../util/highlights';
 import TypeChangeMenu from '../components/TypeChangeMenu';
 
 export default Vue.extend({
@@ -74,7 +75,7 @@ export default Vue.extend({
 		// extracts the table data from the store
 		items(): TableRow[] {
 			const data = dataGetters.getSelectedDataItems(this.$store);
-			const valueHighlights = dataGetters.getHighlightedFeatureValues(this.$store);
+			const valueHighlights = routeGetters.getDecodedHighlightedFeatureValues(this.$store);
 
 			dataGetters.getSelectedDataItems(this.$store).forEach(f => f._rowVariant = null);
 
@@ -142,10 +143,10 @@ export default Vue.extend({
 					values: <Dictionary<string[]>>{}
 				};
 				_.forEach(this.fields, (field, key) => highlights.values[key] = [row[key]]);
-				mutations.highlightFeatureValues(this.$store, highlights);
+				highlightFeatureValues(this, highlights);
 			} else {
 				// clicked on same row - reset the selection key and clear highlights
-				mutations.clearFeatureHighlights(this.$store);
+				clearFeatureHighlightValues(this);
 				this.selectedRowKey = -1;
 			}
 		}

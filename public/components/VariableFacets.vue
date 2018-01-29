@@ -47,12 +47,12 @@ import Facets from '../components/Facets';
 import { Filter, decodeFiltersDictionary, updateFilter, getFilterType, isDisabled,
 	CATEGORICAL_FILTER, NUMERICAL_FILTER, EMPTY_FILTER } from '../util/filters';
 import { overlayRouteEntry, getRouteFacetPage } from '../util/routes';
-import { Highlights, Range } from '../store/data/index';
+import { Highlights, Range } from '../util/highlights';
 import { Dictionary } from '../util/dict';
-import { getters as dataGetters, mutations as dataMutations } from '../store/data/module';
+import { getters as dataGetters } from '../store/data/module';
 import { getters as routeGetters } from '../store/route/module';
 import { createGroups, Group } from '../util/facets';
-import { updateDataHighlights } from '../util/highlights';
+import { updateDataHighlights, clearFeatureHighlightValues } from '../util/highlights';
 import 'font-awesome/css/font-awesome.css';
 import '../styles/spinner.css';
 import Vue from 'vue';
@@ -130,7 +130,7 @@ export default Vue.extend({
 		},
 
 		highlights(): Highlights {
-			return dataGetters.getHighlightedFeatureValues(this.$store);
+			return routeGetters.getDecodedHighlightedFeatureValues(this.$store);
 		},
 
 		importance(): Dictionary<number> {
@@ -236,7 +236,7 @@ export default Vue.extend({
 				};
 				updateDataHighlights(this, context, key, value, selectFilter);
 			} else {
-				dataMutations.clearFeatureHighlights(this.$store);
+				clearFeatureHighlightValues(this);
 			}
 		},
 
@@ -251,7 +251,7 @@ export default Vue.extend({
 				};
 				updateDataHighlights(this, context, key, value, selectFilter);
 			} else {
-				dataMutations.clearFeatureHighlights(this.$store);
+				clearFeatureHighlightValues(this);
 			}
 		},
 
@@ -371,7 +371,7 @@ button {
 }
 .variable-facets-container .facets-root-container .facets-group-container .facets-group {
 	background: white;
-	margin: 2px 2px 4px 2px; 
+	margin: 2px 2px 4px 2px;
     font-size: 0.867rem;
     color: rgba(0,0,0,0.87);
     box-shadow: 0 1px 2px 0 rgba(0,0,0,0.10);

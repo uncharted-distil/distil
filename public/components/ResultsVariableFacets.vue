@@ -1,10 +1,8 @@
 <script lang="ts">
 
 import VariableFacets from './VariableFacets.vue';
-import { mutations as dataMutations } from '../store/data/module';
 import { NUMERICAL_FILTER, CATEGORICAL_FILTER } from '../util/filters';
-import { updateResultHighlights } from '../util/highlights';
-import { Range } from '../store/data/index';
+import { updateResultHighlights, clearFeatureHighlightValues, Range } from '../util/highlights';
 import Vue from 'vue';
 
 export default Vue.extend({
@@ -24,7 +22,7 @@ export default Vue.extend({
 				};
 				updateResultHighlights(this, context, key, value, selectFilter);
 			} else {
-				dataMutations.clearFeatureHighlights(this.$store);
+				clearFeatureHighlightValues(this);
 			}
 		},
 
@@ -40,7 +38,7 @@ export default Vue.extend({
 				updateResultHighlights(this, context, key, value, selectFilter);
 			} else {
 				// clear existing highlights
-				dataMutations.clearFeatureHighlights(this.$store);
+				clearFeatureHighlightValues(this);
 			}
 		},
 	}

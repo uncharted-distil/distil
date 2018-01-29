@@ -1,12 +1,43 @@
-import { Highlights, Data, Range } from '../store/data/index';
+import { Data } from '../store/data/index';
 import { Dictionary } from '../util/dict';
 import { Filter } from '../util/filters';
 import { getVarFromTarget } from '../util/data';
 import { getters as routeGetters } from '../store/route/module';
-import { mutations as dataMutations, actions as dataActions } from '../store/data/module';
+import { actions as dataActions } from '../store/data/module';
+import { overlayRouteEntry} from '../util/routes'
 import _ from 'lodash';
 import Vue from 'vue';
 import { AxiosPromise } from 'axios';
+
+export interface Range {
+	to: number;
+	from: number;
+}
+
+export interface HighlightRoot {
+	context: string;
+	key: string;
+	value: string | Range;
+}
+
+export interface Highlights {
+	root: HighlightRoot;
+	values: Dictionary<string[]>;
+}
+
+export function encodeHighlights(highlights: Highlights): string {
+	if (_.isEmpty(highlights)) {
+		return null;
+	}
+	return btoa(JSON.stringify(highlights));
+}
+
+export function decodeHighlights(highlights: string): Highlights {
+	if (_.isEmpty(highlights)) {
+		return {} as Highlights;
+	}
+	return JSON.parse(atob(highlights)) as Highlights;
+}
 
 // Highlights table rows with values that are currently marked as highlighted.  Uses a supplied highlight
 // context ID to enure that something like a table selection doesn't trigger additional table highlight
@@ -92,6 +123,20 @@ export function updateResultHighlights(component: Vue, context: string, key: str
 	updateHighlights(component, resultPromise, context, key, value);
 }
 
+export function highlightFeatureValues(component: Vue, highlights: Highlights) {
+	const entry = overlayRouteEntry(routeGetters.getRoute(component.$store), {
+		highlights: encodeHighlights(highlights),
+	});
+	component.$router.push(entry);
+}
+
+export function clearFeatureHighlightValues(component: Vue) {
+	const entry = overlayRouteEntry(routeGetters.getRoute(component.$store), {
+		highlights: null
+	});
+	component.$router.push(entry);
+}
+
 // Given returned data,
 function updateHighlights(component: Vue, promise: AxiosPromise<Data>, context: string, key: string, value: string | Range) {
 	promise.then(response => {
@@ -112,7 +157,7 @@ function updateHighlights(component: Vue, promise: AxiosPromise<Data>, context: 
 		for (const [key, values] of highlights) {
 			storeHighlights[key] = Array.from(values);
 		}
-		dataMutations.highlightFeatureValues(component.$store, {
+		highlightFeatureValues(component, {
 			root: {
 				context: context,
 				key: key,

@@ -23,12 +23,12 @@
 <script lang="ts">
 
 import _ from 'lodash';
-import { getters, mutations } from '../store/data/module';
+import { getters } from '../store/data/module';
 import { TargetRow, FieldInfo } from '../store/data/index';
 import { getters as routeGetters } from '../store/route/module';
 import { Dictionary } from '../util/dict';
 import { removeNonTrainingItems, removeNonTrainingFields } from '../util/data';
-import { updateTableHighlights, scrollToFirstHighlight } from '../util/highlights';
+import { updateTableHighlights, highlightFeatureValues, clearFeatureHighlightValues, scrollToFirstHighlight } from '../util/highlights';
 import { getTrainingVariablesForPipelineId } from '../util/pipelines';
 import Vue from 'vue';
 
@@ -73,7 +73,7 @@ export default Vue.extend({
 		items(): TargetRow[] {
 			const items = getters.getResultDataItems(this.$store);
 			const filtered = this.excludeNonTraining ? removeNonTrainingItems(items, this.training) : items;
-			const valueHighlights = getters.getHighlightedFeatureValues(this.$store);
+			const valueHighlights = routeGetters.getDecodedHighlightedFeatureValues(this.$store);
 
 			// clear all selections visuals
 			items.forEach(r => r._rowVariant = null);
@@ -128,11 +128,12 @@ export default Vue.extend({
 					values: <Dictionary<string[]>>{}
 				};
 				_.forEach(this.fields, (field, key) => highlights.values[key] = [row[key]]);
-				mutations.highlightFeatureValues(this.$store, highlights);
+
+				highlightFeatureValues(this, highlights);
 			} else {
 				// clicked on same row - remove the row selection visual
 				this.selectedRowKey = -1;
-				mutations.clearFeatureHighlights(this.$store);
+				clearFeatureHighlightValues(this);
 			}
 		}
 	}

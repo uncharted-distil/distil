@@ -49,12 +49,12 @@ import { overlayRouteEntry } from '../util/routes';
 import { getPipelineById } from '../util/pipelines';
 import { getTask } from '../util/pipelines';
 import { isTarget, getVarFromTarget, getTargetCol } from '../util/data';
-import { updateResultHighlights } from '../util/highlights';
-import { VariableSummary, Extrema, Highlights, Range } from '../store/data/index';
+import { updateResultHighlights, clearFeatureHighlightValues } from '../util/highlights';
+import { VariableSummary, Extrema } from '../store/data/index';
+import { Highlights, Range } from '../util/highlights';
 import { NUMERICAL_FILTER, CATEGORICAL_FILTER } from '../util/filters';
 import { getters as dataGetters} from '../store/data/module';
 import { getters as routeGetters } from '../store/route/module';
-import { mutations as dataMutations } from '../store/data/module';
 import { actions } from '../store/app/module';
 import { Dictionary } from '../util/dict';
 import vueSlider from 'vue-slider-component';
@@ -120,7 +120,7 @@ export default Vue.extend({
 
 		highlights(): Highlights {
 			// find var marked as 'target' and set associated values as highlights
-			const highlights = dataGetters.getHighlightedFeatureValues(this.$store);
+			const highlights = routeGetters.getDecodedHighlightedFeatureValues(this.$store);
 			const facetHighlights = <Highlights>{
 				root: _.cloneDeep(highlights.root),
 				values: <Dictionary<string[]>>{}
@@ -243,7 +243,7 @@ export default Vue.extend({
 				};
 				updateResultHighlights(this, context, colKey, value, filter);
 			} else {
-				dataMutations.clearFeatureHighlights(this.$store);
+				clearFeatureHighlightValues(this);
 			}
 		},
 
@@ -261,7 +261,7 @@ export default Vue.extend({
 				};
 				updateResultHighlights(this, context, colKey, value, filter);
 			} else {
-				dataMutations.clearFeatureHighlights(this.$store);
+				clearFeatureHighlightValues(this);
 			}
 		},
 

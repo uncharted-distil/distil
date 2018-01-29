@@ -60,22 +60,6 @@ export interface TargetRow extends TableRow {
 	_cellVariants: Dictionary<string>;
 }
 
-export interface Highlights {
-	root: HighlightRoot;
-	values: Dictionary<string[]>;
-}
-
-export interface Range {
-	to: number;
-	from: number;
-}
-
-export interface HighlightRoot {
-	context: string;
-	key: string;
-	value: string | Range;
-}
-
 export interface DataState {
 	datasets: Datasets[];
 	variables: Variable[];
@@ -85,7 +69,6 @@ export interface DataState {
 	resultData: Data;
 	filteredData: Data;
 	selectedData: Data;
-	highlightedFeatureValues: Highlights;
 }
 
 export const state = {
@@ -111,8 +94,5 @@ export const state = {
 	filteredData: <Data>{},
 
 	// selected data entries for the active dataset
-	selectedData: <Data>{},
-
-	// highlighted features
-	highlightedFeatureValues: <Highlights>{}
+	selectedData: <Data>{}
 }
