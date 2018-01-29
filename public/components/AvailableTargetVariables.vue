@@ -2,6 +2,7 @@
 	<div class="available-target-variables">
 		<variable-facets
 			enable-search
+			type-change
 			instance-name="availableVars"
 			:variables="variables"
 			:dataset="dataset"
