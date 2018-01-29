@@ -207,6 +207,8 @@ func handleCreatePipelines(conn *Connection, client *pipeline.Client, metadataCt
 		return
 	}
 	// NOTE: IF THE SIZE IS NOT SET THEN THE DEFAULT IS USED (100 rows only)!!!
+	// NOTE: this could be done on the client side, but I am not sure if that
+	// is more elegant or not.
 	filters.Size = -1
 
 	// initialize the storage
