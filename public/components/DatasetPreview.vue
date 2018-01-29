@@ -80,7 +80,7 @@ export default Vue.extend({
 	computed: {
 		topVariables(): Variable[] {
 			return (<Variable[]>this.variables).slice(0).sort((a, b) => {
-				return a.importance - b.importance;
+				return b.importance - a.importance;
 			}).slice(0, NUM_TOP_FEATURES);
 		}
 	},
