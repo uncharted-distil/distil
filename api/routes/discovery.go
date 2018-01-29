@@ -14,7 +14,7 @@ import (
 func ProblemDiscoveryHandler(ctorData model.DataStorageCtor, ctorMeta model.MetadataStorageCtor, datasetDir string) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		dataset := pat.Param(r, "dataset")
-		esIndex := pat.Param(r, "esIndex")
+		esIndex := pat.Param(r, "index")
 		target := pat.Param(r, "target")
 
 		// get variable names and ranges out of the params
