@@ -35,8 +35,6 @@ export default Vue.extend({
 	data() {
 		return {
 			facets: <any>{},
-			histogramHighlightValue: { key: '', value: undefined },
-			facetHighlightValue: { key: '', value: undefined },
 			facetFilteredValues: new Multimap(),
 			instanceName: _.uniqueId('facet-')
 		};
@@ -45,9 +43,6 @@ export default Vue.extend({
 	mounted() {
 		const component = this;
 		const groups = () => <Group[]>this.groups;
-
-		this.histogramHighlightValue = null;
-		this.facetHighlightValue = null;
 
 		// Instantiate the external facets widget.  The facets maintain their own copies
 		// of group objects which are replaced wholesale on changes.  Elsewhere in the code
@@ -98,33 +93,28 @@ export default Vue.extend({
 
 		this.facets.on('facet-histogram:click', (event: Event, key: string, value: any) => {
 			// if this is a click on value previously used as highlight root, clear
-			if (_.isEqual(this.histogramHighlightValue, { key, value })) {
-				this.histogramHighlightValue = null;
+			const range = {
+				from: _.toNumber(value.label),
+				to: _.toNumber(value.toLabel)
+			};
+			if (this.isHighlightedValue(this.highlights, key, range)) {
+				// clear current selection
 				component.$emit('histogram-click', this.instanceName);
 			} else {
-				this.histogramHighlightValue = { key, value };
-				const rangeValue = {
-					from: _.toNumber(value.label),
-					to: _.toNumber(value.toLabel)
-				};
-				component.$emit('histogram-click', this.instanceName, key, rangeValue);
+				// set selection
+				component.$emit('histogram-click', this.instanceName, key, range);
 			}
 		});
 
 		this.facets.on('facet:click', (event: Event, key: string, value: string) => {
 			// User clicked on the value that is currently the highlight root
-			if (_.isEqual(this.facetHighlightValue, { key, value })) {
-				this.facetHighlightValue = null;
+			if (this.isHighlightedValue(this.highlights, key, value)) {
+				// clear current selection
 				component.$emit('facet-click', this.instanceName);
 			} else {
-				// clicked on a value that will act as the new highlght root
-				this.facetHighlightValue = { key, value };
+				// set selection
 				component.$emit('facet-click', this.instanceName, key, value);
 			}
-		});
-
-		setTimeout(() => {
-			this.injectHighlights(this.highlights);
 		});
 	},
 
@@ -177,6 +167,29 @@ export default Vue.extend({
 			}
 		},
 
+		isHighlightedInstance(highlights: Highlights): boolean {
+			return _.get(highlights, 'root.context') === this.instanceName;
+		},
+
+		isHighlightedGroup(highlights: Highlights, key: string): boolean {
+			return this.isHighlightedInstance(highlights) &&
+				_.get(highlights, 'root.key') === key;
+		},
+
+		isHighlightedValue(highlights: Highlights, key: string, value: string | Range): boolean {
+			// if not instance, return false
+			if (!this.isHighlightedGroup(highlights, key)) {
+				return false;
+			}
+			// if string, check for match
+			if (_.isString(value)) {
+				return highlights.root.value === value;
+			}
+			// otherwise, check range
+			return highlights.root.value.from === value.from &&
+				highlights.root.value.to === value.to;
+		},
+
 		injectHighlightsIntoGroup(group: any, highlights: Highlights) {
 
 			// loop through groups ensure that selection is clear on each - not that clear
@@ -211,24 +224,22 @@ export default Vue.extend({
 							const metadata: any[] = facet._histogram.bars[i].metadata;
 							const numValue = _.toNumber(value);
 
-							// If the current bar is the flagged highlight, make sure we have the selection
-							// tag set.
-							if (_.get(this.histogramHighlightValue, 'key') === group.key &&
-								_.toNumber(this.histogramHighlightValue.value.label) <= numValue &&
-								_.toNumber(this.histogramHighlightValue.value.toLabel) >= numValue) {
-									$(facet._histogram.bars[i]._element).addClass('select-highlight');
-							} else {
-								$(facet._histogram.bars[i]._element).removeClass('select-highlight');
-							}
+							const barMin = _.toNumber(_.first(metadata).label);
+							const barMax = _.toNumber(_.last(metadata).toLabel);
 
 							// If the current bar contains the selected value, add it to the slices map so that
 							// it gets added to the selection.
-							if (_.toNumber(_.first(metadata).label) <= numValue &&
-								_.toNumber(_.last(metadata).toLabel) >= numValue) {
-									const valueMetadata = _.last(metadata);
-									slices[valueMetadata.label] = valueMetadata.count;
-									lastLabelIdx = i;
-									break;
+							if (numValue >= barMin && numValue <= barMax) {
+								// If the current bar is the flagged highlight, make sure we have the selection
+								// tag set.
+								if (this.isHighlightedGroup(highlights, group.key)) {
+									$(facet._histogram.bars[i]._element).addClass('select-highlight');
+								}
+
+								const valueMetadata = _.last(metadata);
+								slices[valueMetadata.label] = valueMetadata.count;
+								lastLabelIdx = i;
+								break;
 							}
 						}
 					}
@@ -236,17 +247,16 @@ export default Vue.extend({
 					facet.select({ selection: { slices: slices } });
 				} else {
 					// See if this facet is in the values list, marking it as selected if it is.
-					const matchedValue = values.find(v => v.toLowerCase() === facet.value ? facet.value.toLowerCase(): undefined);
+					const matchedValue = values.find(v => v.toLowerCase() === facet.value.toLowerCase() ? facet.value.toLowerCase(): undefined);
 					if (matchedValue) {
+
 						facet.select(facet.count);
 
 						// Check to see if this facet is the root selection, updating its visual state as necesary.
-						if (this.facetHighlightValue &&
-							this.facetHighlightValue.key === group.key && this.facetHighlightValue.value === matchedValue) {
+						if (this.isHighlightedGroup(highlights, group.key)) {
 							$(facet._element).addClass('select-highlight');
-						} else {
-							$(facet._element).removeClass('select-highlight');
 						}
+
 					} else {
 						facet.deselect();
 					}
@@ -255,20 +265,17 @@ export default Vue.extend({
 		},
 
 		injectHighlights(highlights: Highlights) {
-
-			// If the new highlight state was set via a click on on another component,
-			// clear it out.
-			if (_.get(highlights, 'root.context') !== this.instanceName || _.isEmpty(highlights.values)) {
-				this.histogramHighlightValue = null;
-				this.facetHighlightValue = null;
-				$(this.$el).find('.select-highlight').removeClass('select-highlight');
-			}
-
-			/// Otherwise modify highlights
+			// Clear highlight state incase it was set via a click on on another
+			// component
+			$(this.$el).find('.select-highlight').removeClass('select-highlight');
+			// if (this.isHighlightedInstance(highlights) || _.isEmpty(highlights.values)) {
+			// 	$(this.$el).find('.select-highlight').removeClass('select-highlight');
+			// }
+			/// Update highlights
 			this.groups.forEach(g => {
 				const group = this.facets.getGroup(g.key);
 				if (!group) {
-					return true;
+					return;
 				}
 				this.injectHighlightsIntoGroup(group, highlights);
 			});
@@ -348,6 +355,7 @@ export default Vue.extend({
 						}
 					});
 					this.injectHTML(groupSpec, this.facets.getGroup(groupSpec.key)._element);
+					this.injectHighlightsIntoGroup(this.facets.getGroup(groupSpec.key), this.highlights);
 				});
 			}
 			// sort alphabetically
