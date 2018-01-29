@@ -26,7 +26,6 @@
     "postcss-import": "^11.0.0",
     "postcss-loader": "^2.0.10",
     "store": "^2.0.12",
-    "sugarss": "^1.0.1",
     "vue": "2.5.13",
     "vue-router": "3.0.1",
     "vue-slider-component": "2.4.7",
