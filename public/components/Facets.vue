@@ -181,7 +181,7 @@ export default Vue.extend({
 
 			// loop through groups ensure that selection is clear on each - not that clear
 			// the selection on a categorical facet means set its selection to a full count
-			if (_.isEmpty(highlights.values)) {
+			if (_.isEmpty(highlights.values) || !highlights.values[group.key]) {
 				group.facets.forEach(facet => {
 					if (facet._histogram) {
 						facet.deselect();
