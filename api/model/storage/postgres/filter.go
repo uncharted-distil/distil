@@ -9,10 +9,6 @@ import (
 	"github.com/unchartedsoftware/distil/api/model"
 )
 
-const (
-	filterLimit = 100
-)
-
 func (s *Storage) parseFilteredData(dataset string, numRows int, rows *pgx.Rows) (*model.FilteredData, error) {
 	result := &model.FilteredData{
 		Name:    dataset,
