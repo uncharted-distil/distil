@@ -206,6 +206,8 @@ func handleCreatePipelines(conn *Connection, client *pipeline.Client, metadataCt
 		handleErr(conn, msg, err)
 		return
 	}
+	// NOTE: IF THE SIZE IS NOT SET THEN THE DEFAULT IS USED (100 rows only)!!!
+	filters.Size = -1
 
 	// initialize the storage
 	dataStorage, err := dataCtor()
