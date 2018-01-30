@@ -393,7 +393,7 @@ export default Vue.extend({
 
 					} else {
 
-\						const highlightValue = this.getHighlightRootValue(highlights);
+						const highlightValue = this.getHighlightRootValue(highlights);
 						if (highlightValue) {
 							if (this.isHighlightedGroup(highlights, group.key) &&
 								highlightValue.toLowerCase() === facet.value.toLowerCase()) {
