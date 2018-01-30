@@ -221,6 +221,48 @@ export default Vue.extend({
 				highlights.root.value.to === value.to;
 		},
 
+		injectSelectionIntoGroup(group: any, highlights: Highlights) {
+
+			if (!this.isHighlightedGroup(highlights, group.key)) {
+				return;
+			}
+
+			const highlightValue = highlights.root.value as any;
+
+			for (const facet of group.facets) {
+
+				// ignore placeholder facets
+				if (facet._type === 'placeholder') {
+					continue;
+				}
+
+				if (facet._histogram) {
+
+					const midValue = _.toNumber((highlightValue.to + highlightValue.from) / 2);
+					const bars = facet._histogram.bars;
+
+					for (let i = 0; i < bars.length; i++) {
+
+						const metadata: any[] = bars[i].metadata;
+						const barMin = _.toNumber(_.first(metadata).label);
+						const barMax = _.toNumber(_.last(metadata).toLabel);
+
+						if (midValue >= barMin && midValue <= barMax) {
+							$(bars[i]._element).addClass('select-highlight');
+							return;
+						}
+					}
+
+				} else {
+
+					if (highlightValue.toLowerCase() === facet.value.toLowerCase()) {
+						$(facet._element).addClass('select-highlight');
+					}
+
+				}
+			}
+		},
+
 		injectHighlightsIntoGroup(group: any, highlights: Highlights) {
 
 			const values = !_.isEmpty(highlights.values) ? highlights.values[group.key] : null;
@@ -254,7 +296,7 @@ export default Vue.extend({
 					if (values) {
 
 						const vals = Array.from(values) as number[];
-						const sortedValues = vals.sort((a, b) => a - b); //.filter(value => filter ? value >= filter.from && value <= filter.to : true);
+						const sortedValues = vals.sort((a, b) => a - b);
 
 						let lastLabelIdx = 0;
 						for (const value of sortedValues) {
@@ -269,12 +311,6 @@ export default Vue.extend({
 								// If the current bar contains the selected value, add it to tshe slices map so that
 								// it gets added to the selection.
 								if (numValue >= barMin && numValue <= barMax) {
-									// If the current bar is the flagged highlight, make sure we have the selection
-									// tag set.
-									if (this.isHighlightedGroup(highlights, group.key)) {
-										$(facet._histogram.bars[i]._element).addClass('select-highlight');
-									}
-
 									const valueMetadata = _.last(metadata);
 									slices[valueMetadata.label] = valueMetadata.count;
 									lastLabelIdx = i;
@@ -282,11 +318,10 @@ export default Vue.extend({
 								}
 							}
 						}
-
 					}
 
 					// create selection
-					const selection = {};
+					const selection: any = {};
 
 					if (filter) {
 						// NOTE: the `from` / `to` values MUST be strings.
@@ -312,22 +347,19 @@ export default Vue.extend({
 						// See if this facet is in the values list, marking it as selected if it is.
 						const matchedValue = values.find(v => v.toLowerCase() === facet.value.toLowerCase() ? facet.value.toLowerCase(): undefined);
 						if (matchedValue) {
-
-							// select facet
 							facet.select(facet.count);
-							// Check to see if this facet is the root selection, updating its visual state as necesary.
-							if (this.isHighlightedGroup(highlights, group.key)) {
-								$(facet._element).addClass('select-highlight');
-							}
-
 						} else {
 							facet.deselect();
 						}
+					} else {
+						if (highlights.root && highlights.root.value) {
+							facet.deselect();
+						}
 					}
-
 				}
 			}
 		},
+
 
 		injectHighlights(highlights: Highlights) {
 			// Clear highlight state incase it was set via a click on on another
@@ -340,6 +372,7 @@ export default Vue.extend({
 					return;
 				}
 				this.injectHighlightsIntoGroup(group, highlights);
+				this.injectSelectionIntoGroup(group, highlights);
 			});
 		},
 
@@ -387,6 +420,7 @@ export default Vue.extend({
 					this.facets.replaceGroup(_.cloneDeep(group));
 					this.injectHTML(group, this.facets.getGroup(group.key)._element);
 					this.injectHighlightsIntoGroup(this.facets.getGroup(group.key), this.highlights);
+					this.injectSelectionIntoGroup(this.facets.getGroup(group.key), this.highlights);
 				} else {
 					// add to appends
 					toAdd.push(_.cloneDeep(group));
@@ -404,6 +438,7 @@ export default Vue.extend({
 				toAdd.forEach(groupSpec => {
 					this.injectHTML(groupSpec, this.facets.getGroup(groupSpec.key)._element);
 					this.injectHighlightsIntoGroup(this.facets.getGroup(groupSpec.key), this.highlights);
+					this.injectSelectionIntoGroup(this.facets.getGroup(groupSpec.key), this.highlights);
 				});
 			}
 			// sort alphabetically
@@ -532,19 +567,21 @@ export default Vue.extend({
 .facets-facet-vertical .facet-label {
 	font-family: inherit;
 	font-size: 0.733rem;
-    color: rgba(0,0,0,.54);
+	color: rgba(0,0,0,.54);
 }
 .facets-group .group-header {
 	font-family: inherit;
 	font-size: 0.867rem;
 	font-weight: bold;
 	text-transform: uppercase;
-    color: rgba(0,0,0,.54);
+	color: rgba(0,0,0,.54);
 }
+.facets-facet-horizontal .select-highlight,
 .facets-facet-horizontal .facet-histogram-bar-highlighted.select-highlight {
 	fill: #007bff;
 }
 
+.facets-facet-vertical.select-highlight .facet-bar-base,
 .facets-facet-vertical.select-highlight .facet-bar-selected {
 	box-shadow: inset 0 0 0 1000px #007bff;
 }
