@@ -53,7 +53,7 @@ import { Dictionary } from '../util/dict';
 import { getters as dataGetters } from '../store/data/module';
 import { getters as routeGetters } from '../store/route/module';
 import { createGroups, Group } from '../util/facets';
-import { updateDataHighlights, clearFeatureHighlightValues, getHighlights } from '../util/highlights';
+import { updateHighlightRoot, clearHighlightRoot, getHighlights } from '../util/highlights';
 import 'font-awesome/css/font-awesome.css';
 import '../styles/spinner.css';
 import Vue from 'vue';
@@ -232,26 +232,26 @@ export default Vue.extend({
 
 		onHistogramClick(context: string, key: string, value: Range) {
 			if (key && value) {
-				updateDataHighlights(this, {
+				updateHighlightRoot(this, {
 					context: context,
 					key: key,
 					value: value
 				});
 			} else {
-				clearFeatureHighlightValues(this);
+				clearHighlightRoot(this);
 			}
 		},
 
 		onFacetClick(context: string, key: string, value: string) {
 			if (key && value) {
 				// extract the var name from the key
-				updateDataHighlights(this, {
+				updateHighlightRoot(this, {
 					context: context,
 					key: key,
 					value: value
 				});
 			} else {
-				clearFeatureHighlightValues(this);
+				clearHighlightRoot(this);
 			}
 		},
 

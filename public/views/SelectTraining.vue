@@ -55,7 +55,8 @@ import TargetVariable from '../components/TargetVariable.vue';
 import { getters as dataGetters, actions } from '../store/data/module';
 import { getters as routeGetters} from '../store/route/module';
 import { Variable } from '../store/data/index';
-import { updateDataHighlights, HighlightRoot } from '../util/highlights';
+import { HighlightRoot } from '../util/highlights';
+import { Filter } from '../util/filters';
 import Vue from 'vue';
 
 export default Vue.extend({
@@ -79,6 +80,9 @@ export default Vue.extend({
 		target(): string {
 			return routeGetters.getRouteTargetVariable(this.$store);
 		},
+		filters(): Filter[] {
+			return routeGetters.getDecodedFilters(this.$store);
+		},
 		highlightRoot(): HighlightRoot {
 			return routeGetters.getDecodedHighlightRoot(this.$store);
 		}
@@ -86,7 +90,11 @@ export default Vue.extend({
 
 	watch: {
 		highlightRoot() {
-			updateDataHighlights(this, this.highlightRoot);
+			actions.fetchDataHighlightValues(this.$store, {
+				dataset: this.dataset,
+				filters: this.filters,
+				highlightRoot: this.highlightRoot,
+			});
 		}
 	},
 
@@ -99,7 +107,11 @@ export default Vue.extend({
 			actions.fetchVariablesAndVariableSummaries(this.$store, {
 				dataset: this.dataset
 			});
-			updateDataHighlights(this, this.highlightRoot);
+			actions.fetchDataHighlightValues(this.$store, {
+				dataset: this.dataset,
+				filters: this.filters,
+				highlightRoot: this.highlightRoot,
+			});
 		}
 	}
 });

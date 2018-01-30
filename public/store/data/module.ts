@@ -59,9 +59,10 @@ export const actions = {
 	fetchResultsSummaries: dispatch(moduleActions.fetchResultsSummaries),
 	fetchResidualsSummaries: dispatch(moduleActions.fetchResidualsSummaries),
 	updateResults: dispatch(moduleActions.updateResults),
-	fetchResults: dispatch(moduleActions.fetchResults)
+	fetchResults: dispatch(moduleActions.fetchResults),
+	fetchDataHighlightValues: dispatch(moduleActions.fetchDataHighlightValues),
+	fetchResultHighlightValues: dispatch(moduleActions.fetchResultHighlightValues)
 }
-
 
 // Typed mutations
 export const mutations = {

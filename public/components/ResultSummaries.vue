@@ -51,7 +51,7 @@ import { getPipelineById } from '../util/pipelines';
 import { getTask } from '../util/pipelines';
 import { Filter } from '../util/filters';
 import { isTarget, getVarFromTarget, getTargetCol } from '../util/data';
-import { updateResultHighlights, clearFeatureHighlightValues, getHighlights } from '../util/highlights';
+import { updateHighlightRoot, clearHighlightRoot, getHighlights } from '../util/highlights';
 import { VariableSummary, Extrema } from '../store/data/index';
 import { Highlights, Range } from '../util/highlights';
 import { getters as dataGetters} from '../store/data/module';
@@ -237,13 +237,13 @@ export default Vue.extend({
 		onHistogramClick(context: string, key: string, value: Range) {
 			if (key && value) {
 				const colKey = getTargetCol(routeGetters.getRouteTargetVariable(this.$store));
-				updateResultHighlights(this, {
+				updateHighlightRoot(this, {
 					context: context,
 					key: colKey,
 					value: value
 				});
 			} else {
-				clearFeatureHighlightValues(this);
+				clearHighlightRoot(this);
 			}
 		},
 
@@ -251,13 +251,13 @@ export default Vue.extend({
 			// clear exiting highlights
 			if (key && value) {
 				// extract the var name from the key
-				updateResultHighlights(this, {
+				updateHighlightRoot(this, {
 					context: context,
 					key: key,
 					value: value
 				});
 			} else {
-				clearFeatureHighlightValues(this);
+				clearHighlightRoot(this);
 			}
 		},
 

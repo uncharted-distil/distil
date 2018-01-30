@@ -54,7 +54,7 @@ import { Filter } from '../util/filters';
 import { getters as routeGetters } from '../store/route/module';
 import { getPipelineById, getMetricDisplayName } from '../util/pipelines';
 import { NUMERICAL_FILTER, CATEGORICAL_FILTER, getFilterType, decodeFiltersDictionary } from '../util/filters';
-import { updateResultHighlights, clearFeatureHighlightValues } from '../util/highlights';
+import { updateHighlightRoot, clearHighlightRoot } from '../util/highlights';
 import { Dictionary } from '../util/dict';
 import _ from 'lodash';
 import Vue from 'vue';
@@ -165,13 +165,13 @@ export default Vue.extend({
 
 		histogramHighlights(context: string, key: string, value: Range) {
 			if (key && value) {
-				updateResultHighlights(this, {
+				updateHighlightRoot(this, {
 					context: context,
 					key: key,
 					value: value
 				});
 			} else {
-				clearFeatureHighlightValues(this);
+				clearHighlightRoot(this);
 			}
 		},
 
@@ -180,18 +180,18 @@ export default Vue.extend({
 				// extract the var name from the key
 				const targetVar = routeGetters.getRouteTargetVariable(this.$store);
 				const varName = getPredictedCol(targetVar);
-				updateResultHighlights(this, {
+				updateHighlightRoot(this, {
 					context: context,
 					key: varName,
 					value: value
 				});
 			} else {
-				clearFeatureHighlightValues(this);
+				clearHighlightRoot(this);
 			}
 		},
 
 		resultFacetMouseLeave(key: string) {
-			clearFeatureHighlightValues(this);
+			clearHighlightRoot(this);
 		},
 
 		click() {

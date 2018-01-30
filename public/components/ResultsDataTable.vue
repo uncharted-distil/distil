@@ -28,7 +28,7 @@ import { TargetRow, FieldInfo } from '../store/data/index';
 import { getters as routeGetters } from '../store/route/module';
 import { Dictionary } from '../util/dict';
 import { removeNonTrainingItems, removeNonTrainingFields } from '../util/data';
-import { updateTableHighlights, highlightFeatureValues, clearFeatureHighlightValues, scrollToFirstHighlight, getHighlights } from '../util/highlights';
+import { updateTableHighlights, updateHighlightRoot, clearHighlightRoot, scrollToFirstHighlight, getHighlights } from '../util/highlights';
 import { getTrainingVariablesForPipelineId } from '../util/pipelines';
 import Vue from 'vue';
 
@@ -44,12 +44,6 @@ export default Vue.extend({
 		instanceName: { type: String, default: 'results-table-table' }
 	},
 
-	data() {
-		return {
-			selectedRowKey: -1
-		};
-	},
-
 	computed: {
 		pipelineId(): string {
 			return routeGetters.getRoutePipelineId(this.$store);
@@ -57,6 +51,10 @@ export default Vue.extend({
 
 		numRows(): number {
 			return getters.getResultDataNumRows(this.$store);
+		},
+
+		selectedRowKey(): number {
+			return routeGetters.getDecodedHighlightRoot(this.$store) ? _.toNumber(routeGetters.getDecodedHighlightRoot(this.$store).key) : -1;
 		},
 
 		// extracts the training set from the store
@@ -91,11 +89,12 @@ export default Vue.extend({
 
 			if (this.selectedRowKey >= 0) {
 				const toSelect = updatedItems.find(r => r._key === this.selectedRowKey);
-				if (_.get(highlights, 'root.context') === this.instanceName) {
-					toSelect._rowVariant = 'primary';
-				} else {
-					toSelect._rowVariant = null;
-					this.selectedRowKey = -1;
+				if (toSelect) {
+					if (_.get(highlights, 'root.context') === this.instanceName) {
+						toSelect._rowVariant = 'primary';
+					} else {
+						toSelect._rowVariant = null;
+					}
 				}
 			}
 
@@ -116,24 +115,14 @@ export default Vue.extend({
 		onRowClick(row: TargetRow) {
 			if (row._key !== this.selectedRowKey) {
 				// clicked on a different row than last time - new selection
-				this.selectedRowKey = row._key;
-
-				// publish the highlight change
-				const highlights = {
-					root: {
-						context: this.instanceName,
-						key: row._key.toString(),
-						value: ''
-					},
-					values: <Dictionary<string[]>>{}
-				};
-				_.forEach(this.fields, (field, key) => highlights.values[key] = [row[key]]);
-
-				highlightFeatureValues(this, highlights);
+				updateHighlightRoot(this, {
+					context: this.instanceName,
+					key: row._key.toString(),
+					value: _.map(this.fields, (field, key) => [ key, row[key] ])
+				});
 			} else {
 				// clicked on same row - remove the row selection visual
-				this.selectedRowKey = -1;
-				clearFeatureHighlightValues(this);
+				clearHighlightRoot(this);
 			}
 		}
 	}

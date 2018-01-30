@@ -207,13 +207,16 @@ export default Vue.extend({
 				_.get(highlights, 'root.key') === key;
 		},
 
-		isHighlightedValue(highlights: any, key: string, value: string | {from: number, to: number}): boolean {
+		isHighlightedValue(highlights: any, key: string, value: any): boolean {
 			// if not instance, return false
 			if (!this.isHighlightedGroup(highlights, key)) {
 				return false;
 			}
+			if (_.isArray(highlights.root.value)) {
+				return false;
+			}
 			// if string, check for match
-			if (_.isString(value)) {
+			if (_.isString(highlights.root.value)) {
 				return highlights.root.value === value;
 			}
 			// otherwise, check range
