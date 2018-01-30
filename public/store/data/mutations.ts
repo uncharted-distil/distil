@@ -1,6 +1,7 @@
 import _ from 'lodash';
 import { DataState, Variable, Datasets, VariableSummary, Data } from './index';
 import { updateSummaries } from '../../util/data';
+import { Dictionary } from '../../util/dict';
 
 export const mutations = {
 
@@ -44,5 +45,9 @@ export const mutations = {
 	// sets the current result data into the store
 	setResultData(state: DataState, resultData: Data) {
 		state.resultData = resultData;
+	},
+
+	setHighlightedValues(state: DataState, highlightedValues: Dictionary<string[]>) {
+		state.highlightedValues = highlightedValues;
 	}
 }

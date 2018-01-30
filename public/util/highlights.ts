@@ -1,9 +1,10 @@
+import { Store } from 'vuex';
 import { Data } from '../store/data/index';
 import { Dictionary } from '../util/dict';
-import { Filter } from '../util/filters';
+import { Filter, CATEGORICAL_FILTER, NUMERICAL_FILTER } from '../util/filters';
 import { getVarFromTarget } from '../util/data';
 import { getters as routeGetters } from '../store/route/module';
-import { actions as dataActions } from '../store/data/module';
+import { actions as dataActions, mutations as dataMutations, getters as dataGetters } from '../store/data/module';
 import { overlayRouteEntry} from '../util/routes'
 import _ from 'lodash';
 import Vue from 'vue';
@@ -25,18 +26,18 @@ export interface Highlights {
 	values: Dictionary<string[]>;
 }
 
-export function encodeHighlights(highlights: Highlights): string {
-	if (_.isEmpty(highlights)) {
+export function encodeHighlights(highlightRoot: HighlightRoot): string {
+	if (_.isEmpty(highlightRoot)) {
 		return null;
 	}
-	return btoa(JSON.stringify(highlights));
+	return btoa(JSON.stringify(highlightRoot));
 }
 
-export function decodeHighlights(highlights: string): Highlights {
-	if (_.isEmpty(highlights)) {
-		return {} as Highlights;
+export function decodeHighlights(highlightRoot: string): HighlightRoot {
+	if (_.isEmpty(highlightRoot)) {
+		return null;
 	}
-	return JSON.parse(atob(highlights)) as Highlights;
+	return JSON.parse(atob(highlightRoot)) as HighlightRoot;
 }
 
 // Highlights table rows with values that are currently marked as highlighted.  Uses a supplied highlight
@@ -84,30 +85,58 @@ export function scrollToFirstHighlight(component: Vue, refName: string, smoothSc
 	});
 }
 
+function createFilterFromHighlightRoot(highlightRoot: HighlightRoot): Filter {
+	if (_.isString(highlightRoot.value)) {
+		return {
+			name: highlightRoot.key,
+			type: CATEGORICAL_FILTER,
+			enabled: true,
+			categories: [highlightRoot.value]
+		};
+	}
+	return {
+		name: highlightRoot.key,
+		type: NUMERICAL_FILTER,
+		enabled: true,
+		min: highlightRoot.value.from,
+		max: highlightRoot.value.to
+	};
+}
+
 // Given a key/value from a facet/histogram click event and a corresponding filter,
 // generate a set of value highlights.  This fetches from the train/test data.
-export function updateDataHighlights(component: Vue, context: string,  key: string, value: string | Range, selectFilter: Filter) {
+export function updateDataHighlights(component: Vue, highlightRoot: HighlightRoot) {
+	if (!highlightRoot) {
+		return;
+	}
 	const dataset = routeGetters.getRouteDataset(component.$store);
-	const filters = Array.from(routeGetters.getDecodedFilters(component.$store));
+	const filters = routeGetters.getDecodedFilters(component.$store).slice();
+	const selectFilter = createFilterFromHighlightRoot(highlightRoot);
 
-	const index = _.findIndex(filters, f => f.name === key);
+	const index = _.findIndex(filters, f => f.name === highlightRoot.key);
 	if (index < 0) {
 		filters.push(selectFilter);
 	} else {
 		filters[index] = selectFilter;
 	}
+
 	// fetch the data using the supplied filtered
 	const resultPromise = dataActions.fetchData(component.$store, { dataset: dataset, filters: filters, inclusive: true });
-	updateHighlights(component, resultPromise, context, key, value);
+	updateHighlights(component, resultPromise, highlightRoot);
 }
 
 // Given a key/value from a facet/histogram click event and a corresponding filter,
 // generate a set of value highlights.  This fetches from the result data, which is a subset
 // of the train/test data including additional columns for predicted values and residuals.
-export function updateResultHighlights(component: Vue, context: string, key: string, value: string | Range, selectFilter: Filter) {
+export function updateResultHighlights(component: Vue, highlightRoot: HighlightRoot) {
+	if (!highlightRoot) {
+		return;
+	}
+
 	const dataset = routeGetters.getRouteDataset(component.$store);
-	const filters = Array.from(routeGetters.getDecodedFilters(component.$store));
+	const filters = routeGetters.getDecodedFilters(component.$store).slice();
 	const pipelineId = routeGetters.getRoutePipelineId(component.$store);
+	const selectFilter = createFilterFromHighlightRoot(highlightRoot);
 
 	selectFilter.name = getVarFromTarget(selectFilter.name);
 
@@ -120,25 +149,10 @@ export function updateResultHighlights(component: Vue, context: string, key: str
 
 	// fetch the data using the supplied filtered
 	const resultPromise = dataActions.fetchResults(component.$store, { pipelineId: pipelineId, dataset: dataset, filters: filters });
-	updateHighlights(component, resultPromise, context, key, value);
+	updateHighlights(component, resultPromise, highlightRoot);
 }
 
-export function highlightFeatureValues(component: Vue, highlights: Highlights) {
-	const entry = overlayRouteEntry(routeGetters.getRoute(component.$store), {
-		highlights: encodeHighlights(highlights),
-	});
-	component.$router.push(entry);
-}
-
-export function clearFeatureHighlightValues(component: Vue) {
-	const entry = overlayRouteEntry(routeGetters.getRoute(component.$store), {
-		highlights: null
-	});
-	component.$router.push(entry);
-}
-
-// Given returned data,
-function updateHighlights(component: Vue, promise: AxiosPromise<Data>, context: string, key: string, value: string | Range) {
+function updateHighlights(component: Vue, promise: AxiosPromise<Data>, highlightRoot: HighlightRoot) {
 	promise.then(response => {
 		const data = response.data;
 		const highlights: Map<string, Set<any>> = new Map();
@@ -158,13 +172,38 @@ function updateHighlights(component: Vue, promise: AxiosPromise<Data>, context: 
 			storeHighlights[key] = Array.from(values);
 		}
 		highlightFeatureValues(component, {
-			root: {
-				context: context,
-				key: key,
-				value: value
-			},
+			root: highlightRoot,
 			values: storeHighlights
 		});
 	})
 	.catch(error => console.error(error));
+}
+
+export function highlightFeatureValues(component: Vue, highlights: Highlights) {
+	const entry = overlayRouteEntry(routeGetters.getRoute(component.$store), {
+		highlights: encodeHighlights(highlights.root),
+	});
+	// put highlight values in store
+	dataMutations.setHighlightedValues(component.$store, highlights.values);
+	component.$router.push(entry);
+}
+
+export function clearFeatureHighlightValues(component: Vue) {
+	const entry = overlayRouteEntry(routeGetters.getRoute(component.$store), {
+		highlights: null
+	});
+	dataMutations.setHighlightedValues(component.$store, {});
+	component.$router.push(entry);
+}
+
+export function getHighlights(store: Store<any>): Highlights {
+	const rootHighlights = routeGetters.getDecodedHighlightRoot(store);
+	if (!rootHighlights) {
+		return {} as Highlights;
+	}
+	const values = dataGetters.getHighlightedValues(store);
+	return {
+		root: rootHighlights,
+		values: values
+	};
 }

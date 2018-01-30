@@ -48,7 +48,7 @@ import { createGroups, Group, NumericalFacet, CategoricalFacet } from '../util/f
 import { isPredicted, isError, getVarFromPredicted, getVarFromError, getPredictedFacetKey,
 	getErrorFacetKey, getErrorCol, getPredictedCol } from '../util/data';
 import { VariableSummary } from '../store/data/index';
-import { Highlights, Range } from '../util/highlights';
+import { Highlights, Range, getHighlights } from '../util/highlights';
 import { overlayRouteEntry } from '../util/routes';
 import { Filter } from '../util/filters';
 import { getters as routeGetters } from '../store/route/module';
@@ -113,7 +113,7 @@ export default Vue.extend({
 			// Remap highlights to facet key names, filtering out anything other than
 			// the predicted and error values (since that's all that is displayed in this
 			// component)
-			const highlights = routeGetters.getDecodedHighlightedFeatureValues(this.$store);
+			const highlights = getHighlights(this.$store);
 			const facetHighlights = <Highlights>{
 				root: _.cloneDeep(highlights.root),
 				values: <Dictionary<string[]>>{}
@@ -165,15 +165,11 @@ export default Vue.extend({
 
 		histogramHighlights(context: string, key: string, value: Range) {
 			if (key && value) {
-				const filter = {
-					name: key,
-					type: NUMERICAL_FILTER,
-					enabled: true,
-					context: this.instanceName,
-					min: value.from,
-					max: value.to
-				};
-				updateResultHighlights(this, context, key, value, filter);
+				updateResultHighlights(this, {
+					context: context,
+					key: key,
+					value: value
+				});
 			} else {
 				clearFeatureHighlightValues(this);
 			}
@@ -184,14 +180,11 @@ export default Vue.extend({
 				// extract the var name from the key
 				const targetVar = routeGetters.getRouteTargetVariable(this.$store);
 				const varName = getPredictedCol(targetVar);
-				const filter = {
-					name: varName,
-					type: CATEGORICAL_FILTER,
-					enabled: true,
-					context: this.instanceName,
-					categories: [value]
-				};
-				updateResultHighlights(this, context, key, value, filter);
+				updateResultHighlights(this, {
+					context: context,
+					key: varName,
+					value: value
+				});
 			} else {
 				clearFeatureHighlightValues(this);
 			}

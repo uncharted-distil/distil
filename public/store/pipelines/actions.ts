@@ -176,7 +176,7 @@ export const actions = {
 				feature: request.feature,
 				task: request.task,
 				metric: request.metric,
-				maxPipelines: 1,
+				maxPipelines: request.maxPipelines,
 				filters: request.filters
 			});
 		});

@@ -41,7 +41,8 @@ export const getters = {
 	getSelectedData: read(moduleGetters.getSelectedData),
 	getSelectedDataNumRows: read(moduleGetters.getSelectedDataNumRows),
 	getSelectedDataItems: read(moduleGetters.getSelectedDataItems),
-	getSelectedDataFields: read(moduleGetters.getSelectedDataFields)
+	getSelectedDataFields: read(moduleGetters.getSelectedDataFields),
+	getHighlightedValues: read(moduleGetters.getHighlightedValues)
 }
 
 // Typed actions
@@ -72,5 +73,6 @@ export const mutations = {
 	updateResidualsSummaries: commit(moduleMutations.updateResidualsSummaries),
 	setFilteredData: commit(moduleMutations.setFilteredData),
 	setSelectedData: commit(moduleMutations.setSelectedData),
-	setResultData: commit(moduleMutations.setResultData)
+	setResultData: commit(moduleMutations.setResultData),
+	setHighlightedValues: commit(moduleMutations.setHighlightedValues)
 }

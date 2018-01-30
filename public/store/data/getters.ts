@@ -279,5 +279,9 @@ export const getters = {
 			return result;
 		}
 		return {};
+	},
+
+	getHighlightedValues(state: DataState) {
+		return state.highlightedValues;
 	}
 }

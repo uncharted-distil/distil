@@ -1,7 +1,6 @@
 <script lang="ts">
 
 import VariableFacets from './VariableFacets.vue';
-import { NUMERICAL_FILTER, CATEGORICAL_FILTER } from '../util/filters';
 import { updateResultHighlights, clearFeatureHighlightValues, Range } from '../util/highlights';
 import Vue from 'vue';
 
@@ -13,14 +12,11 @@ export default Vue.extend({
 	methods: {
 		onHistogramClick(context: string, key: string, value: Range) {
 			if (key && value) {
-				const selectFilter = {
-					name: key,
-					type: NUMERICAL_FILTER,
-					enabled: true,
-					min:  value.from,
-					max: value.to
-				};
-				updateResultHighlights(this, context, key, value, selectFilter);
+				updateResultHighlights(this, {
+					context: context,
+					key: key,
+					value: value
+				});
 			} else {
 				clearFeatureHighlightValues(this);
 			}
@@ -28,14 +24,11 @@ export default Vue.extend({
 
 		onFacetClick(context: string, key: string, value: string) {
 			if (key && value) {
-				// extract the var name from the key
-				const selectFilter = {
-					name: key,
-					type: CATEGORICAL_FILTER,
-					enabled: true,
-					categories: [value]
-				};
-				updateResultHighlights(this, context, key, value, selectFilter);
+				updateResultHighlights(this, {
+					context: context,
+					key: key,
+					value: value
+				});
 			} else {
 				// clear existing highlights
 				clearFeatureHighlightValues(this);

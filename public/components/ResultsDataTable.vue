@@ -28,7 +28,7 @@ import { TargetRow, FieldInfo } from '../store/data/index';
 import { getters as routeGetters } from '../store/route/module';
 import { Dictionary } from '../util/dict';
 import { removeNonTrainingItems, removeNonTrainingFields } from '../util/data';
-import { updateTableHighlights, highlightFeatureValues, clearFeatureHighlightValues, scrollToFirstHighlight } from '../util/highlights';
+import { updateTableHighlights, highlightFeatureValues, clearFeatureHighlightValues, scrollToFirstHighlight, getHighlights } from '../util/highlights';
 import { getTrainingVariablesForPipelineId } from '../util/pipelines';
 import Vue from 'vue';
 
@@ -73,7 +73,7 @@ export default Vue.extend({
 		items(): TargetRow[] {
 			const items = getters.getResultDataItems(this.$store);
 			const filtered = this.excludeNonTraining ? removeNonTrainingItems(items, this.training) : items;
-			const valueHighlights = routeGetters.getDecodedHighlightedFeatureValues(this.$store);
+			const highlights = getHighlights(this.$store);
 
 			// clear all selections visuals
 			items.forEach(r => r._rowVariant = null);
@@ -81,8 +81,8 @@ export default Vue.extend({
 			// if we have highlights defined and the select table is not the source then updated
 			// the highlight visuals.
 			let updatedItems = <TargetRow[]>[];
-			if (_.get(valueHighlights, 'root', 'context') !== this.instanceName) {
-				updateTableHighlights(filtered, valueHighlights, this.instanceName);
+			if (_.get(highlights, 'root.context') !== this.instanceName) {
+				updateTableHighlights(filtered, highlights, this.instanceName);
 			}
 
 			updatedItems = filtered
@@ -91,7 +91,7 @@ export default Vue.extend({
 
 			if (this.selectedRowKey >= 0) {
 				const toSelect = updatedItems.find(r => r._key === this.selectedRowKey);
-				if (_.get(valueHighlights, 'root.context') === this.instanceName) {
+				if (_.get(highlights, 'root.context') === this.instanceName) {
 					toSelect._rowVariant = 'primary';
 				} else {
 					toSelect._rowVariant = null;

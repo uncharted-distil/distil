@@ -41,7 +41,7 @@ import { Filter } from '../util/filters';
 import { FieldInfo } from '../store/data/index';
 import { getters as routeGetters } from '../store/route/module';
 import { TableRow } from '../store/data/index';
-import { Highlights } from '../util/highlights';
+import { Highlights, getHighlights } from '../util/highlights';
 import { updateTableHighlights, highlightFeatureValues, clearFeatureHighlightValues, scrollToFirstHighlight } from '../util/highlights';
 import TypeChangeMenu from '../components/TypeChangeMenu';
 
@@ -75,7 +75,7 @@ export default Vue.extend({
 		// extracts the table data from the store
 		items(): TableRow[] {
 			const data = dataGetters.getSelectedDataItems(this.$store);
-			const valueHighlights = routeGetters.getDecodedHighlightedFeatureValues(this.$store);
+			const valueHighlights = getHighlights(this.$store);
 
 			dataGetters.getSelectedDataItems(this.$store).forEach(f => f._rowVariant = null);
 

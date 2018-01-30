@@ -51,10 +51,9 @@ import { getPipelineById } from '../util/pipelines';
 import { getTask } from '../util/pipelines';
 import { Filter } from '../util/filters';
 import { isTarget, getVarFromTarget, getTargetCol } from '../util/data';
-import { updateResultHighlights, clearFeatureHighlightValues } from '../util/highlights';
+import { updateResultHighlights, clearFeatureHighlightValues, getHighlights } from '../util/highlights';
 import { VariableSummary, Extrema } from '../store/data/index';
 import { Highlights, Range } from '../util/highlights';
-import { NUMERICAL_FILTER, CATEGORICAL_FILTER } from '../util/filters';
 import { getters as dataGetters} from '../store/data/module';
 import { getters as routeGetters } from '../store/route/module';
 import { actions } from '../store/app/module';
@@ -67,7 +66,6 @@ import { getters as pipelineGetters } from '../store/pipelines/module';
 
 const DEFAULT_PERCENTILE = 0.25;
 const NUM_STEPS = 100;
-const RESULT_SUMMARY_CONTEXT = 'result_summary';
 
 export default Vue.extend({
 	name: 'result-summaries',
@@ -122,7 +120,7 @@ export default Vue.extend({
 
 		highlights(): Highlights {
 			// find var marked as 'target' and set associated values as highlights
-			const highlights = routeGetters.getDecodedHighlightedFeatureValues(this.$store);
+			const highlights = getHighlights(this.$store);
 			const facetHighlights = <Highlights>{
 				root: _.cloneDeep(highlights.root),
 				values: <Dictionary<string[]>>{}
@@ -239,15 +237,11 @@ export default Vue.extend({
 		onHistogramClick(context: string, key: string, value: Range) {
 			if (key && value) {
 				const colKey = getTargetCol(routeGetters.getRouteTargetVariable(this.$store));
-				const filter = {
-					name: colKey,
-					type: NUMERICAL_FILTER,
-					enabled: true,
-					context: RESULT_SUMMARY_CONTEXT,
-					min: value.from,
-					max: value.to
-				};
-				updateResultHighlights(this, context, colKey, value, filter);
+				updateResultHighlights(this, {
+					context: context,
+					key: colKey,
+					value: value
+				});
 			} else {
 				clearFeatureHighlightValues(this);
 			}
@@ -257,15 +251,11 @@ export default Vue.extend({
 			// clear exiting highlights
 			if (key && value) {
 				// extract the var name from the key
-				const colKey = getTargetCol(routeGetters.getRouteTargetVariable(this.$store));
-				const filter = {
-					name: colKey,
-					type: CATEGORICAL_FILTER,
-					enabled: true,
-					context: RESULT_SUMMARY_CONTEXT,
-					categories: [value]
-				};
-				updateResultHighlights(this, context, colKey, value, filter);
+				updateResultHighlights(this, {
+					context: context,
+					key: key,
+					value: value
+				});
 			} else {
 				clearFeatureHighlightValues(this);
 			}

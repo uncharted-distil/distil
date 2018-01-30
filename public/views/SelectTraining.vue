@@ -55,6 +55,7 @@ import TargetVariable from '../components/TargetVariable.vue';
 import { getters as dataGetters, actions } from '../store/data/module';
 import { getters as routeGetters} from '../store/route/module';
 import { Variable } from '../store/data/index';
+import { updateDataHighlights, HighlightRoot } from '../util/highlights';
 import Vue from 'vue';
 
 export default Vue.extend({
@@ -77,6 +78,15 @@ export default Vue.extend({
 		},
 		target(): string {
 			return routeGetters.getRouteTargetVariable(this.$store);
+		},
+		highlightRoot(): HighlightRoot {
+			return routeGetters.getDecodedHighlightRoot(this.$store);
+		}
+	},
+
+	watch: {
+		highlightRoot() {
+			updateDataHighlights(this, this.highlightRoot);
 		}
 	},
 
@@ -89,6 +99,7 @@ export default Vue.extend({
 			actions.fetchVariablesAndVariableSummaries(this.$store, {
 				dataset: this.dataset
 			});
+			updateDataHighlights(this, this.highlightRoot);
 		}
 	}
 });

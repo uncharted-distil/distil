@@ -53,7 +53,7 @@ import { Dictionary } from '../util/dict';
 import { getters as dataGetters } from '../store/data/module';
 import { getters as routeGetters } from '../store/route/module';
 import { createGroups, Group } from '../util/facets';
-import { updateDataHighlights, clearFeatureHighlightValues } from '../util/highlights';
+import { updateDataHighlights, clearFeatureHighlightValues, getHighlights } from '../util/highlights';
 import 'font-awesome/css/font-awesome.css';
 import '../styles/spinner.css';
 import Vue from 'vue';
@@ -131,7 +131,7 @@ export default Vue.extend({
 		},
 
 		highlights(): Highlights {
-			return routeGetters.getDecodedHighlightedFeatureValues(this.$store);
+			return getHighlights(this.$store);
 		},
 
 		filters(): Filter[] {
@@ -232,14 +232,11 @@ export default Vue.extend({
 
 		onHistogramClick(context: string, key: string, value: Range) {
 			if (key && value) {
-				const selectFilter = {
-					name: key,
-					type: NUMERICAL_FILTER,
-					enabled: true,
-					min:  value.from,
-					max: value.to
-				};
-				updateDataHighlights(this, context, key, value, selectFilter);
+				updateDataHighlights(this, {
+					context: context,
+					key: key,
+					value: value
+				});
 			} else {
 				clearFeatureHighlightValues(this);
 			}
@@ -248,13 +245,11 @@ export default Vue.extend({
 		onFacetClick(context: string, key: string, value: string) {
 			if (key && value) {
 				// extract the var name from the key
-				const selectFilter = {
-					name: key,
-					type: CATEGORICAL_FILTER,
-					enabled: true,
-					categories: [value]
-				};
-				updateDataHighlights(this, context, key, value, selectFilter);
+				updateDataHighlights(this, {
+					context: context,
+					key: key,
+					value: value
+				});
 			} else {
 				clearFeatureHighlightValues(this);
 			}

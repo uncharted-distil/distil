@@ -31,6 +31,7 @@ import { getters as routeGetters } from '../store/route/module';
 import { actions as pipelineActions, getters as pipelineGetters } from '../store/pipelines/module';
 import { Variable, VariableSummary } from '../store/data/index';
 import { Dictionary } from '../util/dict';
+import { updateResultHighlights, HighlightRoot } from '../util/highlights';
 import Vue from 'vue';
 
 export default Vue.extend({
@@ -80,11 +81,20 @@ export default Vue.extend({
 		},
 		sessionId(): string {
 			return pipelineGetters.getPipelineSessionID(this.$store);
+		},
+		highlightRoot(): HighlightRoot {
+			return routeGetters.getDecodedHighlightRoot(this.$store);
 		}
 	},
 
 	mounted() {
 		this.fetch();
+	},
+
+	watch: {
+		highlightRoot() {
+			updateResultHighlights(this, this.highlightRoot);
+		}
 	},
 
 	methods: {
@@ -115,6 +125,7 @@ export default Vue.extend({
 							dataset: this.dataset,
 							requestIds: this.requestIds
 						});
+						updateResultHighlights(this, this.highlightRoot);
 					});
 				});
 		}
