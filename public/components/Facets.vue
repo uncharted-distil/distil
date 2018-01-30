@@ -221,13 +221,38 @@ export default Vue.extend({
 				highlights.root.value.to === value.to;
 		},
 
+		isValueInBar(bar: any, value: number): boolean {
+			const metadata: any[] = bar.metadata;
+			const barMin = _.toNumber(_.first(metadata).label);
+			const barMax = _.toNumber(_.last(metadata).toLabel);
+			const num = _.toNumber(value);
+			return (num >= barMin && num <= barMax);
+		},
+
+		getHighlightRootValue(highlights: Highlights): any {
+			if (highlights.root) {
+				if (highlights.root.value) {
+					if (_.isString(highlights.root.value)) {
+						return highlights.root.value;
+					}
+					// take middle value
+					return _.toNumber((highlights.root.value.to + highlights.root.value.from) / 2);
+				}
+			}
+			return null;
+		},
+
+		getHighlightValuesForGroup(highlights: Highlights, key: string): any[] {
+			return !_.isEmpty(highlights.values) ? highlights.values[key] : null;
+		},
+
 		injectSelectionIntoGroup(group: any, highlights: Highlights) {
 
 			if (!this.isHighlightedGroup(highlights, group.key)) {
 				return;
 			}
 
-			const highlightValue = highlights.root.value as any;
+			const highlightValue = this.getHighlightRootValue(highlights);
 
 			for (const facet of group.facets) {
 
@@ -238,17 +263,11 @@ export default Vue.extend({
 
 				if (facet._histogram) {
 
-					const midValue = _.toNumber((highlightValue.to + highlightValue.from) / 2);
 					const bars = facet._histogram.bars;
-
 					for (let i = 0; i < bars.length; i++) {
-
-						const metadata: any[] = bars[i].metadata;
-						const barMin = _.toNumber(_.first(metadata).label);
-						const barMax = _.toNumber(_.last(metadata).toLabel);
-
-						if (midValue >= barMin && midValue <= barMax) {
-							$(bars[i]._element).addClass('select-highlight');
+						const bar = bars[i];
+						if (this.isValueInBar(bar, highlightValue)) {
+							$(bar._element).addClass('select-highlight');
 							return;
 						}
 					}
@@ -265,7 +284,7 @@ export default Vue.extend({
 
 		injectHighlightsIntoGroup(group: any, highlights: Highlights) {
 
-			const values = !_.isEmpty(highlights.values) ? highlights.values[group.key] : null;
+			const highlightValues = this.getHighlightValuesForGroup(highlights, group.key);
 			const filter = this.histogramFiltersByKey[group.key];
 
 			// loop through groups ensure that selection is clear on each - not that clear
@@ -286,38 +305,55 @@ export default Vue.extend({
 				}
 
 				if (facet._histogram) {
-					// Build up the selection structure to pass to the facets lib.  The facets library doesn't
+					// Build up the selection structures ||  to pass to the facets lib.  The facets library doesn't
 					// give us a good way to determine the index of a particular numeric value in the set of generated
 					// bars (they are non-contiguous), so we just have to check each range ourselves.  To be more efficient
 					// we sort the values and do it one pass.
 
-					let slices: Dictionary<number> = {};
+					let slices: Dictionary<number> = null;
 
-					if (values) {
+					if (highlightValues) {
 
-						const vals = Array.from(values) as number[];
-						const sortedValues = vals.sort((a, b) => a - b);
+						const values = Array.from(highlightValues) as number[];
 
-						let lastLabelIdx = 0;
-						for (const value of sortedValues) {
-							// iterate over the facet bars and find the one that contains the current value
-							for (let i = lastLabelIdx; i < facet._histogram.bars.length; i++) {
-								const metadata: any[] = facet._histogram.bars[i].metadata;
-								const numValue = _.toNumber(value);
+						// if we have values, set the slices object so we can filter by the values.
+						slices = {};
 
-								const barMin = _.toNumber(_.first(metadata).label);
-								const barMax = _.toNumber(_.last(metadata).toLabel);
+						const bars = facet._histogram.bars;
 
-								// If the current bar contains the selected value, add it to tshe slices map so that
-								// it gets added to the selection.
-								if (numValue >= barMin && numValue <= barMax) {
-									const valueMetadata = _.last(metadata);
-									slices[valueMetadata.label] = valueMetadata.count;
-									lastLabelIdx = i;
+						// if this is the root highlight, highlight only the selected bar
+						if (this.isHighlightedGroup(highlights, group.key)) {
+
+							const highlightValue = this.getHighlightRootValue(highlights);
+							for (let i = 0; i < bars.length; i++) {
+								const bar = bars[i];
+								if (this.isValueInBar(bar, highlightValue)) {
+									const entry: any = _.last(bar.metadata);
+									slices[entry.label] = entry.count;
 									break;
 								}
 							}
+
+						} else {
+
+							// otherwise go through all values in highlights
+							const sortedValues: number[] = values.sort((a, b) => a - b) as number[];
+
+							let lastIndex = 0;
+							for (const value of sortedValues) {
+								// iterate over the facet bars and find the one that contains the current value
+								for (let i = lastIndex; i < bars.length; i++) {
+									const bar = bars[i];
+									if (this.isValueInBar(bar, value)) {
+										const entry: any = _.last(bar.metadata);
+										slices[entry.label] = entry.count;
+										lastIndex = i;
+										break;
+									}
+								}
+							}
 						}
+
 					}
 
 					// create selection
@@ -331,11 +367,11 @@ export default Vue.extend({
 						};
 					}
 
-					if (!_.isEmpty(slices)) {
+					if (slices) {
 						selection.slices = slices;
 					}
 
-					if (!_.isEmpty(slices) || filter) {
+					if (slices || filter) {
 						facet.select({
 							selection: selection
 						});
@@ -343,7 +379,10 @@ export default Vue.extend({
 
 				} else {
 
-					if (values) {
+					if (highlightValues) {
+
+						const values = Array.from(highlightValues) as string[];
+
 						// See if this facet is in the values list, marking it as selected if it is.
 						const matchedValue = values.find(v => v.toLowerCase() === facet.value.toLowerCase() ? facet.value.toLowerCase(): undefined);
 						if (matchedValue) {
@@ -351,10 +390,19 @@ export default Vue.extend({
 						} else {
 							facet.deselect();
 						}
+
 					} else {
-						if (highlights.root && highlights.root.value) {
-							facet.deselect();
+
+\						const highlightValue = this.getHighlightRootValue(highlights);
+						if (highlightValue) {
+							if (this.isHighlightedGroup(highlights, group.key) &&
+								highlightValue.toLowerCase() === facet.value.toLowerCase()) {
+								facet.select(facet.count);
+							} else {
+								facet.deselect();
+							}
 						}
+
 					}
 				}
 			}
@@ -581,7 +629,6 @@ export default Vue.extend({
 	fill: #007bff;
 }
 
-.facets-facet-vertical.select-highlight .facet-bar-base,
 .facets-facet-vertical.select-highlight .facet-bar-selected {
 	box-shadow: inset 0 0 0 1000px #007bff;
 }
