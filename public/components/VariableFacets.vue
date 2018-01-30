@@ -216,7 +216,6 @@ export default Vue.extend({
 
 		// handles individual category toggle events within a facet group
 		onFacetToggle(key: string, values: string[]) {
-			console.log('update filter', key, values);
 			// set range filter
 			this.updateFilterRoute({
 				name: key,
