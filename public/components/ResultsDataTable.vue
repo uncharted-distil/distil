@@ -1,6 +1,7 @@
 <template>
 	<div class="results-data-table">
 		<p class="nav-link font-weight-bold">{{title}}</p>
+		<p><small>Displaying {{items.length}} of {{numRows}} rows</small></p>
 		<div class="results-data-table-container">
 			<div class="results-data-no-results" v-if="items.length===0">
 				No results
@@ -22,12 +23,12 @@
 <script lang="ts">
 
 import _ from 'lodash';
-import { getters, mutations } from '../store/data/module';
+import { getters } from '../store/data/module';
 import { TargetRow, FieldInfo } from '../store/data/index';
 import { getters as routeGetters } from '../store/route/module';
 import { Dictionary } from '../util/dict';
 import { removeNonTrainingItems, removeNonTrainingFields } from '../util/data';
-import { updateTableHighlights, scrollToFirstHighlight } from '../util/highlights';
+import { updateTableHighlights, updateHighlightRoot, clearHighlightRoot, scrollToFirstHighlight, getHighlights } from '../util/highlights';
 import { getTrainingVariablesForPipelineId } from '../util/pipelines';
 import Vue from 'vue';
 
@@ -43,15 +44,17 @@ export default Vue.extend({
 		instanceName: { type: String, default: 'results-table-table' }
 	},
 
-	data() {
-		return {
-			selectedRowKey: -1
-		};
-	},
-
 	computed: {
 		pipelineId(): string {
 			return routeGetters.getRoutePipelineId(this.$store);
+		},
+
+		numRows(): number {
+			return getters.getResultDataNumRows(this.$store);
+		},
+
+		selectedRowKey(): number {
+			return routeGetters.getDecodedHighlightRoot(this.$store) ? _.toNumber(routeGetters.getDecodedHighlightRoot(this.$store).key) : -1;
 		},
 
 		// extracts the training set from the store
@@ -68,7 +71,7 @@ export default Vue.extend({
 		items(): TargetRow[] {
 			const items = getters.getResultDataItems(this.$store);
 			const filtered = this.excludeNonTraining ? removeNonTrainingItems(items, this.training) : items;
-			const valueHighlights = getters.getHighlightedFeatureValues(this.$store);
+			const highlights = getHighlights(this.$store);
 
 			// clear all selections visuals
 			items.forEach(r => r._rowVariant = null);
@@ -76,8 +79,8 @@ export default Vue.extend({
 			// if we have highlights defined and the select table is not the source then updated
 			// the highlight visuals.
 			let updatedItems = <TargetRow[]>[];
-			if (_.get(valueHighlights, 'root', 'context') !== this.instanceName) {
-				updateTableHighlights(filtered, valueHighlights, this.instanceName);
+			if (_.get(highlights, 'root.context') !== this.instanceName) {
+				updateTableHighlights(filtered, highlights, this.instanceName);
 			}
 
 			updatedItems = filtered
@@ -86,11 +89,12 @@ export default Vue.extend({
 
 			if (this.selectedRowKey >= 0) {
 				const toSelect = updatedItems.find(r => r._key === this.selectedRowKey);
-				if (_.get(valueHighlights, 'root.context') === this.instanceName) {
-					toSelect._rowVariant = 'primary';
-				} else {
-					toSelect._rowVariant = null;
-					this.selectedRowKey = -1;
+				if (toSelect) {
+					if (_.get(highlights, 'root.context') === this.instanceName) {
+						toSelect._rowVariant = 'primary';
+					} else {
+						toSelect._rowVariant = null;
+					}
 				}
 			}
 
@@ -111,23 +115,14 @@ export default Vue.extend({
 		onRowClick(row: TargetRow) {
 			if (row._key !== this.selectedRowKey) {
 				// clicked on a different row than last time - new selection
-				this.selectedRowKey = row._key;
-
-				// publish the highlight change
-				const highlights = {
-					root: {
-						context: this.instanceName,
-						key: row._key.toString(),
-						value: ''
-					},
-					values: <Dictionary<string[]>>{}
-				};
-				_.forEach(this.fields, (field, key) => highlights.values[key] = [row[key]]);
-				mutations.highlightFeatureValues(this.$store, highlights);
+				updateHighlightRoot(this, {
+					context: this.instanceName,
+					key: row._key.toString(),
+					value: _.map(this.fields, (field, key) => [ key, row[key] ])
+				});
 			} else {
 				// clicked on same row - remove the row selection visual
-				this.selectedRowKey = -1;
-				mutations.clearFeatureHighlights(this.$store);
+				clearHighlightRoot(this);
 			}
 		}
 	}
@@ -149,7 +144,5 @@ results-data-table {
 	background-color: #eee;
 	padding: 8px;
 }
-.table-sm th, .table-sm td {
-	font-size: 0.9rem;
-}
+
 </style>

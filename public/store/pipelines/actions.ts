@@ -19,6 +19,7 @@ interface PipelineRequest {
 	task: string;
 	metric: string[];
 	filters: FilterParams;
+	maxPipelines: number;
 }
 
 export type AppContext = ActionContext<PipelineState, DistilState>;
@@ -175,7 +176,7 @@ export const actions = {
 				feature: request.feature,
 				task: request.task,
 				metric: request.metric,
-				maxPipelines: 3,
+				maxPipelines: request.maxPipelines,
 				filters: request.filters
 			});
 		});

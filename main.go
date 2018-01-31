@@ -6,6 +6,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/davecgh/go-spew/spew"
 	"github.com/unchartedsoftware/plog"
 	"github.com/zenazn/goji/graceful"
 	"goji.io"
@@ -48,7 +49,7 @@ func main() {
 		log.Errorf("%+v", err)
 		os.Exit(1)
 	}
-	log.Infof("%+v", config)
+	log.Infof("%+v", spew.Sdump(config))
 
 	// instantiate elastic client constructor.
 	esClientCtor := elastic.NewClient(config.ElasticEndpoint, false)
@@ -107,6 +108,7 @@ func main() {
 		RankingRESTEndpoint:              config.RankingEndpoint,
 		RankingFunctionName:              config.RankingFunctionName,
 		RankingOutputPathRelative:        config.RankingOutputPath,
+		RankingRowLimit:                  config.RankingRowLimit,
 		DatabasePassword:                 config.PostgresPassword,
 		DatabaseUser:                     config.PostgresUser,
 		Database:                         config.PostgresDatabase,

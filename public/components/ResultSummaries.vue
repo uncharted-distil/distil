@@ -23,6 +23,7 @@
 			@histogram-click="onHistogramClick"
 			@facet-click="onFacetClick"
 			:groups="targetGroups"
+			:filters="filters"
 			:highlights="highlights"></facets>
 		<p class="nav-link font-weight-bold">Predictions by Model</p>
 		<result-facets
@@ -30,7 +31,7 @@
 			:result-extrema="resultExtrema"
 			:residual-extrema="residualExtrema">
 		</result-facets>
-		<b-btn v-b-modal.export variant="outline-success" class="check-button">Export Model</b-btn>
+		<b-btn v-b-modal.export variant="success" class="check-button">Export Model</b-btn>
 		<b-modal id="export" title="Export" @ok="onExport">
 			<div class="check-message-container">
 				<i class="fa fa-check-circle fa-3x check-icon"></i>
@@ -48,13 +49,13 @@ import { createGroups, Group } from '../util/facets';
 import { overlayRouteEntry } from '../util/routes';
 import { getPipelineById } from '../util/pipelines';
 import { getTask } from '../util/pipelines';
+import { Filter } from '../util/filters';
 import { isTarget, getVarFromTarget, getTargetCol } from '../util/data';
-import { updateResultHighlights } from '../util/highlights';
-import { VariableSummary, Extrema, Highlights, Range } from '../store/data/index';
-import { NUMERICAL_FILTER, CATEGORICAL_FILTER } from '../util/filters';
+import { updateHighlightRoot, clearHighlightRoot, getHighlights } from '../util/highlights';
+import { VariableSummary, Extrema } from '../store/data/index';
+import { Highlights, Range } from '../util/highlights';
 import { getters as dataGetters} from '../store/data/module';
 import { getters as routeGetters } from '../store/route/module';
-import { mutations as dataMutations } from '../store/data/module';
 import { actions } from '../store/app/module';
 import { Dictionary } from '../util/dict';
 import vueSlider from 'vue-slider-component';
@@ -65,7 +66,6 @@ import { getters as pipelineGetters } from '../store/pipelines/module';
 
 const DEFAULT_PERCENTILE = 0.25;
 const NUM_STEPS = 100;
-const RESULT_SUMMARY_CONTEXT = 'result_summary';
 
 export default Vue.extend({
 	name: 'result-summaries',
@@ -120,7 +120,7 @@ export default Vue.extend({
 
 		highlights(): Highlights {
 			// find var marked as 'target' and set associated values as highlights
-			const highlights = dataGetters.getHighlightedFeatureValues(this.$store);
+			const highlights = getHighlights(this.$store);
 			const facetHighlights = <Highlights>{
 				root: _.cloneDeep(highlights.root),
 				values: <Dictionary<string[]>>{}
@@ -134,6 +134,10 @@ export default Vue.extend({
 				facetHighlights.root.key = getVarFromTarget(highlights.root.key);
 			}
 			return facetHighlights;
+		},
+
+		filters(): Filter[] {
+			return routeGetters.getDecodedResultsFilters(this.$store);
 		},
 
 		range(): number {
@@ -233,17 +237,13 @@ export default Vue.extend({
 		onHistogramClick(context: string, key: string, value: Range) {
 			if (key && value) {
 				const colKey = getTargetCol(routeGetters.getRouteTargetVariable(this.$store));
-				const filter = {
-					name: colKey,
-					type: NUMERICAL_FILTER,
-					enabled: true,
-					context: RESULT_SUMMARY_CONTEXT,
-					min: value.from,
-					max: value.to
-				};
-				updateResultHighlights(this, context, colKey, value, filter);
+				updateHighlightRoot(this, {
+					context: context,
+					key: colKey,
+					value: value
+				});
 			} else {
-				dataMutations.clearFeatureHighlights(this.$store);
+				clearHighlightRoot(this);
 			}
 		},
 
@@ -251,17 +251,13 @@ export default Vue.extend({
 			// clear exiting highlights
 			if (key && value) {
 				// extract the var name from the key
-				const colKey = getTargetCol(routeGetters.getRouteTargetVariable(this.$store));
-				const filter = {
-					name: colKey,
-					type: CATEGORICAL_FILTER,
-					enabled: true,
-					context: RESULT_SUMMARY_CONTEXT,
-					categories: [value]
-				};
-				updateResultHighlights(this, context, colKey, value, filter);
+				updateHighlightRoot(this, {
+					context: context,
+					key: key,
+					value: value
+				});
 			} else {
-				dataMutations.clearFeatureHighlights(this.$store);
+				clearHighlightRoot(this);
 			}
 		},
 

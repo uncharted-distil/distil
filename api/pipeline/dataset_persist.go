@@ -23,6 +23,12 @@ const (
 	D3MDataFolder = "tables"
 	// D3MDataSchema provides the name of the D3M data schema file
 	D3MDataSchema = "datasetDoc.json"
+	// D3MDatasetSchemaVersion is the current version supported when persisting
+	D3MDatasetSchemaVersion = "3.0"
+	// D3MResourceType is the resource type of persisted datasets
+	D3MResourceType = "table"
+	// D3MResourceFormat is the resource format of persisted dataset
+	D3MResourceFormat = "text/csv"
 )
 
 // FilteredDataProvider defines a function that will fetch data from a back end source given
@@ -34,15 +40,23 @@ type VariableProvider func(dataset string, index string) ([]*model.Variable, err
 
 // DataSchema encapsulates the data schema json structure.
 type DataSchema struct {
-	DatasetID     string        `json:"about.datasetID"`
-	Redacted      bool          `json:"about.redacted"`
-	DataResources *DataResource `json:"dataResources"`
+	Properties    *DataSchemaProperties `json:"about"`
+	DataResources []*DataResource       `json:"dataResources"`
+}
+
+// DataSchemaProperties contains the basic properties of a dataset.
+type DataSchemaProperties struct {
+	DatasetID     string `json:"datasetID"`
+	Redacted      bool   `json:"redacted"`
+	SchemaVersion string `json:"datasetSchemaVersion"`
 }
 
 // DataResource represents a set of variables.
 type DataResource struct {
 	ResID     string          `json:"resID"`
 	ResPath   string          `json:"resPath"`
+	ResType   string          `json:"resType"`
+	ResFormat []string        `json:"resFormat"`
 	Variables []*DataVariable `json:"columns"`
 }
 
@@ -223,18 +237,26 @@ func writeDataSchema(schemaPath string, dataset string, filteredData *model.Filt
 	}
 
 	// Build the schema data for output.
+	drs := make([]*DataResource, 1)
+	drs[0] = &DataResource{
+		ResID:     "0",
+		ResPath:   path.Join(D3MDataFolder, D3MLearningData),
+		ResType:   D3MResourceType,
+		ResFormat: []string{D3MResourceFormat},
+		Variables: make([]*DataVariable, 0),
+	}
+	dsProperties := &DataSchemaProperties{
+		DatasetID:     dataset,
+		Redacted:      true,
+		SchemaVersion: D3MDatasetSchemaVersion,
+	}
 	ds := &DataSchema{
-		DatasetID: dataset,
-		Redacted:  true,
-		DataResources: &DataResource{
-			ResID:     "0",
-			ResPath:   path.Join(D3MDataFolder, D3MLearningData),
-			Variables: make([]*DataVariable, 0),
-		},
+		Properties:    dsProperties,
+		DataResources: drs,
 	}
 
 	// Both outputs have the index.
-	ds.DataResources.Variables = append(ds.DataResources.Variables, &DataVariable{
+	ds.DataResources[0].Variables = append(ds.DataResources[0].Variables, &DataVariable{
 		ColName: "d3mIndex",
 		Role:    []string{"index"},
 		ColType: "integer",
@@ -252,7 +274,7 @@ func writeDataSchema(schemaPath string, dataset string, filteredData *model.Filt
 			Role:    role,
 			ColType: vars[c].Type,
 		}
-		ds.DataResources.Variables = append(ds.DataResources.Variables, v)
+		ds.DataResources[0].Variables = append(ds.DataResources[0].Variables, v)
 	}
 
 	dsJSON, err := json.Marshal(ds)

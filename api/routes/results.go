@@ -57,6 +57,11 @@ func ResultsHandler(storageCtor model.PipelineStorageCtor, storageDataCtor model
 			return
 		}
 
+		if res == nil {
+			handleError(w, errors.Errorf("pipeline id `%s` cannot be mapped to result URI", pipelineID))
+			return
+		}
+
 		results, err := clientData.FetchFilteredResults(dataset, index, res.ResultURI, filterParams, inclusiveBool)
 		if err != nil {
 			handleError(w, err)

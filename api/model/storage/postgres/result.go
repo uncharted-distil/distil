@@ -145,10 +145,11 @@ func (s *Storage) parseVariableValue(value string, variable *model.Variable) (in
 	}
 }
 
-func (s *Storage) parseFilteredResults(dataset string, rows *pgx.Rows, target *model.Variable) (*model.FilteredData, error) {
+func (s *Storage) parseFilteredResults(dataset string, numRows int, rows *pgx.Rows, target *model.Variable) (*model.FilteredData, error) {
 	result := &model.FilteredData{
-		Name:   dataset,
-		Values: make([][]interface{}, 0),
+		Name:    dataset,
+		NumRows: numRows,
+		Values:  make([][]interface{}, 0),
 	}
 
 	// Parse the columns.
@@ -182,7 +183,7 @@ func (s *Storage) parseFilteredResults(dataset string, rows *pgx.Rows, target *m
 	return result, nil
 }
 
-func (s *Storage) parseResults(dataset string, rows *pgx.Rows, variable *model.Variable) (*model.FilteredData, error) {
+func (s *Storage) parseResults(dataset string, numRows int, rows *pgx.Rows, variable *model.Variable) (*model.FilteredData, error) {
 	// Scan the rows. Each row has only the value as a string.
 	values := [][]interface{}{}
 	for rows.Next() {
@@ -201,6 +202,7 @@ func (s *Storage) parseResults(dataset string, rows *pgx.Rows, variable *model.V
 	// Build the filtered data.
 	return &model.FilteredData{
 		Name:    dataset,
+		NumRows: numRows,
 		Columns: []string{variable.Name},
 		Types:   []string{variable.Type},
 		Values:  values,
@@ -355,7 +357,9 @@ func (s *Storage) FetchFilteredResults(dataset string, index string, resultURI s
 	if len(where) > 0 {
 		query = fmt.Sprintf("%s AND %s", query, where)
 	}
-	query = query + ";"
+
+	// Do not return the whole result set to the client.
+	query = fmt.Sprintf("%s LIMIT %d;", query, filterParams.Size)
 
 	rows, err := s.client.Query(query, params...)
 	if err != nil {
@@ -363,7 +367,12 @@ func (s *Storage) FetchFilteredResults(dataset string, index string, resultURI s
 	}
 	defer rows.Close()
 
-	return s.parseFilteredResults(dataset, rows, variable)
+	numRows, err := s.FetchNumRows(datasetResult)
+	if err != nil {
+		return nil, errors.Wrap(err, "Could not pull num rows")
+	}
+
+	return s.parseFilteredResults(dataset, numRows, rows, variable)
 }
 
 // FetchResults pulls the results from the Postgres database.
@@ -386,7 +395,12 @@ func (s *Storage) FetchResults(dataset string, index string, resultURI string) (
 	}
 	defer rows.Close()
 
-	return s.parseResults(dataset, rows, variable)
+	numRows, err := s.FetchNumRows(datasetResult)
+	if err != nil {
+		return nil, errors.Wrap(err, "Could not pull num rows")
+	}
+
+	return s.parseResults(dataset, numRows, rows, variable)
 }
 
 func (s *Storage) getResultMinMaxAggsQuery(variable *model.Variable, resultVariable *model.Variable) string {
@@ -470,10 +484,10 @@ func (s *Storage) fetchNumericalResultHistogram(resultURI string, dataset string
 func (s *Storage) fetchCategoricalResultHistogram(resultURI string, dataset string, resultDataset string, variable *model.Variable) (*model.Histogram, error) {
 	targetName := variable.Name
 
-	query := fmt.Sprintf("SELECT base.%s, result.value, COUNT(*) AS count "+
+	query := fmt.Sprintf("SELECT base.\"%s\", result.value, COUNT(*) AS count "+
 		"FROM %s AS result INNER JOIN %s AS base ON result.index = base.\"d3mIndex\" "+
 		"WHERE result.result_id = $1 and result.target = $2 "+
-		"GROUP BY result.value, base.%s "+
+		"GROUP BY result.value, base.\"%s\" "+
 		"ORDER BY count desc;", targetName, resultDataset, dataset, targetName)
 
 	// execute the postgres query

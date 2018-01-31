@@ -41,6 +41,7 @@ type IngestTaskConfig struct {
 	RankingRESTEndpoint              string
 	RankingFunctionName              string
 	RankingOutputPathRelative        string
+	RankingRowLimit                  int
 	DatabasePassword                 string
 	DatabaseUser                     string
 	Database                         string
@@ -151,21 +152,24 @@ func Rank(index string, dataset string, config *IngestTaskConfig) error {
 		config.getAbsolutePath(dataset, config.MergedOutputSchemaPathRelative),
 		config.getAbsolutePath(dataset, config.ClassificationOutputPathRelative))
 	if err != nil {
-		errors.Wrap(err, "unable to load metadata")
+		return errors.Wrap(err, "unable to load metadata")
 	}
 
 	header, err := meta.GenerateHeaders()
 	if err != nil {
-		errors.Wrap(err, "unable to load metadata")
+		return errors.Wrap(err, "unable to load metadata")
 	}
 
 	if len(header) != 1 {
-		errors.Errorf("merge data should only have one header but found %d", len(header))
+		return errors.Errorf("merge data should only have one header but found %d", len(header))
 	}
 
 	// need to ignore rows with missing
 	// ranking requires a header
-	err = removeMissingValues(config.getAbsolutePath(dataset, config.MergedOutputPathRelative), config.getAbsolutePath(dataset, rankingFilename), config.HasHeader, header[0])
+	err = removeMissingValues(
+		config.getAbsolutePath(dataset, config.MergedOutputPathRelative),
+		config.getAbsolutePath(dataset, rankingFilename),
+		config.HasHeader, header[0], config.RankingRowLimit)
 	if err != nil {
 		return errors.Wrap(err, "unable to ignore missing values")
 	}
@@ -202,7 +206,7 @@ func Ingest(index string, dataset string, config *IngestTaskConfig) error {
 		config.getAbsolutePath(dataset, config.MergedOutputSchemaPathRelative),
 		config.getAbsolutePath(dataset, config.ClassificationOutputPathRelative))
 	if err != nil {
-		errors.Wrap(err, "unable to load metadata")
+		return errors.Wrap(err, "unable to load metadata")
 	}
 
 	indices := make([]int, len(meta.DataResources[0].Variables))
@@ -212,12 +216,6 @@ func Ingest(index string, dataset string, config *IngestTaskConfig) error {
 	err = meta.LoadImportance(config.getAbsolutePath(dataset, config.RankingOutputPathRelative), indices)
 	if err != nil {
 		return errors.Wrap(err, "unable to load importance from file")
-	}
-
-	// load summary
-	err = meta.LoadSummary(config.getAbsolutePath(dataset, config.SummaryOutputPathRelative), true)
-	if err != nil {
-		return errors.Wrap(err, "unable to load summary")
 	}
 
 	// load stats
@@ -311,7 +309,7 @@ func Ingest(index string, dataset string, config *IngestTaskConfig) error {
 	return nil
 }
 
-func removeMissingValues(sourceFile string, destinationFile string, hasHeader bool, headerToWrite []string) error {
+func removeMissingValues(sourceFile string, destinationFile string, hasHeader bool, headerToWrite []string, rowLimit int) error {
 	// Copy source to destination, removing rows that have missing values.
 	file, err := os.Open(sourceFile)
 	if err != nil {
@@ -332,26 +330,17 @@ func removeMissingValues(sourceFile string, destinationFile string, hasHeader bo
 
 	count := 0
 	for {
-		skipLine := false
 		line, err := reader.Read()
 		if err == io.EOF {
 			break
 		} else if err != nil {
 			return errors.Wrap(err, "failed to read line from file")
 		}
-		if count > 0 || !hasHeader {
-			for _, col := range line {
-				// TODO: this is a temp fix for missing values
-				if col == "" {
-					skipLine = true
-				}
-			}
+		if (count > 0 || !hasHeader) && (count < rowLimit) {
 			// write the csv line back out
-			if !skipLine {
-				err := writer.Write(line)
-				if err != nil {
-					return errors.Wrap(err, "failed to write line to file")
-				}
+			err := writer.Write(line)
+			if err != nil {
+				return errors.Wrap(err, "failed to write line to file")
 			}
 		}
 		count++

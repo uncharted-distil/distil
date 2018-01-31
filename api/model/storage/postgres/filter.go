@@ -9,14 +9,11 @@ import (
 	"github.com/unchartedsoftware/distil/api/model"
 )
 
-const (
-	filterLimit = 100
-)
-
-func (s *Storage) parseFilteredData(dataset string, rows *pgx.Rows) (*model.FilteredData, error) {
+func (s *Storage) parseFilteredData(dataset string, numRows int, rows *pgx.Rows) (*model.FilteredData, error) {
 	result := &model.FilteredData{
-		Name:   dataset,
-		Values: make([][]interface{}, 0),
+		Name:    dataset,
+		NumRows: numRows,
+		Values:  make([][]interface{}, 0),
 	}
 
 	// Parse the columns.
@@ -95,6 +92,17 @@ func (s *Storage) buildFilteredResultQueryField(dataset string, variables []*mod
 	return strings.Join(fields, ","), nil
 }
 
+// FetchNumRows pulls the number of rows in the table.
+func (s *Storage) FetchNumRows(dataset string) (int, error) {
+	query := fmt.Sprintf("SELECT count(*) FROM %s", dataset)
+	var numRows int
+	err := s.client.QueryRow(query).Scan(&numRows)
+	if err != nil {
+		return -1, errors.Wrap(err, "postgres row query failed")
+	}
+	return numRows, nil
+}
+
 // FetchData creates a postgres query to fetch a set of rows.  Applies filters to restrict the
 // results to a user selected set of fields, with rows further filtered based on allowed ranges and
 // categories.
@@ -102,6 +110,11 @@ func (s *Storage) FetchData(dataset string, index string, filterParams *model.Fi
 	variables, err := s.metadata.FetchVariables(dataset, index, false)
 	if err != nil {
 		return nil, errors.Wrap(err, "Could not pull variables from ES")
+	}
+
+	numRows, err := s.FetchNumRows(dataset)
+	if err != nil {
+		return nil, errors.Wrap(err, "Could not pull num rows")
 	}
 
 	fields, err := s.buildFilteredQueryField(dataset, variables, filterParams, inclusive)
@@ -138,5 +151,5 @@ func (s *Storage) FetchData(dataset string, index string, filterParams *model.Fi
 	}
 
 	// parse the result
-	return s.parseFilteredData(dataset, res)
+	return s.parseFilteredData(dataset, numRows, res)
 }

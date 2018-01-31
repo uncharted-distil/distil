@@ -28,7 +28,7 @@ type Config struct {
 	PipelineDataDir            string `env:"PIPELINE_DATA_DIR" envDefault:"datasets"`
 	PipelineComputeTrace       bool   `env:"PIPELINE_COMPUTE_TRACE" envDefault:"false"`
 	ExportPath                 string `env:"EXPORT_PATH"`
-	StartupConfigFile          string `env:"CONFIG_JSON_PATH" envDefault:"startup.json"`
+	StartupConfigFile          string `env:"JSON_CONFIG_PATH" envDefault:"/d3m/config"`
 	PostgresHost               string `env:"PG_HOST" envDefault:"localhost"`
 	PostgresPort               string `env:"PG_PORT" envDefault:"5432"`
 	PostgresUser               string `env:"PG_USER" envDefault:"distil"`
@@ -38,7 +38,7 @@ type Config struct {
 	PostgresRetryTimeout       int    `env:"PG_RETRY_TIMEOUT" envDefault:"4000"`
 	PostgresLogLevel           string `env:"PG_LOG_LEVEL" envDefault:"none"`
 	PrimitiveEndPoint          string `env:"PRIMITIVE_END_POINT" envDefault:"http://localhost:5000"`
-	DataFolderPath             string `env:"DATA_FOLDER_PATH" envDefault:"/home/phorne/data/d3m_new"`
+	DataFolderPath             string `env:"DATA_FOLDER_PATH" envDefault:"/d3m/data"`
 	DataFilePath               string `env:"DATA_FILE_PATH" envDefault:"/tables/learningData.csv"`
 	DatasetFolderSuffix        string `env:"DATASET_FOLDER_SUFFIX" envDefault:"_dataset"`
 	MergedOutputDataPath       string `env:"MERGED_OUTPUT_DATA_PATH" envDefault:"tables/merged.csv"`
@@ -50,6 +50,7 @@ type Config struct {
 	RankingEndpoint            string `env:"RANKING_ENDPOINT" envDefault:"http://localhost:5001"`
 	RankingFunctionName        string `env:"RANKING_FUNCTION_NAME" envDefault:"pca"`
 	RankingOutputPath          string `env:"RANKING_OUTPUT_PATH" envDefault:"tables/importance.json"`
+	RankingRowLimit            int    `env:"RANKING_ROW_LIMIT" envDefault:"1000"`
 	SummaryPath                string `env:"SUMMARY_PATH" envDefault:"summary.txt"`
 	ElasticTimeout             int    `env:"ES_TIMEOUT" envDefault:"300"`
 	ElasticDatasetPrefix       string `env:"ES_DATASET_PREFIX" envDefault:"d_"`

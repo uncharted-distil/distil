@@ -1,5 +1,5 @@
 import _ from 'lodash';
-import { FieldInfo, Variable, Data, DataState, Datasets, VariableSummary, TargetRow, Highlights, TableRow } from './index';
+import { FieldInfo, Variable, Data, DataState, Datasets, VariableSummary, TargetRow, TableRow } from './index';
 import { Filter, EMPTY_FILTER } from '../../util/filters';
 import { TARGET_POSTFIX, PREDICTED_POSTFIX } from '../../util/data';
 import { Dictionary } from '../../util/dict';
@@ -167,6 +167,10 @@ export const getters = {
 		return state.filteredData;
 	},
 
+	getFilteredDataNumRows(state: DataState): number {
+		return state.filteredData ? state.filteredData.numRows : 0;
+	},
+
 	getFilteredDataItems(state: DataState, getters: any): Dictionary<any>[] {
 		return getDataItems(state.filteredData, getters.getVariableTypesMap);
 	},
@@ -194,6 +198,10 @@ export const getters = {
 
 	getResultData(state: DataState): Data {
 		return state.resultData;
+	},
+
+	getResultDataNumRows(state: DataState): number {
+		return state.resultData ? state.resultData.numRows : 0;
 	},
 
 	getResultDataItems(state: DataState, getters: any): TargetRow[] {
@@ -248,6 +256,10 @@ export const getters = {
 		return state.selectedData;
 	},
 
+	getSelectedDataNumRows(state: DataState): number {
+		return state.selectedData ? state.selectedData.numRows : 0;
+	},
+
 	getSelectedDataItems(state: DataState, getters: any): TableRow[] {
 		return getDataItems(state.selectedData, getters.getVariableTypesMap);
 	},
@@ -269,7 +281,7 @@ export const getters = {
 		return {};
 	},
 
-	getHighlightedFeatureValues(state: DataState): Highlights {
-		return state.highlightedFeatureValues;
+	getHighlightedValues(state: DataState) {
+		return state.highlightedValues;
 	}
 }

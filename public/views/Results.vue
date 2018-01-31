@@ -25,13 +25,14 @@
 import ResultsComparison from '../components/ResultsComparison.vue';
 import ResultsVariableSummaries from '../components/ResultsVariableSummaries.vue';
 import ResultSummaries from '../components/ResultSummaries.vue';
-import { gotoSelect } from '../util/nav';
 import { getRequestIdsForDatasetAndTarget, getTrainingVariablesForPipelineId } from '../util/pipelines';
 import { getters as dataGetters, actions as dataActions } from '../store/data/module';
 import { getters as routeGetters } from '../store/route/module';
 import { actions as pipelineActions, getters as pipelineGetters } from '../store/pipelines/module';
 import { Variable, VariableSummary } from '../store/data/index';
 import { Dictionary } from '../util/dict';
+import { HighlightRoot } from '../util/highlights';
+import { Filter } from '../util/filters';
 import Vue from 'vue';
 
 export default Vue.extend({
@@ -81,6 +82,12 @@ export default Vue.extend({
 		},
 		sessionId(): string {
 			return pipelineGetters.getPipelineSessionID(this.$store);
+		},
+		filters(): Filter[] {
+			return routeGetters.getDecodedFilters(this.$store);
+		},
+		highlightRoot(): HighlightRoot {
+			return routeGetters.getDecodedHighlightRoot(this.$store);
 		}
 	},
 
@@ -88,10 +95,18 @@ export default Vue.extend({
 		this.fetch();
 	},
 
+	watch: {
+		highlightRoot() {
+			dataActions.fetchResultHighlightValues(this.$store, {
+				dataset: this.dataset,
+				filters: this.filters,
+				highlightRoot: this.highlightRoot,
+				pipelineId: this.pipelineId
+			});
+		}
+	},
+
 	methods: {
-		gotoSelect() {
-			gotoSelect(this.$store, this.$router);
-		},
 		fetch() {
 			Promise.all([
 					dataActions.fetchVariables(this.$store, {
@@ -119,6 +134,12 @@ export default Vue.extend({
 							dataset: this.dataset,
 							requestIds: this.requestIds
 						});
+						dataActions.fetchResultHighlightValues(this.$store, {
+							dataset: this.dataset,
+							filters: this.filters,
+							highlightRoot: this.highlightRoot,
+							pipelineId: this.pipelineId
+						});
 					});
 				});
 		}
@@ -130,6 +151,7 @@ export default Vue.extend({
 .results-view .nav-link {
 	padding: 1rem 0 0.25rem 0;
 	border-bottom: 1px solid #E0E0E0;
+	color: rgba(0,0,0,.87);
 }
 .header-label {
 	padding: 1rem 0 0.5rem 0;
@@ -137,5 +159,8 @@ export default Vue.extend({
 }
 .results-data-table-container {
 	background-color: white;
+}
+.results-view .table td {
+    text-align: right;
 }
 </style>

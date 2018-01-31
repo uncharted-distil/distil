@@ -50,6 +50,7 @@ import { createRouteEntry } from '../util/routes';
 import { addRecentDataset } from '../util/data';
 import { getters } from '../store/route/module';
 import { Variable } from '../store/data/index';
+import { SELECT_ROUTE } from '../store/route/index';
 
 import Vue from 'vue';
 
@@ -79,7 +80,7 @@ export default Vue.extend({
 	computed: {
 		topVariables(): Variable[] {
 			return (<Variable[]>this.variables).slice(0).sort((a, b) => {
-				return a.importance - b.importance;
+				return b.importance - a.importance;
 			}).slice(0, NUM_TOP_FEATURES);
 		}
 	},
@@ -101,7 +102,7 @@ export default Vue.extend({
 			return formatRecursive(n, 0);
 		},
 		setActiveDataset() {
-			const entry = createRouteEntry('/select', {
+			const entry = createRouteEntry(SELECT_ROUTE, {
 				terms: getters.getRouteTerms(this.$store),
 				dataset: this.name
 			});

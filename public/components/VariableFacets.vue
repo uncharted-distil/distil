@@ -1,36 +1,44 @@
 <template>
-	<div class='variable-facets'>
-		<div class="facet-filters">
-			<div v-if="enableSearch">
-				<b-form-fieldset size="sm" horizontal label="Filter" :label-cols="2">
-					<b-form-input size="sm" v-model="filter" placeholder="Type to Search" />
-				</b-form-fieldset>
+	<div class='row h-100 variable-facets'>
+		<div class="col-12 flex-column d-flex">
+			<div v-if="enableSearch" class="row flex-1 align-items-center facet-filters">
+				<div class="col-12 flex-column d-flex">
+					<b-form-fieldset size="sm" horizontal label="Filter" :label-cols="2">
+						<b-form-input size="sm" v-model="filter" placeholder="Type to Search" />
+					</b-form-fieldset>
+				</div>
 			</div>
-			<div v-if="enableToggle">
-				<b-form-fieldset size="sm" horizontal label="Toggle" :label-cols="2">
-					<b-button size="sm" variant="outline-secondary" @click="selectAll">All</b-button>
-					<b-button size="sm" variant="outline-secondary" @click="deselectAll">None</b-button>
-				</b-form-fieldset>
+			<div v-if="enableToggle" class="row flex-1 align-items-center facet-filters">
+				<div class="col-12 flex-column d-flex">
+					<b-form-fieldset size="sm" horizontal label="Toggle" :label-cols="2">
+						<b-button size="sm" variant="outline-secondary" @click="selectAll">All</b-button>
+						<b-button size="sm" variant="outline-secondary" @click="deselectAll">None</b-button>
+					</b-form-fieldset>
+				</div>
+			</div>
+			<div class="row flex-11">
+				<facets class="col-12 flex-column d-flex variable-facets-container"
+					:groups="groups"
+					:filters="filters"
+					:highlights="highlights"
+					:html="html"
+					:sort="sort"
+					:type-change="typeChange"
+					@click="onClick"
+					@expand="onExpand"
+					@collapse="onCollapse"
+					@range-change="onRangeChange"
+					@facet-toggle="onFacetToggle"
+					@histogram-click="onHistogramClick"
+					@facet-click="onFacetClick">
+				</facets>
+			</div>
+			<div v-if="numRows > rowsPerPage" class="row flex-1 align-items-center variable-page-nav">
+				<div class="col-12 flex-column">
+					<b-pagination size="sm" align="center" :total-rows="numRows" :per-page="rowsPerPage" v-model="currentPage" class="mb-0"/>
+				</div>
 			</div>
 		</div>
-		<facets class="variable-facets-container"
-			:groups="groups"
-			:highlights="highlights"
-			:html="html"
-			:sort="sort"
-			:type-change="typeChange"
-			@click="onClick"
-			@expand="onExpand"
-			@collapse="onCollapse"
-			@range-change="onRangeChange"
-			@facet-toggle="onFacetToggle"
-			@histogram-click="onHistogramClick"
-			@facet-click="onFacetClick">
-		</facets>
-		<div v-if="numRows > rowsPerPage" class="variable-page-nav">
-			<b-pagination size="sm" align="center" :total-rows="numRows" :per-page="rowsPerPage" v-model="currentPage"/>
-		</div>
-
 	</div>
 </template>
 
@@ -40,12 +48,12 @@ import Facets from '../components/Facets';
 import { Filter, decodeFiltersDictionary, updateFilter, getFilterType, isDisabled,
 	CATEGORICAL_FILTER, NUMERICAL_FILTER, EMPTY_FILTER } from '../util/filters';
 import { overlayRouteEntry, getRouteFacetPage } from '../util/routes';
-import { Highlights, Range } from '../store/data/index';
+import { Highlights, Range } from '../util/highlights';
 import { Dictionary } from '../util/dict';
-import { getters as dataGetters, mutations as dataMutations } from '../store/data/module';
+import { getters as dataGetters } from '../store/data/module';
 import { getters as routeGetters } from '../store/route/module';
 import { createGroups, Group } from '../util/facets';
-import { updateDataHighlights } from '../util/highlights';
+import { updateHighlightRoot, clearHighlightRoot, getHighlights } from '../util/highlights';
 import 'font-awesome/css/font-awesome.css';
 import '../styles/spinner.css';
 import Vue from 'vue';
@@ -123,7 +131,11 @@ export default Vue.extend({
 		},
 
 		highlights(): Highlights {
-			return dataGetters.getHighlightedFeatureValues(this.$store);
+			return getHighlights(this.$store);
+		},
+
+		filters(): Filter[] {
+			return routeGetters.getDecodedFilters(this.$store);
 		},
 
 		importance(): Dictionary<number> {
@@ -220,31 +232,26 @@ export default Vue.extend({
 
 		onHistogramClick(context: string, key: string, value: Range) {
 			if (key && value) {
-				const selectFilter = {
-					name: key,
-					type: NUMERICAL_FILTER,
-					enabled: true,
-					min:  value.from,
-					max: value.to
-				};
-				updateDataHighlights(this, context, key, value, selectFilter);
+				updateHighlightRoot(this, {
+					context: context,
+					key: key,
+					value: value
+				});
 			} else {
-				dataMutations.clearFeatureHighlights(this.$store);
+				clearHighlightRoot(this);
 			}
 		},
 
 		onFacetClick(context: string, key: string, value: string) {
 			if (key && value) {
 				// extract the var name from the key
-				const selectFilter = {
-					name: key,
-					type: CATEGORICAL_FILTER,
-					enabled: true,
-					categories: [value]
-				};
-				updateDataHighlights(this, context, key, value, selectFilter);
+				updateHighlightRoot(this, {
+					context: context,
+					key: key,
+					value: value
+				});
 			} else {
-				dataMutations.clearFeatureHighlights(this.$store);
+				clearHighlightRoot(this);
 			}
 		},
 
@@ -343,10 +350,6 @@ export default Vue.extend({
 button {
 	cursor: pointer;
 }
-.variable-facets {
-	display: flex;
-	flex-direction: column;
-}
 .page-link {
 	color: #868e96;
 }
@@ -368,7 +371,7 @@ button {
 }
 .variable-facets-container .facets-root-container .facets-group-container .facets-group {
 	background: white;
-	margin: 2px 2px 4px 2px; 
+	margin: 2px 2px 4px 2px;
     font-size: 0.867rem;
     color: rgba(0,0,0,0.87);
     box-shadow: 0 1px 2px 0 rgba(0,0,0,0.10);
@@ -378,12 +381,10 @@ button {
 	font-size: 0.9rem;
 }
 .facet-filters .form-group {
-	margin-bottom: 4px;
-	padding-right: 16px;
+	margin: 0.25rem;
 }
-
 .variable-page-nav {
-	margin-top: 10px;
+	padding-top: 10px;
 }
 
 </style>

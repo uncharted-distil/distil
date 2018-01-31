@@ -4,7 +4,7 @@
 		</div>
 		<div class="row flex-1 align-items-center justify-content-center bg-white">
 			<div class="col-12 col-md-10">
-				<h5 class="header-label">Select a Search Result</h5>
+				<h5 class="header-label">Select a Dataset</h5>
 			</div>
 		</div>
 		<div class="row flex-2 align-items-center justify-content-center">
@@ -23,21 +23,14 @@
 <script lang="ts">
 import SearchBar from '../components/SearchBar.vue';
 import SearchResults from '../components/SearchResults.vue';
-import { gotoHome } from '../util/nav';
 import Vue from 'vue';
 
 export default Vue.extend({
 	name: 'search-view',
-	
+
 	components: {
 		SearchBar,
 		SearchResults
-	},
-
-	methods: {
-		gotoHome() {
-			gotoHome(this.$store, this.$router);
-		}
 	}
 });
 </script>

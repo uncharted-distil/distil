@@ -1,0 +1,464 @@
+<!DOCTYPE html>
+<head>
+    <meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="">
+<meta name="keywords" content=" ">
+<title>Glossary | Distil Help</title>
+<link rel="stylesheet" href="css/syntax.css">
+
+
+<link rel="stylesheet" type="text/css" href="css/lib/font-awesome-4.7.0/css/font-awesome.min.css">
+<!--<link rel="stylesheet" type="text/css" href="css/bootstrap.min.css">-->
+<link rel="stylesheet" href="css/modern-business.css">
+<link rel="stylesheet" href="css/lavish-bootstrap.css">
+<link rel="stylesheet" href="css/customstyles.css">
+<link rel="stylesheet" href="css/theme-black.css">
+
+<script src="js/lib/jquery.min.js"></script>
+<script src="js/lib/jquery.cookie.min.js"></script>
+<script src="js/jquery.navgoco.min.js"></script>
+
+
+<script src="js/lib/bootstrap.min.js"></script>
+<script src="js/lib/anchor.min.js"></script>
+<script src="js/toc.js"></script>
+<script src="js/customscripts.js"></script>
+
+<link rel="shortcut icon" href="images/favicon.ico">
+
+<link rel="alternate" type="application/rss+xml" title="" href="feed.xml">
+
+    <script>
+        $(document).ready(function() {
+            // Initialize navgoco with default options
+            $("#mysidebar").navgoco({
+                caretHtml: '',
+                accordion: false,
+                openClass: 'active', // open
+                save: false, // leave false or nav highlighting doesn't work right
+                cookie: {
+                    name: 'navgoco',
+                    expires: false,
+                    path: '/'
+                },
+                slide: {
+                    duration: 400,
+                    easing: 'swing'
+                }
+            });
+
+            $("#collapseAll").click(function(e) {
+                e.preventDefault();
+                $("#mysidebar").navgoco('toggle', false);
+            });
+
+            $("#expandAll").click(function(e) {
+                e.preventDefault();
+                $("#mysidebar").navgoco('toggle', true);
+            });
+
+        });
+
+    </script>
+    <script>
+        $(function () {
+            $('[data-toggle="tooltip"]').tooltip()
+        })
+    </script>
+    
+
+</head>
+<body>
+<!-- Navigation -->
+<nav class="navbar navbar-inverse navbar-fixed-top">
+    <div class="container topnavlinks">
+        <div class="navbar-header">
+            <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+            <a class="navbar-brand" href="index.html"><img class="navbar-logo" src="images/logo.png" alt="Distil">&nbsp;<span class="projectTitle"> Distil Help</span></a>
+        </div>
+        <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+            <ul class="nav navbar-nav navbar-right">
+                <!-- entries without drop-downs appear here -->
+                
+                
+                
+                <li><a href="index.html">Topics</a></li>
+                
+                
+                
+                <li class="active"><a href="glossary.html">Glossary</a></li>
+                
+                
+                
+                <!-- entries with drop-downs appear here -->
+                <!-- conditional logic to control which topnav appears for the audience defined in the configuration file.-->
+                
+                <!--comment out this block if you want to hide search
+                <li>
+                    <!--start search
+                    <div id="search-demo-container">
+                        <input type="text" id="search-input" placeholder="search...">
+                        <ul id="results-container"></ul>
+                    </div>
+                    <script src="js/jekyll-search.js" type="text/javascript"></script>
+                    <script type="text/javascript">
+                            SimpleJekyllSearch.init({
+                                searchInput: document.getElementById('search-input'),
+                                resultsContainer: document.getElementById('results-container'),
+                                dataSource: 'search.json',
+                                searchResultTemplate: '<li><a href="{url}" title="Glossary">{title}</a></li>',
+                    noResultsText: 'No results found.',
+                            limit: 10,
+                            fuzzy: true,
+                    })
+                    </script>
+                    <!--end search
+                </li>-->
+            </ul>
+        </div>
+        </div>
+        <!-- /.container -->
+</nav>
+
+<!-- Page Content -->
+<div class="container">
+    <div class="col-lg-12">&nbsp;</div>
+    <!-- Content Row -->
+    <div class="row">
+        <!-- Sidebar Column -->
+        <div class="col-md-3">
+
+          
+
+
+
+
+
+<ul id="mysidebar" class="nav">
+    <li class="sidebarTitle">Glossary </li>
+    
+    
+    
+        
+    
+    <li>
+        <a href="#">A–M</a>
+        <ul>
+            
+            
+            
+            <li><a href="#available-feature">Available Feature</a></li>
+            
+            
+            
+            
+            
+            
+            <li><a href="#categorical-feature">Categorical Feature</a></li>
+            
+            
+            
+            
+            
+            
+            <li><a href="#classification">Classification</a></li>
+            
+            
+            
+            
+            
+            
+            <li><a href="#continuous-feature">Continuous Feature</a></li>
+            
+            
+            
+            
+            
+            
+            <li><a href="#dataset">Dataset</a></li>
+            
+            
+            
+            
+            
+            
+            <li><a href="#distance">Distance</a></li>
+            
+            
+            
+            
+            
+            
+            <li><a href="#error">Error</a></li>
+            
+            
+            
+            
+            
+            
+            <li><a href="#feature">Feature</a></li>
+            
+            
+            
+            
+            
+            
+            <li><a href="#importance">Importance</a></li>
+            
+            
+            
+            
+            
+            
+            <li><a href="#model">Model</a></li>
+            
+            
+            
+            
+        </ul>
+        
+        
+    
+    <li>
+        <a href="#">N–Z</a>
+        <ul>
+            
+            
+            
+            <li><a href="#prediction">Prediction</a></li>
+            
+            
+            
+            
+            
+            
+            <li><a href="#regression">Regression</a></li>
+            
+            
+            
+            
+            
+            
+            <li><a href="#sample">Sample</a></li>
+            
+            
+            
+            
+            
+            
+            <li><a href="#summary">Summary</a></li>
+            
+            
+            
+            
+            
+            
+            <li><a href="#target">Target</a></li>
+            
+            
+            
+            
+            
+            
+            <li><a href="#training-feature">Training Feature</a></li>
+            
+            
+            
+            
+            
+            
+            <li><a href="#training-set">Training Set</a></li>
+            
+            
+            
+            
+            
+            
+            <li><a href="#value">Value</a></li>
+            
+            
+            
+            
+        </ul>
+        
+        
+        
+           <p class="external">
+               <a href="#" id="collapseAll">Collapse All</a> | <a href="#" id="expandAll">Expand All</a>
+           </p>
+    </li>
+</ul>
+</div>
+
+<!-- this highlights the active parent class in the navgoco sidebar. this is critical so that the parent expands when you're viewing a page. This must appear below the sidebar code above. Otherwise, if placed inside customscripts.js, the script runs before the sidebar code runs and the class never gets inserted.-->
+<script>$("li.active").parents('li').toggleClass("active");</script>
+    <!-- Content Column -->
+    <div class="col-md-9">
+        <div class="post-header">
+   <h1 class="post-title-main">Glossary</h1>
+</div>
+
+
+
+<div class="post-content">
+
+   
+
+    
+
+
+    
+
+  
+
+
+
+
+
+
+  
+    
+  
+    
+      <h2 id="a-m">A–M</h2>
+      <dl class="dl-horizontal">
+        
+          
+            <dt id="available-feature">Available Feature</dt>
+            <dd>In the Create Models stage, available features are columns or fields in the chosen dataset. You can use an available feature as a part of the training set the model uses to predict the target.</dd>
+          
+        
+          
+            <dt id="categorical-feature">Categorical Feature</dt>
+            <dd>A feature whose values consist of a finite set of categories reused across records. For example, in an automotive dataset, a feature that indicates the country of origin of a vehicle would have a finite set of countries as its values.</dd>
+          
+        
+          
+            <dt id="classification">Classification</dt>
+            <dd>When you choose to predict a categorical feature, Distil produces classification results. Classification results show the number of correctly and incorrectly predicted target values for each row in the dataset.</dd>
+          
+        
+          
+            <dt id="continuous-feature">Continuous Feature</dt>
+            <dd>A feature whose values consist of a range of real numbers. For example, in an automotive dataset, a feature that indicates the weight of a vehicle would have a set of unique weights as its values.</dd>
+          
+        
+          
+            <dt id="dataset">Dataset</dt>
+            <dd>The collection of features and values that you select to build models that predict features.</dd>
+          
+        
+          
+            <dt id="distance">Distance</dt>
+            <dd>In regression models, distance indicates how far away from the actual value the predicted value is. Distance is used as a measure of error for each prediction.
+</dd>
+          
+        
+          
+            <dt id="error">Error</dt>
+            <dd>In regression results, the error threshold allows you to configure how accurate the model should be. Error is calculated by the distance of the predicted value from the actual value.</dd>
+          
+        
+          
+            <dt id="feature">Feature</dt>
+            <dd>A column or field in a dataset that contains a set of values for each record. In an automotive dataset, for example, one feature may be horsepower.</dd>
+          
+        
+          
+            <dt id="importance">Importance</dt>
+            <dd>Available features are listed in descending order by how much influence they have on other features in the dataset. Importance is calculated using Principal Component Analysis.</dd>
+          
+        
+          
+            <dt id="model">Model</dt>
+            <dd>A set of automatically configured algorithms and parameters tunings that attempt to predict a target feature. Models use the training set features you select to attempt to predict the target feature.</dd>
+          
+        
+      </dl>
+    
+  
+    
+      <h2 id="n-z">N–Z</h2>
+      <dl class="dl-horizontal">
+        
+          
+            <dt id="prediction">Prediction</dt>
+            <dd>A set of automatically calculated values for the target feature generated by the model.</dd>
+          
+        
+          
+            <dt id="regression">Regression</dt>
+            <dd>For continuous features (e.g. integers), Distil produces regression results, which break down correct and incorrect results by the error (distance of the predictions from the actual values in the dataset). The acceptable error is configurable for each model.</dd>
+          
+        
+          
+            <dt id="sample">Sample</dt>
+            <dd>In the Create Models stage, Distil shows a representative sample of values for the selected target feature and training features.</dd>
+          
+        
+          
+            <dt id="summary">Summary</dt>
+            <dd>On the Home and Search Data pages, the summary describes the contents of the available datasets that you can use in model building.<br><br>
+On the View Models page, the feature summaries show the range of values in results in the dataset.
+</dd>
+          
+        
+          
+            <dt id="target">Target</dt>
+            <dd>The feature that you want the model to predict.</dd>
+          
+        
+          
+            <dt id="training-feature">Training Feature</dt>
+            <dd>A feature that you want the model to consider when attempting to predict the target.</dd>
+          
+        
+          
+            <dt id="training-set">Training Set</dt>
+            <dd>The set of training features that the model considers when attempting to predict the target.</dd>
+          
+        
+          
+            <dt id="value">Value</dt>
+            <dd>A value of a particular feature in one row of a dataset.</dd>
+          
+        
+      </dl>
+    
+  
+
+  
+
+    <div class="tags">
+        
+    </div>
+</div>
+
+<hr class="shaded"/>
+
+<footer>
+            <div class="row">
+                <div class="col-lg-12 footer">
+               &copy;2018 Uncharted Software Inc.<br />
+<p><img class="logo" src="images/uncharted.png" alt="Uncharted Software Inc."/></p>
+                </div>
+            </div>
+</footer>
+
+
+    </div>
+    <!-- /.row -->
+</div>
+<!-- /.container -->
+    </div>
+
+</body>
+
+</html>

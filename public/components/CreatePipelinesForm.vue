@@ -1,6 +1,6 @@
 <template>
 	<div class="create-pipelines-form">
-		<div class="requirements">
+		<div class="row justify-content-center requirements">
 			<div class="requirement-met text-success" v-if="trainingSelected">
 				<i class="fa fa-check selected-icon"></i><strong>Training features Selected</strong>
 			</div>
@@ -8,9 +8,22 @@
 				<i class="fa fa-check selected-icon"></i><strong>Target Feature Selected</strong>
 			</div>
 		</div>
-		<b-button class="create-button" :variant="createVariant" @click="create" :disabled="disableCreate">
-			Create Models
-		</b-button>
+		<div class="row justify-content-center">
+			<div class="col-9">
+				<b-dropdown
+					class="dropdown-button-style"
+					text="Create Models"
+					:variant="createVariant"
+					:disabled="disableCreate">
+					<b-dropdown-header>Select Number of Models</b-dropdown-header>
+					<b-dropdown-item @click="create(1)">1</b-dropdown-item>
+					<b-dropdown-item @click="create(2)">2</b-dropdown-item>
+					<b-dropdown-item @click="create(3)">3</b-dropdown-item>
+					<b-dropdown-item @click="create(4)">4</b-dropdown-item>
+					<b-dropdown-item @click="create(5)">5</b-dropdown-item>
+				</b-dropdown>
+			</div>
+		</div>
 	</div>
 </template>
 
@@ -21,6 +34,7 @@ import { createRouteEntry } from '../util/routes';
 import { getTask, getMetricDisplayNames, getMetricSchemaName } from '../util/pipelines';
 import { getters as dataGetters } from '../store/data/module';
 import { getters as routeGetters } from '../store/route/module';
+import { RESULTS_ROUTE } from '../store/route/index';
 import { actions as pipelineActions } from '../store/pipelines/module';
 import { PipelineInfo } from '../store/pipelines/index';
 import { getters as pipelineGetters } from '../store/pipelines/module';
@@ -88,12 +102,12 @@ export default Vue.extend({
 		},
 		// determines  create button variant based on completeness of user input
 		createVariant(): string {
-			return !this.disableCreate ? 'outline-success' : 'outline-secondary';
+			return !this.disableCreate ? 'success' : 'outline-secondary';
 		}
 	},
 	methods: {
 		// create button handler
-		create() {
+		create(numPipelines) {
 			// compute schema values for request
 			const taskData = getTask(this.targetVariable.type);
 			const task = taskData.schemaName;
@@ -105,10 +119,11 @@ export default Vue.extend({
 				sessionId: this.sessionId,
 				feature: routeGetters.getRouteTargetVariable(this.$store),
 				task: task,
-				metric: metrics
+				metric: metrics,
+				maxPipelines: numPipelines
 			}).then((res: PipelineInfo) => {
 				// transition to result screen
-				const entry = createRouteEntry('/results', {
+				const entry = createRouteEntry(RESULTS_ROUTE, {
 					dataset: routeGetters.getRouteDataset(this.$store),
 					target: routeGetters.getRouteTargetVariable(this.$store),
 					pipelineId: res.pipelineId
@@ -121,20 +136,20 @@ export default Vue.extend({
 </script>
 
 <style>
-.create-pipelines-form {
-	margin: 8px 16px;
-}
 .create-button {
-	width: 60%;
-	margin: 0 20%;
+	width: 70%;
 }
 .selected-icon {
 	padding-right: 4px;
 }
 .requirement-met {
-	padding: 4px 8px;
+	padding: 0.5rem;
 }
-.requirements {
-	margin-bottom: 8px;
+.dropdown-button-style {
+	position: relative !important;
+	width: 100%;
+}
+.dropdown-toggle {
+	width: 100%;
 }
 </style>

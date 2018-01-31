@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="description" content="">
 <meta name="keywords" content=" ">
-<title>Step 2 - Explore | Distil Help</title>
+<title>Step 2 - Select Features | Distil Help</title>
 <link rel="stylesheet" href="css/syntax.css">
 
 
@@ -14,7 +14,7 @@
 <link rel="stylesheet" href="css/modern-business.css">
 <link rel="stylesheet" href="css/lavish-bootstrap.css">
 <link rel="stylesheet" href="css/customstyles.css">
-<link rel="stylesheet" href="css/theme-blue.css">
+<link rel="stylesheet" href="css/theme-black.css">
 
 <script src="js/lib/jquery.min.js"></script>
 <script src="js/lib/jquery.cookie.min.js"></script>
@@ -28,13 +28,6 @@
 
 <link rel="shortcut icon" href="images/favicon.ico">
 
-<!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
-<!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
-<!--[if lt IE 9]>
-<script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
-<script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
-<![endif]-->
-
 <link rel="alternate" type="application/rss+xml" title="" href="feed.xml">
 
     <script>
@@ -42,7 +35,7 @@
             // Initialize navgoco with default options
             $("#mysidebar").navgoco({
                 caretHtml: '',
-                accordion: true,
+                accordion: false,
                 openClass: 'active', // open
                 save: false, // leave false or nav highlighting doesn't work right
                 cookie: {
@@ -96,6 +89,14 @@
                 
                 
                 
+                <li><a href="index.html">Topics</a></li>
+                
+                
+                
+                <li><a href="glossary.html">Glossary</a></li>
+                
+                
+                
                 <!-- entries with drop-downs appear here -->
                 <!-- conditional logic to control which topnav appears for the audience defined in the configuration file.-->
                 
@@ -112,7 +113,7 @@
                                 searchInput: document.getElementById('search-input'),
                                 resultsContainer: document.getElementById('results-container'),
                                 dataSource: 'search.json',
-                                searchResultTemplate: '<li><a href="{url}" title="Step 2 - Explore">{title}</a></li>',
+                                searchResultTemplate: '<li><a href="{url}" title="Step 2 - Select Features">{title}</a></li>',
                     noResultsText: 'No results found.',
                             limit: 10,
                             fuzzy: true,
@@ -175,35 +176,35 @@
             
             
             
-            <li><a href="search.html">1. Search</a></li>
+            <li><a href="workflow-overview.html">Overview</a></li>
             
             
             
             
             
             
-            <li class="active"><a href="explore.html">2. Explore</a></li>
+            <li><a href="search.html">1. Search for a Dataset</a></li>
             
             
             
             
             
             
-            <li><a href="select.html">3. Select</a></li>
+            <li class="active"><a href="select-target.html">2. Select Target</a></li>
             
             
             
             
             
             
-            <li><a href="pipelines.html">4. Pipelines</a></li>
+            <li><a href="create-models.html">3. Create Models</a></li>
             
             
             
             
             
             
-            <li><a href="results.html">5. results</a></li>
+            <li><a href="results.html">4. Review Results</a></li>
             
             
             
@@ -212,22 +213,19 @@
         
         
         
-        <!-- if you aren't using the accordion, uncomment this block:
            <p class="external">
                <a href="#" id="collapseAll">Collapse All</a> | <a href="#" id="expandAll">Expand All</a>
            </p>
-           -->
     </li>
 </ul>
 </div>
 
 <!-- this highlights the active parent class in the navgoco sidebar. this is critical so that the parent expands when you're viewing a page. This must appear below the sidebar code above. Otherwise, if placed inside customscripts.js, the script runs before the sidebar code runs and the class never gets inserted.-->
 <script>$("li.active").parents('li').toggleClass("active");</script>
-
     <!-- Content Column -->
     <div class="col-md-9">
         <div class="post-header">
-   <h1 class="post-title-main">Step 2 - Explore</h1>
+   <h1 class="post-title-main">Step 2 - Select Features</h1>
 </div>
 
 
@@ -243,7 +241,7 @@
 $( document ).ready(function() {
   // Handler for .ready() called.
 
-$('#toc').toc({ minimumHeaders: 0, listType: 'ul', showSpeed: 0, headers: 'h2,h3,h4' });
+$('#toc').toc({ minimumHeaders: 0, listType: 'ul', showSpeed: 0, headers: 'h2' });
 
 /* this offset helps account for the space taken up by the floating toolbar. */
 $('#toc').on('click', 'a', function() {
@@ -264,15 +262,66 @@ $('#toc').on('click', 'a', function() {
 
     
 
-  <p>The Explore view lets you browse the scope of the values in the selected dataset. Use the filter and toggle controls to remove noisy or irrelevant features and values.</p>
+  <p>Once you have identified a relevant dataset, you must choose the target feature that you want to predict.</p>
 
-<h2 id="overview">Overview</h2>
+<h2 id="target-selection-view-summary">Target Selection View Summary</h2>
 
-<figure><a href="images/diagrams/explore.png"><img class="docimage" src="images/diagrams/explore.png" alt="Explore" /><figcaption>Click to enlarge</figcaption></a></figure>
+<figure href="#select-view-target-close"><a href="#select-view-target"><img class="diagram" src="images/diagrams/select-target.png" alt="Select target feature" /><figcaption>Click to enlarge</figcaption></a></figure>
+<div class="lightbox-target" id="select-view-target"><img src="images/diagrams/select-target.png" /><a class="lightbox-close" href="#select-view-target-close"></a></div>
+
+<h2 id="selecting-the-target-feature-to-predict">Selecting the Target Feature to Predict</h2>
+
+<h5 class="procedure">To choose the target feature that you want to predict:</h5>
+
+<ol>
+  <li>
+    <p>Review the list of available features in the Select Target Feature dialog. Use the <strong>Filter</strong> field to search for <em>acceleration</em>.</p>
+
+    <figure><img class="docimage" src="images/workflow/select-target-feature.png" alt="Set acceleration feature as target" /></figure>
+
+    <div class="alert alert-info" role="alert"><i class="fa fa-info-circle"></i> <b>Note:</b> Feature summaries visualize the values for each column/field in the dataset. Distil automatically infers the type of data stored for each feature. To change the inferred value, use the <span class="feature-type">type <sup class="fa fa-sort-desc" aria-hidden="true" style="display: inline;"></sup></span> drop-down.</div>
+  </li>
+  <li>
+    <p>Click anywhere on the <strong>acceleration</strong> feature summary. Distil adds the feature to the model definition and lists a sample of actual acceleration values.</p>
+
+    <figure><img class="docimage" src="images/workflow/select-target-feature-set.png" alt="Sample of values for selected target (acceleration)" /></figure>
+
+    <div class="alert alert-info" role="alert"><i class="fa fa-info-circle"></i> <b>Note:</b> You can change the target at any time by clicking <strong>Select New Target Feature</strong> under the current target on the Create Models view.</div>
+  </li>
+</ol>
+
+<p>The target you select determines the type of results the model will generate.</p>
+
+<table>
+  <thead>
+    <tr class="header">
+      <th>Feature Type</th>
+      <th>Model Type</th>
+      <th>Prediction</th>
+      <th>Results</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><a href="#" data-toggle="tooltip" data-original-title="Has values that are real numbers">Continuous</a></td>
+      <td>Regression</td>
+      <td>Numerical value</td>
+      <td>Correct and incorrect predictions based on a configurable distance from the actual target feature values</td>
+    </tr>
+    <tr>
+      <td><a href="#" data-toggle="tooltip" data-original-title="Has a finite set of categories reused across records">Categorical</a></td>
+      <td>Classification</td>
+      <td>Category</td>
+      <td>Correct and incorrect predictions based the actual target feature category</td>
+    </tr>
+  </tbody>
+</table>
+
+<p><strong>Acceleration</strong> is a continuous feature that will produce regression results.</p>
 
 <h2 id="next-steps">Next Steps</h2>
 
-<p>From your filtered dataset, choose a set of training features that your model should use to predict a target variable.</p>
+<p>Select the training features that the model should use to predict the target feature.</p>
 
   
   <div class="section-nav">
@@ -283,7 +332,7 @@ $('#toc').on('click', 'a', function() {
     </div>
     <div class="nav-right align-left">
         
-          <a href="select.html" class="next-pg">Next</a>
+          <a href="create-models.html" class="next-pg">Next</a>
         
     </div>
   </div>
@@ -300,7 +349,7 @@ $('#toc').on('click', 'a', function() {
 <footer>
             <div class="row">
                 <div class="col-lg-12 footer">
-               &copy;2017 Uncharted Software Inc.<br />
+               &copy;2018 Uncharted Software Inc.<br />
 <p><img class="logo" src="images/uncharted.png" alt="Uncharted Software Inc."/></p>
                 </div>
             </div>

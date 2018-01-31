@@ -1,6 +1,6 @@
 <template>
 	<div class='variable-summaries'>
-		<h6 class="nav-link">Feature Summaries</h6>
+		<p class="nav-link font-weight-bold">Feature Summaries</p>
 		<result-variable-facets
 			enable-search
 			enable-toggle

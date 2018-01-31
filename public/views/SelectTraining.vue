@@ -1,13 +1,5 @@
 <template>
 	<div class="container-fluid d-flex flex-column h-100 select-view">
-		<b-modal id="target-modal" ref="targetModal" title="Select Target Feature"
-			hide-header-close
-			no-close-on-backdrop
-			no-close-on-esc
-			hide-footer
-			:visible="!target">
-			<available-target-variables></available-target-variables>
-		</b-modal>
 		<div class="row flex-0-nav">
 		</div>
 		<div class="row flex-1 pb-3">
@@ -30,19 +22,21 @@
 				</div>
 				<div class="row flex-12">
 					<div class="col-12 d-flex flex-column">
-						<div class="row flex-3">
+						<div class="row flex-4">
 								<target-variable class="col-12 d-flex flex-column select-target-variables"></target-variable>
 						</div>
 						<div class="row responsive-flex pb-3">
-								<select-data-table class="col-12 d-flex flex-column select-data-table"></select-data-table>
+							<select-data-table class="col-12 d-flex flex-column select-data-table"></select-data-table>
 						</div>
 						<div class="row flex-1 bg-white align-items-center">
 							<div class="col-12 d-flex flex-column">
 								<h5 class="header-label">Create the Models</h5>
 							</div>
 						</div>
-						<div class="row flex-3">
-							<create-pipelines-form class="col-12 d-flex flex-column select-create-pipelines"></create-pipelines-form>
+						<div class="row flex-2 align-items-center">
+							<div class="col-12 d-flex flex-column">
+								<create-pipelines-form class="select-create-pipelines"></create-pipelines-form>
+							</div>
 						</div>
 					</div>
 				</div>
@@ -55,13 +49,14 @@
 
 import CreatePipelinesForm from '../components/CreatePipelinesForm.vue';
 import SelectDataTable from '../components/SelectDataTable.vue';
-import AvailableTargetVariables from '../components/AvailableTargetVariables.vue';
 import AvailableTrainingVariables from '../components/AvailableTrainingVariables.vue';
 import TrainingVariables from '../components/TrainingVariables.vue';
 import TargetVariable from '../components/TargetVariable.vue';
 import { getters as dataGetters, actions } from '../store/data/module';
 import { getters as routeGetters} from '../store/route/module';
 import { Variable } from '../store/data/index';
+import { HighlightRoot } from '../util/highlights';
+import { Filter } from '../util/filters';
 import Vue from 'vue';
 
 export default Vue.extend({
@@ -70,7 +65,6 @@ export default Vue.extend({
 	components: {
 		CreatePipelinesForm,
 		SelectDataTable,
-		AvailableTargetVariables,
 		AvailableTrainingVariables,
 		TrainingVariables,
 		TargetVariable
@@ -85,6 +79,22 @@ export default Vue.extend({
 		},
 		target(): string {
 			return routeGetters.getRouteTargetVariable(this.$store);
+		},
+		filters(): Filter[] {
+			return routeGetters.getDecodedFilters(this.$store);
+		},
+		highlightRoot(): HighlightRoot {
+			return routeGetters.getDecodedHighlightRoot(this.$store);
+		}
+	},
+
+	watch: {
+		highlightRoot() {
+			actions.fetchDataHighlightValues(this.$store, {
+				dataset: this.dataset,
+				filters: this.filters,
+				highlightRoot: this.highlightRoot,
+			});
 		}
 	},
 
@@ -97,6 +107,11 @@ export default Vue.extend({
 			actions.fetchVariablesAndVariableSummaries(this.$store, {
 				dataset: this.dataset
 			});
+			actions.fetchDataHighlightValues(this.$store, {
+				dataset: this.dataset,
+				filters: this.filters,
+				highlightRoot: this.highlightRoot,
+			});
 		}
 	}
 });
@@ -106,6 +121,7 @@ export default Vue.extend({
 .select-view .nav-link {
 	padding: 1rem 0 0.25rem 0;
 	border-bottom: 1px solid #E0E0E0;
+	color: rgba(0,0,0,.87);
 }
 .header-label {
 	padding: 1rem 0 0.5rem 0;
@@ -119,5 +135,4 @@ export default Vue.extend({
 		flex:6;
 	}
 }
-
 </style>

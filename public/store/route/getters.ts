@@ -1,4 +1,5 @@
 import { decodeFilters, Filter } from '../../util/filters';
+import { HighlightRoot, decodeHighlights } from '../../util/highlights'
 import { Route } from 'vue-router';
 
 export const getters = {
@@ -52,5 +53,9 @@ export const getters = {
 
 	getDecodedResultsFilters(state: Route): Filter[] {
 		return decodeFilters(state.query.results ? state.query.results : {} as any);
+	},
+
+	getDecodedHighlightRoot(state: Route): HighlightRoot {
+		return decodeHighlights(state.query.highlights);
 	}
 }
