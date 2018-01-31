@@ -235,6 +235,9 @@ export default Vue.extend({
 		getHighlightRootValue(highlights: Highlights): any {
 			if (highlights.root) {
 				if (highlights.root.value) {
+					if (_.isArray(highlights.root.value)) {
+						return null;
+					}
 					if (_.isString(highlights.root.value)) {
 						return highlights.root.value;
 					}
