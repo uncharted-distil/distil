@@ -357,7 +357,9 @@ func (s *Storage) FetchFilteredResults(dataset string, index string, resultURI s
 	if len(where) > 0 {
 		query = fmt.Sprintf("%s AND %s", query, where)
 	}
-	query = query + ";"
+
+	// Do not return the whole result set to the client.
+	query = fmt.Sprintf("%s LIMIT %d;", query, filterParams.Size)
 
 	rows, err := s.client.Query(query, params...)
 	if err != nil {
