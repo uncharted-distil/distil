@@ -4,7 +4,7 @@
 		</div>
 		<div class="row flex-1 align-items-center bg-white">
 			<div class="col-12">
-				<h5 class="header-label">Select Features That May Predict</h5>
+				<h5 class="header-label">Results</h5>
 			</div>
 		</div>
 		<div class="row flex-12 pb-3">

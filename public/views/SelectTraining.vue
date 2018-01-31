@@ -47,6 +47,7 @@
 
 <script lang="ts">
 
+import _ from 'lodash';
 import CreatePipelinesForm from '../components/CreatePipelinesForm.vue';
 import SelectDataTable from '../components/SelectDataTable.vue';
 import AvailableTrainingVariables from '../components/AvailableTrainingVariables.vue';
@@ -104,8 +105,8 @@ export default Vue.extend({
 
 	methods: {
 		capitalize(str) {
-			return _.capitalize(str)
-		}
+			return _.capitalize(str);
+		},
 		fetch() {
 			actions.fetchVariablesAndVariableSummaries(this.$store, {
 				dataset: this.dataset
