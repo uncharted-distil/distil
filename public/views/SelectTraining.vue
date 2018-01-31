@@ -6,7 +6,7 @@
 			<div class="col-12 col-md-6 d-flex flex-column border-gray-right">
 				<div class="row flex-1 bg-white align-items-center">
 					<div class="col-12 d-flex">
-						<h5 class="header-label">Select Features That May Predict</h5>
+						<h5 class="header-label">Select Features That May Predict {{capitalize(target)}}</h5>
 					</div>
 				</div>
 				<div class="row flex-12">
@@ -103,6 +103,9 @@ export default Vue.extend({
 	},
 
 	methods: {
+		capitalize(str) {
+			return _.capitalize(str)
+		}
 		fetch() {
 			actions.fetchVariablesAndVariableSummaries(this.$store, {
 				dataset: this.dataset
