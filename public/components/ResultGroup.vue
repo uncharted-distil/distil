@@ -3,7 +3,7 @@
 		@click="click()">
 		{{name}} <sup>{{index}}</sup> {{timestamp}}
 		<div v-if="pipelineStatus === 'COMPLETED' || pipelineStatus === 'UPDATED'">
-			<b-badge variant="info" v-bind:key="`${score.metric}`" v-for="score in scores">
+			<b-badge variant="info" v-bind:key="`${score.metric}-${pipelineId}`" v-for="score in scores">
 				{{metricName(score.metric)}}: {{score.value}}
 			</b-badge>
 			<facets v-if="resultGroups.length" class="result-container"

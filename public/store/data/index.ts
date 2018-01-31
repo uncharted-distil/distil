@@ -64,7 +64,8 @@ export interface DataState {
 	datasets: Datasets[];
 	variables: Variable[];
 	variableSummaries: VariableSummary[];
-	resultsSummaries: VariableSummary[];
+	resultSummaries: VariableSummary[];
+	predictedSummaries: VariableSummary[];
 	residualSummaries: VariableSummary[];
 	resultData: Data;
 	filteredData: Data;
@@ -82,10 +83,13 @@ export const state = {
 	// variable summary data for the active dataset
 	variableSummaries: <VariableSummary[]>[],
 
-	// results summary data for the selected pipeline run
-	resultsSummaries: <VariableSummary[]>[],
+	// results summary data for the training dataset
+	resultSummaries: <VariableSummary[]>[],
 
-	// error summary data for the selected pipeline run
+	// results summary data for the predicted data
+	predictedSummaries: <VariableSummary[]>[],
+
+	// error summary data for the predicted data
 	residualSummaries: <VariableSummary[]>[],
 
 	// current set of pipeline results

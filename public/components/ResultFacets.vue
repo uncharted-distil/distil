@@ -67,7 +67,7 @@ export default Vue.extend({
 		},
 
 		resultSummaries(): VariableSummary[] {
-			return dataGetters.getResultsSummaries(this.$store);;
+			return dataGetters.getPredictedSummaries(this.$store);;
 		},
 
 		residualSummaries(): VariableSummary[] {

@@ -91,8 +91,12 @@ export const getters = {
 		return state.variableSummaries;
 	},
 
-	getResultsSummaries(state: DataState): VariableSummary[] {
-		return state.resultsSummaries;
+	getResultSummaries(state: DataState): VariableSummary[] {
+		return state.resultSummaries;
+	},
+
+	getPredictedSummaries(state: DataState): VariableSummary[] {
+		return state.predictedSummaries;
 	},
 
 	getResidualsSummaries(state: DataState): VariableSummary[] {

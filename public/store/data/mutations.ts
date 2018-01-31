@@ -24,8 +24,12 @@ export const mutations = {
 		updateSummaries(summary, state.variableSummaries, 'name');
 	},
 
-	updateResultsSummaries(state: DataState, summary: VariableSummary) {
-		updateSummaries(summary, state.resultsSummaries, 'pipelineId');
+	updateResultSummaries(state: DataState, summary: VariableSummary) {
+		updateSummaries(summary, state.resultSummaries, 'name');
+	},
+
+	updatePredictedSummaries(state: DataState, summary: VariableSummary) {
+		updateSummaries(summary, state.predictedSummaries, 'pipelineId');
 	},
 
 	updateResidualsSummaries(state: DataState, summary: VariableSummary) {
