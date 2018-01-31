@@ -1,6 +1,6 @@
 <template>
 	<div class="available-training-variables">
-		<p class="nav-link font-weight-bold">Available features</p>
+		<p class="nav-link font-weight-bold">Available Features</p>
 		<variable-facets
 			enable-search
 			type-change

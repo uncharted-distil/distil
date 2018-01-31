@@ -165,28 +165,6 @@ export default Vue.extend({
 .missing-icon {
 	padding-right: 4px;
 }
-.var-type-button {
-	width: 100%;
-}
-.var-type-button button {
-	border: none;
-	padding: 0;
-	width: 100%;
-	text-align: left;
-	outline: none;
-	font-size: 0.9rem;
-}
-.var-type-button button:hover,
-.var-type-button button:active,
-.var-type-button button:focus,
-.var-type-button.show > .dropdown-toggle  {
-	border: none;
-	border-radius: 0;
-	padding: 0;
-	color: inherit;
-	background-color: inherit;
-	border-color: inherit;
-}
 table.b-table>tfoot>tr>th.sorting:before,
 table.b-table>thead>tr>th.sorting:before,
 table.b-table>tfoot>tr>th.sorting:after,
