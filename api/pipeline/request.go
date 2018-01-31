@@ -214,9 +214,8 @@ func GenerateEndSessionRequest(sessionID string) *RequestInfo {
 // pipeline indicated by caller supplied pipeline ID.
 func GenerateExportPipelineRequest(sessionID string, pipelineID string, pipelineURI string) *RequestInfo {
 	exportRequest := PipelineExportRequest{
-		Context:         &SessionContext{sessionID},
-		PipelineId:      pipelineID,
-		PipelineExecUri: pipelineURI,
+		Context:    &SessionContext{sessionID},
+		PipelineId: pipelineID,
 	}
 	grpcFunc := func(client *CoreClient, ctx *context.Context, request proto.Message) (proto.Message, error) {
 		// execute the export pipeline request
