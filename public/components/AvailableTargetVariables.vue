@@ -35,7 +35,7 @@ export default Vue.extend({
 			return routeGetters.getRouteDataset(this.$store);
 		},
 		variables(): VariableSummary[] {
-			return dataGetters.getAvailableVariableSummaries(this.$store);
+			return dataGetters.getVariableSummaries(this.$store);
 		},
 		html(): ( { key: string } ) => HTMLDivElement {
 			return (group: { key: string }) => {
@@ -44,11 +44,19 @@ export default Vue.extend({
 				targetElem.className += 'btn btn-sm btn-outline-secondary ml-2 mr-2 mb-2';
 				targetElem.innerHTML = 'Set as Target Feature';
 				targetElem.addEventListener('click', () => {
+					const target = group.key;
+					// remove from training
+					const trainingStr = routeGetters.getRouteTrainingVariables(this.$store);
+					const training = trainingStr ? trainingStr.split(',') : [];
+					const index = training.indexOf(target);
+					if (index !== -1) {
+						training.splice(index, 1);
+					}
 					const entry = createRouteEntry(CREATE_ROUTE, {
 						target: group.key,
 						dataset: routeGetters.getRouteDataset(this.$store),
 						filters: routeGetters.getRouteFilters(this.$store),
-						training: routeGetters.getRouteTrainingVariables(this.$store)
+						training: training.join(',')
 					});
 					this.$router.push(entry);
 				});

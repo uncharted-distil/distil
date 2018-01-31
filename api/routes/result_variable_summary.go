@@ -22,7 +22,7 @@ func ResultVariableSummaryHandler(ctorPipeline model.PipelineStorageCtor, ctorSt
 		// get variable name
 		variable := pat.Param(r, "variable")
 		// get result id
-		resultID, err := url.PathUnescape(pat.Param(r, "result-id"))
+		resultID, err := url.PathUnescape(pat.Param(r, "results-uuid"))
 		if err != nil {
 			handleError(w, errors.Wrap(err, "unable to unescape result id"))
 			return

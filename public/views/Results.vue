@@ -59,9 +59,9 @@ export default Vue.extend({
 		},
 		summaries(): VariableSummary[] {
 			if (this.excludeNonTraining) {
-				return dataGetters.getVariableSummaries(this.$store).filter(summary => this.training[summary.name]);
+				return dataGetters.getResultSummaries(this.$store).filter(summary => this.training[summary.name]);
 			}
-			return dataGetters.getVariableSummaries(this.$store);
+			return dataGetters.getResultSummaries(this.$store);
 		},
 		variables(): Variable[] {
 			return dataGetters.getVariables(this.$store);
@@ -103,6 +103,19 @@ export default Vue.extend({
 				highlightRoot: this.highlightRoot,
 				pipelineId: this.pipelineId
 			});
+		},
+		pipelineId() {
+			dataActions.fetchResultSummaries(this.$store, {
+				dataset: this.dataset,
+				variables: this.variables,
+				pipelineId: this.pipelineId
+			});
+			dataActions.fetchResultHighlightValues(this.$store, {
+				dataset: this.dataset,
+				filters: this.filters,
+				highlightRoot: this.highlightRoot,
+				pipelineId: this.pipelineId
+			});
 		}
 	},
 
@@ -122,11 +135,12 @@ export default Vue.extend({
 						dataset: this.dataset,
 						target: this.target
 					}).then(() => {
-						dataActions.fetchVariableSummaries(this.$store, {
+						dataActions.fetchResultSummaries(this.$store, {
 							dataset: this.dataset,
-							variables: this.variables
+							variables: this.variables,
+							pipelineId: this.pipelineId
 						});
-						dataActions.fetchResultsSummaries(this.$store, {
+						dataActions.fetchPredictedSummaries(this.$store, {
 							dataset: this.dataset,
 							requestIds: this.requestIds
 						});

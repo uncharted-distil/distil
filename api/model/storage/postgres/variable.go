@@ -288,15 +288,12 @@ func (s *Storage) fetchNumericalHistogramByResult(dataset string, variable *mode
 	histogramName, bucketQuery, histogramQuery := s.getHistogramAggQuery(extrema)
 
 	// Create the complete query string.
-	query := fmt.Sprintf(`SELECT %s as bucket, CAST(%s as double precision) AS %s, COUNT(*) AS count
-		FROM %s data INNER JOIN %s result ON data.\"%s\" = result.index
-		WHERE result.result_id = $1
-		GROUP BY %s ORDER BY %s;`,
+	query := fmt.Sprintf("SELECT %s as bucket, CAST(%s as double precision) AS %s, COUNT(*) AS count FROM %s data INNER JOIN %s result ON data.\"%s\" = result.index WHERE result.result_id = $1 GROUP BY %s ORDER BY %s;",
 		bucketQuery, histogramQuery, histogramName, dataset,
 		s.getResultTable(dataset), d3mIndexFieldName, bucketQuery, histogramName)
 
 	// execute the postgres query
-	res, err := s.client.Query(query)
+	res, err := s.client.Query(query, resultURI)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to fetch histograms for variable summaries from postgres")
 	}
@@ -325,10 +322,7 @@ func (s *Storage) fetchCategoricalHistogram(dataset string, variable *model.Vari
 
 func (s *Storage) fetchCategoricalHistogramByResult(dataset string, variable *model.Variable, resultURI string) (*model.Histogram, error) {
 	// Get count by category.
-	query := fmt.Sprintf(`SELECT data.\"%s\", COUNT(*) AS count
-	FROM %s data INNER JOIN %s result ON data.\"%s\" = result.index
-	WHERE result.result_id = $1
-	GROUP BY \"%s\" ORDER BY count desc, \"%s\" LIMIT %d;`, variable.Name, dataset, s.getResultTable(dataset),
+	query := fmt.Sprintf("SELECT data.\"%s\", COUNT(*) AS count FROM %s data INNER JOIN %s result ON data.\"%s\" = result.index WHERE result.result_id = $1 GROUP BY \"%s\" ORDER BY count desc, \"%s\" LIMIT %d;", variable.Name, dataset, s.getResultTable(dataset),
 		d3mIndexFieldName, variable.Name, variable.Name, catResultLimit)
 
 	// execute the postgres query

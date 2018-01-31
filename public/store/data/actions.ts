@@ -129,13 +129,19 @@ export const actions = {
 	},
 
 	fetchVariableSummary(context: DataContext, args: { dataset: string, variable: string }) {
-		const dataset = args.dataset;
-		const variable = args.variable;
-		return axios.get(`/distil/variable-summaries/${ES_INDEX}/${dataset}/${variable}`)
+		if (!args.dataset) {
+			console.warn('`dataset` argument is missing');
+			return null;
+		}
+		if (!args.variable) {
+			console.warn('`variable` argument is missing');
+			return null;
+		}
+		return axios.get(`/distil/variable-summaries/${ES_INDEX}/${args.dataset}/${args.variable}`)
 			.then(response => {
 				// save the variable summary data
 				const histogram = response.data.histogram || {
-					name: variable,
+					name: args.variable,
 					feature: '',
 					buckets: [],
 					extrema: {} as any,
@@ -146,7 +152,96 @@ export const actions = {
 			.catch(error => {
 				console.error(error);
 				mutations.updateVariableSummaries(context, {
-					name: variable,
+					name: args.variable,
+					feature: '',
+					buckets: [],
+					extrema: {} as any,
+					err: error
+				});
+			});
+	},
+
+	// fetches variable summary data for the given dataset and variables
+	fetchResultSummaries(context: DataContext, args: { dataset: string, variables: Variable[], pipelineId: string }) {
+		if (!args.dataset) {
+			console.warn('`dataset` argument is missing');
+			return null;
+		}
+		if (!args.variables) {
+			console.warn('`variables` argument is missing');
+			return null;
+		}
+		if (!args.pipelineId) {
+			console.warn('`pipelineId` argument is missing');
+			return null;
+		}
+		const pipeline = getPipelineById(context.rootState.pipelineModule, args.pipelineId);
+		// commit empty place holders, if there is no data
+		const promises = [];
+		args.variables.forEach(variable => {
+			const summary = _.find(context.state.resultSummaries, v => {
+				return v.name === variable.name;
+			});
+			// update if none exists, or doesn't match latest resultId
+			if (!summary || summary.resultId !== pipeline.resultId) {
+				// add place holder
+				mutations.updateResultSummaries(context, {
+					name: variable.name,
+					feature: name,
+					pending: true,
+					buckets: [],
+					pipelineId: args.pipelineId,
+					extrema: {
+						min: NaN,
+						max: NaN
+					}
+				});
+				// fetch summary
+				promises.push(context.dispatch('fetchResultSummary', {
+					dataset: args.dataset,
+					pipelineId: args.pipelineId,
+					variable: variable.name
+				}));
+			}
+		});
+		// fill them in asynchronously
+		return Promise.all(promises);
+	},
+
+	fetchResultSummary(context: DataContext, args: { dataset: string, variable: string, pipelineId: string }) {
+		if (!args.dataset) {
+			console.warn('`dataset` argument is missing');
+			return null;
+		}
+		if (!args.variable) {
+			console.warn('`variable` argument is missing');
+			return null;
+		}
+		if (!args.pipelineId) {
+			console.warn('`pipelineId` argument is missing');
+			return null;
+		}
+		const pipeline = getPipelineById(context.rootState.pipelineModule, args.pipelineId);
+		if (!pipeline.resultId) {
+			// no results ready to pull
+			return null;
+		}
+		return axios.get(`/distil/results-variable-summary/${ES_INDEX}/${args.dataset}/${args.variable}/${pipeline.resultId}`)
+			.then(response => {
+				// save the variable summary data
+				const histogram = response.data.histogram || {
+					name: args.variable,
+					feature: '',
+					buckets: [],
+					extrema: {} as any,
+					err: 'No analysis available'
+				};
+				mutations.updateResultSummaries(context, histogram);
+			})
+			.catch(error => {
+				console.error(error);
+				mutations.updateResultSummaries(context, {
+					name: args.variable,
 					feature: '',
 					buckets: [],
 					extrema: {} as any,
@@ -190,19 +285,19 @@ export const actions = {
 	},
 
 	// fetches result summary for a given pipeline id.
-	fetchResultsSummary(context: DataContext, args: { dataset: string, pipelineId: string }) {
+	fetchPredictedSummary(context: DataContext, args: { dataset: string, pipelineId: string }) {
 		const pipeline = getPipelineById(context.rootState.pipelineModule, args.pipelineId);
 		const endPoint = `/distil/results-summary/${ES_INDEX}/${args.dataset}`
 		const nameFunc = (p: PipelineInfo) => getPredictedFacetKey(p.feature);
-		getSummary(context, endPoint, pipeline, nameFunc, mutations.updateResultsSummaries);
+		getSummary(context, endPoint, pipeline, nameFunc, mutations.updatePredictedSummaries);
 	},
 
 	// fetches result summaries for a given pipeline create request
-	fetchResultsSummaries(context: DataContext, args: { dataset: string, requestIds: string[] }) {
+	fetchPredictedSummaries(context: DataContext, args: { dataset: string, requestIds: string[] }) {
 		const pipelines = getPipelinesByRequestIds(context.rootState.pipelineModule, args.requestIds);
 		const endPoint = `/distil/results-summary/${ES_INDEX}/${args.dataset}`
 		const nameFunc = (p: PipelineInfo) => getPredictedFacetKey(p.feature);
-		getSummaries(context, endPoint, pipelines, nameFunc, mutations.updateResultsSummaries);
+		getSummaries(context, endPoint, pipelines, nameFunc, mutations.updatePredictedSummaries);
 	},
 
 	// fetches result summary for a given pipeline id.

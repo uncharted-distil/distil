@@ -162,7 +162,7 @@ export default Vue.extend({
 
 		targetSummary() : VariableSummary {
 			const targetVariable = routeGetters.getRouteTargetVariable(this.$store);
-			const varSummaries = dataGetters.getVariableSummaries(this.$store);
+			const varSummaries = dataGetters.getResultSummaries(this.$store);
 			return _.find(varSummaries, v => _.toLower(v.name) === _.toLower(targetVariable));
 		},
 
@@ -173,20 +173,20 @@ export default Vue.extend({
 			return [];
 		},
 
-		resultsSummaries(): VariableSummary[] {
-			return dataGetters.getResultsSummaries(this.$store);
+		predictedSummaries(): VariableSummary[] {
+			return dataGetters.getPredictedSummaries(this.$store);
 		},
 
 		resultExtrema(): Extrema {
-			if (this.targetSummary || this.resultsSummaries) {
+			if (this.targetSummary || this.predictedSummaries) {
 				let min = Infinity;
 				let max = -Infinity;
 				if (this.targetSummary) {
 					min = Math.min(this.targetSummary.extrema.min, min);
 					max = Math.max(this.targetSummary.extrema.max, max);
 				}
-				if (this.resultsSummaries) {
-					this.resultsSummaries.forEach(summary => {
+				if (this.predictedSummaries) {
+					this.predictedSummaries.forEach(summary => {
 						min = Math.min(summary.extrema.min, min);
 						max = Math.max(summary.extrema.max, max);
 					});
