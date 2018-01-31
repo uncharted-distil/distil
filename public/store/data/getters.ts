@@ -1,5 +1,5 @@
 import _ from 'lodash';
-import { FieldInfo, Variable, Data, DataState, Datasets, VariableSummary, TargetRow, Highlights, TableRow } from './index';
+import { FieldInfo, Variable, Data, DataState, Datasets, VariableSummary, TargetRow, TableRow } from './index';
 import { Filter, EMPTY_FILTER } from '../../util/filters';
 import { TARGET_POSTFIX, PREDICTED_POSTFIX } from '../../util/data';
 import { Dictionary } from '../../util/dict';
@@ -281,7 +281,7 @@ export const getters = {
 		return {};
 	},
 
-	getHighlightedFeatureValues(state: DataState): Highlights {
-		return state.highlightedFeatureValues;
+	getHighlightedValues(state: DataState) {
+		return state.highlightedValues;
 	}
 }

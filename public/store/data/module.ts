@@ -42,7 +42,7 @@ export const getters = {
 	getSelectedDataNumRows: read(moduleGetters.getSelectedDataNumRows),
 	getSelectedDataItems: read(moduleGetters.getSelectedDataItems),
 	getSelectedDataFields: read(moduleGetters.getSelectedDataFields),
-	getHighlightedFeatureValues: read(moduleGetters.getHighlightedFeatureValues),
+	getHighlightedValues: read(moduleGetters.getHighlightedValues)
 }
 
 // Typed actions
@@ -59,9 +59,10 @@ export const actions = {
 	fetchResultsSummaries: dispatch(moduleActions.fetchResultsSummaries),
 	fetchResidualsSummaries: dispatch(moduleActions.fetchResidualsSummaries),
 	updateResults: dispatch(moduleActions.updateResults),
-	fetchResults: dispatch(moduleActions.fetchResults)
+	fetchResults: dispatch(moduleActions.fetchResults),
+	fetchDataHighlightValues: dispatch(moduleActions.fetchDataHighlightValues),
+	fetchResultHighlightValues: dispatch(moduleActions.fetchResultHighlightValues)
 }
-
 
 // Typed mutations
 export const mutations = {
@@ -74,7 +75,5 @@ export const mutations = {
 	setFilteredData: commit(moduleMutations.setFilteredData),
 	setSelectedData: commit(moduleMutations.setSelectedData),
 	setResultData: commit(moduleMutations.setResultData),
-	highlightFeatureValues: commit(moduleMutations.highlightFeatureValues),
-	clearFeatureHighlightValues: commit(moduleMutations.clearFeatureHighlightValues),
-	clearFeatureHighlights: commit(moduleMutations.clearFeatureHighlights)
+	setHighlightedValues: commit(moduleMutations.setHighlightedValues)
 }

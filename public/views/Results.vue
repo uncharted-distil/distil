@@ -31,6 +31,8 @@ import { getters as routeGetters } from '../store/route/module';
 import { actions as pipelineActions, getters as pipelineGetters } from '../store/pipelines/module';
 import { Variable, VariableSummary } from '../store/data/index';
 import { Dictionary } from '../util/dict';
+import { HighlightRoot } from '../util/highlights';
+import { Filter } from '../util/filters';
 import Vue from 'vue';
 
 export default Vue.extend({
@@ -80,11 +82,28 @@ export default Vue.extend({
 		},
 		sessionId(): string {
 			return pipelineGetters.getPipelineSessionID(this.$store);
+		},
+		filters(): Filter[] {
+			return routeGetters.getDecodedFilters(this.$store);
+		},
+		highlightRoot(): HighlightRoot {
+			return routeGetters.getDecodedHighlightRoot(this.$store);
 		}
 	},
 
 	mounted() {
 		this.fetch();
+	},
+
+	watch: {
+		highlightRoot() {
+			dataActions.fetchResultHighlightValues(this.$store, {
+				dataset: this.dataset,
+				filters: this.filters,
+				highlightRoot: this.highlightRoot,
+				pipelineId: this.pipelineId
+			});
+		}
 	},
 
 	methods: {
@@ -114,6 +133,12 @@ export default Vue.extend({
 						dataActions.fetchResidualsSummaries(this.$store, {
 							dataset: this.dataset,
 							requestIds: this.requestIds
+						});
+						dataActions.fetchResultHighlightValues(this.$store, {
+							dataset: this.dataset,
+							filters: this.filters,
+							highlightRoot: this.highlightRoot,
+							pipelineId: this.pipelineId
 						});
 					});
 				});
