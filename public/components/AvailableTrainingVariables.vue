@@ -35,7 +35,7 @@ export default Vue.extend({
 			return routeGetters.getRouteDataset(this.$store);
 		},
 		variables(): VariableSummary[] {
-			const summaries = dataGetters.getVariableSummaries(this.$store);
+			const summaries = dataGetters.getAvailableVariableSummaries(this.$store);
 			return filterSummariesByDataset(summaries, this.dataset);
 		},
 		html(): ( { key: string } ) => HTMLDivElement {
