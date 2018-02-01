@@ -41,7 +41,7 @@ export default Vue.extend({
 				const container = document.createElement('div');
 				const trainingElem = document.createElement('button');
 				trainingElem.className += 'btn btn-sm btn-outline-secondary ml-2 mr-2 mb-2';
-				trainingElem.innerHTML = 'Add to Training Set';
+				trainingElem.innerHTML = 'Add';
 				trainingElem.addEventListener('click', () => {
 					const training = routeGetters.getRouteTrainingVariables(this.$store);
 					const trainingArray = training ? training.split(',') : [];

@@ -1,6 +1,6 @@
 <template>
 	<div class="training-variables">
-		<p class="nav-link font-weight-bold">Training features</p>
+		<p class="nav-link font-weight-bold">Features to Model</p>
 		<variable-facets
 			enable-search
 			enable-facet-filtering
