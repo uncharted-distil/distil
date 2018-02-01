@@ -209,7 +209,7 @@ func Rank(index string, dataset string, config *IngestTaskConfig) error {
 	return nil
 }
 
-// Rank the importance of the variables in the dataset.
+// Summarize the contents of the dataset.
 func Summarize(index string, dataset string, config *IngestTaskConfig) error {
 	// create ranker
 	client := rest.NewClient(config.SummaryRESTEndpoint)
