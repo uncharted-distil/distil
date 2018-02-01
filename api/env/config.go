@@ -52,6 +52,9 @@ type Config struct {
 	RankingOutputPath          string `env:"RANKING_OUTPUT_PATH" envDefault:"tables/importance.json"`
 	RankingRowLimit            int    `env:"RANKING_ROW_LIMIT" envDefault:"1000"`
 	SummaryPath                string `env:"SUMMARY_PATH" envDefault:"summary.txt"`
+	SummaryEndpoint            string `env:"SUMMARY_ENDPOINT" envDefault:"http://10.108.4.42:5001"`
+	SummaryFunctionName        string `env:"SUMMARY_FUNCTION_NAME" envDefault:"fileUpload"`
+	SummaryMachinePath         string `env:"SUMMARY_MACHINE_PATH" envDefault:"summary-machine.json"`
 	ElasticTimeout             int    `env:"ES_TIMEOUT" envDefault:"300"`
 	ElasticDatasetPrefix       string `env:"ES_DATASET_PREFIX" envDefault:"d_"`
 	InitialDataset             string `env:"INITIAL_DATASET" envDefault:""`

@@ -24,6 +24,7 @@ import (
 
 const (
 	rankingFilename = "rank-no-missing.csv"
+	baseTableSuffix = "_base"
 )
 
 // IngestTaskConfig captures the necessary configuration for an data ingest.
@@ -46,6 +47,9 @@ type IngestTaskConfig struct {
 	DatabaseUser                     string
 	Database                         string
 	SummaryOutputPathRelative        string
+	SummaryMachineOutputPathRelative string
+	SummaryRESTEndpoint              string
+	SummaryFunctionName              string
 	ESEndpoint                       string
 	ESTimeout                        int
 	ESDatasetPrefix                  string
@@ -78,6 +82,11 @@ func IngestDataset(index string, dataset string, config *IngestTaskConfig) error
 	err = Rank(index, dataset, config)
 	if err != nil {
 		return errors.Wrap(err, "unable to rank field importance")
+	}
+
+	err = Summarize(index, dataset, config)
+	if err != nil {
+		return errors.Wrap(err, "unable to summarize the dataset")
 	}
 
 	err = Ingest(index, dataset, config)
@@ -200,6 +209,34 @@ func Rank(index string, dataset string, config *IngestTaskConfig) error {
 	return nil
 }
 
+// Rank the importance of the variables in the dataset.
+func Summarize(index string, dataset string, config *IngestTaskConfig) error {
+	// create ranker
+	client := rest.NewClient(config.SummaryRESTEndpoint)
+	summarizer := rest.NewSummarizer(config.SummaryFunctionName, client)
+
+	// get the importance from the REST interface
+	summary, err := summarizer.SummarizeFile(config.getAbsolutePath(dataset, config.MergedOutputPathRelative))
+	if err != nil {
+		return errors.Wrap(err, "unable to summarize merged file")
+	}
+
+	// marshall result
+	bytes, err := json.MarshalIndent(summary, "", "    ")
+	if err != nil {
+		return errors.Wrap(err, "unable to marshall summary result")
+	}
+
+	// write to file
+	outputPath := config.getAbsolutePath(dataset, config.SummaryMachineOutputPathRelative)
+	err = ioutil.WriteFile(outputPath, bytes, 0644)
+	if err != nil {
+		return errors.Wrapf(err, "unable to write summary to '%s'", outputPath)
+	}
+
+	return nil
+}
+
 // Ingest the metadata to ES and the data to Postgres.
 func Ingest(index string, dataset string, config *IngestTaskConfig) error {
 	meta, err := metadata.LoadMetadataFromClassification(
@@ -220,6 +257,12 @@ func Ingest(index string, dataset string, config *IngestTaskConfig) error {
 
 	// load stats
 	err = meta.LoadDatasetStats(config.getAbsolutePath(dataset, config.MergedOutputPathRelative))
+	if err != nil {
+		return errors.Wrap(err, "unable to load stats")
+	}
+
+	// load stats
+	err = meta.LoadSummaryMachine(config.getAbsolutePath(dataset, config.SummaryMachineOutputPathRelative))
 	if err != nil {
 		return errors.Wrap(err, "unable to load stats")
 	}
@@ -262,7 +305,9 @@ func Ingest(index string, dataset string, config *IngestTaskConfig) error {
 	dbTable := fmt.Sprintf("%s%s", config.ESDatasetPrefix, dataset)
 
 	// Drop the current table if requested.
-	pg.DropTable(dbTable)
+	// Hardcoded the base table name for now.
+	pg.DropView(dbTable)
+	pg.DropTable(fmt.Sprintf("%s%s", dbTable, baseTableSuffix))
 
 	// Create the database table.
 	ds, err := pg.InitializeDataset(meta)
