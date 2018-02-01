@@ -109,6 +109,7 @@ export const actions = {
 				// add place holder
 				mutations.updateVariableSummaries(context, {
 					name: variable.name,
+					dataset: args.dataset,
 					feature: name,
 					pending: true,
 					buckets: [],
@@ -142,6 +143,7 @@ export const actions = {
 				// save the variable summary data
 				const histogram = response.data.histogram || {
 					name: args.variable,
+					dataset: args.dataset,
 					feature: '',
 					buckets: [],
 					extrema: {} as any,
@@ -153,6 +155,7 @@ export const actions = {
 				console.error(error);
 				mutations.updateVariableSummaries(context, {
 					name: args.variable,
+					dataset: args.dataset,
 					feature: '',
 					buckets: [],
 					extrema: {} as any,
@@ -187,6 +190,7 @@ export const actions = {
 				// add place holder
 				mutations.updateResultSummaries(context, {
 					name: variable.name,
+					dataset: args.dataset,
 					feature: name,
 					pending: true,
 					buckets: [],
@@ -242,6 +246,7 @@ export const actions = {
 				console.error(error);
 				mutations.updateResultSummaries(context, {
 					name: args.variable,
+					dataset: args.dataset,
 					feature: '',
 					buckets: [],
 					extrema: {} as any,
