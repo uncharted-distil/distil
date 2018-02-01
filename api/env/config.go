@@ -1,17 +1,22 @@
 package env
 
 import (
-	"encoding/json"
+	enjson "encoding/json"
 	"fmt"
+	"github.com/caarlos0/env"
+	"github.com/unchartedsoftware/distil/api/util/json"
+	"github.com/unchartedsoftware/plog"
 	"io/ioutil"
 	"os"
-
-	"github.com/caarlos0/env"
+	"path"
 )
 
 const (
-	tempStorageRoot = "temp_storage_root"
-	executablesRoot = "executables_root"
+	tempStorageRoot  = "temp_storage_root"
+	executablesRoot  = "executables_root"
+	datasetRoot      = "dataset_root"
+	userProblemsRoot = "user_problems_root"
+	datasetSchema    = "dataset_schema"
 )
 
 var (
@@ -59,6 +64,7 @@ type Config struct {
 	ElasticDatasetPrefix       string `env:"ES_DATASET_PREFIX" envDefault:"d_"`
 	InitialDataset             string `env:"INITIAL_DATASET" envDefault:""`
 	ESDatasetsIndex            string `env:"ES_DATASETS_INDEX" envDefault:"datasets"`
+	UserProblemPath            string `env:"USER_PROBLEM_PATH" envDefault:"datasets"`
 }
 
 // LoadConfig loads the config from the environment if necessary and returns a
@@ -85,24 +91,41 @@ func overideFromStartupFile(cfg *Config) error {
 		cfg.StartupConfigFile = os.Args[1]
 	}
 
+	log.Infof("Loading overrides from config file (%s)", cfg.StartupConfigFile)
+
 	// read startup config JSON file
 	startupConfig, err := ioutil.ReadFile(cfg.StartupConfigFile)
 	if err != nil {
 		if !os.IsNotExist(err) {
 			return fmt.Errorf("Failed to read startup config file (%s): %v", cfg.StartupConfigFile, err)
 		}
+		log.Infof("No config file found at (%s)", cfg.StartupConfigFile)
 		return nil
 	}
 	// parse out the entries
 	var startupData map[string]interface{}
-	err = json.Unmarshal(startupConfig, &startupData)
+	err = enjson.Unmarshal(startupConfig, &startupData)
 	if err != nil {
 		return fmt.Errorf("Failed to parse startup config file (%s): %v", cfg.StartupConfigFile, err)
 	}
 
 	// override / add values
-	cfg.PipelineDataDir = startupData[tempStorageRoot].(string)
-	cfg.ExportPath = startupData[executablesRoot].(string)
 
+	result, ok := json.String(startupData, tempStorageRoot)
+	if ok {
+		cfg.PipelineDataDir = result
+	}
+
+	result, ok = json.String(startupData, executablesRoot)
+	if ok {
+		cfg.ExportPath = result
+	}
+
+	result, ok = json.String(startupData, datasetSchema)
+	if ok {
+		// split path into path/file
+		cfg.DataFolderPath = path.Dir(result)
+		cfg.InitialDataset = path.Base(result)
+	}
 	return nil
 }
