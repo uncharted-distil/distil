@@ -5,7 +5,7 @@
 		<div class="select-data-table-container">
 			<div class="select-data-no-results" v-if="items.length===0">
 				<div class="text-danger">
-					<i class="fa fa-times missing-icon"></i><strong>No Training features Selected</strong>
+					<i class="fa fa-times missing-icon"></i><strong>No Training Features Selected</strong>
 				</div>
 			</div>
 			<b-table
