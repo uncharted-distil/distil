@@ -27,6 +27,7 @@ export interface Bucket {
 export interface VariableSummary {
 	name: string;
 	feature: string;
+	dataset: string;
 	buckets: Bucket[];
 	extrema: Extrema;
 	pipelineId?: string;

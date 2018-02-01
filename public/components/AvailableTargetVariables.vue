@@ -17,6 +17,7 @@ import 'jquery';
 import { getters as dataGetters } from '../store/data/module';
 import { getters as routeGetters } from '../store/route/module';
 import { createRouteEntry } from '../util/routes';
+import { filterSummariesByDataset } from '../util/data';
 import { VariableSummary } from '../store/data/index';
 import VariableFacets from '../components/VariableFacets.vue';
 import { CREATE_ROUTE } from '../store/route/index';
@@ -35,7 +36,8 @@ export default Vue.extend({
 			return routeGetters.getRouteDataset(this.$store);
 		},
 		variables(): VariableSummary[] {
-			return dataGetters.getVariableSummaries(this.$store);
+			const summaries = dataGetters.getVariableSummaries(this.$store);
+			return filterSummariesByDataset(summaries, this.dataset);
 		},
 		html(): ( { key: string } ) => HTMLDivElement {
 			return (group: { key: string }) => {

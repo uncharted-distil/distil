@@ -18,6 +18,7 @@ import { overlayRouteEntry } from '../util/routes';
 import { getters as dataGetters } from '../store/data/module';
 import { getters as routeGetters } from '../store/route/module';
 import { VariableSummary } from '../store/data/index';
+import { filterSummariesByDataset } from '../util/data';
 import VariableFacets from '../components/VariableFacets.vue';
 import 'font-awesome/css/font-awesome.css';
 import Vue from 'vue';
@@ -34,7 +35,8 @@ export default Vue.extend({
 			return routeGetters.getRouteDataset(this.$store);
 		},
 		variables(): VariableSummary[] {
-			return dataGetters.getAvailableVariableSummaries(this.$store);
+			const summaries = dataGetters.getVariableSummaries(this.$store);
+			return filterSummariesByDataset(summaries, this.dataset);
 		},
 		html(): ( { key: string } ) => HTMLDivElement {
 			return (group: { key: string }) => {

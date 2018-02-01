@@ -51,6 +51,7 @@ func ResultsSummaryHandler(ctor model.PipelineStorageCtor, ctorData model.DataSt
 			handleError(w, err)
 			return
 		}
+		histogram.Dataset = dataset
 
 		// marshall data and sent the response back
 		err = handleJSON(w, ResultsSummary{
