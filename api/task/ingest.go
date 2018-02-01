@@ -85,9 +85,10 @@ func IngestDataset(index string, dataset string, config *IngestTaskConfig) error
 	}
 
 	err = Summarize(index, dataset, config)
-	if err != nil {
-		return errors.Wrap(err, "unable to summarize the dataset")
-	}
+	// NOTE: For now ignore summary errors!
+	//if err != nil {
+	//	return errors.Wrap(err, "unable to summarize the dataset")
+	//}
 
 	err = Ingest(index, dataset, config)
 	if err != nil {
@@ -263,9 +264,10 @@ func Ingest(index string, dataset string, config *IngestTaskConfig) error {
 
 	// load stats
 	err = meta.LoadSummaryMachine(config.getAbsolutePath(dataset, config.SummaryMachineOutputPathRelative))
-	if err != nil {
-		return errors.Wrap(err, "unable to load stats")
-	}
+	// NOTE: For now ignore summary errors!
+	//if err != nil {
+	//	return errors.Wrap(err, "unable to load stats")
+	//}
 
 	// create elasticsearch client
 	elasticClient, err := elastic.NewClient(
