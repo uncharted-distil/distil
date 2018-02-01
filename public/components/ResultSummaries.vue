@@ -248,12 +248,11 @@ export default Vue.extend({
 		},
 
 		onFacetClick(context: string, key: string, value: string) {
-			// clear exiting highlights
 			if (key && value) {
-				// extract the var name from the key
+				const colKey = getTargetCol(routeGetters.getRouteTargetVariable(this.$store));
 				updateHighlightRoot(this, {
 					context: context,
-					key: key,
+					key: colKey,
 					value: value
 				});
 			} else {

@@ -288,6 +288,22 @@ export default Vue.extend({
 			}
 		},
 
+		selectCategoricalFacet(facet: any) {
+			if (facet._spec.segments && facet._spec.segments.length > 0) {
+				facet.select(facet._spec.segments);
+			} else {
+				facet.select(facet.count);
+			}
+		},
+
+		deselectCategoricalFacet(facet: any) {
+			if (facet._spec.segments && facet._spec.segments.length > 0) {
+				facet.select(0);
+			} else {
+				facet.deselect();
+			}
+		},
+
 		injectHighlightsIntoGroup(group: any, highlights: Highlights) {
 
 			const highlightValues = this.getHighlightValuesForGroup(highlights, group.key);
@@ -296,11 +312,13 @@ export default Vue.extend({
 			// loop through groups ensure that selection is clear on each - not that clear
 			// the selection on a categorical facet means set its selection to a full count
 			group.facets.forEach(facet => {
+				if (facet._type === 'placeholder') {
+					return;
+				}
 				if (facet._histogram) {
 					facet.deselect();
-				} else {
-					facet.select(facet.count);
 				}
+				this.selectCategoricalFacet(facet);
 			});
 
 			for (const facet of group.facets) {
@@ -387,25 +405,38 @@ export default Vue.extend({
 
 					if (highlightValues) {
 
-						const values = Array.from(highlightValues) as string[];
+						if (this.isHighlightedGroup(highlights, group.key)) {
 
-						// See if this facet is in the values list, marking it as selected if it is.
-						const matchedValue = values.find(v => v.toLowerCase() === facet.value.toLowerCase() ? facet.value.toLowerCase(): undefined);
-						if (matchedValue) {
-							facet.select(facet.count);
+							const highlightValue = this.getHighlightRootValue(highlights);
+							if (highlightValue.toLowerCase() === facet.value.toLowerCase()) {
+								this.selectCategoricalFacet(facet);
+							} else {
+								this.deselectCategoricalFacet(facet);
+							}
+
 						} else {
-							facet.deselect();
+
+							const values = Array.from(highlightValues) as string[];
+							const matchedValue = values.find(v => v.toLowerCase() === (facet.value.toLowerCase() ? facet.value.toLowerCase(): undefined));
+							if (matchedValue) {
+								this.selectCategoricalFacet(facet);
+							} else {
+								this.deselectCategoricalFacet(facet);
+							}
 						}
+
+
 
 					} else {
 
 						const highlightValue = this.getHighlightRootValue(highlights);
 						if (highlightValue) {
+
 							if (this.isHighlightedGroup(highlights, group.key) &&
 								highlightValue.toLowerCase() === facet.value.toLowerCase()) {
-								facet.select(facet.count);
+								this.selectCategoricalFacet(facet);
 							} else {
-								facet.deselect();
+								this.deselectCategoricalFacet(facet);
 							}
 						}
 
@@ -413,7 +444,6 @@ export default Vue.extend({
 				}
 			}
 		},
-
 
 		injectHighlights(highlights: Highlights) {
 			// Clear highlight state incase it was set via a click on on another
@@ -577,12 +607,12 @@ export default Vue.extend({
 						// switch to unfilter from filtered
 						$icon.removeClass('fa-circle').addClass('fa-circle-o');
 						// add newly selected value
-						current.deselect();
+						this.deselectCategoricalFacet(current);
 					} else {
 						// switch from filtered to unfiltered, and restore highlight state if needed
 						$icon.removeClass('fa-circle-o').addClass('fa-circle');
 						if (this.isHighlightedValue(this.highlights, key, value)) {
-							current.select({ count: current.count });
+							this.selectCategoricalFacet(current);
 						}
 						values.push(value);
 					}
