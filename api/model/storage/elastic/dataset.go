@@ -37,6 +37,11 @@ func (s *Storage) parseDatasets(res *elastic.SearchResult, includeIndex bool) ([
 		if !ok {
 			summary = ""
 		}
+		// extract the summary
+		summaryMachine, ok := json.String(src, "summaryMachine")
+		if !ok {
+			summary = ""
+		}
 		// extract the number of rows
 		numRows, ok := json.Int(src, "numRows")
 		if !ok {
@@ -57,6 +62,7 @@ func (s *Storage) parseDatasets(res *elastic.SearchResult, includeIndex bool) ([
 			Name:        name,
 			Description: description,
 			Summary:     summary,
+			SummaryML:   summaryMachine,
 			NumRows:     int64(numRows),
 			NumBytes:    int64(numBytes),
 			Variables:   variables,

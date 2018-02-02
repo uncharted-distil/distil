@@ -12,6 +12,7 @@ type Dataset struct {
 	Name        string      `json:"name"`
 	Description string      `json:"description"`
 	Summary     string      `json:"summary"`
+	SummaryML   string      `json:"summaryML"`
 	Variables   []*Variable `json:"variables"`
 	NumRows     int64       `json:"numRows"`
 	NumBytes    int64       `json:"numBytes"`
