@@ -18,7 +18,7 @@
 			</div>
 			<div v-if="enableTitle" class="row flex-1 align-items-center">
 				<div class="col-12 flex-column d-flex">
-					<p>Select one the following feature summaries showing count of records by feature value.</p>
+					<p>Select one of the following feature summaries showing count of records by feature value.</p>
 				</div>
 			</div>
 			<div class="row flex-11">
@@ -382,6 +382,13 @@ button {
     color: rgba(0,0,0,0.87);
     box-shadow: 0 1px 2px 0 rgba(0,0,0,0.10);
     transition: box-shadow 0.3s ease-in-out;
+}
+.variable-facets-container .facets-root-container .facets-group-container .facets-group .group-header {
+	padding: 4px 0px 6px 8px;
+}
+.variable-facets-container .facets-root-container .facets-group-container .facets-group .group-header .type-change-menu {
+	float: right;
+	margin-top: -4px;
 }
 .facet-filters span {
 	font-size: 0.9rem;
