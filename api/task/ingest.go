@@ -10,6 +10,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"os"
+	"path"
 	"time"
 
 	"github.com/pkg/errors"
@@ -75,7 +76,8 @@ func (c *IngestTaskConfig) getRawDataPath() string {
 // IngestDataset executes the complete ingest process for the specified dataset.
 func IngestDataset(index string, dataset string, config *IngestTaskConfig) error {
 	// Make sure the temp data directory exists.
-	os.MkdirAll(config.getTmpAbsolutePath(config.MergedOutputSchemaPathRelative), os.ModePerm)
+	tmpPath := path.Dir(config.getTmpAbsolutePath(config.MergedOutputSchemaPathRelative))
+	os.MkdirAll(tmpPath, os.ModePerm)
 
 	err := Merge(index, dataset, config)
 	if err != nil {
