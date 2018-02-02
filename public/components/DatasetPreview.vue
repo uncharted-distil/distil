@@ -17,6 +17,10 @@
 					</ul>
 				</div>
 				<div class='col-8'>
+					<span><b>Description:</b></span>
+					<p class='small-text'>
+						{{summaryML}}
+					</p>
 					<span><b>Summary:</b></span>
 					<p class='small-text'>
 						{{summary}}
@@ -72,6 +76,7 @@ export default Vue.extend({
 		'name': String,
 		'description': String,
 		'summary': String,
+		'summaryML': String,
 		'variables': Array,
 		'numRows': Number,
 		'numBytes': Number
