@@ -50,6 +50,7 @@ export const getters = {
 export const actions = {
 	searchDatasets: dispatch(moduleActions.searchDatasets),
 	setVariableType: dispatch(moduleActions.setVariableType),
+	exportProblem: dispatch(moduleActions.exportProblem),
 	fetchVariables: dispatch(moduleActions.fetchVariables),
 	fetchVariableSummary: dispatch(moduleActions.fetchVariableSummary),
 	fetchVariableSummaries: dispatch(moduleActions.fetchVariableSummaries),
