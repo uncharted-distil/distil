@@ -1,5 +1,6 @@
 import _ from 'lodash';
 import { spinnerHTML } from '../util/spinner';
+import { formatValue } from '../util/types';
 import { VariableSummary, Extrema } from '../store/data/index';
 
 export const CATEGORY_NO_MATCH_COLOR = "#e05353";
@@ -226,10 +227,10 @@ function hackyBinning(summary: VariableSummary, extrema: Extrema) {
 	const buckets = new Array(NUM_BUCKETS);
 	for (let i=0; i<NUM_BUCKETS; i++) {
 		const from = extrema.min + (i * span);
-		const to = extrema.min + (i + 1) * span;
+		const to = extrema.min + ((i + 1) * span);
 		buckets[i] = {
-			label: `${from}`,
-			toLabel: `${to}`,
+			label: `${formatValue(from, summary.varType)}`,
+			toLabel: `${formatValue(to, summary.varType)}`,
 			count: 0
 		};
 	}
@@ -252,19 +253,19 @@ function getHistogramSlices(summary: VariableSummary, extrema: Extrema) {
 	if (extrema && !_.isNaN(extrema.min) && !_.isNaN(extrema.max)) {
 		return hackyBinning(summary, extrema);
 	}
-	return summary.buckets.map((b, i) => {
-		let toLabel: string;
-		if (i < summary.buckets.length-1) {
-			toLabel = summary.buckets[i+1].key;
-		} else {
-			toLabel = `${summary.extrema.max}`;
-		}
-		return {
-			label: b.key,
-			toLabel: toLabel,
-			count: b.count
+	const buckets = summary.buckets;
+	const slices = new Array(buckets.length);
+	for (let i=0; i<buckets.length; i++) {
+		const bucket = buckets[i];
+		const from = _.toNumber(bucket.key);
+		const to = (i < buckets.length-1) ? _.toNumber(buckets[i+1].key) : summary.extrema.max;
+		slices[i] = {
+			label: `${formatValue(from, summary.varType)}`,
+			toLabel: `${formatValue(to, summary.varType)}`,
+			count: bucket.count
 		};
-	});
+	}
+	return slices;
 }
 
 function createNumericalSummaryFacet(summary: VariableSummary, enableCollapse: boolean, enableFiltering: boolean, extrema: Extrema): Group {
