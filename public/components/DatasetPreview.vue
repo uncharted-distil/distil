@@ -17,10 +17,12 @@
 					</ul>
 				</div>
 				<div class='col-8'>
-					<span><b>Description:</b></span>
-					<p class='small-text'>
-						{{summaryML}}
-					</p>
+					<div v-if="summaryML.length > 0">
+						<span><b>Description:</b></span>
+						<p class='small-text'>
+							{{summaryML}}
+						</p>
+					</div>
 					<span><b>Summary:</b></span>
 					<p class='small-text'>
 						{{summary}}
