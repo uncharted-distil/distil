@@ -53,11 +53,12 @@ type DataSchemaProperties struct {
 
 // DataResource represents a set of variables.
 type DataResource struct {
-	ResID     string          `json:"resID"`
-	ResPath   string          `json:"resPath"`
-	ResType   string          `json:"resType"`
-	ResFormat []string        `json:"resFormat"`
-	Variables []*DataVariable `json:"columns"`
+	ResID        string          `json:"resID"`
+	ResPath      string          `json:"resPath"`
+	ResType      string          `json:"resType"`
+	ResFormat    []string        `json:"resFormat"`
+	IsCollection bool            `json:"isCollection"`
+	Variables    []*DataVariable `json:"columns"`
 }
 
 // DataVariable captures the data schema representation of a variable.
@@ -240,11 +241,12 @@ func writeDataSchema(schemaPath string, dataset string, filteredData *model.Filt
 	// Build the schema data for output.
 	drs := make([]*DataResource, 1)
 	drs[0] = &DataResource{
-		ResID:     "0",
-		ResPath:   path.Join(D3MDataFolder, D3MLearningData),
-		ResType:   D3MResourceType,
-		ResFormat: []string{D3MResourceFormat},
-		Variables: make([]*DataVariable, 0),
+		ResID:        "0",
+		ResPath:      path.Join(D3MDataFolder, D3MLearningData),
+		ResType:      D3MResourceType,
+		ResFormat:    []string{D3MResourceFormat},
+		IsCollection: false,
+		Variables:    make([]*DataVariable, 0),
 	}
 	dsProperties := &DataSchemaProperties{
 		DatasetID:     dataset,
