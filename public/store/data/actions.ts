@@ -74,6 +74,28 @@ export const actions = {
 			});
 	},
 
+	exportProblem(context: DataContext, args: { dataset: string, target: string, filters: Filter[] }) {
+		if (!args.dataset) {
+			console.warn('`dataset` argument is missing');
+			return null;
+		}
+		if (!args.target) {
+			console.warn('`target` argument is missing');
+			return null;
+		}
+		if (!args.filters) {
+			console.warn('`filters` argument is missing');
+			return null;
+		}
+
+        const filters = args.filters;
+        const queryParams = encodeQueryParams(filters);
+		return axios.post(`/distil/variables/${ES_INDEX}/${args.dataset}/${args.target}${queryParams}`)
+			.catch(error => {
+				console.error(error);
+			});
+	},
+
 	fetchVariablesAndVariableSummaries(context: DataContext, args: { dataset: string }) {
 		if (!args.dataset) {
 			console.warn('`dataset` argument is missing');
