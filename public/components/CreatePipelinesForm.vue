@@ -1,13 +1,5 @@
 <template>
 	<div class="create-pipelines-form">
-		<div class="row justify-content-center requirements">
-			<div class="requirement-met text-success" v-if="trainingSelected">
-				<i class="fa fa-check selected-icon"></i><strong>Training Features Selected</strong>
-			</div>
-			<div class="requirement-met text-success" v-if="targetSelected">
-				<i class="fa fa-check selected-icon"></i><strong>Target Feature Selected</strong>
-			</div>
-		</div>
 		<div class="row justify-content-center">
 			<b-button class="create-button" :variant="createVariant" @click="create" :disabled="disableCreate">
 				Create Models

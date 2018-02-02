@@ -17,7 +17,6 @@
 			<div class="col-12 col-md-6 d-flex flex-column">
 				<div class="row flex-1 bg-white align-items-center">
 					<div class="col-12">
-						<h5 class="header-label">Select Feature to Predict</h5>
 					</div>
 				</div>
 				<div class="row flex-12">
@@ -27,11 +26,6 @@
 						</div>
 						<div class="row responsive-flex pb-3">
 							<select-data-table class="col-12 d-flex flex-column select-data-table"></select-data-table>
-						</div>
-						<div class="row flex-1 bg-white align-items-center">
-							<div class="col-12 d-flex flex-column">
-								<h5 class="header-label">Create the Models</h5>
-							</div>
 						</div>
 						<div class="row flex-2 align-items-center">
 							<div class="col-12 d-flex flex-column">

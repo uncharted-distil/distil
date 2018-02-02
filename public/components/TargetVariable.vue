@@ -9,8 +9,7 @@
 		<variable-facets v-if="variables.length>0"
 			type-change
 			:variables="variables"
-			:dataset="dataset"
-			:html="html"></variable-facets>
+			:dataset="dataset"></variable-facets>
 	</div>
 </template>
 
@@ -38,25 +37,6 @@ export default Vue.extend({
 		},
 		variables(): VariableSummary[] {
 			return dataGetters.getTargetVariableSummaries(this.$store);
-		},
-		html(): ( { key: string } ) => HTMLDivElement {
-			return (group: { key: string }) => {
-				const container = document.createElement('div');
-				const targetElem = document.createElement('button');
-				targetElem.className += 'btn btn-sm btn-outline-danger ml-2 mr-2 mb-2';
-				targetElem.innerHTML = 'Select New Target Feature';
-				targetElem.addEventListener('click', () => {
-					const entry = createRouteEntry(SELECT_ROUTE, {
-						target: group.key,
-						dataset: routeGetters.getRouteDataset(this.$store),
-						filters: routeGetters.getRouteFilters(this.$store),
-						training: routeGetters.getRouteTrainingVariables(this.$store)
-					});
-					this.$router.push(entry);
-				});
-				container.appendChild(targetElem);
-				return container;
-			};
 		}
 	}
 });
