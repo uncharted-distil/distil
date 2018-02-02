@@ -61,7 +61,7 @@ export default Vue.extend({
 	width: 100%;
 	text-align: left;
 	outline: none;
-	font-size: 0.867rem;
+	font-size: 0.750rem;
 	color: white;
 }
 .var-type-button button:hover,
