@@ -39,7 +39,7 @@
 					Help
 					</b-nav-text>
 				</b-nav-item>
-				<b-btn v-b-modal.abort size="sm" variant="outline-danger" class="abort-button">Abort</b-btn>
+				<b-btn v-b-modal.abort size="sm" variant="danger" class="abort-button">Abort</b-btn>
 				<b-modal id="abort" title="Abort" @ok="onAbort">
 					<div>
 						<i class="fa fa-exclamation-triangle fa-3x abort-icon"></i>

@@ -1,6 +1,6 @@
 <template>
 	<div class='card card-result'>
-		<div class='dataset-header card-header btn btn-outline-success hover' v-on:click='setActiveDataset()' v-bind:class='{collapsed: !expanded}'>
+		<div class='dataset-header btn btn-success hover card-header' v-on:click='setActiveDataset()' v-bind:class='{collapsed: !expanded}'>
 			<a class='nav-link'><b>Name:</b> {{name}}</a>
 			<a class='nav-link'><b>Columns:</b> {{variables.length}}</a>
 			<a class='nav-link'><b>Rows:</b> {{numRows}}</a>
@@ -140,11 +140,14 @@ export default Vue.extend({
 .dataset-header {
 	display: flex;
 	padding: 4px 8px;
-	color: #28a745;
+	color: white;
 	justify-content: space-between;
 	border: none;
 	border-bottom: 1px solid rgba(0, 0, 0, 0.125);
 	text-decoration: underline;
+}
+.card-result .card-header{
+	background-color: #28a745;
 }
 .dataset-header:hover {
 	text-decoration: underline;
@@ -155,5 +158,11 @@ export default Vue.extend({
 .card-expanded {
 	padding-top: 15px;
 }
+.card-result .card-header:hover {
+	color: #fff;
+	background-color: #218838;
+	border-color: #1e7e34;
+}
 
 </style>
+

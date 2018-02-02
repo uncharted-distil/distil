@@ -8,7 +8,7 @@
 			hide-footer>
 			<div class="row justify-content-center">Export Succeeded</div>
 			<div class="row justify-content-center">
-				<b-btn class="mt-3 close-modal" variant="outline-success" block @click="clearExportResults">OK</b-btn>
+				<b-btn class="mt-3 close-modal" variant="success" block @click="clearExportResults">OK</b-btn>
 			</div>
 		</b-modal>
 		<div class="row justify-content-center">
@@ -102,7 +102,7 @@ export default Vue.extend({
 		},
 		// determines  create button variant based on completeness of user input
 		exportVariant(): string {
-			return 'primary';
+			return !this.disableCreate ? 'success' : 'outline-secondary';
 		}
 	},
 	methods: {
