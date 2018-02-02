@@ -8,8 +8,9 @@ echo "Creating directory hieararchy"
 mkdir -p /tmp/d3m/executables
 mkdir /tmp/d3m/config
 mkdir /tmp/d3m/dataset
+mkdir /tmp/d3m/logs
 
-echo "Copying $1"
+echo "Copying $1m"
 cp -r $1 /tmp/d3m/dataset
 
 echo "Generating config"
