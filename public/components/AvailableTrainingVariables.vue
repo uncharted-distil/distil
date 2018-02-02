@@ -42,7 +42,7 @@ export default Vue.extend({
 			return (group: { key: string }) => {
 				const container = document.createElement('div');
 				const trainingElem = document.createElement('button');
-				trainingElem.className += 'btn btn-sm btn-success ml-2 mr-2 mb-2';
+				trainingElem.className += 'btn btn-sm btn-outline-secondary ml-2 mr-2 mb-2';
 				trainingElem.innerHTML = 'Add';
 				trainingElem.addEventListener('click', () => {
 					const training = routeGetters.getRouteTrainingVariables(this.$store);

@@ -26,7 +26,7 @@
 			<b-badge variant="info">{{pipelineStatus}}</b-badge>
 			<b-progress
 				:value="100"
-				variant="secondary"
+				variant="outline-secondary"
 				striped
 				:animated="true"></b-progress>
 		</div>

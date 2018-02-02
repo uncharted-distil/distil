@@ -11,8 +11,8 @@
 			<div v-if="enableToggle" class="row flex-1 align-items-center facet-filters">
 				<div class="col-12 flex-column d-flex">
 					<b-form-fieldset size="sm" horizontal label="Toggle" :label-cols="2">
-						<b-button size="sm" variant="secondary" @click="selectAll">All</b-button>
-						<b-button size="sm" variant="secondary" @click="deselectAll">None</b-button>
+						<b-button size="sm" variant="outline-secondary" @click="selectAll">All</b-button>
+						<b-button size="sm" variant="outline-secondary" @click="deselectAll">None</b-button>
 					</b-form-fieldset>
 				</div>
 			</div>

@@ -83,7 +83,7 @@ export default Vue.extend({
 		},
 		// determines  create button variant based on completeness of user input
 		createVariant(): string {
-			return !this.disableCreate ? 'success' : 'secondary';
+			return !this.disableCreate ? 'success' : 'outline-secondary';
 		}
 	},
 	methods: {

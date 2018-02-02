@@ -42,7 +42,7 @@
 		<div class="pipeline-progress">
 			<b-progress v-if="isRunning()"
 				:value="percentComplete"
-				variant="secondary"
+				variant="outline-secondary"
 				striped
 				:animated="true"></b-progress>
 		</div>
