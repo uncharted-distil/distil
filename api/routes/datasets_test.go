@@ -41,6 +41,7 @@ func TestDatasetsHandler(t *testing.T) {
 					"name": "o_185",
 					"description": "<p><strong>Author</strong>: Jeffrey S. Simonoff</p>\n",
 					"summary": "",
+					"summaryML": "",
 					"numRows": 1073,
 					"numBytes": 744647,
 					"variables": [
@@ -53,6 +54,7 @@ func TestDatasetsHandler(t *testing.T) {
 					"name": "o_196",
 					"description": "<p><strong>Author</strong>: Mr. Somebody</p>\n",
 					"summary": "",
+					"summaryML": "",
 					"numRows": 1073,
 					"numBytes": 744647,
 					"variables": [
@@ -104,6 +106,7 @@ func TestDatasetsHandlerWithSearch(t *testing.T) {
 					"name": "o_185",
 					"description": "<p><strong>Author</strong>: Jeffrey S. Simonoff</p>\n",
 					"summary": "",
+					"summaryML": "",
 					"numRows": 1073,
 					"numBytes": 744647,
 					"variables": [
@@ -116,6 +119,7 @@ func TestDatasetsHandlerWithSearch(t *testing.T) {
 					"name": "o_196",
 					"description": "<p><strong>Author</strong>: Mr. Somebody</p>\n",
 					"summary": "",
+					"summaryML": "",
 					"numRows": 1073,
 					"numBytes": 744647,
 					"variables": [
