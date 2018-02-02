@@ -81,7 +81,6 @@ export default Vue.extend({
 }
 
 .available-target-variables .facets-group {
-	z-index: 0;
 	margin: 5px;
 }
 .available-target-variables .facet-filters {
