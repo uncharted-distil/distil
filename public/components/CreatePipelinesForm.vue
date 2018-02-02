@@ -4,6 +4,9 @@
 			<b-button class="create-button" :variant="createVariant" @click="create" :disabled="disableCreate">
 				Create Models
 			</b-button>
+			<b-button class="create-button" :variant="createVariant" @click="export" :disabled="disableCreate">
+				Export Problem
+			</b-button>
 		</div>
 	</div>
 </template>
@@ -111,6 +114,11 @@ export default Vue.extend({
 				});
 				this.$router.push(entry);
 			});
+		}
+
+		// export button handler
+		export() {
+
 		}
 	}
 });
