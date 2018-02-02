@@ -14,3 +14,4 @@ dist
 distil.exe
 package-lock.json
 public/static
+.history

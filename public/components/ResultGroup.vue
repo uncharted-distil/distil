@@ -3,7 +3,7 @@
 		@click="click()">
 		{{name}} <sup>{{index}}</sup> {{timestamp}}
 		<div v-if="pipelineStatus === 'COMPLETED' || pipelineStatus === 'UPDATED'">
-			<b-badge variant="info" v-bind:key="`${score.metric}`" v-for="score in scores">
+			<b-badge variant="info" v-bind:key="`${score.metric}-${pipelineId}`" v-for="score in scores">
 				{{metricName(score.metric)}}: {{score.value}}
 			</b-badge>
 			<facets v-if="resultGroups.length" class="result-container"
@@ -11,12 +11,14 @@
 				@facet-click="onResultFacetClick"
 				:groups="resultGroups"
 				:highlights="highlights"
+				:filters="filters"
 				:html="residualHtml">
 			</facets>
 			<facets v-if="residualsGroups.length" class="residual-container"
 				@histogram-click="onResidualsHistogramClick"
 				:groups="residualsGroups"
 				:highlights="highlights"
+				:filters="filters"
 				:html="resultHtml">
 			</facets>
 		</div>
@@ -45,14 +47,14 @@ import Facets from '../components/Facets';
 import { createGroups, Group, NumericalFacet, CategoricalFacet } from '../util/facets';
 import { isPredicted, isError, getVarFromPredicted, getVarFromError, getPredictedFacetKey,
 	getErrorFacetKey, getErrorCol, getPredictedCol } from '../util/data';
-import { VariableSummary, Highlights, Range } from '../store/data/index';
+import { VariableSummary } from '../store/data/index';
+import { Highlights, Range, getHighlights } from '../util/highlights';
 import { overlayRouteEntry } from '../util/routes';
-import { getters } from '../store/data/module';
+import { Filter } from '../util/filters';
 import { getters as routeGetters } from '../store/route/module';
 import { getPipelineById, getMetricDisplayName } from '../util/pipelines';
-import { mutations as dataMutations } from '../store/data/module';
 import { NUMERICAL_FILTER, CATEGORICAL_FILTER, getFilterType, decodeFiltersDictionary } from '../util/filters';
-import { updateResultHighlights } from '../util/highlights';
+import { updateHighlightRoot, clearHighlightRoot } from '../util/highlights';
 import { Dictionary } from '../util/dict';
 import _ from 'lodash';
 import Vue from 'vue';
@@ -111,7 +113,7 @@ export default Vue.extend({
 			// Remap highlights to facet key names, filtering out anything other than
 			// the predicted and error values (since that's all that is displayed in this
 			// component)
-			const highlights = getters.getHighlightedFeatureValues(this.$store);
+			const highlights = getHighlights(this.$store);
 			const facetHighlights = <Highlights>{
 				root: _.cloneDeep(highlights.root),
 				values: <Dictionary<string[]>>{}
@@ -132,6 +134,10 @@ export default Vue.extend({
 				}
 			}
 			return facetHighlights;
+		},
+
+		filters(): Filter[] {
+			return routeGetters.getDecodedResultsFilters(this.$store);
 		},
 
 		currentClass(): string {
@@ -159,17 +165,13 @@ export default Vue.extend({
 
 		histogramHighlights(context: string, key: string, value: Range) {
 			if (key && value) {
-				const filter = {
-					name: key,
-					type: NUMERICAL_FILTER,
-					enabled: true,
-					context: this.instanceName,
-					min: value.from,
-					max: value.to
-				};
-				updateResultHighlights(this, context, key, value, filter);
+				updateHighlightRoot(this, {
+					context: context,
+					key: key,
+					value: value
+				});
 			} else {
-				dataMutations.clearFeatureHighlights(this.$store);
+				clearHighlightRoot(this);
 			}
 		},
 
@@ -178,21 +180,18 @@ export default Vue.extend({
 				// extract the var name from the key
 				const targetVar = routeGetters.getRouteTargetVariable(this.$store);
 				const varName = getPredictedCol(targetVar);
-				const filter = {
-					name: varName,
-					type: CATEGORICAL_FILTER,
-					enabled: true,
-					context: this.instanceName,
-					categories: [value]
-				};
-				updateResultHighlights(this, context, key, value, filter);
+				updateHighlightRoot(this, {
+					context: context,
+					key: varName,
+					value: value
+				});
 			} else {
-				dataMutations.clearFeatureHighlights(this.$store);
+				clearHighlightRoot(this);
 			}
 		},
 
 		resultFacetMouseLeave(key: string) {
-			dataMutations.clearFeatureHighlightValues(this.$store);
+			clearHighlightRoot(this);
 		},
 
 		click() {

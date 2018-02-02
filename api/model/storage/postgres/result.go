@@ -357,7 +357,9 @@ func (s *Storage) FetchFilteredResults(dataset string, index string, resultURI s
 	if len(where) > 0 {
 		query = fmt.Sprintf("%s AND %s", query, where)
 	}
-	query = query + ";"
+
+	// Do not return the whole result set to the client.
+	query = fmt.Sprintf("%s LIMIT %d;", query, filterParams.Size)
 
 	rows, err := s.client.Query(query, params...)
 	if err != nil {
@@ -482,10 +484,10 @@ func (s *Storage) fetchNumericalResultHistogram(resultURI string, dataset string
 func (s *Storage) fetchCategoricalResultHistogram(resultURI string, dataset string, resultDataset string, variable *model.Variable) (*model.Histogram, error) {
 	targetName := variable.Name
 
-	query := fmt.Sprintf("SELECT base.%s, result.value, COUNT(*) AS count "+
+	query := fmt.Sprintf("SELECT base.\"%s\", result.value, COUNT(*) AS count "+
 		"FROM %s AS result INNER JOIN %s AS base ON result.index = base.\"d3mIndex\" "+
 		"WHERE result.result_id = $1 and result.target = $2 "+
-		"GROUP BY result.value, base.%s "+
+		"GROUP BY result.value, base.\"%s\" "+
 		"ORDER BY count desc;", targetName, resultDataset, dataset, targetName)
 
 	// execute the postgres query

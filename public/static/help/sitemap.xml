@@ -8,16 +8,22 @@
   
   
   <url>
-    <loc>/css/customstyles.css</loc>
+    <loc>/create-models.html</loc>
   </url>
   
   
   
   <url>
-    <loc>/explore.html</loc>
+    <loc>/css/customstyles.css</loc>
   </url>
   
   
+  
+  
+  
+  <url>
+    <loc>/glossary.html</loc>
+  </url>
   
   
   
@@ -29,12 +35,6 @@
   
   <url>
     <loc>/index.html</loc>
-  </url>
-  
-  
-  
-  <url>
-    <loc>/pipelines.html</loc>
   </url>
   
   
@@ -54,10 +54,16 @@
   
   
   <url>
-    <loc>/select.html</loc>
+    <loc>/select-target.html</loc>
   </url>
   
   
+  
+  
+  
+  <url>
+    <loc>/workflow-overview.html</loc>
+  </url>
   
   
 </urlset>

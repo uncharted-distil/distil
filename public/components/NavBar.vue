@@ -15,7 +15,7 @@
 				<b-nav-item @click="onSearch" :active="isActive(SEARCH_ROUTE)" v-bind:class="{ active: isActive(SEARCH_ROUTE) }">
 					<i class="fa fa-angle-right nav-arrow"></i>
 					<i class="fa fa-file-text-o nav-icon"></i>
-					<b-nav-text>Search Data</b-nav-text>
+					<b-nav-text>Select Data</b-nav-text>
 				</b-nav-item>
 				<b-nav-item @click="onSelectTarget" :active="isActive(SELECT_ROUTE)" :disabled="!hasSelectView()" v-bind:class="{ active: isActive(SELECT_ROUTE) }">
 					<i class="fa fa-angle-right nav-arrow"></i>

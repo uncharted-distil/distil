@@ -3,9 +3,9 @@
     <meta charset="utf-8">
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="description" content="">
+<meta name="description" content="Use Distil to construct predictive models of automotive data.">
 <meta name="keywords" content=" ">
-<title>Step 3 - Select | Distil Help</title>
+<title>Workflow Overview | Distil Help</title>
 <link rel="stylesheet" href="css/syntax.css">
 
 
@@ -14,7 +14,7 @@
 <link rel="stylesheet" href="css/modern-business.css">
 <link rel="stylesheet" href="css/lavish-bootstrap.css">
 <link rel="stylesheet" href="css/customstyles.css">
-<link rel="stylesheet" href="css/theme-blue.css">
+<link rel="stylesheet" href="css/theme-black.css">
 
 <script src="js/lib/jquery.min.js"></script>
 <script src="js/lib/jquery.cookie.min.js"></script>
@@ -28,13 +28,6 @@
 
 <link rel="shortcut icon" href="images/favicon.ico">
 
-<!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
-<!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
-<!--[if lt IE 9]>
-<script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
-<script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
-<![endif]-->
-
 <link rel="alternate" type="application/rss+xml" title="" href="feed.xml">
 
     <script>
@@ -42,7 +35,7 @@
             // Initialize navgoco with default options
             $("#mysidebar").navgoco({
                 caretHtml: '',
-                accordion: true,
+                accordion: false,
                 openClass: 'active', // open
                 save: false, // leave false or nav highlighting doesn't work right
                 cookie: {
@@ -96,6 +89,14 @@
                 
                 
                 
+                <li><a href="index.html">Topics</a></li>
+                
+                
+                
+                <li><a href="glossary.html">Glossary</a></li>
+                
+                
+                
                 <!-- entries with drop-downs appear here -->
                 <!-- conditional logic to control which topnav appears for the audience defined in the configuration file.-->
                 
@@ -112,7 +113,7 @@
                                 searchInput: document.getElementById('search-input'),
                                 resultsContainer: document.getElementById('results-container'),
                                 dataSource: 'search.json',
-                                searchResultTemplate: '<li><a href="{url}" title="Step 3 - Select">{title}</a></li>',
+                                searchResultTemplate: '<li><a href="{url}" title="Workflow Overview">{title}</a></li>',
                     noResultsText: 'No results found.',
                             limit: 10,
                             fuzzy: true,
@@ -175,35 +176,35 @@
             
             
             
-            <li><a href="search.html">1. Search</a></li>
+            <li class="active"><a href="workflow-overview.html">Overview</a></li>
             
             
             
             
             
             
-            <li><a href="explore.html">2. Explore</a></li>
+            <li><a href="search.html">1. Search for a Dataset</a></li>
             
             
             
             
             
             
-            <li class="active"><a href="select.html">3. Select</a></li>
+            <li><a href="select-target.html">2. Select Target</a></li>
             
             
             
             
             
             
-            <li><a href="pipelines.html">4. Pipelines</a></li>
+            <li><a href="create-models.html">3. Create Models</a></li>
             
             
             
             
             
             
-            <li><a href="results.html">5. results</a></li>
+            <li><a href="results.html">4. Review Results</a></li>
             
             
             
@@ -212,28 +213,27 @@
         
         
         
-        <!-- if you aren't using the accordion, uncomment this block:
            <p class="external">
                <a href="#" id="collapseAll">Collapse All</a> | <a href="#" id="expandAll">Expand All</a>
            </p>
-           -->
     </li>
 </ul>
 </div>
 
 <!-- this highlights the active parent class in the navgoco sidebar. this is critical so that the parent expands when you're viewing a page. This must appear below the sidebar code above. Otherwise, if placed inside customscripts.js, the script runs before the sidebar code runs and the class never gets inserted.-->
 <script>$("li.active").parents('li').toggleClass("active");</script>
-
     <!-- Content Column -->
     <div class="col-md-9">
         <div class="post-header">
-   <h1 class="post-title-main">Step 3 - Select</h1>
+   <h1 class="post-title-main">Workflow Overview</h1>
 </div>
 
 
 
 <div class="post-content">
 
+   
+    <div class="summary">Use Distil to construct predictive models of automotive data.</div>
    
 
     
@@ -243,7 +243,7 @@
 $( document ).ready(function() {
   // Handler for .ready() called.
 
-$('#toc').toc({ minimumHeaders: 0, listType: 'ul', showSpeed: 0, headers: 'h2,h3,h4' });
+$('#toc').toc({ minimumHeaders: 0, listType: 'ul', showSpeed: 0, headers: 'h2' });
 
 /* this offset helps account for the space taken up by the floating toolbar. */
 $('#toc').on('click', 'a', function() {
@@ -264,26 +264,25 @@ $('#toc').on('click', 'a', function() {
 
     
 
-  <p>The Select view allows you to choose a set of training features and a target variable. Together these features form a pipeline. Distil will automatically generate models to predict the target variable using the selected features in your pipeline.</p>
+  <p>In this workflow, you will learn how to find a relevant dataset and guide Distil to build a predictive model. The scenario involves the prediction of acceleration in vehicles based on quantitative mileage performance attributes. The workflow has four main steps:</p>
 
-<h2 id="overview">Overview</h2>
-
-<figure><a href="images/diagrams/select.png"><img class="docimage" src="images/diagrams/select.png" alt="Select" /><figcaption>Click to enlarge</figcaption></a></figure>
-
-<h2 id="next-steps">Next Steps</h2>
-
-<p>Execute the pipeline and select results.</p>
+<ol>
+  <li><a href="search.html">Search for a Dataset</a></li>
+  <li><a href="select-target.html">Select Target Feature</a></li>
+  <li><a href="create-models.html">Select Training Features</a></li>
+  <li><a href="results.html">Review Results</a></li>
+</ol>
 
   
   <div class="section-nav">
     <div class="nav-left align-right">
         
-          <a href="explore.html" class="prev-pg">Back</a>
+          <a href="home.html" class="prev-pg">Back</a>
         
     </div>
     <div class="nav-right align-left">
         
-          <a href="pipelines.html" class="next-pg">Next</a>
+          <a href="search.html" class="next-pg">Next</a>
         
     </div>
   </div>
@@ -300,7 +299,7 @@ $('#toc').on('click', 'a', function() {
 <footer>
             <div class="row">
                 <div class="col-lg-12 footer">
-               &copy;2017 Uncharted Software Inc.<br />
+               &copy;2018 Uncharted Software Inc.<br />
 <p><img class="logo" src="images/uncharted.png" alt="Uncharted Software Inc."/></p>
                 </div>
             </div>

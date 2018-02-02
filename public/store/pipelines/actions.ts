@@ -19,6 +19,7 @@ interface PipelineRequest {
 	task: string;
 	metric: string[];
 	filters: FilterParams;
+	maxPipelines: number;
 }
 
 export type AppContext = ActionContext<PipelineState, DistilState>;
@@ -149,7 +150,18 @@ export const actions = {
 					// update summaries
 					if (res.progress === PIPELINE_UPDATED ||
 						res.progress == PIPELINE_COMPLETED) {
-						context.dispatch('fetchResultsSummary', {
+
+						// if current pipelineId, pull result summaries
+						const currentPipelineId = context.getters.getRoutePipelineId;
+						if (res.pipelineId === currentPipelineId) {
+							context.dispatch('fetchResultSummaries', {
+								dataset: request.dataset,
+								pipelineId: res.pipelineId,
+								variables: context.getters.getVariables
+							});
+						}
+
+						context.dispatch('fetchPredictedSummary', {
 							dataset: request.dataset,
 							pipelineId: res.pipelineId
 						});
@@ -175,7 +187,7 @@ export const actions = {
 				feature: request.feature,
 				task: request.task,
 				metric: request.metric,
-				maxPipelines: 1,
+				maxPipelines: request.maxPipelines,
 				filters: request.filters
 			});
 		});

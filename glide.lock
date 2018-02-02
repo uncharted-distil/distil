@@ -1,10 +1,10 @@
-hash: fbe376dd7a15c1ddba9109afda2104e47a8d8a0c638f40130f667c618baf7c61
-updated: 2018-01-11T16:02:07.925642259-05:00
+hash: ea458c342b875449781dcb388b93f0c0075d3bce9dd4cb4b0f52681330409eea
+updated: 2018-02-01T16:07:23.952346296-05:00
 imports:
 - name: github.com/caarlos0/env
   version: 7cd7992b3bc86f920394f8de92c13900da1a46b7
 - name: github.com/davecgh/go-spew
-  version: ecdeabc65495df2dec95d7c4a4c3e021903035e5
+  version: db69d09d2c587e9b9677f991dfcab1fc24d9086e
   subpackages:
   - spew
 - name: github.com/garyburd/redigo
@@ -13,7 +13,7 @@ imports:
   - internal
   - redis
 - name: github.com/go-pg/pg
-  version: 5ce58f5d6c85b9fc1a448a1eab3b7cc5df6df3b4
+  version: 549ba92f3d2b0ac49656ff05ebe05537e1633416
   subpackages:
   - internal
   - internal/parser
@@ -25,16 +25,16 @@ imports:
   subpackages:
   - gomock
 - name: github.com/golang/protobuf
-  version: 1e59b77b52bf8e4b449a57e6f79f21226d571845
+  version: 925541529c1fa6821df4e44ce2723319eb2be768
   subpackages:
   - proto
   - protoc-gen-go
   - protoc-gen-go/descriptor
   - ptypes/any
 - name: github.com/gorilla/websocket
-  version: 292fd08b2560ad524ee37396253d71570339a821
+  version: 4ac909741dfa57448bfadfdbca0cf7eeaa68f0e2
 - name: github.com/jackc/pgx
-  version: 4fb47ac8c9677c49cfa0f4ae61c0d0116c0a07fc
+  version: da3231b0b66e2e74cdb779f1d46c5e958ba8be27
   subpackages:
   - chunkreader
   - internal/sanitize
@@ -45,8 +45,14 @@ imports:
   version: 44cbc27138518b15305cb3eef220d04f2d641b9b
 - name: github.com/jinzhu/inflection
   version: 1c35d901db3da928c72a72d8458480cc9ade058f
+- name: github.com/mailru/easyjson
+  version: 32fa128f234d041f196a9f3e0fea5ac9772c08e1
+  subpackages:
+  - buffer
+  - jlexer
+  - jwriter
 - name: github.com/mattn/go-colorable
-  version: 586e6dcca296d085100876beb6dbf02287a247f7
+  version: 6cc8b475d4682021d75d2cbe2bc481bec4ce98e5
 - name: github.com/mattn/go-isatty
   version: 6ca4dbf54d38eea1a992b3c722a76a5d1c4cb25c
 - name: github.com/mgutz/ansi
@@ -56,7 +62,7 @@ imports:
 - name: github.com/mitchellh/hashstructure
   version: 2bca23e0e452137f789efbc8610126fd8b94f73b
 - name: github.com/pkg/errors
-  version: e881fd58d78e04cf6d0de1217f8707c8cc2249bc
+  version: 30136e27e2ac8d167177e8a583aa4c3fea5be833
 - name: github.com/pmezard/go-difflib
   version: 792786c7400a136282c1664665ae0a8db921c6c2
   subpackages:
@@ -66,7 +72,7 @@ imports:
 - name: github.com/satori/go.uuid
   version: 879c5887cd475cd7864858769793b2ceb0d44feb
 - name: github.com/stretchr/testify
-  version: 87b1dfb5b2fa649f52695dd9eae19abe404a4308
+  version: 12b6f73e6084dad08a7c6e575284b177ecafbc71
   subpackages:
   - assert
 - name: github.com/unchartedsoftware/deluge
@@ -75,7 +81,7 @@ imports:
   - document
   - util
 - name: github.com/unchartedsoftware/distil-ingest
-  version: 6a21dc0d4280797c0f7e49a163bc4ad251e0f74a
+  version: 4379f1534cbb3963a36ebb1f590688a75eeb2462
   repo: git@github.com:unchartedsoftware/distil-ingest.git
   vcs: git
   subpackages:
@@ -102,7 +108,7 @@ imports:
   - pat
   - pattern
 - name: golang.org/x/net
-  version: ab555f366c4508dbe0802550b1b20c46c5c18aa0
+  version: 309822c5b9b9f80db67f016069a12628d94fad34
   subpackages:
   - context
   - html
@@ -114,7 +120,7 @@ imports:
   - lex/httplex
   - trace
 - name: golang.org/x/sys
-  version: 810d7000345868fc619eb81f46307107118f4ae1
+  version: 8f27ce8a604014414f8dfffc25cbcde83a3f2216
   subpackages:
   - unix
 - name: golang.org/x/text
@@ -125,7 +131,7 @@ imports:
   - unicode/bidi
   - unicode/norm
 - name: google.golang.org/genproto
-  version: a8101f21cf983e773d0c1133ebc5424792003214
+  version: 4eb30f4778eed4c258ba66527a0d4f9ec8a36c45
   subpackages:
   - googleapis/rpc/status
 - name: google.golang.org/grpc
@@ -145,7 +151,7 @@ imports:
   - tap
   - transport
 - name: gopkg.in/olivere/elastic.v5
-  version: ef745defcdcc081f19c499930dc12c7a6cb638b4
+  version: 1094ee281ca61a783c9ba22bf86e7e0a8aa2d112
   subpackages:
   - config
   - uritemplates

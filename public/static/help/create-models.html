@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="description" content="">
 <meta name="keywords" content=" ">
-<title>Step 4 - Pipelines | Distil Help</title>
+<title>Step 3 - Create Models | Distil Help</title>
 <link rel="stylesheet" href="css/syntax.css">
 
 
@@ -14,7 +14,7 @@
 <link rel="stylesheet" href="css/modern-business.css">
 <link rel="stylesheet" href="css/lavish-bootstrap.css">
 <link rel="stylesheet" href="css/customstyles.css">
-<link rel="stylesheet" href="css/theme-blue.css">
+<link rel="stylesheet" href="css/theme-black.css">
 
 <script src="js/lib/jquery.min.js"></script>
 <script src="js/lib/jquery.cookie.min.js"></script>
@@ -28,13 +28,6 @@
 
 <link rel="shortcut icon" href="images/favicon.ico">
 
-<!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
-<!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
-<!--[if lt IE 9]>
-<script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
-<script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
-<![endif]-->
-
 <link rel="alternate" type="application/rss+xml" title="" href="feed.xml">
 
     <script>
@@ -42,7 +35,7 @@
             // Initialize navgoco with default options
             $("#mysidebar").navgoco({
                 caretHtml: '',
-                accordion: true,
+                accordion: false,
                 openClass: 'active', // open
                 save: false, // leave false or nav highlighting doesn't work right
                 cookie: {
@@ -96,6 +89,14 @@
                 
                 
                 
+                <li><a href="index.html">Topics</a></li>
+                
+                
+                
+                <li><a href="glossary.html">Glossary</a></li>
+                
+                
+                
                 <!-- entries with drop-downs appear here -->
                 <!-- conditional logic to control which topnav appears for the audience defined in the configuration file.-->
                 
@@ -112,7 +113,7 @@
                                 searchInput: document.getElementById('search-input'),
                                 resultsContainer: document.getElementById('results-container'),
                                 dataSource: 'search.json',
-                                searchResultTemplate: '<li><a href="{url}" title="Step 4 - Pipelines">{title}</a></li>',
+                                searchResultTemplate: '<li><a href="{url}" title="Step 3 - Create Models">{title}</a></li>',
                     noResultsText: 'No results found.',
                             limit: 10,
                             fuzzy: true,
@@ -175,35 +176,35 @@
             
             
             
-            <li><a href="search.html">1. Search</a></li>
+            <li><a href="workflow-overview.html">Overview</a></li>
             
             
             
             
             
             
-            <li><a href="explore.html">2. Explore</a></li>
+            <li><a href="search.html">1. Search for a Dataset</a></li>
             
             
             
             
             
             
-            <li><a href="select.html">3. Select</a></li>
+            <li><a href="select-target.html">2. Select Target</a></li>
             
             
             
             
             
             
-            <li class="active"><a href="pipelines.html">4. Pipelines</a></li>
+            <li class="active"><a href="create-models.html">3. Create Models</a></li>
             
             
             
             
             
             
-            <li><a href="results.html">5. results</a></li>
+            <li><a href="results.html">4. Review Results</a></li>
             
             
             
@@ -212,22 +213,19 @@
         
         
         
-        <!-- if you aren't using the accordion, uncomment this block:
            <p class="external">
                <a href="#" id="collapseAll">Collapse All</a> | <a href="#" id="expandAll">Expand All</a>
            </p>
-           -->
     </li>
 </ul>
 </div>
 
 <!-- this highlights the active parent class in the navgoco sidebar. this is critical so that the parent expands when you're viewing a page. This must appear below the sidebar code above. Otherwise, if placed inside customscripts.js, the script runs before the sidebar code runs and the class never gets inserted.-->
 <script>$("li.active").parents('li').toggleClass("active");</script>
-
     <!-- Content Column -->
     <div class="col-md-9">
         <div class="post-header">
-   <h1 class="post-title-main">Step 4 - Pipelines</h1>
+   <h1 class="post-title-main">Step 3 - Create Models</h1>
 </div>
 
 
@@ -243,7 +241,7 @@
 $( document ).ready(function() {
   // Handler for .ready() called.
 
-$('#toc').toc({ minimumHeaders: 0, listType: 'ul', showSpeed: 0, headers: 'h2,h3,h4' });
+$('#toc').toc({ minimumHeaders: 0, listType: 'ul', showSpeed: 0, headers: 'h2' });
 
 /* this offset helps account for the space taken up by the floating toolbar. */
 $('#toc').on('click', 'a', function() {
@@ -264,21 +262,86 @@ $('#toc').on('click', 'a', function() {
 
     
 
-  <p>The Pipelines view allows you to review and access existing pipelines and generated models.</p>
+  <p>You must choose a set of training features that you think will inform the predictions. Distil will automatically generate models to predict the target using the training features.</p>
 
-<h2 id="overview">Overview</h2>
+<h2 id="training-set-selection-view-summary">Training Set Selection View Summary</h2>
 
-<figure><a href="images/diagrams/pipelines.png"><img class="docimage" src="images/diagrams/pipelines.png" alt="Pipelines" /><figcaption>Click to enlarge</figcaption></a></figure>
+<figure href="#select-view-training-close"><a href="#select-view-training"><img class="diagram" src="images/diagrams/select-training.png" alt="Select training set features" /><figcaption>Click to enlarge</figcaption></a></figure>
+<div class="lightbox-target" id="select-view-training"><img src="images/diagrams/select-training.png" /><a class="lightbox-close" href="#select-view-training-close"></a></div>
+
+<h2 id="selecting-the-training-features">Selecting the Training Features</h2>
+
+<h5 class="procedure">To choose the training features that your model should use in its predictions:</h5>
+
+<ol>
+  <li>
+    <p>Click <strong>Add to Training Set</strong> under any feature. In this example, add <strong>horsepower</strong> and <strong>cylinders</strong>.</p>
+
+    <figure><img class="docimage" src="images/workflow/select-add-to-training-set.png" alt="Add cylinders to training set" /></figure>
+
+    <p>Distil adds the selected features to the list of Training Features. You can filter or change the <span class="feature-type">type <sup class="fa fa-sort-desc" aria-hidden="true" style="display: inline;"></sup></span> of any the training features.</p>
+
+    <figure><img class="docimage" src="images/workflow/select-training-features.png" alt="Cylinders and horsepower added as training features that inform the prediction made by the model" /></figure>
+  </li>
+  <li>
+    <p>Note the distribution of categories for the <strong>cylinders</strong> feature. Four, six and eight cylinder engines appear often in the dataset, while three and five cylinder engines appear much less frequently. Click the infrequent categories to omit them from the model.</p>
+
+    <figure><img class="docimage" src="images/workflow/select-toggle-category.png" alt="Omit records with a specific categorical value" /></figure>
+
+    <p>Greyed out categories are not included in the model.</p>
+  </li>
+  <li>
+    <p>Review the updated sample table. Click the column headers to sort by feature and check for extreme values that may indicate problems with the data. Note that one row has a value of <em>0</em> for <strong>horsepower</strong>, which is likely an error.</p>
+
+    <figure><img class="docimage" src="images/workflow/select-sample-table-error.png" alt="Record with 0 horsepower value" /></figure>
+  </li>
+  <li>
+    <p>To omit records with this value, drag the slider at the beginning of the distribution of <strong>horsepower</strong> values to the right so the range starts above <em>0</em>.</p>
+
+    <figure><img class="docimage" src="images/workflow/select-adjust-range.png" alt="Omit records with 0 horsepower" /></figure>
+  </li>
+</ol>
+
+<h5 class="procedure">To remove a feature from the training set:</h5>
+
+<ul>
+  <li>Click <strong>Remove</strong> under the feature name in the Training Features pane.</li>
+</ul>
+
+<figure><img class="docimage" src="images/workflow/select-remove-feature.png" alt="Remove feature from the training set" /></figure>
+
+<h2 id="generating-the-models">Generating the Models</h2>
+
+<p>Once you have a target feature and a set of training features, you can begin model generation. Based on your selections, Distil:</p>
+
+<ol>
+  <li>Automatically determines the number and type of models to predict your target feature.</li>
+  <li>Uses a subset of the actual data to train the models to predict the target from the training features.</li>
+  <li>Applies the trained models to the rest of the actual data to predict the target feature value in each record.</li>
+</ol>
+
+<div class="alert alert-warning" role="alert"><i class="fa fa-warning"></i> <b>Important:</b> You must select a target feature and at least one training feature before you can generate the models.</div>
+
+<h5 class="procedure">To begin the model generation with the current feature selections:</h5>
+
+<ol>
+  <li>Click <strong>Create Models</strong>.</li>
+  <li>Choose the maximum number of models that Distil should produce.</li>
+</ol>
+
+<figure><img class="docimage" src="images/workflow/select-create-models.png" alt="Create models" /></figure>
+
+<p>In this example, Distil will attempt to predict the <strong>acceleration</strong> based on the <strong>horsepower</strong> and <strong>cylinders</strong> features for a subset of the dataset.</p>
 
 <h2 id="next-steps">Next Steps</h2>
 
-<p>Select a model to review and explore the results.</p>
+<p>Review the generated models to determine whether they accurately predict the target feature.</p>
 
   
   <div class="section-nav">
     <div class="nav-left align-right">
         
-          <a href="select.html" class="prev-pg">Back</a>
+          <a href="select-target.html" class="prev-pg">Back</a>
         
     </div>
     <div class="nav-right align-left">
@@ -300,7 +363,7 @@ $('#toc').on('click', 'a', function() {
 <footer>
             <div class="row">
                 <div class="col-lg-12 footer">
-               &copy;2017 Uncharted Software Inc.<br />
+               &copy;2018 Uncharted Software Inc.<br />
 <p><img class="logo" src="images/uncharted.png" alt="Uncharted Software Inc."/></p>
                 </div>
             </div>

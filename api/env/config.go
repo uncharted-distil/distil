@@ -1,17 +1,22 @@
 package env
 
 import (
-	"encoding/json"
+	enjson "encoding/json"
 	"fmt"
 	"io/ioutil"
 	"os"
+	"path"
 
 	"github.com/caarlos0/env"
+	"github.com/unchartedsoftware/distil/api/util/json"
+	"github.com/unchartedsoftware/plog"
 )
 
 const (
-	tempStorageRoot = "temp_storage_root"
-	executablesRoot = "executables_root"
+	tempStorageRoot  = "temp_storage_root"
+	executablesRoot  = "executables_root"
+	userProblemsRoot = "user_problems_root"
+	trainingDataRoot = "training_data_root"
 )
 
 var (
@@ -28,7 +33,7 @@ type Config struct {
 	PipelineDataDir            string `env:"PIPELINE_DATA_DIR" envDefault:"datasets"`
 	PipelineComputeTrace       bool   `env:"PIPELINE_COMPUTE_TRACE" envDefault:"false"`
 	ExportPath                 string `env:"EXPORT_PATH"`
-	StartupConfigFile          string `env:"CONFIG_JSON_PATH" envDefault:"startup.json"`
+	StartupConfigFile          string `env:"JSON_CONFIG_PATH" envDefault:"/d3m/config"`
 	PostgresHost               string `env:"PG_HOST" envDefault:"localhost"`
 	PostgresPort               string `env:"PG_PORT" envDefault:"5432"`
 	PostgresUser               string `env:"PG_USER" envDefault:"distil"`
@@ -52,10 +57,14 @@ type Config struct {
 	RankingOutputPath          string `env:"RANKING_OUTPUT_PATH" envDefault:"tables/importance.json"`
 	RankingRowLimit            int    `env:"RANKING_ROW_LIMIT" envDefault:"1000"`
 	SummaryPath                string `env:"SUMMARY_PATH" envDefault:"summary.txt"`
+	SummaryEndpoint            string `env:"SUMMARY_ENDPOINT" envDefault:"http://10.108.4.42:5001"`
+	SummaryFunctionName        string `env:"SUMMARY_FUNCTION_NAME" envDefault:"fileUpload"`
+	SummaryMachinePath         string `env:"SUMMARY_MACHINE_PATH" envDefault:"summary-machine.json"`
 	ElasticTimeout             int    `env:"ES_TIMEOUT" envDefault:"300"`
 	ElasticDatasetPrefix       string `env:"ES_DATASET_PREFIX" envDefault:"d_"`
 	InitialDataset             string `env:"INITIAL_DATASET" envDefault:""`
 	ESDatasetsIndex            string `env:"ES_DATASETS_INDEX" envDefault:"datasets"`
+	UserProblemPath            string `env:"USER_PROBLEM_PATH" envDefault:"datasets"`
 }
 
 // LoadConfig loads the config from the environment if necessary and returns a
@@ -82,24 +91,42 @@ func overideFromStartupFile(cfg *Config) error {
 		cfg.StartupConfigFile = os.Args[1]
 	}
 
+	log.Infof("Loading overrides from config file (%s)", cfg.StartupConfigFile)
+
 	// read startup config JSON file
 	startupConfig, err := ioutil.ReadFile(cfg.StartupConfigFile)
 	if err != nil {
 		if !os.IsNotExist(err) {
 			return fmt.Errorf("Failed to read startup config file (%s): %v", cfg.StartupConfigFile, err)
 		}
+		log.Infof("No config file found at (%s)", cfg.StartupConfigFile)
 		return nil
 	}
 	// parse out the entries
 	var startupData map[string]interface{}
-	err = json.Unmarshal(startupConfig, &startupData)
+	err = enjson.Unmarshal(startupConfig, &startupData)
 	if err != nil {
 		return fmt.Errorf("Failed to parse startup config file (%s): %v", cfg.StartupConfigFile, err)
 	}
 
 	// override / add values
-	cfg.PipelineDataDir = startupData[tempStorageRoot].(string)
-	cfg.ExportPath = startupData[executablesRoot].(string)
 
+	result, ok := json.String(startupData, tempStorageRoot)
+	if ok {
+		cfg.PipelineDataDir = result
+	}
+
+	result, ok = json.String(startupData, executablesRoot)
+	if ok {
+		cfg.ExportPath = result
+	}
+
+	result, ok = json.String(startupData, trainingDataRoot)
+	if ok {
+		// split path into path/file
+		dir := path.Dir(result)
+		cfg.DataFolderPath = path.Dir(dir)
+		cfg.InitialDataset = path.Base(dir)
+	}
 	return nil
 }

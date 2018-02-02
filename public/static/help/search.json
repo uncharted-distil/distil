@@ -4,6 +4,17 @@
 
 
 {
+"title": "Step 3 - Create Models",
+"tags": "",
+"keywords": "",
+"url": "create-models.html",
+"summary": ""
+}
+,
+
+
+
+{
 "title": "",
 "tags": "",
 "keywords": "",
@@ -14,16 +25,16 @@
 
 
 
+
+
 {
-"title": "Step 2 - Explore",
+"title": "Glossary",
 "tags": "",
 "keywords": "",
-"url": "explore.html",
+"url": "glossary.html",
 "summary": ""
 }
 ,
-
-
 
 
 
@@ -43,25 +54,14 @@
 "tags": "",
 "keywords": "",
 "url": "index.html",
-"summary": "Distil is data-driven application for interactively guiding machine intelligence to build predictive models that classify or project complex, real-world processes."
+"summary": "Distil is a data-driven application for interactively guiding machine intelligence to build predictive models that classify or project complex, real-world processes."
 }
 ,
 
 
 
 {
-"title": "Step 4 - Pipelines",
-"tags": "",
-"keywords": "",
-"url": "pipelines.html",
-"summary": ""
-}
-,
-
-
-
-{
-"title": "Step 5 - results",
+"title": "Step 4 - Review Results",
 "tags": "",
 "keywords": "",
 "url": "results.html",
@@ -74,7 +74,7 @@
 
 
 {
-"title": "Step 1 - Search",
+"title": "Step 1 - Search for a Dataset",
 "tags": "",
 "keywords": "",
 "url": "search.html",
@@ -85,14 +85,25 @@
 
 
 {
-"title": "Step 3 - Select",
+"title": "Step 2 - Select Features",
 "tags": "",
 "keywords": "",
-"url": "select.html",
+"url": "select-target.html",
 "summary": ""
 }
 ,
 
+
+
+
+
+{
+"title": "Workflow Overview",
+"tags": "",
+"keywords": "",
+"url": "workflow-overview.html",
+"summary": "Use Distil to construct predictive models of automotive data."
+}
 
 
 

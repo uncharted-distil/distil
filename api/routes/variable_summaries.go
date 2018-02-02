@@ -37,6 +37,8 @@ func VariableSummaryHandler(ctorStorage model.DataStorageCtor) func(http.Respons
 			handleError(w, err)
 			return
 		}
+		histogram.Dataset = dataset
+
 		// marshall output into JSON
 		err = handleJSON(w, SummaryResult{
 			Histogram: histogram,

@@ -206,6 +206,10 @@ func handleCreatePipelines(conn *Connection, client *pipeline.Client, metadataCt
 		handleErr(conn, msg, err)
 		return
 	}
+	// NOTE: IF THE SIZE IS NOT SET THEN THE DEFAULT IS USED (100 rows only)!!!
+	// NOTE: this could be done on the client side, but I am not sure if that
+	// is more elegant or not.
+	filters.Size = -1
 
 	// initialize the storage
 	dataStorage, err := dataCtor()
@@ -231,7 +235,6 @@ func handleCreatePipelines(conn *Connection, client *pipeline.Client, metadataCt
 	// persist the filtered dataset if necessary
 	fetchFilteredData := func(dataset string, index string, filterParams *model.FilterParams) (*model.FilteredData, error) {
 		// fetch the whole data and include the target feature
-		filterParams.Filters = append(filterParams.Filters, model.NewEmptyFilter(clientCreateMsg.Feature))
 		return dataStorage.FetchData(dataset, index, filterParams, false)
 	}
 	fetchVariable := func(dataset string, index string) ([]*model.Variable, error) {
@@ -249,7 +252,7 @@ func handleCreatePipelines(conn *Connection, client *pipeline.Client, metadataCt
 		handleErr(conn, msg, err)
 		return
 	}
-	datasetPath = fmt.Sprintf("%s", datasetPath)
+	datasetPath = fmt.Sprintf("%s", filepath.Join(datasetPath, pipeline.D3MDataSchema))
 
 	// Create the set of training features - we already filtered that out when we persist, but needs to be specified
 	// to satisfy ta3ta2 API.
@@ -288,7 +291,7 @@ func handleCreatePipelines(conn *Connection, client *pipeline.Client, metadataCt
 		TargetFeatures: []*pipeline.Feature{
 			{
 				FeatureName: clientCreateMsg.Feature,
-				ResourceId:  datasetPath,
+				ResourceId:  defaultResourceID,
 			},
 		},
 		MaxPipelines: clientCreateMsg.MaxPipelines,
