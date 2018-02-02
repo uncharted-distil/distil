@@ -377,6 +377,14 @@ button {
     box-shadow: 0 1px 2px 0 rgba(0,0,0,0.10);
     transition: box-shadow 0.3s ease-in-out;
 }
+.variable-facets-container .facets-root-container .facets-group-container .facets-group .group-header {
+	padding: 4px 0px 6px 8px;
+
+}
+.variable-facets-container .facets-root-container .facets-group-container .facets-group .group-header .type-change-menu {
+	float: right;
+	margin-top: -4px;
+}
 .facet-filters span {
 	font-size: 0.9rem;
 }

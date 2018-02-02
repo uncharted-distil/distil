@@ -1,6 +1,6 @@
 <template>
 	<div class="type-change-menu">
-		<b-dropdown :text="type" variant="outline-primary" class="var-type-button">
+		<b-dropdown :text="type" variant="secondary" class="var-type-button">
 			<b-dropdown-item
 				v-for="suggested in addMissingSuggestions()"
 				@click.stop="onTypeChange(suggested)"
@@ -55,15 +55,17 @@ export default Vue.extend({
 
 <style>
 
-.var-type-button {
-}
+
 .var-type-button button {
 	border: none;
-	padding: 0;
+	border-radius: 0;
+	padding: 2px 4px;
 	width: 100%;
 	text-align: left;
 	outline: none;
-	font-size: 0.9rem;
+	font-size: 0.867rem;
+	color: white;
+
 }
 .var-type-button button:hover,
 .var-type-button button:active,
@@ -71,9 +73,15 @@ export default Vue.extend({
 .var-type-button.show > .dropdown-toggle  {
 	border: none;
 	border-radius: 0;
-	padding: 0;
-	color: inherit;
-	background-color: inherit;
-	border-color: inherit;
+	padding: 2px 4px;
+	color: white;
+	background-color: #424242;
+	border-color: #424242;
+	box-shadow: none;
 }
+.type-change-menu .dropdown-item {
+	font-size: 0.867rem;
+	text-transform: none;
+}
+
 </style>
