@@ -1,3 +1,4 @@
+import _ from 'lodash';
 import { spinnerHTML } from '../util/spinner';
 import { VariableSummary, Extrema } from '../store/data/index';
 
@@ -211,9 +212,47 @@ function createCategoricalSummaryFacet(summary: VariableSummary, enableCollapse:
 	};
 }
 
-function createNumericalSummaryFacet(summary: VariableSummary, enableCollapse: boolean, enableFiltering: boolean, extrema: Extrema): Group {
+function truncateTowardsZero(num: number): number {
+	if (num < 0) {
+		return Math.ceil(num);
+	}
+	return Math.floor(num);
+}
 
-	const slices = summary.buckets.map((b, i) => {
+function hackyBinning(summary: VariableSummary, extrema: Extrema) {
+	const NUM_BUCKETS = 50;
+	const range = extrema.max - extrema.min;
+	const span = range / NUM_BUCKETS;
+	const buckets = new Array(NUM_BUCKETS);
+	for (let i=0; i<NUM_BUCKETS; i++) {
+		const from = extrema.min + (i * span);
+		const to = extrema.min + (i + 1) * span;
+		buckets[i] = {
+			label: `${from}`,
+			toLabel: `${to}`,
+			count: 0
+		};
+	}
+	for (let i=0; i<summary.buckets.length; i++) {
+		const bucket = summary.buckets[i];
+		if (bucket.count === 0) {
+			continue;
+		}
+		const bucketKey =  _.toNumber(bucket.key);
+		if (bucketKey < extrema.min || bucketKey > extrema.max) {
+			continue;
+		}
+		const index = truncateTowardsZero((bucketKey / span) - (extrema.min / span));
+		buckets[index].count += bucket.count;
+	}
+	return buckets;
+}
+
+function getHistogramSlices(summary: VariableSummary, extrema: Extrema) {
+	if (extrema && !_.isNaN(extrema.min) && !_.isNaN(extrema.max)) {
+		return hackyBinning(summary, extrema);
+	}
+	return summary.buckets.map((b, i) => {
 		let toLabel: string;
 		if (i < summary.buckets.length-1) {
 			toLabel = summary.buckets[i+1].key;
@@ -226,23 +265,11 @@ function createNumericalSummaryFacet(summary: VariableSummary, enableCollapse: b
 			count: b.count
 		};
 	});
+}
 
-	if (extrema) {
-		if (summary.extrema.min > extrema.min) {
-			slices.unshift({
-				label: `${extrema.min}`,
-				toLabel: `${extrema.min}`,
-				count: 0
-			});
-		}
-		if (summary.extrema.max < extrema.max) {
-			slices.push({
-				label: `${extrema.max}`,
-				toLabel: `${extrema.max}`,
-				count: 0
-			});
-		}
-	}
+function createNumericalSummaryFacet(summary: VariableSummary, enableCollapse: boolean, enableFiltering: boolean, extrema: Extrema): Group {
+
+	const slices = getHistogramSlices(summary, extrema);
 
 	return {
 		label: summary.name,

@@ -122,7 +122,7 @@ func main() {
 	}
 
 	// Ingest the data specified by the environment
-	if config.InitialDataset != "" {
+	if config.InitialDataset != "" && !config.SkipIngest {
 		log.Infof("Loading initial dataset '%s'", config.InitialDataset)
 		err = task.IngestDataset(config.ESDatasetsIndex, config.InitialDataset, ingestConfig)
 		if err != nil {

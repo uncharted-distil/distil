@@ -1,8 +1,8 @@
 {
-    "dataset_schema": "/tmp/d3m/dataset/38_sick/38_sick_dataset/datasetDoc.json",
-    "problem_schema": "/tmp/d3m/dataset/38_sick/38_sick_problem/problemDoc.json",
-    "training_data_root": "/tmp/d3m/dataset/38_sick/38_sick_dataset",
-    "problem_root": "/tmp/d3m/dataset/38_sick_problem",
+    "dataset_schema": "/tmp/d3m/dataset/38_sick/TRAIN/dataset_TRAIN/datasetDoc.json",
+    "problem_schema": "/tmp/d3m/dataset/38_sick/TRAIN/problem_TRAIN/problemDoc.json",
+    "training_data_root": "/tmp/d3m/dataset/38_sick/TRAIN/dataset_TRAIN",
+    "problem_root": "/tmp/d3m/dataset/38_sick/TRAIN/problem_TRAIN",
     "pipeline_logs_root": "/tmp/d3m/dataset/logs",
     "executables_root": "/tmp/d3m/executables",
     "temp_storage_root": "/tmp/d3m/temp_storage",

@@ -59,12 +59,12 @@ func (c *IngestTaskConfig) getRootPath(dataset string) string {
 	return fmt.Sprintf("%s/%s/%s%s", c.ContainerDataPath, dataset, dataset, c.DatasetFolderSuffix)
 }
 
-func (c *IngestTaskConfig) getAbsolutePath(dataset string, relativePath string) string {
-	return fmt.Sprintf("%s/%s", c.getRootPath(dataset), relativePath)
+func (c *IngestTaskConfig) getAbsolutePath(relativePath string) string {
+	return fmt.Sprintf("%s/%s", c.ContainerDataPath, relativePath)
 }
 
-func (c *IngestTaskConfig) getRawDataPath(dataset string) string {
-	return fmt.Sprintf("%s/", c.getRootPath(dataset))
+func (c *IngestTaskConfig) getRawDataPath() string {
+	return fmt.Sprintf("%s/", c.ContainerDataPath)
 }
 
 // IngestDataset executes the complete ingest process for the specified dataset.
@@ -101,25 +101,25 @@ func IngestDataset(index string, dataset string, config *IngestTaskConfig) error
 // Merge combines all the source data files into a single datafile.
 func Merge(index string, dataset string, config *IngestTaskConfig) error {
 	// load the metadata from schema
-	meta, err := metadata.LoadMetadataFromOriginalSchema(config.getAbsolutePath(dataset, config.SchemaPathRelative))
+	meta, err := metadata.LoadMetadataFromOriginalSchema(config.getAbsolutePath(config.SchemaPathRelative))
 	if err != nil {
 		return errors.Wrap(err, "unable to load metadata schema")
 	}
 
 	// merge file links in dataset
-	mergedDR, output, err := merge.InjectFileLinksFromFile(meta, config.getAbsolutePath(dataset, config.DataPathRelative), config.getRawDataPath(dataset), config.HasHeader)
+	mergedDR, output, err := merge.InjectFileLinksFromFile(meta, config.getAbsolutePath(config.DataPathRelative), config.getRawDataPath(), config.HasHeader)
 	if err != nil {
 		return errors.Wrap(err, "unable to merge linked files")
 	}
 
 	// write copy to disk
-	err = ioutil.WriteFile(config.getAbsolutePath(dataset, config.MergedOutputPathRelative), output, 0644)
+	err = ioutil.WriteFile(config.getAbsolutePath(config.MergedOutputPathRelative), output, 0644)
 	if err != nil {
 		return errors.Wrap(err, "unable to write merged data")
 	}
 
 	// write merged metadata out to disk
-	err = meta.WriteMergedSchema(config.getAbsolutePath(dataset, config.MergedOutputSchemaPathRelative), mergedDR)
+	err = meta.WriteMergedSchema(config.getAbsolutePath(config.MergedOutputSchemaPathRelative), mergedDR)
 	if err != nil {
 		return errors.Wrap(err, "unable to write merged schema")
 	}
@@ -136,7 +136,7 @@ func Classify(index string, dataset string, config *IngestTaskConfig) error {
 	classifier := rest.NewClassifier(config.ClassificationFunctionName, client)
 
 	// classify the file
-	classification, err := classifier.ClassifyFile(config.getAbsolutePath(dataset, config.MergedOutputPathRelative))
+	classification, err := classifier.ClassifyFile(config.getAbsolutePath(config.MergedOutputPathRelative))
 	if err != nil {
 		return errors.Wrap(err, "unable to classify dataset")
 	}
@@ -147,7 +147,7 @@ func Classify(index string, dataset string, config *IngestTaskConfig) error {
 		return errors.Wrap(err, "unable to serialize classification result")
 	}
 	// write to file
-	err = ioutil.WriteFile(config.getAbsolutePath(dataset, config.ClassificationOutputPathRelative), bytes, 0644)
+	err = ioutil.WriteFile(config.getAbsolutePath(config.ClassificationOutputPathRelative), bytes, 0644)
 	if err != nil {
 		return errors.Wrap(err, "unable to store classification result")
 	}
@@ -159,8 +159,8 @@ func Classify(index string, dataset string, config *IngestTaskConfig) error {
 func Rank(index string, dataset string, config *IngestTaskConfig) error {
 	// get the header for the rank data
 	meta, err := metadata.LoadMetadataFromClassification(
-		config.getAbsolutePath(dataset, config.MergedOutputSchemaPathRelative),
-		config.getAbsolutePath(dataset, config.ClassificationOutputPathRelative))
+		config.getAbsolutePath(config.MergedOutputSchemaPathRelative),
+		config.getAbsolutePath(config.ClassificationOutputPathRelative))
 	if err != nil {
 		return errors.Wrap(err, "unable to load metadata")
 	}
@@ -177,8 +177,8 @@ func Rank(index string, dataset string, config *IngestTaskConfig) error {
 	// need to ignore rows with missing
 	// ranking requires a header
 	err = removeMissingValues(
-		config.getAbsolutePath(dataset, config.MergedOutputPathRelative),
-		config.getAbsolutePath(dataset, rankingFilename),
+		config.getAbsolutePath(config.MergedOutputPathRelative),
+		config.getAbsolutePath(rankingFilename),
 		config.HasHeader, header[0], config.RankingRowLimit)
 	if err != nil {
 		return errors.Wrap(err, "unable to ignore missing values")
@@ -189,7 +189,7 @@ func Rank(index string, dataset string, config *IngestTaskConfig) error {
 	ranker := rest.NewRanker(config.RankingFunctionName, client)
 
 	// get the importance from the REST interface
-	importance, err := ranker.RankFile(config.getAbsolutePath(dataset, rankingFilename))
+	importance, err := ranker.RankFile(config.getAbsolutePath(rankingFilename))
 	if err != nil {
 		return errors.Wrap(err, "unable to rank importance file")
 	}
@@ -201,7 +201,7 @@ func Rank(index string, dataset string, config *IngestTaskConfig) error {
 	}
 
 	// write to file
-	outputPath := config.getAbsolutePath(dataset, config.RankingOutputPathRelative)
+	outputPath := config.getAbsolutePath(config.RankingOutputPathRelative)
 	err = ioutil.WriteFile(outputPath, bytes, 0644)
 	if err != nil {
 		return errors.Wrapf(err, "unable to write importance ranking to '%s'", outputPath)
@@ -217,7 +217,7 @@ func Summarize(index string, dataset string, config *IngestTaskConfig) error {
 	summarizer := rest.NewSummarizer(config.SummaryFunctionName, client)
 
 	// get the importance from the REST interface
-	summary, err := summarizer.SummarizeFile(config.getAbsolutePath(dataset, config.MergedOutputPathRelative))
+	summary, err := summarizer.SummarizeFile(config.getAbsolutePath(config.MergedOutputPathRelative))
 	if err != nil {
 		return errors.Wrap(err, "unable to summarize merged file")
 	}
@@ -229,7 +229,7 @@ func Summarize(index string, dataset string, config *IngestTaskConfig) error {
 	}
 
 	// write to file
-	outputPath := config.getAbsolutePath(dataset, config.SummaryMachineOutputPathRelative)
+	outputPath := config.getAbsolutePath(config.SummaryMachineOutputPathRelative)
 	err = ioutil.WriteFile(outputPath, bytes, 0644)
 	if err != nil {
 		return errors.Wrapf(err, "unable to write summary to '%s'", outputPath)
@@ -241,8 +241,8 @@ func Summarize(index string, dataset string, config *IngestTaskConfig) error {
 // Ingest the metadata to ES and the data to Postgres.
 func Ingest(index string, dataset string, config *IngestTaskConfig) error {
 	meta, err := metadata.LoadMetadataFromClassification(
-		config.getAbsolutePath(dataset, config.MergedOutputSchemaPathRelative),
-		config.getAbsolutePath(dataset, config.ClassificationOutputPathRelative))
+		config.getAbsolutePath(config.MergedOutputSchemaPathRelative),
+		config.getAbsolutePath(config.ClassificationOutputPathRelative))
 	if err != nil {
 		return errors.Wrap(err, "unable to load metadata")
 	}
@@ -251,19 +251,19 @@ func Ingest(index string, dataset string, config *IngestTaskConfig) error {
 	for i := 0; i < len(indices); i++ {
 		indices[i] = i
 	}
-	err = meta.LoadImportance(config.getAbsolutePath(dataset, config.RankingOutputPathRelative), indices)
+	err = meta.LoadImportance(config.getAbsolutePath(config.RankingOutputPathRelative), indices)
 	if err != nil {
 		return errors.Wrap(err, "unable to load importance from file")
 	}
 
 	// load stats
-	err = meta.LoadDatasetStats(config.getAbsolutePath(dataset, config.MergedOutputPathRelative))
+	err = meta.LoadDatasetStats(config.getAbsolutePath(config.MergedOutputPathRelative))
 	if err != nil {
 		return errors.Wrap(err, "unable to load stats")
 	}
 
 	// load stats
-	err = meta.LoadSummaryMachine(config.getAbsolutePath(dataset, config.SummaryMachineOutputPathRelative))
+	err = meta.LoadSummaryMachine(config.getAbsolutePath(config.SummaryMachineOutputPathRelative))
 	// NOTE: For now ignore summary errors!
 	//if err != nil {
 	//	return errors.Wrap(err, "unable to load stats")
@@ -338,7 +338,7 @@ func Ingest(index string, dataset string, config *IngestTaskConfig) error {
 	}
 
 	// Load the data.
-	reader, err := os.Open(config.getAbsolutePath(dataset, config.MergedOutputPathRelative))
+	reader, err := os.Open(config.getAbsolutePath(config.MergedOutputPathRelative))
 	scanner := bufio.NewScanner(reader)
 	for scanner.Scan() {
 		line := scanner.Text()
