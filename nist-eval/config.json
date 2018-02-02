@@ -1,4 +1,5 @@
 {
-    "temp_storage_root": "/tmp/d3m/datasets",
-    "executables_root": "/tmp/d3m/executables"
+    "temp_storage_root": "/tmp/d3m/temp_storage",
+    "executables_root": "/tmp/d3m/executables",
+    "dataset_schema": "/tmp/d3m/dataset/{{ dataset_name }}"
 }

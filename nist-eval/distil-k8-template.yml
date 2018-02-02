@@ -83,7 +83,8 @@ spec:
   #       topologyKey: failure-domain.beta.kubernetes.io/zone
 {% else %}
     - name: shared-data
-      emptyDir: {}
+      hostPath:
+        path: /tmp/d3m/temp_storage
     - name: shared-config
       hostPath:
         path: /tmp/d3m/config
@@ -92,7 +93,7 @@ spec:
   # TA3 container, entry point for evaluation
   - name: ta3-main
     image: {{ distil_image }}
-    imagePullPolicy: {% if nist_deploy %}Always{% else %}IfNotPresent{% endif %}
+    imagePullPolicy: Always
 {% if nist_deploy %}
     command:
       - {{ '{{ command }}' }}
@@ -135,7 +136,7 @@ spec:
     volumeMounts:
 {% if not nist_deploy %}
       - name: shared-data
-        mountPath: /tmp/d3m/datasets
+        mountPath: /tmp/d3m/temp_storage
 {% else %}
 {% raw %}
       ##====|Begin| Required Code that NIST uses to pair TA2 and TA3 components |Begin|
@@ -169,6 +170,25 @@ spec:
     env:
       - name: ES_JAVA_OPTS
         value: -Xmx512m -Xms512m
+
+  # NK semantic typing
+  - name: nk-classification
+    image: registry.datadrivendiscovery.org/j18_ta1eval/distil/simon:latest 
+    imagePullPolicy: IfNotPresent
+    ports:
+      - name: nk-class-port
+        hostPort: 5000
+        containerPort: 5000
+  
+  # NK pca-based classification
+  - name: nk-ranking
+    image: registry.datadrivendiscovery.org/j18_ta1eval/distil/punk_1:0.4
+    imagePullPolicy: IfNotPresent
+    ports:
+      - name: nk-ranking-port
+        hostPort: 5001
+        containerPort: 5000
+
 {% if not nist_deploy %}
   # Stub ta2 container
   - name: ta2-main
@@ -180,12 +200,12 @@ spec:
       - name: EVAL_ID
         value: {{ eval_id }}
       - name: PIPELINE_SERVER_RESULT_DIR
-        value: /tmp/d3m/datasets
+        value: /tmp/d3m/temp_storage
     ports:
       # gRPC port
       - containerPort: 45042
         protocol: TCP
     volumeMounts:
       - name: shared-data
-        mountPath: /tmp/d3m/datasets
+        mountPath: /tmp/d3m/temp_storage
 {% endif %}

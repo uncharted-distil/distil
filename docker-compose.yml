@@ -24,11 +24,11 @@ postgres:
     -d postgres
 # nk_classification_rest:
 #   image:
-#     primitives.azurecr.io/simon:1.0.0
+#     registry.datadrivendiscovery.org/j18_ta1eval/distil/simon:latest
 #   ports:
 #     - "5000:5000"
 # nk_ranking_rest:
 #   image:
-#     primitives.azurecr.io/http_features:0.4
+#     registry.datadrivendiscovery.org/j18_ta1eval/distil/punk_1:0.4
 #   ports:
 #     - "5001:5000"
