@@ -1,10 +1,21 @@
 <template>
 	<div class="create-pipelines-form">
+		<b-modal id="export-modal" ref="exportModal" title="Export Succeeded"
+			@hide="clearExportResults"
+			:visible="!!exportResults"
+			cancel-disabled
+			hide-header
+			hide-footer>
+			<div class="row justify-content-center">Export Succeeded</div>
+			<div class="row justify-content-center">
+				<b-btn class="mt-3 close-modal" variant="outline-success" block @click="clearExportResults">OK</b-btn>
+			</div>
+		</b-modal>
 		<div class="row justify-content-center">
 			<b-button class="create-button" :variant="createVariant" @click="create" :disabled="disableCreate">
 				Create Models
 			</b-button>
-			<b-button class="create-button" :variant="createVariant" @click="export" :disabled="disableCreate">
+			<b-button class="export-button" :variant="exportVariant" @click="exportData" :disabled="disableCreate">
 				Export Problem
 			</b-button>
 		</div>
@@ -16,7 +27,7 @@
 import _ from 'lodash';
 import { createRouteEntry } from '../util/routes';
 import { getTask, getMetricDisplayNames, getMetricSchemaName } from '../util/pipelines';
-import { getters as dataGetters } from '../store/data/module';
+import { getters as dataGetters, actions as dataActions } from '../store/data/module';
 import { getters as routeGetters } from '../store/route/module';
 import { RESULTS_ROUTE } from '../store/route/index';
 import { actions as pipelineActions } from '../store/pipelines/module';
@@ -34,7 +45,8 @@ export default Vue.extend({
 			feature: 'Feature',
 			featureSet: false,
 			metric: 'Metric',
-			metricSet: false
+			metricSet: false,
+			exportResults: null
 		};
 	},
 	computed: {
@@ -87,6 +99,10 @@ export default Vue.extend({
 		// determines  create button variant based on completeness of user input
 		createVariant(): string {
 			return !this.disableCreate ? 'success' : 'outline-secondary';
+		},
+		// determines  create button variant based on completeness of user input
+		exportVariant(): string {
+			return 'primary';
 		}
 	},
 	methods: {
@@ -114,11 +130,21 @@ export default Vue.extend({
 				});
 				this.$router.push(entry);
 			});
-		}
+		},
 
 		// export button handler
-		export() {
+		exportData() {
+			dataActions.exportProblem(this.$store, {
+				dataset: this.dataset,
+				target: this.target,
+				filters: this.selectedFilters.filters,
+			}).then(res => {
+				this.exportResults = res;
+			});
+		},
 
+		clearExportResults() {
+			this.exportResults = null;
 		}
 	}
 });
@@ -126,7 +152,15 @@ export default Vue.extend({
 
 <style>
 .create-button {
-	width: 70%;
+	margin: 0 8px;
+	width: 35%;
+}
+.export-button {
+	margin: 0 8px;
+	width: 35%;
+}
+.close-modal {
+	width: 50%;
 }
 .selected-icon {
 	padding-right: 4px;

@@ -87,10 +87,9 @@ export const actions = {
 			console.warn('`filters` argument is missing');
 			return null;
 		}
-
-        const filters = args.filters;
-        const queryParams = encodeQueryParams(filters);
-		return axios.post(`/distil/variables/${ES_INDEX}/${args.dataset}/${args.target}${queryParams}`)
+		const filters = args.filters;
+		const queryParams = encodeQueryParams(filters);
+		return axios.post(`/distil/discovery/${ES_INDEX}/${args.dataset}/${args.target}${queryParams}`)
 			.catch(error => {
 				console.error(error);
 			});
