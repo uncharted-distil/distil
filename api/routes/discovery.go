@@ -23,6 +23,7 @@ func ProblemDiscoveryHandler(ctorData model.DataStorageCtor, ctorMeta model.Meta
 			handleError(w, err)
 			return
 		}
+		filterParams.Size = -1
 
 		// get storages
 		dataStorage, err := ctorData()
@@ -38,8 +39,7 @@ func ProblemDiscoveryHandler(ctorData model.DataStorageCtor, ctorMeta model.Meta
 		}
 
 		fetchFilteredData := func(dataset string, index string, filterParams *model.FilterParams) (*model.FilteredData, error) {
-			// fetch the whole data and include the target feature
-			filterParams.Filters = append(filterParams.Filters, model.NewEmptyFilter(target))
+			// fetch the whole data
 			return dataStorage.FetchData(dataset, index, filterParams, false)
 		}
 		fetchVariable := func(dataset string, index string) ([]*model.Variable, error) {
