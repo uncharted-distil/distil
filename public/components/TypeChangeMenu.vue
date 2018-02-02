@@ -1,6 +1,6 @@
 <template>
 	<div class="type-change-menu">
-		<b-dropdown :text="type" variant="outline-primary" class="var-type-button">
+		<b-dropdown :text="type" variant="primary" class="var-type-button">
 			<b-dropdown-item
 				v-for="suggested in addMissingSuggestions()"
 				@click.stop="onTypeChange(suggested)"
