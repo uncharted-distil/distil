@@ -1,0 +1,30 @@
+elastic:
+  image:
+    docker.uncharted.software/distil_dev_es:latest
+  ports:
+    - "9200:9200"
+postgres:
+  image:
+    docker.uncharted.software/distil_dev_postgres:latest
+  ports:
+    - "5432:5432"
+  command:
+    -d postgres
+qntfy_ta2:
+  image: registry.datadrivendiscovery.org/uncharted_qntfy/ta3ta2_integration/qntfy_coordinator:latest
+  environment:
+    - COORDINATOR_RPCPORT=45042
+    - COORDINATOR_DEBUG=True
+    - COORDINATOR_VERBOSE=True
+    - COORDINATOR_WORKERTIMEOUT=10
+  ports:
+    - "45042:45042"
+qntfy_ta2_worker:
+  image: registry.datadrivendiscovery.org/uncharted_qntfy/ta3ta2_integration/qntfy_ml-worker:latest
+  environment:
+    - MLW_COORDINATOR_URI=qntfy_ta2:45042
+    - MLW_DEBUG=true
+    - MLW_OUTPUT_DIR=$PWD/datasets
+    - MLW_WORKER_ADDRESS=qntfy_ta2_worker
+  volumes:
+    - $PWD/datasets:$PWD/datasets
