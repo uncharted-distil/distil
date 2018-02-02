@@ -212,11 +212,34 @@ function createCategoricalSummaryFacet(summary: VariableSummary, enableCollapse:
 	};
 }
 
-function createNumericalSummaryFacet(summary: VariableSummary, enableCollapse: boolean, enableFiltering: boolean, extrema: Extrema): Group {
+function hackyBinning(summary: VariableSummary, extrema: Extrema) {
+	const NUM_BUCKETS = 50;
+	const range = extrema.max - extrema.min;
+	const span = range / NUM_BUCKETS;
+	const buckets = new Array(NUM_BUCKETS);
+	for (let i=0; i<NUM_BUCKETS; i++) {
+		const from = extrema.min + (i * span);
+		const to = extrema.min + (i + 1) * span;
+		buckets[i] = {
+			label: `${from}`,
+			toLabel: `${to}`,
+			count: 0
+		};
+	}
+	for (let i=0; i<summary.buckets.length; i++) {
+		const bucket = summary.buckets[i];
+		const bucketKey =  _.toNumber(bucket.key);
+		const index = Math.floor(bucketKey / span) - Math.floor(extrema.min / span);
+		buckets[index].count += bucket.count;
+	}
+	return buckets;
+}
 
-	const span = _.toNumber(summary.buckets[1].key) - _.toNumber(summary.buckets[0].key);
-
-	const slices = summary.buckets.map((b, i) => {
+function getHistogramSlices(summary: VariableSummary, extrema: Extrema) {
+	if (extrema && !_.isNaN(extrema.min) && !_.isNaN(extrema.max)) {
+		return hackyBinning(summary, extrema);
+	}
+	return summary.buckets.map((b, i) => {
 		let toLabel: string;
 		if (i < summary.buckets.length-1) {
 			toLabel = summary.buckets[i+1].key;
@@ -229,36 +252,11 @@ function createNumericalSummaryFacet(summary: VariableSummary, enableCollapse: b
 			count: b.count
 		};
 	});
+}
 
-	if (extrema) {
+function createNumericalSummaryFacet(summary: VariableSummary, enableCollapse: boolean, enableFiltering: boolean, extrema: Extrema): Group {
 
-		const minDist = summary.extrema.min - extrema.min;
-		if (minDist > 0) {
-			for (let i=0; i<minDist; i+=span) {
-				const prev = slices[0];
-				const label = `${Math.max(extrema.min, _.toNumber(prev.label) - span)}`
-				const toLabel = prev.label;
-				slices.unshift({
-					label: label,
-					toLabel: toLabel,
-					count: 0
-				});
-			}
-		}
-		const maxDist = extrema.max - summary.extrema.max;
-		if (maxDist > 0) {
-			for (let i=0; i<maxDist; i+=span) {
-				const next = slices[slices.length - 1];
-				const label = next.toLabel;
-				const toLabel = `${Math.min(extrema.max, _.toNumber(next.toLabel) + span)}`;
-				slices.push({
-					label: label,
-					toLabel: toLabel,
-					count: 0
-				});
-			}
-		}
-	}
+	const slices = getHistogramSlices(summary, extrema);
 
 	return {
 		label: summary.name,
