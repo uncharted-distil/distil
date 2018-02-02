@@ -16,6 +16,11 @@
 					</b-form-fieldset>
 				</div>
 			</div>
+			<div v-if="enableTitle" class="row flex-1 align-items-center">
+				<div class="col-12 flex-column d-flex">
+					<p>Select one the following feature summaries showing count of records by feature value.</p>
+				</div>
+			</div>
 			<div class="row flex-11">
 				<facets class="col-12 flex-column d-flex variable-facets-container"
 					:groups="groups"
@@ -68,6 +73,7 @@ export default Vue.extend({
 	props: {
 		enableSearch: Boolean,
 		enableToggle: Boolean,
+		enableTitle: Boolean,
 		enableGroupCollapse: Boolean,
 		enableFacetFiltering: Boolean,
 		variables: Array,
