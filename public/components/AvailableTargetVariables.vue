@@ -3,6 +3,7 @@
 		<variable-facets
 			enable-search
 			type-change
+			enable-title
 			instance-name="availableVars"
 			:variables="variables"
 			:dataset="dataset"
