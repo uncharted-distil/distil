@@ -3,20 +3,20 @@ package env
 import (
 	enjson "encoding/json"
 	"fmt"
-	"github.com/caarlos0/env"
-	"github.com/unchartedsoftware/distil/api/util/json"
-	"github.com/unchartedsoftware/plog"
 	"io/ioutil"
 	"os"
 	"path"
+
+	"github.com/caarlos0/env"
+	"github.com/unchartedsoftware/distil/api/util/json"
+	"github.com/unchartedsoftware/plog"
 )
 
 const (
 	tempStorageRoot  = "temp_storage_root"
 	executablesRoot  = "executables_root"
-	datasetRoot      = "dataset_root"
 	userProblemsRoot = "user_problems_root"
-	datasetSchema    = "dataset_schema"
+	trainingDataRoot = "training_data_root"
 )
 
 var (
@@ -121,11 +121,12 @@ func overideFromStartupFile(cfg *Config) error {
 		cfg.ExportPath = result
 	}
 
-	result, ok = json.String(startupData, datasetSchema)
+	result, ok = json.String(startupData, trainingDataRoot)
 	if ok {
 		// split path into path/file
-		cfg.DataFolderPath = path.Dir(result)
-		cfg.InitialDataset = path.Base(result)
+		dir := path.Dir(result)
+		cfg.DataFolderPath = path.Dir(dir)
+		cfg.InitialDataset = path.Base(dir)
 	}
 	return nil
 }
