@@ -42,7 +42,7 @@ export default Vue.extend({
 			return (group: Group) => {
 				const container = document.createElement('div');
 				const remove = document.createElement('button');
-				remove.className += 'btn btn-sm btn-danger ml-2 mr-2 mb-2';
+				remove.className += 'btn btn-sm btn-outline-secondary ml-2 mr-2 mb-2';
 				remove.innerHTML = 'Remove';
 				remove.addEventListener('click', () => {
 					const training = routeGetters.getRouteTrainingVariables(this.$store).split(',');
