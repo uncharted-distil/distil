@@ -62,9 +62,10 @@ type DataResource struct {
 
 // DataVariable captures the data schema representation of a variable.
 type DataVariable struct {
-	ColName string   `json:"colName"`
-	Role    []string `json:"role"`
-	ColType string   `json:"colType"`
+	ColName  string   `json:"colName"`
+	Role     []string `json:"role"`
+	ColType  string   `json:"colType"`
+	ColIndex int      `json:"colIndex"`
 }
 
 // Hash the filter set
@@ -257,9 +258,10 @@ func writeDataSchema(schemaPath string, dataset string, filteredData *model.Filt
 
 	// Both outputs have the index.
 	ds.DataResources[0].Variables = append(ds.DataResources[0].Variables, &DataVariable{
-		ColName: "d3mIndex",
-		Role:    []string{"index"},
-		ColType: "integer",
+		ColName:  "d3mIndex",
+		Role:     []string{"index"},
+		ColType:  "integer",
+		ColIndex: 0,
 	})
 
 	// Add all other variables.
@@ -270,9 +272,10 @@ func writeDataSchema(schemaPath string, dataset string, filteredData *model.Filt
 			role[0] = "suggestedTarget"
 		}
 		v := &DataVariable{
-			ColName: c,
-			Role:    role,
-			ColType: vars[c].Type,
+			ColName:  c,
+			Role:     role,
+			ColType:  vars[c].Type,
+			ColIndex: i + 1,
 		}
 		ds.DataResources[0].Variables = append(ds.DataResources[0].Variables, v)
 	}
