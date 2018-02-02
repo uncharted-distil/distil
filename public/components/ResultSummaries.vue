@@ -204,11 +204,11 @@ export default Vue.extend({
 		},
 
 		residualExtrema(): Extrema {
-			let extrema = NaN;
+			let extrema = 0;
 			this.residualsSummaries.forEach(summary => {
-				extrema = Math.max(
+				extrema = Math.max(extrema, Math.max(
 					Math.abs(summary.extrema.min),
-					Math.abs(summary.extrema.max));
+					Math.abs(summary.extrema.max)));
 			});
 			return {
 				min: -extrema,
