@@ -11,16 +11,16 @@ postgres:
   command:
     -d postgres
 qntfy_ta2:
-  image: registry.datadrivendiscovery.org/uncharted_qntfy/ta3ta2_integration/qntfy_coordinator:sha256:ca5e2d9655aeb74f1c19a2f48aba4f87e3afcc3066a9231210f535f0f8f145b2
+  image: registry.datadrivendiscovery.org/uncharted_qntfy/ta3ta2_integration/qntfy_coordinator:latest
   environment:
     - COORDINATOR_RPCPORT=45042
     - COORDINATOR_DEBUG=True
     - COORDINATOR_VERBOSE=True
-    - COORDINATOR_WORKERTIMEOUT=10
+    - COORDINATOR_WORKERTIMEOUT=1000
   ports:
     - "45042:45042"
 qntfy_ta2_worker:
-  image: registry.datadrivendiscovery.org/uncharted_qntfy/ta3ta2_integration/qntfy_ml-worker@sha256:444a5ab76b48f5c4c1f4e2375175facf52642c1675a6442dc69b21bfe147fb91
+  image: registry.datadrivendiscovery.org/uncharted_qntfy/ta3ta2_integration/qntfy_ml-worker:latest
   environment:
     - MLW_COORDINATOR_URI=qntfy_ta2:45042
     - MLW_DEBUG=true
