@@ -1,6 +1,6 @@
 <template>
 	<div class="available-training-variables">
-		<p class="nav-link font-weight-bold">Available features</p>
+		<p class="nav-link font-weight-bold">Available Features</p>
 		<variable-facets
 			enable-search
 			type-change
@@ -18,6 +18,7 @@ import { overlayRouteEntry } from '../util/routes';
 import { getters as dataGetters } from '../store/data/module';
 import { getters as routeGetters } from '../store/route/module';
 import { VariableSummary } from '../store/data/index';
+import { filterSummariesByDataset } from '../util/data';
 import VariableFacets from '../components/VariableFacets.vue';
 import 'font-awesome/css/font-awesome.css';
 import Vue from 'vue';
@@ -34,14 +35,15 @@ export default Vue.extend({
 			return routeGetters.getRouteDataset(this.$store);
 		},
 		variables(): VariableSummary[] {
-			return dataGetters.getAvailableVariableSummaries(this.$store);
+			const summaries = dataGetters.getAvailableVariableSummaries(this.$store);
+			return filterSummariesByDataset(summaries, this.dataset);
 		},
 		html(): ( { key: string } ) => HTMLDivElement {
 			return (group: { key: string }) => {
 				const container = document.createElement('div');
 				const trainingElem = document.createElement('button');
 				trainingElem.className += 'btn btn-sm btn-outline-secondary ml-2 mr-2 mb-2';
-				trainingElem.innerHTML = 'Add to Training Set';
+				trainingElem.innerHTML = 'Add';
 				trainingElem.addEventListener('click', () => {
 					const training = routeGetters.getRouteTrainingVariables(this.$store);
 					const trainingArray = training ? training.split(',') : [];

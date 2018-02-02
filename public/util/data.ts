@@ -155,6 +155,12 @@ export function updateSummaries(summary: VariableSummary, summaries: VariableSum
 	}
 }
 
+export function filterSummariesByDataset(summaries: VariableSummary[], dataset: string): VariableSummary[] {
+	return summaries.filter(summary => {
+		return summary.dataset === dataset;
+	});
+}
+
 export function getSummary(
 	context: DataContext,
 	endpoint: string,

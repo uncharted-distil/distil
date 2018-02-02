@@ -24,7 +24,8 @@ export const getters = {
 	getAvailableVariablesMap: read(moduleGetters.getAvailableVariablesMap),
 	getTrainingVariablesMap: read(moduleGetters.getTrainingVariablesMap),
 	getVariableSummaries: read(moduleGetters.getVariableSummaries),
-	getResultsSummaries: read(moduleGetters.getResultsSummaries),
+	getResultSummaries: read(moduleGetters.getResultSummaries),
+	getPredictedSummaries: read(moduleGetters.getPredictedSummaries),
 	getResidualsSummaries: read(moduleGetters.getResidualsSummaries),
 	getSelectedFilters: read(moduleGetters.getSelectedFilters),
 	getAvailableVariableSummaries: read(moduleGetters.getAvailableVariableSummaries),
@@ -42,7 +43,7 @@ export const getters = {
 	getSelectedDataNumRows: read(moduleGetters.getSelectedDataNumRows),
 	getSelectedDataItems: read(moduleGetters.getSelectedDataItems),
 	getSelectedDataFields: read(moduleGetters.getSelectedDataFields),
-	getHighlightedFeatureValues: read(moduleGetters.getHighlightedFeatureValues),
+	getHighlightedValues: read(moduleGetters.getHighlightedValues)
 }
 
 // Typed actions
@@ -52,16 +53,19 @@ export const actions = {
 	fetchVariables: dispatch(moduleActions.fetchVariables),
 	fetchVariableSummary: dispatch(moduleActions.fetchVariableSummary),
 	fetchVariableSummaries: dispatch(moduleActions.fetchVariableSummaries),
+	fetchResultSummaries: dispatch(moduleActions.fetchResultSummaries),
+	fetchResultSummary: dispatch(moduleActions.fetchResultSummary),
 	fetchVariablesAndVariableSummaries: dispatch(moduleActions.fetchVariablesAndVariableSummaries),
 	updateFilteredData: dispatch(moduleActions.updateFilteredData),
 	updateSelectedData: dispatch(moduleActions.updateSelectedData),
 	fetchData: dispatch(moduleActions.fetchData),
-	fetchResultsSummaries: dispatch(moduleActions.fetchResultsSummaries),
+	fetchPredictedSummaries: dispatch(moduleActions.fetchPredictedSummaries),
 	fetchResidualsSummaries: dispatch(moduleActions.fetchResidualsSummaries),
 	updateResults: dispatch(moduleActions.updateResults),
-	fetchResults: dispatch(moduleActions.fetchResults)
+	fetchResults: dispatch(moduleActions.fetchResults),
+	fetchDataHighlightValues: dispatch(moduleActions.fetchDataHighlightValues),
+	fetchResultHighlightValues: dispatch(moduleActions.fetchResultHighlightValues)
 }
-
 
 // Typed mutations
 export const mutations = {
@@ -69,12 +73,11 @@ export const mutations = {
 	setVariables: commit(moduleMutations.setVariables),
 	setDatasets: commit(moduleMutations.setDatasets),
 	updateVariableSummaries: commit(moduleMutations.updateVariableSummaries),
-	updateResultsSummaries: commit(moduleMutations.updateResultsSummaries),
+	updateResultSummaries: commit(moduleMutations.updateResultSummaries),
+	updatePredictedSummaries: commit(moduleMutations.updatePredictedSummaries),
 	updateResidualsSummaries: commit(moduleMutations.updateResidualsSummaries),
 	setFilteredData: commit(moduleMutations.setFilteredData),
 	setSelectedData: commit(moduleMutations.setSelectedData),
 	setResultData: commit(moduleMutations.setResultData),
-	highlightFeatureValues: commit(moduleMutations.highlightFeatureValues),
-	clearFeatureHighlightValues: commit(moduleMutations.clearFeatureHighlightValues),
-	clearFeatureHighlights: commit(moduleMutations.clearFeatureHighlights)
+	setHighlightedValues: commit(moduleMutations.setHighlightedValues)
 }

@@ -27,6 +27,7 @@ export interface Bucket {
 export interface VariableSummary {
 	name: string;
 	feature: string;
+	dataset: string;
 	buckets: Bucket[];
 	extrema: Extrema;
 	pipelineId?: string;
@@ -60,32 +61,17 @@ export interface TargetRow extends TableRow {
 	_cellVariants: Dictionary<string>;
 }
 
-export interface Highlights {
-	root: HighlightRoot;
-	values: Dictionary<string[]>;
-}
-
-export interface Range {
-	to: number;
-	from: number;
-}
-
-export interface HighlightRoot {
-	context: string;
-	key: string;
-	value: string | Range;
-}
-
 export interface DataState {
 	datasets: Datasets[];
 	variables: Variable[];
 	variableSummaries: VariableSummary[];
-	resultsSummaries: VariableSummary[];
+	resultSummaries: VariableSummary[];
+	predictedSummaries: VariableSummary[];
 	residualSummaries: VariableSummary[];
 	resultData: Data;
 	filteredData: Data;
 	selectedData: Data;
-	highlightedFeatureValues: Highlights;
+	highlightedValues: Dictionary<string[]>;
 }
 
 export const state = {
@@ -98,10 +84,13 @@ export const state = {
 	// variable summary data for the active dataset
 	variableSummaries: <VariableSummary[]>[],
 
-	// results summary data for the selected pipeline run
-	resultsSummaries: <VariableSummary[]>[],
+	// results summary data for the training dataset
+	resultSummaries: <VariableSummary[]>[],
 
-	// error summary data for the selected pipeline run
+	// results summary data for the predicted data
+	predictedSummaries: <VariableSummary[]>[],
+
+	// error summary data for the predicted data
 	residualSummaries: <VariableSummary[]>[],
 
 	// current set of pipeline results
@@ -113,6 +102,5 @@ export const state = {
 	// selected data entries for the active dataset
 	selectedData: <Data>{},
 
-	// highlighted features
-	highlightedFeatureValues: <Highlights>{}
+	highlightedValues: {}
 }

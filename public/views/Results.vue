@@ -4,7 +4,7 @@
 		</div>
 		<div class="row flex-1 align-items-center bg-white">
 			<div class="col-12">
-				<h5 class="header-label">Select Features That May Predict</h5>
+				<h5 class="header-label">Selected Features</h5>
 			</div>
 		</div>
 		<div class="row flex-12 pb-3">
@@ -31,6 +31,8 @@ import { getters as routeGetters } from '../store/route/module';
 import { actions as pipelineActions, getters as pipelineGetters } from '../store/pipelines/module';
 import { Variable, VariableSummary } from '../store/data/index';
 import { Dictionary } from '../util/dict';
+import { HighlightRoot } from '../util/highlights';
+import { Filter } from '../util/filters';
 import Vue from 'vue';
 
 export default Vue.extend({
@@ -57,9 +59,9 @@ export default Vue.extend({
 		},
 		summaries(): VariableSummary[] {
 			if (this.excludeNonTraining) {
-				return dataGetters.getVariableSummaries(this.$store).filter(summary => this.training[summary.name]);
+				return dataGetters.getResultSummaries(this.$store).filter(summary => this.training[summary.name]);
 			}
-			return dataGetters.getVariableSummaries(this.$store);
+			return dataGetters.getResultSummaries(this.$store);
 		},
 		variables(): Variable[] {
 			return dataGetters.getVariables(this.$store);
@@ -80,11 +82,41 @@ export default Vue.extend({
 		},
 		sessionId(): string {
 			return pipelineGetters.getPipelineSessionID(this.$store);
+		},
+		filters(): Filter[] {
+			return routeGetters.getDecodedFilters(this.$store);
+		},
+		highlightRoot(): HighlightRoot {
+			return routeGetters.getDecodedHighlightRoot(this.$store);
 		}
 	},
 
 	mounted() {
 		this.fetch();
+	},
+
+	watch: {
+		highlightRoot() {
+			dataActions.fetchResultHighlightValues(this.$store, {
+				dataset: this.dataset,
+				filters: this.filters,
+				highlightRoot: this.highlightRoot,
+				pipelineId: this.pipelineId
+			});
+		},
+		pipelineId() {
+			dataActions.fetchResultSummaries(this.$store, {
+				dataset: this.dataset,
+				variables: this.variables,
+				pipelineId: this.pipelineId
+			});
+			dataActions.fetchResultHighlightValues(this.$store, {
+				dataset: this.dataset,
+				filters: this.filters,
+				highlightRoot: this.highlightRoot,
+				pipelineId: this.pipelineId
+			});
+		}
 	},
 
 	methods: {
@@ -103,17 +135,24 @@ export default Vue.extend({
 						dataset: this.dataset,
 						target: this.target
 					}).then(() => {
-						dataActions.fetchVariableSummaries(this.$store, {
+						dataActions.fetchResultSummaries(this.$store, {
 							dataset: this.dataset,
-							variables: this.variables
+							variables: this.variables,
+							pipelineId: this.pipelineId
 						});
-						dataActions.fetchResultsSummaries(this.$store, {
+						dataActions.fetchPredictedSummaries(this.$store, {
 							dataset: this.dataset,
 							requestIds: this.requestIds
 						});
 						dataActions.fetchResidualsSummaries(this.$store, {
 							dataset: this.dataset,
 							requestIds: this.requestIds
+						});
+						dataActions.fetchResultHighlightValues(this.$store, {
+							dataset: this.dataset,
+							filters: this.filters,
+							highlightRoot: this.highlightRoot,
+							pipelineId: this.pipelineId
 						});
 					});
 				});

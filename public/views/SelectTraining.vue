@@ -6,7 +6,7 @@
 			<div class="col-12 col-md-6 d-flex flex-column border-gray-right">
 				<div class="row flex-1 bg-white align-items-center">
 					<div class="col-12 d-flex">
-						<h5 class="header-label">Select Features That May Predict</h5>
+						<h5 class="header-label">Select Features That May Predict {{capitalize(target)}}</h5>
 					</div>
 				</div>
 				<div class="row flex-12">
@@ -17,7 +17,6 @@
 			<div class="col-12 col-md-6 d-flex flex-column">
 				<div class="row flex-1 bg-white align-items-center">
 					<div class="col-12">
-						<h5 class="header-label">Select Feature to Predict</h5>
 					</div>
 				</div>
 				<div class="row flex-12">
@@ -27,11 +26,6 @@
 						</div>
 						<div class="row responsive-flex pb-3">
 							<select-data-table class="col-12 d-flex flex-column select-data-table"></select-data-table>
-						</div>
-						<div class="row flex-1 bg-white align-items-center">
-							<div class="col-12 d-flex flex-column">
-								<h5 class="header-label">Create the Models</h5>
-							</div>
 						</div>
 						<div class="row flex-2 align-items-center">
 							<div class="col-12 d-flex flex-column">
@@ -47,6 +41,7 @@
 
 <script lang="ts">
 
+import _ from 'lodash';
 import CreatePipelinesForm from '../components/CreatePipelinesForm.vue';
 import SelectDataTable from '../components/SelectDataTable.vue';
 import AvailableTrainingVariables from '../components/AvailableTrainingVariables.vue';
@@ -55,6 +50,8 @@ import TargetVariable from '../components/TargetVariable.vue';
 import { getters as dataGetters, actions } from '../store/data/module';
 import { getters as routeGetters} from '../store/route/module';
 import { Variable } from '../store/data/index';
+import { HighlightRoot } from '../util/highlights';
+import { Filter } from '../util/filters';
 import Vue from 'vue';
 
 export default Vue.extend({
@@ -77,6 +74,22 @@ export default Vue.extend({
 		},
 		target(): string {
 			return routeGetters.getRouteTargetVariable(this.$store);
+		},
+		filters(): Filter[] {
+			return routeGetters.getDecodedFilters(this.$store);
+		},
+		highlightRoot(): HighlightRoot {
+			return routeGetters.getDecodedHighlightRoot(this.$store);
+		}
+	},
+
+	watch: {
+		highlightRoot() {
+			actions.fetchDataHighlightValues(this.$store, {
+				dataset: this.dataset,
+				filters: this.filters,
+				highlightRoot: this.highlightRoot,
+			});
 		}
 	},
 
@@ -85,9 +98,17 @@ export default Vue.extend({
 	},
 
 	methods: {
+		capitalize(str) {
+			return _.capitalize(str);
+		},
 		fetch() {
 			actions.fetchVariablesAndVariableSummaries(this.$store, {
 				dataset: this.dataset
+			});
+			actions.fetchDataHighlightValues(this.$store, {
+				dataset: this.dataset,
+				filters: this.filters,
+				highlightRoot: this.highlightRoot,
 			});
 		}
 	}

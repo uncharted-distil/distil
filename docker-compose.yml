@@ -12,6 +12,7 @@ pipeline_server:
     - PIPELINE_SERVER_RESULT_DIR=$PWD/datasets
     - PIPELINE_SEND_DELAY=2000
     - PIPELINE_NUM_UPDATES=3
+    - PIPELINE_ERR_PERCENT=0.01
   volumes:
     - $PWD/datasets:$PWD/datasets
 postgres:
@@ -23,11 +24,11 @@ postgres:
     -d postgres
 # nk_classification_rest:
 #   image:
-#     primitives.azurecr.io/simon:1.0.0
+#     registry.datadrivendiscovery.org/j18_ta1eval/distil/simon:latest
 #   ports:
 #     - "5000:5000"
 # nk_ranking_rest:
 #   image:
-#     primitives.azurecr.io/http_features:0.4
+#     registry.datadrivendiscovery.org/j18_ta1eval/distil/punk_1:0.4
 #   ports:
 #     - "5001:5000"

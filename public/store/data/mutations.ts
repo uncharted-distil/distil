@@ -1,6 +1,7 @@
 import _ from 'lodash';
-import { DataState, Variable, Datasets, VariableSummary, Data, Highlights } from './index';
+import { DataState, Variable, Datasets, VariableSummary, Data } from './index';
 import { updateSummaries } from '../../util/data';
+import { Dictionary } from '../../util/dict';
 
 export const mutations = {
 
@@ -23,8 +24,12 @@ export const mutations = {
 		updateSummaries(summary, state.variableSummaries, 'name');
 	},
 
-	updateResultsSummaries(state: DataState, summary: VariableSummary) {
-		updateSummaries(summary, state.resultsSummaries, 'pipelineId');
+	updateResultSummaries(state: DataState, summary: VariableSummary) {
+		updateSummaries(summary, state.resultSummaries, 'name');
+	},
+
+	updatePredictedSummaries(state: DataState, summary: VariableSummary) {
+		updateSummaries(summary, state.predictedSummaries, 'pipelineId');
 	},
 
 	updateResidualsSummaries(state: DataState, summary: VariableSummary) {
@@ -46,15 +51,7 @@ export const mutations = {
 		state.resultData = resultData;
 	},
 
-	highlightFeatureValues(state: DataState, highlights: Highlights) {
-		state.highlightedFeatureValues = highlights;
-	},
-
-	clearFeatureHighlightValues(state: DataState) {
-		state.highlightedFeatureValues = <Highlights>{};
-	},
-
-	clearFeatureHighlights(state: DataState) {
-		state.highlightedFeatureValues = <Highlights>{};
+	setHighlightedValues(state: DataState, highlightedValues: Dictionary<string[]>) {
+		state.highlightedValues = highlightedValues;
 	}
 }

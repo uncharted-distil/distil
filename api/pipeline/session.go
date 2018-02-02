@@ -88,18 +88,23 @@ func (s *Session) GetOrDispatch(ctx context.Context, info *RequestInfo) (*Result
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	// check pending requests
-	for _, req := range s.pendingRequests {
-		if info.RequestHash == req.RequestHash {
-			return s.attachToExistingRequest(req.RequestID)
-		}
-	}
-	// check completed requests
-	for _, req := range s.completedRequests {
-		if info.RequestHash == req.RequestHash {
-			return s.attachToExistingRequest(req.RequestID)
-		}
-	}
+	// TODO: uncomment this once persisting is correct, currently we persist
+	// all results, which ends up with multiple of the same scores being written
+	// out and pulled back in.
+
+	// // check pending requests
+	// for _, req := range s.pendingRequests {
+	// 	if info.RequestHash == req.RequestHash {
+	// 		return s.attachToExistingRequest(req.RequestID)
+	// 	}
+	// }
+	// // check completed requests
+	// for _, req := range s.completedRequests {
+	// 	if info.RequestHash == req.RequestHash {
+	// 		return s.attachToExistingRequest(req.RequestID)
+	// 	}
+	// }
+
 	// no request we could re-use, dispatch a new one and attach
 	requestID := s.dispatchRequest(ctx, info.RequestFunc)
 	return s.attachToExistingRequest(requestID)

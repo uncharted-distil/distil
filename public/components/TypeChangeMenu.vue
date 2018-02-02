@@ -54,8 +54,8 @@ export default Vue.extend({
 </script>
 
 <style>
+
 .var-type-button {
-	width: 100%;
 }
 .var-type-button button {
 	border: none;

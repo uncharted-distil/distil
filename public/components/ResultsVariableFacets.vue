@@ -1,10 +1,7 @@
 <script lang="ts">
 
 import VariableFacets from './VariableFacets.vue';
-import { mutations as dataMutations } from '../store/data/module';
-import { NUMERICAL_FILTER, CATEGORICAL_FILTER } from '../util/filters';
-import { updateResultHighlights } from '../util/highlights';
-import { Range } from '../store/data/index';
+import { updateHighlightRoot, clearHighlightRoot, Range } from '../util/highlights';
 import Vue from 'vue';
 
 export default Vue.extend({
@@ -15,32 +12,26 @@ export default Vue.extend({
 	methods: {
 		onHistogramClick(context: string, key: string, value: Range) {
 			if (key && value) {
-				const selectFilter = {
-					name: key,
-					type: NUMERICAL_FILTER,
-					enabled: true,
-					min:  value.from,
-					max: value.to
-				};
-				updateResultHighlights(this, context, key, value, selectFilter);
+				updateHighlightRoot(this, {
+					context: context,
+					key: key,
+					value: value
+				});
 			} else {
-				dataMutations.clearFeatureHighlights(this.$store);
+				clearHighlightRoot(this);
 			}
 		},
 
 		onFacetClick(context: string, key: string, value: string) {
 			if (key && value) {
-				// extract the var name from the key
-				const selectFilter = {
-					name: key,
-					type: CATEGORICAL_FILTER,
-					enabled: true,
-					categories: [value]
-				};
-				updateResultHighlights(this, context, key, value, selectFilter);
+				updateHighlightRoot(this, {
+					context: context,
+					key: key,
+					value: value
+				});
 			} else {
 				// clear existing highlights
-				dataMutations.clearFeatureHighlights(this.$store);
+				clearHighlightRoot(this);
 			}
 		},
 	}

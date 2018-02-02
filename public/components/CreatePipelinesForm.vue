@@ -1,28 +1,9 @@
 <template>
 	<div class="create-pipelines-form">
-		<div class="row justify-content-center requirements">
-			<div class="requirement-met text-success" v-if="trainingSelected">
-				<i class="fa fa-check selected-icon"></i><strong>Training features Selected</strong>
-			</div>
-			<div class="requirement-met text-success" v-if="targetSelected">
-				<i class="fa fa-check selected-icon"></i><strong>Target Feature Selected</strong>
-			</div>
-		</div>
 		<div class="row justify-content-center">
-			<div class="col-9">
-				<b-dropdown
-					class="dropdown-button-style"
-					text="Create Models"
-					:variant="createVariant"
-					:disabled="disableCreate">
-					<b-dropdown-header>Select Number of Models</b-dropdown-header>
-					<b-dropdown-item @click="create(1)">1</b-dropdown-item>
-					<b-dropdown-item @click="create(2)">2</b-dropdown-item>
-					<b-dropdown-item @click="create(3)">3</b-dropdown-item>
-					<b-dropdown-item @click="create(4)">4</b-dropdown-item>
-					<b-dropdown-item @click="create(5)">5</b-dropdown-item>
-				</b-dropdown>
-			</div>
+			<b-button class="create-button" :variant="createVariant" @click="create" :disabled="disableCreate">
+				Create Models
+			</b-button>
 		</div>
 	</div>
 </template>
@@ -107,7 +88,7 @@ export default Vue.extend({
 	},
 	methods: {
 		// create button handler
-		create(numPipelines) {
+		create() {
 			// compute schema values for request
 			const taskData = getTask(this.targetVariable.type);
 			const task = taskData.schemaName;
@@ -120,7 +101,7 @@ export default Vue.extend({
 				feature: routeGetters.getRouteTargetVariable(this.$store),
 				task: task,
 				metric: metrics,
-				maxPipelines: numPipelines
+				maxPipelines: 1
 			}).then((res: PipelineInfo) => {
 				// transition to result screen
 				const entry = createRouteEntry(RESULTS_ROUTE, {

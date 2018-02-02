@@ -36,6 +36,7 @@ type Bucket struct {
 type Histogram struct {
 	Name    string    `json:"name"`
 	Type    string    `json:"type"`
+	Dataset string    `json:"dataset"`
 	VarType string    `json:"varType"`
 	Extrema *Extrema  `json:"extrema,omitempty"`
 	Buckets []*Bucket `json:"buckets"`
