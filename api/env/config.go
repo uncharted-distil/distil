@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
-	"path"
 
 	"github.com/caarlos0/env"
 	"github.com/unchartedsoftware/distil/api/util/json"
@@ -65,6 +64,7 @@ type Config struct {
 	InitialDataset             string `env:"INITIAL_DATASET" envDefault:""`
 	ESDatasetsIndex            string `env:"ES_DATASETS_INDEX" envDefault:"datasets"`
 	UserProblemPath            string `env:"USER_PROBLEM_PATH" envDefault:"datasets"`
+	SkipIngest                 bool   `env:"SKIP_INGEST" envDefault:"false"`
 }
 
 // LoadConfig loads the config from the environment if necessary and returns a
@@ -123,10 +123,8 @@ func overideFromStartupFile(cfg *Config) error {
 
 	result, ok = json.String(startupData, trainingDataRoot)
 	if ok {
-		// split path into path/file
-		dir := path.Dir(result)
-		cfg.DataFolderPath = path.Dir(dir)
-		cfg.InitialDataset = path.Base(dir)
+		cfg.DataFolderPath = result
+		cfg.InitialDataset = result
 	}
 	return nil
 }
