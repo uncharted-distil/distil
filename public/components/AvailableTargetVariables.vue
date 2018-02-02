@@ -76,10 +76,7 @@ export default Vue.extend({
 	display: flex;
 	flex-direction: column;
 }
-.available-target-variables .facets-group,
-.available-target-variables .facets-group .group-header,
-.available-target-variables .facets-group .group-facet-container,
-.available-target-variables .facets-group .facets-facet-horizontal {
+.available-target-variables .facets-group .facets-facet-horizontal .facet-range {
 	cursor: pointer !important;
 }
 
