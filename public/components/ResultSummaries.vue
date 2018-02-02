@@ -204,6 +204,12 @@ export default Vue.extend({
 		},
 
 		residualExtrema(): Extrema {
+			if (this.residualsSummaries.length === 0) {
+				return {
+					min: NaN,
+					max: NaN
+				};
+			}
 			let extrema = 0;
 			this.residualsSummaries.forEach(summary => {
 				extrema = Math.max(extrema, Math.max(

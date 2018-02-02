@@ -212,6 +212,13 @@ function createCategoricalSummaryFacet(summary: VariableSummary, enableCollapse:
 	};
 }
 
+function truncateTowardsZero(num: number): number {
+	if (num < 0) {
+		return Math.ceil(num);
+	}
+	return Math.floor(num);
+}
+
 function hackyBinning(summary: VariableSummary, extrema: Extrema) {
 	const NUM_BUCKETS = 50;
 	const range = extrema.max - extrema.min;
@@ -228,8 +235,14 @@ function hackyBinning(summary: VariableSummary, extrema: Extrema) {
 	}
 	for (let i=0; i<summary.buckets.length; i++) {
 		const bucket = summary.buckets[i];
+		if (bucket.count === 0) {
+			continue;
+		}
 		const bucketKey =  _.toNumber(bucket.key);
-		const index = Math.floor(bucketKey / span) - Math.floor(extrema.min / span);
+		if (bucketKey < extrema.min || bucketKey > extrema.max) {
+			continue;
+		}
+		const index = truncateTowardsZero((bucketKey / span) - (extrema.min / span));
 		buckets[index].count += bucket.count;
 	}
 	return buckets;
