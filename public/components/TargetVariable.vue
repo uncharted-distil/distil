@@ -18,10 +18,8 @@
 import Vue from 'vue';
 import 'font-awesome/css/font-awesome.css';
 import VariableFacets from '../components/VariableFacets';
-import { createRouteEntry } from '../util/routes';
 import { getters as dataGetters } from '../store/data/module';
 import { getters as routeGetters} from '../store/route/module';
-import { SELECT_ROUTE } from '../store/route/index';
 import { VariableSummary } from '../store/data/index';
 
 export default Vue.extend({
