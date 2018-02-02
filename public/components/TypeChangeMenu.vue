@@ -54,8 +54,6 @@ export default Vue.extend({
 </script>
 
 <style>
-
-
 .var-type-button button {
 	border: none;
 	border-radius: 0;
@@ -65,7 +63,6 @@ export default Vue.extend({
 	outline: none;
 	font-size: 0.867rem;
 	color: white;
-
 }
 .var-type-button button:hover,
 .var-type-button button:active,
@@ -83,5 +80,4 @@ export default Vue.extend({
 	font-size: 0.867rem;
 	text-transform: none;
 }
-
 </style>
