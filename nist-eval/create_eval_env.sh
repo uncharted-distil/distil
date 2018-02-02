@@ -18,4 +18,4 @@ jinja2 ./config.json -Ddataset_name=`basename $1` > /tmp/d3m/config/config.json
 chmod -R 777 /tmp/d3m
 
 echo "Setting JSON_CONFIG_PATH" 
-export JSON_CONFIG_PATH=/tmp/d3m/config
+export JSON_CONFIG_PATH=/tmp/d3m/config/config.json
