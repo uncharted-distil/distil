@@ -181,6 +181,9 @@ export default Vue.extend({
 				this.$emit('click', group.key);
 			});
 
+			// inject type icon in group header
+			this.injectTypeIcon(group, $elem);
+
 			// inject type change header menus
 			this.injectTypeChangeHeaders(group, $elem);
 
@@ -543,6 +546,16 @@ export default Vue.extend({
 			});
 		},
 
+		// inject type icon
+		injectTypeIcon(group: Group, $elem: JQuery) {
+			if (isCategoricalFacet(group.facets[0])) {
+				const facetSpecs = (<CategoricalFacet[]>group.facets);
+				const typeicon = facetSpecs[0].icon.class;
+				const $icon = $(`<i class="${typeicon}"></i>`);
+				$elem.find('.group-header').append($icon);
+			}
+		},
+
 		// inject type headers
 		injectTypeChangeHeaders(group: Group, $elem: JQuery) {
 			if (this.typeChange) {
@@ -644,6 +657,9 @@ export default Vue.extend({
 </script>
 
 <style>
+.facet-icon {
+	display: none;
+}
 .facets-root-container {
 	font-size: inherit;
 }
@@ -659,6 +675,9 @@ export default Vue.extend({
 	font-weight: bold;
 	text-transform: uppercase;
 	color: rgba(0,0,0,.54);
+}
+.facets-group .group-header i {
+	margin-left: 5px;
 }
 .facets-facet-horizontal .select-highlight,
 .facets-facet-horizontal .facet-histogram-bar-highlighted.select-highlight {
