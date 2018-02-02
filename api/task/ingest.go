@@ -74,6 +74,9 @@ func (c *IngestTaskConfig) getRawDataPath() string {
 
 // IngestDataset executes the complete ingest process for the specified dataset.
 func IngestDataset(index string, dataset string, config *IngestTaskConfig) error {
+	// Make sure the temp data directory exists.
+	os.MkdirAll(config.getTmpAbsolutePath(config.MergedOutputSchemaPathRelative), os.ModePerm)
+
 	err := Merge(index, dataset, config)
 	if err != nil {
 		return errors.Wrap(err, "unable to merge all data into a single file")
