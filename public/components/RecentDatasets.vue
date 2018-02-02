@@ -6,6 +6,7 @@
 				:name="dataset.name"
 				:description="dataset.description"
 				:summary="dataset.summary"
+				:summaryML="dataset.summaryML"
 				:variables="dataset.variables"
 				:numBytes="dataset.numBytes"
 				:numRows="dataset.numRows">

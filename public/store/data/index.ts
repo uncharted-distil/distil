@@ -10,7 +10,11 @@ export interface Variable {
 export interface Datasets {
 	name: string;
 	description: string;
+	summary: string;
+	summaryML: string;
 	variables: Variable[];
+	numBytes: number;
+	numRows: number;
 }
 
 export interface Extrema {
