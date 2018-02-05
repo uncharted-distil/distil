@@ -111,3 +111,8 @@ func IsCategorical(typ string) bool {
 func IsText(typ string) bool {
 	return typ == TextType
 }
+
+// MapTA2Type maps a type to a simple type.
+func MapTA2Type(typ string) string {
+	return ta2TypeMap[typ]
+}
