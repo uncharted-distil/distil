@@ -2,6 +2,7 @@ package pipeline
 
 import (
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"os"
 	"path"
@@ -143,8 +144,10 @@ func PersistProblem(fetchVariable VariableProvider, datasetDir string, dataset s
 		PerformanceMetrics: []*ProblemPerformanceMetric{pMetric},
 	}
 
+	problemID := strings.Replace(dataset, "dataset", "", -1)
+	problemID = fmt.Sprintf("%s%s", problemID, "problem")
 	pProps := &ProblemProperties{
-		ProblemID:            strings.Replace(dataset, "dataset", "problem", -1),
+		ProblemID:            problemID,
 		ProblemVersion:       problemVersion,
 		ProblemSchemaVersion: problemSchemaVersion,
 		TaskType:             getTaskType(targetVar.Type),
