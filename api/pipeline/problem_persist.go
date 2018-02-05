@@ -22,6 +22,9 @@ const (
 
 	numericalMetric   = "rSquared"
 	categoricalMetric = "accuracy"
+
+	problemTaskTypeNumerical   = "regression"
+	problemTaskTypeCategorical = "classification"
 )
 
 // VariableProvider defines a function that will get the provided variable.
@@ -78,11 +81,18 @@ func fileExists(filename string) bool {
 	return true
 }
 
-func getMetric(colType string) string {
-	if model.IsCategorical(colType) {
+func getMetric(targetType string) string {
+	if model.IsCategorical(targetType) {
 		return categoricalMetric
 	}
 	return numericalMetric
+}
+
+func getTaskType(targetType string) string {
+	if model.IsCategorical(targetType) {
+		return problemTaskTypeCategorical
+	}
+	return problemTaskTypeNumerical
 }
 
 // PersistProblem stores the problem information in the required D3M
@@ -104,7 +114,7 @@ func PersistProblem(fetchVariable VariableProvider, datasetDir string, dataset s
 	}
 
 	// pull the target variable to determine the problem metric
-	targetVar, err := fetchVariable(index, dataset, target)
+	targetVar, err := fetchVariable(dataset, index, target)
 	if err != nil {
 		return "", errors.Wrap(err, "unable to pull target variable")
 	}
@@ -137,6 +147,7 @@ func PersistProblem(fetchVariable VariableProvider, datasetDir string, dataset s
 		ProblemID:            strings.Replace(dataset, "dataset", "problem", -1),
 		ProblemVersion:       problemVersion,
 		ProblemSchemaVersion: problemSchemaVersion,
+		TaskType:             getTaskType(targetVar.Type),
 	}
 
 	problem := &Problem{
