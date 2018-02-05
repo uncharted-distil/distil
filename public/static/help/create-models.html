@@ -183,7 +183,7 @@
             
             
             
-            <li><a href="search.html">1. Search for a Dataset</a></li>
+            <li><a href="search.html">1. Select Data</a></li>
             
             
             
@@ -204,7 +204,7 @@
             
             
             
-            <li><a href="results.html">4. Review Results</a></li>
+            <li><a href="results.html">4. View Models</a></li>
             
             
             
@@ -262,26 +262,41 @@ $('#toc').on('click', 'a', function() {
 
     
 
-  <p>You must choose a set of training features that you think will inform the predictions. Distil will automatically generate models to predict the target using the training features.</p>
+  <p>You must choose a set of features that you think will inform the predictions. Distil will automatically generate models to predict the target using the features you select in this step.</p>
 
-<h2 id="training-set-selection-view-summary">Training Set Selection View Summary</h2>
+<h2 id="create-models-view-summary">Create Models View Summary</h2>
 
-<figure href="#select-view-training-close"><a href="#select-view-training"><img class="diagram" src="images/diagrams/select-training.png" alt="Select training set features" /><figcaption>Click to enlarge</figcaption></a></figure>
+<figure id="#select-view-training-close"><a href="#select-view-training"><img class="diagram" src="images/diagrams/select-training.png" alt="Select training set features" /><figcaption>Click to enlarge</figcaption></a></figure>
 <div class="lightbox-target" id="select-view-training"><img src="images/diagrams/select-training.png" /><a class="lightbox-close" href="#select-view-training-close"></a></div>
 
-<h2 id="selecting-the-training-features">Selecting the Training Features</h2>
+<h2 id="selecting-the-features-to-model">Selecting the Features to Model</h2>
 
-<h5 class="procedure">To choose the training features that your model should use in its predictions:</h5>
+<h5 class="procedure">To choose the features that your model should use in its predictions:</h5>
 
 <ol>
   <li>
-    <p>Click <strong>Add to Training Set</strong> under any feature. In this example, add <strong>horsepower</strong> and <strong>cylinders</strong>.</p>
+    <p>Click <strong>Add</strong> under any feature. In this example, add <strong>horsepower</strong> and <strong>cylinders</strong>.</p>
 
-    <figure><img class="docimage" src="images/workflow/select-add-to-training-set.png" alt="Add cylinders to training set" /></figure>
+    <figure><img class="docimage" src="images/workflow/select-add-to-training-set.png" alt="Add cylinders to features to model" /></figure>
 
-    <p>Distil adds the selected features to the list of Training Features. You can filter or change the <span class="feature-type">type <sup class="fa fa-sort-desc" aria-hidden="true" style="display: inline;"></sup></span> of any the training features.</p>
+    <p>Distil adds the selected features to the list of Features to Model. You can filter or change the <strong>type <sup class="fa fa-sort-desc" aria-hidden="true" style="display: inline;"></sup></strong> of any of the features to model.</p>
 
-    <figure><img class="docimage" src="images/workflow/select-training-features.png" alt="Cylinders and horsepower added as training features that inform the prediction made by the model" /></figure>
+    <figure><img class="docimage" src="images/workflow/select-training-features.png" alt="Cylinders and horsepower added as features that inform the prediction made by the model" /></figure>
+
+    <div class="panel-group" id="accordion">
+ <div class="panel panel-default">
+   <div class="panel-heading">
+     <h4 class="panel-title"><a class="noCrossRef accordion-toggle" data-toggle="collapse" data-parent="#accordion" href="#collapseOne"><span class="fa fa-plus"></span> To remove a feature from the features to model</a></h4>
+   </div>
+   <div id="collapseOne" class="panel-collapse collapse noCrossRef">
+     <div class="panel-body">
+       Click <strong>Remove</strong> under the feature name in the Features to Model pane.
+       <figure><img class="docimage" src="images/workflow/select-remove-feature.png" alt="Remove feature from the features to model" /></figure>
+
+     </div>
+   </div>
+ </div>
+</div>
   </li>
   <li>
     <p>Note the distribution of categories for the <strong>cylinders</strong> feature. Four, six and eight cylinder engines appear often in the dataset, while three and five cylinder engines appear much less frequently. Click the infrequent categories to omit them from the model.</p>
@@ -302,32 +317,42 @@ $('#toc').on('click', 'a', function() {
   </li>
 </ol>
 
-<h5 class="procedure">To remove a feature from the training set:</h5>
+<p>Depending on your task, next you can:</p>
 
 <ul>
-  <li>Click <strong>Remove</strong> under the feature name in the Training Features pane.</li>
+  <li><a href="#exporting-the-problem">Export the Problem</a> to export the model definition without generating models or predicting <strong>acceleration</strong></li>
+  <li><a href="#generating-the-models">Generate the Models</a> to predict <strong>acceleration</strong> using <strong>horsepower</strong> and <strong>cylinders</strong></li>
 </ul>
 
-<figure><img class="docimage" src="images/workflow/select-remove-feature.png" alt="Remove feature from the training set" /></figure>
+<div class="alert alert-warning" role="alert"><i class="fa fa-warning"></i> <b>Important:</b> You must select a target feature and at least one feature to model from before you can export the problem or generate the models.</div>
+
+<h2 id="exporting-the-problem">Exporting the Problem</h2>
+
+<p>If your task is to discover a problem without generating a predictive model, you can now export your model definition. Otherwise, skip ahead to <a href="#generating-the-models">Generating the Models</a>.</p>
+
+<h5 class="procedure">To export the problem:</h5>
+
+<ul>
+  <li>Click <strong>Export Problem</strong>.</li>
+</ul>
+
+<figure><img class="docimage" src="images/workflow/select-export-problem.png" alt="Export Problem" /></figure>
 
 <h2 id="generating-the-models">Generating the Models</h2>
 
-<p>Once you have a target feature and a set of training features, you can begin model generation. Based on your selections, Distil:</p>
+<p>If your task to build a predictive model, you can now begin the model generation. Based on your selections, Distil:</p>
 
 <ol>
   <li>Automatically determines the number and type of models to predict your target feature.</li>
-  <li>Uses a subset of the actual data to train the models to predict the target from the training features.</li>
+  <li>Uses a subset of the actual data to train the models to predict the target using the features selected in this step.</li>
   <li>Applies the trained models to the rest of the actual data to predict the target feature value in each record.</li>
 </ol>
 
-<div class="alert alert-warning" role="alert"><i class="fa fa-warning"></i> <b>Important:</b> You must select a target feature and at least one training feature before you can generate the models.</div>
-
 <h5 class="procedure">To begin the model generation with the current feature selections:</h5>
 
-<ol>
+<ul>
   <li>Click <strong>Create Models</strong>.</li>
-  <li>Choose the maximum number of models that Distil should produce.</li>
-</ol>
+</ul>
 
 <figure><img class="docimage" src="images/workflow/select-create-models.png" alt="Create models" /></figure>
 

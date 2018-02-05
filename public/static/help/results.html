@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="description" content="">
 <meta name="keywords" content=" ">
-<title>Step 4 - Review Results | Distil Help</title>
+<title>Step 4 - View Models | Distil Help</title>
 <link rel="stylesheet" href="css/syntax.css">
 
 
@@ -113,7 +113,7 @@
                                 searchInput: document.getElementById('search-input'),
                                 resultsContainer: document.getElementById('results-container'),
                                 dataSource: 'search.json',
-                                searchResultTemplate: '<li><a href="{url}" title="Step 4 - Review Results">{title}</a></li>',
+                                searchResultTemplate: '<li><a href="{url}" title="Step 4 - View Models">{title}</a></li>',
                     noResultsText: 'No results found.',
                             limit: 10,
                             fuzzy: true,
@@ -183,7 +183,7 @@
             
             
             
-            <li><a href="search.html">1. Search for a Dataset</a></li>
+            <li><a href="search.html">1. Select Data</a></li>
             
             
             
@@ -204,7 +204,7 @@
             
             
             
-            <li class="active"><a href="results.html">4. Review Results</a></li>
+            <li class="active"><a href="results.html">4. View Models</a></li>
             
             
             
@@ -225,7 +225,7 @@
     <!-- Content Column -->
     <div class="col-md-9">
         <div class="post-header">
-   <h1 class="post-title-main">Step 4 - Review Results</h1>
+   <h1 class="post-title-main">Step 4 - View Models</h1>
 </div>
 
 
@@ -262,7 +262,7 @@ $('#toc').on('click', 'a', function() {
 
     
 
-  <p>The Results view lets you compare the accuracy of models that Distil generates from your feature selections. Depending on your target, Distil builds models of the following types:</p>
+  <p>The View Models view lets you compare the accuracy of models that Distil generates from your feature selections. Depending on your target, Distil builds models of the following types:</p>
 
 <ul>
   <li><strong>Regression models</strong> when your target is <a href="#" data-toggle="tooltip" data-original-title="Has values that are real numbers">continuous</a></li>
@@ -278,24 +278,22 @@ $('#toc').on('click', 'a', function() {
 
 <h2 id="regression-model-summary">Regression Model Summary</h2>
 
-<p>The following diagram shows the features of the Regression Results view. Regression models allow you to configure the acceptable error (distance from the actual value) in predictions. Distil then lists the correctly and incorrectly predicted values based on your selection.</p>
+<p>The following diagram shows the features of regression models. Regression models allow you to configure the acceptable error (distance from the actual value) in predictions. Distil then lists the correctly and incorrectly predicted values based on your selection.</p>
 
-<figure href="#regression-results-view-close"><a href="#regression-results-view"><img class="diagram" src="images/diagrams/results-regression.png" alt="Regression results" /><figcaption>Click to enlarge</figcaption></a></figure>
+<figure id="#regression-results-view-close"><a href="#regression-results-view"><img class="diagram" src="images/diagrams/results-regression.png" alt="Regression results" /><figcaption>Click to enlarge</figcaption></a></figure>
 <div class="lightbox-target" id="regression-results-view"><img src="images/diagrams/results-regression.png" /><a class="lightbox-close" href="#regression-results-view-close"></a></div>
 
 <div class="panel-group" id="accordion">
   <div class="panel panel-default">
     <div class="panel-heading">
-      <h4 class="panel-title">
-        <a class="noCrossRef accordion-toggle" data-toggle="collapse" data-parent="#accordion" href="#collapseOne"><span class="fa fa-plus"></span> Classification model results</a>
-      </h4>
+      <h4 class="panel-title"><a class="noCrossRef accordion-toggle" data-toggle="collapse" data-parent="#accordion" href="#collapseOne"><span class="fa fa-plus"></span> Classification model results</a></h4>
     </div>
     <div id="collapseOne" class="panel-collapse collapse noCrossRef">
       <div class="panel-body">
-        If your target feature was a categorical feature instead of a continuous one, Distil would generate classification models instead of regression models.
+        <p>If your target feature was a categorical feature instead of a continuous one, Distil would generate classification models instead of regression models.</p>
         
         <p>Classification model results are similar to regression models, but they do not require you to specify an error threshold. They only report whether the predicted values correctly or incorrectly matched the actual values.</p>
-        <figure href="#classification-results-view-close"><a href="#classification-results-view"><img class="diagram" src="images/diagrams/results-classification.png" alt="Classification results" /><figcaption>Click to enlarge</figcaption></a></figure><div class="lightbox-target" id="classification-results-view"><img src="images/diagrams/results-classification.png" /><a class="lightbox-close" href="#classification-results-view-close"></a></div>
+        <figure id="#classification-results-view-close"><a href="#classification-results-view"><img class="diagram" src="images/diagrams/results-classification.png" alt="Classification results" /><figcaption>Click to enlarge</figcaption></a></figure><div class="lightbox-target" id="classification-results-view"><img src="images/diagrams/results-classification.png" /><a class="lightbox-close" href="#classification-results-view-close"></a></div>
       </div>
     </div>
   </div>
@@ -303,7 +301,7 @@ $('#toc').on('click', 'a', function() {
 
 <h2 id="reviewing-model-results">Reviewing Model Results</h2>
 
-<p>In the Results view, you can inspect the models generated by Distil to determine which one is most accurate and understand how specific features and values influence the results. The Result view is made up of the following components:</p>
+<p>In the View Models view, you can inspect the models generated by Distil to determine which one is most accurate and understand how specific features and values influence the results. The View Models view is made up of the following components:</p>
 
 <ul>
   <li><a href="#model-results-pane">Model Results Pane</a></li>
@@ -315,7 +313,7 @@ $('#toc').on('click', 'a', function() {
 
 <h3 id="model-results-pane">Model Results Pane</h3>
 
-<p>The Model Results pane on the right lists each model that Distil generated for your problem. Distil ranks the models in descending order of estimated accuracy.</p>
+<p>The Model Results pane on the right lists each model that Distil generated for your problem. Distil ranks the models in descending order of estimated accuracy (ranging from 0–1).</p>
 
 <div class="alert alert-info" role="alert"><i class="fa fa-info-circle"></i> <b>Note:</b> A progress bar under a model indicates that Distil is still generating the results.</div>
 
@@ -368,7 +366,7 @@ $('#toc').on('click', 'a', function() {
 
 <h3 id="feature-summaries">Feature Summaries</h3>
 
-<p>The Feature Summaries show the range of values in the training set features. The distribution of values can help you understand how they influence correct/predictions. You can toggle or filter specific values to understand how predictions would change if you omitted them from the model.</p>
+<p>The Feature Summaries show the range of values in the features used to model the predictions. The distribution of values can help you understand how they influence correct/predictions. You can toggle or filter specific values to understand how predictions would change if you omitted them from the model.</p>
 
 <h5 class="procedure">To investigate feature summaries:</h5>
 
@@ -395,11 +393,11 @@ $('#toc').on('click', 'a', function() {
 
 <figure><img class="docimage" src="images/workflow/results-return-to-select.png" alt="Return to Select to refine the models" /></figure>
 
-<p>When refining the model, you can change the target feature, add or remove training features, or adjust the values included for specific features.</p>
+<p>When refining the model, you can change the target feature, add or remove features used to model the predictions, or adjust the values included for specific features.</p>
 
 <h2 id="finishing-a-problem">Finishing a Problem</h2>
 
-<p>When you are satisfied with the results of a model, click <strong>Export Pipeline</strong> to save it and move on to the next problem.</p>
+<p>When you are satisfied with the results of a model, click <strong>Export Model</strong> to save it and move on to the next problem.</p>
 
 <figure><img class="docimage" src="images/workflow/results-export.png" alt="Export models" /></figure>
 

@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="description" content="">
 <meta name="keywords" content=" ">
-<title>Step 1 - Search for a Dataset | Distil Help</title>
+<title>Step 1 - Select Data | Distil Help</title>
 <link rel="stylesheet" href="css/syntax.css">
 
 
@@ -113,7 +113,7 @@
                                 searchInput: document.getElementById('search-input'),
                                 resultsContainer: document.getElementById('results-container'),
                                 dataSource: 'search.json',
-                                searchResultTemplate: '<li><a href="{url}" title="Step 1 - Search for a Dataset">{title}</a></li>',
+                                searchResultTemplate: '<li><a href="{url}" title="Step 1 - Select Data">{title}</a></li>',
                     noResultsText: 'No results found.',
                             limit: 10,
                             fuzzy: true,
@@ -183,7 +183,7 @@
             
             
             
-            <li class="active"><a href="search.html">1. Search for a Dataset</a></li>
+            <li class="active"><a href="search.html">1. Select Data</a></li>
             
             
             
@@ -204,7 +204,7 @@
             
             
             
-            <li><a href="results.html">4. Review Results</a></li>
+            <li><a href="results.html">4. View Models</a></li>
             
             
             
@@ -225,7 +225,7 @@
     <!-- Content Column -->
     <div class="col-md-9">
         <div class="post-header">
-   <h1 class="post-title-main">Step 1 - Search for a Dataset</h1>
+   <h1 class="post-title-main">Step 1 - Select Data</h1>
 </div>
 
 
@@ -262,13 +262,13 @@ $('#toc').on('click', 'a', function() {
 
     
 
-  <p>To begin, you must first find a dataset that is relevant to your problem. You can search for datasets from the Distil Home page or the Search view.</p>
+  <p>To begin, you must first find a dataset that is relevant to your problem. You can search for datasets from the Distil Home page or the Select Data view.</p>
 
-<h2 id="search-view-summary">Search View Summary</h2>
+<h2 id="select-data-view-summary">Select Data View Summary</h2>
 
-<p>The following diagram shows the features of the Search view. You can search for datasets using keywords (e.g. <em>vehicle acceleration</em>) or by expressing your intent in natural language (e.g. <em>Predict vehicle acceleration</em>).</p>
+<p>The following diagram shows the features of the Select Data view. You can search for datasets using keywords (e.g. <em>vehicle acceleration</em>) or by expressing your intent in natural language (e.g. <em>Predict vehicle acceleration</em>).</p>
 
-<figure href="#search-view-close"><a href="#search-view"><img class="diagram" src="images/diagrams/search.png" alt="Search" /><figcaption>Click to enlarge</figcaption></a></figure>
+<figure id="#search-view-close"><a href="#search-view"><img class="diagram" src="images/diagrams/search.png" alt="Search" /><figcaption>Click to enlarge</figcaption></a></figure>
 <div class="lightbox-target" id="search-view"><img src="images/diagrams/search.png" /><a class="lightbox-close" href="#search-view-close"></a></div>
 
 <h2 id="searching-for-a-dataset">Searching for a Dataset</h2>
@@ -277,7 +277,7 @@ $('#toc').on('click', 'a', function() {
 
 <ol>
   <li>
-    <p>Enter <em>vehicle acceleration</em> in the <strong>Search</strong> field on the Home page or the Search view.</p>
+    <p>Enter <em>acceleration</em> in the <strong>Search</strong> field on the Home page or the Select Data view.</p>
 
     <p>As you type, Distil returns all datasets that contain either keyword in their list of features or full description.</p>
   </li>
