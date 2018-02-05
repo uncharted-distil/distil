@@ -353,7 +353,7 @@ func Ingest(index string, dataset string, config *IngestTaskConfig) error {
 	}
 
 	// Load the data.
-	reader, err := os.Open(config.getAbsolutePath(config.MergedOutputPathRelative))
+	reader, err := os.Open(config.getTmpAbsolutePath(config.MergedOutputPathRelative))
 	scanner := bufio.NewScanner(reader)
 	for scanner.Scan() {
 		line := scanner.Text()
