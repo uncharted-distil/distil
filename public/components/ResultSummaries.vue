@@ -312,11 +312,6 @@ export default Vue.extend({
 	overflow-y: auto;
 }
 
-.result-summaries .facet-range,
-.result-summaries .facets-facet-horizontal {
-	height: 35px;
-}
-
 .result-summaries .facets-facet-base {
 	overflow: visible;
 }
