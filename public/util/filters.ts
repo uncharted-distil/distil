@@ -1,5 +1,8 @@
 import _ from 'lodash';
+import Vue from 'vue';
 import { Dictionary } from './dict'
+import { getters as routeGetters } from '../store/route/module';
+import { overlayRouteEntry } from './routes';
 
 /**
  * Empty filter, omitting no documents.
@@ -168,6 +171,47 @@ export function updateFilter(filters: string, filter: Filter): string {
 
 	// encode the filters back into a url string
 	return encodeFilters(decoded);
+}
+
+export function updateFilterRoute(component: Vue, filter: Filter) {
+	// retrieve the filters from the route
+	const filters = routeGetters.getRouteFilters(component.$store);
+	// merge the updated filters back into the route query params
+	const updated = updateFilter(filters, filter);
+	const entry = overlayRouteEntry(routeGetters.getRoute(component.$store), {
+		filters: updated
+	});
+	component.$router.push(entry);
+}
+
+interface NumericalFilterParams {
+	from: {
+		label: string[]
+	},
+	to: {
+		label: string[]
+	}
+};
+
+type CategoricalFilterParams = string[];
+
+export function createNumericalFilter(key: string, value: NumericalFilterParams): Filter {
+	return {
+		name: key,
+		type: NUMERICAL_FILTER,
+		enabled: true,
+		min: parseFloat(value.from.label[0]),
+		max: parseFloat(value.to.label[0])
+	};
+}
+
+export function createCategoricalFilter(key: string, value: CategoricalFilterParams): Filter {
+	return {
+		name: key,
+		type: CATEGORICAL_FILTER,
+		enabled: true,
+		categories: value
+	};
 }
 
 /**

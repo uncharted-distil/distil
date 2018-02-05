@@ -428,8 +428,6 @@ export default Vue.extend({
 							}
 						}
 
-
-
 					} else {
 
 						const highlightValue = this.getHighlightRootValue(highlights);

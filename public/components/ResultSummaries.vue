@@ -22,6 +22,8 @@
 		<facets class="result-summaries-target"
 			@histogram-click="onHistogramClick"
 			@facet-click="onFacetClick"
+			@range-change="onRangeChange"
+			@facet-toggle="onFacetToggle"
 			:groups="targetGroups"
 			:filters="filters"
 			:highlights="highlights"></facets>
@@ -59,6 +61,7 @@ import { getters as routeGetters } from '../store/route/module';
 import { actions } from '../store/app/module';
 import { Dictionary } from '../util/dict';
 import vueSlider from 'vue-slider-component';
+import { createNumericalFilter, createCategoricalFilter, updateFilterRoute } from '../util/filters';
 import Vue from 'vue';
 import _ from 'lodash';
 import 'font-awesome/css/font-awesome.css';
@@ -137,7 +140,7 @@ export default Vue.extend({
 		},
 
 		filters(): Filter[] {
-			return routeGetters.getDecodedResultsFilters(this.$store);
+			return routeGetters.getDecodedFilters(this.$store);
 		},
 
 		range(): number {
@@ -168,7 +171,7 @@ export default Vue.extend({
 
 		targetGroups(): Group[] {
 			if (this.targetSummary) {
-				return createGroups([ this.targetSummary ], false, false, this.resultExtrema);
+				return createGroups([ this.targetSummary ], false, true, this.resultExtrema);
 			}
 			return [];
 		},
@@ -240,6 +243,17 @@ export default Vue.extend({
 	},
 
 	methods: {
+
+		onRangeChange(key: string, value: { from: { label: string[] }, to: { label: string[] } }) {
+			const filter = createNumericalFilter(key, value);
+			updateFilterRoute(this, filter);
+		},
+
+		onFacetToggle(key: string, values: string[]) {
+			const filter = createCategoricalFilter(key, values);
+			updateFilterRoute(this, filter);
+		},
+
 		onHistogramClick(context: string, key: string, value: Range) {
 			if (key && value) {
 				const colKey = getTargetCol(routeGetters.getRouteTargetVariable(this.$store));
