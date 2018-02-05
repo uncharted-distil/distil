@@ -323,6 +323,7 @@ button {
 .variable-facets-container .facets-root-container .facets-group-container .facets-group .group-header .type-change-menu {
 	float: right;
 	margin-top: -4px;
+	margin-right: -8px;
 }
 .facet-filters span {
 	font-size: 0.9rem;
