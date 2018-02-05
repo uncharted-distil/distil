@@ -35,8 +35,8 @@ const (
 // a set of filter parameters.
 type FilteredDataProvider func(dataset string, index string, filters *model.FilterParams) (*model.FilteredData, error)
 
-// VariableProvider defines a function that will get the variables for a dataset.
-type VariableProvider func(dataset string, index string) ([]*model.Variable, error)
+// VariablesProvider defines a function that will get the variables for a dataset.
+type VariablesProvider func(dataset string, index string) ([]*model.Variable, error)
 
 // DataSchema encapsulates the data schema json structure.
 type DataSchema struct {
@@ -81,7 +81,7 @@ func getFilteredDatasetHash(dataset string, target string, filterParams *model.F
 // PersistFilteredData creates a hash code from the combination of the dataset name, the target name, and its filter
 // state, and saves the filtered data and target data to disk if they haven't been previously.  The path to the data
 // is returned.
-func PersistFilteredData(fetchData FilteredDataProvider, fetchVariables VariableProvider, datasetDir string, dataset string, index string, target string, filters *model.FilterParams) (string, error) {
+func PersistFilteredData(fetchData FilteredDataProvider, fetchVariables VariablesProvider, datasetDir string, dataset string, index string, target string, filters *model.FilterParams) (string, error) {
 	// parse the dataset and its filter state and generate a hashcode from both
 	hash, err := getFilteredDatasetHash(dataset, target, filters)
 	if err != nil {

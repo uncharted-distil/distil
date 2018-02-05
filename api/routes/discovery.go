@@ -42,18 +42,27 @@ func ProblemDiscoveryHandler(ctorData model.DataStorageCtor, ctorMeta model.Meta
 			// fetch the whole data
 			return dataStorage.FetchData(dataset, index, filterParams, false)
 		}
-		fetchVariable := func(dataset string, index string) ([]*model.Variable, error) {
+		fetchVariables := func(dataset string, index string) ([]*model.Variable, error) {
 			return metadataStorage.FetchVariables(dataset, index, false)
 		}
+		fetchVariable := func(dataset string, index string, name string) (*model.Variable, error) {
+			return metadataStorage.FetchVariable(dataset, index, name)
+		}
 
-		path, err := pipeline.PersistFilteredData(fetchFilteredData, fetchVariable, datasetDir, dataset, esIndex, target, filterParams)
+		path, err := pipeline.PersistFilteredData(fetchFilteredData, fetchVariables, datasetDir, dataset, esIndex, target, filterParams)
+		if err != nil {
+			handleError(w, err)
+			return
+		}
+
+		pathProblem, err := pipeline.PersistProblem(fetchVariable, datasetDir, dataset, esIndex, target, filterParams)
 		if err != nil {
 			handleError(w, err)
 			return
 		}
 
 		// marshall output into JSON
-		bytes, err := json.Marshal(map[string]interface{}{"result": "discovered", "path": path})
+		bytes, err := json.Marshal(map[string]interface{}{"result": "discovered", "datasetPath": path, "problemPath": pathProblem})
 		if err != nil {
 			handleError(w, errors.Wrap(err, "unable marshal filtered data result into JSON"))
 			return
