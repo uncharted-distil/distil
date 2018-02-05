@@ -258,6 +258,9 @@ func Ingest(index string, dataset string, config *IngestTaskConfig) error {
 		return errors.Wrap(err, "unable to load metadata")
 	}
 
+	// Adjust the ID & name of the dataset as needed
+	fixDatasetIDName(meta)
+
 	indices := make([]int, len(meta.DataResources[0].Variables))
 	for i := 0; i < len(indices); i++ {
 		indices[i] = i
@@ -418,4 +421,20 @@ func removeMissingValues(sourceFile string, destinationFile string, hasHeader bo
 		return errors.Wrap(err, "failed to close input file")
 	}
 	return nil
+}
+
+func fixDatasetIDName(meta *metadata.Metadata) {
+	// Train dataset ID & name need to be adjusted to fit the expected format.
+	// The ID MUST end in _dataset, and the name should be representative.
+	if isTrainDataset(meta) {
+		meta.ID = strings.TrimSuffix(meta.ID, "_TRAIN")
+		if !strings.HasSuffix(meta.ID, "_dataset") {
+			meta.ID = fmt.Sprintf("%s%s", meta.ID, "_dataset")
+		}
+		meta.Name = strings.TrimSuffix(meta.ID, "_dataset")
+	}
+}
+
+func isTrainDataset(meta *metadata.Metadata) bool {
+	return strings.HasSuffix(meta.ID, "_TRAIN")
 }
