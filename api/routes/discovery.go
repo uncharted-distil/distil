@@ -52,8 +52,14 @@ func ProblemDiscoveryHandler(ctorData model.DataStorageCtor, ctorMeta model.Meta
 			return
 		}
 
+		pathProblem, err := pipeline.PersistProblem(datasetDir, dataset, esIndex, target, filterParams)
+		if err != nil {
+			handleError(w, err)
+			return
+		}
+
 		// marshall output into JSON
-		bytes, err := json.Marshal(map[string]interface{}{"result": "discovered", "path": path})
+		bytes, err := json.Marshal(map[string]interface{}{"result": "discovered", "datasetPath": path, "problemPath": pathProblem})
 		if err != nil {
 			handleError(w, errors.Wrap(err, "unable marshal filtered data result into JSON"))
 			return
