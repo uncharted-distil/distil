@@ -11,6 +11,7 @@ import (
 	"net/http"
 	"os"
 	"path"
+	"strings"
 	"time"
 
 	"github.com/pkg/errors"
@@ -314,7 +315,8 @@ func Ingest(index string, dataset string, config *IngestTaskConfig) error {
 		return errors.Wrap(err, "unable to initialize a new database")
 	}
 
-	dbTable := fmt.Sprintf("%s%s", config.ESDatasetPrefix, dataset)
+	dbTable := strings.Replace(meta.ID, "_dataset", "", -1)
+	dbTable = fmt.Sprintf("%s%s", config.ESDatasetPrefix, dbTable)
 
 	// Drop the current table if requested.
 	// Hardcoded the base table name for now.
