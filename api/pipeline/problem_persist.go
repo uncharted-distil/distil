@@ -144,8 +144,8 @@ func PersistProblem(fetchVariable VariableProvider, datasetDir string, dataset s
 		PerformanceMetrics: []*ProblemPerformanceMetric{pMetric},
 	}
 
-	problemID := strings.Replace(dataset, "dataset", "", -1)
-	problemID = fmt.Sprintf("%s%s", problemID, "problem")
+	problemID := strings.Replace(dataset, "_dataset", "", -1)
+	problemID = fmt.Sprintf("%s%s", problemID, "_problem")
 	pProps := &ProblemProperties{
 		ProblemID:            problemID,
 		ProblemVersion:       problemVersion,
