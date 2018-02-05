@@ -14,7 +14,7 @@ kind: Service
 metadata:
   name: {% if nist_deploy %}{{ '{{ eval_id }}-ta3-web' }}{% else %}{{ eval_id }}-ta3-web{% endif %}
   labels:
-    evalId:  {% if nist_deploy %}{{ '{{ eval_id }}' }}{% else %}{{ eval_id }}{% endif %}
+    evalId: {% if nist_deploy %}{{ '{{ eval_id }}' }}{% else %}{{ eval_id }}{% endif %}
     tier: ta3
 spec:
   # NodePort type allows to expose service outside the cluster
@@ -82,9 +82,12 @@ spec:
   #           - {{ '{{ eval_id }}' }}'
   #       topologyKey: failure-domain.beta.kubernetes.io/zone
 {% else %}
-    - name: shared-data
+    - name: shared-output
       hostPath:
         path: /tmp/d3m/temp_storage
+    - name: shared-input
+      hostPath:
+        path: /tmp/d3m/dataset
     - name: shared-config
       hostPath:
         path: /tmp/d3m/config
@@ -129,14 +132,23 @@ spec:
         value: "true"
       - name: PORT
         value: "80"
+      - name: RANKING_ENDPOINT
+        value: http://localhost:5002
+      - name: CLASSIFICATION_ENDPOINT
+        value: http://localhost:5000
 {% if not nist_deploy %}
       - name: JSON_CONFIG_PATH
         value: /tmp/d3m/config/config.json
 {% endif %}
     volumeMounts:
 {% if not nist_deploy %}
-      - name: shared-data
+      - name: shared-input
+        mountPath: /tmp/d3m/dataset
+        readOnly: true
+      - name: shared-output
         mountPath: /tmp/d3m/temp_storage
+      - name: shared-config
+        mountPath: /tmp/d3m/config
 {% else %}
 {% raw %}
       ##====|Begin| Required Code that NIST uses to pair TA2 and TA3 components |Begin|
@@ -153,17 +165,16 @@ spec:
   # Postgres container - provides access to pre-loaded D3M data
   - name: distil-pg
     image: {{ pg_image }}
-    imagePullPolicy: {% if nist_deploy %}Always{% else %}IfNotPresent{% endif %}
+    imagePullPolicy: Always
     ports:
       - name: pg-port
-        hostPort: 5432
         containerPort: 5432
     args: [-d postgres]
 
   # ElasticSearch container - provides indexing / search on pre-loaded D3M data
   - name: distil-es
     image: {{ es_image }}
-    imagePullPolicy: {% if nist_deploy %}Always{% else %}IfNotPresent{% endif %}
+    imagePullPolicy: Always
     ports:
       - name: es-port
         containerPort: 9200
@@ -174,20 +185,18 @@ spec:
   # NK semantic typing
   - name: nk-classification
     image: registry.datadrivendiscovery.org/j18_ta1eval/distil/simon:latest 
-    imagePullPolicy: IfNotPresent
+    imagePullPolicy: Always
     ports:
       - name: nk-class-port
-        hostPort: 5000
         containerPort: 5000
   
   # NK pca-based classification
   - name: nk-ranking
     image: registry.datadrivendiscovery.org/j18_ta1eval/distil/punk_1:0.4
-    imagePullPolicy: IfNotPresent
+    imagePullPolicy: Always
     ports:
       - name: nk-ranking-port
-        hostPort: 5001
-        containerPort: 5000
+        containerPort: 5002
 
 {% if not nist_deploy %}
   # Stub ta2 container
@@ -206,6 +215,8 @@ spec:
       - containerPort: 45042
         protocol: TCP
     volumeMounts:
-      - name: shared-data
+      - name: shared-output
         mountPath: /tmp/d3m/temp_storage
+      - name: shared-config
+        mountPath: /tmp/d3m/config
 {% endif %}
