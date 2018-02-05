@@ -372,7 +372,14 @@ func (s *Storage) fetchSummaryData(dataset string, index string, varName string,
 	}
 	if model.IsText(variable.Type) {
 		// fetch text analysis
-		return nil, nil
+		// for return an empty histogram
+		hist := &model.Histogram{
+			Name:    varName,
+			Type:    model.TextType,
+			Dataset: dataset,
+			VarType: variable.Type,
+		}
+		return hist, nil
 	}
 	return nil, errors.Errorf("variable %s of type %s does not support summary", variable.Name, variable.Type)
 }
