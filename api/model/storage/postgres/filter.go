@@ -93,10 +93,19 @@ func (s *Storage) buildFilteredResultQueryField(dataset string, variables []*mod
 }
 
 // FetchNumRows pulls the number of rows in the table.
-func (s *Storage) FetchNumRows(dataset string) (int, error) {
+func (s *Storage) FetchNumRows(dataset string, filters map[string]interface{}) (int, error) {
 	query := fmt.Sprintf("SELECT count(*) FROM %s", dataset)
+	params := make([]interface{}, 0)
+	if filters != nil && len(filters) > 0 {
+		clauses := make([]string, 0)
+		for field, value := range filters {
+			clauses = append(clauses, fmt.Sprintf("%s = $%d", field, len(clauses)+1))
+			params = append(params, value)
+		}
+		query = fmt.Sprintf("%s WHERE %s", query, strings.Join(clauses, " AND "))
+	}
 	var numRows int
-	err := s.client.QueryRow(query).Scan(&numRows)
+	err := s.client.QueryRow(query, params...).Scan(&numRows)
 	if err != nil {
 		return -1, errors.Wrap(err, "postgres row query failed")
 	}
@@ -112,7 +121,7 @@ func (s *Storage) FetchData(dataset string, index string, filterParams *model.Fi
 		return nil, errors.Wrap(err, "Could not pull variables from ES")
 	}
 
-	numRows, err := s.FetchNumRows(dataset)
+	numRows, err := s.FetchNumRows(dataset, nil)
 	if err != nil {
 		return nil, errors.Wrap(err, "Could not pull num rows")
 	}

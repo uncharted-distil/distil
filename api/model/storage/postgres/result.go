@@ -370,7 +370,10 @@ func (s *Storage) FetchFilteredResults(dataset string, index string, resultURI s
 	}
 	defer rows.Close()
 
-	numRows, err := s.FetchNumRows(datasetResult)
+	countFilter := map[string]interface{}{
+		"result_id": resultURI,
+	}
+	numRows, err := s.FetchNumRows(datasetResult, countFilter)
 	if err != nil {
 		return nil, errors.Wrap(err, "Could not pull num rows")
 	}
@@ -398,7 +401,10 @@ func (s *Storage) FetchResults(dataset string, index string, resultURI string) (
 	}
 	defer rows.Close()
 
-	numRows, err := s.FetchNumRows(datasetResult)
+	countFilter := map[string]interface{}{
+		"result_id": resultURI,
+	}
+	numRows, err := s.FetchNumRows(datasetResult, countFilter)
 	if err != nil {
 		return nil, errors.Wrap(err, "Could not pull num rows")
 	}
