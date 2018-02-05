@@ -15,10 +15,17 @@ import (
 
 const (
 	// D3MProblem name of the expected problem file.
-	D3MProblem           = "problemDoc.json"
+	D3MProblem = "problemDoc.json"
+
 	problemVersion       = "1.0"
 	problemSchemaVersion = "3.0"
+
+	numericalMetric   = "rSquared"
+	categoricalMetric = "accuracy"
 )
+
+// VariableProvider defines a function that will get the provided variable.
+type VariableProvider func(dataset string, index string, name string) (*model.Variable, error)
 
 // Problem contains the problem file data.
 type Problem struct {
@@ -35,9 +42,10 @@ type ProblemProperties struct {
 	ProblemSchemaVersion string `json:"problemSchemaVersion"`
 }
 
-// ProblemInput lists the inputs of a problem.
+// ProblemInput lists the information of a problem.
 type ProblemInput struct {
-	Data *ProblemData `json:"data"`
+	Data               *ProblemData                `json:"data"`
+	PerformanceMetrics []*ProblemPerformanceMetric `json:"performanceMetrics"`
 }
 
 // ProblemData ties targets to a dataset.
@@ -54,6 +62,11 @@ type ProblemTarget struct {
 	ColName     string `json:"colName"`
 }
 
+// ProblemPerformanceMetric captures the metrics of a problem.
+type ProblemPerformanceMetric struct {
+	Metric string `json:"metric"`
+}
+
 func fileExists(filename string) bool {
 	_, err := os.Stat(filename)
 	if err == nil {
@@ -65,13 +78,20 @@ func fileExists(filename string) bool {
 	return true
 }
 
+func getMetric(colType string) string {
+	if model.IsCategorical(colType) {
+		return categoricalMetric
+	}
+	return numericalMetric
+}
+
 // PersistProblem stores the problem information in the required D3M
 // problem format.
-func PersistProblem(datasetDir string, dataset string, index string, target string, filters *model.FilterParams) (string, error) {
+func PersistProblem(fetchVariable VariableProvider, datasetDir string, dataset string, index string, target string, filters *model.FilterParams) (string, error) {
 	// parse the dataset and its filter state and generate a hashcode from both
 	hash, err := getFilteredDatasetHash(dataset, target, filters)
 	if err != nil {
-		return "", err
+		return "", errors.Wrap(err, "unable to build dataset filter hash")
 	}
 
 	// check to see if we already have this problem saved - return the path
@@ -83,6 +103,13 @@ func PersistProblem(datasetDir string, dataset string, index string, target stri
 		return pPath, nil
 	}
 
+	// pull the target variable to determine the problem metric
+	targetVar, err := fetchVariable(index, dataset, target)
+	if err != nil {
+		return "", errors.Wrap(err, "unable to pull target variable")
+	}
+	metric := getMetric(targetVar.Type)
+
 	targetIdx := -1
 
 	pTarget := &ProblemTarget{
@@ -92,13 +119,18 @@ func PersistProblem(datasetDir string, dataset string, index string, target stri
 		ColName:     target,
 	}
 
+	pMetric := &ProblemPerformanceMetric{
+		Metric: metric,
+	}
+
 	pData := &ProblemData{
 		DatasetID: dataset,
 		Targets:   []*ProblemTarget{pTarget},
 	}
 
 	pInput := &ProblemInput{
-		Data: pData,
+		Data:               pData,
+		PerformanceMetrics: []*ProblemPerformanceMetric{pMetric},
 	}
 
 	pProps := &ProblemProperties{
