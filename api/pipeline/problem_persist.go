@@ -3,6 +3,7 @@ package pipeline
 import (
 	"encoding/json"
 	"io/ioutil"
+	"os"
 	"path"
 	"strconv"
 	"strings"
@@ -53,6 +54,17 @@ type ProblemTarget struct {
 	ColName     string `json:"colName"`
 }
 
+func fileExists(filename string) bool {
+	_, err := os.Stat(filename)
+	if err == nil {
+		return true
+	}
+	if os.IsNotExist(err) {
+		return false
+	}
+	return true
+}
+
 // PersistProblem stores the problem information in the required D3M
 // problem format.
 func PersistProblem(datasetDir string, dataset string, index string, target string, filters *model.FilterParams) (string, error) {
@@ -62,11 +74,12 @@ func PersistProblem(datasetDir string, dataset string, index string, target stri
 		return "", err
 	}
 
-	// check to see if we already have this filtered dataset saved - return the path
+	// check to see if we already have this problem saved - return the path
 	// if so
 	pPath := path.Join(datasetDir, strconv.FormatUint(hash, 10))
-	if dirExists(pPath) {
-		log.Infof("Found cached data for %s with hash %d", dataset, hash)
+	pFilePath := path.Join(pPath, D3MProblem)
+	if dirExists(pPath) && fileExists(pFilePath) {
+		log.Infof("Found stored problem for %s with hash %d", dataset, hash)
 		return pPath, nil
 	}
 
@@ -104,7 +117,7 @@ func PersistProblem(datasetDir string, dataset string, index string, target stri
 		return "", errors.Wrap(err, "unable to marshal problem data")
 	}
 
-	err = ioutil.WriteFile(path.Join(pPath, D3MProblem), data, 0644)
+	err = ioutil.WriteFile(pFilePath, data, 0644)
 	if err != nil {
 		return "", errors.Wrap(err, "Unable to write problem data")
 	}
