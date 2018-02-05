@@ -46,10 +46,10 @@
 // Component that contains a histogram of regression predictions, a histogram of the
 // of prediction-truth residuals, and scoring information.
 
+import Vue from 'vue';
 import Facets from '../components/Facets';
 import { createGroups, Group } from '../util/facets';
-import { isPredicted, isError, getVarFromPredicted, getVarFromError, getPredictedFacetKey,
-	getErrorFacetKey, getErrorCol, getPredictedCol } from '../util/data';
+import { getPredictedCol, getErrorCol } from '../util/data';
 import { VariableSummary } from '../store/data/index';
 import { Highlights, Range, getHighlights } from '../util/highlights';
 import { overlayRouteEntry } from '../util/routes';
@@ -58,9 +58,6 @@ import { getters as routeGetters } from '../store/route/module';
 import { getPipelineById, getMetricDisplayName } from '../util/pipelines';
 import { createNumericalFilter, createCategoricalFilter, updateFilterRoute } from '../util/filters';
 import { updateHighlightRoot, clearHighlightRoot } from '../util/highlights';
-import { Dictionary } from '../util/dict';
-import _ from 'lodash';
-import Vue from 'vue';
 
 export default Vue.extend({
 	name: 'result-group',
@@ -129,30 +126,7 @@ export default Vue.extend({
 		},
 
 		highlights(): Highlights {
-			// Remap highlights to facet key names, filtering out anything other than
-			// the predicted and error values (since that's all that is displayed in this
-			// component)
-			const highlights = getHighlights(this.$store);
-			const facetHighlights = <Highlights>{
-				root: _.cloneDeep(highlights.root),
-				values: <Dictionary<string[]>>{}
-			};
-			_.forEach(highlights.values, (values, varName) => {
-				if (isPredicted(varName)) {
-					facetHighlights.values[getPredictedFacetKey(getVarFromPredicted(varName))] = values;
-				} else if (isError(varName)) {
-					facetHighlights.values[getErrorFacetKey(getVarFromError(varName))] = values;
-				}
-			});
-			// Remap the selection root as well.
-			if (highlights.root) {
-				if (isPredicted(highlights.root.key)) {
-					facetHighlights.root.key = 'Predicted';
-				} else if (isError(highlights.root.key)) {
-					facetHighlights.root.key = 'Error';
-				}
-			}
-			return facetHighlights;
+			return getHighlights(this.$store);
 		},
 
 		currentClass(): string {
@@ -169,13 +143,11 @@ export default Vue.extend({
 		},
 
 		onResultRangeChange(key: string, value: { from: { label: string[] }, to: { label: string[] } }) {
-			// ISSUE: backend query needs `predictedColumnName`, frontend filter needs `key`
 			const filter = createNumericalFilter(this.predictedColumnName, value);
 			updateFilterRoute(this, filter);
 		},
 
 		onResidualRangeChange(key: string, value: { from: { label: string[] }, to: { label: string[] } }) {
-			// ISSUE: backend query needs `errorColumnName`, frontend filter needs `key`
 			const filter = createNumericalFilter(this.errorColumnName, value);
 			updateFilterRoute(this, filter);
 		},
@@ -194,19 +166,10 @@ export default Vue.extend({
 		},
 
 		onResultFacetClick(context: string, key: string, value: string) {
-			if (value) {
-				// extract the var name from the key
-				updateHighlightRoot(this, {
-					context: context,
-					key: this.predictedColumnName,
-					value: value
-				});
-			} else {
-				clearHighlightRoot(this);
-			}
+			this.histogramHighlights(context, this.predictedColumnName, value);
 		},
 
-		histogramHighlights(context: string, key: string, value: Range) {
+		histogramHighlights(context: string, key: string, value: string | Range) {
 			if (value) {
 				updateHighlightRoot(this, {
 					context: context,

@@ -82,7 +82,7 @@ export function createGroups(summaries: VariableSummary[], enableCollapse: boole
 // creates a facet to display a data fetch error
 export function createErrorFacet(summary: VariableSummary, enableCollapse: boolean): Group {
 	return {
-		label: summary.name,
+		label: summary.label ? summary.label : summary.name,
 		key: summary.name,
 		type: summary.varType,
 		collapsible: enableCollapse,
@@ -97,7 +97,7 @@ export function createErrorFacet(summary: VariableSummary, enableCollapse: boole
 // creates a place holder facet to dispay a spinner
 export function createPendingFacet(summary: VariableSummary, enableCollapse: boolean): Group {
 	return {
-		label: summary.name,
+		label: summary.label ? summary.label : summary.name,
 		key: summary.name,
 		type: summary.varType,
 		collapsible: enableCollapse,
@@ -202,7 +202,7 @@ function createCategoricalSummaryFacet(summary: VariableSummary, enableCollapse:
 
 	// Generate a facet group
 	return {
-		label: summary.name,
+		label: summary.label ? summary.label : summary.name,
 		key: summary.name,
 		type: summary.varType,
 		collapsible: enableCollapse,
@@ -273,7 +273,7 @@ function createNumericalSummaryFacet(summary: VariableSummary, enableCollapse: b
 	const slices = getHistogramSlices(summary, extrema);
 
 	return {
-		label: summary.name,
+		label: summary.label ? summary.label : summary.name,
 		key: summary.name,
 		type: summary.varType,
 		collapsible: enableCollapse,
