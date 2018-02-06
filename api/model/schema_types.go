@@ -65,6 +65,27 @@ var (
 		LongitudeType: true,
 		LatitudeType:  true,
 		FloatType:     true}
+	ta2TypeMap = map[string]string{
+		AddressType:     "string",
+		IndexType:       "integer",
+		IntegerType:     "integer",
+		FloatType:       "real",
+		BoolType:        "boolean",
+		DateTimeType:    "dateTime",
+		OrdinalType:     "categorical",
+		CategoricalType: "categorical",
+		NumericalType:   "real",
+		TextType:        "string",
+		CityType:        "string",
+		CountryType:     "string",
+		EmailType:       "string",
+		LatitudeType:    "real",
+		LongitudeType:   "real",
+		PhoneType:       "string",
+		PostalCodeType:  "string",
+		StateType:       "string",
+		URIType:         "string",
+	}
 )
 
 // IsNumerical indicates whether or not a schema type is numeric for the purposes
@@ -89,4 +110,9 @@ func IsCategorical(typ string) bool {
 // of analysis.
 func IsText(typ string) bool {
 	return typ == TextType
+}
+
+// MapTA2Type maps a type to a simple type.
+func MapTA2Type(typ string) string {
+	return ta2TypeMap[typ]
 }

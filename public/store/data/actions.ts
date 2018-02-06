@@ -8,7 +8,7 @@ import { Variable, Data } from './index';
 import { PipelineInfo } from '../pipelines/index';
 import { mutations } from './module'
 import { HighlightRoot, createFilterFromHighlightRoot, parseHighlightValues } from '../../util/highlights';
-import { DataContext, getPredictedFacetKey, getErrorFacetKey, getVarFromTarget } from '../../util/data';
+import { DataContext, getPredictedCol, getErrorCol, getVarFromTarget } from '../../util/data';
 
 export const ES_INDEX = 'datasets';
 
@@ -180,7 +180,7 @@ export const actions = {
 					feature: '',
 					buckets: [],
 					extrema: {} as any,
-					err: error
+					err: error.response? error.response.data : error
 				});
 			});
 	},
@@ -271,7 +271,7 @@ export const actions = {
 					feature: '',
 					buckets: [],
 					extrema: {} as any,
-					err: error
+					err: error.response? error.response.data : error
 				});
 			});
 	},
@@ -314,32 +314,36 @@ export const actions = {
 	fetchPredictedSummary(context: DataContext, args: { dataset: string, pipelineId: string }) {
 		const pipeline = getPipelineById(context.rootState.pipelineModule, args.pipelineId);
 		const endPoint = `/distil/results-summary/${ES_INDEX}/${args.dataset}`
-		const nameFunc = (p: PipelineInfo) => getPredictedFacetKey(p.feature);
-		getSummary(context, endPoint, pipeline, nameFunc, mutations.updatePredictedSummaries);
+		const nameFunc = (p: PipelineInfo) => getPredictedCol(p.feature);
+		const labelFunc = (p: PipelineInfo) => 'Predicted';
+		getSummary(context, endPoint, pipeline, nameFunc, labelFunc, mutations.updatePredictedSummaries);
 	},
 
 	// fetches result summaries for a given pipeline create request
 	fetchPredictedSummaries(context: DataContext, args: { dataset: string, requestIds: string[] }) {
 		const pipelines = getPipelinesByRequestIds(context.rootState.pipelineModule, args.requestIds);
 		const endPoint = `/distil/results-summary/${ES_INDEX}/${args.dataset}`
-		const nameFunc = (p: PipelineInfo) => getPredictedFacetKey(p.feature);
-		getSummaries(context, endPoint, pipelines, nameFunc, mutations.updatePredictedSummaries);
+		const nameFunc = (p: PipelineInfo) => getPredictedCol(p.feature);
+		const labelFunc = (p: PipelineInfo) => 'Predicted';
+		getSummaries(context, endPoint, pipelines, nameFunc, labelFunc, mutations.updatePredictedSummaries);
 	},
 
 	// fetches result summary for a given pipeline id.
 	fetchResidualsSummary(context: DataContext, args: { dataset: string, pipelineId: string }) {
 		const pipeline = getPipelineById(context.rootState.pipelineModule, args.pipelineId);
 		const endPoint = `/distil/residuals-summary/${ES_INDEX}/${args.dataset}`
-		const nameFunc = (p: PipelineInfo) => getErrorFacetKey(p.feature);
-		getSummary(context, endPoint, pipeline, nameFunc, mutations.updateResidualsSummaries);
+		const nameFunc = (p: PipelineInfo) => getErrorCol(p.feature);
+		const labelFunc = (p: PipelineInfo) => 'Error';
+		getSummary(context, endPoint, pipeline, nameFunc, labelFunc, mutations.updateResidualsSummaries);
 	},
 
 	// fetches result summaries for a given pipeline create request
 	fetchResidualsSummaries(context: DataContext, args: { dataset: string, requestIds: string[] }) {
 		const pipelines = getPipelinesByRequestIds(context.rootState.pipelineModule, args.requestIds);
 		const endPoint = `/distil/residuals-summary/${ES_INDEX}/${args.dataset}`
-		const nameFunc = (p: PipelineInfo) => getErrorFacetKey(p.feature);
-		getSummaries(context, endPoint, pipelines, nameFunc, mutations.updateResidualsSummaries);
+		const nameFunc = (p: PipelineInfo) => getErrorCol(p.feature);
+		const labelFunc = (p: PipelineInfo) => 'Error';
+		getSummaries(context, endPoint, pipelines, nameFunc, labelFunc, mutations.updateResidualsSummaries);
 	},
 
 	// fetches result data for created pipeline
@@ -458,7 +462,7 @@ export const actions = {
 		return context.dispatch('fetchResults', {
 				pipelineId: args.pipelineId,
 				dataset: args.dataset,
-				filters: args.filters
+				filters: filtersCopy
 			})
 			.then(res => {
 				mutations.setHighlightedValues(context, parseHighlightValues(res.data));

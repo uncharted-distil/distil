@@ -9,6 +9,7 @@ mkdir -p /tmp/d3m/executables
 mkdir /tmp/d3m/config
 mkdir /tmp/d3m/dataset
 mkdir /tmp/d3m/logs
+mkdir /tmp/d3m/temp_storage
 
 echo "Copying $1m"
 cp -r $1 /tmp/d3m/dataset
@@ -16,7 +17,9 @@ cp -r $1 /tmp/d3m/dataset
 echo "Generating config"
 jinja2 ./config.json -Ddataset_name=`basename $1` > /tmp/d3m/config/config.json
 
-chmod -R 777 /tmp/d3m
+
+chmod -R 555 /tmp/d3m
+chmod 777 /tmp/d3m/temp_storage
 
 echo "Setting JSON_CONFIG_PATH" 
 export JSON_CONFIG_PATH=/tmp/d3m/config/config.json

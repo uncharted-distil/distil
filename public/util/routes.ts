@@ -8,7 +8,6 @@ export interface RouteArgs {
 	filters?: string,
 	training?: string,
 	target?: string,
-	results?: string,
 	pipelineId?: string,
 	highlights?: string,
 	residualThresholdMin?: string,
@@ -32,7 +31,6 @@ export function createRouteEntry(path: string, args: RouteArgs = {}): Location {
 	if (args.pipelineId) { query.pipelineId = args.pipelineId; }
 	if (!_.isEmpty(args.filters)) { query.filters = args.filters; }
 	if (!_.isEmpty(args.training)) { query.training = args.training; }
-	if (!_.isEmpty(args.results)) { query.results = args.results; }
 	if (args.residualThresholdMin) { query.residualThresholdMin = args.residualThresholdMin; }
 	if (args.residualThresholdMax) { query.residualThresholdMax = args.residualThresholdMax; }
 	if (!_.isEmpty(args.highlights)) { query.highlights = args.highlights; }

@@ -10,7 +10,7 @@ type DataStorageCtor func() (DataStorage, error)
 
 // DataStorage defines the functions available to query the underlying data storage.
 type DataStorage interface {
-	FetchNumRows(dataset string) (int, error)
+	FetchNumRows(dataset string, filters map[string]interface{}) (int, error)
 	FetchData(dataset string, index string, filterParams *FilterParams, inclusive bool) (*FilteredData, error)
 	FetchSummary(dataset string, index string, varName string) (*Histogram, error)
 	FetchSummaryByResult(dataset string, index string, varName string, resultURI string) (*Histogram, error)

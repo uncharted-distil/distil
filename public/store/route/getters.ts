@@ -51,10 +51,6 @@ export const getters = {
 		return decodeFilters(state.query.filters ? state.query.filters : {} as any);
 	},
 
-	getDecodedResultsFilters(state: Route): Filter[] {
-		return decodeFilters(state.query.results ? state.query.results : {} as any);
-	},
-
 	getDecodedHighlightRoot(state: Route): HighlightRoot {
 		return decodeHighlights(state.query.highlights);
 	}
