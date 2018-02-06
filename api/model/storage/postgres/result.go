@@ -218,16 +218,19 @@ func removeResultFilters(filterParams *model.FilterParams) *resultFilters {
 	// Strip the predicted and error filters out of the list - they need special handling
 	var predictedFilter *model.Filter
 	var errorFilter *model.Filter
-	for i, filter := range filterParams.Filters {
+	var remaining []*model.Filter
+	for _, filter := range filterParams.Filters {
 		if strings.HasSuffix(filter.Name, predictedSuffix) {
 			predictedFilter = filter
-			filterParams.Filters = append(filterParams.Filters[:i], filterParams.Filters[i+1:]...)
-		}
-		if strings.HasSuffix(filter.Name, errorSuffix) {
+		} else if strings.HasSuffix(filter.Name, errorSuffix) {
 			errorFilter = filter
-			filterParams.Filters = append(filterParams.Filters[:i], filterParams.Filters[i+1:]...)
+		} else {
+			remaining = append(remaining, filter)
 		}
 	}
+
+	// replace original filters
+	filterParams.Filters = remaining
 
 	return &resultFilters{
 		Predicted: predictedFilter,
@@ -259,7 +262,7 @@ func addPredictedFilterToWhere(dataset string, predictedFilter *model.Filter, wh
 
 	// Append the AND clause
 	if wheres != "" {
-		wheres = " AND " + where
+		wheres += " AND " + where
 	} else {
 		wheres = where
 	}
@@ -275,7 +278,7 @@ func addErrorFilterToWhere(dataset string, targetName string, errorFilter *model
 
 	// Append the AND clause
 	if wheres != "" {
-		wheres = " AND " + where
+		wheres += " AND " + where
 	} else {
 		wheres = where
 	}
@@ -367,7 +370,10 @@ func (s *Storage) FetchFilteredResults(dataset string, index string, resultURI s
 	}
 	defer rows.Close()
 
-	numRows, err := s.FetchNumRows(datasetResult)
+	countFilter := map[string]interface{}{
+		"result_id": resultURI,
+	}
+	numRows, err := s.FetchNumRows(datasetResult, countFilter)
 	if err != nil {
 		return nil, errors.Wrap(err, "Could not pull num rows")
 	}
@@ -395,7 +401,10 @@ func (s *Storage) FetchResults(dataset string, index string, resultURI string) (
 	}
 	defer rows.Close()
 
-	numRows, err := s.FetchNumRows(datasetResult)
+	countFilter := map[string]interface{}{
+		"result_id": resultURI,
+	}
+	numRows, err := s.FetchNumRows(datasetResult, countFilter)
 	if err != nil {
 		return nil, errors.Wrap(err, "Could not pull num rows")
 	}

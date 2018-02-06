@@ -137,14 +137,6 @@ export function getVarFromTarget(decorated: string) {
 	return decorated.replace(TARGET_POSTFIX, '');
 }
 
-export function getPredictedFacetKey(target: string) {
-	return 'Predicted';
-}
-
-export function getErrorFacetKey(target: string) {
-	return 'Error';
-}
-
 export function updateSummaries(summary: VariableSummary, summaries: VariableSummary[], matchField: string) {
 	// TODO: add and check timestamps to ensure we don't overwrite old data?
 	const index = _.findIndex(summaries, r => r[matchField] === summary[matchField]);
@@ -166,11 +158,13 @@ export function getSummary(
 	endpoint: string,
 	pipeline: PipelineInfo,
 	nameFunc: (PipelineInfo) => string,
+	labelFunc: (PipelineInfo) => string,
 	updateFunction: (DataContext, VariableSummary) => void): Promise<any> {
 
 	// save a placeholder histogram
 	const pendingHistogram = {
 		name: nameFunc(pipeline),
+		label: labelFunc(pipeline),
 		feature: '',
 		pending: true,
 		buckets: [],
@@ -187,6 +181,7 @@ export function getSummary(
 		return;
 	}
 	const name = nameFunc(pipeline);
+	const label = labelFunc(pipeline);
 	const feature = pipeline.feature;
 	const pipelineId = pipeline.pipelineId;
 	const resultId = pipeline.resultId;
@@ -199,6 +194,7 @@ export function getSummary(
 			if (!histogram) {
 				updateFunction(context, {
 					name: name,
+					label: labelFunc(pipeline),
 					feature: feature,
 					buckets: [],
 					extrema: {} as Extrema,
@@ -210,6 +206,7 @@ export function getSummary(
 			}
 			histogram.buckets = histogram.buckets ? histogram.buckets : [];
 			histogram.name = name;
+			histogram.label = label;
 			histogram.feature = feature;
 			histogram.pipelineId = pipelineId;
 			histogram.resultId = resultId;
@@ -218,6 +215,7 @@ export function getSummary(
 		.catch(error => {
 			updateFunction(context, {
 				name: name,
+				label: labelFunc(pipeline),
 				feature: feature,
 				buckets: [],
 				extrema: {} as Extrema,
@@ -234,6 +232,7 @@ export function getSummaries(
 	endpoint: string,
 	pipelines: PipelineInfo[],
 	nameFunc: (PipelineInfo) => string,
+	labelFunc: (PipelineInfo) => string,
 	updateFunction: (DataContext, VariableSummary) => void): Promise<any> {
 
 	// return as singular promise
@@ -243,6 +242,7 @@ export function getSummaries(
 			endpoint,
 			pipeline,
 			nameFunc,
+			labelFunc,
 			updateFunction);
 	});
 	return Promise.all(promises);

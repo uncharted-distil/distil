@@ -9,14 +9,17 @@
 			<facets v-if="resultGroups.length" class="result-container"
 				@histogram-click="onResultHistogramClick"
 				@facet-click="onResultFacetClick"
+				@range-change="onResultRangeChange"
+				@facet-toggle="onResultFacetToggle"
 				:groups="resultGroups"
 				:highlights="highlights"
 				:filters="filters"
 				:html="residualHtml">
 			</facets>
-			<facets v-if="residualsGroups.length" class="residual-container"
+			<facets v-if="residualGroups.length" class="residual-container"
 				@histogram-click="onResidualsHistogramClick"
-				:groups="residualsGroups"
+				@range-change="onResidualRangeChange"
+				:groups="residualGroups"
 				:highlights="highlights"
 				:filters="filters"
 				:html="resultHtml">
@@ -43,21 +46,18 @@
 // Component that contains a histogram of regression predictions, a histogram of the
 // of prediction-truth residuals, and scoring information.
 
+import Vue from 'vue';
 import Facets from '../components/Facets';
-import { createGroups, Group, NumericalFacet, CategoricalFacet } from '../util/facets';
-import { isPredicted, isError, getVarFromPredicted, getVarFromError, getPredictedFacetKey,
-	getErrorFacetKey, getErrorCol, getPredictedCol } from '../util/data';
+import { createGroups, Group } from '../util/facets';
+import { getPredictedCol, getErrorCol } from '../util/data';
 import { VariableSummary } from '../store/data/index';
 import { Highlights, Range, getHighlights } from '../util/highlights';
 import { overlayRouteEntry } from '../util/routes';
 import { Filter } from '../util/filters';
 import { getters as routeGetters } from '../store/route/module';
 import { getPipelineById, getMetricDisplayName } from '../util/pipelines';
-import { NUMERICAL_FILTER, CATEGORICAL_FILTER, getFilterType, decodeFiltersDictionary } from '../util/filters';
+import { createNumericalFilter, createCategoricalFilter, updateFilterRoute } from '../util/filters';
 import { updateHighlightRoot, clearHighlightRoot } from '../util/highlights';
-import { Dictionary } from '../util/dict';
-import _ from 'lodash';
-import Vue from 'vue';
 
 export default Vue.extend({
 	name: 'result-group',
@@ -87,6 +87,18 @@ export default Vue.extend({
 
 	computed: {
 
+		target(): string {
+			return routeGetters.getRouteTargetVariable(this.$store);
+		},
+
+		predictedColumnName(): string {
+			return getPredictedCol(this.target);
+		},
+
+		errorColumnName(): string {
+			return getErrorCol(this.target);
+		},
+
 		pipelineStatus(): String {
 			const pipeline = getPipelineById(this.$store.state.pipelineModule, this.pipelineId);
 			if (pipeline) {
@@ -95,49 +107,26 @@ export default Vue.extend({
 			return 'unknown';
 		},
 
-		residualsGroups(): Group[] {
-			if (this.residuals()) {
-				return createGroups([this.residuals()], false, false, this.residualExtrema);
-			}
-			return [];
-		},
-
 		resultGroups(): Group[] {
 			if (this.results()) {
-				return createGroups([this.results()], false, false, this.resultExtrema);
+				return createGroups([this.results()], false, true, this.resultExtrema);
 			}
 			return [];
 		},
 
-		highlights(): Highlights {
-			// Remap highlights to facet key names, filtering out anything other than
-			// the predicted and error values (since that's all that is displayed in this
-			// component)
-			const highlights = getHighlights(this.$store);
-			const facetHighlights = <Highlights>{
-				root: _.cloneDeep(highlights.root),
-				values: <Dictionary<string[]>>{}
-			};
-			_.forEach(highlights.values, (values, varName) => {
-				if (isPredicted(varName)) {
-					facetHighlights.values[getPredictedFacetKey(getVarFromPredicted(varName))] = values;
-				} else if (isError(varName)) {
-					facetHighlights.values[getErrorFacetKey(getVarFromError(varName))] = values;
-				}
-			});
-			// Remap the selection root as well.
-			if (highlights.root) {
-				if (isPredicted(highlights.root.key)) {
-					facetHighlights.root.key = 'Predicted';
-				} else if (isError(highlights.root.key)) {
-					facetHighlights.root.key = 'Error';
-				}
+		residualGroups(): Group[] {
+			if (this.residuals()) {
+				return createGroups([this.residuals()], false, true, this.residualExtrema);
 			}
-			return facetHighlights;
+			return [];
 		},
 
 		filters(): Filter[] {
-			return routeGetters.getDecodedResultsFilters(this.$store);
+			return routeGetters.getDecodedFilters(this.$store);
+		},
+
+		highlights(): Highlights {
+			return getHighlights(this.$store);
 		},
 
 		currentClass(): string {
@@ -153,18 +142,35 @@ export default Vue.extend({
 			return getMetricDisplayName(metric);
 		},
 
+		onResultRangeChange(key: string, value: { from: { label: string[] }, to: { label: string[] } }) {
+			const filter = createNumericalFilter(this.predictedColumnName, value);
+			updateFilterRoute(this, filter);
+		},
+
+		onResidualRangeChange(key: string, value: { from: { label: string[] }, to: { label: string[] } }) {
+			const filter = createNumericalFilter(this.errorColumnName, value);
+			updateFilterRoute(this, filter);
+		},
+
 		onResultHistogramClick(context: string, key: string, value: any) {
-			const targetVar = routeGetters.getRouteTargetVariable(this.$store);
-			this.histogramHighlights(context, key ? getPredictedCol(targetVar) : key, value);
+			this.histogramHighlights(context, this.predictedColumnName, value);
 		},
 
 		onResidualsHistogramClick(context, key: string, value: any) {
-			const targetVar = routeGetters.getRouteTargetVariable(this.$store);
-			this.histogramHighlights(context, key ? getErrorCol(targetVar) : key, value);
+			this.histogramHighlights(context, this.errorColumnName, value);
 		},
 
-		histogramHighlights(context: string, key: string, value: Range) {
-			if (key && value) {
+		onResultFacetToggle(key: string, values: string[]) {
+			const filter = createCategoricalFilter(this.predictedColumnName, values);
+			updateFilterRoute(this, filter);
+		},
+
+		onResultFacetClick(context: string, key: string, value: string) {
+			this.histogramHighlights(context, this.predictedColumnName, value);
+		},
+
+		histogramHighlights(context: string, key: string, value: string | Range) {
+			if (value) {
 				updateHighlightRoot(this, {
 					context: context,
 					key: key,
@@ -173,25 +179,6 @@ export default Vue.extend({
 			} else {
 				clearHighlightRoot(this);
 			}
-		},
-
-		onResultFacetClick(context: string, key: string, value: string) {
-			if (key && value) {
-				// extract the var name from the key
-				const targetVar = routeGetters.getRouteTargetVariable(this.$store);
-				const varName = getPredictedCol(targetVar);
-				updateHighlightRoot(this, {
-					context: context,
-					key: varName,
-					value: value
-				});
-			} else {
-				clearHighlightRoot(this);
-			}
-		},
-
-		resultFacetMouseLeave(key: string) {
-			clearHighlightRoot(this);
 		},
 
 		click() {
@@ -215,49 +202,6 @@ export default Vue.extend({
 				return this.residualsSummary as VariableSummary;
 			}
 			return null;
-		},
-
-		updateGroupSelections(groups: Group[]): Group[] {
-			const filters = routeGetters.getRouteResultFilters(this.$store);
-			const decoded = decodeFiltersDictionary(filters);
-			return groups.map(group => {
-				// get filter
-				const filter = decoded[group.key];
-				switch (getFilterType(filter)) {
-					case NUMERICAL_FILTER:
-						// add selection to facets
-						group.facets.forEach(facet => {
-							if ((<NumericalFacet>facet).selection) {
-								(<NumericalFacet>facet).selection = {
-									// NOTE: the `from` / `to` values MUST be strings.
-									range: {
-										from: `${filter.min}`,
-										to: `${filter.max}`,
-									}
-								};
-							}
-						});
-						break;
-
-					case CATEGORICAL_FILTER:
-						// add selection to facets
-						group.facets.forEach(facet => {
-							if ((<CategoricalFacet>facet).value) {
-								const categoricalFacet = <CategoricalFacet>facet;
-								if (filter.categories.indexOf(categoricalFacet.value) !== -1) {
-									// select
-									categoricalFacet.selected = {
-										count: categoricalFacet.count
-									};
-								} else {
-									delete categoricalFacet.selected;
-								}
-							}
-						});
-						break;
-				}
-				return group;
-			});
 		}
 	}
 });
