@@ -42,18 +42,17 @@ export default Vue.extend({
 
 	mounted() {
 		const component = this;
-		const groups = () => <Group[]>this.groups;
 
-		// Instantiate the external facets widget.  The facets maintain their own copies
+		// Instantiate the external facets widget. The facets maintain their own copies
 		// of group objects which are replaced wholesale on changes.  Elsewhere in the code
 		// we modify local copies of the group objects, then replace those in the Facet component
 		// with copies.
-		this.facets = new Facets(this.$el, groups().map(group => {
+		this.facets = new Facets(this.$el, this.groups.map(group => {
 			return _.cloneDeep(group);
 		}));
 
 		// Call customization hook
-		groups().forEach(group => {
+		this.groups.forEach(group => {
 			this.injectHTML(group, this.facets.getGroup(group.key)._element);
 		});
 
@@ -292,7 +291,7 @@ export default Vue.extend({
 		},
 
 		selectCategoricalFacet(facet: any, count?: number) {
-			if (facet._spec.segments && facet._spec.segments.length > 0) {
+			if (!count && facet._spec.segments && facet._spec.segments.length > 0) {
 				facet.select(facet._spec.segments);
 			} else {
 				facet.select(count ? count : facet.count);
