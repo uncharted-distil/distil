@@ -458,7 +458,7 @@ export const actions = {
 		return context.dispatch('fetchResults', {
 				pipelineId: args.pipelineId,
 				dataset: args.dataset,
-				filters: args.filters
+				filters: filtersCopy
 			})
 			.then(res => {
 				mutations.setHighlightedValues(context, parseHighlightValues(res.data));
