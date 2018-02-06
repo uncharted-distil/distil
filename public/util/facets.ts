@@ -193,12 +193,9 @@ function createCategoricalSummaryFacet(summary: VariableSummary, enableCollapse:
 		return facet;
 	})
 
-	let total = undefined;
-	let count = undefined;
-	// if (extrema) {
-	// 	total = extrema.max;
-	// 	count = extrema.max;
-	// }
+	facets.sort((a, b) => {
+		return b.count - a.count;
+	});
 
 	// Generate a facet group
 	return {
@@ -207,9 +204,7 @@ function createCategoricalSummaryFacet(summary: VariableSummary, enableCollapse:
 		type: summary.varType,
 		collapsible: enableCollapse,
 		collapsed: false,
-		facets: facets,
-		total: total,
-		count: count
+		facets: facets
 	};
 }
 
