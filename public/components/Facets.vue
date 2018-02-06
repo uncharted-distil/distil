@@ -291,11 +291,11 @@ export default Vue.extend({
 			}
 		},
 
-		selectCategoricalFacet(facet: any) {
+		selectCategoricalFacet(facet: any, count?: number) {
 			if (facet._spec.segments && facet._spec.segments.length > 0) {
 				facet.select(facet._spec.segments);
 			} else {
-				facet.select(facet.count);
+				facet.select(count ? count : facet.count);
 			}
 		},
 
@@ -373,7 +373,10 @@ export default Vue.extend({
 									const bar = bars[i];
 									if (this.isValueInBar(bar, value)) {
 										const entry: any = _.last(bar.metadata);
-										slices[entry.label] = entry.count;
+										if (!slices[entry.label]) {
+											slices[entry.label] = 0;
+										}
+										slices[entry.label]++;
 										lastIndex = i;
 										break;
 									}
@@ -409,7 +412,6 @@ export default Vue.extend({
 					if (highlightValues) {
 
 						if (this.isHighlightedGroup(highlights, group.key)) {
-
 							const highlightValue = this.getHighlightRootValue(highlights);
 							if (highlightValue.toLowerCase() === facet.value.toLowerCase()) {
 								this.selectCategoricalFacet(facet);
@@ -420,9 +422,9 @@ export default Vue.extend({
 						} else {
 
 							const values = Array.from(highlightValues) as string[];
-							const matchedValue = values.find(v => v.toLowerCase() === (facet.value.toLowerCase() ? facet.value.toLowerCase(): undefined));
-							if (matchedValue) {
-								this.selectCategoricalFacet(facet);
+							const matches = _.filter(values, v => v.toLowerCase() === (facet.value.toLowerCase ? facet.value.toLowerCase() : undefined));
+							if (matches.length > 0) {
+								this.selectCategoricalFacet(facet, matches.length);
 							} else {
 								this.deselectCategoricalFacet(facet);
 							}
