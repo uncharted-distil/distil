@@ -1,3 +1,22 @@
+distil:
+  image:
+    docker.uncharted.software/distil:latest
+#    entrypoint:
+#      ta3_search
+  ports:
+    - "8080:8080"
+  environment:
+    # The SRI_TAG is the name of the SRI docker container as defined below
+    - PIPELINE_COMPUTE_ENDPOINT=sri-tpot:45042
+    - PG_HOST=postgres
+    - ES_ENDPOINT=http://elastic:9200
+    - PIPELINE_COMPUTE_TRACE=true
+    - JSON_CONFIG_PATH=/datasets-sri/config/search_config.json
+    - SKIP_INGEST=true
+  volumes:
+    - /datasets-sri/inputs:/inputs
+    - /datasets-sri/outputs:/outputs
+    - /datasets-sri/config/search_config.json:/datasets-sri/config/search_config.json
 elastic:
   image:
     docker.uncharted.software/distil_dev_es:latest
@@ -17,8 +36,9 @@ sri-tpot:
   ports:
     - 45042
   volumes:
-    - /tmp/d3m/dataset:/tmp/d3m/dataset
-    - $PWD/datasets/config.json:$PWD/datasets/config.json
+    - /datasets-sri/inputs:/inputs
+    - /datasets-sri/outputs:/outputs
+    - /datasets-sri/config/search_config.json:/datasets-sri/config/search_config.json
   command:
     - ta2_server
-    - $PWD/datasets/config.json
+    - /datasets-sri/config/search_config.json
