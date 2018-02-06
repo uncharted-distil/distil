@@ -124,9 +124,12 @@ export default Vue.extend({
 		highlights(): Highlights {
 			// find var marked as 'target' and set associated values as highlights
 			const highlights = getHighlights(this.$store);
+			if (_.isEmpty(highlights)) {
+				return {};
+			}
 			const facetHighlights = <Highlights>{
 				root: _.cloneDeep(highlights.root),
-				values: <Dictionary<string[]>>{}
+				values: {}
 			};
 			_.forEach(highlights.values, (values, varName) => {
 				if (isTarget(varName)) {
@@ -164,9 +167,8 @@ export default Vue.extend({
 		},
 
 		targetSummary() : VariableSummary {
-			const targetVariable = routeGetters.getRouteTargetVariable(this.$store);
 			const varSummaries = dataGetters.getResultSummaries(this.$store);
-			return _.find(varSummaries, v => _.toLower(v.name) === _.toLower(targetVariable));
+			return _.find(varSummaries, v => _.toLower(v.name) === _.toLower(this.target));
 		},
 
 		targetGroups(): Group[] {
@@ -226,8 +228,7 @@ export default Vue.extend({
 		},
 
 		regressionEnabled(): boolean {
-			const targetVarName = routeGetters.getRouteTargetVariable(this.$store);
-			const targetVar = _.find(dataGetters.getVariables(this.$store), v => _.toLower(v.name) === _.toLower(targetVarName));
+			const targetVar = _.find(dataGetters.getVariables(this.$store), v => _.toLower(v.name) === _.toLower(this.target));
 			if (_.isEmpty(targetVar)) {
 				return false;
 			}
@@ -235,10 +236,20 @@ export default Vue.extend({
 			return task.schemaName === 'regression';
 		},
 
+		pipelineId(): string {
+			return routeGetters.getRoutePipelineId(this.$store);
+		},
+
+		activePipeline(): PipelineInfo {
+			return getPipelineById(this.$store.state.pipelineModule, this.pipelineId);
+		},
+
 		activePipelineName(): string {
-			const pipelineId = routeGetters.getRoutePipelineId(this.$store);
-			const result = getPipelineById(this.$store.state.pipelineModule, pipelineId);
-			return result ? result.name : '';
+			return this.activePipeline ? this.activePipeline.name : '';
+		},
+
+		sessionId(): string {
+			return pipelineGetters.getPipelineSessionID(this.$store);
 		}
 	},
 
@@ -256,7 +267,7 @@ export default Vue.extend({
 
 		onHistogramClick(context: string, key: string, value: Range) {
 			if (key && value) {
-				const colKey = getTargetCol(routeGetters.getRouteTargetVariable(this.$store));
+				const colKey = getTargetCol(this.target);
 				updateHighlightRoot(this, {
 					context: context,
 					key: colKey,
@@ -269,7 +280,7 @@ export default Vue.extend({
 
 		onFacetClick(context: string, key: string, value: string) {
 			if (key && value) {
-				const colKey = getTargetCol(routeGetters.getRouteTargetVariable(this.$store));
+				const colKey = getTargetCol(this.target);
 				updateHighlightRoot(this, {
 					context: context,
 					key: colKey,
@@ -293,13 +304,10 @@ export default Vue.extend({
 		},
 
 		onExport() {
-			const pipelineId = routeGetters.getRoutePipelineId(this.$store);
-			const result = getPipelineById(this.$store.state.pipelineModule, pipelineId);
-			const sessionId = pipelineGetters.getPipelineSessionID(this.$store);
 			this.$router.replace('/');
 			actions.exportPipeline(this.$store, {
-				pipelineId: result.pipelineId,
-				sessionId: sessionId
+				pipelineId: activePipeline.pipelineId,
+				sessionId: this.sessionId
 			});
 		}
 	}

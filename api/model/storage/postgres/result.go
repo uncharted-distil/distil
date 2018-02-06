@@ -537,9 +537,6 @@ func (s *Storage) FetchResultsSummary(dataset string, resultURI string, index st
 			return nil, err
 		}
 		return categorical, nil
-	} else if model.IsText(variable.Type) {
-		// fetch text analysis
-		return nil, nil
 	}
 
 	return nil, errors.Errorf("variable %s of type %s does not support summary", variable.Name, variable.Type)
