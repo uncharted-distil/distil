@@ -1,10 +1,10 @@
 hash: ea458c342b875449781dcb388b93f0c0075d3bce9dd4cb4b0f52681330409eea
-updated: 2018-02-01T16:07:23.952346296-05:00
+updated: 2018-02-06T17:23:23.921735388-05:00
 imports:
 - name: github.com/caarlos0/env
   version: 7cd7992b3bc86f920394f8de92c13900da1a46b7
 - name: github.com/davecgh/go-spew
-  version: db69d09d2c587e9b9677f991dfcab1fc24d9086e
+  version: 87df7c60d5820d0f8ae11afede5aa52325c09717
   subpackages:
   - spew
 - name: github.com/garyburd/redigo
@@ -13,7 +13,7 @@ imports:
   - internal
   - redis
 - name: github.com/go-pg/pg
-  version: 549ba92f3d2b0ac49656ff05ebe05537e1633416
+  version: 9c148d3cd18e6038c96c43973bcd115342435c12
   subpackages:
   - internal
   - internal/parser
@@ -25,7 +25,7 @@ imports:
   subpackages:
   - gomock
 - name: github.com/golang/protobuf
-  version: 925541529c1fa6821df4e44ce2723319eb2be768
+  version: bbd03ef6da3a115852eaf24c8a1c46aeb39aa175
   subpackages:
   - proto
   - protoc-gen-go
@@ -34,7 +34,7 @@ imports:
 - name: github.com/gorilla/websocket
   version: 4ac909741dfa57448bfadfdbca0cf7eeaa68f0e2
 - name: github.com/jackc/pgx
-  version: da3231b0b66e2e74cdb779f1d46c5e958ba8be27
+  version: 606697ffdfe6603013560dbc171656de57b4f542
   subpackages:
   - chunkreader
   - internal/sanitize
@@ -52,7 +52,7 @@ imports:
   - jlexer
   - jwriter
 - name: github.com/mattn/go-colorable
-  version: 6cc8b475d4682021d75d2cbe2bc481bec4ce98e5
+  version: 7dc3415be66d7cc68bf0182f35c8d31f8d2ad8a7
 - name: github.com/mattn/go-isatty
   version: 6ca4dbf54d38eea1a992b3c722a76a5d1c4cb25c
 - name: github.com/mgutz/ansi
@@ -72,7 +72,7 @@ imports:
 - name: github.com/satori/go.uuid
   version: 879c5887cd475cd7864858769793b2ceb0d44feb
 - name: github.com/stretchr/testify
-  version: 12b6f73e6084dad08a7c6e575284b177ecafbc71
+  version: be8372ae8ec5c6daaed3cc28ebf73c54b737c240
   subpackages:
   - assert
 - name: github.com/unchartedsoftware/deluge
@@ -81,7 +81,7 @@ imports:
   - document
   - util
 - name: github.com/unchartedsoftware/distil-ingest
-  version: 4379f1534cbb3963a36ebb1f590688a75eeb2462
+  version: bcbe80ccfea04ab6688e76ba1ff71bee17916218
   repo: git@github.com:unchartedsoftware/distil-ingest.git
   vcs: git
   subpackages:
@@ -108,7 +108,7 @@ imports:
   - pat
   - pattern
 - name: golang.org/x/net
-  version: 309822c5b9b9f80db67f016069a12628d94fad34
+  version: 2fb46b16b8dda405028c50f7c7f0f9dd1fa6bfb1
   subpackages:
   - context
   - html
@@ -120,7 +120,7 @@ imports:
   - lex/httplex
   - trace
 - name: golang.org/x/sys
-  version: 8f27ce8a604014414f8dfffc25cbcde83a3f2216
+  version: 37707fdb30a5b38865cfb95e5aab41707daec7fd
   subpackages:
   - unix
 - name: golang.org/x/text
@@ -131,7 +131,7 @@ imports:
   - unicode/bidi
   - unicode/norm
 - name: google.golang.org/genproto
-  version: 4eb30f4778eed4c258ba66527a0d4f9ec8a36c45
+  version: 2b5a72b8730b0b16380010cfe5286c42108d88e7
   subpackages:
   - googleapis/rpc/status
 - name: google.golang.org/grpc
