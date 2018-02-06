@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="description" content="">
 <meta name="keywords" content=" ">
-<title>Step 2 - Select Features | Distil Help</title>
+<title>Step 2 - Select Target | Distil Help</title>
 <link rel="stylesheet" href="css/syntax.css">
 
 
@@ -13,8 +13,8 @@
 <!--<link rel="stylesheet" type="text/css" href="css/bootstrap.min.css">-->
 <link rel="stylesheet" href="css/modern-business.css">
 <link rel="stylesheet" href="css/lavish-bootstrap.css">
-<link rel="stylesheet" href="css/customstyles.css">
-<link rel="stylesheet" href="css/theme-black.css">
+<link rel="stylesheet" href="css/customstyles.css?1517864259540471000">
+<link rel="stylesheet" href="css/theme-black.css?1517864259540471000">
 
 <script src="js/lib/jquery.min.js"></script>
 <script src="js/lib/jquery.cookie.min.js"></script>
@@ -113,7 +113,7 @@
                                 searchInput: document.getElementById('search-input'),
                                 resultsContainer: document.getElementById('results-container'),
                                 dataSource: 'search.json',
-                                searchResultTemplate: '<li><a href="{url}" title="Step 2 - Select Features">{title}</a></li>',
+                                searchResultTemplate: '<li><a href="{url}" title="Step 2 - Select Target">{title}</a></li>',
                     noResultsText: 'No results found.',
                             limit: 10,
                             fuzzy: true,
@@ -183,7 +183,7 @@
             
             
             
-            <li><a href="search.html">1. Search for a Dataset</a></li>
+            <li><a href="search.html">1. Select Data</a></li>
             
             
             
@@ -204,7 +204,7 @@
             
             
             
-            <li><a href="results.html">4. Review Results</a></li>
+            <li><a href="results.html">4. View Models</a></li>
             
             
             
@@ -225,7 +225,7 @@
     <!-- Content Column -->
     <div class="col-md-9">
         <div class="post-header">
-   <h1 class="post-title-main">Step 2 - Select Features</h1>
+   <h1 class="post-title-main">Step 2 - Select Target</h1>
 </div>
 
 
@@ -264,10 +264,10 @@ $('#toc').on('click', 'a', function() {
 
   <p>Once you have identified a relevant dataset, you must choose the target feature that you want to predict.</p>
 
-<h2 id="target-selection-view-summary">Target Selection View Summary</h2>
+<h2 id="select-target-view-summary">Select Target View Summary</h2>
 
-<figure href="#select-view-target-close"><a href="#select-view-target"><img class="diagram" src="images/diagrams/select-target.png" alt="Select target feature" /><figcaption>Click to enlarge</figcaption></a></figure>
-<div class="lightbox-target" id="select-view-target"><img src="images/diagrams/select-target.png" /><a class="lightbox-close" href="#select-view-target-close"></a></div>
+<figure id="#select-view-target-close"><a href="#select-view-target"><img class="diagram" src="images/diagrams/select-target.png?1517864259540471000" alt="Select target feature" /><figcaption>Click to enlarge</figcaption></a></figure>
+<div class="lightbox-target" id="select-view-target"><img src="images/diagrams/select-target.png?1517864259540471000" /><a class="lightbox-close" href="#select-view-target-close"></a></div>
 
 <h2 id="selecting-the-target-feature-to-predict">Selecting the Target Feature to Predict</h2>
 
@@ -277,16 +277,16 @@ $('#toc').on('click', 'a', function() {
   <li>
     <p>Review the list of available features in the Select Target Feature dialog. Use the <strong>Filter</strong> field to search for <em>acceleration</em>.</p>
 
-    <figure><img class="docimage" src="images/workflow/select-target-feature.png" alt="Set acceleration feature as target" /></figure>
+    <figure><img class="docimage" src="images/workflow/select-target-feature.png?1517864259540471000" alt="Set acceleration feature as target" /></figure>
 
-    <div class="alert alert-info" role="alert"><i class="fa fa-info-circle"></i> <b>Note:</b> Feature summaries visualize the values for each column/field in the dataset. Distil automatically infers the type of data stored for each feature. To change the inferred value, use the <span class="feature-type">type <sup class="fa fa-sort-desc" aria-hidden="true" style="display: inline;"></sup></span> drop-down.</div>
+    <div class="alert alert-info" role="alert"><i class="fa fa-info-circle"></i> <b>Note:</b> Feature summaries visualize the values for each column/field in the dataset. Distil automatically infers the type of data stored for each feature. To change the inferred value, use the <strong>type <sup class="fa fa-sort-desc" aria-hidden="true" style="display: inline;"></sup></strong> drop-down on the upper right corner of the summary.</div>
   </li>
   <li>
-    <p>Click anywhere on the <strong>acceleration</strong> feature summary. Distil adds the feature to the model definition and lists a sample of actual acceleration values.</p>
+    <p>On the <strong>acceleration</strong> feature summary, click <strong>Select Target</strong>. Distil adds the feature to the model definition and lists a sample of actual acceleration values.</p>
 
-    <figure><img class="docimage" src="images/workflow/select-target-feature-set.png" alt="Sample of values for selected target (acceleration)" /></figure>
+    <figure><img class="docimage" src="images/workflow/select-target-feature-set.png?1517864259540471000" alt="Sample of values for selected target (acceleration)" /></figure>
 
-    <div class="alert alert-info" role="alert"><i class="fa fa-info-circle"></i> <b>Note:</b> You can change the target at any time by clicking <strong>Select New Target Feature</strong> under the current target on the Create Models view.</div>
+    <div class="alert alert-info" role="alert"><i class="fa fa-info-circle"></i> <b>Note:</b> You can change the target at any time by clicking <strong>Select Target</strong> in the navigation bar to return to the Select Target view.</div>
   </li>
 </ol>
 
@@ -321,7 +321,7 @@ $('#toc').on('click', 'a', function() {
 
 <h2 id="next-steps">Next Steps</h2>
 
-<p>Select the training features that the model should use to predict the target feature.</p>
+<p>Select the features that the model should use to predict the target feature and begin the model generation.</p>
 
   
   <div class="section-nav">
