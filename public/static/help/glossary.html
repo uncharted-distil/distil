@@ -13,8 +13,8 @@
 <!--<link rel="stylesheet" type="text/css" href="css/bootstrap.min.css">-->
 <link rel="stylesheet" href="css/modern-business.css">
 <link rel="stylesheet" href="css/lavish-bootstrap.css">
-<link rel="stylesheet" href="css/customstyles.css">
-<link rel="stylesheet" href="css/theme-black.css">
+<link rel="stylesheet" href="css/customstyles.css?1517864259540471000">
+<link rel="stylesheet" href="css/theme-black.css?1517864259540471000">
 
 <script src="js/lib/jquery.min.js"></script>
 <script src="js/lib/jquery.cookie.min.js"></script>
@@ -210,6 +210,13 @@
             
             
             
+            <li><a href="#feature-to-model">Feature to Model</a></li>
+            
+            
+            
+            
+            
+            
             <li><a href="#importance">Importance</a></li>
             
             
@@ -267,20 +274,6 @@
             
             
             
-            <li><a href="#training-feature">Training Feature</a></li>
-            
-            
-            
-            
-            
-            
-            <li><a href="#training-set">Training Set</a></li>
-            
-            
-            
-            
-            
-            
             <li><a href="#value">Value</a></li>
             
             
@@ -332,7 +325,7 @@
         
           
             <dt id="available-feature">Available Feature</dt>
-            <dd>In the Create Models stage, available features are columns or fields in the chosen dataset. You can use an available feature as a part of the training set the model uses to predict the target.</dd>
+            <dd>In the Create Models step, available features are columns or fields in the chosen dataset. You can use an available feature in the model to predict the target.</dd>
           
         
           
@@ -357,18 +350,22 @@
         
           
             <dt id="distance">Distance</dt>
-            <dd>In regression models, distance indicates how far away from the actual value the predicted value is. Distance is used as a measure of error for each prediction.
-</dd>
+            <dd>In regression models, distance indicates how far from the actual value the predicted value is. Distance is used as a measure of error for each prediction.</dd>
           
         
           
             <dt id="error">Error</dt>
-            <dd>In regression results, the error threshold allows you to configure how accurate the model should be. Error is calculated by the distance of the predicted value from the actual value.</dd>
+            <dd>In regression results, the error threshold allows you to configure how accurate the model should be. Error is calculated as the distance of the predicted value from the actual value.</dd>
           
         
           
             <dt id="feature">Feature</dt>
             <dd>A column or field in a dataset that contains a set of values for each record. In an automotive dataset, for example, one feature may be horsepower.</dd>
+          
+        
+          
+            <dt id="feature-to-model">Feature to Model</dt>
+            <dd>A feature that you want the model to consider when attempting to predict the target.</dd>
           
         
           
@@ -378,7 +375,7 @@
         
           
             <dt id="model">Model</dt>
-            <dd>A set of automatically configured algorithms and parameters tunings that attempt to predict a target feature. Models use the training set features you select to attempt to predict the target feature.</dd>
+            <dd>A set of automatically configured algorithms and parameters tunings that attempt to predict a target feature. Models use features you select to attempt to predict the target feature.</dd>
           
         
       </dl>
@@ -400,12 +397,12 @@
         
           
             <dt id="sample">Sample</dt>
-            <dd>In the Create Models stage, Distil shows a representative sample of values for the selected target feature and training features.</dd>
+            <dd>In the Create Models step, Distil shows a representative sample of values for the selected features to model and the target feature.</dd>
           
         
           
             <dt id="summary">Summary</dt>
-            <dd>On the Home and Search Data pages, the summary describes the contents of the available datasets that you can use in model building.<br><br>
+            <dd>On the Home and Select Data pages, the summary describes the contents of the available datasets that you can use in model building.<br><br>
 On the View Models page, the feature summaries show the range of values in results in the dataset.
 </dd>
           
@@ -413,16 +410,6 @@ On the View Models page, the feature summaries show the range of values in resul
           
             <dt id="target">Target</dt>
             <dd>The feature that you want the model to predict.</dd>
-          
-        
-          
-            <dt id="training-feature">Training Feature</dt>
-            <dd>A feature that you want the model to consider when attempting to predict the target.</dd>
-          
-        
-          
-            <dt id="training-set">Training Set</dt>
-            <dd>The set of training features that the model considers when attempting to predict the target.</dd>
           
         
           

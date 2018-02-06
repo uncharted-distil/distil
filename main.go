@@ -96,6 +96,7 @@ func main() {
 	// build the ingest configuration.
 	ingestConfig := &task.IngestTaskConfig{
 		ContainerDataPath:                config.DataFolderPath,
+		TmpDataPath:                      config.TmpDataPath,
 		DataPathRelative:                 config.DataFilePath,
 		DatasetFolderSuffix:              config.DatasetFolderSuffix,
 		HasHeader:                        true,

@@ -99,13 +99,16 @@ body h1 {
   margin-left: auto;
   margin-right: auto;
   margin-bottom: 12px;
+  max-width: 100%;
   max-height: 400px; }
 
 .post-content .diagram {
   display: block;
   margin-left: auto;
   margin-right: auto;
-  margin-bottom: 12px; }
+  margin-bottom: 12px;
+  height: auto;
+  max-width: 100%; }
 
 .post-content ol li, .post-content ul li {
   margin: 10px 0px; }
@@ -1221,9 +1224,6 @@ a.lightbox-close:after {
 .lightbox-target:target a.lightbox-close {
   top: 51px; }
 
-.feature-type {
-  color: #007bff; }
-
 .procedure {
   font-weight: bold; }
 
@@ -1232,3 +1232,7 @@ a.lightbox-close:after {
 
 .actual {
   color: #00c851; }
+
+video {
+  max-width: 100%;
+  height: auto; }

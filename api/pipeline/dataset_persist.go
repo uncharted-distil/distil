@@ -276,7 +276,7 @@ func writeDataSchema(schemaPath string, dataset string, filteredData *model.Filt
 		v := &DataVariable{
 			ColName:  c,
 			Role:     role,
-			ColType:  vars[c].Type,
+			ColType:  model.MapTA2Type(vars[c].Type),
 			ColIndex: i + 1,
 		}
 		ds.DataResources[0].Variables = append(ds.DataResources[0].Variables, v)
