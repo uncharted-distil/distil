@@ -276,6 +276,12 @@ func Ingest(index string, dataset string, config *IngestTaskConfig) error {
 		return errors.Wrap(err, "unable to load stats")
 	}
 
+	// load summary
+	err = meta.LoadSummaryFromDescription(config.getTmpAbsolutePath(config.SummaryOutputPathRelative))
+	if err != nil {
+		return errors.Wrap(err, "unable to load summary")
+	}
+
 	// load stats
 	err = meta.LoadSummaryMachine(config.getTmpAbsolutePath(config.SummaryMachineOutputPathRelative))
 	// NOTE: For now ignore summary errors!
