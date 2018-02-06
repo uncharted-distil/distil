@@ -180,7 +180,7 @@ export const actions = {
 					feature: '',
 					buckets: [],
 					extrema: {} as any,
-					err: error
+					err: error.response? error.response.data : error
 				});
 			});
 	},
@@ -271,7 +271,7 @@ export const actions = {
 					feature: '',
 					buckets: [],
 					extrema: {} as any,
-					err: error
+					err: error.response? error.response.data : error
 				});
 			});
 	},
