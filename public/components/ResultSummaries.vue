@@ -49,8 +49,7 @@ import ResultFacets from '../components/ResultFacets.vue';
 import Facets from '../components/Facets.vue';
 import { createGroups, Group } from '../util/facets';
 import { overlayRouteEntry } from '../util/routes';
-import { getPipelineById } from '../util/pipelines';
-import { getTask } from '../util/pipelines';
+import { getPipelineById, getTask } from '../util/pipelines';
 import { Filter } from '../util/filters';
 import { isTarget, getVarFromTarget, getTargetCol } from '../util/data';
 import { updateHighlightRoot, clearHighlightRoot, getHighlights } from '../util/highlights';
@@ -59,12 +58,12 @@ import { Highlights, Range } from '../util/highlights';
 import { getters as dataGetters} from '../store/data/module';
 import { getters as routeGetters } from '../store/route/module';
 import { actions } from '../store/app/module';
-import { Dictionary } from '../util/dict';
 import vueSlider from 'vue-slider-component';
 import { createNumericalFilter, createCategoricalFilter, updateFilterRoute } from '../util/filters';
 import Vue from 'vue';
 import _ from 'lodash';
 import 'font-awesome/css/font-awesome.css';
+import { PipelineInfo } from '../store/pipelines/index';
 import { getters as pipelineGetters } from '../store/pipelines/module';
 
 const DEFAULT_PERCENTILE = 0.25;
@@ -125,7 +124,7 @@ export default Vue.extend({
 			// find var marked as 'target' and set associated values as highlights
 			const highlights = getHighlights(this.$store);
 			if (_.isEmpty(highlights)) {
-				return {};
+				return highlights;
 			}
 			const facetHighlights = <Highlights>{
 				root: _.cloneDeep(highlights.root),
@@ -306,7 +305,7 @@ export default Vue.extend({
 		onExport() {
 			this.$router.replace('/');
 			actions.exportPipeline(this.$store, {
-				pipelineId: activePipeline.pipelineId,
+				pipelineId: this.activePipeline.pipelineId,
 				sessionId: this.sessionId
 			});
 		}
