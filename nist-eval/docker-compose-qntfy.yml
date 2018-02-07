@@ -13,6 +13,7 @@ postgres:
 qntfy_ta2:
   image: registry.datadrivendiscovery.org/uncharted_qntfy/ta3ta2_integration/qntfy_coordinator:latest
   environment:
+    - JSON_CONIFG_PATH=/tmp/d3m/config/config.json
     - COORDINATOR_RPCPORT=45042
     - COORDINATOR_DEBUG=True
     - COORDINATOR_VERBOSE=True
@@ -24,7 +25,7 @@ qntfy_ta2_worker:
   environment:
     - MLW_COORDINATOR_URI=qntfy_ta2:45042
     - MLW_DEBUG=true
-    - MLW_OUTPUT_DIR=$PWD/datasets
+    - MLW_OUTPUT_DIR=/d3m/tmp/local_storage
     - MLW_WORKER_ADDRESS=qntfy_ta2_worker
   volumes:
-    - $PWD/datasets:$PWD/datasets
+    - /d3m/tmp:/d3m/tmp

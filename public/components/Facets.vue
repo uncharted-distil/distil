@@ -42,18 +42,17 @@ export default Vue.extend({
 
 	mounted() {
 		const component = this;
-		const groups = () => <Group[]>this.groups;
 
-		// Instantiate the external facets widget.  The facets maintain their own copies
+		// Instantiate the external facets widget. The facets maintain their own copies
 		// of group objects which are replaced wholesale on changes.  Elsewhere in the code
 		// we modify local copies of the group objects, then replace those in the Facet component
 		// with copies.
-		this.facets = new Facets(this.$el, groups().map(group => {
+		this.facets = new Facets(this.$el, this.groups.map(group => {
 			return _.cloneDeep(group);
 		}));
 
 		// Call customization hook
-		groups().forEach(group => {
+		this.groups.forEach(group => {
 			this.injectHTML(group, this.facets.getGroup(group.key)._element);
 		});
 
@@ -232,7 +231,7 @@ export default Vue.extend({
 			const barMin = _.toNumber(_.first(metadata).label);
 			const barMax = _.toNumber(_.last(metadata).toLabel);
 			const num = _.toNumber(value);
-			return (num >= barMin && num <= barMax);
+			return (num >= barMin && num < barMax);
 		},
 
 		getHighlightRootValue(highlights: Highlights): any {
@@ -252,7 +251,17 @@ export default Vue.extend({
 		},
 
 		getHighlightValuesForGroup(highlights: Highlights, key: string): any[] {
-			return !_.isEmpty(highlights.values) ? highlights.values[key] : null;
+			if (highlights.values) {
+				return highlights.values[key] ? highlights.values[key] : [];
+			}
+			return null;
+		},
+
+		getGroupNumRows(key: string): number {
+			const groups = this.groups.filter(g => {
+				return g.key === key;
+			});
+			return groups.length > 0 ? groups[0].numRows : 0;
 		},
 
 		injectSelectionIntoGroup(group: any, highlights: Highlights) {
@@ -291,11 +300,11 @@ export default Vue.extend({
 			}
 		},
 
-		selectCategoricalFacet(facet: any) {
-			if (facet._spec.segments && facet._spec.segments.length > 0) {
+		selectCategoricalFacet(facet: any, count?: number) {
+			if (!count && facet._spec.segments && facet._spec.segments.length > 0) {
 				facet.select(facet._spec.segments);
 			} else {
-				facet.select(facet.count);
+				facet.select(count ? count : facet.count);
 			}
 		},
 
@@ -307,13 +316,53 @@ export default Vue.extend({
 			}
 		},
 
+		getSampleScale(numRows: number ): number {
+			const NUM_SAMPLES = 100;
+			return 1 / (NUM_SAMPLES / numRows);
+		},
+
+		scaleSlicesBySampleSize(slices: Dictionary<number>, numRows: number, bars: any) {
+			const count = {};
+			for (let i = 0; i < bars.length; i++) {
+				const bar = bars[i];
+				const entry: any = _.last(bar.metadata);
+				count[entry.label] = entry.count;
+			}
+			_.forIn(slices, (slice, key) => {
+				slices[key] = Math.min(count[key], slice * this.getSampleScale(numRows));
+			});
+		},
+
+		scaleCountBySampleSize(count: number, numRows: number, facet: any) {
+			return Math.min(facet.count, count * this.getSampleScale(numRows));
+		},
+
+		ensureMinHeight(slices: Dictionary<number>, bars: any) {
+			const MIN_PERCENT = 0.1;
+			// get counts per entry, and max of all
+			const count = {};
+			let max = 0;
+			for (let i = 0; i < bars.length; i++) {
+				const bar = bars[i];
+				const entry: any = _.last(bar.metadata);
+				count[entry.label] = entry.count;
+				max = Math.max(max, entry.count);
+			}
+			// set count to ensure min height
+			const minCount = MIN_PERCENT * max;
+			_.forIn(slices, (slice, key) => {
+				if (slice < minCount) {
+					slices[key] = Math.min(count[key], minCount);
+				}
+			});
+		},
+
 		injectHighlightsIntoGroup(group: any, highlights: Highlights) {
 
 			const highlightValues = this.getHighlightValuesForGroup(highlights, group.key);
 			const filter = this.histogramFiltersByKey[group.key];
 
-			// loop through groups ensure that selection is clear on each - not that clear
-			// the selection on a categorical facet means set its selection to a full count
+			// loop through groups ensure that selection is clear on each
 			group.facets.forEach(facet => {
 				if (facet._type === 'placeholder') {
 					return;
@@ -367,18 +416,26 @@ export default Vue.extend({
 							const sortedValues: number[] = values.sort((a, b) => a - b) as number[];
 
 							let lastIndex = 0;
-							for (const value of sortedValues) {
+							sortedValues.forEach(value => {
 								// iterate over the facet bars and find the one that contains the current value
 								for (let i = lastIndex; i < bars.length; i++) {
 									const bar = bars[i];
 									if (this.isValueInBar(bar, value)) {
 										const entry: any = _.last(bar.metadata);
-										slices[entry.label] = entry.count;
+										if (!slices[entry.label]) {
+											slices[entry.label] = 0;
+										}
+										slices[entry.label]++;
 										lastIndex = i;
 										break;
 									}
 								}
-							}
+							});
+
+							this.scaleSlicesBySampleSize(slices, this.getGroupNumRows(group.key), bars);
+
+							// ensure min height
+							this.ensureMinHeight(slices, bars);
 						}
 
 					}
@@ -409,7 +466,6 @@ export default Vue.extend({
 					if (highlightValues) {
 
 						if (this.isHighlightedGroup(highlights, group.key)) {
-
 							const highlightValue = this.getHighlightRootValue(highlights);
 							if (highlightValue.toLowerCase() === facet.value.toLowerCase()) {
 								this.selectCategoricalFacet(facet);
@@ -420,15 +476,15 @@ export default Vue.extend({
 						} else {
 
 							const values = Array.from(highlightValues) as string[];
-							const matchedValue = values.find(v => v.toLowerCase() === (facet.value.toLowerCase() ? facet.value.toLowerCase(): undefined));
-							if (matchedValue) {
-								this.selectCategoricalFacet(facet);
+							const matches = _.filter(values, v => v.toLowerCase() === (facet.value.toLowerCase ? facet.value.toLowerCase() : undefined));
+
+							if (matches.length > 0) {
+								const count = this.scaleCountBySampleSize(matches.length, this.getGroupNumRows(group.key), facet);
+								this.selectCategoricalFacet(facet, count);
 							} else {
 								this.deselectCategoricalFacet(facet);
 							}
 						}
-
-
 
 					} else {
 

@@ -50,9 +50,11 @@ type Config struct {
 	MergedOutputSchemaPath     string `env:"MERGED_OUTPUT_SCHEMA_PATH" envDefault:"tables/mergedDataSchema.json"`
 	SchemaPath                 string `env:"SCHEMA_PATH" envDefault:"datasetDoc.json"`
 	ClassificationEndpoint     string `env:"CLASSIFICATION_ENDPOINT" envDefault:"http://localhost:5000"`
+	ClassificationWait         bool   `env:"CLASSIFICATION_WAIT" envDefault:"false"`
 	ClassificationFunctionName string `env:"CLASSIFICATION_FUNCTION_NAME" envDefault:"fileUpload"`
 	ClassificationOutputPath   string `env:"CLASSIFICATION_OUTPUT_PATH" envDefault:"tables/classification.json"`
 	RankingEndpoint            string `env:"RANKING_ENDPOINT" envDefault:"http://localhost:5001"`
+	RankingWait                bool   `env:"RANKING_WAIT" envDefault:"false"`
 	RankingFunctionName        string `env:"RANKING_FUNCTION_NAME" envDefault:"pca"`
 	RankingOutputPath          string `env:"RANKING_OUTPUT_PATH" envDefault:"tables/importance.json"`
 	RankingRowLimit            int    `env:"RANKING_ROW_LIMIT" envDefault:"1000"`
@@ -66,6 +68,7 @@ type Config struct {
 	ESDatasetsIndex            string `env:"ES_DATASETS_INDEX" envDefault:"datasets"`
 	UserProblemPath            string `env:"USER_PROBLEM_PATH" envDefault:"datasets"`
 	SkipIngest                 bool   `env:"SKIP_INGEST" envDefault:"false"`
+	ServiceRetryCount          int    `env:"SERVICE_RETRY_COUNT" envDefault:"10"`
 }
 
 // LoadConfig loads the config from the environment if necessary and returns a

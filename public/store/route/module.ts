@@ -19,10 +19,8 @@ export const getters = {
 	getRouteTargetVariable: read(moduleGetters.getRouteTargetVariable),
 	getRoutePipelineId: read(moduleGetters.getRoutePipelineId),
 	getRouteFilters: read(moduleGetters.getRouteFilters),
-	getRouteResultFilters: read(moduleGetters.getRouteResultFilters),
 	getRouteResidualThresholdMin: read(moduleGetters.getRouteResidualThresholdMin),
 	getRouteResidualThresholdMax: read(moduleGetters.getRouteResidualThresholdMax),
 	getDecodedFilters: read(moduleGetters.getDecodedFilters),
-	getDecodedResultsFilters: read(moduleGetters.getDecodedResultsFilters),
 	getDecodedHighlightRoot: read(moduleGetters.getDecodedHighlightRoot)
 }

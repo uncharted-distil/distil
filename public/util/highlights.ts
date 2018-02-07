@@ -102,23 +102,19 @@ export function createFilterFromHighlightRoot(highlightRoot: HighlightRoot): Fil
 }
 
 export function parseHighlightValues(data: Data): Dictionary<string[]> {
-	const highlights: Map<string, Set<any>> = new Map();
+	const highlights: Dictionary<string[]> = {};
 	for (let rowIdx = 0; rowIdx < data.values.length; rowIdx++) {
 		for (const [colIdx, col] of data.columns.entries()) {
 			const val = data.values[rowIdx][colIdx];
-			let colData = highlights.get(col);
+			let colData = highlights[col];
 			if (!colData) {
-				colData = new Set<string>();
-				highlights.set(col, colData);
+				colData = [];
+				highlights[col] = colData;
 			}
-			colData.add(val);
+			colData.push(val);
 		}
 	}
-	const storeHighlights: Dictionary<string[]> = {};
-	for (const [key, values] of highlights) {
-		storeHighlights[key] = Array.from(values);
-	}
-	return storeHighlights;
+	return highlights;
 }
 
 export function updateHighlightRoot(component: Vue, highlightRoot: HighlightRoot) {

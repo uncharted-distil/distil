@@ -3,8 +3,8 @@
 		<div class="col-12 flex-column d-flex">
 			<div v-if="enableSearch" class="row flex-1 align-items-center facet-filters">
 				<div class="col-12 flex-column d-flex">
-					<b-form-fieldset size="sm" horizontal label="Filter" :label-cols="2">
-						<b-form-input size="sm" v-model="filter" placeholder="Type to Search" />
+					<b-form-fieldset size="sm" horizontal :label-cols="0">
+						<b-form-input size="sm" v-model="filter" placeholder="Search" />
 					</b-form-fieldset>
 				</div>
 			</div>
@@ -50,8 +50,8 @@
 <script lang="ts">
 
 import Facets from '../components/Facets';
-import { Filter, decodeFiltersDictionary, updateFilter, getFilterType, isDisabled,
-	CATEGORICAL_FILTER, NUMERICAL_FILTER, EMPTY_FILTER } from '../util/filters';
+import { Filter, decodeFiltersDictionary, updateFilter, isDisabled, EMPTY_FILTER,
+	createNumericalFilter, createCategoricalFilter, updateFilterRoute } from '../util/filters';
 import { overlayRouteEntry, getRouteFacetPage } from '../util/routes';
 import { Highlights, Range } from '../util/highlights';
 import { Dictionary } from '../util/dict';
@@ -130,10 +130,7 @@ export default Vue.extend({
 			let groups = createGroups(filtered, this.enableGroupCollapse, this.enableFacetFiltering);
 
 			// update collapsed state
-			groups = this.updateGroupCollapses(groups);
-
-			// update selections
-			return this.updateGroupFilters(groups);
+			return this.updateGroupCollapses(groups);
 		},
 
 		highlights(): Highlights {
@@ -173,62 +170,39 @@ export default Vue.extend({
 			return 'facetPage';
 		},
 
-		// updates route with current filter state
-		updateFilterRoute(filter: Filter) {
-			// retrieve the filters from the route
-			const filters = routeGetters.getRouteFilters(this.$store);
-			// merge the updated filters back into the route query params
-			const updated = updateFilter(filters, filter);
-			const entry = overlayRouteEntry(routeGetters.getRoute(this.$store), {
-				filters: updated,
-			});
-			this.$router.push(entry);
-		},
-
 		// handles facet group transition to active state
 		onExpand(key: string) {
 			// enable filter
-			this.updateFilterRoute({
+			const filter = {
 				name: key,
 				type: EMPTY_FILTER,
 				enabled: true
-			});
+			};
+			updateFilterRoute(this, filter);
 			this.$emit('expand', key);
 		},
 
 		// handles facet group transitions to inactive (grayed out, reduced visuals) state
 		onCollapse(key) {
-			// disable filter
-			this.updateFilterRoute({
+		// disable filter
+			const filter = {
 				name: key,
 				type: EMPTY_FILTER,
 				enabled: false
-			});
+			};
+			updateFilterRoute(this, filter);
 			this.$emit('collapse', key);
 		},
 
-		// handles range slider change events
 		onRangeChange(key: string, value: { from: { label: string[] }, to: { label: string[] } }) {
-			// set range filter
-			this.updateFilterRoute({
-				name: key,
-				type: NUMERICAL_FILTER,
-				enabled: true,
-				min: parseFloat(value.from.label[0]),
-				max: parseFloat(value.to.label[0])
-			});
+			const filter = createNumericalFilter(key, value);
+			updateFilterRoute(this, filter);
 			this.$emit('range-change', key, value);
 		},
 
-		// handles individual category toggle events within a facet group
 		onFacetToggle(key: string, values: string[]) {
-			// set range filter
-			this.updateFilterRoute({
-				name: key,
-				type: CATEGORICAL_FILTER,
-				enabled: true,
-				categories: values
-			});
+			const filter = createCategoricalFilter(key, values);
+			updateFilterRoute(this, filter);
 			this.$emit('facet-toggle', key, values);
 		},
 
@@ -306,46 +280,6 @@ export default Vue.extend({
 				group.collapsed = isDisabled(decoded[group.key]);
 				return group;
 			});
-		},
-
-		// updates numerical facet range controls or categorical selected state based on
-		// route
-		updateGroupFilters(groups): Group[] {
-			const filters = routeGetters.getRouteFilters(this.$store);
-			const decoded = decodeFiltersDictionary(filters);
-			return groups.map(group => {
-				// get filter
-				const filter = decoded[group.key];
-				switch (getFilterType(filter)) {
-					case NUMERICAL_FILTER:
-						// add selection to facets
-						group.facets.forEach(facet => {
-							facet.selection = {
-								// NOTE: the `from` / `to` values MUST be strings.
-								range: {
-									from: `${filter.min}`,
-									to: `${filter.max}`,
-								}
-							};
-						});
-						break;
-
-					case CATEGORICAL_FILTER:
-						// add selection to facets
-						group.facets.forEach(facet => {
-							if (filter.categories.indexOf(facet.value) !== -1) {
-								// select
-								facet.selected = {
-									count: facet.count
-								};
-							} else {
-								delete facet.selected;
-							}
-						});
-						break;
-				}
-				return group;
-			});
 		}
 	}
 });
@@ -378,17 +312,18 @@ button {
 .variable-facets-container .facets-root-container .facets-group-container .facets-group {
 	background: white;
 	margin: 2px 2px 4px 2px;
-    font-size: 0.867rem;
-    color: rgba(0,0,0,0.87);
-    box-shadow: 0 1px 2px 0 rgba(0,0,0,0.10);
-    transition: box-shadow 0.3s ease-in-out;
+	font-size: 0.867rem;
+	color: rgba(0,0,0,0.87);
+	box-shadow: 0 1px 2px 0 rgba(0,0,0,0.10);
+	transition: box-shadow 0.3s ease-in-out;
 }
 .variable-facets-container .facets-root-container .facets-group-container .facets-group .group-header {
-	padding: 4px 0px 6px 8px;
+	padding: 4px 8px 6px 8px;
 }
 .variable-facets-container .facets-root-container .facets-group-container .facets-group .group-header .type-change-menu {
 	float: right;
 	margin-top: -4px;
+	margin-right: -8px;
 }
 .facet-filters span {
 	font-size: 0.9rem;

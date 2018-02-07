@@ -56,8 +56,7 @@ export interface Group {
 	collapsible: boolean;
 	collapsed: boolean;
 	facets: (PlaceHolderFacet | CategoricalFacet | NumericalFacet)[];
-	total?: number,
-	count?: number
+	numRows: number;
 }
 
 // creates the set of facets from the supplied summary data
@@ -82,7 +81,7 @@ export function createGroups(summaries: VariableSummary[], enableCollapse: boole
 // creates a facet to display a data fetch error
 export function createErrorFacet(summary: VariableSummary, enableCollapse: boolean): Group {
 	return {
-		label: summary.name,
+		label: summary.label ? summary.label : summary.name,
 		key: summary.name,
 		type: summary.varType,
 		collapsible: enableCollapse,
@@ -90,14 +89,15 @@ export function createErrorFacet(summary: VariableSummary, enableCollapse: boole
 		facets: [{
 			placeholder: true,
 			html: `<div>${summary.err}</div>`
-		}]
+		}],
+		numRows: 0
 	};
 }
 
 // creates a place holder facet to dispay a spinner
 export function createPendingFacet(summary: VariableSummary, enableCollapse: boolean): Group {
 	return {
-		label: summary.name,
+		label: summary.label ? summary.label : summary.name,
 		key: summary.name,
 		type: summary.varType,
 		collapsible: enableCollapse,
@@ -105,7 +105,8 @@ export function createPendingFacet(summary: VariableSummary, enableCollapse: boo
 		facets: [{
 			placeholder: true,
 			html: spinnerHTML()
-		}]
+		}],
+		numRows: 0
 	};
 }
 
@@ -199,12 +200,13 @@ function createCategoricalSummaryFacet(summary: VariableSummary, enableCollapse:
 
 	// Generate a facet group
 	return {
-		label: summary.name,
+		label: summary.label ? summary.label : summary.name,
 		key: summary.name,
 		type: summary.varType,
 		collapsible: enableCollapse,
 		collapsed: false,
-		facets: facets
+		facets: facets,
+		numRows: summary.numRows
 	};
 }
 
@@ -234,7 +236,7 @@ function hackyBinning(summary: VariableSummary, extrema: Extrema) {
 		if (bucket.count === 0) {
 			continue;
 		}
-		const bucketKey =  _.toNumber(bucket.key);
+		const bucketKey = _.toNumber(bucket.key);
 		if (bucketKey < extrema.min || bucketKey > extrema.max) {
 			continue;
 		}
@@ -264,11 +266,9 @@ function getHistogramSlices(summary: VariableSummary, extrema: Extrema) {
 }
 
 function createNumericalSummaryFacet(summary: VariableSummary, enableCollapse: boolean, enableFiltering: boolean, extrema: Extrema): Group {
-
 	const slices = getHistogramSlices(summary, extrema);
-
 	return {
-		label: summary.name,
+		label: summary.label ? summary.label : summary.name,
 		key: summary.name,
 		type: summary.varType,
 		collapsible: enableCollapse,
@@ -281,7 +281,8 @@ function createNumericalSummaryFacet(summary: VariableSummary, enableCollapse: b
 				filterable: enableFiltering,
 				selection: {} as any
 			}
-		]
+		],
+		numRows: summary.numRows
 	};
 }
 

@@ -4,6 +4,12 @@
 #
 # pip install jinja2 jinja2-cli
 
+echo "Removing previous environment"
+sudo chgrp -R $USER /tmp/d3m
+sudo chown -R $USER /tmp/d3m
+chmod -R u+w /tmp/d3m
+rm -rf /tmp/d3m
+
 echo "Creating directory hieararchy"
 mkdir -p /tmp/d3m/executables
 mkdir /tmp/d3m/config

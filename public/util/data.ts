@@ -1,6 +1,6 @@
 import _ from 'lodash';
 import { DataState, Datasets, VariableSummary } from '../store/data/index';
-import { Extrema, TargetRow, FieldInfo } from '../store/data/index';
+import { TargetRow, FieldInfo } from '../store/data/index';
 import { PipelineInfo, PIPELINE_UPDATED, PIPELINE_COMPLETED } from '../store/pipelines/index';
 import { DistilState } from '../store/store';
 import { Dictionary } from './dict';
@@ -49,8 +49,6 @@ export function isInTrainingSet(col: string, training: Dictionary<boolean>) {
 		isHiddenField(col) ||
 		training[col]);
 }
-
-
 
 export function removeNonTrainingItems(items: TargetRow[], training: Dictionary<boolean>):  TargetRow[] {
 	return _.map(items, item => {
@@ -137,14 +135,6 @@ export function getVarFromTarget(decorated: string) {
 	return decorated.replace(TARGET_POSTFIX, '');
 }
 
-export function getPredictedFacetKey(target: string) {
-	return 'Predicted';
-}
-
-export function getErrorFacetKey(target: string) {
-	return 'Error';
-}
-
 export function updateSummaries(summary: VariableSummary, summaries: VariableSummary[], matchField: string) {
 	// TODO: add and check timestamps to ensure we don't overwrite old data?
 	const index = _.findIndex(summaries, r => r[matchField] === summary[matchField]);
@@ -161,24 +151,56 @@ export function filterSummariesByDataset(summaries: VariableSummary[], dataset: 
 	});
 }
 
+export function createPendingSummary(name: string, label: string, dataset: string, pipelineId?: string): VariableSummary {
+	return {
+		name: name,
+		label: label,
+		dataset: dataset,
+		feature: '',
+		pending: true,
+		buckets: [],
+		extrema: {
+			min: NaN,
+			max: NaN
+		},
+		numRows: 0,
+		pipelineId: pipelineId
+	};
+}
+
+export function createErrorSummary(name: string, label: string, dataset: string, error: any): VariableSummary {
+	return {
+		name: name,
+		label: label,
+		dataset: dataset,
+		feature: '',
+		buckets: [],
+		extrema: {
+			min: NaN,
+			max: NaN
+		},
+		err: error.response ? error.response.data : error,
+		numRows: 0
+	};
+}
+
 export function getSummary(
 	context: DataContext,
 	endpoint: string,
 	pipeline: PipelineInfo,
 	nameFunc: (PipelineInfo) => string,
+	labelFunc: (PipelineInfo) => string,
 	updateFunction: (DataContext, VariableSummary) => void): Promise<any> {
 
+	const name = nameFunc(pipeline);
+	const label = labelFunc(pipeline);
+	const feature = pipeline.feature;
+	const dataset = pipeline.dataset;
+	const pipelineId = pipeline.pipelineId;
+	const resultId = pipeline.resultId;
+
 	// save a placeholder histogram
-	const pendingHistogram = {
-		name: nameFunc(pipeline),
-		feature: '',
-		pending: true,
-		buckets: [],
-		extrema: {} as any,
-		pipelineId: pipeline.pipelineId,
-		resultId: ''
-	};
-	updateFunction(context, pendingHistogram);
+	updateFunction(context, createPendingSummary(name, label, dataset, pipelineId));
 
 	// fetch the results for each pipeline
 	if (pipeline.progress !== PIPELINE_UPDATED &&
@@ -186,46 +208,22 @@ export function getSummary(
 		// skip
 		return;
 	}
-	const name = nameFunc(pipeline);
-	const feature = pipeline.feature;
-	const pipelineId = pipeline.pipelineId;
-	const resultId = pipeline.resultId;
 
 	// return promise
 	return axios.get(`${endpoint}/${resultId}`)
 		.then(response => {
 			// save the histogram data
 			const histogram = response.data.histogram;
-			if (!histogram) {
-				updateFunction(context, {
-					name: name,
-					feature: feature,
-					buckets: [],
-					extrema: {} as Extrema,
-					pipelineId: pipelineId,
-					resultId: resultId,
-					err: 'No analysis available'
-				});
-				return;
-			}
-			histogram.buckets = histogram.buckets ? histogram.buckets : [];
 			histogram.name = name;
+			histogram.label = label;
 			histogram.feature = feature;
 			histogram.pipelineId = pipelineId;
 			histogram.resultId = resultId;
 			updateFunction(context, histogram);
 		})
 		.catch(error => {
-			updateFunction(context, {
-				name: name,
-				feature: feature,
-				buckets: [],
-				extrema: {} as Extrema,
-				pipelineId: pipelineId,
-				resultId: resultId,
-				err: error
-			});
-			return;
+			console.error(error);
+			updateFunction(context, createErrorSummary(name, label, dataset, error));
 		});
 }
 
@@ -234,6 +232,7 @@ export function getSummaries(
 	endpoint: string,
 	pipelines: PipelineInfo[],
 	nameFunc: (PipelineInfo) => string,
+	labelFunc: (PipelineInfo) => string,
 	updateFunction: (DataContext, VariableSummary) => void): Promise<any> {
 
 	// return as singular promise
@@ -243,6 +242,7 @@ export function getSummaries(
 			endpoint,
 			pipeline,
 			nameFunc,
+			labelFunc,
 			updateFunction);
 	});
 	return Promise.all(promises);

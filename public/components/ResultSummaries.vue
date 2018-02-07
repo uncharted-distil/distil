@@ -22,6 +22,8 @@
 		<facets class="result-summaries-target"
 			@histogram-click="onHistogramClick"
 			@facet-click="onFacetClick"
+			@range-change="onRangeChange"
+			@facet-toggle="onFacetToggle"
 			:groups="targetGroups"
 			:filters="filters"
 			:highlights="highlights"></facets>
@@ -47,8 +49,7 @@ import ResultFacets from '../components/ResultFacets.vue';
 import Facets from '../components/Facets.vue';
 import { createGroups, Group } from '../util/facets';
 import { overlayRouteEntry } from '../util/routes';
-import { getPipelineById } from '../util/pipelines';
-import { getTask } from '../util/pipelines';
+import { getPipelineById, getTask } from '../util/pipelines';
 import { Filter } from '../util/filters';
 import { isTarget, getVarFromTarget, getTargetCol } from '../util/data';
 import { updateHighlightRoot, clearHighlightRoot, getHighlights } from '../util/highlights';
@@ -57,11 +58,12 @@ import { Highlights, Range } from '../util/highlights';
 import { getters as dataGetters} from '../store/data/module';
 import { getters as routeGetters } from '../store/route/module';
 import { actions } from '../store/app/module';
-import { Dictionary } from '../util/dict';
 import vueSlider from 'vue-slider-component';
+import { createNumericalFilter, createCategoricalFilter, updateFilterRoute } from '../util/filters';
 import Vue from 'vue';
 import _ from 'lodash';
 import 'font-awesome/css/font-awesome.css';
+import { PipelineInfo } from '../store/pipelines/index';
 import { getters as pipelineGetters } from '../store/pipelines/module';
 
 const DEFAULT_PERCENTILE = 0.25;
@@ -121,9 +123,12 @@ export default Vue.extend({
 		highlights(): Highlights {
 			// find var marked as 'target' and set associated values as highlights
 			const highlights = getHighlights(this.$store);
+			if (_.isEmpty(highlights)) {
+				return highlights;
+			}
 			const facetHighlights = <Highlights>{
 				root: _.cloneDeep(highlights.root),
-				values: <Dictionary<string[]>>{}
+				values: {}
 			};
 			_.forEach(highlights.values, (values, varName) => {
 				if (isTarget(varName)) {
@@ -137,7 +142,7 @@ export default Vue.extend({
 		},
 
 		filters(): Filter[] {
-			return routeGetters.getDecodedResultsFilters(this.$store);
+			return routeGetters.getDecodedFilters(this.$store);
 		},
 
 		range(): number {
@@ -161,14 +166,13 @@ export default Vue.extend({
 		},
 
 		targetSummary() : VariableSummary {
-			const targetVariable = routeGetters.getRouteTargetVariable(this.$store);
 			const varSummaries = dataGetters.getResultSummaries(this.$store);
-			return _.find(varSummaries, v => _.toLower(v.name) === _.toLower(targetVariable));
+			return _.find(varSummaries, v => _.toLower(v.name) === _.toLower(this.target));
 		},
 
 		targetGroups(): Group[] {
 			if (this.targetSummary) {
-				return createGroups([ this.targetSummary ], false, false, this.resultExtrema);
+				return createGroups([ this.targetSummary ], false, true, this.resultExtrema);
 			}
 			return [];
 		},
@@ -210,12 +214,23 @@ export default Vue.extend({
 					max: NaN
 				};
 			}
+			let isNaN = true;
 			let extrema = 0;
 			this.residualsSummaries.forEach(summary => {
+				if (_.isNaN(summary.extrema.min) || _.isNaN(summary.extrema.max)) {
+					return;
+				}
+				isNaN = false;
 				extrema = Math.max(extrema, Math.max(
 					Math.abs(summary.extrema.min),
 					Math.abs(summary.extrema.max)));
 			});
+			if (isNaN) {
+				return {
+					min: NaN,
+					max: NaN
+				};
+			}
 			return {
 				min: -extrema,
 				max: extrema
@@ -223,8 +238,7 @@ export default Vue.extend({
 		},
 
 		regressionEnabled(): boolean {
-			const targetVarName = routeGetters.getRouteTargetVariable(this.$store);
-			const targetVar = _.find(dataGetters.getVariables(this.$store), v => _.toLower(v.name) === _.toLower(targetVarName));
+			const targetVar = _.find(dataGetters.getVariables(this.$store), v => _.toLower(v.name) === _.toLower(this.target));
 			if (_.isEmpty(targetVar)) {
 				return false;
 			}
@@ -232,17 +246,38 @@ export default Vue.extend({
 			return task.schemaName === 'regression';
 		},
 
+		pipelineId(): string {
+			return routeGetters.getRoutePipelineId(this.$store);
+		},
+
+		activePipeline(): PipelineInfo {
+			return getPipelineById(this.$store.state.pipelineModule, this.pipelineId);
+		},
+
 		activePipelineName(): string {
-			const pipelineId = routeGetters.getRoutePipelineId(this.$store);
-			const result = getPipelineById(this.$store.state.pipelineModule, pipelineId);
-			return result ? result.name : '';
+			return this.activePipeline ? this.activePipeline.name : '';
+		},
+
+		sessionId(): string {
+			return pipelineGetters.getPipelineSessionID(this.$store);
 		}
 	},
 
 	methods: {
+
+		onRangeChange(key: string, value: { from: { label: string[] }, to: { label: string[] } }) {
+			const filter = createNumericalFilter(key, value);
+			updateFilterRoute(this, filter);
+		},
+
+		onFacetToggle(key: string, values: string[]) {
+			const filter = createCategoricalFilter(key, values);
+			updateFilterRoute(this, filter);
+		},
+
 		onHistogramClick(context: string, key: string, value: Range) {
 			if (key && value) {
-				const colKey = getTargetCol(routeGetters.getRouteTargetVariable(this.$store));
+				const colKey = getTargetCol(this.target);
 				updateHighlightRoot(this, {
 					context: context,
 					key: colKey,
@@ -255,7 +290,7 @@ export default Vue.extend({
 
 		onFacetClick(context: string, key: string, value: string) {
 			if (key && value) {
-				const colKey = getTargetCol(routeGetters.getRouteTargetVariable(this.$store));
+				const colKey = getTargetCol(this.target);
 				updateHighlightRoot(this, {
 					context: context,
 					key: colKey,
@@ -279,13 +314,10 @@ export default Vue.extend({
 		},
 
 		onExport() {
-			const pipelineId = routeGetters.getRoutePipelineId(this.$store);
-			const result = getPipelineById(this.$store.state.pipelineModule, pipelineId);
-			const sessionId = pipelineGetters.getPipelineSessionID(this.$store);
 			this.$router.replace('/');
 			actions.exportPipeline(this.$store, {
-				pipelineId: result.pipelineId,
-				sessionId: sessionId
+				pipelineId: this.activePipeline.pipelineId,
+				sessionId: this.sessionId
 			});
 		}
 	}
@@ -296,11 +328,6 @@ export default Vue.extend({
 .result-summaries {
 	overflow-x: hidden;
 	overflow-y: auto;
-}
-
-.result-summaries .facet-range,
-.result-summaries .facets-facet-horizontal {
-	height: 35px;
 }
 
 .result-summaries .facets-facet-base {
