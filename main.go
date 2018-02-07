@@ -125,7 +125,7 @@ func main() {
 	// Ingest the data specified by the environment
 	if config.InitialDataset != "" && !config.SkipIngest {
 		log.Infof("Loading initial dataset '%s'", config.InitialDataset)
-		err = task.IngestDataset(config.ESDatasetsIndex, config.InitialDataset, ingestConfig)
+		err = task.IngestDataset(metadataStorageCtor, config.ESDatasetsIndex, config.InitialDataset, ingestConfig)
 		if err != nil {
 			log.Error(err)
 			os.Exit(1)
@@ -150,7 +150,7 @@ func main() {
 	registerRoute(mux, "/distil/session/:session/:dataset/:target/:pipeline-id", routes.SessionHandler(pgPipelineStorageCtor))
 	registerRoute(mux, "/distil/abort", routes.AbortHandler())
 	registerRoute(mux, "/distil/export/:session/:pipeline-id", routes.ExportHandler(pgPipelineStorageCtor, metadataStorageCtor, pipelineClient, config.ExportPath))
-	registerRoute(mux, "/distil/ingest/:index/:dataset", routes.IngestHandler(ingestConfig))
+	registerRoute(mux, "/distil/ingest/:index/:dataset", routes.IngestHandler(metadataStorageCtor, ingestConfig))
 	registerRoute(mux, "/ws", ws.PipelineHandler(pipelineClient, metadataStorageCtor, pgDataStorageCtor, pgPipelineStorageCtor))
 
 	registerRoute(mux, "/*", routes.FileHandler("./dist"))

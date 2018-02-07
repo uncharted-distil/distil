@@ -6,18 +6,19 @@ import (
 	"github.com/pkg/errors"
 	"goji.io/pat"
 
+	"github.com/unchartedsoftware/distil/api/model"
 	"github.com/unchartedsoftware/distil/api/task"
 )
 
 // IngestHandler ingests a dataset into ES & postgres. It assumes that SetHttpClient
 // raw data is on the distil instance.
-func IngestHandler(config *task.IngestTaskConfig) func(http.ResponseWriter, *http.Request) {
+func IngestHandler(ctor model.MetadataStorageCtor, config *task.IngestTaskConfig) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// extract route parameters
 		index := pat.Param(r, "index")
 		dataset := pat.Param(r, "dataset")
 
-		err := task.IngestDataset(index, dataset, config)
+		err := task.IngestDataset(ctor, index, dataset, config)
 		if err != nil {
 			handleError(w, err)
 			return
