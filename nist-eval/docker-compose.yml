@@ -3,6 +3,18 @@ elastic:
     docker.uncharted.software/distil_dev_es:latest
   ports:
     - "9200:9200"
+pipeline_server:
+  image:
+    docker.uncharted.software/distil-pipeline-server:latest
+  ports:
+    - "45042:45042"
+  environment:
+    - PIPELINE_SERVER_RESULT_DIR=/tmp/d3m
+    - PIPELINE_SEND_DELAY=2000
+    - PIPELINE_NUM_UPDATES=3
+    - PIPELINE_ERR_PERCENT=0.01
+  volumes:
+    - /tmp/d3m:/tmp/d3m
 postgres:
   image:
     docker.uncharted.software/distil_dev_postgres:latest
@@ -10,15 +22,6 @@ postgres:
     - "5432:5432"
   command:
     -d postgres
-isi_ta2:
-  image:
-    registry.datadrivendiscovery.org/j18_ta2eval/isi_ta2:stable
-  ports:
-    - "45042:45042"
-  environment:
-    - CONFIG_JSON_PATH=/tmp/d3m/config/config.json
-  volumes:
-    - /tmp/d3m:/tmp/d3m
 nk_classification_rest:
   image:
     registry.datadrivendiscovery.org/j18_ta1eval/distil/simon:latest
@@ -28,4 +31,4 @@ nk_ranking_rest:
   image:
     registry.datadrivendiscovery.org/j18_ta1eval/distil/punk_1:0.4
   ports:
-    - "5001:5000"
+    - "5001:5002"
