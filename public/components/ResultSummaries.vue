@@ -214,12 +214,23 @@ export default Vue.extend({
 					max: NaN
 				};
 			}
+			let isNaN = true;
 			let extrema = 0;
 			this.residualsSummaries.forEach(summary => {
+				if (_.isNaN(summary.extrema.min) || _.isNaN(summary.extrema.max)) {
+					return;
+				}
+				isNaN = false;
 				extrema = Math.max(extrema, Math.max(
 					Math.abs(summary.extrema.min),
 					Math.abs(summary.extrema.max)));
 			});
+			if (isNaN) {
+				return {
+					min: NaN,
+					max: NaN
+				};
+			}
 			return {
 				min: -extrema,
 				max: extrema
