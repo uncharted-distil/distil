@@ -35,6 +35,7 @@ export interface VariableSummary {
 	dataset: string;
 	buckets: Bucket[];
 	extrema: Extrema;
+	numRows: number;
 	pipelineId?: string;
 	resultId?: string;
 	type?: string;

@@ -8,7 +8,8 @@ import { Variable, Data } from './index';
 import { PipelineInfo } from '../pipelines/index';
 import { mutations } from './module'
 import { HighlightRoot, createFilterFromHighlightRoot, parseHighlightValues } from '../../util/highlights';
-import { DataContext, getPredictedCol, getErrorCol, getVarFromTarget } from '../../util/data';
+import { DataContext, getPredictedCol, getErrorCol, getVarFromTarget,
+	createPendingSummary, createErrorSummary} from '../../util/data';
 
 export const ES_INDEX = 'datasets';
 
@@ -127,18 +128,11 @@ export const actions = {
 				return v.name === variable.name;
 			});
 			if (!exists) {
-				// add place holder
-				mutations.updateVariableSummaries(context, {
-					name: variable.name,
-					dataset: args.dataset,
-					feature: name,
-					pending: true,
-					buckets: [],
-					extrema: {
-						min: NaN,
-						max: NaN
-					}
-				});
+				// add placeholder
+				const name = variable.name;
+				const label = variable.name;
+				const dataset = args.dataset;
+				mutations.updateVariableSummaries(context,  createPendingSummary(name, label, dataset));
 				// fetch summary
 				promises.push(context.dispatch('fetchVariableSummary', {
 					dataset: args.dataset,
@@ -161,27 +155,14 @@ export const actions = {
 		}
 		return axios.get(`/distil/variable-summaries/${ES_INDEX}/${args.dataset}/${args.variable}`)
 			.then(response => {
-				// save the variable summary data
-				const histogram = response.data.histogram || {
-					name: args.variable,
-					dataset: args.dataset,
-					feature: '',
-					buckets: [],
-					extrema: {} as any,
-					err: 'No analysis available'
-				};
-				mutations.updateVariableSummaries(context, histogram);
+				mutations.updateVariableSummaries(context, response.data.histogram);
 			})
 			.catch(error => {
 				console.error(error);
-				mutations.updateVariableSummaries(context, {
-					name: args.variable,
-					dataset: args.dataset,
-					feature: '',
-					buckets: [],
-					extrema: {} as any,
-					err: error.response? error.response.data : error
-				});
+				const name = args.variable;
+				const label = args.variable;
+				const dataset = args.dataset;
+				mutations.updateVariableSummaries(context,  createErrorSummary(name, label, dataset, error));
 			});
 	},
 
@@ -208,19 +189,12 @@ export const actions = {
 			});
 			// update if none exists, or doesn't match latest resultId
 			if (!summary || summary.resultId !== pipeline.resultId) {
-				// add place holder
-				mutations.updateResultSummaries(context, {
-					name: variable.name,
-					dataset: args.dataset,
-					feature: name,
-					pending: true,
-					buckets: [],
-					pipelineId: args.pipelineId,
-					extrema: {
-						min: NaN,
-						max: NaN
-					}
-				});
+				// add placeholder
+				const name = variable.name;
+				const label = variable.name;
+				const dataset = args.dataset;
+				const pipelineId = args.pipelineId;
+				mutations.updateResultSummaries(context,  createPendingSummary(name, label, dataset, pipelineId));
 				// fetch summary
 				promises.push(context.dispatch('fetchResultSummary', {
 					dataset: args.dataset,
@@ -253,26 +227,14 @@ export const actions = {
 		}
 		return axios.get(`/distil/results-variable-summary/${ES_INDEX}/${args.dataset}/${args.variable}/${pipeline.resultId}`)
 			.then(response => {
-				// save the variable summary data
-				const histogram = response.data.histogram || {
-					name: args.variable,
-					feature: '',
-					buckets: [],
-					extrema: {} as any,
-					err: 'No analysis available'
-				};
-				mutations.updateResultSummaries(context, histogram);
+				mutations.updateResultSummaries(context, response.data.histogram);
 			})
 			.catch(error => {
 				console.error(error);
-				mutations.updateResultSummaries(context, {
-					name: args.variable,
-					dataset: args.dataset,
-					feature: '',
-					buckets: [],
-					extrema: {} as any,
-					err: error.response? error.response.data : error
-				});
+				const name = args.variable;
+				const label = args.variable;
+				const dataset = args.dataset;
+				mutations.updateResultSummaries(context,  createErrorSummary(name, label, dataset, error));
 			});
 	},
 
