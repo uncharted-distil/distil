@@ -194,7 +194,7 @@ export const actions = {
 				const label = variable.name;
 				const dataset = args.dataset;
 				const pipelineId = args.pipelineId;
-				mutations.updateVariableSummaries(context,  createPendingSummary(name, label, dataset, pipelineId));
+				mutations.updateResultSummaries(context,  createPendingSummary(name, label, dataset, pipelineId));
 				// fetch summary
 				promises.push(context.dispatch('fetchResultSummary', {
 					dataset: args.dataset,
@@ -234,7 +234,7 @@ export const actions = {
 				const name = args.variable;
 				const label = args.variable;
 				const dataset = args.dataset;
-				mutations.updateVariableSummaries(context,  createErrorSummary(name, label, dataset, error));
+				mutations.updateResultSummaries(context,  createErrorSummary(name, label, dataset, error));
 			});
 	},
 
