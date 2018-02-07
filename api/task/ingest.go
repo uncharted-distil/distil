@@ -16,6 +16,7 @@ import (
 	"time"
 
 	"github.com/pkg/errors"
+	"github.com/unchartedsoftware/plog"
 	"gopkg.in/olivere/elastic.v5"
 
 	"github.com/unchartedsoftware/distil-ingest/conf"
@@ -302,19 +303,6 @@ func Ingest(storage model.MetadataStorage, index string, dataset string, config 
 		return errors.Wrap(err, "unable to initialize elastic client")
 	}
 
-	// ingest the metadata
-	// Create the metadata index if it doesn't exist
-	err = metadata.CreateMetadataIndex(elasticClient, index, false)
-	if err != nil {
-		return errors.Wrap(err, "unable to create metadata index")
-	}
-
-	// Ingest the dataset info into the metadata index
-	err = metadata.IngestMetadata(elasticClient, index, config.ESDatasetPrefix, meta)
-	if err != nil {
-		return errors.Wrap(err, "unable to ingest metadata")
-	}
-
 	// Connect to the database.
 	postgresConfig := &conf.Conf{
 		DBPassword: config.DatabasePassword,
@@ -329,8 +317,26 @@ func Ingest(storage model.MetadataStorage, index string, dataset string, config 
 	// Check for existing dataset
 	match, err := matchDataset(storage, meta, index)
 	// Ignore the error for now as if this fails we still want ingest to succeed.
+	if err != nil {
+		log.Error(err)
+	}
 	if match != "" {
+		log.Infof("Matched %s to dataset %s", meta.Name, match)
 		err = deleteDataset(match, index, pg, elasticClient)
+		log.Infof("Deleted dataset %s", match)
+	}
+
+	// ingest the metadata
+	// Create the metadata index if it doesn't exist
+	err = metadata.CreateMetadataIndex(elasticClient, index, false)
+	if err != nil {
+		return errors.Wrap(err, "unable to create metadata index")
+	}
+
+	// Ingest the dataset info into the metadata index
+	err = metadata.IngestMetadata(elasticClient, index, config.ESDatasetPrefix, meta)
+	if err != nil {
+		return errors.Wrap(err, "unable to ingest metadata")
 	}
 
 	dbTable := strings.Replace(meta.ID, datasetIDSuffix, "", -1)
@@ -479,9 +485,19 @@ func matchDataset(storage model.MetadataStorage, meta *metadata.Metadata, index 
 
 func deleteDataset(name string, index string, pg *postgres.Database, es *elastic.Client) error {
 	id := fmt.Sprintf("%s%s", name, datasetIDSuffix)
+	success := false
+	for i := 0; i < 10 && !success; i++ {
+		_, err := es.Delete().Index(index).Id(id).Type("metadata").Do(context.Background())
+		if err != nil {
+			log.Error(err)
+		} else {
+			success = true
+		}
+	}
 
-	pg.DeleteDataset(name)
-	es.Delete().Index(index).Id(id).Do(context.Background())
+	if success {
+		pg.DeleteDataset(name)
+	}
 
 	return nil
 }
