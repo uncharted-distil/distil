@@ -435,8 +435,8 @@ func (s *Storage) getResultHistogramAggQuery(extrema *model.Extrema, variable *m
 
 	// get histogram agg name & query string.
 	histogramAggName := fmt.Sprintf("\"%s%s\"", model.HistogramAggPrefix, extrema.Name)
-	bucketQueryString := fmt.Sprintf("width_bucket(%s, %g, %g, %d) -1",
-		fieldTyped, extrema.Min, extrema.Max, model.MaxNumBuckets-1)
+	bucketQueryString := fmt.Sprintf("width_bucket(%s, %g, %g, %d)",
+		fieldTyped, extrema.Min, extrema.Max, model.MaxNumBuckets)
 	histogramQueryString := fmt.Sprintf("(%s) * %g + %g", bucketQueryString, interval, extrema.Min)
 
 	return histogramAggName, bucketQueryString, histogramQueryString
@@ -523,23 +523,41 @@ func (s *Storage) FetchResultsSummary(dataset string, resultURI string, index st
 		return nil, err
 	}
 
+	var histogram *model.Histogram
+
 	if model.IsNumerical(variable.Type) {
 		// fetch numeric histograms
-		numeric, err := s.fetchNumericalResultHistogram(resultURI, datasetResult, variable)
+		histogram, err = s.fetchNumericalResultHistogram(resultURI, datasetResult, variable)
 		if err != nil {
 			return nil, err
 		}
-		return numeric, nil
 	} else if model.IsCategorical(variable.Type) {
 		// fetch categorical histograms
-		categorical, err := s.fetchCategoricalResultHistogram(resultURI, dataset, datasetResult, variable)
+		histogram, err = s.fetchCategoricalResultHistogram(resultURI, dataset, datasetResult, variable)
 		if err != nil {
 			return nil, err
 		}
-		return categorical, nil
+	} else {
+		return nil, errors.Errorf("variable %s of type %s does not support summary", variable.Name, variable.Type)
 	}
 
-	return nil, errors.Errorf("variable %s of type %s does not support summary", variable.Name, variable.Type)
+	// add filter if results
+	filter := map[string]interface{}{
+		"result_id": resultURI,
+	}
+
+	// get number of rows
+	numRows, err := s.FetchNumRows(datasetResult, filter)
+	if err != nil {
+		return nil, err
+	}
+	histogram.NumRows = numRows
+
+	// add dataset
+	histogram.Dataset = dataset
+
+	return histogram, nil
+
 }
 
 func toFloat(value interface{}) (float64, error) {

@@ -29,8 +29,8 @@ func (s *Storage) getHistogramAggQuery(extrema *model.Extrema) (string, string, 
 
 	// get histogram agg name & query string.
 	histogramAggName := fmt.Sprintf("\"%s%s\"", model.HistogramAggPrefix, extrema.Name)
-	bucketQueryString := fmt.Sprintf("width_bucket(\"%s\", %g, %g, %d) -1",
-		extrema.Name, extrema.Min, extrema.Max, model.MaxNumBuckets-1)
+	bucketQueryString := fmt.Sprintf("width_bucket(\"%s\", %g, %g, %d)",
+		extrema.Name, extrema.Min, extrema.Max, model.MaxNumBuckets)
 	histogramQueryString := fmt.Sprintf("(%s) * %g + %g", bucketQueryString, interval, extrema.Min)
 
 	return histogramAggName, bucketQueryString, histogramQueryString
@@ -60,6 +60,7 @@ func (s *Storage) parseNumericHistogram(varType string, rows *pgx.Rows, extrema 
 
 		key = key + interval
 	}
+
 	for rows.Next() {
 		var bucketValue float64
 		var bucketCount int64
@@ -68,7 +69,12 @@ func (s *Storage) parseNumericHistogram(varType string, rows *pgx.Rows, extrema 
 		if err != nil {
 			return nil, errors.Wrap(err, fmt.Sprintf("no %s histogram aggregation found", histogramAggName))
 		}
-		buckets[bucket].Count = bucketCount
+		if bucket < int64(len(buckets)) {
+			buckets[bucket-1].Count = bucketCount
+		} else {
+			buckets[len(buckets)-1].Count += bucketCount
+
+		}
 	}
 	// assign histogram attributes
 	return &model.Histogram{
@@ -344,33 +350,43 @@ func (s *Storage) fetchSummaryData(dataset string, index string, varName string,
 		return nil, errors.Wrap(err, "failed to fetch variable description for summary")
 	}
 
+	var histogram *model.Histogram
+
 	if model.IsNumerical(variable.Type) {
 		// fetch numeric histograms
-		var numeric *model.Histogram
 		if resultURI == "" {
-			numeric, err = s.fetchNumericalHistogram(dataset, variable)
+			histogram, err = s.fetchNumericalHistogram(dataset, variable)
 		} else {
-			numeric, err = s.fetchNumericalHistogramByResult(dataset, variable, resultURI)
+			histogram, err = s.fetchNumericalHistogramByResult(dataset, variable, resultURI)
 		}
 		if err != nil {
 			return nil, errors.Wrap(err, "unable to get numerical histogram")
 		}
-		return numeric, nil
-	}
-	if model.IsCategorical(variable.Type) {
+	} else if model.IsCategorical(variable.Type) {
 		// fetch categorical histograms
-		var categorical *model.Histogram
 		if resultURI == "" {
-			categorical, err = s.fetchCategoricalHistogram(dataset, variable)
+			histogram, err = s.fetchCategoricalHistogram(dataset, variable)
 		} else {
-			categorical, err = s.fetchCategoricalHistogramByResult(dataset, variable, resultURI)
+			histogram, err = s.fetchCategoricalHistogramByResult(dataset, variable, resultURI)
 		}
 		if err != nil {
 			return nil, errors.Wrap(err, "unable to get categorical histogram")
 		}
-		return categorical, nil
+	} else {
+		return nil, errors.Errorf("variable %s of type %s does not support summary", variable.Name, variable.Type)
 	}
-	return nil, errors.Errorf("variable %s of type %s does not support summary", variable.Name, variable.Type)
+
+	// get number of rows
+	numRows, err := s.FetchNumRows(dataset, nil)
+	if err != nil {
+		return nil, err
+	}
+	histogram.NumRows = numRows
+
+	// add dataset
+	histogram.Dataset = dataset
+
+	return histogram, err
 }
 
 // FetchSummary returns the summary for the provided dataset and variable.

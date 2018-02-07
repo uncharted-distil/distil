@@ -31,13 +31,13 @@ func VariableSummaryHandler(ctorStorage model.DataStorageCtor) func(http.Respons
 			handleError(w, err)
 			return
 		}
+
 		// fetch summary histogram
 		histogram, err := storage.FetchSummary(dataset, index, variable)
 		if err != nil {
 			handleError(w, err)
 			return
 		}
-		histogram.Dataset = dataset
 
 		// marshall output into JSON
 		err = handleJSON(w, SummaryResult{
