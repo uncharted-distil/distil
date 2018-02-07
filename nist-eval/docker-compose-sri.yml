@@ -15,10 +15,9 @@ sri-tpot:
   image:
     registry.datadrivendiscovery.org/j18_ta2eval/sri_tpot:stable
   ports:
-    - 45042
+    - "45042:45042"
   volumes:
-    - /tmp/d3m/dataset:/tmp/d3m/dataset
-    - $PWD/datasets/config.json:$PWD/datasets/config.json
+    - /tmp/d3m:/tmp/d3m
   command:
     - ta2_server
-    - $PWD/datasets/config.json
+    - /tmp/d3m/config/config.json
