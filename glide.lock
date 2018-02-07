@@ -1,5 +1,5 @@
-hash: ea458c342b875449781dcb388b93f0c0075d3bce9dd4cb4b0f52681330409eea
-updated: 2018-02-07T16:11:29.950546141-05:00
+hash: f5d2fa988621a80790d8be670f34a0bf48e4ec30a1c7f3f9ae765f80ecb804cf
+updated: 2018-02-07T16:36:19.448998198-05:00
 imports:
 - name: github.com/caarlos0/env
   version: 7cd7992b3bc86f920394f8de92c13900da1a46b7
@@ -12,6 +12,14 @@ imports:
   subpackages:
   - internal
   - redis
+- name: github.com/go-pg/pg
+  version: 9c148d3cd18e6038c96c43973bcd115342435c12
+  subpackages:
+  - internal
+  - internal/parser
+  - internal/pool
+  - orm
+  - types
 - name: github.com/golang/mock
   version: b3e60bcdc577185fce3cf625fc96b62857ce5574
   subpackages:
@@ -33,6 +41,10 @@ imports:
   - pgio
   - pgproto3
   - pgtype
+- name: github.com/jeffail/gabs
+  version: 44cbc27138518b15305cb3eef220d04f2d641b9b
+- name: github.com/jinzhu/inflection
+  version: 1c35d901db3da928c72a72d8458480cc9ade058f
 - name: github.com/mailru/easyjson
   version: 32fa128f234d041f196a9f3e0fea5ac9772c08e1
   subpackages:
@@ -63,10 +75,23 @@ imports:
   version: be8372ae8ec5c6daaed3cc28ebf73c54b737c240
   subpackages:
   - assert
+- name: github.com/unchartedsoftware/deluge
+  version: f967d93bead1da1df483356f0819caa2ecfb1bc8
+  subpackages:
+  - document
+  - util
 - name: github.com/unchartedsoftware/distil-ingest
   version: ff0574596c537c53a23a6ac628b11c145f38bea1
   repo: git@github.com:unchartedsoftware/distil-ingest.git
   vcs: git
+  subpackages:
+  - conf
+  - merge
+  - metadata
+  - postgres
+  - postgres/model
+  - rest
+  - smmry
 - name: github.com/unchartedsoftware/plog
   version: 34d2bbd3c0a9458feb0752af2b578a23eb8ddc4f
 - name: github.com/vova616/xxhash
