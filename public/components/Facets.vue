@@ -321,8 +321,7 @@ export default Vue.extend({
 			return 1 / (NUM_SAMPLES / numRows);
 		},
 
-		scaleSlicesBySampleSize(numRows: number, slices: Dictionary<number>, bars: any) {
-			return;
+		scaleSlicesBySampleSize(slices: Dictionary<number>, numRows: number, bars: any) {
 			const count = {};
 			for (let i = 0; i < bars.length; i++) {
 				const bar = bars[i];
@@ -332,6 +331,10 @@ export default Vue.extend({
 			_.forIn(slices, (slice, key) => {
 				slices[key] = Math.min(count[key], slice * this.getSampleScale(numRows));
 			});
+		},
+
+		scaleCountBySampleSize(count: number, numRows: number, facet: any) {
+			return Math.min(facet.count, count * this.getSampleScale(numRows);
 		},
 
 		ensureMinHeight(slices: Dictionary<number>, bars: any) {
@@ -429,7 +432,7 @@ export default Vue.extend({
 								}
 							});
 
-							this.scaleSlicesBySampleSize(this.getGroupNumRows(group.key), slices, bars);
+							this.scaleSlicesBySampleSize(slices, this.getGroupNumRows(group.key), bars);
 
 							// ensure min height
 							this.ensureMinHeight(slices, bars);
@@ -476,7 +479,7 @@ export default Vue.extend({
 							const matches = _.filter(values, v => v.toLowerCase() === (facet.value.toLowerCase ? facet.value.toLowerCase() : undefined));
 
 							if (matches.length > 0) {
-								const count = matches.length * this.getSampleScale(this.getGroupNumRows(group.key));
+								const count = this.scaleCountBySampleSize( matches.length, this.getGroupNumRows(group.key), facet);
 								this.selectCategoricalFacet(facet, count);
 							} else {
 								this.deselectCategoricalFacet(facet);
