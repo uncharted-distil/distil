@@ -1,12 +1,19 @@
 package pipeline
 
 import (
+	"fmt"
 	"sync"
+	"time"
 
 	"github.com/golang/protobuf/proto"
 	"github.com/pkg/errors"
 	"github.com/satori/go.uuid"
 	"golang.org/x/net/context"
+)
+
+const (
+	pipelineTimeoutDuration = time.Second * 5 // time.Minute * 2
+	requestTimeoutDuration  = time.Second * 10
 )
 
 // Session provides facilities for managing GRPC pipeline sessions.
@@ -33,13 +40,19 @@ func NewSession(id string, client CoreClient) *Session {
 	}
 }
 
+// ResultError represents a result error for a specific pipeline;
+type ResultError struct {
+	Error      error
+	PipelineID string
+}
+
 // ResultProxy provides a channel for receiving results and another for receiving
 // errors. This the main conduit for comms between the client and downstream handlers
 // that are receviing request results.
 type ResultProxy struct {
 	RequestID uuid.UUID
 	Results   chan *proto.Message
-	Errors    chan error
+	Errors    chan ResultError
 	Done      chan struct{}
 }
 
@@ -110,10 +123,13 @@ func (s *Session) GetOrDispatch(ctx context.Context, info *RequestInfo) (*Result
 	return s.attachToExistingRequest(requestID)
 }
 
-func (s *Session) proxyError(req *RequestContext, err error) {
+func (s *Session) proxyError(req *RequestContext, pipelineID string, err error) {
 	s.mu.Lock()
 	for _, downstream := range s.downstream[req.RequestID] {
-		downstream.Errors <- err
+		downstream.Errors <- ResultError{
+			Error:      err,
+			PipelineID: pipelineID,
+		}
 	}
 	s.mu.Unlock()
 }
@@ -162,18 +178,65 @@ func (s *Session) dispatchRequest(ctx context.Context, request RequestFunc) uuid
 	// the source channels are closed we nil them out and close down the downstream channels.
 	go func() {
 		done := false
+
+		timers := make(map[string]*time.Timer)
+		pipelineTimeout := make(chan ResultError)
+		requestTimer := time.NewTimer(requestTimeoutDuration)
+
 		for !done {
 			select {
 			case err := <-req.Errors:
 				// broadcast the error downstream
-				s.proxyError(req, err)
+				// TODO: fix this
+				s.proxyError(req, "", err)
 
 			case result := <-req.Results:
 				// put the results in the buffer
+				res := (*result).(*PipelineCreateResult)
+				pipelineID := res.PipelineId
+
+				requestTimer.Reset(requestTimeoutDuration)
+
+				// get timer
+				timer, ok := timers[pipelineID]
+				if !ok {
+					// create timer, add to timeout channel
+					timer = time.NewTimer(pipelineTimeoutDuration)
+					timers[pipelineID] = timer
+					go func(t *time.Timer) {
+						// wait on timer
+						<-timer.C
+						// send timeout error to timer agg
+						pipelineTimeout <- ResultError{
+							Error:      fmt.Errorf("no response for pipeline id %s for %v, timing out", pipelineID, pipelineTimeoutDuration),
+							PipelineID: pipelineID,
+						}
+					}(timer)
+				} else {
+					timer.Reset(pipelineTimeoutDuration)
+				}
 				s.proxyResult(req, *result)
+
+			case err := <-pipelineTimeout:
+
+				// pipeline has timed out
+				delete(timers, err.PipelineID)
+				s.proxyError(req, err.PipelineID, err.Error)
+
+			case <-requestTimer.C:
+
+				// request timed out, consider request done
+				s.proxyDone(req)
+				// flag as done
+				done = true
 
 			case <-req.Done:
 				// notify downstream routines that request has finished processing
+				// clear timers
+				for _, timer := range timers {
+					timer.Stop()
+				}
+				requestTimer.Stop()
 				s.proxyDone(req)
 				// flag as done
 				done = true
@@ -208,7 +271,7 @@ func (s *Session) attachToExistingRequest(requestID uuid.UUID) (*ResultProxy, er
 		proxy := &ResultProxy{
 			RequestID: requestID,
 			Results:   make(chan *proto.Message, len(results)),
-			Errors:    make(chan error),
+			Errors:    make(chan ResultError),
 			Done:      make(chan struct{}),
 		}
 
@@ -235,7 +298,7 @@ func (s *Session) attachToExistingRequest(requestID uuid.UUID) (*ResultProxy, er
 		proxy := &ResultProxy{
 			RequestID: requestID,
 			Results:   make(chan *proto.Message),
-			Errors:    make(chan error),
+			Errors:    make(chan ResultError),
 			Done:      make(chan struct{}),
 		}
 		// write to result channel, block so that done channel always comes

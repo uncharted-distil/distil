@@ -91,7 +91,7 @@ export const actions = {
 							targetFeature = feature.featureName;
 						}
 					});
-
+					
 					// update pipeline
 					mutations.updatePipelineRequest(context, {
 						name: targetFeature,
@@ -132,6 +132,10 @@ export const actions = {
 				if (_.has(res, STREAM_CLOSE)) {
 					stream.close();
 					return;
+				}
+
+				if (res.error) {
+					console.error(res.error);
 				}
 
 				res.name = request.feature;

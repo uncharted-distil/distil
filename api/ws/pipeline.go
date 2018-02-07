@@ -375,7 +375,6 @@ func handleCreatePipelinesSuccess(conn *Connection, msg *Message, proxy *pipelin
 				status := res.ResponseInfo.Status.Code
 				statusDesc := res.ResponseInfo.Status.Details
 				handleErr(conn, msg, errors.Errorf("pipeline create failed - %s: %s", status, statusDesc))
-				return
 			}
 
 			// extract the baseline pipeline status
@@ -385,14 +384,13 @@ func handleCreatePipelinesSuccess(conn *Connection, msg *Message, proxy *pipelin
 			currentTime := time.Now()
 			err := pipelineStorage.UpdateRequest(fmt.Sprintf("%s", proxy.RequestID), progress, currentTime)
 			if err != nil {
-				handleErr(conn, msg, errors.Wrap(err, "Unable to store request update"))
+				handleErr(conn, msg, errors.Wrap(err, "unable to store request update"))
 			}
 			response := map[string]interface{}{
 				"requestId":  proxy.RequestID,
 				"pipelineId": res.PipelineId,
 				"progress":   progress,
 			}
-			log.Infof("Pipeline %s - %s", res.PipelineId, progress)
 
 			// on complete, persist scores
 			if res.ProgressInfo == pipeline.Progress_COMPLETED {
@@ -446,7 +444,7 @@ func handleCreatePipelinesSuccess(conn *Connection, msg *Message, proxy *pipelin
 				outputType,
 				currentTime)
 			if err != nil {
-				handleErr(conn, msg, errors.Wrap(err, "Unable to store result metadata"))
+				handleErr(conn, msg, errors.Wrap(err, "unable to store result metadata"))
 			}
 
 			// persist results, if they are available
@@ -455,14 +453,33 @@ func handleCreatePipelinesSuccess(conn *Connection, msg *Message, proxy *pipelin
 
 				err = dataStorage.PersistResult(dataset, resultURI)
 				if err != nil {
-					handleErr(conn, msg, errors.Wrap(err, "Unable to store pipeline results"))
+					handleErr(conn, msg, errors.Wrap(err, "unable to store pipeline results"))
 				}
 			}
 			handleSuccess(conn, msg, response)
 
 		case err := <-proxy.Errors:
-			handleErr(conn, msg, err)
-			return
+			progress := pipeline.Progress_name[int32(pipeline.Progress_ERRORED)]
+			currentTime := time.Now()
+
+			otherErr := pipelineStorage.UpdateRequest(fmt.Sprintf("%s", proxy.RequestID), progress, currentTime)
+			if otherErr != nil {
+				handleErr(conn, msg, errors.Wrap(otherErr, "unable to store request update"))
+			}
+
+			otherErr = pipelineStorage.PersistResultMetadata(
+				proxy.RequestID.String(),
+				err.PipelineID,
+				"",
+				"",
+				progress,
+				"",
+				currentTime)
+			if otherErr != nil {
+				handleErr(conn, msg, errors.Wrap(otherErr, "unable to store result metadata"))
+			}
+
+			handleErr(conn, msg, err.Error)
 
 		case <-proxy.Done:
 			// notify the downstream client that the stream is closed
