@@ -231,7 +231,7 @@ export default Vue.extend({
 			const barMin = _.toNumber(_.first(metadata).label);
 			const barMax = _.toNumber(_.last(metadata).toLabel);
 			const num = _.toNumber(value);
-			return (num >= barMin && num <= barMax);
+			return (num >= barMin && num < barMax);
 		},
 
 		getHighlightRootValue(highlights: Highlights): any {
@@ -255,6 +255,13 @@ export default Vue.extend({
 				return highlights.values[key] ? highlights.values[key] : [];
 			}
 			return null;
+		},
+
+		getGroupNumRows(key: string): number {
+			const groups = this.groups.filter(g => {
+				return g.key === key;
+			});
+			return groups.length > 0 ? groups[0].numRows : 0;
 		},
 
 		injectSelectionIntoGroup(group: any, highlights: Highlights) {
@@ -307,6 +314,44 @@ export default Vue.extend({
 			} else {
 				facet.deselect();
 			}
+		},
+
+		getSampleScale(numRows: number ): number {
+			const NUM_SAMPLES = 100;
+			return 1 / (NUM_SAMPLES / numRows);
+		},
+
+		scaleSlicesBySampleSize(numRows: number, slices: Dictionary<number>, bars: any) {
+			return;
+			const count = {};
+			for (let i = 0; i < bars.length; i++) {
+				const bar = bars[i];
+				const entry: any = _.last(bar.metadata);
+				count[entry.label] = entry.count;
+			}
+			_.forIn(slices, (slice, key) => {
+				slices[key] = Math.min(count[key], slice * this.getSampleScale(numRows));
+			});
+		},
+
+		ensureMinHeight(slices: Dictionary<number>, bars: any) {
+			const MIN_PERCENT = 0.1;
+			// get counts per entry, and max of all
+			const count = {};
+			let max = 0;
+			for (let i = 0; i < bars.length; i++) {
+				const bar = bars[i];
+				const entry: any = _.last(bar.metadata);
+				count[entry.label] = entry.count;
+				max = Math.max(max, entry.count);
+			}
+			// set count to ensure min height
+			const minCount = MIN_PERCENT * max;
+			_.forIn(slices, (slice, key) => {
+				if (slice < minCount) {
+					slices[key] = Math.min(count[key], minCount);
+				}
+			});
 		},
 
 		injectHighlightsIntoGroup(group: any, highlights: Highlights) {
@@ -368,7 +413,7 @@ export default Vue.extend({
 							const sortedValues: number[] = values.sort((a, b) => a - b) as number[];
 
 							let lastIndex = 0;
-							for (const value of sortedValues) {
+							sortedValues.forEach(value => {
 								// iterate over the facet bars and find the one that contains the current value
 								for (let i = lastIndex; i < bars.length; i++) {
 									const bar = bars[i];
@@ -382,7 +427,12 @@ export default Vue.extend({
 										break;
 									}
 								}
-							}
+							});
+
+							this.scaleSlicesBySampleSize(this.getGroupNumRows(group.key), slices, bars);
+
+							// ensure min height
+							this.ensureMinHeight(slices, bars);
 						}
 
 					}
@@ -424,8 +474,10 @@ export default Vue.extend({
 
 							const values = Array.from(highlightValues) as string[];
 							const matches = _.filter(values, v => v.toLowerCase() === (facet.value.toLowerCase ? facet.value.toLowerCase() : undefined));
+
 							if (matches.length > 0) {
-								this.selectCategoricalFacet(facet, matches.length);
+								const count = matches.length * this.getSampleScale(this.getGroupNumRows(group.key));
+								this.selectCategoricalFacet(facet, count);
 							} else {
 								this.deselectCategoricalFacet(facet);
 							}
