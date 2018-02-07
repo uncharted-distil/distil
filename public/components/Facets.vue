@@ -252,7 +252,10 @@ export default Vue.extend({
 		},
 
 		getHighlightValuesForGroup(highlights: Highlights, key: string): any[] {
-			return !_.isEmpty(highlights.values) ? highlights.values[key] : null;
+			if (highlights.values) {
+				return highlights.values[key] ? highlights.values[key] : [];
+			}
+			return null;
 		},
 
 		injectSelectionIntoGroup(group: any, highlights: Highlights) {
@@ -312,8 +315,7 @@ export default Vue.extend({
 			const highlightValues = this.getHighlightValuesForGroup(highlights, group.key);
 			const filter = this.histogramFiltersByKey[group.key];
 
-			// loop through groups ensure that selection is clear on each - not that clear
-			// the selection on a categorical facet means set its selection to a full count
+			// loop through groups ensure that selection is clear on each
 			group.facets.forEach(facet => {
 				if (facet._type === 'placeholder') {
 					return;
@@ -427,8 +429,6 @@ export default Vue.extend({
 								this.deselectCategoricalFacet(facet);
 							}
 						}
-
-
 
 					} else {
 

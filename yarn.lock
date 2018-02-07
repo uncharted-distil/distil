@@ -10,9 +10,9 @@
   version "4.14.91"
   resolved "https://registry.yarnpkg.com/@types/lodash/-/lodash-4.14.91.tgz#794611b28056d16b5436059c6d800b39d573cd3a"
 
-"@uncharted.software/stories-facets@2.12.1":
-  version "2.12.1"
-  resolved "https://registry.yarnpkg.com/@uncharted.software/stories-facets/-/stories-facets-2.12.1.tgz#bc3b1d1f20f2984fe3c8c985b8950935067bdab0"
+"@uncharted.software/stories-facets@2.12.3":
+  version "2.12.3"
+  resolved "https://registry.yarnpkg.com/@uncharted.software/stories-facets/-/stories-facets-2.12.3.tgz#0dd17dfef6b90bcb2c765bb06250789da334c03e"
 
 abbrev@1:
   version "1.1.1"
@@ -4585,12 +4585,6 @@ style-loader@0.19.1:
   dependencies:
     loader-utils "^1.0.2"
     schema-utils "^0.3.0"
-
-sugarss@^1.0.1:
-  version "1.0.1"
-  resolved "https://registry.yarnpkg.com/sugarss/-/sugarss-1.0.1.tgz#be826d9003e0f247735f92365dc3fd7f1bae9e44"
-  dependencies:
-    postcss "^6.0.14"
 
 supports-color@4.4.0:
   version "4.4.0"

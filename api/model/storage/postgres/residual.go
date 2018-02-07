@@ -29,7 +29,7 @@ func (s *Storage) FetchResidualsSummary(dataset string, resultURI string, index 
 		}
 		return residuals, nil
 	}
-	return nil, nil
+	return nil, fmt.Errorf("variable is not numeric")
 }
 
 func getErrorTyped(variableName string) string {

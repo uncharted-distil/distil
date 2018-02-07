@@ -30,6 +30,7 @@ export interface Bucket {
 
 export interface VariableSummary {
 	name: string;
+	label?: string;
 	feature: string;
 	dataset: string;
 	buckets: Bucket[];

@@ -15,9 +15,16 @@
 			<b-button class="create-button" :variant="createVariant" @click="create" :disabled="disableCreate">
 				Create Models
 			</b-button>
-			<b-button class="export-button" :variant="exportVariant" @click="exportData" :disabled="disableCreate">
+			<b-button class="export-button" :variant="exportVariant" @click="exportData" :disabled="disableExport">
 				Export Problem
 			</b-button>
+		</div>
+		<div class="pipeline-progress">
+			<b-progress v-if="isPending"
+				:value="percentComplete"
+				variant="outline-secondary"
+				striped
+				:animated="true"></b-progress>
 		</div>
 	</div>
 </template>
@@ -46,7 +53,8 @@ export default Vue.extend({
 			featureSet: false,
 			metric: 'Metric',
 			metricSet: false,
-			exportResults: null
+			exportResults: null,
+			pending: false
 		};
 	},
 	computed: {
@@ -92,17 +100,23 @@ export default Vue.extend({
 		sessionId(): string {
 			return pipelineGetters.getPipelineSessionID(this.$store);
 		},
-		// determines create button status based on completeness of user input
+		isPending(): boolean {
+			return this.pending;
+		},
 		disableCreate(): boolean {
+			return this.isPending || (!this.targetSelected || !this.trainingSelected);
+		},
+		disableExport(): boolean {
 			return !this.targetSelected || !this.trainingSelected;
 		},
-		// determines  create button variant based on completeness of user input
 		createVariant(): string {
 			return !this.disableCreate ? 'success' : 'outline-secondary';
 		},
-		// determines  create button variant based on completeness of user input
 		exportVariant(): string {
-			return !this.disableCreate ? 'outline-secondary' : 'outline-secondary';
+			return !this.disableExport ? 'outline-secondary' : 'outline-secondary';
+		},
+		percentComplete(): number {
+			return 100;
 		}
 	},
 	methods: {
@@ -112,6 +126,7 @@ export default Vue.extend({
 			const taskData = getTask(this.targetVariable.type);
 			const task = taskData.schemaName;
 			const metrics = _.map(this.metrics as string[], m => getMetricSchemaName(m));
+			this.pending = true;
 			// dispatch action that triggers request send to server
 			pipelineActions.createPipelines(this.$store, {
 				dataset: this.dataset,
@@ -122,6 +137,7 @@ export default Vue.extend({
 				metric: metrics,
 				maxPipelines: 1
 			}).then((res: PipelineInfo) => {
+				this.pending = false;
 				// transition to result screen
 				const entry = createRouteEntry(RESULTS_ROUTE, {
 					dataset: routeGetters.getRouteDataset(this.$store),
@@ -174,5 +190,8 @@ export default Vue.extend({
 }
 .dropdown-toggle {
 	width: 100%;
+}
+.pipeline-progress {
+	margin: 6px 10%;
 }
 </style>
