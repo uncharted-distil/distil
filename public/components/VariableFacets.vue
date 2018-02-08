@@ -3,9 +3,7 @@
 		<div class="col-12 flex-column d-flex">
 			<div v-if="enableSearch" class="row flex-1 align-items-center facet-filters">
 				<div class="col-12 flex-column d-flex">
-					<b-form-fieldset size="sm" horizontal :label-cols="1">
-						<b-form-input size="sm" v-model="filter" placeholder="Search" />
-					</b-form-fieldset>
+					<b-form-input size="sm" v-model="filter" placeholder="Search" />
 				</div>
 			</div>
 			<div v-if="enableToggle" class="row flex-1 align-items-center facet-filters">
@@ -325,11 +323,11 @@ button {
 	margin-top: -4px;
 	margin-right: -8px;
 }
+.facet-filters {
+	margin: 0 -10px 4px -10px;
+}
 .facet-filters span {
 	font-size: 0.9rem;
-}
-.facet-filters .form-group {
-	margin: 0.25rem;
 }
 .variable-page-nav {
 	padding-top: 10px;

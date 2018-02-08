@@ -156,8 +156,6 @@ export const actions = {
 						res.progress === PIPELINE_UPDATED ||
 						res.progress == PIPELINE_COMPLETED) {
 
-						console.log(res.progress);
-
 						// if current pipelineId, pull result summaries
 						const currentPipelineId = context.getters.getRoutePipelineId;
 						if (res.pipelineId === currentPipelineId) {
