@@ -1,0 +1,25 @@
+elastic:
+  image:
+    docker.uncharted.software/distil_dev_es:latest
+  ports:
+    - "9200:9200"
+postgres:
+  image:
+    docker.uncharted.software/distil_dev_postgres:latest
+  ports:
+    - "5432:5432"
+  command:
+    -d postgres
+mitfl:
+  image:
+    registry.datadrivendiscovery.org/mit-featurelabs/btb-dockerimage:stable
+  ports:
+    - "45042:45042"
+  environment:
+    - CONFIG_JSON_PATH=/tmp/d3m/config/config.json
+  volumes:
+    - /tmp/d3m:/tmp/d3m
+  command:
+    - ta2_grpc_server
+  entrypoint:
+    - /bin/bash
