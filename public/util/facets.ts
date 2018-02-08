@@ -218,13 +218,18 @@ function truncateTowardsZero(num: number): number {
 }
 
 function hackyBinning(summary: VariableSummary, extrema: Extrema) {
-	const NUM_BUCKETS = 50;
-	const range = extrema.max - extrema.min;
-	const span = range / NUM_BUCKETS;
-	const buckets = new Array(NUM_BUCKETS);
-	for (let i=0; i<NUM_BUCKETS; i++) {
-		const from = extrema.min + (i * span);
-		const to = extrema.min + ((i + 1) * span);
+	const MAX_BUCKETS = 50;
+	const isInteger = summary.varType === 'integer';
+	const min = isInteger ? Math.floor(extrema.min) : extrema.min;
+	const max = isInteger ? Math.floor(extrema.max) : extrema.max;
+	const diff = max - min;
+	const numBuckets = isInteger ? Math.min(diff + 1, MAX_BUCKETS) : MAX_BUCKETS;
+	const range = isInteger ? diff + 1 : diff;
+	const span = range / numBuckets;
+	const buckets = new Array(numBuckets);
+	for (let i=0; i<numBuckets; i++) {
+		const from = min + (i * span);
+		const to = min + ((i + 1) * span);
 		buckets[i] = {
 			label: `${formatValue(from, summary.varType)}`,
 			toLabel: `${formatValue(to, summary.varType)}`,
@@ -237,10 +242,10 @@ function hackyBinning(summary: VariableSummary, extrema: Extrema) {
 			continue;
 		}
 		const bucketKey = _.toNumber(bucket.key);
-		if (bucketKey < extrema.min || bucketKey > extrema.max) {
+		if (bucketKey < min || bucketKey > max) {
 			continue;
 		}
-		const index = truncateTowardsZero((bucketKey / span) - (extrema.min / span));
+		const index = truncateTowardsZero((bucketKey / span) - (min / span));
 		buckets[index].count += bucket.count;
 	}
 	return buckets;
@@ -250,19 +255,7 @@ function getHistogramSlices(summary: VariableSummary, extrema: Extrema) {
 	if (extrema && !_.isNaN(extrema.min) && !_.isNaN(extrema.max)) {
 		return hackyBinning(summary, extrema);
 	}
-	const buckets = summary.buckets;
-	const slices = new Array(buckets.length);
-	for (let i=0; i<buckets.length; i++) {
-		const bucket = buckets[i];
-		const from = _.toNumber(bucket.key);
-		const to = (i < buckets.length-1) ? _.toNumber(buckets[i+1].key) : summary.extrema.max;
-		slices[i] = {
-			label: `${formatValue(from, summary.varType)}`,
-			toLabel: `${formatValue(to, summary.varType)}`,
-			count: bucket.count
-		};
-	}
-	return slices;
+	return hackyBinning(summary, summary.extrema);
 }
 
 function createNumericalSummaryFacet(summary: VariableSummary, enableCollapse: boolean, enableFiltering: boolean, extrema: Extrema): Group {
