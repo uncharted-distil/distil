@@ -5,7 +5,7 @@ import { encodeQueryParams, Filter } from '../../util/filters';
 import { getPipelinesByRequestIds, getPipelineById } from '../../util/pipelines';
 import { getSummaries, getSummary } from '../../util/data';
 import { Variable, Data } from './index';
-import { PipelineInfo } from '../pipelines/index';
+import { PipelineInfo, PIPELINE_ERRORED } from '../pipelines/index';
 import { mutations } from './module'
 import { HighlightRoot, createFilterFromHighlightRoot, parseHighlightValues } from '../../util/highlights';
 import { DataContext, getPredictedCol, getErrorCol, getVarFromTarget,
@@ -187,14 +187,22 @@ export const actions = {
 			const summary = _.find(context.state.resultSummaries, v => {
 				return v.name === variable.name;
 			});
+
+			const name = variable.name;
+			const label = variable.name;
+			const dataset = args.dataset;
+			
+			if (pipeline.progress === PIPELINE_ERRORED) {
+				mutations.updateResultSummaries(context, createErrorSummary(name, label, dataset, `No data available due to error`));
+				return;
+			}
 			// update if none exists, or doesn't match latest resultId
 			if (!summary || summary.resultId !== pipeline.resultId) {
 				// add placeholder
-				const name = variable.name;
-				const label = variable.name;
-				const dataset = args.dataset;
 				const pipelineId = args.pipelineId;
-				mutations.updateResultSummaries(context,  createPendingSummary(name, label, dataset, pipelineId));
+
+				mutations.updateResultSummaries(context, createPendingSummary(name, label, dataset, pipelineId));
+
 				// fetch summary
 				promises.push(context.dispatch('fetchResultSummary', {
 					dataset: args.dataset,

@@ -12,8 +12,8 @@ import (
 )
 
 const (
-	pipelineTimeoutDuration = time.Second * 5 // time.Minute * 2
-	requestTimeoutDuration  = time.Second * 10
+	pipelineTimeoutDuration = time.Minute * 2
+	requestTimeoutDuration  = time.Second * 5
 )
 
 // Session provides facilities for managing GRPC pipeline sessions.

@@ -479,7 +479,15 @@ func handleCreatePipelinesSuccess(conn *Connection, msg *Message, proxy *pipelin
 				handleErr(conn, msg, errors.Wrap(otherErr, "unable to store result metadata"))
 			}
 
-			handleErr(conn, msg, err.Error)
+			response := map[string]interface{}{
+				"requestId":  proxy.RequestID,
+				"pipelineId": err.PipelineID,
+				"progress":   progress,
+				"error":      err.Error,
+				"succes":     false,
+			}
+
+			handleSuccess(conn, msg, response)
 
 		case <-proxy.Done:
 			// notify the downstream client that the stream is closed

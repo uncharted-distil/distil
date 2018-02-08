@@ -3,7 +3,7 @@
 		<div class="col-12 flex-column d-flex">
 			<div v-if="enableSearch" class="row flex-1 align-items-center facet-filters">
 				<div class="col-12 flex-column d-flex">
-					<b-form-fieldset size="sm" horizontal :label-cols="0">
+					<b-form-fieldset size="sm" horizontal :label-cols="1">
 						<b-form-input size="sm" v-model="filter" placeholder="Search" />
 					</b-form-fieldset>
 				</div>

@@ -62,6 +62,7 @@ export interface Group {
 // creates the set of facets from the supplied summary data
 export function createGroups(summaries: VariableSummary[], enableCollapse: boolean, enableFiltering: boolean, extrema: Extrema = null): Group[] {
 	return summaries.map(summary => {
+		console.log('CREATE SUMMARY', summary);
 		if (summary.err) {
 			// create error facet
 			return createErrorFacet(summary, enableCollapse);

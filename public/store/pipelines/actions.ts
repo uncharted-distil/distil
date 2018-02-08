@@ -1,6 +1,6 @@
 import _ from 'lodash';
 import axios from 'axios';
-import { PipelineInfo, PipelineState, PIPELINE_UPDATED, PIPELINE_COMPLETED } from './index';
+import { PipelineInfo, PipelineState, PIPELINE_UPDATED, PIPELINE_COMPLETED, PIPELINE_ERRORED } from './index';
 import { ActionContext } from 'vuex';
 import { DistilState } from '../store';
 import { mutations } from './module';
@@ -91,7 +91,7 @@ export const actions = {
 							targetFeature = feature.featureName;
 						}
 					});
-					
+
 					// update pipeline
 					mutations.updatePipelineRequest(context, {
 						name: targetFeature,
@@ -152,8 +152,11 @@ export const actions = {
 					pipelineId: res.pipelineId,
 				}).then(() => {
 					// update summaries
-					if (res.progress === PIPELINE_UPDATED ||
+					if (res.progress === PIPELINE_ERRORED ||
+						res.progress === PIPELINE_UPDATED ||
 						res.progress == PIPELINE_COMPLETED) {
+
+						console.log(res.progress);
 
 						// if current pipelineId, pull result summaries
 						const currentPipelineId = context.getters.getRoutePipelineId;
