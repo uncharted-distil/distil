@@ -5,7 +5,7 @@ import { encodeQueryParams, Filter } from '../../util/filters';
 import { getPipelinesByRequestIds, getPipelineById } from '../../util/pipelines';
 import { getSummaries, getSummary } from '../../util/data';
 import { Variable, Data } from './index';
-import { PipelineInfo } from '../pipelines/index';
+import { PipelineInfo, PIPELINE_ERRORED } from '../pipelines/index';
 import { mutations } from './module'
 import { HighlightRoot, createFilterFromHighlightRoot, parseHighlightValues } from '../../util/highlights';
 import { DataContext, getPredictedCol, getErrorCol, getVarFromTarget,
@@ -200,7 +200,7 @@ export const actions = {
 			if (!summary || summary.resultId !== pipeline.resultId) {
 				// add placeholder
 				const pipelineId = args.pipelineId;
-				mutations.updateResultSummaries(context,  createPendingSummary(name, label, dataset, pipelineId));
+				mutations.updateResultSummaries(context, createPendingSummary(name, label, dataset, pipelineId));
 				// fetch summary
 				promises.push(context.dispatch('fetchResultSummary', {
 					dataset: args.dataset,
