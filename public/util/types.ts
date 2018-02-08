@@ -130,7 +130,7 @@ export function isTextType(type: string): boolean {
 
 export function addTypeSuggestions(type: string, values: any[]): string[] {
 	let suggestions = guessTypeByValue(values);
-	if (!suggestions) {
+	if (!suggestions || suggestions.length === 0) {
 		suggestions = BASIC_SUGGESTIONS;
 	}
 	return suggestions;
