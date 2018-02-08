@@ -68,14 +68,18 @@ const TEXT_SUGGESTIONS = [
 
 export function formatValue(colValue: any, colType: string): any {
 	if (!colType || colType === '') {
-		return _.isNumber(colValue) ? colValue.toFixed(4) : colValue;
+		if (_.isNumber(colValue)) {
+			return _.isInteger(colValue) ? colValue : colValue.toFixed(4);
+		}
+		return colValue;
 	}
-	if (isTextType(colType) || !isFloatingPointType(colType)) {
+	if (isTextType(colType)) {
+		return colValue;
+	}
+	if (_.isInteger(colValue)) {
 		return colValue;
 	}
 	switch (colType) {
-		case 'float':
-			return colValue.toFixed(4);
 		case 'longitude':
 		case 'latitude':
 			return colValue.toFixed(6);

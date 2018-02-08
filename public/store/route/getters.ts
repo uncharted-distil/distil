@@ -35,6 +35,10 @@ export const getters = {
 		return state.query.filters ? state.query.filters : null
 	},
 
+	getRouteHighlightRoot(state: Route): string {
+		return state.query.highlights ? state.query.highlights : null
+	},
+
 	getRouteResultFilters(state: Route): string {
 		return state.query.results ? state.query.results : null;
 	},
@@ -48,7 +52,7 @@ export const getters = {
 	},
 
 	getDecodedFilters(state: Route): Filter[] {
-		return decodeFilters(state.query.filters ? state.query.filters : {} as any);
+		return decodeFilters(state.query.filters);
 	},
 
 	getDecodedHighlightRoot(state: Route): HighlightRoot {

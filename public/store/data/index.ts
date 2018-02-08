@@ -100,13 +100,13 @@ export const state = {
 	residualSummaries: <VariableSummary[]>[],
 
 	// current set of pipeline results
-	resultData: <Data>{},
+	resultData: null,
 
 	// filtered data entries for the active dataset
-	filteredData: <Data>{},
+	filteredData: null,
 
 	// selected data entries for the active dataset
-	selectedData: <Data>{},
+	selectedData: null,
 
 	highlightedValues: {}
 }

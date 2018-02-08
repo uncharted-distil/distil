@@ -3,10 +3,13 @@
 		<p class="nav-link font-weight-bold">Samples to Model From</p>
 		<p class="small-margin"><small>Displaying {{items.length}} of {{numRows}} rows</small></p>
 		<div class="select-data-table-container">
-			<div class="select-data-no-results" v-if="items.length===0">
-				<div class="text-danger">
-					<i class="fa fa-times missing-icon"></i><strong>No Training Features Selected</strong>
-				</div>
+			<div class="select-data-no-results" v-if="!hasData">
+				<div class="bounce1"></div>
+				<div class="bounce2"></div>
+				<div class="bounce3"></div>
+			</div>
+			<div class="select-data-no-results" v-if="hasData && items.length===0">
+				No data available
 			</div>
 			<b-table
 				ref="selectTable"
@@ -35,7 +38,7 @@
 
 import _ from 'lodash';
 import Vue from 'vue';
-import { getters as dataGetters, actions } from '../store/data/module';
+import { getters as dataGetters } from '../store/data/module';
 import { Dictionary } from '../util/dict';
 import { Filter } from '../util/filters';
 import { FieldInfo } from '../store/data/index';
@@ -68,6 +71,10 @@ export default Vue.extend({
 
 		selectedRowKey(): number {
 			return routeGetters.getDecodedHighlightRoot(this.$store) ? _.toNumber(routeGetters.getDecodedHighlightRoot(this.$store).key) : -1;
+		},
+
+		hasData(): boolean {
+			return dataGetters.hasSelectedData(this.$store);
 		},
 
 		// extracts the table data from the store
@@ -111,24 +118,7 @@ export default Vue.extend({
 		}
 	},
 
-	mounted() {
-		this.fetch();
-	},
-
-	watch: {
-		filters() {
-			this.fetch();
-		}
-	},
-
 	methods: {
-		fetch() {
-			actions.updateSelectedData(this.$store, {
-				dataset: this.dataset,
-				filters: this.filters
-			});
-		},
-
 		onRowClick(row: TableRow) {
 			if (row._key !== this.selectedRowKey) {
 				// clicked on a different row than last time - new selection
@@ -161,6 +151,7 @@ export default Vue.extend({
 	width: 100%;
 	background-color: #eee;
 	padding: 8px;
+	text-align: center;
 }
 .missing-icon {
 	padding-right: 4px;
