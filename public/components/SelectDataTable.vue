@@ -20,14 +20,6 @@
 				@row-clicked="onRowClick"
 				:items="items"
 				:fields="fields">
-
-				<template :slot="`HEAD_${field.label}`" v-for="field in fields">
-					{{field.label}}
-					<type-change-menu
-						:key="field.label"
-						:field="field.label"></type-change-menu>
-				</template>
-
 			</b-table>
 		</div>
 
@@ -46,14 +38,9 @@ import { getters as routeGetters } from '../store/route/module';
 import { TableRow } from '../store/data/index';
 import { getHighlights } from '../util/highlights';
 import { updateTableHighlights, updateHighlightRoot, clearHighlightRoot, scrollToFirstHighlight } from '../util/highlights';
-import TypeChangeMenu from '../components/TypeChangeMenu';
 
 export default Vue.extend({
 	name: 'selected-data-table',
-
-	components: {
-		TypeChangeMenu
-	},
 
 	props: {
 		instanceName: { type: String, default: 'select-table-highlight' }

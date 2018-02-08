@@ -612,6 +612,18 @@ export default Vue.extend({
 			}
 		},
 
+		getGroupSampleValues(group: Group): any[] {
+			let values = [];
+			group.facets.forEach((facet: any) => {
+				if (facet.histogram) {
+					values = facet.histogram.slices.slice(0, 10).map(b => _.toNumber(b.label));
+				} else {
+					values.push(facet.value);
+				}
+			});
+			return values.filter(v => v !== undefined);
+		},
+
 		// inject type headers
 		injectTypeChangeHeaders(group: Group, $elem: JQuery) {
 			if (this.typeChange) {
@@ -621,7 +633,8 @@ export default Vue.extend({
 					{
 						store: this.$store,
 						propsData: {
-							field: group.key
+							field: group.key,
+							values: this.getGroupSampleValues(group)
 						}
 					});
 				menu.$mount($slot[0]);
