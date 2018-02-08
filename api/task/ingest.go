@@ -3,6 +3,7 @@ package task
 import (
 	"bufio"
 	"bytes"
+	"context"
 	"encoding/csv"
 	"encoding/json"
 	"fmt"
@@ -15,6 +16,7 @@ import (
 	"time"
 
 	"github.com/pkg/errors"
+	"github.com/unchartedsoftware/plog"
 	"gopkg.in/olivere/elastic.v5"
 
 	"github.com/unchartedsoftware/distil-ingest/conf"
@@ -22,11 +24,13 @@ import (
 	"github.com/unchartedsoftware/distil-ingest/metadata"
 	"github.com/unchartedsoftware/distil-ingest/postgres"
 	"github.com/unchartedsoftware/distil-ingest/rest"
+	"github.com/unchartedsoftware/distil/api/model"
 )
 
 const (
 	rankingFilename = "rank-no-missing.csv"
 	baseTableSuffix = "_base"
+	datasetIDSuffix = "_dataset"
 )
 
 // IngestTaskConfig captures the necessary configuration for an data ingest.
@@ -75,12 +79,17 @@ func (c *IngestTaskConfig) getRawDataPath() string {
 }
 
 // IngestDataset executes the complete ingest process for the specified dataset.
-func IngestDataset(index string, dataset string, config *IngestTaskConfig) error {
+func IngestDataset(metaCtor model.MetadataStorageCtor, index string, dataset string, config *IngestTaskConfig) error {
 	// Make sure the temp data directory exists.
 	tmpPath := path.Dir(config.getTmpAbsolutePath(config.MergedOutputSchemaPathRelative))
 	os.MkdirAll(tmpPath, os.ModePerm)
 
-	err := Merge(index, dataset, config)
+	storage, err := metaCtor()
+	if err != nil {
+		return errors.Wrap(err, "unable to initialize metadata storage")
+	}
+
+	err = Merge(index, dataset, config)
 	if err != nil {
 		return errors.Wrap(err, "unable to merge all data into a single file")
 	}
@@ -101,7 +110,7 @@ func IngestDataset(index string, dataset string, config *IngestTaskConfig) error
 	//	return errors.Wrap(err, "unable to summarize the dataset")
 	//}
 
-	err = Ingest(index, dataset, config)
+	err = Ingest(storage, index, dataset, config)
 	if err != nil {
 		return errors.Wrap(err, "unable to ingest ranked data")
 	}
@@ -250,7 +259,7 @@ func Summarize(index string, dataset string, config *IngestTaskConfig) error {
 }
 
 // Ingest the metadata to ES and the data to Postgres.
-func Ingest(index string, dataset string, config *IngestTaskConfig) error {
+func Ingest(storage model.MetadataStorage, index string, dataset string, config *IngestTaskConfig) error {
 	meta, err := metadata.LoadMetadataFromClassification(
 		config.getTmpAbsolutePath(config.MergedOutputSchemaPathRelative),
 		config.getTmpAbsolutePath(config.ClassificationOutputPathRelative))
@@ -300,6 +309,29 @@ func Ingest(index string, dataset string, config *IngestTaskConfig) error {
 		return errors.Wrap(err, "unable to initialize elastic client")
 	}
 
+	// Connect to the database.
+	postgresConfig := &conf.Conf{
+		DBPassword: config.DatabasePassword,
+		DBUser:     config.DatabaseUser,
+		Database:   config.Database,
+	}
+	pg, err := postgres.NewDatabase(postgresConfig)
+	if err != nil {
+		return errors.Wrap(err, "unable to initialize a new database")
+	}
+
+	// Check for existing dataset
+	match, err := matchDataset(storage, meta, index)
+	// Ignore the error for now as if this fails we still want ingest to succeed.
+	if err != nil {
+		log.Error(err)
+	}
+	if match != "" {
+		log.Infof("Matched %s to dataset %s", meta.Name, match)
+		err = deleteDataset(match, index, pg, elasticClient)
+		log.Infof("Deleted dataset %s", match)
+	}
+
 	// ingest the metadata
 	// Create the metadata index if it doesn't exist
 	err = metadata.CreateMetadataIndex(elasticClient, index, false)
@@ -313,18 +345,7 @@ func Ingest(index string, dataset string, config *IngestTaskConfig) error {
 		return errors.Wrap(err, "unable to ingest metadata")
 	}
 
-	// Connect to the database.
-	postgresConfig := &conf.Conf{
-		DBPassword: config.DatabasePassword,
-		DBUser:     config.DatabaseUser,
-		Database:   config.Database,
-	}
-	pg, err := postgres.NewDatabase(postgresConfig)
-	if err != nil {
-		return errors.Wrap(err, "unable to initialize a new database")
-	}
-
-	dbTable := strings.Replace(meta.ID, "_dataset", "", -1)
+	dbTable := strings.Replace(meta.ID, datasetIDSuffix, "", -1)
 	dbTable = fmt.Sprintf("%s%s", config.ESDatasetPrefix, dbTable)
 
 	// Drop the current table if requested.
@@ -434,13 +455,55 @@ func fixDatasetIDName(meta *metadata.Metadata) {
 	// The ID MUST end in _dataset, and the name should be representative.
 	if isTrainDataset(meta) {
 		meta.ID = strings.TrimSuffix(meta.ID, "_TRAIN")
-		if !strings.HasSuffix(meta.ID, "_dataset") {
-			meta.ID = fmt.Sprintf("%s%s", meta.ID, "_dataset")
+		if !strings.HasSuffix(meta.ID, datasetIDSuffix) {
+			meta.ID = fmt.Sprintf("%s%s", meta.ID, datasetIDSuffix)
 		}
-		meta.Name = strings.TrimSuffix(meta.ID, "_dataset")
+		meta.Name = strings.TrimSuffix(meta.ID, datasetIDSuffix)
 	}
 }
 
 func isTrainDataset(meta *metadata.Metadata) bool {
 	return strings.HasSuffix(meta.ID, "_TRAIN")
+}
+
+func matchDataset(storage model.MetadataStorage, meta *metadata.Metadata, index string) (string, error) {
+	// load the datasets from ES.
+	datasets, err := storage.FetchDatasets(index, true)
+	if err != nil {
+		return "", errors.Wrap(err, "unable to fetch datasets for matching")
+	}
+
+	// See if any of the loaded datasets match.
+	for _, dataset := range datasets {
+		variables := make([]string, 0)
+		for _, v := range dataset.Variables {
+			variables = append(variables, v.Name)
+		}
+		if meta.DatasetMatches(variables) {
+			// Return the name of the matching set.
+			return dataset.Name, nil
+		}
+	}
+
+	// No matching set.
+	return "", nil
+}
+
+func deleteDataset(name string, index string, pg *postgres.Database, es *elastic.Client) error {
+	id := fmt.Sprintf("%s%s", name, datasetIDSuffix)
+	success := false
+	for i := 0; i < 10 && !success; i++ {
+		_, err := es.Delete().Index(index).Id(id).Type("metadata").Do(context.Background())
+		if err != nil {
+			log.Error(err)
+		} else {
+			success = true
+		}
+	}
+
+	if success {
+		pg.DeleteDataset(name)
+	}
+
+	return nil
 }
