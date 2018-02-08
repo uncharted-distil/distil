@@ -159,6 +159,11 @@ export const actions = {
 								pipelineId: res.pipelineId,
 								variables: context.getters.getVariables
 							});
+							context.dispatch('fetchResultTableData', {
+								dataset: request.dataset,
+								pipelineId: res.pipelineId,
+								filters: context.getters.getDecodedFilters
+							});
 						}
 
 						context.dispatch('fetchPredictedSummary', {

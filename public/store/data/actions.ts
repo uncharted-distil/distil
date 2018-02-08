@@ -187,12 +187,18 @@ export const actions = {
 			const summary = _.find(context.state.resultSummaries, v => {
 				return v.name === variable.name;
 			});
+
+			const name = variable.name;
+			const label = variable.name;
+			const dataset = args.dataset;
+
+			if (pipeline.progress === PIPELINE_ERRORED) {
+				mutations.updateResultSummaries(context, createErrorSummary(name, label, dataset, `No data available due to error`));
+				return;
+			}
 			// update if none exists, or doesn't match latest resultId
 			if (!summary || summary.resultId !== pipeline.resultId) {
 				// add placeholder
-				const name = variable.name;
-				const label = variable.name;
-				const dataset = args.dataset;
 				const pipelineId = args.pipelineId;
 				mutations.updateResultSummaries(context,  createPendingSummary(name, label, dataset, pipelineId));
 				// fetch summary
@@ -239,7 +245,7 @@ export const actions = {
 	},
 
 	// update filtered data based on the  current filter state
-	updateFilteredData(context: DataContext, args: { dataset: string, filters: Filter[] }) {
+	fetchFilteredTableData(context: DataContext, args: { dataset: string, filters: Filter[] }) {
 		context.dispatch('fetchData', { dataset: args.dataset, filters: args.filters, inclusive: true })
 			.then(response => {
 				mutations.setFilteredData(context, response.data);
@@ -251,7 +257,7 @@ export const actions = {
 	},
 
 	// update filtered data based on the  current filter state
-	updateSelectedData(context: DataContext, args: { dataset: string, filters: Filter[] }) {
+	fetchSelectedTableData(context: DataContext, args: { dataset: string, filters: Filter[] }) {
 		context.dispatch('fetchData', { dataset: args.dataset, filters: args.filters, inclusive: false })
 			.then(response => {
 				mutations.setSelectedData(context, response.data);
@@ -309,7 +315,7 @@ export const actions = {
 	},
 
 	// fetches result data for created pipeline
-	updateResults(context: DataContext, args: { pipelineId: string, dataset: string, filters: Filter[] }) {
+	fetchResultTableData(context: DataContext, args: { pipelineId: string, dataset: string, filters: Filter[] }) {
 		context.dispatch('fetchResults', args)
 			.then(response => {
 				mutations.setResultData(context, response.data);

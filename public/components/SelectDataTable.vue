@@ -35,7 +35,7 @@
 
 import _ from 'lodash';
 import Vue from 'vue';
-import { getters as dataGetters, actions } from '../store/data/module';
+import { getters as dataGetters } from '../store/data/module';
 import { Dictionary } from '../util/dict';
 import { Filter } from '../util/filters';
 import { FieldInfo } from '../store/data/index';
@@ -111,24 +111,7 @@ export default Vue.extend({
 		}
 	},
 
-	mounted() {
-		this.fetch();
-	},
-
-	watch: {
-		filters() {
-			this.fetch();
-		}
-	},
-
 	methods: {
-		fetch() {
-			actions.updateSelectedData(this.$store, {
-				dataset: this.dataset,
-				filters: this.filters
-			});
-		},
-
 		onRowClick(row: TableRow) {
 			if (row._key !== this.selectedRowKey) {
 				// clicked on a different row than last time - new selection

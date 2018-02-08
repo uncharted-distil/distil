@@ -86,8 +86,14 @@ export default Vue.extend({
 		filters(): Filter[] {
 			return routeGetters.getDecodedFilters(this.$store);
 		},
+		filterStr(): string {
+			return routeGetters.getRouteFilters(this.$store);
+		},
 		highlightRoot(): HighlightRoot {
 			return routeGetters.getDecodedHighlightRoot(this.$store);
+		},
+		highlightRootStr(): string {
+			return routeGetters.getRouteHighlightRoot(this.$store);
 		}
 	},
 
@@ -96,7 +102,7 @@ export default Vue.extend({
 	},
 
 	watch: {
-		highlightRoot() {
+		highlightRootStr() {
 			dataActions.fetchResultHighlightValues(this.$store, {
 				dataset: this.dataset,
 				filters: this.filters,
@@ -115,6 +121,24 @@ export default Vue.extend({
 				filters: this.filters,
 				highlightRoot: this.highlightRoot,
 				pipelineId: this.pipelineId
+			});
+			dataActions.fetchResultTableData(this.$store, {
+				dataset: this.dataset,
+				pipelineId: this.pipelineId,
+				filters: this.filters,
+			});
+		},
+		filterStr() {
+			dataActions.fetchResultHighlightValues(this.$store, {
+				dataset: this.dataset,
+				filters: this.filters,
+				highlightRoot: this.highlightRoot,
+				pipelineId: this.pipelineId
+			});
+			dataActions.fetchResultTableData(this.$store, {
+				dataset: this.dataset,
+				pipelineId: this.pipelineId,
+				filters: this.filters,
 			});
 		}
 	},
@@ -153,6 +177,11 @@ export default Vue.extend({
 							filters: this.filters,
 							highlightRoot: this.highlightRoot,
 							pipelineId: this.pipelineId
+						});
+						dataActions.fetchResultTableData(this.$store, {
+							dataset: this.dataset,
+							pipelineId: this.pipelineId,
+							filters: this.filters,
 						});
 					});
 				});

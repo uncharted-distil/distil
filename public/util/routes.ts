@@ -47,12 +47,8 @@ export function overlayRouteEntry(route: Route, args: RouteArgs): Location {
 	// initialize a new object from the supplied route
 	const routeEntry: Location = {
 		path: route.path,
-		query: _.cloneDeep(route.query)
+		query: _.merge({}, route.query, args)
 	};
-
-	// merge in the supplied arguments
-	_.merge(routeEntry.query, args);
-
 	return routeEntry;
 }
 
