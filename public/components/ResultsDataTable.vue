@@ -9,7 +9,7 @@
 				<div class="bounce3"></div>
 			</div>
 			<div class="results-data-no-results" v-if="hasData && items.length===0">
-				No results
+				No results available
 			</div>
 			<b-table v-if="items.length>0"
 				bordered
