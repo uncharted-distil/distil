@@ -87,7 +87,7 @@ export default Vue.extend({
 		highlightRoot(): HighlightRoot {
 			return routeGetters.getDecodedHighlightRoot(this.$store);
 		},
-		highlightRootStr(): HighlightRoot {
+		highlightRootStr(): string {
 			return routeGetters.getRouteHighlightRoot(this.$store);
 		}
 	},
