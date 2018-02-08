@@ -219,15 +219,17 @@ function truncateTowardsZero(num: number): number {
 
 function hackyBinning(summary: VariableSummary, extrema: Extrema) {
 	const MAX_BUCKETS = 50;
-	const diff = extrema.max - extrema.min;
 	const isInteger = summary.varType === 'integer';
+	const min = isInteger ? Math.floor(extrema.min) : extrema.min;
+	const max = isInteger ? Math.floor(extrema.max) : extrema.max;
+	const diff = max - min;
 	const numBuckets = isInteger ? Math.min(diff + 1, MAX_BUCKETS) : MAX_BUCKETS;
 	const range = isInteger ? diff + 1 : diff;
 	const span = range / numBuckets;
 	const buckets = new Array(numBuckets);
 	for (let i=0; i<numBuckets; i++) {
-		const from = extrema.min + (i * span);
-		const to = extrema.min + ((i + 1) * span);
+		const from = min + (i * span);
+		const to = min + ((i + 1) * span);
 		buckets[i] = {
 			label: `${formatValue(from, summary.varType)}`,
 			toLabel: `${formatValue(to, summary.varType)}`,
@@ -240,10 +242,10 @@ function hackyBinning(summary: VariableSummary, extrema: Extrema) {
 			continue;
 		}
 		const bucketKey = _.toNumber(bucket.key);
-		if (bucketKey < extrema.min || bucketKey > extrema.max) {
+		if (bucketKey < min || bucketKey > max) {
 			continue;
 		}
-		const index = truncateTowardsZero((bucketKey / span) - (extrema.min / span));
+		const index = truncateTowardsZero((bucketKey / span) - (min / span));
 		buckets[index].count += bucket.count;
 	}
 	return buckets;
