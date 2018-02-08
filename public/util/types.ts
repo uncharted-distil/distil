@@ -87,6 +87,14 @@ const FLOAT_SUGGESTIONS = [
 	'longitude'
 ];
 
+const BASIC_SUGGESTIONS = [
+	'integer',
+	'float',
+	'categorical',
+	'ordinal',
+	'text'
+];
+
 export function formatValue(colValue: any, colType: string): any {
 	if (!colType || colType === '') {
 		if (_.isNumber(colValue)) {
@@ -121,7 +129,11 @@ export function isTextType(type: string): boolean {
 }
 
 export function addTypeSuggestions(type: string, values: any[]): string[] {
-	return guessTypeByValue(values);
+	let suggestions = guessTypeByValue(values);
+	if (!suggestions) {
+		suggestions = BASIC_SUGGESTIONS;
+	}
+	return suggestions;
 }
 
 export function guessTypeByType(type: string): string[] {
