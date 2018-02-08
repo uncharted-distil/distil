@@ -150,7 +150,7 @@ func parseBivariateCategoricalHistogram(rows *pgx.Rows, variable *model.Variable
 			var predictedTerm string
 			var targetTerm string
 			var bucketCount int64
-			err := rows.Scan(&predictedTerm, &targetTerm, &bucketCount)
+			err := rows.Scan(&targetTerm, &predictedTerm, &bucketCount)
 			if err != nil {
 				return nil, errors.Wrap(err, fmt.Sprintf("no %s histogram aggregation found", termsAggName))
 			}
