@@ -126,6 +126,11 @@ func overideFromStartupFile(cfg *Config) error {
 		cfg.ExportPath = result
 	}
 
+	result, ok = json.String(startupData, userProblemsRoot)
+	if ok {
+		cfg.UserProblemPath = result
+	}
+
 	result, ok = json.String(startupData, trainingDataRoot)
 	if ok {
 		cfg.DataFolderPath = result
