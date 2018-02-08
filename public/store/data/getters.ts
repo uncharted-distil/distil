@@ -167,6 +167,10 @@ export const getters = {
 		});
 	},
 
+	hasFilteredData(state: DataState): boolean {
+		return !!state.filteredData;
+	},
+
 	getFilteredData(state: DataState): Data {
 		return state.filteredData;
 	},
@@ -198,6 +202,10 @@ export const getters = {
 			return result;
 		}
 		return {};
+	},
+
+	hasResultData(state: DataState): boolean {
+		return !!state.resultData;
 	},
 
 	getResultData(state: DataState): Data {
@@ -254,6 +262,10 @@ export const getters = {
 			return result;
 		}
 		return {};
+	},
+
+	hasSelectedData(state: DataState): boolean {
+		return !!state.selectedData;
 	},
 
 	getSelectedData(state: DataState): Data {

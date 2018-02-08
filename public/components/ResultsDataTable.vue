@@ -3,8 +3,13 @@
 		<p class="nav-link font-weight-bold">{{title}}</p>
 		<p><small>Displaying {{items.length}} of {{numRows}} rows</small></p>
 		<div class="results-data-table-container">
-			<div class="results-data-no-results" v-if="items.length===0">
-				No results
+			<div class="results-data-no-results" v-if="!hasData">
+				<div class="bounce1"></div>
+				<div class="bounce2"></div>
+				<div class="bounce3"></div>
+			</div>
+			<div class="results-data-no-results" v-if="hasData && items.length===0">
+				No results available
 			</div>
 			<b-table v-if="items.length>0"
 				bordered
@@ -65,6 +70,10 @@ export default Vue.extend({
 				trainingMap[t.toLowerCase()] = true;
 			});
 			return trainingMap;
+		},
+
+		hasData(): boolean {
+			return getters.hasResultData(this.$store);
 		},
 
 		// extracts the table data from the store
@@ -131,7 +140,7 @@ export default Vue.extend({
 
 <style>
 
-results-data-table {
+.results-data-table {
 	display: flex;
 	flex-direction: column;
 }
@@ -143,6 +152,7 @@ results-data-table {
 	width: 100%;
 	background-color: #eee;
 	padding: 8px;
+	text-align: center;
 }
 
 </style>

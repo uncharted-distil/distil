@@ -72,35 +72,52 @@ export default Vue.extend({
 		variables(): Variable[] {
 			return dataGetters.getVariables(this.$store);
 		},
+		training(): string {
+			return routeGetters.getRouteTrainingVariables(this.$store);
+		},
 		target(): string {
 			return routeGetters.getRouteTargetVariable(this.$store);
 		},
 		filters(): Filter[] {
 			return routeGetters.getDecodedFilters(this.$store);
 		},
+		selectedFilters(): Filter[] {
+			return dataGetters.getSelectedFilters(this.$store);
+		},
 		highlightRoot(): HighlightRoot {
 			return routeGetters.getDecodedHighlightRoot(this.$store);
+		},
+		highlightRootStr(): string {
+			return routeGetters.getRouteHighlightRoot(this.$store);
 		}
 	},
 
 	watch: {
-		highlightRoot() {
+		highlightRootStr() {
 			actions.fetchDataHighlightValues(this.$store, {
 				dataset: this.dataset,
 				filters: this.filters,
 				highlightRoot: this.highlightRoot,
 			});
+		},
+		selectedFilters() {
+			actions.fetchDataHighlightValues(this.$store, {
+				dataset: this.dataset,
+				filters: this.filters,
+				highlightRoot: this.highlightRoot,
+			});
+			actions.fetchSelectedTableData(this.$store, {
+				dataset: this.dataset,
+				filters: this.selectedFilters
+			});
 		}
 	},
 
-	mounted() {
+	beforeMount() {
 		this.fetch();
 	},
 
 	methods: {
-		capitalize(str) {
-			return _.capitalize(str);
-		},
 		fetch() {
 			actions.fetchVariablesAndVariableSummaries(this.$store, {
 				dataset: this.dataset
@@ -110,6 +127,13 @@ export default Vue.extend({
 				filters: this.filters,
 				highlightRoot: this.highlightRoot,
 			});
+			actions.fetchSelectedTableData(this.$store, {
+				dataset: this.dataset,
+				filters: this.selectedFilters
+			});
+		},
+		capitalize(str) {
+			return _.capitalize(str);
 		}
 	}
 });

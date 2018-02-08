@@ -15,14 +15,15 @@
 
 import { actions, getters } from '../store/data/module';
 import { getters as routeGetters } from '../store/route/module';
-import { addMissingSuggestions } from '../util/types';
+import { addTypeSuggestions } from '../util/types';
 import Vue from 'vue';
 
 export default Vue.extend({
 	name: 'type-change-menu',
 
 	props: {
-		field: String
+		field: String,
+		values: Array
 	},
 
 	computed: {
@@ -40,7 +41,7 @@ export default Vue.extend({
 
 	methods: {
 		addMissingSuggestions(): string[] {
-			return addMissingSuggestions(this.type);
+			return addTypeSuggestions(this.type, this.values);
 		},
 		onTypeChange(suggested) {
 			actions.setVariableType(this.$store, {

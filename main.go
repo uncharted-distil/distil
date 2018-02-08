@@ -127,7 +127,7 @@ func main() {
 	// Ingest the data specified by the environment
 	if config.InitialDataset != "" && !config.SkipIngest {
 		log.Infof("Loading initial dataset '%s'", config.InitialDataset)
-		err = task.IngestDataset(config.ESDatasetsIndex, config.InitialDataset, ingestConfig)
+		err = task.IngestDataset(metadataStorageCtor, config.ESDatasetsIndex, config.InitialDataset, ingestConfig)
 		if err != nil {
 			log.Error(err)
 			os.Exit(1)
@@ -141,7 +141,7 @@ func main() {
 	registerRoute(mux, "/distil/datasets/:index", routes.DatasetsHandler(metadataStorageCtor))
 	registerRoute(mux, "/distil/variables/:index/:dataset", routes.VariablesHandler(metadataStorageCtor))
 	registerRoutePost(mux, "/distil/variables/:index/:dataset", routes.VariableTypeHandler(pgDataStorageCtor, metadataStorageCtor))
-	registerRoutePost(mux, "/distil/discovery/:index/:dataset/:target", routes.ProblemDiscoveryHandler(pgDataStorageCtor, metadataStorageCtor, config.PipelineDataDir))
+	registerRoutePost(mux, "/distil/discovery/:index/:dataset/:target", routes.ProblemDiscoveryHandler(pgDataStorageCtor, metadataStorageCtor, config.UserProblemPath))
 	registerRoute(mux, "/distil/variable-summaries/:index/:dataset/:variable", routes.VariableSummaryHandler(pgDataStorageCtor))
 	registerRoute(mux, "/distil/filtered-data/:esIndex/:dataset/:inclusive", routes.FilteredDataHandler(pgDataStorageCtor))
 	registerRoute(mux, "/distil/results/:index/:dataset/:pipeline-id/:inclusive", routes.ResultsHandler(pgPipelineStorageCtor, pgDataStorageCtor))
@@ -152,7 +152,7 @@ func main() {
 	registerRoute(mux, "/distil/session/:session/:dataset/:target/:pipeline-id", routes.SessionHandler(pgPipelineStorageCtor))
 	registerRoute(mux, "/distil/abort", routes.AbortHandler())
 	registerRoute(mux, "/distil/export/:session/:pipeline-id", routes.ExportHandler(pgPipelineStorageCtor, metadataStorageCtor, pipelineClient, config.ExportPath))
-	registerRoute(mux, "/distil/ingest/:index/:dataset", routes.IngestHandler(ingestConfig))
+	registerRoute(mux, "/distil/ingest/:index/:dataset", routes.IngestHandler(metadataStorageCtor, ingestConfig))
 	registerRoute(mux, "/ws", ws.PipelineHandler(pipelineClient, metadataStorageCtor, pgDataStorageCtor, pgPipelineStorageCtor))
 
 	registerRoute(mux, "/*", routes.FileHandler("./dist"))

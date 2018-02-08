@@ -15,7 +15,6 @@
 
 import _ from 'lodash';
 import { createRouteEntry } from '../util/routes';
-import { actions } from '../store/data/module';
 import { getters } from '../store/route/module';
 import { SEARCH_ROUTE } from '../store/route/index';
 import Vue from 'vue';
@@ -39,15 +38,8 @@ export default Vue.extend({
 	},
 
 	mounted() {
-		actions.searchDatasets(this.$store, this.terms);
 		if (!_.isEmpty(this.terms)) {
 			(<any>this.$refs.searchbox).focus();
-		}
-	},
-
-	watch: {
-		terms() {
-			actions.searchDatasets(this.$store, this.terms);
 		}
 	}
 });

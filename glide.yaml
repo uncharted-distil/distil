@@ -39,3 +39,6 @@ import:
   version: 879c5887cd475cd7864858769793b2ceb0d44feb
 - package: github.com/mitchellh/hashstructure
 - package: github.com/caarlos0/env
+- package: github.com/unchartedsoftware/deluge
+- package: github.com/jeffail/gabs
+- package: github.com/go-pg/pg
