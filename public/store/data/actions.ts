@@ -9,7 +9,7 @@ import { PipelineInfo, PIPELINE_ERRORED } from '../pipelines/index';
 import { mutations } from './module'
 import { HighlightRoot, createFilterFromHighlightRoot, parseHighlightValues } from '../../util/highlights';
 import { DataContext, getPredictedCol, getErrorCol, getVarFromTarget,
-	createPendingSummary, createErrorSummary} from '../../util/data';
+	createPendingSummary, createErrorSummary, createEmptyData} from '../../util/data';
 
 export const ES_INDEX = 'datasets';
 
@@ -246,25 +246,27 @@ export const actions = {
 
 	// update filtered data based on the  current filter state
 	fetchFilteredTableData(context: DataContext, args: { dataset: string, filters: Filter[] }) {
+		mutations.setFilteredData(context, null);
 		context.dispatch('fetchData', { dataset: args.dataset, filters: args.filters, inclusive: true })
 			.then(response => {
 				mutations.setFilteredData(context, response.data);
 			})
 			.catch(error => {
 				console.error(error);
-				mutations.setFilteredData(context, {} as Data);
+				mutations.setFilteredData(context, createEmptyData(args.dataset));
 			});
 	},
 
 	// update filtered data based on the  current filter state
 	fetchSelectedTableData(context: DataContext, args: { dataset: string, filters: Filter[] }) {
+		mutations.setSelectedData(context, null);
 		context.dispatch('fetchData', { dataset: args.dataset, filters: args.filters, inclusive: false })
 			.then(response => {
 				mutations.setSelectedData(context, response.data);
 			})
 			.catch(error => {
 				console.error(error);
-				mutations.setSelectedData(context, {} as Data);
+				mutations.setSelectedData(context, createEmptyData(args.dataset));
 			});
 	},
 
@@ -316,12 +318,14 @@ export const actions = {
 
 	// fetches result data for created pipeline
 	fetchResultTableData(context: DataContext, args: { pipelineId: string, dataset: string, filters: Filter[] }) {
+		mutations.setResultData(context, null);
 		context.dispatch('fetchResults', args)
 			.then(response => {
 				mutations.setResultData(context, response.data);
 			})
 			.catch(error => {
 				console.error(`Failed to fetch results from ${args.pipelineId} with error ${error}`);
+				mutations.setResultData(context, createEmptyData(args.dataset));
 			});
 	},
 

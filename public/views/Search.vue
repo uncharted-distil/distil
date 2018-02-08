@@ -41,7 +41,7 @@ export default Vue.extend({
 		}
 	},
 
-	mounted() {
+	beforeMount() {
 		this.fetch();
 	},
 
