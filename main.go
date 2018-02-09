@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"net/http"
 	"os"
 	"strings"
@@ -176,13 +177,13 @@ func waitForEndpoints(config env.Config) {
 	log.Info("Waiting for services as needed")
 	if config.ClassificationWait {
 		log.Infof("Waiting for classification service at %s", config.ClassificationEndpoint)
-		waitForPostEndpoint(config.ClassificationEndpoint, config.ServiceRetryCount)
+		waitForPostEndpoint(fmt.Sprintf(config.ClassificationEndpoint, "/aaaa"), config.ServiceRetryCount)
 		log.Infof("Classification service is up")
 	}
 
 	if config.RankingWait {
 		log.Infof("Waiting for ranking service at %s", config.RankingEndpoint)
-		waitForPostEndpoint(config.RankingEndpoint, config.ServiceRetryCount)
+		waitForPostEndpoint(fmt.Sprintf(config.RankingEndpoint, "/aaaa"), config.ServiceRetryCount)
 		log.Infof("Ranking service is up")
 	}
 	log.Info("All required services are up")
