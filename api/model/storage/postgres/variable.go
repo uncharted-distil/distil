@@ -20,7 +20,7 @@ func (s *Storage) getHistogramAggQuery(extrema *model.Extrema) (string, string, 
 	// get histogram agg name & query string.
 	histogramAggName := fmt.Sprintf("\"%s%s\"", model.HistogramAggPrefix, extrema.Name)
 	bucketQueryString := fmt.Sprintf("width_bucket(\"%s\", %g, %g, %d) - 1",
-		extrema.Name, extrema.Min, extrema.Max, extrema.GetBucketCount()-1)
+		extrema.Name, extrema.Min, extrema.Max, extrema.GetBucketCount())
 	histogramQueryString := fmt.Sprintf("(%s) * %g + %g", bucketQueryString, interval, extrema.Min)
 
 	return histogramAggName, bucketQueryString, histogramQueryString
@@ -59,8 +59,11 @@ func (s *Storage) parseNumericHistogram(varType string, rows *pgx.Rows, extrema 
 		if err != nil {
 			return nil, errors.Wrap(err, fmt.Sprintf("no %s histogram aggregation found", histogramAggName))
 		}
+
+		// Since the max can match the limit, an extra bucket may exist.
+		// Add the value to the second to last bucket.
 		if bucket < int64(len(buckets)) {
-			buckets[bucket-1].Count = bucketCount
+			buckets[bucket].Count = bucketCount
 		} else {
 			buckets[len(buckets)-1].Count += bucketCount
 
