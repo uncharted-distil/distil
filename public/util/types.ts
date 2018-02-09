@@ -10,7 +10,7 @@ const INTEGER_TYPES = [
 ];
 
 const FLOATING_POINT_TYPES = [
-	'float',
+	'decimal',
 	'latitude',
 	'longitude'
 ];
@@ -73,23 +73,23 @@ const TEXT_SUGGESTIONS = [
 
 const INTEGER_SUGGESTIONS = [
 	'integer',
-	'float',
+	'decimal',
 	'latitude',
 	'longitude',
 	'categorical',
 	'ordinal'
 ];
 
-const FLOAT_SUGGESTIONS = [
+const DECIMAL_SUGGESTIONS = [
 	'integer',
-	'float',
+	'decimal',
 	'latitude',
 	'longitude'
 ];
 
 const BASIC_SUGGESTIONS = [
 	'integer',
-	'float',
+	'decimal',
 	'categorical',
 	'ordinal',
 	'text'
@@ -138,7 +138,7 @@ export function addTypeSuggestions(type: string, values: any[]): string[] {
 
 export function guessTypeByType(type: string): string[] {
 	if (isNumericType(type)) {
-		return isFloatingPointType(type) ? FLOAT_SUGGESTIONS : INTEGER_SUGGESTIONS;
+		return isFloatingPointType(type) ? DECIMAL_SUGGESTIONS : INTEGER_SUGGESTIONS;
 	}
 	return TEXT_SUGGESTIONS;
 }
@@ -156,7 +156,7 @@ export function guessTypeByValue(value: any): string[] {
 	}
 	if (_.isNumber(value) || !_.isNaN(_.toNumber(value))) {
 		const num = _.toNumber(value);
-		return _.isInteger(num) ? INTEGER_SUGGESTIONS : FLOAT_SUGGESTIONS
+		return _.isInteger(num) ? INTEGER_SUGGESTIONS : DECIMAL_SUGGESTIONS
 	}
 	if (value.match(EMAIL_REGEX)) {
 		return EMAIL_SUGGESTIONS;
