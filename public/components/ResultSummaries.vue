@@ -314,11 +314,11 @@ export default Vue.extend({
 		},
 
 		onExport() {
-			this.$router.replace('/');
 			actions.exportPipeline(this.$store, {
 				pipelineId: this.activePipeline.pipelineId,
 				sessionId: this.sessionId
 			});
+			this.$router.replace('/');
 		}
 	}
 });
