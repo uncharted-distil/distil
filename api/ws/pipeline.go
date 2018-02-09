@@ -286,6 +286,7 @@ func handleCreatePipelines(conn *Connection, client *pipeline.Client, metadataCt
 		},
 		PredictFeatures: trainFeatures,
 		Task:            pipeline.TaskType(pipeline.TaskType_value[strings.ToUpper(clientCreateMsg.Task)]),
+		TaskSubtype:     pipeline.TaskSubtype(pipeline.TaskSubtype_NONE),
 		Metrics:         metrics,
 		DatasetUri:      datasetPath,
 		TargetFeatures: []*pipeline.Feature{
