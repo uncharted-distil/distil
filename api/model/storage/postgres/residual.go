@@ -46,7 +46,7 @@ func (s *Storage) getResidualsHistogramAggQuery(extrema *model.Extrema, variable
 	// get histogram agg name & query string.
 	histogramAggName := fmt.Sprintf("\"%s%s\"", model.HistogramAggPrefix, extrema.Name)
 	bucketQueryString := fmt.Sprintf("width_bucket(%s, %g, %g, %d)",
-		errorTyped, extrema.Min, extrema.Max, extrema.GetBucketCount())
+		errorTyped, extrema.Min, extrema.Max, extrema.GetBucketCount()-1)
 	histogramQueryString := fmt.Sprintf("(%s) * %g + %g", bucketQueryString, interval, extrema.Min)
 
 	return histogramAggName, bucketQueryString, histogramQueryString

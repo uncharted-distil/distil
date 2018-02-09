@@ -54,7 +54,7 @@ func (e *Extrema) GetBucketCount() int {
 	max := int(e.Max)
 	min := int(e.Min)
 
-	if max-min+1 < maxNumBuckets {
+	if max-min < maxNumBuckets {
 		return max - min + 1
 	}
 
