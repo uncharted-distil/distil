@@ -14,21 +14,13 @@ const (
 	catResultLimit = 10
 )
 
-func (s *Storage) calculateInterval(extrema *model.Extrema) float64 {
-	// compute the bucket interval for the histogram
-	if model.IsFloatingPoint(extrema.Type) {
-		return (extrema.Max - extrema.Min) / model.MaxNumBuckets
-	}
-	return (extrema.Max - extrema.Min + 1) / model.MaxNumBuckets
-}
-
 func (s *Storage) getHistogramAggQuery(extrema *model.Extrema) (string, string, string) {
-	interval := s.calculateInterval(extrema)
+	interval := extrema.GetBucketInterval()
 
 	// get histogram agg name & query string.
 	histogramAggName := fmt.Sprintf("\"%s%s\"", model.HistogramAggPrefix, extrema.Name)
 	bucketQueryString := fmt.Sprintf("width_bucket(\"%s\", %g, %g, %d)",
-		extrema.Name, extrema.Min, extrema.Max, model.MaxNumBuckets)
+		extrema.Name, extrema.Min, extrema.Max, extrema.GetBucketCount())
 	histogramQueryString := fmt.Sprintf("(%s) * %g + %g", bucketQueryString, interval, extrema.Min)
 
 	return histogramAggName, bucketQueryString, histogramQueryString
@@ -39,9 +31,9 @@ func (s *Storage) parseNumericHistogram(varType string, rows *pgx.Rows, extrema 
 	histogramAggName := model.HistogramAggPrefix + extrema.Name
 
 	// Parse bucket results.
-	interval := s.calculateInterval(extrema)
+	interval := extrema.GetBucketInterval()
 
-	buckets := make([]*model.Bucket, model.MaxNumBuckets)
+	buckets := make([]*model.Bucket, extrema.GetBucketCount())
 	key := extrema.Min
 	for i := 0; i < len(buckets); i++ {
 		keyString := ""

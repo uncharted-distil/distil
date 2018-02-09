@@ -38,7 +38,7 @@ func getErrorTyped(variableName string) string {
 
 func (s *Storage) getResidualsHistogramAggQuery(extrema *model.Extrema, variable *model.Variable, resultVariable *model.Variable) (string, string, string) {
 	// compute the bucket interval for the histogram
-	interval := s.calculateInterval(extrema)
+	interval := extrema.GetBucketInterval()
 
 	// Only numeric types should occur.
 	errorTyped := getErrorTyped(variable.Name)
@@ -46,7 +46,7 @@ func (s *Storage) getResidualsHistogramAggQuery(extrema *model.Extrema, variable
 	// get histogram agg name & query string.
 	histogramAggName := fmt.Sprintf("\"%s%s\"", model.HistogramAggPrefix, extrema.Name)
 	bucketQueryString := fmt.Sprintf("width_bucket(%s, %g, %g, %d)",
-		errorTyped, extrema.Min, extrema.Max, model.MaxNumBuckets)
+		errorTyped, extrema.Min, extrema.Max, extrema.GetBucketCount())
 	histogramQueryString := fmt.Sprintf("(%s) * %g + %g", bucketQueryString, interval, extrema.Min)
 
 	return histogramAggName, bucketQueryString, histogramQueryString
