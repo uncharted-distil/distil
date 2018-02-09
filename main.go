@@ -194,14 +194,16 @@ func waitForPostEndpoint(endpoint string, retryCount int) {
 	i := 0
 	for ; i < retryCount && !up; i++ {
 		resp, err := http.Post(endpoint, "application/json", strings.NewReader("test"))
+		log.Infof("Sent request to %s", endpoint)
 		if err != nil {
-			log.Infof("Sent request to %s", endpoint)
 
 			// If the error indicates the service is up, then stop waiting.
 			if !strings.Contains(err.Error(), "connection refused") {
 				up = true
 			}
 			time.Sleep(10 * time.Second)
+		} else {
+			up = true
 		}
 		if resp != nil {
 			resp.Body.Close()
