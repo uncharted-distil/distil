@@ -1,7 +1,7 @@
 import _ from 'lodash';
 import { FieldInfo, Variable, Data, DataState, Datasets, VariableSummary, TargetRow, TableRow } from './index';
 import { Filter, EMPTY_FILTER } from '../../util/filters';
-import { TARGET_POSTFIX, PREDICTED_POSTFIX } from '../../util/data';
+import { TARGET_POSTFIX, PREDICTED_POSTFIX, getTargetCol, getVarFromTarget, getPredictedCol, getErrorCol } from '../../util/data';
 import { Dictionary } from '../../util/dict';
 import { getPredictedIndex, getErrorIndex, getTargetIndex } from '../../util/data';
 import { formatValue } from '../../util/types';
@@ -62,7 +62,7 @@ export const getters = {
 		available.forEach(name => {
 			map[name] = true;
 			map[name.toLowerCase()] = true;
-		});
+		});		
 		return map;
 	},
 
@@ -208,8 +208,26 @@ export const getters = {
 		return state.resultData ? state.resultData.numRows : 0;
 	},
 
-	getResultDataItems(state: DataState, getters: any): TargetRow[] {
-		return getDataItems(state.resultData, getters.getVariableTypesMap) as TargetRow[];
+	getResultDataItems(state: DataState, getters: any): TargetRow[] {		
+		if (!state.resultData.columns) {
+			return [];
+		} 
+
+		// Find the target index and name in the result table 
+		const targetIndex = getTargetIndex(state.resultData.columns);
+		const targetVarName = getVarFromTarget(state.resultData.columns[targetIndex]);
+		
+		// Make a copy of the variable type map and add entries for target, predicted and error
+		// types.
+		const resultVariableTypeMap = _.clone(<Dictionary<string>>getters.getVariableTypesMap);
+		
+		const targetVarType = resultVariableTypeMap[targetVarName];
+		resultVariableTypeMap[getTargetCol(targetVarName)] = targetVarType;
+		resultVariableTypeMap[getPredictedCol(targetVarName)] = targetVarType;
+		resultVariableTypeMap[getErrorCol(targetVarName)] = targetVarType;
+		
+		// Fetch data items using modified type map
+		return getDataItems(state.resultData, resultVariableTypeMap) as TargetRow[];
 	},
 
 	getResultDataFields(state: DataState): Dictionary<FieldInfo> {
