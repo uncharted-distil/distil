@@ -1,5 +1,5 @@
 import _ from 'lodash';
-import { DataState, Datasets, VariableSummary } from '../store/data/index';
+import { DataState, Datasets, VariableSummary, Data } from '../store/data/index';
 import { TargetRow, FieldInfo } from '../store/data/index';
 import { PipelineInfo, PIPELINE_UPDATED, PIPELINE_COMPLETED } from '../store/pipelines/index';
 import { DistilState } from '../store/store';
@@ -149,6 +149,16 @@ export function filterSummariesByDataset(summaries: VariableSummary[], dataset: 
 	return summaries.filter(summary => {
 		return summary.dataset === dataset;
 	});
+}
+
+export function createEmptyData(name: string): Data {
+	return {
+		name: name,
+		numRows: 0,
+		columns: [],
+		types: [],
+		values: []
+	};
 }
 
 export function createPendingSummary(name: string, label: string, dataset: string, pipelineId?: string): VariableSummary {

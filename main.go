@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"net/http"
 	"os"
 	"strings"
@@ -141,7 +142,7 @@ func main() {
 	registerRoute(mux, "/distil/datasets/:index", routes.DatasetsHandler(metadataStorageCtor))
 	registerRoute(mux, "/distil/variables/:index/:dataset", routes.VariablesHandler(metadataStorageCtor))
 	registerRoutePost(mux, "/distil/variables/:index/:dataset", routes.VariableTypeHandler(pgDataStorageCtor, metadataStorageCtor))
-	registerRoutePost(mux, "/distil/discovery/:index/:dataset/:target", routes.ProblemDiscoveryHandler(pgDataStorageCtor, metadataStorageCtor, config.PipelineDataDir))
+	registerRoutePost(mux, "/distil/discovery/:index/:dataset/:target", routes.ProblemDiscoveryHandler(pgDataStorageCtor, metadataStorageCtor, config.UserProblemPath))
 	registerRoute(mux, "/distil/variable-summaries/:index/:dataset/:variable", routes.VariableSummaryHandler(pgDataStorageCtor))
 	registerRoute(mux, "/distil/filtered-data/:esIndex/:dataset/:inclusive", routes.FilteredDataHandler(pgDataStorageCtor))
 	registerRoute(mux, "/distil/results/:index/:dataset/:pipeline-id/:inclusive", routes.ResultsHandler(pgPipelineStorageCtor, pgDataStorageCtor))
@@ -176,13 +177,13 @@ func waitForEndpoints(config env.Config) {
 	log.Info("Waiting for services as needed")
 	if config.ClassificationWait {
 		log.Infof("Waiting for classification service at %s", config.ClassificationEndpoint)
-		waitForPostEndpoint(config.ClassificationEndpoint, config.ServiceRetryCount)
+		waitForPostEndpoint(fmt.Sprintf(config.ClassificationEndpoint, "/aaaa"), config.ServiceRetryCount)
 		log.Infof("Classification service is up")
 	}
 
 	if config.RankingWait {
 		log.Infof("Waiting for ranking service at %s", config.RankingEndpoint)
-		waitForPostEndpoint(config.RankingEndpoint, config.ServiceRetryCount)
+		waitForPostEndpoint(fmt.Sprintf(config.RankingEndpoint, "/aaaa"), config.ServiceRetryCount)
 		log.Infof("Ranking service is up")
 	}
 	log.Info("All required services are up")

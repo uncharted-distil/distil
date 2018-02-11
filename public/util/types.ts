@@ -1,8 +1,9 @@
 import _ from 'lodash';
 
-const LOW_PROBABILITY = 0.33;
-const MED_PROBABILITY = 0.66;
-const DEFAULT_PROBABILITY = 0.5;
+const EMAIL_REGEX = /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
+const URI_REGEX = /^(?:(?:(?:https?|ftp):)?\/\/)(?:\S+(?::\S*)?@)?(?:(?!(?:10|127)(?:\.\d{1,3}){3})(?!(?:169\.254|192\.168)(?:\.\d{1,3}){2})(?!172\.(?:1[6-9]|2\d|3[0-1])(?:\.\d{1,3}){2})(?:[1-9]\d?|1\d\d|2[01]\d|22[0-3])(?:\.(?:1?\d{1,2}|2[0-4]\d|25[0-5])){2}(?:\.(?:[1-9]\d?|1\d\d|2[0-4]\d|25[0-4]))|(?:(?:[a-z\u00a1-\uffff0-9]-*)*[a-z\u00a1-\uffff0-9]+)(?:\.(?:[a-z\u00a1-\uffff0-9]-*)*[a-z\u00a1-\uffff0-9]+)*(?:\.(?:[a-z\u00a1-\uffff]{2,})))(?::\d{2,5})?(?:[/?#]\S*)?$/i;
+const BOOL_REGEX = /^(0|1|true|false|t|f)$/i;
+const PHONE_REGEX = /^(\+\d{1,2}\s)?\(?\d{3}\)?[\s.-]\d{3}[\s.-]\d{4}$/
 
 const INTEGER_TYPES = [
 	'integer',
@@ -33,6 +34,43 @@ const TEXT_TYPES = [
 	'boolean'
 ];
 
+const BOOL_SUGGESTIONS = [
+	'text',
+	'categorical',
+	'boolean',
+	'integer',
+	'keyword'
+];
+
+const EMAIL_SUGGESTIONS = [
+	'text',
+	'email'
+];
+
+const URI_SUGGESTIONS = [
+	'text',
+	'uri'
+];
+
+const PHONE_SUGGESTIONS= [
+	'text',
+	'integer',
+	'phone'
+];
+
+const TEXT_SUGGESTIONS = [
+	'text',
+	'categorical',
+	'ordinal',
+	'address',
+	'city',
+	'state',
+	'country',
+	'postal_code',
+	'keyword',
+	'dateTime'
+];
+
 const INTEGER_SUGGESTIONS = [
 	'integer',
 	'float',
@@ -49,27 +87,21 @@ const FLOAT_SUGGESTIONS = [
 	'longitude'
 ];
 
-const TEXT_SUGGESTIONS = [
-	'text',
+const BASIC_SUGGESTIONS = [
+	'integer',
+	'float',
 	'categorical',
 	'ordinal',
-	'address',
-	'city',
-	'state',
-	'country',
-	'email',
-	'phone',
-	'postal_code',
-	'uri',
-	'keyword',
-	'dateTime',
-	'boolean'
+	'text'
 ];
 
 export function formatValue(colValue: any, colType: string): any {
 	// If there is no assigned schema, fix precision for a number, pass through otherwise.
 	if (!colType || colType === '') {
-		return _.isNumber(colValue) ? colValue.toFixed(4) : colValue;
+		if (_.isNumber(colValue)) {
+			return _.isInteger(colValue) ? colValue : colValue.toFixed(4);
+		}
+		return colValue;
 	}
 
 	// If the schema type is numeric and the value is a number stored as a string,
@@ -92,8 +124,6 @@ export function formatValue(colValue: any, colType: string): any {
 	// We've got a floating point value - set precision based on
 	// type.
 	switch (colType) {
-		case 'float':
-			return colValue.toFixed(4);
 		case 'longitude':
 		case 'latitude':
 			return colValue.toFixed(6);
@@ -117,51 +147,44 @@ export function isTextType(type: string): boolean {
 	return TEXT_TYPES.indexOf(type) !== -1;
 }
 
-export function probabilityCategoryText(probability: number): string {
-	if (probability < LOW_PROBABILITY) {
-		return 'Low';
+export function addTypeSuggestions(type: string, values: any[]): string[] {
+	let suggestions = guessTypeByValue(values);
+	if (!suggestions || suggestions.length === 0) {
+		suggestions = BASIC_SUGGESTIONS;
 	}
-	if (probability < MED_PROBABILITY) {
-		return 'Med';
-	}
-	return 'High';
+	return suggestions;
 }
 
-export function probabilityCategoryClass(probability: number): string {
-	if (probability < LOW_PROBABILITY) {
-		return 'text-danger';
-	}
-	if (probability < MED_PROBABILITY) {
-		return 'text-warning';
-	}
-	return 'text-success';
-}
-
-export function addSuggestions(current: string[], suggestions: string[], probability: number): string[] {
-	suggestions.forEach((suggestion: string) => {
-		// check if already exists
-		const index = _.findIndex(current, (s: string) => {
-			return s === suggestion;
-		});
-		if (index === -1) {
-			// add
-			current.push(suggestion);
-		}
-	});
-	return current;
-}
-
-export function addMissingSuggestions(type: string): string[] {
-	// copy current suggestions by value
-	const current = [];
+export function guessTypeByType(type: string): string[] {
 	if (isNumericType(type)) {
-		if (isFloatingPointType(type)) {
-			// float
-			return addSuggestions(current, FLOAT_SUGGESTIONS, DEFAULT_PROBABILITY);
-		}
-		// integer
-		return addSuggestions(current, INTEGER_SUGGESTIONS, DEFAULT_PROBABILITY);
+		return isFloatingPointType(type) ? FLOAT_SUGGESTIONS : INTEGER_SUGGESTIONS;
 	}
-	// text
-	return addSuggestions(current, TEXT_SUGGESTIONS, DEFAULT_PROBABILITY);
+	return TEXT_SUGGESTIONS;
+}
+
+export function guessTypeByValue(value: any): string[] {
+	if (_.isArray(value)) {
+		let types = [];
+		value.forEach(val => {
+			types = types.concat(guessTypeByValue(val));
+		});
+		return _.uniq(types);
+	}
+	if (BOOL_REGEX.test(value)) {
+		return BOOL_SUGGESTIONS;
+	}
+	if (_.isNumber(value) || !_.isNaN(_.toNumber(value))) {
+		const num = _.toNumber(value);
+		return _.isInteger(num) ? INTEGER_SUGGESTIONS : FLOAT_SUGGESTIONS
+	}
+	if (value.match(EMAIL_REGEX)) {
+		return EMAIL_SUGGESTIONS;
+	}
+	if (value.match(URI_REGEX)) {
+		return URI_SUGGESTIONS;
+	}
+	if (value.match(PHONE_REGEX)) {
+		return PHONE_SUGGESTIONS;
+	}
+	return TEXT_SUGGESTIONS;
 }

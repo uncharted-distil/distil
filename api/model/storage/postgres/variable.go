@@ -16,12 +16,10 @@ const (
 
 func (s *Storage) calculateInterval(extrema *model.Extrema) float64 {
 	// compute the bucket interval for the histogram
-	interval := (extrema.Max - extrema.Min) / model.MaxNumBuckets
-	if !model.IsFloatingPoint(extrema.Type) {
-		interval = math.Floor(interval)
-		interval = math.Max(1, interval)
+	if model.IsFloatingPoint(extrema.Type) {
+		return (extrema.Max - extrema.Min) / model.MaxNumBuckets
 	}
-	return interval
+	return (extrema.Max - extrema.Min + 1) / model.MaxNumBuckets
 }
 
 func (s *Storage) getHistogramAggQuery(extrema *model.Extrema) (string, string, string) {
@@ -150,7 +148,7 @@ func parseBivariateCategoricalHistogram(rows *pgx.Rows, variable *model.Variable
 			var predictedTerm string
 			var targetTerm string
 			var bucketCount int64
-			err := rows.Scan(&predictedTerm, &targetTerm, &bucketCount)
+			err := rows.Scan(&targetTerm, &predictedTerm, &bucketCount)
 			if err != nil {
 				return nil, errors.Wrap(err, fmt.Sprintf("no %s histogram aggregation found", termsAggName))
 			}

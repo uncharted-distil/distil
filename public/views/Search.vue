@@ -23,6 +23,8 @@
 <script lang="ts">
 import SearchBar from '../components/SearchBar.vue';
 import SearchResults from '../components/SearchResults.vue';
+import { getters as routeGetters } from '../store/route/module';
+import { actions as dataActions } from '../store/data/module';
 import Vue from 'vue';
 
 export default Vue.extend({
@@ -31,6 +33,28 @@ export default Vue.extend({
 	components: {
 		SearchBar,
 		SearchResults
+	},
+
+	computed: {
+		terms(): string {
+			return routeGetters.getRouteTerms(this.$store);
+		}
+	},
+
+	beforeMount() {
+		this.fetch();
+	},
+
+	watch: {
+		terms() {
+			this.fetch();
+		}
+	},
+
+	methods: {
+		fetch() {
+			dataActions.searchDatasets(this.$store, this.terms);
+		}
 	}
 });
 </script>

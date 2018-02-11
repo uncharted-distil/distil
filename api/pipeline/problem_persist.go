@@ -26,6 +26,9 @@ const (
 
 	problemTaskTypeNumerical   = "regression"
 	problemTaskTypeCategorical = "classification"
+
+	problemTaskSubTypeNumerical   = "univariate"
+	problemTaskSubTypeCategorical = "multiClass"
 )
 
 // VariableProvider defines a function that will get the provided variable.
@@ -34,7 +37,7 @@ type VariableProvider func(dataset string, index string, name string) (*model.Va
 // Problem contains the problem file data.
 type Problem struct {
 	Properties *ProblemProperties `json:"about"`
-	Inputs     []*ProblemInput    `json:"inputs"`
+	Inputs     *ProblemInput      `json:"inputs"`
 }
 
 // ProblemProperties represents the basic information of a problem.
@@ -96,6 +99,13 @@ func getTaskType(targetType string) string {
 	return problemTaskTypeNumerical
 }
 
+func getTaskSubType(targetType string) string {
+	if model.IsCategorical(targetType) {
+		return problemTaskSubTypeCategorical
+	}
+	return problemTaskSubTypeNumerical
+}
+
 // PersistProblem stores the problem information in the required D3M
 // problem format.
 func PersistProblem(fetchVariable VariableProvider, datasetDir string, dataset string, index string, target string, filters *model.FilterParams) (string, error) {
@@ -151,11 +161,12 @@ func PersistProblem(fetchVariable VariableProvider, datasetDir string, dataset s
 		ProblemVersion:       problemVersion,
 		ProblemSchemaVersion: problemSchemaVersion,
 		TaskType:             getTaskType(targetVar.Type),
+		TaskSubType:          getTaskSubType(targetVar.Type),
 	}
 
 	problem := &Problem{
 		Properties: pProps,
-		Inputs:     []*ProblemInput{pInput},
+		Inputs:     pInput,
 	}
 
 	data, err := json.Marshal(problem)

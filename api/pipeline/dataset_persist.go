@@ -46,9 +46,16 @@ type DataSchema struct {
 
 // DataSchemaProperties contains the basic properties of a dataset.
 type DataSchemaProperties struct {
-	DatasetID     string `json:"datasetID"`
-	Redacted      bool   `json:"redacted"`
-	SchemaVersion string `json:"datasetSchemaVersion"`
+	DatasetID       string `json:"datasetID"`
+	DatasetName     string `json:"datasetName"`
+	Description     string `json:"description"`
+	Citation        string `json:"citation"`
+	License         string `json:"license"`
+	Source          string `json:"source"`
+	SourceURI       string `json:"sourceURI"`
+	ApproximateSize string `json:"approximateSize"`
+	Redacted        bool   `json:"redacted"`
+	SchemaVersion   string `json:"datasetSchemaVersion"`
 }
 
 // DataResource represents a set of variables.

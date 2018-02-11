@@ -29,7 +29,6 @@ import _ from 'lodash';
 import Vue from 'vue';
 import { getters as dataGetters} from '../store/data/module';
 import { getters as routeGetters} from '../store/route/module';
-import { actions } from '../store/data/module';
 import { getTargetCol, getPredictedCol, getErrorCol } from '../util/data';
 import { Filter } from '../util/filters';
 import { Variable, TargetRow } from '../store/data/index';
@@ -43,10 +42,6 @@ export default Vue.extend({
 
 	props: {
 		excludeNonTraining: Boolean
-	},
-
-	mounted() {
-		this.fetch();
 	},
 
 	computed: {
@@ -121,25 +116,7 @@ export default Vue.extend({
 		}
 	},
 
-	watch: {
-		// if pipeline id changes, update data
-		pipelineId() {
-			this.fetch();
-		},
-		// if filters change, update data
-		filters() {
-			this.fetch();
-		}
-	},
-
 	methods: {
-		fetch() {
-			actions.updateResults(this.$store, {
-				dataset: this.dataset,
-				pipelineId: this.pipelineId,
-				filters: this.filters,
-			});
-		},
 
 		// Methods passed to classification result table instances to filter their displays.
 		classificationMatchFilter(row: TargetRow): boolean {
