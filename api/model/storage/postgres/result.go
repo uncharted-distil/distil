@@ -459,16 +459,22 @@ func (s *Storage) fetchResultExtrema(resultURI string, dataset string, variable 
 	return s.parseExtrema(res, variable)
 }
 
-func (s *Storage) fetchNumericalResultHistogram(resultURI string, dataset string, variable *model.Variable) (*model.Histogram, error) {
+func (s *Storage) fetchNumericalResultHistogram(resultURI string, dataset string, variable *model.Variable, extrema *model.Extrema) (*model.Histogram, error) {
 	resultVariable := &model.Variable{
 		Name: "value",
 		Type: model.TextType,
 	}
 
 	// need the extrema to calculate the histogram interval
-	extrema, err := s.fetchResultExtrema(resultURI, dataset, variable, resultVariable)
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to fetch result variable extrema for summary")
+	var err error
+	if extrema == nil {
+		extrema, err = s.fetchResultExtrema(resultURI, dataset, variable, resultVariable)
+		if err != nil {
+			return nil, errors.Wrap(err, "failed to fetch result variable extrema for summary")
+		}
+	} else {
+		extrema.Name = variable.Name
+		extrema.Type = variable.Type
 	}
 	// for each returned aggregation, create a histogram aggregation. Bucket
 	// size is derived from the min/max and desired bucket count.
@@ -511,7 +517,7 @@ func (s *Storage) fetchCategoricalResultHistogram(resultURI string, dataset stri
 
 // FetchResultsSummary gets the summary data about a target variable from the
 // results table.
-func (s *Storage) FetchResultsSummary(dataset string, resultURI string, index string) (*model.Histogram, error) {
+func (s *Storage) FetchResultsSummary(dataset string, resultURI string, index string, extrema *model.Extrema) (*model.Histogram, error) {
 	datasetResult := s.getResultTable(dataset)
 	targetName, err := s.getResultTargetName(datasetResult, resultURI, index)
 	if err != nil {
@@ -527,7 +533,7 @@ func (s *Storage) FetchResultsSummary(dataset string, resultURI string, index st
 
 	if model.IsNumerical(variable.Type) {
 		// fetch numeric histograms
-		histogram, err = s.fetchNumericalResultHistogram(resultURI, datasetResult, variable)
+		histogram, err = s.fetchNumericalResultHistogram(resultURI, datasetResult, variable, extrema)
 		if err != nil {
 			return nil, err
 		}
