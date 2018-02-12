@@ -96,18 +96,33 @@ const BASIC_SUGGESTIONS = [
 ];
 
 export function formatValue(colValue: any, colType: string): any {
+	// If there is no assigned schema, fix precision for a number, pass through otherwise.
 	if (!colType || colType === '') {
 		if (_.isNumber(colValue)) {
 			return _.isInteger(colValue) ? colValue : colValue.toFixed(4);
 		}
 		return colValue;
 	}
-	if (isTextType(colType)) {
+
+	// If the schema type is numeric and the value is a number stored as a string,
+	// parse it and format again.
+	if (isNumericType(colType) && 
+		!_.isNumber(colValue) && !_.isNaN(Number.parseFloat(colValue))) {
+		return formatValue(Number.parseFloat(colValue), colType);
+	}
+
+	// If the schema type is an integer, round.
+	if (isIntegerType(colType)) {
+		return Math.round(colValue);
+	}
+
+	// If the schema type is text or not float, pass through.
+	if (isTextType(colType) || !isFloatingPointType(colType)) {
 		return colValue;
 	}
-	if (_.isInteger(colValue)) {
-		return colValue;
-	}
+
+	// We've got a floating point value - set precision based on
+	// type.
 	switch (colType) {
 		case 'longitude':
 		case 'latitude':
@@ -122,6 +137,10 @@ export function isNumericType(type: string): boolean {
 
 export function isFloatingPointType(type: string): boolean {
 	return FLOATING_POINT_TYPES.indexOf(type) !== -1;
+}
+
+export function isIntegerType(type: string): boolean {
+	return INTEGER_TYPES.indexOf(type) !== -1;
 }
 
 export function isTextType(type: string): boolean {
