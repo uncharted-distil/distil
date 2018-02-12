@@ -8,7 +8,7 @@ import (
 )
 
 // FetchResidualsSummary fetches a histogram of the residuals associated with a set of numerical predictions.
-func (s *Storage) FetchResidualsSummary(dataset string, resultURI string, index string) (*model.Histogram, error) {
+func (s *Storage) FetchResidualsSummary(dataset string, resultURI string, index string, extrema *model.Extrema) (*model.Histogram, error) {
 	datasetResult := s.getResultTable(dataset)
 	targetName, err := s.getResultTargetName(datasetResult, resultURI, index)
 	if err != nil {
@@ -23,7 +23,7 @@ func (s *Storage) FetchResidualsSummary(dataset string, resultURI string, index 
 	// Just return a nil in the case where we were asked to return residuals for a non-numeric variable.
 	if model.IsNumerical(variable.Type) {
 		// fetch numeric histograms
-		residuals, err := s.fetchResidualsHistogram(resultURI, dataset, variable)
+		residuals, err := s.fetchResidualsHistogram(resultURI, dataset, variable, extrema)
 		if err != nil {
 			return nil, err
 		}
@@ -92,16 +92,22 @@ func (s *Storage) fetchResidualsExtrema(resultURI string, dataset string, variab
 	return s.parseExtrema(res, variable)
 }
 
-func (s *Storage) fetchResidualsHistogram(resultURI string, dataset string, variable *model.Variable) (*model.Histogram, error) {
+func (s *Storage) fetchResidualsHistogram(resultURI string, dataset string, variable *model.Variable, extrema *model.Extrema) (*model.Histogram, error) {
 	resultVariable := &model.Variable{
 		Name: "value",
 		Type: model.TextType,
 	}
 
 	// need the extrema to calculate the histogram interval
-	extrema, err := s.fetchResidualsExtrema(resultURI, dataset, variable, resultVariable)
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to fetch result variable extrema for summary")
+	var err error
+	if extrema == nil {
+		extrema, err = s.fetchResidualsExtrema(resultURI, dataset, variable, resultVariable)
+		if err != nil {
+			return nil, errors.Wrap(err, "failed to fetch result variable extrema for summary")
+		}
+	} else {
+		extrema.Name = variable.Name
+		extrema.Type = variable.Type
 	}
 	// for each returned aggregation, create a histogram aggregation. Bucket
 	// size is derived from the min/max and desired bucket count.
