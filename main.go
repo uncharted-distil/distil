@@ -177,13 +177,13 @@ func waitForEndpoints(config env.Config) {
 	log.Info("Waiting for services as needed")
 	if config.ClassificationWait {
 		log.Infof("Waiting for classification service at %s", config.ClassificationEndpoint)
-		waitForPostEndpoint(fmt.Sprintf(config.ClassificationEndpoint, "/aaaa"), config.ServiceRetryCount)
+		waitForPostEndpoint(fmt.Sprintf("%s%s", config.ClassificationEndpoint, "/aaaa"), config.ServiceRetryCount)
 		log.Infof("Classification service is up")
 	}
 
 	if config.RankingWait {
 		log.Infof("Waiting for ranking service at %s", config.RankingEndpoint)
-		waitForPostEndpoint(fmt.Sprintf(config.RankingEndpoint, "/aaaa"), config.ServiceRetryCount)
+		waitForPostEndpoint(fmt.Sprintf("%s%s", config.RankingEndpoint, "/aaaa"), config.ServiceRetryCount)
 		log.Infof("Ranking service is up")
 	}
 	log.Info("All required services are up")
@@ -194,14 +194,16 @@ func waitForPostEndpoint(endpoint string, retryCount int) {
 	i := 0
 	for ; i < retryCount && !up; i++ {
 		resp, err := http.Post(endpoint, "application/json", strings.NewReader("test"))
+		log.Infof("Sent request to %s", endpoint)
 		if err != nil {
-			log.Infof("Sent request to %s", endpoint)
 
 			// If the error indicates the service is up, then stop waiting.
 			if !strings.Contains(err.Error(), "connection refused") {
 				up = true
 			}
 			time.Sleep(10 * time.Second)
+		} else {
+			up = true
 		}
 		if resp != nil {
 			resp.Body.Close()
