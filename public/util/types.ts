@@ -24,7 +24,8 @@ const TYPES_TO_LABELS: Dictionary<string> = {
 	uri: 'URI',
 	keyword: 'Keyword',
 	dateTime: 'Date/Time',
-	boolean: 'Boolean'
+	boolean: 'Boolean',
+	unknown: 'Unknown'
 };
 
 const LABELS_TO_TYPES = _.invert(TYPES_TO_LABELS);
@@ -55,7 +56,8 @@ const TEXT_TYPES = [
 	'uri',
 	'keyword',
 	'dateTime',
-	'boolean'
+	'boolean',
+	'unknown'
 ];
 
 const BOOL_SUGGESTIONS = [
@@ -63,23 +65,27 @@ const BOOL_SUGGESTIONS = [
 	'categorical',
 	'boolean',
 	'integer',
-	'keyword'
+	'keyword',
+	'unknown'
 ];
 
 const EMAIL_SUGGESTIONS = [
 	'text',
-	'email'
+	'email',
+	'unknown'
 ];
 
 const URI_SUGGESTIONS = [
 	'text',
-	'uri'
+	'uri',
+	'unknown'
 ];
 
 const PHONE_SUGGESTIONS= [
 	'text',
 	'integer',
-	'phone'
+	'phone',
+	'unknown'
 ];
 
 const TEXT_SUGGESTIONS = [
@@ -92,7 +98,8 @@ const TEXT_SUGGESTIONS = [
 	'country',
 	'postal_code',
 	'keyword',
-	'dateTime'
+	'dateTime',
+	'unknown'
 ];
 
 const INTEGER_SUGGESTIONS = [
@@ -101,14 +108,16 @@ const INTEGER_SUGGESTIONS = [
 	'latitude',
 	'longitude',
 	'categorical',
-	'ordinal'
+	'ordinal',
+	'unknown'
 ];
 
 const DECIMAL_SUGGESTIONS = [
 	'integer',
 	'float',
 	'latitude',
-	'longitude'
+	'longitude',
+	'unknown'
 ];
 
 const BASIC_SUGGESTIONS = [
@@ -116,7 +125,8 @@ const BASIC_SUGGESTIONS = [
 	'float',
 	'categorical',
 	'ordinal',
-	'text'
+	'text',
+	'unknown'
 ];
 
 export function formatValue(colValue: any, colType: string): any {
@@ -130,7 +140,7 @@ export function formatValue(colValue: any, colType: string): any {
 
 	// If the schema type is numeric and the value is a number stored as a string,
 	// parse it and format again.
-	if (isNumericType(colType) && 
+	if (isNumericType(colType) &&
 		!_.isNumber(colValue) && !_.isNaN(Number.parseFloat(colValue))) {
 		return formatValue(Number.parseFloat(colValue), colType);
 	}

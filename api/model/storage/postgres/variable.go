@@ -343,7 +343,7 @@ func (s *Storage) fetchCategoricalHistogramByResult(dataset string, variable *mo
 
 func (s *Storage) fetchTextHistogram(dataset string, variable *model.Variable) (*model.Histogram, error) {
 	// Get count by category.
-	query := fmt.Sprintf("SELECT unnest(tsvector_to_array(to_tsvector(%s))) as %s, COUNT(*) AS count FROM %s GROUP BY unnest(tsvector_to_array(to_tsvector(%s))) ORDER BY count, %s desc LIMIT %d;",
+	query := fmt.Sprintf("SELECT unnest(tsvector_to_array(to_tsvector(%s))) as %s, COUNT(*) AS count FROM %s GROUP BY unnest(tsvector_to_array(to_tsvector(%s))) ORDER BY count desc, %s LIMIT %d;",
 		variable.Name, variable.Name, dataset, variable.Name, variable.Name, catResultLimit)
 
 	// execute the postgres query
