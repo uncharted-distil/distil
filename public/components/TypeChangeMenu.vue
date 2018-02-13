@@ -15,7 +15,8 @@
 
 import { actions, getters } from '../store/data/module';
 import { getters as routeGetters } from '../store/route/module';
-import { addTypeSuggestions } from '../util/types';
+import { addTypeSuggestions, getLabelFromType, getTypeFromLabel } from '../util/types';
+import _ from 'lodash';
 import Vue from 'vue';
 
 export default Vue.extend({
@@ -32,7 +33,8 @@ export default Vue.extend({
 			if (!vars || !vars[this.field.toLowerCase()]) {
 				return '';
 			}
-			return vars[this.field.toLowerCase()].type;
+			const type = vars[this.field.toLowerCase()].type;
+			return getLabelFromType(type);
 		},
 		dataset(): string {
 			return routeGetters.getRouteDataset(this.$store);
@@ -41,13 +43,15 @@ export default Vue.extend({
 
 	methods: {
 		addMissingSuggestions(): string[] {
-			return addTypeSuggestions(this.type, this.values);
+			const type = getTypeFromLabel(this.type);
+			return _.map(addTypeSuggestions(type, this.values), t => getLabelFromType(t));
 		},
 		onTypeChange(suggested) {
+			const type = getTypeFromLabel(suggested);
 			actions.setVariableType(this.$store, {
 				dataset: this.dataset,
 				field: this.field,
-				type: suggested
+				type: type
 			});
 		},
 	}
