@@ -1,5 +1,6 @@
 import _ from 'lodash';
-import { DataState, Variable, Datasets, VariableSummary, Data } from './index';
+import Vue from 'vue';
+import { DataState, Variable, Datasets, VariableSummary, Data, Extrema } from './index';
 import { updateSummaries } from '../../util/data';
 import { Dictionary } from '../../util/dict';
 
@@ -34,6 +35,14 @@ export const mutations = {
 
 	updateResidualsSummaries(state: DataState, summary: VariableSummary) {
 		updateSummaries(summary, state.residualSummaries, 'pipelineId');
+	},
+
+	updatePredictedExtremas(state: DataState, args: { pipelineId: string, extrema: Extrema }) {
+		Vue.set(state.predictedExtremas, args.pipelineId, args.extrema);
+	},
+
+	updateResidualsExtremas(state: DataState, args: { pipelineId: string, extrema: Extrema }) {
+		Vue.set(state.residualExtremas, args.pipelineId, args.extrema);
 	},
 
 	// sets the current filtered data into the store

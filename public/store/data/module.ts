@@ -46,7 +46,9 @@ export const getters = {
 	getSelectedDataNumRows: read(moduleGetters.getSelectedDataNumRows),
 	getSelectedDataItems: read(moduleGetters.getSelectedDataItems),
 	getSelectedDataFields: read(moduleGetters.getSelectedDataFields),
-	getHighlightedValues: read(moduleGetters.getHighlightedValues)
+	getHighlightedValues: read(moduleGetters.getHighlightedValues),
+	getPredictedExtrema: read(moduleGetters.getPredictedExtrema),
+	getResidualExtrema: read(moduleGetters.getResidualExtrema),
 }
 
 // Typed actions
@@ -65,6 +67,10 @@ export const actions = {
 	fetchData: dispatch(moduleActions.fetchData),
 	fetchPredictedSummaries: dispatch(moduleActions.fetchPredictedSummaries),
 	fetchResidualsSummaries: dispatch(moduleActions.fetchResidualsSummaries),
+	fetchPredictedExtrema: dispatch(moduleActions.fetchPredictedExtrema),
+	fetchPredictedExtremas: dispatch(moduleActions.fetchPredictedExtremas),
+	fetchResidualsExtrema: dispatch(moduleActions.fetchResidualsExtrema),
+	fetchResidualsExtremas: dispatch(moduleActions.fetchResidualsExtremas),
 	fetchResultTableData: dispatch(moduleActions.fetchResultTableData),
 	fetchResults: dispatch(moduleActions.fetchResults),
 	fetchDataHighlightValues: dispatch(moduleActions.fetchDataHighlightValues),
@@ -80,6 +86,8 @@ export const mutations = {
 	updateResultSummaries: commit(moduleMutations.updateResultSummaries),
 	updatePredictedSummaries: commit(moduleMutations.updatePredictedSummaries),
 	updateResidualsSummaries: commit(moduleMutations.updateResidualsSummaries),
+	updatePredictedExtremas: commit(moduleMutations.updatePredictedExtremas),
+	updateResidualsExtremas: commit(moduleMutations.updateResidualsExtremas),
 	setFilteredData: commit(moduleMutations.setFilteredData),
 	setSelectedData: commit(moduleMutations.setSelectedData),
 	setResultData: commit(moduleMutations.setResultData),

@@ -171,14 +171,27 @@ export const actions = {
 							});
 						}
 
-						context.dispatch('fetchPredictedSummary', {
+						context.dispatch('fetchPredictedExtrema', {
 							dataset: request.dataset,
 							pipelineId: res.pipelineId
+						}).then(() => {
+							context.dispatch('fetchPredictedSummary', {
+								dataset: request.dataset,
+								pipelineId: res.pipelineId,
+								extrema: context.getters.getPredictedExtrema
+							});
 						});
-						context.dispatch('fetchResidualsSummary', {
+						context.dispatch('fetchResidualsExtrema', {
 							dataset: request.dataset,
 							pipelineId: res.pipelineId
+						}).then(() => {
+							context.dispatch('fetchResidualsSummary', {
+								dataset: request.dataset,
+								pipelineId: res.pipelineId,
+								extrema: context.getters.getResidualExtrema
+							});
 						});
+
 					}
 				});
 

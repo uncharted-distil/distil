@@ -1,7 +1,7 @@
 import _ from 'lodash';
 import { spinnerHTML } from '../util/spinner';
 import { formatValue } from '../util/types';
-import { VariableSummary, Extrema } from '../store/data/index';
+import { VariableSummary } from '../store/data/index';
 
 export const CATEGORY_NO_MATCH_COLOR = "#e05353";
 export const CATEGORY_MATCH_COLOR = "#03c6e1";
@@ -60,7 +60,7 @@ export interface Group {
 }
 
 // creates the set of facets from the supplied summary data
-export function createGroups(summaries: VariableSummary[], enableCollapse: boolean, enableFiltering: boolean, extrema: Extrema = null): Group[] {
+export function createGroups(summaries: VariableSummary[], enableCollapse: boolean, enableFiltering: boolean): Group[] {
 	return summaries.map(summary => {
 		if (summary.err) {
 			// create error facet
@@ -71,7 +71,7 @@ export function createGroups(summaries: VariableSummary[], enableCollapse: boole
 			return createPendingFacet(summary, enableCollapse);
 		}
 		// create facet
-		return createSummaryFacet(summary, enableCollapse, enableFiltering, extrema);
+		return createSummaryFacet(summary, enableCollapse, enableFiltering);
 	}).filter(group => {
 		// remove null groups
 		return group;
@@ -111,12 +111,12 @@ export function createPendingFacet(summary: VariableSummary, enableCollapse: boo
 }
 
 // creates categorical or numerical summary facets based on the input summary type
-export function createSummaryFacet(summary: VariableSummary, enableCollapse: boolean, enableFiltering: boolean, extrema: Extrema): Group {
+export function createSummaryFacet(summary: VariableSummary, enableCollapse: boolean, enableFiltering: boolean): Group {
 	switch (summary.type) {
 		case 'categorical':
-			return createCategoricalSummaryFacet(summary, enableCollapse, enableFiltering, extrema);
+			return createCategoricalSummaryFacet(summary, enableCollapse, enableFiltering);
 		case 'numerical':
-			return createNumericalSummaryFacet(summary, enableCollapse, enableFiltering, extrema);
+			return createNumericalSummaryFacet(summary, enableCollapse, enableFiltering);
 	}
 	console.warn('unrecognized summary type', summary.type);
 	return null;
@@ -155,7 +155,7 @@ export function getGroupIcon(summary: VariableSummary): string {
 }
 
 // creates a categorical facet with segments based on nest buckets counts, or no segments if buckets aren't nested
-function createCategoricalSummaryFacet(summary: VariableSummary, enableCollapse: boolean, enableFiltering: boolean, extrema: Extrema): Group {
+function createCategoricalSummaryFacet(summary: VariableSummary, enableCollapse: boolean, enableFiltering: boolean): Group {
 
 	// generate facets from the supplied variable summary
 	const facets = summary.buckets.map(b => {
@@ -210,56 +210,26 @@ function createCategoricalSummaryFacet(summary: VariableSummary, enableCollapse:
 	};
 }
 
-function truncateTowardsZero(num: number): number {
-	if (num < 0) {
-		return Math.ceil(num);
-	}
-	return Math.floor(num);
-}
-
-function hackyBinning(summary: VariableSummary, extrema: Extrema) {
-	const MAX_BUCKETS = 50;
-	const isInteger = summary.varType === 'integer';
-	const min = isInteger ? Math.floor(extrema.min) : extrema.min;
-	const max = isInteger ? Math.floor(extrema.max) : extrema.max;
-	const diff = max - min;
-	const numBuckets = isInteger ? Math.min(diff + 1, MAX_BUCKETS) : MAX_BUCKETS;
-	const range = isInteger ? diff + 1 : diff;
-	const span = range / numBuckets;
-	const buckets = new Array(numBuckets);
-	for (let i=0; i<numBuckets; i++) {
-		const from = min + (i * span);
-		const to = min + ((i + 1) * span);
-		buckets[i] = {
+function getHistogramSlices(summary: VariableSummary) {
+	const buckets = summary.buckets;
+	const extrema = summary.extrema;
+	const slices = new Array(buckets.length);
+	for (let i=0; i<buckets.length; i++) {
+		const bucket = buckets[i];
+		const from = _.toNumber(bucket.key);
+		const to = (i < buckets.length-1) ? _.toNumber(buckets[i+1].key) : extrema.max;
+		slices[i] = {
 			label: `${formatValue(from, summary.varType)}`,
 			toLabel: `${formatValue(to, summary.varType)}`,
-			count: 0
+			count: bucket.count
 		};
 	}
-	for (let i=0; i<summary.buckets.length; i++) {
-		const bucket = summary.buckets[i];
-		if (bucket.count === 0) {
-			continue;
-		}
-		const bucketKey = _.toNumber(bucket.key);
-		if (bucketKey < min || bucketKey > max) {
-			continue;
-		}
-		const index = truncateTowardsZero((bucketKey / span) - (min / span));
-		buckets[index].count += bucket.count;
-	}
-	return buckets;
+	return slices;
+
 }
 
-function getHistogramSlices(summary: VariableSummary, extrema: Extrema) {
-	if (extrema && !_.isNaN(extrema.min) && !_.isNaN(extrema.max)) {
-		return hackyBinning(summary, extrema);
-	}
-	return hackyBinning(summary, summary.extrema);
-}
-
-function createNumericalSummaryFacet(summary: VariableSummary, enableCollapse: boolean, enableFiltering: boolean, extrema: Extrema): Group {
-	const slices = getHistogramSlices(summary, extrema);
+function createNumericalSummaryFacet(summary: VariableSummary, enableCollapse: boolean, enableFiltering: boolean): Group {
+	const slices = getHistogramSlices(summary);
 	return {
 		label: summary.label ? summary.label : summary.name,
 		key: summary.name,

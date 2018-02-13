@@ -22,7 +22,7 @@
 				<div class="row flex-12">
 					<div class="col-12 d-flex flex-column">
 						<div class="row flex-4">
-								<target-variable class="col-12 d-flex flex-column select-target-variables"></target-variable>
+							<target-variable class="col-12 d-flex flex-column select-target-variables"></target-variable>
 						</div>
 						<div class="row responsive-flex pb-3">
 							<select-data-table class="col-12 d-flex flex-column select-data-table"></select-data-table>

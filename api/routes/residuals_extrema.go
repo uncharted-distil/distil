@@ -1,6 +1,7 @@
 package routes
 
 import (
+	"math"
 	"net/http"
 	"net/url"
 
@@ -47,9 +48,14 @@ func ResidualsExtremaHandler(pipelineCtor model.PipelineStorageCtor, dataCtor mo
 			return
 		}
 
+		extremum := math.Max(math.Abs(extrema.Min), math.Abs(extrema.Max))
+
 		// marshall data and sent the response back
 		err = handleJSON(w, map[string]interface{}{
-			"extrema": extrema,
+			"extrema": model.Extrema{
+				Min: -extremum,
+				Max: extremum,
+			},
 		})
 		if err != nil {
 			handleError(w, errors.Wrap(err, "unable marshal result histogram into JSON"))

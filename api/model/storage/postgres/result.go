@@ -530,7 +530,7 @@ func (s *Storage) FetchResultsExtremaByURI(dataset string, resultURI string, ind
 		Name: "value",
 		Type: model.TextType,
 	}
-	return s.fetchResultsExtrema(resultURI, dataset, targetVariable, resultVariable)
+	return s.fetchResultsExtrema(resultURI, datasetResult, targetVariable, resultVariable)
 }
 
 // FetchResultsSummary gets the summary data about a target variable from the

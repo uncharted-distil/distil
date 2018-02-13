@@ -28,11 +28,7 @@
 			:filters="filters"
 			:highlights="highlights"></facets>
 		<p class="nav-link font-weight-bold">Predictions by Model</p>
-		<result-facets
-			:regression="regressionEnabled"
-			:result-extrema="resultExtrema"
-			:residual-extrema="residualExtrema">
-		</result-facets>
+		<result-facets :regression="regressionEnabled"></result-facets>
 		<b-btn v-b-modal.export variant="success" class="check-button">Export Model</b-btn>
 		<b-modal id="export" title="Export" @ok="onExport">
 			<div class="check-message-container">
@@ -172,7 +168,7 @@ export default Vue.extend({
 
 		targetGroups(): Group[] {
 			if (this.targetSummary) {
-				return createGroups([ this.targetSummary ], false, true, this.resultExtrema);
+				return createGroups([ this.targetSummary ], false, true);
 			}
 			return [];
 		},
@@ -181,60 +177,12 @@ export default Vue.extend({
 			return dataGetters.getPredictedSummaries(this.$store);
 		},
 
-		resultExtrema(): Extrema {
-			if (this.targetSummary || this.predictedSummaries) {
-				let min = Infinity;
-				let max = -Infinity;
-				if (this.targetSummary) {
-					min = Math.min(this.targetSummary.extrema.min, min);
-					max = Math.max(this.targetSummary.extrema.max, max);
-				}
-				if (this.predictedSummaries) {
-					this.predictedSummaries.forEach(summary => {
-						min = Math.min(summary.extrema.min, min);
-						max = Math.max(summary.extrema.max, max);
-					});
-				}
-				return {
-					min: min,
-					max: max
-				};
-			}
-			return null;
-		},
-
 		residualsSummaries(): VariableSummary[] {
 			return this.regressionEnabled ? dataGetters.getResidualsSummaries(this.$store) : [];
 		},
 
 		residualExtrema(): Extrema {
-			if (this.residualsSummaries.length === 0) {
-				return {
-					min: NaN,
-					max: NaN
-				};
-			}
-			let isNaN = true;
-			let extrema = 0;
-			this.residualsSummaries.forEach(summary => {
-				if (_.isNaN(summary.extrema.min) || _.isNaN(summary.extrema.max)) {
-					return;
-				}
-				isNaN = false;
-				extrema = Math.max(extrema, Math.max(
-					Math.abs(summary.extrema.min),
-					Math.abs(summary.extrema.max)));
-			});
-			if (isNaN) {
-				return {
-					min: NaN,
-					max: NaN
-				};
-			}
-			return {
-				min: -extrema,
-				max: extrema
-			};
+			return dataGetters.getResidualExtrema(this.$store);
 		},
 
 		regressionEnabled(): boolean {

@@ -41,7 +41,7 @@ func ResultsExtremaHandler(pipelineCtor model.PipelineStorageCtor, dataCtor mode
 			return
 		}
 
-		extrema, err := data.FetchResidualsExtremaByURI(dataset, res.ResultURI, index)
+		extrema, err := data.FetchResultsExtremaByURI(dataset, res.ResultURI, index)
 		if err != nil {
 			handleError(w, err)
 			return

@@ -29,7 +29,7 @@ import { getRequestIdsForDatasetAndTarget, getTrainingVariablesForPipelineId } f
 import { getters as dataGetters, actions as dataActions } from '../store/data/module';
 import { getters as routeGetters } from '../store/route/module';
 import { actions as pipelineActions, getters as pipelineGetters } from '../store/pipelines/module';
-import { Variable, VariableSummary } from '../store/data/index';
+import { Variable, VariableSummary, Extrema } from '../store/data/index';
 import { Dictionary } from '../util/dict';
 import { HighlightRoot } from '../util/highlights';
 import { Filter } from '../util/filters';
@@ -94,6 +94,12 @@ export default Vue.extend({
 		},
 		highlightRootStr(): string {
 			return routeGetters.getRouteHighlightRoot(this.$store);
+		},
+		predictedExtrema(): Extrema {
+			return dataGetters.getPredictedExtrema(this.$store);
+		},
+		residualExtrema(): Extrema {
+			return dataGetters.getResidualExtrema(this.$store);
 		}
 	},
 
@@ -159,18 +165,30 @@ export default Vue.extend({
 						dataset: this.dataset,
 						target: this.target
 					}).then(() => {
+						dataActions.fetchPredictedExtremas(this.$store, {
+							dataset: this.dataset,
+							requestIds: this.requestIds
+						}).then(() => {
+							dataActions.fetchPredictedSummaries(this.$store, {
+								dataset: this.dataset,
+								requestIds: this.requestIds,
+								extrema: this.predictedExtrema
+							});
+						});
+						dataActions.fetchResidualsExtremas(this.$store, {
+							dataset: this.dataset,
+							requestIds: this.requestIds
+						}).then(() => {
+							dataActions.fetchResidualsSummaries(this.$store, {
+								dataset: this.dataset,
+								requestIds: this.requestIds,
+								extrema: this.residualExtrema
+							});
+						});
 						dataActions.fetchResultSummaries(this.$store, {
 							dataset: this.dataset,
 							variables: this.variables,
 							pipelineId: this.pipelineId
-						});
-						dataActions.fetchPredictedSummaries(this.$store, {
-							dataset: this.dataset,
-							requestIds: this.requestIds
-						});
-						dataActions.fetchResidualsSummaries(this.$store, {
-							dataset: this.dataset,
-							requestIds: this.requestIds
 						});
 						dataActions.fetchResultHighlightValues(this.$store, {
 							dataset: this.dataset,
