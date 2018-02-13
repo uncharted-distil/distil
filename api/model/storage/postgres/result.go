@@ -442,7 +442,7 @@ func (s *Storage) getResultHistogramAggQuery(extrema *model.Extrema, variable *m
 	return histogramAggName, bucketQueryString, histogramQueryString
 }
 
-func (s *Storage) fetchResultExtrema(resultURI string, dataset string, variable *model.Variable, resultVariable *model.Variable) (*model.Extrema, error) {
+func (s *Storage) fetchResultsExtrema(resultURI string, dataset string, variable *model.Variable, resultVariable *model.Variable) (*model.Extrema, error) {
 	// add min / max aggregation
 	aggQuery := s.getResultMinMaxAggsQuery(variable, resultVariable)
 
@@ -468,7 +468,7 @@ func (s *Storage) fetchNumericalResultHistogram(resultURI string, dataset string
 	// need the extrema to calculate the histogram interval
 	var err error
 	if extrema == nil {
-		extrema, err = s.fetchResultExtrema(resultURI, dataset, variable, resultVariable)
+		extrema, err = s.fetchResultsExtrema(resultURI, dataset, variable, resultVariable)
 		if err != nil {
 			return nil, errors.Wrap(err, "failed to fetch result variable extrema for summary")
 		}
@@ -513,6 +513,24 @@ func (s *Storage) fetchCategoricalResultHistogram(resultURI string, dataset stri
 	defer res.Close()
 
 	return s.parseCategoricalHistogram(res, variable)
+}
+
+// FetchResultsExtremaByURI fetches the results extrema by resultURI.
+func (s *Storage) FetchResultsExtremaByURI(dataset string, resultURI string, index string) (*model.Extrema, error) {
+	datasetResult := s.getResultTable(dataset)
+	targetName, err := s.getResultTargetName(datasetResult, resultURI, index)
+	if err != nil {
+		return nil, err
+	}
+	targetVariable, err := s.getResultTargetVariable(dataset, index, targetName)
+	if err != nil {
+		return nil, err
+	}
+	resultVariable := &model.Variable{
+		Name: "value",
+		Type: model.TextType,
+	}
+	return s.fetchResultsExtrema(resultURI, dataset, targetVariable, resultVariable)
 }
 
 // FetchResultsSummary gets the summary data about a target variable from the

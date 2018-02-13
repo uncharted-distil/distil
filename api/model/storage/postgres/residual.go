@@ -7,6 +7,24 @@ import (
 	"github.com/unchartedsoftware/distil/api/model"
 )
 
+// FetchResidualsExtremaByURI fetches the residual extrema by resultURI.
+func (s *Storage) FetchResidualsExtremaByURI(dataset string, resultURI string, index string) (*model.Extrema, error) {
+	datasetResult := s.getResultTable(dataset)
+	targetName, err := s.getResultTargetName(datasetResult, resultURI, index)
+	if err != nil {
+		return nil, err
+	}
+	targetVariable, err := s.getResultTargetVariable(dataset, index, targetName)
+	if err != nil {
+		return nil, err
+	}
+	resultVariable := &model.Variable{
+		Name: "value",
+		Type: model.TextType,
+	}
+	return s.fetchResidualsExtrema(resultURI, dataset, targetVariable, resultVariable)
+}
+
 // FetchResidualsSummary fetches a histogram of the residuals associated with a set of numerical predictions.
 func (s *Storage) FetchResidualsSummary(dataset string, resultURI string, index string, extrema *model.Extrema) (*model.Histogram, error) {
 	datasetResult := s.getResultTable(dataset)
