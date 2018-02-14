@@ -3,6 +3,7 @@ package routes
 import (
 	"net/http"
 	"net/url"
+	"strconv"
 
 	"github.com/pkg/errors"
 	"goji.io/pat"
@@ -27,6 +28,16 @@ func ResultVariableSummaryHandler(ctorPipeline model.PipelineStorageCtor, ctorSt
 			handleError(w, errors.Wrap(err, "unable to unescape result id"))
 			return
 		}
+		extremaMin, err := strconv.ParseFloat(pat.Param(r, "min"), 64)
+		if err != nil {
+			handleError(w, errors.Wrap(err, "unable to parse extrema min"))
+			return
+		}
+		extremaMax, err := strconv.ParseFloat(pat.Param(r, "max"), 64)
+		if err != nil {
+			handleError(w, errors.Wrap(err, "unable to parse extrema max"))
+			return
+		}
 
 		// get pipeline client
 		pipelineData, err := ctorPipeline()
@@ -49,7 +60,10 @@ func ResultVariableSummaryHandler(ctorPipeline model.PipelineStorageCtor, ctorSt
 			return
 		}
 		// fetch summary histogram
-		histogram, err := storage.FetchSummaryByResult(dataset, index, variable, result.ResultURI)
+		histogram, err := storage.FetchSummaryByResult(dataset, index, variable, result.ResultURI, &model.Extrema{
+			Min: extremaMin,
+			Max: extremaMax,
+		})
 		if err != nil {
 			handleError(w, err)
 			return

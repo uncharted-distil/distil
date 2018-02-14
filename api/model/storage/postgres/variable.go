@@ -276,11 +276,17 @@ func (s *Storage) fetchNumericalHistogram(dataset string, variable *model.Variab
 	return s.parseNumericHistogram(variable.Type, res, extrema)
 }
 
-func (s *Storage) fetchNumericalHistogramByResult(dataset string, variable *model.Variable, resultURI string) (*model.Histogram, error) {
+func (s *Storage) fetchNumericalHistogramByResult(dataset string, variable *model.Variable, resultURI string, extrema *model.Extrema) (*model.Histogram, error) {
 	// need the extrema to calculate the histogram interval
-	extrema, err := s.fetchExtrema(dataset, variable)
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to fetch variable extrema for summary")
+	var err error
+	if extrema == nil {
+		extrema, err = s.fetchExtrema(dataset, variable)
+		if err != nil {
+			return nil, errors.Wrap(err, "failed to fetch variable extrema for summary")
+		}
+	} else {
+		extrema.Name = variable.Name
+		extrema.Type = variable.Type
 	}
 	// for each returned aggregation, create a histogram aggregation. Bucket
 	// size is derived from the min/max and desired bucket count.
@@ -336,7 +342,7 @@ func (s *Storage) fetchCategoricalHistogramByResult(dataset string, variable *mo
 	return s.parseCategoricalHistogram(res, variable)
 }
 
-func (s *Storage) fetchSummaryData(dataset string, index string, varName string, resultURI string) (*model.Histogram, error) {
+func (s *Storage) fetchSummaryData(dataset string, index string, varName string, resultURI string, extrema *model.Extrema) (*model.Histogram, error) {
 	// need description of the variables to request aggregation against.
 	variable, err := s.metadata.FetchVariable(dataset, index, varName)
 	if err != nil {
@@ -350,7 +356,7 @@ func (s *Storage) fetchSummaryData(dataset string, index string, varName string,
 		if resultURI == "" {
 			histogram, err = s.fetchNumericalHistogram(dataset, variable)
 		} else {
-			histogram, err = s.fetchNumericalHistogramByResult(dataset, variable, resultURI)
+			histogram, err = s.fetchNumericalHistogramByResult(dataset, variable, resultURI, extrema)
 		}
 		if err != nil {
 			return nil, errors.Wrap(err, "unable to get numerical histogram")
@@ -384,11 +390,11 @@ func (s *Storage) fetchSummaryData(dataset string, index string, varName string,
 
 // FetchSummary returns the summary for the provided dataset and variable.
 func (s *Storage) FetchSummary(dataset string, index string, varName string) (*model.Histogram, error) {
-	return s.fetchSummaryData(dataset, index, varName, "")
+	return s.fetchSummaryData(dataset, index, varName, "", nil)
 }
 
 // FetchSummaryByResult returns the summary for the provided dataset
 // and variable for data that is part of the result set.
-func (s *Storage) FetchSummaryByResult(dataset string, index string, varName string, resultURI string) (*model.Histogram, error) {
-	return s.fetchSummaryData(dataset, index, varName, resultURI)
+func (s *Storage) FetchSummaryByResult(dataset string, index string, varName string, resultURI string, extrema *model.Extrema) (*model.Histogram, error) {
+	return s.fetchSummaryData(dataset, index, varName, resultURI, extrema)
 }
