@@ -69,13 +69,13 @@ export const actions = {
 			return;
 		}
 		if (!args.dataset) {
-			args.dataset = 'null';
+			args.dataset = null;
 		}
 		if (!args.target) {
-			args.target = 'null';
+			args.target = null;
 		}
 		if (!args.pipelineId) {
-			args.pipelineId = 'null';
+			args.pipelineId = null;
 		}
 		return axios.get(`/distil/session/${args.sessionId}/${args.dataset}/${args.target}/${args.pipelineId}`)
 			.then(response => {
@@ -156,14 +156,8 @@ export const actions = {
 						res.progress === PIPELINE_UPDATED ||
 						res.progress == PIPELINE_COMPLETED) {
 
-						// if current pipelineId, pull result summaries
-						const currentPipelineId = context.getters.getRoutePipelineId;
-						if (res.pipelineId === currentPipelineId) {
-							context.dispatch('fetchResultSummaries', {
-								dataset: request.dataset,
-								pipelineId: res.pipelineId,
-								variables: context.getters.getVariables
-							});
+						// if current pipelineId, pull results
+						if (res.pipelineId === context.getters.getRoutePipelineId) {
 							context.dispatch('fetchResultTableData', {
 								dataset: request.dataset,
 								pipelineId: res.pipelineId,
@@ -175,6 +169,15 @@ export const actions = {
 							dataset: request.dataset,
 							pipelineId: res.pipelineId
 						}).then(() => {
+							// if current pipelineId, pull result summaries
+							if (res.pipelineId === context.getters.getRoutePipelineId) {
+								context.dispatch('fetchResultSummaries', {
+									dataset: request.dataset,
+									pipelineId: res.pipelineId,
+									variables: context.getters.getVariables,
+									extrema: context.getters.getPredictedExtrema
+								});
+							}
 							context.dispatch('fetchPredictedSummary', {
 								dataset: request.dataset,
 								pipelineId: res.pipelineId,

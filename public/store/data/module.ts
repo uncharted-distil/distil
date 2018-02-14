@@ -88,6 +88,8 @@ export const mutations = {
 	updateResidualsSummaries: commit(moduleMutations.updateResidualsSummaries),
 	updatePredictedExtremas: commit(moduleMutations.updatePredictedExtremas),
 	updateResidualsExtremas: commit(moduleMutations.updateResidualsExtremas),
+	clearPredictedExtremas: commit(moduleMutations.clearPredictedExtremas),
+	clearResidualsExtremas: commit(moduleMutations.clearResidualsExtremas),
 	setFilteredData: commit(moduleMutations.setFilteredData),
 	setSelectedData: commit(moduleMutations.setSelectedData),
 	setResultData: commit(moduleMutations.setResultData),

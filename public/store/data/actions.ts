@@ -167,7 +167,7 @@ export const actions = {
 	},
 
 	// fetches variable summary data for the given dataset and variables
-	fetchResultSummaries(context: DataContext, args: { dataset: string, variables: Variable[], pipelineId: string }) {
+	fetchResultSummaries(context: DataContext, args: { dataset: string, variables: Variable[], pipelineId: string, extrema: Extrema }) {
 		if (!args.dataset) {
 			console.warn('`dataset` argument is missing');
 			return null;
@@ -205,7 +205,8 @@ export const actions = {
 				promises.push(context.dispatch('fetchResultSummary', {
 					dataset: args.dataset,
 					pipelineId: args.pipelineId,
-					variable: variable.name
+					variable: variable.name,
+					extrema: args.extrema
 				}));
 			}
 		});
@@ -213,7 +214,7 @@ export const actions = {
 		return Promise.all(promises);
 	},
 
-	fetchResultSummary(context: DataContext, args: { dataset: string, variable: string, pipelineId: string }) {
+	fetchResultSummary(context: DataContext, args: { dataset: string, variable: string, pipelineId: string, extrema: Extrema }) {
 		if (!args.dataset) {
 			console.warn('`dataset` argument is missing');
 			return null;
@@ -231,7 +232,14 @@ export const actions = {
 			// no results ready to pull
 			return null;
 		}
-		return axios.get(`/distil/results-variable-summary/${ES_INDEX}/${args.dataset}/${args.variable}/${pipeline.resultId}`)
+		// only use extrema if this is the feature variable
+		let extremaMin = null;
+		let extremaMax = null;
+		if (args.variable === pipeline.feature) {
+			extremaMin = args.extrema.min;
+			extremaMax = args.extrema.max;
+		}
+		return axios.get(`/distil/results-variable-summary/${ES_INDEX}/${args.dataset}/${args.variable}/${extremaMin}/${extremaMax}/${pipeline.resultId}`)
 			.then(response => {
 				mutations.updateResultSummaries(context, response.data.histogram);
 			})
@@ -296,6 +304,7 @@ export const actions = {
 
 	fetchPredictedExtremas(context: DataContext, args: { dataset: string, requestIds: string[] }) {
 		const pipelines = getPipelinesByRequestIds(context.rootState.pipelineModule, args.requestIds);
+		mutations.clearPredictedExtremas(context);
 		return Promise.all(pipelines.map(pipeline => {
 			return context.dispatch('fetchPredictedExtrema', {
 				dataset: args.dataset,
@@ -320,6 +329,7 @@ export const actions = {
 
 	fetchResidualsExtremas(context: DataContext, args: { dataset: string, requestIds: string[] }) {
 		const pipelines = getPipelinesByRequestIds(context.rootState.pipelineModule, args.requestIds);
+		mutations.clearResidualsExtremas(context);
 		return Promise.all(pipelines.map(pipeline => {
 			return context.dispatch('fetchResidualsExtrema', {
 				dataset: args.dataset,
