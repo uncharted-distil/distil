@@ -76,7 +76,7 @@ export function scrollToFirstHighlight(component: Vue, refName: string, smoothSc
 				// Enabling smooth scrolling seems to cause some sort of contention within the browser
 				// resulting in only one table scrolling.  We can enable it for the select screen, but
 				// not the result screen.
-				const args = smoothScroll ? { behavior: 'smooth' } : {};
+				const args: ScrollIntoViewOptions = smoothScroll ? { behavior: 'smooth' } : {};
 				selectedElem[0].scrollIntoView(args);
 			}
 		}
