@@ -279,6 +279,17 @@ func handleCreatePipelines(conn *Connection, client *pipeline.Client, metadataCt
 		metrics = append(metrics, metric)
 	}
 
+	// make sure the target is not an unknown type
+	target, err := metadata.FetchVariable(clientCreateMsg.Dataset, clientCreateMsg.Index, clientCreateMsg.Feature)
+	if err != nil {
+		handleErr(conn, msg, err)
+		return
+	}
+	if target.Type == model.UnknownType {
+		handleErr(conn, msg, errors.Errorf("Target '%s' is set to unknown type", target.Name))
+		return
+	}
+
 	// populate the protobuf pipeline create msg
 	createMsg := &pipeline.PipelineCreateRequest{
 		Context: &pipeline.SessionContext{
@@ -490,6 +501,9 @@ func fetchFilteredVariables(metadata model.MetadataStorage, index string, datase
 	// create a list minus those that are in the filtered list
 	filteredVars := []string{}
 	for _, variable := range variablesToUse {
+		if variable.Type == model.UnknownType {
+			return nil, errors.Errorf("feature '%s' not set to a known type", variable.Name)
+		}
 		filteredVars = append(filteredVars, variable.Name)
 	}
 	return filteredVars, nil
