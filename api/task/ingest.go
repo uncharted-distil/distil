@@ -35,31 +35,32 @@ const (
 
 // IngestTaskConfig captures the necessary configuration for an data ingest.
 type IngestTaskConfig struct {
-	ContainerDataPath                string
-	TmpDataPath                      string
-	DataPathRelative                 string
-	DatasetFolderSuffix              string
-	HasHeader                        bool
-	MergedOutputPathRelative         string
-	MergedOutputSchemaPathRelative   string
-	SchemaPathRelative               string
-	ClassificationRESTEndpoint       string
-	ClassificationFunctionName       string
-	ClassificationOutputPathRelative string
-	RankingRESTEndpoint              string
-	RankingFunctionName              string
-	RankingOutputPathRelative        string
-	RankingRowLimit                  int
-	DatabasePassword                 string
-	DatabaseUser                     string
-	Database                         string
-	SummaryOutputPathRelative        string
-	SummaryMachineOutputPathRelative string
-	SummaryRESTEndpoint              string
-	SummaryFunctionName              string
-	ESEndpoint                       string
-	ESTimeout                        int
-	ESDatasetPrefix                  string
+	ContainerDataPath                  string
+	TmpDataPath                        string
+	DataPathRelative                   string
+	DatasetFolderSuffix                string
+	HasHeader                          bool
+	MergedOutputPathRelative           string
+	MergedOutputSchemaPathRelative     string
+	SchemaPathRelative                 string
+	ClassificationRESTEndpoint         string
+	ClassificationFunctionName         string
+	ClassificationOutputPathRelative   string
+	ClassificationProbabilityThreshold float64
+	RankingRESTEndpoint                string
+	RankingFunctionName                string
+	RankingOutputPathRelative          string
+	RankingRowLimit                    int
+	DatabasePassword                   string
+	DatabaseUser                       string
+	Database                           string
+	SummaryOutputPathRelative          string
+	SummaryMachineOutputPathRelative   string
+	SummaryRESTEndpoint                string
+	SummaryFunctionName                string
+	ESEndpoint                         string
+	ESTimeout                          int
+	ESDatasetPrefix                    string
 }
 
 func (c *IngestTaskConfig) getRootPath(dataset string) string {
@@ -83,6 +84,9 @@ func IngestDataset(metaCtor model.MetadataStorageCtor, index string, dataset str
 	// Make sure the temp data directory exists.
 	tmpPath := path.Dir(config.getTmpAbsolutePath(config.MergedOutputSchemaPathRelative))
 	os.MkdirAll(tmpPath, os.ModePerm)
+
+	// Set the probability threshold
+	metadata.SetTypeProbabilityThreshold(config.ClassificationProbabilityThreshold)
 
 	storage, err := metaCtor()
 	if err != nil {
