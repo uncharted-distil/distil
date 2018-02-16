@@ -604,7 +604,7 @@ export default Vue.extend({
 
 		// inject type icon
 		injectTypeIcon(group: Group, $elem: JQuery) {
-			if (isCategoricalFacet(group.facets[0])) {
+			if (isCategoricalFacet(group.facets.length > 0 && group.facets[0])) {
 				const facetSpecs = (<CategoricalFacet[]>group.facets);
 				const typeicon = facetSpecs[0].icon.class;
 				const $icon = $(`<i class="${typeicon}"></i>`);
@@ -658,7 +658,7 @@ export default Vue.extend({
 				const facetSpec = (<CategoricalFacet[]>groupSpec.facets).find(f => f.value === label);
 
 				// only add controls for filterable facets
-				if (!facetSpec.filterable) {
+				if (!facetSpec || !facetSpec.filterable) {
 					continue;
 				}
 
