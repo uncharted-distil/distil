@@ -69,10 +69,8 @@ export default Vue.extend({
 		requestId: String,
 		pipelineId: String,
 		scores: Array,
-		resultSummary: Object,
+		predictedSummary: Object,
 		residualsSummary: Object,
-		resultExtrema: Object,
-		residualExtrema: Object,
 		resultHtml: String,
 		residualHtml: String,
 		instanceName: {
@@ -108,15 +106,15 @@ export default Vue.extend({
 		},
 
 		resultGroups(): Group[] {
-			if (this.results()) {
-				return createGroups([this.results()], false, true, this.resultExtrema);
+			if (this.predicted()) {
+				return createGroups([this.predicted()], false, true);
 			}
 			return [];
 		},
 
 		residualGroups(): Group[] {
 			if (this.residuals()) {
-				return createGroups([this.residuals()], false, true, this.residualExtrema);
+				return createGroups([this.residuals()], false, true);
 			}
 			return [];
 		},
@@ -131,8 +129,8 @@ export default Vue.extend({
 
 		currentClass(): string {
 			const selectedId = routeGetters.getRoutePipelineId(this.$store);
-			const results = this.results();
-			return (results && results.pipelineId === selectedId)
+			const predicted = this.predicted();
+			return (predicted && predicted.pipelineId === selectedId)
 				? 'result-group-selected result-group' : 'result-group';
 		}
 	},
@@ -182,17 +180,17 @@ export default Vue.extend({
 		},
 
 		click() {
-			if (this.results()) {
+			if (this.predicted()) {
 				const routeEntry = overlayRouteEntry(this.$route, {
-					pipelineId: this.results().pipelineId
+					pipelineId: this.predicted().pipelineId
 				});
 				this.$router.push(routeEntry);
 			}
 		},
 
-		results(): VariableSummary {
-			if (this.resultSummary) {
-				return this.resultSummary as VariableSummary;
+		predicted(): VariableSummary {
+			if (this.predictedSummary) {
+				return this.predictedSummary as VariableSummary;
 			}
 			return null;
 		},

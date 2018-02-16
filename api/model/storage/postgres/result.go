@@ -428,21 +428,21 @@ func (s *Storage) getResultMinMaxAggsQuery(variable *model.Variable, resultVaria
 
 func (s *Storage) getResultHistogramAggQuery(extrema *model.Extrema, variable *model.Variable, resultVariable *model.Variable) (string, string, string) {
 	// compute the bucket interval for the histogram
-	interval := s.calculateInterval(extrema)
+	interval := extrema.GetBucketInterval()
 
 	// Only numeric types should occur.
 	fieldTyped := fmt.Sprintf("cast(\"%s\" as double precision)", resultVariable.Name)
 
 	// get histogram agg name & query string.
 	histogramAggName := fmt.Sprintf("\"%s%s\"", model.HistogramAggPrefix, extrema.Name)
-	bucketQueryString := fmt.Sprintf("width_bucket(%s, %g, %g, %d)",
-		fieldTyped, extrema.Min, extrema.Max, model.MaxNumBuckets)
+	bucketQueryString := fmt.Sprintf("width_bucket(%s, %g, %g, %d) - 1",
+		fieldTyped, extrema.Min, extrema.Max, extrema.GetBucketCount())
 	histogramQueryString := fmt.Sprintf("(%s) * %g + %g", bucketQueryString, interval, extrema.Min)
 
 	return histogramAggName, bucketQueryString, histogramQueryString
 }
 
-func (s *Storage) fetchResultExtrema(resultURI string, dataset string, variable *model.Variable, resultVariable *model.Variable) (*model.Extrema, error) {
+func (s *Storage) fetchResultsExtrema(resultURI string, dataset string, variable *model.Variable, resultVariable *model.Variable) (*model.Extrema, error) {
 	// add min / max aggregation
 	aggQuery := s.getResultMinMaxAggsQuery(variable, resultVariable)
 
@@ -459,16 +459,22 @@ func (s *Storage) fetchResultExtrema(resultURI string, dataset string, variable 
 	return s.parseExtrema(res, variable)
 }
 
-func (s *Storage) fetchNumericalResultHistogram(resultURI string, dataset string, variable *model.Variable) (*model.Histogram, error) {
+func (s *Storage) fetchNumericalResultHistogram(resultURI string, dataset string, variable *model.Variable, extrema *model.Extrema) (*model.Histogram, error) {
 	resultVariable := &model.Variable{
 		Name: "value",
 		Type: model.TextType,
 	}
 
 	// need the extrema to calculate the histogram interval
-	extrema, err := s.fetchResultExtrema(resultURI, dataset, variable, resultVariable)
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to fetch result variable extrema for summary")
+	var err error
+	if extrema == nil {
+		extrema, err = s.fetchResultsExtrema(resultURI, dataset, variable, resultVariable)
+		if err != nil {
+			return nil, errors.Wrap(err, "failed to fetch result variable extrema for summary")
+		}
+	} else {
+		extrema.Name = variable.Name
+		extrema.Type = variable.Type
 	}
 	// for each returned aggregation, create a histogram aggregation. Bucket
 	// size is derived from the min/max and desired bucket count.
@@ -509,9 +515,27 @@ func (s *Storage) fetchCategoricalResultHistogram(resultURI string, dataset stri
 	return s.parseCategoricalHistogram(res, variable)
 }
 
+// FetchResultsExtremaByURI fetches the results extrema by resultURI.
+func (s *Storage) FetchResultsExtremaByURI(dataset string, resultURI string, index string) (*model.Extrema, error) {
+	datasetResult := s.getResultTable(dataset)
+	targetName, err := s.getResultTargetName(datasetResult, resultURI, index)
+	if err != nil {
+		return nil, err
+	}
+	targetVariable, err := s.getResultTargetVariable(dataset, index, targetName)
+	if err != nil {
+		return nil, err
+	}
+	resultVariable := &model.Variable{
+		Name: "value",
+		Type: model.TextType,
+	}
+	return s.fetchResultsExtrema(resultURI, datasetResult, targetVariable, resultVariable)
+}
+
 // FetchResultsSummary gets the summary data about a target variable from the
 // results table.
-func (s *Storage) FetchResultsSummary(dataset string, resultURI string, index string) (*model.Histogram, error) {
+func (s *Storage) FetchResultsSummary(dataset string, resultURI string, index string, extrema *model.Extrema) (*model.Histogram, error) {
 	datasetResult := s.getResultTable(dataset)
 	targetName, err := s.getResultTargetName(datasetResult, resultURI, index)
 	if err != nil {
@@ -527,7 +551,7 @@ func (s *Storage) FetchResultsSummary(dataset string, resultURI string, index st
 
 	if model.IsNumerical(variable.Type) {
 		// fetch numeric histograms
-		histogram, err = s.fetchNumericalResultHistogram(resultURI, datasetResult, variable)
+		histogram, err = s.fetchNumericalResultHistogram(resultURI, datasetResult, variable, extrema)
 		if err != nil {
 			return nil, err
 		}

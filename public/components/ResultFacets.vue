@@ -7,10 +7,8 @@
 			:request-id="group.requestId"
 			:pipeline-id="group.pipelineId"
 			:scores="group.scores"
-			:result-summary="group.resultSummary"
+			:predicted-summary="group.predictedSummary"
 			:residuals-summary="group.residualsSummary"
-			:result-extrema="resultExtrema"
-			:residual-extrema="residualExtrema"
 			:resultHtml="html"
 			:residualHtml="html">
 		</result-group>
@@ -36,7 +34,7 @@ interface SummaryGroup {
 	requestId: string;
 	pipelineId: string;
 	groupName: string;
-	resultSummary: VariableSummary;
+	predictedSummary: VariableSummary;
 	residualsSummary: VariableSummary;
 }
 /*eslint-enable */
@@ -51,9 +49,7 @@ export default Vue.extend({
 
 	props: {
 		html: String,
-		regression: Boolean,
-		resultExtrema: Object,
-		residualExtrema: Object
+		regression: Boolean
 	},
 
 	computed: {
@@ -61,7 +57,7 @@ export default Vue.extend({
 		dataset(): string {
 			return routeGetters.getRouteDataset(this.$store);
 		},
-		
+
 		target(): string {
 			return routeGetters.getRouteTargetVariable(this.$store);
 		},
@@ -84,7 +80,7 @@ export default Vue.extend({
 			const summaryGroups = pipelines.map(pipeline => {
 				const pipelineId = pipeline.pipelineId;
 				const requestId = pipeline.requestId;
-				const resultSummary = _.find(resultSummaries, summary => {
+				const predictedSummary = _.find(resultSummaries, summary => {
 					return summary.pipelineId === pipelineId;
 				});
 				const residualSummary = _.find(residualsSummaries, summary => {
@@ -96,7 +92,7 @@ export default Vue.extend({
 					groupName: pipeline ? pipeline.name : '',
 					timestamp: pipeline ? moment(pipeline.timestamp).format('YYYY/MM/DD') : '',
 					scores: pipeline ? pipeline.scores : [],
-					resultSummary: resultSummary,
+					predictedSummary: predictedSummary,
 					residualsSummary: residualSummary
 				};
 			});

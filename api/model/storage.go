@@ -13,13 +13,14 @@ type DataStorage interface {
 	FetchNumRows(dataset string, filters map[string]interface{}) (int, error)
 	FetchData(dataset string, index string, filterParams *FilterParams, inclusive bool) (*FilteredData, error)
 	FetchSummary(dataset string, index string, varName string) (*Histogram, error)
-	FetchSummaryByResult(dataset string, index string, varName string, resultURI string) (*Histogram, error)
+	FetchSummaryByResult(dataset string, index string, varName string, resultURI string, extrema *Extrema) (*Histogram, error)
 	PersistResult(dataset string, resultURI string) error
 	FetchResults(dataset string, index string, resultURI string) (*FilteredData, error)
 	FetchFilteredResults(dataset string, index string, resultURI string, filterParams *FilterParams, inclusive bool) (*FilteredData, error)
-	FetchResultsSummary(dataset string, resultURI string, index string) (*Histogram, error)
-	FetchResidualsSummary(dataset string, resultURI string, index string) (*Histogram, error)
-
+	FetchResultsSummary(dataset string, resultURI string, index string, extrema *Extrema) (*Histogram, error)
+	FetchResultsExtremaByURI(dataset string, resultURI string, index string) (*Extrema, error)
+	FetchResidualsSummary(dataset string, resultURI string, index string, extrema *Extrema) (*Histogram, error)
+	FetchResidualsExtremaByURI(dataset string, resultURI string, index string) (*Extrema, error)
 	// Dataset manipulation
 	SetDataType(dataset string, index string, field string, fieldType string) error
 }
