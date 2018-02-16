@@ -7,8 +7,26 @@ import (
 	"github.com/unchartedsoftware/distil/api/model"
 )
 
+// FetchResidualsExtremaByURI fetches the residual extrema by resultURI.
+func (s *Storage) FetchResidualsExtremaByURI(dataset string, resultURI string, index string) (*model.Extrema, error) {
+	datasetResult := s.getResultTable(dataset)
+	targetName, err := s.getResultTargetName(datasetResult, resultURI, index)
+	if err != nil {
+		return nil, err
+	}
+	targetVariable, err := s.getResultTargetVariable(dataset, index, targetName)
+	if err != nil {
+		return nil, err
+	}
+	resultVariable := &model.Variable{
+		Name: "value",
+		Type: model.TextType,
+	}
+	return s.fetchResidualsExtrema(resultURI, dataset, targetVariable, resultVariable)
+}
+
 // FetchResidualsSummary fetches a histogram of the residuals associated with a set of numerical predictions.
-func (s *Storage) FetchResidualsSummary(dataset string, resultURI string, index string) (*model.Histogram, error) {
+func (s *Storage) FetchResidualsSummary(dataset string, resultURI string, index string, extrema *model.Extrema) (*model.Histogram, error) {
 	datasetResult := s.getResultTable(dataset)
 	targetName, err := s.getResultTargetName(datasetResult, resultURI, index)
 	if err != nil {
@@ -23,7 +41,7 @@ func (s *Storage) FetchResidualsSummary(dataset string, resultURI string, index 
 	// Just return a nil in the case where we were asked to return residuals for a non-numeric variable.
 	if model.IsNumerical(variable.Type) {
 		// fetch numeric histograms
-		residuals, err := s.fetchResidualsHistogram(resultURI, dataset, variable)
+		residuals, err := s.fetchResidualsHistogram(resultURI, dataset, variable, extrema)
 		if err != nil {
 			return nil, err
 		}
@@ -38,15 +56,15 @@ func getErrorTyped(variableName string) string {
 
 func (s *Storage) getResidualsHistogramAggQuery(extrema *model.Extrema, variable *model.Variable, resultVariable *model.Variable) (string, string, string) {
 	// compute the bucket interval for the histogram
-	interval := s.calculateInterval(extrema)
+	interval := extrema.GetBucketInterval()
 
 	// Only numeric types should occur.
 	errorTyped := getErrorTyped(variable.Name)
 
 	// get histogram agg name & query string.
 	histogramAggName := fmt.Sprintf("\"%s%s\"", model.HistogramAggPrefix, extrema.Name)
-	bucketQueryString := fmt.Sprintf("width_bucket(%s, %g, %g, %d)",
-		errorTyped, extrema.Min, extrema.Max, model.MaxNumBuckets)
+	bucketQueryString := fmt.Sprintf("width_bucket(%s, %g, %g, %d) - 1",
+		errorTyped, extrema.Min, extrema.Max, extrema.GetBucketCount())
 	histogramQueryString := fmt.Sprintf("(%s) * %g + %g", bucketQueryString, interval, extrema.Min)
 
 	return histogramAggName, bucketQueryString, histogramQueryString
@@ -92,16 +110,22 @@ func (s *Storage) fetchResidualsExtrema(resultURI string, dataset string, variab
 	return s.parseExtrema(res, variable)
 }
 
-func (s *Storage) fetchResidualsHistogram(resultURI string, dataset string, variable *model.Variable) (*model.Histogram, error) {
+func (s *Storage) fetchResidualsHistogram(resultURI string, dataset string, variable *model.Variable, extrema *model.Extrema) (*model.Histogram, error) {
 	resultVariable := &model.Variable{
 		Name: "value",
 		Type: model.TextType,
 	}
 
 	// need the extrema to calculate the histogram interval
-	extrema, err := s.fetchResidualsExtrema(resultURI, dataset, variable, resultVariable)
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to fetch result variable extrema for summary")
+	var err error
+	if extrema == nil {
+		extrema, err = s.fetchResidualsExtrema(resultURI, dataset, variable, resultVariable)
+		if err != nil {
+			return nil, errors.Wrap(err, "failed to fetch result variable extrema for summary")
+		}
+	} else {
+		extrema.Name = variable.Name
+		extrema.Type = variable.Type
 	}
 	// for each returned aggregation, create a histogram aggregation. Bucket
 	// size is derived from the min/max and desired bucket count.
