@@ -235,7 +235,7 @@ func handleCreatePipelines(conn *Connection, client *pipeline.Client, metadataCt
 	// persist the filtered dataset if necessary
 	fetchFilteredData := func(dataset string, index string, filterParams *model.FilterParams) (*model.FilteredData, error) {
 		// fetch the whole data and include the target feature
-		return dataStorage.FetchData(dataset, index, filterParams, false)
+		return dataStorage.FetchData(dataset, index, filterParams, false, false)
 	}
 	fetchVariable := func(dataset string, index string) ([]*model.Variable, error) {
 		return metadata.FetchVariables(dataset, index, false)

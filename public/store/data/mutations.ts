@@ -63,6 +63,11 @@ export const mutations = {
 		state.selectedData = selectedData;
 	},
 
+	// sets the current excluded data into the store
+	setExcludedData(state: DataState, excludedData: Data) {
+		state.excludedData = excludedData;
+	},
+
 	// sets the current result data into the store
 	setResultData(state: DataState, resultData: Data) {
 		state.resultData = resultData;

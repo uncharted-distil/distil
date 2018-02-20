@@ -110,6 +110,10 @@ export default Vue.extend({
 				dataset: this.dataset,
 				filters: this.selectedFilters
 			});
+			actions.fetchExcludedTableData(this.$store, {
+				dataset: this.dataset,
+				filters: this.selectedFilters
+			});
 		}
 	},
 
@@ -128,6 +132,10 @@ export default Vue.extend({
 				highlightRoot: this.highlightRoot,
 			});
 			actions.fetchSelectedTableData(this.$store, {
+				dataset: this.dataset,
+				filters: this.selectedFilters
+			});
+			actions.fetchExcludedTableData(this.$store, {
 				dataset: this.dataset,
 				filters: this.selectedFilters
 			});

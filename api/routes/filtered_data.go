@@ -26,6 +26,11 @@ func FilteredDataHandler(ctor model.DataStorageCtor) func(http.ResponseWriter, *
 		if inclusive == "inclusive" {
 			inclusiveBool = true
 		}
+		invert := pat.Param(r, "invert")
+		invertBool := false
+		if invert == "true" {
+			invertBool = true
+		}
 
 		// get variable names and ranges out of the params
 		filterParams, err := model.ParseFilterParamsURL(r.URL.Query())
@@ -42,7 +47,7 @@ func FilteredDataHandler(ctor model.DataStorageCtor) func(http.ResponseWriter, *
 		}
 
 		// fetch filtered data based on the supplied search parameters
-		data, err := client.FetchData(dataset, esIndex, filterParams, inclusiveBool)
+		data, err := client.FetchData(dataset, esIndex, filterParams, inclusiveBool, invertBool)
 		if err != nil {
 			handleError(w, errors.Wrap(err, "unable fetch filtered data"))
 			return

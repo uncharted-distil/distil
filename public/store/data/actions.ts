@@ -255,7 +255,7 @@ export const actions = {
 	// update filtered data based on the  current filter state
 	fetchFilteredTableData(context: DataContext, args: { dataset: string, filters: Filter[] }) {
 		mutations.setFilteredData(context, null);
-		context.dispatch('fetchData', { dataset: args.dataset, filters: args.filters, inclusive: true })
+		context.dispatch('fetchData', { dataset: args.dataset, filters: args.filters, inclusive: true, invert: false })
 			.then(response => {
 				mutations.setFilteredData(context, response.data);
 			})
@@ -268,7 +268,7 @@ export const actions = {
 	// update filtered data based on the  current filter state
 	fetchSelectedTableData(context: DataContext, args: { dataset: string, filters: Filter[] }) {
 		mutations.setSelectedData(context, null);
-		context.dispatch('fetchData', { dataset: args.dataset, filters: args.filters, inclusive: false })
+		context.dispatch('fetchData', { dataset: args.dataset, filters: args.filters, inclusive: false, invert: false })
 			.then(response => {
 				mutations.setSelectedData(context, response.data);
 			})
@@ -278,12 +278,33 @@ export const actions = {
 			});
 	},
 
-	fetchData(context: DataContext, args: { dataset: string, filters: Filter[], inclusive: boolean }): AxiosPromise<Data> {
-		const dataset = args.dataset;
-		const filters = args.filters;
-		const queryParams = encodeQueryParams(filters);
+	// update filtered data based on the  current filter state
+	fetchExcludedTableData(context: DataContext, args: { dataset: string, filters: Filter[] }) {
+		mutations.setExcludedData(context, null);
+		context.dispatch('fetchData', { dataset: args.dataset, filters: args.filters, inclusive: false, invert: true })
+			.then(response => {
+				mutations.setExcludedData(context, response.data);
+			})
+			.catch(error => {
+				console.error(error);
+				mutations.setExcludedData(context, createEmptyData(args.dataset));
+			});
+	},
+
+
+	fetchData(context: DataContext, args: { dataset: string, filters: Filter[], inclusive: boolean, invert: boolean }): AxiosPromise<Data> {
+		if (!args.dataset) {
+			console.warn('`dataset` argument is missing');
+			return null;
+		}
+		if (!args.filters) {
+			console.warn('`variable` filters is missing');
+			return null;
+		}
+		const queryParams = encodeQueryParams(args.filters);
 		const inclusiveStr = args.inclusive ? 'inclusive' : 'exclusive';
-		const url = `distil/filtered-data/${ES_INDEX}/${dataset}/${inclusiveStr}${queryParams}`;
+		const invertStr = args.invert ? 'true' : 'false';
+		const url = `distil/filtered-data/${ES_INDEX}/${args.dataset}/${inclusiveStr}/${invertStr}${queryParams}`;
 		// request filtered data from server - no data is valid given filter settings
 		return axios.get<Data>(url);
 	},
@@ -483,7 +504,8 @@ export const actions = {
 		return context.dispatch('fetchData', {
 				dataset: args.dataset,
 				filters: filtersCopy,
-				inclusive: true
+				inclusive: true,
+				invert: false
 			})
 			.then(res => {
 				mutations.setHighlightedValues(context, parseHighlightValues(res.data));

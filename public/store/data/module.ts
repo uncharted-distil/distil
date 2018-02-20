@@ -46,6 +46,11 @@ export const getters = {
 	getSelectedDataNumRows: read(moduleGetters.getSelectedDataNumRows),
 	getSelectedDataItems: read(moduleGetters.getSelectedDataItems),
 	getSelectedDataFields: read(moduleGetters.getSelectedDataFields),
+	hasExcludedData: read(moduleGetters.hasExcludedData),
+	getExcludedData: read(moduleGetters.getExcludedData),
+	getExcludedDataNumRows: read(moduleGetters.getExcludedDataNumRows),
+	getExcludedDataItems: read(moduleGetters.getExcludedDataItems),
+	getExcludedDataFields: read(moduleGetters.getExcludedDataFields),
 	getHighlightedValues: read(moduleGetters.getHighlightedValues),
 	getPredictedExtrema: read(moduleGetters.getPredictedExtrema),
 	getResidualExtrema: read(moduleGetters.getResidualExtrema),
@@ -64,6 +69,7 @@ export const actions = {
 	fetchVariablesAndVariableSummaries: dispatch(moduleActions.fetchVariablesAndVariableSummaries),
 	fetchFilteredTableData: dispatch(moduleActions.fetchFilteredTableData),
 	fetchSelectedTableData: dispatch(moduleActions.fetchSelectedTableData),
+	fetchExcludedTableData: dispatch(moduleActions.fetchExcludedTableData),
 	fetchData: dispatch(moduleActions.fetchData),
 	fetchPredictedSummaries: dispatch(moduleActions.fetchPredictedSummaries),
 	fetchResidualsSummaries: dispatch(moduleActions.fetchResidualsSummaries),
@@ -92,6 +98,7 @@ export const mutations = {
 	clearResidualsExtremas: commit(moduleMutations.clearResidualsExtremas),
 	setFilteredData: commit(moduleMutations.setFilteredData),
 	setSelectedData: commit(moduleMutations.setSelectedData),
+	setExcludedData: commit(moduleMutations.setExcludedData),
 	setResultData: commit(moduleMutations.setResultData),
 	setHighlightedValues: commit(moduleMutations.setHighlightedValues)
 }
