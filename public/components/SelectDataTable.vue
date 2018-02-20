@@ -18,16 +18,7 @@
 			<div class="select-data-no-results" v-if="hasData && items.length===0">
 				No data available
 			</div>
-			<b-table v-if="includedActive && items.length>0"
-				ref="selectTable"
-				bordered
-				hover
-				small
-				@row-clicked="onRowClick"
-				:items="items"
-				:fields="fields">
-			</b-table>
-			<b-table v-if="!includedActive && items.length>0"
+			<b-table v-if="items.length>0"
 				ref="selectTable"
 				bordered
 				hover
@@ -87,38 +78,39 @@ export default Vue.extend({
 
 		// extracts the table data from the store
 		items(): TableRow[] {
-			const data = dataGetters.getSelectedDataItems(this.$store);
-			const valueHighlights = getHighlights(this.$store);
+			const items = this.includedActive ? dataGetters.getSelectedDataItems(this.$store) : dataGetters.getExcludedDataItems(this.$store);
 
-			dataGetters.getSelectedDataItems(this.$store).forEach(f => f._rowVariant = null);
+			// clear any existing selections
+			items.forEach(f => f._rowVariant = null);
+
+			const highlights = getHighlights(this.$store);
 
 			// if we have highlights defined and the select table is not the source then updated
 			// the highlight visuals.
-			if ((_.get(valueHighlights, 'root.context') !== this.instanceName)) {
-				updateTableHighlights(data, valueHighlights, this.instanceName);
+			if ((_.get(highlights, 'root.context') !== this.instanceName)) {
+				updateTableHighlights(items, highlights, this.instanceName);
 
 				// On data / highlights change, scroll to first selected row
 				scrollToFirstHighlight(this, 'selectTable', true);
 			}
 
 			if (this.selectedRowKey >= 0) {
-				const toSelect = dataGetters.getSelectedDataItems(this.$store).find(r => r._key === this.selectedRowKey);
+				const toSelect = items.find(r => r._key === this.selectedRowKey);
 				if (toSelect) {
-					if (_.get(valueHighlights, 'root.context') === this.instanceName) {
+					if (_.get(highlights, 'root.context') === this.instanceName) {
 						toSelect._rowVariant = 'primary';
 					} else {
 						toSelect._rowVariant = null;
 					}
 				}
-
 			}
 
-			return data;
+			return items;
 		},
 
 		// extract the table field header from the store
 		fields(): Dictionary<FieldInfo> {
-			return dataGetters.getSelectedDataFields(this.$store);
+			return this.includedActive ? dataGetters.getSelectedDataFields(this.$store) : dataGetters.getExcludedDataFields(this.$store);
 		},
 
 		filters(): Filter[] {

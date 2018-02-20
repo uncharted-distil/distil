@@ -140,7 +140,23 @@ func (s *Storage) FetchData(dataset string, index string, filterParams *model.Fi
 	}
 
 	if len(where) > 0 {
-		query = fmt.Sprintf("%s WHERE %s", query, where)
+		if invert {
+			query = fmt.Sprintf("%s WHERE NOT(%s)", query, where)
+		} else {
+			query = fmt.Sprintf("%s WHERE %s", query, where)
+		}
+	} else {
+		// if there are not WHERE's and we are inverting, that means we expect
+		// no results.
+		if invert {
+			return &model.FilteredData{
+				Name:    dataset,
+				NumRows: numRows,
+				Columns: make([]string, 0),
+				Types:   make([]string, 0),
+				Values:  make([][]interface{}, 0),
+			}, nil
+		}
 	}
 
 	// order & limit the filtered data.
