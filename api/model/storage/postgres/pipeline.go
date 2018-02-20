@@ -280,6 +280,41 @@ func (s *Storage) FetchResultMetadataByUUID(resultUUID string) (*model.Result, e
 	return res, nil
 }
 
+// FetchResultMetadataByDatasetTarget pulls request result information from
+// Postgres. Only the latest result for each pipeline is fetched.
+func (s *Storage) FetchResultMetadataByDatasetTarget(dataset string, target string) ([]*model.Result, error) {
+	// get the pipeline ids
+	sql := fmt.Sprintf(`SELECT DISTINCT result.pipeline_id
+			FROM %s request INNER JOIN %s rf ON request.request_id = rf.request_id INNER JOIN %s result ON request.request_id = result.request_id
+			WHERE request.dataset = $1 AND rf.feature_name = $2 AND rf.feature_type = $3;`, requestTableName, featureTableName, resultTableName)
+
+	rows, err := s.client.Query(sql, dataset, target, model.FeatureTypeTarget)
+	if err != nil {
+		return nil, errors.Wrap(err, "Unable to pull request pipeline ids from Postgres")
+	}
+	if rows != nil {
+		defer rows.Close()
+	}
+
+	results := make([]*model.Result, 0)
+	for rows.Next() {
+		var pipelineID string
+
+		err = rows.Scan(&pipelineID)
+		if err != nil {
+			return nil, errors.Wrap(err, "Unable to parse pipeline id from Postgres")
+		}
+
+		res, err := s.FetchResultMetadataByPipelineID(pipelineID)
+		if err != nil {
+			return nil, errors.Wrap(err, "Unable to parse pipeline result from Postgres")
+		}
+		results = append(results, res)
+	}
+
+	return results, nil
+}
+
 // FetchResultScore pulls result score from Postgres.
 func (s *Storage) FetchResultScore(pipelineID string) ([]*model.ResultScore, error) {
 	sql := fmt.Sprintf("SELECT pipeline_id, metric, score FROM %s WHERE pipeline_id = $1;", resultScoreTableName)

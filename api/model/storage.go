@@ -44,6 +44,7 @@ type PipelineStorage interface {
 	FetchResultMetadata(requestID string) ([]*Result, error)
 	FetchResultMetadataByUUID(resultUUID string) (*Result, error)
 	FetchResultMetadataByPipelineID(pipelineID string) (*Result, error)
+	FetchResultMetadataByDatasetTarget(dataset string, target string) ([]*Result, error)
 	FetchResultScore(pipelineID string) ([]*ResultScore, error)
 	FetchRequestFeatures(requestID string) ([]*RequestFeature, error)
 	FetchRequestFilters(requestID string) (*FilterParams, error)
