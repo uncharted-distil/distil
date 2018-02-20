@@ -1,7 +1,14 @@
 <template>
 	<div class="select-data-table">
-		<p class="nav-link font-weight-bold">Samples to Model From</p>
+		<p>
+			<b-nav tabs>
+				<b-nav-item class="font-weight-bold" @click="includedActive=true" :active="includedActive">Samples to Model From</b-nav-item>
+				<b-nav-item class="font-weight-bold" @click="includedActive=false" :active="!includedActive">Excluded Samples</b-nav-item>
+			</b-nav>
+		<p>
+
 		<p class="small-margin"><small>Displaying {{items.length}} of {{numRows}} rows</small></p>
+
 		<div class="select-data-table-container">
 			<div class="select-data-no-results" v-if="!hasData">
 				<div class="bounce1"></div>
@@ -11,9 +18,17 @@
 			<div class="select-data-no-results" v-if="hasData && items.length===0">
 				No data available
 			</div>
-			<b-table
+			<b-table v-if="includedActive && items.length>0"
 				ref="selectTable"
-				v-if="items.length>0"
+				bordered
+				hover
+				small
+				@row-clicked="onRowClick"
+				:items="items"
+				:fields="fields">
+			</b-table>
+			<b-table v-if="!includedActive && items.length>0"
+				ref="selectTable"
 				bordered
 				hover
 				small
@@ -44,6 +59,12 @@ export default Vue.extend({
 
 	props: {
 		instanceName: { type: String, default: 'select-table-highlight' }
+	},
+
+	data() {
+		return {
+			includedActive: true
+		};
 	},
 
 	computed: {
@@ -152,5 +173,14 @@ table.b-table>thead>tr>th.sorting:after {
 .select-data-table .small-margin {
 	margin-bottom: 0.5rem
 }
-
+.select-view .nav-tabs .nav-item a {
+	padding-left: 0.5rem;
+	padding-right: 0.5rem;
+}
+.select-view .nav-tabs .nav-link {
+	color: #757575;
+}
+.select-view .nav-tabs .nav-link.active {
+	color: rgba(0, 0, 0, 0.87);
+}
 </style>
