@@ -103,7 +103,7 @@ export default Vue.extend({
 				highlightRoot: this.highlightRoot,
 			});
 		},
-		filterStr() {
+		selectedFilters() {
 			actions.fetchDataHighlightValues(this.$store, {
 				dataset: this.dataset,
 				filters: this.filters,
