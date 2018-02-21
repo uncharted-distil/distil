@@ -1,5 +1,5 @@
 import _ from 'lodash';
-import { FieldInfo, Variable, Data, DataState, Datasets, VariableSummary, TargetRow, TableRow } from './index';
+import { FieldInfo, Variable, Data, DataState, Datasets, VariableSummary, TargetRow, TableRow, Extrema } from './index';
 import { Filter, EMPTY_FILTER } from '../../util/filters';
 import { TARGET_POSTFIX, PREDICTED_POSTFIX } from '../../util/data';
 import { Dictionary } from '../../util/dict';
@@ -299,5 +299,35 @@ export const getters = {
 
 	getHighlightedValues(state: DataState) {
 		return state.highlightedValues;
-	}
+	},
+
+	getPredictedExtrema(state: DataState): Extrema {
+		if (_.isEmpty(state.predictedExtremas)) {
+			return {
+				min: NaN,
+				max: NaN
+			};
+		}
+		const res = { min: Infinity, max: -Infinity };
+		_.forIn(state.predictedExtremas, extrema => {
+			res.min = Math.min(res.min, extrema.min);
+			res.max = Math.max(res.max, extrema.max);
+		});
+		return res;
+	},
+
+	getResidualExtrema(state: DataState): Extrema {
+		if (_.isEmpty(state.residualExtremas)) {
+			return {
+				min: NaN,
+				max: NaN
+			};
+		}
+		const res = { min: Infinity, max: -Infinity };
+		_.forIn(state.residualExtremas, extrema => {
+			res.min = Math.min(res.min, extrema.min);
+			res.max = Math.max(res.max, extrema.max);
+		});
+		return res;
+	},
 }
