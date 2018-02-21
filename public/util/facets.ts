@@ -9,6 +9,7 @@ export const CATEGORY_MATCH_COLOR = "#03c6e1";
 export interface PlaceHolderFacet {
 	placeholder: boolean;
 	html: string;
+	filterable?: boolean;
 }
 
 export interface Segment {

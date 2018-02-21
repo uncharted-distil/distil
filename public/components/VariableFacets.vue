@@ -55,7 +55,7 @@ import { Highlights, Range } from '../util/highlights';
 import { Dictionary } from '../util/dict';
 import { getters as dataGetters } from '../store/data/module';
 import { getters as routeGetters } from '../store/route/module';
-import { createGroups, Group } from '../util/facets';
+import { Group } from '../util/facets';
 import { updateHighlightRoot, clearHighlightRoot, getHighlights } from '../util/highlights';
 import 'font-awesome/css/font-awesome.css';
 import '../styles/spinner.css';
@@ -72,9 +72,7 @@ export default Vue.extend({
 		enableSearch: Boolean,
 		enableToggle: Boolean,
 		enableTitle: Boolean,
-		enableGroupCollapse: Boolean,
-		enableFacetFiltering: Boolean,
-		variables: Array,
+		groups: Array,
 		dataset: String,
 		html: [ String, Object, Function ],
 		instanceName: { type: String, default: 'variable-facets' },
@@ -103,17 +101,16 @@ export default Vue.extend({
 			}
 		},
 
-		groups(): Group[] {
+		sortedGroups(): Group[] {
 			// filter by search
-			const searchFiltered = this.variables.filter(summary => {
-				return this.filter === '' || summary.name.toLowerCase().includes(this.filter.toLowerCase());
+			const searchFiltered = this.groups.filter(group => {
+				return this.filter === '' || group.key.toLowerCase().includes(this.filter.toLowerCase());
 			});
 
 			// sort by current function - sort looks for key to hold sort key
-			// TODO: this only needs to happen on re-order events once it has been sorted initially
-			const sorted = searchFiltered.map(v => ({ key: v.name, variable: v }))
+			const sorted = searchFiltered.map(g => ({ key: g.key, group: g }))
 				.sort((a, b) => this[this.sortMethod](a, b))
-				.map(v => v.variable);
+				.map(g => g.group);
 
 			// if necessary, refilter applying pagination rules
 			this.numRows = searchFiltered.length;
@@ -124,11 +121,8 @@ export default Vue.extend({
 				filtered = sorted.slice(firstIndex, lastIndex);
 			}
 
-			// create the groups
-			let groups = createGroups(filtered, this.enableGroupCollapse, this.enableFacetFiltering);
-
 			// update collapsed state
-			return this.updateGroupCollapses(groups);
+			return this.updateGroupCollapses(filtered);
 		},
 
 		highlights(): Highlights {

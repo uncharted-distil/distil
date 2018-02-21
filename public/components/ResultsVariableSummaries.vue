@@ -7,7 +7,7 @@
 			enable-group-collapse
 			enable-facet-filtering
 			instance-name="result-summary-facets"
-			:variables="variables"
+			:groups="groups"
 			:dataset="dataset"
 			:type-change="typeChange">
 		</result-variable-facets>

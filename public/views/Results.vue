@@ -10,7 +10,7 @@
 		<div class="row flex-12 pb-3">
 				<results-variable-summaries
 					class="col-12 col-md-3 border-gray-right results-variable-summaries"
-					:variables="summaries"
+					:groups="groups"
 					:dataset="dataset"></results-variable-summaries>
 				<results-comparison
 					class="col-12 col-md-6 results-result-comparison"
@@ -29,9 +29,10 @@ import { getRequestIdsForDatasetAndTarget, getTrainingVariablesForPipelineId } f
 import { getters as dataGetters, actions as dataActions } from '../store/data/module';
 import { getters as routeGetters } from '../store/route/module';
 import { actions as pipelineActions, getters as pipelineGetters } from '../store/pipelines/module';
-import { Variable, VariableSummary, Extrema } from '../store/data/index';
+import { Variable, Extrema } from '../store/data/index';
 import { Dictionary } from '../util/dict';
 import { HighlightRoot } from '../util/highlights';
+import { Group, createGroups } from '../util/facets';
 import { Filter } from '../util/filters';
 import Vue from 'vue';
 
@@ -57,11 +58,13 @@ export default Vue.extend({
 		target(): string {
 			return routeGetters.getRouteTargetVariable(this.$store);
 		},
-		summaries(): VariableSummary[] {
+		groups(): Group[] {
+			let summaries;
 			if (this.excludeNonTraining) {
-				return dataGetters.getResultSummaries(this.$store).filter(summary => this.training[summary.name]);
+				summaries = dataGetters.getResultSummaries(this.$store).filter(summary => this.training[summary.name]);
 			}
-			return dataGetters.getResultSummaries(this.$store);
+			summaries = dataGetters.getResultSummaries(this.$store);
+			return createGroups(summaries, false, false);
 		},
 		variables(): Variable[] {
 			return dataGetters.getVariables(this.$store);

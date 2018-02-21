@@ -4,10 +4,8 @@
 		<variable-facets
 			enable-search
 			enable-toggle
-			enable-group-collapse
-			enable-facet-filtering
 			instance-name="variable-summary-facets"
-			:variables="variables"
+			:groups="groups"
 			:dataset="dataset"
 			:type-change="typeChange">
 		</variable-facets>
@@ -28,7 +26,7 @@ export default Vue.extend({
 	},
 
 	props: {
-		'variables': Array,
+		'groups': Array,
 		'dataset': String,
 		'typeChange': Boolean
 	}

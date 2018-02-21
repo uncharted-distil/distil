@@ -5,7 +5,7 @@
 			type-change
 			enable-title
 			instance-name="availableVars"
-			:variables="variables"
+			:groups="variables"
 			:dataset="dataset"
 			:html="html">
 		</variable-facets>
@@ -19,9 +19,9 @@ import { getters as dataGetters } from '../store/data/module';
 import { getters as routeGetters } from '../store/route/module';
 import { createRouteEntry } from '../util/routes';
 import { filterSummariesByDataset } from '../util/data';
-import { VariableSummary } from '../store/data/index';
 import VariableFacets from '../components/VariableFacets.vue';
 import { CREATE_ROUTE } from '../store/route/index';
+import { Group, createGroups } from '../util/facets';
 import 'font-awesome/css/font-awesome.css';
 import Vue from 'vue';
 
@@ -36,9 +36,10 @@ export default Vue.extend({
 		dataset(): string {
 			return routeGetters.getRouteDataset(this.$store);
 		},
-		variables(): VariableSummary[] {
+		groups(): Group[] {
 			const summaries = dataGetters.getVariableSummaries(this.$store);
-			return filterSummariesByDataset(summaries, this.dataset);
+			filterSummariesByDataset(summaries, this.dataset);
+			return createGroups(summaries, false, false);
 		},
 		html(): ( { key: string } ) => HTMLDivElement {
 			return (group: { key: string }) => {

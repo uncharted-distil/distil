@@ -3,10 +3,10 @@
 		<p class="nav-link font-weight-bold">Features to Model</p>
 		<variable-facets
 			enable-search
-			enable-facet-filtering
 			type-change
 			instance-name="trainingVars"
-			:variables="variables"
+			@click="onClick"
+			:groups="groups"
 			:dataset="dataset"
 			:html="html">
 		</variable-facets>
@@ -21,8 +21,8 @@ import 'font-awesome/css/font-awesome.css';
 import Vue from 'vue';
 import { getters as dataGetters} from '../store/data/module';
 import { getters as routeGetters } from '../store/route/module';
-import { VariableSummary } from '../store/data/index';
-import { Group } from '../util/facets';
+import { Group, createGroups } from '../util/facets';
+import { Highlights, getHighlights } from '../util/highlights';
 
 export default Vue.extend({
 	name: 'training-variables',
@@ -35,8 +35,24 @@ export default Vue.extend({
 		dataset(): string {
 			return routeGetters.getRouteDataset(this.$store);
 		},
-		variables(): VariableSummary[] {
-			return dataGetters.getTrainingVariableSummaries(this.$store);
+		highlightRoot(): Highlights {
+			return getHighlights(this.$store);
+		},
+		groups(): Group[] {
+			const summaries = dataGetters.getTrainingVariableSummaries(this.$store);
+			const groups =  createGroups(summaries, false, false);
+			if (this.highlightRoot.root) {
+				groups.forEach(group => {
+					if (group) {
+						if (group.key === this.highlightRoot.root.key) {
+							group.facets.forEach(facet => {
+								facet.filterable = true;
+							});
+						}
+					}
+				});
+			}
+			return groups;
 		},
 		html(): (Group) => HTMLDivElement {
 			return (group: Group) => {
@@ -55,6 +71,11 @@ export default Vue.extend({
 				container.appendChild(remove);
 				return container;
 			};
+		}
+	},
+	methods: {
+		onClick(key: string) {
+			console.log(key);
 		}
 	}
 });
