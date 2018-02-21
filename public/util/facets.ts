@@ -5,6 +5,7 @@ import { VariableSummary, Extrema } from '../store/data/index';
 
 export const CATEGORY_NO_MATCH_COLOR = "#e05353";
 export const CATEGORY_MATCH_COLOR = "#03c6e1";
+export const CATEGORICAL_CHUNK_SIZE = 10;
 
 export interface PlaceHolderFacet {
 	placeholder: boolean;
@@ -57,6 +58,8 @@ export interface Group {
 	collapsed: boolean;
 	facets: (PlaceHolderFacet | CategoricalFacet | NumericalFacet)[];
 	numRows: number;
+	more?: number;
+	remaining?: (PlaceHolderFacet | CategoricalFacet | NumericalFacet)[];
 }
 
 // creates the set of facets from the supplied summary data
@@ -157,8 +160,7 @@ export function getGroupIcon(summary: VariableSummary): string {
 // creates a categorical facet with segments based on nest buckets counts, or no segments if buckets aren't nested
 function createCategoricalSummaryFacet(summary: VariableSummary, enableCollapse: boolean, enableFiltering: boolean, extrema: Extrema): Group {
 
-	// generate facets from the supplied variable summary
-	const facets = summary.buckets.map(b => {
+	const facets =  summary.buckets.map(b => {
 
 		let segments = [];
 		let selected = null;
@@ -192,11 +194,14 @@ function createCategoricalSummaryFacet(summary: VariableSummary, enableCollapse:
 		};
 
 		return facet;
-	})
+	});
 
 	facets.sort((a, b) => {
 		return b.count - a.count;
 	});
+
+	const top = facets.slice(0, CATEGORICAL_CHUNK_SIZE)
+	const remaining = (facets.length > CATEGORICAL_CHUNK_SIZE) ? facets.slice(CATEGORICAL_CHUNK_SIZE) : [];
 
 	// Generate a facet group
 	return {
@@ -205,8 +210,10 @@ function createCategoricalSummaryFacet(summary: VariableSummary, enableCollapse:
 		type: summary.varType,
 		collapsible: enableCollapse,
 		collapsed: false,
-		facets: facets,
-		numRows: summary.numRows
+		facets: top,
+		numRows: summary.numRows,
+		more: remaining.length,
+		remaining: remaining
 	};
 }
 

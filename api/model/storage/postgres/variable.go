@@ -11,7 +11,7 @@ import (
 )
 
 const (
-	catResultLimit = 10
+	catResultLimit = 100
 )
 
 func (s *Storage) calculateInterval(extrema *model.Extrema) float64 {
