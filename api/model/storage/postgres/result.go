@@ -497,7 +497,7 @@ func (s *Storage) fetchCategoricalResultHistogram(resultURI string, dataset stri
 		"FROM %s AS result INNER JOIN %s AS base ON result.index = base.\"d3mIndex\" "+
 		"WHERE result.result_id = $1 and result.target = $2 "+
 		"GROUP BY result.value, base.\"%s\" "+
-		"ORDER BY count desc;", targetName, resultDataset, dataset, targetName)
+		"ORDER BY count desc LIMIT %d;", targetName, resultDataset, dataset, targetName, catResultLimit)
 
 	// execute the postgres query
 	res, err := s.client.Query(query, resultURI, targetName)
