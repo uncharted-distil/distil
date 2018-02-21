@@ -2,6 +2,7 @@
 	<div class="training-variables">
 		<p class="nav-link font-weight-bold">Features to Model</p>
 		<variable-facets
+			ref="facets"
 			enable-search
 			enable-facet-filtering
 			type-change
@@ -9,6 +10,15 @@
 			:variables="variables"
 			:dataset="dataset"
 			:html="html">
+			<div v-if="variables.length > 0" class="pb-2">
+				<b-button size="sm" variant="outline-secondary" @click="removeAll">Remove All</b-button>
+			</div>
+			<div>
+				{{subtitle}}
+			</div>
+			<div v-if="variables.length === 0">
+				<i class="no-selections-icon fa fa-arrow-circle-left"></i>
+			</div>
 		</variable-facets>
 	</div>
 </template>
@@ -38,6 +48,9 @@ export default Vue.extend({
 		variables(): VariableSummary[] {
 			return dataGetters.getTrainingVariableSummaries(this.$store);
 		},
+		subtitle(): string {
+			return `${this.variables.length} features available`;
+		},
 		html(): (Group) => HTMLDivElement {
 			return (group: Group) => {
 				const container = document.createElement('div');
@@ -56,6 +69,21 @@ export default Vue.extend({
 				return container;
 			};
 		}
+	},
+
+	methods: {
+		removeAll() {
+			const facets = this.$refs.facets as any;
+			const training = routeGetters.getRouteTrainingVariables(this.$store);
+			const trainingArray = training ? training.split(',') : [];
+			facets.availableVariables().forEach(variable => {
+				trainingArray.splice(trainingArray.indexOf(variable), 1);
+			});
+			const entry = overlayRouteEntry(routeGetters.getRoute(this.$store), {
+				training: trainingArray.join(',')
+			});
+			this.$router.push(entry);
+		}
 	}
 });
 </script>
@@ -64,5 +92,9 @@ export default Vue.extend({
 .training-variables {
 	display: flex;
 	flex-direction: column;
+}
+.no-selections-icon {
+	color: #32CD32;
+	font-size: 46px;
 }
 </style>
