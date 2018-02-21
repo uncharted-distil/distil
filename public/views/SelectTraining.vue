@@ -81,6 +81,9 @@ export default Vue.extend({
 		filters(): Filter[] {
 			return routeGetters.getDecodedFilters(this.$store);
 		},
+		filterStr(): string {
+			return routeGetters.getRouteFilters(this.$store);
+		},
 		selectedFilters(): Filter[] {
 			return dataGetters.getSelectedFilters(this.$store);
 		},
@@ -100,7 +103,7 @@ export default Vue.extend({
 				highlightRoot: this.highlightRoot,
 			});
 		},
-		selectedFilters() {
+		filterStr() {
 			actions.fetchDataHighlightValues(this.$store, {
 				dataset: this.dataset,
 				filters: this.filters,
