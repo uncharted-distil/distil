@@ -30,7 +30,7 @@ export interface Bucket {
 
 export interface VariableSummary {
 	name: string;
-	label?: string;
+	label: string;
 	feature: string;
 	dataset: string;
 	buckets: Bucket[];
@@ -74,6 +74,8 @@ export interface DataState {
 	resultSummaries: VariableSummary[];
 	predictedSummaries: VariableSummary[];
 	residualSummaries: VariableSummary[];
+	predictedExtremas: Dictionary<Extrema>;
+	residualExtremas: Dictionary<Extrema>;
 	resultData: Data;
 	filteredData: Data;
 	selectedData: Data;
@@ -98,6 +100,10 @@ export const state = {
 
 	// error summary data for the predicted data
 	residualSummaries: <VariableSummary[]>[],
+
+	predictedExtremas: {},
+
+	residualExtremas: {},
 
 	// current set of pipeline results
 	resultData: null,

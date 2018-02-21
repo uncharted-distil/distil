@@ -14,21 +14,13 @@ const (
 	catResultLimit = 100
 )
 
-func (s *Storage) calculateInterval(extrema *model.Extrema) float64 {
-	// compute the bucket interval for the histogram
-	if model.IsFloatingPoint(extrema.Type) {
-		return (extrema.Max - extrema.Min) / model.MaxNumBuckets
-	}
-	return (extrema.Max - extrema.Min + 1) / model.MaxNumBuckets
-}
-
 func (s *Storage) getHistogramAggQuery(extrema *model.Extrema) (string, string, string) {
-	interval := s.calculateInterval(extrema)
+	interval := extrema.GetBucketInterval()
 
 	// get histogram agg name & query string.
 	histogramAggName := fmt.Sprintf("\"%s%s\"", model.HistogramAggPrefix, extrema.Name)
-	bucketQueryString := fmt.Sprintf("width_bucket(\"%s\", %g, %g, %d)",
-		extrema.Name, extrema.Min, extrema.Max, model.MaxNumBuckets)
+	bucketQueryString := fmt.Sprintf("width_bucket(\"%s\", %g, %g, %d) - 1",
+		extrema.Name, extrema.Min, extrema.Max, extrema.GetBucketCount())
 	histogramQueryString := fmt.Sprintf("(%s) * %g + %g", bucketQueryString, interval, extrema.Min)
 
 	return histogramAggName, bucketQueryString, histogramQueryString
@@ -39,9 +31,9 @@ func (s *Storage) parseNumericHistogram(varType string, rows *pgx.Rows, extrema 
 	histogramAggName := model.HistogramAggPrefix + extrema.Name
 
 	// Parse bucket results.
-	interval := s.calculateInterval(extrema)
+	interval := extrema.GetBucketInterval()
 
-	buckets := make([]*model.Bucket, model.MaxNumBuckets)
+	buckets := make([]*model.Bucket, extrema.GetBucketCount())
 	key := extrema.Min
 	for i := 0; i < len(buckets); i++ {
 		keyString := ""
@@ -67,8 +59,11 @@ func (s *Storage) parseNumericHistogram(varType string, rows *pgx.Rows, extrema 
 		if err != nil {
 			return nil, errors.Wrap(err, fmt.Sprintf("no %s histogram aggregation found", histogramAggName))
 		}
+
+		// Since the max can match the limit, an extra bucket may exist.
+		// Add the value to the second to last bucket.
 		if bucket < int64(len(buckets)) {
-			buckets[bucket-1].Count = bucketCount
+			buckets[bucket].Count = bucketCount
 		} else {
 			buckets[len(buckets)-1].Count += bucketCount
 
@@ -281,11 +276,17 @@ func (s *Storage) fetchNumericalHistogram(dataset string, variable *model.Variab
 	return s.parseNumericHistogram(variable.Type, res, extrema)
 }
 
-func (s *Storage) fetchNumericalHistogramByResult(dataset string, variable *model.Variable, resultURI string) (*model.Histogram, error) {
+func (s *Storage) fetchNumericalHistogramByResult(dataset string, variable *model.Variable, resultURI string, extrema *model.Extrema) (*model.Histogram, error) {
 	// need the extrema to calculate the histogram interval
-	extrema, err := s.fetchExtrema(dataset, variable)
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to fetch variable extrema for summary")
+	var err error
+	if extrema == nil {
+		extrema, err = s.fetchExtrema(dataset, variable)
+		if err != nil {
+			return nil, errors.Wrap(err, "failed to fetch variable extrema for summary")
+		}
+	} else {
+		extrema.Name = variable.Name
+		extrema.Type = variable.Type
 	}
 	// for each returned aggregation, create a histogram aggregation. Bucket
 	// size is derived from the min/max and desired bucket count.
@@ -341,7 +342,7 @@ func (s *Storage) fetchCategoricalHistogramByResult(dataset string, variable *mo
 	return s.parseCategoricalHistogram(res, variable)
 }
 
-func (s *Storage) fetchSummaryData(dataset string, index string, varName string, resultURI string) (*model.Histogram, error) {
+func (s *Storage) fetchSummaryData(dataset string, index string, varName string, resultURI string, extrema *model.Extrema) (*model.Histogram, error) {
 	// need description of the variables to request aggregation against.
 	variable, err := s.metadata.FetchVariable(dataset, index, varName)
 	if err != nil {
@@ -355,7 +356,7 @@ func (s *Storage) fetchSummaryData(dataset string, index string, varName string,
 		if resultURI == "" {
 			histogram, err = s.fetchNumericalHistogram(dataset, variable)
 		} else {
-			histogram, err = s.fetchNumericalHistogramByResult(dataset, variable, resultURI)
+			histogram, err = s.fetchNumericalHistogramByResult(dataset, variable, resultURI, extrema)
 		}
 		if err != nil {
 			return nil, errors.Wrap(err, "unable to get numerical histogram")
@@ -389,11 +390,11 @@ func (s *Storage) fetchSummaryData(dataset string, index string, varName string,
 
 // FetchSummary returns the summary for the provided dataset and variable.
 func (s *Storage) FetchSummary(dataset string, index string, varName string) (*model.Histogram, error) {
-	return s.fetchSummaryData(dataset, index, varName, "")
+	return s.fetchSummaryData(dataset, index, varName, "", nil)
 }
 
 // FetchSummaryByResult returns the summary for the provided dataset
 // and variable for data that is part of the result set.
-func (s *Storage) FetchSummaryByResult(dataset string, index string, varName string, resultURI string) (*model.Histogram, error) {
-	return s.fetchSummaryData(dataset, index, varName, resultURI)
+func (s *Storage) FetchSummaryByResult(dataset string, index string, varName string, resultURI string, extrema *model.Extrema) (*model.Histogram, error) {
+	return s.fetchSummaryData(dataset, index, varName, resultURI, extrema)
 }

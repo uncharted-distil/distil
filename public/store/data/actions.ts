@@ -4,7 +4,7 @@ import { AxiosPromise } from 'axios';
 import { encodeQueryParams, Filter } from '../../util/filters';
 import { getPipelinesByRequestIds, getPipelineById } from '../../util/pipelines';
 import { getSummaries, getSummary } from '../../util/data';
-import { Variable, Data } from './index';
+import { Variable, Data, Extrema } from './index';
 import { PipelineInfo, PIPELINE_ERRORED } from '../pipelines/index';
 import { mutations } from './module'
 import { HighlightRoot, createFilterFromHighlightRoot, parseHighlightValues } from '../../util/highlights';
@@ -167,7 +167,7 @@ export const actions = {
 	},
 
 	// fetches variable summary data for the given dataset and variables
-	fetchResultSummaries(context: DataContext, args: { dataset: string, variables: Variable[], pipelineId: string }) {
+	fetchResultSummaries(context: DataContext, args: { dataset: string, variables: Variable[], pipelineId: string, extrema: Extrema }) {
 		if (!args.dataset) {
 			console.warn('`dataset` argument is missing');
 			return null;
@@ -205,7 +205,8 @@ export const actions = {
 				promises.push(context.dispatch('fetchResultSummary', {
 					dataset: args.dataset,
 					pipelineId: args.pipelineId,
-					variable: variable.name
+					variable: variable.name,
+					extrema: args.extrema
 				}));
 			}
 		});
@@ -213,7 +214,7 @@ export const actions = {
 		return Promise.all(promises);
 	},
 
-	fetchResultSummary(context: DataContext, args: { dataset: string, variable: string, pipelineId: string }) {
+	fetchResultSummary(context: DataContext, args: { dataset: string, variable: string, pipelineId: string, extrema: Extrema }) {
 		if (!args.dataset) {
 			console.warn('`dataset` argument is missing');
 			return null;
@@ -231,7 +232,14 @@ export const actions = {
 			// no results ready to pull
 			return null;
 		}
-		return axios.get(`/distil/results-variable-summary/${ES_INDEX}/${args.dataset}/${args.variable}/${pipeline.resultId}`)
+		// only use extrema if this is the feature variable
+		let extremaMin = null;
+		let extremaMax = null;
+		if (args.variable === pipeline.feature) {
+			extremaMin = args.extrema.min;
+			extremaMax = args.extrema.max;
+		}
+		return axios.get(`/distil/results-variable-summary/${ES_INDEX}/${args.dataset}/${args.variable}/${extremaMin}/${extremaMax}/${pipeline.resultId}`)
 			.then(response => {
 				mutations.updateResultSummaries(context, response.data.histogram);
 			})
@@ -280,37 +288,135 @@ export const actions = {
 		return axios.get<Data>(url);
 	},
 
-	// fetches result summary for a given pipeline id.
-	fetchPredictedSummary(context: DataContext, args: { dataset: string, pipelineId: string }) {
+	fetchPredictedExtrema(context: DataContext, args: { dataset: string, pipelineId: string }) {
 		const pipeline = getPipelineById(context.rootState.pipelineModule, args.pipelineId);
-		const endPoint = `/distil/results-summary/${ES_INDEX}/${args.dataset}`
+		return axios.get(`/distil/results-extrema/${ES_INDEX}/${args.dataset}/${pipeline.resultId}`)
+			.then(response => {
+				mutations.updatePredictedExtremas(context, {
+					pipelineId: args.pipelineId,
+					extrema: response.data.extrema
+				});
+			})
+			.catch(error => {
+				console.error(error);
+			});
+	},
+
+	fetchPredictedExtremas(context: DataContext, args: { dataset: string, requestIds: string[] }) {
+		const pipelines = getPipelinesByRequestIds(context.rootState.pipelineModule, args.requestIds);
+		mutations.clearPredictedExtremas(context);
+		return Promise.all(pipelines.map(pipeline => {
+			return context.dispatch('fetchPredictedExtrema', {
+				dataset: args.dataset,
+				pipelineId: pipeline.pipelineId
+			});
+		}));
+	},
+
+	fetchResidualsExtrema(context: DataContext, args: { dataset: string, pipelineId: string }) {
+		const pipeline = getPipelineById(context.rootState.pipelineModule, args.pipelineId);
+		return axios.get(`/distil/residuals-extrema/${ES_INDEX}/${args.dataset}/${pipeline.resultId}`)
+			.then(response => {
+				mutations.updateResidualsExtremas(context, {
+					pipelineId: args.pipelineId,
+					extrema: response.data.extrema
+				});
+			})
+			.catch(error => {
+				console.error(error);
+			});
+	},
+
+	fetchResidualsExtremas(context: DataContext, args: { dataset: string, requestIds: string[] }) {
+		const pipelines = getPipelinesByRequestIds(context.rootState.pipelineModule, args.requestIds);
+		mutations.clearResidualsExtremas(context);
+		return Promise.all(pipelines.map(pipeline => {
+			return context.dispatch('fetchResidualsExtrema', {
+				dataset: args.dataset,
+				pipelineId: pipeline.pipelineId
+			});
+		}));
+	},
+
+	// fetches result summary for a given pipeline id.
+	fetchPredictedSummary(context: DataContext, args: { dataset: string, pipelineId: string, extrema: Extrema }) {
+		if (!args.dataset) {
+			console.warn('`dataset` argument is missing');
+			return null;
+		}
+		if (!args.pipelineId) {
+			console.warn('`pipelineId` argument is missing');
+			return null;
+		}
+		if (!args.extrema) {
+			console.warn('`extrema` argument is missing');
+			return null;
+		}
+		const pipeline = getPipelineById(context.rootState.pipelineModule, args.pipelineId);
+		const endPoint = `/distil/results-summary/${ES_INDEX}/${args.dataset}/${args.extrema.min}/${args.extrema.max}`
 		const nameFunc = (p: PipelineInfo) => getPredictedCol(p.feature);
 		const labelFunc = (p: PipelineInfo) => 'Predicted';
 		getSummary(context, endPoint, pipeline, nameFunc, labelFunc, mutations.updatePredictedSummaries);
 	},
 
 	// fetches result summaries for a given pipeline create request
-	fetchPredictedSummaries(context: DataContext, args: { dataset: string, requestIds: string[] }) {
+	fetchPredictedSummaries(context: DataContext, args: { dataset: string, requestIds: string[], extrema: Extrema }) {
+		if (!args.dataset) {
+			console.warn('`dataset` argument is missing');
+			return null;
+		}
+		if (!args.requestIds) {
+			console.warn('`requestIds` argument is missing');
+			return null;
+		}
+		if (!args.extrema) {
+			console.warn('`extrema` argument is missing');
+			return null;
+		}
 		const pipelines = getPipelinesByRequestIds(context.rootState.pipelineModule, args.requestIds);
-		const endPoint = `/distil/results-summary/${ES_INDEX}/${args.dataset}`
+		const endPoint = `/distil/results-summary/${ES_INDEX}/${args.dataset}/${args.extrema.min}/${args.extrema.max}`
 		const nameFunc = (p: PipelineInfo) => getPredictedCol(p.feature);
 		const labelFunc = (p: PipelineInfo) => 'Predicted';
 		getSummaries(context, endPoint, pipelines, nameFunc, labelFunc, mutations.updatePredictedSummaries);
 	},
 
 	// fetches result summary for a given pipeline id.
-	fetchResidualsSummary(context: DataContext, args: { dataset: string, pipelineId: string }) {
+	fetchResidualsSummary(context: DataContext, args: { dataset: string, pipelineId: string, extrema: Extrema }) {
+		if (!args.dataset) {
+			console.warn('`dataset` argument is missing');
+			return null;
+		}
+		if (!args.pipelineId) {
+			console.warn('`pipelineId` argument is missing');
+			return null;
+		}
+		if (!args.extrema) {
+			console.warn('`extrema` argument is missing');
+			return null;
+		}
 		const pipeline = getPipelineById(context.rootState.pipelineModule, args.pipelineId);
-		const endPoint = `/distil/residuals-summary/${ES_INDEX}/${args.dataset}`
+		const endPoint = `/distil/residuals-summary/${ES_INDEX}/${args.dataset}/${args.extrema.min}/${args.extrema.max}`
 		const nameFunc = (p: PipelineInfo) => getErrorCol(p.feature);
 		const labelFunc = (p: PipelineInfo) => 'Error';
 		getSummary(context, endPoint, pipeline, nameFunc, labelFunc, mutations.updateResidualsSummaries);
 	},
 
 	// fetches result summaries for a given pipeline create request
-	fetchResidualsSummaries(context: DataContext, args: { dataset: string, requestIds: string[] }) {
+	fetchResidualsSummaries(context: DataContext, args: { dataset: string, requestIds: string[], extrema: Extrema }) {
+		if (!args.dataset) {
+			console.warn('`dataset` argument is missing');
+			return null;
+		}
+		if (!args.requestIds) {
+			console.warn('`requestIds` argument is missing');
+			return null;
+		}
+		if (!args.extrema) {
+			console.warn('`extrema` argument is missing');
+			return null;
+		}
 		const pipelines = getPipelinesByRequestIds(context.rootState.pipelineModule, args.requestIds);
-		const endPoint = `/distil/residuals-summary/${ES_INDEX}/${args.dataset}`
+		const endPoint = `/distil/residuals-summary/${ES_INDEX}/${args.dataset}/${args.extrema.min}/${args.extrema.max}`
 		const nameFunc = (p: PipelineInfo) => getErrorCol(p.feature);
 		const labelFunc = (p: PipelineInfo) => 'Error';
 		getSummaries(context, endPoint, pipelines, nameFunc, labelFunc, mutations.updateResidualsSummaries);
