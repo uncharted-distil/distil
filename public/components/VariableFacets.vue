@@ -19,6 +19,9 @@
 					<p>Select one of the following feature summaries showing count of records by feature value.</p>
 				</div>
 			</div>
+			<div class="pl-2">
+				<slot></slot>
+			</div>
 			<div class="row flex-11">
 				<facets class="col-12 flex-column d-flex variable-facets-container"
 					:groups="groups"
@@ -55,6 +58,7 @@ import { Highlights, Range } from '../util/highlights';
 import { Dictionary } from '../util/dict';
 import { getters as dataGetters } from '../store/data/module';
 import { getters as routeGetters } from '../store/route/module';
+import { VariableSummary } from '../store/data/index';
 import { createGroups, Group } from '../util/facets';
 import { updateHighlightRoot, clearHighlightRoot, getHighlights } from '../util/highlights';
 import 'font-awesome/css/font-awesome.css';
@@ -76,6 +80,7 @@ export default Vue.extend({
 		enableFacetFiltering: Boolean,
 		variables: Array,
 		dataset: String,
+		subtitle: String,
 		html: [ String, Object, Function ],
 		instanceName: { type: String, default: 'variable-facets' },
 		typeChange: Boolean
@@ -103,7 +108,7 @@ export default Vue.extend({
 			}
 		},
 
-		groups(): Group[] {
+		availableSummaries(): VariableSummary[] {
 			// filter by search
 			const searchFiltered = this.variables.filter(summary => {
 				return this.filter === '' || summary.name.toLowerCase().includes(this.filter.toLowerCase());
@@ -111,17 +116,19 @@ export default Vue.extend({
 
 			// sort by current function - sort looks for key to hold sort key
 			// TODO: this only needs to happen on re-order events once it has been sorted initially
-			const sorted = searchFiltered.map(v => ({ key: v.name, variable: v }))
+			return searchFiltered.map(v => ({ key: v.name, variable: v }))
 				.sort((a, b) => this[this.sortMethod](a, b))
 				.map(v => v.variable);
+		},
 
+		groups(): Group[] {
 			// if necessary, refilter applying pagination rules
-			this.numRows = searchFiltered.length;
-			let filtered = sorted;
+			this.numRows = this.availableSummaries.length;
+			let filtered = this.availableSummaries;
 			if (this.numRows > this.rowsPerPage) {
 				const firstIndex = this.rowsPerPage * (this.currentPage - 1);
 				const lastIndex = Math.min(firstIndex + this.rowsPerPage, this.numRows);
-				filtered = sorted.slice(firstIndex, lastIndex);
+				filtered = this.availableSummaries.slice(firstIndex, lastIndex);
 			}
 
 			// create the groups
@@ -157,6 +164,14 @@ export default Vue.extend({
 		importanceDesc(a: { key: string }, b: { key: string }): number {
 			const importance = this.importance;
 			return importance[b.key] - importance[a.key];
+		},
+
+		availableVariables(): string[] {
+			// filter by search
+			const searchFiltered = this.variables.filter(summary => {
+				return this.filter === '' || summary.name.toLowerCase().includes(this.filter.toLowerCase());
+			});
+			return searchFiltered.map(v => v.name );
 		},
 
 		// creates a facet key for the route from the instance-name component arg
