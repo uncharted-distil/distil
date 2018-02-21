@@ -254,7 +254,7 @@ export const actions = {
 
 	// update filtered data based on the  current filter state
 	fetchFilteredTableData(context: DataContext, args: { dataset: string, filters: Filter[] }) {
-		mutations.setFilteredData(context, null);
+		//mutations.setFilteredData(context, null);
 		context.dispatch('fetchData', { dataset: args.dataset, filters: args.filters, inclusive: true })
 			.then(response => {
 				mutations.setFilteredData(context, response.data);
@@ -267,7 +267,7 @@ export const actions = {
 
 	// update filtered data based on the  current filter state
 	fetchSelectedTableData(context: DataContext, args: { dataset: string, filters: Filter[] }) {
-		mutations.setSelectedData(context, null);
+		//mutations.setSelectedData(context, null);
 		context.dispatch('fetchData', { dataset: args.dataset, filters: args.filters, inclusive: false })
 			.then(response => {
 				mutations.setSelectedData(context, response.data);
@@ -424,7 +424,7 @@ export const actions = {
 
 	// fetches result data for created pipeline
 	fetchResultTableData(context: DataContext, args: { pipelineId: string, dataset: string, filters: Filter[] }) {
-		mutations.setResultData(context, null);
+		//mutations.setResultData(context, null);
 		context.dispatch('fetchResults', args)
 			.then(response => {
 				mutations.setResultData(context, response.data);
