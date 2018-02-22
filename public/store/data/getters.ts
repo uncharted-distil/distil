@@ -217,7 +217,9 @@ export const getters = {
 	},
 
 	getResultDataItems(state: DataState, getters: any): TargetRow[] {
-		if (!_.get(state, ['resultData', 'columns'])) {
+		if (!state.resultData ||
+			!state.resultData.columns ||
+			state.resultData.columns.length === 0) {
 			return [];
 		}
 
@@ -331,6 +333,10 @@ export const getters = {
 			res.min = Math.min(res.min, extrema.min);
 			res.max = Math.max(res.max, extrema.max);
 		});
+		if (state.resultExtrema) {
+			res.min = Math.min(res.min, state.resultExtrema.min);
+			res.max = Math.max(res.max, state.resultExtrema.max);
+		}
 		return res;
 	},
 
