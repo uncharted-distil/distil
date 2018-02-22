@@ -213,7 +213,7 @@ func writeData(dataPath string, datasetDir string, filteredData *model.FilteredD
 	defer writer.Flush()
 
 	// write out the header, including the d3m_index field
-	variableNames := []string{"d3mIndex"}
+	variableNames := make([]string, 0)
 	for _, column := range filteredData.Columns {
 		variableNames = append(variableNames, column)
 	}
@@ -222,9 +222,8 @@ func writeData(dataPath string, datasetDir string, filteredData *model.FilteredD
 		return errors.Wrapf(err, "unable to persist %v", variableNames)
 	}
 
-	for rowNum, row := range filteredData.Values {
-		// append the index as the d3m_index col
-		strVals := []string{strconv.Itoa(rowNum)}
+	for _, row := range filteredData.Values {
+		strVals := make([]string, 0)
 
 		// convert vals in row to string
 		for _, value := range row {
@@ -266,12 +265,12 @@ func writeDataSchema(schemaPath string, dataset string, filteredData *model.Filt
 	}
 
 	// Both outputs have the index.
-	ds.DataResources[0].Variables = append(ds.DataResources[0].Variables, &DataVariable{
-		ColName:  "d3mIndex",
-		Role:     []string{"index"},
-		ColType:  "integer",
-		ColIndex: 0,
-	})
+	//ds.DataResources[0].Variables = append(ds.DataResources[0].Variables, &DataVariable{
+	//	ColName:  "d3mIndex",
+	//	Role:     []string{"index"},
+	//	ColType:  "integer",
+	//	ColIndex: 0,
+	//})
 
 	// Add all other variables.
 	// NOTE: the target is identified by the suggested target role.
@@ -279,6 +278,10 @@ func writeDataSchema(schemaPath string, dataset string, filteredData *model.Filt
 		role := []string{"attribute"}
 		if i == targetIdx {
 			role[0] = "suggestedTarget"
+		}
+		if c == "d3mIndex" {
+			// Set the specific values for the d3m index.
+			role[0] = "index"
 		}
 		v := &DataVariable{
 			ColName:  c,

@@ -211,6 +211,12 @@ func handleCreatePipelines(conn *Connection, client *pipeline.Client, metadataCt
 	// is more elegant or not.
 	filters.Size = -1
 
+	// NOTE: D3M index field is needed in the persisted data.
+	filters.Filters = append(filters.Filters, &model.Filter{
+		Name: "d3mIndex",
+		Type: "empty",
+	})
+
 	// initialize the storage
 	dataStorage, err := dataCtor()
 	if err != nil {
@@ -234,7 +240,11 @@ func handleCreatePipelines(conn *Connection, client *pipeline.Client, metadataCt
 
 	// persist the filtered dataset if necessary
 	fetchFilteredData := func(dataset string, index string, filterParams *model.FilterParams) (*model.FilteredData, error) {
-		// fetch the whole data and include the target feature
+		// fetch the whole data, including the target and index
+		log.Infof("FILTER: %v", *filterParams)
+		for _, f := range filterParams.Filters {
+			log.Infof("FILTER IN: %v", *f)
+		}
 		return dataStorage.FetchData(dataset, index, filterParams, false)
 	}
 	fetchVariable := func(dataset string, index string) ([]*model.Variable, error) {
