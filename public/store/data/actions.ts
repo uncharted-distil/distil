@@ -231,6 +231,10 @@ export const actions = {
 			console.warn('`pipelineId` argument is missing');
 			return null;
 		}
+		if (!args.extrema || (!args.extrema.min && !args.extrema.max)) {
+			console.warn('`extrema` argument is missing');
+			return null;
+		}
 		const pipeline = getPipelineById(context.rootState.pipelineModule, args.pipelineId);
 		if (!pipeline.resultId) {
 			// no results ready to pull
