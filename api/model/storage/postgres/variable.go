@@ -66,7 +66,6 @@ func (s *Storage) parseNumericHistogram(varType string, rows *pgx.Rows, extrema 
 			buckets[bucket].Count = bucketCount
 		} else {
 			buckets[len(buckets)-1].Count += bucketCount
-
 		}
 	}
 	// assign histogram attributes
@@ -250,6 +249,37 @@ func (s *Storage) fetchExtrema(dataset string, variable *model.Variable) (*model
 	return s.parseExtrema(res, variable)
 }
 
+func (s *Storage) fetchExtremaByURI(dataset string, resultURI string, variable *model.Variable) (*model.Extrema, error) {
+	// add min / max aggregation
+	aggQuery := s.getMinMaxAggsQuery(variable)
+
+	// create a query that does min and max aggregations for each variable
+	queryString := fmt.Sprintf("SELECT %s FROM %s data INNER JOIN %s result ON data.\"%s\" = result.index WHERE result.result_id = $1;", aggQuery, dataset, s.getResultTable(dataset), d3mIndexFieldName)
+
+	// execute the postgres query
+	// NOTE: We may want to use the regular Query operation since QueryRow
+	// hides db exceptions.
+	res, err := s.client.Query(queryString, resultURI)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to fetch extrema for variable summaries from postgres")
+	}
+	if res != nil {
+		defer res.Close()
+	}
+
+	return s.parseExtrema(res, variable)
+}
+
+// FetchExtremaByURI return extrema of a variable in a result set.
+func (s *Storage) FetchExtremaByURI(dataset string, resultURI string, index string, varName string) (*model.Extrema, error) {
+
+	variable, err := s.metadata.FetchVariable(dataset, index, varName)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to fetch variable description for summary")
+	}
+	return s.fetchExtremaByURI(dataset, resultURI, variable)
+}
+
 func (s *Storage) fetchNumericalHistogram(dataset string, variable *model.Variable) (*model.Histogram, error) {
 	// need the extrema to calculate the histogram interval
 	extrema, err := s.fetchExtrema(dataset, variable)
@@ -280,7 +310,7 @@ func (s *Storage) fetchNumericalHistogramByResult(dataset string, variable *mode
 	// need the extrema to calculate the histogram interval
 	var err error
 	if extrema == nil {
-		extrema, err = s.fetchExtrema(dataset, variable)
+		extrema, err = s.fetchExtremaByURI(dataset, resultURI, variable)
 		if err != nil {
 			return nil, errors.Wrap(err, "failed to fetch variable extrema for summary")
 		}
