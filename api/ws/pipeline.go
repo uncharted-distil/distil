@@ -241,14 +241,10 @@ func handleCreatePipelines(conn *Connection, client *pipeline.Client, metadataCt
 	// persist the filtered dataset if necessary
 	fetchFilteredData := func(dataset string, index string, filterParams *model.FilterParams) (*model.FilteredData, error) {
 		// fetch the whole data, including the target and index
-		log.Infof("FILTER: %v", *filterParams)
-		for _, f := range filterParams.Filters {
-			log.Infof("FILTER IN: %v", *f)
-		}
 		return dataStorage.FetchData(dataset, index, filterParams, false)
 	}
 	fetchVariable := func(dataset string, index string) ([]*model.Variable, error) {
-		return metadata.FetchVariables(dataset, index, false)
+		return metadata.FetchVariables(dataset, index, true)
 	}
 	datasetPath, err := pipeline.PersistFilteredData(fetchFilteredData, fetchVariable, client.DataDir, clientCreateMsg.Dataset, clientCreateMsg.Index, clientCreateMsg.Feature, filters)
 	if err != nil {
@@ -489,7 +485,7 @@ func handleCreatePipelinesSuccess(conn *Connection, msg *Message, proxy *pipelin
 // be cached by Redis, but still worth looking into storing some of the dataset info.
 func fetchFilteredVariables(metadata model.MetadataStorage, index string, dataset string, filters *model.FilterParams) ([]string, error) {
 	// fetch the variable set from es
-	variables, err := metadata.FetchVariables(dataset, index, false)
+	variables, err := metadata.FetchVariables(dataset, index, true)
 	if err != nil {
 		return nil, err
 	}

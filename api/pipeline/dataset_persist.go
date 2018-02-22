@@ -264,15 +264,6 @@ func writeDataSchema(schemaPath string, dataset string, filteredData *model.Filt
 		DataResources: drs,
 	}
 
-	// Both outputs have the index.
-	//ds.DataResources[0].Variables = append(ds.DataResources[0].Variables, &DataVariable{
-	//	ColName:  "d3mIndex",
-	//	Role:     []string{"index"},
-	//	ColType:  "integer",
-	//	ColIndex: 0,
-	//})
-
-	// Add all other variables.
 	// NOTE: the target is identified by the suggested target role.
 	for i, c := range filteredData.Columns {
 		role := []string{"attribute"}
@@ -287,7 +278,7 @@ func writeDataSchema(schemaPath string, dataset string, filteredData *model.Filt
 			ColName:  c,
 			Role:     role,
 			ColType:  model.MapTA2Type(vars[c].Type),
-			ColIndex: i + 1,
+			ColIndex: i,
 		}
 		ds.DataResources[0].Variables = append(ds.DataResources[0].Variables, v)
 	}
