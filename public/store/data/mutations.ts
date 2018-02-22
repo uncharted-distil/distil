@@ -49,6 +49,14 @@ export const mutations = {
 		state.residualExtremas = {};
 	},
 
+	updateResultExtrema(state: DataState, args: { extrema: Extrema }) {
+		state.resultExtrema = args.extrema;
+	},
+
+	clearResultExtrema(state: DataState) {
+		state.resultExtrema = null;
+	},
+
 	updateResidualsExtremas(state: DataState, args: { pipelineId: string, extrema: Extrema }) {
 		Vue.set(state.residualExtremas, args.pipelineId, args.extrema);
 	},

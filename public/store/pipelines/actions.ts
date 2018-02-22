@@ -24,6 +24,90 @@ interface PipelineRequest {
 
 export type AppContext = ActionContext<PipelineState, DistilState>;
 
+function updateCurrentPipelineResults(context: any, req: PipelineRequest, res: PipelineInfo) {
+
+	const currentPipelineId = context.getters.getRoutePipelineId;
+
+	// if current pipelineId, pull results
+	if (res.pipelineId === currentPipelineId) {
+		context.dispatch('fetchResultTableData', {
+			dataset: req.dataset,
+			pipelineId: res.pipelineId,
+			filters: context.getters.getDecodedFilters
+		});
+	}
+
+	Promise.all([
+		context.dispatch('fetchResultExtrema', {
+			dataset: req.dataset,
+			variable: req.feature,
+			pipelineId: res.pipelineId
+		}),
+		context.dispatch('fetchPredictedExtrema', {
+			dataset: req.dataset,
+			pipelineId: res.pipelineId
+		})
+	]).then(() => {
+		// if current pipelineId, pull result summaries
+		if (res.pipelineId === currentPipelineId) {
+			context.dispatch('fetchResultSummaries', {
+				dataset: req.dataset,
+				pipelineId: res.pipelineId,
+				variables: context.getters.getVariables,
+				extrema: context.getters.getPredictedExtrema
+			});
+		}
+		context.dispatch('fetchPredictedSummary', {
+			dataset: req.dataset,
+			pipelineId: res.pipelineId,
+			extrema: context.getters.getPredictedExtrema
+		});
+	});
+
+	context.dispatch('fetchResidualsExtrema', {
+		dataset: req.dataset,
+		pipelineId: res.pipelineId
+	}).then(() => {
+		context.dispatch('fetchResidualsSummary', {
+			dataset: req.dataset,
+			pipelineId: res.pipelineId,
+			extrema: context.getters.getResidualExtrema
+		});
+	});
+}
+
+function updatePipelineResults(context: any, req: PipelineRequest, res: PipelineInfo) {
+
+	Promise.all([
+		context.dispatch('fetchResultExtrema', {
+			dataset: req.dataset,
+			variable: req.feature,
+			pipelineId: res.pipelineId
+		}),
+		context.dispatch('fetchPredictedExtrema', {
+			dataset: req.dataset,
+			pipelineId: res.pipelineId
+		})
+	]).then(() => {
+		context.dispatch('fetchPredictedSummary', {
+			dataset: req.dataset,
+			pipelineId: res.pipelineId,
+			extrema: context.getters.getPredictedExtrema
+		});
+	});
+
+	context.dispatch('fetchResidualsExtrema', {
+		dataset: req.dataset,
+		pipelineId: res.pipelineId
+	}).then(() => {
+		context.dispatch('fetchResidualsSummary', {
+			dataset: req.dataset,
+			pipelineId: res.pipelineId,
+			extrema: context.getters.getResidualExtrema
+		});
+	});
+}
+
 export const actions = {
 
 	// starts a pipeline session.
@@ -154,46 +238,16 @@ export const actions = {
 					// update summaries
 					if (res.progress === PIPELINE_ERRORED ||
 						res.progress === PIPELINE_UPDATED ||
-						res.progress == PIPELINE_COMPLETED) {
+						res.progress === PIPELINE_COMPLETED) {
 
 						// if current pipelineId, pull results
 						if (res.pipelineId === context.getters.getRoutePipelineId) {
-							context.dispatch('fetchResultTableData', {
-								dataset: request.dataset,
-								pipelineId: res.pipelineId,
-								filters: context.getters.getDecodedFilters
-							});
+							// current pipelineId is selected
+							updateCurrentPipelineResults(context, request, res);
+						} else {
+							// current pipelineId is NOT selected
+							updatePipelineResults(context, request, res);
 						}
-
-						context.dispatch('fetchPredictedExtrema', {
-							dataset: request.dataset,
-							pipelineId: res.pipelineId
-						}).then(() => {
-							// if current pipelineId, pull result summaries
-							if (res.pipelineId === context.getters.getRoutePipelineId) {
-								context.dispatch('fetchResultSummaries', {
-									dataset: request.dataset,
-									pipelineId: res.pipelineId,
-									variables: context.getters.getVariables,
-									extrema: context.getters.getPredictedExtrema
-								});
-							}
-							context.dispatch('fetchPredictedSummary', {
-								dataset: request.dataset,
-								pipelineId: res.pipelineId,
-								extrema: context.getters.getPredictedExtrema
-							});
-						});
-						context.dispatch('fetchResidualsExtrema', {
-							dataset: request.dataset,
-							pipelineId: res.pipelineId
-						}).then(() => {
-							context.dispatch('fetchResidualsSummary', {
-								dataset: request.dataset,
-								pipelineId: res.pipelineId,
-								extrema: context.getters.getResidualExtrema
-							});
-						});
 
 					}
 				});

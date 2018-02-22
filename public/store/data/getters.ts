@@ -313,6 +313,10 @@ export const getters = {
 			res.min = Math.min(res.min, extrema.min);
 			res.max = Math.max(res.max, extrema.max);
 		});
+		if (state.resultExtrema) {
+			res.min = Math.min(res.min, state.resultExtrema.min);
+			res.max = Math.max(res.max, state.resultExtrema.max);			
+		}
 		return res;
 	},
 

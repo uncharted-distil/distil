@@ -74,6 +74,7 @@ export interface DataState {
 	resultSummaries: VariableSummary[];
 	predictedSummaries: VariableSummary[];
 	residualSummaries: VariableSummary[];
+	resultExtrema: Extrema;
 	predictedExtremas: Dictionary<Extrema>;
 	residualExtremas: Dictionary<Extrema>;
 	resultData: Data;
@@ -104,6 +105,8 @@ export const state = {
 	predictedExtremas: {},
 
 	residualExtremas: {},
+
+	resultExtrema: null,
 
 	// current set of pipeline results
 	resultData: null,
