@@ -53,6 +53,14 @@ export const mutations = {
 		Vue.set(state.residualExtremas, args.pipelineId, args.extrema);
 	},
 
+	updateResultExtrema(state: DataState, args: { extrema: Extrema }) {
+		state.resultExtrema = args.extrema;
+	},
+
+	clearResultExtrema(state: DataState) {
+		state.resultExtrema = null;
+	},
+
 	// sets the current filtered data into the store
 	setFilteredData(state: DataState, filteredData: Data) {
 		state.filteredData = filteredData;

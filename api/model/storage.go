@@ -21,6 +21,7 @@ type DataStorage interface {
 	FetchResultsExtremaByURI(dataset string, resultURI string, index string) (*Extrema, error)
 	FetchResidualsSummary(dataset string, resultURI string, index string, extrema *Extrema) (*Histogram, error)
 	FetchResidualsExtremaByURI(dataset string, resultURI string, index string) (*Extrema, error)
+	FetchExtremaByURI(dataset string, resultURI string, index string, variable string) (*Extrema, error)
 	// Dataset manipulation
 	SetDataType(dataset string, index string, field string, fieldType string) error
 }
