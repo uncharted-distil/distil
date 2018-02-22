@@ -211,6 +211,12 @@ func handleCreatePipelines(conn *Connection, client *pipeline.Client, metadataCt
 	// is more elegant or not.
 	filters.Size = -1
 
+	// NOTE: D3M index field is needed in the persisted data.
+	filters.Filters = append(filters.Filters, &model.Filter{
+		Name: "d3mIndex",
+		Type: "empty",
+	})
+
 	// initialize the storage
 	dataStorage, err := dataCtor()
 	if err != nil {
@@ -234,11 +240,11 @@ func handleCreatePipelines(conn *Connection, client *pipeline.Client, metadataCt
 
 	// persist the filtered dataset if necessary
 	fetchFilteredData := func(dataset string, index string, filterParams *model.FilterParams) (*model.FilteredData, error) {
-		// fetch the whole data and include the target feature
+		// fetch the whole data, including the target and index
 		return dataStorage.FetchData(dataset, index, filterParams, false)
 	}
 	fetchVariable := func(dataset string, index string) ([]*model.Variable, error) {
-		return metadata.FetchVariables(dataset, index, false)
+		return metadata.FetchVariables(dataset, index, true)
 	}
 	datasetPath, err := pipeline.PersistFilteredData(fetchFilteredData, fetchVariable, client.DataDir, clientCreateMsg.Dataset, clientCreateMsg.Index, clientCreateMsg.Feature, filters)
 	if err != nil {
@@ -479,7 +485,7 @@ func handleCreatePipelinesSuccess(conn *Connection, msg *Message, proxy *pipelin
 // be cached by Redis, but still worth looking into storing some of the dataset info.
 func fetchFilteredVariables(metadata model.MetadataStorage, index string, dataset string, filters *model.FilterParams) ([]string, error) {
 	// fetch the variable set from es
-	variables, err := metadata.FetchVariables(dataset, index, false)
+	variables, err := metadata.FetchVariables(dataset, index, true)
 	if err != nil {
 		return nil, err
 	}
