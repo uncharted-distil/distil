@@ -317,6 +317,39 @@ export const getters = {
 		return {};
 	},
 
+	hasExcludedData(state: DataState): boolean {
+		return !!state.excludedData;
+	},
+
+	getExcludedData(state: DataState): Data {
+		return state.excludedData;
+	},
+
+	getExcludedDataNumRows(state: DataState): number {
+		return state.excludedData ? state.excludedData.numRows : 0;
+	},
+
+	getExcludedDataItems(state: DataState, getters: any): TableRow[] {
+		return getDataItems(state.excludedData, getters.getVariableTypesMap);
+	},
+
+	getExcludedDataFields(state: DataState): Dictionary<FieldInfo> {
+		const data = state.excludedData;
+		if (validateData(data)) {
+			const vmap = getters.getVariableTypesMap;
+			const result = {};
+			for (const col of data.columns) {
+				result[col] = {
+					label: col,
+					type: vmap[col],
+					sortable: true
+				};
+			}
+			return result;
+		}
+		return {};
+	},
+
 	getHighlightedValues(state: DataState) {
 		return state.highlightedValues;
 	},

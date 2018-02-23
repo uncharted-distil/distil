@@ -1,7 +1,14 @@
 <template>
 	<div class="select-data-table">
-		<p class="nav-link font-weight-bold">Samples to Model From</p>
+		<p>
+			<b-nav tabs>
+				<b-nav-item class="font-weight-bold" @click="includedActive=true" :active="includedActive">Samples to Model From</b-nav-item>
+				<b-nav-item class="font-weight-bold" @click="includedActive=false" :active="!includedActive">Excluded Samples</b-nav-item>
+			</b-nav>
+		<p>
+
 		<p class="small-margin"><small>Displaying {{items.length}} of {{numRows}} rows</small></p>
+
 		<div class="select-data-table-container">
 			<div class="select-data-no-results" v-if="!hasData">
 				<div class="bounce1"></div>
@@ -11,9 +18,8 @@
 			<div class="select-data-no-results" v-if="hasData && items.length===0">
 				No data available
 			</div>
-			<b-table
+			<b-table v-if="items.length>0"
 				ref="selectTable"
-				v-if="items.length>0"
 				bordered
 				hover
 				small
@@ -46,6 +52,12 @@ export default Vue.extend({
 		instanceName: { type: String, default: 'select-table-highlight' }
 	},
 
+	data() {
+		return {
+			includedActive: true
+		};
+	},
+
 	computed: {
 		// get dataset from route
 		dataset(): string {
@@ -66,38 +78,39 @@ export default Vue.extend({
 
 		// extracts the table data from the store
 		items(): TableRow[] {
-			const data = dataGetters.getSelectedDataItems(this.$store);
-			const valueHighlights = getHighlights(this.$store);
+			const items = this.includedActive ? dataGetters.getSelectedDataItems(this.$store) : dataGetters.getExcludedDataItems(this.$store);
 
-			dataGetters.getSelectedDataItems(this.$store).forEach(f => f._rowVariant = null);
+			// clear any existing selections
+			items.forEach(f => f._rowVariant = null);
+
+			const highlights = getHighlights(this.$store);
 
 			// if we have highlights defined and the select table is not the source then updated
 			// the highlight visuals.
-			if ((_.get(valueHighlights, 'root.context') !== this.instanceName)) {
-				updateTableHighlights(data, valueHighlights, this.instanceName);
+			if ((_.get(highlights, 'root.context') !== this.instanceName)) {
+				updateTableHighlights(items, highlights, this.instanceName);
 
 				// On data / highlights change, scroll to first selected row
 				scrollToFirstHighlight(this, 'selectTable', true);
 			}
 
 			if (this.selectedRowKey >= 0) {
-				const toSelect = dataGetters.getSelectedDataItems(this.$store).find(r => r._key === this.selectedRowKey);
+				const toSelect = items.find(r => r._key === this.selectedRowKey);
 				if (toSelect) {
-					if (_.get(valueHighlights, 'root.context') === this.instanceName) {
+					if (_.get(highlights, 'root.context') === this.instanceName) {
 						toSelect._rowVariant = 'primary';
 					} else {
 						toSelect._rowVariant = null;
 					}
 				}
-
 			}
 
-			return data;
+			return items;
 		},
 
 		// extract the table field header from the store
 		fields(): Dictionary<FieldInfo> {
-			return dataGetters.getSelectedDataFields(this.$store);
+			return this.includedActive ? dataGetters.getSelectedDataFields(this.$store) : dataGetters.getExcludedDataFields(this.$store);
 		},
 
 		filters(): Filter[] {
@@ -152,5 +165,14 @@ table.b-table>thead>tr>th.sorting:after {
 .select-data-table .small-margin {
 	margin-bottom: 0.5rem
 }
-
+.select-view .nav-tabs .nav-item a {
+	padding-left: 0.5rem;
+	padding-right: 0.5rem;
+}
+.select-view .nav-tabs .nav-link {
+	color: #757575;
+}
+.select-view .nav-tabs .nav-link.active {
+	color: rgba(0, 0, 0, 0.87);
+}
 </style>

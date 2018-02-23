@@ -115,7 +115,7 @@ func (s *Storage) FetchNumRows(dataset string, filters map[string]interface{}) (
 // FetchData creates a postgres query to fetch a set of rows.  Applies filters to restrict the
 // results to a user selected set of fields, with rows further filtered based on allowed ranges and
 // categories.
-func (s *Storage) FetchData(dataset string, index string, filterParams *model.FilterParams, inclusive bool) (*model.FilteredData, error) {
+func (s *Storage) FetchData(dataset string, index string, filterParams *model.FilterParams, inclusive bool, invert bool) (*model.FilteredData, error) {
 	variables, err := s.metadata.FetchVariables(dataset, index, false)
 	if err != nil {
 		return nil, errors.Wrap(err, "Could not pull variables from ES")
@@ -140,7 +140,23 @@ func (s *Storage) FetchData(dataset string, index string, filterParams *model.Fi
 	}
 
 	if len(where) > 0 {
-		query = fmt.Sprintf("%s WHERE %s", query, where)
+		if invert {
+			query = fmt.Sprintf("%s WHERE NOT(%s)", query, where)
+		} else {
+			query = fmt.Sprintf("%s WHERE %s", query, where)
+		}
+	} else {
+		// if there are not WHERE's and we are inverting, that means we expect
+		// no results.
+		if invert {
+			return &model.FilteredData{
+				Name:    dataset,
+				NumRows: numRows,
+				Columns: make([]string, 0),
+				Types:   make([]string, 0),
+				Values:  make([][]interface{}, 0),
+			}, nil
+		}
 	}
 
 	// order & limit the filtered data.

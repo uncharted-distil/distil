@@ -80,6 +80,7 @@ export interface DataState {
 	resultData: Data;
 	filteredData: Data;
 	selectedData: Data;
+	excludedData: Data;
 	highlightedValues: Dictionary<string[]>;
 }
 
@@ -116,6 +117,9 @@ export const state = {
 
 	// selected data entries for the active dataset
 	selectedData: null,
+
+	// excluded data entries for the active dataset
+	excludedData: null,
 
 	highlightedValues: {}
 }
