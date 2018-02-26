@@ -10,6 +10,7 @@ export const CATEGORICAL_CHUNK_SIZE = 10;
 export interface PlaceHolderFacet {
 	placeholder: boolean;
 	html: string;
+	filterable: boolean;
 }
 
 export interface Segment {
@@ -91,7 +92,8 @@ export function createErrorFacet(summary: VariableSummary, enableCollapse: boole
 		collapsed: false,
 		facets: [{
 			placeholder: true,
-			html: `<div>${summary.err}</div>`
+			html: `<div>${summary.err}</div>`,
+			filterable: false
 		}],
 		numRows: 0
 	};
@@ -107,7 +109,8 @@ export function createPendingFacet(summary: VariableSummary, enableCollapse: boo
 		collapsed: false,
 		facets: [{
 			placeholder: true,
-			html: spinnerHTML()
+			html: spinnerHTML(),
+			filterable: false
 		}],
 		numRows: 0
 	};
