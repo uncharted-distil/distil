@@ -522,7 +522,7 @@ func (s *Storage) fetchCategoricalResultHistogram(resultURI string, dataset stri
 	if len(categories.Buckets) > catResultLimit {
 		bucketsComplete := categories.Buckets
 		sort.Slice(bucketsComplete, func(i, j int) bool {
-			return bucketsComplete[i].Count < bucketsComplete[j].Count
+			return bucketsComplete[i].Count > bucketsComplete[j].Count
 		})
 		categories.Buckets = bucketsComplete[:catResultLimit]
 	}
