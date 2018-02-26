@@ -19,6 +19,9 @@
 					<p>Select one of the following feature summaries showing count of records by feature value.</p>
 				</div>
 			</div>
+			<div class="pl-2">
+				<slot></slot>
+			</div>
 			<div class="row flex-11">
 				<facets class="col-12 flex-column d-flex variable-facets-container"
 					:groups="groups"
@@ -55,7 +58,8 @@ import { Highlights, Range } from '../util/highlights';
 import { Dictionary } from '../util/dict';
 import { getters as dataGetters } from '../store/data/module';
 import { getters as routeGetters } from '../store/route/module';
-import { Group } from '../util/facets';
+import { VariableSummary } from '../store/data/index';
+import { createGroups, Group } from '../util/facets';
 import { updateHighlightRoot, clearHighlightRoot, getHighlights } from '../util/highlights';
 import 'font-awesome/css/font-awesome.css';
 import '../styles/spinner.css';
@@ -74,6 +78,7 @@ export default Vue.extend({
 		enableTitle: Boolean,
 		groups: Array,
 		dataset: String,
+		subtitle: String,
 		html: [ String, Object, Function ],
 		instanceName: { type: String, default: 'variable-facets' },
 		typeChange: Boolean
@@ -111,7 +116,7 @@ export default Vue.extend({
 			const sorted = searchFiltered.map(g => ({ key: g.key, group: g }))
 				.sort((a, b) => this[this.sortMethod](a, b))
 				.map(g => g.group);
-
+	
 			// if necessary, refilter applying pagination rules
 			this.numRows = searchFiltered.length;
 			let filtered = sorted;
@@ -151,6 +156,14 @@ export default Vue.extend({
 		importanceDesc(a: { key: string }, b: { key: string }): number {
 			const importance = this.importance;
 			return importance[b.key] - importance[a.key];
+		},
+
+		availableVariables(): string[] {
+			// filter by search
+			const searchFiltered = this.variables.filter(summary => {
+				return this.filter === '' || summary.name.toLowerCase().includes(this.filter.toLowerCase());
+			});
+			return searchFiltered.map(v => v.name );
 		},
 
 		// creates a facet key for the route from the instance-name component arg

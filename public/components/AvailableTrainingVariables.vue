@@ -2,12 +2,19 @@
 	<div class="available-training-variables">
 		<p class="nav-link font-weight-bold">Available Features</p>
 		<variable-facets
+			ref="facets"
 			enable-search
 			type-change
 			instance-name="availableVars"
 			:groups="groups"
 			:dataset="dataset"
 			:html="html">
+			<div v-if="variables.length > 0" class="pb-2">
+				<b-button size="sm" variant="outline-secondary" @click="addAll">Add All</b-button>
+			</div>
+			<div>
+				{{subtitle}}
+			</div>
 		</variable-facets>
 	</div>
 </template>
@@ -39,6 +46,9 @@ export default Vue.extend({
 			filterSummariesByDataset(summaries, this.dataset);
 			return createGroups(summaries, false, false);
 		},
+		subtitle(): string {
+			return `${this.variables.length} features available`;
+		},
 		html(): ( { key: string } ) => HTMLDivElement {
 			return (group: { key: string }) => {
 				const container = document.createElement('div');
@@ -56,6 +66,21 @@ export default Vue.extend({
 				container.appendChild(trainingElem);
 				return container;
 			};
+		}
+	},
+
+	methods: {
+		addAll() {
+			const facets = this.$refs.facets as any;
+			const training = routeGetters.getRouteTrainingVariables(this.$store);
+			const trainingArray = training ? training.split(',') : [];
+			facets.availableVariables().forEach(variable => {
+				trainingArray.push(variable);
+			});
+			const entry = overlayRouteEntry(routeGetters.getRoute(this.$store), {
+				training: trainingArray.join(',')
+			});
+			this.$router.push(entry);
 		}
 	}
 });
