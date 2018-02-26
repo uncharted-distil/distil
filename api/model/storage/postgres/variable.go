@@ -11,7 +11,7 @@ import (
 )
 
 const (
-	catResultLimit = 10
+	catResultLimit = 100
 )
 
 func (s *Storage) getHistogramAggQuery(extrema *model.Extrema) (string, string, string) {

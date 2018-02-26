@@ -5,7 +5,7 @@
 			type-change
 			enable-title
 			instance-name="availableVars"
-			:groups="variables"
+			:groups="groups"
 			:dataset="dataset"
 			:html="html">
 		</variable-facets>

@@ -10,13 +10,13 @@
 			:groups="groups"
 			:dataset="dataset"
 			:html="html">
-			<div v-if="variables.length > 0" class="pb-2">
+			<div v-if="groups.length > 0" class="pb-2">
 				<b-button size="sm" variant="outline-secondary" @click="removeAll">Remove All</b-button>
 			</div>
 			<div>
 				{{subtitle}}
 			</div>
-			<div v-if="variables.length === 0">
+			<div v-if="groups.length === 0">
 				<i class="no-selections-icon fa fa-arrow-circle-left"></i>
 			</div>
 		</variable-facets>
@@ -65,7 +65,7 @@ export default Vue.extend({
 			return groups;
 		},
 		subtitle(): string {
-			return `${this.variables.length} features selected`;
+			return `${this.groups.length} features selected`;
 		},
 		html(): (Group) => HTMLDivElement {
 			return (group: Group) => {

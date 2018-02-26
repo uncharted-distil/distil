@@ -58,8 +58,7 @@ import { Highlights, Range } from '../util/highlights';
 import { Dictionary } from '../util/dict';
 import { getters as dataGetters } from '../store/data/module';
 import { getters as routeGetters } from '../store/route/module';
-import { VariableSummary } from '../store/data/index';
-import { createGroups, Group } from '../util/facets';
+import { Group } from '../util/facets';
 import { updateHighlightRoot, clearHighlightRoot, getHighlights } from '../util/highlights';
 import 'font-awesome/css/font-awesome.css';
 import '../styles/spinner.css';
@@ -116,7 +115,7 @@ export default Vue.extend({
 			const sorted = searchFiltered.map(g => ({ key: g.key, group: g }))
 				.sort((a, b) => this[this.sortMethod](a, b))
 				.map(g => g.group);
-	
+
 			// if necessary, refilter applying pagination rules
 			this.numRows = searchFiltered.length;
 			let filtered = sorted;
@@ -160,10 +159,10 @@ export default Vue.extend({
 
 		availableVariables(): string[] {
 			// filter by search
-			const searchFiltered = this.variables.filter(summary => {
-				return this.filter === '' || summary.name.toLowerCase().includes(this.filter.toLowerCase());
+			const searchFiltered = this.groups.filter(group => {
+				return this.filter === '' || group.key.toLowerCase().includes(this.filter.toLowerCase());
 			});
-			return searchFiltered.map(v => v.name );
+			return searchFiltered.map(v => v.key);
 		},
 
 		// creates a facet key for the route from the instance-name component arg

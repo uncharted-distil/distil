@@ -9,7 +9,7 @@
 			:groups="groups"
 			:dataset="dataset"
 			:html="html">
-			<div v-if="variables.length > 0" class="pb-2">
+			<div v-if="groups.length > 0" class="pb-2">
 				<b-button size="sm" variant="outline-secondary" @click="addAll">Add All</b-button>
 			</div>
 			<div>
@@ -47,7 +47,7 @@ export default Vue.extend({
 			return createGroups(summaries, false, false);
 		},
 		subtitle(): string {
-			return `${this.variables.length} features available`;
+			return `${this.groups.length} features available`;
 		},
 		html(): ( { key: string } ) => HTMLDivElement {
 			return (group: { key: string }) => {
