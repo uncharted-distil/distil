@@ -74,11 +74,13 @@ export interface DataState {
 	resultSummaries: VariableSummary[];
 	predictedSummaries: VariableSummary[];
 	residualSummaries: VariableSummary[];
+	resultExtrema: Extrema;
 	predictedExtremas: Dictionary<Extrema>;
 	residualExtremas: Dictionary<Extrema>;
 	resultData: Data;
 	filteredData: Data;
 	selectedData: Data;
+	excludedData: Data;
 	highlightedValues: Dictionary<string[]>;
 }
 
@@ -101,6 +103,8 @@ export const state = {
 	// error summary data for the predicted data
 	residualSummaries: <VariableSummary[]>[],
 
+	resultExtrema: null,
+
 	predictedExtremas: {},
 
 	residualExtremas: {},
@@ -113,6 +117,9 @@ export const state = {
 
 	// selected data entries for the active dataset
 	selectedData: null,
+
+	// excluded data entries for the active dataset
+	excludedData: null,
 
 	highlightedValues: {}
 }

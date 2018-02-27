@@ -180,6 +180,10 @@ export const actions = {
 			console.warn('`pipelineId` argument is missing');
 			return null;
 		}
+		if (!args.extrema || (!args.extrema.min && !args.extrema.max)) {
+			console.warn('`extrema` argument is missing');
+			return null;
+		}
 		const pipeline = getPipelineById(context.rootState.pipelineModule, args.pipelineId);
 		// commit empty place holders, if there is no data
 		const promises = [];
@@ -227,6 +231,10 @@ export const actions = {
 			console.warn('`pipelineId` argument is missing');
 			return null;
 		}
+		if (!args.extrema || (!args.extrema.min && !args.extrema.max)) {
+			console.warn('`extrema` argument is missing');
+			return null;
+		}
 		const pipeline = getPipelineById(context.rootState.pipelineModule, args.pipelineId);
 		if (!pipeline.resultId) {
 			// no results ready to pull
@@ -252,10 +260,40 @@ export const actions = {
 			});
 	},
 
+	fetchResultExtrema(context: DataContext, args: { dataset: string, variable: string, pipelineId: string }) {
+		if (!args.dataset) {
+			console.warn('`dataset` argument is missing');
+			return null;
+		}
+		if (!args.variable) {
+			console.warn('`variable` argument is missing');
+			return null;
+		}
+		if (!args.pipelineId) {
+			console.warn('`pipelineId` argument is missing');
+			return null;
+		}
+		const pipeline = getPipelineById(context.rootState.pipelineModule, args.pipelineId);
+		if (!pipeline.resultId) {
+			console.warn(`No 'resultId' exists for pipeline '${args.pipelineId}'`);
+			return null;
+		}
+		mutations.clearResultExtrema(context);
+		return axios.get(`/distil/results-variable-extrema/${ES_INDEX}/${args.dataset}/${args.variable}/${pipeline.resultId}`)
+			.then(response => {
+				mutations.updateResultExtrema(context, {
+					extrema: response.data.extrema
+				});
+			})
+			.catch(error => {
+				console.error(error);
+			});
+	},
+
 	// update filtered data based on the  current filter state
 	fetchFilteredTableData(context: DataContext, args: { dataset: string, filters: Filter[] }) {
 		mutations.setFilteredData(context, null);
-		context.dispatch('fetchData', { dataset: args.dataset, filters: args.filters, inclusive: true })
+		context.dispatch('fetchData', { dataset: args.dataset, filters: args.filters, inclusive: true, invert: false })
 			.then(response => {
 				mutations.setFilteredData(context, response.data);
 			})
@@ -268,7 +306,7 @@ export const actions = {
 	// update filtered data based on the  current filter state
 	fetchSelectedTableData(context: DataContext, args: { dataset: string, filters: Filter[] }) {
 		mutations.setSelectedData(context, null);
-		context.dispatch('fetchData', { dataset: args.dataset, filters: args.filters, inclusive: false })
+		context.dispatch('fetchData', { dataset: args.dataset, filters: args.filters, inclusive: false, invert: false })
 			.then(response => {
 				mutations.setSelectedData(context, response.data);
 			})
@@ -278,18 +316,51 @@ export const actions = {
 			});
 	},
 
-	fetchData(context: DataContext, args: { dataset: string, filters: Filter[], inclusive: boolean }): AxiosPromise<Data> {
-		const dataset = args.dataset;
-		const filters = args.filters;
-		const queryParams = encodeQueryParams(filters);
+	// update filtered data based on the  current filter state
+	fetchExcludedTableData(context: DataContext, args: { dataset: string, filters: Filter[] }) {
+		mutations.setExcludedData(context, null);
+		context.dispatch('fetchData', { dataset: args.dataset, filters: args.filters, inclusive: false, invert: true })
+			.then(response => {
+				mutations.setExcludedData(context, response.data);
+			})
+			.catch(error => {
+				console.error(error);
+				mutations.setExcludedData(context, createEmptyData(args.dataset));
+			});
+	},
+
+
+	fetchData(context: DataContext, args: { dataset: string, filters: Filter[], inclusive: boolean, invert: boolean }): AxiosPromise<Data> {
+		if (!args.dataset) {
+			console.warn('`dataset` argument is missing');
+			return null;
+		}
+		if (!args.filters) {
+			console.warn('`variable` filters is missing');
+			return null;
+		}
+		const queryParams = encodeQueryParams(args.filters);
 		const inclusiveStr = args.inclusive ? 'inclusive' : 'exclusive';
-		const url = `distil/filtered-data/${ES_INDEX}/${dataset}/${inclusiveStr}${queryParams}`;
+		const invertStr = args.invert ? 'true' : 'false';
+		const url = `distil/filtered-data/${ES_INDEX}/${args.dataset}/${inclusiveStr}/${invertStr}${queryParams}`;
 		// request filtered data from server - no data is valid given filter settings
 		return axios.get<Data>(url);
 	},
 
 	fetchPredictedExtrema(context: DataContext, args: { dataset: string, pipelineId: string }) {
+		if (!args.dataset) {
+			console.warn('`dataset` argument is missing');
+			return null;
+		}
+		if (!args.pipelineId) {
+			console.warn('`pipelineId` argument is missing');
+			return null;
+		}
 		const pipeline = getPipelineById(context.rootState.pipelineModule, args.pipelineId);
+		if (!pipeline.resultId) {
+			console.warn(`No 'resultId' exists for pipeline '${args.pipelineId}'`);
+			return null;
+		}
 		return axios.get(`/distil/results-extrema/${ES_INDEX}/${args.dataset}/${pipeline.resultId}`)
 			.then(response => {
 				mutations.updatePredictedExtremas(context, {
@@ -303,6 +374,14 @@ export const actions = {
 	},
 
 	fetchPredictedExtremas(context: DataContext, args: { dataset: string, requestIds: string[] }) {
+		if (!args.dataset) {
+			console.warn('`dataset` argument is missing');
+			return null;
+		}
+		if (!args.requestIds) {
+			console.warn('`requestIds` argument is missing');
+			return null;
+		}
 		const pipelines = getPipelinesByRequestIds(context.rootState.pipelineModule, args.requestIds);
 		mutations.clearPredictedExtremas(context);
 		return Promise.all(pipelines.map(pipeline => {
@@ -314,7 +393,19 @@ export const actions = {
 	},
 
 	fetchResidualsExtrema(context: DataContext, args: { dataset: string, pipelineId: string }) {
+		if (!args.dataset) {
+			console.warn('`dataset` argument is missing');
+			return null;
+		}
+		if (!args.pipelineId) {
+			console.warn('`pipelineId` argument is missing');
+			return null;
+		}
 		const pipeline = getPipelineById(context.rootState.pipelineModule, args.pipelineId);
+		if (!pipeline.resultId) {
+			console.warn(`No 'resultId' exists for pipeline '${args.pipelineId}'`);
+			return null;
+		}
 		return axios.get(`/distil/residuals-extrema/${ES_INDEX}/${args.dataset}/${pipeline.resultId}`)
 			.then(response => {
 				mutations.updateResidualsExtremas(context, {
@@ -328,6 +419,14 @@ export const actions = {
 	},
 
 	fetchResidualsExtremas(context: DataContext, args: { dataset: string, requestIds: string[] }) {
+		if (!args.dataset) {
+			console.warn('`dataset` argument is missing');
+			return null;
+		}
+		if (!args.requestIds) {
+			console.warn('`requestIds` argument is missing');
+			return null;
+		}
 		const pipelines = getPipelinesByRequestIds(context.rootState.pipelineModule, args.requestIds);
 		mutations.clearResidualsExtremas(context);
 		return Promise.all(pipelines.map(pipeline => {
@@ -348,7 +447,7 @@ export const actions = {
 			console.warn('`pipelineId` argument is missing');
 			return null;
 		}
-		if (!args.extrema) {
+		if (!args.extrema || (!args.extrema.min && !args.extrema.max)) {
 			console.warn('`extrema` argument is missing');
 			return null;
 		}
@@ -390,7 +489,7 @@ export const actions = {
 			console.warn('`pipelineId` argument is missing');
 			return null;
 		}
-		if (!args.extrema) {
+		if (!args.extrema || (!args.extrema.min && !args.extrema.max)) {
 			console.warn('`extrema` argument is missing');
 			return null;
 		}
@@ -483,7 +582,8 @@ export const actions = {
 		return context.dispatch('fetchData', {
 				dataset: args.dataset,
 				filters: filtersCopy,
-				inclusive: true
+				inclusive: true,
+				invert: false
 			})
 			.then(res => {
 				mutations.setHighlightedValues(context, parseHighlightValues(res.data));
