@@ -282,12 +282,12 @@ func (s *Storage) FetchResultMetadataByUUID(resultUUID string) (*model.Result, e
 
 // FetchResultMetadataByDatasetTarget pulls request result information from
 // Postgres. Only the latest result for each pipeline is fetched.
-func (s *Storage) FetchResultMetadataByDatasetTarget(sessionID string, dataset string, target string) ([]*model.Result, error) {
+func (s *Storage) FetchResultMetadataByDatasetTarget(sessionID string, dataset string, target string, pipelineID string) ([]*model.Result, error) {
 
 	// get the pipeline ids
 	sql := fmt.Sprintf(`SELECT DISTINCT result.pipeline_id
 			FROM %s request INNER JOIN %s rf ON request.request_id = rf.request_id INNER JOIN %s result ON request.request_id = result.request_id
-			WHERE request.session_id = $1  AND ;`, requestTableName, featureTableName, resultTableName)
+			WHERE request.session_id = $1 `, requestTableName, featureTableName, resultTableName)
 	params := make([]interface{}, 0)
 	params = append(params, sessionID)
 
@@ -299,6 +299,10 @@ func (s *Storage) FetchResultMetadataByDatasetTarget(sessionID string, dataset s
 		sql = fmt.Sprintf("%s AND rf.feature_name = $%d AND rf.feature_type = $%d", sql, len(params), len(params)+1)
 		params = append(params, target)
 		params = append(params, model.FeatureTypeTarget)
+	}
+	if pipelineID != "" {
+		sql = fmt.Sprintf("%s AND result.pipeline_id = $%d", sql, len(params))
+		params = append(params, pipelineID)
 	}
 
 	sql = fmt.Sprintf("%s;", sql)
