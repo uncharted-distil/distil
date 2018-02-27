@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"math"
 	"os"
+	"sort"
 	"strconv"
 	"strings"
 
@@ -503,7 +504,7 @@ func (s *Storage) fetchCategoricalResultHistogram(resultURI string, dataset stri
 		"FROM %s AS result INNER JOIN %s AS base ON result.index = base.\"d3mIndex\" "+
 		"WHERE result.result_id = $1 and result.target = $2 "+
 		"GROUP BY result.value, base.\"%s\" "+
-		"ORDER BY count desc LIMIT %d;", targetName, resultDataset, dataset, targetName, catResultLimit)
+		"ORDER BY count desc;", targetName, resultDataset, dataset, targetName)
 
 	// execute the postgres query
 	res, err := s.client.Query(query, resultURI, targetName)
@@ -512,7 +513,21 @@ func (s *Storage) fetchCategoricalResultHistogram(resultURI string, dataset stri
 	}
 	defer res.Close()
 
-	return s.parseCategoricalHistogram(res, variable)
+	// limit the parsed categories.
+	categories, err := s.parseCategoricalHistogram(res, variable)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to parse histograms for result summaries from postgres")
+	}
+
+	if len(categories.Buckets) > catResultLimit {
+		bucketsComplete := categories.Buckets
+		sort.Slice(bucketsComplete, func(i, j int) bool {
+			return bucketsComplete[i].Count > bucketsComplete[j].Count
+		})
+		categories.Buckets = bucketsComplete[:catResultLimit]
+	}
+
+	return categories, err
 }
 
 // FetchResultsExtremaByURI fetches the results extrema by resultURI.
