@@ -181,8 +181,9 @@ func (s *Storage) parseResultMetadata(rows *pgx.Rows) ([]*model.Result, error) {
 		var progress string
 		var outputType string
 		var createdTime time.Time
+		var dataset string
 
-		err := rows.Scan(&requestID, &pipelineID, &resultUUID, &resultURI, &progress, &outputType, &createdTime)
+		err := rows.Scan(&requestID, &pipelineID, &resultUUID, &resultURI, &progress, &outputType, &createdTime, &dataset)
 		if err != nil {
 			return nil, errors.Wrap(err, "Unable to parse requests results from Postgres")
 		}
@@ -201,6 +202,7 @@ func (s *Storage) parseResultMetadata(rows *pgx.Rows) ([]*model.Result, error) {
 			OutputType:  outputType,
 			CreatedTime: createdTime,
 			Scores:      scores,
+			Dataset:     dataset,
 		})
 	}
 
@@ -217,7 +219,9 @@ func (s *Storage) parseResultMetadata(rows *pgx.Rows) ([]*model.Result, error) {
 
 // FetchResultMetadata pulls request result information from Postgres.
 func (s *Storage) FetchResultMetadata(requestID string) ([]*model.Result, error) {
-	sql := fmt.Sprintf("SELECT request_id, pipeline_id, result_uuid, result_uri, progress, output_type, created_time FROM %s WHERE request_id = $1;", resultTableName)
+	sql := fmt.Sprintf("SELECT request_id, pipeline_id, result_uuid, result_uri, progress, output_type, created_time, dataset "+
+		"FROM %s AS result INNER JOIN %s AS request ON result.request_id = request.request_id "+
+		"WHERE request_id = $1;", resultTableName, requestTableName)
 
 	rows, err := s.client.Query(sql, requestID)
 	if err != nil {
@@ -232,8 +236,8 @@ func (s *Storage) FetchResultMetadata(requestID string) ([]*model.Result, error)
 
 // FetchResultMetadataByPipelineID pulls request result information from Postgres.
 func (s *Storage) FetchResultMetadataByPipelineID(pipelineID string) (*model.Result, error) {
-	sql := fmt.Sprintf("SELECT request_id, pipeline_id, result_uuid, result_uri, progress, output_type, created_time " +
-		"FROM %s AS result INNER JOIN %s AS request ON result.request_id = request.request_id " +
+	sql := fmt.Sprintf("SELECT request_id, pipeline_id, result_uuid, result_uri, progress, output_type, created_time, dataset "+
+		"FROM %s AS result INNER JOIN %s AS request ON result.request_id = request.request_id "+
 		"WHERE pipeline_id = $1 ORDER BY created_time desc LIMIT 1;", resultTableName, requestTableName)
 
 	rows, err := s.client.Query(sql, pipelineID)
@@ -259,7 +263,9 @@ func (s *Storage) FetchResultMetadataByPipelineID(pipelineID string) (*model.Res
 
 // FetchResultMetadataByUUID pulls request result information from Postgres.
 func (s *Storage) FetchResultMetadataByUUID(resultUUID string) (*model.Result, error) {
-	sql := fmt.Sprintf("SELECT request_id, pipeline_id, result_uuid, result_uri, progress, output_type, created_time FROM %s WHERE result_uuid = $1;", resultTableName)
+	sql := fmt.Sprintf("SELECT request_id, pipeline_id, result_uuid, result_uri, progress, output_type, created_time, dataset "+
+		"FROM %s AS result INNER JOIN %s AS request ON result.request_id = request.request_id "+
+		"WHERE result_uuid = $1;", resultTableName, requestTableName)
 
 	rows, err := s.client.Query(sql, resultUUID)
 	if err != nil {
