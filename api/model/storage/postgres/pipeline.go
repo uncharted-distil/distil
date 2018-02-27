@@ -292,16 +292,16 @@ func (s *Storage) FetchResultMetadataByDatasetTarget(sessionID string, dataset s
 	params = append(params, sessionID)
 
 	if dataset != "" {
-		sql = fmt.Sprintf("%s AND request.dataset = $%d", sql, len(params))
+		sql = fmt.Sprintf("%s AND request.dataset = $%d", sql, len(params)+1)
 		params = append(params, dataset)
 	}
 	if target != "" {
-		sql = fmt.Sprintf("%s AND rf.feature_name = $%d AND rf.feature_type = $%d", sql, len(params), len(params)+1)
+		sql = fmt.Sprintf("%s AND rf.feature_name = $%d AND rf.feature_type = $%d", sql, len(params)+1, len(params)+2)
 		params = append(params, target)
 		params = append(params, model.FeatureTypeTarget)
 	}
 	if pipelineID != "" {
-		sql = fmt.Sprintf("%s AND result.pipeline_id = $%d", sql, len(params))
+		sql = fmt.Sprintf("%s AND result.pipeline_id = $%d", sql, len(params)+1)
 		params = append(params, pipelineID)
 	}
 
