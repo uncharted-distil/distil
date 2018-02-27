@@ -13,8 +13,9 @@ import (
 const (
 	// DatasetSuffix is the suffix for the dataset entry when stored in
 	// elasticsearch.
-	DatasetSuffix = "_dataset"
-	metadataType  = "metadata"
+	DatasetSuffix    = "_dataset"
+	metadataType     = "metadata"
+	datasetsListSize = 1000
 )
 
 func (s *Storage) parseDatasets(res *elastic.SearchResult, includeIndex bool) ([]*model.Dataset, error) {
@@ -77,6 +78,7 @@ func (s *Storage) FetchDatasets(index string, includeIndex bool) ([]*model.Datas
 	res, err := s.client.Search().
 		Index(index).
 		FetchSource(true).
+		Size(datasetsListSize).
 		Do(context.Background())
 	if err != nil {
 		return nil, errors.Wrap(err, "elasticsearch dataset fetch query failed")
@@ -94,6 +96,7 @@ func (s *Storage) SearchDatasets(index string, terms string, includeIndex bool) 
 		Query(query).
 		Index(index).
 		FetchSource(true).
+		Size(datasetsListSize).
 		Do(context.Background())
 	if err != nil {
 		return nil, errors.Wrap(err, "elasticsearch dataset search query failed")
