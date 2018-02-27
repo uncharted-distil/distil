@@ -181,8 +181,9 @@ func (s *Storage) parseResultMetadata(rows *pgx.Rows) ([]*model.Result, error) {
 		var progress string
 		var outputType string
 		var createdTime time.Time
+		var dataset string
 
-		err := rows.Scan(&requestID, &pipelineID, &resultUUID, &resultURI, &progress, &outputType, &createdTime)
+		err := rows.Scan(&requestID, &pipelineID, &resultUUID, &resultURI, &progress, &outputType, &createdTime, &dataset)
 		if err != nil {
 			return nil, errors.Wrap(err, "Unable to parse requests results from Postgres")
 		}
@@ -201,6 +202,7 @@ func (s *Storage) parseResultMetadata(rows *pgx.Rows) ([]*model.Result, error) {
 			OutputType:  outputType,
 			CreatedTime: createdTime,
 			Scores:      scores,
+			Dataset:     dataset,
 		})
 	}
 
@@ -217,7 +219,9 @@ func (s *Storage) parseResultMetadata(rows *pgx.Rows) ([]*model.Result, error) {
 
 // FetchResultMetadata pulls request result information from Postgres.
 func (s *Storage) FetchResultMetadata(requestID string) ([]*model.Result, error) {
-	sql := fmt.Sprintf("SELECT request_id, pipeline_id, result_uuid, result_uri, progress, output_type, created_time FROM %s WHERE request_id = $1;", resultTableName)
+	sql := fmt.Sprintf("SELECT request_id, pipeline_id, result_uuid, result_uri, progress, output_type, created_time, dataset "+
+		"FROM %s AS result INNER JOIN %s AS request ON result.request_id = request.request_id "+
+		"WHERE request_id = $1;", resultTableName, requestTableName)
 
 	rows, err := s.client.Query(sql, requestID)
 	if err != nil {
@@ -232,7 +236,9 @@ func (s *Storage) FetchResultMetadata(requestID string) ([]*model.Result, error)
 
 // FetchResultMetadataByPipelineID pulls request result information from Postgres.
 func (s *Storage) FetchResultMetadataByPipelineID(pipelineID string) (*model.Result, error) {
-	sql := fmt.Sprintf("SELECT request_id, pipeline_id, result_uuid, result_uri, progress, output_type, created_time FROM %s WHERE pipeline_id = $1 ORDER BY created_time desc LIMIT 1;", resultTableName)
+	sql := fmt.Sprintf("SELECT request_id, pipeline_id, result_uuid, result_uri, progress, output_type, created_time, dataset "+
+		"FROM %s AS result INNER JOIN %s AS request ON result.request_id = request.request_id "+
+		"WHERE pipeline_id = $1 ORDER BY created_time desc LIMIT 1;", resultTableName, requestTableName)
 
 	rows, err := s.client.Query(sql, pipelineID)
 	if err != nil {
@@ -257,7 +263,9 @@ func (s *Storage) FetchResultMetadataByPipelineID(pipelineID string) (*model.Res
 
 // FetchResultMetadataByUUID pulls request result information from Postgres.
 func (s *Storage) FetchResultMetadataByUUID(resultUUID string) (*model.Result, error) {
-	sql := fmt.Sprintf("SELECT request_id, pipeline_id, result_uuid, result_uri, progress, output_type, created_time FROM %s WHERE result_uuid = $1;", resultTableName)
+	sql := fmt.Sprintf("SELECT request_id, pipeline_id, result_uuid, result_uri, progress, output_type, created_time, dataset "+
+		"FROM %s AS result INNER JOIN %s AS request ON result.request_id = request.request_id "+
+		"WHERE result_uuid = $1;", resultTableName, requestTableName)
 
 	rows, err := s.client.Query(sql, resultUUID)
 	if err != nil {
@@ -278,6 +286,59 @@ func (s *Storage) FetchResultMetadataByUUID(resultUUID string) (*model.Result, e
 	}
 
 	return res, nil
+}
+
+// FetchResultMetadataByDatasetTarget pulls request result information from
+// Postgres. Only the latest result for each pipeline is fetched.
+func (s *Storage) FetchResultMetadataByDatasetTarget(sessionID string, dataset string, target string, pipelineID string) ([]*model.Result, error) {
+
+	// get the pipeline ids
+	sql := fmt.Sprintf(`SELECT DISTINCT result.pipeline_id
+			FROM %s request INNER JOIN %s rf ON request.request_id = rf.request_id INNER JOIN %s result ON request.request_id = result.request_id
+			WHERE request.session_id = $1 `, requestTableName, featureTableName, resultTableName)
+	params := make([]interface{}, 0)
+	params = append(params, sessionID)
+
+	if dataset != "" {
+		sql = fmt.Sprintf("%s AND request.dataset = $%d", sql, len(params)+1)
+		params = append(params, dataset)
+	}
+	if target != "" {
+		sql = fmt.Sprintf("%s AND rf.feature_name = $%d AND rf.feature_type = $%d", sql, len(params)+1, len(params)+2)
+		params = append(params, target)
+		params = append(params, model.FeatureTypeTarget)
+	}
+	if pipelineID != "" {
+		sql = fmt.Sprintf("%s AND result.pipeline_id = $%d", sql, len(params)+1)
+		params = append(params, pipelineID)
+	}
+
+	sql = fmt.Sprintf("%s;", sql)
+	rows, err := s.client.Query(sql, params...)
+	if err != nil {
+		return nil, errors.Wrap(err, "Unable to pull request pipeline ids from Postgres")
+	}
+	if rows != nil {
+		defer rows.Close()
+	}
+
+	results := make([]*model.Result, 0)
+	for rows.Next() {
+		var pipelineID string
+
+		err = rows.Scan(&pipelineID)
+		if err != nil {
+			return nil, errors.Wrap(err, "Unable to parse pipeline id from Postgres")
+		}
+
+		res, err := s.FetchResultMetadataByPipelineID(pipelineID)
+		if err != nil {
+			return nil, errors.Wrap(err, "Unable to parse pipeline result from Postgres")
+		}
+		results = append(results, res)
+	}
+
+	return results, nil
 }
 
 // FetchResultScore pulls result score from Postgres.
