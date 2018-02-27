@@ -232,7 +232,9 @@ func (s *Storage) FetchResultMetadata(requestID string) ([]*model.Result, error)
 
 // FetchResultMetadataByPipelineID pulls request result information from Postgres.
 func (s *Storage) FetchResultMetadataByPipelineID(pipelineID string) (*model.Result, error) {
-	sql := fmt.Sprintf("SELECT request_id, pipeline_id, result_uuid, result_uri, progress, output_type, created_time FROM %s WHERE pipeline_id = $1 ORDER BY created_time desc LIMIT 1;", resultTableName)
+	sql := fmt.Sprintf("SELECT request_id, pipeline_id, result_uuid, result_uri, progress, output_type, created_time " +
+		"FROM %s AS result INNER JOIN %s AS request ON result.request_id = request.request_id " +
+		"WHERE pipeline_id = $1 ORDER BY created_time desc LIMIT 1;", resultTableName, requestTableName)
 
 	rows, err := s.client.Query(sql, pipelineID)
 	if err != nil {
