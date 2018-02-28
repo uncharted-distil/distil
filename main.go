@@ -139,6 +139,7 @@ func main() {
 	mux.Use(middleware.Log)
 	mux.Use(middleware.Gzip)
 
+	routes.SetVerboseError(config.VerboseError)
 	registerRoute(mux, "/distil/datasets/:index", routes.DatasetsHandler(metadataStorageCtor))
 	registerRoute(mux, "/distil/variables/:index/:dataset", routes.VariablesHandler(metadataStorageCtor))
 	registerRoutePost(mux, "/distil/variables/:index/:dataset", routes.VariableTypeHandler(pgDataStorageCtor, metadataStorageCtor))
