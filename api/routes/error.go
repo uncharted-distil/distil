@@ -10,6 +10,8 @@ var (
 	verboseError = false
 )
 
+// SetVerboseError sets the flag determining if the client should receive
+// error details
 func SetVerboseError(verbose bool) {
 	verboseError = verbose
 }
