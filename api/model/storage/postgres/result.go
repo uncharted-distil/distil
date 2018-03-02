@@ -412,109 +412,6 @@ func (s *Storage) FetchResults(dataset string, index string, resultURI string) (
 	return s.parseResults(dataset, numRows, rows, variable)
 }
 
-func (s *Storage) getResultMinMaxAggsQuery(variable *model.Variable, resultVariable *model.Variable) string {
-	// get min / max agg names
-	minAggName := model.MinAggPrefix + resultVariable.Name
-	maxAggName := model.MaxAggPrefix + resultVariable.Name
-
-	// Only numeric types should occur.
-	fieldTyped := fmt.Sprintf("cast(\"%s\" as double precision)", resultVariable.Name)
-
-	// create aggregations
-	queryPart := fmt.Sprintf("MIN(%s) AS \"%s\", MAX(%s) AS \"%s\"", fieldTyped, minAggName, fieldTyped, maxAggName)
-	// add aggregations
-	return queryPart
-}
-
-func (s *Storage) getResultHistogramAggQuery(extrema *model.Extrema, variable *model.Variable, resultVariable *model.Variable) (string, string, string) {
-	// compute the bucket interval for the histogram
-	interval := extrema.GetBucketInterval()
-
-	// Only numeric types should occur.
-	fieldTyped := fmt.Sprintf("cast(\"%s\" as double precision)", resultVariable.Name)
-
-	// get histogram agg name & query string.
-	histogramAggName := fmt.Sprintf("\"%s%s\"", model.HistogramAggPrefix, extrema.Name)
-	bucketQueryString := fmt.Sprintf("width_bucket(%s, %g, %g, %d) - 1",
-		fieldTyped, extrema.Min, extrema.Max, extrema.GetBucketCount())
-	histogramQueryString := fmt.Sprintf("(%s) * %g + %g", bucketQueryString, interval, extrema.Min)
-
-	return histogramAggName, bucketQueryString, histogramQueryString
-}
-
-func (s *Storage) fetchResultsExtrema(resultURI string, dataset string, variable *model.Variable, resultVariable *model.Variable) (*model.Extrema, error) {
-	// add min / max aggregation
-	aggQuery := s.getResultMinMaxAggsQuery(variable, resultVariable)
-
-	// create a query that does min and max aggregations for each variable
-	queryString := fmt.Sprintf("SELECT %s FROM %s WHERE result_id = $1 AND target = $2;", aggQuery, dataset)
-
-	// execute the postgres query
-	res, err := s.client.Query(queryString, resultURI, variable.Name)
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to fetch extrema for result from postgres")
-	}
-	defer res.Close()
-
-	return s.parseExtrema(res, variable)
-}
-
-func (s *Storage) fetchNumericalResultHistogram(resultURI string, dataset string, variable *model.Variable, extrema *model.Extrema) (*model.Histogram, error) {
-	resultVariable := &model.Variable{
-		Name: "value",
-		Type: model.TextType,
-	}
-
-	// need the extrema to calculate the histogram interval
-	var err error
-	if extrema == nil {
-		extrema, err = s.fetchResultsExtrema(resultURI, dataset, variable, resultVariable)
-		if err != nil {
-			return nil, errors.Wrap(err, "failed to fetch result variable extrema for summary")
-		}
-	} else {
-		extrema.Name = variable.Name
-		extrema.Type = variable.Type
-	}
-	// for each returned aggregation, create a histogram aggregation. Bucket
-	// size is derived from the min/max and desired bucket count.
-	histogramName, bucketQuery, histogramQuery := s.getResultHistogramAggQuery(extrema, variable, resultVariable)
-
-	// Create the complete query string.
-	query := fmt.Sprintf(`
-		SELECT %s as bucket, CAST(%s as double precision) AS %s, COUNT(*) AS count FROM %s
-		WHERE result_id = $1 AND target = $2
-		GROUP BY %s ORDER BY %s;`, bucketQuery, histogramQuery, histogramName, dataset, bucketQuery, histogramName)
-
-	// execute the postgres query
-	res, err := s.client.Query(query, resultURI, variable.Name)
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to fetch histograms for result variable summaries from postgres")
-	}
-	defer res.Close()
-
-	return s.parseNumericHistogram(variable.Type, res, extrema)
-}
-
-func (s *Storage) fetchCategoricalResultHistogram(resultURI string, dataset string, resultDataset string, variable *model.Variable) (*model.Histogram, error) {
-	targetName := variable.Name
-
-	query := fmt.Sprintf("SELECT base.\"%s\", result.value, COUNT(*) AS count "+
-		"FROM %s AS result INNER JOIN %s AS base ON result.index = base.\"d3mIndex\" "+
-		"WHERE result.result_id = $1 and result.target = $2 "+
-		"GROUP BY result.value, base.\"%s\" "+
-		"ORDER BY count desc;", targetName, resultDataset, dataset, targetName)
-
-	// execute the postgres query
-	res, err := s.client.Query(query, resultURI, targetName)
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to fetch histograms for result summaries from postgres")
-	}
-	defer res.Close()
-
-	return s.parseCategoricalHistogram(res, variable)
-}
-
 // FetchResultsExtremaByURI fetches the results extrema by resultURI.
 func (s *Storage) FetchResultsExtremaByURI(dataset string, resultURI string, index string) (*model.Extrema, error) {
 	datasetResult := s.getResultTable(dataset)
@@ -530,12 +427,14 @@ func (s *Storage) FetchResultsExtremaByURI(dataset string, resultURI string, ind
 		Name: "value",
 		Type: model.TextType,
 	}
-	return s.fetchResultsExtrema(resultURI, datasetResult, targetVariable, resultVariable)
+
+	field := NewNumericalField(s)
+	return field.fetchResultsExtrema(resultURI, datasetResult, targetVariable, resultVariable)
 }
 
 // FetchResultsSummary gets the summary data about a target variable from the
 // results table.
-func (s *Storage) FetchResultsSummary(dataset string, resultURI string, index string, extrema *model.Extrema) (*model.Histogram, error) {
+func (s *Storage) FetchResultsSummary(dataset string, resultURI string, index string, filterParams *model.FilterParams, inclusive bool, extrema *model.Extrema) (*model.Histogram, error) {
 	datasetResult := s.getResultTable(dataset)
 	targetName, err := s.getResultTargetName(datasetResult, resultURI, index)
 	if err != nil {
@@ -547,22 +446,22 @@ func (s *Storage) FetchResultsSummary(dataset string, resultURI string, index st
 		return nil, err
 	}
 
+	// use the variable type to guide the summary creation.
+	var field Field
 	var histogram *model.Histogram
-
 	if model.IsNumerical(variable.Type) {
 		// fetch numeric histograms
-		histogram, err = s.fetchNumericalResultHistogram(resultURI, datasetResult, variable, extrema)
-		if err != nil {
-			return nil, err
-		}
+		field = NewNumericalField(s)
 	} else if model.IsCategorical(variable.Type) {
 		// fetch categorical histograms
-		histogram, err = s.fetchCategoricalResultHistogram(resultURI, dataset, datasetResult, variable)
-		if err != nil {
-			return nil, err
-		}
+		field = NewCategoricalField(s)
 	} else {
 		return nil, errors.Errorf("variable %s of type %s does not support summary", variable.Name, variable.Type)
+	}
+
+	histogram, err = field.FetchResultSummaryData(resultURI, dataset, datasetResult, variable, extrema)
+	if err != nil {
+		return nil, errors.Wrap(err, "unable to fetch result summary")
 	}
 
 	// add filter if results

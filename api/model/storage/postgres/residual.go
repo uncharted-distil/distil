@@ -26,7 +26,7 @@ func (s *Storage) FetchResidualsExtremaByURI(dataset string, resultURI string, i
 }
 
 // FetchResidualsSummary fetches a histogram of the residuals associated with a set of numerical predictions.
-func (s *Storage) FetchResidualsSummary(dataset string, resultURI string, index string, extrema *model.Extrema) (*model.Histogram, error) {
+func (s *Storage) FetchResidualsSummary(dataset string, resultURI string, index string, filterParams *model.FilterParams, inclusive bool, extrema *model.Extrema) (*model.Histogram, error) {
 	datasetResult := s.getResultTable(dataset)
 	targetName, err := s.getResultTargetName(datasetResult, resultURI, index)
 	if err != nil {
@@ -146,5 +146,7 @@ func (s *Storage) fetchResidualsHistogram(resultURI string, dataset string, vari
 	}
 	defer res.Close()
 
-	return s.parseNumericHistogram(variable.Type, res, extrema)
+	field := NewNumericalField(s)
+
+	return field.parseHistogram(variable.Type, res, extrema)
 }
