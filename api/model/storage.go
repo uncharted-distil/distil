@@ -12,14 +12,14 @@ type DataStorageCtor func() (DataStorage, error)
 type DataStorage interface {
 	FetchNumRows(dataset string, filters map[string]interface{}) (int, error)
 	FetchData(dataset string, index string, filterParams *FilterParams, inclusive bool, invert bool) (*FilteredData, error)
-	FetchSummary(dataset string, index string, varName string, filterParams *FilterParams, inclusive bool) (*Histogram, error)
-	FetchSummaryByResult(dataset string, index string, varName string, resultURI string, filterParams *FilterParams, inclusive bool, extrema *Extrema) (*Histogram, error)
+	FetchSummary(dataset string, index string, varName string, filterParams *FilterParams) (*Histogram, error)
+	FetchSummaryByResult(dataset string, index string, varName string, resultURI string, filterParams *FilterParams, extrema *Extrema) (*Histogram, error)
 	PersistResult(dataset string, resultURI string) error
 	FetchResults(dataset string, index string, resultURI string) (*FilteredData, error)
 	FetchFilteredResults(dataset string, index string, resultURI string, filterParams *FilterParams, inclusive bool) (*FilteredData, error)
-	FetchResultsSummary(dataset string, resultURI string, index string, filterParams *FilterParams, inclusive bool, extrema *Extrema) (*Histogram, error)
+	FetchResultsSummary(dataset string, resultURI string, index string, filterParams *FilterParams, extrema *Extrema) (*Histogram, error)
 	FetchResultsExtremaByURI(dataset string, resultURI string, index string) (*Extrema, error)
-	FetchResidualsSummary(dataset string, resultURI string, index string, filterParams *FilterParams, inclusive bool, extrema *Extrema) (*Histogram, error)
+	FetchResidualsSummary(dataset string, resultURI string, index string, filterParams *FilterParams, extrema *Extrema) (*Histogram, error)
 	FetchResidualsExtremaByURI(dataset string, resultURI string, index string) (*Extrema, error)
 	FetchExtremaByURI(dataset string, resultURI string, index string, variable string) (*Extrema, error)
 	// Dataset manipulation

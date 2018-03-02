@@ -315,10 +315,7 @@ func (s *Storage) FetchFilteredResults(dataset string, index string, resultURI s
 	}
 
 	// Create the filter portion of the where clause.
-	where, params, err := s.buildFilteredQueryWhere(dataset, filterParams)
-	if err != nil {
-		return nil, errors.Wrap(err, "Could not build where clause")
-	}
+	where, params := s.buildFilteredQueryWhere(dataset, filterParams)
 
 	// Add the predicted filter into the where clause if it was included in the filter set
 	if resultFilters.Predicted != nil {
@@ -434,7 +431,7 @@ func (s *Storage) FetchResultsExtremaByURI(dataset string, resultURI string, ind
 
 // FetchResultsSummary gets the summary data about a target variable from the
 // results table.
-func (s *Storage) FetchResultsSummary(dataset string, resultURI string, index string, filterParams *model.FilterParams, inclusive bool, extrema *model.Extrema) (*model.Histogram, error) {
+func (s *Storage) FetchResultsSummary(dataset string, resultURI string, index string, filterParams *model.FilterParams, extrema *model.Extrema) (*model.Histogram, error) {
 	datasetResult := s.getResultTable(dataset)
 	targetName, err := s.getResultTargetName(datasetResult, resultURI, index)
 	if err != nil {

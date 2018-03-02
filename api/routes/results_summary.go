@@ -23,9 +23,6 @@ func ResultsSummaryHandler(pipelineCtor model.PipelineStorageCtor, dataCtor mode
 		index := pat.Param(r, "index")
 		dataset := pat.Param(r, "dataset")
 
-		inclusive := pat.Param(r, "inclusive")
-		inclusiveBool := inclusive == "inclusive"
-
 		resultUUID, err := url.PathUnescape(pat.Param(r, "results-uuid"))
 		if err != nil {
 			handleError(w, errors.Wrap(err, "unable to unescape results uuid"))
@@ -69,7 +66,7 @@ func ResultsSummaryHandler(pipelineCtor model.PipelineStorageCtor, dataCtor mode
 		}
 
 		// fetch summary histogram
-		histogram, err := data.FetchResultsSummary(dataset, res.ResultURI, index, filterParams, inclusiveBool, &model.Extrema{
+		histogram, err := data.FetchResultsSummary(dataset, res.ResultURI, index, filterParams, &model.Extrema{
 			Min: extremaMin,
 			Max: extremaMax,
 		})

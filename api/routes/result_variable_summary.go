@@ -23,9 +23,6 @@ func ResultVariableSummaryHandler(ctorPipeline model.PipelineStorageCtor, ctorSt
 		// get variable name
 		variable := pat.Param(r, "variable")
 
-		inclusive := pat.Param(r, "inclusive")
-		inclusiveBool := inclusive == "inclusive"
-
 		// get result id
 		resultID, err := url.PathUnescape(pat.Param(r, "results-uuid"))
 		if err != nil {
@@ -80,7 +77,7 @@ func ResultVariableSummaryHandler(ctorPipeline model.PipelineStorageCtor, ctorSt
 			return
 		}
 		// fetch summary histogram
-		histogram, err := storage.FetchSummaryByResult(dataset, index, variable, result.ResultURI, filterParams, inclusiveBool, extrema)
+		histogram, err := storage.FetchSummaryByResult(dataset, index, variable, result.ResultURI, filterParams, extrema)
 		if err != nil {
 			handleError(w, err)
 			return

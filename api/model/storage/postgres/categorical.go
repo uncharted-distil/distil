@@ -24,24 +24,30 @@ func NewCategoricalField(storage *Storage) *CategoricalField {
 }
 
 // FetchSummaryData pulls summary data from the database and builds a histogram.
-func (f *CategoricalField) FetchSummaryData(dataset string, index string, variable *model.Variable, resultURI string, filterParams *model.FilterParams, inclusive bool, extrema *model.Extrema) (*model.Histogram, error) {
+func (f *CategoricalField) FetchSummaryData(dataset string, index string, variable *model.Variable, resultURI string, filterParams *model.FilterParams, extrema *model.Extrema) (*model.Histogram, error) {
 	var histogram *model.Histogram
 	var err error
 	if resultURI == "" {
-		histogram, err = f.fetchHistogram(dataset, variable)
+		histogram, err = f.fetchHistogram(dataset, variable, filterParams)
 	} else {
-		histogram, err = f.fetchHistogramByResult(dataset, variable, resultURI)
+		histogram, err = f.fetchHistogramByResult(dataset, variable, resultURI, filterParams)
 	}
 
 	return histogram, err
 }
 
-func (f *CategoricalField) fetchHistogram(dataset string, variable *model.Variable) (*model.Histogram, error) {
+func (f *CategoricalField) fetchHistogram(dataset string, variable *model.Variable, filterParams *model.FilterParams) (*model.Histogram, error) {
+	// create the filter for the query.
+	where, params := f.Storage.buildFilteredQueryWhere(dataset, filterParams)
+	if len(where) > 0 {
+		where = fmt.Sprintf(" WHERE %s", where)
+	}
+
 	// Get count by category.
-	query := fmt.Sprintf("SELECT \"%s\", COUNT(*) AS count FROM %s GROUP BY \"%s\" ORDER BY count desc, \"%s\" LIMIT %d;", variable.Name, dataset, variable.Name, variable.Name, catResultLimit)
+	query := fmt.Sprintf("SELECT \"%s\", COUNT(*) AS count FROM %s%s GROUP BY \"%s\" ORDER BY count desc, \"%s\" LIMIT %d;", variable.Name, dataset, where, variable.Name, variable.Name, catResultLimit)
 
 	// execute the postgres query
-	res, err := f.Storage.client.Query(query)
+	res, err := f.Storage.client.Query(query, params...)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to fetch histograms for variable summaries from postgres")
 	}
@@ -52,13 +58,22 @@ func (f *CategoricalField) fetchHistogram(dataset string, variable *model.Variab
 	return f.parseHistogram(res, variable)
 }
 
-func (f *CategoricalField) fetchHistogramByResult(dataset string, variable *model.Variable, resultURI string) (*model.Histogram, error) {
+func (f *CategoricalField) fetchHistogramByResult(dataset string, variable *model.Variable, resultURI string, filterParams *model.FilterParams) (*model.Histogram, error) {
+	// create the filter for the query.
+	where, params := f.Storage.buildFilteredQueryWhere(dataset, filterParams)
+	if len(where) > 0 {
+		where = fmt.Sprintf(" AND %s", where)
+	}
+	params = append(params, resultURI)
+
 	// Get count by category.
-	query := fmt.Sprintf("SELECT data.\"%s\", COUNT(*) AS count FROM %s data INNER JOIN %s result ON data.\"%s\" = result.index WHERE result.result_id = $1 GROUP BY \"%s\" ORDER BY count desc, \"%s\" LIMIT %d;", variable.Name, dataset, f.Storage.getResultTable(dataset),
-		d3mIndexFieldName, variable.Name, variable.Name, catResultLimit)
+	query := fmt.Sprintf("SELECT data.\"%s\", COUNT(*) AS count FROM %s data INNER JOIN %s result ON data.\"%s\" = result.index WHERE result.result_id = $%d%s GROUP BY \"%s\" ORDER BY count desc, \"%s\" LIMIT %d;",
+		variable.Name, dataset, f.Storage.getResultTable(dataset),
+		d3mIndexFieldName, len(params), where, variable.Name,
+		variable.Name, catResultLimit)
 
 	// execute the postgres query
-	res, err := f.Storage.client.Query(query, resultURI)
+	res, err := f.Storage.client.Query(query, params...)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to fetch histograms for variable summaries from postgres")
 	}

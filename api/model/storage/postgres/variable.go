@@ -111,7 +111,7 @@ func (s *Storage) FetchExtremaByURI(dataset string, resultURI string, index stri
 	return s.fetchExtremaByURI(dataset, resultURI, variable)
 }
 
-func (s *Storage) fetchSummaryData(dataset string, index string, varName string, resultURI string, filterParams *model.FilterParams, inclusive bool, extrema *model.Extrema) (*model.Histogram, error) {
+func (s *Storage) fetchSummaryData(dataset string, index string, varName string, resultURI string, filterParams *model.FilterParams, extrema *model.Extrema) (*model.Histogram, error) {
 	// need description of the variables to request aggregation against.
 	variable, err := s.metadata.FetchVariable(dataset, index, varName)
 	if err != nil {
@@ -128,7 +128,7 @@ func (s *Storage) fetchSummaryData(dataset string, index string, varName string,
 		return nil, errors.Errorf("variable %s of type %s does not support summary", variable.Name, variable.Type)
 	}
 
-	histogram, err := field.FetchSummaryData(dataset, index, variable, resultURI, filterParams, inclusive, extrema)
+	histogram, err := field.FetchSummaryData(dataset, index, variable, resultURI, filterParams, extrema)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to fetch summary data")
 	}
@@ -147,12 +147,12 @@ func (s *Storage) fetchSummaryData(dataset string, index string, varName string,
 }
 
 // FetchSummary returns the summary for the provided dataset and variable.
-func (s *Storage) FetchSummary(dataset string, index string, varName string, filterParams *model.FilterParams, inclusive bool) (*model.Histogram, error) {
-	return s.fetchSummaryData(dataset, index, varName, "", filterParams, inclusive, nil)
+func (s *Storage) FetchSummary(dataset string, index string, varName string, filterParams *model.FilterParams) (*model.Histogram, error) {
+	return s.fetchSummaryData(dataset, index, varName, "", filterParams, nil)
 }
 
 // FetchSummaryByResult returns the summary for the provided dataset
 // and variable for data that is part of the result set.
-func (s *Storage) FetchSummaryByResult(dataset string, index string, varName string, resultURI string, filterParams *model.FilterParams, inclusive bool, extrema *model.Extrema) (*model.Histogram, error) {
-	return s.fetchSummaryData(dataset, index, varName, resultURI, filterParams, inclusive, extrema)
+func (s *Storage) FetchSummaryByResult(dataset string, index string, varName string, resultURI string, filterParams *model.FilterParams, extrema *model.Extrema) (*model.Histogram, error) {
+	return s.fetchSummaryData(dataset, index, varName, resultURI, filterParams, extrema)
 }

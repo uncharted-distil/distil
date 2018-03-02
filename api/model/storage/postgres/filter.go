@@ -44,7 +44,7 @@ func (s *Storage) parseFilteredData(dataset string, numRows int, rows *pgx.Rows)
 	return result, nil
 }
 
-func (s *Storage) buildFilteredQueryWhere(dataset string, filterParams *model.FilterParams) (string, []interface{}, error) {
+func (s *Storage) buildFilteredQueryWhere(dataset string, filterParams *model.FilterParams) (string, []interface{}) {
 	// Build where clauses using the filter parameters.
 	// param identifiers in the query are 1-based $x.
 	params := make([]interface{}, 0)
@@ -71,7 +71,7 @@ func (s *Storage) buildFilteredQueryWhere(dataset string, filterParams *model.Fi
 		}
 	}
 
-	return strings.Join(wheres, " AND "), params, nil
+	return strings.Join(wheres, " AND "), params
 }
 
 func (s *Storage) buildFilteredQueryField(dataset string, variables []*model.Variable, filterParams *model.FilterParams, inclusive bool) (string, error) {
@@ -134,10 +134,7 @@ func (s *Storage) FetchData(dataset string, index string, filterParams *model.Fi
 	// construct a Postgres query that fetches documents from the dataset with the supplied variable filters applied
 	query := fmt.Sprintf("SELECT %s FROM %s", fields, dataset)
 
-	where, params, err := s.buildFilteredQueryWhere(dataset, filterParams)
-	if err != nil {
-		return nil, errors.Wrap(err, "Could not build where clause")
-	}
+	where, params := s.buildFilteredQueryWhere(dataset, filterParams)
 
 	if len(where) > 0 {
 		if invert {

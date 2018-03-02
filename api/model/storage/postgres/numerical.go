@@ -24,7 +24,7 @@ func NewNumericalField(storage *Storage) *NumericalField {
 }
 
 // FetchSummaryData pulls summary data from the database and builds a histogram.
-func (f *NumericalField) FetchSummaryData(dataset string, index string, variable *model.Variable, resultURI string, filterParams *model.FilterParams, inclusive bool, extrema *model.Extrema) (*model.Histogram, error) {
+func (f *NumericalField) FetchSummaryData(dataset string, index string, variable *model.Variable, resultURI string, filterParams *model.FilterParams, extrema *model.Extrema) (*model.Histogram, error) {
 	var histogram *model.Histogram
 	var err error
 	if resultURI == "" {
