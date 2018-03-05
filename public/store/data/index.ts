@@ -137,5 +137,8 @@ export const state = {
 	// excluded data entries for the active dataset
 	excludedData: null,
 
-	highlightValues: {}
+	highlightValues: {
+		summaries: [],
+		samples: {}
+	}
 }

@@ -250,14 +250,6 @@ export default Vue.extend({
 				highlights.root.value.to === value.to;
 		},
 
-		isValueInBar(bar: any, value: number): boolean {
-			const metadata: any[] = bar.metadata;
-			const barMin = _.toNumber(_.first(metadata).label);
-			const barMax = _.toNumber(_.last(metadata).toLabel);
-			const num = _.toNumber(value);
-			return (num >= barMin && num < barMax);
-		},
-
 		getHighlightRootValue(highlights: Highlight): any {
 			if (highlights.root) {
 				if (highlights.root.value) {
@@ -273,9 +265,16 @@ export default Vue.extend({
 			return null;
 		},
 
-		getHighlightValuesForGroup(highlights: Highlight, key: string): any[] {
+		getHighlightRootKey(highlights: Highlight): any {
+			if (highlights.root) {
+				return highlights.root.key;
+			}
+			return null;
+		},
+
+		getHighlightSummaries(highlights: Highlight): any {
 			if (highlights.values) {
-				return highlights.values[key] ? highlights.values[key] : [];
+				return highlights.values.summaries;
 			}
 			return null;
 		},
@@ -288,7 +287,7 @@ export default Vue.extend({
 		},
 
 		selectCategoricalFacet(facet: any, count?: number) {
-			if (!count && facet._spec.segments && facet._spec.segments.length > 0) {
+			if (count === undefined && facet._spec.segments && facet._spec.segments.length > 0) {
 				facet.select(facet._spec.segments);
 			} else {
 				facet.select(count ? count : facet.count);
@@ -358,13 +357,14 @@ export default Vue.extend({
 				this.selectCategoricalFacet(facet);
 			});
 
-			const highlightValues = this.getHighlightValuesForGroup(highlights, group.key);
 			const highlightRootValue = this.getHighlightRootValue(highlights);
 
 			if (!highlightRootValue) {
 				// no value to highlight, exit early
 				return;
 			}
+
+			const summaries = this.getHighlightSummaries(highlights);
 
 			for (const facet of group.facets) {
 
@@ -388,37 +388,23 @@ export default Vue.extend({
 
 					} else {
 
-						// check if we have values to display
-						if (highlightValues) {
+						const summary = _.find(summaries, s => {
+							return s.name === group.key;
+						});
 
-							// otherwise go through all values in highlights
-							const values = Array.from(highlightValues) as number[];
-							const sortedValues: number[] = values.sort((a, b) => a - b) as number[];
+						if (summary) {
 
-							const slices = {};
 							const bars = facet._histogram.bars;
 
-							let lastIndex = 0;
-							sortedValues.forEach(value => {
-								// iterate over the facet bars and find the one that contains the current value
-								for (let i = lastIndex; i < bars.length; i++) {
-									const bar = bars[i];
-									if (this.isValueInBar(bar, value)) {
-										const entry: any = _.last(bar.metadata);
-										if (!slices[entry.label]) {
-											slices[entry.label] = 0;
-										}
-										slices[entry.label]++;
-										lastIndex = i;
-										break;
-									}
-								}
+							const slices = {};
+
+							summary.buckets.forEach((bucket, index) => {
+								const entry: any = _.last(bars[index].metadata);
+								slices[entry.label] = bucket.count;
 							});
 
-							this.scaleSlicesBySampleSize(slices, this.getGroupNumRows(group.key), bars);
-
 							// ensure min height
-							this.ensureMinHeight(slices, bars);
+							//this.ensureMinHeight(slices, bars);
 
 							selection.slices = slices;
 						}
@@ -431,42 +417,34 @@ export default Vue.extend({
 
 				} else {
 
-					if (highlightValues) {
+					if (this.isHighlightedGroup(highlights, group.key)) {
 
-						if (this.isHighlightedGroup(highlights, group.key)) {
-							const highlightValue = this.getHighlightRootValue(highlights);
-							if (highlightValue.toLowerCase() === facet.value.toLowerCase()) {
-								this.selectCategoricalFacet(facet);
-							} else {
-								this.deselectCategoricalFacet(facet);
-							}
-
+						const highlightValue = this.getHighlightRootValue(highlights);
+						if (highlightValue.toLowerCase() === facet.value.toLowerCase()) {
+							this.selectCategoricalFacet(facet);
 						} else {
-
-							const values = Array.from(highlightValues) as string[];
-							const matches = _.filter(values, v => v.toLowerCase() === (facet.value.toLowerCase ? facet.value.toLowerCase() : undefined));
-
-							if (matches.length > 0) {
-								const count = this.scaleCountBySampleSize(matches.length, this.getGroupNumRows(group.key), facet);
-								this.selectCategoricalFacet(facet, count);
-							} else {
-								this.deselectCategoricalFacet(facet);
-							}
+							this.deselectCategoricalFacet(facet);
 						}
 
 					} else {
 
-						const highlightValue = this.getHighlightRootValue(highlights);
-						if (highlightValue) {
+						const summary = _.find(summaries, s => {
+							return s.name === group.key;
+						});
 
-							if (this.isHighlightedGroup(highlights, group.key) &&
-								highlightValue.toLowerCase() === facet.value.toLowerCase()) {
-								this.selectCategoricalFacet(facet);
+						if (summary) {
+
+							const bucket = _.find(summary.buckets, b => {
+								return b.key === facet.value;
+							});
+
+							if (bucket && bucket.count > 0) {
+								this.selectCategoricalFacet(facet, bucket.count);
 							} else {
 								this.deselectCategoricalFacet(facet);
 							}
-						}
 
+						}
 					}
 				}
 			}

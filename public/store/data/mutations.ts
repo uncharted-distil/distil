@@ -85,7 +85,16 @@ export const mutations = {
 		state.highlightValues.samples = samples;
 	},
 
-	updateHighlightSummaries(state: DataState, summaries: VariableSummary[]) {
-		state.highlightValues.summaries = summaries;
+	updateHighlightSummaries(state: DataState, summary: VariableSummary) {
+		if (!summary) {
+			return;
+		}
+		const index = _.findIndex(state.highlightValues.summaries, s => {
+			return s.name === summary.name;
+		});
+		if (index !== -1) {
+			Vue.set(state.highlightValues.summaries, index, summary);
+		}
+		state.highlightValues.summaries.push(summary);
 	}
 }

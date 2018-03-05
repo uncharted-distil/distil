@@ -104,11 +104,6 @@ export default Vue.extend({
 			});
 		},
 		filterStr() {
-			actions.fetchDataHighlightValues(this.$store, {
-				dataset: this.dataset,
-				variables: this.variables,
-				highlightRoot: this.highlightRoot,
-			});
 			actions.fetchSelectedTableData(this.$store, {
 				dataset: this.dataset,
 				filters: this.selectedFilters
@@ -126,21 +121,26 @@ export default Vue.extend({
 
 	methods: {
 		fetch() {
-			actions.fetchVariablesAndVariableSummaries(this.$store, {
+			actions.fetchVariables(this.$store, {
 				dataset: this.dataset
-			});
-			actions.fetchDataHighlightValues(this.$store, {
-				dataset: this.dataset,
-				variables: this.variables,
-				highlightRoot: this.highlightRoot,
-			});
-			actions.fetchSelectedTableData(this.$store, {
-				dataset: this.dataset,
-				filters: this.selectedFilters
-			});
-			actions.fetchExcludedTableData(this.$store, {
-				dataset: this.dataset,
-				filters: this.selectedFilters
+			}).then(() => {
+				actions.fetchVariableSummaries(this.$store, {
+					dataset: this.dataset,
+					variables: this.variables
+				});
+				actions.fetchDataHighlightValues(this.$store, {
+					dataset: this.dataset,
+					variables: this.variables,
+					highlightRoot: this.highlightRoot,
+				});
+				actions.fetchSelectedTableData(this.$store, {
+					dataset: this.dataset,
+					filters: this.selectedFilters
+				});
+				actions.fetchExcludedTableData(this.$store, {
+					dataset: this.dataset,
+					filters: this.selectedFilters
+				});
 			});
 		},
 		capitalize(str) {

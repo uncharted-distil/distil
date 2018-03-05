@@ -15,10 +15,8 @@
 				{{metricName(score.metric)}}: {{score.value}}
 			</b-badge>
 			<facets v-if="resultGroups.length" class="result-container"
-				@histogram-click="onResultHistogramClick"
 				@facet-click="onResultFacetClick"
 				@range-change="onResultRangeChange"
-				@facet-toggle="onResultFacetToggle"
 				:groups="resultGroups"
 				:highlights="highlights"
 				:filters="filters"

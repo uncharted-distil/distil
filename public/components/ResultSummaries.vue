@@ -20,10 +20,8 @@
 		</div>
 		<p class="nav-link font-weight-bold">Actual</p>
 		<facets class="result-summaries-target"
-			@histogram-click="onHistogramClick"
 			@facet-click="onFacetClick"
 			@range-change="onRangeChange"
-			@facet-toggle="onFacetToggle"
 			:groups="targetGroups"
 			:filters="filters"
 			:highlights="highlights"></facets>
@@ -54,7 +52,7 @@ import { getters as dataGetters} from '../store/data/module';
 import { getters as routeGetters } from '../store/route/module';
 import { actions } from '../store/app/module';
 import vueSlider from 'vue-slider-component';
-import { createNumericalFilter, createCategoricalFilter, updateFilterRoute } from '../util/filters';
+import { createNumericalFilter, updateFilterRoute } from '../util/filters';
 import Vue from 'vue';
 import _ from 'lodash';
 import 'font-awesome/css/font-awesome.css';
@@ -217,23 +215,18 @@ export default Vue.extend({
 			updateFilterRoute(this, filter);
 		},
 
-		onFacetToggle(key: string, values: string[]) {
-			const filter = createCategoricalFilter(key, values);
-			updateFilterRoute(this, filter);
-		},
-
-		onHistogramClick(context: string, key: string, value: any) {
-			if (key && value) {
-				const colKey = getTargetCol(this.target);
-				updateHighlightRoot(this, {
-					context: context,
-					key: colKey,
-					value: value
-				});
-			} else {
-				clearHighlightRoot(this);
-			}
-		},
+		// onHistogramClick(context: string, key: string, value: any) {
+		// 	if (key && value) {
+		// 		const colKey = getTargetCol(this.target);
+		// 		updateHighlightRoot(this, {
+		// 			context: context,
+		// 			key: colKey,
+		// 			value: value
+		// 		});
+		// 	} else {
+		// 		clearHighlightRoot(this);
+		// 	}
+		// },
 
 		onFacetClick(context: string, key: string, value: string) {
 			if (key && value) {

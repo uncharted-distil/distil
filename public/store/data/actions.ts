@@ -600,10 +600,9 @@ export const actions = {
 		}
 		const filter = createFilterFromHighlightRoot(args.highlightRoot);
 		const queryParams = encodeQueryParams(filter ? [ filter ] : null);
-
 		// commit empty place holders, if there is no data
 		return Promise.all(args.variables.map(variable => {
-			return axios.get(`/distil/variable-summaries/${ES_INDEX}/${args.dataset}/${variable}${queryParams}`)
+			return axios.get(`/distil/variable-summaries/${ES_INDEX}/${args.dataset}/${variable.name}${queryParams}`)
 				.then(response => {
 					mutations.updateHighlightSummaries(context, response.data.histogram);
 				})
