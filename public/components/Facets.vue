@@ -7,11 +7,11 @@ import _ from 'lodash';
 import $ from 'jquery';
 import Vue from 'vue';
 import { Group, CategoricalFacet, isCategoricalFacet, CATEGORICAL_CHUNK_SIZE } from '../util/facets';
+import { Highlight } from '../store/data/index';
 import { Dictionary } from '../util/dict';
 import Facets from '@uncharted.software/stories-facets';
 import TypeChangeMenu from '../components/TypeChangeMenu';
 import '@uncharted.software/stories-facets/dist/facets.css';
-import { Highlights, Range } from '../util/highlights';
 import { CATEGORICAL_FILTER, NUMERICAL_FILTER } from '../util/filters';
 
 export default Vue.extend({
@@ -66,7 +66,11 @@ export default Vue.extend({
 		});
 
 		this.facets.on('facet-histogram:rangechangeduser', (event: Event, key: string, value: any) => {
-			component.$emit('range-change', key, value);
+			const range = {
+				from: _.toNumber(value.from.label[0]),
+				to: _.toNumber(value.to.label[0])
+			};
+			component.$emit('range-change', this.instanceName, key, range);
 		});
 
 		// hover over events
@@ -152,7 +156,7 @@ export default Vue.extend({
 			});
 			return m;
 		},
-		histogramFiltersByKey(): Dictionary<Range> {
+		histogramFiltersByKey(): Dictionary<any> {
 			const m = {};
 			this.filters.forEach(filter => {
 				if (filter.enabled && filter.type === NUMERICAL_FILTER) {
@@ -182,7 +186,7 @@ export default Vue.extend({
 		},
 
 		// handle external highlight changes by updating internal facet select states
-		highlights(currHighlights: Highlights) {
+		highlights(currHighlights: Highlight) {
 			this.injectHighlights(currHighlights);
 		},
 
@@ -209,9 +213,6 @@ export default Vue.extend({
 			// inject type change header menus
 			this.injectTypeChangeHeaders(group, $elem);
 
-			// inject category toggle buttons
-			this.injectCategoryToggleButtons(group, $elem);
-
 			if (!this.html) {
 				return;
 			}
@@ -223,11 +224,11 @@ export default Vue.extend({
 			}
 		},
 
-		isHighlightedInstance(highlights: Highlights): boolean {
+		isHighlightedInstance(highlights: Highlight): boolean {
 			return _.get(highlights, 'root.context') === this.instanceName;
 		},
 
-		isHighlightedGroup(highlights: Highlights, key: string): boolean {
+		isHighlightedGroup(highlights: Highlight, key: string): boolean {
 			return this.isHighlightedInstance(highlights) &&
 				_.get(highlights, 'root.key') === key;
 		},
@@ -257,7 +258,7 @@ export default Vue.extend({
 			return (num >= barMin && num < barMax);
 		},
 
-		getHighlightRootValue(highlights: Highlights): any {
+		getHighlightRootValue(highlights: Highlight): any {
 			if (highlights.root) {
 				if (highlights.root.value) {
 					if (_.isArray(highlights.root.value)) {
@@ -266,14 +267,13 @@ export default Vue.extend({
 					if (_.isString(highlights.root.value)) {
 						return highlights.root.value;
 					}
-					// take middle value
-					return _.toNumber((highlights.root.value.to + highlights.root.value.from) / 2);
+					return highlights.root.value;
 				}
 			}
 			return null;
 		},
 
-		getHighlightValuesForGroup(highlights: Highlights, key: string): any[] {
+		getHighlightValuesForGroup(highlights: Highlight, key: string): any[] {
 			if (highlights.values) {
 				return highlights.values[key] ? highlights.values[key] : [];
 			}
@@ -285,42 +285,6 @@ export default Vue.extend({
 				return g.key === key;
 			});
 			return groups.length > 0 ? groups[0].numRows : 0;
-		},
-
-		injectSelectionIntoGroup(group: any, highlights: Highlights) {
-
-			if (!this.isHighlightedGroup(highlights, group.key)) {
-				return;
-			}
-
-			const highlightValue = this.getHighlightRootValue(highlights);
-
-			for (const facet of group.facets) {
-
-				// ignore placeholder facets
-				if (facet._type === 'placeholder') {
-					continue;
-				}
-
-				if (facet._histogram) {
-
-					const bars = facet._histogram.bars;
-					for (let i = 0; i < bars.length; i++) {
-						const bar = bars[i];
-						if (this.isValueInBar(bar, highlightValue)) {
-							$(bar._element).addClass('select-highlight');
-							return;
-						}
-					}
-
-				} else {
-
-					if (highlightValue.toLowerCase() === facet.value.toLowerCase()) {
-						$(facet._element).addClass('select-highlight');
-					}
-
-				}
-			}
 		},
 
 		selectCategoricalFacet(facet: any, count?: number) {
@@ -380,10 +344,8 @@ export default Vue.extend({
 			});
 		},
 
-		injectHighlightsIntoGroup(group: any, highlights: Highlights) {
+		injectHighlightsIntoGroup(group: any, highlights: Highlight) {
 
-			const highlightValues = this.getHighlightValuesForGroup(highlights, group.key);
-			const filter = this.histogramFiltersByKey[group.key];
 
 			// loop through groups ensure that selection is clear on each
 			group.facets.forEach(facet => {
@@ -396,6 +358,14 @@ export default Vue.extend({
 				this.selectCategoricalFacet(facet);
 			});
 
+			const highlightValues = this.getHighlightValuesForGroup(highlights, group.key);
+			const highlightRootValue = this.getHighlightRootValue(highlights);
+
+			if (!highlightRootValue) {
+				// no value to highlight, exit early
+				return;
+			}
+
 			for (const facet of group.facets) {
 
 				// ignore placeholder facets
@@ -404,39 +374,29 @@ export default Vue.extend({
 				}
 
 				if (facet._histogram) {
-					// Build up the selection structures ||  to pass to the facets lib.  The facets library doesn't
-					// give us a good way to determine the index of a particular numeric value in the set of generated
-					// bars (they are non-contiguous), so we just have to check each range ourselves.  To be more efficient
-					// we sort the values and do it one pass.
 
-					let slices: Dictionary<number> = null;
+					const selection = {} as any;
 
-					if (highlightValues) {
+					// if this is the highlighted group, create filter selection
+					if (this.isHighlightedGroup(highlights, group.key)) {
 
-						const values = Array.from(highlightValues) as number[];
+						// NOTE: the `from` / `to` values MUST be strings.
+						selection.range = {
+							from: `${highlightRootValue.from}`,
+							to: `${highlightRootValue.to}`
+						};
 
-						// if we have values, set the slices object so we can filter by the values.
-						slices = {};
+					} else {
 
-						const bars = facet._histogram.bars;
-
-						// if this is the root highlight, highlight only the selected bar
-						if (this.isHighlightedGroup(highlights, group.key)) {
-
-							const highlightValue = this.getHighlightRootValue(highlights);
-							for (let i = 0; i < bars.length; i++) {
-								const bar = bars[i];
-								if (this.isValueInBar(bar, highlightValue)) {
-									const entry: any = _.last(bar.metadata);
-									slices[entry.label] = entry.count;
-									break;
-								}
-							}
-
-						} else {
+						// check if we have values to display
+						if (highlightValues) {
 
 							// otherwise go through all values in highlights
+							const values = Array.from(highlightValues) as number[];
 							const sortedValues: number[] = values.sort((a, b) => a - b) as number[];
+
+							const slices = {};
+							const bars = facet._histogram.bars;
 
 							let lastIndex = 0;
 							sortedValues.forEach(value => {
@@ -459,30 +419,15 @@ export default Vue.extend({
 
 							// ensure min height
 							this.ensureMinHeight(slices, bars);
+
+							selection.slices = slices;
 						}
-
 					}
 
-					// create selection
-					const selection: any = {};
+					facet.select({
+						selection: selection
+					});
 
-					if (filter) {
-						// NOTE: the `from` / `to` values MUST be strings.
-						selection.range = {
-							from: `${filter.from}`,
-							to: `${filter.to}`
-						};
-					}
-
-					if (slices) {
-						selection.slices = slices;
-					}
-
-					if (slices || filter) {
-						facet.select({
-							selection: selection
-						});
-					}
 
 				} else {
 
@@ -527,7 +472,7 @@ export default Vue.extend({
 			}
 		},
 
-		injectHighlights(highlights: Highlights) {
+		injectHighlights(highlights: Highlight) {
 			// Clear highlight state incase it was set via a click on on another
 			// component
 			$(this.$el).find('.select-highlight').removeClass('select-highlight');
@@ -538,7 +483,6 @@ export default Vue.extend({
 					return;
 				}
 				this.injectHighlightsIntoGroup(group, highlights);
-				this.injectSelectionIntoGroup(group, highlights);
 			});
 		},
 
@@ -586,7 +530,6 @@ export default Vue.extend({
 					this.facets.replaceGroup(_.cloneDeep(group));
 					this.injectHTML(group, this.facets.getGroup(group.key)._element);
 					this.injectHighlightsIntoGroup(this.facets.getGroup(group.key), this.highlights);
-					this.injectSelectionIntoGroup(this.facets.getGroup(group.key), this.highlights);
 				} else {
 					// add to appends
 					toAdd.push(_.cloneDeep(group));
@@ -604,7 +547,6 @@ export default Vue.extend({
 				toAdd.forEach(groupSpec => {
 					this.injectHTML(groupSpec, this.facets.getGroup(groupSpec.key)._element);
 					this.injectHighlightsIntoGroup(this.facets.getGroup(groupSpec.key), this.highlights);
-					this.injectSelectionIntoGroup(this.facets.getGroup(groupSpec.key), this.highlights);
 				});
 			}
 			// sort alphabetically
@@ -661,82 +603,6 @@ export default Vue.extend({
 						}
 					});
 				menu.$mount($slot[0]);
-			}
-		},
-
-		// inject category filter buttons
-		injectCategoryToggleButtons(groupSpec: Group, $elem: JQuery) {
-			if (!isCategoricalFacet(groupSpec.facets[0])) {
-				return;
-			}
-
-			// find the facet nodes in the DOM
-			const $verticalFacets = $elem.find('.facets-facet-vertical');
-
-			// Add a clickable filter state button to each facet.
-			for (const facetElement of $verticalFacets) {
-
-				const $facet = $(facetElement).find('.facet-query-close');
-				const label = $facet.parent().find('.facet-label').text().trim();
-				const facetSpec = (<CategoricalFacet[]>groupSpec.facets).find(f => f.value === label);
-
-				// only add controls for filterable facets
-				if (!facetSpec.filterable) {
-					continue;
-				}
-
-				// setup based on the initial filter state
-				const key = groupSpec.key;
-				const value = facetSpec.value;
-
-				let $icon = null;
-
-				if (this.isFiltered(key, value)) {
-					$icon = $(`<i id=${key}-${value} class="fa fa-circle-o"></i>`);
-				} else {
-					$icon = $(`<i id=${key}-${value} class="fa fa-circle"></i>`);
-				}
-				$icon.appendTo($facet);
-
-
-				$icon.click(e => {
-					// get group and current facet
-					const group = this.facets.getGroup(key);
-					const current = <any>(<CategoricalFacet[]>group.facets).find(facet => facet.value === value);
-
-					// selected values
-					const values = [];
-
-					// toggle the facet filter state
-					if (!this.isFiltered(key, value)) {
-						// switch to unfilter from filtered
-						$icon.removeClass('fa-circle').addClass('fa-circle-o');
-						// add newly selected value
-						this.deselectCategoricalFacet(current);
-					} else {
-						// switch from filtered to unfiltered, and restore highlight state if needed
-						$icon.removeClass('fa-circle-o').addClass('fa-circle');
-						if (this.isHighlightedValue(this.highlights, key, value)) {
-							this.selectCategoricalFacet(current);
-						}
-						values.push(value);
-					}
-
-					// add all currently selected values
-					const selected = group.facets
-						.filter(f => !this.isFiltered(f.key, f.value) && value !== f.value)
-						.map(f => f.value);
-
-					this.$emit('facet-toggle', key, values.concat(selected));
-				});
-
-				$icon.mouseenter(e => {
-					$icon.addClass('text-primary');
-				});
-
-				$icon.mouseleave(e => {
-					$icon.removeClass('text-primary');
-				});
 			}
 		}
 	},

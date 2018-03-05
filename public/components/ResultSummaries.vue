@@ -49,8 +49,7 @@ import { getPipelineById, getTask } from '../util/pipelines';
 import { Filter } from '../util/filters';
 import { isTarget, getVarFromTarget, getTargetCol } from '../util/data';
 import { updateHighlightRoot, clearHighlightRoot, getHighlights } from '../util/highlights';
-import { VariableSummary, Extrema } from '../store/data/index';
-import { Highlights, Range } from '../util/highlights';
+import { VariableSummary, Extrema, Highlight } from '../store/data/index';
 import { getters as dataGetters} from '../store/data/module';
 import { getters as routeGetters } from '../store/route/module';
 import { actions } from '../store/app/module';
@@ -116,13 +115,13 @@ export default Vue.extend({
 			];
 		},
 
-		highlights(): Highlights {
+		highlights(): Highlight {
 			// find var marked as 'target' and set associated values as highlights
 			const highlights = getHighlights(this.$store);
 			if (_.isEmpty(highlights)) {
 				return highlights;
 			}
-			const facetHighlights = <Highlights>{
+			const facetHighlights = <Highlight>{
 				root: _.cloneDeep(highlights.root),
 				values: {}
 			};
@@ -223,7 +222,7 @@ export default Vue.extend({
 			updateFilterRoute(this, filter);
 		},
 
-		onHistogramClick(context: string, key: string, value: Range) {
+		onHistogramClick(context: string, key: string, value: any) {
 			if (key && value) {
 				const colKey = getTargetCol(this.target);
 				updateHighlightRoot(this, {

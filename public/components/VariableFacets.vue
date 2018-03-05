@@ -34,8 +34,6 @@
 					@expand="onExpand"
 					@collapse="onCollapse"
 					@range-change="onRangeChange"
-					@facet-toggle="onFacetToggle"
-					@histogram-click="onHistogramClick"
 					@facet-click="onFacetClick">
 				</facets>
 			</div>
@@ -51,11 +49,10 @@
 <script lang="ts">
 
 import Facets from '../components/Facets';
-import { Filter, decodeFiltersDictionary, updateFilter, isDisabled, EMPTY_FILTER,
-	createNumericalFilter, createCategoricalFilter, updateFilterRoute } from '../util/filters';
+import { Filter, decodeFiltersDictionary, updateFilter, isDisabled, EMPTY_FILTER, updateFilterRoute } from '../util/filters';
 import { overlayRouteEntry, getRouteFacetPage } from '../util/routes';
-import { Highlights, Range } from '../util/highlights';
 import { Dictionary } from '../util/dict';
+import { Highlight } from '../store/data/index';
 import { getters as dataGetters } from '../store/data/module';
 import { getters as routeGetters } from '../store/route/module';
 import { Group } from '../util/facets';
@@ -129,7 +126,7 @@ export default Vue.extend({
 			return this.updateGroupCollapses(filtered);
 		},
 
-		highlights(): Highlights {
+		highlights(): Highlight {
 			return getHighlights(this.$store);
 		},
 
@@ -198,32 +195,13 @@ export default Vue.extend({
 			this.$emit('collapse', key);
 		},
 
-		onRangeChange(key: string, value: { from: { label: string[] }, to: { label: string[] } }) {
-			const filter = createNumericalFilter(key, value);
-			updateFilterRoute(this, filter);
+		onRangeChange(context: string, key: string, value: { from: { label: string[] }, to: { label: string[] } }) {
+			updateHighlightRoot(this, {
+				context: context,
+				key: key,
+				value: value
+			});
 			this.$emit('range-change', key, value);
-		},
-
-		onFacetToggle(key: string, values: string[]) {
-			const filter = createCategoricalFilter(key, values);
-			updateFilterRoute(this, filter);
-			this.$emit('facet-toggle', key, values);
-		},
-
-		onClick(key: string) {
-			this.$emit('click', key);
-		},
-
-		onHistogramClick(context: string, key: string, value: Range) {
-			if (key && value) {
-				updateHighlightRoot(this, {
-					context: context,
-					key: key,
-					value: value
-				});
-			} else {
-				clearHighlightRoot(this);
-			}
 		},
 
 		onFacetClick(context: string, key: string, value: string) {
@@ -237,6 +215,10 @@ export default Vue.extend({
 			} else {
 				clearHighlightRoot(this);
 			}
+		},
+
+		onClick(key: string) {
+			this.$emit('click', key);
 		},
 
 		// sets all facet groups to the active state - full size display + all controls, updates

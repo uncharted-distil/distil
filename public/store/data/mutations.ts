@@ -81,7 +81,11 @@ export const mutations = {
 		state.resultData = resultData;
 	},
 
-	setHighlightedValues(state: DataState, highlightedValues: Dictionary<string[]>) {
-		state.highlightedValues = highlightedValues;
+	updateHighlightSamples(state: DataState, samples: Dictionary<string[]>) {
+		state.highlightValues.samples = samples;
+	},
+
+	updateHighlightSummaries(state: DataState, summaries: VariableSummary[]) {
+		state.highlightValues.summaries = summaries;
 	}
 }

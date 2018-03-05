@@ -50,7 +50,7 @@ import TargetVariable from '../components/TargetVariable.vue';
 import { getters as dataGetters, actions } from '../store/data/module';
 import { getters as routeGetters} from '../store/route/module';
 import { Variable } from '../store/data/index';
-import { HighlightRoot } from '../util/highlights';
+import { HighlightRoot } from '../store/data/index';
 import { Filter } from '../util/filters';
 import Vue from 'vue';
 
@@ -99,14 +99,14 @@ export default Vue.extend({
 		highlightRootStr() {
 			actions.fetchDataHighlightValues(this.$store, {
 				dataset: this.dataset,
-				filters: this.filters,
+				variables: this.variables,
 				highlightRoot: this.highlightRoot,
 			});
 		},
 		filterStr() {
 			actions.fetchDataHighlightValues(this.$store, {
 				dataset: this.dataset,
-				filters: this.filters,
+				variables: this.variables,
 				highlightRoot: this.highlightRoot,
 			});
 			actions.fetchSelectedTableData(this.$store, {
@@ -131,7 +131,7 @@ export default Vue.extend({
 			});
 			actions.fetchDataHighlightValues(this.$store, {
 				dataset: this.dataset,
-				filters: this.filters,
+				variables: this.variables,
 				highlightRoot: this.highlightRoot,
 			});
 			actions.fetchSelectedTableData(this.$store, {

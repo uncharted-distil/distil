@@ -51,7 +51,8 @@ export const getters = {
 	getExcludedDataNumRows: read(moduleGetters.getExcludedDataNumRows),
 	getExcludedDataItems: read(moduleGetters.getExcludedDataItems),
 	getExcludedDataFields: read(moduleGetters.getExcludedDataFields),
-	getHighlightedValues: read(moduleGetters.getHighlightedValues),
+	getHighlightedSamples: read(moduleGetters.getHighlightedSamples),
+	getHighlightedSummaries: read(moduleGetters.getHighlightedSummaries),
 	getPredictedExtrema: read(moduleGetters.getPredictedExtrema),
 	getResidualExtrema: read(moduleGetters.getResidualExtrema),
 }
@@ -103,5 +104,6 @@ export const mutations = {
 	setSelectedData: commit(moduleMutations.setSelectedData),
 	setExcludedData: commit(moduleMutations.setExcludedData),
 	setResultData: commit(moduleMutations.setResultData),
-	setHighlightedValues: commit(moduleMutations.setHighlightedValues)
+	updateHighlightSamples: commit(moduleMutations.updateHighlightSamples),
+	updateHighlightSummaries: commit(moduleMutations.updateHighlightSummaries)
 }

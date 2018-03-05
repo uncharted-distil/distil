@@ -50,8 +50,8 @@ import Vue from 'vue';
 import Facets from '../components/Facets';
 import { createGroups, Group } from '../util/facets';
 import { getPredictedCol, getErrorCol } from '../util/data';
-import { VariableSummary } from '../store/data/index';
-import { Highlights, Range, getHighlights } from '../util/highlights';
+import { VariableSummary, Highlight } from '../store/data/index';
+import { getHighlights } from '../util/highlights';
 import { overlayRouteEntry } from '../util/routes';
 import { Filter } from '../util/filters';
 import { getters as routeGetters } from '../store/route/module';
@@ -123,7 +123,7 @@ export default Vue.extend({
 			return routeGetters.getDecodedFilters(this.$store);
 		},
 
-		highlights(): Highlights {
+		highlights(): Highlight {
 			return getHighlights(this.$store);
 		},
 
@@ -167,7 +167,7 @@ export default Vue.extend({
 			this.histogramHighlights(context, this.predictedColumnName, value);
 		},
 
-		histogramHighlights(context: string, key: string, value: string | Range) {
+		histogramHighlights(context: string, key: string, value: any) {
 			if (value) {
 				updateHighlightRoot(this, {
 					context: context,

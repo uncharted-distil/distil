@@ -1,5 +1,6 @@
 import { decodeFilters, Filter } from '../../util/filters';
-import { HighlightRoot, decodeHighlights } from '../../util/highlights'
+import { HighlightRoot } from '../data/index';
+import { decodeHighlights } from '../../util/highlights'
 import { Route } from 'vue-router';
 
 export const getters = {

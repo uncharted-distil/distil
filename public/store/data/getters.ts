@@ -300,7 +300,7 @@ export const getters = {
 		return getDataItems(state.selectedData, getters.getVariableTypesMap);
 	},
 
-	getSelectedDataFields(state: DataState): Dictionary<FieldInfo> {
+	getSelectedDataFields(state: DataState, getters: any): Dictionary<FieldInfo> {
 		const data = state.selectedData;
 		if (validateData(data)) {
 			const vmap = getters.getVariableTypesMap;
@@ -333,7 +333,7 @@ export const getters = {
 		return getDataItems(state.excludedData, getters.getVariableTypesMap);
 	},
 
-	getExcludedDataFields(state: DataState): Dictionary<FieldInfo> {
+	getExcludedDataFields(state: DataState, getters: any): Dictionary<FieldInfo> {
 		const data = state.excludedData;
 		if (validateData(data)) {
 			const vmap = getters.getVariableTypesMap;
@@ -350,8 +350,13 @@ export const getters = {
 		return {};
 	},
 
-	getHighlightedValues(state: DataState) {
-		return state.highlightedValues;
+	getHighlightedSamples(state: DataState): Dictionary<string[]> {
+		return state.highlightValues ? state.highlightValues.samples : {};
+	},
+
+
+	getHighlightedSummaries(state: DataState): VariableSummary[] {
+		return state.highlightValues ? state.highlightValues.summaries : null;
 	},
 
 	getPredictedExtrema(state: DataState): Extrema {

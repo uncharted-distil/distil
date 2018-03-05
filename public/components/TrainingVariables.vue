@@ -5,8 +5,8 @@
 			ref="facets"
 			enable-search
 			type-change
-			instance-name="trainingVars"
 			@click="onClick"
+			:instance-name="instanceName"
 			:groups="groups"
 			:dataset="dataset"
 			:html="html">
@@ -29,10 +29,11 @@ import { overlayRouteEntry } from '../util/routes';
 import VariableFacets from '../components/VariableFacets';
 import 'font-awesome/css/font-awesome.css';
 import Vue from 'vue';
-import { getters as dataGetters} from '../store/data/module';
+import { Highlight } from '../store/data/index';
+import { getters as dataGetters } from '../store/data/module';
 import { getters as routeGetters } from '../store/route/module';
 import { Group, createGroups } from '../util/facets';
-import { Highlights, getHighlights } from '../util/highlights';
+import { getHighlights, updateHighlightRoot } from '../util/highlights';
 
 export default Vue.extend({
 	name: 'training-variables',
@@ -45,7 +46,10 @@ export default Vue.extend({
 		dataset(): string {
 			return routeGetters.getRouteDataset(this.$store);
 		},
-		highlightRoot(): Highlights {
+		instanceName(): string {
+			return 'trainingVars';
+		},
+		highlightRoot(): Highlight {
 			return getHighlights(this.$store);
 		},
 		groups(): Group[] {
@@ -101,7 +105,11 @@ export default Vue.extend({
 			this.$router.push(entry);
 		},
 		onClick(key: string) {
-			console.log(key);
+			updateHighlightRoot(this, {
+				context: this.instanceName,
+				key: key,
+				value: null
+			});
 		}
 	}
 });

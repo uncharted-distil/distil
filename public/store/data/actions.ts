@@ -7,7 +7,8 @@ import { getSummaries, getSummary } from '../../util/data';
 import { Variable, Data, Extrema } from './index';
 import { PipelineInfo, PIPELINE_ERRORED } from '../pipelines/index';
 import { mutations } from './module'
-import { HighlightRoot, createFilterFromHighlightRoot, parseHighlightValues } from '../../util/highlights';
+import { HighlightRoot } from './index';
+import { createFilterFromHighlightRoot, parseHighlightSamples } from '../../util/highlights';
 import { DataContext, getPredictedCol, getErrorCol, getVarFromTarget,
 	createPendingSummary, createErrorSummary, createEmptyData} from '../../util/data';
 
@@ -541,21 +542,18 @@ export const actions = {
 		return axios.get<Data>(`/distil/results/${ES_INDEX}/${args.dataset}/${encodedPipelineId}/inclusive${queryParams}`);
 	},
 
-	fetchDataHighlightValues(context: DataContext, args: { highlightRoot: HighlightRoot, dataset: string, filters: Filter[] }) {
+	fetchDataHighlightSamples(context: DataContext, args: { highlightRoot: HighlightRoot, dataset: string }) {
 		if (!args.highlightRoot) {
-			mutations.setHighlightedValues(context, {});
+			mutations.updateHighlightSamples(context, null);
 			return null;
 		}
 		if (!args.dataset) {
 			console.warn('`dataset` argument is missing');
 			return null;
 		}
-		if (!args.filters) {
-			console.warn('`filters` argument is missing');
-			return null;
-		}
 
 		// if root is from table row, populate here and return
+		/*
 		if (_.isArray(args.highlightRoot.value)) {
 			const highlightValues = args.highlightRoot.value;
 			const values = {};
@@ -564,39 +562,75 @@ export const actions = {
 				const vals = value[1]
 				values[col] = [ vals ];
 			});
-			mutations.setHighlightedValues(context, values);
+			mutations.setHighlightSamples(context, values);
 			return;
 		}
+		*/
 
-		const filtersCopy = args.filters.slice();
-		const selectFilter = createFilterFromHighlightRoot(args.highlightRoot);
-
-		const index = _.findIndex(filtersCopy, f => f.name === args.highlightRoot.key);
-		if (index < 0) {
-			filtersCopy.push(selectFilter);
-		} else {
-			filtersCopy[index] = selectFilter;
-		}
+		const filter = createFilterFromHighlightRoot(args.highlightRoot);
 
 		// fetch the data using the supplied filtered
 		return context.dispatch('fetchData', {
 				dataset: args.dataset,
-				filters: filtersCopy,
+				filters: filter ? [ filter ] : null,
 				inclusive: true,
 				invert: false
 			})
 			.then(res => {
-				mutations.setHighlightedValues(context, parseHighlightValues(res.data));
+				mutations.updateHighlightSamples(context, parseHighlightSamples(res.data));
 			})
 			.catch(error => {
 				console.error(error);
-				mutations.setHighlightedValues(context, {});
+				mutations.updateHighlightSamples(context, null);
 			});
 	},
 
-	fetchResultHighlightValues(context: DataContext, args: { highlightRoot: HighlightRoot, dataset: string, filters: Filter[], pipelineId: string }) {
+	fetchDataHighlightSummaries(context: DataContext, args: { highlightRoot: HighlightRoot, dataset: string, variables: Variable[] }) {
 		if (!args.highlightRoot) {
-			mutations.setHighlightedValues(context, {});
+			mutations.updateHighlightSummaries(context, null);
+			return null;
+		}
+		if (!args.dataset) {
+			console.warn('`dataset` argument is missing');
+			return null;
+		}
+		if (!args.variables) {
+			console.warn('`variables` argument is missing');
+			return null;
+		}
+		const filter = createFilterFromHighlightRoot(args.highlightRoot);
+		const queryParams = encodeQueryParams(filter ? [ filter ] : null);
+
+		// commit empty place holders, if there is no data
+		return Promise.all(args.variables.map(variable => {
+			return axios.get(`/distil/variable-summaries/${ES_INDEX}/${args.dataset}/${variable}${queryParams}`)
+				.then(response => {
+					mutations.updateHighlightSummaries(context, response.data.histogram);
+				})
+				.catch(error => {
+					console.error(error);
+					mutations.updateHighlightSummaries(context,  null);
+				});
+		}));
+	},
+
+	fetchDataHighlightValues(context: DataContext, args: { highlightRoot: HighlightRoot, dataset: string, variables: Variable[] }) {
+		return Promise.all([
+			context.dispatch('fetchDataHighlightSamples', {
+				highlightRoot: args.highlightRoot,
+				dataset: args.dataset,
+			}),
+			context.dispatch('fetchDataHighlightSummaries', {
+				highlightRoot: args.highlightRoot,
+				dataset: args.dataset,
+				variables: args.variables
+			})
+		]);
+	},
+
+	fetchResultHighlightSamples(context: DataContext, args: { highlightRoot: HighlightRoot, dataset: string, filters: Filter[], pipelineId: string }) {
+		if (!args.highlightRoot) {
+			mutations.updateHighlightSamples(context, null);
 			return null;
 		}
 		if (!args.dataset) {
@@ -621,19 +655,20 @@ export const actions = {
 				const vals = value[1]
 				values[col] = [ vals ];
 			});
-			mutations.setHighlightedValues(context, values);
+			mutations.updateHighlightSamples(context, values);
 			return;
 		}
 
 		const filtersCopy = args.filters.slice();
 		const selectFilter = createFilterFromHighlightRoot(args.highlightRoot);
-		selectFilter.name = getVarFromTarget(selectFilter.name);
-
-		const index = _.findIndex(filtersCopy, f => f.name === args.highlightRoot.key);
-		if (index < 0) {
-			filtersCopy.push(selectFilter);
-		} else {
-			filtersCopy[index] = selectFilter;
+		if (selectFilter) {
+			selectFilter.name = getVarFromTarget(selectFilter.name);
+			const index = _.findIndex(filtersCopy, f => f.name === args.highlightRoot.key);
+			if (index < 0) {
+				filtersCopy.push(selectFilter);
+			} else {
+				filtersCopy[index] = selectFilter;
+			}
 		}
 
 		// fetch the data using the supplied filtered
@@ -643,11 +678,15 @@ export const actions = {
 				filters: filtersCopy
 			})
 			.then(res => {
-				mutations.setHighlightedValues(context, parseHighlightValues(res.data));
+				mutations.updateHighlightSamples(context, parseHighlightSamples(res.data));
 			})
 			.catch(error => {
 				console.error(error);
-				mutations.setHighlightedValues(context, {});
+				mutations.updateHighlightSamples(context, null);
 			});
 	},
+
+	fetchResultHighlightValues(context: DataContext, args: { highlightRoot: HighlightRoot, dataset: string, filters: Filter[], pipelineId: string }) {
+
+	}
 }

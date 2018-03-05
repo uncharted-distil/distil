@@ -31,7 +31,7 @@ import { getters as routeGetters } from '../store/route/module';
 import { actions as pipelineActions, getters as pipelineGetters } from '../store/pipelines/module';
 import { Variable, Extrema } from '../store/data/index';
 import { Dictionary } from '../util/dict';
-import { HighlightRoot } from '../util/highlights';
+import { HighlightRoot } from '../store/data/index';
 import { Group, createGroups } from '../util/facets';
 import { Filter } from '../util/filters';
 import Vue from 'vue';
