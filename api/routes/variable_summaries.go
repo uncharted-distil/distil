@@ -25,6 +25,13 @@ func VariableSummaryHandler(ctorStorage model.DataStorageCtor) func(http.Respons
 		// get variabloe name
 		variable := pat.Param(r, "variable")
 
+		// get variable names and ranges out of the params
+		filterParams, err := model.ParseFilterParamsURL(r.URL.Query())
+		if err != nil {
+			handleError(w, err)
+			return
+		}
+
 		// get storage client
 		storage, err := ctorStorage()
 		if err != nil {
@@ -33,7 +40,7 @@ func VariableSummaryHandler(ctorStorage model.DataStorageCtor) func(http.Respons
 		}
 
 		// fetch summary histogram
-		histogram, err := storage.FetchSummary(dataset, index, variable)
+		histogram, err := storage.FetchSummary(dataset, index, variable, filterParams)
 		if err != nil {
 			handleError(w, err)
 			return

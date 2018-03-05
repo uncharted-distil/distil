@@ -23,70 +23,36 @@ func SessionHandler(storageCtor model.PipelineStorageCtor) func(http.ResponseWri
 		target := pat.Param(r, "target")
 		pipelineID := pat.Param(r, "pipeline-id")
 
+		if pipelineID == "null" {
+			pipelineID = ""
+		}
+		if dataset == "null" {
+			dataset = ""
+		}
+		if target == "null" {
+			target = ""
+		}
+
 		client, err := storageCtor()
 		if err != nil {
 			handleError(w, err)
 			return
 		}
 
-		requests, err := client.FetchRequests(sessionID)
+		results, err := client.FetchResultMetadataByDatasetTarget(sessionID, dataset, target, pipelineID)
 		if err != nil {
 			handleError(w, err)
 			return
 		}
 
 		// Blank the result URI.
-		for _, req := range requests {
-			for _, res := range req.Results {
-				res.ResultURI = ""
-			}
-		}
-
-		// TODO: FILTER BY DATASET / TARGET FEATURE IN SQL!
-		var filtered []*model.Request
-		for _, req := range requests {
-			if dataset == "null" || req.Dataset == dataset {
-				if target == "null" {
-					filtered = append(filtered, req)
-				} else {
-					for _, feature := range req.Features {
-						if feature.FeatureType == model.FeatureTypeTarget &&
-							feature.FeatureName == target {
-							filtered = append(filtered, req)
-						}
-					}
-				}
-			}
-		}
-
-		// TODO: FILTER BY LATEST RESULT IN SQL!
-		latest := make(map[string]*model.Result)
-		for _, req := range filtered {
-			for _, res := range req.Results {
-				// TODO: ADD DATASET TO TABLE
-				res.Dataset = req.Dataset
-				current, ok := latest[res.PipelineID]
-				if !ok {
-					latest[res.PipelineID] = res
-				} else {
-					if current.CreatedTime.Before(res.CreatedTime) {
-						latest[res.PipelineID] = res
-					}
-				}
-			}
-		}
-
-		// TODO: FILTER BY PIPELINE-ID IN SQL!
-		var final []*model.Result
-		for _, res := range latest {
-			if pipelineID == "null" || res.PipelineID == pipelineID {
-				final = append(final, res)
-			}
+		for _, res := range results {
+			res.ResultURI = ""
 		}
 
 		// marshall data and sent the response back
 		err = handleJSON(w, Session{
-			Pipelines: final,
+			Pipelines: results,
 		})
 		if err != nil {
 			handleError(w, errors.Wrap(err, "unable marshal session pipelines into JSON"))

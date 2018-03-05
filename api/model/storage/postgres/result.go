@@ -315,10 +315,7 @@ func (s *Storage) FetchFilteredResults(dataset string, index string, resultURI s
 	}
 
 	// Create the filter portion of the where clause.
-	where, params, err := s.buildFilteredQueryWhere(dataset, filterParams)
-	if err != nil {
-		return nil, errors.Wrap(err, "Could not build where clause")
-	}
+	where, params := s.buildFilteredQueryWhere(dataset, filterParams)
 
 	// Add the predicted filter into the where clause if it was included in the filter set
 	if resultFilters.Predicted != nil {
@@ -530,12 +527,14 @@ func (s *Storage) FetchResultsExtremaByURI(dataset string, resultURI string, ind
 		Name: "value",
 		Type: model.TextType,
 	}
-	return s.fetchResultsExtrema(resultURI, datasetResult, targetVariable, resultVariable)
+
+	field := NewNumericalField(s)
+	return field.fetchResultsExtrema(resultURI, datasetResult, targetVariable, resultVariable)
 }
 
 // FetchResultsSummary gets the summary data about a target variable from the
 // results table.
-func (s *Storage) FetchResultsSummary(dataset string, resultURI string, index string, extrema *model.Extrema) (*model.Histogram, error) {
+func (s *Storage) FetchResultsSummary(dataset string, resultURI string, index string, filterParams *model.FilterParams, extrema *model.Extrema) (*model.Histogram, error) {
 	datasetResult := s.getResultTable(dataset)
 	targetName, err := s.getResultTargetName(datasetResult, resultURI, index)
 	if err != nil {
@@ -547,22 +546,22 @@ func (s *Storage) FetchResultsSummary(dataset string, resultURI string, index st
 		return nil, err
 	}
 
+	// use the variable type to guide the summary creation.
+	var field Field
 	var histogram *model.Histogram
-
 	if model.IsNumerical(variable.Type) {
 		// fetch numeric histograms
-		histogram, err = s.fetchNumericalResultHistogram(resultURI, datasetResult, variable, extrema)
-		if err != nil {
-			return nil, err
-		}
+		field = NewNumericalField(s)
 	} else if model.IsCategorical(variable.Type) {
 		// fetch categorical histograms
-		histogram, err = s.fetchCategoricalResultHistogram(resultURI, dataset, datasetResult, variable)
-		if err != nil {
-			return nil, err
-		}
+		field = NewCategoricalField(s)
 	} else {
 		return nil, errors.Errorf("variable %s of type %s does not support summary", variable.Name, variable.Type)
+	}
+
+	histogram, err = field.FetchResultSummaryData(resultURI, dataset, datasetResult, variable, extrema)
+	if err != nil {
+		return nil, errors.Wrap(err, "unable to fetch result summary")
 	}
 
 	// add filter if results
