@@ -28,15 +28,21 @@ func (f *NumericalField) FetchSummaryData(dataset string, index string, variable
 	var histogram *model.Histogram
 	var err error
 	if resultURI == "" {
-		histogram, err = f.fetchHistogram(dataset, variable)
+		histogram, err = f.fetchHistogram(dataset, variable, filterParams)
 	} else {
-		histogram, err = f.fetchHistogramByResult(dataset, variable, resultURI, extrema)
+		histogram, err = f.fetchHistogramByResult(dataset, variable, resultURI, filterParams, extrema)
 	}
 
 	return histogram, err
 }
 
-func (f *NumericalField) fetchHistogram(dataset string, variable *model.Variable) (*model.Histogram, error) {
+func (f *NumericalField) fetchHistogram(dataset string, variable *model.Variable, filterParams *model.FilterParams) (*model.Histogram, error) {
+	// create the filter for the query.
+	where, params := f.Storage.buildFilteredQueryWhere(dataset, filterParams)
+	if len(where) > 0 {
+		where = fmt.Sprintf(" WHERE %s", where)
+	}
+
 	// need the extrema to calculate the histogram interval
 	extrema, err := f.fetchExtrema(dataset, variable)
 	if err != nil {
@@ -47,11 +53,11 @@ func (f *NumericalField) fetchHistogram(dataset string, variable *model.Variable
 	histogramName, bucketQuery, histogramQuery := f.getHistogramAggQuery(extrema)
 
 	// Create the complete query string.
-	query := fmt.Sprintf("SELECT %s as bucket, CAST(%s as double precision) AS %s, COUNT(*) AS count FROM %s GROUP BY %s ORDER BY %s;",
-		bucketQuery, histogramQuery, histogramName, dataset, bucketQuery, histogramName)
+	query := fmt.Sprintf("SELECT %s as bucket, CAST(%s as double precision) AS %s, COUNT(*) AS count FROM %s%s GROUP BY %s ORDER BY %s;",
+		bucketQuery, histogramQuery, histogramName, dataset, where, bucketQuery, histogramName)
 
 	// execute the postgres query
-	res, err := f.Storage.client.Query(query)
+	res, err := f.Storage.client.Query(query, params...)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to fetch histograms for variable summaries from postgres")
 	}
@@ -62,7 +68,14 @@ func (f *NumericalField) fetchHistogram(dataset string, variable *model.Variable
 	return f.parseHistogram(variable.Type, res, extrema)
 }
 
-func (f *NumericalField) fetchHistogramByResult(dataset string, variable *model.Variable, resultURI string, extrema *model.Extrema) (*model.Histogram, error) {
+func (f *NumericalField) fetchHistogramByResult(dataset string, variable *model.Variable, resultURI string, filterParams *model.FilterParams, extrema *model.Extrema) (*model.Histogram, error) {
+	// create the filter for the query.
+	where, params := f.Storage.buildFilteredQueryWhere(dataset, filterParams)
+	if len(where) > 0 {
+		where = fmt.Sprintf(" AND %s", where)
+	}
+	params = append(params, resultURI)
+
 	// need the extrema to calculate the histogram interval
 	var err error
 	if extrema == nil {
@@ -79,12 +92,12 @@ func (f *NumericalField) fetchHistogramByResult(dataset string, variable *model.
 	histogramName, bucketQuery, histogramQuery := f.getHistogramAggQuery(extrema)
 
 	// Create the complete query string.
-	query := fmt.Sprintf("SELECT %s as bucket, CAST(%s as double precision) AS %s, COUNT(*) AS count FROM %s data INNER JOIN %s result ON data.\"%s\" = result.index WHERE result.result_id = $1 GROUP BY %s ORDER BY %s;",
+	query := fmt.Sprintf("SELECT %s as bucket, CAST(%s as double precision) AS %s, COUNT(*) AS count FROM %s data INNER JOIN %s result ON data.\"%s\" = result.index WHERE result.result_id = $%d%s GROUP BY %s ORDER BY %s;",
 		bucketQuery, histogramQuery, histogramName, dataset,
-		f.Storage.getResultTable(dataset), d3mIndexFieldName, bucketQuery, histogramName)
+		f.Storage.getResultTable(dataset), d3mIndexFieldName, len(params), where, bucketQuery, histogramName)
 
 	// execute the postgres query
-	res, err := f.Storage.client.Query(query, resultURI)
+	res, err := f.Storage.client.Query(query, params...)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to fetch histograms for variable summaries from postgres")
 	}
