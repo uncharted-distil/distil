@@ -1,7 +1,7 @@
 import _ from 'lodash';
 import { FieldInfo, Variable, Data, DataState, Datasets, VariableSummary, TargetRow, TableRow, Extrema } from './index';
 import { Filter, EMPTY_FILTER } from '../../util/filters';
-import { TARGET_POSTFIX, PREDICTED_POSTFIX } from '../../util/data';
+import { TARGET_POSTFIX, PREDICTED_POSTFIX, getTargetCol, getVarFromTarget, getPredictedCol, getErrorCol } from '../../util/data';
 import { Dictionary } from '../../util/dict';
 import { getPredictedIndex, getErrorIndex, getTargetIndex } from '../../util/data';
 import { formatValue } from '../../util/types';
@@ -217,7 +217,27 @@ export const getters = {
 	},
 
 	getResultDataItems(state: DataState, getters: any): TargetRow[] {
-		return getDataItems(state.resultData, getters.getVariableTypesMap) as TargetRow[];
+		if (!state.resultData ||
+			!state.resultData.columns ||
+			state.resultData.columns.length === 0) {
+			return [];
+		}
+
+		// Find the target index and name in the result table
+		const targetIndex = getTargetIndex(state.resultData.columns);
+		const targetVarName = getVarFromTarget(state.resultData.columns[targetIndex]);
+
+		// Make a copy of the variable type map and add entries for target, predicted and error
+		// types.
+		const resultVariableTypeMap = _.clone(<Dictionary<string>>getters.getVariableTypesMap);
+
+		const targetVarType = resultVariableTypeMap[targetVarName];
+		resultVariableTypeMap[getTargetCol(targetVarName)] = targetVarType;
+		resultVariableTypeMap[getPredictedCol(targetVarName)] = targetVarType;
+		resultVariableTypeMap[getErrorCol(targetVarName)] = targetVarType;
+
+		// Fetch data items using modified type map
+		return getDataItems(state.resultData, resultVariableTypeMap) as TargetRow[];
 	},
 
 	getResultDataFields(state: DataState): Dictionary<FieldInfo> {
@@ -297,6 +317,39 @@ export const getters = {
 		return {};
 	},
 
+	hasExcludedData(state: DataState): boolean {
+		return !!state.excludedData;
+	},
+
+	getExcludedData(state: DataState): Data {
+		return state.excludedData;
+	},
+
+	getExcludedDataNumRows(state: DataState): number {
+		return state.excludedData ? state.excludedData.numRows : 0;
+	},
+
+	getExcludedDataItems(state: DataState, getters: any): TableRow[] {
+		return getDataItems(state.excludedData, getters.getVariableTypesMap);
+	},
+
+	getExcludedDataFields(state: DataState): Dictionary<FieldInfo> {
+		const data = state.excludedData;
+		if (validateData(data)) {
+			const vmap = getters.getVariableTypesMap;
+			const result = {};
+			for (const col of data.columns) {
+				result[col] = {
+					label: col,
+					type: vmap[col],
+					sortable: true
+				};
+			}
+			return result;
+		}
+		return {};
+	},
+
 	getHighlightedValues(state: DataState) {
 		return state.highlightedValues;
 	},
@@ -315,7 +368,7 @@ export const getters = {
 		});
 		if (state.resultExtrema) {
 			res.min = Math.min(res.min, state.resultExtrema.min);
-			res.max = Math.max(res.max, state.resultExtrema.max);			
+			res.max = Math.max(res.max, state.resultExtrema.max);
 		}
 		return res;
 	},

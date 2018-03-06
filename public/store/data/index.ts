@@ -80,6 +80,7 @@ export interface DataState {
 	resultData: Data;
 	filteredData: Data;
 	selectedData: Data;
+	excludedData: Data;
 	highlightedValues: Dictionary<string[]>;
 }
 
@@ -102,11 +103,11 @@ export const state = {
 	// error summary data for the predicted data
 	residualSummaries: <VariableSummary[]>[],
 
+	resultExtrema: null,
+
 	predictedExtremas: {},
 
 	residualExtremas: {},
-
-	resultExtrema: null,
 
 	// current set of pipeline results
 	resultData: null,
@@ -116,6 +117,9 @@ export const state = {
 
 	// selected data entries for the active dataset
 	selectedData: null,
+
+	// excluded data entries for the active dataset
+	excludedData: null,
 
 	highlightedValues: {}
 }

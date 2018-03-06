@@ -46,7 +46,7 @@ func ProblemDiscoveryHandler(ctorData model.DataStorageCtor, ctorMeta model.Meta
 
 		fetchFilteredData := func(dataset string, index string, filterParams *model.FilterParams) (*model.FilteredData, error) {
 			// fetch the whole data
-			return dataStorage.FetchData(dataset, index, filterParams, false)
+			return dataStorage.FetchData(dataset, index, filterParams, false, false)
 		}
 		fetchVariables := func(dataset string, index string) ([]*model.Variable, error) {
 			return metadataStorage.FetchVariables(dataset, index, true)

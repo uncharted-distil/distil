@@ -64,6 +64,7 @@ export const actions = {
 	fetchVariablesAndVariableSummaries: dispatch(moduleActions.fetchVariablesAndVariableSummaries),
 	fetchFilteredTableData: dispatch(moduleActions.fetchFilteredTableData),
 	fetchSelectedTableData: dispatch(moduleActions.fetchSelectedTableData),
+	fetchExcludedTableData: dispatch(moduleActions.fetchExcludedTableData),
 	fetchData: dispatch(moduleActions.fetchData),
 	fetchPredictedSummaries: dispatch(moduleActions.fetchPredictedSummaries),
 	fetchResidualsSummaries: dispatch(moduleActions.fetchResidualsSummaries),
@@ -95,6 +96,7 @@ export const mutations = {
 	clearResidualsExtremas: commit(moduleMutations.clearResidualsExtremas),
 	setFilteredData: commit(moduleMutations.setFilteredData),
 	setSelectedData: commit(moduleMutations.setSelectedData),
+	setExcludedData: commit(moduleMutations.setExcludedData),
 	setResultData: commit(moduleMutations.setResultData),
 	setHighlightedValues: commit(moduleMutations.setHighlightedValues)
 }

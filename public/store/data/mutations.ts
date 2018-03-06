@@ -49,16 +49,16 @@ export const mutations = {
 		state.residualExtremas = {};
 	},
 
+	updateResidualsExtremas(state: DataState, args: { pipelineId: string, extrema: Extrema }) {
+		Vue.set(state.residualExtremas, args.pipelineId, args.extrema);
+	},
+
 	updateResultExtrema(state: DataState, args: { extrema: Extrema }) {
 		state.resultExtrema = args.extrema;
 	},
 
 	clearResultExtrema(state: DataState) {
 		state.resultExtrema = null;
-	},
-
-	updateResidualsExtremas(state: DataState, args: { pipelineId: string, extrema: Extrema }) {
-		Vue.set(state.residualExtremas, args.pipelineId, args.extrema);
 	},
 
 	// sets the current filtered data into the store
@@ -69,6 +69,11 @@ export const mutations = {
 	// sets the current selected data into the store
 	setSelectedData(state: DataState, selectedData: Data) {
 		state.selectedData = selectedData;
+	},
+
+	// sets the current excluded data into the store
+	setExcludedData(state: DataState, excludedData: Data) {
+		state.excludedData = excludedData;
 	},
 
 	// sets the current result data into the store
