@@ -49,6 +49,8 @@ export const getters = {
 	getHighlightedValues: read(moduleGetters.getHighlightedValues),
 	getPredictedExtrema: read(moduleGetters.getPredictedExtrema),
 	getResidualExtrema: read(moduleGetters.getResidualExtrema),
+	getExcludedDataFields: read(moduleGetters.getExcludedDataFields),
+	getExcludedDataItems: read(moduleGetters.getExcludedDataItems),
 }
 
 // Typed actions
