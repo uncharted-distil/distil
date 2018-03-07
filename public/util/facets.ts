@@ -28,6 +28,7 @@ export interface CategoricalFacet {
 	selected: { count: number } | SelectedSegments;
 	value: string;
 	count: number;
+	countLabel: string;
 	filterable: boolean;
 	segments: Segment[];
 }
