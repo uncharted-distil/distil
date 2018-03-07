@@ -6,14 +6,6 @@
 					<b-form-input size="sm" v-model="filter" placeholder="Search" />
 				</div>
 			</div>
-			<div v-if="enableToggle" class="row flex-1 align-items-center facet-filters">
-				<div class="col-12 flex-column d-flex">
-					<b-form-fieldset size="sm" horizontal label="Toggle" :label-cols="2">
-						<b-button size="sm" variant="outline-secondary" @click="selectAll">All</b-button>
-						<b-button size="sm" variant="outline-secondary" @click="deselectAll">None</b-button>
-					</b-form-fieldset>
-				</div>
-			</div>
 			<div v-if="enableTitle" class="row flex-1 align-items-center">
 				<div class="col-12 flex-column d-flex">
 					<p>Select one of the following feature summaries showing count of records by feature value.</p>
@@ -25,15 +17,12 @@
 			<div class="row flex-11">
 				<facets class="col-12 flex-column d-flex variable-facets-container"
 					:groups="groups"
-					:filters="filters"
 					:highlights="highlights"
 					:html="html"
 					:sort="sort"
 					:type-change="typeChange"
 					@numerical-click="onNumericalClick"
 					@categorical-click="onCategoricalClick"
-					@expand="onExpand"
-					@collapse="onCollapse"
 					@range-change="onRangeChange"
 					@facet-click="onFacetClick">
 				</facets>
@@ -50,14 +39,14 @@
 <script lang="ts">
 
 import Facets from '../components/Facets';
-import { Filter, decodeFiltersDictionary, updateFilter, isDisabled, EMPTY_FILTER, updateFilterRoute } from '../util/filters';
+import { decodeFiltersDictionary, isDisabled } from '../util/filters';
 import { overlayRouteEntry, getRouteFacetPage } from '../util/routes';
 import { Dictionary } from '../util/dict';
 import { Highlight } from '../store/data/index';
 import { getters as dataGetters } from '../store/data/module';
 import { getters as routeGetters } from '../store/route/module';
 import { Group } from '../util/facets';
-import { updateHighlightRoot, clearHighlightRoot, getHighlights } from '../util/highlights';
+import { updateHighlightRoot, getHighlights } from '../util/highlights';
 import 'font-awesome/css/font-awesome.css';
 import '../styles/spinner.css';
 import Vue from 'vue';
@@ -71,7 +60,6 @@ export default Vue.extend({
 
 	props: {
 		enableSearch: Boolean,
-		enableToggle: Boolean,
 		enableTitle: Boolean,
 		groups: Array,
 		dataset: String,
@@ -131,10 +119,6 @@ export default Vue.extend({
 			return getHighlights(this.$store);
 		},
 
-		filters(): Filter[] {
-			return routeGetters.getDecodedFilters(this.$store);
-		},
-
 		importance(): Dictionary<number> {
 			const variables = dataGetters.getVariables(this.$store);
 			const importance: Dictionary<number> = {};
@@ -172,30 +156,6 @@ export default Vue.extend({
 			return 'facetPage';
 		},
 
-		// handles facet group transition to active state
-		onExpand(key: string) {
-			// enable filter
-			const filter = {
-				name: key,
-				type: EMPTY_FILTER,
-				enabled: true
-			};
-			updateFilterRoute(this, filter);
-			this.$emit('expand', key);
-		},
-
-		// handles facet group transitions to inactive (grayed out, reduced visuals) state
-		onCollapse(key) {
-		// disable filter
-			const filter = {
-				name: key,
-				type: EMPTY_FILTER,
-				enabled: false
-			};
-			updateFilterRoute(this, filter);
-			this.$emit('collapse', key);
-		},
-
 		onRangeChange(context: string, key: string, value: { from: { label: string[] }, to: { label: string[] } }) {
 			updateHighlightRoot(this, {
 				context: context,
@@ -206,16 +166,7 @@ export default Vue.extend({
 		},
 
 		onFacetClick(context: string, key: string, value: string) {
-			if (key && value) {
-				// extract the var name from the key
-				updateHighlightRoot(this, {
-					context: context,
-					key: key,
-					value: value
-				});
-			} else {
-				clearHighlightRoot(this);
-			}
+			this.$emit('facet-click', context, key, value);
 		},
 
 		onNumericalClick(key: string) {
@@ -224,42 +175,6 @@ export default Vue.extend({
 
 		onCategoricalClick(key: string) {
 			this.$emit('categorical-click', key);
-		},
-
-		// sets all facet groups to the active state - full size display + all controls, updates
-		// route accordingly
-		selectAll() {
-			// enable all filters
-			let filters = routeGetters.getRouteFilters(this.$store);
-			this.groups.forEach(group => {
-				filters = updateFilter(filters, {
-					name: group.key,
-					type: EMPTY_FILTER,
-					enabled: true
-				});
-			});
-			const entry = overlayRouteEntry(routeGetters.getRoute(this.$store), {
-				filters: filters,
-			});
-			this.$router.push(entry);
-		},
-
-		// sets all facet groups to the inactive state - minimized diplay , no controls,
-		// and updates route accordingly
-		deselectAll() {
-			// enable all filters
-			let filters = routeGetters.getRouteFilters(this.$store);
-			this.groups.forEach(group => {
-				filters = updateFilter(filters, {
-					name: group.key,
-					type: EMPTY_FILTER,
-					enabled: false
-				});
-			});
-			const entry = overlayRouteEntry(routeGetters.getRoute(this.$store), {
-				filters: filters
-			});
-			this.$router.push(entry);
 		},
 
 		// updates facet collapse/expand state based on route settings

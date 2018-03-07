@@ -43,8 +43,8 @@ export default Vue.extend({
 		},
 		groups(): Group[] {
 			const summaries = dataGetters.getAvailableVariableSummaries(this.$store);
-			filterSummariesByDataset(summaries, this.dataset);
-			return createGroups(summaries, false, false);
+			const filtered = filterSummariesByDataset(summaries, this.dataset);
+			return createGroups(filtered, false, false);
 		},
 		subtitle(): string {
 			return `${this.groups.length} features available`;

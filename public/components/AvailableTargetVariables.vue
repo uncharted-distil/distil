@@ -38,8 +38,8 @@ export default Vue.extend({
 		},
 		groups(): Group[] {
 			const summaries = dataGetters.getVariableSummaries(this.$store);
-			filterSummariesByDataset(summaries, this.dataset);
-			return createGroups(summaries, false, false);
+			const filtered = filterSummariesByDataset(summaries, this.dataset);
+			return createGroups(filtered, false, false);
 		},
 		html(): ( { key: string } ) => HTMLDivElement {
 			return (group: { key: string }) => {

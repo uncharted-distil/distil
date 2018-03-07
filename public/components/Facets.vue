@@ -12,14 +12,12 @@ import { Dictionary } from '../util/dict';
 import Facets from '@uncharted.software/stories-facets';
 import TypeChangeMenu from '../components/TypeChangeMenu';
 import '@uncharted.software/stories-facets/dist/facets.css';
-import { CATEGORICAL_FILTER, NUMERICAL_FILTER } from '../util/filters';
 
 export default Vue.extend({
 	name: 'facets',
 
 	props: {
 		groups: Array,
-		filters: Array,
 		highlights: Object,
 		typeChange: Boolean,
 		html: [ String, Object, Function ],
@@ -142,31 +140,6 @@ export default Vue.extend({
 				}
 			});
 			return groups;
-		},
-		facetFiltersByKey(): Dictionary<string[]> {
-			const m = {};
-			this.filters.forEach(filter => {
-				if (filter.enabled && filter.type === CATEGORICAL_FILTER) {
-					const categories = {};
-					filter.categories.forEach(category => {
-						categories[category] = true;
-					});
-					m[filter.name] = categories;
-				}
-			});
-			return m;
-		},
-		histogramFiltersByKey(): Dictionary<any> {
-			const m = {};
-			this.filters.forEach(filter => {
-				if (filter.enabled && filter.type === NUMERICAL_FILTER) {
-					m[filter.name] = {
-						from: filter.min,
-						to: filter.max
-					};
-				}
-			});
-			return m;
 		}
 	},
 
@@ -196,10 +169,6 @@ export default Vue.extend({
 	},
 
 	methods: {
-
-		isFiltered(key: string, value: any): boolean {
-			return this.facetFiltersByKey[key] ? !this.facetFiltersByKey[key][value] : false;
-		},
 
 		isCategorical(group: any): boolean {
 			if (group.facets.length === 0) {
@@ -292,25 +261,11 @@ export default Vue.extend({
 			return null;
 		},
 
-		getHighlightRootKey(highlights: Highlight): any {
-			if (highlights.root) {
-				return highlights.root.key;
-			}
-			return null;
-		},
-
 		getHighlightSummaries(highlights: Highlight): any {
 			if (highlights.values) {
 				return highlights.values.summaries;
 			}
 			return null;
-		},
-
-		getGroupNumRows(key: string): number {
-			const groups = this.processedGroups.filter(g => {
-				return g.key === key;
-			});
-			return groups.length > 0 ? groups[0].numRows : 0;
 		},
 
 		selectCategoricalFacet(facet: any, count?: number) {
@@ -327,27 +282,6 @@ export default Vue.extend({
 			} else {
 				facet.deselect();
 			}
-		},
-
-		getSampleScale(numRows: number ): number {
-			const NUM_SAMPLES = 100;
-			return 1 / (NUM_SAMPLES / numRows);
-		},
-
-		scaleSlicesBySampleSize(slices: Dictionary<number>, numRows: number, bars: any) {
-			const count = {};
-			for (let i = 0; i < bars.length; i++) {
-				const bar = bars[i];
-				const entry: any = _.last(bar.metadata);
-				count[entry.label] = entry.count;
-			}
-			_.forIn(slices, (slice, key) => {
-				slices[key] = Math.min(count[key], slice * this.getSampleScale(numRows));
-			});
-		},
-
-		scaleCountBySampleSize(count: number, numRows: number, facet: any) {
-			return Math.min(facet.count, count * this.getSampleScale(numRows));
 		},
 
 		ensureMinHeight(slices: Dictionary<number>, bars: any) {
@@ -371,7 +305,6 @@ export default Vue.extend({
 		},
 
 		injectHighlightsIntoGroup(group: any, highlights: Highlight) {
-
 
 			// loop through groups ensure that selection is clear on each
 			group.facets.forEach(facet => {

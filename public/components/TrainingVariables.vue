@@ -5,7 +5,8 @@
 			ref="facets"
 			enable-search
 			type-change
-			@numerical-click="onClick"
+			@facet-click="onCategoricalClick"
+			@numerical-click="onNumericalClick"
 			:instance-name="instanceName"
 			:groups="groups"
 			:dataset="dataset"
@@ -33,7 +34,7 @@ import { Highlight } from '../store/data/index';
 import { getters as dataGetters } from '../store/data/module';
 import { getters as routeGetters } from '../store/route/module';
 import { Group, createGroups } from '../util/facets';
-import { getHighlights, updateHighlightRoot } from '../util/highlights';
+import { getHighlights, updateHighlightRoot, clearHighlightRoot } from '../util/highlights';
 
 export default Vue.extend({
 	name: 'training-variables',
@@ -104,8 +105,21 @@ export default Vue.extend({
 			});
 			this.$router.push(entry);
 		},
-		onClick(key: string) {
-			if (this.highlights.root && this.highlights.root.key !== key) {
+
+		onCategoricalClick(context: string, key: string, value: string) {
+			if (key && value) {
+				// extract the var name from the key
+				updateHighlightRoot(this, {
+					context: context,
+					key: key,
+					value: value
+				});
+			} else {
+				clearHighlightRoot(this);
+			}
+		},
+		onNumericalClick(key: string) {
+			if (!this.highlights.root || this.highlights.root.key !== key) {
 				updateHighlightRoot(this, {
 					context: this.instanceName,
 					key: key,
