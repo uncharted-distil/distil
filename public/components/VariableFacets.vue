@@ -30,7 +30,8 @@
 					:html="html"
 					:sort="sort"
 					:type-change="typeChange"
-					@click="onClick"
+					@numerical-click="onNumericalClick"
+					@categorical-click="onCategoricalClick"
 					@expand="onExpand"
 					@collapse="onCollapse"
 					@range-change="onRangeChange"
@@ -217,8 +218,12 @@ export default Vue.extend({
 			}
 		},
 
-		onClick(key: string) {
-			this.$emit('click', key);
+		onNumericalClick(key: string) {
+			this.$emit('numerical-click', key);
+		},
+
+		onCategoricalClick(key: string) {
+			this.$emit('categorical-click', key);
 		},
 
 		// sets all facet groups to the active state - full size display + all controls, updates

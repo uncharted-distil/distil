@@ -197,14 +197,41 @@ export default Vue.extend({
 
 	methods: {
 
-		isFiltered(key, value): boolean {
+		isFiltered(key: string, value: any): boolean {
 			return this.facetFiltersByKey[key] ? !this.facetFiltersByKey[key][value] : false;
 		},
 
-		injectHTML(group: Group, $elem: JQuery) {
+		isCategorical(group: any): boolean {
+			if (group.facets.length === 0) {
+				return false;
+			}
+			if (group.facets[0].histogram) {
+				return false;
+			}
+			return true;
+		},
 
-			$elem.click(() => {
-				this.$emit('click', group.key);
+		isNumerical(group: any): boolean {
+			if (group.facets.length === 0) {
+				return false;
+			}
+			if (group.facets[0].histogram) {
+				return true;
+			}
+			return false;
+		},
+
+		injectHTML(group: Group, $elem: JQuery) {
+			$elem.click(event => {
+				if (this.isNumerical(group)) {
+					this.$emit('numerical-click', group.key);
+				} else if (this.isCategorical(group)) {
+					this.$emit('categorical-click', group.key);
+				}
+			});
+
+			$elem.find('.facet-histogram g').click(event => {
+				this.$emit('numerical-click', group.key);
 			});
 
 			// inject type icon in group header

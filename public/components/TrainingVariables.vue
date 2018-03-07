@@ -5,7 +5,7 @@
 			ref="facets"
 			enable-search
 			type-change
-			@click="onClick"
+			@numerical-click="onClick"
 			:instance-name="instanceName"
 			:groups="groups"
 			:dataset="dataset"
@@ -49,16 +49,16 @@ export default Vue.extend({
 		instanceName(): string {
 			return 'trainingVars';
 		},
-		highlightRoot(): Highlight {
+		highlights(): Highlight {
 			return getHighlights(this.$store);
 		},
 		groups(): Group[] {
 			const summaries = dataGetters.getTrainingVariableSummaries(this.$store);
 			const groups =  createGroups(summaries, false, false);
-			if (this.highlightRoot.root) {
+			if (this.highlights.root) {
 				groups.forEach(group => {
 					if (group) {
-						if (group.key === this.highlightRoot.root.key) {
+						if (group.key === this.highlights.root.key) {
 							group.facets.forEach(facet => {
 								facet.filterable = true;
 							});
@@ -105,11 +105,13 @@ export default Vue.extend({
 			this.$router.push(entry);
 		},
 		onClick(key: string) {
-			updateHighlightRoot(this, {
-				context: this.instanceName,
-				key: key,
-				value: null
-			});
+			if (this.highlights.root && this.highlights.root.key !== key) {
+				updateHighlightRoot(this, {
+					context: this.instanceName,
+					key: key,
+					value: null
+				});
+			}
 		}
 	}
 });

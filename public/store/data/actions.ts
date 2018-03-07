@@ -336,10 +336,6 @@ export const actions = {
 			console.warn('`dataset` argument is missing');
 			return null;
 		}
-		if (!args.filters) {
-			console.warn('`variable` filters is missing');
-			return null;
-		}
 		const queryParams = encodeQueryParams(args.filters);
 		const inclusiveStr = args.inclusive ? 'inclusive' : 'exclusive';
 		const invertStr = args.invert ? 'true' : 'false';
