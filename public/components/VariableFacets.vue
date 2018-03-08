@@ -39,12 +39,10 @@
 <script lang="ts">
 
 import Facets from '../components/Facets';
-import { decodeFiltersDictionary, isDisabled } from '../util/filters';
 import { overlayRouteEntry, getRouteFacetPage } from '../util/routes';
 import { Dictionary } from '../util/dict';
 import { Highlight } from '../store/data/index';
 import { getters as dataGetters } from '../store/data/module';
-import { getters as routeGetters } from '../store/route/module';
 import { Group } from '../util/facets';
 import { updateHighlightRoot, getHighlights } from '../util/highlights';
 import 'font-awesome/css/font-awesome.css';
@@ -111,8 +109,7 @@ export default Vue.extend({
 				filtered = sorted.slice(firstIndex, lastIndex);
 			}
 
-			// update collapsed state
-			return this.updateGroupCollapses(filtered);
+			return filtered;
 		},
 
 		highlights(): Highlight {
@@ -175,17 +172,6 @@ export default Vue.extend({
 
 		onCategoricalClick(key: string) {
 			this.$emit('categorical-click', key);
-		},
-
-		// updates facet collapse/expand state based on route settings
-		updateGroupCollapses(groups: Group[]): Group[] {
-			const filters = routeGetters.getRouteFilters(this.$store);
-			const decoded = decodeFiltersDictionary(filters);
-			return groups.map(group => {
-				// return if disabled
-				group.collapsed = isDisabled(decoded[group.key]);
-				return group;
-			});
 		}
 	}
 });

@@ -30,7 +30,7 @@ import Vue from 'vue';
 import { getters as dataGetters} from '../store/data/module';
 import { getters as routeGetters} from '../store/route/module';
 import { getTargetCol, getPredictedCol, getErrorCol } from '../util/data';
-import { Filter } from '../util/filters';
+import { FilterParams } from '../util/filters';
 import { Variable, TargetRow } from '../store/data/index';
 
 export default Vue.extend({
@@ -54,8 +54,8 @@ export default Vue.extend({
 			return routeGetters.getRoutePipelineId(this.$store);
 		},
 
-		filters(): Filter[] {
-			return routeGetters.getDecodedFilters(this.$store);
+		filters(): FilterParams {
+			return routeGetters.getDecodedFilterParams(this.$store);
 		},
 
 		target(): string {

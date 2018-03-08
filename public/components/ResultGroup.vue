@@ -48,14 +48,11 @@ import Vue from 'vue';
 import Facets from '../components/Facets';
 import { createGroups, Group } from '../util/facets';
 import { getPredictedCol, getErrorCol } from '../util/data';
-import { VariableSummary, Highlight } from '../store/data/index';
+import { Highlight } from '../store/data/index';
 import { getHighlights } from '../util/highlights';
-import { overlayRouteEntry } from '../util/routes';
-import { Filter } from '../util/filters';
+import { FilterParams } from '../util/filters';
 import { getters as routeGetters } from '../store/route/module';
 import { getPipelineById, getMetricDisplayName } from '../util/pipelines';
-import { createNumericalFilter, createCategoricalFilter, updateFilterRoute } from '../util/filters';
-import { updateHighlightRoot, clearHighlightRoot } from '../util/highlights';
 
 export default Vue.extend({
 	name: 'result-group',
@@ -104,21 +101,21 @@ export default Vue.extend({
 		},
 
 		resultGroups(): Group[] {
-			if (this.predicted()) {
-				return createGroups([this.predicted()], false, true);
+			if (this.predictedSummary) {
+				return createGroups([this.predictedSummary], false, true);
 			}
 			return [];
 		},
 
 		residualGroups(): Group[] {
-			if (this.residuals()) {
-				return createGroups([this.residuals()], false, true);
+			if (this.residualsSummary) {
+				return createGroups([this.residualsSummary], false, true);
 			}
 			return [];
 		},
 
-		filters(): Filter[] {
-			return routeGetters.getDecodedFilters(this.$store);
+		filters(): FilterParams {
+			return routeGetters.getDecodedFilterParams(this.$store);
 		},
 
 		highlights(): Highlight {
@@ -127,7 +124,7 @@ export default Vue.extend({
 
 		currentClass(): string {
 			const selectedId = routeGetters.getRoutePipelineId(this.$store);
-			const predicted = this.predicted();
+			const predicted = this.predictedSummary;
 			return (predicted && predicted.pipelineId === selectedId)
 				? 'result-group-selected result-group' : 'result-group';
 		}
@@ -138,6 +135,7 @@ export default Vue.extend({
 			return getMetricDisplayName(metric);
 		},
 
+		/*
 		onResultRangeChange(key: string, value: { from: { label: string[] }, to: { label: string[] } }) {
 			const filter = createNumericalFilter(this.predictedColumnName, value);
 			updateFilterRoute(this, filter);
@@ -178,27 +176,14 @@ export default Vue.extend({
 		},
 
 		click() {
-			if (this.predicted()) {
+			if (this.predictedSummary) {
 				const routeEntry = overlayRouteEntry(this.$route, {
-					pipelineId: this.predicted().pipelineId
+					pipelineId: this.predictedSummary.pipelineId
 				});
 				this.$router.push(routeEntry);
 			}
-		},
-
-		predicted(): VariableSummary {
-			if (this.predictedSummary) {
-				return this.predictedSummary as VariableSummary;
-			}
-			return null;
-		},
-
-		residuals(): VariableSummary {
-			if (this.residualsSummary) {
-				return this.residualsSummary as VariableSummary;
-			}
-			return null;
 		}
+		*/
 	}
 });
 </script>

@@ -74,17 +74,17 @@ func (s *Storage) buildFilteredQueryWhere(dataset string, filterParams *model.Fi
 	return strings.Join(wheres, " AND "), params
 }
 
-func (s *Storage) buildFilteredQueryField(dataset string, variables []*model.Variable, filterParams *model.FilterParams, inclusive bool) (string, error) {
+func (s *Storage) buildFilteredQueryField(dataset string, variables []*model.Variable, filterParams *model.FilterParams) (string, error) {
 	fields := make([]string, 0)
-	for _, variable := range model.GetFilterVariables(filterParams, variables, inclusive) {
+	for _, variable := range model.GetFilterVariables(filterParams, variables) {
 		fields = append(fields, fmt.Sprintf("\"%s\"", variable.Name))
 	}
 	return strings.Join(fields, ","), nil
 }
 
-func (s *Storage) buildFilteredResultQueryField(dataset string, variables []*model.Variable, targetVariable *model.Variable, filterParams *model.FilterParams, inclusive bool) (string, error) {
+func (s *Storage) buildFilteredResultQueryField(dataset string, variables []*model.Variable, targetVariable *model.Variable, filterParams *model.FilterParams) (string, error) {
 	fields := make([]string, 0)
-	for _, variable := range model.GetFilterVariables(filterParams, variables, inclusive) {
+	for _, variable := range model.GetFilterVariables(filterParams, variables) {
 		if strings.Compare(targetVariable.Name, variable.Name) != 0 {
 			fields = append(fields, fmt.Sprintf("\"%s\"", variable.Name))
 		}
@@ -115,7 +115,7 @@ func (s *Storage) FetchNumRows(dataset string, filters map[string]interface{}) (
 // FetchData creates a postgres query to fetch a set of rows.  Applies filters to restrict the
 // results to a user selected set of fields, with rows further filtered based on allowed ranges and
 // categories.
-func (s *Storage) FetchData(dataset string, index string, filterParams *model.FilterParams, inclusive bool, invert bool) (*model.FilteredData, error) {
+func (s *Storage) FetchData(dataset string, index string, filterParams *model.FilterParams, invert bool) (*model.FilteredData, error) {
 	variables, err := s.metadata.FetchVariables(dataset, index, false)
 	if err != nil {
 		return nil, errors.Wrap(err, "Could not pull variables from ES")
@@ -126,7 +126,7 @@ func (s *Storage) FetchData(dataset string, index string, filterParams *model.Fi
 		return nil, errors.Wrap(err, "Could not pull num rows")
 	}
 
-	fields, err := s.buildFilteredQueryField(dataset, variables, filterParams, inclusive)
+	fields, err := s.buildFilteredQueryField(dataset, variables, filterParams)
 	if err != nil {
 		return nil, errors.Wrap(err, "Could not build field list")
 	}

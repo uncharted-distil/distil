@@ -4,6 +4,9 @@ import (
 	"encoding/json"
 )
 
+// RawMessage is an alias for json.RawMessage
+type RawMessage = json.RawMessage
+
 func get(json map[string]interface{}, path ...string) (interface{}, bool) {
 	child := json
 	last := len(path) - 1
@@ -127,6 +130,16 @@ func Int(json map[string]interface{}, path ...string) (int, bool) {
 	return int(flt), true
 }
 
+// IntDefault returns an int property under the given key, if it doesn't
+// exist, it will return the provided default.
+func IntDefault(json map[string]interface{}, def int, path ...string) int {
+	v, ok := Int(json, path...)
+	if ok {
+		return v
+	}
+	return def
+}
+
 // Array returns an []map[string]interface{} property under the given key.
 func Array(json map[string]interface{}, path ...string) ([]map[string]interface{}, bool) {
 	vs, ok := array(json, path...)
@@ -248,6 +261,15 @@ func Unmarshal(data []byte) (map[string]interface{}, error) {
 		return nil, err
 	}
 	return m, nil
+}
+
+// UnmarshalStruct unmarshals JSON into the provided struct.
+func UnmarshalStruct(data []byte, s interface{}) error {
+	err := json.Unmarshal(data, &s)
+	if nil != err {
+		return err
+	}
+	return nil
 }
 
 // Copy will copy the JSON data deeply by value, this process involves

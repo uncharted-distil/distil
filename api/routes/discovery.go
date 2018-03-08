@@ -17,8 +17,15 @@ func ProblemDiscoveryHandler(ctorData model.DataStorageCtor, ctorMeta model.Meta
 		esIndex := pat.Param(r, "index")
 		target := pat.Param(r, "target")
 
+		// parse POST params
+		params, err := getPostParameters(r)
+		if err != nil {
+			handleError(w, errors.Wrap(err, "Unable to parse post parameters"))
+			return
+		}
+
 		// get variable names and ranges out of the params
-		filterParams, err := model.ParseFilterParamsURL(r.URL.Query())
+		filterParams, err := model.ParseFilterParamsFromJSON(params)
 		if err != nil {
 			handleError(w, err)
 			return
@@ -40,7 +47,7 @@ func ProblemDiscoveryHandler(ctorData model.DataStorageCtor, ctorMeta model.Meta
 
 		fetchFilteredData := func(dataset string, index string, filterParams *model.FilterParams) (*model.FilteredData, error) {
 			// fetch the whole data
-			return dataStorage.FetchData(dataset, index, filterParams, false, false)
+			return dataStorage.FetchData(dataset, index, filterParams, false)
 		}
 		fetchVariables := func(dataset string, index string) ([]*model.Variable, error) {
 			return metadataStorage.FetchVariables(dataset, index, false)

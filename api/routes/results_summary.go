@@ -39,8 +39,15 @@ func ResultsSummaryHandler(pipelineCtor model.PipelineStorageCtor, dataCtor mode
 			return
 		}
 
+		// parse POST params
+		params, err := getPostParameters(r)
+		if err != nil {
+			handleError(w, errors.Wrap(err, "Unable to parse post parameters"))
+			return
+		}
+
 		// get variable names and ranges out of the params
-		filterParams, err := model.ParseFilterParamsURL(r.URL.Query())
+		filterParams, err := model.ParseFilterParamsFromJSON(params)
 		if err != nil {
 			handleError(w, err)
 			return

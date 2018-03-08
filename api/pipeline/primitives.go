@@ -53,7 +53,8 @@ func Rank(restClient *rest.Client, data model.DataStorage, dataset string, index
 	resultData, err := ioutil.ReadFile(resultPath)
 	if os.IsNotExist(err) {
 		// pull the dataset
-		rawData, err := data.FetchData(dataset, index, &model.FilterParams{}, true, false)
+		// TODO: pass variables here, right now it will pull no data
+		rawData, err := data.FetchData(dataset, index, &model.FilterParams{}, false)
 		if err != nil {
 			return nil, errors.Wrap(err, "unable to pull the data")
 		}

@@ -44,15 +44,14 @@ import Facets from '../components/Facets.vue';
 import { createGroups, Group } from '../util/facets';
 import { overlayRouteEntry } from '../util/routes';
 import { getPipelineById, getTask } from '../util/pipelines';
-import { Filter } from '../util/filters';
-import { isTarget, getVarFromTarget, getTargetCol } from '../util/data';
-import { updateHighlightRoot, clearHighlightRoot, getHighlights } from '../util/highlights';
+import { FilterParams } from '../util/filters';
+import { isTarget, getVarFromTarget } from '../util/data';
+import { getHighlights } from '../util/highlights';
 import { VariableSummary, Extrema, Highlight } from '../store/data/index';
 import { getters as dataGetters} from '../store/data/module';
 import { getters as routeGetters } from '../store/route/module';
 import { actions } from '../store/app/module';
 import vueSlider from 'vue-slider-component';
-import { createNumericalFilter, updateFilterRoute } from '../util/filters';
 import Vue from 'vue';
 import _ from 'lodash';
 import 'font-awesome/css/font-awesome.css';
@@ -134,8 +133,8 @@ export default Vue.extend({
 			return facetHighlights;
 		},
 
-		filters(): Filter[] {
-			return routeGetters.getDecodedFilters(this.$store);
+		filters(): FilterParams {
+			return routeGetters.getDecodedFilterParams(this.$store);
 		},
 
 		range(): number {
@@ -210,10 +209,10 @@ export default Vue.extend({
 
 	methods: {
 
-		onRangeChange(key: string, value: { from: { label: string[] }, to: { label: string[] } }) {
-			const filter = createNumericalFilter(key, value);
-			updateFilterRoute(this, filter);
-		},
+		// onRangeChange(key: string, value: { from: { label: string[] }, to: { label: string[] } }) {
+		// 	const filter = createNumericalFilter(key, value);
+		// 	updateFilterRoute(this, filter);
+		// },
 
 		// onHistogramClick(context: string, key: string, value: any) {
 		// 	if (key && value) {
@@ -228,18 +227,18 @@ export default Vue.extend({
 		// 	}
 		// },
 
-		onFacetClick(context: string, key: string, value: string) {
-			if (key && value) {
-				const colKey = getTargetCol(this.target);
-				updateHighlightRoot(this, {
-					context: context,
-					key: colKey,
-					value: value
-				});
-			} else {
-				clearHighlightRoot(this);
-			}
-		},
+		// onFacetClick(context: string, key: string, value: string) {
+		// 	if (key && value) {
+		// 		const colKey = getTargetCol(this.target);
+		// 		updateHighlightRoot(this, {
+		// 			context: context,
+		// 			key: colKey,
+		// 			value: value
+		// 		});
+		// 	} else {
+		// 		clearHighlightRoot(this);
+		// 	}
+		// },
 
 		updateThreshold(min: number, max: number) {
 			const entry = overlayRouteEntry(this.$route, {

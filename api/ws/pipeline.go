@@ -201,7 +201,15 @@ func handleCreatePipelines(conn *Connection, client *pipeline.Client, metadataCt
 
 	// parse the features out of the create msg - done as a separate step because their structure isn't entirely
 	// fixed
-	filters, err := model.ParseFilterParamsJSON(clientCreateMsg.Filters)
+
+	params := make(map[string]interface{})
+	err = json.Unmarshal(clientCreateMsg.Filters, &params)
+	if err != nil {
+		handleErr(conn, msg, err)
+		return
+	}
+
+	filters, err := model.ParseFilterParamsFromJSON(params)
 	if err != nil {
 		handleErr(conn, msg, err)
 		return
@@ -235,7 +243,7 @@ func handleCreatePipelines(conn *Connection, client *pipeline.Client, metadataCt
 	// persist the filtered dataset if necessary
 	fetchFilteredData := func(dataset string, index string, filterParams *model.FilterParams) (*model.FilteredData, error) {
 		// fetch the whole data and include the target feature
-		return dataStorage.FetchData(dataset, index, filterParams, false, false)
+		return dataStorage.FetchData(dataset, index, filterParams, false)
 	}
 	fetchVariable := func(dataset string, index string) ([]*model.Variable, error) {
 		return metadata.FetchVariables(dataset, index, false)
@@ -485,7 +493,7 @@ func fetchFilteredVariables(metadata model.MetadataStorage, index string, datase
 		return nil, err
 	}
 
-	variablesToUse := model.GetFilterVariables(filters, variables, false)
+	variablesToUse := model.GetFilterVariables(filters, variables)
 
 	// create a list minus those that are in the filtered list
 	filteredVars := []string{}

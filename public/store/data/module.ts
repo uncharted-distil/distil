@@ -17,61 +17,73 @@ const { commit, read, dispatch } = getStoreAccessors<DataState, DistilState>(nul
 
 // Typed getters
 export const getters = {
+	// dataset
+	getDatasets: read(moduleGetters.getDatasets),
+	// variables
 	getVariables: read(moduleGetters.getVariables),
 	getVariablesMap: read(moduleGetters.getVariablesMap),
-	getDatasets: read(moduleGetters.getDatasets),
 	getAvailableVariables: read(moduleGetters.getAvailableVariables),
 	getAvailableVariablesMap: read(moduleGetters.getAvailableVariablesMap),
 	getTrainingVariablesMap: read(moduleGetters.getTrainingVariablesMap),
+	// variable summaries
 	getVariableSummaries: read(moduleGetters.getVariableSummaries),
 	getResultSummaries: read(moduleGetters.getResultSummaries),
 	getPredictedSummaries: read(moduleGetters.getPredictedSummaries),
 	getResidualsSummaries: read(moduleGetters.getResidualsSummaries),
-	getSelectedFilters: read(moduleGetters.getSelectedFilters),
 	getAvailableVariableSummaries: read(moduleGetters.getAvailableVariableSummaries),
 	getTrainingVariableSummaries: read(moduleGetters.getTrainingVariableSummaries),
 	getTargetVariableSummaries: read(moduleGetters.getTargetVariableSummaries),
-	hasFilteredData: read(moduleGetters.hasFilteredData),
-	getFilteredData: read(moduleGetters.getFilteredData),
-	getFilteredDataNumRows: read(moduleGetters.getFilteredDataNumRows),
-	getFilteredDataItems: read(moduleGetters.getFilteredDataItems),
-	getFilteredDataFields: read(moduleGetters.getFilteredDataFields),
-	hasResultData: read(moduleGetters.hasResultData),
-	getResultData: read(moduleGetters.getResultData),
-	getResultDataNumRows: read(moduleGetters.getResultDataNumRows),
-	getResultDataItems: read(moduleGetters.getResultDataItems),
-	getResultDataFields: read(moduleGetters.getResultDataFields),
+	// filters
+	getSelectedFilterParams: read(moduleGetters.getSelectedFilterParams),
+	// selected data
 	hasSelectedData: read(moduleGetters.hasSelectedData),
 	getSelectedData: read(moduleGetters.getSelectedData),
 	getSelectedDataNumRows: read(moduleGetters.getSelectedDataNumRows),
 	getSelectedDataItems: read(moduleGetters.getSelectedDataItems),
 	getSelectedDataFields: read(moduleGetters.getSelectedDataFields),
+	// excluded data
 	hasExcludedData: read(moduleGetters.hasExcludedData),
 	getExcludedData: read(moduleGetters.getExcludedData),
 	getExcludedDataNumRows: read(moduleGetters.getExcludedDataNumRows),
 	getExcludedDataItems: read(moduleGetters.getExcludedDataItems),
 	getExcludedDataFields: read(moduleGetters.getExcludedDataFields),
-	getHighlightedSamples: read(moduleGetters.getHighlightedSamples),
-	getHighlightedSummaries: read(moduleGetters.getHighlightedSummaries),
+	// result data
+	hasResultData: read(moduleGetters.hasResultData),
+	getResultData: read(moduleGetters.getResultData),
+	getResultDataNumRows: read(moduleGetters.getResultDataNumRows),
+	getResultDataItems: read(moduleGetters.getResultDataItems),
+	getResultDataFields: read(moduleGetters.getResultDataFields),
+	// extrema
 	getPredictedExtrema: read(moduleGetters.getPredictedExtrema),
 	getResidualExtrema: read(moduleGetters.getResidualExtrema),
+	// highlights
+	getHighlightedSamples: read(moduleGetters.getHighlightedSamples),
+	getHighlightedSummaries: read(moduleGetters.getHighlightedSummaries),
 }
 
 // Typed actions
 export const actions = {
+
 	searchDatasets: dispatch(moduleActions.searchDatasets),
 	setVariableType: dispatch(moduleActions.setVariableType),
+
 	exportProblem: dispatch(moduleActions.exportProblem),
+
 	fetchVariables: dispatch(moduleActions.fetchVariables),
+
 	fetchVariableSummary: dispatch(moduleActions.fetchVariableSummary),
 	fetchVariableSummaries: dispatch(moduleActions.fetchVariableSummaries),
+
 	fetchResultSummaries: dispatch(moduleActions.fetchResultSummaries),
 	fetchResultSummary: dispatch(moduleActions.fetchResultSummary),
+
 	fetchVariablesAndVariableSummaries: dispatch(moduleActions.fetchVariablesAndVariableSummaries),
-	fetchFilteredTableData: dispatch(moduleActions.fetchFilteredTableData),
+
 	fetchSelectedTableData: dispatch(moduleActions.fetchSelectedTableData),
 	fetchExcludedTableData: dispatch(moduleActions.fetchExcludedTableData),
+
 	fetchData: dispatch(moduleActions.fetchData),
+
 	fetchPredictedSummaries: dispatch(moduleActions.fetchPredictedSummaries),
 	fetchResidualsSummaries: dispatch(moduleActions.fetchResidualsSummaries),
 	fetchResultExtrema: dispatch(moduleActions.fetchResultExtrema),
@@ -100,7 +112,6 @@ export const mutations = {
 	clearResultExtrema: commit(moduleMutations.clearResultExtrema),
 	clearPredictedExtremas: commit(moduleMutations.clearPredictedExtremas),
 	clearResidualsExtremas: commit(moduleMutations.clearResidualsExtremas),
-	setFilteredData: commit(moduleMutations.setFilteredData),
 	setSelectedData: commit(moduleMutations.setSelectedData),
 	setExcludedData: commit(moduleMutations.setExcludedData),
 	setResultData: commit(moduleMutations.setResultData),

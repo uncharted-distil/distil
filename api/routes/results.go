@@ -17,13 +17,24 @@ type Results struct {
 
 // ResultsHandler fetches predicted pipeline values and returns them to the client
 // in a JSON structure
-func ResultsHandler(storageCtor model.PipelineStorageCtor, storageDataCtor model.DataStorageCtor) func(http.ResponseWriter, *http.Request) {
+func ResultsHandler(pipelineCtor model.PipelineStorageCtor, dataCtor model.DataStorageCtor) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
-		// extract route parameters
-		index := pat.Param(r, "index")
+		// parse POST params
+		params, err := getPostParameters(r)
+		if err != nil {
+			handleError(w, errors.Wrap(err, "Unable to parse post parameters"))
+			return
+		}
+
+		// get variable names and ranges out of the params
+		filterParams, err := model.ParseFilterParamsFromJSON(params)
+		if err != nil {
+			handleError(w, err)
+			return
+		}
+
 		dataset := pat.Param(r, "dataset")
-		inclusive := pat.Param(r, "inclusive")
-		inclusiveBool := inclusive == "inclusive"
+		esIndex := pat.Param(r, "esIndex")
 
 		pipelineID, err := url.PathUnescape(pat.Param(r, "pipeline-id"))
 		if err != nil {
@@ -31,27 +42,20 @@ func ResultsHandler(storageCtor model.PipelineStorageCtor, storageDataCtor model
 			return
 		}
 
-		// get variable names and ranges out of the params
-		filterParams, err := model.ParseFilterParamsURL(r.URL.Query())
+		pipeline, err := pipelineCtor()
 		if err != nil {
 			handleError(w, err)
 			return
 		}
 
-		client, err := storageCtor()
-		if err != nil {
-			handleError(w, err)
-			return
-		}
-
-		clientData, err := storageDataCtor()
+		data, err := dataCtor()
 		if err != nil {
 			handleError(w, err)
 			return
 		}
 
 		// get the result URI
-		res, err := client.FetchResultMetadataByPipelineID(pipelineID)
+		res, err := pipeline.FetchResultMetadataByPipelineID(pipelineID)
 		if err != nil {
 			handleError(w, err)
 			return
@@ -62,7 +66,7 @@ func ResultsHandler(storageCtor model.PipelineStorageCtor, storageDataCtor model
 			return
 		}
 
-		results, err := clientData.FetchFilteredResults(dataset, index, res.ResultURI, filterParams, inclusiveBool)
+		results, err := data.FetchFilteredResults(dataset, esIndex, res.ResultURI, filterParams)
 		if err != nil {
 			handleError(w, err)
 			return

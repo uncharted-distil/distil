@@ -286,7 +286,7 @@ func addErrorFilterToWhere(dataset string, targetName string, errorFilter *model
 }
 
 // FetchFilteredResults pulls the results from the Postgres database.
-func (s *Storage) FetchFilteredResults(dataset string, index string, resultURI string, filterParams *model.FilterParams, inclusive bool) (*model.FilteredData, error) {
+func (s *Storage) FetchFilteredResults(dataset string, index string, resultURI string, filterParams *model.FilterParams) (*model.FilteredData, error) {
 	datasetResult := s.getResultTable(dataset)
 	targetName, err := s.getResultTargetName(datasetResult, resultURI, index)
 	if err != nil {
@@ -309,7 +309,7 @@ func (s *Storage) FetchFilteredResults(dataset string, index string, resultURI s
 	resultFilters := removeResultFilters(filterParams)
 
 	// generate variable list for inclusion in query select
-	fields, err := s.buildFilteredResultQueryField(dataset, variables, variable, filterParams, inclusive)
+	fields, err := s.buildFilteredResultQueryField(dataset, variables, variable, filterParams)
 	if err != nil {
 		return nil, errors.Wrap(err, "Could not build field list")
 	}

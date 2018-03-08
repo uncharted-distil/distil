@@ -33,7 +33,7 @@ import { Variable, Extrema } from '../store/data/index';
 import { Dictionary } from '../util/dict';
 import { HighlightRoot } from '../store/data/index';
 import { Group, createGroups } from '../util/facets';
-import { Filter } from '../util/filters';
+import { FilterParams } from '../util/filters';
 import Vue from 'vue';
 
 export default Vue.extend({
@@ -86,8 +86,8 @@ export default Vue.extend({
 		sessionId(): string {
 			return pipelineGetters.getPipelineSessionID(this.$store);
 		},
-		filters(): Filter[] {
-			return routeGetters.getDecodedFilters(this.$store);
+		filters(): FilterParams {
+			return routeGetters.getDecodedFilterParams(this.$store);
 		},
 		filterStr(): string {
 			return routeGetters.getRouteFilters(this.$store);

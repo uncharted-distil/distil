@@ -61,11 +61,6 @@ export const mutations = {
 		state.resultExtrema = null;
 	},
 
-	// sets the current filtered data into the store
-	setFilteredData(state: DataState, filteredData: Data) {
-		state.filteredData = filteredData;
-	},
-
 	// sets the current selected data into the store
 	setSelectedData(state: DataState, selectedData: Data) {
 		state.selectedData = selectedData;

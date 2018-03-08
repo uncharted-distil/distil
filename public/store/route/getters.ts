@@ -1,4 +1,4 @@
-import { decodeFilters, Filter } from '../../util/filters';
+import { decodeFilters, FilterParams } from '../../util/filters';
 import { HighlightRoot } from '../data/index';
 import { decodeHighlights } from '../../util/highlights'
 import { Route } from 'vue-router';
@@ -52,7 +52,7 @@ export const getters = {
 		return state.query.residualThresholdMax;
 	},
 
-	getDecodedFilters(state: Route): Filter[] {
+	getDecodedFilterParams(state: Route): FilterParams {
 		return decodeFilters(state.query.filters);
 	},
 

@@ -7,7 +7,15 @@
 			</b-nav>
 		<p>
 
-		<p class="small-margin"><small>Displaying {{items.length}} of {{numRows}} rows</small></p>
+		<p class="small-margin">
+			<small>Displaying {{items.length}} of {{numRows}} rows</small>
+			<b-button
+				variant="outline-secondary"
+				:disabled="!highlights.root"
+				@click="onExcludeClick">
+				<i class="fa fa-minus-circle"></i>Exclude
+			</b-button>
+		</p>
 
 		<div class="select-data-table-container">
 			<div class="select-data-no-results" v-if="!hasData">
@@ -38,12 +46,12 @@ import _ from 'lodash';
 import Vue from 'vue';
 import { getters as dataGetters } from '../store/data/module';
 import { Dictionary } from '../util/dict';
-import { Filter } from '../util/filters';
-import { FieldInfo } from '../store/data/index';
+import { FilterParams } from '../util/filters';
+import { FieldInfo, Highlight } from '../store/data/index';
 import { getters as routeGetters } from '../store/route/module';
 import { TableRow } from '../store/data/index';
-import { getHighlights } from '../util/highlights';
-import { updateTableHighlights, updateHighlightRoot, clearHighlightRoot, scrollToFirstHighlight } from '../util/highlights';
+import { updateFilterRoute } from '../util/filters';
+import { updateTableHighlights, getHighlights, updateHighlightRoot, clearHighlightRoot, scrollToFirstHighlight, createFilterFromHighlightRoot } from '../util/highlights';
 
 export default Vue.extend({
 	name: 'selected-data-table',
@@ -62,6 +70,10 @@ export default Vue.extend({
 		// get dataset from route
 		dataset(): string {
 			return routeGetters.getRouteDataset(this.$store);
+		},
+
+		highlights(): Highlight {
+			return getHighlights(this.$store);
 		},
 
 		numRows(): number {
@@ -83,12 +95,10 @@ export default Vue.extend({
 			// clear any existing selections
 			items.forEach(f => f._rowVariant = null);
 
-			const highlights = getHighlights(this.$store);
-
 			// if we have highlights defined and the select table is not the source then updated
 			// the highlight visuals.
-			if ((_.get(highlights, 'root.context') !== this.instanceName)) {
-				updateTableHighlights(items, highlights, this.instanceName);
+			if ((_.get(this.highlights, 'root.context') !== this.instanceName)) {
+				updateTableHighlights(items, this.highlights, this.instanceName);
 
 				// On data / highlights change, scroll to first selected row
 				scrollToFirstHighlight(this, 'selectTable', true);
@@ -97,7 +107,7 @@ export default Vue.extend({
 			if (this.selectedRowKey >= 0) {
 				const toSelect = items.find(r => r._key === this.selectedRowKey);
 				if (toSelect) {
-					if (_.get(highlights, 'root.context') === this.instanceName) {
+					if (_.get(this.highlights, 'root.context') === this.instanceName) {
 						toSelect._rowVariant = 'primary';
 					} else {
 						toSelect._rowVariant = null;
@@ -113,12 +123,17 @@ export default Vue.extend({
 			return this.includedActive ? dataGetters.getSelectedDataFields(this.$store) : dataGetters.getExcludedDataFields(this.$store);
 		},
 
-		filters(): Filter[] {
-			return dataGetters.getSelectedFilters(this.$store);
+		filters(): FilterParams {
+			return dataGetters.getSelectedFilterParams(this.$store);
 		}
 	},
 
 	methods: {
+		onExcludeClick() {
+			const filter = createFilterFromHighlightRoot(this.highlights.root);
+			updateFilterRoute(this, filter);
+			clearHighlightRoot(this);
+		},
 		onRowClick(row: TableRow) {
 			if (row._key !== this.selectedRowKey) {
 				// clicked on a different row than last time - new selection

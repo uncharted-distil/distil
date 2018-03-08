@@ -33,7 +33,7 @@ function updateCurrentPipelineResults(context: any, req: PipelineRequest, res: P
 		context.dispatch('fetchResultTableData', {
 			dataset: req.dataset,
 			pipelineId: res.pipelineId,
-			filters: context.getters.getDecodedFilters
+			filters: context.getters.getDecodedFilterParams
 		});
 	}
 

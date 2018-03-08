@@ -75,7 +75,6 @@ export function createFilterFromHighlightRoot(highlightRoot: HighlightRoot): Fil
 		return {
 			name: highlightRoot.key,
 			type: CATEGORICAL_FILTER,
-			enabled: true,
 			categories: [highlightRoot.value]
 		};
 	}
@@ -83,7 +82,6 @@ export function createFilterFromHighlightRoot(highlightRoot: HighlightRoot): Fil
 		return {
 			name: highlightRoot.key,
 			type: NUMERICAL_FILTER,
-			enabled: true,
 			min: highlightRoot.value.from,
 			max: highlightRoot.value.to
 		};
