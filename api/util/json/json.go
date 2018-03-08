@@ -5,7 +5,7 @@ import (
 )
 
 // RawMessage is an alias for json.RawMessage
-type RawMessage = json.RawMessage
+type RawMessage json.RawMessage
 
 func get(json map[string]interface{}, path ...string) (interface{}, bool) {
 	child := json
