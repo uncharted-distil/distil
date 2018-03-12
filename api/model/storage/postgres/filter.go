@@ -112,6 +112,16 @@ func (s *Storage) FetchNumRows(dataset string, filters map[string]interface{}) (
 	return numRows, nil
 }
 
+func (s *Storage) filterIncludesIndex(filterParams *model.FilterParams) bool {
+	for _, v := range filterParams.Filters {
+		if v.Name == d3mIndexFieldName {
+			return true
+		}
+	}
+
+	return false
+}
+
 // FetchData creates a postgres query to fetch a set of rows.  Applies filters to restrict the
 // results to a user selected set of fields, with rows further filtered based on allowed ranges and
 // categories.
