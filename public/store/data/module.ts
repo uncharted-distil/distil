@@ -46,14 +46,11 @@ export const getters = {
 	getSelectedDataNumRows: read(moduleGetters.getSelectedDataNumRows),
 	getSelectedDataItems: read(moduleGetters.getSelectedDataItems),
 	getSelectedDataFields: read(moduleGetters.getSelectedDataFields),
-	hasExcludedData: read(moduleGetters.hasExcludedData),
-	getExcludedData: read(moduleGetters.getExcludedData),
-	getExcludedDataNumRows: read(moduleGetters.getExcludedDataNumRows),
-	getExcludedDataItems: read(moduleGetters.getExcludedDataItems),
-	getExcludedDataFields: read(moduleGetters.getExcludedDataFields),
 	getHighlightedValues: read(moduleGetters.getHighlightedValues),
 	getPredictedExtrema: read(moduleGetters.getPredictedExtrema),
 	getResidualExtrema: read(moduleGetters.getResidualExtrema),
+	getExcludedDataFields: read(moduleGetters.getExcludedDataFields),
+	getExcludedDataItems: read(moduleGetters.getExcludedDataItems),
 }
 
 // Typed actions

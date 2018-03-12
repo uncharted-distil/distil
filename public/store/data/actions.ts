@@ -523,7 +523,7 @@ export const actions = {
 
 	// fetches result data for created pipeline
 	fetchResultTableData(context: DataContext, args: { pipelineId: string, dataset: string, filters: Filter[] }) {
-		mutations.setResultData(context, null);
+		//mutations.setResultData(context, null);
 		context.dispatch('fetchResults', args)
 			.then(response => {
 				mutations.setResultData(context, response.data);

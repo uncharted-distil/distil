@@ -6,7 +6,7 @@
 import _ from 'lodash';
 import $ from 'jquery';
 import Vue from 'vue';
-import { Group, CategoricalFacet, isCategoricalFacet } from '../util/facets';
+import { Group, CategoricalFacet, isCategoricalFacet, CATEGORICAL_CHUNK_SIZE } from '../util/facets';
 import { Dictionary } from '../util/dict';
 import Facets from '@uncharted.software/stories-facets';
 import TypeChangeMenu from '../components/TypeChangeMenu';
@@ -20,7 +20,7 @@ export default Vue.extend({
 	props: {
 		groups: Array,
 		filters: Array,
-		highlights: Object, // ValueHighlights
+		highlights: Object,
 		typeChange: Boolean,
 		html: [ String, Object, Function ],
 		sort: {
@@ -36,7 +36,8 @@ export default Vue.extend({
 	data() {
 		return {
 			facets: <any>{},
-			instanceName: _.uniqueId('facet-')
+			instanceName: _.uniqueId('facet-'),
+			more: {}
 		};
 	},
 
@@ -47,12 +48,10 @@ export default Vue.extend({
 		// of group objects which are replaced wholesale on changes.  Elsewhere in the code
 		// we modify local copies of the group objects, then replace those in the Facet component
 		// with copies.
-		this.facets = new Facets(this.$el, this.groups.map(group => {
-			return _.cloneDeep(group);
-		}));
+		this.facets = new Facets(this.$el, this.processedGroups);
 
 		// Call customization hook
-		this.groups.forEach(group => {
+		this.processedGroups.forEach(group => {
 			this.injectHTML(group, this.facets.getGroup(group.key)._element);
 		});
 
@@ -88,6 +87,16 @@ export default Vue.extend({
 			component.$emit('facet-mouse-leave', key);
 		});
 
+		// more events
+
+		this.facets.on('facet-group:more', (event: Event, key: string) => {
+			component.$emit('facet-more', key);
+			if (!component.more[key]) {
+				Vue.set(component.more, key, 0);
+			}
+			Vue.set(component.more, key, component.more[key] + CATEGORICAL_CHUNK_SIZE);
+		});
+
 		// click events
 
 		this.facets.on('facet-histogram:click', (event: Event, key: string, value: any) => {
@@ -118,6 +127,18 @@ export default Vue.extend({
 	},
 
 	computed: {
+		processedGroups(): Group[] {
+			const groups = _.cloneDeep(this.groups);
+			groups.forEach(group => {
+				const more = this.more[group.key];
+				if (more) {
+					group.facets = group.facets.concat(group.remaining.slice(0, more));
+					group.remaining = group.remaining.slice(more);
+					group.more = group.remaining.length;
+				}
+			});
+			return groups;
+		},
 		facetFiltersByKey(): Dictionary<string[]> {
 			const m = {};
 			this.filters.forEach(filter => {
@@ -146,8 +167,9 @@ export default Vue.extend({
 	},
 
 	watch: {
+
 		// handle changes to the facet group list
-		groups(currGroups: Group[], prevGroups: Group[]) {
+		processedGroups(currGroups: Group[], prevGroups: Group[]) {
 			// get map of all existing group keys in facets
 			const prevMap: Dictionary<Group> = {};
 			prevGroups.forEach(group => {
@@ -170,6 +192,7 @@ export default Vue.extend({
 	},
 
 	methods: {
+
 		isFiltered(key, value): boolean {
 			return this.facetFiltersByKey[key] ? !this.facetFiltersByKey[key][value] : false;
 		},
@@ -258,7 +281,7 @@ export default Vue.extend({
 		},
 
 		getGroupNumRows(key: string): number {
-			const groups = this.groups.filter(g => {
+			const groups = this.processedGroups.filter(g => {
 				return g.key === key;
 			});
 			return groups.length > 0 ? groups[0].numRows : 0;
@@ -509,7 +532,7 @@ export default Vue.extend({
 			// component
 			$(this.$el).find('.select-highlight').removeClass('select-highlight');
 			/// Update highlights
-			this.groups.forEach(g => {
+			this.processedGroups.forEach(g => {
 				const group = this.facets.getGroup(g.key);
 				if (!group) {
 					return;

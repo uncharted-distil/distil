@@ -222,7 +222,7 @@ func (s *Storage) FetchResultMetadata(requestID string) ([]*model.Result, error)
 	sql := fmt.Sprintf("SELECT result.request_id, result.pipeline_id, result.result_uuid, "+
 		"result.result_uri, result.progress, result.output_type, result.created_time, request.dataset "+
 		"FROM %s AS result INNER JOIN %s AS request ON result.request_id = request.request_id "+
-		"WHERE request_id = $1;", resultTableName, requestTableName)
+		"WHERE result.request_id = $1;", resultTableName, requestTableName)
 
 	rows, err := s.client.Query(sql, requestID)
 	if err != nil {
@@ -240,7 +240,7 @@ func (s *Storage) FetchResultMetadataByPipelineID(pipelineID string) (*model.Res
 	sql := fmt.Sprintf("SELECT result.request_id, result.pipeline_id, result.result_uuid, "+
 		"result.result_uri, result.progress, result.output_type, result.created_time, request.dataset "+
 		"FROM %s AS result INNER JOIN %s AS request ON result.request_id = request.request_id "+
-		"WHERE pipeline_id = $1 ORDER BY created_time desc LIMIT 1;", resultTableName, requestTableName)
+		"WHERE result.pipeline_id = $1 ORDER BY result.created_time desc LIMIT 1;", resultTableName, requestTableName)
 
 	rows, err := s.client.Query(sql, pipelineID)
 	if err != nil {
@@ -268,7 +268,7 @@ func (s *Storage) FetchResultMetadataByUUID(resultUUID string) (*model.Result, e
 	sql := fmt.Sprintf("SELECT result.request_id, result.pipeline_id, result.result_uuid, "+
 		"result.result_uri, result.progress, result.output_type, result.created_time, request.dataset "+
 		"FROM %s AS result INNER JOIN %s AS request ON result.request_id = request.request_id "+
-		"WHERE result_uuid = $1;", resultTableName, requestTableName)
+		"WHERE result.result_uuid = $1;", resultTableName, requestTableName)
 
 	rows, err := s.client.Query(sql, resultUUID)
 	if err != nil {

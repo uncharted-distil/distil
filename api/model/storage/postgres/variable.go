@@ -11,7 +11,7 @@ import (
 )
 
 const (
-	catResultLimit = 10
+	catResultLimit = 100
 )
 
 func (s *Storage) getHistogramAggQuery(extrema *model.Extrema) (string, string, string) {
@@ -66,7 +66,6 @@ func (s *Storage) parseNumericHistogram(varType string, rows *pgx.Rows, extrema 
 			buckets[bucket].Count = bucketCount
 		} else {
 			buckets[len(buckets)-1].Count += bucketCount
-
 		}
 	}
 	// assign histogram attributes

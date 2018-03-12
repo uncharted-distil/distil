@@ -112,11 +112,23 @@ func (s *Storage) FetchNumRows(dataset string, filters map[string]interface{}) (
 	return numRows, nil
 }
 
+func (s *Storage) filterIncludesIndex(filterParams *model.FilterParams) bool {
+	for _, v := range filterParams.Filters {
+		if v.Name == d3mIndexFieldName {
+			return true
+		}
+	}
+
+	return false
+}
+
 // FetchData creates a postgres query to fetch a set of rows.  Applies filters to restrict the
 // results to a user selected set of fields, with rows further filtered based on allowed ranges and
 // categories.
 func (s *Storage) FetchData(dataset string, index string, filterParams *model.FilterParams, inclusive bool, invert bool) (*model.FilteredData, error) {
-	variables, err := s.metadata.FetchVariables(dataset, index, false)
+	// Include the d3m if inclusive XOR index is specified
+	indexSpecified := s.filterIncludesIndex(filterParams)
+	variables, err := s.metadata.FetchVariables(dataset, index, inclusive != indexSpecified)
 	if err != nil {
 		return nil, errors.Wrap(err, "Could not pull variables from ES")
 	}

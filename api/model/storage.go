@@ -18,10 +18,11 @@ type DataStorage interface {
 	FetchResults(dataset string, index string, resultURI string) (*FilteredData, error)
 	FetchFilteredResults(dataset string, index string, resultURI string, filterParams *FilterParams, inclusive bool) (*FilteredData, error)
 	FetchResultsSummary(dataset string, resultURI string, index string, extrema *Extrema) (*Histogram, error)
-	FetchResultsExtremaByURI(dataset string, resultURI string, index string) (*Extrema, error)
 	FetchResidualsSummary(dataset string, resultURI string, index string, extrema *Extrema) (*Histogram, error)
+	FetchResultsExtremaByURI(dataset string, resultURI string, index string) (*Extrema, error)
 	FetchResidualsExtremaByURI(dataset string, resultURI string, index string) (*Extrema, error)
 	FetchExtremaByURI(dataset string, resultURI string, index string, variable string) (*Extrema, error)
+
 	// Dataset manipulation
 	SetDataType(dataset string, index string, field string, fieldType string) error
 }
