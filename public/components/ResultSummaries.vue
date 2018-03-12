@@ -211,7 +211,7 @@ export default Vue.extend({
 
 		// onRangeChange(key: string, value: { from: { label: string[] }, to: { label: string[] } }) {
 		// 	const filter = createNumericalFilter(key, value);
-		// 	updateFilterRoute(this, filter);
+		// 	addFilterToRoute(this, filter);
 		// },
 
 		// onHistogramClick(context: string, key: string, value: any) {

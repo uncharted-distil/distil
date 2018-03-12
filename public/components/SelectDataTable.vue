@@ -7,13 +7,20 @@
 			</b-nav>
 		<p>
 
+		<div>
+			<div v-for="filter in filters">
+				<filter-badge
+					:filter="filter"></filter-badge>
+			</div>
+		</div>
+
 		<p class="small-margin">
 			<small>Displaying {{items.length}} of {{numRows}} rows</small>
 			<b-button
 				variant="outline-secondary"
 				:disabled="!highlights.root"
 				@click="onExcludeClick">
-				<i class="fa fa-minus-circle"></i>Exclude
+				<i class="fa fa-minus-circle pr-1"></i>Exclude
 			</b-button>
 		</p>
 
@@ -44,17 +51,22 @@
 
 import _ from 'lodash';
 import Vue from 'vue';
+import FilterBadge from './FilterBadge';
 import { getters as dataGetters } from '../store/data/module';
 import { Dictionary } from '../util/dict';
-import { FilterParams } from '../util/filters';
+import { Filter } from '../util/filters';
 import { FieldInfo, Highlight } from '../store/data/index';
 import { getters as routeGetters } from '../store/route/module';
 import { TableRow } from '../store/data/index';
-import { updateFilterRoute } from '../util/filters';
+import { addFilterToRoute, EXCLUDE_FILTER } from '../util/filters';
 import { updateTableHighlights, getHighlights, updateHighlightRoot, clearHighlightRoot, scrollToFirstHighlight, createFilterFromHighlightRoot } from '../util/highlights';
 
 export default Vue.extend({
 	name: 'selected-data-table',
+
+	components: {
+		FilterBadge
+	},
 
 	props: {
 		instanceName: { type: String, default: 'select-table-highlight' }
@@ -123,15 +135,15 @@ export default Vue.extend({
 			return this.includedActive ? dataGetters.getSelectedDataFields(this.$store) : dataGetters.getExcludedDataFields(this.$store);
 		},
 
-		filters(): FilterParams {
-			return dataGetters.getSelectedFilterParams(this.$store);
+		filters(): Filter[] {
+			return dataGetters.getFilters(this.$store);
 		}
 	},
 
 	methods: {
 		onExcludeClick() {
-			const filter = createFilterFromHighlightRoot(this.highlights.root);
-			updateFilterRoute(this, filter);
+			const filter = createFilterFromHighlightRoot(this.highlights.root, EXCLUDE_FILTER);
+			addFilterToRoute(this, filter);
 			clearHighlightRoot(this);
 		},
 		onRowClick(row: TableRow) {

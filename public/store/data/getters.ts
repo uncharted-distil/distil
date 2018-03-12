@@ -1,6 +1,6 @@
 import _ from 'lodash';
 import { FieldInfo, Variable, Data, DataState, Datasets, VariableSummary, TargetRow, TableRow, Extrema } from './index';
-import { FilterParams } from '../../util/filters';
+import { FilterParams, Filter } from '../../util/filters';
 import { TARGET_POSTFIX, PREDICTED_POSTFIX, getTargetCol, getVarFromTarget, getPredictedCol, getErrorCol } from '../../util/data';
 import { Dictionary } from '../../util/dict';
 import { getPredictedIndex, getErrorIndex, getTargetIndex } from '../../util/data';
@@ -103,10 +103,13 @@ export const getters = {
 		return state.residualSummaries;
 	},
 
-	getSelectedFilterParams(state: DataState, getters: any): FilterParams {
-
+	getFilters(state: DataState, getters: any): Filter[] {
 		const filterParams = getters.getDecodedFilterParams;
+		return filterParams.filters.slice();
+	},
 
+	getSelectedFilterParams(state: DataState, getters: any): FilterParams {
+		const filterParams = _.cloneDeep(getters.getDecodedFilterParams);
 		// add training filters
 		const training = getters.getRouteTrainingVariables as string;
 		if (training) {

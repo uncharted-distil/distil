@@ -34,6 +34,7 @@ export const getters = {
 	getTrainingVariableSummaries: read(moduleGetters.getTrainingVariableSummaries),
 	getTargetVariableSummaries: read(moduleGetters.getTargetVariableSummaries),
 	// filters
+	getFilters: read(moduleGetters.getFilters),
 	getSelectedFilterParams: read(moduleGetters.getSelectedFilterParams),
 	// selected data
 	hasSelectedData: read(moduleGetters.hasSelectedData),

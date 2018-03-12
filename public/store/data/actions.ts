@@ -1,7 +1,7 @@
 import _ from 'lodash';
 import axios from 'axios';
 import { AxiosPromise } from 'axios';
-import { FilterParams } from '../../util/filters';
+import { FilterParams, INCLUDE_FILTER } from '../../util/filters';
 import { getPipelinesByRequestIds, getPipelineById } from '../../util/pipelines';
 import { getSummaries, getSummary } from '../../util/data';
 import { Variable, Data, Extrema } from './index';
@@ -551,7 +551,7 @@ export const actions = {
 		}
 		*/
 
-		const highlightFilter = createFilterFromHighlightRoot(args.highlightRoot);
+		const highlightFilter = createFilterFromHighlightRoot(args.highlightRoot, INCLUDE_FILTER);
 		if (highlightFilter) {
 			args.filters.filters.push(highlightFilter);
 		}
@@ -585,7 +585,7 @@ export const actions = {
 			return null;
 		}
 
-		const highlightFilter = createFilterFromHighlightRoot(args.highlightRoot);
+		const highlightFilter = createFilterFromHighlightRoot(args.highlightRoot, INCLUDE_FILTER);
 		if (highlightFilter) {
 			args.filters.filters.push(highlightFilter);
 		}
@@ -650,7 +650,7 @@ export const actions = {
 		// 	return;
 		// }
 
-		const highlightFilter = createFilterFromHighlightRoot(args.highlightRoot);
+		const highlightFilter = createFilterFromHighlightRoot(args.highlightRoot, INCLUDE_FILTER);
 		if (highlightFilter) {
 			highlightFilter.name = getVarFromTarget(highlightFilter.name);
 			args.filters.filters.push(highlightFilter);

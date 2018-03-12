@@ -67,7 +67,7 @@ export function scrollToFirstHighlight(component: Vue, refName: string, smoothSc
 	});
 }
 
-export function createFilterFromHighlightRoot(highlightRoot: HighlightRoot): Filter {
+export function createFilterFromHighlightRoot(highlightRoot: HighlightRoot, mode: string): Filter {
 	if (highlightRoot.value == null) {
 		return null;
 	}
@@ -75,6 +75,7 @@ export function createFilterFromHighlightRoot(highlightRoot: HighlightRoot): Fil
 		return {
 			name: highlightRoot.key,
 			type: CATEGORICAL_FILTER,
+			mode: mode,
 			categories: [highlightRoot.value]
 		};
 	}
@@ -82,6 +83,7 @@ export function createFilterFromHighlightRoot(highlightRoot: HighlightRoot): Fil
 		return {
 			name: highlightRoot.key,
 			type: NUMERICAL_FILTER,
+			mode: mode,
 			min: highlightRoot.value.from,
 			max: highlightRoot.value.to
 		};

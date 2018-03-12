@@ -17,6 +17,10 @@ const (
 	CategoricalFilter = "categorical"
 	// NumericalFilter represents a numerical filter type.
 	NumericalFilter = "numerical"
+	// IncludeFilter represents an inclusive filter mode.
+	IncludeFilter = "include"
+	// ExcludeFilter represents an exclusive filter mode.
+	ExcludeFilter = "exclude"
 )
 
 // FilterParams defines the set of numeric range and categorical filters. Variables
@@ -41,27 +45,30 @@ type FilteredData struct {
 type Filter struct {
 	Name       string   `json:"name"`
 	Type       string   `json:"type"`
+	Mode       string   `json:"mode"`
 	Min        *float64 `json:"min"`
 	Max        *float64 `json:"max"`
 	Categories []string `json:"categories"`
 }
 
 // NewNumericalFilter instantiates a numerical filter.
-func NewNumericalFilter(name string, min float64, max float64) *Filter {
+func NewNumericalFilter(name string, mode string, min float64, max float64) *Filter {
 	return &Filter{
 		Name: name,
 		Type: NumericalFilter,
+		Mode: mode,
 		Min:  &min,
 		Max:  &max,
 	}
 }
 
 // NewCategoricalFilter instantiates a categorical filter.
-func NewCategoricalFilter(name string, categories []string) *Filter {
+func NewCategoricalFilter(name string, mode string, categories []string) *Filter {
 	sort.Strings(categories)
 	return &Filter{
 		Name:       name,
 		Type:       CategoricalFilter,
+		Mode:       mode,
 		Categories: categories,
 	}
 }
@@ -103,6 +110,12 @@ func ParseFilterParamsFromJSON(params map[string]interface{}) (*FilterParams, er
 				return nil, errors.Errorf("no `type` provided for filter")
 			}
 
+			// mode
+			mode, ok := json.String(filter, "mode")
+			if !ok {
+				return nil, errors.Errorf("no `mode` provided for filter")
+			}
+
 			// numeric
 			if typ == NumericalFilter {
 				min, ok := json.Float(filter, "min")
@@ -113,7 +126,7 @@ func ParseFilterParamsFromJSON(params map[string]interface{}) (*FilterParams, er
 				if !ok {
 					return nil, errors.Errorf("no `max` provided for filter")
 				}
-				filterParams.Filters = append(filterParams.Filters, NewNumericalFilter(name, min, max))
+				filterParams.Filters = append(filterParams.Filters, NewNumericalFilter(name, mode, min, max))
 			}
 
 			// categorical
@@ -122,7 +135,7 @@ func ParseFilterParamsFromJSON(params map[string]interface{}) (*FilterParams, er
 				if !ok {
 					return nil, errors.Errorf("no `categories` provided for filter")
 				}
-				filterParams.Filters = append(filterParams.Filters, NewCategoricalFilter(name, categories))
+				filterParams.Filters = append(filterParams.Filters, NewCategoricalFilter(name, mode, categories))
 			}
 		}
 	}

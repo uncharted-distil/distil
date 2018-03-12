@@ -430,11 +430,12 @@ func (s *Storage) FetchRequestFilters(requestID string) (*model.FilterParams, er
 		var requestID string
 		var featureName string
 		var filterType string
+		var filterMode string
 		var filterMin float64
 		var filterMax float64
 		var filterCategories string
 
-		err = rows.Scan(&requestID, &featureName, &filterType, &filterMin, &filterMax, &filterCategories)
+		err = rows.Scan(&requestID, &featureName, &filterType, &filterMode, &filterMin, &filterMax, &filterCategories)
 		if err != nil {
 			return nil, errors.Wrap(err, "Unable to parse requests filters from Postgres")
 		}
@@ -443,11 +444,13 @@ func (s *Storage) FetchRequestFilters(requestID string) (*model.FilterParams, er
 		case model.CategoricalFilter:
 			filters.Filters = append(filters.Filters, model.NewCategoricalFilter(
 				featureName,
+				filterMode,
 				strings.Split(filterCategories, ","),
 			))
 		case model.NumericalFilter:
 			filters.Filters = append(filters.Filters, model.NewNumericalFilter(
 				featureName,
+				filterMode,
 				filterMin,
 				filterMax,
 			))

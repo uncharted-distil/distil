@@ -44,30 +44,62 @@ func (s *Storage) parseFilteredData(dataset string, numRows int, rows *pgx.Rows)
 	return result, nil
 }
 
+func (s *Storage) buildIncludeFilter(wheres []string, params []interface{}, filter *model.Filter) ([]string, []interface{}) {
+	switch filter.Type {
+	case model.NumericalFilter:
+		// numerical
+		where := fmt.Sprintf("\"%s\" >= $%d AND \"%s\" <= $%d", filter.Name, len(params)+1, filter.Name, len(params)+2)
+		wheres = append(wheres, where)
+		params = append(params, *filter.Min)
+		params = append(params, *filter.Max)
+	case model.CategoricalFilter:
+		// categorical
+		categories := make([]string, 0)
+		offset := len(params) + 1
+		for i, category := range filter.Categories {
+			categories = append(categories, fmt.Sprintf("$%d", offset+i))
+			params = append(params, category)
+		}
+		where := fmt.Sprintf("\"%s\" IN (%s)", filter.Name, strings.Join(categories, ", "))
+		wheres = append(wheres, where)
+	}
+	return wheres, params
+}
+
+func (s *Storage) buildExcludeFilter(wheres []string, params []interface{}, filter *model.Filter) ([]string, []interface{}) {
+	switch filter.Type {
+	case model.NumericalFilter:
+		// numerical
+		where := fmt.Sprintf("(\"%s\" < $%d OR \"%s\" > $%d)", filter.Name, len(params)+1, filter.Name, len(params)+2)
+		wheres = append(wheres, where)
+		params = append(params, *filter.Min)
+		params = append(params, *filter.Max)
+
+	case model.CategoricalFilter:
+		// categorical
+		categories := make([]string, 0)
+		offset := len(params) + 1
+		for i, category := range filter.Categories {
+			categories = append(categories, fmt.Sprintf("$%d", offset+i))
+			params = append(params, category)
+		}
+		where := fmt.Sprintf("\"%s\" NOT IN (%s)", filter.Name, strings.Join(categories, ", "))
+		wheres = append(wheres, where)
+	}
+	return wheres, params
+}
+
 func (s *Storage) buildFilteredQueryWhere(dataset string, filterParams *model.FilterParams) (string, []interface{}) {
-	// Build where clauses using the filter parameters.
-	// param identifiers in the query are 1-based $x.
-	params := make([]interface{}, 0)
+
 	wheres := make([]string, 0)
+	params := make([]interface{}, 0)
 
 	for _, filter := range filterParams.Filters {
-		switch filter.Type {
-		case model.NumericalFilter:
-			// numerical
-			where := fmt.Sprintf("\"%s\" >= $%d AND \"%s\" <= $%d", filter.Name, len(params)+1, filter.Name, len(params)+2)
-			wheres = append(wheres, where)
-			params = append(params, *filter.Min)
-			params = append(params, *filter.Max)
-		case model.CategoricalFilter:
-			// categorical
-			categories := make([]string, 0)
-			offset := len(params) + 1
-			for i, category := range filter.Categories {
-				categories = append(categories, fmt.Sprintf("$%d", offset+i))
-				params = append(params, category)
-			}
-			where := fmt.Sprintf("\"%s\" IN (%s)", filter.Name, strings.Join(categories, ", "))
-			wheres = append(wheres, where)
+		switch filter.Mode {
+		case model.IncludeFilter:
+			wheres, params = s.buildIncludeFilter(wheres, params, filter)
+		case model.ExcludeFilter:
+			wheres, params = s.buildExcludeFilter(wheres, params, filter)
 		}
 	}
 

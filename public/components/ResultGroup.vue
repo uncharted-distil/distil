@@ -138,12 +138,12 @@ export default Vue.extend({
 		/*
 		onResultRangeChange(key: string, value: { from: { label: string[] }, to: { label: string[] } }) {
 			const filter = createNumericalFilter(this.predictedColumnName, value);
-			updateFilterRoute(this, filter);
+			addFilterToRoute(this, filter);
 		},
 
 		onResidualRangeChange(key: string, value: { from: { label: string[] }, to: { label: string[] } }) {
 			const filter = createNumericalFilter(this.errorColumnName, value);
-			updateFilterRoute(this, filter);
+			addFilterToRoute(this, filter);
 		},
 
 		onResultHistogramClick(context: string, key: string, value: any) {
@@ -156,7 +156,7 @@ export default Vue.extend({
 
 		onResultFacetToggle(key: string, values: string[]) {
 			const filter = createCategoricalFilter(this.predictedColumnName, values);
-			updateFilterRoute(this, filter);
+			addFilterToRoute(this, filter);
 		},
 
 		onResultFacetClick(context: string, key: string, value: string) {
