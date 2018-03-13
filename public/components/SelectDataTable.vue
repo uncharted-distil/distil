@@ -16,11 +16,17 @@
 
 		<p class="small-margin">
 			<small>Displaying {{items.length}} of {{numRows}} rows</small>
-			<b-button
+			<b-button v-if="includedActive"
 				variant="outline-secondary"
 				:disabled="!highlights.root"
 				@click="onExcludeClick">
 				<i class="fa fa-minus-circle pr-1"></i>Exclude
+			</b-button>
+			<b-button v-if="!includedActive"
+				variant="outline-secondary"
+				:disabled="!highlights.root"
+				@click="onReincludeClick">
+				<i class="fa fa-plus-circle pr-1"></i>Reinclude
 			</b-button>
 		</p>
 
@@ -146,13 +152,24 @@ export default Vue.extend({
 			addFilterToRoute(this, filter);
 			clearHighlightRoot(this);
 		},
+		onReincludeClick() {
+			const filter = createFilterFromHighlightRoot(this.highlights.root, INCLUDE_FILTER);
+			addFilterToRoute(this, filter);
+			clearHighlightRoot(this);
+		},
 		onRowClick(row: TableRow) {
 			if (row._key !== this.selectedRowKey) {
 				// clicked on a different row than last time - new selection
 				updateHighlightRoot(this, {
 					context: this.instanceName,
 					key: row._key.toString(),
-					value: _.map(this.fields, (field, key) => [ key, row[key] ])
+					value: _.map(this.fields, (field, key) => {
+						return {
+							name: key,
+							type: field.type,
+							value: row[key]
+						};
+					})
 				});
 			} else {
 				// clicked on same row - reset the selection key and clear highlights

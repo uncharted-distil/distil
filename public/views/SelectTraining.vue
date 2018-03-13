@@ -78,6 +78,9 @@ export default Vue.extend({
 		target(): string {
 			return routeGetters.getRouteTargetVariable(this.$store);
 		},
+		filtersStr(): string {
+			return routeGetters.getRouteFilters(this.$store);
+		},
 		selectedFilters(): FilterParams {
 			return dataGetters.getSelectedFilterParams(this.$store);
 		},
@@ -98,7 +101,17 @@ export default Vue.extend({
 				filters: this.selectedFilters
 			});
 		},
-		selectedFilters() {
+		training() {
+			actions.fetchSelectedTableData(this.$store, {
+				dataset: this.dataset,
+				filters: this.selectedFilters
+			});
+			actions.fetchExcludedTableData(this.$store, {
+				dataset: this.dataset,
+				filters: this.selectedFilters
+			});
+		},
+		filtersStr() {
 			actions.fetchSelectedTableData(this.$store, {
 				dataset: this.dataset,
 				filters: this.selectedFilters

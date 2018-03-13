@@ -1,5 +1,5 @@
 import { Store } from 'vuex';
-import { Data, Highlight, HighlightRoot, VariableSummary } from '../store/data/index';
+import { Data, Highlight, HighlightRoot } from '../store/data/index';
 import { Dictionary } from '../util/dict';
 import { Filter, CATEGORICAL_FILTER, NUMERICAL_FILTER } from '../util/filters';
 import { getters as routeGetters } from '../store/route/module';
@@ -105,10 +105,6 @@ export function parseHighlightSamples(data: Data): Dictionary<string[]>  {
 		}
 	}
 	return samples;
-}
-
-export function parseHighlightSummaries(data: any): VariableSummary[] {
-	return data;
 }
 
 export function updateHighlightRoot(component: Vue, highlightRoot: HighlightRoot) {
