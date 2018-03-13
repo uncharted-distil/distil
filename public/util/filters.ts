@@ -116,3 +116,17 @@ export function removeFilterFromRoute(component: Vue, filter: Filter) {
 	});
 	component.$router.push(entry);
 }
+
+export function removeFiltersByName(component: Vue, name: string) {
+	// retrieve the filters from the route
+	const filters = routeGetters.getRouteFilters(component.$store);
+	const decoded = decodeFilters(filters);
+	decoded.filters = decoded.filters.filter(filter => {
+		return (filter.name !== name);
+	});
+	const encoded = encodeFilters(decoded);
+	const entry = overlayRouteEntry(routeGetters.getRoute(component.$store), {
+		filters: encoded
+	});
+	component.$router.push(entry);
+}

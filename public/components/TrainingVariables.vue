@@ -35,6 +35,7 @@ import { getters as dataGetters } from '../store/data/module';
 import { getters as routeGetters } from '../store/route/module';
 import { Group, createGroups } from '../util/facets';
 import { getHighlights, updateHighlightRoot, clearHighlightRoot } from '../util/highlights';
+import { removeFiltersByName } from '../util/filters';
 
 export default Vue.extend({
 	name: 'training-variables',
@@ -85,6 +86,7 @@ export default Vue.extend({
 						training: training.join(',')
 					});
 					this.$router.push(entry);
+					removeFiltersByName(this, group.key);
 				});
 				container.appendChild(remove);
 				return container;

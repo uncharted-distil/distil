@@ -70,17 +70,17 @@ func (s *Storage) PersistRequestFeature(requestID string, featureName string, fe
 
 // PersistRequestFilters persists request filters information to Postgres.
 func (s *Storage) PersistRequestFilters(requestID string, filters *model.FilterParams) error {
-	sql := fmt.Sprintf("INSERT INTO %s (request_id, feature_name, filter_type, filter_min, filter_max, filter_categories) VALUES ($1, $2, $3, $4, $5, $6);", filterTableName)
+	sql := fmt.Sprintf("INSERT INTO %s (request_id, feature_name, filter_type, filter_mode, filter_min, filter_max, filter_categories) VALUES ($1, $2, $3, $4, $5, $6, $7);", filterTableName)
 
 	for _, filter := range filters.Filters {
 		switch filter.Type {
 		case model.NumericalFilter:
-			_, err := s.client.Exec(sql, requestID, filter.Name, model.NumericalFilter, filter.Min, filter.Max, "")
+			_, err := s.client.Exec(sql, requestID, filter.Name, model.NumericalFilter, filter.Mode, filter.Min, filter.Max, "")
 			if err != nil {
 				return err
 			}
 		case model.CategoricalFilter:
-			_, err := s.client.Exec(sql, requestID, filter.Name, model.CategoricalFilter, 0, 0, strings.Join(filter.Categories, ","))
+			_, err := s.client.Exec(sql, requestID, filter.Name, model.CategoricalFilter, filter.Mode, 0, 0, strings.Join(filter.Categories, ","))
 			if err != nil {
 				return err
 			}
@@ -412,7 +412,7 @@ func (s *Storage) FetchRequestFeatures(requestID string) ([]*model.RequestFeatur
 
 // FetchRequestFilters pulls request filter information from Postgres.
 func (s *Storage) FetchRequestFilters(requestID string) (*model.FilterParams, error) {
-	sql := fmt.Sprintf("SELECT request_id, feature_name, filter_type, filter_min, filter_max, filter_categories FROM %s WHERE request_id = $1;", filterTableName)
+	sql := fmt.Sprintf("SELECT request_id, feature_name, filter_type, filter_mode, filter_min, filter_max, filter_categories FROM %s WHERE request_id = $1;", filterTableName)
 
 	rows, err := s.client.Query(sql, requestID)
 	if err != nil {
