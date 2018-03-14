@@ -495,7 +495,9 @@ func fetchFilteredVariables(metadata model.MetadataStorage, index string, datase
 	// create a list minus those that are in the filtered list
 	filteredVars := []string{}
 	for _, variable := range variablesToUse {
-		filteredVars = append(filteredVars, variable.Name)
+		if variable.Role != model.RoleIndex {
+			filteredVars = append(filteredVars, variable.Name)
+		}
 	}
 	return filteredVars, nil
 }
