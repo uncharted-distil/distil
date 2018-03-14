@@ -49,7 +49,9 @@ type PipelineStorage interface {
 	FetchResultMetadataByDatasetTarget(sessionID string, dataset string, target string, pipelineID string) ([]*Result, error)
 	FetchResultScore(pipelineID string) ([]*ResultScore, error)
 	FetchRequestFeatures(requestID string) ([]*RequestFeature, error)
+	FetchRequestFeaturesByPipelineID(pipelineID string) ([]*RequestFeature, error)
 	FetchRequestFilters(requestID string) (*FilterParams, error)
+	FetchRequestFiltersByPipelineID(pipelineID string) (*FilterParams, error)
 }
 
 // MetadataStorageCtor represents a client constructor to instantiate a
