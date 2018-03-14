@@ -199,9 +199,8 @@ func handleCreatePipelines(conn *Connection, client *pipeline.Client, metadataCt
 		return
 	}
 
-	// parse the features out of the create msg - done as a separate step because their structure isn't entirely
-	// fixed
-
+	// parse the features out of the create msg - done as a separate step
+	// because their structure isn't entirely fixed
 	params := make(map[string]interface{})
 	err = json.Unmarshal(clientCreateMsg.Filters, &params)
 	if err != nil {
@@ -490,8 +489,8 @@ func handleCreatePipelinesSuccess(conn *Connection, msg *Message, proxy *pipelin
 	}
 }
 
-// TODO: We don't store this anywhere, so we end up running an ES query to get the var list.  This should
-// be cached by Redis, but still worth looking into storing some of the dataset info.
+// TODO: We don't store this anywhere, so we end up running an ES query to get
+// the var list.
 func fetchFilteredVariables(metadata model.MetadataStorage, index string, dataset string, filters *model.FilterParams) ([]string, error) {
 	// fetch the variable set from es
 	variables, err := metadata.FetchVariables(dataset, index, true)

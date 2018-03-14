@@ -78,9 +78,7 @@ export default Vue.extend({
 		},
 
 		onNumericalClick(key: string) {
-			console.log(key);
 			if (!this.highlights.root || this.highlights.root.key !== key) {
-				console.log('derp');
 				updateHighlightRoot(this, {
 					context: this.instanceName,
 					key: key,

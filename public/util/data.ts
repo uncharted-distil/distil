@@ -220,7 +220,7 @@ export function getSummary(
 	}
 
 	// return promise
-	return axios.get(`${endpoint}/${resultId}`)
+	return axios.post(`${endpoint}/${resultId}`, {})
 		.then(response => {
 			// save the histogram data
 			const histogram = response.data.histogram;

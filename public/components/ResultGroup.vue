@@ -15,16 +15,15 @@
 				{{metricName(score.metric)}}: {{score.value}}
 			</b-badge>
 			<facets v-if="resultGroups.length" class="result-container"
-				@facet-click="onResultFacetClick"
-				@range-change="onResultRangeChange"
+				@facet-click="onResultCategoricalClick"
+				@numerical-click="onResultNumericalClick"
 				:groups="resultGroups"
 				:highlights="highlights"
 				:filters="filters"
 				:html="residualHtml">
 			</facets>
 			<facets v-if="residualGroups.length" class="residual-container"
-				@histogram-click="onResidualsHistogramClick"
-				@range-change="onResidualRangeChange"
+				@numerical-click="onResidualNumericalClick"
 				:groups="residualGroups"
 				:highlights="highlights"
 				:filters="filters"
@@ -49,10 +48,11 @@ import Facets from '../components/Facets';
 import { createGroups, Group } from '../util/facets';
 import { getPredictedCol, getErrorCol } from '../util/data';
 import { Highlight } from '../store/data/index';
-import { getHighlights } from '../util/highlights';
 import { FilterParams } from '../util/filters';
 import { getters as routeGetters } from '../store/route/module';
 import { getPipelineById, getMetricDisplayName } from '../util/pipelines';
+import { overlayRouteEntry } from '../util/routes';
+import { getHighlights, updateHighlightRoot, clearHighlightRoot } from '../util/highlights';
 
 export default Vue.extend({
 	name: 'result-group',
@@ -131,49 +131,47 @@ export default Vue.extend({
 	},
 
 	methods: {
+
 		metricName(metric): string {
 			return getMetricDisplayName(metric);
 		},
 
-		/*
-		onResultRangeChange(key: string, value: { from: { label: string[] }, to: { label: string[] } }) {
-			const filter = createNumericalFilter(this.predictedColumnName, value);
-			addFilterToRoute(this, filter);
-		},
-
-		onResidualRangeChange(key: string, value: { from: { label: string[] }, to: { label: string[] } }) {
-			const filter = createNumericalFilter(this.errorColumnName, value);
-			addFilterToRoute(this, filter);
-		},
-
-		onResultHistogramClick(context: string, key: string, value: any) {
-			this.histogramHighlights(context, this.predictedColumnName, value);
-		},
-
-		onResidualsHistogramClick(context, key: string, value: any) {
-			this.histogramHighlights(context, this.errorColumnName, value);
-		},
-
-		onResultFacetToggle(key: string, values: string[]) {
-			const filter = createCategoricalFilter(this.predictedColumnName, values);
-			addFilterToRoute(this, filter);
-		},
-
-		onResultFacetClick(context: string, key: string, value: string) {
-			this.histogramHighlights(context, this.predictedColumnName, value);
-		},
-
-		histogramHighlights(context: string, key: string, value: any) {
-			if (value) {
+		onResultCategoricalClick(context: string, key: string, value: string) {
+			if (key && value) {
+				// extract the var name from the key
 				updateHighlightRoot(this, {
 					context: context,
-					key: key,
+					key: this.predictedColumnName,
 					value: value
 				});
 			} else {
 				clearHighlightRoot(this);
 			}
 		},
+
+		onResultNumericalClick(key: string) {
+			if (!this.highlights.root || this.highlights.root.key !== key) {
+				updateHighlightRoot(this, {
+					context: this.instanceName,
+					key: this.predictedColumnName,
+					value: null
+				});
+			}
+		},
+
+		onResidualNumericalClick(key: string) {
+		},
+
+		/*
+		onResidualRangeChange(key: string, value: { from: { label: string[] }, to: { label: string[] } }) {
+			const filter = createNumericalFilter(this.errorColumnName, value);
+			addFilterToRoute(this, filter);
+		},
+
+		onResidualsHistogramClick(context, key: string, value: any) {
+			this.histogramHighlights(context, this.errorColumnName, value);
+		},
+		*/
 
 		click() {
 			if (this.predictedSummary) {
@@ -183,7 +181,6 @@ export default Vue.extend({
 				this.$router.push(routeEntry);
 			}
 		}
-		*/
 	}
 });
 </script>

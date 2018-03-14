@@ -20,8 +20,8 @@
 		</div>
 		<p class="nav-link font-weight-bold">Actual</p>
 		<facets class="result-summaries-target"
-			@facet-click="onFacetClick"
-			@range-change="onRangeChange"
+			@facet-click="onCategoricalClick"
+			@numerical-click="onNumericalClick"
 			:groups="targetGroups"
 			:filters="filters"
 			:highlights="highlights"></facets>
@@ -45,8 +45,8 @@ import { createGroups, Group } from '../util/facets';
 import { overlayRouteEntry } from '../util/routes';
 import { getPipelineById, getTask } from '../util/pipelines';
 import { FilterParams } from '../util/filters';
-import { isTarget, getVarFromTarget } from '../util/data';
-import { getHighlights } from '../util/highlights';
+import { isTarget, getVarFromTarget, getTargetCol } from '../util/data';
+import { getHighlights, updateHighlightRoot, clearHighlightRoot } from '../util/highlights';
 import { VariableSummary, Extrema, Highlight } from '../store/data/index';
 import { getters as dataGetters} from '../store/data/module';
 import { getters as routeGetters } from '../store/route/module';
@@ -204,41 +204,39 @@ export default Vue.extend({
 
 		sessionId(): string {
 			return pipelineGetters.getPipelineSessionID(this.$store);
+		},
+
+		instanceName(): string {
+			return 'groundTruth';
 		}
 	},
 
 	methods: {
 
-		// onRangeChange(key: string, value: { from: { label: string[] }, to: { label: string[] } }) {
-		// 	const filter = createNumericalFilter(key, value);
-		// 	addFilterToRoute(this, filter);
-		// },
+		onCategoricalClick(context: string, key: string, value: string) {
+			if (key && value) {
+				// extract the var name from the key
+				const colKey = getTargetCol(this.target);
+				updateHighlightRoot(this, {
+					context: context,
+					key: colKey,
+					value: value
+				});
+			} else {
+				clearHighlightRoot(this);
+			}
+		},
 
-		// onHistogramClick(context: string, key: string, value: any) {
-		// 	if (key && value) {
-		// 		const colKey = getTargetCol(this.target);
-		// 		updateHighlightRoot(this, {
-		// 			context: context,
-		// 			key: colKey,
-		// 			value: value
-		// 		});
-		// 	} else {
-		// 		clearHighlightRoot(this);
-		// 	}
-		// },
-
-		// onFacetClick(context: string, key: string, value: string) {
-		// 	if (key && value) {
-		// 		const colKey = getTargetCol(this.target);
-		// 		updateHighlightRoot(this, {
-		// 			context: context,
-		// 			key: colKey,
-		// 			value: value
-		// 		});
-		// 	} else {
-		// 		clearHighlightRoot(this);
-		// 	}
-		// },
+		onNumericalClick(key: string) {
+			if (!this.highlights.root || this.highlights.root.key !== key) {
+				const colKey = getTargetCol(this.target);
+				updateHighlightRoot(this, {
+					context: this.instanceName,
+					key: colKey,
+					value: null
+				});
+			}
+		},
 
 		updateThreshold(min: number, max: number) {
 			const entry = overlayRouteEntry(this.$route, {

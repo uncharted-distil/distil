@@ -8,15 +8,15 @@
 			</div>
 		</div>
 		<div class="row flex-12 pb-3">
-				<results-variable-summaries
-					class="col-12 col-md-3 border-gray-right results-variable-summaries"
-					:groups="groups"
-					:dataset="dataset"></results-variable-summaries>
-				<results-comparison
-					class="col-12 col-md-6 results-result-comparison"
-					:exclude-non-training="excludeNonTraining"></results-comparison>
-				<result-summaries
-					class="col-12 col-md-3 border-gray-left results-result-summaries"></result-summaries>
+			<results-variable-summaries
+				class="col-12 col-md-3 border-gray-right results-variable-summaries"
+				:groups="groups"
+				:dataset="dataset"></results-variable-summaries>
+			<results-comparison
+				class="col-12 col-md-6 results-result-comparison"
+				:exclude-non-training="excludeNonTraining"></results-comparison>
+			<result-summaries
+				class="col-12 col-md-3 border-gray-left results-result-summaries"></result-summaries>
 		</div>
 	</div>
 </template>
@@ -62,8 +62,9 @@ export default Vue.extend({
 			let summaries;
 			if (this.excludeNonTraining) {
 				summaries = dataGetters.getResultSummaries(this.$store).filter(summary => this.training[summary.name]);
+			} else {
+				summaries = dataGetters.getResultSummaries(this.$store);
 			}
-			summaries = dataGetters.getResultSummaries(this.$store);
 			return createGroups(summaries, false, false);
 		},
 		variables(): Variable[] {

@@ -246,7 +246,7 @@ export const actions = {
 			extremaMin = args.extrema.min;
 			extremaMax = args.extrema.max;
 		}
-		return axios.post(`/distil/results-variable-summary/${ES_INDEX}/${args.dataset}/${args.variable}/${extremaMin}/${extremaMax}/${pipeline.resultId}`)
+		return axios.post(`/distil/results-variable-summary/${ES_INDEX}/${args.dataset}/${args.variable}/${extremaMin}/${extremaMax}/${pipeline.resultId}`, {})
 			.then(response => {
 				mutations.updateResultSummaries(context, response.data.histogram);
 			})
@@ -584,6 +584,14 @@ export const actions = {
 			console.warn('`variables` argument is missing');
 			return null;
 		}
+
+		/*
+		if (_.isArray(args.highlightRoot.value)) {
+			const summaries = getters.getVariableSummaries(state: DataState): VariableSummary[] {
+				return state.variableSummaries;
+			}
+		}
+		*/
 
 		const highlightFilter = createFilterFromHighlightRoot(args.highlightRoot, INCLUDE_FILTER);
 		if (highlightFilter) {

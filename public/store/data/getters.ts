@@ -115,13 +115,11 @@ export const getters = {
 		if (training) {
 			filterParams.variables = filterParams.variables.concat(training.split(','));
 		}
-
 		// add target filter
 		const target = getters.getRouteTargetVariable as string;
 		if (target) {
 			filterParams.variables.push(target);
 		}
-
 		return filterParams;
 	},
 

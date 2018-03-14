@@ -34,7 +34,7 @@ func ResultsHandler(pipelineCtor model.PipelineStorageCtor, dataCtor model.DataS
 		}
 
 		dataset := pat.Param(r, "dataset")
-		esIndex := pat.Param(r, "esIndex")
+		esIndex := pat.Param(r, "index")
 
 		pipelineID, err := url.PathUnescape(pat.Param(r, "pipeline-id"))
 		if err != nil {
