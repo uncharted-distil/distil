@@ -120,6 +120,7 @@ export default Vue.extend({
 				clearHighlightRoot(this);
 			}
 		},
+
 		onNumericalClick(key: string) {
 			if (!this.highlights.root || this.highlights.root.key !== key) {
 				updateHighlightRoot(this, {

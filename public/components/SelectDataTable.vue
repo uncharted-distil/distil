@@ -64,7 +64,7 @@ import { Filter } from '../util/filters';
 import { FieldInfo, Highlight } from '../store/data/index';
 import { getters as routeGetters } from '../store/route/module';
 import { TableRow } from '../store/data/index';
-import { addFilterToRoute, EXCLUDE_FILTER } from '../util/filters';
+import { addFilterToRoute, EXCLUDE_FILTER, INCLUDE_FILTER } from '../util/filters';
 import { updateTableHighlights, getHighlights, updateHighlightRoot, clearHighlightRoot, scrollToFirstHighlight, createFilterFromHighlightRoot } from '../util/highlights';
 
 export default Vue.extend({
