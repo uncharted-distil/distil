@@ -153,7 +153,7 @@ func (s *Storage) loadRequest(rows *pgx.Rows) (*model.Request, error) {
 		return nil, errors.Wrap(err, "Unable to get request features from Postgres")
 	}
 
-	filters, err := s.FetchRequestFilters(requestID)
+	filters, err := s.FetchRequestFilters(requestID, features)
 	if err != nil {
 		return nil, errors.Wrap(err, "Unable to get request filters from Postgres")
 	}
@@ -212,6 +212,14 @@ func (s *Storage) parseResultMetadata(rows *pgx.Rows) ([]*model.Result, error) {
 			return nil, err
 		}
 		result.Features = features
+	}
+
+	for _, result := range results {
+		filters, err := s.FetchRequestFilters(result.RequestID, result.Features)
+		if err != nil {
+			return nil, err
+		}
+		result.Filters = filters
 	}
 
 	return results, nil
@@ -410,44 +418,8 @@ func (s *Storage) FetchRequestFeatures(requestID string) ([]*model.RequestFeatur
 	return results, nil
 }
 
-// FetchRequestFeaturesByPipelineID pulls request feature information from Postgres.
-func (s *Storage) FetchRequestFeaturesByPipelineID(pipelineID string) ([]*model.RequestFeature, error) {
-
-	sql := fmt.Sprintf("SELECT feature.request_id, feature.feature_name, feature.feature_type "+
-		"FROM %s AS feature INNER JOIN %s AS request ON feature.request_id = request.request_id "+
-		"WHERE feature.pipeline_id = $1", featureTableName, requestTableName)
-
-	rows, err := s.client.Query(sql, pipelineID)
-	if err != nil {
-		return nil, errors.Wrap(err, "Unable to pull request features from Postgres")
-	}
-	if rows != nil {
-		defer rows.Close()
-	}
-
-	results := make([]*model.RequestFeature, 0)
-	for rows.Next() {
-		var requestID string
-		var featureName string
-		var featureType string
-
-		err = rows.Scan(&requestID, &featureName, &featureType)
-		if err != nil {
-			return nil, errors.Wrap(err, "Unable to parse requests features from Postgres")
-		}
-
-		results = append(results, &model.RequestFeature{
-			RequestID:   requestID,
-			FeatureName: featureName,
-			FeatureType: featureType,
-		})
-	}
-
-	return results, nil
-}
-
 // FetchRequestFilters pulls request filter information from Postgres.
-func (s *Storage) FetchRequestFilters(requestID string) (*model.FilterParams, error) {
+func (s *Storage) FetchRequestFilters(requestID string, features []*model.RequestFeature) (*model.FilterParams, error) {
 	sql := fmt.Sprintf("SELECT request_id, feature_name, filter_type, filter_mode, filter_min, filter_max, filter_categories FROM %s WHERE request_id = $1;", filterTableName)
 
 	rows, err := s.client.Query(sql, requestID)
@@ -493,57 +465,8 @@ func (s *Storage) FetchRequestFilters(requestID string) (*model.FilterParams, er
 		}
 	}
 
-	return filters, nil
-}
-
-// FetchRequestFiltersByPipelineID pulls request filter information from Postgres.
-func (s *Storage) FetchRequestFiltersByPipelineID(pipelineID string) (*model.FilterParams, error) {
-	sql := fmt.Sprintf("SELECT filter.request_id, filter.feature_name, filter.filter_type, "+
-		"filter.filter_mode, filter.filter_min, filter.filter_max, filter.filter_categories "+
-		"FROM %s AS filter INNER JOIN %s AS request ON filter.request_id = request.request_id "+
-		"WHERE filter.pipeline_id = $1", filterTableName, requestTableName)
-
-	rows, err := s.client.Query(sql, pipelineID)
-	if err != nil {
-		return nil, errors.Wrap(err, "Unable to pull request filters from Postgres")
-	}
-	if rows != nil {
-		defer rows.Close()
-	}
-
-	filters := &model.FilterParams{
-		Size: model.DefaultFilterSize,
-	}
-
-	for rows.Next() {
-		var requestID string
-		var featureName string
-		var filterType string
-		var filterMode string
-		var filterMin float64
-		var filterMax float64
-		var filterCategories string
-
-		err = rows.Scan(&requestID, &featureName, &filterType, &filterMode, &filterMin, &filterMax, &filterCategories)
-		if err != nil {
-			return nil, errors.Wrap(err, "Unable to parse requests filters from Postgres")
-		}
-
-		switch filterType {
-		case model.CategoricalFilter:
-			filters.Filters = append(filters.Filters, model.NewCategoricalFilter(
-				featureName,
-				filterMode,
-				strings.Split(filterCategories, ","),
-			))
-		case model.NumericalFilter:
-			filters.Filters = append(filters.Filters, model.NewNumericalFilter(
-				featureName,
-				filterMode,
-				filterMin,
-				filterMax,
-			))
-		}
+	for _, feature := range features {
+		filters.Variables = append(filters.Variables, feature.FeatureName)
 	}
 
 	return filters, nil

@@ -204,6 +204,7 @@ export default Vue.extend({
 								requestIds: this.requestIds,
 								extrema: this.predictedExtrema
 							});
+
 						});
 						dataActions.fetchResidualsExtremas(this.$store, {
 							dataset: this.dataset,

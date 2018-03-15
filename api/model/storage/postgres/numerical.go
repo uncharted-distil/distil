@@ -277,7 +277,7 @@ func (f *NumericalField) FetchResultSummaryData(resultURI string, dataset string
 	query := fmt.Sprintf(`
 		SELECT %s as bucket, CAST(%s as double precision) AS %s, COUNT(*) AS count FROM %s
 		WHERE result_id = $1 AND target = $2
-		GROUP BY %s ORDER BY %s;`, bucketQuery, histogramQuery, histogramName, dataset, bucketQuery, histogramName)
+		GROUP BY %s ORDER BY %s;`, bucketQuery, histogramQuery, histogramName, datasetResult, bucketQuery, histogramName)
 
 	// execute the postgres query
 	res, err := f.Storage.client.Query(query, resultURI, variable.Name)

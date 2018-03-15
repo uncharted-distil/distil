@@ -61,6 +61,9 @@ func ResultsHandler(pipelineCtor model.PipelineStorageCtor, dataCtor model.DataS
 			return
 		}
 
+		// merge provided filterParams with those of the request
+		filterParams.Merge(res.Filters)
+
 		if res == nil {
 			handleError(w, errors.Errorf("pipeline id `%s` cannot be mapped to result URI", pipelineID))
 			return

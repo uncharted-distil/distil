@@ -31,6 +31,60 @@ type FilterParams struct {
 	Variables []string  `json:"variables"`
 }
 
+func stringSliceEqual(a, b []string) bool {
+	if a == nil && b == nil {
+		return true
+	}
+	if a == nil || b == nil {
+		return false
+	}
+	if len(a) != len(b) {
+		return false
+	}
+	for i := range a {
+		if a[i] != b[i] {
+			return false
+		}
+	}
+	return true
+}
+
+// Merge merges another set of filter params into this set, expanding all
+// properties.
+func (f *FilterParams) Merge(other *FilterParams) {
+	// take greater of sizes
+	if other.Size > f.Size {
+		f.Size = other.Size
+	}
+	for _, filter := range other.Filters {
+		found := false
+		for _, currentFilter := range f.Filters {
+			if filter.Name == currentFilter.Name &&
+				filter.Min == currentFilter.Min &&
+				filter.Max == currentFilter.Max &&
+				stringSliceEqual(filter.Categories, currentFilter.Categories) {
+				found = true
+				break
+			}
+		}
+		if !found {
+			f.Filters = append(f.Filters, filter)
+		}
+	}
+	for _, variable := range other.Variables {
+		found := false
+		for _, currentVariable := range f.Variables {
+			if variable == currentVariable {
+				found = true
+				break
+			}
+		}
+		if !found {
+			f.Variables = append(f.Variables, variable)
+		}
+	}
+}
+
 // FilteredData provides the metadata and raw data values that match a supplied
 // input filter.
 type FilteredData struct {
