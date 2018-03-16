@@ -1,7 +1,6 @@
 package model
 
 import (
-	"fmt"
 	"sort"
 
 	"github.com/pkg/errors"
