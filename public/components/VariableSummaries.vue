@@ -7,7 +7,7 @@
 			instance-name="variable-summary-facets"
 			:groups="groups"
 			:dataset="dataset"
-			:type-change="typeChange">
+			:enable-type-change="enableTypeChance">
 		</variable-facets>
 	</div>
 </template>
@@ -28,7 +28,7 @@ export default Vue.extend({
 	props: {
 		'groups': Array,
 		'dataset': String,
-		'typeChange': Boolean
+		'enableTypeChance': Boolean
 	}
 
 });

@@ -4,7 +4,8 @@
 		<variable-facets
 			ref="facets"
 			enable-search
-			type-change
+			enable-highlighting
+			enable-type-change
 			@facet-click="onCategoricalClick"
 			@numerical-click="onNumericalClick"
 			:instance-name="instanceName"
@@ -34,7 +35,7 @@ import { Highlight } from '../store/data/index';
 import { getters as dataGetters } from '../store/data/module';
 import { getters as routeGetters } from '../store/route/module';
 import { Group, createGroups } from '../util/facets';
-import { getHighlights, updateHighlightRoot, clearHighlightRoot } from '../util/highlights';
+import { getHighlights } from '../util/highlights';
 import { removeFiltersByName } from '../util/filters';
 
 export default Vue.extend({
@@ -56,19 +57,7 @@ export default Vue.extend({
 		},
 		groups(): Group[] {
 			const summaries = dataGetters.getTrainingVariableSummaries(this.$store);
-			const groups =  createGroups(summaries, false, false);
-			if (this.highlights.root) {
-				groups.forEach(group => {
-					if (group) {
-						if (group.key === this.highlights.root.key) {
-							group.facets.forEach(facet => {
-								facet.filterable = true;
-							});
-						}
-					}
-				});
-			}
-			return groups;
+		 	return createGroups(summaries);
 		},
 		subtitle(): string {
 			return `${this.groups.length} features selected`;
@@ -106,29 +95,6 @@ export default Vue.extend({
 				training: trainingArray.join(',')
 			});
 			this.$router.push(entry);
-		},
-
-		onCategoricalClick(context: string, key: string, value: string) {
-			if (key && value) {
-				// extract the var name from the key
-				updateHighlightRoot(this, {
-					context: context,
-					key: key,
-					value: value
-				});
-			} else {
-				clearHighlightRoot(this);
-			}
-		},
-
-		onNumericalClick(key: string) {
-			if (!this.highlights.root || this.highlights.root.key !== key) {
-				updateHighlightRoot(this, {
-					context: this.instanceName,
-					key: key,
-					value: null
-				});
-			}
 		}
 	}
 });

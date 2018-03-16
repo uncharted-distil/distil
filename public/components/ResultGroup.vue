@@ -17,16 +17,15 @@
 			<facets v-if="resultGroups.length" class="result-container"
 				@facet-click="onResultCategoricalClick"
 				@numerical-click="onResultNumericalClick"
+				@range-change="onResultRangeChange"
 				:groups="resultGroups"
 				:highlights="highlights"
-				:filters="filters"
 				:html="residualHtml">
 			</facets>
 			<facets v-if="residualGroups.length" class="residual-container"
 				@numerical-click="onResidualNumericalClick"
 				:groups="residualGroups"
 				:highlights="highlights"
-				:filters="filters"
 				:html="resultHtml">
 			</facets>
 		</div>
@@ -48,7 +47,6 @@ import Facets from '../components/Facets';
 import { createGroups, Group } from '../util/facets';
 import { getPredictedCol, getErrorCol } from '../util/data';
 import { Highlight } from '../store/data/index';
-import { FilterParams } from '../util/filters';
 import { getters as routeGetters } from '../store/route/module';
 import { getPipelineById, getMetricDisplayName } from '../util/pipelines';
 import { overlayRouteEntry } from '../util/routes';
@@ -102,20 +100,25 @@ export default Vue.extend({
 
 		resultGroups(): Group[] {
 			if (this.predictedSummary) {
-				return createGroups([this.predictedSummary], false, true);
+				const predicted = createGroups([ this.predictedSummary ]);
+				if (this.highlights.root) {
+					const group = predicted[0];
+					if (group.key === this.highlights.root.key) {
+						group.facets.forEach(facet => {
+							facet.filterable = true;
+						});
+					}
+				}
+				return predicted;
 			}
 			return [];
 		},
 
 		residualGroups(): Group[] {
 			if (this.residualsSummary) {
-				return createGroups([this.residualsSummary], false, true);
+				return createGroups([this.residualsSummary]);
 			}
 			return [];
-		},
-
-		filters(): FilterParams {
-			return routeGetters.getDecodedFilterParams(this.$store);
 		},
 
 		highlights(): Highlight {
@@ -157,6 +160,15 @@ export default Vue.extend({
 					value: null
 				});
 			}
+		},
+
+		onResultRangeChange(context: string, key: string, value: { from: { label: string[] }, to: { label: string[] } }) {
+			updateHighlightRoot(this, {
+				context: context,
+				key: this.predictedColumnName,
+				value: value
+			});
+			this.$emit('range-change', key, value);
 		},
 
 		onResidualNumericalClick(key: string) {

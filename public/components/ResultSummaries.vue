@@ -22,8 +22,8 @@
 		<facets class="result-summaries-target"
 			@facet-click="onCategoricalClick"
 			@numerical-click="onNumericalClick"
+			@range-change="onRangeChange"
 			:groups="targetGroups"
-			:filters="filters"
 			:highlights="highlights"></facets>
 		<p class="nav-link font-weight-bold">Predictions by Model</p>
 		<result-facets :regression="regressionEnabled"></result-facets>
@@ -44,7 +44,6 @@ import Facets from '../components/Facets.vue';
 import { createGroups, Group } from '../util/facets';
 import { overlayRouteEntry } from '../util/routes';
 import { getPipelineById, getTask } from '../util/pipelines';
-import { FilterParams } from '../util/filters';
 import { isTarget, getVarFromTarget, getTargetCol } from '../util/data';
 import { getHighlights, updateHighlightRoot, clearHighlightRoot } from '../util/highlights';
 import { VariableSummary, Extrema, Highlight } from '../store/data/index';
@@ -133,10 +132,6 @@ export default Vue.extend({
 			return facetHighlights;
 		},
 
-		filters(): FilterParams {
-			return routeGetters.getDecodedFilterParams(this.$store);
-		},
-
 		range(): number {
 			if (_.isNaN(this.residualExtrema.min) ||
 				_.isNaN(this.residualExtrema.max)) {
@@ -164,7 +159,16 @@ export default Vue.extend({
 
 		targetGroups(): Group[] {
 			if (this.targetSummary) {
-				return createGroups([ this.targetSummary ], false, true);
+				const target = createGroups([ this.targetSummary ]);
+				if (this.highlights.root) {
+					const group = target[0];
+					if (group.key === this.highlights.root.key) {
+						group.facets.forEach(facet => {
+							facet.filterable = true;
+						});
+					}
+				}
+				return target;
 			}
 			return [];
 		},
@@ -236,6 +240,16 @@ export default Vue.extend({
 					value: null
 				});
 			}
+		},
+
+		onRangeChange(context: string, key: string, value: { from: { label: string[] }, to: { label: string[] } }) {
+			const colKey = getTargetCol(this.target);
+			updateHighlightRoot(this, {
+				context: context,
+				key: colKey,
+				value: value
+			});
+			this.$emit('range-change', key, value);
 		},
 
 		updateThreshold(min: number, max: number) {

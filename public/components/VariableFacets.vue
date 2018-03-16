@@ -16,11 +16,11 @@
 			</div>
 			<div class="row flex-11">
 				<facets class="col-12 flex-column d-flex variable-facets-container"
-					:groups="groups"
+					:groups="sortedGroups"
 					:highlights="highlights"
 					:html="html"
 					:sort="sort"
-					:type-change="typeChange"
+					:enable-type-change="enableTypeChange"
 					@numerical-click="onNumericalClick"
 					@categorical-click="onCategoricalClick"
 					@range-change="onRangeChange"
@@ -44,7 +44,7 @@ import { Dictionary } from '../util/dict';
 import { Highlight } from '../store/data/index';
 import { getters as dataGetters } from '../store/data/module';
 import { Group } from '../util/facets';
-import { updateHighlightRoot, getHighlights } from '../util/highlights';
+import { updateHighlightRoot, getHighlights, clearHighlightRoot } from '../util/highlights';
 import 'font-awesome/css/font-awesome.css';
 import '../styles/spinner.css';
 import Vue from 'vue';
@@ -59,12 +59,13 @@ export default Vue.extend({
 	props: {
 		enableSearch: Boolean,
 		enableTitle: Boolean,
+		enableTypeChange: Boolean,
+		enableHighlighting: Boolean,
 		groups: Array,
 		dataset: String,
 		subtitle: String,
 		html: [ String, Object, Function ],
 		instanceName: { type: String, default: 'variable-facets' },
-		typeChange: Boolean
 	},
 
 	data() {
@@ -107,6 +108,19 @@ export default Vue.extend({
 				const firstIndex = this.rowsPerPage * (this.currentPage - 1);
 				const lastIndex = Math.min(firstIndex + this.rowsPerPage, this.numRows);
 				filtered = sorted.slice(firstIndex, lastIndex);
+			}
+
+			// highlight
+			if (this.enableHighlighting && this.highlights.root) {
+				filtered.forEach(group => {
+					if (group) {
+						if (group.key === this.highlights.root.key) {
+							group.facets.forEach(facet => {
+								facet.filterable = true;
+							});
+						}
+					}
+				});
 			}
 
 			return filtered;
@@ -166,12 +180,33 @@ export default Vue.extend({
 			this.$emit('facet-click', context, key, value);
 		},
 
-		onNumericalClick(key: string) {
-			this.$emit('numerical-click', key);
+		onCategoricalClick(context: string, key: string, value: string) {
+			if (this.enableHighlighting) {
+				if (key && value) {
+					// extract the var name from the key
+					updateHighlightRoot(this, {
+						context: context,
+						key: key,
+						value: value
+					});
+				} else {
+					clearHighlightRoot(this);
+				}
+			}
+			this.$emit('categorical-click', key);
 		},
 
-		onCategoricalClick(key: string) {
-			this.$emit('categorical-click', key);
+		onNumericalClick(key: string) {
+			if (this.enableHighlighting) {
+				if (!this.highlights.root || this.highlights.root.key !== key) {
+					updateHighlightRoot(this, {
+						context: this.instanceName,
+						key: key,
+						value: null
+					});
+				}
+			}
+			this.$emit('numerical-click', key);
 		}
 	}
 });
@@ -212,7 +247,7 @@ button {
 .variable-facets-container .facets-root-container .facets-group-container .facets-group .group-header {
 	padding: 4px 8px 6px 8px;
 }
-.variable-facets-container .facets-root-container .facets-group-container .facets-group .group-header .type-change-menu {
+.variable-facets-container .facets-root-container .facets-group-container .facets-group .group-header .enable-type-change-menu {
 	float: right;
 	margin-top: -4px;
 	margin-right: -8px;

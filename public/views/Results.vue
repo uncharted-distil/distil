@@ -33,7 +33,6 @@ import { Variable, Extrema } from '../store/data/index';
 import { Dictionary } from '../util/dict';
 import { HighlightRoot } from '../store/data/index';
 import { Group, createGroups } from '../util/facets';
-import { FilterParams } from '../util/filters';
 import Vue from 'vue';
 
 export default Vue.extend({
@@ -65,7 +64,7 @@ export default Vue.extend({
 			} else {
 				summaries = dataGetters.getResultSummaries(this.$store);
 			}
-			return createGroups(summaries, false, false);
+			return createGroups(summaries);
 		},
 		variables(): Variable[] {
 			return dataGetters.getVariables(this.$store);
@@ -86,12 +85,6 @@ export default Vue.extend({
 		},
 		sessionId(): string {
 			return pipelineGetters.getPipelineSessionID(this.$store);
-		},
-		filters(): FilterParams {
-			return routeGetters.getDecodedFilterParams(this.$store);
-		},
-		filterStr(): string {
-			return routeGetters.getRouteFilters(this.$store);
 		},
 		highlightRoot(): HighlightRoot {
 			return routeGetters.getDecodedHighlightRoot(this.$store);
@@ -115,9 +108,10 @@ export default Vue.extend({
 		highlightRootStr() {
 			dataActions.fetchResultHighlightValues(this.$store, {
 				dataset: this.dataset,
-				filters: this.filters,
 				highlightRoot: this.highlightRoot,
-				pipelineId: this.pipelineId
+				pipelineId: this.pipelineId,
+				extrema: this.predictedExtrema,
+				variables: this.variables
 			});
 		},
 		pipelineId() {
@@ -141,27 +135,14 @@ export default Vue.extend({
 			});
 			dataActions.fetchResultHighlightValues(this.$store, {
 				dataset: this.dataset,
-				filters: this.filters,
 				highlightRoot: this.highlightRoot,
-				pipelineId: this.pipelineId
+				pipelineId: this.pipelineId,
+				extrema: this.predictedExtrema,
+				variables: this.variables
 			});
 			dataActions.fetchResultTableData(this.$store, {
 				dataset: this.dataset,
-				pipelineId: this.pipelineId,
-				filters: this.filters,
-			});
-		},
-		filterStr() {
-			dataActions.fetchResultHighlightValues(this.$store, {
-				dataset: this.dataset,
-				filters: this.filters,
-				highlightRoot: this.highlightRoot,
 				pipelineId: this.pipelineId
-			});
-			dataActions.fetchResultTableData(this.$store, {
-				dataset: this.dataset,
-				pipelineId: this.pipelineId,
-				filters: this.filters,
 			});
 		}
 	},
@@ -218,14 +199,14 @@ export default Vue.extend({
 						});
 						dataActions.fetchResultHighlightValues(this.$store, {
 							dataset: this.dataset,
-							filters: this.filters,
 							highlightRoot: this.highlightRoot,
-							pipelineId: this.pipelineId
+							pipelineId: this.pipelineId,
+							extrema: this.predictedExtrema,
+							variables: this.variables
 						});
 						dataActions.fetchResultTableData(this.$store, {
 							dataset: this.dataset,
-							pipelineId: this.pipelineId,
-							filters: this.filters,
+							pipelineId: this.pipelineId
 						});
 					});
 				});

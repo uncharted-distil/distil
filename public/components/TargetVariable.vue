@@ -7,7 +7,8 @@
 			</div>
 		</div>
 		<variable-facets v-if="groups.length>0"
-			type-change
+			enable-type-change
+			enable-highlighting
 			:groups="groups"
 			:dataset="dataset"
 			:instance-name="instanceName"
@@ -25,7 +26,7 @@ import { getters as dataGetters } from '../store/data/module';
 import { getters as routeGetters} from '../store/route/module';
 import { Group, createGroups } from '../util/facets';
 import { Highlight } from '../store/data/index';
-import { getHighlights, updateHighlightRoot, clearHighlightRoot } from '../util/highlights';
+import { getHighlights } from '../util/highlights';
 
 export default Vue.extend({
 	name: 'target-variables',
@@ -40,19 +41,7 @@ export default Vue.extend({
 		},
 		groups(): Group[] {
 			const summaries = dataGetters.getTargetVariableSummaries(this.$store);
-			const groups =  createGroups(summaries, false, false);
-			if (this.highlights.root) {
-				groups.forEach(group => {
-					if (group) {
-						if (group.key === this.highlights.root.key) {
-							group.facets.forEach(facet => {
-								facet.filterable = true;
-							});
-						}
-					}
-				});
-			}
-			return groups;
+			return createGroups(summaries);
 		},
 		highlights(): Highlight {
 			return getHighlights(this.$store);
@@ -60,33 +49,8 @@ export default Vue.extend({
 		instanceName(): string {
 			return 'targetVar';
 		}
-	},
-
-	methods: {
-
-		onCategoricalClick(context: string, key: string, value: string) {
-			if (key && value) {
-				// extract the var name from the key
-				updateHighlightRoot(this, {
-					context: context,
-					key: key,
-					value: value
-				});
-			} else {
-				clearHighlightRoot(this);
-			}
-		},
-
-		onNumericalClick(key: string) {
-			if (!this.highlights.root || this.highlights.root.key !== key) {
-				updateHighlightRoot(this, {
-					context: this.instanceName,
-					key: key,
-					value: null
-				});
-			}
-		}
 	}
+
 });
 </script>
 

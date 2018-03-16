@@ -1,7 +1,6 @@
 <script lang="ts">
 
 import VariableFacets from './VariableFacets.vue';
-import { updateHighlightRoot, clearHighlightRoot } from '../util/highlights';
 import Vue from 'vue';
 
 export default Vue.extend({
@@ -10,6 +9,7 @@ export default Vue.extend({
 	name: 'results-variable-facets',
 
 	methods: {
+		/*
 		onHistogramClick(context: string, key: string, value: any) {
 			if (key && value) {
 				updateHighlightRoot(this, {
@@ -34,6 +34,7 @@ export default Vue.extend({
 				clearHighlightRoot(this);
 			}
 		},
+		*/
 	}
 });
 

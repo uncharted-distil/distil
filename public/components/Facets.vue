@@ -19,7 +19,7 @@ export default Vue.extend({
 	props: {
 		groups: Array,
 		highlights: Object,
-		typeChange: Boolean,
+		enableTypeChance: Boolean,
 		html: [ String, Object, Function ],
 		sort: {
 			default: (a: { key: string }, b: { key: string }) => {
@@ -529,7 +529,7 @@ export default Vue.extend({
 
 		// inject type headers
 		injectTypeChangeHeaders(group: Group, $elem: JQuery) {
-			if (this.typeChange) {
+			if (this.enableTypeChance) {
 				const $slot = $('<span/>');
 				$elem.find('.group-header').append($slot);
 				const menu = new TypeChangeMenu(
@@ -578,6 +578,10 @@ export default Vue.extend({
 .facets-facet-horizontal .select-highlight,
 .facets-facet-horizontal .facet-histogram-bar-highlighted.select-highlight {
 	fill: #007bff;
+}
+
+.facet-histogram {
+	cursor: pointer !important;
 }
 
 .facets-facet-vertical.select-highlight .facet-bar-selected {

@@ -4,7 +4,7 @@
 		<variable-facets
 			ref="facets"
 			enable-search
-			type-change
+			enable-type-change
 			instance-name="availableVars"
 			:groups="groups"
 			:dataset="dataset"
@@ -44,7 +44,7 @@ export default Vue.extend({
 		groups(): Group[] {
 			const summaries = dataGetters.getAvailableVariableSummaries(this.$store);
 			const filtered = filterSummariesByDataset(summaries, this.dataset);
-			return createGroups(filtered, false, false);
+			return createGroups(filtered);
 		},
 		subtitle(): string {
 			return `${this.groups.length} features available`;

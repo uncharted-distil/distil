@@ -2,7 +2,7 @@
 	<div class="available-target-variables">
 		<variable-facets
 			enable-search
-			type-change
+			enable-type-change
 			enable-title
 			instance-name="availableVars"
 			:groups="groups"
@@ -39,7 +39,7 @@ export default Vue.extend({
 		groups(): Group[] {
 			const summaries = dataGetters.getVariableSummaries(this.$store);
 			const filtered = filterSummariesByDataset(summaries, this.dataset);
-			return createGroups(filtered, false, false);
+			return createGroups(filtered);
 		},
 		html(): ( { key: string } ) => HTMLDivElement {
 			return (group: { key: string }) => {

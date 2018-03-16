@@ -3,13 +3,11 @@
 		<p class="nav-link font-weight-bold">Feature Summaries</p>
 		<result-variable-facets
 			enable-search
-			enable-toggle
-			enable-group-collapse
-			enable-facet-filtering
+			enable-highlighting
 			instance-name="result-summary-facets"
 			:groups="groups"
 			:dataset="dataset"
-			:type-change="typeChange">
+			:enable-type-change="enableTypeChance">
 		</result-variable-facets>
 	</div>
 </template>
