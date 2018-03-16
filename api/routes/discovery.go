@@ -33,10 +33,7 @@ func ProblemDiscoveryHandler(ctorData model.DataStorageCtor, ctorMeta model.Meta
 		filterParams.Size = -1
 
 		// NOTE: D3M index field is needed in the persisted data.
-		filterParams.Filters = append(filterParams.Filters, &model.Filter{
-			Name: "d3mIndex",
-			Type: "empty",
-		})
+		filterParams.Variables = append(filterParams.Variables, "d3mIndex")
 
 		// get storages
 		dataStorage, err := ctorData()

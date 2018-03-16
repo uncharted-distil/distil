@@ -158,7 +158,7 @@ func (s *Storage) filterIncludesIndex(filterParams *model.FilterParams) bool {
 // results to a user selected set of fields, with rows further filtered based on allowed ranges and
 // categories.
 func (s *Storage) FetchData(dataset string, index string, filterParams *model.FilterParams, invert bool) (*model.FilteredData, error) {
-	variables, err := s.metadata.FetchVariables(dataset, index, false)
+	variables, err := s.metadata.FetchVariables(dataset, index, true)
 	if err != nil {
 		return nil, errors.Wrap(err, "Could not pull variables from ES")
 	}
