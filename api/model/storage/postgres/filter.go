@@ -44,11 +44,22 @@ func (s *Storage) parseFilteredData(dataset string, numRows int, rows *pgx.Rows)
 	return result, nil
 }
 
+func (s *Storage) formatFilterName(name string) string {
+	if strings.HasSuffix(name, predictedSuffix) {
+		//name = "value"
+		return "CAST(\"value\" as double precision)"
+	}
+	return fmt.Sprintf("\"%s\"", name)
+}
+
 func (s *Storage) buildIncludeFilter(wheres []string, params []interface{}, filter *model.Filter) ([]string, []interface{}) {
+
+	name := s.formatFilterName(filter.Name)
+
 	switch filter.Type {
 	case model.NumericalFilter:
 		// numerical
-		where := fmt.Sprintf("\"%s\" >= $%d AND \"%s\" <= $%d", filter.Name, len(params)+1, filter.Name, len(params)+2)
+		where := fmt.Sprintf("%s >= $%d AND %s <= $%d", name, len(params)+1, name, len(params)+2)
 		wheres = append(wheres, where)
 		params = append(params, *filter.Min)
 		params = append(params, *filter.Max)
@@ -60,17 +71,20 @@ func (s *Storage) buildIncludeFilter(wheres []string, params []interface{}, filt
 			categories = append(categories, fmt.Sprintf("$%d", offset+i))
 			params = append(params, category)
 		}
-		where := fmt.Sprintf("\"%s\" IN (%s)", filter.Name, strings.Join(categories, ", "))
+		where := fmt.Sprintf("%s IN (%s)", name, strings.Join(categories, ", "))
 		wheres = append(wheres, where)
 	}
 	return wheres, params
 }
 
 func (s *Storage) buildExcludeFilter(wheres []string, params []interface{}, filter *model.Filter) ([]string, []interface{}) {
+
+	name := s.formatFilterName(filter.Name)
+
 	switch filter.Type {
 	case model.NumericalFilter:
 		// numerical
-		where := fmt.Sprintf("(\"%s\" < $%d OR \"%s\" > $%d)", filter.Name, len(params)+1, filter.Name, len(params)+2)
+		where := fmt.Sprintf("(%s < $%d OR %s > $%d)", name, len(params)+1, name, len(params)+2)
 		wheres = append(wheres, where)
 		params = append(params, *filter.Min)
 		params = append(params, *filter.Max)
@@ -83,7 +97,7 @@ func (s *Storage) buildExcludeFilter(wheres []string, params []interface{}, filt
 			categories = append(categories, fmt.Sprintf("$%d", offset+i))
 			params = append(params, category)
 		}
-		where := fmt.Sprintf("\"%s\" NOT IN (%s)", filter.Name, strings.Join(categories, ", "))
+		where := fmt.Sprintf("%s NOT IN (%s)", name, strings.Join(categories, ", "))
 		wheres = append(wheres, where)
 	}
 	return wheres, params
