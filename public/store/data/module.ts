@@ -49,6 +49,8 @@ export const getters = {
 	getHighlightedValues: read(moduleGetters.getHighlightedValues),
 	getPredictedExtrema: read(moduleGetters.getPredictedExtrema),
 	getResidualExtrema: read(moduleGetters.getResidualExtrema),
+	getExcludedDataFields: read(moduleGetters.getExcludedDataFields),
+	getExcludedDataItems: read(moduleGetters.getExcludedDataItems),
 }
 
 // Typed actions
@@ -64,9 +66,11 @@ export const actions = {
 	fetchVariablesAndVariableSummaries: dispatch(moduleActions.fetchVariablesAndVariableSummaries),
 	fetchFilteredTableData: dispatch(moduleActions.fetchFilteredTableData),
 	fetchSelectedTableData: dispatch(moduleActions.fetchSelectedTableData),
+	fetchExcludedTableData: dispatch(moduleActions.fetchExcludedTableData),
 	fetchData: dispatch(moduleActions.fetchData),
 	fetchPredictedSummaries: dispatch(moduleActions.fetchPredictedSummaries),
 	fetchResidualsSummaries: dispatch(moduleActions.fetchResidualsSummaries),
+	fetchResultExtrema: dispatch(moduleActions.fetchResultExtrema),
 	fetchPredictedExtrema: dispatch(moduleActions.fetchPredictedExtrema),
 	fetchPredictedExtremas: dispatch(moduleActions.fetchPredictedExtremas),
 	fetchResidualsExtrema: dispatch(moduleActions.fetchResidualsExtrema),
@@ -86,12 +90,15 @@ export const mutations = {
 	updateResultSummaries: commit(moduleMutations.updateResultSummaries),
 	updatePredictedSummaries: commit(moduleMutations.updatePredictedSummaries),
 	updateResidualsSummaries: commit(moduleMutations.updateResidualsSummaries),
+	updateResultExtrema: commit(moduleMutations.updateResultExtrema),
 	updatePredictedExtremas: commit(moduleMutations.updatePredictedExtremas),
 	updateResidualsExtremas: commit(moduleMutations.updateResidualsExtremas),
+	clearResultExtrema: commit(moduleMutations.clearResultExtrema),
 	clearPredictedExtremas: commit(moduleMutations.clearPredictedExtremas),
 	clearResidualsExtremas: commit(moduleMutations.clearResidualsExtremas),
 	setFilteredData: commit(moduleMutations.setFilteredData),
 	setSelectedData: commit(moduleMutations.setSelectedData),
+	setExcludedData: commit(moduleMutations.setExcludedData),
 	setResultData: commit(moduleMutations.setResultData),
 	setHighlightedValues: commit(moduleMutations.setHighlightedValues)
 }

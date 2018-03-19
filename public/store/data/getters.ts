@@ -217,7 +217,9 @@ export const getters = {
 	},
 
 	getResultDataItems(state: DataState, getters: any): TargetRow[] {
-		if (!_.get(state, ['resultData', 'columns'])) {
+		if (!state.resultData ||
+			!state.resultData.columns ||
+			state.resultData.columns.length === 0) {
 			return [];
 		}
 
@@ -315,6 +317,39 @@ export const getters = {
 		return {};
 	},
 
+	hasExcludedData(state: DataState): boolean {
+		return !!state.excludedData;
+	},
+
+	getExcludedData(state: DataState): Data {
+		return state.excludedData;
+	},
+
+	getExcludedDataNumRows(state: DataState): number {
+		return state.excludedData ? state.excludedData.numRows : 0;
+	},
+
+	getExcludedDataItems(state: DataState, getters: any): TableRow[] {
+		return getDataItems(state.excludedData, getters.getVariableTypesMap);
+	},
+
+	getExcludedDataFields(state: DataState): Dictionary<FieldInfo> {
+		const data = state.excludedData;
+		if (validateData(data)) {
+			const vmap = getters.getVariableTypesMap;
+			const result = {};
+			for (const col of data.columns) {
+				result[col] = {
+					label: col,
+					type: vmap[col],
+					sortable: true
+				};
+			}
+			return result;
+		}
+		return {};
+	},
+
 	getHighlightedValues(state: DataState) {
 		return state.highlightedValues;
 	},
@@ -331,6 +366,10 @@ export const getters = {
 			res.min = Math.min(res.min, extrema.min);
 			res.max = Math.max(res.max, extrema.max);
 		});
+		if (state.resultExtrema) {
+			res.min = Math.min(res.min, state.resultExtrema.min);
+			res.max = Math.max(res.max, state.resultExtrema.max);
+		}
 		return res;
 	},
 

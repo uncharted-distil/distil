@@ -5,6 +5,8 @@ const (
 	FeatureTypeTrain = "train"
 	// FeatureTypeTarget is the target feature type.
 	FeatureTypeTarget = "target"
+	// RoleIndex is the role used for index fields.
+	RoleIndex = "index"
 )
 
 // Variable represents a single variable description within a dataset.
