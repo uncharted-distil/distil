@@ -372,6 +372,23 @@ func (s *Storage) fetchCategoricalHistogramByResult(dataset string, variable *mo
 	return s.parseCategoricalHistogram(res, variable)
 }
 
+func (s *Storage) fetchTextHistogram(dataset string, variable *model.Variable) (*model.Histogram, error) {
+	// Get count by category.
+	query := fmt.Sprintf("SELECT unnest(tsvector_to_array(to_tsvector(\"%s\"))) as \"%s\", COUNT(*) AS count FROM %s GROUP BY unnest(tsvector_to_array(to_tsvector(\"%s\"))) ORDER BY count desc, \"%s\" LIMIT %d;",
+		variable.Name, variable.Name, dataset, variable.Name, variable.Name, catResultLimit)
+
+	// execute the postgres query
+	res, err := s.client.Query(query)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to fetch text histogram for variable summaries from postgres")
+	}
+	if res != nil {
+		defer res.Close()
+	}
+
+	return s.parseCategoricalHistogram(res, variable)
+}
+
 func (s *Storage) fetchSummaryData(dataset string, index string, varName string, resultURI string, extrema *model.Extrema) (*model.Histogram, error) {
 	// need description of the variables to request aggregation against.
 	variable, err := s.metadata.FetchVariable(dataset, index, varName)
@@ -400,6 +417,11 @@ func (s *Storage) fetchSummaryData(dataset string, index string, varName string,
 		}
 		if err != nil {
 			return nil, errors.Wrap(err, "unable to get categorical histogram")
+		}
+	} else if model.IsText(variable.Type) {
+		histogram, err = s.fetchTextHistogram(dataset, variable)
+		if err != nil {
+			return nil, err
 		}
 	} else {
 		return nil, errors.Errorf("variable %s of type %s does not support summary", variable.Name, variable.Type)

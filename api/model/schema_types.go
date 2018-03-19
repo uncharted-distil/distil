@@ -39,6 +39,8 @@ const (
 	StateType = "state"
 	// URIType is the schema type for URI values
 	URIType = "uri"
+	// UnknownType is the schema type for unknown values
+	UnknownType = "unknown"
 )
 
 var (
@@ -53,7 +55,8 @@ var (
 		PhoneType:       true,
 		PostalCodeType:  true,
 		StateType:       true,
-		URIType:         true}
+		URIType:         true,
+		UnknownType:     true}
 	numericalTypes = map[string]bool{
 		LongitudeType: true,
 		LatitudeType:  true,
