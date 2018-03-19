@@ -11,9 +11,7 @@
 			enable-highlighting
 			:groups="groups"
 			:dataset="dataset"
-			:instance-name="instanceName"
-			@facet-click="onCategoricalClick"
-			@numerical-click="onNumericalClick"></variable-facets>
+			:instance-name="instanceName"></variable-facets>
 	</div>
 </template>
 

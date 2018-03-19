@@ -177,10 +177,6 @@ export default Vue.extend({
 		},
 
 		onFacetClick(context: string, key: string, value: string) {
-			this.$emit('facet-click', context, key, value);
-		},
-
-		onCategoricalClick(context: string, key: string, value: string) {
 			if (this.enableHighlighting) {
 				if (key && value) {
 					// extract the var name from the key
@@ -193,6 +189,10 @@ export default Vue.extend({
 					clearHighlightRoot(this);
 				}
 			}
+			this.$emit('facet-click', context, key, value);
+		},
+
+		onCategoricalClick(context: string, key: string) {
 			this.$emit('categorical-click', key);
 		},
 

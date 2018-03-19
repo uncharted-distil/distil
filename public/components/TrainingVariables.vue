@@ -6,8 +6,6 @@
 			enable-search
 			enable-highlighting
 			enable-type-change
-			@facet-click="onCategoricalClick"
-			@numerical-click="onNumericalClick"
 			:instance-name="instanceName"
 			:groups="groups"
 			:dataset="dataset"
