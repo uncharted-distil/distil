@@ -438,7 +438,7 @@ export const actions = {
 		const endPoint = `/distil/results-summary/${ES_INDEX}/${args.dataset}/${args.extrema.min}/${args.extrema.max}`
 		const nameFunc = (p: PipelineInfo) => getPredictedCol(p.feature);
 		const labelFunc = (p: PipelineInfo) => 'Predicted';
-		getSummary(context, endPoint, pipeline, nameFunc, labelFunc, mutations.updatePredictedSummaries);
+		getSummary(context, endPoint, pipeline, nameFunc, labelFunc, mutations.updatePredictedSummaries, null);
 	},
 
 	// fetches result summaries for a given pipeline create request
@@ -459,7 +459,7 @@ export const actions = {
 		const endPoint = `/distil/results-summary/${ES_INDEX}/${args.dataset}/${args.extrema.min}/${args.extrema.max}`
 		const nameFunc = (p: PipelineInfo) => getPredictedCol(p.feature);
 		const labelFunc = (p: PipelineInfo) => 'Predicted';
-		getSummaries(context, endPoint, pipelines, nameFunc, labelFunc, mutations.updatePredictedSummaries);
+		getSummaries(context, endPoint, pipelines, nameFunc, labelFunc, mutations.updatePredictedSummaries, null);
 	},
 
 	// fetches result summary for a given pipeline id.
@@ -480,7 +480,7 @@ export const actions = {
 		const endPoint = `/distil/residuals-summary/${ES_INDEX}/${args.dataset}/${args.extrema.min}/${args.extrema.max}`
 		const nameFunc = (p: PipelineInfo) => getErrorCol(p.feature);
 		const labelFunc = (p: PipelineInfo) => 'Error';
-		getSummary(context, endPoint, pipeline, nameFunc, labelFunc, mutations.updateResidualsSummaries);
+		getSummary(context, endPoint, pipeline, nameFunc, labelFunc, mutations.updateResidualsSummaries, null);
 	},
 
 	// fetches result summaries for a given pipeline create request
@@ -501,7 +501,7 @@ export const actions = {
 		const endPoint = `/distil/residuals-summary/${ES_INDEX}/${args.dataset}/${args.extrema.min}/${args.extrema.max}`
 		const nameFunc = (p: PipelineInfo) => getErrorCol(p.feature);
 		const labelFunc = (p: PipelineInfo) => 'Error';
-		getSummaries(context, endPoint, pipelines, nameFunc, labelFunc, mutations.updateResidualsSummaries);
+		getSummaries(context, endPoint, pipelines, nameFunc, labelFunc, mutations.updateResidualsSummaries, null);
 	},
 
 	// fetches result data for created pipeline

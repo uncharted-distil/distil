@@ -89,6 +89,7 @@ export const mutations = {
 		});
 		if (index !== -1) {
 			Vue.set(state.highlightValues.summaries, index, summary);
+			return;
 		}
 		state.highlightValues.summaries.push(summary);
 	}

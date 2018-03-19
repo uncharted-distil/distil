@@ -185,7 +185,13 @@ export default Vue.extend({
 								requestIds: this.requestIds,
 								extrema: this.predictedExtrema
 							});
-
+							dataActions.fetchResultHighlightValues(this.$store, {
+								dataset: this.dataset,
+								highlightRoot: this.highlightRoot,
+								pipelineId: this.pipelineId,
+								extrema: this.predictedExtrema,
+								variables: this.variables
+							});
 						});
 						dataActions.fetchResidualsExtremas(this.$store, {
 							dataset: this.dataset,
@@ -196,13 +202,6 @@ export default Vue.extend({
 								requestIds: this.requestIds,
 								extrema: this.residualExtrema
 							});
-						});
-						dataActions.fetchResultHighlightValues(this.$store, {
-							dataset: this.dataset,
-							highlightRoot: this.highlightRoot,
-							pipelineId: this.pipelineId,
-							extrema: this.predictedExtrema,
-							variables: this.variables
 						});
 						dataActions.fetchResultTableData(this.$store, {
 							dataset: this.dataset,

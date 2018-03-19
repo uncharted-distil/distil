@@ -113,23 +113,19 @@ export default Vue.extend({
 
 		highlights(): Highlight {
 			// find var marked as 'target' and set associated values as highlights
-			const highlights = getHighlights(this.$store);
+			const highlights = _.cloneDeep(getHighlights(this.$store));
 			if (_.isEmpty(highlights)) {
 				return highlights;
 			}
-			const facetHighlights = <Highlight>{
-				root: _.cloneDeep(highlights.root),
-				values: {}
-			};
-			_.forEach(highlights.values, (values, varName) => {
+			_.forEach(highlights.values.samples, (values, varName) => {
 				if (isTarget(varName)) {
-					facetHighlights.values[getVarFromTarget(varName)] = values;
+					highlights.values.samples[getVarFromTarget(varName)] = values;
 				}
 			});
 			if (highlights.root && isTarget(highlights.root.key)) {
-				facetHighlights.root.key = getVarFromTarget(highlights.root.key);
+				highlights.root.key = getVarFromTarget(highlights.root.key);
 			}
-			return facetHighlights;
+			return highlights;
 		},
 
 		range(): number {
