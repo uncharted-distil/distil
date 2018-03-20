@@ -15,6 +15,7 @@
 				bordered
 				hover
 				small
+				responsive
 				@row-clicked="onRowClick"
 				:ref="refName"
 				:items="items"

@@ -134,7 +134,12 @@ export default Vue.extend({
 				if (more) {
 					group.facets = group.facets.concat(group.remaining.slice(0, more));
 					group.remaining = group.remaining.slice(more);
+					let remainingTotal = 0;
+					group.remaining.forEach(facet => {
+						remainingTotal += facet.count;
+					});
 					group.more = group.remaining.length;
+					group.moreTotal = remainingTotal;
 				}
 			});
 			return groups;

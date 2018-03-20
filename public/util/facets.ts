@@ -60,6 +60,8 @@ export interface Group {
 	facets: (PlaceHolderFacet | CategoricalFacet | NumericalFacet)[];
 	numRows: number;
 	more?: number;
+	moreTotal?: number;
+	total?: number;
 	remaining?: (PlaceHolderFacet | CategoricalFacet | NumericalFacet)[];
 }
 
@@ -161,6 +163,8 @@ export function getGroupIcon(summary: VariableSummary): string {
 // creates a categorical facet with segments based on nest buckets counts, or no segments if buckets aren't nested
 function createCategoricalSummaryFacet(summary: VariableSummary, enableCollapse: boolean, enableFiltering: boolean): Group {
 
+
+	let total = 0;
 	const facets =  summary.buckets.map(b => {
 
 		let segments = [];
@@ -198,7 +202,7 @@ function createCategoricalSummaryFacet(summary: VariableSummary, enableCollapse:
 			segments: segments,
 			filterable: enableFiltering
 		};
-
+		total += b.count;
 		return facet;
 	});
 
@@ -208,6 +212,10 @@ function createCategoricalSummaryFacet(summary: VariableSummary, enableCollapse:
 
 	const top = facets.slice(0, CATEGORICAL_CHUNK_SIZE)
 	const remaining = (facets.length > CATEGORICAL_CHUNK_SIZE) ? facets.slice(CATEGORICAL_CHUNK_SIZE) : [];
+	let remainingTotal = 0;
+	remaining.forEach(facet => {
+		remainingTotal += facet.count;
+	});
 
 	// Generate a facet group
 	return {
@@ -217,8 +225,10 @@ function createCategoricalSummaryFacet(summary: VariableSummary, enableCollapse:
 		collapsible: enableCollapse,
 		collapsed: false,
 		facets: top,
+		total: total,
 		numRows: summary.numRows,
 		more: remaining.length,
+		moreTotal: remainingTotal,
 		remaining: remaining
 	};
 }
