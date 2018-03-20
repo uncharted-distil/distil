@@ -10,9 +10,9 @@
   version "4.14.91"
   resolved "https://registry.yarnpkg.com/@types/lodash/-/lodash-4.14.91.tgz#794611b28056d16b5436059c6d800b39d573cd3a"
 
-"@uncharted.software/stories-facets@2.12.3":
-  version "2.12.3"
-  resolved "https://registry.yarnpkg.com/@uncharted.software/stories-facets/-/stories-facets-2.12.3.tgz#0dd17dfef6b90bcb2c765bb06250789da334c03e"
+"@uncharted.software/stories-facets@2.12.4":
+  version "2.12.4"
+  resolved "https://registry.yarnpkg.com/@uncharted.software/stories-facets/-/stories-facets-2.12.4.tgz#2e49b9fc793eab0e1eacf18518a7360b220cd5ff"
 
 abbrev@1:
   version "1.1.1"

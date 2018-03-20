@@ -136,7 +136,12 @@ export default Vue.extend({
 				if (more) {
 					group.facets = group.facets.concat(group.remaining.slice(0, more));
 					group.remaining = group.remaining.slice(more);
+					let remainingTotal = 0;
+					group.remaining.forEach(facet => {
+						remainingTotal += facet.count;
+					});
 					group.more = group.remaining.length;
+					group.moreTotal = remainingTotal;
 				}
 			});
 			return groups;
@@ -507,7 +512,7 @@ export default Vue.extend({
 
 		// inject type icon
 		injectTypeIcon(group: Group, $elem: JQuery) {
-			if (isCategoricalFacet(group.facets[0])) {
+			if (isCategoricalFacet(group.facets.length > 0 && group.facets[0])) {
 				const facetSpecs = (<CategoricalFacet[]>group.facets);
 				const typeicon = facetSpecs[0].icon.class;
 				const $icon = $(`<i class="${typeicon}"></i>`);
