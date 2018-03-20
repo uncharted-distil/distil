@@ -29,7 +29,7 @@
 			:highlights="highlights"></facets>
 		<p class="nav-link font-weight-bold">Predictions by Model</p>
 		<result-facets :regression="regressionEnabled"></result-facets>
-		<b-btn v-b-modal.export variant="success" class="check-button">Export Model</b-btn>
+		<b-btn v-b-modal.export variant="primary" class="check-button">Task 2: Export Model</b-btn>
 		<b-modal id="export" title="Export" @ok="onExport">
 			<div class="check-message-container">
 				<i class="fa fa-check-circle fa-3x check-icon"></i>
@@ -56,6 +56,7 @@ import { getters as routeGetters } from '../store/route/module';
 import { actions } from '../store/app/module';
 import vueSlider from 'vue-slider-component';
 import { createNumericalFilter, createCategoricalFilter, updateFilterRoute } from '../util/filters';
+import { EXPORT_SUCCESS_ROUTE } from '../store/route/index';
 import Vue from 'vue';
 import _ from 'lodash';
 import 'font-awesome/css/font-awesome.css';
@@ -266,7 +267,7 @@ export default Vue.extend({
 				pipelineId: this.activePipeline.pipelineId,
 				sessionId: this.sessionId
 			});
-			this.$router.replace('/');
+			this.$router.replace(EXPORT_SUCCESS_ROUTE);
 		}
 	}
 });
