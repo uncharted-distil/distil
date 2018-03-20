@@ -18,6 +18,7 @@ const { commit, read, dispatch } = getStoreAccessors<AppState, DistilState>(null
 // typed getters
 export const getters = {
 	getUserSession: read(moduleGetters.getUserSession),
+	isAborted: read(moduleGetters.isAborted),
 }
 
 // typed actions
@@ -28,5 +29,6 @@ export const actions = {
 
 // type mutators
 export const mutations = {
-	setUserSession: commit(moduleMutations.setUserSession)
+	setUserSession: commit(moduleMutations.setUserSession),
+	setAborted: commit(moduleMutations.setAborted)
 }
