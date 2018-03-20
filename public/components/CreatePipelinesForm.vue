@@ -1,6 +1,6 @@
 <template>
 	<div class="create-pipelines-form">
-		<b-modal id="export-modal" ref="exportModal" title="Export Succeeded"
+		<b-modal id="export-modal" title="Export Succeeded"
 			@hide="clearExportResults"
 			:visible="!!exportResults"
 			cancel-disabled
