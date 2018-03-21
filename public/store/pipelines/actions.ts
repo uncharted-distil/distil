@@ -52,7 +52,7 @@ function updateCurrentPipelineResults(context: any, req: PipelineRequest, res: P
 			context.dispatch('fetchResultSummaries', {
 				dataset: req.dataset,
 				pipelineId: res.pipelineId,
-				variables: context.getters.getVariables,
+				variables: context.getters.getActivePipelineVariables,
 				extrema: context.getters.getPredictedExtrema
 			});
 		}

@@ -13,8 +13,7 @@
 				:groups="groups"
 				:dataset="dataset"></results-variable-summaries>
 			<results-comparison
-				class="col-12 col-md-6 results-result-comparison"
-				:exclude-non-training="excludeNonTraining"></results-comparison>
+				class="col-12 col-md-6 results-result-comparison"></results-comparison>
 			<result-summaries
 				class="col-12 col-md-3 border-gray-left results-result-summaries"></result-summaries>
 		</div>
@@ -25,7 +24,7 @@
 import ResultsComparison from '../components/ResultsComparison.vue';
 import ResultsVariableSummaries from '../components/ResultsVariableSummaries.vue';
 import ResultSummaries from '../components/ResultSummaries.vue';
-import { getRequestIdsForDatasetAndTarget, getTrainingVariablesForPipelineId } from '../util/pipelines';
+import { getRequestIdsForDatasetAndTarget } from '../util/pipelines';
 import { getters as dataGetters, actions as dataActions } from '../store/data/module';
 import { getters as routeGetters } from '../store/route/module';
 import { actions as pipelineActions, getters as pipelineGetters } from '../store/pipelines/module';
@@ -44,12 +43,6 @@ export default Vue.extend({
 		ResultSummaries
 	},
 
-	data() {
-		return {
-			excludeNonTraining: true
-		};
-	},
-
 	computed: {
 		dataset(): string {
 			return routeGetters.getRouteDataset(this.$store);
@@ -58,27 +51,17 @@ export default Vue.extend({
 			return routeGetters.getRouteTargetVariable(this.$store);
 		},
 		groups(): Group[] {
-			let summaries;
-			if (this.excludeNonTraining) {
-				summaries = dataGetters.getResultSummaries(this.$store).filter(summary => this.training[summary.name]);
-			} else {
-				summaries = dataGetters.getResultSummaries(this.$store);
-			}
+			const summaries = dataGetters.getResultSummaries(this.$store).filter(summary => this.training[summary.name]);
 			return createGroups(summaries);
 		},
 		variables(): Variable[] {
-			return dataGetters.getVariables(this.$store);
+			return pipelineGetters.getActivePipelineVariables(this.$store);
 		},
 		requestIds(): string[] {
 			return getRequestIdsForDatasetAndTarget(this.$store.state.pipelineModule, this.dataset, this.target);
 		},
 		training(): Dictionary<boolean> {
-			const training = getTrainingVariablesForPipelineId(this.$store.state.pipelineModule, this.pipelineId);
-			const trainingMap = {};
-			training.forEach(t => {
-				trainingMap[t] = true;
-			});
-			return trainingMap;
+			return pipelineGetters.getActivePipelineTrainingMap(this.$store);
 		},
 		pipelineId(): string {
 			return routeGetters.getRoutePipelineId(this.$store);

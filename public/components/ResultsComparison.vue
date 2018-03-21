@@ -5,7 +5,6 @@
 			title="Correct Predictions"
 			refName="correctTable"
 			instanceName="correct-results-data-table"
-			:exclude-non-training="excludeNonTraining"
 			:filterFunc="correctFilter"
 			:decorateFunc="correctDecorate"
 			:showError="regressionEnabled"></results-data-table>
@@ -14,7 +13,6 @@
 			title="Incorrect Predictions"
 			refName="incorrectTable"
 			instanceName="incorrect-results-data-table"
-			:exclude-non-training="excludeNonTraining"
 			:filterFunc="incorrectFilter"
 			:decorateFunc="incorrectDecorate"
 			:showError="regressionEnabled"></results-data-table>
@@ -38,10 +36,6 @@ export default Vue.extend({
 
 	components: {
 		ResultsDataTable,
-	},
-
-	props: {
-		excludeNonTraining: Boolean
 	},
 
 	computed: {

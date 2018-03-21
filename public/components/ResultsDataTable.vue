@@ -32,10 +32,10 @@ import _ from 'lodash';
 import { getters } from '../store/data/module';
 import { TargetRow, FieldInfo } from '../store/data/index';
 import { getters as routeGetters } from '../store/route/module';
+import { getters as pipelineGetters } from '../store/pipelines/module';
 import { Dictionary } from '../util/dict';
 import { removeNonTrainingItems, removeNonTrainingFields } from '../util/data';
 import { updateTableHighlights, updateHighlightRoot, clearHighlightRoot, scrollToFirstHighlight, getHighlights } from '../util/highlights';
-import { getTrainingVariablesForPipelineId } from '../util/pipelines';
 import Vue from 'vue';
 
 export default Vue.extend({
@@ -45,7 +45,6 @@ export default Vue.extend({
 		title: String,
 		filterFunc: Function,
 		decorateFunc: Function,
-		excludeNonTraining: Boolean,
 		refName: String,
 		instanceName: { type: String, default: 'results-table-table' }
 	},
@@ -63,14 +62,8 @@ export default Vue.extend({
 			return routeGetters.getDecodedHighlightRoot(this.$store) ? _.toNumber(routeGetters.getDecodedHighlightRoot(this.$store).key) : -1;
 		},
 
-		// extracts the training set from the store
 		training(): Dictionary<boolean> {
-			const training = getTrainingVariablesForPipelineId(this.$store.state.pipelineModule, this.pipelineId);
-			const trainingMap = {};
-			training.forEach(t => {
-				trainingMap[t.toLowerCase()] = true;
-			});
-			return trainingMap;
+			return pipelineGetters.getActivePipelineTrainingMap(this.$store);
 		},
 
 		hasData(): boolean {
@@ -80,7 +73,7 @@ export default Vue.extend({
 		// extracts the table data from the store
 		items(): TargetRow[] {
 			const items = getters.getResultDataItems(this.$store);
-			const filtered = this.excludeNonTraining ? removeNonTrainingItems(items, this.training) : items;
+			const filtered = removeNonTrainingItems(items, this.training);
 			const highlights = getHighlights(this.$store);
 
 			// clear all selections visuals
@@ -117,7 +110,7 @@ export default Vue.extend({
 		// extract the table field header from the store
 		fields(): Dictionary<FieldInfo> {
 			const fields = getters.getResultDataFields(this.$store);
-			return this.excludeNonTraining ? removeNonTrainingFields(fields, this.training) : fields;
+			return removeNonTrainingFields(fields, this.training);
 		}
 	},
 

@@ -20,7 +20,10 @@ export const getters = {
 	hasActiveSession: read(moduleGetters.hasActiveSession),
 	getRunningPipelines: read(moduleGetters.getRunningPipelines),
 	getCompletedPipelines: read(moduleGetters.getCompletedPipelines),
-	getPipelines: read(moduleGetters.getPipelines)
+	getPipelines: read(moduleGetters.getPipelines),
+	getActivePipeline: read(moduleGetters.getActivePipeline),
+	getActivePipelineTrainingMap: read(moduleGetters.getActivePipelineTrainingMap),
+	getActivePipelineVariables: read(moduleGetters.getActivePipelineVariables),
 }
 
 export const actions = {
