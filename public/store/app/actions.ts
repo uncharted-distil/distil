@@ -28,9 +28,15 @@ export const actions = {
 				mutations.setAborted(context);
 			})
 			.catch(error => {
-				// NOTE: request always fails because we exit on the server
-				console.warn(`User exported pipeline ${args.pipelineId}`);
-				mutations.setAborted(context);
+				if (error.response && error.response.status === 400) {
+					// wrong target variable
+					console.warn(`Export failed for pipeline ${args.pipelineId}`);
+					return;
+				} else {
+					// NOTE: request always fails because we exit on the server
+					console.warn(`User exported pipeline ${args.pipelineId}`);
+					mutations.setAborted(context);
+				}
 			});
 	}
 };
