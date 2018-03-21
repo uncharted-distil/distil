@@ -46,7 +46,7 @@ export default Vue.extend({
 			return filterSummariesByDataset(summaries, this.dataset);
 		},
 		subtitle(): string {
-			return `${this.variables.length} features available`;
+			return `${this.variables.length} features available (sorted by interestingness)`;
 		},
 		html(): ( { key: string } ) => HTMLDivElement {
 			return (group: { key: string }) => {

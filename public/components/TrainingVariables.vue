@@ -49,7 +49,7 @@ export default Vue.extend({
 			return dataGetters.getTrainingVariableSummaries(this.$store);
 		},
 		subtitle(): string {
-			return `${this.variables.length} features selected`;
+			return `${this.variables.length} features selected (sorted by interestingness)`;
 		},
 		html(): (Group) => HTMLDivElement {
 			return (group: Group) => {

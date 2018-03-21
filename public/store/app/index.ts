@@ -4,9 +4,11 @@ export interface UserSession {
 
 export interface AppState {
 	session: UserSession;
+	isAborted: boolean;
 }
 
 // shared data model
 export const state: AppState = {
-	session: {} as UserSession
+	session: {} as UserSession,
+	isAborted: false
 };

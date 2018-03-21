@@ -29,11 +29,22 @@
 			:highlights="highlights"></facets>
 		<p class="nav-link font-weight-bold">Predictions by Model</p>
 		<result-facets :regression="regressionEnabled"></result-facets>
-		<b-btn v-b-modal.export variant="success" class="check-button">Export Model</b-btn>
+		<b-btn v-b-modal.export variant="primary" class="check-button">Task 2: Export Model</b-btn>
 		<b-modal id="export" title="Export" @ok="onExport">
 			<div class="check-message-container">
 				<i class="fa fa-check-circle fa-3x check-icon"></i>
 				<div>This action will export pipeline <b>{{activePipelineName}}</b> and terminate the session.</div>
+			</div>
+		</b-modal>
+
+		<b-modal id="export-failure-modal" ref="exportFailModal" title="Export Failed"
+			cancel-disabled
+			hide-header
+			hide-footer>
+			<div class="check-message-container">
+				<i class="fa fa-exclamation-triangle fa-3x fail-icon"></i>
+				<div><b>Export Failed:</b> The selected target variable does not match the required target variable.</div>
+				<b-btn class="mt-3 close-modal" variant="success" block @click="hideFailureModal">OK</b-btn>
 			</div>
 		</b-modal>
 	</div>
@@ -53,9 +64,10 @@ import { VariableSummary, Extrema } from '../store/data/index';
 import { Highlights, Range } from '../util/highlights';
 import { getters as dataGetters} from '../store/data/module';
 import { getters as routeGetters } from '../store/route/module';
-import { actions } from '../store/app/module';
+import { actions as appActions, getters as appGetters } from '../store/app/module';
 import vueSlider from 'vue-slider-component';
 import { createNumericalFilter, createCategoricalFilter, updateFilterRoute } from '../util/filters';
+import { EXPORT_SUCCESS_ROUTE } from '../store/route/index';
 import Vue from 'vue';
 import _ from 'lodash';
 import 'font-awesome/css/font-awesome.css';
@@ -208,6 +220,10 @@ export default Vue.extend({
 
 		sessionId(): string {
 			return pipelineGetters.getPipelineSessionID(this.$store);
+		},
+
+		isAborted(): boolean {
+			return appGetters.isAborted(this.$store);
 		}
 	},
 
@@ -262,11 +278,24 @@ export default Vue.extend({
 		},
 
 		onExport() {
-			actions.exportPipeline(this.$store, {
+			appActions.exportPipeline(this.$store, {
 				pipelineId: this.activePipeline.pipelineId,
 				sessionId: this.sessionId
+			}).then(() => {
+				if (this.isAborted) {
+					// the export was successful
+					this.$router.replace(EXPORT_SUCCESS_ROUTE);
+				} else {
+					// failed, this is because the wrong variable was selected
+					const modal = this.$refs.exportFailModal as any;
+					modal.show();
+				}
 			});
-			this.$router.replace('/');
+		},
+
+		hideFailureModal() {
+			const modal = this.$refs.exportFailModal as any;
+			modal.hide();
 		}
 	}
 });
@@ -353,6 +382,13 @@ export default Vue.extend({
 	display: flex;
 	flex-shrink: 0;
 	color:#00C851;
+	padding-right: 15px;
+}
+
+.fail-icon {
+	display: flex;
+	flex-shrink: 0;
+	color:#dc3545;
 	padding-right: 15px;
 }
 

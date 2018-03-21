@@ -6,7 +6,7 @@
 		<img src="/images/uncharted.svg" class="app-icon"></img>
 		<span class="navbar-brand">Distil</span>
 
-		<b-collapse is-nav id="nav_collapse">
+		<b-collapse v-if="!isAborted" is-nav id="nav_collapse">
 			<b-navbar-nav>
 				<b-nav-item @click="onHome" :active="isActive(HOME_ROUTE)" v-bind:class="{ active: isActive(HOME_ROUTE) }">
 					<i class="fa fa-home nav-icon"></i>
@@ -54,9 +54,9 @@
 <script lang="ts">
 import '../assets/images/uncharted.svg';
 import { gotoHome, gotoSearch, gotoSelectTarget, gotoSelectData, gotoResults } from '../util/nav';
-import { actions as appActions } from '../store/app/module';
+import { actions as appActions,  getters as appGetters } from '../store/app/module';
 import { getters as routeGetters } from '../store/route/module';
-import { HOME_ROUTE, SEARCH_ROUTE, SELECT_ROUTE, CREATE_ROUTE, RESULTS_ROUTE } from '../store/route/index';
+import { HOME_ROUTE, SEARCH_ROUTE, SELECT_ROUTE, CREATE_ROUTE, RESULTS_ROUTE, ABORT_SUCCESS_ROUTE } from '../store/route/index';
 import { restoreView } from '../util/view';
 import Vue from 'vue';
 
@@ -79,6 +79,9 @@ export default Vue.extend({
 		},
 		dataset(): string {
 			return routeGetters.getRouteDataset(this.$store);
+		},
+		isAborted(): boolean {
+			return appGetters.isAborted(this.$store);
 		}
 	},
 
@@ -102,7 +105,7 @@ export default Vue.extend({
 			gotoResults(this.$store, this.$router);
 		},
 		onAbort() {
-			this.$router.replace('/');
+			this.$router.replace(ABORT_SUCCESS_ROUTE);
 			appActions.abort(this.$store);
 		},
 		hasSelectView(): boolean {

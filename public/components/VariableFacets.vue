@@ -16,7 +16,7 @@
 			</div>
 			<div v-if="enableTitle" class="row flex-1 align-items-center">
 				<div class="col-12 flex-column d-flex">
-					<p>Select one of the following feature summaries showing count of records by feature value.</p>
+					<p>Select one of the following feature summaries (sorted by interestingness) showing count of records by feature value.</p>
 				</div>
 			</div>
 			<div class="pl-2">
