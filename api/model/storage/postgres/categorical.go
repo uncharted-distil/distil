@@ -201,17 +201,25 @@ func (f *CategoricalField) parseBivariateHistogram(rows *pgx.Rows, variable *mod
 
 // FetchResultSummaryData pulls data from the result table and builds
 // the categorical histogram for the field.
-func (f *CategoricalField) FetchResultSummaryData(resultURI string, dataset string, datasetResult string, variable *model.Variable, extrema *model.Extrema) (*model.Histogram, error) {
+func (f *CategoricalField) FetchResultSummaryData(resultURI string, dataset string, datasetResult string, variable *model.Variable, filterParams *model.FilterParams, extrema *model.Extrema) (*model.Histogram, error) {
 	targetName := variable.Name
+
+	where, params := f.Storage.buildFilteredQueryWhere(dataset, filterParams)
+	if len(where) > 0 {
+		where = fmt.Sprintf(" WHERE %s AND result.result_id = $%d and result.target = $%d", where, len(params)+1, len(params)+2)
+	} else {
+		where = " WHERE result.result_id = $1 and result.target = $2"
+	}
+	params = append(params, resultURI, targetName)
 
 	query := fmt.Sprintf("SELECT base.\"%s\", result.value, COUNT(*) AS count "+
 		"FROM %s AS result INNER JOIN %s AS base ON result.index = base.\"d3mIndex\" "+
-		"WHERE result.result_id = $1 and result.target = $2 "+
+		"%s "+
 		"GROUP BY result.value, base.\"%s\" "+
-		"ORDER BY count desc;", targetName, datasetResult, dataset, targetName)
+		"ORDER BY count desc;", targetName, datasetResult, dataset, where, targetName)
 
 	// execute the postgres query
-	res, err := f.Storage.client.Query(query, resultURI, targetName)
+	res, err := f.Storage.client.Query(query, params...)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to fetch histograms for result summaries from postgres")
 	}

@@ -504,7 +504,7 @@ func (s *Storage) FetchResultsSummary(dataset string, resultURI string, index st
 		return nil, errors.Errorf("variable %s of type %s does not support summary", variable.Name, variable.Type)
 	}
 
-	histogram, err = field.FetchResultSummaryData(resultURI, dataset, datasetResult, variable, extrema)
+	histogram, err = field.FetchResultSummaryData(resultURI, dataset, datasetResult, variable, filterParams, extrema)
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to fetch result summary")
 	}

@@ -252,7 +252,7 @@ func (f *NumericalField) fetchExtremaByURI(dataset string, resultURI string, var
 
 // FetchResultSummaryData pulls data from the result table and builds
 // the numerical histogram for the field.
-func (f *NumericalField) FetchResultSummaryData(resultURI string, dataset string, datasetResult string, variable *model.Variable, extrema *model.Extrema) (*model.Histogram, error) {
+func (f *NumericalField) FetchResultSummaryData(resultURI string, dataset string, datasetResult string, variable *model.Variable, filterParams *model.FilterParams, extrema *model.Extrema) (*model.Histogram, error) {
 	resultVariable := &model.Variable{
 		Name: "value",
 		Type: model.TextType,
@@ -273,14 +273,25 @@ func (f *NumericalField) FetchResultSummaryData(resultURI string, dataset string
 	// size is derived from the min/max and desired bucket count.
 	histogramName, bucketQuery, histogramQuery := f.getResultHistogramAggQuery(extrema, variable, resultVariable)
 
+	// create the filter for the query.
+	where, params := f.Storage.buildFilteredQueryWhere(dataset, filterParams)
+	if len(where) > 0 {
+		where = fmt.Sprintf("WHERE %s AND result.result_id = $%d AND result.target = $%d", where, len(params)+1, len(params)+2)
+	} else {
+		where = "WHERE result.result_id = $1 AND result.target = $2"
+	}
+	params = append(params, resultURI, variable.Name)
+
 	// Create the complete query string.
-	query := fmt.Sprintf(`
-		SELECT %s as bucket, CAST(%s as double precision) AS %s, COUNT(*) AS count FROM %s
-		WHERE result_id = $1 AND target = $2
-		GROUP BY %s ORDER BY %s;`, bucketQuery, histogramQuery, histogramName, datasetResult, bucketQuery, histogramName)
+	query := fmt.Sprintf("SELECT %s as bucket, CAST(%s as double precision) AS %s, COUNT(*) AS count "+
+		"FROM %s data INNER JOIN %s result ON data.\"%s\" = result.index %s "+
+		"GROUP BY %s ORDER BY %s;",
+		bucketQuery, histogramQuery, histogramName, dataset, datasetResult, d3mIndexFieldName, where, bucketQuery, histogramName)
+
+	fmt.Println(query)
 
 	// execute the postgres query
-	res, err := f.Storage.client.Query(query, resultURI, variable.Name)
+	res, err := f.Storage.client.Query(query, params...)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to fetch histograms for result variable summaries from postgres")
 	}
