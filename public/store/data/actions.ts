@@ -707,9 +707,9 @@ export const actions = {
 		const pipelines = getPipelinesByRequestIds(context.rootState.pipelineModule, args.requestIds);
 
 		const endPoint = `/distil/results-summary/${ES_INDEX}/${args.dataset}/${args.extrema.min}/${args.extrema.max}`
-		const nameFunc = (p: PipelineInfo) => p.feature;
+		const nameFunc = (p: PipelineInfo) => getPredictedCol(p.feature);
 		const labelFunc = (p: PipelineInfo) => '';
-		getSummaries(context, endPoint, pipelines, nameFunc, labelFunc, mutations.updateHighlightSummaries, filters);
+		getSummaries(context, endPoint, pipelines, nameFunc, labelFunc, mutations.updatePredictedHighlightSummaries, filters);
 	},
 
 	fetchResultHighlightSamples(context: DataContext, args: { highlightRoot: HighlightRoot, dataset: string, pipelineId: string }) {

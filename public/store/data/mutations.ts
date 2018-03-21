@@ -92,5 +92,19 @@ export const mutations = {
 			return;
 		}
 		state.highlightValues.summaries.push(summary);
+	},
+
+	updatePredictedHighlightSummaries(state: DataState, summary: VariableSummary) {
+		if (!summary) {
+			return;
+		}
+		const index = _.findIndex(state.highlightValues.summaries, s => {
+			return s.pipelineId === summary.pipelineId;
+		});
+		if (index !== -1) {
+			Vue.set(state.highlightValues.summaries, index, summary);
+			return;
+		}
+		state.highlightValues.summaries.push(summary);
 	}
 }

@@ -288,8 +288,6 @@ func (f *NumericalField) FetchResultSummaryData(resultURI string, dataset string
 		"GROUP BY %s ORDER BY %s;",
 		bucketQuery, histogramQuery, histogramName, dataset, datasetResult, d3mIndexFieldName, where, bucketQuery, histogramName)
 
-	fmt.Println(query)
-
 	// execute the postgres query
 	res, err := f.Storage.client.Query(query, params...)
 	if err != nil {
