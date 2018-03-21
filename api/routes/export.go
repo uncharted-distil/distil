@@ -62,7 +62,8 @@ func ExportHandler(pipelineCtor model.PipelineStorageCtor, metaCtor model.Metada
 
 		// fail if the pipeline target was not the original dataset target
 		if variable.Role != "suggestedTarget" {
-			handleError(w, fmt.Errorf("Target %s is not the expected target variable", variable.Name))
+			log.Warnf("Target %s is not the expected target variable", variable.Name)
+			http.Error(w, fmt.Sprintf("Target %s is not the expected target variable", variable.Name), http.StatusBadRequest)
 			return
 		}
 

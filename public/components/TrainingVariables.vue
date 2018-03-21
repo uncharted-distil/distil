@@ -58,7 +58,7 @@ export default Vue.extend({
 		 	return createGroups(summaries);
 		},
 		subtitle(): string {
-			return `${this.groups.length} features selected`;
+			return `${this.groups.length} features selected (sorted by interestingness)`;
 		},
 		html(): (Group) => HTMLDivElement {
 			return (group: Group) => {

@@ -228,6 +228,9 @@ export default Vue.extend({
 	background-color: white;
 }
 .results-view .table td {
-    text-align: right;
+	text-align: right;
+}
+.result-facets {
+	margin-bottom: 12px;
 }
 </style>

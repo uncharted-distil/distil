@@ -1,6 +1,6 @@
 <template>
 	<div class="create-pipelines-form">
-		<b-modal id="export-modal" ref="exportModal" title="Export Succeeded"
+		<b-modal id="export-modal" title="Export Succeeded"
 			@hide="clearExportResults"
 			:visible="!!exportResults"
 			cancel-disabled
@@ -12,11 +12,11 @@
 			</div>
 		</b-modal>
 		<div class="row justify-content-center">
+			<b-button class="export-button" :variant="exportVariant" @click="exportData" :disabled="disableExport">
+				Task 1: Export Problem
+			</b-button>
 			<b-button class="create-button" :variant="createVariant" @click="create" :disabled="disableCreate">
 				Create Models
-			</b-button>
-			<b-button class="export-button" :variant="exportVariant" @click="exportData" :disabled="disableExport">
-				Export Problem
 			</b-button>
 		</div>
 		<div class="pipeline-progress">
@@ -111,7 +111,7 @@ export default Vue.extend({
 			return !this.disableCreate ? 'success' : 'outline-secondary';
 		},
 		exportVariant(): string {
-			return !this.disableExport ? 'outline-secondary' : 'outline-secondary';
+			return !this.disableExport ? 'primary' : 'outline-secondary';
 		},
 		percentComplete(): number {
 			return 100;

@@ -47,7 +47,7 @@ export default Vue.extend({
 			return createGroups(filtered);
 		},
 		subtitle(): string {
-			return `${this.groups.length} features available`;
+			return `${this.variables.length} features available (sorted by interestingness)`;
 		},
 		html(): ( { key: string } ) => HTMLDivElement {
 			return (group: { key: string }) => {
