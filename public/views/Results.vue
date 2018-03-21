@@ -8,10 +8,13 @@
 			</div>
 		</div>
 		<div class="row flex-12 pb-3">
-			<results-variable-summaries
+			<variable-summaries
 				class="col-12 col-md-3 border-gray-right results-variable-summaries"
+				enable-search
+				enable-highlighting
+				instance-name="result-summary-facets"
 				:groups="groups"
-				:dataset="dataset"></results-variable-summaries>
+				:dataset="dataset"></variable-summaries>
 			<results-comparison
 				class="col-12 col-md-6 results-result-comparison"></results-comparison>
 			<result-summaries
@@ -21,8 +24,8 @@
 </template>
 
 <script lang="ts">
+import VariableSummaries from '../components/VariableSummaries.vue';
 import ResultsComparison from '../components/ResultsComparison.vue';
-import ResultsVariableSummaries from '../components/ResultsVariableSummaries.vue';
 import ResultSummaries from '../components/ResultSummaries.vue';
 import { getRequestIdsForDatasetAndTarget } from '../util/pipelines';
 import { getters as dataGetters, actions as dataActions } from '../store/data/module';
@@ -38,8 +41,8 @@ export default Vue.extend({
 	name: 'results-view',
 
 	components: {
+		VariableSummaries,
 		ResultsComparison,
-		ResultsVariableSummaries,
 		ResultSummaries
 	},
 
@@ -93,6 +96,7 @@ export default Vue.extend({
 				dataset: this.dataset,
 				highlightRoot: this.highlightRoot,
 				pipelineId: this.pipelineId,
+				requestIds: this.requestIds,
 				extrema: this.predictedExtrema,
 				variables: this.variables
 			});
@@ -120,6 +124,7 @@ export default Vue.extend({
 				dataset: this.dataset,
 				highlightRoot: this.highlightRoot,
 				pipelineId: this.pipelineId,
+				requestIds: this.requestIds,
 				extrema: this.predictedExtrema,
 				variables: this.variables
 			});
@@ -172,6 +177,7 @@ export default Vue.extend({
 								dataset: this.dataset,
 								highlightRoot: this.highlightRoot,
 								pipelineId: this.pipelineId,
+								requestIds: this.requestIds,
 								extrema: this.predictedExtrema,
 								variables: this.variables
 							});

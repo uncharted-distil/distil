@@ -679,6 +679,39 @@ export const actions = {
 		}));
 	},
 
+	fetchPredictedHighlightSummaries(context: DataContext, args: { highlightRoot: HighlightRoot, dataset: string, requestIds: string[], variables: Variable[], extrema: Extrema }) {
+		if (!args.highlightRoot) {
+			mutations.updateHighlightSummaries(context, null);
+			return null;
+		}
+		if (!args.dataset) {
+			console.warn('`dataset` argument is missing');
+			return null;
+		}
+		if (!args.variables) {
+			console.warn('`variables` argument is missing');
+			return null;
+		}
+
+		const filters = {
+			variables: [],
+			filters: []
+		}
+
+		const highlightFilter = createFilterFromHighlightRoot(args.highlightRoot, INCLUDE_FILTER);
+		if (highlightFilter) {
+			highlightFilter.name = getVarFromTarget(highlightFilter.name);
+			filters.filters.push(highlightFilter);
+		}
+
+		const pipelines = getPipelinesByRequestIds(context.rootState.pipelineModule, args.requestIds);
+
+		const endPoint = `/distil/results-summary/${ES_INDEX}/${args.dataset}/${args.extrema.min}/${args.extrema.max}`
+		const nameFunc = (p: PipelineInfo) => p.feature;
+		const labelFunc = (p: PipelineInfo) => '';
+		getSummaries(context, endPoint, pipelines, nameFunc, labelFunc, mutations.updateHighlightSummaries, filters);
+	},
+
 	fetchResultHighlightSamples(context: DataContext, args: { highlightRoot: HighlightRoot, dataset: string, pipelineId: string }) {
 		if (!args.highlightRoot) {
 			mutations.updateHighlightSamples(context, null);
@@ -719,7 +752,7 @@ export const actions = {
 			});
 	},
 
-	fetchResultHighlightValues(context: DataContext, args: { highlightRoot: HighlightRoot, dataset: string, variables: Variable[], pipelineId: string, extrema: Extrema }) {
+	fetchResultHighlightValues(context: DataContext, args: { highlightRoot: HighlightRoot, dataset: string, variables: Variable[], pipelineId: string, requestIds: string[], extrema: Extrema }) {
 		return Promise.all([
 			context.dispatch('fetchResultHighlightSamples', {
 				highlightRoot: args.highlightRoot,
@@ -731,6 +764,13 @@ export const actions = {
 				dataset: args.dataset,
 				variables: args.variables,
 				pipelineId: args.pipelineId,
+				extrema: args.extrema
+			}),
+			context.dispatch('fetchPredictedHighlightSummaries', {
+				highlightRoot: args.highlightRoot,
+				dataset: args.dataset,
+				variables: args.variables,
+				requestIds: args.requestIds,
 				extrema: args.extrema
 			})
 		]);

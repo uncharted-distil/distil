@@ -19,7 +19,7 @@ export default Vue.extend({
 	props: {
 		groups: Array,
 		highlights: Object,
-		enableTypeChance: Boolean,
+		enableTypeChange: Boolean,
 		html: [ String, Object, Function ],
 		sort: {
 			default: (a: { key: string }, b: { key: string }) => {
@@ -534,7 +534,7 @@ export default Vue.extend({
 
 		// inject type headers
 		injectTypeChangeHeaders(group: Group, $elem: JQuery) {
-			if (this.enableTypeChance) {
+			if (this.enableTypeChange) {
 				const $slot = $('<span/>');
 				$elem.find('.group-header').append($slot);
 				const menu = new TypeChangeMenu(

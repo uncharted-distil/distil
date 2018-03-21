@@ -67,7 +67,7 @@ export const getters = {
 
 	getActivePipelineVariables(state: PipelineState, getters: any): Variable[] {
 		const trainingMap = getters.getActivePipelineTrainingMap;
-		const target = getters.getRouteTarget;
+		const target = getters.getRouteTargetVariable;
 		const variables = getters.getVariables;
 		return variables.filter(variable => trainingMap[variable.name] || variable.name === target);
 	}
