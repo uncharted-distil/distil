@@ -8,46 +8,42 @@
 			</div>
 		</div>
 		<div class="row flex-12 pb-3">
-				<results-variable-summaries
-					class="col-12 col-md-3 border-gray-right results-variable-summaries"
-					:variables="summaries"
-					:dataset="dataset"></results-variable-summaries>
-				<results-comparison
-					class="col-12 col-md-6 results-result-comparison"
-					:exclude-non-training="excludeNonTraining"></results-comparison>
-				<result-summaries
-					class="col-12 col-md-3 border-gray-left results-result-summaries"></result-summaries>
+			<variable-summaries
+				class="col-12 col-md-3 border-gray-right results-variable-summaries"
+				enable-search
+				enable-highlighting
+				instance-name="result-summary-facets"
+				:groups="groups"
+				:dataset="dataset"></variable-summaries>
+			<results-comparison
+				class="col-12 col-md-6 results-result-comparison"></results-comparison>
+			<result-summaries
+				class="col-12 col-md-3 border-gray-left results-result-summaries"></result-summaries>
 		</div>
 	</div>
 </template>
 
 <script lang="ts">
+import VariableSummaries from '../components/VariableSummaries.vue';
 import ResultsComparison from '../components/ResultsComparison.vue';
-import ResultsVariableSummaries from '../components/ResultsVariableSummaries.vue';
 import ResultSummaries from '../components/ResultSummaries.vue';
-import { getRequestIdsForDatasetAndTarget, getTrainingVariablesForPipelineId } from '../util/pipelines';
+import { getRequestIdsForDatasetAndTarget } from '../util/pipelines';
 import { getters as dataGetters, actions as dataActions } from '../store/data/module';
 import { getters as routeGetters } from '../store/route/module';
 import { actions as pipelineActions, getters as pipelineGetters } from '../store/pipelines/module';
-import { Variable, VariableSummary, Extrema } from '../store/data/index';
+import { Variable, Extrema } from '../store/data/index';
 import { Dictionary } from '../util/dict';
-import { HighlightRoot } from '../util/highlights';
-import { Filter } from '../util/filters';
+import { HighlightRoot } from '../store/data/index';
+import { Group, createGroups } from '../util/facets';
 import Vue from 'vue';
 
 export default Vue.extend({
 	name: 'results-view',
 
 	components: {
+		VariableSummaries,
 		ResultsComparison,
-		ResultsVariableSummaries,
 		ResultSummaries
-	},
-
-	data() {
-		return {
-			excludeNonTraining: true
-		};
 	},
 
 	computed: {
@@ -57,37 +53,24 @@ export default Vue.extend({
 		target(): string {
 			return routeGetters.getRouteTargetVariable(this.$store);
 		},
-		summaries(): VariableSummary[] {
-			if (this.excludeNonTraining) {
-				return dataGetters.getResultSummaries(this.$store).filter(summary => this.training[summary.name]);
-			}
-			return dataGetters.getResultSummaries(this.$store);
+		groups(): Group[] {
+			const summaries = dataGetters.getResultSummaries(this.$store).filter(summary => this.training[summary.name]);
+			return createGroups(summaries);
 		},
 		variables(): Variable[] {
-			return dataGetters.getVariables(this.$store);
+			return pipelineGetters.getActivePipelineVariables(this.$store);
 		},
 		requestIds(): string[] {
 			return getRequestIdsForDatasetAndTarget(this.$store.state.pipelineModule, this.dataset, this.target);
 		},
 		training(): Dictionary<boolean> {
-			const training = getTrainingVariablesForPipelineId(this.$store.state.pipelineModule, this.pipelineId);
-			const trainingMap = {};
-			training.forEach(t => {
-				trainingMap[t] = true;
-			});
-			return trainingMap;
+			return pipelineGetters.getActivePipelineTrainingMap(this.$store);
 		},
 		pipelineId(): string {
 			return routeGetters.getRoutePipelineId(this.$store);
 		},
 		sessionId(): string {
 			return pipelineGetters.getPipelineSessionID(this.$store);
-		},
-		filters(): Filter[] {
-			return routeGetters.getDecodedFilters(this.$store);
-		},
-		filterStr(): string {
-			return routeGetters.getRouteFilters(this.$store);
 		},
 		highlightRoot(): HighlightRoot {
 			return routeGetters.getDecodedHighlightRoot(this.$store);
@@ -111,9 +94,11 @@ export default Vue.extend({
 		highlightRootStr() {
 			dataActions.fetchResultHighlightValues(this.$store, {
 				dataset: this.dataset,
-				filters: this.filters,
 				highlightRoot: this.highlightRoot,
-				pipelineId: this.pipelineId
+				pipelineId: this.pipelineId,
+				requestIds: this.requestIds,
+				extrema: this.predictedExtrema,
+				variables: this.variables
 			});
 		},
 		pipelineId() {
@@ -137,27 +122,15 @@ export default Vue.extend({
 			});
 			dataActions.fetchResultHighlightValues(this.$store, {
 				dataset: this.dataset,
-				filters: this.filters,
 				highlightRoot: this.highlightRoot,
-				pipelineId: this.pipelineId
+				pipelineId: this.pipelineId,
+				requestIds: this.requestIds,
+				extrema: this.predictedExtrema,
+				variables: this.variables
 			});
 			dataActions.fetchResultTableData(this.$store, {
 				dataset: this.dataset,
-				pipelineId: this.pipelineId,
-				filters: this.filters,
-			});
-		},
-		filterStr() {
-			dataActions.fetchResultHighlightValues(this.$store, {
-				dataset: this.dataset,
-				filters: this.filters,
-				highlightRoot: this.highlightRoot,
 				pipelineId: this.pipelineId
-			});
-			dataActions.fetchResultTableData(this.$store, {
-				dataset: this.dataset,
-				pipelineId: this.pipelineId,
-				filters: this.filters,
 			});
 		}
 	},
@@ -200,6 +173,14 @@ export default Vue.extend({
 								requestIds: this.requestIds,
 								extrema: this.predictedExtrema
 							});
+							dataActions.fetchResultHighlightValues(this.$store, {
+								dataset: this.dataset,
+								highlightRoot: this.highlightRoot,
+								pipelineId: this.pipelineId,
+								requestIds: this.requestIds,
+								extrema: this.predictedExtrema,
+								variables: this.variables
+							});
 						});
 						dataActions.fetchResidualsExtremas(this.$store, {
 							dataset: this.dataset,
@@ -211,16 +192,9 @@ export default Vue.extend({
 								extrema: this.residualExtrema
 							});
 						});
-						dataActions.fetchResultHighlightValues(this.$store, {
-							dataset: this.dataset,
-							filters: this.filters,
-							highlightRoot: this.highlightRoot,
-							pipelineId: this.pipelineId
-						});
 						dataActions.fetchResultTableData(this.$store, {
 							dataset: this.dataset,
-							pipelineId: this.pipelineId,
-							filters: this.filters,
+							pipelineId: this.pipelineId
 						});
 					});
 				});

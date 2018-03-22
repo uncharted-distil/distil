@@ -61,11 +61,6 @@ export const mutations = {
 		state.resultExtrema = null;
 	},
 
-	// sets the current filtered data into the store
-	setFilteredData(state: DataState, filteredData: Data) {
-		state.filteredData = filteredData;
-	},
-
 	// sets the current selected data into the store
 	setSelectedData(state: DataState, selectedData: Data) {
 		state.selectedData = selectedData;
@@ -81,7 +76,35 @@ export const mutations = {
 		state.resultData = resultData;
 	},
 
-	setHighlightedValues(state: DataState, highlightedValues: Dictionary<string[]>) {
-		state.highlightedValues = highlightedValues;
+	updateHighlightSamples(state: DataState, samples: Dictionary<string[]>) {
+		state.highlightValues.samples = samples;
+	},
+
+	updateHighlightSummaries(state: DataState, summary: VariableSummary) {
+		if (!summary) {
+			return;
+		}
+		const index = _.findIndex(state.highlightValues.summaries, s => {
+			return s.name === summary.name;
+		});
+		if (index !== -1) {
+			Vue.set(state.highlightValues.summaries, index, summary);
+			return;
+		}
+		state.highlightValues.summaries.push(summary);
+	},
+
+	updatePredictedHighlightSummaries(state: DataState, summary: VariableSummary) {
+		if (!summary) {
+			return;
+		}
+		const index = _.findIndex(state.highlightValues.summaries, s => {
+			return s.pipelineId === summary.pipelineId;
+		});
+		if (index !== -1) {
+			Vue.set(state.highlightValues.summaries, index, summary);
+			return;
+		}
+		state.highlightValues.summaries.push(summary);
 	}
 }

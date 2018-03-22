@@ -4,6 +4,7 @@ import { TargetRow, FieldInfo } from '../store/data/index';
 import { PipelineInfo, PIPELINE_UPDATED, PIPELINE_COMPLETED } from '../store/pipelines/index';
 import { DistilState } from '../store/store';
 import { Dictionary } from './dict';
+import { FilterParams } from './filters';
 import { ActionContext } from 'vuex';
 import axios from 'axios';
 import localStorage from 'store';
@@ -200,7 +201,8 @@ export function getSummary(
 	pipeline: PipelineInfo,
 	nameFunc: (PipelineInfo) => string,
 	labelFunc: (PipelineInfo) => string,
-	updateFunction: (DataContext, VariableSummary) => void): Promise<any> {
+	updateFunction: (DataContext, VariableSummary) => void,
+	filters: FilterParams): Promise<any> {
 
 	const name = nameFunc(pipeline);
 	const label = labelFunc(pipeline);
@@ -220,7 +222,7 @@ export function getSummary(
 	}
 
 	// return promise
-	return axios.get(`${endpoint}/${resultId}`)
+	return axios.post(`${endpoint}/${resultId}`, filters ? filters: {})
 		.then(response => {
 			// save the histogram data
 			const histogram = response.data.histogram;
@@ -243,7 +245,8 @@ export function getSummaries(
 	pipelines: PipelineInfo[],
 	nameFunc: (PipelineInfo) => string,
 	labelFunc: (PipelineInfo) => string,
-	updateFunction: (DataContext, VariableSummary) => void): Promise<any> {
+	updateFunction: (DataContext, VariableSummary) => void,
+	filters: FilterParams): Promise<any> {
 
 	// return as singular promise
 	const promises = pipelines.map(pipeline => {
@@ -253,7 +256,8 @@ export function getSummaries(
 			pipeline,
 			nameFunc,
 			labelFunc,
-			updateFunction);
+			updateFunction,
+			filters);
 	});
 	return Promise.all(promises);
 }

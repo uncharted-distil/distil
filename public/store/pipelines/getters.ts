@@ -1,4 +1,7 @@
+import _ from 'lodash';
+import { Variable } from '../data/index';
 import { PipelineState, PipelineInfo, PIPELINE_RUNNING, PIPELINE_UPDATED, PIPELINE_COMPLETED } from './index';
+import { Dictionary } from '../../util/dict';
 import localStorage from 'store';
 
 function sortPipelines(a: PipelineInfo, b: PipelineInfo): number {
@@ -42,5 +45,32 @@ export const getters = {
 
 	getPipelines(state: PipelineState): PipelineInfo[] {
 		return Array.from(state.pipelineRequests).slice().sort(sortPipelines);
+	},
+
+	getActivePipeline(state: PipelineState, getters: any): PipelineInfo {
+		const pipelineId = getters.getRoutePipelineId;
+		return _.find(state.pipelineRequests, pipeline => pipeline.pipelineId === pipelineId);
+	},
+
+	getActivePipelineTrainingMap(state: PipelineState, getters: any): Dictionary<boolean> {
+		const activePipeline = getters.getActivePipeline;
+		if (!activePipeline || !activePipeline.features) {
+			return {};
+		}
+		const training = activePipeline.features.filter(f => f.featureType === 'train').map(f => f.featureName);
+		const trainingMap = {};
+		training.forEach(t => {
+			trainingMap[t] = true;
+		});
+		return trainingMap;
+	},
+
+	getActivePipelineVariables(state: PipelineState, getters: any): Variable[] {
+		const trainingMap = getters.getActivePipelineTrainingMap;
+		const target = getters.getRouteTargetVariable;
+		const variables = getters.getVariables;
+		return variables.filter(variable => trainingMap[variable.name] || variable.name === target);
 	}
+
+
 }

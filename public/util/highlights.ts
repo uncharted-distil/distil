@@ -1,5 +1,5 @@
 import { Store } from 'vuex';
-import { Data } from '../store/data/index';
+import { Data, Highlight, HighlightRoot } from '../store/data/index';
 import { Dictionary } from '../util/dict';
 import { Filter, CATEGORICAL_FILTER, NUMERICAL_FILTER } from '../util/filters';
 import { getters as routeGetters } from '../store/route/module';
@@ -7,22 +7,6 @@ import { getters as dataGetters } from '../store/data/module';
 import { overlayRouteEntry} from '../util/routes'
 import _ from 'lodash';
 import Vue from 'vue';
-
-export interface Range {
-	to: number;
-	from: number;
-}
-
-export interface HighlightRoot {
-	context: string;
-	key: string;
-	value: any;
-}
-
-export interface Highlights {
-	root: HighlightRoot;
-	values: Dictionary<string[]>;
-}
 
 export function encodeHighlights(highlightRoot: HighlightRoot): string {
 	if (_.isEmpty(highlightRoot)) {
@@ -38,22 +22,22 @@ export function decodeHighlights(highlightRoot: string): HighlightRoot {
 	return JSON.parse(atob(highlightRoot)) as HighlightRoot;
 }
 
-// Highlights table rows with values that are currently marked as highlighted.  Uses a supplied highlight
+// Highlight table rows with values that are currently marked as highlighted.  Uses a supplied highlight
 // context ID to enure that something like a table selection doesn't trigger additional table highlight
 // updates.
-export function updateTableHighlights(tableData: Dictionary<any>[], highlightValues: Highlights, highlightContext: string) {
+export function updateTableHighlights(tableData: Dictionary<any>[], highlight: Highlight, highlightContext: string) {
 
 	// skip highlighting when the context is the originating table
-	if (_.get(highlightValues, 'root.context', highlightContext) !== highlightContext) {
+	if (_.get(highlight, 'root.context', highlightContext) !== highlightContext) {
 		// for the table, we're interested only in rows that have data that matches the value/range
 		// described by the highlight root
 		_.forEach(tableData, (row, rowNum) => {
-			const value = row[highlightValues.root.key];
+			const value = row[highlight.root.key];
 			// range case (root selection is numerical facet)
-			if (_.get(highlightValues, 'root.value.from', NaN) <= value &&
-				_.get(highlightValues, 'root.value.to', NaN) >= value) {
+			if (_.get(highlight, 'root.value.from', NaN) <= value &&
+				_.get(highlight, 'root.value.to', NaN) >= value) {
 				row._rowVariant = 'info';
-			} else if (_.get(highlightValues, 'root.value') === value) {
+			} else if (_.get(highlight, 'root.value') === value) {
 				// single value case (root selection is a categorical facet)
 				row._rowVariant = 'info';
 			} else {
@@ -83,38 +67,44 @@ export function scrollToFirstHighlight(component: Vue, refName: string, smoothSc
 	});
 }
 
-export function createFilterFromHighlightRoot(highlightRoot: HighlightRoot): Filter {
+export function createFilterFromHighlightRoot(highlightRoot: HighlightRoot, mode: string): Filter {
+	if (highlightRoot.value == null) {
+		return null;
+	}
 	if (_.isString(highlightRoot.value)) {
 		return {
 			name: highlightRoot.key,
 			type: CATEGORICAL_FILTER,
-			enabled: true,
+			mode: mode,
 			categories: [highlightRoot.value]
 		};
 	}
-	return {
-		name: highlightRoot.key,
-		type: NUMERICAL_FILTER,
-		enabled: true,
-		min: highlightRoot.value.from,
-		max: highlightRoot.value.to
-	};
+	if (highlightRoot.value.from !== undefined && highlightRoot.value.to !== undefined) {
+		return {
+			name: highlightRoot.key,
+			type: NUMERICAL_FILTER,
+			mode: mode,
+			min: highlightRoot.value.from,
+			max: highlightRoot.value.to
+		};
+	}
+	return null;
 }
 
-export function parseHighlightValues(data: Data): Dictionary<string[]> {
-	const highlights: Dictionary<string[]> = {};
+export function parseHighlightSamples(data: Data): Dictionary<string[]>  {
+	const samples: Dictionary<string[]> = {};
 	for (let rowIdx = 0; rowIdx < data.values.length; rowIdx++) {
 		for (const [colIdx, col] of data.columns.entries()) {
 			const val = data.values[rowIdx][colIdx];
-			let colData = highlights[col];
+			let colData = samples[col];
 			if (!colData) {
 				colData = [];
-				highlights[col] = colData;
+				samples[col] = colData;
 			}
 			colData.push(val);
 		}
 	}
-	return highlights;
+	return samples;
 }
 
 export function updateHighlightRoot(component: Vue, highlightRoot: HighlightRoot) {
@@ -131,14 +121,16 @@ export function clearHighlightRoot(component: Vue) {
 	component.$router.push(entry);
 }
 
-export function getHighlights(store: Store<any>): Highlights {
+export function getHighlights(store: Store<any>): Highlight {
 	const rootHighlights = routeGetters.getDecodedHighlightRoot(store);
 	if (!rootHighlights) {
-		return {} as Highlights;
+		return {} as Highlight;
 	}
-	const values = dataGetters.getHighlightedValues(store);
 	return {
 		root: rootHighlights,
-		values: values
+		values: {
+			samples: dataGetters.getHighlightedSamples(store),
+			summaries: dataGetters.getHighlightedSummaries(store)
+		}
 	};
 }

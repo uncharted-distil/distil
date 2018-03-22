@@ -23,7 +23,7 @@ type DatasetResult struct {
 // it contains the search terms if set, and if unset, flags that a list of all
 // datasets should be returned.  The full list will be contain names only,
 // descriptions and variable lists will not be included.
-func DatasetsHandler(ctor model.MetadataStorageCtor) func(http.ResponseWriter, *http.Request) {
+func DatasetsHandler(metaCtor model.MetadataStorageCtor) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// get index name
 		index := pat.Param(r, "index")
@@ -34,7 +34,7 @@ func DatasetsHandler(ctor model.MetadataStorageCtor) func(http.ResponseWriter, *
 			return
 		}
 		// get elasticsearch client
-		storage, err := ctor()
+		storage, err := metaCtor()
 		if err != nil {
 			handleError(w, err)
 			return

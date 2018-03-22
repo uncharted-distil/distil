@@ -16,19 +16,19 @@ import (
 
 // ExportHandler exports the caller supplied pipeline by calling through to the compute
 // server export functionality.
-func ExportHandler(storageCtor model.PipelineStorageCtor, metaStorageCtor model.MetadataStorageCtor, client *pipeline.Client, exportPath string) func(http.ResponseWriter, *http.Request) {
+func ExportHandler(pipelineCtor model.PipelineStorageCtor, metaCtor model.MetadataStorageCtor, client *pipeline.Client, exportPath string) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// extract route parameters
 		pipelineID := pat.Param(r, "pipeline-id")
 		sessionID := pat.Param(r, "session")
 
 		// get the pipeline target
-		pipelineStorage, err := storageCtor()
+		pipeline, err := pipelineCtor()
 		if err != nil {
 			handleError(w, err)
 			return
 		}
-		res, err := pipelineStorage.FetchResultMetadataByPipelineID(pipelineID)
+		res, err := pipeline.FetchResultMetadataByPipelineID(pipelineID)
 		if err != nil {
 			handleError(w, err)
 			return
@@ -42,19 +42,19 @@ func ExportHandler(storageCtor model.PipelineStorageCtor, metaStorageCtor model.
 		}
 
 		// get the initial target
-		request, err := pipelineStorage.FetchRequest(res.RequestID)
+		request, err := pipeline.FetchRequest(res.RequestID)
 		if err != nil {
 			handleError(w, err)
 			return
 		}
 
-		metaStorage, err := metaStorageCtor()
+		meta, err := metaCtor()
 		if err != nil {
 			handleError(w, err)
 			return
 		}
 
-		variable, err := metaStorage.FetchVariable(request.Dataset, "datasets", pipelineTarget)
+		variable, err := meta.FetchVariable(request.Dataset, "datasets", pipelineTarget)
 		if err != nil {
 			handleError(w, err)
 			return

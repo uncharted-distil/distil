@@ -13,13 +13,13 @@ func TestDatasetHashEqual(t *testing.T) {
 	filterParams0 := model.FilterParams{
 		Size: 0,
 		Filters: []*model.Filter{
-			model.NewNumericalFilter("feature_a", 0, 100),
+			model.NewNumericalFilter("feature_a", "include", 0, 100),
 		},
 	}
 	filterParams1 := model.FilterParams{
 		Size: 0,
 		Filters: []*model.Filter{
-			model.NewNumericalFilter("feature_a", 0, 100),
+			model.NewNumericalFilter("feature_a", "include", 0, 100),
 		},
 	}
 	hash0, err := getFilteredDatasetHash("dataset", "target", &filterParams0)
@@ -32,13 +32,13 @@ func TestDatasetHashNotEqual(t *testing.T) {
 	filterParams0 := model.FilterParams{
 		Size: 0,
 		Filters: []*model.Filter{
-			model.NewNumericalFilter("feature_a", 0, 100),
+			model.NewNumericalFilter("feature_a", "include", 0, 100),
 		},
 	}
 	filterParams1 := model.FilterParams{
 		Size: 1,
 		Filters: []*model.Filter{
-			model.NewNumericalFilter("feature_a", 0, 100),
+			model.NewNumericalFilter("feature_a", "include", 0, 100),
 		},
 	}
 	hash0, err := getFilteredDatasetHash("dataset", "target", &filterParams0)
@@ -111,8 +111,8 @@ func TestPersistFilteredData(t *testing.T) {
 	// Stubbed out params - not actually applied to stub data
 	filterParams := &model.FilterParams{
 		Filters: []*model.Filter{
-			model.NewNumericalFilter("int_a", 0, 100),
-			model.NewNumericalFilter("float_b", 5.0, 500.0),
+			model.NewNumericalFilter("int_a", "include", 0, 100),
+			model.NewNumericalFilter("float_b", "include", 5.0, 500.0),
 		},
 	}
 
@@ -132,8 +132,8 @@ func TestPersistFilteredData(t *testing.T) {
 	// Verify that changed params results in a new file being used
 	filterParamsMod := &model.FilterParams{
 		Filters: []*model.Filter{
-			model.NewNumericalFilter("int_a", 0, 100),
-			model.NewNumericalFilter("float_b", 10.0, 11.0),
+			model.NewNumericalFilter("int_a", "include", 0, 100),
+			model.NewNumericalFilter("float_b", "include", 10.0, 11.0),
 		},
 	}
 	datasetPathMod, err := PersistFilteredData(fetchFilteredData(t), fetchVariables(t), "./test_output", "test", "test", "feature1", filterParamsMod)

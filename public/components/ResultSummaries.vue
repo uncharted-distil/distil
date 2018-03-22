@@ -20,12 +20,10 @@
 		</div>
 		<p class="nav-link font-weight-bold">Actual</p>
 		<facets class="result-summaries-target"
-			@histogram-click="onHistogramClick"
-			@facet-click="onFacetClick"
+			@facet-click="onCategoricalClick"
+			@numerical-click="onNumericalClick"
 			@range-change="onRangeChange"
-			@facet-toggle="onFacetToggle"
 			:groups="targetGroups"
-			:filters="filters"
 			:highlights="highlights"></facets>
 		<p class="nav-link font-weight-bold">Predictions by Model</p>
 		<result-facets :regression="regressionEnabled"></result-facets>
@@ -57,17 +55,14 @@ import Facets from '../components/Facets.vue';
 import { createGroups, Group } from '../util/facets';
 import { overlayRouteEntry } from '../util/routes';
 import { getPipelineById, getTask } from '../util/pipelines';
-import { Filter } from '../util/filters';
 import { isTarget, getVarFromTarget, getTargetCol } from '../util/data';
-import { updateHighlightRoot, clearHighlightRoot, getHighlights } from '../util/highlights';
-import { VariableSummary, Extrema } from '../store/data/index';
-import { Highlights, Range } from '../util/highlights';
+import { getHighlights, updateHighlightRoot, clearHighlightRoot } from '../util/highlights';
+import { VariableSummary, Extrema, Highlight } from '../store/data/index';
 import { getters as dataGetters} from '../store/data/module';
 import { getters as routeGetters } from '../store/route/module';
 import { actions as appActions, getters as appGetters } from '../store/app/module';
-import vueSlider from 'vue-slider-component';
-import { createNumericalFilter, createCategoricalFilter, updateFilterRoute } from '../util/filters';
 import { EXPORT_SUCCESS_ROUTE } from '../store/route/index';
+import vueSlider from 'vue-slider-component';
 import Vue from 'vue';
 import _ from 'lodash';
 import 'font-awesome/css/font-awesome.css';
@@ -129,29 +124,21 @@ export default Vue.extend({
 			];
 		},
 
-		highlights(): Highlights {
+		highlights(): Highlight {
 			// find var marked as 'target' and set associated values as highlights
-			const highlights = getHighlights(this.$store);
+			const highlights = _.cloneDeep(getHighlights(this.$store));
 			if (_.isEmpty(highlights)) {
 				return highlights;
 			}
-			const facetHighlights = <Highlights>{
-				root: _.cloneDeep(highlights.root),
-				values: {}
-			};
-			_.forEach(highlights.values, (values, varName) => {
+			_.forEach(highlights.values.samples, (values, varName) => {
 				if (isTarget(varName)) {
-					facetHighlights.values[getVarFromTarget(varName)] = values;
+					highlights.values.samples[getVarFromTarget(varName)] = values;
 				}
 			});
 			if (highlights.root && isTarget(highlights.root.key)) {
-				facetHighlights.root.key = getVarFromTarget(highlights.root.key);
+				highlights.root.key = getVarFromTarget(highlights.root.key);
 			}
-			return facetHighlights;
-		},
-
-		filters(): Filter[] {
-			return routeGetters.getDecodedFilters(this.$store);
+			return highlights;
 		},
 
 		range(): number {
@@ -181,7 +168,16 @@ export default Vue.extend({
 
 		targetGroups(): Group[] {
 			if (this.targetSummary) {
-				return createGroups([ this.targetSummary ], false, true);
+				const target = createGroups([ this.targetSummary ]);
+				if (this.highlights.root) {
+					const group = target[0];
+					if (group.key === this.highlights.root.key) {
+						group.facets.forEach(facet => {
+							facet.filterable = true;
+						});
+					}
+				}
+				return target;
 			}
 			return [];
 		},
@@ -223,6 +219,10 @@ export default Vue.extend({
 			return pipelineGetters.getPipelineSessionID(this.$store);
 		},
 
+		instanceName(): string {
+			return 'groundTruth';
+		},
+
 		isAborted(): boolean {
 			return appGetters.isAborted(this.$store);
 		}
@@ -230,18 +230,9 @@ export default Vue.extend({
 
 	methods: {
 
-		onRangeChange(key: string, value: { from: { label: string[] }, to: { label: string[] } }) {
-			const filter = createNumericalFilter(key, value);
-			updateFilterRoute(this, filter);
-		},
-
-		onFacetToggle(key: string, values: string[]) {
-			const filter = createCategoricalFilter(key, values);
-			updateFilterRoute(this, filter);
-		},
-
-		onHistogramClick(context: string, key: string, value: Range) {
+		onCategoricalClick(context: string, key: string, value: string) {
 			if (key && value) {
+				// extract the var name from the key
 				const colKey = getTargetCol(this.target);
 				updateHighlightRoot(this, {
 					context: context,
@@ -253,17 +244,25 @@ export default Vue.extend({
 			}
 		},
 
-		onFacetClick(context: string, key: string, value: string) {
-			if (key && value) {
+		onNumericalClick(key: string) {
+			if (!this.highlights.root || this.highlights.root.key !== key) {
 				const colKey = getTargetCol(this.target);
 				updateHighlightRoot(this, {
-					context: context,
+					context: this.instanceName,
 					key: colKey,
-					value: value
+					value: null
 				});
-			} else {
-				clearHighlightRoot(this);
 			}
+		},
+
+		onRangeChange(context: string, key: string, value: { from: { label: string[] }, to: { label: string[] } }) {
+			const colKey = getTargetCol(this.target);
+			updateHighlightRoot(this, {
+				context: context,
+				key: colKey,
+				value: value
+			});
+			this.$emit('range-change', key, value);
 		},
 
 		updateThreshold(min: number, max: number) {

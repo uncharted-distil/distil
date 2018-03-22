@@ -15,21 +15,17 @@
 				{{metricName(score.metric)}}: {{score.value}}
 			</b-badge>
 			<facets v-if="resultGroups.length" class="result-container"
-				@histogram-click="onResultHistogramClick"
-				@facet-click="onResultFacetClick"
+				@facet-click="onResultCategoricalClick"
+				@numerical-click="onResultNumericalClick"
 				@range-change="onResultRangeChange"
-				@facet-toggle="onResultFacetToggle"
 				:groups="resultGroups"
 				:highlights="highlights"
-				:filters="filters"
 				:html="residualHtml">
 			</facets>
 			<facets v-if="residualGroups.length" class="residual-container"
-				@histogram-click="onResidualsHistogramClick"
-				@range-change="onResidualRangeChange"
+				@numerical-click="onResidualNumericalClick"
 				:groups="residualGroups"
 				:highlights="highlights"
-				:filters="filters"
 				:html="resultHtml">
 			</facets>
 		</div>
@@ -50,14 +46,11 @@ import Vue from 'vue';
 import Facets from '../components/Facets';
 import { createGroups, Group } from '../util/facets';
 import { getPredictedCol, getErrorCol } from '../util/data';
-import { VariableSummary } from '../store/data/index';
-import { Highlights, Range, getHighlights } from '../util/highlights';
-import { overlayRouteEntry } from '../util/routes';
-import { Filter } from '../util/filters';
+import { Highlight } from '../store/data/index';
 import { getters as routeGetters } from '../store/route/module';
 import { getPipelineById, getMetricDisplayName } from '../util/pipelines';
-import { createNumericalFilter, createCategoricalFilter, updateFilterRoute } from '../util/filters';
-import { updateHighlightRoot, clearHighlightRoot } from '../util/highlights';
+import { overlayRouteEntry } from '../util/routes';
+import { getHighlights, updateHighlightRoot, clearHighlightRoot } from '../util/highlights';
 
 export default Vue.extend({
 	name: 'result-group',
@@ -106,72 +99,52 @@ export default Vue.extend({
 		},
 
 		resultGroups(): Group[] {
-			if (this.predicted()) {
-				return createGroups([this.predicted()], false, true);
+			if (this.predictedSummary) {
+				const predicted = createGroups([ this.predictedSummary ]);
+				if (this.highlights.root) {
+					const group = predicted[0];
+					if (group.key === this.highlights.root.key) {
+						group.facets.forEach(facet => {
+							facet.filterable = true;
+						});
+					}
+				}
+				return predicted;
 			}
 			return [];
 		},
 
 		residualGroups(): Group[] {
-			if (this.residuals()) {
-				return createGroups([this.residuals()], false, true);
+			if (this.residualsSummary) {
+				return createGroups([this.residualsSummary]);
 			}
 			return [];
 		},
 
-		filters(): Filter[] {
-			return routeGetters.getDecodedFilters(this.$store);
-		},
-
-		highlights(): Highlights {
+		highlights(): Highlight {
 			return getHighlights(this.$store);
 		},
 
 		currentClass(): string {
 			const selectedId = routeGetters.getRoutePipelineId(this.$store);
-			const predicted = this.predicted();
+			const predicted = this.predictedSummary;
 			return (predicted && predicted.pipelineId === selectedId)
 				? 'result-group-selected result-group' : 'result-group';
 		}
 	},
 
 	methods: {
+
 		metricName(metric): string {
 			return getMetricDisplayName(metric);
 		},
 
-		onResultRangeChange(key: string, value: { from: { label: string[] }, to: { label: string[] } }) {
-			const filter = createNumericalFilter(this.predictedColumnName, value);
-			updateFilterRoute(this, filter);
-		},
-
-		onResidualRangeChange(key: string, value: { from: { label: string[] }, to: { label: string[] } }) {
-			const filter = createNumericalFilter(this.errorColumnName, value);
-			updateFilterRoute(this, filter);
-		},
-
-		onResultHistogramClick(context: string, key: string, value: any) {
-			this.histogramHighlights(context, this.predictedColumnName, value);
-		},
-
-		onResidualsHistogramClick(context, key: string, value: any) {
-			this.histogramHighlights(context, this.errorColumnName, value);
-		},
-
-		onResultFacetToggle(key: string, values: string[]) {
-			const filter = createCategoricalFilter(this.predictedColumnName, values);
-			updateFilterRoute(this, filter);
-		},
-
-		onResultFacetClick(context: string, key: string, value: string) {
-			this.histogramHighlights(context, this.predictedColumnName, value);
-		},
-
-		histogramHighlights(context: string, key: string, value: string | Range) {
-			if (value) {
+		onResultCategoricalClick(context: string, key: string, value: string) {
+			if (key && value) {
+				// extract the var name from the key
 				updateHighlightRoot(this, {
 					context: context,
-					key: key,
+					key: this.predictedColumnName,
 					value: value
 				});
 			} else {
@@ -179,27 +152,46 @@ export default Vue.extend({
 			}
 		},
 
+		onResultNumericalClick(key: string) {
+			if (!this.highlights.root || this.highlights.root.key !== key) {
+				updateHighlightRoot(this, {
+					context: this.instanceName,
+					key: this.predictedColumnName,
+					value: null
+				});
+			}
+		},
+
+		onResultRangeChange(context: string, key: string, value: { from: { label: string[] }, to: { label: string[] } }) {
+			updateHighlightRoot(this, {
+				context: context,
+				key: this.predictedColumnName,
+				value: value
+			});
+			this.$emit('range-change', key, value);
+		},
+
+		onResidualNumericalClick(key: string) {
+		},
+
+		/*
+		onResidualRangeChange(key: string, value: { from: { label: string[] }, to: { label: string[] } }) {
+			const filter = createNumericalFilter(this.errorColumnName, value);
+			addFilterToRoute(this, filter);
+		},
+
+		onResidualsHistogramClick(context, key: string, value: any) {
+			this.histogramHighlights(context, this.errorColumnName, value);
+		},
+		*/
+
 		click() {
-			if (this.predicted()) {
+			if (this.predictedSummary) {
 				const routeEntry = overlayRouteEntry(this.$route, {
-					pipelineId: this.predicted().pipelineId
+					pipelineId: this.predictedSummary.pipelineId
 				});
 				this.$router.push(routeEntry);
 			}
-		},
-
-		predicted(): VariableSummary {
-			if (this.predictedSummary) {
-				return this.predictedSummary as VariableSummary;
-			}
-			return null;
-		},
-
-		residuals(): VariableSummary {
-			if (this.residualsSummary) {
-				return this.residualsSummary as VariableSummary;
-			}
-			return null;
 		}
 	}
 });

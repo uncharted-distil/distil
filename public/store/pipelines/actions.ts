@@ -32,8 +32,7 @@ function updateCurrentPipelineResults(context: any, req: PipelineRequest, res: P
 	if (res.pipelineId === currentPipelineId) {
 		context.dispatch('fetchResultTableData', {
 			dataset: req.dataset,
-			pipelineId: res.pipelineId,
-			filters: context.getters.getDecodedFilters
+			pipelineId: res.pipelineId
 		});
 	}
 
@@ -53,7 +52,7 @@ function updateCurrentPipelineResults(context: any, req: PipelineRequest, res: P
 			context.dispatch('fetchResultSummaries', {
 				dataset: req.dataset,
 				pipelineId: res.pipelineId,
-				variables: context.getters.getVariables,
+				variables: context.getters.getActivePipelineVariables,
 				extrema: context.getters.getPredictedExtrema
 			});
 		}

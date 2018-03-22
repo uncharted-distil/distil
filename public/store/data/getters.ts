@@ -1,6 +1,6 @@
 import _ from 'lodash';
 import { FieldInfo, Variable, Data, DataState, Datasets, VariableSummary, TargetRow, TableRow, Extrema } from './index';
-import { Filter, EMPTY_FILTER } from '../../util/filters';
+import { FilterParams, Filter } from '../../util/filters';
 import { TARGET_POSTFIX, PREDICTED_POSTFIX, getTargetCol, getVarFromTarget, getPredictedCol, getErrorCol } from '../../util/data';
 import { Dictionary } from '../../util/dict';
 import { getPredictedIndex, getErrorIndex, getTargetIndex } from '../../util/data';
@@ -103,48 +103,24 @@ export const getters = {
 		return state.residualSummaries;
 	},
 
-	getSelectedFilters(state: DataState, getters: any): Filter[] {
+	getFilters(state: DataState, getters: any): Filter[] {
+		const filterParams = getters.getDecodedFilterParams;
+		return filterParams.filters.slice();
+	},
 
-		const existing = getters.getDecodedFilters as Filter[];
-		const filters: Filter[] = [];
-
+	getSelectedFilterParams(state: DataState, getters: any): FilterParams {
+		const filterParams = _.cloneDeep(getters.getDecodedFilterParams);
 		// add training filters
 		const training = getters.getRouteTrainingVariables as string;
 		if (training) {
-			training.split(',').forEach(variable => {
-				const index = _.findIndex(existing, filter => {
-					return filter.name == variable;
-				});
-				if (index === -1) {
-					filters.push({
-						name: variable,
-						type: EMPTY_FILTER,
-						enabled: false
-					});
-				} else {
-					filters.push(existing[index]);
-				}
-			});
+			filterParams.variables = filterParams.variables.concat(training.split(','));
 		}
-
 		// add target filter
 		const target = getters.getRouteTargetVariable as string;
 		if (target) {
-			const index = _.findIndex(existing, filter => {
-				return filter.name == target;
-			});
-			if (index === -1) {
-				filters.push({
-					name: target,
-					type: EMPTY_FILTER,
-					enabled: false
-				});
-			} else {
-				filters.push(existing[index]);
-			}
+			filterParams.variables.push(target);
 		}
-
-		return filters;
+		return filterParams;
 	},
 
 	getAvailableVariableSummaries(state: DataState, getters: any): VariableSummary[] {
@@ -165,43 +141,6 @@ export const getters = {
 		return state.variableSummaries.filter(variable => {
 			return target.toLowerCase() === variable.name.toLowerCase();
 		});
-	},
-
-	hasFilteredData(state: DataState): boolean {
-		return !!state.filteredData;
-	},
-
-	getFilteredData(state: DataState): Data {
-		return state.filteredData;
-	},
-
-	getFilteredDataNumRows(state: DataState): number {
-		return state.filteredData ? state.filteredData.numRows : 0;
-	},
-
-	getFilteredDataItems(state: DataState, getters: any): Dictionary<any>[] {
-		return getDataItems(state.filteredData, getters.getVariableTypesMap);
-	},
-
-	getFilteredDataFields(state: DataState): Dictionary<FieldInfo> {
-		const data = state.filteredData;
-		if (validateData(data)) {
-			const variables = state.variables;
-			const types = {};
-			variables.forEach(variable => {
-				types[variable.name] = variable.type;
-			});
-			const result: Dictionary<FieldInfo> = {} as any;
-			for (const col of data.columns) {
-				result[col] = {
-					label: col,
-					type: types[col],
-					sortable: true
-				};
-			}
-			return result;
-		}
-		return {};
 	},
 
 	hasResultData(state: DataState): boolean {
@@ -300,7 +239,7 @@ export const getters = {
 		return getDataItems(state.selectedData, getters.getVariableTypesMap);
 	},
 
-	getSelectedDataFields(state: DataState): Dictionary<FieldInfo> {
+	getSelectedDataFields(state: DataState, getters: any): Dictionary<FieldInfo> {
 		const data = state.selectedData;
 		if (validateData(data)) {
 			const vmap = getters.getVariableTypesMap;
@@ -333,7 +272,7 @@ export const getters = {
 		return getDataItems(state.excludedData, getters.getVariableTypesMap);
 	},
 
-	getExcludedDataFields(state: DataState): Dictionary<FieldInfo> {
+	getExcludedDataFields(state: DataState, getters: any): Dictionary<FieldInfo> {
 		const data = state.excludedData;
 		if (validateData(data)) {
 			const vmap = getters.getVariableTypesMap;
@@ -350,8 +289,13 @@ export const getters = {
 		return {};
 	},
 
-	getHighlightedValues(state: DataState) {
-		return state.highlightedValues;
+	getHighlightedSamples(state: DataState): Dictionary<string[]> {
+		return state.highlightValues ? state.highlightValues.samples : {};
+	},
+
+
+	getHighlightedSummaries(state: DataState): VariableSummary[] {
+		return state.highlightValues ? state.highlightValues.summaries : null;
 	},
 
 	getPredictedExtrema(state: DataState): Extrema {

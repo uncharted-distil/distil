@@ -4,19 +4,19 @@
 		<variable-facets
 			ref="facets"
 			enable-search
-			enable-facet-filtering
-			type-change
-			instance-name="trainingVars"
-			:variables="variables"
+			enable-highlighting
+			enable-type-change
+			:instance-name="instanceName"
+			:groups="groups"
 			:dataset="dataset"
 			:html="html">
-			<div v-if="variables.length > 0" class="pb-2">
+			<div v-if="groups.length > 0" class="pb-2">
 				<b-button size="sm" variant="outline-secondary" @click="removeAll">Remove All</b-button>
 			</div>
 			<div>
 				{{subtitle}}
 			</div>
-			<div v-if="variables.length === 0">
+			<div v-if="groups.length === 0">
 				<i class="no-selections-icon fa fa-arrow-circle-left"></i>
 			</div>
 		</variable-facets>
@@ -29,10 +29,12 @@ import { overlayRouteEntry } from '../util/routes';
 import VariableFacets from '../components/VariableFacets';
 import 'font-awesome/css/font-awesome.css';
 import Vue from 'vue';
-import { getters as dataGetters} from '../store/data/module';
+import { Highlight } from '../store/data/index';
+import { getters as dataGetters } from '../store/data/module';
 import { getters as routeGetters } from '../store/route/module';
-import { VariableSummary } from '../store/data/index';
-import { Group } from '../util/facets';
+import { Group, createGroups } from '../util/facets';
+import { getHighlights } from '../util/highlights';
+import { removeFiltersByName } from '../util/filters';
 
 export default Vue.extend({
 	name: 'training-variables',
@@ -45,11 +47,18 @@ export default Vue.extend({
 		dataset(): string {
 			return routeGetters.getRouteDataset(this.$store);
 		},
-		variables(): VariableSummary[] {
-			return dataGetters.getTrainingVariableSummaries(this.$store);
+		instanceName(): string {
+			return 'trainingVars';
+		},
+		highlights(): Highlight {
+			return getHighlights(this.$store);
+		},
+		groups(): Group[] {
+			const summaries = dataGetters.getTrainingVariableSummaries(this.$store);
+		 	return createGroups(summaries);
 		},
 		subtitle(): string {
-			return `${this.variables.length} features selected (sorted by interestingness)`;
+			return `${this.groups.length} features selected (sorted by interestingness)`;
 		},
 		html(): (Group) => HTMLDivElement {
 			return (group: Group) => {
@@ -64,6 +73,7 @@ export default Vue.extend({
 						training: training.join(',')
 					});
 					this.$router.push(entry);
+					removeFiltersByName(this, group.key);
 				});
 				container.appendChild(remove);
 				return container;

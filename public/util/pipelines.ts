@@ -61,16 +61,6 @@ export function getPipelinesForDatasetAndTarget(state: PipelineState, dataset: s
 	return pipelines;
 }
 
-export function getTrainingVariablesForPipelineId(state: PipelineState, pipelineId: string): string[] {
-	let res = null;
-	state.pipelineRequests.forEach(pipeline => {
-		if (pipeline.pipelineId === pipelineId) {
-			res = pipeline;
-		}
-	});
-	return (res && res.features) ? res.features.filter(f => f.featureType === 'train').map(f => f.featureName) : [];
-}
-
 // Gets a task object based on a variable type.
 export function getTask(varType: string): Task {
 	const lowerType = _.toLower(varType);

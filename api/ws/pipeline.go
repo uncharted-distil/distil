@@ -199,23 +199,26 @@ func handleCreatePipelines(conn *Connection, client *pipeline.Client, metadataCt
 		return
 	}
 
-	// parse the features out of the create msg - done as a separate step because their structure isn't entirely
-	// fixed
-	filters, err := model.ParseFilterParamsJSON(clientCreateMsg.Filters)
+	// parse the features out of the create msg - done as a separate step
+	// because their structure isn't entirely fixed
+	params := make(map[string]interface{})
+	err = json.Unmarshal(clientCreateMsg.Filters, &params)
 	if err != nil {
 		handleErr(conn, msg, err)
 		return
 	}
-	// NOTE: IF THE SIZE IS NOT SET THEN THE DEFAULT IS USED (100 rows only)!!!
+
+	filters, err := model.ParseFilterParamsFromJSON(params)
+	if err != nil {
+		handleErr(conn, msg, err)
+		return
+	}
 	// NOTE: this could be done on the client side, but I am not sure if that
 	// is more elegant or not.
 	filters.Size = -1
 
 	// NOTE: D3M index field is needed in the persisted data.
-	filters.Filters = append(filters.Filters, &model.Filter{
-		Name: "d3mIndex",
-		Type: "empty",
-	})
+	filters.Variables = append(filters.Variables, "d3mIndex")
 
 	// initialize the storage
 	dataStorage, err := dataCtor()
@@ -241,7 +244,7 @@ func handleCreatePipelines(conn *Connection, client *pipeline.Client, metadataCt
 	// persist the filtered dataset if necessary
 	fetchFilteredData := func(dataset string, index string, filterParams *model.FilterParams) (*model.FilteredData, error) {
 		// fetch the whole data and include the target feature
-		return dataStorage.FetchData(dataset, index, filterParams, false, false)
+		return dataStorage.FetchData(dataset, index, filterParams, false)
 	}
 	fetchVariable := func(dataset string, index string) ([]*model.Variable, error) {
 		return metadata.FetchVariables(dataset, index, true)
@@ -493,8 +496,8 @@ func handleCreatePipelinesSuccess(conn *Connection, msg *Message, proxy *pipelin
 	}
 }
 
-// TODO: We don't store this anywhere, so we end up running an ES query to get the var list.  This should
-// be cached by Redis, but still worth looking into storing some of the dataset info.
+// TODO: We don't store this anywhere, so we end up running an ES query to get
+// the var list.
 func fetchFilteredVariables(metadata model.MetadataStorage, index string, dataset string, filters *model.FilterParams) ([]string, error) {
 	// fetch the variable set from es
 	variables, err := metadata.FetchVariables(dataset, index, true)
@@ -502,7 +505,7 @@ func fetchFilteredVariables(metadata model.MetadataStorage, index string, datase
 		return nil, err
 	}
 
-	variablesToUse := model.GetFilterVariables(filters, variables, false)
+	variablesToUse := model.GetFilterVariables(filters, variables)
 
 	// create a list minus those that are in the filtered list
 	filteredVars := []string{}

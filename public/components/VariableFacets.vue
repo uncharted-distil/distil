@@ -6,14 +6,6 @@
 					<b-form-input size="sm" v-model="filter" placeholder="Search" />
 				</div>
 			</div>
-			<div v-if="enableToggle" class="row flex-1 align-items-center facet-filters">
-				<div class="col-12 flex-column d-flex">
-					<b-form-fieldset size="sm" horizontal label="Toggle" :label-cols="2">
-						<b-button size="sm" variant="outline-secondary" @click="selectAll">All</b-button>
-						<b-button size="sm" variant="outline-secondary" @click="deselectAll">None</b-button>
-					</b-form-fieldset>
-				</div>
-			</div>
 			<div v-if="enableTitle" class="row flex-1 align-items-center">
 				<div class="col-12 flex-column d-flex">
 					<p>Select one of the following feature summaries (sorted by interestingness) showing count of records by feature value.</p>
@@ -24,18 +16,14 @@
 			</div>
 			<div class="row flex-11">
 				<facets class="col-12 flex-column d-flex variable-facets-container"
-					:groups="groups"
-					:filters="filters"
+					:groups="sortedGroups"
 					:highlights="highlights"
 					:html="html"
 					:sort="sort"
-					:type-change="typeChange"
-					@click="onClick"
-					@expand="onExpand"
-					@collapse="onCollapse"
+					:enable-type-change="enableTypeChange"
+					@numerical-click="onNumericalClick"
+					@categorical-click="onCategoricalClick"
 					@range-change="onRangeChange"
-					@facet-toggle="onFacetToggle"
-					@histogram-click="onHistogramClick"
 					@facet-click="onFacetClick">
 				</facets>
 			</div>
@@ -51,16 +39,12 @@
 <script lang="ts">
 
 import Facets from '../components/Facets';
-import { Filter, decodeFiltersDictionary, updateFilter, isDisabled, EMPTY_FILTER,
-	createNumericalFilter, createCategoricalFilter, updateFilterRoute } from '../util/filters';
 import { overlayRouteEntry, getRouteFacetPage } from '../util/routes';
-import { Highlights, Range } from '../util/highlights';
 import { Dictionary } from '../util/dict';
+import { Highlight } from '../store/data/index';
 import { getters as dataGetters } from '../store/data/module';
-import { getters as routeGetters } from '../store/route/module';
-import { VariableSummary } from '../store/data/index';
-import { createGroups, Group } from '../util/facets';
-import { updateHighlightRoot, clearHighlightRoot, getHighlights } from '../util/highlights';
+import { Group } from '../util/facets';
+import { updateHighlightRoot, getHighlights, clearHighlightRoot } from '../util/highlights';
 import 'font-awesome/css/font-awesome.css';
 import '../styles/spinner.css';
 import Vue from 'vue';
@@ -74,16 +58,14 @@ export default Vue.extend({
 
 	props: {
 		enableSearch: Boolean,
-		enableToggle: Boolean,
 		enableTitle: Boolean,
-		enableGroupCollapse: Boolean,
-		enableFacetFiltering: Boolean,
-		variables: Array,
+		enableTypeChange: Boolean,
+		enableHighlighting: Boolean,
+		groups: Array,
 		dataset: String,
 		subtitle: String,
 		html: [ String, Object, Function ],
 		instanceName: { type: String, default: 'variable-facets' },
-		typeChange: Boolean
 	},
 
 	data() {
@@ -108,42 +90,44 @@ export default Vue.extend({
 			}
 		},
 
-		availableSummaries(): VariableSummary[] {
+		sortedGroups(): Group[] {
 			// filter by search
-			const searchFiltered = this.variables.filter(summary => {
-				return this.filter === '' || summary.name.toLowerCase().includes(this.filter.toLowerCase());
+			const searchFiltered = this.groups.filter(group => {
+				return this.filter === '' || group.key.toLowerCase().includes(this.filter.toLowerCase());
 			});
 
 			// sort by current function - sort looks for key to hold sort key
-			// TODO: this only needs to happen on re-order events once it has been sorted initially
-			return searchFiltered.map(v => ({ key: v.name, variable: v }))
+			const sorted = searchFiltered.map(g => ({ key: g.key, group: g }))
 				.sort((a, b) => this[this.sortMethod](a, b))
-				.map(v => v.variable);
-		},
+				.map(g => g.group);
 
-		groups(): Group[] {
 			// if necessary, refilter applying pagination rules
-			this.numRows = this.availableSummaries.length;
-			let filtered = this.availableSummaries;
+			this.numRows = searchFiltered.length;
+			let filtered = sorted;
 			if (this.numRows > this.rowsPerPage) {
 				const firstIndex = this.rowsPerPage * (this.currentPage - 1);
 				const lastIndex = Math.min(firstIndex + this.rowsPerPage, this.numRows);
-				filtered = this.availableSummaries.slice(firstIndex, lastIndex);
+				filtered = sorted.slice(firstIndex, lastIndex);
 			}
 
-			// create the groups
-			let groups = createGroups(filtered, this.enableGroupCollapse, this.enableFacetFiltering);
+			// highlight
+			if (this.enableHighlighting && this.highlights.root) {
+				filtered.forEach(group => {
+					if (group) {
+						if (group.key === this.highlights.root.key) {
+							group.facets.forEach(facet => {
+								facet.filterable = true;
+							});
+						}
+					}
+				});
+			}
 
-			// update collapsed state
-			return this.updateGroupCollapses(groups);
+			return filtered;
 		},
 
-		highlights(): Highlights {
+		highlights(): Highlight {
 			return getHighlights(this.$store);
-		},
-
-		filters(): Filter[] {
-			return routeGetters.getDecodedFilters(this.$store);
 		},
 
 		importance(): Dictionary<number> {
@@ -168,10 +152,10 @@ export default Vue.extend({
 
 		availableVariables(): string[] {
 			// filter by search
-			const searchFiltered = this.variables.filter(summary => {
-				return this.filter === '' || summary.name.toLowerCase().includes(this.filter.toLowerCase());
+			const searchFiltered = this.groups.filter(group => {
+				return this.filter === '' || group.key.toLowerCase().includes(this.filter.toLowerCase());
 			});
-			return searchFiltered.map(v => v.name );
+			return searchFiltered.map(v => v.key);
 		},
 
 		// creates a facet key for the route from the instance-name component arg
@@ -183,116 +167,46 @@ export default Vue.extend({
 			return 'facetPage';
 		},
 
-		// handles facet group transition to active state
-		onExpand(key: string) {
-			// enable filter
-			const filter = {
-				name: key,
-				type: EMPTY_FILTER,
-				enabled: true
-			};
-			updateFilterRoute(this, filter);
-			this.$emit('expand', key);
-		},
-
-		// handles facet group transitions to inactive (grayed out, reduced visuals) state
-		onCollapse(key) {
-		// disable filter
-			const filter = {
-				name: key,
-				type: EMPTY_FILTER,
-				enabled: false
-			};
-			updateFilterRoute(this, filter);
-			this.$emit('collapse', key);
-		},
-
-		onRangeChange(key: string, value: { from: { label: string[] }, to: { label: string[] } }) {
-			const filter = createNumericalFilter(key, value);
-			updateFilterRoute(this, filter);
+		onRangeChange(context: string, key: string, value: { from: { label: string[] }, to: { label: string[] } }) {
+			updateHighlightRoot(this, {
+				context: context,
+				key: key,
+				value: value
+			});
 			this.$emit('range-change', key, value);
 		},
 
-		onFacetToggle(key: string, values: string[]) {
-			const filter = createCategoricalFilter(key, values);
-			updateFilterRoute(this, filter);
-			this.$emit('facet-toggle', key, values);
-		},
-
-		onClick(key: string) {
-			this.$emit('click', key);
-		},
-
-		onHistogramClick(context: string, key: string, value: Range) {
-			if (key && value) {
-				updateHighlightRoot(this, {
-					context: context,
-					key: key,
-					value: value
-				});
-			} else {
-				clearHighlightRoot(this);
-			}
-		},
-
 		onFacetClick(context: string, key: string, value: string) {
-			if (key && value) {
-				// extract the var name from the key
-				updateHighlightRoot(this, {
-					context: context,
-					key: key,
-					value: value
-				});
-			} else {
-				clearHighlightRoot(this);
+			if (this.enableHighlighting) {
+				if (key && value) {
+					// extract the var name from the key
+					updateHighlightRoot(this, {
+						context: context,
+						key: key,
+						value: value
+					});
+				} else {
+					clearHighlightRoot(this);
+				}
 			}
+			this.$emit('facet-click', context, key, value);
 		},
 
-		// sets all facet groups to the active state - full size display + all controls, updates
-		// route accordingly
-		selectAll() {
-			// enable all filters
-			let filters = routeGetters.getRouteFilters(this.$store);
-			this.groups.forEach(group => {
-				filters = updateFilter(filters, {
-					name: group.key,
-					type: EMPTY_FILTER,
-					enabled: true
-				});
-			});
-			const entry = overlayRouteEntry(routeGetters.getRoute(this.$store), {
-				filters: filters,
-			});
-			this.$router.push(entry);
+		onCategoricalClick(context: string, key: string) {
+			this.$emit('categorical-click', key);
 		},
 
-		// sets all facet groups to the inactive state - minimized diplay , no controls,
-		// and updates route accordingly
-		deselectAll() {
-			// enable all filters
-			let filters = routeGetters.getRouteFilters(this.$store);
-			this.groups.forEach(group => {
-				filters = updateFilter(filters, {
-					name: group.key,
-					type: EMPTY_FILTER,
-					enabled: false
-				});
-			});
-			const entry = overlayRouteEntry(routeGetters.getRoute(this.$store), {
-				filters: filters
-			});
-			this.$router.push(entry);
-		},
-
-		// updates facet collapse/expand state based on route settings
-		updateGroupCollapses(groups: Group[]): Group[] {
-			const filters = routeGetters.getRouteFilters(this.$store);
-			const decoded = decodeFiltersDictionary(filters);
-			return groups.map(group => {
-				// return if disabled
-				group.collapsed = isDisabled(decoded[group.key]);
-				return group;
-			});
+		onNumericalClick(key: string) {
+			if (this.enableHighlighting) {
+				if (!this.highlights.root || this.highlights.root.key !== key) {
+					updateHighlightRoot(this, {
+						context: this.instanceName,
+						key: key,
+						value: null
+					});
+				}
+			}
+			this.$emit('numerical-click', key);
 		}
 	}
 });
@@ -333,7 +247,7 @@ button {
 .variable-facets-container .facets-root-container .facets-group-container .facets-group .group-header {
 	padding: 4px 8px 6px 8px;
 }
-.variable-facets-container .facets-root-container .facets-group-container .facets-group .group-header .type-change-menu {
+.variable-facets-container .facets-root-container .facets-group-container .facets-group .group-header .enable-type-change-menu {
 	float: right;
 	margin-top: -4px;
 	margin-right: -8px;

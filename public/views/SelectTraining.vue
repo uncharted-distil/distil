@@ -50,8 +50,8 @@ import TargetVariable from '../components/TargetVariable.vue';
 import { getters as dataGetters, actions } from '../store/data/module';
 import { getters as routeGetters} from '../store/route/module';
 import { Variable } from '../store/data/index';
-import { HighlightRoot } from '../util/highlights';
-import { Filter } from '../util/filters';
+import { HighlightRoot } from '../store/data/index';
+import { FilterParams } from '../util/filters';
 import Vue from 'vue';
 
 export default Vue.extend({
@@ -78,14 +78,11 @@ export default Vue.extend({
 		target(): string {
 			return routeGetters.getRouteTargetVariable(this.$store);
 		},
-		filters(): Filter[] {
-			return routeGetters.getDecodedFilters(this.$store);
-		},
-		filterStr(): string {
+		filtersStr(): string {
 			return routeGetters.getRouteFilters(this.$store);
 		},
-		selectedFilters(): Filter[] {
-			return dataGetters.getSelectedFilters(this.$store);
+		selectedFilters(): FilterParams {
+			return dataGetters.getSelectedFilterParams(this.$store);
 		},
 		highlightRoot(): HighlightRoot {
 			return routeGetters.getDecodedHighlightRoot(this.$store);
@@ -99,16 +96,22 @@ export default Vue.extend({
 		highlightRootStr() {
 			actions.fetchDataHighlightValues(this.$store, {
 				dataset: this.dataset,
-				filters: this.filters,
+				variables: this.variables,
 				highlightRoot: this.highlightRoot,
+				filters: this.selectedFilters
 			});
 		},
-		filterStr() {
-			actions.fetchDataHighlightValues(this.$store, {
+		training() {
+			actions.fetchSelectedTableData(this.$store, {
 				dataset: this.dataset,
-				filters: this.filters,
-				highlightRoot: this.highlightRoot,
+				filters: this.selectedFilters
 			});
+			actions.fetchExcludedTableData(this.$store, {
+				dataset: this.dataset,
+				filters: this.selectedFilters
+			});
+		},
+		filtersStr() {
 			actions.fetchSelectedTableData(this.$store, {
 				dataset: this.dataset,
 				filters: this.selectedFilters
@@ -126,21 +129,27 @@ export default Vue.extend({
 
 	methods: {
 		fetch() {
-			actions.fetchVariablesAndVariableSummaries(this.$store, {
+			actions.fetchVariables(this.$store, {
 				dataset: this.dataset
-			});
-			actions.fetchDataHighlightValues(this.$store, {
-				dataset: this.dataset,
-				filters: this.filters,
-				highlightRoot: this.highlightRoot,
-			});
-			actions.fetchSelectedTableData(this.$store, {
-				dataset: this.dataset,
-				filters: this.selectedFilters
-			});
-			actions.fetchExcludedTableData(this.$store, {
-				dataset: this.dataset,
-				filters: this.selectedFilters
+			}).then(() => {
+				actions.fetchVariableSummaries(this.$store, {
+					dataset: this.dataset,
+					variables: this.variables
+				});
+				actions.fetchDataHighlightValues(this.$store, {
+					dataset: this.dataset,
+					variables: this.variables,
+					highlightRoot: this.highlightRoot,
+					filters: this.selectedFilters
+				});
+				actions.fetchSelectedTableData(this.$store, {
+					dataset: this.dataset,
+					filters: this.selectedFilters
+				});
+				actions.fetchExcludedTableData(this.$store, {
+					dataset: this.dataset,
+					filters: this.selectedFilters
+				});
 			});
 		},
 		capitalize(str) {

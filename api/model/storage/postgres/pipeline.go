@@ -70,17 +70,17 @@ func (s *Storage) PersistRequestFeature(requestID string, featureName string, fe
 
 // PersistRequestFilters persists request filters information to Postgres.
 func (s *Storage) PersistRequestFilters(requestID string, filters *model.FilterParams) error {
-	sql := fmt.Sprintf("INSERT INTO %s (request_id, feature_name, filter_type, filter_min, filter_max, filter_categories) VALUES ($1, $2, $3, $4, $5, $6);", filterTableName)
+	sql := fmt.Sprintf("INSERT INTO %s (request_id, feature_name, filter_type, filter_mode, filter_min, filter_max, filter_categories) VALUES ($1, $2, $3, $4, $5, $6, $7);", filterTableName)
 
 	for _, filter := range filters.Filters {
 		switch filter.Type {
 		case model.NumericalFilter:
-			_, err := s.client.Exec(sql, requestID, filter.Name, model.NumericalFilter, filter.Min, filter.Max, "")
+			_, err := s.client.Exec(sql, requestID, filter.Name, model.NumericalFilter, filter.Mode, filter.Min, filter.Max, "")
 			if err != nil {
 				return err
 			}
 		case model.CategoricalFilter:
-			_, err := s.client.Exec(sql, requestID, filter.Name, model.CategoricalFilter, 0, 0, strings.Join(filter.Categories, ","))
+			_, err := s.client.Exec(sql, requestID, filter.Name, model.CategoricalFilter, filter.Mode, 0, 0, strings.Join(filter.Categories, ","))
 			if err != nil {
 				return err
 			}
@@ -153,7 +153,7 @@ func (s *Storage) loadRequest(rows *pgx.Rows) (*model.Request, error) {
 		return nil, errors.Wrap(err, "Unable to get request features from Postgres")
 	}
 
-	filters, err := s.FetchRequestFilters(requestID)
+	filters, err := s.FetchRequestFilters(requestID, features)
 	if err != nil {
 		return nil, errors.Wrap(err, "Unable to get request filters from Postgres")
 	}
@@ -212,6 +212,14 @@ func (s *Storage) parseResultMetadata(rows *pgx.Rows) ([]*model.Result, error) {
 			return nil, err
 		}
 		result.Features = features
+	}
+
+	for _, result := range results {
+		filters, err := s.FetchRequestFilters(result.RequestID, result.Features)
+		if err != nil {
+			return nil, err
+		}
+		result.Filters = filters
 	}
 
 	return results, nil
@@ -411,8 +419,8 @@ func (s *Storage) FetchRequestFeatures(requestID string) ([]*model.RequestFeatur
 }
 
 // FetchRequestFilters pulls request filter information from Postgres.
-func (s *Storage) FetchRequestFilters(requestID string) (*model.FilterParams, error) {
-	sql := fmt.Sprintf("SELECT request_id, feature_name, filter_type, filter_min, filter_max, filter_categories FROM %s WHERE request_id = $1;", filterTableName)
+func (s *Storage) FetchRequestFilters(requestID string, features []*model.RequestFeature) (*model.FilterParams, error) {
+	sql := fmt.Sprintf("SELECT request_id, feature_name, filter_type, filter_mode, filter_min, filter_max, filter_categories FROM %s WHERE request_id = $1;", filterTableName)
 
 	rows, err := s.client.Query(sql, requestID)
 	if err != nil {
@@ -430,11 +438,12 @@ func (s *Storage) FetchRequestFilters(requestID string) (*model.FilterParams, er
 		var requestID string
 		var featureName string
 		var filterType string
+		var filterMode string
 		var filterMin float64
 		var filterMax float64
 		var filterCategories string
 
-		err = rows.Scan(&requestID, &featureName, &filterType, &filterMin, &filterMax, &filterCategories)
+		err = rows.Scan(&requestID, &featureName, &filterType, &filterMode, &filterMin, &filterMax, &filterCategories)
 		if err != nil {
 			return nil, errors.Wrap(err, "Unable to parse requests filters from Postgres")
 		}
@@ -443,15 +452,21 @@ func (s *Storage) FetchRequestFilters(requestID string) (*model.FilterParams, er
 		case model.CategoricalFilter:
 			filters.Filters = append(filters.Filters, model.NewCategoricalFilter(
 				featureName,
+				filterMode,
 				strings.Split(filterCategories, ","),
 			))
 		case model.NumericalFilter:
 			filters.Filters = append(filters.Filters, model.NewNumericalFilter(
 				featureName,
+				filterMode,
 				filterMin,
 				filterMax,
 			))
 		}
+	}
+
+	for _, feature := range features {
+		filters.Variables = append(filters.Variables, feature.FeatureName)
 	}
 
 	return filters, nil

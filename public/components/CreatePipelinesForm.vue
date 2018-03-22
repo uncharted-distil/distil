@@ -64,10 +64,8 @@ export default Vue.extend({
 		variables(): Variable[] {
 			return dataGetters.getVariables(this.$store);
 		},
-		selectedFilters(): FilterParams {
-			return {
-				filters: dataGetters.getSelectedFilters(this.$store)
-			};
+		filters(): FilterParams {
+			return dataGetters.getSelectedFilterParams(this.$store);
 		},
 		// gets the metrics that are used to score predictions against the user selected variable
 		metrics(): string[] {
@@ -130,7 +128,7 @@ export default Vue.extend({
 			// dispatch action that triggers request send to server
 			pipelineActions.createPipelines(this.$store, {
 				dataset: this.dataset,
-				filters: this.selectedFilters,
+				filters: this.filters,
 				sessionId: this.sessionId,
 				feature: routeGetters.getRouteTargetVariable(this.$store),
 				task: task,
@@ -153,7 +151,7 @@ export default Vue.extend({
 			dataActions.exportProblem(this.$store, {
 				dataset: this.dataset,
 				target: this.target,
-				filters: this.selectedFilters.filters,
+				filters: this.filters,
 			}).then(res => {
 				this.exportResults = res;
 			});

@@ -22,6 +22,7 @@ func ResultVariableSummaryHandler(ctorPipeline model.PipelineStorageCtor, ctorSt
 		dataset := pat.Param(r, "dataset")
 		// get variable name
 		variable := pat.Param(r, "variable")
+
 		// get result id
 		resultID, err := url.PathUnescape(pat.Param(r, "results-uuid"))
 		if err != nil {
@@ -48,6 +49,20 @@ func ResultVariableSummaryHandler(ctorPipeline model.PipelineStorageCtor, ctorSt
 			}
 		}
 
+		// parse POST params
+		params, err := getPostParameters(r)
+		if err != nil {
+			handleError(w, errors.Wrap(err, "Unable to parse post parameters"))
+			return
+		}
+
+		// get variable names and ranges out of the params
+		filterParams, err := model.ParseFilterParamsFromJSON(params)
+		if err != nil {
+			handleError(w, err)
+			return
+		}
+
 		// get pipeline client
 		pipelineData, err := ctorPipeline()
 		if err != nil {
@@ -69,7 +84,7 @@ func ResultVariableSummaryHandler(ctorPipeline model.PipelineStorageCtor, ctorSt
 			return
 		}
 		// fetch summary histogram
-		histogram, err := storage.FetchSummaryByResult(dataset, index, variable, result.ResultURI, extrema)
+		histogram, err := storage.FetchSummaryByResult(dataset, index, variable, result.ResultURI, filterParams, extrema)
 		if err != nil {
 			handleError(w, err)
 			return

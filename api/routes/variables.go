@@ -20,20 +20,20 @@ type VariablesResult struct {
 // VariablesHandler generates a route handler that facilitates a search of
 // variable names and descriptions, returning a variable list for the specified
 // dataset.
-func VariablesHandler(ctor model.MetadataStorageCtor) func(http.ResponseWriter, *http.Request) {
+func VariablesHandler(metaCtor model.MetadataStorageCtor) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// get index name
 		index := pat.Param(r, "index")
 		// get dataset name
 		dataset := pat.Param(r, "dataset")
 		// get elasticsearch client
-		client, err := ctor()
+		meta, err := metaCtor()
 		if err != nil {
 			handleError(w, err)
 			return
 		}
 		// fetch variables
-		variables, err := client.FetchVariables(dataset, index, false)
+		variables, err := meta.FetchVariables(dataset, index, false)
 		if err != nil {
 			handleError(w, err)
 			return
@@ -51,7 +51,7 @@ func VariablesHandler(ctor model.MetadataStorageCtor) func(http.ResponseWriter, 
 
 // VariableTypeHandler generates a route handler that facilitates the update
 // of a variable type.
-func VariableTypeHandler(storageCtor model.DataStorageCtor, ctor model.MetadataStorageCtor) func(http.ResponseWriter, *http.Request) {
+func VariableTypeHandler(storageCtor model.DataStorageCtor, metaCtor model.MetadataStorageCtor) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		params, err := getPostParameters(r)
 		if err != nil {
@@ -64,26 +64,26 @@ func VariableTypeHandler(storageCtor model.DataStorageCtor, ctor model.MetadataS
 		dataset := pat.Param(r, "dataset")
 
 		// get clients
-		client, err := storageCtor()
+		storage, err := storageCtor()
 		if err != nil {
 			handleError(w, err)
 			return
 		}
-		clientES, err := ctor()
+		meta, err := metaCtor()
 		if err != nil {
 			handleError(w, err)
 			return
 		}
 
 		// update the variable type in the storage
-		err = client.SetDataType(dataset, index, field, typ)
+		err = storage.SetDataType(dataset, index, field, typ)
 		if err != nil {
 			handleError(w, errors.Wrap(err, "unable to update the data type in storage"))
 			return
 		}
 
 		// update the variable type in the metadata
-		err = clientES.SetDataType(dataset, index, field, typ)
+		err = meta.SetDataType(dataset, index, field, typ)
 		if err != nil {
 			handleError(w, errors.Wrap(err, "unable to update the data type in metadata"))
 			return

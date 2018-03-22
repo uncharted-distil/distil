@@ -44,47 +44,93 @@ func (s *Storage) parseFilteredData(dataset string, numRows int, rows *pgx.Rows)
 	return result, nil
 }
 
-func (s *Storage) buildFilteredQueryWhere(dataset string, filterParams *model.FilterParams) (string, []interface{}, error) {
-	// Build where clauses using the filter parameters.
-	// param identifiers in the query are 1-based $x.
-	params := make([]interface{}, 0)
+func (s *Storage) formatFilterName(name string) string {
+	if strings.HasSuffix(name, predictedSuffix) {
+		//name = "value"
+		return "CAST(\"value\" as double precision)"
+	}
+	return fmt.Sprintf("\"%s\"", name)
+}
+
+func (s *Storage) buildIncludeFilter(wheres []string, params []interface{}, filter *model.Filter) ([]string, []interface{}) {
+
+	name := s.formatFilterName(filter.Name)
+
+	switch filter.Type {
+	case model.NumericalFilter:
+		// numerical
+		where := fmt.Sprintf("%s >= $%d AND %s <= $%d", name, len(params)+1, name, len(params)+2)
+		wheres = append(wheres, where)
+		params = append(params, *filter.Min)
+		params = append(params, *filter.Max)
+	case model.CategoricalFilter:
+		// categorical
+		categories := make([]string, 0)
+		offset := len(params) + 1
+		for i, category := range filter.Categories {
+			categories = append(categories, fmt.Sprintf("$%d", offset+i))
+			params = append(params, category)
+		}
+		where := fmt.Sprintf("%s IN (%s)", name, strings.Join(categories, ", "))
+		wheres = append(wheres, where)
+	}
+	return wheres, params
+}
+
+func (s *Storage) buildExcludeFilter(wheres []string, params []interface{}, filter *model.Filter) ([]string, []interface{}) {
+
+	name := s.formatFilterName(filter.Name)
+
+	switch filter.Type {
+	case model.NumericalFilter:
+		// numerical
+		where := fmt.Sprintf("(%s < $%d OR %s > $%d)", name, len(params)+1, name, len(params)+2)
+		wheres = append(wheres, where)
+		params = append(params, *filter.Min)
+		params = append(params, *filter.Max)
+
+	case model.CategoricalFilter:
+		// categorical
+		categories := make([]string, 0)
+		offset := len(params) + 1
+		for i, category := range filter.Categories {
+			categories = append(categories, fmt.Sprintf("$%d", offset+i))
+			params = append(params, category)
+		}
+		where := fmt.Sprintf("%s NOT IN (%s)", name, strings.Join(categories, ", "))
+		wheres = append(wheres, where)
+	}
+	return wheres, params
+}
+
+func (s *Storage) buildFilteredQueryWhere(dataset string, filterParams *model.FilterParams) (string, []interface{}) {
+
 	wheres := make([]string, 0)
+	params := make([]interface{}, 0)
 
 	for _, filter := range filterParams.Filters {
-		switch filter.Type {
-		case model.NumericalFilter:
-			// numerical
-			where := fmt.Sprintf("\"%s\" >= $%d AND \"%s\" <= $%d", filter.Name, len(params)+1, filter.Name, len(params)+2)
-			wheres = append(wheres, where)
-			params = append(params, *filter.Min)
-			params = append(params, *filter.Max)
-		case model.CategoricalFilter:
-			// categorical
-			categories := make([]string, 0)
-			offset := len(params) + 1
-			for i, category := range filter.Categories {
-				categories = append(categories, fmt.Sprintf("$%d", offset+i))
-				params = append(params, category)
-			}
-			where := fmt.Sprintf("\"%s\" IN (%s)", filter.Name, strings.Join(categories, ", "))
-			wheres = append(wheres, where)
+		switch filter.Mode {
+		case model.IncludeFilter:
+			wheres, params = s.buildIncludeFilter(wheres, params, filter)
+		case model.ExcludeFilter:
+			wheres, params = s.buildExcludeFilter(wheres, params, filter)
 		}
 	}
 
-	return strings.Join(wheres, " AND "), params, nil
+	return strings.Join(wheres, " AND "), params
 }
 
-func (s *Storage) buildFilteredQueryField(dataset string, variables []*model.Variable, filterParams *model.FilterParams, inclusive bool) (string, error) {
+func (s *Storage) buildFilteredQueryField(dataset string, variables []*model.Variable, filterParams *model.FilterParams) (string, error) {
 	fields := make([]string, 0)
-	for _, variable := range model.GetFilterVariables(filterParams, variables, inclusive) {
+	for _, variable := range model.GetFilterVariables(filterParams, variables) {
 		fields = append(fields, fmt.Sprintf("\"%s\"", variable.Name))
 	}
 	return strings.Join(fields, ","), nil
 }
 
-func (s *Storage) buildFilteredResultQueryField(dataset string, variables []*model.Variable, targetVariable *model.Variable, filterParams *model.FilterParams, inclusive bool) (string, error) {
+func (s *Storage) buildFilteredResultQueryField(dataset string, variables []*model.Variable, targetVariable *model.Variable, filterParams *model.FilterParams) (string, error) {
 	fields := make([]string, 0)
-	for _, variable := range model.GetFilterVariables(filterParams, variables, inclusive) {
+	for _, variable := range model.GetFilterVariables(filterParams, variables) {
 		if strings.Compare(targetVariable.Name, variable.Name) != 0 {
 			fields = append(fields, fmt.Sprintf("\"%s\"", variable.Name))
 		}
@@ -125,10 +171,8 @@ func (s *Storage) filterIncludesIndex(filterParams *model.FilterParams) bool {
 // FetchData creates a postgres query to fetch a set of rows.  Applies filters to restrict the
 // results to a user selected set of fields, with rows further filtered based on allowed ranges and
 // categories.
-func (s *Storage) FetchData(dataset string, index string, filterParams *model.FilterParams, inclusive bool, invert bool) (*model.FilteredData, error) {
-	// Include the d3m if inclusive XOR index is specified
-	indexSpecified := s.filterIncludesIndex(filterParams)
-	variables, err := s.metadata.FetchVariables(dataset, index, inclusive != indexSpecified)
+func (s *Storage) FetchData(dataset string, index string, filterParams *model.FilterParams, invert bool) (*model.FilteredData, error) {
+	variables, err := s.metadata.FetchVariables(dataset, index, true)
 	if err != nil {
 		return nil, errors.Wrap(err, "Could not pull variables from ES")
 	}
@@ -138,7 +182,7 @@ func (s *Storage) FetchData(dataset string, index string, filterParams *model.Fi
 		return nil, errors.Wrap(err, "Could not pull num rows")
 	}
 
-	fields, err := s.buildFilteredQueryField(dataset, variables, filterParams, inclusive)
+	fields, err := s.buildFilteredQueryField(dataset, variables, filterParams)
 	if err != nil {
 		return nil, errors.Wrap(err, "Could not build field list")
 	}
@@ -146,10 +190,7 @@ func (s *Storage) FetchData(dataset string, index string, filterParams *model.Fi
 	// construct a Postgres query that fetches documents from the dataset with the supplied variable filters applied
 	query := fmt.Sprintf("SELECT %s FROM %s", fields, dataset)
 
-	where, params, err := s.buildFilteredQueryWhere(dataset, filterParams)
-	if err != nil {
-		return nil, errors.Wrap(err, "Could not build where clause")
-	}
+	where, params := s.buildFilteredQueryWhere(dataset, filterParams)
 
 	if len(where) > 0 {
 		if invert {

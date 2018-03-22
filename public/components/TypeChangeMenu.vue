@@ -1,5 +1,5 @@
 <template>
-	<div class="type-change-menu">
+	<div class="enable-type-change-menu">
 		<b-dropdown :text="type" variant="secondary" class="var-type-button">
 			<b-dropdown-item
 				v-for="suggested in addMissingSuggestions()"
@@ -20,7 +20,7 @@ import _ from 'lodash';
 import Vue from 'vue';
 
 export default Vue.extend({
-	name: 'type-change-menu',
+	name: 'enable-type-change-menu',
 
 	props: {
 		field: String,
@@ -81,7 +81,7 @@ export default Vue.extend({
 	border-color: #424242;
 	box-shadow: none;
 }
-.type-change-menu .dropdown-item {
+.enable-type-change-menu .dropdown-item {
 	font-size: 0.867rem;
 	text-transform: none;
 }

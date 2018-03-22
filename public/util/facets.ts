@@ -10,6 +10,7 @@ export const CATEGORICAL_CHUNK_SIZE = 10;
 export interface PlaceHolderFacet {
 	placeholder: boolean;
 	html: string;
+	filterable: boolean;
 }
 
 export interface Segment {
@@ -66,18 +67,18 @@ export interface Group {
 }
 
 // creates the set of facets from the supplied summary data
-export function createGroups(summaries: VariableSummary[], enableCollapse: boolean, enableFiltering: boolean): Group[] {
+export function createGroups(summaries: VariableSummary[]): Group[] {
 	return summaries.map(summary => {
 		if (summary.err) {
 			// create error facet
-			return createErrorFacet(summary, enableCollapse);
+			return createErrorFacet(summary);
 		}
 		if (summary.pending) {
 			// create pending facet
-			return createPendingFacet(summary, enableCollapse);
+			return createPendingFacet(summary);
 		}
 		// create facet
-		return createSummaryFacet(summary, enableCollapse, enableFiltering);
+		return createSummaryFacet(summary);
 	}).filter(group => {
 		// remove null groups
 		return group;
@@ -85,44 +86,46 @@ export function createGroups(summaries: VariableSummary[], enableCollapse: boole
 }
 
 // creates a facet to display a data fetch error
-export function createErrorFacet(summary: VariableSummary, enableCollapse: boolean): Group {
+export function createErrorFacet(summary: VariableSummary): Group {
 	return {
 		label: summary.label ? summary.label : summary.name,
 		key: summary.name,
 		type: summary.varType,
-		collapsible: enableCollapse,
+		collapsible: false,
 		collapsed: false,
 		facets: [{
 			placeholder: true,
-			html: `<div>${summary.err}</div>`
+			html: `<div>${summary.err}</div>`,
+			filterable: false
 		}],
 		numRows: 0
 	};
 }
 
 // creates a place holder facet to dispay a spinner
-export function createPendingFacet(summary: VariableSummary, enableCollapse: boolean): Group {
+export function createPendingFacet(summary: VariableSummary): Group {
 	return {
 		label: summary.label ? summary.label : summary.name,
 		key: summary.name,
 		type: summary.varType,
-		collapsible: enableCollapse,
+		collapsible: false,
 		collapsed: false,
 		facets: [{
 			placeholder: true,
-			html: spinnerHTML()
+			html: spinnerHTML(),
+			filterable: false
 		}],
 		numRows: 0
 	};
 }
 
 // creates categorical or numerical summary facets based on the input summary type
-export function createSummaryFacet(summary: VariableSummary, enableCollapse: boolean, enableFiltering: boolean): Group {
+export function createSummaryFacet(summary: VariableSummary): Group {
 	switch (summary.type) {
 		case 'categorical':
-			return createCategoricalSummaryFacet(summary, enableCollapse, enableFiltering);
+			return createCategoricalSummaryFacet(summary);
 		case 'numerical':
-			return createNumericalSummaryFacet(summary, enableCollapse, enableFiltering);
+			return createNumericalSummaryFacet(summary);
 	}
 	console.warn('unrecognized summary type', summary.type);
 	return null;
@@ -161,7 +164,7 @@ export function getGroupIcon(summary: VariableSummary): string {
 }
 
 // creates a categorical facet with segments based on nest buckets counts, or no segments if buckets aren't nested
-function createCategoricalSummaryFacet(summary: VariableSummary, enableCollapse: boolean, enableFiltering: boolean): Group {
+function createCategoricalSummaryFacet(summary: VariableSummary): Group {
 
 
 	let total = 0;
@@ -174,8 +177,14 @@ function createCategoricalSummaryFacet(summary: VariableSummary, enableCollapse:
 		// are given a colour to signify a match, all other nested buckets are summed and displayed as not matching.
 		let countLabel = b.key;
 		if (b.buckets) {
-			segments.push( { color: CATEGORY_MATCH_COLOR, count: 0 });
-			segments.push( { color: CATEGORY_NO_MATCH_COLOR, count: 0 });
+			segments.push({
+				color: CATEGORY_MATCH_COLOR,
+				count: 0
+			});
+			segments.push({
+				color: CATEGORY_NO_MATCH_COLOR,
+				count: 0
+			});
 			for (const subBucket of b.buckets) {
 				if (subBucket.key === b.key) {
 					segments[0].count = subBucket.count;
@@ -184,23 +193,30 @@ function createCategoricalSummaryFacet(summary: VariableSummary, enableCollapse:
 				}
 			}
 			// TODO: Add proper highlight state visuals once highlighting is cleaned up
-			selected = { segments: segments, selected: b.count };
-			const totalCount = <number>(segments[0].count + segments[1].count);
+			selected = {
+				segments: segments,
+				selected: b.count
+			};
+			const totalCount = segments[0].count + segments[1].count;
 			countLabel = `${segments[0].count} correct of ${totalCount}`;
 		} else {
 			// if no segments, just use basic count selection
-			selected = { count: b.count };
+			selected = {
+				count: b.count
+			};
 			countLabel = b.count.toString();
 		}
 
 		const facet: CategoricalFacet = {
-			icon : { class : getGroupIcon(summary) },
+			icon : {
+				class : getGroupIcon(summary)
+			},
 			value: b.key,
 			countLabel: countLabel,
 			count: b.count,
 			selected: selected,
 			segments: segments,
-			filterable: enableFiltering
+			filterable: false
 		};
 		total += b.count;
 		return facet;
@@ -222,7 +238,7 @@ function createCategoricalSummaryFacet(summary: VariableSummary, enableCollapse:
 		label: summary.label ? summary.label : summary.name,
 		key: summary.name,
 		type: summary.varType,
-		collapsible: enableCollapse,
+		collapsible: false,
 		collapsed: false,
 		facets: top,
 		total: total,
@@ -251,20 +267,20 @@ function getHistogramSlices(summary: VariableSummary) {
 
 }
 
-function createNumericalSummaryFacet(summary: VariableSummary, enableCollapse: boolean, enableFiltering: boolean): Group {
+function createNumericalSummaryFacet(summary: VariableSummary): Group {
 	const slices = getHistogramSlices(summary);
 	return {
 		label: summary.label ? summary.label : summary.name,
 		key: summary.name,
 		type: summary.varType,
-		collapsible: enableCollapse,
+		collapsible: false,
 		collapsed: false,
 		facets: [
 			{
 				histogram: {
 					slices: slices
 				},
-				filterable: enableFiltering,
+				filterable: false,
 				selection: {} as any
 			}
 		],

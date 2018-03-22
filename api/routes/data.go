@@ -16,38 +16,40 @@ const (
 	CategoricalFilter = "categorical"
 )
 
-// FilteredDataHandler creates a route that fetches filtered data from backing storage instance.
-func FilteredDataHandler(ctor model.DataStorageCtor) func(http.ResponseWriter, *http.Request) {
+// DataHandler creates a route that fetches filtered data from backing storage instance.
+func DataHandler(storageCtor model.DataStorageCtor, metaCtor model.MetadataStorageCtor) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
+		// parse POST params
+		params, err := getPostParameters(r)
+		if err != nil {
+			handleError(w, errors.Wrap(err, "Unable to parse post parameters"))
+			return
+		}
+
+		// get variable names and ranges out of the params
+		filterParams, err := model.ParseFilterParamsFromJSON(params)
+		if err != nil {
+			handleError(w, err)
+			return
+		}
+
 		dataset := pat.Param(r, "dataset")
 		esIndex := pat.Param(r, "esIndex")
-		inclusive := pat.Param(r, "inclusive")
-		inclusiveBool := false
-		if inclusive == "inclusive" {
-			inclusiveBool = true
-		}
 		invert := pat.Param(r, "invert")
 		invertBool := false
 		if invert == "true" {
 			invertBool = true
 		}
 
-		// get variable names and ranges out of the params
-		filterParams, err := model.ParseFilterParamsURL(r.URL.Query())
-		if err != nil {
-			handleError(w, err)
-			return
-		}
-
 		// get filter client
-		client, err := ctor()
+		storage, err := storageCtor()
 		if err != nil {
 			handleError(w, err)
 			return
 		}
 
 		// fetch filtered data based on the supplied search parameters
-		data, err := client.FetchData(dataset, esIndex, filterParams, inclusiveBool, invertBool)
+		data, err := storage.FetchData(dataset, esIndex, filterParams, invertBool)
 		if err != nil {
 			handleError(w, errors.Wrap(err, "unable fetch filtered data"))
 			return

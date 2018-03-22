@@ -141,18 +141,12 @@ func main() {
 	mux.Use(middleware.Gzip)
 
 	routes.SetVerboseError(config.VerboseError)
+
+	// GET
 	registerRoute(mux, "/distil/datasets/:index", routes.DatasetsHandler(metadataStorageCtor))
 	registerRoute(mux, "/distil/variables/:index/:dataset", routes.VariablesHandler(metadataStorageCtor))
-	registerRoutePost(mux, "/distil/variables/:index/:dataset", routes.VariableTypeHandler(pgDataStorageCtor, metadataStorageCtor))
-	registerRoutePost(mux, "/distil/discovery/:index/:dataset/:target", routes.ProblemDiscoveryHandler(pgDataStorageCtor, metadataStorageCtor, config.UserProblemPath))
-	registerRoute(mux, "/distil/variable-summaries/:index/:dataset/:variable", routes.VariableSummaryHandler(pgDataStorageCtor))
-	registerRoute(mux, "/distil/filtered-data/:esIndex/:dataset/:inclusive/:invert", routes.FilteredDataHandler(pgDataStorageCtor))
-	registerRoute(mux, "/distil/results/:index/:dataset/:pipeline-id/:inclusive", routes.ResultsHandler(pgPipelineStorageCtor, pgDataStorageCtor))
-	registerRoute(mux, "/distil/results-variable-summary/:index/:dataset/:variable/:min/:max/:results-uuid", routes.ResultVariableSummaryHandler(pgPipelineStorageCtor, pgDataStorageCtor))
 	registerRoute(mux, "/distil/results-variable-extrema/:index/:dataset/:variable/:results-uuid", routes.ResultVariableExtremaHandler(pgPipelineStorageCtor, pgDataStorageCtor))
-	registerRoute(mux, "/distil/results-summary/:index/:dataset/:min/:max/:results-uuid", routes.ResultsSummaryHandler(pgPipelineStorageCtor, pgDataStorageCtor))
 	registerRoute(mux, "/distil/results-extrema/:index/:dataset/:results-uuid", routes.ResultsExtremaHandler(pgPipelineStorageCtor, pgDataStorageCtor))
-	registerRoute(mux, "/distil/residuals-summary/:index/:dataset/:min/:max/:results-uuid", routes.ResidualsSummaryHandler(pgPipelineStorageCtor, pgDataStorageCtor))
 	registerRoute(mux, "/distil/residuals-extrema/:index/:dataset/:results-uuid", routes.ResidualsExtremaHandler(pgPipelineStorageCtor, pgDataStorageCtor))
 	registerRoute(mux, "/distil/ranking/:index/:dataset/:target", routes.RankingHandler(pgDataStorageCtor, restClient, config.PipelineDataDir))
 	registerRoute(mux, "/distil/session/:session/:dataset/:target/:pipeline-id", routes.SessionHandler(pgPipelineStorageCtor))
@@ -161,6 +155,17 @@ func main() {
 	registerRoute(mux, "/distil/ingest/:index/:dataset", routes.IngestHandler(metadataStorageCtor, ingestConfig))
 	registerRoute(mux, "/ws", ws.PipelineHandler(pipelineClient, metadataStorageCtor, pgDataStorageCtor, pgPipelineStorageCtor))
 
+	// POST
+	registerRoutePost(mux, "/distil/variables/:index/:dataset", routes.VariableTypeHandler(pgDataStorageCtor, metadataStorageCtor))
+	registerRoutePost(mux, "/distil/discovery/:index/:dataset/:target", routes.ProblemDiscoveryHandler(pgDataStorageCtor, metadataStorageCtor, config.UserProblemPath))
+	registerRoutePost(mux, "/distil/data/:esIndex/:dataset/:invert", routes.DataHandler(pgDataStorageCtor, metadataStorageCtor))
+	registerRoutePost(mux, "/distil/results/:index/:dataset/:pipeline-id", routes.ResultsHandler(pgPipelineStorageCtor, pgDataStorageCtor))
+	registerRoutePost(mux, "/distil/variable-summary/:index/:dataset/:variable", routes.VariableSummaryHandler(pgDataStorageCtor))
+	registerRoutePost(mux, "/distil/results-variable-summary/:index/:dataset/:variable/:min/:max/:results-uuid", routes.ResultVariableSummaryHandler(pgPipelineStorageCtor, pgDataStorageCtor))
+	registerRoutePost(mux, "/distil/residuals-summary/:index/:dataset/:min/:max/:results-uuid", routes.ResidualsSummaryHandler(pgPipelineStorageCtor, pgDataStorageCtor))
+	registerRoutePost(mux, "/distil/results-summary/:index/:dataset/:min/:max/:results-uuid", routes.ResultsSummaryHandler(pgPipelineStorageCtor, pgDataStorageCtor))
+
+	// static
 	registerRoute(mux, "/*", routes.FileHandler("./dist"))
 
 	// catch kill signals for graceful shutdown

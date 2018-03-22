@@ -67,6 +67,22 @@ export interface TargetRow extends TableRow {
 	_cellVariants: Dictionary<string>;
 }
 
+export interface HighlightRoot {
+	context: string;
+	key: string;
+	value: any;
+}
+
+export interface HighlightValues {
+	summaries?: VariableSummary[];
+	samples?: Dictionary<string[]>;
+}
+
+export interface Highlight {
+	root: HighlightRoot;
+	values: HighlightValues;
+}
+
 export interface DataState {
 	datasets: Datasets[];
 	variables: Variable[];
@@ -78,10 +94,9 @@ export interface DataState {
 	predictedExtremas: Dictionary<Extrema>;
 	residualExtremas: Dictionary<Extrema>;
 	resultData: Data;
-	filteredData: Data;
 	selectedData: Data;
 	excludedData: Data;
-	highlightedValues: Dictionary<string[]>;
+	highlightValues: HighlightValues;
 }
 
 export const state = {
@@ -112,14 +127,15 @@ export const state = {
 	// current set of pipeline results
 	resultData: null,
 
-	// filtered data entries for the active dataset
-	filteredData: null,
-
 	// selected data entries for the active dataset
 	selectedData: null,
 
 	// excluded data entries for the active dataset
 	excludedData: null,
 
-	highlightedValues: {}
+	// highlight values
+	highlightValues: {
+		summaries: [],
+		samples: {}
+	}
 }

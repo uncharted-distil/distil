@@ -3,13 +3,11 @@
 		<p class="nav-link font-weight-bold">Feature Summaries</p>
 		<variable-facets
 			enable-search
-			enable-toggle
-			enable-group-collapse
-			enable-facet-filtering
-			instance-name="variable-summary-facets"
-			:variables="variables"
+			:instance-name="instanceName"
+			:groups="groups"
 			:dataset="dataset"
-			:type-change="typeChange">
+			:enable-highlighting="enableHighlighting"
+			:enable-type-change="enableTypeChange">
 		</variable-facets>
 	</div>
 </template>
@@ -28,9 +26,11 @@ export default Vue.extend({
 	},
 
 	props: {
-		'variables': Array,
-		'dataset': String,
-		'typeChange': Boolean
+		groups: Array,
+		dataset: String,
+		instanceName: String,
+		enableHighlighting: Boolean,
+		enableTypeChange: Boolean
 	}
 
 });

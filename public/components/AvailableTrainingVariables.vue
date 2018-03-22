@@ -4,12 +4,12 @@
 		<variable-facets
 			ref="facets"
 			enable-search
-			type-change
+			enable-type-change
 			instance-name="availableVars"
-			:variables="variables"
+			:groups="groups"
 			:dataset="dataset"
 			:html="html">
-			<div v-if="variables.length > 0" class="pb-2">
+			<div v-if="groups.length > 0" class="pb-2">
 				<b-button size="sm" variant="outline-secondary" @click="addAll">Add All</b-button>
 			</div>
 			<div>
@@ -24,8 +24,8 @@
 import { overlayRouteEntry } from '../util/routes';
 import { getters as dataGetters } from '../store/data/module';
 import { getters as routeGetters } from '../store/route/module';
-import { VariableSummary } from '../store/data/index';
 import { filterSummariesByDataset } from '../util/data';
+import { Group, createGroups } from '../util/facets';
 import VariableFacets from '../components/VariableFacets.vue';
 import 'font-awesome/css/font-awesome.css';
 import Vue from 'vue';
@@ -41,12 +41,13 @@ export default Vue.extend({
 		dataset(): string {
 			return routeGetters.getRouteDataset(this.$store);
 		},
-		variables(): VariableSummary[] {
+		groups(): Group[] {
 			const summaries = dataGetters.getAvailableVariableSummaries(this.$store);
-			return filterSummariesByDataset(summaries, this.dataset);
+			const filtered = filterSummariesByDataset(summaries, this.dataset);
+			return createGroups(filtered);
 		},
 		subtitle(): string {
-			return `${this.variables.length} features available (sorted by interestingness)`;
+			return `${this.groups.length} features available (sorted by interestingness)`;
 		},
 		html(): ( { key: string } ) => HTMLDivElement {
 			return (group: { key: string }) => {
