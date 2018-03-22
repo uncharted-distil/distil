@@ -60,6 +60,11 @@ func (s *Storage) parseRawVariable(child map[string]interface{}) (*model.Variabl
 	if !ok {
 		suggestedTypes = make([]map[string]interface{}, 0)
 	}
+
+	if displayVariable == "" {
+		displayVariable = name
+	}
+
 	return &model.Variable{
 		Name:             name,
 		Type:             typ,
