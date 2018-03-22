@@ -90,7 +90,8 @@ export default Vue.extend({
 		return {
 			formatter(arg) {
 				return arg ? arg.toFixed(2) : '';
-			}
+			},
+			exportFailureMsg: ''
 		};
 	},
 
