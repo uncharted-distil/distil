@@ -43,7 +43,7 @@
 			hide-footer>
 			<div class="check-message-container">
 				<i class="fa fa-exclamation-triangle fa-3x fail-icon"></i>
-				<div><b>Export Failed:</b> The selected target variable does not match the required target variable.</div>
+				<div><b>Export Failed:</b> {{exportFailureMsg}} </div>
 				<b-btn class="mt-3 close-modal" variant="success" block @click="hideFailureModal">OK</b-btn>
 			</div>
 		</b-modal>
@@ -281,14 +281,17 @@ export default Vue.extend({
 			appActions.exportPipeline(this.$store, {
 				pipelineId: this.activePipeline.pipelineId,
 				sessionId: this.sessionId
-			}).then(() => {
+			}).then(err => {
 				if (this.isAborted) {
 					// the export was successful
 					this.$router.replace(EXPORT_SUCCESS_ROUTE);
 				} else {
-					// failed, this is because the wrong variable was selected
-					const modal = this.$refs.exportFailModal as any;
-					modal.show();
+					if (err) {
+						// failed, this is because the wrong variable was selected
+						const modal = this.$refs.exportFailModal as any;
+						this.exportFailureMsg = err.message;
+						modal.show();
+					}
 				}
 			});
 		},
