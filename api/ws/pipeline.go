@@ -267,11 +267,19 @@ func handleCreatePipelines(conn *Connection, client *pipeline.Client, metadataCt
 		handleErr(conn, msg, err)
 		return
 	}
+
+	// map variable name to variable display name
+	variables, err := metadata.FetchVariables(clientCreateMsg.Dataset, clientCreateMsg.Index, false)
+	variableNamesDisplay := make(map[string]string)
+	for _, v := range variables {
+		variableNamesDisplay[v.Name] = v.DisplayVariable
+	}
+
 	trainFeatures := []*pipeline.Feature{}
 	for _, featureName := range filteredVars {
 		if featureName != clientCreateMsg.Feature {
 			feature := &pipeline.Feature{
-				FeatureName: featureName,
+				FeatureName: variableNamesDisplay[featureName],
 				ResourceId:  defaultResourceID,
 			}
 			trainFeatures = append(trainFeatures, feature)
@@ -296,7 +304,7 @@ func handleCreatePipelines(conn *Connection, client *pipeline.Client, metadataCt
 		DatasetUri:      datasetPath,
 		TargetFeatures: []*pipeline.Feature{
 			{
-				FeatureName: clientCreateMsg.Feature,
+				FeatureName: variableNamesDisplay[clientCreateMsg.Feature],
 				ResourceId:  defaultResourceID,
 			},
 		},
