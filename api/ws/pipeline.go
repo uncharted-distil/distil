@@ -271,8 +271,10 @@ func handleCreatePipelines(conn *Connection, client *pipeline.Client, metadataCt
 	// map variable name to variable display name
 	variables, err := metadata.FetchVariables(clientCreateMsg.Dataset, clientCreateMsg.Index, false)
 	variableNamesDisplay := make(map[string]string)
+	variableNames := make(map[string]string)
 	for _, v := range variables {
 		variableNamesDisplay[v.Name] = v.DisplayVariable
+		variableNames[v.DisplayVariable] = v.Name
 	}
 
 	trainFeatures := []*pipeline.Feature{}
@@ -335,7 +337,7 @@ func handleCreatePipelines(conn *Connection, client *pipeline.Client, metadataCt
 
 	// store the request features
 	for _, f := range trainFeatures {
-		err = pipelineStorage.PersistRequestFeature(requestID, f.FeatureName, model.FeatureTypeTrain)
+		err = pipelineStorage.PersistRequestFeature(requestID, variableNames[f.FeatureName], model.FeatureTypeTrain)
 		if err != nil {
 			handleErr(conn, msg, err)
 			return
@@ -343,7 +345,7 @@ func handleCreatePipelines(conn *Connection, client *pipeline.Client, metadataCt
 	}
 
 	for _, f := range createMsg.TargetFeatures {
-		err = pipelineStorage.PersistRequestFeature(requestID, f.FeatureName, model.FeatureTypeTarget)
+		err = pipelineStorage.PersistRequestFeature(requestID, variableNames[f.FeatureName], model.FeatureTypeTarget)
 		if err != nil {
 			handleErr(conn, msg, err)
 			return
