@@ -17,6 +17,7 @@ import:
 - package: github.com/unchartedsoftware/distil-ingest
   repo: git@github.com:unchartedsoftware/distil-ingest.git
   vcs: git
+  version: e7de3c3f2b17cfdf9dadeadac88f62975f411752
 - package: github.com/vova616/xxhash
 - package: github.com/zenazn/goji
   subpackages:
