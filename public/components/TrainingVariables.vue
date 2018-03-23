@@ -1,6 +1,8 @@
 <template>
 	<div class="training-variables">
-		<p class="nav-link font-weight-bold">Features to Model</p>
+		<p class="nav-link font-weight-bold">Features to Model
+			<i class="float-right fa fa-angle-right fa-lg"></i>
+		</p>
 		<variable-facets
 			ref="facets"
 			enable-search

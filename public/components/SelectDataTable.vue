@@ -16,13 +16,13 @@
 
 		<p class="small-margin">
 			<small>Displaying {{items.length}} of {{numRows}} rows</small>
-			<b-button v-if="includedActive"
+			<b-button class="float-right" v-if="includedActive"
 				variant="outline-secondary"
 				:disabled="!highlights.root"
 				@click="onExcludeClick">
 				<i class="fa fa-minus-circle pr-1"></i>Exclude
 			</b-button>
-			<b-button v-if="!includedActive"
+			<b-button class="float-right" v-if="!includedActive"
 				variant="outline-secondary"
 				:disabled="!highlights.root"
 				@click="onReincludeClick">

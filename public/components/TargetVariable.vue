@@ -1,13 +1,11 @@
 <template>
 	<div>
-		<p class="nav-link font-weight-bold">Target Feature</p>
 		<div class="target-no-target" v-if="groups.length===0">
 			<div class="text-danger">
 				<i class="fa fa-times missing-icon"></i><strong>No Target Feature Selected</strong>
 			</div>
 		</div>
 		<variable-facets v-if="groups.length>0"
-			enable-type-change
 			enable-highlighting
 			:groups="groups"
 			:dataset="dataset"
