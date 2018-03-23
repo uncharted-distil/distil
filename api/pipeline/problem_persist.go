@@ -38,6 +38,7 @@ type VariableProvider func(dataset string, index string, name string) (*model.Va
 type Problem struct {
 	Properties *ProblemProperties `json:"about"`
 	Inputs     *ProblemInput      `json:"inputs"`
+	Outputs    *ProblemOutput     `json:"expectedOutputs"`
 }
 
 // ProblemProperties represents the basic information of a problem.
@@ -51,8 +52,13 @@ type ProblemProperties struct {
 
 // ProblemInput lists the information of a problem.
 type ProblemInput struct {
-	Data               *ProblemData                `json:"data"`
+	Data               []*ProblemData              `json:"data"`
 	PerformanceMetrics []*ProblemPerformanceMetric `json:"performanceMetrics"`
+}
+
+// ProblemOutput lists the output file of a problem
+type ProblemOutput struct {
+	Predictions string `json:"predictionsFile"`
 }
 
 // ProblemData ties targets to a dataset.
@@ -150,7 +156,7 @@ func PersistProblem(fetchVariable VariableProvider, datasetDir string, dataset s
 	}
 
 	pInput := &ProblemInput{
-		Data:               pData,
+		Data:               []*ProblemData{pData},
 		PerformanceMetrics: []*ProblemPerformanceMetric{pMetric},
 	}
 
@@ -180,4 +186,19 @@ func PersistProblem(fetchVariable VariableProvider, datasetDir string, dataset s
 	}
 
 	return pPath, nil
+}
+
+// ReadProblem reads a problem description JSON file from the specified path into a Problem
+// structure.
+func ReadProblem(problemPath string) (*Problem, error) {
+	raw, err := ioutil.ReadFile(problemPath)
+	if err != nil {
+		return nil, errors.Wrap(err, "unabled to read problem file")
+	}
+	var problem *Problem
+	err = json.Unmarshal(raw, &problem)
+	if err != nil {
+		return nil, errors.Wrap(err, "unable to unmarshall problem file")
+	}
+	return problem, nil
 }

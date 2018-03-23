@@ -16,6 +16,7 @@ const (
 	executablesRoot  = "executables_root"
 	userProblemsRoot = "user_problems_root"
 	trainingDataRoot = "training_data_root"
+	problemSchema    = "problem_schema"
 )
 
 var (
@@ -49,6 +50,7 @@ type Config struct {
 	MergedOutputDataPath       string `env:"MERGED_OUTPUT_DATA_PATH" envDefault:"tables/merged.csv"`
 	MergedOutputSchemaPath     string `env:"MERGED_OUTPUT_SCHEMA_PATH" envDefault:"tables/mergedDataSchema.json"`
 	SchemaPath                 string `env:"SCHEMA_PATH" envDefault:"datasetDoc.json"`
+	ProblemSchemaPath          string `env:"PROBLEM_SCHEMA_PATH" envDefault:""`
 	ClassificationEndpoint     string `env:"CLASSIFICATION_ENDPOINT" envDefault:"http://localhost:5000"`
 	ClassificationWait         bool   `env:"CLASSIFICATION_WAIT" envDefault:"false"`
 	ClassificationFunctionName string `env:"CLASSIFICATION_FUNCTION_NAME" envDefault:"fileUpload"`
@@ -136,5 +138,11 @@ func overideFromStartupFile(cfg *Config) error {
 		cfg.DataFolderPath = result
 		cfg.InitialDataset = result
 	}
+
+	result, ok = json.String(startupData, problemSchema)
+	if ok {
+		cfg.ProblemSchemaPath = result
+	}
+
 	return nil
 }
