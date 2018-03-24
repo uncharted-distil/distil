@@ -31,10 +31,52 @@ const (
 	datasetSizeLimit  = 10000
 )
 
-// PipelineHandler represents a pipeline websocket handler.
-func PipelineHandler(client *pipeline.Client, metadataCtor model.MetadataStorageCtor, dataCtor model.DataStorageCtor, pipelineCtor model.PipelineStorageCtor) func(http.ResponseWriter, *http.Request) {
-	return func(w http.ResponseWriter, r *http.Request) {
+var problemTarget string
+var problemMetric string
+var metricMap = map[string]string{
+	"ACCURACY":                    "ACCURACY",
+	"F1":                          "F1",
+	"F1MICRO":                     "F1_MICRO",
+	"F1MACRO":                     "F1_MACRO",
+	"ROCAUC":                      "ROC_AUC",
+	"ROCAUCMICRO":                 "ROC_AUC_MICRO",
+	"ROCAUCMACRO":                 "ROC_AUC_MACRO",
+	"MEANSQUAREDERROR":            "MEAN_SQUARED_ERROR",
+	"ROOTMEANSQUAREDERROR":        "ROOT_MEAN_SQUARED_ERROR",
+	"ROOTMEANSQUAREDERRORAVG":     "ROOT_MEAN_SQUARED_ERROR_AVG",
+	"MEANABSOLUTEERROR":           "MEAN_ABSOLUTE_ERROR",
+	"RSQUARED":                    "R_SQUARED",
+	"NORMALIZEDMUTUALINFORMATION": "NORMALIZED_MUTUAL_INFORMATION",
+	"JACCARDSIMILARITYSCORE":      "JACCARD_SIMILARITY_SCORE",
+	"PRECISIONATTOPK":             "PRECISION_AT_TOP_K",
+}
 
+// PipelineHandler represents a pipeline websocket handler.
+func PipelineHandler(client *pipeline.Client, metadataCtor model.MetadataStorageCtor, dataCtor model.DataStorageCtor,
+	pipelineCtor model.PipelineStorageCtor, problemSchemaPath string) func(http.ResponseWriter, *http.Request) {
+
+	// ** For Jan Eval Only - should not appear in master
+	if problemSchemaPath != "" {
+		problem, err := pipeline.ReadProblem(problemSchemaPath)
+		if err == nil {
+			problemTarget = strings.ToUpper(problem.Inputs.Data[0].Targets[0].ColName)
+			schemaMetric := strings.ToUpper(problem.Inputs.PerformanceMetrics[0].Metric)
+			var ok bool
+			problemMetric, ok = metricMap[schemaMetric]
+			if !ok {
+				problemMetric = ""
+				problemTarget = ""
+				log.Warnf("Could not map schema metric %s to API metric", schemaMetric)
+			} else {
+				log.Infof("Loaded problem from %s - target: %s : metric: %s", problemSchemaPath, problemTarget, problemMetric)
+			}
+		} else {
+			log.Warnf("Failed to load problem with error %s", err)
+		}
+	}
+	// ** End For Jan Eval Only
+
+	return func(w http.ResponseWriter, r *http.Request) {
 		// create conn
 		conn, err := NewConnection(w, r, handlePipelineMessage(client, metadataCtor, dataCtor, pipelineCtor))
 		if err != nil {
@@ -278,12 +320,19 @@ func handleCreatePipelines(conn *Connection, client *pipeline.Client, metadataCt
 		}
 	}
 
-	// convert received metrics into the ta3ta2 format
+	// ** For Jan eval only - this shouldn't show up in master **
+	// If the requested target matches the problem target, force use of the problem metric.
 	metrics := []pipeline.PerformanceMetric{}
-	for _, msgMetric := range clientCreateMsg.Metrics {
-		metric := pipeline.PerformanceMetric(pipeline.PerformanceMetric_value[strings.ToUpper(msgMetric)])
+	if problemTarget != "" && problemTarget == strings.ToUpper(clientCreateMsg.Feature) {
+		metric := pipeline.PerformanceMetric(pipeline.PerformanceMetric_value[problemMetric])
 		metrics = append(metrics, metric)
+	} else {
+		for _, msgMetric := range clientCreateMsg.Metrics {
+			metric := pipeline.PerformanceMetric(pipeline.PerformanceMetric_value[strings.ToUpper(msgMetric)])
+			metrics = append(metrics, metric)
+		}
 	}
+	// ** End for Jan eval only **
 
 	// populate the protobuf pipeline create msg
 	createMsg := &pipeline.PipelineCreateRequest{
@@ -500,4 +549,10 @@ func fetchFilteredVariables(metadata model.MetadataStorage, index string, datase
 		}
 	}
 	return filteredVars, nil
+}
+
+// ** For Jan eval only - shouldn't appear in master
+type problemData struct {
+	metric    string
+	targetVar string
 }
