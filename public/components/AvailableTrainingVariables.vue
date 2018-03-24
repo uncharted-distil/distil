@@ -1,6 +1,8 @@
 <template>
 	<div class="available-training-variables">
-		<p class="nav-link font-weight-bold">Available Features</p>
+		<p class="nav-link font-weight-bold">Available Features
+			<i class="float-right fa fa-angle-right fa-lg"></i>
+		</p>
 		<variable-facets
 			ref="facets"
 			enable-search
