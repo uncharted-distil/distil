@@ -33,7 +33,7 @@
 
 import _ from 'lodash';
 import { createRouteEntry } from '../util/routes';
-import { getTask, getMetricDisplayNames, getMetricSchemaName } from '../util/pipelines';
+import { getTask, getDefaultMetricDisplayNames, getMetricSchemaName } from '../util/pipelines';
 import { getters as dataGetters, actions as dataActions } from '../store/data/module';
 import { getters as routeGetters } from '../store/route/module';
 import { RESULTS_ROUTE } from '../store/route/index';
@@ -78,7 +78,7 @@ export default Vue.extend({
 			// get the task info associated with that variable type
 			const taskData = getTask(this.targetVariable.type);
 			// grab the valid metrics from the task data to use as labels in the UI
-			return getMetricDisplayNames(taskData);
+			return getDefaultMetricDisplayNames(taskData);
 		},
 		trainingSelected(): boolean {
 			return !_.isEmpty(this.training);
