@@ -105,7 +105,7 @@ func ExportHandler(storageCtor model.PipelineStorageCtor, metaStorageCtor model.
 		log.Infof("Exporting to %s", exportURI)
 
 		err = client.ExportPipeline(context.Background(), sessionID, pipelineID, exportURI)
-		if err == nil {
+		if err != nil {
 			log.Infof("Failed pipeline export request to %s", exportURI)
 			os.Exit(1)
 		} else {
