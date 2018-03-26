@@ -22,7 +22,7 @@ export const mutations = {
 	},
 
 	// adds a pipeline request or replaces an existing one if the ids match.
-	updatePipelineRequest(state: PipelineState, pipeline: PipelineInfo) {
+	updatePipelineRequests(state: PipelineState, pipeline: PipelineInfo) {
 		const index = _.findIndex(state.pipelineRequests, p => {
 			return p.pipelineId === pipeline.pipelineId;
 		});
@@ -33,5 +33,9 @@ export const mutations = {
 				Vue.set(state.pipelineRequests, index, pipeline);
 			}
 		}
+	},
+
+	clearPipelineRequests(state: PipelineState) {
+		state.pipelineRequests = [];
 	}
 }

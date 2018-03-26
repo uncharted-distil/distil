@@ -66,7 +66,7 @@ import { FieldInfo, Highlight } from '../store/data/index';
 import { getters as routeGetters } from '../store/route/module';
 import { TableRow } from '../store/data/index';
 import { addFilterToRoute, EXCLUDE_FILTER, INCLUDE_FILTER } from '../util/filters';
-import { updateTableHighlights, getHighlights, updateHighlightRoot, clearHighlightRoot, scrollToFirstHighlight, createFilterFromHighlightRoot } from '../util/highlights';
+import { getHighlights, updateHighlightRoot, clearHighlightRoot, createFilterFromHighlightRoot } from '../util/highlights';
 
 export default Vue.extend({
 	name: 'selected-data-table',
@@ -109,32 +109,7 @@ export default Vue.extend({
 
 		// extracts the table data from the store
 		items(): TableRow[] {
-			const items = this.includedActive ? dataGetters.getSelectedDataItems(this.$store) : dataGetters.getExcludedDataItems(this.$store);
-
-			// clear any existing selections
-			items.forEach(f => f._rowVariant = null);
-
-			// if we have highlights defined and the select table is not the source then updated
-			// the highlight visuals.
-			if ((_.get(this.highlights, 'root.context') !== this.instanceName)) {
-				updateTableHighlights(items, this.highlights, this.instanceName);
-
-				// On data / highlights change, scroll to first selected row
-				scrollToFirstHighlight(this, 'selectTable', true);
-			}
-
-			if (this.selectedRowKey >= 0) {
-				const toSelect = items.find(r => r._key === this.selectedRowKey);
-				if (toSelect) {
-					if (_.get(this.highlights, 'root.context') === this.instanceName) {
-						toSelect._rowVariant = 'primary';
-					} else {
-						toSelect._rowVariant = null;
-					}
-				}
-			}
-
-			return items;
+			return this.includedActive ? dataGetters.getSelectedDataItems(this.$store) : dataGetters.getExcludedDataItems(this.$store);
 		},
 
 		// extract the table field header from the store

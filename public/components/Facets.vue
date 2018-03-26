@@ -289,26 +289,6 @@ export default Vue.extend({
 			}
 		},
 
-		ensureMinHeight(slices: Dictionary<number>, bars: any) {
-			const MIN_PERCENT = 0.1;
-			// get counts per entry, and max of all
-			const count = {};
-			let max = 0;
-			for (let i = 0; i < bars.length; i++) {
-				const bar = bars[i];
-				const entry: any = _.last(bar.metadata);
-				count[entry.label] = entry.count;
-				max = Math.max(max, entry.count);
-			}
-			// set count to ensure min height
-			const minCount = MIN_PERCENT * max;
-			_.forIn(slices, (slice, key) => {
-				if (slice < minCount) {
-					slices[key] = Math.min(count[key], minCount);
-				}
-			});
-		},
-
 		injectHighlightsIntoGroup(group: any, highlights: Highlight) {
 
 			// loop through groups ensure that selection is clear on each
@@ -323,13 +303,7 @@ export default Vue.extend({
 			});
 
 			const highlightRootValue = this.getHighlightRootValue(highlights);
-
-			if (!highlightRootValue) {
-				// no value to highlight, exit early
-				return;
-			}
-
-			const summaries = this.getHighlightSummaries(highlights);
+			const highlightSummaries = this.getHighlightSummaries(highlights);
 
 			for (const facet of group.facets) {
 
@@ -353,7 +327,7 @@ export default Vue.extend({
 
 					} else {
 
-						const summary = _.find(summaries, s => {
+						const summary = _.find(highlightSummaries, s => {
 							return s.name === group.key;
 						});
 
@@ -368,9 +342,6 @@ export default Vue.extend({
 								slices[entry.label] = bucket.count;
 							});
 
-							// ensure min height
-							//this.ensureMinHeight(slices, bars);
-
 							selection.slices = slices;
 						}
 					}
@@ -378,7 +349,6 @@ export default Vue.extend({
 					facet.select({
 						selection: selection
 					});
-
 
 				} else {
 
@@ -393,7 +363,7 @@ export default Vue.extend({
 
 					} else {
 
-						const summary = _.find(summaries, s => {
+						const summary = _.find(highlightSummaries, s => {
 							return s.name === group.key;
 						});
 

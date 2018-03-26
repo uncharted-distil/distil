@@ -61,6 +61,14 @@ function updateCurrentPipelineResults(context: any, req: PipelineRequest, res: P
 			pipelineId: res.pipelineId,
 			extrema: context.getters.getPredictedExtrema
 		});
+		context.dispatch('fetchResultHighlightValues', {
+			dataset: req.dataset,
+			highlightRoot: context.getters.getDecodedHighlightRoot,
+			extrema: context.getters.getPredictedExtrema,
+			pipelineId: res.pipelineId,
+			requestIds: context.getters.getPipelines,
+			variables: context.getters.getActivePipelineVariables
+		});
 	});
 
 	context.dispatch('fetchResidualsExtrema', {
@@ -160,6 +168,9 @@ export const actions = {
 		if (!args.pipelineId) {
 			args.pipelineId = null;
 		}
+
+		mutations.clearPipelineRequests(context);
+
 		return axios.get(`/distil/session/${args.sessionId}/${args.dataset}/${args.target}/${args.pipelineId}`)
 			.then(response => {
 				if (!response.data.pipelines) {
@@ -176,7 +187,7 @@ export const actions = {
 					});
 
 					// update pipeline
-					mutations.updatePipelineRequest(context, {
+					mutations.updatePipelineRequests(context, {
 						name: targetFeature,
 						feature: targetFeature,
 						filters: pipeline.filters,

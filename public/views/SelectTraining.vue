@@ -111,7 +111,6 @@ export default Vue.extend({
 			const summaries = dataGetters.getTargetVariableSummaries(this.$store);
 			if (summaries.length > 0) {
 				const summary = summaries[0];
-				console.log(summary.buckets);
 				return summary.buckets;
 			}
 			return [];
@@ -126,25 +125,51 @@ export default Vue.extend({
 				highlightRoot: this.highlightRoot,
 				filters: this.selectedFilters
 			});
-		},
-		training() {
 			actions.fetchSelectedTableData(this.$store, {
 				dataset: this.dataset,
-				filters: this.selectedFilters
+				filters: this.selectedFilters,
+				highlightRoot: this.highlightRoot
 			});
 			actions.fetchExcludedTableData(this.$store, {
 				dataset: this.dataset,
+				filters: this.selectedFilters,
+				highlightRoot: this.highlightRoot
+			});
+		},
+		training() {
+			actions.fetchDataHighlightValues(this.$store, {
+				dataset: this.dataset,
+				variables: this.variables,
+				highlightRoot: this.highlightRoot,
 				filters: this.selectedFilters
+			});
+			actions.fetchSelectedTableData(this.$store, {
+				dataset: this.dataset,
+				filters: this.selectedFilters,
+				highlightRoot: this.highlightRoot
+			});
+			actions.fetchExcludedTableData(this.$store, {
+				dataset: this.dataset,
+				filters: this.selectedFilters,
+				highlightRoot: this.highlightRoot
 			});
 		},
 		filtersStr() {
+			actions.fetchDataHighlightValues(this.$store, {
+				dataset: this.dataset,
+				variables: this.variables,
+				highlightRoot: this.highlightRoot,
+				filters: this.selectedFilters
+			});
 			actions.fetchSelectedTableData(this.$store, {
 				dataset: this.dataset,
-				filters: this.selectedFilters
+				filters: this.selectedFilters,
+				highlightRoot: this.highlightRoot
 			});
 			actions.fetchExcludedTableData(this.$store, {
 				dataset: this.dataset,
-				filters: this.selectedFilters
+				filters: this.selectedFilters,
+				highlightRoot: this.highlightRoot
 			});
 		}
 	},
@@ -170,11 +195,13 @@ export default Vue.extend({
 				});
 				actions.fetchSelectedTableData(this.$store, {
 					dataset: this.dataset,
-					filters: this.selectedFilters
+					filters: this.selectedFilters,
+					highlightRoot: this.highlightRoot
 				});
 				actions.fetchExcludedTableData(this.$store, {
 					dataset: this.dataset,
-					filters: this.selectedFilters
+					filters: this.selectedFilters,
+					highlightRoot: this.highlightRoot
 				});
 			});
 		},

@@ -35,7 +35,7 @@ import { getters as routeGetters } from '../store/route/module';
 import { getters as pipelineGetters } from '../store/pipelines/module';
 import { Dictionary } from '../util/dict';
 import { removeNonTrainingItems, removeNonTrainingFields } from '../util/data';
-import { updateTableHighlights, updateHighlightRoot, clearHighlightRoot, scrollToFirstHighlight, getHighlights } from '../util/highlights';
+import { updateHighlightRoot, clearHighlightRoot } from '../util/highlights';
 import Vue from 'vue';
 
 export default Vue.extend({
@@ -73,38 +73,7 @@ export default Vue.extend({
 		// extracts the table data from the store
 		items(): TargetRow[] {
 			const items = getters.getResultDataItems(this.$store);
-			const filtered = removeNonTrainingItems(items, this.training);
-			const highlights = getHighlights(this.$store);
-
-			// clear all selections visuals
-			items.forEach(r => r._rowVariant = null);
-
-			// if we have highlights defined and the select table is not the source then updated
-			// the highlight visuals.
-			let updatedItems = <TargetRow[]>[];
-			if (_.get(highlights, 'root.context') !== this.instanceName) {
-				updateTableHighlights(filtered, highlights, this.instanceName);
-			}
-
-			updatedItems = filtered
-				.filter(item => this.filterFunc(item))
-				.map(item => this.decorateFunc(item));
-
-			if (this.selectedRowKey >= 0) {
-				const toSelect = updatedItems.find(r => r._key === this.selectedRowKey);
-				if (toSelect) {
-					if (_.get(highlights, 'root.context') === this.instanceName) {
-						toSelect._rowVariant = 'primary';
-					} else {
-						toSelect._rowVariant = null;
-					}
-				}
-			}
-
-			// On data / highlights change, scroll to first selected row
-			scrollToFirstHighlight(this, this.refName, false);
-
-			return updatedItems;
+			return removeNonTrainingItems(items, this.training);
 		},
 
 		// extract the table field header from the store

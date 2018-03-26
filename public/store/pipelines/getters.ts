@@ -47,6 +47,16 @@ export const getters = {
 		return Array.from(state.pipelineRequests).slice().sort(sortPipelines);
 	},
 
+	getPipelineRequestIds(state: PipelineState): string[] {
+		const ids = [];
+		state.pipelineRequests.forEach(pipeline => {
+			if (ids.indexOf(pipeline.requestId) === -1) {
+				ids.push(pipeline.requestId);
+			}
+		});
+		return ids;
+	},
+
 	getActivePipeline(state: PipelineState, getters: any): PipelineInfo {
 		const pipelineId = getters.getRoutePipelineId;
 		return _.find(state.pipelineRequests, pipeline => pipeline.pipelineId === pipelineId);

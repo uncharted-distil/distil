@@ -27,7 +27,6 @@
 import VariableSummaries from '../components/VariableSummaries.vue';
 import ResultsComparison from '../components/ResultsComparison.vue';
 import ResultSummaries from '../components/ResultSummaries.vue';
-import { getRequestIdsForDatasetAndTarget } from '../util/pipelines';
 import { getters as dataGetters, actions as dataActions } from '../store/data/module';
 import { getters as routeGetters } from '../store/route/module';
 import { actions as pipelineActions, getters as pipelineGetters } from '../store/pipelines/module';
@@ -61,7 +60,7 @@ export default Vue.extend({
 			return pipelineGetters.getActivePipelineVariables(this.$store);
 		},
 		requestIds(): string[] {
-			return getRequestIdsForDatasetAndTarget(this.$store.state.pipelineModule, this.dataset, this.target);
+			return pipelineGetters.getPipelineRequestIds(this.$store);
 		},
 		training(): Dictionary<boolean> {
 			return pipelineGetters.getActivePipelineTrainingMap(this.$store);
@@ -100,6 +99,11 @@ export default Vue.extend({
 				extrema: this.predictedExtrema,
 				variables: this.variables
 			});
+			dataActions.fetchResultTableData(this.$store, {
+				dataset: this.dataset,
+				pipelineId: this.pipelineId,
+				highlightRoot: this.highlightRoot
+			});
 		},
 		pipelineId() {
 			Promise.all([
@@ -119,18 +123,29 @@ export default Vue.extend({
 					pipelineId: this.pipelineId,
 					extrema: this.predictedExtrema
 				});
+				dataActions.fetchResultHighlightValues(this.$store, {
+					dataset: this.dataset,
+					highlightRoot: this.highlightRoot,
+					pipelineId: this.pipelineId,
+					requestIds: this.requestIds,
+					extrema: this.predictedExtrema,
+					variables: this.variables
+				});
 			});
-			dataActions.fetchResultHighlightValues(this.$store, {
+			dataActions.fetchResidualsExtremas(this.$store, {
 				dataset: this.dataset,
-				highlightRoot: this.highlightRoot,
-				pipelineId: this.pipelineId,
-				requestIds: this.requestIds,
-				extrema: this.predictedExtrema,
-				variables: this.variables
+				requestIds: this.requestIds
+			}).then(() => {
+				dataActions.fetchResidualsSummaries(this.$store, {
+					dataset: this.dataset,
+					requestIds: this.requestIds,
+					extrema: this.residualExtrema
+				});
 			});
 			dataActions.fetchResultTableData(this.$store, {
 				dataset: this.dataset,
-				pipelineId: this.pipelineId
+				pipelineId: this.pipelineId,
+				highlightRoot: this.highlightRoot
 			});
 		}
 	},
@@ -194,7 +209,8 @@ export default Vue.extend({
 						});
 						dataActions.fetchResultTableData(this.$store, {
 							dataset: this.dataset,
-							pipelineId: this.pipelineId
+							pipelineId: this.pipelineId,
+							highlightRoot: this.highlightRoot
 						});
 					});
 				});

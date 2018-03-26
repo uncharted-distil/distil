@@ -106,5 +106,9 @@ export const mutations = {
 			return;
 		}
 		state.highlightValues.summaries.push(summary);
+	},
+
+	clearHighlightSummaries(state: DataState) {
+		state.highlightValues.summaries = [];
 	}
 }
