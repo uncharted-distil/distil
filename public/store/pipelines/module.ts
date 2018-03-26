@@ -21,6 +21,7 @@ export const getters = {
 	getRunningPipelines: read(moduleGetters.getRunningPipelines),
 	getCompletedPipelines: read(moduleGetters.getCompletedPipelines),
 	getPipelines: read(moduleGetters.getPipelines),
+	getPipelineRequestIds: read(moduleGetters.getPipelineRequestIds),
 	getActivePipeline: read(moduleGetters.getActivePipeline),
 	getActivePipelineTrainingMap: read(moduleGetters.getActivePipelineTrainingMap),
 	getActivePipelineVariables: read(moduleGetters.getActivePipelineVariables),
@@ -36,5 +37,6 @@ export const actions = {
 export const mutations = {
 	setPipelineSessionID: commit(moduleMutations.setPipelineSessionID),
 	setSessionActivity: commit(moduleMutations.setSessionActivity),
-	updatePipelineRequest: commit(moduleMutations.updatePipelineRequest)
+	updatePipelineRequests: commit(moduleMutations.updatePipelineRequests),
+	clearPipelineRequests: commit(moduleMutations.clearPipelineRequests)
 }

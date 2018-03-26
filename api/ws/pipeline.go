@@ -449,9 +449,7 @@ func handleCreatePipelinesSuccess(conn *Connection, msg *Message, proxy *pipelin
 				bs := hasher.Sum(nil)
 				resultID = fmt.Sprintf("%x", bs)
 
-				response["pipeline"] = map[string]interface{}{
-					"resultId": resultID,
-				}
+				response["resultId"] = resultID
 
 				outputTypeName := int32(res.PipelineInfo.Output)
 				outputType = pipeline.OutputType_name[outputTypeName]

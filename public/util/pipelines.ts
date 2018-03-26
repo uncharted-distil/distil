@@ -35,32 +35,6 @@ export function getPipelineById(state: PipelineState, pipelineId: string): Pipel
 	return _.find(state.pipelineRequests, p => pipelineId === p.pipelineId);
 }
 
-// Utility function to return all request ids for the provided dataset and target variable
-export function getRequestIdsForDatasetAndTarget(state: PipelineState, dataset: string, target: string): string[] {
-	const ids = [];
-	state.pipelineRequests.forEach(pipeline => {
-		if (pipeline.dataset === dataset && pipeline.feature === target) {
-			if (ids.indexOf(pipeline.requestId) === -1) {
-				ids.push(pipeline.requestId);
-			}
-		}
-	});
-	return ids;
-}
-
-// Utility function to return all pipelines for the provided dataset and target variable
-export function getPipelinesForDatasetAndTarget(state: PipelineState, dataset: string, target: string): PipelineInfo[] {
-	const pipelines = [];
-	state.pipelineRequests.forEach(pipeline => {
-		if (pipeline.dataset === dataset && pipeline.feature === target) {
-			if (pipelines.indexOf(pipeline.requestId) === -1) {
-				pipelines.push(pipeline);
-			}
-		}
-	});
-	return pipelines;
-}
-
 // Gets a task object based on a variable type.
 export function getTask(varType: string): Task {
 	const lowerType = _.toLower(varType);

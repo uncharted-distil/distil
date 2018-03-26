@@ -197,6 +197,9 @@ export function guessTypeByType(type: string): string[] {
 }
 
 export function guessTypeByValue(value: any): string[] {
+	if (value === undefined) {
+		return TEXT_SUGGESTIONS;
+	}
 	if (_.isArray(value)) {
 		let types = [];
 		value.forEach(val => {
@@ -211,13 +214,13 @@ export function guessTypeByValue(value: any): string[] {
 		const num = _.toNumber(value);
 		return _.isInteger(num) ? INTEGER_SUGGESTIONS : DECIMAL_SUGGESTIONS
 	}
-	if (value.match(EMAIL_REGEX)) {
+	if (EMAIL_REGEX.test(value)) {
 		return EMAIL_SUGGESTIONS;
 	}
-	if (value.match(URI_REGEX)) {
+	if (URI_REGEX.test(value)) {
 		return URI_SUGGESTIONS;
 	}
-	if (value.match(PHONE_REGEX)) {
+	if (PHONE_REGEX.test(value)) {
 		return PHONE_SUGGESTIONS;
 	}
 	return TEXT_SUGGESTIONS;

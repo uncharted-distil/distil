@@ -118,5 +118,7 @@ export const mutations = {
 	setResultData: commit(moduleMutations.setResultData),
 	updateHighlightSamples: commit(moduleMutations.updateHighlightSamples),
 	updateHighlightSummaries: commit(moduleMutations.updateHighlightSummaries),
-	updatePredictedHighlightSummaries: commit(moduleMutations.updatePredictedHighlightSummaries)
+	updatePredictedHighlightSummaries: commit(moduleMutations.updatePredictedHighlightSummaries),
+	clearHighlightSummaries: commit(moduleMutations.clearHighlightSummaries),
+
 }

@@ -30,7 +30,7 @@ import './styles/main.css';
 Vue.use(VueRouter);
 Vue.use(BootstrapVue);
 
-const router = new VueRouter({
+export const router = new VueRouter({
 	routes: [
 		{ path: ROOT_ROUTE, redirect: HOME_ROUTE },
 		{ path: HOME_ROUTE, component: Home },

@@ -21,10 +21,10 @@ export interface PipelineInfo {
 	name: string;
 	feature: string;
 	pipelineId: string;
+	resultId: string;
 	progress: string;
 	output: string;
 	scores: Score[];
-	resultId: string;
 	timestamp: number;
 	dataset: string;
 	filters: FilterParams;

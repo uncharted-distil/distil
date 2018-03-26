@@ -68,7 +68,7 @@ export function scrollToFirstHighlight(component: Vue, refName: string, smoothSc
 }
 
 export function createFilterFromHighlightRoot(highlightRoot: HighlightRoot, mode: string): Filter {
-	if (highlightRoot.value == null) {
+	if (!highlightRoot || highlightRoot.value == null) {
 		return null;
 	}
 	if (_.isString(highlightRoot.value)) {
@@ -122,12 +122,8 @@ export function clearHighlightRoot(component: Vue) {
 }
 
 export function getHighlights(store: Store<any>): Highlight {
-	const rootHighlights = routeGetters.getDecodedHighlightRoot(store);
-	if (!rootHighlights) {
-		return {} as Highlight;
-	}
 	return {
-		root: rootHighlights,
+		root: routeGetters.getDecodedHighlightRoot(store),
 		values: {
 			samples: dataGetters.getHighlightedSamples(store),
 			summaries: dataGetters.getHighlightedSummaries(store)

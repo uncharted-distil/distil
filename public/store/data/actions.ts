@@ -290,9 +290,20 @@ export const actions = {
 	},
 
 	// update filtered data based on the  current filter state
-	fetchSelectedTableData(context: DataContext, args: { dataset: string, filters: FilterParams }) {
+	fetchSelectedTableData(context: DataContext, args: { dataset: string, filters: FilterParams, highlightRoot: HighlightRoot }) {
+		if (!args.filters) {
+			console.warn('`filters` argument is missing');
+			return null;
+		}
+
+		const highlightFilter = createFilterFromHighlightRoot(args.highlightRoot, INCLUDE_FILTER);
+		if (highlightFilter) {
+			args.filters.filters.push(highlightFilter);
+		}
+
 		mutations.setSelectedData(context, null);
-		context.dispatch('fetchData', { dataset: args.dataset, filters: args.filters, inclusive: false, invert: false })
+
+		context.dispatch('fetchData', { dataset: args.dataset, filters: args.filters, invert: false })
 			.then(response => {
 				mutations.setSelectedData(context, response.data);
 			})
@@ -303,9 +314,20 @@ export const actions = {
 	},
 
 	// update filtered data based on the  current filter state
-	fetchExcludedTableData(context: DataContext, args: { dataset: string, filters: FilterParams }) {
+	fetchExcludedTableData(context: DataContext, args: { dataset: string, filters: FilterParams, highlightRoot: HighlightRoot }) {
+		if (!args.filters) {
+			console.warn('`filters` argument is missing');
+			return null;
+		}
+
+		const highlightFilter = createFilterFromHighlightRoot(args.highlightRoot, INCLUDE_FILTER);
+		if (highlightFilter) {
+			args.filters.filters.push(highlightFilter);
+		}
+
 		mutations.setExcludedData(context, null);
-		context.dispatch('fetchData', { dataset: args.dataset, filters: args.filters, inclusive: false, invert: true })
+
+		context.dispatch('fetchData', { dataset: args.dataset, filters: args.filters, invert: true })
 			.then(response => {
 				mutations.setExcludedData(context, response.data);
 			})
@@ -505,7 +527,19 @@ export const actions = {
 	},
 
 	// fetches result data for created pipeline
-	fetchResultTableData(context: DataContext, args: { pipelineId: string, dataset: string }) {
+	fetchResultTableData(context: DataContext, args: { pipelineId: string, dataset: string, highlightRoot: HighlightRoot, filters?: FilterParams }) {
+		if (!args.filters) {
+			args.filters = {
+				variables: [],
+				filters: []
+			};
+		}
+		const highlightFilter = createFilterFromHighlightRoot(args.highlightRoot, INCLUDE_FILTER);
+		if (highlightFilter) {
+			highlightFilter.name = getVarFromTarget(highlightFilter.name);
+			args.filters.filters.push(highlightFilter);
+		}
+		mutations.setSelectedData(context, null);
 		mutations.setResultData(context, null);
 		context.dispatch('fetchResults', args)
 			.then(response => {
@@ -517,17 +551,12 @@ export const actions = {
 			});
 	},
 
-	fetchResults(context: DataContext, args: { pipelineId: string, dataset: string }): AxiosPromise<Data> {
+	fetchResults(context: DataContext, args: { pipelineId: string, dataset: string, filters: FilterParams }): AxiosPromise<Data> {
 		const encodedPipelineId = encodeURIComponent(args.pipelineId);
-		// TODO: create filtesr from highlights
-		return axios.post(`/distil/results/${ES_INDEX}/${args.dataset}/${encodedPipelineId}`, {});
+		return axios.post(`/distil/results/${ES_INDEX}/${args.dataset}/${encodedPipelineId}`, args.filters);
 	},
 
 	fetchDataHighlightSamples(context: DataContext, args: { highlightRoot: HighlightRoot, filters: FilterParams, dataset: string }) {
-		if (!args.highlightRoot) {
-			mutations.updateHighlightSamples(context, null);
-			return null;
-		}
 		if (!args.dataset) {
 			console.warn('`dataset` argument is missing');
 			return null;
@@ -536,21 +565,6 @@ export const actions = {
 			console.warn('`filters` argument is missing');
 			return null;
 		}
-
-		// if root is from table row, populate here and return
-		/*
-		if (_.isArray(args.highlightRoot.value)) {
-			const highlightValues = args.highlightRoot.value;
-			const values = {};
-			highlightValues.forEach(value => {
-				const col = value[0];
-				const vals = value[1]
-				values[col] = [ vals ];
-			});
-			mutations.setHighlightSamples(context, values);
-			return;
-		}
-		*/
 
 		const highlightFilter = createFilterFromHighlightRoot(args.highlightRoot, INCLUDE_FILTER);
 		if (highlightFilter) {
@@ -573,10 +587,6 @@ export const actions = {
 	},
 
 	fetchDataHighlightSummaries(context: DataContext, args: { highlightRoot: HighlightRoot, dataset: string, filters: FilterParams, variables: Variable[] }) {
-		if (!args.highlightRoot) {
-			mutations.updateHighlightSummaries(context, null);
-			return null;
-		}
 		if (!args.dataset) {
 			console.warn('`dataset` argument is missing');
 			return null;
@@ -585,14 +595,6 @@ export const actions = {
 			console.warn('`variables` argument is missing');
 			return null;
 		}
-
-		/*
-		if (_.isArray(args.highlightRoot.value)) {
-			const summaries = getters.getVariableSummaries(state: DataState): VariableSummary[] {
-				return state.variableSummaries;
-			}
-		}
-		*/
 
 		const highlightFilter = createFilterFromHighlightRoot(args.highlightRoot, INCLUDE_FILTER);
 		if (highlightFilter) {
@@ -607,12 +609,16 @@ export const actions = {
 				})
 				.catch(error => {
 					console.error(error);
-					mutations.updateHighlightSummaries(context,  null);
 				});
 		}));
 	},
 
 	fetchDataHighlightValues(context: DataContext, args: { highlightRoot: HighlightRoot, dataset: string, filters: FilterParams, variables: Variable[] }) {
+
+		// clear existing values
+		mutations.clearHighlightSummaries(context);
+		mutations.updateHighlightSamples(context, null);
+
 		return Promise.all([
 			context.dispatch('fetchDataHighlightSamples', {
 				highlightRoot: args.highlightRoot,
@@ -629,16 +635,18 @@ export const actions = {
 	},
 
 	fetchResultHighlightSummaries(context: DataContext, args: { highlightRoot: HighlightRoot, dataset: string, pipelineId: string, variables: Variable[], extrema: Extrema }) {
-		if (!args.highlightRoot) {
-			mutations.updateHighlightSummaries(context, null);
-			return null;
-		}
 		if (!args.dataset) {
 			console.warn('`dataset` argument is missing');
 			return null;
 		}
 		if (!args.variables) {
 			console.warn('`variables` argument is missing');
+			return null;
+		}
+
+		const pipeline = getPipelineById(context.rootState.pipelineModule, args.pipelineId);
+		if (!pipeline.resultId) {
+			// no results ready to pull
 			return null;
 		}
 
@@ -651,12 +659,6 @@ export const actions = {
 		if (highlightFilter) {
 			highlightFilter.name = getVarFromTarget(highlightFilter.name);
 			filters.filters.push(highlightFilter);
-		}
-
-		const pipeline = getPipelineById(context.rootState.pipelineModule, args.pipelineId);
-		if (!pipeline.resultId) {
-			// no results ready to pull
-			return null;
 		}
 
 		// commit empty place holders, if there is no data
@@ -674,16 +676,11 @@ export const actions = {
 				})
 				.catch(error => {
 					console.error(error);
-					mutations.updateHighlightSummaries(context,  null);
 				});
 		}));
 	},
 
 	fetchPredictedHighlightSummaries(context: DataContext, args: { highlightRoot: HighlightRoot, dataset: string, requestIds: string[], variables: Variable[], extrema: Extrema }) {
-		if (!args.highlightRoot) {
-			mutations.updateHighlightSummaries(context, null);
-			return null;
-		}
 		if (!args.dataset) {
 			console.warn('`dataset` argument is missing');
 			return null;
@@ -713,10 +710,6 @@ export const actions = {
 	},
 
 	fetchResultHighlightSamples(context: DataContext, args: { highlightRoot: HighlightRoot, dataset: string, pipelineId: string }) {
-		if (!args.highlightRoot) {
-			mutations.updateHighlightSamples(context, null);
-			return null;
-		}
 		if (!args.dataset) {
 			console.warn('`dataset` argument is missing');
 			return null;
@@ -753,6 +746,11 @@ export const actions = {
 	},
 
 	fetchResultHighlightValues(context: DataContext, args: { highlightRoot: HighlightRoot, dataset: string, variables: Variable[], pipelineId: string, requestIds: string[], extrema: Extrema }) {
+
+		// clear existing values
+		mutations.clearHighlightSummaries(context);
+		mutations.updateHighlightSamples(context, null);
+
 		return Promise.all([
 			context.dispatch('fetchResultHighlightSamples', {
 				highlightRoot: args.highlightRoot,

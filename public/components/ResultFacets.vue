@@ -24,7 +24,7 @@ import ResultGroup from '../components/ResultGroup.vue';
 import { VariableSummary } from '../store/data/index';
 import { getters as dataGetters } from '../store/data/module';
 import { getters as routeGetters } from '../store/route/module';
-import { getPipelinesForDatasetAndTarget } from '../util/pipelines';
+import { getters as pipelineGetters } from '../store/pipelines/module';
 import 'font-awesome/css/font-awesome.css';
 import '../styles/spinner.css';
 import Vue from 'vue';
@@ -73,7 +73,7 @@ export default Vue.extend({
 		// Generate pairs of residuals and results for each pipeline in the numerical case.
 		resultGroups(): SummaryGroup[] {
 
-			const pipelines = getPipelinesForDatasetAndTarget(this.$store.state.pipelineModule, this.dataset, this.target);
+			const pipelines = pipelineGetters.getPipelines(this.$store);
 			const resultSummaries = this.resultSummaries;
 			const residualsSummaries = this.residualSummaries;
 
