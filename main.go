@@ -92,6 +92,16 @@ func main() {
 	}
 	defer pipelineClient.Close()
 
+	// ** jan eval only - Read in the problem definition
+	var problem *pipeline.Problem
+	if config.ProblemPath != "" {
+		problem, err = pipeline.ReadProblem(config.ProblemPath)
+		if err != nil {
+			log.Warnf("Failed to load problem with error %s", err)
+		}
+	}
+	// ** end jan eval only
+
 	// instantiate the REST client for primitives.
 	restClient := rest.NewClient(config.PrimitiveEndPoint)
 
@@ -155,9 +165,9 @@ func main() {
 	registerRoute(mux, "/distil/ranking/:index/:dataset/:target", routes.RankingHandler(pgDataStorageCtor, restClient, config.PipelineDataDir))
 	registerRoute(mux, "/distil/session/:session/:dataset/:target/:pipeline-id", routes.SessionHandler(pgPipelineStorageCtor))
 	registerRoute(mux, "/distil/abort", routes.AbortHandler())
-	registerRoute(mux, "/distil/export/:session/:pipeline-id", routes.ExportHandler(pgPipelineStorageCtor, metadataStorageCtor, pipelineClient, config.ExportPath))
+	registerRoute(mux, "/distil/export/:session/:pipeline-id", routes.ExportHandler(pgPipelineStorageCtor, metadataStorageCtor, pipelineClient, config.ExportPath, problem))
 	registerRoute(mux, "/distil/ingest/:index/:dataset", routes.IngestHandler(metadataStorageCtor, ingestConfig))
-	registerRoute(mux, "/ws", ws.PipelineHandler(pipelineClient, metadataStorageCtor, pgDataStorageCtor, pgPipelineStorageCtor, config.ProblemSchemaPath))
+	registerRoute(mux, "/ws", ws.PipelineHandler(pipelineClient, metadataStorageCtor, pgDataStorageCtor, pgPipelineStorageCtor, problem))
 
 	registerRoute(mux, "/*", routes.FileHandler("./dist"))
 

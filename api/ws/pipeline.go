@@ -53,25 +53,21 @@ var metricMap = map[string]string{
 
 // PipelineHandler represents a pipeline websocket handler.
 func PipelineHandler(client *pipeline.Client, metadataCtor model.MetadataStorageCtor, dataCtor model.DataStorageCtor,
-	pipelineCtor model.PipelineStorageCtor, problemSchemaPath string) func(http.ResponseWriter, *http.Request) {
+	pipelineCtor model.PipelineStorageCtor, problem *pipeline.Problem) func(http.ResponseWriter, *http.Request) {
 
 	// ** For Jan Eval Only - should not appear in master
-	if problemSchemaPath != "" {
-		problem, err := pipeline.ReadProblem(problemSchemaPath)
-		if err == nil {
-			problemTarget = strings.ToUpper(problem.Inputs.Data[0].Targets[0].ColName)
-			schemaMetric := strings.ToUpper(problem.Inputs.PerformanceMetrics[0].Metric)
-			var ok bool
-			problemMetric, ok = metricMap[schemaMetric]
-			if !ok {
-				problemMetric = ""
-				problemTarget = ""
-				log.Warnf("Could not map schema metric %s to API metric", schemaMetric)
-			} else {
-				log.Infof("Loaded problem from %s - target: %s : metric: %s", problemSchemaPath, problemTarget, problemMetric)
-			}
+	// extract pronlem values
+	if problem != nil {
+		problemTarget = strings.ToUpper(problem.Inputs.Data[0].Targets[0].ColName)
+		schemaMetric := strings.ToUpper(problem.Inputs.PerformanceMetrics[0].Metric)
+		var ok bool
+		problemMetric, ok = metricMap[schemaMetric]
+		if !ok {
+			problemMetric = ""
+			problemTarget = ""
+			log.Warnf("Could not map schema metric %s to API metric", schemaMetric)
 		} else {
-			log.Warnf("Failed to load problem with error %s", err)
+			log.Infof("Loaded problem with target: %s : metric: %s", problemTarget, problemMetric)
 		}
 	}
 	// ** End For Jan Eval Only

@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"os"
 	"path"
+	"strings"
 
 	"goji.io/pat"
 
@@ -16,7 +17,18 @@ import (
 
 // ExportHandler exports the caller supplied pipeline by calling through to the compute
 // server export functionality.
-func ExportHandler(storageCtor model.PipelineStorageCtor, metaStorageCtor model.MetadataStorageCtor, client *pipeline.Client, exportPath string) func(http.ResponseWriter, *http.Request) {
+func ExportHandler(storageCtor model.PipelineStorageCtor, metaStorageCtor model.MetadataStorageCtor, client *pipeline.Client, exportPath string, problem *pipeline.Problem) func(http.ResponseWriter, *http.Request) {
+
+	// ** jan eval only
+	var targetVar string
+	var targetTask string
+
+	if problem != nil {
+		targetVar = problem.Inputs.Data[0].Targets[0].ColName
+		targetTask = problem.Properties.TaskType
+	}
+	// ** end jan eval only
+
 	return func(w http.ResponseWriter, r *http.Request) {
 		// extract route parameters
 		pipelineID := pat.Param(r, "pipeline-id")
@@ -60,12 +72,33 @@ func ExportHandler(storageCtor model.PipelineStorageCtor, metaStorageCtor model.
 			return
 		}
 
-		// fail if the pipeline target was not the original dataset target
-		if variable.Role != "suggestedTarget" {
-			log.Warnf("Target %s is not the expected target variable", variable.Name)
-			http.Error(w, fmt.Sprintf("The selected target `%s` does not match the required target variable.", variable.Name), http.StatusBadRequest)
+		// ** jan eval only
+
+		// fail if the pipeline target was not the expected dataset target for the problem
+		if targetVar != "" && strings.ToUpper(variable.Name) != strings.ToUpper(targetVar) {
+			log.Warnf("Target %s is not the expected target variable %s", variable.Name, targetVar)
+			http.Error(w, fmt.Sprintf("The selected target `%s` does not match the required target variable `%s`.", variable.Name, targetVar), http.StatusBadRequest)
 			return
 		}
+
+		// fail if the pipeline task does not match the task for the problem - this isn't not currently stored
+		// in the request, so we hack it
+		if targetTask != "" {
+			if model.IsNumerical(variable.Type) && strings.ToUpper(targetTask) != "REGRESSION" {
+				http.Error(w, fmt.Sprintf("Target type `%s` expected to be one of `Categorical`, `Ordinal` or `Boolean` for this task.", variable.Type), http.StatusBadRequest)
+				log.Warnf("Target var type of %s is not of the expected type for problem task `%s`", variable.Type, targetTask)
+				return
+			} else if model.IsCategorical(variable.Type) && strings.ToUpper(targetTask) != "CLASSIFICATION" {
+				http.Error(w, fmt.Sprintf("Target type `%s` expected to be one `Integer` or `Float` for this task.", variable.Type), http.StatusBadRequest)
+				log.Warnf("Target var type of %s is not of the expected type for problem task `%s`", variable.Type, targetTask)
+				return
+			} else if model.IsText(variable.Type) {
+				http.Error(w, fmt.Sprintf("Target type of `%s` unsupported for this task", variable.Type), http.StatusBadRequest)
+				log.Warnf("Target var type of %s is not an allowed target type", variable.Type)
+				return
+			}
+		}
+		// ** end jan eval only
 
 		exportPath := path.Join(exportPath, pipelineID+".d3m")
 		exportURI := fmt.Sprintf("file://%s", exportPath)
