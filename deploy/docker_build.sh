@@ -3,6 +3,7 @@
 # builds distil docker image
 pushd .
 cd ..
+yarn build
 make build_static
 popd
 docker build -t docker.uncharted.software/distil:jan_eval_patch ..
