@@ -143,7 +143,7 @@ func PersistProblem(fetchVariable VariableProvider, datasetDir string, dataset s
 		TargetIndex: 0,
 		ResID:       "0",
 		ColIndex:    targetIdx,
-		ColName:     target,
+		ColName:     targetVar.DisplayVariable,
 	}
 
 	pMetric := &ProblemPerformanceMetric{

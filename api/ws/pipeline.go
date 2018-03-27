@@ -305,11 +305,21 @@ func handleCreatePipelines(conn *Connection, client *pipeline.Client, metadataCt
 		handleErr(conn, msg, err)
 		return
 	}
+
+	// map variable name to variable display name
+	variables, err := metadata.FetchVariables(clientCreateMsg.Dataset, clientCreateMsg.Index, false)
+	variableNamesDisplay := make(map[string]string)
+	variableNames := make(map[string]string)
+	for _, v := range variables {
+		variableNamesDisplay[v.Name] = v.DisplayVariable
+		variableNames[v.DisplayVariable] = v.Name
+	}
+
 	trainFeatures := []*pipeline.Feature{}
 	for _, featureName := range filteredVars {
 		if featureName != clientCreateMsg.Feature {
 			feature := &pipeline.Feature{
-				FeatureName: featureName,
+				FeatureName: variableNamesDisplay[featureName],
 				ResourceId:  defaultResourceID,
 			}
 			trainFeatures = append(trainFeatures, feature)
@@ -341,7 +351,7 @@ func handleCreatePipelines(conn *Connection, client *pipeline.Client, metadataCt
 		DatasetUri:      datasetPath,
 		TargetFeatures: []*pipeline.Feature{
 			{
-				FeatureName: clientCreateMsg.Feature,
+				FeatureName: variableNamesDisplay[clientCreateMsg.Feature],
 				ResourceId:  defaultResourceID,
 			},
 		},
@@ -372,7 +382,7 @@ func handleCreatePipelines(conn *Connection, client *pipeline.Client, metadataCt
 
 	// store the request features
 	for _, f := range trainFeatures {
-		err = pipelineStorage.PersistRequestFeature(requestID, f.FeatureName, model.FeatureTypeTrain)
+		err = pipelineStorage.PersistRequestFeature(requestID, variableNames[f.FeatureName], model.FeatureTypeTrain)
 		if err != nil {
 			handleErr(conn, msg, err)
 			return
@@ -380,7 +390,7 @@ func handleCreatePipelines(conn *Connection, client *pipeline.Client, metadataCt
 	}
 
 	for _, f := range createMsg.TargetFeatures {
-		err = pipelineStorage.PersistRequestFeature(requestID, f.FeatureName, model.FeatureTypeTarget)
+		err = pipelineStorage.PersistRequestFeature(requestID, variableNames[f.FeatureName], model.FeatureTypeTarget)
 		if err != nil {
 			handleErr(conn, msg, err)
 			return
@@ -395,7 +405,7 @@ func handleCreatePipelines(conn *Connection, client *pipeline.Client, metadataCt
 	}
 
 	// handle the request
-	handleCreatePipelinesSuccess(conn, msg, proxy, dataStorage, pipelineStorage, clientCreateMsg.Dataset)
+	handleCreatePipelinesSuccess(conn, msg, proxy, dataStorage, pipelineStorage, clientCreateMsg.Dataset, clientCreateMsg.Index)
 }
 
 func handleGetSessionSuccess(conn *Connection, msg *Message, session string, created bool, resumed bool) {
@@ -415,7 +425,7 @@ func handleEndSessionSuccess(conn *Connection, msg *Message) {
 	})
 }
 
-func handleCreatePipelinesSuccess(conn *Connection, msg *Message, proxy *pipeline.ResultProxy, dataStorage model.DataStorage, pipelineStorage model.PipelineStorage, dataset string) {
+func handleCreatePipelinesSuccess(conn *Connection, msg *Message, proxy *pipeline.ResultProxy, dataStorage model.DataStorage, pipelineStorage model.PipelineStorage, dataset string, index string) {
 	// process the result proxy, which is replicated for completed, pending requests
 	for {
 		select {
@@ -504,7 +514,7 @@ func handleCreatePipelinesSuccess(conn *Connection, msg *Message, proxy *pipelin
 			if res.ProgressInfo == pipeline.Progress_COMPLETED ||
 				res.ProgressInfo == pipeline.Progress_UPDATED {
 
-				err = dataStorage.PersistResult(dataset, resultURI)
+				err = dataStorage.PersistResult(dataset, index, resultURI)
 				if err != nil {
 					handleErr(conn, msg, errors.Wrap(err, "Unable to store pipeline results"))
 				}

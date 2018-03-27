@@ -60,7 +60,7 @@ func (s *Storage) getResultTargetVariable(dataset string, index string, targetNa
 }
 
 // PersistResult stores the pipeline result to Postgres.
-func (s *Storage) PersistResult(dataset string, resultURI string) error {
+func (s *Storage) PersistResult(dataset string, index string, resultURI string) error {
 	// Read the results file.
 	file, err := os.Open(resultURI)
 	if err != nil {
@@ -83,6 +83,18 @@ func (s *Storage) PersistResult(dataset string, resultURI string) error {
 
 	// Header row will have the target.
 	targetName := records[0][1]
+
+	// Translate from display name to storage name.
+	variables, err := s.metadata.FetchVariables(dataset, index, false)
+	if err != nil {
+		return errors.Wrap(err, "unable load pipeline result as csv")
+	}
+
+	for _, v := range variables {
+		if v.DisplayVariable == targetName {
+			targetName = v.OriginalVariable
+		}
+	}
 
 	// store all results to the storage
 	for i := 1; i < len(records); i++ {

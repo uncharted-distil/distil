@@ -60,6 +60,11 @@ func (s *Storage) parseRawVariable(child map[string]interface{}) (*model.Variabl
 	if !ok {
 		suggestedTypes = make([]map[string]interface{}, 0)
 	}
+
+	if displayVariable == "" {
+		displayVariable = name
+	}
+
 	return &model.Variable{
 		Name:             name,
 		Type:             typ,
@@ -219,10 +224,7 @@ func (s *Storage) FetchVariablesDisplay(dataset string, index string) ([]*model.
 	resultIncludes := make(map[string]bool)
 	result := make([]*model.Variable, 0)
 	for _, v := range vars {
-		name := v.DisplayVariable
-		if name == "" {
-			name = v.Name
-		}
+		name := v.Name
 		if !resultIncludes[name] {
 			result = append(result, varsLookup[name])
 			resultIncludes[name] = true
