@@ -6,6 +6,8 @@
 				Error:
 			</div>
 			<div class="result-summaries-slider">
+				<div class="error-center-line"></div>
+				<div class="error-center-label">0</div>
 				<vue-slider ref="slider"
 					:min="residualExtrema.min"
 					:max="residualExtrema.max"
@@ -18,16 +20,10 @@
 					@callback="onSlide"/>
 			</div>
 		</div>
-		<p class="nav-link font-weight-bold">Actual</p>
-		<facets class="result-summaries-target"
-			@facet-click="onCategoricalClick"
-			@numerical-click="onNumericalClick"
-			@range-change="onRangeChange"
-			:groups="targetGroups"
-			:highlights="highlights"></facets>
 		<p class="nav-link font-weight-bold">Predictions by Model</p>
 		<result-facets :regression="regressionEnabled"></result-facets>
 		<b-btn v-b-modal.export variant="primary" class="check-button">Task 2: Export Model</b-btn>
+
 		<b-modal id="export" title="Export" @ok="onExport">
 			<div class="check-message-container">
 				<i class="fa fa-check-circle fa-3x check-icon"></i>
@@ -52,12 +48,9 @@
 
 import ResultFacets from '../components/ResultFacets.vue';
 import Facets from '../components/Facets.vue';
-import { createGroups, Group } from '../util/facets';
 import { overlayRouteEntry } from '../util/routes';
 import { getPipelineById, getTask } from '../util/pipelines';
-import { isTarget, getVarFromTarget, getTargetCol } from '../util/data';
-import { getHighlights, updateHighlightRoot, clearHighlightRoot } from '../util/highlights';
-import { VariableSummary, Extrema, Highlight } from '../store/data/index';
+import { VariableSummary, Extrema } from '../store/data/index';
 import { getters as dataGetters} from '../store/data/module';
 import { getters as routeGetters } from '../store/route/module';
 import { actions as appActions, getters as appGetters } from '../store/app/module';
@@ -86,7 +79,8 @@ export default Vue.extend({
 			formatter(arg) {
 				return arg ? arg.toFixed(2) : '';
 			},
-			exportFailureMsg: ''
+			exportFailureMsg: '',
+			symmetricSlider: true
 		};
 	},
 
@@ -124,23 +118,6 @@ export default Vue.extend({
 			];
 		},
 
-		highlights(): Highlight {
-			// find var marked as 'target' and set associated values as highlights
-			const highlights = _.cloneDeep(getHighlights(this.$store));
-			if (_.isEmpty(highlights)) {
-				return highlights;
-			}
-			_.forEach(highlights.values.samples, (values, varName) => {
-				if (isTarget(varName)) {
-					highlights.values.samples[getVarFromTarget(varName)] = values;
-				}
-			});
-			if (highlights.root && isTarget(highlights.root.key)) {
-				highlights.root.key = getVarFromTarget(highlights.root.key);
-			}
-			return highlights;
-		},
-
 		range(): number {
 			if (_.isNaN(this.residualExtrema.min) ||
 				_.isNaN(this.residualExtrema.max)) {
@@ -159,27 +136,6 @@ export default Vue.extend({
 		interval(): number {
 			const interval = this.range / NUM_STEPS;
 			return interval;
-		},
-
-		targetSummary() : VariableSummary {
-			const varSummaries = dataGetters.getResultSummaries(this.$store);
-			return _.find(varSummaries, v => _.toLower(v.name) === _.toLower(this.target));
-		},
-
-		targetGroups(): Group[] {
-			if (this.targetSummary) {
-				const target = createGroups([ this.targetSummary ]);
-				if (this.highlights.root) {
-					const group = target[0];
-					if (group.key === this.highlights.root.key) {
-						group.facets.forEach(facet => {
-							facet.filterable = true;
-						});
-					}
-				}
-				return target;
-			}
-			return [];
 		},
 
 		predictedSummaries(): VariableSummary[] {
@@ -230,40 +186,7 @@ export default Vue.extend({
 
 	methods: {
 
-		onCategoricalClick(context: string, key: string, value: string) {
-			if (key && value) {
-				// extract the var name from the key
-				const colKey = getTargetCol(this.target);
-				updateHighlightRoot(this, {
-					context: context,
-					key: colKey,
-					value: value
-				});
-			} else {
-				clearHighlightRoot(this);
-			}
-		},
 
-		onNumericalClick(key: string) {
-			if (!this.highlights.root || this.highlights.root.key !== key) {
-				const colKey = getTargetCol(this.target);
-				updateHighlightRoot(this, {
-					context: this.instanceName,
-					key: colKey,
-					value: null
-				});
-			}
-		},
-
-		onRangeChange(context: string, key: string, value: { from: { label: string[] }, to: { label: string[] } }) {
-			const colKey = getTargetCol(this.target);
-			updateHighlightRoot(this, {
-				context: context,
-				key: colKey,
-				value: value
-			});
-			this.$emit('range-change', key, value);
-		},
 
 		updateThreshold(min: number, max: number) {
 			const entry = overlayRouteEntry(this.$route, {
@@ -274,6 +197,11 @@ export default Vue.extend({
 		},
 
 		onSlide(value) {
+			// if (this.symmetricSlider) {
+			// 	console.log('before:', this.$refs.slider.getValue();
+			// 	console.log('after:', value);
+			// 	//this.$refs.slider.setValue([ ] true);
+			// }
 			this.updateThreshold(value[0], value[1]);
 		},
 
@@ -314,34 +242,6 @@ export default Vue.extend({
 	overflow: visible;
 }
 
-.result-summaries-target {
-	margin-bottom: 12px;
-}
-
-.result-summaries-target .facets-group {
-	box-shadow: none;
-}
-
-.result-summaries-target .facets-facet-horizontal .facet-histogram-bar-highlighted {
-	fill: #00C851;
-}
-
-.result-summaries-target .facets-facet-horizontal .facet-histogram-bar-highlighted:hover {
-	fill: #007E33;
-}
-
-.result-summaries-target .facets-facet-horizontal .facet-histogram-bar-highlighted.select-highlight {
-	fill: #007bff;
-}
-
-.result-summaries-target .facets-facet-vertical .facet-bar-selected {
-	box-shadow: inset 0 0 0 1000px #00C851;
-}
-
-.result-summaries-target .facets-facet-horizontal .facet-range-filter {
-	box-shadow: inset 0 0 0 1000px rgba(0, 225, 11, 0.15);
-}
-
 .result-summaries-error {
 	display: flex;
 	flex-direction: row;
@@ -359,19 +259,41 @@ export default Vue.extend({
 .result-summaries-slider {
 	display: flex;
 	flex-grow: 1;
+	position: relative;
 }
 
 .result-summaries-slider .vue-slider-component .vue-slider-process {
-	background-color: #00C851;
+	background-color: #9e9e9e;
 }
 
 .result-summaries-slider .vue-slider-component .vue-slider-tooltip {
-	border: 1px solid #00C851;
-	background-color: #00C851;
+	border: 1px solid #9e9e9e;
+	background-color: #9e9e9e;
 }
+
+.result-summaries-slider .vue-slider-component .vue-slider-piecewise {
+	background-color: #ee0701;
+}
+
 
 .facets-facet-vertical.select-highlight .facet-bar-selected {
 	box-shadow: inset 0 0 0 1000px #007bff;
+}
+
+.error-center-line {
+	position:absolute;
+	left: 50%;
+	height: 22px;
+	width: 1px;
+	background-color: #333;
+}
+
+.error-center-label {
+	position:absolute;
+	top: 22px;
+	width: 100%;
+	color: #333;
+	text-align: center;
 }
 
 .check-message-container {
@@ -391,7 +313,7 @@ export default Vue.extend({
 .fail-icon {
 	display: flex;
 	flex-shrink: 0;
-	color:#dc3545;
+	color:#ee0701;
 	padding-right: 15px;
 }
 

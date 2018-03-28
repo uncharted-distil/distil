@@ -2,11 +2,29 @@
 	<div class="container-fluid d-flex flex-column h-100 results-view">
 		<div class="row flex-0-nav">
 		</div>
-		<div class="row flex-1 align-items-center bg-white">
-			<div class="col-12">
-				<h5 class="header-label">Selected Features</h5>
+
+		<div class="row align-items-center justify-content-center bg-white">
+
+			<div class="col-12 col-md-6 d-flex flex-column">
+				<h5 class="header-label">Select Model That Best Predicts {{target.toUpperCase()}}</h5>
+
+				<div class="row col-12 pl-4">
+					<div>
+						{{target.toUpperCase()}} is being modeled as a {{targetType}}
+					</div>
+				</div>
+				<div class="row col-12 pl-4">
+					<p>
+						Use interactive feature highlighting to analyze models. Go back to revise features, if needed.
+					</p>
+				</div>
 			</div>
+
+			<result-target-variable
+				class="col-12 col-md-6 d-flex flex-column"></result-target-variable>
 		</div>
+
+
 		<div class="row flex-12 pb-3">
 			<variable-summaries
 				class="col-12 col-md-3 border-gray-right results-variable-summaries"
@@ -27,6 +45,7 @@
 import VariableSummaries from '../components/VariableSummaries.vue';
 import ResultsComparison from '../components/ResultsComparison.vue';
 import ResultSummaries from '../components/ResultSummaries.vue';
+import ResultTargetVariable from '../components/ResultTargetVariable.vue';
 import { getters as dataGetters, actions as dataActions } from '../store/data/module';
 import { getters as routeGetters } from '../store/route/module';
 import { actions as pipelineActions, getters as pipelineGetters } from '../store/pipelines/module';
@@ -41,6 +60,7 @@ export default Vue.extend({
 
 	components: {
 		VariableSummaries,
+		ResultTargetVariable,
 		ResultsComparison,
 		ResultSummaries
 	},
@@ -51,6 +71,13 @@ export default Vue.extend({
 		},
 		target(): string {
 			return routeGetters.getRouteTargetVariable(this.$store);
+		},
+		targetType(): string {
+			const variables = dataGetters.getVariablesMap(this.$store);
+			if (variables && variables[this.target]) {
+				return variables[this.target].type;
+			}
+			return '';
 		},
 		groups(): Group[] {
 			const summaries = dataGetters.getResultSummaries(this.$store).filter(summary => this.training[summary.name]);

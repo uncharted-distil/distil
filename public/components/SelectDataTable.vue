@@ -45,7 +45,6 @@
 				hover
 				small
 				responsive
-				@row-clicked="onRowClick"
 				:items="items"
 				:fields="fields">
 			</b-table>
@@ -99,10 +98,6 @@ export default Vue.extend({
 			return dataGetters.getSelectedDataNumRows(this.$store);
 		},
 
-		selectedRowKey(): number {
-			return routeGetters.getDecodedHighlightRoot(this.$store) ? _.toNumber(routeGetters.getDecodedHighlightRoot(this.$store).key) : -1;
-		},
-
 		hasData(): boolean {
 			return dataGetters.hasSelectedData(this.$store);
 		},
@@ -132,25 +127,6 @@ export default Vue.extend({
 			const filter = createFilterFromHighlightRoot(this.highlights.root, INCLUDE_FILTER);
 			addFilterToRoute(this, filter);
 			clearHighlightRoot(this);
-		},
-		onRowClick(row: TableRow) {
-			if (row._key !== this.selectedRowKey) {
-				// clicked on a different row than last time - new selection
-				updateHighlightRoot(this, {
-					context: this.instanceName,
-					key: row._key.toString(),
-					value: _.map(this.fields, (field, key) => {
-						return {
-							name: key,
-							type: field.type,
-							value: row[key]
-						};
-					})
-				});
-			} else {
-				// clicked on same row - reset the selection key and clear highlights
-				clearHighlightRoot(this);
-			}
 		}
 	}
 });

@@ -16,7 +16,6 @@
 				hover
 				small
 				responsive
-				@row-clicked="onRowClick"
 				:ref="refName"
 				:items="items"
 				:fields="fields">
@@ -58,10 +57,6 @@ export default Vue.extend({
 			return getters.getResultDataNumRows(this.$store);
 		},
 
-		selectedRowKey(): number {
-			return routeGetters.getDecodedHighlightRoot(this.$store) ? _.toNumber(routeGetters.getDecodedHighlightRoot(this.$store).key) : -1;
-		},
-
 		training(): Dictionary<boolean> {
 			return pipelineGetters.getActivePipelineTrainingMap(this.$store);
 		},
@@ -70,34 +65,20 @@ export default Vue.extend({
 			return getters.hasResultData(this.$store);
 		},
 
-		// extracts the table data from the store
 		items(): TargetRow[] {
 			const items = getters.getResultDataItems(this.$store);
-			return removeNonTrainingItems(items, this.training);
+			const filtered = removeNonTrainingItems(items, this.training);
+			return filtered
+				.filter(item => this.filterFunc(item))
+				.map(item => this.decorateFunc(item));
 		},
 
-		// extract the table field header from the store
 		fields(): Dictionary<FieldInfo> {
 			const fields = getters.getResultDataFields(this.$store);
 			return removeNonTrainingFields(fields, this.training);
 		}
-	},
-
-	methods: {
-		onRowClick(row: TargetRow) {
-			if (row._key !== this.selectedRowKey) {
-				// clicked on a different row than last time - new selection
-				updateHighlightRoot(this, {
-					context: this.instanceName,
-					key: row._key.toString(),
-					value: _.map(this.fields, (field, key) => [ key, row[key] ])
-				});
-			} else {
-				// clicked on same row - remove the row selection visual
-				clearHighlightRoot(this);
-			}
-		}
 	}
+
 });
 </script>
 
