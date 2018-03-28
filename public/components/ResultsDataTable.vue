@@ -27,14 +27,12 @@
 
 <script lang="ts">
 
-import _ from 'lodash';
 import { getters } from '../store/data/module';
 import { TargetRow, FieldInfo } from '../store/data/index';
 import { getters as routeGetters } from '../store/route/module';
 import { getters as pipelineGetters } from '../store/pipelines/module';
 import { Dictionary } from '../util/dict';
 import { removeNonTrainingItems, removeNonTrainingFields } from '../util/data';
-import { updateHighlightRoot, clearHighlightRoot } from '../util/highlights';
 import Vue from 'vue';
 
 export default Vue.extend({

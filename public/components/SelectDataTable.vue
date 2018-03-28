@@ -55,7 +55,6 @@
 
 <script lang="ts">
 
-import _ from 'lodash';
 import Vue from 'vue';
 import FilterBadge from './FilterBadge';
 import { getters as dataGetters } from '../store/data/module';
@@ -65,7 +64,7 @@ import { FieldInfo, Highlight } from '../store/data/index';
 import { getters as routeGetters } from '../store/route/module';
 import { TableRow } from '../store/data/index';
 import { addFilterToRoute, EXCLUDE_FILTER, INCLUDE_FILTER } from '../util/filters';
-import { getHighlights, updateHighlightRoot, clearHighlightRoot, createFilterFromHighlightRoot } from '../util/highlights';
+import { getHighlights, clearHighlightRoot, createFilterFromHighlightRoot } from '../util/highlights';
 
 export default Vue.extend({
 	name: 'selected-data-table',
