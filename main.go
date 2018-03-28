@@ -6,7 +6,6 @@ import (
 	"os"
 	"strings"
 	"syscall"
-	"time"
 
 	"github.com/davecgh/go-spew/spew"
 	"github.com/unchartedsoftware/plog"
@@ -23,6 +22,7 @@ import (
 	"github.com/unchartedsoftware/distil/api/pipeline"
 	"github.com/unchartedsoftware/distil/api/postgres"
 	"github.com/unchartedsoftware/distil/api/routes"
+	"github.com/unchartedsoftware/distil/api/service"
 	"github.com/unchartedsoftware/distil/api/task"
 	"github.com/unchartedsoftware/distil/api/ws"
 )
@@ -44,6 +44,7 @@ func registerRoutePost(mux *goji.Mux, pattern string, handler func(http.Response
 
 func main() {
 	log.Infof("version: %s built: %s", version, timestamp)
+	servicesToWait := make(map[string]service.Heartbeat)
 
 	// load config from env
 	config, err := env.LoadConfig()
@@ -60,19 +61,38 @@ func main() {
 	postgresClientCtor := postgres.NewClient(config.PostgresHost, config.PostgresPort, config.PostgresUser, config.PostgresPassword,
 		config.PostgresDatabase, config.PostgresLogLevel)
 
+	// wait for required services.
+	servicesToWait["postgres"] = func() bool {
+		_, err := postgresClientCtor()
+		return err == nil
+	}
+	servicesToWait["elastic"] = func() bool {
+		_, err := esClientCtor()
+		return err == nil
+	}
+	if config.ClassificationWait {
+		servicesToWait["classification"] = func() bool {
+			return waitForPostEndpoint(fmt.Sprintf("%s%s", config.ClassificationEndpoint, "/aaaa"))
+		}
+	}
+	if config.RankingWait {
+		servicesToWait["ranking"] = func() bool {
+			return waitForPostEndpoint(fmt.Sprintf("%s%s", config.RankingEndpoint, "/aaaa"))
+		}
+	}
+
 	// make sure a connection can be made to postgres - doesn't appear to be thread safe and
 	// causes panic if deferred, so we'll do it an a retry loop here.  We need to provide
 	// flexibility on startup because we can't guarantee the DB will be up before the server.
-	for i := 0; i < config.PostgresRetryCount; i++ {
-		_, err = postgresClientCtor()
+	for name, test := range servicesToWait {
+		log.Infof("Waiting for service '%s'", name)
+		err = service.WaitForService(name, &config, test)
 		if err == nil {
-			break
-		} else if i == config.PostgresRetryCount {
-			log.Errorf("%v", err)
+			log.Infof("Service '%s' is up", name)
+		} else {
+			log.Error(err)
 			os.Exit(1)
 		}
-		log.Errorf("%v", err)
-		time.Sleep(time.Duration(config.PostgresRetryTimeout) * time.Millisecond)
 	}
 
 	// instantiate the metadata storage (using ES).
@@ -124,7 +144,6 @@ func main() {
 		ESTimeout:                          config.ElasticTimeout,
 		ESDatasetPrefix:                    config.ElasticDatasetPrefix,
 	}
-	waitForEndpoints(config)
 
 	// Ingest the data specified by the environment
 	if config.InitialDataset != "" && !config.SkipIngest {
@@ -183,45 +202,21 @@ func main() {
 	graceful.Wait()
 }
 
-func waitForEndpoints(config env.Config) {
-	log.Info("Waiting for services as needed")
-	if config.ClassificationWait {
-		log.Infof("Waiting for classification service at %s", config.ClassificationEndpoint)
-		waitForPostEndpoint(fmt.Sprintf("%s%s", config.ClassificationEndpoint, "/aaaa"), config.ServiceRetryCount)
-		log.Infof("Classification service is up")
-	}
-
-	if config.RankingWait {
-		log.Infof("Waiting for ranking service at %s", config.RankingEndpoint)
-		waitForPostEndpoint(fmt.Sprintf("%s%s", config.RankingEndpoint, "/aaaa"), config.ServiceRetryCount)
-		log.Infof("Ranking service is up")
-	}
-	log.Info("All required services are up")
-}
-
-func waitForPostEndpoint(endpoint string, retryCount int) {
+func waitForPostEndpoint(endpoint string) bool {
 	up := false
-	i := 0
-	for ; i < retryCount && !up; i++ {
-		resp, err := http.Post(endpoint, "application/json", strings.NewReader("test"))
-		log.Infof("Sent request to %s", endpoint)
-		if err != nil {
-
-			// If the error indicates the service is up, then stop waiting.
-			if !strings.Contains(err.Error(), "connection refused") {
-				up = true
-			}
-			time.Sleep(10 * time.Second)
-		} else {
+	resp, err := http.Post(endpoint, "application/json", strings.NewReader("test"))
+	log.Infof("Sent request to %s", endpoint)
+	if err != nil {
+		// If the error indicates the service is up, then stop waiting.
+		if !strings.Contains(err.Error(), "connection refused") {
 			up = true
 		}
-		if resp != nil {
-			resp.Body.Close()
-		}
+	} else {
+		up = true
+	}
+	if resp != nil {
+		resp.Body.Close()
 	}
 
-	if i == retryCount {
-		log.Errorf("Shutting down since unable to connect to %s after %d retries", endpoint, retryCount)
-		os.Exit(1)
-	}
+	return up
 }
