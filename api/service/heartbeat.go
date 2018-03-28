@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"github.com/pkg/errors"
+	"github.com/unchartedsoftware/plog"
 
 	"github.com/unchartedsoftware/distil/api/env"
 )
@@ -19,6 +20,7 @@ func WaitForService(serviceName string, config *env.Config, test Heartbeat) erro
 	i := 0
 	retryCount := config.ServiceRetryCount
 	for ; i < retryCount && !up; i++ {
+		log.Infof("Waiting for service '%s' (attempt %d)", serviceName, i+1)
 		if ServiceIsUp(test) {
 			up = true
 		} else {

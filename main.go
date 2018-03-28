@@ -206,6 +206,7 @@ func waitForPostEndpoint(endpoint string) bool {
 	up := false
 	resp, err := http.Post(endpoint, "application/json", strings.NewReader("test"))
 	log.Infof("Sent request to %s", endpoint)
+	log.Infof("response error: %v", err)
 	if err != nil {
 		// If the error indicates the service is up, then stop waiting.
 		if !strings.Contains(err.Error(), "connection refused") {
