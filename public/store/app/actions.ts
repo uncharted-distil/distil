@@ -28,13 +28,9 @@ export const actions = {
 				mutations.setAborted(context);
 			})
 			.catch(error => {
-				if (error.response) {
-					return new Error(error.response.data);
-				} else {
-					// NOTE: request always fails because we exit on the server
-					console.warn(`User exported pipeline ${args.pipelineId}`);
-					mutations.setAborted(context);
-				}
+				// NOTE: request always fails because we exit on the server
+				console.warn(`User exported pipeline ${args.pipelineId}`);
+				mutations.setAborted(context);
 			});
 	}
 };
