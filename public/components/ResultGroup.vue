@@ -237,8 +237,8 @@ export default Vue.extend({
 	box-shadow: none;
 }
 
-.result-container {
-	box-shadow: none;
+.result-group-container .badge {
+	margin: 0px 4px 4px 0px;
 }
 
 .result-container .facets-group,
