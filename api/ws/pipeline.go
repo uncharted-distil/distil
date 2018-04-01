@@ -57,10 +57,10 @@ func PipelineHandler(client *pipeline.Client, metadataCtor model.MetadataStorage
 
 	// ** For Jan Eval Only - should not appear in master
 	// extract problem target and metric values
-	var failure bool
+	failure := false
 	if problem != nil {
 		problemTarget = strings.ToUpper(problem.Inputs.Data[0].Targets[0].ColName)
-		problemMetrics := []string{}
+		problemMetrics = []string{}
 		for _, metric := range problem.Inputs.PerformanceMetrics {
 			schemaMetric := strings.ToUpper(metric.Metric)
 			problemMetric, ok := metricMap[schemaMetric]
