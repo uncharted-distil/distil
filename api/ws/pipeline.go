@@ -32,7 +32,7 @@ const (
 )
 
 var problemTarget string
-var problemMetric string
+var problemMetrics []string
 var metricMap = map[string]string{
 	"ACCURACY":                    "ACCURACY",
 	"F1":                          "F1",
@@ -56,18 +56,27 @@ func PipelineHandler(client *pipeline.Client, metadataCtor model.MetadataStorage
 	pipelineCtor model.PipelineStorageCtor, problem *pipeline.Problem) func(http.ResponseWriter, *http.Request) {
 
 	// ** For Jan Eval Only - should not appear in master
-	// extract pronlem values
+	// extract problem target and metric values
+	failure := false
 	if problem != nil {
 		problemTarget = strings.ToUpper(problem.Inputs.Data[0].Targets[0].ColName)
-		schemaMetric := strings.ToUpper(problem.Inputs.PerformanceMetrics[0].Metric)
-		var ok bool
-		problemMetric, ok = metricMap[schemaMetric]
-		if !ok {
-			problemMetric = ""
+		problemMetrics = []string{}
+		for _, metric := range problem.Inputs.PerformanceMetrics {
+			schemaMetric := strings.ToUpper(metric.Metric)
+			problemMetric, ok := metricMap[schemaMetric]
+			if !ok {
+				log.Warnf("Could not map schema metric %s to API metric", schemaMetric)
+				failure = true
+				break
+			}
+			problemMetrics = append(problemMetrics, problemMetric)
+		}
+
+		if failure {
+			problemMetrics = []string{}
 			problemTarget = ""
-			log.Warnf("Could not map schema metric %s to API metric", schemaMetric)
 		} else {
-			log.Infof("Loaded problem with target: %s : metric: %s", problemTarget, problemMetric)
+			log.Infof("Loaded problem with target: %s : metric: %s", problemTarget, problemMetrics)
 		}
 	}
 	// ** End For Jan Eval Only
@@ -330,8 +339,10 @@ func handleCreatePipelines(conn *Connection, client *pipeline.Client, metadataCt
 	// If the requested target matches the problem target, force use of the problem metric.
 	metrics := []pipeline.PerformanceMetric{}
 	if problemTarget != "" && problemTarget == strings.ToUpper(clientCreateMsg.Feature) {
-		metric := pipeline.PerformanceMetric(pipeline.PerformanceMetric_value[problemMetric])
-		metrics = append(metrics, metric)
+		for _, problemMetric := range problemMetrics {
+			metric := pipeline.PerformanceMetric(pipeline.PerformanceMetric_value[problemMetric])
+			metrics = append(metrics, metric)
+		}
 	} else {
 		for _, msgMetric := range clientCreateMsg.Metrics {
 			metric := pipeline.PerformanceMetric(pipeline.PerformanceMetric_value[strings.ToUpper(msgMetric)])
