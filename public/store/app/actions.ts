@@ -28,10 +28,11 @@ export const actions = {
 				mutations.setAborted(context);
 			})
 			.catch(error => {
-				if (error.response) {
+				// check for case where target / task doesn't match the problem requests - server returns
+				// a bad request staus code along with an error message
+				if (error.response && error.response.status === 400) {
 					return new Error(error.response.data);
 				} else {
-					// NOTE: request always fails because we exit on the server
 					console.warn(`User exported pipeline ${args.pipelineId}`);
 					mutations.setAborted(context);
 				}
