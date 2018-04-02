@@ -45,7 +45,6 @@
 				hover
 				small
 				responsive
-				@row-clicked="onRowClick"
 				:items="items"
 				:fields="fields">
 			</b-table>
@@ -56,7 +55,6 @@
 
 <script lang="ts">
 
-import _ from 'lodash';
 import Vue from 'vue';
 import FilterBadge from './FilterBadge';
 import { getters as dataGetters } from '../store/data/module';
@@ -66,7 +64,7 @@ import { FieldInfo, Highlight } from '../store/data/index';
 import { getters as routeGetters } from '../store/route/module';
 import { TableRow } from '../store/data/index';
 import { addFilterToRoute, EXCLUDE_FILTER, INCLUDE_FILTER } from '../util/filters';
-import { getHighlights, updateHighlightRoot, clearHighlightRoot, createFilterFromHighlightRoot } from '../util/highlights';
+import { getHighlights, clearHighlightRoot, createFilterFromHighlightRoot } from '../util/highlights';
 
 export default Vue.extend({
 	name: 'selected-data-table',
@@ -99,10 +97,6 @@ export default Vue.extend({
 			return dataGetters.getSelectedDataNumRows(this.$store);
 		},
 
-		selectedRowKey(): number {
-			return routeGetters.getDecodedHighlightRoot(this.$store) ? _.toNumber(routeGetters.getDecodedHighlightRoot(this.$store).key) : -1;
-		},
-
 		hasData(): boolean {
 			return dataGetters.hasSelectedData(this.$store);
 		},
@@ -132,25 +126,6 @@ export default Vue.extend({
 			const filter = createFilterFromHighlightRoot(this.highlights.root, INCLUDE_FILTER);
 			addFilterToRoute(this, filter);
 			clearHighlightRoot(this);
-		},
-		onRowClick(row: TableRow) {
-			if (row._key !== this.selectedRowKey) {
-				// clicked on a different row than last time - new selection
-				updateHighlightRoot(this, {
-					context: this.instanceName,
-					key: row._key.toString(),
-					value: _.map(this.fields, (field, key) => {
-						return {
-							name: key,
-							type: field.type,
-							value: row[key]
-						};
-					})
-				});
-			} else {
-				// clicked on same row - reset the selection key and clear highlights
-				clearHighlightRoot(this);
-			}
 		}
 	}
 });

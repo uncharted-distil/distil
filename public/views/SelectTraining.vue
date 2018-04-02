@@ -5,11 +5,11 @@
 		<div class="row align-items-center justify-content-center bg-white">
 
 			<div class="col-12 col-md-6 d-flex flex-column">
-				<h5 class="header-label">Select Features That May Predict {{capitalize(target)}}</h5>
+				<h5 class="header-label">Select Features That May Predict {{target.toUpperCase()}}</h5>
 
 				<div class="row col-12 pl-4">
 					<div>
-						{{capitalize(target)}} is being modeled as a
+						{{target.toUpperCase()}} is being modeled as a
 					</div>
 					<div class="pl-2">
 						<type-change-menu :field="target" :values="targetSampleValues"></type-change-menu>
@@ -204,9 +204,6 @@ export default Vue.extend({
 					highlightRoot: this.highlightRoot
 				});
 			});
-		},
-		capitalize(str) {
-			return str.toUpperCase();
 		}
 	}
 });

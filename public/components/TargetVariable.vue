@@ -5,7 +5,7 @@
 				<i class="fa fa-times missing-icon"></i><strong>No Target Feature Selected</strong>
 			</div>
 		</div>
-		<variable-facets v-if="groups.length>0"
+		<variable-facets v-if="groups.length>0" class="target-summary"
 			enable-highlighting
 			:groups="groups"
 			:dataset="dataset"
@@ -25,7 +25,7 @@ import { Highlight } from '../store/data/index';
 import { getHighlights } from '../util/highlights';
 
 export default Vue.extend({
-	name: 'target-variables',
+	name: 'target-variable',
 
 	components: {
 		VariableFacets
@@ -51,6 +51,19 @@ export default Vue.extend({
 </script>
 
 <style>
+.target-summary .variable-facets-container .facets-root-container .facets-group-container .facets-group {
+	box-shadow: none;
+}
+
+/*
+.target-summary .facet-range {
+	height: 45px;
+}
+.target-summary .facet-range-controls {
+	display: none;
+}
+*/
+
 .target-no-target {
 	width: 100%;
 	background-color: #eee;
