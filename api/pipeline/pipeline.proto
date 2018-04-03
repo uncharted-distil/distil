@@ -1,0 +1,168 @@
+syntax = "proto3";
+option go_package = "pipeline";
+
+import "google/protobuf/descriptor.proto";
+import "google/protobuf/timestamp.proto";
+
+import "primitive.proto";
+import "value.proto";
+
+// Pipeline description contains many "data references". Data reference is just a string
+// which identifies an output of a step or a pipeline input and forms a data-flow connection
+// between data available and an input to a step. It is recommended to be a string of the
+// following forms:
+//
+//  * `steps.<number>.<id>` — `number` identifies the step in the list of steps (0-based)
+//    and `id` identifies the name of a produce method of the primitive,
+//    or the output of a pipeline step
+//
+//  * `inputs.<number>` — `number` identifies the pipeline input (0-based)
+
+message ContainerArgument {
+    // Data reference.
+    string data = 1;
+}
+
+message PrimitiveArgument {
+    // 0-based index from steps identifying a primitive to pass in.
+    string primitive = 1;
+}
+
+message DataArgument {
+    // Data reference.
+    string data = 1;
+}
+
+message PrimitiveStepArgument {
+    oneof argument {
+        // A container data type as an argument.
+        ContainerArgument container = 1;
+        // A primitive as an argument.
+        PrimitiveArgument primitive = 2;
+        // A singleton output from another step as an argument.
+        DataArgument data = 3;
+    }
+}
+
+message StepInput {
+    // Data reference.
+    string data = 1;
+}
+
+message StepOutput {
+    // Name which becomes part of the data reference.
+    string id = 1;
+}
+
+message PipelineSource {
+    // String representing name of the author, team.
+    string name = 1;
+}
+
+// User associated with the creation of the template/pipeline, or selection of a primitive.
+message PipelineDescriptionUser {
+    // A UUID of the user. It does not have to map to any real ID, just that it is possible
+    // to connect mutliple pipelines/templates by the same user together, if necessary.
+    string id = 1;
+    // Textual description of what user did to create the template/pipeline, or select a primitive.
+    string description = 2;
+}
+
+// Possible input to the pipeline or template.
+message PipelineDescriptionInput {
+    // Human friendly name of the input.
+    string name = 1;
+}
+
+// Available output of the pipeline or template.
+message PipelineDescriptionOutput {
+    // Human friendly name of the output.
+    string name = 1;
+    // Data reference, probably of an output of a step.
+    string data = 2;
+}
+
+message PrimitivePipelineDescriptionStep {
+    Primitive primitive = 1;
+    // Arguments to the primitive. Constructor arguments should not be listed here, because they
+    // can be automatically created from other information. All these arguments are listed as kind
+    // "PIPELINE" in primitive's metadata.
+    map<string, PrimitiveStepArgument> arguments = 2;
+    // List of produce metods providing data. One can reference using data reference these outputs
+    // then in arguments (inputs) in other steps or pipeline outputs.
+    repeated StepOutput outputs = 3;
+    // Some hyper-parameters are not really tunable and should be fixed as part of template/pipeline.
+    // This can be done here. Hyper-parameters listed here cannot be tuned or overridden. Author of a
+    // template/pipeline decides which hyper-parameter are which, probably based on their semantic type.
+    // TA3 can specify a list of hyper-parameters to fix, and TA2 can add to the list additional
+    // hyper-paramaters in found pipelines.
+    map<string, Value> hyperparams = 4;
+    // List of users associated with selection of this primitive/arguments/hyper-parameters. Optional.
+    repeated PipelineDescriptionUser users = 5;
+}
+
+message SubpipelinePipelineDescriptionStep {
+    // Only "id" field is required in this case to reference another pipeline in the template.
+    PipelineDescription pipeline = 1;
+    // List of data references, probably of an output of a step or pipeline input,
+    // mapped to sub-pipeline's inputs in order.
+    repeated StepInput inputs = 2;
+    // List of IDs to be used in data references, mapping sub-pipeline's outputs in order.
+    repeated StepOutput outputs = 3;
+}
+
+// Used to represent a pipeline template which can be used to generate full pipelines.
+// A placeholder is replaced with a pipeline step to form a pipeline. See README.md
+// for restrictions on the number of them, their position, allowed inputs and outputs,
+// etc.
+message PlaceholderPipelineDescriptionStep {
+    // List of inputs which can be used as inputs to resulting sub-pipeline. Resulting
+    // sub-pipeline does not have to use all the inputs, but it cannot use any other inputs.
+    repeated StepInput inputs = 1;
+    // A list of outputs of the resulting sub-pipeline.
+    repeated StepOutput outputs = 2;
+}
+
+message PipelineDescriptionStep {
+    oneof step {
+        PrimitivePipelineDescriptionStep primitive = 1;
+        SubpipelinePipelineDescriptionStep pipeline = 2;
+        PlaceholderPipelineDescriptionStep placeholder = 3;
+    }
+}
+
+// Pipeline description matches the D3M pipeline description.
+// It serves two purposes: describing found pipelines by TA2 to TA3, and communicating pipeline
+// templates by TA3 to TA2. Because of this some fields are reasonable only in one of those uses.
+// They are marked with "TA2" or "TA3" in the comment, for fields to be set only by TA2 or only
+// by TA3, respectivelly.
+message PipelineDescription {
+    // TA2: UUID of the pipeline. Templates do not have IDs. It does not necessary have to
+    // match "pipeline_id" from "ListPipelinesResponse" and other related messages. Those
+    // IDs are about whole solutions (pipeline, potentially fitted, with set hyper-parameters).
+    // This here ID is about this particular ID description.
+    string id = 1;
+    // "schema" field is not needed because it is fixed by the TA2-TA3 protocol version.
+    // System which generated a pipeline or a template. Optional.
+    PipelineSource source = 2;
+    // TA2: Timestamp when created. Templates do not have this timestamp.
+    google.protobuf.Timestamp created = 3;
+    // Human friendly name of the pipeline. For templates it can be a hint to
+    // TA2 how to name found pipelines. Optional.
+    string name = 4;
+    // Human friendly description of the pipeline. Optional.
+    string description = 5;
+    // List of users associated with the creation of the template and consequently of the pipeline.
+    // TA2 can store this information into metalearning database. TA2 is not really expected to use
+    // this information during pipeline search. TA2 should not have to understand TA3 users, mapping
+    // between users and pipeline search IDs is something TA3 should handle. Optional.
+    repeated PipelineDescriptionUser users = 6;
+    // In most cases inputs are datasets. But if TA3 wants to jut run a primitive, it can send a
+    // template with only that primitive in the template, and then pass anything to its inputs during
+    // execution. Here, we are describing possible inputs to the pipeline or template. Order matters.
+    repeated PipelineDescriptionInput inputs = 7;
+    // Available outputs of the pipeline or template.
+    repeated PipelineDescriptionOutput outputs = 8;
+    // Steps defining the pipeline.
+    repeated PipelineDescriptionStep steps = 9;
+}

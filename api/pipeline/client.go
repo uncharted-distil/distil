@@ -1,9 +1,9 @@
 package pipeline
 
 import (
+	"io"
 	"sync"
 
-	"github.com/golang/protobuf/proto"
 	"github.com/pkg/errors"
 	"github.com/unchartedsoftware/distil/api/middleware"
 	"github.com/unchartedsoftware/plog"
@@ -18,11 +18,10 @@ import (
 // is designed such that multiple go routines make RPC calls to a single shared client, and synch
 // is managed internally.
 type Client struct {
-	sessions map[string]*Session
-	client   CoreClient
-	conn     *grpc.ClientConn
-	mu       *sync.Mutex
-	DataDir  string
+	client  CoreClient
+	conn    *grpc.ClientConn
+	mu      *sync.Mutex
+	DataDir string
 }
 
 // NewClient creates a new pipline request dispatcher instance. This will establish
@@ -40,8 +39,6 @@ func NewClient(serverAddr string, dataDir string, trace bool) (*Client, error) {
 	log.Infof("connected to %s", serverAddr)
 
 	client := Client{}
-	client.mu = &sync.Mutex{}
-	client.sessions = make(map[string]*Session)
 	client.client = NewCoreClient(conn)
 	client.conn = conn
 	client.DataDir = dataDir
@@ -54,111 +51,198 @@ func (c *Client) Close() {
 	c.conn.Close()
 }
 
-// GetSession returns an existing session struct.
-func (c *Client) GetSession(id string) (*Session, bool) {
-	// check for session
-	c.mu.Lock()
-	session, ok := c.sessions[id]
-	c.mu.Unlock()
-	if !ok {
-		return nil, false
-	}
-	return session, true
-}
+/*
 
-// StartSession starts a new session.
-func (c *Client) StartSession(ctx context.Context) (*Session, error) {
-	// create start session request
-	req := GenerateStartSessionRequest()
-	// execute the request
-	results, err := c.dispatchRequestSync(ctx, req.RequestFunc)
+[ pipelines ] <-- [ fit   ] <-- [ produce ]
+		      <-- [ score ]
+
+*/
+
+// GenerateCandidatePipelines generates candidate pipel\ines.
+func (c *Client) GenerateCandidatePipelines(ctx context.Context) ([]*GetSearchPipelinesResultsResponse, error) {
+	/*
+		Note over TA3,TA2: Generate candidate pipelines
+		    TA3->>TA2: SearchPipelines(SearchPipelinesRequest)
+		    TA2-->>TA3: SearchPipelinesResponse
+		    TA3->>TA2: GetSearchPipelinesResults(GetSearchPipelinesResultsRequest)
+		    TA2--xTA3: GetSearchPipelineResultsResponse
+	*/
+
+	searchPipelinesRequest := &SearchPipelinesRequest{}
+	searchPipelineResponse, err := c.client.SearchPipelines(ctx, searchPipelinesRequest)
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to start pipeline session")
-	}
-	// create session
-	result, ok := (*results[0]).(*SessionResponse)
-	if !ok {
-		return nil, errors.Errorf("unable to start session")
+		return nil, err
 	}
 
-	log.Infof("Starting session with server API version [%v] and UserAgent [%v]", result.GetVersion(), result.GetUserAgent())
-	if result.GetVersion() != APIVersion() {
-		log.Warnf("Server did not provide expected version [%v]", APIVersion())
+	searchPiplinesResultsRequest := &GetSearchPipelinesResultsRequest{
+		SearchId: searchPipelineResponse.SearchId,
 	}
 
-	// create session
-	session := NewSession(result.GetContext().GetSessionId(), c.client)
-	// store session
-	c.mu.Lock()
-	c.sessions[session.ID] = session
-	c.mu.Unlock()
-	return session, nil
-}
-
-// EndSession ends a session.
-func (c *Client) EndSession(ctx context.Context, id string) error {
-	// check for session
-	c.mu.Lock()
-	_, ok := c.sessions[id]
-	c.mu.Unlock()
-	if !ok {
-		return errors.Errorf("session id `%s` is not recognized", id)
-	}
-	// create start session request
-	req := GenerateEndSessionRequest(id)
-	// execute the request
-	_, err := c.dispatchRequestSync(ctx, req.RequestFunc)
+	searchPipelinesResultsResponse, err := c.client.GetSearchPipelinesResults(ctx, searchPiplinesResultsRequest)
 	if err != nil {
-		return errors.Wrap(err, "failed to end pipeline session")
+		return nil, err
 	}
-	c.mu.Lock()
-	delete(c.sessions, id)
-	c.mu.Unlock()
-	return nil
-}
 
-// ExportPipeline will issue an export pipeline call to the pipeline compute server
-func (c *Client) ExportPipeline(ctx context.Context, sessionID string, pipelineID string, pipelineURI string) error {
-	// check for session
-	c.mu.Lock()
-	_, ok := c.sessions[sessionID]
-	c.mu.Unlock()
-	if !ok {
-		return errors.Errorf("session id `%s` is not recognized", sessionID)
-	}
-	// create start session request
-	req := GenerateExportPipelineRequest(sessionID, pipelineID, pipelineURI)
-	// execute the request
-	_, err := c.dispatchRequestSync(ctx, req.RequestFunc)
-	if err != nil {
-		return errors.Wrap(err, "failed to export pipeline")
-	}
-	return nil
-}
+	var pipelineResultResponses []*GetSearchPipelinesResultsResponse
 
-func (c *Client) dispatchRequestSync(ctx context.Context, request RequestFunc) ([]*proto.Message, error) {
-	// execute the start session request
-	req := request(&ctx, &c.client)
-
-	// wait until session id is available
-	var results []*proto.Message
-
-	done := false
-	for !done {
-		select {
-		case err := <-req.Errors:
-			// return err
-			return results, err
-
-		case result := <-req.Results:
-			// create session
-			results = append(results, result)
-
-		case <-req.Done:
-			// flag as done
-			done = true
+	for {
+		pipelineResultResponse, err := searchPipelinesResultsResponse.Recv()
+		if err == io.EOF {
+			break
+		} else if err != nil {
+			return nil, err
 		}
+		pipelineResultResponses = append(pipelineResultResponses, pipelineResultResponse)
 	}
 
-	return results, nil
+	return pipelineResultResponses, nil
+}
+
+// GenerateScoresForCandidatePipeline generates scrores for candidate pipelines.
+func (c *Client) GenerateScoresForCandidatePipeline(ctx context.Context, pipelineID string) ([]*GetScorePipelineResultsResponse, error) {
+	/*
+		Note over TA3,TA2: Generate scores for candidate pipeline (assuming not generated during search)
+		    TA3->>TA2: ScorePipeline(ScorePipelineRequest)
+		    TA2-->>TA3: ScorePipelineRequestResponse
+		    TA3->>TA2: GetScorePipelineResults(GetScorePipelinesResultRequest)
+		    TA2--xTA3: GetScorePipelineResultsResponse
+		    TA2--xTA3: GetScorePipelineResultsResponse
+		    TA2--xTA3: GetScorePipelineResultsResponse
+	*/
+
+	scorePipelineRequest := &ScorePipelineRequest{
+		PipelineId: pipelineID,
+	}
+
+	scorePipelineResponse, err := c.client.ScorePipeline(ctx, scorePipelineRequest)
+	if err != nil {
+		return nil, err
+	}
+
+	searchPiplinesResultsRequest := &GetScorePipelineResultsRequest{
+		RequestId: scorePipelineResponse.RequestId,
+	}
+
+	scorePipelineResultsResponse, err := c.client.GetScorePipelineResults(ctx, searchPiplinesResultsRequest)
+	if err != nil {
+		return nil, err
+	}
+
+	var pipelineResultResponses []*GetScorePipelineResultsResponse
+
+	for {
+		pipelineResultResponse, err := scorePipelineResultsResponse.Recv()
+		if err == io.EOF {
+			break
+		} else if err != nil {
+			return nil, err
+		}
+		pipelineResultResponses = append(pipelineResultResponses, pipelineResultResponse)
+	}
+
+	return pipelineResultResponses, nil
+}
+
+// GeneratePipelineFit generates fit for candidate pipelines.
+func (c *Client) GeneratePipelineFit(ctx context.Context, pipelineID string) ([]*GetFitPipelineResultsResponse, error) {
+	/*
+		Note over TA3,TA2: Final fit of model
+			TA3->>TA2: FitPipeline(ProducePipelineRequest)
+			TA2-->>TA3: FitPipelineResponse
+			TA3->>TA2: GetFitPipelineResults(GetProducePipelineResultsRequest)
+			TA2--xTA3: GetFitPipelineResultsResponse
+			TA2--xTA3: GetFitPipelineResultsResponse
+	*/
+	fitPipelineRequest := &FitPipelineRequest{
+		PipelineId: pipelineID,
+	}
+
+	fitPipelineResponse, err := c.client.FitPipeline(ctx, fitPipelineRequest)
+	if err != nil {
+		return nil, err
+	}
+
+	fitPipelineResultsRequest := &GetFitPipelineResultsRequest{
+		RequestId: fitPipelineResponse.RequestId,
+	}
+
+	fitPipelineResultsResponse, err := c.client.GetFitPipelineResults(ctx, fitPipelineResultsRequest)
+	if err != nil {
+		return nil, err
+	}
+
+	var pipelineResultResponses []*GetFitPipelineResultsResponse
+
+	for {
+		pipelineResultResponse, err := fitPipelineResultsResponse.Recv()
+		if err == io.EOF {
+			break
+		} else if err != nil {
+			return nil, err
+		}
+		pipelineResultResponses = append(pipelineResultResponses, pipelineResultResponse)
+	}
+
+	return pipelineResultResponses, nil
+}
+
+// GeneratePredictions generates predictions.
+func (c *Client) GeneratePredictions(ctx context.Context, pipelineID string, searchID string) ([]*GetProducePipelineResultsResponse, error) {
+	/*
+		Note over TA3,TA2: Generate predictions using fitted model and held back test data
+		    TA3->>TA2: ProducePipeline(ProducePipelineRequest)
+		    TA2-->>TA3: ProducePipelineResponse
+		    TA3->>TA2: GetProducePipelineResults(GetProducePipelineResultsRequest)
+		    TA2--xTA3: GetProducePipelineResultsResponse
+		    TA2--xTA3: GetProducePipelineResultsResponse
+		    TA2--xTA3: GetProducePipelineResultsResponse
+		    TA3->>TA2: EndSearchPipelines(EndSearchPipelinesRequest)
+		    TA2-->>TA3:
+	*/
+
+	producePipelineRequest := &ProducePipelineRequest{
+		PipelineId: pipelineID,
+	}
+
+	producePipelineResponse, err := c.client.ProducePipeline(ctx, producePipelineRequest)
+	if err != nil {
+		return nil, err
+	}
+
+	producePipelineResultsRequest := &GetProducePipelineResultsRequest{
+		RequestId: producePipelineResponse.RequestId,
+	}
+
+	producePipelineResultsResponse, err := c.client.GetProducePipelineResults(ctx, producePipelineResultsRequest)
+	if err != nil {
+		return nil, err
+	}
+
+	var pipelineResultResponses []*GetProducePipelineResultsResponse
+
+	for {
+		pipelineResultResponse, err := producePipelineResultsResponse.Recv()
+		if err == io.EOF {
+			break
+		} else if err != nil {
+			return nil, err
+		}
+		pipelineResultResponses = append(pipelineResultResponses, pipelineResultResponse)
+	}
+
+	endSearchPipelines := &EndSearchPipelinesRequest{
+		SearchId: searchID,
+	}
+
+	_, err = c.client.EndSearchPipelines(ctx, endSearchPipelines)
+	if err != nil {
+		return nil, err
+	}
+
+	return pipelineResultResponses, nil
+}
+
+// ExportPipeline exports the pipeline.
+func (c *Client) ExportPipeline(ctx context.Context, pipelineID string, exportURI string) error {
+	return nil
 }

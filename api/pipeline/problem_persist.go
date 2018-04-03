@@ -34,14 +34,14 @@ const (
 // VariableProvider defines a function that will get the provided variable.
 type VariableProvider func(dataset string, index string, name string) (*model.Variable, error)
 
-// Problem contains the problem file data.
-type Problem struct {
-	Properties *ProblemProperties `json:"about"`
-	Inputs     *ProblemInput      `json:"inputs"`
+// ProblemPersist contains the problem file data.
+type ProblemPersist struct {
+	Properties *ProblemPersistProperties `json:"about"`
+	Inputs     *ProblemPersistInput      `json:"inputs"`
 }
 
-// ProblemProperties represents the basic information of a problem.
-type ProblemProperties struct {
+// ProblemPersistProperties represents the basic information of a problem.
+type ProblemPersistProperties struct {
 	ProblemID            string `json:"problemID"`
 	TaskType             string `json:"taskType"`
 	TaskSubType          string `json:"taskSubType"`
@@ -49,28 +49,28 @@ type ProblemProperties struct {
 	ProblemSchemaVersion string `json:"problemSchemaVersion"`
 }
 
-// ProblemInput lists the information of a problem.
-type ProblemInput struct {
-	Data               *ProblemData                `json:"data"`
-	PerformanceMetrics []*ProblemPerformanceMetric `json:"performanceMetrics"`
+// ProblemPersistInput lists the information of a problem.
+type ProblemPersistInput struct {
+	Data               *ProblemPersistData                `json:"data"`
+	PerformanceMetrics []*ProblemPersistPerformanceMetric `json:"performanceMetrics"`
 }
 
-// ProblemData ties targets to a dataset.
-type ProblemData struct {
-	DatasetID string           `json:"datasetID"`
-	Targets   []*ProblemTarget `json:"targets"`
+// ProblemPersistData ties targets to a dataset.
+type ProblemPersistData struct {
+	DatasetID string                  `json:"datasetID"`
+	Targets   []*ProblemPersistTarget `json:"targets"`
 }
 
-// ProblemTarget represents the target information of the problem.
-type ProblemTarget struct {
+// ProblemPersistTarget represents the target information of the problem.
+type ProblemPersistTarget struct {
 	TargetIndex int    `json:"targetIndex"`
 	ResID       string `json:"resID"`
 	ColIndex    int    `json:"colIndex"`
 	ColName     string `json:"colName"`
 }
 
-// ProblemPerformanceMetric captures the metrics of a problem.
-type ProblemPerformanceMetric struct {
+// ProblemPersistPerformanceMetric captures the metrics of a problem.
+type ProblemPersistPerformanceMetric struct {
 	Metric string `json:"metric"`
 }
 
@@ -133,30 +133,30 @@ func PersistProblem(fetchVariable VariableProvider, datasetDir string, dataset s
 
 	targetIdx := -1
 
-	pTarget := &ProblemTarget{
+	pTarget := &ProblemPersistTarget{
 		TargetIndex: 0,
 		ResID:       "0",
 		ColIndex:    targetIdx,
 		ColName:     target,
 	}
 
-	pMetric := &ProblemPerformanceMetric{
+	pMetric := &ProblemPersistPerformanceMetric{
 		Metric: metric,
 	}
 
-	pData := &ProblemData{
+	pData := &ProblemPersistData{
 		DatasetID: dataset,
-		Targets:   []*ProblemTarget{pTarget},
+		Targets:   []*ProblemPersistTarget{pTarget},
 	}
 
-	pInput := &ProblemInput{
+	pInput := &ProblemPersistInput{
 		Data:               pData,
-		PerformanceMetrics: []*ProblemPerformanceMetric{pMetric},
+		PerformanceMetrics: []*ProblemPersistPerformanceMetric{pMetric},
 	}
 
 	problemID := strings.Replace(dataset, "_dataset", "", -1)
 	problemID = fmt.Sprintf("%s%s", problemID, "_problem")
-	pProps := &ProblemProperties{
+	pProps := &ProblemPersistProperties{
 		ProblemID:            problemID,
 		ProblemVersion:       problemVersion,
 		ProblemSchemaVersion: problemSchemaVersion,
@@ -164,7 +164,7 @@ func PersistProblem(fetchVariable VariableProvider, datasetDir string, dataset s
 		TaskSubType:          getTaskSubType(targetVar.Type),
 	}
 
-	problem := &Problem{
+	problem := &ProblemPersist{
 		Properties: pProps,
 		Inputs:     pInput,
 	}

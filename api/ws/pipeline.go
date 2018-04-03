@@ -1,19 +1,13 @@
 package ws
 
 import (
-	"crypto/sha1"
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"path"
-	"path/filepath"
-	"strings"
 	"time"
 
 	"github.com/pkg/errors"
-	"github.com/satori/go.uuid"
 	"github.com/unchartedsoftware/plog"
-	"golang.org/x/net/context"
 
 	"github.com/unchartedsoftware/distil/api/model"
 	"github.com/unchartedsoftware/distil/api/pipeline"
@@ -79,12 +73,6 @@ func parseMessage(bytes []byte) (*Message, error) {
 
 func handleMessage(conn *Connection, client *pipeline.Client, metadataCtor model.MetadataStorageCtor, dataCtor model.DataStorageCtor, pipelineCtor model.PipelineStorageCtor, msg *Message) {
 	switch msg.Type {
-	case getSession:
-		handleGetSession(conn, client, msg, pipelineCtor)
-		return
-	case endSession:
-		handleEndSession(conn, client, msg)
-		return
 	case createPipelines:
 		handleCreatePipelines(conn, client, metadataCtor, dataCtor, pipelineCtor, msg)
 		return
@@ -93,91 +81,6 @@ func handleMessage(conn *Connection, client *pipeline.Client, metadataCtor model
 		handleErr(conn, msg, errors.New("unrecognized message type"))
 		return
 	}
-}
-
-func loadSessionRequests(msg *Message, session *pipeline.Session, pipelineStorage model.PipelineStorage) error {
-	// load the stored session information.
-	log.Infof("Loading requests for session %v.", msg.Session)
-	reqs, err := pipelineStorage.FetchRequests(msg.Session)
-	if err != nil {
-		return errors.Wrap(err, "Unable to pull session request")
-	}
-
-	// parse the requests into the session object.
-	for _, r := range reqs {
-		// get the uuid for the request.
-		requestID, err := uuid.FromString(r.RequestID)
-		if err != nil {
-			return errors.Wrap(err, "Unable to parse request uuid")
-		}
-
-		// add the request to the right collection
-		req := &pipeline.RequestContext{
-			RequestID: requestID,
-		}
-		if pipeline.Progress_value[r.Progress] != int32(pipeline.Progress_COMPLETED) {
-			session.AddPendingRequest(req)
-		} else {
-			session.AddCompletedRequest(req)
-		}
-	}
-
-	log.Infof("Requests for session %v loaded successfully.", msg.Session)
-
-	return nil
-}
-
-func handleGetSession(conn *Connection, client *pipeline.Client, msg *Message, pipelineCtor model.PipelineStorageCtor) {
-	// get the storage instance
-	storage, err := pipelineCtor()
-	if err != nil {
-		handleErr(conn, msg, err)
-		return
-	}
-
-	// get existing session
-	if msg.Session != "" {
-		// try to get existing session
-		session, ok := client.GetSession(msg.Session)
-		if ok {
-			err = loadSessionRequests(msg, session, storage)
-			if err != nil {
-				handleErr(conn, msg, err)
-				return
-			}
-
-			handleGetSessionSuccess(conn, msg, session.ID, false, true)
-			return
-		}
-	}
-
-	// start a new session
-	session, err := client.StartSession(context.Background())
-	if err != nil {
-		handleErr(conn, msg, err)
-		return
-	}
-
-	// store the sessions
-	err = storage.PersistSession(session.ID)
-	if err != nil {
-		handleErr(conn, msg, err)
-		return
-	}
-
-	handleGetSessionSuccess(conn, msg, session.ID, true, false)
-	return
-}
-
-func handleEndSession(conn *Connection, client *pipeline.Client, msg *Message) {
-	// end session
-	err := client.EndSession(context.Background(), msg.Session)
-	if err != nil {
-		handleErr(conn, msg, err)
-		return
-	}
-	handleEndSessionSuccess(conn, msg)
-	return
 }
 
 type pipelineCreateMsg struct {
@@ -191,201 +94,178 @@ type pipelineCreateMsg struct {
 }
 
 func handleCreatePipelines(conn *Connection, client *pipeline.Client, metadataCtor model.MetadataStorageCtor, dataCtor model.DataStorageCtor, pipelineCtor model.PipelineStorageCtor, msg *Message) {
-	// unmarshall the request data
-	clientCreateMsg := &pipelineCreateMsg{}
-	err := json.Unmarshal(msg.Raw, clientCreateMsg)
-	if err != nil {
-		handleErr(conn, msg, err)
-		return
-	}
+	/*
+		// unmarshall the request data
+		clientCreateMsg := &pipelineCreateMsg{}
+		err := json.Unmarshal(msg.Raw, clientCreateMsg)
+		if err != nil {
+			handleErr(conn, msg, err)
+			return
+		}
 
-	// parse the features out of the create msg - done as a separate step
-	// because their structure isn't entirely fixed
-	params := make(map[string]interface{})
-	err = json.Unmarshal(clientCreateMsg.Filters, &params)
-	if err != nil {
-		handleErr(conn, msg, err)
-		return
-	}
+		// parse the features out of the create msg - done as a separate step
+		// because their structure isn't entirely fixed
+		params := make(map[string]interface{})
+		err = json.Unmarshal(clientCreateMsg.Filters, &params)
+		if err != nil {
+			handleErr(conn, msg, err)
+			return
+		}
 
-	filters, err := model.ParseFilterParamsFromJSON(params)
-	if err != nil {
-		handleErr(conn, msg, err)
-		return
-	}
-	// NOTE: this could be done on the client side, but I am not sure if that
-	// is more elegant or not.
-	filters.Size = -1
+		filters, err := model.ParseFilterParamsFromJSON(params)
+		if err != nil {
+			handleErr(conn, msg, err)
+			return
+		}
+		// NOTE: this could be done on the client side, but I am not sure if that
+		// is more elegant or not.
+		filters.Size = -1
 
-	// NOTE: D3M index field is needed in the persisted data.
-	filters.Variables = append(filters.Variables, "d3mIndex")
+		// NOTE: D3M index field is needed in the persisted data.
+		filters.Variables = append(filters.Variables, "d3mIndex")
 
-	// initialize the storage
-	dataStorage, err := dataCtor()
-	if err != nil {
-		handleErr(conn, msg, err)
-		return
-	}
+		// initialize the storage
+		dataStorage, err := dataCtor()
+		if err != nil {
+			handleErr(conn, msg, err)
+			return
+		}
 
-	// initialize metadata storage
-	metadata, err := metadataCtor()
-	if err != nil {
-		handleErr(conn, msg, err)
-		return
-	}
+		// initialize metadata storage
+		metadata, err := metadataCtor()
+		if err != nil {
+			handleErr(conn, msg, err)
+			return
+		}
 
-	// initialize pipeline storage
-	pipelineStorage, err := pipelineCtor()
-	if err != nil {
-		handleErr(conn, msg, err)
-		return
-	}
+		// initialize pipeline storage
+		pipelineStorage, err := pipelineCtor()
+		if err != nil {
+			handleErr(conn, msg, err)
+			return
+		}
 
-	// persist the filtered dataset if necessary
-	fetchFilteredData := func(dataset string, index string, filterParams *model.FilterParams) (*model.FilteredData, error) {
-		// fetch the whole data and include the target feature
-		return dataStorage.FetchData(dataset, index, filterParams, false)
-	}
-	fetchVariable := func(dataset string, index string) ([]*model.Variable, error) {
-		return metadata.FetchVariables(dataset, index, true)
-	}
-	datasetPath, err := pipeline.PersistFilteredData(fetchFilteredData, fetchVariable, client.DataDir, clientCreateMsg.Dataset, clientCreateMsg.Index, clientCreateMsg.Feature, filters)
-	if err != nil {
-		handleErr(conn, msg, err)
-		return
-	}
+		// persist the filtered dataset if necessary
+		fetchFilteredData := func(dataset string, index string, filterParams *model.FilterParams) (*model.FilteredData, error) {
+			// fetch the whole data and include the target feature
+			return dataStorage.FetchData(dataset, index, filterParams, false)
+		}
+		fetchVariable := func(dataset string, index string) ([]*model.Variable, error) {
+			return metadata.FetchVariables(dataset, index, true)
+		}
+		datasetPath, err := pipeline.PersistFilteredData(fetchFilteredData, fetchVariable, client.DataDir, clientCreateMsg.Dataset, clientCreateMsg.Index, clientCreateMsg.Feature, filters)
+		if err != nil {
+			handleErr(conn, msg, err)
+			return
+		}
 
-	// make sure the path is absolute and contains the URI prefix
-	datasetPath, err = filepath.Abs(datasetPath)
-	if err != nil {
-		handleErr(conn, msg, err)
-		return
-	}
-	datasetPath = fmt.Sprintf("%s", filepath.Join(datasetPath, pipeline.D3MDataSchema))
+		// make sure the path is absolute and contains the URI prefix
+		datasetPath, err = filepath.Abs(datasetPath)
+		if err != nil {
+			handleErr(conn, msg, err)
+			return
+		}
+		datasetPath = fmt.Sprintf("%s", filepath.Join(datasetPath, pipeline.D3MDataSchema))
 
-	// Create the set of training features - we already filtered that out when we persist, but needs to be specified
-	// to satisfy ta3ta2 API.
-	filteredVars, err := fetchFilteredVariables(metadata, clientCreateMsg.Index, clientCreateMsg.Dataset, filters)
-	if err != nil {
-		handleErr(conn, msg, err)
-		return
-	}
-	trainFeatures := []*pipeline.Feature{}
-	for _, featureName := range filteredVars {
-		if featureName != clientCreateMsg.Feature {
-			feature := &pipeline.Feature{
-				FeatureName: featureName,
-				ResourceId:  defaultResourceID,
+		// Create the set of training features - we already filtered that out when we persist, but needs to be specified
+		// to satisfy ta3ta2 API.
+		filteredVars, err := fetchFilteredVariables(metadata, clientCreateMsg.Index, clientCreateMsg.Dataset, filters)
+		if err != nil {
+			handleErr(conn, msg, err)
+			return
+		}
+		trainFeatures := []*pipeline.Feature{}
+		for _, featureName := range filteredVars {
+			if featureName != clientCreateMsg.Feature {
+				feature := &pipeline.Feature{
+					FeatureName: featureName,
+					ResourceId:  defaultResourceID,
+				}
+				trainFeatures = append(trainFeatures, feature)
 			}
-			trainFeatures = append(trainFeatures, feature)
 		}
-	}
 
-	// convert received metrics into the ta3ta2 format
-	metrics := []pipeline.PerformanceMetric{}
-	for _, msgMetric := range clientCreateMsg.Metrics {
-		metric := pipeline.PerformanceMetric(pipeline.PerformanceMetric_value[strings.ToUpper(msgMetric)])
-		metrics = append(metrics, metric)
-	}
+		// convert received metrics into the ta3ta2 format
+		metrics := []pipeline.PerformanceMetric{}
+		for _, msgMetric := range clientCreateMsg.Metrics {
+			metric := pipeline.PerformanceMetric(pipeline.PerformanceMetric_value[strings.ToUpper(msgMetric)])
+			metrics = append(metrics, metric)
+		}
 
-	// make sure the target is not an unknown type
-	target, err := metadata.FetchVariable(clientCreateMsg.Dataset, clientCreateMsg.Index, clientCreateMsg.Feature)
-	if err != nil {
-		handleErr(conn, msg, err)
-		return
-	}
-	if target.Type == model.UnknownType {
-		handleErr(conn, msg, errors.Errorf("Target '%s' is set to unknown type", target.Name))
-		return
-	}
+		// make sure the target is not an unknown type
+		target, err := metadata.FetchVariable(clientCreateMsg.Dataset, clientCreateMsg.Index, clientCreateMsg.Feature)
+		if err != nil {
+			handleErr(conn, msg, err)
+			return
+		}
+		if target.Type == model.UnknownType {
+			handleErr(conn, msg, errors.Errorf("Target '%s' is set to unknown type", target.Name))
+			return
+		}
 
-	// populate the protobuf pipeline create msg
-	createMsg := &pipeline.PipelineCreateRequest{
-		Context: &pipeline.SessionContext{
-			SessionId: msg.Session,
-		},
-		PredictFeatures: trainFeatures,
-		Task:            pipeline.TaskType(pipeline.TaskType_value[strings.ToUpper(clientCreateMsg.Task)]),
-		TaskSubtype:     pipeline.TaskSubtype(pipeline.TaskSubtype_NONE),
-		Metrics:         metrics,
-		DatasetUri:      datasetPath,
-		TargetFeatures: []*pipeline.Feature{
-			{
-				FeatureName: clientCreateMsg.Feature,
-				ResourceId:  defaultResourceID,
+		// populate the protobuf pipeline create msg
+		createMsg := &pipeline.PipelineCreateRequest{
+			PredictFeatures: trainFeatures,
+			Task:            pipeline.TaskType(pipeline.TaskType_value[strings.ToUpper(clientCreateMsg.Task)]),
+			TaskSubtype:     pipeline.TaskSubtype(pipeline.TaskSubtype_NONE),
+			Metrics:         metrics,
+			DatasetUri:      datasetPath,
+			TargetFeatures: []*pipeline.Feature{
+				{
+					FeatureName: clientCreateMsg.Feature,
+					ResourceId:  defaultResourceID,
+				},
 			},
-		},
-		MaxPipelines: clientCreateMsg.MaxPipelines,
-	}
+			MaxPipelines: clientCreateMsg.MaxPipelines,
+		}
 
-	// kick off the pipeline creation, or re-attach to one that is already running
-	session, ok := client.GetSession(msg.Session)
-	if !ok {
-		log.Warnf("Expected session %s does not exist", msg.Session)
-		return
-	}
-
-	requestInfo := pipeline.GeneratePipelineCreateRequest(createMsg)
-	proxy, err := session.GetOrDispatch(context.Background(), requestInfo)
-	if err != nil {
-		handleErr(conn, msg, err)
-		return
-	}
-
-	// store the request using the initial progress value
-	requestID := fmt.Sprintf("%s", requestInfo.RequestID)
-	err = pipelineStorage.PersistRequest(session.ID, requestID, clientCreateMsg.Dataset, pipeline.Progress_name[0], time.Now())
-	if err != nil {
-		handleErr(conn, msg, err)
-		return
-	}
-
-	// store the request features
-	for _, f := range trainFeatures {
-		err = pipelineStorage.PersistRequestFeature(requestID, f.FeatureName, model.FeatureTypeTrain)
+		requestInfo := pipeline.GeneratePipelineCreateRequest(createMsg)
+		proxy, err := session.GetOrDispatch(context.Background(), requestInfo)
 		if err != nil {
 			handleErr(conn, msg, err)
 			return
 		}
-	}
 
-	for _, f := range createMsg.TargetFeatures {
-		err = pipelineStorage.PersistRequestFeature(requestID, f.FeatureName, model.FeatureTypeTarget)
+		// store the request using the initial progress value
+		requestID := fmt.Sprintf("%s", requestInfo.RequestID)
+		err = pipelineStorage.PersistRequest(session.ID, requestID, clientCreateMsg.Dataset, pipeline.Progress_name[0], time.Now())
 		if err != nil {
 			handleErr(conn, msg, err)
 			return
 		}
-	}
 
-	// store request filters
-	err = pipelineStorage.PersistRequestFilters(requestID, filters)
-	if err != nil {
-		handleErr(conn, msg, err)
-		return
-	}
+		// store the request features
+		for _, f := range trainFeatures {
+			err = pipelineStorage.PersistRequestFeature(requestID, f.FeatureName, model.FeatureTypeTrain)
+			if err != nil {
+				handleErr(conn, msg, err)
+				return
+			}
+		}
 
-	// handle the request
-	handleCreatePipelinesSuccess(conn, msg, proxy, dataStorage, pipelineStorage, clientCreateMsg.Dataset)
+		for _, f := range createMsg.TargetFeatures {
+			err = pipelineStorage.PersistRequestFeature(requestID, f.FeatureName, model.FeatureTypeTarget)
+			if err != nil {
+				handleErr(conn, msg, err)
+				return
+			}
+		}
+
+		// store request filters
+		err = pipelineStorage.PersistRequestFilters(requestID, filters)
+		if err != nil {
+			handleErr(conn, msg, err)
+			return
+		}
+
+		// handle the request
+		handleCreatePipelinesSuccess(conn, msg, proxy, dataStorage, pipelineStorage, clientCreateMsg.Dataset)
+	*/
 }
 
-func handleGetSessionSuccess(conn *Connection, msg *Message, session string, created bool, resumed bool) {
-	// send response
-	handleSuccess(conn, msg, map[string]interface{}{
-		"success": true,
-		"session": session,
-		"created": created,
-		"resumed": resumed,
-	})
-}
-
-func handleEndSessionSuccess(conn *Connection, msg *Message) {
-	// send response
-	handleSuccess(conn, msg, map[string]interface{}{
-		"success": true,
-	})
-}
-
+/*
 func handleCreatePipelinesSuccess(conn *Connection, msg *Message, proxy *pipeline.ResultProxy, dataStorage model.DataStorage, pipelineStorage model.PipelineStorage, dataset string) {
+
 	// process the result proxy, which is replicated for completed, pending requests
 	for {
 		select {
@@ -493,6 +373,7 @@ func handleCreatePipelinesSuccess(conn *Connection, msg *Message, proxy *pipelin
 		}
 	}
 }
+*/
 
 // TODO: We don't store this anywhere, so we end up running an ES query to get
 // the var list.

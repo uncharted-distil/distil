@@ -20,7 +20,6 @@ func ExportHandler(pipelineCtor model.PipelineStorageCtor, metaCtor model.Metada
 	return func(w http.ResponseWriter, r *http.Request) {
 		// extract route parameters
 		pipelineID := pat.Param(r, "pipeline-id")
-		sessionID := pat.Param(r, "session")
 
 		// get the pipeline target
 		pipeline, err := pipelineCtor()
@@ -71,7 +70,7 @@ func ExportHandler(pipelineCtor model.PipelineStorageCtor, metaCtor model.Metada
 		exportURI := fmt.Sprintf("file://%s", exportPath)
 		log.Infof("Exporting to %s", exportURI)
 
-		err = client.ExportPipeline(context.Background(), sessionID, pipelineID, exportURI)
+		err = client.ExportPipeline(context.Background(), pipelineID, exportURI)
 		if err != nil {
 			log.Infof("Failed pipeline export request to %s", exportURI)
 			os.Exit(1)

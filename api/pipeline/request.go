@@ -1,5 +1,6 @@
 package pipeline
 
+/*
 import (
 	"bytes"
 	"compress/gzip"
@@ -295,3 +296,4 @@ func getAPIVersion() string {
 	}
 	return *ex.(*string)
 }
+*/
