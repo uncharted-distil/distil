@@ -28,7 +28,7 @@ func ExportHandler(pipelineCtor model.PipelineStorageCtor, metaCtor model.Metada
 			handleError(w, err)
 			return
 		}
-		res, err := pipeline.FetchResultMetadataByPipelineID(pipelineID)
+		res, err := pipeline.FetchPipelineResult(pipelineID)
 		if err != nil {
 			handleError(w, err)
 			return
@@ -42,7 +42,13 @@ func ExportHandler(pipelineCtor model.PipelineStorageCtor, metaCtor model.Metada
 		}
 
 		// get the initial target
-		request, err := pipeline.FetchRequest(res.RequestID)
+		pip, err := pipeline.FetchPipeline(res.PipelineID)
+		if err != nil {
+			handleError(w, err)
+			return
+		}
+
+		m, err := pipeline.FetchModel(pip.ModelID)
 		if err != nil {
 			handleError(w, err)
 			return
@@ -54,7 +60,7 @@ func ExportHandler(pipelineCtor model.PipelineStorageCtor, metaCtor model.Metada
 			return
 		}
 
-		variable, err := meta.FetchVariable(request.Dataset, "datasets", pipelineTarget)
+		variable, err := meta.FetchVariable(m.Dataset, "datasets", pipelineTarget)
 		if err != nil {
 			handleError(w, err)
 			return

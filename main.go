@@ -149,7 +149,6 @@ func main() {
 	registerRoute(mux, "/distil/results-extrema/:index/:dataset/:results-uuid", routes.ResultsExtremaHandler(pgPipelineStorageCtor, pgDataStorageCtor))
 	registerRoute(mux, "/distil/residuals-extrema/:index/:dataset/:results-uuid", routes.ResidualsExtremaHandler(pgPipelineStorageCtor, pgDataStorageCtor))
 	registerRoute(mux, "/distil/ranking/:index/:dataset/:target", routes.RankingHandler(pgDataStorageCtor, restClient, config.PipelineDataDir))
-	registerRoute(mux, "/distil/session/:session/:dataset/:target/:pipeline-id", routes.SessionHandler(pgPipelineStorageCtor))
 	registerRoute(mux, "/distil/abort", routes.AbortHandler())
 	registerRoute(mux, "/distil/export/:session/:pipeline-id", routes.ExportHandler(pgPipelineStorageCtor, metadataStorageCtor, pipelineClient, config.ExportPath))
 	registerRoute(mux, "/distil/ingest/:index/:dataset", routes.IngestHandler(metadataStorageCtor, ingestConfig))

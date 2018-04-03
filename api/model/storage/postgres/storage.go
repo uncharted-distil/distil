@@ -6,13 +6,13 @@ import (
 )
 
 const (
-	sessionTableName     = "session"
-	requestTableName     = "request"
-	resultTableName      = "result"
-	resultScoreTableName = "result_score"
-	featureTableName     = "request_feature"
-	filterTableName      = "request_filter"
-	d3mIndexFieldName    = "d3mIndex"
+	modelTableName          = "model"
+	pipelineTableName       = "pipeline"
+	pipelineResultTableName = "pipeline_result"
+	pipelineScoreTableName  = "pipeline_score"
+	featureTableName        = "model_feature"
+	filterTableName         = "model_filter"
+	d3mIndexFieldName       = "d3mIndex"
 
 	// Database data types
 	dataTypeText    = "TEXT"

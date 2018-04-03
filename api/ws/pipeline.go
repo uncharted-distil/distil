@@ -98,15 +98,12 @@ func handleMessage(conn *Connection, client *pipeline.Client, metadataCtor model
 func loadSessionRequests(msg *Message, session *pipeline.Session, pipelineStorage model.PipelineStorage) error {
 	// load the stored session information.
 	log.Infof("Loading requests for session %v.", msg.Session)
-	reqs, err := pipelineStorage.FetchRequests(msg.Session)
-	if err != nil {
-		return errors.Wrap(err, "Unable to pull session request")
-	}
+	reqs := make([]*model.Model, 0)
 
 	// parse the requests into the session object.
 	for _, r := range reqs {
 		// get the uuid for the request.
-		requestID, err := uuid.FromString(r.RequestID)
+		requestID, err := uuid.FromString(r.ModelID)
 		if err != nil {
 			return errors.Wrap(err, "Unable to parse request uuid")
 		}
@@ -153,13 +150,6 @@ func handleGetSession(conn *Connection, client *pipeline.Client, msg *Message, p
 
 	// start a new session
 	session, err := client.StartSession(context.Background())
-	if err != nil {
-		handleErr(conn, msg, err)
-		return
-	}
-
-	// store the sessions
-	err = storage.PersistSession(session.ID)
 	if err != nil {
 		handleErr(conn, msg, err)
 		return
@@ -333,8 +323,8 @@ func handleCreatePipelines(conn *Connection, client *pipeline.Client, metadataCt
 	}
 
 	// store the request using the initial progress value
-	requestID := fmt.Sprintf("%s", requestInfo.RequestID)
-	err = pipelineStorage.PersistRequest(session.ID, requestID, clientCreateMsg.Dataset, pipeline.Progress_name[0], time.Now())
+	modelID := fmt.Sprintf("%s", requestInfo.RequestID)
+	err = pipelineStorage.PersistModel(modelID, clientCreateMsg.Dataset, pipeline.Progress_name[0], time.Now())
 	if err != nil {
 		handleErr(conn, msg, err)
 		return
@@ -342,7 +332,7 @@ func handleCreatePipelines(conn *Connection, client *pipeline.Client, metadataCt
 
 	// store the request features
 	for _, f := range trainFeatures {
-		err = pipelineStorage.PersistRequestFeature(requestID, f.FeatureName, model.FeatureTypeTrain)
+		err = pipelineStorage.PersistModelFeature(modelID, f.FeatureName, model.FeatureTypeTrain)
 		if err != nil {
 			handleErr(conn, msg, err)
 			return
@@ -350,7 +340,7 @@ func handleCreatePipelines(conn *Connection, client *pipeline.Client, metadataCt
 	}
 
 	for _, f := range createMsg.TargetFeatures {
-		err = pipelineStorage.PersistRequestFeature(requestID, f.FeatureName, model.FeatureTypeTarget)
+		err = pipelineStorage.PersistModelFeature(modelID, f.FeatureName, model.FeatureTypeTarget)
 		if err != nil {
 			handleErr(conn, msg, err)
 			return
@@ -358,7 +348,7 @@ func handleCreatePipelines(conn *Connection, client *pipeline.Client, metadataCt
 	}
 
 	// store request filters
-	err = pipelineStorage.PersistRequestFilters(requestID, filters)
+	err = pipelineStorage.PersistModelFilters(modelID, filters)
 	if err != nil {
 		handleErr(conn, msg, err)
 		return
@@ -404,7 +394,7 @@ func handleCreatePipelinesSuccess(conn *Connection, msg *Message, proxy *pipelin
 
 			// update the request progress
 			currentTime := time.Now()
-			err := pipelineStorage.UpdateRequest(fmt.Sprintf("%s", proxy.RequestID), progress, currentTime)
+			err := pipelineStorage.UpdateModel(fmt.Sprintf("%s", proxy.RequestID), progress, currentTime)
 			if err != nil {
 				handleErr(conn, msg, errors.Wrap(err, "Unable to store request update"))
 			}
@@ -423,13 +413,12 @@ func handleCreatePipelinesSuccess(conn *Connection, msg *Message, proxy *pipelin
 					scoreValue := float64(score.Value)
 
 					// store the result score
-					pipelineStorage.PersistResultScore(res.PipelineId, scoreMetric, scoreValue)
+					pipelineStorage.PersistPipelineScore(res.PipelineId, scoreMetric, scoreValue)
 				}
 			}
 
 			resultURI := ""
 			resultID := ""
-			outputType := ""
 
 			// on update / complete, persist the resultURI
 			if res.ProgressInfo == pipeline.Progress_COMPLETED ||
@@ -450,19 +439,14 @@ func handleCreatePipelinesSuccess(conn *Connection, msg *Message, proxy *pipelin
 				resultID = fmt.Sprintf("%x", bs)
 
 				response["resultId"] = resultID
-
-				outputTypeName := int32(res.PipelineInfo.Output)
-				outputType = pipeline.OutputType_name[outputTypeName]
 			}
 
 			// store the result metadata
-			err = pipelineStorage.PersistResultMetadata(
-				proxy.RequestID.String(),
+			err = pipelineStorage.PersistPipelineResult(
 				res.PipelineId,
 				resultID,
 				resultURI,
 				progress,
-				outputType,
 				currentTime)
 			if err != nil {
 				handleErr(conn, msg, errors.Wrap(err, "Unable to store result metadata"))
