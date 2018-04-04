@@ -34,7 +34,7 @@ type Config struct {
 	ExportPath                         string  `env:"EXPORT_PATH"`
 	StartupConfigFile                  string  `env:"JSON_CONFIG_PATH" envDefault:"/d3m/config"`
 	PostgresHost                       string  `env:"PG_HOST" envDefault:"localhost"`
-	PostgresPort                       string  `env:"PG_PORT" envDefault:"5432"`
+	PostgresPort                       int     `env:"PG_PORT" envDefault:"5432"`
 	PostgresUser                       string  `env:"PG_USER" envDefault:"distil"`
 	PostgresPassword                   string  `env:"PG_PASSWORD" envDefault:""`
 	PostgresDatabase                   string  `env:"PG_DATABASE" envDefault:"distil"`

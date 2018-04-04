@@ -54,6 +54,8 @@ type IngestTaskConfig struct {
 	DatabasePassword                   string
 	DatabaseUser                       string
 	Database                           string
+	DatabaseHost                       string
+	DatabasePort                       int
 	SummaryOutputPathRelative          string
 	SummaryMachineOutputPathRelative   string
 	SummaryRESTEndpoint                string
@@ -318,6 +320,8 @@ func Ingest(storage model.MetadataStorage, index string, dataset string, config 
 		DBPassword: config.DatabasePassword,
 		DBUser:     config.DatabaseUser,
 		Database:   config.Database,
+		DBHost:     config.DatabaseHost,
+		DBPort:     config.DatabasePort,
 	}
 	pg, err := postgres.NewDatabase(postgresConfig)
 	if err != nil {
