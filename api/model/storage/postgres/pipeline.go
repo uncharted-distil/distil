@@ -21,7 +21,7 @@ func (s *Storage) PersistModel(modelID string, dataset string, progress string, 
 
 // UpdateModel updates a model in Postgres.
 func (s *Storage) UpdateModel(modelID string, progress string, updatedTime time.Time) error {
-	sql := fmt.Sprintf("UPDATE %s SET progress = $1, last_updated_time = $2 WHERE request_id = $3;", modelTableName)
+	sql := fmt.Sprintf("UPDATE %s SET progress = $1, last_updated_time = $2 WHERE model_id = $3;", modelTableName)
 
 	_, err := s.client.Exec(sql, progress, updatedTime, modelID)
 
@@ -218,7 +218,7 @@ func (s *Storage) parsePipelineResult(rows *pgx.Rows) ([]*model.PipelineResult, 
 // FetchPipelineResultByModelID pulls pipeline result information from Postgres.
 func (s *Storage) FetchPipelineResultByModelID(modelID string) ([]*model.PipelineResult, error) {
 	sql := fmt.Sprintf("SELECT result.pipeline_id, result.result_uuid, "+
-		"result.result_uri, result.progress, result.created_time, request.dataset "+
+		"result.result_uri, result.progress, result.created_time, model.dataset "+
 		"FROM %s AS result INNER JOIN %s AS pipeline ON result.pipeline_id = pipeline.pipeline_id "+
 		"INNER JOIN %s AS model ON pipeline.model_id = model.model_id "+
 		"WHERE model.model_id = $1;", pipelineResultTableName, pipelineTableName, modelTableName)
@@ -380,7 +380,7 @@ func (s *Storage) FetchPipelineScore(pipelineID string) ([]*model.PipelineScore,
 	return results, nil
 }
 
-// FetchModelFeatures pulls request feature information from Postgres.
+// FetchModelFeatures pulls model feature information from Postgres.
 func (s *Storage) FetchModelFeatures(modelID string) ([]*model.Feature, error) {
 	sql := fmt.Sprintf("SELECT model_id, feature_name, feature_type FROM %s WHERE model_id = $1;", featureTableName)
 
@@ -400,7 +400,7 @@ func (s *Storage) FetchModelFeatures(modelID string) ([]*model.Feature, error) {
 
 		err = rows.Scan(&modelID, &featureName, &featureType)
 		if err != nil {
-			return nil, errors.Wrap(err, "Unable to parse requests features from Postgres")
+			return nil, errors.Wrap(err, "Unable to parse model features from Postgres")
 		}
 
 		results = append(results, &model.Feature{
@@ -413,7 +413,7 @@ func (s *Storage) FetchModelFeatures(modelID string) ([]*model.Feature, error) {
 	return results, nil
 }
 
-// FetchModelFilters pulls request filter information from Postgres.
+// FetchModelFilters pulls model filter information from Postgres.
 func (s *Storage) FetchModelFilters(modelID string, features []*model.Feature) (*model.FilterParams, error) {
 	sql := fmt.Sprintf("SELECT model_id, feature_name, filter_type, filter_mode, filter_min, filter_max, filter_categories FROM %s WHERE model_id = $1;", filterTableName)
 
