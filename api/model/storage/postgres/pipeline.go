@@ -12,7 +12,7 @@ import (
 
 // PersistModel persists a model to Postgres.
 func (s *Storage) PersistModel(modelID string, dataset string, progress string, createdTime time.Time) error {
-	sql := fmt.Sprintf("INSERT INTO %s (model_id, dataset, progress, created_time, last_updated_time) VALUES ($1, $2, $3, $4, $4;", modelTableName)
+	sql := fmt.Sprintf("INSERT INTO %s (model_id, dataset, progress, created_time, last_updated_time) VALUES ($1, $2, $3, $4, $4);", modelTableName)
 
 	_, err := s.client.Exec(sql, modelID, dataset, progress, createdTime)
 
