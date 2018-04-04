@@ -218,5 +218,6 @@ const variableType: Dictionary<Task> = {
 	postal_code: classification,
 	uri: classification,
 	datetime: classification,
-	text: classification
+	text: classification,
+	boolean: classification
 };
