@@ -1,7 +1,6 @@
 package pipeline
 
 import (
-	"fmt"
 	"io"
 	"sync"
 	"time"
