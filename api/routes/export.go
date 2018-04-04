@@ -75,7 +75,7 @@ func ExportHandler(storageCtor model.PipelineStorageCtor, metaStorageCtor model.
 		// ** jan eval only
 
 		// fail if the pipeline target was not the expected dataset target for the problem
-		if targetVar != "" && strings.ToUpper(variable.Name) != strings.ToUpper(targetVar) {
+		if targetVar != "" && strings.ToUpper(variable.DisplayVariable) != strings.ToUpper(targetVar) {
 			log.Warnf("Target %s is not the expected target variable %s", variable.Name, targetVar)
 			http.Error(w, fmt.Sprintf("The selected target `%s` does not match the required target variable `%s`.", variable.Name, targetVar), http.StatusBadRequest)
 			return
