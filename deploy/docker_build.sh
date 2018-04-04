@@ -5,4 +5,4 @@ pushd .
 cd ..
 make build_static
 popd
-docker build -t docker.uncharted.software/distil:jan_eval_patch ..
+docker build -t docker.uncharted.software/distil:latest ..

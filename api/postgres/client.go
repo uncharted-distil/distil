@@ -1,7 +1,7 @@
 package postgres
 
 import (
-	"strconv"
+	"fmt"
 	"sync"
 	"time"
 
@@ -72,17 +72,14 @@ func (pgxLogAdapter) Error(msg string, ctx ...interface{}) {
 
 // NewClient instantiates and returns a new postgres client constructor.  Log level is one
 // of none, info, warn, error, debug.
-func NewClient(host, port, user, password, database string, logLevel string) ClientCtor {
+func NewClient(host string, port int, user string, password string, database string, logLevel string) ClientCtor {
 	return func() (DatabaseDriver, error) {
-		endpoint := host + ":" + port
-		portInt, err := strconv.Atoi(port)
-		if err != nil {
-			return nil, errors.Wrap(err, "Unable to connect to Postgres endpoint")
-		}
+		endpoint := fmt.Sprintf("%s:%d", host, port)
 
 		// Default logs to disabled - note that just setting level to 'none' is insufficient
 		// as internally pgx defaults that to Debug.
 		var level pgx.LogLevel
+		var err error
 		level = pgx.LogLevelNone
 		var logAdapter pgxLogAdapter
 		if logLevel != "" {
@@ -105,7 +102,7 @@ func NewClient(host, port, user, password, database string, logLevel string) Cli
 			log.Infof("Creating new Postgres connection to endpoint %s", endpoint)
 			dbConfig := pgx.ConnConfig{
 				Host:     host,
-				Port:     uint16(portInt),
+				Port:     uint16(port),
 				User:     user,
 				Password: password,
 				Database: database,

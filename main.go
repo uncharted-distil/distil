@@ -136,6 +136,8 @@ func main() {
 		DatabasePassword:                   config.PostgresPassword,
 		DatabaseUser:                       config.PostgresUser,
 		Database:                           config.PostgresDatabase,
+		DatabaseHost:                       config.PostgresHost,
+		DatabasePort:                       config.PostgresPort,
 		SummaryOutputPathRelative:          config.SummaryPath,
 		SummaryRESTEndpoint:                config.SummaryEndpoint,
 		SummaryFunctionName:                config.SummaryFunctionName,
