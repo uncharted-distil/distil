@@ -169,6 +169,6 @@ const variableType: Dictionary<Task> = {
 	uri: classification,
 	datetime: classification,
 	text: classification,
-	unknown: classification
+	unknown: classification,
 	boolean: classification
 };
