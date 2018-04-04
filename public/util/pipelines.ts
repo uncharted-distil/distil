@@ -170,4 +170,5 @@ const variableType: Dictionary<Task> = {
 	datetime: classification,
 	text: classification,
 	unknown: classification
+	boolean: classification
 };
