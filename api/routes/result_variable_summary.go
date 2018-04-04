@@ -71,7 +71,7 @@ func ResultVariableSummaryHandler(ctorPipeline model.PipelineStorageCtor, ctorSt
 		}
 
 		// get result URI
-		result, err := pipelineData.FetchResultMetadataByUUID(resultID)
+		result, err := pipelineData.FetchPipelineResultByUUID(resultID)
 		if err != nil {
 			handleError(w, err)
 			return

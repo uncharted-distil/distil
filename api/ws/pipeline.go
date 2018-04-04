@@ -284,7 +284,7 @@ func handleCreatePipelinesSuccess(conn *Connection, msg *Message, proxy *pipelin
 
 			// update the request progress
 			currentTime := time.Now()
-			err := pipelineStorage.UpdateRequest(fmt.Sprintf("%s", proxy.RequestID), progress, currentTime)
+			err := pipelineStorage.UpdateModel(fmt.Sprintf("%s", proxy.RequestID), progress, currentTime)
 			if err != nil {
 				handleErr(conn, msg, errors.Wrap(err, "Unable to store request update"))
 			}
@@ -303,13 +303,12 @@ func handleCreatePipelinesSuccess(conn *Connection, msg *Message, proxy *pipelin
 					scoreValue := float64(score.Value)
 
 					// store the result score
-					pipelineStorage.PersistResultScore(res.PipelineId, scoreMetric, scoreValue)
+					pipelineStorage.PersistPipelineScore(res.PipelineId, scoreMetric, scoreValue)
 				}
 			}
 
 			resultURI := ""
 			resultID := ""
-			outputType := ""
 
 			// on update / complete, persist the resultURI
 			if res.ProgressInfo == pipeline.Progress_COMPLETED ||
@@ -330,19 +329,14 @@ func handleCreatePipelinesSuccess(conn *Connection, msg *Message, proxy *pipelin
 				resultID = fmt.Sprintf("%x", bs)
 
 				response["resultId"] = resultID
-
-				outputTypeName := int32(res.PipelineInfo.Output)
-				outputType = pipeline.OutputType_name[outputTypeName]
 			}
 
 			// store the result metadata
-			err = pipelineStorage.PersistResultMetadata(
-				proxy.RequestID.String(),
+			err = pipelineStorage.PersistPipelineResult(
 				res.PipelineId,
 				resultID,
 				resultURI,
 				progress,
-				outputType,
 				currentTime)
 			if err != nil {
 				handleErr(conn, msg, errors.Wrap(err, "Unable to store result metadata"))

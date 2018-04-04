@@ -55,7 +55,7 @@ func ResultsHandler(pipelineCtor model.PipelineStorageCtor, dataCtor model.DataS
 		}
 
 		// get the result URI
-		res, err := pipeline.FetchResultMetadataByPipelineID(pipelineID)
+		res, err := pipeline.FetchPipelineResult(pipelineID)
 		if err != nil {
 			handleError(w, err)
 			return
