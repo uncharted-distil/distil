@@ -13,7 +13,7 @@ import (
 )
 
 const (
-	pullTimeout = 5 * time.Second
+	pullTimeout = 10 * time.Second
 	pullMax     = 10
 )
 
@@ -64,17 +64,6 @@ func (c *Client) Close() {
 
 */
 
-// StartSearch starts a pipeline search session.
-func (c *Client) StartSearch(ctx context.Context) (string, error) {
-	searchPipelinesRequest := &SearchPipelinesRequest{}
-	searchPipelineResponse, err := c.client.SearchPipelines(ctx, searchPipelinesRequest)
-	if err != nil {
-		return "", err
-	}
-
-	return searchPipelineResponse.SearchId, nil
-}
-
 type pullFunc func() error
 
 func pullFromAPI(maxPulls int, timeout time.Duration, pull pullFunc) error {
@@ -91,7 +80,7 @@ func pullFromAPI(maxPulls int, timeout time.Duration, pull pullFunc) error {
 		}()
 
 		// set timeout timer
-		timer := time.NewTimer(5 * time.Second)
+		timer := time.NewTimer(timeout)
 
 		select {
 		case err := <-recvChan:
@@ -113,6 +102,17 @@ func pullFromAPI(maxPulls int, timeout time.Duration, pull pullFunc) error {
 
 	}
 
+}
+
+// StartSearch starts a pipeline search session.
+func (c *Client) StartSearch(ctx context.Context) (string, error) {
+	searchPipelinesRequest := &SearchPipelinesRequest{}
+	searchPipelineResponse, err := c.client.SearchPipelines(ctx, searchPipelinesRequest)
+	if err != nil {
+		return "", err
+	}
+
+	return searchPipelineResponse.SearchId, nil
 }
 
 // GenerateCandidatePipelines generates candidate pipel\ines.
@@ -259,6 +259,13 @@ func (c *Client) GeneratePredictions(ctx context.Context, pipelineID string) ([]
 
 	producePipelineRequest := &ProducePipelineRequest{
 		PipelineId: pipelineID,
+		Inputs: []*Value{
+			&Value{
+				Value: &Value_DatasetUri{
+					DatasetUri: "testURI",
+				},
+			},
+		},
 	}
 
 	producePipelineResponse, err := c.client.ProducePipeline(ctx, producePipelineRequest)
