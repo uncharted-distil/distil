@@ -88,9 +88,9 @@ func getFilteredDatasetHash(dataset string, target string, filterParams *model.F
 // PersistFilteredData creates a hash code from the combination of the dataset name, the target name, and its filter
 // state, and saves the filtered data and target data to disk if they haven't been previously.  The path to the data
 // is returned.
-func PersistFilteredData(fetchData FilteredDataProvider, fetchVariables VariablesProvider, datasetDir string, dataset string, index string, target string, filters *model.FilterParams) (string, error) {
+func PersistFilteredData(datasetDir string, target string, dataset *model.QueriedDataset) (string, error) {
 	// parse the dataset and its filter state and generate a hashcode from both
-	hash, err := getFilteredDatasetHash(dataset, target, filters)
+	hash, err := getFilteredDatasetHash(dataset.Metadata.Name, target, dataset.Filters)
 	if err != nil {
 		return "", err
 	}
@@ -105,18 +105,14 @@ func PersistFilteredData(fetchData FilteredDataProvider, fetchVariables Variable
 
 	// get the filtered dataset from elastic search
 	start := time.Now()
-	filteredData, err := fetchData(dataset, index, filters)
-	if err != nil {
-		return "", err
-	}
-	if len(filteredData.Values) <= 0 {
+	if len(dataset.Data.Values) <= 0 {
 		log.Infof("No data available for %s after filter application", dataset)
 		return "", nil
 	}
 
 	// find the index of the target variable
 	targetIdx := -1
-	for idx, column := range filteredData.Columns {
+	for idx, column := range dataset.Data.Columns {
 		if column == target {
 			targetIdx = idx
 			break
@@ -132,18 +128,12 @@ func PersistFilteredData(fetchData FilteredDataProvider, fetchVariables Variable
 	}
 
 	// write the filtered data (minus the target field) to csv file
-	err = writeData(path, datasetDir, filteredData, targetIdx)
+	err = writeData(path, datasetDir, dataset.Data, targetIdx)
 	if err != nil {
 		return "", err
 	}
 
-	// write the data schema
-	variables, err := fetchVariables(dataset, index)
-	if err != nil {
-		return "", err
-	}
-
-	err = writeDataSchema(path, dataset, filteredData, targetIdx, variables)
+	err = writeDataSchema(path, dataset.Metadata.Name, dataset.Data, targetIdx, dataset.Metadata.Variables)
 	if err != nil {
 		return "", err
 	}

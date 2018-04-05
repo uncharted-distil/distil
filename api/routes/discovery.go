@@ -47,19 +47,17 @@ func ProblemDiscoveryHandler(ctorData model.DataStorageCtor, ctorMeta model.Meta
 			handleError(w, err)
 			return
 		}
-
-		fetchFilteredData := func(dataset string, index string, filterParams *model.FilterParams) (*model.FilteredData, error) {
-			// fetch the whole data
-			return dataStorage.FetchData(dataset, index, filterParams, false)
-		}
-		fetchVariables := func(dataset string, index string) ([]*model.Variable, error) {
-			return metadataStorage.FetchVariables(dataset, index, true)
-		}
 		fetchVariable := func(dataset string, index string, name string) (*model.Variable, error) {
 			return metadataStorage.FetchVariable(dataset, index, name)
 		}
 
-		path, err := pipeline.PersistFilteredData(fetchFilteredData, fetchVariables, datasetDir, dataset, esIndex, target, filterParams)
+		ds, err := model.FetchDataset(dataset, esIndex, true, filterParams, metadataStorage, dataStorage)
+		if err != nil {
+			handleError(w, err)
+			return
+		}
+
+		path, err := pipeline.PersistFilteredData(datasetDir, target, ds)
 		if err != nil {
 			handleError(w, err)
 			return

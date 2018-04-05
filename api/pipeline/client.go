@@ -260,7 +260,7 @@ func (c *Client) GeneratePredictions(ctx context.Context, pipelineID string) ([]
 	producePipelineRequest := &ProducePipelineRequest{
 		PipelineId: pipelineID,
 		Inputs: []*Value{
-			&Value{
+			{
 				Value: &Value_DatasetUri{
 					DatasetUri: "testURI",
 				},

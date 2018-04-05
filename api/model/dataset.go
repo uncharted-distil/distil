@@ -1,5 +1,9 @@
 package model
 
+import (
+	"github.com/pkg/errors"
+)
+
 const (
 	// DatasetSuffix is the suffix for the dataset entry when stored in
 	// elasticsearch.
@@ -16,4 +20,37 @@ type Dataset struct {
 	Variables   []*Variable `json:"variables"`
 	NumRows     int64       `json:"numRows"`
 	NumBytes    int64       `json:"numBytes"`
+}
+
+// QueriedDataset wraps dataset querying components into a single entity.
+type QueriedDataset struct {
+	Metadata *Dataset
+	Data     *FilteredData
+	Filters  *FilterParams
+}
+
+// FetchDataset builds a QueriedDataset from the needed parameters.
+func FetchDataset(dataset string, index string, includeIndex bool, filterParams *FilterParams, storageMeta MetadataStorage, storageData DataStorage) (*QueriedDataset, error) {
+	datasets, err := storageMeta.FetchDatasets(index, includeIndex)
+	if err != nil {
+		return nil, errors.Wrap(err, "unable to fetch variables")
+	}
+
+	var metadata *Dataset
+	for _, ds := range datasets {
+		if ds.Name == dataset {
+			metadata = ds
+		}
+	}
+
+	data, err := storageData.FetchData(dataset, index, filterParams, false)
+	if err != nil {
+		return nil, errors.Wrap(err, "unable to fetch data")
+	}
+
+	return &QueriedDataset{
+		Metadata: metadata,
+		Data:     data,
+		Filters:  filterParams,
+	}, nil
 }
