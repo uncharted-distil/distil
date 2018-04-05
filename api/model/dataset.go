@@ -36,6 +36,7 @@ func FetchDataset(dataset string, index string, includeIndex bool, filterParams 
 		return nil, errors.Wrap(err, "unable to fetch variables")
 	}
 
+	// TODO: Add FetchDataset function to metadata storage.
 	var metadata *Dataset
 	for _, ds := range datasets {
 		if ds.Name == dataset {

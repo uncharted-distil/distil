@@ -108,9 +108,9 @@ func getTaskSubType(targetType string) string {
 
 // PersistProblem stores the problem information in the required D3M
 // problem format.
-func PersistProblem(fetchVariable VariableProvider, datasetDir string, dataset string, index string, target string, filters *model.FilterParams) (string, error) {
+func PersistProblem(datasetDir string, dataset string, targetVar *model.Variable, filters *model.FilterParams) (string, error) {
 	// parse the dataset and its filter state and generate a hashcode from both
-	hash, err := getFilteredDatasetHash(dataset, target, filters)
+	hash, err := getFilteredDatasetHash(dataset, targetVar.Name, filters)
 	if err != nil {
 		return "", errors.Wrap(err, "unable to build dataset filter hash")
 	}
@@ -124,11 +124,6 @@ func PersistProblem(fetchVariable VariableProvider, datasetDir string, dataset s
 		return pPath, nil
 	}
 
-	// pull the target variable to determine the problem metric
-	targetVar, err := fetchVariable(dataset, index, target)
-	if err != nil {
-		return "", errors.Wrap(err, "unable to pull target variable")
-	}
 	metric := getMetric(targetVar.Type)
 
 	targetIdx := -1
@@ -137,7 +132,7 @@ func PersistProblem(fetchVariable VariableProvider, datasetDir string, dataset s
 		TargetIndex: 0,
 		ResID:       "0",
 		ColIndex:    targetIdx,
-		ColName:     target,
+		ColName:     targetVar.Name,
 	}
 
 	pMetric := &ProblemPersistPerformanceMetric{
