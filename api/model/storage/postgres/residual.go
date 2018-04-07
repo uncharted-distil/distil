@@ -18,6 +18,9 @@ func (s *Storage) FetchResidualsExtremaByURI(dataset string, resultURI string, i
 	if err != nil {
 		return nil, err
 	}
+	if model.IsCategorical(targetVariable.Type) {
+		return nil, errors.Errorf("variable '%s' is categorical and does not have an extrema", targetName)
+	}
 	resultVariable := &model.Variable{
 		Name: "value",
 		Type: model.TextType,

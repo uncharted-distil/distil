@@ -277,6 +277,9 @@ func (s *Storage) FetchExtremaByURI(dataset string, resultURI string, index stri
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to fetch variable description for summary")
 	}
+	if model.IsCategorical(variable.Type) {
+		return nil, errors.Errorf("variable '%s' is categorical and does not have an extrema", varName)
+	}
 	return s.fetchExtremaByURI(dataset, resultURI, variable)
 }
 
