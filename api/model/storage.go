@@ -52,7 +52,6 @@ type PipelineStorage interface {
 	FetchPipelineScore(pipelineID string) ([]*PipelineScore, error)
 }
 
-
 // MetadataStorageCtor represents a client constructor to instantiate a
 // metadata storage client.
 type MetadataStorageCtor func() (MetadataStorage, error)

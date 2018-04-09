@@ -3,8 +3,8 @@ package pipeline
 import (
 	"context"
 	"fmt"
-	"strings"
 	"path/filepath"
+	"strings"
 
 	"github.com/unchartedsoftware/distil/api/model"
 )
@@ -16,34 +16,34 @@ const (
 
 // CreateMessage represents a create model message.
 type CreateMessage struct {
-	Dataset      string          `json:"dataset"`
-	Index        string          `json:"index"`
-	TargetFeature string    `json:"target"`
-	Task         string          `json:"task"`
-	MaxPipelines int32           `json:"maxPipelines"`
-	Filters      *model.FilterParams    `json:"filters"`
-	Metrics      []string        `json:"metric"`
+	Dataset       string              `json:"dataset"`
+	Index         string              `json:"index"`
+	TargetFeature string              `json:"target"`
+	Task          string              `json:"task"`
+	MaxPipelines  int32               `json:"maxPipelines"`
+	Filters       *model.FilterParams `json:"filters"`
+	Metrics       []string            `json:"metric"`
 }
 
 // PipelineStatus represents a pipeline status.
 type PipelineStatus struct {
-	Progress Progress
-	RequestID string
+	Progress   Progress
+	RequestID  string
 	PipelineID string
-	Error error
+	Error      error
 }
 
 func (m *CreateMessage) createSearchPipelinesRequest() (*SearchPipelinesRequest, error) {
 	return &SearchPipelinesRequest{
 		Problem: &ProblemDescription{
 			Problem: &Problem{
-				TaskType: convertTaskTypeFromTA3ToTA2(m.Task),
+				TaskType:           convertTaskTypeFromTA3ToTA2(m.Task),
 				PerformanceMetrics: convertMetricsFromTA3ToTA2(m.Metrics),
 			},
 			Inputs: []*ProblemInput{
 				&ProblemInput{
 					DatasetId: convertDatasetTA3ToTA2(m.Dataset),
-					Targets: convertTargetFeaturseTA3ToTA2(m.TargetFeature),
+					Targets:   convertTargetFeaturseTA3ToTA2(m.TargetFeature),
 				},
 			},
 		},
@@ -105,15 +105,13 @@ func (m *CreateMessage) PersistAndDispatch(client *Client, pipelineStorage model
 	}
 
 	// store target feature
-	for _, f := range createMsg.TargetFeatures {
-		err = pipelineStorage.PersistRequestFeature(requestID, m.TargetFeature, model.FeatureTypeTarget)
-		if err != nil {
-			return nil, err
-		}
+	err = pipelineStorage.PersistRequestFeature(requestID, m.TargetFeature, model.FeatureTypeTarget)
+	if err != nil {
+		return nil, err
 	}
 
 	// store request filters
-	err = pipelineStorage.PersistRequestFilters(requestID, filters)
+	err = pipelineStorage.PersistRequestFilters(requestID, m.Filters)
 	if err != nil {
 		return nil, err
 	}
@@ -124,7 +122,7 @@ func (m *CreateMessage) PersistAndDispatch(client *Client, pipelineStorage model
 		return nil, err
 	}
 
-	// TODO: finish this
+	return statusChannels, nil
 }
 
 func convertMetricsFromTA3ToTA2(metrics []string) []*ProblemPerformanceMetric {
@@ -144,7 +142,7 @@ func convertTaskTypeFromTA3ToTA2(taskType string) TaskType {
 func convertTargetFeaturseTA3ToTA2(target string) []*ProblemTarget {
 	return []*ProblemTarget{
 		&ProblemTarget{
-			ColumnName: target,
+			ColumnName:  target,
 			ResourceId:  defaultResourceID,
 			ColumnIndex: 0, // TODO: fix this
 			TargetIndex: 0, // TODO: what is this?

@@ -6,7 +6,7 @@ import (
 )
 
 const (
-	requestTableName          = "request"
+	requestTableName        = "request"
 	pipelineTableName       = "pipeline"
 	pipelineResultTableName = "pipeline_result"
 	pipelineScoreTableName  = "pipeline_score"

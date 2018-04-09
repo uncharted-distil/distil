@@ -6,7 +6,7 @@ import (
 
 // Request represents the request metadata.
 type Request struct {
-	RequestID         string        `json:"requestId"`
+	RequestID       string        `json:"requestId"`
 	Dataset         string        `json:"dataset"`
 	Progress        string        `json:"progress"`
 	CreatedTime     time.Time     `json:"timestamp"`
@@ -17,7 +17,7 @@ type Request struct {
 
 // Feature represents a request feature metadata.
 type Feature struct {
-	RequestID     string `json:"requestId"`
+	RequestID   string `json:"requestId"`
 	FeatureName string `json:"featureName"`
 	FeatureType string `json:"featureType"`
 }
@@ -25,7 +25,7 @@ type Feature struct {
 // Pipeline is a container for a TA2 pipeline.
 type Pipeline struct {
 	PipelineID  string            `json:"pipelineId"`
-	RequestID     string            `json:"requestId"`
+	RequestID   string            `json:"requestId"`
 	Progress    string            `json:"progress"`
 	CreatedTime time.Time         `json:"timestamp"`
 	Results     []*PipelineResult `json:"results"`

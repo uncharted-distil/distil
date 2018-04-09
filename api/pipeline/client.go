@@ -217,15 +217,14 @@ func (c *Client) GeneratePredictions(ctx context.Context, request *ProducePipeli
 		return nil, err
 	}
 
-	pipelineResultResponses := make(chan *GetProducePipelineResultsResponse)
-
+	var pipelineResultResponses []*GetProducePipelineResultsResponse
 
 	err = pullFromAPI(pullMax, pullTimeout, func() error {
 		pipelineResultResponse, err := producePipelineResultsResponse.Recv()
 		if err != nil {
 			return err
 		}
-		pipelineResultResponses <- pipelineResultResponse
+		pipelineResultResponses = append(pipelineResultResponses, pipelineResultResponse)
 		return nil
 	})
 	if err != nil {
@@ -256,19 +255,19 @@ func (c *Client) dispatchPipeline(statusChan chan PipelineStatus, searchID strin
 
 	// notify that the pipeline is pending
 	statusChan <- PipelineStatus{
-		RequestID: searchID,
+		RequestID:  searchID,
 		PipelineID: pipelineID,
-		Progress: Progress_PENDING,
+		Progress:   Progress_PENDING,
 	}
 
 	// score pipeline
 	_, err := c.GenerateScoresForCandidatePipeline(context.Background(), pipelineID)
 	if err != nil {
 		statusChan <- PipelineStatus{
-			RequestID: searchID,
+			RequestID:  searchID,
 			PipelineID: pipelineID,
-			Progress: Progress_ERRORED,
-			Error: err,
+			Progress:   Progress_ERRORED,
+			Error:      err,
 		}
 		return
 	}
@@ -277,19 +276,19 @@ func (c *Client) dispatchPipeline(statusChan chan PipelineStatus, searchID strin
 	_, err = c.GeneratePipelineFit(context.Background(), pipelineID)
 	if err != nil {
 		statusChan <- PipelineStatus{
-			RequestID: searchID,
+			RequestID:  searchID,
 			PipelineID: pipelineID,
-			Progress: Progress_ERRORED,
-			Error: err,
+			Progress:   Progress_ERRORED,
+			Error:      err,
 		}
 		return
 	}
 
 	// notify that the pipeline is running
 	statusChan <- PipelineStatus{
-		RequestID: searchID,
+		RequestID:  searchID,
 		PipelineID: pipelineID,
-		Progress: Progress_RUNNING,
+		Progress:   Progress_RUNNING,
 	}
 
 	// generate predictions
@@ -308,18 +307,18 @@ func (c *Client) dispatchPipeline(statusChan chan PipelineStatus, searchID strin
 	_, err = c.GeneratePredictions(context.Background(), producePipelineRequest)
 	if err != nil {
 		statusChan <- PipelineStatus{
-			RequestID: searchID,
+			RequestID:  searchID,
 			PipelineID: pipelineID,
-			Progress: Progress_ERRORED,
-			Error: err,
+			Progress:   Progress_ERRORED,
+			Error:      err,
 		}
 		return
 	}
 
 	statusChan <- PipelineStatus{
-		RequestID: searchID,
+		RequestID:  searchID,
 		PipelineID: pipelineID,
-		Progress: Progress_COMPLETED,
+		Progress:   Progress_COMPLETED,
 	}
 }
 
@@ -333,7 +332,7 @@ func (c *Client) DispatchPipelines(searchID string, datasetURI string) ([]chan P
 
 	// create status channels
 	var statusChannels []chan PipelineStatus
-	for _, pipeline := range pipelines {
+	for range pipelines {
 		statusChannels = append(statusChannels, make(chan PipelineStatus))
 	}
 

@@ -119,6 +119,10 @@ func handleCreatePipelines(conn *Connection, client *pipeline.Client, metadataCt
 		return
 	}
 
+	for _, statusChannel := range statusChannels {
+		// TODO: listen and respond to client
+	}
+
 	// handle the request
 	//handleCreatePipelinesSuccess(conn, msg, proxy, dataStorage, pipelineStorage, clientCreateMsg.Dataset)
 
