@@ -190,7 +190,7 @@ func (c *Client) GeneratePipelineFit(ctx context.Context, pipelineID string) ([]
 }
 
 // GeneratePredictions generates predictions.
-func (c *Client) GeneratePredictions(ctx context.Context, request *ProducePipelineRequest) (chan *GetProducePipelineResultsResponse, error) {
+func (c *Client) GeneratePredictions(ctx context.Context, request *ProducePipelineRequest) ([]*GetProducePipelineResultsResponse, error) {
 	/*
 		Note over TA3,TA2: Generate predictions using fitted model and held back test data
 		    TA3->>TA2: ProducePipeline(ProducePipelineRequest)

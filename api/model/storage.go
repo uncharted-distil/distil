@@ -34,18 +34,18 @@ type PipelineStorageCtor func() (PipelineStorage, error)
 // PipelineStorage defines the functions available to query the underlying
 // pipeline storage.
 type PipelineStorage interface {
-	PersistModel(modelID string, dataset string, progress string, createdTime time.Time) error
-	PersistModelFeature(modelID string, featureName string, featureType string) error
-	PersistModelFilters(modelID string, filters *FilterParams) error
-	PersistPipeline(modelID string, pipelineID string, progress string, createdTime time.Time) error
+	PersistRequest(requestID string, dataset string, progress string, createdTime time.Time) error
+	PersistRequestFeature(requestID string, featureName string, featureType string) error
+	PersistRequestFilters(requestID string, filters *FilterParams) error
+	PersistPipeline(requestID string, pipelineID string, progress string, createdTime time.Time) error
 	PersistPipelineResult(pipelineID string, resultUUID string, resultURI string, progress string, createdTime time.Time) error
 	PersistPipelineScore(pipelineID string, metric string, score float64) error
-	UpdateModel(modelID string, progress string, updatedTime time.Time) error
-	FetchModel(modelID string) (*Model, error)
-	FetchModelFeatures(modelID string) ([]*Feature, error)
-	FetchModelFilters(modelID string, features []*Feature) (*FilterParams, error)
+	UpdateRequest(requestID string, progress string, updatedTime time.Time) error
+	FetchRequest(requestID string) (*Request, error)
+	FetchRequestFeatures(requestID string) ([]*Feature, error)
+	FetchRequestFilters(requestID string, features []*Feature) (*FilterParams, error)
 	FetchPipeline(pipelineID string) (*Pipeline, error)
-	FetchPipelineResultByModelID(modelID string) ([]*PipelineResult, error)
+	FetchPipelineResultByRequestID(requestID string) ([]*PipelineResult, error)
 	FetchPipelineResultByUUID(resultUUID string) (*PipelineResult, error)
 	FetchPipelineResult(pipelineID string) (*PipelineResult, error)
 	FetchPipelineResultByDatasetTarget(dataset string, target string, pipelineID string) ([]*PipelineResult, error)
