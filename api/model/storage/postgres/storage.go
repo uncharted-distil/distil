@@ -6,12 +6,12 @@ import (
 )
 
 const (
-	modelTableName          = "model"
+	requestTableName          = "request"
 	pipelineTableName       = "pipeline"
 	pipelineResultTableName = "pipeline_result"
 	pipelineScoreTableName  = "pipeline_score"
-	featureTableName        = "model_feature"
-	filterTableName         = "model_filter"
+	featureTableName        = "request_feature"
+	filterTableName         = "request_filter"
 	d3mIndexFieldName       = "d3mIndex"
 
 	// Database data types

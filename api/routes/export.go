@@ -47,7 +47,7 @@ func ExportHandler(pipelineCtor model.PipelineStorageCtor, metaCtor model.Metada
 			return
 		}
 
-		m, err := pipeline.FetchModel(pip.ModelID)
+		m, err := pipeline.FetchRequest(pip.RequestID)
 		if err != nil {
 			handleError(w, err)
 			return
