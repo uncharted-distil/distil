@@ -25,6 +25,7 @@ const TEXT_TYPES = [
 	'city',
 	'state',
 	'country',
+	'country_code',
 	'email',
 	'phone',
 	'postal_code',
@@ -106,6 +107,9 @@ export function formatValue(colValue: any, colType: string): any {
 		return colValue;
 	}
 	if (_.isInteger(colValue)) {
+		return colValue;
+	}
+	if (colValue === '') {
 		return colValue;
 	}
 	switch (colType) {
