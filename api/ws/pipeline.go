@@ -83,17 +83,24 @@ func handleMessage(conn *Connection, client *pipeline.Client, metadataCtor model
 	}
 }
 
-type pipelineCreateMsg struct {
-	Dataset      string          `json:"dataset"`
-	Index        string          `json:"index"`
-	Feature      string          `json:"feature"`
-	Task         string          `json:"task"`
-	MaxPipelines int32           `json:"maxPipelines"`
-	Filters      json.RawMessage `json:"filters"`
-	Metrics      []string        `json:"metric"`
-}
-
 func handleCreatePipelines(conn *Connection, client *pipeline.Client, metadataCtor model.MetadataStorageCtor, dataCtor model.DataStorageCtor, pipelineCtor model.PipelineStorageCtor, msg *Message) {
+
+
+	// unmarshall the request data
+	createMessage := &pipeline.CreateMessage{}
+	err := json.Unmarshal(msg.Raw, createMessage)
+	if err != nil {
+		handleErr(conn, msg, err)
+		return
+	}
+
+	ta2CreateMessage, err := createMessage.ConvertTA3ToTA2()
+	if err != nil {
+		handleErr(conn, msg, err)
+		return
+	}
+
+
 	/*
 		// unmarshall the request data
 		clientCreateMsg := &pipelineCreateMsg{}

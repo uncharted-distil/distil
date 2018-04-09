@@ -1,20 +1,13 @@
 package pipeline
 
 import (
-	"io"
 	"sync"
-	"time"
 
 	"github.com/pkg/errors"
 	"github.com/unchartedsoftware/distil/api/middleware"
 	"github.com/unchartedsoftware/plog"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
-)
-
-const (
-	pullTimeout = 10 * time.Second
-	pullMax     = 10
 )
 
 // Client provides facilities for managing GPRC pipeline requests. Requests are
@@ -57,57 +50,10 @@ func (c *Client) Close() {
 	c.conn.Close()
 }
 
-/*
-
-[ pipelines ] <-- [ fit   ] <-- [ produce ]
-		      <-- [ score ]
-
-*/
-
-type pullFunc func() error
-
-func pullFromAPI(maxPulls int, timeout time.Duration, pull pullFunc) error {
-
-	recvChan := make(chan error)
-
-	count := 0
-	for {
-
-		// pull
-		go func() {
-			err := pull()
-			recvChan <- err
-		}()
-
-		// set timeout timer
-		timer := time.NewTimer(timeout)
-
-		select {
-		case err := <-recvChan:
-			timer.Stop()
-			if err == io.EOF {
-				return nil
-			} else if err != nil {
-				return err
-			}
-			count++
-			if count > maxPulls {
-				return nil
-			}
-
-		case <-timer.C:
-			// timeout
-			return errors.Errorf("pipeline request has timed out")
-		}
-
-	}
-
-}
-
 // StartSearch starts a pipeline search session.
-func (c *Client) StartSearch(ctx context.Context) (string, error) {
-	searchPipelinesRequest := &SearchPipelinesRequest{}
-	searchPipelineResponse, err := c.client.SearchPipelines(ctx, searchPipelinesRequest)
+func (c *Client) StartSearch(ctx context.Context, request *SearchPipelinesRequest) (string, error) {
+
+	searchPipelineResponse, err := c.client.SearchPipelines(ctx, request)
 	if err != nil {
 		return "", err
 	}
@@ -244,7 +190,7 @@ func (c *Client) GeneratePipelineFit(ctx context.Context, pipelineID string) ([]
 }
 
 // GeneratePredictions generates predictions.
-func (c *Client) GeneratePredictions(ctx context.Context, pipelineID string) ([]*GetProducePipelineResultsResponse, error) {
+func (c *Client) GeneratePredictions(ctx context.Context, request *ProducePipelineRequest) ([]*GetProducePipelineResultsResponse, error) {
 	/*
 		Note over TA3,TA2: Generate predictions using fitted model and held back test data
 		    TA3->>TA2: ProducePipeline(ProducePipelineRequest)
@@ -257,18 +203,7 @@ func (c *Client) GeneratePredictions(ctx context.Context, pipelineID string) ([]
 		    TA2-->>TA3:
 	*/
 
-	producePipelineRequest := &ProducePipelineRequest{
-		PipelineId: pipelineID,
-		Inputs: []*Value{
-			{
-				Value: &Value_DatasetUri{
-					DatasetUri: "testURI",
-				},
-			},
-		},
-	}
-
-	producePipelineResponse, err := c.client.ProducePipeline(ctx, producePipelineRequest)
+	producePipelineResponse, err := c.client.ProducePipeline(ctx, request)
 	if err != nil {
 		return nil, err
 	}
@@ -314,3 +249,9 @@ func (c *Client) EndSearch(ctx context.Context, searchID string) error {
 func (c *Client) ExportPipeline(ctx context.Context, pipelineID string, exportURI string) error {
 	return nil
 }
+
+/*
+[ pipelines ] <-- [ fit   ] <-- [ produce ]
+		      <-- [ score ]
+
+*/
