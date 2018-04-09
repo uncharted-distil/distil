@@ -25,7 +25,7 @@
 import ResultsComparison from '../components/ResultsComparison.vue';
 import ResultsVariableSummaries from '../components/ResultsVariableSummaries.vue';
 import ResultSummaries from '../components/ResultSummaries.vue';
-import { getRequestIdsForDatasetAndTarget, getTrainingVariablesForPipelineId } from '../util/pipelines';
+import { getRequestIdsForDatasetAndTarget, getTrainingVariablesForPipelineId, regression, getTask } from '../util/pipelines';
 import { getters as dataGetters, actions as dataActions } from '../store/data/module';
 import { getters as routeGetters } from '../store/route/module';
 import { actions as pipelineActions, getters as pipelineGetters } from '../store/pipelines/module';
@@ -117,17 +117,23 @@ export default Vue.extend({
 			});
 		},
 		pipelineId() {
-			Promise.all([
-				dataActions.fetchResultExtrema(this.$store, {
-					dataset: this.dataset,
-					variable: this.target,
-					pipelineId: this.pipelineId
-				}),
-				dataActions.fetchPredictedExtremas(this.$store, {
-					dataset: this.dataset,
-					requestIds: this.requestIds
-				})
-			]).then(() => {
+			// if this is a regression task, pull extrema as a first step
+			const isRegression = this.testRegression();
+			let extremaFetches = [];
+			if (isRegression) {
+				extremaFetches = [
+					dataActions.fetchResultExtrema(this.$store, {
+						dataset: this.dataset,
+						variable: this.target,
+						pipelineId: this.pipelineId
+					}),
+					dataActions.fetchPredictedExtremas(this.$store, {
+						dataset: this.dataset,
+						requestIds: this.requestIds
+					})
+				];
+			}
+			Promise.all(extremaFetches).then(() => {
 				dataActions.fetchResultSummaries(this.$store, {
 					dataset: this.dataset,
 					variables: this.variables,
@@ -178,17 +184,22 @@ export default Vue.extend({
 						dataset: this.dataset,
 						target: this.target
 					}).then(() => {
-						Promise.all([
-							dataActions.fetchResultExtrema(this.$store, {
-								dataset: this.dataset,
-								variable: this.target,
-								pipelineId: this.pipelineId
-							}),
-							dataActions.fetchPredictedExtremas(this.$store, {
-								dataset: this.dataset,
-								requestIds: this.requestIds
-							})
-						]).then(() => {
+						const isRegression = this.testRegression();
+						let extremaFetches = [];
+						if (isRegression) {
+							extremaFetches = [
+								dataActions.fetchResultExtrema(this.$store, {
+									dataset: this.dataset,
+									variable: this.target,
+									pipelineId: this.pipelineId
+								}),
+								dataActions.fetchPredictedExtremas(this.$store, {
+									dataset: this.dataset,
+									requestIds: this.requestIds
+								})
+							];
+						}
+						Promise.all(extremaFetches).then(() => {
 							dataActions.fetchResultSummaries(this.$store, {
 								dataset: this.dataset,
 								variables: this.variables,
@@ -201,16 +212,19 @@ export default Vue.extend({
 								extrema: this.predictedExtrema
 							});
 						});
-						dataActions.fetchResidualsExtremas(this.$store, {
-							dataset: this.dataset,
-							requestIds: this.requestIds
-						}).then(() => {
-							dataActions.fetchResidualsSummaries(this.$store, {
+
+						if (isRegression) {
+							dataActions.fetchResidualsExtremas(this.$store, {
 								dataset: this.dataset,
-								requestIds: this.requestIds,
-								extrema: this.residualExtrema
+								requestIds: this.requestIds
+							}).then(() => {
+								dataActions.fetchResidualsSummaries(this.$store, {
+									dataset: this.dataset,
+									requestIds: this.requestIds,
+									extrema: this.residualExtrema
+								});
 							});
-						});
+						}
 						dataActions.fetchResultHighlightValues(this.$store, {
 							dataset: this.dataset,
 							filters: this.filters,
@@ -224,6 +238,12 @@ export default Vue.extend({
 						});
 					});
 				});
+		},
+		// tests whether or not the results are for a regression or a classificiation
+		testRegression(): boolean {
+			const targetVariable = this.variables.find(s => s.name === this.target);
+			const task = getTask(targetVariable.type);
+			return task.schemaName === regression.schemaName;
 		}
 	}
 });
