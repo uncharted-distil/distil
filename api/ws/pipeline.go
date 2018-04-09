@@ -18,7 +18,6 @@ const (
 	endSession        = "END_SESSION"
 	createPipelines   = "CREATE_PIPELINES"
 	streamClose       = "STREAM_CLOSE"
-	datasetDir        = "datasets"
 	categoricalType   = "categorical"
 	numericalType     = "numerical"
 	defaultResourceID = "0"
@@ -85,7 +84,6 @@ func handleMessage(conn *Connection, client *pipeline.Client, metadataCtor model
 
 func handleCreatePipelines(conn *Connection, client *pipeline.Client, metadataCtor model.MetadataStorageCtor, dataCtor model.DataStorageCtor, pipelineCtor model.PipelineStorageCtor, msg *Message) {
 
-
 	// unmarshall the request data
 	createMessage := &pipeline.CreateMessage{}
 	err := json.Unmarshal(msg.Raw, createMessage)
@@ -94,12 +92,35 @@ func handleCreatePipelines(conn *Connection, client *pipeline.Client, metadataCt
 		return
 	}
 
-	ta2CreateMessage, err := createMessage.ConvertTA3ToTA2()
+	// initialize the storage
+	dataStorage, err := dataCtor()
 	if err != nil {
 		handleErr(conn, msg, err)
 		return
 	}
 
+	// initialize metadata storage
+	metaStorage, err := metadataCtor()
+	if err != nil {
+		handleErr(conn, msg, err)
+		return
+	}
+
+	// initialize pipeline storage
+	pipelineStorage, err := pipelineCtor()
+	if err != nil {
+		handleErr(conn, msg, err)
+		return
+	}
+
+	statusChannels, err := createMessage.PersistAndDispatch(client, pipelineStorage, metaStorage, dataStorage)
+	if err != nil {
+		handleErr(conn, msg, err)
+		return
+	}
+
+	// handle the request
+	//handleCreatePipelinesSuccess(conn, msg, proxy, dataStorage, pipelineStorage, clientCreateMsg.Dataset)
 
 	/*
 		// unmarshall the request data

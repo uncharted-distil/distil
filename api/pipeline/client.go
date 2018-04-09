@@ -190,7 +190,7 @@ func (c *Client) GeneratePipelineFit(ctx context.Context, pipelineID string) ([]
 }
 
 // GeneratePredictions generates predictions.
-func (c *Client) GeneratePredictions(ctx context.Context, request *ProducePipelineRequest) ([]*GetProducePipelineResultsResponse, error) {
+func (c *Client) GeneratePredictions(ctx context.Context, request *ProducePipelineRequest) (chan *GetProducePipelineResultsResponse, error) {
 	/*
 		Note over TA3,TA2: Generate predictions using fitted model and held back test data
 		    TA3->>TA2: ProducePipeline(ProducePipelineRequest)
@@ -217,14 +217,15 @@ func (c *Client) GeneratePredictions(ctx context.Context, request *ProducePipeli
 		return nil, err
 	}
 
-	var pipelineResultResponses []*GetProducePipelineResultsResponse
+	pipelineResultResponses := make(chan *GetProducePipelineResultsResponse)
+
 
 	err = pullFromAPI(pullMax, pullTimeout, func() error {
 		pipelineResultResponse, err := producePipelineResultsResponse.Recv()
 		if err != nil {
 			return err
 		}
-		pipelineResultResponses = append(pipelineResultResponses, pipelineResultResponse)
+		pipelineResultResponses <- pipelineResultResponse
 		return nil
 	})
 	if err != nil {
@@ -250,8 +251,108 @@ func (c *Client) ExportPipeline(ctx context.Context, pipelineID string, exportUR
 	return nil
 }
 
-/*
-[ pipelines ] <-- [ fit   ] <-- [ produce ]
-		      <-- [ score ]
+// DispatchPipeline
+func (c *Client) dispatchPipeline(statusChan chan PipelineStatus, searchID string, pipelineID string, datasetURI string) {
 
-*/
+	// notify that the pipeline is pending
+	statusChan <- PipelineStatus{
+		RequestID: searchID,
+		PipelineID: pipelineID,
+		Progress: Progress_PENDING,
+	}
+
+	// score pipeline
+	_, err := c.GenerateScoresForCandidatePipeline(context.Background(), pipelineID)
+	if err != nil {
+		statusChan <- PipelineStatus{
+			RequestID: searchID,
+			PipelineID: pipelineID,
+			Progress: Progress_ERRORED,
+			Error: err,
+		}
+		return
+	}
+
+	// fit pipeline
+	_, err = c.GeneratePipelineFit(context.Background(), pipelineID)
+	if err != nil {
+		statusChan <- PipelineStatus{
+			RequestID: searchID,
+			PipelineID: pipelineID,
+			Progress: Progress_ERRORED,
+			Error: err,
+		}
+		return
+	}
+
+	// notify that the pipeline is running
+	statusChan <- PipelineStatus{
+		RequestID: searchID,
+		PipelineID: pipelineID,
+		Progress: Progress_RUNNING,
+	}
+
+	// generate predictions
+	producePipelineRequest := &ProducePipelineRequest{
+		PipelineId: pipelineID,
+		Inputs: []*Value{
+			{
+				Value: &Value_DatasetUri{
+					DatasetUri: datasetURI,
+				},
+			},
+		},
+	}
+
+	// generate predictions
+	_, err = c.GeneratePredictions(context.Background(), producePipelineRequest)
+	if err != nil {
+		statusChan <- PipelineStatus{
+			RequestID: searchID,
+			PipelineID: pipelineID,
+			Progress: Progress_ERRORED,
+			Error: err,
+		}
+		return
+	}
+
+	statusChan <- PipelineStatus{
+		RequestID: searchID,
+		PipelineID: pipelineID,
+		Progress: Progress_COMPLETED,
+	}
+}
+
+// DispatchPipelines dispatches all pipeline requests.
+func (c *Client) DispatchPipelines(searchID string, datasetURI string) ([]chan PipelineStatus, error) {
+
+	pipelines, err := c.GenerateCandidatePipelines(context.Background(), searchID)
+	if err != nil {
+		return nil, err
+	}
+
+	// create status channels
+	var statusChannels []chan PipelineStatus
+	for _, pipeline := range pipelines {
+		statusChannels = append(statusChannels, make(chan PipelineStatus))
+	}
+
+	wg := &sync.WaitGroup{}
+
+	// dispatch all pipelines
+	go func() {
+		for i, pipeline := range pipelines {
+			statusChan := statusChannels[i]
+			wg.Add(1)
+			go func(pipelineID string) {
+				c.dispatchPipeline(statusChan, searchID, pipelineID, datasetURI)
+				wg.Done()
+			}(pipeline.PipelineId)
+
+		}
+		// end search
+		c.EndSearch(context.Background(), searchID)
+	}()
+
+	return statusChannels, nil
+}
