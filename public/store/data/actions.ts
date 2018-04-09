@@ -180,10 +180,6 @@ export const actions = {
 			console.warn('`pipelineId` argument is missing');
 			return null;
 		}
-		if (!args.extrema || (!args.extrema.min && !args.extrema.max)) {
-			console.warn('`extrema` argument is missing');
-			return null;
-		}
 		const pipeline = getPipelineById(context.rootState.pipelineModule, args.pipelineId);
 		// commit empty place holders, if there is no data
 		const promises = [];
@@ -231,10 +227,6 @@ export const actions = {
 			console.warn('`pipelineId` argument is missing');
 			return null;
 		}
-		if (!args.extrema || (!args.extrema.min && !args.extrema.max)) {
-			console.warn('`extrema` argument is missing');
-			return null;
-		}
 		const pipeline = getPipelineById(context.rootState.pipelineModule, args.pipelineId);
 		if (!pipeline.resultId) {
 			// no results ready to pull
@@ -243,7 +235,7 @@ export const actions = {
 		// only use extrema if this is the feature variable
 		let extremaMin = null;
 		let extremaMax = null;
-		if (args.variable === pipeline.feature) {
+		if (args.variable === pipeline.feature && args.extrema) {
 			extremaMin = args.extrema.min;
 			extremaMax = args.extrema.max;
 		}
@@ -426,12 +418,15 @@ export const actions = {
 			console.warn('`pipelineId` argument is missing');
 			return null;
 		}
-		if (!args.extrema || (!args.extrema.min && !args.extrema.max)) {
-			console.warn('`extrema` argument is missing');
-			return null;
+		// only use extrema if this is the feature variable
+		let extremaMin = null;
+		let extremaMax = null;
+		if (args.extrema) {
+			extremaMin = args.extrema.min;
+			extremaMax = args.extrema.max;
 		}
 		const pipeline = getPipelineById(context.rootState.pipelineModule, args.pipelineId);
-		const endPoint = `/distil/results-summary/${ES_INDEX}/${args.dataset}/${args.extrema.min}/${args.extrema.max}`
+		const endPoint = `/distil/results-summary/${ES_INDEX}/${args.dataset}/${extremaMin}/${extremaMax}`
 		const nameFunc = (p: PipelineInfo) => getPredictedCol(p.feature);
 		const labelFunc = (p: PipelineInfo) => 'Predicted';
 		getSummary(context, endPoint, pipeline, nameFunc, labelFunc, mutations.updatePredictedSummaries);
@@ -447,12 +442,15 @@ export const actions = {
 			console.warn('`requestIds` argument is missing');
 			return null;
 		}
-		if (!args.extrema) {
-			console.warn('`extrema` argument is missing');
-			return null;
+		// only use extrema if this is the feature variable
+		let extremaMin = null;
+		let extremaMax = null;
+		if (args.extrema) {
+			extremaMin = args.extrema.min;
+			extremaMax = args.extrema.max;
 		}
 		const pipelines = getPipelinesByRequestIds(context.rootState.pipelineModule, args.requestIds);
-		const endPoint = `/distil/results-summary/${ES_INDEX}/${args.dataset}/${args.extrema.min}/${args.extrema.max}`
+		const endPoint = `/distil/results-summary/${ES_INDEX}/${args.dataset}/${extremaMin}/${extremaMax}`
 		const nameFunc = (p: PipelineInfo) => getPredictedCol(p.feature);
 		const labelFunc = (p: PipelineInfo) => 'Predicted';
 		getSummaries(context, endPoint, pipelines, nameFunc, labelFunc, mutations.updatePredictedSummaries);
