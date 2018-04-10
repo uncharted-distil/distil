@@ -97,27 +97,43 @@ const BASIC_SUGGESTIONS = [
 ];
 
 export function formatValue(colValue: any, colType: string): any {
+	// if the value is empty, don't format it
+	if (colValue === '') {
+		return colValue;
+	}
+
+	//  if no column type is set, format as an integer or leave
+	// as a string based on the type of the value itself
 	if (!colType || colType === '') {
 		if (_.isNumber(colValue)) {
 			return _.isInteger(colValue) ? colValue : colValue.toFixed(4);
 		}
 		return colValue;
 	}
+
+	// if the column type is text, don't format the value
 	if (isTextType(colType)) {
 		return colValue;
 	}
+
+	// if value is an integer, don't format the value
 	if (_.isInteger(colValue)) {
 		return colValue;
 	}
-	if (colValue === '') {
-		return colValue;
+
+	// if the column type is a number, set the precision to 4 places by default,
+	// 6 for lat/lon
+	if (_.isNumber(colValue)) {
+		switch (colType) {
+			case 'longitude':
+			case 'latitude':
+				return colValue.toFixed(6);
+		}
+		return colValue.toFixed(4);
 	}
-	switch (colType) {
-		case 'longitude':
-		case 'latitude':
-			return colValue.toFixed(6);
-	}
-	return colValue.toFixed(4);
+
+	// just push the value through unchanged
+	return colValue;
 }
 
 export function isNumericType(type: string): boolean {
