@@ -138,14 +138,14 @@ const regressionMetrics: Dictionary<NameInfo> = {
 const metrics = [classificationMetrics, regressionMetrics];
 
 // classification task info
-const classification: Task = {
+export const classification: Task = {
 	displayName: 'Classification',
 	schemaName: 'classification',
 	metrics: classificationMetrics,
 };
 
 // regression task info
-const regression: Task = {
+export const regression: Task = {
 	displayName: 'Regression',
 	schemaName: 'regression',
 	metrics: regressionMetrics,

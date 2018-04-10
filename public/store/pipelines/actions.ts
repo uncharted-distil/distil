@@ -6,6 +6,7 @@ import { DistilState } from '../store';
 import { mutations } from './module';
 import { getWebSocketConnection } from '../../util/ws';
 import { FilterParams } from '../../util/filters';
+import { regression } from '../../util/pipelines';
 
 const ES_INDEX = 'datasets';
 const CREATE_PIPELINES_MSG = 'CREATE_PIPELINES';
@@ -36,17 +37,24 @@ function updateCurrentPipelineResults(context: any, req: PipelineRequest, res: P
 		});
 	}
 
-	Promise.all([
-		context.dispatch('fetchResultExtrema', {
-			dataset: req.dataset,
-			variable: req.feature,
-			pipelineId: res.pipelineId
-		}),
-		context.dispatch('fetchPredictedExtrema', {
-			dataset: req.dataset,
-			pipelineId: res.pipelineId
-		})
-	]).then(() => {
+	// if this is a regression task, pull extrema as a first step
+	const isRegression = req.task.toLowerCase() === regression.schemaName.toLowerCase();
+	let extremaFetches = [];
+	if (isRegression) {
+		extremaFetches = [
+			context.dispatch('fetchResultExtrema', {
+				dataset: req.dataset,
+				variable: req.feature,
+				pipelineId: res.pipelineId
+			}),
+			context.dispatch('fetchPredictedExtrema', {
+				dataset: req.dataset,
+				pipelineId: res.pipelineId
+			})
+		]
+	}
+
+	Promise.all(extremaFetches).then(() => {
 		// if current pipelineId, pull result summaries
 		if (res.pipelineId === currentPipelineId) {
 			context.dispatch('fetchResultSummaries', {
@@ -71,31 +79,37 @@ function updateCurrentPipelineResults(context: any, req: PipelineRequest, res: P
 		});
 	});
 
-	context.dispatch('fetchResidualsExtrema', {
-		dataset: req.dataset,
-		pipelineId: res.pipelineId
-	}).then(() => {
-		context.dispatch('fetchResidualsSummary', {
+	if (isRegression) {
+		context.dispatch('fetchResidualsExtrema', {
 			dataset: req.dataset,
-			pipelineId: res.pipelineId,
-			extrema: context.getters.getResidualExtrema
+			pipelineId: res.pipelineId
+		}).then(() => {
+			context.dispatch('fetchResidualsSummary', {
+				dataset: req.dataset,
+				pipelineId: res.pipelineId,
+				extrema: context.getters.getResidualExtrema
+			});
 		});
-	});
+	}
 }
 
 function updatePipelineResults(context: any, req: PipelineRequest, res: PipelineInfo) {
-
-	Promise.all([
-		context.dispatch('fetchResultExtrema', {
-			dataset: req.dataset,
-			variable: req.feature,
-			pipelineId: res.pipelineId
-		}),
-		context.dispatch('fetchPredictedExtrema', {
-			dataset: req.dataset,
-			pipelineId: res.pipelineId
-		})
-	]).then(() => {
+	const isRegression = req.task.toLowerCase() === regression.schemaName.toLowerCase();
+	let extremaFetches = [];
+	if (isRegression) {
+		extremaFetches = [
+			context.dispatch('fetchResultExtrema', {
+				dataset: req.dataset,
+				variable: req.feature,
+				pipelineId: res.pipelineId
+			}),
+			context.dispatch('fetchPredictedExtrema', {
+				dataset: req.dataset,
+				pipelineId: res.pipelineId
+			})
+		]
+	}
+	Promise.all(extremaFetches).then(() => {
 		context.dispatch('fetchPredictedSummary', {
 			dataset: req.dataset,
 			pipelineId: res.pipelineId,
@@ -103,16 +117,18 @@ function updatePipelineResults(context: any, req: PipelineRequest, res: Pipeline
 		});
 	});
 
-	context.dispatch('fetchResidualsExtrema', {
-		dataset: req.dataset,
-		pipelineId: res.pipelineId
-	}).then(() => {
-		context.dispatch('fetchResidualsSummary', {
+	if (isRegression) {
+		context.dispatch('fetchResidualsExtrema', {
 			dataset: req.dataset,
-			pipelineId: res.pipelineId,
-			extrema: context.getters.getResidualExtrema
+			pipelineId: res.pipelineId
+		}).then(() => {
+			context.dispatch('fetchResidualsSummary', {
+				dataset: req.dataset,
+				pipelineId: res.pipelineId,
+				extrema: context.getters.getResidualExtrema
+			});
 		});
-	});
+	}
 }
 
 export const actions = {
