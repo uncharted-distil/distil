@@ -42,14 +42,14 @@ func TestClient(t *testing.T) {
 	searchID, err := client.StartSearch(context.Background(), searchPipelinesRequest)
 	assert.NoError(t, err)
 
-	pipelines, err := client.GenerateCandidatePipelines(context.Background(), searchID)
+	pipelines, err := client.SearchPipelines(context.Background(), searchID)
 	assert.NoError(t, err)
 
 	for _, pipeline := range pipelines {
 
 		assert.NotEmpty(t, pipeline.PipelineId)
 
-		_, err := client.GenerateScoresForCandidatePipeline(context.Background(), pipeline.PipelineId)
+		_, err := client.GeneratePipelineScores(context.Background(), pipeline.PipelineId)
 		assert.NoError(t, err)
 
 		_, err = client.GeneratePipelineFit(context.Background(), pipeline.PipelineId)

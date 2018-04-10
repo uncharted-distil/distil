@@ -61,15 +61,8 @@ func (c *Client) StartSearch(ctx context.Context, request *SearchPipelinesReques
 	return searchPipelineResponse.SearchId, nil
 }
 
-// GenerateCandidatePipelines generates candidate pipel\ines.
-func (c *Client) GenerateCandidatePipelines(ctx context.Context, searchID string) ([]*GetSearchPipelinesResultsResponse, error) {
-	/*
-		Note over TA3,TA2: Generate candidate pipelines
-		    TA3->>TA2: SearchPipelines(SearchPipelinesRequest)
-		    TA2-->>TA3: SearchPipelinesResponse
-		    TA3->>TA2: GetSearchPipelinesResults(GetSearchPipelinesResultsRequest)
-		    TA2--xTA3: GetSearchPipelineResultsResponse
-	*/
+// SearchPipelines generates candidate pipel\ines.
+func (c *Client) SearchPipelines(ctx context.Context, searchID string) ([]*GetSearchPipelinesResultsResponse, error) {
 
 	searchPiplinesResultsRequest := &GetSearchPipelinesResultsRequest{
 		SearchId: searchID,
@@ -97,17 +90,8 @@ func (c *Client) GenerateCandidatePipelines(ctx context.Context, searchID string
 	return pipelineResultResponses, nil
 }
 
-// GenerateScoresForCandidatePipeline generates scrores for candidate pipelines.
-func (c *Client) GenerateScoresForCandidatePipeline(ctx context.Context, pipelineID string) ([]*GetScorePipelineResultsResponse, error) {
-	/*
-		Note over TA3,TA2: Generate scores for candidate pipeline (assuming not generated during search)
-		    TA3->>TA2: ScorePipeline(ScorePipelineRequest)
-		    TA2-->>TA3: ScorePipelineRequestResponse
-		    TA3->>TA2: GetScorePipelineResults(GetScorePipelinesResultRequest)
-		    TA2--xTA3: GetScorePipelineResultsResponse
-		    TA2--xTA3: GetScorePipelineResultsResponse
-		    TA2--xTA3: GetScorePipelineResultsResponse
-	*/
+// GeneratePipelineScores generates scrores for candidate pipelines.
+func (c *Client) GeneratePipelineScores(ctx context.Context, pipelineID string) ([]*GetScorePipelineResultsResponse, error) {
 
 	scorePipelineRequest := &ScorePipelineRequest{
 		PipelineId: pipelineID,
@@ -146,14 +130,7 @@ func (c *Client) GenerateScoresForCandidatePipeline(ctx context.Context, pipelin
 
 // GeneratePipelineFit generates fit for candidate pipelines.
 func (c *Client) GeneratePipelineFit(ctx context.Context, pipelineID string) ([]*GetFitPipelineResultsResponse, error) {
-	/*
-		Note over TA3,TA2: Final fit of model
-			TA3->>TA2: FitPipeline(ProducePipelineRequest)
-			TA2-->>TA3: FitPipelineResponse
-			TA3->>TA2: GetFitPipelineResults(GetProducePipelineResultsRequest)
-			TA2--xTA3: GetFitPipelineResultsResponse
-			TA2--xTA3: GetFitPipelineResultsResponse
-	*/
+
 	fitPipelineRequest := &FitPipelineRequest{
 		PipelineId: pipelineID,
 	}
@@ -191,17 +168,6 @@ func (c *Client) GeneratePipelineFit(ctx context.Context, pipelineID string) ([]
 
 // GeneratePredictions generates predictions.
 func (c *Client) GeneratePredictions(ctx context.Context, request *ProducePipelineRequest) ([]*GetProducePipelineResultsResponse, error) {
-	/*
-		Note over TA3,TA2: Generate predictions using fitted model and held back test data
-		    TA3->>TA2: ProducePipeline(ProducePipelineRequest)
-		    TA2-->>TA3: ProducePipelineResponse
-		    TA3->>TA2: GetProducePipelineResults(GetProducePipelineResultsRequest)
-		    TA2--xTA3: GetProducePipelineResultsResponse
-		    TA2--xTA3: GetProducePipelineResultsResponse
-		    TA2--xTA3: GetProducePipelineResultsResponse
-		    TA3->>TA2: EndSearchPipelines(EndSearchPipelinesRequest)
-		    TA2-->>TA3:
-	*/
 
 	producePipelineResponse, err := c.client.ProducePipeline(ctx, request)
 	if err != nil {
@@ -248,110 +214,4 @@ func (c *Client) EndSearch(ctx context.Context, searchID string) error {
 // ExportPipeline exports the pipeline.
 func (c *Client) ExportPipeline(ctx context.Context, pipelineID string, exportURI string) error {
 	return nil
-}
-
-// DispatchPipeline
-func (c *Client) dispatchPipeline(statusChan chan PipelineStatus, searchID string, pipelineID string, datasetURI string) {
-
-	// notify that the pipeline is pending
-	statusChan <- PipelineStatus{
-		RequestID:  searchID,
-		PipelineID: pipelineID,
-		Progress:   Progress_PENDING,
-	}
-
-	// score pipeline
-	_, err := c.GenerateScoresForCandidatePipeline(context.Background(), pipelineID)
-	if err != nil {
-		statusChan <- PipelineStatus{
-			RequestID:  searchID,
-			PipelineID: pipelineID,
-			Progress:   Progress_ERRORED,
-			Error:      err,
-		}
-		return
-	}
-
-	// fit pipeline
-	_, err = c.GeneratePipelineFit(context.Background(), pipelineID)
-	if err != nil {
-		statusChan <- PipelineStatus{
-			RequestID:  searchID,
-			PipelineID: pipelineID,
-			Progress:   Progress_ERRORED,
-			Error:      err,
-		}
-		return
-	}
-
-	// notify that the pipeline is running
-	statusChan <- PipelineStatus{
-		RequestID:  searchID,
-		PipelineID: pipelineID,
-		Progress:   Progress_RUNNING,
-	}
-
-	// generate predictions
-	producePipelineRequest := &ProducePipelineRequest{
-		PipelineId: pipelineID,
-		Inputs: []*Value{
-			{
-				Value: &Value_DatasetUri{
-					DatasetUri: datasetURI,
-				},
-			},
-		},
-	}
-
-	// generate predictions
-	_, err = c.GeneratePredictions(context.Background(), producePipelineRequest)
-	if err != nil {
-		statusChan <- PipelineStatus{
-			RequestID:  searchID,
-			PipelineID: pipelineID,
-			Progress:   Progress_ERRORED,
-			Error:      err,
-		}
-		return
-	}
-
-	statusChan <- PipelineStatus{
-		RequestID:  searchID,
-		PipelineID: pipelineID,
-		Progress:   Progress_COMPLETED,
-	}
-}
-
-// DispatchPipelines dispatches all pipeline requests.
-func (c *Client) DispatchPipelines(searchID string, datasetURI string) ([]chan PipelineStatus, error) {
-
-	pipelines, err := c.GenerateCandidatePipelines(context.Background(), searchID)
-	if err != nil {
-		return nil, err
-	}
-
-	// create status channels
-	var statusChannels []chan PipelineStatus
-	for range pipelines {
-		statusChannels = append(statusChannels, make(chan PipelineStatus))
-	}
-
-	wg := &sync.WaitGroup{}
-
-	// dispatch all pipelines
-	go func() {
-		for i, pipeline := range pipelines {
-			statusChan := statusChannels[i]
-			wg.Add(1)
-			go func(pipelineID string) {
-				c.dispatchPipeline(statusChan, searchID, pipelineID, datasetURI)
-				wg.Done()
-			}(pipeline.PipelineId)
-
-		}
-		// end search
-		c.EndSearch(context.Background(), searchID)
-	}()
-
-	return statusChannels, nil
 }
