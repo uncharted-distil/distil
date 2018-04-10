@@ -50,6 +50,7 @@ const TEXT_TYPES = [
 	'city',
 	'state',
 	'country',
+	'country_code',
 	'email',
 	'phone',
 	'postal_code',
@@ -152,6 +153,10 @@ export function formatValue(colValue: any, colType: string): any {
 
 	// If the schema type is text or not float, pass through.
 	if (isTextType(colType) || !isFloatingPointType(colType)) {
+		return colValue;
+	}
+	
+	if (colValue === '') {
 		return colValue;
 	}
 
