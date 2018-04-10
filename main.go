@@ -138,7 +138,7 @@ func main() {
 	// Ingest the data specified by the environment
 	if config.InitialDataset != "" && !config.SkipIngest {
 		log.Infof("Loading initial dataset '%s'", config.InitialDataset)
-		err = task.IngestDataset(metadataStorageCtor, config.ESDatasetsIndex, config.InitialDataset, ingestConfig)
+		err = task.IngestDataset(metadataStorageCtor, config.ESDatasetsIndex, config.InitialDataset, ingestConfig, problem)
 		if err != nil {
 			log.Error(err)
 			os.Exit(1)

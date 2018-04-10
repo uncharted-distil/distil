@@ -25,6 +25,7 @@ import (
 	"github.com/unchartedsoftware/distil-ingest/postgres"
 	"github.com/unchartedsoftware/distil-ingest/rest"
 	"github.com/unchartedsoftware/distil/api/model"
+	"github.com/unchartedsoftware/distil/api/pipeline"
 )
 
 const (
@@ -79,7 +80,7 @@ func (c *IngestTaskConfig) getRawDataPath() string {
 }
 
 // IngestDataset executes the complete ingest process for the specified dataset.
-func IngestDataset(metaCtor model.MetadataStorageCtor, index string, dataset string, config *IngestTaskConfig) error {
+func IngestDataset(metaCtor model.MetadataStorageCtor, index string, dataset string, config *IngestTaskConfig, problem *pipeline.Problem) error {
 	// Make sure the temp data directory exists.
 	tmpPath := path.Dir(config.getTmpAbsolutePath(config.MergedOutputSchemaPathRelative))
 	os.MkdirAll(tmpPath, os.ModePerm)
@@ -110,7 +111,7 @@ func IngestDataset(metaCtor model.MetadataStorageCtor, index string, dataset str
 	//	return errors.Wrap(err, "unable to summarize the dataset")
 	//}
 
-	err = Ingest(storage, index, dataset, config)
+	err = Ingest(storage, index, dataset, config, problem)
 	if err != nil {
 		return errors.Wrap(err, "unable to ingest ranked data")
 	}
@@ -259,12 +260,26 @@ func Summarize(index string, dataset string, config *IngestTaskConfig) error {
 }
 
 // Ingest the metadata to ES and the data to Postgres.
-func Ingest(storage model.MetadataStorage, index string, dataset string, config *IngestTaskConfig) error {
+func Ingest(storage model.MetadataStorage, index string, dataset string, config *IngestTaskConfig, problem *pipeline.Problem) error {
 	meta, err := metadata.LoadMetadataFromClassification(
 		config.getTmpAbsolutePath(config.MergedOutputSchemaPathRelative),
 		config.getTmpAbsolutePath(config.ClassificationOutputPathRelative))
 	if err != nil {
 		return errors.Wrap(err, "unable to load metadata")
+	}
+
+	if problem != nil {
+		typeOverride := ""
+		if problem.Properties.TaskType == "regression" {
+			typeOverride = model.FloatType
+		} else if problem.Properties.TaskType == "classification" {
+			typeOverride = model.CategoricalType
+		}
+		for _, v := range meta.DataResources[0].Variables {
+			if v.DisplayName == problem.Inputs.Data[0].Targets[0].ColName {
+				v.Type = typeOverride
+			}
+		}
 	}
 
 	// Adjust the ID & name of the dataset as needed
