@@ -18,7 +18,7 @@ func IngestHandler(ctor model.MetadataStorageCtor, config *task.IngestTaskConfig
 		index := pat.Param(r, "index")
 		dataset := pat.Param(r, "dataset")
 
-		err := task.IngestDataset(ctor, index, dataset, config)
+		err := task.IngestDataset(ctor, index, dataset, config, nil)
 		if err != nil {
 			handleError(w, err)
 			return
