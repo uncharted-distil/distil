@@ -80,5 +80,6 @@ new Vue({
 		pipelineActions.startPipelineSession(this.$store, {
 			sessionId: this.sessionId
 		});
+		appActions.fetchVersion(this.$store);
 	}
 }).$mount('#app');

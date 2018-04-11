@@ -36,5 +36,16 @@ export const actions = {
 					mutations.setAborted(context);
 				}
 			});
+	},
+
+	fetchVersion(context: AppContext) {
+		return axios.get(`/distil/version`)
+			.then(res => {
+				mutations.setVersionNumber(context, res.Version);
+				mutations.setVersionTimestamp(context, res.Timestamp);
+			})
+			.catch((err: string) => {
+				console.warn(err);
+			});
 	}
 };

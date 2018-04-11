@@ -8,5 +8,13 @@ export const getters = {
 
 	isAborted(state: AppState) {
 		return state.isAborted;
+	},
+
+	getVersionNumber(state: AppState) {
+		return state.VersionNumber;
+	},
+
+	getVersionTimestamp(state: AppState) {
+		return state.versionTimestamp;
 	}
 };
