@@ -6,9 +6,9 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/fatih/structs"
 	"github.com/pkg/errors"
 	"github.com/unchartedsoftware/plog"
-	"github.com/fatih/structs"
 
 	"github.com/unchartedsoftware/distil/api/model"
 	"github.com/unchartedsoftware/distil/api/pipeline"
@@ -123,16 +123,16 @@ func handleCreatePipelines(conn *Connection, client *pipeline.Client, metadataCt
 
 	for _, c := range statusChannels {
 		// TODO: listen and respond to client
-		go func(statusChannel chan pipeline.PipelineStatus) {
+		go func(statusChannel chan pipeline.CreateStatus) {
 			// read status from, channel
-			status <- statusChannel
+			status := <-statusChannel
 			// check for error
 			if status.Error != nil {
 				handleErr(conn, msg, err)
 				return
 			}
 			// send status to client
-			handleSuccess(conn, msg,  structs.Map(status))
+			handleSuccess(conn, msg, structs.Map(status))
 		}(c)
 	}
 }

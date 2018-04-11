@@ -2,11 +2,15 @@ package pipeline
 
 import (
 	"context"
+	"crypto/sha1"
 	"fmt"
+	"path"
 	"path/filepath"
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/pkg/errors"
 
 	"github.com/unchartedsoftware/distil/api/model"
 )
@@ -14,6 +18,10 @@ import (
 const (
 	defaultResourceID = "0"
 	datasetDir        = "datasets"
+	pendingStatus     = "PENDING"
+	runningStatus     = "RUNNING"
+	erroredStatus     = "ERRORED"
+	completedStatus   = "COMPLETED"
 )
 
 // CreateMessage represents a create model message.
@@ -27,13 +35,13 @@ type CreateMessage struct {
 	Metrics       []string            `json:"metric"`
 }
 
-// PipelineStatus represents a pipeline status.
-type PipelineStatus struct {
-	Progress   Progress
+// CreateStatus represents a pipeline status.
+type CreateStatus struct {
+	Progress   string
 	RequestID  string
 	PipelineID string
 	Error      error
-	Timestamp time.Time
+	Timestamp  time.Time
 }
 
 func (m *CreateMessage) createSearchPipelinesRequest() (*SearchPipelinesRequest, error) {
@@ -66,25 +74,25 @@ func (m *CreateMessage) createProducePipelineRequest(datasetURI string, pipeline
 	}
 }
 
-func (m *CreateMessage) dispatchPipeline(statusChan chan PipelineStatus, client *Client, pipelineStorage model.PipelineStorage, searchID string, pipelineID string, datasetURI string) {
+func (m *CreateMessage) dispatchPipeline(statusChan chan CreateStatus, client *Client, pipelineStorage model.PipelineStorage, searchID string, pipelineID string, datasetURI string) {
 
 	// notify that the pipeline is pending
-	statusChan <- PipelineStatus{
+	statusChan <- CreateStatus{
 		RequestID:  searchID,
 		PipelineID: pipelineID,
-		Progress:   Progress_PENDING,
-		Timestamp: time.Now(),
+		Progress:   pendingStatus,
+		Timestamp:  time.Now(),
 	}
 
 	// score pipeline
 	pipelineScoreResponses, err := client.GeneratePipelineScores(context.Background(), pipelineID)
 	if err != nil {
-		statusChan <- PipelineStatus{
+		statusChan <- CreateStatus{
 			RequestID:  searchID,
 			PipelineID: pipelineID,
-			Progress:   Progress_ERRORED,
+			Progress:   erroredStatus,
 			Error:      err,
-			Timestamp: time.Now(),
+			Timestamp:  time.Now(),
 		}
 		return
 	}
@@ -94,12 +102,12 @@ func (m *CreateMessage) dispatchPipeline(statusChan chan PipelineStatus, client 
 		for _, score := range response.Scores {
 			err := pipelineStorage.PersistPipelineScore(pipelineID, score.Metric.Metric.String(), score.Value.GetDouble())
 			if err != nil {
-				statusChan <- PipelineStatus{
+				statusChan <- CreateStatus{
 					RequestID:  searchID,
 					PipelineID: pipelineID,
-					Progress:   Progress_ERRORED,
+					Progress:   erroredStatus,
 					Error:      err,
-					Timestamp: time.Now(),
+					Timestamp:  time.Now(),
 				}
 				return
 			}
@@ -109,22 +117,22 @@ func (m *CreateMessage) dispatchPipeline(statusChan chan PipelineStatus, client 
 	// fit pipeline
 	_, err = client.GeneratePipelineFit(context.Background(), pipelineID)
 	if err != nil {
-		statusChan <- PipelineStatus{
+		statusChan <- CreateStatus{
 			RequestID:  searchID,
 			PipelineID: pipelineID,
-			Progress:   Progress_ERRORED,
+			Progress:   erroredStatus,
 			Error:      err,
-			Timestamp: time.Now(),
+			Timestamp:  time.Now(),
 		}
 		return
 	}
 
 	// notify that the pipeline is running
-	statusChan <- PipelineStatus{
+	statusChan <- CreateStatus{
 		RequestID:  searchID,
 		PipelineID: pipelineID,
-		Progress:   Progress_RUNNING,
-		Timestamp: time.Now(),
+		Progress:   runningStatus,
+		Timestamp:  time.Now(),
 	}
 
 	// generate predictions
@@ -133,20 +141,45 @@ func (m *CreateMessage) dispatchPipeline(statusChan chan PipelineStatus, client 
 	// generate predictions
 	predictionResponses, err := client.GeneratePredictions(context.Background(), producePipelineRequest)
 	if err != nil {
-		statusChan <- PipelineStatus{
+		statusChan <- CreateStatus{
 			RequestID:  searchID,
 			PipelineID: pipelineID,
-			Progress:   Progress_ERRORED,
+			Progress:   erroredStatus,
 			Error:      err,
-			Timestamp: time.Now(),
+			Timestamp:  time.Now(),
 		}
 		return
 	}
 
 	for _, response := range predictionResponses {
-		/*
+
+		output, ok := response.ExposedOutputs["outputs.0"]
+		if !ok {
+			statusChan <- CreateStatus{
+				RequestID:  searchID,
+				PipelineID: pipelineID,
+				Progress:   erroredStatus,
+				Error:      errors.Errorf("output is missing from response"),
+				Timestamp:  time.Now(),
+			}
+			return
+		}
+
+		datasetURI, ok := output.Value.(*Value_DatasetUri)
+		if !ok {
+			statusChan <- CreateStatus{
+				RequestID:  searchID,
+				PipelineID: pipelineID,
+				Progress:   erroredStatus,
+				Error:      errors.Errorf("output is not of correct format"),
+				Timestamp:  time.Now(),
+			}
+			return
+		}
+
 		// remove the protocol portion if it exists. The returned value is either a
 		// csv file or a directory.
+		resultURI := datasetURI.DatasetUri
 		resultURI = strings.Replace(resultURI, "file://", "", 1)
 		if !strings.HasSuffix(resultURI, ".csv") {
 			resultURI = path.Join(resultURI, D3MLearningData)
@@ -156,33 +189,32 @@ func (m *CreateMessage) dispatchPipeline(statusChan chan PipelineStatus, client 
 		hasher := sha1.New()
 		hasher.Write([]byte(resultURI))
 		bs := hasher.Sum(nil)
-		resultID = fmt.Sprintf("%x", bs)
+		resultID := fmt.Sprintf("%x", bs)
 
 		// persist predictions
-		err := pipelineStorage.PersistPipelineResult(pipelineID, resultID, resultURI, Progress_COMPLETED, time.Now())
+		err := pipelineStorage.PersistPipelineResult(pipelineID, resultID, resultURI, completedStatus, time.Now())
 		if err != nil {
-			statusChan <- PipelineStatus{
+			statusChan <- CreateStatus{
 				RequestID:  searchID,
 				PipelineID: pipelineID,
-				Progress:   Progress_ERRORED,
+				Progress:   erroredStatus,
 				Error:      err,
-				Timestamp: time.Now(),
+				Timestamp:  time.Now(),
 			}
 			return
 		}
-		*/
 	}
 
-	statusChan <- PipelineStatus{
+	statusChan <- CreateStatus{
 		RequestID:  searchID,
 		PipelineID: pipelineID,
-		Progress:   Progress_COMPLETED,
-		Timestamp: time.Now(),
+		Progress:   completedStatus,
+		Timestamp:  time.Now(),
 	}
 }
 
 // DispatchPipelines dispatches all pipeline requests.
-func (m *CreateMessage) DispatchPipelines(client *Client, pipelineStorage model.PipelineStorage, searchID string, datasetURI string) ([]chan PipelineStatus, error) {
+func (m *CreateMessage) DispatchPipelines(client *Client, pipelineStorage model.PipelineStorage, searchID string, datasetURI string) ([]chan CreateStatus, error) {
 
 	pipelines, err := client.SearchPipelines(context.Background(), searchID)
 	if err != nil {
@@ -190,9 +222,9 @@ func (m *CreateMessage) DispatchPipelines(client *Client, pipelineStorage model.
 	}
 
 	// create status channels
-	var statusChannels []chan PipelineStatus
+	var statusChannels []chan CreateStatus
 	for range pipelines {
-		statusChannels = append(statusChannels, make(chan PipelineStatus))
+		statusChannels = append(statusChannels, make(chan CreateStatus))
 	}
 
 	wg := &sync.WaitGroup{}
@@ -216,7 +248,7 @@ func (m *CreateMessage) DispatchPipelines(client *Client, pipelineStorage model.
 }
 
 // PersistAndDispatch persists the pipeline request and dispatches it.
-func (m *CreateMessage) PersistAndDispatch(client *Client, pipelineStorage model.PipelineStorage, metaStorage model.MetadataStorage, dataStorage model.DataStorage) ([]chan PipelineStatus, error) {
+func (m *CreateMessage) PersistAndDispatch(client *Client, pipelineStorage model.PipelineStorage, metaStorage model.MetadataStorage, dataStorage model.DataStorage) ([]chan CreateStatus, error) {
 
 	// create search pipelines request
 	searchRequest, err := m.createSearchPipelinesRequest()
