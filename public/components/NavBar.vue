@@ -34,10 +34,6 @@
 				</b-nav-item>
 			</b-navbar-nav>
 			<b-navbar-nav class="ml-auto">
-				<b-nav-item>
-					<b-nav-text>Version:</b-nav-text>
-					<b-nav-text>Actual</b-nav-text>
-				</b-nav-item>
 				<b-nav-item href="/help">
 					<b-nav-text>
 					Help

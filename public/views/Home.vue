@@ -24,6 +24,11 @@
 				</div>
 			</div>
 		</div>
+		<div class="home-center">
+			<b-home-text-item>
+				<b-home-text>{{version}}</b-home-text>
+			</b-home-text-item>
+		</div>
 	</div>
 </template>
 
@@ -33,6 +38,7 @@ import RecentPipelines from '../components/RecentPipelines';
 import RunningPipelines from '../components/RunningPipelines';
 import SearchBar from '../components/SearchBar';
 import { actions, getters } from '../store/pipelines/module';
+import { getters as appGetters } from '../store/app/module';
 import Vue from 'vue';
 
 export default Vue.extend({
@@ -48,6 +54,9 @@ export default Vue.extend({
 	computed: {
 		sessionId(): string {
 			return getters.getPipelineSessionID(this.$store);
+		},
+		version(): string {
+			return `Version: ${appGetters.getVersionNumber(this.$store)} at ${appGetters.getVersionTimestamp(this.$store)}`;
 		}
 	},
 
@@ -81,6 +90,15 @@ export default Vue.extend({
 }
 .home-items .card {
 	margin-bottom: 1rem;
+}
+.home-text-item .home-link {
+	padding: 2px;
+}
+.home-text-item .home-text  {
+	letter-spacing: 0.01rem;
+}
+.home-center {
+	margin: 0 auto;
 }
 
 </style>

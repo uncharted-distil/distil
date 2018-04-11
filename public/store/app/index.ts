@@ -13,6 +13,6 @@ export interface AppState {
 export const state: AppState = {
 	session: {} as UserSession,
 	isAborted: false,
-	versionNumber: "unknown",
-	versionTimestamp: "unknown"
+	versionNumber: 'unknown',
+	versionTimestamp: 'unknown'
 };
