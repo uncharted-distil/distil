@@ -97,7 +97,7 @@ func (s *Storage) loadRequest(rows *pgx.Rows) (*model.Request, error) {
 	}
 
 	return &model.Request{
-		RequestID:         requestID,
+		RequestID:       requestID,
 		Dataset:         dataset,
 		Progress:        progress,
 		CreatedTime:     createdTime,
@@ -131,7 +131,7 @@ func (s *Storage) FetchRequestFeatures(requestID string) ([]*model.Feature, erro
 		}
 
 		results = append(results, &model.Feature{
-			RequestID:     requestID,
+			RequestID:   requestID,
 			FeatureName: featureName,
 			FeatureType: featureType,
 		})

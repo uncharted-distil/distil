@@ -64,7 +64,7 @@ func (s *Storage) parsePipeline(rows *pgx.Rows) (*model.Pipeline, error) {
 	}
 
 	return &model.Pipeline{
-		RequestID:     requestID,
+		RequestID:   requestID,
 		PipelineID:  pipelineID,
 		Progress:    progress,
 		CreatedTime: createdTime,

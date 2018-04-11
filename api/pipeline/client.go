@@ -1,20 +1,13 @@
 package pipeline
 
 import (
-	"io"
 	"sync"
-	"time"
 
 	"github.com/pkg/errors"
 	"github.com/unchartedsoftware/distil/api/middleware"
 	"github.com/unchartedsoftware/plog"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
-)
-
-const (
-	pullTimeout = 10 * time.Second
-	pullMax     = 10
 )
 
 // Client provides facilities for managing GPRC pipeline requests. Requests are
@@ -57,57 +50,10 @@ func (c *Client) Close() {
 	c.conn.Close()
 }
 
-/*
-
-[ pipelines ] <-- [ fit   ] <-- [ produce ]
-		      <-- [ score ]
-
-*/
-
-type pullFunc func() error
-
-func pullFromAPI(maxPulls int, timeout time.Duration, pull pullFunc) error {
-
-	recvChan := make(chan error)
-
-	count := 0
-	for {
-
-		// pull
-		go func() {
-			err := pull()
-			recvChan <- err
-		}()
-
-		// set timeout timer
-		timer := time.NewTimer(timeout)
-
-		select {
-		case err := <-recvChan:
-			timer.Stop()
-			if err == io.EOF {
-				return nil
-			} else if err != nil {
-				return err
-			}
-			count++
-			if count > maxPulls {
-				return nil
-			}
-
-		case <-timer.C:
-			// timeout
-			return errors.Errorf("pipeline request has timed out")
-		}
-
-	}
-
-}
-
 // StartSearch starts a pipeline search session.
-func (c *Client) StartSearch(ctx context.Context) (string, error) {
-	searchPipelinesRequest := &SearchPipelinesRequest{}
-	searchPipelineResponse, err := c.client.SearchPipelines(ctx, searchPipelinesRequest)
+func (c *Client) StartSearch(ctx context.Context, request *SearchPipelinesRequest) (string, error) {
+
+	searchPipelineResponse, err := c.client.SearchPipelines(ctx, request)
 	if err != nil {
 		return "", err
 	}
@@ -115,15 +61,8 @@ func (c *Client) StartSearch(ctx context.Context) (string, error) {
 	return searchPipelineResponse.SearchId, nil
 }
 
-// GenerateCandidatePipelines generates candidate pipel\ines.
-func (c *Client) GenerateCandidatePipelines(ctx context.Context, searchID string) ([]*GetSearchPipelinesResultsResponse, error) {
-	/*
-		Note over TA3,TA2: Generate candidate pipelines
-		    TA3->>TA2: SearchPipelines(SearchPipelinesRequest)
-		    TA2-->>TA3: SearchPipelinesResponse
-		    TA3->>TA2: GetSearchPipelinesResults(GetSearchPipelinesResultsRequest)
-		    TA2--xTA3: GetSearchPipelineResultsResponse
-	*/
+// SearchPipelines generates candidate pipel\ines.
+func (c *Client) SearchPipelines(ctx context.Context, searchID string) ([]*GetSearchPipelinesResultsResponse, error) {
 
 	searchPiplinesResultsRequest := &GetSearchPipelinesResultsRequest{
 		SearchId: searchID,
@@ -151,17 +90,8 @@ func (c *Client) GenerateCandidatePipelines(ctx context.Context, searchID string
 	return pipelineResultResponses, nil
 }
 
-// GenerateScoresForCandidatePipeline generates scrores for candidate pipelines.
-func (c *Client) GenerateScoresForCandidatePipeline(ctx context.Context, pipelineID string) ([]*GetScorePipelineResultsResponse, error) {
-	/*
-		Note over TA3,TA2: Generate scores for candidate pipeline (assuming not generated during search)
-		    TA3->>TA2: ScorePipeline(ScorePipelineRequest)
-		    TA2-->>TA3: ScorePipelineRequestResponse
-		    TA3->>TA2: GetScorePipelineResults(GetScorePipelinesResultRequest)
-		    TA2--xTA3: GetScorePipelineResultsResponse
-		    TA2--xTA3: GetScorePipelineResultsResponse
-		    TA2--xTA3: GetScorePipelineResultsResponse
-	*/
+// GeneratePipelineScores generates scrores for candidate pipelines.
+func (c *Client) GeneratePipelineScores(ctx context.Context, pipelineID string) ([]*GetScorePipelineResultsResponse, error) {
 
 	scorePipelineRequest := &ScorePipelineRequest{
 		PipelineId: pipelineID,
@@ -200,14 +130,7 @@ func (c *Client) GenerateScoresForCandidatePipeline(ctx context.Context, pipelin
 
 // GeneratePipelineFit generates fit for candidate pipelines.
 func (c *Client) GeneratePipelineFit(ctx context.Context, pipelineID string) ([]*GetFitPipelineResultsResponse, error) {
-	/*
-		Note over TA3,TA2: Final fit of model
-			TA3->>TA2: FitPipeline(ProducePipelineRequest)
-			TA2-->>TA3: FitPipelineResponse
-			TA3->>TA2: GetFitPipelineResults(GetProducePipelineResultsRequest)
-			TA2--xTA3: GetFitPipelineResultsResponse
-			TA2--xTA3: GetFitPipelineResultsResponse
-	*/
+
 	fitPipelineRequest := &FitPipelineRequest{
 		PipelineId: pipelineID,
 	}
@@ -244,31 +167,9 @@ func (c *Client) GeneratePipelineFit(ctx context.Context, pipelineID string) ([]
 }
 
 // GeneratePredictions generates predictions.
-func (c *Client) GeneratePredictions(ctx context.Context, pipelineID string) ([]*GetProducePipelineResultsResponse, error) {
-	/*
-		Note over TA3,TA2: Generate predictions using fitted model and held back test data
-		    TA3->>TA2: ProducePipeline(ProducePipelineRequest)
-		    TA2-->>TA3: ProducePipelineResponse
-		    TA3->>TA2: GetProducePipelineResults(GetProducePipelineResultsRequest)
-		    TA2--xTA3: GetProducePipelineResultsResponse
-		    TA2--xTA3: GetProducePipelineResultsResponse
-		    TA2--xTA3: GetProducePipelineResultsResponse
-		    TA3->>TA2: EndSearchPipelines(EndSearchPipelinesRequest)
-		    TA2-->>TA3:
-	*/
+func (c *Client) GeneratePredictions(ctx context.Context, request *ProducePipelineRequest) ([]*GetProducePipelineResultsResponse, error) {
 
-	producePipelineRequest := &ProducePipelineRequest{
-		PipelineId: pipelineID,
-		Inputs: []*Value{
-			{
-				Value: &Value_DatasetUri{
-					DatasetUri: "testURI",
-				},
-			},
-		},
-	}
-
-	producePipelineResponse, err := c.client.ProducePipeline(ctx, producePipelineRequest)
+	producePipelineResponse, err := c.client.ProducePipeline(ctx, request)
 	if err != nil {
 		return nil, err
 	}
