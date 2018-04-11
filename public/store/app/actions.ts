@@ -40,9 +40,9 @@ export const actions = {
 
 	fetchVersion(context: AppContext) {
 		return axios.get(`/distil/version`)
-			.then(res => {
-				mutations.setVersionNumber(context, res.Version);
-				mutations.setVersionTimestamp(context, res.Timestamp);
+			.then(response => {
+				mutations.setVersionNumber(context, response.data.version);
+				mutations.setVersionTimestamp(context, response.data.timestamp);
 			})
 			.catch((err: string) => {
 				console.warn(err);

@@ -11,7 +11,7 @@ export const getters = {
 	},
 
 	getVersionNumber(state: AppState) {
-		return state.VersionNumber;
+		return state.versionNumber;
 	},
 
 	getVersionTimestamp(state: AppState) {
