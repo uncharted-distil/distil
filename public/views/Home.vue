@@ -24,6 +24,9 @@
 				</div>
 			</div>
 		</div>
+		<div class="home-version-text text-muted">
+			{{version}}
+		</div>
 	</div>
 </template>
 
@@ -33,6 +36,7 @@ import RecentPipelines from '../components/RecentPipelines';
 import RunningPipelines from '../components/RunningPipelines';
 import SearchBar from '../components/SearchBar';
 import { actions, getters } from '../store/pipelines/module';
+import { getters as appGetters } from '../store/app/module';
 import Vue from 'vue';
 
 export default Vue.extend({
@@ -48,6 +52,9 @@ export default Vue.extend({
 	computed: {
 		sessionId(): string {
 			return getters.getPipelineSessionID(this.$store);
+		},
+		version(): string {
+			return `version: ${appGetters.getVersionNumber(this.$store)} at ${appGetters.getVersionTimestamp(this.$store)}`;
 		}
 	},
 
@@ -81,6 +88,10 @@ export default Vue.extend({
 }
 .home-items .card {
 	margin-bottom: 1rem;
+}
+.home-version-text {
+	margin: 0 auto;
+	font-size: 0.8rem;
 }
 
 </style>
