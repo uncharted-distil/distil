@@ -173,7 +173,7 @@ func (p *builder) Compile() (*PipelineDescription, error) {
 	lastStep := len(p.steps) - 1
 	lastOutput := p.steps[lastStep].GetOutputMethods()[0]
 	pipelineOutputs := []*PipelineDescriptionOutput{
-		&PipelineDescriptionOutput{
+		{
 			Data: fmt.Sprintf("steps.%d.%s", lastStep, lastOutput),
 		},
 	}

@@ -163,6 +163,7 @@ func main() {
 
 	// GET
 	registerRoute(mux, "/distil/datasets/:index", routes.DatasetsHandler(metadataStorageCtor))
+	registerRoute(mux, "/distil/pipelines/:dataset/:target/:pipeline-id", routes.PipelineHandler(pgPipelineStorageCtor))
 	registerRoute(mux, "/distil/variables/:index/:dataset", routes.VariablesHandler(metadataStorageCtor))
 	registerRoute(mux, "/distil/results-variable-extrema/:index/:dataset/:variable/:results-uuid", routes.ResultVariableExtremaHandler(pgPipelineStorageCtor, pgDataStorageCtor))
 	registerRoute(mux, "/distil/results-extrema/:index/:dataset/:results-uuid", routes.ResultsExtremaHandler(pgPipelineStorageCtor, pgDataStorageCtor))

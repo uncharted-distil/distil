@@ -52,7 +52,7 @@ func (m *CreateMessage) createSearchPipelinesRequest() (*SearchPipelinesRequest,
 				PerformanceMetrics: convertMetricsFromTA3ToTA2(m.Metrics),
 			},
 			Inputs: []*ProblemInput{
-				&ProblemInput{
+				{
 					DatasetId: convertDatasetTA3ToTA2(m.Dataset),
 					Targets:   convertTargetFeaturseTA3ToTA2(m.TargetFeature),
 				},
@@ -325,7 +325,7 @@ func convertTaskTypeFromTA3ToTA2(taskType string) TaskType {
 
 func convertTargetFeaturseTA3ToTA2(target string) []*ProblemTarget {
 	return []*ProblemTarget{
-		&ProblemTarget{
+		{
 			ColumnName:  target,
 			ResourceId:  defaultResourceID,
 			ColumnIndex: 0, // TODO: fix this
