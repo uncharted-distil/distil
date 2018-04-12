@@ -127,7 +127,7 @@ export const actions = {
 
 		mutations.clearPipelineRequests(context);
 
-		return axios.get(`/distil/session/${args.dataset}/${args.target}/${args.pipelineId}`)
+		return axios.get(`/distil/pipelines/${args.dataset}/${args.target}/${args.pipelineId}`)
 			.then(response => {
 				if (!response.data.pipelines) {
 					return;
