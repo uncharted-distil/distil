@@ -11,6 +11,8 @@ const (
 	pipelineInputsKey = "inputs"
 )
 
+// DescriptionStep provides data for a pipeline description step and an operation
+// to create a protobuf PipelineDescriptionStep from that data.
 type DescriptionStep interface {
 	GetPrimitive() *Primitive
 	GetArguments() map[string]string
