@@ -24,10 +24,8 @@
 				</div>
 			</div>
 		</div>
-		<div class="home-center">
-			<b-home-text-item>
-				<b-home-text>{{version}}</b-home-text>
-			</b-home-text-item>
+		<div class="home-version-text text-muted">
+			{{version}}
 		</div>
 	</div>
 </template>
@@ -56,7 +54,7 @@ export default Vue.extend({
 			return getters.getPipelineSessionID(this.$store);
 		},
 		version(): string {
-			return `Version: ${appGetters.getVersionNumber(this.$store)} at ${appGetters.getVersionTimestamp(this.$store)}`;
+			return `version: ${appGetters.getVersionNumber(this.$store)} at ${appGetters.getVersionTimestamp(this.$store)}`;
 		}
 	},
 
@@ -91,14 +89,9 @@ export default Vue.extend({
 .home-items .card {
 	margin-bottom: 1rem;
 }
-.home-text-item .home-link {
-	padding: 2px;
-}
-.home-text-item .home-text  {
-	letter-spacing: 0.01rem;
-}
-.home-center {
+.home-version-text {
 	margin: 0 auto;
+	font-size: 0.8rem;
 }
 
 </style>
