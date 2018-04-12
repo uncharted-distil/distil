@@ -60,7 +60,6 @@ import Vue from 'vue';
 import _ from 'lodash';
 import 'font-awesome/css/font-awesome.css';
 import { PipelineInfo } from '../store/pipelines/index';
-import { getters as pipelineGetters } from '../store/pipelines/module';
 
 const DEFAULT_PERCENTILE = 0.25;
 const NUM_STEPS = 100;
@@ -171,10 +170,6 @@ export default Vue.extend({
 			return this.activePipeline ? this.activePipeline.name : '';
 		},
 
-		sessionId(): string {
-			return pipelineGetters.getPipelineSessionID(this.$store);
-		},
-
 		instanceName(): string {
 			return 'groundTruth';
 		},
@@ -185,8 +180,6 @@ export default Vue.extend({
 	},
 
 	methods: {
-
-
 
 		updateThreshold(min: number, max: number) {
 			const entry = overlayRouteEntry(this.$route, {
@@ -207,8 +200,7 @@ export default Vue.extend({
 
 		onExport() {
 			appActions.exportPipeline(this.$store, {
-				pipelineId: this.activePipeline.pipelineId,
-				sessionId: this.sessionId
+				pipelineId: this.activePipeline.pipelineId
 			}).then(err => {
 				if (this.isAborted) {
 					// the export was successful

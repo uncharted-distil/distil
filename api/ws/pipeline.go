@@ -15,10 +15,7 @@ import (
 )
 
 const (
-	getSession        = "GET_SESSION"
-	endSession        = "END_SESSION"
 	createPipelines   = "CREATE_PIPELINES"
-	streamClose       = "STREAM_CLOSE"
 	categoricalType   = "categorical"
 	numericalType     = "numerical"
 	defaultResourceID = "0"

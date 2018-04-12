@@ -32,7 +32,7 @@ type CreateMessage struct {
 	Task          string              `json:"task"`
 	MaxPipelines  int32               `json:"maxPipelines"`
 	Filters       *model.FilterParams `json:"filters"`
-	Metrics       []string            `json:"metric"`
+	Metrics       []string            `json:"metrics"`
 }
 
 // CreateStatus represents a pipeline status.

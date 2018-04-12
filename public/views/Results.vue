@@ -95,9 +95,6 @@ export default Vue.extend({
 		pipelineId(): string {
 			return routeGetters.getRoutePipelineId(this.$store);
 		},
-		sessionId(): string {
-			return pipelineGetters.getPipelineSessionID(this.$store);
-		},
 		highlightRoot(): HighlightRoot {
 			return routeGetters.getDecodedHighlightRoot(this.$store);
 		},
@@ -183,13 +180,9 @@ export default Vue.extend({
 					dataActions.fetchVariables(this.$store, {
 						dataset: this.dataset
 					}),
-					pipelineActions.startPipelineSession(this.$store, {
-						sessionId: this.sessionId
-					})
 				])
 				.then(() => {
 					pipelineActions.fetchPipelines(this.$store, {
-						sessionId: this.sessionId,
 						dataset: this.dataset,
 						target: this.target
 					}).then(() => {

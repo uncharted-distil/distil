@@ -32,7 +32,7 @@ import RecentDatasets from '../components/RecentDatasets';
 import RecentPipelines from '../components/RecentPipelines';
 import RunningPipelines from '../components/RunningPipelines';
 import SearchBar from '../components/SearchBar';
-import { actions, getters } from '../store/pipelines/module';
+import { actions } from '../store/pipelines/module';
 import Vue from 'vue';
 
 export default Vue.extend({
@@ -45,21 +45,13 @@ export default Vue.extend({
 		SearchBar
 	},
 
-	computed: {
-		sessionId(): string {
-			return getters.getPipelineSessionID(this.$store);
-		}
-	},
-
 	beforeMount() {
 		this.fetch();
 	},
 
 	methods: {
 		fetch() {
-			actions.fetchPipelines(this.$store, {
-				sessionId: this.sessionId
-			});
+			actions.fetchPipelines(this.$store, {});
 		}
 	}
 

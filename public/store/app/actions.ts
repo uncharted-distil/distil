@@ -21,8 +21,8 @@ export const actions = {
 			});
 	},
 
-	exportPipeline(context: AppContext, args: { sessionId: string, pipelineId: string}) {
-		return axios.get(`/distil/export/${args.sessionId}/${args.pipelineId}`)
+	exportPipeline(context: AppContext, args: { pipelineId: string}) {
+		return axios.get(`/distil/export/${args.pipelineId}`)
 			.then(() => {
 				console.warn(`User exported pipeline ${args.pipelineId}`);
 				mutations.setAborted(context);
