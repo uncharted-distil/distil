@@ -142,6 +142,8 @@ export const actions = {
 						}
 					});
 
+					console.log('Pipeline: ', pipeline);
+
 					// update pipeline
 					mutations.updatePipelineRequests(context, {
 						name: targetFeature,
@@ -172,6 +174,8 @@ export const actions = {
 			let receivedFirstResponse = false;
 
 			const stream = conn.stream(res => {
+
+				console.log('PIPELINE RESPONSE', res);
 
 				if (res.error) {
 					console.error(res.error);
@@ -218,6 +222,8 @@ export const actions = {
 				}
 
 			});
+
+			console.log('SENDING CREATE PIPELINES REQUEST');
 
 			// send create pipelines request
 			stream.send({

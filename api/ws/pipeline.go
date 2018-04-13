@@ -6,12 +6,12 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/fatih/structs"
 	"github.com/pkg/errors"
 	"github.com/unchartedsoftware/plog"
 
 	"github.com/unchartedsoftware/distil/api/model"
 	"github.com/unchartedsoftware/distil/api/pipeline"
+	jutil "github.com/unchartedsoftware/distil/api/util/json"
 )
 
 const (
@@ -119,17 +119,25 @@ func handleCreatePipelines(conn *Connection, client *pipeline.Client, metadataCt
 	}
 
 	for _, c := range statusChannels {
-		// TODO: listen and respond to client
+		// listen and respond to client
 		go func(statusChannel chan pipeline.CreateStatus) {
-			// read status from, channel
-			status := <-statusChannel
-			// check for error
-			if status.Error != nil {
-				handleErr(conn, msg, err)
-				return
+
+			for {
+				// read status from, channel
+				status := <-statusChannel
+				// check for error
+				if status.Error != nil {
+					handleErr(conn, msg, err)
+					return
+				}
+				// send status to client
+				handleSuccess(conn, msg, jutil.StructToMap(status))
+				// break out if completed
+				if status.Progress == pipeline.CompletedStatus {
+					return
+				}
 			}
-			// send status to client
-			handleSuccess(conn, msg, structs.Map(status))
+
 		}(c)
 	}
 }

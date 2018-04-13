@@ -99,14 +99,14 @@ func PersistFilteredData(datasetDir string, target string, dataset *model.Querie
 	// if so
 	path := path.Join(datasetDir, strconv.FormatUint(hash, 10))
 	if dirExists(path) {
-		log.Infof("Found cached data for %s with hash %d", dataset, hash)
+		log.Infof("Found cached data with hash %d", hash)
 		return path, nil
 	}
 
 	// get the filtered dataset from elastic search
 	start := time.Now()
 	if len(dataset.Data.Values) <= 0 {
-		log.Infof("No data available for %s after filter application", dataset)
+		log.Info("No data available for data after filter application")
 		return "", nil
 	}
 
@@ -138,7 +138,7 @@ func PersistFilteredData(datasetDir string, target string, dataset *model.Querie
 		return "", err
 	}
 
-	log.Infof("Persisted data for %s to %s in %v", dataset, path, time.Since(start))
+	log.Infof("Persisted data to %s in %v", path, time.Since(start))
 	return path, nil
 }
 

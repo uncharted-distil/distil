@@ -253,6 +253,19 @@ func Marshal(j interface{}) ([]byte, error) {
 	return json.Marshal(j)
 }
 
+// StructToMap covnerts a struct to its map[string]interface{} equivalent.
+func StructToMap(arg interface{}) map[string]interface{} {
+	bs, err := Marshal(arg)
+	if nil != err {
+		return nil
+	}
+	m, err := Unmarshal(bs)
+	if nil != err {
+		return nil
+	}
+	return m
+}
+
 // Unmarshal unmarshals JSON and returns a newly instantiated map.
 func Unmarshal(data []byte) (map[string]interface{}, error) {
 	var m map[string]interface{}
@@ -261,15 +274,6 @@ func Unmarshal(data []byte) (map[string]interface{}, error) {
 		return nil, err
 	}
 	return m, nil
-}
-
-// UnmarshalStruct unmarshals JSON into the provided struct.
-func UnmarshalStruct(data []byte, s interface{}) error {
-	err := json.Unmarshal(data, &s)
-	if nil != err {
-		return err
-	}
-	return nil
 }
 
 // Copy will copy the JSON data deeply by value, this process involves
