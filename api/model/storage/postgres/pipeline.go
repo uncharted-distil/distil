@@ -99,7 +99,7 @@ func (s *Storage) parsePipelineResult(rows *pgx.Rows) ([]*model.PipelineResult, 
 	// TODO: This should not be in the parsing code. The calling code
 	// should be loading the required data.
 	// for _, result := range results {
-	// 	features, err := s.FetchmodelFeatures(result.RequestID)
+	// 	features, err := s.FetchRequestFeatures(result.RequestID)
 	// 	if err != nil {
 	// 		return nil, err
 	// 	}

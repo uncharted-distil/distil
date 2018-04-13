@@ -112,8 +112,15 @@ func (m *CreateMessage) persistPipelineStatus(statusChan chan CreateStatus, clie
 }
 
 func (m *CreateMessage) persistPipelineResults(statusChan chan CreateStatus, client *Client, pipelineStorage model.PipelineStorage, searchID string, pipelineID string, resultID string, resultURI string) {
+	// persist the completed state
+	err := pipelineStorage.PersistPipeline(searchID, pipelineID, CompletedStatus, time.Now())
+	if err != nil {
+		// notify of error
+		m.persistPipelineError(statusChan, client, pipelineStorage, searchID, pipelineID, err)
+		return
+	}
 	// persist results
-	err := pipelineStorage.PersistPipelineResult(pipelineID, resultID, resultURI, CompletedStatus, time.Now())
+	err = pipelineStorage.PersistPipelineResult(pipelineID, resultID, resultURI, CompletedStatus, time.Now())
 	if err != nil {
 		// notify of error
 		m.persistPipelineError(statusChan, client, pipelineStorage, searchID, pipelineID, err)
@@ -221,15 +228,15 @@ func (m *CreateMessage) DispatchPipelines(client *Client, pipelineStorage model.
 		statusChannels = append(statusChannels, make(chan CreateStatus))
 	}
 
-	// persist all pipelines as pending
-	for i, pipeline := range pipelines {
-		m.persistPipelineStatus(statusChannels[i], client, pipelineStorage, searchID, pipeline.PipelineId, PendingStatus)
-	}
-
 	wg := &sync.WaitGroup{}
 
 	// dispatch all pipelines
 	go func() {
+
+		// persist all pipelines as pending
+		for i, pipeline := range pipelines {
+			m.persistPipelineStatus(statusChannels[i], client, pipelineStorage, searchID, pipeline.PipelineId, PendingStatus)
+		}
 
 		// dispatch individual pipelines
 		for i, pipeline := range pipelines {
@@ -285,6 +292,12 @@ func (m *CreateMessage) PersistAndDispatch(client *Client, pipelineStorage model
 		return nil, err
 	}
 	datasetPath = fmt.Sprintf("%s", filepath.Join(datasetPath, D3MDataSchema))
+
+	// persist the request
+	err = pipelineStorage.PersistRequest(requestID, dataset.Metadata.Name, PendingStatus, time.Now())
+	if err != nil {
+		return nil, err
+	}
 
 	// store the request features
 	for _, v := range m.Filters.Variables {
