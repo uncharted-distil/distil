@@ -59,22 +59,25 @@ func PipelineHandler(pipelineCtor model.PipelineStorageCtor) func(http.ResponseW
 			return
 		}
 
-		// Blank the result URI & flatten the results.
+		// flatten the results
 		pipelines := make([]*PipelineInfo, 0)
 		for _, req := range requests {
 			for _, pip := range req.Pipelines {
 				for _, res := range pip.Results {
-					res.ResultURI = ""
 					pipelines = append(pipelines, &PipelineInfo{
-						RequestID:   pip.RequestID,
+						// request
+						Feature:   req.TargetFeature(),
+						Features:  req.Features,
+						Filters:   req.Filters,
+						RequestID: req.RequestID,
+						// pipeline
+						Scores: pip.Scores,
+						// result
+						CreatedTime: res.CreatedTime,
+						Dataset:     res.Dataset,
 						PipelineID:  res.PipelineID,
 						ResultUUID:  res.ResultUUID,
 						Progress:    res.Progress,
-						Scores:      pip.Scores,
-						CreatedTime: res.CreatedTime,
-						Dataset:     res.Dataset,
-						Features:    req.Features,
-						Filters:     req.Filters,
 					})
 				}
 			}
