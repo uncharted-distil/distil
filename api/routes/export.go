@@ -27,21 +27,21 @@ func ExportHandler(pipelineCtor model.PipelineStorageCtor, metaCtor model.Metada
 			handleError(w, err)
 			return
 		}
-		res, err := pipeline.FetchPipelineResult(pipelineID)
+		req, err := pipeline.FetchRequestByPipelineID(pipelineID)
 		if err != nil {
 			handleError(w, err)
 			return
 		}
 
 		pipelineTarget := ""
-		for _, f := range res.Features {
+		for _, f := range req.Features {
 			if f.FeatureType == model.FeatureTypeTarget {
 				pipelineTarget = f.FeatureName
 			}
 		}
 
 		// get the initial target
-		pip, err := pipeline.FetchPipeline(res.PipelineID)
+		pip, err := pipeline.FetchPipeline(pipelineID)
 		if err != nil {
 			handleError(w, err)
 			return

@@ -42,13 +42,14 @@ type PipelineStorage interface {
 	PersistPipelineScore(pipelineID string, metric string, score float64) error
 	UpdateRequest(requestID string, progress string, updatedTime time.Time) error
 	FetchRequest(requestID string) (*Request, error)
+	FetchRequestByPipelineID(requestID string) (*Request, error)
 	FetchRequestFeatures(requestID string) ([]*Feature, error)
 	FetchRequestFilters(requestID string, features []*Feature) (*FilterParams, error)
 	FetchPipeline(pipelineID string) (*Pipeline, error)
 	FetchPipelineResultByRequestID(requestID string) ([]*PipelineResult, error)
 	FetchPipelineResultByUUID(resultUUID string) (*PipelineResult, error)
 	FetchPipelineResult(pipelineID string) (*PipelineResult, error)
-	FetchPipelineResultByDatasetTarget(dataset string, target string, pipelineID string) ([]*PipelineResult, error)
+	FetchRequestPipelineResultByDatasetTarget(dataset string, target string, pipelineID string) ([]*Request, error)
 	FetchPipelineScore(pipelineID string) ([]*PipelineScore, error)
 }
 

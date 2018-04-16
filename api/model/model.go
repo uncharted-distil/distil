@@ -13,6 +13,7 @@ type Request struct {
 	LastUpdatedTime time.Time     `json:"lastUpdatedTime"`
 	Features        []*Feature    `json:"features"`
 	Filters         *FilterParams `json:"filters"`
+	Pipelines       []*Pipeline   `json:"pipelines"`
 }
 
 // Feature represents a request feature metadata.
@@ -34,15 +35,13 @@ type Pipeline struct {
 
 // PipelineResult represents the pipeline result metadata.
 type PipelineResult struct {
-	PipelineID  string        `json:"pipelineId"`
-	Dataset     string        `json:"dataset"`
-	ResultURI   string        `json:"requestUri"`
-	ResultUUID  string        `json:"resultId"`
-	Progress    string        `json:"progress"`
-	OutputType  string        `json:"outputType"`
-	CreatedTime time.Time     `json:"timestamp"`
-	Filters     *FilterParams `json:"filters"`
-	Features    []*Feature    `json:"features"`
+	PipelineID  string    `json:"pipelineId"`
+	Dataset     string    `json:"dataset"`
+	ResultURI   string    `json:"requestUri"`
+	ResultUUID  string    `json:"resultId"`
+	Progress    string    `json:"progress"`
+	OutputType  string    `json:"outputType"`
+	CreatedTime time.Time `json:"timestamp"`
 }
 
 // PipelineScore represents the result score data.
