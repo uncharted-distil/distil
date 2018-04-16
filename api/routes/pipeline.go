@@ -2,6 +2,7 @@ package routes
 
 import (
 	"net/http"
+	"time"
 
 	"github.com/pkg/errors"
 	"goji.io/pat"
@@ -9,11 +10,23 @@ import (
 	"github.com/unchartedsoftware/distil/api/model"
 )
 
-// Pipeline represents a session response
-type Pipeline struct {
-	Pipelines []*model.PipelineResult `json:"pipelines"`
-	Features  []*model.Feature        `json:"features"`
-	Filters   *model.FilterParams     `json:"filters"`
+// PipelineInfo represents the pipeline information relevant to the client.
+type PipelineInfo struct {
+	RequestID   string                 `json:"requestId"`
+	Feature     string                 `json:"feature"`
+	PipelineID  string                 `json:"pipelineId"`
+	ResultUUID  string                 `json:"resultId"`
+	Progress    string                 `json:"progress"`
+	Scores      []*model.PipelineScore `json:"scores"`
+	CreatedTime time.Time              `json:"timestamp"`
+	Dataset     string                 `json:"dataset"`
+	Features    []*model.Feature       `json:"features"`
+	Filters     *model.FilterParams    `json:"filters"`
+}
+
+// PipelineResponse represents a request response
+type PipelineResponse struct {
+	Pipelines []*PipelineInfo `json:"pipelines"`
 }
 
 // PipelineHandler fetches existing pipelines.
@@ -47,25 +60,30 @@ func PipelineHandler(pipelineCtor model.PipelineStorageCtor) func(http.ResponseW
 		}
 
 		// Blank the result URI & flatten the results.
-		pipelines := make(map[string]*Pipeline)
+		pipelines := make([]*PipelineInfo, 0)
 		for _, req := range requests {
 			for _, pip := range req.Pipelines {
 				for _, res := range pip.Results {
 					res.ResultURI = ""
-					if pipelines[res.PipelineID] == nil {
-						pipelines[res.PipelineID] = &Pipeline{
-							Pipelines: make([]*model.PipelineResult, 0),
-							Features:  req.Features,
-							Filters:   req.Filters,
-						}
-					}
-					pipelines[res.PipelineID].Pipelines = append(pipelines[res.PipelineID].Pipelines, res)
+					pipelines = append(pipelines, &PipelineInfo{
+						RequestID:   pip.RequestID,
+						PipelineID:  res.PipelineID,
+						ResultUUID:  res.ResultUUID,
+						Progress:    res.Progress,
+						Scores:      pip.Scores,
+						CreatedTime: res.CreatedTime,
+						Dataset:     res.Dataset,
+						Features:    req.Features,
+						Filters:     req.Filters,
+					})
 				}
 			}
 		}
 
 		// marshall data and sent the response back
-		err = handleJSON(w, pipelines)
+		err = handleJSON(w, &PipelineResponse{
+			Pipelines: pipelines,
+		})
 		if err != nil {
 			handleError(w, errors.Wrap(err, "unable marshal session pipelines into JSON"))
 			return
