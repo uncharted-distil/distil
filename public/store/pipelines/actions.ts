@@ -129,6 +129,7 @@ export const actions = {
 
 		return axios.get(`/distil/pipelines/${args.dataset}/${args.target}/${args.pipelineId}`)
 			.then(response => {
+				console.log('Pipeline response: ', response);
 				if (!response.data.pipelines) {
 					return;
 				}
@@ -156,8 +157,7 @@ export const actions = {
 						progress: pipeline.progress,
 						pipelineId: pipeline.pipelineId,
 						resultId: pipeline.resultId,
-						scores: pipeline.scores,
-						output: ''
+						scores: pipeline.scores
 					});
 				});
 			})

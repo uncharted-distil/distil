@@ -81,6 +81,7 @@ func (m *CreateMessage) createProducePipelineRequest(datasetURI string, pipeline
 }
 
 func (m *CreateMessage) persistPipelineError(statusChan chan CreateStatus, client *Client, pipelineStorage model.PipelineStorage, searchID string, pipelineID string, err error) {
+	fmt.Println("PERSISTING ERROR", err)
 	// persist the updated state
 	// NOTE: ignoring error
 	pipelineStorage.PersistPipeline(searchID, pipelineID, ErroredStatus, time.Now())
@@ -95,6 +96,7 @@ func (m *CreateMessage) persistPipelineError(statusChan chan CreateStatus, clien
 }
 
 func (m *CreateMessage) persistPipelineStatus(statusChan chan CreateStatus, client *Client, pipelineStorage model.PipelineStorage, searchID string, pipelineID string, status string) {
+	fmt.Println("PERSISTING", status)
 	// persist the updated state
 	err := pipelineStorage.PersistPipeline(searchID, pipelineID, status, time.Now())
 	if err != nil {
@@ -111,7 +113,8 @@ func (m *CreateMessage) persistPipelineStatus(statusChan chan CreateStatus, clie
 	}
 }
 
-func (m *CreateMessage) persistPipelineResults(statusChan chan CreateStatus, client *Client, pipelineStorage model.PipelineStorage, searchID string, pipelineID string, resultID string, resultURI string) {
+func (m *CreateMessage) persistPipelineResults(statusChan chan CreateStatus, client *Client, pipelineStorage model.PipelineStorage, dataStorage model.DataStorage, searchID string, dataset string, pipelineID string, resultID string, resultURI string) {
+	fmt.Println("PERSISTING RESULT", resultURI)
 	// persist the completed state
 	err := pipelineStorage.PersistPipeline(searchID, pipelineID, CompletedStatus, time.Now())
 	if err != nil {
@@ -119,8 +122,15 @@ func (m *CreateMessage) persistPipelineResults(statusChan chan CreateStatus, cli
 		m.persistPipelineError(statusChan, client, pipelineStorage, searchID, pipelineID, err)
 		return
 	}
-	// persist results
+	// persist result metadata
 	err = pipelineStorage.PersistPipelineResult(pipelineID, resultID, resultURI, CompletedStatus, time.Now())
+	if err != nil {
+		// notify of error
+		m.persistPipelineError(statusChan, client, pipelineStorage, searchID, pipelineID, err)
+		return
+	}
+	// persist results
+	err = dataStorage.PersistResult(dataset, resultURI)
 	if err != nil {
 		// notify of error
 		m.persistPipelineError(statusChan, client, pipelineStorage, searchID, pipelineID, err)
@@ -136,7 +146,7 @@ func (m *CreateMessage) persistPipelineResults(statusChan chan CreateStatus, cli
 	}
 }
 
-func (m *CreateMessage) dispatchPipeline(statusChan chan CreateStatus, client *Client, pipelineStorage model.PipelineStorage, searchID string, pipelineID string, datasetURI string) {
+func (m *CreateMessage) dispatchPipeline(statusChan chan CreateStatus, client *Client, pipelineStorage model.PipelineStorage, dataStorage model.DataStorage, searchID string, pipelineID string, dataset string, datasetURI string) {
 
 	// score pipeline
 	pipelineScoreResponses, err := client.GeneratePipelineScores(context.Background(), pipelineID)
@@ -210,12 +220,12 @@ func (m *CreateMessage) dispatchPipeline(statusChan chan CreateStatus, client *C
 		resultID := fmt.Sprintf("%x", bs)
 
 		// persist results
-		m.persistPipelineResults(statusChan, client, pipelineStorage, searchID, pipelineID, resultID, resultURI)
+		m.persistPipelineResults(statusChan, client, pipelineStorage, dataStorage, searchID, dataset, pipelineID, resultID, resultURI)
 	}
 }
 
 // DispatchPipelines dispatches all pipeline requests
-func (m *CreateMessage) DispatchPipelines(client *Client, pipelineStorage model.PipelineStorage, searchID string, datasetURI string) ([]chan CreateStatus, error) {
+func (m *CreateMessage) DispatchPipelines(client *Client, pipelineStorage model.PipelineStorage, dataStorage model.DataStorage, searchID string, dataset string, datasetURI string) ([]chan CreateStatus, error) {
 
 	pipelines, err := client.SearchPipelines(context.Background(), searchID)
 	if err != nil {
@@ -242,7 +252,7 @@ func (m *CreateMessage) DispatchPipelines(client *Client, pipelineStorage model.
 		for i, pipeline := range pipelines {
 			wg.Add(1)
 			go func(statusChan chan CreateStatus, pipelineID string) {
-				m.dispatchPipeline(statusChan, client, pipelineStorage, searchID, pipelineID, datasetURI)
+				m.dispatchPipeline(statusChan, client, pipelineStorage, dataStorage, searchID, pipelineID, dataset, datasetURI)
 				wg.Done()
 			}(statusChannels[i], pipeline.PipelineId)
 
@@ -322,7 +332,7 @@ func (m *CreateMessage) PersistAndDispatch(client *Client, pipelineStorage model
 	fmt.Println("DISPATCHING")
 
 	// dispatch pipelines
-	statusChannels, err := m.DispatchPipelines(client, pipelineStorage, requestID, datasetPath)
+	statusChannels, err := m.DispatchPipelines(client, pipelineStorage, dataStorage, requestID, dataset.Metadata.Name, datasetPath)
 	if err != nil {
 		return nil, err
 	}

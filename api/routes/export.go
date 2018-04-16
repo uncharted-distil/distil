@@ -33,12 +33,7 @@ func ExportHandler(pipelineCtor model.PipelineStorageCtor, metaCtor model.Metada
 			return
 		}
 
-		pipelineTarget := ""
-		for _, f := range req.Features {
-			if f.FeatureType == model.FeatureTypeTarget {
-				pipelineTarget = f.FeatureName
-			}
-		}
+		pipelineTarget := req.TargetFeature()
 
 		// get the initial target
 		pip, err := pipeline.FetchPipeline(pipelineID)

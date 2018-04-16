@@ -16,6 +16,16 @@ type Request struct {
 	Pipelines       []*Pipeline   `json:"pipelines"`
 }
 
+// TargetFeature returns the target feature out of the feature set.
+func (r *Request) TargetFeature() string {
+	for _, f := range r.Features {
+		if f.FeatureType == FeatureTypeTarget {
+			return f.FeatureName
+		}
+	}
+	return ""
+}
+
 // Feature represents a request feature metadata.
 type Feature struct {
 	RequestID   string `json:"requestId"`

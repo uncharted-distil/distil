@@ -22,7 +22,6 @@ export interface PipelineInfo {
 	pipelineId: string;
 	resultId: string;
 	progress: string;
-	output: string;
 	scores: Score[];
 	timestamp: number;
 	dataset: string;

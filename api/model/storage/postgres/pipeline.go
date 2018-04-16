@@ -38,7 +38,7 @@ func (s *Storage) PersistPipelineScore(pipelineID string, metric string, score f
 
 // FetchPipeline pulls pipeline information from Postgres.
 func (s *Storage) FetchPipeline(pipelineID string) (*model.Pipeline, error) {
-	sql := fmt.Sprintf("SELECT request_id, pipelineID, progress, created_time FROM %s WHERE pipeline_id = $1;", pipelineTableName)
+	sql := fmt.Sprintf("SELECT request_id, pipeline_id, progress, created_time FROM %s WHERE pipeline_id = $1;", pipelineTableName)
 
 	rows, err := s.client.Query(sql, pipelineID)
 	if err != nil {

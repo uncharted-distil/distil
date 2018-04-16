@@ -78,7 +78,7 @@ func (s *Storage) FetchRequest(requestID string) (*model.Request, error) {
 // a pipeline ID.
 func (s *Storage) FetchRequestByPipelineID(pipelineID string) (*model.Request, error) {
 	sql := fmt.Sprintf("SELECT req.request_id, req.dataset, req.progress, req.created_time, req.last_updated_time "+
-		"FROM %s as req INNER JOIN %s as pip ON req.request_id = pip.request_id"+
+		"FROM %s as req INNER JOIN %s as pip ON req.request_id = pip.request_id "+
 		"WHERE pip.pipeline_id = $1;", requestTableName, pipelineTableName)
 
 	rows, err := s.client.Query(sql, pipelineID)
