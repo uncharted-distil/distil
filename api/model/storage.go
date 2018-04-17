@@ -49,7 +49,7 @@ type PipelineStorage interface {
 	FetchPipelineResultByRequestID(requestID string) ([]*PipelineResult, error)
 	FetchPipelineResultByUUID(resultUUID string) (*PipelineResult, error)
 	FetchPipelineResult(pipelineID string) (*PipelineResult, error)
-	FetchRequestPipelineResultByDatasetTarget(dataset string, target string, pipelineID string) ([]*Request, error)
+	FetchPipelineResultByDatasetTarget(dataset string, target string, pipelineID string) ([]*Request, error)
 	FetchPipelineScore(pipelineID string) ([]*PipelineScore, error)
 }
 

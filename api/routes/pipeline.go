@@ -53,7 +53,7 @@ func PipelineHandler(pipelineCtor model.PipelineStorageCtor) func(http.ResponseW
 			return
 		}
 
-		requests, err := pipeline.FetchRequestPipelineResultByDatasetTarget(dataset, target, pipelineID)
+		requests, err := pipeline.FetchPipelineResultByDatasetTarget(dataset, target, pipelineID)
 		if err != nil {
 			handleError(w, err)
 			return
@@ -62,24 +62,29 @@ func PipelineHandler(pipelineCtor model.PipelineStorageCtor) func(http.ResponseW
 		// flatten the results
 		pipelines := make([]*PipelineInfo, 0)
 		for _, req := range requests {
+
 			for _, pip := range req.Pipelines {
-				for _, res := range pip.Results {
-					pipelines = append(pipelines, &PipelineInfo{
-						// request
-						Feature:   req.TargetFeature(),
-						Features:  req.Features,
-						Filters:   req.Filters,
-						RequestID: req.RequestID,
-						// pipeline
-						Scores: pip.Scores,
-						// result
-						CreatedTime: res.CreatedTime,
-						Dataset:     res.Dataset,
-						PipelineID:  res.PipelineID,
-						ResultUUID:  res.ResultUUID,
-						Progress:    res.Progress,
-					})
+				pipeline := &PipelineInfo{
+					// request
+					RequestID: req.RequestID,
+					Dataset:   req.Dataset,
+					Feature:   req.TargetFeature(),
+					Features:  req.Features,
+					Filters:   req.Filters,
+					// pipeline
+					PipelineID:  pip.PipelineID,
+					Scores:      pip.Scores,
+					CreatedTime: pip.CreatedTime,
+					Progress:    pip.Progress,
 				}
+				for _, res := range pip.Results {
+					// result
+					pipeline.CreatedTime = res.CreatedTime
+					pipeline.ResultUUID = res.ResultUUID
+					pipeline.Progress = res.Progress
+				}
+
+				pipelines = append(pipelines, pipeline)
 			}
 		}
 

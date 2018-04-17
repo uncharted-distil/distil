@@ -228,16 +228,16 @@ func (s *Storage) loadRequestFromPipelineID(pipelineID string) (*model.Request, 
 	return request, nil
 }
 
-// FetchRequestPipelineResultByDatasetTarget pulls a request with pipeline
+// FetchPipelineResultByDatasetTarget pulls a request with pipeline
 // result information from Postgres. Only the latest result for each
 // pipeline is fetched.
-func (s *Storage) FetchRequestPipelineResultByDatasetTarget(dataset string, target string, pipelineID string) ([]*model.Request, error) {
+func (s *Storage) FetchPipelineResultByDatasetTarget(dataset string, target string, pipelineID string) ([]*model.Request, error) {
 
 	// get the pipeline ids
-	sql := fmt.Sprintf("SELECT DISTINCT result.pipeline_id "+
+	sql := fmt.Sprintf("SELECT DISTINCT pipeline.pipeline_id "+
 		"FROM %s request INNER JOIN %s rf ON request.request_id = rf.request_id "+
 		"INNER JOIN %s pipeline ON request.request_id = pipeline.request_id "+
-		"INNER JOIN %s result ON pipeline.pipeline_id = result.pipeline_id",
+		"LEFT JOIN %s result ON pipeline.pipeline_id = result.pipeline_id",
 		requestTableName, featureTableName, pipelineTableName, pipelineResultTableName)
 	params := make([]interface{}, 0)
 
@@ -267,7 +267,7 @@ func (s *Storage) FetchRequestPipelineResultByDatasetTarget(dataset string, targ
 	// TODO: code should be changed to not have a request / result built.
 	// Would need to lookup to see if the request was already loaded.
 	// Then would need to see if the pipeline was loaded.
-	results := make([]*model.Request, 0)
+	requests := make([]*model.Request, 0)
 	for rows.Next() {
 		var pipelineID string
 
@@ -276,18 +276,24 @@ func (s *Storage) FetchRequestPipelineResultByDatasetTarget(dataset string, targ
 			return nil, errors.Wrap(err, "Unable to parse pipeline id from Postgres")
 		}
 
-		res, err := s.FetchPipelineResult(pipelineID)
+		request, err := s.loadRequestFromPipelineID(pipelineID)
+		if err != nil {
+			return nil, errors.Wrap(err, "Unable to load request from Postgres")
+		}
+
+		result, err := s.FetchPipelineResult(pipelineID)
 		if err != nil {
 			return nil, errors.Wrap(err, "Unable to parse pipeline result from Postgres")
 		}
 
-		req, err := s.loadRequestFromPipelineID(pipelineID)
-		if err != nil {
-			return nil, errors.Wrap(err, "Unable to load request from Postgres")
+		if result != nil {
+			request.Pipelines[0].Results = []*model.PipelineResult{
+				result,
+			}
 		}
-		req.Pipelines[0].Results = []*model.PipelineResult{res}
-		results = append(results, req)
+
+		requests = append(requests, request)
 	}
 
-	return results, nil
+	return requests, nil
 }

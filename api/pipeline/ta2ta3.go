@@ -50,7 +50,7 @@ type CreateStatus struct {
 	Timestamp  time.Time `json:"timestamp"`
 }
 
-func (m *CreateMessage) createSearchPipelinesRequest() (*SearchPipelinesRequest, error) {
+func (m *CreateMessage) createSearchPipelinesRequest(targetIndex int) (*SearchPipelinesRequest, error) {
 	return &SearchPipelinesRequest{
 		Problem: &ProblemDescription{
 			Problem: &Problem{
@@ -60,7 +60,7 @@ func (m *CreateMessage) createSearchPipelinesRequest() (*SearchPipelinesRequest,
 			Inputs: []*ProblemInput{
 				{
 					DatasetId: convertDatasetTA3ToTA2(m.Dataset),
-					Targets:   convertTargetFeaturesTA3ToTA2(m.TargetFeature),
+					Targets:   convertTargetFeaturesTA3ToTA2(m.TargetFeature, targetIndex),
 				},
 			},
 		},
@@ -221,6 +221,29 @@ func (m *CreateMessage) dispatchPipeline(statusChan chan CreateStatus, client *C
 	}
 }
 
+func (m *CreateMessage) createStatusChannels(client *Client, pipelines []*GetSearchPipelinesResultsResponse, pipelineStorage model.PipelineStorage, searchID string) []chan CreateStatus {
+
+	// create channels
+
+	// NOTE: WE BUFFER THE CHANNELS TO A SIZE OF 1 HERE SO WE CAN PERSIST BELOW
+	// WITHOUT DEADLOCKING.
+	var statusChannels []chan CreateStatus
+	for range pipelines {
+		statusChannels = append(statusChannels, make(chan CreateStatus, 1))
+	}
+
+	// persist all pipelines as pending
+
+	// NOTE: we persist the pipelines here so that they exist in the DB when the
+	// method returns.
+	// NOTE: THE CHANNELS MUST BE BUFFERED TO A SIZE OF 1 OR ELSE THIS WILL DEADLOCK.
+	for i, pipeline := range pipelines {
+		m.persistPipelineStatus(statusChannels[i], client, pipelineStorage, searchID, pipeline.PipelineId, PendingStatus)
+	}
+
+	return statusChannels
+}
+
 // DispatchPipelines dispatches all pipeline requests
 func (m *CreateMessage) DispatchPipelines(client *Client, pipelineStorage model.PipelineStorage, dataStorage model.DataStorage, searchID string, dataset string, datasetURI string) ([]chan CreateStatus, error) {
 
@@ -229,25 +252,20 @@ func (m *CreateMessage) DispatchPipelines(client *Client, pipelineStorage model.
 		return nil, err
 	}
 
-	// create status channels
-	var statusChannels []chan CreateStatus
-	for range pipelines {
-		statusChannels = append(statusChannels, make(chan CreateStatus))
-	}
-
-	wg := &sync.WaitGroup{}
+	// create status channels and persist pipelines
+	statusChannels := m.createStatusChannels(client, pipelines, pipelineStorage, searchID)
 
 	// dispatch all pipelines
 	go func() {
 
-		// persist all pipelines as pending
-		for i, pipeline := range pipelines {
-			m.persistPipelineStatus(statusChannels[i], client, pipelineStorage, searchID, pipeline.PipelineId, PendingStatus)
-		}
+		wg := &sync.WaitGroup{}
 
 		// dispatch individual pipelines
 		for i, pipeline := range pipelines {
+
+			// increment waitgroup
 			wg.Add(1)
+
 			go func(statusChan chan CreateStatus, pipelineID string) {
 				m.dispatchPipeline(statusChan, client, pipelineStorage, dataStorage, searchID, pipelineID, dataset, datasetURI)
 				wg.Done()
@@ -268,18 +286,6 @@ func (m *CreateMessage) DispatchPipelines(client *Client, pipelineStorage model.
 // PersistAndDispatch persists the pipeline request and dispatches it.
 func (m *CreateMessage) PersistAndDispatch(client *Client, pipelineStorage model.PipelineStorage, metaStorage model.MetadataStorage, dataStorage model.DataStorage) ([]chan CreateStatus, error) {
 
-	// create search pipelines request
-	searchRequest, err := m.createSearchPipelinesRequest()
-	if err != nil {
-		return nil, err
-	}
-
-	// start a pipeline searchID
-	requestID, err := client.StartSearch(context.Background(), searchRequest)
-	if err != nil {
-		return nil, err
-	}
-
 	// fetch the queried dataset
 	dataset, err := model.FetchDataset(m.Dataset, m.Index, true, m.Filters, metaStorage, dataStorage)
 	if err != nil {
@@ -287,7 +293,7 @@ func (m *CreateMessage) PersistAndDispatch(client *Client, pipelineStorage model
 	}
 
 	// perist the dataset and get URI
-	datasetPath, err := PersistFilteredData(datasetDir, m.TargetFeature, dataset)
+	datasetPath, targetIndex, err := PersistFilteredData(datasetDir, m.TargetFeature, dataset)
 	if err != nil {
 		return nil, err
 	}
@@ -297,6 +303,18 @@ func (m *CreateMessage) PersistAndDispatch(client *Client, pipelineStorage model
 		return nil, err
 	}
 	datasetPath = fmt.Sprintf("%s", filepath.Join(datasetPath, D3MDataSchema))
+
+	// create search pipelines request
+	searchRequest, err := m.createSearchPipelinesRequest(targetIndex)
+	if err != nil {
+		return nil, err
+	}
+
+	// start a pipeline searchID
+	requestID, err := client.StartSearch(context.Background(), searchRequest)
+	if err != nil {
+		return nil, err
+	}
 
 	// persist the request
 	err = pipelineStorage.PersistRequest(requestID, dataset.Metadata.Name, PendingStatus, time.Now())
@@ -347,13 +365,13 @@ func convertTaskTypeFromTA3ToTA2(taskType string) TaskType {
 	return TaskType(TaskType_value[strings.ToUpper(taskType)])
 }
 
-func convertTargetFeaturesTA3ToTA2(target string) []*ProblemTarget {
+func convertTargetFeaturesTA3ToTA2(target string, targetIndex int) []*ProblemTarget {
 	return []*ProblemTarget{
 		{
 			ColumnName:  target,
 			ResourceId:  defaultResourceID,
-			ColumnIndex: 0, // TODO: fix this
-			TargetIndex: 0, // TODO: what is this?
+			TargetIndex: int32(targetIndex),
+			ColumnIndex: int32(targetIndex), // TODO: is this correct?
 		},
 	}
 }

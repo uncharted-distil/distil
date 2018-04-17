@@ -21,7 +21,9 @@
 			</div>
 		</div>
 		<p class="nav-link font-weight-bold">Predictions by Model</p>
-		<result-facets :regression="regressionEnabled"></result-facets>
+		<result-facets
+			:regression="regressionEnabled">
+			</result-facets>
 		<b-btn v-b-modal.export variant="primary" class="check-button">Task 2: Export Model</b-btn>
 
 		<b-modal id="export" title="Export" @ok="onExport">
@@ -50,7 +52,7 @@ import ResultFacets from '../components/ResultFacets.vue';
 import Facets from '../components/Facets.vue';
 import { overlayRouteEntry } from '../util/routes';
 import { getPipelineById, getTask } from '../util/pipelines';
-import { VariableSummary, Extrema } from '../store/data/index';
+import { Extrema } from '../store/data/index';
 import { getters as dataGetters} from '../store/data/module';
 import { getters as routeGetters } from '../store/route/module';
 import { actions as appActions, getters as appGetters } from '../store/app/module';
@@ -135,14 +137,6 @@ export default Vue.extend({
 		interval(): number {
 			const interval = this.range / NUM_STEPS;
 			return interval;
-		},
-
-		predictedSummaries(): VariableSummary[] {
-			return dataGetters.getPredictedSummaries(this.$store);
-		},
-
-		residualsSummaries(): VariableSummary[] {
-			return this.regressionEnabled ? dataGetters.getResidualsSummaries(this.$store) : [];
 		},
 
 		residualExtrema(): Extrema {

@@ -174,6 +174,7 @@ export const actions = {
 
 				if (res.error) {
 					console.error(res.error);
+					return;
 				}
 
 				res.name = request.target;

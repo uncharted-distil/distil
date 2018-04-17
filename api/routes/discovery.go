@@ -60,7 +60,7 @@ func ProblemDiscoveryHandler(ctorData model.DataStorageCtor, ctorMeta model.Meta
 			return
 		}
 
-		path, err := pipeline.PersistFilteredData(datasetDir, target, ds)
+		path, _, err := pipeline.PersistFilteredData(datasetDir, target, ds)
 		if err != nil {
 			handleError(w, err)
 			return

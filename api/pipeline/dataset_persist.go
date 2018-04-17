@@ -88,11 +88,11 @@ func getFilteredDatasetHash(dataset string, target string, filterParams *model.F
 // PersistFilteredData creates a hash code from the combination of the dataset name, the target name, and its filter
 // state, and saves the filtered data and target data to disk if they haven't been previously.  The path to the data
 // is returned.
-func PersistFilteredData(datasetDir string, target string, dataset *model.QueriedDataset) (string, error) {
+func PersistFilteredData(datasetDir string, target string, dataset *model.QueriedDataset) (string, int, error) {
 	// parse the dataset and its filter state and generate a hashcode from both
 	hash, err := getFilteredDatasetHash(dataset.Metadata.Name, target, dataset.Filters)
 	if err != nil {
-		return "", err
+		return "", -1, err
 	}
 
 	// check to see if we already have this filtered dataset saved - return the path
@@ -100,14 +100,14 @@ func PersistFilteredData(datasetDir string, target string, dataset *model.Querie
 	path := path.Join(datasetDir, strconv.FormatUint(hash, 10))
 	if dirExists(path) {
 		log.Infof("Found cached data with hash %d", hash)
-		return path, nil
+		return path, -1, nil
 	}
 
 	// get the filtered dataset from elastic search
 	start := time.Now()
 	if len(dataset.Data.Values) <= 0 {
 		log.Info("No data available for data after filter application")
-		return "", nil
+		return "", -1, nil
 	}
 
 	// find the index of the target variable
@@ -119,27 +119,27 @@ func PersistFilteredData(datasetDir string, target string, dataset *model.Querie
 		}
 	}
 	if targetIdx < 0 {
-		return "", errors.Errorf("could not find target %s in filtered data", target)
+		return "", -1, errors.Errorf("could not find target %s in filtered data", target)
 	}
 
 	// create the path for the data and target csvs
 	if err := os.MkdirAll(path, 0777); err != nil && !os.IsExist(err) {
-		return "", errors.Wrapf(err, "unable to create dataset dir %s", datasetDir)
+		return "", -1, errors.Wrapf(err, "unable to create dataset dir %s", datasetDir)
 	}
 
 	// write the filtered data (minus the target field) to csv file
 	err = writeData(path, datasetDir, dataset.Data, targetIdx)
 	if err != nil {
-		return "", err
+		return "", -1, err
 	}
 
 	err = writeDataSchema(path, dataset.Metadata.Name, dataset.Data, targetIdx, dataset.Metadata.Variables)
 	if err != nil {
-		return "", err
+		return "", -1, err
 	}
 
 	log.Infof("Persisted data to %s in %v", path, time.Since(start))
-	return path, nil
+	return path, targetIdx, nil
 }
 
 // PersistData writes out the data to the specified file using a csv structure.
