@@ -186,7 +186,6 @@ export default Vue.extend({
 						dataset: this.dataset,
 						target: this.target
 					}).then(() => {
-						console.log('FETCHED PIPELINES');
 						Promise.all([
 							dataActions.fetchResultExtrema(this.$store, {
 								dataset: this.dataset,
@@ -198,7 +197,6 @@ export default Vue.extend({
 								requestIds: this.requestIds
 							})
 						]).then(() => {
-							console.log('FETCHED EXTREMA');
 							dataActions.fetchResultSummaries(this.$store, {
 								dataset: this.dataset,
 								variables: this.variables,

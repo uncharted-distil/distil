@@ -129,7 +129,6 @@ export const actions = {
 
 		return axios.get(`/distil/pipelines/${args.dataset}/${args.target}/${args.pipelineId}`)
 			.then(response => {
-				console.log('Pipeline response: ', response);
 				if (!response.data.pipelines) {
 					return;
 				}
@@ -142,8 +141,6 @@ export const actions = {
 							targetFeature = feature.featureName;
 						}
 					});
-
-					console.log('Pipeline: ', pipeline);
 
 					// update pipeline
 					mutations.updatePipelineRequests(context, {
@@ -174,8 +171,6 @@ export const actions = {
 			let receivedFirstResponse = false;
 
 			const stream = conn.stream(res => {
-
-				console.log('PIPELINE RESPONSE', res);
 
 				if (res.error) {
 					console.error(res.error);
@@ -222,8 +217,6 @@ export const actions = {
 				}
 
 			});
-
-			console.log('SENDING CREATE PIPELINES REQUEST');
 
 			// send create pipelines request
 			stream.send({

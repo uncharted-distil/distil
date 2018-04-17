@@ -60,7 +60,7 @@ func (m *CreateMessage) createSearchPipelinesRequest() (*SearchPipelinesRequest,
 			Inputs: []*ProblemInput{
 				{
 					DatasetId: convertDatasetTA3ToTA2(m.Dataset),
-					Targets:   convertTargetFeaturseTA3ToTA2(m.TargetFeature),
+					Targets:   convertTargetFeaturesTA3ToTA2(m.TargetFeature),
 				},
 			},
 		},
@@ -81,7 +81,6 @@ func (m *CreateMessage) createProducePipelineRequest(datasetURI string, pipeline
 }
 
 func (m *CreateMessage) persistPipelineError(statusChan chan CreateStatus, client *Client, pipelineStorage model.PipelineStorage, searchID string, pipelineID string, err error) {
-	fmt.Println("PERSISTING ERROR", err)
 	// persist the updated state
 	// NOTE: ignoring error
 	pipelineStorage.PersistPipeline(searchID, pipelineID, ErroredStatus, time.Now())
@@ -96,7 +95,6 @@ func (m *CreateMessage) persistPipelineError(statusChan chan CreateStatus, clien
 }
 
 func (m *CreateMessage) persistPipelineStatus(statusChan chan CreateStatus, client *Client, pipelineStorage model.PipelineStorage, searchID string, pipelineID string, status string) {
-	fmt.Println("PERSISTING", status)
 	// persist the updated state
 	err := pipelineStorage.PersistPipeline(searchID, pipelineID, status, time.Now())
 	if err != nil {
@@ -114,7 +112,6 @@ func (m *CreateMessage) persistPipelineStatus(statusChan chan CreateStatus, clie
 }
 
 func (m *CreateMessage) persistPipelineResults(statusChan chan CreateStatus, client *Client, pipelineStorage model.PipelineStorage, dataStorage model.DataStorage, searchID string, dataset string, pipelineID string, resultID string, resultURI string) {
-	fmt.Println("PERSISTING RESULT", resultURI)
 	// persist the completed state
 	err := pipelineStorage.PersistPipeline(searchID, pipelineID, CompletedStatus, time.Now())
 	if err != nil {
@@ -271,8 +268,6 @@ func (m *CreateMessage) DispatchPipelines(client *Client, pipelineStorage model.
 // PersistAndDispatch persists the pipeline request and dispatches it.
 func (m *CreateMessage) PersistAndDispatch(client *Client, pipelineStorage model.PipelineStorage, metaStorage model.MetadataStorage, dataStorage model.DataStorage) ([]chan CreateStatus, error) {
 
-	fmt.Println("PERSISTING")
-
 	// create search pipelines request
 	searchRequest, err := m.createSearchPipelinesRequest()
 	if err != nil {
@@ -329,15 +324,11 @@ func (m *CreateMessage) PersistAndDispatch(client *Client, pipelineStorage model
 		return nil, err
 	}
 
-	fmt.Println("DISPATCHING")
-
 	// dispatch pipelines
 	statusChannels, err := m.DispatchPipelines(client, pipelineStorage, dataStorage, requestID, dataset.Metadata.Name, datasetPath)
 	if err != nil {
 		return nil, err
 	}
-
-	fmt.Println("DISPATCHED")
 
 	return statusChannels, nil
 }
@@ -356,7 +347,7 @@ func convertTaskTypeFromTA3ToTA2(taskType string) TaskType {
 	return TaskType(TaskType_value[strings.ToUpper(taskType)])
 }
 
-func convertTargetFeaturseTA3ToTA2(target string) []*ProblemTarget {
+func convertTargetFeaturesTA3ToTA2(target string) []*ProblemTarget {
 	return []*ProblemTarget{
 		{
 			ColumnName:  target,
