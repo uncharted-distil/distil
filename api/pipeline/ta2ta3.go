@@ -324,16 +324,18 @@ func (m *CreateMessage) PersistAndDispatch(client *Client, pipelineStorage model
 
 	// store the request features
 	for _, v := range m.Filters.Variables {
-		err = pipelineStorage.PersistRequestFeature(requestID, v, model.FeatureTypeTrain)
+		var typ string
+		if v == m.TargetFeature {
+			// store target feature
+			typ = model.FeatureTypeTarget
+		} else {
+			// store training feature
+			typ = model.FeatureTypeTrain
+		}
+		err = pipelineStorage.PersistRequestFeature(requestID, v, typ)
 		if err != nil {
 			return nil, err
 		}
-	}
-
-	// store target feature
-	err = pipelineStorage.PersistRequestFeature(requestID, m.TargetFeature, model.FeatureTypeTarget)
-	if err != nil {
-		return nil, err
 	}
 
 	// store request filters
