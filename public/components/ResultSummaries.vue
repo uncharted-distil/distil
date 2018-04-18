@@ -151,7 +151,7 @@ export default Vue.extend({
 			return {
 				min: _.round(extrema.min, ERROR_DECIMALS),
 				max: _.round(extrema.max, ERROR_DECIMALS)
-			}
+			};
 		},
 
 		regressionEnabled(): boolean {

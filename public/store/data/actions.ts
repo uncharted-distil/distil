@@ -534,6 +534,14 @@ export const actions = {
 				filters: []
 			};
 		}
+
+		const pipeline = getPipelineById(context.rootState.pipelineModule, args.pipelineId);
+		if (!pipeline.resultId) {
+			// no results ready to pull
+			console.warn(`No 'resultId' exists for pipeline '${args.pipelineId}'`);
+			return null;
+		}
+
 		const highlightFilter = createFilterFromHighlightRoot(args.highlightRoot, INCLUDE_FILTER);
 		if (highlightFilter) {
 			highlightFilter.name = getVarFromTarget(highlightFilter.name);
@@ -647,6 +655,7 @@ export const actions = {
 		const pipeline = getPipelineById(context.rootState.pipelineModule, args.pipelineId);
 		if (!pipeline.resultId) {
 			// no results ready to pull
+			console.warn(`No 'resultId' exists for pipeline '${args.pipelineId}'`);
 			return null;
 		}
 
@@ -716,6 +725,12 @@ export const actions = {
 		}
 		if (!args.pipelineId) {
 			console.warn('`pipelineId` argument is missing');
+			return null;
+		}
+
+		const pipeline = getPipelineById(context.rootState.pipelineModule, args.pipelineId);
+		if (!pipeline.resultId) {
+			// no results ready to pull
 			return null;
 		}
 
