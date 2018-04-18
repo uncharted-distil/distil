@@ -5,7 +5,7 @@
 			<div class="result-summaries-label">
 				Error:
 			</div>
-			<div class="result-summaries-slider">
+			<div class="result-summaries-slider" v-if="showSlider">
 				<div class="error-center-line"></div>
 				<div class="error-center-label">0</div>
 				<vue-slider ref="slider"
@@ -48,6 +48,7 @@
 
 <script lang="ts">
 
+import _ from 'lodash';
 import ResultFacets from '../components/ResultFacets.vue';
 import Facets from '../components/Facets.vue';
 import { overlayRouteEntry } from '../util/routes';
@@ -59,12 +60,12 @@ import { actions as appActions, getters as appGetters } from '../store/app/modul
 import { EXPORT_SUCCESS_ROUTE } from '../store/route/index';
 import vueSlider from 'vue-slider-component';
 import Vue from 'vue';
-import _ from 'lodash';
 import 'font-awesome/css/font-awesome.css';
 import { PipelineInfo } from '../store/pipelines/index';
 
 const DEFAULT_PERCENTILE = 0.25;
 const NUM_STEPS = 100;
+const ERROR_DECIMALS = 2;
 
 export default Vue.extend({
 	name: 'result-summaries',
@@ -92,6 +93,10 @@ export default Vue.extend({
 
 		target(): string {
 			return routeGetters.getRouteTargetVariable(this.$store);
+		},
+
+		showSlider(): boolean {
+			return !_.isNaN(this.interval);
 		},
 
 		initialValue(): number[] {
@@ -135,12 +140,18 @@ export default Vue.extend({
 		},
 
 		interval(): number {
-			const interval = this.range / NUM_STEPS;
-			return interval;
+			return this.range / NUM_STEPS;
 		},
 
 		residualExtrema(): Extrema {
-			return dataGetters.getResidualExtrema(this.$store);
+			const extrema = dataGetters.getResidualExtrema(this.$store);
+			if (!extrema) {
+				return extrema;
+			}
+			return {
+				min: _.round(extrema.min, ERROR_DECIMALS),
+				max: _.round(extrema.max, ERROR_DECIMALS)
+			}
 		},
 
 		regressionEnabled(): boolean {

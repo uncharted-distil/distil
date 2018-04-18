@@ -14,17 +14,12 @@
 					<strong>Feature:</strong> {{result.feature}}
 				</div>
 				<div>
-					<b-badge v-if="isSubmitted()">
+					<b-badge v-if="isPending()">
 						{{status()}}
 					</b-badge>
 					<b-badge variant="info" v-if="isRunning()">
 						{{status()}}
 					</b-badge>
-					<div v-if="isUpdated()">
-						<b-badge variant="info" v-bind:key="score.metric" v-for="score in result.scores">
-							{{metricName(score.metric)}}: {{score.value}}
-						</b-badge>
-					</div>
 					<div v-if="isCompleted()">
 						<b-badge variant="info" v-bind:key="score.metric" v-for="score in result.scores">
 							{{metricName(score.metric)}}: {{score.value}}
@@ -81,7 +76,7 @@ export default Vue.extend({
 		metricName(metric): string {
 			return getMetricDisplayName(metric);
 		},
-		isSubmitted(): boolean {
+		isPending(): boolean {
 			return (<PipelineInfo>this.result).progress === PIPELINE_PENDING;
 		},
 		isRunning(): boolean {

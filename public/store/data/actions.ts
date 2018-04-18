@@ -103,7 +103,7 @@ export const actions = {
 		return context.dispatch('fetchVariables', {
 			dataset: args.dataset
 		}).then(() => {
-			context.dispatch('fetchVariableSummaries', {
+			return context.dispatch('fetchVariableSummaries', {
 				dataset: args.dataset,
 				variables: context.state.variables
 			});
@@ -303,7 +303,7 @@ export const actions = {
 
 		mutations.setSelectedData(context, null);
 
-		context.dispatch('fetchData', { dataset: args.dataset, filters: args.filters, invert: false })
+		return context.dispatch('fetchData', { dataset: args.dataset, filters: args.filters, invert: false })
 			.then(response => {
 				mutations.setSelectedData(context, response.data);
 			})
@@ -327,7 +327,7 @@ export const actions = {
 
 		mutations.setExcludedData(context, null);
 
-		context.dispatch('fetchData', { dataset: args.dataset, filters: args.filters, invert: true })
+		return context.dispatch('fetchData', { dataset: args.dataset, filters: args.filters, invert: true })
 			.then(response => {
 				mutations.setExcludedData(context, response.data);
 			})
@@ -541,7 +541,7 @@ export const actions = {
 		}
 		mutations.setSelectedData(context, null);
 		mutations.setResultData(context, null);
-		context.dispatch('fetchResults', args)
+		return context.dispatch('fetchResults', args)
 			.then(response => {
 				mutations.setResultData(context, response.data);
 			})
