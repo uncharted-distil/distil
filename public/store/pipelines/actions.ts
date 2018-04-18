@@ -114,6 +114,54 @@ function updatePipelineResults(context: any, req: CreatePipelineRequest, res: Pi
 
 export const actions = {
 
+	fetchPipeline(context: AppContext, args: { dataset?: string, target?: string, pipelineId?: string }) {
+		if (!args.dataset) {
+			args.dataset = null;
+		}
+		if (!args.target) {
+			args.target = null;
+		}
+		if (!args.pipelineId) {
+			console.warn('`pipelineId` argument is missing');
+			return null;
+		}
+
+		return axios.get(`/distil/pipelines/${args.dataset}/${args.target}/${args.pipelineId}`)
+			.then(response => {
+				if (!response.data.pipelines) {
+					return;
+				}
+				const pipelines = response.data.pipelines as PipelineInfo[];
+				pipelines.forEach(pipeline => {
+
+					let targetFeature = '';
+					pipeline.features.forEach(feature => {
+						if (feature.featureType === FEATURE_TYPE_TARGET) {
+							targetFeature = feature.featureName;
+						}
+					});
+
+					// update pipeline
+					mutations.updatePipelineRequests(context, {
+						name: targetFeature,
+						feature: targetFeature,
+						filters: pipeline.filters,
+						features: pipeline.features,
+						requestId: pipeline.requestId,
+						dataset: pipeline.dataset,
+						timestamp: pipeline.timestamp,
+						progress: pipeline.progress,
+						pipelineId: pipeline.pipelineId,
+						resultId: pipeline.resultId,
+						scores: pipeline.scores
+					});
+				});
+			})
+			.catch(error => {
+				console.error(error);
+			});
+	},
+
 	fetchPipelines(context: AppContext, args: { dataset?: string, target?: string, pipelineId?: string }) {
 		if (!args.dataset) {
 			args.dataset = null;
@@ -184,7 +232,7 @@ export const actions = {
 				// resultId is present to fetch summary
 
 				// update pipeline status
-				context.dispatch('fetchPipelines', {
+				context.dispatch('fetchPipeline', {
 					dataset: request.dataset,
 					target: request.target,
 					pipelineId: res.pipelineId,
