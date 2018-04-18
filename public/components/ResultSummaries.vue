@@ -65,7 +65,7 @@ import { PipelineInfo } from '../store/pipelines/index';
 
 const DEFAULT_PERCENTILE = 0.25;
 const NUM_STEPS = 100;
-const ERROR_DECIMALS = 2;
+const ERROR_DECIMALS = 0;
 
 export default Vue.extend({
 	name: 'result-summaries',
@@ -102,8 +102,7 @@ export default Vue.extend({
 		initialValue(): number[] {
 			const min = routeGetters.getRouteResidualThresholdMin(this.$store);
 			const max = routeGetters.getRouteResidualThresholdMax(this.$store);
-			if (min === undefined || min === '' ||
-				max === undefined || max === '') {
+			if (min === undefined || max === undefined) {
 				if (!_.isNaN(this.defaultValue[0]) && !_.isNaN(this.defaultValue[1])) {
 					this.updateThreshold(this.defaultValue[0], this.defaultValue[1]);
 				}

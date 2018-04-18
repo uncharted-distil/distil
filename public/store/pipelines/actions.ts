@@ -34,7 +34,7 @@ function updateCurrentPipelineResults(context: any, req: CreatePipelineRequest, 
 	}
 
 	Promise.all([
-		context.dispatch('fetchResultExtrema', {
+		context.dispatch('fetchTargetResultExtrema', {
 			dataset: req.dataset,
 			variable: req.target,
 			pipelineId: res.pipelineId
@@ -46,7 +46,7 @@ function updateCurrentPipelineResults(context: any, req: CreatePipelineRequest, 
 	]).then(() => {
 		// if current pipelineId, pull result summaries
 		if (res.pipelineId === currentPipelineId) {
-			context.dispatch('fetchResultSummaries', {
+			context.dispatch('fetchTrainingResultSummaries', {
 				dataset: req.dataset,
 				pipelineId: res.pipelineId,
 				variables: context.getters.getActivePipelineVariables,
@@ -83,7 +83,7 @@ function updateCurrentPipelineResults(context: any, req: CreatePipelineRequest, 
 function updatePipelineResults(context: any, req: CreatePipelineRequest, res: PipelineInfo) {
 
 	Promise.all([
-		context.dispatch('fetchResultExtrema', {
+		context.dispatch('fetchTargetResultExtrema', {
 			dataset: req.dataset,
 			variable: req.target,
 			pipelineId: res.pipelineId

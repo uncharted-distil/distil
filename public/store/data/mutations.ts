@@ -41,6 +41,10 @@ export const mutations = {
 		state.predictedExtremas = {};
 	},
 
+	clearPredictedExtrema(state: DataState, pipelineId: string) {
+		Vue.delete(state.predictedExtremas, pipelineId);
+	},
+
 	updatePredictedExtremas(state: DataState, args: { pipelineId: string, extrema: Extrema }) {
 		Vue.set(state.predictedExtremas, args.pipelineId, args.extrema);
 	},
@@ -49,15 +53,19 @@ export const mutations = {
 		state.residualExtremas = {};
 	},
 
+	clearResidualsExtrema(state: DataState, pipelineId: string) {
+		Vue.delete(state.residualExtremas, pipelineId);
+	},
+
 	updateResidualsExtremas(state: DataState, args: { pipelineId: string, extrema: Extrema }) {
 		Vue.set(state.residualExtremas, args.pipelineId, args.extrema);
 	},
 
-	updateResultExtrema(state: DataState, args: { extrema: Extrema }) {
+	updateTargetResultExtrema(state: DataState, args: { extrema: Extrema }) {
 		state.resultExtrema = args.extrema;
 	},
 
-	clearResultExtrema(state: DataState) {
+	clearTargetResultExtrema(state: DataState) {
 		state.resultExtrema = null;
 	},
 

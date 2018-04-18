@@ -131,7 +131,7 @@ export default Vue.extend({
 		},
 		pipelineId() {
 			Promise.all([
-				dataActions.fetchResultExtrema(this.$store, {
+				dataActions.fetchTargetResultExtrema(this.$store, {
 					dataset: this.dataset,
 					variable: this.target,
 					pipelineId: this.pipelineId
@@ -141,7 +141,7 @@ export default Vue.extend({
 					requestIds: this.requestIds
 				})
 			]).then(() => {
-				dataActions.fetchResultSummaries(this.$store, {
+				dataActions.fetchTrainingResultSummaries(this.$store, {
 					dataset: this.dataset,
 					variables: this.variables,
 					pipelineId: this.pipelineId,
@@ -187,7 +187,7 @@ export default Vue.extend({
 						target: this.target
 					}).then(() => {
 						Promise.all([
-							dataActions.fetchResultExtrema(this.$store, {
+							dataActions.fetchTargetResultExtrema(this.$store, {
 								dataset: this.dataset,
 								variable: this.target,
 								pipelineId: this.pipelineId
@@ -197,7 +197,7 @@ export default Vue.extend({
 								requestIds: this.requestIds
 							})
 						]).then(() => {
-							dataActions.fetchResultSummaries(this.$store, {
+							dataActions.fetchTrainingResultSummaries(this.$store, {
 								dataset: this.dataset,
 								variables: this.variables,
 								pipelineId: this.pipelineId,

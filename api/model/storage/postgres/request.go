@@ -236,9 +236,8 @@ func (s *Storage) FetchPipelineResultByDatasetTarget(dataset string, target stri
 	// get the pipeline ids
 	sql := fmt.Sprintf("SELECT DISTINCT pipeline.pipeline_id "+
 		"FROM %s request INNER JOIN %s rf ON request.request_id = rf.request_id "+
-		"INNER JOIN %s pipeline ON request.request_id = pipeline.request_id "+
-		"LEFT JOIN %s result ON pipeline.pipeline_id = result.pipeline_id",
-		requestTableName, featureTableName, pipelineTableName, pipelineResultTableName)
+		"INNER JOIN %s pipeline ON request.request_id = pipeline.request_id ",
+		requestTableName, featureTableName, pipelineTableName)
 	params := make([]interface{}, 0)
 
 	if dataset != "" {

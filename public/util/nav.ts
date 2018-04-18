@@ -1,4 +1,5 @@
 import VueRouter from 'vue-router';
+import _ from 'lodash';
 import { Store } from 'vuex';
 import { createRouteEntry } from '../util/routes';
 import { restoreView } from '../util/view';
@@ -8,7 +9,7 @@ import { getters as routeGetters } from '../store/route/module';
 export function gotoView(store: Store<any>, router: VueRouter, view: string, overrides: any) {
 	const dataset = routeGetters.getRouteDataset(store);
 	const prev = restoreView(store, view, dataset);
-	const entry = createRouteEntry(view, prev ? prev.query : overrides);
+	const entry = createRouteEntry(view, prev ? _.merge({}, prev.query, pruneEmpty(overrides)) : overrides);
 	router.push(entry);
 }
 
@@ -47,4 +48,25 @@ export function gotoResults(store: Store<any>, router: VueRouter) {
 		dataset: routeGetters.getRouteDataset(store),
 		target: routeGetters.getRouteTargetVariable(store)
 	});
+}
+
+function prune(current) {
+	_.forIn(current, (value, key) => {
+		if (value === undefined ||
+			value == null ||
+			(_.isString(value) && _.isEmpty(value)) ||
+			(_.isObject(value) && _.isEmpty(prune(value)))) {
+			delete current[key];
+		}
+	});
+	// remove any leftover undefined values from the delete
+	// operation on an array
+	if (_.isArray(current)) {
+		_.pull(current, undefined);
+	}
+	return current;
+}
+
+function pruneEmpty(obj) {
+	return prune(_.cloneDeep(obj));
 }
