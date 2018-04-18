@@ -8,7 +8,6 @@ import { FilterParams } from '../../util/filters';
 
 const ES_INDEX = 'datasets';
 const CREATE_PIPELINES = 'CREATE_PIPELINES';
-const FEATURE_TYPE_TARGET = 'target';
 
 interface CreatePipelineRequest {
 	dataset: string;
@@ -114,37 +113,23 @@ function updatePipelineResults(context: any, req: CreatePipelineRequest, res: Pi
 
 export const actions = {
 
-	fetchPipeline(context: AppContext, args: { dataset?: string, target?: string, pipelineId?: string }) {
-		if (!args.dataset) {
-			args.dataset = null;
-		}
-		if (!args.target) {
-			args.target = null;
-		}
+	fetchPipeline(context: AppContext, args: { pipelineId?: string }) {
 		if (!args.pipelineId) {
 			console.warn('`pipelineId` argument is missing');
 			return null;
 		}
 
-		return axios.get(`/distil/pipelines/${args.dataset}/${args.target}/${args.pipelineId}`)
+		return axios.get(`/distil/pipelines/null/null/${args.pipelineId}`)
 			.then(response => {
 				if (!response.data.pipelines) {
 					return;
 				}
-				const pipelines = response.data.pipelines as PipelineInfo[];
+				const pipelines = response.data.pipelines;
 				pipelines.forEach(pipeline => {
-
-					let targetFeature = '';
-					pipeline.features.forEach(feature => {
-						if (feature.featureType === FEATURE_TYPE_TARGET) {
-							targetFeature = feature.featureName;
-						}
-					});
-
 					// update pipeline
 					mutations.updatePipelineRequests(context, {
-						name: targetFeature,
-						feature: targetFeature,
+						name: pipeline.feature,
+						feature: pipeline.feature,
 						filters: pipeline.filters,
 						features: pipeline.features,
 						requestId: pipeline.requestId,
@@ -180,20 +165,12 @@ export const actions = {
 				if (!response.data.pipelines) {
 					return;
 				}
-				const pipelines = response.data.pipelines as PipelineInfo[];
+				const pipelines = response.data.pipelines;
 				pipelines.forEach(pipeline => {
-
-					let targetFeature = '';
-					pipeline.features.forEach(feature => {
-						if (feature.featureType === FEATURE_TYPE_TARGET) {
-							targetFeature = feature.featureName;
-						}
-					});
-
 					// update pipeline
 					mutations.updatePipelineRequests(context, {
-						name: targetFeature,
-						feature: targetFeature,
+						name: pipeline.feature,
+						feature: pipeline.feature,
 						filters: pipeline.filters,
 						features: pipeline.features,
 						requestId: pipeline.requestId,
