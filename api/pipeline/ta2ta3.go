@@ -286,6 +286,9 @@ func (m *CreateMessage) DispatchPipelines(client *Client, pipelineStorage model.
 // PersistAndDispatch persists the pipeline request and dispatches it.
 func (m *CreateMessage) PersistAndDispatch(client *Client, pipelineStorage model.PipelineStorage, metaStorage model.MetadataStorage, dataStorage model.DataStorage) ([]chan CreateStatus, error) {
 
+	// NOTE: D3M index field is needed in the persisted data.
+	m.Filters.Variables = append(m.Filters.Variables, "d3mIndex")
+
 	// fetch the queried dataset
 	dataset, err := model.FetchDataset(m.Dataset, m.Index, true, m.Filters, metaStorage, dataStorage)
 	if err != nil {
