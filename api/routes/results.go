@@ -70,6 +70,16 @@ func ResultsHandler(pipelineCtor model.PipelineStorageCtor, dataCtor model.DataS
 
 		// get the result URI
 		res, err := pipeline.FetchPipelineResult(pipelineID)
+		if err != nil {
+			handleError(w, err)
+			return
+		}
+
+		// if no result, return an empty map
+		if res == nil {
+			handleJSON(w, make(map[string]interface{}))
+			return
+		}
 
 		results, err := data.FetchFilteredResults(dataset, esIndex, res.ResultURI, filterParams)
 		if err != nil {
