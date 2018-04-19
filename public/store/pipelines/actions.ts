@@ -38,7 +38,7 @@ function updateCurrentPipelineResults(context: any, req: CreatePipelineRequest, 
 	let extremaFetches = [];
 	if (isRegression) {
 		extremaFetches = [
-			context.dispatch('fetchResultExtrema', {
+			context.dispatch('fetchTargetResultExtrema', {
 				dataset: req.dataset,
 				variable: req.target,
 				pipelineId: res.pipelineId
