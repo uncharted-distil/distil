@@ -40,7 +40,7 @@ function updateCurrentPipelineResults(context: any, req: CreatePipelineRequest, 
 		extremaFetches = [
 			context.dispatch('fetchResultExtrema', {
 				dataset: req.dataset,
-				variable: req.feature,
+				variable: req.target,
 				pipelineId: res.pipelineId
 			}),
 			context.dispatch('fetchPredictedExtrema', {
@@ -89,14 +89,14 @@ function updateCurrentPipelineResults(context: any, req: CreatePipelineRequest, 
 	}
 }
 
-function updatePipelineResults(context: any, req: PipelineRequest, res: PipelineInfo) {
+function updatePipelineResults(context: any, req: CreatePipelineRequest, res: PipelineInfo) {
 	const isRegression = req.task.toLowerCase() === regression.schemaName.toLowerCase();
 	let extremaFetches = [];
 	if (isRegression) {
 		extremaFetches = [
 			context.dispatch('fetchTargetResultExtrema', {
 				dataset: req.dataset,
-				variable: req.feature,
+				variable: req.target,
 				pipelineId: res.pipelineId
 			}),
 			context.dispatch('fetchPredictedExtrema', {

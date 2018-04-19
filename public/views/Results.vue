@@ -136,7 +136,7 @@ export default Vue.extend({
 			let extremaFetches = [];
 			if (isRegression) {
 				extremaFetches = [
-					dataActions.fetchResultExtrema(this.$store, {
+					dataActions.fetchTargetResultExtrema(this.$store, {
 						dataset: this.dataset,
 						variable: this.target,
 						pipelineId: this.pipelineId
@@ -148,7 +148,7 @@ export default Vue.extend({
 				];
 			}
 			Promise.all(extremaFetches).then(() => {
-				dataActions.fetchResultSummaries(this.$store, {
+				dataActions.fetchTrainingResultSummaries(this.$store, {
 					dataset: this.dataset,
 					variables: this.variables,
 					pipelineId: this.pipelineId,
@@ -197,7 +197,7 @@ export default Vue.extend({
 						let extremaFetches = [];
 						if (isRegression) {
 							extremaFetches = [
-								dataActions.fetchResultExtrema(this.$store, {
+								dataActions.fetchTargetResultExtrema(this.$store, {
 									dataset: this.dataset,
 									variable: this.target,
 									pipelineId: this.pipelineId
@@ -209,7 +209,7 @@ export default Vue.extend({
 							];
 						}
 						Promise.all(extremaFetches).then(() => {
-							dataActions.fetchResultSummaries(this.$store, {
+							dataActions.fetchTrainingResultSummaries(this.$store, {
 								dataset: this.dataset,
 								variables: this.variables,
 								pipelineId: this.pipelineId,

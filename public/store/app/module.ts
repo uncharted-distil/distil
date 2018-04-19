@@ -31,7 +31,6 @@ export const actions = {
 
 // type mutators
 export const mutations = {
-	setUserSession: commit(moduleMutations.setUserSession),
 	setAborted: commit(moduleMutations.setAborted),
 	setVersionNumber: commit(moduleMutations.setVersionNumber),
 	setVersionTimestamp: commit(moduleMutations.setVersionTimestamp)

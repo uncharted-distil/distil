@@ -7,7 +7,6 @@ export interface AppState {
 
 // shared data model
 export const state: AppState = {
-	session: {} as UserSession,
 	isAborted: false,
 	versionNumber: 'unknown',
 	versionTimestamp: 'unknown'
