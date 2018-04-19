@@ -72,7 +72,7 @@ func (s *Storage) getResidualsHistogramAggQuery(extrema *model.Extrema, variable
 
 func getResultJoin(dataset string) string {
 	// FROM clause to join result and base data on d3mIdex value
-	return fmt.Sprintf("%s_result as res inner join %s as data on data.\"%s\" = res.index", dataset, dataset, d3mIndexFieldName)
+	return fmt.Sprintf("%s_result as res inner join %s as data on data.\"%s\" = res.index", dataset, dataset, model.D3MIndexFieldName)
 }
 
 func getResidualsMinMaxAggsQuery(variable *model.Variable, resultVariable *model.Variable) string {

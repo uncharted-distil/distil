@@ -287,7 +287,7 @@ func (m *CreateMessage) DispatchPipelines(client *Client, pipelineStorage model.
 func (m *CreateMessage) PersistAndDispatch(client *Client, pipelineStorage model.PipelineStorage, metaStorage model.MetadataStorage, dataStorage model.DataStorage) ([]chan CreateStatus, error) {
 
 	// NOTE: D3M index field is needed in the persisted data.
-	m.Filters.Variables = append(m.Filters.Variables, "d3mIndex")
+	m.Filters.Variables = append(m.Filters.Variables, model.D3MIndexFieldName)
 
 	// fetch the queried dataset
 	dataset, err := model.FetchDataset(m.Dataset, m.Index, true, m.Filters, metaStorage, dataStorage)
@@ -328,6 +328,11 @@ func (m *CreateMessage) PersistAndDispatch(client *Client, pipelineStorage model
 	// store the request features
 	for _, v := range m.Filters.Variables {
 		var typ string
+		// ignore the index field
+		if v == model.D3MIndexFieldName {
+			continue
+		}
+
 		if v == m.TargetFeature {
 			// store target feature
 			typ = model.FeatureTypeTarget

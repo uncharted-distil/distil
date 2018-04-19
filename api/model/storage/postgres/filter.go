@@ -160,7 +160,7 @@ func (s *Storage) FetchNumRows(dataset string, filters map[string]interface{}) (
 
 func (s *Storage) filterIncludesIndex(filterParams *model.FilterParams) bool {
 	for _, v := range filterParams.Filters {
-		if v.Name == d3mIndexFieldName {
+		if v.Name == model.D3MIndexFieldName {
 			return true
 		}
 	}
@@ -213,7 +213,7 @@ func (s *Storage) FetchData(dataset string, index string, filterParams *model.Fi
 	}
 
 	// order & limit the filtered data.
-	query = fmt.Sprintf("%s ORDER BY \"%s\"", query, d3mIndexFieldName)
+	query = fmt.Sprintf("%s ORDER BY \"%s\"", query, model.D3MIndexFieldName)
 	if filterParams.Size > 0 {
 		query = fmt.Sprintf("%s LIMIT %d", query, filterParams.Size)
 	}

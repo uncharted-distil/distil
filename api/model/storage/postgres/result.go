@@ -350,7 +350,8 @@ func (s *Storage) FetchFilteredResults(dataset string, index string, resultURI s
 			"%s "+
 			"FROM %s as predicted inner join %s as data on data.\"%s\" = predicted.index "+
 			"WHERE result_id = $%d AND target = $%d",
-		predictedCol, targetName, targetCol, errorExpr, fields, datasetResult, dataset, d3mIndexFieldName, len(params)+1, len(params)+2)
+		predictedCol, targetName, targetCol, errorExpr, fields, datasetResult, dataset,
+		model.D3MIndexFieldName, len(params)+1, len(params)+2)
 
 	params = append(params, resultURI)
 	params = append(params, targetName)

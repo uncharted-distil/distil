@@ -12,7 +12,6 @@ const (
 	pipelineScoreTableName  = "pipeline_score"
 	featureTableName        = "request_feature"
 	filterTableName         = "request_filter"
-	d3mIndexFieldName       = "d3mIndex"
 
 	// Database data types
 	dataTypeText    = "TEXT"
