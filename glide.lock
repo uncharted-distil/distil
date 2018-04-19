@@ -1,5 +1,5 @@
-hash: acc6ec698458aabdfc46cc6396be7e5249f438112d2783976bfa616937e91b68
-updated: 2018-04-10T17:15:38.515360274-04:00
+hash: a48c9e58b8dc46bd797a2481095fd53e258d6029e61884229dbccc82c924a9ff
+updated: 2018-04-04T17:46:05.488880752-04:00
 imports:
 - name: github.com/caarlos0/env
   version: 7cd7992b3bc86f920394f8de92c13900da1a46b7
@@ -84,7 +84,7 @@ imports:
   - document
   - util
 - name: github.com/unchartedsoftware/distil-ingest
-  version: d179e250ca3b37646ba2fcc0f320f1b02bf020a4
+  version: b4d5090437fffe172aeda3b4e58009f5dd9b5548
   repo: git@github.com:unchartedsoftware/distil-ingest.git
   vcs: git
   subpackages:
