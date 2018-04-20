@@ -214,12 +214,12 @@ func (f *TextField) FetchResultSummaryData(resultURI string, dataset string, dat
 		where = " WHERE result.result_id = $1 and result.target = $2"
 	}
 	params = append(params, resultURI, targetName)
-
-	query := fmt.Sprintf("SELECT base.\"%s\", result.value, COUNT(*) AS count "+
+	query := fmt.Sprintf("SELECT unnest(tsvector_to_array(to_tsvector(base.\"%s\"))) as \"%s\", "+
+		"unnest(tsvector_to_array(to_tsvector(result.value))) as value, COUNT(*) AS count "+
 		"FROM %s AS result INNER JOIN %s AS base ON result.index = base.\"d3mIndex\" "+
 		"%s "+
-		"GROUP BY result.value, base.\"%s\" "+
-		"ORDER BY count desc;", targetName, datasetResult, dataset, where, targetName)
+		"GROUP BY unnest(tsvector_to_array(to_tsvector(result.value))), unnest(tsvector_to_array(to_tsvector(base.\"%s\"))) "+
+		"ORDER BY count desc;", targetName, targetName, datasetResult, dataset, where, targetName)
 
 	// execute the postgres query
 	res, err := f.Storage.client.Query(query, params...)
