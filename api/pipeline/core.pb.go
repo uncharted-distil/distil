@@ -6,28 +6,73 @@ Package pipeline is a generated protocol buffer package.
 
 It is generated from these files:
 	core.proto
+	pipeline.proto
+	primitive.proto
+	problem.proto
+	value.proto
 
 It has these top-level messages:
-	SessionContext
-	Status
-	Response
-	SessionRequest
-	SessionResponse
-	Feature
-	PipelineCreateRequest
+	ScoringConfiguration
 	Score
-	Pipeline
-	PipelineCreateResult
-	PipelineExecuteRequest
-	PipelineExecuteResult
-	PipelineListRequest
-	PipelineDeleteRequest
-	PipelineCancelRequest
-	PipelineListResult
-	PipelineCreateResultsRequest
-	PipelineExecuteResultsRequest
+	UpdateProblemRequest
+	UpdateProblemResponse
+	SearchPipelinesRequest
+	SearchPipelinesResponse
+	EndSearchPipelinesRequest
+	EndSearchPipelinesResponse
+	StopSearchPipelinesRequest
+	StopSearchPipelinesResponse
+	PipelineSearchScore
+	GetSearchPipelinesResultsRequest
+	GetSearchPipelinesResultsResponse
+	DescribePipelineRequest
+	PrimitiveStepDescription
+	SubpipelineStepDescription
+	StepDescription
+	DescribePipelineResponse
+	StepProgress
+	PipelineRunUser
+	ScorePipelineRequest
+	ScorePipelineResponse
+	GetScorePipelineResultsRequest
+	GetScorePipelineResultsResponse
+	FitPipelineRequest
+	FitPipelineResponse
+	GetFitPipelineResultsRequest
+	GetFitPipelineResultsResponse
+	ProducePipelineRequest
+	ProducePipelineResponse
+	GetProducePipelineResultsRequest
+	GetProducePipelineResultsResponse
 	PipelineExportRequest
-	SetProblemDocRequest
+	PipelineExportResponse
+	ListPrimitivesRequest
+	ListPrimitivesResponse
+	ListAllowedValueTypesRequest
+	ListAllowedValueTypesResponse
+	ContainerArgument
+	PrimitiveArgument
+	DataArgument
+	PrimitiveStepArgument
+	StepInput
+	StepOutput
+	PipelineSource
+	PipelineDescriptionUser
+	PipelineDescriptionInput
+	PipelineDescriptionOutput
+	PrimitivePipelineDescriptionStep
+	SubpipelinePipelineDescriptionStep
+	PlaceholderPipelineDescriptionStep
+	PipelineDescriptionStep
+	PipelineDescription
+	Primitive
+	ProblemPerformanceMetric
+	Problem
+	ProblemTarget
+	ProblemInput
+	ProblemDescription
+	ValueError
+	Value
 */
 package pipeline
 
@@ -35,6 +80,7 @@ import proto "github.com/golang/protobuf/proto"
 import fmt "fmt"
 import math "math"
 import google_protobuf "github.com/golang/protobuf/protoc-gen-go/descriptor"
+import google_protobuf1 "github.com/golang/protobuf/ptypes/timestamp"
 
 import (
 	context "golang.org/x/net/context"
@@ -52,89 +98,77 @@ var _ = math.Inf
 // proto package needs to be updated.
 const _ = proto.ProtoPackageIsVersion2 // please upgrade the proto package
 
-type StatusCode int32
+type EvaluationMethod int32
 
 const (
-	StatusCode_UNKNOWN             StatusCode = 0
-	StatusCode_OK                  StatusCode = 1
-	StatusCode_CANCELLED           StatusCode = 2
-	StatusCode_SESSION_UNKNOWN     StatusCode = 3
-	StatusCode_SESSION_ENDED       StatusCode = 4
-	StatusCode_SESSION_EXPIRED     StatusCode = 5
-	StatusCode_INVALID_ARGUMENT    StatusCode = 6
-	StatusCode_RESOURCE_EXHAUSTED  StatusCode = 7
-	StatusCode_UNAVAILABLE         StatusCode = 8
-	StatusCode_FAILED_PRECONDITION StatusCode = 9
-	StatusCode_OUT_OF_RANGE        StatusCode = 10
-	StatusCode_UNIMPLEMENTED       StatusCode = 11
-	StatusCode_INTERNAL            StatusCode = 12
-	StatusCode_ABORTED             StatusCode = 13
+	// Default value. Not to be used.
+	EvaluationMethod_EVALUATION_METHOD_UNDEFINED EvaluationMethod = 0
+	// The following are the only evaluation methods required
+	// to be supported for the "ScorePipeline" call.
+	EvaluationMethod_HOLDOUT EvaluationMethod = 1
+	EvaluationMethod_K_FOLD  EvaluationMethod = 2
+	// The rest are defined to allow expressing internal evaluation
+	// methods used by TA2 during pipeline search. If any you are using
+	// is missing, feel free to request it to be added.
+	EvaluationMethod_LEAVE_ONE_OUT EvaluationMethod = 100
+	// Instead of really scoring, a TA2 might predict the score only.
+	EvaluationMethod_PREDICTION EvaluationMethod = 101
+	// Training data is reused to test as well.
+	EvaluationMethod_TRAINING_DATA EvaluationMethod = 102
 )
 
-var StatusCode_name = map[int32]string{
-	0:  "UNKNOWN",
-	1:  "OK",
-	2:  "CANCELLED",
-	3:  "SESSION_UNKNOWN",
-	4:  "SESSION_ENDED",
-	5:  "SESSION_EXPIRED",
-	6:  "INVALID_ARGUMENT",
-	7:  "RESOURCE_EXHAUSTED",
-	8:  "UNAVAILABLE",
-	9:  "FAILED_PRECONDITION",
-	10: "OUT_OF_RANGE",
-	11: "UNIMPLEMENTED",
-	12: "INTERNAL",
-	13: "ABORTED",
+var EvaluationMethod_name = map[int32]string{
+	0:   "EVALUATION_METHOD_UNDEFINED",
+	1:   "HOLDOUT",
+	2:   "K_FOLD",
+	100: "LEAVE_ONE_OUT",
+	101: "PREDICTION",
+	102: "TRAINING_DATA",
 }
-var StatusCode_value = map[string]int32{
-	"UNKNOWN":             0,
-	"OK":                  1,
-	"CANCELLED":           2,
-	"SESSION_UNKNOWN":     3,
-	"SESSION_ENDED":       4,
-	"SESSION_EXPIRED":     5,
-	"INVALID_ARGUMENT":    6,
-	"RESOURCE_EXHAUSTED":  7,
-	"UNAVAILABLE":         8,
-	"FAILED_PRECONDITION": 9,
-	"OUT_OF_RANGE":        10,
-	"UNIMPLEMENTED":       11,
-	"INTERNAL":            12,
-	"ABORTED":             13,
+var EvaluationMethod_value = map[string]int32{
+	"EVALUATION_METHOD_UNDEFINED": 0,
+	"HOLDOUT":                     1,
+	"K_FOLD":                      2,
+	"LEAVE_ONE_OUT":               100,
+	"PREDICTION":                  101,
+	"TRAINING_DATA":               102,
 }
 
-func (x StatusCode) String() string {
-	return proto.EnumName(StatusCode_name, int32(x))
+func (x EvaluationMethod) String() string {
+	return proto.EnumName(EvaluationMethod_name, int32(x))
 }
-func (StatusCode) EnumDescriptor() ([]byte, []int) { return fileDescriptor0, []int{0} }
+func (EvaluationMethod) EnumDescriptor() ([]byte, []int) { return fileDescriptor0, []int{0} }
 
+// After "progress" becomes "COMPLETED" or "ERRORED" stream closes.
 type Progress int32
 
 const (
+	// Default value. Not to be used.
 	Progress_PROGRESS_UNKNOWN Progress = 0
-	Progress_SUBMITTED        Progress = 1
-	Progress_RUNNING          Progress = 2
-	Progress_UPDATED          Progress = 3
-	Progress_COMPLETED        Progress = 4
-	Progress_ERRORED          Progress = 5
+	// The process has been scheduled but is pending execution.
+	Progress_PENDING Progress = 1
+	// The process is currently running. There can be multiple messages with this state
+	// (while the process is running).
+	Progress_RUNNING Progress = 2
+	// The process completed and final results are available.
+	Progress_COMPLETED Progress = 3
+	// The process failed.
+	Progress_ERRORED Progress = 4
 )
 
 var Progress_name = map[int32]string{
 	0: "PROGRESS_UNKNOWN",
-	1: "SUBMITTED",
+	1: "PENDING",
 	2: "RUNNING",
-	3: "UPDATED",
-	4: "COMPLETED",
-	5: "ERRORED",
+	3: "COMPLETED",
+	4: "ERRORED",
 }
 var Progress_value = map[string]int32{
 	"PROGRESS_UNKNOWN": 0,
-	"SUBMITTED":        1,
+	"PENDING":          1,
 	"RUNNING":          2,
-	"UPDATED":          3,
-	"COMPLETED":        4,
-	"ERRORED":          5,
+	"COMPLETED":        3,
+	"ERRORED":          4,
 }
 
 func (x Progress) String() string {
@@ -142,740 +176,1161 @@ func (x Progress) String() string {
 }
 func (Progress) EnumDescriptor() ([]byte, []int) { return fileDescriptor0, []int{1} }
 
-type TaskType int32
-
-const (
-	TaskType_TASK_TYPE_UNDEFINED     TaskType = 0
-	TaskType_CLASSIFICATION          TaskType = 1
-	TaskType_REGRESSION              TaskType = 2
-	TaskType_CLUSTERING              TaskType = 3
-	TaskType_LINK_PREDICTION         TaskType = 4
-	TaskType_VERTEX_NOMINATION       TaskType = 5
-	TaskType_COMMUNITY_DETECTION     TaskType = 6
-	TaskType_GRAPH_CLUSTERING        TaskType = 7
-	TaskType_GRAPH_MATCHING          TaskType = 8
-	TaskType_TIME_SERIES_FORECASTING TaskType = 9
-	TaskType_COLLABORATIVE_FILTERING TaskType = 10
-)
-
-var TaskType_name = map[int32]string{
-	0:  "TASK_TYPE_UNDEFINED",
-	1:  "CLASSIFICATION",
-	2:  "REGRESSION",
-	3:  "CLUSTERING",
-	4:  "LINK_PREDICTION",
-	5:  "VERTEX_NOMINATION",
-	6:  "COMMUNITY_DETECTION",
-	7:  "GRAPH_CLUSTERING",
-	8:  "GRAPH_MATCHING",
-	9:  "TIME_SERIES_FORECASTING",
-	10: "COLLABORATIVE_FILTERING",
-}
-var TaskType_value = map[string]int32{
-	"TASK_TYPE_UNDEFINED":     0,
-	"CLASSIFICATION":          1,
-	"REGRESSION":              2,
-	"CLUSTERING":              3,
-	"LINK_PREDICTION":         4,
-	"VERTEX_NOMINATION":       5,
-	"COMMUNITY_DETECTION":     6,
-	"GRAPH_CLUSTERING":        7,
-	"GRAPH_MATCHING":          8,
-	"TIME_SERIES_FORECASTING": 9,
-	"COLLABORATIVE_FILTERING": 10,
+type ScoringConfiguration struct {
+	// The evaluation method to use.
+	Method EvaluationMethod `protobuf:"varint,1,opt,name=method,enum=EvaluationMethod" json:"method,omitempty"`
+	// Number of folds made, if applicable.
+	Folds int32 `protobuf:"varint,2,opt,name=folds" json:"folds,omitempty"`
+	// Ratio of train set vs. test set, if applicable.
+	TrainTestRatio float64 `protobuf:"fixed64,3,opt,name=train_test_ratio,json=trainTestRatio" json:"train_test_ratio,omitempty"`
+	// Shuffle data?  If applicable.
+	Shuffle bool `protobuf:"varint,4,opt,name=shuffle" json:"shuffle,omitempty"`
+	// Fix random seed to use for shuffling. Optional.
+	RandomSeed int32 `protobuf:"varint,5,opt,name=random_seed,json=randomSeed" json:"random_seed,omitempty"`
+	// Do stratified k-fold? If applicable.
+	Stratified bool `protobuf:"varint,6,opt,name=stratified" json:"stratified,omitempty"`
 }
 
-func (x TaskType) String() string {
-	return proto.EnumName(TaskType_name, int32(x))
-}
-func (TaskType) EnumDescriptor() ([]byte, []int) { return fileDescriptor0, []int{2} }
+func (m *ScoringConfiguration) Reset()                    { *m = ScoringConfiguration{} }
+func (m *ScoringConfiguration) String() string            { return proto.CompactTextString(m) }
+func (*ScoringConfiguration) ProtoMessage()               {}
+func (*ScoringConfiguration) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{0} }
 
-type TaskSubtype int32
-
-const (
-	TaskSubtype_TASK_SUBTYPE_UNDEFINED TaskSubtype = 0
-	TaskSubtype_NONE                   TaskSubtype = 1
-	TaskSubtype_BINARY                 TaskSubtype = 2
-	TaskSubtype_MULTICLASS             TaskSubtype = 3
-	TaskSubtype_MULTILABEL             TaskSubtype = 4
-	TaskSubtype_UNIVARIATE             TaskSubtype = 5
-	TaskSubtype_MULTIVARIATE           TaskSubtype = 6
-	TaskSubtype_OVERLAPPING            TaskSubtype = 7
-	TaskSubtype_NONOVERLAPPING         TaskSubtype = 8
-)
-
-var TaskSubtype_name = map[int32]string{
-	0: "TASK_SUBTYPE_UNDEFINED",
-	1: "NONE",
-	2: "BINARY",
-	3: "MULTICLASS",
-	4: "MULTILABEL",
-	5: "UNIVARIATE",
-	6: "MULTIVARIATE",
-	7: "OVERLAPPING",
-	8: "NONOVERLAPPING",
-}
-var TaskSubtype_value = map[string]int32{
-	"TASK_SUBTYPE_UNDEFINED": 0,
-	"NONE":           1,
-	"BINARY":         2,
-	"MULTICLASS":     3,
-	"MULTILABEL":     4,
-	"UNIVARIATE":     5,
-	"MULTIVARIATE":   6,
-	"OVERLAPPING":    7,
-	"NONOVERLAPPING": 8,
-}
-
-func (x TaskSubtype) String() string {
-	return proto.EnumName(TaskSubtype_name, int32(x))
-}
-func (TaskSubtype) EnumDescriptor() ([]byte, []int) { return fileDescriptor0, []int{3} }
-
-type OutputType int32
-
-const (
-	OutputType_OUTPUT_TYPE_UNDEFINED OutputType = 0
-)
-
-var OutputType_name = map[int32]string{
-	0: "OUTPUT_TYPE_UNDEFINED",
-}
-var OutputType_value = map[string]int32{
-	"OUTPUT_TYPE_UNDEFINED": 0,
-}
-
-func (x OutputType) String() string {
-	return proto.EnumName(OutputType_name, int32(x))
-}
-func (OutputType) EnumDescriptor() ([]byte, []int) { return fileDescriptor0, []int{4} }
-
-type PerformanceMetric int32
-
-const (
-	PerformanceMetric_METRIC_UNDEFINED              PerformanceMetric = 0
-	PerformanceMetric_EXECUTION_TIME                PerformanceMetric = 1
-	PerformanceMetric_ACCURACY                      PerformanceMetric = 2
-	PerformanceMetric_F1                            PerformanceMetric = 3
-	PerformanceMetric_F1_MICRO                      PerformanceMetric = 4
-	PerformanceMetric_F1_MACRO                      PerformanceMetric = 5
-	PerformanceMetric_ROC_AUC                       PerformanceMetric = 6
-	PerformanceMetric_ROC_AUC_MICRO                 PerformanceMetric = 7
-	PerformanceMetric_ROC_AUC_MACRO                 PerformanceMetric = 8
-	PerformanceMetric_MEAN_SQUARED_ERROR            PerformanceMetric = 9
-	PerformanceMetric_ROOT_MEAN_SQUARED_ERROR       PerformanceMetric = 10
-	PerformanceMetric_ROOT_MEAN_SQUARED_ERROR_AVG   PerformanceMetric = 11
-	PerformanceMetric_MEAN_ABSOLUTE_ERROR           PerformanceMetric = 12
-	PerformanceMetric_R_SQUARED                     PerformanceMetric = 13
-	PerformanceMetric_NORMALIZED_MUTUAL_INFORMATION PerformanceMetric = 14
-	PerformanceMetric_JACCARD_SIMILARITY_SCORE      PerformanceMetric = 15
-)
-
-var PerformanceMetric_name = map[int32]string{
-	0:  "METRIC_UNDEFINED",
-	1:  "EXECUTION_TIME",
-	2:  "ACCURACY",
-	3:  "F1",
-	4:  "F1_MICRO",
-	5:  "F1_MACRO",
-	6:  "ROC_AUC",
-	7:  "ROC_AUC_MICRO",
-	8:  "ROC_AUC_MACRO",
-	9:  "MEAN_SQUARED_ERROR",
-	10: "ROOT_MEAN_SQUARED_ERROR",
-	11: "ROOT_MEAN_SQUARED_ERROR_AVG",
-	12: "MEAN_ABSOLUTE_ERROR",
-	13: "R_SQUARED",
-	14: "NORMALIZED_MUTUAL_INFORMATION",
-	15: "JACCARD_SIMILARITY_SCORE",
-}
-var PerformanceMetric_value = map[string]int32{
-	"METRIC_UNDEFINED":              0,
-	"EXECUTION_TIME":                1,
-	"ACCURACY":                      2,
-	"F1":                            3,
-	"F1_MICRO":                      4,
-	"F1_MACRO":                      5,
-	"ROC_AUC":                       6,
-	"ROC_AUC_MICRO":                 7,
-	"ROC_AUC_MACRO":                 8,
-	"MEAN_SQUARED_ERROR":            9,
-	"ROOT_MEAN_SQUARED_ERROR":       10,
-	"ROOT_MEAN_SQUARED_ERROR_AVG":   11,
-	"MEAN_ABSOLUTE_ERROR":           12,
-	"R_SQUARED":                     13,
-	"NORMALIZED_MUTUAL_INFORMATION": 14,
-	"JACCARD_SIMILARITY_SCORE":      15,
-}
-
-func (x PerformanceMetric) String() string {
-	return proto.EnumName(PerformanceMetric_name, int32(x))
-}
-func (PerformanceMetric) EnumDescriptor() ([]byte, []int) { return fileDescriptor0, []int{5} }
-
-type SessionContext struct {
-	SessionId string `protobuf:"bytes,1,opt,name=session_id,json=sessionId" json:"session_id,omitempty"`
-}
-
-func (m *SessionContext) Reset()                    { *m = SessionContext{} }
-func (m *SessionContext) String() string            { return proto.CompactTextString(m) }
-func (*SessionContext) ProtoMessage()               {}
-func (*SessionContext) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{0} }
-
-func (m *SessionContext) GetSessionId() string {
+func (m *ScoringConfiguration) GetMethod() EvaluationMethod {
 	if m != nil {
-		return m.SessionId
+		return m.Method
 	}
-	return ""
+	return EvaluationMethod_EVALUATION_METHOD_UNDEFINED
 }
 
-type Status struct {
-	Code    StatusCode `protobuf:"varint,1,opt,name=code,enum=StatusCode" json:"code,omitempty"`
-	Details string     `protobuf:"bytes,2,opt,name=details" json:"details,omitempty"`
-}
-
-func (m *Status) Reset()                    { *m = Status{} }
-func (m *Status) String() string            { return proto.CompactTextString(m) }
-func (*Status) ProtoMessage()               {}
-func (*Status) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{1} }
-
-func (m *Status) GetCode() StatusCode {
+func (m *ScoringConfiguration) GetFolds() int32 {
 	if m != nil {
-		return m.Code
-	}
-	return StatusCode_UNKNOWN
-}
-
-func (m *Status) GetDetails() string {
-	if m != nil {
-		return m.Details
-	}
-	return ""
-}
-
-type Response struct {
-	Status *Status `protobuf:"bytes,1,opt,name=status" json:"status,omitempty"`
-}
-
-func (m *Response) Reset()                    { *m = Response{} }
-func (m *Response) String() string            { return proto.CompactTextString(m) }
-func (*Response) ProtoMessage()               {}
-func (*Response) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{2} }
-
-func (m *Response) GetStatus() *Status {
-	if m != nil {
-		return m.Status
-	}
-	return nil
-}
-
-// in the future we could also pass arguments allowing one to fork an existing session,
-// or provide resource limits on a session (asking TA2 system to terminate work if it exceeds a given limit)
-type SessionRequest struct {
-	UserAgent string `protobuf:"bytes,1,opt,name=user_agent,json=userAgent" json:"user_agent,omitempty"`
-	Version   string `protobuf:"bytes,2,opt,name=version" json:"version,omitempty"`
-}
-
-func (m *SessionRequest) Reset()                    { *m = SessionRequest{} }
-func (m *SessionRequest) String() string            { return proto.CompactTextString(m) }
-func (*SessionRequest) ProtoMessage()               {}
-func (*SessionRequest) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{3} }
-
-func (m *SessionRequest) GetUserAgent() string {
-	if m != nil {
-		return m.UserAgent
-	}
-	return ""
-}
-
-func (m *SessionRequest) GetVersion() string {
-	if m != nil {
-		return m.Version
-	}
-	return ""
-}
-
-type SessionResponse struct {
-	ResponseInfo *Response       `protobuf:"bytes,1,opt,name=response_info,json=responseInfo" json:"response_info,omitempty"`
-	UserAgent    string          `protobuf:"bytes,2,opt,name=user_agent,json=userAgent" json:"user_agent,omitempty"`
-	Version      string          `protobuf:"bytes,3,opt,name=version" json:"version,omitempty"`
-	Context      *SessionContext `protobuf:"bytes,4,opt,name=context" json:"context,omitempty"`
-}
-
-func (m *SessionResponse) Reset()                    { *m = SessionResponse{} }
-func (m *SessionResponse) String() string            { return proto.CompactTextString(m) }
-func (*SessionResponse) ProtoMessage()               {}
-func (*SessionResponse) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{4} }
-
-func (m *SessionResponse) GetResponseInfo() *Response {
-	if m != nil {
-		return m.ResponseInfo
-	}
-	return nil
-}
-
-func (m *SessionResponse) GetUserAgent() string {
-	if m != nil {
-		return m.UserAgent
-	}
-	return ""
-}
-
-func (m *SessionResponse) GetVersion() string {
-	if m != nil {
-		return m.Version
-	}
-	return ""
-}
-
-func (m *SessionResponse) GetContext() *SessionContext {
-	if m != nil {
-		return m.Context
-	}
-	return nil
-}
-
-type Feature struct {
-	ResourceId string `protobuf:"bytes,1,opt,name=resource_id,json=resourceId" json:"resource_id,omitempty"`
-	// be set to a string value of '0' when working with a raw CSV file rather than a D3M dataset.
-	FeatureName string `protobuf:"bytes,2,opt,name=feature_name,json=featureName" json:"feature_name,omitempty"`
-}
-
-func (m *Feature) Reset()                    { *m = Feature{} }
-func (m *Feature) String() string            { return proto.CompactTextString(m) }
-func (*Feature) ProtoMessage()               {}
-func (*Feature) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{5} }
-
-func (m *Feature) GetResourceId() string {
-	if m != nil {
-		return m.ResourceId
-	}
-	return ""
-}
-
-func (m *Feature) GetFeatureName() string {
-	if m != nil {
-		return m.FeatureName
-	}
-	return ""
-}
-
-type PipelineCreateRequest struct {
-	Context         *SessionContext     `protobuf:"bytes,1,opt,name=context" json:"context,omitempty"`
-	DatasetUri      string              `protobuf:"bytes,2,opt,name=dataset_uri,json=datasetUri" json:"dataset_uri,omitempty"`
-	Task            TaskType            `protobuf:"varint,3,opt,name=task,enum=TaskType" json:"task,omitempty"`
-	TaskSubtype     TaskSubtype         `protobuf:"varint,4,opt,name=task_subtype,json=taskSubtype,enum=TaskSubtype" json:"task_subtype,omitempty"`
-	TaskDescription string              `protobuf:"bytes,5,opt,name=task_description,json=taskDescription" json:"task_description,omitempty"`
-	Output          OutputType          `protobuf:"varint,6,opt,name=output,enum=OutputType" json:"output,omitempty"`
-	Metrics         []PerformanceMetric `protobuf:"varint,7,rep,packed,name=metrics,enum=PerformanceMetric" json:"metrics,omitempty"`
-	TargetFeatures  []*Feature          `protobuf:"bytes,8,rep,name=target_features,json=targetFeatures" json:"target_features,omitempty"`
-	PredictFeatures []*Feature          `protobuf:"bytes,9,rep,name=predict_features,json=predictFeatures" json:"predict_features,omitempty"`
-	MaxPipelines    int32               `protobuf:"varint,10,opt,name=max_pipelines,json=maxPipelines" json:"max_pipelines,omitempty"`
-}
-
-func (m *PipelineCreateRequest) Reset()                    { *m = PipelineCreateRequest{} }
-func (m *PipelineCreateRequest) String() string            { return proto.CompactTextString(m) }
-func (*PipelineCreateRequest) ProtoMessage()               {}
-func (*PipelineCreateRequest) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{6} }
-
-func (m *PipelineCreateRequest) GetContext() *SessionContext {
-	if m != nil {
-		return m.Context
-	}
-	return nil
-}
-
-func (m *PipelineCreateRequest) GetDatasetUri() string {
-	if m != nil {
-		return m.DatasetUri
-	}
-	return ""
-}
-
-func (m *PipelineCreateRequest) GetTask() TaskType {
-	if m != nil {
-		return m.Task
-	}
-	return TaskType_TASK_TYPE_UNDEFINED
-}
-
-func (m *PipelineCreateRequest) GetTaskSubtype() TaskSubtype {
-	if m != nil {
-		return m.TaskSubtype
-	}
-	return TaskSubtype_TASK_SUBTYPE_UNDEFINED
-}
-
-func (m *PipelineCreateRequest) GetTaskDescription() string {
-	if m != nil {
-		return m.TaskDescription
-	}
-	return ""
-}
-
-func (m *PipelineCreateRequest) GetOutput() OutputType {
-	if m != nil {
-		return m.Output
-	}
-	return OutputType_OUTPUT_TYPE_UNDEFINED
-}
-
-func (m *PipelineCreateRequest) GetMetrics() []PerformanceMetric {
-	if m != nil {
-		return m.Metrics
-	}
-	return nil
-}
-
-func (m *PipelineCreateRequest) GetTargetFeatures() []*Feature {
-	if m != nil {
-		return m.TargetFeatures
-	}
-	return nil
-}
-
-func (m *PipelineCreateRequest) GetPredictFeatures() []*Feature {
-	if m != nil {
-		return m.PredictFeatures
-	}
-	return nil
-}
-
-func (m *PipelineCreateRequest) GetMaxPipelines() int32 {
-	if m != nil {
-		return m.MaxPipelines
+		return m.Folds
 	}
 	return 0
 }
 
+func (m *ScoringConfiguration) GetTrainTestRatio() float64 {
+	if m != nil {
+		return m.TrainTestRatio
+	}
+	return 0
+}
+
+func (m *ScoringConfiguration) GetShuffle() bool {
+	if m != nil {
+		return m.Shuffle
+	}
+	return false
+}
+
+func (m *ScoringConfiguration) GetRandomSeed() int32 {
+	if m != nil {
+		return m.RandomSeed
+	}
+	return 0
+}
+
+func (m *ScoringConfiguration) GetStratified() bool {
+	if m != nil {
+		return m.Stratified
+	}
+	return false
+}
+
 type Score struct {
-	Metric PerformanceMetric `protobuf:"varint,1,opt,name=metric,enum=PerformanceMetric" json:"metric,omitempty"`
-	Value  float32           `protobuf:"fixed32,2,opt,name=value" json:"value,omitempty"`
+	Metric *ProblemPerformanceMetric `protobuf:"bytes,1,opt,name=metric" json:"metric,omitempty"`
+	Value  *Value                    `protobuf:"bytes,2,opt,name=value" json:"value,omitempty"`
 }
 
 func (m *Score) Reset()                    { *m = Score{} }
 func (m *Score) String() string            { return proto.CompactTextString(m) }
 func (*Score) ProtoMessage()               {}
-func (*Score) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{7} }
+func (*Score) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{1} }
 
-func (m *Score) GetMetric() PerformanceMetric {
+func (m *Score) GetMetric() *ProblemPerformanceMetric {
 	if m != nil {
 		return m.Metric
 	}
-	return PerformanceMetric_METRIC_UNDEFINED
+	return nil
 }
 
-func (m *Score) GetValue() float32 {
+func (m *Score) GetValue() *Value {
 	if m != nil {
 		return m.Value
 	}
-	return 0
+	return nil
 }
 
-type Pipeline struct {
-	PredictResultUri string     `protobuf:"bytes,1,opt,name=predict_result_uri,json=predictResultUri" json:"predict_result_uri,omitempty"`
-	Output           OutputType `protobuf:"varint,2,opt,name=output,enum=OutputType" json:"output,omitempty"`
-	Scores           []*Score   `protobuf:"bytes,3,rep,name=scores" json:"scores,omitempty"`
+// Updates problem with new description. This upates problem description also for all
+// ongoing pipeline searches associated with this problem. Internal behavior of TA2
+// is unspecified: it can simply start a new search using new problem description, or
+// it can start modifying pipelines it has already found to new problem description, or
+// it can use it to help narrow down onging pipeline search further. In any case, after
+// this call returns, all found pipelines for searches associated with this problem
+// should be for the updated problem description.
+type UpdateProblemRequest struct {
+	SearchId string `protobuf:"bytes,1,opt,name=search_id,json=searchId" json:"search_id,omitempty"`
+	// New problem description. It has to be provided in full and it replaces existing
+	// problem description.
+	Problem *ProblemDescription `protobuf:"bytes,2,opt,name=problem" json:"problem,omitempty"`
 }
 
-func (m *Pipeline) Reset()                    { *m = Pipeline{} }
-func (m *Pipeline) String() string            { return proto.CompactTextString(m) }
-func (*Pipeline) ProtoMessage()               {}
-func (*Pipeline) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{8} }
+func (m *UpdateProblemRequest) Reset()                    { *m = UpdateProblemRequest{} }
+func (m *UpdateProblemRequest) String() string            { return proto.CompactTextString(m) }
+func (*UpdateProblemRequest) ProtoMessage()               {}
+func (*UpdateProblemRequest) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{2} }
 
-func (m *Pipeline) GetPredictResultUri() string {
+func (m *UpdateProblemRequest) GetSearchId() string {
 	if m != nil {
-		return m.PredictResultUri
+		return m.SearchId
 	}
 	return ""
 }
 
-func (m *Pipeline) GetOutput() OutputType {
+func (m *UpdateProblemRequest) GetProblem() *ProblemDescription {
 	if m != nil {
-		return m.Output
+		return m.Problem
 	}
-	return OutputType_OUTPUT_TYPE_UNDEFINED
+	return nil
 }
 
-func (m *Pipeline) GetScores() []*Score {
+type UpdateProblemResponse struct {
+}
+
+func (m *UpdateProblemResponse) Reset()                    { *m = UpdateProblemResponse{} }
+func (m *UpdateProblemResponse) String() string            { return proto.CompactTextString(m) }
+func (*UpdateProblemResponse) ProtoMessage()               {}
+func (*UpdateProblemResponse) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{3} }
+
+// Starts a new pipeline search. Found pipelines have not necessary be fitted on the provided
+// inputs. Problem description and inputs are used only to help guide the search process.
+// Consider found pipelines just a static descriptions of pipelines at this stage.
+// Multiple parallel pipeline searches can happen at the same time.
+type SearchPipelinesRequest struct {
+	// Some string identifying the name and version of the TA3 system.
+	UserAgent string `protobuf:"bytes,1,opt,name=user_agent,json=userAgent" json:"user_agent,omitempty"`
+	// Shall be set to "protocol_version" above.
+	Version string `protobuf:"bytes,2,opt,name=version" json:"version,omitempty"`
+	// Which value types can a TA2 system use to communicate values to a TA3 system?
+	// The order is important as TA2 system will try value types in order until one works out,
+	// or an error will be returned instead of the value.
+	AllowedValueTypes []ValueType `protobuf:"varint,3,rep,packed,name=allowed_value_types,json=allowedValueTypes,enum=ValueType" json:"allowed_value_types,omitempty"`
+	// Problem description to use for the pipeline search.
+	Problem *ProblemDescription `protobuf:"bytes,4,opt,name=problem" json:"problem,omitempty"`
+	// A pipeline template to use for search or to execute. If template is ommited, then a
+	// regular pipeline search is done. If template consists only of one placeholder step,
+	// then a regular pipeline search is done to replace that step. If there is no placeholder
+	// step, but template describes a full pipeline with free hyper-parameters, then this
+	// call becomes a hyper-paramater tuning call over free hyper-paramaters and found pipelines
+	// share the same pipeline, but different hyper-parameter configurations. If there is no
+	// placeholder step and all hyper-parameters are fixed as part of the pipeline, then this
+	// call only checks the given template and returns the same pipeline back, to be execeuted.
+	// This allows fixed computations to be done on data, for example, pipeline can consist
+	// of only one primitve with fixed hyper-parameters to execute that one primitive.
+	// Moreover, such fully specified pipeline with fixed hyper-parametres can have any
+	// inputs and any outputs. Otherwise pipelines have to be from a Dataset container value
+	// to predictions.
+	Template *PipelineDescription `protobuf:"bytes,5,opt,name=template" json:"template,omitempty"`
+	// Pipeline inputs used during pipeline search. They have to point to be Dataset container
+	// values. Order matters as each input is mapped to template's input in order. Optional
+	// for templates without a placeholder and with all hyper-parameters fixed.
+	Inputs []*Value `protobuf:"bytes,6,rep,name=inputs" json:"inputs,omitempty"`
+}
+
+func (m *SearchPipelinesRequest) Reset()                    { *m = SearchPipelinesRequest{} }
+func (m *SearchPipelinesRequest) String() string            { return proto.CompactTextString(m) }
+func (*SearchPipelinesRequest) ProtoMessage()               {}
+func (*SearchPipelinesRequest) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{4} }
+
+func (m *SearchPipelinesRequest) GetUserAgent() string {
+	if m != nil {
+		return m.UserAgent
+	}
+	return ""
+}
+
+func (m *SearchPipelinesRequest) GetVersion() string {
+	if m != nil {
+		return m.Version
+	}
+	return ""
+}
+
+func (m *SearchPipelinesRequest) GetAllowedValueTypes() []ValueType {
+	if m != nil {
+		return m.AllowedValueTypes
+	}
+	return nil
+}
+
+func (m *SearchPipelinesRequest) GetProblem() *ProblemDescription {
+	if m != nil {
+		return m.Problem
+	}
+	return nil
+}
+
+func (m *SearchPipelinesRequest) GetTemplate() *PipelineDescription {
+	if m != nil {
+		return m.Template
+	}
+	return nil
+}
+
+func (m *SearchPipelinesRequest) GetInputs() []*Value {
+	if m != nil {
+		return m.Inputs
+	}
+	return nil
+}
+
+// Call returns immediatelly with the ID. Use "GetFoundPipelines" call to get results.
+type SearchPipelinesResponse struct {
+	// An ID identifying this pipeline search. This string should be at least 22 characters
+	// long to ensure enough entropy to not be guessable.
+	SearchId string `protobuf:"bytes,1,opt,name=search_id,json=searchId" json:"search_id,omitempty"`
+	// Some string identifying the name and version of the TA2 system.
+	UserAgent string `protobuf:"bytes,2,opt,name=user_agent,json=userAgent" json:"user_agent,omitempty"`
+	// Shall be set to "protocol_version" above.
+	Version string `protobuf:"bytes,3,opt,name=version" json:"version,omitempty"`
+}
+
+func (m *SearchPipelinesResponse) Reset()                    { *m = SearchPipelinesResponse{} }
+func (m *SearchPipelinesResponse) String() string            { return proto.CompactTextString(m) }
+func (*SearchPipelinesResponse) ProtoMessage()               {}
+func (*SearchPipelinesResponse) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{5} }
+
+func (m *SearchPipelinesResponse) GetSearchId() string {
+	if m != nil {
+		return m.SearchId
+	}
+	return ""
+}
+
+func (m *SearchPipelinesResponse) GetUserAgent() string {
+	if m != nil {
+		return m.UserAgent
+	}
+	return ""
+}
+
+func (m *SearchPipelinesResponse) GetVersion() string {
+	if m != nil {
+		return m.Version
+	}
+	return ""
+}
+
+// Ends the search and releases all resources associated with the pipeline search.
+// If the call is made in parallel with a running search and results are being streamed,
+// the search is stopped and the "GetSearchPipelinesResults" stream is closed by TA2
+// (as it happens when the search is concluded on its own, or when search is stopped
+// by "StopSearchPipelines"). Found pipeline IDs during the search are not usable
+// anymore after this call.
+type EndSearchPipelinesRequest struct {
+	SearchId string `protobuf:"bytes,1,opt,name=search_id,json=searchId" json:"search_id,omitempty"`
+}
+
+func (m *EndSearchPipelinesRequest) Reset()                    { *m = EndSearchPipelinesRequest{} }
+func (m *EndSearchPipelinesRequest) String() string            { return proto.CompactTextString(m) }
+func (*EndSearchPipelinesRequest) ProtoMessage()               {}
+func (*EndSearchPipelinesRequest) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{6} }
+
+func (m *EndSearchPipelinesRequest) GetSearchId() string {
+	if m != nil {
+		return m.SearchId
+	}
+	return ""
+}
+
+type EndSearchPipelinesResponse struct {
+}
+
+func (m *EndSearchPipelinesResponse) Reset()                    { *m = EndSearchPipelinesResponse{} }
+func (m *EndSearchPipelinesResponse) String() string            { return proto.CompactTextString(m) }
+func (*EndSearchPipelinesResponse) ProtoMessage()               {}
+func (*EndSearchPipelinesResponse) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{7} }
+
+// Stops the search but leaves all already found pipelines available.
+// If the call is made in parallel with a running search and results are being streamed,
+// the "GetSearchPipelinesResults" stream is closed by TA2 (as it happens when the search
+// is concluded on its own). Search cannot be re-started after it has been stopped.
+type StopSearchPipelinesRequest struct {
+	SearchId string `protobuf:"bytes,1,opt,name=search_id,json=searchId" json:"search_id,omitempty"`
+}
+
+func (m *StopSearchPipelinesRequest) Reset()                    { *m = StopSearchPipelinesRequest{} }
+func (m *StopSearchPipelinesRequest) String() string            { return proto.CompactTextString(m) }
+func (*StopSearchPipelinesRequest) ProtoMessage()               {}
+func (*StopSearchPipelinesRequest) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{8} }
+
+func (m *StopSearchPipelinesRequest) GetSearchId() string {
+	if m != nil {
+		return m.SearchId
+	}
+	return ""
+}
+
+type StopSearchPipelinesResponse struct {
+}
+
+func (m *StopSearchPipelinesResponse) Reset()                    { *m = StopSearchPipelinesResponse{} }
+func (m *StopSearchPipelinesResponse) String() string            { return proto.CompactTextString(m) }
+func (*StopSearchPipelinesResponse) ProtoMessage()               {}
+func (*StopSearchPipelinesResponse) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{9} }
+
+// Decription of a TA2 score done during pipeline search. Because there is a wide range of potential
+// approaches TA2 can use to score candidate pipelines this might not capture what your TA2 is doing.
+// Feel free to request additions to be able to describe your approch.
+type PipelineSearchScore struct {
+	ScoringConfiguration *ScoringConfiguration `protobuf:"bytes,1,opt,name=scoring_configuration,json=scoringConfiguration" json:"scoring_configuration,omitempty"`
+	Score                *Score                `protobuf:"bytes,2,opt,name=score" json:"score,omitempty"`
+}
+
+func (m *PipelineSearchScore) Reset()                    { *m = PipelineSearchScore{} }
+func (m *PipelineSearchScore) String() string            { return proto.CompactTextString(m) }
+func (*PipelineSearchScore) ProtoMessage()               {}
+func (*PipelineSearchScore) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{10} }
+
+func (m *PipelineSearchScore) GetScoringConfiguration() *ScoringConfiguration {
+	if m != nil {
+		return m.ScoringConfiguration
+	}
+	return nil
+}
+
+func (m *PipelineSearchScore) GetScore() *Score {
+	if m != nil {
+		return m.Score
+	}
+	return nil
+}
+
+// Get all pipelines found until now during the search and start receiving any
+// new pipeline found as well.
+type GetSearchPipelinesResultsRequest struct {
+	SearchId string `protobuf:"bytes,1,opt,name=search_id,json=searchId" json:"search_id,omitempty"`
+}
+
+func (m *GetSearchPipelinesResultsRequest) Reset()         { *m = GetSearchPipelinesResultsRequest{} }
+func (m *GetSearchPipelinesResultsRequest) String() string { return proto.CompactTextString(m) }
+func (*GetSearchPipelinesResultsRequest) ProtoMessage()    {}
+func (*GetSearchPipelinesResultsRequest) Descriptor() ([]byte, []int) {
+	return fileDescriptor0, []int{11}
+}
+
+func (m *GetSearchPipelinesResultsRequest) GetSearchId() string {
+	if m != nil {
+		return m.SearchId
+	}
+	return ""
+}
+
+type GetSearchPipelinesResultsResponse struct {
+	PipelineId string `protobuf:"bytes,1,opt,name=pipeline_id,json=pipelineId" json:"pipeline_id,omitempty"`
+	// Internal score for this pipeline between 0.0 and 1.0 where 1.0 is the highest score.
+	// There is no other meaning to this score and it does not necessary depend on scores
+	// listed in the problem description. Optional.
+	// Becaue this field is optional, if omitted the default value will be 0. But 0 is a
+	// valid value for this field. Because of that you should never omit the field.
+	// If you do not have internal score to provide, use NaN for the value of this field
+	// to signal that.
+	InternalScore float64 `protobuf:"fixed64,2,opt,name=internal_score,json=internalScore" json:"internal_score,omitempty"`
+	// TA2 might be able to provide more meaningful scores as well, depending on its
+	// approach to pipeline search. Moreover, even same TA2 might not use same scoring
+	// approach for all its pipelines. Optional.
+	Scores []*PipelineSearchScore `protobuf:"bytes,3,rep,name=scores" json:"scores,omitempty"`
+}
+
+func (m *GetSearchPipelinesResultsResponse) Reset()         { *m = GetSearchPipelinesResultsResponse{} }
+func (m *GetSearchPipelinesResultsResponse) String() string { return proto.CompactTextString(m) }
+func (*GetSearchPipelinesResultsResponse) ProtoMessage()    {}
+func (*GetSearchPipelinesResultsResponse) Descriptor() ([]byte, []int) {
+	return fileDescriptor0, []int{12}
+}
+
+func (m *GetSearchPipelinesResultsResponse) GetPipelineId() string {
+	if m != nil {
+		return m.PipelineId
+	}
+	return ""
+}
+
+func (m *GetSearchPipelinesResultsResponse) GetInternalScore() float64 {
+	if m != nil {
+		return m.InternalScore
+	}
+	return 0
+}
+
+func (m *GetSearchPipelinesResultsResponse) GetScores() []*PipelineSearchScore {
 	if m != nil {
 		return m.Scores
 	}
 	return nil
 }
 
-type PipelineCreateResult struct {
-	ResponseInfo *Response `protobuf:"bytes,1,opt,name=response_info,json=responseInfo" json:"response_info,omitempty"`
-	// and the stream should be closed immediately
-	// if pipeline_id is set and this is an error, it concerns only that single pipeline
-	// (progress_info should be set to ERRORED) and the create process will continue to
-	// create and train the other pipelines
-	ProgressInfo Progress `protobuf:"varint,2,opt,name=progress_info,json=progressInfo,enum=Progress" json:"progress_info,omitempty"`
-	// pipeline failed and unavailable for ExecutePipeline or ExportPipeline
-	PipelineId string `protobuf:"bytes,3,opt,name=pipeline_id,json=pipelineId" json:"pipeline_id,omitempty"`
-	// Will be set if progress info value is UPDATED or COMPLETED
-	PipelineInfo *Pipeline `protobuf:"bytes,4,opt,name=pipeline_info,json=pipelineInfo" json:"pipeline_info,omitempty"`
+// Request a detailed description of the found pipeline.
+type DescribePipelineRequest struct {
+	PipelineId string `protobuf:"bytes,1,opt,name=pipeline_id,json=pipelineId" json:"pipeline_id,omitempty"`
 }
 
-func (m *PipelineCreateResult) Reset()                    { *m = PipelineCreateResult{} }
-func (m *PipelineCreateResult) String() string            { return proto.CompactTextString(m) }
-func (*PipelineCreateResult) ProtoMessage()               {}
-func (*PipelineCreateResult) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{9} }
+func (m *DescribePipelineRequest) Reset()                    { *m = DescribePipelineRequest{} }
+func (m *DescribePipelineRequest) String() string            { return proto.CompactTextString(m) }
+func (*DescribePipelineRequest) ProtoMessage()               {}
+func (*DescribePipelineRequest) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{13} }
 
-func (m *PipelineCreateResult) GetResponseInfo() *Response {
+func (m *DescribePipelineRequest) GetPipelineId() string {
 	if m != nil {
-		return m.ResponseInfo
+		return m.PipelineId
+	}
+	return ""
+}
+
+type PrimitiveStepDescription struct {
+	// Selected value for free pipeline hyper-parameters.
+	Hyperparams map[string]*Value `protobuf:"bytes,1,rep,name=hyperparams" json:"hyperparams,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
+}
+
+func (m *PrimitiveStepDescription) Reset()                    { *m = PrimitiveStepDescription{} }
+func (m *PrimitiveStepDescription) String() string            { return proto.CompactTextString(m) }
+func (*PrimitiveStepDescription) ProtoMessage()               {}
+func (*PrimitiveStepDescription) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{14} }
+
+func (m *PrimitiveStepDescription) GetHyperparams() map[string]*Value {
+	if m != nil {
+		return m.Hyperparams
 	}
 	return nil
 }
 
-func (m *PipelineCreateResult) GetProgressInfo() Progress {
+type SubpipelineStepDescription struct {
+	// Each step in a sub-pipeline has description as well. In order of steps in the sub-pipeline.
+	Steps []*StepDescription `protobuf:"bytes,1,rep,name=steps" json:"steps,omitempty"`
+}
+
+func (m *SubpipelineStepDescription) Reset()                    { *m = SubpipelineStepDescription{} }
+func (m *SubpipelineStepDescription) String() string            { return proto.CompactTextString(m) }
+func (*SubpipelineStepDescription) ProtoMessage()               {}
+func (*SubpipelineStepDescription) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{15} }
+
+func (m *SubpipelineStepDescription) GetSteps() []*StepDescription {
 	if m != nil {
-		return m.ProgressInfo
+		return m.Steps
+	}
+	return nil
+}
+
+type StepDescription struct {
+	// Types that are valid to be assigned to Step:
+	//	*StepDescription_Primitive
+	//	*StepDescription_Pipeline
+	Step isStepDescription_Step `protobuf_oneof:"step"`
+}
+
+func (m *StepDescription) Reset()                    { *m = StepDescription{} }
+func (m *StepDescription) String() string            { return proto.CompactTextString(m) }
+func (*StepDescription) ProtoMessage()               {}
+func (*StepDescription) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{16} }
+
+type isStepDescription_Step interface {
+	isStepDescription_Step()
+}
+
+type StepDescription_Primitive struct {
+	Primitive *PrimitiveStepDescription `protobuf:"bytes,1,opt,name=primitive,oneof"`
+}
+type StepDescription_Pipeline struct {
+	Pipeline *SubpipelineStepDescription `protobuf:"bytes,2,opt,name=pipeline,oneof"`
+}
+
+func (*StepDescription_Primitive) isStepDescription_Step() {}
+func (*StepDescription_Pipeline) isStepDescription_Step()  {}
+
+func (m *StepDescription) GetStep() isStepDescription_Step {
+	if m != nil {
+		return m.Step
+	}
+	return nil
+}
+
+func (m *StepDescription) GetPrimitive() *PrimitiveStepDescription {
+	if x, ok := m.GetStep().(*StepDescription_Primitive); ok {
+		return x.Primitive
+	}
+	return nil
+}
+
+func (m *StepDescription) GetPipeline() *SubpipelineStepDescription {
+	if x, ok := m.GetStep().(*StepDescription_Pipeline); ok {
+		return x.Pipeline
+	}
+	return nil
+}
+
+// XXX_OneofFuncs is for the internal use of the proto package.
+func (*StepDescription) XXX_OneofFuncs() (func(msg proto.Message, b *proto.Buffer) error, func(msg proto.Message, tag, wire int, b *proto.Buffer) (bool, error), func(msg proto.Message) (n int), []interface{}) {
+	return _StepDescription_OneofMarshaler, _StepDescription_OneofUnmarshaler, _StepDescription_OneofSizer, []interface{}{
+		(*StepDescription_Primitive)(nil),
+		(*StepDescription_Pipeline)(nil),
+	}
+}
+
+func _StepDescription_OneofMarshaler(msg proto.Message, b *proto.Buffer) error {
+	m := msg.(*StepDescription)
+	// step
+	switch x := m.Step.(type) {
+	case *StepDescription_Primitive:
+		b.EncodeVarint(1<<3 | proto.WireBytes)
+		if err := b.EncodeMessage(x.Primitive); err != nil {
+			return err
+		}
+	case *StepDescription_Pipeline:
+		b.EncodeVarint(2<<3 | proto.WireBytes)
+		if err := b.EncodeMessage(x.Pipeline); err != nil {
+			return err
+		}
+	case nil:
+	default:
+		return fmt.Errorf("StepDescription.Step has unexpected type %T", x)
+	}
+	return nil
+}
+
+func _StepDescription_OneofUnmarshaler(msg proto.Message, tag, wire int, b *proto.Buffer) (bool, error) {
+	m := msg.(*StepDescription)
+	switch tag {
+	case 1: // step.primitive
+		if wire != proto.WireBytes {
+			return true, proto.ErrInternalBadWireType
+		}
+		msg := new(PrimitiveStepDescription)
+		err := b.DecodeMessage(msg)
+		m.Step = &StepDescription_Primitive{msg}
+		return true, err
+	case 2: // step.pipeline
+		if wire != proto.WireBytes {
+			return true, proto.ErrInternalBadWireType
+		}
+		msg := new(SubpipelineStepDescription)
+		err := b.DecodeMessage(msg)
+		m.Step = &StepDescription_Pipeline{msg}
+		return true, err
+	default:
+		return false, nil
+	}
+}
+
+func _StepDescription_OneofSizer(msg proto.Message) (n int) {
+	m := msg.(*StepDescription)
+	// step
+	switch x := m.Step.(type) {
+	case *StepDescription_Primitive:
+		s := proto.Size(x.Primitive)
+		n += proto.SizeVarint(1<<3 | proto.WireBytes)
+		n += proto.SizeVarint(uint64(s))
+		n += s
+	case *StepDescription_Pipeline:
+		s := proto.Size(x.Pipeline)
+		n += proto.SizeVarint(2<<3 | proto.WireBytes)
+		n += proto.SizeVarint(uint64(s))
+		n += s
+	case nil:
+	default:
+		panic(fmt.Sprintf("proto: unexpected type %T in oneof", x))
+	}
+	return n
+}
+
+type DescribePipelineResponse struct {
+	// A pipeline description. Nested pipelines should be fully described as well.
+	Pipeline *PipelineDescription `protobuf:"bytes,1,opt,name=pipeline" json:"pipeline,omitempty"`
+	// Each step in a pipeline has description as well. In order of steps in the pipeline.
+	Steps []*StepDescription `protobuf:"bytes,2,rep,name=steps" json:"steps,omitempty"`
+}
+
+func (m *DescribePipelineResponse) Reset()                    { *m = DescribePipelineResponse{} }
+func (m *DescribePipelineResponse) String() string            { return proto.CompactTextString(m) }
+func (*DescribePipelineResponse) ProtoMessage()               {}
+func (*DescribePipelineResponse) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{17} }
+
+func (m *DescribePipelineResponse) GetPipeline() *PipelineDescription {
+	if m != nil {
+		return m.Pipeline
+	}
+	return nil
+}
+
+func (m *DescribePipelineResponse) GetSteps() []*StepDescription {
+	if m != nil {
+		return m.Steps
+	}
+	return nil
+}
+
+type StepProgress struct {
+	Progress Progress `protobuf:"varint,1,opt,name=progress,enum=Progress" json:"progress,omitempty"`
+	// If step failed, why.
+	Failure string                      `protobuf:"bytes,2,opt,name=failure" json:"failure,omitempty"`
+	Start   *google_protobuf1.Timestamp `protobuf:"bytes,3,opt,name=start" json:"start,omitempty"`
+	End     *google_protobuf1.Timestamp `protobuf:"bytes,4,opt,name=end" json:"end,omitempty"`
+	// If step is a sub-pipeline, then this list contains progress for each step in the sub-pipeline, in order.
+	// List can be incomplete while the process is in progress.
+	Steps []*StepProgress `protobuf:"bytes,5,rep,name=steps" json:"steps,omitempty"`
+}
+
+func (m *StepProgress) Reset()                    { *m = StepProgress{} }
+func (m *StepProgress) String() string            { return proto.CompactTextString(m) }
+func (*StepProgress) ProtoMessage()               {}
+func (*StepProgress) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{18} }
+
+func (m *StepProgress) GetProgress() Progress {
+	if m != nil {
+		return m.Progress
 	}
 	return Progress_PROGRESS_UNKNOWN
 }
 
-func (m *PipelineCreateResult) GetPipelineId() string {
+func (m *StepProgress) GetFailure() string {
+	if m != nil {
+		return m.Failure
+	}
+	return ""
+}
+
+func (m *StepProgress) GetStart() *google_protobuf1.Timestamp {
+	if m != nil {
+		return m.Start
+	}
+	return nil
+}
+
+func (m *StepProgress) GetEnd() *google_protobuf1.Timestamp {
+	if m != nil {
+		return m.End
+	}
+	return nil
+}
+
+func (m *StepProgress) GetSteps() []*StepProgress {
+	if m != nil {
+		return m.Steps
+	}
+	return nil
+}
+
+// User associated with the run of the pipeline.
+type PipelineRunUser struct {
+	// A UUID of the user. It does not have to map to any real ID, just that it is possible
+	// to connect mutliple pipeline actions by the same user together, if necessary.
+	Id string `protobuf:"bytes,1,opt,name=id" json:"id,omitempty"`
+	// Was this run because pipeline was choosen by this user.
+	Choosen bool `protobuf:"varint,2,opt,name=choosen" json:"choosen,omitempty"`
+	// Textual reason provided by the user why the run was choosen by this user.
+	Reason string `protobuf:"bytes,3,opt,name=reason" json:"reason,omitempty"`
+}
+
+func (m *PipelineRunUser) Reset()                    { *m = PipelineRunUser{} }
+func (m *PipelineRunUser) String() string            { return proto.CompactTextString(m) }
+func (*PipelineRunUser) ProtoMessage()               {}
+func (*PipelineRunUser) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{19} }
+
+func (m *PipelineRunUser) GetId() string {
+	if m != nil {
+		return m.Id
+	}
+	return ""
+}
+
+func (m *PipelineRunUser) GetChoosen() bool {
+	if m != nil {
+		return m.Choosen
+	}
+	return false
+}
+
+func (m *PipelineRunUser) GetReason() string {
+	if m != nil {
+		return m.Reason
+	}
+	return ""
+}
+
+// Request pipeline to be scored given inputs. Inputs have to be Dataset container values
+// and pipeline outputs have to be predictions. It can internally run multiple fit + produce runs
+// of the pipeline on permutations of inputs data (e.g., for cross-validation). This is also
+// why we cannot expose outputs here.
+type ScorePipelineRequest struct {
+	PipelineId         string                      `protobuf:"bytes,1,opt,name=pipeline_id,json=pipelineId" json:"pipeline_id,omitempty"`
+	Inputs             []*Value                    `protobuf:"bytes,2,rep,name=inputs" json:"inputs,omitempty"`
+	PerformanceMetrics []*ProblemPerformanceMetric `protobuf:"bytes,3,rep,name=performance_metrics,json=performanceMetrics" json:"performance_metrics,omitempty"`
+	// Any users associated with this call itself. Optional.
+	Users         []*PipelineRunUser    `protobuf:"bytes,4,rep,name=users" json:"users,omitempty"`
+	Configuration *ScoringConfiguration `protobuf:"bytes,5,opt,name=configuration" json:"configuration,omitempty"`
+}
+
+func (m *ScorePipelineRequest) Reset()                    { *m = ScorePipelineRequest{} }
+func (m *ScorePipelineRequest) String() string            { return proto.CompactTextString(m) }
+func (*ScorePipelineRequest) ProtoMessage()               {}
+func (*ScorePipelineRequest) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{20} }
+
+func (m *ScorePipelineRequest) GetPipelineId() string {
 	if m != nil {
 		return m.PipelineId
 	}
 	return ""
 }
 
-func (m *PipelineCreateResult) GetPipelineInfo() *Pipeline {
+func (m *ScorePipelineRequest) GetInputs() []*Value {
 	if m != nil {
-		return m.PipelineInfo
+		return m.Inputs
 	}
 	return nil
 }
 
-type PipelineExecuteRequest struct {
-	Context    *SessionContext `protobuf:"bytes,1,opt,name=context" json:"context,omitempty"`
-	PipelineId string          `protobuf:"bytes,2,opt,name=pipeline_id,json=pipelineId" json:"pipeline_id,omitempty"`
-	DatasetUri string          `protobuf:"bytes,3,opt,name=dataset_uri,json=datasetUri" json:"dataset_uri,omitempty"`
-}
-
-func (m *PipelineExecuteRequest) Reset()                    { *m = PipelineExecuteRequest{} }
-func (m *PipelineExecuteRequest) String() string            { return proto.CompactTextString(m) }
-func (*PipelineExecuteRequest) ProtoMessage()               {}
-func (*PipelineExecuteRequest) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{10} }
-
-func (m *PipelineExecuteRequest) GetContext() *SessionContext {
+func (m *ScorePipelineRequest) GetPerformanceMetrics() []*ProblemPerformanceMetric {
 	if m != nil {
-		return m.Context
+		return m.PerformanceMetrics
 	}
 	return nil
 }
 
-func (m *PipelineExecuteRequest) GetPipelineId() string {
+func (m *ScorePipelineRequest) GetUsers() []*PipelineRunUser {
 	if m != nil {
-		return m.PipelineId
+		return m.Users
+	}
+	return nil
+}
+
+func (m *ScorePipelineRequest) GetConfiguration() *ScoringConfiguration {
+	if m != nil {
+		return m.Configuration
+	}
+	return nil
+}
+
+type ScorePipelineResponse struct {
+	RequestId string `protobuf:"bytes,1,opt,name=request_id,json=requestId" json:"request_id,omitempty"`
+}
+
+func (m *ScorePipelineResponse) Reset()                    { *m = ScorePipelineResponse{} }
+func (m *ScorePipelineResponse) String() string            { return proto.CompactTextString(m) }
+func (*ScorePipelineResponse) ProtoMessage()               {}
+func (*ScorePipelineResponse) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{21} }
+
+func (m *ScorePipelineResponse) GetRequestId() string {
+	if m != nil {
+		return m.RequestId
 	}
 	return ""
 }
 
-func (m *PipelineExecuteRequest) GetDatasetUri() string {
+// Get all score results computed until now and start receiving any
+// new score results computed as well.
+type GetScorePipelineResultsRequest struct {
+	RequestId string `protobuf:"bytes,1,opt,name=request_id,json=requestId" json:"request_id,omitempty"`
+}
+
+func (m *GetScorePipelineResultsRequest) Reset()                    { *m = GetScorePipelineResultsRequest{} }
+func (m *GetScorePipelineResultsRequest) String() string            { return proto.CompactTextString(m) }
+func (*GetScorePipelineResultsRequest) ProtoMessage()               {}
+func (*GetScorePipelineResultsRequest) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{22} }
+
+func (m *GetScorePipelineResultsRequest) GetRequestId() string {
 	if m != nil {
-		return m.DatasetUri
+		return m.RequestId
 	}
 	return ""
 }
 
-type PipelineExecuteResult struct {
-	ResponseInfo *Response `protobuf:"bytes,1,opt,name=response_info,json=responseInfo" json:"response_info,omitempty"`
-	ProgressInfo Progress  `protobuf:"varint,2,opt,name=progress_info,json=progressInfo,enum=Progress" json:"progress_info,omitempty"`
-	PipelineId   string    `protobuf:"bytes,3,opt,name=pipeline_id,json=pipelineId" json:"pipeline_id,omitempty"`
-	// Will be set if progress info value is UPDATED or COMPLETED
-	ResultUri string `protobuf:"bytes,4,opt,name=result_uri,json=resultUri" json:"result_uri,omitempty"`
+type GetScorePipelineResultsResponse struct {
+	// Overall process progress.
+	Progress Progress `protobuf:"varint,1,opt,name=progress,enum=Progress" json:"progress,omitempty"`
+	// Failure which prevented scoring.
+	Failure string                      `protobuf:"bytes,2,opt,name=failure" json:"failure,omitempty"`
+	Start   *google_protobuf1.Timestamp `protobuf:"bytes,3,opt,name=start" json:"start,omitempty"`
+	End     *google_protobuf1.Timestamp `protobuf:"bytes,4,opt,name=end" json:"end,omitempty"`
+	// List of score results. List can be incomplete while the process is in progress.
+	Scores []*Score `protobuf:"bytes,5,rep,name=scores" json:"scores,omitempty"`
 }
 
-func (m *PipelineExecuteResult) Reset()                    { *m = PipelineExecuteResult{} }
-func (m *PipelineExecuteResult) String() string            { return proto.CompactTextString(m) }
-func (*PipelineExecuteResult) ProtoMessage()               {}
-func (*PipelineExecuteResult) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{11} }
-
-func (m *PipelineExecuteResult) GetResponseInfo() *Response {
-	if m != nil {
-		return m.ResponseInfo
-	}
-	return nil
+func (m *GetScorePipelineResultsResponse) Reset()         { *m = GetScorePipelineResultsResponse{} }
+func (m *GetScorePipelineResultsResponse) String() string { return proto.CompactTextString(m) }
+func (*GetScorePipelineResultsResponse) ProtoMessage()    {}
+func (*GetScorePipelineResultsResponse) Descriptor() ([]byte, []int) {
+	return fileDescriptor0, []int{23}
 }
 
-func (m *PipelineExecuteResult) GetProgressInfo() Progress {
+func (m *GetScorePipelineResultsResponse) GetProgress() Progress {
 	if m != nil {
-		return m.ProgressInfo
+		return m.Progress
 	}
 	return Progress_PROGRESS_UNKNOWN
 }
 
-func (m *PipelineExecuteResult) GetPipelineId() string {
+func (m *GetScorePipelineResultsResponse) GetFailure() string {
+	if m != nil {
+		return m.Failure
+	}
+	return ""
+}
+
+func (m *GetScorePipelineResultsResponse) GetStart() *google_protobuf1.Timestamp {
+	if m != nil {
+		return m.Start
+	}
+	return nil
+}
+
+func (m *GetScorePipelineResultsResponse) GetEnd() *google_protobuf1.Timestamp {
+	if m != nil {
+		return m.End
+	}
+	return nil
+}
+
+func (m *GetScorePipelineResultsResponse) GetScores() []*Score {
+	if m != nil {
+		return m.Scores
+	}
+	return nil
+}
+
+// Fit the pipeline on given inputs. If a pipeline is already fitted on inputs this is a noop
+// (if no additional outputs should be exposed). This can happen when TA2 fits the pipeline
+// already during pipeline search phase.
+type FitPipelineRequest struct {
+	PipelineId string   `protobuf:"bytes,1,opt,name=pipeline_id,json=pipelineId" json:"pipeline_id,omitempty"`
+	Inputs     []*Value `protobuf:"bytes,2,rep,name=inputs" json:"inputs,omitempty"`
+	// List of data references of step outputs which should be exposed to the TA3 system.
+	// If you want to expose outputs of the whole pipeline (e.g., predictions themselves),
+	// list them here as well. These can be recursive data references like "steps.1.steps.4.produce"
+	// to point to an output inside a sub-pipeline.
+	ExposeOutputs []string `protobuf:"bytes,3,rep,name=expose_outputs,json=exposeOutputs" json:"expose_outputs,omitempty"`
+	// Which value types should be used for exposing outputs. If not provided, the allowed
+	// value types list from hello call is used instead.
+	// The order is important as TA2 system will try value types in order until one works out,
+	// or an error will be returned instead of the value. An error exposing a value does not stop
+	// the overall process.
+	ExposeValueTypes []ValueType `protobuf:"varint,4,rep,packed,name=expose_value_types,json=exposeValueTypes,enum=ValueType" json:"expose_value_types,omitempty"`
+	// Any users associated with this call itself. Optional.
+	Users []*PipelineRunUser `protobuf:"bytes,5,rep,name=users" json:"users,omitempty"`
+}
+
+func (m *FitPipelineRequest) Reset()                    { *m = FitPipelineRequest{} }
+func (m *FitPipelineRequest) String() string            { return proto.CompactTextString(m) }
+func (*FitPipelineRequest) ProtoMessage()               {}
+func (*FitPipelineRequest) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{24} }
+
+func (m *FitPipelineRequest) GetPipelineId() string {
 	if m != nil {
 		return m.PipelineId
 	}
 	return ""
 }
 
-func (m *PipelineExecuteResult) GetResultUri() string {
+func (m *FitPipelineRequest) GetInputs() []*Value {
 	if m != nil {
-		return m.ResultUri
+		return m.Inputs
+	}
+	return nil
+}
+
+func (m *FitPipelineRequest) GetExposeOutputs() []string {
+	if m != nil {
+		return m.ExposeOutputs
+	}
+	return nil
+}
+
+func (m *FitPipelineRequest) GetExposeValueTypes() []ValueType {
+	if m != nil {
+		return m.ExposeValueTypes
+	}
+	return nil
+}
+
+func (m *FitPipelineRequest) GetUsers() []*PipelineRunUser {
+	if m != nil {
+		return m.Users
+	}
+	return nil
+}
+
+type FitPipelineResponse struct {
+	RequestId string `protobuf:"bytes,1,opt,name=request_id,json=requestId" json:"request_id,omitempty"`
+}
+
+func (m *FitPipelineResponse) Reset()                    { *m = FitPipelineResponse{} }
+func (m *FitPipelineResponse) String() string            { return proto.CompactTextString(m) }
+func (*FitPipelineResponse) ProtoMessage()               {}
+func (*FitPipelineResponse) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{25} }
+
+func (m *FitPipelineResponse) GetRequestId() string {
+	if m != nil {
+		return m.RequestId
 	}
 	return ""
 }
 
-type PipelineListRequest struct {
-	Context *SessionContext `protobuf:"bytes,1,opt,name=context" json:"context,omitempty"`
+// Get all fitting results computed until now and start receiving any
+// new fitting results computed as well.
+type GetFitPipelineResultsRequest struct {
+	RequestId string `protobuf:"bytes,1,opt,name=request_id,json=requestId" json:"request_id,omitempty"`
 }
 
-func (m *PipelineListRequest) Reset()                    { *m = PipelineListRequest{} }
-func (m *PipelineListRequest) String() string            { return proto.CompactTextString(m) }
-func (*PipelineListRequest) ProtoMessage()               {}
-func (*PipelineListRequest) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{12} }
+func (m *GetFitPipelineResultsRequest) Reset()                    { *m = GetFitPipelineResultsRequest{} }
+func (m *GetFitPipelineResultsRequest) String() string            { return proto.CompactTextString(m) }
+func (*GetFitPipelineResultsRequest) ProtoMessage()               {}
+func (*GetFitPipelineResultsRequest) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{26} }
 
-func (m *PipelineListRequest) GetContext() *SessionContext {
+func (m *GetFitPipelineResultsRequest) GetRequestId() string {
 	if m != nil {
-		return m.Context
+		return m.RequestId
+	}
+	return ""
+}
+
+type GetFitPipelineResultsResponse struct {
+	// Overall process progress.
+	Progress Progress `protobuf:"varint,1,opt,name=progress,enum=Progress" json:"progress,omitempty"`
+	// Failure which prevented pipeline to run at all.
+	Failure string                      `protobuf:"bytes,2,opt,name=failure" json:"failure,omitempty"`
+	Start   *google_protobuf1.Timestamp `protobuf:"bytes,3,opt,name=start" json:"start,omitempty"`
+	End     *google_protobuf1.Timestamp `protobuf:"bytes,4,opt,name=end" json:"end,omitempty"`
+	// The ist contains progress for each step in the pipeline, in order.
+	// List can be incomplete while the process is in progress.
+	Steps []*StepProgress `protobuf:"bytes,5,rep,name=steps" json:"steps,omitempty"`
+	// A mapping between data references of step outputs and values.
+	ExposedOutputs map[string]*Value `protobuf:"bytes,6,rep,name=exposed_outputs,json=exposedOutputs" json:"exposed_outputs,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
+}
+
+func (m *GetFitPipelineResultsResponse) Reset()                    { *m = GetFitPipelineResultsResponse{} }
+func (m *GetFitPipelineResultsResponse) String() string            { return proto.CompactTextString(m) }
+func (*GetFitPipelineResultsResponse) ProtoMessage()               {}
+func (*GetFitPipelineResultsResponse) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{27} }
+
+func (m *GetFitPipelineResultsResponse) GetProgress() Progress {
+	if m != nil {
+		return m.Progress
+	}
+	return Progress_PROGRESS_UNKNOWN
+}
+
+func (m *GetFitPipelineResultsResponse) GetFailure() string {
+	if m != nil {
+		return m.Failure
+	}
+	return ""
+}
+
+func (m *GetFitPipelineResultsResponse) GetStart() *google_protobuf1.Timestamp {
+	if m != nil {
+		return m.Start
 	}
 	return nil
 }
 
-type PipelineDeleteRequest struct {
-	Context           *SessionContext `protobuf:"bytes,1,opt,name=context" json:"context,omitempty"`
-	DeletePipelineIds []string        `protobuf:"bytes,2,rep,name=delete_pipeline_ids,json=deletePipelineIds" json:"delete_pipeline_ids,omitempty"`
-}
-
-func (m *PipelineDeleteRequest) Reset()                    { *m = PipelineDeleteRequest{} }
-func (m *PipelineDeleteRequest) String() string            { return proto.CompactTextString(m) }
-func (*PipelineDeleteRequest) ProtoMessage()               {}
-func (*PipelineDeleteRequest) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{13} }
-
-func (m *PipelineDeleteRequest) GetContext() *SessionContext {
+func (m *GetFitPipelineResultsResponse) GetEnd() *google_protobuf1.Timestamp {
 	if m != nil {
-		return m.Context
+		return m.End
 	}
 	return nil
 }
 
-func (m *PipelineDeleteRequest) GetDeletePipelineIds() []string {
+func (m *GetFitPipelineResultsResponse) GetSteps() []*StepProgress {
 	if m != nil {
-		return m.DeletePipelineIds
+		return m.Steps
 	}
 	return nil
 }
 
-type PipelineCancelRequest struct {
-	Context           *SessionContext `protobuf:"bytes,1,opt,name=context" json:"context,omitempty"`
-	CancelPipelineIds []string        `protobuf:"bytes,2,rep,name=cancel_pipeline_ids,json=cancelPipelineIds" json:"cancel_pipeline_ids,omitempty"`
-}
-
-func (m *PipelineCancelRequest) Reset()                    { *m = PipelineCancelRequest{} }
-func (m *PipelineCancelRequest) String() string            { return proto.CompactTextString(m) }
-func (*PipelineCancelRequest) ProtoMessage()               {}
-func (*PipelineCancelRequest) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{14} }
-
-func (m *PipelineCancelRequest) GetContext() *SessionContext {
+func (m *GetFitPipelineResultsResponse) GetExposedOutputs() map[string]*Value {
 	if m != nil {
-		return m.Context
+		return m.ExposedOutputs
 	}
 	return nil
 }
 
-func (m *PipelineCancelRequest) GetCancelPipelineIds() []string {
+// Produce the pipeline on given inputs. A pipeline has to be fitted for this to be possible
+// (even if it is full of just transformations).
+type ProducePipelineRequest struct {
+	PipelineId string   `protobuf:"bytes,1,opt,name=pipeline_id,json=pipelineId" json:"pipeline_id,omitempty"`
+	Inputs     []*Value `protobuf:"bytes,2,rep,name=inputs" json:"inputs,omitempty"`
+	// List of data references of step outputs which should be exposed to the TA3 system.
+	// If you want to expose outputs of the whole pipeline (e.g., predictions themselves),
+	// list them here as well. These can be recursive data references like "steps.1.steps.4.produce"
+	// to point to an output inside a sub-pipeline.
+	ExposeOutputs []string `protobuf:"bytes,3,rep,name=expose_outputs,json=exposeOutputs" json:"expose_outputs,omitempty"`
+	// Which value types should be used for exposing outputs. If not provided, the allowed
+	// value types list from hello call is used instead.
+	// The order is important as TA2 system will try value types in order until one works out,
+	// or an error will be returned instead of the value. An error exposing a value does not stop
+	// the overall process.
+	ExposeValueTypes []ValueType `protobuf:"varint,4,rep,packed,name=expose_value_types,json=exposeValueTypes,enum=ValueType" json:"expose_value_types,omitempty"`
+	// Any users associated with this call itself. Optional.
+	Users []*PipelineRunUser `protobuf:"bytes,5,rep,name=users" json:"users,omitempty"`
+}
+
+func (m *ProducePipelineRequest) Reset()                    { *m = ProducePipelineRequest{} }
+func (m *ProducePipelineRequest) String() string            { return proto.CompactTextString(m) }
+func (*ProducePipelineRequest) ProtoMessage()               {}
+func (*ProducePipelineRequest) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{28} }
+
+func (m *ProducePipelineRequest) GetPipelineId() string {
 	if m != nil {
-		return m.CancelPipelineIds
+		return m.PipelineId
+	}
+	return ""
+}
+
+func (m *ProducePipelineRequest) GetInputs() []*Value {
+	if m != nil {
+		return m.Inputs
 	}
 	return nil
 }
 
-type PipelineListResult struct {
-	ResponseInfo *Response `protobuf:"bytes,1,opt,name=response_info,json=responseInfo" json:"response_info,omitempty"`
-	PipelineIds  []string  `protobuf:"bytes,2,rep,name=pipeline_ids,json=pipelineIds" json:"pipeline_ids,omitempty"`
-}
-
-func (m *PipelineListResult) Reset()                    { *m = PipelineListResult{} }
-func (m *PipelineListResult) String() string            { return proto.CompactTextString(m) }
-func (*PipelineListResult) ProtoMessage()               {}
-func (*PipelineListResult) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{15} }
-
-func (m *PipelineListResult) GetResponseInfo() *Response {
+func (m *ProducePipelineRequest) GetExposeOutputs() []string {
 	if m != nil {
-		return m.ResponseInfo
+		return m.ExposeOutputs
 	}
 	return nil
 }
 
-func (m *PipelineListResult) GetPipelineIds() []string {
+func (m *ProducePipelineRequest) GetExposeValueTypes() []ValueType {
 	if m != nil {
-		return m.PipelineIds
+		return m.ExposeValueTypes
 	}
 	return nil
 }
 
-type PipelineCreateResultsRequest struct {
-	Context     *SessionContext `protobuf:"bytes,1,opt,name=context" json:"context,omitempty"`
-	PipelineIds []string        `protobuf:"bytes,2,rep,name=pipeline_ids,json=pipelineIds" json:"pipeline_ids,omitempty"`
-}
-
-func (m *PipelineCreateResultsRequest) Reset()                    { *m = PipelineCreateResultsRequest{} }
-func (m *PipelineCreateResultsRequest) String() string            { return proto.CompactTextString(m) }
-func (*PipelineCreateResultsRequest) ProtoMessage()               {}
-func (*PipelineCreateResultsRequest) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{16} }
-
-func (m *PipelineCreateResultsRequest) GetContext() *SessionContext {
+func (m *ProducePipelineRequest) GetUsers() []*PipelineRunUser {
 	if m != nil {
-		return m.Context
+		return m.Users
 	}
 	return nil
 }
 
-func (m *PipelineCreateResultsRequest) GetPipelineIds() []string {
+type ProducePipelineResponse struct {
+	RequestId string `protobuf:"bytes,1,opt,name=request_id,json=requestId" json:"request_id,omitempty"`
+}
+
+func (m *ProducePipelineResponse) Reset()                    { *m = ProducePipelineResponse{} }
+func (m *ProducePipelineResponse) String() string            { return proto.CompactTextString(m) }
+func (*ProducePipelineResponse) ProtoMessage()               {}
+func (*ProducePipelineResponse) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{29} }
+
+func (m *ProducePipelineResponse) GetRequestId() string {
 	if m != nil {
-		return m.PipelineIds
+		return m.RequestId
+	}
+	return ""
+}
+
+// Get all producing results computed until now and start receiving any
+// new producing results computed as well.
+type GetProducePipelineResultsRequest struct {
+	RequestId string `protobuf:"bytes,1,opt,name=request_id,json=requestId" json:"request_id,omitempty"`
+}
+
+func (m *GetProducePipelineResultsRequest) Reset()         { *m = GetProducePipelineResultsRequest{} }
+func (m *GetProducePipelineResultsRequest) String() string { return proto.CompactTextString(m) }
+func (*GetProducePipelineResultsRequest) ProtoMessage()    {}
+func (*GetProducePipelineResultsRequest) Descriptor() ([]byte, []int) {
+	return fileDescriptor0, []int{30}
+}
+
+func (m *GetProducePipelineResultsRequest) GetRequestId() string {
+	if m != nil {
+		return m.RequestId
+	}
+	return ""
+}
+
+type GetProducePipelineResultsResponse struct {
+	// Overall process progress.
+	Progress Progress `protobuf:"varint,1,opt,name=progress,enum=Progress" json:"progress,omitempty"`
+	// Failure which prevented pipeline to run at all.
+	Failure string                      `protobuf:"bytes,2,opt,name=failure" json:"failure,omitempty"`
+	Start   *google_protobuf1.Timestamp `protobuf:"bytes,3,opt,name=start" json:"start,omitempty"`
+	End     *google_protobuf1.Timestamp `protobuf:"bytes,4,opt,name=end" json:"end,omitempty"`
+	// The ist contains progress for each step in the pipeline, in order.
+	// List can be incomplete while the process is in progress.
+	Steps []*StepProgress `protobuf:"bytes,5,rep,name=steps" json:"steps,omitempty"`
+	// A mapping between data references of step outputs and values.
+	ExposedOutputs map[string]*Value `protobuf:"bytes,6,rep,name=exposed_outputs,json=exposedOutputs" json:"exposed_outputs,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
+}
+
+func (m *GetProducePipelineResultsResponse) Reset()         { *m = GetProducePipelineResultsResponse{} }
+func (m *GetProducePipelineResultsResponse) String() string { return proto.CompactTextString(m) }
+func (*GetProducePipelineResultsResponse) ProtoMessage()    {}
+func (*GetProducePipelineResultsResponse) Descriptor() ([]byte, []int) {
+	return fileDescriptor0, []int{31}
+}
+
+func (m *GetProducePipelineResultsResponse) GetProgress() Progress {
+	if m != nil {
+		return m.Progress
+	}
+	return Progress_PROGRESS_UNKNOWN
+}
+
+func (m *GetProducePipelineResultsResponse) GetFailure() string {
+	if m != nil {
+		return m.Failure
+	}
+	return ""
+}
+
+func (m *GetProducePipelineResultsResponse) GetStart() *google_protobuf1.Timestamp {
+	if m != nil {
+		return m.Start
 	}
 	return nil
 }
 
-type PipelineExecuteResultsRequest struct {
-	Context     *SessionContext `protobuf:"bytes,1,opt,name=context" json:"context,omitempty"`
-	PipelineIds []string        `protobuf:"bytes,2,rep,name=pipeline_ids,json=pipelineIds" json:"pipeline_ids,omitempty"`
-}
-
-func (m *PipelineExecuteResultsRequest) Reset()                    { *m = PipelineExecuteResultsRequest{} }
-func (m *PipelineExecuteResultsRequest) String() string            { return proto.CompactTextString(m) }
-func (*PipelineExecuteResultsRequest) ProtoMessage()               {}
-func (*PipelineExecuteResultsRequest) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{17} }
-
-func (m *PipelineExecuteResultsRequest) GetContext() *SessionContext {
+func (m *GetProducePipelineResultsResponse) GetEnd() *google_protobuf1.Timestamp {
 	if m != nil {
-		return m.Context
+		return m.End
 	}
 	return nil
 }
 
-func (m *PipelineExecuteResultsRequest) GetPipelineIds() []string {
+func (m *GetProducePipelineResultsResponse) GetSteps() []*StepProgress {
 	if m != nil {
-		return m.PipelineIds
+		return m.Steps
 	}
 	return nil
 }
 
+func (m *GetProducePipelineResultsResponse) GetExposedOutputs() map[string]*Value {
+	if m != nil {
+		return m.ExposedOutputs
+	}
+	return nil
+}
+
+// Exports a pipeline for evaluaton purposes based on NIST specifications.
 type PipelineExportRequest struct {
-	Context         *SessionContext `protobuf:"bytes,1,opt,name=context" json:"context,omitempty"`
-	PipelineId      string          `protobuf:"bytes,2,opt,name=pipeline_id,json=pipelineId" json:"pipeline_id,omitempty"`
-	PipelineExecUri string          `protobuf:"bytes,3,opt,name=pipeline_exec_uri,json=pipelineExecUri" json:"pipeline_exec_uri,omitempty"`
+	// Found pipeline to export.
+	PipelineId string `protobuf:"bytes,1,opt,name=pipeline_id,json=pipelineId" json:"pipeline_id,omitempty"`
+	// Pipeline rank to be used for the exported pipeline. Each exported pipeline
+	// has rank metadata associated with it. There has to be at least one pipeline
+	// exported and only one can and should have rank 1, but assuring this is
+	// responsibility of a TA3. If an export of a pipeline is requested again with the
+	// same rank as previously (for same or different pipeline), a TA2 system should
+	// override the previous export with a new one (or by removing files associated
+	// with the previous export and creating new files, or by overriding files with new
+	// content). Filenames of exported files are left to be choosen by the TA2 system.
+	Rank int32 `protobuf:"varint,2,opt,name=rank" json:"rank,omitempty"`
 }
 
 func (m *PipelineExportRequest) Reset()                    { *m = PipelineExportRequest{} }
 func (m *PipelineExportRequest) String() string            { return proto.CompactTextString(m) }
 func (*PipelineExportRequest) ProtoMessage()               {}
-func (*PipelineExportRequest) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{18} }
-
-func (m *PipelineExportRequest) GetContext() *SessionContext {
-	if m != nil {
-		return m.Context
-	}
-	return nil
-}
+func (*PipelineExportRequest) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{32} }
 
 func (m *PipelineExportRequest) GetPipelineId() string {
 	if m != nil {
@@ -884,236 +1339,78 @@ func (m *PipelineExportRequest) GetPipelineId() string {
 	return ""
 }
 
-func (m *PipelineExportRequest) GetPipelineExecUri() string {
+func (m *PipelineExportRequest) GetRank() int32 {
 	if m != nil {
-		return m.PipelineExecUri
+		return m.Rank
 	}
-	return ""
+	return 0
 }
 
-type SetProblemDocRequest struct {
-	Updates []*SetProblemDocRequest_ReplaceProblemDocField `protobuf:"bytes,1,rep,name=updates" json:"updates,omitempty"`
-	Context *SessionContext                                `protobuf:"bytes,2,opt,name=context" json:"context,omitempty"`
+type PipelineExportResponse struct {
 }
 
-func (m *SetProblemDocRequest) Reset()                    { *m = SetProblemDocRequest{} }
-func (m *SetProblemDocRequest) String() string            { return proto.CompactTextString(m) }
-func (*SetProblemDocRequest) ProtoMessage()               {}
-func (*SetProblemDocRequest) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{19} }
+func (m *PipelineExportResponse) Reset()                    { *m = PipelineExportResponse{} }
+func (m *PipelineExportResponse) String() string            { return proto.CompactTextString(m) }
+func (*PipelineExportResponse) ProtoMessage()               {}
+func (*PipelineExportResponse) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{33} }
 
-func (m *SetProblemDocRequest) GetUpdates() []*SetProblemDocRequest_ReplaceProblemDocField {
+// List all primitives known to TA2, their IDs, versions, names, and digests. Using this
+// information TA3 knows which primitives to put into pipeline templates. To narrow down
+// potential primitives to use TA3 can also first ask TA3 to do a pipeline search and then
+// observe which primitives TA2 is using. If more metadata about primitives is needed,
+// TA3 can use results of this call to map primitives to metadata (from Python code or
+// primitive annotations) on its own.
+type ListPrimitivesRequest struct {
+}
+
+func (m *ListPrimitivesRequest) Reset()                    { *m = ListPrimitivesRequest{} }
+func (m *ListPrimitivesRequest) String() string            { return proto.CompactTextString(m) }
+func (*ListPrimitivesRequest) ProtoMessage()               {}
+func (*ListPrimitivesRequest) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{34} }
+
+type ListPrimitivesResponse struct {
+	Primitives []*Primitive `protobuf:"bytes,1,rep,name=primitives" json:"primitives,omitempty"`
+}
+
+func (m *ListPrimitivesResponse) Reset()                    { *m = ListPrimitivesResponse{} }
+func (m *ListPrimitivesResponse) String() string            { return proto.CompactTextString(m) }
+func (*ListPrimitivesResponse) ProtoMessage()               {}
+func (*ListPrimitivesResponse) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{35} }
+
+func (m *ListPrimitivesResponse) GetPrimitives() []*Primitive {
 	if m != nil {
-		return m.Updates
+		return m.Primitives
 	}
 	return nil
 }
 
-func (m *SetProblemDocRequest) GetContext() *SessionContext {
+// List which value types can a TA3 system use to communicate values to a TA2 system?
+// This call is also suitable for a ping/pong call to check that TA2 is ready.
+type ListAllowedValueTypesRequest struct {
+}
+
+func (m *ListAllowedValueTypesRequest) Reset()                    { *m = ListAllowedValueTypesRequest{} }
+func (m *ListAllowedValueTypesRequest) String() string            { return proto.CompactTextString(m) }
+func (*ListAllowedValueTypesRequest) ProtoMessage()               {}
+func (*ListAllowedValueTypesRequest) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{36} }
+
+type ListAllowedValueTypesResponse struct {
+	// Which value types can a TA3 system use to communicate values to a TA2 system?
+	// The order is important as TA3 system will try value types in order until one works out,
+	// or an error will be returned instead of the value.
+	AllowedValueTypes []ValueType `protobuf:"varint,1,rep,packed,name=allowed_value_types,json=allowedValueTypes,enum=ValueType" json:"allowed_value_types,omitempty"`
+}
+
+func (m *ListAllowedValueTypesResponse) Reset()                    { *m = ListAllowedValueTypesResponse{} }
+func (m *ListAllowedValueTypesResponse) String() string            { return proto.CompactTextString(m) }
+func (*ListAllowedValueTypesResponse) ProtoMessage()               {}
+func (*ListAllowedValueTypesResponse) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{37} }
+
+func (m *ListAllowedValueTypesResponse) GetAllowedValueTypes() []ValueType {
 	if m != nil {
-		return m.Context
+		return m.AllowedValueTypes
 	}
 	return nil
-}
-
-type SetProblemDocRequest_ReplaceProblemDocField struct {
-	// Types that are valid to be assigned to Update:
-	//	*SetProblemDocRequest_ReplaceProblemDocField_TaskType
-	//	*SetProblemDocRequest_ReplaceProblemDocField_TaskSubtype
-	//	*SetProblemDocRequest_ReplaceProblemDocField_TaskDescription
-	//	*SetProblemDocRequest_ReplaceProblemDocField_OutputType
-	//	*SetProblemDocRequest_ReplaceProblemDocField_Metric
-	Update isSetProblemDocRequest_ReplaceProblemDocField_Update `protobuf_oneof:"update"`
-}
-
-func (m *SetProblemDocRequest_ReplaceProblemDocField) Reset() {
-	*m = SetProblemDocRequest_ReplaceProblemDocField{}
-}
-func (m *SetProblemDocRequest_ReplaceProblemDocField) String() string {
-	return proto.CompactTextString(m)
-}
-func (*SetProblemDocRequest_ReplaceProblemDocField) ProtoMessage() {}
-func (*SetProblemDocRequest_ReplaceProblemDocField) Descriptor() ([]byte, []int) {
-	return fileDescriptor0, []int{19, 0}
-}
-
-type isSetProblemDocRequest_ReplaceProblemDocField_Update interface {
-	isSetProblemDocRequest_ReplaceProblemDocField_Update()
-}
-
-type SetProblemDocRequest_ReplaceProblemDocField_TaskType struct {
-	TaskType TaskType `protobuf:"varint,1,opt,name=task_type,json=taskType,enum=TaskType,oneof"`
-}
-type SetProblemDocRequest_ReplaceProblemDocField_TaskSubtype struct {
-	TaskSubtype TaskSubtype `protobuf:"varint,2,opt,name=task_subtype,json=taskSubtype,enum=TaskSubtype,oneof"`
-}
-type SetProblemDocRequest_ReplaceProblemDocField_TaskDescription struct {
-	TaskDescription string `protobuf:"bytes,3,opt,name=task_description,json=taskDescription,oneof"`
-}
-type SetProblemDocRequest_ReplaceProblemDocField_OutputType struct {
-	OutputType OutputType `protobuf:"varint,4,opt,name=output_type,json=outputType,enum=OutputType,oneof"`
-}
-type SetProblemDocRequest_ReplaceProblemDocField_Metric struct {
-	Metric PerformanceMetric `protobuf:"varint,5,opt,name=metric,enum=PerformanceMetric,oneof"`
-}
-
-func (*SetProblemDocRequest_ReplaceProblemDocField_TaskType) isSetProblemDocRequest_ReplaceProblemDocField_Update() {
-}
-func (*SetProblemDocRequest_ReplaceProblemDocField_TaskSubtype) isSetProblemDocRequest_ReplaceProblemDocField_Update() {
-}
-func (*SetProblemDocRequest_ReplaceProblemDocField_TaskDescription) isSetProblemDocRequest_ReplaceProblemDocField_Update() {
-}
-func (*SetProblemDocRequest_ReplaceProblemDocField_OutputType) isSetProblemDocRequest_ReplaceProblemDocField_Update() {
-}
-func (*SetProblemDocRequest_ReplaceProblemDocField_Metric) isSetProblemDocRequest_ReplaceProblemDocField_Update() {
-}
-
-func (m *SetProblemDocRequest_ReplaceProblemDocField) GetUpdate() isSetProblemDocRequest_ReplaceProblemDocField_Update {
-	if m != nil {
-		return m.Update
-	}
-	return nil
-}
-
-func (m *SetProblemDocRequest_ReplaceProblemDocField) GetTaskType() TaskType {
-	if x, ok := m.GetUpdate().(*SetProblemDocRequest_ReplaceProblemDocField_TaskType); ok {
-		return x.TaskType
-	}
-	return TaskType_TASK_TYPE_UNDEFINED
-}
-
-func (m *SetProblemDocRequest_ReplaceProblemDocField) GetTaskSubtype() TaskSubtype {
-	if x, ok := m.GetUpdate().(*SetProblemDocRequest_ReplaceProblemDocField_TaskSubtype); ok {
-		return x.TaskSubtype
-	}
-	return TaskSubtype_TASK_SUBTYPE_UNDEFINED
-}
-
-func (m *SetProblemDocRequest_ReplaceProblemDocField) GetTaskDescription() string {
-	if x, ok := m.GetUpdate().(*SetProblemDocRequest_ReplaceProblemDocField_TaskDescription); ok {
-		return x.TaskDescription
-	}
-	return ""
-}
-
-func (m *SetProblemDocRequest_ReplaceProblemDocField) GetOutputType() OutputType {
-	if x, ok := m.GetUpdate().(*SetProblemDocRequest_ReplaceProblemDocField_OutputType); ok {
-		return x.OutputType
-	}
-	return OutputType_OUTPUT_TYPE_UNDEFINED
-}
-
-func (m *SetProblemDocRequest_ReplaceProblemDocField) GetMetric() PerformanceMetric {
-	if x, ok := m.GetUpdate().(*SetProblemDocRequest_ReplaceProblemDocField_Metric); ok {
-		return x.Metric
-	}
-	return PerformanceMetric_METRIC_UNDEFINED
-}
-
-// XXX_OneofFuncs is for the internal use of the proto package.
-func (*SetProblemDocRequest_ReplaceProblemDocField) XXX_OneofFuncs() (func(msg proto.Message, b *proto.Buffer) error, func(msg proto.Message, tag, wire int, b *proto.Buffer) (bool, error), func(msg proto.Message) (n int), []interface{}) {
-	return _SetProblemDocRequest_ReplaceProblemDocField_OneofMarshaler, _SetProblemDocRequest_ReplaceProblemDocField_OneofUnmarshaler, _SetProblemDocRequest_ReplaceProblemDocField_OneofSizer, []interface{}{
-		(*SetProblemDocRequest_ReplaceProblemDocField_TaskType)(nil),
-		(*SetProblemDocRequest_ReplaceProblemDocField_TaskSubtype)(nil),
-		(*SetProblemDocRequest_ReplaceProblemDocField_TaskDescription)(nil),
-		(*SetProblemDocRequest_ReplaceProblemDocField_OutputType)(nil),
-		(*SetProblemDocRequest_ReplaceProblemDocField_Metric)(nil),
-	}
-}
-
-func _SetProblemDocRequest_ReplaceProblemDocField_OneofMarshaler(msg proto.Message, b *proto.Buffer) error {
-	m := msg.(*SetProblemDocRequest_ReplaceProblemDocField)
-	// update
-	switch x := m.Update.(type) {
-	case *SetProblemDocRequest_ReplaceProblemDocField_TaskType:
-		b.EncodeVarint(1<<3 | proto.WireVarint)
-		b.EncodeVarint(uint64(x.TaskType))
-	case *SetProblemDocRequest_ReplaceProblemDocField_TaskSubtype:
-		b.EncodeVarint(2<<3 | proto.WireVarint)
-		b.EncodeVarint(uint64(x.TaskSubtype))
-	case *SetProblemDocRequest_ReplaceProblemDocField_TaskDescription:
-		b.EncodeVarint(3<<3 | proto.WireBytes)
-		b.EncodeStringBytes(x.TaskDescription)
-	case *SetProblemDocRequest_ReplaceProblemDocField_OutputType:
-		b.EncodeVarint(4<<3 | proto.WireVarint)
-		b.EncodeVarint(uint64(x.OutputType))
-	case *SetProblemDocRequest_ReplaceProblemDocField_Metric:
-		b.EncodeVarint(5<<3 | proto.WireVarint)
-		b.EncodeVarint(uint64(x.Metric))
-	case nil:
-	default:
-		return fmt.Errorf("SetProblemDocRequest_ReplaceProblemDocField.Update has unexpected type %T", x)
-	}
-	return nil
-}
-
-func _SetProblemDocRequest_ReplaceProblemDocField_OneofUnmarshaler(msg proto.Message, tag, wire int, b *proto.Buffer) (bool, error) {
-	m := msg.(*SetProblemDocRequest_ReplaceProblemDocField)
-	switch tag {
-	case 1: // update.task_type
-		if wire != proto.WireVarint {
-			return true, proto.ErrInternalBadWireType
-		}
-		x, err := b.DecodeVarint()
-		m.Update = &SetProblemDocRequest_ReplaceProblemDocField_TaskType{TaskType(x)}
-		return true, err
-	case 2: // update.task_subtype
-		if wire != proto.WireVarint {
-			return true, proto.ErrInternalBadWireType
-		}
-		x, err := b.DecodeVarint()
-		m.Update = &SetProblemDocRequest_ReplaceProblemDocField_TaskSubtype{TaskSubtype(x)}
-		return true, err
-	case 3: // update.task_description
-		if wire != proto.WireBytes {
-			return true, proto.ErrInternalBadWireType
-		}
-		x, err := b.DecodeStringBytes()
-		m.Update = &SetProblemDocRequest_ReplaceProblemDocField_TaskDescription{x}
-		return true, err
-	case 4: // update.output_type
-		if wire != proto.WireVarint {
-			return true, proto.ErrInternalBadWireType
-		}
-		x, err := b.DecodeVarint()
-		m.Update = &SetProblemDocRequest_ReplaceProblemDocField_OutputType{OutputType(x)}
-		return true, err
-	case 5: // update.metric
-		if wire != proto.WireVarint {
-			return true, proto.ErrInternalBadWireType
-		}
-		x, err := b.DecodeVarint()
-		m.Update = &SetProblemDocRequest_ReplaceProblemDocField_Metric{PerformanceMetric(x)}
-		return true, err
-	default:
-		return false, nil
-	}
-}
-
-func _SetProblemDocRequest_ReplaceProblemDocField_OneofSizer(msg proto.Message) (n int) {
-	m := msg.(*SetProblemDocRequest_ReplaceProblemDocField)
-	// update
-	switch x := m.Update.(type) {
-	case *SetProblemDocRequest_ReplaceProblemDocField_TaskType:
-		n += proto.SizeVarint(1<<3 | proto.WireVarint)
-		n += proto.SizeVarint(uint64(x.TaskType))
-	case *SetProblemDocRequest_ReplaceProblemDocField_TaskSubtype:
-		n += proto.SizeVarint(2<<3 | proto.WireVarint)
-		n += proto.SizeVarint(uint64(x.TaskSubtype))
-	case *SetProblemDocRequest_ReplaceProblemDocField_TaskDescription:
-		n += proto.SizeVarint(3<<3 | proto.WireBytes)
-		n += proto.SizeVarint(uint64(len(x.TaskDescription)))
-		n += len(x.TaskDescription)
-	case *SetProblemDocRequest_ReplaceProblemDocField_OutputType:
-		n += proto.SizeVarint(4<<3 | proto.WireVarint)
-		n += proto.SizeVarint(uint64(x.OutputType))
-	case *SetProblemDocRequest_ReplaceProblemDocField_Metric:
-		n += proto.SizeVarint(5<<3 | proto.WireVarint)
-		n += proto.SizeVarint(uint64(x.Metric))
-	case nil:
-	default:
-		panic(fmt.Sprintf("proto: unexpected type %T in oneof", x))
-	}
-	return n
 }
 
 var E_ProtocolVersion = &proto.ExtensionDesc{
@@ -1126,33 +1423,46 @@ var E_ProtocolVersion = &proto.ExtensionDesc{
 }
 
 func init() {
-	proto.RegisterType((*SessionContext)(nil), "SessionContext")
-	proto.RegisterType((*Status)(nil), "Status")
-	proto.RegisterType((*Response)(nil), "Response")
-	proto.RegisterType((*SessionRequest)(nil), "SessionRequest")
-	proto.RegisterType((*SessionResponse)(nil), "SessionResponse")
-	proto.RegisterType((*Feature)(nil), "Feature")
-	proto.RegisterType((*PipelineCreateRequest)(nil), "PipelineCreateRequest")
+	proto.RegisterType((*ScoringConfiguration)(nil), "ScoringConfiguration")
 	proto.RegisterType((*Score)(nil), "Score")
-	proto.RegisterType((*Pipeline)(nil), "Pipeline")
-	proto.RegisterType((*PipelineCreateResult)(nil), "PipelineCreateResult")
-	proto.RegisterType((*PipelineExecuteRequest)(nil), "PipelineExecuteRequest")
-	proto.RegisterType((*PipelineExecuteResult)(nil), "PipelineExecuteResult")
-	proto.RegisterType((*PipelineListRequest)(nil), "PipelineListRequest")
-	proto.RegisterType((*PipelineDeleteRequest)(nil), "PipelineDeleteRequest")
-	proto.RegisterType((*PipelineCancelRequest)(nil), "PipelineCancelRequest")
-	proto.RegisterType((*PipelineListResult)(nil), "PipelineListResult")
-	proto.RegisterType((*PipelineCreateResultsRequest)(nil), "PipelineCreateResultsRequest")
-	proto.RegisterType((*PipelineExecuteResultsRequest)(nil), "PipelineExecuteResultsRequest")
+	proto.RegisterType((*UpdateProblemRequest)(nil), "UpdateProblemRequest")
+	proto.RegisterType((*UpdateProblemResponse)(nil), "UpdateProblemResponse")
+	proto.RegisterType((*SearchPipelinesRequest)(nil), "SearchPipelinesRequest")
+	proto.RegisterType((*SearchPipelinesResponse)(nil), "SearchPipelinesResponse")
+	proto.RegisterType((*EndSearchPipelinesRequest)(nil), "EndSearchPipelinesRequest")
+	proto.RegisterType((*EndSearchPipelinesResponse)(nil), "EndSearchPipelinesResponse")
+	proto.RegisterType((*StopSearchPipelinesRequest)(nil), "StopSearchPipelinesRequest")
+	proto.RegisterType((*StopSearchPipelinesResponse)(nil), "StopSearchPipelinesResponse")
+	proto.RegisterType((*PipelineSearchScore)(nil), "PipelineSearchScore")
+	proto.RegisterType((*GetSearchPipelinesResultsRequest)(nil), "GetSearchPipelinesResultsRequest")
+	proto.RegisterType((*GetSearchPipelinesResultsResponse)(nil), "GetSearchPipelinesResultsResponse")
+	proto.RegisterType((*DescribePipelineRequest)(nil), "DescribePipelineRequest")
+	proto.RegisterType((*PrimitiveStepDescription)(nil), "PrimitiveStepDescription")
+	proto.RegisterType((*SubpipelineStepDescription)(nil), "SubpipelineStepDescription")
+	proto.RegisterType((*StepDescription)(nil), "StepDescription")
+	proto.RegisterType((*DescribePipelineResponse)(nil), "DescribePipelineResponse")
+	proto.RegisterType((*StepProgress)(nil), "StepProgress")
+	proto.RegisterType((*PipelineRunUser)(nil), "PipelineRunUser")
+	proto.RegisterType((*ScorePipelineRequest)(nil), "ScorePipelineRequest")
+	proto.RegisterType((*ScorePipelineResponse)(nil), "ScorePipelineResponse")
+	proto.RegisterType((*GetScorePipelineResultsRequest)(nil), "GetScorePipelineResultsRequest")
+	proto.RegisterType((*GetScorePipelineResultsResponse)(nil), "GetScorePipelineResultsResponse")
+	proto.RegisterType((*FitPipelineRequest)(nil), "FitPipelineRequest")
+	proto.RegisterType((*FitPipelineResponse)(nil), "FitPipelineResponse")
+	proto.RegisterType((*GetFitPipelineResultsRequest)(nil), "GetFitPipelineResultsRequest")
+	proto.RegisterType((*GetFitPipelineResultsResponse)(nil), "GetFitPipelineResultsResponse")
+	proto.RegisterType((*ProducePipelineRequest)(nil), "ProducePipelineRequest")
+	proto.RegisterType((*ProducePipelineResponse)(nil), "ProducePipelineResponse")
+	proto.RegisterType((*GetProducePipelineResultsRequest)(nil), "GetProducePipelineResultsRequest")
+	proto.RegisterType((*GetProducePipelineResultsResponse)(nil), "GetProducePipelineResultsResponse")
 	proto.RegisterType((*PipelineExportRequest)(nil), "PipelineExportRequest")
-	proto.RegisterType((*SetProblemDocRequest)(nil), "SetProblemDocRequest")
-	proto.RegisterType((*SetProblemDocRequest_ReplaceProblemDocField)(nil), "SetProblemDocRequest.ReplaceProblemDocField")
-	proto.RegisterEnum("StatusCode", StatusCode_name, StatusCode_value)
+	proto.RegisterType((*PipelineExportResponse)(nil), "PipelineExportResponse")
+	proto.RegisterType((*ListPrimitivesRequest)(nil), "ListPrimitivesRequest")
+	proto.RegisterType((*ListPrimitivesResponse)(nil), "ListPrimitivesResponse")
+	proto.RegisterType((*ListAllowedValueTypesRequest)(nil), "ListAllowedValueTypesRequest")
+	proto.RegisterType((*ListAllowedValueTypesResponse)(nil), "ListAllowedValueTypesResponse")
+	proto.RegisterEnum("EvaluationMethod", EvaluationMethod_name, EvaluationMethod_value)
 	proto.RegisterEnum("Progress", Progress_name, Progress_value)
-	proto.RegisterEnum("TaskType", TaskType_name, TaskType_value)
-	proto.RegisterEnum("TaskSubtype", TaskSubtype_name, TaskSubtype_value)
-	proto.RegisterEnum("OutputType", OutputType_name, OutputType_value)
-	proto.RegisterEnum("PerformanceMetric", PerformanceMetric_name, PerformanceMetric_value)
 	proto.RegisterExtension(E_ProtocolVersion)
 }
 
@@ -1167,41 +1477,21 @@ const _ = grpc.SupportPackageIsVersion4
 // Client API for Core service
 
 type CoreClient interface {
-	// Train step - multiple result messages returned via GRPC streaming.
-	// Request the TA2 system generate pipelines to satisfy a given task,
-	// training data, and targets.  The response is a stream of result messages
-	// indicating progress, failure, or completion of an individual pipeline
-	// creation task associated with the request.  The stream is closed by the
-	// server when all pipeline creation tasks have been completed.
-	CreatePipelines(ctx context.Context, in *PipelineCreateRequest, opts ...grpc.CallOption) (Core_CreatePipelinesClient, error)
-	// Predict step - multiple results messages returned via GRPC streaming.
-	// Request the TA2 system execute a previously created pipeline against an
-	// input dataset.  This response is a stream of result messages indicating
-	// progress, failure, or completion of the pipeline execution task.  The
-	// stream is closed by the server when all pipeline execution tasks have
-	// been completed. Labels / predicted values are made available to TA3
-	// systems for user inspection.
-	ExecutePipeline(ctx context.Context, in *PipelineExecuteRequest, opts ...grpc.CallOption) (Core_ExecutePipelineClient, error)
-	// Lists all pipelines in session.
-	ListPipelines(ctx context.Context, in *PipelineListRequest, opts ...grpc.CallOption) (*PipelineListResult, error)
-	// Deletes specified pipelines in session, returns IDs of successfully deleted pipelines.
-	DeletePipelines(ctx context.Context, in *PipelineDeleteRequest, opts ...grpc.CallOption) (*PipelineListResult, error)
-	// Cancels processing (creation or execution) of specified pipelines in session, but does not
-	// delete.  Returns IDs of successfully canceled pipelines.  State of a canceled pipeline is
-	// unspecified.  It could be useable or not.
-	CancelPipelines(ctx context.Context, in *PipelineCancelRequest, opts ...grpc.CallOption) (*PipelineListResult, error)
-	// Obtain results; lists existing pipelines then streams new results as they become available.
-	GetCreatePipelineResults(ctx context.Context, in *PipelineCreateResultsRequest, opts ...grpc.CallOption) (Core_GetCreatePipelineResultsClient, error)
-	GetExecutePipelineResults(ctx context.Context, in *PipelineExecuteResultsRequest, opts ...grpc.CallOption) (Core_GetExecutePipelineResultsClient, error)
-	// Export executable of a pipeline, including any optional preprocessing used in session.
-	ExportPipeline(ctx context.Context, in *PipelineExportRequest, opts ...grpc.CallOption) (*Response, error)
-	// Set problem schema for current session.
-	SetProblemDoc(ctx context.Context, in *SetProblemDocRequest, opts ...grpc.CallOption) (*Response, error)
-	// Session management.
-	// Create a new user session, which provides a session context for creation and execution of pipelines.
-	StartSession(ctx context.Context, in *SessionRequest, opts ...grpc.CallOption) (*SessionResponse, error)
-	// Terminate a user session and release associated context resources.
-	EndSession(ctx context.Context, in *SessionContext, opts ...grpc.CallOption) (*Response, error)
+	SearchPipelines(ctx context.Context, in *SearchPipelinesRequest, opts ...grpc.CallOption) (*SearchPipelinesResponse, error)
+	GetSearchPipelinesResults(ctx context.Context, in *GetSearchPipelinesResultsRequest, opts ...grpc.CallOption) (Core_GetSearchPipelinesResultsClient, error)
+	EndSearchPipelines(ctx context.Context, in *EndSearchPipelinesRequest, opts ...grpc.CallOption) (*EndSearchPipelinesResponse, error)
+	StopSearchPipelines(ctx context.Context, in *StopSearchPipelinesRequest, opts ...grpc.CallOption) (*StopSearchPipelinesResponse, error)
+	DescribePipeline(ctx context.Context, in *DescribePipelineRequest, opts ...grpc.CallOption) (*DescribePipelineResponse, error)
+	ScorePipeline(ctx context.Context, in *ScorePipelineRequest, opts ...grpc.CallOption) (*ScorePipelineResponse, error)
+	GetScorePipelineResults(ctx context.Context, in *GetScorePipelineResultsRequest, opts ...grpc.CallOption) (Core_GetScorePipelineResultsClient, error)
+	FitPipeline(ctx context.Context, in *FitPipelineRequest, opts ...grpc.CallOption) (*FitPipelineResponse, error)
+	GetFitPipelineResults(ctx context.Context, in *GetFitPipelineResultsRequest, opts ...grpc.CallOption) (Core_GetFitPipelineResultsClient, error)
+	ProducePipeline(ctx context.Context, in *ProducePipelineRequest, opts ...grpc.CallOption) (*ProducePipelineResponse, error)
+	GetProducePipelineResults(ctx context.Context, in *GetProducePipelineResultsRequest, opts ...grpc.CallOption) (Core_GetProducePipelineResultsClient, error)
+	PipelineExport(ctx context.Context, in *PipelineExportRequest, opts ...grpc.CallOption) (*PipelineExportResponse, error)
+	UpdateProblem(ctx context.Context, in *UpdateProblemRequest, opts ...grpc.CallOption) (*UpdateProblemResponse, error)
+	ListPrimitives(ctx context.Context, in *ListPrimitivesRequest, opts ...grpc.CallOption) (*ListPrimitivesResponse, error)
+	ListAllowedValueTypes(ctx context.Context, in *ListAllowedValueTypesRequest, opts ...grpc.CallOption) (*ListAllowedValueTypesResponse, error)
 }
 
 type coreClient struct {
@@ -1212,12 +1502,21 @@ func NewCoreClient(cc *grpc.ClientConn) CoreClient {
 	return &coreClient{cc}
 }
 
-func (c *coreClient) CreatePipelines(ctx context.Context, in *PipelineCreateRequest, opts ...grpc.CallOption) (Core_CreatePipelinesClient, error) {
-	stream, err := grpc.NewClientStream(ctx, &_Core_serviceDesc.Streams[0], c.cc, "/Core/CreatePipelines", opts...)
+func (c *coreClient) SearchPipelines(ctx context.Context, in *SearchPipelinesRequest, opts ...grpc.CallOption) (*SearchPipelinesResponse, error) {
+	out := new(SearchPipelinesResponse)
+	err := grpc.Invoke(ctx, "/Core/SearchPipelines", in, out, c.cc, opts...)
 	if err != nil {
 		return nil, err
 	}
-	x := &coreCreatePipelinesClient{stream}
+	return out, nil
+}
+
+func (c *coreClient) GetSearchPipelinesResults(ctx context.Context, in *GetSearchPipelinesResultsRequest, opts ...grpc.CallOption) (Core_GetSearchPipelinesResultsClient, error) {
+	stream, err := grpc.NewClientStream(ctx, &_Core_serviceDesc.Streams[0], c.cc, "/Core/GetSearchPipelinesResults", opts...)
+	if err != nil {
+		return nil, err
+	}
+	x := &coreGetSearchPipelinesResultsClient{stream}
 	if err := x.ClientStream.SendMsg(in); err != nil {
 		return nil, err
 	}
@@ -1227,29 +1526,65 @@ func (c *coreClient) CreatePipelines(ctx context.Context, in *PipelineCreateRequ
 	return x, nil
 }
 
-type Core_CreatePipelinesClient interface {
-	Recv() (*PipelineCreateResult, error)
+type Core_GetSearchPipelinesResultsClient interface {
+	Recv() (*GetSearchPipelinesResultsResponse, error)
 	grpc.ClientStream
 }
 
-type coreCreatePipelinesClient struct {
+type coreGetSearchPipelinesResultsClient struct {
 	grpc.ClientStream
 }
 
-func (x *coreCreatePipelinesClient) Recv() (*PipelineCreateResult, error) {
-	m := new(PipelineCreateResult)
+func (x *coreGetSearchPipelinesResultsClient) Recv() (*GetSearchPipelinesResultsResponse, error) {
+	m := new(GetSearchPipelinesResultsResponse)
 	if err := x.ClientStream.RecvMsg(m); err != nil {
 		return nil, err
 	}
 	return m, nil
 }
 
-func (c *coreClient) ExecutePipeline(ctx context.Context, in *PipelineExecuteRequest, opts ...grpc.CallOption) (Core_ExecutePipelineClient, error) {
-	stream, err := grpc.NewClientStream(ctx, &_Core_serviceDesc.Streams[1], c.cc, "/Core/ExecutePipeline", opts...)
+func (c *coreClient) EndSearchPipelines(ctx context.Context, in *EndSearchPipelinesRequest, opts ...grpc.CallOption) (*EndSearchPipelinesResponse, error) {
+	out := new(EndSearchPipelinesResponse)
+	err := grpc.Invoke(ctx, "/Core/EndSearchPipelines", in, out, c.cc, opts...)
 	if err != nil {
 		return nil, err
 	}
-	x := &coreExecutePipelineClient{stream}
+	return out, nil
+}
+
+func (c *coreClient) StopSearchPipelines(ctx context.Context, in *StopSearchPipelinesRequest, opts ...grpc.CallOption) (*StopSearchPipelinesResponse, error) {
+	out := new(StopSearchPipelinesResponse)
+	err := grpc.Invoke(ctx, "/Core/StopSearchPipelines", in, out, c.cc, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *coreClient) DescribePipeline(ctx context.Context, in *DescribePipelineRequest, opts ...grpc.CallOption) (*DescribePipelineResponse, error) {
+	out := new(DescribePipelineResponse)
+	err := grpc.Invoke(ctx, "/Core/DescribePipeline", in, out, c.cc, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *coreClient) ScorePipeline(ctx context.Context, in *ScorePipelineRequest, opts ...grpc.CallOption) (*ScorePipelineResponse, error) {
+	out := new(ScorePipelineResponse)
+	err := grpc.Invoke(ctx, "/Core/ScorePipeline", in, out, c.cc, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *coreClient) GetScorePipelineResults(ctx context.Context, in *GetScorePipelineResultsRequest, opts ...grpc.CallOption) (Core_GetScorePipelineResultsClient, error) {
+	stream, err := grpc.NewClientStream(ctx, &_Core_serviceDesc.Streams[1], c.cc, "/Core/GetScorePipelineResults", opts...)
+	if err != nil {
+		return nil, err
+	}
+	x := &coreGetScorePipelineResultsClient{stream}
 	if err := x.ClientStream.SendMsg(in); err != nil {
 		return nil, err
 	}
@@ -1259,56 +1594,38 @@ func (c *coreClient) ExecutePipeline(ctx context.Context, in *PipelineExecuteReq
 	return x, nil
 }
 
-type Core_ExecutePipelineClient interface {
-	Recv() (*PipelineExecuteResult, error)
+type Core_GetScorePipelineResultsClient interface {
+	Recv() (*GetScorePipelineResultsResponse, error)
 	grpc.ClientStream
 }
 
-type coreExecutePipelineClient struct {
+type coreGetScorePipelineResultsClient struct {
 	grpc.ClientStream
 }
 
-func (x *coreExecutePipelineClient) Recv() (*PipelineExecuteResult, error) {
-	m := new(PipelineExecuteResult)
+func (x *coreGetScorePipelineResultsClient) Recv() (*GetScorePipelineResultsResponse, error) {
+	m := new(GetScorePipelineResultsResponse)
 	if err := x.ClientStream.RecvMsg(m); err != nil {
 		return nil, err
 	}
 	return m, nil
 }
 
-func (c *coreClient) ListPipelines(ctx context.Context, in *PipelineListRequest, opts ...grpc.CallOption) (*PipelineListResult, error) {
-	out := new(PipelineListResult)
-	err := grpc.Invoke(ctx, "/Core/ListPipelines", in, out, c.cc, opts...)
+func (c *coreClient) FitPipeline(ctx context.Context, in *FitPipelineRequest, opts ...grpc.CallOption) (*FitPipelineResponse, error) {
+	out := new(FitPipelineResponse)
+	err := grpc.Invoke(ctx, "/Core/FitPipeline", in, out, c.cc, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *coreClient) DeletePipelines(ctx context.Context, in *PipelineDeleteRequest, opts ...grpc.CallOption) (*PipelineListResult, error) {
-	out := new(PipelineListResult)
-	err := grpc.Invoke(ctx, "/Core/DeletePipelines", in, out, c.cc, opts...)
+func (c *coreClient) GetFitPipelineResults(ctx context.Context, in *GetFitPipelineResultsRequest, opts ...grpc.CallOption) (Core_GetFitPipelineResultsClient, error) {
+	stream, err := grpc.NewClientStream(ctx, &_Core_serviceDesc.Streams[2], c.cc, "/Core/GetFitPipelineResults", opts...)
 	if err != nil {
 		return nil, err
 	}
-	return out, nil
-}
-
-func (c *coreClient) CancelPipelines(ctx context.Context, in *PipelineCancelRequest, opts ...grpc.CallOption) (*PipelineListResult, error) {
-	out := new(PipelineListResult)
-	err := grpc.Invoke(ctx, "/Core/CancelPipelines", in, out, c.cc, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *coreClient) GetCreatePipelineResults(ctx context.Context, in *PipelineCreateResultsRequest, opts ...grpc.CallOption) (Core_GetCreatePipelineResultsClient, error) {
-	stream, err := grpc.NewClientStream(ctx, &_Core_serviceDesc.Streams[2], c.cc, "/Core/GetCreatePipelineResults", opts...)
-	if err != nil {
-		return nil, err
-	}
-	x := &coreGetCreatePipelineResultsClient{stream}
+	x := &coreGetFitPipelineResultsClient{stream}
 	if err := x.ClientStream.SendMsg(in); err != nil {
 		return nil, err
 	}
@@ -1318,29 +1635,38 @@ func (c *coreClient) GetCreatePipelineResults(ctx context.Context, in *PipelineC
 	return x, nil
 }
 
-type Core_GetCreatePipelineResultsClient interface {
-	Recv() (*PipelineCreateResult, error)
+type Core_GetFitPipelineResultsClient interface {
+	Recv() (*GetFitPipelineResultsResponse, error)
 	grpc.ClientStream
 }
 
-type coreGetCreatePipelineResultsClient struct {
+type coreGetFitPipelineResultsClient struct {
 	grpc.ClientStream
 }
 
-func (x *coreGetCreatePipelineResultsClient) Recv() (*PipelineCreateResult, error) {
-	m := new(PipelineCreateResult)
+func (x *coreGetFitPipelineResultsClient) Recv() (*GetFitPipelineResultsResponse, error) {
+	m := new(GetFitPipelineResultsResponse)
 	if err := x.ClientStream.RecvMsg(m); err != nil {
 		return nil, err
 	}
 	return m, nil
 }
 
-func (c *coreClient) GetExecutePipelineResults(ctx context.Context, in *PipelineExecuteResultsRequest, opts ...grpc.CallOption) (Core_GetExecutePipelineResultsClient, error) {
-	stream, err := grpc.NewClientStream(ctx, &_Core_serviceDesc.Streams[3], c.cc, "/Core/GetExecutePipelineResults", opts...)
+func (c *coreClient) ProducePipeline(ctx context.Context, in *ProducePipelineRequest, opts ...grpc.CallOption) (*ProducePipelineResponse, error) {
+	out := new(ProducePipelineResponse)
+	err := grpc.Invoke(ctx, "/Core/ProducePipeline", in, out, c.cc, opts...)
 	if err != nil {
 		return nil, err
 	}
-	x := &coreGetExecutePipelineResultsClient{stream}
+	return out, nil
+}
+
+func (c *coreClient) GetProducePipelineResults(ctx context.Context, in *GetProducePipelineResultsRequest, opts ...grpc.CallOption) (Core_GetProducePipelineResultsClient, error) {
+	stream, err := grpc.NewClientStream(ctx, &_Core_serviceDesc.Streams[3], c.cc, "/Core/GetProducePipelineResults", opts...)
+	if err != nil {
+		return nil, err
+	}
+	x := &coreGetProducePipelineResultsClient{stream}
 	if err := x.ClientStream.SendMsg(in); err != nil {
 		return nil, err
 	}
@@ -1350,53 +1676,53 @@ func (c *coreClient) GetExecutePipelineResults(ctx context.Context, in *Pipeline
 	return x, nil
 }
 
-type Core_GetExecutePipelineResultsClient interface {
-	Recv() (*PipelineExecuteResult, error)
+type Core_GetProducePipelineResultsClient interface {
+	Recv() (*GetProducePipelineResultsResponse, error)
 	grpc.ClientStream
 }
 
-type coreGetExecutePipelineResultsClient struct {
+type coreGetProducePipelineResultsClient struct {
 	grpc.ClientStream
 }
 
-func (x *coreGetExecutePipelineResultsClient) Recv() (*PipelineExecuteResult, error) {
-	m := new(PipelineExecuteResult)
+func (x *coreGetProducePipelineResultsClient) Recv() (*GetProducePipelineResultsResponse, error) {
+	m := new(GetProducePipelineResultsResponse)
 	if err := x.ClientStream.RecvMsg(m); err != nil {
 		return nil, err
 	}
 	return m, nil
 }
 
-func (c *coreClient) ExportPipeline(ctx context.Context, in *PipelineExportRequest, opts ...grpc.CallOption) (*Response, error) {
-	out := new(Response)
-	err := grpc.Invoke(ctx, "/Core/ExportPipeline", in, out, c.cc, opts...)
+func (c *coreClient) PipelineExport(ctx context.Context, in *PipelineExportRequest, opts ...grpc.CallOption) (*PipelineExportResponse, error) {
+	out := new(PipelineExportResponse)
+	err := grpc.Invoke(ctx, "/Core/PipelineExport", in, out, c.cc, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *coreClient) SetProblemDoc(ctx context.Context, in *SetProblemDocRequest, opts ...grpc.CallOption) (*Response, error) {
-	out := new(Response)
-	err := grpc.Invoke(ctx, "/Core/SetProblemDoc", in, out, c.cc, opts...)
+func (c *coreClient) UpdateProblem(ctx context.Context, in *UpdateProblemRequest, opts ...grpc.CallOption) (*UpdateProblemResponse, error) {
+	out := new(UpdateProblemResponse)
+	err := grpc.Invoke(ctx, "/Core/UpdateProblem", in, out, c.cc, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *coreClient) StartSession(ctx context.Context, in *SessionRequest, opts ...grpc.CallOption) (*SessionResponse, error) {
-	out := new(SessionResponse)
-	err := grpc.Invoke(ctx, "/Core/StartSession", in, out, c.cc, opts...)
+func (c *coreClient) ListPrimitives(ctx context.Context, in *ListPrimitivesRequest, opts ...grpc.CallOption) (*ListPrimitivesResponse, error) {
+	out := new(ListPrimitivesResponse)
+	err := grpc.Invoke(ctx, "/Core/ListPrimitives", in, out, c.cc, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *coreClient) EndSession(ctx context.Context, in *SessionContext, opts ...grpc.CallOption) (*Response, error) {
-	out := new(Response)
-	err := grpc.Invoke(ctx, "/Core/EndSession", in, out, c.cc, opts...)
+func (c *coreClient) ListAllowedValueTypes(ctx context.Context, in *ListAllowedValueTypesRequest, opts ...grpc.CallOption) (*ListAllowedValueTypesResponse, error) {
+	out := new(ListAllowedValueTypesResponse)
+	err := grpc.Invoke(ctx, "/Core/ListAllowedValueTypes", in, out, c.cc, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -1406,253 +1732,305 @@ func (c *coreClient) EndSession(ctx context.Context, in *SessionContext, opts ..
 // Server API for Core service
 
 type CoreServer interface {
-	// Train step - multiple result messages returned via GRPC streaming.
-	// Request the TA2 system generate pipelines to satisfy a given task,
-	// training data, and targets.  The response is a stream of result messages
-	// indicating progress, failure, or completion of an individual pipeline
-	// creation task associated with the request.  The stream is closed by the
-	// server when all pipeline creation tasks have been completed.
-	CreatePipelines(*PipelineCreateRequest, Core_CreatePipelinesServer) error
-	// Predict step - multiple results messages returned via GRPC streaming.
-	// Request the TA2 system execute a previously created pipeline against an
-	// input dataset.  This response is a stream of result messages indicating
-	// progress, failure, or completion of the pipeline execution task.  The
-	// stream is closed by the server when all pipeline execution tasks have
-	// been completed. Labels / predicted values are made available to TA3
-	// systems for user inspection.
-	ExecutePipeline(*PipelineExecuteRequest, Core_ExecutePipelineServer) error
-	// Lists all pipelines in session.
-	ListPipelines(context.Context, *PipelineListRequest) (*PipelineListResult, error)
-	// Deletes specified pipelines in session, returns IDs of successfully deleted pipelines.
-	DeletePipelines(context.Context, *PipelineDeleteRequest) (*PipelineListResult, error)
-	// Cancels processing (creation or execution) of specified pipelines in session, but does not
-	// delete.  Returns IDs of successfully canceled pipelines.  State of a canceled pipeline is
-	// unspecified.  It could be useable or not.
-	CancelPipelines(context.Context, *PipelineCancelRequest) (*PipelineListResult, error)
-	// Obtain results; lists existing pipelines then streams new results as they become available.
-	GetCreatePipelineResults(*PipelineCreateResultsRequest, Core_GetCreatePipelineResultsServer) error
-	GetExecutePipelineResults(*PipelineExecuteResultsRequest, Core_GetExecutePipelineResultsServer) error
-	// Export executable of a pipeline, including any optional preprocessing used in session.
-	ExportPipeline(context.Context, *PipelineExportRequest) (*Response, error)
-	// Set problem schema for current session.
-	SetProblemDoc(context.Context, *SetProblemDocRequest) (*Response, error)
-	// Session management.
-	// Create a new user session, which provides a session context for creation and execution of pipelines.
-	StartSession(context.Context, *SessionRequest) (*SessionResponse, error)
-	// Terminate a user session and release associated context resources.
-	EndSession(context.Context, *SessionContext) (*Response, error)
+	SearchPipelines(context.Context, *SearchPipelinesRequest) (*SearchPipelinesResponse, error)
+	GetSearchPipelinesResults(*GetSearchPipelinesResultsRequest, Core_GetSearchPipelinesResultsServer) error
+	EndSearchPipelines(context.Context, *EndSearchPipelinesRequest) (*EndSearchPipelinesResponse, error)
+	StopSearchPipelines(context.Context, *StopSearchPipelinesRequest) (*StopSearchPipelinesResponse, error)
+	DescribePipeline(context.Context, *DescribePipelineRequest) (*DescribePipelineResponse, error)
+	ScorePipeline(context.Context, *ScorePipelineRequest) (*ScorePipelineResponse, error)
+	GetScorePipelineResults(*GetScorePipelineResultsRequest, Core_GetScorePipelineResultsServer) error
+	FitPipeline(context.Context, *FitPipelineRequest) (*FitPipelineResponse, error)
+	GetFitPipelineResults(*GetFitPipelineResultsRequest, Core_GetFitPipelineResultsServer) error
+	ProducePipeline(context.Context, *ProducePipelineRequest) (*ProducePipelineResponse, error)
+	GetProducePipelineResults(*GetProducePipelineResultsRequest, Core_GetProducePipelineResultsServer) error
+	PipelineExport(context.Context, *PipelineExportRequest) (*PipelineExportResponse, error)
+	UpdateProblem(context.Context, *UpdateProblemRequest) (*UpdateProblemResponse, error)
+	ListPrimitives(context.Context, *ListPrimitivesRequest) (*ListPrimitivesResponse, error)
+	ListAllowedValueTypes(context.Context, *ListAllowedValueTypesRequest) (*ListAllowedValueTypesResponse, error)
 }
 
 func RegisterCoreServer(s *grpc.Server, srv CoreServer) {
 	s.RegisterService(&_Core_serviceDesc, srv)
 }
 
-func _Core_CreatePipelines_Handler(srv interface{}, stream grpc.ServerStream) error {
-	m := new(PipelineCreateRequest)
-	if err := stream.RecvMsg(m); err != nil {
-		return err
-	}
-	return srv.(CoreServer).CreatePipelines(m, &coreCreatePipelinesServer{stream})
-}
-
-type Core_CreatePipelinesServer interface {
-	Send(*PipelineCreateResult) error
-	grpc.ServerStream
-}
-
-type coreCreatePipelinesServer struct {
-	grpc.ServerStream
-}
-
-func (x *coreCreatePipelinesServer) Send(m *PipelineCreateResult) error {
-	return x.ServerStream.SendMsg(m)
-}
-
-func _Core_ExecutePipeline_Handler(srv interface{}, stream grpc.ServerStream) error {
-	m := new(PipelineExecuteRequest)
-	if err := stream.RecvMsg(m); err != nil {
-		return err
-	}
-	return srv.(CoreServer).ExecutePipeline(m, &coreExecutePipelineServer{stream})
-}
-
-type Core_ExecutePipelineServer interface {
-	Send(*PipelineExecuteResult) error
-	grpc.ServerStream
-}
-
-type coreExecutePipelineServer struct {
-	grpc.ServerStream
-}
-
-func (x *coreExecutePipelineServer) Send(m *PipelineExecuteResult) error {
-	return x.ServerStream.SendMsg(m)
-}
-
-func _Core_ListPipelines_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(PipelineListRequest)
+func _Core_SearchPipelines_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(SearchPipelinesRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(CoreServer).ListPipelines(ctx, in)
+		return srv.(CoreServer).SearchPipelines(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/Core/ListPipelines",
+		FullMethod: "/Core/SearchPipelines",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(CoreServer).ListPipelines(ctx, req.(*PipelineListRequest))
+		return srv.(CoreServer).SearchPipelines(ctx, req.(*SearchPipelinesRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _Core_DeletePipelines_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(PipelineDeleteRequest)
+func _Core_GetSearchPipelinesResults_Handler(srv interface{}, stream grpc.ServerStream) error {
+	m := new(GetSearchPipelinesResultsRequest)
+	if err := stream.RecvMsg(m); err != nil {
+		return err
+	}
+	return srv.(CoreServer).GetSearchPipelinesResults(m, &coreGetSearchPipelinesResultsServer{stream})
+}
+
+type Core_GetSearchPipelinesResultsServer interface {
+	Send(*GetSearchPipelinesResultsResponse) error
+	grpc.ServerStream
+}
+
+type coreGetSearchPipelinesResultsServer struct {
+	grpc.ServerStream
+}
+
+func (x *coreGetSearchPipelinesResultsServer) Send(m *GetSearchPipelinesResultsResponse) error {
+	return x.ServerStream.SendMsg(m)
+}
+
+func _Core_EndSearchPipelines_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(EndSearchPipelinesRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(CoreServer).DeletePipelines(ctx, in)
+		return srv.(CoreServer).EndSearchPipelines(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/Core/DeletePipelines",
+		FullMethod: "/Core/EndSearchPipelines",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(CoreServer).DeletePipelines(ctx, req.(*PipelineDeleteRequest))
+		return srv.(CoreServer).EndSearchPipelines(ctx, req.(*EndSearchPipelinesRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _Core_CancelPipelines_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(PipelineCancelRequest)
+func _Core_StopSearchPipelines_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(StopSearchPipelinesRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(CoreServer).CancelPipelines(ctx, in)
+		return srv.(CoreServer).StopSearchPipelines(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/Core/CancelPipelines",
+		FullMethod: "/Core/StopSearchPipelines",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(CoreServer).CancelPipelines(ctx, req.(*PipelineCancelRequest))
+		return srv.(CoreServer).StopSearchPipelines(ctx, req.(*StopSearchPipelinesRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _Core_GetCreatePipelineResults_Handler(srv interface{}, stream grpc.ServerStream) error {
-	m := new(PipelineCreateResultsRequest)
+func _Core_DescribePipeline_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(DescribePipelineRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(CoreServer).DescribePipeline(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/Core/DescribePipeline",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(CoreServer).DescribePipeline(ctx, req.(*DescribePipelineRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Core_ScorePipeline_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ScorePipelineRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(CoreServer).ScorePipeline(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/Core/ScorePipeline",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(CoreServer).ScorePipeline(ctx, req.(*ScorePipelineRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Core_GetScorePipelineResults_Handler(srv interface{}, stream grpc.ServerStream) error {
+	m := new(GetScorePipelineResultsRequest)
 	if err := stream.RecvMsg(m); err != nil {
 		return err
 	}
-	return srv.(CoreServer).GetCreatePipelineResults(m, &coreGetCreatePipelineResultsServer{stream})
+	return srv.(CoreServer).GetScorePipelineResults(m, &coreGetScorePipelineResultsServer{stream})
 }
 
-type Core_GetCreatePipelineResultsServer interface {
-	Send(*PipelineCreateResult) error
+type Core_GetScorePipelineResultsServer interface {
+	Send(*GetScorePipelineResultsResponse) error
 	grpc.ServerStream
 }
 
-type coreGetCreatePipelineResultsServer struct {
+type coreGetScorePipelineResultsServer struct {
 	grpc.ServerStream
 }
 
-func (x *coreGetCreatePipelineResultsServer) Send(m *PipelineCreateResult) error {
+func (x *coreGetScorePipelineResultsServer) Send(m *GetScorePipelineResultsResponse) error {
 	return x.ServerStream.SendMsg(m)
 }
 
-func _Core_GetExecutePipelineResults_Handler(srv interface{}, stream grpc.ServerStream) error {
-	m := new(PipelineExecuteResultsRequest)
+func _Core_FitPipeline_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(FitPipelineRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(CoreServer).FitPipeline(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/Core/FitPipeline",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(CoreServer).FitPipeline(ctx, req.(*FitPipelineRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Core_GetFitPipelineResults_Handler(srv interface{}, stream grpc.ServerStream) error {
+	m := new(GetFitPipelineResultsRequest)
 	if err := stream.RecvMsg(m); err != nil {
 		return err
 	}
-	return srv.(CoreServer).GetExecutePipelineResults(m, &coreGetExecutePipelineResultsServer{stream})
+	return srv.(CoreServer).GetFitPipelineResults(m, &coreGetFitPipelineResultsServer{stream})
 }
 
-type Core_GetExecutePipelineResultsServer interface {
-	Send(*PipelineExecuteResult) error
+type Core_GetFitPipelineResultsServer interface {
+	Send(*GetFitPipelineResultsResponse) error
 	grpc.ServerStream
 }
 
-type coreGetExecutePipelineResultsServer struct {
+type coreGetFitPipelineResultsServer struct {
 	grpc.ServerStream
 }
 
-func (x *coreGetExecutePipelineResultsServer) Send(m *PipelineExecuteResult) error {
+func (x *coreGetFitPipelineResultsServer) Send(m *GetFitPipelineResultsResponse) error {
 	return x.ServerStream.SendMsg(m)
 }
 
-func _Core_ExportPipeline_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _Core_ProducePipeline_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ProducePipelineRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(CoreServer).ProducePipeline(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/Core/ProducePipeline",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(CoreServer).ProducePipeline(ctx, req.(*ProducePipelineRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Core_GetProducePipelineResults_Handler(srv interface{}, stream grpc.ServerStream) error {
+	m := new(GetProducePipelineResultsRequest)
+	if err := stream.RecvMsg(m); err != nil {
+		return err
+	}
+	return srv.(CoreServer).GetProducePipelineResults(m, &coreGetProducePipelineResultsServer{stream})
+}
+
+type Core_GetProducePipelineResultsServer interface {
+	Send(*GetProducePipelineResultsResponse) error
+	grpc.ServerStream
+}
+
+type coreGetProducePipelineResultsServer struct {
+	grpc.ServerStream
+}
+
+func (x *coreGetProducePipelineResultsServer) Send(m *GetProducePipelineResultsResponse) error {
+	return x.ServerStream.SendMsg(m)
+}
+
+func _Core_PipelineExport_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(PipelineExportRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(CoreServer).ExportPipeline(ctx, in)
+		return srv.(CoreServer).PipelineExport(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/Core/ExportPipeline",
+		FullMethod: "/Core/PipelineExport",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(CoreServer).ExportPipeline(ctx, req.(*PipelineExportRequest))
+		return srv.(CoreServer).PipelineExport(ctx, req.(*PipelineExportRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _Core_SetProblemDoc_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(SetProblemDocRequest)
+func _Core_UpdateProblem_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UpdateProblemRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(CoreServer).SetProblemDoc(ctx, in)
+		return srv.(CoreServer).UpdateProblem(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/Core/SetProblemDoc",
+		FullMethod: "/Core/UpdateProblem",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(CoreServer).SetProblemDoc(ctx, req.(*SetProblemDocRequest))
+		return srv.(CoreServer).UpdateProblem(ctx, req.(*UpdateProblemRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _Core_StartSession_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(SessionRequest)
+func _Core_ListPrimitives_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListPrimitivesRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(CoreServer).StartSession(ctx, in)
+		return srv.(CoreServer).ListPrimitives(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/Core/StartSession",
+		FullMethod: "/Core/ListPrimitives",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(CoreServer).StartSession(ctx, req.(*SessionRequest))
+		return srv.(CoreServer).ListPrimitives(ctx, req.(*ListPrimitivesRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _Core_EndSession_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(SessionContext)
+func _Core_ListAllowedValueTypes_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListAllowedValueTypesRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(CoreServer).EndSession(ctx, in)
+		return srv.(CoreServer).ListAllowedValueTypes(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/Core/EndSession",
+		FullMethod: "/Core/ListAllowedValueTypes",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(CoreServer).EndSession(ctx, req.(*SessionContext))
+		return srv.(CoreServer).ListAllowedValueTypes(ctx, req.(*ListAllowedValueTypesRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -1662,53 +2040,69 @@ var _Core_serviceDesc = grpc.ServiceDesc{
 	HandlerType: (*CoreServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
-			MethodName: "ListPipelines",
-			Handler:    _Core_ListPipelines_Handler,
+			MethodName: "SearchPipelines",
+			Handler:    _Core_SearchPipelines_Handler,
 		},
 		{
-			MethodName: "DeletePipelines",
-			Handler:    _Core_DeletePipelines_Handler,
+			MethodName: "EndSearchPipelines",
+			Handler:    _Core_EndSearchPipelines_Handler,
 		},
 		{
-			MethodName: "CancelPipelines",
-			Handler:    _Core_CancelPipelines_Handler,
+			MethodName: "StopSearchPipelines",
+			Handler:    _Core_StopSearchPipelines_Handler,
 		},
 		{
-			MethodName: "ExportPipeline",
-			Handler:    _Core_ExportPipeline_Handler,
+			MethodName: "DescribePipeline",
+			Handler:    _Core_DescribePipeline_Handler,
 		},
 		{
-			MethodName: "SetProblemDoc",
-			Handler:    _Core_SetProblemDoc_Handler,
+			MethodName: "ScorePipeline",
+			Handler:    _Core_ScorePipeline_Handler,
 		},
 		{
-			MethodName: "StartSession",
-			Handler:    _Core_StartSession_Handler,
+			MethodName: "FitPipeline",
+			Handler:    _Core_FitPipeline_Handler,
 		},
 		{
-			MethodName: "EndSession",
-			Handler:    _Core_EndSession_Handler,
+			MethodName: "ProducePipeline",
+			Handler:    _Core_ProducePipeline_Handler,
+		},
+		{
+			MethodName: "PipelineExport",
+			Handler:    _Core_PipelineExport_Handler,
+		},
+		{
+			MethodName: "UpdateProblem",
+			Handler:    _Core_UpdateProblem_Handler,
+		},
+		{
+			MethodName: "ListPrimitives",
+			Handler:    _Core_ListPrimitives_Handler,
+		},
+		{
+			MethodName: "ListAllowedValueTypes",
+			Handler:    _Core_ListAllowedValueTypes_Handler,
 		},
 	},
 	Streams: []grpc.StreamDesc{
 		{
-			StreamName:    "CreatePipelines",
-			Handler:       _Core_CreatePipelines_Handler,
+			StreamName:    "GetSearchPipelinesResults",
+			Handler:       _Core_GetSearchPipelinesResults_Handler,
 			ServerStreams: true,
 		},
 		{
-			StreamName:    "ExecutePipeline",
-			Handler:       _Core_ExecutePipeline_Handler,
+			StreamName:    "GetScorePipelineResults",
+			Handler:       _Core_GetScorePipelineResults_Handler,
 			ServerStreams: true,
 		},
 		{
-			StreamName:    "GetCreatePipelineResults",
-			Handler:       _Core_GetCreatePipelineResults_Handler,
+			StreamName:    "GetFitPipelineResults",
+			Handler:       _Core_GetFitPipelineResults_Handler,
 			ServerStreams: true,
 		},
 		{
-			StreamName:    "GetExecutePipelineResults",
-			Handler:       _Core_GetExecutePipelineResults_Handler,
+			StreamName:    "GetProducePipelineResults",
+			Handler:       _Core_GetProducePipelineResults_Handler,
 			ServerStreams: true,
 		},
 	},
@@ -1718,126 +2112,120 @@ var _Core_serviceDesc = grpc.ServiceDesc{
 func init() { proto.RegisterFile("core.proto", fileDescriptor0) }
 
 var fileDescriptor0 = []byte{
-	// 1922 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xcc, 0x58, 0x4b, 0x6f, 0xe3, 0xd6,
-	0x15, 0xd6, 0xfb, 0x71, 0xf4, 0xa2, 0xaf, 0x1f, 0xa3, 0x38, 0xe3, 0x8c, 0x47, 0x59, 0xd4, 0x71,
-	0x06, 0x9c, 0xb1, 0x06, 0x45, 0x81, 0xa2, 0x8b, 0xd0, 0xe4, 0x95, 0x7d, 0x3b, 0x14, 0xa9, 0x5e,
-	0x92, 0xce, 0x4c, 0x36, 0x84, 0x46, 0xba, 0x36, 0x84, 0xc8, 0xa2, 0x4a, 0x52, 0x81, 0xb3, 0x28,
-	0xd0, 0x4d, 0x36, 0xdd, 0x74, 0xd7, 0x1f, 0x50, 0xa0, 0xf9, 0x07, 0x45, 0x77, 0xdd, 0x76, 0x5f,
-	0xf4, 0x0f, 0xf4, 0x9f, 0x14, 0xf7, 0x92, 0x94, 0x28, 0x59, 0x63, 0x34, 0x06, 0x06, 0xc8, 0xca,
-	0x3e, 0xef, 0x73, 0xbe, 0x7b, 0x8e, 0xce, 0x91, 0x00, 0x46, 0x9e, 0xcf, 0xe4, 0xb9, 0xef, 0x85,
-	0xde, 0xe1, 0xf1, 0x8d, 0xe7, 0xdd, 0x4c, 0xd9, 0x4b, 0x41, 0xbd, 0x5f, 0x5c, 0xbf, 0x1c, 0xb3,
-	0x60, 0xe4, 0x4f, 0xe6, 0xa1, 0xe7, 0x47, 0x1a, 0x9d, 0x97, 0xd0, 0xb4, 0x58, 0x10, 0x4c, 0xbc,
-	0x99, 0xea, 0xcd, 0x42, 0x76, 0x17, 0xa2, 0x23, 0x80, 0x20, 0xe2, 0xb8, 0x93, 0x71, 0x3b, 0x7b,
-	0x9c, 0x3d, 0xa9, 0xd2, 0x6a, 0xcc, 0x21, 0xe3, 0x8e, 0x0a, 0x25, 0x2b, 0x1c, 0x86, 0x8b, 0x00,
-	0x3d, 0x83, 0xc2, 0xc8, 0x1b, 0x33, 0xa1, 0xd2, 0xec, 0xd6, 0xe4, 0x88, 0xad, 0x7a, 0x63, 0x46,
-	0x85, 0x00, 0xb5, 0xa1, 0x3c, 0x66, 0xe1, 0x70, 0x32, 0x0d, 0xda, 0x39, 0xe1, 0x26, 0x21, 0x3b,
-	0x5f, 0x42, 0x85, 0xb2, 0x60, 0xee, 0xcd, 0x02, 0x86, 0x9e, 0x41, 0x29, 0x10, 0x96, 0xc2, 0x51,
-	0xad, 0x5b, 0x8e, 0x1d, 0xd1, 0x98, 0xdd, 0x21, 0xcb, 0x14, 0x29, 0xfb, 0xfd, 0x82, 0x05, 0x22,
-	0xc5, 0x45, 0xc0, 0x7c, 0x77, 0x78, 0xc3, 0x66, 0x61, 0x92, 0x22, 0xe7, 0x28, 0x9c, 0xc1, 0xe3,
-	0x7e, 0xc7, 0x7c, 0x6e, 0x90, 0xc4, 0x8d, 0xc9, 0xce, 0xdf, 0xb2, 0xd0, 0x5a, 0xfa, 0x8a, 0xe3,
-	0xcb, 0xd0, 0xf0, 0xe3, 0xff, 0xdd, 0xc9, 0xec, 0xda, 0x8b, 0xd3, 0xa8, 0xca, 0x89, 0x06, 0xad,
-	0x27, 0x72, 0x32, 0xbb, 0xf6, 0x36, 0x82, 0xe7, 0x1e, 0x08, 0x9e, 0x5f, 0x0b, 0x8e, 0xbe, 0x80,
-	0xf2, 0x28, 0xc2, 0xb8, 0x5d, 0x10, 0x21, 0x5a, 0xf2, 0x3a, 0xf4, 0x34, 0x91, 0x77, 0xfa, 0x50,
-	0xee, 0xb1, 0x61, 0xb8, 0xf0, 0x39, 0x3c, 0x35, 0x9f, 0x05, 0xde, 0xc2, 0x1f, 0xb1, 0xd5, 0x7b,
-	0x40, 0xc2, 0x22, 0x63, 0xf4, 0x1c, 0xea, 0xd7, 0x91, 0xae, 0x3b, 0x1b, 0xde, 0xb2, 0x38, 0xa3,
-	0x5a, 0xcc, 0x33, 0x86, 0xb7, 0xac, 0xf3, 0xcf, 0x3c, 0xec, 0x0f, 0x26, 0x73, 0x36, 0x9d, 0xcc,
-	0x98, 0xea, 0xb3, 0x61, 0xc8, 0x12, 0x24, 0x53, 0x39, 0x65, 0x1f, 0xce, 0x89, 0x27, 0x32, 0x1e,
-	0x86, 0xc3, 0x80, 0x85, 0xee, 0xc2, 0x9f, 0xc4, 0x61, 0x20, 0x66, 0x39, 0xfe, 0x04, 0x1d, 0x41,
-	0x21, 0x1c, 0x06, 0xdf, 0x8a, 0xb2, 0x9b, 0xdd, 0xaa, 0x6c, 0x0f, 0x83, 0x6f, 0xed, 0xef, 0xe7,
-	0x8c, 0x0a, 0x36, 0x7a, 0x09, 0x75, 0xfe, 0xd7, 0x0d, 0x16, 0xef, 0xc3, 0xef, 0xe7, 0x4c, 0x60,
-	0xd0, 0xec, 0xd6, 0x85, 0x9a, 0x15, 0xf1, 0x68, 0x2d, 0x5c, 0x11, 0xe8, 0x0b, 0x90, 0x84, 0x41,
-	0xd2, 0xb3, 0x1c, 0xd2, 0xa2, 0x88, 0xda, 0xe2, 0x7c, 0x6d, 0xc5, 0x46, 0x9f, 0x43, 0xc9, 0x5b,
-	0x84, 0xf3, 0x45, 0xd8, 0x2e, 0xc5, 0xcd, 0x68, 0x0a, 0x52, 0x84, 0x8f, 0x45, 0xe8, 0x05, 0x94,
-	0x6f, 0x59, 0xe8, 0x4f, 0x46, 0x41, 0xbb, 0x7c, 0x9c, 0x3f, 0x69, 0x76, 0x91, 0x3c, 0x60, 0xfe,
-	0xb5, 0xe7, 0xdf, 0x0e, 0x67, 0x23, 0xd6, 0x17, 0x22, 0x9a, 0xa8, 0xa0, 0x33, 0x68, 0x85, 0x43,
-	0xff, 0x86, 0x85, 0x6e, 0x8c, 0x64, 0xd0, 0xae, 0x1c, 0xe7, 0x4f, 0x6a, 0xdd, 0x8a, 0x1c, 0x3f,
-	0x0d, 0x6d, 0x46, 0x0a, 0x31, 0x19, 0xa0, 0xd7, 0x20, 0xcd, 0x7d, 0x36, 0x9e, 0x8c, 0x52, 0x36,
-	0xd5, 0x0d, 0x9b, 0x56, 0xac, 0xb1, 0x34, 0xfa, 0x1c, 0x1a, 0xb7, 0xc3, 0x3b, 0x77, 0x1e, 0x3f,
-	0x4f, 0xd0, 0x86, 0xe3, 0xec, 0x49, 0x91, 0xd6, 0x6f, 0x87, 0x77, 0xc9, 0x93, 0xf1, 0x11, 0x28,
-	0x5a, 0x7c, 0xac, 0xd1, 0x29, 0x94, 0xa2, 0x04, 0xe3, 0xa9, 0xdb, 0x56, 0x42, 0xac, 0x81, 0xf6,
-	0xa0, 0xf8, 0xdd, 0x70, 0xba, 0x88, 0x3a, 0x22, 0x47, 0x23, 0xa2, 0xf3, 0x07, 0xa8, 0x24, 0x7e,
-	0xd1, 0x0b, 0x40, 0x49, 0xc2, 0x3e, 0x0b, 0x16, 0xd3, 0xe8, 0x65, 0xa3, 0x16, 0x4b, 0x4a, 0xa1,
-	0x42, 0xc0, 0xdf, 0x77, 0x05, 0x72, 0xee, 0xc3, 0x20, 0x7f, 0x06, 0xa5, 0x80, 0x67, 0x1a, 0xb4,
-	0xf3, 0xa2, 0xf2, 0x92, 0x2c, 0x12, 0xa7, 0x31, 0xb7, 0xf3, 0xaf, 0x2c, 0xec, 0x6d, 0xb6, 0x22,
-	0x0f, 0xf0, 0x93, 0xc7, 0x50, 0x86, 0xc6, 0xdc, 0xf7, 0x6e, 0x7c, 0x16, 0x04, 0x91, 0x7e, 0x2e,
-	0x6e, 0xbb, 0x41, 0xcc, 0xa5, 0xf5, 0x44, 0x2e, 0xf4, 0x9f, 0x41, 0x2d, 0xc1, 0x98, 0xcf, 0x51,
-	0x34, 0x9b, 0x90, 0xb0, 0xc8, 0x58, 0x38, 0x5c, 0x2a, 0x70, 0x87, 0x85, 0x38, 0x81, 0x24, 0x5d,
-	0x5a, 0x5f, 0x6a, 0xcf, 0xae, 0xbd, 0xce, 0x0f, 0x59, 0x38, 0x48, 0x44, 0xf8, 0x8e, 0x8d, 0x16,
-	0x8f, 0x9d, 0xaa, 0x74, 0x5a, 0xb9, 0x7b, 0x69, 0x6d, 0x8c, 0x5d, 0x7e, 0x73, 0xec, 0x3a, 0xff,
-	0xc8, 0xae, 0x86, 0x7b, 0x99, 0xc7, 0xcf, 0x03, 0xd2, 0x23, 0x80, 0x54, 0x5f, 0x15, 0xa2, 0x8f,
-	0x4a, 0x3f, 0x69, 0xa8, 0xce, 0x57, 0xb0, 0x9b, 0x24, 0xae, 0x4f, 0x82, 0xf0, 0xa7, 0xa3, 0xd7,
-	0xf1, 0x57, 0xa5, 0x6b, 0x6c, 0xca, 0x1e, 0xf5, 0x02, 0x32, 0xec, 0x8e, 0x85, 0xad, 0x9b, 0x2a,
-	0x86, 0x6f, 0xac, 0xfc, 0x49, 0x95, 0xee, 0x44, 0xa2, 0xc1, 0xb2, 0xa6, 0x20, 0x1d, 0x53, 0xe5,
-	0x53, 0x37, 0x7d, 0x5c, 0xcc, 0x91, 0xb0, 0xdd, 0x1a, 0x33, 0x12, 0xa5, 0x63, 0xde, 0x00, 0x5a,
-	0x47, 0xea, 0x51, 0xef, 0xfb, 0x1c, 0xea, 0x5b, 0xc2, 0xd5, 0xe6, 0xa9, 0x40, 0x53, 0x78, 0xba,
-	0x6d, 0x3a, 0x83, 0x47, 0xd4, 0xf8, 0x7f, 0x44, 0xbb, 0x85, 0xa3, 0xad, 0x9d, 0xfb, 0x91, 0xc2,
-	0xfd, 0x79, 0x6d, 0x52, 0xe6, 0x9e, 0x1f, 0x7e, 0x8c, 0x81, 0x3d, 0x85, 0x9d, 0xa5, 0x02, 0xbb,
-	0x63, 0xa3, 0xd4, 0xd8, 0xb6, 0xe6, 0xa9, 0x6a, 0xf9, 0x04, 0xfc, 0x25, 0x0f, 0x7b, 0x16, 0x0b,
-	0x07, 0xbe, 0xf7, 0x7e, 0xca, 0x6e, 0x35, 0x6f, 0x94, 0x24, 0xd4, 0x83, 0xf2, 0x62, 0x3e, 0x1e,
-	0x86, 0x8c, 0x5f, 0x45, 0xfc, 0x73, 0xf4, 0x85, 0xbc, 0x4d, 0x4f, 0xa6, 0x6c, 0x3e, 0x1d, 0x8e,
-	0xd8, 0x4a, 0xd0, 0x9b, 0xb0, 0xe9, 0x98, 0x26, 0xc6, 0xe9, 0xc2, 0x72, 0x0f, 0x17, 0x76, 0xf8,
-	0xa7, 0x1c, 0x1c, 0x6c, 0x77, 0x87, 0x4e, 0xa0, 0x2a, 0x36, 0xb1, 0xd8, 0xdb, 0xd9, 0x8d, 0xf5,
-	0x7e, 0x99, 0xa1, 0x95, 0x30, 0xfe, 0x1f, 0x9d, 0x6d, 0x2c, 0xf9, 0xdc, 0xfd, 0x25, 0x7f, 0x99,
-	0x59, 0x5f, 0xf3, 0x5f, 0x6e, 0x59, 0xf3, 0x02, 0xae, 0xcb, 0xcc, 0xfd, 0x45, 0x2f, 0x43, 0x2d,
-	0x5a, 0x34, 0x6e, 0xea, 0x86, 0x48, 0x2f, 0xa2, 0xcb, 0x0c, 0x05, 0x6f, 0x49, 0xa1, 0x17, 0xcb,
-	0x7d, 0x59, 0xfc, 0xd0, 0xbe, 0xbc, 0xcc, 0x24, 0x1b, 0xf3, 0xbc, 0x02, 0xa5, 0x08, 0xb8, 0xd3,
-	0x1f, 0x72, 0x00, 0xab, 0x7b, 0x16, 0xd5, 0xa0, 0xec, 0x18, 0x6f, 0x0c, 0xf3, 0x6b, 0x43, 0xca,
-	0xa0, 0x12, 0xe4, 0xcc, 0x37, 0x52, 0x16, 0x35, 0xa0, 0xaa, 0x2a, 0x86, 0x8a, 0x75, 0x1d, 0x6b,
-	0x52, 0x0e, 0xed, 0x42, 0xcb, 0xc2, 0x96, 0x45, 0x4c, 0xc3, 0x4d, 0x74, 0xf3, 0x68, 0x07, 0x1a,
-	0x09, 0x13, 0x1b, 0x1a, 0xd6, 0xa4, 0x42, 0x5a, 0x0f, 0xbf, 0x1d, 0x10, 0x8a, 0x35, 0xa9, 0x88,
-	0xf6, 0x40, 0x22, 0xc6, 0x95, 0xa2, 0x13, 0xcd, 0x55, 0xe8, 0x85, 0xd3, 0xc7, 0x86, 0x2d, 0x95,
-	0xd0, 0x01, 0x20, 0x8a, 0x2d, 0xd3, 0xa1, 0x2a, 0x76, 0xf1, 0xdb, 0x4b, 0xc5, 0xb1, 0x6c, 0xac,
-	0x49, 0x65, 0xd4, 0x82, 0x9a, 0x63, 0x28, 0x57, 0x0a, 0xd1, 0x95, 0x73, 0x1d, 0x4b, 0x15, 0xf4,
-	0x04, 0x76, 0x7b, 0x0a, 0xd1, 0xb1, 0xe6, 0x0e, 0x28, 0x56, 0x4d, 0x43, 0x23, 0x36, 0x31, 0x0d,
-	0xa9, 0x8a, 0x24, 0xa8, 0x9b, 0x8e, 0xed, 0x9a, 0x3d, 0x97, 0x2a, 0xc6, 0x05, 0x96, 0x80, 0x67,
-	0xe4, 0x18, 0xa4, 0x3f, 0xd0, 0x31, 0x0f, 0x82, 0x35, 0xa9, 0x86, 0xea, 0x50, 0x21, 0x86, 0x8d,
-	0xa9, 0xa1, 0xe8, 0x52, 0x9d, 0xd7, 0xaa, 0x9c, 0x9b, 0x94, 0x8b, 0x1a, 0xa7, 0x0c, 0x2a, 0xc9,
-	0x87, 0x3f, 0xcf, 0x71, 0x40, 0xcd, 0x0b, 0x8a, 0x2d, 0xcb, 0x5d, 0xa1, 0xd1, 0x80, 0xaa, 0xe5,
-	0x9c, 0xf7, 0x89, 0xcd, 0x0d, 0xb2, 0xdc, 0x9a, 0x3a, 0x86, 0x41, 0x8c, 0x0b, 0x29, 0x27, 0x60,
-	0x1b, 0x68, 0x0a, 0x97, 0xe4, 0x05, 0x5c, 0x26, 0x8f, 0x6b, 0x0b, 0x18, 0x6a, 0x50, 0xc6, 0x94,
-	0x9a, 0xa2, 0xfc, 0xd3, 0x3f, 0xe6, 0xa0, 0x92, 0xf4, 0x13, 0x2f, 0xc6, 0x56, 0xac, 0x37, 0xae,
-	0xfd, 0x6e, 0x80, 0x5d, 0xc7, 0xd0, 0x70, 0x8f, 0x18, 0x58, 0x93, 0x32, 0x08, 0x41, 0x53, 0xd5,
-	0x15, 0xcb, 0x22, 0x3d, 0xa2, 0x2a, 0xa2, 0xc0, 0x2c, 0x6a, 0x02, 0x50, 0x2c, 0x72, 0xe2, 0x74,
-	0x8e, 0xd3, 0xaa, 0xce, 0x71, 0xa2, 0x3c, 0x85, 0x3c, 0x47, 0x5b, 0x27, 0xc6, 0x1b, 0x8e, 0x8b,
-	0x46, 0x54, 0x61, 0x54, 0x40, 0xfb, 0xb0, 0x73, 0x85, 0xa9, 0x8d, 0xdf, 0xba, 0x86, 0xd9, 0x27,
-	0x46, 0xe4, 0xab, 0xc8, 0x03, 0xab, 0x66, 0xbf, 0xef, 0x18, 0xc4, 0x7e, 0xe7, 0x6a, 0xd8, 0xc6,
-	0x91, 0x7e, 0x89, 0x57, 0x7e, 0x41, 0x95, 0xc1, 0xa5, 0x9b, 0x72, 0x5d, 0xe6, 0xe9, 0x44, 0xdc,
-	0xbe, 0x62, 0xab, 0x97, 0x9c, 0x57, 0x41, 0x9f, 0xc2, 0x13, 0x9b, 0xf4, 0xb1, 0x6b, 0x61, 0x4a,
-	0xb0, 0xe5, 0xf6, 0x4c, 0x8a, 0x55, 0xc5, 0xb2, 0xb9, 0xb0, 0xca, 0x85, 0xaa, 0xa9, 0xeb, 0x1c,
-	0x5d, 0xc5, 0x26, 0x57, 0xd8, 0xed, 0x11, 0x3d, 0xf6, 0x06, 0xa7, 0x3f, 0x66, 0xa1, 0x96, 0x9a,
-	0x12, 0x74, 0x08, 0x07, 0x02, 0x05, 0xcb, 0x39, 0xbf, 0x07, 0x44, 0x05, 0x0a, 0x86, 0x69, 0x60,
-	0x29, 0x8b, 0x00, 0x4a, 0xe7, 0xc4, 0x50, 0xe8, 0xbb, 0xa8, 0xf4, 0xbe, 0xa3, 0xdb, 0x44, 0x60,
-	0x24, 0xe5, 0x97, 0xb4, 0xae, 0x9c, 0x63, 0x5d, 0x2a, 0x70, 0xda, 0x31, 0xc8, 0x95, 0x42, 0x89,
-	0x62, 0x63, 0xa9, 0xc8, 0x7b, 0x43, 0xc8, 0x13, 0x4e, 0x89, 0xf7, 0x95, 0x79, 0x85, 0xa9, 0xae,
-	0x0c, 0x06, 0xcb, 0x12, 0x0d, 0xd3, 0x48, 0xf3, 0x2a, 0xa7, 0xbf, 0x00, 0x58, 0x8d, 0x1b, 0xfa,
-	0x04, 0xf6, 0x4d, 0xc7, 0x1e, 0x38, 0xf6, 0xbd, 0xe7, 0x3a, 0xfd, 0x6f, 0x0e, 0x76, 0xee, 0x4d,
-	0x1b, 0xc7, 0xb2, 0x8f, 0x6d, 0x4a, 0xd4, 0xcd, 0xa7, 0xc5, 0x6f, 0xb1, 0xea, 0x70, 0xc0, 0x5d,
-	0x8e, 0xa0, 0x94, 0xe5, 0x6d, 0xa9, 0xa8, 0xaa, 0x43, 0x15, 0x95, 0x57, 0x57, 0x82, 0x5c, 0xef,
-	0x4c, 0xca, 0x73, 0x6e, 0xef, 0xcc, 0xed, 0x13, 0x95, 0x9a, 0x52, 0x21, 0xa1, 0x14, 0x4e, 0x15,
-	0x45, 0xf3, 0x99, 0xaa, 0xab, 0x38, 0xaa, 0x54, 0xe2, 0x8d, 0x1e, 0x13, 0xb1, 0x76, 0x79, 0x8d,
-	0x25, 0x4c, 0x2a, 0x7c, 0xc4, 0xfa, 0x58, 0x31, 0x5c, 0xeb, 0x77, 0x8e, 0x42, 0xb1, 0xe6, 0x8a,
-	0x9e, 0x8c, 0xde, 0x8a, 0x9a, 0xa6, 0xed, 0x6e, 0x11, 0x02, 0x7a, 0x06, 0x9f, 0x7e, 0x40, 0xe8,
-	0x2a, 0x57, 0x17, 0x52, 0x8d, 0x77, 0x92, 0x90, 0x29, 0xe7, 0x96, 0xa9, 0x3b, 0x36, 0x8e, 0x2d,
-	0xeb, 0x7c, 0x08, 0x68, 0x62, 0x21, 0x35, 0xd0, 0x73, 0x38, 0x32, 0x4c, 0xda, 0x57, 0x74, 0xf2,
-	0x0d, 0xd6, 0xdc, 0xbe, 0x63, 0x3b, 0x8a, 0xee, 0x12, 0xa3, 0xc7, 0x79, 0xa2, 0xf7, 0x9a, 0xe8,
-	0x29, 0xb4, 0x7f, 0xab, 0xa8, 0xaa, 0x42, 0x35, 0xd7, 0x22, 0x7d, 0xa2, 0x2b, 0x94, 0x77, 0xa7,
-	0xa5, 0x9a, 0x14, 0x4b, 0xad, 0xee, 0xbf, 0x8b, 0x50, 0x50, 0xf9, 0x17, 0x03, 0x0d, 0x5a, 0xd1,
-	0xc2, 0x5e, 0x7e, 0x69, 0x40, 0x07, 0xf2, 0xd6, 0xef, 0x7c, 0x87, 0xfb, 0xf2, 0xb6, 0x15, 0xdf,
-	0xc9, 0xbc, 0xca, 0xa2, 0x1e, 0xb4, 0xe2, 0x45, 0xbc, 0xfc, 0x8e, 0xf0, 0x44, 0xde, 0x7e, 0xe4,
-	0x1e, 0x1e, 0xc8, 0x5b, 0x77, 0xb7, 0xf0, 0xf3, 0x1b, 0x68, 0xf0, 0x3b, 0x65, 0x95, 0xcb, 0x9e,
-	0xbc, 0xe5, 0xd2, 0x3b, 0xdc, 0x95, 0xef, 0x5f, 0x35, 0x9d, 0x0c, 0xfa, 0x0a, 0x5a, 0xda, 0xda,
-	0xd9, 0x95, 0xae, 0x65, 0xed, 0xce, 0x7b, 0xc0, 0x83, 0xba, 0x76, 0x44, 0xad, 0xa1, 0x91, 0xbe,
-	0xda, 0x3e, 0xe4, 0xc1, 0x86, 0xf6, 0x05, 0x0b, 0xd7, 0x21, 0x8d, 0x8f, 0x13, 0x74, 0x24, 0x3f,
-	0x74, 0x23, 0x3d, 0x84, 0xef, 0xd7, 0xf0, 0xc9, 0x05, 0x0b, 0x37, 0x20, 0x4e, 0xdc, 0x7e, 0x26,
-	0x3f, 0x78, 0x0c, 0x3d, 0x08, 0xf8, 0x2f, 0xa1, 0x19, 0x5d, 0x34, 0xcb, 0x77, 0x4b, 0x6b, 0xa7,
-	0x4e, 0x9d, 0xc3, 0xd5, 0x75, 0xd8, 0xc9, 0xa0, 0xd7, 0xd0, 0x58, 0x3b, 0x2b, 0xd0, 0xfe, 0xd6,
-	0x33, 0x63, 0xd3, 0xa8, 0x6e, 0x85, 0x43, 0x3f, 0x8c, 0x0f, 0x09, 0xb4, 0x3c, 0x29, 0x12, 0x6d,
-	0x49, 0xde, 0xf8, 0x8d, 0xa5, 0x93, 0x41, 0xa7, 0x00, 0x78, 0x36, 0xbe, 0x67, 0x12, 0x5f, 0x21,
-	0x6b, 0x01, 0x7e, 0x4d, 0xf8, 0xf7, 0x68, 0x2f, 0xf4, 0x46, 0xde, 0xd4, 0x4d, 0x7e, 0x3c, 0x79,
-	0x2a, 0x47, 0x3f, 0x65, 0xc9, 0xc9, 0x4f, 0x59, 0x72, 0x6f, 0x32, 0x65, 0xa6, 0xb8, 0x0a, 0x82,
-	0xf6, 0x7f, 0x7e, 0x4c, 0x0e, 0xac, 0xd8, 0xee, 0x2a, 0x32, 0x3b, 0x6f, 0xff, 0xf5, 0xef, 0x87,
-	0xd0, 0x7d, 0x75, 0xf6, 0x2b, 0xf9, 0xac, 0x2b, 0x77, 0x5f, 0x7d, 0x53, 0x49, 0x2e, 0xb0, 0xf7,
-	0x25, 0xa1, 0xfa, 0xfa, 0x7f, 0x01, 0x00, 0x00, 0xff, 0xff, 0x42, 0x98, 0x1a, 0x60, 0x2f, 0x13,
-	0x00, 0x00,
+	// 1838 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xdc, 0x58, 0x4f, 0x6f, 0xe3, 0xc6,
+	0x15, 0x17, 0x25, 0x4b, 0x6b, 0x3d, 0xc5, 0x36, 0x77, 0xfc, 0x47, 0x5c, 0xfa, 0x6f, 0x58, 0x6c,
+	0xe1, 0x2e, 0xd2, 0x89, 0x57, 0x2d, 0x52, 0xaf, 0x8b, 0x22, 0x55, 0x2c, 0xda, 0x56, 0xe2, 0x95,
+	0x84, 0x91, 0xec, 0x06, 0xc9, 0x81, 0xa5, 0xc5, 0x91, 0x4d, 0x44, 0x22, 0x59, 0x92, 0xda, 0xd6,
+	0xa7, 0x02, 0x3d, 0xf5, 0xd2, 0xf6, 0xd4, 0x43, 0xaf, 0x3d, 0xf4, 0xdc, 0x4b, 0x81, 0x7e, 0x90,
+	0x1c, 0x8b, 0x1e, 0xf2, 0x49, 0x0a, 0x72, 0x86, 0x12, 0x25, 0x91, 0xb4, 0x37, 0x28, 0x8a, 0x66,
+	0x6f, 0x9c, 0x37, 0x6f, 0x1e, 0xdf, 0x7b, 0xf3, 0xe6, 0x37, 0xbf, 0x37, 0x00, 0x7d, 0xdb, 0xa5,
+	0xd8, 0x71, 0x6d, 0xdf, 0x96, 0x0f, 0x6e, 0x6d, 0xfb, 0x76, 0x48, 0x3f, 0x0c, 0x47, 0x37, 0xe3,
+	0xc1, 0x87, 0x06, 0xf5, 0xfa, 0xae, 0xe9, 0xf8, 0xb6, 0xcb, 0x35, 0xf6, 0xe7, 0x35, 0x7c, 0x73,
+	0x44, 0x3d, 0x5f, 0x1f, 0x39, 0x5c, 0x61, 0xd5, 0x31, 0x1d, 0x3a, 0x34, 0xad, 0xc8, 0xe4, 0x9a,
+	0xe3, 0x9a, 0x23, 0xd3, 0x37, 0xdf, 0x44, 0x82, 0x15, 0xc7, 0xb5, 0x6f, 0x86, 0x74, 0xc4, 0x87,
+	0x95, 0x37, 0xfa, 0x70, 0xcc, 0xe7, 0x94, 0x7f, 0x09, 0xb0, 0xd1, 0xed, 0xdb, 0xae, 0x69, 0xdd,
+	0x9e, 0xda, 0xd6, 0xc0, 0xbc, 0x1d, 0xbb, 0xba, 0x6f, 0xda, 0x16, 0xfa, 0x01, 0x94, 0x46, 0xd4,
+	0xbf, 0xb3, 0x0d, 0x49, 0x38, 0x10, 0x0e, 0x57, 0x6b, 0x4f, 0xb1, 0x1a, 0xac, 0x0b, 0x27, 0x5f,
+	0x87, 0x13, 0x84, 0x2b, 0xa0, 0x0d, 0x28, 0x0e, 0xec, 0xa1, 0xe1, 0x49, 0xf9, 0x03, 0xe1, 0xb0,
+	0x48, 0xd8, 0x00, 0x1d, 0x82, 0xe8, 0xbb, 0xba, 0x69, 0x69, 0x3e, 0xf5, 0x7c, 0x2d, 0xb4, 0x2a,
+	0x15, 0x0e, 0x84, 0x43, 0x81, 0xac, 0x86, 0xf2, 0x1e, 0xf5, 0x7c, 0x12, 0x48, 0x91, 0x04, 0x4f,
+	0xbc, 0xbb, 0xf1, 0x60, 0x30, 0xa4, 0xd2, 0xd2, 0x81, 0x70, 0xb8, 0x4c, 0xa2, 0x21, 0xda, 0x87,
+	0x8a, 0xab, 0x5b, 0x86, 0x3d, 0xd2, 0x3c, 0x4a, 0x0d, 0xa9, 0x18, 0xda, 0x07, 0x26, 0xea, 0x52,
+	0x6a, 0xa0, 0x3d, 0x00, 0xcf, 0x0f, 0x6c, 0x0f, 0x4c, 0x6a, 0x48, 0xa5, 0x70, 0x75, 0x4c, 0xa2,
+	0x7c, 0x0e, 0xc5, 0x20, 0x3a, 0x8a, 0x5e, 0x86, 0xe1, 0xb8, 0x66, 0x3f, 0x0c, 0xa7, 0x52, 0x7b,
+	0x86, 0x3b, 0x2c, 0x29, 0x1d, 0xea, 0x0e, 0x6c, 0x77, 0xa4, 0x5b, 0x7d, 0xfa, 0x3a, 0x54, 0x20,
+	0x5c, 0x11, 0xed, 0x40, 0x31, 0xcc, 0x54, 0x18, 0x56, 0xa5, 0x56, 0xc2, 0xd7, 0xc1, 0x88, 0x30,
+	0xa1, 0x72, 0x03, 0x1b, 0x57, 0x8e, 0xa1, 0xfb, 0x94, 0xdb, 0x21, 0xf4, 0x57, 0x63, 0xea, 0xf9,
+	0x68, 0x1b, 0xca, 0x1e, 0xd5, 0xdd, 0xfe, 0x9d, 0x66, 0xb2, 0xd4, 0x95, 0xc9, 0x32, 0x13, 0x34,
+	0x0d, 0xf4, 0x43, 0x78, 0xc2, 0xf7, 0x82, 0x1b, 0x5d, 0x8f, 0xdc, 0x68, 0xf0, 0x6d, 0x37, 0x6d,
+	0x8b, 0x44, 0x3a, 0x4a, 0x15, 0x36, 0xe7, 0xfe, 0xe1, 0x39, 0xb6, 0xe5, 0x51, 0xe5, 0x8f, 0x79,
+	0xd8, 0xea, 0x86, 0x46, 0x3b, 0x7c, 0xef, 0xbd, 0xe8, 0xff, 0xbb, 0x00, 0x63, 0x8f, 0xba, 0x9a,
+	0x7e, 0x4b, 0x2d, 0x9f, 0x3b, 0x50, 0x0e, 0x24, 0xf5, 0x40, 0x10, 0xe4, 0xfa, 0x0d, 0x75, 0x3d,
+	0xd3, 0xb6, 0x42, 0x0f, 0xca, 0x24, 0x1a, 0xa2, 0x13, 0x58, 0xd7, 0x87, 0x43, 0xfb, 0xd7, 0xd4,
+	0xd0, 0xc2, 0x08, 0x35, 0xff, 0xde, 0xa1, 0x9e, 0x54, 0x38, 0x28, 0x1c, 0xae, 0xd6, 0x80, 0x05,
+	0xdf, 0xbb, 0x77, 0x28, 0x79, 0xca, 0xd5, 0x26, 0x12, 0x2f, 0x1e, 0xd7, 0xd2, 0xc3, 0x71, 0xa1,
+	0x23, 0x58, 0xf6, 0xe9, 0xc8, 0x19, 0xea, 0x3e, 0x0d, 0xf7, 0xb4, 0x52, 0xdb, 0xc0, 0x51, 0x20,
+	0xf1, 0x05, 0x13, 0x2d, 0xb4, 0x07, 0x25, 0xd3, 0x72, 0xc6, 0xbe, 0x27, 0x95, 0x0e, 0x0a, 0xb1,
+	0xcd, 0xe0, 0x52, 0xc5, 0x86, 0xea, 0x42, 0x3e, 0x58, 0xae, 0xb2, 0x37, 0x64, 0x36, 0x5b, 0xf9,
+	0x8c, 0x6c, 0x15, 0x66, 0xb2, 0xa5, 0x1c, 0xc3, 0x33, 0xd5, 0x32, 0x52, 0xf6, 0x20, 0xeb, 0x97,
+	0xca, 0x0e, 0xc8, 0x49, 0x2b, 0xf9, 0xce, 0xbe, 0x02, 0xb9, 0xeb, 0xdb, 0xce, 0xb7, 0x31, 0xbc,
+	0x0b, 0xdb, 0x89, 0x4b, 0xb9, 0xe5, 0xdf, 0xc2, 0x7a, 0x24, 0x64, 0x2a, 0xec, 0x60, 0x7c, 0x0a,
+	0x9b, 0x1e, 0x3b, 0xff, 0x5a, 0x3f, 0x0e, 0x00, 0xfc, 0x9c, 0x6c, 0xe2, 0x24, 0x74, 0x20, 0x1b,
+	0x5e, 0x12, 0x66, 0xec, 0x40, 0x31, 0x90, 0x4f, 0x4f, 0x4c, 0xf8, 0x0b, 0xc2, 0x84, 0xca, 0xc7,
+	0x70, 0x70, 0x4e, 0xfd, 0x45, 0xf7, 0xc6, 0x43, 0xff, 0x71, 0x01, 0xfe, 0x45, 0x80, 0xf7, 0x33,
+	0x2c, 0xf0, 0xfd, 0xde, 0x87, 0x4a, 0x04, 0x88, 0x53, 0x23, 0x10, 0x89, 0x9a, 0x06, 0x7a, 0x0e,
+	0xab, 0xa6, 0xe5, 0x53, 0xd7, 0xd2, 0x87, 0xda, 0xd4, 0x5d, 0x81, 0xac, 0x44, 0x52, 0x96, 0x98,
+	0x0f, 0xa0, 0x14, 0xce, 0xb2, 0x23, 0x10, 0x2f, 0xd1, 0x58, 0xfa, 0x08, 0xd7, 0x51, 0x4e, 0xa0,
+	0xca, 0x2a, 0xf7, 0x86, 0x46, 0x6a, 0x51, 0x4c, 0x0f, 0x39, 0xa4, 0xfc, 0x5d, 0x00, 0xa9, 0x13,
+	0x61, 0x76, 0xd7, 0xa7, 0x4e, 0xec, 0x0c, 0xa0, 0x4b, 0xa8, 0xdc, 0xdd, 0x3b, 0xd4, 0x75, 0x74,
+	0x57, 0x1f, 0x79, 0x92, 0x10, 0xfa, 0xf2, 0x02, 0xa7, 0xe9, 0xe3, 0x8b, 0xa9, 0xb2, 0x6a, 0xf9,
+	0xee, 0x3d, 0x89, 0x2f, 0x97, 0xcf, 0x40, 0x9c, 0x57, 0x40, 0x22, 0x14, 0xbe, 0xa2, 0xf7, 0xdc,
+	0xaf, 0xe0, 0x33, 0x1b, 0xf9, 0x4e, 0xf2, 0xc7, 0x82, 0xd2, 0x00, 0xb9, 0x3b, 0xbe, 0x89, 0x62,
+	0x98, 0xf7, 0xf9, 0xfb, 0x50, 0xf4, 0x7c, 0xea, 0x44, 0xde, 0x8a, 0x78, 0x4e, 0x81, 0xb0, 0x69,
+	0xe5, 0x4f, 0x02, 0xac, 0xcd, 0xaf, 0x7d, 0x05, 0xe5, 0xc9, 0xfd, 0x15, 0xc3, 0xea, 0xe4, 0x68,
+	0x2f, 0x72, 0x64, 0xaa, 0x8d, 0x5e, 0xc1, 0x72, 0xe4, 0x11, 0xf7, 0x7c, 0x1b, 0xa7, 0x7b, 0x79,
+	0x91, 0x23, 0x13, 0xf5, 0x4f, 0x4a, 0xb0, 0x14, 0xb8, 0xa4, 0xf8, 0x20, 0x2d, 0x6e, 0x23, 0x2f,
+	0xac, 0xa3, 0x98, 0x79, 0x21, 0x0b, 0xb5, 0x22, 0xad, 0x69, 0x1e, 0xf2, 0xd9, 0x79, 0xf8, 0x5a,
+	0x80, 0xf7, 0x82, 0xa9, 0x8e, 0x6b, 0xdf, 0xba, 0xd4, 0xf3, 0xd0, 0x73, 0x58, 0x76, 0xf8, 0x37,
+	0xbf, 0x7e, 0xcb, 0x38, 0x9a, 0x24, 0x93, 0xa9, 0x00, 0x9e, 0x06, 0xba, 0x39, 0x1c, 0xf3, 0x12,
+	0x2e, 0x93, 0x68, 0x88, 0x8e, 0x82, 0x3f, 0xeb, 0xae, 0x1f, 0xc2, 0x56, 0xa5, 0x26, 0x63, 0x46,
+	0x22, 0x70, 0x44, 0x22, 0x70, 0x2f, 0x22, 0x11, 0x84, 0x29, 0xa2, 0x0f, 0xa0, 0x40, 0x2d, 0x83,
+	0xc3, 0x77, 0x96, 0x7e, 0xa0, 0x86, 0xbe, 0x17, 0x45, 0x56, 0x0c, 0x23, 0x5b, 0xc1, 0x71, 0xf7,
+	0xa3, 0xb0, 0xba, 0xb0, 0x36, 0x49, 0xe2, 0xd8, 0xba, 0xf2, 0xa8, 0x8b, 0x56, 0x21, 0x3f, 0x39,
+	0x02, 0x79, 0xd3, 0x08, 0x22, 0xe8, 0xdf, 0xd9, 0xb6, 0x47, 0xd9, 0x75, 0xb4, 0x4c, 0xa2, 0x21,
+	0xda, 0x82, 0x92, 0x4b, 0x75, 0x6f, 0x82, 0xbc, 0x7c, 0xa4, 0xfc, 0x3e, 0xcf, 0x08, 0xcb, 0x5b,
+	0x1f, 0xb3, 0xd8, 0x1d, 0x92, 0x4f, 0xba, 0x43, 0xd0, 0xa7, 0xb0, 0xee, 0x4c, 0xc9, 0x80, 0xc6,
+	0x58, 0x40, 0x74, 0xfa, 0x33, 0xf8, 0x02, 0x72, 0xe6, 0x45, 0x5e, 0xb0, 0xf3, 0xc1, 0x2d, 0xe2,
+	0x49, 0x4b, 0x7c, 0xe7, 0xe7, 0x12, 0x41, 0xd8, 0x34, 0xfa, 0x29, 0xac, 0xcc, 0xa2, 0x6e, 0x31,
+	0x0b, 0x75, 0x67, 0x75, 0x95, 0x8f, 0x60, 0x73, 0x2e, 0x13, 0xbc, 0x52, 0x77, 0x01, 0x5c, 0x96,
+	0x95, 0x69, 0x26, 0xca, 0x5c, 0xd2, 0x34, 0x94, 0x8f, 0x61, 0x2f, 0x80, 0xd1, 0xb9, 0xa5, 0x71,
+	0x18, 0x7e, 0xc0, 0xc0, 0x37, 0x02, 0xec, 0xa7, 0x5a, 0xe0, 0x3e, 0xfc, 0xdf, 0x97, 0xf0, 0xde,
+	0x04, 0xdf, 0x8b, 0xbc, 0x1c, 0x66, 0x11, 0xfd, 0xdf, 0x02, 0xa0, 0x33, 0xd3, 0xff, 0xaf, 0x97,
+	0xd9, 0x73, 0x58, 0xa5, 0xbf, 0x71, 0x6c, 0x8f, 0x6a, 0xf6, 0xd8, 0x0f, 0xf5, 0x82, 0x0a, 0x2b,
+	0x93, 0x15, 0x26, 0x6d, 0x33, 0x21, 0x3a, 0x06, 0xc4, 0xd5, 0xe2, 0x6c, 0x6c, 0x69, 0x81, 0x8d,
+	0x89, 0x4c, 0x2b, 0x46, 0xc6, 0x26, 0xb5, 0x57, 0xcc, 0xac, 0x3d, 0xe5, 0xc7, 0xb0, 0x3e, 0x13,
+	0xdf, 0xe3, 0x8a, 0xe7, 0x67, 0xb0, 0x73, 0x4e, 0xfd, 0xd9, 0x85, 0x6f, 0x51, 0x3a, 0x7f, 0x28,
+	0xc0, 0x6e, 0xca, 0xfa, 0xef, 0x4a, 0xe1, 0x3c, 0x06, 0xfb, 0xd0, 0x97, 0xb0, 0xc6, 0x36, 0xc6,
+	0x98, 0x6c, 0x33, 0x63, 0xae, 0x35, 0x9c, 0x19, 0x3e, 0x56, 0xd9, 0x2a, 0x5e, 0x06, 0xec, 0x0a,
+	0xe7, 0x05, 0x13, 0x09, 0xe5, 0x26, 0xac, 0x27, 0xa8, 0x7d, 0xab, 0x8b, 0xfc, 0x1b, 0x01, 0xb6,
+	0x3a, 0xae, 0x6d, 0x8c, 0xfb, 0xf4, 0xdd, 0xad, 0xf4, 0x63, 0xa8, 0x2e, 0xc4, 0xf8, 0xb8, 0x6a,
+	0xaf, 0x87, 0x9c, 0x75, 0x71, 0xf1, 0x5b, 0x54, 0xfc, 0x9f, 0x0b, 0x21, 0x6b, 0x4d, 0xb3, 0xf1,
+	0x4e, 0x55, 0xbd, 0x96, 0x56, 0xf5, 0x1f, 0xe1, 0x07, 0x53, 0xf0, 0xbf, 0xae, 0xfc, 0x4b, 0xd8,
+	0x8c, 0x3c, 0x09, 0x4c, 0xba, 0xfe, 0xa3, 0xeb, 0x1e, 0xc1, 0x92, 0xab, 0x5b, 0x5f, 0xf1, 0xe7,
+	0x8e, 0xf0, 0x5b, 0x91, 0x60, 0x6b, 0xde, 0x1a, 0xef, 0xbb, 0xaa, 0xb0, 0x79, 0x69, 0x7a, 0xfe,
+	0x84, 0xc2, 0x46, 0x75, 0xa3, 0x34, 0x60, 0x6b, 0x7e, 0x82, 0x17, 0xc3, 0x0b, 0x80, 0x09, 0xab,
+	0x8d, 0x48, 0x34, 0x4c, 0x49, 0x30, 0x89, 0xcd, 0x2a, 0x7b, 0xb0, 0x13, 0x58, 0xa9, 0xcf, 0xf7,
+	0xe4, 0xd1, 0x5f, 0xbe, 0x84, 0xdd, 0x94, 0x79, 0xfe, 0xb3, 0x94, 0xbe, 0x5f, 0x78, 0x44, 0xdf,
+	0xff, 0xe2, 0x77, 0x02, 0x88, 0xf3, 0xcf, 0x42, 0x68, 0x1f, 0xb6, 0xd5, 0xeb, 0xfa, 0xe5, 0x55,
+	0xbd, 0xd7, 0x6c, 0xb7, 0xb4, 0xd7, 0x6a, 0xef, 0xa2, 0xdd, 0xd0, 0xae, 0x5a, 0x0d, 0xf5, 0xac,
+	0xd9, 0x52, 0x1b, 0x62, 0x0e, 0x55, 0xe0, 0xc9, 0x45, 0xfb, 0xb2, 0xd1, 0xbe, 0xea, 0x89, 0x02,
+	0x02, 0x28, 0x7d, 0xa6, 0x9d, 0xb5, 0x2f, 0x1b, 0x62, 0x1e, 0x3d, 0x85, 0x95, 0x4b, 0xb5, 0x7e,
+	0xad, 0x6a, 0xed, 0x96, 0xaa, 0x05, 0xd3, 0x06, 0x5a, 0x05, 0xe8, 0x10, 0xb5, 0xd1, 0x3c, 0x0d,
+	0x8c, 0x89, 0x34, 0x50, 0xe9, 0x91, 0x7a, 0xb3, 0xd5, 0x6c, 0x9d, 0x6b, 0x8d, 0x7a, 0xaf, 0x2e,
+	0x0e, 0x5e, 0x5c, 0xc3, 0xf2, 0x84, 0x38, 0x6f, 0x80, 0xd8, 0x21, 0xed, 0x73, 0xa2, 0x76, 0xbb,
+	0xda, 0x55, 0xeb, 0xb3, 0x56, 0xfb, 0x17, 0x2d, 0xf6, 0xc3, 0x8e, 0xda, 0x6a, 0x34, 0x5b, 0xe7,
+	0xa2, 0x10, 0x0c, 0xc8, 0x55, 0x2b, 0x30, 0x20, 0xe6, 0xd1, 0x0a, 0x94, 0x4f, 0xdb, 0xaf, 0x3b,
+	0x97, 0x6a, 0x4f, 0x6d, 0x88, 0x85, 0x60, 0x4e, 0x25, 0xa4, 0x4d, 0xd4, 0x86, 0xb8, 0x54, 0xfb,
+	0x67, 0x19, 0x96, 0x4e, 0x83, 0x4e, 0xf0, 0x0c, 0xd6, 0xe6, 0x7a, 0x4e, 0x54, 0xc5, 0xc9, 0x1d,
+	0xba, 0x2c, 0xe1, 0xb4, 0xfe, 0x3b, 0x87, 0x06, 0xf0, 0x2c, 0xb5, 0x7d, 0x45, 0xef, 0xe3, 0x87,
+	0x9a, 0x63, 0x59, 0xc1, 0x0f, 0x76, 0xbf, 0x4a, 0xee, 0x48, 0x40, 0x6d, 0x40, 0x8b, 0x2f, 0x0c,
+	0x48, 0xc6, 0xa9, 0x0f, 0x16, 0xf2, 0x36, 0xce, 0x78, 0x92, 0xc8, 0x21, 0x02, 0xeb, 0x09, 0x2f,
+	0x0b, 0x68, 0x1b, 0xa7, 0x3f, 0x55, 0xc8, 0x3b, 0x38, 0xeb, 0x31, 0x22, 0x87, 0x9a, 0x20, 0xce,
+	0x77, 0x5a, 0x48, 0xc2, 0x29, 0x3d, 0xb4, 0xfc, 0x0c, 0xa7, 0xb5, 0x65, 0x4a, 0x0e, 0xfd, 0x1c,
+	0x56, 0x66, 0xa8, 0x28, 0x62, 0xf4, 0x79, 0xc1, 0xc8, 0x16, 0x4e, 0xa4, 0xcb, 0x4a, 0x0e, 0xfd,
+	0x12, 0xaa, 0x29, 0x7c, 0x16, 0xed, 0xe3, 0x6c, 0xae, 0x2c, 0x1f, 0xe0, 0x07, 0xa8, 0x70, 0xb8,
+	0x27, 0x27, 0x50, 0x89, 0x5d, 0xfa, 0x68, 0x1d, 0x2f, 0x52, 0x4b, 0x79, 0x03, 0x27, 0xf0, 0x31,
+	0x25, 0x87, 0xbe, 0x80, 0xcd, 0x44, 0xce, 0x80, 0x76, 0x71, 0x16, 0x15, 0x93, 0xf7, 0xb2, 0xa9,
+	0x46, 0xe8, 0xd7, 0x19, 0xac, 0xcd, 0xc1, 0x32, 0xaa, 0xe2, 0x64, 0x42, 0x20, 0x4b, 0x38, 0xe5,
+	0x16, 0x9d, 0xd4, 0x76, 0x32, 0xc2, 0xb3, 0xda, 0xce, 0xbc, 0x44, 0x59, 0x6d, 0x67, 0x5f, 0x10,
+	0xa1, 0xbf, 0xa7, 0xb0, 0x3a, 0x8b, 0xb3, 0x68, 0x0b, 0x27, 0xc2, 0xb8, 0x5c, 0xc5, 0x29, 0x80,
+	0x1c, 0x16, 0xcc, 0xcc, 0xbb, 0x2a, 0xda, 0xc4, 0x49, 0x6f, 0xb9, 0xf2, 0x16, 0x4e, 0x7e, 0x7e,
+	0xcd, 0x05, 0x6e, 0xcc, 0x62, 0x37, 0xda, 0xc2, 0x89, 0x28, 0x2f, 0x57, 0x71, 0x32, 0xc8, 0x2b,
+	0x39, 0xf4, 0x39, 0xbb, 0x19, 0x16, 0xa0, 0x19, 0xed, 0xe2, 0x2c, 0x48, 0x97, 0xf7, 0x70, 0x26,
+	0xa2, 0x2b, 0xb9, 0x93, 0x26, 0x88, 0xe1, 0x3d, 0xde, 0xb7, 0x87, 0x5a, 0xf4, 0xbe, 0xbb, 0xb3,
+	0x70, 0xc3, 0x9f, 0x99, 0x43, 0xda, 0x0e, 0x1f, 0x22, 0x3c, 0xe9, 0xeb, 0xbf, 0xb1, 0x36, 0x7b,
+	0x2d, 0x5a, 0x77, 0xcd, 0x96, 0x7d, 0x22, 0xff, 0xf5, 0x1f, 0xf2, 0x7b, 0xb5, 0xa3, 0x97, 0xc7,
+	0xf8, 0x25, 0xfe, 0x89, 0xe6, 0xb8, 0xf4, 0x8b, 0xc9, 0xfb, 0xc6, 0x4d, 0x29, 0x54, 0xfe, 0xd1,
+	0x7f, 0x02, 0x00, 0x00, 0xff, 0xff, 0x39, 0xeb, 0x20, 0xcf, 0xd1, 0x18, 0x00, 0x00,
 }

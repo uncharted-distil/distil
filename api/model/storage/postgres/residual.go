@@ -10,7 +10,7 @@ import (
 // FetchResidualsExtremaByURI fetches the residual extrema by resultURI.
 func (s *Storage) FetchResidualsExtremaByURI(dataset string, resultURI string, index string) (*model.Extrema, error) {
 	datasetResult := s.getResultTable(dataset)
-	targetName, err := s.getResultTargetName(datasetResult, resultURI, index)
+	targetName, err := s.getResultTargetName(datasetResult, resultURI)
 	if err != nil {
 		return nil, err
 	}
@@ -28,7 +28,7 @@ func (s *Storage) FetchResidualsExtremaByURI(dataset string, resultURI string, i
 // FetchResidualsSummary fetches a histogram of the residuals associated with a set of numerical predictions.
 func (s *Storage) FetchResidualsSummary(dataset string, resultURI string, index string, filterParams *model.FilterParams, extrema *model.Extrema) (*model.Histogram, error) {
 	datasetResult := s.getResultTable(dataset)
-	targetName, err := s.getResultTargetName(datasetResult, resultURI, index)
+	targetName, err := s.getResultTargetName(datasetResult, resultURI)
 	if err != nil {
 		return nil, err
 	}
@@ -72,7 +72,7 @@ func (s *Storage) getResidualsHistogramAggQuery(extrema *model.Extrema, variable
 
 func getResultJoin(dataset string) string {
 	// FROM clause to join result and base data on d3mIdex value
-	return fmt.Sprintf("%s_result as res inner join %s as data on data.\"%s\" = res.index", dataset, dataset, d3mIndexFieldName)
+	return fmt.Sprintf("%s_result as res inner join %s as data on data.\"%s\" = res.index", dataset, dataset, model.D3MIndexFieldName)
 }
 
 func getResidualsMinMaxAggsQuery(variable *model.Variable, resultVariable *model.Variable) string {

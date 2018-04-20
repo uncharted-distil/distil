@@ -20,7 +20,6 @@ func ExportHandler(pipelineCtor model.PipelineStorageCtor, metaCtor model.Metada
 	return func(w http.ResponseWriter, r *http.Request) {
 		// extract route parameters
 		pipelineID := pat.Param(r, "pipeline-id")
-		sessionID := pat.Param(r, "session")
 
 		// get the pipeline target
 		pipeline, err := pipelineCtor()
@@ -28,21 +27,22 @@ func ExportHandler(pipelineCtor model.PipelineStorageCtor, metaCtor model.Metada
 			handleError(w, err)
 			return
 		}
-		res, err := pipeline.FetchResultMetadataByPipelineID(pipelineID)
+		req, err := pipeline.FetchRequestByPipelineID(pipelineID)
 		if err != nil {
 			handleError(w, err)
 			return
 		}
 
-		pipelineTarget := ""
-		for _, f := range res.Features {
-			if f.FeatureType == model.FeatureTypeTarget {
-				pipelineTarget = f.FeatureName
-			}
-		}
+		pipelineTarget := req.TargetFeature()
 
 		// get the initial target
-		request, err := pipeline.FetchRequest(res.RequestID)
+		pip, err := pipeline.FetchPipeline(pipelineID)
+		if err != nil {
+			handleError(w, err)
+			return
+		}
+
+		m, err := pipeline.FetchRequest(pip.RequestID)
 		if err != nil {
 			handleError(w, err)
 			return
@@ -54,7 +54,7 @@ func ExportHandler(pipelineCtor model.PipelineStorageCtor, metaCtor model.Metada
 			return
 		}
 
-		variable, err := meta.FetchVariable(request.Dataset, "datasets", pipelineTarget)
+		variable, err := meta.FetchVariable(m.Dataset, "datasets", pipelineTarget)
 		if err != nil {
 			handleError(w, err)
 			return
@@ -71,7 +71,7 @@ func ExportHandler(pipelineCtor model.PipelineStorageCtor, metaCtor model.Metada
 		exportURI := fmt.Sprintf("file://%s", exportPath)
 		log.Infof("Exporting to %s", exportURI)
 
-		err = client.ExportPipeline(context.Background(), sessionID, pipelineID, exportURI)
+		err = client.ExportPipeline(context.Background(), pipelineID, exportURI)
 		if err != nil {
 			log.Infof("Failed pipeline export request to %s", exportURI)
 			os.Exit(1)

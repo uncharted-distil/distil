@@ -11,7 +11,6 @@ import ExportSuccess from './views/ExportSuccess.vue';
 import AbortSuccess from './views/AbortSuccess.vue';
 import { getters as routeGetters } from './store/route/module';
 import { mutations as viewMutations } from './store/view/module';
-import { actions as pipelineActions, getters as pipelineGetters } from './store/pipelines/module';
 import { actions as appActions } from './store/app/module';
 import { ROOT_ROUTE, HOME_ROUTE, SEARCH_ROUTE, SELECT_ROUTE, CREATE_ROUTE, RESULTS_ROUTE, EXPORT_SUCCESS_ROUTE, ABORT_SUCCESS_ROUTE } from './store/route/index';
 import store from './store/store';
@@ -67,20 +66,9 @@ new Vue({
 	template: `
 		<div id="distil-app">
 			<navigation></navigation>
-			<router-view class="view" v-if="hasActiveSession"></router-view>
+			<router-view class="view"></router-view>
 		</div>`,
-	computed: {
-		sessionId(): string {
-			return pipelineGetters.getPipelineSessionID(this.$store)
-		},
-		hasActiveSession(): boolean {
-			return pipelineGetters.hasActiveSession(this.$store)
-		}
-	},
 	mounted() {
-		pipelineActions.startPipelineSession(this.$store, {
-			sessionId: this.sessionId
-		});
 		appActions.fetchVersion(this.$store);
 	}
 }).$mount('#app');

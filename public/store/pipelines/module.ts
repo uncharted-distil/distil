@@ -16,8 +16,6 @@ export const pipelineModule: Module<PipelineState, DistilState> = {
 const { commit, read, dispatch } = getStoreAccessors<PipelineState, DistilState>(null);
 
 export const getters = {
-	getPipelineSessionID: read(moduleGetters.getPipelineSessionID),
-	hasActiveSession: read(moduleGetters.hasActiveSession),
 	getRunningPipelines: read(moduleGetters.getRunningPipelines),
 	getCompletedPipelines: read(moduleGetters.getCompletedPipelines),
 	getPipelines: read(moduleGetters.getPipelines),
@@ -28,15 +26,11 @@ export const getters = {
 }
 
 export const actions = {
-	startPipelineSession: dispatch(moduleActions.startPipelineSession),
-	endPipelineSession: dispatch(moduleActions.endPipelineSession),
 	fetchPipelines: dispatch(moduleActions.fetchPipelines),
 	createPipelines: dispatch(moduleActions.createPipelines),
 }
 
 export const mutations = {
-	setPipelineSessionID: commit(moduleMutations.setPipelineSessionID),
-	setSessionActivity: commit(moduleMutations.setSessionActivity),
 	updatePipelineRequests: commit(moduleMutations.updatePipelineRequests),
 	clearPipelineRequests: commit(moduleMutations.clearPipelineRequests)
 }

@@ -94,7 +94,7 @@ func (f *NumericalField) fetchHistogramByResult(dataset string, variable *model.
 	// Create the complete query string.
 	query := fmt.Sprintf("SELECT %s as bucket, CAST(%s as double precision) AS %s, COUNT(*) AS count FROM %s data INNER JOIN %s result ON data.\"%s\" = result.index WHERE result.result_id = $%d%s GROUP BY %s ORDER BY %s;",
 		bucketQuery, histogramQuery, histogramName, dataset,
-		f.Storage.getResultTable(dataset), d3mIndexFieldName, len(params), where, bucketQuery, histogramName)
+		f.Storage.getResultTable(dataset), model.D3MIndexFieldName, len(params), where, bucketQuery, histogramName)
 
 	// execute the postgres query
 	res, err := f.Storage.client.Query(query, params...)
@@ -234,7 +234,8 @@ func (f *NumericalField) fetchExtremaByURI(dataset string, resultURI string, var
 	aggQuery := f.getMinMaxAggsQuery(variable)
 
 	// create a query that does min and max aggregations for each variable
-	queryString := fmt.Sprintf("SELECT %s FROM %s data INNER JOIN %s result ON data.\"%s\" = result.index WHERE result.result_id = $1;", aggQuery, dataset, f.Storage.getResultTable(dataset), d3mIndexFieldName)
+	queryString := fmt.Sprintf("SELECT %s FROM %s data INNER JOIN %s result ON data.\"%s\" = result.index WHERE result.result_id = $1;",
+		aggQuery, dataset, f.Storage.getResultTable(dataset), model.D3MIndexFieldName)
 
 	// execute the postgres query
 	// NOTE: We may want to use the regular Query operation since QueryRow
@@ -286,7 +287,8 @@ func (f *NumericalField) FetchResultSummaryData(resultURI string, dataset string
 	query := fmt.Sprintf("SELECT %s as bucket, CAST(%s as double precision) AS %s, COUNT(*) AS count "+
 		"FROM %s data INNER JOIN %s result ON data.\"%s\" = result.index %s "+
 		"GROUP BY %s ORDER BY %s;",
-		bucketQuery, histogramQuery, histogramName, dataset, datasetResult, d3mIndexFieldName, where, bucketQuery, histogramName)
+		bucketQuery, histogramQuery, histogramName, dataset, datasetResult,
+		model.D3MIndexFieldName, where, bucketQuery, histogramName)
 
 	// execute the postgres query
 	res, err := f.Storage.client.Query(query, params...)

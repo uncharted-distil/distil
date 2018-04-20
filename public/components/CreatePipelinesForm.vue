@@ -39,7 +39,6 @@ import { getters as routeGetters } from '../store/route/module';
 import { RESULTS_ROUTE } from '../store/route/index';
 import { actions as pipelineActions } from '../store/pipelines/module';
 import { PipelineInfo } from '../store/pipelines/index';
-import { getters as pipelineGetters } from '../store/pipelines/module';
 import { Variable } from '../store/data/index';
 import { FilterParams } from '../util/filters';
 import Vue from 'vue';
@@ -95,9 +94,6 @@ export default Vue.extend({
 				return _.toLower(v.name) === _.toLower(this.target);
 			});
 		},
-		sessionId(): string {
-			return pipelineGetters.getPipelineSessionID(this.$store);
-		},
 		isPending(): boolean {
 			return this.pending;
 		},
@@ -129,10 +125,9 @@ export default Vue.extend({
 			pipelineActions.createPipelines(this.$store, {
 				dataset: this.dataset,
 				filters: this.filters,
-				sessionId: this.sessionId,
-				feature: routeGetters.getRouteTargetVariable(this.$store),
+				target: routeGetters.getRouteTargetVariable(this.$store),
 				task: task,
-				metric: metrics,
+				metrics: metrics,
 				maxPipelines: 1
 			}).then((res: PipelineInfo) => {
 				this.pending = false;

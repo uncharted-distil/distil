@@ -35,7 +35,7 @@ func ResultsExtremaHandler(pipelineCtor model.PipelineStorageCtor, dataCtor mode
 		}
 
 		// get the result URI. Error ignored to make it ES compatible.
-		res, err := pipeline.FetchResultMetadataByUUID(resultUUID)
+		res, err := pipeline.FetchPipelineResultByUUID(resultUUID)
 		if err != nil {
 			handleError(w, err)
 			return

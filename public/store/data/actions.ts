@@ -103,7 +103,7 @@ export const actions = {
 		return context.dispatch('fetchVariables', {
 			dataset: args.dataset
 		}).then(() => {
-			context.dispatch('fetchVariableSummaries', {
+			return context.dispatch('fetchVariableSummaries', {
 				dataset: args.dataset,
 				variables: context.state.variables
 			});
@@ -166,7 +166,7 @@ export const actions = {
 	},
 
 	// fetches variable summary data for the given dataset and variables
-	fetchResultSummaries(context: DataContext, args: { dataset: string, variables: Variable[], pipelineId: string, extrema: Extrema }) {
+	fetchTrainingResultSummaries(context: DataContext, args: { dataset: string, variables: Variable[], pipelineId: string, extrema: Extrema }) {
 		if (!args.dataset) {
 			console.warn('`dataset` argument is missing');
 			return null;
@@ -251,7 +251,7 @@ export const actions = {
 			});
 	},
 
-	fetchResultExtrema(context: DataContext, args: { dataset: string, variable: string, pipelineId: string }) {
+	fetchTargetResultExtrema(context: DataContext, args: { dataset: string, variable: string, pipelineId: string }) {
 		if (!args.dataset) {
 			console.warn('`dataset` argument is missing');
 			return null;
@@ -264,15 +264,18 @@ export const actions = {
 			console.warn('`pipelineId` argument is missing');
 			return null;
 		}
+
+		mutations.clearTargetResultExtrema(context);
+
 		const pipeline = getPipelineById(context.rootState.pipelineModule, args.pipelineId);
 		if (!pipeline.resultId) {
 			console.warn(`No 'resultId' exists for pipeline '${args.pipelineId}'`);
 			return null;
 		}
-		mutations.clearResultExtrema(context);
+
 		return axios.get(`/distil/results-variable-extrema/${ES_INDEX}/${args.dataset}/${args.variable}/${pipeline.resultId}`)
 			.then(response => {
-				mutations.updateResultExtrema(context, {
+				mutations.updateTargetResultExtrema(context, {
 					extrema: response.data.extrema
 				});
 			})
@@ -295,7 +298,7 @@ export const actions = {
 
 		mutations.setSelectedData(context, null);
 
-		context.dispatch('fetchData', { dataset: args.dataset, filters: args.filters, invert: false })
+		return context.dispatch('fetchData', { dataset: args.dataset, filters: args.filters, invert: false })
 			.then(response => {
 				mutations.setSelectedData(context, response.data);
 			})
@@ -319,7 +322,7 @@ export const actions = {
 
 		mutations.setExcludedData(context, null);
 
-		context.dispatch('fetchData', { dataset: args.dataset, filters: args.filters, invert: true })
+		return context.dispatch('fetchData', { dataset: args.dataset, filters: args.filters, invert: true })
 			.then(response => {
 				mutations.setExcludedData(context, response.data);
 			})
@@ -353,11 +356,16 @@ export const actions = {
 			console.warn('`pipelineId` argument is missing');
 			return null;
 		}
+
+		// clear extrema
+		mutations.clearPredictedExtrema(context, args.pipelineId);
+
 		const pipeline = getPipelineById(context.rootState.pipelineModule, args.pipelineId);
 		if (!pipeline.resultId) {
 			console.warn(`No 'resultId' exists for pipeline '${args.pipelineId}'`);
 			return null;
 		}
+
 		return axios.get(`/distil/results-extrema/${ES_INDEX}/${args.dataset}/${pipeline.resultId}`)
 			.then(response => {
 				mutations.updatePredictedExtremas(context, {
@@ -379,8 +387,8 @@ export const actions = {
 			console.warn('`requestIds` argument is missing');
 			return null;
 		}
+
 		const pipelines = getPipelinesByRequestIds(context.rootState.pipelineModule, args.requestIds);
-		mutations.clearPredictedExtremas(context);
 		return Promise.all(pipelines.map(pipeline => {
 			return context.dispatch('fetchPredictedExtrema', {
 				dataset: args.dataset,
@@ -398,11 +406,16 @@ export const actions = {
 			console.warn('`pipelineId` argument is missing');
 			return null;
 		}
+
+		// clear extrema
+		mutations.clearResidualsExtrema(context, args.pipelineId);
+
 		const pipeline = getPipelineById(context.rootState.pipelineModule, args.pipelineId);
 		if (!pipeline.resultId) {
 			console.warn(`No 'resultId' exists for pipeline '${args.pipelineId}'`);
 			return null;
 		}
+
 		return axios.get(`/distil/residuals-extrema/${ES_INDEX}/${args.dataset}/${pipeline.resultId}`)
 			.then(response => {
 				mutations.updateResidualsExtremas(context, {
@@ -424,8 +437,8 @@ export const actions = {
 			console.warn('`requestIds` argument is missing');
 			return null;
 		}
+
 		const pipelines = getPipelinesByRequestIds(context.rootState.pipelineModule, args.requestIds);
-		mutations.clearResidualsExtremas(context);
 		return Promise.all(pipelines.map(pipeline => {
 			return context.dispatch('fetchResidualsExtrema', {
 				dataset: args.dataset,
@@ -532,6 +545,14 @@ export const actions = {
 				filters: []
 			};
 		}
+
+		const pipeline = getPipelineById(context.rootState.pipelineModule, args.pipelineId);
+		if (!pipeline.resultId) {
+			// no results ready to pull
+			console.warn(`No 'resultId' exists for pipeline '${args.pipelineId}'`);
+			return null;
+		}
+
 		const highlightFilter = createFilterFromHighlightRoot(args.highlightRoot, INCLUDE_FILTER);
 		if (highlightFilter) {
 			highlightFilter.name = getVarFromTarget(highlightFilter.name);
@@ -539,7 +560,7 @@ export const actions = {
 		}
 		mutations.setSelectedData(context, null);
 		mutations.setResultData(context, null);
-		context.dispatch('fetchResults', args)
+		return context.dispatch('fetchResults', args)
 			.then(response => {
 				mutations.setResultData(context, response.data);
 			})
@@ -645,6 +666,7 @@ export const actions = {
 		const pipeline = getPipelineById(context.rootState.pipelineModule, args.pipelineId);
 		if (!pipeline.resultId) {
 			// no results ready to pull
+			console.warn(`No 'resultId' exists for pipeline '${args.pipelineId}'`);
 			return null;
 		}
 
@@ -714,6 +736,12 @@ export const actions = {
 		}
 		if (!args.pipelineId) {
 			console.warn('`pipelineId` argument is missing');
+			return null;
+		}
+
+		const pipeline = getPipelineById(context.rootState.pipelineModule, args.pipelineId);
+		if (!pipeline.resultId) {
+			// no results ready to pull
 			return null;
 		}
 

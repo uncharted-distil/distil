@@ -35,7 +35,7 @@ import RecentDatasets from '../components/RecentDatasets';
 import RecentPipelines from '../components/RecentPipelines';
 import RunningPipelines from '../components/RunningPipelines';
 import SearchBar from '../components/SearchBar';
-import { actions, getters } from '../store/pipelines/module';
+import { actions } from '../store/pipelines/module';
 import { getters as appGetters } from '../store/app/module';
 import Vue from 'vue';
 
@@ -50,9 +50,6 @@ export default Vue.extend({
 	},
 
 	computed: {
-		sessionId(): string {
-			return getters.getPipelineSessionID(this.$store);
-		},
 		version(): string {
 			return `version: ${appGetters.getVersionNumber(this.$store)} at ${appGetters.getVersionTimestamp(this.$store)}`;
 		}
@@ -64,9 +61,7 @@ export default Vue.extend({
 
 	methods: {
 		fetch() {
-			actions.fetchPipelines(this.$store, {
-				sessionId: this.sessionId
-			});
+			actions.fetchPipelines(this.$store, {});
 		}
 	}
 

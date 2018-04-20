@@ -7,6 +7,8 @@ const (
 	FeatureTypeTarget = "target"
 	// RoleIndex is the role used for index fields.
 	RoleIndex = "index"
+	// D3MIndexFieldName denotes the name of the index field.
+	D3MIndexFieldName = "d3mIndex"
 )
 
 // Variable represents a single variable description within a dataset.

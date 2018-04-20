@@ -25,14 +25,14 @@ func (s *Storage) getResultTable(dataset string) string {
 	return fmt.Sprintf("%s_result", dataset)
 }
 
-func (s *Storage) getResultTargetName(dataset string, resultURI string, index string) (string, error) {
+func (s *Storage) getResultTargetName(dataset string, resultURI string) (string, error) {
 	// Assume only a single target / result. Read the target name from the
 	// database table.
 	sql := fmt.Sprintf("SELECT target FROM %s WHERE result_id = $1 LIMIT 1;", dataset)
 
 	rows, err := s.client.Query(sql, resultURI)
 	if err != nil {
-		return "", errors.Wrap(err, "Unable to get target variable name from results")
+		return "", errors.Wrap(err, fmt.Sprintf("Unable to get target variable name from results for result URI `%s`", resultURI))
 	}
 	defer rows.Close()
 
@@ -40,13 +40,13 @@ func (s *Storage) getResultTargetName(dataset string, resultURI string, index st
 		var targetName string
 		err = rows.Scan(&targetName)
 		if err != nil {
-			return "", errors.Wrap(err, "Unable to get target variable name from results")
+			return "", errors.Wrap(err, fmt.Sprintf("Unable to get target variable name for result URI `%s`", resultURI))
 		}
 
 		return targetName, nil
 	}
 
-	return "", errors.New("Result URI not found")
+	return "", errors.Errorf("Target feature for result URI `%s` not found", resultURI)
 }
 
 func (s *Storage) getResultTargetVariable(dataset string, index string, targetName string) (*model.Variable, error) {
@@ -288,7 +288,7 @@ func addErrorFilterToWhere(dataset string, targetName string, errorFilter *model
 // FetchFilteredResults pulls the results from the Postgres database.
 func (s *Storage) FetchFilteredResults(dataset string, index string, resultURI string, filterParams *model.FilterParams) (*model.FilteredData, error) {
 	datasetResult := s.getResultTable(dataset)
-	targetName, err := s.getResultTargetName(datasetResult, resultURI, index)
+	targetName, err := s.getResultTargetName(datasetResult, resultURI)
 	if err != nil {
 		return nil, err
 	}
@@ -350,7 +350,8 @@ func (s *Storage) FetchFilteredResults(dataset string, index string, resultURI s
 			"%s "+
 			"FROM %s as predicted inner join %s as data on data.\"%s\" = predicted.index "+
 			"WHERE result_id = $%d AND target = $%d",
-		predictedCol, targetName, targetCol, errorExpr, fields, datasetResult, dataset, d3mIndexFieldName, len(params)+1, len(params)+2)
+		predictedCol, targetName, targetCol, errorExpr, fields, datasetResult, dataset,
+		model.D3MIndexFieldName, len(params)+1, len(params)+2)
 
 	params = append(params, resultURI)
 	params = append(params, targetName)
@@ -384,7 +385,7 @@ func (s *Storage) FetchResults(dataset string, index string, resultURI string) (
 
 	// fetch the variable info to resolve its type - skip the first column since that will be the d3m_index value
 	datasetResult := s.getResultTable(dataset)
-	targetName, err := s.getResultTargetName(datasetResult, resultURI, index)
+	targetName, err := s.getResultTargetName(datasetResult, resultURI)
 	variable, err := s.getResultTargetVariable(dataset, index, targetName)
 	if err != nil {
 		return nil, err
@@ -460,7 +461,7 @@ func (s *Storage) fetchResultsExtrema(resultURI string, dataset string, variable
 // FetchResultsExtremaByURI fetches the results extrema by resultURI.
 func (s *Storage) FetchResultsExtremaByURI(dataset string, resultURI string, index string) (*model.Extrema, error) {
 	datasetResult := s.getResultTable(dataset)
-	targetName, err := s.getResultTargetName(datasetResult, resultURI, index)
+	targetName, err := s.getResultTargetName(datasetResult, resultURI)
 	if err != nil {
 		return nil, err
 	}
@@ -481,7 +482,7 @@ func (s *Storage) FetchResultsExtremaByURI(dataset string, resultURI string, ind
 // results table.
 func (s *Storage) FetchResultsSummary(dataset string, resultURI string, index string, filterParams *model.FilterParams, extrema *model.Extrema) (*model.Histogram, error) {
 	datasetResult := s.getResultTable(dataset)
-	targetName, err := s.getResultTargetName(datasetResult, resultURI, index)
+	targetName, err := s.getResultTargetName(datasetResult, resultURI)
 	if err != nil {
 		return nil, err
 	}

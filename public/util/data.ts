@@ -1,7 +1,7 @@
 import _ from 'lodash';
 import { DataState, Datasets, VariableSummary, Data } from '../store/data/index';
 import { TargetRow, FieldInfo } from '../store/data/index';
-import { PipelineInfo, PIPELINE_UPDATED, PIPELINE_COMPLETED } from '../store/pipelines/index';
+import { PipelineInfo, PIPELINE_COMPLETED } from '../store/pipelines/index';
 import { DistilState } from '../store/store';
 import { Dictionary } from './dict';
 import { FilterParams } from './filters';
@@ -215,8 +215,7 @@ export function getSummary(
 	updateFunction(context, createPendingSummary(name, label, dataset, pipelineId));
 
 	// fetch the results for each pipeline
-	if (pipeline.progress !== PIPELINE_UPDATED &&
-		pipeline.progress !== PIPELINE_COMPLETED) {
+	if (pipeline.progress !== PIPELINE_COMPLETED) {
 		// skip
 		return;
 	}

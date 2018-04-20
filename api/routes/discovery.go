@@ -48,24 +48,25 @@ func ProblemDiscoveryHandler(ctorData model.DataStorageCtor, ctorMeta model.Meta
 			return
 		}
 
-		fetchFilteredData := func(dataset string, index string, filterParams *model.FilterParams) (*model.FilteredData, error) {
-			// fetch the whole data
-			return dataStorage.FetchData(dataset, index, filterParams, false)
-		}
-		fetchVariables := func(dataset string, index string) ([]*model.Variable, error) {
-			return metadataStorage.FetchVariables(dataset, index, true)
-		}
-		fetchVariable := func(dataset string, index string, name string) (*model.Variable, error) {
-			return metadataStorage.FetchVariable(dataset, index, name)
-		}
-
-		path, err := pipeline.PersistFilteredData(fetchFilteredData, fetchVariables, datasetDir, dataset, esIndex, target, filterParams)
+		targetVar, err := metadataStorage.FetchVariable(dataset, esIndex, target)
 		if err != nil {
 			handleError(w, err)
 			return
 		}
 
-		pathProblem, err := pipeline.PersistProblem(fetchVariable, datasetDir, dataset, esIndex, target, filterParams)
+		ds, err := model.FetchDataset(dataset, esIndex, true, filterParams, metadataStorage, dataStorage)
+		if err != nil {
+			handleError(w, err)
+			return
+		}
+
+		path, _, err := pipeline.PersistFilteredData(datasetDir, target, ds)
+		if err != nil {
+			handleError(w, err)
+			return
+		}
+
+		pathProblem, err := pipeline.PersistProblem(datasetDir, dataset, targetVar, filterParams)
 		if err != nil {
 			handleError(w, err)
 			return

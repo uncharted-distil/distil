@@ -48,7 +48,7 @@ func (s *Storage) getExistingFields(dataset string, index string) (map[string]*m
 	}
 
 	// Add the d3m index variable.
-	varIndex, err := s.metadata.FetchVariable(dataset, index, d3mIndexFieldName)
+	varIndex, err := s.metadata.FetchVariable(dataset, index, model.D3MIndexFieldName)
 	if err != nil {
 		return nil, errors.Wrap(err, "Unable to get d3m index variable")
 	}

@@ -85,7 +85,8 @@ func (s *Storage) fetchExtremaByURI(dataset string, resultURI string, variable *
 	aggQuery := s.getMinMaxAggsQuery(variable)
 
 	// create a query that does min and max aggregations for each variable
-	queryString := fmt.Sprintf("SELECT %s FROM %s data INNER JOIN %s result ON data.\"%s\" = result.index WHERE result.result_id = $1;", aggQuery, dataset, s.getResultTable(dataset), d3mIndexFieldName)
+	queryString := fmt.Sprintf("SELECT %s FROM %s data INNER JOIN %s result ON data.\"%s\" = result.index WHERE result.result_id = $1;",
+		aggQuery, dataset, s.getResultTable(dataset), model.D3MIndexFieldName)
 
 	// execute the postgres query
 	// NOTE: We may want to use the regular Query operation since QueryRow

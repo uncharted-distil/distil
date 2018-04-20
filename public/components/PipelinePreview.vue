@@ -14,17 +14,12 @@
 					<strong>Feature:</strong> {{result.feature}}
 				</div>
 				<div>
-					<b-badge v-if="isSubmitted()">
+					<b-badge v-if="isPending()">
 						{{status()}}
 					</b-badge>
 					<b-badge variant="info" v-if="isRunning()">
 						{{status()}}
 					</b-badge>
-					<div v-if="isUpdated()">
-						<b-badge variant="info" v-bind:key="score.metric" v-for="score in result.scores">
-							{{metricName(score.metric)}}: {{score.value}}
-						</b-badge>
-					</div>
 					<div v-if="isCompleted()">
 						<b-badge variant="info" v-bind:key="score.metric" v-for="score in result.scores">
 							{{metricName(score.metric)}}: {{score.value}}
@@ -53,7 +48,7 @@
 import moment from 'moment';
 import { getMetricDisplayName } from '../util/pipelines';
 import { createRouteEntry } from '../util/routes';
-import { PipelineInfo, PIPELINE_SUBMITTED, PIPELINE_RUNNING, PIPELINE_UPDATED, PIPELINE_COMPLETED, PIPELINE_ERRORED } from '../store/pipelines/index';
+import { PipelineInfo, PIPELINE_PENDING, PIPELINE_RUNNING, PIPELINE_COMPLETED, PIPELINE_ERRORED } from '../store/pipelines/index';
 import { RESULTS_ROUTE } from '../store/route/index';
 import Vue from 'vue';
 
@@ -76,28 +71,16 @@ export default Vue.extend({
 
 	methods: {
 		status(): string {
-			const result = <PipelineInfo>this.result;
-			if (result.progress === PIPELINE_UPDATED) {
-				const score = result.scores[0];
-				const metricName = getMetricDisplayName(score.metric);
-				if (metricName) {
-					return metricName + ': ' + score.value;
-				}
-				return score.value.toString();
-			}
-			return result.progress;
+			return this.result.progress;
 		},
 		metricName(metric): string {
 			return getMetricDisplayName(metric);
 		},
-		isSubmitted(): boolean {
-			return (<PipelineInfo>this.result).progress === PIPELINE_SUBMITTED;
+		isPending(): boolean {
+			return (<PipelineInfo>this.result).progress === PIPELINE_PENDING;
 		},
 		isRunning(): boolean {
 			return (<PipelineInfo>this.result).progress === PIPELINE_RUNNING;
-		},
-		isUpdated(): boolean {
-			return (<PipelineInfo>this.result).progress === PIPELINE_UPDATED;
 		},
 		isCompleted(): boolean {
 			return (<PipelineInfo>this.result).progress === PIPELINE_COMPLETED;

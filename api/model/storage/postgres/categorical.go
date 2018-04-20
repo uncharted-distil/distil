@@ -69,7 +69,7 @@ func (f *CategoricalField) fetchHistogramByResult(dataset string, variable *mode
 	// Get count by category.
 	query := fmt.Sprintf("SELECT data.\"%s\", COUNT(*) AS count FROM %s data INNER JOIN %s result ON data.\"%s\" = result.index WHERE result.result_id = $%d%s GROUP BY \"%s\" ORDER BY count desc, \"%s\" LIMIT %d;",
 		variable.Name, dataset, f.Storage.getResultTable(dataset),
-		d3mIndexFieldName, len(params), where, variable.Name,
+		model.D3MIndexFieldName, len(params), where, variable.Name,
 		variable.Name, catResultLimit)
 
 	// execute the postgres query

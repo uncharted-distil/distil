@@ -54,18 +54,30 @@ func ResultsHandler(pipelineCtor model.PipelineStorageCtor, dataCtor model.DataS
 			return
 		}
 
+		// get the filters
+		req, err := pipeline.FetchRequestByPipelineID(pipelineID)
+		if err != nil {
+			handleError(w, err)
+			return
+		}
+		if req == nil {
+			handleError(w, errors.Errorf("pipeline id `%s` cannot be mapped to result URI", pipelineID))
+			return
+		}
+
+		// merge provided filterParams with those of the request
+		filterParams.Merge(req.Filters)
+
 		// get the result URI
-		res, err := pipeline.FetchResultMetadataByPipelineID(pipelineID)
+		res, err := pipeline.FetchPipelineResult(pipelineID)
 		if err != nil {
 			handleError(w, err)
 			return
 		}
 
-		// merge provided filterParams with those of the request
-		filterParams.Merge(res.Filters)
-
+		// if no result, return an empty map
 		if res == nil {
-			handleError(w, errors.Errorf("pipeline id `%s` cannot be mapped to result URI", pipelineID))
+			handleJSON(w, make(map[string]interface{}))
 			return
 		}
 
