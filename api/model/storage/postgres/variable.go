@@ -125,7 +125,9 @@ func (s *Storage) fetchSummaryData(dataset string, index string, varName string,
 		field = NewNumericalField(s)
 	} else if model.IsCategorical(variable.Type) {
 		field = NewCategoricalField(s)
-	} else {
+	} else if model.IsText(variable.Type) {
+       field = NewTextField(s)
+    } else {
 		return nil, errors.Errorf("variable %s of type %s does not support summary", variable.Name, variable.Type)
 	}
 
