@@ -37,15 +37,15 @@ func (f *TextField) FetchSummaryData(dataset string, index string, variable *mod
 }
 
 func (f *TextField) fetchHistogram(dataset string, variable *model.Variable, filterParams *model.FilterParams) (*model.Histogram, error) {
-    // create the filter for the query.
-    where, params := f.Storage.buildFilteredQueryWhere(dataset, filterParams)
-    if len(where) > 0 {
-        where = fmt.Sprintf(" WHERE %s", where)
-    }
+	// create the filter for the query.
+	where, params := f.Storage.buildFilteredQueryWhere(dataset, filterParams)
+	if len(where) > 0 {
+		where = fmt.Sprintf(" WHERE %s", where)
+	}
 
 	// Get count by category.
-	query := fmt.Sprintf("SELECT unnest(tsvector_to_array(to_tsvector(\"%s\"))) as \"%s\", COUNT(*) AS count " +
-        "FROM %s%s GROUP BY unnest(tsvector_to_array(to_tsvector(\"%s\"))) ORDER BY count desc, \"%s\" LIMIT %d;",
+	query := fmt.Sprintf("SELECT unnest(tsvector_to_array(to_tsvector(\"%s\"))) as \"%s\", COUNT(*) AS count "+
+		"FROM %s%s GROUP BY unnest(tsvector_to_array(to_tsvector(\"%s\"))) ORDER BY count desc, \"%s\" LIMIT %d;",
 		variable.Name, variable.Name, dataset, where, variable.Name, variable.Name, catResultLimit)
 
 	// execute the postgres query
@@ -61,17 +61,17 @@ func (f *TextField) fetchHistogram(dataset string, variable *model.Variable, fil
 }
 
 func (f *TextField) fetchHistogramByResult(dataset string, variable *model.Variable, resultURI string, filterParams *model.FilterParams) (*model.Histogram, error) {
-    // create the filter for the query.
-    where, params := f.Storage.buildFilteredQueryWhere(dataset, filterParams)
-    if len(where) > 0 {
-        where = fmt.Sprintf(" WHERE %s", where)
-    }
+	// create the filter for the query.
+	where, params := f.Storage.buildFilteredQueryWhere(dataset, filterParams)
+	if len(where) > 0 {
+		where = fmt.Sprintf(" WHERE %s", where)
+	}
 	params = append(params, resultURI)
 
 	// Get count by category.
-	query := fmt.Sprintf("SELECT unnest(tsvector_to_array(to_tsvector(\"%s\"))) as \"%s\", COUNT(*) AS count " +
-        "FROM %s data INNER JOIN %s result ON data.\"%s\" = result.index WHERE result.result_id = $%d%s " +
-        "GROUP BY unnest(tsvector_to_array(to_tsvector(\"%s\"))) ORDER BY count desc, \"%s\" LIMIT %d;",
+	query := fmt.Sprintf("SELECT unnest(tsvector_to_array(to_tsvector(\"%s\"))) as \"%s\", COUNT(*) AS count "+
+		"FROM %s data INNER JOIN %s result ON data.\"%s\" = result.index WHERE result.result_id = $%d%s "+
+		"GROUP BY unnest(tsvector_to_array(to_tsvector(\"%s\"))) ORDER BY count desc, \"%s\" LIMIT %d;",
 		variable.Name, variable.Name, dataset, f.Storage.getResultTable(dataset),
 		model.D3MIndexFieldName, len(params), where, variable.Name, variable.Name, catResultLimit)
 
