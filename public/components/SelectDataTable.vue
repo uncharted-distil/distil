@@ -8,6 +8,9 @@
 		<p>
 
 		<div>
+			<filter-badge v-if="activeFilter"
+				no-remove
+				:filter="activeFilter"></filter-badge>
 			<div v-for="filter in filters">
 				<filter-badge
 					:filter="filter"></filter-badge>
@@ -111,7 +114,22 @@ export default Vue.extend({
 			return this.includedActive ? dataGetters.getSelectedDataFields(this.$store) : dataGetters.getExcludedDataFields(this.$store);
 		},
 
+		activeFilter(): Filter {
+			if (!this.highlights ||
+				!this.highlights.root ||
+				!this.highlights.root.value) {
+				return null;
+			}
+			if (this.includedActive) {
+				return createFilterFromHighlightRoot(this.highlights.root, INCLUDE_FILTER);
+			}
+			return createFilterFromHighlightRoot(this.highlights.root, EXCLUDE_FILTER);
+		},
+
 		filters(): Filter[] {
+			if (this.includedActive) {
+				return this.invertFilters(dataGetters.getFilters(this.$store);
+			}
 			return dataGetters.getFilters(this.$store);
 		}
 	},
@@ -126,6 +144,9 @@ export default Vue.extend({
 			const filter = createFilterFromHighlightRoot(this.highlights.root, INCLUDE_FILTER);
 			addFilterToRoute(this, filter);
 			clearHighlightRoot(this);
+		},
+		invertFilters(filters: Filter[]): Filter[] {
+			return filters;
 		}
 	}
 });

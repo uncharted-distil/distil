@@ -8,7 +8,7 @@
 			{{filter.categories.join(',')}}
 		</span>
 
-		<b-button size="sm" @click="onClick">
+		<b-button v-if="!noRemove" size="sm" @click="onClick">
 			<i class="fa fa-times"></i>
 		</b-button>
 	</div>
@@ -23,7 +23,8 @@ export default Vue.extend({
 	name: 'filter-badge',
 
 	props: {
-		filter: Object
+		filter: Object,
+		noRemove: Boolean
 	},
 
 	methods: {

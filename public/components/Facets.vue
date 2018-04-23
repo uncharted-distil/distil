@@ -198,14 +198,28 @@ export default Vue.extend({
 		injectHTML(group: Group, $elem: JQuery) {
 			$elem.click(event => {
 				if (this.isNumerical(group)) {
-					this.$emit('numerical-click', group.key);
+					const slices = group.facets[0].histogram.slices;
+					const first = slices[0];
+					const last = slices[slices.length - 1];
+					const range = {
+						from: _.toNumber(first.label),
+						to: _.toNumber(last.toLabel)
+					};
+					this.$emit('numerical-click', this.instanceName, group.key, range);
 				} else if (this.isCategorical(group)) {
-					this.$emit('categorical-click', group.key);
+					this.$emit('categorical-click', this.instanceName, group.key);
 				}
 			});
 
-			$elem.find('.facet-histogram g').click(event => {
-				this.$emit('numerical-click', group.key);
+			$elem.find('.facet-histogram g').click(event =>
+				const slices = group.facets[0].histogram.slices;
+				const first = slices[0];
+				const last = slices[slices.length - 1];
+				const range = {
+					from: _.toNumber(first.label),
+					to: _.toNumber(last.toLabel)
+				};
+				this.$emit('numerical-click', this.instanceName, group.key, range);
 			});
 
 			// inject type icon in group header

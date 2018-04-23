@@ -167,7 +167,7 @@ export default Vue.extend({
 			return 'facetPage';
 		},
 
-		onRangeChange(context: string, key: string, value: { from: { label: string[] }, to: { label: string[] } }) {
+		onRangeChange(context: string, key: string, value: { from: number, to: number }) {
 			updateHighlightRoot(this, {
 				context: context,
 				key: key,
@@ -196,13 +196,13 @@ export default Vue.extend({
 			this.$emit('categorical-click', key);
 		},
 
-		onNumericalClick(key: string) {
+		onNumericalClick(context: string, key: string, value: { from: number, to: number }) {
 			if (this.enableHighlighting) {
 				if (!this.highlights.root || this.highlights.root.key !== key) {
 					updateHighlightRoot(this, {
 						context: this.instanceName,
 						key: key,
-						value: null
+						value: value
 					});
 				}
 			}
