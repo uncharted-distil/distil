@@ -128,7 +128,7 @@ export default Vue.extend({
 
 		filters(): Filter[] {
 			if (this.includedActive) {
-				return this.invertFilters(dataGetters.getFilters(this.$store);
+				return this.invertFilters(dataGetters.getFilters(this.$store));
 			}
 			return dataGetters.getFilters(this.$store);
 		}
@@ -146,6 +146,7 @@ export default Vue.extend({
 			clearHighlightRoot(this);
 		},
 		invertFilters(filters: Filter[]): Filter[] {
+			// TODO: invert filters
 			return filters;
 		}
 	}

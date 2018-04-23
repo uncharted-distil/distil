@@ -195,7 +195,7 @@ export default Vue.extend({
 			return false;
 		},
 
-		injectHTML(group: Group, $elem: JQuery) {
+		injectHTML(group: any, $elem: JQuery) {
 			$elem.click(event => {
 				if (this.isNumerical(group)) {
 					const slices = group.facets[0].histogram.slices;
@@ -211,7 +211,7 @@ export default Vue.extend({
 				}
 			});
 
-			$elem.find('.facet-histogram g').click(event =>
+			$elem.find('.facet-histogram g').click(event => {
 				const slices = group.facets[0].histogram.slices;
 				const first = slices[0];
 				const last = slices[slices.length - 1];
