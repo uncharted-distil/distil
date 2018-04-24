@@ -152,7 +152,7 @@ export default Vue.extend({
 			}
 		},
 
-		onResultNumericalClick(key: string) {
+		onResultNumericalClick(context: string, key: string) {
 			if (!this.highlights.root || this.highlights.root.key !== key) {
 				updateHighlightRoot(this, {
 					context: this.instanceName,
@@ -180,7 +180,7 @@ export default Vue.extend({
 			addFilterToRoute(this, filter);
 		},
 
-		onResidualsHistogramClick(context, key: string, value: any) {
+		onResidualsHistogramClick(context: string, key: string, value: any) {
 			this.histogramHighlights(context, this.errorColumnName, value);
 		},
 		*/
