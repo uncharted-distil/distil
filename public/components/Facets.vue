@@ -1,5 +1,5 @@
 <template>
-	<div class="facets" v-once ref="facets"></div>
+	<div class="facets" v-bind:class="{ 'highlighting-enabled': enableHighlighting }" v-once ref="facets"></div>
 </template>
 
 <script lang="ts">
@@ -20,7 +20,10 @@ export default Vue.extend({
 		groups: Array,
 		highlights: Object,
 		enableTypeChange: Boolean,
+		enableHighlighting: Boolean,
 		html: [ String, Object, Function ],
+		instanceName: String,
+		highlightArrows: Boolean,
 		sort: {
 			default: (a: { key: string }, b: { key: string }) => {
 				const textA = a.key.toLowerCase();
@@ -34,7 +37,6 @@ export default Vue.extend({
 	data() {
 		return {
 			facets: <any>{},
-			instanceName: _.uniqueId('facet-'),
 			more: {}
 		};
 	},
@@ -166,6 +168,9 @@ export default Vue.extend({
 		// handle external highlight changes by updating internal facet select states
 		highlights(currHighlights: Highlight) {
 			this.injectHighlights(currHighlights);
+			if (this.enableHighlighting) {
+				this.addHighlightArrow(currHighlights);
+			}
 		},
 
 		sort(currSort) {
@@ -237,6 +242,25 @@ export default Vue.extend({
 			} else {
 				$group.append(this.html);
 			}
+		},
+
+		addHighlightArrow(highlights: Highlight) {
+			const $elem = $(this.$el);
+			// remove previous
+			$elem.find('.highlight-arrow').remove();
+
+			// NOTE: first group is a query group, ignore it
+			const QUERY_OFFSET = 1;
+
+
+			const $groups = $elem.find('.facets-group');
+			this.groups.forEach((group, index) => {
+				// add highlight arrow
+				if (this.isHighlightedGroup(highlights, group.key)) {
+					const $group = $($groups.get(index + QUERY_OFFSET));
+					$group.append('<div class="highlight-arrow"><i class="fa fa-arrow-circle-right fa-2x"></i></div>');
+				}
+			});
 		},
 
 		isHighlightedInstance(highlights: Highlight): boolean {
@@ -542,6 +566,24 @@ export default Vue.extend({
 </script>
 
 <style>
+
+.facets.highlighting-enabled {
+	padding-left: 32px;
+}
+.highlighting-enabled .facets-group {
+	cursor: pointer !important;
+	border: 1px solid rgba(0,0,0,0);
+}
+.highlighting-enabled .facets-group:hover {
+	border: 1px solid #00c6e1;
+}
+
+.highlighting-enabled .group-header,
+.highlighting-enabled .facet-range-controls,
+.highlighting-enabled .facets-facet-horizontal {
+	cursor: pointer !important;
+}
+
 .facet-icon {
 	display: none;
 }
@@ -575,5 +617,12 @@ export default Vue.extend({
 
 .facets-facet-vertical.select-highlight .facet-bar-selected {
 	box-shadow: inset 0 0 0 1000px #007bff;
+}
+
+.highlight-arrow {
+	position: absolute;
+	left: -28px;
+	top: calc(50% - 14px);
+	color: #00c6e1;
 }
 </style>

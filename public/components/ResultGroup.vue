@@ -20,12 +20,14 @@
 				@range-change="onResultRangeChange"
 				:groups="resultGroups"
 				:highlights="highlights"
+				:instanceName="predictedInstanceName"
 				:html="residualHtml">
 			</facets>
 			<facets v-if="residualGroups.length" class="residual-container"
 				@numerical-click="onResidualNumericalClick"
 				:groups="residualGroups"
 				:highlights="highlights"
+				:instanceName="residualInstanceName"
 				:html="resultHtml">
 			</facets>
 		</div>
@@ -65,11 +67,14 @@ export default Vue.extend({
 		predictedSummary: Object,
 		residualsSummary: Object,
 		resultHtml: String,
-		residualHtml: String,
-		instanceName: {
-			type: String,
-			default: 'result-group'
-		}
+		residualHtml: String
+	},
+
+	data() {
+		return {
+			predictedInstanceName: 'predicted-result-facet',
+			residualInstanceName: 'residual-result-facet'
+		};
 	},
 
 	components: {
@@ -155,7 +160,7 @@ export default Vue.extend({
 		onResultNumericalClick(context: string, key: string) {
 			if (!this.highlights.root || this.highlights.root.key !== key) {
 				updateHighlightRoot(this, {
-					context: this.instanceName,
+					context: context,
 					key: this.predictedColumnName,
 					value: null
 				});
