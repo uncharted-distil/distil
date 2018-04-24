@@ -49,7 +49,8 @@
 				small
 				responsive
 				:items="items"
-				:fields="fields">
+				:fields="fields"
+				@row-clicked="onRowClick">
 			</b-table>
 		</div>
 
@@ -58,16 +59,18 @@
 
 <script lang="ts">
 
+import _ from 'lodash';
 import Vue from 'vue';
 import FilterBadge from './FilterBadge';
 import { getters as dataGetters } from '../store/data/module';
 import { Dictionary } from '../util/dict';
 import { Filter } from '../util/filters';
-import { FieldInfo, Highlight } from '../store/data/index';
+import { FieldInfo, Highlight, RowSelection } from '../store/data/index';
 import { getters as routeGetters } from '../store/route/module';
 import { TableRow } from '../store/data/index';
 import { addFilterToRoute, EXCLUDE_FILTER, INCLUDE_FILTER } from '../util/filters';
 import { getHighlights, clearHighlightRoot, createFilterFromHighlightRoot } from '../util/highlights';
+import { updateRowSelection, clearRowSelection, updateTableRowSelection } from '../util/row';
 
 export default Vue.extend({
 	name: 'selected-data-table',
@@ -106,7 +109,8 @@ export default Vue.extend({
 
 		// extracts the table data from the store
 		items(): TableRow[] {
-			return this.includedActive ? dataGetters.getSelectedDataItems(this.$store) : dataGetters.getExcludedDataItems(this.$store);
+			const items = this.includedActive ? dataGetters.getSelectedDataItems(this.$store) : dataGetters.getExcludedDataItems(this.$store);
+			return updateTableRowSelection(items, this.selectedRow, this.instanceName);
 		},
 
 		// extract the table field header from the store
@@ -131,6 +135,14 @@ export default Vue.extend({
 				return this.invertFilters(dataGetters.getFilters(this.$store));
 			}
 			return dataGetters.getFilters(this.$store);
+		},
+
+		selectedRow(): RowSelection {
+			return routeGetters.getDecodedRowSelection(this.$store);
+		},
+
+		selectedRowIndex(): number {
+			return this.selectedRow ? this.selectedRow.index : -1;
 		}
 	},
 
@@ -144,6 +156,24 @@ export default Vue.extend({
 			const filter = createFilterFromHighlightRoot(this.highlights.root, INCLUDE_FILTER);
 			addFilterToRoute(this, filter);
 			clearHighlightRoot(this);
+		},
+		onRowClick(row: TableRow) {
+			if (row._key !== this.selectedRowIndex) {
+				// clicked on a different row than last time - new selection
+				updateRowSelection(this, {
+					context: this.instanceName,
+					index: row._key,
+					cols: _.map(this.fields, (field, key) => {
+						return {
+							key: key,
+							value: row[key]
+						};
+					})
+				});
+			} else {
+				// clicked on same row - reset the selection key and clear highlights
+				clearRowSelection(this);
+			}
 		},
 		invertFilters(filters: Filter[]): Filter[] {
 			// TODO: invert filters
