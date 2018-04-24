@@ -1,5 +1,5 @@
 <template>
-	<div class="filter-badge">
+	<div class="filter-badge" v-bind:class="{ active: activeFilter }">
 		{{filter.name}}
 		<span v-if="filter.type==='numerical'">
 			{{filter.min}} : {{filter.max}}
@@ -8,7 +8,7 @@
 			{{filter.categories.join(',')}}
 		</span>
 
-		<b-button v-if="!noRemove" size="sm" @click="onClick">
+		<b-button class="remove-button" size="sm" @click="onClick">
 			<i class="fa fa-times"></i>
 		</b-button>
 	</div>
@@ -18,18 +18,23 @@
 
 import Vue from 'vue';
 import { removeFilterFromRoute } from '../util/filters';
+import { clearHighlightRoot } from '../util/highlights';
 
 export default Vue.extend({
 	name: 'filter-badge',
 
 	props: {
 		filter: Object,
-		noRemove: Boolean
+		activeFilter: Boolean
 	},
 
 	methods: {
 		onClick() {
-			removeFilterFromRoute(this, this.filter);
+			if (!this.activeFilter) {
+				removeFilterFromRoute(this, this.filter);
+			} else {
+				clearHighlightRoot(this);
+			}
 		}
 	}
 });
@@ -37,7 +42,39 @@ export default Vue.extend({
 
 <style>
 .filter-badge {
-	padding: 2px 4px;
+	position: relative;
+	height: 28px;
+	display: inline-block;
+	color: #fff;
+	float: left;
+	padding-left: 8px;
+	margin: 2px 4px;
+	border-radius: 4px;
 	background-color: #00c6e1;
+}
+
+.filter-badge.active {
+	background-color: #28a745;
+}
+
+.remove-button {
+	color: #fff;
+	margin-left: 8px;
+	background: none;
+	border-radius: 0px;
+	border-top-right-radius: 4px;
+	border-bottom-right-radius: 4px;
+	border: none;
+	border-left: 1px solid #fff;
+}
+.remove-button:hover {
+	color: #fff;
+	background-color: #0089a4;
+	border: none;
+	border-left: 1px solid #fff;
+}
+
+.active .remove-button:hover {
+	background-color: #1e7e34;
 }
 </style>

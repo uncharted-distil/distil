@@ -5,11 +5,11 @@
 				<b-nav-item class="font-weight-bold" @click="includedActive=true" :active="includedActive">Samples to Model From</b-nav-item>
 				<b-nav-item class="font-weight-bold" @click="includedActive=false" :active="!includedActive">Excluded Samples</b-nav-item>
 			</b-nav>
-		<p>
+		</p>
 
 		<div>
 			<filter-badge v-if="activeFilter"
-				no-remove
+				active-filter
 				:filter="activeFilter"></filter-badge>
 			<div v-for="filter in filters">
 				<filter-badge
@@ -18,7 +18,6 @@
 		</div>
 
 		<p class="small-margin">
-			<small>Displaying {{items.length}} of {{numRows}} rows</small>
 			<b-button class="float-right" v-if="includedActive"
 				variant="outline-secondary"
 				:disabled="!highlights.root"
@@ -31,6 +30,7 @@
 				@click="onReincludeClick">
 				<i class="fa fa-plus-circle pr-1"></i>Reinclude
 			</b-button>
+			<small class="row-number-label">Displaying {{items.length}} of {{numRows}} rows</small>
 		</p>
 
 		<div class="select-data-table-container">
@@ -191,5 +191,9 @@ table.b-table>thead>tr>th.sorting:after {
 }
 .select-view .nav-tabs .nav-link.active {
 	color: rgba(0, 0, 0, 0.87);
+}
+.row-number-label {
+	position: relative;
+	top: 20px;
 }
 </style>
