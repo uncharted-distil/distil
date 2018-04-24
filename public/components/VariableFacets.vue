@@ -21,6 +21,8 @@
 					:html="html"
 					:sort="sort"
 					:enable-type-change="enableTypeChange"
+					:enable-highlighting="enableHighlighting"
+					:instanceName="instanceName"
 					@numerical-click="onNumericalClick"
 					@categorical-click="onCategoricalClick"
 					@range-change="onRangeChange"

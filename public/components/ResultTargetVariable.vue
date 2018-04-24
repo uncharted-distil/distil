@@ -4,6 +4,7 @@
 			@facet-click="onCategoricalClick"
 			@numerical-click="onNumericalClick"
 			@range-change="onRangeChange"
+			:instanceName="instanceName"
 			:groups="targetGroups"
 			:highlights="highlights"></facets>
 	</div>
