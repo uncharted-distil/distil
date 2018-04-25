@@ -65,13 +65,15 @@ export function parseHighlightSamples(data: Data): Dictionary<string[]>  {
 export function updateHighlightRoot(component: Vue, highlightRoot: HighlightRoot) {
 	const entry = overlayRouteEntry(routeGetters.getRoute(component.$store), {
 		highlights: encodeHighlights(highlightRoot),
+		row: null // clear row
 	});
 	component.$router.push(entry);
 }
 
 export function clearHighlightRoot(component: Vue) {
 	const entry = overlayRouteEntry(routeGetters.getRoute(component.$store), {
-		highlights: null
+		highlights: null,
+		row: null // clear row
 	});
 	component.$router.push(entry);
 }
