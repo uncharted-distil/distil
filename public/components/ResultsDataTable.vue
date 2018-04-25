@@ -4,9 +4,7 @@
 		<p><small>Displaying {{items.length}} of {{numRows}} rows</small></p>
 		<div class="results-data-table-container">
 			<div class="results-data-no-results" v-if="!hasData">
-				<div class="bounce1"></div>
-				<div class="bounce2"></div>
-				<div class="bounce3"></div>
+				<div v-html="spinnerHTML"></div>
 			</div>
 			<div class="results-data-no-results" v-if="hasData && items.length===0">
 				No results available
@@ -29,6 +27,7 @@
 <script lang="ts">
 
 import _ from 'lodash';
+import { spinnerHTML } from '../util/spinner';
 import { getters } from '../store/data/module';
 import { TargetRow, TableRow, FieldInfo, RowSelection } from '../store/data/index';
 import { getters as routeGetters } from '../store/route/module';
@@ -88,6 +87,10 @@ export default Vue.extend({
 
 		selectedRowIndex(): number {
 			return this.selectedRow ? this.selectedRow.index : -1;
+		},
+
+		spinnerHTML(): string {
+			return spinnerHTML();
 		}
 	},
 

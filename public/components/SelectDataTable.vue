@@ -35,9 +35,7 @@
 
 		<div class="select-data-table-container">
 			<div class="select-data-no-results" v-if="!hasData">
-				<div class="bounce1"></div>
-				<div class="bounce2"></div>
-				<div class="bounce3"></div>
+				<div v-html="spinnerHTML"></div>
 			</div>
 			<div class="select-data-no-results" v-if="hasData && items.length===0">
 				No data available
@@ -60,6 +58,7 @@
 <script lang="ts">
 
 import _ from 'lodash';
+import { spinnerHTML } from '../util/spinner';
 import Vue from 'vue';
 import FilterBadge from './FilterBadge';
 import { getters as dataGetters } from '../store/data/module';
@@ -143,6 +142,10 @@ export default Vue.extend({
 
 		selectedRowIndex(): number {
 			return this.selectedRow ? this.selectedRow.index : -1;
+		},
+
+		spinnerHTML(): string {
+			return spinnerHTML();
 		}
 	},
 

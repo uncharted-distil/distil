@@ -5,3 +5,7 @@ export function spinnerHTML(): string {
 		'<div class="bounce2"></div>',
 		'<div class="bounce3"></div>'].join('');
 }
+
+export function circleSpinnerHTML(): string {
+	return '<div class="circle-spinner"></div>';
+}

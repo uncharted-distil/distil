@@ -11,6 +11,7 @@ import { Highlight, RowSelection } from '../store/data/index';
 import { Dictionary } from '../util/dict';
 import Facets from '@uncharted.software/stories-facets';
 import TypeChangeMenu from '../components/TypeChangeMenu';
+import { circleSpinnerHTML } from '../util/spinner';
 import '@uncharted.software/stories-facets/dist/facets.css';
 
 export default Vue.extend({
@@ -396,6 +397,15 @@ export default Vue.extend({
 			}
 		},
 
+		removeSpinnerFromGroup(group: any) {
+			group._facetContainer.find('.facet-highlight-spinner').remove();
+		},
+
+		addSpinnerForGroup(group: any) {
+			const $spinner = $(`<div class="facet-highlight-spinner">${circleSpinnerHTML()}</div>`);
+			group._facetContainer.append($spinner);
+		},
+
 		injectHighlightsIntoGroup(group: any, highlights: Highlight) {
 
 			// loop through groups ensure that selection is clear on each
@@ -439,6 +449,7 @@ export default Vue.extend({
 						});
 
 						if (summary) {
+							this.removeSpinnerFromGroup(group);
 
 							const bars = facet._histogram.bars;
 
@@ -450,6 +461,8 @@ export default Vue.extend({
 							});
 
 							selection.slices = slices;
+						} else {
+							this.addSpinnerForGroup(group);
 						}
 					}
 
@@ -476,6 +489,8 @@ export default Vue.extend({
 
 						if (summary) {
 
+							this.removeSpinnerFromGroup(group);
+
 							const bucket = _.find(summary.buckets, b => {
 								return b.key === facet.value;
 							});
@@ -486,6 +501,8 @@ export default Vue.extend({
 								this.deselectCategoricalFacet(facet);
 							}
 
+						} else {
+							this.addSpinnerForGroup(group);
 						}
 					}
 				}
@@ -637,6 +654,15 @@ export default Vue.extend({
 
 <style>
 
+.group-facet-container {
+	position: relative;
+}
+.facet-highlight-spinner {
+	position: absolute;
+	right: 0;
+	margin: 6px 8px;
+}
+
 .facets.highlighting-enabled {
 	padding-left: 32px;
 }
@@ -652,6 +678,10 @@ export default Vue.extend({
 .highlighting-enabled .facet-range-controls,
 .highlighting-enabled .facets-facet-horizontal {
 	cursor: pointer !important;
+}
+
+.facets-facet-horizontal .facet-histogram-bar-transform {
+	transition: none;
 }
 
 .facet-icon {
