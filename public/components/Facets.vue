@@ -7,7 +7,7 @@ import _ from 'lodash';
 import $ from 'jquery';
 import Vue from 'vue';
 import { Group, CategoricalFacet, isCategoricalFacet, CATEGORICAL_CHUNK_SIZE } from '../util/facets';
-import { Highlight } from '../store/data/index';
+import { Highlight, RowSelection } from '../store/data/index';
 import { Dictionary } from '../util/dict';
 import Facets from '@uncharted.software/stories-facets';
 import TypeChangeMenu from '../components/TypeChangeMenu';
@@ -19,6 +19,7 @@ export default Vue.extend({
 	props: {
 		groups: Array,
 		highlights: Object,
+		rowSelection: Object,
 		enableTypeChange: Boolean,
 		enableHighlighting: Boolean,
 		html: [ String, Object, Function ],
@@ -167,10 +168,15 @@ export default Vue.extend({
 
 		// handle external highlight changes by updating internal facet select states
 		highlights(currHighlights: Highlight) {
-			this.injectHighlights(currHighlights);
+			this.injectHighlights(currHighlights, this.rowSelection);
 			if (this.enableHighlighting) {
 				this.addHighlightArrow(currHighlights);
 			}
+		},
+
+		// handle external highlight changes by updating internal facet select states
+		rowSelection(currSelection: RowSelection) {
+			this.injectHighlights(this.highlights, currSelection);
 		},
 
 		sort(currSort) {
@@ -327,6 +333,69 @@ export default Vue.extend({
 			}
 		},
 
+		injectSelectedRowIntoGroup(group: any, selection: RowSelection) {
+
+			// clear existing selections
+			for (const facet of group.facets) {
+
+				// ignore placeholder facets
+				if (facet._type === 'placeholder') {
+					continue;
+				}
+
+				if (facet._histogram) {
+					facet._histogram.bars.forEach(bar => {
+						bar._element.css('fill', '');
+					});
+				} else {
+					facet._barForeground.css('box-shadow', '');
+					facet._barBackground.css('box-shadow', '');
+				}
+			}
+
+			// if no selection, exit early
+			if (!selection) {
+				return;
+			}
+
+			// get col
+			const col = _.find(selection.cols, c => {
+				return c.key === group.key;
+			});
+
+			// no matching col, exit early
+			if (!col) {
+				return;
+			}
+
+			for (const facet of group.facets) {
+
+				// ignore placeholder facets
+				if (facet._type === 'placeholder') {
+					continue;
+				}
+
+				if (facet._histogram) {
+
+					facet._histogram.bars.forEach(bar => {
+						const entry: any = _.last(bar.metadata);
+						if (col.value >= _.toNumber(entry.label) &&
+							col.value < _.toNumber(entry.toLabel)) {
+							bar._element.css('fill', '#d78cde');
+						}
+					});
+
+				} else {
+
+					if (facet.value === col.value) {
+						facet._barForeground.css('box-shadow', 'inset 0 0 0 1000px #d78cde');
+						facet._barBackground.css('box-shadow', 'inset 0 0 0 1000px #d78cde');
+					}
+
+				}
+			}
+		},
+
 		injectHighlightsIntoGroup(group: any, highlights: Highlight) {
 
 			// loop through groups ensure that selection is clear on each
@@ -423,7 +492,7 @@ export default Vue.extend({
 			}
 		},
 
-		injectHighlights(highlights: Highlight) {
+		injectHighlights(highlights: Highlight, selection: RowSelection) {
 			// Clear highlight state incase it was set via a click on on another
 			// component
 			$(this.$el).find('.select-highlight').removeClass('select-highlight');
@@ -434,6 +503,7 @@ export default Vue.extend({
 					return;
 				}
 				this.injectHighlightsIntoGroup(group, highlights);
+				this.injectSelectedRowIntoGroup(group, selection);
 			});
 		},
 

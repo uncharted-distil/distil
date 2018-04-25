@@ -209,6 +209,10 @@ table.b-table>tfoot>tr>th.sorting:after,
 table.b-table>thead>tr>th.sorting:after {
 	top: 0;
 }
+
+table tr {
+	cursor: pointer;
+}
 .select-data-table .small-margin {
 	margin-bottom: 0.5rem
 }
