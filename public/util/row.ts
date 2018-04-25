@@ -19,6 +19,11 @@ export function decodeRowSelection(row: string): RowSelection {
 }
 
 export function updateTableRowSelection(items: any, selection: RowSelection, context: string) {
+	// clear selections
+	_.forEach(items, (row, rowNum) => {
+		row._rowVariant = null;
+	});
+
 	// skip highlighting when the context is the originating table
 	if (!selection) {
 		return items;
@@ -27,10 +32,6 @@ export function updateTableRowSelection(items: any, selection: RowSelection, con
 	if (selection.context !== context) {
 		return items;
 	}
-	// // clear selections
-	_.forEach(items, (row, rowNum) => {
-		row._rowVariant = null;
-	});
 	// add selection
 	if (items[selection.index]) {
 		items[selection.index]._rowVariant = 'info';
