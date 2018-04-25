@@ -22,51 +22,6 @@ export function decodeHighlights(highlightRoot: string): HighlightRoot {
 	return JSON.parse(atob(highlightRoot)) as HighlightRoot;
 }
 
-// Highlight table rows with values that are currently marked as highlighted.  Uses a supplied highlight
-// context ID to enure that something like a table selection doesn't trigger additional table highlight
-// updates.
-export function updateTableHighlights(tableData: Dictionary<any>[], highlight: Highlight, highlightContext: string) {
-
-	// skip highlighting when the context is the originating table
-	if (_.get(highlight, 'root.context', highlightContext) !== highlightContext) {
-		// for the table, we're interested only in rows that have data that matches the value/range
-		// described by the highlight root
-		_.forEach(tableData, (row, rowNum) => {
-			const value = row[highlight.root.key];
-			// range case (root selection is numerical facet)
-			if (_.get(highlight, 'root.value.from', NaN) <= value &&
-				_.get(highlight, 'root.value.to', NaN) >= value) {
-				row._rowVariant = 'info';
-			} else if (_.get(highlight, 'root.value') === value) {
-				// single value case (root selection is a categorical facet)
-				row._rowVariant = 'info';
-			} else {
-				row._rowVariant = null;
-			}
-		});
-	}
-}
-
-// Scrolls table to first highlighted row
-export function scrollToFirstHighlight(component: Vue, refName: string, smoothScroll: boolean) {
-	// No support for scroll-to in the bootstrap table.  Author suggests finding the
-	// the row element and using the scrollIntoView function - we put this into a nextTick()
-	// because need it to kick off after the virtual DOM update
-	component.$nextTick(() => {
-		const tableRef = <Vue>component.$refs[refName];
-		if (tableRef && tableRef.$el) {
-			const selectedElem = $(tableRef.$el).find('.table-info');
-			if (selectedElem && selectedElem.length > 0) {
-				// Enabling smooth scrolling seems to cause some sort of contention within the browser
-				// resulting in only one table scrolling.  We can enable it for the select screen, but
-				// not the result screen.
-				const args: ScrollIntoViewOptions = smoothScroll ? { behavior: 'smooth' } : {};
-				selectedElem[0].scrollIntoView(args);
-			}
-		}
-	});
-}
-
 export function createFilterFromHighlightRoot(highlightRoot: HighlightRoot, mode: string): Filter {
 	if (!highlightRoot || highlightRoot.value == null) {
 		return null;
@@ -110,13 +65,15 @@ export function parseHighlightSamples(data: Data): Dictionary<string[]>  {
 export function updateHighlightRoot(component: Vue, highlightRoot: HighlightRoot) {
 	const entry = overlayRouteEntry(routeGetters.getRoute(component.$store), {
 		highlights: encodeHighlights(highlightRoot),
+		row: null // clear row
 	});
 	component.$router.push(entry);
 }
 
 export function clearHighlightRoot(component: Vue) {
 	const entry = overlayRouteEntry(routeGetters.getRoute(component.$store), {
-		highlights: null
+		highlights: null,
+		row: null // clear row
 	});
 	component.$router.push(entry);
 }

@@ -10,6 +10,7 @@ export interface RouteArgs {
 	target?: string,
 	pipelineId?: string,
 	highlights?: string,
+	row?: string;
 	residualThresholdMin?: string,
 	residualThresholdMax?: string
 }

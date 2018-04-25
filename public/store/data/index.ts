@@ -73,6 +73,17 @@ export interface HighlightRoot {
 	value: any;
 }
 
+export interface Column {
+	key: string;
+	value: any;
+}
+
+export interface RowSelection {
+	context: string;
+	index: number;
+	cols: Column[];
+}
+
 export interface HighlightValues {
 	summaries?: VariableSummary[];
 	samples?: Dictionary<string[]>;

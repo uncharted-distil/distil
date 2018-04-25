@@ -4,9 +4,7 @@
 		<p><small>Displaying {{items.length}} of {{numRows}} rows</small></p>
 		<div class="results-data-table-container">
 			<div class="results-data-no-results" v-if="!hasData">
-				<div class="bounce1"></div>
-				<div class="bounce2"></div>
-				<div class="bounce3"></div>
+				<div v-html="spinnerHTML"></div>
 			</div>
 			<div class="results-data-no-results" v-if="hasData && items.length===0">
 				No results available
@@ -18,7 +16,8 @@
 				responsive
 				:ref="refName"
 				:items="items"
-				:fields="fields">
+				:fields="fields"
+				@row-clicked="onRowClick">
 			</b-table>
 		</div>
 
@@ -27,12 +26,15 @@
 
 <script lang="ts">
 
+import _ from 'lodash';
+import { spinnerHTML } from '../util/spinner';
 import { getters } from '../store/data/module';
-import { TargetRow, FieldInfo } from '../store/data/index';
+import { TargetRow, TableRow, FieldInfo, RowSelection } from '../store/data/index';
 import { getters as routeGetters } from '../store/route/module';
 import { getters as pipelineGetters } from '../store/pipelines/module';
 import { Dictionary } from '../util/dict';
 import { removeNonTrainingItems, removeNonTrainingFields } from '../util/data';
+import { updateRowSelection, clearRowSelection, updateTableRowSelection } from '../util/row';
 import Vue from 'vue';
 
 export default Vue.extend({
@@ -66,7 +68,10 @@ export default Vue.extend({
 		items(): TargetRow[] {
 			const items = getters.getResultDataItems(this.$store);
 			const filtered = removeNonTrainingItems(items, this.training);
-			return filtered
+
+			const selected = updateTableRowSelection(filtered, this.selectedRow, this.instanceName);
+
+			return selected
 				.filter(item => this.filterFunc(item))
 				.map(item => this.decorateFunc(item));
 		},
@@ -74,7 +79,41 @@ export default Vue.extend({
 		fields(): Dictionary<FieldInfo> {
 			const fields = getters.getResultDataFields(this.$store);
 			return removeNonTrainingFields(fields, this.training);
+		},
+
+		selectedRow(): RowSelection {
+			return routeGetters.getDecodedRowSelection(this.$store);
+		},
+
+		selectedRowIndex(): number {
+			return this.selectedRow ? this.selectedRow.index : -1;
+		},
+
+		spinnerHTML(): string {
+			return spinnerHTML();
 		}
+	},
+
+	methods: {
+
+		onRowClick(row: TableRow) {
+			if (row._key !== this.selectedRowIndex) {
+				// clicked on a different row than last time - new selection
+				updateRowSelection(this, {
+					context: this.instanceName,
+					index: row._key,
+					cols: _.map(this.fields, (field, key) => {
+						return {
+							key: key,
+							value: row[key]
+						};
+					})
+				});
+			} else {
+				// clicked on same row - reset the selection key and clear highlights
+				clearRowSelection(this);
+			}
+		},
 	}
 
 });
@@ -95,6 +134,9 @@ export default Vue.extend({
 	background-color: #eee;
 	padding: 8px;
 	text-align: center;
+}
+table tr {
+	cursor: pointer;
 }
 
 </style>

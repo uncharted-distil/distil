@@ -1,6 +1,7 @@
+import { HighlightRoot, RowSelection } from '../data/index';
 import { decodeFilters, FilterParams } from '../../util/filters';
-import { HighlightRoot } from '../data/index';
 import { decodeHighlights } from '../../util/highlights'
+import { decodeRowSelection } from '../../util/row';
 import { Route } from 'vue-router';
 
 export const getters = {
@@ -44,6 +45,10 @@ export const getters = {
 		return state.query.highlights ? state.query.highlights : null
 	},
 
+	getRouteRowSelection(state: Route): string {
+		return state.query.row ? state.query.row : null
+	},
+
 	getRouteResultFilters(state: Route): string {
 		return state.query.results ? state.query.results : null;
 	},
@@ -62,5 +67,9 @@ export const getters = {
 
 	getDecodedHighlightRoot(state: Route): HighlightRoot {
 		return decodeHighlights(state.query.highlights);
-	}
+	},
+
+	getDecodedRowSelection(state: Route): RowSelection {
+		return decodeRowSelection(state.query.row);
+	},
 }

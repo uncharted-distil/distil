@@ -18,6 +18,7 @@
 				<facets class="col-12 flex-column d-flex variable-facets-container"
 					:groups="sortedGroups"
 					:highlights="highlights"
+					:row-selection="rowSelection"
 					:html="html"
 					:sort="sort"
 					:enable-type-change="enableTypeChange"
@@ -43,8 +44,9 @@
 import Facets from '../components/Facets';
 import { overlayRouteEntry, getRouteFacetPage } from '../util/routes';
 import { Dictionary } from '../util/dict';
-import { Highlight } from '../store/data/index';
+import { Highlight, RowSelection } from '../store/data/index';
 import { getters as dataGetters } from '../store/data/module';
+import { getters as routeGetters } from '../store/route/module';
 import { Group } from '../util/facets';
 import { updateHighlightRoot, getHighlights, clearHighlightRoot } from '../util/highlights';
 import 'font-awesome/css/font-awesome.css';
@@ -130,6 +132,10 @@ export default Vue.extend({
 
 		highlights(): Highlight {
 			return getHighlights(this.$store);
+		},
+
+		rowSelection(): RowSelection {
+			return routeGetters.getDecodedRowSelection(this.$store);
 		},
 
 		importance(): Dictionary<number> {
