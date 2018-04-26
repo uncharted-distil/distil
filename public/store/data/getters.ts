@@ -87,6 +87,13 @@ export const getters = {
 		}).map(v => v.name);
 	},
 
+	getTrainingVariables(state: DataState, getters: any): string[] {
+		const training = getters.getTrainingVariablesMap as Dictionary<string>;
+		return state.variables.filter(variable => {
+			return training[variable.name.toLowerCase()];
+		}).map(v => v.name);
+	},
+
 	getVariableSummaries(state: DataState): VariableSummary[] {
 		return state.variableSummaries;
 	},

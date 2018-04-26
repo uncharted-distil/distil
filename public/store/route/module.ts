@@ -16,6 +16,8 @@ export const getters = {
 	getRouteTerms: read(moduleGetters.getRouteTerms),
 	getRouteDataset: read(moduleGetters.getRouteDataset),
 	getRouteTrainingVariables: read(moduleGetters.getRouteTrainingVariables),
+	getRouteAvailableVarsPage: read(moduleGetters.getRouteAvailableVarsPage),
+	getRouteTrainingVarsPage: read(moduleGetters.getRouteTrainingVarsPage),
 	getRouteTargetVariable: read(moduleGetters.getRouteTargetVariable),
 	getRoutePipelineId: read(moduleGetters.getRoutePipelineId),
 	getRouteFilters: read(moduleGetters.getRouteFilters),

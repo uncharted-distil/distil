@@ -87,6 +87,13 @@ export default Vue.extend({
 		variables(): Variable[] {
 			return pipelineGetters.getActivePipelineVariables(this.$store);
 		},
+		// paginatedVariables(): Variable[] {
+		// 	// return only visible variables
+		// 	const availableVars = filterVariablesByPage(this.availableVarsPage, NUM_PER_PAGE, sortVariablesByImportance(this.availableVariables));
+		// 	const trainingVars = filterVariablesByPage(this.availableVarsPage, NUM_PER_PAGE, sortVariablesByImportance(this.trainingVariables));
+		// 	const targetVar = this.targetVariable;
+		// 	return availableVars.concat(trainingVars).concat([ targetVar ]);
+		// },
 		requestIds(): string[] {
 			return pipelineGetters.getPipelineRequestIds(this.$store);
 		},

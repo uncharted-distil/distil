@@ -63,8 +63,8 @@ import TargetVariable from '../components/TargetVariable.vue';
 import TypeChangeMenu from '../components/TypeChangeMenu.vue';
 import { getters as dataGetters, actions } from '../store/data/module';
 import { getters as routeGetters} from '../store/route/module';
-import { Variable } from '../store/data/index';
-import { HighlightRoot } from '../store/data/index';
+import { Variable, HighlightRoot } from '../store/data/index';
+import { sortVariablesByImportance, filterVariablesByPage, NUM_PER_PAGE } from '../util/data';
 import { FilterParams } from '../util/filters';
 import Vue from 'vue';
 
@@ -90,6 +90,22 @@ export default Vue.extend({
 		training(): string {
 			return routeGetters.getRouteTrainingVariables(this.$store);
 		},
+		availableVariables(): Variable[] {
+			const varMap = dataGetters.getVariablesMap(this.$store);
+			return dataGetters.getAvailableVariables(this.$store).map(v => {
+				return varMap[v];
+			});
+		},
+		trainingVariables(): Variable[] {
+			const varMap = dataGetters.getVariablesMap(this.$store);
+			return dataGetters.getTrainingVariables(this.$store).map(v => {
+				return varMap[v];
+			});
+		},
+		targetVariable(): Variable {
+			const varMap = dataGetters.getVariablesMap(this.$store);
+			return varMap[this.target];
+		},
 		target(): string {
 			return routeGetters.getRouteTargetVariable(this.$store);
 		},
@@ -112,6 +128,19 @@ export default Vue.extend({
 				return summary.buckets;
 			}
 			return [];
+		},
+		availableVarsPage(): number {
+			return routeGetters.getRouteAvailableVarsPage(this.$store);
+		},
+		trainingVarsPage(): number {
+			return routeGetters.getRouteTrainingVarsPage(this.$store);
+		},
+		paginatedVariables(): Variable[] {
+			// return only visible variables
+			const availableVars = filterVariablesByPage(this.availableVarsPage, NUM_PER_PAGE, sortVariablesByImportance(this.availableVariables));
+			const trainingVars = filterVariablesByPage(this.availableVarsPage, NUM_PER_PAGE, sortVariablesByImportance(this.trainingVariables));
+			const targetVar = this.targetVariable;
+			return availableVars.concat(trainingVars).concat([ targetVar ]);
 		}
 	},
 
@@ -119,7 +148,7 @@ export default Vue.extend({
 		highlightRootStr() {
 			actions.fetchDataHighlightValues(this.$store, {
 				dataset: this.dataset,
-				variables: this.variables,
+				variables: this.paginatedVariables,
 				highlightRoot: this.highlightRoot,
 				filters: this.selectedFilters
 			});
@@ -137,7 +166,7 @@ export default Vue.extend({
 		training() {
 			actions.fetchDataHighlightValues(this.$store, {
 				dataset: this.dataset,
-				variables: this.variables,
+				variables: this.paginatedVariables,
 				highlightRoot: this.highlightRoot,
 				filters: this.selectedFilters
 			});
@@ -155,7 +184,7 @@ export default Vue.extend({
 		filtersStr() {
 			actions.fetchDataHighlightValues(this.$store, {
 				dataset: this.dataset,
-				variables: this.variables,
+				variables: this.paginatedVariables,
 				highlightRoot: this.highlightRoot,
 				filters: this.selectedFilters
 			});
@@ -187,7 +216,7 @@ export default Vue.extend({
 				});
 				actions.fetchDataHighlightValues(this.$store, {
 					dataset: this.dataset,
-					variables: this.variables,
+					variables: this.paginatedVariables,
 					highlightRoot: this.highlightRoot,
 					filters: this.selectedFilters
 				});

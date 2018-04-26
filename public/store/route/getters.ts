@@ -3,6 +3,7 @@ import { decodeFilters, FilterParams } from '../../util/filters';
 import { decodeHighlights } from '../../util/highlights'
 import { decodeRowSelection } from '../../util/row';
 import { Route } from 'vue-router';
+import _ from 'lodash';
 
 export const getters = {
 	getRoute(state: Route): Route {
@@ -23,6 +24,14 @@ export const getters = {
 
 	getRouteTrainingVariables(state: Route): string {
 		return state.query.training ? state.query.training : null
+	},
+
+	getRouteTrainingVarsPage(state: Route): number {
+		return state.query.trainingVarsPage ? _.toNumber(state.query.trainingVarsPage) : 1
+	},
+
+	getRouteAvailableVarsPage(state: Route): number {
+		return state.query.availableVarsPage ? _.toNumber(state.query.availableVarsPage) : 1
 	},
 
 	getRouteTargetVariable(state: Route): string {

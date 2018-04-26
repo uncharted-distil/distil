@@ -1,9 +1,10 @@
 import _ from 'lodash';
 import { DataState, Datasets, VariableSummary, Data } from '../store/data/index';
-import { TargetRow, FieldInfo } from '../store/data/index';
+import { TargetRow, FieldInfo, Variable } from '../store/data/index';
 import { PipelineInfo, PIPELINE_COMPLETED } from '../store/pipelines/index';
 import { DistilState } from '../store/store';
 import { Dictionary } from './dict';
+import { Group } from './facets';
 import { FilterParams } from './filters';
 import { ActionContext } from 'vuex';
 import axios from 'axios';
@@ -17,6 +18,8 @@ export const ERROR_POSTFIX = '_error';
 
 export const PREDICTED_FACET_KEY_POSTFIX = ' - predicted';
 export const ERROR_FACET_KEY_POSTFIX = ' - error';
+
+export const NUM_PER_PAGE = 10;
 
 export type DataContext = ActionContext<DataState, DistilState>;
 
@@ -259,4 +262,33 @@ export function getSummaries(
 			filters);
 	});
 	return Promise.all(promises);
+}
+
+export function filterVariablesByPage(pageIndex: number, numPerPage: number, variables: any[]) {
+	if (variables.length > numPerPage) {
+		const firstIndex = numPerPage * (pageIndex - 1);
+		const lastIndex = Math.min(firstIndex + numPerPage, variables.length);
+		return variables.slice(firstIndex, lastIndex);
+	}
+	return variables;
+}
+
+export function sortVariablesByImportance(variables: Variable[]): Variable[] {
+	variables.sort((a, b) => {
+		return b.importance - a.importance;
+	});
+	return variables;
+}
+
+export function sortGroupsByImportance(groups: Group[], variables: Variable[]): Group[] {
+	// create importance lookup map
+	const importance: Dictionary<number> = {};
+	variables.forEach(variable => {
+		importance[variable.name] = variable.importance;
+	});
+	// sort by importance
+	groups.sort((a, b) => {
+		return importance[b.key] - importance[a.key];
+	});
+	return groups;
 }
