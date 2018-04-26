@@ -3,8 +3,6 @@ import { spinnerHTML } from '../util/spinner';
 import { formatValue } from '../util/types';
 import { VariableSummary } from '../store/data/index';
 
-export const CATEGORY_NO_MATCH_COLOR = "#e05353";
-export const CATEGORY_MATCH_COLOR = "#03c6e1";
 export const CATEGORICAL_CHUNK_SIZE = 10;
 
 export interface PlaceHolderFacet {
@@ -123,7 +121,11 @@ export function createPendingFacet(summary: VariableSummary): Group {
 export function createSummaryFacet(summary: VariableSummary): Group {
 	switch (summary.type) {
 		case 'categorical':
-			return createCategoricalSummaryFacet(summary);
+			if (summary.resultId) {
+				return createCategoricalResultFacet(summary);
+			} else {
+				return createCategoricalSummaryFacet(summary);
+			}
 		case 'numerical':
 			return createNumericalSummaryFacet(summary);
 	}
@@ -163,49 +165,74 @@ export function getGroupIcon(summary: VariableSummary): string {
 	}
 }
 
-// creates a categorical facet with segments based on nest buckets counts, or no segments if buckets aren't nested
+// Creates a categorical result facet consisting of a 'Correct' bar capturing all predictions that are correct,
+// and an 'Incorect' bar capturing any that were wrong.
+function createCategoricalResultFacet(summary: VariableSummary): Group {
+	let total = 0;
+
+	// total up correct and incorrect
+	let correct = 0;
+	let incorrect = 0;
+	for (const bucket of summary.buckets) {
+		for (const subBucket of bucket.buckets) {
+			if (subBucket.key === bucket.key) {
+				correct += subBucket.count;
+			} else {
+				incorrect += subBucket.count;
+			}
+		}
+	}
+
+	// create factes for each
+	const correctFacet: CategoricalFacet = {
+		icon : {
+			class : getGroupIcon(summary)
+		},
+		value: 'Correct',
+		countLabel: correct.toString(),
+		count: correct,
+		selected: { count: correct },
+		segments: [],
+		filterable: false
+	};
+
+	const incorrectFacet: CategoricalFacet = {
+		icon : {
+			class : getGroupIcon(summary)
+		},
+		value: 'Incorrect',
+		countLabel: incorrect.toString(),
+		count: incorrect,
+		selected: { count: incorrect },
+		segments: [],
+		filterable: false
+	};
+
+	// Generate a facet group
+	return {
+		label: summary.label ? summary.label : summary.name,
+		key: summary.name,
+		type: summary.varType,
+		collapsible: false,
+		collapsed: false,
+		facets: [correctFacet, incorrectFacet],
+		total: total,
+		numRows: summary.numRows,
+		more: 0,
+		moreTotal: 0,
+		remaining: null
+	};
+}
+
+// creates a categorical facet
 function createCategoricalSummaryFacet(summary: VariableSummary): Group {
-
-
 	let total = 0;
 	const facets =  summary.buckets.map(b => {
-
-		let segments = [];
-		let selected = null;
-
-		// Populate segments if buckets are nested.  If a nested bucket's key matches the parent bucket key, values
-		// are given a colour to signify a match, all other nested buckets are summed and displayed as not matching.
-		let countLabel = b.key;
-		if (b.buckets) {
-			segments.push({
-				color: CATEGORY_MATCH_COLOR,
-				count: 0
-			});
-			segments.push({
-				color: CATEGORY_NO_MATCH_COLOR,
-				count: 0
-			});
-			for (const subBucket of b.buckets) {
-				if (subBucket.key === b.key) {
-					segments[0].count = subBucket.count;
-				} else {
-					segments[1].count += subBucket.count;
-				}
-			}
-			// TODO: Add proper highlight state visuals once highlighting is cleaned up
-			selected = {
-				segments: segments,
-				selected: b.count
-			};
-			const totalCount = segments[0].count + segments[1].count;
-			countLabel = `${segments[0].count} correct of ${totalCount}`;
-		} else {
-			// if no segments, just use basic count selection
-			selected = {
-				count: b.count
-			};
-			countLabel = b.count.toString();
-		}
+		const segments = [];
+		const selected = {
+			count: b.count
+		};
+		let countLabel = b.count.toString();
 
 		const facet: CategoricalFacet = {
 			icon : {

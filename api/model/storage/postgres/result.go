@@ -16,9 +16,11 @@ import (
 )
 
 const (
-	predictedSuffix = "_predicted"
-	errorSuffix     = "_error"
-	targetSuffix    = "_target"
+	predictedSuffix   = "_predicted"
+	errorSuffix       = "_error"
+	targetSuffix      = "_target"
+	correctCategory   = "correct"
+	incorrectCategory = "incorrect"
 )
 
 func (s *Storage) getResultTable(dataset string) string {
@@ -238,34 +240,70 @@ func removeResultFilters(filterParams *model.FilterParams) *resultFilters {
 	}
 }
 
-func addPredictedFilterToWhere(dataset string, predictedFilter *model.Filter, wheres string, params []interface{}) (string, []interface{}, error) {
+func appendAndClause(expression string, andClause string) string {
+	if expression == "" {
+		return andClause
+	}
+	if andClause == "" {
+		return andClause
+	}
+	return fmt.Sprintf("%s AND %s", expression, andClause)
+}
+
+func isCorrectnessCategory(categoryName string) bool {
+	return strings.EqualFold(correctCategory, categoryName) || strings.EqualFold(categoryName, incorrectCategory)
+}
+
+func addCorrectnessFilterToWhere(target *model.Variable, correctnessCategory string, wheres string) string {
+	// filter for result correctness which is based on well know category values
+	categoryWhere := ""
+	op := ""
+	if strings.EqualFold(correctnessCategory, correctCategory) {
+		op = "="
+	} else if strings.EqualFold(correctnessCategory, incorrectCategory) {
+		op = "!="
+	}
+	categoryWhere = fmt.Sprintf("predicted.value %s data.\"%s\"", op, target.Name)
+	return appendAndClause(wheres, categoryWhere)
+}
+
+func addPredictedFilterToWhere(dataset string, predictedFilter *model.Filter, target *model.Variable, wheres string, params []interface{}) (string, []interface{}, error) {
 	// Handle the predicted column, which is accessed as `value` in the result query
 	where := ""
 	switch predictedFilter.Type {
 	case model.NumericalFilter:
-		// numerical
+		// numerical range-based filter
 		where = fmt.Sprintf("cast(value AS double precision) >= $%d AND cast(value AS double precision) <= $%d", len(params)+1, len(params)+2)
 		params = append(params, *predictedFilter.Min)
 		params = append(params, *predictedFilter.Max)
 	case model.CategoricalFilter:
-		// categorical
+		// categorical label based filter, with checks for special correct/incorrect metafilters
 		categories := make([]string, 0)
+		correctnessCategory := ""
 		offset := len(params) + 1
+
 		for i, category := range predictedFilter.Categories {
-			categories = append(categories, fmt.Sprintf("$%d", offset+i))
-			params = append(params, category)
+			if !isCorrectnessCategory(category) {
+				categories = append(categories, fmt.Sprintf("$%d", offset+i))
+				params = append(params, category)
+			} else {
+				correctnessCategory = category
+			}
 		}
-		where = fmt.Sprintf("value IN (%s)", strings.Join(categories, ", "))
+
+		if len(categories) >= 1 {
+			where = fmt.Sprintf("value IN (%s)", strings.Join(categories, ", "))
+		}
+
+		if correctnessCategory != "" {
+			where = addCorrectnessFilterToWhere(target, correctnessCategory, where)
+		}
 	default:
 		return "", nil, errors.Errorf("unexpected type %s for variable %s", predictedFilter.Type, predictedFilter.Name)
 	}
 
 	// Append the AND clause
-	if wheres != "" {
-		wheres += " AND " + where
-	} else {
-		wheres = where
-	}
+	wheres = appendAndClause(wheres, where)
 	return wheres, params, nil
 }
 
@@ -319,7 +357,7 @@ func (s *Storage) FetchFilteredResults(dataset string, index string, resultURI s
 
 	// Add the predicted filter into the where clause if it was included in the filter set
 	if resultFilters.Predicted != nil {
-		where, params, err = addPredictedFilterToWhere(dataset, resultFilters.Predicted, where, params)
+		where, params, err = addPredictedFilterToWhere(dataset, resultFilters.Predicted, variable, where, params)
 		if err != nil {
 			return nil, errors.Wrap(err, "Could not add result to where clause")
 		}
