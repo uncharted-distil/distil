@@ -31,7 +31,7 @@ export default Vue.extend({
 
 	data() {
 		return {
-			instanceName: 'result-target-variable'
+			instanceName: 'resultTargetVariable'
 		};
 	},
 

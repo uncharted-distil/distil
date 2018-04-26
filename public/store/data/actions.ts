@@ -700,13 +700,9 @@ export const actions = {
 		}));
 	},
 
-	fetchPredictedHighlightSummaries(context: DataContext, args: { highlightRoot: HighlightRoot, dataset: string, requestIds: string[], variables: Variable[], extrema: Extrema }) {
+	fetchPredictedHighlightSummaries(context: DataContext, args: { highlightRoot: HighlightRoot, dataset: string, requestIds: string[], extrema: Extrema }) {
 		if (!args.dataset) {
 			console.warn('`dataset` argument is missing');
-			return null;
-		}
-		if (!args.variables) {
-			console.warn('`variables` argument is missing');
 			return null;
 		}
 
@@ -793,7 +789,6 @@ export const actions = {
 			context.dispatch('fetchPredictedHighlightSummaries', {
 				highlightRoot: args.highlightRoot,
 				dataset: args.dataset,
-				variables: args.variables,
 				requestIds: args.requestIds,
 				extrema: args.extrema
 			})

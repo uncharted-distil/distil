@@ -70,7 +70,7 @@ export default Vue.extend({
 		dataset: String,
 		subtitle: String,
 		html: [ String, Object, Function ],
-		instanceName: { type: String, default: 'variable-facets' },
+		instanceName: { type: String, default: 'variableFacets' },
 	},
 
 	data() {

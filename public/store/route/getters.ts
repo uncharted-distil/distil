@@ -34,6 +34,10 @@ export const getters = {
 		return state.query.availableVarsPage ? _.toNumber(state.query.availableVarsPage) : 1
 	},
 
+	getRouteResultTrainingVarsPage(state: Route): number {
+		return state.query.resultTrainingVarsPage ? _.toNumber(state.query.resultTrainingVarsPage) : 1
+	},
+
 	getRouteTargetVariable(state: Route): string {
 		return state.query.target ? state.query.target : null;
 	},
