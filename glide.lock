@@ -84,17 +84,9 @@ imports:
   - document
   - util
 - name: github.com/unchartedsoftware/distil-ingest
-  version: b4d5090437fffe172aeda3b4e58009f5dd9b5548
+  version: 5dffc1ab94a6a779b258e131992d901fa2a59f7d
   repo: git@github.com:unchartedsoftware/distil-ingest.git
   vcs: git
-  subpackages:
-  - conf
-  - merge
-  - metadata
-  - postgres
-  - postgres/model
-  - rest
-  - smmry
 - name: github.com/unchartedsoftware/plog
   version: 34d2bbd3c0a9458feb0752af2b578a23eb8ddc4f
 - name: github.com/vova616/xxhash
