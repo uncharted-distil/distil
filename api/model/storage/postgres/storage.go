@@ -12,6 +12,7 @@ const (
 	pipelineScoreTableName  = "pipeline_score"
 	featureTableName        = "request_feature"
 	filterTableName         = "request_filter"
+	wordStemTableName       = "word_stem"
 
 	// Database data types
 	dataTypeText    = "TEXT"

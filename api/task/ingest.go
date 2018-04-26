@@ -392,6 +392,12 @@ func Ingest(storage model.MetadataStorage, index string, dataset string, config 
 	scanner := bufio.NewScanner(reader)
 	for scanner.Scan() {
 		line := scanner.Text()
+
+		err = pg.AddWordStems(line)
+		if err != nil {
+			log.Warn(fmt.Sprintf("%v", err))
+		}
+
 		err = pg.IngestRow(dbTable, line)
 		if err != nil {
 			return errors.Wrap(err, "unable to ingest row")
