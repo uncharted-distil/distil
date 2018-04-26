@@ -16,11 +16,15 @@ import (
 )
 
 const (
-	predictedSuffix   = "_predicted"
-	errorSuffix       = "_error"
-	targetSuffix      = "_target"
-	correctCategory   = "correct"
-	incorrectCategory = "incorrect"
+	predictedSuffix = "_predicted"
+	errorSuffix     = "_error"
+	targetSuffix    = "_target"
+
+	// CorrectCategory identifies the correct result meta-category.
+	CorrectCategory = "correct"
+
+	// IncorrectCategory identifies the incorrect result meta-category.
+	IncorrectCategory = "incorrect"
 )
 
 func (s *Storage) getResultTable(dataset string) string {
@@ -251,16 +255,16 @@ func appendAndClause(expression string, andClause string) string {
 }
 
 func isCorrectnessCategory(categoryName string) bool {
-	return strings.EqualFold(correctCategory, categoryName) || strings.EqualFold(categoryName, incorrectCategory)
+	return strings.EqualFold(CorrectCategory, categoryName) || strings.EqualFold(categoryName, IncorrectCategory)
 }
 
 func addCorrectnessFilterToWhere(target *model.Variable, correctnessCategory string, wheres string) string {
 	// filter for result correctness which is based on well know category values
 	categoryWhere := ""
 	op := ""
-	if strings.EqualFold(correctnessCategory, correctCategory) {
+	if strings.EqualFold(correctnessCategory, CorrectCategory) {
 		op = "="
-	} else if strings.EqualFold(correctnessCategory, incorrectCategory) {
+	} else if strings.EqualFold(correctnessCategory, IncorrectCategory) {
 		op = "!="
 	}
 	categoryWhere = fmt.Sprintf("predicted.value %s data.\"%s\"", op, target.Name)

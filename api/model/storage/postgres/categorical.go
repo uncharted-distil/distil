@@ -3,6 +3,7 @@ package postgres
 import (
 	"fmt"
 	"math"
+	"strings"
 
 	"github.com/jackc/pgx"
 	"github.com/pkg/errors"
@@ -58,35 +59,76 @@ func (f *CategoricalField) fetchHistogram(dataset string, variable *model.Variab
 	return f.parseHistogram(res, variable)
 }
 
-func (f *CategoricalField) buildResultWhere(dataset string, resultURI string, filterParams *model.FilterParams) (string, error) {
+func (f *CategoricalField) buildResultWhere(dataset string, resultURI string, resultFilter *model.Filter) (string, error) {
 	// get the target variable name
 	datasetResult := f.Storage.getResultTable(dataset)
 	targetName, err := f.Storage.getResultTargetName(datasetResult, resultURI)
 	if err != nil {
 		return "", err
 	}
-	where := fmt.Sprintf("result.value = data.%s", targetName)
+
+	op := ""
+	for _, category := range resultFilter.Categories {
+		if strings.EqualFold(category, CorrectCategory) {
+			op = "="
+			break
+		} else if strings.EqualFold(category, IncorrectCategory) {
+			op = "!="
+			break
+		}
+	}
+
+	if op == "" {
+		return op, nil
+	}
+
+	where := fmt.Sprintf("result.value %s data.\"%s\"", op, targetName)
 	return where, nil
 }
 
+func (f *CategoricalField) removeResultFilters(filterParams *model.FilterParams) *model.Filter {
+	// Strip the predicted filter out of the list - it needs special handling
+	var predictedFilter *model.Filter
+	var remaining []*model.Filter
+	for _, filter := range filterParams.Filters {
+		if strings.HasSuffix(filter.Name, predictedSuffix) {
+			predictedFilter = filter
+		} else {
+			remaining = append(remaining, filter)
+		}
+	}
+
+	// replace original filters
+	filterParams.Filters = remaining
+
+	return predictedFilter
+}
+
 func (f *CategoricalField) fetchHistogramByResult(dataset string, variable *model.Variable, resultURI string, filterParams *model.FilterParams) (*model.Histogram, error) {
+
+	// pull filters generated against the result facet out for special handling
+	resultFilter := f.removeResultFilters(filterParams)
+
 	// create the filter for the query.
 	where, params := f.Storage.buildFilteredQueryWhere(dataset, filterParams)
 	if len(where) > 0 {
-		where = fmt.Sprintf(" AND %s", where)
+		where = fmt.Sprintf("AND %s", where)
 	}
 	params = append(params, resultURI)
 
-	resultWhere, err := f.buildResultWhere(dataset, resultURI, filterParams)
-	if err != nil {
-		return nil, err
-	}
-	if where != "" {
-		where = fmt.Sprintf(" AND %s", resultWhere)
+	// apply the result filter
+	if resultFilter != nil {
+		resultWhere, err := f.buildResultWhere(dataset, resultURI, resultFilter)
+		if err != nil {
+			return nil, err
+		}
+		if resultWhere != "" {
+			where = fmt.Sprintf("AND %s", resultWhere)
+		}
 	}
 
 	// Get count by category.
-	query := fmt.Sprintf("SELECT data.\"%s\", COUNT(*) AS count FROM %s data INNER JOIN %s result ON data.\"%s\" = result.index WHERE result.result_id = $%d%s GROUP BY \"%s\" ORDER BY count desc, \"%s\" LIMIT %d;",
+	query := fmt.Sprintf("SELECT data.\"%s\", COUNT(*) AS count FROM %s data INNER JOIN %s result ON data.\"%s\" = result.index WHERE result.result_id = $%d %s GROUP BY \"%s\" ORDER BY count desc, \"%s\" LIMIT %d;",
 		variable.Name, dataset, f.Storage.getResultTable(dataset),
 		model.D3MIndexFieldName, len(params), where, variable.Name,
 		variable.Name, catResultLimit)
