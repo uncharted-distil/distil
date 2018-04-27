@@ -3,7 +3,6 @@ package postgres
 import (
 	"fmt"
 	"math"
-	"strings"
 
 	"github.com/jackc/pgx"
 	"github.com/pkg/errors"
@@ -59,55 +58,10 @@ func (f *CategoricalField) fetchHistogram(dataset string, variable *model.Variab
 	return f.parseHistogram(res, variable)
 }
 
-func (f *CategoricalField) buildResultWhere(dataset string, resultURI string, resultFilter *model.Filter) (string, error) {
-	// get the target variable name
-	datasetResult := f.Storage.getResultTable(dataset)
-	targetName, err := f.Storage.getResultTargetName(datasetResult, resultURI)
-	if err != nil {
-		return "", err
-	}
-
-	op := ""
-	for _, category := range resultFilter.Categories {
-		if strings.EqualFold(category, CorrectCategory) {
-			op = "="
-			break
-		} else if strings.EqualFold(category, IncorrectCategory) {
-			op = "!="
-			break
-		}
-	}
-
-	if op == "" {
-		return op, nil
-	}
-
-	where := fmt.Sprintf("result.value %s data.\"%s\"", op, targetName)
-	return where, nil
-}
-
-func (f *CategoricalField) removeResultFilters(filterParams *model.FilterParams) *model.Filter {
-	// Strip the predicted filter out of the list - it needs special handling
-	var predictedFilter *model.Filter
-	var remaining []*model.Filter
-	for _, filter := range filterParams.Filters {
-		if strings.HasSuffix(filter.Name, predictedSuffix) {
-			predictedFilter = filter
-		} else {
-			remaining = append(remaining, filter)
-		}
-	}
-
-	// replace original filters
-	filterParams.Filters = remaining
-
-	return predictedFilter
-}
-
 func (f *CategoricalField) fetchHistogramByResult(dataset string, variable *model.Variable, resultURI string, filterParams *model.FilterParams) (*model.Histogram, error) {
 
 	// pull filters generated against the result facet out for special handling
-	resultFilter := f.removeResultFilters(filterParams)
+	resultFilter := f.Storage.removeResultFilters(filterParams)
 
 	// create the filter for the query.
 	where, params := f.Storage.buildFilteredQueryWhere(dataset, filterParams)
@@ -118,7 +72,7 @@ func (f *CategoricalField) fetchHistogramByResult(dataset string, variable *mode
 
 	// apply the result filter
 	if resultFilter != nil {
-		resultWhere, err := f.buildResultWhere(dataset, resultURI, resultFilter)
+		resultWhere, err := f.Storage.buildResultWhere(dataset, resultURI, resultFilter)
 		if err != nil {
 			return nil, err
 		}

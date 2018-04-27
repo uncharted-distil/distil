@@ -9,6 +9,14 @@ import (
 	"github.com/unchartedsoftware/distil/api/model"
 )
 
+const (
+	// CorrectCategory identifies the correct result meta-category.
+	CorrectCategory = "correct"
+
+	// IncorrectCategory identifies the incorrect result meta-category.
+	IncorrectCategory = "incorrect"
+)
+
 func (s *Storage) parseFilteredData(dataset string, numRows int, rows *pgx.Rows) (*model.FilteredData, error) {
 	result := &model.FilteredData{
 		Name:    dataset,
@@ -136,6 +144,51 @@ func (s *Storage) buildFilteredResultQueryField(dataset string, variables []*mod
 		}
 	}
 	return strings.Join(fields, ","), nil
+}
+
+func (s *Storage) buildResultWhere(dataset string, resultURI string, resultFilter *model.Filter) (string, error) {
+	// get the target variable name
+	datasetResult := s.getResultTable(dataset)
+	targetName, err := s.getResultTargetName(datasetResult, resultURI)
+	if err != nil {
+		return "", err
+	}
+
+	op := ""
+	for _, category := range resultFilter.Categories {
+		if strings.EqualFold(category, CorrectCategory) {
+			op = "="
+			break
+		} else if strings.EqualFold(category, IncorrectCategory) {
+			op = "!="
+			break
+		}
+	}
+
+	if op == "" {
+		return op, nil
+	}
+
+	where := fmt.Sprintf("result.value %s data.\"%s\"", op, targetName)
+	return where, nil
+}
+
+func (s *Storage) removeResultFilters(filterParams *model.FilterParams) *model.Filter {
+	// Strip the predicted filter out of the list - it needs special handling
+	var predictedFilter *model.Filter
+	var remaining []*model.Filter
+	for _, filter := range filterParams.Filters {
+		if strings.HasSuffix(filter.Name, predictedSuffix) {
+			predictedFilter = filter
+		} else {
+			remaining = append(remaining, filter)
+		}
+	}
+
+	// replace original filters
+	filterParams.Filters = remaining
+
+	return predictedFilter
 }
 
 // FetchNumRows pulls the number of rows in the table.

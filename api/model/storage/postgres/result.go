@@ -19,12 +19,6 @@ const (
 	predictedSuffix = "_predicted"
 	errorSuffix     = "_error"
 	targetSuffix    = "_target"
-
-	// CorrectCategory identifies the correct result meta-category.
-	CorrectCategory = "correct"
-
-	// IncorrectCategory identifies the incorrect result meta-category.
-	IncorrectCategory = "incorrect"
 )
 
 func (s *Storage) getResultTable(dataset string) string {
