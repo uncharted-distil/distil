@@ -132,7 +132,7 @@ func PersistProblem(datasetDir string, dataset string, targetVar *model.Variable
 		TargetIndex: 0,
 		ResID:       "0",
 		ColIndex:    targetIdx,
-		ColName:     targetVar.Name,
+		ColName:     targetVar.DisplayVariable,
 	}
 
 	pMetric := &ProblemPersistPerformanceMetric{

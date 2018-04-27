@@ -34,7 +34,6 @@ func DataHandler(storageCtor model.DataStorageCtor, metaCtor model.MetadataStora
 		}
 
 		dataset := pat.Param(r, "dataset")
-		esIndex := pat.Param(r, "esIndex")
 		invert := pat.Param(r, "invert")
 		invertBool := false
 		if invert == "true" {
@@ -49,7 +48,7 @@ func DataHandler(storageCtor model.DataStorageCtor, metaCtor model.MetadataStora
 		}
 
 		// fetch filtered data based on the supplied search parameters
-		data, err := storage.FetchData(dataset, esIndex, filterParams, invertBool)
+		data, err := storage.FetchData(dataset, filterParams, invertBool)
 		if err != nil {
 			handleError(w, errors.Wrap(err, "unable fetch filtered data"))
 			return

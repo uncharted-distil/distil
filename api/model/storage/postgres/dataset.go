@@ -40,15 +40,15 @@ func (s *Storage) defaultValue(typ string) interface{} {
 	}
 }
 
-func (s *Storage) getExistingFields(dataset string, index string) (map[string]*model.Variable, error) {
+func (s *Storage) getExistingFields(dataset string) (map[string]*model.Variable, error) {
 	// Read the existing fields from the database.
-	vars, err := s.metadata.FetchVariablesDisplay(dataset, index)
+	vars, err := s.metadata.FetchVariablesDisplay(dataset)
 	if err != nil {
 		return nil, errors.Wrap(err, "Unable to get existing fields")
 	}
 
 	// Add the d3m index variable.
-	varIndex, err := s.metadata.FetchVariable(dataset, index, model.D3MIndexFieldName)
+	varIndex, err := s.metadata.FetchVariable(dataset, model.D3MIndexFieldName)
 	if err != nil {
 		return nil, errors.Wrap(err, "Unable to get d3m index variable")
 	}
@@ -93,9 +93,9 @@ func (s *Storage) createView(dataset string, fields map[string]*model.Variable) 
 
 // SetDataType updates the data type of the specified field.
 // Multiple simultaneous calls to the function can result in discarded changes.
-func (s *Storage) SetDataType(dataset string, index string, field string, fieldType string) error {
+func (s *Storage) SetDataType(dataset string, field string, fieldType string) error {
 	// get all existing fields to rebuild the view.
-	fields, err := s.getExistingFields(dataset, index)
+	fields, err := s.getExistingFields(dataset)
 	if err != nil {
 		return errors.Wrap(err, "Unable to read existing fields")
 	}

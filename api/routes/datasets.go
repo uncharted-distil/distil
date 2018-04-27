@@ -7,7 +7,6 @@ import (
 	"github.com/microcosm-cc/bluemonday"
 	"github.com/pkg/errors"
 	"github.com/russross/blackfriday"
-	"goji.io/pat"
 
 	"github.com/unchartedsoftware/distil/api/model"
 )
@@ -25,8 +24,6 @@ type DatasetResult struct {
 // descriptions and variable lists will not be included.
 func DatasetsHandler(metaCtor model.MetadataStorageCtor) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
-		// get index name
-		index := pat.Param(r, "index")
 		// check for search terms
 		terms, err := url.QueryUnescape(r.URL.Query().Get("search"))
 		if err != nil {
@@ -42,9 +39,9 @@ func DatasetsHandler(metaCtor model.MetadataStorageCtor) func(http.ResponseWrite
 		// if its present, forward a search, otherwise fetch all datasets
 		var datasets []*model.Dataset
 		if terms != "" {
-			datasets, err = storage.SearchDatasets(index, terms, false)
+			datasets, err = storage.SearchDatasets(terms, false)
 		} else {
-			datasets, err = storage.FetchDatasets(index, false)
+			datasets, err = storage.FetchDatasets(false)
 		}
 		if err != nil {
 			handleError(w, err)

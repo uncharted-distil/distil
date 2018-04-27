@@ -48,7 +48,7 @@ func ProblemDiscoveryHandler(ctorData model.DataStorageCtor, ctorMeta model.Meta
 			return
 		}
 
-		targetVar, err := metadataStorage.FetchVariable(dataset, esIndex, target)
+		targetVar, err := metadataStorage.FetchVariable(dataset, target)
 		if err != nil {
 			handleError(w, err)
 			return
