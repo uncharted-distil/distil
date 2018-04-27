@@ -121,11 +121,7 @@ export function createPendingFacet(summary: VariableSummary): Group {
 export function createSummaryFacet(summary: VariableSummary): Group {
 	switch (summary.type) {
 		case 'categorical':
-			if (summary.resultId) {
-				return createCategoricalResultFacet(summary);
-			} else {
-				return createCategoricalSummaryFacet(summary);
-			}
+			return createCategoricalSummaryFacet(summary);
 		case 'numerical':
 			return createNumericalSummaryFacet(summary);
 	}
@@ -163,65 +159,6 @@ export function getGroupIcon(summary: VariableSummary): string {
 		default:
 			return 'fa fa-info';
 	}
-}
-
-// Creates a categorical result facet consisting of a 'Correct' bar capturing all predictions that are correct,
-// and an 'Incorect' bar capturing any that were wrong.
-function createCategoricalResultFacet(summary: VariableSummary): Group {
-	let total = 0;
-
-	// total up correct and incorrect
-	let correct = 0;
-	let incorrect = 0;
-	for (const bucket of summary.buckets) {
-		for (const subBucket of bucket.buckets) {
-			if (subBucket.key === bucket.key) {
-				correct += subBucket.count;
-			} else {
-				incorrect += subBucket.count;
-			}
-		}
-	}
-
-	// create factes for each
-	const correctFacet: CategoricalFacet = {
-		icon : {
-			class : getGroupIcon(summary)
-		},
-		value: 'Correct',
-		countLabel: correct.toString(),
-		count: correct,
-		selected: { count: correct },
-		segments: [],
-		filterable: false
-	};
-
-	const incorrectFacet: CategoricalFacet = {
-		icon : {
-			class : getGroupIcon(summary)
-		},
-		value: 'Incorrect',
-		countLabel: incorrect.toString(),
-		count: incorrect,
-		selected: { count: incorrect },
-		segments: [],
-		filterable: false
-	};
-
-	// Generate a facet group
-	return {
-		label: summary.label ? summary.label : summary.name,
-		key: summary.name,
-		type: summary.varType,
-		collapsible: false,
-		collapsed: false,
-		facets: [correctFacet, incorrectFacet],
-		total: total,
-		numRows: summary.numRows,
-		more: 0,
-		moreTotal: 0,
-		remaining: null
-	};
 }
 
 // creates a categorical facet

@@ -3,7 +3,7 @@ import axios from 'axios';
 import { AxiosPromise } from 'axios';
 import { FilterParams, INCLUDE_FILTER } from '../../util/filters';
 import { getPipelinesByRequestIds, getPipelineById } from '../../util/pipelines';
-import { getSummaries, getSummary } from '../../util/data';
+import { getSummaries, getSummary, updatePredictedSummary, updatePredictedHighlightSummary } from '../../util/data';
 import { Variable, Data, Extrema } from './index';
 import { PipelineInfo, PIPELINE_ERRORED } from '../pipelines/index';
 import { mutations } from './module'
@@ -457,6 +457,9 @@ export const actions = {
 			console.warn('`pipelineId` argument is missing');
 			return null;
 		}
+
+
+
 		// only use extrema if this is the feature variable
 		let extremaMin = null;
 		let extremaMax = null;
@@ -468,7 +471,8 @@ export const actions = {
 		const endPoint = `/distil/results-summary/${ES_INDEX}/${args.dataset}/${extremaMin}/${extremaMax}`
 		const nameFunc = (p: PipelineInfo) => getPredictedCol(p.feature);
 		const labelFunc = (p: PipelineInfo) => 'Predicted';
-		getSummary(context, endPoint, pipeline, nameFunc, labelFunc, mutations.updatePredictedSummaries, null);
+
+		getSummary(context, endPoint, pipeline, nameFunc, labelFunc, updatePredictedSummary, null);
 	},
 
 	// fetches result summaries for a given pipeline create request
@@ -492,7 +496,7 @@ export const actions = {
 		const endPoint = `/distil/results-summary/${ES_INDEX}/${args.dataset}/${extremaMin}/${extremaMax}`
 		const nameFunc = (p: PipelineInfo) => getPredictedCol(p.feature);
 		const labelFunc = (p: PipelineInfo) => 'Predicted';
-		getSummaries(context, endPoint, pipelines, nameFunc, labelFunc, mutations.updatePredictedSummaries, null);
+		getSummaries(context, endPoint, pipelines, nameFunc, labelFunc, updatePredictedSummary, null);
 	},
 
 	// fetches result summary for a given pipeline id.
@@ -722,7 +726,7 @@ export const actions = {
 		const endPoint = `/distil/results-summary/${ES_INDEX}/${args.dataset}/${args.extrema.min}/${args.extrema.max}`
 		const nameFunc = (p: PipelineInfo) => getPredictedCol(p.feature);
 		const labelFunc = (p: PipelineInfo) => '';
-		getSummaries(context, endPoint, pipelines, nameFunc, labelFunc, mutations.updatePredictedHighlightSummaries, filters);
+		getSummaries(context, endPoint, pipelines, nameFunc, labelFunc, updatePredictedHighlightSummary, filters);
 	},
 
 	fetchResultHighlightSamples(context: DataContext, args: { highlightRoot: HighlightRoot, dataset: string, pipelineId: string }) {
