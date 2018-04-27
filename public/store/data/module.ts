@@ -23,6 +23,7 @@ export const getters = {
 	getVariables: read(moduleGetters.getVariables),
 	getVariablesMap: read(moduleGetters.getVariablesMap),
 	getAvailableVariables: read(moduleGetters.getAvailableVariables),
+	getTrainingVariables: read(moduleGetters.getTrainingVariables),
 	getAvailableVariablesMap: read(moduleGetters.getAvailableVariablesMap),
 	getTrainingVariablesMap: read(moduleGetters.getTrainingVariablesMap),
 	// variable summaries

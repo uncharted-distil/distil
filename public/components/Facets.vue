@@ -402,6 +402,7 @@ export default Vue.extend({
 		},
 
 		addSpinnerForGroup(group: any) {
+			this.removeSpinnerFromGroup(group);
 			const $spinner = $(`<div class="facet-highlight-spinner">${circleSpinnerHTML()}</div>`);
 			group._facetContainer.append($spinner);
 		},
@@ -462,7 +463,9 @@ export default Vue.extend({
 
 							selection.slices = slices;
 						} else {
-							this.addSpinnerForGroup(group);
+							if (highlightRootValue) {
+								this.addSpinnerForGroup(group);
+							}
 						}
 					}
 
@@ -488,7 +491,6 @@ export default Vue.extend({
 						});
 
 						if (summary) {
-
 							this.removeSpinnerFromGroup(group);
 
 							const bucket = _.find(summary.buckets, b => {
@@ -502,7 +504,9 @@ export default Vue.extend({
 							}
 
 						} else {
-							this.addSpinnerForGroup(group);
+							if (highlightRootValue) {
+								this.addSpinnerForGroup(group);
+							}
 						}
 					}
 				}

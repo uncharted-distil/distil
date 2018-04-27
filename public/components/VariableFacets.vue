@@ -16,11 +16,11 @@
 			</div>
 			<div class="row flex-11">
 				<facets class="col-12 flex-column d-flex variable-facets-container"
-					:groups="sortedGroups"
+					:groups="paginatedGroups"
 					:highlights="highlights"
 					:row-selection="rowSelection"
 					:html="html"
-					:sort="sort"
+					:sort="importanceDesc"
 					:enable-type-change="enableTypeChange"
 					:enable-highlighting="enableHighlighting"
 					:instanceName="instanceName"
@@ -44,7 +44,8 @@
 import Facets from '../components/Facets';
 import { overlayRouteEntry, getRouteFacetPage } from '../util/routes';
 import { Dictionary } from '../util/dict';
-import { Highlight, RowSelection } from '../store/data/index';
+import { sortGroupsByImportance, filterVariablesByPage, NUM_PER_PAGE } from '../util/data';
+import { Highlight, RowSelection, Variable } from '../store/data/index';
 import { getters as dataGetters } from '../store/data/module';
 import { getters as routeGetters } from '../store/route/module';
 import { Group } from '../util/facets';
@@ -69,15 +70,13 @@ export default Vue.extend({
 		dataset: String,
 		subtitle: String,
 		html: [ String, Object, Function ],
-		instanceName: { type: String, default: 'variable-facets' },
+		instanceName: { type: String, default: 'variableFacets' },
 	},
 
 	data() {
 		return {
 			filter: '',
-			numRows: 1,
-			rowsPerPage: 10,
-			sortMethod: 'importanceDesc'
+			rowsPerPage: NUM_PER_PAGE
 		};
 	},
 
@@ -94,29 +93,30 @@ export default Vue.extend({
 			}
 		},
 
-		sortedGroups(): Group[] {
-			// filter by search
-			const searchFiltered = this.groups.filter(group => {
+		variables(): Variable[] {
+			return dataGetters.getVariables(this.$store);
+		},
+
+		filteredGroups(): Group[] {
+			return this.groups.filter(group => {
 				return this.filter === '' || group.key.toLowerCase().includes(this.filter.toLowerCase());
 			});
+		},
 
-			// sort by current function - sort looks for key to hold sort key
-			const sorted = searchFiltered.map(g => ({ key: g.key, group: g }))
-				.sort((a, b) => this[this.sortMethod](a, b))
-				.map(g => g.group);
+		numRows(): number {
+			return this.filteredGroups.length;
+		},
 
-			// if necessary, refilter applying pagination rules
-			this.numRows = searchFiltered.length;
-			let filtered = sorted;
-			if (this.numRows > this.rowsPerPage) {
-				const firstIndex = this.rowsPerPage * (this.currentPage - 1);
-				const lastIndex = Math.min(firstIndex + this.rowsPerPage, this.numRows);
-				filtered = sorted.slice(firstIndex, lastIndex);
-			}
+		sortedFilteredGroups(): Group[] {
+			return sortGroupsByImportance(this.filteredGroups, this.variables);
+		},
+
+		paginatedGroups(): Group[] {
+			const paginated = filterVariablesByPage(this.currentPage, this.rowsPerPage, this.sortedFilteredGroups);
 
 			// highlight
 			if (this.enableHighlighting && this.highlights.root) {
-				filtered.forEach(group => {
+				paginated.forEach(group => {
 					if (group) {
 						if (group.key === this.highlights.root.key) {
 							group.facets.forEach(facet => {
@@ -127,7 +127,7 @@ export default Vue.extend({
 				});
 			}
 
-			return filtered;
+			return paginated;
 		},
 
 		highlights(): Highlight {
@@ -139,16 +139,11 @@ export default Vue.extend({
 		},
 
 		importance(): Dictionary<number> {
-			const variables = dataGetters.getVariables(this.$store);
 			const importance: Dictionary<number> = {};
-			variables.forEach(variable => {
+			this.variables.forEach(variable => {
 				importance[variable.name] = variable.importance;
 			});
 			return importance;
-		},
-
-		sort() {
-			return (<any>this)[(<any>this).sortMethod];
 		}
 	},
 
