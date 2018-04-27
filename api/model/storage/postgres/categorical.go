@@ -65,9 +65,6 @@ func (f *CategoricalField) fetchHistogramByResult(dataset string, variable *mode
 
 	// create the filter for the query.
 	where, params := f.Storage.buildFilteredQueryWhere(dataset, filters.genericFilters)
-	if len(where) > 0 {
-		where = fmt.Sprintf("AND %s", where)
-	}
 	params = append(params, resultURI)
 
 	// apply the result filter
@@ -76,9 +73,11 @@ func (f *CategoricalField) fetchHistogramByResult(dataset string, variable *mode
 		if err != nil {
 			return nil, err
 		}
-		if resultWhere != "" {
-			where = fmt.Sprintf("AND %s", resultWhere)
-		}
+		where = appendAndClause(where, resultWhere)
+	}
+
+	if where != "" {
+		where = "AND " + where
 	}
 
 	// Get count by category.

@@ -284,11 +284,7 @@ func addErrorFilterToWhere(dataset string, targetName string, errorFilter *model
 	params = append(params, *errorFilter.Max)
 
 	// Append the AND clause
-	if wheres != "" {
-		wheres += " AND " + where
-	} else {
-		wheres = where
-	}
+	wheres = appendAndClause(wheres, where)
 	return wheres, params, nil
 }
 

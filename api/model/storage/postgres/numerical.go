@@ -75,9 +75,6 @@ func (f *NumericalField) fetchHistogramByResult(dataset string, variable *model.
 
 	// create the filter for the query.
 	where, params := f.Storage.buildFilteredQueryWhere(dataset, splitFilters.genericFilters)
-	if len(where) > 0 {
-		where = fmt.Sprintf(" AND %s", where)
-	}
 	params = append(params, resultURI)
 
 	// apply the result filter
@@ -86,9 +83,11 @@ func (f *NumericalField) fetchHistogramByResult(dataset string, variable *model.
 		if err != nil {
 			return nil, err
 		}
-		if resultWhere != "" {
-			where = fmt.Sprintf("AND %s", resultWhere)
-		}
+		where = appendAndClause(where, resultWhere)
+	}
+
+	if where != "" {
+		where = " AND " + where
 	}
 
 	// need the extrema to calculate the histogram interval
