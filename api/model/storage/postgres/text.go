@@ -38,7 +38,7 @@ func (f *TextField) FetchSummaryData(dataset string, index string, variable *mod
 
 func (f *TextField) fetchHistogram(dataset string, variable *model.Variable, filterParams *model.FilterParams) (*model.Histogram, error) {
 	// create the filter for the query.
-	where, params := f.Storage.buildFilteredQueryWhere(dataset, filterParams)
+	where, params := f.Storage.buildFilteredQueryWhere(dataset, filterParams.Filters)
 	if len(where) > 0 {
 		where = fmt.Sprintf(" WHERE %s", where)
 	}
@@ -64,7 +64,7 @@ func (f *TextField) fetchHistogram(dataset string, variable *model.Variable, fil
 
 func (f *TextField) fetchHistogramByResult(dataset string, variable *model.Variable, resultURI string, filterParams *model.FilterParams) (*model.Histogram, error) {
 	// create the filter for the query.
-	where, params := f.Storage.buildFilteredQueryWhere(dataset, filterParams)
+	where, params := f.Storage.buildFilteredQueryWhere(dataset, filterParams.Filters)
 	if len(where) > 0 {
 		where = fmt.Sprintf(" AND %s", where)
 	}
@@ -211,7 +211,7 @@ func (f *TextField) parseBivariateHistogram(rows *pgx.Rows, variable *model.Vari
 func (f *TextField) FetchResultSummaryData(resultURI string, dataset string, datasetResult string, variable *model.Variable, filterParams *model.FilterParams, extrema *model.Extrema) (*model.Histogram, error) {
 	targetName := variable.Name
 
-	where, params := f.Storage.buildFilteredQueryWhere(dataset, filterParams)
+	where, params := f.Storage.buildFilteredQueryWhere(dataset, filterParams.Filters)
 	if len(where) > 0 {
 		where = fmt.Sprintf(" WHERE %s AND result.result_id = $%d and result.target = $%d", where, len(params)+1, len(params)+2)
 	} else {

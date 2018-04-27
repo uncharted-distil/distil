@@ -128,14 +128,14 @@ func NewCategoricalFilter(name string, mode string, categories []string) *Filter
 }
 
 // GetFilterVariables builds the filtered list of fields based on the filtering parameters.
-func GetFilterVariables(filterParams *FilterParams, variables []*Variable) []*Variable {
+func GetFilterVariables(filterVariables []string, variables []*Variable) []*Variable {
 	variableLookup := make(map[string]*Variable)
 	for _, v := range variables {
 		variableLookup[v.Name] = v
 	}
 
 	filtered := make([]*Variable, 0)
-	for _, variable := range filterParams.Variables {
+	for _, variable := range filterVariables {
 		filtered = append(filtered, variableLookup[variable])
 	}
 

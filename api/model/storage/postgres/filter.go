@@ -9,6 +9,14 @@ import (
 	"github.com/unchartedsoftware/distil/api/model"
 )
 
+const (
+	// CorrectCategory identifies the correct result meta-category.
+	CorrectCategory = "correct"
+
+	// IncorrectCategory identifies the incorrect result meta-category.
+	IncorrectCategory = "incorrect"
+)
+
 func (s *Storage) parseFilteredData(dataset string, numRows int, rows *pgx.Rows) (*model.FilteredData, error) {
 	result := &model.FilteredData{
 		Name:    dataset,
@@ -103,12 +111,12 @@ func (s *Storage) buildExcludeFilter(wheres []string, params []interface{}, filt
 	return wheres, params
 }
 
-func (s *Storage) buildFilteredQueryWhere(dataset string, filterParams *model.FilterParams) (string, []interface{}) {
+func (s *Storage) buildFilteredQueryWhere(dataset string, filters []*model.Filter) (string, []interface{}) {
 
 	wheres := make([]string, 0)
 	params := make([]interface{}, 0)
 
-	for _, filter := range filterParams.Filters {
+	for _, filter := range filters {
 		switch filter.Mode {
 		case model.IncludeFilter:
 			wheres, params = s.buildIncludeFilter(wheres, params, filter)
@@ -120,22 +128,76 @@ func (s *Storage) buildFilteredQueryWhere(dataset string, filterParams *model.Fi
 	return strings.Join(wheres, " AND "), params
 }
 
-func (s *Storage) buildFilteredQueryField(dataset string, variables []*model.Variable, filterParams *model.FilterParams) (string, error) {
+func (s *Storage) buildFilteredQueryField(dataset string, variables []*model.Variable, filterVariables []string) (string, error) {
 	fields := make([]string, 0)
-	for _, variable := range model.GetFilterVariables(filterParams, variables) {
+	for _, variable := range model.GetFilterVariables(filterVariables, variables) {
 		fields = append(fields, fmt.Sprintf("\"%s\"", variable.Name))
 	}
 	return strings.Join(fields, ","), nil
 }
 
-func (s *Storage) buildFilteredResultQueryField(dataset string, variables []*model.Variable, targetVariable *model.Variable, filterParams *model.FilterParams) (string, error) {
+func (s *Storage) buildFilteredResultQueryField(dataset string, variables []*model.Variable, targetVariable *model.Variable, filterVariables []string) (string, error) {
 	fields := make([]string, 0)
-	for _, variable := range model.GetFilterVariables(filterParams, variables) {
+	for _, variable := range model.GetFilterVariables(filterVariables, variables) {
 		if strings.Compare(targetVariable.Name, variable.Name) != 0 {
 			fields = append(fields, fmt.Sprintf("\"%s\"", variable.Name))
 		}
 	}
 	return strings.Join(fields, ","), nil
+}
+
+func (s *Storage) buildResultWhere(dataset string, resultURI string, resultFilter *model.Filter) (string, error) {
+	// get the target variable name
+	datasetResult := s.getResultTable(dataset)
+	targetName, err := s.getResultTargetName(datasetResult, resultURI)
+	if err != nil {
+		return "", err
+	}
+
+	op := ""
+	for _, category := range resultFilter.Categories {
+		if strings.EqualFold(category, CorrectCategory) {
+			op = "="
+			break
+		} else if strings.EqualFold(category, IncorrectCategory) {
+			op = "!="
+			break
+		}
+	}
+
+	if op == "" {
+		return op, nil
+	}
+
+	where := fmt.Sprintf("result.value %s data.\"%s\"", op, targetName)
+	return where, nil
+}
+
+type filters struct {
+	genericFilters  []*model.Filter
+	predictedFilter *model.Filter
+	errorFilter     *model.Filter
+}
+
+func (s *Storage) splitFilters(filterParams *model.FilterParams) *filters {
+	// Groups filters for handling downstream
+	var predictedFilter *model.Filter
+	var errorFilter *model.Filter
+	var remaining []*model.Filter
+	for _, filter := range filterParams.Filters {
+		if strings.HasSuffix(filter.Name, predictedSuffix) {
+			predictedFilter = filter
+		} else if strings.HasSuffix(filter.Name, errorSuffix) {
+			errorFilter = filter
+		} else {
+			remaining = append(remaining, filter)
+		}
+	}
+	return &filters{
+		genericFilters:  remaining,
+		predictedFilter: predictedFilter,
+		errorFilter:     errorFilter,
+	}
 }
 
 // FetchNumRows pulls the number of rows in the table.
@@ -182,7 +244,7 @@ func (s *Storage) FetchData(dataset string, index string, filterParams *model.Fi
 		return nil, errors.Wrap(err, "Could not pull num rows")
 	}
 
-	fields, err := s.buildFilteredQueryField(dataset, variables, filterParams)
+	fields, err := s.buildFilteredQueryField(dataset, variables, filterParams.Variables)
 	if err != nil {
 		return nil, errors.Wrap(err, "Could not build field list")
 	}
@@ -190,7 +252,7 @@ func (s *Storage) FetchData(dataset string, index string, filterParams *model.Fi
 	// construct a Postgres query that fetches documents from the dataset with the supplied variable filters applied
 	query := fmt.Sprintf("SELECT %s FROM %s", fields, dataset)
 
-	where, params := s.buildFilteredQueryWhere(dataset, filterParams)
+	where, params := s.buildFilteredQueryWhere(dataset, filterParams.Filters)
 
 	if len(where) > 0 {
 		if invert {

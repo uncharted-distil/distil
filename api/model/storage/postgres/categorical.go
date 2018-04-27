@@ -38,7 +38,7 @@ func (f *CategoricalField) FetchSummaryData(dataset string, index string, variab
 
 func (f *CategoricalField) fetchHistogram(dataset string, variable *model.Variable, filterParams *model.FilterParams) (*model.Histogram, error) {
 	// create the filter for the query.
-	where, params := f.Storage.buildFilteredQueryWhere(dataset, filterParams)
+	where, params := f.Storage.buildFilteredQueryWhere(dataset, filterParams.Filters)
 	if len(where) > 0 {
 		where = fmt.Sprintf(" WHERE %s", where)
 	}
@@ -59,15 +59,34 @@ func (f *CategoricalField) fetchHistogram(dataset string, variable *model.Variab
 }
 
 func (f *CategoricalField) fetchHistogramByResult(dataset string, variable *model.Variable, resultURI string, filterParams *model.FilterParams) (*model.Histogram, error) {
+
+	// pull filters generated against the result facet out for special handling
+	filters := f.Storage.splitFilters(filterParams)
+
 	// create the filter for the query.
-	where, params := f.Storage.buildFilteredQueryWhere(dataset, filterParams)
-	if len(where) > 0 {
-		where = fmt.Sprintf(" AND %s", where)
-	}
+	where, params := f.Storage.buildFilteredQueryWhere(dataset, filters.genericFilters)
 	params = append(params, resultURI)
 
+	// apply the result filter
+	if filters.predictedFilter != nil {
+		resultWhere, err := f.Storage.buildResultWhere(dataset, resultURI, filters.predictedFilter)
+		if err != nil {
+			return nil, err
+		}
+		where = appendAndClause(where, resultWhere)
+	}
+
+	if where != "" {
+		where = "AND " + where
+	}
+
 	// Get count by category.
-	query := fmt.Sprintf("SELECT data.\"%s\", COUNT(*) AS count FROM %s data INNER JOIN %s result ON data.\"%s\" = result.index WHERE result.result_id = $%d%s GROUP BY \"%s\" ORDER BY count desc, \"%s\" LIMIT %d;",
+	query := fmt.Sprintf(
+		`SELECT data."%s", COUNT(*) AS count
+		 FROM %s data INNER JOIN %s result ON data."%s" = result.index
+		 WHERE result.result_id = $%d %s
+		 GROUP BY "%s"
+		 ORDER BY count desc, "%s" LIMIT %d;`,
 		variable.Name, dataset, f.Storage.getResultTable(dataset),
 		model.D3MIndexFieldName, len(params), where, variable.Name,
 		variable.Name, catResultLimit)
@@ -204,19 +223,21 @@ func (f *CategoricalField) parseBivariateHistogram(rows *pgx.Rows, variable *mod
 func (f *CategoricalField) FetchResultSummaryData(resultURI string, dataset string, datasetResult string, variable *model.Variable, filterParams *model.FilterParams, extrema *model.Extrema) (*model.Histogram, error) {
 	targetName := variable.Name
 
-	where, params := f.Storage.buildFilteredQueryWhere(dataset, filterParams)
+	where, params := f.Storage.buildFilteredQueryWhere(dataset, filterParams.Filters)
 	if len(where) > 0 {
-		where = fmt.Sprintf(" WHERE %s AND result.result_id = $%d and result.target = $%d", where, len(params)+1, len(params)+2)
+		where = fmt.Sprintf(" %s AND result.result_id = $%d and result.target = $%d", where, len(params)+1, len(params)+2)
 	} else {
-		where = " WHERE result.result_id = $1 and result.target = $2"
+		where = " result.result_id = $1 and result.target = $2"
 	}
 	params = append(params, resultURI, targetName)
 
-	query := fmt.Sprintf("SELECT base.\"%s\", result.value, COUNT(*) AS count "+
-		"FROM %s AS result INNER JOIN %s AS base ON result.index = base.\"d3mIndex\" "+
-		"%s "+
-		"GROUP BY result.value, base.\"%s\" "+
-		"ORDER BY count desc;", targetName, datasetResult, dataset, where, targetName)
+	query := fmt.Sprintf(
+		`SELECT base."%s", result.value, COUNT(*) AS count
+		 FROM %s AS result INNER JOIN %s AS base ON result.index = base."d3mIndex"
+		 WHERE %s
+		 GROUP BY result.value, base."%s"
+		 ORDER BY count desc;`,
+		targetName, datasetResult, dataset, where, targetName)
 
 	// execute the postgres query
 	res, err := f.Storage.client.Query(query, params...)
