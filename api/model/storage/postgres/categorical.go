@@ -38,7 +38,7 @@ func (f *CategoricalField) FetchSummaryData(dataset string, index string, variab
 
 func (f *CategoricalField) fetchHistogram(dataset string, variable *model.Variable, filterParams *model.FilterParams) (*model.Histogram, error) {
 	// create the filter for the query.
-	where, params := f.Storage.buildFilteredQueryWhere(dataset, filterParams)
+	where, params := f.Storage.buildFilteredQueryWhere(dataset, filterParams.Filters)
 	if len(where) > 0 {
 		where = fmt.Sprintf(" WHERE %s", where)
 	}
@@ -61,18 +61,18 @@ func (f *CategoricalField) fetchHistogram(dataset string, variable *model.Variab
 func (f *CategoricalField) fetchHistogramByResult(dataset string, variable *model.Variable, resultURI string, filterParams *model.FilterParams) (*model.Histogram, error) {
 
 	// pull filters generated against the result facet out for special handling
-	resultFilter := f.Storage.removeResultFilters(filterParams)
+	filters := f.Storage.splitFilters(filterParams)
 
 	// create the filter for the query.
-	where, params := f.Storage.buildFilteredQueryWhere(dataset, filterParams)
+	where, params := f.Storage.buildFilteredQueryWhere(dataset, filters.genericFilters)
 	if len(where) > 0 {
 		where = fmt.Sprintf("AND %s", where)
 	}
 	params = append(params, resultURI)
 
 	// apply the result filter
-	if resultFilter != nil {
-		resultWhere, err := f.Storage.buildResultWhere(dataset, resultURI, resultFilter)
+	if filters.predictedFilter != nil {
+		resultWhere, err := f.Storage.buildResultWhere(dataset, resultURI, filters.predictedFilter)
 		if err != nil {
 			return nil, err
 		}
@@ -224,7 +224,7 @@ func (f *CategoricalField) parseBivariateHistogram(rows *pgx.Rows, variable *mod
 func (f *CategoricalField) FetchResultSummaryData(resultURI string, dataset string, datasetResult string, variable *model.Variable, filterParams *model.FilterParams, extrema *model.Extrema) (*model.Histogram, error) {
 	targetName := variable.Name
 
-	where, params := f.Storage.buildFilteredQueryWhere(dataset, filterParams)
+	where, params := f.Storage.buildFilteredQueryWhere(dataset, filterParams.Filters)
 	if len(where) > 0 {
 		where = fmt.Sprintf(" %s AND result.result_id = $%d and result.target = $%d", where, len(params)+1, len(params)+2)
 	} else {

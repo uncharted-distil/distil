@@ -209,35 +209,6 @@ func (s *Storage) parseResults(dataset string, numRows int, rows *pgx.Rows, vari
 	}, nil
 }
 
-type resultFilters struct {
-	Predicted *model.Filter
-	Error     *model.Filter
-}
-
-func removeResultFilters(filterParams *model.FilterParams) *resultFilters {
-	// Strip the predicted and error filters out of the list - they need special handling
-	var predictedFilter *model.Filter
-	var errorFilter *model.Filter
-	var remaining []*model.Filter
-	for _, filter := range filterParams.Filters {
-		if strings.HasSuffix(filter.Name, predictedSuffix) {
-			predictedFilter = filter
-		} else if strings.HasSuffix(filter.Name, errorSuffix) {
-			errorFilter = filter
-		} else {
-			remaining = append(remaining, filter)
-		}
-	}
-
-	// replace original filters
-	filterParams.Filters = remaining
-
-	return &resultFilters{
-		Predicted: predictedFilter,
-		Error:     errorFilter,
-	}
-}
-
 func appendAndClause(expression string, andClause string) string {
 	if expression == "" {
 		return andClause
@@ -341,29 +312,29 @@ func (s *Storage) FetchFilteredResults(dataset string, index string, resultURI s
 		return nil, errors.Wrap(err, "Could not pull variables from ES")
 	}
 
-	// remove result specific filters (predicted, error) from filters - they have their own handling
-	resultFilters := removeResultFilters(filterParams)
+	// break filters out groups for specific handling
+	filters := s.splitFilters(filterParams)
 
 	// generate variable list for inclusion in query select
-	fields, err := s.buildFilteredResultQueryField(dataset, variables, variable, filterParams)
+	fields, err := s.buildFilteredResultQueryField(dataset, variables, variable, filterParams.Variables)
 	if err != nil {
 		return nil, errors.Wrap(err, "Could not build field list")
 	}
 
 	// Create the filter portion of the where clause.
-	where, params := s.buildFilteredQueryWhere(dataset, filterParams)
+	where, params := s.buildFilteredQueryWhere(dataset, filters.genericFilters)
 
 	// Add the predicted filter into the where clause if it was included in the filter set
-	if resultFilters.Predicted != nil {
-		where, params, err = addPredictedFilterToWhere(dataset, resultFilters.Predicted, variable, where, params)
+	if filters.predictedFilter != nil {
+		where, params, err = addPredictedFilterToWhere(dataset, filters.predictedFilter, variable, where, params)
 		if err != nil {
 			return nil, errors.Wrap(err, "Could not add result to where clause")
 		}
 	}
 
 	// Add the error filter into the where clause if it was included in the filter set
-	if resultFilters.Error != nil {
-		where, params, err = addErrorFilterToWhere(dataset, targetName, resultFilters.Error, where, params)
+	if filters.errorFilter != nil {
+		where, params, err = addErrorFilterToWhere(dataset, targetName, filters.errorFilter, where, params)
 		if err != nil {
 			return nil, errors.Wrap(err, "Could not add error to where clause")
 		}
