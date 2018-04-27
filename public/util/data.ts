@@ -4,7 +4,7 @@ import { TargetRow, FieldInfo, Variable } from '../store/data/index';
 import { PipelineInfo, PIPELINE_COMPLETED } from '../store/pipelines/index';
 import { DistilState } from '../store/store';
 import { Dictionary } from './dict';
-import { mutations as dataMutations } from '../store/data/mutations';
+import { mutations as dataMutations } from '../store/data/module';
 import { Group } from './facets';
 import { FilterParams } from './filters';
 import { ActionContext } from 'vuex';
@@ -308,7 +308,7 @@ export function updatePredictedSummary(context: DataContext, summary: VariableSu
 function mutatePredictedSummary(context: DataContext, summary: VariableSummary, f: (DataContext, VariableSummary) => void) {
 	// Only need to collapse categorical result summaries
 	if (summary.type !== SummaryType.Categorical) {
-		f(context.state, summary);
+		f(context, summary);
 		return;
 	}
 
@@ -331,6 +331,5 @@ function mutatePredictedSummary(context: DataContext, summary: VariableSummary, 
 		{ key: "Incorrect", count: incorrect}
 	]
 
-	f(context.state, clonedSummary);
+	f(context, clonedSummary);
 }
-
