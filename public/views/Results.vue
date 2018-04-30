@@ -30,7 +30,7 @@
 				class="col-12 col-md-3 border-gray-right results-variable-summaries"
 				enable-search
 				enable-highlighting
-				instance-name="result-summary-facets"
+				:instance-name="instanceName"
 				:groups="groups"
 				:dataset="dataset"></variable-summaries>
 			<results-comparison
@@ -54,7 +54,9 @@ import { Variable, Extrema } from '../store/data/index';
 import { Dictionary } from '../util/dict';
 import { HighlightRoot } from '../store/data/index';
 import { Group, createGroups } from '../util/facets';
+import { sortVariablesByImportance, filterVariablesByPage, NUM_PER_PAGE } from '../util/data';
 import Vue from 'vue';
+import _ from 'lodash';
 
 export default Vue.extend({
 	name: 'results-view',
@@ -67,6 +69,9 @@ export default Vue.extend({
 	},
 
 	computed: {
+		instanceName(): string {
+			return 'resultTrainingVars';
+		},
 		dataset(): string {
 			return routeGetters.getRouteDataset(this.$store);
 		},
@@ -86,6 +91,16 @@ export default Vue.extend({
 		},
 		variables(): Variable[] {
 			return pipelineGetters.getActivePipelineVariables(this.$store);
+		},
+		resultTrainingVarsPage(): number {
+			return routeGetters.getRouteResultTrainingVarsPage(this.$store);
+		},
+		paginatedVariables(): Variable[] {
+			// return only visible variables
+			const trainingVars = this.variables.filter(v => v.name !== this.target);
+			const targetVar = _.find(this.variables, v => v.name === this.target);
+			const paginatedTrainingVars = filterVariablesByPage(this.resultTrainingVarsPage, NUM_PER_PAGE, sortVariablesByImportance(trainingVars));
+			return paginatedTrainingVars.concat([ targetVar ]);
 		},
 		requestIds(): string[] {
 			return pipelineGetters.getPipelineRequestIds(this.$store);
@@ -122,7 +137,7 @@ export default Vue.extend({
 				pipelineId: this.pipelineId,
 				requestIds: this.requestIds,
 				extrema: this.predictedExtrema,
-				variables: this.variables
+				variables: this.paginatedVariables
 			});
 			dataActions.fetchResultTableData(this.$store, {
 				dataset: this.dataset,
@@ -160,7 +175,7 @@ export default Vue.extend({
 					pipelineId: this.pipelineId,
 					requestIds: this.requestIds,
 					extrema: this.predictedExtrema,
-					variables: this.variables
+					variables: this.paginatedVariables
 				});
 			});
 			dataActions.fetchResidualsExtremas(this.$store, {
@@ -226,7 +241,7 @@ export default Vue.extend({
 								pipelineId: this.pipelineId,
 								requestIds: this.requestIds,
 								extrema: this.predictedExtrema,
-								variables: this.variables
+								variables: this.paginatedVariables
 							});
 						});
 

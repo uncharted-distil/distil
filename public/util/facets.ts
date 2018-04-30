@@ -3,8 +3,6 @@ import { spinnerHTML } from '../util/spinner';
 import { formatValue } from '../util/types';
 import { VariableSummary } from '../store/data/index';
 
-export const CATEGORY_NO_MATCH_COLOR = "#e05353";
-export const CATEGORY_MATCH_COLOR = "#03c6e1";
 export const CATEGORICAL_CHUNK_SIZE = 10;
 
 export interface PlaceHolderFacet {
@@ -163,49 +161,15 @@ export function getGroupIcon(summary: VariableSummary): string {
 	}
 }
 
-// creates a categorical facet with segments based on nest buckets counts, or no segments if buckets aren't nested
+// creates a categorical facet
 function createCategoricalSummaryFacet(summary: VariableSummary): Group {
-
-
 	let total = 0;
 	const facets =  summary.buckets.map(b => {
-
-		let segments = [];
-		let selected = null;
-
-		// Populate segments if buckets are nested.  If a nested bucket's key matches the parent bucket key, values
-		// are given a colour to signify a match, all other nested buckets are summed and displayed as not matching.
-		let countLabel = b.key;
-		if (b.buckets) {
-			segments.push({
-				color: CATEGORY_MATCH_COLOR,
-				count: 0
-			});
-			segments.push({
-				color: CATEGORY_NO_MATCH_COLOR,
-				count: 0
-			});
-			for (const subBucket of b.buckets) {
-				if (subBucket.key === b.key) {
-					segments[0].count = subBucket.count;
-				} else {
-					segments[1].count += subBucket.count;
-				}
-			}
-			// TODO: Add proper highlight state visuals once highlighting is cleaned up
-			selected = {
-				segments: segments,
-				selected: b.count
-			};
-			const totalCount = segments[0].count + segments[1].count;
-			countLabel = `${segments[0].count} correct of ${totalCount}`;
-		} else {
-			// if no segments, just use basic count selection
-			selected = {
-				count: b.count
-			};
-			countLabel = b.count.toString();
-		}
+		const segments = [];
+		const selected = {
+			count: b.count
+		};
+		let countLabel = b.count.toString();
 
 		const facet: CategoricalFacet = {
 			icon : {

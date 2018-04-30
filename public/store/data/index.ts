@@ -1,5 +1,10 @@
 import { Dictionary } from '../../util/dict';
 
+export enum SummaryType {
+	Categorical = "categorical",
+	Numerical = "numerical"
+}
+
 export interface Variable {
 	name: string;
 	type: string;

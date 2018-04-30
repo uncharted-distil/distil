@@ -38,7 +38,7 @@ func (f *NumericalField) FetchSummaryData(dataset string, variable *model.Variab
 
 func (f *NumericalField) fetchHistogram(dataset string, variable *model.Variable, filterParams *model.FilterParams) (*model.Histogram, error) {
 	// create the filter for the query.
-	where, params := f.Storage.buildFilteredQueryWhere(dataset, filterParams)
+	where, params := f.Storage.buildFilteredQueryWhere(dataset, filterParams.Filters)
 	if len(where) > 0 {
 		where = fmt.Sprintf(" WHERE %s", where)
 	}
@@ -69,12 +69,26 @@ func (f *NumericalField) fetchHistogram(dataset string, variable *model.Variable
 }
 
 func (f *NumericalField) fetchHistogramByResult(dataset string, variable *model.Variable, resultURI string, filterParams *model.FilterParams, extrema *model.Extrema) (*model.Histogram, error) {
+
+	// pull filters generated against the result facet out for special handling
+	splitFilters := f.Storage.splitFilters(filterParams)
+
 	// create the filter for the query.
-	where, params := f.Storage.buildFilteredQueryWhere(dataset, filterParams)
-	if len(where) > 0 {
-		where = fmt.Sprintf(" AND %s", where)
-	}
+	where, params := f.Storage.buildFilteredQueryWhere(dataset, splitFilters.genericFilters)
 	params = append(params, resultURI)
+
+	// apply the result filter
+	if splitFilters.predictedFilter != nil {
+		resultWhere, err := f.Storage.buildResultWhere(dataset, resultURI, splitFilters.predictedFilter)
+		if err != nil {
+			return nil, err
+		}
+		where = appendAndClause(where, resultWhere)
+	}
+
+	if where != "" {
+		where = " AND " + where
+	}
 
 	// need the extrema to calculate the histogram interval
 	var err error
@@ -92,7 +106,12 @@ func (f *NumericalField) fetchHistogramByResult(dataset string, variable *model.
 	histogramName, bucketQuery, histogramQuery := f.getHistogramAggQuery(extrema)
 
 	// Create the complete query string.
-	query := fmt.Sprintf("SELECT %s as bucket, CAST(%s as double precision) AS %s, COUNT(*) AS count FROM %s data INNER JOIN %s result ON data.\"%s\" = result.index WHERE result.result_id = $%d%s GROUP BY %s ORDER BY %s;",
+	query := fmt.Sprintf(`
+		SELECT %s as bucket, CAST(%s as double precision) AS %s, COUNT(*) AS count
+		FROM %s data INNER JOIN %s result ON data."%s" = result.index
+		WHERE result.result_id = $%d%s
+		GROUP BY %s
+		ORDER BY %s;`,
 		bucketQuery, histogramQuery, histogramName, dataset,
 		f.Storage.getResultTable(dataset), model.D3MIndexFieldName, len(params), where, bucketQuery, histogramName)
 
@@ -275,18 +294,21 @@ func (f *NumericalField) FetchResultSummaryData(resultURI string, dataset string
 	histogramName, bucketQuery, histogramQuery := f.getResultHistogramAggQuery(extrema, variable, resultVariable)
 
 	// create the filter for the query.
-	where, params := f.Storage.buildFilteredQueryWhere(dataset, filterParams)
+	where, params := f.Storage.buildFilteredQueryWhere(dataset, filterParams.Filters)
 	if len(where) > 0 {
-		where = fmt.Sprintf("WHERE %s AND result.result_id = $%d AND result.target = $%d", where, len(params)+1, len(params)+2)
+		where = fmt.Sprintf(" %s AND result.result_id = $%d AND result.target = $%d", where, len(params)+1, len(params)+2)
 	} else {
-		where = "WHERE result.result_id = $1 AND result.target = $2"
+		where = " result.result_id = $1 AND result.target = $2"
 	}
 	params = append(params, resultURI, variable.Name)
 
 	// Create the complete query string.
-	query := fmt.Sprintf("SELECT %s as bucket, CAST(%s as double precision) AS %s, COUNT(*) AS count "+
-		"FROM %s data INNER JOIN %s result ON data.\"%s\" = result.index %s "+
-		"GROUP BY %s ORDER BY %s;",
+	query := fmt.Sprintf(`
+		SELECT %s as bucket, CAST(%s as double precision) AS %s, COUNT(*) AS count
+		FROM %s data INNER JOIN %s result ON data."%s" = result.index
+		WHERE %s
+		GROUP BY %s
+		ORDER BY %s;`,
 		bucketQuery, histogramQuery, histogramName, dataset, datasetResult,
 		model.D3MIndexFieldName, where, bucketQuery, histogramName)
 

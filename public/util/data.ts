@@ -1,9 +1,11 @@
 import _ from 'lodash';
-import { DataState, Datasets, VariableSummary, Data } from '../store/data/index';
-import { TargetRow, FieldInfo } from '../store/data/index';
+import { DataState, Datasets, VariableSummary, Data, SummaryType } from '../store/data/index';
+import { TargetRow, FieldInfo, Variable } from '../store/data/index';
 import { PipelineInfo, PIPELINE_COMPLETED } from '../store/pipelines/index';
 import { DistilState } from '../store/store';
 import { Dictionary } from './dict';
+import { mutations as dataMutations } from '../store/data/module';
+import { Group } from './facets';
 import { FilterParams } from './filters';
 import { ActionContext } from 'vuex';
 import axios from 'axios';
@@ -17,6 +19,8 @@ export const ERROR_POSTFIX = '_error';
 
 export const PREDICTED_FACET_KEY_POSTFIX = ' - predicted';
 export const ERROR_FACET_KEY_POSTFIX = ' - error';
+
+export const NUM_PER_PAGE = 10;
 
 export type DataContext = ActionContext<DataState, DistilState>;
 
@@ -259,4 +263,73 @@ export function getSummaries(
 			filters);
 	});
 	return Promise.all(promises);
+}
+
+export function filterVariablesByPage(pageIndex: number, numPerPage: number, variables: any[]) {
+	if (variables.length > numPerPage) {
+		const firstIndex = numPerPage * (pageIndex - 1);
+		const lastIndex = Math.min(firstIndex + numPerPage, variables.length);
+		return variables.slice(firstIndex, lastIndex);
+	}
+	return variables;
+}
+
+export function sortVariablesByImportance(variables: Variable[]): Variable[] {
+	variables.sort((a, b) => {
+		return b.importance - a.importance;
+	});
+	return variables;
+}
+
+export function sortGroupsByImportance(groups: Group[], variables: Variable[]): Group[] {
+	// create importance lookup map
+	const importance: Dictionary<number> = {};
+	variables.forEach(variable => {
+		importance[variable.name] = variable.importance;
+	});
+	// sort by importance
+	groups.sort((a, b) => {
+		return importance[b.key] - importance[a.key];
+	});
+	return groups;
+}
+
+
+export function updatePredictedHighlightSummary(context: DataContext, summary: VariableSummary) {
+	mutatePredictedSummary(context, summary, dataMutations.updatePredictedHighlightSummaries)
+}
+
+export function updatePredictedSummary(context: DataContext, summary: VariableSummary) {
+	mutatePredictedSummary(context, summary, dataMutations.updatePredictedSummaries)
+}
+
+// Collapse categorical result summary data, which is returned as a confusion matrix, into a binary
+// correct/incorrect reprsenation prior to applying the mutation.
+function mutatePredictedSummary(context: DataContext, summary: VariableSummary, f: (DataContext, VariableSummary) => void) {
+	// Only need to collapse categorical result summaries
+	if (summary.type !== SummaryType.Categorical) {
+		f(context, summary);
+		return;
+	}
+
+	// total up correct and incorrect
+	let correct = 0;
+	let incorrect = 0;
+	for (const bucket of summary.buckets) {
+		for (const subBucket of bucket.buckets) {
+			if (subBucket.key === bucket.key) {
+				correct += subBucket.count;
+			} else {
+				incorrect += subBucket.count;
+			}
+		}
+	}
+	// create a new summary, replacing the buckets with the collapsed values
+	const clonedSummary = _.cloneDeep(summary);
+	clonedSummary.buckets = [
+		{ key: "Correct", count: correct },
+		{ key: "Incorrect", count: incorrect}
+	]
+
+	f(context, clonedSummary);
 }
