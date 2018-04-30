@@ -218,14 +218,14 @@ export default Vue.extend({
 	left: 50%;
 	height: 22px;
 	width: 1px;
-	background-color: #333;
+	background-color: #666;
 }
 
 .error-center-label {
 	position:absolute;
 	top: 22px;
 	width: 100%;
-	color: #333;
+	color: #666;
 	text-align: center;
 }
 
