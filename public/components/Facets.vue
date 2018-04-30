@@ -448,17 +448,13 @@ export default Vue.extend({
 		},
 
 		removeSpinnerFromGroup(group: any) {
-			//group._facetContainer.find('.facet-highlight-spinner').remove();
+			group._element.find('.facet-highlight-spinner').remove();
 		},
 
 		addSpinnerForGroup(group: any) {
 			this.removeSpinnerFromGroup(group);
 			const $spinner = $(`<div class="facet-highlight-spinner">${circleSpinnerHTML()}</div>`);
-			if (this.enableTypeChange) {
-				// if we are injecting a typechange chear, put spinner on bottom
-				$spinner.addClass('bottom-spinner');
-			}
-			group._facetContainer.append($spinner);
+			group._element.find('.facets-group').append($spinner);
 		},
 
 		injectHighlightsIntoGroup(group: any, highlights: Highlight) {
@@ -724,15 +720,13 @@ export default Vue.extend({
 .group-facet-container {
 	position: relative;
 }
+
 .facet-highlight-spinner {
 	position: absolute;
 	right: 0;
-	top: -30px;
-	margin: 6px 8px;
-}
-
-.bottom-spinner {
-	top: unset;
+	bottom: 0;
+	margin-right: 8px;
+	margin-bottom: 6px;
 }
 
 .facets.highlighting-enabled {
