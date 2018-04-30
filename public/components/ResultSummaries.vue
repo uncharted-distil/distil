@@ -2,9 +2,6 @@
 	<div class='result-summaries'>
 		<p class="nav-link font-weight-bold">Results<p>
 		<div v-if="regressionEnabled" class="result-summaries-error">
-			<div class="result-summaries-label">
-				Error:
-			</div>
 			<error-threshold-slider/>
 		</div>
 		<p class="nav-link font-weight-bold">Predictions by Model</p>
@@ -153,12 +150,6 @@ export default Vue.extend({
 	margin-bottom: 30px;
 }
 
-.result-summaries-label {
-	display: flex;
-	flex-basis: auto;
-	margin-left: 10px;
-	margin-right: 15px;
-}
 
 .facets-facet-vertical.select-highlight .facet-bar-selected {
 	box-shadow: inset 0 0 0 1000px #007bff;
