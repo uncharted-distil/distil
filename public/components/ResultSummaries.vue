@@ -5,20 +5,7 @@
 			<div class="result-summaries-label">
 				Error:
 			</div>
-			<div class="result-summaries-slider" v-if="showSlider">
-				<div class="error-center-line"></div>
-				<div class="error-center-label">0</div>
-				<vue-slider ref="slider"
-					:min="residualExtrema.min"
-					:max="residualExtrema.max"
-					:interval="interval"
-					:value="initialValue"
-					:formatter="formatter"
-					:lazy="true"
-					width=100%
-					tooltip-dir="bottom"
-					@callback="onSlide"/>
-			</div>
+			<error-threshold-slider/>
 		</div>
 		<p class="nav-link font-weight-bold">Predictions by Model</p>
 		<result-facets
@@ -51,9 +38,8 @@
 import _ from 'lodash';
 import ResultFacets from '../components/ResultFacets.vue';
 import Facets from '../components/Facets.vue';
-import { overlayRouteEntry } from '../util/routes';
+import ErrorThresholdSlider from '../components/ErrorThresholdSlider.vue';
 import { getPipelineById, getTask } from '../util/pipelines';
-import { Extrema } from '../store/data/index';
 import { getters as dataGetters} from '../store/data/module';
 import { getters as routeGetters } from '../store/route/module';
 import { actions as appActions, getters as appGetters } from '../store/app/module';
@@ -63,16 +49,13 @@ import Vue from 'vue';
 import 'font-awesome/css/font-awesome.css';
 import { PipelineInfo } from '../store/pipelines/index';
 
-const DEFAULT_PERCENTILE = 0.25;
-const NUM_STEPS = 100;
-const ERROR_DECIMALS = 0;
-
 export default Vue.extend({
 	name: 'result-summaries',
 
 	components: {
 		ResultFacets,
 		Facets,
+		ErrorThresholdSlider,
 		vueSlider,
 	},
 
@@ -93,64 +76,6 @@ export default Vue.extend({
 
 		target(): string {
 			return routeGetters.getRouteTargetVariable(this.$store);
-		},
-
-		showSlider(): boolean {
-			return !_.isNaN(this.interval);
-		},
-
-		initialValue(): number[] {
-			const min = routeGetters.getRouteResidualThresholdMin(this.$store);
-			const max = routeGetters.getRouteResidualThresholdMax(this.$store);
-			if (min === undefined || max === undefined) {
-				if (!_.isNaN(this.defaultValue[0]) && !_.isNaN(this.defaultValue[1])) {
-					this.updateThreshold(this.defaultValue[0], this.defaultValue[1]);
-				}
-				return this.defaultValue;
-			}
-			const nmin = _.toNumber(min);
-			const nmax = _.toNumber(max);
-			// NOTE: the slider component discards the values if they are
-			// not within the extrema. We have to read the extrema here so
-			// that the values are recomputed when the extrema is computed.
-			const extrema = this.residualExtrema;
-			if (nmin < extrema.min || nmax > extrema.max) {
-				return [ NaN, NaN ];
-			}
-			return [
-				nmin,
-				nmax
-			];
-		},
-
-		range(): number {
-			if (_.isNaN(this.residualExtrema.min) ||
-				_.isNaN(this.residualExtrema.max)) {
-				return NaN;
-			}
-			return this.residualExtrema.max - this.residualExtrema.min;
-		},
-
-		defaultValue(): number[] {
-			return [
-				-this.range/2 * DEFAULT_PERCENTILE,
-				this.range/2 * DEFAULT_PERCENTILE
-			];
-		},
-
-		interval(): number {
-			return this.range / NUM_STEPS;
-		},
-
-		residualExtrema(): Extrema {
-			const extrema = dataGetters.getResidualExtrema(this.$store);
-			if (!extrema) {
-				return extrema;
-			}
-			return {
-				min: _.round(extrema.min, ERROR_DECIMALS),
-				max: _.round(extrema.max, ERROR_DECIMALS)
-			};
 		},
 
 		regressionEnabled(): boolean {
@@ -184,23 +109,6 @@ export default Vue.extend({
 	},
 
 	methods: {
-
-		updateThreshold(min: number, max: number) {
-			const entry = overlayRouteEntry(this.$route, {
-				residualThresholdMin: `${min}`,
-				residualThresholdMax: `${max}`
-			});
-			this.$router.push(entry);
-		},
-
-		onSlide(value) {
-			// if (this.symmetricSlider) {
-			// 	console.log('before:', this.$refs.slider.getValue();
-			// 	console.log('after:', value);
-			// 	//this.$refs.slider.setValue([ ] true);
-			// }
-			this.updateThreshold(value[0], value[1]);
-		},
 
 		onExport() {
 			appActions.exportPipeline(this.$store, {
@@ -252,44 +160,8 @@ export default Vue.extend({
 	margin-right: 15px;
 }
 
-.result-summaries-slider {
-	display: flex;
-	flex-grow: 1;
-	position: relative;
-}
-
-.result-summaries-slider .vue-slider-component .vue-slider-process {
-	background-color: #9e9e9e;
-}
-
-.result-summaries-slider .vue-slider-component .vue-slider-tooltip {
-	border: 1px solid #9e9e9e;
-	background-color: #9e9e9e;
-}
-
-.result-summaries-slider .vue-slider-component .vue-slider-piecewise {
-	background-color: #ee0701;
-}
-
-
 .facets-facet-vertical.select-highlight .facet-bar-selected {
 	box-shadow: inset 0 0 0 1000px #007bff;
-}
-
-.error-center-line {
-	position:absolute;
-	left: 50%;
-	height: 22px;
-	width: 1px;
-	background-color: #333;
-}
-
-.error-center-label {
-	position:absolute;
-	top: 22px;
-	width: 100%;
-	color: #333;
-	text-align: center;
 }
 
 .check-message-container {
