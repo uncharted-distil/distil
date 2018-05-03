@@ -31,7 +31,7 @@ type QueriedDataset struct {
 
 // FetchDataset builds a QueriedDataset from the needed parameters.
 func FetchDataset(dataset string, index string, includeIndex bool, filterParams *FilterParams, storageMeta MetadataStorage, storageData DataStorage) (*QueriedDataset, error) {
-	datasets, err := storageMeta.FetchDatasets(index, includeIndex)
+	datasets, err := storageMeta.FetchDatasets(includeIndex)
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to fetch variables")
 	}
@@ -44,7 +44,7 @@ func FetchDataset(dataset string, index string, includeIndex bool, filterParams 
 		}
 	}
 
-	data, err := storageData.FetchData(dataset, index, filterParams, false)
+	data, err := storageData.FetchData(dataset, filterParams, false)
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to fetch data")
 	}

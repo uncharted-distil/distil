@@ -16,8 +16,6 @@ import (
 // for data returned in a result set.
 func ResultVariableSummaryHandler(ctorPipeline model.PipelineStorageCtor, ctorStorage model.DataStorageCtor) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
-		// get index name
-		index := pat.Param(r, "index")
 		// get dataset name
 		dataset := pat.Param(r, "dataset")
 		// get variable name
@@ -84,7 +82,7 @@ func ResultVariableSummaryHandler(ctorPipeline model.PipelineStorageCtor, ctorSt
 			return
 		}
 		// fetch summary histogram
-		histogram, err := storage.FetchSummaryByResult(dataset, index, variable, result.ResultURI, filterParams, extrema)
+		histogram, err := storage.FetchSummaryByResult(dataset, variable, result.ResultURI, filterParams, extrema)
 		if err != nil {
 			handleError(w, err)
 			return

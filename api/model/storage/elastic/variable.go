@@ -60,6 +60,12 @@ func (s *Storage) parseRawVariable(child map[string]interface{}) (*model.Variabl
 	if !ok {
 		suggestedTypes = make([]map[string]interface{}, 0)
 	}
+
+	// default the display name to the normalized name
+	if displayVariable == "" {
+		displayVariable = name
+	}
+
 	return &model.Variable{
 		Name:             name,
 		Type:             typ,
@@ -126,7 +132,7 @@ func (s *Storage) parseVariables(searchHit *elastic.SearchHit, includeIndex bool
 }
 
 // FetchVariable returns the variable for the provided index, dataset, and variable.
-func (s *Storage) FetchVariable(dataset string, index string, varName string) (*model.Variable, error) {
+func (s *Storage) FetchVariable(dataset string, varName string) (*model.Variable, error) {
 	// get dataset id
 	datasetID := dataset + DatasetSuffix
 	// create match query
@@ -137,7 +143,7 @@ func (s *Storage) FetchVariable(dataset string, index string, varName string) (*
 	// execute the ES query
 	res, err := s.client.Search().
 		Query(query).
-		Index(index).
+		Index(s.index).
 		FetchSource(true).
 		FetchSourceContext(fetchContext).
 		Do(context.Background())
@@ -157,9 +163,9 @@ func (s *Storage) FetchVariable(dataset string, index string, varName string) (*
 }
 
 // FetchVariableDisplay returns the display variable for the provided index, dataset, and variable.
-func (s *Storage) FetchVariableDisplay(dataset string, index string, varName string) (*model.Variable, error) {
+func (s *Storage) FetchVariableDisplay(dataset string, varName string) (*model.Variable, error) {
 	// get the indicated variable.
-	variable, err := s.FetchVariable(dataset, index, varName)
+	variable, err := s.FetchVariable(dataset, varName)
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to fetch variable")
 	}
@@ -167,14 +173,14 @@ func (s *Storage) FetchVariableDisplay(dataset string, index string, varName str
 	// DisplayVariable will identify the variable to return.
 	// If not set, no other fetch is needed.
 	if variable.DisplayVariable != "" && variable.DisplayVariable != varName {
-		return s.FetchVariable(dataset, index, variable.DisplayVariable)
+		return s.FetchVariable(dataset, variable.DisplayVariable)
 	}
 
 	return variable, nil
 }
 
 // FetchVariables returns all the variables for the provided index and dataset.
-func (s *Storage) FetchVariables(dataset string, index string, includeIndex bool) ([]*model.Variable, error) {
+func (s *Storage) FetchVariables(dataset string, includeIndex bool) ([]*model.Variable, error) {
 	// get dataset id
 	datasetID := dataset + DatasetSuffix
 	// create match query
@@ -185,7 +191,7 @@ func (s *Storage) FetchVariables(dataset string, index string, includeIndex bool
 	// execute the ES query
 	res, err := s.client.Search().
 		Query(query).
-		Index(index).
+		Index(s.index).
 		FetchSource(true).
 		FetchSourceContext(fetchContext).
 		Do(context.Background())
@@ -201,9 +207,9 @@ func (s *Storage) FetchVariables(dataset string, index string, includeIndex bool
 }
 
 // FetchVariablesDisplay returns all the display variables for the provided index and dataset.
-func (s *Storage) FetchVariablesDisplay(dataset string, index string) ([]*model.Variable, error) {
+func (s *Storage) FetchVariablesDisplay(dataset string) ([]*model.Variable, error) {
 	// get all variables.
-	vars, err := s.FetchVariables(dataset, index, false)
+	vars, err := s.FetchVariables(dataset, false)
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to fetch dataset variables")
 	}
@@ -219,10 +225,7 @@ func (s *Storage) FetchVariablesDisplay(dataset string, index string) ([]*model.
 	resultIncludes := make(map[string]bool)
 	result := make([]*model.Variable, 0)
 	for _, v := range vars {
-		name := v.DisplayVariable
-		if name == "" {
-			name = v.Name
-		}
+		name := v.Name
 		if !resultIncludes[name] {
 			result = append(result, varsLookup[name])
 			resultIncludes[name] = true

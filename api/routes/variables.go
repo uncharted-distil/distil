@@ -22,8 +22,6 @@ type VariablesResult struct {
 // dataset.
 func VariablesHandler(metaCtor model.MetadataStorageCtor) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
-		// get index name
-		index := pat.Param(r, "index")
 		// get dataset name
 		dataset := pat.Param(r, "dataset")
 		// get elasticsearch client
@@ -33,7 +31,7 @@ func VariablesHandler(metaCtor model.MetadataStorageCtor) func(http.ResponseWrit
 			return
 		}
 		// fetch variables
-		variables, err := meta.FetchVariables(dataset, index, false)
+		variables, err := meta.FetchVariables(dataset, false)
 		if err != nil {
 			handleError(w, err)
 			return
@@ -60,7 +58,6 @@ func VariableTypeHandler(storageCtor model.DataStorageCtor, metaCtor model.Metad
 		}
 		field := params["field"].(string)
 		typ := params["type"].(string)
-		index := pat.Param(r, "index")
 		dataset := pat.Param(r, "dataset")
 
 		// get clients
@@ -76,14 +73,14 @@ func VariableTypeHandler(storageCtor model.DataStorageCtor, metaCtor model.Metad
 		}
 
 		// update the variable type in the storage
-		err = storage.SetDataType(dataset, index, field, typ)
+		err = storage.SetDataType(dataset, field, typ)
 		if err != nil {
 			handleError(w, errors.Wrap(err, "unable to update the data type in storage"))
 			return
 		}
 
 		// update the variable type in the metadata
-		err = meta.SetDataType(dataset, index, field, typ)
+		err = meta.SetDataType(dataset, field, typ)
 		if err != nil {
 			handleError(w, errors.Wrap(err, "unable to update the data type in metadata"))
 			return
