@@ -49,8 +49,8 @@ func (s *Storage) getResultTargetName(dataset string, resultURI string) (string,
 	return "", errors.Errorf("Target feature for result URI `%s` not found", resultURI)
 }
 
-func (s *Storage) getResultTargetVariable(dataset string, index string, targetName string) (*model.Variable, error) {
-	variable, err := s.metadata.FetchVariable(dataset, index, targetName)
+func (s *Storage) getResultTargetVariable(dataset string, targetName string) (*model.Variable, error) {
+	variable, err := s.metadata.FetchVariable(dataset, targetName)
 	if err != nil {
 		return nil, errors.Wrap(err, "Unable to get target variable information")
 	}
@@ -82,6 +82,18 @@ func (s *Storage) PersistResult(dataset string, resultURI string) error {
 
 	// Header row will have the target.
 	targetName := records[0][1]
+
+	// Translate from display name to storage name.
+	variables, err := s.metadata.FetchVariables(dataset, false)
+	if err != nil {
+		return errors.Wrap(err, "unable load pipeline result as csv")
+	}
+
+	for _, v := range variables {
+		if v.DisplayVariable == targetName {
+			targetName = v.OriginalVariable
+		}
+	}
 
 	// store all results to the storage
 	for i := 1; i < len(records); i++ {
@@ -289,7 +301,7 @@ func addErrorFilterToWhere(dataset string, targetName string, errorFilter *model
 }
 
 // FetchFilteredResults pulls the results from the Postgres database.
-func (s *Storage) FetchFilteredResults(dataset string, index string, resultURI string, filterParams *model.FilterParams) (*model.FilteredData, error) {
+func (s *Storage) FetchFilteredResults(dataset string, resultURI string, filterParams *model.FilterParams) (*model.FilteredData, error) {
 	datasetResult := s.getResultTable(dataset)
 	targetName, err := s.getResultTargetName(datasetResult, resultURI)
 	if err != nil {
@@ -297,13 +309,13 @@ func (s *Storage) FetchFilteredResults(dataset string, index string, resultURI s
 	}
 
 	// fetch the variable info to resolve its type - skip the first column since that will be the d3m_index value
-	variable, err := s.getResultTargetVariable(dataset, index, targetName)
+	variable, err := s.getResultTargetVariable(dataset, targetName)
 	if err != nil {
 		return nil, err
 	}
 
 	// fetch variable metadata
-	variables, err := s.metadata.FetchVariables(dataset, index, false)
+	variables, err := s.metadata.FetchVariables(dataset, false)
 	if err != nil {
 		return nil, errors.Wrap(err, "Could not pull variables from ES")
 	}
@@ -384,12 +396,12 @@ func (s *Storage) FetchFilteredResults(dataset string, index string, resultURI s
 }
 
 // FetchResults pulls the results from the Postgres database.
-func (s *Storage) FetchResults(dataset string, index string, resultURI string) (*model.FilteredData, error) {
+func (s *Storage) FetchResults(dataset string, resultURI string) (*model.FilteredData, error) {
 
 	// fetch the variable info to resolve its type - skip the first column since that will be the d3m_index value
 	datasetResult := s.getResultTable(dataset)
 	targetName, err := s.getResultTargetName(datasetResult, resultURI)
-	variable, err := s.getResultTargetVariable(dataset, index, targetName)
+	variable, err := s.getResultTargetVariable(dataset, targetName)
 	if err != nil {
 		return nil, err
 	}
@@ -462,13 +474,13 @@ func (s *Storage) fetchResultsExtrema(resultURI string, dataset string, variable
 }
 
 // FetchResultsExtremaByURI fetches the results extrema by resultURI.
-func (s *Storage) FetchResultsExtremaByURI(dataset string, resultURI string, index string) (*model.Extrema, error) {
+func (s *Storage) FetchResultsExtremaByURI(dataset string, resultURI string) (*model.Extrema, error) {
 	datasetResult := s.getResultTable(dataset)
 	targetName, err := s.getResultTargetName(datasetResult, resultURI)
 	if err != nil {
 		return nil, err
 	}
-	targetVariable, err := s.getResultTargetVariable(dataset, index, targetName)
+	targetVariable, err := s.getResultTargetVariable(dataset, targetName)
 	if err != nil {
 		return nil, err
 	}
@@ -483,14 +495,14 @@ func (s *Storage) FetchResultsExtremaByURI(dataset string, resultURI string, ind
 
 // FetchResultsSummary gets the summary data about a target variable from the
 // results table.
-func (s *Storage) FetchResultsSummary(dataset string, resultURI string, index string, filterParams *model.FilterParams, extrema *model.Extrema) (*model.Histogram, error) {
+func (s *Storage) FetchResultsSummary(dataset string, resultURI string, filterParams *model.FilterParams, extrema *model.Extrema) (*model.Histogram, error) {
 	datasetResult := s.getResultTable(dataset)
 	targetName, err := s.getResultTargetName(datasetResult, resultURI)
 	if err != nil {
 		return nil, err
 	}
 
-	variable, err := s.getResultTargetVariable(dataset, index, targetName)
+	variable, err := s.getResultTargetVariable(dataset, targetName)
 	if err != nil {
 		return nil, err
 	}

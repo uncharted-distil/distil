@@ -54,7 +54,7 @@ func ExportHandler(pipelineCtor model.PipelineStorageCtor, metaCtor model.Metada
 			return
 		}
 
-		variable, err := meta.FetchVariable(m.Dataset, "datasets", pipelineTarget)
+		variable, err := meta.FetchVariable(m.Dataset, pipelineTarget)
 		if err != nil {
 			handleError(w, err)
 			return

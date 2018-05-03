@@ -20,7 +20,7 @@ func TestDatasetsHandler(t *testing.T) {
 	})
 	// mock elasticsearch client & storage
 	ctor := mock.ElasticClientCtor(t, handler)
-	ctorStorage := elastic.NewMetadataStorage(ctor)
+	ctorStorage := elastic.NewMetadataStorage("datasets", ctor)
 
 	// put together a stub dataset request
 	req := mock.HTTPRequest(t, "GET", "/distil/datasets/", map[string]string{
@@ -45,9 +45,9 @@ func TestDatasetsHandler(t *testing.T) {
 					"numRows": 1073,
 					"numBytes": 744647,
 					"variables": [
-						{"name":"Player","type":"categorical","importance": 0,"role": "attribute","suggestedTypes": [{ "type": "categorical", "probability": 1.00 }], "varOriginalName": "", "varDisplayName": ""},
-						{"name":"Number_seasons","type":"integer","importance": 1,"role": "attribute","suggestedTypes":[ { "type": "integer", "probability": 1.00 }], "varOriginalName": "", "varDisplayName": ""},
-						{"name":"Games_played","type":"integer","importance": 2,"role": "attribute","suggestedTypes": [{ "type": "integer", "probability": 1.00 }], "varOriginalName": "", "varDisplayName": ""}
+						{"name":"Player","type":"categorical","importance": 0,"role": "attribute","suggestedTypes": [{ "type": "categorical", "probability": 1.00 }], "varOriginalName": "", "varDisplayName": "Player"},
+						{"name":"Number_seasons","type":"integer","importance": 1,"role": "attribute","suggestedTypes":[ { "type": "integer", "probability": 1.00 }], "varOriginalName": "", "varDisplayName": "Number_seasons"},
+						{"name":"Games_played","type":"integer","importance": 2,"role": "attribute","suggestedTypes": [{ "type": "integer", "probability": 1.00 }], "varOriginalName": "", "varDisplayName": "Games_played"}
 					]
 				},
 				{
@@ -58,8 +58,8 @@ func TestDatasetsHandler(t *testing.T) {
 					"numRows": 1073,
 					"numBytes": 744647,
 					"variables": [
-						{"name":"cylinders","type":"categorical","importance": 0,"role": "attribute","suggestedTypes":  [{ "type": "categorical", "probability": 1.00 }], "varOriginalName": "", "varDisplayName": ""},
-						{"name":"displacement","type":"categorical","importance": 0,"role": "attribute","suggestedTypes":  [{ "type": "categorical", "probability": 1.00 }], "varOriginalName": "", "varDisplayName": ""}
+						{"name":"cylinders","type":"categorical","importance": 0,"role": "attribute","suggestedTypes":  [{ "type": "categorical", "probability": 1.00 }], "varOriginalName": "", "varDisplayName": "cylinders"},
+						{"name":"displacement","type":"categorical","importance": 0,"role": "attribute","suggestedTypes":  [{ "type": "categorical", "probability": 1.00 }], "varOriginalName": "", "varDisplayName": "displacement"}
 					]
 				}
 			]
@@ -81,7 +81,7 @@ func TestDatasetsHandlerWithSearch(t *testing.T) {
 	})
 	// mock elasticsearch client & storage
 	ctor := mock.ElasticClientCtor(t, handler)
-	ctorStorage := elastic.NewMetadataStorage(ctor)
+	ctorStorage := elastic.NewMetadataStorage("datasets", ctor)
 
 	// put together a stub dataset request
 	params := map[string]string{
@@ -110,9 +110,9 @@ func TestDatasetsHandlerWithSearch(t *testing.T) {
 					"numRows": 1073,
 					"numBytes": 744647,
 					"variables": [
-						{"name":"Player","type":"categorical","importance": 0,"role": "attribute","suggestedTypes": [{ "type": "categorical", "probability": 1.00 }], "varOriginalName": "", "varDisplayName": ""},
-						{"name":"Number_seasons","type":"integer","importance": 1,"role": "attribute","suggestedTypes":[ { "type": "integer", "probability": 1.00 }], "varOriginalName": "", "varDisplayName": ""},
-						{"name":"Games_played","type":"integer","importance": 2,"role": "attribute","suggestedTypes": [{ "type": "integer", "probability": 1.00 }], "varOriginalName": "", "varDisplayName": ""}
+						{"name":"Player","type":"categorical","importance": 0,"role": "attribute","suggestedTypes": [{ "type": "categorical", "probability": 1.00 }], "varOriginalName": "", "varDisplayName": "Player"},
+						{"name":"Number_seasons","type":"integer","importance": 1,"role": "attribute","suggestedTypes":[ { "type": "integer", "probability": 1.00 }], "varOriginalName": "", "varDisplayName": "Number_seasons"},
+						{"name":"Games_played","type":"integer","importance": 2,"role": "attribute","suggestedTypes": [{ "type": "integer", "probability": 1.00 }], "varOriginalName": "", "varDisplayName": "Games_played"}
 					]
 				},
 				{
@@ -123,8 +123,8 @@ func TestDatasetsHandlerWithSearch(t *testing.T) {
 					"numRows": 1073,
 					"numBytes": 744647,
 					"variables": [
-						{"name":"cylinders","type":"categorical","importance": 0,"role": "attribute","suggestedTypes":  [{ "type": "categorical", "probability": 1.00 }], "varOriginalName": "", "varDisplayName": ""},
-						{"name":"displacement","type":"categorical","importance": 0,"role": "attribute","suggestedTypes":  [{ "type": "categorical", "probability": 1.00 }], "varOriginalName": "", "varDisplayName": ""}
+						{"name":"cylinders","type":"categorical","importance": 0,"role": "attribute","suggestedTypes":  [{ "type": "categorical", "probability": 1.00 }], "varOriginalName": "", "varDisplayName": "cylinders"},
+						{"name":"displacement","type":"categorical","importance": 0,"role": "attribute","suggestedTypes":  [{ "type": "categorical", "probability": 1.00 }], "varOriginalName": "", "varDisplayName": "displacement"}
 					]
 				}
 			]

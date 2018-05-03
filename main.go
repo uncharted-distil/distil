@@ -96,7 +96,7 @@ func main() {
 	}
 
 	// instantiate the metadata storage (using ES).
-	metadataStorageCtor := es.NewMetadataStorage(esClientCtor)
+	metadataStorageCtor := es.NewMetadataStorage(config.ESDatasetsIndex, esClientCtor)
 
 	// instantiate the postgres data storage constructor.
 	pgDataStorageCtor := pg.NewDataStorage(postgresClientCtor, metadataStorageCtor)

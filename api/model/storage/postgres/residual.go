@@ -8,13 +8,13 @@ import (
 )
 
 // FetchResidualsExtremaByURI fetches the residual extrema by resultURI.
-func (s *Storage) FetchResidualsExtremaByURI(dataset string, resultURI string, index string) (*model.Extrema, error) {
+func (s *Storage) FetchResidualsExtremaByURI(dataset string, resultURI string) (*model.Extrema, error) {
 	datasetResult := s.getResultTable(dataset)
 	targetName, err := s.getResultTargetName(datasetResult, resultURI)
 	if err != nil {
 		return nil, err
 	}
-	targetVariable, err := s.getResultTargetVariable(dataset, index, targetName)
+	targetVariable, err := s.getResultTargetVariable(dataset, targetName)
 	if err != nil {
 		return nil, err
 	}
@@ -26,14 +26,14 @@ func (s *Storage) FetchResidualsExtremaByURI(dataset string, resultURI string, i
 }
 
 // FetchResidualsSummary fetches a histogram of the residuals associated with a set of numerical predictions.
-func (s *Storage) FetchResidualsSummary(dataset string, resultURI string, index string, filterParams *model.FilterParams, extrema *model.Extrema) (*model.Histogram, error) {
+func (s *Storage) FetchResidualsSummary(dataset string, resultURI string, filterParams *model.FilterParams, extrema *model.Extrema) (*model.Histogram, error) {
 	datasetResult := s.getResultTable(dataset)
 	targetName, err := s.getResultTargetName(datasetResult, resultURI)
 	if err != nil {
 		return nil, err
 	}
 
-	variable, err := s.getResultTargetVariable(dataset, index, targetName)
+	variable, err := s.getResultTargetVariable(dataset, targetName)
 	if err != nil {
 		return nil, err
 	}

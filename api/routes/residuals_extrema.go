@@ -14,8 +14,6 @@ import (
 // ResidualsExtremaHandler returns the extremas for a residual summary.
 func ResidualsExtremaHandler(pipelineCtor model.PipelineStorageCtor, dataCtor model.DataStorageCtor) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
-		// extract route parameters
-		index := pat.Param(r, "index")
 		dataset := pat.Param(r, "dataset")
 		resultUUID, err := url.PathUnescape(pat.Param(r, "results-uuid"))
 		if err != nil {
@@ -42,7 +40,7 @@ func ResidualsExtremaHandler(pipelineCtor model.PipelineStorageCtor, dataCtor mo
 			return
 		}
 
-		extrema, err := data.FetchResidualsExtremaByURI(dataset, res.ResultURI, index)
+		extrema, err := data.FetchResidualsExtremaByURI(dataset, res.ResultURI)
 		if err != nil {
 			handleError(w, err)
 			return
