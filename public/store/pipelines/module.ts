@@ -1,36 +1,36 @@
 import { Module } from 'vuex';
-import { state, PipelineState } from './index';
+import { state, SolutionState } from './index';
 import { getters as moduleGetters } from './getters';
 import { actions as moduleActions } from './actions';
 import { mutations as moduleMutations } from './mutations';
 import { DistilState } from '../store';
 import { getStoreAccessors } from 'vuex-typescript';
 
-export const pipelineModule: Module<PipelineState, DistilState> = {
+export const solutionModule: Module<SolutionState, DistilState> = {
 	state: state,
 	getters: moduleGetters,
 	actions: moduleActions,
 	mutations: moduleMutations
 }
 
-const { commit, read, dispatch } = getStoreAccessors<PipelineState, DistilState>(null);
+const { commit, read, dispatch } = getStoreAccessors<SolutionState, DistilState>(null);
 
 export const getters = {
-	getRunningPipelines: read(moduleGetters.getRunningPipelines),
-	getCompletedPipelines: read(moduleGetters.getCompletedPipelines),
-	getPipelines: read(moduleGetters.getPipelines),
-	getPipelineRequestIds: read(moduleGetters.getPipelineRequestIds),
-	getActivePipeline: read(moduleGetters.getActivePipeline),
-	getActivePipelineTrainingMap: read(moduleGetters.getActivePipelineTrainingMap),
-	getActivePipelineVariables: read(moduleGetters.getActivePipelineVariables),
+	getRunningSolutions: read(moduleGetters.getRunningSolutions),
+	getCompletedSolutions: read(moduleGetters.getCompletedSolutions),
+	getSolutions: read(moduleGetters.getSolutions),
+	getSolutionRequestIds: read(moduleGetters.getSolutionRequestIds),
+	getActiveSolution: read(moduleGetters.getActiveSolution),
+	getActiveSolutionTrainingMap: read(moduleGetters.getActiveSolutionTrainingMap),
+	getActiveSolutionVariables: read(moduleGetters.getActiveSolutionVariables),
 }
 
 export const actions = {
-	fetchPipelines: dispatch(moduleActions.fetchPipelines),
-	createPipelines: dispatch(moduleActions.createPipelines),
+	fetchSolutions: dispatch(moduleActions.fetchSolutions),
+	createSolutions: dispatch(moduleActions.createSolutions),
 }
 
 export const mutations = {
-	updatePipelineRequests: commit(moduleMutations.updatePipelineRequests),
-	clearPipelineRequests: commit(moduleMutations.clearPipelineRequests)
+	updateSolutionRequests: commit(moduleMutations.updateSolutionRequests),
+	clearSolutionRequests: commit(moduleMutations.clearSolutionRequests)
 }

@@ -74,14 +74,14 @@ func (s *Storage) FetchRequest(requestID string) (*model.Request, error) {
 	return s.loadRequest(rows)
 }
 
-// FetchRequestByPipelineID pulls request information from Postgres using
-// a pipeline ID.
-func (s *Storage) FetchRequestByPipelineID(pipelineID string) (*model.Request, error) {
+// FetchRequestBySolutionID pulls request information from Postgres using
+// a solution ID.
+func (s *Storage) FetchRequestBySolutionID(solutionID string) (*model.Request, error) {
 	sql := fmt.Sprintf("SELECT req.request_id, req.dataset, req.progress, req.created_time, req.last_updated_time "+
-		"FROM %s as req INNER JOIN %s as pip ON req.request_id = pip.request_id "+
-		"WHERE pip.pipeline_id = $1;", requestTableName, pipelineTableName)
+		"FROM %s as req INNER JOIN %s as sol ON req.request_id = sol.request_id "+
+		"WHERE sol.solution_id = $1;", requestTableName, solutionTableName)
 
-	rows, err := s.client.Query(sql, pipelineID)
+	rows, err := s.client.Query(sql, solutionID)
 	if err != nil {
 		return nil, errors.Wrap(err, "Unable to pull request from Postgres")
 	}
@@ -213,31 +213,31 @@ func (s *Storage) FetchRequestFilters(requestID string, features []*model.Featur
 	return filters, nil
 }
 
-func (s *Storage) loadRequestFromPipelineID(pipelineID string) (*model.Request, error) {
-	pipeline, err := s.FetchPipeline(pipelineID)
+func (s *Storage) loadRequestFromSolutionID(solutionID string) (*model.Request, error) {
+	solution, err := s.FetchSolution(solutionID)
 	if err != nil {
-		return nil, errors.Wrap(err, "Unable to fetch pipeline from Postgres")
+		return nil, errors.Wrap(err, "Unable to fetch solution from Postgres")
 	}
 
-	request, err := s.FetchRequest(pipeline.RequestID)
+	request, err := s.FetchRequest(solution.RequestID)
 	if err != nil {
 		return nil, errors.Wrap(err, "Unable to fetch request from Postgres")
 	}
-	request.Pipelines = []*model.Pipeline{pipeline}
+	request.Solutions = []*model.Solution{solution}
 
 	return request, nil
 }
 
-// FetchPipelineResultByDatasetTarget pulls a request with pipeline
+// FetchSolutionResultByDatasetTarget pulls a request with solution
 // result information from Postgres. Only the latest result for each
-// pipeline is fetched.
-func (s *Storage) FetchPipelineResultByDatasetTarget(dataset string, target string, pipelineID string) ([]*model.Request, error) {
+// solution is fetched.
+func (s *Storage) FetchSolutionResultByDatasetTarget(dataset string, target string, solutionID string) ([]*model.Request, error) {
 
-	// get the pipeline ids
-	sql := fmt.Sprintf("SELECT DISTINCT pipeline.pipeline_id "+
+	// get the solution ids
+	sql := fmt.Sprintf("SELECT DISTINCT solution.solution_id "+
 		"FROM %s request INNER JOIN %s rf ON request.request_id = rf.request_id "+
-		"INNER JOIN %s pipeline ON request.request_id = pipeline.request_id ",
-		requestTableName, featureTableName, pipelineTableName)
+		"INNER JOIN %s solution ON request.request_id = solution.request_id ",
+		requestTableName, featureTableName, solutionTableName)
 	params := make([]interface{}, 0)
 
 	if dataset != "" {
@@ -249,15 +249,15 @@ func (s *Storage) FetchPipelineResultByDatasetTarget(dataset string, target stri
 		params = append(params, target)
 		params = append(params, model.FeatureTypeTarget)
 	}
-	if pipelineID != "" {
-		sql = fmt.Sprintf("%s AND pipeline.pipeline_id = $%d", sql, len(params)+1)
-		params = append(params, pipelineID)
+	if solutionID != "" {
+		sql = fmt.Sprintf("%s AND solution.solution_id = $%d", sql, len(params)+1)
+		params = append(params, solutionID)
 	}
 
 	sql = fmt.Sprintf("%s;", sql)
 	rows, err := s.client.Query(sql, params...)
 	if err != nil {
-		return nil, errors.Wrap(err, "Unable to pull pipeline ids from Postgres")
+		return nil, errors.Wrap(err, "Unable to pull solution ids from Postgres")
 	}
 	if rows != nil {
 		defer rows.Close()
@@ -265,28 +265,28 @@ func (s *Storage) FetchPipelineResultByDatasetTarget(dataset string, target stri
 
 	// TODO: code should be changed to not have a request / result built.
 	// Would need to lookup to see if the request was already loaded.
-	// Then would need to see if the pipeline was loaded.
+	// Then would need to see if the solution was loaded.
 	requests := make([]*model.Request, 0)
 	for rows.Next() {
-		var pipelineID string
+		var solutionID string
 
-		err = rows.Scan(&pipelineID)
+		err = rows.Scan(&solutionID)
 		if err != nil {
-			return nil, errors.Wrap(err, "Unable to parse pipeline id from Postgres")
+			return nil, errors.Wrap(err, "Unable to parse solution id from Postgres")
 		}
 
-		request, err := s.loadRequestFromPipelineID(pipelineID)
+		request, err := s.loadRequestFromSolutionID(solutionID)
 		if err != nil {
 			return nil, errors.Wrap(err, "Unable to load request from Postgres")
 		}
 
-		result, err := s.FetchPipelineResult(pipelineID)
+		result, err := s.FetchSolutionResult(solutionID)
 		if err != nil {
-			return nil, errors.Wrap(err, "Unable to parse pipeline result from Postgres")
+			return nil, errors.Wrap(err, "Unable to parse solution result from Postgres")
 		}
 
 		if result != nil {
-			request.Pipelines[0].Results = []*model.PipelineResult{
+			request.Solutions[0].Results = []*model.SolutionResult{
 				result,
 			}
 		}

@@ -10,7 +10,7 @@ import (
 	"google.golang.org/grpc"
 )
 
-// Client provides facilities for managing GPRC pipeline requests. Requests are
+// Client provides facilities for managing GPRC solution requests. Requests are
 // isssued and a context object containing rx channels is returned to the caller for consumption
 // of results. The context for running requests can also be fetched, along with their buffered
 // results. Spawning a grpc.ClientConn per RPC call is not considered good practice - the system
@@ -24,7 +24,7 @@ type Client struct {
 }
 
 // NewClient creates a new pipline request dispatcher instance. This will establish
-// the connection to the pipeline server or return an error on fail
+// the connection to the solution server or return an error on fail
 func NewClient(serverAddr string, dataDir string, trace bool) (*Client, error) {
 	conn, err := grpc.Dial(
 		serverAddr,
@@ -44,174 +44,174 @@ func NewClient(serverAddr string, dataDir string, trace bool) (*Client, error) {
 	return &client, nil
 }
 
-// Close the connection to the pipeline service
+// Close the connection to the solution service
 func (c *Client) Close() {
 	log.Infof("client connection closed")
 	c.conn.Close()
 }
 
-// StartSearch starts a pipeline search session.
-func (c *Client) StartSearch(ctx context.Context, request *SearchPipelinesRequest) (string, error) {
+// StartSearch starts a solution search session.
+func (c *Client) StartSearch(ctx context.Context, request *SearchSolutionsRequest) (string, error) {
 
-	searchPipelineResponse, err := c.client.SearchPipelines(ctx, request)
+	searchSolutionResponse, err := c.client.SearchSolutions(ctx, request)
 	if err != nil {
 		return "", err
 	}
 
-	return searchPipelineResponse.SearchId, nil
+	return searchSolutionResponse.SearchId, nil
 }
 
-// SearchPipelines generates candidate pipel\ines.
-func (c *Client) SearchPipelines(ctx context.Context, searchID string) ([]*GetSearchPipelinesResultsResponse, error) {
+// SearchSolutions generates candidate pipel\ines.
+func (c *Client) SearchSolutions(ctx context.Context, searchID string) ([]*GetSearchSolutionsResultsResponse, error) {
 
-	searchPiplinesResultsRequest := &GetSearchPipelinesResultsRequest{
+	searchPiplinesResultsRequest := &GetSearchSolutionsResultsRequest{
 		SearchId: searchID,
 	}
 
-	searchPipelinesResultsResponse, err := c.client.GetSearchPipelinesResults(ctx, searchPiplinesResultsRequest)
+	searchSolutionsResultsResponse, err := c.client.GetSearchSolutionsResults(ctx, searchPiplinesResultsRequest)
 	if err != nil {
 		return nil, err
 	}
 
-	var pipelineResultResponses []*GetSearchPipelinesResultsResponse
+	var solutionResultResponses []*GetSearchSolutionsResultsResponse
 
 	err = pullFromAPI(pullMax, pullTimeout, func() error {
-		pipelineResultResponse, err := searchPipelinesResultsResponse.Recv()
+		solutionResultResponse, err := searchSolutionsResultsResponse.Recv()
 		if err != nil {
 			return err
 		}
-		pipelineResultResponses = append(pipelineResultResponses, pipelineResultResponse)
+		solutionResultResponses = append(solutionResultResponses, solutionResultResponse)
 		return nil
 	})
 	if err != nil {
 		return nil, err
 	}
 
-	return pipelineResultResponses, nil
+	return solutionResultResponses, nil
 }
 
-// GeneratePipelineScores generates scrores for candidate pipelines.
-func (c *Client) GeneratePipelineScores(ctx context.Context, pipelineID string) ([]*GetScorePipelineResultsResponse, error) {
+// GenerateSolutionScores generates scrores for candidate solutions.
+func (c *Client) GenerateSolutionScores(ctx context.Context, solutionID string) ([]*GetScoreSolutionResultsResponse, error) {
 
-	scorePipelineRequest := &ScorePipelineRequest{
-		PipelineId: pipelineID,
+	scoreSolutionRequest := &ScoreSolutionRequest{
+		SolutionId: solutionID,
 	}
 
-	scorePipelineResponse, err := c.client.ScorePipeline(ctx, scorePipelineRequest)
+	scoreSolutionResponse, err := c.client.ScoreSolution(ctx, scoreSolutionRequest)
 	if err != nil {
 		return nil, err
 	}
 
-	searchPiplinesResultsRequest := &GetScorePipelineResultsRequest{
-		RequestId: scorePipelineResponse.RequestId,
+	searchPiplinesResultsRequest := &GetScoreSolutionResultsRequest{
+		RequestId: scoreSolutionResponse.RequestId,
 	}
 
-	scorePipelineResultsResponse, err := c.client.GetScorePipelineResults(ctx, searchPiplinesResultsRequest)
+	scoreSolutionResultsResponse, err := c.client.GetScoreSolutionResults(ctx, searchPiplinesResultsRequest)
 	if err != nil {
 		return nil, err
 	}
 
-	var pipelineResultResponses []*GetScorePipelineResultsResponse
+	var solutionResultResponses []*GetScoreSolutionResultsResponse
 
 	err = pullFromAPI(pullMax, pullTimeout, func() error {
-		pipelineResultResponse, err := scorePipelineResultsResponse.Recv()
+		solutionResultResponse, err := scoreSolutionResultsResponse.Recv()
 		if err != nil {
 			return err
 		}
-		pipelineResultResponses = append(pipelineResultResponses, pipelineResultResponse)
+		solutionResultResponses = append(solutionResultResponses, solutionResultResponse)
 		return nil
 	})
 	if err != nil {
 		return nil, err
 	}
 
-	return pipelineResultResponses, nil
+	return solutionResultResponses, nil
 }
 
-// GeneratePipelineFit generates fit for candidate pipelines.
-func (c *Client) GeneratePipelineFit(ctx context.Context, pipelineID string) ([]*GetFitPipelineResultsResponse, error) {
+// GenerateSolutionFit generates fit for candidate solutions.
+func (c *Client) GenerateSolutionFit(ctx context.Context, solutionID string) ([]*GetFitSolutionResultsResponse, error) {
 
-	fitPipelineRequest := &FitPipelineRequest{
-		PipelineId: pipelineID,
+	fitSolutionRequest := &FitSolutionRequest{
+		SolutionId: solutionID,
 	}
 
-	fitPipelineResponse, err := c.client.FitPipeline(ctx, fitPipelineRequest)
+	fitSolutionResponse, err := c.client.FitSolution(ctx, fitSolutionRequest)
 	if err != nil {
 		return nil, err
 	}
 
-	fitPipelineResultsRequest := &GetFitPipelineResultsRequest{
-		RequestId: fitPipelineResponse.RequestId,
+	fitSolutionResultsRequest := &GetFitSolutionResultsRequest{
+		RequestId: fitSolutionResponse.RequestId,
 	}
 
-	fitPipelineResultsResponse, err := c.client.GetFitPipelineResults(ctx, fitPipelineResultsRequest)
+	fitSolutionResultsResponse, err := c.client.GetFitSolutionResults(ctx, fitSolutionResultsRequest)
 	if err != nil {
 		return nil, err
 	}
 
-	var pipelineResultResponses []*GetFitPipelineResultsResponse
+	var solutionResultResponses []*GetFitSolutionResultsResponse
 
 	err = pullFromAPI(pullMax, pullTimeout, func() error {
-		pipelineResultResponse, err := fitPipelineResultsResponse.Recv()
+		solutionResultResponse, err := fitSolutionResultsResponse.Recv()
 		if err != nil {
 			return err
 		}
-		pipelineResultResponses = append(pipelineResultResponses, pipelineResultResponse)
+		solutionResultResponses = append(solutionResultResponses, solutionResultResponse)
 		return nil
 	})
 	if err != nil {
 		return nil, err
 	}
 
-	return pipelineResultResponses, nil
+	return solutionResultResponses, nil
 }
 
 // GeneratePredictions generates predictions.
-func (c *Client) GeneratePredictions(ctx context.Context, request *ProducePipelineRequest) ([]*GetProducePipelineResultsResponse, error) {
+func (c *Client) GeneratePredictions(ctx context.Context, request *ProduceSolutionRequest) ([]*GetProduceSolutionResultsResponse, error) {
 
-	producePipelineResponse, err := c.client.ProducePipeline(ctx, request)
+	produceSolutionResponse, err := c.client.ProduceSolution(ctx, request)
 	if err != nil {
 		return nil, err
 	}
 
-	producePipelineResultsRequest := &GetProducePipelineResultsRequest{
-		RequestId: producePipelineResponse.RequestId,
+	produceSolutionResultsRequest := &GetProduceSolutionResultsRequest{
+		RequestId: produceSolutionResponse.RequestId,
 	}
 
-	producePipelineResultsResponse, err := c.client.GetProducePipelineResults(ctx, producePipelineResultsRequest)
+	produceSolutionResultsResponse, err := c.client.GetProduceSolutionResults(ctx, produceSolutionResultsRequest)
 	if err != nil {
 		return nil, err
 	}
 
-	var pipelineResultResponses []*GetProducePipelineResultsResponse
+	var solutionResultResponses []*GetProduceSolutionResultsResponse
 
 	err = pullFromAPI(pullMax, pullTimeout, func() error {
-		pipelineResultResponse, err := producePipelineResultsResponse.Recv()
+		solutionResultResponse, err := produceSolutionResultsResponse.Recv()
 		if err != nil {
 			return err
 		}
-		pipelineResultResponses = append(pipelineResultResponses, pipelineResultResponse)
+		solutionResultResponses = append(solutionResultResponses, solutionResultResponse)
 		return nil
 	})
 	if err != nil {
 		return nil, err
 	}
 
-	return pipelineResultResponses, nil
+	return solutionResultResponses, nil
 }
 
-// EndSearch ends the pipeline search session.
+// EndSearch ends the solution search session.
 func (c *Client) EndSearch(ctx context.Context, searchID string) error {
 
-	endSearchPipelines := &EndSearchPipelinesRequest{
+	endSearchSolutions := &EndSearchSolutionsRequest{
 		SearchId: searchID,
 	}
 
-	_, err := c.client.EndSearchPipelines(ctx, endSearchPipelines)
+	_, err := c.client.EndSearchSolutions(ctx, endSearchSolutions)
 	return err
 }
 
-// ExportPipeline exports the pipeline.
-func (c *Client) ExportPipeline(ctx context.Context, pipelineID string, exportURI string) error {
+// ExportSolution exports the solution.
+func (c *Client) ExportSolution(ctx context.Context, solutionID string, exportURI string) error {
 	return nil
 }

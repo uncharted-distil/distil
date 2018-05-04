@@ -13,6 +13,12 @@ var _ = proto.Marshal
 var _ = fmt.Errorf
 var _ = math.Inf
 
+// This is a compile-time assertion to ensure that this generated file
+// is compatible with the proto package it is being compiled against.
+// A compilation error at this line likely means your copy of the
+// proto package needs to be updated.
+const _ = proto.ProtoPackageIsVersion2 // please upgrade the proto package
+
 type ValueType int32
 
 const (
@@ -60,7 +66,9 @@ var ValueType_value = map[string]int32{
 func (x ValueType) String() string {
 	return proto.EnumName(ValueType_name, int32(x))
 }
-func (ValueType) EnumDescriptor() ([]byte, []int) { return fileDescriptor4, []int{0} }
+func (ValueType) EnumDescriptor() ([]byte, []int) {
+	return fileDescriptor_value_6c24ea2e03c5abec, []int{0}
+}
 
 type ValueError struct {
 	// A error message useful for debugging or logging. Not meant to be very end-user friendly.
@@ -69,13 +77,35 @@ type ValueError struct {
 	// would otherwise support a given value, then the error message should communicate this error.
 	// If there was such an error but some later value type allowed for recovery, then there
 	// should be no error.
-	Message string `protobuf:"bytes,1,opt,name=message" json:"message,omitempty"`
+	Message              string   `protobuf:"bytes,1,opt,name=message" json:"message,omitempty"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
 }
 
-func (m *ValueError) Reset()                    { *m = ValueError{} }
-func (m *ValueError) String() string            { return proto.CompactTextString(m) }
-func (*ValueError) ProtoMessage()               {}
-func (*ValueError) Descriptor() ([]byte, []int) { return fileDescriptor4, []int{0} }
+func (m *ValueError) Reset()         { *m = ValueError{} }
+func (m *ValueError) String() string { return proto.CompactTextString(m) }
+func (*ValueError) ProtoMessage()    {}
+func (*ValueError) Descriptor() ([]byte, []int) {
+	return fileDescriptor_value_6c24ea2e03c5abec, []int{0}
+}
+func (m *ValueError) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_ValueError.Unmarshal(m, b)
+}
+func (m *ValueError) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_ValueError.Marshal(b, m, deterministic)
+}
+func (dst *ValueError) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ValueError.Merge(dst, src)
+}
+func (m *ValueError) XXX_Size() int {
+	return xxx_messageInfo_ValueError.Size(m)
+}
+func (m *ValueError) XXX_DiscardUnknown() {
+	xxx_messageInfo_ValueError.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_ValueError proto.InternalMessageInfo
 
 func (m *ValueError) GetMessage() string {
 	if m != nil {
@@ -97,13 +127,35 @@ type Value struct {
 	//	*Value_PickleBlob
 	//	*Value_CsvUri
 	//	*Value_PlasmaId
-	Value isValue_Value `protobuf_oneof:"value"`
+	Value                isValue_Value `protobuf_oneof:"value"`
+	XXX_NoUnkeyedLiteral struct{}      `json:"-"`
+	XXX_unrecognized     []byte        `json:"-"`
+	XXX_sizecache        int32         `json:"-"`
 }
 
-func (m *Value) Reset()                    { *m = Value{} }
-func (m *Value) String() string            { return proto.CompactTextString(m) }
-func (*Value) ProtoMessage()               {}
-func (*Value) Descriptor() ([]byte, []int) { return fileDescriptor4, []int{1} }
+func (m *Value) Reset()         { *m = Value{} }
+func (m *Value) String() string { return proto.CompactTextString(m) }
+func (*Value) ProtoMessage()    {}
+func (*Value) Descriptor() ([]byte, []int) {
+	return fileDescriptor_value_6c24ea2e03c5abec, []int{1}
+}
+func (m *Value) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_Value.Unmarshal(m, b)
+}
+func (m *Value) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_Value.Marshal(b, m, deterministic)
+}
+func (dst *Value) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_Value.Merge(dst, src)
+}
+func (m *Value) XXX_Size() int {
+	return xxx_messageInfo_Value.Size(m)
+}
+func (m *Value) XXX_DiscardUnknown() {
+	xxx_messageInfo_Value.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_Value proto.InternalMessageInfo
 
 type isValue_Value interface {
 	isValue_Value()
@@ -398,44 +450,44 @@ func _Value_OneofSizer(msg proto.Message) (n int) {
 	switch x := m.Value.(type) {
 	case *Value_Error:
 		s := proto.Size(x.Error)
-		n += proto.SizeVarint(1<<3 | proto.WireBytes)
+		n += 1 // tag and wire
 		n += proto.SizeVarint(uint64(s))
 		n += s
 	case *Value_Double:
-		n += proto.SizeVarint(2<<3 | proto.WireFixed64)
+		n += 1 // tag and wire
 		n += 8
 	case *Value_Int64:
-		n += proto.SizeVarint(3<<3 | proto.WireVarint)
+		n += 1 // tag and wire
 		n += proto.SizeVarint(uint64(x.Int64))
 	case *Value_Bool:
-		n += proto.SizeVarint(4<<3 | proto.WireVarint)
+		n += 1 // tag and wire
 		n += 1
 	case *Value_String_:
-		n += proto.SizeVarint(5<<3 | proto.WireBytes)
+		n += 1 // tag and wire
 		n += proto.SizeVarint(uint64(len(x.String_)))
 		n += len(x.String_)
 	case *Value_Bytes:
-		n += proto.SizeVarint(6<<3 | proto.WireBytes)
+		n += 1 // tag and wire
 		n += proto.SizeVarint(uint64(len(x.Bytes)))
 		n += len(x.Bytes)
 	case *Value_DatasetUri:
-		n += proto.SizeVarint(7<<3 | proto.WireBytes)
+		n += 1 // tag and wire
 		n += proto.SizeVarint(uint64(len(x.DatasetUri)))
 		n += len(x.DatasetUri)
 	case *Value_PickleUri:
-		n += proto.SizeVarint(8<<3 | proto.WireBytes)
+		n += 1 // tag and wire
 		n += proto.SizeVarint(uint64(len(x.PickleUri)))
 		n += len(x.PickleUri)
 	case *Value_PickleBlob:
-		n += proto.SizeVarint(9<<3 | proto.WireBytes)
+		n += 1 // tag and wire
 		n += proto.SizeVarint(uint64(len(x.PickleBlob)))
 		n += len(x.PickleBlob)
 	case *Value_CsvUri:
-		n += proto.SizeVarint(10<<3 | proto.WireBytes)
+		n += 1 // tag and wire
 		n += proto.SizeVarint(uint64(len(x.CsvUri)))
 		n += len(x.CsvUri)
 	case *Value_PlasmaId:
-		n += proto.SizeVarint(11<<3 | proto.WireBytes)
+		n += 1 // tag and wire
 		n += proto.SizeVarint(uint64(len(x.PlasmaId)))
 		n += len(x.PlasmaId)
 	case nil:
@@ -451,9 +503,9 @@ func init() {
 	proto.RegisterEnum("ValueType", ValueType_name, ValueType_value)
 }
 
-func init() { proto.RegisterFile("value.proto", fileDescriptor4) }
+func init() { proto.RegisterFile("value.proto", fileDescriptor_value_6c24ea2e03c5abec) }
 
-var fileDescriptor4 = []byte{
+var fileDescriptor_value_6c24ea2e03c5abec = []byte{
 	// 410 bytes of a gzipped FileDescriptorProto
 	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x44, 0x92, 0xef, 0x8b, 0xd3, 0x30,
 	0x18, 0xc7, 0xd7, 0x6d, 0x5d, 0xd7, 0x27, 0xfe, 0x28, 0xe1, 0x90, 0x28, 0x88, 0xbd, 0x13, 0xa4,

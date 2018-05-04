@@ -13,6 +13,12 @@ var _ = proto.Marshal
 var _ = fmt.Errorf
 var _ = math.Inf
 
+// This is a compile-time assertion to ensure that this generated file
+// is compatible with the proto package it is being compiled against.
+// A compilation error at this line likely means your copy of the
+// proto package needs to be updated.
+const _ = proto.ProtoPackageIsVersion2 // please upgrade the proto package
+
 // Top level classification of the problem.
 type TaskType int32
 
@@ -61,7 +67,9 @@ var TaskType_value = map[string]int32{
 func (x TaskType) String() string {
 	return proto.EnumName(TaskType_name, int32(x))
 }
-func (TaskType) EnumDescriptor() ([]byte, []int) { return fileDescriptor3, []int{0} }
+func (TaskType) EnumDescriptor() ([]byte, []int) {
+	return fileDescriptor_problem_75e7978529a05cc2, []int{0}
+}
 
 // Secondary classification of the problem.
 type TaskSubtype int32
@@ -106,7 +114,9 @@ var TaskSubtype_value = map[string]int32{
 func (x TaskSubtype) String() string {
 	return proto.EnumName(TaskSubtype_name, int32(x))
 }
-func (TaskSubtype) EnumDescriptor() ([]byte, []int) { return fileDescriptor3, []int{1} }
+func (TaskSubtype) EnumDescriptor() ([]byte, []int) {
+	return fileDescriptor_problem_75e7978529a05cc2, []int{1}
+}
 
 // The evaluation metric for any potential solution.
 type PerformanceMetric int32
@@ -115,7 +125,7 @@ const (
 	// Default value. Not to be used.
 	PerformanceMetric_METRIC_UNDEFINED PerformanceMetric = 0
 	// The following are the only evaluation methods required
-	// to be supported for the ScorePipeline call.
+	// to be supported for the ScoreSolution call.
 	PerformanceMetric_ACCURACY                      PerformanceMetric = 1
 	PerformanceMetric_F1                            PerformanceMetric = 2
 	PerformanceMetric_F1_MICRO                      PerformanceMetric = 3
@@ -180,19 +190,43 @@ var PerformanceMetric_value = map[string]int32{
 func (x PerformanceMetric) String() string {
 	return proto.EnumName(PerformanceMetric_name, int32(x))
 }
-func (PerformanceMetric) EnumDescriptor() ([]byte, []int) { return fileDescriptor3, []int{2} }
+func (PerformanceMetric) EnumDescriptor() ([]byte, []int) {
+	return fileDescriptor_problem_75e7978529a05cc2, []int{2}
+}
 
 type ProblemPerformanceMetric struct {
 	Metric PerformanceMetric `protobuf:"varint,1,opt,name=metric,enum=PerformanceMetric" json:"metric,omitempty"`
 	// Additional params used by some metrics.
-	K        int32  `protobuf:"varint,2,opt,name=k" json:"k,omitempty"`
-	PosLabel string `protobuf:"bytes,3,opt,name=pos_label,json=posLabel" json:"pos_label,omitempty"`
+	K                    int32    `protobuf:"varint,2,opt,name=k" json:"k,omitempty"`
+	PosLabel             string   `protobuf:"bytes,3,opt,name=pos_label,json=posLabel" json:"pos_label,omitempty"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
 }
 
-func (m *ProblemPerformanceMetric) Reset()                    { *m = ProblemPerformanceMetric{} }
-func (m *ProblemPerformanceMetric) String() string            { return proto.CompactTextString(m) }
-func (*ProblemPerformanceMetric) ProtoMessage()               {}
-func (*ProblemPerformanceMetric) Descriptor() ([]byte, []int) { return fileDescriptor3, []int{0} }
+func (m *ProblemPerformanceMetric) Reset()         { *m = ProblemPerformanceMetric{} }
+func (m *ProblemPerformanceMetric) String() string { return proto.CompactTextString(m) }
+func (*ProblemPerformanceMetric) ProtoMessage()    {}
+func (*ProblemPerformanceMetric) Descriptor() ([]byte, []int) {
+	return fileDescriptor_problem_75e7978529a05cc2, []int{0}
+}
+func (m *ProblemPerformanceMetric) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_ProblemPerformanceMetric.Unmarshal(m, b)
+}
+func (m *ProblemPerformanceMetric) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_ProblemPerformanceMetric.Marshal(b, m, deterministic)
+}
+func (dst *ProblemPerformanceMetric) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ProblemPerformanceMetric.Merge(dst, src)
+}
+func (m *ProblemPerformanceMetric) XXX_Size() int {
+	return xxx_messageInfo_ProblemPerformanceMetric.Size(m)
+}
+func (m *ProblemPerformanceMetric) XXX_DiscardUnknown() {
+	xxx_messageInfo_ProblemPerformanceMetric.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_ProblemPerformanceMetric proto.InternalMessageInfo
 
 func (m *ProblemPerformanceMetric) GetMetric() PerformanceMetric {
 	if m != nil {
@@ -219,18 +253,40 @@ type Problem struct {
 	// ID of this problem.
 	Id string `protobuf:"bytes,1,opt,name=id" json:"id,omitempty"`
 	// Version of this problem.
-	Version            string                      `protobuf:"bytes,2,opt,name=version" json:"version,omitempty"`
-	Name               string                      `protobuf:"bytes,3,opt,name=name" json:"name,omitempty"`
-	Description        string                      `protobuf:"bytes,4,opt,name=description" json:"description,omitempty"`
-	TaskType           TaskType                    `protobuf:"varint,5,opt,name=task_type,json=taskType,enum=TaskType" json:"task_type,omitempty"`
-	TaskSubtype        TaskSubtype                 `protobuf:"varint,6,opt,name=task_subtype,json=taskSubtype,enum=TaskSubtype" json:"task_subtype,omitempty"`
-	PerformanceMetrics []*ProblemPerformanceMetric `protobuf:"bytes,7,rep,name=performance_metrics,json=performanceMetrics" json:"performance_metrics,omitempty"`
+	Version              string                      `protobuf:"bytes,2,opt,name=version" json:"version,omitempty"`
+	Name                 string                      `protobuf:"bytes,3,opt,name=name" json:"name,omitempty"`
+	Description          string                      `protobuf:"bytes,4,opt,name=description" json:"description,omitempty"`
+	TaskType             TaskType                    `protobuf:"varint,5,opt,name=task_type,json=taskType,enum=TaskType" json:"task_type,omitempty"`
+	TaskSubtype          TaskSubtype                 `protobuf:"varint,6,opt,name=task_subtype,json=taskSubtype,enum=TaskSubtype" json:"task_subtype,omitempty"`
+	PerformanceMetrics   []*ProblemPerformanceMetric `protobuf:"bytes,7,rep,name=performance_metrics,json=performanceMetrics" json:"performance_metrics,omitempty"`
+	XXX_NoUnkeyedLiteral struct{}                    `json:"-"`
+	XXX_unrecognized     []byte                      `json:"-"`
+	XXX_sizecache        int32                       `json:"-"`
 }
 
-func (m *Problem) Reset()                    { *m = Problem{} }
-func (m *Problem) String() string            { return proto.CompactTextString(m) }
-func (*Problem) ProtoMessage()               {}
-func (*Problem) Descriptor() ([]byte, []int) { return fileDescriptor3, []int{1} }
+func (m *Problem) Reset()         { *m = Problem{} }
+func (m *Problem) String() string { return proto.CompactTextString(m) }
+func (*Problem) ProtoMessage()    {}
+func (*Problem) Descriptor() ([]byte, []int) {
+	return fileDescriptor_problem_75e7978529a05cc2, []int{1}
+}
+func (m *Problem) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_Problem.Unmarshal(m, b)
+}
+func (m *Problem) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_Problem.Marshal(b, m, deterministic)
+}
+func (dst *Problem) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_Problem.Merge(dst, src)
+}
+func (m *Problem) XXX_Size() int {
+	return xxx_messageInfo_Problem.Size(m)
+}
+func (m *Problem) XXX_DiscardUnknown() {
+	xxx_messageInfo_Problem.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_Problem proto.InternalMessageInfo
 
 func (m *Problem) GetId() string {
 	if m != nil {
@@ -282,16 +338,38 @@ func (m *Problem) GetPerformanceMetrics() []*ProblemPerformanceMetric {
 }
 
 type ProblemTarget struct {
-	TargetIndex int32  `protobuf:"varint,1,opt,name=target_index,json=targetIndex" json:"target_index,omitempty"`
-	ResourceId  string `protobuf:"bytes,2,opt,name=resource_id,json=resourceId" json:"resource_id,omitempty"`
-	ColumnIndex int32  `protobuf:"varint,3,opt,name=column_index,json=columnIndex" json:"column_index,omitempty"`
-	ColumnName  string `protobuf:"bytes,4,opt,name=column_name,json=columnName" json:"column_name,omitempty"`
+	TargetIndex          int32    `protobuf:"varint,1,opt,name=target_index,json=targetIndex" json:"target_index,omitempty"`
+	ResourceId           string   `protobuf:"bytes,2,opt,name=resource_id,json=resourceId" json:"resource_id,omitempty"`
+	ColumnIndex          int32    `protobuf:"varint,3,opt,name=column_index,json=columnIndex" json:"column_index,omitempty"`
+	ColumnName           string   `protobuf:"bytes,4,opt,name=column_name,json=columnName" json:"column_name,omitempty"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
 }
 
-func (m *ProblemTarget) Reset()                    { *m = ProblemTarget{} }
-func (m *ProblemTarget) String() string            { return proto.CompactTextString(m) }
-func (*ProblemTarget) ProtoMessage()               {}
-func (*ProblemTarget) Descriptor() ([]byte, []int) { return fileDescriptor3, []int{2} }
+func (m *ProblemTarget) Reset()         { *m = ProblemTarget{} }
+func (m *ProblemTarget) String() string { return proto.CompactTextString(m) }
+func (*ProblemTarget) ProtoMessage()    {}
+func (*ProblemTarget) Descriptor() ([]byte, []int) {
+	return fileDescriptor_problem_75e7978529a05cc2, []int{2}
+}
+func (m *ProblemTarget) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_ProblemTarget.Unmarshal(m, b)
+}
+func (m *ProblemTarget) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_ProblemTarget.Marshal(b, m, deterministic)
+}
+func (dst *ProblemTarget) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ProblemTarget.Merge(dst, src)
+}
+func (m *ProblemTarget) XXX_Size() int {
+	return xxx_messageInfo_ProblemTarget.Size(m)
+}
+func (m *ProblemTarget) XXX_DiscardUnknown() {
+	xxx_messageInfo_ProblemTarget.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_ProblemTarget proto.InternalMessageInfo
 
 func (m *ProblemTarget) GetTargetIndex() int32 {
 	if m != nil {
@@ -327,13 +405,35 @@ type ProblemInput struct {
 	// in its metadata. That ID is then used here to reference those inputs.
 	DatasetId string `protobuf:"bytes,1,opt,name=dataset_id,json=datasetId" json:"dataset_id,omitempty"`
 	// Targets should resolve to columns in a given dataset.
-	Targets []*ProblemTarget `protobuf:"bytes,2,rep,name=targets" json:"targets,omitempty"`
+	Targets              []*ProblemTarget `protobuf:"bytes,2,rep,name=targets" json:"targets,omitempty"`
+	XXX_NoUnkeyedLiteral struct{}         `json:"-"`
+	XXX_unrecognized     []byte           `json:"-"`
+	XXX_sizecache        int32            `json:"-"`
 }
 
-func (m *ProblemInput) Reset()                    { *m = ProblemInput{} }
-func (m *ProblemInput) String() string            { return proto.CompactTextString(m) }
-func (*ProblemInput) ProtoMessage()               {}
-func (*ProblemInput) Descriptor() ([]byte, []int) { return fileDescriptor3, []int{3} }
+func (m *ProblemInput) Reset()         { *m = ProblemInput{} }
+func (m *ProblemInput) String() string { return proto.CompactTextString(m) }
+func (*ProblemInput) ProtoMessage()    {}
+func (*ProblemInput) Descriptor() ([]byte, []int) {
+	return fileDescriptor_problem_75e7978529a05cc2, []int{3}
+}
+func (m *ProblemInput) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_ProblemInput.Unmarshal(m, b)
+}
+func (m *ProblemInput) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_ProblemInput.Marshal(b, m, deterministic)
+}
+func (dst *ProblemInput) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ProblemInput.Merge(dst, src)
+}
+func (m *ProblemInput) XXX_Size() int {
+	return xxx_messageInfo_ProblemInput.Size(m)
+}
+func (m *ProblemInput) XXX_DiscardUnknown() {
+	xxx_messageInfo_ProblemInput.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_ProblemInput proto.InternalMessageInfo
 
 func (m *ProblemInput) GetDatasetId() string {
 	if m != nil {
@@ -355,14 +455,36 @@ func (m *ProblemInput) GetTargets() []*ProblemTarget {
 // and are needed only when executing an exported pipeline, but then
 // TA2 gets full problem description anyway directly.
 type ProblemDescription struct {
-	Problem *Problem        `protobuf:"bytes,1,opt,name=problem" json:"problem,omitempty"`
-	Inputs  []*ProblemInput `protobuf:"bytes,2,rep,name=inputs" json:"inputs,omitempty"`
+	Problem              *Problem        `protobuf:"bytes,1,opt,name=problem" json:"problem,omitempty"`
+	Inputs               []*ProblemInput `protobuf:"bytes,2,rep,name=inputs" json:"inputs,omitempty"`
+	XXX_NoUnkeyedLiteral struct{}        `json:"-"`
+	XXX_unrecognized     []byte          `json:"-"`
+	XXX_sizecache        int32           `json:"-"`
 }
 
-func (m *ProblemDescription) Reset()                    { *m = ProblemDescription{} }
-func (m *ProblemDescription) String() string            { return proto.CompactTextString(m) }
-func (*ProblemDescription) ProtoMessage()               {}
-func (*ProblemDescription) Descriptor() ([]byte, []int) { return fileDescriptor3, []int{4} }
+func (m *ProblemDescription) Reset()         { *m = ProblemDescription{} }
+func (m *ProblemDescription) String() string { return proto.CompactTextString(m) }
+func (*ProblemDescription) ProtoMessage()    {}
+func (*ProblemDescription) Descriptor() ([]byte, []int) {
+	return fileDescriptor_problem_75e7978529a05cc2, []int{4}
+}
+func (m *ProblemDescription) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_ProblemDescription.Unmarshal(m, b)
+}
+func (m *ProblemDescription) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_ProblemDescription.Marshal(b, m, deterministic)
+}
+func (dst *ProblemDescription) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ProblemDescription.Merge(dst, src)
+}
+func (m *ProblemDescription) XXX_Size() int {
+	return xxx_messageInfo_ProblemDescription.Size(m)
+}
+func (m *ProblemDescription) XXX_DiscardUnknown() {
+	xxx_messageInfo_ProblemDescription.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_ProblemDescription proto.InternalMessageInfo
 
 func (m *ProblemDescription) GetProblem() *Problem {
 	if m != nil {
@@ -389,9 +511,9 @@ func init() {
 	proto.RegisterEnum("PerformanceMetric", PerformanceMetric_name, PerformanceMetric_value)
 }
 
-func init() { proto.RegisterFile("problem.proto", fileDescriptor3) }
+func init() { proto.RegisterFile("problem.proto", fileDescriptor_problem_75e7978529a05cc2) }
 
-var fileDescriptor3 = []byte{
+var fileDescriptor_problem_75e7978529a05cc2 = []byte{
 	// 906 bytes of a gzipped FileDescriptorProto
 	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x74, 0x55, 0xdb, 0x6e, 0xdb, 0x46,
 	0x10, 0x2d, 0x75, 0xd7, 0xe8, 0x62, 0x7a, 0x9c, 0x26, 0x6a, 0xdc, 0x20, 0x8a, 0x80, 0x16, 0x86,

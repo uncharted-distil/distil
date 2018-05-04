@@ -17,15 +17,12 @@ import "value.proto";
 //    or the output of a pipeline step
 //
 //  * `inputs.<number>` — `number` identifies the pipeline input (0-based)
+//
+//  * `outputs.<number>` — `number` identifies the pipeline output (0-based)
 
 message ContainerArgument {
     // Data reference.
     string data = 1;
-}
-
-message PrimitiveArgument {
-    // 0-based index from steps identifying a primitive to pass in.
-    string primitive = 1;
 }
 
 message DataArgument {
@@ -33,14 +30,47 @@ message DataArgument {
     string data = 1;
 }
 
+message DataArguments {
+    repeated string data = 1;
+}
+
+message PrimitiveArgument {
+    // 0-based index identifying a step of which primitive is used as a value.
+    int32 data = 1;
+}
+
+message PrimitiveArguments {
+    // 0-based index identifying a step of which primitive is used as a value.
+    repeated int32 data = 1;
+}
+
+message ValueArgument {
+    Value data = 1;
+}
+
 message PrimitiveStepArgument {
     oneof argument {
         // A container data type as an argument.
         ContainerArgument container = 1;
-        // A primitive as an argument.
-        PrimitiveArgument primitive = 2;
         // A singleton output from another step as an argument.
-        DataArgument data = 3;
+        DataArgument data = 2;
+    }
+}
+
+message PrimitiveStepHyperparameter {
+    oneof argument {
+        // A container data type as a hyper-parameter.
+        ContainerArgument container = 1;
+        // A singleton output from another step as a hyper-parameter.
+        DataArgument data = 2;
+        // A primitive instance to be passed as a hyper-parameter.
+        PrimitiveArgument primitive = 3;
+        // A constant value of a hyper-parameter.
+        ValueArgument value = 4;
+        // A set of primitive instances to be passed as a hyper-parameter.
+        PrimitiveArguments primitives_set = 5;
+        // "A set of singleton outputs from other steps in a pipeline.
+        DataArguments data_set = 6;
     }
 }
 
@@ -57,15 +87,40 @@ message StepOutput {
 message PipelineSource {
     // String representing name of the author, team.
     string name = 1;
+    // An URI to contact the source.
+    string contact = 2;
+    // A list of pipeline IDs used to derive the pipeline.
+    repeated string pipelines = 3;
+}
+
+enum PipelineContext {
+    // Default value. Not to be used.
+    PIPELINE_CONTEXT_UNKNOWN = 0;
+
+    // Pipeline was created during building/training of the system itself, e.g., during metalearning.
+    PRETRAINING = 1;
+    // Pipeline was created during development or testing of the system itself, e.g., during debugging.
+    TESTING = 2;
+    // Pipeline was created during evaluation of the system itself, e.g., NIST blind evaluation.
+    EVALUATION = 3;
+    // Pipeline was created during regular (production) operation of the system.
+    PRODUCTION = 4;
 }
 
 // User associated with the creation of the template/pipeline, or selection of a primitive.
 message PipelineDescriptionUser {
-    // A UUID of the user. It does not have to map to any real ID, just that it is possible
-    // to connect mutliple pipelines/templates by the same user together, if necessary.
+    // Globally unique ID for this user. It can be opaque, but it should identify the same user
+    // across sessions. Consider using UUID variant 5 with namespace set to the name of your system
+    // and name to an ID in your system's database. It does not have to map to any real ID, just
+    // that it is possible to connect mutliple pipelines/templates by the same user together,
+    // if necessary.
     string id = 1;
-    // Textual description of what user did to create the template/pipeline, or select a primitive.
-    string description = 2;
+    // A natural language description of what the user did to be on the list, e.g., "Picked
+    // a pipeline from a list of pipelines.".
+    string reason = 2;
+    // A natural language description by the user of what the user did,
+    // e.g., "I picked a pipeline because it looks short in comparison with others.".
+    string rationale = 3;
 }
 
 // Possible input to the pipeline or template.
@@ -96,7 +151,7 @@ message PrimitivePipelineDescriptionStep {
     // template/pipeline decides which hyper-parameter are which, probably based on their semantic type.
     // TA3 can specify a list of hyper-parameters to fix, and TA2 can add to the list additional
     // hyper-paramaters in found pipelines.
-    map<string, Value> hyperparams = 4;
+    map<string, PrimitiveStepHyperparameter> hyperparams = 4;
     // List of users associated with selection of this primitive/arguments/hyper-parameters. Optional.
     repeated PipelineDescriptionUser users = 5;
 }
@@ -134,35 +189,41 @@ message PipelineDescriptionStep {
 // Pipeline description matches the D3M pipeline description.
 // It serves two purposes: describing found pipelines by TA2 to TA3, and communicating pipeline
 // templates by TA3 to TA2. Because of this some fields are reasonable only in one of those uses.
-// They are marked with "TA2" or "TA3" in the comment, for fields to be set only by TA2 or only
-// by TA3, respectivelly.
+// They are marked with "TA2" or "TA3" in the comment, for fields which are primarily to be set
+// only by TA2 or only by TA3, respectivelly.
 message PipelineDescription {
-    // TA2: UUID of the pipeline. Templates do not have IDs. It does not necessary have to
-    // match "pipeline_id" from "ListPipelinesResponse" and other related messages. Those
-    // IDs are about whole solutions (pipeline, potentially fitted, with set hyper-parameters).
-    // This here ID is about this particular ID description.
+    // TA2: UUID of the pipeline. Templates do not have IDs. But TA3 might provide it for a fully
+    // specified pipeline. It does not necessary have to match "solution_id" from
+    // "ListSolutionsResponse" and other related messages. Those IDs are about whole solutions
+    // (pipeline, potentially fitted, with set hyper-parameters). This here ID is about this
+    // particular ID description.
     string id = 1;
     // "schema" field is not needed because it is fixed by the TA2-TA3 protocol version.
     // System which generated a pipeline or a template. Optional.
     PipelineSource source = 2;
-    // TA2: Timestamp when created. Templates do not have this timestamp.
+    // TA2: Timestamp when created. Templates do not have this timestamp. TA3 might provide it for
+    // a fully specified pipeline.
     google.protobuf.Timestamp created = 3;
+    // In which context a template or pipeline was made. This is helpful to distinguish evaluation
+    // context from other contexts. The value should not really influence different behavior from
+    // either system, but it is useful when recording metalearning information to understand this.
+    PipelineContext context = 4;
     // Human friendly name of the pipeline. For templates it can be a hint to
     // TA2 how to name found pipelines. Optional.
-    string name = 4;
+    string name = 5;
     // Human friendly description of the pipeline. Optional.
-    string description = 5;
+    string description = 6;
     // List of users associated with the creation of the template and consequently of the pipeline.
     // TA2 can store this information into metalearning database. TA2 is not really expected to use
     // this information during pipeline search. TA2 should not have to understand TA3 users, mapping
     // between users and pipeline search IDs is something TA3 should handle. Optional.
-    repeated PipelineDescriptionUser users = 6;
+    repeated PipelineDescriptionUser users = 7;
     // In most cases inputs are datasets. But if TA3 wants to jut run a primitive, it can send a
     // template with only that primitive in the template, and then pass anything to its inputs during
     // execution. Here, we are describing possible inputs to the pipeline or template. Order matters.
-    repeated PipelineDescriptionInput inputs = 7;
+    repeated PipelineDescriptionInput inputs = 8;
     // Available outputs of the pipeline or template.
-    repeated PipelineDescriptionOutput outputs = 8;
+    repeated PipelineDescriptionOutput outputs = 9;
     // Steps defining the pipeline.
-    repeated PipelineDescriptionStep steps = 9;
+    repeated PipelineDescriptionStep steps = 10;
 }

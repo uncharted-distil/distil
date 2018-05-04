@@ -1,5 +1,5 @@
 <template>
-	<div class="create-pipelines-form">
+	<div class="create-solutions-form">
 		<b-modal id="export-modal" title="Export Succeeded"
 			@hide="clearExportResults"
 			:visible="!!exportResults"
@@ -19,7 +19,7 @@
 				Create Models
 			</b-button>
 		</div>
-		<div class="pipeline-progress">
+		<div class="solution-progress">
 			<b-progress v-if="isPending"
 				:value="percentComplete"
 				variant="outline-secondary"
@@ -33,18 +33,18 @@
 
 import _ from 'lodash';
 import { createRouteEntry } from '../util/routes';
-import { getTask, getMetricDisplayNames, getMetricSchemaName } from '../util/pipelines';
+import { getTask, getMetricDisplayNames, getMetricSchemaName } from '../util/solutions';
 import { getters as dataGetters, actions as dataActions } from '../store/data/module';
 import { getters as routeGetters } from '../store/route/module';
 import { RESULTS_ROUTE } from '../store/route/index';
-import { actions as pipelineActions } from '../store/pipelines/module';
-import { PipelineInfo } from '../store/pipelines/index';
+import { actions as solutionActions } from '../store/solutions/module';
+import { SolutionInfo } from '../store/solutions/index';
 import { Variable } from '../store/data/index';
 import { FilterParams } from '../util/filters';
 import Vue from 'vue';
 
 export default Vue.extend({
-	name: 'create-pipelines-form',
+	name: 'create-solutions-form',
 	data() {
 		return {
 			descriptionText: '',
@@ -122,20 +122,20 @@ export default Vue.extend({
 			const metrics = _.map(this.metrics as string[], m => getMetricSchemaName(m));
 			this.pending = true;
 			// dispatch action that triggers request send to server
-			pipelineActions.createPipelines(this.$store, {
+			solutionActions.createSolutions(this.$store, {
 				dataset: this.dataset,
 				filters: this.filters,
 				target: routeGetters.getRouteTargetVariable(this.$store),
 				task: task,
 				metrics: metrics,
-				maxPipelines: 1
-			}).then((res: PipelineInfo) => {
+				maxSolutions: 1
+			}).then((res: SolutionInfo) => {
 				this.pending = false;
 				// transition to result screen
 				const entry = createRouteEntry(RESULTS_ROUTE, {
 					dataset: routeGetters.getRouteDataset(this.$store),
 					target: routeGetters.getRouteTargetVariable(this.$store),
-					pipelineId: res.pipelineId
+					solutionId: res.solutionId
 				});
 				this.$router.push(entry);
 			});
@@ -184,7 +184,7 @@ export default Vue.extend({
 .dropdown-toggle {
 	width: 100%;
 }
-.pipeline-progress {
+.solution-progress {
 	margin: 6px 10%;
 }
 </style>

@@ -1,9 +1,9 @@
 <template>
 	<b-card header="Recent Models">
-		<div v-if="recentPipelines.length === 0">None</div>
-		<b-list-group v-bind:key="pipeline.timestamp" v-for="pipeline in recentPipelines">
-			<b-list-group-item href="#" v-bind:key="pipeline.name">
-				<pipeline-preview :result="pipeline"></pipeline-preview>
+		<div v-if="recentSolutions.length === 0">None</div>
+		<b-list-group v-bind:key="solution.timestamp" v-for="solution in recentSolutions">
+			<b-list-group-item href="#" v-bind:key="solution.name">
+				<solution-preview :result="solution"></solution-preview>
 			</b-list-group-item>
 		</b-list-group>
 	</b-card>
@@ -11,31 +11,31 @@
 
 <script lang="ts">
 
-import PipelinePreview from '../components/PipelinePreview';
-import { getters } from '../store/pipelines/module';
-import { PipelineInfo } from '../store/pipelines/index';
+import SolutionPreview from '../components/SolutionPreview';
+import { getters } from '../store/solutions/module';
+import { SolutionInfo } from '../store/solutions/index';
 import Vue from 'vue';
 
 export default Vue.extend({
-	name: 'recent-pipelines',
+	name: 'recent-solutions',
 
 	components: {
-		PipelinePreview
+		SolutionPreview
 	},
 
 	props: {
-		maxPipelines: {
+		maxSolutions: {
 		default: 20,
 			type: Number
 		}
 	},
 
 	computed: {
-		recentPipelines(): PipelineInfo[] {
-			return getters.getPipelines(this.$store)
+		recentSolutions(): SolutionInfo[] {
+			return getters.getSolutions(this.$store)
 				.slice()
 				.sort((a, b) => b.timestamp - a.timestamp)
-				.slice(0, this.maxPipelines);
+				.slice(0, this.maxSolutions);
 		}
 	}
 });

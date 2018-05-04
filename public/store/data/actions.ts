@@ -2,10 +2,10 @@ import _ from 'lodash';
 import axios from 'axios';
 import { AxiosPromise } from 'axios';
 import { FilterParams, INCLUDE_FILTER } from '../../util/filters';
-import { getPipelinesByRequestIds, getPipelineById } from '../../util/pipelines';
+import { getSolutionsByRequestIds, getSolutionById } from '../../util/solutions';
 import { getSummaries, getSummary, updatePredictedSummary, updatePredictedHighlightSummary } from '../../util/data';
 import { Variable, Data, Extrema } from './index';
-import { PipelineInfo, PIPELINE_ERRORED } from '../pipelines/index';
+import { SolutionInfo, SOLUTION_ERRORED } from '../solutions/index';
 import { mutations } from './module'
 import { HighlightRoot } from './index';
 import { createFilterFromHighlightRoot, parseHighlightSamples } from '../../util/highlights';
@@ -166,7 +166,7 @@ export const actions = {
 	},
 
 	// fetches variable summary data for the given dataset and variables
-	fetchTrainingResultSummaries(context: DataContext, args: { dataset: string, variables: Variable[], pipelineId: string, extrema: Extrema }) {
+	fetchTrainingResultSummaries(context: DataContext, args: { dataset: string, variables: Variable[], solutionId: string, extrema: Extrema }) {
 		if (!args.dataset) {
 			console.warn('`dataset` argument is missing');
 			return null;
@@ -175,11 +175,11 @@ export const actions = {
 			console.warn('`variables` argument is missing');
 			return null;
 		}
-		if (!args.pipelineId) {
-			console.warn('`pipelineId` argument is missing');
+		if (!args.solutionId) {
+			console.warn('`solutionId` argument is missing');
 			return null;
 		}
-		const pipeline = getPipelineById(context.rootState.pipelineModule, args.pipelineId);
+		const solution = getSolutionById(context.rootState.solutionModule, args.solutionId);
 		// commit empty place holders, if there is no data
 		const promises = [];
 		args.variables.forEach(variable => {
@@ -191,19 +191,19 @@ export const actions = {
 			const label = variable.name;
 			const dataset = args.dataset;
 
-			if (pipeline.progress === PIPELINE_ERRORED) {
+			if (solution.progress === SOLUTION_ERRORED) {
 				mutations.updateResultSummaries(context, createErrorSummary(name, label, dataset, `No data available due to error`));
 				return;
 			}
 			// update if none exists, or doesn't match latest resultId
-			if (!summary || summary.resultId !== pipeline.resultId) {
+			if (!summary || summary.resultId !== solution.resultId) {
 				// add placeholder
-				const pipelineId = args.pipelineId;
-				mutations.updateResultSummaries(context, createPendingSummary(name, label, dataset, pipelineId));
+				const solutionId = args.solutionId;
+				mutations.updateResultSummaries(context, createPendingSummary(name, label, dataset, solutionId));
 				// fetch summary
 				promises.push(context.dispatch('fetchResultSummary', {
 					dataset: args.dataset,
-					pipelineId: args.pipelineId,
+					solutionId: args.solutionId,
 					variable: variable.name,
 					extrema: args.extrema
 				}));
@@ -213,7 +213,7 @@ export const actions = {
 		return Promise.all(promises);
 	},
 
-	fetchResultSummary(context: DataContext, args: { dataset: string, variable: string, pipelineId: string, extrema: Extrema }) {
+	fetchResultSummary(context: DataContext, args: { dataset: string, variable: string, solutionId: string, extrema: Extrema }) {
 		if (!args.dataset) {
 			console.warn('`dataset` argument is missing');
 			return null;
@@ -222,23 +222,23 @@ export const actions = {
 			console.warn('`variable` argument is missing');
 			return null;
 		}
-		if (!args.pipelineId) {
-			console.warn('`pipelineId` argument is missing');
+		if (!args.solutionId) {
+			console.warn('`solutionId` argument is missing');
 			return null;
 		}
-		const pipeline = getPipelineById(context.rootState.pipelineModule, args.pipelineId);
-		if (!pipeline.resultId) {
+		const solution = getSolutionById(context.rootState.solutionModule, args.solutionId);
+		if (!solution.resultId) {
 			// no results ready to pull
 			return null;
 		}
 		// only use extrema if this is the feature variable
 		let extremaMin = null;
 		let extremaMax = null;
-		if (args.variable === pipeline.feature && args.extrema) {
+		if (args.variable === solution.feature && args.extrema) {
 			extremaMin = args.extrema.min;
 			extremaMax = args.extrema.max;
 		}
-		return axios.post(`/distil/results-variable-summary/${ES_INDEX}/${args.dataset}/${args.variable}/${extremaMin}/${extremaMax}/${pipeline.resultId}`, {})
+		return axios.post(`/distil/results-variable-summary/${ES_INDEX}/${args.dataset}/${args.variable}/${extremaMin}/${extremaMax}/${solution.resultId}`, {})
 			.then(response => {
 				mutations.updateResultSummaries(context, response.data.histogram);
 			})
@@ -251,7 +251,7 @@ export const actions = {
 			});
 	},
 
-	fetchTargetResultExtrema(context: DataContext, args: { dataset: string, variable: string, pipelineId: string }) {
+	fetchTargetResultExtrema(context: DataContext, args: { dataset: string, variable: string, solutionId: string }) {
 		if (!args.dataset) {
 			console.warn('`dataset` argument is missing');
 			return null;
@@ -260,20 +260,20 @@ export const actions = {
 			console.warn('`variable` argument is missing');
 			return null;
 		}
-		if (!args.pipelineId) {
-			console.warn('`pipelineId` argument is missing');
+		if (!args.solutionId) {
+			console.warn('`solutionId` argument is missing');
 			return null;
 		}
 
 		mutations.clearTargetResultExtrema(context);
 
-		const pipeline = getPipelineById(context.rootState.pipelineModule, args.pipelineId);
-		if (!pipeline.resultId) {
-			console.warn(`No 'resultId' exists for pipeline '${args.pipelineId}'`);
+		const solution = getSolutionById(context.rootState.solutionModule, args.solutionId);
+		if (!solution.resultId) {
+			console.warn(`No 'resultId' exists for solution '${args.solutionId}'`);
 			return null;
 		}
 
-		return axios.get(`/distil/results-variable-extrema/${ES_INDEX}/${args.dataset}/${args.variable}/${pipeline.resultId}`)
+		return axios.get(`/distil/results-variable-extrema/${ES_INDEX}/${args.dataset}/${args.variable}/${solution.resultId}`)
 			.then(response => {
 				mutations.updateTargetResultExtrema(context, {
 					extrema: response.data.extrema
@@ -347,29 +347,29 @@ export const actions = {
 		return axios.post(`distil/data/${ES_INDEX}/${args.dataset}/${invertStr}`, args.filters);
 	},
 
-	fetchPredictedExtrema(context: DataContext, args: { dataset: string, pipelineId: string }) {
+	fetchPredictedExtrema(context: DataContext, args: { dataset: string, solutionId: string }) {
 		if (!args.dataset) {
 			console.warn('`dataset` argument is missing');
 			return null;
 		}
-		if (!args.pipelineId) {
-			console.warn('`pipelineId` argument is missing');
+		if (!args.solutionId) {
+			console.warn('`solutionId` argument is missing');
 			return null;
 		}
 
 		// clear extrema
-		mutations.clearPredictedExtrema(context, args.pipelineId);
+		mutations.clearPredictedExtrema(context, args.solutionId);
 
-		const pipeline = getPipelineById(context.rootState.pipelineModule, args.pipelineId);
-		if (!pipeline.resultId) {
-			console.warn(`No 'resultId' exists for pipeline '${args.pipelineId}'`);
+		const solution = getSolutionById(context.rootState.solutionModule, args.solutionId);
+		if (!solution.resultId) {
+			console.warn(`No 'resultId' exists for solution '${args.solutionId}'`);
 			return null;
 		}
 
-		return axios.get(`/distil/results-extrema/${ES_INDEX}/${args.dataset}/${pipeline.resultId}`)
+		return axios.get(`/distil/results-extrema/${ES_INDEX}/${args.dataset}/${solution.resultId}`)
 			.then(response => {
 				mutations.updatePredictedExtremas(context, {
-					pipelineId: args.pipelineId,
+					solutionId: args.solutionId,
 					extrema: response.data.extrema
 				});
 			})
@@ -388,38 +388,38 @@ export const actions = {
 			return null;
 		}
 
-		const pipelines = getPipelinesByRequestIds(context.rootState.pipelineModule, args.requestIds);
-		return Promise.all(pipelines.map(pipeline => {
+		const solutions = getSolutionsByRequestIds(context.rootState.solutionModule, args.requestIds);
+		return Promise.all(solutions.map(solution => {
 			return context.dispatch('fetchPredictedExtrema', {
 				dataset: args.dataset,
-				pipelineId: pipeline.pipelineId
+				solutionId: solution.solutionId
 			});
 		}));
 	},
 
-	fetchResidualsExtrema(context: DataContext, args: { dataset: string, pipelineId: string }) {
+	fetchResidualsExtrema(context: DataContext, args: { dataset: string, solutionId: string }) {
 		if (!args.dataset) {
 			console.warn('`dataset` argument is missing');
 			return null;
 		}
-		if (!args.pipelineId) {
-			console.warn('`pipelineId` argument is missing');
+		if (!args.solutionId) {
+			console.warn('`solutionId` argument is missing');
 			return null;
 		}
 
 		// clear extrema
-		mutations.clearResidualsExtrema(context, args.pipelineId);
+		mutations.clearResidualsExtrema(context, args.solutionId);
 
-		const pipeline = getPipelineById(context.rootState.pipelineModule, args.pipelineId);
-		if (!pipeline.resultId) {
-			console.warn(`No 'resultId' exists for pipeline '${args.pipelineId}'`);
+		const solution = getSolutionById(context.rootState.solutionModule, args.solutionId);
+		if (!solution.resultId) {
+			console.warn(`No 'resultId' exists for solution '${args.solutionId}'`);
 			return null;
 		}
 
-		return axios.get(`/distil/residuals-extrema/${ES_INDEX}/${args.dataset}/${pipeline.resultId}`)
+		return axios.get(`/distil/residuals-extrema/${ES_INDEX}/${args.dataset}/${solution.resultId}`)
 			.then(response => {
 				mutations.updateResidualsExtremas(context, {
-					pipelineId: args.pipelineId,
+					solutionId: args.solutionId,
 					extrema: response.data.extrema
 				});
 			})
@@ -438,23 +438,23 @@ export const actions = {
 			return null;
 		}
 
-		const pipelines = getPipelinesByRequestIds(context.rootState.pipelineModule, args.requestIds);
-		return Promise.all(pipelines.map(pipeline => {
+		const solutions = getSolutionsByRequestIds(context.rootState.solutionModule, args.requestIds);
+		return Promise.all(solutions.map(solution => {
 			return context.dispatch('fetchResidualsExtrema', {
 				dataset: args.dataset,
-				pipelineId: pipeline.pipelineId
+				solutionId: solution.solutionId
 			});
 		}));
 	},
 
-	// fetches result summary for a given pipeline id.
-	fetchPredictedSummary(context: DataContext, args: { dataset: string, pipelineId: string, extrema: Extrema }) {
+	// fetches result summary for a given solution id.
+	fetchPredictedSummary(context: DataContext, args: { dataset: string, solutionId: string, extrema: Extrema }) {
 		if (!args.dataset) {
 			console.warn('`dataset` argument is missing');
 			return null;
 		}
-		if (!args.pipelineId) {
-			console.warn('`pipelineId` argument is missing');
+		if (!args.solutionId) {
+			console.warn('`solutionId` argument is missing');
 			return null;
 		}
 
@@ -467,15 +467,15 @@ export const actions = {
 			extremaMin = args.extrema.min;
 			extremaMax = args.extrema.max;
 		}
-		const pipeline = getPipelineById(context.rootState.pipelineModule, args.pipelineId);
+		const solution = getSolutionById(context.rootState.solutionModule, args.solutionId);
 		const endPoint = `/distil/results-summary/${ES_INDEX}/${args.dataset}/${extremaMin}/${extremaMax}`
-		const nameFunc = (p: PipelineInfo) => getPredictedCol(p.feature);
-		const labelFunc = (p: PipelineInfo) => 'Predicted';
+		const nameFunc = (p: SolutionInfo) => getPredictedCol(p.feature);
+		const labelFunc = (p: SolutionInfo) => 'Predicted';
 
-		getSummary(context, endPoint, pipeline, nameFunc, labelFunc, updatePredictedSummary, null);
+		getSummary(context, endPoint, solution, nameFunc, labelFunc, updatePredictedSummary, null);
 	},
 
-	// fetches result summaries for a given pipeline create request
+	// fetches result summaries for a given solution create request
 	fetchPredictedSummaries(context: DataContext, args: { dataset: string, requestIds: string[], extrema: Extrema }) {
 		if (!args.dataset) {
 			console.warn('`dataset` argument is missing');
@@ -492,35 +492,35 @@ export const actions = {
 			extremaMin = args.extrema.min;
 			extremaMax = args.extrema.max;
 		}
-		const pipelines = getPipelinesByRequestIds(context.rootState.pipelineModule, args.requestIds);
+		const solutions = getSolutionsByRequestIds(context.rootState.solutionModule, args.requestIds);
 		const endPoint = `/distil/results-summary/${ES_INDEX}/${args.dataset}/${extremaMin}/${extremaMax}`
-		const nameFunc = (p: PipelineInfo) => getPredictedCol(p.feature);
-		const labelFunc = (p: PipelineInfo) => 'Predicted';
-		getSummaries(context, endPoint, pipelines, nameFunc, labelFunc, updatePredictedSummary, null);
+		const nameFunc = (p: SolutionInfo) => getPredictedCol(p.feature);
+		const labelFunc = (p: SolutionInfo) => 'Predicted';
+		getSummaries(context, endPoint, solutions, nameFunc, labelFunc, updatePredictedSummary, null);
 	},
 
-	// fetches result summary for a given pipeline id.
-	fetchResidualsSummary(context: DataContext, args: { dataset: string, pipelineId: string, extrema: Extrema }) {
+	// fetches result summary for a given solution id.
+	fetchResidualsSummary(context: DataContext, args: { dataset: string, solutionId: string, extrema: Extrema }) {
 		if (!args.dataset) {
 			console.warn('`dataset` argument is missing');
 			return null;
 		}
-		if (!args.pipelineId) {
-			console.warn('`pipelineId` argument is missing');
+		if (!args.solutionId) {
+			console.warn('`solutionId` argument is missing');
 			return null;
 		}
 		if (!args.extrema || (!args.extrema.min && !args.extrema.max)) {
 			console.warn('`extrema` argument is missing');
 			return null;
 		}
-		const pipeline = getPipelineById(context.rootState.pipelineModule, args.pipelineId);
+		const solution = getSolutionById(context.rootState.solutionModule, args.solutionId);
 		const endPoint = `/distil/residuals-summary/${ES_INDEX}/${args.dataset}/${args.extrema.min}/${args.extrema.max}`
-		const nameFunc = (p: PipelineInfo) => getErrorCol(p.feature);
-		const labelFunc = (p: PipelineInfo) => 'Error';
-		getSummary(context, endPoint, pipeline, nameFunc, labelFunc, mutations.updateResidualsSummaries, null);
+		const nameFunc = (p: SolutionInfo) => getErrorCol(p.feature);
+		const labelFunc = (p: SolutionInfo) => 'Error';
+		getSummary(context, endPoint, solution, nameFunc, labelFunc, mutations.updateResidualsSummaries, null);
 	},
 
-	// fetches result summaries for a given pipeline create request
+	// fetches result summaries for a given solution create request
 	fetchResidualsSummaries(context: DataContext, args: { dataset: string, requestIds: string[], extrema: Extrema }) {
 		if (!args.dataset) {
 			console.warn('`dataset` argument is missing');
@@ -534,15 +534,15 @@ export const actions = {
 			console.warn('`extrema` argument is missing');
 			return null;
 		}
-		const pipelines = getPipelinesByRequestIds(context.rootState.pipelineModule, args.requestIds);
+		const solutions = getSolutionsByRequestIds(context.rootState.solutionModule, args.requestIds);
 		const endPoint = `/distil/residuals-summary/${ES_INDEX}/${args.dataset}/${args.extrema.min}/${args.extrema.max}`
-		const nameFunc = (p: PipelineInfo) => getErrorCol(p.feature);
-		const labelFunc = (p: PipelineInfo) => 'Error';
-		getSummaries(context, endPoint, pipelines, nameFunc, labelFunc, mutations.updateResidualsSummaries, null);
+		const nameFunc = (p: SolutionInfo) => getErrorCol(p.feature);
+		const labelFunc = (p: SolutionInfo) => 'Error';
+		getSummaries(context, endPoint, solutions, nameFunc, labelFunc, mutations.updateResidualsSummaries, null);
 	},
 
-	// fetches result data for created pipeline
-	fetchResultTableData(context: DataContext, args: { pipelineId: string, dataset: string, highlightRoot: HighlightRoot, filters?: FilterParams }) {
+	// fetches result data for created solution
+	fetchResultTableData(context: DataContext, args: { solutionId: string, dataset: string, highlightRoot: HighlightRoot, filters?: FilterParams }) {
 		if (!args.filters) {
 			args.filters = {
 				variables: [],
@@ -550,10 +550,10 @@ export const actions = {
 			};
 		}
 
-		const pipeline = getPipelineById(context.rootState.pipelineModule, args.pipelineId);
-		if (!pipeline.resultId) {
+		const solution = getSolutionById(context.rootState.solutionModule, args.solutionId);
+		if (!solution.resultId) {
 			// no results ready to pull
-			console.warn(`No 'resultId' exists for pipeline '${args.pipelineId}'`);
+			console.warn(`No 'resultId' exists for solution '${args.solutionId}'`);
 			return null;
 		}
 
@@ -569,14 +569,14 @@ export const actions = {
 				mutations.setResultData(context, response.data);
 			})
 			.catch(error => {
-				console.error(`Failed to fetch results from ${args.pipelineId} with error ${error}`);
+				console.error(`Failed to fetch results from ${args.solutionId} with error ${error}`);
 				mutations.setResultData(context, createEmptyData(args.dataset));
 			});
 	},
 
-	fetchResults(context: DataContext, args: { pipelineId: string, dataset: string, filters: FilterParams }): AxiosPromise<Data> {
-		const encodedPipelineId = encodeURIComponent(args.pipelineId);
-		return axios.post(`/distil/results/${ES_INDEX}/${args.dataset}/${encodedPipelineId}`, args.filters);
+	fetchResults(context: DataContext, args: { solutionId: string, dataset: string, filters: FilterParams }): AxiosPromise<Data> {
+		const encodedSolutionId = encodeURIComponent(args.solutionId);
+		return axios.post(`/distil/results/${ES_INDEX}/${args.dataset}/${encodedSolutionId}`, args.filters);
 	},
 
 	fetchDataHighlightSamples(context: DataContext, args: { highlightRoot: HighlightRoot, filters: FilterParams, dataset: string }) {
@@ -657,7 +657,7 @@ export const actions = {
 		]);
 	},
 
-	fetchResultHighlightSummaries(context: DataContext, args: { highlightRoot: HighlightRoot, dataset: string, pipelineId: string, variables: Variable[], extrema: Extrema }) {
+	fetchResultHighlightSummaries(context: DataContext, args: { highlightRoot: HighlightRoot, dataset: string, solutionId: string, variables: Variable[], extrema: Extrema }) {
 		if (!args.dataset) {
 			console.warn('`dataset` argument is missing');
 			return null;
@@ -667,10 +667,10 @@ export const actions = {
 			return null;
 		}
 
-		const pipeline = getPipelineById(context.rootState.pipelineModule, args.pipelineId);
-		if (!pipeline.resultId) {
+		const solution = getSolutionById(context.rootState.solutionModule, args.solutionId);
+		if (!solution.resultId) {
 			// no results ready to pull
-			console.warn(`No 'resultId' exists for pipeline '${args.pipelineId}'`);
+			console.warn(`No 'resultId' exists for solution '${args.solutionId}'`);
 			return null;
 		}
 
@@ -690,11 +690,11 @@ export const actions = {
 			// only use extrema if this is the feature variable
 			let extremaMin = null;
 			let extremaMax = null;
-			if (variable.name === pipeline.feature) {
+			if (variable.name === solution.feature) {
 				extremaMin = args.extrema.min;
 				extremaMax = args.extrema.max;
 			}
-			return axios.post(`/distil/results-variable-summary/${ES_INDEX}/${args.dataset}/${variable.name}/${extremaMin}/${extremaMax}/${pipeline.resultId}`, filters)
+			return axios.post(`/distil/results-variable-summary/${ES_INDEX}/${args.dataset}/${variable.name}/${extremaMin}/${extremaMax}/${solution.resultId}`, filters)
 				.then(response => {
 					mutations.updateHighlightSummaries(context, response.data.histogram);
 				})
@@ -721,26 +721,26 @@ export const actions = {
 			filters.filters.push(highlightFilter);
 		}
 
-		const pipelines = getPipelinesByRequestIds(context.rootState.pipelineModule, args.requestIds);
+		const solutions = getSolutionsByRequestIds(context.rootState.solutionModule, args.requestIds);
 
 		const endPoint = `/distil/results-summary/${ES_INDEX}/${args.dataset}/${args.extrema.min}/${args.extrema.max}`
-		const nameFunc = (p: PipelineInfo) => getPredictedCol(p.feature);
-		const labelFunc = (p: PipelineInfo) => '';
-		getSummaries(context, endPoint, pipelines, nameFunc, labelFunc, updatePredictedHighlightSummary, filters);
+		const nameFunc = (p: SolutionInfo) => getPredictedCol(p.feature);
+		const labelFunc = (p: SolutionInfo) => '';
+		getSummaries(context, endPoint, solutions, nameFunc, labelFunc, updatePredictedHighlightSummary, filters);
 	},
 
-	fetchResultHighlightSamples(context: DataContext, args: { highlightRoot: HighlightRoot, dataset: string, pipelineId: string }) {
+	fetchResultHighlightSamples(context: DataContext, args: { highlightRoot: HighlightRoot, dataset: string, solutionId: string }) {
 		if (!args.dataset) {
 			console.warn('`dataset` argument is missing');
 			return null;
 		}
-		if (!args.pipelineId) {
-			console.warn('`pipelineId` argument is missing');
+		if (!args.solutionId) {
+			console.warn('`solutionId` argument is missing');
 			return null;
 		}
 
-		const pipeline = getPipelineById(context.rootState.pipelineModule, args.pipelineId);
-		if (!pipeline.resultId) {
+		const solution = getSolutionById(context.rootState.solutionModule, args.solutionId);
+		if (!solution.resultId) {
 			// no results ready to pull
 			return null;
 		}
@@ -758,7 +758,7 @@ export const actions = {
 
 		// fetch the data using the supplied filtered
 		return context.dispatch('fetchResults', {
-				pipelineId: args.pipelineId,
+				solutionId: args.solutionId,
 				dataset: args.dataset,
 				filters: filters
 			})
@@ -771,7 +771,7 @@ export const actions = {
 			});
 	},
 
-	fetchResultHighlightValues(context: DataContext, args: { highlightRoot: HighlightRoot, dataset: string, variables: Variable[], pipelineId: string, requestIds: string[], extrema: Extrema }) {
+	fetchResultHighlightValues(context: DataContext, args: { highlightRoot: HighlightRoot, dataset: string, variables: Variable[], solutionId: string, requestIds: string[], extrema: Extrema }) {
 
 		// clear existing values
 		mutations.clearHighlightSummaries(context);
@@ -781,13 +781,13 @@ export const actions = {
 			context.dispatch('fetchResultHighlightSamples', {
 				highlightRoot: args.highlightRoot,
 				dataset: args.dataset,
-				pipelineId: args.pipelineId
+				solutionId: args.solutionId
 			}),
 			context.dispatch('fetchResultHighlightSummaries', {
 				highlightRoot: args.highlightRoot,
 				dataset: args.dataset,
 				variables: args.variables,
-				pipelineId: args.pipelineId,
+				solutionId: args.solutionId,
 				extrema: args.extrema
 			}),
 			context.dispatch('fetchPredictedHighlightSummaries', {

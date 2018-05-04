@@ -45,7 +45,7 @@ func pullFromAPI(maxPulls int, timeout time.Duration, pull pullFunc) error {
 
 		case <-timer.C:
 			// timeout
-			return errors.Errorf("pipeline request has timed out")
+			return errors.Errorf("solution request has timed out")
 		}
 
 	}

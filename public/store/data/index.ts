@@ -41,7 +41,7 @@ export interface VariableSummary {
 	buckets: Bucket[];
 	extrema: Extrema;
 	numRows: number;
-	pipelineId?: string;
+	solutionId?: string;
 	resultId?: string;
 	type?: string;
 	varType?: string;
@@ -140,7 +140,7 @@ export const state = {
 
 	residualExtremas: {},
 
-	// current set of pipeline results
+	// current set of solution results
 	resultData: null,
 
 	// selected data entries for the active dataset

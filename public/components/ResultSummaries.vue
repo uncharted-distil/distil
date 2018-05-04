@@ -29,7 +29,7 @@
 		<b-modal id="export" title="Export" @ok="onExport">
 			<div class="check-message-container">
 				<i class="fa fa-check-circle fa-3x check-icon"></i>
-				<div>This action will export pipeline <b>{{activePipelineName}}</b> and terminate the session.</div>
+				<div>This action will export solution <b>{{activeSolutionName}}</b> and terminate the session.</div>
 			</div>
 		</b-modal>
 
@@ -52,7 +52,7 @@ import _ from 'lodash';
 import ResultFacets from '../components/ResultFacets.vue';
 import Facets from '../components/Facets.vue';
 import { overlayRouteEntry } from '../util/routes';
-import { getPipelineById, getTask } from '../util/pipelines';
+import { getSolutionById, getTask } from '../util/solutions';
 import { Extrema } from '../store/data/index';
 import { getters as dataGetters} from '../store/data/module';
 import { getters as routeGetters } from '../store/route/module';
@@ -61,7 +61,7 @@ import { EXPORT_SUCCESS_ROUTE } from '../store/route/index';
 import vueSlider from 'vue-slider-component';
 import Vue from 'vue';
 import 'font-awesome/css/font-awesome.css';
-import { PipelineInfo } from '../store/pipelines/index';
+import { SolutionInfo } from '../store/solutions/index';
 
 const DEFAULT_PERCENTILE = 0.25;
 const NUM_STEPS = 100;
@@ -162,16 +162,16 @@ export default Vue.extend({
 			return task.schemaName === 'regression';
 		},
 
-		pipelineId(): string {
-			return routeGetters.getRoutePipelineId(this.$store);
+		solutionId(): string {
+			return routeGetters.getRouteSolutionId(this.$store);
 		},
 
-		activePipeline(): PipelineInfo {
-			return getPipelineById(this.$store.state.pipelineModule, this.pipelineId);
+		activeSolution(): SolutionInfo {
+			return getSolutionById(this.$store.state.solutionModule, this.solutionId);
 		},
 
-		activePipelineName(): string {
-			return this.activePipeline ? this.activePipeline.name : '';
+		activeSolutionName(): string {
+			return this.activeSolution ? this.activeSolution.name : '';
 		},
 
 		instanceName(): string {
@@ -203,8 +203,8 @@ export default Vue.extend({
 		},
 
 		onExport() {
-			appActions.exportPipeline(this.$store, {
-				pipelineId: this.activePipeline.pipelineId
+			appActions.exportSolution(this.$store, {
+				solutionId: this.activeSolution.solutionId
 			}).then(err => {
 				if (this.isAborted) {
 					// the export was successful

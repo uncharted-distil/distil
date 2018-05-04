@@ -27,30 +27,30 @@ type DataStorage interface {
 	SetDataType(dataset string, index string, field string, fieldType string) error
 }
 
-// PipelineStorageCtor represents a client constructor to instantiate a
-// pipeline storage client.
-type PipelineStorageCtor func() (PipelineStorage, error)
+// SolutionStorageCtor represents a client constructor to instantiate a
+// solution storage client.
+type SolutionStorageCtor func() (SolutionStorage, error)
 
-// PipelineStorage defines the functions available to query the underlying
-// pipeline storage.
-type PipelineStorage interface {
+// SolutionStorage defines the functions available to query the underlying
+// solution storage.
+type SolutionStorage interface {
 	PersistRequest(requestID string, dataset string, progress string, createdTime time.Time) error
 	PersistRequestFeature(requestID string, featureName string, featureType string) error
 	PersistRequestFilters(requestID string, filters *FilterParams) error
-	PersistPipeline(requestID string, pipelineID string, progress string, createdTime time.Time) error
-	PersistPipelineResult(pipelineID string, resultUUID string, resultURI string, progress string, createdTime time.Time) error
-	PersistPipelineScore(pipelineID string, metric string, score float64) error
+	PersistSolution(requestID string, solutionID string, progress string, createdTime time.Time) error
+	PersistSolutionResult(solutionID string, resultUUID string, resultURI string, progress string, createdTime time.Time) error
+	PersistSolutionScore(solutionID string, metric string, score float64) error
 	UpdateRequest(requestID string, progress string, updatedTime time.Time) error
 	FetchRequest(requestID string) (*Request, error)
-	FetchRequestByPipelineID(requestID string) (*Request, error)
+	FetchRequestBySolutionID(requestID string) (*Request, error)
 	FetchRequestFeatures(requestID string) ([]*Feature, error)
 	FetchRequestFilters(requestID string, features []*Feature) (*FilterParams, error)
-	FetchPipeline(pipelineID string) (*Pipeline, error)
-	FetchPipelineResultByRequestID(requestID string) ([]*PipelineResult, error)
-	FetchPipelineResultByUUID(resultUUID string) (*PipelineResult, error)
-	FetchPipelineResult(pipelineID string) (*PipelineResult, error)
-	FetchPipelineResultByDatasetTarget(dataset string, target string, pipelineID string) ([]*Request, error)
-	FetchPipelineScore(pipelineID string) ([]*PipelineScore, error)
+	FetchSolution(solutionID string) (*Solution, error)
+	FetchSolutionResultByRequestID(requestID string) ([]*SolutionResult, error)
+	FetchSolutionResultByUUID(resultUUID string) (*SolutionResult, error)
+	FetchSolutionResult(solutionID string) (*SolutionResult, error)
+	FetchSolutionResultByDatasetTarget(dataset string, target string, solutionID string) ([]*Request, error)
+	FetchSolutionScore(solutionID string) ([]*SolutionScore, error)
 }
 
 // MetadataStorageCtor represents a client constructor to instantiate a

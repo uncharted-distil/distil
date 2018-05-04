@@ -1,35 +1,35 @@
 import axios from 'axios';
-import { PipelineInfo, PipelineState, PIPELINE_COMPLETED, PIPELINE_ERRORED } from './index';
+import { SolutionInfo, SolutionState, SOLUTION_COMPLETED, SOLUTION_ERRORED } from './index';
 import { ActionContext } from 'vuex';
 import { DistilState } from '../store';
 import { mutations } from './module';
 import { getWebSocketConnection } from '../../util/ws';
 import { FilterParams } from '../../util/filters';
-import { regression } from '../../util/pipelines';
+import { regression } from '../../util/solutions';
 
 const ES_INDEX = 'datasets';
-const CREATE_PIPELINES = 'CREATE_PIPELINES';
+const CREATE_SOLUTIONS = 'CREATE_SOLUTIONS';
 
-interface CreatePipelineRequest {
+interface CreateSolutionRequest {
 	dataset: string;
 	target: string;
 	task: string;
-	maxPipelines: number;
+	maxSolutions: number;
 	metrics: string[];
 	filters: FilterParams;
 }
 
-export type AppContext = ActionContext<PipelineState, DistilState>;
+export type AppContext = ActionContext<SolutionState, DistilState>;
 
-function updateCurrentPipelineResults(context: any, req: CreatePipelineRequest, res: PipelineInfo) {
+function updateCurrentSolutionResults(context: any, req: CreateSolutionRequest, res: SolutionInfo) {
 
-	const currentPipelineId = context.getters.getRoutePipelineId;
+	const currentSolutionId = context.getters.getRouteSolutionId;
 
-	// if current pipelineId, pull results
-	if (res.pipelineId === currentPipelineId) {
+	// if current solutionId, pull results
+	if (res.solutionId === currentSolutionId) {
 		context.dispatch('fetchResultTableData', {
 			dataset: req.dataset,
-			pipelineId: res.pipelineId
+			solutionId: res.solutionId
 		});
 	}
 
@@ -41,55 +41,55 @@ function updateCurrentPipelineResults(context: any, req: CreatePipelineRequest, 
 			context.dispatch('fetchTargetResultExtrema', {
 				dataset: req.dataset,
 				variable: req.target,
-				pipelineId: res.pipelineId
+				solutionId: res.solutionId
 			}),
 			context.dispatch('fetchPredictedExtrema', {
 				dataset: req.dataset,
-				pipelineId: res.pipelineId
+				solutionId: res.solutionId
 			})
 		]
 	}
 
 	Promise.all(extremaFetches).then(() => {
-		// if current pipelineId, pull result summaries
-		if (res.pipelineId === currentPipelineId) {
+		// if current solutionId, pull result summaries
+		if (res.solutionId === currentSolutionId) {
 			context.dispatch('fetchTrainingResultSummaries', {
 				dataset: req.dataset,
-				pipelineId: res.pipelineId,
-				variables: context.getters.getActivePipelineVariables,
+				solutionId: res.solutionId,
+				variables: context.getters.getActiveSolutionVariables,
 				extrema: context.getters.getPredictedExtrema
 			});
 		}
 		context.dispatch('fetchPredictedSummary', {
 			dataset: req.dataset,
-			pipelineId: res.pipelineId,
+			solutionId: res.solutionId,
 			extrema: context.getters.getPredictedExtrema
 		});
 		context.dispatch('fetchResultHighlightValues', {
 			dataset: req.dataset,
 			highlightRoot: context.getters.getDecodedHighlightRoot,
 			extrema: context.getters.getPredictedExtrema,
-			pipelineId: res.pipelineId,
-			requestIds: context.getters.getPipelines,
-			variables: context.getters.getActivePipelineVariables
+			solutionId: res.solutionId,
+			requestIds: context.getters.getSolutions,
+			variables: context.getters.getActiveSolutionVariables
 		});
 	});
 
 	if (isRegression) {
 		context.dispatch('fetchResidualsExtrema', {
 			dataset: req.dataset,
-			pipelineId: res.pipelineId
+			solutionId: res.solutionId
 		}).then(() => {
 			context.dispatch('fetchResidualsSummary', {
 				dataset: req.dataset,
-				pipelineId: res.pipelineId,
+				solutionId: res.solutionId,
 				extrema: context.getters.getResidualExtrema
 			});
 		});
 	}
 }
 
-function updatePipelineResults(context: any, req: CreatePipelineRequest, res: PipelineInfo) {
+function updateSolutionResults(context: any, req: CreateSolutionRequest, res: SolutionInfo) {
 	const isRegression = req.task.toLowerCase() === regression.schemaName.toLowerCase();
 	let extremaFetches = [];
 	if (isRegression) {
@@ -97,18 +97,18 @@ function updatePipelineResults(context: any, req: CreatePipelineRequest, res: Pi
 			context.dispatch('fetchTargetResultExtrema', {
 				dataset: req.dataset,
 				variable: req.target,
-				pipelineId: res.pipelineId
+				solutionId: res.solutionId
 			}),
 			context.dispatch('fetchPredictedExtrema', {
 				dataset: req.dataset,
-				pipelineId: res.pipelineId
+				solutionId: res.solutionId
 			})
 		]
 	}
 	Promise.all(extremaFetches).then(() => {
 		context.dispatch('fetchPredictedSummary', {
 			dataset: req.dataset,
-			pipelineId: res.pipelineId,
+			solutionId: res.solutionId,
 			extrema: context.getters.getPredictedExtrema
 		});
 	});
@@ -116,11 +116,11 @@ function updatePipelineResults(context: any, req: CreatePipelineRequest, res: Pi
 	if (isRegression) {
 		context.dispatch('fetchResidualsExtrema', {
 			dataset: req.dataset,
-			pipelineId: res.pipelineId
+			solutionId: res.solutionId
 		}).then(() => {
 			context.dispatch('fetchResidualsSummary', {
 				dataset: req.dataset,
-				pipelineId: res.pipelineId,
+				solutionId: res.solutionId,
 				extrema: context.getters.getResidualExtrema
 			});
 		});
@@ -129,32 +129,32 @@ function updatePipelineResults(context: any, req: CreatePipelineRequest, res: Pi
 
 export const actions = {
 
-	fetchPipeline(context: AppContext, args: { pipelineId?: string }) {
-		if (!args.pipelineId) {
-			console.warn('`pipelineId` argument is missing');
+	fetchSolution(context: AppContext, args: { solutionId?: string }) {
+		if (!args.solutionId) {
+			console.warn('`solutionId` argument is missing');
 			return null;
 		}
 
-		return axios.get(`/distil/pipelines/null/null/${args.pipelineId}`)
+		return axios.get(`/distil/solutions/null/null/${args.solutionId}`)
 			.then(response => {
-				if (!response.data.pipelines) {
+				if (!response.data.solutions) {
 					return;
 				}
-				const pipelines = response.data.pipelines;
-				pipelines.forEach(pipeline => {
-					// update pipeline
-					mutations.updatePipelineRequests(context, {
-						name: pipeline.feature,
-						feature: pipeline.feature,
-						filters: pipeline.filters,
-						features: pipeline.features,
-						requestId: pipeline.requestId,
-						dataset: pipeline.dataset,
-						timestamp: pipeline.timestamp,
-						progress: pipeline.progress,
-						pipelineId: pipeline.pipelineId,
-						resultId: pipeline.resultId,
-						scores: pipeline.scores
+				const solutions = response.data.solutions;
+				solutions.forEach(solution => {
+					// update solution
+					mutations.updateSolutionRequests(context, {
+						name: solution.feature,
+						feature: solution.feature,
+						filters: solution.filters,
+						features: solution.features,
+						requestId: solution.requestId,
+						dataset: solution.dataset,
+						timestamp: solution.timestamp,
+						progress: solution.progress,
+						solutionId: solution.solutionId,
+						resultId: solution.resultId,
+						scores: solution.scores
 					});
 				});
 			})
@@ -163,39 +163,39 @@ export const actions = {
 			});
 	},
 
-	fetchPipelines(context: AppContext, args: { dataset?: string, target?: string, pipelineId?: string }) {
+	fetchSolutions(context: AppContext, args: { dataset?: string, target?: string, solutionId?: string }) {
 		if (!args.dataset) {
 			args.dataset = null;
 		}
 		if (!args.target) {
 			args.target = null;
 		}
-		if (!args.pipelineId) {
-			args.pipelineId = null;
+		if (!args.solutionId) {
+			args.solutionId = null;
 		}
 
-		mutations.clearPipelineRequests(context);
+		mutations.clearSolutionRequests(context);
 
-		return axios.get(`/distil/pipelines/${args.dataset}/${args.target}/${args.pipelineId}`)
+		return axios.get(`/distil/solutions/${args.dataset}/${args.target}/${args.solutionId}`)
 			.then(response => {
-				if (!response.data.pipelines) {
+				if (!response.data.solutions) {
 					return;
 				}
-				const pipelines = response.data.pipelines;
-				pipelines.forEach(pipeline => {
-					// update pipeline
-					mutations.updatePipelineRequests(context, {
-						name: pipeline.feature,
-						feature: pipeline.feature,
-						filters: pipeline.filters,
-						features: pipeline.features,
-						requestId: pipeline.requestId,
-						dataset: pipeline.dataset,
-						timestamp: pipeline.timestamp,
-						progress: pipeline.progress,
-						pipelineId: pipeline.pipelineId,
-						resultId: pipeline.resultId,
-						scores: pipeline.scores
+				const solutions = response.data.solutions;
+				solutions.forEach(solution => {
+					// update solution
+					mutations.updateSolutionRequests(context, {
+						name: solution.feature,
+						feature: solution.feature,
+						filters: solution.filters,
+						features: solution.features,
+						requestId: solution.requestId,
+						dataset: solution.dataset,
+						timestamp: solution.timestamp,
+						progress: solution.progress,
+						solutionId: solution.solutionId,
+						resultId: solution.resultId,
+						scores: solution.scores
 					});
 				});
 			})
@@ -204,7 +204,7 @@ export const actions = {
 			});
 	},
 
-	createPipelines(context: any, request: CreatePipelineRequest) {
+	createSolutions(context: any, request: CreateSolutionRequest) {
 		return new Promise((resolve, reject) => {
 
 			const conn = getWebSocketConnection();
@@ -221,26 +221,26 @@ export const actions = {
 				res.name = request.target;
 				res.feature = request.target;
 
-				// NOTE: 'fetchPipeline' must be done first to ensure the
+				// NOTE: 'fetchSolution' must be done first to ensure the
 				// resultId is present to fetch summary
 
-				// update pipeline status
-				context.dispatch('fetchPipeline', {
+				// update solution status
+				context.dispatch('fetchSolution', {
 					dataset: request.dataset,
 					target: request.target,
-					pipelineId: res.pipelineId,
+					solutionId: res.solutionId,
 				}).then(() => {
 					// update summaries
-					if (res.progress === PIPELINE_ERRORED ||
-						res.progress === PIPELINE_COMPLETED) {
+					if (res.progress === SOLUTION_ERRORED ||
+						res.progress === SOLUTION_COMPLETED) {
 
-						// if current pipelineId, pull results
-						if (res.pipelineId === context.getters.getRoutePipelineId) {
-							// current pipelineId is selected
-							updateCurrentPipelineResults(context, request, res);
+						// if current solutionId, pull results
+						if (res.solutionId === context.getters.getRouteSolutionId) {
+							// current solutionId is selected
+							updateCurrentSolutionResults(context, request, res);
 						} else {
-							// current pipelineId is NOT selected
-							updatePipelineResults(context, request, res);
+							// current solutionId is NOT selected
+							updateSolutionResults(context, request, res);
 						}
 
 					}
@@ -253,22 +253,22 @@ export const actions = {
 				}
 
 				// close stream on complete
-				if (res.progress === PIPELINE_COMPLETED) {
+				if (res.progress === SOLUTION_COMPLETED) {
 					stream.close();
 					return;
 				}
 
 			});
 
-			// send create pipelines request
+			// send create solutions request
 			stream.send({
-				type: CREATE_PIPELINES,
+				type: CREATE_SOLUTIONS,
 				index: ES_INDEX,
 				dataset: request.dataset,
 				target: request.target,
 				task: request.task,
 				metrics: request.metrics,
-				maxPipelines: request.maxPipelines,
+				maxSolutions: request.maxSolutions,
 				filters: request.filters
 			});
 		});

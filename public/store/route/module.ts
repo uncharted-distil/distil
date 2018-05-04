@@ -20,7 +20,7 @@ export const getters = {
 	getRouteTrainingVarsPage: read(moduleGetters.getRouteTrainingVarsPage),
 	getRouteResultTrainingVarsPage: read(moduleGetters.getRouteResultTrainingVarsPage),
 	getRouteTargetVariable: read(moduleGetters.getRouteTargetVariable),
-	getRoutePipelineId: read(moduleGetters.getRoutePipelineId),
+	getRouteSolutionId: read(moduleGetters.getRouteSolutionId),
 	getRouteFilters: read(moduleGetters.getRouteFilters),
 	getRouteHighlightRoot: read(moduleGetters.getRouteHighlightRoot),
 	getRouteRowSelection: read(moduleGetters.getRouteRowSelection),

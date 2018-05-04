@@ -7,9 +7,9 @@ import (
 
 const (
 	requestTableName        = "request"
-	pipelineTableName       = "pipeline"
-	pipelineResultTableName = "pipeline_result"
-	pipelineScoreTableName  = "pipeline_score"
+	solutionTableName       = "solution"
+	solutionResultTableName = "solution_result"
+	solutionScoreTableName  = "solution_score"
 	featureTableName        = "request_feature"
 	filterTableName         = "request_filter"
 	wordStemTableName       = "word_stem"
@@ -34,9 +34,9 @@ func NewDataStorage(clientCtor postgres.ClientCtor, metadataCtor model.MetadataS
 	}
 }
 
-// NewPipelineStorage returns a constructor for a pipeline storage.
-func NewPipelineStorage(clientCtor postgres.ClientCtor, metadataCtor model.MetadataStorageCtor) model.PipelineStorageCtor {
-	return func() (model.PipelineStorage, error) {
+// NewSolutionStorage returns a constructor for a solution storage.
+func NewSolutionStorage(clientCtor postgres.ClientCtor, metadataCtor model.MetadataStorageCtor) model.SolutionStorageCtor {
+	return func() (model.SolutionStorage, error) {
 		return newStorage(clientCtor, metadataCtor)
 	}
 }

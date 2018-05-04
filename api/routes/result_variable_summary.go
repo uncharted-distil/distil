@@ -14,7 +14,7 @@ import (
 // ResultVariableSummaryHandler generates a route handler that facilitates the
 // creation and retrieval of summary information about the specified variable
 // for data returned in a result set.
-func ResultVariableSummaryHandler(ctorPipeline model.PipelineStorageCtor, ctorStorage model.DataStorageCtor) func(http.ResponseWriter, *http.Request) {
+func ResultVariableSummaryHandler(ctorSolution model.SolutionStorageCtor, ctorStorage model.DataStorageCtor) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// get index name
 		index := pat.Param(r, "index")
@@ -63,15 +63,15 @@ func ResultVariableSummaryHandler(ctorPipeline model.PipelineStorageCtor, ctorSt
 			return
 		}
 
-		// get pipeline client
-		pipelineData, err := ctorPipeline()
+		// get solution client
+		solutionData, err := ctorSolution()
 		if err != nil {
 			handleError(w, err)
 			return
 		}
 
 		// get result URI
-		result, err := pipelineData.FetchPipelineResultByUUID(resultID)
+		result, err := solutionData.FetchSolutionResultByUUID(resultID)
 		if err != nil {
 			handleError(w, err)
 			return

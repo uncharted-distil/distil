@@ -11,7 +11,7 @@ import (
 )
 
 // ResultVariableExtremaHandler returns the extremas for a variable relative to the result dataset.
-func ResultVariableExtremaHandler(pipelineCtor model.PipelineStorageCtor, dataCtor model.DataStorageCtor) func(http.ResponseWriter, *http.Request) {
+func ResultVariableExtremaHandler(solutionCtor model.SolutionStorageCtor, dataCtor model.DataStorageCtor) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// extract route parameters
 		index := pat.Param(r, "index")
@@ -23,7 +23,7 @@ func ResultVariableExtremaHandler(pipelineCtor model.PipelineStorageCtor, dataCt
 			return
 		}
 
-		pipeline, err := pipelineCtor()
+		solution, err := solutionCtor()
 		if err != nil {
 			handleError(w, err)
 			return
@@ -36,7 +36,7 @@ func ResultVariableExtremaHandler(pipelineCtor model.PipelineStorageCtor, dataCt
 		}
 
 		// get the result URI. Error ignored to make it ES compatible.
-		res, err := pipeline.FetchPipelineResultByUUID(resultUUID)
+		res, err := solution.FetchSolutionResultByUUID(resultUUID)
 		if err != nil {
 			handleError(w, err)
 			return

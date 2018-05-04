@@ -13,7 +13,7 @@ type Request struct {
 	LastUpdatedTime time.Time     `json:"lastUpdatedTime"`
 	Features        []*Feature    `json:"features"`
 	Filters         *FilterParams `json:"filters"`
-	Pipelines       []*Pipeline   `json:"pipelines"`
+	Solutions       []*Solution   `json:"solutions"`
 }
 
 // TargetFeature returns the target feature out of the feature set.
@@ -33,19 +33,19 @@ type Feature struct {
 	FeatureType string `json:"featureType"`
 }
 
-// Pipeline is a container for a TA2 pipeline.
-type Pipeline struct {
-	PipelineID  string            `json:"pipelineId"`
+// Solution is a container for a TA2 solution.
+type Solution struct {
+	SolutionID  string            `json:"solutionId"`
 	RequestID   string            `json:"requestId"`
 	Progress    string            `json:"progress"`
 	CreatedTime time.Time         `json:"timestamp"`
-	Results     []*PipelineResult `json:"results"`
-	Scores      []*PipelineScore  `json:"scores"`
+	Results     []*SolutionResult `json:"results"`
+	Scores      []*SolutionScore  `json:"scores"`
 }
 
-// PipelineResult represents the pipeline result metadata.
-type PipelineResult struct {
-	PipelineID  string    `json:"pipelineId"`
+// SolutionResult represents the solution result metadata.
+type SolutionResult struct {
+	SolutionID  string    `json:"solutionId"`
 	Dataset     string    `json:"dataset"`
 	ResultURI   string    `json:"requestUri"`
 	ResultUUID  string    `json:"resultId"`
@@ -54,9 +54,9 @@ type PipelineResult struct {
 	CreatedTime time.Time `json:"timestamp"`
 }
 
-// PipelineScore represents the result score data.
-type PipelineScore struct {
-	PipelineID string  `json:"pipelineId"`
+// SolutionScore represents the result score data.
+type SolutionScore struct {
+	SolutionID string  `json:"solutionId"`
 	Metric     string  `json:"metric"`
 	Score      float64 `json:"value"`
 }

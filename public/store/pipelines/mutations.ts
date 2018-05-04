@@ -1,25 +1,25 @@
 import _ from 'lodash';
 import moment from 'moment';
 import Vue from 'vue';
-import { PipelineState, PipelineInfo } from './index';
+import { SolutionState, SolutionInfo } from './index';
 
 export const mutations = {
 
-	// adds a pipeline request or replaces an existing one if the ids match.
-	updatePipelineRequests(state: PipelineState, pipeline: PipelineInfo) {
-		const index = _.findIndex(state.pipelineRequests, p => {
-			return p.pipelineId === pipeline.pipelineId;
+	// adds a solution request or replaces an existing one if the ids match.
+	updateSolutionRequests(state: SolutionState, solution: SolutionInfo) {
+		const index = _.findIndex(state.solutionRequests, p => {
+			return p.solutionId === solution.solutionId;
 		});
 		if (index === -1) {
-			state.pipelineRequests.push(pipeline);
+			state.solutionRequests.push(solution);
 		} else {
-			if (moment(pipeline.timestamp) >= moment(state.pipelineRequests[index].timestamp)) {
-				Vue.set(state.pipelineRequests, index, pipeline);
+			if (moment(solution.timestamp) >= moment(state.solutionRequests[index].timestamp)) {
+				Vue.set(state.solutionRequests, index, solution);
 			}
 		}
 	},
 
-	clearPipelineRequests(state: PipelineState) {
-		state.pipelineRequests = [];
+	clearSolutionRequests(state: SolutionState) {
+		state.solutionRequests = [];
 	}
 }

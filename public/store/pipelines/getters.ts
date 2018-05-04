@@ -1,13 +1,13 @@
 import _ from 'lodash';
 import { Variable } from '../data/index';
-import { PipelineState, PipelineInfo, PIPELINE_RUNNING, PIPELINE_COMPLETED } from './index';
+import { SolutionState, SolutionInfo, SOLUTION_RUNNING, SOLUTION_COMPLETED } from './index';
 import { Dictionary } from '../../util/dict';
 
-function sortPipelines(a: PipelineInfo, b: PipelineInfo): number {
-	if (a.pipelineId < b.pipelineId) {
+function sortSolutions(a: SolutionInfo, b: SolutionInfo): number {
+	if (a.solutionId < b.solutionId) {
 		return -1
 	}
-	if (a.pipelineId > b.pipelineId) {
+	if (a.solutionId > b.solutionId) {
 		return 1
 	}
 	return 0;
@@ -15,43 +15,43 @@ function sortPipelines(a: PipelineInfo, b: PipelineInfo): number {
 
 export const getters = {
 
-	// Returns a dictionary of dictionaries, where the first key is the pipeline create request ID, and the second
-	// key is the pipeline ID.
-	getRunningPipelines(state: PipelineState): PipelineInfo[] {
-		return state.pipelineRequests.filter(pipeline => pipeline.progress === PIPELINE_RUNNING).sort(sortPipelines);
+	// Returns a dictionary of dictionaries, where the first key is the solution create request ID, and the second
+	// key is the solution ID.
+	getRunningSolutions(state: SolutionState): SolutionInfo[] {
+		return state.solutionRequests.filter(solution => solution.progress === SOLUTION_RUNNING).sort(sortSolutions);
 	},
 
-	// Returns a dictionary of dictionaries, where the first key is the pipeline create request ID, and the second
-	// key is the pipeline ID.
-	getCompletedPipelines(state: PipelineState): PipelineInfo[] {
-		return state.pipelineRequests.filter(pipeline => pipeline.progress === PIPELINE_COMPLETED).sort(sortPipelines);
+	// Returns a dictionary of dictionaries, where the first key is the solution create request ID, and the second
+	// key is the solution ID.
+	getCompletedSolutions(state: SolutionState): SolutionInfo[] {
+		return state.solutionRequests.filter(solution => solution.progress === SOLUTION_COMPLETED).sort(sortSolutions);
 	},
 
-	getPipelines(state: PipelineState): PipelineInfo[] {
-		return Array.from(state.pipelineRequests).slice().sort(sortPipelines);
+	getSolutions(state: SolutionState): SolutionInfo[] {
+		return Array.from(state.solutionRequests).slice().sort(sortSolutions);
 	},
 
-	getPipelineRequestIds(state: PipelineState): string[] {
+	getSolutionRequestIds(state: SolutionState): string[] {
 		const ids = [];
-		state.pipelineRequests.forEach(pipeline => {
-			if (ids.indexOf(pipeline.requestId) === -1) {
-				ids.push(pipeline.requestId);
+		state.solutionRequests.forEach(solution => {
+			if (ids.indexOf(solution.requestId) === -1) {
+				ids.push(solution.requestId);
 			}
 		});
 		return ids;
 	},
 
-	getActivePipeline(state: PipelineState, getters: any): PipelineInfo {
-		const pipelineId = getters.getRoutePipelineId;
-		return _.find(state.pipelineRequests, pipeline => pipeline.pipelineId === pipelineId);
+	getActiveSolution(state: SolutionState, getters: any): SolutionInfo {
+		const solutionId = getters.getRouteSolutionId;
+		return _.find(state.solutionRequests, solution => solution.solutionId === solutionId);
 	},
 
-	getActivePipelineTrainingMap(state: PipelineState, getters: any): Dictionary<boolean> {
-		const activePipeline = getters.getActivePipeline;
-		if (!activePipeline || !activePipeline.features) {
+	getActiveSolutionTrainingMap(state: SolutionState, getters: any): Dictionary<boolean> {
+		const activeSolution = getters.getActiveSolution;
+		if (!activeSolution || !activeSolution.features) {
 			return {};
 		}
-		const training = activePipeline.features.filter(f => f.featureType === 'train').map(f => f.featureName);
+		const training = activeSolution.features.filter(f => f.featureType === 'train').map(f => f.featureName);
 		const trainingMap = {};
 		training.forEach(t => {
 			trainingMap[t] = true;
@@ -59,8 +59,8 @@ export const getters = {
 		return trainingMap;
 	},
 
-	getActivePipelineVariables(state: PipelineState, getters: any): Variable[] {
-		const trainingMap = getters.getActivePipelineTrainingMap;
+	getActiveSolutionVariables(state: SolutionState, getters: any): Variable[] {
+		const trainingMap = getters.getActiveSolutionTrainingMap;
 		const target = getters.getRouteTargetVariable;
 		const variables = getters.getVariables;
 		return variables.filter(variable => trainingMap[variable.name] || variable.name === target);

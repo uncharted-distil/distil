@@ -42,7 +42,7 @@
 						</div>
 						<div class="row align-items-center">
 							<div class="col-12 d-flex flex-column">
-								<create-pipelines-form class="select-create-pipelines"></create-pipelines-form>
+								<create-solutions-form class="select-create-solutions"></create-solutions-form>
 							</div>
 						</div>
 					</div>
@@ -55,7 +55,7 @@
 
 <script lang="ts">
 
-import CreatePipelinesForm from '../components/CreatePipelinesForm.vue';
+import CreateSolutionsForm from '../components/CreateSolutionsForm.vue';
 import SelectDataTable from '../components/SelectDataTable.vue';
 import AvailableTrainingVariables from '../components/AvailableTrainingVariables.vue';
 import TrainingVariables from '../components/TrainingVariables.vue';
@@ -72,7 +72,7 @@ export default Vue.extend({
 	name: 'select-view',
 
 	components: {
-		CreatePipelinesForm,
+		CreateSolutionsForm,
 		SelectDataTable,
 		AvailableTrainingVariables,
 		TrainingVariables,

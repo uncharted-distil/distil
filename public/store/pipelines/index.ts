@@ -1,38 +1,38 @@
 import { FilterParams } from '../../util/filters';
 
-export const PIPELINE_PENDING = 'PENDING';
-export const PIPELINE_RUNNING = 'RUNNING';
-export const PIPELINE_COMPLETED = 'COMPLETED';
-export const PIPELINE_ERRORED = 'ERRORED';
+export const SOLUTION_PENDING = 'PENDING';
+export const SOLUTION_RUNNING = 'RUNNING';
+export const SOLUTION_COMPLETED = 'COMPLETED';
+export const SOLUTION_ERRORED = 'ERRORED';
 
 export interface Score {
 	metric: string;
 	value: number;
 }
 
-export interface PipelineFeature {
+export interface SolutionFeature {
 	featureName: string;
 	featureType: string;
 }
 
-export interface PipelineInfo {
+export interface SolutionInfo {
 	requestId: string;
 	name: string;
 	feature: string;
-	pipelineId: string;
+	solutionId: string;
 	resultId: string;
 	progress: string;
 	scores: Score[];
 	timestamp: number;
 	dataset: string;
 	filters: FilterParams;
-	features: PipelineFeature[];
+	features: SolutionFeature[];
 }
 
-export interface PipelineState {
-	pipelineRequests: PipelineInfo[];
+export interface SolutionState {
+	solutionRequests: SolutionInfo[];
 }
 
-export const state: PipelineState = {
-	pipelineRequests: [] as any
+export const state: SolutionState = {
+	solutionRequests: [] as any
 }
