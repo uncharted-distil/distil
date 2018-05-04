@@ -109,7 +109,8 @@ export interface DataState {
 	resultExtrema: Extrema;
 	predictedExtremas: Dictionary<Extrema>;
 	residualExtremas: Dictionary<Extrema>;
-	resultData: Data;
+	highlightedResultData: Data;
+	unhighlightedResultData: Data;
 	selectedData: Data;
 	excludedData: Data;
 	highlightValues: HighlightValues;
@@ -141,7 +142,9 @@ export const state = {
 	residualExtremas: {},
 
 	// current set of pipeline results
-	resultData: null,
+	highlightedResultData: null,
+
+	unhighlightedResultData: null,
 
 	// selected data entries for the active dataset
 	selectedData: null,

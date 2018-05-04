@@ -1,7 +1,6 @@
 <template>
 	<div class="results-data-table">
-		<p class="nav-link font-weight-bold">{{title}}</p>
-		<p><small>Displaying {{items.length}} of {{numRows}} rows</small></p>
+		<p><small v-html="title"></small></p>
 		<div class="results-data-table-container">
 			<div class="results-data-no-results" v-if="!hasData">
 				<div v-html="spinnerHTML"></div>
@@ -37,7 +36,6 @@
 
 import _ from 'lodash';
 import { spinnerHTML } from '../util/spinner';
-import { getters } from '../store/data/module';
 import { Extrema } from '../store/data/index';
 import { TargetRow, TableRow, FieldInfo, RowSelection } from '../store/data/index';
 import { getters as dataGetters } from '../store/data/module';
@@ -53,19 +51,16 @@ export default Vue.extend({
 
 	props: {
 		title: String,
-		filterFunc: Function,
 		decorateFunc: Function,
 		refName: String,
+		dataItems: Array,
+		dataFields: Object,
 		instanceName: { type: String, default: 'results-table-table' }
 	},
 
 	computed: {
 		pipelineId(): string {
 			return routeGetters.getRoutePipelineId(this.$store);
-		},
-
-		numRows(): number {
-			return getters.getResultDataNumRows(this.$store);
 		},
 
 		target(): string {
@@ -85,23 +80,17 @@ export default Vue.extend({
 		},
 
 		hasData(): boolean {
-			return getters.hasResultData(this.$store);
+			return !!this.dataItems;
 		},
 
 		items(): TargetRow[] {
-			const items = getters.getResultDataItems(this.$store);
-			const filtered = removeNonTrainingItems(items, this.training);
-
+			const filtered = removeNonTrainingItems(this.dataItems, this.training);
 			const selected = updateTableRowSelection(filtered, this.selectedRow, this.instanceName);
-
-			return selected
-				.filter(item => this.filterFunc(item))
-				.map(item => this.decorateFunc(item));
+			return selected.map(item => this.decorateFunc(item));
 		},
 
 		fields(): Dictionary<FieldInfo> {
-			const fields = getters.getResultDataFields(this.$store);
-			return removeNonTrainingFields(fields, this.training);
+			return removeNonTrainingFields(this.dataFields, this.training);
 		},
 
 		selectedRow(): RowSelection {

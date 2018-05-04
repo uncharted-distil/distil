@@ -50,11 +50,15 @@ export const getters = {
 	getExcludedDataItems: read(moduleGetters.getExcludedDataItems),
 	getExcludedDataFields: read(moduleGetters.getExcludedDataFields),
 	// result data
-	hasResultData: read(moduleGetters.hasResultData),
-	getResultData: read(moduleGetters.getResultData),
 	getResultDataNumRows: read(moduleGetters.getResultDataNumRows),
-	getResultDataItems: read(moduleGetters.getResultDataItems),
-	getResultDataFields: read(moduleGetters.getResultDataFields),
+	hasHighlightedResultData: read(moduleGetters.hasHighlightedResultData),
+	getHighlightedResultData: read(moduleGetters.getHighlightedResultData),
+	getHighlightedResultDataItems: read(moduleGetters.getHighlightedResultDataItems),
+	getHighlightedResultDataFields: read(moduleGetters.getHighlightedResultDataFields),
+	hasUnhighlightedResultData: read(moduleGetters.hasUnhighlightedResultData),
+	getUnhighlightedResultData: read(moduleGetters.getUnhighlightedResultData),
+	getUnhighlightedResultDataItems: read(moduleGetters.getUnhighlightedResultDataItems),
+	getUnhighlightedResultDataFields: read(moduleGetters.getUnhighlightedResultDataFields),
 	// extrema
 	getPredictedExtrema: read(moduleGetters.getPredictedExtrema),
 	getResidualExtrema: read(moduleGetters.getResidualExtrema),
@@ -84,6 +88,10 @@ export const actions = {
 	fetchSelectedTableData: dispatch(moduleActions.fetchSelectedTableData),
 	fetchExcludedTableData: dispatch(moduleActions.fetchExcludedTableData),
 
+	fetchResultTableData: dispatch(moduleActions.fetchResultTableData),
+	fetchHighlightedResultTableData: dispatch(moduleActions.fetchHighlightedResultTableData),
+	fetchUnhighlightedResultTableData: dispatch(moduleActions.fetchUnhighlightedResultTableData),
+
 	fetchData: dispatch(moduleActions.fetchData),
 
 	fetchPredictedSummaries: dispatch(moduleActions.fetchPredictedSummaries),
@@ -93,7 +101,7 @@ export const actions = {
 	fetchPredictedExtremas: dispatch(moduleActions.fetchPredictedExtremas),
 	fetchResidualsExtrema: dispatch(moduleActions.fetchResidualsExtrema),
 	fetchResidualsExtremas: dispatch(moduleActions.fetchResidualsExtremas),
-	fetchResultTableData: dispatch(moduleActions.fetchResultTableData),
+
 	fetchResults: dispatch(moduleActions.fetchResults),
 	fetchDataHighlightValues: dispatch(moduleActions.fetchDataHighlightValues),
 	fetchResultHighlightValues: dispatch(moduleActions.fetchResultHighlightValues)
@@ -118,7 +126,8 @@ export const mutations = {
 	clearResidualsExtrema: commit(moduleMutations.clearResidualsExtrema),
 	setSelectedData: commit(moduleMutations.setSelectedData),
 	setExcludedData: commit(moduleMutations.setExcludedData),
-	setResultData: commit(moduleMutations.setResultData),
+	setHighlightedResultData: commit(moduleMutations.setHighlightedResultData),
+	setUnhighlightedResultData: commit(moduleMutations.setUnhighlightedResultData),
 	updateHighlightSamples: commit(moduleMutations.updateHighlightSamples),
 	updateHighlightSummaries: commit(moduleMutations.updateHighlightSummaries),
 	updatePredictedHighlightSummaries: commit(moduleMutations.updatePredictedHighlightSummaries),
