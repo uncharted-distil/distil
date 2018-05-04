@@ -90,7 +90,10 @@ export default Vue.extend({
 		},
 
 		highlightedResultErrors(): number {
-			return -1;
+			return this.highlightedResultDataItems.filter(item => {
+				const err = _.toNumber(item[getErrorCol(this.target)]);
+				return err < this.residualThresholdMin || err > this.residualThresholdMax;
+			}).length;
 		},
 
 		unhighlightedResultDataItems(): TargetRow[] {
@@ -102,7 +105,10 @@ export default Vue.extend({
 		},
 
 		unhighlightedResultErrors(): number {
-			return -1;
+			return this.unhighlightedResultDataItems.filter(item => {
+				const err = _.toNumber(item[getErrorCol(this.target)]);
+				return err < this.residualThresholdMin || err > this.residualThresholdMax;
+			}).length;
 		},
 
 		residualThresholdMin(): number {
@@ -149,7 +155,7 @@ export default Vue.extend({
 		},
 
 		bottomTableTitle(): string {
-			return `${this.unhighlightedResultDataItems.length} <b class="matching-color">matching</b> samples of ${this.numRows}, including ${this.unhighlightedResultErrors} <b class="erroneous-color">erroneous</b> predictions`;
+			return `${this.unhighlightedResultDataItems.length} <b class="other-color">other</b> samples of ${this.numRows}, including ${this.unhighlightedResultErrors} <b class="erroneous-color">erroneous</b> predictions`;
 
 		},
 
@@ -218,6 +224,9 @@ export default Vue.extend({
 }
 .matching-color {
 	color: #00c6e1;
+}
+.other-color {
+	color: #333;
 }
 .erroneous-color {
 	color: #e05353;
