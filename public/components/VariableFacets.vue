@@ -23,6 +23,7 @@
 					:sort="importanceDesc"
 					:enable-type-change="enableTypeChange"
 					:enable-highlighting="enableHighlighting"
+					:ignore-highlights="ignoreHighlights"
 					:instanceName="instanceName"
 					@numerical-click="onNumericalClick"
 					@categorical-click="onCategoricalClick"
@@ -66,6 +67,7 @@ export default Vue.extend({
 		enableTitle: Boolean,
 		enableTypeChange: Boolean,
 		enableHighlighting: Boolean,
+		ignoreHighlights: Boolean,
 		groups: Array,
 		dataset: String,
 		subtitle: String,

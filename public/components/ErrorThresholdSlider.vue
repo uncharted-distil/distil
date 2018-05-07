@@ -205,7 +205,7 @@ export default Vue.extend({
 }
 
 .error-threshold-slider .vue-slider-component .vue-slider-piecewise {
-	background-color: #ee0701;
+	background-color: #e05353;
 }
 
 

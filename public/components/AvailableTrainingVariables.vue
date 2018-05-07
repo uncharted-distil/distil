@@ -7,7 +7,7 @@
 			ref="facets"
 			enable-search
 			enable-type-change
-			instance-name="availableVars"
+			instance-name="availableTrainingVars"
 			:groups="groups"
 			:dataset="dataset"
 			:html="html">

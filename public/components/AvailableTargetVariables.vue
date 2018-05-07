@@ -4,7 +4,8 @@
 			enable-search
 			enable-type-change
 			enable-title
-			instance-name="availableVars"
+			ignore-highlights
+			instance-name="availableTargetVars"
 			:groups="groups"
 			:dataset="dataset"
 			:html="html">

@@ -80,9 +80,15 @@ export const mutations = {
 	},
 
 	// sets the current result data into the store
-	setResultData(state: DataState, resultData: Data) {
-		state.resultData = resultData;
+	setHighlightedResultData(state: DataState, resultData: Data) {
+		state.highlightedResultData = resultData;
 	},
+
+	// sets the current result data into the store
+	setUnhighlightedResultData(state: DataState, resultData: Data) {
+		state.unhighlightedResultData = resultData;
+	},
+
 
 	updateHighlightSamples(state: DataState, samples: Dictionary<string[]>) {
 		state.highlightValues.samples = samples;

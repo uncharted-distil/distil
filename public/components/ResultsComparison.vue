@@ -1,21 +1,35 @@
 <template>
-	<div class="results-tables">
-		<results-data-table
-			class="results-data-table"
-			title="Correct Predictions"
-			refName="correctTable"
-			instanceName="correct-results-data-table"
-			:filterFunc="correctFilter"
-			:decorateFunc="correctDecorate"
-			:showError="regressionEnabled"></results-data-table>
-		<results-data-table
-			class="results-data-table"
-			title="Incorrect Predictions"
-			refName="incorrectTable"
-			instanceName="incorrect-results-data-table"
-			:filterFunc="incorrectFilter"
-			:decorateFunc="incorrectDecorate"
-			:showError="regressionEnabled"></results-data-table>
+	<div class="results-tables" v-bind:class="{ 'one-table': !hasHighlights, 'two-tables': hasHighlights }">
+		<template v-if="hasHighlights">
+			<p class="nav-link font-weight-bold">Samples Modeled</p>
+			<results-data-table
+				refName="topTable"
+				instanceName="top-results-data-table"
+				:title="topTableTitle"
+				:data-fields="highlightedResultDataFields"
+				:data-items="highlightedResultDataItems"
+				:decorateFunc="topDecorate"
+				:showError="regressionEnabled"></results-data-table>
+			<results-data-table
+				refName="bottomTable"
+				instanceName="bottom-results-data-table"
+				:title="bottomTableTitle"
+				:data-fields="unhighlightedResultDataFields"
+				:data-items="unhighlightedResultDataItems"
+				:decorateFunc="bottomDecorate"
+				:showError="regressionEnabled"></results-data-table>
+		</template>
+		<template v-if="!hasHighlights">
+			<p class="nav-link font-weight-bold">Samples Modeled</p>
+			<results-data-table
+				refName="singleTable"
+				instanceName="single-results-data-table"
+				:title="singleTableTitle"
+				:data-fields="unhighlightedResultDataFields"
+				:data-items="unhighlightedResultDataItems"
+				:decorateFunc="bottomDecorate"
+				:showError="regressionEnabled"></results-data-table>
+		</template>
 	</div>
 </template>
 
@@ -25,11 +39,13 @@ import ResultsDataTable from '../components/ResultsDataTable.vue';
 import { getTask } from '../util/pipelines';
 import _ from 'lodash';
 import Vue from 'vue';
+import { Dictionary } from '../util/dict';
 import { getters as dataGetters} from '../store/data/module';
 import { getters as routeGetters} from '../store/route/module';
 import { getTargetCol, getPredictedCol, getErrorCol } from '../util/data';
 import { FilterParams } from '../util/filters';
-import { Variable, TargetRow } from '../store/data/index';
+import { Variable, TargetRow, FieldInfo } from '../store/data/index';
+import { getHighlights } from '../util/highlights';
 
 export default Vue.extend({
 	name: 'results-comparison',
@@ -60,6 +76,41 @@ export default Vue.extend({
 			return dataGetters.getVariables(this.$store);
 		},
 
+		hasHighlights(): boolean {
+			const highlights = getHighlights(this.$store);
+			return highlights && highlights.root && highlights.root.value;
+		},
+
+		highlightedResultDataItems(): TargetRow[] {
+			return dataGetters.getHighlightedResultDataItems(this.$store);
+		},
+
+		highlightedResultDataFields():  Dictionary<FieldInfo> {
+			return dataGetters.getHighlightedResultDataFields(this.$store);
+		},
+
+		highlightedResultErrors(): number {
+			return this.highlightedResultDataItems.filter(item => {
+				const err = _.toNumber(item[getErrorCol(this.target)]);
+				return err < this.residualThresholdMin || err > this.residualThresholdMax;
+			}).length;
+		},
+
+		unhighlightedResultDataItems(): TargetRow[] {
+			return dataGetters.getUnhighlightedResultDataItems(this.$store);
+		},
+
+		unhighlightedResultDataFields():  Dictionary<FieldInfo> {
+			return dataGetters.getUnhighlightedResultDataFields(this.$store);
+		},
+
+		unhighlightedResultErrors(): number {
+			return this.unhighlightedResultDataItems.filter(item => {
+				const err = _.toNumber(item[getErrorCol(this.target)]);
+				return err < this.residualThresholdMin || err > this.residualThresholdMax;
+			}).length;
+		},
+
 		residualThresholdMin(): number {
 			return _.toNumber(routeGetters.getRouteResidualThresholdMin(this.$store));
 		},
@@ -81,47 +132,40 @@ export default Vue.extend({
 			return task.schemaName === 'regression';
 		},
 
-		correctFilter(): (row: TargetRow) => boolean {
-			if (this.regressionEnabled) {
-				return this.regressionInRangeFilter;
-			}
-			return this.classificationMatchFilter;
-		},
-
-		correctDecorate(): (row: TargetRow) => TargetRow {
+		topDecorate(): (row: TargetRow) => TargetRow {
 			if (this.regressionEnabled) {
 				return this.regressionInRangeDecorate;
 			}
 			return this.classificationMatchDecorate;
 		},
 
-		incorrectFilter(): (row: TargetRow) => boolean {
-			if (this.regressionEnabled) {
-				return this.regressionOutOfRangeFilter;
-			}
-			return this.classificationNoMatchFilter;
-		},
-
-		incorrectDecorate(): (row: TargetRow) => TargetRow {
+		bottomDecorate(): (row: TargetRow) => TargetRow {
 			if (this.regressionEnabled) {
 				return this.regressionOutOfRangeDecorate;
 			}
 			return this.classificationNoMatchDecorate;
+		},
+
+		numRows(): number {
+			return dataGetters.getResultDataNumRows(this.$store);
+		},
+
+		topTableTitle(): string {
+			return `${this.highlightedResultDataItems.length} <b class="matching-color">matching</b> samples of ${this.numRows}, including ${this.highlightedResultErrors} <b class="erroneous-color">erroneous</b> predictions`;
+		},
+
+		bottomTableTitle(): string {
+			return `${this.unhighlightedResultDataItems.length} <b class="other-color">other</b> samples of ${this.numRows}, including ${this.unhighlightedResultErrors} <b class="erroneous-color">erroneous</b> predictions`;
+
+		},
+
+		singleTableTitle(): string {
+			return `Displaying ${this.unhighlightedResultDataItems.length} of ${this.numRows}, including ${this.unhighlightedResultErrors} <b>erroneous</b> predictions`;
 		}
 	},
 
 	methods: {
 
-		// Methods passed to classification result table instances to filter their displays.
-		classificationMatchFilter(row: TargetRow): boolean {
-			return row[getTargetCol(this.target)] === row[getPredictedCol(this.target)];
-		},
-
-		classificationNoMatchFilter(row: TargetRow): boolean {
-			return row[getTargetCol(this.target)] !== row[getPredictedCol(this.target)];
-		},
-
-		// Methods passed to classification result table instance to update their row visuals post-filter
 		classificationMatchDecorate(row: TargetRow): TargetRow {
 			row._cellVariants = {
 				[getTargetCol(this.target)]: 'primary',
@@ -138,20 +182,6 @@ export default Vue.extend({
 			return row;
 		},
 
-		// Methods passed to regression result table instances to filter their displays.
-
-		regressionInRangeFilter(row: TargetRow): boolean {
-			// grab the residual threshold slider value and update
-			const err = row[getErrorCol(this.target)];
-			return err >= this.residualThresholdMin && err <= this.residualThresholdMax;
-		},
-
-		regressionOutOfRangeFilter(row: TargetRow): boolean {
-			return !this.regressionInRangeFilter(row);
-		},
-
-		// Methods passed to classification result table instance to update their row visuals post-filter
-
 		regressionInRangeDecorate(row: TargetRow): TargetRow {
 			row._cellVariants = {
 				[getTargetCol(this.target)]: 'success',
@@ -160,8 +190,6 @@ export default Vue.extend({
 			};
 			return row;
 		},
-
-		// Methods passed to classification result table instance to update their row visuals post-filter
 
 		regressionOutOfRangeDecorate(row: TargetRow): TargetRow {
 			row._cellVariants = {
@@ -176,7 +204,9 @@ export default Vue.extend({
 </script>
 
 <style>
-.results-tables {
+.results-tables,
+.one-table,
+.two-tables {
 	display: flex;
 	flex-direction: column;
 	flex: none;
@@ -184,7 +214,21 @@ export default Vue.extend({
 .results-data-table {
 	display: flex;
 	flex-direction: column;
+}
+.two-tables .results-data-table {
 	max-height: 50%;
 	min-height: 50%;
+}
+.one-table .results-data-table {
+	height: 100%;
+}
+.matching-color {
+	color: #00c6e1;
+}
+.other-color {
+	color: #333;
+}
+.erroneous-color {
+	color: #e05353;
 }
 </style>
