@@ -28,9 +28,9 @@ type Config struct {
 	ElasticEndpoint                    string  `env:"ES_ENDPOINT" envDefault:"http://localhost:9200"`
 	RedisEndpoint                      string  `env:"REDIS_ENDPOINT" envDefault:"localhost:6379"`
 	RedisExpiry                        int     `env:"REDIS_EXPIRY" envDefault:"-1"`
-	SolutionComputeEndpoint            string  `env:"Solution_COMPUTE_ENDPOINT" envDefault:"localhost:50051"`
-	SolutionDataDir                    string  `env:"Solution_DATA_DIR" envDefault:"datasets"`
-	SolutionComputeTrace               bool    `env:"Solution_COMPUTE_TRACE" envDefault:"false"`
+	SolutionComputeEndpoint            string  `env:"SOLUTION_COMPUTE_ENDPOINT" envDefault:"localhost:50051"`
+	SolutionDataDir                    string  `env:"SOLUTION_DATA_DIR" envDefault:"datasets"`
+	SolutionComputeTrace               bool    `env:"SOLUTION_COMPUTE_TRACE" envDefault:"false"`
 	ExportPath                         string  `env:"EXPORT_PATH"`
 	StartupConfigFile                  string  `env:"JSON_CONFIG_PATH" envDefault:"/d3m/config"`
 	PostgresHost                       string  `env:"PG_HOST" envDefault:"localhost"`
