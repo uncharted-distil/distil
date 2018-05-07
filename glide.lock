@@ -1,5 +1,5 @@
-hash: a48c9e58b8dc46bd797a2481095fd53e258d6029e61884229dbccc82c924a9ff
-updated: 2018-04-04T17:46:05.488880752-04:00
+hash: 72e90a77d2dbf28cde191167527d8a93e6374dd6620b8823781b1342c94d0862
+updated: 2018-05-07T09:41:13.915126564-04:00
 imports:
 - name: github.com/caarlos0/env
   version: 7cd7992b3bc86f920394f8de92c13900da1a46b7
@@ -7,8 +7,6 @@ imports:
   version: 87df7c60d5820d0f8ae11afede5aa52325c09717
   subpackages:
   - spew
-- name: github.com/fatih/structs
-  version: ebf56d35bba727c68ac77f56f2fcf90b181851aa
 - name: github.com/garyburd/redigo
   version: d1ed5c67e5794de818ea85e6b522fda02623a484
   subpackages:
@@ -27,12 +25,14 @@ imports:
   subpackages:
   - gomock
 - name: github.com/golang/protobuf
-  version: 1e59b77b52bf8e4b449a57e6f79f21226d571845
+  version: b4deda0973fb4c70b50d226b1af49f3da59f5265
   subpackages:
   - proto
   - protoc-gen-go
   - protoc-gen-go/descriptor
+  - ptypes
   - ptypes/any
+  - ptypes/duration
   - ptypes/timestamp
 - name: github.com/gorilla/websocket
   version: 4ac909741dfa57448bfadfdbca0cf7eeaa68f0e2
@@ -55,7 +55,7 @@ imports:
   - jlexer
   - jwriter
 - name: github.com/mattn/go-colorable
-  version: 586e6dcca296d085100876beb6dbf02287a247f7
+  version: 7dc3415be66d7cc68bf0182f35c8d31f8d2ad8a7
 - name: github.com/mattn/go-isatty
   version: 6ca4dbf54d38eea1a992b3c722a76a5d1c4cb25c
 - name: github.com/mgutz/ansi
@@ -87,6 +87,14 @@ imports:
   version: 5dffc1ab94a6a779b258e131992d901fa2a59f7d
   repo: git@github.com:unchartedsoftware/distil-ingest.git
   vcs: git
+  subpackages:
+  - conf
+  - merge
+  - metadata
+  - postgres
+  - postgres/model
+  - rest
+  - smmry
 - name: github.com/unchartedsoftware/plog
   version: 34d2bbd3c0a9458feb0752af2b578a23eb8ddc4f
 - name: github.com/vova616/xxhash
@@ -103,7 +111,7 @@ imports:
   - pat
   - pattern
 - name: golang.org/x/net
-  version: ab555f366c4508dbe0802550b1b20c46c5c18aa0
+  version: 2fb46b16b8dda405028c50f7c7f0f9dd1fa6bfb1
   subpackages:
   - context
   - html
@@ -115,7 +123,7 @@ imports:
   - lex/httplex
   - trace
 - name: golang.org/x/sys
-  version: 810d7000345868fc619eb81f46307107118f4ae1
+  version: 37707fdb30a5b38865cfb95e5aab41707daec7fd
   subpackages:
   - unix
 - name: golang.org/x/text
@@ -126,21 +134,30 @@ imports:
   - unicode/bidi
   - unicode/norm
 - name: google.golang.org/genproto
-  version: a8101f21cf983e773d0c1133ebc5424792003214
+  version: 2b5a72b8730b0b16380010cfe5286c42108d88e7
   subpackages:
   - googleapis/rpc/status
 - name: google.golang.org/grpc
-  version: b15215fb911b24a5d61d57feec4233d610530464
+  version: d11072e7ca9811b1100b80ca0269ac831f06d024
   subpackages:
+  - balancer
+  - balancer/base
+  - balancer/roundrobin
   - codes
+  - connectivity
   - credentials
-  - grpclb/grpc_lb_v1
+  - encoding
+  - encoding/proto
+  - grpclb/grpc_lb_v1/messages
   - grpclog
   - internal
   - keepalive
   - metadata
   - naming
   - peer
+  - resolver
+  - resolver/dns
+  - resolver/passthrough
   - stats
   - status
   - tap
