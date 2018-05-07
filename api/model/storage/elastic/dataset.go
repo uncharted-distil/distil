@@ -73,10 +73,10 @@ func (s *Storage) parseDatasets(res *elastic.SearchResult, includeIndex bool) ([
 }
 
 // FetchDatasets returns all datasets in the provided index.
-func (s *Storage) FetchDatasets(index string, includeIndex bool) ([]*model.Dataset, error) {
+func (s *Storage) FetchDatasets(includeIndex bool) ([]*model.Dataset, error) {
 	// execute the ES query
 	res, err := s.client.Search().
-		Index(index).
+		Index(s.index).
 		FetchSource(true).
 		Size(datasetsListSize).
 		Do(context.Background())
@@ -88,13 +88,13 @@ func (s *Storage) FetchDatasets(index string, includeIndex bool) ([]*model.Datas
 
 // SearchDatasets returns the datasets that match the search criteria in the
 // provided index.
-func (s *Storage) SearchDatasets(index string, terms string, includeIndex bool) ([]*model.Dataset, error) {
+func (s *Storage) SearchDatasets(terms string, includeIndex bool) ([]*model.Dataset, error) {
 	query := elastic.NewMultiMatchQuery(terms, "_id", "description", "variables.varName").
 		Analyzer("standard")
 	// execute the ES query
 	res, err := s.client.Search().
 		Query(query).
-		Index(index).
+		Index(s.index).
 		FetchSource(true).
 		Size(datasetsListSize).
 		Do(context.Background())
@@ -105,9 +105,9 @@ func (s *Storage) SearchDatasets(index string, terms string, includeIndex bool) 
 }
 
 // SetDataType updates the data type of the field in ES.
-func (s *Storage) SetDataType(dataset string, index string, field string, fieldType string) error {
+func (s *Storage) SetDataType(dataset string, field string, fieldType string) error {
 	// Fetch all existing variables
-	vars, err := s.FetchVariables(dataset, index, true)
+	vars, err := s.FetchVariables(dataset, true)
 	if err != nil {
 		return errors.Wrapf(err, "failed to fetch existing variable")
 	}
@@ -139,13 +139,13 @@ func (s *Storage) SetDataType(dataset string, index string, field string, fieldT
 
 	// push the document into the metadata index
 	_, err = s.client.Update().
-		Index(index).
+		Index(s.index).
 		Type(metadataType).
 		Id(dataset + DatasetSuffix).
 		Doc(source).
 		Do(context.Background())
 	if err != nil {
-		return errors.Wrapf(err, "failed to add document to index `%s`", index)
+		return errors.Wrapf(err, "failed to add document to index `%s`", s.index)
 	}
 	return nil
 }

@@ -1,7 +1,7 @@
 import _ from 'lodash';
 import axios from 'axios';
 import { AxiosPromise } from 'axios';
-import { FilterParams, INCLUDE_FILTER } from '../../util/filters';
+import { FilterParams, INCLUDE_FILTER, EXCLUDE_FILTER } from '../../util/filters';
 import { getSolutionsByRequestIds, getSolutionById } from '../../util/solutions';
 import { getSummaries, getSummary, updatePredictedSummary, updatePredictedHighlightSummary } from '../../util/data';
 import { Variable, Data, Extrema } from './index';
@@ -297,7 +297,6 @@ export const actions = {
 		}
 
 		mutations.setSelectedData(context, null);
-
 		return context.dispatch('fetchData', { dataset: args.dataset, filters: args.filters, invert: false })
 			.then(response => {
 				mutations.setSelectedData(context, response.data);
@@ -543,6 +542,21 @@ export const actions = {
 
 	// fetches result data for created solution
 	fetchResultTableData(context: DataContext, args: { solutionId: string, dataset: string, highlightRoot: HighlightRoot, filters?: FilterParams }) {
+		return Promise.all([
+			context.dispatch('fetchHighlightedResultTableData', {
+				dataset: args.dataset,
+				solutionId: args.solutionId,
+				highlightRoot: args.highlightRoot
+			}),
+			context.dispatch('fetchUnhighlightedResultTableData', {
+				dataset: args.dataset,
+				solutionId: args.solutionId,
+				highlightRoot: args.highlightRoot
+			})
+		]);
+	},
+
+	fetchHighlightedResultTableData(context: DataContext, args: { solutionId: string, dataset: string, highlightRoot: HighlightRoot, filters?: FilterParams }) {
 		if (!args.filters) {
 			args.filters = {
 				variables: [],
@@ -562,15 +576,47 @@ export const actions = {
 			highlightFilter.name = getVarFromTarget(highlightFilter.name);
 			args.filters.filters.push(highlightFilter);
 		}
-		mutations.setSelectedData(context, null);
-		mutations.setResultData(context, null);
+
+		mutations.setHighlightedResultData(context, null);
 		return context.dispatch('fetchResults', args)
 			.then(response => {
-				mutations.setResultData(context, response.data);
+				mutations.setHighlightedResultData(context, response.data);
 			})
 			.catch(error => {
 				console.error(`Failed to fetch results from ${args.solutionId} with error ${error}`);
-				mutations.setResultData(context, createEmptyData(args.dataset));
+				mutations.setHighlightedResultData(context, createEmptyData(args.dataset));
+			});
+	},
+
+	fetchUnhighlightedResultTableData(context: DataContext, args: { solutionId: string, dataset: string, highlightRoot: HighlightRoot, filters?: FilterParams }) {
+		if (!args.filters) {
+			args.filters = {
+				variables: [],
+				filters: []
+			};
+		}
+
+		const solution = getSolutionById(context.rootState.solutionModule, args.solutionId);
+		if (!solution.resultId) {
+			// no results ready to pull
+			console.warn(`No 'resultId' exists for solution '${args.solutionId}'`);
+			return null;
+		}
+
+		const highlightFilter = createFilterFromHighlightRoot(args.highlightRoot, EXCLUDE_FILTER);
+		if (highlightFilter) {
+			highlightFilter.name = getVarFromTarget(highlightFilter.name);
+			args.filters.filters.push(highlightFilter);
+		}
+
+		mutations.setUnhighlightedResultData(context, null);
+		return context.dispatch('fetchResults', args)
+			.then(response => {
+				mutations.setUnhighlightedResultData(context, response.data);
+			})
+			.catch(error => {
+				console.error(`Failed to fetch results from ${args.solutionId} with error ${error}`);
+				mutations.setUnhighlightedResultData(context, createEmptyData(args.dataset));
 			});
 	},
 

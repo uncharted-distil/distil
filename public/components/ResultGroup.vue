@@ -23,13 +23,18 @@
 				:instanceName="predictedInstanceName"
 				:html="residualHtml">
 			</facets>
-			<facets v-if="residualGroups.length" class="residual-container"
-				@numerical-click="onResidualNumericalClick"
-				:groups="residualGroups"
-				:highlights="highlights"
-				:instanceName="residualInstanceName"
-				:html="resultHtml">
-			</facets>
+			<div class="residual-group-container">
+				<facets v-if="residualGroups.length" class="residual-container"
+					ignore-highlights
+					:groups="residualGroups"
+					:highlights="highlights"
+					:deemphasis="residualThreshold"
+					:instanceName="residualInstanceName"
+					:html="resultHtml">
+				</facets>
+				<div class="residual-center-line"></div>
+				<div class="residual-center-label">0</div>
+			</div>
 		</div>
 		<div v-if="solutionStatus === 'ERRORED'">
 			<b-badge variant="danger">
@@ -47,12 +52,14 @@
 import Vue from 'vue';
 import Facets from '../components/Facets';
 import { createGroups, Group } from '../util/facets';
+import { Extrema } from '../store/data/index';
 import { getPredictedCol, getErrorCol } from '../util/data';
 import { Highlight } from '../store/data/index';
 import { getters as routeGetters } from '../store/route/module';
 import { getSolutionById, getMetricDisplayName } from '../util/solutions';
 import { overlayRouteEntry } from '../util/routes';
 import { getHighlights, updateHighlightRoot, clearHighlightRoot } from '../util/highlights';
+import _ from 'lodash';
 
 export default Vue.extend({
 	name: 'result-group',
@@ -135,6 +142,13 @@ export default Vue.extend({
 			const predicted = this.predictedSummary;
 			return (predicted && predicted.solutionId === selectedId)
 				? 'result-group-selected result-group' : 'result-group';
+		},
+
+		residualThreshold(): Extrema {
+			return {
+				min: _.toNumber(routeGetters.getRouteResidualThresholdMin(this.$store)),
+				max: _.toNumber(routeGetters.getRouteResidualThresholdMax(this.$store))
+			};
 		}
 	},
 
@@ -175,20 +189,6 @@ export default Vue.extend({
 			});
 			this.$emit('range-change', key, value);
 		},
-
-		onResidualNumericalClick(key: string) {
-		},
-
-		/*
-		onResidualRangeChange(key: string, value: { from: { label: string[] }, to: { label: string[] } }) {
-			const filter = createNumericalFilter(this.errorColumnName, value);
-			addFilterToRoute(this, filter);
-		},
-
-		onResidualsHistogramClick(context: string, key: string, value: any) {
-			this.histogramHighlights(context, this.errorColumnName, value);
-		},
-		*/
 
 		click() {
 			if (this.predictedSummary) {
@@ -269,6 +269,29 @@ export default Vue.extend({
 
 .residual-container .facets-facet-horizontal .facet-range-filter {
 	box-shadow: inset 0 0 0 1000px rgba(225, 0, 11, 0.15);
+}
+
+.residual-group-container {
+	position: relative;
+}
+
+.residual-center-line {
+	position: absolute;
+	left: 50%;
+	top: 20px;
+	height: 42px;
+	width: 1px;
+	background-color: #666;
+}
+
+.residual-center-label {
+	position: absolute;
+	top: 68px;
+	width: 100%;
+	color: #666;
+	text-align: center;
+	font-family: Helvetica Neue,Helvetica,Arial,sans-serif;
+    font-size: 11px;
 }
 
 </style>

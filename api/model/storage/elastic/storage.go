@@ -9,10 +9,11 @@ import (
 // Storage accesses the underlying ES instance.
 type Storage struct {
 	client *elastic.Client
+	index  string
 }
 
 // NewMetadataStorage returns a constructor for a metadata storage.
-func NewMetadataStorage(clientCtor es.ClientCtor) model.MetadataStorageCtor {
+func NewMetadataStorage(index string, clientCtor es.ClientCtor) model.MetadataStorageCtor {
 	return func() (model.MetadataStorage, error) {
 		esClient, err := clientCtor()
 		if err != nil {
@@ -21,6 +22,7 @@ func NewMetadataStorage(clientCtor es.ClientCtor) model.MetadataStorageCtor {
 
 		return &Storage{
 			client: esClient,
+			index:  index,
 		}, nil
 	}
 }

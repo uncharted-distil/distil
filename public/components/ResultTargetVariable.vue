@@ -93,13 +93,13 @@ export default Vue.extend({
 			}
 		},
 
-		onNumericalClick(context: string, key: string) {
+		onNumericalClick(context: string, key: string, value: { from: number, to: number }) {
 			if (!this.highlights.root || this.highlights.root.key !== key) {
 				const colKey = getTargetCol(this.target);
 				updateHighlightRoot(this, {
 					context: this.instanceName,
 					key: colKey,
-					value: null
+					value: value
 				});
 			}
 		},

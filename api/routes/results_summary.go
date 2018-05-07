@@ -20,7 +20,6 @@ type ResultsSummary struct {
 func ResultsSummaryHandler(solutionCtor model.SolutionStorageCtor, dataCtor model.DataStorageCtor) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// extract route parameters
-		index := pat.Param(r, "index")
 		dataset := pat.Param(r, "dataset")
 
 		resultUUID, err := url.PathUnescape(pat.Param(r, "results-uuid"))
@@ -73,7 +72,7 @@ func ResultsSummaryHandler(solutionCtor model.SolutionStorageCtor, dataCtor mode
 		}
 
 		// fetch summary histogram
-		histogram, err := data.FetchResultsSummary(dataset, res.ResultURI, index, filterParams, &model.Extrema{
+		histogram, err := data.FetchResultsSummary(dataset, res.ResultURI, filterParams, &model.Extrema{
 			Min: extremaMin,
 			Max: extremaMax,
 		})

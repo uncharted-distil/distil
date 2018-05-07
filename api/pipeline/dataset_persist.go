@@ -128,7 +128,7 @@ func PersistFilteredData(datasetDir string, target string, dataset *model.Querie
 	}
 
 	// write the filtered data (minus the target field) to csv file
-	err = writeData(path, datasetDir, dataset.Data, targetIdx)
+	err = writeData(path, datasetDir, dataset.Data, dataset.Metadata.Variables, targetIdx)
 	if err != nil {
 		return "", -1, err
 	}
@@ -185,7 +185,7 @@ func dirExists(path string) bool {
 	return true
 }
 
-func writeData(dataPath string, datasetDir string, filteredData *model.FilteredData, targetIdx int) error {
+func writeData(dataPath string, datasetDir string, filteredData *model.FilteredData, variables []*model.Variable, targetIdx int) error {
 	// make sure the output folder exists
 	dataFolder := path.Join(dataPath, D3MDataFolder)
 	err := os.MkdirAll(dataFolder, os.ModePerm)
@@ -202,10 +202,16 @@ func writeData(dataPath string, datasetDir string, filteredData *model.FilteredD
 	writer := csv.NewWriter(file)
 	defer writer.Flush()
 
+	// map the name to the display name
+	variableNamesDisplay := make(map[string]string)
+	for _, v := range variables {
+		variableNamesDisplay[v.Name] = v.DisplayVariable
+	}
+
 	// write out the header, including the d3m_index field
 	variableNames := make([]string, 0)
 	for _, column := range filteredData.Columns {
-		variableNames = append(variableNames, column)
+		variableNames = append(variableNames, variableNamesDisplay[column])
 	}
 	err = writer.Write(variableNames)
 	if err != nil {
@@ -265,7 +271,7 @@ func writeDataSchema(schemaPath string, dataset string, filteredData *model.Filt
 			role[0] = "index"
 		}
 		v := &DataVariable{
-			ColName:  c,
+			ColName:  vars[c].DisplayVariable,
 			Role:     role,
 			ColType:  model.MapTA2Type(vars[c].Type),
 			ColIndex: i,

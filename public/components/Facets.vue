@@ -21,8 +21,10 @@ export default Vue.extend({
 		groups: Array,
 		highlights: Object,
 		rowSelection: Object,
+		deemphasis: Object,
 		enableTypeChange: Boolean,
 		enableHighlighting: Boolean,
+		ignoreHighlights: Boolean,
 		html: [ String, Object, Function ],
 		instanceName: String,
 		highlightArrows: Boolean,
@@ -169,7 +171,7 @@ export default Vue.extend({
 
 		// handle external highlight changes by updating internal facet select states
 		highlights(currHighlights: Highlight) {
-			this.injectHighlights(currHighlights, this.rowSelection);
+			this.injectHighlights(currHighlights, this.rowSelection, this.deemphasis);
 			if (this.enableHighlighting) {
 				this.addHighlightArrow(currHighlights);
 			}
@@ -177,7 +179,11 @@ export default Vue.extend({
 
 		// handle external highlight changes by updating internal facet select states
 		rowSelection(currSelection: RowSelection) {
-			this.injectHighlights(this.highlights, currSelection);
+			this.injectHighlights(this.highlights, currSelection, this.deemphasis);
+		},
+
+		deemphasis(currDemphasis: any) {
+			this.injectHighlights(this.highlights, this.rowSelection, currDemphasis);
 		},
 
 		sort(currSort) {
@@ -297,16 +303,8 @@ export default Vue.extend({
 		},
 
 		getHighlightRootValue(highlights: Highlight): any {
-			if (highlights.root) {
-				if (highlights.root.value) {
-					if (_.isArray(highlights.root.value)) {
-						return null;
-					}
-					if (_.isString(highlights.root.value)) {
-						return highlights.root.value;
-					}
-					return highlights.root.value;
-				}
+			if (highlights.root && highlights.root.value) {
+				return highlights.root.value;
 			}
 			return null;
 		},
@@ -334,6 +332,48 @@ export default Vue.extend({
 			}
 		},
 
+		injectDeemphasis(group: any, deemphasis: any) {
+			if (!deemphasis) {
+				return;
+			}
+
+			// clear deemphasis
+			for (const facet of group.facets) {
+
+				// only emphasize histograms
+				if (!facet._histogram) {
+					continue;
+				}
+
+				facet._histogram.bars.forEach(bar => {
+					if (!bar._element.hasClass('row-selected'))  {
+						// NOTE: don't trample row selections
+						bar._element.css('fill', '');
+					}
+				});
+			}
+
+			// de-emphasis within range
+			for (const facet of group.facets) {
+
+				// only emphasize histograms
+				if (!facet._histogram) {
+					continue;
+				}
+
+				facet._histogram.bars.forEach(bar => {
+					const entry: any = _.last(bar.metadata);
+					if (_.toNumber(entry.label) >= deemphasis.min &&
+						_.toNumber(entry.toLabel) < deemphasis.max) {
+						if (!bar._element.hasClass('row-selected'))  {
+							// NOTE: don't trample row selections
+							bar._element.css('fill', '#ddd');
+						}
+					}
+				});
+			}
+		},
+
 		injectSelectedRowIntoGroup(group: any, selection: RowSelection) {
 
 			// clear existing selections
@@ -347,6 +387,7 @@ export default Vue.extend({
 				if (facet._histogram) {
 					facet._histogram.bars.forEach(bar => {
 						bar._element.css('fill', '');
+						bar._element.removeClass('row-selected');
 					});
 				} else {
 					facet._barForeground.css('box-shadow', '');
@@ -383,6 +424,7 @@ export default Vue.extend({
 						if (col.value >= _.toNumber(entry.label) &&
 							col.value < _.toNumber(entry.toLabel)) {
 							bar._element.css('fill', '#d78cde');
+							bar._element.addClass('row-selected');
 						}
 					});
 
@@ -398,16 +440,20 @@ export default Vue.extend({
 		},
 
 		removeSpinnerFromGroup(group: any) {
-			group._facetContainer.find('.facet-highlight-spinner').remove();
+			group._element.find('.facet-highlight-spinner').remove();
 		},
 
 		addSpinnerForGroup(group: any) {
 			this.removeSpinnerFromGroup(group);
 			const $spinner = $(`<div class="facet-highlight-spinner">${circleSpinnerHTML()}</div>`);
-			group._facetContainer.append($spinner);
+			group._element.find('.facets-group').append($spinner);
 		},
 
 		injectHighlightsIntoGroup(group: any, highlights: Highlight) {
+
+			if (this.ignoreHighlights) {
+				return;
+			}
 
 			// loop through groups ensure that selection is clear on each
 			group.facets.forEach(facet => {
@@ -513,7 +559,7 @@ export default Vue.extend({
 			}
 		},
 
-		injectHighlights(highlights: Highlight, selection: RowSelection) {
+		injectHighlights(highlights: Highlight, selection: RowSelection, deemphasis: any) {
 			// Clear highlight state incase it was set via a click on on another
 			// component
 			$(this.$el).find('.select-highlight').removeClass('select-highlight');
@@ -525,6 +571,7 @@ export default Vue.extend({
 				}
 				this.injectHighlightsIntoGroup(group, highlights);
 				this.injectSelectedRowIntoGroup(group, selection);
+				this.injectDeemphasis(group, deemphasis);
 			});
 		},
 
@@ -572,6 +619,8 @@ export default Vue.extend({
 					this.facets.replaceGroup(_.cloneDeep(group));
 					this.injectHTML(group, this.facets.getGroup(group.key)._element);
 					this.injectHighlightsIntoGroup(this.facets.getGroup(group.key), this.highlights);
+					this.injectSelectedRowIntoGroup(this.facets.getGroup(group.key), this.rowSelection);
+					this.injectDeemphasis(this.facets.getGroup(group.key), this.deemphasis);
 				} else {
 					// add to appends
 					toAdd.push(_.cloneDeep(group));
@@ -589,6 +638,8 @@ export default Vue.extend({
 				toAdd.forEach(groupSpec => {
 					this.injectHTML(groupSpec, this.facets.getGroup(groupSpec.key)._element);
 					this.injectHighlightsIntoGroup(this.facets.getGroup(groupSpec.key), this.highlights);
+					this.injectSelectedRowIntoGroup(this.facets.getGroup(groupSpec.key), this.rowSelection);
+					this.injectDeemphasis(this.facets.getGroup(groupSpec.key), this.deemphasis);
 				});
 			}
 			// sort alphabetically
@@ -661,10 +712,13 @@ export default Vue.extend({
 .group-facet-container {
 	position: relative;
 }
+
 .facet-highlight-spinner {
 	position: absolute;
 	right: 0;
-	margin: 6px 8px;
+	bottom: 0;
+	margin-right: 8px;
+	margin-bottom: 6px;
 }
 
 .facets.highlighting-enabled {

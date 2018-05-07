@@ -14,7 +14,6 @@ import (
 func ResultsExtremaHandler(solutionCtor model.SolutionStorageCtor, dataCtor model.DataStorageCtor) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// extract route parameters
-		index := pat.Param(r, "index")
 		dataset := pat.Param(r, "dataset")
 		resultUUID, err := url.PathUnescape(pat.Param(r, "results-uuid"))
 		if err != nil {
@@ -41,7 +40,7 @@ func ResultsExtremaHandler(solutionCtor model.SolutionStorageCtor, dataCtor mode
 			return
 		}
 
-		extrema, err := data.FetchResultsExtremaByURI(dataset, res.ResultURI, index)
+		extrema, err := data.FetchResultsExtremaByURI(dataset, res.ResultURI)
 		if err != nil {
 			handleError(w, err)
 			return

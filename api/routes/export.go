@@ -54,7 +54,7 @@ func ExportHandler(solutionCtor model.SolutionStorageCtor, metaCtor model.Metada
 			return
 		}
 
-		variable, err := meta.FetchVariable(m.Dataset, "datasets", solutionTarget)
+		variable, err := meta.FetchVariable(m.Dataset, solutionTarget)
 		if err != nil {
 			handleError(w, err)
 			return

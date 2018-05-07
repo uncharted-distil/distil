@@ -29,6 +29,73 @@ function getDataItems(data: Data, typeMap: Dictionary<string>): TableRow[] {
 	return [];
 }
 
+function getResultDataItems(data: Data, getters: any): TargetRow[] {
+	if (!data ||
+		!data.columns ||
+		data.columns.length === 0) {
+		return [];
+	}
+
+	// Find the target index and name in the result table
+	const targetIndex = getTargetIndex(data.columns);
+	const targetVarName = getVarFromTarget(data.columns[targetIndex]);
+
+	// Make a copy of the variable type map and add entries for target, predicted and error
+	// types.
+	const resultVariableTypeMap = _.clone(<Dictionary<string>>getters.getVariableTypesMap);
+
+	const targetVarType = resultVariableTypeMap[targetVarName];
+	resultVariableTypeMap[getTargetCol(targetVarName)] = targetVarType;
+	resultVariableTypeMap[getPredictedCol(targetVarName)] = targetVarType;
+	resultVariableTypeMap[getErrorCol(targetVarName)] = targetVarType;
+
+	// Fetch data items using modified type map
+	return getDataItems(data, resultVariableTypeMap) as TargetRow[];
+}
+
+function getResultDataFields(data: Data): Dictionary<FieldInfo> {
+	if (validateData(data)) {
+		// look at first row and figure out the target, predicted, error values
+		const predictedIndex = getPredictedIndex(data.columns);
+		const targetIndex = getTargetIndex(data.columns);
+		const errorIndex = getErrorIndex(data.columns);
+
+		const result = {}
+		// assign column names, ignoring target, predicted and error
+		for (const [idx, col] of data.columns.entries()) {
+			if (idx !== predictedIndex && idx !== targetIndex && idx !== errorIndex) {
+				result[col] = {
+					label: col,
+					sortable: true,
+					type: ""
+				};
+			}
+		}
+		// add target, predicted and error at end with customized labels
+		const targetName = data.columns[targetIndex];
+		result[targetName] = {
+			label: targetName.replace(TARGET_POSTFIX, ''),
+			sortable: true,
+			type: ""
+		};
+		const predictedName = data.columns[predictedIndex];
+		result[data.columns[predictedIndex]] = {
+			label: `Predicted ${predictedName.replace(PREDICTED_POSTFIX, '')}`,
+			sortable: true,
+			type: ""
+		};
+		if (errorIndex >= 0) {
+			result[data.columns[errorIndex]] = {
+				label: 'Error',
+				sortable: true,
+				type: ""
+			};
+		}
+		return result;
+	}
+	return {};
+}
+
 export const getters = {
 	getVariables(state: DataState): Variable[] {
 		return state.variables;
@@ -150,84 +217,40 @@ export const getters = {
 		});
 	},
 
-	hasResultData(state: DataState): boolean {
-		return !!state.resultData;
-	},
-
-	getResultData(state: DataState): Data {
-		return state.resultData;
-	},
-
 	getResultDataNumRows(state: DataState): number {
-		return state.resultData ? state.resultData.numRows : 0;
+		return state.unhighlightedResultData ? state.unhighlightedResultData.numRows : 0;
 	},
 
-	getResultDataItems(state: DataState, getters: any): TargetRow[] {
-		if (!state.resultData ||
-			!state.resultData.columns ||
-			state.resultData.columns.length === 0) {
-			return [];
-		}
-
-		// Find the target index and name in the result table
-		const targetIndex = getTargetIndex(state.resultData.columns);
-		const targetVarName = getVarFromTarget(state.resultData.columns[targetIndex]);
-
-		// Make a copy of the variable type map and add entries for target, predicted and error
-		// types.
-		const resultVariableTypeMap = _.clone(<Dictionary<string>>getters.getVariableTypesMap);
-
-		const targetVarType = resultVariableTypeMap[targetVarName];
-		resultVariableTypeMap[getTargetCol(targetVarName)] = targetVarType;
-		resultVariableTypeMap[getPredictedCol(targetVarName)] = targetVarType;
-		resultVariableTypeMap[getErrorCol(targetVarName)] = targetVarType;
-
-		// Fetch data items using modified type map
-		return getDataItems(state.resultData, resultVariableTypeMap) as TargetRow[];
+	hasHighlightedResultData(state: DataState): boolean {
+		return !!state.highlightedResultData;
 	},
 
-	getResultDataFields(state: DataState): Dictionary<FieldInfo> {
-		const data = state.resultData;
-		if (validateData(data)) {
-			// look at first row and figure out the target, predicted, error values
-			const predictedIndex = getPredictedIndex(data.columns);
-			const targetIndex = getTargetIndex(data.columns);
-			const errorIndex = getErrorIndex(data.columns);
+	getHighlightedResultData(state: DataState): Data {
+		return state.highlightedResultData;
+	},
 
-			const result = {}
-			// assign column names, ignoring target, predicted and error
-			for (const [idx, col] of data.columns.entries()) {
-				if (idx !== predictedIndex && idx !== targetIndex && idx !== errorIndex) {
-					result[col] = {
-						label: col,
-						sortable: true,
-						type: ""
-					};
-				}
-			}
-			// add target, predicted and error at end with customized labels
-			const targetName = data.columns[targetIndex];
-			result[targetName] = {
-				label: targetName.replace(TARGET_POSTFIX, ''),
-				sortable: true,
-				type: ""
-			};
-			const predictedName = data.columns[predictedIndex];
-			result[data.columns[predictedIndex]] = {
-				label: `Predicted ${predictedName.replace(PREDICTED_POSTFIX, '')}`,
-				sortable: true,
-				type: ""
-			};
-			if (errorIndex >= 0) {
-				result[data.columns[errorIndex]] = {
-					label: 'Error',
-					sortable: true,
-					type: ""
-				};
-			}
-			return result;
-		}
-		return {};
+	getHighlightedResultDataItems(state: DataState, getters: any): TargetRow[] {
+		return getResultDataItems(state.highlightedResultData, getters);
+	},
+
+	getHighlightedResultDataFields(state: DataState): Dictionary<FieldInfo> {
+		return getResultDataFields(state.highlightedResultData);
+	},
+
+	hasUnhighlightedResultData(state: DataState): boolean {
+		return !!state.unhighlightedResultData;
+	},
+
+	getUnhighlightedResultData(state: DataState): Data {
+		return state.unhighlightedResultData;
+	},
+	
+	getUnhighlightedResultDataItems(state: DataState, getters: any): TargetRow[] {
+		return getResultDataItems(state.unhighlightedResultData, getters);
+	},
+
+	getUnhighlightedResultDataFields(state: DataState): Dictionary<FieldInfo> {
+		return getResultDataFields(state.unhighlightedResultData);
 	},
 
 	hasSelectedData(state: DataState): boolean {

@@ -34,7 +34,6 @@ func ResultsHandler(solutionCtor model.SolutionStorageCtor, dataCtor model.DataS
 		}
 
 		dataset := pat.Param(r, "dataset")
-		esIndex := pat.Param(r, "index")
 
 		solutionID, err := url.PathUnescape(pat.Param(r, "solution-id"))
 		if err != nil {
@@ -81,7 +80,7 @@ func ResultsHandler(solutionCtor model.SolutionStorageCtor, dataCtor model.DataS
 			return
 		}
 
-		results, err := data.FetchFilteredResults(dataset, esIndex, res.ResultURI, filterParams)
+		results, err := data.FetchFilteredResults(dataset, res.ResultURI, filterParams)
 		if err != nil {
 			handleError(w, err)
 			return
