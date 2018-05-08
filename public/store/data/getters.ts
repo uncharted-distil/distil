@@ -244,7 +244,7 @@ export const getters = {
 	getUnhighlightedResultData(state: DataState): Data {
 		return state.unhighlightedResultData;
 	},
-	
+
 	getUnhighlightedResultDataItems(state: DataState, getters: any): TargetRow[] {
 		return getResultDataItems(state.unhighlightedResultData, getters);
 	},
@@ -361,4 +361,8 @@ export const getters = {
 		});
 		return res;
 	},
+
+	getImages(state: DataState): Dictionary<any> {
+		return state.loadedImages;
+	}
 }

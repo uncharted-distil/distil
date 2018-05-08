@@ -114,6 +114,7 @@ export interface DataState {
 	selectedData: Data;
 	excludedData: Data;
 	highlightValues: HighlightValues;
+	loadedImages: {};
 }
 
 export const state = {
@@ -156,5 +157,7 @@ export const state = {
 	highlightValues: {
 		summaries: [],
 		samples: {}
-	}
+	},
+
+	loadedImages: {}
 }

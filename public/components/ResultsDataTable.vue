@@ -19,12 +19,10 @@
 				@row-clicked="onRowClick">
 				<template :slot="targetErrorCol" slot-scope="data">
 					<!-- A custom formatted data column cell -->
-
 					<div class="error-bar-container">
 						<div class="error-bar" v-bind:style="{ 'background-color': errorBarColor(data.item[targetErrorCol]), width: errorBarWidth(data.item[targetErrorCol]), left: errorBarLeft(data.item[targetErrorCol]) }"></div>
 						<div class="error-bar-center"></div>
 					</div>
-
 				</template>
 			</b-table>
 		</div>

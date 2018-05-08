@@ -39,6 +39,8 @@ const (
 	StateType = "state"
 	// URIType is the schema type for URI values
 	URIType = "uri"
+	// ImageType is the schema type for Image values
+	ImageType = "image"
 	// UnknownType is the schema type for unknown values
 	UnknownType = "unknown"
 )
