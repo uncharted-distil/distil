@@ -9,6 +9,7 @@
 			:scores="group.scores"
 			:predicted-summary="group.predictedSummary"
 			:residuals-summary="group.residualsSummary"
+			:accuracy-summary="group.accuracySummary"
 			:resultHtml="html"
 			:residualHtml="html">
 		</result-group>
@@ -36,6 +37,7 @@ interface SummaryGroup {
 	groupName: string;
 	predictedSummary: VariableSummary;
 	residualsSummary: VariableSummary;
+	accuracySummary: VariableSummary;
 }
 /*eslint-enable */
 
@@ -70,22 +72,24 @@ export default Vue.extend({
 			return this.regression ? dataGetters.getResidualsSummaries(this.$store) : [];
 		},
 
+		accuracySummaries(): VariableSummary[] {
+			return !this.regression ? dataGetters.getAccuracySummaries(this.$store) : [];
+		},
+
 		// Generate pairs of residuals and results for each solution in the numerical case.
 		resultGroups(): SummaryGroup[] {
 
 			const solutions = solutionGetters.getSolutions(this.$store).filter(solution => solution.feature === this.target);
 			const predictedSummaries = this.predictedSummaries;
 			const residualsSummaries = this.residualSummaries;
+			const accuracySummaries = this.accuracySummaries;
 
 			const summaryGroups = solutions.map(solution => {
 				const solutionId = solution.solutionId;
 				const requestId = solution.requestId;
-				const predictedSummary = _.find(predictedSummaries, summary => {
-					return summary.solutionId === solutionId;
-				});
-				const residualSummary = _.find(residualsSummaries, summary => {
-					return summary.solutionId === solutionId;
-				});
+				const predictedSummary = _.find(predictedSummaries, summary => summary.solutionId === solutionId);
+				const residualSummary = _.find(residualsSummaries, summary => summary.solutionId === solutionId);
+				const accuracySummary = _.find(accuracySummaries, summary => summary.solutionId === solutionId);
 				return {
 					requestId: requestId,
 					solutionId: solutionId,
@@ -93,7 +97,8 @@ export default Vue.extend({
 					timestamp: solution ? moment(solution.timestamp).format('YYYY/MM/DD') : '',
 					scores: solution ? solution.scores : [],
 					predictedSummary: predictedSummary,
-					residualsSummary: residualSummary
+					residualsSummary: residualSummary,
+					accuracySummary: accuracySummary
 				};
 			});
 

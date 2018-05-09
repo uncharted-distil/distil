@@ -177,6 +177,10 @@ export const getters = {
 		return state.residualSummaries;
 	},
 
+	getAccuracySummaries(state: DataState): VariableSummary[] {
+		return state.accuracySummaries;
+	},
+
 	getFilters(state: DataState, getters: any): Filter[] {
 		const filterParams = getters.getDecodedFilterParams;
 		return filterParams.filters.slice();
@@ -244,7 +248,7 @@ export const getters = {
 	getUnhighlightedResultData(state: DataState): Data {
 		return state.unhighlightedResultData;
 	},
-	
+
 	getUnhighlightedResultDataItems(state: DataState, getters: any): TargetRow[] {
 		return getResultDataItems(state.unhighlightedResultData, getters);
 	},

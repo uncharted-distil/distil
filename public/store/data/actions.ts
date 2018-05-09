@@ -3,7 +3,7 @@ import axios from 'axios';
 import { AxiosPromise } from 'axios';
 import { FilterParams, INCLUDE_FILTER, EXCLUDE_FILTER } from '../../util/filters';
 import { getSolutionsByRequestIds, getSolutionById } from '../../util/solutions';
-import { getSummaries, getSummary, updatePredictedSummary, updatePredictedHighlightSummary } from '../../util/data';
+import { getSummaries, getSummary, updateAccuracySummary, updateAccuracyHighlightSummary } from '../../util/data';
 import { Variable, Data, Extrema } from './index';
 import { SolutionInfo, SOLUTION_ERRORED } from '../solutions/index';
 import { mutations } from './module'
@@ -457,8 +457,6 @@ export const actions = {
 			return null;
 		}
 
-
-
 		// only use extrema if this is the feature variable
 		let extremaMin = null;
 		let extremaMax = null;
@@ -471,7 +469,7 @@ export const actions = {
 		const nameFunc = (p: SolutionInfo) => getPredictedCol(p.feature);
 		const labelFunc = (p: SolutionInfo) => 'Predicted';
 
-		getSummary(context, endPoint, solution, nameFunc, labelFunc, updatePredictedSummary, null);
+		getSummary(context, endPoint, solution, nameFunc, labelFunc, mutations.updatePredictedSummaries, null);
 	},
 
 	// fetches result summaries for a given solution create request
@@ -495,7 +493,7 @@ export const actions = {
 		const endPoint = `/distil/results-summary/${ES_INDEX}/${args.dataset}/${extremaMin}/${extremaMax}`
 		const nameFunc = (p: SolutionInfo) => getPredictedCol(p.feature);
 		const labelFunc = (p: SolutionInfo) => 'Predicted';
-		getSummaries(context, endPoint, solutions, nameFunc, labelFunc, updatePredictedSummary, null);
+		getSummaries(context, endPoint, solutions, nameFunc, labelFunc, mutations.updatePredictedSummaries, null);
 	},
 
 	// fetches result summary for a given solution id.
@@ -540,7 +538,49 @@ export const actions = {
 		getSummaries(context, endPoint, solutions, nameFunc, labelFunc, mutations.updateResidualsSummaries, null);
 	},
 
-	// fetches result data for created solution
+	// fetches result summary for a given pipeline id.
+	fetchAccuracySummary(context: DataContext, args: { dataset: string, solutionId: string}) {
+		if (!args.dataset) {
+			console.warn('`dataset` argument is missing');
+			return null;
+		}
+		if (!args.solutionId) {
+			console.warn('`pipelineId` argument is missing');
+			return null;
+		}
+
+		// only use extrema if this is the feature variable
+		const extremaMin = null;
+		const extremaMax = null;
+		const solution = getSolutionById(context.rootState.solutionModule, args.solutionId);
+		const endPoint = `/distil/results-summary/${ES_INDEX}/${args.dataset}/${extremaMin}/${extremaMax}`
+		const nameFunc = (p: PipelineInfo) => getPredictedCol(p.feature);
+		const labelFunc = (p: PipelineInfo) => 'Accuracy';
+
+		getSummary(context, endPoint, pipeline, solution, labelFunc, updateAccuracySummary, null);
+	},
+
+	// fetches result summaries for a given pipeline create request
+	fetchAccuracySummaries(context: DataContext, args: { dataset: string, requestIds: string[]}) {
+		if (!args.dataset) {
+			console.warn('`dataset` argument is missing');
+			return null;
+		}
+		if (!args.requestIds) {
+			console.warn('`requestIds` argument is missing');
+			return null;
+		}
+		// only use extrema if this is the feature variable
+		const extremaMin = NaN;
+		const extremaMax = NaN;
+		const solutions = getSolutionsByRequestIds(context.rootState.solutionModule, args.requestIds);
+		const endPoint = `/distil/results-summary/${ES_INDEX}/${args.dataset}/${extremaMin}/${extremaMax}`
+		const nameFunc = (p: PipelineInfo) => getPredictedCol(p.feature);
+		const labelFunc = (p: PipelineInfo) => 'Error Summary';
+		getSummaries(context, endPoint, solutions, nameFunc, labelFunc, updateAccuracySummary, null);
+	},
+
+	// fetches result data for created pipeline
 	fetchResultTableData(context: DataContext, args: { solutionId: string, dataset: string, highlightRoot: HighlightRoot, filters?: FilterParams }) {
 		return Promise.all([
 			context.dispatch('fetchHighlightedResultTableData', {
@@ -772,7 +812,32 @@ export const actions = {
 		const endPoint = `/distil/results-summary/${ES_INDEX}/${args.dataset}/${args.extrema.min}/${args.extrema.max}`
 		const nameFunc = (p: SolutionInfo) => getPredictedCol(p.feature);
 		const labelFunc = (p: SolutionInfo) => '';
-		getSummaries(context, endPoint, solutions, nameFunc, labelFunc, updatePredictedHighlightSummary, filters);
+		getSummaries(context, endPoint, solutions, nameFunc, labelFunc, mutations.updatePredictedHighlightSummaries, filters);
+	},
+
+	fetchAccuracyHighlightSummaries(context: DataContext, args: { highlightRoot: HighlightRoot, dataset: string, requestIds: string[], extrema: Extrema }) {
+		if (!args.dataset) {
+			console.warn('`dataset` argument is missing');
+			return null;
+		}
+
+		const filters = {
+			variables: [],
+			filters: []
+		}
+
+		const highlightFilter = createFilterFromHighlightRoot(args.highlightRoot, INCLUDE_FILTER);
+		if (highlightFilter) {
+			highlightFilter.name = getVarFromTarget(highlightFilter.name);
+			filters.filters.push(highlightFilter);
+		}
+
+		const solutions = getSolutionsByRequestIds(context.rootState.solutionModule, args.requestIds);
+
+		const endPoint = `/distil/results-summary/${ES_INDEX}/${args.dataset}/${args.extrema.min}/${args.extrema.max}`
+		const nameFunc = (p: SolutionInfo) => getPredictedCol(p.feature);
+		const labelFunc = (p: SolutionInfo) => '';
+		getSummaries(context, endPoint, solutions, nameFunc, labelFunc, updateAccuracyHighlightSummary, filters);
 	},
 
 	fetchResultHighlightSamples(context: DataContext, args: { highlightRoot: HighlightRoot, dataset: string, solutionId: string }) {
@@ -837,6 +902,12 @@ export const actions = {
 				extrema: args.extrema
 			}),
 			context.dispatch('fetchPredictedHighlightSummaries', {
+				highlightRoot: args.highlightRoot,
+				dataset: args.dataset,
+				requestIds: args.requestIds,
+				extrema: args.extrema
+			}),
+			context.dispatch('fetchAccuracyHighlightSummaries', {
 				highlightRoot: args.highlightRoot,
 				dataset: args.dataset,
 				requestIds: args.requestIds,

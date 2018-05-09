@@ -35,6 +35,13 @@
 				<div class="residual-center-line"></div>
 				<div class="residual-center-label">0</div>
 			</div>
+			<facets v-if="accuracyGroups.length" class="result-container"
+				@facet-click="onResultCategoricalClick"
+				:groups="accuracyGroups"
+				:highlights="highlights"
+				:instanceName="accuracyInstanceName"
+				:html="residualHtml">
+			</facets>
 		</div>
 		<div v-if="solutionStatus === 'ERRORED'">
 			<b-badge variant="danger">
@@ -73,6 +80,7 @@ export default Vue.extend({
 		scores: Array,
 		predictedSummary: Object,
 		residualsSummary: Object,
+		accuracySummary: Object,
 		resultHtml: String,
 		residualHtml: String
 	},
@@ -80,7 +88,8 @@ export default Vue.extend({
 	data() {
 		return {
 			predictedInstanceName: 'predicted-result-facet',
-			residualInstanceName: 'residual-result-facet'
+			residualInstanceName: 'residual-result-facet',
+			accuracyInstanceName: 'accuracy-result-facet'
 		};
 	},
 
@@ -122,6 +131,22 @@ export default Vue.extend({
 					}
 				}
 				return predicted;
+			}
+			return [];
+		},
+
+		accuracyGroups(): Group[] {
+			if (this.accuracySummary) {
+				const accuracy = createGroups([ this.accuracySummary ]);
+				if (this.highlights.root) {
+					const group = accuracy[0];
+					if (group.key === this.highlights.root.key) {
+						group.facets.forEach(facet => {
+							facet.filterable = true;
+						});
+					}
+				}
+				return accuracy;
 			}
 			return [];
 		},

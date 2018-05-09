@@ -295,17 +295,18 @@ export function sortGroupsByImportance(groups: Group[], variables: Variable[]): 
 }
 
 
-export function updatePredictedHighlightSummary(context: DataContext, summary: VariableSummary) {
-	mutatePredictedSummary(context, summary, dataMutations.updatePredictedHighlightSummaries)
+
+export function updateAccuracyHighlightSummary(context: DataContext, summary: VariableSummary) {
+	mutateAccuracySummary(context, summary, dataMutations.updateAccuracyHighlightSummaries)
 }
 
-export function updatePredictedSummary(context: DataContext, summary: VariableSummary) {
-	mutatePredictedSummary(context, summary, dataMutations.updatePredictedSummaries)
+export function updateAccuracySummary(context: DataContext, summary: VariableSummary) {
+	mutateAccuracySummary(context, summary, dataMutations.updateAccuracySummaries)
 }
 
 // Collapse categorical result summary data, which is returned as a confusion matrix, into a binary
-// correct/incorrect reprsenation prior to applying the mutation.
-function mutatePredictedSummary(context: DataContext, summary: VariableSummary, f: (DataContext, VariableSummary) => void) {
+// correct/incorrect reprsentation prior to applying the mutation.
+function mutateAccuracySummary(context: DataContext, summary: VariableSummary, f: (DataContext, VariableSummary) => void) {
 	// Only need to collapse categorical result summaries
 	if (summary.type !== SummaryType.Categorical) {
 		f(context, summary);

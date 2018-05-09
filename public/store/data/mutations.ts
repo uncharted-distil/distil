@@ -37,6 +37,10 @@ export const mutations = {
 		updateSummaries(summary, state.residualSummaries, 'solutionId');
 	},
 
+	updateAccuracySummaries(state: DataState, summary: VariableSummary) {
+		updateSummaries(summary, state.accuracySummaries, 'pipelineId');
+	},
+
 	clearPredictedExtremas(state: DataState) {
 		state.predictedExtremas = {};
 	},
@@ -120,6 +124,10 @@ export const mutations = {
 			return;
 		}
 		state.highlightValues.summaries.push(summary);
+	},
+
+	updateAccuracyHighlightSummaries(state: DataState, summary: VariableSummary) {
+
 	},
 
 	clearHighlightSummaries(state: DataState) {

@@ -55,7 +55,7 @@ func (s *Storage) parseFilteredData(dataset string, numRows int, rows *pgx.Rows)
 func (s *Storage) formatFilterName(name string) string {
 	if strings.HasSuffix(name, predictedSuffix) {
 		//name = "value"
-		return "CAST(\"value\" as double precision)"
+		return "result.value" //"CAST(\"value\" as double precision)"
 	}
 	return fmt.Sprintf("\"%s\"", name)
 }
@@ -146,14 +146,16 @@ func (s *Storage) buildFilteredResultQueryField(dataset string, variables []*mod
 	return strings.Join(fields, ","), nil
 }
 
-func (s *Storage) buildResultWhere(dataset string, resultURI string, resultFilter *model.Filter) (string, error) {
+func (s *Storage) buildResultWhere(dataset string, resultURI string, resultFilter *model.Filter) (string, []interface{}, error) {
 	// get the target variable name
 	datasetResult := s.getResultTable(dataset)
 	targetName, err := s.getResultTargetName(datasetResult, resultURI)
 	if err != nil {
-		return "", err
+		return "", []interface{}{}, err
 	}
 
+	// correct/incorrect are well known categories that require the predicted category to be compared
+	// to the target category
 	op := ""
 	for _, category := range resultFilter.Categories {
 		if strings.EqualFold(category, CorrectCategory) {
@@ -164,13 +166,14 @@ func (s *Storage) buildResultWhere(dataset string, resultURI string, resultFilte
 			break
 		}
 	}
-
-	if op == "" {
-		return op, nil
+	if op != "" {
+		where := fmt.Sprintf("result.value %s data.\"%s\"", op, targetName)
+		return where, []interface{}{}, nil
 	}
 
-	where := fmt.Sprintf("result.value %s data.\"%s\"", op, targetName)
-	return where, nil
+	// handle the general category case
+	where, params := s.buildFilteredQueryWhere(dataset, []*model.Filter{resultFilter})
+	return where, params, nil
 }
 
 type filters struct {
