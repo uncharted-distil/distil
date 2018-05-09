@@ -4,6 +4,7 @@ import { formatValue } from '../util/types';
 import { VariableSummary } from '../store/data/index';
 
 export const CATEGORICAL_CHUNK_SIZE = 10;
+export const IMAGE_CHUNK_SIZE = 5;
 
 export interface PlaceHolderFacet {
 	placeholder: boolean;
@@ -161,6 +162,13 @@ export function getGroupIcon(summary: VariableSummary): string {
 	}
 }
 
+export function getCategoricalChunkSize(type: string):number {
+	if (type === 'image') {
+		return IMAGE_CHUNK_SIZE;
+	}
+	return CATEGORICAL_CHUNK_SIZE;
+}
+
 // creates a categorical facet
 function createCategoricalSummaryFacet(summary: VariableSummary): Group {
 	let total = 0;
@@ -190,8 +198,9 @@ function createCategoricalSummaryFacet(summary: VariableSummary): Group {
 		return b.count - a.count;
 	});
 
-	const top = facets.slice(0, CATEGORICAL_CHUNK_SIZE)
-	const remaining = (facets.length > CATEGORICAL_CHUNK_SIZE) ? facets.slice(CATEGORICAL_CHUNK_SIZE) : [];
+	const chunkSize = getCategoricalChunkSize(summary.varType);
+	const top = facets.slice(0, chunkSize)
+	const remaining = (facets.length > chunkSize) ? facets.slice(chunkSize) : [];
 	let remainingTotal = 0;
 	remaining.forEach(facet => {
 		remainingTotal += facet.count;

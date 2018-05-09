@@ -125,4 +125,8 @@ export default Vue.extend({
 .image-elem:hover .zoom-icon {
 	visibility: visible;
 }
+
+.zoom-icon {
+	pointer-events: none;
+}
 </style>

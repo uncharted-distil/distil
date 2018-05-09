@@ -58,7 +58,8 @@ var (
 		PostalCodeType:  true,
 		StateType:       true,
 		URIType:         true,
-		UnknownType:     true}
+		UnknownType:     true,
+		ImageType:       true}
 	numericalTypes = map[string]bool{
 		LongitudeType: true,
 		LatitudeType:  true,

@@ -846,6 +846,11 @@ export const actions = {
 	},
 
 	fetchImage(context: DataContext, args: { url: string }) {
+		const IMAGES = [
+			'a.jpeg',
+			'b.jpeg',
+			'c.jpeg'
+		];
 		return new Promise((resolve, reject) => {
 			const image = new Image();
 			image.onload = () => {
@@ -858,7 +863,8 @@ export const actions = {
 				reject(err);
 			};
 			image.crossOrigin = 'anonymous';
-			image.src = `images/${args.url}`;
+			image.src = `images/${IMAGES[Math.floor(Math.random() * IMAGES.length)]}`;
+			//image.src = `images/${args.url}`;
 		});
 
 	}

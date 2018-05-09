@@ -46,6 +46,7 @@ const NUMERIC_TYPES = INTEGER_TYPES.concat(FLOATING_POINT_TYPES);
 
 const TEXT_TYPES = [
 	'text',
+	'image',
 	'categorical',
 	'ordinal',
 	'address',
@@ -124,7 +125,9 @@ const DECIMAL_SUGGESTIONS = [
 ];
 
 const IMAGE_SUGGESTIONS = [
-	'image'
+	'image',
+	'text',
+	'categorical'
 ];
 
 const BASIC_SUGGESTIONS = [
@@ -133,10 +136,9 @@ const BASIC_SUGGESTIONS = [
 	'categorical',
 	'ordinal',
 	'text',
+	'image',
 	'unknown'
 ];
-
-
 
 export function formatValue(colValue: any, colType: string): any {
 	// If there is no assigned schema, fix precision for a number, pass through otherwise.
