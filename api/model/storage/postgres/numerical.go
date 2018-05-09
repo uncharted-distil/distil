@@ -116,8 +116,6 @@ func (f *NumericalField) fetchHistogramByResult(dataset string, variable *model.
 		bucketQuery, histogramQuery, histogramName, dataset,
 		f.Storage.getResultTable(dataset), model.D3MIndexFieldName, len(params), where, bucketQuery, histogramName)
 
-	fmt.Printf("___________++++++++++ %v\n", params)
-
 	// execute the postgres query
 	res, err := f.Storage.client.Query(query, params...)
 	if err != nil {
