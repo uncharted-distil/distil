@@ -16,22 +16,27 @@ const (
 type DescriptionStep interface {
 	GetPrimitive() *Primitive
 	GetArguments() map[string]string
-	GetHyperparameters() map[string]*Value
+	GetHyperparameters() map[string]interface{}
 	GetOutputMethods() []string
-	BuildDescriptionStep() *PipelineDescriptionStep
+	BuildDescriptionStep() (*PipelineDescriptionStep, error)
 }
 
 // StepData contains the minimum amount of data used to describe a pipeline step
 type StepData struct {
 	Primitive       *Primitive
 	Arguments       map[string]string
-	Hyperparameters map[string]*Value
+	Hyperparameters map[string]interface{}
 	OutputMethods   []string
 }
 
-// NewStepData Creates a pipeline step instance from the required field subset.  Hyperparameters are
-// optional so nil is a valid value.
-func NewStepData(primitive *Primitive, outputMethods []string, hyperparameters map[string]*Value) *StepData {
+// NewStepData Creates a pipeline step instance from the required field subset.
+func NewStepData(primitive *Primitive, outputMethods []string) *StepData {
+	return NewStepDataWithHyperparameters(primitive, outputMethods, nil)
+}
+
+// NewStepDataWithHyperparameters creates a pipeline step instance from the required field subset.  Hyperparameters are
+// optional so nil is a valid value, valid types fror hyper parameters are intXX, string, bool.
+func NewStepDataWithHyperparameters(primitive *Primitive, outputMethods []string, hyperparameters map[string]interface{}) *StepData {
 	return &StepData{
 		Primitive:       primitive,
 		Hyperparameters: hyperparameters, // optional, nil is valid
@@ -52,8 +57,8 @@ func (s *StepData) GetArguments() map[string]string {
 }
 
 // GetHyperparameters returns a map of arguments that will be passed to the primitive methods
-// of the primitive step.
-func (s *StepData) GetHyperparameters() map[string]*Value {
+// of the primitive step.  Types are currently restricted to intXX, bool, string
+func (s *StepData) GetHyperparameters() map[string]interface{} {
 	return s.Hyperparameters
 }
 
@@ -65,7 +70,7 @@ func (s *StepData) GetOutputMethods() []string {
 
 // BuildDescriptionStep creates protobuf structures from a pipeline step
 // definition.
-func (s *StepData) BuildDescriptionStep() *PipelineDescriptionStep {
+func (s *StepData) BuildDescriptionStep() (*PipelineDescriptionStep, error) {
 	// generate arguments entries
 	arguments := map[string]*PrimitiveStepArgument{}
 	for k, v := range s.Arguments {
@@ -79,14 +84,63 @@ func (s *StepData) BuildDescriptionStep() *PipelineDescriptionStep {
 		}
 	}
 
-	// generate arguments entries
+	// generate arguments entries - accepted types are currently intXX, string, bool.  The underlying
+	// protobuf structure allows for others - introducing them should be a matter of expanding this
+	// list.
 	hyperparameters := map[string]*PrimitiveStepHyperparameter{}
 	for k, v := range s.Hyperparameters {
+		var value *Value
+		switch t := v.(type) {
+		case int:
+			value = &Value{
+				Value: &Value_Int64{
+					Int64: int64(t),
+				},
+			}
+		case int8:
+			value = &Value{
+				Value: &Value_Int64{
+					Int64: int64(t),
+				},
+			}
+		case int16:
+			value = &Value{
+				Value: &Value_Int64{
+					Int64: int64(t),
+				},
+			}
+		case int32:
+			value = &Value{
+				Value: &Value_Int64{
+					Int64: int64(t),
+				},
+			}
+		case int64:
+			value = &Value{
+				Value: &Value_Int64{
+					Int64: t,
+				},
+			}
+		case bool:
+			value = &Value{
+				Value: &Value_Bool{
+					Bool: t,
+				},
+			}
+		case string:
+			value = &Value{
+				Value: &Value_String_{
+					String_: t,
+				},
+			}
+		default:
+			return nil, errors.Errorf("compile failed: unhandle type %s for hyperparameter %v", k, v)
+		}
 		hyperparameters[k] = &PrimitiveStepHyperparameter{
 			// only handle value args rights now - extend to others if required
 			Argument: &PrimitiveStepHyperparameter_Value{
 				Value: &ValueArgument{
-					Data: v,
+					Data: value,
 				},
 			},
 		}
@@ -112,7 +166,7 @@ func (s *StepData) BuildDescriptionStep() *PipelineDescriptionStep {
 				Outputs:     outputMethods,
 			},
 		},
-	}
+	}, nil
 }
 
 type builder struct {
@@ -221,7 +275,11 @@ func (p *builder) Compile() (*PipelineDescription, error) {
 	// build the pipeline descriptions
 	descriptionSteps := []*PipelineDescriptionStep{}
 	for _, step := range p.steps {
-		descriptionSteps = append(descriptionSteps, step.BuildDescriptionStep())
+		builtStep, err := step.BuildDescriptionStep()
+		if err != nil {
+			return nil, err
+		}
+		descriptionSteps = append(descriptionSteps, builtStep)
 	}
 
 	pipelineDesc := &PipelineDescription{

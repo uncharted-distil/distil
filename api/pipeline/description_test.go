@@ -8,7 +8,7 @@ import (
 )
 
 func CreateTestStep(step int) *StepData {
-	return NewStepData(
+	return NewStepDataWithHyperparameters(
 		&Primitive{
 			Id:         fmt.Sprintf("0000-primtive-%d", step),
 			Version:    "1.0.0",
@@ -16,12 +16,8 @@ func CreateTestStep(step int) *StepData {
 			PythonPath: fmt.Sprintf("d3m.primitives.distil.primitive.%d", step),
 		},
 		[]string{"produce"},
-		map[string]*Value{
-			"test": &Value{
-				Value: &Value_String_{
-					String_: fmt.Sprintf("hyperparam-%d", step),
-				},
-			},
+		map[string]interface{}{
+			"test": fmt.Sprintf("hyperparam-%d", step),
 		},
 	)
 }
