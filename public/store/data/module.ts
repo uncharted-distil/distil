@@ -31,7 +31,7 @@ export const getters = {
 	getResultSummaries: read(moduleGetters.getResultSummaries),
 	getPredictedSummaries: read(moduleGetters.getPredictedSummaries),
 	getResidualsSummaries: read(moduleGetters.getResidualsSummaries),
-	getAccuracySummaries: read(moduleGetters.getAccuracySummaries),
+	getCorrectnessSummaries: read(moduleGetters.getCorrectnessSummaries),
 	getAvailableVariableSummaries: read(moduleGetters.getAvailableVariableSummaries),
 	getTrainingVariableSummaries: read(moduleGetters.getTrainingVariableSummaries),
 	getTargetVariableSummaries: read(moduleGetters.getTargetVariableSummaries),
@@ -97,7 +97,7 @@ export const actions = {
 
 	fetchPredictedSummaries: dispatch(moduleActions.fetchPredictedSummaries),
 	fetchResidualsSummaries: dispatch(moduleActions.fetchResidualsSummaries),
-	fetchAccuracySummaries: dispatch(moduleActions.fetchAccuracySummaries),
+	fetchCorrectnessSummaries: dispatch(moduleActions.fetchCorrectnessSummaries),
 	fetchTargetResultExtrema: dispatch(moduleActions.fetchTargetResultExtrema),
 	fetchPredictedExtrema: dispatch(moduleActions.fetchPredictedExtrema),
 	fetchPredictedExtremas: dispatch(moduleActions.fetchPredictedExtremas),
@@ -118,7 +118,7 @@ export const mutations = {
 	updateResultSummaries: commit(moduleMutations.updateResultSummaries),
 	updatePredictedSummaries: commit(moduleMutations.updatePredictedSummaries),
 	updateResidualsSummaries: commit(moduleMutations.updateResidualsSummaries),
-	updateAccuracySummaries: commit(moduleMutations.updateAccuracySummaries),
+	updateCorrectnessSummaries: commit(moduleMutations.updateCorrectnessSummaries),
 	updateTargetResultExtrema: commit(moduleMutations.updateTargetResultExtrema),
 	updatePredictedExtremas: commit(moduleMutations.updatePredictedExtremas),
 	updateResidualsExtremas: commit(moduleMutations.updateResidualsExtremas),
@@ -134,7 +134,7 @@ export const mutations = {
 	updateHighlightSamples: commit(moduleMutations.updateHighlightSamples),
 	updateHighlightSummaries: commit(moduleMutations.updateHighlightSummaries),
 	updatePredictedHighlightSummaries: commit(moduleMutations.updatePredictedHighlightSummaries),
-	updateAccuracyHighlightSummaries: commit(moduleMutations.updateAccuracyHighlightSummaries),
+	updateCorrectnessHighlightSummaries: commit(moduleMutations.updateCorrectnessHighlightSummaries),
 	clearHighlightSummaries: commit(moduleMutations.clearHighlightSummaries),
 
 }

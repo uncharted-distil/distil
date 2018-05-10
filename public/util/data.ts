@@ -16,7 +16,7 @@ import Vue from 'vue';
 export const PREDICTED_POSTFIX = '_predicted';
 export const TARGET_POSTFIX = '_target';
 export const ERROR_POSTFIX = '_error';
-export const ACCURACY_POSTFIX = '_accuracy';
+export const CORRECTNESS_POSTFIX = '_correctness';
 
 export const PREDICTED_FACET_KEY_POSTFIX = ' - predicted';
 export const ERROR_FACET_KEY_POSTFIX = ' - error';
@@ -93,8 +93,8 @@ export function isTarget(col: string): boolean {
 	return col.endsWith(TARGET_POSTFIX);
 }
 
-export function isAccuracy(col: string): boolean {
-	return col.endsWith(ACCURACY_POSTFIX);
+export function isCorrectness(col: string): boolean {
+	return col.endsWith(CORRECTNESS_POSTFIX);
 }
 
 export function isHiddenField(col: string): boolean {
@@ -115,8 +115,8 @@ export function getTargetIndex(columns: string[]): number {
 	return _.findIndex(columns, isTarget);
 }
 
-export function getAccuracyIndex(columns: string[]): number {
-	return _.findIndex(columns, isAccuracy);
+export function getCorrectnessIndex(columns: string[]): number {
+	return _.findIndex(columns, isCorrectness);
 }
 
 // Converts from variable name to a server-side result column name
@@ -134,8 +134,8 @@ export function getErrorCol(target: string): string {
 	return target + ERROR_POSTFIX;
 }
 
-export function getAccuracyCol(target: string): string {
-	return target + ACCURACY_POSTFIX;
+export function getCorrectnessCol(target: string): string {
+	return target + CORRECTNESS_POSTFIX;
 }
 
 // Converts from a server side result column name to a variable name
@@ -153,8 +153,8 @@ export function getVarFromTarget(decorated: string) {
 	return decorated.replace(TARGET_POSTFIX, '');
 }
 
-export function getVarFromAccuracy(decorated: string) {
-	return decorated.replace(ACCURACY_POSTFIX, '');
+export function getVarFromCorrectness(decorated: string) {
+	return decorated.replace(CORRECTNESS_POSTFIX, '');
 }
 
 export function updateSummaries(summary: VariableSummary, summaries: VariableSummary[], matchField: string) {
@@ -313,17 +313,17 @@ export function sortGroupsByImportance(groups: Group[], variables: Variable[]): 
 
 
 
-export function updateAccuracyHighlightSummary(context: DataContext, summary: VariableSummary) {
-	mutateAccuracySummary(context, summary, dataMutations.updateAccuracyHighlightSummaries)
+export function updateCorrectnessHighlightSummary(context: DataContext, summary: VariableSummary) {
+	mutateCorrectnessSummary(context, summary, dataMutations.updateCorrectnessHighlightSummaries)
 }
 
-export function updateAccuracySummary(context: DataContext, summary: VariableSummary) {
-	mutateAccuracySummary(context, summary, dataMutations.updateAccuracySummaries)
+export function updateCorrectnessSummary(context: DataContext, summary: VariableSummary) {
+	mutateCorrectnessSummary(context, summary, dataMutations.updateCorrectnessSummaries)
 }
 
 // Collapse categorical result summary data, which is returned as a confusion matrix, into a binary
 // correct/incorrect reprsentation prior to applying the mutation.
-function mutateAccuracySummary(context: DataContext, summary: VariableSummary, f: (DataContext, VariableSummary) => void) {
+function mutateCorrectnessSummary(context: DataContext, summary: VariableSummary, f: (DataContext, VariableSummary) => void) {
 	// Only need to collapse categorical result summaries
 	if (summary.type !== SummaryType.Categorical) {
 		f(context, summary);

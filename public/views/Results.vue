@@ -190,7 +190,7 @@ export default Vue.extend({
 					});
 				});
 			} else {
-				dataActions.fetchAccuracySummaries(this.$store, {
+				dataActions.fetchCorrectnessSummaries(this.$store, {
 					dataset: this.dataset,
 					requestIds: this.requestIds
 				});
@@ -264,7 +264,7 @@ export default Vue.extend({
 								});
 							});
 						} else {
-							dataActions.fetchAccuracySummaries(this.$store, {
+							dataActions.fetchCorrectnessSummaries(this.$store, {
 								dataset: this.dataset,
 								requestIds: this.requestIds
 							});

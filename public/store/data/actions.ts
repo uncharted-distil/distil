@@ -3,7 +3,7 @@ import axios from 'axios';
 import { AxiosPromise } from 'axios';
 import { FilterParams, INCLUDE_FILTER, EXCLUDE_FILTER } from '../../util/filters';
 import { getSolutionsByRequestIds, getSolutionById } from '../../util/solutions';
-import { getSummaries, getSummary, updateAccuracySummary, updateAccuracyHighlightSummary, getAccuracyCol } from '../../util/data';
+import { getSummaries, getSummary, updateCorrectnessSummary, updateCorrectnessHighlightSummary, getCorrectnessCol } from '../../util/data';
 import { Variable, Data, Extrema } from './index';
 import { SolutionInfo, SOLUTION_ERRORED } from '../solutions/index';
 import { mutations } from './module'
@@ -539,7 +539,7 @@ export const actions = {
 	},
 
 	// fetches result summary for a given pipeline id.
-	fetchAccuracySummary(context: DataContext, args: { dataset: string, solutionId: string}) {
+	fetchCorrectnessSummary(context: DataContext, args: { dataset: string, solutionId: string}) {
 		if (!args.dataset) {
 			console.warn('`dataset` argument is missing');
 			return null;
@@ -554,14 +554,14 @@ export const actions = {
 		const extremaMax = null;
 		const solution = getSolutionById(context.rootState.solutionModule, args.solutionId);
 		const endPoint = `/distil/results-summary/${ES_INDEX}/${args.dataset}/${extremaMin}/${extremaMax}`
-		const nameFunc = (p: PipelineInfo) => getAccuracyCol(p.feature);
+		const nameFunc = (p: PipelineInfo) => getCorrectnessCol(p.feature);
 		const labelFunc = (p: PipelineInfo) => 'Error Summary';
 
-		getSummary(context, endPoint, pipeline, solution, labelFunc, updateAccuracySummary, null);
+		getSummary(context, endPoint, solution, nameFunc, labelFunc, updateCorrectnessSummary, null);
 	},
 
 	// fetches result summaries for a given pipeline create request
-	fetchAccuracySummaries(context: DataContext, args: { dataset: string, requestIds: string[]}) {
+	fetchCorrectnessSummaries(context: DataContext, args: { dataset: string, requestIds: string[]}) {
 		if (!args.dataset) {
 			console.warn('`dataset` argument is missing');
 			return null;
@@ -575,9 +575,9 @@ export const actions = {
 		const extremaMax = NaN;
 		const solutions = getSolutionsByRequestIds(context.rootState.solutionModule, args.requestIds);
 		const endPoint = `/distil/results-summary/${ES_INDEX}/${args.dataset}/${extremaMin}/${extremaMax}`
-		const nameFunc = (p: PipelineInfo) => getAccuracyCol(p.feature);
+		const nameFunc = (p: PipelineInfo) => getCorrectnessCol(p.feature);
 		const labelFunc = (p: PipelineInfo) => 'Error Summary';
-		getSummaries(context, endPoint, solutions, nameFunc, labelFunc, updateAccuracySummary, null);
+		getSummaries(context, endPoint, solutions, nameFunc, labelFunc, updateCorrectnessSummary, null);
 	},
 
 	// fetches result data for created pipeline
@@ -815,7 +815,7 @@ export const actions = {
 		getSummaries(context, endPoint, solutions, nameFunc, labelFunc, mutations.updatePredictedHighlightSummaries, filters);
 	},
 
-	fetchAccuracyHighlightSummaries(context: DataContext, args: { highlightRoot: HighlightRoot, dataset: string, requestIds: string[], extrema: Extrema }) {
+	fetchCorrectnessHighlightSummaries(context: DataContext, args: { highlightRoot: HighlightRoot, dataset: string, requestIds: string[], extrema: Extrema }) {
 		if (!args.dataset) {
 			console.warn('`dataset` argument is missing');
 			return null;
@@ -835,9 +835,9 @@ export const actions = {
 		const solutions = getSolutionsByRequestIds(context.rootState.solutionModule, args.requestIds);
 
 		const endPoint = `/distil/results-summary/${ES_INDEX}/${args.dataset}/${args.extrema.min}/${args.extrema.max}`
-		const nameFunc = (p: SolutionInfo) => getAccuracyCol(p.feature);
+		const nameFunc = (p: SolutionInfo) => getCorrectnessCol(p.feature);
 		const labelFunc = (p: SolutionInfo) => '';
-		getSummaries(context, endPoint, solutions, nameFunc, labelFunc, updateAccuracyHighlightSummary, filters);
+		getSummaries(context, endPoint, solutions, nameFunc, labelFunc, updateCorrectnessHighlightSummary, filters);
 	},
 
 	fetchResultHighlightSamples(context: DataContext, args: { highlightRoot: HighlightRoot, dataset: string, solutionId: string }) {
@@ -907,7 +907,7 @@ export const actions = {
 				requestIds: args.requestIds,
 				extrema: args.extrema
 			}),
-			context.dispatch('fetchAccuracyHighlightSummaries', {
+			context.dispatch('fetchCorrectnessHighlightSummaries', {
 				highlightRoot: args.highlightRoot,
 				dataset: args.dataset,
 				requestIds: args.requestIds,

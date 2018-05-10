@@ -53,7 +53,7 @@ func (s *Storage) parseFilteredData(dataset string, numRows int, rows *pgx.Rows)
 }
 
 func (s *Storage) formatFilterName(name string) string {
-	if strings.HasSuffix(name, predictedSuffix) || strings.HasSuffix(name, accuracySuffix) {
+	if strings.HasSuffix(name, predictedSuffix) || strings.HasSuffix(name, correctnessSuffix) {
 		//name = "value"
 		return "result.value"
 	}
@@ -146,7 +146,7 @@ func (s *Storage) buildFilteredResultQueryField(dataset string, variables []*mod
 	return strings.Join(fields, ","), nil
 }
 
-func (s *Storage) buildAccuracyResultWhere(dataset string, resultURI string, resultFilter *model.Filter) (string, error) {
+func (s *Storage) buildCorrectnessResultWhere(dataset string, resultURI string, resultFilter *model.Filter) (string, error) {
 	// get the target variable name
 	datasetResult := s.getResultTable(dataset)
 	targetName, err := s.getResultTargetName(datasetResult, resultURI)
@@ -180,34 +180,34 @@ func (s *Storage) buildPredictedResultWhere(dataset string, resultURI string, re
 }
 
 type filters struct {
-	genericFilters  []*model.Filter
-	predictedFilter *model.Filter
-	errorFilter     *model.Filter
-	accuracyFilter  *model.Filter
+	genericFilters    []*model.Filter
+	predictedFilter   *model.Filter
+	errorFilter       *model.Filter
+	correctnessFilter *model.Filter
 }
 
 func (s *Storage) splitFilters(filterParams *model.FilterParams) *filters {
 	// Groups filters for handling downstream
 	var predictedFilter *model.Filter
 	var errorFilter *model.Filter
-	var accuracyFilter *model.Filter
+	var correctnessFilter *model.Filter
 	var remaining []*model.Filter
 	for _, filter := range filterParams.Filters {
 		if strings.HasSuffix(filter.Name, predictedSuffix) {
 			predictedFilter = filter
 		} else if strings.HasSuffix(filter.Name, errorSuffix) {
 			errorFilter = filter
-		} else if strings.HasSuffix(filter.Name, accuracySuffix) {
-			accuracyFilter = filter
+		} else if strings.HasSuffix(filter.Name, correctnessSuffix) {
+			correctnessFilter = filter
 		} else {
 			remaining = append(remaining, filter)
 		}
 	}
 	return &filters{
-		genericFilters:  remaining,
-		predictedFilter: predictedFilter,
-		errorFilter:     errorFilter,
-		accuracyFilter:  accuracyFilter,
+		genericFilters:    remaining,
+		predictedFilter:   predictedFilter,
+		errorFilter:       errorFilter,
+		correctnessFilter: correctnessFilter,
 	}
 }
 

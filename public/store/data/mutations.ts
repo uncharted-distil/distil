@@ -1,7 +1,7 @@
 import _ from 'lodash';
 import Vue from 'vue';
 import { DataState, Variable, Datasets, VariableSummary, Data, Extrema } from './index';
-import { updateSummaries, isPredicted, isAccuracy } from '../../util/data';
+import { updateSummaries, isPredicted, isCorrectness } from '../../util/data';
 import { Dictionary } from '../../util/dict';
 
 export const mutations = {
@@ -37,8 +37,8 @@ export const mutations = {
 		updateSummaries(summary, state.residualSummaries, 'solutionId');
 	},
 
-	updateAccuracySummaries(state: DataState, summary: VariableSummary) {
-		updateSummaries(summary, state.accuracySummaries, 'pipelineId');
+	updateCorrectnessSummaries(state: DataState, summary: VariableSummary) {
+		updateSummaries(summary, state.correctnessSummaries, 'pipelineId');
 	},
 
 	clearPredictedExtremas(state: DataState) {
@@ -122,11 +122,11 @@ export const mutations = {
 		state.highlightValues.summaries.push(summary);
 	},
 
-	updateAccuracyHighlightSummaries(state: DataState, summary: VariableSummary) {
+	updateCorrectnessHighlightSummaries(state: DataState, summary: VariableSummary) {
 		if (!summary) {
 			return;
 		}
-		const index = _.findIndex(state.highlightValues.summaries, s => s.pipelineId === summary.pipelineId && isAccuracy(s.name));
+		const index = _.findIndex(state.highlightValues.summaries, s => s.pipelineId === summary.pipelineId && isCorrectness(s.name));
 		if (index !== -1) {
 			Vue.set(state.highlightValues.summaries, index, summary);
 			return;

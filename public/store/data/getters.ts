@@ -177,8 +177,8 @@ export const getters = {
 		return state.residualSummaries;
 	},
 
-	getAccuracySummaries(state: DataState): VariableSummary[] {
-		return state.accuracySummaries;
+	getCorrectnessSummaries(state: DataState): VariableSummary[] {
+		return state.correctnessSummaries;
 	},
 
 	getFilters(state: DataState, getters: any): Filter[] {

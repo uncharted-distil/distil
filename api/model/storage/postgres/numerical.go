@@ -84,8 +84,8 @@ func (f *NumericalField) fetchHistogramByResult(dataset string, variable *model.
 		}
 		where = appendAndClause(where, resultWhere)
 		params = append(params, predictedParams...)
-	} else if splitFilters.accuracyFilter != nil {
-		resultWhere, err := f.Storage.buildAccuracyResultWhere(dataset, resultURI, splitFilters.accuracyFilter)
+	} else if splitFilters.correctnessFilter != nil {
+		resultWhere, err := f.Storage.buildCorrectnessResultWhere(dataset, resultURI, splitFilters.correctnessFilter)
 		if err != nil {
 			return nil, err
 		}

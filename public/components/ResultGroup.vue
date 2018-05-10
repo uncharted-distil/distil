@@ -35,11 +35,11 @@
 				<div class="residual-center-line"></div>
 				<div class="residual-center-label">0</div>
 			</div>
-			<facets v-if="accuracyGroups.length" class="result-container"
-				@facet-click="onAccuracyCategoricalClick"
-				:groups="accuracyGroups"
+			<facets v-if="correctnessGroups.length" class="result-container"
+				@facet-click="onCorrectnessCategoricalClick"
+				:groups="correctnessGroups"
 				:highlights="highlights"
-				:instanceName="accuracyInstanceName"
+				:instanceName="correctnessInstanceName"
 				:html="residualHtml">
 			</facets>
 		</div>
@@ -60,7 +60,7 @@ import Vue from 'vue';
 import Facets from '../components/Facets';
 import { createGroups, Group } from '../util/facets';
 import { Extrema, VariableSummary } from '../store/data/index';
-import { getPredictedCol, getErrorCol, getAccuracyCol } from '../util/data';
+import { getPredictedCol, getErrorCol, getCorrectnessCol } from '../util/data';
 import { Highlight } from '../store/data/index';
 import { getters as routeGetters } from '../store/route/module';
 import { getSolutionById, getMetricDisplayName } from '../util/solutions';
@@ -80,7 +80,7 @@ export default Vue.extend({
 		scores: Array,
 		predictedSummary: Object,
 		residualsSummary: Object,
-		accuracySummary: Object,
+		correctnessSummary: Object,
 		resultHtml: String,
 		residualHtml: String
 	},
@@ -89,7 +89,7 @@ export default Vue.extend({
 		return {
 			predictedInstanceName: 'predicted-result-facet',
 			residualInstanceName: 'residual-result-facet',
-			accuracyInstanceName: 'accuracy-result-facet'
+			correctnessInstanceName: 'correctness-result-facet'
 		};
 	},
 
@@ -111,8 +111,8 @@ export default Vue.extend({
 			return getErrorCol(this.target);
 		},
 
-		accuracyColumnName(): string {
-			return getAccuracyCol(this.target);
+		correctnessColumnName(): string {
+			return getCorrectnessCol(this.target);
 		},
 
 		solutionStatus(): String {
@@ -127,8 +127,8 @@ export default Vue.extend({
 			return this.getAndActivateGroups(this.predictedSummary);
 		},
 
-		accuracyGroups(): Group[] {
-			return this.getAndActivateGroups(this.accuracySummary);
+		correctnessGroups(): Group[] {
+			return this.getAndActivateGroups(this.correctnessSummary);
 		},
 
 		residualGroups(): Group[] {
@@ -176,12 +176,12 @@ export default Vue.extend({
 			}
 		},
 
-		onAccuracyCategoricalClick(context: string, key: string, value: string) {
+		onCorrectnessCategoricalClick(context: string, key: string, value: string) {
 			if (key && value) {
 				// extract the var name from the key
 				updateHighlightRoot(this, {
 					context: context,
-					key: this.accuracyColumnName,
+					key: this.correctnessColumnName,
 					value: value
 				});
 			} else {

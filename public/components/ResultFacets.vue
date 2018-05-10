@@ -9,7 +9,7 @@
 			:scores="group.scores"
 			:predicted-summary="group.predictedSummary"
 			:residuals-summary="group.residualsSummary"
-			:accuracy-summary="group.accuracySummary"
+			:correctness-summary="group.correctnessSummary"
 			:resultHtml="html"
 			:residualHtml="html">
 		</result-group>
@@ -37,7 +37,7 @@ interface SummaryGroup {
 	groupName: string;
 	predictedSummary: VariableSummary;
 	residualsSummary: VariableSummary;
-	accuracySummary: VariableSummary;
+	correctnessSummary: VariableSummary;
 }
 /*eslint-enable */
 
@@ -72,8 +72,8 @@ export default Vue.extend({
 			return this.regression ? dataGetters.getResidualsSummaries(this.$store) : [];
 		},
 
-		accuracySummaries(): VariableSummary[] {
-			return !this.regression ? dataGetters.getAccuracySummaries(this.$store) : [];
+		correctnessSummaries(): VariableSummary[] {
+			return !this.regression ? dataGetters.getCorrectnessSummaries(this.$store) : [];
 		},
 
 		// Generate pairs of residuals and results for each solution in the numerical case.
@@ -82,14 +82,14 @@ export default Vue.extend({
 			const solutions = solutionGetters.getSolutions(this.$store).filter(solution => solution.feature === this.target);
 			const predictedSummaries = this.predictedSummaries;
 			const residualsSummaries = this.residualSummaries;
-			const accuracySummaries = this.accuracySummaries;
+			const correctnessSummaries = this.correctnessSummaries;
 
 			const summaryGroups = solutions.map(solution => {
 				const solutionId = solution.solutionId;
 				const requestId = solution.requestId;
 				const predictedSummary = _.find(predictedSummaries, summary => summary.solutionId === solutionId);
 				const residualSummary = _.find(residualsSummaries, summary => summary.solutionId === solutionId);
-				const accuracySummary = _.find(accuracySummaries, summary => summary.solutionId === solutionId);
+				const correctnessSummary = _.find(correctnessSummaries, summary => summary.solutionId === solutionId);
 				return {
 					requestId: requestId,
 					solutionId: solutionId,
@@ -98,7 +98,7 @@ export default Vue.extend({
 					scores: solution ? solution.scores : [],
 					predictedSummary: predictedSummary,
 					residualsSummary: residualSummary,
-					accuracySummary: accuracySummary
+					correctnessSummary: correctnessSummary
 				};
 			});
 
