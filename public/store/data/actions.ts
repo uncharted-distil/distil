@@ -12,6 +12,11 @@ import { createFilterFromHighlightRoot, parseHighlightSamples } from '../../util
 import { DataContext, getPredictedCol, getErrorCol, getVarFromTarget,
 	createPendingSummary, createErrorSummary, createEmptyData} from '../../util/data';
 
+// DEBUG: MOCKING
+import '../../assets/images/a.jpeg';
+import '../../assets/images/b.jpeg';
+import '../../assets/images/c.jpeg';
+
 export const ES_INDEX = 'datasets';
 
 export const actions = {
