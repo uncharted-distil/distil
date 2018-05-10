@@ -12,10 +12,10 @@ services:
     ports:
       - "45042:45042"
     environment:
-      - PIPELINE_SERVER_RESULT_DIR=/tmp/d3m
-      - PIPELINE_SEND_DELAY=2000
-      - PIPELINE_NUM_UPDATES=3
-      - PIPELINE_ERR_PERCENT=0.01
+      - SOLUTION_SERVER_RESULT_DIR=/tmp/d3m
+      - SOLUTION_SEND_DELAY=2000
+      - SOLUTION_NUM_UPDATES=3
+      - SOLUTION_ERR_PERCENT=0.01
     volumes:
       - /tmp/d3m:/tmp/d3m
   postgres:

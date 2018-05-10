@@ -5,8 +5,8 @@ import { routeModule } from './route/module';
 import { Route } from 'vue-router';
 import { dataModule } from './data/module';
 import { DataState } from './data/index';
-import { pipelineModule } from './pipelines/module';
-import { PipelineState } from './pipelines/index';
+import { solutionModule } from './solutions/module';
+import { SolutionState } from './solutions/index';
 import { viewModule } from './view/module';
 import { ViewState } from './view/index';
 import { appModule } from './app/module';
@@ -17,7 +17,7 @@ Vue.use(Vuex);
 export interface DistilState {
 	routeModule: Route;
 	dataModule: DataState;
-	pipelineModule: PipelineState;
+	solutionModule: SolutionState;
 	viewModule: ViewState;
 	appModule: AppState;
 }
@@ -26,7 +26,7 @@ export default new Store<DistilState>({
 	modules:  {
 		routeModule,
 		dataModule,
-		pipelineModule,
+		solutionModule,
 		viewModule,
 		appModule
 	},

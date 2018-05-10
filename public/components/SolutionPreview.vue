@@ -1,7 +1,7 @@
 <template>
 	<div>
-		<div class="pipeline-preview" @click="onResult()">
-			<div class="pipeline-header">
+		<div class="solution-preview" @click="onResult()">
+			<div class="solution-header">
 				<div>
 					<strong>Dataset:</strong> {{result.dataset}}
 				</div>
@@ -9,7 +9,7 @@
 					<strong>Date:</strong> {{formattedTime}}
 				</div>
 			</div>
-			<div class="pipeline-body">
+			<div class="solution-body">
 				<div>
 					<strong>Feature:</strong> {{result.feature}}
 				</div>
@@ -34,7 +34,7 @@
 				</div>
 			</div>
 		</div>
-		<div class="pipeline-progress">
+		<div class="solution-progress">
 			<b-progress v-if="isRunning()"
 				:value="percentComplete"
 				variant="outline-secondary"
@@ -46,14 +46,14 @@
 
 <script lang="ts">
 import moment from 'moment';
-import { getMetricDisplayName } from '../util/pipelines';
+import { getMetricDisplayName } from '../util/solutions';
 import { createRouteEntry } from '../util/routes';
-import { PipelineInfo, PIPELINE_PENDING, PIPELINE_RUNNING, PIPELINE_COMPLETED, PIPELINE_ERRORED } from '../store/pipelines/index';
+import { SolutionInfo, SOLUTION_PENDING, SOLUTION_RUNNING, SOLUTION_COMPLETED, SOLUTION_ERRORED } from '../store/solutions/index';
 import { RESULTS_ROUTE } from '../store/route/index';
 import Vue from 'vue';
 
 export default Vue.extend({
-	name: 'pipeline-preview',
+	name: 'solution-preview',
 
 	props: {
 		'result': Object
@@ -77,23 +77,23 @@ export default Vue.extend({
 			return getMetricDisplayName(metric);
 		},
 		isPending(): boolean {
-			return (<PipelineInfo>this.result).progress === PIPELINE_PENDING;
+			return (<SolutionInfo>this.result).progress === SOLUTION_PENDING;
 		},
 		isRunning(): boolean {
-			return (<PipelineInfo>this.result).progress === PIPELINE_RUNNING;
+			return (<SolutionInfo>this.result).progress === SOLUTION_RUNNING;
 		},
 		isCompleted(): boolean {
-			return (<PipelineInfo>this.result).progress === PIPELINE_COMPLETED;
+			return (<SolutionInfo>this.result).progress === SOLUTION_COMPLETED;
 		},
 		isErrored(): boolean {
-			return (<PipelineInfo>this.result).progress === PIPELINE_ERRORED;
+			return (<SolutionInfo>this.result).progress === SOLUTION_ERRORED;
 		},
 		onResult() {
-			const result = <PipelineInfo>this.result;
+			const result = <SolutionInfo>this.result;
 			const entry = createRouteEntry(RESULTS_ROUTE, {
 				dataset: result.dataset,
 				target: result.feature,
-				pipelineId: result.pipelineId
+				solutionId: result.solutionId
 			});
 			this.$router.push(entry);
 		}
@@ -102,23 +102,23 @@ export default Vue.extend({
 </script>
 
 <style>
-.pipeline-preview {
+.solution-preview {
 	display: flex;
 	flex-direction: column;
 }
-.pipeline-header {
+.solution-header {
 	display: flex;
 	justify-content: space-between;
 }
-.pipeline-body {
+.solution-body {
 	display: flex;
 	justify-content: space-between;
 }
-.pipeline-preview .badge {
+.solution-preview .badge {
 	display: block;
 	margin: 4px 0;
 }
-.pipeline-progress {
+.solution-progress {
 	margin: 6px 0;
 }
 </style>

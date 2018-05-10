@@ -14,35 +14,35 @@ import (
 	"github.com/unchartedsoftware/plog"
 )
 
-// ExportHandler exports the caller supplied pipeline by calling through to the compute
+// ExportHandler exports the caller supplied solution by calling through to the compute
 // server export functionality.
-func ExportHandler(pipelineCtor model.PipelineStorageCtor, metaCtor model.MetadataStorageCtor, client *pipeline.Client, exportPath string) func(http.ResponseWriter, *http.Request) {
+func ExportHandler(solutionCtor model.SolutionStorageCtor, metaCtor model.MetadataStorageCtor, client *pipeline.Client, exportPath string) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// extract route parameters
-		pipelineID := pat.Param(r, "pipeline-id")
+		solutionID := pat.Param(r, "solution-id")
 
-		// get the pipeline target
-		pipeline, err := pipelineCtor()
+		// get the solution target
+		solution, err := solutionCtor()
 		if err != nil {
 			handleError(w, err)
 			return
 		}
-		req, err := pipeline.FetchRequestByPipelineID(pipelineID)
+		req, err := solution.FetchRequestBySolutionID(solutionID)
 		if err != nil {
 			handleError(w, err)
 			return
 		}
 
-		pipelineTarget := req.TargetFeature()
+		solutionTarget := req.TargetFeature()
 
 		// get the initial target
-		pip, err := pipeline.FetchPipeline(pipelineID)
+		pip, err := solution.FetchSolution(solutionID)
 		if err != nil {
 			handleError(w, err)
 			return
 		}
 
-		m, err := pipeline.FetchRequest(pip.RequestID)
+		m, err := solution.FetchRequest(pip.RequestID)
 		if err != nil {
 			handleError(w, err)
 			return
@@ -54,26 +54,26 @@ func ExportHandler(pipelineCtor model.PipelineStorageCtor, metaCtor model.Metada
 			return
 		}
 
-		variable, err := meta.FetchVariable(m.Dataset, pipelineTarget)
+		variable, err := meta.FetchVariable(m.Dataset, solutionTarget)
 		if err != nil {
 			handleError(w, err)
 			return
 		}
 
-		// fail if the pipeline target was not the original dataset target
+		// fail if the solution target was not the original dataset target
 		if variable.Role != "suggestedTarget" {
 			log.Warnf("Target %s is not the expected target variable", variable.Name)
 			http.Error(w, fmt.Sprintf("The selected target `%s` does not match the required target variable.", variable.Name), http.StatusBadRequest)
 			return
 		}
 
-		exportPath := path.Join(exportPath, pipelineID+".d3m")
+		exportPath := path.Join(exportPath, solutionID+".d3m")
 		exportURI := fmt.Sprintf("file://%s", exportPath)
 		log.Infof("Exporting to %s", exportURI)
 
-		err = client.ExportPipeline(context.Background(), pipelineID, exportURI)
+		err = client.ExportSolution(context.Background(), solutionID, exportURI)
 		if err != nil {
-			log.Infof("Failed pipeline export request to %s", exportURI)
+			log.Infof("Failed solution export request to %s", exportURI)
 			os.Exit(1)
 		} else {
 			log.Infof("Completed export request to %s", exportURI)

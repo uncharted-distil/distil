@@ -1,7 +1,7 @@
 import _ from 'lodash';
 import { DataState, Datasets, VariableSummary, Data, SummaryType } from '../store/data/index';
 import { TargetRow, FieldInfo, Variable } from '../store/data/index';
-import { PipelineInfo, PIPELINE_COMPLETED } from '../store/pipelines/index';
+import { SolutionInfo, SOLUTION_COMPLETED } from '../store/solutions/index';
 import { DistilState } from '../store/store';
 import { Dictionary } from './dict';
 import { mutations as dataMutations } from '../store/data/module';
@@ -166,7 +166,7 @@ export function createEmptyData(name: string): Data {
 	};
 }
 
-export function createPendingSummary(name: string, label: string, dataset: string, pipelineId?: string): VariableSummary {
+export function createPendingSummary(name: string, label: string, dataset: string, solutionId?: string): VariableSummary {
 	return {
 		name: name,
 		label: label,
@@ -179,7 +179,7 @@ export function createPendingSummary(name: string, label: string, dataset: strin
 			max: NaN
 		},
 		numRows: 0,
-		pipelineId: pipelineId
+		solutionId: solutionId
 	};
 }
 
@@ -202,24 +202,24 @@ export function createErrorSummary(name: string, label: string, dataset: string,
 export function getSummary(
 	context: DataContext,
 	endpoint: string,
-	pipeline: PipelineInfo,
-	nameFunc: (PipelineInfo) => string,
-	labelFunc: (PipelineInfo) => string,
+	solution: SolutionInfo,
+	nameFunc: (SolutionInfo) => string,
+	labelFunc: (SolutionInfo) => string,
 	updateFunction: (DataContext, VariableSummary) => void,
 	filters: FilterParams): Promise<any> {
 
-	const name = nameFunc(pipeline);
-	const label = labelFunc(pipeline);
-	const feature = pipeline.feature;
-	const dataset = pipeline.dataset;
-	const pipelineId = pipeline.pipelineId;
-	const resultId = pipeline.resultId;
+	const name = nameFunc(solution);
+	const label = labelFunc(solution);
+	const feature = solution.feature;
+	const dataset = solution.dataset;
+	const solutionId = solution.solutionId;
+	const resultId = solution.resultId;
 
 	// save a placeholder histogram
-	updateFunction(context, createPendingSummary(name, label, dataset, pipelineId));
+	updateFunction(context, createPendingSummary(name, label, dataset, solutionId));
 
-	// fetch the results for each pipeline
-	if (pipeline.progress !== PIPELINE_COMPLETED) {
+	// fetch the results for each solution
+	if (solution.progress !== SOLUTION_COMPLETED) {
 		// skip
 		return;
 	}
@@ -232,7 +232,7 @@ export function getSummary(
 			histogram.name = name;
 			histogram.label = label;
 			histogram.feature = feature;
-			histogram.pipelineId = pipelineId;
+			histogram.solutionId = solutionId;
 			histogram.resultId = resultId;
 			updateFunction(context, histogram);
 		})
@@ -245,18 +245,18 @@ export function getSummary(
 export function getSummaries(
 	context: DataContext,
 	endpoint: string,
-	pipelines: PipelineInfo[],
-	nameFunc: (PipelineInfo) => string,
-	labelFunc: (PipelineInfo) => string,
+	solutions: SolutionInfo[],
+	nameFunc: (SolutionInfo) => string,
+	labelFunc: (SolutionInfo) => string,
 	updateFunction: (DataContext, VariableSummary) => void,
 	filters: FilterParams): Promise<any> {
 
 	// return as singular promise
-	const promises = pipelines.map(pipeline => {
+	const promises = solutions.map(solution => {
 		return getSummary(
 			context,
 			endpoint,
-			pipeline,
+			solution,
 			nameFunc,
 			labelFunc,
 			updateFunction,

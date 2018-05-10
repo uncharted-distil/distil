@@ -12,7 +12,7 @@ import (
 )
 
 // ResidualsExtremaHandler returns the extremas for a residual summary.
-func ResidualsExtremaHandler(pipelineCtor model.PipelineStorageCtor, dataCtor model.DataStorageCtor) func(http.ResponseWriter, *http.Request) {
+func ResidualsExtremaHandler(solutionCtor model.SolutionStorageCtor, dataCtor model.DataStorageCtor) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		dataset := pat.Param(r, "dataset")
 		resultUUID, err := url.PathUnescape(pat.Param(r, "results-uuid"))
@@ -21,7 +21,7 @@ func ResidualsExtremaHandler(pipelineCtor model.PipelineStorageCtor, dataCtor mo
 			return
 		}
 
-		pipeline, err := pipelineCtor()
+		solution, err := solutionCtor()
 		if err != nil {
 			handleError(w, err)
 			return
@@ -34,7 +34,7 @@ func ResidualsExtremaHandler(pipelineCtor model.PipelineStorageCtor, dataCtor mo
 		}
 
 		// get the result URI. Error ignored to make it ES compatible.
-		res, err := pipeline.FetchPipelineResultByUUID(resultUUID)
+		res, err := solution.FetchSolutionResultByUUID(resultUUID)
 		if err != nil {
 			handleError(w, err)
 			return

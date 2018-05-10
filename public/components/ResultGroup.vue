@@ -2,16 +2,16 @@
 	<div v-bind:class="currentClass"
 		@click="click()">
 		{{name}} <sup>{{index}}</sup> {{timestamp}}
-		<div v-if="pipelineStatus !== 'COMPLETED' && pipelineStatus !== 'ERRORED'">
-			<b-badge variant="info">{{pipelineStatus}}</b-badge>
+		<div v-if="solutionStatus !== 'COMPLETED' && solutionStatus !== 'ERRORED'">
+			<b-badge variant="info">{{solutionStatus}}</b-badge>
 			<b-progress
 				:value="100"
 				variant="outline-secondary"
 				striped
 				:animated="true"></b-progress>
 		</div>
-		<div v-if="pipelineStatus === 'COMPLETED' || pipelineStatus === 'UPDATED'">
-			<b-badge variant="info" v-bind:key="`${score.metric}-${pipelineId}`" v-for="score in scores">
+		<div v-if="solutionStatus === 'COMPLETED' || solutionStatus === 'UPDATED'">
+			<b-badge variant="info" v-bind:key="`${score.metric}-${solutionId}`" v-for="score in scores">
 				{{metricName(score.metric)}}: {{score.value}}
 			</b-badge>
 			<facets v-if="resultGroups.length" class="result-container"
@@ -36,7 +36,7 @@
 				<div class="residual-center-label">0</div>
 			</div>
 		</div>
-		<div v-if="pipelineStatus === 'ERRORED'">
+		<div v-if="solutionStatus === 'ERRORED'">
 			<b-badge variant="danger">
 				ERROR
 			</b-badge>
@@ -56,7 +56,7 @@ import { Extrema } from '../store/data/index';
 import { getPredictedCol, getErrorCol } from '../util/data';
 import { Highlight } from '../store/data/index';
 import { getters as routeGetters } from '../store/route/module';
-import { getPipelineById, getMetricDisplayName } from '../util/pipelines';
+import { getSolutionById, getMetricDisplayName } from '../util/solutions';
 import { overlayRouteEntry } from '../util/routes';
 import { getHighlights, updateHighlightRoot, clearHighlightRoot } from '../util/highlights';
 import _ from 'lodash';
@@ -69,7 +69,7 @@ export default Vue.extend({
 		index: Number,
 		timestamp: String,
 		requestId: String,
-		pipelineId: String,
+		solutionId: String,
 		scores: Array,
 		predictedSummary: Object,
 		residualsSummary: Object,
@@ -102,10 +102,10 @@ export default Vue.extend({
 			return getErrorCol(this.target);
 		},
 
-		pipelineStatus(): String {
-			const pipeline = getPipelineById(this.$store.state.pipelineModule, this.pipelineId);
-			if (pipeline) {
-				return pipeline.progress;
+		solutionStatus(): String {
+			const solution = getSolutionById(this.$store.state.solutionModule, this.solutionId);
+			if (solution) {
+				return solution.progress;
 			}
 			return 'unknown';
 		},
@@ -138,9 +138,9 @@ export default Vue.extend({
 		},
 
 		currentClass(): string {
-			const selectedId = routeGetters.getRoutePipelineId(this.$store);
+			const selectedId = routeGetters.getRouteSolutionId(this.$store);
 			const predicted = this.predictedSummary;
-			return (predicted && predicted.pipelineId === selectedId)
+			return (predicted && predicted.solutionId === selectedId)
 				? 'result-group-selected result-group' : 'result-group';
 		},
 
@@ -193,7 +193,7 @@ export default Vue.extend({
 		click() {
 			if (this.predictedSummary) {
 				const routeEntry = overlayRouteEntry(this.$route, {
-					pipelineId: this.predictedSummary.pipelineId
+					solutionId: this.predictedSummary.solutionId
 				});
 				this.$router.push(routeEntry);
 			}

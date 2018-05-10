@@ -40,7 +40,7 @@ import { Extrema } from '../store/data/index';
 import { TargetRow, TableRow, FieldInfo, RowSelection } from '../store/data/index';
 import { getters as dataGetters } from '../store/data/module';
 import { getters as routeGetters } from '../store/route/module';
-import { getters as pipelineGetters } from '../store/pipelines/module';
+import { getters as solutionGetters } from '../store/solutions/module';
 import { Dictionary } from '../util/dict';
 import { removeNonTrainingItems, removeNonTrainingFields, getErrorCol } from '../util/data';
 import { updateRowSelection, clearRowSelection, updateTableRowSelection } from '../util/row';
@@ -59,8 +59,8 @@ export default Vue.extend({
 	},
 
 	computed: {
-		pipelineId(): string {
-			return routeGetters.getRoutePipelineId(this.$store);
+		solutionId(): string {
+			return routeGetters.getRouteSolutionId(this.$store);
 		},
 
 		target(): string {
@@ -76,7 +76,7 @@ export default Vue.extend({
 		},
 
 		training(): Dictionary<boolean> {
-			return pipelineGetters.getActivePipelineTrainingMap(this.$store);
+			return solutionGetters.getActiveSolutionTrainingMap(this.$store);
 		},
 
 		hasData(): boolean {

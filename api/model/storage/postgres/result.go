@@ -58,21 +58,21 @@ func (s *Storage) getResultTargetVariable(dataset string, targetName string) (*m
 	return variable, nil
 }
 
-// PersistResult stores the pipeline result to Postgres.
+// PersistResult stores the solution result to Postgres.
 func (s *Storage) PersistResult(dataset string, resultURI string) error {
 	// Read the results file.
 	file, err := os.Open(resultURI)
 	if err != nil {
-		return errors.Wrap(err, "unable open pipeline result file")
+		return errors.Wrap(err, "unable open solution result file")
 	}
 	csvReader := csv.NewReader(bufio.NewReader(file))
 	csvReader.TrimLeadingSpace = true
 	records, err := csvReader.ReadAll()
 	if err != nil {
-		return errors.Wrap(err, "unable load pipeline result as csv")
+		return errors.Wrap(err, "unable load solution result as csv")
 	}
 	if len(records) <= 0 || len(records[0]) <= 0 {
-		return errors.Wrap(err, "pipeline csv empty")
+		return errors.Wrap(err, "solution csv empty")
 	}
 
 	// currently only support a single result column.
@@ -86,7 +86,7 @@ func (s *Storage) PersistResult(dataset string, resultURI string) error {
 	// Translate from display name to storage name.
 	variables, err := s.metadata.FetchVariables(dataset, false)
 	if err != nil {
-		return errors.Wrap(err, "unable load pipeline result as csv")
+		return errors.Wrap(err, "unable load solution result as csv")
 	}
 
 	for _, v := range variables {

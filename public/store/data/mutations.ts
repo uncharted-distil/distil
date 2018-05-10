@@ -30,35 +30,35 @@ export const mutations = {
 	},
 
 	updatePredictedSummaries(state: DataState, summary: VariableSummary) {
-		updateSummaries(summary, state.predictedSummaries, 'pipelineId');
+		updateSummaries(summary, state.predictedSummaries, 'solutionId');
 	},
 
 	updateResidualsSummaries(state: DataState, summary: VariableSummary) {
-		updateSummaries(summary, state.residualSummaries, 'pipelineId');
+		updateSummaries(summary, state.residualSummaries, 'solutionId');
 	},
 
 	clearPredictedExtremas(state: DataState) {
 		state.predictedExtremas = {};
 	},
 
-	clearPredictedExtrema(state: DataState, pipelineId: string) {
-		Vue.delete(state.predictedExtremas, pipelineId);
+	clearPredictedExtrema(state: DataState, solutionId: string) {
+		Vue.delete(state.predictedExtremas, solutionId);
 	},
 
-	updatePredictedExtremas(state: DataState, args: { pipelineId: string, extrema: Extrema }) {
-		Vue.set(state.predictedExtremas, args.pipelineId, args.extrema);
+	updatePredictedExtremas(state: DataState, args: { solutionId: string, extrema: Extrema }) {
+		Vue.set(state.predictedExtremas, args.solutionId, args.extrema);
 	},
 
 	clearResidualsExtremas(state: DataState) {
 		state.residualExtremas = {};
 	},
 
-	clearResidualsExtrema(state: DataState, pipelineId: string) {
-		Vue.delete(state.residualExtremas, pipelineId);
+	clearResidualsExtrema(state: DataState, solutionId: string) {
+		Vue.delete(state.residualExtremas, solutionId);
 	},
 
-	updateResidualsExtremas(state: DataState, args: { pipelineId: string, extrema: Extrema }) {
-		Vue.set(state.residualExtremas, args.pipelineId, args.extrema);
+	updateResidualsExtremas(state: DataState, args: { solutionId: string, extrema: Extrema }) {
+		Vue.set(state.residualExtremas, args.solutionId, args.extrema);
 	},
 
 	updateTargetResultExtrema(state: DataState, args: { extrema: Extrema }) {
@@ -113,7 +113,7 @@ export const mutations = {
 			return;
 		}
 		const index = _.findIndex(state.highlightValues.summaries, s => {
-			return s.pipelineId === summary.pipelineId;
+			return s.solutionId === summary.solutionId;
 		});
 		if (index !== -1) {
 			Vue.set(state.highlightValues.summaries, index, summary);
