@@ -550,12 +550,12 @@ export const actions = {
 		}
 
 		// only use extrema if this is the feature variable
-		const extremaMin = null;
-		const extremaMax = null;
+		const extremaMin = NaN;
+		const extremaMax = NaN;
 		const solution = getSolutionById(context.rootState.solutionModule, args.solutionId);
 		const endPoint = `/distil/results-summary/${ES_INDEX}/${args.dataset}/${extremaMin}/${extremaMax}`
-		const nameFunc = (p: PipelineInfo) => getCorrectnessCol(p.feature);
-		const labelFunc = (p: PipelineInfo) => 'Error Summary';
+		const nameFunc = (p: SolutionInfo) => getCorrectnessCol(p.feature);
+		const labelFunc = (p: SolutionInfo) => 'Error Summary';
 
 		getSummary(context, endPoint, solution, nameFunc, labelFunc, updateCorrectnessSummary, null);
 	},
@@ -575,8 +575,8 @@ export const actions = {
 		const extremaMax = NaN;
 		const solutions = getSolutionsByRequestIds(context.rootState.solutionModule, args.requestIds);
 		const endPoint = `/distil/results-summary/${ES_INDEX}/${args.dataset}/${extremaMin}/${extremaMax}`
-		const nameFunc = (p: PipelineInfo) => getCorrectnessCol(p.feature);
-		const labelFunc = (p: PipelineInfo) => 'Error Summary';
+		const nameFunc = (p: SolutionInfo) => getCorrectnessCol(p.feature);
+		const labelFunc = (p: SolutionInfo) => 'Error Summary';
 		getSummaries(context, endPoint, solutions, nameFunc, labelFunc, updateCorrectnessSummary, null);
 	},
 

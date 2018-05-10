@@ -126,7 +126,7 @@ export const mutations = {
 		if (!summary) {
 			return;
 		}
-		const index = _.findIndex(state.highlightValues.summaries, s => s.pipelineId === summary.pipelineId && isCorrectness(s.name));
+		const index = _.findIndex(state.highlightValues.summaries, s => s.solutionId === summary.solutionId && isCorrectness(s.name));
 		if (index !== -1) {
 			Vue.set(state.highlightValues.summaries, index, summary);
 			return;
