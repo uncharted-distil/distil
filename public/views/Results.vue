@@ -189,6 +189,11 @@ export default Vue.extend({
 						extrema: this.residualExtrema
 					});
 				});
+			} else {
+				dataActions.fetchAccuracySummaries(this.$store, {
+					dataset: this.dataset,
+					requestIds: this.requestIds
+				});
 			}
 			dataActions.fetchResultTableData(this.$store, {
 				dataset: this.dataset,

@@ -1,7 +1,7 @@
 import _ from 'lodash';
 import Vue from 'vue';
 import { DataState, Variable, Datasets, VariableSummary, Data, Extrema } from './index';
-import { updateSummaries } from '../../util/data';
+import { updateSummaries, isPredicted, isAccuracy } from '../../util/data';
 import { Dictionary } from '../../util/dict';
 
 export const mutations = {
@@ -102,9 +102,7 @@ export const mutations = {
 		if (!summary) {
 			return;
 		}
-		const index = _.findIndex(state.highlightValues.summaries, s => {
-			return s.name === summary.name;
-		});
+		const index = _.findIndex(state.highlightValues.summaries, s => s.name === summary.name);
 		if (index !== -1) {
 			Vue.set(state.highlightValues.summaries, index, summary);
 			return;
@@ -116,9 +114,7 @@ export const mutations = {
 		if (!summary) {
 			return;
 		}
-		const index = _.findIndex(state.highlightValues.summaries, s => {
-			return s.solutionId === summary.solutionId;
-		});
+		const index = _.findIndex(state.highlightValues.summaries, s => s.solutionId === summary.solutionId && isPredicted(s.name));
 		if (index !== -1) {
 			Vue.set(state.highlightValues.summaries, index, summary);
 			return;
@@ -127,7 +123,15 @@ export const mutations = {
 	},
 
 	updateAccuracyHighlightSummaries(state: DataState, summary: VariableSummary) {
-
+		if (!summary) {
+			return;
+		}
+		const index = _.findIndex(state.highlightValues.summaries, s => s.pipelineId === summary.pipelineId && isAccuracy(s.name));
+		if (index !== -1) {
+			Vue.set(state.highlightValues.summaries, index, summary);
+			return;
+		}
+		state.highlightValues.summaries.push(summary);
 	},
 
 	clearHighlightSummaries(state: DataState) {

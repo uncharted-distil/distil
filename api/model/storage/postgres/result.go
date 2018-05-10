@@ -18,6 +18,7 @@ import (
 const (
 	predictedSuffix = "_predicted"
 	errorSuffix     = "_error"
+	accuracySuffix  = "_accuracy"
 	targetSuffix    = "_target"
 )
 

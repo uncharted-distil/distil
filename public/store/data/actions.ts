@@ -3,7 +3,7 @@ import axios from 'axios';
 import { AxiosPromise } from 'axios';
 import { FilterParams, INCLUDE_FILTER, EXCLUDE_FILTER } from '../../util/filters';
 import { getSolutionsByRequestIds, getSolutionById } from '../../util/solutions';
-import { getSummaries, getSummary, updateAccuracySummary, updateAccuracyHighlightSummary } from '../../util/data';
+import { getSummaries, getSummary, updateAccuracySummary, updateAccuracyHighlightSummary, getAccuracyCol } from '../../util/data';
 import { Variable, Data, Extrema } from './index';
 import { SolutionInfo, SOLUTION_ERRORED } from '../solutions/index';
 import { mutations } from './module'
@@ -554,8 +554,8 @@ export const actions = {
 		const extremaMax = null;
 		const solution = getSolutionById(context.rootState.solutionModule, args.solutionId);
 		const endPoint = `/distil/results-summary/${ES_INDEX}/${args.dataset}/${extremaMin}/${extremaMax}`
-		const nameFunc = (p: PipelineInfo) => getPredictedCol(p.feature);
-		const labelFunc = (p: PipelineInfo) => 'Accuracy';
+		const nameFunc = (p: PipelineInfo) => getAccuracyCol(p.feature);
+		const labelFunc = (p: PipelineInfo) => 'Error Summary';
 
 		getSummary(context, endPoint, pipeline, solution, labelFunc, updateAccuracySummary, null);
 	},
@@ -575,7 +575,7 @@ export const actions = {
 		const extremaMax = NaN;
 		const solutions = getSolutionsByRequestIds(context.rootState.solutionModule, args.requestIds);
 		const endPoint = `/distil/results-summary/${ES_INDEX}/${args.dataset}/${extremaMin}/${extremaMax}`
-		const nameFunc = (p: PipelineInfo) => getPredictedCol(p.feature);
+		const nameFunc = (p: PipelineInfo) => getAccuracyCol(p.feature);
 		const labelFunc = (p: PipelineInfo) => 'Error Summary';
 		getSummaries(context, endPoint, solutions, nameFunc, labelFunc, updateAccuracySummary, null);
 	},
@@ -835,7 +835,7 @@ export const actions = {
 		const solutions = getSolutionsByRequestIds(context.rootState.solutionModule, args.requestIds);
 
 		const endPoint = `/distil/results-summary/${ES_INDEX}/${args.dataset}/${args.extrema.min}/${args.extrema.max}`
-		const nameFunc = (p: SolutionInfo) => getPredictedCol(p.feature);
+		const nameFunc = (p: SolutionInfo) => getAccuracyCol(p.feature);
 		const labelFunc = (p: SolutionInfo) => '';
 		getSummaries(context, endPoint, solutions, nameFunc, labelFunc, updateAccuracyHighlightSummary, filters);
 	},

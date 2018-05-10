@@ -78,13 +78,20 @@ func (f *NumericalField) fetchHistogramByResult(dataset string, variable *model.
 
 	// apply the result filter
 	if splitFilters.predictedFilter != nil {
-		resultWhere, predictedParams, err := f.Storage.buildResultWhere(dataset, resultURI, splitFilters.predictedFilter)
+		resultWhere, predictedParams, err := f.Storage.buildPredictedResultWhere(dataset, resultURI, splitFilters.predictedFilter)
 		if err != nil {
 			return nil, err
 		}
 		where = appendAndClause(where, resultWhere)
 		params = append(params, predictedParams...)
+	} else if splitFilters.accuracyFilter != nil {
+		resultWhere, err := f.Storage.buildAccuracyResultWhere(dataset, resultURI, splitFilters.accuracyFilter)
+		if err != nil {
+			return nil, err
+		}
+		where = appendAndClause(where, resultWhere)
 	}
+
 	if where != "" {
 		where = " AND " + where
 	}

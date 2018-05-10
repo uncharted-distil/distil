@@ -36,7 +36,7 @@
 				<div class="residual-center-label">0</div>
 			</div>
 			<facets v-if="accuracyGroups.length" class="result-container"
-				@facet-click="onResultCategoricalClick"
+				@facet-click="onAccuracyCategoricalClick"
 				:groups="accuracyGroups"
 				:highlights="highlights"
 				:instanceName="accuracyInstanceName"
@@ -59,8 +59,8 @@
 import Vue from 'vue';
 import Facets from '../components/Facets';
 import { createGroups, Group } from '../util/facets';
-import { Extrema } from '../store/data/index';
-import { getPredictedCol, getErrorCol } from '../util/data';
+import { Extrema, VariableSummary } from '../store/data/index';
+import { getPredictedCol, getErrorCol, getAccuracyCol } from '../util/data';
 import { Highlight } from '../store/data/index';
 import { getters as routeGetters } from '../store/route/module';
 import { getSolutionById, getMetricDisplayName } from '../util/solutions';
@@ -111,6 +111,10 @@ export default Vue.extend({
 			return getErrorCol(this.target);
 		},
 
+		accuracyColumnName(): string {
+			return getAccuracyCol(this.target);
+		},
+
 		solutionStatus(): String {
 			const solution = getSolutionById(this.$store.state.solutionModule, this.solutionId);
 			if (solution) {
@@ -120,35 +124,11 @@ export default Vue.extend({
 		},
 
 		resultGroups(): Group[] {
-			if (this.predictedSummary) {
-				const predicted = createGroups([ this.predictedSummary ]);
-				if (this.highlights.root) {
-					const group = predicted[0];
-					if (group.key === this.highlights.root.key) {
-						group.facets.forEach(facet => {
-							facet.filterable = true;
-						});
-					}
-				}
-				return predicted;
-			}
-			return [];
+			return this.getAndActivateGroups(this.predictedSummary);
 		},
 
 		accuracyGroups(): Group[] {
-			if (this.accuracySummary) {
-				const accuracy = createGroups([ this.accuracySummary ]);
-				if (this.highlights.root) {
-					const group = accuracy[0];
-					if (group.key === this.highlights.root.key) {
-						group.facets.forEach(facet => {
-							facet.filterable = true;
-						});
-					}
-				}
-				return accuracy;
-			}
-			return [];
+			return this.getAndActivateGroups(this.accuracySummary);
 		},
 
 		residualGroups(): Group[] {
@@ -196,6 +176,19 @@ export default Vue.extend({
 			}
 		},
 
+		onAccuracyCategoricalClick(context: string, key: string, value: string) {
+			if (key && value) {
+				// extract the var name from the key
+				updateHighlightRoot(this, {
+					context: context,
+					key: this.accuracyColumnName,
+					value: value
+				});
+			} else {
+				clearHighlightRoot(this);
+			}
+		},
+
 		onResultNumericalClick(context: string, key: string) {
 			if (!this.highlights.root || this.highlights.root.key !== key) {
 				updateHighlightRoot(this, {
@@ -222,6 +215,20 @@ export default Vue.extend({
 				});
 				this.$router.push(routeEntry);
 			}
+		},
+
+		getAndActivateGroups(summary: VariableSummary): Group[] {
+			if (summary) {
+				const groups = createGroups([ summary ]);
+				if (this.highlights.root) {
+					const group = groups[0];
+					if (group.key === this.highlights.root.key) {
+						group.facets.forEach(facet => facet.filterable = true);
+					}
+				}
+				return groups;
+			}
+			return [];
 		}
 	}
 });

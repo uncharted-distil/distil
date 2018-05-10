@@ -53,9 +53,9 @@ func (s *Storage) parseFilteredData(dataset string, numRows int, rows *pgx.Rows)
 }
 
 func (s *Storage) formatFilterName(name string) string {
-	if strings.HasSuffix(name, predictedSuffix) {
+	if strings.HasSuffix(name, predictedSuffix) || strings.HasSuffix(name, accuracySuffix) {
 		//name = "value"
-		return "result.value" //"CAST(\"value\" as double precision)"
+		return "result.value"
 	}
 	return fmt.Sprintf("\"%s\"", name)
 }
@@ -146,12 +146,12 @@ func (s *Storage) buildFilteredResultQueryField(dataset string, variables []*mod
 	return strings.Join(fields, ","), nil
 }
 
-func (s *Storage) buildResultWhere(dataset string, resultURI string, resultFilter *model.Filter) (string, []interface{}, error) {
+func (s *Storage) buildAccuracyResultWhere(dataset string, resultURI string, resultFilter *model.Filter) (string, error) {
 	// get the target variable name
 	datasetResult := s.getResultTable(dataset)
 	targetName, err := s.getResultTargetName(datasetResult, resultURI)
 	if err != nil {
-		return "", []interface{}{}, err
+		return "", err
 	}
 
 	// correct/incorrect are well known categories that require the predicted category to be compared
@@ -166,11 +166,14 @@ func (s *Storage) buildResultWhere(dataset string, resultURI string, resultFilte
 			break
 		}
 	}
-	if op != "" {
-		where := fmt.Sprintf("result.value %s data.\"%s\"", op, targetName)
-		return where, []interface{}{}, nil
+	if op == "" {
+		return "", err
 	}
+	where := fmt.Sprintf("result.value %s data.\"%s\"", op, targetName)
+	return where, nil
+}
 
+func (s *Storage) buildPredictedResultWhere(dataset string, resultURI string, resultFilter *model.Filter) (string, []interface{}, error) {
 	// handle the general category case
 	where, params := s.buildFilteredQueryWhere(dataset, []*model.Filter{resultFilter})
 	return where, params, nil
@@ -180,18 +183,22 @@ type filters struct {
 	genericFilters  []*model.Filter
 	predictedFilter *model.Filter
 	errorFilter     *model.Filter
+	accuracyFilter  *model.Filter
 }
 
 func (s *Storage) splitFilters(filterParams *model.FilterParams) *filters {
 	// Groups filters for handling downstream
 	var predictedFilter *model.Filter
 	var errorFilter *model.Filter
+	var accuracyFilter *model.Filter
 	var remaining []*model.Filter
 	for _, filter := range filterParams.Filters {
 		if strings.HasSuffix(filter.Name, predictedSuffix) {
 			predictedFilter = filter
 		} else if strings.HasSuffix(filter.Name, errorSuffix) {
 			errorFilter = filter
+		} else if strings.HasSuffix(filter.Name, accuracySuffix) {
+			accuracyFilter = filter
 		} else {
 			remaining = append(remaining, filter)
 		}
@@ -200,6 +207,7 @@ func (s *Storage) splitFilters(filterParams *model.FilterParams) *filters {
 		genericFilters:  remaining,
 		predictedFilter: predictedFilter,
 		errorFilter:     errorFilter,
+		accuracyFilter:  accuracyFilter,
 	}
 }
 
