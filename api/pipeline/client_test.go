@@ -13,7 +13,7 @@ func TestClient(t *testing.T) {
 	client, err := NewClient("localhost:45042", "./datasets", true)
 	assert.NoError(t, err)
 
-	searchPipelinesRequest := &SearchPipelinesRequest{
+	searchSolutionsRequest := &SearchSolutionsRequest{
 		Problem: &ProblemDescription{
 			Problem: &Problem{
 				TaskType: TaskType_REGRESSION,
@@ -39,24 +39,24 @@ func TestClient(t *testing.T) {
 		},
 	}
 
-	searchID, err := client.StartSearch(context.Background(), searchPipelinesRequest)
+	searchID, err := client.StartSearch(context.Background(), searchSolutionsRequest)
 	assert.NoError(t, err)
 
-	pipelines, err := client.SearchPipelines(context.Background(), searchID)
+	solutions, err := client.SearchSolutions(context.Background(), searchID)
 	assert.NoError(t, err)
 
-	for _, pipeline := range pipelines {
+	for _, solution := range solutions {
 
-		assert.NotEmpty(t, pipeline.PipelineId)
+		assert.NotEmpty(t, solution.SolutionId)
 
-		_, err := client.GeneratePipelineScores(context.Background(), pipeline.PipelineId)
+		_, err := client.GenerateSolutionScores(context.Background(), solution.SolutionId)
 		assert.NoError(t, err)
 
-		_, err = client.GeneratePipelineFit(context.Background(), pipeline.PipelineId)
+		_, err = client.GenerateSolutionFit(context.Background(), solution.SolutionId)
 		assert.NoError(t, err)
 
-		producePipelineRequest := &ProducePipelineRequest{
-			PipelineId: pipeline.PipelineId,
+		produceSolutionRequest := &ProduceSolutionRequest{
+			SolutionId: solution.SolutionId,
 			Inputs: []*Value{
 				{
 					Value: &Value_DatasetUri{
@@ -66,7 +66,7 @@ func TestClient(t *testing.T) {
 			},
 		}
 
-		_, err = client.GeneratePredictions(context.Background(), producePipelineRequest)
+		_, err = client.GeneratePredictions(context.Background(), produceSolutionRequest)
 		assert.NoError(t, err)
 	}
 

@@ -15,19 +15,19 @@ import (
 )
 
 const (
-	createPipelines   = "CREATE_PIPELINES"
+	createSolutions   = "CREATE_SOLUTIONS"
 	categoricalType   = "categorical"
 	numericalType     = "numerical"
 	defaultResourceID = "0"
 	datasetSizeLimit  = 10000
 )
 
-// PipelineHandler represents a pipeline websocket handler.
-func PipelineHandler(client *pipeline.Client, metadataCtor model.MetadataStorageCtor, dataCtor model.DataStorageCtor, pipelineCtor model.PipelineStorageCtor) func(http.ResponseWriter, *http.Request) {
+// SolutionHandler represents a solution websocket handler.
+func SolutionHandler(client *pipeline.Client, metadataCtor model.MetadataStorageCtor, dataCtor model.DataStorageCtor, solutionCtor model.SolutionStorageCtor) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 
 		// create conn
-		conn, err := NewConnection(w, r, handlePipelineMessage(client, metadataCtor, dataCtor, pipelineCtor))
+		conn, err := NewConnection(w, r, handleSolutionMessage(client, metadataCtor, dataCtor, solutionCtor))
 		if err != nil {
 			log.Warn(err)
 			return
@@ -42,19 +42,19 @@ func PipelineHandler(client *pipeline.Client, metadataCtor model.MetadataStorage
 	}
 }
 
-func handlePipelineMessage(client *pipeline.Client, metadataCtor model.MetadataStorageCtor, dataCtor model.DataStorageCtor, pipelineCtor model.PipelineStorageCtor) func(conn *Connection, bytes []byte) {
+func handleSolutionMessage(client *pipeline.Client, metadataCtor model.MetadataStorageCtor, dataCtor model.DataStorageCtor, solutionCtor model.SolutionStorageCtor) func(conn *Connection, bytes []byte) {
 	return func(conn *Connection, bytes []byte) {
 		// parse the message
 		msg, err := NewMessage(bytes)
 		if err != nil {
 			// parsing error, send back a failure response
-			err := fmt.Errorf("unable to parse pipeline request message: %s", string(bytes))
+			err := fmt.Errorf("unable to parse solution request message: %s", string(bytes))
 			// send error response
 			handleErr(conn, nil, err)
 			return
 		}
 		// handle message
-		go handleMessage(conn, client, metadataCtor, dataCtor, pipelineCtor, msg)
+		go handleMessage(conn, client, metadataCtor, dataCtor, solutionCtor, msg)
 	}
 }
 
@@ -68,10 +68,10 @@ func parseMessage(bytes []byte) (*Message, error) {
 	return msg, nil
 }
 
-func handleMessage(conn *Connection, client *pipeline.Client, metadataCtor model.MetadataStorageCtor, dataCtor model.DataStorageCtor, pipelineCtor model.PipelineStorageCtor, msg *Message) {
+func handleMessage(conn *Connection, client *pipeline.Client, metadataCtor model.MetadataStorageCtor, dataCtor model.DataStorageCtor, solutionCtor model.SolutionStorageCtor, msg *Message) {
 	switch msg.Type {
-	case createPipelines:
-		handleCreatePipelines(conn, client, metadataCtor, dataCtor, pipelineCtor, msg)
+	case createSolutions:
+		handleCreateSolutions(conn, client, metadataCtor, dataCtor, solutionCtor, msg)
 		return
 	default:
 		// unrecognized type
@@ -80,7 +80,7 @@ func handleMessage(conn *Connection, client *pipeline.Client, metadataCtor model
 	}
 }
 
-func handleCreatePipelines(conn *Connection, client *pipeline.Client, metadataCtor model.MetadataStorageCtor, dataCtor model.DataStorageCtor, pipelineCtor model.PipelineStorageCtor, msg *Message) {
+func handleCreateSolutions(conn *Connection, client *pipeline.Client, metadataCtor model.MetadataStorageCtor, dataCtor model.DataStorageCtor, solutionCtor model.SolutionStorageCtor, msg *Message) {
 
 	// unmarshall the request data
 	createMessage := &pipeline.CreateMessage{}
@@ -104,15 +104,15 @@ func handleCreatePipelines(conn *Connection, client *pipeline.Client, metadataCt
 		return
 	}
 
-	// initialize pipeline storage
-	pipelineStorage, err := pipelineCtor()
+	// initialize solution storage
+	solutionStorage, err := solutionCtor()
 	if err != nil {
 		handleErr(conn, msg, err)
 		return
 	}
 
 	// persist the request information and dispatch the request
-	statusChannels, err := createMessage.PersistAndDispatch(client, pipelineStorage, metaStorage, dataStorage)
+	statusChannels, err := createMessage.PersistAndDispatch(client, solutionStorage, metaStorage, dataStorage)
 	if err != nil {
 		handleErr(conn, msg, err)
 		return

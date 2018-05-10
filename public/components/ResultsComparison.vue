@@ -36,7 +36,7 @@
 <script lang="ts">
 
 import ResultsDataTable from '../components/ResultsDataTable.vue';
-import { getTask } from '../util/pipelines';
+import { getTask } from '../util/solutions';
 import _ from 'lodash';
 import Vue from 'vue';
 import { Dictionary } from '../util/dict';
@@ -60,8 +60,8 @@ export default Vue.extend({
 			return routeGetters.getRouteDataset(this.$store);
 		},
 
-		pipelineId(): string {
-			return routeGetters.getRoutePipelineId(this.$store);
+		solutionId(): string {
+			return routeGetters.getRouteSolutionId(this.$store);
 		},
 
 		filters(): FilterParams {

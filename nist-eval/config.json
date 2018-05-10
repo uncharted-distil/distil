@@ -3,7 +3,7 @@
     "problem_schema": "/tmp/d3m/dataset/{{ dataset_name }}/TRAIN/problem_TRAIN/problemDoc.json",
     "training_data_root": "/tmp/d3m/dataset/{{ dataset_name }}/TRAIN/dataset_TRAIN",
     "problem_root": "/tmp/d3m/dataset/{{ dataset_name }}/TRAIN/problem_TRAIN",
-    "pipeline_logs_root": "/tmp/d3m/dataset/logs",
+    "solution_logs_root": "/tmp/d3m/dataset/logs",
     "executables_root": "/tmp/d3m/executables",
     "temp_storage_root": "/tmp/d3m/temp_storage",
     "timeout": 60,

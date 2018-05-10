@@ -1,7 +1,7 @@
 import _ from 'lodash';
 import Vue from 'vue';
 import { DataState, Variable, Datasets, VariableSummary, Data, Extrema } from './index';
-import { updateSummaries } from '../../util/data';
+import { updateSummaries, isPredicted, isCorrectness } from '../../util/data';
 import { Dictionary } from '../../util/dict';
 
 export const mutations = {
@@ -30,35 +30,39 @@ export const mutations = {
 	},
 
 	updatePredictedSummaries(state: DataState, summary: VariableSummary) {
-		updateSummaries(summary, state.predictedSummaries, 'pipelineId');
+		updateSummaries(summary, state.predictedSummaries, 'solutionId');
 	},
 
 	updateResidualsSummaries(state: DataState, summary: VariableSummary) {
-		updateSummaries(summary, state.residualSummaries, 'pipelineId');
+		updateSummaries(summary, state.residualSummaries, 'solutionId');
+	},
+
+	updateCorrectnessSummaries(state: DataState, summary: VariableSummary) {
+		updateSummaries(summary, state.correctnessSummaries, 'pipelineId');
 	},
 
 	clearPredictedExtremas(state: DataState) {
 		state.predictedExtremas = {};
 	},
 
-	clearPredictedExtrema(state: DataState, pipelineId: string) {
-		Vue.delete(state.predictedExtremas, pipelineId);
+	clearPredictedExtrema(state: DataState, solutionId: string) {
+		Vue.delete(state.predictedExtremas, solutionId);
 	},
 
-	updatePredictedExtremas(state: DataState, args: { pipelineId: string, extrema: Extrema }) {
-		Vue.set(state.predictedExtremas, args.pipelineId, args.extrema);
+	updatePredictedExtremas(state: DataState, args: { solutionId: string, extrema: Extrema }) {
+		Vue.set(state.predictedExtremas, args.solutionId, args.extrema);
 	},
 
 	clearResidualsExtremas(state: DataState) {
 		state.residualExtremas = {};
 	},
 
-	clearResidualsExtrema(state: DataState, pipelineId: string) {
-		Vue.delete(state.residualExtremas, pipelineId);
+	clearResidualsExtrema(state: DataState, solutionId: string) {
+		Vue.delete(state.residualExtremas, solutionId);
 	},
 
-	updateResidualsExtremas(state: DataState, args: { pipelineId: string, extrema: Extrema }) {
-		Vue.set(state.residualExtremas, args.pipelineId, args.extrema);
+	updateResidualsExtremas(state: DataState, args: { solutionId: string, extrema: Extrema }) {
+		Vue.set(state.residualExtremas, args.solutionId, args.extrema);
 	},
 
 	updateTargetResultExtrema(state: DataState, args: { extrema: Extrema }) {
@@ -98,9 +102,7 @@ export const mutations = {
 		if (!summary) {
 			return;
 		}
-		const index = _.findIndex(state.highlightValues.summaries, s => {
-			return s.name === summary.name;
-		});
+		const index = _.findIndex(state.highlightValues.summaries, s => s.name === summary.name);
 		if (index !== -1) {
 			Vue.set(state.highlightValues.summaries, index, summary);
 			return;
@@ -112,9 +114,19 @@ export const mutations = {
 		if (!summary) {
 			return;
 		}
-		const index = _.findIndex(state.highlightValues.summaries, s => {
-			return s.pipelineId === summary.pipelineId;
-		});
+		const index = _.findIndex(state.highlightValues.summaries, s => s.solutionId === summary.solutionId && isPredicted(s.name));
+		if (index !== -1) {
+			Vue.set(state.highlightValues.summaries, index, summary);
+			return;
+		}
+		state.highlightValues.summaries.push(summary);
+	},
+
+	updateCorrectnessHighlightSummaries(state: DataState, summary: VariableSummary) {
+		if (!summary) {
+			return;
+		}
+		const index = _.findIndex(state.highlightValues.summaries, s => s.solutionId === summary.solutionId && isCorrectness(s.name));
 		if (index !== -1) {
 			Vue.set(state.highlightValues.summaries, index, summary);
 			return;

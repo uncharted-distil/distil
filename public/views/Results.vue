@@ -46,10 +46,10 @@ import VariableSummaries from '../components/VariableSummaries.vue';
 import ResultsComparison from '../components/ResultsComparison.vue';
 import ResultSummaries from '../components/ResultSummaries.vue';
 import ResultTargetVariable from '../components/ResultTargetVariable.vue';
-import { regression, getTask } from '../util/pipelines';
+import { regression, getTask } from '../util/solutions';
 import { getters as dataGetters, actions as dataActions } from '../store/data/module';
 import { getters as routeGetters } from '../store/route/module';
-import { actions as pipelineActions, getters as pipelineGetters } from '../store/pipelines/module';
+import { actions as solutionActions, getters as solutionGetters } from '../store/solutions/module';
 import { Variable, Extrema } from '../store/data/index';
 import { Dictionary } from '../util/dict';
 import { HighlightRoot } from '../store/data/index';
@@ -90,7 +90,7 @@ export default Vue.extend({
 			return createGroups(summaries);
 		},
 		variables(): Variable[] {
-			return pipelineGetters.getActivePipelineVariables(this.$store);
+			return solutionGetters.getActiveSolutionVariables(this.$store);
 		},
 		resultTrainingVarsPage(): number {
 			return routeGetters.getRouteResultTrainingVarsPage(this.$store);
@@ -103,13 +103,13 @@ export default Vue.extend({
 			return paginatedTrainingVars.concat([ targetVar ]);
 		},
 		requestIds(): string[] {
-			return pipelineGetters.getPipelineRequestIds(this.$store);
+			return solutionGetters.getSolutionRequestIds(this.$store);
 		},
 		training(): Dictionary<boolean> {
-			return pipelineGetters.getActivePipelineTrainingMap(this.$store);
+			return solutionGetters.getActiveSolutionTrainingMap(this.$store);
 		},
-		pipelineId(): string {
-			return routeGetters.getRoutePipelineId(this.$store);
+		solutionId(): string {
+			return routeGetters.getRouteSolutionId(this.$store);
 		},
 		highlightRoot(): HighlightRoot {
 			return routeGetters.getDecodedHighlightRoot(this.$store);
@@ -134,18 +134,18 @@ export default Vue.extend({
 			dataActions.fetchResultHighlightValues(this.$store, {
 				dataset: this.dataset,
 				highlightRoot: this.highlightRoot,
-				pipelineId: this.pipelineId,
+				solutionId: this.solutionId,
 				requestIds: this.requestIds,
 				extrema: this.predictedExtrema,
 				variables: this.paginatedVariables
 			});
 			dataActions.fetchResultTableData(this.$store, {
 				dataset: this.dataset,
-				pipelineId: this.pipelineId,
+				solutionId: this.solutionId,
 				highlightRoot: this.highlightRoot
 			});
 		},
-		pipelineId() {
+		solutionId() {
 			// if this is a regression task, pull extrema as a first step
 			const isRegression = this.testRegression();
 			let extremaFetches = [];
@@ -154,7 +154,7 @@ export default Vue.extend({
 					dataActions.fetchTargetResultExtrema(this.$store, {
 						dataset: this.dataset,
 						variable: this.target,
-						pipelineId: this.pipelineId
+						solutionId: this.solutionId
 					}),
 					dataActions.fetchPredictedExtremas(this.$store, {
 						dataset: this.dataset,
@@ -166,31 +166,38 @@ export default Vue.extend({
 				dataActions.fetchTrainingResultSummaries(this.$store, {
 					dataset: this.dataset,
 					variables: this.variables,
-					pipelineId: this.pipelineId,
+					solutionId: this.solutionId,
 					extrema: this.predictedExtrema
 				});
 				dataActions.fetchResultHighlightValues(this.$store, {
 					dataset: this.dataset,
 					highlightRoot: this.highlightRoot,
-					pipelineId: this.pipelineId,
+					solutionId: this.solutionId,
 					requestIds: this.requestIds,
 					extrema: this.predictedExtrema,
 					variables: this.paginatedVariables
 				});
 			});
-			dataActions.fetchResidualsExtremas(this.$store, {
-				dataset: this.dataset,
-				requestIds: this.requestIds
-			}).then(() => {
-				dataActions.fetchResidualsSummaries(this.$store, {
+			if (isRegression) {
+				dataActions.fetchResidualsExtremas(this.$store, {
 					dataset: this.dataset,
-					requestIds: this.requestIds,
-					extrema: this.residualExtrema
+					requestIds: this.requestIds
+				}).then(() => {
+					dataActions.fetchResidualsSummaries(this.$store, {
+						dataset: this.dataset,
+						requestIds: this.requestIds,
+						extrema: this.residualExtrema
+					});
 				});
-			});
+			} else {
+				dataActions.fetchCorrectnessSummaries(this.$store, {
+					dataset: this.dataset,
+					requestIds: this.requestIds
+				});
+			}
 			dataActions.fetchResultTableData(this.$store, {
 				dataset: this.dataset,
-				pipelineId: this.pipelineId,
+				solutionId: this.solutionId,
 				highlightRoot: this.highlightRoot
 			});
 		}
@@ -204,7 +211,7 @@ export default Vue.extend({
 					}),
 				])
 				.then(() => {
-					pipelineActions.fetchPipelines(this.$store, {
+					solutionActions.fetchSolutions(this.$store, {
 						dataset: this.dataset,
 						target: this.target
 					}).then(() => {
@@ -215,7 +222,7 @@ export default Vue.extend({
 								dataActions.fetchTargetResultExtrema(this.$store, {
 									dataset: this.dataset,
 									variable: this.target,
-									pipelineId: this.pipelineId
+									solutionId: this.solutionId
 								}),
 								dataActions.fetchPredictedExtremas(this.$store, {
 									dataset: this.dataset,
@@ -227,7 +234,7 @@ export default Vue.extend({
 							dataActions.fetchTrainingResultSummaries(this.$store, {
 								dataset: this.dataset,
 								variables: this.variables,
-								pipelineId: this.pipelineId,
+								solutionId: this.solutionId,
 								extrema: this.predictedExtrema
 							});
 							dataActions.fetchPredictedSummaries(this.$store, {
@@ -238,7 +245,7 @@ export default Vue.extend({
 							dataActions.fetchResultHighlightValues(this.$store, {
 								dataset: this.dataset,
 								highlightRoot: this.highlightRoot,
-								pipelineId: this.pipelineId,
+								solutionId: this.solutionId,
 								requestIds: this.requestIds,
 								extrema: this.predictedExtrema,
 								variables: this.paginatedVariables
@@ -256,10 +263,16 @@ export default Vue.extend({
 									extrema: this.residualExtrema
 								});
 							});
-						};
+						} else {
+							dataActions.fetchCorrectnessSummaries(this.$store, {
+								dataset: this.dataset,
+								requestIds: this.requestIds
+							});
+						}
+
 						dataActions.fetchResultTableData(this.$store, {
 							dataset: this.dataset,
-							pipelineId: this.pipelineId,
+							solutionId: this.solutionId,
 							highlightRoot: this.highlightRoot
 						});
 					});

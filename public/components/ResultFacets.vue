@@ -5,10 +5,11 @@
 			:index="index"
 			:timestamp="group.timestamp"
 			:request-id="group.requestId"
-			:pipeline-id="group.pipelineId"
+			:solution-id="group.solutionId"
 			:scores="group.scores"
 			:predicted-summary="group.predictedSummary"
 			:residuals-summary="group.residualsSummary"
+			:correctness-summary="group.correctnessSummary"
 			:resultHtml="html"
 			:residualHtml="html">
 		</result-group>
@@ -24,7 +25,7 @@ import ResultGroup from '../components/ResultGroup.vue';
 import { VariableSummary } from '../store/data/index';
 import { getters as dataGetters } from '../store/data/module';
 import { getters as routeGetters } from '../store/route/module';
-import { getters as pipelineGetters } from '../store/pipelines/module';
+import { getters as solutionGetters } from '../store/solutions/module';
 import 'font-awesome/css/font-awesome.css';
 import '../styles/spinner.css';
 import Vue from 'vue';
@@ -32,10 +33,11 @@ import Vue from 'vue';
 /*eslint-disable */
 interface SummaryGroup {
 	requestId: string;
-	pipelineId: string;
+	solutionId: string;
 	groupName: string;
 	predictedSummary: VariableSummary;
 	residualsSummary: VariableSummary;
+	correctnessSummary: VariableSummary;
 }
 /*eslint-enable */
 
@@ -70,30 +72,33 @@ export default Vue.extend({
 			return this.regression ? dataGetters.getResidualsSummaries(this.$store) : [];
 		},
 
-		// Generate pairs of residuals and results for each pipeline in the numerical case.
+		correctnessSummaries(): VariableSummary[] {
+			return !this.regression ? dataGetters.getCorrectnessSummaries(this.$store) : [];
+		},
+
+		// Generate pairs of residuals and results for each solution in the numerical case.
 		resultGroups(): SummaryGroup[] {
 
-			const pipelines = pipelineGetters.getPipelines(this.$store).filter(pipeline => pipeline.feature === this.target);
+			const solutions = solutionGetters.getSolutions(this.$store).filter(solution => solution.feature === this.target);
 			const predictedSummaries = this.predictedSummaries;
 			const residualsSummaries = this.residualSummaries;
+			const correctnessSummaries = this.correctnessSummaries;
 
-			const summaryGroups = pipelines.map(pipeline => {
-				const pipelineId = pipeline.pipelineId;
-				const requestId = pipeline.requestId;
-				const predictedSummary = _.find(predictedSummaries, summary => {
-					return summary.pipelineId === pipelineId;
-				});
-				const residualSummary = _.find(residualsSummaries, summary => {
-					return summary.pipelineId === pipelineId;
-				});
+			const summaryGroups = solutions.map(solution => {
+				const solutionId = solution.solutionId;
+				const requestId = solution.requestId;
+				const predictedSummary = _.find(predictedSummaries, summary => summary.solutionId === solutionId);
+				const residualSummary = _.find(residualsSummaries, summary => summary.solutionId === solutionId);
+				const correctnessSummary = _.find(correctnessSummaries, summary => summary.solutionId === solutionId);
 				return {
 					requestId: requestId,
-					pipelineId: pipelineId,
-					groupName: pipeline ? pipeline.name : '',
-					timestamp: pipeline ? moment(pipeline.timestamp).format('YYYY/MM/DD') : '',
-					scores: pipeline ? pipeline.scores : [],
+					solutionId: solutionId,
+					groupName: solution ? solution.name : '',
+					timestamp: solution ? moment(solution.timestamp).format('YYYY/MM/DD') : '',
+					scores: solution ? solution.scores : [],
 					predictedSummary: predictedSummary,
-					residualsSummary: residualSummary
+					residualsSummary: residualSummary,
+					correctnessSummary: correctnessSummary
 				};
 			});
 

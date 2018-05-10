@@ -101,16 +101,16 @@ func main() {
 	// instantiate the postgres data storage constructor.
 	pgDataStorageCtor := pg.NewDataStorage(postgresClientCtor, metadataStorageCtor)
 
-	// instantiate the postgres pipeline storage constructor.
-	pgPipelineStorageCtor := pg.NewPipelineStorage(postgresClientCtor, metadataStorageCtor)
+	// instantiate the postgres solution storage constructor.
+	pgSolutionStorageCtor := pg.NewSolutionStorage(postgresClientCtor, metadataStorageCtor)
 
-	// Instantiate the pipeline compute client
-	pipelineClient, err := pipeline.NewClient(config.PipelineComputeEndpoint, config.PipelineDataDir, config.PipelineComputeTrace)
+	// Instantiate the solution compute client
+	solutionClient, err := pipeline.NewClient(config.SolutionComputeEndpoint, config.SolutionDataDir, config.SolutionComputeTrace)
 	if err != nil {
 		log.Errorf("%v", err)
 		os.Exit(1)
 	}
-	defer pipelineClient.Close()
+	defer solutionClient.Close()
 
 	// instantiate the REST client for primitives.
 	restClient := rest.NewClient(config.PrimitiveEndPoint)
@@ -165,27 +165,27 @@ func main() {
 
 	// GET
 	registerRoute(mux, "/distil/datasets/:index", routes.DatasetsHandler(metadataStorageCtor))
-	registerRoute(mux, "/distil/pipelines/:dataset/:target/:pipeline-id", routes.PipelineHandler(pgPipelineStorageCtor))
+	registerRoute(mux, "/distil/solutions/:dataset/:target/:solution-id", routes.SolutionHandler(pgSolutionStorageCtor))
 	registerRoute(mux, "/distil/variables/:index/:dataset", routes.VariablesHandler(metadataStorageCtor))
-	registerRoute(mux, "/distil/results-variable-extrema/:index/:dataset/:variable/:results-uuid", routes.ResultVariableExtremaHandler(pgPipelineStorageCtor, pgDataStorageCtor))
-	registerRoute(mux, "/distil/results-extrema/:index/:dataset/:results-uuid", routes.ResultsExtremaHandler(pgPipelineStorageCtor, pgDataStorageCtor))
-	registerRoute(mux, "/distil/residuals-extrema/:index/:dataset/:results-uuid", routes.ResidualsExtremaHandler(pgPipelineStorageCtor, pgDataStorageCtor))
-	registerRoute(mux, "/distil/ranking/:index/:dataset/:target", routes.RankingHandler(pgDataStorageCtor, restClient, config.PipelineDataDir))
+	registerRoute(mux, "/distil/results-variable-extrema/:index/:dataset/:variable/:results-uuid", routes.ResultVariableExtremaHandler(pgSolutionStorageCtor, pgDataStorageCtor))
+	registerRoute(mux, "/distil/results-extrema/:index/:dataset/:results-uuid", routes.ResultsExtremaHandler(pgSolutionStorageCtor, pgDataStorageCtor))
+	registerRoute(mux, "/distil/residuals-extrema/:index/:dataset/:results-uuid", routes.ResidualsExtremaHandler(pgSolutionStorageCtor, pgDataStorageCtor))
+	registerRoute(mux, "/distil/ranking/:index/:dataset/:target", routes.RankingHandler(pgDataStorageCtor, restClient, config.SolutionDataDir))
 	registerRoute(mux, "/distil/abort", routes.AbortHandler())
-	registerRoute(mux, "/distil/export/:session/:pipeline-id", routes.ExportHandler(pgPipelineStorageCtor, metadataStorageCtor, pipelineClient, config.ExportPath))
+	registerRoute(mux, "/distil/export/:solution-id", routes.ExportHandler(pgSolutionStorageCtor, metadataStorageCtor, solutionClient, config.ExportPath))
 	registerRoute(mux, "/distil/ingest/:index/:dataset", routes.IngestHandler(metadataStorageCtor, ingestConfig))
 	registerRoute(mux, "/distil/version", routes.VersionHandler(version, timestamp))
-	registerRoute(mux, "/ws", ws.PipelineHandler(pipelineClient, metadataStorageCtor, pgDataStorageCtor, pgPipelineStorageCtor))
+	registerRoute(mux, "/ws", ws.SolutionHandler(solutionClient, metadataStorageCtor, pgDataStorageCtor, pgSolutionStorageCtor))
 
 	// POST
 	registerRoutePost(mux, "/distil/variables/:index/:dataset", routes.VariableTypeHandler(pgDataStorageCtor, metadataStorageCtor))
 	registerRoutePost(mux, "/distil/discovery/:index/:dataset/:target", routes.ProblemDiscoveryHandler(pgDataStorageCtor, metadataStorageCtor, config.UserProblemPath))
 	registerRoutePost(mux, "/distil/data/:esIndex/:dataset/:invert", routes.DataHandler(pgDataStorageCtor, metadataStorageCtor))
-	registerRoutePost(mux, "/distil/results/:index/:dataset/:pipeline-id", routes.ResultsHandler(pgPipelineStorageCtor, pgDataStorageCtor))
+	registerRoutePost(mux, "/distil/results/:index/:dataset/:solution-id", routes.ResultsHandler(pgSolutionStorageCtor, pgDataStorageCtor))
 	registerRoutePost(mux, "/distil/variable-summary/:index/:dataset/:variable", routes.VariableSummaryHandler(pgDataStorageCtor))
-	registerRoutePost(mux, "/distil/results-variable-summary/:index/:dataset/:variable/:min/:max/:results-uuid", routes.ResultVariableSummaryHandler(pgPipelineStorageCtor, pgDataStorageCtor))
-	registerRoutePost(mux, "/distil/residuals-summary/:index/:dataset/:min/:max/:results-uuid", routes.ResidualsSummaryHandler(pgPipelineStorageCtor, pgDataStorageCtor))
-	registerRoutePost(mux, "/distil/results-summary/:index/:dataset/:min/:max/:results-uuid", routes.ResultsSummaryHandler(pgPipelineStorageCtor, pgDataStorageCtor))
+	registerRoutePost(mux, "/distil/results-variable-summary/:index/:dataset/:variable/:min/:max/:results-uuid", routes.ResultVariableSummaryHandler(pgSolutionStorageCtor, pgDataStorageCtor))
+	registerRoutePost(mux, "/distil/residuals-summary/:index/:dataset/:min/:max/:results-uuid", routes.ResidualsSummaryHandler(pgSolutionStorageCtor, pgDataStorageCtor))
+	registerRoutePost(mux, "/distil/results-summary/:index/:dataset/:min/:max/:results-uuid", routes.ResultsSummaryHandler(pgSolutionStorageCtor, pgDataStorageCtor))
 
 	// static
 	registerRoute(mux, "/*", routes.FileHandler("./dist"))

@@ -1,11 +1,11 @@
 /**
- * Structures and functions to support conditional display of pipeline create parameters.
+ * Structures and functions to support conditional display of solution create parameters.
  * The displayName is intended to be a label that is visible
  */
 
 import _ from 'lodash';
 import { Dictionary } from './dict';
-import { PipelineState, PipelineInfo } from '../store/pipelines/index';
+import { SolutionState, SolutionInfo } from '../store/solutions/index';
 
 export interface NameInfo {
 	displayName: string,
@@ -18,21 +18,21 @@ export interface Task {
 	metrics: Dictionary<NameInfo>
 };
 
-// Utility function to return all pipeline results associated with a given request ID
-export function getPipelinesByRequestIds(state: PipelineState, requestIds: string[]): PipelineInfo[] {
+// Utility function to return all solution results associated with a given request ID
+export function getSolutionsByRequestIds(state: SolutionState, requestIds: string[]): SolutionInfo[] {
 	const ids = {};
 	requestIds.forEach(id => {
 		ids[id] = true;
 	});
-	return state.pipelineRequests.filter(pipeline => ids[pipeline.requestId]);
+	return state.solutionRequests.filter(solution => ids[solution.requestId]);
 }
 
-// Returns a specific pipeline result given a request and its pipeline id.
-export function getPipelineById(state: PipelineState, pipelineId: string): PipelineInfo {
-	if (!pipelineId) {
+// Returns a specific solution result given a request and its solution id.
+export function getSolutionById(state: SolutionState, solutionId: string): SolutionInfo {
+	if (!solutionId) {
 		return null;
 	}
-	return _.find(state.pipelineRequests, p => pipelineId === p.pipelineId);
+	return _.find(state.solutionRequests, p => solutionId === p.solutionId);
 }
 
 // Gets a task object based on a variable type.

@@ -10,35 +10,35 @@ import (
 	"github.com/unchartedsoftware/distil/api/model"
 )
 
-// PipelineInfo represents the pipeline information relevant to the client.
-type PipelineInfo struct {
+// SolutionInfo represents the solution information relevant to the client.
+type SolutionInfo struct {
 	RequestID   string                 `json:"requestId"`
 	Feature     string                 `json:"feature"`
-	PipelineID  string                 `json:"pipelineId"`
+	SolutionID  string                 `json:"solutionId"`
 	ResultUUID  string                 `json:"resultId"`
 	Progress    string                 `json:"progress"`
-	Scores      []*model.PipelineScore `json:"scores"`
+	Scores      []*model.SolutionScore `json:"scores"`
 	CreatedTime time.Time              `json:"timestamp"`
 	Dataset     string                 `json:"dataset"`
 	Features    []*model.Feature       `json:"features"`
 	Filters     *model.FilterParams    `json:"filters"`
 }
 
-// PipelineResponse represents a request response
-type PipelineResponse struct {
-	Pipelines []*PipelineInfo `json:"pipelines"`
+// SolutionResponse represents a request response
+type SolutionResponse struct {
+	Solutions []*SolutionInfo `json:"solutions"`
 }
 
-// PipelineHandler fetches existing pipelines.
-func PipelineHandler(pipelineCtor model.PipelineStorageCtor) func(http.ResponseWriter, *http.Request) {
+// SolutionHandler fetches existing solutions.
+func SolutionHandler(solutionCtor model.SolutionStorageCtor) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// extract route parameters
 		dataset := pat.Param(r, "dataset")
 		target := pat.Param(r, "target")
-		pipelineID := pat.Param(r, "pipeline-id")
+		solutionID := pat.Param(r, "solution-id")
 
-		if pipelineID == "null" {
-			pipelineID = ""
+		if solutionID == "null" {
+			solutionID = ""
 		}
 		if dataset == "null" {
 			dataset = ""
@@ -47,53 +47,53 @@ func PipelineHandler(pipelineCtor model.PipelineStorageCtor) func(http.ResponseW
 			target = ""
 		}
 
-		pipeline, err := pipelineCtor()
+		solution, err := solutionCtor()
 		if err != nil {
 			handleError(w, err)
 			return
 		}
 
-		requests, err := pipeline.FetchPipelineResultByDatasetTarget(dataset, target, pipelineID)
+		requests, err := solution.FetchSolutionResultByDatasetTarget(dataset, target, solutionID)
 		if err != nil {
 			handleError(w, err)
 			return
 		}
 
 		// flatten the results
-		pipelines := make([]*PipelineInfo, 0)
+		solutions := make([]*SolutionInfo, 0)
 		for _, req := range requests {
 
-			for _, pip := range req.Pipelines {
-				pipeline := &PipelineInfo{
+			for _, pip := range req.Solutions {
+				solution := &SolutionInfo{
 					// request
 					RequestID: req.RequestID,
 					Dataset:   req.Dataset,
 					Feature:   req.TargetFeature(),
 					Features:  req.Features,
 					Filters:   req.Filters,
-					// pipeline
-					PipelineID:  pip.PipelineID,
+					// solution
+					SolutionID:  pip.SolutionID,
 					Scores:      pip.Scores,
 					CreatedTime: pip.CreatedTime,
 					Progress:    pip.Progress,
 				}
 				for _, res := range pip.Results {
 					// result
-					pipeline.CreatedTime = res.CreatedTime
-					pipeline.ResultUUID = res.ResultUUID
-					pipeline.Progress = res.Progress
+					solution.CreatedTime = res.CreatedTime
+					solution.ResultUUID = res.ResultUUID
+					solution.Progress = res.Progress
 				}
 
-				pipelines = append(pipelines, pipeline)
+				solutions = append(solutions, solution)
 			}
 		}
 
 		// marshall data and sent the response back
-		err = handleJSON(w, &PipelineResponse{
-			Pipelines: pipelines,
+		err = handleJSON(w, &SolutionResponse{
+			Solutions: solutions,
 		})
 		if err != nil {
-			handleError(w, errors.Wrap(err, "unable marshal session pipelines into JSON"))
+			handleError(w, errors.Wrap(err, "unable marshal session solutions into JSON"))
 			return
 		}
 

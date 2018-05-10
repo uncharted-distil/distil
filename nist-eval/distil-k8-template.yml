@@ -126,9 +126,9 @@ spec:
         value: "45042"
       - name: TA3_PORT
         value: "5001"
-      - name: PIPELINE_COMPUTE_ENDPOINT
+      - name: SOLUTION_COMPUTE_ENDPOINT
         value: {% if nist_deploy %}{{ '{{ eval_id }}-ta2:45042' }}{% else %}"localhost:45042"{% endif %}
-      - name: PIPELINE_COMPUTE_TRACE
+      - name: SOLUTION_COMPUTE_TRACE
         value: "true"
       - name: PORT
         value: "80"
@@ -189,7 +189,7 @@ spec:
     ports:
       - name: nk-class-port
         containerPort: 5000
-  
+
   # NK pca-based classification
   - name: nk-ranking
     image: registry.datadrivendiscovery.org/j18_ta1eval/distil/punk_1:0.4
@@ -208,7 +208,7 @@ spec:
       # NIST eval id
       - name: EVAL_ID
         value: {{ eval_id }}
-      - name: PIPELINE_SERVER_RESULT_DIR
+      - name: SOLUTION_SERVER_RESULT_DIR
         value: /tmp/d3m/temp_storage
     ports:
       # gRPC port

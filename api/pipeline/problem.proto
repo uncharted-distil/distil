@@ -42,7 +42,7 @@ enum PerformanceMetric {
     METRIC_UNDEFINED = 0;
 
     // The following are the only evaluation methods required
-    // to be supported for the ScorePipeline call.
+    // to be supported for the ScoreSolution call.
     ACCURACY = 1;
     F1 = 2;
     F1_MICRO = 3;

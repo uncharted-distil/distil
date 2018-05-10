@@ -162,9 +162,9 @@ docker-compose pull
 #   ports:
 #     - "45042:45042"
 #   environment:
-#     - PIPELINE_SERVER_RESULT_DIR=$PWD/datasets
-#     - PIPELINE_SEND_DELAY=2000
-#     - PIPELINE_NUM_UPDATES=3
+#     - SOLUTION_SERVER_RESULT_DIR=$PWD/datasets
+#     - SOLUTION_SEND_DELAY=2000
+#     - SOLUTION_NUM_UPDATES=3
 #   volumes:
 #     - $PWD/datasets:$PWD/datasets
 ```
