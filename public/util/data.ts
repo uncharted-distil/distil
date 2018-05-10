@@ -1,7 +1,7 @@
 import _ from 'lodash';
 import { DataState, Datasets, VariableSummary, Data, SummaryType } from '../store/data/index';
 import { TargetRow, FieldInfo, Variable } from '../store/data/index';
-import { PipelineInfo, PIPELINE_COMPLETED } from '../store/pipelines/index';
+import { SolutionInfo, SOLUTION_COMPLETED } from '../store/solutions/index';
 import { DistilState } from '../store/store';
 import { Dictionary } from './dict';
 import { mutations as dataMutations } from '../store/data/module';
@@ -16,6 +16,7 @@ import Vue from 'vue';
 export const PREDICTED_POSTFIX = '_predicted';
 export const TARGET_POSTFIX = '_target';
 export const ERROR_POSTFIX = '_error';
+export const CORRECTNESS_POSTFIX = '_correctness';
 
 export const PREDICTED_FACET_KEY_POSTFIX = ' - predicted';
 export const ERROR_FACET_KEY_POSTFIX = ' - error';
@@ -92,6 +93,10 @@ export function isTarget(col: string): boolean {
 	return col.endsWith(TARGET_POSTFIX);
 }
 
+export function isCorrectness(col: string): boolean {
+	return col.endsWith(CORRECTNESS_POSTFIX);
+}
+
 export function isHiddenField(col: string): boolean {
 	return col.startsWith('_');
 }
@@ -110,6 +115,10 @@ export function getTargetIndex(columns: string[]): number {
 	return _.findIndex(columns, isTarget);
 }
 
+export function getCorrectnessIndex(columns: string[]): number {
+	return _.findIndex(columns, isCorrectness);
+}
+
 // Converts from variable name to a server-side result column name
 // Example: "weight" -> "weight_predicted"
 
@@ -125,6 +134,10 @@ export function getErrorCol(target: string): string {
 	return target + ERROR_POSTFIX;
 }
 
+export function getCorrectnessCol(target: string): string {
+	return target + CORRECTNESS_POSTFIX;
+}
+
 // Converts from a server side result column name to a variable name
 // Example: "weight_error" -> "error"
 
@@ -138,6 +151,10 @@ export function getVarFromError(decorated: string) {
 
 export function getVarFromTarget(decorated: string) {
 	return decorated.replace(TARGET_POSTFIX, '');
+}
+
+export function getVarFromCorrectness(decorated: string) {
+	return decorated.replace(CORRECTNESS_POSTFIX, '');
 }
 
 export function updateSummaries(summary: VariableSummary, summaries: VariableSummary[], matchField: string) {
@@ -166,7 +183,7 @@ export function createEmptyData(name: string): Data {
 	};
 }
 
-export function createPendingSummary(name: string, label: string, dataset: string, pipelineId?: string): VariableSummary {
+export function createPendingSummary(name: string, label: string, dataset: string, solutionId?: string): VariableSummary {
 	return {
 		name: name,
 		label: label,
@@ -179,7 +196,7 @@ export function createPendingSummary(name: string, label: string, dataset: strin
 			max: NaN
 		},
 		numRows: 0,
-		pipelineId: pipelineId
+		solutionId: solutionId
 	};
 }
 
@@ -202,24 +219,24 @@ export function createErrorSummary(name: string, label: string, dataset: string,
 export function getSummary(
 	context: DataContext,
 	endpoint: string,
-	pipeline: PipelineInfo,
-	nameFunc: (PipelineInfo) => string,
-	labelFunc: (PipelineInfo) => string,
+	solution: SolutionInfo,
+	nameFunc: (SolutionInfo) => string,
+	labelFunc: (SolutionInfo) => string,
 	updateFunction: (DataContext, VariableSummary) => void,
 	filters: FilterParams): Promise<any> {
 
-	const name = nameFunc(pipeline);
-	const label = labelFunc(pipeline);
-	const feature = pipeline.feature;
-	const dataset = pipeline.dataset;
-	const pipelineId = pipeline.pipelineId;
-	const resultId = pipeline.resultId;
+	const name = nameFunc(solution);
+	const label = labelFunc(solution);
+	const feature = solution.feature;
+	const dataset = solution.dataset;
+	const solutionId = solution.solutionId;
+	const resultId = solution.resultId;
 
 	// save a placeholder histogram
-	updateFunction(context, createPendingSummary(name, label, dataset, pipelineId));
+	updateFunction(context, createPendingSummary(name, label, dataset, solutionId));
 
-	// fetch the results for each pipeline
-	if (pipeline.progress !== PIPELINE_COMPLETED) {
+	// fetch the results for each solution
+	if (solution.progress !== SOLUTION_COMPLETED) {
 		// skip
 		return;
 	}
@@ -232,7 +249,7 @@ export function getSummary(
 			histogram.name = name;
 			histogram.label = label;
 			histogram.feature = feature;
-			histogram.pipelineId = pipelineId;
+			histogram.solutionId = solutionId;
 			histogram.resultId = resultId;
 			updateFunction(context, histogram);
 		})
@@ -245,18 +262,18 @@ export function getSummary(
 export function getSummaries(
 	context: DataContext,
 	endpoint: string,
-	pipelines: PipelineInfo[],
-	nameFunc: (PipelineInfo) => string,
-	labelFunc: (PipelineInfo) => string,
+	solutions: SolutionInfo[],
+	nameFunc: (SolutionInfo) => string,
+	labelFunc: (SolutionInfo) => string,
 	updateFunction: (DataContext, VariableSummary) => void,
 	filters: FilterParams): Promise<any> {
 
 	// return as singular promise
-	const promises = pipelines.map(pipeline => {
+	const promises = solutions.map(solution => {
 		return getSummary(
 			context,
 			endpoint,
-			pipeline,
+			solution,
 			nameFunc,
 			labelFunc,
 			updateFunction,
@@ -295,17 +312,18 @@ export function sortGroupsByImportance(groups: Group[], variables: Variable[]): 
 }
 
 
-export function updatePredictedHighlightSummary(context: DataContext, summary: VariableSummary) {
-	mutatePredictedSummary(context, summary, dataMutations.updatePredictedHighlightSummaries)
+
+export function updateCorrectnessHighlightSummary(context: DataContext, summary: VariableSummary) {
+	mutateCorrectnessSummary(context, summary, dataMutations.updateCorrectnessHighlightSummaries)
 }
 
-export function updatePredictedSummary(context: DataContext, summary: VariableSummary) {
-	mutatePredictedSummary(context, summary, dataMutations.updatePredictedSummaries)
+export function updateCorrectnessSummary(context: DataContext, summary: VariableSummary) {
+	mutateCorrectnessSummary(context, summary, dataMutations.updateCorrectnessSummaries)
 }
 
 // Collapse categorical result summary data, which is returned as a confusion matrix, into a binary
-// correct/incorrect reprsenation prior to applying the mutation.
-function mutatePredictedSummary(context: DataContext, summary: VariableSummary, f: (DataContext, VariableSummary) => void) {
+// correct/incorrect reprsentation prior to applying the mutation.
+function mutateCorrectnessSummary(context: DataContext, summary: VariableSummary, f: (DataContext, VariableSummary) => void) {
 	// Only need to collapse categorical result summaries
 	if (summary.type !== SummaryType.Categorical) {
 		f(context, summary);

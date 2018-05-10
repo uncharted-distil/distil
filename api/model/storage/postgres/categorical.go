@@ -65,11 +65,17 @@ func (f *CategoricalField) fetchHistogramByResult(dataset string, variable *mode
 
 	// create the filter for the query.
 	where, params := f.Storage.buildFilteredQueryWhere(dataset, filters.genericFilters)
-	params = append(params, resultURI)
 
-	// apply the result filter
+	// apply the predicted result filter
 	if filters.predictedFilter != nil {
-		resultWhere, err := f.Storage.buildResultWhere(dataset, resultURI, filters.predictedFilter)
+		resultWhere, predictedParams, err := f.Storage.buildPredictedResultWhere(dataset, resultURI, filters.predictedFilter)
+		if err != nil {
+			return nil, err
+		}
+		where = appendAndClause(where, resultWhere)
+		params = append(params, predictedParams...)
+	} else if filters.correctnessFilter != nil {
+		resultWhere, err := f.Storage.buildCorrectnessResultWhere(dataset, resultURI, filters.correctnessFilter)
 		if err != nil {
 			return nil, err
 		}
@@ -79,6 +85,8 @@ func (f *CategoricalField) fetchHistogramByResult(dataset string, variable *mode
 	if where != "" {
 		where = "AND " + where
 	}
+
+	params = append(params, resultURI)
 
 	// Get count by category.
 	query := fmt.Sprintf(
@@ -218,12 +226,33 @@ func (f *CategoricalField) parseBivariateHistogram(rows *pgx.Rows, variable *mod
 	}, nil
 }
 
-// FetchResultSummaryData pulls data from the result table and builds
+// FetchResultSummaryData pulls predicted data from the result table and builds
 // the categorical histogram for the field.
 func (f *CategoricalField) FetchResultSummaryData(resultURI string, dataset string, datasetResult string, variable *model.Variable, filterParams *model.FilterParams, extrema *model.Extrema) (*model.Histogram, error) {
 	targetName := variable.Name
 
-	where, params := f.Storage.buildFilteredQueryWhere(dataset, filterParams.Filters)
+	// pull filters generated against the result facet out for special handling
+	filters := f.Storage.splitFilters(filterParams)
+
+	// create the filter for the query.
+	where, params := f.Storage.buildFilteredQueryWhere(dataset, filters.genericFilters)
+
+	// apply the predicted result filter
+	if filters.predictedFilter != nil {
+		resultWhere, predictedParams, err := f.Storage.buildPredictedResultWhere(dataset, resultURI, filters.predictedFilter)
+		if err != nil {
+			return nil, err
+		}
+		where = appendAndClause(where, resultWhere)
+		params = append(params, predictedParams...)
+	} else if filters.correctnessFilter != nil {
+		resultWhere, err := f.Storage.buildCorrectnessResultWhere(dataset, resultURI, filters.correctnessFilter)
+		if err != nil {
+			return nil, err
+		}
+		where = appendAndClause(where, resultWhere)
+	}
+
 	if len(where) > 0 {
 		where = fmt.Sprintf(" %s AND result.result_id = $%d and result.target = $%d", where, len(params)+1, len(params)+2)
 	} else {
@@ -232,10 +261,10 @@ func (f *CategoricalField) FetchResultSummaryData(resultURI string, dataset stri
 	params = append(params, resultURI, targetName)
 
 	query := fmt.Sprintf(
-		`SELECT base."%s", result.value, COUNT(*) AS count
-		 FROM %s AS result INNER JOIN %s AS base ON result.index = base."d3mIndex"
+		`SELECT data."%s", result.value, COUNT(*) AS count
+		 FROM %s AS result INNER JOIN %s AS data ON result.index = data."d3mIndex"
 		 WHERE %s
-		 GROUP BY result.value, base."%s"
+		 GROUP BY result.value, data."%s"
 		 ORDER BY count desc;`,
 		targetName, datasetResult, dataset, where, targetName)
 

@@ -15,9 +15,9 @@ type Results struct {
 	Results *model.FilteredData `json:"results"`
 }
 
-// ResultsHandler fetches predicted pipeline values and returns them to the client
+// ResultsHandler fetches predicted solution values and returns them to the client
 // in a JSON structure
-func ResultsHandler(pipelineCtor model.PipelineStorageCtor, dataCtor model.DataStorageCtor) func(http.ResponseWriter, *http.Request) {
+func ResultsHandler(solutionCtor model.SolutionStorageCtor, dataCtor model.DataStorageCtor) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// parse POST params
 		params, err := getPostParameters(r)
@@ -35,13 +35,13 @@ func ResultsHandler(pipelineCtor model.PipelineStorageCtor, dataCtor model.DataS
 
 		dataset := pat.Param(r, "dataset")
 
-		pipelineID, err := url.PathUnescape(pat.Param(r, "pipeline-id"))
+		solutionID, err := url.PathUnescape(pat.Param(r, "solution-id"))
 		if err != nil {
-			handleError(w, errors.Wrap(err, "unable to unescape pipeline id"))
+			handleError(w, errors.Wrap(err, "unable to unescape solution id"))
 			return
 		}
 
-		pipeline, err := pipelineCtor()
+		solution, err := solutionCtor()
 		if err != nil {
 			handleError(w, err)
 			return
@@ -54,13 +54,13 @@ func ResultsHandler(pipelineCtor model.PipelineStorageCtor, dataCtor model.DataS
 		}
 
 		// get the filters
-		req, err := pipeline.FetchRequestByPipelineID(pipelineID)
+		req, err := solution.FetchRequestBySolutionID(solutionID)
 		if err != nil {
 			handleError(w, err)
 			return
 		}
 		if req == nil {
-			handleError(w, errors.Errorf("pipeline id `%s` cannot be mapped to result URI", pipelineID))
+			handleError(w, errors.Errorf("solution id `%s` cannot be mapped to result URI", solutionID))
 			return
 		}
 
@@ -68,7 +68,7 @@ func ResultsHandler(pipelineCtor model.PipelineStorageCtor, dataCtor model.DataS
 		filterParams.Merge(req.Filters)
 
 		// get the result URI
-		res, err := pipeline.FetchPipelineResult(pipelineID)
+		res, err := solution.FetchSolutionResult(solutionID)
 		if err != nil {
 			handleError(w, err)
 			return
@@ -89,7 +89,7 @@ func ResultsHandler(pipelineCtor model.PipelineStorageCtor, dataCtor model.DataS
 		// marshall data and sent the response back
 		err = handleJSON(w, results)
 		if err != nil {
-			handleError(w, errors.Wrap(err, "unable marshal pipeline result into JSON"))
+			handleError(w, errors.Wrap(err, "unable marshal solution result into JSON"))
 			return
 		}
 

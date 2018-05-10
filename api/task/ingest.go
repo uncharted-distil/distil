@@ -382,9 +382,9 @@ func Ingest(storage model.MetadataStorage, index string, dataset string, config 
 		return errors.Wrap(err, "unable to create the result table")
 	}
 
-	err = pg.CreatePipelineMetadataTables()
+	err = pg.CreateSolutionMetadataTables()
 	if err != nil {
-		return errors.Wrap(err, "unable to create pipeline metadata tables")
+		return errors.Wrap(err, "unable to create solution metadata tables")
 	}
 
 	// Load the data.

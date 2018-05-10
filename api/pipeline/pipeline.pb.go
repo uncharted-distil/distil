@@ -7,22 +7,87 @@ import proto "github.com/golang/protobuf/proto"
 import fmt "fmt"
 import math "math"
 import _ "github.com/golang/protobuf/protoc-gen-go/descriptor"
-import google_protobuf1 "github.com/golang/protobuf/ptypes/timestamp"
+import timestamp "github.com/golang/protobuf/ptypes/timestamp"
 
 // Reference imports to suppress errors if they are not otherwise used.
 var _ = proto.Marshal
 var _ = fmt.Errorf
 var _ = math.Inf
 
-type ContainerArgument struct {
-	// Data reference.
-	Data string `protobuf:"bytes,1,opt,name=data" json:"data,omitempty"`
+// This is a compile-time assertion to ensure that this generated file
+// is compatible with the proto package it is being compiled against.
+// A compilation error at this line likely means your copy of the
+// proto package needs to be updated.
+const _ = proto.ProtoPackageIsVersion2 // please upgrade the proto package
+
+type PipelineContext int32
+
+const (
+	// Default value. Not to be used.
+	PipelineContext_PIPELINE_CONTEXT_UNKNOWN PipelineContext = 0
+	// Pipeline was created during building/training of the system itself, e.g., during metalearning.
+	PipelineContext_PRETRAINING PipelineContext = 1
+	// Pipeline was created during development or testing of the system itself, e.g., during debugging.
+	PipelineContext_TESTING PipelineContext = 2
+	// Pipeline was created during evaluation of the system itself, e.g., NIST blind evaluation.
+	PipelineContext_EVALUATION PipelineContext = 3
+	// Pipeline was created during regular (production) operation of the system.
+	PipelineContext_PRODUCTION PipelineContext = 4
+)
+
+var PipelineContext_name = map[int32]string{
+	0: "PIPELINE_CONTEXT_UNKNOWN",
+	1: "PRETRAINING",
+	2: "TESTING",
+	3: "EVALUATION",
+	4: "PRODUCTION",
+}
+var PipelineContext_value = map[string]int32{
+	"PIPELINE_CONTEXT_UNKNOWN": 0,
+	"PRETRAINING":              1,
+	"TESTING":                  2,
+	"EVALUATION":               3,
+	"PRODUCTION":               4,
 }
 
-func (m *ContainerArgument) Reset()                    { *m = ContainerArgument{} }
-func (m *ContainerArgument) String() string            { return proto.CompactTextString(m) }
-func (*ContainerArgument) ProtoMessage()               {}
-func (*ContainerArgument) Descriptor() ([]byte, []int) { return fileDescriptor1, []int{0} }
+func (x PipelineContext) String() string {
+	return proto.EnumName(PipelineContext_name, int32(x))
+}
+func (PipelineContext) EnumDescriptor() ([]byte, []int) {
+	return fileDescriptor_pipeline_460f5e8f3459b875, []int{0}
+}
+
+type ContainerArgument struct {
+	// Data reference.
+	Data                 string   `protobuf:"bytes,1,opt,name=data" json:"data,omitempty"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
+}
+
+func (m *ContainerArgument) Reset()         { *m = ContainerArgument{} }
+func (m *ContainerArgument) String() string { return proto.CompactTextString(m) }
+func (*ContainerArgument) ProtoMessage()    {}
+func (*ContainerArgument) Descriptor() ([]byte, []int) {
+	return fileDescriptor_pipeline_460f5e8f3459b875, []int{0}
+}
+func (m *ContainerArgument) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_ContainerArgument.Unmarshal(m, b)
+}
+func (m *ContainerArgument) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_ContainerArgument.Marshal(b, m, deterministic)
+}
+func (dst *ContainerArgument) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ContainerArgument.Merge(dst, src)
+}
+func (m *ContainerArgument) XXX_Size() int {
+	return xxx_messageInfo_ContainerArgument.Size(m)
+}
+func (m *ContainerArgument) XXX_DiscardUnknown() {
+	xxx_messageInfo_ContainerArgument.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_ContainerArgument proto.InternalMessageInfo
 
 func (m *ContainerArgument) GetData() string {
 	if m != nil {
@@ -31,32 +96,37 @@ func (m *ContainerArgument) GetData() string {
 	return ""
 }
 
-type PrimitiveArgument struct {
-	// 0-based index from steps identifying a primitive to pass in.
-	Primitive string `protobuf:"bytes,1,opt,name=primitive" json:"primitive,omitempty"`
-}
-
-func (m *PrimitiveArgument) Reset()                    { *m = PrimitiveArgument{} }
-func (m *PrimitiveArgument) String() string            { return proto.CompactTextString(m) }
-func (*PrimitiveArgument) ProtoMessage()               {}
-func (*PrimitiveArgument) Descriptor() ([]byte, []int) { return fileDescriptor1, []int{1} }
-
-func (m *PrimitiveArgument) GetPrimitive() string {
-	if m != nil {
-		return m.Primitive
-	}
-	return ""
-}
-
 type DataArgument struct {
 	// Data reference.
-	Data string `protobuf:"bytes,1,opt,name=data" json:"data,omitempty"`
+	Data                 string   `protobuf:"bytes,1,opt,name=data" json:"data,omitempty"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
 }
 
-func (m *DataArgument) Reset()                    { *m = DataArgument{} }
-func (m *DataArgument) String() string            { return proto.CompactTextString(m) }
-func (*DataArgument) ProtoMessage()               {}
-func (*DataArgument) Descriptor() ([]byte, []int) { return fileDescriptor1, []int{2} }
+func (m *DataArgument) Reset()         { *m = DataArgument{} }
+func (m *DataArgument) String() string { return proto.CompactTextString(m) }
+func (*DataArgument) ProtoMessage()    {}
+func (*DataArgument) Descriptor() ([]byte, []int) {
+	return fileDescriptor_pipeline_460f5e8f3459b875, []int{1}
+}
+func (m *DataArgument) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_DataArgument.Unmarshal(m, b)
+}
+func (m *DataArgument) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_DataArgument.Marshal(b, m, deterministic)
+}
+func (dst *DataArgument) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_DataArgument.Merge(dst, src)
+}
+func (m *DataArgument) XXX_Size() int {
+	return xxx_messageInfo_DataArgument.Size(m)
+}
+func (m *DataArgument) XXX_DiscardUnknown() {
+	xxx_messageInfo_DataArgument.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_DataArgument proto.InternalMessageInfo
 
 func (m *DataArgument) GetData() string {
 	if m != nil {
@@ -65,18 +135,193 @@ func (m *DataArgument) GetData() string {
 	return ""
 }
 
+type DataArguments struct {
+	Data                 []string `protobuf:"bytes,1,rep,name=data" json:"data,omitempty"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
+}
+
+func (m *DataArguments) Reset()         { *m = DataArguments{} }
+func (m *DataArguments) String() string { return proto.CompactTextString(m) }
+func (*DataArguments) ProtoMessage()    {}
+func (*DataArguments) Descriptor() ([]byte, []int) {
+	return fileDescriptor_pipeline_460f5e8f3459b875, []int{2}
+}
+func (m *DataArguments) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_DataArguments.Unmarshal(m, b)
+}
+func (m *DataArguments) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_DataArguments.Marshal(b, m, deterministic)
+}
+func (dst *DataArguments) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_DataArguments.Merge(dst, src)
+}
+func (m *DataArguments) XXX_Size() int {
+	return xxx_messageInfo_DataArguments.Size(m)
+}
+func (m *DataArguments) XXX_DiscardUnknown() {
+	xxx_messageInfo_DataArguments.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_DataArguments proto.InternalMessageInfo
+
+func (m *DataArguments) GetData() []string {
+	if m != nil {
+		return m.Data
+	}
+	return nil
+}
+
+type PrimitiveArgument struct {
+	// 0-based index identifying a step of which primitive is used as a value.
+	Data                 int32    `protobuf:"varint,1,opt,name=data" json:"data,omitempty"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
+}
+
+func (m *PrimitiveArgument) Reset()         { *m = PrimitiveArgument{} }
+func (m *PrimitiveArgument) String() string { return proto.CompactTextString(m) }
+func (*PrimitiveArgument) ProtoMessage()    {}
+func (*PrimitiveArgument) Descriptor() ([]byte, []int) {
+	return fileDescriptor_pipeline_460f5e8f3459b875, []int{3}
+}
+func (m *PrimitiveArgument) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_PrimitiveArgument.Unmarshal(m, b)
+}
+func (m *PrimitiveArgument) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_PrimitiveArgument.Marshal(b, m, deterministic)
+}
+func (dst *PrimitiveArgument) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_PrimitiveArgument.Merge(dst, src)
+}
+func (m *PrimitiveArgument) XXX_Size() int {
+	return xxx_messageInfo_PrimitiveArgument.Size(m)
+}
+func (m *PrimitiveArgument) XXX_DiscardUnknown() {
+	xxx_messageInfo_PrimitiveArgument.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_PrimitiveArgument proto.InternalMessageInfo
+
+func (m *PrimitiveArgument) GetData() int32 {
+	if m != nil {
+		return m.Data
+	}
+	return 0
+}
+
+type PrimitiveArguments struct {
+	// 0-based index identifying a step of which primitive is used as a value.
+	Data                 []int32  `protobuf:"varint,1,rep,packed,name=data" json:"data,omitempty"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
+}
+
+func (m *PrimitiveArguments) Reset()         { *m = PrimitiveArguments{} }
+func (m *PrimitiveArguments) String() string { return proto.CompactTextString(m) }
+func (*PrimitiveArguments) ProtoMessage()    {}
+func (*PrimitiveArguments) Descriptor() ([]byte, []int) {
+	return fileDescriptor_pipeline_460f5e8f3459b875, []int{4}
+}
+func (m *PrimitiveArguments) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_PrimitiveArguments.Unmarshal(m, b)
+}
+func (m *PrimitiveArguments) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_PrimitiveArguments.Marshal(b, m, deterministic)
+}
+func (dst *PrimitiveArguments) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_PrimitiveArguments.Merge(dst, src)
+}
+func (m *PrimitiveArguments) XXX_Size() int {
+	return xxx_messageInfo_PrimitiveArguments.Size(m)
+}
+func (m *PrimitiveArguments) XXX_DiscardUnknown() {
+	xxx_messageInfo_PrimitiveArguments.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_PrimitiveArguments proto.InternalMessageInfo
+
+func (m *PrimitiveArguments) GetData() []int32 {
+	if m != nil {
+		return m.Data
+	}
+	return nil
+}
+
+type ValueArgument struct {
+	Data                 *Value   `protobuf:"bytes,1,opt,name=data" json:"data,omitempty"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
+}
+
+func (m *ValueArgument) Reset()         { *m = ValueArgument{} }
+func (m *ValueArgument) String() string { return proto.CompactTextString(m) }
+func (*ValueArgument) ProtoMessage()    {}
+func (*ValueArgument) Descriptor() ([]byte, []int) {
+	return fileDescriptor_pipeline_460f5e8f3459b875, []int{5}
+}
+func (m *ValueArgument) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_ValueArgument.Unmarshal(m, b)
+}
+func (m *ValueArgument) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_ValueArgument.Marshal(b, m, deterministic)
+}
+func (dst *ValueArgument) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ValueArgument.Merge(dst, src)
+}
+func (m *ValueArgument) XXX_Size() int {
+	return xxx_messageInfo_ValueArgument.Size(m)
+}
+func (m *ValueArgument) XXX_DiscardUnknown() {
+	xxx_messageInfo_ValueArgument.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_ValueArgument proto.InternalMessageInfo
+
+func (m *ValueArgument) GetData() *Value {
+	if m != nil {
+		return m.Data
+	}
+	return nil
+}
+
 type PrimitiveStepArgument struct {
 	// Types that are valid to be assigned to Argument:
 	//	*PrimitiveStepArgument_Container
-	//	*PrimitiveStepArgument_Primitive
 	//	*PrimitiveStepArgument_Data
-	Argument isPrimitiveStepArgument_Argument `protobuf_oneof:"argument"`
+	Argument             isPrimitiveStepArgument_Argument `protobuf_oneof:"argument"`
+	XXX_NoUnkeyedLiteral struct{}                         `json:"-"`
+	XXX_unrecognized     []byte                           `json:"-"`
+	XXX_sizecache        int32                            `json:"-"`
 }
 
-func (m *PrimitiveStepArgument) Reset()                    { *m = PrimitiveStepArgument{} }
-func (m *PrimitiveStepArgument) String() string            { return proto.CompactTextString(m) }
-func (*PrimitiveStepArgument) ProtoMessage()               {}
-func (*PrimitiveStepArgument) Descriptor() ([]byte, []int) { return fileDescriptor1, []int{3} }
+func (m *PrimitiveStepArgument) Reset()         { *m = PrimitiveStepArgument{} }
+func (m *PrimitiveStepArgument) String() string { return proto.CompactTextString(m) }
+func (*PrimitiveStepArgument) ProtoMessage()    {}
+func (*PrimitiveStepArgument) Descriptor() ([]byte, []int) {
+	return fileDescriptor_pipeline_460f5e8f3459b875, []int{6}
+}
+func (m *PrimitiveStepArgument) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_PrimitiveStepArgument.Unmarshal(m, b)
+}
+func (m *PrimitiveStepArgument) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_PrimitiveStepArgument.Marshal(b, m, deterministic)
+}
+func (dst *PrimitiveStepArgument) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_PrimitiveStepArgument.Merge(dst, src)
+}
+func (m *PrimitiveStepArgument) XXX_Size() int {
+	return xxx_messageInfo_PrimitiveStepArgument.Size(m)
+}
+func (m *PrimitiveStepArgument) XXX_DiscardUnknown() {
+	xxx_messageInfo_PrimitiveStepArgument.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_PrimitiveStepArgument proto.InternalMessageInfo
 
 type isPrimitiveStepArgument_Argument interface {
 	isPrimitiveStepArgument_Argument()
@@ -85,15 +330,11 @@ type isPrimitiveStepArgument_Argument interface {
 type PrimitiveStepArgument_Container struct {
 	Container *ContainerArgument `protobuf:"bytes,1,opt,name=container,oneof"`
 }
-type PrimitiveStepArgument_Primitive struct {
-	Primitive *PrimitiveArgument `protobuf:"bytes,2,opt,name=primitive,oneof"`
-}
 type PrimitiveStepArgument_Data struct {
-	Data *DataArgument `protobuf:"bytes,3,opt,name=data,oneof"`
+	Data *DataArgument `protobuf:"bytes,2,opt,name=data,oneof"`
 }
 
 func (*PrimitiveStepArgument_Container) isPrimitiveStepArgument_Argument() {}
-func (*PrimitiveStepArgument_Primitive) isPrimitiveStepArgument_Argument() {}
 func (*PrimitiveStepArgument_Data) isPrimitiveStepArgument_Argument()      {}
 
 func (m *PrimitiveStepArgument) GetArgument() isPrimitiveStepArgument_Argument {
@@ -110,13 +351,6 @@ func (m *PrimitiveStepArgument) GetContainer() *ContainerArgument {
 	return nil
 }
 
-func (m *PrimitiveStepArgument) GetPrimitive() *PrimitiveArgument {
-	if x, ok := m.GetArgument().(*PrimitiveStepArgument_Primitive); ok {
-		return x.Primitive
-	}
-	return nil
-}
-
 func (m *PrimitiveStepArgument) GetData() *DataArgument {
 	if x, ok := m.GetArgument().(*PrimitiveStepArgument_Data); ok {
 		return x.Data
@@ -128,7 +362,6 @@ func (m *PrimitiveStepArgument) GetData() *DataArgument {
 func (*PrimitiveStepArgument) XXX_OneofFuncs() (func(msg proto.Message, b *proto.Buffer) error, func(msg proto.Message, tag, wire int, b *proto.Buffer) (bool, error), func(msg proto.Message) (n int), []interface{}) {
 	return _PrimitiveStepArgument_OneofMarshaler, _PrimitiveStepArgument_OneofUnmarshaler, _PrimitiveStepArgument_OneofSizer, []interface{}{
 		(*PrimitiveStepArgument_Container)(nil),
-		(*PrimitiveStepArgument_Primitive)(nil),
 		(*PrimitiveStepArgument_Data)(nil),
 	}
 }
@@ -142,13 +375,8 @@ func _PrimitiveStepArgument_OneofMarshaler(msg proto.Message, b *proto.Buffer) e
 		if err := b.EncodeMessage(x.Container); err != nil {
 			return err
 		}
-	case *PrimitiveStepArgument_Primitive:
-		b.EncodeVarint(2<<3 | proto.WireBytes)
-		if err := b.EncodeMessage(x.Primitive); err != nil {
-			return err
-		}
 	case *PrimitiveStepArgument_Data:
-		b.EncodeVarint(3<<3 | proto.WireBytes)
+		b.EncodeVarint(2<<3 | proto.WireBytes)
 		if err := b.EncodeMessage(x.Data); err != nil {
 			return err
 		}
@@ -170,15 +398,7 @@ func _PrimitiveStepArgument_OneofUnmarshaler(msg proto.Message, tag, wire int, b
 		err := b.DecodeMessage(msg)
 		m.Argument = &PrimitiveStepArgument_Container{msg}
 		return true, err
-	case 2: // argument.primitive
-		if wire != proto.WireBytes {
-			return true, proto.ErrInternalBadWireType
-		}
-		msg := new(PrimitiveArgument)
-		err := b.DecodeMessage(msg)
-		m.Argument = &PrimitiveStepArgument_Primitive{msg}
-		return true, err
-	case 3: // argument.data
+	case 2: // argument.data
 		if wire != proto.WireBytes {
 			return true, proto.ErrInternalBadWireType
 		}
@@ -197,17 +417,279 @@ func _PrimitiveStepArgument_OneofSizer(msg proto.Message) (n int) {
 	switch x := m.Argument.(type) {
 	case *PrimitiveStepArgument_Container:
 		s := proto.Size(x.Container)
-		n += proto.SizeVarint(1<<3 | proto.WireBytes)
-		n += proto.SizeVarint(uint64(s))
-		n += s
-	case *PrimitiveStepArgument_Primitive:
-		s := proto.Size(x.Primitive)
-		n += proto.SizeVarint(2<<3 | proto.WireBytes)
+		n += 1 // tag and wire
 		n += proto.SizeVarint(uint64(s))
 		n += s
 	case *PrimitiveStepArgument_Data:
 		s := proto.Size(x.Data)
-		n += proto.SizeVarint(3<<3 | proto.WireBytes)
+		n += 1 // tag and wire
+		n += proto.SizeVarint(uint64(s))
+		n += s
+	case nil:
+	default:
+		panic(fmt.Sprintf("proto: unexpected type %T in oneof", x))
+	}
+	return n
+}
+
+type PrimitiveStepHyperparameter struct {
+	// Types that are valid to be assigned to Argument:
+	//	*PrimitiveStepHyperparameter_Container
+	//	*PrimitiveStepHyperparameter_Data
+	//	*PrimitiveStepHyperparameter_Primitive
+	//	*PrimitiveStepHyperparameter_Value
+	//	*PrimitiveStepHyperparameter_PrimitivesSet
+	//	*PrimitiveStepHyperparameter_DataSet
+	Argument             isPrimitiveStepHyperparameter_Argument `protobuf_oneof:"argument"`
+	XXX_NoUnkeyedLiteral struct{}                               `json:"-"`
+	XXX_unrecognized     []byte                                 `json:"-"`
+	XXX_sizecache        int32                                  `json:"-"`
+}
+
+func (m *PrimitiveStepHyperparameter) Reset()         { *m = PrimitiveStepHyperparameter{} }
+func (m *PrimitiveStepHyperparameter) String() string { return proto.CompactTextString(m) }
+func (*PrimitiveStepHyperparameter) ProtoMessage()    {}
+func (*PrimitiveStepHyperparameter) Descriptor() ([]byte, []int) {
+	return fileDescriptor_pipeline_460f5e8f3459b875, []int{7}
+}
+func (m *PrimitiveStepHyperparameter) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_PrimitiveStepHyperparameter.Unmarshal(m, b)
+}
+func (m *PrimitiveStepHyperparameter) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_PrimitiveStepHyperparameter.Marshal(b, m, deterministic)
+}
+func (dst *PrimitiveStepHyperparameter) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_PrimitiveStepHyperparameter.Merge(dst, src)
+}
+func (m *PrimitiveStepHyperparameter) XXX_Size() int {
+	return xxx_messageInfo_PrimitiveStepHyperparameter.Size(m)
+}
+func (m *PrimitiveStepHyperparameter) XXX_DiscardUnknown() {
+	xxx_messageInfo_PrimitiveStepHyperparameter.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_PrimitiveStepHyperparameter proto.InternalMessageInfo
+
+type isPrimitiveStepHyperparameter_Argument interface {
+	isPrimitiveStepHyperparameter_Argument()
+}
+
+type PrimitiveStepHyperparameter_Container struct {
+	Container *ContainerArgument `protobuf:"bytes,1,opt,name=container,oneof"`
+}
+type PrimitiveStepHyperparameter_Data struct {
+	Data *DataArgument `protobuf:"bytes,2,opt,name=data,oneof"`
+}
+type PrimitiveStepHyperparameter_Primitive struct {
+	Primitive *PrimitiveArgument `protobuf:"bytes,3,opt,name=primitive,oneof"`
+}
+type PrimitiveStepHyperparameter_Value struct {
+	Value *ValueArgument `protobuf:"bytes,4,opt,name=value,oneof"`
+}
+type PrimitiveStepHyperparameter_PrimitivesSet struct {
+	PrimitivesSet *PrimitiveArguments `protobuf:"bytes,5,opt,name=primitives_set,json=primitivesSet,oneof"`
+}
+type PrimitiveStepHyperparameter_DataSet struct {
+	DataSet *DataArguments `protobuf:"bytes,6,opt,name=data_set,json=dataSet,oneof"`
+}
+
+func (*PrimitiveStepHyperparameter_Container) isPrimitiveStepHyperparameter_Argument()     {}
+func (*PrimitiveStepHyperparameter_Data) isPrimitiveStepHyperparameter_Argument()          {}
+func (*PrimitiveStepHyperparameter_Primitive) isPrimitiveStepHyperparameter_Argument()     {}
+func (*PrimitiveStepHyperparameter_Value) isPrimitiveStepHyperparameter_Argument()         {}
+func (*PrimitiveStepHyperparameter_PrimitivesSet) isPrimitiveStepHyperparameter_Argument() {}
+func (*PrimitiveStepHyperparameter_DataSet) isPrimitiveStepHyperparameter_Argument()       {}
+
+func (m *PrimitiveStepHyperparameter) GetArgument() isPrimitiveStepHyperparameter_Argument {
+	if m != nil {
+		return m.Argument
+	}
+	return nil
+}
+
+func (m *PrimitiveStepHyperparameter) GetContainer() *ContainerArgument {
+	if x, ok := m.GetArgument().(*PrimitiveStepHyperparameter_Container); ok {
+		return x.Container
+	}
+	return nil
+}
+
+func (m *PrimitiveStepHyperparameter) GetData() *DataArgument {
+	if x, ok := m.GetArgument().(*PrimitiveStepHyperparameter_Data); ok {
+		return x.Data
+	}
+	return nil
+}
+
+func (m *PrimitiveStepHyperparameter) GetPrimitive() *PrimitiveArgument {
+	if x, ok := m.GetArgument().(*PrimitiveStepHyperparameter_Primitive); ok {
+		return x.Primitive
+	}
+	return nil
+}
+
+func (m *PrimitiveStepHyperparameter) GetValue() *ValueArgument {
+	if x, ok := m.GetArgument().(*PrimitiveStepHyperparameter_Value); ok {
+		return x.Value
+	}
+	return nil
+}
+
+func (m *PrimitiveStepHyperparameter) GetPrimitivesSet() *PrimitiveArguments {
+	if x, ok := m.GetArgument().(*PrimitiveStepHyperparameter_PrimitivesSet); ok {
+		return x.PrimitivesSet
+	}
+	return nil
+}
+
+func (m *PrimitiveStepHyperparameter) GetDataSet() *DataArguments {
+	if x, ok := m.GetArgument().(*PrimitiveStepHyperparameter_DataSet); ok {
+		return x.DataSet
+	}
+	return nil
+}
+
+// XXX_OneofFuncs is for the internal use of the proto package.
+func (*PrimitiveStepHyperparameter) XXX_OneofFuncs() (func(msg proto.Message, b *proto.Buffer) error, func(msg proto.Message, tag, wire int, b *proto.Buffer) (bool, error), func(msg proto.Message) (n int), []interface{}) {
+	return _PrimitiveStepHyperparameter_OneofMarshaler, _PrimitiveStepHyperparameter_OneofUnmarshaler, _PrimitiveStepHyperparameter_OneofSizer, []interface{}{
+		(*PrimitiveStepHyperparameter_Container)(nil),
+		(*PrimitiveStepHyperparameter_Data)(nil),
+		(*PrimitiveStepHyperparameter_Primitive)(nil),
+		(*PrimitiveStepHyperparameter_Value)(nil),
+		(*PrimitiveStepHyperparameter_PrimitivesSet)(nil),
+		(*PrimitiveStepHyperparameter_DataSet)(nil),
+	}
+}
+
+func _PrimitiveStepHyperparameter_OneofMarshaler(msg proto.Message, b *proto.Buffer) error {
+	m := msg.(*PrimitiveStepHyperparameter)
+	// argument
+	switch x := m.Argument.(type) {
+	case *PrimitiveStepHyperparameter_Container:
+		b.EncodeVarint(1<<3 | proto.WireBytes)
+		if err := b.EncodeMessage(x.Container); err != nil {
+			return err
+		}
+	case *PrimitiveStepHyperparameter_Data:
+		b.EncodeVarint(2<<3 | proto.WireBytes)
+		if err := b.EncodeMessage(x.Data); err != nil {
+			return err
+		}
+	case *PrimitiveStepHyperparameter_Primitive:
+		b.EncodeVarint(3<<3 | proto.WireBytes)
+		if err := b.EncodeMessage(x.Primitive); err != nil {
+			return err
+		}
+	case *PrimitiveStepHyperparameter_Value:
+		b.EncodeVarint(4<<3 | proto.WireBytes)
+		if err := b.EncodeMessage(x.Value); err != nil {
+			return err
+		}
+	case *PrimitiveStepHyperparameter_PrimitivesSet:
+		b.EncodeVarint(5<<3 | proto.WireBytes)
+		if err := b.EncodeMessage(x.PrimitivesSet); err != nil {
+			return err
+		}
+	case *PrimitiveStepHyperparameter_DataSet:
+		b.EncodeVarint(6<<3 | proto.WireBytes)
+		if err := b.EncodeMessage(x.DataSet); err != nil {
+			return err
+		}
+	case nil:
+	default:
+		return fmt.Errorf("PrimitiveStepHyperparameter.Argument has unexpected type %T", x)
+	}
+	return nil
+}
+
+func _PrimitiveStepHyperparameter_OneofUnmarshaler(msg proto.Message, tag, wire int, b *proto.Buffer) (bool, error) {
+	m := msg.(*PrimitiveStepHyperparameter)
+	switch tag {
+	case 1: // argument.container
+		if wire != proto.WireBytes {
+			return true, proto.ErrInternalBadWireType
+		}
+		msg := new(ContainerArgument)
+		err := b.DecodeMessage(msg)
+		m.Argument = &PrimitiveStepHyperparameter_Container{msg}
+		return true, err
+	case 2: // argument.data
+		if wire != proto.WireBytes {
+			return true, proto.ErrInternalBadWireType
+		}
+		msg := new(DataArgument)
+		err := b.DecodeMessage(msg)
+		m.Argument = &PrimitiveStepHyperparameter_Data{msg}
+		return true, err
+	case 3: // argument.primitive
+		if wire != proto.WireBytes {
+			return true, proto.ErrInternalBadWireType
+		}
+		msg := new(PrimitiveArgument)
+		err := b.DecodeMessage(msg)
+		m.Argument = &PrimitiveStepHyperparameter_Primitive{msg}
+		return true, err
+	case 4: // argument.value
+		if wire != proto.WireBytes {
+			return true, proto.ErrInternalBadWireType
+		}
+		msg := new(ValueArgument)
+		err := b.DecodeMessage(msg)
+		m.Argument = &PrimitiveStepHyperparameter_Value{msg}
+		return true, err
+	case 5: // argument.primitives_set
+		if wire != proto.WireBytes {
+			return true, proto.ErrInternalBadWireType
+		}
+		msg := new(PrimitiveArguments)
+		err := b.DecodeMessage(msg)
+		m.Argument = &PrimitiveStepHyperparameter_PrimitivesSet{msg}
+		return true, err
+	case 6: // argument.data_set
+		if wire != proto.WireBytes {
+			return true, proto.ErrInternalBadWireType
+		}
+		msg := new(DataArguments)
+		err := b.DecodeMessage(msg)
+		m.Argument = &PrimitiveStepHyperparameter_DataSet{msg}
+		return true, err
+	default:
+		return false, nil
+	}
+}
+
+func _PrimitiveStepHyperparameter_OneofSizer(msg proto.Message) (n int) {
+	m := msg.(*PrimitiveStepHyperparameter)
+	// argument
+	switch x := m.Argument.(type) {
+	case *PrimitiveStepHyperparameter_Container:
+		s := proto.Size(x.Container)
+		n += 1 // tag and wire
+		n += proto.SizeVarint(uint64(s))
+		n += s
+	case *PrimitiveStepHyperparameter_Data:
+		s := proto.Size(x.Data)
+		n += 1 // tag and wire
+		n += proto.SizeVarint(uint64(s))
+		n += s
+	case *PrimitiveStepHyperparameter_Primitive:
+		s := proto.Size(x.Primitive)
+		n += 1 // tag and wire
+		n += proto.SizeVarint(uint64(s))
+		n += s
+	case *PrimitiveStepHyperparameter_Value:
+		s := proto.Size(x.Value)
+		n += 1 // tag and wire
+		n += proto.SizeVarint(uint64(s))
+		n += s
+	case *PrimitiveStepHyperparameter_PrimitivesSet:
+		s := proto.Size(x.PrimitivesSet)
+		n += 1 // tag and wire
+		n += proto.SizeVarint(uint64(s))
+		n += s
+	case *PrimitiveStepHyperparameter_DataSet:
+		s := proto.Size(x.DataSet)
+		n += 1 // tag and wire
 		n += proto.SizeVarint(uint64(s))
 		n += s
 	case nil:
@@ -219,13 +701,35 @@ func _PrimitiveStepArgument_OneofSizer(msg proto.Message) (n int) {
 
 type StepInput struct {
 	// Data reference.
-	Data string `protobuf:"bytes,1,opt,name=data" json:"data,omitempty"`
+	Data                 string   `protobuf:"bytes,1,opt,name=data" json:"data,omitempty"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
 }
 
-func (m *StepInput) Reset()                    { *m = StepInput{} }
-func (m *StepInput) String() string            { return proto.CompactTextString(m) }
-func (*StepInput) ProtoMessage()               {}
-func (*StepInput) Descriptor() ([]byte, []int) { return fileDescriptor1, []int{4} }
+func (m *StepInput) Reset()         { *m = StepInput{} }
+func (m *StepInput) String() string { return proto.CompactTextString(m) }
+func (*StepInput) ProtoMessage()    {}
+func (*StepInput) Descriptor() ([]byte, []int) {
+	return fileDescriptor_pipeline_460f5e8f3459b875, []int{8}
+}
+func (m *StepInput) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_StepInput.Unmarshal(m, b)
+}
+func (m *StepInput) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_StepInput.Marshal(b, m, deterministic)
+}
+func (dst *StepInput) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_StepInput.Merge(dst, src)
+}
+func (m *StepInput) XXX_Size() int {
+	return xxx_messageInfo_StepInput.Size(m)
+}
+func (m *StepInput) XXX_DiscardUnknown() {
+	xxx_messageInfo_StepInput.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_StepInput proto.InternalMessageInfo
 
 func (m *StepInput) GetData() string {
 	if m != nil {
@@ -236,13 +740,35 @@ func (m *StepInput) GetData() string {
 
 type StepOutput struct {
 	// Name which becomes part of the data reference.
-	Id string `protobuf:"bytes,1,opt,name=id" json:"id,omitempty"`
+	Id                   string   `protobuf:"bytes,1,opt,name=id" json:"id,omitempty"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
 }
 
-func (m *StepOutput) Reset()                    { *m = StepOutput{} }
-func (m *StepOutput) String() string            { return proto.CompactTextString(m) }
-func (*StepOutput) ProtoMessage()               {}
-func (*StepOutput) Descriptor() ([]byte, []int) { return fileDescriptor1, []int{5} }
+func (m *StepOutput) Reset()         { *m = StepOutput{} }
+func (m *StepOutput) String() string { return proto.CompactTextString(m) }
+func (*StepOutput) ProtoMessage()    {}
+func (*StepOutput) Descriptor() ([]byte, []int) {
+	return fileDescriptor_pipeline_460f5e8f3459b875, []int{9}
+}
+func (m *StepOutput) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_StepOutput.Unmarshal(m, b)
+}
+func (m *StepOutput) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_StepOutput.Marshal(b, m, deterministic)
+}
+func (dst *StepOutput) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_StepOutput.Merge(dst, src)
+}
+func (m *StepOutput) XXX_Size() int {
+	return xxx_messageInfo_StepOutput.Size(m)
+}
+func (m *StepOutput) XXX_DiscardUnknown() {
+	xxx_messageInfo_StepOutput.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_StepOutput proto.InternalMessageInfo
 
 func (m *StepOutput) GetId() string {
 	if m != nil {
@@ -254,12 +780,38 @@ func (m *StepOutput) GetId() string {
 type PipelineSource struct {
 	// String representing name of the author, team.
 	Name string `protobuf:"bytes,1,opt,name=name" json:"name,omitempty"`
+	// An URI to contact the source.
+	Contact string `protobuf:"bytes,2,opt,name=contact" json:"contact,omitempty"`
+	// A list of pipeline IDs used to derive the pipeline.
+	Pipelines            []string `protobuf:"bytes,3,rep,name=pipelines" json:"pipelines,omitempty"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
 }
 
-func (m *PipelineSource) Reset()                    { *m = PipelineSource{} }
-func (m *PipelineSource) String() string            { return proto.CompactTextString(m) }
-func (*PipelineSource) ProtoMessage()               {}
-func (*PipelineSource) Descriptor() ([]byte, []int) { return fileDescriptor1, []int{6} }
+func (m *PipelineSource) Reset()         { *m = PipelineSource{} }
+func (m *PipelineSource) String() string { return proto.CompactTextString(m) }
+func (*PipelineSource) ProtoMessage()    {}
+func (*PipelineSource) Descriptor() ([]byte, []int) {
+	return fileDescriptor_pipeline_460f5e8f3459b875, []int{10}
+}
+func (m *PipelineSource) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_PipelineSource.Unmarshal(m, b)
+}
+func (m *PipelineSource) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_PipelineSource.Marshal(b, m, deterministic)
+}
+func (dst *PipelineSource) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_PipelineSource.Merge(dst, src)
+}
+func (m *PipelineSource) XXX_Size() int {
+	return xxx_messageInfo_PipelineSource.Size(m)
+}
+func (m *PipelineSource) XXX_DiscardUnknown() {
+	xxx_messageInfo_PipelineSource.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_PipelineSource proto.InternalMessageInfo
 
 func (m *PipelineSource) GetName() string {
 	if m != nil {
@@ -268,19 +820,62 @@ func (m *PipelineSource) GetName() string {
 	return ""
 }
 
-// User associated with the creation of the template/pipeline, or selection of a primitive.
-type PipelineDescriptionUser struct {
-	// A UUID of the user. It does not have to map to any real ID, just that it is possible
-	// to connect mutliple pipelines/templates by the same user together, if necessary.
-	Id string `protobuf:"bytes,1,opt,name=id" json:"id,omitempty"`
-	// Textual description of what user did to create the template/pipeline, or select a primitive.
-	Description string `protobuf:"bytes,2,opt,name=description" json:"description,omitempty"`
+func (m *PipelineSource) GetContact() string {
+	if m != nil {
+		return m.Contact
+	}
+	return ""
 }
 
-func (m *PipelineDescriptionUser) Reset()                    { *m = PipelineDescriptionUser{} }
-func (m *PipelineDescriptionUser) String() string            { return proto.CompactTextString(m) }
-func (*PipelineDescriptionUser) ProtoMessage()               {}
-func (*PipelineDescriptionUser) Descriptor() ([]byte, []int) { return fileDescriptor1, []int{7} }
+func (m *PipelineSource) GetPipelines() []string {
+	if m != nil {
+		return m.Pipelines
+	}
+	return nil
+}
+
+// User associated with the creation of the template/pipeline, or selection of a primitive.
+type PipelineDescriptionUser struct {
+	// Globally unique ID for this user. It can be opaque, but it should identify the same user
+	// across sessions. Consider using UUID variant 5 with namespace set to the name of your system
+	// and name to an ID in your system's database. It does not have to map to any real ID, just
+	// that it is possible to connect mutliple pipelines/templates by the same user together,
+	// if necessary.
+	Id string `protobuf:"bytes,1,opt,name=id" json:"id,omitempty"`
+	// A natural language description of what the user did to be on the list, e.g., "Picked
+	// a pipeline from a list of pipelines.".
+	Reason string `protobuf:"bytes,2,opt,name=reason" json:"reason,omitempty"`
+	// A natural language description by the user of what the user did,
+	// e.g., "I picked a pipeline because it looks short in comparison with others.".
+	Rationale            string   `protobuf:"bytes,3,opt,name=rationale" json:"rationale,omitempty"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
+}
+
+func (m *PipelineDescriptionUser) Reset()         { *m = PipelineDescriptionUser{} }
+func (m *PipelineDescriptionUser) String() string { return proto.CompactTextString(m) }
+func (*PipelineDescriptionUser) ProtoMessage()    {}
+func (*PipelineDescriptionUser) Descriptor() ([]byte, []int) {
+	return fileDescriptor_pipeline_460f5e8f3459b875, []int{11}
+}
+func (m *PipelineDescriptionUser) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_PipelineDescriptionUser.Unmarshal(m, b)
+}
+func (m *PipelineDescriptionUser) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_PipelineDescriptionUser.Marshal(b, m, deterministic)
+}
+func (dst *PipelineDescriptionUser) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_PipelineDescriptionUser.Merge(dst, src)
+}
+func (m *PipelineDescriptionUser) XXX_Size() int {
+	return xxx_messageInfo_PipelineDescriptionUser.Size(m)
+}
+func (m *PipelineDescriptionUser) XXX_DiscardUnknown() {
+	xxx_messageInfo_PipelineDescriptionUser.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_PipelineDescriptionUser proto.InternalMessageInfo
 
 func (m *PipelineDescriptionUser) GetId() string {
 	if m != nil {
@@ -289,9 +884,16 @@ func (m *PipelineDescriptionUser) GetId() string {
 	return ""
 }
 
-func (m *PipelineDescriptionUser) GetDescription() string {
+func (m *PipelineDescriptionUser) GetReason() string {
 	if m != nil {
-		return m.Description
+		return m.Reason
+	}
+	return ""
+}
+
+func (m *PipelineDescriptionUser) GetRationale() string {
+	if m != nil {
+		return m.Rationale
 	}
 	return ""
 }
@@ -299,13 +901,35 @@ func (m *PipelineDescriptionUser) GetDescription() string {
 // Possible input to the pipeline or template.
 type PipelineDescriptionInput struct {
 	// Human friendly name of the input.
-	Name string `protobuf:"bytes,1,opt,name=name" json:"name,omitempty"`
+	Name                 string   `protobuf:"bytes,1,opt,name=name" json:"name,omitempty"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
 }
 
-func (m *PipelineDescriptionInput) Reset()                    { *m = PipelineDescriptionInput{} }
-func (m *PipelineDescriptionInput) String() string            { return proto.CompactTextString(m) }
-func (*PipelineDescriptionInput) ProtoMessage()               {}
-func (*PipelineDescriptionInput) Descriptor() ([]byte, []int) { return fileDescriptor1, []int{8} }
+func (m *PipelineDescriptionInput) Reset()         { *m = PipelineDescriptionInput{} }
+func (m *PipelineDescriptionInput) String() string { return proto.CompactTextString(m) }
+func (*PipelineDescriptionInput) ProtoMessage()    {}
+func (*PipelineDescriptionInput) Descriptor() ([]byte, []int) {
+	return fileDescriptor_pipeline_460f5e8f3459b875, []int{12}
+}
+func (m *PipelineDescriptionInput) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_PipelineDescriptionInput.Unmarshal(m, b)
+}
+func (m *PipelineDescriptionInput) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_PipelineDescriptionInput.Marshal(b, m, deterministic)
+}
+func (dst *PipelineDescriptionInput) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_PipelineDescriptionInput.Merge(dst, src)
+}
+func (m *PipelineDescriptionInput) XXX_Size() int {
+	return xxx_messageInfo_PipelineDescriptionInput.Size(m)
+}
+func (m *PipelineDescriptionInput) XXX_DiscardUnknown() {
+	xxx_messageInfo_PipelineDescriptionInput.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_PipelineDescriptionInput proto.InternalMessageInfo
 
 func (m *PipelineDescriptionInput) GetName() string {
 	if m != nil {
@@ -319,13 +943,35 @@ type PipelineDescriptionOutput struct {
 	// Human friendly name of the output.
 	Name string `protobuf:"bytes,1,opt,name=name" json:"name,omitempty"`
 	// Data reference, probably of an output of a step.
-	Data string `protobuf:"bytes,2,opt,name=data" json:"data,omitempty"`
+	Data                 string   `protobuf:"bytes,2,opt,name=data" json:"data,omitempty"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
 }
 
-func (m *PipelineDescriptionOutput) Reset()                    { *m = PipelineDescriptionOutput{} }
-func (m *PipelineDescriptionOutput) String() string            { return proto.CompactTextString(m) }
-func (*PipelineDescriptionOutput) ProtoMessage()               {}
-func (*PipelineDescriptionOutput) Descriptor() ([]byte, []int) { return fileDescriptor1, []int{9} }
+func (m *PipelineDescriptionOutput) Reset()         { *m = PipelineDescriptionOutput{} }
+func (m *PipelineDescriptionOutput) String() string { return proto.CompactTextString(m) }
+func (*PipelineDescriptionOutput) ProtoMessage()    {}
+func (*PipelineDescriptionOutput) Descriptor() ([]byte, []int) {
+	return fileDescriptor_pipeline_460f5e8f3459b875, []int{13}
+}
+func (m *PipelineDescriptionOutput) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_PipelineDescriptionOutput.Unmarshal(m, b)
+}
+func (m *PipelineDescriptionOutput) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_PipelineDescriptionOutput.Marshal(b, m, deterministic)
+}
+func (dst *PipelineDescriptionOutput) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_PipelineDescriptionOutput.Merge(dst, src)
+}
+func (m *PipelineDescriptionOutput) XXX_Size() int {
+	return xxx_messageInfo_PipelineDescriptionOutput.Size(m)
+}
+func (m *PipelineDescriptionOutput) XXX_DiscardUnknown() {
+	xxx_messageInfo_PipelineDescriptionOutput.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_PipelineDescriptionOutput proto.InternalMessageInfo
 
 func (m *PipelineDescriptionOutput) GetName() string {
 	if m != nil {
@@ -355,17 +1001,37 @@ type PrimitivePipelineDescriptionStep struct {
 	// template/pipeline decides which hyper-parameter are which, probably based on their semantic type.
 	// TA3 can specify a list of hyper-parameters to fix, and TA2 can add to the list additional
 	// hyper-paramaters in found pipelines.
-	Hyperparams map[string]*Value `protobuf:"bytes,4,rep,name=hyperparams" json:"hyperparams,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
+	Hyperparams map[string]*PrimitiveStepHyperparameter `protobuf:"bytes,4,rep,name=hyperparams" json:"hyperparams,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
 	// List of users associated with selection of this primitive/arguments/hyper-parameters. Optional.
-	Users []*PipelineDescriptionUser `protobuf:"bytes,5,rep,name=users" json:"users,omitempty"`
+	Users                []*PipelineDescriptionUser `protobuf:"bytes,5,rep,name=users" json:"users,omitempty"`
+	XXX_NoUnkeyedLiteral struct{}                   `json:"-"`
+	XXX_unrecognized     []byte                     `json:"-"`
+	XXX_sizecache        int32                      `json:"-"`
 }
 
 func (m *PrimitivePipelineDescriptionStep) Reset()         { *m = PrimitivePipelineDescriptionStep{} }
 func (m *PrimitivePipelineDescriptionStep) String() string { return proto.CompactTextString(m) }
 func (*PrimitivePipelineDescriptionStep) ProtoMessage()    {}
 func (*PrimitivePipelineDescriptionStep) Descriptor() ([]byte, []int) {
-	return fileDescriptor1, []int{10}
+	return fileDescriptor_pipeline_460f5e8f3459b875, []int{14}
 }
+func (m *PrimitivePipelineDescriptionStep) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_PrimitivePipelineDescriptionStep.Unmarshal(m, b)
+}
+func (m *PrimitivePipelineDescriptionStep) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_PrimitivePipelineDescriptionStep.Marshal(b, m, deterministic)
+}
+func (dst *PrimitivePipelineDescriptionStep) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_PrimitivePipelineDescriptionStep.Merge(dst, src)
+}
+func (m *PrimitivePipelineDescriptionStep) XXX_Size() int {
+	return xxx_messageInfo_PrimitivePipelineDescriptionStep.Size(m)
+}
+func (m *PrimitivePipelineDescriptionStep) XXX_DiscardUnknown() {
+	xxx_messageInfo_PrimitivePipelineDescriptionStep.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_PrimitivePipelineDescriptionStep proto.InternalMessageInfo
 
 func (m *PrimitivePipelineDescriptionStep) GetPrimitive() *Primitive {
 	if m != nil {
@@ -388,7 +1054,7 @@ func (m *PrimitivePipelineDescriptionStep) GetOutputs() []*StepOutput {
 	return nil
 }
 
-func (m *PrimitivePipelineDescriptionStep) GetHyperparams() map[string]*Value {
+func (m *PrimitivePipelineDescriptionStep) GetHyperparams() map[string]*PrimitiveStepHyperparameter {
 	if m != nil {
 		return m.Hyperparams
 	}
@@ -409,15 +1075,35 @@ type SubpipelinePipelineDescriptionStep struct {
 	// mapped to sub-pipeline's inputs in order.
 	Inputs []*StepInput `protobuf:"bytes,2,rep,name=inputs" json:"inputs,omitempty"`
 	// List of IDs to be used in data references, mapping sub-pipeline's outputs in order.
-	Outputs []*StepOutput `protobuf:"bytes,3,rep,name=outputs" json:"outputs,omitempty"`
+	Outputs              []*StepOutput `protobuf:"bytes,3,rep,name=outputs" json:"outputs,omitempty"`
+	XXX_NoUnkeyedLiteral struct{}      `json:"-"`
+	XXX_unrecognized     []byte        `json:"-"`
+	XXX_sizecache        int32         `json:"-"`
 }
 
 func (m *SubpipelinePipelineDescriptionStep) Reset()         { *m = SubpipelinePipelineDescriptionStep{} }
 func (m *SubpipelinePipelineDescriptionStep) String() string { return proto.CompactTextString(m) }
 func (*SubpipelinePipelineDescriptionStep) ProtoMessage()    {}
 func (*SubpipelinePipelineDescriptionStep) Descriptor() ([]byte, []int) {
-	return fileDescriptor1, []int{11}
+	return fileDescriptor_pipeline_460f5e8f3459b875, []int{15}
 }
+func (m *SubpipelinePipelineDescriptionStep) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_SubpipelinePipelineDescriptionStep.Unmarshal(m, b)
+}
+func (m *SubpipelinePipelineDescriptionStep) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_SubpipelinePipelineDescriptionStep.Marshal(b, m, deterministic)
+}
+func (dst *SubpipelinePipelineDescriptionStep) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_SubpipelinePipelineDescriptionStep.Merge(dst, src)
+}
+func (m *SubpipelinePipelineDescriptionStep) XXX_Size() int {
+	return xxx_messageInfo_SubpipelinePipelineDescriptionStep.Size(m)
+}
+func (m *SubpipelinePipelineDescriptionStep) XXX_DiscardUnknown() {
+	xxx_messageInfo_SubpipelinePipelineDescriptionStep.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_SubpipelinePipelineDescriptionStep proto.InternalMessageInfo
 
 func (m *SubpipelinePipelineDescriptionStep) GetPipeline() *PipelineDescription {
 	if m != nil {
@@ -449,15 +1135,35 @@ type PlaceholderPipelineDescriptionStep struct {
 	// sub-pipeline does not have to use all the inputs, but it cannot use any other inputs.
 	Inputs []*StepInput `protobuf:"bytes,1,rep,name=inputs" json:"inputs,omitempty"`
 	// A list of outputs of the resulting sub-pipeline.
-	Outputs []*StepOutput `protobuf:"bytes,2,rep,name=outputs" json:"outputs,omitempty"`
+	Outputs              []*StepOutput `protobuf:"bytes,2,rep,name=outputs" json:"outputs,omitempty"`
+	XXX_NoUnkeyedLiteral struct{}      `json:"-"`
+	XXX_unrecognized     []byte        `json:"-"`
+	XXX_sizecache        int32         `json:"-"`
 }
 
 func (m *PlaceholderPipelineDescriptionStep) Reset()         { *m = PlaceholderPipelineDescriptionStep{} }
 func (m *PlaceholderPipelineDescriptionStep) String() string { return proto.CompactTextString(m) }
 func (*PlaceholderPipelineDescriptionStep) ProtoMessage()    {}
 func (*PlaceholderPipelineDescriptionStep) Descriptor() ([]byte, []int) {
-	return fileDescriptor1, []int{12}
+	return fileDescriptor_pipeline_460f5e8f3459b875, []int{16}
 }
+func (m *PlaceholderPipelineDescriptionStep) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_PlaceholderPipelineDescriptionStep.Unmarshal(m, b)
+}
+func (m *PlaceholderPipelineDescriptionStep) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_PlaceholderPipelineDescriptionStep.Marshal(b, m, deterministic)
+}
+func (dst *PlaceholderPipelineDescriptionStep) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_PlaceholderPipelineDescriptionStep.Merge(dst, src)
+}
+func (m *PlaceholderPipelineDescriptionStep) XXX_Size() int {
+	return xxx_messageInfo_PlaceholderPipelineDescriptionStep.Size(m)
+}
+func (m *PlaceholderPipelineDescriptionStep) XXX_DiscardUnknown() {
+	xxx_messageInfo_PlaceholderPipelineDescriptionStep.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_PlaceholderPipelineDescriptionStep proto.InternalMessageInfo
 
 func (m *PlaceholderPipelineDescriptionStep) GetInputs() []*StepInput {
 	if m != nil {
@@ -478,13 +1184,35 @@ type PipelineDescriptionStep struct {
 	//	*PipelineDescriptionStep_Primitive
 	//	*PipelineDescriptionStep_Pipeline
 	//	*PipelineDescriptionStep_Placeholder
-	Step isPipelineDescriptionStep_Step `protobuf_oneof:"step"`
+	Step                 isPipelineDescriptionStep_Step `protobuf_oneof:"step"`
+	XXX_NoUnkeyedLiteral struct{}                       `json:"-"`
+	XXX_unrecognized     []byte                         `json:"-"`
+	XXX_sizecache        int32                          `json:"-"`
 }
 
-func (m *PipelineDescriptionStep) Reset()                    { *m = PipelineDescriptionStep{} }
-func (m *PipelineDescriptionStep) String() string            { return proto.CompactTextString(m) }
-func (*PipelineDescriptionStep) ProtoMessage()               {}
-func (*PipelineDescriptionStep) Descriptor() ([]byte, []int) { return fileDescriptor1, []int{13} }
+func (m *PipelineDescriptionStep) Reset()         { *m = PipelineDescriptionStep{} }
+func (m *PipelineDescriptionStep) String() string { return proto.CompactTextString(m) }
+func (*PipelineDescriptionStep) ProtoMessage()    {}
+func (*PipelineDescriptionStep) Descriptor() ([]byte, []int) {
+	return fileDescriptor_pipeline_460f5e8f3459b875, []int{17}
+}
+func (m *PipelineDescriptionStep) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_PipelineDescriptionStep.Unmarshal(m, b)
+}
+func (m *PipelineDescriptionStep) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_PipelineDescriptionStep.Marshal(b, m, deterministic)
+}
+func (dst *PipelineDescriptionStep) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_PipelineDescriptionStep.Merge(dst, src)
+}
+func (m *PipelineDescriptionStep) XXX_Size() int {
+	return xxx_messageInfo_PipelineDescriptionStep.Size(m)
+}
+func (m *PipelineDescriptionStep) XXX_DiscardUnknown() {
+	xxx_messageInfo_PipelineDescriptionStep.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_PipelineDescriptionStep proto.InternalMessageInfo
 
 type isPipelineDescriptionStep_Step interface {
 	isPipelineDescriptionStep_Step()
@@ -605,17 +1333,17 @@ func _PipelineDescriptionStep_OneofSizer(msg proto.Message) (n int) {
 	switch x := m.Step.(type) {
 	case *PipelineDescriptionStep_Primitive:
 		s := proto.Size(x.Primitive)
-		n += proto.SizeVarint(1<<3 | proto.WireBytes)
+		n += 1 // tag and wire
 		n += proto.SizeVarint(uint64(s))
 		n += s
 	case *PipelineDescriptionStep_Pipeline:
 		s := proto.Size(x.Pipeline)
-		n += proto.SizeVarint(2<<3 | proto.WireBytes)
+		n += 1 // tag and wire
 		n += proto.SizeVarint(uint64(s))
 		n += s
 	case *PipelineDescriptionStep_Placeholder:
 		s := proto.Size(x.Placeholder)
-		n += proto.SizeVarint(3<<3 | proto.WireBytes)
+		n += 1 // tag and wire
 		n += proto.SizeVarint(uint64(s))
 		n += s
 	case nil:
@@ -628,43 +1356,71 @@ func _PipelineDescriptionStep_OneofSizer(msg proto.Message) (n int) {
 // Pipeline description matches the D3M pipeline description.
 // It serves two purposes: describing found pipelines by TA2 to TA3, and communicating pipeline
 // templates by TA3 to TA2. Because of this some fields are reasonable only in one of those uses.
-// They are marked with "TA2" or "TA3" in the comment, for fields to be set only by TA2 or only
-// by TA3, respectivelly.
+// They are marked with "TA2" or "TA3" in the comment, for fields which are primarily to be set
+// only by TA2 or only by TA3, respectivelly.
 type PipelineDescription struct {
-	// TA2: UUID of the pipeline. Templates do not have IDs. It does not necessary have to
-	// match "pipeline_id" from "ListPipelinesResponse" and other related messages. Those
-	// IDs are about whole solutions (pipeline, potentially fitted, with set hyper-parameters).
-	// This here ID is about this particular ID description.
+	// TA2: UUID of the pipeline. Templates do not have IDs. But TA3 might provide it for a fully
+	// specified pipeline. It does not necessary have to match "solution_id" from
+	// "ListSolutionsResponse" and other related messages. Those IDs are about whole solutions
+	// (pipeline, potentially fitted, with set hyper-parameters). This here ID is about this
+	// particular ID description.
 	Id string `protobuf:"bytes,1,opt,name=id" json:"id,omitempty"`
 	// "schema" field is not needed because it is fixed by the TA2-TA3 protocol version.
 	// System which generated a pipeline or a template. Optional.
 	Source *PipelineSource `protobuf:"bytes,2,opt,name=source" json:"source,omitempty"`
-	// TA2: Timestamp when created. Templates do not have this timestamp.
-	Created *google_protobuf1.Timestamp `protobuf:"bytes,3,opt,name=created" json:"created,omitempty"`
+	// TA2: Timestamp when created. Templates do not have this timestamp. TA3 might provide it for
+	// a fully specified pipeline.
+	Created *timestamp.Timestamp `protobuf:"bytes,3,opt,name=created" json:"created,omitempty"`
+	// In which context a template or pipeline was made. This is helpful to distinguish evaluation
+	// context from other contexts. The value should not really influence different behavior from
+	// either system, but it is useful when recording metalearning information to understand this.
+	Context PipelineContext `protobuf:"varint,4,opt,name=context,enum=PipelineContext" json:"context,omitempty"`
 	// Human friendly name of the pipeline. For templates it can be a hint to
 	// TA2 how to name found pipelines. Optional.
-	Name string `protobuf:"bytes,4,opt,name=name" json:"name,omitempty"`
+	Name string `protobuf:"bytes,5,opt,name=name" json:"name,omitempty"`
 	// Human friendly description of the pipeline. Optional.
-	Description string `protobuf:"bytes,5,opt,name=description" json:"description,omitempty"`
+	Description string `protobuf:"bytes,6,opt,name=description" json:"description,omitempty"`
 	// List of users associated with the creation of the template and consequently of the pipeline.
 	// TA2 can store this information into metalearning database. TA2 is not really expected to use
 	// this information during pipeline search. TA2 should not have to understand TA3 users, mapping
 	// between users and pipeline search IDs is something TA3 should handle. Optional.
-	Users []*PipelineDescriptionUser `protobuf:"bytes,6,rep,name=users" json:"users,omitempty"`
+	Users []*PipelineDescriptionUser `protobuf:"bytes,7,rep,name=users" json:"users,omitempty"`
 	// In most cases inputs are datasets. But if TA3 wants to jut run a primitive, it can send a
 	// template with only that primitive in the template, and then pass anything to its inputs during
 	// execution. Here, we are describing possible inputs to the pipeline or template. Order matters.
-	Inputs []*PipelineDescriptionInput `protobuf:"bytes,7,rep,name=inputs" json:"inputs,omitempty"`
+	Inputs []*PipelineDescriptionInput `protobuf:"bytes,8,rep,name=inputs" json:"inputs,omitempty"`
 	// Available outputs of the pipeline or template.
-	Outputs []*PipelineDescriptionOutput `protobuf:"bytes,8,rep,name=outputs" json:"outputs,omitempty"`
+	Outputs []*PipelineDescriptionOutput `protobuf:"bytes,9,rep,name=outputs" json:"outputs,omitempty"`
 	// Steps defining the pipeline.
-	Steps []*PipelineDescriptionStep `protobuf:"bytes,9,rep,name=steps" json:"steps,omitempty"`
+	Steps                []*PipelineDescriptionStep `protobuf:"bytes,10,rep,name=steps" json:"steps,omitempty"`
+	XXX_NoUnkeyedLiteral struct{}                   `json:"-"`
+	XXX_unrecognized     []byte                     `json:"-"`
+	XXX_sizecache        int32                      `json:"-"`
 }
 
-func (m *PipelineDescription) Reset()                    { *m = PipelineDescription{} }
-func (m *PipelineDescription) String() string            { return proto.CompactTextString(m) }
-func (*PipelineDescription) ProtoMessage()               {}
-func (*PipelineDescription) Descriptor() ([]byte, []int) { return fileDescriptor1, []int{14} }
+func (m *PipelineDescription) Reset()         { *m = PipelineDescription{} }
+func (m *PipelineDescription) String() string { return proto.CompactTextString(m) }
+func (*PipelineDescription) ProtoMessage()    {}
+func (*PipelineDescription) Descriptor() ([]byte, []int) {
+	return fileDescriptor_pipeline_460f5e8f3459b875, []int{18}
+}
+func (m *PipelineDescription) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_PipelineDescription.Unmarshal(m, b)
+}
+func (m *PipelineDescription) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_PipelineDescription.Marshal(b, m, deterministic)
+}
+func (dst *PipelineDescription) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_PipelineDescription.Merge(dst, src)
+}
+func (m *PipelineDescription) XXX_Size() int {
+	return xxx_messageInfo_PipelineDescription.Size(m)
+}
+func (m *PipelineDescription) XXX_DiscardUnknown() {
+	xxx_messageInfo_PipelineDescription.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_PipelineDescription proto.InternalMessageInfo
 
 func (m *PipelineDescription) GetId() string {
 	if m != nil {
@@ -680,11 +1436,18 @@ func (m *PipelineDescription) GetSource() *PipelineSource {
 	return nil
 }
 
-func (m *PipelineDescription) GetCreated() *google_protobuf1.Timestamp {
+func (m *PipelineDescription) GetCreated() *timestamp.Timestamp {
 	if m != nil {
 		return m.Created
 	}
 	return nil
+}
+
+func (m *PipelineDescription) GetContext() PipelineContext {
+	if m != nil {
+		return m.Context
+	}
+	return PipelineContext_PIPELINE_CONTEXT_UNKNOWN
 }
 
 func (m *PipelineDescription) GetName() string {
@@ -731,9 +1494,13 @@ func (m *PipelineDescription) GetSteps() []*PipelineDescriptionStep {
 
 func init() {
 	proto.RegisterType((*ContainerArgument)(nil), "ContainerArgument")
-	proto.RegisterType((*PrimitiveArgument)(nil), "PrimitiveArgument")
 	proto.RegisterType((*DataArgument)(nil), "DataArgument")
+	proto.RegisterType((*DataArguments)(nil), "DataArguments")
+	proto.RegisterType((*PrimitiveArgument)(nil), "PrimitiveArgument")
+	proto.RegisterType((*PrimitiveArguments)(nil), "PrimitiveArguments")
+	proto.RegisterType((*ValueArgument)(nil), "ValueArgument")
 	proto.RegisterType((*PrimitiveStepArgument)(nil), "PrimitiveStepArgument")
+	proto.RegisterType((*PrimitiveStepHyperparameter)(nil), "PrimitiveStepHyperparameter")
 	proto.RegisterType((*StepInput)(nil), "StepInput")
 	proto.RegisterType((*StepOutput)(nil), "StepOutput")
 	proto.RegisterType((*PipelineSource)(nil), "PipelineSource")
@@ -741,60 +1508,79 @@ func init() {
 	proto.RegisterType((*PipelineDescriptionInput)(nil), "PipelineDescriptionInput")
 	proto.RegisterType((*PipelineDescriptionOutput)(nil), "PipelineDescriptionOutput")
 	proto.RegisterType((*PrimitivePipelineDescriptionStep)(nil), "PrimitivePipelineDescriptionStep")
+	proto.RegisterMapType((map[string]*PrimitiveStepArgument)(nil), "PrimitivePipelineDescriptionStep.ArgumentsEntry")
+	proto.RegisterMapType((map[string]*PrimitiveStepHyperparameter)(nil), "PrimitivePipelineDescriptionStep.HyperparamsEntry")
 	proto.RegisterType((*SubpipelinePipelineDescriptionStep)(nil), "SubpipelinePipelineDescriptionStep")
 	proto.RegisterType((*PlaceholderPipelineDescriptionStep)(nil), "PlaceholderPipelineDescriptionStep")
 	proto.RegisterType((*PipelineDescriptionStep)(nil), "PipelineDescriptionStep")
 	proto.RegisterType((*PipelineDescription)(nil), "PipelineDescription")
+	proto.RegisterEnum("PipelineContext", PipelineContext_name, PipelineContext_value)
 }
 
-func init() { proto.RegisterFile("pipeline.proto", fileDescriptor1) }
+func init() { proto.RegisterFile("pipeline.proto", fileDescriptor_pipeline_460f5e8f3459b875) }
 
-var fileDescriptor1 = []byte{
-	// 726 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x8c, 0x55, 0xcb, 0x6e, 0xd3, 0x4a,
-	0x18, 0x8e, 0x9d, 0x4b, 0xeb, 0xdf, 0xe7, 0xa4, 0xed, 0x9c, 0x03, 0xb8, 0x51, 0xa5, 0x86, 0x29,
-	0xa8, 0x5d, 0xa0, 0x69, 0x1b, 0xba, 0x40, 0xec, 0x7a, 0x01, 0x82, 0x90, 0xa0, 0x72, 0x0b, 0x0b,
-	0x76, 0x6e, 0x3c, 0xb4, 0x16, 0x89, 0x6d, 0x8d, 0xc7, 0x95, 0xba, 0xe6, 0x49, 0x78, 0x03, 0xde,
-	0x8a, 0x2d, 0x8f, 0x80, 0x3c, 0x9e, 0x8b, 0x93, 0x38, 0x4d, 0x77, 0xb6, 0xe7, 0xfb, 0xbf, 0xff,
-	0xf2, 0xfd, 0xf3, 0x19, 0xba, 0x69, 0x94, 0xd2, 0x71, 0x14, 0x53, 0x92, 0xb2, 0x84, 0x27, 0xbd,
-	0xfe, 0x75, 0x92, 0x5c, 0x8f, 0xe9, 0xbe, 0x78, 0xbb, 0xca, 0xbf, 0xed, 0x87, 0x34, 0x1b, 0xb1,
-	0x28, 0xe5, 0x09, 0x93, 0x88, 0xed, 0x59, 0x04, 0x8f, 0x26, 0x34, 0xe3, 0xc1, 0x24, 0x95, 0x80,
-	0xb5, 0x94, 0x45, 0x93, 0x88, 0x47, 0xb7, 0x8a, 0xd3, 0xbd, 0x0d, 0xc6, 0xb9, 0x7c, 0xc1, 0xbb,
-	0xb0, 0x71, 0x9a, 0xc4, 0x3c, 0x88, 0x62, 0xca, 0x8e, 0xd9, 0x75, 0x3e, 0xa1, 0x31, 0x47, 0x08,
-	0x5a, 0x61, 0xc0, 0x03, 0xcf, 0xea, 0x5b, 0x7b, 0x8e, 0x2f, 0x9e, 0xf1, 0x21, 0x6c, 0x9c, 0x2b,
-	0x22, 0x0d, 0xdc, 0x02, 0x47, 0xb3, 0x4b, 0xb4, 0xf9, 0x80, 0x31, 0xfc, 0x73, 0x16, 0xf0, 0xe0,
-	0x5e, 0xda, 0x5f, 0x16, 0x3c, 0xd2, 0xbc, 0x17, 0x9c, 0xa6, 0x1a, 0x3d, 0x00, 0x67, 0xa4, 0x2a,
-	0x13, 0x21, 0xee, 0x00, 0x91, 0xb9, 0x5a, 0x87, 0x0d, 0xdf, 0xc0, 0x8a, 0x18, 0x53, 0x8f, 0x2d,
-	0x63, 0xe6, 0xca, 0x2e, 0x62, 0x34, 0x0c, 0xed, 0xc8, 0xaa, 0x9a, 0x02, 0xfe, 0x2f, 0xa9, 0x96,
-	0x3c, 0x6c, 0x94, 0x65, 0x9e, 0x00, 0xac, 0x06, 0xf2, 0x1b, 0xde, 0x06, 0xa7, 0x28, 0xf4, 0x7d,
-	0x9c, 0xe6, 0xf5, 0x3d, 0x6d, 0x01, 0x14, 0x80, 0x4f, 0x39, 0x2f, 0x10, 0x5d, 0xb0, 0xa3, 0x50,
-	0x9e, 0xdb, 0x51, 0x88, 0x9f, 0x41, 0xf7, 0x5c, 0x8a, 0x7c, 0x91, 0xe4, 0x6c, 0x44, 0x0b, 0x8e,
-	0x38, 0x98, 0xa8, 0x01, 0x8a, 0x67, 0xfc, 0x01, 0x9e, 0x28, 0xd4, 0x99, 0x94, 0x3c, 0x4a, 0xe2,
-	0xcf, 0x19, 0x65, 0xb3, 0x84, 0xa8, 0x0f, 0x6e, 0x68, 0x20, 0xa2, 0x6d, 0xc7, 0xaf, 0x7e, 0xc2,
-	0x04, 0xbc, 0x1a, 0x32, 0xdd, 0xc0, 0x5c, 0xf2, 0x53, 0xd8, 0xac, 0xc1, 0xcb, 0x7e, 0x6a, 0x02,
-	0xf4, 0x14, 0xec, 0xca, 0x14, 0x7e, 0x37, 0xa1, 0xaf, 0x47, 0x5f, 0x43, 0x57, 0x8c, 0x08, 0xed,
-	0xcd, 0x2e, 0x90, 0x3b, 0x00, 0x23, 0x58, 0x55, 0xa6, 0x8f, 0xe0, 0x28, 0x05, 0x32, 0xcf, 0xee,
-	0x37, 0xf7, 0xdc, 0xc1, 0x01, 0x59, 0xc6, 0x4f, 0x94, 0x90, 0xd9, 0x9b, 0x98, 0xb3, 0x3b, 0xdf,
-	0x50, 0xa0, 0xe7, 0xb0, 0x92, 0x88, 0x86, 0x32, 0xaf, 0x29, 0xd8, 0x5c, 0x62, 0x44, 0xf3, 0xd5,
-	0x19, 0xba, 0x04, 0xf7, 0xe6, 0x2e, 0xa5, 0x2c, 0x0d, 0x58, 0x30, 0xc9, 0xbc, 0x96, 0x80, 0x0e,
-	0x96, 0x27, 0x1e, 0x9a, 0xa0, 0x32, 0x75, 0x95, 0x06, 0x11, 0x68, 0xe7, 0x19, 0x65, 0x99, 0xd7,
-	0x16, 0x7c, 0x1e, 0x59, 0xa0, 0xb5, 0x5f, 0xc2, 0x7a, 0x97, 0xd0, 0x9d, 0xee, 0x04, 0xad, 0x43,
-	0xf3, 0x3b, 0xbd, 0x93, 0x22, 0x14, 0x8f, 0xe8, 0x05, 0xb4, 0xc5, 0xc5, 0x96, 0x7b, 0xff, 0x98,
-	0xd4, 0x5e, 0x2b, 0xbf, 0x04, 0xbd, 0xb6, 0x5f, 0x59, 0xbd, 0xb7, 0xb0, 0x3e, 0x5b, 0x66, 0x0d,
-	0xef, 0xd6, 0x34, 0x6f, 0x87, 0x7c, 0x29, 0xde, 0x2a, 0x3c, 0xf8, 0xa7, 0x05, 0xf8, 0x22, 0xbf,
-	0x52, 0xd6, 0xb5, 0x48, 0xeb, 0x03, 0x58, 0x55, 0x10, 0x29, 0xf5, 0xff, 0x75, 0x7d, 0xfb, 0x1a,
-	0x85, 0x30, 0x74, 0xa2, 0x58, 0x48, 0x54, 0x0a, 0x0e, 0x44, 0x5f, 0x3c, 0x5f, 0x9e, 0x3c, 0x50,
-	0x47, 0x9c, 0x00, 0x3e, 0x1f, 0x07, 0x23, 0x7a, 0x93, 0x8c, 0x43, 0xca, 0x16, 0x95, 0x68, 0x12,
-	0x5a, 0x0f, 0x49, 0x68, 0xdf, 0x93, 0xf0, 0x8f, 0x55, 0x7b, 0x83, 0x45, 0x9a, 0xe3, 0xf9, 0xad,
-	0x7f, 0xba, 0x74, 0xa5, 0xa6, 0x5d, 0xeb, 0xb8, 0x32, 0xcc, 0x52, 0x98, 0x1d, 0xb2, 0x5c, 0x83,
-	0x61, 0xa3, 0x32, 0xdd, 0x77, 0xe0, 0xa6, 0x66, 0x24, 0xd2, 0xff, 0x76, 0xc8, 0xf2, 0x31, 0x0d,
-	0x1b, 0x7e, 0x35, 0xf2, 0xa4, 0x03, 0xad, 0x8c, 0xd3, 0x14, 0xff, 0x68, 0xc2, 0x7f, 0x35, 0x21,
-	0x73, 0x86, 0xb5, 0x0b, 0x9d, 0x4c, 0x38, 0x9f, 0xac, 0x7c, 0x8d, 0x4c, 0x1b, 0xa2, 0x2f, 0x8f,
-	0xd1, 0x11, 0xac, 0x8c, 0x18, 0x0d, 0x38, 0x0d, 0x65, 0x75, 0x3d, 0x52, 0xfe, 0xed, 0x88, 0xfa,
-	0xdb, 0x91, 0x4b, 0xf5, 0xb7, 0xf3, 0x15, 0x54, 0x1b, 0x54, 0xab, 0x62, 0x50, 0x33, 0x1e, 0xd9,
-	0x9e, 0xf3, 0x48, 0x73, 0x25, 0x3b, 0x0f, 0xba, 0x92, 0xe8, 0x50, 0xaf, 0xca, 0x8a, 0x08, 0xd8,
-	0x24, 0x8b, 0x2c, 0x56, 0x6f, 0xce, 0x91, 0xd9, 0x9c, 0x55, 0x11, 0xd3, 0x23, 0x0b, 0x6d, 0xd6,
-	0x38, 0x10, 0x81, 0x76, 0x31, 0xdd, 0xcc, 0x73, 0x16, 0x17, 0x56, 0xa8, 0xe2, 0x97, 0xb0, 0x13,
-	0xf8, 0xaa, 0x25, 0xbe, 0xea, 0x88, 0x39, 0xbd, 0xfc, 0x1b, 0x00, 0x00, 0xff, 0xff, 0x39, 0x9e,
-	0x2f, 0xeb, 0x57, 0x08, 0x00, 0x00,
+var fileDescriptor_pipeline_460f5e8f3459b875 = []byte{
+	// 978 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xb4, 0x56, 0xdd, 0x6e, 0xdb, 0x36,
+	0x14, 0xf6, 0xbf, 0xe3, 0xa3, 0xc5, 0x71, 0xd9, 0xad, 0x53, 0xbd, 0x00, 0xf5, 0x14, 0x6c, 0x09,
+	0xda, 0x81, 0xed, 0xbc, 0x5e, 0x0c, 0xc3, 0x6e, 0x1c, 0xc7, 0xa8, 0x8d, 0x15, 0xb6, 0x41, 0x2b,
+	0xdd, 0x30, 0x14, 0x08, 0x14, 0x9b, 0x4b, 0x85, 0xd9, 0x92, 0x20, 0xd1, 0xc1, 0x02, 0xec, 0x65,
+	0xf6, 0x04, 0x7b, 0x8e, 0xbd, 0xcd, 0x5e, 0x60, 0xc0, 0x40, 0x8a, 0xa4, 0x24, 0x5b, 0x8e, 0x73,
+	0xd3, 0x3b, 0x93, 0xfc, 0xf8, 0x9d, 0xc3, 0xef, 0x7c, 0xe7, 0x58, 0xd0, 0x0c, 0xdc, 0x80, 0x2e,
+	0x5d, 0x8f, 0xe2, 0x20, 0xf4, 0x99, 0xdf, 0xee, 0xdc, 0xf8, 0xfe, 0xcd, 0x92, 0xbe, 0x14, 0xab,
+	0xeb, 0xf5, 0x6f, 0x2f, 0x17, 0x34, 0x9a, 0x87, 0x6e, 0xc0, 0xfc, 0x50, 0x22, 0x9e, 0x6d, 0x22,
+	0x98, 0xbb, 0xa2, 0x11, 0x73, 0x56, 0x81, 0x04, 0x1c, 0x05, 0xa1, 0xbb, 0x72, 0x99, 0x7b, 0xab,
+	0x38, 0x8d, 0x5b, 0x67, 0xb9, 0x96, 0x0b, 0xeb, 0x14, 0x1e, 0xf5, 0x7d, 0x8f, 0x39, 0xae, 0x47,
+	0xc3, 0x5e, 0x78, 0xb3, 0x5e, 0x51, 0x8f, 0x21, 0x04, 0x95, 0x85, 0xc3, 0x1c, 0xb3, 0xd8, 0x29,
+	0x9e, 0x35, 0x88, 0xf8, 0x6d, 0x59, 0xf0, 0xc9, 0x85, 0xc3, 0x9c, 0x7b, 0x31, 0x27, 0x70, 0x98,
+	0xc6, 0x44, 0x29, 0x50, 0x59, 0x83, 0x4e, 0xe1, 0xd1, 0x54, 0x65, 0x94, 0xcb, 0x56, 0x95, 0xc0,
+	0x33, 0x40, 0x5b, 0xc0, 0x2c, 0xa5, 0x42, 0xbe, 0x80, 0xc3, 0x77, 0xfc, 0x4d, 0x9a, 0xae, 0x9d,
+	0xa2, 0x33, 0xba, 0x35, 0x2c, 0x4e, 0x25, 0xf8, 0x4f, 0xf8, 0x4c, 0xd3, 0xce, 0x18, 0x0d, 0xf4,
+	0xa5, 0x2e, 0x34, 0xe6, 0x4a, 0x0a, 0x79, 0x13, 0xe1, 0x2d, 0x71, 0x86, 0x05, 0x92, 0xc0, 0xd0,
+	0x89, 0x0c, 0x54, 0x12, 0xf0, 0x43, 0x9c, 0x7e, 0xfe, 0xb0, 0x10, 0x47, 0x3c, 0x07, 0x38, 0x70,
+	0xe4, 0x9e, 0xf5, 0x4f, 0x09, 0xbe, 0xc8, 0x84, 0x1f, 0xde, 0x05, 0x34, 0x0c, 0x9c, 0xd0, 0x59,
+	0x51, 0x46, 0xc3, 0x8f, 0x96, 0x04, 0x27, 0xd6, 0x46, 0x30, 0xcb, 0x92, 0x78, 0x4b, 0x5f, 0x4e,
+	0xac, 0x61, 0xe8, 0x6b, 0xa8, 0x0a, 0xaf, 0x98, 0x15, 0x81, 0x6f, 0xe2, 0x8c, 0xca, 0xc3, 0x02,
+	0x89, 0x8f, 0xd1, 0x8f, 0xd0, 0xd4, 0x97, 0xa2, 0xab, 0x88, 0x32, 0xb3, 0x2a, 0x2e, 0x3c, 0xde,
+	0x0e, 0x10, 0x0d, 0x0b, 0xe4, 0x30, 0x01, 0xcf, 0x28, 0x43, 0x2f, 0xe0, 0x80, 0x67, 0x28, 0xee,
+	0xd5, 0x64, 0xa0, 0x8c, 0x8d, 0x86, 0x05, 0x52, 0xe7, 0x88, 0x19, 0x65, 0x19, 0x2d, 0x9f, 0x41,
+	0x83, 0x2b, 0x38, 0xf2, 0x82, 0x75, 0xbe, 0x1f, 0x8f, 0x01, 0x38, 0x60, 0xb2, 0x66, 0x1c, 0xd1,
+	0x84, 0x92, 0xbb, 0x90, 0xe7, 0x25, 0x77, 0x61, 0xbd, 0x87, 0xe6, 0x54, 0x76, 0xdb, 0xcc, 0x5f,
+	0x87, 0x73, 0xca, 0x39, 0x3c, 0x67, 0x45, 0x15, 0x07, 0xff, 0x8d, 0x4c, 0xa8, 0x0b, 0xa5, 0xe7,
+	0x4c, 0xe8, 0xdb, 0x20, 0x6a, 0x89, 0x8e, 0xa1, 0xa1, 0xba, 0x35, 0x32, 0xcb, 0xc2, 0xe1, 0xc9,
+	0x86, 0x75, 0x05, 0x9f, 0x2b, 0xf6, 0x0b, 0xd9, 0xb3, 0xae, 0xef, 0x5d, 0x46, 0x34, 0xdc, 0x4c,
+	0x04, 0x3d, 0x81, 0x5a, 0x48, 0x9d, 0xc8, 0xf7, 0x64, 0x04, 0xb9, 0xe2, 0x01, 0x42, 0x87, 0xdf,
+	0x72, 0x96, 0x71, 0xc9, 0x1a, 0x24, 0xd9, 0xb0, 0x30, 0x98, 0x39, 0x01, 0xb4, 0x18, 0x9b, 0x0f,
+	0xb1, 0xfa, 0xf0, 0x34, 0x07, 0x2f, 0xb5, 0xc9, 0x7b, 0x39, 0x4a, 0xd9, 0x4a, 0x29, 0xfa, 0x5f,
+	0x19, 0x3a, 0xba, 0xa6, 0x39, 0x74, 0x5c, 0x6e, 0x74, 0x96, 0xb6, 0x5a, 0xec, 0x61, 0x48, 0x9c,
+	0x90, 0x36, 0xd8, 0x18, 0x1a, 0xaa, 0x9a, 0x91, 0x59, 0xea, 0x94, 0xcf, 0x8c, 0xee, 0x2b, 0xbc,
+	0x8f, 0x1f, 0x6b, 0x63, 0x0c, 0x3c, 0x16, 0xde, 0x91, 0x84, 0x02, 0x7d, 0x05, 0x75, 0x5f, 0x3c,
+	0x28, 0x2e, 0x88, 0xd1, 0x35, 0x70, 0x62, 0x00, 0xa2, 0xce, 0x90, 0x0d, 0xc6, 0x07, 0xdd, 0x76,
+	0x91, 0x59, 0x11, 0xd0, 0xee, 0xfe, 0xc0, 0x49, 0xaf, 0xca, 0xd0, 0x69, 0x1a, 0x84, 0xa1, 0xba,
+	0x8e, 0x68, 0x18, 0x99, 0x55, 0xc1, 0x67, 0xe2, 0x1d, 0xf5, 0x27, 0x31, 0xac, 0x6d, 0x43, 0x33,
+	0xfb, 0x12, 0xd4, 0x82, 0xf2, 0xef, 0xf4, 0x4e, 0x16, 0x81, 0xff, 0x44, 0xdf, 0xa8, 0x0e, 0x8c,
+	0x7b, 0xfb, 0x09, 0xce, 0x1d, 0x5d, 0xb2, 0x0f, 0x7f, 0x28, 0x7d, 0x5f, 0x6c, 0xbf, 0x87, 0xd6,
+	0x66, 0x9a, 0x39, 0xbc, 0xdd, 0x2c, 0xef, 0x31, 0xbe, 0x67, 0x26, 0xa5, 0xd8, 0xad, 0xbf, 0x8a,
+	0x60, 0xcd, 0xd6, 0xd7, 0xca, 0xe6, 0xbb, 0x1c, 0xf0, 0x0a, 0x0e, 0x14, 0x44, 0x1a, 0xe0, 0xd3,
+	0x3c, 0x35, 0x88, 0x46, 0x21, 0x0b, 0x6a, 0xae, 0x27, 0x0a, 0x17, 0xdb, 0x00, 0xb0, 0x6e, 0x6d,
+	0x22, 0x4f, 0x1e, 0x58, 0x5d, 0xcb, 0x07, 0x6b, 0xba, 0x74, 0xe6, 0xf4, 0x83, 0xbf, 0x5c, 0xd0,
+	0x70, 0x57, 0x8a, 0x49, 0xc0, 0xe2, 0x43, 0x02, 0x96, 0xee, 0x09, 0xf8, 0x6f, 0x31, 0xb7, 0xd7,
+	0x45, 0x98, 0xde, 0x76, 0x2f, 0x7c, 0xb9, 0xd7, 0x68, 0xd9, 0x29, 0xdc, 0x4b, 0x89, 0x19, 0x97,
+	0xeb, 0x04, 0xef, 0xaf, 0xc1, 0xb0, 0x90, 0x52, 0xf7, 0x0d, 0x18, 0x41, 0x22, 0x89, 0x1c, 0xff,
+	0x27, 0x78, 0xbf, 0x4c, 0xc3, 0x02, 0x49, 0xdf, 0x3c, 0xaf, 0x41, 0x25, 0x62, 0x34, 0xb0, 0xfe,
+	0x2e, 0xc3, 0xe3, 0x9c, 0x2b, 0x5b, 0xa3, 0xed, 0x14, 0x6a, 0x91, 0x98, 0xad, 0x32, 0xf3, 0x23,
+	0x9c, 0x1d, 0xb9, 0x44, 0x1e, 0xa3, 0xd7, 0x50, 0x9f, 0x87, 0xd4, 0x61, 0x74, 0x21, 0xb3, 0x6b,
+	0xe3, 0xf8, 0xc3, 0x06, 0xab, 0x0f, 0x1b, 0x6c, 0xab, 0x0f, 0x1b, 0xa2, 0xa0, 0xe8, 0x79, 0x3c,
+	0x9c, 0xe9, 0x1f, 0x4c, 0xfc, 0x45, 0x35, 0xbb, 0x2d, 0xcd, 0xdf, 0x8f, 0xf7, 0x89, 0x02, 0xe8,
+	0x11, 0x57, 0x4d, 0x8d, 0xb8, 0x0e, 0x18, 0x8b, 0x24, 0x7b, 0xf1, 0xef, 0xd3, 0x20, 0xe9, 0xad,
+	0xa4, 0xa9, 0xeb, 0x0f, 0x6a, 0x6a, 0xf4, 0xad, 0xb6, 0xd5, 0x81, 0xb8, 0xf0, 0x14, 0xef, 0x1a,
+	0xd2, 0xda, 0x65, 0xaf, 0x13, 0x97, 0x35, 0xc4, 0x9d, 0x36, 0xde, 0x39, 0xa8, 0x93, 0x19, 0x86,
+	0xa1, 0xca, 0x2b, 0x11, 0x99, 0xb0, 0x3b, 0x31, 0x5e, 0x41, 0x12, 0xc3, 0x9e, 0xaf, 0xe0, 0x68,
+	0x43, 0x1a, 0x74, 0x0c, 0xe6, 0x74, 0x34, 0x1d, 0xbc, 0x1d, 0x8d, 0x07, 0x57, 0xfd, 0xc9, 0xd8,
+	0x1e, 0xfc, 0x62, 0x5f, 0x5d, 0x8e, 0x7f, 0x1a, 0x4f, 0x7e, 0x1e, 0xb7, 0x0a, 0xe8, 0x08, 0x8c,
+	0x29, 0x19, 0xd8, 0xa4, 0x37, 0x1a, 0x8f, 0xc6, 0x6f, 0x5a, 0x45, 0x64, 0x40, 0xdd, 0x1e, 0xcc,
+	0x6c, 0xbe, 0x28, 0xa1, 0x26, 0xc0, 0xe0, 0x5d, 0xef, 0xed, 0x65, 0xcf, 0x1e, 0x4d, 0xc6, 0xad,
+	0x32, 0x5f, 0x4f, 0xc9, 0xe4, 0xe2, 0xb2, 0x2f, 0xd6, 0x95, 0x73, 0xf8, 0x55, 0xbb, 0xef, 0xba,
+	0x26, 0x4a, 0xf8, 0xdd, 0xff, 0x01, 0x00, 0x00, 0xff, 0xff, 0x5f, 0x76, 0x11, 0xd6, 0xdd, 0x0a,
+	0x00, 0x00,
 }

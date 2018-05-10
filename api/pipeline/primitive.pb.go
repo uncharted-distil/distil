@@ -13,19 +13,49 @@ var _ = proto.Marshal
 var _ = fmt.Errorf
 var _ = math.Inf
 
+// This is a compile-time assertion to ensure that this generated file
+// is compatible with the proto package it is being compiled against.
+// A compilation error at this line likely means your copy of the
+// proto package needs to be updated.
+const _ = proto.ProtoPackageIsVersion2 // please upgrade the proto package
+
 // Description of the primitive.
 type Primitive struct {
 	Id         string `protobuf:"bytes,1,opt,name=id" json:"id,omitempty"`
 	Version    string `protobuf:"bytes,2,opt,name=version" json:"version,omitempty"`
 	PythonPath string `protobuf:"bytes,3,opt,name=python_path,json=pythonPath" json:"python_path,omitempty"`
 	Name       string `protobuf:"bytes,4,opt,name=name" json:"name,omitempty"`
-	Digest     string `protobuf:"bytes,5,opt,name=digest" json:"digest,omitempty"`
+	// Digest is optional, because some locally registered primitives might not have it.
+	// But for all primitives published it is available and it should be provided here as well.
+	Digest               string   `protobuf:"bytes,5,opt,name=digest" json:"digest,omitempty"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
 }
 
-func (m *Primitive) Reset()                    { *m = Primitive{} }
-func (m *Primitive) String() string            { return proto.CompactTextString(m) }
-func (*Primitive) ProtoMessage()               {}
-func (*Primitive) Descriptor() ([]byte, []int) { return fileDescriptor2, []int{0} }
+func (m *Primitive) Reset()         { *m = Primitive{} }
+func (m *Primitive) String() string { return proto.CompactTextString(m) }
+func (*Primitive) ProtoMessage()    {}
+func (*Primitive) Descriptor() ([]byte, []int) {
+	return fileDescriptor_primitive_791c73a92f28dc9a, []int{0}
+}
+func (m *Primitive) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_Primitive.Unmarshal(m, b)
+}
+func (m *Primitive) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_Primitive.Marshal(b, m, deterministic)
+}
+func (dst *Primitive) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_Primitive.Merge(dst, src)
+}
+func (m *Primitive) XXX_Size() int {
+	return xxx_messageInfo_Primitive.Size(m)
+}
+func (m *Primitive) XXX_DiscardUnknown() {
+	xxx_messageInfo_Primitive.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_Primitive proto.InternalMessageInfo
 
 func (m *Primitive) GetId() string {
 	if m != nil {
@@ -66,9 +96,9 @@ func init() {
 	proto.RegisterType((*Primitive)(nil), "Primitive")
 }
 
-func init() { proto.RegisterFile("primitive.proto", fileDescriptor2) }
+func init() { proto.RegisterFile("primitive.proto", fileDescriptor_primitive_791c73a92f28dc9a) }
 
-var fileDescriptor2 = []byte{
+var fileDescriptor_primitive_791c73a92f28dc9a = []byte{
 	// 177 bytes of a gzipped FileDescriptorProto
 	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x34, 0x8e, 0xc1, 0xca, 0x82, 0x40,
 	0x10, 0x80, 0xd1, 0xdf, 0xdf, 0x72, 0x82, 0x82, 0x3d, 0xc4, 0xd2, 0x25, 0xe9, 0xd4, 0x29, 0x0f,

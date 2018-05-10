@@ -17,10 +17,10 @@
 				<div class="home-items">
 					<recent-datasets
 						:max-datasets="5"></recent-datasets>
-					<recent-pipelines
-						:max-pipelines="5"></recent-pipelines>
-					<running-pipelines
-						:max-pipelines="5"></running-pipelines>
+					<recent-solutions
+						:max-solutions="5"></recent-solutions>
+					<running-solutions
+						:max-solutions="5"></running-solutions>
 				</div>
 			</div>
 		</div>
@@ -32,10 +32,10 @@
 
 <script lang="ts">
 import RecentDatasets from '../components/RecentDatasets';
-import RecentPipelines from '../components/RecentPipelines';
-import RunningPipelines from '../components/RunningPipelines';
+import RecentSolutions from '../components/RecentSolutions';
+import RunningSolutions from '../components/RunningSolutions';
 import SearchBar from '../components/SearchBar';
-import { actions } from '../store/pipelines/module';
+import { actions } from '../store/solutions/module';
 import { getters as appGetters } from '../store/app/module';
 import Vue from 'vue';
 
@@ -44,8 +44,8 @@ export default Vue.extend({
 
 	components: {
 		RecentDatasets,
-		RecentPipelines,
-		RunningPipelines,
+		RecentSolutions,
+		RunningSolutions,
 		SearchBar
 	},
 
@@ -61,7 +61,7 @@ export default Vue.extend({
 
 	methods: {
 		fetch() {
-			actions.fetchPipelines(this.$store, {});
+			actions.fetchSolutions(this.$store, {});
 		}
 	}
 

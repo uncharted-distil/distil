@@ -9,85 +9,85 @@ import (
 	"github.com/unchartedsoftware/distil/api/model"
 )
 
-// PersistPipeline persists the pipeline to Postgres.
-func (s *Storage) PersistPipeline(requestID string, pipelineID string, progress string, createdTime time.Time) error {
-	sql := fmt.Sprintf("INSERT INTO %s (request_id, pipeline_id, progress, created_time) VALUES ($1, $2, $3, $4);", pipelineTableName)
+// PersistSolution persists the solution to Postgres.
+func (s *Storage) PersistSolution(requestID string, solutionID string, progress string, createdTime time.Time) error {
+	sql := fmt.Sprintf("INSERT INTO %s (request_id, solution_id, progress, created_time) VALUES ($1, $2, $3, $4);", solutionTableName)
 
-	_, err := s.client.Exec(sql, requestID, pipelineID, progress, createdTime)
-
-	return err
-}
-
-// PersistPipelineResult persists the pipeline result metadata to Postgres.
-func (s *Storage) PersistPipelineResult(pipelineID string, resultUUID string, resultURI string, progress string, createdTime time.Time) error {
-	sql := fmt.Sprintf("INSERT INTO %s (pipeline_id, result_uuid, result_uri, progress, created_time) VALUES ($1, $2, $3, $4, $5);", pipelineResultTableName)
-
-	_, err := s.client.Exec(sql, pipelineID, resultUUID, resultURI, progress, createdTime)
+	_, err := s.client.Exec(sql, requestID, solutionID, progress, createdTime)
 
 	return err
 }
 
-// PersistPipelineScore persist the pipeline score to Postgres.
-func (s *Storage) PersistPipelineScore(pipelineID string, metric string, score float64) error {
-	sql := fmt.Sprintf("INSERT INTO %s (pipeline_id, metric, score) VALUES ($1, $2, $3);", pipelineScoreTableName)
+// PersistSolutionResult persists the solution result metadata to Postgres.
+func (s *Storage) PersistSolutionResult(solutionID string, resultUUID string, resultURI string, progress string, createdTime time.Time) error {
+	sql := fmt.Sprintf("INSERT INTO %s (solution_id, result_uuid, result_uri, progress, created_time) VALUES ($1, $2, $3, $4, $5);", solutionResultTableName)
 
-	_, err := s.client.Exec(sql, pipelineID, metric, score)
+	_, err := s.client.Exec(sql, solutionID, resultUUID, resultURI, progress, createdTime)
 
 	return err
 }
 
-// FetchPipeline pulls pipeline information from Postgres.
-func (s *Storage) FetchPipeline(pipelineID string) (*model.Pipeline, error) {
-	sql := fmt.Sprintf("SELECT request_id, pipeline_id, progress, created_time FROM %s WHERE pipeline_id = $1;", pipelineTableName)
+// PersistSolutionScore persist the solution score to Postgres.
+func (s *Storage) PersistSolutionScore(solutionID string, metric string, score float64) error {
+	sql := fmt.Sprintf("INSERT INTO %s (solution_id, metric, score) VALUES ($1, $2, $3);", solutionScoreTableName)
 
-	rows, err := s.client.Query(sql, pipelineID)
+	_, err := s.client.Exec(sql, solutionID, metric, score)
+
+	return err
+}
+
+// FetchSolution pulls solution information from Postgres.
+func (s *Storage) FetchSolution(solutionID string) (*model.Solution, error) {
+	sql := fmt.Sprintf("SELECT request_id, solution_id, progress, created_time FROM %s WHERE solution_id = $1;", solutionTableName)
+
+	rows, err := s.client.Query(sql, solutionID)
 	if err != nil {
-		return nil, errors.Wrap(err, "Unable to pull pipeline from Postgres")
+		return nil, errors.Wrap(err, "Unable to pull solution from Postgres")
 	}
 	if rows != nil {
 		defer rows.Close()
 	}
 	rows.Next()
 
-	return s.parsePipeline(rows)
+	return s.parseSolution(rows)
 }
 
-func (s *Storage) parsePipeline(rows *pgx.Rows) (*model.Pipeline, error) {
+func (s *Storage) parseSolution(rows *pgx.Rows) (*model.Solution, error) {
 	var requestID string
-	var pipelineID string
+	var solutionID string
 	var progress string
 	var createdTime time.Time
 
-	err := rows.Scan(&requestID, &pipelineID, &progress, &createdTime)
+	err := rows.Scan(&requestID, &solutionID, &progress, &createdTime)
 	if err != nil {
-		return nil, errors.Wrap(err, "Unable to parse pipeline from Postgres")
+		return nil, errors.Wrap(err, "Unable to parse solution from Postgres")
 	}
 
-	return &model.Pipeline{
+	return &model.Solution{
 		RequestID:   requestID,
-		PipelineID:  pipelineID,
+		SolutionID:  solutionID,
 		Progress:    progress,
 		CreatedTime: createdTime,
 	}, nil
 }
 
-func (s *Storage) parsePipelineResult(rows *pgx.Rows) ([]*model.PipelineResult, error) {
-	results := make([]*model.PipelineResult, 0)
+func (s *Storage) parseSolutionResult(rows *pgx.Rows) ([]*model.SolutionResult, error) {
+	results := make([]*model.SolutionResult, 0)
 	for rows.Next() {
-		var pipelineID string
+		var solutionID string
 		var resultUUID string
 		var resultURI string
 		var progress string
 		var createdTime time.Time
 		var dataset string
 
-		err := rows.Scan(&pipelineID, &resultUUID, &resultURI, &progress, &createdTime, &dataset)
+		err := rows.Scan(&solutionID, &resultUUID, &resultURI, &progress, &createdTime, &dataset)
 		if err != nil {
-			return nil, errors.Wrap(err, "Unable to parse pipeline results from Postgres")
+			return nil, errors.Wrap(err, "Unable to parse solution results from Postgres")
 		}
 
-		results = append(results, &model.PipelineResult{
-			PipelineID:  pipelineID,
+		results = append(results, &model.SolutionResult{
+			SolutionID:  solutionID,
 			ResultURI:   resultURI,
 			ResultUUID:  resultUUID,
 			Progress:    progress,
@@ -117,13 +117,13 @@ func (s *Storage) parsePipelineResult(rows *pgx.Rows) ([]*model.PipelineResult, 
 	return results, nil
 }
 
-// FetchPipelineResultByRequestID pulls pipeline result information from Postgres.
-func (s *Storage) FetchPipelineResultByRequestID(requestID string) ([]*model.PipelineResult, error) {
-	sql := fmt.Sprintf("SELECT result.pipeline_id, result.result_uuid, "+
+// FetchSolutionResultByRequestID pulls solution result information from Postgres.
+func (s *Storage) FetchSolutionResultByRequestID(requestID string) ([]*model.SolutionResult, error) {
+	sql := fmt.Sprintf("SELECT result.solution_id, result.result_uuid, "+
 		"result.result_uri, result.progress, result.created_time, request.dataset "+
-		"FROM %s AS result INNER JOIN %s AS pipeline ON result.pipeline_id = pipeline.pipeline_id "+
-		"INNER JOIN %s AS request ON pipeline.request_id = request.request_id "+
-		"WHERE request.request_id = $1;", pipelineResultTableName, pipelineTableName, requestTableName)
+		"FROM %s AS result INNER JOIN %s AS solution ON result.solution_id = solution.solution_id "+
+		"INNER JOIN %s AS request ON solution.request_id = request.request_id "+
+		"WHERE request.request_id = $1;", solutionResultTableName, solutionTableName, requestTableName)
 
 	rows, err := s.client.Query(sql, requestID)
 	if err != nil {
@@ -133,32 +133,32 @@ func (s *Storage) FetchPipelineResultByRequestID(requestID string) ([]*model.Pip
 		defer rows.Close()
 	}
 
-	return s.parsePipelineResult(rows)
+	return s.parseSolutionResult(rows)
 }
 
-// FetchPipelineResult pulls pipeline result information from Postgres.
-func (s *Storage) FetchPipelineResult(pipelineID string) (*model.PipelineResult, error) {
-	sql := fmt.Sprintf("SELECT result.pipeline_id, result.result_uuid, "+
+// FetchSolutionResult pulls solution result information from Postgres.
+func (s *Storage) FetchSolutionResult(solutionID string) (*model.SolutionResult, error) {
+	sql := fmt.Sprintf("SELECT result.solution_id, result.result_uuid, "+
 		"result.result_uri, result.progress, result.created_time, request.dataset "+
-		"FROM %s AS result INNER JOIN %s AS pipeline ON result.pipeline_id = pipeline.pipeline_id "+
-		"INNER JOIN %s AS request ON pipeline.request_id = request.request_id "+
-		"WHERE result.pipeline_id = $1 "+
-		"ORDER BY result.created_time desc LIMIT 1;", pipelineResultTableName, pipelineTableName, requestTableName)
+		"FROM %s AS result INNER JOIN %s AS solution ON result.solution_id = solution.solution_id "+
+		"INNER JOIN %s AS request ON solution.request_id = request.request_id "+
+		"WHERE result.solution_id = $1 "+
+		"ORDER BY result.created_time desc LIMIT 1;", solutionResultTableName, solutionTableName, requestTableName)
 
-	rows, err := s.client.Query(sql, pipelineID)
+	rows, err := s.client.Query(sql, solutionID)
 	if err != nil {
-		return nil, errors.Wrap(err, "Unable to pull pipeline results from Postgres")
+		return nil, errors.Wrap(err, "Unable to pull solution results from Postgres")
 	}
 	if rows != nil {
 		defer rows.Close()
 	}
 
-	results, err := s.parsePipelineResult(rows)
+	results, err := s.parseSolutionResult(rows)
 	if err != nil {
-		return nil, errors.Wrap(err, "Unable to parse pipeline results from Postgres")
+		return nil, errors.Wrap(err, "Unable to parse solution results from Postgres")
 	}
 
-	var res *model.PipelineResult
+	var res *model.SolutionResult
 	if results != nil && len(results) > 0 {
 		res = results[0]
 	}
@@ -166,28 +166,28 @@ func (s *Storage) FetchPipelineResult(pipelineID string) (*model.PipelineResult,
 	return res, nil
 }
 
-// FetchPipelineResultByUUID pulls pipeline result information from Postgres.
-func (s *Storage) FetchPipelineResultByUUID(resultUUID string) (*model.PipelineResult, error) {
-	sql := fmt.Sprintf("SELECT result.pipeline_id, result.result_uuid, "+
+// FetchSolutionResultByUUID pulls solution result information from Postgres.
+func (s *Storage) FetchSolutionResultByUUID(resultUUID string) (*model.SolutionResult, error) {
+	sql := fmt.Sprintf("SELECT result.solution_id, result.result_uuid, "+
 		"result.result_uri, result.progress, result.created_time, request.dataset "+
-		"FROM %s AS result INNER JOIN %s AS pipeline ON result.pipeline_id = pipeline.pipeline_id "+
-		"INNER JOIN %s AS request ON pipeline.request_id = request.request_id "+
-		"WHERE result.result_uuid = $1;", pipelineResultTableName, pipelineTableName, requestTableName)
+		"FROM %s AS result INNER JOIN %s AS solution ON result.solution_id = solution.solution_id "+
+		"INNER JOIN %s AS request ON solution.request_id = request.request_id "+
+		"WHERE result.result_uuid = $1;", solutionResultTableName, solutionTableName, requestTableName)
 
 	rows, err := s.client.Query(sql, resultUUID)
 	if err != nil {
-		return nil, errors.Wrap(err, "Unable to pull pipeline results from Postgres")
+		return nil, errors.Wrap(err, "Unable to pull solution results from Postgres")
 	}
 	if rows != nil {
 		defer rows.Close()
 	}
 
-	results, err := s.parsePipelineResult(rows)
+	results, err := s.parseSolutionResult(rows)
 	if err != nil {
-		return nil, errors.Wrap(err, "Unable to parse pipeline results from Postgres")
+		return nil, errors.Wrap(err, "Unable to parse solution results from Postgres")
 	}
 
-	var res *model.PipelineResult
+	var res *model.SolutionResult
 	if results != nil && len(results) > 0 {
 		res = results[0]
 	}
@@ -195,31 +195,31 @@ func (s *Storage) FetchPipelineResultByUUID(resultUUID string) (*model.PipelineR
 	return res, nil
 }
 
-// FetchPipelineScore pulls pipeline score from Postgres.
-func (s *Storage) FetchPipelineScore(pipelineID string) ([]*model.PipelineScore, error) {
-	sql := fmt.Sprintf("SELECT pipeline_id, metric, score FROM %s WHERE pipeline_id = $1;", pipelineScoreTableName)
+// FetchSolutionScore pulls solution score from Postgres.
+func (s *Storage) FetchSolutionScore(solutionID string) ([]*model.SolutionScore, error) {
+	sql := fmt.Sprintf("SELECT solution_id, metric, score FROM %s WHERE solution_id = $1;", solutionScoreTableName)
 
-	rows, err := s.client.Query(sql, pipelineID)
+	rows, err := s.client.Query(sql, solutionID)
 	if err != nil {
-		return nil, errors.Wrap(err, "Unable to pull pipeline score from Postgres")
+		return nil, errors.Wrap(err, "Unable to pull solution score from Postgres")
 	}
 	if rows != nil {
 		defer rows.Close()
 	}
 
-	results := make([]*model.PipelineScore, 0)
+	results := make([]*model.SolutionScore, 0)
 	for rows.Next() {
-		var pipelineID string
+		var solutionID string
 		var metric string
 		var score float64
 
-		err = rows.Scan(&pipelineID, &metric, &score)
+		err = rows.Scan(&solutionID, &metric, &score)
 		if err != nil {
 			return nil, errors.Wrap(err, "Unable to parse result score from Postgres")
 		}
 
-		results = append(results, &model.PipelineScore{
-			PipelineID: pipelineID,
+		results = append(results, &model.SolutionScore{
+			SolutionID: solutionID,
 			Metric:     metric,
 			Score:      score,
 		})

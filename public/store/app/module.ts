@@ -25,7 +25,7 @@ export const getters = {
 // typed actions
 export const actions = {
 	abort: dispatch(moduleActions.abort),
-	exportPipeline: dispatch(moduleActions.exportPipeline),
+	exportSolution: dispatch(moduleActions.exportSolution),
 	fetchVersion: dispatch(moduleActions.fetchVersion)
 }
 

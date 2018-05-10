@@ -21,10 +21,10 @@ export const actions = {
 			});
 	},
 
-	exportPipeline(context: AppContext, args: { pipelineId: string}) {
-		return axios.get(`/distil/export/${args.pipelineId}`)
+	exportSolution(context: AppContext, args: { solutionId: string}) {
+		return axios.get(`/distil/export/${args.solutionId}`)
 			.then(() => {
-				console.warn(`User exported pipeline ${args.pipelineId}`);
+				console.warn(`User exported solution ${args.solutionId}`);
 				mutations.setAborted(context);
 			})
 			.catch(error => {
@@ -32,7 +32,7 @@ export const actions = {
 					return new Error(error.response.data);
 				} else {
 					// NOTE: request always fails because we exit on the server
-					console.warn(`User exported pipeline ${args.pipelineId}`);
+					console.warn(`User exported solution ${args.solutionId}`);
 					mutations.setAborted(context);
 				}
 			});

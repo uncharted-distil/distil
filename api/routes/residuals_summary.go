@@ -17,7 +17,7 @@ type ResidualsSummary struct {
 }
 
 // ResidualsSummaryHandler bins predicted result data for consumption in a downstream summary view.
-func ResidualsSummaryHandler(pipelineCtor model.PipelineStorageCtor, dataCtor model.DataStorageCtor) func(http.ResponseWriter, *http.Request) {
+func ResidualsSummaryHandler(solutionCtor model.SolutionStorageCtor, dataCtor model.DataStorageCtor) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// extract route parameters
 		dataset := pat.Param(r, "dataset")
@@ -52,7 +52,7 @@ func ResidualsSummaryHandler(pipelineCtor model.PipelineStorageCtor, dataCtor mo
 			return
 		}
 
-		pipeline, err := pipelineCtor()
+		solution, err := solutionCtor()
 		if err != nil {
 			handleError(w, err)
 			return
@@ -65,7 +65,7 @@ func ResidualsSummaryHandler(pipelineCtor model.PipelineStorageCtor, dataCtor mo
 		}
 
 		// get the result URI. Error ignored to make it ES compatible.
-		res, err := pipeline.FetchPipelineResultByUUID(resultUUID)
+		res, err := solution.FetchSolutionResultByUUID(resultUUID)
 		if err != nil {
 			handleError(w, err)
 			return
