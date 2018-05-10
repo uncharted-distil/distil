@@ -8,16 +8,22 @@ import (
 )
 
 func CreateTestStep(step int) *StepData {
-	return &StepData{
-		Primitive: &Primitive{
+	return NewStepData(
+		&Primitive{
 			Id:         fmt.Sprintf("0000-primtive-%d", step),
 			Version:    "1.0.0",
 			Name:       fmt.Sprintf("primitive-%d", step),
 			PythonPath: fmt.Sprintf("d3m.primitives.distil.primitive.%d", step),
 		},
-		Arguments:     map[string]string{},
-		OutputMethods: []string{"produce"},
-	}
+		[]string{"produce"},
+		map[string]*Value{
+			"test": &Value{
+				Value: &Value_String_{
+					String_: fmt.Sprintf("hyperparam-%d", step),
+				},
+			},
+		},
+	)
 }
 func TestPipelineCompile(t *testing.T) {
 
@@ -38,14 +44,17 @@ func TestPipelineCompile(t *testing.T) {
 	// validate step inputs
 	assert.Equal(t, "inputs.0", steps[0].GetPrimitive().GetArguments()["inputs"].GetContainer().GetData())
 	assert.Equal(t, "produce", steps[0].GetPrimitive().GetOutputs()[0].GetId())
+	assert.Equal(t, "hyperparam-0", steps[0].GetPrimitive().GetHyperparams()["test"].GetValue().GetData().GetString_())
 	assert.EqualValues(t, step0.GetPrimitive(), steps[0].GetPrimitive().GetPrimitive())
 
 	assert.Equal(t, "steps.0.produce", steps[1].GetPrimitive().GetArguments()["inputs"].GetContainer().GetData())
 	assert.Equal(t, "produce", steps[1].GetPrimitive().GetOutputs()[0].GetId())
+	assert.Equal(t, "hyperparam-1", steps[1].GetPrimitive().GetHyperparams()["test"].GetValue().GetData().GetString_())
 	assert.EqualValues(t, step1.GetPrimitive(), steps[1].GetPrimitive().GetPrimitive())
 
 	assert.Equal(t, "steps.1.produce", steps[2].GetPrimitive().GetArguments()["inputs"].GetContainer().GetData())
 	assert.Equal(t, "produce", steps[2].GetPrimitive().GetOutputs()[0].GetId())
+	assert.Equal(t, "hyperparam-2", steps[2].GetPrimitive().GetHyperparams()["test"].GetValue().GetData().GetString_())
 	assert.EqualValues(t, step2.GetPrimitive(), steps[2].GetPrimitive().GetPrimitive())
 
 	// validate outputs

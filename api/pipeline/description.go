@@ -16,15 +16,28 @@ const (
 type DescriptionStep interface {
 	GetPrimitive() *Primitive
 	GetArguments() map[string]string
+	GetHyperparameters() map[string]*Value
 	GetOutputMethods() []string
 	BuildDescriptionStep() *PipelineDescriptionStep
 }
 
 // StepData contains the minimum amount of data used to describe a pipeline step
 type StepData struct {
-	Primitive     *Primitive
-	Arguments     map[string]string
-	OutputMethods []string
+	Primitive       *Primitive
+	Arguments       map[string]string
+	Hyperparameters map[string]*Value
+	OutputMethods   []string
+}
+
+// NewStepData Creates a pipeline step instance from the required field subset.  Hyperparameters are
+// optional so nil is a valid value.
+func NewStepData(primitive *Primitive, outputMethods []string, hyperparameters map[string]*Value) *StepData {
+	return &StepData{
+		Primitive:       primitive,
+		Hyperparameters: hyperparameters, // optional, nil is valid
+		Arguments:       map[string]string{},
+		OutputMethods:   outputMethods,
+	}
 }
 
 // GetPrimitive returns a primitive definition for a pipeline step.
@@ -38,6 +51,12 @@ func (s *StepData) GetArguments() map[string]string {
 	return s.Arguments
 }
 
+// GetHyperparameters returns a map of arguments that will be passed to the primitive methods
+// of the primitive step.
+func (s *StepData) GetHyperparameters() map[string]*Value {
+	return s.Hyperparameters
+}
+
 // GetOutputMethods returns a list of methods that will be called to generate
 // primitive output.  These feed into downstream primitives.
 func (s *StepData) GetOutputMethods() []string {
@@ -48,9 +67,9 @@ func (s *StepData) GetOutputMethods() []string {
 // definition.
 func (s *StepData) BuildDescriptionStep() *PipelineDescriptionStep {
 	// generate arguments entries
-	psArgs := map[string]*PrimitiveStepArgument{}
+	arguments := map[string]*PrimitiveStepArgument{}
 	for k, v := range s.Arguments {
-		psArgs[k] = &PrimitiveStepArgument{
+		arguments[k] = &PrimitiveStepArgument{
 			// only handle container args rights now - extend to others if required
 			Argument: &PrimitiveStepArgument_Container{
 				Container: &ContainerArgument{
@@ -60,7 +79,21 @@ func (s *StepData) BuildDescriptionStep() *PipelineDescriptionStep {
 		}
 	}
 
-	// list of methods that will generate output - order matters because
+	// generate arguments entries
+	hyperparameters := map[string]*PrimitiveStepHyperparameter{}
+	for k, v := range s.Hyperparameters {
+		hyperparameters[k] = &PrimitiveStepHyperparameter{
+			// only handle value args rights now - extend to others if required
+			Argument: &PrimitiveStepHyperparameter_Value{
+				Value: &ValueArgument{
+					Data: v,
+				},
+			},
+		}
+	}
+
+	// list of methods that will generate output - order matters because the steps are
+	// numbered
 	outputMethods := []*StepOutput{}
 	for _, outputMethod := range s.OutputMethods {
 		outputMethods = append(outputMethods,
@@ -73,9 +106,10 @@ func (s *StepData) BuildDescriptionStep() *PipelineDescriptionStep {
 	return &PipelineDescriptionStep{
 		Step: &PipelineDescriptionStep_Primitive{
 			Primitive: &PrimitivePipelineDescriptionStep{
-				Primitive: s.Primitive,
-				Arguments: psArgs,
-				Outputs:   outputMethods,
+				Primitive:   s.Primitive,
+				Arguments:   arguments,
+				Hyperparams: hyperparameters,
+				Outputs:     outputMethods,
 			},
 		},
 	}
@@ -116,6 +150,12 @@ func (p *builder) Add(step DescriptionStep) DescriptionBuilder {
 }
 
 func validateStep(steps []DescriptionStep, stepNumber int) (map[string]string, error) {
+	// Validate step parameters.  This is currently pretty surface level, but we could
+	// go in validate the struct hierarchy to catch more potential caller errors during
+	// the compile step.
+	//
+	// NOTE: Hyperparameters are optional so there is no included check at this time.
+
 	step := steps[stepNumber]
 	if step == nil {
 		return nil, errors.Errorf("compile failed: nil value for step %d", stepNumber)
