@@ -16,9 +16,10 @@ import (
 )
 
 const (
-	predictedSuffix = "_predicted"
-	errorSuffix     = "_error"
-	targetSuffix    = "_target"
+	predictedSuffix   = "_predicted"
+	errorSuffix       = "_error"
+	correctnessSuffix = "_correctness"
+	targetSuffix      = "_target"
 )
 
 func (s *Storage) getResultTable(dataset string) string {

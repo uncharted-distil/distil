@@ -178,16 +178,23 @@ export default Vue.extend({
 					variables: this.paginatedVariables
 				});
 			});
-			dataActions.fetchResidualsExtremas(this.$store, {
-				dataset: this.dataset,
-				requestIds: this.requestIds
-			}).then(() => {
-				dataActions.fetchResidualsSummaries(this.$store, {
+			if (isRegression) {
+				dataActions.fetchResidualsExtremas(this.$store, {
 					dataset: this.dataset,
-					requestIds: this.requestIds,
-					extrema: this.residualExtrema
+					requestIds: this.requestIds
+				}).then(() => {
+					dataActions.fetchResidualsSummaries(this.$store, {
+						dataset: this.dataset,
+						requestIds: this.requestIds,
+						extrema: this.residualExtrema
+					});
 				});
-			});
+			} else {
+				dataActions.fetchCorrectnessSummaries(this.$store, {
+					dataset: this.dataset,
+					requestIds: this.requestIds
+				});
+			}
 			dataActions.fetchResultTableData(this.$store, {
 				dataset: this.dataset,
 				solutionId: this.solutionId,
@@ -256,7 +263,13 @@ export default Vue.extend({
 									extrema: this.residualExtrema
 								});
 							});
-						};
+						} else {
+							dataActions.fetchCorrectnessSummaries(this.$store, {
+								dataset: this.dataset,
+								requestIds: this.requestIds
+							});
+						}
+
 						dataActions.fetchResultTableData(this.$store, {
 							dataset: this.dataset,
 							solutionId: this.solutionId,

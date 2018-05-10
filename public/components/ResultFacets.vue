@@ -9,6 +9,7 @@
 			:scores="group.scores"
 			:predicted-summary="group.predictedSummary"
 			:residuals-summary="group.residualsSummary"
+			:correctness-summary="group.correctnessSummary"
 			:resultHtml="html"
 			:residualHtml="html">
 		</result-group>
@@ -36,6 +37,7 @@ interface SummaryGroup {
 	groupName: string;
 	predictedSummary: VariableSummary;
 	residualsSummary: VariableSummary;
+	correctnessSummary: VariableSummary;
 }
 /*eslint-enable */
 
@@ -70,22 +72,24 @@ export default Vue.extend({
 			return this.regression ? dataGetters.getResidualsSummaries(this.$store) : [];
 		},
 
+		correctnessSummaries(): VariableSummary[] {
+			return !this.regression ? dataGetters.getCorrectnessSummaries(this.$store) : [];
+		},
+
 		// Generate pairs of residuals and results for each solution in the numerical case.
 		resultGroups(): SummaryGroup[] {
 
 			const solutions = solutionGetters.getSolutions(this.$store).filter(solution => solution.feature === this.target);
 			const predictedSummaries = this.predictedSummaries;
 			const residualsSummaries = this.residualSummaries;
+			const correctnessSummaries = this.correctnessSummaries;
 
 			const summaryGroups = solutions.map(solution => {
 				const solutionId = solution.solutionId;
 				const requestId = solution.requestId;
-				const predictedSummary = _.find(predictedSummaries, summary => {
-					return summary.solutionId === solutionId;
-				});
-				const residualSummary = _.find(residualsSummaries, summary => {
-					return summary.solutionId === solutionId;
-				});
+				const predictedSummary = _.find(predictedSummaries, summary => summary.solutionId === solutionId);
+				const residualSummary = _.find(residualsSummaries, summary => summary.solutionId === solutionId);
+				const correctnessSummary = _.find(correctnessSummaries, summary => summary.solutionId === solutionId);
 				return {
 					requestId: requestId,
 					solutionId: solutionId,
@@ -93,7 +97,8 @@ export default Vue.extend({
 					timestamp: solution ? moment(solution.timestamp).format('YYYY/MM/DD') : '',
 					scores: solution ? solution.scores : [],
 					predictedSummary: predictedSummary,
-					residualsSummary: residualSummary
+					residualsSummary: residualSummary,
+					correctnessSummary: correctnessSummary
 				};
 			});
 

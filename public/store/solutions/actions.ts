@@ -86,6 +86,11 @@ function updateCurrentSolutionResults(context: any, req: CreateSolutionRequest, 
 				extrema: context.getters.getResidualExtrema
 			});
 		});
+	} else {
+		context.dispatch('fetchCorrectnessSummary', {
+			dataset: req.dataset,
+			solutionId: res.solutionId
+		});
 	}
 }
 
@@ -123,6 +128,11 @@ function updateSolutionResults(context: any, req: CreateSolutionRequest, res: So
 				solutionId: res.solutionId,
 				extrema: context.getters.getResidualExtrema
 			});
+		});
+	} else {
+		context.dispatch('fetchCorrectnessSummary', {
+			dataset: req.dataset,
+			solutionId: res.solutionId
 		});
 	}
 }

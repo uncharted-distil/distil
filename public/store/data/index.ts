@@ -106,6 +106,7 @@ export interface DataState {
 	resultSummaries: VariableSummary[];
 	predictedSummaries: VariableSummary[];
 	residualSummaries: VariableSummary[];
+	correctnessSummaries: VariableSummary[];
 	resultExtrema: Extrema;
 	predictedExtremas: Dictionary<Extrema>;
 	residualExtremas: Dictionary<Extrema>;
@@ -132,8 +133,11 @@ export const state = {
 	// results summary data for the predicted data
 	predictedSummaries: <VariableSummary[]>[],
 
-	// error summary data for the predicted data
+	// residuals summary for the predicted numerical data
 	residualSummaries: <VariableSummary[]>[],
+
+	// correctness summary (correct vs. incorrect) for predicted categorical data
+	correctnessSummaries: <VariableSummary[]>[],
 
 	resultExtrema: null,
 

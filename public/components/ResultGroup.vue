@@ -35,6 +35,13 @@
 				<div class="residual-center-line"></div>
 				<div class="residual-center-label">0</div>
 			</div>
+			<facets v-if="correctnessGroups.length" class="result-container"
+				@facet-click="onCorrectnessCategoricalClick"
+				:groups="correctnessGroups"
+				:highlights="highlights"
+				:instanceName="correctnessInstanceName"
+				:html="residualHtml">
+			</facets>
 		</div>
 		<div v-if="solutionStatus === 'ERRORED'">
 			<b-badge variant="danger">
@@ -52,8 +59,8 @@
 import Vue from 'vue';
 import Facets from '../components/Facets';
 import { createGroups, Group } from '../util/facets';
-import { Extrema } from '../store/data/index';
-import { getPredictedCol, getErrorCol } from '../util/data';
+import { Extrema, VariableSummary } from '../store/data/index';
+import { getPredictedCol, getErrorCol, getCorrectnessCol } from '../util/data';
 import { Highlight } from '../store/data/index';
 import { getters as routeGetters } from '../store/route/module';
 import { getSolutionById, getMetricDisplayName } from '../util/solutions';
@@ -73,6 +80,7 @@ export default Vue.extend({
 		scores: Array,
 		predictedSummary: Object,
 		residualsSummary: Object,
+		correctnessSummary: Object,
 		resultHtml: String,
 		residualHtml: String
 	},
@@ -80,7 +88,8 @@ export default Vue.extend({
 	data() {
 		return {
 			predictedInstanceName: 'predicted-result-facet',
-			residualInstanceName: 'residual-result-facet'
+			residualInstanceName: 'residual-result-facet',
+			correctnessInstanceName: 'correctness-result-facet'
 		};
 	},
 
@@ -102,6 +111,10 @@ export default Vue.extend({
 			return getErrorCol(this.target);
 		},
 
+		correctnessColumnName(): string {
+			return getCorrectnessCol(this.target);
+		},
+
 		solutionStatus(): String {
 			const solution = getSolutionById(this.$store.state.solutionModule, this.solutionId);
 			if (solution) {
@@ -111,19 +124,11 @@ export default Vue.extend({
 		},
 
 		resultGroups(): Group[] {
-			if (this.predictedSummary) {
-				const predicted = createGroups([ this.predictedSummary ]);
-				if (this.highlights.root) {
-					const group = predicted[0];
-					if (group.key === this.highlights.root.key) {
-						group.facets.forEach(facet => {
-							facet.filterable = true;
-						});
-					}
-				}
-				return predicted;
-			}
-			return [];
+			return this.getAndActivateGroups(this.predictedSummary);
+		},
+
+		correctnessGroups(): Group[] {
+			return this.getAndActivateGroups(this.correctnessSummary);
 		},
 
 		residualGroups(): Group[] {
@@ -171,6 +176,19 @@ export default Vue.extend({
 			}
 		},
 
+		onCorrectnessCategoricalClick(context: string, key: string, value: string) {
+			if (key && value) {
+				// extract the var name from the key
+				updateHighlightRoot(this, {
+					context: context,
+					key: this.correctnessColumnName,
+					value: value
+				});
+			} else {
+				clearHighlightRoot(this);
+			}
+		},
+
 		onResultNumericalClick(context: string, key: string) {
 			if (!this.highlights.root || this.highlights.root.key !== key) {
 				updateHighlightRoot(this, {
@@ -197,6 +215,20 @@ export default Vue.extend({
 				});
 				this.$router.push(routeEntry);
 			}
+		},
+
+		getAndActivateGroups(summary: VariableSummary): Group[] {
+			if (summary) {
+				const groups = createGroups([ summary ]);
+				if (this.highlights.root) {
+					const group = groups[0];
+					if (group.key === this.highlights.root.key) {
+						group.facets.forEach(facet => facet.filterable = true);
+					}
+				}
+				return groups;
+			}
+			return [];
 		}
 	}
 });
