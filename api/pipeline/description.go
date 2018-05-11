@@ -134,7 +134,7 @@ func (s *StepData) BuildDescriptionStep() (*PipelineDescriptionStep, error) {
 				},
 			}
 		default:
-			return nil, errors.Errorf("compile failed: unhandle type %s for hyperparameter %v", k, v)
+			return nil, errors.Errorf("compile failed: unhandled type `%v` for hyperparameter `%s`", v, k)
 		}
 		hyperparameters[k] = &PrimitiveStepHyperparameter{
 			// only handle value args rights now - extend to others if required
