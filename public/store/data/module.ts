@@ -66,6 +66,8 @@ export const getters = {
 	// highlights
 	getHighlightedSamples: read(moduleGetters.getHighlightedSamples),
 	getHighlightedSummaries: read(moduleGetters.getHighlightedSummaries),
+	// images
+	getImages: read(moduleGetters.getImages),
 }
 
 // Typed actions
@@ -106,7 +108,9 @@ export const actions = {
 
 	fetchResults: dispatch(moduleActions.fetchResults),
 	fetchDataHighlightValues: dispatch(moduleActions.fetchDataHighlightValues),
-	fetchResultHighlightValues: dispatch(moduleActions.fetchResultHighlightValues)
+	fetchResultHighlightValues: dispatch(moduleActions.fetchResultHighlightValues),
+
+	fetchImage: dispatch(moduleActions.fetchImage)
 }
 
 // Typed mutations
@@ -136,5 +140,6 @@ export const mutations = {
 	updatePredictedHighlightSummaries: commit(moduleMutations.updatePredictedHighlightSummaries),
 	updateCorrectnessHighlightSummaries: commit(moduleMutations.updateCorrectnessHighlightSummaries),
 	clearHighlightSummaries: commit(moduleMutations.clearHighlightSummaries),
+	setImage: commit(moduleMutations.setImage),
 
 }

@@ -49,6 +49,11 @@
 				:items="items"
 				:fields="fields"
 				@row-clicked="onRowClick">
+
+				<template v-for="imageField in imageFields" :slot="imageField" slot-scope="data">
+					<image-preview :key="imageField" :image-url="data.item[imageField]"></image-preview>
+				</template>
+
 			</b-table>
 		</div>
 
@@ -61,6 +66,7 @@ import _ from 'lodash';
 import { spinnerHTML } from '../util/spinner';
 import Vue from 'vue';
 import FilterBadge from './FilterBadge';
+import ImagePreview from './ImagePreview';
 import { getters as dataGetters } from '../store/data/module';
 import { Dictionary } from '../util/dict';
 import { Filter } from '../util/filters';
@@ -75,7 +81,8 @@ export default Vue.extend({
 	name: 'selected-data-table',
 
 	components: {
-		FilterBadge
+		FilterBadge,
+		ImagePreview
 	},
 
 	props: {
@@ -115,6 +122,17 @@ export default Vue.extend({
 		// extract the table field header from the store
 		fields(): Dictionary<FieldInfo> {
 			return this.includedActive ? dataGetters.getSelectedDataFields(this.$store) : dataGetters.getExcludedDataFields(this.$store);
+		},
+
+		imageFields(): string[] {
+			return _.map(this.fields, (field, name) => {
+				return {
+					name: name,
+					type: field.type
+				};
+			})
+			.filter(field => field.type === 'image')
+			.map(field => field.name);
 		},
 
 		activeFilter(): Filter {

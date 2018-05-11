@@ -6,14 +6,14 @@
 import _ from 'lodash';
 import $ from 'jquery';
 import Vue from 'vue';
-import { Group, CategoricalFacet, isCategoricalFacet, CATEGORICAL_CHUNK_SIZE } from '../util/facets';
+import { Group, CategoricalFacet, isCategoricalFacet, getCategoricalChunkSize } from '../util/facets';
 import { Highlight, RowSelection } from '../store/data/index';
 import { Dictionary } from '../util/dict';
 import Facets from '@uncharted.software/stories-facets';
+import ImagePreview from '../components/ImagePreview';
 import TypeChangeMenu from '../components/TypeChangeMenu';
 import { circleSpinnerHTML } from '../util/spinner';
 import '@uncharted.software/stories-facets/dist/facets.css';
-
 export default Vue.extend({
 	name: 'facets',
 
@@ -102,7 +102,9 @@ export default Vue.extend({
 			if (!component.more[key]) {
 				Vue.set(component.more, key, 0);
 			}
-			Vue.set(component.more, key, component.more[key] + CATEGORICAL_CHUNK_SIZE);
+			console.log(key, this.groups);
+			const group = _.find(this.groups, g => g.key === key);
+			Vue.set(component.more, key, component.more[key] + getCategoricalChunkSize(group.type));
 		});
 
 		// click events
@@ -245,6 +247,9 @@ export default Vue.extend({
 
 			// inject type change header menus
 			this.injectTypeChangeHeaders(group, $elem);
+
+			// inject image preview if image type
+			this.injectImagePreview(group, $elem);
 
 			if (!this.html) {
 				return;
@@ -696,6 +701,25 @@ export default Vue.extend({
 						}
 					});
 				menu.$mount($slot[0]);
+			}
+		},
+
+		injectImagePreview(group: Group, $elem: JQuery) {
+			if (group.type === 'image') {
+				const $facets = $elem.find('.facet-block');
+				group.facets.forEach((facet: any, index) => {
+					const $facet = $($facets.get(index));
+					const $slot = $('<span/>');
+					$facet.append($slot);
+					const preview = new ImagePreview(
+						{
+							store: this.$store,
+							propsData: {
+								imageUrl: facet.value
+							}
+						});
+					preview.$mount($slot[0]);
+				});
 			}
 		}
 	},

@@ -365,4 +365,8 @@ export const getters = {
 		});
 		return res;
 	},
+
+	getImages(state: DataState): Dictionary<any> {
+		return state.loadedImages;
+	}
 }

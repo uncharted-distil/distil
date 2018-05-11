@@ -39,6 +39,8 @@ const (
 	StateType = "state"
 	// URIType is the schema type for URI values
 	URIType = "uri"
+	// ImageType is the schema type for Image values
+	ImageType = "image"
 	// UnknownType is the schema type for unknown values
 	UnknownType = "unknown"
 )
@@ -56,7 +58,8 @@ var (
 		PostalCodeType:  true,
 		StateType:       true,
 		URIType:         true,
-		UnknownType:     true}
+		UnknownType:     true,
+		ImageType:       true}
 	numericalTypes = map[string]bool{
 		LongitudeType: true,
 		LatitudeType:  true,
