@@ -218,7 +218,7 @@ func (f *NumericalField) parseHistogram(varType string, rows *pgx.Rows, extrema 
 		Name:    extrema.Name,
 		Type:    model.NumericalType,
 		VarType: varType,
-		Extrema: extrema,
+		Extrema: rounded,
 		Buckets: buckets,
 	}, nil
 }
