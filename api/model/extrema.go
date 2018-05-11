@@ -81,24 +81,9 @@ func (e *Extrema) GetBucketMinMax() *Extrema {
 }
 
 func (e *Extrema) getFloatingPointInterval() float64 {
-	// get interval
 	rang := e.Max - e.Min
-	interval := rang / maxNumBuckets
-	if interval < 1 {
-		// if interval is less than one, round to significant digit
-		factor := 10.0
-		for {
-			if factor*interval > 1 {
-				break
-			} else {
-				factor = factor * 10
-			}
-		}
-		unit := 1 / factor
-		return ceilByUnit(interval, unit)
-	}
-	// ceil interval
-	return math.Ceil(interval)
+	interval := math.Abs(rang / maxNumBuckets)
+	return roundInterval(interval)
 }
 
 func (e *Extrema) getIntegerInterval() float64 {
@@ -123,4 +108,18 @@ func floorByUnit(x float64, unit float64) float64 {
 
 func ceilByUnit(x float64, unit float64) float64 {
 	return math.Ceil(x/unit) * unit
+}
+
+func roundInterval(interval float64) float64 {
+	round := math.Pow(10, math.Floor(math.Log10(interval)))
+	// round interval are considered 1, 2, or 5.
+	interval /= round
+	if interval <= 2 {
+		interval = 2
+	} else if interval <= 5 {
+		interval = 5
+	} else {
+		interval = 10
+	}
+	return interval * round
 }
