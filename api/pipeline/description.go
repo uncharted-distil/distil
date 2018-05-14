@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/pkg/errors"
+	log "github.com/unchartedsoftware/plog"
 )
 
 const (
@@ -14,11 +15,12 @@ const (
 // DescriptionStep provides data for a pipeline description step and an operation
 // to create a protobuf PipelineDescriptionStep from that data.
 type DescriptionStep interface {
+	BuildDescriptionStep() (*PipelineDescriptionStep, error)
 	GetPrimitive() *Primitive
 	GetArguments() map[string]string
+	UpdateArguments(string, string)
 	GetHyperparameters() map[string]interface{}
 	GetOutputMethods() []string
-	BuildDescriptionStep() (*PipelineDescriptionStep, error)
 }
 
 // StepData contains the minimum amount of data used to describe a pipeline step
@@ -53,7 +55,17 @@ func (s *StepData) GetPrimitive() *Primitive {
 // GetArguments returns a map of arguments that will be passed to the methods
 // of the primitive step.
 func (s *StepData) GetArguments() map[string]string {
-	return s.Arguments
+	copy := map[string]string{}
+	for k, v := range s.Arguments {
+		copy[k] = v
+	}
+	return copy
+}
+
+// UpdateArguments updates the arguments map that will be passed to the methods
+// of primtive step.
+func (s *StepData) UpdateArguments(key string, value string) {
+	s.Arguments[key] = value
 }
 
 // GetHyperparameters returns a map of arguments that will be passed to the primitive methods
@@ -169,6 +181,87 @@ func (s *StepData) BuildDescriptionStep() (*PipelineDescriptionStep, error) {
 	}, nil
 }
 
+type InferenceStepData struct {
+	Inputs  []string
+	Outputs []string
+}
+
+func NewInferenceStepData() *InferenceStepData {
+	return &InferenceStepData{
+		Inputs:  []string{},
+		Outputs: []string{"produce"},
+	}
+}
+
+// GetPrimitive returns nil since there is no primitive associated with a placeholder
+// step.
+func (s *InferenceStepData) GetPrimitive() *Primitive {
+	return nil
+}
+
+// GetArguments adapts the internal placeholder step argument type to the primitive
+// step argument type.
+func (s *InferenceStepData) GetArguments() map[string]string {
+	argMap := map[string]string{}
+	for i, input := range s.Inputs {
+		argMap[fmt.Sprintf("%s.%d", stepInputsKey, i)] = input
+	}
+	return argMap
+}
+
+// UpdateArguments updates the placheolder step argument.
+func (s *InferenceStepData) UpdateArguments(key string, value string) {
+	if key != stepInputsKey {
+		log.Warnf("Compile warning - inference step key `%s` is not `%s` as expected", key, stepInputsKey)
+	}
+	s.Inputs = append(s.Inputs, value)
+}
+
+// GetHyperparameters returns an empty map since inference steps don't
+// take hyper parameters.
+func (s *InferenceStepData) GetHyperparameters() map[string]interface{} {
+	return map[string]interface{}{}
+}
+
+// GetOutputMethods returns a list of methods that will be called to generate
+// primitive output.  These feed into downstream primitives.
+func (s *InferenceStepData) GetOutputMethods() []string {
+	return s.Outputs
+}
+
+// BuildDescriptionStep creates protobuf structures from a pipeline step
+// definition.
+func (s *InferenceStepData) BuildDescriptionStep() (*PipelineDescriptionStep, error) {
+	// generate arguments entries
+	inputs := []*StepInput{}
+	for _, v := range s.Inputs {
+		input := &StepInput{
+			Data: v,
+		}
+		inputs = append(inputs, input)
+	}
+
+	// list of methods that will generate output - order matters because the steps are
+	// numbered
+	outputs := []*StepOutput{}
+	for _, v := range s.Outputs {
+		output := &StepOutput{
+			Id: v,
+		}
+		outputs = append(outputs, output)
+	}
+
+	// create the pipeline description structure
+	return &PipelineDescriptionStep{
+		Step: &PipelineDescriptionStep_Placeholder{
+			Placeholder: &PlaceholderPipelineDescriptionStep{
+				Inputs:  inputs,
+				Outputs: outputs,
+			},
+		},
+	}, nil
+}
+
 type builder struct {
 	name        string
 	description string
@@ -184,6 +277,7 @@ type builder struct {
 // 			Compile()
 type DescriptionBuilder interface {
 	Add(stepData DescriptionStep) DescriptionBuilder
+	AddInferencePoint() DescriptionBuilder
 	Compile() (*PipelineDescription, error)
 }
 
@@ -203,33 +297,34 @@ func (p *builder) Add(step DescriptionStep) DescriptionBuilder {
 	return p
 }
 
-func validateStep(steps []DescriptionStep, stepNumber int) (map[string]string, error) {
+func (p *builder) AddInferencePoint() DescriptionBuilder {
+	// Create the standard inference step  and append it
+	p.steps = append(p.steps, NewInferenceStepData())
+	return p
+}
+
+func validateStep(steps []DescriptionStep, stepNumber int) error {
 	// Validate step parameters.  This is currently pretty surface level, but we could
 	// go in validate the struct hierarchy to catch more potential caller errors during
 	// the compile step.
 	//
-	// NOTE: Hyperparameters are optional so there is no included check at this time.
+	// NOTE: Hyperparameters and Primitive are optional so there is no included check at this time.
 
 	step := steps[stepNumber]
 	if step == nil {
-		return nil, errors.Errorf("compile failed: nil value for step %d", stepNumber)
-	}
-
-	primitive := step.GetPrimitive()
-	if primitive == nil {
-		return nil, errors.Errorf("compile failed: step %d missing primitive definition", stepNumber)
+		return errors.Errorf("compile failed: nil value for step %d", stepNumber)
 	}
 
 	args := step.GetArguments()
 	if args == nil {
-		return nil, errors.Errorf("compile failed: step %d missing argument list", stepNumber)
+		return errors.Errorf("compile failed: step %d missing argument list", stepNumber)
 	}
 
 	outputs := step.GetOutputMethods()
 	if len(outputs) == 0 {
-		return nil, errors.Errorf("compile failed: expected at least 1 output for step %d", stepNumber)
+		return errors.Errorf("compile failed: expected at least 1 output for step %d", stepNumber)
 	}
-	return args, nil
+	return nil
 }
 
 // Compile the pipeline into a PipelineDescription
@@ -239,28 +334,29 @@ func (p *builder) Compile() (*PipelineDescription, error) {
 	}
 
 	// make sure first step has an arg list
-	args, err := validateStep(p.steps, 0)
+	err := validateStep(p.steps, 0)
 	if err != nil {
 		return nil, err
 	}
 
 	// first step, set the input to the dataset by default
+	args := p.steps[0].GetArguments()
 	_, ok := args[pipelineInputsKey]
 	if ok {
 		return nil, errors.Errorf("compile failed: argument `%s` is reserved for internal use", stepInputsKey)
 	}
-	args[stepInputsKey] = fmt.Sprintf("%s.0", pipelineInputsKey)
+	p.steps[0].UpdateArguments(stepInputsKey, fmt.Sprintf("%s.0", pipelineInputsKey))
 
 	// Connect the input of each step to the output of the previous.  Currently
 	// only support a single output.
 	for i := 1; i < len(p.steps); i++ {
 		previousStep := i - 1
 		previousOutput := p.steps[i-1].GetOutputMethods()[0]
-		args, err := validateStep(p.steps, i)
+		err := validateStep(p.steps, i)
 		if err != nil {
 			return nil, err
 		}
-		args[stepInputsKey] = fmt.Sprintf("steps.%d.%s", previousStep, previousOutput)
+		p.steps[i].UpdateArguments(stepInputsKey, fmt.Sprintf("steps.%d.%s", previousStep, previousOutput))
 	}
 
 	// Set the output from the tail end of the pipeline

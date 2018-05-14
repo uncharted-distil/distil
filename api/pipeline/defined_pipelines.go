@@ -25,6 +25,7 @@ func CreateUserDatasetPipeline() (*PipelineDescription, error) {
 	pipeline, err := NewDescriptionBuilder("baseball_user_cleaning", "Baseball dataset with user driven feature selection and typing").
 		Add(featureSelect).
 		Add(semanticTypeUpdate).
+		AddInferencePoint().
 		Compile()
 
 	if err != nil {
