@@ -16,8 +16,10 @@ type Variable struct {
 	Name             string      `json:"name"`
 	Type             string      `json:"type"`
 	Role             string      `json:"role"`
+	DistilRole       string      `json:"distilRole"`
 	DisplayVariable  string      `json:"varDisplayName"`
 	OriginalVariable string      `json:"varOriginalName"`
 	Importance       int         `json:"importance"`
 	SuggestedTypes   interface{} `json:"suggestedTypes"`
+	Deleted          bool        `json:"deleted"`
 }

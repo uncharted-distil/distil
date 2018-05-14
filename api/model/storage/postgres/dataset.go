@@ -40,6 +40,30 @@ func (s *Storage) defaultValue(typ string) interface{} {
 	}
 }
 
+func (s *Storage) getDatabaseFields(tableName string) ([]string, error) {
+	sql := fmt.Sprintf("SELECT column_name FROM information_schema.columns WHERE schema_name = 'public' AND table_name = $1;")
+
+	res, err := s.client.Query(sql, tableName)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to fetch database column names from postgres")
+	}
+	if res != nil {
+		defer res.Close()
+	}
+
+	cols := make([]string, 0)
+	for res.Next() {
+		var colName string
+		err := res.Scan(&colName)
+		if err != nil {
+			return nil, errors.Wrap(err, "Unable to parse column name")
+		}
+		cols = append(cols, colName)
+	}
+
+	return cols, nil
+}
+
 func (s *Storage) getExistingFields(dataset string) (map[string]*model.Variable, error) {
 	// Read the existing fields from the database.
 	vars, err := s.metadata.FetchVariablesDisplay(dataset)
@@ -91,9 +115,9 @@ func (s *Storage) createView(dataset string, fields map[string]*model.Variable) 
 	return err
 }
 
-// SetDataType updates the data type of the specified field.
+// SetDataType updates the data type of the specified variable.
 // Multiple simultaneous calls to the function can result in discarded changes.
-func (s *Storage) SetDataType(dataset string, field string, fieldType string) error {
+func (s *Storage) SetDataType(dataset string, varName string, varType string) error {
 	// get all existing fields to rebuild the view.
 	fields, err := s.getExistingFields(dataset)
 	if err != nil {
@@ -101,10 +125,10 @@ func (s *Storage) SetDataType(dataset string, field string, fieldType string) er
 	}
 
 	// update field type in lookup.
-	if fields[field] == nil {
-		return fmt.Errorf("field '%s' not found in existing fields", field)
+	if fields[varName] == nil {
+		return fmt.Errorf("field '%s' not found in existing fields", varName)
 	}
-	fields[field].Type = fieldType
+	fields[varName].Type = varType
 
 	// map the types to db types.
 	for field, v := range fields {
@@ -115,6 +139,104 @@ func (s *Storage) SetDataType(dataset string, field string, fieldType string) er
 	err = s.createView(dataset, fields)
 	if err != nil {
 		return errors.Wrap(err, "Unable to create the new view")
+	}
+
+	return nil
+}
+
+// AddVariable adds a new variable to the dataset.
+func (s *Storage) AddVariable(dataset string, varName string, varType string) error {
+	// check to make sure the column doesnt exist already
+	dbFields, err := s.getDatabaseFields(fmt.Sprintf("%s_base", dataset))
+	if err != nil {
+		return errors.Wrap(err, "unable to read database fields")
+	}
+
+	found := false
+	for _, v := range dbFields {
+		if v == varName {
+			found = true
+			break
+		}
+	}
+	if found {
+		return errors.Errorf("dataset %s already has variable '%s' in postgres", dataset, varName)
+	}
+
+	// add the empty column
+	sql := fmt.Sprintf("ALTER TABLE %s_base ADD COLUMN \"%s\" TEXT;", dataset, varName)
+	_, err = s.client.Exec(sql)
+	if err != nil {
+		return errors.Wrap(err, "Unable to add new column to database table")
+	}
+
+	// recreate the view with the new column
+	dbType := s.mapType(varType)
+	fields, err := s.getExistingFields(dataset)
+	if err != nil {
+		return errors.Wrap(err, "Unable to read existing fields")
+	}
+
+	if fields[varName] == nil {
+		// need to add the field to the view
+		fields[varName] = &model.Variable{
+			Name:             varName,
+			OriginalVariable: varName,
+			Type:             dbType,
+		}
+	}
+
+	err = s.createView(dataset, fields)
+	if err != nil {
+		return errors.Wrap(err, "Unable to create the new view")
+	}
+
+	return nil
+}
+
+// DeleteVariable flags a variable as deleted.
+func (s *Storage) DeleteVariable(dataset string, varName string) error {
+	// check if the variable is in the view
+	dbFields, err := s.getDatabaseFields(dataset)
+	if err != nil {
+		return errors.Wrap(err, "unable to read database fields")
+	}
+
+	found := false
+	for _, v := range dbFields {
+		if v == varName {
+			found = true
+			break
+		}
+	}
+	if !found {
+		return nil
+	}
+
+	// recreate the view without the field if it is in it
+	fields, err := s.getExistingFields(dataset)
+	if err != nil {
+		return errors.Wrap(err, "Unable to read existing fields")
+	}
+
+	if fields[varName] != nil {
+		delete(fields, varName)
+	}
+
+	err = s.createView(dataset, fields)
+	if err != nil {
+		return errors.Wrap(err, "Unable to create the new view")
+	}
+
+	return nil
+}
+
+// UpdateVariable updates the value of a variable stored in the database.
+func (s *Storage) UpdateVariable(dataset string, varName string, d3mIndex int, value string) error {
+	sql := fmt.Sprintf("UPDATE \"%s_base\" SET \"%s\" = $1 WHERE %s = $2", dataset, varName, model.D3MIndexFieldName)
+	_, err := s.client.Exec(sql, value, d3mIndex)
+	if err != nil {
+		return errors.Wrap(err, "Unable to update value stored in the database")
 	}
 
 	return nil
