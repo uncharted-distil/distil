@@ -450,9 +450,10 @@ func (s *Storage) getResultHistogramAggQuery(extrema *model.Extrema, variable *m
 
 	// get histogram agg name & query string.
 	histogramAggName := fmt.Sprintf("\"%s%s\"", model.HistogramAggPrefix, extrema.Name)
+	rounded := extrema.GetBucketMinMax()
 	bucketQueryString := fmt.Sprintf("width_bucket(%s, %g, %g, %d) - 1",
-		fieldTyped, extrema.Min, extrema.Max, extrema.GetBucketCount())
-	histogramQueryString := fmt.Sprintf("(%s) * %g + %g", bucketQueryString, interval, extrema.Min)
+		fieldTyped, rounded.Min, rounded.Max, extrema.GetBucketCount())
+	histogramQueryString := fmt.Sprintf("(%s) * %g + %g", bucketQueryString, interval, rounded.Min)
 
 	return histogramAggName, bucketQueryString, histogramQueryString
 }
