@@ -55,9 +55,13 @@ export default Vue.extend({
 		highlights(): Highlight {
 			return getHighlights(this.$store);
 		},
+		trainingVariableSummaries(): VariableSummary[] {
+			const training = dataGetters.getTrainingVariablesMap(this.$store);
+			const summaries = dataGetters.getVariableSummaries(this.$store);
+			return summaries.filter(variable => training[variable.name.toLowerCase()]);
+		},
 		groups(): Group[] {
-			const summaries = dataGetters.getTrainingVariableSummaries(this.$store);
-		 	return createGroups(summaries);
+		 	return createGroups(this.trainingVariableSummaries);
 		},
 		subtitle(): string {
 			return `${this.groups.length} features selected (sorted by interestingness)`;

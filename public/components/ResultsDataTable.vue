@@ -35,7 +35,7 @@
 import _ from 'lodash';
 import { spinnerHTML } from '../util/spinner';
 import { Extrema } from '../store/data/index';
-import { TargetRow, TableRow, FieldInfo, RowSelection } from '../store/data/index';
+import { TargetRow, TableRow, TableColumn, RowSelection } from '../store/data/index';
 import { getters as dataGetters } from '../store/data/module';
 import { getters as routeGetters } from '../store/route/module';
 import { getters as solutionGetters } from '../store/solutions/module';
@@ -87,7 +87,7 @@ export default Vue.extend({
 			return selected.map(item => this.decorateFunc(item));
 		},
 
-		fields(): Dictionary<FieldInfo> {
+		fields(): Dictionary<TableColumn> {
 			return removeNonTrainingFields(this.dataFields, this.training);
 		},
 

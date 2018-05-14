@@ -70,7 +70,7 @@ import ImagePreview from './ImagePreview';
 import { getters as dataGetters } from '../store/data/module';
 import { Dictionary } from '../util/dict';
 import { Filter } from '../util/filters';
-import { FieldInfo, Highlight, RowSelection } from '../store/data/index';
+import { TableColumn, Highlight, RowSelection } from '../store/data/index';
 import { getters as routeGetters } from '../store/route/module';
 import { TableRow } from '../store/data/index';
 import { addFilterToRoute, EXCLUDE_FILTER, INCLUDE_FILTER } from '../util/filters';
@@ -106,22 +106,22 @@ export default Vue.extend({
 		},
 
 		numRows(): number {
-			return dataGetters.getSelectedDataNumRows(this.$store);
+			return dataGetters.getIncludedTableDataNumRows(this.$store);
 		},
 
 		hasData(): boolean {
-			return dataGetters.hasSelectedData(this.$store);
+			return dataGetters.hasIncludedTableData(this.$store);
 		},
 
 		// extracts the table data from the store
 		items(): TableRow[] {
-			const items = this.includedActive ? dataGetters.getSelectedDataItems(this.$store) : dataGetters.getExcludedDataItems(this.$store);
+			const items = this.includedActive ? dataGetters.getIncludedTableDataItems(this.$store) : dataGetters.getExcludedTableDataItems(this.$store);
 			return updateTableRowSelection(items, this.selectedRow, this.instanceName);
 		},
 
 		// extract the table field header from the store
-		fields(): Dictionary<FieldInfo> {
-			return this.includedActive ? dataGetters.getSelectedDataFields(this.$store) : dataGetters.getExcludedDataFields(this.$store);
+		fields(): Dictionary<TableColumn> {
+			return this.includedActive ? dataGetters.getIncludedTableDataFields(this.$store) : dataGetters.getExcludedTableDataFields(this.$store);
 		},
 
 		imageFields(): string[] {
@@ -149,9 +149,9 @@ export default Vue.extend({
 
 		filters(): Filter[] {
 			if (this.includedActive) {
-				return this.invertFilters(dataGetters.getFilters(this.$store));
+				return this.invertFilters(routeGetters.getDecodedFilters(this.$store));
 			}
-			return dataGetters.getFilters(this.$store);
+			return routeGetters.getDecodedFilters(this.$store);
 		},
 
 		selectedRow(): RowSelection {

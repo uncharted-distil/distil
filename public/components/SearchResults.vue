@@ -19,7 +19,7 @@
 import DatasetPreview from '../components/DatasetPreview';
 import Vue from 'vue';
 import { getters } from '../store/data/module';
-import { Datasets } from '../store/data/index';
+import { Dataset } from '../store/data/index';
 
 export default Vue.extend({
 	name: 'search-results',
@@ -29,7 +29,7 @@ export default Vue.extend({
 	},
 
 	computed: {
-		datasets(): Datasets[] {
+		datasets(): Dataset[] {
 			return getters.getDatasets(this.$store);
 		}
 	},

@@ -24,7 +24,6 @@
 				class="col-12 col-md-6 d-flex flex-column"></result-target-variable>
 		</div>
 
-
 		<div class="row flex-12 pb-3">
 			<variable-summaries
 				class="col-12 col-md-3 border-gray-right results-variable-summaries"
@@ -122,6 +121,12 @@ export default Vue.extend({
 		},
 		residualExtrema(): Extrema {
 			return dataGetters.getResidualExtrema(this.$store);
+		},
+		// tests whether or not the results are for a regression or a classificiation
+		isRegression(): boolean {
+			const targetVariable = this.variables.find(s => s.name === this.target);
+			const task = getTask(targetVariable.type);
+			return task.schemaName === regression.schemaName;
 		}
 	},
 
@@ -147,11 +152,10 @@ export default Vue.extend({
 		},
 		solutionId() {
 			// if this is a regression task, pull extrema as a first step
-			const isRegression = this.testRegression();
 			let extremaFetches = [];
-			if (isRegression) {
+			if (this.isRegression) {
 				extremaFetches = [
-					dataActions.fetchTargetResultExtrema(this.$store, {
+					dataActions.fetchResultExtrema(this.$store, {
 						dataset: this.dataset,
 						variable: this.target,
 						solutionId: this.solutionId
@@ -178,7 +182,7 @@ export default Vue.extend({
 					variables: this.paginatedVariables
 				});
 			});
-			if (isRegression) {
+			if (this.isRegression) {
 				dataActions.fetchResidualsExtremas(this.$store, {
 					dataset: this.dataset,
 					requestIds: this.requestIds
@@ -215,11 +219,10 @@ export default Vue.extend({
 						dataset: this.dataset,
 						target: this.target
 					}).then(() => {
-						const isRegression = this.testRegression();
 						let extremaFetches = [];
-						if (isRegression) {
+						if (this.isRegression) {
 							extremaFetches = [
-								dataActions.fetchTargetResultExtrema(this.$store, {
+								dataActions.fetchResultExtrema(this.$store, {
 									dataset: this.dataset,
 									variable: this.target,
 									solutionId: this.solutionId
@@ -252,7 +255,7 @@ export default Vue.extend({
 							});
 						});
 
-						if (isRegression) {
+						if (this.isRegression) {
 							dataActions.fetchResidualsExtremas(this.$store, {
 								dataset: this.dataset,
 								requestIds: this.requestIds
@@ -277,12 +280,6 @@ export default Vue.extend({
 						});
 					});
 				});
-		},
-		// tests whether or not the results are for a regression or a classificiation
-		testRegression(): boolean {
-			const targetVariable = this.variables.find(s => s.name === this.target);
-			const task = getTask(targetVariable.type);
-			return task.schemaName === regression.schemaName;
 		}
 	}
 });

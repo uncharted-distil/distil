@@ -64,7 +64,7 @@ export default Vue.extend({
 			return dataGetters.getVariables(this.$store);
 		},
 		filters(): FilterParams {
-			return dataGetters.getSelectedFilterParams(this.$store);
+			return routeGetters.getDecodedFilterParams(this.$store);
 		},
 		// gets the metrics that are used to score predictions against the user selected variable
 		metrics(): string[] {

@@ -13,7 +13,7 @@ import (
 
 // DatasetResult represents the result of a datasets response.
 type DatasetResult struct {
-	Datasets []*model.Dataset `json:"datasets"`
+	Dataset []*model.Dataset `json:"datasets"`
 }
 
 // DatasetsHandler generates a route handler that facilitates a search of
@@ -53,7 +53,7 @@ func DatasetsHandler(metaCtor model.MetadataStorageCtor) func(http.ResponseWrite
 		}
 		// marshall data
 		err = handleJSON(w, DatasetResult{
-			Datasets: datasets,
+			Dataset: datasets,
 		})
 		if err != nil {
 			handleError(w, errors.Wrap(err, "unable marshal dataset result into JSON"))

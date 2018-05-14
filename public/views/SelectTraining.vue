@@ -113,7 +113,7 @@ export default Vue.extend({
 			return routeGetters.getRouteFilters(this.$store);
 		},
 		selectedFilters(): FilterParams {
-			return dataGetters.getSelectedFilterParams(this.$store);
+			return routeGetters.getDecodedFilterParams(this.$store);
 		},
 		highlightRoot(): HighlightRoot {
 			return routeGetters.getDecodedHighlightRoot(this.$store);
@@ -121,8 +121,18 @@ export default Vue.extend({
 		highlightRootStr(): string {
 			return routeGetters.getRouteHighlightRoot(this.$store);
 		},
+		targetVariableSummaries(): VariableSummary[] {
+			const target = routeGetters.getRouteTargetVariable(this.$store);
+			if (!target) {
+				return [];
+			}
+			const summaries = dataGetters.getVariableSummaries(this.$store);
+			return summaries.filter(variable => {
+				return target.toLowerCase() === variable.name.toLowerCase();
+			});
+		},
 		targetSampleValues(): any[] {
-			const summaries = dataGetters.getTargetVariableSummaries(this.$store);
+			const summaries = this.targetVariableSummaries;
 			if (summaries.length > 0) {
 				const summary = summaries[0];
 				return summary.buckets;
@@ -152,7 +162,7 @@ export default Vue.extend({
 				highlightRoot: this.highlightRoot,
 				filters: this.selectedFilters
 			});
-			actions.fetchSelectedTableData(this.$store, {
+			actions.fetchIncludedTableData(this.$store, {
 				dataset: this.dataset,
 				filters: this.selectedFilters,
 				highlightRoot: this.highlightRoot
@@ -170,7 +180,7 @@ export default Vue.extend({
 				highlightRoot: this.highlightRoot,
 				filters: this.selectedFilters
 			});
-			actions.fetchSelectedTableData(this.$store, {
+			actions.fetchIncludedTableData(this.$store, {
 				dataset: this.dataset,
 				filters: this.selectedFilters,
 				highlightRoot: this.highlightRoot
@@ -188,7 +198,7 @@ export default Vue.extend({
 				highlightRoot: this.highlightRoot,
 				filters: this.selectedFilters
 			});
-			actions.fetchSelectedTableData(this.$store, {
+			actions.fetchIncludedTableData(this.$store, {
 				dataset: this.dataset,
 				filters: this.selectedFilters,
 				highlightRoot: this.highlightRoot
@@ -220,7 +230,7 @@ export default Vue.extend({
 					highlightRoot: this.highlightRoot,
 					filters: this.selectedFilters
 				});
-				actions.fetchSelectedTableData(this.$store, {
+				actions.fetchIncludedTableData(this.$store, {
 					dataset: this.dataset,
 					filters: this.selectedFilters,
 					highlightRoot: this.highlightRoot

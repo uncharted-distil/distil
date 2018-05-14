@@ -1,5 +1,5 @@
 import { HighlightRoot, RowSelection } from '../data/index';
-import { decodeFilters, FilterParams } from '../../util/filters';
+import { decodeFilters, Filter, FilterParams } from '../../util/filters';
 import { decodeHighlights } from '../../util/highlights'
 import { decodeRowSelection } from '../../util/row';
 import { Route } from 'vue-router';
@@ -74,8 +74,27 @@ export const getters = {
 		return state.query.residualThresholdMax;
 	},
 
-	getDecodedFilterParams(state: Route): FilterParams {
-		return decodeFilters(state.query.filters);
+	getDecodedFilters(state: Route, getters: any): Filter[] {
+		return decodeFilters(state.query.filters).slice();
+	},
+
+	getDecodedFilterParams(state: Route, getters: any): FilterParams {
+		const filters = getters.getDecodedFilters;
+		const filterParams = {
+			filters: filters,
+			variables: []
+		};
+		// add training vars
+		const training = getters.getRouteTrainingVariables as string;
+		if (training) {
+			filterParams.variables = filterParams.variables.concat(training.split(','));
+		}
+		// add target vars
+		const target = getters.getRouteTargetVariable as string;
+		if (target) {
+			filterParams.variables.push(target);
+		}
+		return filterParams;
 	},
 
 	getDecodedHighlightRoot(state: Route): HighlightRoot {

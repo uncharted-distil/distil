@@ -43,9 +43,13 @@ export default Vue.extend({
 		dataset(): string {
 			return routeGetters.getRouteDataset(this.$store);
 		},
+		availableVariableSummaries(): VariableSummary[] {
+			const available = dataGetters.getAvailableVariablesMap(this.$store);
+			const summaries = dataGetters.getVariableSummaries(this.$store);
+			return summaries.filter(variable => available[variable.name.toLowerCase()]);
+		},
 		groups(): Group[] {
-			const summaries = dataGetters.getAvailableVariableSummaries(this.$store);
-			const filtered = filterSummariesByDataset(summaries, this.dataset);
+			const filtered = filterSummariesByDataset(this.availableVariableSummaries, this.dataset);
 			return createGroups(filtered);
 		},
 		subtitle(): string {

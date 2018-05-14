@@ -500,10 +500,10 @@ export default Vue.extend({
 							return s.name === group.key;
 						});
 
-						if (summary) {
-							this.removeSpinnerFromGroup(group);
+						const bars = facet._histogram.bars;
 
-							const bars = facet._histogram.bars;
+						if (summary && summary.buckets.length === bars.length) {
+							this.removeSpinnerFromGroup(group);
 
 							const slices = {};
 

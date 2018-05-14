@@ -26,7 +26,7 @@ export const getters = {
 	getRouteRowSelection: read(moduleGetters.getRouteRowSelection),
 	getRouteResidualThresholdMin: read(moduleGetters.getRouteResidualThresholdMin),
 	getRouteResidualThresholdMax: read(moduleGetters.getRouteResidualThresholdMax),
-	getDecodedFilterParams: read(moduleGetters.getDecodedFilterParams),
+	getDecodedFilters: read(moduleGetters.getDecodedFilters),
 	getDecodedHighlightRoot: read(moduleGetters.getDecodedHighlightRoot),
 	getDecodedRowSelection: read(moduleGetters.getDecodedRowSelection)
 

@@ -6,16 +6,16 @@
 				refName="topTable"
 				instanceName="top-results-data-table"
 				:title="topTableTitle"
-				:data-fields="highlightedResultDataFields"
-				:data-items="highlightedResultDataItems"
+				:data-fields="includedResultTableDataFields"
+				:data-items="includedResultTableDataItems"
 				:decorateFunc="topDecorate"
 				:showError="regressionEnabled"></results-data-table>
 			<results-data-table
 				refName="bottomTable"
 				instanceName="bottom-results-data-table"
 				:title="bottomTableTitle"
-				:data-fields="unhighlightedResultDataFields"
-				:data-items="unhighlightedResultDataItems"
+				:data-fields="excludedResultTableDataFields"
+				:data-items="excludedResultTableDataItems"
 				:decorateFunc="bottomDecorate"
 				:showError="regressionEnabled"></results-data-table>
 		</template>
@@ -25,8 +25,8 @@
 				refName="singleTable"
 				instanceName="single-results-data-table"
 				:title="singleTableTitle"
-				:data-fields="unhighlightedResultDataFields"
-				:data-items="unhighlightedResultDataItems"
+				:data-fields="includedResultTableDataFields"
+				:data-items="includedResultTableDataItems"
 				:decorateFunc="bottomDecorate"
 				:showError="regressionEnabled"></results-data-table>
 		</template>
@@ -43,8 +43,7 @@ import { Dictionary } from '../util/dict';
 import { getters as dataGetters} from '../store/data/module';
 import { getters as routeGetters} from '../store/route/module';
 import { getTargetCol, getPredictedCol, getErrorCol } from '../util/data';
-import { FilterParams } from '../util/filters';
-import { Variable, TargetRow, FieldInfo } from '../store/data/index';
+import { Variable, TargetRow, TableColumn } from '../store/data/index';
 import { getHighlights } from '../util/highlights';
 
 export default Vue.extend({
@@ -64,10 +63,6 @@ export default Vue.extend({
 			return routeGetters.getRouteSolutionId(this.$store);
 		},
 
-		filters(): FilterParams {
-			return routeGetters.getDecodedFilterParams(this.$store);
-		},
-
 		target(): string {
 			return routeGetters.getRouteTargetVariable(this.$store);
 		},
@@ -81,31 +76,31 @@ export default Vue.extend({
 			return highlights && highlights.root && highlights.root.value;
 		},
 
-		highlightedResultDataItems(): TargetRow[] {
-			return dataGetters.getHighlightedResultDataItems(this.$store);
+		includedResultTableDataItems(): TargetRow[] {
+			return dataGetters.getIncludedResultTableDataItems(this.$store);
 		},
 
-		highlightedResultDataFields():  Dictionary<FieldInfo> {
-			return dataGetters.getHighlightedResultDataFields(this.$store);
+		includedResultTableDataFields():  Dictionary<TableColumn> {
+			return dataGetters.getIncludedResultTableDataFields(this.$store);
 		},
 
 		highlightedResultErrors(): number {
-			return this.highlightedResultDataItems.filter(item => {
+			return this.includedResultTableDataItems.filter(item => {
 				const err = _.toNumber(item[getErrorCol(this.target)]);
 				return err < this.residualThresholdMin || err > this.residualThresholdMax;
 			}).length;
 		},
 
-		unhighlightedResultDataItems(): TargetRow[] {
-			return dataGetters.getUnhighlightedResultDataItems(this.$store);
+		excludedResultTableDataItems(): TargetRow[] {
+			return dataGetters.getExcludedResultTableDataItems(this.$store);
 		},
 
-		unhighlightedResultDataFields():  Dictionary<FieldInfo> {
-			return dataGetters.getUnhighlightedResultDataFields(this.$store);
+		excludedResultTableDataFields():  Dictionary<TableColumn> {
+			return dataGetters.getExcludedResultTableDataFields(this.$store);
 		},
 
 		unhighlightedResultErrors(): number {
-			return this.unhighlightedResultDataItems.filter(item => {
+			return this.excludedResultTableDataItems.filter(item => {
 				const err = _.toNumber(item[getErrorCol(this.target)]);
 				return err < this.residualThresholdMin || err > this.residualThresholdMax;
 			}).length;
@@ -151,16 +146,16 @@ export default Vue.extend({
 		},
 
 		topTableTitle(): string {
-			return `${this.highlightedResultDataItems.length} <b class="matching-color">matching</b> samples of ${this.numRows}, including ${this.highlightedResultErrors} <b class="erroneous-color">erroneous</b> predictions`;
+			return `${this.includedResultTableDataItems.length} <b class="matching-color">matching</b> samples of ${this.numRows}, including ${this.highlightedResultErrors} <b class="erroneous-color">erroneous</b> predictions`;
 		},
 
 		bottomTableTitle(): string {
-			return `${this.unhighlightedResultDataItems.length} <b class="other-color">other</b> samples of ${this.numRows}, including ${this.unhighlightedResultErrors} <b class="erroneous-color">erroneous</b> predictions`;
+			return `${this.excludedResultTableDataItems.length} <b class="other-color">other</b> samples of ${this.numRows}, including ${this.unhighlightedResultErrors} <b class="erroneous-color">erroneous</b> predictions`;
 
 		},
 
 		singleTableTitle(): string {
-			return `Displaying ${this.unhighlightedResultDataItems.length} of ${this.numRows}, including ${this.unhighlightedResultErrors} <b>erroneous</b> predictions`;
+			return `Displaying ${this.excludedResultTableDataItems.length} of ${this.numRows}, including ${this.unhighlightedResultErrors} <b>erroneous</b> predictions`;
 		}
 	},
 
