@@ -1,6 +1,8 @@
 package model
 
 const (
+	// Internal Type Keys
+
 	// AddressType is the schema type for address values
 	AddressType = "address"
 	// IndexType is the schema type for index values
@@ -43,6 +45,26 @@ const (
 	ImageType = "image"
 	// UnknownType is the schema type for unknown values
 	UnknownType = "unknown"
+
+	// TA2 Semantic Type Keys - defined in
+	// https://gitlab.com/datadrivendiscovery/d3m/blob/devel/d3m/metadata/schemas/v0/definitions.json
+
+	// TA2StringType is the semantic type reprsenting a text/string
+	TA2StringType = "http://schema.org/Text"
+	// TA2IntegerType is the TA2 semantic type for an integer value
+	TA2IntegerType = "http://schema.org/Integer"
+	// TA2RealType is the TA2 semantic type for a real value
+	TA2RealType = "http://schema.org/Float"
+	// TA2BooleanType is the TA2 semantic type for a boolean value
+	TA2BooleanType = "http://schema.org/Boolean"
+	// TA2LocationType is the TA2 semantic type for a location value
+	TA2LocationType = "https://metadata.datadrivendiscovery.org/types/Location"
+	// TA2TimeType is the TA2 semantic type for a time value
+	TA2TimeType = "https://metadata.datadrivendiscovery.org/types/Time"
+	// TA2CategoricalType is the TA2 semantic type for categorical data
+	TA2CategoricalType = "https://metadata.datadrivendiscovery.org/types/CategoricalData"
+	// TA2OrdinalType is the TA2 semantic type for ordinal (ordered categorical) data
+	TA2OrdinalType = "https://metadata.datadrivendiscovery.org/types/OrdinalData"
 )
 
 var (
