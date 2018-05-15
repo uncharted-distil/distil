@@ -172,6 +172,7 @@ func (s *Storage) AddVariable(dataset string, varName string, varType string, va
 		OriginalVariable: varName,
 		DisplayVariable:  varName,
 		DistilRole:       varRole,
+		SuggestedTypes:   make([]string, 0),
 	})
 
 	return s.updateVariables(dataset, vars)

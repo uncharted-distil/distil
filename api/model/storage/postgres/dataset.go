@@ -41,7 +41,7 @@ func (s *Storage) defaultValue(typ string) interface{} {
 }
 
 func (s *Storage) getDatabaseFields(tableName string) ([]string, error) {
-	sql := fmt.Sprintf("SELECT column_name FROM information_schema.columns WHERE schema_name = 'public' AND table_name = $1;")
+	sql := fmt.Sprintf("SELECT column_name FROM information_schema.columns WHERE table_schema = 'public' AND table_name = $1;")
 
 	res, err := s.client.Query(sql, tableName)
 	if err != nil {
@@ -144,6 +144,26 @@ func (s *Storage) SetDataType(dataset string, varName string, varType string) er
 	return nil
 }
 
+func (s *Storage) createViewFromMetadataFields(dataset string, fields map[string]*model.Variable) error {
+	dbFields := make(map[string]*model.Variable)
+
+	// map the types to db types.
+	for field, v := range fields {
+		dbFields[field] = &model.Variable{
+			Name:             v.Name,
+			OriginalVariable: v.OriginalVariable,
+			Type:             s.mapType(v.Type),
+		}
+	}
+
+	err := s.createView(dataset, dbFields)
+	if err != nil {
+		return errors.Wrap(err, "Unable to create the new view")
+	}
+
+	return nil
+}
+
 // AddVariable adds a new variable to the dataset.
 func (s *Storage) AddVariable(dataset string, varName string, varType string) error {
 	// check to make sure the column doesnt exist already
@@ -171,7 +191,6 @@ func (s *Storage) AddVariable(dataset string, varName string, varType string) er
 	}
 
 	// recreate the view with the new column
-	dbType := s.mapType(varType)
 	fields, err := s.getExistingFields(dataset)
 	if err != nil {
 		return errors.Wrap(err, "Unable to read existing fields")
@@ -182,11 +201,11 @@ func (s *Storage) AddVariable(dataset string, varName string, varType string) er
 		fields[varName] = &model.Variable{
 			Name:             varName,
 			OriginalVariable: varName,
-			Type:             dbType,
+			Type:             varType,
 		}
 	}
 
-	err = s.createView(dataset, fields)
+	err = s.createViewFromMetadataFields(dataset, fields)
 	if err != nil {
 		return errors.Wrap(err, "Unable to create the new view")
 	}
@@ -223,7 +242,7 @@ func (s *Storage) DeleteVariable(dataset string, varName string) error {
 		delete(fields, varName)
 	}
 
-	err = s.createView(dataset, fields)
+	err = s.createViewFromMetadataFields(dataset, fields)
 	if err != nil {
 		return errors.Wrap(err, "Unable to create the new view")
 	}
@@ -232,8 +251,8 @@ func (s *Storage) DeleteVariable(dataset string, varName string) error {
 }
 
 // UpdateVariable updates the value of a variable stored in the database.
-func (s *Storage) UpdateVariable(dataset string, varName string, d3mIndex int, value string) error {
-	sql := fmt.Sprintf("UPDATE \"%s_base\" SET \"%s\" = $1 WHERE %s = $2", dataset, varName, model.D3MIndexFieldName)
+func (s *Storage) UpdateVariable(dataset string, varName string, d3mIndex string, value string) error {
+	sql := fmt.Sprintf("UPDATE %s_base SET \"%s\" = $1 WHERE \"%s\" = $2", dataset, varName, model.D3MIndexFieldName)
 	_, err := s.client.Exec(sql, value, d3mIndex)
 	if err != nil {
 		return errors.Wrap(err, "Unable to update value stored in the database")

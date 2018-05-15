@@ -27,7 +27,7 @@ type DataStorage interface {
 	SetDataType(dataset string, varName string, varType string) error
 	AddVariable(dataset string, varName string, varType string) error
 	DeleteVariable(dataset string, varName string) error
-	UpdateVariable(dataset string, varName string, d3mIndex int, value string) error
+	UpdateVariable(dataset string, varName string, d3mIndex string, value string) error
 }
 
 // SolutionStorageCtor represents a client constructor to instantiate a
