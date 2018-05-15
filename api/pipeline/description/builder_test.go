@@ -1,15 +1,16 @@
-package pipeline
+package description
 
 import (
 	fmt "fmt"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/unchartedsoftware/distil/api/pipeline"
 )
 
 func createTestStep(step int) *StepData {
 	return NewStepDataWithHyperparameters(
-		&Primitive{
+		&pipeline.Primitive{
 			Id:         fmt.Sprintf("0000-primtive-%d", step),
 			Version:    "1.0.0",
 			Name:       fmt.Sprintf("primitive-%d", step),
@@ -29,7 +30,7 @@ func TestPipelineCompile(t *testing.T) {
 	step1 := createTestStep(1)
 	step2 := createTestStep(2)
 
-	desc, err := NewDescriptionBuilder("test pipeline", "test pipelne consisting of 3 stages").
+	desc, err := NewBuilder("test pipeline", "test pipelne consisting of 3 stages").
 		Add(step0).
 		Add(step1).
 		Add(step2).
@@ -66,7 +67,7 @@ func TestPipelineCompileWithInference(t *testing.T) {
 	step0 := createTestStep(0)
 	step1 := createTestStep(1)
 
-	desc, err := NewDescriptionBuilder("test pipeline", "test pipelne consisting of 3 stages").
+	desc, err := NewBuilder("test pipeline", "test pipelne consisting of 3 stages").
 		Add(step0).
 		Add(step1).
 		AddInferencePoint().

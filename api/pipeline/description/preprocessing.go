@@ -1,12 +1,15 @@
-package pipeline
+package description
 
-import "github.com/unchartedsoftware/distil/api/model"
-import "github.com/pkg/errors"
+import (
+	"github.com/pkg/errors"
+	"github.com/unchartedsoftware/distil/api/model"
+	"github.com/unchartedsoftware/distil/api/pipeline"
+)
 
 // CreateUserDatasetPipeline creates a pipeline description to capture user feature selection and
 // semantic type information.
 func CreateUserDatasetPipeline(name string, description string,
-	allFeatures []*model.Variable, selectedFeatures []string) (*PipelineDescription, error) {
+	allFeatures []*model.Variable, selectedFeatures []string) (*pipeline.PipelineDescription, error) {
 
 	// save the selected features in a set for quick lookup
 	selectedSet := map[string]bool{}
@@ -47,7 +50,7 @@ func CreateUserDatasetPipeline(name string, description string,
 	semanticTypeUpdate, _ := NewUpdateSemanticTypeStep(addedTypes, removedTypes)
 
 	// insantiate the pipeline
-	pipeline, err := NewDescriptionBuilder(name, description).
+	pipeline, err := NewBuilder(name, description).
 		Add(featureSelect).
 		Add(semanticTypeUpdate).
 		AddInferencePoint().

@@ -1,9 +1,10 @@
-package pipeline
+package description
 
 import (
 	"encoding/json"
 
 	"github.com/pkg/errors"
+	"github.com/unchartedsoftware/distil/api/pipeline"
 	log "github.com/unchartedsoftware/plog"
 )
 
@@ -11,7 +12,7 @@ import (
 // dataframe, and assigns types to the columns based on the exposed metadata.
 func NewSimonStep() *StepData {
 	return NewStepData(
-		&Primitive{
+		&pipeline.Primitive{
 			Id:         "d2fa8df2-6517-3c26-bafc-87b701c4043a",
 			Version:    "1.0.0",
 			Name:       "simon",
@@ -26,7 +27,7 @@ func NewSimonStep() *StepData {
 // ** TODO: Placeholder.  Not yet in TA1 image.
 func NewRankingStep() *StepData {
 	return NewStepData(
-		&Primitive{
+		&pipeline.Primitive{
 			Id:         "d2fa8df2-6517-3c26-bafc-87b701c4043a",
 			Version:    "1.0.0",
 			Name:       "punk",
@@ -39,7 +40,7 @@ func NewRankingStep() *StepData {
 // NewDukeStep creates a
 func NewDukeStep() *StepData {
 	return NewStepData(
-		&Primitive{
+		&pipeline.Primitive{
 			Id:         "46612a42-6120-3559-9db9-3aa9a76eb94f",
 			Version:    "1.0.0",
 			Name:       "duke",
@@ -53,7 +54,7 @@ func NewDukeStep() *StepData {
 // into a PANDAS dataframe.
 func NewDatasetToDataframeStep() *StepData {
 	return &StepData{
-		Primitive: &Primitive{
+		Primitive: &pipeline.Primitive{
 			Id:         "4b42ce1e-9b98-4a25-b68e-fad13311eb65",
 			Version:    "0.2.0",
 			Name:       "Dataset to DataFrame converter",
@@ -85,7 +86,7 @@ func NewUpdateSemanticTypeStep(add []*ColumnUpdate, remove []*ColumnUpdate) (*St
 	}
 
 	return NewStepDataWithHyperparameters(
-		&Primitive{
+		&pipeline.Primitive{
 			Id:         "98c79128-555a-4a6b-85fb-d4f4064c94ab",
 			Version:    "0.1.0",
 			Name:       "Semantic type updater",
@@ -108,7 +109,7 @@ func NewRemoveColumnsStep(columns []string) (*StepData, error) {
 	}
 
 	return NewStepDataWithHyperparameters(
-		&Primitive{
+		&pipeline.Primitive{
 			Id:         "2eeff053-395a-497d-88db-7374c27812e6",
 			Version:    "0.1.0",
 			Name:       "Column remover",
