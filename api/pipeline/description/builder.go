@@ -14,16 +14,26 @@ type builder struct {
 	steps       []Step
 }
 
+// Compileable allows an implementer to produce a pipeline
+// description.
+type Compileable interface {
+	Compile() (*pipeline.PipelineDescription, error)
+}
+
 // Builder creates a PipelineDescription from a set of ordered pipeline description
-// steps.  Called as
+// steps.  Called as:
+//
 // 		pipelineDesc := NewBuilder("somePrimitive", "somePrimitive description").
 //			Add(stepData0).
 //			Add(stepData1).
 // 			Compile()
+//
+// An inference step can be added by calling AddInferencePoint(), which marks the point where
+// a TA2 system should be filling in the rest of the pipeline.
 type Builder interface {
+	Compileable
 	Add(stepData Step) Builder
-	AddInferencePoint() Builder
-	Compile() (*pipeline.PipelineDescription, error)
+	AddInferencePoint() Compileable
 }
 
 // NewBuilder creates a new Builder instance.
@@ -42,7 +52,11 @@ func (p *builder) Add(step Step) Builder {
 	return p
 }
 
-func (p *builder) AddInferencePoint() Builder {
+// Add a new new inference marker to the pipeline builder.  TA2 systems
+// will infer the remained of the pipeline from this point.  Note that
+// a Compileable is returned here rather than a Builder, as no stages
+// can be added after the inference point.
+func (p *builder) AddInferencePoint() Compileable {
 	// Create the standard inference step  and append it
 	p.steps = append(p.steps, NewInferenceStepData())
 	return p
