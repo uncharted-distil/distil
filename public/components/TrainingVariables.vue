@@ -56,9 +56,7 @@ export default Vue.extend({
 			return getHighlights(this.$store);
 		},
 		trainingVariableSummaries(): VariableSummary[] {
-			const training = dataGetters.getTrainingVariablesMap(this.$store);
-			const summaries = dataGetters.getVariableSummaries(this.$store);
-			return summaries.filter(variable => training[variable.name.toLowerCase()]);
+			return routeGetters.getTrainingVariableSummaries(this.$store);
 		},
 		groups(): Group[] {
 		 	return createGroups(this.trainingVariableSummaries);

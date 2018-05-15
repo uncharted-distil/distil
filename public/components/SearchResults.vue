@@ -18,7 +18,7 @@
 
 import DatasetPreview from '../components/DatasetPreview';
 import Vue from 'vue';
-import { getters } from '../store/data/module';
+import { getters as datasetGetters } from '../store/dataset/module';
 import { Dataset } from '../store/data/index';
 
 export default Vue.extend({
@@ -30,7 +30,7 @@ export default Vue.extend({
 
 	computed: {
 		datasets(): Dataset[] {
-			return getters.getDatasets(this.$store);
+			return datasetGetters.getDatasets(this.$store);
 		}
 	},
 

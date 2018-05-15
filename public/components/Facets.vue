@@ -7,7 +7,7 @@ import _ from 'lodash';
 import $ from 'jquery';
 import Vue from 'vue';
 import { Group, CategoricalFacet, isCategoricalFacet, getCategoricalChunkSize } from '../util/facets';
-import { Highlight, RowSelection } from '../store/data/index';
+import { Highlight, RowSelection } from '../store/highlights/index';
 import { Dictionary } from '../util/dict';
 import Facets from '@uncharted.software/stories-facets';
 import ImagePreview from '../components/ImagePreview';

@@ -36,7 +36,7 @@ import _ from 'lodash';
 import { spinnerHTML } from '../util/spinner';
 import { Extrema } from '../store/data/index';
 import { TargetRow, TableRow, TableColumn, RowSelection } from '../store/data/index';
-import { getters as dataGetters } from '../store/data/module';
+import { getters as resultsGetters } from '../store/results/module';
 import { getters as routeGetters } from '../store/route/module';
 import { getters as solutionGetters } from '../store/solutions/module';
 import { Dictionary } from '../util/dict';
@@ -70,7 +70,7 @@ export default Vue.extend({
 		},
 
 		residualExtrema(): Extrema {
-			return dataGetters.getResidualExtrema(this.$store);
+			return resultsGetters.getResidualExtrema(this.$store);
 		},
 
 		training(): Dictionary<boolean> {

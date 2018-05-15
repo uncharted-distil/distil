@@ -61,7 +61,8 @@ import AvailableTrainingVariables from '../components/AvailableTrainingVariables
 import TrainingVariables from '../components/TrainingVariables.vue';
 import TargetVariable from '../components/TargetVariable.vue';
 import TypeChangeMenu from '../components/TypeChangeMenu.vue';
-import { getters as dataGetters, actions } from '../store/data/module';
+import { getters as datasetGetters, actions as datasetActions } from '../store/dataset/module';
+import { actions as highlightActions } from '../store/highlights/module';
 import { getters as routeGetters} from '../store/route/module';
 import { Variable, HighlightRoot } from '../store/data/index';
 import { sortVariablesByImportance, filterVariablesByPage, NUM_PER_PAGE } from '../util/data';
@@ -81,30 +82,8 @@ export default Vue.extend({
 	},
 
 	computed: {
-		dataset(): string {
-			return routeGetters.getRouteDataset(this.$store);
-		},
-		variables(): Variable[] {
-			return dataGetters.getVariables(this.$store);
-		},
 		training(): string {
 			return routeGetters.getRouteTrainingVariables(this.$store);
-		},
-		availableVariables(): Variable[] {
-			const varMap = dataGetters.getVariablesMap(this.$store);
-			return dataGetters.getAvailableVariables(this.$store).map(v => {
-				return varMap[v];
-			});
-		},
-		trainingVariables(): Variable[] {
-			const varMap = dataGetters.getVariablesMap(this.$store);
-			return dataGetters.getTrainingVariables(this.$store).map(v => {
-				return varMap[v];
-			});
-		},
-		targetVariable(): Variable {
-			const varMap = dataGetters.getVariablesMap(this.$store);
-			return varMap[this.target];
 		},
 		target(): string {
 			return routeGetters.getRouteTargetVariable(this.$store);
@@ -112,138 +91,36 @@ export default Vue.extend({
 		filtersStr(): string {
 			return routeGetters.getRouteFilters(this.$store);
 		},
-		selectedFilters(): FilterParams {
-			return routeGetters.getDecodedFilterParams(this.$store);
-		},
-		highlightRoot(): HighlightRoot {
-			return routeGetters.getDecodedHighlightRoot(this.$store);
-		},
 		highlightRootStr(): string {
 			return routeGetters.getRouteHighlightRoot(this.$store);
 		},
-		targetVariableSummaries(): VariableSummary[] {
-			const target = routeGetters.getRouteTargetVariable(this.$store);
-			if (!target) {
-				return [];
-			}
-			const summaries = dataGetters.getVariableSummaries(this.$store);
-			return summaries.filter(variable => {
-				return target.toLowerCase() === variable.name.toLowerCase();
-			});
-		},
 		targetSampleValues(): any[] {
-			const summaries = this.targetVariableSummaries;
+			const summaries = routeGetters.getTargetVariableSummaries(this.$store);
 			if (summaries.length > 0) {
 				const summary = summaries[0];
 				return summary.buckets;
 			}
 			return [];
-		},
-		availableVarsPage(): number {
-			return routeGetters.getRouteAvailableVarsPage(this.$store);
-		},
-		trainingVarsPage(): number {
-			return routeGetters.getRouteTrainingVarsPage(this.$store);
-		},
-		paginatedVariables(): Variable[] {
-			// return only visible variables
-			const availableVars = filterVariablesByPage(this.availableVarsPage, NUM_PER_PAGE, sortVariablesByImportance(this.availableVariables));
-			const trainingVars = filterVariablesByPage(this.availableVarsPage, NUM_PER_PAGE, sortVariablesByImportance(this.trainingVariables));
-			const targetVar = this.targetVariable;
-			return availableVars.concat(trainingVars).concat([ targetVar ]);
 		}
 	},
 
 	watch: {
 		highlightRootStr() {
-			actions.fetchDataHighlightValues(this.$store, {
-				dataset: this.dataset,
-				variables: this.paginatedVariables,
-				highlightRoot: this.highlightRoot,
-				filters: this.selectedFilters
-			});
-			actions.fetchIncludedTableData(this.$store, {
-				dataset: this.dataset,
-				filters: this.selectedFilters,
-				highlightRoot: this.highlightRoot
-			});
-			actions.fetchExcludedTableData(this.$store, {
-				dataset: this.dataset,
-				filters: this.selectedFilters,
-				highlightRoot: this.highlightRoot
-			});
+			viewActions.updateSelectTrainingData(this.$store);
 		},
 		training() {
-			actions.fetchDataHighlightValues(this.$store, {
-				dataset: this.dataset,
-				variables: this.paginatedVariables,
-				highlightRoot: this.highlightRoot,
-				filters: this.selectedFilters
-			});
-			actions.fetchIncludedTableData(this.$store, {
-				dataset: this.dataset,
-				filters: this.selectedFilters,
-				highlightRoot: this.highlightRoot
-			});
-			actions.fetchExcludedTableData(this.$store, {
-				dataset: this.dataset,
-				filters: this.selectedFilters,
-				highlightRoot: this.highlightRoot
-			});
+			viewActions.updateSelectTrainingData(this.$store);
 		},
 		filtersStr() {
-			actions.fetchDataHighlightValues(this.$store, {
-				dataset: this.dataset,
-				variables: this.paginatedVariables,
-				highlightRoot: this.highlightRoot,
-				filters: this.selectedFilters
-			});
-			actions.fetchIncludedTableData(this.$store, {
-				dataset: this.dataset,
-				filters: this.selectedFilters,
-				highlightRoot: this.highlightRoot
-			});
-			actions.fetchExcludedTableData(this.$store, {
-				dataset: this.dataset,
-				filters: this.selectedFilters,
-				highlightRoot: this.highlightRoot
-			});
+			viewActions.updateSelectTrainingData(this.$store);
 		}
 	},
 
 	beforeMount() {
-		this.fetch();
-	},
-
-	methods: {
-		fetch() {
-			actions.fetchVariables(this.$store, {
-				dataset: this.dataset
-			}).then(() => {
-				actions.fetchVariableSummaries(this.$store, {
-					dataset: this.dataset,
-					variables: this.variables
-				});
-				actions.fetchDataHighlightValues(this.$store, {
-					dataset: this.dataset,
-					variables: this.paginatedVariables,
-					highlightRoot: this.highlightRoot,
-					filters: this.selectedFilters
-				});
-				actions.fetchIncludedTableData(this.$store, {
-					dataset: this.dataset,
-					filters: this.selectedFilters,
-					highlightRoot: this.highlightRoot
-				});
-				actions.fetchExcludedTableData(this.$store, {
-					dataset: this.dataset,
-					filters: this.selectedFilters,
-					highlightRoot: this.highlightRoot
-				});
-			});
-		}
+		viewActions.fetchSelectTrainingData(this.$store);
 	}
 });
+
 </script>
 
 <style>

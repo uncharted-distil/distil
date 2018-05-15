@@ -46,7 +46,6 @@ export const actions = {
 	setVariableType: dispatch(moduleActions.setVariableType),
 	fetchVariableSummary: dispatch(moduleActions.fetchVariableSummary),
 	fetchVariableSummaries: dispatch(moduleActions.fetchVariableSummaries),
-	fetchVariablesAndVariableSummaries: dispatch(moduleActions.fetchVariablesAndVariableSummaries),
 	// included / excluded table data
 	fetchIncludedTableData: dispatch(moduleActions.fetchIncludedTableData),
 	fetchExcludedTableData: dispatch(moduleActions.fetchExcludedTableData),

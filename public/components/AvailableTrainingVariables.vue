@@ -24,7 +24,7 @@
 <script lang="ts">
 
 import { overlayRouteEntry } from '../util/routes';
-import { getters as dataGetters } from '../store/data/module';
+import { getters as datasetGetters } from '../store/dataset/module';
 import { getters as routeGetters } from '../store/route/module';
 import { filterSummariesByDataset } from '../util/data';
 import { Group, createGroups } from '../util/facets';
@@ -44,9 +44,7 @@ export default Vue.extend({
 			return routeGetters.getRouteDataset(this.$store);
 		},
 		availableVariableSummaries(): VariableSummary[] {
-			const available = dataGetters.getAvailableVariablesMap(this.$store);
-			const summaries = dataGetters.getVariableSummaries(this.$store);
-			return summaries.filter(variable => available[variable.name.toLowerCase()]);
+			return routeGetters.getAvailableVariableSummaries(this.$store);
 		},
 		groups(): Group[] {
 			const filtered = filterSummariesByDataset(this.availableVariableSummaries, this.dataset);

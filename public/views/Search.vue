@@ -24,7 +24,7 @@
 import SearchBar from '../components/SearchBar.vue';
 import SearchResults from '../components/SearchResults.vue';
 import { getters as routeGetters } from '../store/route/module';
-import { actions as dataActions } from '../store/data/module';
+import { actions as datasetActions } from '../store/data/module';
 import Vue from 'vue';
 
 export default Vue.extend({
@@ -53,7 +53,7 @@ export default Vue.extend({
 
 	methods: {
 		fetch() {
-			dataActions.searchDatasets(this.$store, this.terms);
+			datasetActions.searchDatasets(this.$store, this.terms);
 		}
 	}
 });

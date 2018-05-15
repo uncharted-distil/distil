@@ -18,7 +18,6 @@
 import Vue from 'vue';
 import 'font-awesome/css/font-awesome.css';
 import VariableFacets from '../components/VariableFacets';
-import { getters as dataGetters } from '../store/data/module';
 import { getters as routeGetters} from '../store/route/module';
 import { Group, createGroups } from '../util/facets';
 import { Highlight } from '../store/data/index';
@@ -37,14 +36,7 @@ export default Vue.extend({
 		},
 
 		targetVariableSummaries(): VariableSummary[] {
-			const target = routeGetters.getRouteTargetVariable(this.$store);
-			if (!target) {
-				return [];
-			}
-			const summaries = dataGetters.getVariableSummaries(this.$store);
-			return summaries.filter(variable => {
-				return target.toLowerCase() === variable.name.toLowerCase();
-			});
+			return routeGetters.getTargetVariableSummaries(this.$store);
 		},
 
 		groups(): Group[] {

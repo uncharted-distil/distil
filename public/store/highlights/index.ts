@@ -28,3 +28,14 @@ export const state: HighlightState = {
 		samples: {}
 	}
 }
+
+export interface Column {
+	key: string;
+	value: any;
+}
+
+export interface RowSelection {
+	context: string;
+	index: number;
+	cols: Column[];
+}

@@ -23,7 +23,7 @@ import moment from 'moment';
 import Facets from '../components/Facets';
 import ResultGroup from '../components/ResultGroup.vue';
 import { VariableSummary } from '../store/data/index';
-import { getters as dataGetters } from '../store/data/module';
+import { getters as resultsGetters } from '../store/results/module';
 import { getters as routeGetters } from '../store/route/module';
 import { getters as solutionGetters } from '../store/solutions/module';
 import 'font-awesome/css/font-awesome.css';
@@ -65,15 +65,15 @@ export default Vue.extend({
 		},
 
 		predictedSummaries(): VariableSummary[] {
-			return dataGetters.getPredictedSummaries(this.$store);
+			return resultsGetters.getPredictedSummaries(this.$store);
 		},
 
 		residualSummaries(): VariableSummary[] {
-			return this.regression ? dataGetters.getResidualsSummaries(this.$store) : [];
+			return this.regression ? resultsGetters.getResidualsSummaries(this.$store) : [];
 		},
 
 		correctnessSummaries(): VariableSummary[] {
-			return !this.regression ? dataGetters.getCorrectnessSummaries(this.$store) : [];
+			return !this.regression ? resultsGetters.getCorrectnessSummaries(this.$store) : [];
 		},
 
 		// Generate pairs of residuals and results for each solution in the numerical case.

@@ -1,9 +1,20 @@
-import { HighlightRoot, RowSelection } from '../data/index';
+import { Variable, VariableSummary } from '../dataset/index';
+import { HighlightRoot, RowSelection } from '../highlights/index';
 import { decodeFilters, Filter, FilterParams } from '../../util/filters';
 import { decodeHighlights } from '../../util/highlights'
 import { decodeRowSelection } from '../../util/row';
+import { Dictionary } from '../../util/dict';
 import { Route } from 'vue-router';
 import _ from 'lodash';
+
+function buildLookup(strs: any[]): Dictionary<boolean> {
+	const lookup = {};
+	strs.forEach(str => {
+		lookup[str] = true;
+		lookup[str.toLowerCase()] = true;
+	});
+	return lookup;
+}
 
 export const getters = {
 	getRoute(state: Route): Route {
@@ -74,6 +85,11 @@ export const getters = {
 		return state.query.residualThresholdMax;
 	},
 
+	getDecodedTrainingVariableNames(state: Route, getters: any): string[] {
+		const training = getters.getRouteTrainingVariables;
+		return training ? training.split(',') : [];
+	},
+
 	getDecodedFilters(state: Route, getters: any): Filter[] {
 		return decodeFilters(state.query.filters).slice();
 	},
@@ -85,10 +101,8 @@ export const getters = {
 			variables: []
 		};
 		// add training vars
-		const training = getters.getRouteTrainingVariables as string;
-		if (training) {
-			filterParams.variables = filterParams.variables.concat(training.split(','));
-		}
+		const training = getters.getDecodedTrainingVariableNames;
+		filterParams.variables = filterParams.variables.concat(training);
 		// add target vars
 		const target = getters.getRouteTargetVariable as string;
 		if (target) {
@@ -104,4 +118,55 @@ export const getters = {
 	getDecodedRowSelection(state: Route): RowSelection {
 		return decodeRowSelection(state.query.row);
 	},
+
+	getTrainingVariables(state: Route, getters: any): Variable[] {
+		const training = getters.getters.getDecodedTrainingVariableNames;
+		const lookup = buildLookup(training);
+		const variables = getters.getVariables;
+		return variables.filter(variable => lookup[variable.name.toLowerCase()]);
+	},
+
+	getTrainingVariableSummaries(state: Route, getters: any): VariableSummary[] {
+		const training = getters.getters.getDecodedTrainingVariableNames;
+		const lookup = buildLookup(training);
+		const summaries = getters.getVariableSummaries;
+		return summaries.filter(summary => lookup[summary.name.toLowerCase()]);
+	},
+
+	getTargetVariable(state: Route, getters: any): Variable {
+		const target = getters.getRouteTargetVariable;
+		if (target) {
+			const variables = getters.getVariables;
+			const found = variables.filter(summary => target.toLowerCase() === summary.name.toLowerCase());
+			if (found) {
+				return found[0];
+			}
+		}
+		return null;
+	},
+
+	getTargetVariableSummaries(state: Route, getters: any): VariableSummary[] {
+		const target = getters.getRouteTargetVariable;
+		if (target) {
+			const summaries = getters.getVariableSummaries;
+			return summaries.filter(summary => target.toLowerCase() === summary.name.toLowerCase());
+		}
+		return [];
+	},
+
+	getAvailableVariables(state: Route, getters: any): Variable[] {
+		const training = getters.getDecodedTrainingVariableNames;
+		const target = getters.getRouteTargetVariable;
+		const lookup = buildLookup(training.concat([ target ]));
+		const variables = getters.getVariabless;
+		return variables.filter(variable => !lookup[variable.name.toLowerCase()]);
+	},
+
+	getAvailableVariableSummaries(state: Route, getters: any): VariableSummary[] {
+		const training = getters.getDecodedTrainingVariableNames;
+		const target = getters.getRouteTargetVariable;
+		const lookup = buildLookup(training.concat([ target ]));
+		const summaries = getters.getVariableSummaries;
+		return summaries.filter(summary => !lookup[summary.name.toLowerCase()]);
+	}
 }

@@ -73,21 +73,6 @@ export const actions = {
 			});
 	},
 
-	fetchVariablesAndVariableSummaries(context: DatasetContext, args: { dataset: string }): Promise<void> {
-		if (!args.dataset) {
-			console.warn('`dataset` argument is missing');
-			return null;
-		}
-		return context.dispatch('fetchVariables', {
-			dataset: args.dataset
-		}).then(() => {
-			return context.dispatch('fetchVariableSummaries', {
-				dataset: args.dataset,
-				variables: context.state.variables
-			});
-		});
-	},
-
 	// fetches variable summary data for the given dataset and variables
 	fetchVariableSummaries(context: DatasetContext, args: { dataset: string, variables: Variable[] }): Promise<void[]>  {
 		if (!args.dataset) {

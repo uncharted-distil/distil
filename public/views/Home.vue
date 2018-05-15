@@ -35,7 +35,7 @@ import RecentDatasets from '../components/RecentDatasets';
 import RecentSolutions from '../components/RecentSolutions';
 import RunningSolutions from '../components/RunningSolutions';
 import SearchBar from '../components/SearchBar';
-import { actions } from '../store/solutions/module';
+import { actions as solutionActions } from '../store/solutions/module';
 import { getters as appGetters } from '../store/app/module';
 import Vue from 'vue';
 
@@ -61,7 +61,7 @@ export default Vue.extend({
 
 	methods: {
 		fetch() {
-			actions.fetchSolutions(this.$store, {});
+			solutionActions.fetchSolutions(this.$store, {});
 		}
 	}
 

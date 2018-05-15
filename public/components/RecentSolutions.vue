@@ -12,7 +12,7 @@
 <script lang="ts">
 
 import SolutionPreview from '../components/SolutionPreview';
-import { getters } from '../store/solutions/module';
+import { solutionGetters as solutionGetters } from '../store/solutions/module';
 import { SolutionInfo } from '../store/solutions/index';
 import Vue from 'vue';
 
@@ -32,7 +32,7 @@ export default Vue.extend({
 
 	computed: {
 		recentSolutions(): SolutionInfo[] {
-			return getters.getSolutions(this.$store)
+			return solutionGetters.getSolutions(this.$store)
 				.slice()
 				.sort((a, b) => b.timestamp - a.timestamp)
 				.slice(0, this.maxSolutions);

@@ -67,7 +67,7 @@ import { spinnerHTML } from '../util/spinner';
 import Vue from 'vue';
 import FilterBadge from './FilterBadge';
 import ImagePreview from './ImagePreview';
-import { getters as dataGetters } from '../store/data/module';
+import { getters as datasetGetters } from '../store/dataset/module';
 import { Dictionary } from '../util/dict';
 import { Filter } from '../util/filters';
 import { TableColumn, Highlight, RowSelection } from '../store/data/index';
@@ -106,22 +106,22 @@ export default Vue.extend({
 		},
 
 		numRows(): number {
-			return dataGetters.getIncludedTableDataNumRows(this.$store);
+			return datasetGetters.getIncludedTableDataNumRows(this.$store);
 		},
 
 		hasData(): boolean {
-			return dataGetters.hasIncludedTableData(this.$store);
+			return datasetGetters.hasIncludedTableData(this.$store);
 		},
 
 		// extracts the table data from the store
 		items(): TableRow[] {
-			const items = this.includedActive ? dataGetters.getIncludedTableDataItems(this.$store) : dataGetters.getExcludedTableDataItems(this.$store);
+			const items = this.includedActive ? datasetGetters.getIncludedTableDataItems(this.$store) : datasetGetters.getExcludedTableDataItems(this.$store);
 			return updateTableRowSelection(items, this.selectedRow, this.instanceName);
 		},
 
 		// extract the table field header from the store
 		fields(): Dictionary<TableColumn> {
-			return this.includedActive ? dataGetters.getIncludedTableDataFields(this.$store) : dataGetters.getExcludedTableDataFields(this.$store);
+			return this.includedActive ? datasetGetters.getIncludedTableDataFields(this.$store) : datasetGetters.getExcludedTableDataFields(this.$store);
 		},
 
 		imageFields(): string[] {

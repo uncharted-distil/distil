@@ -40,7 +40,8 @@ import { getTask } from '../util/solutions';
 import _ from 'lodash';
 import Vue from 'vue';
 import { Dictionary } from '../util/dict';
-import { getters as dataGetters} from '../store/data/module';
+import { getters as datasetGetters} from '../store/dataset/module';
+import { getters as resultsGetters} from '../store/results/module';
 import { getters as routeGetters} from '../store/route/module';
 import { getTargetCol, getPredictedCol, getErrorCol } from '../util/data';
 import { Variable, TargetRow, TableColumn } from '../store/data/index';
@@ -68,7 +69,7 @@ export default Vue.extend({
 		},
 
 		variables(): Variable[] {
-			return dataGetters.getVariables(this.$store);
+			return datasetGetters.getVariables(this.$store);
 		},
 
 		hasHighlights(): boolean {
@@ -77,11 +78,11 @@ export default Vue.extend({
 		},
 
 		includedResultTableDataItems(): TargetRow[] {
-			return dataGetters.getIncludedResultTableDataItems(this.$store);
+			return resultsGetters.getIncludedResultTableDataItems(this.$store);
 		},
 
 		includedResultTableDataFields():  Dictionary<TableColumn> {
-			return dataGetters.getIncludedResultTableDataFields(this.$store);
+			return resultsGetters.getIncludedResultTableDataFields(this.$store);
 		},
 
 		highlightedResultErrors(): number {
@@ -92,11 +93,11 @@ export default Vue.extend({
 		},
 
 		excludedResultTableDataItems(): TargetRow[] {
-			return dataGetters.getExcludedResultTableDataItems(this.$store);
+			return resultsGetters.getExcludedResultTableDataItems(this.$store);
 		},
 
 		excludedResultTableDataFields():  Dictionary<TableColumn> {
-			return dataGetters.getExcludedResultTableDataFields(this.$store);
+			return resultsGetters.getExcludedResultTableDataFields(this.$store);
 		},
 
 		unhighlightedResultErrors(): number {
@@ -142,7 +143,7 @@ export default Vue.extend({
 		},
 
 		numRows(): number {
-			return dataGetters.getResultDataNumRows(this.$store);
+			return resultsGetters.getResultDataNumRows(this.$store);
 		},
 
 		topTableTitle(): string {
