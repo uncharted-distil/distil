@@ -24,7 +24,7 @@
 import SearchBar from '../components/SearchBar.vue';
 import SearchResults from '../components/SearchResults.vue';
 import { getters as routeGetters } from '../store/route/module';
-import { actions as datasetActions } from '../store/data/module';
+import { actions as datasetActions } from '../store/dataset/module';
 import Vue from 'vue';
 
 export default Vue.extend({

@@ -16,12 +16,14 @@
 <script lang="ts">
 
 import Vue from 'vue';
-import 'font-awesome/css/font-awesome.css';
 import VariableFacets from '../components/VariableFacets';
 import { getters as routeGetters} from '../store/route/module';
 import { Group, createGroups } from '../util/facets';
-import { Highlight } from '../store/data/index';
+import { Highlight } from '../store/highlights/index';
+import { VariableSummary } from '../store/dataset/index';
 import { getHighlights } from '../util/highlights';
+
+import 'font-awesome/css/font-awesome.css';
 
 export default Vue.extend({
 	name: 'target-variable',

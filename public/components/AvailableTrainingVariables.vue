@@ -23,14 +23,15 @@
 
 <script lang="ts">
 
+import Vue from 'vue';
 import { overlayRouteEntry } from '../util/routes';
-import { getters as datasetGetters } from '../store/dataset/module';
+import { VariableSummary } from '../store/dataset/index';
 import { getters as routeGetters } from '../store/route/module';
 import { filterSummariesByDataset } from '../util/data';
 import { Group, createGroups } from '../util/facets';
 import VariableFacets from '../components/VariableFacets.vue';
+
 import 'font-awesome/css/font-awesome.css';
-import Vue from 'vue';
 
 export default Vue.extend({
 	name: 'available-training-variables',

@@ -13,7 +13,7 @@
 
 <script lang="ts">
 
-import { actions as datasetActions, getters as datasetGetters } from '../store/data/module';
+import { actions as datasetActions, getters as datasetGetters } from '../store/dataset/module';
 import { getters as routeGetters } from '../store/route/module';
 import { addTypeSuggestions, getLabelFromType, getTypeFromLabel } from '../util/types';
 import _ from 'lodash';

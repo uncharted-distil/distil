@@ -22,7 +22,7 @@ import _ from 'lodash';
 import moment from 'moment';
 import Facets from '../components/Facets';
 import ResultGroup from '../components/ResultGroup.vue';
-import { VariableSummary } from '../store/data/index';
+import { VariableSummary } from '../store/dataset/index';
 import { getters as resultsGetters } from '../store/results/module';
 import { getters as routeGetters } from '../store/route/module';
 import { getters as solutionGetters } from '../store/solutions/module';

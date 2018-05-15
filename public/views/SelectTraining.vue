@@ -55,19 +55,15 @@
 
 <script lang="ts">
 
+import Vue from 'vue';
 import CreateSolutionsForm from '../components/CreateSolutionsForm.vue';
 import SelectDataTable from '../components/SelectDataTable.vue';
 import AvailableTrainingVariables from '../components/AvailableTrainingVariables.vue';
 import TrainingVariables from '../components/TrainingVariables.vue';
 import TargetVariable from '../components/TargetVariable.vue';
 import TypeChangeMenu from '../components/TypeChangeMenu.vue';
-import { getters as datasetGetters, actions as datasetActions } from '../store/dataset/module';
-import { actions as highlightActions } from '../store/highlights/module';
-import { getters as routeGetters} from '../store/route/module';
-import { Variable, HighlightRoot } from '../store/data/index';
-import { sortVariablesByImportance, filterVariablesByPage, NUM_PER_PAGE } from '../util/data';
-import { FilterParams } from '../util/filters';
-import Vue from 'vue';
+import { actions as viewActions } from '../store/view/module';
+import { getters as routeGetters } from '../store/route/module';
 
 export default Vue.extend({
 	name: 'select-view',

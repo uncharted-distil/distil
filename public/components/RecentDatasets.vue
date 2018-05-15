@@ -19,7 +19,7 @@
 import DatasetPreview from '../components/DatasetPreview';
 import { getters as datasetGetters } from '../store/dataset/module';
 import { filterDatasets, getRecentDatasets } from '../util/data';
-import { Dataset } from '../store/data/index';
+import { Dataset } from '../store/dataset/index';
 import Vue from 'vue';
 
 export default Vue.extend({

@@ -27,7 +27,13 @@ export const getters = {
 	getRouteResidualThresholdMin: read(moduleGetters.getRouteResidualThresholdMin),
 	getRouteResidualThresholdMax: read(moduleGetters.getRouteResidualThresholdMax),
 	getDecodedFilters: read(moduleGetters.getDecodedFilters),
+	getDecodedFilterParams: read(moduleGetters.getDecodedFilterParams),
+	getTrainingVariables: read(moduleGetters.getTrainingVariables),
+	getTrainingVariableSummaries: read(moduleGetters.getTrainingVariableSummaries),
+	getTargetVariable: read(moduleGetters.getTargetVariable),
+	getTargetVariableSummaries: read(moduleGetters.getTargetVariableSummaries),
+	getAvailableVariables: read(moduleGetters.getAvailableVariables),
+	getAvailableVariableSummaries: read(moduleGetters.getAvailableVariableSummaries),
 	getDecodedHighlightRoot: read(moduleGetters.getDecodedHighlightRoot),
 	getDecodedRowSelection: read(moduleGetters.getDecodedRowSelection)
-
-}
+};

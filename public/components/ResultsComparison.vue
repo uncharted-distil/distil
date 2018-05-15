@@ -44,7 +44,7 @@ import { getters as datasetGetters} from '../store/dataset/module';
 import { getters as resultsGetters} from '../store/results/module';
 import { getters as routeGetters} from '../store/route/module';
 import { getTargetCol, getPredictedCol, getErrorCol } from '../util/data';
-import { Variable, TargetRow, TableColumn } from '../store/data/index';
+import { Variable, TargetRow, TableColumn } from '../store/dataset/index';
 import { getHighlights } from '../util/highlights';
 
 export default Vue.extend({

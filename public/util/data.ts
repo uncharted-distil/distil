@@ -1,9 +1,10 @@
 import _ from 'lodash';
 import { Dataset, VariableSummary, SummaryType, TableData, TableRow } from '../store/dataset/index';
-import { TargetRow, TableColumn, Variable } from '../store/data/index';
+import { TargetRow, TableColumn, Variable } from '../store/dataset/index';
 import { SolutionInfo, SOLUTION_COMPLETED } from '../store/solutions/index';
 import { Dictionary } from './dict';
-import { mutations as dataMutations } from '../store/data/module';
+import { mutations as resultMutations } from '../store/results/module';
+import { mutations as highlightMutations } from '../store/highlights/module';
 import { Group } from './facets';
 import { FilterParams } from './filters';
 import { formatValue } from '../util/types';
@@ -309,11 +310,11 @@ export function sortGroupsByImportance(groups: Group[], variables: Variable[]): 
 }
 
 export function updateCorrectnessHighlightSummary(context: any, summary: VariableSummary) {
-	mutateCorrectnessSummary(context, summary, dataMutations.updateCorrectnessHighlightSummaries)
+	mutateCorrectnessSummary(context, summary, highlightMutations.updateCorrectnessHighlightSummaries)
 }
 
 export function updateCorrectnessSummary(context: any, summary: VariableSummary) {
-	mutateCorrectnessSummary(context, summary, dataMutations.updateCorrectnessSummaries)
+	mutateCorrectnessSummary(context, summary, resultMutations.updateCorrectnessSummaries)
 }
 
 // Collapse categorical result summary data, which is returned as a confusion matrix, into a binary

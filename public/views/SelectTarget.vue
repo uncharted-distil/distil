@@ -22,8 +22,7 @@
 
 import Vue from 'vue';
 import AvailableTargetVariables from '../components/AvailableTargetVariables.vue';
-import { actions as viewActions } from '../store/view/module'
-import { Variable } from '../store/data/index';
+import { actions as viewActions } from '../store/view/module';
 
 export default Vue.extend({
 	name: 'select-view',

@@ -20,7 +20,8 @@ import { Group, createGroups } from '../util/facets';
 import _ from 'lodash';
 import { getHighlights, updateHighlightRoot, clearHighlightRoot } from '../util/highlights';
 import { isTarget, getVarFromTarget, getTargetCol } from '../util/data';
-import { VariableSummary, Highlight } from '../store/data/index';
+import { VariableSummary } from '../store/dataset/index';
+import { Highlight } from '../store/highlights/index';
 
 export default Vue.extend({
 	name: 'result-target-variable',

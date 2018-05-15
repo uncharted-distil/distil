@@ -1,9 +1,10 @@
 import { Store } from 'vuex';
-import { Data, Highlight, HighlightRoot } from '../store/data/index';
+import { TableData } from '../store/dataset/index';
+import { Highlight, HighlightRoot } from '../store/highlights/index';
 import { Dictionary } from '../util/dict';
 import { Filter, CATEGORICAL_FILTER, NUMERICAL_FILTER } from '../util/filters';
 import { getters as routeGetters } from '../store/route/module';
-import { getters as dataGetters } from '../store/data/module';
+import { getters as highlightGetters } from '../store/highlights/module';
 import { overlayRouteEntry} from '../util/routes'
 import _ from 'lodash';
 import Vue from 'vue';
@@ -46,7 +47,7 @@ export function createFilterFromHighlightRoot(highlightRoot: HighlightRoot, mode
 	return null;
 }
 
-export function parseHighlightSamples(data: Data): Dictionary<string[]>  {
+export function parseHighlightSamples(data: TableData): Dictionary<string[]>  {
 	const samples: Dictionary<string[]> = {};
 	for (let rowIdx = 0; rowIdx < data.values.length; rowIdx++) {
 		for (const [colIdx, col] of data.columns.entries()) {
@@ -82,8 +83,8 @@ export function getHighlights(store: Store<any>): Highlight {
 	return {
 		root: routeGetters.getDecodedHighlightRoot(store),
 		values: {
-			samples: dataGetters.getHighlightedSamples(store),
-			summaries: dataGetters.getHighlightedSummaries(store)
+			samples: highlightGetters.getHighlightedSamples(store),
+			summaries: highlightGetters.getHighlightedSummaries(store)
 		}
 	};
 }

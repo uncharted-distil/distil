@@ -1,7 +1,7 @@
 import _ from 'lodash';
 import { spinnerHTML } from '../util/spinner';
 import { formatValue } from '../util/types';
-import { VariableSummary } from '../store/data/index';
+import { VariableSummary } from '../store/dataset/index';
 
 export const CATEGORICAL_CHUNK_SIZE = 10;
 export const IMAGE_CHUNK_SIZE = 5;

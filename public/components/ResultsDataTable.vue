@@ -34,8 +34,9 @@
 
 import _ from 'lodash';
 import { spinnerHTML } from '../util/spinner';
-import { Extrema } from '../store/data/index';
-import { TargetRow, TableRow, TableColumn, RowSelection } from '../store/data/index';
+import { Extrema } from '../store/dataset/index';
+import { TargetRow, TableRow, TableColumn } from '../store/dataset/index';
+import { RowSelection } from '../store/highlights/index';
 import { getters as resultsGetters } from '../store/results/module';
 import { getters as routeGetters } from '../store/route/module';
 import { getters as solutionGetters } from '../store/solutions/module';

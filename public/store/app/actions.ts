@@ -4,6 +4,7 @@ import { DistilState } from '../store';
 import { ActionContext } from 'vuex';
 import { mutations } from './module';
 import { ES_INDEX } from '../dataset/index';
+import { FilterParams } from '../../util/filters';
 
 export type AppContext = ActionContext<AppState, DistilState>;
 

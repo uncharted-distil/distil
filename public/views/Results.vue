@@ -41,22 +41,20 @@
 </template>
 
 <script lang="ts">
+
+import Vue from 'vue';
 import VariableSummaries from '../components/VariableSummaries.vue';
 import ResultsComparison from '../components/ResultsComparison.vue';
 import ResultSummaries from '../components/ResultSummaries.vue';
 import ResultTargetVariable from '../components/ResultTargetVariable.vue';
-import { regression, getTask } from '../util/solutions';
-import { getters as dataGetters, actions as dataActions } from '../store/data/module';
-import { getters as resultGetters, actions as resultActions } from '../store/data/module';
+import { actions as viewActions } from '../store/view/module';
+import { getters as datasetGetters } from '../store/dataset/module';
+import { getters as resultGetters } from '../store/results/module';
 import { getters as routeGetters } from '../store/route/module';
-import { actions as solutionActions, getters as solutionGetters } from '../store/solutions/module';
-import { Variable, Extrema } from '../store/data/index';
+import { getters as solutionGetters } from '../store/solutions/module';
+import { Variable } from '../store/dataset/index';
 import { Dictionary } from '../util/dict';
-import { HighlightRoot } from '../store/data/index';
 import { Group, createGroups } from '../util/facets';
-import { sortVariablesByImportance, filterVariablesByPage, NUM_PER_PAGE } from '../util/data';
-import Vue from 'vue';
-import _ from 'lodash';
 
 export default Vue.extend({
 	name: 'results-view',
@@ -79,7 +77,7 @@ export default Vue.extend({
 			return routeGetters.getRouteTargetVariable(this.$store);
 		},
 		targetType(): string {
-			const variables = dataGetters.getVariablesMap(this.$store);
+			const variables = datasetGetters.getVariablesMap(this.$store);
 			if (variables && variables[this.target]) {
 				return variables[this.target].type;
 			}

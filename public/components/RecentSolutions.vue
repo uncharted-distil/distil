@@ -12,7 +12,7 @@
 <script lang="ts">
 
 import SolutionPreview from '../components/SolutionPreview';
-import { solutionGetters as solutionGetters } from '../store/solutions/module';
+import { getters as solutionGetters } from '../store/solutions/module';
 import { SolutionInfo } from '../store/solutions/index';
 import Vue from 'vue';
 
