@@ -5,9 +5,9 @@ import { DatasetState, Variable, ES_INDEX } from './index';
 import { mutations } from './module'
 import { DistilState } from '../store';
 import { HighlightRoot } from '../highlights/index';
-import { FilterParams, INCLUDE_FILTER, EXCLUDE_FILTER } from '../../util/filters';
+import { FilterParams, INCLUDE_FILTER } from '../../util/filters';
 import { createPendingSummary, createErrorSummary, createEmptyTableData } from '../../util/data';
-import { createFilterFromHighlightRoot } from '../../util/highlights';
+import { addHighlightToFilterParams } from '../../util/highlights';
 
 export type DatasetContext = ActionContext<DatasetState, DistilState>;
 
@@ -128,23 +128,20 @@ export const actions = {
 	},
 
 	// update filtered data based on the current filter state
-	fetchIncludedTableData(context: DatasetContext, args: { dataset: string, filters: FilterParams, highlightRoot: HighlightRoot }) {
+	fetchIncludedTableData(context: DatasetContext, args: { dataset: string, filterParams: FilterParams, highlightRoot: HighlightRoot }) {
 		if (!args.dataset) {
 			console.warn('`dataset` argument is missing');
 			return null;
 		}
-		if (!args.filters) {
+		if (!args.filterParams) {
 			console.warn('`filters` argument is missing');
 			return null;
 		}
 
-		const highlightFilter = createFilterFromHighlightRoot(args.highlightRoot, INCLUDE_FILTER);
-		if (highlightFilter) {
-			args.filters.filters.push(highlightFilter);
-		}
+		const filterParams = addHighlightToFilterParams(args.filterParams, args.highlightRoot, INCLUDE_FILTER);
 
 		// request filtered data from server - no data is valid given filter settings
-		return axios.post(`distil/data/${ES_INDEX}/${args.dataset}/false`, args.filters)
+		return axios.post(`distil/data/${ES_INDEX}/${args.dataset}/false`, filterParams)
 			.then(response => {
 				mutations.setIncludedTableData(context, response.data);
 			})
@@ -155,22 +152,20 @@ export const actions = {
 	},
 
 	// update filtered data based on the  current filter state
-	fetchExcludedTableData(context: DatasetContext, args: { dataset: string, filters: FilterParams, highlightRoot: HighlightRoot }) {
+	fetchExcludedTableData(context: DatasetContext, args: { dataset: string, filterParams: FilterParams, highlightRoot: HighlightRoot }) {
 		if (!args.dataset) {
 			console.warn('`dataset` argument is missing');
 			return null;
 		}
-		if (!args.filters) {
+		if (!args.filterParams) {
 			console.warn('`filters` argument is missing');
 			return null;
 		}
 
-		const highlightFilter = createFilterFromHighlightRoot(args.highlightRoot, EXCLUDE_FILTER);
-		if (highlightFilter) {
-			args.filters.filters.push(highlightFilter);
-		}
+		// NOTE: we use an `INCLUDE_FILTER` here because we are inverting all the filters in the REST param
+		const filterParams = addHighlightToFilterParams(args.filterParams, args.highlightRoot, INCLUDE_FILTER);
 
-		return axios.post(`distil/data/${ES_INDEX}/${args.dataset}/true`, args.filters)
+		return axios.post(`distil/data/${ES_INDEX}/${args.dataset}/true`, filterParams)
 			.then(response => {
 				mutations.setExcludedTableData(context, response.data);
 			})

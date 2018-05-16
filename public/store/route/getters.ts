@@ -91,15 +91,15 @@ export const getters = {
 	},
 
 	getDecodedFilters(state: Route, getters: any): Filter[] {
-		return decodeFilters(state.query.filters).slice();
+		return decodeFilters(state.query.filters);
 	},
 
 	getDecodedFilterParams(state: Route, getters: any): FilterParams {
 		const filters = getters.getDecodedFilters;
-		const filterParams = {
+		const filterParams = _.cloneDeep({
 			filters: filters,
 			variables: []
-		};
+		});
 		// add training vars
 		const training = getters.getDecodedTrainingVariableNames;
 		filterParams.variables = filterParams.variables.concat(training);

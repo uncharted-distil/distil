@@ -24,6 +24,8 @@ export const mutations = {
 };
 
 export const actions = {
+	fetchHomeData: dispatch(moduleActions.fetchHomeData),
+	fetchSearchData: dispatch(moduleActions.fetchSearchData),
 	fetchSelectTargetData: dispatch(moduleActions.fetchSelectTargetData),
 	fetchSelectTrainingData: dispatch(moduleActions.fetchSelectTrainingData),
 	updateSelectTrainingData: dispatch(moduleActions.updateSelectTrainingData),

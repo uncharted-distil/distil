@@ -64,7 +64,7 @@ export default Vue.extend({
 		variables(): Variable[] {
 			return datasetGetters.getVariables(this.$store);
 		},
-		filters(): FilterParams {
+		filterParams(): FilterParams {
 			return routeGetters.getDecodedFilterParams(this.$store);
 		},
 		// gets the metrics that are used to score predictions against the user selected variable
@@ -125,7 +125,7 @@ export default Vue.extend({
 			// dispatch action that triggers request send to server
 			solutionActions.createSolutions(this.$store, {
 				dataset: this.dataset,
-				filters: this.filters,
+				filters: this.filterParams,
 				target: routeGetters.getRouteTargetVariable(this.$store),
 				task: task,
 				metrics: metrics,
@@ -147,7 +147,7 @@ export default Vue.extend({
 			appActions.exportProblem(this.$store, {
 				dataset: this.dataset,
 				target: this.target,
-				filters: this.filters,
+				filterParams: this.filterParams,
 			}).then(res => {
 				this.exportResults = res;
 			});

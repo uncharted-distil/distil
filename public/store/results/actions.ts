@@ -2,7 +2,7 @@ import _ from 'lodash';
 import axios from 'axios';
 import { ActionContext } from 'vuex';
 import { DistilState } from '../store';
-import { FilterParams, INCLUDE_FILTER, EXCLUDE_FILTER } from '../../util/filters';
+import { INCLUDE_FILTER, EXCLUDE_FILTER } from '../../util/filters';
 import { getSolutionsByRequestIds, getSolutionById } from '../../util/solutions';
 import { getSummaries, getSummary, updateCorrectnessSummary, getCorrectnessCol } from '../../util/data';
 import { Variable, Extrema, ES_INDEX } from '../dataset/index';
@@ -10,7 +10,7 @@ import { HighlightRoot } from '../highlights/index';
 import { SolutionInfo, SOLUTION_ERRORED } from '../solutions/index';
 import { mutations } from './module'
 import { ResultsState } from './index'
-import { createFilterFromHighlightRoot } from '../../util/highlights';
+import { addHighlightToFilterParams } from '../../util/highlights';
 import { getPredictedCol, getErrorCol, getVarFromTarget, createPendingSummary, createErrorSummary, createEmptyTableData} from '../../util/data';
 
 export type ResultsContext = ActionContext<ResultsState, DistilState>;
@@ -134,14 +134,7 @@ export const actions = {
 			});
 	},
 
-	fetchIncludedResultTableData(context: ResultsContext, args: { solutionId: string, dataset: string, highlightRoot: HighlightRoot, filters?: FilterParams }) {
-		if (!args.filters) {
-			args.filters = {
-				variables: [],
-				filters: []
-			};
-		}
-
+	fetchIncludedResultTableData(context: ResultsContext, args: { solutionId: string, dataset: string, highlightRoot: HighlightRoot }) {
 		const solution = getSolutionById(context.rootState.solutionModule, args.solutionId);
 		if (!solution.resultId) {
 			// no results ready to pull
@@ -149,13 +142,13 @@ export const actions = {
 			return null;
 		}
 
-		const highlightFilter = createFilterFromHighlightRoot(args.highlightRoot, INCLUDE_FILTER);
-		if (highlightFilter) {
-			highlightFilter.name = getVarFromTarget(highlightFilter.name);
-			args.filters.filters.push(highlightFilter);
-		}
+		let filterParams = {
+			variables: [],
+			filters: []
+		};
+		filterParams = addHighlightToFilterParams(filterParams, args.highlightRoot, INCLUDE_FILTER, getVarFromTarget);
 
-		return axios.post(`/distil/results/${ES_INDEX}/${args.dataset}/${encodeURIComponent(args.solutionId)}`, args.filters)
+		return axios.post(`/distil/results/${ES_INDEX}/${args.dataset}/${encodeURIComponent(args.solutionId)}`, filterParams)
 			.then(response => {
 				mutations.setIncludedResultTableData(context, response.data);
 			})
@@ -165,14 +158,7 @@ export const actions = {
 			});
 	},
 
-	fetchExcludedResultTableData(context: ResultsContext, args: { solutionId: string, dataset: string, highlightRoot: HighlightRoot, filters?: FilterParams }) {
-		if (!args.filters) {
-			args.filters = {
-				variables: [],
-				filters: []
-			};
-		}
-
+	fetchExcludedResultTableData(context: ResultsContext, args: { solutionId: string, dataset: string, highlightRoot: HighlightRoot }) {
 		const solution = getSolutionById(context.rootState.solutionModule, args.solutionId);
 		if (!solution.resultId) {
 			// no results ready to pull
@@ -180,13 +166,13 @@ export const actions = {
 			return null;
 		}
 
-		const highlightFilter = createFilterFromHighlightRoot(args.highlightRoot, EXCLUDE_FILTER);
-		if (highlightFilter) {
-			highlightFilter.name = getVarFromTarget(highlightFilter.name);
-			args.filters.filters.push(highlightFilter);
-		}
+		let filterParams = {
+			variables: [],
+			filters: []
+		};
+		filterParams = addHighlightToFilterParams(filterParams, args.highlightRoot, EXCLUDE_FILTER, getVarFromTarget);
 
-		return axios.post(`/distil/results/${ES_INDEX}/${args.dataset}/${encodeURIComponent(args.solutionId)}`, args.filters)
+		return axios.post(`/distil/results/${ES_INDEX}/${args.dataset}/${encodeURIComponent(args.solutionId)}`, filterParams)
 			.then(response => {
 				mutations.setExcludedResultTableData(context, response.data);
 			})
@@ -194,6 +180,21 @@ export const actions = {
 				console.error(`Failed to fetch results from ${args.solutionId} with error ${error}`);
 				mutations.setExcludedResultTableData(context, createEmptyTableData(args.dataset));
 			});
+	},
+
+	fetchResultTableData(context: ResultsContext, args: { solutionId: string, dataset: string, highlightRoot: HighlightRoot}) {
+		return Promise.all([
+			context.dispatch('fetchIncludedResultTableData', {
+				dataset: args.dataset,
+				solutionId: args.solutionId,
+				highlightRoot: args.highlightRoot
+			}),
+			context.dispatch('fetchExcludedResultTableData', {
+				dataset: args.dataset,
+				solutionId: args.solutionId,
+				highlightRoot: args.highlightRoot
+			})
+		]);
 	},
 
 	fetchPredictedExtrema(context: ResultsContext, args: { dataset: string, solutionId: string }) {

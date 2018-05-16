@@ -45,9 +45,9 @@ export const actions = {
 	fetchResultSummary: dispatch(moduleActions.fetchResultSummary),
 	fetchResultExtrema: dispatch(moduleActions.fetchResultExtrema),
 	fetchTrainingResultSummaries: dispatch(moduleActions.fetchTrainingResultSummaries),
-
 	fetchIncludedResultTableData: dispatch(moduleActions.fetchIncludedResultTableData),
 	fetchExcludedResultTableData: dispatch(moduleActions.fetchExcludedResultTableData),
+	fetchResultTableData: dispatch(moduleActions.fetchExcludedResultTableData),
 	// predicted
 	fetchPredictedSummaries: dispatch(moduleActions.fetchPredictedSummaries),
 	fetchPredictedExtrema: dispatch(moduleActions.fetchPredictedExtrema),

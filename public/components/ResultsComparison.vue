@@ -10,6 +10,7 @@
 				:data-items="includedResultTableDataItems"
 				:decorateFunc="topDecorate"
 				:showError="regressionEnabled"></results-data-table>
+			<br>
 			<results-data-table
 				refName="bottomTable"
 				instanceName="bottom-results-data-table"

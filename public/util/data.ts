@@ -221,7 +221,7 @@ export function getSummary(
 	nameFunc: (SolutionInfo) => string,
 	labelFunc: (SolutionInfo) => string,
 	updateFunction: (any, VariableSummary) => void,
-	filters: FilterParams): Promise<any> {
+	filterParams: FilterParams): Promise<any> {
 
 	const name = nameFunc(solution);
 	const label = labelFunc(solution);
@@ -240,7 +240,7 @@ export function getSummary(
 	}
 
 	// return promise
-	return axios.post(`${endpoint}/${resultId}`, filters ? filters: {})
+	return axios.post(`${endpoint}/${resultId}`, filterParams ? filterParams: {})
 		.then(response => {
 			// save the histogram data
 			const histogram = response.data.histogram;
@@ -264,7 +264,7 @@ export function getSummaries(
 	nameFunc: (SolutionInfo) => string,
 	labelFunc: (SolutionInfo) => string,
 	updateFunction: (any, VariableSummary) => void,
-	filters: FilterParams): Promise<any> {
+	filterParams: FilterParams): Promise<any> {
 
 	// return as singular promise
 	const promises = solutions.map(solution => {
@@ -275,7 +275,7 @@ export function getSummaries(
 			nameFunc,
 			labelFunc,
 			updateFunction,
-			filters);
+			filterParams);
 	});
 	return Promise.all(promises);
 }

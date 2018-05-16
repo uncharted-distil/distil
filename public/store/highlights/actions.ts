@@ -9,30 +9,27 @@ import { Variable, Extrema, ES_INDEX } from '../dataset/index';
 import { mutations } from './module'
 import { SolutionInfo } from '../solutions/index';
 import { HighlightRoot } from './index';
-import { createFilterFromHighlightRoot, parseHighlightSamples } from '../../util/highlights';
+import { addHighlightToFilterParams, parseHighlightSamples } from '../../util/highlights';
 import { getPredictedCol, getVarFromTarget } from '../../util/data';
 
 export type HighlightsContext = ActionContext<HighlightState, DistilState>;
 
 export const actions = {
 
-	fetchDataHighlightSamples(context: HighlightsContext, args: { highlightRoot: HighlightRoot, filters: FilterParams, dataset: string }) {
+	fetchDataHighlightSamples(context: HighlightsContext, args: { highlightRoot: HighlightRoot, filterParams: FilterParams, dataset: string }) {
 		if (!args.dataset) {
 			console.warn('`dataset` argument is missing');
 			return null;
 		}
-		if (!args.filters) {
+		if (!args.filterParams) {
 			console.warn('`filters` argument is missing');
 			return null;
 		}
 
-		const highlightFilter = createFilterFromHighlightRoot(args.highlightRoot, INCLUDE_FILTER);
-		if (highlightFilter) {
-			args.filters.filters.push(highlightFilter);
-		}
+		const filterParams = addHighlightToFilterParams(args.filterParams, args.highlightRoot, INCLUDE_FILTER);
 
 		// fetch the data using the supplied filtered
-		return axios.post(`distil/data/${ES_INDEX}/${args.dataset}/false`, args.filters)
+		return axios.post(`distil/data/${ES_INDEX}/${args.dataset}/false`, filterParams)
 			.then(res => {
 				mutations.updateHighlightSamples(context, parseHighlightSamples(res.data));
 			})
@@ -42,7 +39,7 @@ export const actions = {
 			});
 	},
 
-	fetchDataHighlightSummaries(context: HighlightsContext, args: { highlightRoot: HighlightRoot, dataset: string, filters: FilterParams, variables: Variable[] }) {
+	fetchDataHighlightSummaries(context: HighlightsContext, args: { highlightRoot: HighlightRoot, dataset: string, filterParams: FilterParams, variables: Variable[] }) {
 		if (!args.dataset) {
 			console.warn('`dataset` argument is missing');
 			return null;
@@ -52,14 +49,11 @@ export const actions = {
 			return null;
 		}
 
-		const highlightFilter = createFilterFromHighlightRoot(args.highlightRoot, INCLUDE_FILTER);
-		if (highlightFilter) {
-			args.filters.filters.push(highlightFilter);
-		}
+		const filterParams = addHighlightToFilterParams(args.filterParams, args.highlightRoot, INCLUDE_FILTER);
 
 		// commit empty place holders, if there is no data
 		return Promise.all(args.variables.map(variable => {
-			return axios.post(`/distil/variable-summary/${ES_INDEX}/${args.dataset}/${variable.name}`, args.filters)
+			return axios.post(`/distil/variable-summary/${ES_INDEX}/${args.dataset}/${variable.name}`, filterParams)
 				.then(response => {
 					mutations.updateHighlightSummaries(context, response.data.histogram);
 				})
@@ -69,18 +63,18 @@ export const actions = {
 		}));
 	},
 
-	fetchDataHighlightValues(context: HighlightsContext, args: { highlightRoot: HighlightRoot, dataset: string, filters: FilterParams, variables: Variable[] }) {
+	fetchDataHighlightValues(context: HighlightsContext, args: { highlightRoot: HighlightRoot, dataset: string, filterParams: FilterParams, variables: Variable[] }) {
 		return Promise.all([
 			context.dispatch('fetchDataHighlightSamples', {
 				highlightRoot: args.highlightRoot,
 				dataset: args.dataset,
-				filters: args.filters,
+				filterParams: args.filterParams,
 			}),
 			context.dispatch('fetchDataHighlightSummaries', {
 				highlightRoot: args.highlightRoot,
 				dataset: args.dataset,
 				variables: args.variables,
-				filters: args.filters
+				filterParams: args.filterParams
 			})
 		]);
 	},
@@ -102,16 +96,11 @@ export const actions = {
 			return null;
 		}
 
-		const filters = {
+		let filterParams = {
 			variables: [],
 			filters: []
 		}
-
-		const highlightFilter = createFilterFromHighlightRoot(args.highlightRoot, INCLUDE_FILTER);
-		if (highlightFilter) {
-			highlightFilter.name = getVarFromTarget(highlightFilter.name);
-			filters.filters.push(highlightFilter);
-		}
+		filterParams = addHighlightToFilterParams(filterParams, args.highlightRoot, INCLUDE_FILTER, getVarFromTarget);
 
 		// commit empty place holders, if there is no data
 		return Promise.all(args.variables.map(variable => {
@@ -122,7 +111,7 @@ export const actions = {
 				extremaMin = args.extrema.min;
 				extremaMax = args.extrema.max;
 			}
-			return axios.post(`/distil/results-variable-summary/${ES_INDEX}/${args.dataset}/${variable.name}/${extremaMin}/${extremaMax}/${solution.resultId}`, filters)
+			return axios.post(`/distil/results-variable-summary/${ES_INDEX}/${args.dataset}/${variable.name}/${extremaMin}/${extremaMax}/${solution.resultId}`, filterParams)
 				.then(response => {
 					mutations.updateHighlightSummaries(context, response.data.histogram);
 				})
@@ -138,23 +127,17 @@ export const actions = {
 			return null;
 		}
 
-		const filters = {
+		let filterParams = {
 			variables: [],
 			filters: []
 		}
-
-		const highlightFilter = createFilterFromHighlightRoot(args.highlightRoot, INCLUDE_FILTER);
-		if (highlightFilter) {
-			highlightFilter.name = getVarFromTarget(highlightFilter.name);
-			filters.filters.push(highlightFilter);
-		}
+		filterParams = addHighlightToFilterParams(filterParams, args.highlightRoot, INCLUDE_FILTER, getVarFromTarget);
 
 		const solutions = getSolutionsByRequestIds(context.rootState.solutionModule, args.requestIds);
-
 		const endPoint = `/distil/results-summary/${ES_INDEX}/${args.dataset}/${args.extrema.min}/${args.extrema.max}`
 		const nameFunc = (p: SolutionInfo) => getPredictedCol(p.feature);
 		const labelFunc = (p: SolutionInfo) => '';
-		getSummaries(context, endPoint, solutions, nameFunc, labelFunc, mutations.updatePredictedHighlightSummaries, filters);
+		getSummaries(context, endPoint, solutions, nameFunc, labelFunc, mutations.updatePredictedHighlightSummaries, filterParams);
 	},
 
 	fetchCorrectnessHighlightSummaries(context: HighlightsContext, args: { highlightRoot: HighlightRoot, dataset: string, requestIds: string[], extrema: Extrema }) {
@@ -163,23 +146,17 @@ export const actions = {
 			return null;
 		}
 
-		const filters = {
+		let filterParams = {
 			variables: [],
 			filters: []
 		}
-
-		const highlightFilter = createFilterFromHighlightRoot(args.highlightRoot, INCLUDE_FILTER);
-		if (highlightFilter) {
-			highlightFilter.name = getVarFromTarget(highlightFilter.name);
-			filters.filters.push(highlightFilter);
-		}
+		filterParams = addHighlightToFilterParams(filterParams, args.highlightRoot, INCLUDE_FILTER, getVarFromTarget);
 
 		const solutions = getSolutionsByRequestIds(context.rootState.solutionModule, args.requestIds);
-
 		const endPoint = `/distil/results-summary/${ES_INDEX}/${args.dataset}/${args.extrema.min}/${args.extrema.max}`
 		const nameFunc = (p: SolutionInfo) => getCorrectnessCol(p.feature);
 		const labelFunc = (p: SolutionInfo) => '';
-		getSummaries(context, endPoint, solutions, nameFunc, labelFunc, updateCorrectnessHighlightSummary, filters);
+		getSummaries(context, endPoint, solutions, nameFunc, labelFunc, updateCorrectnessHighlightSummary, filterParams);
 	},
 
 	fetchResultHighlightSamples(context: HighlightsContext, args: { highlightRoot: HighlightRoot, dataset: string, solutionId: string }) {
@@ -198,22 +175,17 @@ export const actions = {
 			return null;
 		}
 
-		const filters = {
+		let filterParams = {
 			variables: [],
 			filters: []
 		}
-
-		const highlightFilter = createFilterFromHighlightRoot(args.highlightRoot, INCLUDE_FILTER);
-		if (highlightFilter) {
-			highlightFilter.name = getVarFromTarget(highlightFilter.name);
-			filters.filters.push(highlightFilter);
-		}
+		filterParams = addHighlightToFilterParams(filterParams, args.highlightRoot, INCLUDE_FILTER, getVarFromTarget);
 
 		// fetch the data using the supplied filtered
 		return context.dispatch('fetchResultTableData', {
 				solutionId: args.solutionId,
 				dataset: args.dataset,
-				filters: filters
+				filterParams: filterParams
 			})
 			.then(res => {
 				mutations.updateHighlightSamples(context, parseHighlightSamples(res.data));

@@ -6,6 +6,15 @@ export type ViewContext = ActionContext<ViewState, DistilState>;
 
 export const actions = {
 
+	fetchHomeData(context: ViewContext) {
+		return context.dispatch('fetchSolutions', {});
+	},
+
+	fetchSearchData(context: ViewContext) {
+		const terms = context.getters.getRouteTerms;
+		return context.dispatch('datasetActions', terms);
+	},
+
 	fetchSelectTargetData(context: ViewContext) {
 		// clear previous state
 		context.commit('clearHighlightSummaries');
@@ -50,6 +59,12 @@ export const actions = {
 	},
 
 	updateSelectTrainingData(context: ViewContext) {
+		// clear any previous state
+		context.commit('clearHighlightSummaries');
+		context.commit('updateHighlightSamples', null);
+		context.commit('setIncludedTableData', null);
+		context.commit('setExcludedTableData', null);
+
 		const dataset = context.getters.getRouteDataset;
 		const highlightRoot = context.getters.getDecodedHighlightRoot;
 		const filterParams = context.getters.getDecodedFilterParams;
@@ -60,16 +75,16 @@ export const actions = {
 				dataset: dataset,
 				variables: paginatedVariables,
 				highlightRoot: highlightRoot,
-				filters: filterParams
+				filterParams: filterParams
 			}),
 			context.dispatch('fetchIncludedTableData', {
 				dataset: dataset,
-				filters: filterParams,
+				filterParams: filterParams,
 				highlightRoot: highlightRoot
 			}),
 			context.dispatch('fetchExcludedTableData', {
 				dataset: dataset,
-				filters: filterParams,
+				filterParams: filterParams,
 				highlightRoot: highlightRoot
 			})
 		]);
