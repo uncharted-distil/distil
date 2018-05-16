@@ -1,9 +1,12 @@
 package pipeline
 
 import (
+	"bytes"
+	"compress/gzip"
 	"context"
 	"crypto/sha1"
 	"fmt"
+	"io/ioutil"
 	"math/rand"
 	"path"
 	"path/filepath"
@@ -11,9 +14,12 @@ import (
 	"sync"
 	"time"
 
+	"github.com/golang/protobuf/proto"
+	protobuf "github.com/golang/protobuf/protoc-gen-go/descriptor"
 	"github.com/pkg/errors"
 
 	"github.com/unchartedsoftware/distil/api/model"
+	log "github.com/unchartedsoftware/plog"
 )
 
 const (
@@ -52,15 +58,15 @@ type CreateStatus struct {
 	Timestamp  time.Time `json:"timestamp"`
 }
 
-func (m *CreateMessage) createSearchSolutionsRequest(targetIndex int, datasetURI string) (*SearchSolutionsRequest, error) {
+func (m *CreateMessage) createSearchSolutionsRequest(targetIndex int, datasetURI string, userAgent string) (*SearchSolutionsRequest, error) {
+	// Grab the embedded ta3ta2 API version
+	apiVersion, err := getAPIVersion()
+	if err != nil {
+		log.Warnf("Failed to extract API version")
+		apiVersion = "unknown"
+	}
+
 	return &SearchSolutionsRequest{
-		Inputs: []*Value{
-			{
-				Value: &Value_DatasetUri{
-					DatasetUri: datasetURI,
-				},
-			},
-		},
 		Problem: &ProblemDescription{
 			Problem: &Problem{
 				TaskType:           convertTaskTypeFromTA3ToTA2(m.Task),
@@ -70,6 +76,23 @@ func (m *CreateMessage) createSearchSolutionsRequest(targetIndex int, datasetURI
 				{
 					DatasetId: convertDatasetTA3ToTA2(m.Dataset),
 					Targets:   convertTargetFeaturesTA3ToTA2(m.TargetFeature, targetIndex),
+				},
+			},
+		},
+
+		UserAgent: userAgent,
+		Version:   apiVersion,
+
+		// we accept dataset and csv uris as return types
+		AllowedValueTypes: []ValueType{
+			ValueType_DATASET_URI,
+		},
+
+		// URI of the input dataset
+		Inputs: []*Value{
+			{
+				Value: &Value_DatasetUri{
+					DatasetUri: m.Dataset,
 				},
 			},
 		},
@@ -367,7 +390,7 @@ func (m *CreateMessage) PersistAndDispatch(client *Client, solutionStorage model
 	datasetPathTest = fmt.Sprintf("%s", filepath.Join(datasetPathTest, D3MDataSchema))
 
 	// create search solutions request
-	searchRequest, err := m.createSearchSolutionsRequest(targetIndex, datasetPathTrain)
+	searchRequest, err := m.createSearchSolutionsRequest(targetIndex, datasetPathTrain, client.UserAgent)
 	if err != nil {
 		return nil, err
 	}
@@ -447,4 +470,39 @@ func convertTargetFeaturesTA3ToTA2(target string, targetIndex int) []*ProblemTar
 
 func convertDatasetTA3ToTA2(dataset string) string {
 	return dataset
+}
+
+// getApiVersion retrieves the ta3-ta2 API version embedded in the pipeline_service.proto file
+func getAPIVersion() (string, error) {
+	// Get the raw file descriptor bytes
+	fileDesc := proto.FileDescriptor(E_ProtocolVersion.Filename)
+	if fileDesc == nil {
+		return "", fmt.Errorf("failed to find file descriptor for %v", E_ProtocolVersion.Filename)
+	}
+
+	// Open a gzip reader and decompress
+	r, err := gzip.NewReader(bytes.NewReader(fileDesc))
+	if err != nil {
+		return "", fmt.Errorf("failed to open gzip reader: %v", err)
+	}
+	defer r.Close()
+
+	b, err := ioutil.ReadAll(r)
+	if err != nil {
+		return "", fmt.Errorf("failed to decompress descriptor: %v", err)
+	}
+
+	// Unmarshall the bytes from the proto format
+	fd := &protobuf.FileDescriptorProto{}
+	if err := proto.Unmarshal(b, fd); err != nil {
+		return "", fmt.Errorf("malformed FileDescriptorProto: %v", err)
+	}
+
+	// Fetch the extension from the FileDescriptorOptions message
+	ex, err := proto.GetExtension(fd.GetOptions(), E_ProtocolVersion)
+	if err != nil {
+		return "", fmt.Errorf("failed to fetch extension: %v", err)
+	}
+
+	return *ex.(*string), nil
 }

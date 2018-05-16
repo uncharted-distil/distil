@@ -17,15 +17,16 @@ import (
 // is designed such that multiple go routines make RPC calls to a single shared client, and synch
 // is managed internally.
 type Client struct {
-	client  CoreClient
-	conn    *grpc.ClientConn
-	mu      *sync.Mutex
-	DataDir string
+	client    CoreClient
+	conn      *grpc.ClientConn
+	mu        *sync.Mutex
+	DataDir   string
+	UserAgent string
 }
 
 // NewClient creates a new pipline request dispatcher instance. This will establish
 // the connection to the solution server or return an error on fail
-func NewClient(serverAddr string, dataDir string, trace bool) (*Client, error) {
+func NewClient(serverAddr string, dataDir string, trace bool, userAgent string) (*Client, error) {
 	conn, err := grpc.Dial(
 		serverAddr,
 		grpc.WithInsecure(),
@@ -41,6 +42,7 @@ func NewClient(serverAddr string, dataDir string, trace bool) (*Client, error) {
 	client.client = NewCoreClient(conn)
 	client.conn = conn
 	client.DataDir = dataDir
+	client.UserAgent = userAgent
 	return &client, nil
 }
 

@@ -46,6 +46,9 @@ func main() {
 	log.Infof("version: %s built: %s", version, timestamp)
 	servicesToWait := make(map[string]service.Heartbeat)
 
+	userAgent := fmt.Sprintf("uncharted-distil-%s-%s", version, timestamp)
+	log.Infof("user agent: %s", userAgent)
+
 	// load config from env
 	config, err := env.LoadConfig()
 	if err != nil {
@@ -105,7 +108,7 @@ func main() {
 	pgSolutionStorageCtor := pg.NewSolutionStorage(postgresClientCtor, metadataStorageCtor)
 
 	// Instantiate the solution compute client
-	solutionClient, err := pipeline.NewClient(config.SolutionComputeEndpoint, config.SolutionDataDir, config.SolutionComputeTrace)
+	solutionClient, err := pipeline.NewClient(config.SolutionComputeEndpoint, config.SolutionDataDir, config.SolutionComputeTrace, userAgent)
 	if err != nil {
 		log.Errorf("%v", err)
 		os.Exit(1)
