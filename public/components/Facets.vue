@@ -102,7 +102,6 @@ export default Vue.extend({
 			if (!component.more[key]) {
 				Vue.set(component.more, key, 0);
 			}
-			console.log(key, this.groups);
 			const group = _.find(this.groups, g => g.key === key);
 			Vue.set(component.more, key, component.more[key] + getCategoricalChunkSize(group.type));
 		});

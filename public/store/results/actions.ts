@@ -372,7 +372,7 @@ export const actions = {
 			console.warn('`requestIds` argument is missing');
 			return null;
 		}
-		if (!args.extrema) {
+		if (!args.extrema || (!args.extrema.min && !args.extrema.max)) {
 			console.warn('`extrema` argument is missing');
 			return null;
 		}
@@ -395,10 +395,8 @@ export const actions = {
 		}
 
 		// only use extrema if this is the feature variable
-		const extremaMin = NaN;
-		const extremaMax = NaN;
 		const solution = getSolutionById(context.rootState.solutionModule, args.solutionId);
-		const endPoint = `/distil/results-summary/${ES_INDEX}/${args.dataset}/${extremaMin}/${extremaMax}`
+		const endPoint = `/distil/results-summary/${ES_INDEX}/${args.dataset}/null/null`;
 		const nameFunc = (p: SolutionInfo) => getCorrectnessCol(p.feature);
 		const labelFunc = (p: SolutionInfo) => 'Error Summary';
 
@@ -416,10 +414,8 @@ export const actions = {
 			return null;
 		}
 		// only use extrema if this is the feature variable
-		const extremaMin = NaN;
-		const extremaMax = NaN;
 		const solutions = getSolutionsByRequestIds(context.rootState.solutionModule, args.requestIds);
-		const endPoint = `/distil/results-summary/${ES_INDEX}/${args.dataset}/${extremaMin}/${extremaMax}`
+		const endPoint = `/distil/results-summary/${ES_INDEX}/${args.dataset}/null/null`
 		const nameFunc = (p: SolutionInfo) => getCorrectnessCol(p.feature);
 		const labelFunc = (p: SolutionInfo) => 'Error Summary';
 		getSummaries(context, endPoint, solutions, nameFunc, labelFunc, updateCorrectnessSummary, null);

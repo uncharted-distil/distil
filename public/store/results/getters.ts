@@ -55,7 +55,7 @@ export const getters = {
 	},
 
 	getPredictedExtrema(state: ResultsState): Extrema {
-		if (_.isEmpty(state.predictedExtremas)) {
+		if (_.isEmpty(state.predictedExtremas) && !state.targetResultExtrema) {
 			return {
 				min: NaN,
 				max: NaN

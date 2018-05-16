@@ -131,8 +131,6 @@ export const actions = {
 		const variables = context.getters.getVariables;
 		const requestIds = context.getters.getSolutionRequestIds;
 		const solutionId = context.getters.getRouteSolutionId;
-		const predictedExtrema = context.getters.getPredictedExtrema;
-		const residualExtrema = context.getters.getResidualExtrema;
 		const paginatedVariables = context.getters.getResultsPaginatedVariables;
 		const highlightRoot = context.getters.getDecodedHighlightRoot;
 
@@ -151,6 +149,7 @@ export const actions = {
 			];
 		}
 		Promise.all(extremaFetches).then(() => {
+			const predictedExtrema = context.getters.getPredictedExtrema;
 			context.dispatch('fetchTrainingResultSummaries', {
 				dataset: dataset,
 				variables: variables,
@@ -177,6 +176,7 @@ export const actions = {
 				dataset: dataset,
 				requestIds: requestIds
 			}).then(() => {
+				const residualExtrema = context.getters.getResidualExtrema;
 				context.dispatch('fetchResidualsSummaries', {
 					dataset: dataset,
 					requestIds: requestIds,
