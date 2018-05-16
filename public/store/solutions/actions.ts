@@ -25,13 +25,11 @@ function updateCurrentSolutionResults(context: SolutionContext, req: CreateSolut
 
 	const currentSolutionId = context.getters.getRouteSolutionId;
 
-	// if current solutionId, pull results
-	if (res.solutionId === currentSolutionId) {
-		context.dispatch('fetchResultTableData', {
-			dataset: req.dataset,
-			solutionId: res.solutionId
-		});
-	}
+	// pull new table results
+	context.dispatch('fetchResultTableData', {
+		dataset: req.dataset,
+		solutionId: res.solutionId
+	});
 
 	// if this is a regression task, pull extrema as a first step
 	const isRegression = req.task.toLowerCase() === regression.schemaName.toLowerCase();

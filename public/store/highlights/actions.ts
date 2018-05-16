@@ -32,11 +32,7 @@ export const actions = {
 		}
 
 		// fetch the data using the supplied filtered
-		return context.dispatch('fetchTableData', {
-				dataset: args.dataset,
-				filters: args.filters,
-				invert: false
-			})
+		return axios.post(`distil/data/${ES_INDEX}/${args.dataset}/false`, args.filters)
 			.then(res => {
 				mutations.updateHighlightSamples(context, parseHighlightSamples(res.data));
 			})
@@ -74,11 +70,6 @@ export const actions = {
 	},
 
 	fetchDataHighlightValues(context: HighlightsContext, args: { highlightRoot: HighlightRoot, dataset: string, filters: FilterParams, variables: Variable[] }) {
-
-		// clear existing values
-		mutations.clearHighlightSummaries(context);
-		mutations.updateHighlightSamples(context, null);
-
 		return Promise.all([
 			context.dispatch('fetchDataHighlightSamples', {
 				highlightRoot: args.highlightRoot,
@@ -234,11 +225,6 @@ export const actions = {
 	},
 
 	fetchResultHighlightValues(context: HighlightsContext, args: { highlightRoot: HighlightRoot, dataset: string, variables: Variable[], solutionId: string, requestIds: string[], extrema: Extrema }) {
-
-		// clear existing values
-		mutations.clearHighlightSummaries(context);
-		mutations.updateHighlightSamples(context, null);
-
 		return Promise.all([
 			context.dispatch('fetchResultHighlightSamples', {
 				highlightRoot: args.highlightRoot,

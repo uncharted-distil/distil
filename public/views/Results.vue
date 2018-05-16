@@ -110,7 +110,7 @@ export default Vue.extend({
 			viewActions.updateResultsHighlights(this.$store);
 		},
 		solutionId() {
-			viewActions.updateResultsSolution(this.$store);
+			viewActions.updateResultsActiveSolution(this.$store);
 		}
 	}
 });

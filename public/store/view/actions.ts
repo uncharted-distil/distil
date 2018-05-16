@@ -7,8 +7,13 @@ export type ViewContext = ActionContext<ViewState, DistilState>;
 export const actions = {
 
 	fetchSelectTargetData(context: ViewContext) {
-		// TODO: clear previous state
+		// clear previous state
+		context.commit('clearHighlightSummaries');
+		context.commit('updateHighlightSamples', null);
+
+		// fetch new state
 		const dataset = context.getters.getRouteDataset;
+
 		return context.dispatch('fetchVariables', {
 			dataset: dataset
 		}).then(() => {
@@ -21,9 +26,15 @@ export const actions = {
 	},
 
 	fetchSelectTrainingData(context: ViewContext) {
-		// TODO: clear previous state
+		// clear any previous state
+		context.commit('clearHighlightSummaries');
+		context.commit('updateHighlightSamples', null);
+		context.commit('setIncludedTableData', null);
+		context.commit('setExcludedTableData', null);
 
+		// fetch new state
 		const dataset = context.getters.getRouteDataset;
+
 		return context.dispatch('fetchVariables', {
 			dataset: dataset
 		}).then(() => {
@@ -43,6 +54,7 @@ export const actions = {
 		const highlightRoot = context.getters.getDecodedHighlightRoot;
 		const filterParams = context.getters.getDecodedFilterParams;
 		const paginatedVariables = context.getters.getSelectTrainingPaginatedVariables;
+
 		return Promise.all([
 			context.dispatch('fetchDataHighlightValues', {
 				dataset: dataset,
@@ -64,9 +76,18 @@ export const actions = {
 	},
 
 	fetchResultsData(context: ViewContext) {
-		// TODO: clear previous state
+		// clear previous state
+		context.commit('clearHighlightSummaries');
+		context.commit('updateHighlightSamples', null);
+		context.commit('clearResultExtrema', null);
+		context.commit('clearPredictedExtremas', null);
+		context.commit('clearResidualsExtrema', null);
+		context.commit('setIncludedResultTableData', null);
+		context.commit('setExcludedResultTableData', null);
 
+		// fetch new state
 		const dataset = context.getters.getRouteDataset;
+
 		return context.dispatch('fetchVariables', {
 			dataset: dataset
 		}).then(() => {
@@ -81,7 +102,14 @@ export const actions = {
 	},
 
 	updateResultsSolution(context: ViewContext) {
+		// clear previous state
+		context.commit('clearResultExtrema', null);
+		context.commit('clearPredictedExtremas', null);
+		context.commit('clearResidualsExtrema', null);
+		context.commit('setIncludedResultTableData', null);
+		context.commit('setExcludedResultTableData', null);
 
+		// fetch new state
 		const dataset = context.getters.getRouteDataset;
 		const target = context.getters.getRouteTargetVariable;
 		const isRegression = context.getters.isRegression;
@@ -146,15 +174,35 @@ export const actions = {
 				requestIds: requestIds
 			});
 		}
+	},
 
-		context.dispatch('fetchResultTableData', {
-			dataset: dataset,
-			solutionId: solutionId,
-			highlightRoot: highlightRoot
-		});
+	updateResultsActiveSolution(context: ViewContext) {
+		// clear previous state
+		context.commit('clearResultExtrema', null);
+		context.commit('clearPredictedExtremas', null);
+		context.commit('clearResidualsExtrema', null);
+		context.commit('setIncludedResultTableData', null);
+		context.commit('setExcludedResultTableData', null);
+
+		// fetch new state
+		const dataset = context.getters.getRouteDataset;
+		const solutionId = context.getters.getRouteSolutionId;
+		const highlightRoot = context.getters.getDecodedHighlightRoot;
+
+		return Promise.all([
+			context.dispatch('updateResultsSolution'),
+			context.dispatch('fetchResultTableData', {
+				dataset: dataset,
+				solutionId: solutionId,
+				highlightRoot: highlightRoot
+			})
+		]);
 	},
 
 	updateResultsHighlights(context: ViewContext) {
+		// clear previous state
+		context.commit('setIncludedResultTableData', null);
+		context.commit('setExcludedResultTableData', null);
 
 		const dataset = context.getters.getRouteDataset;
 		const requestIds = context.getters.getSolutionRequestIds;

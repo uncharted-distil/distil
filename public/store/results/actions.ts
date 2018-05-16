@@ -117,8 +117,6 @@ export const actions = {
 			return null;
 		}
 
-		mutations.clearResultExtrema(context);
-
 		const solution = getSolutionById(context.rootState.solutionModule, args.solutionId);
 		if (!solution.resultId) {
 			console.warn(`No 'resultId' exists for solution '${args.solutionId}'`);
@@ -157,8 +155,6 @@ export const actions = {
 			args.filters.filters.push(highlightFilter);
 		}
 
-		mutations.setIncludedResultTableData(context, null);
-
 		return axios.post(`/distil/results/${ES_INDEX}/${args.dataset}/${encodeURIComponent(args.solutionId)}`, args.filters)
 			.then(response => {
 				mutations.setIncludedResultTableData(context, response.data);
@@ -190,8 +186,6 @@ export const actions = {
 			args.filters.filters.push(highlightFilter);
 		}
 
-		mutations.setExcludedResultTableData(context, null);
-
 		return axios.post(`/distil/results/${ES_INDEX}/${args.dataset}/${encodeURIComponent(args.solutionId)}`, args.filters)
 			.then(response => {
 				mutations.setExcludedResultTableData(context, response.data);
@@ -211,9 +205,6 @@ export const actions = {
 			console.warn('`solutionId` argument is missing');
 			return null;
 		}
-
-		// clear extrema
-		mutations.clearPredictedExtrema(context, args.solutionId);
 
 		const solution = getSolutionById(context.rootState.solutionModule, args.solutionId);
 		if (!solution.resultId) {
@@ -261,9 +252,6 @@ export const actions = {
 			console.warn('`solutionId` argument is missing');
 			return null;
 		}
-
-		// clear extrema
-		mutations.clearResidualsExtrema(context, args.solutionId);
 
 		const solution = getSolutionById(context.rootState.solutionModule, args.solutionId);
 		if (!solution.resultId) {

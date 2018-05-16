@@ -55,8 +55,7 @@ export const actions = {
 			console.warn('`type` argument is missing');
 			return null;
 		}
-		return axios.post(`/distil/variables/${ES_INDEX}/${args.dataset}`,
-			{
+		return axios.post(`/distil/variables/${ES_INDEX}/${args.dataset}`, {
 				field: args.field,
 				type: args.type
 			})
@@ -144,8 +143,6 @@ export const actions = {
 			args.filters.filters.push(highlightFilter);
 		}
 
-		mutations.setIncludedTableData(context, null);
-
 		// request filtered data from server - no data is valid given filter settings
 		return axios.post(`distil/data/${ES_INDEX}/${args.dataset}/false`, args.filters)
 			.then(response => {
@@ -172,8 +169,6 @@ export const actions = {
 		if (highlightFilter) {
 			args.filters.filters.push(highlightFilter);
 		}
-
-		mutations.setExcludedTableData(context, null);
 
 		return axios.post(`distil/data/${ES_INDEX}/${args.dataset}/true`, args.filters)
 			.then(response => {
