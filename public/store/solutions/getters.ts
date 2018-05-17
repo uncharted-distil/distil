@@ -1,5 +1,6 @@
 import _ from 'lodash';
-import { Variable } from '../data/index';
+import { Variable } from '../dataset/index';
+import { regression, getTask } from '../../util/solutions';
 import { SolutionState, SolutionInfo, SOLUTION_RUNNING, SOLUTION_COMPLETED } from './index';
 import { Dictionary } from '../../util/dict';
 
@@ -64,7 +65,13 @@ export const getters = {
 		const target = getters.getRouteTargetVariable;
 		const variables = getters.getVariables;
 		return variables.filter(variable => trainingMap[variable.name] || variable.name === target);
+	},
+
+	isRegression(state: SolutionState, getters: any): boolean {
+		const variables = getters.getVariables;
+		const target = getters.getRouteTargetVariable;
+		const targetVariable = variables.find(s => s.name === target);
+		const task = getTask(targetVariable.type);
+		return task.schemaName === regression.schemaName;
 	}
-
-
 }

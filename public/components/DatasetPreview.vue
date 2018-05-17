@@ -55,7 +55,7 @@ import _ from 'lodash';
 import { createRouteEntry } from '../util/routes';
 import { addRecentDataset } from '../util/data';
 import { getters } from '../store/route/module';
-import { Variable } from '../store/data/index';
+import { Variable } from '../store/dataset/index';
 import { SELECT_ROUTE } from '../store/route/index';
 
 import Vue from 'vue';
@@ -165,4 +165,3 @@ export default Vue.extend({
 }
 
 </style>
-

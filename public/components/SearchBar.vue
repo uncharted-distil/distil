@@ -15,7 +15,7 @@
 
 import _ from 'lodash';
 import { createRouteEntry } from '../util/routes';
-import { getters } from '../store/route/module';
+import { getters as routeGetters } from '../store/route/module';
 import { SEARCH_ROUTE } from '../store/route/index';
 import Vue from 'vue';
 
@@ -25,14 +25,14 @@ export default Vue.extend({
 	computed: {
 		terms: {
 			set(terms: string) {
-				const path = !_.isEmpty(terms) ? SEARCH_ROUTE : getters.getRoutePath(this.$store);
+				const path = !_.isEmpty(terms) ? SEARCH_ROUTE : routeGetters.getRoutePath(this.$store);
 				const routeEntry = createRouteEntry(path, {
 					terms: terms
 				});
 				this.$router.push(routeEntry);
 			},
 			get(): string {
-				return getters.getRouteTerms(this.$store);
+				return routeGetters.getRouteTerms(this.$store);
 			}
 		}
 	},

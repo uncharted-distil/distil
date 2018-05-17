@@ -15,6 +15,7 @@ const (
 type Variable struct {
 	Name             string      `json:"name"`
 	Type             string      `json:"type"`
+	OriginalType     string      `json:"originalType,omitempty"` // Eval only
 	Role             string      `json:"role"`
 	DistilRole       string      `json:"distilRole"`
 	DisplayVariable  string      `json:"varDisplayName"`

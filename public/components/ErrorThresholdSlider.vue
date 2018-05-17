@@ -39,8 +39,8 @@
 
 import _ from 'lodash';
 import { overlayRouteEntry } from '../util/routes';
-import { Extrema } from '../store/data/index';
-import { getters as dataGetters} from '../store/data/module';
+import { Extrema } from '../store/dataset/index';
+import { getters as resultsGetters} from '../store/results/module';
 import { getters as routeGetters } from '../store/route/module';
 import vueSlider from 'vue-slider-component';
 import Vue from 'vue';
@@ -118,7 +118,7 @@ export default Vue.extend({
 		},
 
 		residualExtrema(): Extrema {
-			const extrema = dataGetters.getResidualExtrema(this.$store);
+			const extrema = resultsGetters.getResidualExtrema(this.$store);
 			if (!extrema) {
 				return extrema;
 			}

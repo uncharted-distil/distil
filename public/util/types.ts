@@ -5,6 +5,7 @@ const EMAIL_REGEX = /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"
 const URI_REGEX = /^(?:(?:(?:https?|ftp):)?\/\/)(?:\S+(?::\S*)?@)?(?:(?!(?:10|127)(?:\.\d{1,3}){3})(?!(?:169\.254|192\.168)(?:\.\d{1,3}){2})(?!172\.(?:1[6-9]|2\d|3[0-1])(?:\.\d{1,3}){2})(?:[1-9]\d?|1\d\d|2[01]\d|22[0-3])(?:\.(?:1?\d{1,2}|2[0-4]\d|25[0-5])){2}(?:\.(?:[1-9]\d?|1\d\d|2[0-4]\d|25[0-4]))|(?:(?:[a-z\u00a1-\uffff0-9]-*)*[a-z\u00a1-\uffff0-9]+)(?:\.(?:[a-z\u00a1-\uffff0-9]-*)*[a-z\u00a1-\uffff0-9]+)*(?:\.(?:[a-z\u00a1-\uffff]{2,})))(?::\d{2,5})?(?:[/?#]\S*)?$/i;
 const BOOL_REGEX = /^(0|1|true|false|t|f)$/i;
 const PHONE_REGEX = /^(\+\d{1,2}\s)?\(?\d{3}\)?[\s.-]\d{3}[\s.-]\d{4}$/
+const IMAGE_REGEX = /\.(gif|jpg|jpeg|png|tif|tiff|bmp)$/i;
 
 const TYPES_TO_LABELS: Dictionary<string> = {
 	integer: 'Integer',
@@ -25,6 +26,7 @@ const TYPES_TO_LABELS: Dictionary<string> = {
 	keyword: 'Keyword',
 	dateTime: 'Date/Time',
 	boolean: 'Boolean',
+	image: 'Image',
 	unknown: 'Unknown'
 };
 
@@ -44,6 +46,7 @@ const NUMERIC_TYPES = INTEGER_TYPES.concat(FLOATING_POINT_TYPES);
 
 const TEXT_TYPES = [
 	'text',
+	'image',
 	'categorical',
 	'ordinal',
 	'address',
@@ -121,12 +124,19 @@ const DECIMAL_SUGGESTIONS = [
 	'unknown'
 ];
 
+const IMAGE_SUGGESTIONS = [
+	'image',
+	'text',
+	'categorical'
+];
+
 const BASIC_SUGGESTIONS = [
 	'integer',
 	'float',
 	'categorical',
 	'ordinal',
 	'text',
+	'image',
 	'unknown'
 ];
 
@@ -155,7 +165,7 @@ export function formatValue(colValue: any, colType: string): any {
 	if (isTextType(colType) || !isFloatingPointType(colType)) {
 		return colValue;
 	}
-	
+
 	if (colValue === '') {
 		return colValue;
 	}
@@ -227,6 +237,9 @@ export function guessTypeByValue(value: any): string[] {
 	}
 	if (PHONE_REGEX.test(value)) {
 		return PHONE_SUGGESTIONS;
+	}
+	if (IMAGE_REGEX.test(value)) {
+		return IMAGE_SUGGESTIONS;
 	}
 	return TEXT_SUGGESTIONS;
 }

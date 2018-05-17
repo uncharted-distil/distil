@@ -161,9 +161,10 @@ func (f *NumericalField) getHistogramAggQuery(extrema *model.Extrema) (string, s
 
 	// get histogram agg name & query string.
 	histogramAggName := fmt.Sprintf("\"%s%s\"", model.HistogramAggPrefix, extrema.Name)
+	rounded := extrema.GetBucketMinMax()
 	bucketQueryString := fmt.Sprintf("width_bucket(\"%s\", %g, %g, %d) - 1",
-		extrema.Name, extrema.Min, extrema.Max, extrema.GetBucketCount())
-	histogramQueryString := fmt.Sprintf("(%s) * %g + %g", bucketQueryString, interval, extrema.Min)
+		extrema.Name, rounded.Min, rounded.Max, extrema.GetBucketCount())
+	histogramQueryString := fmt.Sprintf("(%s) * %g + %g", bucketQueryString, interval, rounded.Min)
 
 	return histogramAggName, bucketQueryString, histogramQueryString
 }
@@ -176,7 +177,8 @@ func (f *NumericalField) parseHistogram(varType string, rows *pgx.Rows, extrema 
 	interval := extrema.GetBucketInterval()
 
 	buckets := make([]*model.Bucket, extrema.GetBucketCount())
-	key := extrema.Min
+	rounded := extrema.GetBucketMinMax()
+	key := rounded.Min
 	for i := 0; i < len(buckets); i++ {
 		keyString := ""
 		if model.IsFloatingPoint(extrema.Type) {
@@ -216,7 +218,7 @@ func (f *NumericalField) parseHistogram(varType string, rows *pgx.Rows, extrema 
 		Name:    extrema.Name,
 		Type:    model.NumericalType,
 		VarType: varType,
-		Extrema: extrema,
+		Extrema: rounded,
 		Buckets: buckets,
 	}, nil
 }
@@ -353,9 +355,10 @@ func (f *NumericalField) getResultHistogramAggQuery(extrema *model.Extrema, vari
 
 	// get histogram agg name & query string.
 	histogramAggName := fmt.Sprintf("\"%s%s\"", model.HistogramAggPrefix, extrema.Name)
+	rounded := extrema.GetBucketMinMax()
 	bucketQueryString := fmt.Sprintf("width_bucket(%s, %g, %g, %d) - 1",
-		fieldTyped, extrema.Min, extrema.Max, extrema.GetBucketCount())
-	histogramQueryString := fmt.Sprintf("(%s) * %g + %g", bucketQueryString, interval, extrema.Min)
+		fieldTyped, rounded.Min, rounded.Max, extrema.GetBucketCount())
+	histogramQueryString := fmt.Sprintf("(%s) * %g + %g", bucketQueryString, interval, rounded.Min)
 
 	return histogramAggName, bucketQueryString, histogramQueryString
 }

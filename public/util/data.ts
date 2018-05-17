@@ -1,13 +1,13 @@
 import _ from 'lodash';
-import { DataState, Datasets, VariableSummary, Data, SummaryType } from '../store/data/index';
-import { TargetRow, FieldInfo, Variable } from '../store/data/index';
+import { Dataset, VariableSummary, SummaryType, TableData, TableRow } from '../store/dataset/index';
+import { TargetRow, TableColumn, Variable } from '../store/dataset/index';
 import { SolutionInfo, SOLUTION_COMPLETED } from '../store/solutions/index';
-import { DistilState } from '../store/store';
 import { Dictionary } from './dict';
-import { mutations as dataMutations } from '../store/data/module';
+import { mutations as resultMutations } from '../store/results/module';
+import { mutations as highlightMutations } from '../store/highlights/module';
 import { Group } from './facets';
 import { FilterParams } from './filters';
-import { ActionContext } from 'vuex';
+import { formatValue } from '../util/types';
 import axios from 'axios';
 import localStorage from 'store';
 import Vue from 'vue';
@@ -23,10 +23,8 @@ export const ERROR_FACET_KEY_POSTFIX = ' - error';
 
 export const NUM_PER_PAGE = 10;
 
-export type DataContext = ActionContext<DataState, DistilState>;
-
 // filters datasets by id
-export function filterDatasets(ids: string[], datasets: Datasets[]): Datasets[] {
+export function filterDatasets(ids: string[], datasets: Dataset[]): Dataset[] {
 	if (_.isUndefined(ids)) {
 		return datasets;
 	}
@@ -68,8 +66,8 @@ export function removeNonTrainingItems(items: TargetRow[], training: Dictionary<
 	});
 }
 
-export function removeNonTrainingFields(fields: Dictionary<FieldInfo>, training: Dictionary<boolean>): Dictionary<FieldInfo> {
-	const res: Dictionary<FieldInfo> = {};
+export function removeNonTrainingFields(fields: Dictionary<TableColumn>, training: Dictionary<boolean>): Dictionary<TableColumn> {
+	const res: Dictionary<TableColumn> = {};
 	_.forIn(fields, (val, col) => {
 		if (isInTrainingSet(col.toLowerCase(), training)) {
 			res[col] = val;
@@ -173,7 +171,7 @@ export function filterSummariesByDataset(summaries: VariableSummary[], dataset: 
 	});
 }
 
-export function createEmptyData(name: string): Data {
+export function createEmptyTableData(name: string): TableData {
 	return {
 		name: name,
 		numRows: 0,
@@ -217,13 +215,13 @@ export function createErrorSummary(name: string, label: string, dataset: string,
 }
 
 export function getSummary(
-	context: DataContext,
+	context: any,
 	endpoint: string,
 	solution: SolutionInfo,
 	nameFunc: (SolutionInfo) => string,
 	labelFunc: (SolutionInfo) => string,
-	updateFunction: (DataContext, VariableSummary) => void,
-	filters: FilterParams): Promise<any> {
+	updateFunction: (any, VariableSummary) => void,
+	filterParams: FilterParams): Promise<any> {
 
 	const name = nameFunc(solution);
 	const label = labelFunc(solution);
@@ -242,7 +240,7 @@ export function getSummary(
 	}
 
 	// return promise
-	return axios.post(`${endpoint}/${resultId}`, filters ? filters: {})
+	return axios.post(`${endpoint}/${resultId}`, filterParams ? filterParams: {})
 		.then(response => {
 			// save the histogram data
 			const histogram = response.data.histogram;
@@ -260,13 +258,13 @@ export function getSummary(
 }
 
 export function getSummaries(
-	context: DataContext,
+	context: any,
 	endpoint: string,
 	solutions: SolutionInfo[],
 	nameFunc: (SolutionInfo) => string,
 	labelFunc: (SolutionInfo) => string,
-	updateFunction: (DataContext, VariableSummary) => void,
-	filters: FilterParams): Promise<any> {
+	updateFunction: (any, VariableSummary) => void,
+	filterParams: FilterParams): Promise<any> {
 
 	// return as singular promise
 	const promises = solutions.map(solution => {
@@ -277,7 +275,7 @@ export function getSummaries(
 			nameFunc,
 			labelFunc,
 			updateFunction,
-			filters);
+			filterParams);
 	});
 	return Promise.all(promises);
 }
@@ -311,19 +309,17 @@ export function sortGroupsByImportance(groups: Group[], variables: Variable[]): 
 	return groups;
 }
 
-
-
-export function updateCorrectnessHighlightSummary(context: DataContext, summary: VariableSummary) {
-	mutateCorrectnessSummary(context, summary, dataMutations.updateCorrectnessHighlightSummaries)
+export function updateCorrectnessHighlightSummary(context: any, summary: VariableSummary) {
+	mutateCorrectnessSummary(context, summary, highlightMutations.updateCorrectnessHighlightSummaries)
 }
 
-export function updateCorrectnessSummary(context: DataContext, summary: VariableSummary) {
-	mutateCorrectnessSummary(context, summary, dataMutations.updateCorrectnessSummaries)
+export function updateCorrectnessSummary(context: any, summary: VariableSummary) {
+	mutateCorrectnessSummary(context, summary, resultMutations.updateCorrectnessSummaries)
 }
 
 // Collapse categorical result summary data, which is returned as a confusion matrix, into a binary
 // correct/incorrect reprsentation prior to applying the mutation.
-function mutateCorrectnessSummary(context: DataContext, summary: VariableSummary, f: (DataContext, VariableSummary) => void) {
+function mutateCorrectnessSummary(context: any, summary: VariableSummary, f: (any, VariableSummary) => void) {
 	// Only need to collapse categorical result summaries
 	if (summary.type !== SummaryType.Categorical) {
 		f(context, summary);
@@ -350,4 +346,94 @@ function mutateCorrectnessSummary(context: DataContext, summary: VariableSummary
 	]
 
 	f(context, clonedSummary);
+}
+
+export function validateData(data: TableData) {
+	return !_.isEmpty(data) &&
+		!_.isEmpty(data.values) &&
+		!_.isEmpty(data.columns);
+}
+
+export function getTableDataItems(data: TableData, typeMap: Dictionary<string>): TableRow[] {
+	if (validateData(data)) {
+		// convert fetched result data rows into table data rows
+		return data.values.map((resultRow, rowIndex) => {
+			const row = {} as TargetRow;
+			resultRow.forEach((colValue, colIndex) => {
+				const colName = data.columns[colIndex];
+				const colType = typeMap[colName];
+				row[colName] = formatValue(colValue, colType);
+			});
+			row._key = rowIndex;
+			return row;
+		});
+	}
+	return [];
+}
+
+export function getResultDataItems(data: TableData, getters: any): TargetRow[] {
+	if (!data ||
+		!data.columns ||
+		data.columns.length === 0) {
+		return [];
+	}
+
+	// Find the target index and name in the result table
+	const targetIndex = getTargetIndex(data.columns);
+	const targetVarName = getVarFromTarget(data.columns[targetIndex]);
+
+	// Make a copy of the variable type map and add entries for target, predicted and error
+	// types.
+	const resultVariableTypeMap = _.clone(<Dictionary<string>>getters.getVariableTypesMap);
+
+	const targetVarType = resultVariableTypeMap[targetVarName];
+	resultVariableTypeMap[getTargetCol(targetVarName)] = targetVarType;
+	resultVariableTypeMap[getPredictedCol(targetVarName)] = targetVarType;
+	resultVariableTypeMap[getErrorCol(targetVarName)] = targetVarType;
+
+	// Fetch data items using modified type map
+	return getTableDataItems(data, resultVariableTypeMap) as TargetRow[];
+}
+
+export function getResultDataFields(data: TableData): Dictionary<TableColumn> {
+	if (validateData(data)) {
+		// look at first row and figure out the target, predicted, error values
+		const predictedIndex = getPredictedIndex(data.columns);
+		const targetIndex = getTargetIndex(data.columns);
+		const errorIndex = getErrorIndex(data.columns);
+
+		const result = {}
+		// assign column names, ignoring target, predicted and error
+		for (const [idx, col] of data.columns.entries()) {
+			if (idx !== predictedIndex && idx !== targetIndex && idx !== errorIndex) {
+				result[col] = {
+					label: col,
+					sortable: true,
+					type: ""
+				};
+			}
+		}
+		// add target, predicted and error at end with customized labels
+		const targetName = data.columns[targetIndex];
+		result[targetName] = {
+			label: targetName.replace(TARGET_POSTFIX, ''),
+			sortable: true,
+			type: ""
+		};
+		const predictedName = data.columns[predictedIndex];
+		result[data.columns[predictedIndex]] = {
+			label: `Predicted ${predictedName.replace(PREDICTED_POSTFIX, '')}`,
+			sortable: true,
+			type: ""
+		};
+		if (errorIndex >= 0) {
+			result[data.columns[errorIndex]] = {
+				label: 'Error',
+				sortable: true,
+				type: ""
+			};
+		}
+		return result;
+	}
+	return {};
 }

@@ -34,12 +34,13 @@
 import _ from 'lodash';
 import { createRouteEntry } from '../util/routes';
 import { getTask, getMetricDisplayNames, getMetricSchemaName } from '../util/solutions';
-import { getters as dataGetters, actions as dataActions } from '../store/data/module';
+import { actions as appActions } from '../store/app/module';
+import { getters as datasetGetters } from '../store/dataset/module';
 import { getters as routeGetters } from '../store/route/module';
 import { RESULTS_ROUTE } from '../store/route/index';
 import { actions as solutionActions } from '../store/solutions/module';
 import { SolutionInfo } from '../store/solutions/index';
-import { Variable } from '../store/data/index';
+import { Variable } from '../store/dataset/index';
 import { FilterParams } from '../util/filters';
 import Vue from 'vue';
 
@@ -61,10 +62,10 @@ export default Vue.extend({
 			return routeGetters.getRouteDataset(this.$store);
 		},
 		variables(): Variable[] {
-			return dataGetters.getVariables(this.$store);
+			return datasetGetters.getVariables(this.$store);
 		},
-		filters(): FilterParams {
-			return dataGetters.getSelectedFilterParams(this.$store);
+		filterParams(): FilterParams {
+			return routeGetters.getDecodedFilterParams(this.$store);
 		},
 		// gets the metrics that are used to score predictions against the user selected variable
 		metrics(): string[] {
@@ -124,7 +125,7 @@ export default Vue.extend({
 			// dispatch action that triggers request send to server
 			solutionActions.createSolutions(this.$store, {
 				dataset: this.dataset,
-				filters: this.filters,
+				filters: this.filterParams,
 				target: routeGetters.getRouteTargetVariable(this.$store),
 				task: task,
 				metrics: metrics,
@@ -143,10 +144,10 @@ export default Vue.extend({
 
 		// export button handler
 		exportData() {
-			dataActions.exportProblem(this.$store, {
+			appActions.exportProblem(this.$store, {
 				dataset: this.dataset,
 				target: this.target,
-				filters: this.filters,
+				filterParams: this.filterParams,
 			}).then(res => {
 				this.exportResults = res;
 			});

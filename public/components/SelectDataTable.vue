@@ -49,6 +49,11 @@
 				:items="items"
 				:fields="fields"
 				@row-clicked="onRowClick">
+
+				<template v-for="imageField in imageFields" :slot="imageField" slot-scope="data">
+					<image-preview :key="imageField" :image-url="data.item[imageField]"></image-preview>
+				</template>
+
 			</b-table>
 		</div>
 
@@ -61,12 +66,14 @@ import _ from 'lodash';
 import { spinnerHTML } from '../util/spinner';
 import Vue from 'vue';
 import FilterBadge from './FilterBadge';
-import { getters as dataGetters } from '../store/data/module';
+import ImagePreview from './ImagePreview';
+import { getters as datasetGetters } from '../store/dataset/module';
 import { Dictionary } from '../util/dict';
 import { Filter } from '../util/filters';
-import { FieldInfo, Highlight, RowSelection } from '../store/data/index';
+import { TableColumn } from '../store/dataset/index';
+import { Highlight, RowSelection } from '../store/highlights/index';
 import { getters as routeGetters } from '../store/route/module';
-import { TableRow } from '../store/data/index';
+import { TableRow } from '../store/dataset/index';
 import { addFilterToRoute, EXCLUDE_FILTER, INCLUDE_FILTER } from '../util/filters';
 import { getHighlights, clearHighlightRoot, createFilterFromHighlightRoot } from '../util/highlights';
 import { updateRowSelection, clearRowSelection, updateTableRowSelection } from '../util/row';
@@ -75,7 +82,8 @@ export default Vue.extend({
 	name: 'selected-data-table',
 
 	components: {
-		FilterBadge
+		FilterBadge,
+		ImagePreview
 	},
 
 	props: {
@@ -99,22 +107,33 @@ export default Vue.extend({
 		},
 
 		numRows(): number {
-			return dataGetters.getSelectedDataNumRows(this.$store);
+			return datasetGetters.getIncludedTableDataNumRows(this.$store);
 		},
 
 		hasData(): boolean {
-			return dataGetters.hasSelectedData(this.$store);
+			return datasetGetters.hasIncludedTableData(this.$store);
 		},
 
 		// extracts the table data from the store
 		items(): TableRow[] {
-			const items = this.includedActive ? dataGetters.getSelectedDataItems(this.$store) : dataGetters.getExcludedDataItems(this.$store);
+			const items = this.includedActive ? datasetGetters.getIncludedTableDataItems(this.$store) : datasetGetters.getExcludedTableDataItems(this.$store);
 			return updateTableRowSelection(items, this.selectedRow, this.instanceName);
 		},
 
 		// extract the table field header from the store
-		fields(): Dictionary<FieldInfo> {
-			return this.includedActive ? dataGetters.getSelectedDataFields(this.$store) : dataGetters.getExcludedDataFields(this.$store);
+		fields(): Dictionary<TableColumn> {
+			return this.includedActive ? datasetGetters.getIncludedTableDataFields(this.$store) : datasetGetters.getExcludedTableDataFields(this.$store);
+		},
+
+		imageFields(): string[] {
+			return _.map(this.fields, (field, name) => {
+				return {
+					name: name,
+					type: field.type
+				};
+			})
+			.filter(field => field.type === 'image')
+			.map(field => field.name);
 		},
 
 		activeFilter(): Filter {
@@ -131,9 +150,9 @@ export default Vue.extend({
 
 		filters(): Filter[] {
 			if (this.includedActive) {
-				return this.invertFilters(dataGetters.getFilters(this.$store));
+				return this.invertFilters(routeGetters.getDecodedFilters(this.$store));
 			}
-			return dataGetters.getFilters(this.$store);
+			return routeGetters.getDecodedFilters(this.$store);
 		},
 
 		selectedRow(): RowSelection {

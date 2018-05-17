@@ -23,6 +23,7 @@ export const getters = {
 	getActiveSolution: read(moduleGetters.getActiveSolution),
 	getActiveSolutionTrainingMap: read(moduleGetters.getActiveSolutionTrainingMap),
 	getActiveSolutionVariables: read(moduleGetters.getActiveSolutionVariables),
+	isRegression: read(moduleGetters.isRegression)
 }
 
 export const actions = {

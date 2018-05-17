@@ -71,11 +71,14 @@ func ResultsSummaryHandler(solutionCtor model.SolutionStorageCtor, dataCtor mode
 			return
 		}
 
+		extrema, err := model.NewExtrema(extremaMin, extremaMax)
+		if err != nil {
+			handleError(w, err)
+			return
+		}
+
 		// fetch summary histogram
-		histogram, err := data.FetchResultsSummary(dataset, res.ResultURI, filterParams, &model.Extrema{
-			Min: extremaMin,
-			Max: extremaMax,
-		})
+		histogram, err := data.FetchResultsSummary(dataset, res.ResultURI, filterParams, extrema)
 		if err != nil {
 			handleError(w, err)
 			return
