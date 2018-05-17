@@ -52,14 +52,11 @@ export interface FilterParams {
  *
  * @returns {Filter[]} The decoded filter object.
  */
-export function decodeFilters(filters: string): FilterParams {
+export function decodeFilters(filters: string): Filter[] {
 	if (_.isEmpty(filters)) {
-		return {
-			filters: [],
-			variables: []
-		};
+		return [];
 	}
-	return JSON.parse(atob(filters)) as FilterParams;
+	return JSON.parse(atob(filters)) as Filter[];
 }
 
 /**
@@ -69,7 +66,7 @@ export function decodeFilters(filters: string): FilterParams {
  *
  * @returns {string} The encoded route query strings.
  */
-export function encodeFilters(filters: FilterParams): string {
+export function encodeFilters(filters: Filter[]): string {
 	if (_.isEmpty(filters)) {
 		return null;
 	}
@@ -78,18 +75,18 @@ export function encodeFilters(filters: FilterParams): string {
 
 function addFilter(filters: string, filter: Filter): string {
 	const decoded = decodeFilters(filters);
-	decoded.filters.push(filter);
+	decoded.push(filter);
 	return encodeFilters(decoded);
 }
 
 function removeFilter(filters: string, filter: Filter): string {
 	// decode the provided filters
 	const decoded = decodeFilters(filters);
-	const index = _.findIndex(decoded.filters, f => {
+	const index = _.findIndex(decoded, f => {
 		return _.isEqual(f, filter);
 	});
 	if (index !== -1) {
-		decoded.filters.splice(index, 1);
+		decoded.splice(index, 1);
 	}
 	// encode the filters back into a url string
 	return encodeFilters(decoded);
@@ -120,8 +117,8 @@ export function removeFilterFromRoute(component: Vue, filter: Filter) {
 export function removeFiltersByName(component: Vue, name: string) {
 	// retrieve the filters from the route
 	const filters = routeGetters.getRouteFilters(component.$store);
-	const decoded = decodeFilters(filters);
-	decoded.filters = decoded.filters.filter(filter => {
+	let decoded = decodeFilters(filters);
+	decoded = decoded.filter(filter => {
 		return (filter.name !== name);
 	});
 	const encoded = encodeFilters(decoded);

@@ -37,7 +37,7 @@ import ResultFacets from '../components/ResultFacets.vue';
 import Facets from '../components/Facets.vue';
 import ErrorThresholdSlider from '../components/ErrorThresholdSlider.vue';
 import { getSolutionById, getTask } from '../util/solutions';
-import { getters as dataGetters} from '../store/data/module';
+import { getters as datasetGetters } from '../store/dataset/module';
 import { getters as routeGetters } from '../store/route/module';
 import { actions as appActions, getters as appGetters } from '../store/app/module';
 import { EXPORT_SUCCESS_ROUTE } from '../store/route/index';
@@ -76,7 +76,7 @@ export default Vue.extend({
 		},
 
 		regressionEnabled(): boolean {
-			const targetVar = _.find(dataGetters.getVariables(this.$store), v => _.toLower(v.name) === _.toLower(this.target));
+			const targetVar = _.find(datasetGetters.getVariables(this.$store), v => _.toLower(v.name) === _.toLower(this.target));
 			if (_.isEmpty(targetVar)) {
 				return false;
 			}

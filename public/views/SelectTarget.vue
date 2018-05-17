@@ -20,11 +20,9 @@
 
 <script lang="ts">
 
-import AvailableTargetVariables from '../components/AvailableTargetVariables.vue';
-import { getters as dataGetters, actions } from '../store/data/module';
-import { getters as routeGetters} from '../store/route/module';
-import { Variable } from '../store/data/index';
 import Vue from 'vue';
+import AvailableTargetVariables from '../components/AvailableTargetVariables.vue';
+import { actions as viewActions } from '../store/view/module';
 
 export default Vue.extend({
 	name: 'select-view',
@@ -33,28 +31,8 @@ export default Vue.extend({
 		AvailableTargetVariables
 	},
 
-	computed: {
-		dataset(): string {
-			return routeGetters.getRouteDataset(this.$store);
-		},
-		variables(): Variable[] {
-			return dataGetters.getVariables(this.$store);
-		},
-		target(): string {
-			return routeGetters.getRouteTargetVariable(this.$store);
-		}
-	},
-
 	beforeMount() {
-		this.fetch();
-	},
-
-	methods: {
-		fetch() {
-			actions.fetchVariablesAndVariableSummaries(this.$store, {
-				dataset: this.dataset
-			});
-		}
+		viewActions.fetchSelectTargetData(this.$store);
 	}
 });
 </script>

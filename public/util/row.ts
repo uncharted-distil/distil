@@ -1,4 +1,4 @@
-import { RowSelection } from '../store/data/index';
+import { RowSelection } from '../store/highlights/index';
 import { getters as routeGetters } from '../store/route/module';
 import { overlayRouteEntry} from '../util/routes'
 import _ from 'lodash';

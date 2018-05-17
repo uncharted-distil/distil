@@ -59,9 +59,9 @@
 import Vue from 'vue';
 import Facets from '../components/Facets';
 import { createGroups, Group } from '../util/facets';
-import { Extrema, VariableSummary } from '../store/data/index';
+import { Extrema, VariableSummary } from '../store/dataset/index';
 import { getPredictedCol, getErrorCol, getCorrectnessCol } from '../util/data';
-import { Highlight } from '../store/data/index';
+import { Highlight } from '../store/highlights/index';
 import { getters as routeGetters } from '../store/route/module';
 import { getSolutionById, getMetricDisplayName } from '../util/solutions';
 import { overlayRouteEntry } from '../util/routes';

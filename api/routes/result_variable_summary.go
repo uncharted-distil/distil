@@ -41,9 +41,10 @@ func ResultVariableSummaryHandler(ctorSolution model.SolutionStorageCtor, ctorSt
 				handleError(w, errors.Wrap(err, "unable to parse extrema max"))
 				return
 			}
-			extrema = &model.Extrema{
-				Min: extremaMin,
-				Max: extremaMax,
+			extrema, err = model.NewExtrema(extremaMin, extremaMax)
+			if err != nil {
+				handleError(w, err)
+				return
 			}
 		}
 
