@@ -93,7 +93,7 @@ func (m *CreateMessage) createSearchSolutionsRequest(targetIndex int, datasetURI
 		Inputs: []*pipeline.Value{
 			{
 				Value: &pipeline.Value_DatasetUri{
-					DatasetUri: m.Dataset,
+					DatasetUri: datasetURI,
 				},
 			},
 		},
