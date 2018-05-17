@@ -14,52 +14,52 @@ const (
 
 var (
 	samples = []*Extrema{
-		&Extrema{
+		{
 			Type: FloatType,
 			Min:  0.2667,
 			Max:  1.4630,
 		},
-		&Extrema{
+		{
 			Type: IntegerType,
 			Min:  1,
 			Max:  20,
 		},
-		&Extrema{
+		{
 			Type: IntegerType,
 			Min:  1,
 			Max:  60,
 		},
-		&Extrema{
+		{
 			Type: FloatType,
 			Min:  -1.4630,
 			Max:  -0.2667,
 		},
-		&Extrema{
+		{
 			Type: IntegerType,
 			Min:  -20,
 			Max:  -1,
 		},
-		&Extrema{
+		{
 			Type: IntegerType,
 			Min:  -60,
 			Max:  -1,
 		},
-		&Extrema{
+		{
 			Type: FloatType,
 			Min:  -1.4630,
 			Max:  3.2667,
 		},
-		&Extrema{
+		{
 			Type: IntegerType,
 			Min:  -21,
 			Max:  57,
 		},
-		&Extrema{
+		{
 			Type: IntegerType,
 			Min:  -3,
 			Max:  5,
 		},
-		&Extrema{
+		{
 			Type: FloatType,
 			Min:  -512.4630,
 			Max:  1097.2667,
