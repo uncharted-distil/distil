@@ -24,7 +24,6 @@
 				class="col-12 col-md-6 d-flex flex-column"></result-target-variable>
 		</div>
 
-
 		<div class="row flex-12 pb-3">
 			<variable-summaries
 				class="col-12 col-md-3 border-gray-right results-variable-summaries"
@@ -42,21 +41,20 @@
 </template>
 
 <script lang="ts">
+
+import Vue from 'vue';
 import VariableSummaries from '../components/VariableSummaries.vue';
 import ResultsComparison from '../components/ResultsComparison.vue';
 import ResultSummaries from '../components/ResultSummaries.vue';
 import ResultTargetVariable from '../components/ResultTargetVariable.vue';
-import { regression, getTask } from '../util/solutions';
-import { getters as dataGetters, actions as dataActions } from '../store/data/module';
+import { actions as viewActions } from '../store/view/module';
+import { getters as datasetGetters } from '../store/dataset/module';
+import { getters as resultGetters } from '../store/results/module';
 import { getters as routeGetters } from '../store/route/module';
-import { actions as solutionActions, getters as solutionGetters } from '../store/solutions/module';
-import { Variable, Extrema } from '../store/data/index';
+import { getters as solutionGetters } from '../store/solutions/module';
+import { Variable } from '../store/dataset/index';
 import { Dictionary } from '../util/dict';
-import { HighlightRoot } from '../store/data/index';
 import { Group, createGroups } from '../util/facets';
-import { sortVariablesByImportance, filterVariablesByPage, NUM_PER_PAGE } from '../util/data';
-import Vue from 'vue';
-import _ from 'lodash';
 
 export default Vue.extend({
 	name: 'results-view',
@@ -79,31 +77,18 @@ export default Vue.extend({
 			return routeGetters.getRouteTargetVariable(this.$store);
 		},
 		targetType(): string {
-			const variables = dataGetters.getVariablesMap(this.$store);
+			const variables = datasetGetters.getVariablesMap(this.$store);
 			if (variables && variables[this.target]) {
 				return variables[this.target].type;
 			}
 			return '';
 		},
 		groups(): Group[] {
-			const summaries = dataGetters.getResultSummaries(this.$store).filter(summary => this.training[summary.name]);
+			const summaries = resultGetters.getResultSummaries(this.$store).filter(summary => this.training[summary.name]);
 			return createGroups(summaries);
 		},
 		variables(): Variable[] {
 			return solutionGetters.getActiveSolutionVariables(this.$store);
-		},
-		resultTrainingVarsPage(): number {
-			return routeGetters.getRouteResultTrainingVarsPage(this.$store);
-		},
-		paginatedVariables(): Variable[] {
-			// return only visible variables
-			const trainingVars = this.variables.filter(v => v.name !== this.target);
-			const targetVar = _.find(this.variables, v => v.name === this.target);
-			const paginatedTrainingVars = filterVariablesByPage(this.resultTrainingVarsPage, NUM_PER_PAGE, sortVariablesByImportance(trainingVars));
-			return paginatedTrainingVars.concat([ targetVar ]);
-		},
-		requestIds(): string[] {
-			return solutionGetters.getSolutionRequestIds(this.$store);
 		},
 		training(): Dictionary<boolean> {
 			return solutionGetters.getActiveSolutionTrainingMap(this.$store);
@@ -111,178 +96,21 @@ export default Vue.extend({
 		solutionId(): string {
 			return routeGetters.getRouteSolutionId(this.$store);
 		},
-		highlightRoot(): HighlightRoot {
-			return routeGetters.getDecodedHighlightRoot(this.$store);
-		},
 		highlightRootStr(): string {
 			return routeGetters.getRouteHighlightRoot(this.$store);
-		},
-		predictedExtrema(): Extrema {
-			return dataGetters.getPredictedExtrema(this.$store);
-		},
-		residualExtrema(): Extrema {
-			return dataGetters.getResidualExtrema(this.$store);
 		}
 	},
 
 	beforeMount() {
-		this.fetch();
+		viewActions.fetchResultsData(this.$store);
 	},
 
 	watch: {
 		highlightRootStr() {
-			dataActions.fetchResultHighlightValues(this.$store, {
-				dataset: this.dataset,
-				highlightRoot: this.highlightRoot,
-				solutionId: this.solutionId,
-				requestIds: this.requestIds,
-				extrema: this.predictedExtrema,
-				variables: this.paginatedVariables
-			});
-			dataActions.fetchResultTableData(this.$store, {
-				dataset: this.dataset,
-				solutionId: this.solutionId,
-				highlightRoot: this.highlightRoot
-			});
+			viewActions.updateResultsHighlights(this.$store);
 		},
 		solutionId() {
-			// if this is a regression task, pull extrema as a first step
-			const isRegression = this.testRegression();
-			let extremaFetches = [];
-			if (isRegression) {
-				extremaFetches = [
-					dataActions.fetchTargetResultExtrema(this.$store, {
-						dataset: this.dataset,
-						variable: this.target,
-						solutionId: this.solutionId
-					}),
-					dataActions.fetchPredictedExtremas(this.$store, {
-						dataset: this.dataset,
-						requestIds: this.requestIds
-					})
-				];
-			}
-			Promise.all(extremaFetches).then(() => {
-				dataActions.fetchTrainingResultSummaries(this.$store, {
-					dataset: this.dataset,
-					variables: this.variables,
-					solutionId: this.solutionId,
-					extrema: this.predictedExtrema
-				});
-				dataActions.fetchResultHighlightValues(this.$store, {
-					dataset: this.dataset,
-					highlightRoot: this.highlightRoot,
-					solutionId: this.solutionId,
-					requestIds: this.requestIds,
-					extrema: this.predictedExtrema,
-					variables: this.paginatedVariables
-				});
-			});
-			if (isRegression) {
-				dataActions.fetchResidualsExtremas(this.$store, {
-					dataset: this.dataset,
-					requestIds: this.requestIds
-				}).then(() => {
-					dataActions.fetchResidualsSummaries(this.$store, {
-						dataset: this.dataset,
-						requestIds: this.requestIds,
-						extrema: this.residualExtrema
-					});
-				});
-			} else {
-				dataActions.fetchCorrectnessSummaries(this.$store, {
-					dataset: this.dataset,
-					requestIds: this.requestIds
-				});
-			}
-			dataActions.fetchResultTableData(this.$store, {
-				dataset: this.dataset,
-				solutionId: this.solutionId,
-				highlightRoot: this.highlightRoot
-			});
-		}
-	},
-
-	methods: {
-		fetch() {
-			Promise.all([
-					dataActions.fetchVariables(this.$store, {
-						dataset: this.dataset
-					}),
-				])
-				.then(() => {
-					solutionActions.fetchSolutions(this.$store, {
-						dataset: this.dataset,
-						target: this.target
-					}).then(() => {
-						const isRegression = this.testRegression();
-						let extremaFetches = [];
-						if (isRegression) {
-							extremaFetches = [
-								dataActions.fetchTargetResultExtrema(this.$store, {
-									dataset: this.dataset,
-									variable: this.target,
-									solutionId: this.solutionId
-								}),
-								dataActions.fetchPredictedExtremas(this.$store, {
-									dataset: this.dataset,
-									requestIds: this.requestIds
-								})
-							];
-						}
-						Promise.all(extremaFetches).then(() => {
-							dataActions.fetchTrainingResultSummaries(this.$store, {
-								dataset: this.dataset,
-								variables: this.variables,
-								solutionId: this.solutionId,
-								extrema: this.predictedExtrema
-							});
-							dataActions.fetchPredictedSummaries(this.$store, {
-								dataset: this.dataset,
-								requestIds: this.requestIds,
-								extrema: this.predictedExtrema
-							});
-							dataActions.fetchResultHighlightValues(this.$store, {
-								dataset: this.dataset,
-								highlightRoot: this.highlightRoot,
-								solutionId: this.solutionId,
-								requestIds: this.requestIds,
-								extrema: this.predictedExtrema,
-								variables: this.paginatedVariables
-							});
-						});
-
-						if (isRegression) {
-							dataActions.fetchResidualsExtremas(this.$store, {
-								dataset: this.dataset,
-								requestIds: this.requestIds
-							}).then(() => {
-								dataActions.fetchResidualsSummaries(this.$store, {
-									dataset: this.dataset,
-									requestIds: this.requestIds,
-									extrema: this.residualExtrema
-								});
-							});
-						} else {
-							dataActions.fetchCorrectnessSummaries(this.$store, {
-								dataset: this.dataset,
-								requestIds: this.requestIds
-							});
-						}
-
-						dataActions.fetchResultTableData(this.$store, {
-							dataset: this.dataset,
-							solutionId: this.solutionId,
-							highlightRoot: this.highlightRoot
-						});
-					});
-				});
-		},
-		// tests whether or not the results are for a regression or a classificiation
-		testRegression(): boolean {
-			const targetVariable = this.variables.find(s => s.name === this.target);
-			const task = getTask(targetVariable.type);
-			return task.schemaName === regression.schemaName;
+			viewActions.updateResultsActiveSolution(this.$store);
 		}
 	}
 });

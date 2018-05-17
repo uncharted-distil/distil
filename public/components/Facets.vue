@@ -7,7 +7,7 @@ import _ from 'lodash';
 import $ from 'jquery';
 import Vue from 'vue';
 import { Group, CategoricalFacet, isCategoricalFacet, getCategoricalChunkSize } from '../util/facets';
-import { Highlight, RowSelection } from '../store/data/index';
+import { Highlight, RowSelection } from '../store/highlights/index';
 import { Dictionary } from '../util/dict';
 import Facets from '@uncharted.software/stories-facets';
 import ImagePreview from '../components/ImagePreview';
@@ -102,7 +102,6 @@ export default Vue.extend({
 			if (!component.more[key]) {
 				Vue.set(component.more, key, 0);
 			}
-			console.log(key, this.groups);
 			const group = _.find(this.groups, g => g.key === key);
 			Vue.set(component.more, key, component.more[key] + getCategoricalChunkSize(group.type));
 		});
@@ -500,10 +499,10 @@ export default Vue.extend({
 							return s.name === group.key;
 						});
 
-						if (summary) {
-							this.removeSpinnerFromGroup(group);
+						const bars = facet._histogram.bars;
 
-							const bars = facet._histogram.bars;
+						if (summary && summary.buckets.length === bars.length) {
+							this.removeSpinnerFromGroup(group);
 
 							const slices = {};
 

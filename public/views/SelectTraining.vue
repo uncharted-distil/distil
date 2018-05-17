@@ -55,18 +55,15 @@
 
 <script lang="ts">
 
+import Vue from 'vue';
 import CreateSolutionsForm from '../components/CreateSolutionsForm.vue';
 import SelectDataTable from '../components/SelectDataTable.vue';
 import AvailableTrainingVariables from '../components/AvailableTrainingVariables.vue';
 import TrainingVariables from '../components/TrainingVariables.vue';
 import TargetVariable from '../components/TargetVariable.vue';
 import TypeChangeMenu from '../components/TypeChangeMenu.vue';
-import { getters as dataGetters, actions } from '../store/data/module';
-import { getters as routeGetters} from '../store/route/module';
-import { Variable, HighlightRoot } from '../store/data/index';
-import { sortVariablesByImportance, filterVariablesByPage, NUM_PER_PAGE } from '../util/data';
-import { FilterParams } from '../util/filters';
-import Vue from 'vue';
+import { actions as viewActions } from '../store/view/module';
+import { getters as routeGetters } from '../store/route/module';
 
 export default Vue.extend({
 	name: 'select-view',
@@ -81,30 +78,8 @@ export default Vue.extend({
 	},
 
 	computed: {
-		dataset(): string {
-			return routeGetters.getRouteDataset(this.$store);
-		},
-		variables(): Variable[] {
-			return dataGetters.getVariables(this.$store);
-		},
 		training(): string {
 			return routeGetters.getRouteTrainingVariables(this.$store);
-		},
-		availableVariables(): Variable[] {
-			const varMap = dataGetters.getVariablesMap(this.$store);
-			return dataGetters.getAvailableVariables(this.$store).map(v => {
-				return varMap[v];
-			});
-		},
-		trainingVariables(): Variable[] {
-			const varMap = dataGetters.getVariablesMap(this.$store);
-			return dataGetters.getTrainingVariables(this.$store).map(v => {
-				return varMap[v];
-			});
-		},
-		targetVariable(): Variable {
-			const varMap = dataGetters.getVariablesMap(this.$store);
-			return varMap[this.target];
 		},
 		target(): string {
 			return routeGetters.getRouteTargetVariable(this.$store);
@@ -112,128 +87,36 @@ export default Vue.extend({
 		filtersStr(): string {
 			return routeGetters.getRouteFilters(this.$store);
 		},
-		selectedFilters(): FilterParams {
-			return dataGetters.getSelectedFilterParams(this.$store);
-		},
-		highlightRoot(): HighlightRoot {
-			return routeGetters.getDecodedHighlightRoot(this.$store);
-		},
 		highlightRootStr(): string {
 			return routeGetters.getRouteHighlightRoot(this.$store);
 		},
 		targetSampleValues(): any[] {
-			const summaries = dataGetters.getTargetVariableSummaries(this.$store);
+			const summaries = routeGetters.getTargetVariableSummaries(this.$store);
 			if (summaries.length > 0) {
 				const summary = summaries[0];
 				return summary.buckets;
 			}
 			return [];
-		},
-		availableVarsPage(): number {
-			return routeGetters.getRouteAvailableVarsPage(this.$store);
-		},
-		trainingVarsPage(): number {
-			return routeGetters.getRouteTrainingVarsPage(this.$store);
-		},
-		paginatedVariables(): Variable[] {
-			// return only visible variables
-			const availableVars = filterVariablesByPage(this.availableVarsPage, NUM_PER_PAGE, sortVariablesByImportance(this.availableVariables));
-			const trainingVars = filterVariablesByPage(this.availableVarsPage, NUM_PER_PAGE, sortVariablesByImportance(this.trainingVariables));
-			const targetVar = this.targetVariable;
-			return availableVars.concat(trainingVars).concat([ targetVar ]);
 		}
 	},
 
 	watch: {
 		highlightRootStr() {
-			actions.fetchDataHighlightValues(this.$store, {
-				dataset: this.dataset,
-				variables: this.paginatedVariables,
-				highlightRoot: this.highlightRoot,
-				filters: this.selectedFilters
-			});
-			actions.fetchSelectedTableData(this.$store, {
-				dataset: this.dataset,
-				filters: this.selectedFilters,
-				highlightRoot: this.highlightRoot
-			});
-			actions.fetchExcludedTableData(this.$store, {
-				dataset: this.dataset,
-				filters: this.selectedFilters,
-				highlightRoot: this.highlightRoot
-			});
+			viewActions.updateSelectTrainingData(this.$store);
 		},
 		training() {
-			actions.fetchDataHighlightValues(this.$store, {
-				dataset: this.dataset,
-				variables: this.paginatedVariables,
-				highlightRoot: this.highlightRoot,
-				filters: this.selectedFilters
-			});
-			actions.fetchSelectedTableData(this.$store, {
-				dataset: this.dataset,
-				filters: this.selectedFilters,
-				highlightRoot: this.highlightRoot
-			});
-			actions.fetchExcludedTableData(this.$store, {
-				dataset: this.dataset,
-				filters: this.selectedFilters,
-				highlightRoot: this.highlightRoot
-			});
+			viewActions.updateSelectTrainingData(this.$store);
 		},
 		filtersStr() {
-			actions.fetchDataHighlightValues(this.$store, {
-				dataset: this.dataset,
-				variables: this.paginatedVariables,
-				highlightRoot: this.highlightRoot,
-				filters: this.selectedFilters
-			});
-			actions.fetchSelectedTableData(this.$store, {
-				dataset: this.dataset,
-				filters: this.selectedFilters,
-				highlightRoot: this.highlightRoot
-			});
-			actions.fetchExcludedTableData(this.$store, {
-				dataset: this.dataset,
-				filters: this.selectedFilters,
-				highlightRoot: this.highlightRoot
-			});
+			viewActions.updateSelectTrainingData(this.$store);
 		}
 	},
 
 	beforeMount() {
-		this.fetch();
-	},
-
-	methods: {
-		fetch() {
-			actions.fetchVariables(this.$store, {
-				dataset: this.dataset
-			}).then(() => {
-				actions.fetchVariableSummaries(this.$store, {
-					dataset: this.dataset,
-					variables: this.variables
-				});
-				actions.fetchDataHighlightValues(this.$store, {
-					dataset: this.dataset,
-					variables: this.paginatedVariables,
-					highlightRoot: this.highlightRoot,
-					filters: this.selectedFilters
-				});
-				actions.fetchSelectedTableData(this.$store, {
-					dataset: this.dataset,
-					filters: this.selectedFilters,
-					highlightRoot: this.highlightRoot
-				});
-				actions.fetchExcludedTableData(this.$store, {
-					dataset: this.dataset,
-					filters: this.selectedFilters,
-					highlightRoot: this.highlightRoot
-				});
-			});
-		}
+		viewActions.fetchSelectTrainingData(this.$store);
 	}
 });
+
 </script>
 
 <style>

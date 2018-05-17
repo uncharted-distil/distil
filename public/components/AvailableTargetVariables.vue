@@ -16,7 +16,7 @@
 <script lang="ts">
 
 import 'jquery';
-import { getters as dataGetters } from '../store/data/module';
+import { getters as datasetGetters } from '../store/dataset/module';
 import { getters as routeGetters } from '../store/route/module';
 import { createRouteEntry } from '../util/routes';
 import { filterSummariesByDataset } from '../util/data';
@@ -38,7 +38,7 @@ export default Vue.extend({
 			return routeGetters.getRouteDataset(this.$store);
 		},
 		groups(): Group[] {
-			const summaries = dataGetters.getVariableSummaries(this.$store);
+			const summaries = datasetGetters.getVariableSummaries(this.$store);
 			const filtered = filterSummariesByDataset(summaries, this.dataset);
 			return createGroups(filtered);
 		},

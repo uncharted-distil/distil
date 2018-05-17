@@ -46,8 +46,9 @@ import Facets from '../components/Facets';
 import { overlayRouteEntry, getRouteFacetPage } from '../util/routes';
 import { Dictionary } from '../util/dict';
 import { sortGroupsByImportance, filterVariablesByPage, NUM_PER_PAGE } from '../util/data';
-import { Highlight, RowSelection, Variable } from '../store/data/index';
-import { getters as dataGetters } from '../store/data/module';
+import { Variable } from '../store/dataset/index';
+import { Highlight, RowSelection } from '../store/highlights/index';
+import { getters as datasetGetters } from '../store/dataset/module';
 import { getters as routeGetters } from '../store/route/module';
 import { Group } from '../util/facets';
 import { updateHighlightRoot, getHighlights, clearHighlightRoot } from '../util/highlights';
@@ -96,7 +97,7 @@ export default Vue.extend({
 		},
 
 		variables(): Variable[] {
-			return dataGetters.getVariables(this.$store);
+			return datasetGetters.getVariables(this.$store);
 		},
 
 		filteredGroups(): Group[] {

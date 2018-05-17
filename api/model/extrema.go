@@ -1,6 +1,7 @@
 package model
 
 import (
+	"fmt"
 	"math"
 )
 
@@ -15,6 +16,20 @@ type Extrema struct {
 	Type string  `json:"-"`
 	Min  float64 `json:"min"`
 	Max  float64 `json:"max"`
+}
+
+// NewExtrema instantiates a new extrema struct.
+func NewExtrema(min float64, max float64) (*Extrema, error) {
+	if min >= max {
+		return nil, fmt.Errorf("extrema min cannot be equal to or greater than max")
+	}
+	if math.IsNaN(min) || math.IsNaN(max) {
+		return nil, fmt.Errorf("extrema cannot contain NaN values")
+	}
+	return &Extrema{
+		Min: min,
+		Max: max,
+	}, nil
 }
 
 // GetBucketInterval calculates the size of the buckets given the extrema.
@@ -40,7 +55,7 @@ func (e *Extrema) GetBucketMinMax() *Extrema {
 	roundedMin := floorByUnit(e.Min, interval)
 	roundedMax := ceilByUnit(e.Max, interval)
 
-	// if interval does not straddle 0, return it
+	// if interval does not straddle 0, return itf
 	if roundedMin > 0 || roundedMin < 0 {
 		return &Extrema{
 			Min: roundedMin,
@@ -54,6 +69,15 @@ func (e *Extrema) GetBucketMinMax() *Extrema {
 			Min: roundedMin,
 			Max: roundedMax,
 		}
+	}
+
+	// NOTE: prevent infinite loop, simply return unrounded extrema. This
+	// shouldn't ever actually happen, but we know how that usually turns out...
+	if math.IsNaN(interval) ||
+		math.IsNaN(roundedMin) ||
+		math.IsNaN(roundedMax) ||
+		interval <= 0 {
+		return e
 	}
 
 	// build new min from zero

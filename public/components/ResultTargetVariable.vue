@@ -15,12 +15,13 @@
 import Vue from 'vue';
 import Facets from '../components/Facets';
 import { getters as routeGetters } from '../store/route/module';
-import { getters as dataGetters } from '../store/data/module';
+import { getters as resultsGetters } from '../store/results/module';
 import { Group, createGroups } from '../util/facets';
 import _ from 'lodash';
 import { getHighlights, updateHighlightRoot, clearHighlightRoot } from '../util/highlights';
 import { isTarget, getVarFromTarget, getTargetCol } from '../util/data';
-import { VariableSummary, Highlight } from '../store/data/index';
+import { VariableSummary } from '../store/dataset/index';
+import { Highlight } from '../store/highlights/index';
 
 export default Vue.extend({
 	name: 'result-target-variable',
@@ -41,7 +42,7 @@ export default Vue.extend({
 			return routeGetters.getRouteTargetVariable(this.$store);
 		},
 		targetSummary() : VariableSummary {
-			const varSummaries = dataGetters.getResultSummaries(this.$store);
+			const varSummaries = resultsGetters.getResultSummaries(this.$store);
 			return _.find(varSummaries, v => _.toLower(v.name) === _.toLower(this.target));
 		},
 		targetGroups(): Group[] {

@@ -2,12 +2,12 @@ import axios from 'axios';
 import { SolutionInfo, SolutionState, SOLUTION_COMPLETED, SOLUTION_ERRORED } from './index';
 import { ActionContext } from 'vuex';
 import { DistilState } from '../store';
+import { ES_INDEX } from '../dataset/index';
 import { mutations } from './module';
 import { getWebSocketConnection } from '../../util/ws';
 import { FilterParams } from '../../util/filters';
 import { regression } from '../../util/solutions';
 
-const ES_INDEX = 'datasets';
 const CREATE_SOLUTIONS = 'CREATE_SOLUTIONS';
 
 interface CreateSolutionRequest {
@@ -19,26 +19,24 @@ interface CreateSolutionRequest {
 	filters: FilterParams;
 }
 
-export type AppContext = ActionContext<SolutionState, DistilState>;
+export type SolutionContext = ActionContext<SolutionState, DistilState>;
 
-function updateCurrentSolutionResults(context: any, req: CreateSolutionRequest, res: SolutionInfo) {
+function updateCurrentSolutionResults(context: SolutionContext, req: CreateSolutionRequest, res: SolutionInfo) {
 
 	const currentSolutionId = context.getters.getRouteSolutionId;
 
-	// if current solutionId, pull results
-	if (res.solutionId === currentSolutionId) {
-		context.dispatch('fetchResultTableData', {
-			dataset: req.dataset,
-			solutionId: res.solutionId
-		});
-	}
+	// pull new table results
+	context.dispatch('fetchResultTableData', {
+		dataset: req.dataset,
+		solutionId: res.solutionId
+	});
 
 	// if this is a regression task, pull extrema as a first step
 	const isRegression = req.task.toLowerCase() === regression.schemaName.toLowerCase();
 	let extremaFetches = [];
 	if (isRegression) {
 		extremaFetches = [
-			context.dispatch('fetchTargetResultExtrema', {
+			context.dispatch('fetchResultExtrema', {
 				dataset: req.dataset,
 				variable: req.target,
 				solutionId: res.solutionId
@@ -94,12 +92,12 @@ function updateCurrentSolutionResults(context: any, req: CreateSolutionRequest, 
 	}
 }
 
-function updateSolutionResults(context: any, req: CreateSolutionRequest, res: SolutionInfo) {
+function updateSolutionResults(context: SolutionContext, req: CreateSolutionRequest, res: SolutionInfo) {
 	const isRegression = req.task.toLowerCase() === regression.schemaName.toLowerCase();
 	let extremaFetches = [];
 	if (isRegression) {
 		extremaFetches = [
-			context.dispatch('fetchTargetResultExtrema', {
+			context.dispatch('fetchResultExtrema', {
 				dataset: req.dataset,
 				variable: req.target,
 				solutionId: res.solutionId
@@ -139,7 +137,7 @@ function updateSolutionResults(context: any, req: CreateSolutionRequest, res: So
 
 export const actions = {
 
-	fetchSolution(context: AppContext, args: { solutionId?: string }) {
+	fetchSolution(context: SolutionContext, args: { solutionId?: string }) {
 		if (!args.solutionId) {
 			console.warn('`solutionId` argument is missing');
 			return null;
@@ -173,7 +171,7 @@ export const actions = {
 			});
 	},
 
-	fetchSolutions(context: AppContext, args: { dataset?: string, target?: string, solutionId?: string }) {
+	fetchSolutions(context: SolutionContext, args: { dataset?: string, target?: string, solutionId?: string }) {
 		if (!args.dataset) {
 			args.dataset = null;
 		}

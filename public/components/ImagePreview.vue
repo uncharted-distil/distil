@@ -19,7 +19,7 @@
 
 import Vue from 'vue';
 import { circleSpinnerHTML } from '../util/spinner';
-import { getters as dataGetters, actions as dataActions } from '../store/data/module';
+import { getters as imagesGetters, actions as imagesActions } from '../store/images/module';
 
 export default Vue.extend({
 	name: 'image-preview',
@@ -36,15 +36,15 @@ export default Vue.extend({
 
 	computed: {
 		isLoaded(): boolean {
-			const arg = dataGetters.getImages(this.$store)[this.imageUrl];
+			const arg = imagesGetters.getImages(this.$store)[this.imageUrl];
 			return arg && arg.image;
 		},
 		isErrored(): boolean {
-			const arg = dataGetters.getImages(this.$store)[this.imageUrl];
+			const arg = imagesGetters.getImages(this.$store)[this.imageUrl];
 			return arg && arg.err;
 		},
 		image(): HTMLImageElement {
-			const arg = dataGetters.getImages(this.$store)[this.imageUrl];
+			const arg = imagesGetters.getImages(this.$store)[this.imageUrl];
 			return arg ? arg.image : null;
 		},
 		spinnerHTML(): string {
@@ -53,7 +53,7 @@ export default Vue.extend({
 	},
 
 	mounted() {
-		dataActions.fetchImage(this.$store, { url: this.imageUrl });
+		imagesActions.fetchImage(this.$store, { url: this.imageUrl });
 	},
 
 	watch: {

@@ -27,16 +27,17 @@
 
 <script lang="ts">
 
-import { overlayRouteEntry } from '../util/routes';
-import VariableFacets from '../components/VariableFacets';
-import 'font-awesome/css/font-awesome.css';
 import Vue from 'vue';
-import { Highlight } from '../store/data/index';
-import { getters as dataGetters } from '../store/data/module';
+import VariableFacets from '../components/VariableFacets';
+import { VariableSummary } from '../store/dataset/index';
+import { Highlight } from '../store/highlights/index';
 import { getters as routeGetters } from '../store/route/module';
 import { Group, createGroups } from '../util/facets';
 import { getHighlights } from '../util/highlights';
+import { overlayRouteEntry } from '../util/routes';
 import { removeFiltersByName } from '../util/filters';
+
+import 'font-awesome/css/font-awesome.css';
 
 export default Vue.extend({
 	name: 'training-variables',
@@ -55,9 +56,11 @@ export default Vue.extend({
 		highlights(): Highlight {
 			return getHighlights(this.$store);
 		},
+		trainingVariableSummaries(): VariableSummary[] {
+			return routeGetters.getTrainingVariableSummaries(this.$store);
+		},
 		groups(): Group[] {
-			const summaries = dataGetters.getTrainingVariableSummaries(this.$store);
-		 	return createGroups(summaries);
+		 	return createGroups(this.trainingVariableSummaries);
 		},
 		subtitle(): string {
 			return `${this.groups.length} features selected (sorted by interestingness)`;

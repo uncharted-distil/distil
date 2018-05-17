@@ -1,5 +1,5 @@
 <template>
-	<b-card header="Recent Datasets">
+	<b-card header="Recent Dataset">
 		<div v-if="recentDatasets.length === 0">None</div>
 		<b-list-group v-bind:key="dataset.name" v-for="dataset in recentDatasets">
 			<dataset-preview
@@ -17,9 +17,9 @@
 
 <script lang="ts">
 import DatasetPreview from '../components/DatasetPreview';
-import { getters } from '../store/data/module';
+import { getters as datasetGetters } from '../store/dataset/module';
 import { filterDatasets, getRecentDatasets } from '../util/data';
-import { Datasets } from '../store/data/index';
+import { Dataset } from '../store/dataset/index';
 import Vue from 'vue';
 
 export default Vue.extend({
@@ -37,9 +37,9 @@ export default Vue.extend({
 	},
 
 	computed: {
-		recentDatasets(): Datasets[] {
+		recentDatasets(): Dataset[] {
 			const names = getRecentDatasets().slice(0, this.maxDatasets);
-			return filterDatasets(names, getters.getDatasets(this.$store));
+			return filterDatasets(names, datasetGetters.getDatasets(this.$store));
 		}
 	}
 

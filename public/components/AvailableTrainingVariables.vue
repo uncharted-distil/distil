@@ -23,14 +23,15 @@
 
 <script lang="ts">
 
+import Vue from 'vue';
 import { overlayRouteEntry } from '../util/routes';
-import { getters as dataGetters } from '../store/data/module';
+import { VariableSummary } from '../store/dataset/index';
 import { getters as routeGetters } from '../store/route/module';
 import { filterSummariesByDataset } from '../util/data';
 import { Group, createGroups } from '../util/facets';
 import VariableFacets from '../components/VariableFacets.vue';
+
 import 'font-awesome/css/font-awesome.css';
-import Vue from 'vue';
 
 export default Vue.extend({
 	name: 'available-training-variables',
@@ -43,9 +44,11 @@ export default Vue.extend({
 		dataset(): string {
 			return routeGetters.getRouteDataset(this.$store);
 		},
+		availableVariableSummaries(): VariableSummary[] {
+			return routeGetters.getAvailableVariableSummaries(this.$store);
+		},
 		groups(): Group[] {
-			const summaries = dataGetters.getAvailableVariableSummaries(this.$store);
-			const filtered = filterSummariesByDataset(summaries, this.dataset);
+			const filtered = filterSummariesByDataset(this.availableVariableSummaries, this.dataset);
 			return createGroups(filtered);
 		},
 		subtitle(): string {
