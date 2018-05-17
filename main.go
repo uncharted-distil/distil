@@ -14,12 +14,12 @@ import (
 	"goji.io/pat"
 
 	"github.com/unchartedsoftware/distil-ingest/rest"
+	"github.com/unchartedsoftware/distil/api/compute"
 	"github.com/unchartedsoftware/distil/api/elastic"
 	"github.com/unchartedsoftware/distil/api/env"
 	"github.com/unchartedsoftware/distil/api/middleware"
 	es "github.com/unchartedsoftware/distil/api/model/storage/elastic"
 	pg "github.com/unchartedsoftware/distil/api/model/storage/postgres"
-	"github.com/unchartedsoftware/distil/api/pipeline"
 	"github.com/unchartedsoftware/distil/api/postgres"
 	"github.com/unchartedsoftware/distil/api/routes"
 	"github.com/unchartedsoftware/distil/api/service"
@@ -45,6 +45,9 @@ func registerRoutePost(mux *goji.Mux, pattern string, handler func(http.Response
 func main() {
 	log.Infof("version: %s built: %s", version, timestamp)
 	servicesToWait := make(map[string]service.Heartbeat)
+
+	userAgent := fmt.Sprintf("uncharted-distil-%s-%s", version, timestamp)
+	log.Infof("user agent: %s", userAgent)
 
 	// load config from env
 	config, err := env.LoadConfig()
@@ -105,7 +108,7 @@ func main() {
 	pgSolutionStorageCtor := pg.NewSolutionStorage(postgresClientCtor, metadataStorageCtor)
 
 	// Instantiate the solution compute client
-	solutionClient, err := pipeline.NewClient(config.SolutionComputeEndpoint, config.SolutionDataDir, config.SolutionComputeTrace)
+	solutionClient, err := compute.NewClient(config.SolutionComputeEndpoint, config.SolutionDataDir, config.SolutionComputeTrace, userAgent)
 	if err != nil {
 		log.Errorf("%v", err)
 		os.Exit(1)

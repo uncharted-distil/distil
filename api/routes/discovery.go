@@ -4,8 +4,8 @@ import (
 	"net/http"
 
 	"github.com/pkg/errors"
+	"github.com/unchartedsoftware/distil/api/compute"
 	"github.com/unchartedsoftware/distil/api/model"
-	"github.com/unchartedsoftware/distil/api/pipeline"
 	"github.com/unchartedsoftware/distil/api/util/json"
 	"goji.io/pat"
 )
@@ -60,13 +60,13 @@ func ProblemDiscoveryHandler(ctorData model.DataStorageCtor, ctorMeta model.Meta
 			return
 		}
 
-		path, _, err := pipeline.PersistFilteredData(datasetDir, target, ds)
+		path, _, err := compute.PersistFilteredData(datasetDir, target, ds)
 		if err != nil {
 			handleError(w, err)
 			return
 		}
 
-		pathProblem, err := pipeline.PersistProblem(datasetDir, dataset, targetVar, filterParams)
+		pathProblem, err := compute.PersistProblem(datasetDir, dataset, targetVar, filterParams)
 		if err != nil {
 			handleError(w, err)
 			return
