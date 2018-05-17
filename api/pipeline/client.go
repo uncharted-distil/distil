@@ -129,10 +129,17 @@ func (c *Client) GenerateSolutionScores(ctx context.Context, solutionID string) 
 }
 
 // GenerateSolutionFit generates fit for candidate solutions.
-func (c *Client) GenerateSolutionFit(ctx context.Context, solutionID string) ([]*GetFitSolutionResultsResponse, error) {
+func (c *Client) GenerateSolutionFit(ctx context.Context, solutionID string, datasetURI string) ([]*GetFitSolutionResultsResponse, error) {
 
 	fitSolutionRequest := &FitSolutionRequest{
 		SolutionId: solutionID,
+		Inputs: []*Value{
+			{
+				Value: &Value_DatasetUri{
+					DatasetUri: datasetURI,
+				},
+			},
+		},
 	}
 
 	fitSolutionResponse, err := c.client.FitSolution(ctx, fitSolutionRequest)
