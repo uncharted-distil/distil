@@ -1,5 +1,8 @@
 <template>
-	<div class="facets" v-bind:class="{ 'highlighting-enabled': enableHighlighting }" v-once ref="facets"></div>
+	<div class="facet-root" v-bind:class="{ 'highlighting-enabled': enableHighlighting }">
+		<div class="facets" v-once ref="facets"></div>
+		<div class="facet-tooltip" style="display:none;"></div>
+	</div>
 </template>
 
 <script lang="ts">
@@ -13,7 +16,9 @@ import Facets from '@uncharted.software/stories-facets';
 import ImagePreview from '../components/ImagePreview';
 import TypeChangeMenu from '../components/TypeChangeMenu';
 import { circleSpinnerHTML } from '../util/spinner';
+
 import '@uncharted.software/stories-facets/dist/facets.css';
+
 export default Vue.extend({
 	name: 'facets',
 
@@ -132,6 +137,33 @@ export default Vue.extend({
 				// set selection
 				component.$emit('facet-click', this.instanceName, key, value);
 			}
+		});
+
+		this.facets.on('facet-histogram:mouseenter', (event: Event, key: string, value: any) => {
+			const $target = $(event.target);
+			const $parent = $target.parent();
+			const $root = $(this.$el);
+			const $tooltip = $(this.$el).find('.facet-tooltip');
+			const TOOLTIP_BUFFER = 8;
+
+			// set the text now so that the dimensions are correct
+			$tooltip.html(`<b>${value.label} - ${value.toLabel}</b>`);
+			const posX = $parent.offset().left - $root.offset().left;
+			const posY = $parent.offset().top - $root.offset().top + $root.scrollTop();
+			const offsetX = posX + ($target.outerWidth() / 2) - ($tooltip.outerWidth() / 2);
+			const offsetY = posY - $tooltip.height() - TOOLTIP_BUFFER;
+
+			// ensure it doesnt go outside of root
+			const x = Math.min($root.width(), Math.max(0, offsetX));
+			const y = Math.max(0, offsetY);
+
+			$tooltip.css('left', `${x}px`);
+			$tooltip.css('top', `${y}px`);
+			$tooltip.show();
+		});
+
+		this.facets.on('facet-histogram:mouseleave', (event: Event, key: string, value: string) => {
+			$(this.$el).find('.facet-tooltip').hide();
 		});
 	},
 
@@ -744,7 +776,7 @@ export default Vue.extend({
 	margin-bottom: 6px;
 }
 
-.facets.highlighting-enabled {
+.facet-root.highlighting-enabled {
 	padding-left: 32px;
 }
 .highlighting-enabled .facets-group {
@@ -805,5 +837,27 @@ export default Vue.extend({
 	left: -28px;
 	top: calc(50% - 14px);
 	color: #00c6e1;
+}
+.facets {
+	z-index: 1;
+}
+.facet-tooltip {
+	position: absolute;
+	padding: 4px 8px;
+	border-radius: 4px;
+	background-color: #333;
+	color: #fff;
+	z-index: 2;
+	pointer-events: none;
+}
+.facet-tooltip::after {
+	content: " ";
+	position: absolute;
+	top: 100%; /* At the bottom of the tooltip */
+	left: 50%;
+	margin-left: -5px;
+	border-width: 5px;
+	border-style: solid;
+	border-color: #333 transparent transparent transparent;
 }
 </style>
