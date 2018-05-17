@@ -16,12 +16,6 @@ import { ROOT_ROUTE, HOME_ROUTE, SEARCH_ROUTE, SELECT_ROUTE, CREATE_ROUTE, RESUL
 import store from './store/store';
 import BootstrapVue from 'bootstrap-vue';
 
-import './assets/favicons/apple-touch-icon.png';
-import './assets/favicons/favicon-32x32.png';
-import './assets/favicons/favicon-16x16.png';
-import './assets/favicons/manifest.json';
-import './assets/favicons/safari-pinned-tab.svg';
-
 import 'bootstrap-vue/dist/bootstrap-vue.css';
 
 import './styles/bootstrap-v4beta2-custom.css';

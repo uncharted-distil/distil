@@ -43,7 +43,10 @@ export function getTask(varType: string): Task {
 
 // Gets the display names for the metrics from a given task.
 export function getMetricDisplayNames(task: Task): string[] {
-	return _.map(_.get(task, 'metrics', []), (s: NameInfo) => s.displayName);
+	if (!task.metrics) {
+		return [];
+	}
+	return _.map(task.metrics, s => s.displayName);
 }
 
 // Gets the schema name for a metric given its display name.
