@@ -5,6 +5,7 @@ const CopyWebpackPlugin = require('copy-webpack-plugin');
 
 module.exports = {
 	entry: './public/main.ts',
+	mode: 'development',
 	output: {
 		path: path.resolve(__dirname, './dist'),
 		filename: 'build.js'
@@ -55,10 +56,6 @@ module.exports = {
 				loader: 'file-loader?name=images/[name].[ext]'
 			},
 			{
-				test: /favicons\/.*\.(png|svg|xml|ico|json)$/,
-				loader: 'file-loader?name=favicons/[name].[ext]'
-			},
-			{
 				test: /fonts\/.*\.(ttf|otf|eot|svg|woff(2)?)(\?[a-z0-9]+)?$/,
 				loader: 'file-loader?name=fonts/[name].[ext]'
 			}
@@ -76,6 +73,9 @@ module.exports = {
 		}),
 		new CopyWebpackPlugin([
 			{ from: 'public/static' }
+		]),
+		new CopyWebpackPlugin([
+			{ from: 'public/assets/favicons', to: 'favicons' }
 		])
 	],
 	devtool: 'source-map-eval'
