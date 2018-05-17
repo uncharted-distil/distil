@@ -104,24 +104,10 @@ func (s *Storage) SearchDatasets(terms string, includeIndex bool) ([]*model.Data
 	return s.parseDatasets(res, includeIndex)
 }
 
-// SetDataType updates the data type of the field in ES.
-func (s *Storage) SetDataType(dataset string, field string, fieldType string) error {
-	// Fetch all existing variables
-	vars, err := s.FetchVariables(dataset, true)
-	if err != nil {
-		return errors.Wrapf(err, "failed to fetch existing variable")
-	}
-
-	// Update only the variable we care about
-	for _, v := range vars {
-		if v.Name == field {
-			v.Type = fieldType
-		}
-	}
-
-	// re-serialize the vars
+func (s *Storage) updateVariables(dataset string, variables []*model.Variable) error {
+	// reserialize the data
 	var serialized []map[string]interface{}
-	for _, v := range vars {
+	for _, v := range variables {
 		serialized = append(serialized, map[string]interface{}{
 			VarNameField:             v.Name,
 			VarRoleField:             v.Role,
@@ -130,6 +116,8 @@ func (s *Storage) SetDataType(dataset string, field string, fieldType string) er
 			VarSuggestedTypesField:   v.SuggestedTypes,
 			VarOriginalVariableField: v.OriginalVariable,
 			VarDisplayVariableField:  v.DisplayVariable,
+			VarDistilRole:            v.DistilRole,
+			VarDeleted:               v.Deleted,
 		})
 	}
 
@@ -138,7 +126,7 @@ func (s *Storage) SetDataType(dataset string, field string, fieldType string) er
 	}
 
 	// push the document into the metadata index
-	_, err = s.client.Update().
+	_, err := s.client.Update().
 		Index(s.index).
 		Type(metadataType).
 		Id(dataset + DatasetSuffix).
@@ -147,5 +135,63 @@ func (s *Storage) SetDataType(dataset string, field string, fieldType string) er
 	if err != nil {
 		return errors.Wrapf(err, "failed to add document to index `%s`", s.index)
 	}
+
 	return nil
+}
+
+// SetDataType updates the data type of the field in ES.
+func (s *Storage) SetDataType(dataset string, varName string, varType string) error {
+	// Fetch all existing variables
+	vars, err := s.FetchVariables(dataset, true)
+	if err != nil {
+		return errors.Wrapf(err, "failed to fetch existing variable")
+	}
+
+	// Update only the variable we care about
+	for _, v := range vars {
+		if v.Name == varName {
+			v.Type = varType
+		}
+	}
+
+	return s.updateVariables(dataset, vars)
+}
+
+// AddVariable adds a new variable to the dataset.
+func (s *Storage) AddVariable(dataset string, varName string, varType string, varRole string) error {
+	// query for existing variables
+	vars, err := s.FetchVariables(dataset, true)
+	if err != nil {
+		return errors.Wrapf(err, "failed to fetch existing variable")
+	}
+
+	// add the new variables
+	vars = append(vars, &model.Variable{
+		Name:             varName,
+		Type:             varType,
+		OriginalVariable: varName,
+		DisplayVariable:  varName,
+		DistilRole:       varRole,
+		SuggestedTypes:   make([]string, 0),
+	})
+
+	return s.updateVariables(dataset, vars)
+}
+
+// DeleteVariable flags a variable as deleted.
+func (s *Storage) DeleteVariable(dataset string, varName string) error {
+	// query for existing variables
+	vars, err := s.FetchVariables(dataset, true)
+	if err != nil {
+		return errors.Wrapf(err, "failed to fetch existing variable")
+	}
+
+	// soft delete the variable
+	for _, v := range vars {
+		if v.Name == varName {
+			v.Deleted = true
+		}
+	}
+
+	return s.updateVariables(dataset, vars)
 }
