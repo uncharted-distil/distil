@@ -8,8 +8,8 @@ import (
 	"goji.io/pat"
 
 	"github.com/unchartedsoftware/distil-ingest/rest"
+	"github.com/unchartedsoftware/distil/api/compute"
 	"github.com/unchartedsoftware/distil/api/model"
-	"github.com/unchartedsoftware/distil/api/pipeline"
 )
 
 // RankingHandler generates a route handler that will rank importance of
@@ -30,7 +30,7 @@ func RankingHandler(dataCtor model.DataStorageCtor, restClient *rest.Client, dat
 		}
 		// calculate importance
 		log.Infof("Calculating importance for %s target %s", dataset, target)
-		importance, err := pipeline.Rank(restClient, data, dataset, index, dataDir, target)
+		importance, err := compute.Rank(restClient, data, dataset, index, dataDir, target)
 		if err != nil {
 			handleError(w, err)
 			return
