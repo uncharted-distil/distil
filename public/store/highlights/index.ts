@@ -21,14 +21,6 @@ export interface HighlightState {
 	highlightValues: HighlightValues;
 }
 
-export const state: HighlightState = {
-	// highlighted values fetched from the server
-	highlightValues: {
-		summaries: [],
-		samples: {}
-	}
-}
-
 export interface Column {
 	key: string;
 	value: any;
@@ -38,4 +30,12 @@ export interface RowSelection {
 	context: string;
 	index: number;
 	cols: Column[];
+}
+
+export const state: HighlightState = {
+	// highlighted values fetched from the server
+	highlightValues: {
+		summaries: [],
+		samples: {}
+	}
 }
