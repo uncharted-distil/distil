@@ -4,6 +4,7 @@
 		<variable-facets
 			enable-search
 			:instance-name="instanceName"
+			:rows-per-page="numRowsPerPage"
 			:groups="groups"
 			:dataset="dataset"
 			:enable-highlighting="enableHighlighting"
@@ -14,9 +15,11 @@
 
 <script lang="ts">
 
-import VariableFacets from '../components/VariableFacets';
-import 'font-awesome/css/font-awesome.css';
 import Vue from 'vue';
+import VariableFacets from '../components/VariableFacets';
+import { NUM_PER_PAGE } from '../util/data';
+
+import 'font-awesome/css/font-awesome.css';
 
 export default Vue.extend({
 	name: 'variable-summaries',
@@ -31,6 +34,12 @@ export default Vue.extend({
 		instanceName: String,
 		enableHighlighting: Boolean,
 		enableTypeChange: Boolean
+	},
+
+	computed: {
+		numRowsPerPage(): number {
+			return NUM_PER_PAGE;
+		}
 	}
 
 });

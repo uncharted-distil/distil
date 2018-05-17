@@ -6,6 +6,7 @@
 			enable-title
 			ignore-highlights
 			instance-name="availableTargetVars"
+			:rows-per-page="numRowsPerPage"
 			:groups="groups"
 			:dataset="dataset"
 			:html="html">
@@ -26,6 +27,9 @@ import { Group, createGroups } from '../util/facets';
 import 'font-awesome/css/font-awesome.css';
 import Vue from 'vue';
 
+// 9 so it makes a nice clean grid
+const NUM_TARGET_PER_PAGE = 9;
+
 export default Vue.extend({
 	name: 'available-target-variables',
 
@@ -41,6 +45,9 @@ export default Vue.extend({
 			const summaries = datasetGetters.getVariableSummaries(this.$store);
 			const filtered = filterSummariesByDataset(summaries, this.dataset);
 			return createGroups(filtered);
+		},
+		numRowsPerPage(): number {
+			return NUM_TARGET_PER_PAGE;
 		},
 		html(): ( { key: string } ) => HTMLDivElement {
 			return (group: { key: string }) => {
@@ -76,9 +83,9 @@ export default Vue.extend({
 
 <style>
 .available-target-variables {
-	display: flex;
-	flex-direction: column;
+	height: 100%;
 }
+
 .available-target-variables .facets-group .facets-facet-horizontal .facet-range {
 	cursor: pointer !important;
 }
@@ -88,5 +95,17 @@ export default Vue.extend({
 }
 .available-target-variables .facet-filters {
 	padding: 2rem;
+}
+.available-target-variables .facets-root-container {
+	display: flex;
+	flex-wrap: wrap;
+	justify-content: center;
+}
+
+.available-target-variables .facets-group-container {
+	flex-grow: 1;
+	width: 30%;
+	max-width: 30%;
+	margin: 5px;
 }
 </style>

@@ -1,4 +1,7 @@
 import _ from 'lodash';
+import axios from 'axios';
+import Vue from 'vue';
+import localStorage from 'store';
 import { Dataset, VariableSummary, SummaryType, TableData, TableRow } from '../store/dataset/index';
 import { TargetRow, TableColumn, Variable } from '../store/dataset/index';
 import { SolutionInfo, SOLUTION_COMPLETED } from '../store/solutions/index';
@@ -8,9 +11,6 @@ import { mutations as highlightMutations } from '../store/highlights/module';
 import { Group } from './facets';
 import { FilterParams } from './filters';
 import { formatValue } from '../util/types';
-import axios from 'axios';
-import localStorage from 'store';
-import Vue from 'vue';
 
 // Postfixes for special variable names
 export const PREDICTED_POSTFIX = '_predicted';

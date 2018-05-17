@@ -9,6 +9,7 @@
 			enable-highlighting
 			enable-type-change
 			:instance-name="instanceName"
+			:rows-per-page="numRowsPerPage"
 			:groups="groups"
 			:dataset="dataset"
 			:html="html">
@@ -34,6 +35,7 @@ import { Highlight } from '../store/highlights/index';
 import { getters as routeGetters } from '../store/route/module';
 import { Group, createGroups } from '../util/facets';
 import { getHighlights } from '../util/highlights';
+import { NUM_PER_PAGE } from '../util/data';
 import { overlayRouteEntry } from '../util/routes';
 import { removeFiltersByName } from '../util/filters';
 
@@ -52,6 +54,9 @@ export default Vue.extend({
 		},
 		instanceName(): string {
 			return 'trainingVars';
+		},
+		numRowsPerPage(): number {
+			return NUM_PER_PAGE;
 		},
 		highlights(): Highlight {
 			return getHighlights(this.$store);
