@@ -9,14 +9,14 @@ import (
 
 	"goji.io/pat"
 
+	"github.com/unchartedsoftware/distil/api/compute"
 	"github.com/unchartedsoftware/distil/api/model"
-	"github.com/unchartedsoftware/distil/api/pipeline"
 	"github.com/unchartedsoftware/plog"
 )
 
 // ExportHandler exports the caller supplied solution by calling through to the compute
 // server export functionality.
-func ExportHandler(solutionCtor model.SolutionStorageCtor, metaCtor model.MetadataStorageCtor, client *pipeline.Client, exportPath string) func(http.ResponseWriter, *http.Request) {
+func ExportHandler(solutionCtor model.SolutionStorageCtor, metaCtor model.MetadataStorageCtor, client *compute.Client, exportPath string) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// extract route parameters
 		solutionID := pat.Param(r, "solution-id")

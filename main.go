@@ -14,12 +14,12 @@ import (
 	"goji.io/pat"
 
 	"github.com/unchartedsoftware/distil-ingest/rest"
+	"github.com/unchartedsoftware/distil/api/compute"
 	"github.com/unchartedsoftware/distil/api/elastic"
 	"github.com/unchartedsoftware/distil/api/env"
 	"github.com/unchartedsoftware/distil/api/middleware"
 	es "github.com/unchartedsoftware/distil/api/model/storage/elastic"
 	pg "github.com/unchartedsoftware/distil/api/model/storage/postgres"
-	"github.com/unchartedsoftware/distil/api/pipeline"
 	"github.com/unchartedsoftware/distil/api/postgres"
 	"github.com/unchartedsoftware/distil/api/routes"
 	"github.com/unchartedsoftware/distil/api/service"
@@ -108,7 +108,7 @@ func main() {
 	pgSolutionStorageCtor := pg.NewSolutionStorage(postgresClientCtor, metadataStorageCtor)
 
 	// Instantiate the solution compute client
-	solutionClient, err := pipeline.NewClient(config.SolutionComputeEndpoint, config.SolutionDataDir, config.SolutionComputeTrace, userAgent)
+	solutionClient, err := compute.NewClient(config.SolutionComputeEndpoint, config.SolutionDataDir, config.SolutionComputeTrace, userAgent)
 	if err != nil {
 		log.Errorf("%v", err)
 		os.Exit(1)

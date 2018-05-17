@@ -1,4 +1,4 @@
-package pipeline
+package compute
 
 import (
 	"bytes"
@@ -17,6 +17,7 @@ import (
 	"github.com/golang/protobuf/proto"
 	protobuf "github.com/golang/protobuf/protoc-gen-go/descriptor"
 	"github.com/pkg/errors"
+	"github.com/unchartedsoftware/distil/api/pipeline"
 
 	"github.com/unchartedsoftware/distil/api/model"
 	log "github.com/unchartedsoftware/plog"
@@ -58,7 +59,7 @@ type CreateStatus struct {
 	Timestamp  time.Time `json:"timestamp"`
 }
 
-func (m *CreateMessage) createSearchSolutionsRequest(targetIndex int, datasetURI string, userAgent string) (*SearchSolutionsRequest, error) {
+func (m *CreateMessage) createSearchSolutionsRequest(targetIndex int, datasetURI string, userAgent string) (*pipeline.SearchSolutionsRequest, error) {
 	// Grab the embedded ta3ta2 API version
 	apiVersion, err := getAPIVersion()
 	if err != nil {
@@ -66,13 +67,13 @@ func (m *CreateMessage) createSearchSolutionsRequest(targetIndex int, datasetURI
 		apiVersion = "unknown"
 	}
 
-	return &SearchSolutionsRequest{
-		Problem: &ProblemDescription{
-			Problem: &Problem{
+	return &pipeline.SearchSolutionsRequest{
+		Problem: &pipeline.ProblemDescription{
+			Problem: &pipeline.Problem{
 				TaskType:           convertTaskTypeFromTA3ToTA2(m.Task),
 				PerformanceMetrics: convertMetricsFromTA3ToTA2(m.Metrics),
 			},
-			Inputs: []*ProblemInput{
+			Inputs: []*pipeline.ProblemInput{
 				{
 					DatasetId: convertDatasetTA3ToTA2(m.Dataset),
 					Targets:   convertTargetFeaturesTA3ToTA2(m.TargetFeature, targetIndex),
@@ -84,14 +85,14 @@ func (m *CreateMessage) createSearchSolutionsRequest(targetIndex int, datasetURI
 		Version:   apiVersion,
 
 		// we accept dataset and csv uris as return types
-		AllowedValueTypes: []ValueType{
-			ValueType_DATASET_URI,
+		AllowedValueTypes: []pipeline.ValueType{
+			pipeline.ValueType_DATASET_URI,
 		},
 
 		// URI of the input dataset
-		Inputs: []*Value{
+		Inputs: []*pipeline.Value{
 			{
-				Value: &Value_DatasetUri{
+				Value: &pipeline.Value_DatasetUri{
 					DatasetUri: m.Dataset,
 				},
 			},
@@ -99,12 +100,12 @@ func (m *CreateMessage) createSearchSolutionsRequest(targetIndex int, datasetURI
 	}, nil
 }
 
-func (m *CreateMessage) createProduceSolutionRequest(datasetURI string, solutionID string) *ProduceSolutionRequest {
-	return &ProduceSolutionRequest{
+func (m *CreateMessage) createProduceSolutionRequest(datasetURI string, solutionID string) *pipeline.ProduceSolutionRequest {
+	return &pipeline.ProduceSolutionRequest{
 		SolutionId: solutionID,
-		Inputs: []*Value{
+		Inputs: []*pipeline.Value{
 			{
-				Value: &Value_DatasetUri{
+				Value: &pipeline.Value_DatasetUri{
 					DatasetUri: datasetURI,
 				},
 			},
@@ -217,7 +218,7 @@ func (m *CreateMessage) dispatchSolution(statusChan chan CreateStatus, client *C
 
 	for _, response := range predictionResponses {
 
-		if response.Progress.State != ProgressState_COMPLETED {
+		if response.Progress.State != pipeline.ProgressState_COMPLETED {
 			// only persist completed responses
 			continue
 		}
@@ -228,7 +229,7 @@ func (m *CreateMessage) dispatchSolution(statusChan chan CreateStatus, client *C
 			return
 		}
 
-		datasetURI, ok := output.Value.(*Value_DatasetUri)
+		datasetURI, ok := output.Value.(*pipeline.Value_DatasetUri)
 		if !ok {
 			m.persistSolutionError(statusChan, client, solutionStorage, searchID, solutionID, errors.Errorf("output is not of correct format"))
 			return
@@ -253,7 +254,7 @@ func (m *CreateMessage) dispatchSolution(statusChan chan CreateStatus, client *C
 	}
 }
 
-func (m *CreateMessage) createStatusChannels(client *Client, solutions []*GetSearchSolutionsResultsResponse, solutionStorage model.SolutionStorage, searchID string) []chan CreateStatus {
+func (m *CreateMessage) createStatusChannels(client *Client, solutions []*pipeline.GetSearchSolutionsResultsResponse, solutionStorage model.SolutionStorage, searchID string) []chan CreateStatus {
 
 	// create channels
 
@@ -443,22 +444,22 @@ func (m *CreateMessage) PersistAndDispatch(client *Client, solutionStorage model
 	return statusChannels, nil
 }
 
-func convertMetricsFromTA3ToTA2(metrics []string) []*ProblemPerformanceMetric {
-	var res []*ProblemPerformanceMetric
+func convertMetricsFromTA3ToTA2(metrics []string) []*pipeline.ProblemPerformanceMetric {
+	var res []*pipeline.ProblemPerformanceMetric
 	for _, metric := range metrics {
-		res = append(res, &ProblemPerformanceMetric{
-			Metric: PerformanceMetric(PerformanceMetric_value[strings.ToUpper(metric)]),
+		res = append(res, &pipeline.ProblemPerformanceMetric{
+			Metric: pipeline.PerformanceMetric(pipeline.PerformanceMetric_value[strings.ToUpper(metric)]),
 		})
 	}
 	return res
 }
 
-func convertTaskTypeFromTA3ToTA2(taskType string) TaskType {
-	return TaskType(TaskType_value[strings.ToUpper(taskType)])
+func convertTaskTypeFromTA3ToTA2(taskType string) pipeline.TaskType {
+	return pipeline.TaskType(pipeline.TaskType_value[strings.ToUpper(taskType)])
 }
 
-func convertTargetFeaturesTA3ToTA2(target string, targetIndex int) []*ProblemTarget {
-	return []*ProblemTarget{
+func convertTargetFeaturesTA3ToTA2(target string, targetIndex int) []*pipeline.ProblemTarget {
+	return []*pipeline.ProblemTarget{
 		{
 			ColumnName:  target,
 			ResourceId:  defaultResourceID,
@@ -475,9 +476,9 @@ func convertDatasetTA3ToTA2(dataset string) string {
 // getApiVersion retrieves the ta3-ta2 API version embedded in the pipeline_service.proto file
 func getAPIVersion() (string, error) {
 	// Get the raw file descriptor bytes
-	fileDesc := proto.FileDescriptor(E_ProtocolVersion.Filename)
+	fileDesc := proto.FileDescriptor(pipeline.E_ProtocolVersion.Filename)
 	if fileDesc == nil {
-		return "", fmt.Errorf("failed to find file descriptor for %v", E_ProtocolVersion.Filename)
+		return "", fmt.Errorf("failed to find file descriptor for %v", pipeline.E_ProtocolVersion.Filename)
 	}
 
 	// Open a gzip reader and decompress
@@ -499,7 +500,7 @@ func getAPIVersion() (string, error) {
 	}
 
 	// Fetch the extension from the FileDescriptorOptions message
-	ex, err := proto.GetExtension(fd.GetOptions(), E_ProtocolVersion)
+	ex, err := proto.GetExtension(fd.GetOptions(), pipeline.E_ProtocolVersion)
 	if err != nil {
 		return "", fmt.Errorf("failed to fetch extension: %v", err)
 	}

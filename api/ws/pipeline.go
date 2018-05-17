@@ -9,8 +9,8 @@ import (
 	"github.com/pkg/errors"
 	"github.com/unchartedsoftware/plog"
 
+	"github.com/unchartedsoftware/distil/api/compute"
 	"github.com/unchartedsoftware/distil/api/model"
-	"github.com/unchartedsoftware/distil/api/pipeline"
 	jutil "github.com/unchartedsoftware/distil/api/util/json"
 )
 
@@ -23,7 +23,7 @@ const (
 )
 
 // SolutionHandler represents a solution websocket handler.
-func SolutionHandler(client *pipeline.Client, metadataCtor model.MetadataStorageCtor, dataCtor model.DataStorageCtor, solutionCtor model.SolutionStorageCtor) func(http.ResponseWriter, *http.Request) {
+func SolutionHandler(client *compute.Client, metadataCtor model.MetadataStorageCtor, dataCtor model.DataStorageCtor, solutionCtor model.SolutionStorageCtor) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 
 		// create conn
@@ -42,7 +42,7 @@ func SolutionHandler(client *pipeline.Client, metadataCtor model.MetadataStorage
 	}
 }
 
-func handleSolutionMessage(client *pipeline.Client, metadataCtor model.MetadataStorageCtor, dataCtor model.DataStorageCtor, solutionCtor model.SolutionStorageCtor) func(conn *Connection, bytes []byte) {
+func handleSolutionMessage(client *compute.Client, metadataCtor model.MetadataStorageCtor, dataCtor model.DataStorageCtor, solutionCtor model.SolutionStorageCtor) func(conn *Connection, bytes []byte) {
 	return func(conn *Connection, bytes []byte) {
 		// parse the message
 		msg, err := NewMessage(bytes)
@@ -68,7 +68,7 @@ func parseMessage(bytes []byte) (*Message, error) {
 	return msg, nil
 }
 
-func handleMessage(conn *Connection, client *pipeline.Client, metadataCtor model.MetadataStorageCtor, dataCtor model.DataStorageCtor, solutionCtor model.SolutionStorageCtor, msg *Message) {
+func handleMessage(conn *Connection, client *compute.Client, metadataCtor model.MetadataStorageCtor, dataCtor model.DataStorageCtor, solutionCtor model.SolutionStorageCtor, msg *Message) {
 	switch msg.Type {
 	case createSolutions:
 		handleCreateSolutions(conn, client, metadataCtor, dataCtor, solutionCtor, msg)
@@ -80,10 +80,10 @@ func handleMessage(conn *Connection, client *pipeline.Client, metadataCtor model
 	}
 }
 
-func handleCreateSolutions(conn *Connection, client *pipeline.Client, metadataCtor model.MetadataStorageCtor, dataCtor model.DataStorageCtor, solutionCtor model.SolutionStorageCtor, msg *Message) {
+func handleCreateSolutions(conn *Connection, client *compute.Client, metadataCtor model.MetadataStorageCtor, dataCtor model.DataStorageCtor, solutionCtor model.SolutionStorageCtor, msg *Message) {
 
 	// unmarshall the request data
-	createMessage := &pipeline.CreateMessage{}
+	createMessage := &compute.CreateMessage{}
 	err := json.Unmarshal(msg.Raw, createMessage)
 	if err != nil {
 		handleErr(conn, msg, err)
@@ -120,7 +120,7 @@ func handleCreateSolutions(conn *Connection, client *pipeline.Client, metadataCt
 
 	for _, c := range statusChannels {
 		// listen and respond to client
-		go func(statusChannel chan pipeline.CreateStatus) {
+		go func(statusChannel chan compute.CreateStatus) {
 
 			for {
 				// read status from, channel
@@ -133,7 +133,7 @@ func handleCreateSolutions(conn *Connection, client *pipeline.Client, metadataCt
 				// send status to client
 				handleSuccess(conn, msg, jutil.StructToMap(status))
 				// break out if completed
-				if status.Progress == pipeline.CompletedStatus {
+				if status.Progress == compute.CompletedStatus {
 					return
 				}
 			}
