@@ -139,7 +139,7 @@ export default Vue.extend({
 			}
 		});
 
-		this.facets.on('facet-histogram:mouseenter', (event: Event, key: string, value: string) => {
+		this.facets.on('facet-histogram:mouseenter', (event: Event, key: string, value: any) => {
 			const $target = $(event.target);
 			const $parent = $target.parent();
 			const $root = $(this.$el);
@@ -148,7 +148,7 @@ export default Vue.extend({
 
 			// set the text now so that the dimensions are correct
 			$tooltip.html(`<b>${value.label} - ${value.toLabel}</b>`);
-			const posX = $parent.offset().left - $root.offset().left
+			const posX = $parent.offset().left - $root.offset().left;
 			const posY = $parent.offset().top - $root.offset().top + $root.scrollTop();
 			const offsetX = posX + ($target.outerWidth() / 2) - ($tooltip.outerWidth() / 2);
 			const offsetY = posY - $tooltip.height() - TOOLTIP_BUFFER;
