@@ -77,8 +77,8 @@ type DataVariable struct {
 }
 
 // Hash the filter set
-func getFilteredDatasetHash(dataset string, target string, filterParams *model.FilterParams) (uint64, error) {
-	hash, err := hashstructure.Hash([]interface{}{dataset, target, *filterParams}, nil)
+func getFilteredDatasetHash(dataset string, target string, filterParams *model.FilterParams, isTrain bool) (uint64, error) {
+	hash, err := hashstructure.Hash([]interface{}{dataset, target, *filterParams, isTrain}, nil)
 	if err != nil {
 		return 0, errors.Wrapf(err, "failed to generate hashcode for %s", dataset)
 	}
@@ -90,17 +90,21 @@ func getFilteredDatasetHash(dataset string, target string, filterParams *model.F
 // is returned.
 func PersistFilteredData(datasetDir string, target string, dataset *model.QueriedDataset) (string, int, error) {
 	// parse the dataset and its filter state and generate a hashcode from both
-	hash, err := getFilteredDatasetHash(dataset.Metadata.Name, target, dataset.Filters)
+	hash, err := getFilteredDatasetHash(dataset.Metadata.Name, target, dataset.Filters, dataset.IsTrain)
 	if err != nil {
 		return "", -1, err
 	}
 
+	// REMOVED CACHING FOR NOW DUE TO TRAIN / TEST SPLIT
 	// check to see if we already have this filtered dataset saved - return the path
 	// if so
 	path := path.Join(datasetDir, strconv.FormatUint(hash, 10))
 	if dirExists(path) {
 		log.Infof("Found cached data with hash %d", hash)
-		return path, -1, nil
+		//	return path, -1, nil
+		// delete existing data to overwrite with latest
+		os.RemoveAll(path)
+		log.Infof("Deleted data at %s", path)
 	}
 
 	// get the filtered dataset from elastic search

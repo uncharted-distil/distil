@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/sha1"
 	"fmt"
+	"math/rand"
 	"path"
 	"path/filepath"
 	"strings"
@@ -19,6 +20,7 @@ const (
 	defaultResourceID       = "0"
 	defaultExposedOutputKey = "outputs.0"
 	datasetDir              = "datasets"
+	trainTestSplitThreshold = 0.9
 	// PendingStatus represents that the solution request has been acknoledged by not yet sent to the API
 	PendingStatus = "PENDING"
 	// RunningStatus represents that the solution request has been sent to the API.
@@ -50,8 +52,15 @@ type CreateStatus struct {
 	Timestamp  time.Time `json:"timestamp"`
 }
 
-func (m *CreateMessage) createSearchSolutionsRequest(targetIndex int) (*SearchSolutionsRequest, error) {
+func (m *CreateMessage) createSearchSolutionsRequest(targetIndex int, datasetURI string) (*SearchSolutionsRequest, error) {
 	return &SearchSolutionsRequest{
+		Inputs: []*Value{
+			{
+				Value: &Value_DatasetUri{
+					DatasetUri: datasetURI,
+				},
+			},
+		},
 		Problem: &ProblemDescription{
 			Problem: &Problem{
 				TaskType:           convertTaskTypeFromTA3ToTA2(m.Task),
@@ -143,7 +152,7 @@ func (m *CreateMessage) persistSolutionResults(statusChan chan CreateStatus, cli
 	}
 }
 
-func (m *CreateMessage) dispatchSolution(statusChan chan CreateStatus, client *Client, solutionStorage model.SolutionStorage, dataStorage model.DataStorage, searchID string, solutionID string, dataset string, datasetURI string) {
+func (m *CreateMessage) dispatchSolution(statusChan chan CreateStatus, client *Client, solutionStorage model.SolutionStorage, dataStorage model.DataStorage, searchID string, solutionID string, dataset string, datasetURITrain string, datasetURITest string) {
 
 	// score solution
 	solutionScoreResponses, err := client.GenerateSolutionScores(context.Background(), solutionID)
@@ -164,7 +173,7 @@ func (m *CreateMessage) dispatchSolution(statusChan chan CreateStatus, client *C
 	}
 
 	// fit solution
-	_, err = client.GenerateSolutionFit(context.Background(), solutionID)
+	_, err = client.GenerateSolutionFit(context.Background(), solutionID, datasetURITrain)
 	if err != nil {
 		m.persistSolutionError(statusChan, client, solutionStorage, searchID, solutionID, err)
 		return
@@ -174,7 +183,7 @@ func (m *CreateMessage) dispatchSolution(statusChan chan CreateStatus, client *C
 	m.persistSolutionStatus(statusChan, client, solutionStorage, searchID, solutionID, RunningStatus)
 
 	// generate predictions
-	produceSolutionRequest := m.createProduceSolutionRequest(datasetURI, solutionID)
+	produceSolutionRequest := m.createProduceSolutionRequest(datasetURITest, solutionID)
 
 	// generate predictions
 	predictionResponses, err := client.GeneratePredictions(context.Background(), produceSolutionRequest)
@@ -245,7 +254,7 @@ func (m *CreateMessage) createStatusChannels(client *Client, solutions []*GetSea
 }
 
 // DispatchSolutions dispatches all solution requests
-func (m *CreateMessage) DispatchSolutions(client *Client, solutionStorage model.SolutionStorage, dataStorage model.DataStorage, searchID string, dataset string, datasetURI string) ([]chan CreateStatus, error) {
+func (m *CreateMessage) DispatchSolutions(client *Client, solutionStorage model.SolutionStorage, dataStorage model.DataStorage, searchID string, dataset string, datasetURITrain string, datasetURITest string) ([]chan CreateStatus, error) {
 
 	solutions, err := client.SearchSolutions(context.Background(), searchID)
 	if err != nil {
@@ -267,7 +276,7 @@ func (m *CreateMessage) DispatchSolutions(client *Client, solutionStorage model.
 			wg.Add(1)
 
 			go func(statusChan chan CreateStatus, solutionID string) {
-				m.dispatchSolution(statusChan, client, solutionStorage, dataStorage, searchID, solutionID, dataset, datasetURI)
+				m.dispatchSolution(statusChan, client, solutionStorage, dataStorage, searchID, solutionID, dataset, datasetURITrain, datasetURITest)
 				wg.Done()
 			}(statusChannels[i], solution.SolutionId)
 
@@ -283,6 +292,44 @@ func (m *CreateMessage) DispatchSolutions(client *Client, solutionStorage model.
 	return statusChannels, nil
 }
 
+func splitTrainTest(dataset *model.QueriedDataset) (*model.QueriedDataset, *model.QueriedDataset, error) {
+	trainDataset := &model.QueriedDataset{
+		Metadata: dataset.Metadata,
+		Filters:  dataset.Filters,
+		IsTrain:  true,
+		Data: &model.FilteredData{
+			Name:    dataset.Data.Name,
+			NumRows: dataset.Data.NumRows,
+			Columns: dataset.Data.Columns,
+			Types:   dataset.Data.Types,
+			Values:  make([][]interface{}, 0),
+		},
+	}
+	testDataset := &model.QueriedDataset{
+		Metadata: dataset.Metadata,
+		Filters:  dataset.Filters,
+		IsTrain:  true,
+		Data: &model.FilteredData{
+			Name:    dataset.Data.Name,
+			NumRows: dataset.Data.NumRows,
+			Columns: dataset.Data.Columns,
+			Types:   dataset.Data.Types,
+			Values:  make([][]interface{}, 0),
+		},
+	}
+
+	// randomly split the dataset between train and test
+	for _, r := range dataset.Data.Values {
+		if rand.Float64() < trainTestSplitThreshold {
+			trainDataset.Data.Values = append(trainDataset.Data.Values, r)
+		} else {
+			testDataset.Data.Values = append(testDataset.Data.Values, r)
+		}
+	}
+
+	return trainDataset, testDataset, nil
+}
+
 // PersistAndDispatch persists the solution request and dispatches it.
 func (m *CreateMessage) PersistAndDispatch(client *Client, solutionStorage model.SolutionStorage, metaStorage model.MetadataStorage, dataStorage model.DataStorage) ([]chan CreateStatus, error) {
 
@@ -295,20 +342,32 @@ func (m *CreateMessage) PersistAndDispatch(client *Client, solutionStorage model
 		return nil, err
 	}
 
-	// perist the dataset and get URI
-	datasetPath, targetIndex, err := PersistFilteredData(datasetDir, m.TargetFeature, dataset)
+	// split the train & test data into separate datasets to be submitted to TA2
+	trainDataset, testDataset, err := splitTrainTest(dataset)
+
+	// perist the datasets and get URI
+	datasetPathTrain, targetIndex, err := PersistFilteredData(datasetDir, m.TargetFeature, trainDataset)
+	if err != nil {
+		return nil, err
+	}
+	datasetPathTest, _, err := PersistFilteredData(datasetDir, m.TargetFeature, testDataset)
 	if err != nil {
 		return nil, err
 	}
 	// make sure the path is absolute and contains the URI prefix
-	datasetPath, err = filepath.Abs(datasetPath)
+	datasetPathTrain, err = filepath.Abs(datasetPathTrain)
 	if err != nil {
 		return nil, err
 	}
-	datasetPath = fmt.Sprintf("%s", filepath.Join(datasetPath, D3MDataSchema))
+	datasetPathTrain = fmt.Sprintf("%s", filepath.Join(datasetPathTrain, D3MDataSchema))
+	datasetPathTest, err = filepath.Abs(datasetPathTest)
+	if err != nil {
+		return nil, err
+	}
+	datasetPathTest = fmt.Sprintf("%s", filepath.Join(datasetPathTest, D3MDataSchema))
 
 	// create search solutions request
-	searchRequest, err := m.createSearchSolutionsRequest(targetIndex)
+	searchRequest, err := m.createSearchSolutionsRequest(targetIndex, datasetPathTrain)
 	if err != nil {
 		return nil, err
 	}
@@ -353,7 +412,7 @@ func (m *CreateMessage) PersistAndDispatch(client *Client, solutionStorage model
 	}
 
 	// dispatch solutions
-	statusChannels, err := m.DispatchSolutions(client, solutionStorage, dataStorage, requestID, dataset.Metadata.Name, datasetPath)
+	statusChannels, err := m.DispatchSolutions(client, solutionStorage, dataStorage, requestID, dataset.Metadata.Name, datasetPathTrain, datasetPathTest)
 	if err != nil {
 		return nil, err
 	}

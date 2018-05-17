@@ -24,7 +24,10 @@ type DataStorage interface {
 	FetchExtremaByURI(dataset string, resultURI string, variable string) (*Extrema, error)
 
 	// Dataset manipulation
-	SetDataType(dataset string, field string, fieldType string) error
+	SetDataType(dataset string, varName string, varType string) error
+	AddVariable(dataset string, varName string, varType string) error
+	DeleteVariable(dataset string, varName string) error
+	UpdateVariable(dataset string, varName string, d3mIndex string, value string) error
 }
 
 // SolutionStorageCtor represents a client constructor to instantiate a
@@ -68,5 +71,7 @@ type MetadataStorage interface {
 	SearchDatasets(terms string, includeIndex bool) ([]*Dataset, error)
 
 	// Dataset manipulation
-	SetDataType(dataset string, field string, fieldType string) error
+	SetDataType(dataset string, varName string, varType string) error
+	AddVariable(dataset string, varName string, varType string, varDistilRole string) error
+	DeleteVariable(dataset string, varName string) error
 }

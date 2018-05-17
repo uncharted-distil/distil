@@ -27,6 +27,7 @@ type QueriedDataset struct {
 	Metadata *Dataset
 	Data     *FilteredData
 	Filters  *FilterParams
+	IsTrain  bool
 }
 
 // FetchDataset builds a QueriedDataset from the needed parameters.

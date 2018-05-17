@@ -29,6 +29,10 @@ const (
 	VarSuggestedTypesField = "suggestedTypes"
 	// VarRoleIndex is the variable role of an index field.
 	VarRoleIndex = "index"
+	// VarDistilRole is the variable role in distil.
+	VarDistilRole = "distilRole"
+	// VarDeleted flags whether the variable is deleted.
+	VarDeleted = "deleted"
 )
 
 func (s *Storage) parseRawVariable(child map[string]interface{}) (*model.Variable, error) {
@@ -56,6 +60,14 @@ func (s *Storage) parseRawVariable(child map[string]interface{}) (*model.Variabl
 	if !ok {
 		displayVariable = ""
 	}
+	distilRole, ok := json.String(child, VarDistilRole)
+	if !ok {
+		distilRole = ""
+	}
+	deleted, ok := json.Bool(child, VarDeleted)
+	if !ok {
+		deleted = false
+	}
 	suggestedTypes, ok := json.Array(child, VarSuggestedTypesField)
 	if !ok {
 		suggestedTypes = make([]map[string]interface{}, 0)
@@ -74,6 +86,8 @@ func (s *Storage) parseRawVariable(child map[string]interface{}) (*model.Variabl
 		SuggestedTypes:   suggestedTypes,
 		OriginalVariable: originalVariable,
 		DisplayVariable:  displayVariable,
+		DistilRole:       distilRole,
+		Deleted:          deleted,
 	}, nil
 }
 
