@@ -168,5 +168,13 @@ export const getters = {
 		const lookup = buildLookup(training.concat([ target ]));
 		const summaries = getters.getVariableSummaries;
 		return summaries.filter(summary => !lookup[summary.name.toLowerCase()]);
+	},
+
+	getSolutionIndex(state: Route, getters: any): number {
+		const solutionId = getters.getRouteSolutionId;
+		const solutions = getters.getSolutions;
+		return _.findIndex(solutions, (solution: any) => {
+			return solution.solutionId === solutionId;
+		});
 	}
 }

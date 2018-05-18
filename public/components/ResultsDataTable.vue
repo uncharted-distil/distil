@@ -17,6 +17,12 @@
 				:items="items"
 				:fields="fields"
 				@row-clicked="onRowClick">
+
+				<template :slot="predictedCol" slot-scope="data">
+					<!-- A custom formatted header cell for predicted field -->
+					{{target}}<sup>{{solutionIndex}}</sup>
+				</template>
+
 				<template :slot="targetErrorCol" slot-scope="data">
 					<!-- A custom formatted data column cell -->
 					<div class="error-bar-container">
@@ -41,7 +47,7 @@ import { getters as resultsGetters } from '../store/results/module';
 import { getters as routeGetters } from '../store/route/module';
 import { getters as solutionGetters } from '../store/solutions/module';
 import { Dictionary } from '../util/dict';
-import { removeNonTrainingItems, removeNonTrainingFields, getErrorCol } from '../util/data';
+import { removeNonTrainingItems, removeNonTrainingFields, getPredictedCol, getErrorCol } from '../util/data';
 import { updateRowSelection, clearRowSelection, updateTableRowSelection } from '../util/row';
 import Vue from 'vue';
 
@@ -61,8 +67,16 @@ export default Vue.extend({
 			return routeGetters.getRouteSolutionId(this.$store);
 		},
 
+		solutionIndex(): number {
+			return routeGetters.getSolutionIndex(this.$store);
+		},
+
 		target(): string {
 			return routeGetters.getRouteTargetVariable(this.$store);
+		},
+
+		predictedCol(): string {
+			return `HEAD_${getPredictedCol(this.target)}`;
 		},
 
 		targetErrorCol(): string {
