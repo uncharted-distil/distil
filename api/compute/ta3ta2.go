@@ -17,6 +17,8 @@ import (
 	"github.com/golang/protobuf/proto"
 	protobuf "github.com/golang/protobuf/protoc-gen-go/descriptor"
 	"github.com/pkg/errors"
+	uuid "github.com/satori/go.uuid"
+	"github.com/unchartedsoftware/distil/api/compute/description"
 	"github.com/unchartedsoftware/distil/api/pipeline"
 
 	"github.com/unchartedsoftware/distil/api/model"
@@ -59,12 +61,19 @@ type CreateStatus struct {
 	Timestamp  time.Time `json:"timestamp"`
 }
 
-func (m *CreateMessage) createSearchSolutionsRequest(targetIndex int, datasetURI string, userAgent string) (*pipeline.SearchSolutionsRequest, error) {
-	// Grab the embedded ta3ta2 API version
-	apiVersion, err := getAPIVersion()
-	if err != nil {
-		log.Warnf("Failed to extract API version")
-		apiVersion = "unknown"
+var apiVersion string
+
+func (m *CreateMessage) createSearchSolutionsRequest(targetIndex int, preprocessing *pipeline.PipelineDescription,
+	datasetURI string, userAgent string) (*pipeline.SearchSolutionsRequest, error) {
+	// Grab the embedded ta3ta2 API version.  This is a non-trivial operation but it can be cached due to
+	// the invariance of the result.
+	var err error
+	if apiVersion == "" {
+		apiVersion, err = getAPIVersion()
+		if err != nil {
+			log.Warnf("Failed to extract API version")
+			apiVersion = "unknown"
+		}
 	}
 
 	return &pipeline.SearchSolutionsRequest{
@@ -97,7 +106,24 @@ func (m *CreateMessage) createSearchSolutionsRequest(targetIndex int, datasetURI
 				},
 			},
 		},
+
+		Template: preprocessing,
 	}, nil
+}
+
+// createPreprocessingPipeline creates pipeline to enfore user feature selection and typing
+func (m *CreateMessage) createPreprocessingPipeline(featureVariables []*model.Variable, variables []string) (*pipeline.PipelineDescription, error) {
+	uuid := uuid.NewV4()
+	name := fmt.Sprintf("preprocessing-%s-%s", m.Dataset, uuid.String())
+	desc := fmt.Sprintf(
+		"Preprocessing pipeline capturing user feature selection and type information.  Dataset: `%s` ID: `%s`", m.Dataset, uuid.String())
+
+	preprocessingPipeline, err := description.CreateUserDatasetPipeline(name, desc, featureVariables, variables)
+	if err != nil {
+		return nil, err
+	}
+
+	return preprocessingPipeline, nil
 }
 
 func (m *CreateMessage) createProduceSolutionRequest(datasetURI string, solutionID string) *pipeline.ProduceSolutionRequest {
@@ -360,6 +386,12 @@ func (m *CreateMessage) PersistAndDispatch(client *Client, solutionStorage model
 	// NOTE: D3M index field is needed in the persisted data.
 	m.Filters.Variables = append(m.Filters.Variables, model.D3MIndexFieldName)
 
+	// fetch the full set of variables associated with the dataset
+	variables, err := metaStorage.FetchVariables(m.Dataset, true)
+	if err != nil {
+		return nil, err
+	}
+
 	// fetch the queried dataset
 	dataset, err := model.FetchDataset(m.Dataset, m.Index, true, m.Filters, metaStorage, dataStorage)
 	if err != nil {
@@ -390,8 +422,14 @@ func (m *CreateMessage) PersistAndDispatch(client *Client, solutionStorage model
 	}
 	datasetPathTest = fmt.Sprintf("%s", filepath.Join(datasetPathTest, D3MDataSchema))
 
+	// generate the pre-processing pipeline to enforce feature selection and semantic type changes
+	preprocessing, err := m.createPreprocessingPipeline(variables, m.Filters.Variables)
+	if err != nil {
+		return nil, err
+	}
+
 	// create search solutions request
-	searchRequest, err := m.createSearchSolutionsRequest(targetIndex, datasetPathTrain, client.UserAgent)
+	searchRequest, err := m.createSearchSolutionsRequest(targetIndex, preprocessing, datasetPathTrain, client.UserAgent)
 	if err != nil {
 		return nil, err
 	}

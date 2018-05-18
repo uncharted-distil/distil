@@ -1,6 +1,8 @@
 package description
 
 import (
+	"strings"
+
 	"github.com/pkg/errors"
 	"github.com/unchartedsoftware/distil/api/model"
 	"github.com/unchartedsoftware/distil/api/pipeline"
@@ -14,7 +16,7 @@ func CreateUserDatasetPipeline(name string, description string,
 	// save the selected features in a set for quick lookup
 	selectedSet := map[string]bool{}
 	for _, v := range selectedFeatures {
-		selectedSet[v] = true
+		selectedSet[strings.ToLower(v)] = true
 	}
 
 	// create a list of features to remove and a list of semantic type updaates
@@ -22,7 +24,7 @@ func CreateUserDatasetPipeline(name string, description string,
 	addedTypes := []*ColumnUpdate{}
 	removedTypes := []*ColumnUpdate{}
 	for _, v := range allFeatures {
-		if !selectedSet[v.Name] {
+		if !selectedSet[strings.ToLower(v.Name)] {
 			removeFeatures = append(removeFeatures, v.Name)
 		} else {
 			addType := model.MapTA2Type(v.Type)
@@ -34,15 +36,19 @@ func CreateUserDatasetPipeline(name string, description string,
 				return nil, errors.Errorf("remove variable `%s` internal type `%s` can't be mapped to ta2", v.Name, v.OriginalType)
 			}
 
-			addedTypes = append(addedTypes, &ColumnUpdate{
-				Name:         v.Name,
-				SemanticType: v.Type,
-			})
+			// only apply change when types are different
+			if addType != removeType {
+				addedTypes = append(addedTypes, &ColumnUpdate{
+					Name:         v.Name,
+					SemanticType: v.Type,
+				})
 
-			removedTypes = append(removedTypes, &ColumnUpdate{
-				Name:         v.Name,
-				SemanticType: v.OriginalType,
-			})
+				removedTypes = append(removedTypes, &ColumnUpdate{
+					Name:         v.Name,
+					SemanticType: v.OriginalType,
+				})
+			}
+
 		}
 	}
 

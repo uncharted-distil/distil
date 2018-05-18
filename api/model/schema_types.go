@@ -11,6 +11,8 @@ const (
 	IntegerType = "integer"
 	// FloatType is the schema type for float values
 	FloatType = "float"
+	// RealType is the schema type for real values, and is equivalent to FloatType
+	RealType = "real"
 	// BoolType is the schema type for bool values
 	BoolType = "boolean"
 	// DateTimeType is the schema type for date/time values
@@ -98,6 +100,7 @@ var (
 		IndexType:       "integer",
 		IntegerType:     "integer",
 		FloatType:       "real",
+		RealType:        "real",
 		BoolType:        "boolean",
 		DateTimeType:    "dateTime",
 		OrdinalType:     "categorical",
