@@ -45,7 +45,7 @@
 import Facets from '../components/Facets';
 import { overlayRouteEntry, getRouteFacetPage } from '../util/routes';
 import { Dictionary } from '../util/dict';
-import { sortGroupsByImportance, filterVariablesByPage, NUM_PER_PAGE } from '../util/data';
+import { sortGroupsByImportance, filterVariablesByPage } from '../util/data';
 import { Variable } from '../store/dataset/index';
 import { Highlight, RowSelection } from '../store/highlights/index';
 import { getters as datasetGetters } from '../store/dataset/module';
@@ -74,12 +74,12 @@ export default Vue.extend({
 		subtitle: String,
 		html: [ String, Object, Function ],
 		instanceName: { type: String, default: 'variableFacets' },
+		rowsPerPage: { type: Number, default: 10 }
 	},
 
 	data() {
 		return {
-			filter: '',
-			rowsPerPage: NUM_PER_PAGE
+			filter: ''
 		};
 	},
 

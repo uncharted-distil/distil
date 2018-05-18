@@ -1,6 +1,5 @@
 <template>
-	<div class="facet-root" v-bind:class="{ 'highlighting-enabled': enableHighlighting }">
-		<div class="facets" v-once ref="facets"></div>
+	<div class="facets-root" v-bind:class="{ 'highlighting-enabled': enableHighlighting }">
 		<div class="facet-tooltip" style="display:none;"></div>
 	</div>
 </template>
@@ -776,7 +775,7 @@ export default Vue.extend({
 	margin-bottom: 6px;
 }
 
-.facet-root.highlighting-enabled {
+.facets-root.highlighting-enabled {
 	padding-left: 32px;
 }
 .highlighting-enabled .facets-group {
@@ -837,9 +836,6 @@ export default Vue.extend({
 	left: -28px;
 	top: calc(50% - 14px);
 	color: #00c6e1;
-}
-.facets {
-	z-index: 1;
 }
 .facet-tooltip {
 	position: absolute;
