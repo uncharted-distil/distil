@@ -16,11 +16,11 @@ all:
 	@echo "  install       - install dependencies"
 
 lint:
-	@go vet $(shell glide novendor)
+	@go vet ./...
 	@go list ./... | grep -v /vendor/ | xargs -L1 golint
 
 fmt:
-	@go fmt $(shell glide novendor)
+	@go fmt ./...
 
 build: lint
 	@go build -i ${LDFLAGS}
@@ -29,7 +29,7 @@ build_static:
 	env CGO_ENABLED=0 env GOOS=linux GOARCH=amd64 go build ${LDFLAGS}
 
 compile: lint
-	@go build $(shell glide novendor)
+	@go build ./...
 
 deploy:
 	@./deploy.sh
@@ -38,7 +38,7 @@ watch:
 	@./run.sh
 
 test: build
-	@go test $(shell glide novendor)
+	@go test ./...
 
 proto:
 	@protoc -I /usr/local/include -I api/pipeline api/pipeline/*.proto --go_out=plugins=grpc:api/pipeline
