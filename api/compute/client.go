@@ -25,6 +25,9 @@ type Client struct {
 	UserAgent string
 }
 
+// SearchSolutionHandler is executed when a new search solution is returned.
+type SearchSolutionHandler func(*pipeline.GetSearchSolutionsResultsResponse)
+
 // NewClient creates a new pipline request dispatcher instance. This will establish
 // the connection to the solution server or return an error on fail
 func NewClient(serverAddr string, dataDir string, trace bool, userAgent string) (*Client, error) {
@@ -65,7 +68,7 @@ func (c *Client) StartSearch(ctx context.Context, request *pipeline.SearchSoluti
 }
 
 // SearchSolutions generates candidate pipel\ines.
-func (c *Client) SearchSolutions(ctx context.Context, searchID string) ([]*pipeline.GetSearchSolutionsResultsResponse, error) {
+func (c *Client) SearchSolutions(ctx context.Context, searchID string, solutionHandler SearchSolutionHandler) error {
 
 	searchPiplinesResultsRequest := &pipeline.GetSearchSolutionsResultsRequest{
 		SearchId: searchID,
@@ -73,24 +76,25 @@ func (c *Client) SearchSolutions(ctx context.Context, searchID string) ([]*pipel
 
 	searchSolutionsResultsResponse, err := c.client.GetSearchSolutionsResults(ctx, searchPiplinesResultsRequest)
 	if err != nil {
-		return nil, err
+		return err
 	}
-
-	var solutionResultResponses []*pipeline.GetSearchSolutionsResultsResponse
 
 	err = pullFromAPI(pullMax, pullTimeout, func() error {
 		solutionResultResponse, err := searchSolutionsResultsResponse.Recv()
 		if err != nil {
 			return err
 		}
-		solutionResultResponses = append(solutionResultResponses, solutionResultResponse)
+		// ignore empty responses
+		if solutionResultResponse.SolutionId != "" {
+			go solutionHandler(solutionResultResponse)
+		}
 		return nil
 	})
 	if err != nil {
-		return nil, err
+		return err
 	}
 
-	return solutionResultResponses, nil
+	return nil
 }
 
 // GenerateSolutionScores generates scrores for candidate solutions.
@@ -208,6 +212,17 @@ func (c *Client) GeneratePredictions(ctx context.Context, request *pipeline.Prod
 	}
 
 	return solutionResultResponses, nil
+}
+
+// StopSearch stop the solution search session.
+func (c *Client) StopSearch(ctx context.Context, searchID string) error {
+
+	stopSearchSolutions := &pipeline.StopSearchSolutionsRequest{
+		SearchId: searchID,
+	}
+
+	_, err := c.client.StopSearchSolutions(ctx, stopSearchSolutions)
+	return err
 }
 
 // EndSearch ends the solution search session.

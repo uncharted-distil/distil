@@ -16,6 +16,7 @@ import (
 
 const (
 	createSolutions   = "CREATE_SOLUTIONS"
+	stopSolutions     = "STOP_SOLUTIONS"
 	categoricalType   = "categorical"
 	numericalType     = "numerical"
 	defaultResourceID = "0"
@@ -73,6 +74,9 @@ func handleMessage(conn *Connection, client *compute.Client, metadataCtor model.
 	case createSolutions:
 		handleCreateSolutions(conn, client, metadataCtor, dataCtor, solutionCtor, msg)
 		return
+	case stopSolutions:
+		handleStopSolutions(conn, client, msg)
+		return
 	default:
 		// unrecognized type
 		handleErr(conn, msg, errors.New("unrecognized message type"))
@@ -81,10 +85,8 @@ func handleMessage(conn *Connection, client *compute.Client, metadataCtor model.
 }
 
 func handleCreateSolutions(conn *Connection, client *compute.Client, metadataCtor model.MetadataStorageCtor, dataCtor model.DataStorageCtor, solutionCtor model.SolutionStorageCtor, msg *Message) {
-
-	// unmarshall the request data
-	createMessage := &compute.CreateMessage{}
-	err := json.Unmarshal(msg.Raw, createMessage)
+	// unmarshal request
+	request, err := compute.NewSolutionRequest(msg.Raw)
 	if err != nil {
 		handleErr(conn, msg, err)
 		return
@@ -112,32 +114,42 @@ func handleCreateSolutions(conn *Connection, client *compute.Client, metadataCto
 	}
 
 	// persist the request information and dispatch the request
-	statusChannels, err := createMessage.PersistAndDispatch(client, solutionStorage, metaStorage, dataStorage)
+	err = request.PersistAndDispatch(client, solutionStorage, metaStorage, dataStorage)
 	if err != nil {
 		handleErr(conn, msg, err)
 		return
 	}
 
-	for _, c := range statusChannels {
-		// listen and respond to client
-		go func(statusChannel chan compute.CreateStatus) {
+	// listen for solution updates
+	request.Listen(func(status compute.SolutionStatus) {
+		// check for error
+		if status.Error != nil {
+			handleErr(conn, msg, err)
+			return
+		}
+		// send status to client
+		handleSuccess(conn, msg, jutil.StructToMap(status))
+		// break out if completed
+		if status.Progress == compute.CompletedStatus {
+			return
+		}
+	})
+}
 
-			for {
-				// read status from, channel
-				status := <-statusChannel
-				// check for error
-				if status.Error != nil {
-					handleErr(conn, msg, err)
-					return
-				}
-				// send status to client
-				handleSuccess(conn, msg, jutil.StructToMap(status))
-				// break out if completed
-				if status.Progress == compute.CompletedStatus {
-					return
-				}
-			}
-
-		}(c)
+func handleStopSolutions(conn *Connection, client *compute.Client, msg *Message) {
+	// unmarshal request
+	request, err := compute.NewStopSolutionSearchRequest(msg.Raw)
+	if err != nil {
+		handleErr(conn, msg, err)
+		return
 	}
+
+	// dispatch request
+	err = request.Dispatch(client)
+	if err != nil {
+		handleErr(conn, msg, err)
+		return
+	}
+	handleSuccess(conn, msg, nil)
+	return
 }

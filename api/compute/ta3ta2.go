@@ -5,6 +5,7 @@ import (
 	"compress/gzip"
 	"context"
 	"crypto/sha1"
+	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"math/rand"
@@ -38,19 +39,56 @@ const (
 	CompletedStatus = "COMPLETED"
 )
 
-// CreateMessage represents a create model message.
-type CreateMessage struct {
-	Dataset       string              `json:"dataset"`
-	Index         string              `json:"index"`
-	TargetFeature string              `json:"target"`
-	Task          string              `json:"task"`
-	MaxSolutions  int32               `json:"maxSolutions"`
-	Filters       *model.FilterParams `json:"filters"`
-	Metrics       []string            `json:"metrics"`
+// StopSolutionSearchRequest represents a request to stop any pending siolution searches.
+type StopSolutionSearchRequest struct {
+	RequestID string `json:"requestId"`
 }
 
-// CreateStatus represents a solution status.
-type CreateStatus struct {
+// NewStopSolutionSearchRequest instantiates a new StopSolutionSearchRequest.
+func NewStopSolutionSearchRequest(data []byte) (*StopSolutionSearchRequest, error) {
+	req := &StopSolutionSearchRequest{}
+	err := json.Unmarshal(data, &req)
+	if err != nil {
+		return nil, err
+	}
+	return req, nil
+}
+
+// Dispatch dispatches the stop search request.
+func (s *StopSolutionSearchRequest) Dispatch(client *Client) error {
+	return client.StopSearch(context.Background(), s.RequestID)
+}
+
+// SolutionRequest represents a solution search request.
+type SolutionRequest struct {
+	Dataset        string              `json:"dataset"`
+	Index          string              `json:"index"`
+	TargetFeature  string              `json:"target"`
+	Task           string              `json:"task"`
+	MaxSolutions   int32               `json:"maxSolutions"`
+	Filters        *model.FilterParams `json:"filters"`
+	Metrics        []string            `json:"metrics"`
+	mu             *sync.Mutex
+	wg             *sync.WaitGroup
+	statusChannels []chan SolutionStatus
+	listener       SolutionStatusListener
+}
+
+// NewSolutionRequest instantiates a new SolutionRequest.
+func NewSolutionRequest(data []byte) (*SolutionRequest, error) {
+	req := &SolutionRequest{
+		mu: &sync.Mutex{},
+		wg: &sync.WaitGroup{},
+	}
+	err := json.Unmarshal(data, &req)
+	if err != nil {
+		return nil, err
+	}
+	return req, nil
+}
+
+// SolutionStatus represents a solution status.
+type SolutionStatus struct {
 	Progress   string    `json:"progress"`
 	RequestID  string    `json:"requestId"`
 	SolutionID string    `json:"solutionId"`
@@ -59,7 +97,45 @@ type CreateStatus struct {
 	Timestamp  time.Time `json:"timestamp"`
 }
 
-func (m *CreateMessage) createSearchSolutionsRequest(targetIndex int, datasetURI string, userAgent string) (*pipeline.SearchSolutionsRequest, error) {
+// SolutionStatusListener executes on a new solution status.
+type SolutionStatusListener func(status SolutionStatus)
+
+func (s *SolutionRequest) addSolution(c chan SolutionStatus) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.wg.Add(1)
+	s.statusChannels = append(s.statusChannels, c)
+	go s.listenOnStatusChannel(c)
+}
+
+func (s *SolutionRequest) completeSolution() {
+	s.wg.Done()
+}
+
+func (s *SolutionRequest) waitOnSolutions() {
+	s.wg.Wait()
+}
+
+func (s *SolutionRequest) listenOnStatusChannel(statusChannel chan SolutionStatus) {
+	for {
+		// read status from, channel
+		status := <-statusChannel
+		// execute callback
+		s.listener(status)
+	}
+}
+
+// Listen listens ont he solution requests for new solution statuses.
+func (s *SolutionRequest) Listen(listener SolutionStatusListener) {
+	s.listener = listener
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	for _, c := range s.statusChannels {
+		go s.listenOnStatusChannel(c)
+	}
+}
+
+func (s *SolutionRequest) createSearchSolutionsRequest(targetIndex int, datasetURI string, userAgent string) (*pipeline.SearchSolutionsRequest, error) {
 	// Grab the embedded ta3ta2 API version
 	apiVersion, err := getAPIVersion()
 	if err != nil {
@@ -70,13 +146,13 @@ func (m *CreateMessage) createSearchSolutionsRequest(targetIndex int, datasetURI
 	return &pipeline.SearchSolutionsRequest{
 		Problem: &pipeline.ProblemDescription{
 			Problem: &pipeline.Problem{
-				TaskType:           convertTaskTypeFromTA3ToTA2(m.Task),
-				PerformanceMetrics: convertMetricsFromTA3ToTA2(m.Metrics),
+				TaskType:           convertTaskTypeFromTA3ToTA2(s.Task),
+				PerformanceMetrics: convertMetricsFromTA3ToTA2(s.Metrics),
 			},
 			Inputs: []*pipeline.ProblemInput{
 				{
-					DatasetId: convertDatasetTA3ToTA2(m.Dataset),
-					Targets:   convertTargetFeaturesTA3ToTA2(m.TargetFeature, targetIndex),
+					DatasetId: convertDatasetTA3ToTA2(s.Dataset),
+					Targets:   convertTargetFeaturesTA3ToTA2(s.TargetFeature, targetIndex),
 				},
 			},
 		},
@@ -100,7 +176,7 @@ func (m *CreateMessage) createSearchSolutionsRequest(targetIndex int, datasetURI
 	}, nil
 }
 
-func (m *CreateMessage) createProduceSolutionRequest(datasetURI string, solutionID string) *pipeline.ProduceSolutionRequest {
+func (s *SolutionRequest) createProduceSolutionRequest(datasetURI string, solutionID string) *pipeline.ProduceSolutionRequest {
 	return &pipeline.ProduceSolutionRequest{
 		SolutionId: solutionID,
 		Inputs: []*pipeline.Value{
@@ -113,12 +189,12 @@ func (m *CreateMessage) createProduceSolutionRequest(datasetURI string, solution
 	}
 }
 
-func (m *CreateMessage) persistSolutionError(statusChan chan CreateStatus, client *Client, solutionStorage model.SolutionStorage, searchID string, solutionID string, err error) {
+func (s *SolutionRequest) persistSolutionError(statusChan chan SolutionStatus, client *Client, solutionStorage model.SolutionStorage, searchID string, solutionID string, err error) {
 	// persist the updated state
 	// NOTE: ignoring error
 	solutionStorage.PersistSolution(searchID, solutionID, ErroredStatus, time.Now())
 	// notify of error
-	statusChan <- CreateStatus{
+	statusChan <- SolutionStatus{
 		RequestID:  searchID,
 		SolutionID: solutionID,
 		Progress:   ErroredStatus,
@@ -127,16 +203,16 @@ func (m *CreateMessage) persistSolutionError(statusChan chan CreateStatus, clien
 	}
 }
 
-func (m *CreateMessage) persistSolutionStatus(statusChan chan CreateStatus, client *Client, solutionStorage model.SolutionStorage, searchID string, solutionID string, status string) {
+func (s *SolutionRequest) persistSolutionStatus(statusChan chan SolutionStatus, client *Client, solutionStorage model.SolutionStorage, searchID string, solutionID string, status string) {
 	// persist the updated state
 	err := solutionStorage.PersistSolution(searchID, solutionID, status, time.Now())
 	if err != nil {
 		// notify of error
-		m.persistSolutionError(statusChan, client, solutionStorage, searchID, solutionID, err)
+		s.persistSolutionError(statusChan, client, solutionStorage, searchID, solutionID, err)
 		return
 	}
 	// notify client of update
-	statusChan <- CreateStatus{
+	statusChan <- SolutionStatus{
 		RequestID:  searchID,
 		SolutionID: solutionID,
 		Progress:   status,
@@ -144,30 +220,30 @@ func (m *CreateMessage) persistSolutionStatus(statusChan chan CreateStatus, clie
 	}
 }
 
-func (m *CreateMessage) persistSolutionResults(statusChan chan CreateStatus, client *Client, solutionStorage model.SolutionStorage, dataStorage model.DataStorage, searchID string, dataset string, solutionID string, resultID string, resultURI string) {
+func (s *SolutionRequest) persistSolutionResults(statusChan chan SolutionStatus, client *Client, solutionStorage model.SolutionStorage, dataStorage model.DataStorage, searchID string, dataset string, solutionID string, resultID string, resultURI string) {
 	// persist the completed state
 	err := solutionStorage.PersistSolution(searchID, solutionID, CompletedStatus, time.Now())
 	if err != nil {
 		// notify of error
-		m.persistSolutionError(statusChan, client, solutionStorage, searchID, solutionID, err)
+		s.persistSolutionError(statusChan, client, solutionStorage, searchID, solutionID, err)
 		return
 	}
 	// persist result metadata
 	err = solutionStorage.PersistSolutionResult(solutionID, resultID, resultURI, CompletedStatus, time.Now())
 	if err != nil {
 		// notify of error
-		m.persistSolutionError(statusChan, client, solutionStorage, searchID, solutionID, err)
+		s.persistSolutionError(statusChan, client, solutionStorage, searchID, solutionID, err)
 		return
 	}
 	// persist results
 	err = dataStorage.PersistResult(dataset, resultURI)
 	if err != nil {
 		// notify of error
-		m.persistSolutionError(statusChan, client, solutionStorage, searchID, solutionID, err)
+		s.persistSolutionError(statusChan, client, solutionStorage, searchID, solutionID, err)
 		return
 	}
 	// notify client of update
-	statusChan <- CreateStatus{
+	statusChan <- SolutionStatus{
 		RequestID:  searchID,
 		SolutionID: solutionID,
 		ResultID:   resultID,
@@ -176,12 +252,12 @@ func (m *CreateMessage) persistSolutionResults(statusChan chan CreateStatus, cli
 	}
 }
 
-func (m *CreateMessage) dispatchSolution(statusChan chan CreateStatus, client *Client, solutionStorage model.SolutionStorage, dataStorage model.DataStorage, searchID string, solutionID string, dataset string, datasetURITrain string, datasetURITest string) {
+func (s *SolutionRequest) dispatchSolution(statusChan chan SolutionStatus, client *Client, solutionStorage model.SolutionStorage, dataStorage model.DataStorage, searchID string, solutionID string, dataset string, datasetURITrain string, datasetURITest string) {
 
 	// score solution
 	solutionScoreResponses, err := client.GenerateSolutionScores(context.Background(), solutionID)
 	if err != nil {
-		m.persistSolutionError(statusChan, client, solutionStorage, searchID, solutionID, err)
+		s.persistSolutionError(statusChan, client, solutionStorage, searchID, solutionID, err)
 		return
 	}
 
@@ -190,7 +266,7 @@ func (m *CreateMessage) dispatchSolution(statusChan chan CreateStatus, client *C
 		for _, score := range response.Scores {
 			err := solutionStorage.PersistSolutionScore(solutionID, score.Metric.Metric.String(), score.Value.GetDouble())
 			if err != nil {
-				m.persistSolutionError(statusChan, client, solutionStorage, searchID, solutionID, err)
+				s.persistSolutionError(statusChan, client, solutionStorage, searchID, solutionID, err)
 				return
 			}
 		}
@@ -199,20 +275,20 @@ func (m *CreateMessage) dispatchSolution(statusChan chan CreateStatus, client *C
 	// fit solution
 	_, err = client.GenerateSolutionFit(context.Background(), solutionID, datasetURITrain)
 	if err != nil {
-		m.persistSolutionError(statusChan, client, solutionStorage, searchID, solutionID, err)
+		s.persistSolutionError(statusChan, client, solutionStorage, searchID, solutionID, err)
 		return
 	}
 
 	// persist solution running status
-	m.persistSolutionStatus(statusChan, client, solutionStorage, searchID, solutionID, RunningStatus)
+	s.persistSolutionStatus(statusChan, client, solutionStorage, searchID, solutionID, RunningStatus)
 
 	// generate predictions
-	produceSolutionRequest := m.createProduceSolutionRequest(datasetURITest, solutionID)
+	produceSolutionRequest := s.createProduceSolutionRequest(datasetURITest, solutionID)
 
 	// generate predictions
 	predictionResponses, err := client.GeneratePredictions(context.Background(), produceSolutionRequest)
 	if err != nil {
-		m.persistSolutionError(statusChan, client, solutionStorage, searchID, solutionID, err)
+		s.persistSolutionError(statusChan, client, solutionStorage, searchID, solutionID, err)
 		return
 	}
 
@@ -225,13 +301,13 @@ func (m *CreateMessage) dispatchSolution(statusChan chan CreateStatus, client *C
 
 		output, ok := response.ExposedOutputs[defaultExposedOutputKey]
 		if !ok {
-			m.persistSolutionError(statusChan, client, solutionStorage, searchID, solutionID, errors.Errorf("output is missing from response"))
+			s.persistSolutionError(statusChan, client, solutionStorage, searchID, solutionID, errors.Errorf("output is missing from response"))
 			return
 		}
 
 		datasetURI, ok := output.Value.(*pipeline.Value_DatasetUri)
 		if !ok {
-			m.persistSolutionError(statusChan, client, solutionStorage, searchID, solutionID, errors.Errorf("output is not of correct format"))
+			s.persistSolutionError(statusChan, client, solutionStorage, searchID, solutionID, errors.Errorf("output is not of correct format"))
 			return
 		}
 
@@ -250,70 +326,46 @@ func (m *CreateMessage) dispatchSolution(statusChan chan CreateStatus, client *C
 		resultID := fmt.Sprintf("%x", bs)
 
 		// persist results
-		m.persistSolutionResults(statusChan, client, solutionStorage, dataStorage, searchID, dataset, solutionID, resultID, resultURI)
+		s.persistSolutionResults(statusChan, client, solutionStorage, dataStorage, searchID, dataset, solutionID, resultID, resultURI)
 	}
 }
 
-func (m *CreateMessage) createStatusChannels(client *Client, solutions []*pipeline.GetSearchSolutionsResultsResponse, solutionStorage model.SolutionStorage, searchID string) []chan CreateStatus {
-
-	// create channels
-
-	// NOTE: WE BUFFER THE CHANNELS TO A SIZE OF 1 HERE SO WE CAN PERSIST BELOW
+func (s *SolutionRequest) createStatusChannel(client *Client, solution *pipeline.GetSearchSolutionsResultsResponse, solutionStorage model.SolutionStorage, searchID string) chan SolutionStatus {
+	// NOTE: WE BUFFER THE CHANNEL TO A SIZE OF 1 HERE SO WE CAN PERSIST BELOW
 	// WITHOUT DEADLOCKING.
-	var statusChannels []chan CreateStatus
-	for range solutions {
-		statusChannels = append(statusChannels, make(chan CreateStatus, 1))
-	}
+	statusChannel := make(chan SolutionStatus, 1)
 
 	// persist all solutions as pending
 
-	// NOTE: we persist the solutions here so that they exist in the DB when the
+	// NOTE: we persist the solution here so that it exists in the DB when the
 	// method returns.
 	// NOTE: THE CHANNELS MUST BE BUFFERED TO A SIZE OF 1 OR ELSE THIS WILL DEADLOCK.
-	for i, solution := range solutions {
-		m.persistSolutionStatus(statusChannels[i], client, solutionStorage, searchID, solution.SolutionId, PendingStatus)
-	}
+	s.persistSolutionStatus(statusChannel, client, solutionStorage, searchID, solution.SolutionId, PendingStatus)
 
-	return statusChannels
+	return statusChannel
 }
 
-// DispatchSolutions dispatches all solution requests
-func (m *CreateMessage) DispatchSolutions(client *Client, solutionStorage model.SolutionStorage, dataStorage model.DataStorage, searchID string, dataset string, datasetURITrain string, datasetURITest string) ([]chan CreateStatus, error) {
-
-	solutions, err := client.SearchSolutions(context.Background(), searchID)
+func (s *SolutionRequest) dispatchRequest(client *Client, solutionStorage model.SolutionStorage, dataStorage model.DataStorage, searchID string, dataset string, datasetURITrain string, datasetURITest string) error {
+	// search for solutions, this wont return until the search finishes or it times out
+	err := client.SearchSolutions(context.Background(), searchID, func(solution *pipeline.GetSearchSolutionsResultsResponse) {
+		// create a new status channel for the solution
+		c := s.createStatusChannel(client, solution, solutionStorage, searchID)
+		// add the solution to the request
+		s.addSolution(c)
+		// dispatch it
+		s.dispatchSolution(c, client, solutionStorage, dataStorage, searchID, solution.SolutionId, dataset, datasetURITrain, datasetURITest)
+		// once done, mark as complete
+		s.completeSolution()
+	})
 	if err != nil {
-		return nil, err
+		return err
 	}
 
-	// create status channels and persist solutions
-	statusChannels := m.createStatusChannels(client, solutions, solutionStorage, searchID)
+	// wait until all are complete and the search has finished / timed out
+	s.waitOnSolutions()
 
-	// dispatch all solutions
-	go func() {
-
-		wg := &sync.WaitGroup{}
-
-		// dispatch individual solutions
-		for i, solution := range solutions {
-
-			// increment waitgroup
-			wg.Add(1)
-
-			go func(statusChan chan CreateStatus, solutionID string) {
-				m.dispatchSolution(statusChan, client, solutionStorage, dataStorage, searchID, solutionID, dataset, datasetURITrain, datasetURITest)
-				wg.Done()
-			}(statusChannels[i], solution.SolutionId)
-
-		}
-
-		// wait until all are complete
-		wg.Wait()
-
-		// end search
-		client.EndSearch(context.Background(), searchID)
-	}()
-
-	return statusChannels, nil
+	// end search
+	return client.EndSearch(context.Background(), searchID)
 }
 
 func splitTrainTest(dataset *model.QueriedDataset) (*model.QueriedDataset, *model.QueriedDataset, error) {
@@ -355,68 +407,68 @@ func splitTrainTest(dataset *model.QueriedDataset) (*model.QueriedDataset, *mode
 }
 
 // PersistAndDispatch persists the solution request and dispatches it.
-func (m *CreateMessage) PersistAndDispatch(client *Client, solutionStorage model.SolutionStorage, metaStorage model.MetadataStorage, dataStorage model.DataStorage) ([]chan CreateStatus, error) {
+func (s *SolutionRequest) PersistAndDispatch(client *Client, solutionStorage model.SolutionStorage, metaStorage model.MetadataStorage, dataStorage model.DataStorage) error {
 
 	// NOTE: D3M index field is needed in the persisted data.
-	m.Filters.Variables = append(m.Filters.Variables, model.D3MIndexFieldName)
+	s.Filters.Variables = append(s.Filters.Variables, model.D3MIndexFieldName)
 
 	// fetch the queried dataset
-	dataset, err := model.FetchDataset(m.Dataset, m.Index, true, m.Filters, metaStorage, dataStorage)
+	dataset, err := model.FetchDataset(s.Dataset, s.Index, true, s.Filters, metaStorage, dataStorage)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	// split the train & test data into separate datasets to be submitted to TA2
 	trainDataset, testDataset, err := splitTrainTest(dataset)
 
 	// perist the datasets and get URI
-	datasetPathTrain, targetIndex, err := PersistFilteredData(datasetDir, m.TargetFeature, trainDataset)
+	datasetPathTrain, targetIndex, err := PersistFilteredData(datasetDir, s.TargetFeature, trainDataset)
 	if err != nil {
-		return nil, err
+		return err
 	}
-	datasetPathTest, _, err := PersistFilteredData(datasetDir, m.TargetFeature, testDataset)
+	datasetPathTest, _, err := PersistFilteredData(datasetDir, s.TargetFeature, testDataset)
 	if err != nil {
-		return nil, err
+		return err
 	}
 	// make sure the path is absolute and contains the URI prefix
 	datasetPathTrain, err = filepath.Abs(datasetPathTrain)
 	if err != nil {
-		return nil, err
+		return err
 	}
 	datasetPathTrain = fmt.Sprintf("%s", filepath.Join(datasetPathTrain, D3MDataSchema))
 	datasetPathTest, err = filepath.Abs(datasetPathTest)
 	if err != nil {
-		return nil, err
+		return err
 	}
 	datasetPathTest = fmt.Sprintf("%s", filepath.Join(datasetPathTest, D3MDataSchema))
 
 	// create search solutions request
-	searchRequest, err := m.createSearchSolutionsRequest(targetIndex, datasetPathTrain, client.UserAgent)
+	searchRequest, err := s.createSearchSolutionsRequest(targetIndex, datasetPathTrain, client.UserAgent)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	// start a solution searchID
 	requestID, err := client.StartSearch(context.Background(), searchRequest)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	// persist the request
 	err = solutionStorage.PersistRequest(requestID, dataset.Metadata.Name, PendingStatus, time.Now())
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	// store the request features
-	for _, v := range m.Filters.Variables {
+	for _, v := range s.Filters.Variables {
 		var typ string
 		// ignore the index field
 		if v == model.D3MIndexFieldName {
 			continue
 		}
 
-		if v == m.TargetFeature {
+		if v == s.TargetFeature {
 			// store target feature
 			typ = model.FeatureTypeTarget
 		} else {
@@ -425,23 +477,19 @@ func (m *CreateMessage) PersistAndDispatch(client *Client, solutionStorage model
 		}
 		err = solutionStorage.PersistRequestFeature(requestID, v, typ)
 		if err != nil {
-			return nil, err
+			return err
 		}
 	}
 
 	// store request filters
-	err = solutionStorage.PersistRequestFilters(requestID, m.Filters)
+	err = solutionStorage.PersistRequestFilters(requestID, s.Filters)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
-	// dispatch solutions
-	statusChannels, err := m.DispatchSolutions(client, solutionStorage, dataStorage, requestID, dataset.Metadata.Name, datasetPathTrain, datasetPathTest)
-	if err != nil {
-		return nil, err
-	}
-
-	return statusChannels, nil
+	// dispatch search request
+	go s.dispatchRequest(client, solutionStorage, dataStorage, requestID, dataset.Metadata.Name, datasetPathTrain, datasetPathTest)
+	return nil
 }
 
 func convertMetricsFromTA3ToTA2(metrics []string) []*pipeline.ProblemPerformanceMetric {
