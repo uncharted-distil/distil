@@ -8,7 +8,6 @@
 				:title="topTableTitle"
 				:data-fields="includedResultTableDataFields"
 				:data-items="includedResultTableDataItems"
-				:decorateFunc="topDecorate"
 				:showError="regressionEnabled"></results-data-table>
 			<br>
 			<results-data-table
@@ -17,7 +16,6 @@
 				:title="bottomTableTitle"
 				:data-fields="excludedResultTableDataFields"
 				:data-items="excludedResultTableDataItems"
-				:decorateFunc="bottomDecorate"
 				:showError="regressionEnabled"></results-data-table>
 		</template>
 		<template v-if="!hasHighlights">
@@ -28,7 +26,6 @@
 				:title="singleTableTitle"
 				:data-fields="includedResultTableDataFields"
 				:data-items="includedResultTableDataItems"
-				:decorateFunc="bottomDecorate"
 				:showError="regressionEnabled"></results-data-table>
 		</template>
 	</div>
@@ -44,7 +41,7 @@ import { Dictionary } from '../util/dict';
 import { getters as datasetGetters} from '../store/dataset/module';
 import { getters as resultsGetters} from '../store/results/module';
 import { getters as routeGetters} from '../store/route/module';
-import { getTargetCol, getPredictedCol, getErrorCol } from '../util/data';
+import { getErrorCol } from '../util/data';
 import { Variable, TargetRow, TableColumn } from '../store/dataset/index';
 import { getHighlights } from '../util/highlights';
 
@@ -129,20 +126,6 @@ export default Vue.extend({
 			return task.schemaName === 'regression';
 		},
 
-		topDecorate(): (row: TargetRow) => TargetRow {
-			if (this.regressionEnabled) {
-				return this.regressionInRangeDecorate;
-			}
-			return this.classificationMatchDecorate;
-		},
-
-		bottomDecorate(): (row: TargetRow) => TargetRow {
-			if (this.regressionEnabled) {
-				return this.regressionOutOfRangeDecorate;
-			}
-			return this.classificationNoMatchDecorate;
-		},
-
 		numRows(): number {
 			return resultsGetters.getResultDataNumRows(this.$store);
 		},
@@ -158,43 +141,6 @@ export default Vue.extend({
 
 		singleTableTitle(): string {
 			return `Displaying ${this.excludedResultTableDataItems.length} of ${this.numRows}, including ${this.unhighlightedResultErrors} <b>erroneous</b> predictions`;
-		}
-	},
-
-	methods: {
-
-		classificationMatchDecorate(row: TargetRow): TargetRow {
-			row._cellVariants = {
-				[getTargetCol(this.target)]: 'primary',
-				[getPredictedCol(this.target)]: 'success'
-			};
-			return row;
-		},
-
-		classificationNoMatchDecorate(row: TargetRow): TargetRow {
-			row._cellVariants = {
-				[getTargetCol(this.target)]: 'primary',
-				[getPredictedCol(this.target)]: 'danger'
-			};
-			return row;
-		},
-
-		regressionInRangeDecorate(row: TargetRow): TargetRow {
-			row._cellVariants = {
-				[getTargetCol(this.target)]: 'success',
-				[getPredictedCol(this.target)]: 'primary',
-				[getErrorCol(this.target)]: 'danger'
-			};
-			return row;
-		},
-
-		regressionOutOfRangeDecorate(row: TargetRow): TargetRow {
-			row._cellVariants = {
-				[getTargetCol(this.target)]: 'success',
-				[getPredictedCol(this.target)]: 'primary',
-				[getErrorCol(this.target)]: 'danger'
-			};
-			return row;
 		}
 	}
 });
