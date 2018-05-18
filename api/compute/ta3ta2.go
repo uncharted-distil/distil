@@ -346,23 +346,39 @@ func (s *SolutionRequest) createStatusChannel(client *Client, solution *pipeline
 }
 
 func (s *SolutionRequest) dispatchRequest(client *Client, solutionStorage model.SolutionStorage, dataStorage model.DataStorage, searchID string, dataset string, datasetURITrain string, datasetURITest string) error {
+
+	fmt.Println("SEARCHING SOLUTIONS")
+
 	// search for solutions, this wont return until the search finishes or it times out
 	err := client.SearchSolutions(context.Background(), searchID, func(solution *pipeline.GetSearchSolutionsResultsResponse) {
+
 		// create a new status channel for the solution
 		c := s.createStatusChannel(client, solution, solutionStorage, searchID)
 		// add the solution to the request
 		s.addSolution(c)
+
+		fmt.Println("CREATED", solution.SolutionId)
+
 		// dispatch it
 		s.dispatchSolution(c, client, solutionStorage, dataStorage, searchID, solution.SolutionId, dataset, datasetURITrain, datasetURITest)
+
+		fmt.Println("DISPATCHED", solution.SolutionId)
+
 		// once done, mark as complete
 		s.completeSolution()
+
+		fmt.Println("COMPLETED", solution.SolutionId)
 	})
 	if err != nil {
 		return err
 	}
 
+	fmt.Println("SEARCH FINISHED")
+
 	// wait until all are complete and the search has finished / timed out
 	s.waitOnSolutions()
+
+	fmt.Println("FINISHED WAITING ON SOLUTIONS")
 
 	// end search
 	return client.EndSearch(context.Background(), searchID)

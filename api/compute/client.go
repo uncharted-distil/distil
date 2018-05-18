@@ -67,7 +67,9 @@ func (c *Client) StartSearch(ctx context.Context, request *pipeline.SearchSoluti
 	return searchSolutionResponse.SearchId, nil
 }
 
-// SearchSolutions generates candidate pipel\ines.
+// SearchSolutions generates candidate pipelines and executes a provided handler
+// for each result. While handlers are executing asynchronously, this method
+// will not return until all handlers have finished.
 func (c *Client) SearchSolutions(ctx context.Context, searchID string, solutionHandler SearchSolutionHandler) error {
 
 	searchPiplinesResultsRequest := &pipeline.GetSearchSolutionsResultsRequest{
@@ -79,6 +81,9 @@ func (c *Client) SearchSolutions(ctx context.Context, searchID string, solutionH
 		return err
 	}
 
+	// track handlers to ensure they all finish before returning
+	wg := &sync.WaitGroup{}
+
 	err = pullFromAPI(pullMax, pullTimeout, func() error {
 		solutionResultResponse, err := searchSolutionsResultsResponse.Recv()
 		if err != nil {
@@ -86,7 +91,11 @@ func (c *Client) SearchSolutions(ctx context.Context, searchID string, solutionH
 		}
 		// ignore empty responses
 		if solutionResultResponse.SolutionId != "" {
-			go solutionHandler(solutionResultResponse)
+			wg.Add(1)
+			go func() {
+				solutionHandler(solutionResultResponse)
+				wg.Done()
+			}()
 		}
 		return nil
 	})
@@ -94,6 +103,8 @@ func (c *Client) SearchSolutions(ctx context.Context, searchID string, solutionH
 		return err
 	}
 
+	// don't return until all handlers have finished executing
+	wg.Wait()
 	return nil
 }
 
