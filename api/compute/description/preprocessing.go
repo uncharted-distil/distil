@@ -10,8 +10,8 @@ import (
 
 // CreateUserDatasetPipeline creates a pipeline description to capture user feature selection and
 // semantic type information.
-func CreateUserDatasetPipeline(name string, description string,
-	allFeatures []*model.Variable, selectedFeatures []string) (*pipeline.PipelineDescription, error) {
+func CreateUserDatasetPipeline(name string, description string, allFeatures []*model.Variable,
+	selectedFeatures []string, target string) (*pipeline.PipelineDescription, error) {
 
 	// save the selected features in a set for quick lookup
 	selectedSet := map[string]bool{}
@@ -19,14 +19,19 @@ func CreateUserDatasetPipeline(name string, description string,
 		selectedSet[strings.ToLower(v)] = true
 	}
 
-	// create a list of features to remove and a list of semantic type updaates
+	// create a list of features to remove
 	removeFeatures := []string{}
-	addedTypes := []*ColumnUpdate{}
-	removedTypes := []*ColumnUpdate{}
 	for _, v := range allFeatures {
 		if !selectedSet[strings.ToLower(v.Name)] {
 			removeFeatures = append(removeFeatures, v.Name)
-		} else {
+		}
+	}
+
+	// create the added/removed semantic types
+	addedTypes := []*ColumnUpdate{}
+	removedTypes := []*ColumnUpdate{}
+	for _, v := range allFeatures {
+		if selectedSet[strings.ToLower(v.Name)] {
 			addType := model.MapTA2Type(v.Type)
 			if addType == "" {
 				return nil, errors.Errorf("variable `%s` internal type `%s` can't be mapped to ta2", v.Name, v.Type)
@@ -48,7 +53,15 @@ func CreateUserDatasetPipeline(name string, description string,
 					SemanticType: addType,
 				})
 			}
+		}
 
+		if strings.EqualFold(v.Name, target) {
+			// Add the target role type to the target variable.  TA2 systems can key off of the
+			// problem description or the presence of this semantic type when searching solutions.
+			addedTypes = append(addedTypes, &ColumnUpdate{
+				Name:         v.Name,
+				SemanticType: model.TA2TargetType,
+			})
 		}
 	}
 

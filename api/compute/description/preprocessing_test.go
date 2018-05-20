@@ -29,7 +29,7 @@ func TestCreateUserDatasetPipeline(t *testing.T) {
 	}
 
 	pipeline, err := CreateUserDatasetPipeline(
-		"test_user_pipeline", "a test user pipeline", variables, []string{"test_var_0", "test_var_1"})
+		"test_user_pipeline", "a test user pipeline", variables, []string{"test_var_0", "test_var_1"}, "test_var_1")
 	assert.NoError(t, err)
 	t.Logf("\n%s", proto.MarshalTextString(pipeline))
 }
@@ -45,7 +45,7 @@ func TestCreateUserDatasetPipelineMappingError(t *testing.T) {
 	}
 
 	pipeline, err := CreateUserDatasetPipeline(
-		"test_user_pipeline", "a test user pipeline", variables, []string{"test_var_0"})
+		"test_user_pipeline", "a test user pipeline", variables, []string{"test_var_0"}, "test_var_1")
 	assert.Error(t, err)
 	t.Logf("\n%s", proto.MarshalTextString(pipeline))
 }

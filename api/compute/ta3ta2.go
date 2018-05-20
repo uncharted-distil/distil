@@ -118,7 +118,7 @@ func (m *CreateMessage) createPreprocessingPipeline(featureVariables []*model.Va
 	desc := fmt.Sprintf(
 		"Preprocessing pipeline capturing user feature selection and type information.  Dataset: `%s` ID: `%s`", m.Dataset, uuid.String())
 
-	preprocessingPipeline, err := description.CreateUserDatasetPipeline(name, desc, featureVariables, variables)
+	preprocessingPipeline, err := description.CreateUserDatasetPipeline(name, desc, featureVariables, variables, m.TargetFeature)
 	if err != nil {
 		return nil, err
 	}

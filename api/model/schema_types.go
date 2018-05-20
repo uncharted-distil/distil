@@ -52,7 +52,7 @@ const (
 
 	// TA2 Semantic Type Keys - defined in
 	// https://gitlab.com/datadrivendiscovery/d3m/blob/devel/d3m/metadata/schemas/v0/definitions.json
-	// These are the agreed upond set of types a TA2 system should support.
+	// These are the agreed upond set of types that are consumable by a downstream TA2 system.
 
 	// TA2StringType is the semantic type reprsenting a text/string
 	TA2StringType = "http://schema.org/Text"
@@ -70,6 +70,11 @@ const (
 	TA2CategoricalType = "https://metadata.datadrivendiscovery.org/types/CategoricalData"
 	// TA2OrdinalType is the TA2 semantic type for ordinal (ordered categorical) data
 	TA2OrdinalType = "https://metadata.datadrivendiscovery.org/types/OrdinalData"
+
+	// TA2 Role keys
+
+	// TA2TargetType is the semantic type indicating a prediction target
+	TA2TargetType = "https://metadata.datadrivendiscovery.org/types/Target"
 )
 
 var (
