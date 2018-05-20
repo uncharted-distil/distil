@@ -48,7 +48,7 @@ func (s *Storage) parseRawVariable(child map[string]interface{}) (*model.Variabl
 	}
 	originalType, ok := json.String(child, VarOriginalTypeField)
 	if !ok {
-		return nil, errors.New("unable to parse original type from varaible data")
+		return nil, errors.New("unable to parse original type from variable data")
 	}
 	importance, ok := json.Int(child, VarImportanceField)
 	if !ok {

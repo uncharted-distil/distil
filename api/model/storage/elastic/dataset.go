@@ -112,6 +112,7 @@ func (s *Storage) updateVariables(dataset string, variables []*model.Variable) e
 			VarNameField:             v.Name,
 			VarRoleField:             v.Role,
 			VarTypeField:             v.Type,
+			VarOriginalTypeField:     v.OriginalType,
 			VarImportanceField:       v.Importance,
 			VarSuggestedTypesField:   v.SuggestedTypes,
 			VarOriginalVariableField: v.OriginalVariable,
@@ -169,6 +170,7 @@ func (s *Storage) AddVariable(dataset string, varName string, varType string, va
 	vars = append(vars, &model.Variable{
 		Name:             varName,
 		Type:             varType,
+		OriginalType:     varType,
 		OriginalVariable: varName,
 		DisplayVariable:  varName,
 		DistilRole:       varRole,
