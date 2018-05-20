@@ -50,7 +50,6 @@ export default Vue.extend({
 
 	props: {
 		title: String,
-		decorateFunc: Function,
 		refName: String,
 		dataItems: Array,
 		dataFields: Object,
@@ -84,8 +83,7 @@ export default Vue.extend({
 
 		items(): TargetRow[] {
 			const filtered = removeNonTrainingItems(this.dataItems, this.training);
-			const selected = updateTableRowSelection(filtered, this.selectedRow, this.instanceName);
-			return selected.map(item => this.decorateFunc(item));
+			return updateTableRowSelection(filtered, this.selectedRow, this.instanceName);
 		},
 
 		fields(): Dictionary<TableColumn> {
