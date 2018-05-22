@@ -121,7 +121,7 @@ func handleCreateSolutions(conn *Connection, client *compute.Client, metadataCto
 	}
 
 	// listen for solution updates
-	request.Listen(func(status compute.SolutionStatus) {
+	err = request.Listen(func(status compute.SolutionStatus) {
 		// check for error
 		if status.Error != nil {
 			handleErr(conn, msg, err)
@@ -129,11 +129,14 @@ func handleCreateSolutions(conn *Connection, client *compute.Client, metadataCto
 		}
 		// send status to client
 		handleSuccess(conn, msg, jutil.StructToMap(status))
-		// break out if completed
-		if status.Progress == compute.CompletedStatus {
-			return
-		}
 	})
+	if err != nil {
+		handleErr(conn, msg, err)
+		return
+	}
+
+	// complete the request
+	handleComplete(conn, msg)
 }
 
 func handleStopSolutions(conn *Connection, client *compute.Client, msg *Message) {
@@ -150,6 +153,7 @@ func handleStopSolutions(conn *Connection, client *compute.Client, msg *Message)
 		handleErr(conn, msg, err)
 		return
 	}
-	handleSuccess(conn, msg, nil)
+	// complete the request
+	handleComplete(conn, msg)
 	return
 }

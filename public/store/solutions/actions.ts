@@ -222,7 +222,16 @@ export const actions = {
 			const stream = conn.stream(res => {
 
 				if (res.error) {
+					console.error('Solution request has errored, closing stream');
 					console.error(res.error);
+					stream.close();
+					return;
+				}
+
+				// close stream on complete
+				if (res.complete) {
+					console.log('Solution request has completed, closing stream');
+					stream.close();
 					return;
 				}
 
@@ -258,12 +267,6 @@ export const actions = {
 				if (!receivedFirstResponse) {
 					receivedFirstResponse = true;
 					resolve(res);
-				}
-
-				// close stream on complete
-				if (res.progress === SOLUTION_COMPLETED) {
-					stream.close();
-					return;
 				}
 
 			});

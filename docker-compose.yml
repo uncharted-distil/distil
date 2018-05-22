@@ -1,6 +1,6 @@
 elastic:
   image:
-    docker.uncharted.software/distil_dev_es:latest
+    docker.uncharted.software/distil_dev_es:0.10.2
   ports:
     - "9200:9200"
 pipeline_server:
@@ -12,7 +12,8 @@ pipeline_server:
     - SOLUTION_SERVER_RESULT_DIR=$PWD/datasets
     - SOLUTION_SEND_DELAY=2000
     - SOLUTION_NUM_UPDATES=3
-    - SOLUTION_ERR_PERCENT=0.01
+    - SOLUTION_MAX_SOLUTIONS=5
+    - SOLUTION_ERR_PERCENT=0.1
   volumes:
     - $PWD/datasets:$PWD/datasets
 postgres:

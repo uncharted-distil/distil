@@ -72,13 +72,15 @@ type SolutionRequest struct {
 	wg             *sync.WaitGroup
 	statusChannels []chan SolutionStatus
 	listener       SolutionStatusListener
+	finished       chan error
 }
 
 // NewSolutionRequest instantiates a new SolutionRequest.
 func NewSolutionRequest(data []byte) (*SolutionRequest, error) {
 	req := &SolutionRequest{
-		mu: &sync.Mutex{},
-		wg: &sync.WaitGroup{},
+		mu:       &sync.Mutex{},
+		wg:       &sync.WaitGroup{},
+		finished: make(chan error),
 	}
 	err := json.Unmarshal(data, &req)
 	if err != nil {
@@ -126,13 +128,14 @@ func (s *SolutionRequest) listenOnStatusChannel(statusChannel chan SolutionStatu
 }
 
 // Listen listens ont he solution requests for new solution statuses.
-func (s *SolutionRequest) Listen(listener SolutionStatusListener) {
+func (s *SolutionRequest) Listen(listener SolutionStatusListener) error {
 	s.listener = listener
 	s.mu.Lock()
-	defer s.mu.Unlock()
 	for _, c := range s.statusChannels {
 		go s.listenOnStatusChannel(c)
 	}
+	s.mu.Unlock()
+	return <-s.finished
 }
 
 func (s *SolutionRequest) createSearchSolutionsRequest(targetIndex int, datasetURI string, userAgent string) (*pipeline.SearchSolutionsRequest, error) {
@@ -301,13 +304,15 @@ func (s *SolutionRequest) dispatchSolution(statusChan chan SolutionStatus, clien
 
 		output, ok := response.ExposedOutputs[defaultExposedOutputKey]
 		if !ok {
-			s.persistSolutionError(statusChan, client, solutionStorage, searchID, solutionID, errors.Errorf("output is missing from response"))
+			err := errors.Errorf("output is missing from response")
+			s.persistSolutionError(statusChan, client, solutionStorage, searchID, solutionID, err)
 			return
 		}
 
 		datasetURI, ok := output.Value.(*pipeline.Value_DatasetUri)
 		if !ok {
-			s.persistSolutionError(statusChan, client, solutionStorage, searchID, solutionID, errors.Errorf("output is not of correct format"))
+			err := errors.Errorf("output is not of correct format")
+			s.persistSolutionError(statusChan, client, solutionStorage, searchID, solutionID, err)
 			return
 		}
 
@@ -345,9 +350,7 @@ func (s *SolutionRequest) createStatusChannel(client *Client, solution *pipeline
 	return statusChannel
 }
 
-func (s *SolutionRequest) dispatchRequest(client *Client, solutionStorage model.SolutionStorage, dataStorage model.DataStorage, searchID string, dataset string, datasetURITrain string, datasetURITest string) error {
-
-	fmt.Println("SEARCHING SOLUTIONS")
+func (s *SolutionRequest) dispatchRequest(client *Client, solutionStorage model.SolutionStorage, dataStorage model.DataStorage, searchID string, dataset string, datasetURITrain string, datasetURITest string) {
 
 	// search for solutions, this wont return until the search finishes or it times out
 	err := client.SearchSolutions(context.Background(), searchID, func(solution *pipeline.GetSearchSolutionsResultsResponse) {
@@ -357,31 +360,22 @@ func (s *SolutionRequest) dispatchRequest(client *Client, solutionStorage model.
 		// add the solution to the request
 		s.addSolution(c)
 
-		fmt.Println("CREATED", solution.SolutionId)
-
 		// dispatch it
 		s.dispatchSolution(c, client, solutionStorage, dataStorage, searchID, solution.SolutionId, dataset, datasetURITrain, datasetURITest)
 
-		fmt.Println("DISPATCHED", solution.SolutionId)
-
 		// once done, mark as complete
 		s.completeSolution()
-
-		fmt.Println("COMPLETED", solution.SolutionId)
 	})
 	if err != nil {
-		return err
+		s.finished <- err
+		return
 	}
-
-	fmt.Println("SEARCH FINISHED")
 
 	// wait until all are complete and the search has finished / timed out
 	s.waitOnSolutions()
 
-	fmt.Println("FINISHED WAITING ON SOLUTIONS")
-
 	// end search
-	return client.EndSearch(context.Background(), searchID)
+	s.finished <- client.EndSearch(context.Background(), searchID)
 }
 
 func splitTrainTest(dataset *model.QueriedDataset) (*model.QueriedDataset, *model.QueriedDataset, error) {
@@ -471,7 +465,10 @@ func (s *SolutionRequest) PersistAndDispatch(client *Client, solutionStorage mod
 	}
 
 	// persist the request
-	err = solutionStorage.PersistRequest(requestID, dataset.Metadata.Name, PendingStatus, time.Now())
+	// TODO: we persist the request and never update the status, so we just
+	// leave it blank here, eventually we should support updating the progress
+	// to the full life cycle.
+	err = solutionStorage.PersistRequest(requestID, dataset.Metadata.Name, "", time.Now())
 	if err != nil {
 		return err
 	}
@@ -505,6 +502,7 @@ func (s *SolutionRequest) PersistAndDispatch(client *Client, solutionStorage mod
 
 	// dispatch search request
 	go s.dispatchRequest(client, solutionStorage, dataStorage, requestID, dataset.Metadata.Name, datasetPathTrain, datasetPathTest)
+
 	return nil
 }
 
