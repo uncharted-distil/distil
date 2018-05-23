@@ -1,6 +1,7 @@
 package compute
 
 import (
+	"strings"
 	"sync"
 
 	"github.com/pkg/errors"
@@ -37,6 +38,7 @@ func NewClient(serverAddr string, dataDir string, trace bool, userAgent string) 
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to connect to %s", serverAddr)
 	}
+
 	log.Infof("connected to %s", serverAddr)
 
 	client := Client{}
@@ -44,6 +46,21 @@ func NewClient(serverAddr string, dataDir string, trace bool, userAgent string) 
 	client.conn = conn
 	client.DataDir = dataDir
 	client.UserAgent = userAgent
+
+	// check for basic ta2 connectivity
+	helloResponse, err := client.client.Hello(context.Background(), &pipeline.HelloRequest{})
+	if err != nil {
+		return nil, err
+	}
+	log.Infof("ta2 user agent: %s", helloResponse.GetUserAgent())
+	log.Infof("ta2 API version: %s", helloResponse.GetVersion())
+	log.Infof("ta2 Allowed value types: %+v", helloResponse.GetAllowedValueTypes())
+	log.Infof("ta2 extensions: %+v", helloResponse.GetSupportedExtensions())
+
+	if !strings.EqualFold(GetAPIVersion(), helloResponse.GetVersion()) {
+		log.Warnf("ta2 API version '%s' does not match expected version '%s", helloResponse.GetVersion(), GetAPIVersion())
+	}
+
 	return &client, nil
 }
 

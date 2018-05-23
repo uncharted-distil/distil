@@ -47,7 +47,8 @@ func main() {
 	servicesToWait := make(map[string]service.Heartbeat)
 
 	userAgent := fmt.Sprintf("uncharted-distil-%s-%s", version, timestamp)
-	log.Infof("user agent: %s", userAgent)
+	apiVersion := compute.GetAPIVersion()
+	log.Infof("user agent: %s api version: %s", userAgent, apiVersion)
 
 	// load config from env
 	config, err := env.LoadConfig()
