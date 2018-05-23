@@ -20,15 +20,16 @@ import (
 	uuid "github.com/satori/go.uuid"
 	"github.com/unchartedsoftware/distil/api/compute/description"
 	"github.com/unchartedsoftware/distil/api/pipeline"
+	log "github.com/unchartedsoftware/plog"
 
 	"github.com/unchartedsoftware/distil/api/model"
-	log "github.com/unchartedsoftware/plog"
 )
 
 const (
 	defaultResourceID       = "0"
 	defaultExposedOutputKey = "outputs.0"
 	datasetDir              = "datasets"
+	unknownAPIVersion       = "unknown"
 	trainTestSplitThreshold = 0.9
 	// PendingStatus represents that the solution request has been acknoledged by not yet sent to the API
 	PendingStatus = "PENDING"
@@ -39,6 +40,9 @@ const (
 	// CompletedStatus represents that the solution request has completed successfully.
 	CompletedStatus = "COMPLETED"
 )
+
+// cached ta3ta2 API version
+var apiVersion string
 
 // CreateMessage represents a create model message.
 type CreateMessage struct {
@@ -61,20 +65,8 @@ type CreateStatus struct {
 	Timestamp  time.Time `json:"timestamp"`
 }
 
-var apiVersion string
-
 func (m *CreateMessage) createSearchSolutionsRequest(targetIndex int, preprocessing *pipeline.PipelineDescription,
 	datasetURI string, userAgent string) (*pipeline.SearchSolutionsRequest, error) {
-	// Grab the embedded ta3ta2 API version.  This is a non-trivial operation but it can be cached due to
-	// the invariance of the result.
-	var err error
-	if apiVersion == "" {
-		apiVersion, err = getAPIVersion()
-		if err != nil {
-			log.Warnf("Failed to extract API version")
-			apiVersion = "unknown"
-		}
-	}
 
 	return &pipeline.SearchSolutionsRequest{
 		Problem: &pipeline.ProblemDescription{
@@ -91,7 +83,7 @@ func (m *CreateMessage) createSearchSolutionsRequest(targetIndex int, preprocess
 		},
 
 		UserAgent: userAgent,
-		Version:   apiVersion,
+		Version:   GetAPIVersion(),
 
 		// we accept dataset and csv uris as return types
 		AllowedValueTypes: []pipeline.ValueType{
@@ -511,37 +503,47 @@ func convertDatasetTA3ToTA2(dataset string) string {
 	return dataset
 }
 
-// getApiVersion retrieves the ta3-ta2 API version embedded in the pipeline_service.proto file
-func getAPIVersion() (string, error) {
+// GetAPIVersion retrieves the ta3-ta2 API version embedded in the pipeline_core.proto file.  This is
+// a non-trivial operation, so the value is cached for quick access.
+func GetAPIVersion() string {
+	if apiVersion != "" {
+		return apiVersion
+	}
+
 	// Get the raw file descriptor bytes
 	fileDesc := proto.FileDescriptor(pipeline.E_ProtocolVersion.Filename)
 	if fileDesc == nil {
-		return "", fmt.Errorf("failed to find file descriptor for %v", pipeline.E_ProtocolVersion.Filename)
+		log.Errorf("failed to find file descriptor for %v", pipeline.E_ProtocolVersion.Filename)
+		return unknownAPIVersion
 	}
 
 	// Open a gzip reader and decompress
 	r, err := gzip.NewReader(bytes.NewReader(fileDesc))
 	if err != nil {
-		return "", fmt.Errorf("failed to open gzip reader: %v", err)
+		log.Errorf("failed to open gzip reader: %v", err)
+		return unknownAPIVersion
 	}
 	defer r.Close()
 
 	b, err := ioutil.ReadAll(r)
 	if err != nil {
-		return "", fmt.Errorf("failed to decompress descriptor: %v", err)
+		log.Errorf("failed to decompress descriptor: %v", err)
+		return unknownAPIVersion
 	}
 
 	// Unmarshall the bytes from the proto format
 	fd := &protobuf.FileDescriptorProto{}
 	if err := proto.Unmarshal(b, fd); err != nil {
-		return "", fmt.Errorf("malformed FileDescriptorProto: %v", err)
+		log.Errorf("malformed FileDescriptorProto: %v", err)
+		return unknownAPIVersion
 	}
 
 	// Fetch the extension from the FileDescriptorOptions message
 	ex, err := proto.GetExtension(fd.GetOptions(), pipeline.E_ProtocolVersion)
 	if err != nil {
-		return "", fmt.Errorf("failed to fetch extension: %v", err)
+		log.Errorf("failed to fetch extension: %v", err)
+		return unknownAPIVersion
 	}
 
-	return *ex.(*string), nil
+	return *ex.(*string)
 }
