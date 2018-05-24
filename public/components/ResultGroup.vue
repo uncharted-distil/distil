@@ -2,7 +2,7 @@
 	<div v-bind:class="currentClass"
 		@click="click()">
 		{{name}} <sup>{{index}}</sup> {{timestamp}}
-		<div v-if="solutionStatus !== 'COMPLETED' && solutionStatus !== 'ERRORED'">
+		<div v-if="isPending">
 			<b-badge variant="info">{{solutionStatus}}</b-badge>
 			<b-progress
 				:value="100"
@@ -10,7 +10,7 @@
 				striped
 				:animated="true"></b-progress>
 		</div>
-		<div v-if="solutionStatus === 'COMPLETED' || solutionStatus === 'UPDATED'">
+		<div v-if="isCompleted">
 			<b-badge variant="info" v-bind:key="`${score.metric}-${solutionId}`" v-for="score in scores">
 				{{metricName(score.metric)}}: {{score.value}}
 			</b-badge>
@@ -43,7 +43,7 @@
 				:html="residualHtml">
 			</facets>
 		</div>
-		<div v-if="solutionStatus === 'ERRORED'">
+		<div v-if="isErrored">
 			<b-badge variant="danger">
 				ERROR
 			</b-badge>
@@ -60,8 +60,9 @@ import Vue from 'vue';
 import Facets from '../components/Facets';
 import { createGroups, Group } from '../util/facets';
 import { Extrema, VariableSummary } from '../store/dataset/index';
-import { getPredictedCol, getErrorCol, getCorrectnessCol } from '../util/data';
 import { Highlight } from '../store/highlights/index';
+import { SOLUTION_COMPLETED, SOLUTION_ERRORED } from '../store/solutions/index';
+import { getPredictedCol, getErrorCol, getCorrectnessCol } from '../util/data';
 import { getters as routeGetters } from '../store/route/module';
 import { getSolutionById, getMetricDisplayName } from '../util/solutions';
 import { overlayRouteEntry } from '../util/routes';
@@ -154,7 +155,20 @@ export default Vue.extend({
 				min: _.toNumber(routeGetters.getRouteResidualThresholdMin(this.$store)),
 				max: _.toNumber(routeGetters.getRouteResidualThresholdMax(this.$store))
 			};
+		},
+
+		isPending(): boolean {
+			return this.solutionStatus !== SOLUTION_COMPLETED && this.solutionStatus !== SOLUTION_ERRORED;
+		},
+
+		isCompleted(): boolean {
+			return this.solutionStatus === SOLUTION_COMPLETED;
+		},
+
+		isErrored(): boolean {
+			return this.solutionStatus === SOLUTION_ERRORED;
 		}
+
 	},
 
 	methods: {

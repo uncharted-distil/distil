@@ -29,14 +29,22 @@ const (
 	defaultExposedOutputKey = "outputs.0"
 	datasetDir              = "datasets"
 	trainTestSplitThreshold = 0.9
-	// PendingStatus represents that the solution request has been acknoledged by not yet sent to the API
-	PendingStatus = "PENDING"
-	// RunningStatus represents that the solution request has been sent to the API.
-	RunningStatus = "RUNNING"
-	// ErroredStatus represents that the solution request has terminated with an error.
-	ErroredStatus = "ERRORED"
-	// CompletedStatus represents that the solution request has completed successfully.
-	CompletedStatus = "COMPLETED"
+	// SolutionPendingStatus represents that the solution request has been acknoledged by not yet sent to the API
+	SolutionPendingStatus = "SOLUTION_PENDING"
+	// SolutionRunningStatus represents that the solution request has been sent to the API.
+	SolutionRunningStatus = "SOLUTION_RUNNING"
+	// SolutionErroredStatus represents that the solution request has terminated with an error.
+	SolutionErroredStatus = "SOLUTION_ERRORED"
+	// SolutionCompletedStatus represents that the solution request has completed successfully.
+	SolutionCompletedStatus = "SOLUTION_COMPLETED"
+	// RequestPendingStatus represents that the solution request has been acknoledged by not yet sent to the API
+	RequestPendingStatus = "REQUEST_PENDING"
+	// RequestRunningStatus represents that the solution request has been sent to the API.
+	RequestRunningStatus = "REQUEST_RUNNING"
+	// RequestErroredStatus represents that the solution request has terminated with an error.
+	RequestErroredStatus = "REQUEST_ERRORED"
+	// RequestCompletedStatus represents that the solution request has completed successfully.
+	RequestCompletedStatus = "REQUEST_COMPLETED"
 )
 
 // StopSolutionSearchRequest represents a request to stop any pending siolution searches.
@@ -59,28 +67,36 @@ func (s *StopSolutionSearchRequest) Dispatch(client *Client) error {
 	return client.StopSearch(context.Background(), s.RequestID)
 }
 
+func newStatusChannel() chan SolutionStatus {
+	// NOTE: WE BUFFER THE CHANNEL TO A SIZE OF 1 HERE SO THAT THE INITIAL
+	// PERSIST DOES NOT DEADLOCK
+	return make(chan SolutionStatus, 1)
+}
+
 // SolutionRequest represents a solution search request.
 type SolutionRequest struct {
-	Dataset        string              `json:"dataset"`
-	Index          string              `json:"index"`
-	TargetFeature  string              `json:"target"`
-	Task           string              `json:"task"`
-	MaxSolutions   int32               `json:"maxSolutions"`
-	Filters        *model.FilterParams `json:"filters"`
-	Metrics        []string            `json:"metrics"`
-	mu             *sync.Mutex
-	wg             *sync.WaitGroup
-	statusChannels []chan SolutionStatus
-	listener       SolutionStatusListener
-	finished       chan error
+	Dataset          string              `json:"dataset"`
+	Index            string              `json:"index"`
+	TargetFeature    string              `json:"target"`
+	Task             string              `json:"task"`
+	MaxSolutions     int32               `json:"maxSolutions"`
+	Filters          *model.FilterParams `json:"filters"`
+	Metrics          []string            `json:"metrics"`
+	mu               *sync.Mutex
+	wg               *sync.WaitGroup
+	requestChannel   chan SolutionStatus
+	solutionChannels []chan SolutionStatus
+	listener         SolutionStatusListener
+	finished         chan error
 }
 
 // NewSolutionRequest instantiates a new SolutionRequest.
 func NewSolutionRequest(data []byte) (*SolutionRequest, error) {
 	req := &SolutionRequest{
-		mu:       &sync.Mutex{},
-		wg:       &sync.WaitGroup{},
-		finished: make(chan error),
+		mu:             &sync.Mutex{},
+		wg:             &sync.WaitGroup{},
+		finished:       make(chan error),
+		requestChannel: newStatusChannel(),
 	}
 	err := json.Unmarshal(data, &req)
 	if err != nil {
@@ -106,7 +122,7 @@ func (s *SolutionRequest) addSolution(c chan SolutionStatus) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	s.wg.Add(1)
-	s.statusChannels = append(s.statusChannels, c)
+	s.solutionChannels = append(s.solutionChannels, c)
 	go s.listenOnStatusChannel(c)
 }
 
@@ -131,7 +147,10 @@ func (s *SolutionRequest) listenOnStatusChannel(statusChannel chan SolutionStatu
 func (s *SolutionRequest) Listen(listener SolutionStatusListener) error {
 	s.listener = listener
 	s.mu.Lock()
-	for _, c := range s.statusChannels {
+	// listen on main request channel
+	go s.listenOnStatusChannel(s.requestChannel)
+	// listen on individual solution channels
+	for _, c := range s.solutionChannels {
 		go s.listenOnStatusChannel(c)
 	}
 	s.mu.Unlock()
@@ -192,29 +211,29 @@ func (s *SolutionRequest) createProduceSolutionRequest(datasetURI string, soluti
 	}
 }
 
-func (s *SolutionRequest) persistSolutionError(statusChan chan SolutionStatus, client *Client, solutionStorage model.SolutionStorage, searchID string, solutionID string, err error) {
+func (s *SolutionRequest) persistSolutionError(statusChan chan SolutionStatus, solutionStorage model.SolutionStorage, searchID string, solutionID string, err error) {
 	// persist the updated state
 	// NOTE: ignoring error
-	solutionStorage.PersistSolution(searchID, solutionID, ErroredStatus, time.Now())
+	solutionStorage.PersistSolution(searchID, solutionID, SolutionErroredStatus, time.Now())
 	// notify of error
 	statusChan <- SolutionStatus{
 		RequestID:  searchID,
 		SolutionID: solutionID,
-		Progress:   ErroredStatus,
+		Progress:   SolutionErroredStatus,
 		Error:      err,
 		Timestamp:  time.Now(),
 	}
 }
 
-func (s *SolutionRequest) persistSolutionStatus(statusChan chan SolutionStatus, client *Client, solutionStorage model.SolutionStorage, searchID string, solutionID string, status string) {
+func (s *SolutionRequest) persistSolutionStatus(statusChan chan SolutionStatus, solutionStorage model.SolutionStorage, searchID string, solutionID string, status string) {
 	// persist the updated state
 	err := solutionStorage.PersistSolution(searchID, solutionID, status, time.Now())
 	if err != nil {
 		// notify of error
-		s.persistSolutionError(statusChan, client, solutionStorage, searchID, solutionID, err)
+		s.persistSolutionError(statusChan, solutionStorage, searchID, solutionID, err)
 		return
 	}
-	// notify client of update
+	// notify of update
 	statusChan <- SolutionStatus{
 		RequestID:  searchID,
 		SolutionID: solutionID,
@@ -223,26 +242,56 @@ func (s *SolutionRequest) persistSolutionStatus(statusChan chan SolutionStatus, 
 	}
 }
 
-func (s *SolutionRequest) persistSolutionResults(statusChan chan SolutionStatus, client *Client, solutionStorage model.SolutionStorage, dataStorage model.DataStorage, searchID string, dataset string, solutionID string, resultID string, resultURI string) {
-	// persist the completed state
-	err := solutionStorage.PersistSolution(searchID, solutionID, CompletedStatus, time.Now())
+func (s *SolutionRequest) persistRequestError(statusChan chan SolutionStatus, solutionStorage model.SolutionStorage, searchID string, dataset string, err error) {
+	// persist the updated state
+	// NOTE: ignoring error
+	solutionStorage.PersistRequest(searchID, dataset, RequestErroredStatus, time.Now())
+	// notify of error
+	statusChan <- SolutionStatus{
+		RequestID: searchID,
+		Progress:  RequestErroredStatus,
+		Error:     err,
+		Timestamp: time.Now(),
+	}
+}
+
+func (s *SolutionRequest) persistRequestStatus(statusChan chan SolutionStatus, solutionStorage model.SolutionStorage, searchID string, dataset string, status string) error {
+	// persist the updated state
+	err := solutionStorage.PersistRequest(searchID, dataset, status, time.Now())
 	if err != nil {
 		// notify of error
-		s.persistSolutionError(statusChan, client, solutionStorage, searchID, solutionID, err)
+		s.persistRequestError(statusChan, solutionStorage, searchID, dataset, err)
+		return err
+	}
+	// notify of update
+	statusChan <- SolutionStatus{
+		RequestID: searchID,
+		Progress:  status,
+		Timestamp: time.Now(),
+	}
+	return nil
+}
+
+func (s *SolutionRequest) persistSolutionResults(statusChan chan SolutionStatus, client *Client, solutionStorage model.SolutionStorage, dataStorage model.DataStorage, searchID string, dataset string, solutionID string, resultID string, resultURI string) {
+	// persist the completed state
+	err := solutionStorage.PersistSolution(searchID, solutionID, SolutionCompletedStatus, time.Now())
+	if err != nil {
+		// notify of error
+		s.persistSolutionError(statusChan, solutionStorage, searchID, solutionID, err)
 		return
 	}
 	// persist result metadata
-	err = solutionStorage.PersistSolutionResult(solutionID, resultID, resultURI, CompletedStatus, time.Now())
+	err = solutionStorage.PersistSolutionResult(solutionID, resultID, resultURI, SolutionCompletedStatus, time.Now())
 	if err != nil {
 		// notify of error
-		s.persistSolutionError(statusChan, client, solutionStorage, searchID, solutionID, err)
+		s.persistSolutionError(statusChan, solutionStorage, searchID, solutionID, err)
 		return
 	}
 	// persist results
 	err = dataStorage.PersistResult(dataset, resultURI)
 	if err != nil {
 		// notify of error
-		s.persistSolutionError(statusChan, client, solutionStorage, searchID, solutionID, err)
+		s.persistSolutionError(statusChan, solutionStorage, searchID, solutionID, err)
 		return
 	}
 	// notify client of update
@@ -250,7 +299,7 @@ func (s *SolutionRequest) persistSolutionResults(statusChan chan SolutionStatus,
 		RequestID:  searchID,
 		SolutionID: solutionID,
 		ResultID:   resultID,
-		Progress:   CompletedStatus,
+		Progress:   SolutionCompletedStatus,
 		Timestamp:  time.Now(),
 	}
 }
@@ -260,7 +309,7 @@ func (s *SolutionRequest) dispatchSolution(statusChan chan SolutionStatus, clien
 	// score solution
 	solutionScoreResponses, err := client.GenerateSolutionScores(context.Background(), solutionID)
 	if err != nil {
-		s.persistSolutionError(statusChan, client, solutionStorage, searchID, solutionID, err)
+		s.persistSolutionError(statusChan, solutionStorage, searchID, solutionID, err)
 		return
 	}
 
@@ -269,7 +318,7 @@ func (s *SolutionRequest) dispatchSolution(statusChan chan SolutionStatus, clien
 		for _, score := range response.Scores {
 			err := solutionStorage.PersistSolutionScore(solutionID, score.Metric.Metric.String(), score.Value.GetDouble())
 			if err != nil {
-				s.persistSolutionError(statusChan, client, solutionStorage, searchID, solutionID, err)
+				s.persistSolutionError(statusChan, solutionStorage, searchID, solutionID, err)
 				return
 			}
 		}
@@ -278,12 +327,12 @@ func (s *SolutionRequest) dispatchSolution(statusChan chan SolutionStatus, clien
 	// fit solution
 	_, err = client.GenerateSolutionFit(context.Background(), solutionID, datasetURITrain)
 	if err != nil {
-		s.persistSolutionError(statusChan, client, solutionStorage, searchID, solutionID, err)
+		s.persistSolutionError(statusChan, solutionStorage, searchID, solutionID, err)
 		return
 	}
 
 	// persist solution running status
-	s.persistSolutionStatus(statusChan, client, solutionStorage, searchID, solutionID, RunningStatus)
+	s.persistSolutionStatus(statusChan, solutionStorage, searchID, solutionID, SolutionRunningStatus)
 
 	// generate predictions
 	produceSolutionRequest := s.createProduceSolutionRequest(datasetURITest, solutionID)
@@ -291,7 +340,7 @@ func (s *SolutionRequest) dispatchSolution(statusChan chan SolutionStatus, clien
 	// generate predictions
 	predictionResponses, err := client.GeneratePredictions(context.Background(), produceSolutionRequest)
 	if err != nil {
-		s.persistSolutionError(statusChan, client, solutionStorage, searchID, solutionID, err)
+		s.persistSolutionError(statusChan, solutionStorage, searchID, solutionID, err)
 		return
 	}
 
@@ -305,14 +354,14 @@ func (s *SolutionRequest) dispatchSolution(statusChan chan SolutionStatus, clien
 		output, ok := response.ExposedOutputs[defaultExposedOutputKey]
 		if !ok {
 			err := errors.Errorf("output is missing from response")
-			s.persistSolutionError(statusChan, client, solutionStorage, searchID, solutionID, err)
+			s.persistSolutionError(statusChan, solutionStorage, searchID, solutionID, err)
 			return
 		}
 
 		datasetURI, ok := output.Value.(*pipeline.Value_DatasetUri)
 		if !ok {
 			err := errors.Errorf("output is not of correct format")
-			s.persistSolutionError(statusChan, client, solutionStorage, searchID, solutionID, err)
+			s.persistSolutionError(statusChan, solutionStorage, searchID, solutionID, err)
 			return
 		}
 
@@ -335,40 +384,34 @@ func (s *SolutionRequest) dispatchSolution(statusChan chan SolutionStatus, clien
 	}
 }
 
-func (s *SolutionRequest) createStatusChannel(client *Client, solution *pipeline.GetSearchSolutionsResultsResponse, solutionStorage model.SolutionStorage, searchID string) chan SolutionStatus {
-	// NOTE: WE BUFFER THE CHANNEL TO A SIZE OF 1 HERE SO WE CAN PERSIST BELOW
-	// WITHOUT DEADLOCKING.
-	statusChannel := make(chan SolutionStatus, 1)
-
-	// persist all solutions as pending
-
-	// NOTE: we persist the solution here so that it exists in the DB when the
-	// method returns.
-	// NOTE: THE CHANNELS MUST BE BUFFERED TO A SIZE OF 1 OR ELSE THIS WILL DEADLOCK.
-	s.persistSolutionStatus(statusChannel, client, solutionStorage, searchID, solution.SolutionId, PendingStatus)
-
-	return statusChannel
-}
-
 func (s *SolutionRequest) dispatchRequest(client *Client, solutionStorage model.SolutionStorage, dataStorage model.DataStorage, searchID string, dataset string, datasetURITrain string, datasetURITest string) {
 
-	// search for solutions, this wont return until the search finishes or it times out
-	err := client.SearchSolutions(context.Background(), searchID, func(solution *pipeline.GetSearchSolutionsResultsResponse) {
-
-		// create a new status channel for the solution
-		c := s.createStatusChannel(client, solution, solutionStorage, searchID)
-		// add the solution to the request
-		s.addSolution(c)
-
-		// dispatch it
-		s.dispatchSolution(c, client, solutionStorage, dataStorage, searchID, solution.SolutionId, dataset, datasetURITrain, datasetURITest)
-
-		// once done, mark as complete
-		s.completeSolution()
-	})
+	// update request status
+	err := s.persistRequestStatus(s.requestChannel, solutionStorage, searchID, dataset, RequestRunningStatus)
 	if err != nil {
 		s.finished <- err
 		return
+	}
+
+	// search for solutions, this wont return until the search finishes or it times out
+	err = client.SearchSolutions(context.Background(), searchID, func(solution *pipeline.GetSearchSolutionsResultsResponse) {
+		// create a new status channel for the solution
+		c := newStatusChannel()
+		// persist the solution
+		s.persistSolutionStatus(c, solutionStorage, searchID, solution.SolutionId, SolutionPendingStatus)
+		// add the solution to the request
+		s.addSolution(c)
+		// dispatch it
+		s.dispatchSolution(c, client, solutionStorage, dataStorage, searchID, solution.SolutionId, dataset, datasetURITrain, datasetURITest)
+		// once done, mark as complete
+		s.completeSolution()
+	})
+
+	// update request status
+	if err != nil {
+		s.persistRequestError(s.requestChannel, solutionStorage, searchID, dataset, err)
+	} else {
+		s.persistRequestStatus(s.requestChannel, solutionStorage, searchID, dataset, RequestCompletedStatus)
 	}
 
 	// wait until all are complete and the search has finished / timed out
@@ -465,10 +508,7 @@ func (s *SolutionRequest) PersistAndDispatch(client *Client, solutionStorage mod
 	}
 
 	// persist the request
-	// TODO: we persist the request and never update the status, so we just
-	// leave it blank here, eventually we should support updating the progress
-	// to the full life cycle.
-	err = solutionStorage.PersistRequest(requestID, dataset.Metadata.Name, "", time.Now())
+	err = s.persistRequestStatus(s.requestChannel, solutionStorage, requestID, dataset.Metadata.Name, RequestPendingStatus)
 	if err != nil {
 		return err
 	}

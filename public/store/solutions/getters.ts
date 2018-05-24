@@ -1,17 +1,19 @@
 import _ from 'lodash';
 import { Variable } from '../dataset/index';
 import { regression, getTask } from '../../util/solutions';
-import { SolutionState, SolutionInfo, SOLUTION_RUNNING, SOLUTION_COMPLETED } from './index';
+import { SolutionState, SolutionInfo, SolutionRequest, SOLUTION_RUNNING, SOLUTION_COMPLETED } from './index';
 import { Dictionary } from '../../util/dict';
 
+function sortRequests(a: SolutionRequest, b: SolutionRequest): number {
+	// descending order
+	const aOldest = _.maxBy(a.solutions, sol => sol.timestamp) as any;
+	const bOldest = _.maxBy(b.solutions, sol => sol.timestamp) as any;
+	return bOldest - aOldest;
+}
+
 function sortSolutions(a: SolutionInfo, b: SolutionInfo): number {
-	if (a.solutionId < b.solutionId) {
-		return -1
-	}
-	if (a.solutionId > b.solutionId) {
-		return 1
-	}
-	return 0;
+	// ascending order
+	return a.timestamp - b.timestamp;
 }
 
 export const getters = {
@@ -19,22 +21,43 @@ export const getters = {
 	// Returns a dictionary of dictionaries, where the first key is the solution create request ID, and the second
 	// key is the solution ID.
 	getRunningSolutions(state: SolutionState): SolutionInfo[] {
-		return state.solutionRequests.filter(solution => solution.progress === SOLUTION_RUNNING).sort(sortSolutions);
+		return state.solutions.filter(solution => solution.progress === SOLUTION_RUNNING).sort(sortSolutions);
 	},
 
 	// Returns a dictionary of dictionaries, where the first key is the solution create request ID, and the second
 	// key is the solution ID.
 	getCompletedSolutions(state: SolutionState): SolutionInfo[] {
-		return state.solutionRequests.filter(solution => solution.progress === SOLUTION_COMPLETED).sort(sortSolutions);
+		return state.solutions.filter(solution => solution.progress === SOLUTION_COMPLETED).sort(sortSolutions);
 	},
 
 	getSolutions(state: SolutionState): SolutionInfo[] {
-		return Array.from(state.solutionRequests).slice().sort(sortSolutions);
+		return state.solutions.slice().sort(sortSolutions);
+	},
+
+	getSolutionsRequests(state: SolutionState): SolutionRequest[] {
+		const reqs = {};
+		state.solutions.forEach(solution => {
+			if (!reqs[solution.requestId]) {
+				reqs[solution.requestId] = {
+					requestId: solution.requestId,
+					dataset: solution.dataset,
+					feature: solution.feature,
+					// TODO: FIX THIS
+					progress: 'UH OH',
+					solutions: []
+				};
+			}
+			reqs[solution.requestId].solutions.push(solution);
+		});
+		return _.map(reqs, req => {
+			req.solutions.sort(sortSolutions);
+			return req;
+		}).sort(sortRequests);
 	},
 
 	getSolutionRequestIds(state: SolutionState): string[] {
 		const ids = [];
-		state.solutionRequests.forEach(solution => {
+		state.solutions.forEach(solution => {
 			if (ids.indexOf(solution.requestId) === -1) {
 				ids.push(solution.requestId);
 			}
@@ -44,7 +67,7 @@ export const getters = {
 
 	getActiveSolution(state: SolutionState, getters: any): SolutionInfo {
 		const solutionId = getters.getRouteSolutionId;
-		return _.find(state.solutionRequests, solution => solution.solutionId === solutionId);
+		return _.find(state.solutions, solution => solution.solutionId === solutionId);
 	},
 
 	getActiveSolutionTrainingMap(state: SolutionState, getters: any): Dictionary<boolean> {

@@ -19,6 +19,7 @@ export const getters = {
 	getRunningSolutions: read(moduleGetters.getRunningSolutions),
 	getCompletedSolutions: read(moduleGetters.getCompletedSolutions),
 	getSolutions: read(moduleGetters.getSolutions),
+	getSolutionsRequests: read(moduleGetters.getSolutionsRequests),
 	getSolutionRequestIds: read(moduleGetters.getSolutionRequestIds),
 	getActiveSolution: read(moduleGetters.getActiveSolution),
 	getActiveSolutionTrainingMap: read(moduleGetters.getActiveSolutionTrainingMap),

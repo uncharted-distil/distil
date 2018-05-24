@@ -1,9 +1,14 @@
 import { FilterParams } from '../../util/filters';
 
-export const SOLUTION_PENDING = 'PENDING';
-export const SOLUTION_RUNNING = 'RUNNING';
-export const SOLUTION_COMPLETED = 'COMPLETED';
-export const SOLUTION_ERRORED = 'ERRORED';
+export const SOLUTION_PENDING = 'SOLUTION_PENDING';
+export const SOLUTION_RUNNING = 'SOLUTION_RUNNING';
+export const SOLUTION_COMPLETED = 'SOLUTION_COMPLETED';
+export const SOLUTION_ERRORED = 'SOLUTION_ERRORED';
+
+export const REQUEST_PENDING = 'REQUEST_PENDING';
+export const REQUEST_RUNNING = 'REQUEST_RUNNING';
+export const REQUEST_COMPLETED = 'REQUEST_COMPLETED';
+export const REQUEST_ERRORED = 'REQUEST_ERRORED';
 
 export interface Score {
 	metric: string;
@@ -29,10 +34,18 @@ export interface SolutionInfo {
 	features: SolutionFeature[];
 }
 
+export interface SolutionRequest {
+	requestId: string;
+	dataset: string;
+	feature: string;
+	progress: string;
+	solutions: SolutionInfo[];
+}
+
 export interface SolutionState {
-	solutionRequests: SolutionInfo[];
+	solutions: SolutionInfo[];
 }
 
 export const state: SolutionState = {
-	solutionRequests: [] as any
+	solutions: []
 }

@@ -24,7 +24,7 @@ export function getSolutionsByRequestIds(state: SolutionState, requestIds: strin
 	requestIds.forEach(id => {
 		ids[id] = true;
 	});
-	return state.solutionRequests.filter(solution => ids[solution.requestId]);
+	return state.solutions.filter(solution => ids[solution.requestId]);
 }
 
 // Returns a specific solution result given a request and its solution id.
@@ -32,7 +32,7 @@ export function getSolutionById(state: SolutionState, solutionId: string): Solut
 	if (!solutionId) {
 		return null;
 	}
-	return _.find(state.solutionRequests, p => solutionId === p.solutionId);
+	return _.find(state.solutions, p => solutionId === p.solutionId);
 }
 
 // Gets a task object based on a variable type.
