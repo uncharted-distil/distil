@@ -36,7 +36,7 @@ func pullFromAPI(maxPulls int, timeout time.Duration, pull pullFunc) error {
 			if err == io.EOF {
 				return nil
 			} else if err != nil {
-				return err
+				return errors.Wrap(err, "rpc error")
 			}
 			count++
 			if count > maxPulls {
