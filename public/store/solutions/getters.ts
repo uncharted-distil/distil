@@ -1,73 +1,71 @@
 import _ from 'lodash';
+import moment from 'moment';
 import { Variable } from '../dataset/index';
 import { regression, getTask } from '../../util/solutions';
-import { SolutionState, SolutionInfo, SolutionRequest, SOLUTION_RUNNING, SOLUTION_COMPLETED } from './index';
+import { SolutionState, Solution, SolutionRequest, SOLUTION_RUNNING, SOLUTION_COMPLETED } from './index';
 import { Dictionary } from '../../util/dict';
+import { Stream } from '../../util/ws';
 
-function sortRequests(a: SolutionRequest, b: SolutionRequest): number {
+export function sortRequests(a: SolutionRequest, b: SolutionRequest): number {
 	// descending order
-	const aOldest = _.maxBy(a.solutions, sol => sol.timestamp) as any;
-	const bOldest = _.maxBy(b.solutions, sol => sol.timestamp) as any;
-	return bOldest - aOldest;
+	return moment(b.timestamp).unix() - moment(a.timestamp).unix();
 }
 
-function sortSolutions(a: SolutionInfo, b: SolutionInfo): number {
+export function sortSolutions(a: Solution, b: Solution): number {
 	// ascending order
-	return a.timestamp - b.timestamp;
+	return moment(a.timestamp).unix() - moment(b.timestamp).unix();
 }
 
 export const getters = {
 
 	// Returns a dictionary of dictionaries, where the first key is the solution create request ID, and the second
 	// key is the solution ID.
-	getRunningSolutions(state: SolutionState): SolutionInfo[] {
-		return state.solutions.filter(solution => solution.progress === SOLUTION_RUNNING).sort(sortSolutions);
+	getRunningSolutions(state: SolutionState): Solution[] {
+		const running = [];
+		state.requests.forEach(request => {
+			request.solutions.forEach(solution => {
+				if (solution.progress === SOLUTION_RUNNING) {
+					running.push(solution);
+				}
+			});
+		});
+		return running.sort(sortSolutions);
 	},
 
 	// Returns a dictionary of dictionaries, where the first key is the solution create request ID, and the second
 	// key is the solution ID.
-	getCompletedSolutions(state: SolutionState): SolutionInfo[] {
-		return state.solutions.filter(solution => solution.progress === SOLUTION_COMPLETED).sort(sortSolutions);
+	getCompletedSolutions(state: SolutionState): Solution[] {
+		const running = [];
+		state.requests.forEach(request => {
+			request.solutions.forEach(solution => {
+				if (solution.progress === SOLUTION_COMPLETED) {
+					running.push(solution);
+				}
+			});
+		});
+		return running.sort(sortSolutions);
 	},
 
-	getSolutions(state: SolutionState): SolutionInfo[] {
-		return state.solutions.slice().sort(sortSolutions);
+	getSolutions(state: SolutionState): Solution[] {
+		let solutions = [];
+		state.requests.forEach(request => {
+			solutions = solutions.concat(request.solutions);
+		});
+		return solutions.sort(sortSolutions);
 	},
 
 	getSolutionsRequests(state: SolutionState): SolutionRequest[] {
-		const reqs = {};
-		state.solutions.forEach(solution => {
-			if (!reqs[solution.requestId]) {
-				reqs[solution.requestId] = {
-					requestId: solution.requestId,
-					dataset: solution.dataset,
-					feature: solution.feature,
-					// TODO: FIX THIS
-					progress: 'UH OH',
-					solutions: []
-				};
-			}
-			reqs[solution.requestId].solutions.push(solution);
-		});
-		return _.map(reqs, req => {
-			req.solutions.sort(sortSolutions);
-			return req;
-		}).sort(sortRequests);
+		return state.requests.slice();
 	},
 
 	getSolutionRequestIds(state: SolutionState): string[] {
-		const ids = [];
-		state.solutions.forEach(solution => {
-			if (ids.indexOf(solution.requestId) === -1) {
-				ids.push(solution.requestId);
-			}
-		});
-		return ids;
+		return state.requests.map(r => r.requestId);
 	},
 
-	getActiveSolution(state: SolutionState, getters: any): SolutionInfo {
+	getActiveSolution(state: SolutionState, getters: any): Solution {
 		const solutionId = getters.getRouteSolutionId;
-		return _.find(state.solutions, solution => solution.solutionId === solutionId);
+		const solutions = getters.getSolutions;
+		return _.find(solutions, solution => solution.solutionId === solutionId);
 	},
 
 	getActiveSolutionTrainingMap(state: SolutionState, getters: any): Dictionary<boolean> {
@@ -96,5 +94,9 @@ export const getters = {
 		const targetVariable = variables.find(s => s.name === target);
 		const task = getTask(targetVariable.type);
 		return task.schemaName === regression.schemaName;
+	},
+
+	getRequestStreams(state: SolutionState, getters: any): Dictionary<Stream> {
+		return state.streams;
 	}
 }

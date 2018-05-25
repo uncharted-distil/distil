@@ -5,7 +5,7 @@
 
 import _ from 'lodash';
 import { Dictionary } from './dict';
-import { SolutionState, SolutionInfo } from '../store/solutions/index';
+import { SolutionState, Solution } from '../store/solutions/index';
 
 export interface NameInfo {
 	displayName: string,
@@ -19,20 +19,34 @@ export interface Task {
 };
 
 // Utility function to return all solution results associated with a given request ID
-export function getSolutionsByRequestIds(state: SolutionState, requestIds: string[]): SolutionInfo[] {
+export function getSolutionsByRequestIds(state: SolutionState, requestIds: string[]): Solution[] {
 	const ids = {};
 	requestIds.forEach(id => {
 		ids[id] = true;
 	});
-	return state.solutions.filter(solution => ids[solution.requestId]);
+
+	let solutions = [];
+	const filtered = state.requests.filter(request => ids[request.requestId]);
+	filtered.forEach(request => {
+		solutions = solutions.concat(request.solutions);
+	});
+	return solutions;
 }
 
 // Returns a specific solution result given a request and its solution id.
-export function getSolutionById(state: SolutionState, solutionId: string): SolutionInfo {
+export function getSolutionById(state: SolutionState, solutionId: string): Solution {
 	if (!solutionId) {
 		return null;
 	}
-	return _.find(state.solutions, p => solutionId === p.solutionId);
+	let found = null;
+	state.requests.forEach(request => {
+		request.solutions.forEach(solution => {
+			if (solution.solutionId === solutionId) {
+				found = solution;
+			}
+		});
+	});
+	return found;
 }
 
 // Gets a task object based on a variable type.

@@ -119,11 +119,13 @@ type SolutionStatus struct {
 type SolutionStatusListener func(status SolutionStatus)
 
 func (s *SolutionRequest) addSolution(c chan SolutionStatus) {
-	s.mu.Lock()
-	defer s.mu.Unlock()
 	s.wg.Add(1)
+	s.mu.Lock()
 	s.solutionChannels = append(s.solutionChannels, c)
-	go s.listenOnStatusChannel(c)
+	if s.listener != nil {
+		go s.listenOnStatusChannel(c)
+	}
+	s.mu.Unlock()
 }
 
 func (s *SolutionRequest) completeSolution() {
@@ -397,10 +399,10 @@ func (s *SolutionRequest) dispatchRequest(client *Client, solutionStorage model.
 	err = client.SearchSolutions(context.Background(), searchID, func(solution *pipeline.GetSearchSolutionsResultsResponse) {
 		// create a new status channel for the solution
 		c := newStatusChannel()
-		// persist the solution
-		s.persistSolutionStatus(c, solutionStorage, searchID, solution.SolutionId, SolutionPendingStatus)
 		// add the solution to the request
 		s.addSolution(c)
+		// persist the solution
+		s.persistSolutionStatus(c, solutionStorage, searchID, solution.SolutionId, SolutionPendingStatus)
 		// dispatch it
 		s.dispatchSolution(c, client, solutionStorage, dataStorage, searchID, solution.SolutionId, dataset, datasetURITrain, datasetURITest)
 		// once done, mark as complete

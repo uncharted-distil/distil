@@ -48,7 +48,7 @@
 import moment from 'moment';
 import { getMetricDisplayName } from '../util/solutions';
 import { createRouteEntry } from '../util/routes';
-import { SolutionInfo, SOLUTION_PENDING, SOLUTION_RUNNING, SOLUTION_COMPLETED, SOLUTION_ERRORED } from '../store/solutions/index';
+import { Solution, SOLUTION_PENDING, SOLUTION_RUNNING, SOLUTION_COMPLETED, SOLUTION_ERRORED } from '../store/solutions/index';
 import { RESULTS_ROUTE } from '../store/route/index';
 import Vue from 'vue';
 
@@ -77,19 +77,19 @@ export default Vue.extend({
 			return getMetricDisplayName(metric);
 		},
 		isPending(): boolean {
-			return (<SolutionInfo>this.result).progress === SOLUTION_PENDING;
+			return (<Solution>this.result).progress === SOLUTION_PENDING;
 		},
 		isRunning(): boolean {
-			return (<SolutionInfo>this.result).progress === SOLUTION_RUNNING;
+			return (<Solution>this.result).progress === SOLUTION_RUNNING;
 		},
 		isCompleted(): boolean {
-			return (<SolutionInfo>this.result).progress === SOLUTION_COMPLETED;
+			return (<Solution>this.result).progress === SOLUTION_COMPLETED;
 		},
 		isErrored(): boolean {
-			return (<SolutionInfo>this.result).progress === SOLUTION_ERRORED;
+			return (<Solution>this.result).progress === SOLUTION_ERRORED;
 		},
 		onResult() {
-			const result = <SolutionInfo>this.result;
+			const result = <Solution>this.result;
 			const entry = createRouteEntry(RESULTS_ROUTE, {
 				dataset: result.dataset,
 				target: result.feature,

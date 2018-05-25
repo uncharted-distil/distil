@@ -7,7 +7,7 @@ import { getSolutionsByRequestIds, getSolutionById } from '../../util/solutions'
 import { getSummaries, updateCorrectnessHighlightSummary, getCorrectnessCol } from '../../util/data';
 import { Variable, Extrema, ES_INDEX } from '../dataset/index';
 import { mutations } from './module'
-import { SolutionInfo } from '../solutions/index';
+import { Solution } from '../solutions/index';
 import { HighlightRoot } from './index';
 import { addHighlightToFilterParams, parseHighlightSamples } from '../../util/highlights';
 import { getPredictedCol, getVarFromTarget } from '../../util/data';
@@ -135,8 +135,8 @@ export const actions = {
 
 		const solutions = getSolutionsByRequestIds(context.rootState.solutionModule, args.requestIds);
 		const endPoint = `/distil/results-summary/${ES_INDEX}/${args.dataset}/${args.extrema.min}/${args.extrema.max}`
-		const nameFunc = (p: SolutionInfo) => getPredictedCol(p.feature);
-		const labelFunc = (p: SolutionInfo) => '';
+		const nameFunc = (p: Solution) => getPredictedCol(p.feature);
+		const labelFunc = (p: Solution) => '';
 		getSummaries(context, endPoint, solutions, nameFunc, labelFunc, mutations.updatePredictedHighlightSummaries, filterParams);
 	},
 
@@ -154,8 +154,8 @@ export const actions = {
 
 		const solutions = getSolutionsByRequestIds(context.rootState.solutionModule, args.requestIds);
 		const endPoint = `/distil/results-summary/${ES_INDEX}/${args.dataset}/${args.extrema.min}/${args.extrema.max}`
-		const nameFunc = (p: SolutionInfo) => getCorrectnessCol(p.feature);
-		const labelFunc = (p: SolutionInfo) => '';
+		const nameFunc = (p: Solution) => getCorrectnessCol(p.feature);
+		const labelFunc = (p: Solution) => '';
 		getSummaries(context, endPoint, solutions, nameFunc, labelFunc, updateCorrectnessHighlightSummary, filterParams);
 	},
 

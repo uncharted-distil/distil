@@ -203,12 +203,12 @@ export default Vue.extend({
 			}
 		},
 
-		onResultNumericalClick(context: string, key: string) {
+		onResultNumericalClick(context: string, key: string, value: { from: number, to: number }) {
 			if (!this.highlights.root || this.highlights.root.key !== key) {
 				updateHighlightRoot(this, {
 					context: context,
 					key: this.predictedColumnName,
-					value: null
+					value: value
 				});
 			}
 		},

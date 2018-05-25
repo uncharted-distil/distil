@@ -44,7 +44,7 @@ import { EXPORT_SUCCESS_ROUTE } from '../store/route/index';
 import vueSlider from 'vue-slider-component';
 import Vue from 'vue';
 import 'font-awesome/css/font-awesome.css';
-import { SolutionInfo } from '../store/solutions/index';
+import { Solution } from '../store/solutions/index';
 
 export default Vue.extend({
 	name: 'result-summaries',
@@ -88,12 +88,12 @@ export default Vue.extend({
 			return routeGetters.getRouteSolutionId(this.$store);
 		},
 
-		activeSolution(): SolutionInfo {
+		activeSolution(): Solution {
 			return getSolutionById(this.$store.state.solutionModule, this.solutionId);
 		},
 
 		activeSolutionName(): string {
-			return this.activeSolution ? this.activeSolution.name : '';
+			return this.activeSolution ? this.activeSolution.feature : '';
 		},
 
 		instanceName(): string {

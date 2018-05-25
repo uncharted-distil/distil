@@ -153,7 +153,5 @@ func handleStopSolutions(conn *Connection, client *compute.Client, msg *Message)
 		handleErr(conn, msg, err)
 		return
 	}
-	// complete the request
-	handleComplete(conn, msg)
 	return
 }

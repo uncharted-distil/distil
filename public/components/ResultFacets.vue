@@ -1,17 +1,16 @@
 <template>
 	<div class='result-facets'>
 		<div class="request-group-container" :key="request.requestId" v-for="(request, index) in requestGroups">
+
 			<p class="nav-link font-weight-bold">
 				Solution <sup>{{index}}</sup>
-				<div v-if="isPending">
-					<b-progress
-						:value="100"
-						variant="outline-secondary"
-						striped
-						:animated="true"></b-progress>
-					<button class="abort-search-button">Abort</button>
+
+				<div v-if="isPending(request.progress)">
+					<b-badge variant="info">{{request.progress}}</b-badge>
+					<b-button variant="danger" size="sm" class="pull-right abort-search-button" @click="stopRequest(request.requestId)">Stop</b-button>
 				</div>
-				<div v-if="isErrored">
+
+				<div v-if="isErrored(request.progress)">
 					<b-badge variant="danger">
 						ERROR
 					</b-badge>
@@ -31,6 +30,7 @@
 				:resultHtml="html"
 				:residualHtml="html">
 			</result-group>
+
 		</div>
 	</div>
 </template>
@@ -46,7 +46,7 @@ import { VariableSummary } from '../store/dataset/index';
 import { REQUEST_COMPLETED, REQUEST_ERRORED } from '../store/solutions/index';
 import { getters as resultsGetters } from '../store/results/module';
 import { getters as routeGetters } from '../store/route/module';
-import { getters as solutionGetters } from '../store/solutions/module';
+import { getters as solutionGetters, actions as solutionActions } from '../store/solutions/module';
 
 import 'font-awesome/css/font-awesome.css';
 import '../styles/spinner.css';
@@ -113,6 +113,7 @@ export default Vue.extend({
 			return filtered.map(request => {
 				return {
 					requestId: request.requestId,
+					progress: request.progress,
 					groups: request.solutions.map(solution => {
 						const solutionId = solution.solutionId;
 						const requestId = solution.requestId;
@@ -122,9 +123,9 @@ export default Vue.extend({
 						return {
 							requestId: requestId,
 							solutionId: solutionId,
-							groupName: solution ? solution.name : '',
-							timestamp: solution ? moment(solution.timestamp).format('YYYY/MM/DD') : '',
-							scores: solution ? solution.scores : [],
+							groupName: solution.feature,
+							timestamp: moment(solution.timestamp).format('YYYY/MM/DD'),
+							scores: solution.scores,
 							predictedSummary: predictedSummary,
 							residualsSummary: residualSummary,
 							correctnessSummary: correctnessSummary
@@ -147,6 +148,10 @@ export default Vue.extend({
 
 		isErrored(status: string): boolean {
 			return status === REQUEST_ERRORED;
+		},
+
+		stopRequest(requestId: string) {
+			solutionActions.stopSolutionRequest(this.$store, { requestId: requestId });
 		}
 	}
 });
@@ -160,8 +165,5 @@ button {
 .result-group-container {
 	overflow-x: hidden;
 	overflow-y: hidden;
-}
-.abort-search-button {
-	float: right;
 }
 </style>

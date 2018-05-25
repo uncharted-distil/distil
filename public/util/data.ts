@@ -4,7 +4,7 @@ import Vue from 'vue';
 import localStorage from 'store';
 import { Dataset, VariableSummary, SummaryType, TableData, TableRow } from '../store/dataset/index';
 import { TargetRow, TableColumn, Variable } from '../store/dataset/index';
-import { SolutionInfo, SOLUTION_COMPLETED } from '../store/solutions/index';
+import { Solution, SOLUTION_COMPLETED } from '../store/solutions/index';
 import { Dictionary } from './dict';
 import { mutations as resultMutations } from '../store/results/module';
 import { mutations as highlightMutations } from '../store/highlights/module';
@@ -58,7 +58,7 @@ export function removeNonTrainingItems(items: TargetRow[], training: Dictionary<
 	return _.map(items, item => {
 		const row: TargetRow = <TargetRow>{};
 		_.forIn(item, (val, col) => {
-			if (isInTrainingSet(col.toLowerCase(), training)) {
+			if (isInTrainingSet(col, training)) {
 				row[col] = val;
 			}
 		});
@@ -69,7 +69,7 @@ export function removeNonTrainingItems(items: TargetRow[], training: Dictionary<
 export function removeNonTrainingFields(fields: Dictionary<TableColumn>, training: Dictionary<boolean>): Dictionary<TableColumn> {
 	const res: Dictionary<TableColumn> = {};
 	_.forIn(fields, (val, col) => {
-		if (isInTrainingSet(col.toLowerCase(), training)) {
+		if (isInTrainingSet(col, training)) {
 			res[col] = val;
 		}
 	});
@@ -217,9 +217,9 @@ export function createErrorSummary(name: string, label: string, dataset: string,
 export function getSummary(
 	context: any,
 	endpoint: string,
-	solution: SolutionInfo,
-	nameFunc: (SolutionInfo) => string,
-	labelFunc: (SolutionInfo) => string,
+	solution: Solution,
+	nameFunc: (Solution) => string,
+	labelFunc: (Solution) => string,
 	updateFunction: (any, VariableSummary) => void,
 	filterParams: FilterParams): Promise<any> {
 
@@ -260,9 +260,9 @@ export function getSummary(
 export function getSummaries(
 	context: any,
 	endpoint: string,
-	solutions: SolutionInfo[],
-	nameFunc: (SolutionInfo) => string,
-	labelFunc: (SolutionInfo) => string,
+	solutions: Solution[],
+	nameFunc: (Solution) => string,
+	labelFunc: (Solution) => string,
 	updateFunction: (any, VariableSummary) => void,
 	filterParams: FilterParams): Promise<any> {
 

@@ -7,7 +7,7 @@ import { getSolutionsByRequestIds, getSolutionById } from '../../util/solutions'
 import { getSummaries, getSummary, updateCorrectnessSummary, getCorrectnessCol } from '../../util/data';
 import { Variable, Extrema, ES_INDEX } from '../dataset/index';
 import { HighlightRoot } from '../highlights/index';
-import { SolutionInfo, SOLUTION_ERRORED } from '../solutions/index';
+import { Solution, SOLUTION_ERRORED } from '../solutions/index';
 import { mutations } from './module'
 import { ResultsState } from './index'
 import { addHighlightToFilterParams } from '../../util/highlights';
@@ -311,8 +311,8 @@ export const actions = {
 		}
 		const solution = getSolutionById(context.rootState.solutionModule, args.solutionId);
 		const endPoint = `/distil/results-summary/${ES_INDEX}/${args.dataset}/${extremaMin}/${extremaMax}`
-		const nameFunc = (p: SolutionInfo) => getPredictedCol(p.feature);
-		const labelFunc = (p: SolutionInfo) => 'Predicted';
+		const nameFunc = (p: Solution) => getPredictedCol(p.feature);
+		const labelFunc = (p: Solution) => 'Predicted';
 
 		getSummary(context, endPoint, solution, nameFunc, labelFunc, mutations.updatePredictedSummaries, null);
 	},
@@ -336,8 +336,8 @@ export const actions = {
 		}
 		const solutions = getSolutionsByRequestIds(context.rootState.solutionModule, args.requestIds);
 		const endPoint = `/distil/results-summary/${ES_INDEX}/${args.dataset}/${extremaMin}/${extremaMax}`
-		const nameFunc = (p: SolutionInfo) => getPredictedCol(p.feature);
-		const labelFunc = (p: SolutionInfo) => 'Predicted';
+		const nameFunc = (p: Solution) => getPredictedCol(p.feature);
+		const labelFunc = (p: Solution) => 'Predicted';
 		getSummaries(context, endPoint, solutions, nameFunc, labelFunc, mutations.updatePredictedSummaries, null);
 	},
 
@@ -357,8 +357,8 @@ export const actions = {
 		}
 		const solution = getSolutionById(context.rootState.solutionModule, args.solutionId);
 		const endPoint = `/distil/residuals-summary/${ES_INDEX}/${args.dataset}/${args.extrema.min}/${args.extrema.max}`
-		const nameFunc = (p: SolutionInfo) => getErrorCol(p.feature);
-		const labelFunc = (p: SolutionInfo) => 'Error';
+		const nameFunc = (p: Solution) => getErrorCol(p.feature);
+		const labelFunc = (p: Solution) => 'Error';
 		getSummary(context, endPoint, solution, nameFunc, labelFunc, mutations.updateResidualsSummaries, null);
 	},
 
@@ -378,8 +378,8 @@ export const actions = {
 		}
 		const solutions = getSolutionsByRequestIds(context.rootState.solutionModule, args.requestIds);
 		const endPoint = `/distil/residuals-summary/${ES_INDEX}/${args.dataset}/${args.extrema.min}/${args.extrema.max}`
-		const nameFunc = (p: SolutionInfo) => getErrorCol(p.feature);
-		const labelFunc = (p: SolutionInfo) => 'Error';
+		const nameFunc = (p: Solution) => getErrorCol(p.feature);
+		const labelFunc = (p: Solution) => 'Error';
 		getSummaries(context, endPoint, solutions, nameFunc, labelFunc, mutations.updateResidualsSummaries, null);
 	},
 
@@ -397,8 +397,8 @@ export const actions = {
 		// only use extrema if this is the feature variable
 		const solution = getSolutionById(context.rootState.solutionModule, args.solutionId);
 		const endPoint = `/distil/results-summary/${ES_INDEX}/${args.dataset}/null/null`;
-		const nameFunc = (p: SolutionInfo) => getCorrectnessCol(p.feature);
-		const labelFunc = (p: SolutionInfo) => 'Error Summary';
+		const nameFunc = (p: Solution) => getCorrectnessCol(p.feature);
+		const labelFunc = (p: Solution) => 'Error Summary';
 
 		getSummary(context, endPoint, solution, nameFunc, labelFunc, updateCorrectnessSummary, null);
 	},
@@ -416,8 +416,8 @@ export const actions = {
 		// only use extrema if this is the feature variable
 		const solutions = getSolutionsByRequestIds(context.rootState.solutionModule, args.requestIds);
 		const endPoint = `/distil/results-summary/${ES_INDEX}/${args.dataset}/null/null`
-		const nameFunc = (p: SolutionInfo) => getCorrectnessCol(p.feature);
-		const labelFunc = (p: SolutionInfo) => 'Error Summary';
+		const nameFunc = (p: Solution) => getCorrectnessCol(p.feature);
+		const labelFunc = (p: Solution) => 'Error Summary';
 		getSummaries(context, endPoint, solutions, nameFunc, labelFunc, updateCorrectnessSummary, null);
 	}
 

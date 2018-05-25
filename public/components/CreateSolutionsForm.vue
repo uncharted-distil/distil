@@ -39,7 +39,7 @@ import { getters as datasetGetters } from '../store/dataset/module';
 import { getters as routeGetters } from '../store/route/module';
 import { RESULTS_ROUTE } from '../store/route/index';
 import { actions as solutionActions } from '../store/solutions/module';
-import { SolutionInfo } from '../store/solutions/index';
+import { Solution } from '../store/solutions/index';
 import { Variable } from '../store/dataset/index';
 import { FilterParams } from '../util/filters';
 import Vue from 'vue';
@@ -123,14 +123,14 @@ export default Vue.extend({
 			const metrics = _.map(this.metrics as string[], m => getMetricSchemaName(m));
 			this.pending = true;
 			// dispatch action that triggers request send to server
-			solutionActions.createSolutions(this.$store, {
+			solutionActions.createSolutionRequest(this.$store, {
 				dataset: this.dataset,
 				filters: this.filterParams,
 				target: routeGetters.getRouteTargetVariable(this.$store),
 				task: task,
 				metrics: metrics,
 				maxSolutions: 1
-			}).then((res: SolutionInfo) => {
+			}).then((res: Solution) => {
 				this.pending = false;
 				// transition to result screen
 				const entry = createRouteEntry(RESULTS_ROUTE, {

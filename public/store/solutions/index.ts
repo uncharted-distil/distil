@@ -1,4 +1,6 @@
 import { FilterParams } from '../../util/filters';
+import { Stream } from '../../util/ws';
+import { Dictionary } from '../../util/dict';
 
 export const SOLUTION_PENDING = 'SOLUTION_PENDING';
 export const SOLUTION_RUNNING = 'SOLUTION_RUNNING';
@@ -20,9 +22,8 @@ export interface SolutionFeature {
 	featureType: string;
 }
 
-export interface SolutionInfo {
+export interface Solution {
 	requestId: string;
-	name: string;
 	feature: string;
 	solutionId: string;
 	resultId: string;
@@ -39,13 +40,16 @@ export interface SolutionRequest {
 	dataset: string;
 	feature: string;
 	progress: string;
-	solutions: SolutionInfo[];
+	solutions: Solution[];
+	timestamp: number;
 }
 
 export interface SolutionState {
-	solutions: SolutionInfo[];
+	requests: SolutionRequest[];
+	streams: Dictionary<Stream>;
 }
 
 export const state: SolutionState = {
-	solutions: []
+	requests: [],
+	streams: {}
 }
