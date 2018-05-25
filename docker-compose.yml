@@ -1,6 +1,6 @@
 elastic:
   image:
-    docker.uncharted.software/distil_dev_es:0.10.2
+    docker.uncharted.software/distil_dev_es:latest
   ports:
     - "9200:9200"
 pipeline_server:
