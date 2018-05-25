@@ -1,7 +1,9 @@
 package model
 
 const (
-	// Internal Type Keys
+	// Internal Type Keys.  These reflect types produced by semantic typing
+	// analytics, and are not the set that is consumable by a downstream TA2
+	// system.
 
 	// AddressType is the schema type for address values
 	AddressType = "address"
@@ -11,6 +13,8 @@ const (
 	IntegerType = "integer"
 	// FloatType is the schema type for float values
 	FloatType = "float"
+	// RealType is the schema type for real values, and is equivalent to FloatType
+	RealType = "real"
 	// BoolType is the schema type for bool values
 	BoolType = "boolean"
 	// DateTimeType is the schema type for date/time values
@@ -48,6 +52,7 @@ const (
 
 	// TA2 Semantic Type Keys - defined in
 	// https://gitlab.com/datadrivendiscovery/d3m/blob/devel/d3m/metadata/schemas/v0/definitions.json
+	// These are the agreed upond set of types that are consumable by a downstream TA2 system.
 
 	// TA2StringType is the semantic type reprsenting a text/string
 	TA2StringType = "http://schema.org/Text"
@@ -65,6 +70,11 @@ const (
 	TA2CategoricalType = "https://metadata.datadrivendiscovery.org/types/CategoricalData"
 	// TA2OrdinalType is the TA2 semantic type for ordinal (ordered categorical) data
 	TA2OrdinalType = "https://metadata.datadrivendiscovery.org/types/OrdinalData"
+
+	// TA2 Role keys
+
+	// TA2TargetType is the semantic type indicating a prediction target
+	TA2TargetType = "https://metadata.datadrivendiscovery.org/types/Target"
 )
 
 var (
@@ -94,25 +104,26 @@ var (
 		LatitudeType:  true,
 		FloatType:     true}
 	ta2TypeMap = map[string]string{
-		AddressType:     "string",
-		IndexType:       "integer",
-		IntegerType:     "integer",
-		FloatType:       "real",
-		BoolType:        "boolean",
-		DateTimeType:    "dateTime",
-		OrdinalType:     "categorical",
-		CategoricalType: "categorical",
-		NumericalType:   "real",
-		TextType:        "string",
-		CityType:        "string",
-		CountryType:     "string",
-		EmailType:       "string",
-		LatitudeType:    "real",
-		LongitudeType:   "real",
-		PhoneType:       "string",
-		PostalCodeType:  "string",
-		StateType:       "string",
-		URIType:         "string",
+		AddressType:     TA2StringType,
+		IndexType:       TA2IntegerType,
+		IntegerType:     TA2IntegerType,
+		FloatType:       TA2RealType,
+		RealType:        TA2RealType,
+		BoolType:        TA2BooleanType,
+		DateTimeType:    TA2TimeType,
+		OrdinalType:     TA2CategoricalType,
+		CategoricalType: TA2CategoricalType,
+		NumericalType:   TA2RealType,
+		TextType:        TA2StringType,
+		CityType:        TA2StringType,
+		CountryType:     TA2StringType,
+		EmailType:       TA2StringType,
+		LatitudeType:    TA2RealType,
+		LongitudeType:   TA2RealType,
+		PhoneType:       TA2StringType,
+		PostalCodeType:  TA2StringType,
+		StateType:       TA2StringType,
+		URIType:         TA2StringType,
 	}
 )
 

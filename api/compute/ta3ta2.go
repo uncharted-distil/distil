@@ -18,16 +18,19 @@ import (
 	"github.com/golang/protobuf/proto"
 	protobuf "github.com/golang/protobuf/protoc-gen-go/descriptor"
 	"github.com/pkg/errors"
+	uuid "github.com/satori/go.uuid"
+	"github.com/unchartedsoftware/distil/api/compute/description"
 	"github.com/unchartedsoftware/distil/api/pipeline"
+	log "github.com/unchartedsoftware/plog"
 
 	"github.com/unchartedsoftware/distil/api/model"
-	log "github.com/unchartedsoftware/plog"
 )
 
 const (
 	defaultResourceID       = "0"
 	defaultExposedOutputKey = "outputs.0"
 	datasetDir              = "datasets"
+	unknownAPIVersion       = "unknown"
 	trainTestSplitThreshold = 0.9
 	// SolutionPendingStatus represents that the solution request has been acknoledged by not yet sent to the API
 	SolutionPendingStatus = "SOLUTION_PENDING"
@@ -45,6 +48,11 @@ const (
 	RequestErroredStatus = "REQUEST_ERRORED"
 	// RequestCompletedStatus represents that the solution request has completed successfully.
 	RequestCompletedStatus = "REQUEST_COMPLETED"
+)
+
+var (
+	// cached ta3ta2 API version
+	apiVersion string
 )
 
 // StopSolutionSearchRequest represents a request to stop any pending siolution searches.
@@ -159,13 +167,8 @@ func (s *SolutionRequest) Listen(listener SolutionStatusListener) error {
 	return <-s.finished
 }
 
-func (s *SolutionRequest) createSearchSolutionsRequest(targetIndex int, datasetURI string, userAgent string) (*pipeline.SearchSolutionsRequest, error) {
-	// Grab the embedded ta3ta2 API version
-	apiVersion, err := getAPIVersion()
-	if err != nil {
-		log.Warnf("Failed to extract API version")
-		apiVersion = "unknown"
-	}
+func (s *SolutionRequest) createSearchSolutionsRequest(targetIndex int, preprocessing *pipeline.PipelineDescription,
+	datasetURI string, userAgent string) (*pipeline.SearchSolutionsRequest, error) {
 
 	return &pipeline.SearchSolutionsRequest{
 		Problem: &pipeline.ProblemDescription{
@@ -182,7 +185,7 @@ func (s *SolutionRequest) createSearchSolutionsRequest(targetIndex int, datasetU
 		},
 
 		UserAgent: userAgent,
-		Version:   apiVersion,
+		Version:   GetAPIVersion(),
 
 		// we accept dataset and csv uris as return types
 		AllowedValueTypes: []pipeline.ValueType{
@@ -197,7 +200,23 @@ func (s *SolutionRequest) createSearchSolutionsRequest(targetIndex int, datasetU
 				},
 			},
 		},
+
+		Template: preprocessing,
 	}, nil
+}
+
+// createPreprocessingPipeline creates pipeline to enfore user feature selection and typing
+func (s *SolutionRequest) createPreprocessingPipeline(featureVariables []*model.Variable, variables []string) (*pipeline.PipelineDescription, error) {
+	uuid := uuid.NewV4()
+	name := fmt.Sprintf("preprocessing-%s-%s", s.Dataset, uuid.String())
+	desc := fmt.Sprintf("Preprocessing pipeline capturing user feature selection and type information. Dataset: `%s` ID: `%s`", s.Dataset, uuid.String())
+
+	preprocessingPipeline, err := description.CreateUserDatasetPipeline(name, desc, featureVariables, variables, s.TargetFeature)
+	if err != nil {
+		return nil, err
+	}
+
+	return preprocessingPipeline, nil
 }
 
 func (s *SolutionRequest) createProduceSolutionRequest(datasetURI string, solutionID string) *pipeline.ProduceSolutionRequest {
@@ -467,6 +486,12 @@ func (s *SolutionRequest) PersistAndDispatch(client *Client, solutionStorage mod
 	// NOTE: D3M index field is needed in the persisted data.
 	s.Filters.Variables = append(s.Filters.Variables, model.D3MIndexFieldName)
 
+	// fetch the full set of variables associated with the dataset
+	variables, err := metaStorage.FetchVariables(s.Dataset, true)
+	if err != nil {
+		return err
+	}
+
 	// fetch the queried dataset
 	dataset, err := model.FetchDataset(s.Dataset, s.Index, true, s.Filters, metaStorage, dataStorage)
 	if err != nil {
@@ -497,8 +522,14 @@ func (s *SolutionRequest) PersistAndDispatch(client *Client, solutionStorage mod
 	}
 	datasetPathTest = fmt.Sprintf("%s", filepath.Join(datasetPathTest, D3MDataSchema))
 
+	// generate the pre-processing pipeline to enforce feature selection and semantic type changes
+	preprocessing, err := s.createPreprocessingPipeline(variables, s.Filters.Variables)
+	if err != nil {
+		return err
+	}
+
 	// create search solutions request
-	searchRequest, err := s.createSearchSolutionsRequest(targetIndex, datasetPathTrain, client.UserAgent)
+	searchRequest, err := s.createSearchSolutionsRequest(targetIndex, preprocessing, datasetPathTrain, client.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -577,37 +608,49 @@ func convertDatasetTA3ToTA2(dataset string) string {
 	return dataset
 }
 
-// getApiVersion retrieves the ta3-ta2 API version embedded in the pipeline_service.proto file
-func getAPIVersion() (string, error) {
+// GetAPIVersion retrieves the ta3-ta2 API version embedded in the pipeline_core.proto file.  This is
+// a non-trivial operation, so the value is cached for quick access.
+func GetAPIVersion() string {
+	if apiVersion != "" {
+		return apiVersion
+	}
+
 	// Get the raw file descriptor bytes
 	fileDesc := proto.FileDescriptor(pipeline.E_ProtocolVersion.Filename)
 	if fileDesc == nil {
-		return "", fmt.Errorf("failed to find file descriptor for %v", pipeline.E_ProtocolVersion.Filename)
+		log.Errorf("failed to find file descriptor for %v", pipeline.E_ProtocolVersion.Filename)
+		return unknownAPIVersion
 	}
 
 	// Open a gzip reader and decompress
 	r, err := gzip.NewReader(bytes.NewReader(fileDesc))
 	if err != nil {
-		return "", fmt.Errorf("failed to open gzip reader: %v", err)
+		log.Errorf("failed to open gzip reader: %v", err)
+		return unknownAPIVersion
 	}
 	defer r.Close()
 
 	b, err := ioutil.ReadAll(r)
 	if err != nil {
-		return "", fmt.Errorf("failed to decompress descriptor: %v", err)
+		log.Errorf("failed to decompress descriptor: %v", err)
+		return unknownAPIVersion
 	}
 
 	// Unmarshall the bytes from the proto format
 	fd := &protobuf.FileDescriptorProto{}
 	if err := proto.Unmarshal(b, fd); err != nil {
-		return "", fmt.Errorf("malformed FileDescriptorProto: %v", err)
+		log.Errorf("malformed FileDescriptorProto: %v", err)
+		return unknownAPIVersion
 	}
 
 	// Fetch the extension from the FileDescriptorOptions message
 	ex, err := proto.GetExtension(fd.GetOptions(), pipeline.E_ProtocolVersion)
 	if err != nil {
-		return "", fmt.Errorf("failed to fetch extension: %v", err)
+		log.Errorf("failed to fetch extension: %v", err)
+		return unknownAPIVersion
 	}
 
-	return *ex.(*string), nil
+	apiVersion = *ex.(*string)
+
+	return apiVersion
 }

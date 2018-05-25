@@ -1,6 +1,8 @@
 package description
 
 import (
+	"strings"
+
 	"github.com/pkg/errors"
 	"github.com/unchartedsoftware/distil/api/model"
 	"github.com/unchartedsoftware/distil/api/pipeline"
@@ -8,23 +10,28 @@ import (
 
 // CreateUserDatasetPipeline creates a pipeline description to capture user feature selection and
 // semantic type information.
-func CreateUserDatasetPipeline(name string, description string,
-	allFeatures []*model.Variable, selectedFeatures []string) (*pipeline.PipelineDescription, error) {
+func CreateUserDatasetPipeline(name string, description string, allFeatures []*model.Variable,
+	selectedFeatures []string, target string) (*pipeline.PipelineDescription, error) {
 
 	// save the selected features in a set for quick lookup
 	selectedSet := map[string]bool{}
 	for _, v := range selectedFeatures {
-		selectedSet[v] = true
+		selectedSet[strings.ToLower(v)] = true
 	}
 
-	// create a list of features to remove and a list of semantic type updaates
+	// create a list of features to remove
 	removeFeatures := []string{}
+	for _, v := range allFeatures {
+		if !selectedSet[strings.ToLower(v.Name)] {
+			removeFeatures = append(removeFeatures, v.Name)
+		}
+	}
+
+	// create the added/removed semantic types
 	addedTypes := []*ColumnUpdate{}
 	removedTypes := []*ColumnUpdate{}
 	for _, v := range allFeatures {
-		if !selectedSet[v.Name] {
-			removeFeatures = append(removeFeatures, v.Name)
-		} else {
+		if selectedSet[strings.ToLower(v.Name)] {
 			addType := model.MapTA2Type(v.Type)
 			if addType == "" {
 				return nil, errors.Errorf("variable `%s` internal type `%s` can't be mapped to ta2", v.Name, v.Type)
@@ -34,14 +41,26 @@ func CreateUserDatasetPipeline(name string, description string,
 				return nil, errors.Errorf("remove variable `%s` internal type `%s` can't be mapped to ta2", v.Name, v.OriginalType)
 			}
 
+			// only apply change when types are different
+			if addType != removeType {
+				addedTypes = append(addedTypes, &ColumnUpdate{
+					Name:         v.Name,
+					SemanticType: removeType,
+				})
+
+				removedTypes = append(removedTypes, &ColumnUpdate{
+					Name:         v.Name,
+					SemanticType: addType,
+				})
+			}
+		}
+
+		if strings.EqualFold(v.Name, target) {
+			// Add the target role type to the target variable.  TA2 systems can key off of the
+			// problem description or the presence of this semantic type when searching solutions.
 			addedTypes = append(addedTypes, &ColumnUpdate{
 				Name:         v.Name,
-				SemanticType: v.Type,
-			})
-
-			removedTypes = append(removedTypes, &ColumnUpdate{
-				Name:         v.Name,
-				SemanticType: v.OriginalType,
+				SemanticType: model.TA2TargetType,
 			})
 		}
 	}

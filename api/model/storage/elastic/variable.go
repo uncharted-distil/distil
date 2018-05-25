@@ -23,6 +23,8 @@ const (
 	VarOriginalVariableField = "colOriginalName"
 	// VarTypeField is the field name for the variable type.
 	VarTypeField = "colType"
+	// VarOriginalTypeField is the field name for the orginal variable type.
+	VarOriginalTypeField = "colOriginalType"
 	// VarImportanceField is the field name for the variable importnace.
 	VarImportanceField = "importance"
 	// VarSuggestedTypesField is the field name for the suggested variable types.
@@ -43,6 +45,10 @@ func (s *Storage) parseRawVariable(child map[string]interface{}) (*model.Variabl
 	typ, ok := json.String(child, VarTypeField)
 	if !ok {
 		return nil, errors.New("unable to parse type from variable data")
+	}
+	originalType, ok := json.String(child, VarOriginalTypeField)
+	if !ok {
+		return nil, errors.New("unable to parse original type from variable data")
 	}
 	importance, ok := json.Int(child, VarImportanceField)
 	if !ok {
@@ -81,6 +87,7 @@ func (s *Storage) parseRawVariable(child map[string]interface{}) (*model.Variabl
 	return &model.Variable{
 		Name:             name,
 		Type:             typ,
+		OriginalType:     originalType,
 		Importance:       importance,
 		Role:             role,
 		SuggestedTypes:   suggestedTypes,
