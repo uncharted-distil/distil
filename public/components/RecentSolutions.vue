@@ -13,7 +13,7 @@
 
 import SolutionPreview from '../components/SolutionPreview';
 import { getters as solutionGetters } from '../store/solutions/module';
-import { SolutionInfo } from '../store/solutions/index';
+import { Solution } from '../store/solutions/index';
 import Vue from 'vue';
 
 export default Vue.extend({
@@ -31,7 +31,7 @@ export default Vue.extend({
 	},
 
 	computed: {
-		recentSolutions(): SolutionInfo[] {
+		recentSolutions(): Solution[] {
 			return solutionGetters.getSolutions(this.$store)
 				.slice()
 				.sort((a, b) => b.timestamp - a.timestamp)

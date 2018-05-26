@@ -100,7 +100,7 @@ function stripURL(url) {
 	return url;
 }
 
-class Stream {
+export class Stream {
 	id: string;
 	conn: Connection;
 	fn: (x: any) => void;

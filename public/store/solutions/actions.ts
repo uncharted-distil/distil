@@ -1,5 +1,7 @@
 import axios from 'axios';
-import { SolutionInfo, SolutionState, SOLUTION_COMPLETED, SOLUTION_ERRORED } from './index';
+import { SolutionState,
+	SOLUTION_PENDING, SOLUTION_RUNNING, SOLUTION_COMPLETED, SOLUTION_ERRORED,
+ 	REQUEST_PENDING, REQUEST_RUNNING, REQUEST_COMPLETED, REQUEST_ERRORED } from './index';
 import { ActionContext } from 'vuex';
 import { DistilState } from '../store';
 import { ES_INDEX } from '../dataset/index';
@@ -9,6 +11,7 @@ import { FilterParams } from '../../util/filters';
 import { regression } from '../../util/solutions';
 
 const CREATE_SOLUTIONS = 'CREATE_SOLUTIONS';
+const STOP_SOLUTIONS = 'STOP_SOLUTIONS';
 
 interface CreateSolutionRequest {
 	dataset: string;
@@ -19,9 +22,18 @@ interface CreateSolutionRequest {
 	filters: FilterParams;
 }
 
+interface SolutionStatus {
+	requestId: string;
+	solutionId?: string;
+	resultId?: string;
+	progress: string;
+	error: string;
+	timestamp: number;
+}
+
 export type SolutionContext = ActionContext<SolutionState, DistilState>;
 
-function updateCurrentSolutionResults(context: SolutionContext, req: CreateSolutionRequest, res: SolutionInfo) {
+function updateCurrentSolutionResults(context: SolutionContext, req: CreateSolutionRequest, res: SolutionStatus) {
 
 	const currentSolutionId = context.getters.getRouteSolutionId;
 
@@ -92,7 +104,7 @@ function updateCurrentSolutionResults(context: SolutionContext, req: CreateSolut
 	}
 }
 
-function updateSolutionResults(context: SolutionContext, req: CreateSolutionRequest, res: SolutionInfo) {
+function updateSolutionResults(context: SolutionContext, req: CreateSolutionRequest, res: SolutionStatus) {
 	const isRegression = req.task.toLowerCase() === regression.schemaName.toLowerCase();
 	let extremaFetches = [];
 	if (isRegression) {
@@ -135,41 +147,39 @@ function updateSolutionResults(context: SolutionContext, req: CreateSolutionRequ
 	}
 }
 
+function handleRequestProgress(context: SolutionContext, request: CreateSolutionRequest, response: SolutionStatus) {
+
+	console.log(`Progress for request ${response.requestId} updated to ${response.progress}`);
+
+	switch (response.progress) {
+		case REQUEST_PENDING:
+		case REQUEST_RUNNING:
+		case REQUEST_COMPLETED:
+		case REQUEST_ERRORED:
+			break;
+	}
+}
+
+function handleSolutionProgress(context: SolutionContext, request: CreateSolutionRequest, response: SolutionStatus) {
+
+	console.log(`Progress for solution ${response.solutionId} updated to ${response.progress}`);
+
+	switch (response.progress) {
+		case SOLUTION_COMPLETED:
+		case SOLUTION_ERRORED:
+			// if current solutionId, pull results
+			if (response.solutionId === context.getters.getRouteSolutionId) {
+				// current solutionId is selected
+				updateCurrentSolutionResults(context, request, response);
+			} else {
+				// current solutionId is NOT selected
+				updateSolutionResults(context, request, response);
+			}
+			break;
+	}
+}
+
 export const actions = {
-
-	fetchSolution(context: SolutionContext, args: { solutionId?: string }) {
-		if (!args.solutionId) {
-			console.warn('`solutionId` argument is missing');
-			return null;
-		}
-
-		return axios.get(`/distil/solutions/null/null/${args.solutionId}`)
-			.then(response => {
-				if (!response.data.solutions) {
-					return;
-				}
-				const solutions = response.data.solutions;
-				solutions.forEach(solution => {
-					// update solution
-					mutations.updateSolutionRequests(context, {
-						name: solution.feature,
-						feature: solution.feature,
-						filters: solution.filters,
-						features: solution.features,
-						requestId: solution.requestId,
-						dataset: solution.dataset,
-						timestamp: solution.timestamp,
-						progress: solution.progress,
-						solutionId: solution.solutionId,
-						resultId: solution.resultId,
-						scores: solution.scores
-					});
-				});
-			})
-			.catch(error => {
-				console.error(error);
-			});
-	},
 
 	fetchSolutions(context: SolutionContext, args: { dataset?: string, target?: string, solutionId?: string }) {
 		if (!args.dataset) {
@@ -182,29 +192,15 @@ export const actions = {
 			args.solutionId = null;
 		}
 
-		mutations.clearSolutionRequests(context);
-
 		return axios.get(`/distil/solutions/${args.dataset}/${args.target}/${args.solutionId}`)
 			.then(response => {
-				if (!response.data.solutions) {
+				if (!response.data) {
 					return;
 				}
-				const solutions = response.data.solutions;
-				solutions.forEach(solution => {
+				const requests = response.data;
+				requests.forEach(request => {
 					// update solution
-					mutations.updateSolutionRequests(context, {
-						name: solution.feature,
-						feature: solution.feature,
-						filters: solution.filters,
-						features: solution.features,
-						requestId: solution.requestId,
-						dataset: solution.dataset,
-						timestamp: solution.timestamp,
-						progress: solution.progress,
-						solutionId: solution.solutionId,
-						resultId: solution.resultId,
-						scores: solution.scores
-					});
+					mutations.updateSolutionRequests(context, request);
 				});
 			})
 			.catch(error => {
@@ -212,60 +208,57 @@ export const actions = {
 			});
 	},
 
-	createSolutions(context: any, request: CreateSolutionRequest) {
+	createSolutionRequest(context: any, request: CreateSolutionRequest) {
 		return new Promise((resolve, reject) => {
 
 			const conn = getWebSocketConnection();
 
 			let receivedFirstResponse = false;
 
-			const stream = conn.stream(res => {
+			const stream = conn.stream(response => {
 
-				if (res.error) {
-					console.error(res.error);
+				if (response.error) {
+					console.error(response.error);
 					return;
-				}
-
-				res.name = request.target;
-				res.feature = request.target;
-
-				// NOTE: 'fetchSolution' must be done first to ensure the
-				// resultId is present to fetch summary
-
-				// update solution status
-				context.dispatch('fetchSolution', {
-					dataset: request.dataset,
-					target: request.target,
-					solutionId: res.solutionId,
-				}).then(() => {
-					// update summaries
-					if (res.progress === SOLUTION_ERRORED ||
-						res.progress === SOLUTION_COMPLETED) {
-
-						// if current solutionId, pull results
-						if (res.solutionId === context.getters.getRouteSolutionId) {
-							// current solutionId is selected
-							updateCurrentSolutionResults(context, request, res);
-						} else {
-							// current solutionId is NOT selected
-							updateSolutionResults(context, request, res);
-						}
-
-					}
-				});
-
-				// resolve promise on first response
-				if (!receivedFirstResponse) {
-					receivedFirstResponse = true;
-					resolve(res);
 				}
 
 				// close stream on complete
-				if (res.progress === SOLUTION_COMPLETED) {
+				if (response.complete) {
+					console.log('Solution request has completed, closing stream');
 					stream.close();
-					return;
+					mutations.removeRequestStream(context, { requestId: response.requestId });
 				}
 
+				// pull updated solution info
+
+				context.dispatch('fetchSolutions', {
+					dataset: request.dataset,
+					target: request.target,
+					solutionId: response.solutionId,
+				}).then(() => {
+					// handle response
+					switch (response.progress) {
+						case REQUEST_PENDING:
+						case REQUEST_RUNNING:
+						case REQUEST_COMPLETED:
+						case REQUEST_ERRORED:
+							handleRequestProgress(context, request, response);
+							break;
+						case SOLUTION_PENDING:
+						case SOLUTION_RUNNING:
+						case SOLUTION_COMPLETED:
+						case SOLUTION_ERRORED:
+							// resolve promise on first solution response
+							if (!receivedFirstResponse) {
+								receivedFirstResponse = true;
+								// add the request stream
+								mutations.addRequestStream(context, { requestId: response.requestId, stream: stream });
+								resolve(response);
+							}
+							handleSolutionProgress(context, request, response);
+							break;
+					}
+				});
 			});
 
 			// send create solutions request
@@ -279,6 +272,19 @@ export const actions = {
 				maxSolutions: request.maxSolutions,
 				filters: request.filters
 			});
+		});
+	},
+
+	stopSolutionRequest(context: any, args: { requestId: string }) {
+		const streams = context.getters.getRequestStreams;
+		const stream = streams[args.requestId];
+		if (!stream) {
+			console.warn(`No request stream found for requestId: ${args.requestId}`);
+			return;
+		}
+		stream.send({
+			type: STOP_SOLUTIONS,
+			requestId: args.requestId
 		});
 	},
 }

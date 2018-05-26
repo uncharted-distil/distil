@@ -26,6 +26,9 @@ type Client struct {
 	UserAgent string
 }
 
+// SearchSolutionHandler is executed when a new search solution is returned.
+type SearchSolutionHandler func(*pipeline.GetSearchSolutionsResultsResponse)
+
 // NewClient creates a new pipline request dispatcher instance. This will establish
 // the connection to the solution server or return an error on fail
 func NewClient(serverAddr string, dataDir string, trace bool, userAgent string) (*Client, error) {
@@ -81,8 +84,10 @@ func (c *Client) StartSearch(ctx context.Context, request *pipeline.SearchSoluti
 	return searchSolutionResponse.SearchId, nil
 }
 
-// SearchSolutions generates candidate pipel\ines.
-func (c *Client) SearchSolutions(ctx context.Context, searchID string) ([]*pipeline.GetSearchSolutionsResultsResponse, error) {
+// SearchSolutions generates candidate pipelines and executes a provided handler
+// for each result. While handlers are executing asynchronously, this method
+// will not return until all handlers have finished.
+func (c *Client) SearchSolutions(ctx context.Context, searchID string, solutionHandler SearchSolutionHandler) error {
 
 	searchPiplinesResultsRequest := &pipeline.GetSearchSolutionsResultsRequest{
 		SearchId: searchID,
@@ -90,24 +95,34 @@ func (c *Client) SearchSolutions(ctx context.Context, searchID string) ([]*pipel
 
 	searchSolutionsResultsResponse, err := c.client.GetSearchSolutionsResults(ctx, searchPiplinesResultsRequest)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
-	var solutionResultResponses []*pipeline.GetSearchSolutionsResultsResponse
+	// track handlers to ensure they all finish before returning
+	wg := &sync.WaitGroup{}
 
 	err = pullFromAPI(pullMax, pullTimeout, func() error {
 		solutionResultResponse, err := searchSolutionsResultsResponse.Recv()
 		if err != nil {
 			return err
 		}
-		solutionResultResponses = append(solutionResultResponses, solutionResultResponse)
+		// ignore empty responses
+		if solutionResultResponse.SolutionId != "" {
+			wg.Add(1)
+			go func() {
+				solutionHandler(solutionResultResponse)
+				wg.Done()
+			}()
+		}
 		return nil
 	})
 	if err != nil {
-		return nil, err
+		return err
 	}
 
-	return solutionResultResponses, nil
+	// don't return until all handlers have finished executing
+	wg.Wait()
+	return nil
 }
 
 // GenerateSolutionScores generates scrores for candidate solutions.
@@ -225,6 +240,17 @@ func (c *Client) GeneratePredictions(ctx context.Context, request *pipeline.Prod
 	}
 
 	return solutionResultResponses, nil
+}
+
+// StopSearch stop the solution search session.
+func (c *Client) StopSearch(ctx context.Context, searchID string) error {
+
+	stopSearchSolutions := &pipeline.StopSearchSolutionsRequest{
+		SearchId: searchID,
+	}
+
+	_, err := c.client.StopSearchSolutions(ctx, stopSearchSolutions)
+	return err
 }
 
 // EndSearch ends the solution search session.

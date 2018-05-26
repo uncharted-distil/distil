@@ -38,7 +38,7 @@ func (s *Storage) PersistSolutionScore(solutionID string, metric string, score f
 
 // FetchSolution pulls solution information from Postgres.
 func (s *Storage) FetchSolution(solutionID string) (*model.Solution, error) {
-	sql := fmt.Sprintf("SELECT request_id, solution_id, progress, created_time FROM %s WHERE solution_id = $1;", solutionTableName)
+	sql := fmt.Sprintf("SELECT request_id, solution_id, progress, created_time FROM %s WHERE solution_id = $1 ORDER BY created_time desc LIMIT 1;", solutionTableName)
 
 	rows, err := s.client.Query(sql, solutionID)
 	if err != nil {

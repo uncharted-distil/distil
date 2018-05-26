@@ -60,7 +60,7 @@ func (s *Storage) PersistRequestFilters(requestID string, filters *model.FilterP
 
 // FetchRequest pulls request information from Postgres.
 func (s *Storage) FetchRequest(requestID string) (*model.Request, error) {
-	sql := fmt.Sprintf("SELECT request_id, dataset, progress, created_time, last_updated_time FROM %s WHERE request_id = $1;", requestTableName)
+	sql := fmt.Sprintf("SELECT request_id, dataset, progress, created_time, last_updated_time FROM %s WHERE request_id = $1 ORDER BY created_time desc LIMIT 1;", requestTableName)
 
 	rows, err := s.client.Query(sql, requestID)
 	if err != nil {

@@ -83,7 +83,7 @@ export default Vue.extend({
 			return resultsGetters.getIncludedResultTableDataFields(this.$store);
 		},
 
-		highlightedResultErrors(): number {
+		includedResultErrors(): number {
 			return this.includedResultTableDataItems.filter(item => {
 				const err = _.toNumber(item[getErrorCol(this.target)]);
 				return err < this.residualThresholdMin || err > this.residualThresholdMax;
@@ -98,7 +98,7 @@ export default Vue.extend({
 			return resultsGetters.getExcludedResultTableDataFields(this.$store);
 		},
 
-		unhighlightedResultErrors(): number {
+		excludedResultErrors(): number {
 			return this.excludedResultTableDataItems.filter(item => {
 				const err = _.toNumber(item[getErrorCol(this.target)]);
 				return err < this.residualThresholdMin || err > this.residualThresholdMax;
@@ -131,16 +131,16 @@ export default Vue.extend({
 		},
 
 		topTableTitle(): string {
-			return `${this.includedResultTableDataItems.length} <b class="matching-color">matching</b> samples of ${this.numRows}, including ${this.highlightedResultErrors} <b class="erroneous-color">erroneous</b> predictions`;
+			return `${this.includedResultTableDataItems.length} <b class="matching-color">matching</b> samples of ${this.numRows}, including ${this.includedResultErrors} <b class="erroneous-color">erroneous</b> predictions`;
 		},
 
 		bottomTableTitle(): string {
-			return `${this.excludedResultTableDataItems.length} <b class="other-color">other</b> samples of ${this.numRows}, including ${this.unhighlightedResultErrors} <b class="erroneous-color">erroneous</b> predictions`;
+			return `${this.excludedResultTableDataItems.length} <b class="other-color">other</b> samples of ${this.numRows}, including ${this.excludedResultErrors} <b class="erroneous-color">erroneous</b> predictions`;
 
 		},
 
 		singleTableTitle(): string {
-			return `Displaying ${this.excludedResultTableDataItems.length} of ${this.numRows}, including ${this.unhighlightedResultErrors} <b>erroneous</b> predictions`;
+			return `Displaying ${this.excludedResultTableDataItems.length} of ${this.numRows}, including ${this.excludedResultErrors} <b>erroneous</b> predictions`;
 		}
 	}
 });

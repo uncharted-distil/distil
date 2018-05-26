@@ -19,19 +19,24 @@ export const getters = {
 	getRunningSolutions: read(moduleGetters.getRunningSolutions),
 	getCompletedSolutions: read(moduleGetters.getCompletedSolutions),
 	getSolutions: read(moduleGetters.getSolutions),
+	getSolutionsRequests: read(moduleGetters.getSolutionsRequests),
 	getSolutionRequestIds: read(moduleGetters.getSolutionRequestIds),
 	getActiveSolution: read(moduleGetters.getActiveSolution),
 	getActiveSolutionTrainingMap: read(moduleGetters.getActiveSolutionTrainingMap),
 	getActiveSolutionVariables: read(moduleGetters.getActiveSolutionVariables),
-	isRegression: read(moduleGetters.isRegression)
+	isRegression: read(moduleGetters.isRegression),
+	getRequestStreams: read(moduleGetters.getRequestStreams),
 }
 
 export const actions = {
 	fetchSolutions: dispatch(moduleActions.fetchSolutions),
-	createSolutions: dispatch(moduleActions.createSolutions),
+	createSolutionRequest: dispatch(moduleActions.createSolutionRequest),
+	stopSolutionRequest: dispatch(moduleActions.stopSolutionRequest),
 }
 
 export const mutations = {
 	updateSolutionRequests: commit(moduleMutations.updateSolutionRequests),
-	clearSolutionRequests: commit(moduleMutations.clearSolutionRequests)
+	clearSolutionRequests: commit(moduleMutations.clearSolutionRequests),
+	addRequestStream: commit(moduleMutations.addRequestStream),
+	removeRequestStream: commit(moduleMutations.removeRequestStream),
 }
