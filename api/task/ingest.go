@@ -20,6 +20,7 @@ import (
 	"gopkg.in/olivere/elastic.v5"
 
 	"github.com/unchartedsoftware/distil-ingest/conf"
+	"github.com/unchartedsoftware/distil-ingest/feature"
 	"github.com/unchartedsoftware/distil-ingest/merge"
 	"github.com/unchartedsoftware/distil-ingest/metadata"
 	"github.com/unchartedsoftware/distil-ingest/postgres"
@@ -39,7 +40,12 @@ type IngestTaskConfig struct {
 	TmpDataPath                        string
 	DataPathRelative                   string
 	DatasetFolderSuffix                string
+	MediaPathRelative                  string
 	HasHeader                          bool
+	FeaturizationRESTEndpoint          string
+	FeaturizationFunctionName          string
+	FeaturizationOutputDataRelative    string
+	FeaturizationOutputSchemaRelative  string
 	MergedOutputPathRelative           string
 	MergedOutputSchemaPathRelative     string
 	SchemaPathRelative                 string
@@ -95,6 +101,11 @@ func IngestDataset(metaCtor model.MetadataStorageCtor, index string, dataset str
 		return errors.Wrap(err, "unable to initialize metadata storage")
 	}
 
+	err = Featurize(index, dataset, config)
+	if err != nil {
+		return errors.Wrap(err, "unable to featurize all data")
+	}
+
 	err = Merge(index, dataset, config)
 	if err != nil {
 		return errors.Wrap(err, "unable to merge all data into a single file")
@@ -124,16 +135,43 @@ func IngestDataset(metaCtor model.MetadataStorageCtor, index string, dataset str
 	return nil
 }
 
+// Featurize uses primitives to obtain a featurized view of complex variables.
+func Featurize(index string, dataset string, config *IngestTaskConfig) error {
+	client := rest.NewClient(config.FeaturizationRESTEndpoint)
+
+	// create featurizer
+	featurizer := rest.NewFeaturizer(config.FeaturizationFunctionName, client)
+
+	// load metadata from original schema
+	meta, err := metadata.LoadMetadataFromOriginalSchema(config.getAbsolutePath(config.SchemaPathRelative))
+	if err != nil {
+		return errors.Wrap(err, "unable to load original schema file")
+	}
+
+	// featurize data
+	err = feature.FeaturizeDataset(meta, featurizer, config.getAbsolutePath(config.DataPathRelative),
+		config.getAbsolutePath(config.MediaPathRelative), config.getAbsolutePath(config.TmpDataPath),
+		config.getAbsolutePath(config.FeaturizationOutputDataRelative),
+		config.getAbsolutePath(config.FeaturizationOutputSchemaRelative), config.HasHeader)
+	if err != nil {
+		return errors.Wrap(err, "unable to featurize data")
+	}
+
+	log.Infof("Featurized data written to %s", config.getAbsolutePath(config.TmpDataPath))
+
+	return nil
+}
+
 // Merge combines all the source data files into a single datafile.
 func Merge(index string, dataset string, config *IngestTaskConfig) error {
 	// load the metadata from schema
-	meta, err := metadata.LoadMetadataFromOriginalSchema(config.getAbsolutePath(config.SchemaPathRelative))
+	meta, err := metadata.LoadMetadataFromOriginalSchema(config.getAbsolutePath(config.FeaturizationOutputSchemaRelative))
 	if err != nil {
 		return errors.Wrap(err, "unable to load metadata schema")
 	}
 
 	// merge file links in dataset
-	mergedDR, output, err := merge.InjectFileLinksFromFile(meta, config.getAbsolutePath(config.DataPathRelative), config.getRawDataPath(), config.HasHeader)
+	mergedDR, output, err := merge.InjectFileLinksFromFile(meta, config.getAbsolutePath(config.FeaturizationOutputDataRelative), config.getRawDataPath(), config.getAbsolutePath(config.MergedOutputPathRelative), config.HasHeader)
 	if err != nil {
 		return errors.Wrap(err, "unable to merge linked files")
 	}
