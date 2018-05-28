@@ -54,7 +54,7 @@ export default Vue.extend({
 }
 
 .filter-badge.active {
-	background-color: #28a745;
+	background-color: #00c6e1;
 }
 
 .remove-button {

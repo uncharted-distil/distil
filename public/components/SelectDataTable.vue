@@ -7,13 +7,16 @@
 			</b-nav>
 		</p>
 
-		<div>
+		<div class="table-search-bar">
 			<filter-badge v-if="activeFilter"
 				active-filter
-				:filter="activeFilter"></filter-badge>
-			<div v-for="filter in filters">
-				<filter-badge
-					:filter="filter"></filter-badge>
+				:filter="activeFilter">
+			</filter-badge>
+			<filter-badge v-for="filter in filters"
+				:filter="filter">
+			</filter-badge>
+			<div class="search-input">
+				<b-form-input disabled size="sm" placeholder="Search"></b-form-input>
 			</div>
 		</div>
 
@@ -30,7 +33,7 @@
 				@click="onReincludeClick">
 				<i class="fa fa-plus-circle pr-1"></i>Reinclude
 			</b-button>
-			<small class="row-number-label">Displaying {{items.length}} of {{numRows}} rows</small>
+			<small class="row-number-label" v-html="tableTitle"></small>
 		</p>
 
 		<div class="select-data-table-container">
@@ -165,7 +168,11 @@ export default Vue.extend({
 
 		spinnerHTML(): string {
 			return spinnerHTML();
-		}
+		},
+
+		tableTitle(): string {
+			return `${this.items.length} <b class="matching-color">matching</b> samples of ${this.numRows} to model`;
+		},
 	},
 
 	methods: {
@@ -251,5 +258,13 @@ table tr {
 .row-number-label {
 	position: relative;
 	top: 20px;
+}
+.matching-color {
+	color: #00c6e1;
+}
+.table-search-bar {
+}
+.search-input {
+	margin: 4px 0;
 }
 </style>
