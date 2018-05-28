@@ -40,7 +40,7 @@ type IngestTaskConfig struct {
 	TmpDataPath                        string
 	DataPathRelative                   string
 	DatasetFolderSuffix                string
-	MediaPathRelative                  string
+	MediaPath                          string
 	HasHeader                          bool
 	FeaturizationRESTEndpoint          string
 	FeaturizationFunctionName          string
@@ -149,8 +149,8 @@ func Featurize(index string, dataset string, config *IngestTaskConfig) error {
 	}
 
 	// featurize data
-	err = feature.FeaturizeDataset(meta, featurizer, config.getAbsolutePath(config.DataPathRelative),
-		config.getAbsolutePath(config.MediaPathRelative), config.getAbsolutePath(config.TmpDataPath),
+	err = feature.FeaturizeDataset(meta, featurizer, config.ContainerDataPath,
+		fmt.Sprintf("%s/%s", config.MediaPath, dataset), config.getAbsolutePath(config.TmpDataPath),
 		config.getAbsolutePath(config.FeaturizationOutputDataRelative),
 		config.getAbsolutePath(config.FeaturizationOutputSchemaRelative), config.HasHeader)
 	if err != nil {

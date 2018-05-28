@@ -125,7 +125,7 @@ func main() {
 		TmpDataPath:                        config.TmpDataPath,
 		DataPathRelative:                   config.DataFilePath,
 		DatasetFolderSuffix:                config.DatasetFolderSuffix,
-		MediaPathRelative:                  config.MediaPathRelative,
+		MediaPath:                          config.MediaPath,
 		HasHeader:                          true,
 		FeaturizationRESTEndpoint:          config.FeaturizationRESTEndpoint,
 		FeaturizationFunctionName:          config.FeaturizationFunctionName,

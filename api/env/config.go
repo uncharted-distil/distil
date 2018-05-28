@@ -46,7 +46,7 @@ type Config struct {
 	DataFolderPath                     string  `env:"DATA_FOLDER_PATH" envDefault:"/d3m/data"`
 	DataFilePath                       string  `env:"DATA_FILE_PATH" envDefault:"/tables/learningData.csv"`
 	DatasetFolderSuffix                string  `env:"DATASET_FOLDER_SUFFIX" envDefault:"_dataset"`
-	MediaPathRelative                  string  `env:"MEDIA_PATH" envDefault:"media"`
+	MediaPath                          string  `env:"MEDIA_PATH" envDefault:"HTTP://10.108.4.104"`
 	FeaturizationRESTEndpoint          string  `env:"FEATURIZATION_ENDPOINT" envDefault:"10.108.4.42:5002"`
 	FeaturizationFunctionName          string  `env:"FEATURIZATION_FUNCTION_NAME" envDefault:"fileupload"`
 	FeaturizationOutputDataRelative    string  `env:"FEATURIZATION_OUTPUT_DATA" envDefault:"features/features.csv"`
