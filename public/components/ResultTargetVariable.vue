@@ -1,6 +1,7 @@
 <template>
 	<div>
 		<facets class="result-summaries-target"
+			enable-highlighting
 			@facet-click="onCategoricalClick"
 			@numerical-click="onNumericalClick"
 			@range-change="onRangeChange"
@@ -12,12 +13,12 @@
 
 <script lang="ts">
 
+import _ from 'lodash';
 import Vue from 'vue';
 import Facets from '../components/Facets';
 import { getters as routeGetters } from '../store/route/module';
 import { getters as resultsGetters } from '../store/results/module';
 import { Group, createGroups } from '../util/facets';
-import _ from 'lodash';
 import { getHighlights, updateHighlightRoot, clearHighlightRoot } from '../util/highlights';
 import { isTarget, getVarFromTarget, getTargetCol } from '../util/data';
 import { VariableSummary } from '../store/dataset/index';
@@ -113,10 +114,6 @@ export default Vue.extend({
 				value: value
 			});
 			this.$emit('range-change', key, value);
-		},
-
-		capitalize(str) {
-			return str.toUpperCase();
 		}
 	}
 
@@ -128,27 +125,5 @@ export default Vue.extend({
 .result-summaries-target .facets-group {
 	box-shadow: none;
 }
-
-/*
-.result-summaries-target .facets-facet-horizontal .facet-histogram-bar-highlighted {
-	fill: #00C851;
-}
-
-.result-summaries-target .facets-facet-horizontal .facet-histogram-bar-highlighted:hover {
-	fill: #007E33;
-}
-
-.result-summaries-target .facets-facet-horizontal .facet-histogram-bar-highlighted.select-highlight {
-	fill: #007bff;
-}
-
-.result-summaries-target .facets-facet-vertical .facet-bar-selected {
-	box-shadow: inset 0 0 0 1000px #00C851;
-}
-
-.result-summaries-target .facets-facet-horizontal .facet-range-filter {
-	box-shadow: inset 0 0 0 1000px rgba(0, 225, 11, 0.15);
-}
-*/
 
 </style>
