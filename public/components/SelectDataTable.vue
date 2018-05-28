@@ -8,15 +8,18 @@
 		</p>
 
 		<div class="table-search-bar">
-			<filter-badge v-if="activeFilter"
-				active-filter
-				:filter="activeFilter">
-			</filter-badge>
-			<filter-badge v-for="filter in filters"
-				:filter="filter">
-			</filter-badge>
-			<div class="search-input">
-				<b-form-input disabled size="sm" placeholder="Search"></b-form-input>
+			<div class="fake-search-input">
+				<div class="filter-badges">
+					<filter-badge v-if="activeFilter"
+						active-filter
+						:filter="activeFilter">
+					</filter-badge>
+					<!--
+					<filter-badge v-for="filter in filters"
+						:filter="filter">
+					</filter-badge>
+					-->
+				</div>
 			</div>
 		</div>
 
@@ -25,13 +28,13 @@
 				variant="outline-secondary"
 				:disabled="!highlights.root"
 				@click="onExcludeClick">
-				<i class="fa fa-minus-circle pr-1"></i>Exclude
+				<i class="fa fa-minus-circle pr-1 exclude-icon"></i>Exclude
 			</b-button>
 			<b-button class="float-right" v-if="!includedActive"
 				variant="outline-secondary"
 				:disabled="!highlights.root"
 				@click="onReincludeClick">
-				<i class="fa fa-plus-circle pr-1"></i>Reinclude
+				<i class="fa fa-plus-circle pr-1 include-icon"></i>Reinclude
 			</b-button>
 			<small class="row-number-label" v-html="tableTitle"></small>
 		</p>
@@ -255,6 +258,10 @@ table tr {
 .select-view .nav-tabs .nav-link.active {
 	color: rgba(0, 0, 0, 0.87);
 }
+.include-icon,
+.exclude-icon {
+	color: #00c6e1;
+}
 .row-number-label {
 	position: relative;
 	top: 20px;
@@ -264,7 +271,16 @@ table tr {
 }
 .table-search-bar {
 }
-.search-input {
-	margin: 4px 0;
+.fake-search-input {
+	position: relative;
+	height: 38px;
+	padding: 2px 2px;
+	margin-bottom: 4px;
+	background-color: #eee;
+	border: 1px solid #ccc;
+	border-radius: 0.2rem;
+}
+.filter-badges {
+
 }
 </style>

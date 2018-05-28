@@ -1,5 +1,5 @@
 <template>
-	<div class="error-threshold-slider" v-if="showSlider">
+	<div class="error-threshold-slider" v-if="hasThreshold">
 
 		<div>
 			<div class="error-header">
@@ -25,7 +25,7 @@
 				:min="residualExtrema.min"
 				:max="residualExtrema.max"
 				:interval="interval"
-				:value="initialValue"
+				:value="value"
 				:formatter="formatter"
 				:lazy="true"
 				width=100%
@@ -64,68 +64,54 @@ export default Vue.extend({
 			},
 			symmetricSlider: true,
 			min: NaN,
-			max: NaN
+			max: NaN,
+			hasDefaultedThreshold: false
 		};
 	},
 
 	computed: {
 
-		showSlider(): boolean {
-			return !_.isNaN(this.interval);
+		residualExtrema(): Extrema {
+			const extrema = resultsGetters.getResidualExtrema(this.$store);
+			if (!extrema) {
+				return {
+					min: NaN,
+					max: NaN
+				};
+			}
+			return {
+				min: _.round(extrema.min, ERROR_DECIMALS),
+				max: _.round(extrema.max, ERROR_DECIMALS)
+			};
 		},
 
-		initialValue(): number[] {
+		thresholdMin(): number {
 			const min = routeGetters.getRouteResidualThresholdMin(this.$store);
-			const max = routeGetters.getRouteResidualThresholdMax(this.$store);
-			if (min === undefined || max === undefined) {
-				if (!_.isNaN(this.defaultValue[0]) && !_.isNaN(this.defaultValue[1])) {
-					this.updateThreshold(this.defaultValue[0], this.defaultValue[1]);
-				}
-				return this.defaultValue;
-			}
-			const nmin = _.toNumber(min);
-			const nmax = _.toNumber(max);
-			// NOTE: the slider component discards the values if they are
-			// not within the extrema. We have to read the extrema here so
-			// that the values are re-computed when the extrema is computed.
-			const extrema = this.residualExtrema;
-			if (nmin < extrema.min || nmax > extrema.max) {
-				return [ NaN, NaN ];
-			}
+			return min !== undefined ? _.toNumber(min) : null;
+		},
+
+		thresholdMax(): number {
+			const max =  routeGetters.getRouteResidualThresholdMax(this.$store);
+			return max !== undefined ? _.toNumber(max) : null;
+		},
+
+		value(): number[] {
 			return [
-				nmin,
-				nmax
+				_.toNumber(this.thresholdMin),
+				_.toNumber(this.thresholdMax)
 			];
 		},
 
 		range(): number {
-			if (_.isNaN(this.residualExtrema.min) ||
-				_.isNaN(this.residualExtrema.max)) {
-				return NaN;
-			}
 			return this.residualExtrema.max - this.residualExtrema.min;
-		},
-
-		defaultValue(): number[] {
-			return [
-				-this.range/2 * DEFAULT_PERCENTILE,
-				this.range/2 * DEFAULT_PERCENTILE
-			];
 		},
 
 		interval(): number {
 			return this.range / NUM_STEPS;
 		},
 
-		residualExtrema(): Extrema {
-			const extrema = resultsGetters.getResidualExtrema(this.$store);
-			if (!extrema) {
-				return extrema;
-			}
-			return {
-				min: _.round(extrema.min, ERROR_DECIMALS),
-				max: _.round(extrema.max, ERROR_DECIMALS)
-			};
+		hasThreshold(): boolean {
+			return this.thresholdMin !== null && this.thresholdMax !== null;
 		}
 	},
 
@@ -172,7 +158,21 @@ export default Vue.extend({
 			const newValues = this.forceSymmetric(value);
 			this.updateThreshold(newValues[0], newValues[1]);
 		}
+	},
 
+	watch: {
+		residualExtrema() {
+			if (this.hasDefaultedThreshold || this.hasThreshold) {
+				return;
+			}
+			if (!this.hasDefaultedThreshold && this.residualExtrema) {
+				// set the route
+				const defaultMin = -this.range/2 * DEFAULT_PERCENTILE;
+				const defaultMax = this.range/2 * DEFAULT_PERCENTILE;
+				this.updateThreshold(defaultMin, defaultMax);
+				this.hasDefaultedThreshold = true;
+			}
+		}
 	}
 });
 </script>

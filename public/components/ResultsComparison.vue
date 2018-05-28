@@ -136,7 +136,6 @@ export default Vue.extend({
 
 		bottomTableTitle(): string {
 			return `${this.excludedResultTableDataItems.length} <b class="other-color">other</b> samples of ${this.numRows}, including ${this.excludedResultErrors} <b class="erroneous-color">erroneous</b> predictions`;
-
 		},
 
 		singleTableTitle(): string {
