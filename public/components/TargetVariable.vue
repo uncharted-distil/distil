@@ -1,11 +1,6 @@
 <template>
 	<div>
-		<div class="target-no-target" v-if="groups.length===0">
-			<div class="text-danger">
-				<i class="fa fa-times missing-icon"></i><strong>No Target Feature Selected</strong>
-			</div>
-		</div>
-		<variable-facets v-if="groups.length>0" class="target-summary"
+		<variable-facets class="target-summary"
 			enable-highlighting
 			:groups="groups"
 			:dataset="dataset"
@@ -59,15 +54,6 @@ export default Vue.extend({
 .target-summary .variable-facets-container .facets-root-container .facets-group-container .facets-group {
 	box-shadow: none;
 }
-
-/*
-.target-summary .facet-range {
-	height: 45px;
-}
-.target-summary .facet-range-controls {
-	display: none;
-}
-*/
 
 .target-no-target {
 	width: 100%;
