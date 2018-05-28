@@ -108,7 +108,7 @@ export default Vue.extend({
 			return !this.disableCreate ? 'success' : 'outline-secondary';
 		},
 		exportVariant(): string {
-			return !this.disableExport ? 'primary' : 'outline-secondary';
+			return !this.disableExport ? 'dark' : 'outline-secondary';
 		},
 		percentComplete(): number {
 			return 100;
