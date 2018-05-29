@@ -16,9 +16,11 @@ import { getters as routeGetters} from '../store/route/module';
 import { Group, createGroups } from '../util/facets';
 import { Highlight } from '../store/highlights/index';
 import { VariableSummary } from '../store/dataset/index';
-import { getHighlights } from '../util/highlights';
+import { getHighlights, updateHighlightRoot } from '../util/highlights';
 
 import 'font-awesome/css/font-awesome.css';
+
+const DEFAULT_HIGHLIGHT_PERCENTILE = 0.8;
 
 export default Vue.extend({
 	name: 'target-variable',
@@ -27,9 +29,19 @@ export default Vue.extend({
 		VariableFacets
 	},
 
+	data() {
+		return {
+			hasDefaultedHighlight: false
+		};
+	},
+
 	computed: {
 		dataset(): string {
 			return routeGetters.getRouteDataset(this.$store);
+		},
+
+		target(): string {
+			return routeGetters.getRouteTargetVariable(this.$store);
 		},
 
 		targetVariableSummaries(): VariableSummary[] {
@@ -45,7 +57,32 @@ export default Vue.extend({
 		instanceName(): string {
 			return 'targetVar';
 		}
+	},
+
+	watch: {
+		targetVariableSummaries() {
+
+			if (this.hasDefaultedHighlight || this.highlights.root) {
+				return;
+			}
+
+			if (!this.hasDefaultedHighlight && this.targetVariableSummaries.length > 0) {
+				const summary = this.targetVariableSummaries[0];
+				const extrema = summary.extrema;
+				const range = extrema.min + (extrema.max - extrema.min);
+				updateHighlightRoot(this, {
+					context: this.instanceName,
+					key: this.target,
+					value: {
+						from: extrema.min + (range * DEFAULT_HIGHLIGHT_PERCENTILE),
+						to: extrema.max
+					}
+				});
+				this.hasDefaultedHighlight = true;
+			}
+		}
 	}
+
 
 });
 </script>

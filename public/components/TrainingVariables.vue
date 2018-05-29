@@ -13,11 +13,13 @@
 			:groups="groups"
 			:dataset="dataset"
 			:html="html">
-			<div v-if="groups.length > 0" class="pb-2">
-				<b-button size="sm" variant="outline-secondary" @click="removeAll">Remove All</b-button>
-			</div>
-			<div>
-				{{subtitle}}
+			<div class="available-variables-menu">
+				<div>
+					{{subtitle}}
+				</div>
+				<div v-if="groups.length > 0">
+					<b-button size="sm" variant="outline-secondary" @click="removeAll">Remove All</b-button>
+				</div>
 			</div>
 			<div v-if="groups.length === 0">
 				<i class="no-selections-icon fa fa-arrow-circle-left"></i>
@@ -68,7 +70,7 @@ export default Vue.extend({
 		 	return createGroups(this.trainingVariableSummaries);
 		},
 		subtitle(): string {
-			return `${this.groups.length} features selected (sorted by interestingness)`;
+			return `${this.groups.length} features selected`;
 		},
 		html(): (Group) => HTMLDivElement {
 			return (group: Group) => {
@@ -116,5 +118,11 @@ export default Vue.extend({
 .no-selections-icon {
 	color: #32CD32;
 	font-size: 46px;
+}
+.training-variables-menu {
+	display: flex;
+	justify-content: space-between;
+	padding: 4px 0;
+	line-height: 30px;
 }
 </style>

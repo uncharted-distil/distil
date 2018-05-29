@@ -7,13 +7,19 @@
 			</b-nav>
 		</p>
 
-		<div>
-			<filter-badge v-if="activeFilter"
-				active-filter
-				:filter="activeFilter"></filter-badge>
-			<div v-for="filter in filters">
-				<filter-badge
-					:filter="filter"></filter-badge>
+		<div class="table-search-bar">
+			<div class="fake-search-input">
+				<div class="filter-badges">
+					<filter-badge v-if="activeFilter"
+						active-filter
+						:filter="activeFilter">
+					</filter-badge>
+					<!--
+					<filter-badge v-for="filter in filters"
+						:filter="filter">
+					</filter-badge>
+					-->
+				</div>
 			</div>
 		</div>
 
@@ -22,15 +28,15 @@
 				variant="outline-secondary"
 				:disabled="!highlights.root"
 				@click="onExcludeClick">
-				<i class="fa fa-minus-circle pr-1"></i>Exclude
+				<i class="fa fa-minus-circle pr-1 exclude-icon"></i>Exclude
 			</b-button>
 			<b-button class="float-right" v-if="!includedActive"
 				variant="outline-secondary"
 				:disabled="!highlights.root"
 				@click="onReincludeClick">
-				<i class="fa fa-plus-circle pr-1"></i>Reinclude
+				<i class="fa fa-plus-circle pr-1 include-icon"></i>Reinclude
 			</b-button>
-			<small class="row-number-label">Displaying {{items.length}} of {{numRows}} rows</small>
+			<small class="row-number-label" v-html="tableTitle"></small>
 		</p>
 
 		<div class="select-data-table-container">
@@ -165,7 +171,11 @@ export default Vue.extend({
 
 		spinnerHTML(): string {
 			return spinnerHTML();
-		}
+		},
+
+		tableTitle(): string {
+			return `${this.items.length} <b class="matching-color">matching</b> samples of ${this.numRows} to model`;
+		},
 	},
 
 	methods: {
@@ -248,8 +258,29 @@ table tr {
 .select-view .nav-tabs .nav-link.active {
 	color: rgba(0, 0, 0, 0.87);
 }
+.include-icon,
+.exclude-icon {
+	color: #00c6e1;
+}
 .row-number-label {
 	position: relative;
 	top: 20px;
+}
+.matching-color {
+	color: #00c6e1;
+}
+.table-search-bar {
+}
+.fake-search-input {
+	position: relative;
+	height: 38px;
+	padding: 2px 2px;
+	margin-bottom: 4px;
+	background-color: #eee;
+	border: 1px solid #ccc;
+	border-radius: 0.2rem;
+}
+.filter-badges {
+
 }
 </style>

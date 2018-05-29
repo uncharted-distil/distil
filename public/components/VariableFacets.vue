@@ -11,7 +11,7 @@
 					<p>Select one of the following feature summaries (sorted by interestingness) showing count of records by feature value.</p>
 				</div>
 			</div>
-			<div class="pl-2">
+			<div class="pl-1 pr-1">
 				<slot></slot>
 			</div>
 			<div class="row flex-11">

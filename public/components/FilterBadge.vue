@@ -46,7 +46,6 @@ export default Vue.extend({
 	height: 28px;
 	display: inline-block;
 	color: #fff;
-	float: left;
 	padding-left: 8px;
 	margin: 2px 4px;
 	border-radius: 4px;
@@ -54,7 +53,7 @@ export default Vue.extend({
 }
 
 .filter-badge.active {
-	background-color: #28a745;
+	background-color: #00c6e1;
 }
 
 .remove-button {
@@ -75,6 +74,6 @@ export default Vue.extend({
 }
 
 .active .remove-button:hover {
-	background-color: #1e7e34;
+	background-color: #0089a4;
 }
 </style>

@@ -12,11 +12,13 @@
 			:groups="groups"
 			:dataset="dataset"
 			:html="html">
-			<div v-if="groups.length > 0" class="pb-2">
-				<b-button size="sm" variant="outline-secondary" @click="addAll">Add All</b-button>
-			</div>
-			<div>
-				{{subtitle}}
+			<div class="available-variables-menu">
+				<div>
+					{{subtitle}}
+				</div>
+				<div v-if="groups.length > 0">
+					<b-button size="sm" variant="outline-secondary" @click="addAll">Add All</b-button>
+				</div>
 			</div>
 		</variable-facets>
 	</div>
@@ -53,7 +55,7 @@ export default Vue.extend({
 			return createGroups(filtered);
 		},
 		subtitle(): string {
-			return `${this.groups.length} features available (sorted by interestingness)`;
+			return `${this.groups.length} features available`;
 		},
 		numRowsPerPage(): number {
 			return NUM_PER_PAGE;
@@ -99,5 +101,11 @@ export default Vue.extend({
 .available-training-variables {
 	display: flex;
 	flex-direction: column;
+}
+.available-variables-menu {
+	display: flex;
+	justify-content: space-between;
+	padding: 4px 0;
+	line-height: 30px;
 }
 </style>

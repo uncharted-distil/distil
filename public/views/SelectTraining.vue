@@ -17,7 +17,7 @@
 				</div>
 				<div class="row col-12 pl-4">
 					<p>
-						Use interactive feature highlighting to analyze relationships or to exclude samples from the model.
+						Use interactive feature highlighting to analyze relationships or to exclude samples from the model. Features are sorted by a measure of interestingness.
 					</p>
 				</div>
 			</div>
