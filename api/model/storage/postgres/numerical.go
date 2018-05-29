@@ -204,11 +204,15 @@ func (f *NumericalField) parseHistogram(varType string, rows *pgx.Rows, extrema 
 			return nil, errors.Wrap(err, fmt.Sprintf("no %s histogram aggregation found", histogramAggName))
 		}
 
-		// Since the max can match the limit, an extra bucket may exist.
-		// Add the value to the second to last bucket.
-		if bucket < int64(len(buckets)) {
+		if bucket < 0 {
+			// Due to float representation, sometimes the lowest value <
+			// first bucket interval and so ends up in bucket -1.
+			buckets[0].Count = bucketCount
+		} else if bucket < int64(len(buckets)) {
 			buckets[bucket].Count = bucketCount
 		} else {
+			// Since the max can match the limit, an extra bucket may exist.
+			// Add the value to the second to last bucket.
 			buckets[len(buckets)-1].Count += bucketCount
 
 		}
