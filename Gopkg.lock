@@ -120,7 +120,8 @@
 [[projects]]
   name = "github.com/pkg/errors"
   packages = ["."]
-  revision = "30136e27e2ac8d167177e8a583aa4c3fea5be833"
+  revision = "645ef00459ed84a119197bfb8d8205042c6df63d"
+  version = "v0.8.0"
 
 [[projects]]
   name = "github.com/pmezard/go-difflib"
@@ -158,6 +159,7 @@
   name = "github.com/unchartedsoftware/distil-ingest"
   packages = [
     "conf",
+    "feature",
     "merge",
     "metadata",
     "postgres",
@@ -165,9 +167,9 @@
     "rest",
     "smmry"
   ]
-  revision = "6fa8701ad9c9245a565a74a10bff911b50dbcd03"
+  revision = "32e88ae5aa51879279288ac4b8c511631713d40d"
   source = "git@github.com:unchartedsoftware/distil-ingest.git"
-  version = "0.3.2"
+  version = "0.4.0"
 
 [[projects]]
   branch = "master"
@@ -288,6 +290,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "b6afd4ecdfb59a4612cde9287b29ae1fb862a5c17c0db7ed4b4f47b6a89c4d25"
+  inputs-digest = "f5a6c1440a5d92e5b85ce4a986356b92380151baaa94e82f81396074d7fb5b71"
   solver-name = "gps-cdcl"
   solver-version = 1

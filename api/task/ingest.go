@@ -12,6 +12,7 @@ import (
 	"net/http"
 	"os"
 	"path"
+	"path/filepath"
 	"strings"
 	"time"
 
@@ -20,6 +21,7 @@ import (
 	"gopkg.in/olivere/elastic.v5"
 
 	"github.com/unchartedsoftware/distil-ingest/conf"
+	"github.com/unchartedsoftware/distil-ingest/feature"
 	"github.com/unchartedsoftware/distil-ingest/merge"
 	"github.com/unchartedsoftware/distil-ingest/metadata"
 	"github.com/unchartedsoftware/distil-ingest/postgres"
@@ -39,7 +41,12 @@ type IngestTaskConfig struct {
 	TmpDataPath                        string
 	DataPathRelative                   string
 	DatasetFolderSuffix                string
+	MediaPath                          string
 	HasHeader                          bool
+	FeaturizationRESTEndpoint          string
+	FeaturizationFunctionName          string
+	FeaturizationOutputDataRelative    string
+	FeaturizationOutputSchemaRelative  string
 	MergedOutputPathRelative           string
 	MergedOutputSchemaPathRelative     string
 	SchemaPathRelative                 string
@@ -95,6 +102,11 @@ func IngestDataset(metaCtor model.MetadataStorageCtor, index string, dataset str
 		return errors.Wrap(err, "unable to initialize metadata storage")
 	}
 
+	err = Featurize(index, dataset, config)
+	if err != nil {
+		return errors.Wrap(err, "unable to featurize all data")
+	}
+
 	err = Merge(index, dataset, config)
 	if err != nil {
 		return errors.Wrap(err, "unable to merge all data into a single file")
@@ -124,16 +136,46 @@ func IngestDataset(metaCtor model.MetadataStorageCtor, index string, dataset str
 	return nil
 }
 
+// Featurize uses primitives to obtain a featurized view of complex variables.
+func Featurize(index string, dataset string, config *IngestTaskConfig) error {
+	client := rest.NewClient(config.FeaturizationRESTEndpoint)
+
+	// create required folders for outputPath
+	createContainingDirs(config.getTmpAbsolutePath(config.FeaturizationOutputDataRelative))
+	createContainingDirs(config.getTmpAbsolutePath(config.FeaturizationOutputSchemaRelative))
+
+	// create featurizer
+	featurizer := rest.NewFeaturizer(config.FeaturizationFunctionName, client)
+
+	// load metadata from original schema
+	meta, err := metadata.LoadMetadataFromOriginalSchema(config.getAbsolutePath(config.SchemaPathRelative))
+	if err != nil {
+		return errors.Wrap(err, "unable to load original schema file")
+	}
+
+	// featurize data
+	err = feature.FeaturizeDataset(meta, featurizer, config.ContainerDataPath,
+		config.MediaPath, config.TmpDataPath,
+		config.FeaturizationOutputDataRelative, config.FeaturizationOutputSchemaRelative, config.HasHeader)
+	if err != nil {
+		return errors.Wrap(err, "unable to featurize data")
+	}
+
+	log.Infof("Featurized data written to %s", config.getAbsolutePath(config.TmpDataPath))
+
+	return nil
+}
+
 // Merge combines all the source data files into a single datafile.
 func Merge(index string, dataset string, config *IngestTaskConfig) error {
 	// load the metadata from schema
-	meta, err := metadata.LoadMetadataFromOriginalSchema(config.getAbsolutePath(config.SchemaPathRelative))
+	meta, err := metadata.LoadMetadataFromOriginalSchema(config.getTmpAbsolutePath(config.FeaturizationOutputSchemaRelative))
 	if err != nil {
 		return errors.Wrap(err, "unable to load metadata schema")
 	}
 
 	// merge file links in dataset
-	mergedDR, output, err := merge.InjectFileLinksFromFile(meta, config.getAbsolutePath(config.DataPathRelative), config.getRawDataPath(), config.HasHeader)
+	mergedDR, output, err := merge.InjectFileLinksFromFile(meta, config.getTmpAbsolutePath(config.FeaturizationOutputDataRelative), config.getRawDataPath(), config.MergedOutputPathRelative, config.HasHeader)
 	if err != nil {
 		return errors.Wrap(err, "unable to merge linked files")
 	}
@@ -501,6 +543,18 @@ func matchDataset(storage model.MetadataStorage, meta *metadata.Metadata, index 
 
 	// No matching set.
 	return "", nil
+}
+
+func createContainingDirs(filePath string) error {
+	dirToCreate := filepath.Dir(filePath)
+	if dirToCreate != "/" && dirToCreate != "." {
+		err := os.MkdirAll(dirToCreate, 0777)
+		if err != nil {
+			return errors.Wrap(err, "unable to create containing directory")
+		}
+	}
+
+	return nil
 }
 
 func deleteDataset(name string, index string, pg *postgres.Database, es *elastic.Client) error {
