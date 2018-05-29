@@ -12,6 +12,7 @@ import (
 	"net/http"
 	"os"
 	"path"
+	"path/filepath"
 	"strings"
 	"time"
 
@@ -139,6 +140,10 @@ func IngestDataset(metaCtor model.MetadataStorageCtor, index string, dataset str
 func Featurize(index string, dataset string, config *IngestTaskConfig) error {
 	client := rest.NewClient(config.FeaturizationRESTEndpoint)
 
+	// create required folders for outputPath
+	createContainingDirs(config.getTmpAbsolutePath(config.FeaturizationOutputDataRelative))
+	createContainingDirs(config.getTmpAbsolutePath(config.FeaturizationOutputSchemaRelative))
+
 	// create featurizer
 	featurizer := rest.NewFeaturizer(config.FeaturizationFunctionName, client)
 
@@ -150,9 +155,8 @@ func Featurize(index string, dataset string, config *IngestTaskConfig) error {
 
 	// featurize data
 	err = feature.FeaturizeDataset(meta, featurizer, config.ContainerDataPath,
-		fmt.Sprintf("%s/%s", config.MediaPath, dataset), config.getAbsolutePath(config.TmpDataPath),
-		config.getAbsolutePath(config.FeaturizationOutputDataRelative),
-		config.getAbsolutePath(config.FeaturizationOutputSchemaRelative), config.HasHeader)
+		config.MediaPath, config.TmpDataPath,
+		config.FeaturizationOutputDataRelative, config.FeaturizationOutputSchemaRelative, config.HasHeader)
 	if err != nil {
 		return errors.Wrap(err, "unable to featurize data")
 	}
@@ -165,13 +169,13 @@ func Featurize(index string, dataset string, config *IngestTaskConfig) error {
 // Merge combines all the source data files into a single datafile.
 func Merge(index string, dataset string, config *IngestTaskConfig) error {
 	// load the metadata from schema
-	meta, err := metadata.LoadMetadataFromOriginalSchema(config.getAbsolutePath(config.FeaturizationOutputSchemaRelative))
+	meta, err := metadata.LoadMetadataFromOriginalSchema(config.getTmpAbsolutePath(config.FeaturizationOutputSchemaRelative))
 	if err != nil {
 		return errors.Wrap(err, "unable to load metadata schema")
 	}
 
 	// merge file links in dataset
-	mergedDR, output, err := merge.InjectFileLinksFromFile(meta, config.getAbsolutePath(config.FeaturizationOutputDataRelative), config.getRawDataPath(), config.getAbsolutePath(config.MergedOutputPathRelative), config.HasHeader)
+	mergedDR, output, err := merge.InjectFileLinksFromFile(meta, config.getTmpAbsolutePath(config.FeaturizationOutputDataRelative), config.getRawDataPath(), config.MergedOutputPathRelative, config.HasHeader)
 	if err != nil {
 		return errors.Wrap(err, "unable to merge linked files")
 	}
@@ -539,6 +543,18 @@ func matchDataset(storage model.MetadataStorage, meta *metadata.Metadata, index 
 
 	// No matching set.
 	return "", nil
+}
+
+func createContainingDirs(filePath string) error {
+	dirToCreate := filepath.Dir(filePath)
+	if dirToCreate != "/" && dirToCreate != "." {
+		err := os.MkdirAll(dirToCreate, 0777)
+		if err != nil {
+			return errors.Wrap(err, "unable to create containing directory")
+		}
+	}
+
+	return nil
 }
 
 func deleteDataset(name string, index string, pg *postgres.Database, es *elastic.Client) error {
