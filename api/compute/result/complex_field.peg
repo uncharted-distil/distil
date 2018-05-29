@@ -1,0 +1,25 @@
+package compute
+
+type ComplexField Peg {
+    arrayElements
+}
+
+ComplexField <- array !.
+
+array <- ws * obracket ws* (item ws* (comma ws* item ws* )*)? cbracket
+item <- string / <value*> { p.addElement(buffer[begin:end]) }
+string <- escaped_string / nonescaped_string
+escaped_string <- escdquote <(textdata / squote / lf / cr / obracket / cbracket)*> escdquote { p.addElement(buffer[begin:end]) }
+nonescaped_string <- squote <textdata*> squote { p.addElement(buffer[begin:end]) }
+
+# terminals
+ws <- ' '
+comma <- ','
+lf <- '\n'
+cr <- '\r'
+escdquote <- '\"'
+squote <- '\''
+obracket <- '['
+cbracket <- ']'
+value <- [a-zA-Z0-9]
+textdata <- [a-zA-Z0-9 !#$&%()*+\-./:;<->?\\^_`{|}~]
