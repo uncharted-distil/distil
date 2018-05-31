@@ -1,4 +1,4 @@
-import { RowSelection } from '../store/highlights/index';
+import { RowSelection, Row } from '../store/highlights/index';
 import { getters as routeGetters } from '../store/route/module';
 import { overlayRouteEntry} from '../util/routes'
 import _ from 'lodash';
@@ -18,30 +18,39 @@ export function decodeRowSelection(row: string): RowSelection {
 	return JSON.parse(atob(row)) as RowSelection;
 }
 
-export function updateTableRowSelection(items: any, selection: RowSelection, context: string) {
-	// clear selections
-	_.forEach(items, (row, rowNum) => {
-		row._rowVariant = null;
-	});
-
-	// skip highlighting when the context is the originating table
+export function isRowSelected(selection: RowSelection, index: number): boolean {
 	if (!selection) {
-		return items;
+		return false;
 	}
-
-	if (selection.context !== context) {
-		return items;
+	for (let i=0; i<selection.rows.length; i++) {
+		if (selection.rows[i].index === index) {
+			return true;
+		}
 	}
-	// add selection
-	if (items[selection.index]) {
-		items[selection.index]._rowVariant = 'info';
-	}
-	return items;
+	return false;
 }
 
-export function updateRowSelection(component: Vue, row: RowSelection) {
+export function updateRowSelection(component: Vue, context: string, selection: RowSelection, row: Row) {
+
+	if (!selection || selection.context !== context) {
+		selection = {
+			context: context,
+			rows: []
+		};
+	}
+	if (row) {
+		selection.rows.push(row);
+	}
+
 	const entry = overlayRouteEntry(routeGetters.getRoute(component.$store), {
-		row: encodeRowSelection(row),
+		row: encodeRowSelection(selection),
+	});
+	component.$router.push(entry);
+}
+
+export function removeRowSelection(component: Vue, index: number) {
+	const entry = overlayRouteEntry(routeGetters.getRoute(component.$store), {
+		row: null
 	});
 	component.$router.push(entry);
 }

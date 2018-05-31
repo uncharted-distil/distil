@@ -68,6 +68,7 @@
 
 <script lang="ts">
 
+import $ from 'jquery';
 import _ from 'lodash';
 import { spinnerHTML } from '../util/spinner';
 import Vue from 'vue';
@@ -82,7 +83,7 @@ import { getters as routeGetters } from '../store/route/module';
 import { TableRow } from '../store/dataset/index';
 import { addFilterToRoute, EXCLUDE_FILTER, INCLUDE_FILTER } from '../util/filters';
 import { getHighlights, clearHighlightRoot, createFilterFromHighlightRoot } from '../util/highlights';
-import { updateRowSelection, clearRowSelection, updateTableRowSelection } from '../util/row';
+import { updateRowSelection, isRowSelected } from '../util/row';
 
 export default Vue.extend({
 	name: 'selected-data-table',
@@ -122,8 +123,7 @@ export default Vue.extend({
 
 		// extracts the table data from the store
 		items(): TableRow[] {
-			const items = this.includedActive ? datasetGetters.getIncludedTableDataItems(this.$store) : datasetGetters.getExcludedTableDataItems(this.$store);
-			return updateTableRowSelection(items, this.selectedRow, this.instanceName);
+			return this.includedActive ? datasetGetters.getIncludedTableDataItems(this.$store) : datasetGetters.getExcludedTableDataItems(this.$store);
 		},
 
 		// extract the table field header from the store
@@ -161,12 +161,8 @@ export default Vue.extend({
 			return routeGetters.getDecodedFilters(this.$store);
 		},
 
-		selectedRow(): RowSelection {
+		rowSelection(): RowSelection {
 			return routeGetters.getDecodedRowSelection(this.$store);
-		},
-
-		selectedRowIndex(): number {
-			return this.selectedRow ? this.selectedRow.index : -1;
 		},
 
 		spinnerHTML(): string {
@@ -176,6 +172,19 @@ export default Vue.extend({
 		tableTitle(): string {
 			return `${this.items.length} <b class="matching-color">matching</b> samples of ${this.numRows} to model`;
 		},
+	},
+
+	updated() {
+		if (this.rowSelection) {
+			const $rows = $(this.$el).find('table').find('tbody').find('tr');
+			$rows.removeClass('selected');
+			this.rowSelection.rows.forEach(row => {
+				const elem = $rows.get(row.index);
+				if (elem) {
+					$(elem).addClass('selected');
+				}
+			});
+		}
 	},
 
 	methods: {
@@ -190,10 +199,8 @@ export default Vue.extend({
 			clearHighlightRoot(this);
 		},
 		onRowClick(row: TableRow) {
-			if (row._key !== this.selectedRowIndex) {
-				// clicked on a different row than last time - new selection
-				updateRowSelection(this, {
-					context: this.instanceName,
+			if (!isRowSelected(this.rowSelection, row._key)) {
+				const r = {
 					index: row._key,
 					cols: _.map(this.fields, (field, key) => {
 						return {
@@ -201,10 +208,13 @@ export default Vue.extend({
 							value: row[key]
 						};
 					})
-				});
+				};
+				updateRowSelection(this, this.instanceName, this.rowSelection, r);
 			} else {
-				// clicked on same row - reset the selection key and clear highlights
-				clearRowSelection(this);
+				_.remove(this.rowSelection.rows, r => {
+					return r.index === row._key;
+				});
+				updateRowSelection(this, this.instanceName, this.rowSelection, null);
 			}
 		},
 		invertFilters(filters: Filter[]): Filter[] {
@@ -282,5 +292,9 @@ table tr {
 }
 .filter-badges {
 
+}
+tr.selected {
+	border-left: 4px solid #ff0067;
+	background-color: rgba(255, 0, 103, 0.2);
 }
 </style>

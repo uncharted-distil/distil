@@ -38,6 +38,7 @@
 
 <script lang="ts">
 
+import $ from 'jquery';
 import _ from 'lodash';
 import { spinnerHTML } from '../util/spinner';
 import { Extrema } from '../store/dataset/index';
@@ -48,7 +49,7 @@ import { getters as routeGetters } from '../store/route/module';
 import { getters as solutionGetters } from '../store/solutions/module';
 import { Dictionary } from '../util/dict';
 import { removeNonTrainingItems, removeNonTrainingFields, getPredictedCol, getErrorCol } from '../util/data';
-import { updateRowSelection, clearRowSelection, updateTableRowSelection } from '../util/row';
+import { updateRowSelection, isRowSelected } from '../util/row';
 import Vue from 'vue';
 
 export default Vue.extend({
@@ -96,20 +97,15 @@ export default Vue.extend({
 		},
 
 		items(): TargetRow[] {
-			const filtered = removeNonTrainingItems(this.dataItems, this.training);
-			return updateTableRowSelection(filtered, this.selectedRow, this.instanceName);
+			return removeNonTrainingItems(this.dataItems, this.training);
 		},
 
 		fields(): Dictionary<TableColumn> {
 			return removeNonTrainingFields(this.dataFields, this.training);
 		},
 
-		selectedRow(): RowSelection {
+		rowSelection(): RowSelection {
 			return routeGetters.getDecodedRowSelection(this.$store);
-		},
-
-		selectedRowIndex(): number {
-			return this.selectedRow ? this.selectedRow.index : -1;
 		},
 
 		spinnerHTML(): string {
@@ -125,13 +121,25 @@ export default Vue.extend({
 		},
 	},
 
+	updated() {
+		if (this.rowSelection) {
+			const $rows = $(this.$el).find('table').find('tbody').find('tr');
+			$rows.removeClass('selected');
+			this.rowSelection.rows.forEach(row => {
+				const elem = $rows.get(row.index);
+				if (elem) {
+					$(elem).addClass('selected');
+				}
+			});
+		}
+	},
+
 	methods: {
 
 		onRowClick(row: TableRow) {
-			if (row._key !== this.selectedRowIndex) {
+			if (!isRowSelected(this.rowSelection, row._key)) {
 				// clicked on a different row than last time - new selection
-				updateRowSelection(this, {
-					context: this.instanceName,
+				const r = {
 					index: row._key,
 					cols: _.map(this.fields, (field, key) => {
 						return {
@@ -139,10 +147,13 @@ export default Vue.extend({
 							value: row[key]
 						};
 					})
-				});
+				};
+				updateRowSelection(this, this.instanceName, this.rowSelection, r);
 			} else {
-				// clicked on same row - reset the selection key and clear highlights
-				clearRowSelection(this);
+				_.remove(this.rowSelection.rows, r => {
+					return r.index === row._key;
+				});
+				updateRowSelection(this, this.instanceName, this.rowSelection, null);
 			}
 		},
 

@@ -26,10 +26,14 @@ export interface Column {
 	value: any;
 }
 
-export interface RowSelection {
-	context: string;
+export interface Row {
 	index: number;
 	cols: Column[];
+}
+
+export interface RowSelection {
+	context: string;
+	rows: Row[];
 }
 
 export const state: HighlightState = {
