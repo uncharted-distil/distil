@@ -58,6 +58,9 @@ func main() {
 	}
 	log.Infof("%+v", spew.Sdump(config))
 
+	// set dataset directory
+	compute.SetDatasetDir(config.SolutionDataDir)
+
 	// instantiate elastic client constructor.
 	esClientCtor := elastic.NewClient(config.ElasticEndpoint, false)
 
