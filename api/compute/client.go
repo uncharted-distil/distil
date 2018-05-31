@@ -78,7 +78,7 @@ func (c *Client) StartSearch(ctx context.Context, request *pipeline.SearchSoluti
 
 	searchSolutionResponse, err := c.client.SearchSolutions(ctx, request)
 	if err != nil {
-		return "", err
+		return "", errors.Wrap(err, "failed to start search")
 	}
 
 	return searchSolutionResponse.SearchId, nil
@@ -95,7 +95,7 @@ func (c *Client) SearchSolutions(ctx context.Context, searchID string, solutionH
 
 	searchSolutionsResultsResponse, err := c.client.GetSearchSolutionsResults(ctx, searchPiplinesResultsRequest)
 	if err != nil {
-		return err
+		return errors.Wrap(err, "failed to open search results stream")
 	}
 
 	// track handlers to ensure they all finish before returning
@@ -104,7 +104,7 @@ func (c *Client) SearchSolutions(ctx context.Context, searchID string, solutionH
 	err = pullFromAPI(pullMax, pullTimeout, func() error {
 		solutionResultResponse, err := searchSolutionsResultsResponse.Recv()
 		if err != nil {
-			return err
+			return errors.Wrap(err, "failed to get search result")
 		}
 		// ignore empty responses
 		if solutionResultResponse.SolutionId != "" {
@@ -134,7 +134,7 @@ func (c *Client) GenerateSolutionScores(ctx context.Context, solutionID string) 
 
 	scoreSolutionResponse, err := c.client.ScoreSolution(ctx, scoreSolutionRequest)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "failed to start solution scoring")
 	}
 
 	searchPiplinesResultsRequest := &pipeline.GetScoreSolutionResultsRequest{
@@ -143,7 +143,7 @@ func (c *Client) GenerateSolutionScores(ctx context.Context, solutionID string) 
 
 	scoreSolutionResultsResponse, err := c.client.GetScoreSolutionResults(ctx, searchPiplinesResultsRequest)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "failed to open solution scoring results stream")
 	}
 
 	var solutionResultResponses []*pipeline.GetScoreSolutionResultsResponse
@@ -151,7 +151,7 @@ func (c *Client) GenerateSolutionScores(ctx context.Context, solutionID string) 
 	err = pullFromAPI(pullMax, pullTimeout, func() error {
 		solutionResultResponse, err := scoreSolutionResultsResponse.Recv()
 		if err != nil {
-			return err
+			return errors.Wrap(err, "failed to receive solution scoring result")
 		}
 		solutionResultResponses = append(solutionResultResponses, solutionResultResponse)
 		return nil
@@ -179,7 +179,7 @@ func (c *Client) GenerateSolutionFit(ctx context.Context, solutionID string, dat
 
 	fitSolutionResponse, err := c.client.FitSolution(ctx, fitSolutionRequest)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "failed to start solution fitting")
 	}
 
 	fitSolutionResultsRequest := &pipeline.GetFitSolutionResultsRequest{
@@ -188,7 +188,7 @@ func (c *Client) GenerateSolutionFit(ctx context.Context, solutionID string, dat
 
 	fitSolutionResultsResponse, err := c.client.GetFitSolutionResults(ctx, fitSolutionResultsRequest)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "failed to open solution fitting result stream")
 	}
 
 	var solutionResultResponses []*pipeline.GetFitSolutionResultsResponse
@@ -196,7 +196,7 @@ func (c *Client) GenerateSolutionFit(ctx context.Context, solutionID string, dat
 	err = pullFromAPI(pullMax, pullTimeout, func() error {
 		solutionResultResponse, err := fitSolutionResultsResponse.Recv()
 		if err != nil {
-			return err
+			return errors.Wrap(err, "failed to receving solution fitting result")
 		}
 		solutionResultResponses = append(solutionResultResponses, solutionResultResponse)
 		return nil
@@ -213,7 +213,7 @@ func (c *Client) GeneratePredictions(ctx context.Context, request *pipeline.Prod
 
 	produceSolutionResponse, err := c.client.ProduceSolution(ctx, request)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "failed to start solution produce")
 	}
 
 	produceSolutionResultsRequest := &pipeline.GetProduceSolutionResultsRequest{
@@ -222,7 +222,7 @@ func (c *Client) GeneratePredictions(ctx context.Context, request *pipeline.Prod
 
 	produceSolutionResultsResponse, err := c.client.GetProduceSolutionResults(ctx, produceSolutionResultsRequest)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "failed to open solution produce result stream")
 	}
 
 	var solutionResultResponses []*pipeline.GetProduceSolutionResultsResponse
@@ -230,7 +230,7 @@ func (c *Client) GeneratePredictions(ctx context.Context, request *pipeline.Prod
 	err = pullFromAPI(pullMax, pullTimeout, func() error {
 		solutionResultResponse, err := produceSolutionResultsResponse.Recv()
 		if err != nil {
-			return err
+			return errors.Wrap(err, "failed to receive solution produce result")
 		}
 		solutionResultResponses = append(solutionResultResponses, solutionResultResponse)
 		return nil
@@ -250,7 +250,7 @@ func (c *Client) StopSearch(ctx context.Context, searchID string) error {
 	}
 
 	_, err := c.client.StopSearchSolutions(ctx, stopSearchSolutions)
-	return err
+	return errors.Wrap(err, "failed to stop solution search")
 }
 
 // EndSearch ends the solution search session.
@@ -261,10 +261,10 @@ func (c *Client) EndSearch(ctx context.Context, searchID string) error {
 	}
 
 	_, err := c.client.EndSearchSolutions(ctx, endSearchSolutions)
-	return err
+	return errors.Wrap(err, "failed to end solution search")
 }
 
 // ExportSolution exports the solution.
 func (c *Client) ExportSolution(ctx context.Context, solutionID string, exportURI string) error {
-	return nil
+	return errors.New("export not implemented")
 }

@@ -22,10 +22,10 @@ func NewSimonStep() *StepData {
 	)
 }
 
-// NewRankingStep creates a punk PCA-based feature ranking call that can be added to
+// NewPunkStep creates a punk PCA-based feature ranking call that can be added to
 // a pipeline.
 // ** TODO: Placeholder.  Not yet in TA1 image.
-func NewRankingStep() *StepData {
+func NewPunkStep() *StepData {
 	return NewStepData(
 		&pipeline.Primitive{
 			Id:         "d2fa8df2-6517-3c26-bafc-87b701c4043a",
@@ -37,7 +37,7 @@ func NewRankingStep() *StepData {
 	)
 }
 
-// NewDukeStep creates a
+// NewDukeStep creates a wrapper for the Duke dataset classifier.
 func NewDukeStep() *StepData {
 	return NewStepData(
 		&pipeline.Primitive{
@@ -45,6 +45,20 @@ func NewDukeStep() *StepData {
 			Version:    "1.0.0",
 			Name:       "duke",
 			PythonPath: "d3m.primitives.distil.duke",
+		},
+		[]string{"produce"},
+	)
+}
+
+// NewCrocStep creates a wrapper for the Croc image classifier.
+// **TODO: Not yet in TA1 image.
+func NewCrocStep() *StepData {
+	return NewStepData(
+		&pipeline.Primitive{
+			Id:         "46612a42-6120-3559-9db9-3aa9a76eb94f",
+			Version:    "1.0.0",
+			Name:       "croc",
+			PythonPath: "d3m.primitives.distil.croc",
 		},
 		[]string{"produce"},
 	)
