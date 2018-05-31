@@ -9,6 +9,8 @@ import (
 	"github.com/unchartedsoftware/distil/api/pipeline"
 )
 
+// ExecPipelineStatus contains status / result information for a pipeline status
+// request.
 type ExecPipelineStatus struct {
 	Progress  string
 	RequestID string
@@ -17,57 +19,41 @@ type ExecPipelineStatus struct {
 	ResultURI string
 }
 
+// ExecPipelineStatusListener defines a funtction type for handling pipeline
+// execution result updates.
 type ExecPipelineStatusListener func(status ExecPipelineStatus)
 
 // ExecPipelineRequest defines a request that will execute a fully specified pipline
 // on a TA2 system.
 type ExecPipelineRequest struct {
-	datasetURI       string
-	pipelineDesc     *pipeline.PipelineDescription
-	wg               *sync.WaitGroup
-	mu               *sync.Mutex
-	requestChannel   chan ExecPipelineStatus
-	solutionChannels []chan ExecPipelineStatus
-	listener         ExecPipelineStatusListener
-	finished         chan error
+	datasetURI    string
+	pipelineDesc  *pipeline.PipelineDescription
+	wg            *sync.WaitGroup
+	statusChannel chan ExecPipelineStatus
+	finished      chan error
 }
 
 // NewExecPipelineRequest creates a new request that will run the supplied dataset through
 // the pipeline description.
 func (e *ExecPipelineRequest) NewExecPipelineRequest(datasetURI string, pipelineDesc *pipeline.PipelineDescription) *ExecPipelineRequest {
 	return &ExecPipelineRequest{
-		datasetURI:     datasetURI,
-		pipelineDesc:   pipelineDesc,
-		wg:             &sync.WaitGroup{},
-		finished:       make(chan error),
-		requestChannel: make(chan ExecPipelineStatus, 1),
+		datasetURI:    datasetURI,
+		pipelineDesc:  pipelineDesc,
+		wg:            &sync.WaitGroup{},
+		finished:      make(chan error),
+		statusChannel: make(chan ExecPipelineStatus, 1),
 	}
 }
 
-// Listen listens on the solution requests for new solution statuses.  Status
-// updates are buffered, so listening on a request will provide all status up
-// to the point the call is made, and provide additional solution status updates
-// as the call progresses.
+// Listen listens for new solution statuses and invokes the caller supplied function
+// when a status update is received.  The call will block until the request completes.
 func (e *ExecPipelineRequest) Listen(listener ExecPipelineStatusListener) error {
-	e.listener = listener
-	e.mu.Lock()
-	// listen on main request channel
-	go e.listenOnStatusChannel(e.requestChannel)
-	// listen on individual solution channels
-	for _, c := range e.solutionChannels {
-		go e.listenOnStatusChannel(c)
-	}
-	e.mu.Unlock()
+	go func() {
+		for {
+			listener(<-e.statusChannel)
+		}
+	}()
 	return <-e.finished
-}
-
-func (e *ExecPipelineRequest) listenOnStatusChannel(statusChannel chan ExecPipelineStatus) {
-	for {
-		// read status from, channel
-		status := <-statusChannel
-		// execute callback
-		e.listener(status)
-	}
 }
 
 // Dispatch dispatches a pipeline exeucute request for processing by TA2
@@ -87,73 +73,60 @@ func (e *ExecPipelineRequest) Dispatch(client *Client) error {
 	return nil
 }
 
-func (e *ExecPipelineRequest) dispatchRequest(client *Client, searchID string) {
+func (e *ExecPipelineRequest) dispatchRequest(client *Client, requestID string) {
 
-	// update request status
-	e.updateStatus(e.requestChannel, searchID, RequestPendingStatus)
+	// Update request status
+	e.notifyStatus(e.statusChannel, requestID, RequestPendingStatus)
 
-	// search for solutions, this wont return until the search finishes or it times out
-	err := client.SearchSolutions(context.Background(), searchID, func(solution *pipeline.GetSearchSolutionsResultsResponse) {
-		// create a new status channel for the solution
-		c := make(chan ExecPipelineStatus, 1)
-		// add the solution to the request
-		e.addSolution(c)
-		// persist the solution
-		e.updateStatus(c, searchID, SolutionPendingStatus)
-		// dispatch it
-		e.dispatchSolution(c, client, searchID, solution.SolutionId)
-		// once done, mark as complete
-		e.completeSolution()
+	var firstSolution string
+	var produceCalled bool
+	// Search for solutions, this wont return until the produce finishes or it times out.
+	err := client.SearchSolutions(context.Background(), requestID, func(solution *pipeline.GetSearchSolutionsResultsResponse) {
+		defer e.wg.Done()
+
+		// A complete pipeline specification should result in a single solution being generated.  Consider it an
+		// error condition when that is not the case.
+		if firstSolution == "" {
+			firstSolution = solution.GetSolutionId()
+		} else if firstSolution != solution.GetSolutionId() {
+			err := errors.Errorf("multiple solutions found for request %s, expected 1", requestID)
+			e.notifyError(e.statusChannel, requestID, err)
+			return
+		}
+
+		// handle solution search update - status codes pertain to the search itself, and not a particular
+		// solution
+		switch solution.GetProgress().GetState() {
+		case pipeline.ProgressState_ERRORED:
+			// search errored - most likely case is that the supplied pipeline had a problem in its specification
+			err := errors.Errorf("could not generate solution for request - %s", solution.GetProgress().GetStatus())
+			e.notifyError(e.statusChannel, requestID, err)
+			return
+		case pipeline.ProgressState_RUNNING:
+		case pipeline.ProgressState_COMPLETED:
+			// sarch is actively running or has completed - safe to call produce at this point, but we should
+			// only do so once.  A status update with no actual solution ID is valid.
+			e.notifyStatus(e.statusChannel, requestID, RequestRunningStatus)
+			if solution.GetSolutionId() != "" && !produceCalled {
+				produceCalled = true
+				e.dispatchProduce(e.statusChannel, client, requestID, solution.GetSolutionId())
+			}
+		case pipeline.ProgressState_PENDING:
+		case pipeline.ProgressState_PROGRESS_UNKNOWN:
+		default:
+			e.notifyStatus(e.statusChannel, requestID, RequestRunningStatus)
+		}
 	})
 
-	// update request status
 	if err != nil {
-		e.updateError(e.requestChannel, searchID, err)
-	} else {
-		e.updateStatus(e.requestChannel, searchID, RequestCompletedStatus)
+		e.notifyError(e.statusChannel, requestID, err)
 	}
 
 	// wait until all are complete and the search has finished / timed out
-	e.waitOnSolutions()
+	e.wg.Wait()
 
 	// end search
-	e.finished <- client.EndSearch(context.Background(), searchID)
-}
-
-func (e *ExecPipelineRequest) addSolution(c chan ExecPipelineStatus) {
-	e.wg.Add(1)
-	e.mu.Lock()
-	e.solutionChannels = append(e.solutionChannels, c)
-	if e.listener != nil {
-		go e.listenOnStatusChannel(c)
-	}
-	e.mu.Unlock()
-}
-
-func (e *ExecPipelineRequest) completeSolution() {
-	e.wg.Done()
-}
-
-func (e *ExecPipelineRequest) waitOnSolutions() {
-	e.wg.Wait()
-}
-
-func (e *ExecPipelineRequest) updateStatus(statusChan chan ExecPipelineStatus, searchID string, status string) {
-	// notify of update
-	statusChan <- ExecPipelineStatus{
-		RequestID: searchID,
-		Progress:  status,
-		Timestamp: time.Now(),
-	}
-}
-
-func (e *ExecPipelineRequest) updateError(statusChan chan ExecPipelineStatus, searchID string, err error) {
-	statusChan <- ExecPipelineStatus{
-		RequestID: searchID,
-		Progress:  RequestErroredStatus,
-		Error:     err,
-		Timestamp: time.Now(),
-	}
+	e.finished <- client.EndSearch(context.Background(), requestID)
 }
 
 func (e *ExecPipelineRequest) createProduceSolutionRequest(datsetURI string, solutionID string) *pipeline.ProduceSolutionRequest {
@@ -169,55 +142,80 @@ func (e *ExecPipelineRequest) createProduceSolutionRequest(datsetURI string, sol
 		ExposeOutputs: []string{defaultExposedOutputKey},
 		ExposeValueTypes: []pipeline.ValueType{
 			pipeline.ValueType_CSV_URI,
-			pipeline.ValueType_DATASET_URI,
 		},
 	}
 }
 
-func (e *ExecPipelineRequest) dispatchSolution(statusChan chan ExecPipelineStatus, client *Client, searchID string, solutionID string) {
+func (e *ExecPipelineRequest) dispatchProduce(statusChan chan ExecPipelineStatus, client *Client, requestID string, solutionID string) {
 	// generate predictions
-	produceSolutionRequest := e.createProduceSolutionRequest(e.datasetURI, solutionID)
+	produceRequest := e.createProduceSolutionRequest(e.datasetURI, solutionID)
 
-	// generate predictions
-	predictionResponses, err := client.GeneratePredictions(context.Background(), produceSolutionRequest)
+	// run produce - this blocks until all responses are returned
+	responses, err := client.GeneratePredictions(context.Background(), produceRequest)
 	if err != nil {
-		e.updateError(statusChan, searchID, err)
+		e.notifyError(statusChan, requestID, err)
 		return
 	}
 
-	for _, response := range predictionResponses {
-
-		if response.Progress.State != pipeline.ProgressState_COMPLETED {
-			// only persist completed responses
-			continue
+	// find the completed response
+	var completed *pipeline.GetProduceSolutionResultsResponse
+	for _, response := range responses {
+		if response.Progress.State == pipeline.ProgressState_COMPLETED {
+			completed = response
+			break
 		}
-
-		output, ok := response.ExposedOutputs[defaultExposedOutputKey]
-		if !ok {
-			err := errors.Errorf("output is missing from response")
-			e.updateError(statusChan, searchID, err)
-			return
-		}
-
-		var uri string
-		var err error
-		results := output.Value
-		switch res := results.(type) {
-		case *pipeline.Value_DatasetUri:
-			uri = res.DatasetUri
-		case *pipeline.Value_CsvUri:
-			uri = res.CsvUri
-		default:
-			err = errors.Errorf("unexpected result type '%v'", res)
-			e.updateError(statusChan, searchID, err)
-		}
-
-		statusChan <- ExecPipelineStatus{
-			RequestID: searchID,
-			Progress:  RequestCompletedStatus,
-			Timestamp: time.Now(),
-			ResultURI: uri,
-		}
+	}
+	if completed == nil {
+		err := errors.Errorf("no completed response found")
+		e.notifyError(statusChan, requestID, err)
 		return
+	}
+
+	// make sure the exposed output is what was asked for
+	output, ok := completed.ExposedOutputs[defaultExposedOutputKey]
+	if !ok {
+		err := errors.Errorf("output is missing from response")
+		e.notifyError(statusChan, requestID, err)
+		return
+	}
+
+	var uri string
+	results := output.Value
+	switch res := results.(type) {
+	case *pipeline.Value_DatasetUri:
+		uri = res.DatasetUri
+	case *pipeline.Value_CsvUri:
+		uri = res.CsvUri
+	default:
+		err = errors.Errorf("unexpected result type '%v'", res)
+		e.notifyError(statusChan, requestID, err)
+	}
+	e.notifyResult(statusChan, requestID, uri)
+}
+
+func (e *ExecPipelineRequest) notifyStatus(statusChan chan ExecPipelineStatus, requestID string, status string) {
+	// notify of update
+	statusChan <- ExecPipelineStatus{
+		RequestID: requestID,
+		Progress:  status,
+		Timestamp: time.Now(),
+	}
+}
+
+func (e *ExecPipelineRequest) notifyError(statusChan chan ExecPipelineStatus, requestID string, err error) {
+	statusChan <- ExecPipelineStatus{
+		RequestID: requestID,
+		Progress:  RequestErroredStatus,
+		Error:     err,
+		Timestamp: time.Now(),
+	}
+}
+
+func (e *ExecPipelineRequest) notifyResult(statusChan chan ExecPipelineStatus, requestID string, resultURI string) {
+	statusChan <- ExecPipelineStatus{
+		RequestID: requestID,
+		Progress:  RequestCompletedStatus,
+		ResultURI: resultURI,
+		Timestamp: time.Now(),
 	}
 }
