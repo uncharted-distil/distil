@@ -103,6 +103,7 @@ func (e *ExecPipelineRequest) dispatchRequest(client *Client, requestID string) 
 			e.notifyError(e.statusChannel, requestID, err)
 			return
 		case pipeline.ProgressState_RUNNING:
+			fallthrough
 		case pipeline.ProgressState_COMPLETED:
 			// sarch is actively running or has completed - safe to call produce at this point, but we should
 			// only do so once.  A status update with no actual solution ID is valid.
@@ -111,8 +112,6 @@ func (e *ExecPipelineRequest) dispatchRequest(client *Client, requestID string) 
 				produceCalled = true
 				e.dispatchProduce(e.statusChannel, client, requestID, solution.GetSolutionId())
 			}
-		case pipeline.ProgressState_PENDING:
-		case pipeline.ProgressState_PROGRESS_UNKNOWN:
 		default:
 			e.notifyStatus(e.statusChannel, requestID, RequestRunningStatus)
 		}
