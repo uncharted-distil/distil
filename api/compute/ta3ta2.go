@@ -29,7 +29,6 @@ import (
 const (
 	defaultResourceID       = "0"
 	defaultExposedOutputKey = "outputs.0"
-	datasetDir              = "datasets"
 	unknownAPIVersion       = "unknown"
 	trainTestSplitThreshold = 0.9
 	// SolutionPendingStatus represents that the solution request has been acknoledged by not yet sent to the API
@@ -53,7 +52,13 @@ const (
 var (
 	// cached ta3ta2 API version
 	apiVersion string
+	// folder for dataset data exchanged with TA2
+	datasetDir string
 )
+
+func SetDatasetDir(dir string) {
+	datasetDir = dir
+}
 
 // StopSolutionSearchRequest represents a request to stop any pending siolution searches.
 type StopSolutionSearchRequest struct {
