@@ -29,6 +29,7 @@ export interface Column {
 export interface Row {
 	index: number;
 	cols: Column[];
+	included: boolean;
 }
 
 export interface RowSelection {

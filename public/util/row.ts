@@ -18,6 +18,20 @@ export function decodeRowSelection(row: string): RowSelection {
 	return JSON.parse(atob(row)) as RowSelection;
 }
 
+export function getNumIncludedRows(selection: RowSelection,): number {
+	if (!selection) {
+		return 0;
+	}
+	return selection.rows.filter(r => r.included).length;
+}
+
+export function getNumExcludedRows(selection: RowSelection,): number {
+	if (!selection) {
+		return 0;
+	}
+	return selection.rows.filter(r => !r.included).length;
+}
+
 export function isRowSelected(selection: RowSelection, index: number): boolean {
 	if (!selection) {
 		return false;
@@ -44,13 +58,6 @@ export function updateRowSelection(component: Vue, context: string, selection: R
 
 	const entry = overlayRouteEntry(routeGetters.getRoute(component.$store), {
 		row: encodeRowSelection(selection),
-	});
-	component.$router.push(entry);
-}
-
-export function removeRowSelection(component: Vue, index: number) {
-	const entry = overlayRouteEntry(routeGetters.getRoute(component.$store), {
-		row: null
 	});
 	component.$router.push(entry);
 }

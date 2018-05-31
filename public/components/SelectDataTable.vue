@@ -10,15 +10,13 @@
 		<div class="table-search-bar">
 			<div class="fake-search-input">
 				<div class="filter-badges">
-					<filter-badge v-if="activeFilter"
+					<filter-badge v-if="activeFilter && includedActive"
 						active-filter
 						:filter="activeFilter">
 					</filter-badge>
-					<!--
-					<filter-badge v-for="filter in filters"
+					<filter-badge v-if="!includedActive" v-for="filter in filters"
 						:filter="filter">
 					</filter-badge>
-					-->
 				</div>
 			</div>
 		</div>
@@ -83,7 +81,7 @@ import { getters as routeGetters } from '../store/route/module';
 import { TableRow } from '../store/dataset/index';
 import { addFilterToRoute, EXCLUDE_FILTER, INCLUDE_FILTER } from '../util/filters';
 import { getHighlights, clearHighlightRoot, createFilterFromHighlightRoot } from '../util/highlights';
-import { updateRowSelection, isRowSelected } from '../util/row';
+import { updateRowSelection, isRowSelected, getNumIncludedRows, getNumExcludedRows } from '../util/row';
 
 export default Vue.extend({
 	name: 'selected-data-table',
@@ -170,7 +168,21 @@ export default Vue.extend({
 		},
 
 		tableTitle(): string {
-			return `${this.items.length} <b class="matching-color">matching</b> samples of ${this.numRows} to model`;
+			if (this.includedActive) {
+				const included = getNumIncludedRows(this.rowSelection);
+				if (included > 0) {
+					return `${this.items.length} <b class="matching-color">matching</b> samples of ${this.numRows} to model, ${included} <b class="selected-color">selected</b>`;
+				} else {
+					return `${this.items.length} <b class="matching-color">matching</b> samples of ${this.numRows} to model`;
+				}
+			} else {
+				const excluded = getNumExcludedRows(this.rowSelection);
+				if (excluded > 0) {
+					return `${this.items.length} <b class="matching-color">matching</b> samples of ${this.numRows} to model, ${excluded} <b class="selected-color">selected</b>`;
+				} else {
+					return `${this.items.length} <b class="matching-color">matching</b> samples of ${this.numRows} to model`;
+				}
+			}
 		},
 	},
 
@@ -202,6 +214,7 @@ export default Vue.extend({
 			if (!isRowSelected(this.rowSelection, row._key)) {
 				const r = {
 					index: row._key,
+					included: this.includedActive,
 					cols: _.map(this.fields, (field, key) => {
 						return {
 							key: key,
@@ -292,6 +305,9 @@ table tr {
 }
 .filter-badges {
 
+}
+.selected-color {
+	color: #ff0067;
 }
 tr.selected {
 	border-left: 4px solid #ff0067;

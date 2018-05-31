@@ -141,6 +141,7 @@ export default Vue.extend({
 				// clicked on a different row than last time - new selection
 				const r = {
 					index: row._key,
+					included: true, // TODO: fix this
 					cols: _.map(this.fields, (field, key) => {
 						return {
 							key: key,
