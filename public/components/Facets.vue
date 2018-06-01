@@ -11,6 +11,8 @@ import Vue from 'vue';
 import { Group, CategoricalFacet, isCategoricalFacet, getCategoricalChunkSize } from '../util/facets';
 import { Highlight, RowSelection } from '../store/highlights/index';
 import { Dictionary } from '../util/dict';
+import { getSelectedRows } from '../util/row';
+
 import Facets from '@uncharted.software/stories-facets';
 import ImagePreview from '../components/ImagePreview';
 import TypeChangeMenu from '../components/TypeChangeMenu';
@@ -431,11 +433,12 @@ export default Vue.extend({
 			}
 
 			// if no selection, exit early
-			if (!selection || selection.rows.length === 0) {
+			if (!selection || selection.d3mIndices.length === 0) {
 				return;
 			}
 
-			selection.rows.forEach(row => {
+			const rows = getSelectedRows(this, selection);
+			rows.forEach(row => {
 
 				// get col
 				const col = _.find(row.cols, c => {

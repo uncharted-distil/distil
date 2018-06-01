@@ -38,18 +38,17 @@
 
 <script lang="ts">
 
-import $ from 'jquery';
 import _ from 'lodash';
 import { spinnerHTML } from '../util/spinner';
 import { Extrema } from '../store/dataset/index';
-import { TargetRow, TableRow, TableColumn } from '../store/dataset/index';
+import { TargetRow, TableRow, TableColumn, D3M_INDEX_FIELD } from '../store/dataset/index';
 import { RowSelection } from '../store/highlights/index';
 import { getters as resultsGetters } from '../store/results/module';
 import { getters as routeGetters } from '../store/route/module';
 import { getters as solutionGetters } from '../store/solutions/module';
 import { Dictionary } from '../util/dict';
 import { removeNonTrainingItems, removeNonTrainingFields, getPredictedCol, getErrorCol } from '../util/data';
-import { updateRowSelection, isRowSelected } from '../util/row';
+import { addRowSelection, removeRowSelection, isRowSelected, updateTableRowSelection } from '../util/row';
 import Vue from 'vue';
 
 export default Vue.extend({
@@ -97,7 +96,8 @@ export default Vue.extend({
 		},
 
 		items(): TargetRow[] {
-			return removeNonTrainingItems(this.dataItems, this.training);
+			const filtered = removeNonTrainingItems(this.dataItems, this.training);
+			return updateTableRowSelection(filtered, this.rowSelection, this.instanceName);
 		},
 
 		fields(): Dictionary<TableColumn> {
@@ -121,40 +121,13 @@ export default Vue.extend({
 		},
 	},
 
-	updated() {
-		if (this.rowSelection) {
-			const $rows = $(this.$el).find('table').find('tbody').find('tr');
-			$rows.removeClass('selected');
-			this.rowSelection.rows.forEach(row => {
-				const elem = $rows.get(row.index);
-				if (elem) {
-					$(elem).addClass('selected');
-				}
-			});
-		}
-	},
-
 	methods: {
 
 		onRowClick(row: TableRow) {
-			if (!isRowSelected(this.rowSelection, row._key)) {
-				// clicked on a different row than last time - new selection
-				const r = {
-					index: row._key,
-					included: true, // TODO: fix this
-					cols: _.map(this.fields, (field, key) => {
-						return {
-							key: key,
-							value: row[key]
-						};
-					})
-				};
-				updateRowSelection(this, this.instanceName, this.rowSelection, r);
+			if (!isRowSelected(this.rowSelection, row[D3M_INDEX_FIELD])) {
+				addRowSelection(this, this.instanceName, this.rowSelection, row[D3M_INDEX_FIELD]);
 			} else {
-				_.remove(this.rowSelection.rows, r => {
-					return r.index === row._key;
-				});
-				updateRowSelection(this, this.instanceName, this.rowSelection, null);
+				removeRowSelection(this, this.instanceName, this.rowSelection, row[D3M_INDEX_FIELD]);
 			}
 		},
 
@@ -228,4 +201,8 @@ table tr {
 	background-color: #666;
 }
 
+.table-selected-row {
+	border-left: 4px solid #ff0067;
+	background-color: rgba(255, 0, 103, 0.2);
+}
 </style>

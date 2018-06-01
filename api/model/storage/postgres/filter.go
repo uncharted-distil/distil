@@ -133,6 +133,7 @@ func (s *Storage) buildFilteredQueryField(dataset string, variables []*model.Var
 	for _, variable := range model.GetFilterVariables(filterVariables, variables) {
 		fields = append(fields, fmt.Sprintf("\"%s\"", variable.Name))
 	}
+	fields = append(fields, fmt.Sprintf("\"%s\"", model.D3MIndexFieldName))
 	return strings.Join(fields, ","), nil
 }
 
@@ -143,6 +144,7 @@ func (s *Storage) buildFilteredResultQueryField(dataset string, variables []*mod
 			fields = append(fields, fmt.Sprintf("\"%s\"", variable.Name))
 		}
 	}
+	fields = append(fields, fmt.Sprintf("\"%s\"", model.D3MIndexFieldName))
 	return strings.Join(fields, ","), nil
 }
 

@@ -28,13 +28,14 @@ export interface Column {
 
 export interface Row {
 	index: number;
+	d3mIndex: number;
 	cols: Column[];
 	included: boolean;
 }
 
 export interface RowSelection {
 	context: string;
-	rows: Row[];
+	d3mIndices: number[];
 }
 
 export const state: HighlightState = {

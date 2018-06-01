@@ -66,7 +66,6 @@
 
 <script lang="ts">
 
-import $ from 'jquery';
 import _ from 'lodash';
 import { spinnerHTML } from '../util/spinner';
 import Vue from 'vue';
@@ -75,13 +74,13 @@ import ImagePreview from './ImagePreview';
 import { getters as datasetGetters } from '../store/dataset/module';
 import { Dictionary } from '../util/dict';
 import { Filter } from '../util/filters';
-import { TableColumn } from '../store/dataset/index';
+import { TableColumn, D3M_INDEX_FIELD } from '../store/dataset/index';
 import { Highlight, RowSelection } from '../store/highlights/index';
 import { getters as routeGetters } from '../store/route/module';
 import { TableRow } from '../store/dataset/index';
 import { addFilterToRoute, EXCLUDE_FILTER, INCLUDE_FILTER } from '../util/filters';
 import { getHighlights, clearHighlightRoot, createFilterFromHighlightRoot } from '../util/highlights';
-import { updateRowSelection, isRowSelected, getNumIncludedRows, getNumExcludedRows } from '../util/row';
+import { addRowSelection, removeRowSelection, isRowSelected, getNumIncludedRows, getNumExcludedRows, updateTableRowSelection } from '../util/row';
 
 export default Vue.extend({
 	name: 'selected-data-table',
@@ -121,7 +120,8 @@ export default Vue.extend({
 
 		// extracts the table data from the store
 		items(): TableRow[] {
-			return this.includedActive ? datasetGetters.getIncludedTableDataItems(this.$store) : datasetGetters.getExcludedTableDataItems(this.$store);
+			const items = this.includedActive ? datasetGetters.getIncludedTableDataItems(this.$store) : datasetGetters.getExcludedTableDataItems(this.$store);
+			return updateTableRowSelection(items, this.rowSelection, this.instanceName);
 		},
 
 		// extract the table field header from the store
@@ -169,14 +169,14 @@ export default Vue.extend({
 
 		tableTitle(): string {
 			if (this.includedActive) {
-				const included = getNumIncludedRows(this.rowSelection);
+				const included = getNumIncludedRows(this, this.rowSelection);
 				if (included > 0) {
 					return `${this.items.length} <b class="matching-color">matching</b> samples of ${this.numRows} to model, ${included} <b class="selected-color">selected</b>`;
 				} else {
 					return `${this.items.length} <b class="matching-color">matching</b> samples of ${this.numRows} to model`;
 				}
 			} else {
-				const excluded = getNumExcludedRows(this.rowSelection);
+				const excluded = getNumExcludedRows(this, this.rowSelection);
 				if (excluded > 0) {
 					return `${this.items.length} <b class="matching-color">matching</b> samples of ${this.numRows} to model, ${excluded} <b class="selected-color">selected</b>`;
 				} else {
@@ -184,19 +184,6 @@ export default Vue.extend({
 				}
 			}
 		},
-	},
-
-	updated() {
-		if (this.rowSelection) {
-			const $rows = $(this.$el).find('table').find('tbody').find('tr');
-			$rows.removeClass('selected');
-			this.rowSelection.rows.forEach(row => {
-				const elem = $rows.get(row.index);
-				if (elem) {
-					$(elem).addClass('selected');
-				}
-			});
-		}
 	},
 
 	methods: {
@@ -211,23 +198,10 @@ export default Vue.extend({
 			clearHighlightRoot(this);
 		},
 		onRowClick(row: TableRow) {
-			if (!isRowSelected(this.rowSelection, row._key)) {
-				const r = {
-					index: row._key,
-					included: this.includedActive,
-					cols: _.map(this.fields, (field, key) => {
-						return {
-							key: key,
-							value: row[key]
-						};
-					})
-				};
-				updateRowSelection(this, this.instanceName, this.rowSelection, r);
+			if (!isRowSelected(this.rowSelection, row[D3M_INDEX_FIELD])) {
+				addRowSelection(this, this.instanceName, this.rowSelection, row[D3M_INDEX_FIELD]);
 			} else {
-				_.remove(this.rowSelection.rows, r => {
-					return r.index === row._key;
-				});
-				updateRowSelection(this, this.instanceName, this.rowSelection, null);
+				removeRowSelection(this, this.instanceName, this.rowSelection, row[D3M_INDEX_FIELD]);
 			}
 		},
 		invertFilters(filters: Filter[]): Filter[] {
@@ -309,7 +283,7 @@ table tr {
 .selected-color {
 	color: #ff0067;
 }
-tr.selected {
+.table-selected-row {
 	border-left: 4px solid #ff0067;
 	background-color: rgba(255, 0, 103, 0.2);
 }
