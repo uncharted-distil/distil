@@ -63,8 +63,8 @@ export default Vue.extend({
 				return arg ? arg.toFixed(2) : '';
 			},
 			symmetricSlider: true,
-			min: NaN,
-			max: NaN,
+			min: null,
+			max: null,
 			hasDefaultedThreshold: false
 		};
 	},
@@ -75,8 +75,8 @@ export default Vue.extend({
 			const extrema = resultsGetters.getResidualExtrema(this.$store);
 			if (!extrema) {
 				return {
-					min: NaN,
-					max: NaN
+					min: null,
+					max: null
 				};
 			}
 			return {

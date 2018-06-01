@@ -1,6 +1,7 @@
 package routes
 
 import (
+	"math"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -27,15 +28,25 @@ func ResultsSummaryHandler(solutionCtor model.SolutionStorageCtor, dataCtor mode
 			handleError(w, errors.Wrap(err, "unable to unescape results uuid"))
 			return
 		}
-		extremaMin, err := strconv.ParseFloat(pat.Param(r, "min"), 64)
-		if err != nil {
-			handleError(w, errors.Wrap(err, "unable to parse extrema min"))
-			return
+
+		minStr := pat.Param(r, "min")
+		extremaMin := -math.MaxFloat64
+		if minStr != "" && minStr != "null" {
+			extremaMin, err = strconv.ParseFloat(minStr, 64)
+			if err != nil {
+				handleError(w, errors.Wrap(err, "unable to parse extrema min"))
+				return
+			}
 		}
-		extremaMax, err := strconv.ParseFloat(pat.Param(r, "max"), 64)
-		if err != nil {
-			handleError(w, errors.Wrap(err, "unable to parse extrema max"))
-			return
+
+		maxStr := pat.Param(r, "max")
+		extremaMax := math.MaxFloat64
+		if maxStr != "" && maxStr != "null" {
+			extremaMax, err = strconv.ParseFloat(maxStr, 64)
+			if err != nil {
+				handleError(w, errors.Wrap(err, "unable to parse extrema max"))
+				return
+			}
 		}
 
 		// parse POST params

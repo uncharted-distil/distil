@@ -103,11 +103,11 @@ func (c *Client) SearchSolutions(ctx context.Context, searchID string, solutionH
 	wg := &sync.WaitGroup{}
 
 	err = pullFromAPI(pullMax, pullTimeout, func() error {
+		solutionResultResponse, err := searchSolutionsResultsResponse.Recv()
 		if err == io.EOF {
 			return nil
 		}
 
-		solutionResultResponse, err := searchSolutionsResultsResponse.Recv()
 		if err != nil {
 			return errors.Wrap(err, "failed to get search result")
 		}
