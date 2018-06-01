@@ -2,17 +2,12 @@ package task
 
 import (
 	"bufio"
-	"bytes"
 	"context"
-	"encoding/csv"
-	"encoding/json"
 	"fmt"
-	"io"
 	"io/ioutil"
 	"net/http"
 	"os"
 	"path"
-	"path/filepath"
 	"strings"
 	"time"
 
@@ -21,11 +16,9 @@ import (
 	"gopkg.in/olivere/elastic.v5"
 
 	"github.com/unchartedsoftware/distil-ingest/conf"
-	"github.com/unchartedsoftware/distil-ingest/feature"
 	"github.com/unchartedsoftware/distil-ingest/merge"
 	"github.com/unchartedsoftware/distil-ingest/metadata"
 	"github.com/unchartedsoftware/distil-ingest/postgres"
-	"github.com/unchartedsoftware/distil-ingest/rest"
 	"github.com/unchartedsoftware/distil/api/model"
 )
 
@@ -34,6 +27,26 @@ const (
 	baseTableSuffix = "_base"
 	datasetIDSuffix = "_dataset"
 )
+
+var (
+	classify  = ClassifyContainer
+	rank      = RankContainer
+	summarize = SummarizeContainer
+	featurize = FeaturizeContainer
+)
+
+// Classify function that will classify variables within the dataset.
+type Classify func(index string, dataset string, config *IngestTaskConfig) error
+
+// Rank function that will rank relative variable importance within the dataset.
+type Rank func(index string, dataset string, config *IngestTaskConfig) error
+
+// Summarize function that will provide a summary of the dataset.
+type Summarize func(index string, dataset string, config *IngestTaskConfig) error
+
+// Featurize function that will extract features from dataset variables
+// and add them to the dataset.
+type Featurize func(index string, dataset string, config *IngestTaskConfig) error
 
 // IngestTaskConfig captures the necessary configuration for an data ingest.
 type IngestTaskConfig struct {
@@ -102,7 +115,7 @@ func IngestDataset(metaCtor model.MetadataStorageCtor, index string, dataset str
 		return errors.Wrap(err, "unable to initialize metadata storage")
 	}
 
-	err = Featurize(index, dataset, config)
+	err = featurize(index, dataset, config)
 	if err != nil {
 		return errors.Wrap(err, "unable to featurize all data")
 	}
@@ -112,17 +125,17 @@ func IngestDataset(metaCtor model.MetadataStorageCtor, index string, dataset str
 		return errors.Wrap(err, "unable to merge all data into a single file")
 	}
 
-	err = Classify(index, dataset, config)
+	err = classify(index, dataset, config)
 	if err != nil {
 		return errors.Wrap(err, "unable to classify fields")
 	}
 
-	err = Rank(index, dataset, config)
+	err = rank(index, dataset, config)
 	if err != nil {
 		return errors.Wrap(err, "unable to rank field importance")
 	}
 
-	err = Summarize(index, dataset, config)
+	err = summarize(index, dataset, config)
 	// NOTE: For now ignore summary errors!
 	//if err != nil {
 	//	return errors.Wrap(err, "unable to summarize the dataset")
@@ -132,36 +145,6 @@ func IngestDataset(metaCtor model.MetadataStorageCtor, index string, dataset str
 	if err != nil {
 		return errors.Wrap(err, "unable to ingest ranked data")
 	}
-
-	return nil
-}
-
-// Featurize uses primitives to obtain a featurized view of complex variables.
-func Featurize(index string, dataset string, config *IngestTaskConfig) error {
-	client := rest.NewClient(config.FeaturizationRESTEndpoint)
-
-	// create required folders for outputPath
-	createContainingDirs(config.getTmpAbsolutePath(config.FeaturizationOutputDataRelative))
-	createContainingDirs(config.getTmpAbsolutePath(config.FeaturizationOutputSchemaRelative))
-
-	// create featurizer
-	featurizer := rest.NewFeaturizer(config.FeaturizationFunctionName, client)
-
-	// load metadata from original schema
-	meta, err := metadata.LoadMetadataFromOriginalSchema(config.getAbsolutePath(config.SchemaPathRelative))
-	if err != nil {
-		return errors.Wrap(err, "unable to load original schema file")
-	}
-
-	// featurize data
-	err = feature.FeaturizeDataset(meta, featurizer, config.ContainerDataPath,
-		config.MediaPath, config.TmpDataPath,
-		config.FeaturizationOutputDataRelative, config.FeaturizationOutputSchemaRelative, config.HasHeader)
-	if err != nil {
-		return errors.Wrap(err, "unable to featurize data")
-	}
-
-	log.Infof("Featurized data written to %s", config.getAbsolutePath(config.TmpDataPath))
 
 	return nil
 }
@@ -190,117 +173,6 @@ func Merge(index string, dataset string, config *IngestTaskConfig) error {
 	err = meta.WriteMergedSchema(config.getTmpAbsolutePath(config.MergedOutputSchemaPathRelative), mergedDR)
 	if err != nil {
 		return errors.Wrap(err, "unable to write merged schema")
-	}
-
-	return nil
-}
-
-// Classify uses the merged datafile and determines the data types of
-// every variable specified in the merged schema file.
-func Classify(index string, dataset string, config *IngestTaskConfig) error {
-	client := rest.NewClient(config.ClassificationRESTEndpoint)
-
-	// create classifier
-	classifier := rest.NewClassifier(config.ClassificationFunctionName, client)
-
-	// classify the file
-	classification, err := classifier.ClassifyFile(config.getTmpAbsolutePath(config.MergedOutputPathRelative))
-	if err != nil {
-		return errors.Wrap(err, "unable to classify dataset")
-	}
-
-	// marshall result
-	bytes, err := json.MarshalIndent(classification, "", "    ")
-	if err != nil {
-		return errors.Wrap(err, "unable to serialize classification result")
-	}
-	// write to file
-	err = ioutil.WriteFile(config.getTmpAbsolutePath(config.ClassificationOutputPathRelative), bytes, 0644)
-	if err != nil {
-		return errors.Wrap(err, "unable to store classification result")
-	}
-
-	return nil
-}
-
-// Rank the importance of the variables in the dataset.
-func Rank(index string, dataset string, config *IngestTaskConfig) error {
-	// get the header for the rank data
-	meta, err := metadata.LoadMetadataFromClassification(
-		config.getTmpAbsolutePath(config.MergedOutputSchemaPathRelative),
-		config.getTmpAbsolutePath(config.ClassificationOutputPathRelative))
-	if err != nil {
-		return errors.Wrap(err, "unable to load metadata")
-	}
-
-	header, err := meta.GenerateHeaders()
-	if err != nil {
-		return errors.Wrap(err, "unable to load metadata")
-	}
-
-	if len(header) != 1 {
-		return errors.Errorf("merge data should only have one header but found %d", len(header))
-	}
-
-	// need to ignore rows with missing
-	// ranking requires a header
-	err = removeMissingValues(
-		config.getTmpAbsolutePath(config.MergedOutputPathRelative),
-		config.getTmpAbsolutePath(rankingFilename),
-		config.HasHeader, header[0], config.RankingRowLimit)
-	if err != nil {
-		return errors.Wrap(err, "unable to ignore missing values")
-	}
-
-	// create ranker
-	client := rest.NewClient(config.RankingRESTEndpoint)
-	ranker := rest.NewRanker(config.RankingFunctionName, client)
-
-	// get the importance from the REST interface
-	importance, err := ranker.RankFile(config.getTmpAbsolutePath(rankingFilename))
-	if err != nil {
-		return errors.Wrap(err, "unable to rank importance file")
-	}
-
-	// marshall result
-	bytes, err := json.MarshalIndent(importance, "", "    ")
-	if err != nil {
-		return errors.Wrap(err, "unable to marshall importance ranking result")
-	}
-
-	// write to file
-	outputPath := config.getTmpAbsolutePath(config.RankingOutputPathRelative)
-	err = ioutil.WriteFile(outputPath, bytes, 0644)
-	if err != nil {
-		return errors.Wrapf(err, "unable to write importance ranking to '%s'", outputPath)
-	}
-
-	return nil
-}
-
-// Summarize the contents of the dataset.
-func Summarize(index string, dataset string, config *IngestTaskConfig) error {
-	// create ranker
-	client := rest.NewClient(config.SummaryRESTEndpoint)
-	summarizer := rest.NewSummarizer(config.SummaryFunctionName, client)
-
-	// get the importance from the REST interface
-	summary, err := summarizer.SummarizeFile(config.getTmpAbsolutePath(config.MergedOutputPathRelative))
-	if err != nil {
-		return errors.Wrap(err, "unable to summarize merged file")
-	}
-
-	// marshall result
-	bytes, err := json.MarshalIndent(summary, "", "    ")
-	if err != nil {
-		return errors.Wrap(err, "unable to marshall summary result")
-	}
-
-	// write to file
-	outputPath := config.getTmpAbsolutePath(config.SummaryMachineOutputPathRelative)
-	err = ioutil.WriteFile(outputPath, bytes, 0644)
-	if err != nil {
-		return errors.Wrapf(err, "unable to write summary to '%s'", outputPath)
 	}
 
 	return nil
@@ -454,58 +326,6 @@ func Ingest(storage model.MetadataStorage, index string, dataset string, config 
 	return nil
 }
 
-func removeMissingValues(sourceFile string, destinationFile string, hasHeader bool, headerToWrite []string, rowLimit int) error {
-	// Copy source to destination, removing rows that have missing values.
-	file, err := os.Open(sourceFile)
-	if err != nil {
-		return errors.Wrap(err, "failed to open source file")
-	}
-
-	reader := csv.NewReader(file)
-
-	// output writer
-	output := &bytes.Buffer{}
-	writer := csv.NewWriter(output)
-	if headerToWrite != nil && len(headerToWrite) > 0 {
-		err := writer.Write(headerToWrite)
-		if err != nil {
-			return errors.Wrap(err, "failed to write header to file")
-		}
-	}
-
-	count := 0
-	for {
-		line, err := reader.Read()
-		if err == io.EOF {
-			break
-		} else if err != nil {
-			return errors.Wrap(err, "failed to read line from file")
-		}
-		if (count > 0 || !hasHeader) && (count < rowLimit) {
-			// write the csv line back out
-			err := writer.Write(line)
-			if err != nil {
-				return errors.Wrap(err, "failed to write line to file")
-			}
-		}
-		count++
-	}
-	// flush writer
-	writer.Flush()
-
-	err = ioutil.WriteFile(destinationFile, output.Bytes(), 0644)
-	if err != nil {
-		return errors.Wrap(err, "failed to close output file")
-	}
-
-	// close left
-	err = file.Close()
-	if err != nil {
-		return errors.Wrap(err, "failed to close input file")
-	}
-	return nil
-}
-
 func fixDatasetIDName(meta *metadata.Metadata) {
 	// Train dataset ID & name need to be adjusted to fit the expected format.
 	// The ID MUST end in _dataset, and the name should be representative.
@@ -543,18 +363,6 @@ func matchDataset(storage model.MetadataStorage, meta *metadata.Metadata, index 
 
 	// No matching set.
 	return "", nil
-}
-
-func createContainingDirs(filePath string) error {
-	dirToCreate := filepath.Dir(filePath)
-	if dirToCreate != "/" && dirToCreate != "." {
-		err := os.MkdirAll(dirToCreate, 0777)
-		if err != nil {
-			return errors.Wrap(err, "unable to create containing directory")
-		}
-	}
-
-	return nil
 }
 
 func deleteDataset(name string, index string, pg *postgres.Database, es *elastic.Client) error {
