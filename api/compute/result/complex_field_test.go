@@ -47,3 +47,17 @@ func TestParserFail(t *testing.T) {
 	err := field.Parse()
 	assert.Error(t, err)
 }
+
+func TestParserNested(t *testing.T) {
+	field := &ComplexField{Buffer: "[[10, 20, 30, [alpha, bravo]], [40, 50, 60]]"}
+	field.Init()
+
+	err := field.Parse()
+	field.PrintSyntaxTree()
+	assert.NoError(t, err)
+
+	field.Execute()
+
+	assert.Equal(t, []interface{}{"alpha", "bravo"}, field.arrayElements.elements[0].([]interface{})[3].([]interface{}))
+	assert.Equal(t, []interface{}{"40", "50", "60"}, field.arrayElements.elements[1].([]interface{}))
+}

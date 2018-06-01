@@ -2,9 +2,14 @@ package compute
 
 # Parser for an array field exported from a Python PANDAS dataframe via its to_csv() method.
 # The exported file is RFC 4180 compatible, and is loaded using the CSV loader from the golang
-# standard lib.
+# standard lib.  The loader handles most of the escaping.
 #
-# Example: "[10, 20, 30, \"forty  & fifty\"]"
+# "[10, 20, 30, \"forty  & fifty\"]"
+#
+# parses to the Go type:
+#
+# []interface{"10", "20", "30", "forty & fifty"}
+#
 
 # generated go struct - accessible via `p` in attached code blocks
 type ComplexField Peg {
@@ -14,11 +19,11 @@ type ComplexField Peg {
 ComplexField <- array !.
 
 # non-terminals
-array <- ws * obracket ws* (item ws* (comma ws* item ws* )*)? cbracket
-item <- string / <value*> { p.addElement(buffer[begin:end]) }
-string <- escaped_string / nonescaped_string
-escaped_string <- escdquote <(textdata / squote / lf / cr / obracket / cbracket)*> escdquote { p.addElement(buffer[begin:end]) }
-nonescaped_string <- squote <textdata*> squote { p.addElement(buffer[begin:end]) }
+array <- ws* obracket { p.pushArray() } ws* (item ws* (comma ws* item ws* )*)? cbracket { p.popArray() }
+item <- array / string / <value*> { p.addElement(buffer[begin:end]) }
+string <- dquote_string / squote_string
+dquote_string <- escdquote <(textdata / squote / lf / cr / obracket / cbracket)*> escdquote { p.addElement(buffer[begin:end]) }
+squote_string <- squote <(textdata / escdquote / lf / cr / obracket / cbracket)*> squote { p.addElement(buffer[begin:end]) }
 
 # terminals
 ws <- ' '

@@ -15,6 +15,7 @@ func TestCSVResultParser(t *testing.T) {
 	fmt.Printf("%v", result)
 
 	assert.Equal(t, []interface{}{"idx", "col a", "col b"}, result[0])
-	assert.Equal(t, []interface{}{int64(0), []interface{}{"alpha", "bravo"}, "foxtrot"}, result[1])
-	assert.Equal(t, []interface{}{int64(1), []interface{}{"charlie", "delta's oscar"}, "hotel"}, result[2])
+	assert.Equal(t, []interface{}{"0", []interface{}{"alpha", "bravo"}, "foxtrot"}, result[1])
+	assert.Equal(t, []interface{}{"1", []interface{}{"charlie", "delta's oscar"}, "hotel"}, result[2])
+	assert.Equal(t, []interface{}{"2", []interface{}{"a", "[", "b"}, []interface{}{"c", "\"", "e"}}, result[3])
 }
