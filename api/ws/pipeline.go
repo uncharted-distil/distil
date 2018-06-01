@@ -124,7 +124,7 @@ func handleCreateSolutions(conn *Connection, client *compute.Client, metadataCto
 	err = request.Listen(func(status compute.SolutionStatus) {
 		// check for error
 		if status.Error != nil {
-			handleErr(conn, msg, err)
+			handleErr(conn, msg, status.Error)
 			return
 		}
 		// send status to client
