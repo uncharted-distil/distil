@@ -190,8 +190,8 @@ export function createPendingSummary(name: string, label: string, dataset: strin
 		pending: true,
 		buckets: [],
 		extrema: {
-			min: NaN,
-			max: NaN
+			min: null,
+			max: null
 		},
 		numRows: 0,
 		solutionId: solutionId
@@ -206,8 +206,8 @@ export function createErrorSummary(name: string, label: string, dataset: string,
 		feature: '',
 		buckets: [],
 		extrema: {
-			min: NaN,
-			max: NaN
+			min: null,
+			max: null
 		},
 		err: error.response ? error.response.data : error,
 		numRows: 0
