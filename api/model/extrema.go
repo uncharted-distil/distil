@@ -1,6 +1,7 @@
 package model
 
 import (
+	"errors"
 	"fmt"
 	"math"
 )
@@ -24,7 +25,7 @@ func NewExtrema(min float64, max float64) (*Extrema, error) {
 		return nil, fmt.Errorf("extrema min cannot be equal to or greater than max")
 	}
 	if math.IsNaN(min) || math.IsNaN(max) {
-		return nil, fmt.Errorf("extrema cannot contain NaN values")
+		return nil, errors.New("extrema cannot contain NaN values")
 	}
 	return &Extrema{
 		Min: min,

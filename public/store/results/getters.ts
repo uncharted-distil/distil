@@ -57,8 +57,8 @@ export const getters = {
 	getPredictedExtrema(state: ResultsState): Extrema {
 		if (_.isEmpty(state.predictedExtremas) && !state.targetResultExtrema) {
 			return {
-				min: NaN,
-				max: NaN
+				min: null,
+				max: null
 			};
 		}
 		const res = { min: Infinity, max: -Infinity };
@@ -82,8 +82,8 @@ export const getters = {
 	getResidualExtrema(state: ResultsState): Extrema {
 		if (_.isEmpty(state.residualExtremas)) {
 			return {
-				min: NaN,
-				max: NaN
+				min: null,
+				max: null
 			};
 		}
 		const res = { min: Infinity, max: -Infinity };
