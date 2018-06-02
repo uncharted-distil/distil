@@ -22,8 +22,8 @@ ComplexField <- array !.
 array <- ws* obracket { p.pushArray() } ws* (item ws* (comma ws* item ws* )*)? cbracket { p.popArray() }
 item <- array / string / <value*> { p.addElement(buffer[begin:end]) }
 string <- dquote_string / squote_string
-dquote_string <- escdquote <(textdata / squote / lf / cr / obracket / cbracket)*> escdquote { p.addElement(buffer[begin:end]) }
-squote_string <- squote <(textdata / escdquote / lf / cr / obracket / cbracket)*> squote { p.addElement(buffer[begin:end]) }
+dquote_string <- escdquote <(textdata / squote / lf / cr / obracket / cbracket / comma)*> escdquote { p.addElement(buffer[begin:end]) }
+squote_string <- squote <(escquote / escdquote / textdata / lf / cr / obracket / cbracket)*> squote { p.addElement(buffer[begin:end]) }
 
 # terminals
 ws <- ' '
@@ -31,6 +31,7 @@ comma <- ','
 lf <- '\n'
 cr <- '\r'
 escdquote <- '\"'
+escsquote <- '\\\''
 squote <- '\''
 obracket <- '['
 cbracket <- ']'

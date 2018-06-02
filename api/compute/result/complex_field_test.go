@@ -6,18 +6,18 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestParserUnescaped(t *testing.T) {
-	field := &ComplexField{Buffer: "  ['c ar'  , 'plane', 'b* oat']"}
+func TestParserSingleQuoted(t *testing.T) {
+	field := &ComplexField{Buffer: "  ['c ar'  , '\\'plane', 'b* oat']"} // single quote can be escaped in python
 	field.Init()
 
 	err := field.Parse()
 	assert.NoError(t, err)
 
 	field.Execute()
-	assert.Equal(t, []interface{}{"c ar", "plane", "b* oat"}, field.arrayElements.elements)
+	assert.Equal(t, []interface{}{"c ar", "'plane", "b* oat"}, field.arrayElements.elements)
 }
 
-func TestParserEscaped(t *testing.T) {
+func TestParserDoubleQuoted(t *testing.T) {
 	field := &ComplexField{Buffer: "[\"&car\"  , \"\\plane\", \"boat's\"]"}
 	field.Init()
 

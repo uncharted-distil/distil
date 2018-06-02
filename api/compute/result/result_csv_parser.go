@@ -4,6 +4,7 @@ import (
 	"encoding/csv"
 	"io"
 	"os"
+	"strings"
 
 	"github.com/pkg/errors"
 )
@@ -71,7 +72,9 @@ func (a *arrayElements) lastIdx() int {
 }
 
 // Called by peg parse
-func (a *arrayElements) addElement(element interface{}) {
+func (a *arrayElements) addElement(element string) {
+	// there is no single quote escape in Go so we need to pull it out of any element we process
+	element = strings.Replace(element, "\\'", "'", -1)
 	a.stack[a.lastIdx()] = append(a.stack[a.lastIdx()], element)
 }
 

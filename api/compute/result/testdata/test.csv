@@ -2,3 +2,4 @@ idx,col a,col b
 0,"['alpha', 'bravo']",foxtrot
 1,"['charlie', ""delta's oscar""]",hotel
 2,"['a', '[', 'b']","['c', '""', 'e']"
+3,"['a', '[\'""', 'b']","['c', '""', 'e']"
