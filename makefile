@@ -43,11 +43,15 @@ test: build
 proto:
 	@protoc -I /usr/local/include -I api/pipeline api/pipeline/*.proto --go_out=plugins=grpc:api/pipeline
 
+peg:
+	@peg -inline ./api/compute/result/complex_field.peg
+
 install:
 	@npm install -g yarn
 	@yarn install
 	@go get -u github.com/golang/protobuf/protoc-gen-go
 	@go get -u github.com/golang/lint/golint
 	@go get -u github.com/golang/dep/cmd/dep
+	@go get -u github.com/pointlander/peg
 	@go get -u github.com/unchartedsoftware/witch
 	@dep ensure

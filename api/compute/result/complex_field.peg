@@ -1,0 +1,39 @@
+package compute
+
+# Parser for an array field exported from a Python PANDAS dataframe via its to_csv() method.
+# The exported file is RFC 4180 compatible, and is loaded using the CSV loader from the golang
+# standard lib.  The loader handles most of the escaping.
+#
+# "[10, 20, 30, \"forty  & fifty\"]"
+#
+# parses to the Go type:
+#
+# []interface{"10", "20", "30", "forty & fifty"}
+#
+
+# generated go struct - accessible via `p` in attached code blocks
+type ComplexField Peg {
+    arrayElements
+}
+
+ComplexField <- array !.
+
+# non-terminals
+array <- ws* obracket { p.pushArray() } ws* (item ws* (comma ws* item ws* )*)? cbracket { p.popArray() }
+item <- array / string / <value*> { p.addElement(buffer[begin:end]) }
+string <- dquote_string / squote_string
+dquote_string <- escdquote <(textdata / squote / lf / cr / obracket / cbracket / comma)*> escdquote { p.addElement(buffer[begin:end]) }
+squote_string <- squote <(escquote / escdquote / textdata / lf / cr / obracket / cbracket)*> squote { p.addElement(buffer[begin:end]) }
+
+# terminals
+ws <- ' '
+comma <- ','
+lf <- '\n'
+cr <- '\r'
+escdquote <- '\"'
+escsquote <- '\\\''
+squote <- '\''
+obracket <- '['
+cbracket <- ']'
+value <- [a-zA-Z0-9]
+textdata <- [a-zA-Z0-9 !#$&%()*+\-./:;<->?\\^_`{|}~]

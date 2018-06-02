@@ -44,10 +44,18 @@ mv protoc3/bin/protoc /usr/bin/protoc
 make install
 ```
 
-#### Compile the protocol buffer definitions:
+#### OPTIONAL - Generate code:
+
+To regenerate TA3TA2 interface protobuf files *if the `api/pipeline/*.proto` sources change, run:
 
 ```bash
 make proto
+```
+
+To regenerate the PANDAS dataframe parser if the `api/compute/result/complex_field.peg` file is changed, run:
+
+```bash
+make peg
 ```
 
 #### Docker images:
