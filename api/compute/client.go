@@ -1,6 +1,7 @@
 package compute
 
 import (
+	"io"
 	"strings"
 	"sync"
 
@@ -103,6 +104,10 @@ func (c *Client) SearchSolutions(ctx context.Context, searchID string, solutionH
 
 	err = pullFromAPI(pullMax, pullTimeout, func() error {
 		solutionResultResponse, err := searchSolutionsResultsResponse.Recv()
+		if err == io.EOF {
+			return nil
+		}
+
 		if err != nil {
 			return errors.Wrap(err, "failed to get search result")
 		}
@@ -150,6 +155,10 @@ func (c *Client) GenerateSolutionScores(ctx context.Context, solutionID string) 
 
 	err = pullFromAPI(pullMax, pullTimeout, func() error {
 		solutionResultResponse, err := scoreSolutionResultsResponse.Recv()
+		if err == io.EOF {
+			return nil
+		}
+
 		if err != nil {
 			return errors.Wrap(err, "failed to receive solution scoring result")
 		}
@@ -195,6 +204,10 @@ func (c *Client) GenerateSolutionFit(ctx context.Context, solutionID string, dat
 
 	err = pullFromAPI(pullMax, pullTimeout, func() error {
 		solutionResultResponse, err := fitSolutionResultsResponse.Recv()
+		if err == io.EOF {
+			return nil
+		}
+
 		if err != nil {
 			return errors.Wrap(err, "failed to receving solution fitting result")
 		}
@@ -229,6 +242,10 @@ func (c *Client) GeneratePredictions(ctx context.Context, request *pipeline.Prod
 
 	err = pullFromAPI(pullMax, pullTimeout, func() error {
 		solutionResultResponse, err := produceSolutionResultsResponse.Recv()
+		if err == io.EOF {
+			return nil
+		}
+
 		if err != nil {
 			return errors.Wrap(err, "failed to receive solution produce result")
 		}

@@ -3,6 +3,8 @@ import { ResultsState } from './index';
 import { VariableSummary, Extrema, TableData } from '../dataset/index';
 import { updateSummaries } from '../../util/data';
 
+const SOLUTION_ID = 'solutionId'
+
 export const mutations = {
 
 	// results
@@ -32,7 +34,7 @@ export const mutations = {
 	// predicted
 
 	updatePredictedSummaries(state: ResultsState, summary: VariableSummary) {
-		updateSummaries(summary, state.predictedSummaries, 'solutionId');
+		updateSummaries(summary, state.predictedSummaries, SOLUTION_ID);
 	},
 
 	updatePredictedExtremas(state: ResultsState, args: { solutionId: string, extrema: Extrema }) {
@@ -50,7 +52,7 @@ export const mutations = {
 	// residuals
 
 	updateResidualsSummaries(state: ResultsState, summary: VariableSummary) {
-		updateSummaries(summary, state.residualSummaries, 'solutionId');
+		updateSummaries(summary, state.residualSummaries, SOLUTION_ID);
 	},
 
 	updateResidualsExtremas(state: ResultsState, args: { solutionId: string, extrema: Extrema }) {
@@ -68,6 +70,6 @@ export const mutations = {
 	// correctness
 
 	updateCorrectnessSummaries(state: ResultsState, summary: VariableSummary) {
-		updateSummaries(summary, state.correctnessSummaries, 'pipelineId');
+		updateSummaries(summary, state.correctnessSummaries, SOLUTION_ID);
 	}
 }
