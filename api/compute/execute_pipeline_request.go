@@ -35,7 +35,7 @@ type ExecPipelineRequest struct {
 
 // NewExecPipelineRequest creates a new request that will run the supplied dataset through
 // the pipeline description.
-func (e *ExecPipelineRequest) NewExecPipelineRequest(datasetURI string, pipelineDesc *pipeline.PipelineDescription) *ExecPipelineRequest {
+func NewExecPipelineRequest(datasetURI string, pipelineDesc *pipeline.PipelineDescription) *ExecPipelineRequest {
 	return &ExecPipelineRequest{
 		datasetURI:    datasetURI,
 		pipelineDesc:  pipelineDesc,
