@@ -14,8 +14,7 @@
 						active-filter
 						:filter="activeFilter">
 					</filter-badge>
-					<filter-badge v-if="!includedActive" v-for="filter in filters"
-						:filter="filter">
+					<filter-badge v-if="!includedActive && filter.type !== 'row'" v-for="filter in filters" :filter="filter">
 					</filter-badge>
 				</div>
 			</div>
@@ -30,9 +29,9 @@
 			</b-button>
 			<b-button class="float-right" v-if="!includedActive"
 				variant="outline-secondary"
-				:disabled="!isFilteringHighlights && !isFilteringSelection"
+				:disabled="!isFilteringSelection"
 				@click="onReincludeClick">
-				<i class="fa fa-plus-circle pr-1" v-bind:class="{'include-highlight': isFilteringHighlights, 'include-selection': isFilteringSelection}"></i>Reinclude
+				<i class="fa fa-plus-circle pr-1" v-bind:class="{'include-selection': isFilteringSelection}"></i>Reinclude
 			</b-button>
 			<small class="row-number-label" v-html="tableTitle"></small>
 		</p>
