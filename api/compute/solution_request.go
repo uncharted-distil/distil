@@ -196,9 +196,9 @@ func (s *SolutionRequest) createPreprocessingPipeline(featureVariables []*model.
 	return preprocessingPipeline, nil
 }
 
-func (s *SolutionRequest) createProduceSolutionRequest(datasetURI string, solutionID string) *pipeline.ProduceSolutionRequest {
+func (s *SolutionRequest) createProduceSolutionRequest(datasetURI string, fittedSolutionID string) *pipeline.ProduceSolutionRequest {
 	return &pipeline.ProduceSolutionRequest{
-		SolutionId: solutionID,
+		FittedSolutionId: fittedSolutionID,
 		Inputs: []*pipeline.Value{
 			{
 				Value: &pipeline.Value_DatasetUri{
@@ -323,17 +323,30 @@ func (s *SolutionRequest) dispatchSolution(statusChan chan SolutionStatus, clien
 	}
 
 	// fit solution
-	_, err = client.GenerateSolutionFit(context.Background(), solutionID, datasetURITrain)
+	var fitResults []*pipeline.GetFitSolutionResultsResponse
+	fitResults, err = client.GenerateSolutionFit(context.Background(), solutionID, datasetURITrain)
 	if err != nil {
 		s.persistSolutionError(statusChan, solutionStorage, searchID, solutionID, err)
 		return
+	}
+
+	// find the completed result and get the fitted solution ID out
+	var fittedSolutionID string
+	for _, result := range fitResults {
+		if result.GetFittedSolutionId() != "" {
+			fittedSolutionID = result.GetFittedSolutionId()
+			break
+		}
+	}
+	if fittedSolutionID == "" {
+		s.persistSolutionError(statusChan, solutionStorage, searchID, solutionID, errors.Errorf("no fitted solution ID for solution `%s`", solutionID))
 	}
 
 	// persist solution running status
 	s.persistSolutionStatus(statusChan, solutionStorage, searchID, solutionID, SolutionRunningStatus)
 
 	// generate predictions
-	produceSolutionRequest := s.createProduceSolutionRequest(datasetURITest, solutionID)
+	produceSolutionRequest := s.createProduceSolutionRequest(datasetURITest, fittedSolutionID)
 
 	// generate predictions
 	predictionResponses, err := client.GeneratePredictions(context.Background(), produceSolutionRequest)
