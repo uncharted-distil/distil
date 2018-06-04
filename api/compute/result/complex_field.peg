@@ -1,4 +1,4 @@
-package compute
+package result
 
 # Parser for an array field exported from a Python PANDAS dataframe via its to_csv() method.
 # The exported file is RFC 4180 compatible, and is loaded using the CSV loader from the golang
