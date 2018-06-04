@@ -24,15 +24,15 @@
 		<p class="small-margin">
 			<b-button class="float-right" v-if="includedActive"
 				variant="outline-secondary"
-				:disabled="!highlights.root"
+				:disabled="!isFilteringHighlights && !isFilteringSelection"
 				@click="onExcludeClick">
-				<i class="fa fa-minus-circle pr-1 exclude-icon"></i>Exclude
+				<i class="fa fa-minus-circle pr-1" v-bind:class="{'exclude-highlight': isFilteringHighlights, 'exclude-selection': isFilteringSelection}"></i>Exclude
 			</b-button>
 			<b-button class="float-right" v-if="!includedActive"
 				variant="outline-secondary"
-				:disabled="!highlights.root"
+				:disabled="!isFilteringHighlights && !isFilteringSelection"
 				@click="onReincludeClick">
-				<i class="fa fa-plus-circle pr-1 include-icon"></i>Reinclude
+				<i class="fa fa-plus-circle pr-1" v-bind:class="{'include-highlight': isFilteringHighlights, 'include-selection': isFilteringSelection}"></i>Reinclude
 			</b-button>
 			<small class="row-number-label" v-html="tableTitle"></small>
 		</p>
@@ -80,7 +80,7 @@ import { getters as routeGetters } from '../store/route/module';
 import { TableRow } from '../store/dataset/index';
 import { addFilterToRoute, EXCLUDE_FILTER, INCLUDE_FILTER } from '../util/filters';
 import { getHighlights, clearHighlightRoot, createFilterFromHighlightRoot } from '../util/highlights';
-import { addRowSelection, removeRowSelection, isRowSelected, getNumIncludedRows, getNumExcludedRows, updateTableRowSelection } from '../util/row';
+import { addRowSelection, removeRowSelection, clearRowSelection, isRowSelected, getNumIncludedRows, getNumExcludedRows, updateTableRowSelection, createFilterFromRowSelection } from '../util/row';
 
 export default Vue.extend({
 	name: 'selected-data-table',
@@ -184,18 +184,48 @@ export default Vue.extend({
 				}
 			}
 		},
+
+		isFilteringHighlights(): boolean {
+			return !this.isFilteringSelection && !!this.highlights.root;
+		},
+
+		isFilteringSelection(): boolean {
+			return !!this.rowSelection;
+		}
 	},
 
 	methods: {
 		onExcludeClick() {
-			const filter = createFilterFromHighlightRoot(this.highlights.root, EXCLUDE_FILTER);
+			let filter = null;
+			if (this.isFilteringHighlights) {
+				filter = createFilterFromHighlightRoot(this.highlights.root, EXCLUDE_FILTER);
+			} else {
+				filter = createFilterFromRowSelection(this.rowSelection, EXCLUDE_FILTER);
+			}
+
 			addFilterToRoute(this, filter);
-			clearHighlightRoot(this);
+
+			if (this.isFilteringHighlights) {
+				clearHighlightRoot(this);
+			} else {
+				clearRowSelection(this);
+			}
 		},
 		onReincludeClick() {
-			const filter = createFilterFromHighlightRoot(this.highlights.root, INCLUDE_FILTER);
+			let filter = null;
+			if (this.isFilteringHighlights) {
+				filter = createFilterFromHighlightRoot(this.highlights.root, INCLUDE_FILTER);
+			} else {
+				filter = createFilterFromRowSelection(this.rowSelection, INCLUDE_FILTER);
+			}
+
 			addFilterToRoute(this, filter);
-			clearHighlightRoot(this);
+
+			if (this.isFilteringHighlights) {
+				clearHighlightRoot(this);
+			} else {
+				clearRowSelection(this);
+			}
 		},
 		onRowClick(row: TableRow) {
 			if (!isRowSelected(this.rowSelection, row[D3M_INDEX_FIELD])) {
@@ -255,9 +285,13 @@ table tr {
 .select-view .nav-tabs .nav-link.active {
 	color: rgba(0, 0, 0, 0.87);
 }
-.include-icon,
-.exclude-icon {
+.include-highlight,
+.exclude-highlight {
 	color: #00c6e1;
+}
+.include-selection,
+.exclude-selection {
+	color: #ff0067;
 }
 .row-number-label {
 	position: relative;

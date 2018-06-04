@@ -17,6 +17,8 @@ const (
 	CategoricalFilter = "categorical"
 	// NumericalFilter represents a numerical filter type.
 	NumericalFilter = "numerical"
+	// RowFilter represents a numerical filter type.
+	RowFilter = "row"
 	// IncludeFilter represents an inclusive filter mode.
 	IncludeFilter = "include"
 	// ExcludeFilter represents an exclusive filter mode.
@@ -103,6 +105,7 @@ type Filter struct {
 	Min        *float64 `json:"min"`
 	Max        *float64 `json:"max"`
 	Categories []string `json:"categories"`
+	D3mIndices []string `json:"d3mIndices"`
 }
 
 // NewNumericalFilter instantiates a numerical filter.
@@ -124,6 +127,15 @@ func NewCategoricalFilter(name string, mode string, categories []string) *Filter
 		Type:       CategoricalFilter,
 		Mode:       mode,
 		Categories: categories,
+	}
+}
+
+// NewRowFilter instantiates a row filter.
+func NewRowFilter(mode string, d3mIndices []string) *Filter {
+	return &Filter{
+		Type:       RowFilter,
+		Mode:       mode,
+		D3mIndices: d3mIndices,
 	}
 }
 
@@ -152,12 +164,6 @@ func ParseFilterParamsFromJSON(params map[string]interface{}) (*FilterParams, er
 	if ok {
 		for _, filter := range filters {
 
-			// name
-			name, ok := json.String(filter, "name")
-			if !ok {
-				return nil, errors.Errorf("no `name` provided for filter")
-			}
-
 			// type
 			typ, ok := json.String(filter, "type")
 			if !ok {
@@ -172,6 +178,10 @@ func ParseFilterParamsFromJSON(params map[string]interface{}) (*FilterParams, er
 
 			// numeric
 			if typ == NumericalFilter {
+				name, ok := json.String(filter, "name")
+				if !ok {
+					return nil, errors.Errorf("no `name` provided for filter")
+				}
 				min, ok := json.Float(filter, "min")
 				if !ok {
 					return nil, errors.Errorf("no `min` provided for filter")
@@ -185,11 +195,24 @@ func ParseFilterParamsFromJSON(params map[string]interface{}) (*FilterParams, er
 
 			// categorical
 			if typ == CategoricalFilter {
+				name, ok := json.String(filter, "name")
+				if !ok {
+					return nil, errors.Errorf("no `name` provided for filter")
+				}
 				categories, ok := json.StringArray(filter, "categories")
 				if !ok {
 					return nil, errors.Errorf("no `categories` provided for filter")
 				}
 				filterParams.Filters = append(filterParams.Filters, NewCategoricalFilter(name, mode, categories))
+			}
+
+			// row
+			if typ == RowFilter {
+				indices, ok := json.StringArray(filter, "d3mIndices")
+				if !ok {
+					return nil, errors.Errorf("no `d3mIndices` provided for filter")
+				}
+				filterParams.Filters = append(filterParams.Filters, NewRowFilter(mode, indices))
 			}
 		}
 	}

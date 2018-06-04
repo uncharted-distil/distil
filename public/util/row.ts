@@ -2,7 +2,8 @@ import { RowSelection, Row } from '../store/highlights/index';
 import { D3M_INDEX_FIELD } from '../store/dataset/index';
 import { getters as routeGetters } from '../store/route/module';
 import { getters as dataGetters } from '../store/dataset/module';
-import { overlayRouteEntry} from '../util/routes'
+import { overlayRouteEntry } from '../util/routes'
+import { Filter, ROW_FILTER } from '../util/filters';
 import _ from 'lodash';
 import Vue from 'vue';
 
@@ -18,6 +19,17 @@ export function decodeRowSelection(row: string): RowSelection {
 		return null;
 	}
 	return JSON.parse(atob(row)) as RowSelection;
+}
+
+export function createFilterFromRowSelection(selection: RowSelection, mode: string): Filter {
+	if (!selection || selection.d3mIndices.length === 0) {
+		return null;
+	}
+	return {
+		type: ROW_FILTER,
+		mode: mode,
+		d3mIndices: selection.d3mIndices.map(num => _.toString(num))
+	};
 }
 
 export function getNumIncludedRows(component: Vue, selection: RowSelection): number {
@@ -152,6 +164,13 @@ export function removeRowSelection(component: Vue, context: string, selection: R
 	}
 	const entry = overlayRouteEntry(routeGetters.getRoute(component.$store), {
 		row: encodeRowSelection(selection),
+	});
+	component.$router.push(entry);
+}
+
+export function clearRowSelection(component: Vue) {
+	const entry = overlayRouteEntry(routeGetters.getRoute(component.$store), {
+		row: null
 	});
 	component.$router.push(entry);
 }

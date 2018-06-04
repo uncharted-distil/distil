@@ -44,12 +44,17 @@ func (s *Storage) PersistRequestFilters(requestID string, filters *model.FilterP
 	for _, filter := range filters.Filters {
 		switch filter.Type {
 		case model.NumericalFilter:
-			_, err := s.client.Exec(sql, requestID, filter.Name, model.NumericalFilter, filter.Mode, filter.Min, filter.Max, "")
+			_, err := s.client.Exec(sql, requestID, filter.Name, model.NumericalFilter, filter.Mode, filter.Min, filter.Max, "", "")
 			if err != nil {
 				return err
 			}
 		case model.CategoricalFilter:
-			_, err := s.client.Exec(sql, requestID, filter.Name, model.CategoricalFilter, filter.Mode, 0, 0, strings.Join(filter.Categories, ","))
+			_, err := s.client.Exec(sql, requestID, filter.Name, model.CategoricalFilter, filter.Mode, 0, 0, strings.Join(filter.Categories, ","), "")
+			if err != nil {
+				return err
+			}
+		case model.RowFilter:
+			_, err := s.client.Exec(sql, requestID, "", model.RowFilter, filter.Mode, 0, 0, "", strings.Join(filter.D3mIndices, ","))
 			if err != nil {
 				return err
 			}
@@ -183,8 +188,9 @@ func (s *Storage) FetchRequestFilters(requestID string, features []*model.Featur
 		var filterMin float64
 		var filterMax float64
 		var filterCategories string
+		var filterIndices string
 
-		err = rows.Scan(&requestID, &featureName, &filterType, &filterMode, &filterMin, &filterMax, &filterCategories)
+		err = rows.Scan(&requestID, &featureName, &filterType, &filterMode, &filterMin, &filterMax, &filterCategories, &filterIndices)
 		if err != nil {
 			return nil, errors.Wrap(err, "Unable to parse request filters from Postgres")
 		}
@@ -202,6 +208,11 @@ func (s *Storage) FetchRequestFilters(requestID string, features []*model.Featur
 				filterMode,
 				filterMin,
 				filterMax,
+			))
+		case model.RowFilter:
+			filters.Filters = append(filters.Filters, model.NewRowFilter(
+				filterMode,
+				strings.Split(filterIndices, ","),
 			))
 		}
 	}
