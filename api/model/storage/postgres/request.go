@@ -39,7 +39,7 @@ func (s *Storage) PersistRequestFeature(requestID string, featureName string, fe
 
 // PersistRequestFilters persists request filters information to Postgres.
 func (s *Storage) PersistRequestFilters(requestID string, filters *model.FilterParams) error {
-	sql := fmt.Sprintf("INSERT INTO %s (request_id, feature_name, filter_type, filter_mode, filter_min, filter_max, filter_categories) VALUES ($1, $2, $3, $4, $5, $6, $7);", filterTableName)
+	sql := fmt.Sprintf("INSERT INTO %s (request_id, feature_name, filter_type, filter_mode, filter_min, filter_max, filter_categories, filter_indices) VALUES ($1, $2, $3, $4, $5, $6, $7);", filterTableName)
 
 	for _, filter := range filters.Filters {
 		switch filter.Type {
@@ -166,7 +166,7 @@ func (s *Storage) FetchRequestFeatures(requestID string) ([]*model.Feature, erro
 
 // FetchRequestFilters pulls request filter information from Postgres.
 func (s *Storage) FetchRequestFilters(requestID string, features []*model.Feature) (*model.FilterParams, error) {
-	sql := fmt.Sprintf("SELECT request_id, feature_name, filter_type, filter_mode, filter_min, filter_max, filter_categories FROM %s WHERE request_id = $1;", filterTableName)
+	sql := fmt.Sprintf("SELECT request_id, feature_name, filter_type, filter_mode, filter_min, filter_max, filter_categories, filter_indices FROM %s WHERE request_id = $1;", filterTableName)
 
 	rows, err := s.client.Query(sql, requestID)
 	if err != nil {
