@@ -67,10 +67,10 @@ message PrimitiveStepHyperparameter {
         PrimitiveArgument primitive = 3;
         // A constant value of a hyper-parameter.
         ValueArgument value = 4;
-        // A set of primitive instances to be passed as a hyper-parameter.
-        PrimitiveArguments primitives_set = 5;
         // "A set of singleton outputs from other steps in a pipeline.
-        DataArguments data_set = 6;
+        DataArguments data_set = 5;
+        // A set of primitive instances to be passed as a hyper-parameter.
+        PrimitiveArguments primitives_set = 6;
     }
 }
 

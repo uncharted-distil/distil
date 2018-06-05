@@ -63,6 +63,26 @@ message ValueError {
     string message = 1;
 }
 
+message DoubleList {
+    repeated double list = 1;
+}
+
+message Int64List {
+    repeated int64 list = 1;
+}
+
+message BoolList {
+    repeated bool list = 1;
+}
+
+message StringList {
+    repeated string list = 1;
+}
+
+message BytesList {
+    repeated bytes list = 1;
+}
+
 message Value {
     oneof value {
         // If there was an error trying to provided the value using the requested
@@ -74,15 +94,20 @@ message Value {
         bool bool = 4;
         string string = 5;
         bytes bytes = 6;
+        DoubleList double_list = 7;
+        Int64List int64_list = 8;
+        BoolList bool_list = 9;
+        StringList string_list = 10;
+        BytesList bytes_list = 11;
         // An URI pointing to a dataset. Resulting value is Dataset container value from loading this URI.
-        string dataset_uri = 7;
-        // An URI to a Python-pickled value.
-        string pickle_uri = 8;
-        // A Python-pickled value itself.
-        bytes pickle_blob = 9;
+        string dataset_uri = 12;
         // An URI pointing to a CSV file.
-        string csv_uri = 10;
+        string csv_uri = 13;
+        // An URI to a Python-pickled value.
+        string pickle_uri = 14;
+        // A Python-pickled value itself.
+        bytes pickle_blob = 15;
         // 20 bytes of Plasma ObjectID of the value.
-        bytes plasma_id = 11;
+        bytes plasma_id = 16;
     }
 }

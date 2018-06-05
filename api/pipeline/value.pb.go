@@ -67,7 +67,7 @@ func (x ValueType) String() string {
 	return proto.EnumName(ValueType_name, int32(x))
 }
 func (ValueType) EnumDescriptor() ([]byte, []int) {
-	return fileDescriptor_value_6c24ea2e03c5abec, []int{0}
+	return fileDescriptor_value_c67e00387da7b2d5, []int{0}
 }
 
 type ValueError struct {
@@ -87,7 +87,7 @@ func (m *ValueError) Reset()         { *m = ValueError{} }
 func (m *ValueError) String() string { return proto.CompactTextString(m) }
 func (*ValueError) ProtoMessage()    {}
 func (*ValueError) Descriptor() ([]byte, []int) {
-	return fileDescriptor_value_6c24ea2e03c5abec, []int{0}
+	return fileDescriptor_value_c67e00387da7b2d5, []int{0}
 }
 func (m *ValueError) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ValueError.Unmarshal(m, b)
@@ -114,6 +114,196 @@ func (m *ValueError) GetMessage() string {
 	return ""
 }
 
+type DoubleList struct {
+	List                 []float64 `protobuf:"fixed64,1,rep,packed,name=list" json:"list,omitempty"`
+	XXX_NoUnkeyedLiteral struct{}  `json:"-"`
+	XXX_unrecognized     []byte    `json:"-"`
+	XXX_sizecache        int32     `json:"-"`
+}
+
+func (m *DoubleList) Reset()         { *m = DoubleList{} }
+func (m *DoubleList) String() string { return proto.CompactTextString(m) }
+func (*DoubleList) ProtoMessage()    {}
+func (*DoubleList) Descriptor() ([]byte, []int) {
+	return fileDescriptor_value_c67e00387da7b2d5, []int{1}
+}
+func (m *DoubleList) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_DoubleList.Unmarshal(m, b)
+}
+func (m *DoubleList) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_DoubleList.Marshal(b, m, deterministic)
+}
+func (dst *DoubleList) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_DoubleList.Merge(dst, src)
+}
+func (m *DoubleList) XXX_Size() int {
+	return xxx_messageInfo_DoubleList.Size(m)
+}
+func (m *DoubleList) XXX_DiscardUnknown() {
+	xxx_messageInfo_DoubleList.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_DoubleList proto.InternalMessageInfo
+
+func (m *DoubleList) GetList() []float64 {
+	if m != nil {
+		return m.List
+	}
+	return nil
+}
+
+type Int64List struct {
+	List                 []int64  `protobuf:"varint,1,rep,packed,name=list" json:"list,omitempty"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
+}
+
+func (m *Int64List) Reset()         { *m = Int64List{} }
+func (m *Int64List) String() string { return proto.CompactTextString(m) }
+func (*Int64List) ProtoMessage()    {}
+func (*Int64List) Descriptor() ([]byte, []int) {
+	return fileDescriptor_value_c67e00387da7b2d5, []int{2}
+}
+func (m *Int64List) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_Int64List.Unmarshal(m, b)
+}
+func (m *Int64List) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_Int64List.Marshal(b, m, deterministic)
+}
+func (dst *Int64List) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_Int64List.Merge(dst, src)
+}
+func (m *Int64List) XXX_Size() int {
+	return xxx_messageInfo_Int64List.Size(m)
+}
+func (m *Int64List) XXX_DiscardUnknown() {
+	xxx_messageInfo_Int64List.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_Int64List proto.InternalMessageInfo
+
+func (m *Int64List) GetList() []int64 {
+	if m != nil {
+		return m.List
+	}
+	return nil
+}
+
+type BoolList struct {
+	List                 []bool   `protobuf:"varint,1,rep,packed,name=list" json:"list,omitempty"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
+}
+
+func (m *BoolList) Reset()         { *m = BoolList{} }
+func (m *BoolList) String() string { return proto.CompactTextString(m) }
+func (*BoolList) ProtoMessage()    {}
+func (*BoolList) Descriptor() ([]byte, []int) {
+	return fileDescriptor_value_c67e00387da7b2d5, []int{3}
+}
+func (m *BoolList) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_BoolList.Unmarshal(m, b)
+}
+func (m *BoolList) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_BoolList.Marshal(b, m, deterministic)
+}
+func (dst *BoolList) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_BoolList.Merge(dst, src)
+}
+func (m *BoolList) XXX_Size() int {
+	return xxx_messageInfo_BoolList.Size(m)
+}
+func (m *BoolList) XXX_DiscardUnknown() {
+	xxx_messageInfo_BoolList.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_BoolList proto.InternalMessageInfo
+
+func (m *BoolList) GetList() []bool {
+	if m != nil {
+		return m.List
+	}
+	return nil
+}
+
+type StringList struct {
+	List                 []string `protobuf:"bytes,1,rep,name=list" json:"list,omitempty"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
+}
+
+func (m *StringList) Reset()         { *m = StringList{} }
+func (m *StringList) String() string { return proto.CompactTextString(m) }
+func (*StringList) ProtoMessage()    {}
+func (*StringList) Descriptor() ([]byte, []int) {
+	return fileDescriptor_value_c67e00387da7b2d5, []int{4}
+}
+func (m *StringList) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_StringList.Unmarshal(m, b)
+}
+func (m *StringList) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_StringList.Marshal(b, m, deterministic)
+}
+func (dst *StringList) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_StringList.Merge(dst, src)
+}
+func (m *StringList) XXX_Size() int {
+	return xxx_messageInfo_StringList.Size(m)
+}
+func (m *StringList) XXX_DiscardUnknown() {
+	xxx_messageInfo_StringList.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_StringList proto.InternalMessageInfo
+
+func (m *StringList) GetList() []string {
+	if m != nil {
+		return m.List
+	}
+	return nil
+}
+
+type BytesList struct {
+	List                 [][]byte `protobuf:"bytes,1,rep,name=list,proto3" json:"list,omitempty"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
+}
+
+func (m *BytesList) Reset()         { *m = BytesList{} }
+func (m *BytesList) String() string { return proto.CompactTextString(m) }
+func (*BytesList) ProtoMessage()    {}
+func (*BytesList) Descriptor() ([]byte, []int) {
+	return fileDescriptor_value_c67e00387da7b2d5, []int{5}
+}
+func (m *BytesList) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_BytesList.Unmarshal(m, b)
+}
+func (m *BytesList) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_BytesList.Marshal(b, m, deterministic)
+}
+func (dst *BytesList) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_BytesList.Merge(dst, src)
+}
+func (m *BytesList) XXX_Size() int {
+	return xxx_messageInfo_BytesList.Size(m)
+}
+func (m *BytesList) XXX_DiscardUnknown() {
+	xxx_messageInfo_BytesList.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_BytesList proto.InternalMessageInfo
+
+func (m *BytesList) GetList() [][]byte {
+	if m != nil {
+		return m.List
+	}
+	return nil
+}
+
 type Value struct {
 	// Types that are valid to be assigned to Value:
 	//	*Value_Error
@@ -122,10 +312,15 @@ type Value struct {
 	//	*Value_Bool
 	//	*Value_String_
 	//	*Value_Bytes
+	//	*Value_DoubleList
+	//	*Value_Int64List
+	//	*Value_BoolList
+	//	*Value_StringList
+	//	*Value_BytesList
 	//	*Value_DatasetUri
+	//	*Value_CsvUri
 	//	*Value_PickleUri
 	//	*Value_PickleBlob
-	//	*Value_CsvUri
 	//	*Value_PlasmaId
 	Value                isValue_Value `protobuf_oneof:"value"`
 	XXX_NoUnkeyedLiteral struct{}      `json:"-"`
@@ -137,7 +332,7 @@ func (m *Value) Reset()         { *m = Value{} }
 func (m *Value) String() string { return proto.CompactTextString(m) }
 func (*Value) ProtoMessage()    {}
 func (*Value) Descriptor() ([]byte, []int) {
-	return fileDescriptor_value_6c24ea2e03c5abec, []int{1}
+	return fileDescriptor_value_c67e00387da7b2d5, []int{6}
 }
 func (m *Value) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_Value.Unmarshal(m, b)
@@ -179,20 +374,35 @@ type Value_String_ struct {
 type Value_Bytes struct {
 	Bytes []byte `protobuf:"bytes,6,opt,name=bytes,proto3,oneof"`
 }
+type Value_DoubleList struct {
+	DoubleList *DoubleList `protobuf:"bytes,7,opt,name=double_list,json=doubleList,oneof"`
+}
+type Value_Int64List struct {
+	Int64List *Int64List `protobuf:"bytes,8,opt,name=int64_list,json=int64List,oneof"`
+}
+type Value_BoolList struct {
+	BoolList *BoolList `protobuf:"bytes,9,opt,name=bool_list,json=boolList,oneof"`
+}
+type Value_StringList struct {
+	StringList *StringList `protobuf:"bytes,10,opt,name=string_list,json=stringList,oneof"`
+}
+type Value_BytesList struct {
+	BytesList *BytesList `protobuf:"bytes,11,opt,name=bytes_list,json=bytesList,oneof"`
+}
 type Value_DatasetUri struct {
-	DatasetUri string `protobuf:"bytes,7,opt,name=dataset_uri,json=datasetUri,oneof"`
-}
-type Value_PickleUri struct {
-	PickleUri string `protobuf:"bytes,8,opt,name=pickle_uri,json=pickleUri,oneof"`
-}
-type Value_PickleBlob struct {
-	PickleBlob []byte `protobuf:"bytes,9,opt,name=pickle_blob,json=pickleBlob,proto3,oneof"`
+	DatasetUri string `protobuf:"bytes,12,opt,name=dataset_uri,json=datasetUri,oneof"`
 }
 type Value_CsvUri struct {
-	CsvUri string `protobuf:"bytes,10,opt,name=csv_uri,json=csvUri,oneof"`
+	CsvUri string `protobuf:"bytes,13,opt,name=csv_uri,json=csvUri,oneof"`
+}
+type Value_PickleUri struct {
+	PickleUri string `protobuf:"bytes,14,opt,name=pickle_uri,json=pickleUri,oneof"`
+}
+type Value_PickleBlob struct {
+	PickleBlob []byte `protobuf:"bytes,15,opt,name=pickle_blob,json=pickleBlob,proto3,oneof"`
 }
 type Value_PlasmaId struct {
-	PlasmaId []byte `protobuf:"bytes,11,opt,name=plasma_id,json=plasmaId,proto3,oneof"`
+	PlasmaId []byte `protobuf:"bytes,16,opt,name=plasma_id,json=plasmaId,proto3,oneof"`
 }
 
 func (*Value_Error) isValue_Value()      {}
@@ -201,10 +411,15 @@ func (*Value_Int64) isValue_Value()      {}
 func (*Value_Bool) isValue_Value()       {}
 func (*Value_String_) isValue_Value()    {}
 func (*Value_Bytes) isValue_Value()      {}
+func (*Value_DoubleList) isValue_Value() {}
+func (*Value_Int64List) isValue_Value()  {}
+func (*Value_BoolList) isValue_Value()   {}
+func (*Value_StringList) isValue_Value() {}
+func (*Value_BytesList) isValue_Value()  {}
 func (*Value_DatasetUri) isValue_Value() {}
+func (*Value_CsvUri) isValue_Value()     {}
 func (*Value_PickleUri) isValue_Value()  {}
 func (*Value_PickleBlob) isValue_Value() {}
-func (*Value_CsvUri) isValue_Value()     {}
 func (*Value_PlasmaId) isValue_Value()   {}
 
 func (m *Value) GetValue() isValue_Value {
@@ -256,9 +471,51 @@ func (m *Value) GetBytes() []byte {
 	return nil
 }
 
+func (m *Value) GetDoubleList() *DoubleList {
+	if x, ok := m.GetValue().(*Value_DoubleList); ok {
+		return x.DoubleList
+	}
+	return nil
+}
+
+func (m *Value) GetInt64List() *Int64List {
+	if x, ok := m.GetValue().(*Value_Int64List); ok {
+		return x.Int64List
+	}
+	return nil
+}
+
+func (m *Value) GetBoolList() *BoolList {
+	if x, ok := m.GetValue().(*Value_BoolList); ok {
+		return x.BoolList
+	}
+	return nil
+}
+
+func (m *Value) GetStringList() *StringList {
+	if x, ok := m.GetValue().(*Value_StringList); ok {
+		return x.StringList
+	}
+	return nil
+}
+
+func (m *Value) GetBytesList() *BytesList {
+	if x, ok := m.GetValue().(*Value_BytesList); ok {
+		return x.BytesList
+	}
+	return nil
+}
+
 func (m *Value) GetDatasetUri() string {
 	if x, ok := m.GetValue().(*Value_DatasetUri); ok {
 		return x.DatasetUri
+	}
+	return ""
+}
+
+func (m *Value) GetCsvUri() string {
+	if x, ok := m.GetValue().(*Value_CsvUri); ok {
+		return x.CsvUri
 	}
 	return ""
 }
@@ -277,13 +534,6 @@ func (m *Value) GetPickleBlob() []byte {
 	return nil
 }
 
-func (m *Value) GetCsvUri() string {
-	if x, ok := m.GetValue().(*Value_CsvUri); ok {
-		return x.CsvUri
-	}
-	return ""
-}
-
 func (m *Value) GetPlasmaId() []byte {
 	if x, ok := m.GetValue().(*Value_PlasmaId); ok {
 		return x.PlasmaId
@@ -300,10 +550,15 @@ func (*Value) XXX_OneofFuncs() (func(msg proto.Message, b *proto.Buffer) error, 
 		(*Value_Bool)(nil),
 		(*Value_String_)(nil),
 		(*Value_Bytes)(nil),
+		(*Value_DoubleList)(nil),
+		(*Value_Int64List)(nil),
+		(*Value_BoolList)(nil),
+		(*Value_StringList)(nil),
+		(*Value_BytesList)(nil),
 		(*Value_DatasetUri)(nil),
+		(*Value_CsvUri)(nil),
 		(*Value_PickleUri)(nil),
 		(*Value_PickleBlob)(nil),
-		(*Value_CsvUri)(nil),
 		(*Value_PlasmaId)(nil),
 	}
 }
@@ -336,20 +591,45 @@ func _Value_OneofMarshaler(msg proto.Message, b *proto.Buffer) error {
 	case *Value_Bytes:
 		b.EncodeVarint(6<<3 | proto.WireBytes)
 		b.EncodeRawBytes(x.Bytes)
-	case *Value_DatasetUri:
+	case *Value_DoubleList:
 		b.EncodeVarint(7<<3 | proto.WireBytes)
-		b.EncodeStringBytes(x.DatasetUri)
-	case *Value_PickleUri:
+		if err := b.EncodeMessage(x.DoubleList); err != nil {
+			return err
+		}
+	case *Value_Int64List:
 		b.EncodeVarint(8<<3 | proto.WireBytes)
+		if err := b.EncodeMessage(x.Int64List); err != nil {
+			return err
+		}
+	case *Value_BoolList:
+		b.EncodeVarint(9<<3 | proto.WireBytes)
+		if err := b.EncodeMessage(x.BoolList); err != nil {
+			return err
+		}
+	case *Value_StringList:
+		b.EncodeVarint(10<<3 | proto.WireBytes)
+		if err := b.EncodeMessage(x.StringList); err != nil {
+			return err
+		}
+	case *Value_BytesList:
+		b.EncodeVarint(11<<3 | proto.WireBytes)
+		if err := b.EncodeMessage(x.BytesList); err != nil {
+			return err
+		}
+	case *Value_DatasetUri:
+		b.EncodeVarint(12<<3 | proto.WireBytes)
+		b.EncodeStringBytes(x.DatasetUri)
+	case *Value_CsvUri:
+		b.EncodeVarint(13<<3 | proto.WireBytes)
+		b.EncodeStringBytes(x.CsvUri)
+	case *Value_PickleUri:
+		b.EncodeVarint(14<<3 | proto.WireBytes)
 		b.EncodeStringBytes(x.PickleUri)
 	case *Value_PickleBlob:
-		b.EncodeVarint(9<<3 | proto.WireBytes)
+		b.EncodeVarint(15<<3 | proto.WireBytes)
 		b.EncodeRawBytes(x.PickleBlob)
-	case *Value_CsvUri:
-		b.EncodeVarint(10<<3 | proto.WireBytes)
-		b.EncodeStringBytes(x.CsvUri)
 	case *Value_PlasmaId:
-		b.EncodeVarint(11<<3 | proto.WireBytes)
+		b.EncodeVarint(16<<3 | proto.WireBytes)
 		b.EncodeRawBytes(x.PlasmaId)
 	case nil:
 	default:
@@ -404,35 +684,75 @@ func _Value_OneofUnmarshaler(msg proto.Message, tag, wire int, b *proto.Buffer) 
 		x, err := b.DecodeRawBytes(true)
 		m.Value = &Value_Bytes{x}
 		return true, err
-	case 7: // value.dataset_uri
+	case 7: // value.double_list
+		if wire != proto.WireBytes {
+			return true, proto.ErrInternalBadWireType
+		}
+		msg := new(DoubleList)
+		err := b.DecodeMessage(msg)
+		m.Value = &Value_DoubleList{msg}
+		return true, err
+	case 8: // value.int64_list
+		if wire != proto.WireBytes {
+			return true, proto.ErrInternalBadWireType
+		}
+		msg := new(Int64List)
+		err := b.DecodeMessage(msg)
+		m.Value = &Value_Int64List{msg}
+		return true, err
+	case 9: // value.bool_list
+		if wire != proto.WireBytes {
+			return true, proto.ErrInternalBadWireType
+		}
+		msg := new(BoolList)
+		err := b.DecodeMessage(msg)
+		m.Value = &Value_BoolList{msg}
+		return true, err
+	case 10: // value.string_list
+		if wire != proto.WireBytes {
+			return true, proto.ErrInternalBadWireType
+		}
+		msg := new(StringList)
+		err := b.DecodeMessage(msg)
+		m.Value = &Value_StringList{msg}
+		return true, err
+	case 11: // value.bytes_list
+		if wire != proto.WireBytes {
+			return true, proto.ErrInternalBadWireType
+		}
+		msg := new(BytesList)
+		err := b.DecodeMessage(msg)
+		m.Value = &Value_BytesList{msg}
+		return true, err
+	case 12: // value.dataset_uri
 		if wire != proto.WireBytes {
 			return true, proto.ErrInternalBadWireType
 		}
 		x, err := b.DecodeStringBytes()
 		m.Value = &Value_DatasetUri{x}
 		return true, err
-	case 8: // value.pickle_uri
-		if wire != proto.WireBytes {
-			return true, proto.ErrInternalBadWireType
-		}
-		x, err := b.DecodeStringBytes()
-		m.Value = &Value_PickleUri{x}
-		return true, err
-	case 9: // value.pickle_blob
-		if wire != proto.WireBytes {
-			return true, proto.ErrInternalBadWireType
-		}
-		x, err := b.DecodeRawBytes(true)
-		m.Value = &Value_PickleBlob{x}
-		return true, err
-	case 10: // value.csv_uri
+	case 13: // value.csv_uri
 		if wire != proto.WireBytes {
 			return true, proto.ErrInternalBadWireType
 		}
 		x, err := b.DecodeStringBytes()
 		m.Value = &Value_CsvUri{x}
 		return true, err
-	case 11: // value.plasma_id
+	case 14: // value.pickle_uri
+		if wire != proto.WireBytes {
+			return true, proto.ErrInternalBadWireType
+		}
+		x, err := b.DecodeStringBytes()
+		m.Value = &Value_PickleUri{x}
+		return true, err
+	case 15: // value.pickle_blob
+		if wire != proto.WireBytes {
+			return true, proto.ErrInternalBadWireType
+		}
+		x, err := b.DecodeRawBytes(true)
+		m.Value = &Value_PickleBlob{x}
+		return true, err
+	case 16: // value.plasma_id
 		if wire != proto.WireBytes {
 			return true, proto.ErrInternalBadWireType
 		}
@@ -470,10 +790,39 @@ func _Value_OneofSizer(msg proto.Message) (n int) {
 		n += 1 // tag and wire
 		n += proto.SizeVarint(uint64(len(x.Bytes)))
 		n += len(x.Bytes)
+	case *Value_DoubleList:
+		s := proto.Size(x.DoubleList)
+		n += 1 // tag and wire
+		n += proto.SizeVarint(uint64(s))
+		n += s
+	case *Value_Int64List:
+		s := proto.Size(x.Int64List)
+		n += 1 // tag and wire
+		n += proto.SizeVarint(uint64(s))
+		n += s
+	case *Value_BoolList:
+		s := proto.Size(x.BoolList)
+		n += 1 // tag and wire
+		n += proto.SizeVarint(uint64(s))
+		n += s
+	case *Value_StringList:
+		s := proto.Size(x.StringList)
+		n += 1 // tag and wire
+		n += proto.SizeVarint(uint64(s))
+		n += s
+	case *Value_BytesList:
+		s := proto.Size(x.BytesList)
+		n += 1 // tag and wire
+		n += proto.SizeVarint(uint64(s))
+		n += s
 	case *Value_DatasetUri:
 		n += 1 // tag and wire
 		n += proto.SizeVarint(uint64(len(x.DatasetUri)))
 		n += len(x.DatasetUri)
+	case *Value_CsvUri:
+		n += 1 // tag and wire
+		n += proto.SizeVarint(uint64(len(x.CsvUri)))
+		n += len(x.CsvUri)
 	case *Value_PickleUri:
 		n += 1 // tag and wire
 		n += proto.SizeVarint(uint64(len(x.PickleUri)))
@@ -482,12 +831,8 @@ func _Value_OneofSizer(msg proto.Message) (n int) {
 		n += 1 // tag and wire
 		n += proto.SizeVarint(uint64(len(x.PickleBlob)))
 		n += len(x.PickleBlob)
-	case *Value_CsvUri:
-		n += 1 // tag and wire
-		n += proto.SizeVarint(uint64(len(x.CsvUri)))
-		n += len(x.CsvUri)
 	case *Value_PlasmaId:
-		n += 1 // tag and wire
+		n += 2 // tag and wire
 		n += proto.SizeVarint(uint64(len(x.PlasmaId)))
 		n += len(x.PlasmaId)
 	case nil:
@@ -499,38 +844,52 @@ func _Value_OneofSizer(msg proto.Message) (n int) {
 
 func init() {
 	proto.RegisterType((*ValueError)(nil), "ValueError")
+	proto.RegisterType((*DoubleList)(nil), "DoubleList")
+	proto.RegisterType((*Int64List)(nil), "Int64List")
+	proto.RegisterType((*BoolList)(nil), "BoolList")
+	proto.RegisterType((*StringList)(nil), "StringList")
+	proto.RegisterType((*BytesList)(nil), "BytesList")
 	proto.RegisterType((*Value)(nil), "Value")
 	proto.RegisterEnum("ValueType", ValueType_name, ValueType_value)
 }
 
-func init() { proto.RegisterFile("value.proto", fileDescriptor_value_6c24ea2e03c5abec) }
+func init() { proto.RegisterFile("value.proto", fileDescriptor_value_c67e00387da7b2d5) }
 
-var fileDescriptor_value_6c24ea2e03c5abec = []byte{
-	// 410 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x44, 0x92, 0xef, 0x8b, 0xd3, 0x30,
-	0x18, 0xc7, 0xd7, 0x6d, 0x5d, 0xd7, 0x27, 0xfe, 0x28, 0xe1, 0x90, 0x28, 0x88, 0xbd, 0x13, 0xa4,
-	0xf8, 0xe2, 0x0e, 0x54, 0x7c, 0xdf, 0xde, 0x2a, 0x2b, 0xce, 0x73, 0x74, 0x3f, 0x44, 0xdf, 0x94,
-	0x66, 0x8d, 0x23, 0x98, 0x5b, 0x4a, 0xd2, 0x0d, 0x0e, 0xfc, 0x23, 0xfd, 0x93, 0x24, 0x69, 0xc6,
-	0xbd, 0xfc, 0x3c, 0xfd, 0x7c, 0xbf, 0x7d, 0x48, 0x02, 0xe8, 0x54, 0x8b, 0x23, 0xbb, 0x6e, 0x95,
-	0xec, 0xe4, 0xab, 0x78, 0x2f, 0xe5, 0x5e, 0xb0, 0x1b, 0x4b, 0xf4, 0xf8, 0xfb, 0xa6, 0x61, 0x7a,
-	0xa7, 0x78, 0xdb, 0x49, 0xd5, 0x1b, 0x57, 0xef, 0x00, 0xb6, 0x26, 0x90, 0x2b, 0x25, 0x15, 0x26,
-	0x10, 0xdc, 0x33, 0xad, 0xeb, 0x3d, 0x23, 0x5e, 0xec, 0x25, 0x61, 0x79, 0xc6, 0xab, 0x7f, 0x43,
-	0xf0, 0xad, 0x88, 0xdf, 0x82, 0xcf, 0x8c, 0x6c, 0x0d, 0xf4, 0x01, 0x5d, 0x3f, 0xe6, 0xe7, 0x83,
-	0xb2, 0xff, 0x86, 0x09, 0x4c, 0x1a, 0x79, 0xa4, 0x82, 0x91, 0x61, 0xec, 0x25, 0xde, 0x7c, 0x50,
-	0x3a, 0xc6, 0x2f, 0xc0, 0xe7, 0x87, 0xee, 0xf3, 0x27, 0x32, 0x8a, 0xbd, 0x64, 0x64, 0x12, 0x16,
-	0xf1, 0x05, 0x8c, 0xa9, 0x94, 0x82, 0x8c, 0x63, 0x2f, 0x99, 0xce, 0x07, 0xa5, 0x25, 0xd3, 0xa3,
-	0x3b, 0xc5, 0x0f, 0x7b, 0xe2, 0x9b, 0x7d, 0x4c, 0x4f, 0xcf, 0xa6, 0x87, 0x3e, 0x74, 0x4c, 0x93,
-	0x49, 0xec, 0x25, 0x4f, 0x4c, 0x8f, 0x45, 0x7c, 0x09, 0xa8, 0xa9, 0xbb, 0x5a, 0xb3, 0xae, 0x3a,
-	0x2a, 0x4e, 0x02, 0x17, 0x03, 0x37, 0xdc, 0x28, 0x8e, 0xdf, 0x00, 0xb4, 0x7c, 0xf7, 0x47, 0x30,
-	0x6b, 0x4c, 0x9d, 0x11, 0xf6, 0x33, 0x23, 0x5c, 0x02, 0x72, 0x02, 0x15, 0x92, 0x92, 0xd0, 0xfd,
-	0xc1, 0xa5, 0x32, 0x21, 0x29, 0x7e, 0x09, 0xc1, 0x4e, 0x9f, 0x6c, 0x01, 0x9c, 0x37, 0xdb, 0xe9,
-	0x93, 0x49, 0xbf, 0x86, 0xb0, 0x15, 0xb5, 0xbe, 0xaf, 0x2b, 0xde, 0x10, 0xe4, 0xb2, 0xd3, 0x7e,
-	0x54, 0x34, 0x59, 0x00, 0xbe, 0xbd, 0xa2, 0xf7, 0x7f, 0x21, 0xb4, 0x47, 0xb7, 0x7e, 0x68, 0x19,
-	0x26, 0x70, 0xb1, 0x4d, 0x17, 0x9b, 0xbc, 0x5a, 0xff, 0x5c, 0xe6, 0xd5, 0xe6, 0x6e, 0x96, 0x7f,
-	0x29, 0xee, 0xf2, 0x59, 0x34, 0xc0, 0x01, 0x8c, 0xca, 0xf4, 0x47, 0xe4, 0xe1, 0xe7, 0x80, 0x66,
-	0xe9, 0x3a, 0x5d, 0xe5, 0xeb, 0x6a, 0x53, 0x16, 0xd1, 0x10, 0x23, 0x08, 0x6e, 0x57, 0x5b, 0x0b,
-	0x23, 0xfc, 0x0c, 0x60, 0x59, 0xdc, 0x7e, 0x5d, 0xe4, 0x96, 0xc7, 0xc6, 0x76, 0x9c, 0x2d, 0xbe,
-	0x67, 0x91, 0x8f, 0x9f, 0x42, 0xb8, 0x5c, 0xa4, 0xab, 0x6f, 0x69, 0x55, 0xcc, 0xa2, 0x49, 0x06,
-	0xbf, 0xa6, 0x2d, 0x6f, 0x99, 0xe0, 0x07, 0x46, 0x27, 0xf6, 0x2d, 0x7c, 0xfc, 0x1f, 0x00, 0x00,
-	0xff, 0xff, 0x8d, 0xf5, 0xf9, 0x78, 0x3c, 0x02, 0x00, 0x00,
+var fileDescriptor_value_c67e00387da7b2d5 = []byte{
+	// 556 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x64, 0x93, 0x5f, 0x8b, 0x9b, 0x40,
+	0x14, 0xc5, 0x75, 0x13, 0xa3, 0x5e, 0xf7, 0x8f, 0x0c, 0x4b, 0x99, 0x16, 0xda, 0x75, 0xb7, 0x50,
+	0xa4, 0x0b, 0x2e, 0xb4, 0xa5, 0xef, 0xba, 0xb1, 0x28, 0x4d, 0xb7, 0x8b, 0x49, 0xb6, 0xb4, 0x2f,
+	0xa2, 0x71, 0x1a, 0x86, 0xba, 0x3b, 0xe2, 0x98, 0xc0, 0x42, 0x3f, 0x56, 0x3f, 0x60, 0x99, 0x71,
+	0x12, 0x1f, 0xf2, 0x96, 0x33, 0xf7, 0x37, 0xd7, 0x73, 0xcf, 0xcd, 0x80, 0xb3, 0x2d, 0xea, 0x0d,
+	0x09, 0x9a, 0x96, 0x75, 0xec, 0x95, 0xb7, 0x66, 0x6c, 0x5d, 0x93, 0x1b, 0xa9, 0xca, 0xcd, 0xef,
+	0x9b, 0x8a, 0xf0, 0x55, 0x4b, 0x9b, 0x8e, 0xb5, 0x3d, 0x71, 0xf5, 0x0e, 0xe0, 0x41, 0x5c, 0x88,
+	0xdb, 0x96, 0xb5, 0x08, 0x83, 0xf9, 0x48, 0x38, 0x2f, 0xd6, 0x04, 0xeb, 0x9e, 0xee, 0xdb, 0xd9,
+	0x4e, 0x5e, 0x79, 0x00, 0x53, 0xb6, 0x29, 0x6b, 0x32, 0xa3, 0xbc, 0x43, 0x08, 0xc6, 0x35, 0xe5,
+	0x1d, 0xd6, 0xbd, 0x91, 0xaf, 0x67, 0xf2, 0xf7, 0xd5, 0x05, 0xd8, 0xe9, 0x53, 0xf7, 0xf9, 0xd3,
+	0x01, 0x30, 0x52, 0xc0, 0x1b, 0xb0, 0x22, 0xc6, 0xea, 0x83, 0xba, 0xa5, 0xea, 0x1e, 0xc0, 0xbc,
+	0x6b, 0xe9, 0xd3, 0xfa, 0x80, 0xb0, 0x87, 0x4f, 0x44, 0xcf, 0x1d, 0xe1, 0x07, 0xc0, 0xb1, 0x02,
+	0xfe, 0x8d, 0xc1, 0x90, 0xe3, 0xa0, 0xb7, 0x60, 0x10, 0x31, 0x92, 0x9c, 0xc3, 0xf9, 0xe0, 0x04,
+	0xc3, 0x94, 0x89, 0x96, 0xf5, 0x35, 0x84, 0x61, 0x52, 0xc9, 0xa1, 0xf0, 0x91, 0xa7, 0xfb, 0x7a,
+	0xa2, 0x65, 0x4a, 0xa3, 0x17, 0x60, 0x50, 0x31, 0x0c, 0x1e, 0x79, 0xba, 0x3f, 0x12, 0x37, 0xa4,
+	0x44, 0xe7, 0x30, 0x2e, 0x19, 0xab, 0xf1, 0xd8, 0xd3, 0x7d, 0x2b, 0xd1, 0x32, 0xa9, 0x44, 0x1f,
+	0x2e, 0x9d, 0x63, 0x43, 0xa4, 0x26, 0xfa, 0xf4, 0x5a, 0xf4, 0x29, 0x85, 0x63, 0x3c, 0xf1, 0x74,
+	0xff, 0x58, 0xf4, 0x91, 0x12, 0x05, 0xe0, 0xf4, 0x5f, 0xca, 0xe5, 0x0c, 0xa6, 0x32, 0x39, 0x44,
+	0x9c, 0x68, 0x19, 0x54, 0x43, 0xe0, 0xd7, 0x00, 0xd2, 0x40, 0x8f, 0x5b, 0x12, 0x87, 0x60, 0x9f,
+	0x77, 0xa2, 0x65, 0x36, 0xdd, 0x87, 0xef, 0x83, 0x2d, 0x6c, 0xf5, 0xac, 0x2d, 0x59, 0x3b, 0xd8,
+	0x45, 0x9f, 0x68, 0x99, 0x55, 0xee, 0xd6, 0x10, 0x80, 0xd3, 0x1b, 0xed, 0x59, 0x50, 0x36, 0x86,
+	0x35, 0x08, 0x1b, 0x7c, 0x58, 0xca, 0x35, 0x80, 0xf4, 0xdf, 0xe3, 0x8e, 0xb2, 0xb1, 0xdf, 0x89,
+	0xb0, 0x51, 0xee, 0x17, 0x74, 0x09, 0x4e, 0x55, 0x74, 0x05, 0x27, 0x5d, 0xbe, 0x69, 0x29, 0x3e,
+	0x56, 0xd1, 0x80, 0x3a, 0x5c, 0xb6, 0x14, 0xbd, 0x04, 0x73, 0xc5, 0xb7, 0xb2, 0x7c, 0xb2, 0x4b,
+	0x6e, 0xc5, 0xb7, 0xa2, 0x74, 0x01, 0xd0, 0xd0, 0xd5, 0x9f, 0x9a, 0xc8, 0xea, 0xa9, 0xaa, 0xda,
+	0xfd, 0x99, 0x00, 0x2e, 0xc1, 0x51, 0x40, 0x59, 0xb3, 0x12, 0x9f, 0xa9, 0x80, 0xd5, 0xad, 0xa8,
+	0x66, 0x25, 0x7a, 0x0d, 0x76, 0x53, 0x17, 0xfc, 0xb1, 0xc8, 0x69, 0x85, 0x5d, 0x05, 0x58, 0xfd,
+	0x51, 0x5a, 0x45, 0x26, 0x18, 0xf2, 0xb1, 0xbc, 0xff, 0x0b, 0xb6, 0xfc, 0x7b, 0x2c, 0x9e, 0x1b,
+	0x82, 0x30, 0x9c, 0x3f, 0x84, 0xb3, 0x65, 0x9c, 0x2f, 0x7e, 0xde, 0xc7, 0xf9, 0xf2, 0x6e, 0x1a,
+	0x7f, 0x49, 0xef, 0xe2, 0xa9, 0xab, 0x21, 0x13, 0x46, 0x59, 0xf8, 0xc3, 0xd5, 0xd1, 0x19, 0x38,
+	0xd3, 0x70, 0x11, 0xce, 0xe3, 0x45, 0xbe, 0xcc, 0x52, 0xf7, 0x08, 0x39, 0x60, 0xde, 0xce, 0x1f,
+	0xa4, 0x18, 0xa1, 0x53, 0x80, 0xfb, 0xf4, 0xf6, 0xeb, 0x2c, 0x96, 0x7a, 0x2c, 0x68, 0xa5, 0xa3,
+	0xd9, 0xf7, 0xc8, 0x35, 0xd0, 0x09, 0xd8, 0xf7, 0xb3, 0x70, 0xfe, 0x2d, 0xcc, 0xd3, 0xa9, 0x3b,
+	0x89, 0xe0, 0x97, 0xd5, 0xd0, 0x86, 0xd4, 0xf4, 0x89, 0x94, 0x13, 0xf9, 0x2a, 0x3f, 0xfe, 0x0f,
+	0x00, 0x00, 0xff, 0xff, 0xc6, 0x96, 0x50, 0x88, 0xc6, 0x03, 0x00, 0x00,
 }

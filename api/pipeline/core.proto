@@ -17,7 +17,7 @@ extend google.protobuf.FileOptions {
 
 // Date-based version string. Use this to populate version field in "SearchSolutionsRequest"
 // and "SearchSolutionsResponse" messages.
-option (protocol_version) = "2018.5.2_pre";
+option (protocol_version) = "2018.6.2";
 
 enum EvaluationMethod {
     // Default value. Not to be used.
@@ -258,14 +258,14 @@ message StepDescription {
 message DescribeSolutionResponse {
     // A pipeline description. Nested pipelines should be fully described as well.
     PipelineDescription pipeline = 1;
-    // Each step in a pipeline has description. These are reported in the order of steps in
+    // Each step in a pipeline has description. These are reported in the order of steps in 
     // the pipeline.
     repeated StepDescription steps = 2;
 }
 
 message StepProgress {
     Progress progress = 1;
-    // If step is a sub-pipeline, then this list contains progress for each step in the
+    // If step is a sub-pipeline, then this list contains progress for each step in the 
     // sub-pipeline, in order.
     // List can be incomplete while the process is in progress. Systems can provide
     // steps only at the end (when "progress" equals COMPLETED) and not during running.
@@ -321,9 +321,9 @@ message FitSolutionRequest {
     repeated Value inputs = 2;
     // List of data references of step outputs which should be exposed to the TA3 system.
     // If you want to expose outputs of the whole pipeline (e.g., predictions themselves),
-    // list them here as well. These can be recursive data references like
-    // "steps.1.steps.4.produce" to point to an output inside a sub-pipeline.
-    // Systems only have to support exposing final outputs and can return "ValueError" for
+    // list them here as well. These can be recursive data references like 
+    // "steps.1.steps.4.produce" to point to an output inside a sub-pipeline. 
+    // Systems only have to support exposing final outputs and can return "ValueError" for 
     // intermediate values.
     repeated string expose_outputs = 3;
     // Which value types should be used for exposing outputs. If not provided, the allowed
@@ -355,23 +355,25 @@ message GetFitSolutionResultsResponse {
     repeated StepProgress steps = 2;
     // A mapping between data references of step outputs and values.
     map<string, Value> exposed_outputs = 3;
+    // The fitted solution ID, once progress = COMPLETED.
+    string fitted_solution_id = 4;
 }
 
 // Produce (execute) the solution on given inputs. A solution has to have been fitted for this
 // to be possible (even if in cases where this is just created by transformations).
 message ProduceSolutionRequest {
-    string solution_id = 1;
+    string fitted_solution_id = 1;
     repeated Value inputs = 2;
     // List of data references of step outputs which should be exposed to the TA3 system.
     // If you want to expose outputs of the whole pipeline (e.g., predictions themselves),
-    // list them here as well. These can be recursive data references like
-    // "steps.1.steps.4.produce" to point to an output inside a sub-pipeline.
-    // Systems only have to support exposing final outputs and can return "ValueError" for
+    // list them here as well. These can be recursive data references like 
+    // "steps.1.steps.4.produce" to point to an output inside a sub-pipeline. 
+    // Systems only have to support exposing final outputs and can return "ValueError" for 
     // intermediate values.
     repeated string expose_outputs = 3;
     // Which value types should be used for exposing outputs. If not provided, the allowed
     // value types list from a hello call is used instead.
-    // The order is important as the TA2 system will try value types in order until one works
+    // The order is important as the TA2 system will try value types in order until one works 
     // out, or an error will be returned instead of the value. An error exposing a value does
     // not stop the overall process.
     repeated ValueType expose_value_types = 4;
@@ -403,16 +405,12 @@ message GetProduceSolutionResultsResponse {
 // Exports a solution for evaluation purposes based on NIST specifications.
 message SolutionExportRequest {
     // Found solution to export.
-    string solution_id = 1;
-    // Solution rank to be used for the exported solution. Each exported solution
-    // has rank metadata associated with it. There has to be at least one solution
-    // exported and only one can and should have rank 1, but assuring this is
-    // responsibility of a TA3. If an export of a solution is requested again with any
-    // same rank as previously used (for the same or different solution), a TA2 system should
-    // override the previous export with a new one (or by removing files associated
-    // with the previous export and creating new files, or by overriding files with new
-    // content). Filenames of exported files are left to be chosen by the TA2 system.
-    int32 rank = 2;
+    string fitted_solution_id = 1;
+    // Solution rank to be used for the exported solution. Lower numbers represent
+    // better solutions. Presently NIST requirements are that ranks should be non-negative
+    // and that each exported pipeline have a different rank. TA3 should make sure not to repeat ranks.
+    // Filenames of exported files are left to be chosen by the TA2 system.
+    double rank = 2;
 }
 
 message SolutionExportResponse {}
