@@ -10,6 +10,7 @@
 
 <script lang="ts">
 
+import _ from 'lodash';
 import Vue from 'vue';
 import VariableFacets from '../components/VariableFacets';
 import { getters as routeGetters} from '../store/route/module';
@@ -61,25 +62,61 @@ export default Vue.extend({
 
 	watch: {
 		targetVariableSummaries() {
+			this.defaultTargetHighlight();
+		}
+	},
 
+	mounted() {
+		this.defaultTargetHighlight();
+	},
+
+	methods: {
+		defaultTargetHighlight() {
 			if (this.hasDefaultedHighlight || this.highlights.root) {
 				return;
 			}
 
 			if (!this.hasDefaultedHighlight && this.targetVariableSummaries.length > 0) {
-				const summary = this.targetVariableSummaries[0];
-				const extrema = summary.extrema;
-				const range = extrema.min + (extrema.max - extrema.min);
 				updateHighlightRoot(this, {
 					context: this.instanceName,
 					key: this.target,
-					value: {
-						from: extrema.min + (range * DEFAULT_HIGHLIGHT_PERCENTILE),
-						to: extrema.max
-					}
+					value: this.getValidFacetRangeBounary()
 				});
 				this.hasDefaultedHighlight = true;
 			}
+		},
+		getValidFacetRangeBounary(): any {
+			// facet library is incapable of selecting a range that isnt exactly
+			// on a bin boundary, so we need to iterate through and find it
+			// manually.
+			const summary = this.targetVariableSummaries[0];
+			const extrema = summary.extrema;
+			const group = this.groups[0];
+			const range = extrema.max - extrema.min;
+			const from = extrema.min + (range * DEFAULT_HIGHLIGHT_PERCENTILE);
+			const to = extrema.max;
+			const facet = group.facets[0] as any;
+			const slices = facet.histogram.slices;
+			let fromSlice = null;
+			let toSlice = null;
+			for (let i=0; i<slices.length; i++) {
+				const slice = _.toNumber(slices[i].label);
+				if (from <= slice) {
+					fromSlice = slice;
+					break;
+				}
+			}
+			for (let i=slices.length-1;  i >= 0; i--) {
+				const slice = _.toNumber(slices[i].toLabel);
+				if (to >= slice) {
+					toSlice = slice;
+					break;
+				}
+			}
+			return {
+				from: fromSlice,
+				to: toSlice
+			};
 		}
 	}
 

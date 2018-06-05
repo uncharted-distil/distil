@@ -41,14 +41,14 @@
 import _ from 'lodash';
 import { spinnerHTML } from '../util/spinner';
 import { Extrema } from '../store/dataset/index';
-import { TargetRow, TableRow, TableColumn } from '../store/dataset/index';
+import { TargetRow, TableRow, TableColumn, D3M_INDEX_FIELD } from '../store/dataset/index';
 import { RowSelection } from '../store/highlights/index';
 import { getters as resultsGetters } from '../store/results/module';
 import { getters as routeGetters } from '../store/route/module';
 import { getters as solutionGetters } from '../store/solutions/module';
 import { Dictionary } from '../util/dict';
 import { removeNonTrainingItems, removeNonTrainingFields, getPredictedCol, getErrorCol } from '../util/data';
-import { updateRowSelection, clearRowSelection, updateTableRowSelection } from '../util/row';
+import { addRowSelection, removeRowSelection, isRowSelected, updateTableRowSelection } from '../util/row';
 import Vue from 'vue';
 
 export default Vue.extend({
@@ -97,19 +97,15 @@ export default Vue.extend({
 
 		items(): TargetRow[] {
 			const filtered = removeNonTrainingItems(this.dataItems, this.training);
-			return updateTableRowSelection(filtered, this.selectedRow, this.instanceName);
+			return updateTableRowSelection(filtered, this.rowSelection, this.instanceName);
 		},
 
 		fields(): Dictionary<TableColumn> {
 			return removeNonTrainingFields(this.dataFields, this.training);
 		},
 
-		selectedRow(): RowSelection {
+		rowSelection(): RowSelection {
 			return routeGetters.getDecodedRowSelection(this.$store);
-		},
-
-		selectedRowIndex(): number {
-			return this.selectedRow ? this.selectedRow.index : -1;
 		},
 
 		spinnerHTML(): string {
@@ -128,21 +124,10 @@ export default Vue.extend({
 	methods: {
 
 		onRowClick(row: TableRow) {
-			if (row._key !== this.selectedRowIndex) {
-				// clicked on a different row than last time - new selection
-				updateRowSelection(this, {
-					context: this.instanceName,
-					index: row._key,
-					cols: _.map(this.fields, (field, key) => {
-						return {
-							key: key,
-							value: row[key]
-						};
-					})
-				});
+			if (!isRowSelected(this.rowSelection, row[D3M_INDEX_FIELD])) {
+				addRowSelection(this, this.instanceName, this.rowSelection, row[D3M_INDEX_FIELD]);
 			} else {
-				// clicked on same row - reset the selection key and clear highlights
-				clearRowSelection(this);
+				removeRowSelection(this, this.instanceName, this.rowSelection, row[D3M_INDEX_FIELD]);
 			}
 		},
 
@@ -216,4 +201,8 @@ table tr {
 	background-color: #666;
 }
 
+.table-selected-row {
+	border-left: 4px solid #ff0067;
+	background-color: rgba(255, 0, 103, 0.2);
+}
 </style>

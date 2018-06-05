@@ -270,7 +270,7 @@ func writeDataSchema(schemaPath string, dataset string, filteredData *model.Filt
 		if i == targetIdx {
 			role[0] = "suggestedTarget"
 		}
-		if c == "d3mIndex" {
+		if c == model.D3MIndexFieldName {
 			// Set the specific values for the d3m index.
 			role[0] = "index"
 		}

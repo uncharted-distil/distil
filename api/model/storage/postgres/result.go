@@ -258,6 +258,7 @@ func addPredictedFilterToWhere(dataset string, predictedFilter *model.Filter, ta
 		where = fmt.Sprintf("cast(value AS double precision) >= $%d AND cast(value AS double precision) <= $%d", len(params)+1, len(params)+2)
 		params = append(params, *predictedFilter.Min)
 		params = append(params, *predictedFilter.Max)
+
 	case model.CategoricalFilter:
 		// categorical label based filter, with checks for special correct/incorrect metafilters
 		categories := make([]string, 0)
@@ -280,6 +281,20 @@ func addPredictedFilterToWhere(dataset string, predictedFilter *model.Filter, ta
 		if correctnessCategory != "" {
 			where = addCorrectnessFilterToWhere(target, correctnessCategory, where)
 		}
+
+	case model.RowFilter:
+		// row index based filter
+		indices := make([]string, 0)
+		offset := len(params) + 1
+		for i, d3mIndex := range predictedFilter.D3mIndices {
+			indices = append(indices, fmt.Sprintf("$%d", offset+i))
+			params = append(params, d3mIndex)
+
+		}
+		if len(indices) >= 1 {
+			where = fmt.Sprintf("value IN (%s)", strings.Join(indices, ", "))
+		}
+
 	default:
 		return "", nil, errors.Errorf("unexpected type %s for variable %s", predictedFilter.Type, predictedFilter.Name)
 	}

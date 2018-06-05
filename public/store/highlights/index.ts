@@ -26,10 +26,16 @@ export interface Column {
 	value: any;
 }
 
+export interface Row {
+	index: number;
+	d3mIndex: number;
+	cols: Column[];
+	included: boolean;
+}
+
 export interface RowSelection {
 	context: string;
-	index: number;
-	cols: Column[];
+	d3mIndices: number[];
 }
 
 export const state: HighlightState = {

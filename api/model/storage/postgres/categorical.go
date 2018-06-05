@@ -262,11 +262,11 @@ func (f *CategoricalField) FetchResultSummaryData(resultURI string, dataset stri
 
 	query := fmt.Sprintf(
 		`SELECT data."%s", result.value, COUNT(*) AS count
-		 FROM %s AS result INNER JOIN %s AS data ON result.index = data."d3mIndex"
+		 FROM %s AS result INNER JOIN %s AS data ON result.index = data."%s"
 		 WHERE %s
 		 GROUP BY result.value, data."%s"
 		 ORDER BY count desc;`,
-		targetName, datasetResult, dataset, where, targetName)
+		targetName, datasetResult, dataset, model.D3MIndexFieldName, where, targetName)
 
 	// execute the postgres query
 	res, err := f.Storage.client.Query(query, params...)

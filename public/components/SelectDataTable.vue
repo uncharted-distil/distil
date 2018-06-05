@@ -10,15 +10,12 @@
 		<div class="table-search-bar">
 			<div class="fake-search-input">
 				<div class="filter-badges">
-					<filter-badge v-if="activeFilter"
+					<filter-badge v-if="activeFilter && includedActive"
 						active-filter
 						:filter="activeFilter">
 					</filter-badge>
-					<!--
-					<filter-badge v-for="filter in filters"
-						:filter="filter">
+					<filter-badge v-if="!includedActive && filter.type !== 'row'" v-for="filter in filters" :filter="filter">
 					</filter-badge>
-					-->
 				</div>
 			</div>
 		</div>
@@ -26,15 +23,15 @@
 		<p class="small-margin">
 			<b-button class="float-right" v-if="includedActive"
 				variant="outline-secondary"
-				:disabled="!highlights.root"
+				:disabled="!isFilteringHighlights && !isFilteringSelection"
 				@click="onExcludeClick">
-				<i class="fa fa-minus-circle pr-1 exclude-icon"></i>Exclude
+				<i class="fa fa-minus-circle pr-1" v-bind:class="{'exclude-highlight': isFilteringHighlights, 'exclude-selection': isFilteringSelection}"></i>Exclude
 			</b-button>
 			<b-button class="float-right" v-if="!includedActive"
 				variant="outline-secondary"
-				:disabled="!highlights.root"
+				:disabled="!isFilteringSelection"
 				@click="onReincludeClick">
-				<i class="fa fa-plus-circle pr-1 include-icon"></i>Reinclude
+				<i class="fa fa-plus-circle pr-1" v-bind:class="{'include-selection': isFilteringSelection}"></i>Reinclude
 			</b-button>
 			<small class="row-number-label" v-html="tableTitle"></small>
 		</p>
@@ -76,13 +73,13 @@ import ImagePreview from './ImagePreview';
 import { getters as datasetGetters } from '../store/dataset/module';
 import { Dictionary } from '../util/dict';
 import { Filter } from '../util/filters';
-import { TableColumn } from '../store/dataset/index';
+import { TableColumn, D3M_INDEX_FIELD } from '../store/dataset/index';
 import { Highlight, RowSelection } from '../store/highlights/index';
 import { getters as routeGetters } from '../store/route/module';
 import { TableRow } from '../store/dataset/index';
 import { addFilterToRoute, EXCLUDE_FILTER, INCLUDE_FILTER } from '../util/filters';
 import { getHighlights, clearHighlightRoot, createFilterFromHighlightRoot } from '../util/highlights';
-import { updateRowSelection, clearRowSelection, updateTableRowSelection } from '../util/row';
+import { addRowSelection, removeRowSelection, clearRowSelection, isRowSelected, getNumIncludedRows, getNumExcludedRows, updateTableRowSelection, createFilterFromRowSelection } from '../util/row';
 
 export default Vue.extend({
 	name: 'selected-data-table',
@@ -123,7 +120,7 @@ export default Vue.extend({
 		// extracts the table data from the store
 		items(): TableRow[] {
 			const items = this.includedActive ? datasetGetters.getIncludedTableDataItems(this.$store) : datasetGetters.getExcludedTableDataItems(this.$store);
-			return updateTableRowSelection(items, this.selectedRow, this.instanceName);
+			return updateTableRowSelection(items, this.rowSelection, this.instanceName);
 		},
 
 		// extract the table field header from the store
@@ -161,12 +158,8 @@ export default Vue.extend({
 			return routeGetters.getDecodedFilters(this.$store);
 		},
 
-		selectedRow(): RowSelection {
+		rowSelection(): RowSelection {
 			return routeGetters.getDecodedRowSelection(this.$store);
-		},
-
-		selectedRowIndex(): number {
-			return this.selectedRow ? this.selectedRow.index : -1;
 		},
 
 		spinnerHTML(): string {
@@ -174,37 +167,70 @@ export default Vue.extend({
 		},
 
 		tableTitle(): string {
-			return `${this.items.length} <b class="matching-color">matching</b> samples of ${this.numRows} to model`;
+			if (this.includedActive) {
+				const included = getNumIncludedRows(this, this.rowSelection);
+				if (included > 0) {
+					return `${this.items.length} <b class="matching-color">matching</b> samples of ${this.numRows} to model, ${included} <b class="selected-color">selected</b>`;
+				} else {
+					return `${this.items.length} <b class="matching-color">matching</b> samples of ${this.numRows} to model`;
+				}
+			} else {
+				const excluded = getNumExcludedRows(this, this.rowSelection);
+				if (excluded > 0) {
+					return `${this.items.length} <b class="matching-color">matching</b> samples of ${this.numRows} to model, ${excluded} <b class="selected-color">selected</b>`;
+				} else {
+					return `${this.items.length} <b class="matching-color">matching</b> samples of ${this.numRows} to model`;
+				}
+			}
 		},
+
+		isFilteringHighlights(): boolean {
+			return !this.isFilteringSelection && !!this.highlights.root;
+		},
+
+		isFilteringSelection(): boolean {
+			return !!this.rowSelection;
+		}
 	},
 
 	methods: {
 		onExcludeClick() {
-			const filter = createFilterFromHighlightRoot(this.highlights.root, EXCLUDE_FILTER);
+			let filter = null;
+			if (this.isFilteringHighlights) {
+				filter = createFilterFromHighlightRoot(this.highlights.root, EXCLUDE_FILTER);
+			} else {
+				filter = createFilterFromRowSelection(this.rowSelection, EXCLUDE_FILTER);
+			}
+
 			addFilterToRoute(this, filter);
-			clearHighlightRoot(this);
+
+			if (this.isFilteringHighlights) {
+				clearHighlightRoot(this);
+			} else {
+				clearRowSelection(this);
+			}
 		},
 		onReincludeClick() {
-			const filter = createFilterFromHighlightRoot(this.highlights.root, INCLUDE_FILTER);
+			let filter = null;
+			if (this.isFilteringHighlights) {
+				filter = createFilterFromHighlightRoot(this.highlights.root, INCLUDE_FILTER);
+			} else {
+				filter = createFilterFromRowSelection(this.rowSelection, INCLUDE_FILTER);
+			}
+
 			addFilterToRoute(this, filter);
-			clearHighlightRoot(this);
+
+			if (this.isFilteringHighlights) {
+				clearHighlightRoot(this);
+			} else {
+				clearRowSelection(this);
+			}
 		},
 		onRowClick(row: TableRow) {
-			if (row._key !== this.selectedRowIndex) {
-				// clicked on a different row than last time - new selection
-				updateRowSelection(this, {
-					context: this.instanceName,
-					index: row._key,
-					cols: _.map(this.fields, (field, key) => {
-						return {
-							key: key,
-							value: row[key]
-						};
-					})
-				});
+			if (!isRowSelected(this.rowSelection, row[D3M_INDEX_FIELD])) {
+				addRowSelection(this, this.instanceName, this.rowSelection, row[D3M_INDEX_FIELD]);
 			} else {
-				// clicked on same row - reset the selection key and clear highlights
-				clearRowSelection(this);
+				removeRowSelection(this, this.instanceName, this.rowSelection, row[D3M_INDEX_FIELD]);
 			}
 		},
 		invertFilters(filters: Filter[]): Filter[] {
@@ -258,9 +284,13 @@ table tr {
 .select-view .nav-tabs .nav-link.active {
 	color: rgba(0, 0, 0, 0.87);
 }
-.include-icon,
-.exclude-icon {
+.include-highlight,
+.exclude-highlight {
 	color: #00c6e1;
+}
+.include-selection,
+.exclude-selection {
+	color: #ff0067;
 }
 .row-number-label {
 	position: relative;
@@ -282,5 +312,12 @@ table tr {
 }
 .filter-badges {
 
+}
+.selected-color {
+	color: #ff0067;
+}
+.table-selected-row {
+	border-left: 4px solid #ff0067;
+	background-color: rgba(255, 0, 103, 0.2);
 }
 </style>
