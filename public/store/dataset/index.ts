@@ -5,6 +5,7 @@ export enum SummaryType {
 	Numerical = "numerical"
 }
 
+export const D3M_INDEX_FIELD = 'd3mIndex';
 export const ES_INDEX = 'datasets';
 
 export interface Variable {

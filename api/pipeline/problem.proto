@@ -18,6 +18,7 @@ enum TaskType {
     GRAPH_MATCHING = 8;
     TIME_SERIES_FORECASTING = 9;
     COLLABORATIVE_FILTERING = 10;
+    OBJECT_DETECTION = 11;
 }
 
 // Secondary classification of the problem.
@@ -44,20 +45,23 @@ enum PerformanceMetric {
     // The following are the only evaluation methods required
     // to be supported for the ScoreSolution call.
     ACCURACY = 1;
-    F1 = 2;
-    F1_MICRO = 3;
-    F1_MACRO = 4;
-    ROC_AUC = 5;
-    ROC_AUC_MICRO = 6;
-    ROC_AUC_MACRO = 7;
-    MEAN_SQUARED_ERROR = 8;
-    ROOT_MEAN_SQUARED_ERROR = 9;
-    ROOT_MEAN_SQUARED_ERROR_AVG = 10;
-    MEAN_ABSOLUTE_ERROR = 11;
-    R_SQUARED = 12;
-    NORMALIZED_MUTUAL_INFORMATION = 13;
-    JACCARD_SIMILARITY_SCORE = 14;
-    PRECISION_AT_TOP_K = 15;
+    PRECISION = 2;
+    RECALL = 3;
+    F1 = 4;
+    F1_MICRO = 5;
+    F1_MACRO = 6;
+    ROC_AUC = 7;
+    ROC_AUC_MICRO = 8;
+    ROC_AUC_MACRO = 9;
+    MEAN_SQUARED_ERROR = 10;
+    ROOT_MEAN_SQUARED_ERROR = 11;
+    ROOT_MEAN_SQUARED_ERROR_AVG = 12;
+    MEAN_ABSOLUTE_ERROR = 13;
+    R_SQUARED = 14;
+    NORMALIZED_MUTUAL_INFORMATION = 15;
+    JACCARD_SIMILARITY_SCORE = 16;
+    PRECISION_AT_TOP_K = 17;
+    OBJECT_DETECTION_AVERAGE_PRECISION = 18;
 
     // The rest are defined to allow expressing internal evaluation
     // scores used by TA2 during pipeline search. If any you are using
@@ -90,6 +94,7 @@ message ProblemTarget {
     string resource_id = 2;
     int32 column_index = 3;
     string column_name = 4;
+    int32 clusters_number = 5;
 }
 
 message ProblemInput {

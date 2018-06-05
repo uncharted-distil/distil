@@ -81,6 +81,16 @@ func (s *Storage) buildIncludeFilter(wheres []string, params []interface{}, filt
 		}
 		where := fmt.Sprintf("%s IN (%s)", name, strings.Join(categories, ", "))
 		wheres = append(wheres, where)
+	case model.RowFilter:
+		// row
+		indices := make([]string, 0)
+		offset := len(params) + 1
+		for i, d3mIndex := range filter.D3mIndices {
+			indices = append(indices, fmt.Sprintf("$%d", offset+i))
+			params = append(params, d3mIndex)
+		}
+		where := fmt.Sprintf("\"%s\" IN (%s)", model.D3MIndexFieldName, strings.Join(indices, ", "))
+		wheres = append(wheres, where)
 	}
 	return wheres, params
 }
@@ -106,6 +116,16 @@ func (s *Storage) buildExcludeFilter(wheres []string, params []interface{}, filt
 			params = append(params, category)
 		}
 		where := fmt.Sprintf("%s NOT IN (%s)", name, strings.Join(categories, ", "))
+		wheres = append(wheres, where)
+	case model.RowFilter:
+		// row
+		indices := make([]string, 0)
+		offset := len(params) + 1
+		for i, d3mIndex := range filter.D3mIndices {
+			indices = append(indices, fmt.Sprintf("$%d", offset+i))
+			params = append(params, d3mIndex)
+		}
+		where := fmt.Sprintf("\"%s\" NOT IN (%s)", model.D3MIndexFieldName, strings.Join(indices, ", "))
 		wheres = append(wheres, where)
 	}
 	return wheres, params
@@ -133,6 +153,7 @@ func (s *Storage) buildFilteredQueryField(dataset string, variables []*model.Var
 	for _, variable := range model.GetFilterVariables(filterVariables, variables) {
 		fields = append(fields, fmt.Sprintf("\"%s\"", variable.Name))
 	}
+	fields = append(fields, fmt.Sprintf("\"%s\"", model.D3MIndexFieldName))
 	return strings.Join(fields, ","), nil
 }
 
@@ -143,6 +164,7 @@ func (s *Storage) buildFilteredResultQueryField(dataset string, variables []*mod
 			fields = append(fields, fmt.Sprintf("\"%s\"", variable.Name))
 		}
 	}
+	fields = append(fields, fmt.Sprintf("\"%s\"", model.D3MIndexFieldName))
 	return strings.Join(fields, ","), nil
 }
 

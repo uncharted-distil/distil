@@ -11,6 +11,8 @@ import Vue from 'vue';
 import { Group, CategoricalFacet, isCategoricalFacet, getCategoricalChunkSize } from '../util/facets';
 import { Highlight, RowSelection } from '../store/highlights/index';
 import { Dictionary } from '../util/dict';
+import { getSelectedRows } from '../util/row';
+
 import Facets from '@uncharted.software/stories-facets';
 import ImagePreview from '../components/ImagePreview';
 import TypeChangeMenu from '../components/TypeChangeMenu';
@@ -431,47 +433,51 @@ export default Vue.extend({
 			}
 
 			// if no selection, exit early
-			if (!selection) {
+			if (!selection || selection.d3mIndices.length === 0) {
 				return;
 			}
 
-			// get col
-			const col = _.find(selection.cols, c => {
-				return c.key === group.key;
-			});
+			const rows = getSelectedRows(this, selection);
+			rows.forEach(row => {
 
-			// no matching col, exit early
-			if (!col) {
-				return;
-			}
+				// get col
+				const col = _.find(row.cols, c => {
+					return c.key === group.key;
+				});
 
-			for (const facet of group.facets) {
-
-				// ignore placeholder facets
-				if (facet._type === 'placeholder') {
-					continue;
+				// no matching col, exit early
+				if (!col) {
+					return;
 				}
 
-				if (facet._histogram) {
+				for (const facet of group.facets) {
 
-					facet._histogram.bars.forEach(bar => {
-						const entry: any = _.last(bar.metadata);
-						if (col.value >= _.toNumber(entry.label) &&
-							col.value < _.toNumber(entry.toLabel)) {
-							bar._element.css('fill', '#d78cde');
-							bar._element.addClass('row-selected');
-						}
-					});
-
-				} else {
-
-					if (facet.value === col.value) {
-						facet._barForeground.css('box-shadow', 'inset 0 0 0 1000px #d78cde');
-						facet._barBackground.css('box-shadow', 'inset 0 0 0 1000px #d78cde');
+					// ignore placeholder facets
+					if (facet._type === 'placeholder') {
+						continue;
 					}
 
+					if (facet._histogram) {
+
+						facet._histogram.bars.forEach(bar => {
+							const entry: any = _.last(bar.metadata);
+							if (col.value >= _.toNumber(entry.label) &&
+								col.value < _.toNumber(entry.toLabel)) {
+								bar._element.css('fill', '#ff0067');
+								bar._element.addClass('row-selected');
+							}
+						});
+
+					} else {
+
+						if (facet.value === col.value) {
+							facet._barForeground.css('box-shadow', 'inset 0 0 0 1000px #ff0067');
+							facet._barBackground.css('box-shadow', 'inset 0 0 0 1000px #ff0067');
+						}
+
+					}
 				}
-			}
+			});
 		},
 
 		removeSpinnerFromGroup(group: any) {

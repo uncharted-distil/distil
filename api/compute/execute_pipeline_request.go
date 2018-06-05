@@ -130,7 +130,7 @@ func (e *ExecPipelineRequest) dispatchRequest(client *Client, requestID string) 
 
 func (e *ExecPipelineRequest) createProduceSolutionRequest(datsetURI string, solutionID string) *pipeline.ProduceSolutionRequest {
 	return &pipeline.ProduceSolutionRequest{
-		SolutionId: solutionID,
+		FittedSolutionId: solutionID,
 		Inputs: []*pipeline.Value{
 			{
 				Value: &pipeline.Value_DatasetUri{

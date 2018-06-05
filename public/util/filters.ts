@@ -17,6 +17,11 @@ export const CATEGORICAL_FILTER = 'categorical';
  */
 export const NUMERICAL_FILTER = 'numerical';
 
+/**
+ * Row filter, omitting documents that have the specified d3mIndices;
+ * @constant {string}
+ */
+export const ROW_FILTER = 'row';
 
 /**
  * Include filter, excluding documents that do not fall within the filter.
@@ -31,12 +36,13 @@ export const INCLUDE_FILTER = 'include';
 export const EXCLUDE_FILTER = 'exclude';
 
 export interface Filter {
-	name: string;
 	type: string;
 	mode: string;
+	name?: string;
 	min?: number;
 	max?: number;
 	categories?: string[];
+	d3mIndices?: string[];
 }
 
 export interface FilterParams {
@@ -73,10 +79,76 @@ export function encodeFilters(filters: Filter[]): string {
 	return btoa(JSON.stringify(filters));
 }
 
+/**
+ * Resolves any redundant row include / excludes such that there are only a
+ * maximum of two row filters, one for includes, one for excludes.
+ */
+function dedupeRowFilters(filters: Filter[]): Filter[] {
+
+	const selections = filters.filter(filter => filter.type === ROW_FILTER);
+	const remaining = filters.filter(filter => filter.type !== ROW_FILTER);
+
+	const included = {};
+	const excluded = {};
+	const d3mIndices = {};
+
+	selections.forEach((filter, filterIndex) => {
+		filter.d3mIndices.forEach(d3mIndex => {
+			if (filter.mode === INCLUDE_FILTER) {
+				included[d3mIndex] = filterIndex;
+			} else {
+				excluded[d3mIndex] = filterIndex;
+			}
+			d3mIndices[d3mIndex] = true;
+		});
+	});
+
+	const includes = {
+		type: ROW_FILTER,
+		mode: INCLUDE_FILTER,
+		d3mIndices: []
+	};;
+	const excludes = {
+		type: ROW_FILTER,
+		mode: EXCLUDE_FILTER,
+		d3mIndices: []
+	};
+
+	_.keys(d3mIndices).forEach(d3mIndex => {
+		const includedIndex = included[d3mIndex];
+		const excludedIndex = excluded[d3mIndex];
+
+		// NOTE: filters should be in the order they are created
+		if (includedIndex >= 0 && excludedIndex >= 0) {
+			// if excluded and then included, omit filter entirely
+			return;
+		}
+
+		if (includedIndex >= 0) {
+			includes.d3mIndices.push(d3mIndex);
+			return;
+		}
+
+		if (excludedIndex >= 0) {
+			excludes.d3mIndices.push(d3mIndex);
+		}
+	});
+
+	if (includes.d3mIndices.length > 0) {
+		remaining.push(includes);
+	}
+
+	if (excludes.d3mIndices.length > 0) {
+		remaining.push(excludes);
+	}
+
+	return remaining;
+}
+
 function addFilter(filters: string, filter: Filter): string {
 	const decoded = decodeFilters(filters);
 	decoded.push(filter);
-	return encodeFilters(decoded);
+	return encodeFilters(dedupeRowFilters(decoded));
 }
 
 function removeFilter(filters: string, filter: Filter): string {
