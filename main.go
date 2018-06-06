@@ -88,14 +88,6 @@ func main() {
 		}
 	}
 
-	// set the ingest functions to use
-	if config.IngestPrimitive {
-		task.SetClassify(task.ClassifyPrimmitive)
-		task.SetRank(task.RankPrimmitive)
-		task.SetSummarize(task.SummarizePrimitive)
-		task.SetFeaturize(task.FeaturizePrimitive)
-	}
-
 	// make sure a connection can be made to postgres - doesn't appear to be thread safe and
 	// causes panic if deferred, so we'll do it an a retry loop here.  We need to provide
 	// flexibility on startup because we can't guarantee the DB will be up before the server.
@@ -129,6 +121,15 @@ func main() {
 
 	// instantiate the REST client for primitives.
 	restClient := rest.NewClient(config.PrimitiveEndPoint)
+
+	// set the ingest functions to use
+	if config.IngestPrimitive {
+		task.SetClassify(task.ClassifyPrimmitive)
+		task.SetRank(task.RankPrimmitive)
+		task.SetSummarize(task.SummarizePrimitive)
+		task.SetFeaturize(task.FeaturizePrimitive)
+		task.SetClient(solutionClient)
+	}
 
 	// build the ingest configuration.
 	ingestConfig := &task.IngestTaskConfig{

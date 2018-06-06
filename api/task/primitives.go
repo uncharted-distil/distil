@@ -26,6 +26,10 @@ var (
 	client *compute.Client
 )
 
+func SetClient(computeClient *compute.Client) {
+	client = computeClient
+}
+
 func submitPrimitive(dataset string, step *pipeline.PipelineDescription) (string, error) {
 	request := compute.NewExecPipelineRequest(dataset, step)
 
