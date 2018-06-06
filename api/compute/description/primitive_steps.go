@@ -1,11 +1,7 @@
 package description
 
 import (
-	"encoding/json"
-
-	"github.com/pkg/errors"
 	"github.com/unchartedsoftware/distil/api/pipeline"
-	log "github.com/unchartedsoftware/plog"
 )
 
 // NewSimonStep creates a SIMON data classification step.  It examines an input
@@ -82,21 +78,27 @@ func NewDatasetToDataframeStep() *StepData {
 // ColumnUpdate defines a column name and a semantic type to add/remove
 // from that column.
 type ColumnUpdate struct {
-	Name         string `json:"col_name"`
-	SemanticType string `json:"semantic_type"`
+	Name         string
+	SemanticType string
 }
 
 // NewUpdateSemanticTypeStep adds and removes semantic data values from an input
-// dataframe.
+// dataframe.  Column names and types are matched case insensitively.
 func NewUpdateSemanticTypeStep(add []*ColumnUpdate, remove []*ColumnUpdate) (*StepData, error) {
-	// convert string arrays into JSON strings
-	addJSON, err := json.Marshal(add)
-	if err != nil {
-		log.Error(err)
+	// extract into two lists for compatibility with hyperparams interface
+	addNames := []string{}
+	addTypes := []string{}
+
+	for _, val := range add {
+		addNames = append(addNames, val.Name)
+		addTypes = append(addTypes, val.SemanticType)
 	}
-	removeJSON, err := json.Marshal(remove)
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to create update semantic type step")
+
+	removeNames := []string{}
+	removeTypes := []string{}
+	for _, val := range remove {
+		removeNames = append(removeNames, val.Name)
+		removeTypes = append(removeTypes, val.SemanticType)
 	}
 
 	return NewStepDataWithHyperparameters(
@@ -108,20 +110,17 @@ func NewUpdateSemanticTypeStep(add []*ColumnUpdate, remove []*ColumnUpdate) (*St
 		},
 		[]string{"produce"},
 		map[string]interface{}{
-			"add":    string(addJSON[:]),
-			"remove": string(removeJSON[:]),
+			"add_columns":    addNames,
+			"add_types":      addTypes,
+			"remove_columns": removeNames,
+			"remove_types":   removeTypes,
 		},
 	), nil
 }
 
 // NewRemoveColumnsStep removes columns from an input dataframe.  Columns
 // are specified by name and the match is case insensitive.
-func NewRemoveColumnsStep(columns []string) (*StepData, error) {
-	removeJSON, err := json.Marshal(columns)
-	if err != nil {
-		return nil, errors.Wrap(err, "")
-	}
-
+func NewRemoveColumnsStep(colNames []string) (*StepData, error) {
 	return NewStepDataWithHyperparameters(
 		&pipeline.Primitive{
 			Id:         "2eeff053-395a-497d-88db-7374c27812e6",
@@ -131,7 +130,7 @@ func NewRemoveColumnsStep(columns []string) (*StepData, error) {
 		},
 		[]string{"produce"},
 		map[string]interface{}{
-			"columns": string(removeJSON[:]),
+			"colNames": colNames,
 		},
 	), nil
 }

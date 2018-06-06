@@ -1,6 +1,8 @@
 package description
 
 import (
+	"reflect"
+
 	"github.com/pkg/errors"
 	"github.com/unchartedsoftware/distil/api/pipeline"
 )
@@ -101,34 +103,39 @@ func (s *StepData) BuildDescriptionStep() (*pipeline.PipelineDescriptionStep, er
 	for k, v := range s.Hyperparameters {
 		var value *pipeline.Value
 		switch t := v.(type) {
-		case int:
+		case int, int8, int16, int32, int64:
 			value = &pipeline.Value{
 				Value: &pipeline.Value_Int64{
-					Int64: int64(t),
+					Int64: reflect.ValueOf(t).Int(),
 				},
 			}
-		case int8:
+		case []int, []int8, []int16, []int32, []int64:
+			arr := []int64{}
+			s := reflect.ValueOf(t)
+			if s.Kind() == reflect.Slice {
+				for i := 0; i < s.Len(); i++ {
+					arr = append(arr, s.Index(i).Int())
+				}
+			}
 			value = &pipeline.Value{
-				Value: &pipeline.Value_Int64{
-					Int64: int64(t),
+				Value: &pipeline.Value_Int64List{
+					Int64List: &pipeline.Int64List{
+						List: arr,
+					},
 				},
 			}
-		case int16:
+		case string:
 			value = &pipeline.Value{
-				Value: &pipeline.Value_Int64{
-					Int64: int64(t),
+				Value: &pipeline.Value_String_{
+					String_: t,
 				},
 			}
-		case int32:
+		case []string:
 			value = &pipeline.Value{
-				Value: &pipeline.Value_Int64{
-					Int64: int64(t),
-				},
-			}
-		case int64:
-			value = &pipeline.Value{
-				Value: &pipeline.Value_Int64{
-					Int64: t,
+				Value: &pipeline.Value_StringList{
+					StringList: &pipeline.StringList{
+						List: t,
+					},
 				},
 			}
 		case bool:
@@ -137,10 +144,12 @@ func (s *StepData) BuildDescriptionStep() (*pipeline.PipelineDescriptionStep, er
 					Bool: t,
 				},
 			}
-		case string:
+		case []bool:
 			value = &pipeline.Value{
-				Value: &pipeline.Value_String_{
-					String_: t,
+				Value: &pipeline.Value_BoolList{
+					BoolList: &pipeline.BoolList{
+						List: t,
+					},
 				},
 			}
 		default:

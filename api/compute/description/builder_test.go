@@ -18,9 +18,31 @@ func createTestStep(step int) *StepData {
 		},
 		[]string{"produce"},
 		map[string]interface{}{
-			"test": fmt.Sprintf("hyperparam-%d", step),
+			"testString":      fmt.Sprintf("hyperparam-%d", step),
+			"testBool":        step%2 == 0,
+			"testInt":         step,
+			"testStringArray": []string{fmt.Sprintf("alpha-%d", step), fmt.Sprintf("bravo-%d", step)},
+			"testBoolArray":   []bool{step%2 == 0, step%2 != 0},
+			"testIntArray":    []int{step, step + 1},
 		},
 	)
+}
+
+func testStep(t *testing.T, index int, step *StepData, steps []*pipeline.PipelineDescriptionStep) {
+	assert.Equal(t, "produce", steps[index].GetPrimitive().GetOutputs()[0].GetId())
+
+	assert.Equal(t, fmt.Sprintf("hyperparam-%d", index),
+		steps[index].GetPrimitive().GetHyperparams()["testString"].GetValue().GetData().GetString_())
+	assert.Equal(t, int64(index), steps[index].GetPrimitive().GetHyperparams()["testInt"].GetValue().GetData().GetInt64())
+	assert.Equal(t, index%2 == 0, steps[index].GetPrimitive().GetHyperparams()["testBool"].GetValue().GetData().GetBool())
+	assert.Equal(t, []string{fmt.Sprintf("alpha-%d", index), fmt.Sprintf("bravo-%d", index)},
+		steps[index].GetPrimitive().GetHyperparams()["testStringArray"].GetValue().GetData().GetStringList().GetList())
+	assert.Equal(t, []int64{int64(index), int64(index) + 1},
+		steps[index].GetPrimitive().GetHyperparams()["testIntArray"].GetValue().GetData().GetInt64List().GetList())
+	assert.Equal(t, []bool{index%2 == 0, index%2 != 0},
+		steps[index].GetPrimitive().GetHyperparams()["testBoolArray"].GetValue().GetData().GetBoolList().GetList())
+
+	assert.EqualValues(t, step.GetPrimitive(), steps[index].GetPrimitive().GetPrimitive())
 }
 
 // Tests basic pipeline compilation.
@@ -42,19 +64,13 @@ func TestPipelineCompile(t *testing.T) {
 
 	// validate step inputs
 	assert.Equal(t, "inputs.0", steps[0].GetPrimitive().GetArguments()[stepInputsKey].GetContainer().GetData())
-	assert.Equal(t, "produce", steps[0].GetPrimitive().GetOutputs()[0].GetId())
-	assert.Equal(t, "hyperparam-0", steps[0].GetPrimitive().GetHyperparams()["test"].GetValue().GetData().GetString_())
-	assert.EqualValues(t, step0.GetPrimitive(), steps[0].GetPrimitive().GetPrimitive())
+	testStep(t, 0, step0, steps)
 
 	assert.Equal(t, "steps.0.produce", steps[1].GetPrimitive().GetArguments()[stepInputsKey].GetContainer().GetData())
-	assert.Equal(t, "produce", steps[1].GetPrimitive().GetOutputs()[0].GetId())
-	assert.Equal(t, "hyperparam-1", steps[1].GetPrimitive().GetHyperparams()["test"].GetValue().GetData().GetString_())
-	assert.EqualValues(t, step1.GetPrimitive(), steps[1].GetPrimitive().GetPrimitive())
+	testStep(t, 1, step1, steps)
 
 	assert.Equal(t, "steps.1.produce", steps[2].GetPrimitive().GetArguments()[stepInputsKey].GetContainer().GetData())
-	assert.Equal(t, "produce", steps[2].GetPrimitive().GetOutputs()[0].GetId())
-	assert.Equal(t, "hyperparam-2", steps[2].GetPrimitive().GetHyperparams()["test"].GetValue().GetData().GetString_())
-	assert.EqualValues(t, step2.GetPrimitive(), steps[2].GetPrimitive().GetPrimitive())
+	testStep(t, 2, step2, steps)
 
 	// validate outputs
 	assert.Equal(t, 1, len(desc.GetOutputs()))
