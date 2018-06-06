@@ -48,6 +48,26 @@ type Summarize func(index string, dataset string, config *IngestTaskConfig) erro
 // and add them to the dataset.
 type Featurize func(index string, dataset string, config *IngestTaskConfig) error
 
+// SetClassify sets the classification function to use.
+func SetClassify(classificationFunc Classify) {
+	classify = classificationFunc
+}
+
+// SetRank sets the ranking function to use.
+func SetRank(rankFunc Rank) {
+	rank = rankFunc
+}
+
+// SetSummarize sets the summarization function to use.
+func SetSummarize(summarizeFunc Summarize) {
+	summarize = summarizeFunc
+}
+
+// SetFeaturize sets the featurization function to use.
+func SetFeaturize(featurizeFunc Featurize) {
+	featurize = featurizeFunc
+}
+
 // IngestTaskConfig captures the necessary configuration for an data ingest.
 type IngestTaskConfig struct {
 	ContainerDataPath                  string
