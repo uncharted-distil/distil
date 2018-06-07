@@ -20,6 +20,8 @@ import { circleSpinnerHTML } from '../util/spinner';
 
 import '@uncharted.software/stories-facets/dist/facets.css';
 
+const INJECT_DEBOUNCE = 200;
+
 export default Vue.extend({
 	name: 'facets',
 
@@ -47,6 +49,7 @@ export default Vue.extend({
 	data() {
 		return {
 			facets: <any>{},
+			debouncedInjection: _.debounce(this.injectHighlights, INJECT_DEBOUNCE),
 			more: {}
 		};
 	},
@@ -205,7 +208,7 @@ export default Vue.extend({
 
 		// handle external highlight changes by updating internal facet select states
 		highlights(currHighlights: Highlight) {
-			this.injectHighlights(currHighlights, this.rowSelection, this.deemphasis);
+			this.debouncedInjection(currHighlights, this.rowSelection, this.deemphasis);
 			if (this.enableHighlighting) {
 				this.addHighlightArrow(currHighlights);
 			}
@@ -213,11 +216,11 @@ export default Vue.extend({
 
 		// handle external highlight changes by updating internal facet select states
 		rowSelection(currSelection: RowSelection) {
-			this.injectHighlights(this.highlights, currSelection, this.deemphasis);
+			this.debouncedInjection(this.highlights, currSelection, this.deemphasis);
 		},
 
 		deemphasis(currDemphasis: any) {
-			this.injectHighlights(this.highlights, this.rowSelection, currDemphasis);
+			this.debouncedInjection(this.highlights, this.rowSelection, currDemphasis);
 		},
 
 		sort(currSort) {

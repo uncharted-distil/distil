@@ -76,6 +76,9 @@ module.exports = {
 		]),
 		new CopyWebpackPlugin([
 			{ from: 'public/assets/favicons', to: 'favicons' }
+		]),
+		new CopyWebpackPlugin([
+			{ from: 'public/assets/timeseries', to: 'timeseries' }
 		])
 	],
 	devtool: 'source-map-eval'
