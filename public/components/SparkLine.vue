@@ -55,10 +55,11 @@ export default Vue.extend({
 		}
 	},
 	data() {
+		const component = this as any;
 		return {
-			debouncedRender: _.debounce(this.render, RENDER_DEBOUNCE)
+			debouncedRender: _.debounce(component.render, RENDER_DEBOUNCE)
 		};
-	}
+	},
 	computed: {
 		timeseries(): any[] {
 			const arg = timeseriesGetters.getTimeSeries(this.$store)[this.timeSeriesUrl];

@@ -47,9 +47,10 @@ export default Vue.extend({
 	},
 
 	data() {
+		const component = this as any;
 		return {
 			facets: <any>{},
-			debouncedInjection: _.debounce(this.injectHighlights, INJECT_DEBOUNCE),
+			debouncedInjection: _.debounce(component.injectHighlights, INJECT_DEBOUNCE),
 			more: {}
 		};
 	},
