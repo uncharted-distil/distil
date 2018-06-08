@@ -1,11 +1,17 @@
 <template>
-	<svg ref="svg" class="line-chart"></svg>
+	<div>
+		<svg v-if="isLoaded" ref="svg" class="line-chart"></svg>
+		<div v-if="isErrored">Error</div>
+		<div v-if="!isErrored && !isLoaded" v-html="spinnerHTML"></div>
+	</div>
 </template>
 
 <script lang="ts">
+
 import * as d3 from 'd3';
 import _ from 'lodash';
 import Vue from 'vue';
+import { circleSpinnerHTML } from '../util/spinner';
 import { getters as timeseriesGetters, actions as timeseriesActions } from '../store/timeseries/module';
 
 const RENDER_DEBOUNCE = 200;
@@ -61,10 +67,21 @@ export default Vue.extend({
 		};
 	},
 	computed: {
+		isLoaded(): boolean {
+			const arg = timeseriesGetters.getTimeSeries(this.$store)[this.timeSeriesUrl];
+			return arg && arg.timeseries;
+		},
+		isErrored(): boolean {
+			const arg = timeseriesGetters.getTimeSeries(this.$store)[this.timeSeriesUrl];
+			return arg && arg.err;
+		},
 		timeseries(): any[] {
 			const arg = timeseriesGetters.getTimeSeries(this.$store)[this.timeSeriesUrl];
 			return arg ? arg.timeseries : null;
 		},
+		spinnerHTML(): string {
+			return circleSpinnerHTML();
+		}
 	},
 	mounted() {
 		timeseriesActions.fetchTimeSeries(this.$store, { url: this.timeSeriesUrl });
