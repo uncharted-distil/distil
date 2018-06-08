@@ -45,12 +45,12 @@ func CreateUserDatasetPipeline(name string, description string, allFeatures []*m
 			if addType != removeType {
 				addedTypes = append(addedTypes, &ColumnUpdate{
 					Name:         v.Name,
-					SemanticType: removeType,
+					SemanticType: addType,
 				})
 
 				removedTypes = append(removedTypes, &ColumnUpdate{
 					Name:         v.Name,
-					SemanticType: addType,
+					SemanticType: removeType,
 				})
 			}
 		}
