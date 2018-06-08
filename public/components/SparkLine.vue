@@ -1,8 +1,15 @@
 <template>
-	<div>
-		<svg v-if="isLoaded" ref="svg" class="line-chart"></svg>
+	<div class="sparkline-container">
+		<svg v-if="isLoaded" ref="svg" class="line-chart" @click.stop="onClick"></svg>
+		<i class="fa fa-plus zoom-icon"></i>
 		<div v-if="isErrored">Error</div>
 		<div v-if="!isErrored && !isLoaded" v-html="spinnerHTML"></div>
+		<b-modal id="sparkline-zoom-modal" :title="timeSeriesUrl"
+			@hide="hideModal"
+			:visible="!!zoomSparkline"
+			hide-footer>
+			<div class="sparkline-elem-zoom" ref="sparklineElemZoom"></div>
+		</b-modal>
 	</div>
 </template>
 
@@ -19,14 +26,13 @@ const RENDER_DEBOUNCE = 200;
 export default Vue.extend({
 	name: 'SparkLine',
 	props: {
-		imageUrl: String,
 		margin: {
 			type: Object,
 			default: () => ({
-				top: 0,
-				right: 0,
-				bottom: 0,
-				left: 0
+				top: 8,
+				right: 4,
+				bottom: 8,
+				left: 4
 			})
 		},
 		smoothing: {
@@ -63,6 +69,7 @@ export default Vue.extend({
 	data() {
 		const component = this as any;
 		return {
+			zoomSparkline: false,
 			debouncedRender: _.debounce(component.render, RENDER_DEBOUNCE)
 		};
 	},
@@ -144,7 +151,7 @@ export default Vue.extend({
 
 			const className = this.className || 'line-chart';
 			const g = svg.append('g')
-				.attr('stroke', '#000')
+				.attr('stroke', '#666')
 				.attr('transform', `translate(${this.margin.left}, ${this.margin.top})`)
 				.attr('class', className);
 
@@ -166,17 +173,66 @@ export default Vue.extend({
 		},
 		refreshLayout() {
 			this.debouncedRender();
+		},
+		onClick() {
+			const $svg = this.$refs.svg as any;
+			const $elem = this.$refs.sparklineElemZoom as any;
+			$elem.innerHTML = '';
+			$elem.appendChild($svg.cloneNode(true));
+			this.zoomSparkline = true;
+		},
+		hideModal() {
+			this.zoomSparkline = false;
 		}
 	}
+
 });
 </script>
 
 <style>
 
-svg {
+svg.line-chart {
 	position: relative;
 	max-height: 32px;
 	width: 100%;
+	border: 1px solid rgba(0,0,0,0);
+}
+
+svg.line-chart:hover {
+	background-color: #fff;
+	border: 1px solid #666;
+	border-radius: 4px;
+}
+
+.zoom-icon {
+	position: absolute;
+	right: 4px;
+	top: 4px;
+	color: #666;
+	visibility: hidden;
+}
+
+.sparkline-container {
+	position: relative;
+}
+
+.sparkline-container:hover .zoom-icon {
+	visibility: visible;
+}
+
+.zoom-icon {
+	pointer-events: none;
+}
+
+.sparkline-elem-zoom {
+	position: relative;
+	padding: 32px 16px;
+	max-width: 100%;
+	border-radius: 4px;
+}
+
+#sparkline-zoom-modal .modal-dialog {
+	max-width: none;
 }
 
 </style>

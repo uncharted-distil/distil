@@ -6,7 +6,7 @@
 				<div v-if="!isErrored && !isLoaded" v-html="spinnerHTML"></div>
 			</div>
 		</div>
-		<b-modal id="zoom-modal" :title="imageUrl"
+		<b-modal id="image-zoom-modal" :title="imageUrl"
 			@hide="hideModal"
 			:visible="!!zoomImage"
 			hide-footer>
