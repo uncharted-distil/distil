@@ -58,7 +58,7 @@
 				</template>
 
 				<template v-for="timeseriesField in timeseriesFields" :slot="timeseriesField" slot-scope="data">
-					<spark-line :key="timeseriesField" :time-series-url="data.item[timeseriesField]"></spark-line>
+					<sparkline-preview :key="timeseriesField" :time-series-url="data.item[timeseriesField]"></sparkline-preview>
 				</template>
 
 			</b-table>
@@ -73,7 +73,7 @@ import _ from 'lodash';
 import { spinnerHTML } from '../util/spinner';
 import Vue from 'vue';
 import FilterBadge from './FilterBadge';
-import SparkLine from './SparkLine';
+import SparkLinePreview from './SparkLinePreview';
 import ImagePreview from './ImagePreview';
 import { getters as datasetGetters } from '../store/dataset/module';
 import { Dictionary } from '../util/dict';
@@ -92,7 +92,7 @@ export default Vue.extend({
 	components: {
 		FilterBadge,
 		ImagePreview,
-		SparkLine
+		SparkLinePreview
 	},
 
 	props: {

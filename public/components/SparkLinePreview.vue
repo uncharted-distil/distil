@@ -24,7 +24,7 @@ import { getters as timeseriesGetters, actions as timeseriesActions } from '../s
 const RENDER_DEBOUNCE = 200;
 
 export default Vue.extend({
-	name: 'SparkLine',
+	name: 'sparkline-preview',
 	props: {
 		margin: {
 			type: Object,
