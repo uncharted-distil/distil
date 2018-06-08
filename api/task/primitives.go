@@ -26,6 +26,7 @@ var (
 	client *compute.Client
 )
 
+// SetClient sets the compute client to use when invoking primitives.
 func SetClient(computeClient *compute.Client) {
 	client = computeClient
 }
