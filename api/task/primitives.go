@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"encoding/csv"
 	"encoding/json"
-	"fmt"
 	"io"
 	"io/ioutil"
 	"os"
@@ -174,22 +173,26 @@ func SummarizePrimitive(index string, dataset string, config *IngestTaskConfig) 
 		return errors.Wrap(err, "unable to run Duke pipeline")
 	}
 
-	// parse primitive response (dataset,tokens,probabilities)
+	// parse primitive response (token,probability)
 	res, err := result.ParseResultCSV(datasetURI)
 	if err != nil {
 		return errors.Wrap(err, "unable to parse Duke pipeline result")
 	}
 
-	summary := ""
+	tokens := make([]string, len(res)-1)
 	for i, v := range res {
+		// skip the header
 		if i > 0 {
-			tokens := v[1].([]string)
-			summary = strings.Join(tokens, ", ")
+			token, ok := v[0].(string)
+			if !ok {
+				return errors.Wrap(err, "unable to parse Duke token")
+			}
+			tokens[i-1] = token
 		}
 	}
 
 	sum := &rest.SummaryResult{
-		Summary: fmt.Sprintf("The dataset contains information about: %s", summary),
+		Summary: strings.Join(tokens, ", "),
 	}
 
 	// output the classification in the expected JSON format
