@@ -15,7 +15,7 @@ import { getSelectedRows } from '../util/row';
 
 import Facets from '@uncharted.software/stories-facets';
 import ImagePreview from '../components/ImagePreview';
-import SparkLinePreview from '../components/SparkLinePreview';
+import SparklinePreview from '../components/SparklinePreview';
 import TypeChangeMenu from '../components/TypeChangeMenu';
 import { circleSpinnerHTML } from '../util/spinner';
 
@@ -774,7 +774,7 @@ export default Vue.extend({
 					const $facet = $($facets.get(index));
 					const $slot = $('<span/>');
 					$facet.append($slot);
-					const preview = new SparkLinePreview(
+					const preview = new SparklinePreview(
 						{
 							store: this.$store,
 							propsData: {

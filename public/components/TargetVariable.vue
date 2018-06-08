@@ -16,8 +16,9 @@ import VariableFacets from '../components/VariableFacets';
 import { getters as routeGetters} from '../store/route/module';
 import { Group, createGroups } from '../util/facets';
 import { Highlight } from '../store/highlights/index';
-import { VariableSummary } from '../store/dataset/index';
+import { Variable, VariableSummary } from '../store/dataset/index';
 import { getHighlights, updateHighlightRoot } from '../util/highlights';
+import { isNumericType } from '../util/types';
 
 import 'font-awesome/css/font-awesome.css';
 
@@ -37,6 +38,10 @@ export default Vue.extend({
 
 		target(): string {
 			return routeGetters.getRouteTargetVariable(this.$store);
+		},
+
+		targetVariable(): Variable {
+			return routeGetters.getTargetVariable(this.$store);
 		},
 
 		targetVariableSummaries(): VariableSummary[] {
@@ -72,6 +77,11 @@ export default Vue.extend({
 
 	methods: {
 		defaultTargetHighlight() {
+			// only default higlight numeric types
+			if (!this.targetVariable || !isNumericType(this.targetVariable.type)) {
+				return;
+			}
+
 			// if we have no current highlight, and no filters, highlight default range
 			if (this.highlights.root || this.hasFilters) {
 				return;

@@ -73,7 +73,7 @@ import _ from 'lodash';
 import { spinnerHTML } from '../util/spinner';
 import Vue from 'vue';
 import FilterBadge from './FilterBadge';
-import SparkLinePreview from './SparkLinePreview';
+import SparklinePreview from './SparklinePreview';
 import ImagePreview from './ImagePreview';
 import { getters as datasetGetters } from '../store/dataset/module';
 import { Dictionary } from '../util/dict';
@@ -92,7 +92,7 @@ export default Vue.extend({
 	components: {
 		FilterBadge,
 		ImagePreview,
-		SparkLinePreview
+		SparklinePreview
 	},
 
 	props: {
