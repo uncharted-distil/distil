@@ -15,6 +15,7 @@ import { getSelectedRows } from '../util/row';
 
 import Facets from '@uncharted.software/stories-facets';
 import ImagePreview from '../components/ImagePreview';
+import SparkLine from '../components/SparkLine';
 import TypeChangeMenu from '../components/TypeChangeMenu';
 import { circleSpinnerHTML } from '../util/spinner';
 
@@ -286,6 +287,9 @@ export default Vue.extend({
 
 			// inject image preview if image type
 			this.injectImagePreview(group, $elem);
+
+			// inject sparkline preview if timeseries type
+			this.injectSparklinePreview(group, $elem);
 
 			if (!this.html) {
 				return;
@@ -756,6 +760,25 @@ export default Vue.extend({
 							store: this.$store,
 							propsData: {
 								imageUrl: facet.value
+							}
+						});
+					preview.$mount($slot[0]);
+				});
+			}
+		},
+
+		injectSparklinePreview(group: Group, $elem: JQuery) {
+			if (group.type === 'timeseries') {
+				const $facets = $elem.find('.facet-block');
+				group.facets.forEach((facet: any, index) => {
+					const $facet = $($facets.get(index));
+					const $slot = $('<span/>');
+					$facet.append($slot);
+					const preview = new SparkLine(
+						{
+							store: this.$store,
+							propsData: {
+								timeSeriesUrl: facet.value
 							}
 						});
 					preview.$mount($slot[0]);
