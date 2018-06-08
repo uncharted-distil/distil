@@ -167,9 +167,9 @@
     "rest",
     "smmry"
   ]
-  revision = "32e88ae5aa51879279288ac4b8c511631713d40d"
+  revision = "f8224151b7d1a1f76deed20b996518e123ff2ee3"
   source = "git@github.com:unchartedsoftware/distil-ingest.git"
-  version = "0.4.0"
+  version = "0.4.2"
 
 [[projects]]
   branch = "master"
