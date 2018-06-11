@@ -57,6 +57,10 @@
 					<image-preview :key="imageField" :image-url="data.item[imageField]"></image-preview>
 				</template>
 
+				<template v-for="timeseriesField in timeseriesFields" :slot="timeseriesField" slot-scope="data">
+					<sparkline-preview :key="timeseriesField" :time-series-url="data.item[timeseriesField]"></sparkline-preview>
+				</template>
+
 			</b-table>
 		</div>
 
@@ -69,6 +73,7 @@ import _ from 'lodash';
 import { spinnerHTML } from '../util/spinner';
 import Vue from 'vue';
 import FilterBadge from './FilterBadge';
+import SparklinePreview from './SparklinePreview';
 import ImagePreview from './ImagePreview';
 import { getters as datasetGetters } from '../store/dataset/module';
 import { Dictionary } from '../util/dict';
@@ -86,7 +91,8 @@ export default Vue.extend({
 
 	components: {
 		FilterBadge,
-		ImagePreview
+		ImagePreview,
+		SparklinePreview
 	},
 
 	props: {
@@ -136,6 +142,17 @@ export default Vue.extend({
 				};
 			})
 			.filter(field => field.type === 'image')
+			.map(field => field.name);
+		},
+
+		timeseriesFields(): string[] {
+			return _.map(this.fields, (field, name) => {
+				return {
+					name: name,
+					type: field.type
+				};
+			})
+			.filter(field => field.type === 'timeseries')
 			.map(field => field.name);
 		},
 

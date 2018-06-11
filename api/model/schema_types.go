@@ -47,6 +47,8 @@ const (
 	URIType = "uri"
 	// ImageType is the schema type for Image values
 	ImageType = "image"
+	// TimeSeriesType is the schema type for Image values
+	TimeSeriesType = "timeseries"
 	// UnknownType is the schema type for unknown values
 	UnknownType = "unknown"
 
@@ -91,7 +93,8 @@ var (
 		StateType:       true,
 		URIType:         true,
 		UnknownType:     true,
-		ImageType:       true}
+		ImageType:       true,
+		TimeSeriesType:  true}
 	numericalTypes = map[string]bool{
 		LongitudeType: true,
 		LatitudeType:  true,
