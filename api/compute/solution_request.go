@@ -448,7 +448,7 @@ func splitTrainTest(dataset *model.QueriedDataset) (*model.QueriedDataset, *mode
 	testDataset := &model.QueriedDataset{
 		Metadata: dataset.Metadata,
 		Filters:  dataset.Filters,
-		IsTrain:  true,
+		IsTrain:  false,
 		Data: &model.FilteredData{
 			Name:    dataset.Data.Name,
 			NumRows: dataset.Data.NumRows,
