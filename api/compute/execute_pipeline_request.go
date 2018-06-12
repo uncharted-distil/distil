@@ -83,7 +83,6 @@ func (e *ExecPipelineRequest) dispatchRequest(client *Client, requestID string) 
 	var produceCalled bool
 	// Search for solutions, this wont return until the produce finishes or it times out.
 	err := client.SearchSolutions(context.Background(), requestID, func(solution *pipeline.GetSearchSolutionsResultsResponse) {
-		defer e.wg.Done()
 
 		// A complete pipeline specification should result in a single solution being generated.  Consider it an
 		// error condition when that is not the case.
@@ -94,6 +93,7 @@ func (e *ExecPipelineRequest) dispatchRequest(client *Client, requestID string) 
 			e.notifyError(e.statusChannel, requestID, err)
 			return
 		}
+		defer e.wg.Done()
 
 		// handle solution search update - status codes pertain to the search itself, and not a particular
 		// solution
