@@ -505,12 +505,12 @@ func (s *SolutionRequest) PersistAndDispatch(client *Client, solutionStorage mod
 	if err != nil {
 		return err
 	}
-	datasetPathTrain = fmt.Sprintf("%s", filepath.Join(datasetPathTrain, D3MDataSchema))
+	datasetPathTrain = fmt.Sprintf("file://%s", filepath.Join(datasetPathTrain, D3MDataSchema))
 	datasetPathTest, err = filepath.Abs(datasetPathTest)
 	if err != nil {
 		return err
 	}
-	datasetPathTest = fmt.Sprintf("%s", filepath.Join(datasetPathTest, D3MDataSchema))
+	datasetPathTest = fmt.Sprintf("file://%s", filepath.Join(datasetPathTest, D3MDataSchema))
 
 	// generate the pre-processing pipeline to enforce feature selection and semantic type changes
 	preprocessing, err := s.createPreprocessingPipeline(variables, s.Filters.Variables)
