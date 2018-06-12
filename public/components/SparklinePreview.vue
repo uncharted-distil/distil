@@ -17,11 +17,9 @@
 
 import * as d3 from 'd3';
 import _ from 'lodash';
+import axios from 'axios';
 import Vue from 'vue';
 import { circleSpinnerHTML } from '../util/spinner';
-import { getters as timeseriesGetters, actions as timeseriesActions } from '../store/timeseries/module';
-
-const RENDER_DEBOUNCE = 200;
 
 export default Vue.extend({
 	name: 'sparkline-preview',
@@ -59,121 +57,106 @@ export default Vue.extend({
 			type: String
 		}
 	},
-	watch: {
-		timeseries(currTimeSeries) {
-			if (currTimeSeries) {
-				this.debouncedRender();
-			}
-		}
-	},
 	data() {
-		const component = this as any;
 		return {
 			zoomSparkline: false,
-			debouncedRender: _.debounce(component.render, RENDER_DEBOUNCE)
+			entry: null
 		};
 	},
 	computed: {
 		isLoaded(): boolean {
-			const arg = timeseriesGetters.getTimeSeries(this.$store)[this.timeSeriesUrl];
-			return arg && arg.timeseries;
+			return this.entry && this.entry.timeseries;
 		},
 		isErrored(): boolean {
-			const arg = timeseriesGetters.getTimeSeries(this.$store)[this.timeSeriesUrl];
-			return arg && arg.err;
+			return this.entry && this.entry.err;
 		},
 		timeseries(): any[] {
-			const arg = timeseriesGetters.getTimeSeries(this.$store)[this.timeSeriesUrl];
-			return arg ? arg.timeseries : null;
+			return this.entry ? this.entry.timeseries : null;
 		},
 		spinnerHTML(): string {
 			return circleSpinnerHTML();
 		}
 	},
 	mounted() {
-		timeseriesActions.fetchTimeSeries(this.$store, { url: this.timeSeriesUrl });
+		this.requestTimeseries(this.timeSeriesUrl);
+	},
+	updated() {
+		if (_.isEmpty(this.timeseries)) {
+			return;
+		}
+
+		const timeseries = this.timeseries;
+
+		const $svg = this.$refs.svg as any;
+		const svg = d3.select($svg);
+		svg.selectAll('*').remove();
+
+		const hasLastPoint = (this.lastPointRadius > 0 && timeseries.length > 0);
+		const dims = $svg.getBoundingClientRect();
+
+		let width = dims.width - this.margin.left - this.margin.right;
+		let height = dims.height - this.margin.top - this.margin.bottom;
+
+		height = hasLastPoint ? height - this.lastPointRadius : height;
+		width = hasLastPoint ? width - this.lastPointRadius : width;
+
+		if (width <= 0) {
+			console.warn('Invalid width for line chart');
+			return;
+		}
+
+		if (height <= 0) {
+			console.warn('Invalid height for line chart');
+			return;
+		}
+
+		let xScale;
+		if (this.xScaleType === 'point') {
+			xScale = d3.scalePoint().range([0, width]);
+		} else {
+			xScale = d3.scaleBand().rangeRound([0, width], 0);
+		}
+		xScale.domain(timeseries.map(d => d.timestamp));
+
+		const min = this.zeroBased ? 0 : d3.min(this.timeseries, d => d.count);
+		const max = d3.max(timeseries, d => d.count);
+
+		const yScale = d3.scaleLinear()
+			.domain([min, max])
+			.range([height, 0]);
+
+		let curveType = d3.curveBasis;
+		if (this.smoothing === 'linear') {
+			curveType = d3.curveLinear;
+		}
+
+		const line = d3.line()
+			.x(d => xScale(d.timestamp))
+			.y(d => yScale(d.count))
+			.curve(curveType);
+
+		const className = this.className || 'line-chart';
+		const g = svg.append('g')
+			.attr('transform', `translate(${this.margin.left}, ${this.margin.top})`)
+			.attr('class', className);
+
+		g.datum(timeseries);
+
+		g.append('path')
+			.attr('fill', 'none')
+			.attr('class', 'line')
+			.attr('d', line);
+
+		if (hasLastPoint) {
+			const lastPoint = timeseries[timeseries.length - 1];
+			g.append('circle')
+				.attr('cx', xScale(lastPoint.timestamp))
+				.attr('cy', yScale(lastPoint.count))
+				.attr('r', this.lastPointRadius)
+				.attr('class', 'last-point');
+		}
 	},
 	methods: {
-		render() {
-			if (_.isEmpty(this.timeseries)) {
-				return;
-			}
-
-			const timeseries = this.timeseries;
-
-			const $svg = this.$refs.svg as any;
-			const svg = d3.select($svg);
-			svg.selectAll('*').remove();
-
-			const hasLastPoint = (this.lastPointRadius > 0 && timeseries.length > 0);
-			const dims = $svg.getBoundingClientRect();
-
-			let width = dims.width - this.margin.left - this.margin.right;
-			let height = dims.height - this.margin.top - this.margin.bottom;
-
-			height = hasLastPoint ? height - this.lastPointRadius : height;
-			width = hasLastPoint ? width - this.lastPointRadius : width;
-
-			if (width <= 0) {
-				console.warn('Invalid width for line chart');
-				return;
-			}
-
-			if (height <= 0) {
-				console.warn('Invalid height for line chart');
-				return;
-			}
-
-			let xScale;
-			if (this.xScaleType === 'point') {
-				xScale = d3.scalePoint().range([0, width]);
-			} else {
-				xScale = d3.scaleBand().rangeRound([0, width], 0);
-			}
-			xScale.domain(timeseries.map(d => d.timestamp));
-
-			const min = this.zeroBased ? 0 : d3.min(this.timeseries, d => d.count);
-			const max = d3.max(timeseries, d => d.count);
-
-			const yScale = d3.scaleLinear()
-				.domain([min, max])
-				.range([height, 0]);
-
-			let curveType = d3.curveBasis;
-			if (this.smoothing === 'linear') {
-				curveType = d3.curveLinear;
-			}
-
-			const line = d3.line()
-				.x(d => xScale(d.timestamp))
-				.y(d => yScale(d.count))
-				.curve(curveType);
-
-			const className = this.className || 'line-chart';
-			const g = svg.append('g')
-				.attr('stroke', '#666')
-				.attr('transform', `translate(${this.margin.left}, ${this.margin.top})`)
-				.attr('class', className);
-
-			g.datum(timeseries);
-
-			g.append('path')
-				.attr('fill', 'none')
-				.attr('class', 'line')
-				.attr('d', line);
-
-			if (hasLastPoint) {
-				const lastPoint = timeseries[timeseries.length - 1];
-				g.append('circle')
-					.attr('cx', xScale(lastPoint.timestamp))
-					.attr('cy', yScale(lastPoint.count))
-					.attr('r', this.lastPointRadius)
-					.attr('class', 'last-point');
-			}
-		},
-		refreshLayout() {
-			this.debouncedRender();
-		},
 		onClick() {
 			const $svg = this.$refs.svg as any;
 			const $elem = this.$refs.sparklineElemZoom as any;
@@ -183,6 +166,32 @@ export default Vue.extend({
 		},
 		hideModal() {
 			this.zoomSparkline = false;
+		},
+		requestTimeseries(url: string) {
+			// DEBUG:
+			const TIME_SERIES = [
+				'a.csv',
+				'b.csv',
+				'c.csv',
+				'd.csv',
+				'e.csv'
+			];
+			return axios.get(`timeseries/${TIME_SERIES[Math.floor(Math.random() * TIME_SERIES.length)]}`)
+				.then(response => {
+					const lines = response.data.split('\n');
+					const timeseries = lines.slice(1, lines.length - 1).map(entry => {
+						const split = entry.split(',');
+						return {
+							timestamp: split[0],
+							count: _.toNumber(split[1])
+						};
+					});
+					this.entry = { url: url, timeseries: timeseries };
+				})
+				.catch(err => {
+					console.error(err);
+					this.entry = { url: url, err: err };
+				});
 		}
 	}
 
@@ -198,10 +207,13 @@ svg.line-chart {
 	border: 1px solid rgba(0,0,0,0);
 }
 
-svg.line-chart:hover {
-	background-color: #fff;
-	border: 1px solid #666;
-	border-radius: 4px;
+svg.line-chart g {
+	stroke: #666;
+	stroke-width: 2px;
+}
+
+svg.line-chart:hover g {
+	stroke: #00c6e1;
 }
 
 .zoom-icon {
@@ -227,12 +239,11 @@ svg.line-chart:hover {
 .sparkline-elem-zoom {
 	position: relative;
 	padding: 32px 16px;
-	max-width: 100%;
 	border-radius: 4px;
 }
 
 #sparkline-zoom-modal .modal-dialog {
-	max-width: none;
+	max-width: 50%;
 }
 
 </style>

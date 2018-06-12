@@ -98,6 +98,7 @@ const TEXT_SUGGESTIONS = [
 	'text',
 	'categorical',
 	'ordinal',
+	'integer',
 	'address',
 	'city',
 	'state',
@@ -105,6 +106,7 @@ const TEXT_SUGGESTIONS = [
 	'postal_code',
 	'keyword',
 	'dateTime',
+	'image',
 	'unknown'
 ];
 
