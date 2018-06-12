@@ -77,6 +77,7 @@ func (e *ExecPipelineRequest) dispatchRequest(client *Client, requestID string) 
 
 	// Update request status
 	e.notifyStatus(e.statusChannel, requestID, RequestPendingStatus)
+	e.wg.Add(1)
 
 	var firstSolution string
 	var produceCalled bool
