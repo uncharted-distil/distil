@@ -63,6 +63,16 @@ func (e *ExecPipelineRequest) Dispatch(client *Client) error {
 		Version:   GetAPIVersion(),
 		UserAgent: client.UserAgent,
 		Template:  e.pipelineDesc,
+		AllowedValueTypes: []pipeline.ValueType{
+			pipeline.ValueType_CSV_URI,
+		},
+		Inputs: []*pipeline.Value{
+			{
+				Value: &pipeline.Value_DatasetUri{
+					DatasetUri: e.datasetURI,
+				},
+			},
+		},
 	})
 	if err != nil {
 		return err
