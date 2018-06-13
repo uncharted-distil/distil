@@ -83,8 +83,8 @@ type ColumnUpdate struct {
 }
 
 // NewUpdateSemanticTypeStep adds and removes semantic data values from an input
-// dataframe.  Column names and types are matched case insensitively.
-func NewUpdateSemanticTypeStep(add []*ColumnUpdate, remove []*ColumnUpdate) (*StepData, error) {
+// dataset.
+func NewUpdateSemanticTypeStep(resourceID string, add []*ColumnUpdate, remove []*ColumnUpdate) (*StepData, error) {
 	// extract into two lists for compatibility with hyperparams interface
 	addNames := []string{}
 	addTypes := []string{}
@@ -110,6 +110,7 @@ func NewUpdateSemanticTypeStep(add []*ColumnUpdate, remove []*ColumnUpdate) (*St
 		},
 		[]string{"produce"},
 		map[string]interface{}{
+			"resource_id":    resourceID,
 			"add_columns":    addNames,
 			"add_types":      addTypes,
 			"remove_columns": removeNames,
@@ -120,7 +121,7 @@ func NewUpdateSemanticTypeStep(add []*ColumnUpdate, remove []*ColumnUpdate) (*St
 
 // NewRemoveColumnsStep removes columns from an input dataframe.  Columns
 // are specified by name and the match is case insensitive.
-func NewRemoveColumnsStep(colNames []string) (*StepData, error) {
+func NewRemoveColumnsStep(resourceID string, colNames []string) (*StepData, error) {
 	return NewStepDataWithHyperparameters(
 		&pipeline.Primitive{
 			Id:         "2eeff053-395a-497d-88db-7374c27812e6",
@@ -130,7 +131,8 @@ func NewRemoveColumnsStep(colNames []string) (*StepData, error) {
 		},
 		[]string{"produce"},
 		map[string]interface{}{
-			"colNames": colNames,
+			"resource_id": resourceID,
+			"columns":     colNames,
 		},
 	), nil
 }
