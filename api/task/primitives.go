@@ -236,7 +236,7 @@ func FeaturizePrimitive(index string, dataset string, config *IngestTaskConfig) 
 	// parse primitive response (d3mIndex,labels,probabilities)
 	res, err := result.ParseResultCSV(datasetURI)
 	if err != nil {
-		return errors.Wrap(err, "unable to parse Duke pipeline result")
+		return errors.Wrap(err, "unable to parse Croc pipeline result")
 	}
 
 	// build the lookup for the new field

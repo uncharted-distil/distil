@@ -7,6 +7,7 @@ import (
 
 	"github.com/pkg/errors"
 	"github.com/unchartedsoftware/distil/api/pipeline"
+	"github.com/unchartedsoftware/plog"
 )
 
 // ExecPipelineStatus contains status / result information for a pipeline status
@@ -89,8 +90,7 @@ func (e *ExecPipelineRequest) dispatchRequest(client *Client, requestID string) 
 		if firstSolution == "" {
 			firstSolution = solution.GetSolutionId()
 		} else if firstSolution != solution.GetSolutionId() {
-			err := errors.Errorf("multiple solutions found for request %s, expected 1", requestID)
-			e.notifyError(e.statusChannel, requestID, err)
+			log.Warnf("multiple solutions found for request %s, expected 1", requestID)
 			return
 		}
 		defer e.wg.Done()
