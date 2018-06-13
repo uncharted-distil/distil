@@ -79,7 +79,6 @@ func CreateUserDatasetPipeline(name string, description string, allFeatures []*m
 
 	// insantiate the pipeline
 	pipeline, err := NewBuilder(name, description).
-		Add(NewDatasetToDataframeStep()).
 		Add(featureSelect).
 		Add(semanticTypeUpdate).
 		AddInferencePoint().
