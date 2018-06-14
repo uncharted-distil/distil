@@ -73,6 +73,27 @@ const (
 	// TA2OrdinalType is the TA2 semantic type for ordinal (ordered categorical) data
 	TA2OrdinalType = "https://metadata.datadrivendiscovery.org/types/OrdinalData"
 
+	// TA2 Schema keys
+
+	// BooleanSchemaType is the schema doc type for boolean data
+	BooleanSchemaType = "boolean"
+	// IntegerSchemaType is the schema doc type for integer data
+	IntegerSchemaType = "integer"
+	// RealSchemaType is the schema doc type for real data
+	RealSchemaType = "real"
+	// StringSchemaType is the schema doc type for string/text data
+	StringSchemaType = "string"
+	// CategoricalSchemaType is the schema doc type for categorical data
+	CategoricalSchemaType = "categorical"
+	// DatetimeSchemaType is the schema doc type for datetime data
+	DatetimeSchemaType = "dateTime"
+	// RealVectorSchemaType is the schema doc type for a vector of real data
+	RealVectorSchemaType = "realVector"
+	// JSONSchemaType is the schema doc type for json data
+	JSONSchemaType = "json"
+	// GeoJSONSchemaType is the schema doc type for geo json data
+	GeoJSONSchemaType = "geojson"
+
 	// TA2 Role keys
 
 	// TA2TargetType is the semantic type indicating a prediction target
@@ -127,6 +148,28 @@ var (
 		StateType:       TA2StringType,
 		URIType:         TA2StringType,
 	}
+	schemaTypeMap = map[string]string{
+		AddressType:     StringSchemaType,
+		IndexType:       IntegerSchemaType,
+		IntegerType:     IntegerSchemaType,
+		FloatType:       RealSchemaType,
+		RealType:        RealSchemaType,
+		BoolType:        BooleanSchemaType,
+		DateTimeType:    DatetimeSchemaType,
+		OrdinalType:     CategoricalSchemaType,
+		CategoricalType: CategoricalSchemaType,
+		NumericalType:   RealSchemaType,
+		TextType:        StringSchemaType,
+		CityType:        StringSchemaType,
+		CountryType:     StringSchemaType,
+		EmailType:       StringSchemaType,
+		LatitudeType:    RealSchemaType,
+		LongitudeType:   RealSchemaType,
+		PhoneType:       StringSchemaType,
+		PostalCodeType:  StringSchemaType,
+		StateType:       StringSchemaType,
+		URIType:         StringSchemaType,
+	}
 )
 
 // IsNumerical indicates whether or not a schema type is numeric for the purposes
@@ -162,4 +205,9 @@ func IsImage(typ string) bool {
 // MapTA2Type maps a type to a simple type.
 func MapTA2Type(typ string) string {
 	return ta2TypeMap[typ]
+}
+
+// MapSchemaType maps a type to a dataset doc type.
+func MapSchemaType(typ string) string {
+	return schemaTypeMap[typ]
 }

@@ -47,9 +47,8 @@ func NewDukeStep() *StepData {
 }
 
 // NewCrocStep creates a wrapper for the Croc image classifier.
-// **TODO: Not yet in TA1 image.
-func NewCrocStep() *StepData {
-	return NewStepData(
+func NewCrocStep(targetColumns []string, outputLabels []string) *StepData {
+	return NewStepDataWithHyperparameters(
 		&pipeline.Primitive{
 			Id:         "46612a42-6120-3559-9db9-3aa9a76eb94f",
 			Version:    "1.0.0",
@@ -57,22 +56,25 @@ func NewCrocStep() *StepData {
 			PythonPath: "d3m.primitives.distil.croc",
 		},
 		[]string{"produce"},
+		map[string]interface{}{
+			"target_columns": targetColumns,
+			"output_labels":  outputLabels,
+		},
 	)
 }
 
 // NewDatasetToDataframeStep creates a primitive call that transforms an input dataset
 // into a PANDAS dataframe.
 func NewDatasetToDataframeStep() *StepData {
-	return &StepData{
-		Primitive: &pipeline.Primitive{
+	return NewStepData(
+		&pipeline.Primitive{
 			Id:         "4b42ce1e-9b98-4a25-b68e-fad13311eb65",
 			Version:    "0.2.0",
 			Name:       "Dataset to DataFrame converter",
 			PythonPath: "d3m.primitives.datasets.DatasetToDataFrame",
 		},
-		Arguments:     map[string]string{},
-		OutputMethods: []string{"produce"},
-	}
+		[]string{"produce"},
+	)
 }
 
 // ColumnUpdate defines a column name and a semantic type to add/remove

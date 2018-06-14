@@ -150,10 +150,17 @@ func (s *Storage) buildFilteredQueryWhere(dataset string, filters []*model.Filte
 
 func (s *Storage) buildFilteredQueryField(dataset string, variables []*model.Variable, filterVariables []string) (string, error) {
 	fields := make([]string, 0)
+	indexIncluded := false
 	for _, variable := range model.GetFilterVariables(filterVariables, variables) {
 		fields = append(fields, fmt.Sprintf("\"%s\"", variable.Name))
+		if variable.Name == model.D3MIndexFieldName {
+			indexIncluded = true
+		}
 	}
-	fields = append(fields, fmt.Sprintf("\"%s\"", model.D3MIndexFieldName))
+	// if the index is not already in the field list, then append it
+	if !indexIncluded {
+		fields = append(fields, fmt.Sprintf("\"%s\"", model.D3MIndexFieldName))
+	}
 	return strings.Join(fields, ","), nil
 }
 

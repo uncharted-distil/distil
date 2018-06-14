@@ -8,7 +8,7 @@ import (
 	"github.com/unchartedsoftware/distil/api/pipeline"
 )
 
-const default_resource = "0"
+const defaultResource = "0"
 
 // CreateUserDatasetPipeline creates a pipeline description to capture user feature selection and
 // semantic type information.
@@ -67,12 +67,12 @@ func CreateUserDatasetPipeline(name string, description string, allFeatures []*m
 		}
 	}
 
-	featureSelect, err := NewRemoveColumnsStep(default_resource, removeFeatures)
+	featureSelect, err := NewRemoveColumnsStep(defaultResource, removeFeatures)
 	if err != nil {
 		return nil, err
 	}
 
-	semanticTypeUpdate, _ := NewUpdateSemanticTypeStep(default_resource, addedTypes, removedTypes)
+	semanticTypeUpdate, _ := NewUpdateSemanticTypeStep(defaultResource, addedTypes, removedTypes)
 	if err != nil {
 		return nil, err
 	}
@@ -120,11 +120,11 @@ func CreateSimonPipeline(name string, description string) (*pipeline.PipelineDes
 }
 
 // CreateCrocPipeline creates a pipeline to run image featurization on a dataset.
-func CreateCrocPipeline(name string, description string) (*pipeline.PipelineDescription, error) {
+func CreateCrocPipeline(name string, description string, targetColumns []string, outputLabels []string) (*pipeline.PipelineDescription, error) {
 	// insantiate the pipeline
 	pipeline, err := NewBuilder(name, description).
 		Add(NewDatasetToDataframeStep()).
-		Add(NewCrocStep()).
+		Add(NewCrocStep(targetColumns, outputLabels)).
 		Compile()
 
 	if err != nil {
