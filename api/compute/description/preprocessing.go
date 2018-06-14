@@ -8,7 +8,7 @@ import (
 	"github.com/unchartedsoftware/distil/api/pipeline"
 )
 
-const default_resource = "0"
+const defaultResource = "0"
 
 // CreateUserDatasetPipeline creates a pipeline description to capture user feature selection and
 // semantic type information.
@@ -67,12 +67,12 @@ func CreateUserDatasetPipeline(name string, description string, allFeatures []*m
 		}
 	}
 
-	featureSelect, err := NewRemoveColumnsStep(default_resource, removeFeatures)
+	featureSelect, err := NewRemoveColumnsStep(defaultResource, removeFeatures)
 	if err != nil {
 		return nil, err
 	}
 
-	semanticTypeUpdate, _ := NewUpdateSemanticTypeStep(default_resource, addedTypes, removedTypes)
+	semanticTypeUpdate, _ := NewUpdateSemanticTypeStep(defaultResource, addedTypes, removedTypes)
 	if err != nil {
 		return nil, err
 	}
