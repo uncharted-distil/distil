@@ -120,11 +120,11 @@ func CreateSimonPipeline(name string, description string) (*pipeline.PipelineDes
 }
 
 // CreateCrocPipeline creates a pipeline to run image featurization on a dataset.
-func CreateCrocPipeline(name string, description string) (*pipeline.PipelineDescription, error) {
+func CreateCrocPipeline(name string, description string, targetColumns []string, outputLabels []string) (*pipeline.PipelineDescription, error) {
 	// insantiate the pipeline
 	pipeline, err := NewBuilder(name, description).
 		Add(NewDatasetToDataframeStep()).
-		Add(NewCrocStep()).
+		Add(NewCrocStep(targetColumns, outputLabels)).
 		Compile()
 
 	if err != nil {

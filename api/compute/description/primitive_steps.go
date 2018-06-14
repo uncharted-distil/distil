@@ -47,7 +47,7 @@ func NewDukeStep() *StepData {
 }
 
 // NewCrocStep creates a wrapper for the Croc image classifier.
-func NewCrocStep(targetColumns string, output_labels string) *StepData {
+func NewCrocStep(targetColumns []string, outputLabels []string) *StepData {
 	return NewStepDataWithHyperparameters(
 		&pipeline.Primitive{
 			Id:         "46612a42-6120-3559-9db9-3aa9a76eb94f",
@@ -58,7 +58,7 @@ func NewCrocStep(targetColumns string, output_labels string) *StepData {
 		[]string{"produce"},
 		map[string]interface{}{
 			"target_columns": targetColumns,
-			"output_labels":  output_labels,
+			"output_labels":  outputLabels,
 		},
 	)
 }
