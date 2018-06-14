@@ -93,7 +93,6 @@ var (
 		StateType:       true,
 		URIType:         true,
 		UnknownType:     true,
-		ImageType:       true,
 		TimeSeriesType:  true}
 	numericalTypes = map[string]bool{
 		LongitudeType: true,
@@ -152,6 +151,12 @@ func IsCategorical(typ string) bool {
 // of analysis.
 func IsText(typ string) bool {
 	return typ == TextType
+}
+
+// IsImage indicates whether or not a schema type is an image for the purposes
+// of analysis.
+func IsImage(typ string) bool {
+	return typ == ImageType
 }
 
 // MapTA2Type maps a type to a simple type.

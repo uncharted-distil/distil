@@ -524,7 +524,7 @@ func isTrainDataset(meta *metadata.Metadata) bool {
 
 func matchDataset(storage model.MetadataStorage, meta *metadata.Metadata, index string) (string, error) {
 	// load the datasets from ES.
-	datasets, err := storage.FetchDatasets(true)
+	datasets, err := storage.FetchDatasets(true, true)
 	if err != nil {
 		return "", errors.Wrap(err, "unable to fetch datasets for matching")
 	}
