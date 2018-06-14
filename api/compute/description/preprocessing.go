@@ -8,6 +8,8 @@ import (
 	"github.com/unchartedsoftware/distil/api/pipeline"
 )
 
+const defaultResource = "0"
+
 // CreateUserDatasetPipeline creates a pipeline description to capture user feature selection and
 // semantic type information.
 func CreateUserDatasetPipeline(name string, description string, allFeatures []*model.Variable,
@@ -45,12 +47,12 @@ func CreateUserDatasetPipeline(name string, description string, allFeatures []*m
 			if addType != removeType {
 				addedTypes = append(addedTypes, &ColumnUpdate{
 					Name:         v.Name,
-					SemanticType: removeType,
+					SemanticType: addType,
 				})
 
 				removedTypes = append(removedTypes, &ColumnUpdate{
 					Name:         v.Name,
-					SemanticType: addType,
+					SemanticType: removeType,
 				})
 			}
 		}
@@ -65,19 +67,18 @@ func CreateUserDatasetPipeline(name string, description string, allFeatures []*m
 		}
 	}
 
-	featureSelect, err := NewRemoveColumnsStep(removeFeatures)
+	featureSelect, err := NewRemoveColumnsStep(defaultResource, removeFeatures)
 	if err != nil {
 		return nil, err
 	}
 
-	semanticTypeUpdate, _ := NewUpdateSemanticTypeStep(addedTypes, removedTypes)
+	semanticTypeUpdate, _ := NewUpdateSemanticTypeStep(defaultResource, addedTypes, removedTypes)
 	if err != nil {
 		return nil, err
 	}
 
 	// insantiate the pipeline
 	pipeline, err := NewBuilder(name, description).
-		Add(NewDatasetToDataframeStep()).
 		Add(featureSelect).
 		Add(semanticTypeUpdate).
 		AddInferencePoint().
@@ -119,11 +120,11 @@ func CreateSimonPipeline(name string, description string) (*pipeline.PipelineDes
 }
 
 // CreateCrocPipeline creates a pipeline to run image featurization on a dataset.
-func CreateCrocPipeline(name string, description string) (*pipeline.PipelineDescription, error) {
+func CreateCrocPipeline(name string, description string, targetColumns []string, outputLabels []string) (*pipeline.PipelineDescription, error) {
 	// insantiate the pipeline
 	pipeline, err := NewBuilder(name, description).
 		Add(NewDatasetToDataframeStep()).
-		Add(NewCrocStep()).
+		Add(NewCrocStep(targetColumns, outputLabels)).
 		Compile()
 
 	if err != nil {

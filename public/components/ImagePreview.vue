@@ -6,7 +6,7 @@
 				<div v-if="!isErrored && !isLoaded" v-html="spinnerHTML"></div>
 			</div>
 		</div>
-		<b-modal id="zoom-modal" :title="imageUrl"
+		<b-modal id="image-zoom-modal" :title="imageUrl"
 			@hide="hideModal"
 			:visible="!!zoomImage"
 			hide-footer>
@@ -19,7 +19,6 @@
 
 import Vue from 'vue';
 import { circleSpinnerHTML } from '../util/spinner';
-import { getters as imagesGetters, actions as imagesActions } from '../store/images/module';
 
 export default Vue.extend({
 	name: 'image-preview',
@@ -30,22 +29,20 @@ export default Vue.extend({
 
 	data() {
 		return {
-			zoomImage: false
+			zoomImage: false,
+			entry: null
 		};
 	},
 
 	computed: {
 		isLoaded(): boolean {
-			const arg = imagesGetters.getImages(this.$store)[this.imageUrl];
-			return arg && arg.image;
+			return this.entry && this.entry.image;
 		},
 		isErrored(): boolean {
-			const arg = imagesGetters.getImages(this.$store)[this.imageUrl];
-			return arg && arg.err;
+			return this.entry && this.entry.err;
 		},
 		image(): HTMLImageElement {
-			const arg = imagesGetters.getImages(this.$store)[this.imageUrl];
-			return arg ? arg.image : null;
+			return this.entry ? this.entry.image : null;
 		},
 		spinnerHTML(): string {
 			return circleSpinnerHTML();
@@ -53,20 +50,19 @@ export default Vue.extend({
 	},
 
 	mounted() {
-		imagesActions.fetchImage(this.$store, { url: this.imageUrl });
+		this.requestImage(this.imageUrl);
 	},
 
-	watch: {
-		image(currImage: HTMLImageElement) {
-			const $elem = this.$refs.imageElem as any;
-			$elem.innerHTML = '';
-			if (currImage) {
-				$elem.appendChild(currImage.cloneNode());
-				const icon = document.createElement('i');
-				icon.className += 'fa fa-plus zoom-icon';
-				$elem.appendChild(icon);
-			}
+	updated() {
+		if (!this.image) {
+			return;
 		}
+		const $elem = this.$refs.imageElem as any;
+		$elem.innerHTML = '';
+		$elem.appendChild(this.image.cloneNode());
+		const icon = document.createElement('i');
+		icon.className += 'fa fa-plus zoom-icon';
+		$elem.appendChild(icon);
 	},
 
 	methods: {
@@ -81,6 +77,28 @@ export default Vue.extend({
 
 		hideModal() {
 			this.zoomImage = false;
+		},
+
+		requestImage(url: string) {
+			const IMAGES = [
+				'a.jpeg',
+				'b.jpeg',
+				'c.jpeg'
+			];
+			return new Promise((resolve, reject) => {
+				const image = new Image();
+				image.onload = () => {
+					this.entry = { url: url, image: image };
+				};
+				image.onerror = (event: any) => {
+					const err = new Error(`Unable to load image from URL: \`${event.path[0].currentSrc}\``);
+					this.entry = { url: url, err: err };
+					reject(err);
+				};
+				image.crossOrigin = 'anonymous';
+				image.src = `images/${IMAGES[Math.floor(Math.random() * IMAGES.length)]}`;
+				//image.src = `images/${url}`;
+			});
 		}
 	}
 });

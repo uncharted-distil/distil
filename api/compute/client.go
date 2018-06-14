@@ -36,6 +36,7 @@ func NewClient(serverAddr string, dataDir string, trace bool, userAgent string) 
 	conn, err := grpc.Dial(
 		serverAddr,
 		grpc.WithInsecure(),
+		grpc.WithBlock(),
 		grpc.WithUnaryInterceptor(middleware.GenerateUnaryClientInterceptor(trace)),
 		grpc.WithStreamInterceptor(middleware.GenerateStreamClientInterceptor(trace)),
 	)

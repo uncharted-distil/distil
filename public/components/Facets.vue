@@ -15,10 +15,13 @@ import { getSelectedRows } from '../util/row';
 
 import Facets from '@uncharted.software/stories-facets';
 import ImagePreview from '../components/ImagePreview';
+import SparklinePreview from '../components/SparklinePreview';
 import TypeChangeMenu from '../components/TypeChangeMenu';
 import { circleSpinnerHTML } from '../util/spinner';
 
 import '@uncharted.software/stories-facets/dist/facets.css';
+
+const INJECT_DEBOUNCE = 200;
 
 export default Vue.extend({
 	name: 'facets',
@@ -45,8 +48,10 @@ export default Vue.extend({
 	},
 
 	data() {
+		const component = this as any;
 		return {
 			facets: <any>{},
+			debouncedInjection: _.debounce(component.injectHighlights, INJECT_DEBOUNCE),
 			more: {}
 		};
 	},
@@ -205,7 +210,7 @@ export default Vue.extend({
 
 		// handle external highlight changes by updating internal facet select states
 		highlights(currHighlights: Highlight) {
-			this.injectHighlights(currHighlights, this.rowSelection, this.deemphasis);
+			this.debouncedInjection(currHighlights, this.rowSelection, this.deemphasis);
 			if (this.enableHighlighting) {
 				this.addHighlightArrow(currHighlights);
 			}
@@ -213,11 +218,11 @@ export default Vue.extend({
 
 		// handle external highlight changes by updating internal facet select states
 		rowSelection(currSelection: RowSelection) {
-			this.injectHighlights(this.highlights, currSelection, this.deemphasis);
+			this.debouncedInjection(this.highlights, currSelection, this.deemphasis);
 		},
 
 		deemphasis(currDemphasis: any) {
-			this.injectHighlights(this.highlights, this.rowSelection, currDemphasis);
+			this.debouncedInjection(this.highlights, this.rowSelection, currDemphasis);
 		},
 
 		sort(currSort) {
@@ -282,6 +287,9 @@ export default Vue.extend({
 
 			// inject image preview if image type
 			this.injectImagePreview(group, $elem);
+
+			// inject sparkline preview if timeseries type
+			this.injectSparklinePreview(group, $elem);
 
 			if (!this.html) {
 				return;
@@ -752,6 +760,25 @@ export default Vue.extend({
 							store: this.$store,
 							propsData: {
 								imageUrl: facet.value
+							}
+						});
+					preview.$mount($slot[0]);
+				});
+			}
+		},
+
+		injectSparklinePreview(group: Group, $elem: JQuery) {
+			if (group.type === 'timeseries') {
+				const $facets = $elem.find('.facet-block');
+				group.facets.forEach((facet: any, index) => {
+					const $facet = $($facets.get(index));
+					const $slot = $('<span/>');
+					$facet.append($slot);
+					const preview = new SparklinePreview(
+						{
+							store: this.$store,
+							propsData: {
+								timeSeriesUrl: facet.value
 							}
 						});
 					preview.$mount($slot[0]);

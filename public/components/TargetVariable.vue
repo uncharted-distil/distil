@@ -16,24 +16,19 @@ import VariableFacets from '../components/VariableFacets';
 import { getters as routeGetters} from '../store/route/module';
 import { Group, createGroups } from '../util/facets';
 import { Highlight } from '../store/highlights/index';
-import { VariableSummary } from '../store/dataset/index';
+import { Variable, VariableSummary } from '../store/dataset/index';
 import { getHighlights, updateHighlightRoot } from '../util/highlights';
+import { isNumericType } from '../util/types';
 
 import 'font-awesome/css/font-awesome.css';
 
-const DEFAULT_HIGHLIGHT_PERCENTILE = 0.8;
+const DEFAULT_HIGHLIGHT_PERCENTILE = 0.6;
 
 export default Vue.extend({
 	name: 'target-variable',
 
 	components: {
 		VariableFacets
-	},
-
-	data() {
-		return {
-			hasDefaultedHighlight: false
-		};
 	},
 
 	computed: {
@@ -45,6 +40,10 @@ export default Vue.extend({
 			return routeGetters.getRouteTargetVariable(this.$store);
 		},
 
+		targetVariable(): Variable {
+			return routeGetters.getTargetVariable(this.$store);
+		},
+
 		targetVariableSummaries(): VariableSummary[] {
 			return routeGetters.getTargetVariableSummaries(this.$store);
 		},
@@ -52,9 +51,15 @@ export default Vue.extend({
 		groups(): Group[] {
 			return createGroups(this.targetVariableSummaries);
 		},
+
 		highlights(): Highlight {
 			return getHighlights(this.$store);
 		},
+
+		hasFilters(): boolean {
+			return routeGetters.getDecodedFilters(this.$store).length > 0;
+		},
+
 		instanceName(): string {
 			return 'targetVar';
 		}
@@ -72,20 +77,25 @@ export default Vue.extend({
 
 	methods: {
 		defaultTargetHighlight() {
-			if (this.hasDefaultedHighlight || this.highlights.root) {
+			// only default higlight numeric types
+			if (!this.targetVariable || !isNumericType(this.targetVariable.type)) {
 				return;
 			}
 
-			if (!this.hasDefaultedHighlight && this.targetVariableSummaries.length > 0) {
+			// if we have no current highlight, and no filters, highlight default range
+			if (this.highlights.root || this.hasFilters) {
+				return;
+			}
+
+			if (this.targetVariableSummaries.length > 0) {
 				updateHighlightRoot(this, {
 					context: this.instanceName,
 					key: this.target,
-					value: this.getValidFacetRangeBounary()
+					value: this.getValidFacetRangeBoundary()
 				});
-				this.hasDefaultedHighlight = true;
 			}
 		},
-		getValidFacetRangeBounary(): any {
+		getValidFacetRangeBoundary(): any {
 			// facet library is incapable of selecting a range that isnt exactly
 			// on a bin boundary, so we need to iterate through and find it
 			// manually.
@@ -97,8 +107,10 @@ export default Vue.extend({
 			const to = extrema.max;
 			const facet = group.facets[0] as any;
 			const slices = facet.histogram.slices;
-			let fromSlice = null;
-			let toSlice = null;
+			// case case set to full range
+			let fromSlice = _.toNumber(slices[0].label);
+			let toSlice = _.toNumber(slices[slices.length - 1].toLabel);
+			// try to narrow into percentile
 			for (let i=0; i<slices.length; i++) {
 				const slice = _.toNumber(slices[i].label);
 				if (from <= slice) {

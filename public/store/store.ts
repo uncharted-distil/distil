@@ -7,8 +7,6 @@ import { datasetModule } from './dataset/module';
 import { DatasetState } from './dataset/index';
 import { highlightsModule } from './highlights/module';
 import { HighlightState } from './highlights/index';
-import { imagesModule } from './images/module';
-import { ImageState } from './images/index';
 import { resultsModule } from './results/module';
 import { ResultsState } from './results/index';
 import { solutionModule } from './solutions/module';
@@ -25,9 +23,8 @@ export interface DistilState {
 	datasetModule: DatasetState;
 	highlightsModule: HighlightState,
 	solutionModule: SolutionState;
-	imagesModule: ImageState;
-	viewModule: ViewState;
 	resultsModule: ResultsState,
+	viewModule: ViewState;
 	appModule: AppState;
 }
 
@@ -36,9 +33,8 @@ export default new Store<DistilState>({
 		routeModule,
 		datasetModule,
 		highlightsModule,
-		imagesModule,
-		resultsModule,
 		solutionModule,
+		resultsModule,
 		viewModule,
 		appModule
 	},

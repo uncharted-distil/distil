@@ -27,6 +27,7 @@ const TYPES_TO_LABELS: Dictionary<string> = {
 	dateTime: 'Date/Time',
 	boolean: 'Boolean',
 	image: 'Image',
+	timeseries: 'Time Series',
 	unknown: 'Unknown'
 };
 
@@ -47,6 +48,7 @@ const NUMERIC_TYPES = INTEGER_TYPES.concat(FLOATING_POINT_TYPES);
 const TEXT_TYPES = [
 	'text',
 	'image',
+	'timeseries',
 	'categorical',
 	'ordinal',
 	'address',
@@ -96,6 +98,7 @@ const TEXT_SUGGESTIONS = [
 	'text',
 	'categorical',
 	'ordinal',
+	'integer',
 	'address',
 	'city',
 	'state',
@@ -103,6 +106,7 @@ const TEXT_SUGGESTIONS = [
 	'postal_code',
 	'keyword',
 	'dateTime',
+	'image',
 	'unknown'
 ];
 
@@ -137,6 +141,7 @@ const BASIC_SUGGESTIONS = [
 	'ordinal',
 	'text',
 	'image',
+	'timeseries',
 	'unknown'
 ];
 
