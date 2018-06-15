@@ -12,6 +12,9 @@ export const REQUEST_RUNNING = 'REQUEST_RUNNING';
 export const REQUEST_COMPLETED = 'REQUEST_COMPLETED';
 export const REQUEST_ERRORED = 'REQUEST_ERRORED';
 
+export const NUM_SOLUTIONS = 3;
+export const MAX_SOLUTION_SEARCH_TIME = 10; // in minutes
+
 export interface Score {
 	metric: string;
 	value: number;

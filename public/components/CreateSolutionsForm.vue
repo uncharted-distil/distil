@@ -39,7 +39,7 @@ import { getters as datasetGetters } from '../store/dataset/module';
 import { getters as routeGetters } from '../store/route/module';
 import { RESULTS_ROUTE } from '../store/route/index';
 import { actions as solutionActions } from '../store/solutions/module';
-import { Solution } from '../store/solutions/index';
+import { Solution, NUM_SOLUTIONS, MAX_SOLUTION_SEARCH_TIME } from '../store/solutions/index';
 import { Variable } from '../store/dataset/index';
 import { FilterParams } from '../util/filters';
 import Vue from 'vue';
@@ -129,7 +129,8 @@ export default Vue.extend({
 				target: routeGetters.getRouteTargetVariable(this.$store),
 				task: task,
 				metrics: metrics,
-				maxSolutions: 1
+				maxSolutions: NUM_SOLUTIONS,
+				maxTime: MAX_SOLUTION_SEARCH_TIME,
 			}).then((res: Solution) => {
 				this.pending = false;
 				// transition to result screen
