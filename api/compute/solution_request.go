@@ -65,6 +65,7 @@ type SolutionRequest struct {
 	TargetFeature    string              `json:"target"`
 	Task             string              `json:"task"`
 	MaxSolutions     int32               `json:"maxSolutions"`
+	MaxTime          int64               `json:"maxTime"`
 	Filters          *model.FilterParams `json:"filters"`
 	Metrics          []string            `json:"metrics"`
 	mu               *sync.Mutex
@@ -161,8 +162,12 @@ func (s *SolutionRequest) createSearchSolutionsRequest(targetIndex int, preproce
 			},
 		},
 
+		// Our agent/version info
 		UserAgent: userAgent,
 		Version:   GetAPIVersion(),
+
+		// Requested max time for solution search - not guaranteed to be honoured
+		TimeBound: float64(s.MaxTime),
 
 		// we accept dataset and csv uris as return types
 		AllowedValueTypes: []pipeline.ValueType{
