@@ -44,6 +44,7 @@ export interface VariableSummary {
 	buckets: Bucket[];
 	extrema: Extrema;
 	numRows: number;
+	files?: string[];
 	solutionId?: string;
 	resultId?: string;
 	type?: string;

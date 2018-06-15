@@ -31,7 +31,7 @@ func VariablesHandler(metaCtor model.MetadataStorageCtor) func(http.ResponseWrit
 			return
 		}
 		// fetch variables
-		variables, err := meta.FetchVariables(dataset, false)
+		variables, err := meta.FetchVariables(dataset, false, false)
 		if err != nil {
 			handleError(w, err)
 			return

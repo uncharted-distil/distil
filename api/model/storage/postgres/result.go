@@ -85,7 +85,7 @@ func (s *Storage) PersistResult(dataset string, resultURI string) error {
 	targetName := records[0][1]
 
 	// Translate from display name to storage name.
-	variables, err := s.metadata.FetchVariables(dataset, false)
+	variables, err := s.metadata.FetchVariables(dataset, false, false)
 	if err != nil {
 		return errors.Wrap(err, "unable load solution result as csv")
 	}
@@ -331,7 +331,7 @@ func (s *Storage) FetchFilteredResults(dataset string, resultURI string, filterP
 	}
 
 	// fetch variable metadata
-	variables, err := s.metadata.FetchVariables(dataset, false)
+	variables, err := s.metadata.FetchVariables(dataset, false, false)
 	if err != nil {
 		return nil, errors.Wrap(err, "Could not pull variables from ES")
 	}

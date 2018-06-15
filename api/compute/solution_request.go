@@ -482,13 +482,13 @@ func (s *SolutionRequest) PersistAndDispatch(client *Client, solutionStorage mod
 	s.Filters.Variables = append(s.Filters.Variables, model.D3MIndexFieldName)
 
 	// fetch the full set of variables associated with the dataset
-	variables, err := metaStorage.FetchVariables(s.Dataset, true)
+	variables, err := metaStorage.FetchVariables(s.Dataset, true, true)
 	if err != nil {
 		return err
 	}
 
 	// fetch the queried dataset
-	dataset, err := model.FetchDataset(s.Dataset, s.Index, true, s.Filters, metaStorage, dataStorage)
+	dataset, err := model.FetchDataset(s.Dataset, s.Index, true, true, s.Filters, metaStorage, dataStorage)
 	if err != nil {
 		return err
 	}

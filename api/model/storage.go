@@ -63,12 +63,12 @@ type MetadataStorageCtor func() (MetadataStorage, error)
 // MetadataStorage defines the functions available to query the underlying
 // metadata storage.
 type MetadataStorage interface {
-	FetchVariables(dataset string, includeIndex bool) ([]*Variable, error)
+	FetchVariables(dataset string, includeIndex bool, includeMeta bool) ([]*Variable, error)
 	FetchVariablesDisplay(dataset string) ([]*Variable, error)
 	FetchVariable(dataset string, varName string) (*Variable, error)
 	FetchVariableDisplay(dataset string, varName string) (*Variable, error)
-	FetchDatasets(includeIndex bool) ([]*Dataset, error)
-	SearchDatasets(terms string, includeIndex bool) ([]*Dataset, error)
+	FetchDatasets(includeIndex bool, includeMeta bool) ([]*Dataset, error)
+	SearchDatasets(terms string, includeIndex bool, includeMeta bool) ([]*Dataset, error)
 
 	// Dataset manipulation
 	SetDataType(dataset string, varName string, varType string) error

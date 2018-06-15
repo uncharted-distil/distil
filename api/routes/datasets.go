@@ -39,9 +39,9 @@ func DatasetsHandler(metaCtor model.MetadataStorageCtor) func(http.ResponseWrite
 		// if its present, forward a search, otherwise fetch all datasets
 		var datasets []*model.Dataset
 		if terms != "" {
-			datasets, err = storage.SearchDatasets(terms, false)
+			datasets, err = storage.SearchDatasets(terms, false, false)
 		} else {
-			datasets, err = storage.FetchDatasets(false)
+			datasets, err = storage.FetchDatasets(false, false)
 		}
 		if err != nil {
 			handleError(w, err)

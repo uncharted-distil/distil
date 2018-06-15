@@ -121,6 +121,7 @@ func (s *Storage) fetchSummaryData(dataset string, varName string, resultURI str
 	}
 
 	// get the histogram by using the variable type.
+
 	var field Field
 	if model.IsNumerical(variable.Type) {
 		field = NewNumericalField(s)
@@ -128,7 +129,12 @@ func (s *Storage) fetchSummaryData(dataset string, varName string, resultURI str
 		field = NewCategoricalField(s)
 	} else if model.IsText(variable.Type) {
 		field = NewTextField(s)
+	} else if model.IsImage(variable.Type) {
+		field = NewImageField(s)
 	} else {
+		/*else if model.IsTimeSeries(variable.Type) {
+			field = NewTimeSeries(s)
+		}*/
 		return nil, errors.Errorf("variable %s of type %s does not support summary", variable.Name, variable.Type)
 	}
 
