@@ -1,6 +1,7 @@
 package model
 
 import (
+	"fmt"
 	"sort"
 
 	"github.com/pkg/errors"
@@ -149,6 +150,14 @@ func GetFilterVariables(filterVariables []string, variables []*Variable) []*Vari
 	filtered := make([]*Variable, 0)
 	for _, variable := range filterVariables {
 		filtered = append(filtered, variableLookup[variable])
+		// check for metadata var type
+		if HasMetadataVar(variableLookup[variable].Type) {
+			metadataVarName := fmt.Sprintf("%s%s", MetadataVarPrefix, variable)
+			metadataVar, ok := variableLookup[metadataVarName]
+			if ok {
+				filtered = append(filtered, metadataVar)
+			}
+		}
 	}
 
 	return filtered

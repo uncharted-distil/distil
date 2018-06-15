@@ -37,8 +37,7 @@ func (f *TimeSeriesField) FetchSummaryData(dataset string, variable *model.Varia
 }
 
 func (f *TimeSeriesField) metadataVarName(varName string) string {
-	prefix := "_feature_"
-	return fmt.Sprintf("%s%s", prefix, varName)
+	return fmt.Sprintf("%s%s", model.MetadataVarPrefix, varName)
 }
 
 func (f *TimeSeriesField) fetchRepresentationTimeSeriess(dataset string, variable *model.Variable, categoryBuckets []*model.Bucket) ([]string, error) {

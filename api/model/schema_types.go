@@ -99,7 +99,7 @@ const (
 	GeoJSONSchemaType = "geojson"
 	// ImageSchemaType is the schema doc type for image data
 	ImageSchemaType = "image"
-	// ImageSchemaType is the schema doc type for image data
+	// TimeSeriesSchemaType is the schema doc type for image data
 	TimeSeriesSchemaType = "timeseries"
 
 	// TA2 Role keys
@@ -218,6 +218,11 @@ func IsImage(typ string) bool {
 // of analysis.
 func IsTimeSeries(typ string) bool {
 	return typ == TimeSeriesType
+}
+
+// HasMetadataVar indicates whether or not a schema type has a corresponding metadata var.
+func HasMetadataVar(typ string) bool {
+	return IsImage(typ) || IsTimeSeries(typ)
 }
 
 // MapTA2Type maps a type to a simple type.

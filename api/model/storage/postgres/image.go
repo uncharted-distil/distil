@@ -37,8 +37,7 @@ func (f *ImageField) FetchSummaryData(dataset string, variable *model.Variable, 
 }
 
 func (f *ImageField) metadataVarName(varName string) string {
-	prefix := "_feature_"
-	return fmt.Sprintf("%s%s", prefix, varName)
+	return fmt.Sprintf("%s%s", model.MetadataVarPrefix, varName)
 }
 
 func (f *ImageField) fetchRepresentationImages(dataset string, variable *model.Variable, categoryBuckets []*model.Bucket) ([]string, error) {

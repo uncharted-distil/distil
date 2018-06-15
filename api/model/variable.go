@@ -9,6 +9,8 @@ const (
 	RoleIndex = "index"
 	// D3MIndexFieldName denotes the name of the index field.
 	D3MIndexFieldName = "d3mIndex"
+	// MetadataVarPrefix is the prefix of a metadata var name.
+	MetadataVarPrefix = "_feature_"
 )
 
 // Variable represents a single variable description within a dataset.
