@@ -29,6 +29,8 @@ type Config struct {
 	RedisEndpoint                      string  `env:"REDIS_ENDPOINT" envDefault:"localhost:6379"`
 	RedisExpiry                        int     `env:"REDIS_EXPIRY" envDefault:"-1"`
 	SolutionComputeEndpoint            string  `env:"SOLUTION_COMPUTE_ENDPOINT" envDefault:"localhost:50051"`
+	SolutionComputePullTimeout         int     `env:"SOLUTION_COMPUTE_PULL_TIMEOUT" envDefault:"60"`
+	SolutionComputePullMax             int     `env:"SOLUTION_COMPUTE_PULL_MAX" envDefault:"10"`
 	SolutionDataDir                    string  `env:"SOLUTION_DATA_DIR" envDefault:"datasets"`
 	SolutionComputeTrace               bool    `env:"SOLUTION_COMPUTE_TRACE" envDefault:"false"`
 	ExportPath                         string  `env:"EXPORT_PATH"`

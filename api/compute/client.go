@@ -4,6 +4,7 @@ import (
 	"io"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/pkg/errors"
 	"github.com/unchartedsoftware/distil/api/middleware"
@@ -20,11 +21,13 @@ import (
 // is designed such that multiple go routines make RPC calls to a single shared client, and synch
 // is managed internally.
 type Client struct {
-	client    pipeline.CoreClient
-	conn      *grpc.ClientConn
-	mu        *sync.Mutex
-	DataDir   string
-	UserAgent string
+	client      pipeline.CoreClient
+	conn        *grpc.ClientConn
+	mu          *sync.Mutex
+	DataDir     string
+	UserAgent   string
+	PullTimeout time.Duration
+	PullMax     int
 }
 
 // SearchSolutionHandler is executed when a new search solution is returned.
@@ -32,7 +35,8 @@ type SearchSolutionHandler func(*pipeline.GetSearchSolutionsResultsResponse)
 
 // NewClient creates a new pipline request dispatcher instance. This will establish
 // the connection to the solution server or return an error on fail
-func NewClient(serverAddr string, dataDir string, trace bool, userAgent string) (*Client, error) {
+func NewClient(serverAddr string, dataDir string, trace bool, userAgent string,
+	pullTimeout time.Duration, pullMax int) (*Client, error) {
 	conn, err := grpc.Dial(
 		serverAddr,
 		grpc.WithInsecure(),
@@ -51,6 +55,8 @@ func NewClient(serverAddr string, dataDir string, trace bool, userAgent string) 
 	client.conn = conn
 	client.DataDir = dataDir
 	client.UserAgent = userAgent
+	client.PullTimeout = pullTimeout
+	client.PullMax = pullMax
 
 	// check for basic ta2 connectivity
 	helloResponse, err := client.client.Hello(context.Background(), &pipeline.HelloRequest{})
@@ -103,7 +109,7 @@ func (c *Client) SearchSolutions(ctx context.Context, searchID string, solutionH
 	// track handlers to ensure they all finish before returning
 	wg := &sync.WaitGroup{}
 
-	err = pullFromAPI(pullMax, pullTimeout, func() error {
+	err = pullFromAPI(c.PullMax, c.PullTimeout, func() error {
 		solutionResultResponse, err := searchSolutionsResultsResponse.Recv()
 		if err == io.EOF {
 			return nil
@@ -154,7 +160,7 @@ func (c *Client) GenerateSolutionScores(ctx context.Context, solutionID string) 
 
 	var solutionResultResponses []*pipeline.GetScoreSolutionResultsResponse
 
-	err = pullFromAPI(pullMax, pullTimeout, func() error {
+	err = pullFromAPI(c.PullMax, c.PullTimeout, func() error {
 		solutionResultResponse, err := scoreSolutionResultsResponse.Recv()
 		if err == io.EOF {
 			return nil
@@ -203,7 +209,7 @@ func (c *Client) GenerateSolutionFit(ctx context.Context, solutionID string, dat
 
 	var solutionResultResponses []*pipeline.GetFitSolutionResultsResponse
 
-	err = pullFromAPI(pullMax, pullTimeout, func() error {
+	err = pullFromAPI(c.PullMax, c.PullTimeout, func() error {
 		solutionResultResponse, err := fitSolutionResultsResponse.Recv()
 		if err == io.EOF {
 			return nil
@@ -241,7 +247,7 @@ func (c *Client) GeneratePredictions(ctx context.Context, request *pipeline.Prod
 
 	var solutionResultResponses []*pipeline.GetProduceSolutionResultsResponse
 
-	err = pullFromAPI(pullMax, pullTimeout, func() error {
+	err = pullFromAPI(c.PullMax, c.PullTimeout, func() error {
 		solutionResultResponse, err := produceSolutionResultsResponse.Recv()
 		if err == io.EOF {
 			return nil

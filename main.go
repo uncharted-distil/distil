@@ -6,6 +6,7 @@ import (
 	"os"
 	"strings"
 	"syscall"
+	"time"
 
 	"github.com/davecgh/go-spew/spew"
 	"github.com/unchartedsoftware/plog"
@@ -112,7 +113,8 @@ func main() {
 	pgSolutionStorageCtor := pg.NewSolutionStorage(postgresClientCtor, metadataStorageCtor)
 
 	// Instantiate the solution compute client
-	solutionClient, err := compute.NewClient(config.SolutionComputeEndpoint, config.SolutionDataDir, config.SolutionComputeTrace, userAgent)
+	solutionClient, err := compute.NewClient(config.SolutionComputeEndpoint, config.SolutionDataDir, config.SolutionComputeTrace,
+		userAgent, time.Duration(config.SolutionComputePullTimeout)*time.Second, config.SolutionComputePullMax)
 	if err != nil {
 		log.Errorf("%v", err)
 		os.Exit(1)

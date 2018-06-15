@@ -7,11 +7,6 @@ import (
 	"github.com/pkg/errors"
 )
 
-const (
-	pullTimeout = 10 * time.Second
-	pullMax     = 10
-)
-
 type pullFunc func() error
 
 func pullFromAPI(maxPulls int, timeout time.Duration, pull pullFunc) error {
