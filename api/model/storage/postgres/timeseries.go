@@ -49,8 +49,6 @@ func (f *TimeSeriesField) fetchRepresentationTimeSeriess(dataset string, variabl
 
 		prefixedVarName := f.metadataVarName(variable.Name)
 
-		fmt.Println(">", bucket.Key)
-
 		// pull sample row containing bucket
 		query := fmt.Sprintf("SELECT \"%s\" FROM %s WHERE \"%s\" = $1 LIMIT 1;", variable.Name, dataset, prefixedVarName)
 
@@ -66,13 +64,10 @@ func (f *TimeSeriesField) fetchRepresentationTimeSeriess(dataset string, variabl
 			if err != nil {
 				return nil, errors.Wrap(err, "Unable to parse solution from Postgres")
 			}
-			fmt.Println(">>> value for bucket", timeseriesFile)
 			timeseriesFiles = append(timeseriesFiles, timeseriesFile)
 		}
 		rows.Close()
 	}
-
-	fmt.Println("DONE")
 
 	return timeseriesFiles, nil
 }
@@ -163,7 +158,17 @@ func (f *TimeSeriesField) fetchHistogramByResult(dataset string, variable *model
 		defer res.Close()
 	}
 
-	return f.parseHistogram(res, variable)
+	histogram, err := f.parseHistogram(res, variable)
+	if err != nil {
+		return nil, err
+	}
+
+	files, err := f.fetchRepresentationTimeSeriess(dataset, variable, histogram.Buckets)
+	if err != nil {
+		return nil, err
+	}
+	histogram.Files = files
+	return histogram, nil
 }
 
 func (f *TimeSeriesField) parseHistogram(rows *pgx.Rows, variable *model.Variable) (*model.Histogram, error) {
@@ -333,5 +338,15 @@ func (f *TimeSeriesField) FetchResultSummaryData(resultURI string, dataset strin
 	}
 	defer res.Close()
 
-	return f.parseHistogram(res, variable)
+	histogram, err := f.parseHistogram(res, variable)
+	if err != nil {
+		return nil, err
+	}
+
+	files, err := f.fetchRepresentationTimeSeriess(dataset, variable, histogram.Buckets)
+	if err != nil {
+		return nil, err
+	}
+	histogram.Files = files
+	return histogram, nil
 }

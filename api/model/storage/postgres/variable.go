@@ -131,9 +131,10 @@ func (s *Storage) fetchSummaryData(dataset string, varName string, resultURI str
 		field = NewTextField(s)
 	} else if model.IsImage(variable.Type) {
 		field = NewImageField(s)
-	}  /*else if model.IsTimeSeries(variable.Type) {
-		field = NewTimeSeries(s)
-	}*/ else {
+	} else {
+		/*else if model.IsTimeSeries(variable.Type) {
+			field = NewTimeSeries(s)
+		}*/
 		return nil, errors.Errorf("variable %s of type %s does not support summary", variable.Name, variable.Type)
 	}
 

@@ -49,8 +49,6 @@ func (f *ImageField) fetchRepresentationImages(dataset string, variable *model.V
 
 		prefixedVarName := f.metadataVarName(variable.Name)
 
-		fmt.Println(">", bucket.Key)
-
 		// pull sample row containing bucket
 		query := fmt.Sprintf("SELECT \"%s\" FROM %s WHERE \"%s\" = $1 LIMIT 1;", variable.Name, dataset, prefixedVarName)
 
@@ -66,14 +64,10 @@ func (f *ImageField) fetchRepresentationImages(dataset string, variable *model.V
 			if err != nil {
 				return nil, errors.Wrap(err, "Unable to parse solution from Postgres")
 			}
-			fmt.Println(">>> value for bucket", imageFile)
 			imageFiles = append(imageFiles, imageFile)
 		}
 		rows.Close()
 	}
-
-	fmt.Println("DONE")
-
 	return imageFiles, nil
 }
 
@@ -163,7 +157,17 @@ func (f *ImageField) fetchHistogramByResult(dataset string, variable *model.Vari
 		defer res.Close()
 	}
 
-	return f.parseHistogram(res, variable)
+	histogram, err := f.parseHistogram(res, variable)
+	if err != nil {
+		return nil, err
+	}
+
+	files, err := f.fetchRepresentationImages(dataset, variable, histogram.Buckets)
+	if err != nil {
+		return nil, err
+	}
+	histogram.Files = files
+	return histogram, nil
 }
 
 func (f *ImageField) parseHistogram(rows *pgx.Rows, variable *model.Variable) (*model.Histogram, error) {
@@ -333,5 +337,15 @@ func (f *ImageField) FetchResultSummaryData(resultURI string, dataset string, da
 	}
 	defer res.Close()
 
-	return f.parseHistogram(res, variable)
+	histogram, err := f.parseHistogram(res, variable)
+	if err != nil {
+		return nil, err
+	}
+
+	files, err := f.fetchRepresentationImages(dataset, variable, histogram.Buckets)
+	if err != nil {
+		return nil, err
+	}
+	histogram.Files = files
+	return histogram, nil
 }
