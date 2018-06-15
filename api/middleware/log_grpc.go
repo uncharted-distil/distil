@@ -1,6 +1,7 @@
 package middleware
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/golang/protobuf/proto"
@@ -14,7 +15,7 @@ func GenerateUnaryClientInterceptor(trace bool) grpc.UnaryClientInterceptor {
 	return func(ctx context.Context, method string, req, reply interface{}, cc *grpc.ClientConn, invoker grpc.UnaryInvoker, opts ...grpc.CallOption) error {
 		startTime := time.Now()
 		newRequestLogger().
-			requestType("GRPC.UNARY").
+			requestType("GRPC.UNARY [SEND]").
 			request(method).
 			message(req.(proto.Message)).
 			log(true)
@@ -24,7 +25,7 @@ func GenerateUnaryClientInterceptor(trace bool) grpc.UnaryClientInterceptor {
 		}
 		dt := time.Since(startTime)
 		newRequestLogger().
-			requestType("GRPC.UNARY").
+			requestType("GRPC.UNARY [RECV]").
 			request(method).
 			message(reply.(proto.Message)).
 			duration(dt).
@@ -64,15 +65,16 @@ func (c *LoggingClientStream) RecvMsg(m interface{}) error {
 		return err
 	}
 
+	request := fmt.Sprintf("%s [RECV]", c.requestType)
 	if c.trace {
 		newRequestLogger().
-			requestType(c.requestType).
+			requestType(request).
 			request(c.method).
 			message(m.(proto.Message)).
 			log(true)
 	} else {
 		newRequestLogger().
-			requestType(c.requestType).
+			requestType(request).
 			request(c.method).
 			log(true)
 	}
@@ -81,15 +83,16 @@ func (c *LoggingClientStream) RecvMsg(m interface{}) error {
 
 // SendMsg logs messages sent out over a GRPC stream
 func (c *LoggingClientStream) SendMsg(m interface{}) error {
+	request := fmt.Sprintf("%s [SEND]", c.requestType)
 	if c.trace {
 		newRequestLogger().
-			requestType(c.requestType).
+			requestType(request).
 			request(c.method).
 			message(m.(proto.Message)).
 			log(true)
 	} else {
 		newRequestLogger().
-			requestType(c.requestType).
+			requestType(request).
 			request(c.method).
 			log(true)
 	}
