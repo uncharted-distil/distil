@@ -202,6 +202,12 @@ func IsImage(typ string) bool {
 	return typ == ImageType
 }
 
+// IsTimeSeries indicates whether or not a schema type is an timeseries for the purposes
+// of analysis.
+func IsTimeSeries(typ string) bool {
+	return typ == TimeSeriesType
+}
+
 // MapTA2Type maps a type to a simple type.
 func MapTA2Type(typ string) string {
 	return ta2TypeMap[typ]

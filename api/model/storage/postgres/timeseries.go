@@ -9,14 +9,14 @@ import (
 	"github.com/unchartedsoftware/distil/api/model"
 )
 
-// ImageField defines behaviour for the image field type.
-type ImageField struct {
+// TimeSeriesField defines behaviour for the timeseries field type.
+type TimeSeriesField struct {
 	Storage *Storage
 }
 
-// NewImageField creates a new field for image types.
-func NewImageField(storage *Storage) *ImageField {
-	field := &ImageField{
+// NewTimeSeriesField creates a new field for timeseries types.
+func NewTimeSeriesField(storage *Storage) *TimeSeriesField {
+	field := &TimeSeriesField{
 		Storage: storage,
 	}
 
@@ -24,7 +24,7 @@ func NewImageField(storage *Storage) *ImageField {
 }
 
 // FetchSummaryData pulls summary data from the database and builds a histogram.
-func (f *ImageField) FetchSummaryData(dataset string, variable *model.Variable, resultURI string, filterParams *model.FilterParams, extrema *model.Extrema) (*model.Histogram, error) {
+func (f *TimeSeriesField) FetchSummaryData(dataset string, variable *model.Variable, resultURI string, filterParams *model.FilterParams, extrema *model.Extrema) (*model.Histogram, error) {
 	var histogram *model.Histogram
 	var err error
 	if resultURI == "" {
@@ -36,14 +36,14 @@ func (f *ImageField) FetchSummaryData(dataset string, variable *model.Variable, 
 	return histogram, err
 }
 
-func (f *ImageField) metadataVarName(varName string) string {
+func (f *TimeSeriesField) metadataVarName(varName string) string {
 	prefix := "_feature_"
 	return fmt.Sprintf("%s%s", prefix, varName)
 }
 
-func (f *ImageField) fetchRepresentationImages(dataset string, variable *model.Variable, categoryBuckets []*model.Bucket) ([]string, error) {
+func (f *TimeSeriesField) fetchRepresentationTimeSeriess(dataset string, variable *model.Variable, categoryBuckets []*model.Bucket) ([]string, error) {
 
-	var imageFiles []string
+	var timeseriesFiles []string
 
 	for _, bucket := range categoryBuckets {
 
@@ -61,23 +61,23 @@ func (f *ImageField) fetchRepresentationImages(dataset string, variable *model.V
 		}
 
 		if rows.Next() {
-			var imageFile string
-			err = rows.Scan(&imageFile)
+			var timeseriesFile string
+			err = rows.Scan(&timeseriesFile)
 			if err != nil {
 				return nil, errors.Wrap(err, "Unable to parse solution from Postgres")
 			}
-			fmt.Println(">>> value for bucket", imageFile)
-			imageFiles = append(imageFiles, imageFile)
+			fmt.Println(">>> value for bucket", timeseriesFile)
+			timeseriesFiles = append(timeseriesFiles, timeseriesFile)
 		}
 		rows.Close()
 	}
 
 	fmt.Println("DONE")
 
-	return imageFiles, nil
+	return timeseriesFiles, nil
 }
 
-func (f *ImageField) fetchHistogram(dataset string, variable *model.Variable, filterParams *model.FilterParams) (*model.Histogram, error) {
+func (f *TimeSeriesField) fetchHistogram(dataset string, variable *model.Variable, filterParams *model.FilterParams) (*model.Histogram, error) {
 	// create the filter for the query.
 	where, params := f.Storage.buildFilteredQueryWhere(dataset, filterParams.Filters)
 	if len(where) > 0 {
@@ -103,7 +103,7 @@ func (f *ImageField) fetchHistogram(dataset string, variable *model.Variable, fi
 		return nil, err
 	}
 
-	files, err := f.fetchRepresentationImages(dataset, variable, histogram.Buckets)
+	files, err := f.fetchRepresentationTimeSeriess(dataset, variable, histogram.Buckets)
 	if err != nil {
 		return nil, err
 	}
@@ -111,7 +111,7 @@ func (f *ImageField) fetchHistogram(dataset string, variable *model.Variable, fi
 	return histogram, nil
 }
 
-func (f *ImageField) fetchHistogramByResult(dataset string, variable *model.Variable, resultURI string, filterParams *model.FilterParams) (*model.Histogram, error) {
+func (f *TimeSeriesField) fetchHistogramByResult(dataset string, variable *model.Variable, resultURI string, filterParams *model.FilterParams) (*model.Histogram, error) {
 
 	// pull filters generated against the result facet out for special handling
 	filters := f.Storage.splitFilters(filterParams)
@@ -166,7 +166,7 @@ func (f *ImageField) fetchHistogramByResult(dataset string, variable *model.Vari
 	return f.parseHistogram(res, variable)
 }
 
-func (f *ImageField) parseHistogram(rows *pgx.Rows, variable *model.Variable) (*model.Histogram, error) {
+func (f *TimeSeriesField) parseHistogram(rows *pgx.Rows, variable *model.Variable) (*model.Histogram, error) {
 	prefixedVarName := f.metadataVarName(variable.Name)
 
 	termsAggName := model.TermsAggPrefix + prefixedVarName
@@ -184,7 +184,7 @@ func (f *ImageField) parseHistogram(rows *pgx.Rows, variable *model.Variable) (*
 	}
 }
 
-func (f *ImageField) parseUnivariateHistogram(rows *pgx.Rows, variable *model.Variable, termsAggName string) (*model.Histogram, error) {
+func (f *TimeSeriesField) parseUnivariateHistogram(rows *pgx.Rows, variable *model.Variable, termsAggName string) (*model.Histogram, error) {
 	// Parse bucket results.
 	buckets := make([]*model.Bucket, 0)
 	min := int64(math.MaxInt32)
@@ -225,7 +225,7 @@ func (f *ImageField) parseUnivariateHistogram(rows *pgx.Rows, variable *model.Va
 	}, nil
 }
 
-func (f *ImageField) parseBivariateHistogram(rows *pgx.Rows, variable *model.Variable, termsAggName string) (*model.Histogram, error) {
+func (f *TimeSeriesField) parseBivariateHistogram(rows *pgx.Rows, variable *model.Variable, termsAggName string) (*model.Histogram, error) {
 	// extract the counts
 	countMap := map[string]map[string]int64{}
 	if rows != nil {
@@ -285,8 +285,8 @@ func (f *ImageField) parseBivariateHistogram(rows *pgx.Rows, variable *model.Var
 }
 
 // FetchResultSummaryData pulls predicted data from the result table and builds
-// the image histogram for the field.
-func (f *ImageField) FetchResultSummaryData(resultURI string, dataset string, datasetResult string, variable *model.Variable, filterParams *model.FilterParams, extrema *model.Extrema) (*model.Histogram, error) {
+// the timeseries histogram for the field.
+func (f *TimeSeriesField) FetchResultSummaryData(resultURI string, dataset string, datasetResult string, variable *model.Variable, filterParams *model.FilterParams, extrema *model.Extrema) (*model.Histogram, error) {
 	targetName := f.metadataVarName(variable.Name)
 
 	// pull filters generated against the result facet out for special handling

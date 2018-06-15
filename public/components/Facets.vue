@@ -759,7 +759,7 @@ export default Vue.extend({
 						{
 							store: this.$store,
 							propsData: {
-								imageUrl: facet.value
+								imageUrl: facet.file || facet.value
 							}
 						});
 					preview.$mount($slot[0]);
@@ -778,7 +778,7 @@ export default Vue.extend({
 						{
 							store: this.$store,
 							propsData: {
-								timeSeriesUrl: facet.value
+								timeSeriesUrl: facet.file || facet.value
 							}
 						});
 					preview.$mount($slot[0]);
