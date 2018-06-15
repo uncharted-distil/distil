@@ -72,6 +72,10 @@ const (
 	TA2CategoricalType = "https://metadata.datadrivendiscovery.org/types/CategoricalData"
 	// TA2OrdinalType is the TA2 semantic type for ordinal (ordered categorical) data
 	TA2OrdinalType = "https://metadata.datadrivendiscovery.org/types/OrdinalData"
+	// TA2ImageType is the TA2 semantic type for image data
+	TA2ImageType = "http://schema.org/ImageObject"
+	// TA2TimeSeriesType is the TA2 semantic type for timeseries data
+	TA2TimeSeriesType = "https://metadata.datadrivendiscovery.org/types/Timeseries"
 
 	// TA2 Schema keys
 
@@ -93,6 +97,10 @@ const (
 	JSONSchemaType = "json"
 	// GeoJSONSchemaType is the schema doc type for geo json data
 	GeoJSONSchemaType = "geojson"
+	// ImageSchemaType is the schema doc type for image data
+	ImageSchemaType = "image"
+	// ImageSchemaType is the schema doc type for image data
+	TimeSeriesSchemaType = "timeseries"
 
 	// TA2 Role keys
 
@@ -147,6 +155,8 @@ var (
 		PostalCodeType:  TA2StringType,
 		StateType:       TA2StringType,
 		URIType:         TA2StringType,
+		ImageType:       TA2ImageType,
+		TimeSeriesType:  TA2TimeSeriesType,
 	}
 	schemaTypeMap = map[string]string{
 		AddressType:     StringSchemaType,
@@ -169,6 +179,8 @@ var (
 		PostalCodeType:  StringSchemaType,
 		StateType:       StringSchemaType,
 		URIType:         StringSchemaType,
+		ImageType:       ImageSchemaType,
+		TimeSeriesType:  TimeSeriesSchemaType,
 	}
 )
 
