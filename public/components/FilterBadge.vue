@@ -4,7 +4,7 @@
 		<span v-if="filter.type==='numerical'">
 			{{filter.min}} : {{filter.max}}
 		</span>
-		<span v-if="filter.type==='categorical'">
+		<span v-if="filter.type==='categorical' || filter.type==='feature'">
 			{{filter.categories.join(',')}}
 		</span>
 
