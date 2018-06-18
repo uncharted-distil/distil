@@ -164,6 +164,15 @@ function removeFilter(filters: string, filter: Filter): string {
 	return encodeFilters(decoded);
 }
 
+export function hasFilterInRoute(component: Vue, variable: string): boolean {
+	// retrieve the filters from the route
+	const filters = routeGetters.getRouteFilters(component.$store);
+	const decoded = decodeFilters(filters);
+	return decoded.filter(filter => {
+		return filter.name && filter.name === variable;
+	}).length > 0;
+}
+
 export function addFilterToRoute(component: Vue, filter: Filter) {
 	// retrieve the filters from the route
 	const filters = routeGetters.getRouteFilters(component.$store);

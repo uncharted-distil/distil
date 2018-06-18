@@ -1,6 +1,9 @@
 <template>
 	<div class="enable-type-change-menu">
-		<b-dropdown :text="type" variant="secondary" class="var-type-button">
+		<b-dropdown variant="secondary" class="var-type-button"
+			id="type-change-dropdown"
+			:text="type"
+			:disabled="isDisabled">
 			<b-dropdown-item
 				v-for="suggested in addMissingSuggestions()"
 				@click.stop="onTypeChange(suggested)"
@@ -8,6 +11,9 @@
 				{{suggested}}
 			</b-dropdown-item>
 		</b-dropdown>
+		<b-tooltip :delay="delay" :disabled="!isDisabled" target="type-change-dropdown">
+			Cannot change type when actively filtering
+		</b-tooltip>
 	</div>
 </template>
 
@@ -16,6 +22,7 @@
 import { actions as datasetActions, getters as datasetGetters } from '../store/dataset/module';
 import { getters as routeGetters } from '../store/route/module';
 import { addTypeSuggestions, getLabelFromType, getTypeFromLabel } from '../util/types';
+import { hasFilterInRoute } from '../util/filters';
 import _ from 'lodash';
 import Vue from 'vue';
 
@@ -38,6 +45,19 @@ export default Vue.extend({
 		},
 		dataset(): string {
 			return routeGetters.getRouteDataset(this.$store);
+		},
+		highlightRoot(): Highlight {
+			return routeGetters.getDecodedHighlightRoot(this.$store);
+		},
+		isDisabled(): boolean {
+			return hasFilterInRoute(this, this.field) ||
+				(this.highlightRoot && this.highlightRoot.key === this.field);
+		},
+		delay(): any {
+			return {
+				show: 10,
+				hide: 10
+			};
 		}
 	},
 
