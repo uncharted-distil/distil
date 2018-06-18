@@ -24,6 +24,12 @@ export const NUMERICAL_FILTER = 'numerical';
 export const ROW_FILTER = 'row';
 
 /**
+ * Feature filter, omitting documents that have the specified feature value;
+ * @constant {string}
+ */
+export const FEATURE_FILTER = 'feature';
+
+/**
  * Include filter, excluding documents that do not fall within the filter.
  * @constant {string}
  */

@@ -18,6 +18,8 @@ const (
 	CategoricalFilter = "categorical"
 	// NumericalFilter represents a numerical filter type.
 	NumericalFilter = "numerical"
+	// FeatureFilter represents a categorical filter type.
+	FeatureFilter = "feature"
 	// RowFilter represents a numerical filter type.
 	RowFilter = "row"
 	// IncludeFilter represents an inclusive filter mode.

@@ -7,7 +7,7 @@ import { getters as routeGetters } from '../store/route/module';
 import { getters as highlightGetters } from '../store/highlights/module';
 import { overlayRouteEntry } from '../util/routes'
 import { FilterParams } from '../util/filters'
-import { getVarType, isMetaType, addMetaPrefix } from '../util/types'
+import { getFilterType, getVarType, isMetaType, addMetaPrefix } from '../util/types'
 import _ from 'lodash';
 import Vue from 'vue';
 
@@ -34,10 +34,11 @@ export function createFilterFromHighlightRoot(store: Store<any>, highlightRoot: 
 	if (isMetaType(type)) {
 		name = addMetaPrefix(name);
 	}
+	const filterType = getFilterType(type);
 	if (_.isString(highlightRoot.value)) {
 		return {
 			name: name,
-			type: CATEGORICAL_FILTER,
+			type: filterType,
 			mode: mode,
 			categories: [highlightRoot.value]
 		};
