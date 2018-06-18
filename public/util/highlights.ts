@@ -7,6 +7,7 @@ import { getters as routeGetters } from '../store/route/module';
 import { getters as highlightGetters } from '../store/highlights/module';
 import { overlayRouteEntry } from '../util/routes'
 import { FilterParams } from '../util/filters'
+import { getVarType, isMetaType, addMetaPrefix } from '../util/types'
 import _ from 'lodash';
 import Vue from 'vue';
 
@@ -24,13 +25,18 @@ export function decodeHighlights(highlightRoot: string): HighlightRoot {
 	return JSON.parse(atob(highlightRoot)) as HighlightRoot;
 }
 
-export function createFilterFromHighlightRoot(highlightRoot: HighlightRoot, mode: string, nameFunc?: Function): Filter {
+export function createFilterFromHighlightRoot(store: Store<any>, highlightRoot: HighlightRoot, mode: string, nameFunc?: Function): Filter {
 	if (!highlightRoot || highlightRoot.value == null) {
 		return null;
 	}
+	let name = nameFunc ? nameFunc(highlightRoot.key) : highlightRoot.key;
+	const type = getVarType(store, name);
+	if (isMetaType(type)) {
+		name = addMetaPrefix(name);
+	}
 	if (_.isString(highlightRoot.value)) {
 		return {
-			name: nameFunc ? nameFunc(highlightRoot.key) : highlightRoot.key,
+			name: name,
 			type: CATEGORICAL_FILTER,
 			mode: mode,
 			categories: [highlightRoot.value]
@@ -38,7 +44,7 @@ export function createFilterFromHighlightRoot(highlightRoot: HighlightRoot, mode
 	}
 	if (highlightRoot.value.from !== undefined && highlightRoot.value.to !== undefined) {
 		return {
-			name: nameFunc ? nameFunc(highlightRoot.key) : highlightRoot.key,
+			name: name,
 			type: NUMERICAL_FILTER,
 			mode: mode,
 			min: highlightRoot.value.from,
@@ -48,9 +54,9 @@ export function createFilterFromHighlightRoot(highlightRoot: HighlightRoot, mode
 	return null;
 }
 
-export function addHighlightToFilterParams(filterParams: FilterParams, highlightRoot: HighlightRoot, mode: string, nameFunc?: Function): FilterParams {
+export function addHighlightToFilterParams(store: any, filterParams: FilterParams, highlightRoot: HighlightRoot, mode: string, nameFunc?: Function): FilterParams {
 	const params = _.cloneDeep(filterParams);
-	const highlightFilter = createFilterFromHighlightRoot(highlightRoot, mode, nameFunc);
+	const highlightFilter = createFilterFromHighlightRoot(store, highlightRoot, mode, nameFunc);
 	if (highlightFilter) {
 		params.filters.push(highlightFilter);
 	}
