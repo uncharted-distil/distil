@@ -198,7 +198,7 @@ export function formatValue(colValue: any, colType: string): any {
 	return colValue.toFixed(4);
 }
 
-export function getFilterType(type: string): boolean {
+export function getFilterType(type: string): string {
 	if (isMetaType(type)) {
 		return FEATURE_FILTER;
 	} else if (isNumericType(type)) {

@@ -2,7 +2,7 @@ import { Store } from 'vuex';
 import { TableData } from '../store/dataset/index';
 import { Highlight, HighlightRoot } from '../store/highlights/index';
 import { Dictionary } from '../util/dict';
-import { Filter, CATEGORICAL_FILTER, NUMERICAL_FILTER } from '../util/filters';
+import { Filter, NUMERICAL_FILTER } from '../util/filters';
 import { getters as routeGetters } from '../store/route/module';
 import { getters as highlightGetters } from '../store/highlights/module';
 import { overlayRouteEntry } from '../util/routes'
