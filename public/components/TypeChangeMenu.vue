@@ -19,12 +19,13 @@
 
 <script lang="ts">
 
+import _ from 'lodash';
+import Vue from 'vue';
+import { HighlightRoot } from '../store/highlights/index';
 import { actions as datasetActions, getters as datasetGetters } from '../store/dataset/module';
 import { getters as routeGetters } from '../store/route/module';
 import { addTypeSuggestions, getLabelFromType, getTypeFromLabel } from '../util/types';
 import { hasFilterInRoute } from '../util/filters';
-import _ from 'lodash';
-import Vue from 'vue';
 
 export default Vue.extend({
 	name: 'enable-type-change-menu',
@@ -46,7 +47,7 @@ export default Vue.extend({
 		dataset(): string {
 			return routeGetters.getRouteDataset(this.$store);
 		},
-		highlightRoot(): Highlight {
+		highlightRoot(): HighlightRoot {
 			return routeGetters.getDecodedHighlightRoot(this.$store);
 		},
 		isDisabled(): boolean {
