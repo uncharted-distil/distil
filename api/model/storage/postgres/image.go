@@ -49,7 +49,7 @@ func (f *ImageField) fetchRepresentationImages(dataset string, variable *model.V
 		prefixedVarName := f.metadataVarName(variable.Name)
 
 		// pull sample row containing bucket
-		query := fmt.Sprintf("SELECT \"%s\" FROM %s WHERE \"%s\" = $1 LIMIT 1;", variable.Name, dataset, prefixedVarName)
+		query := fmt.Sprintf("SELECT \"%s\" FROM %s WHERE \"%s\" ~ $1 LIMIT 1;", variable.Name, dataset, prefixedVarName)
 
 		// execute the postgres query
 		rows, err := f.Storage.client.Query(query, bucket.Key)
@@ -81,7 +81,7 @@ func (f *ImageField) fetchHistogram(dataset string, variable *model.Variable, fi
 	fieldSelect := fmt.Sprintf("unnest(string_to_array(\"%s\", ' '))", prefixedVarName)
 
 	// Get count by category.
-	query := fmt.Sprintf("SELECT replace(\"%s\", '_', ' ') AS \"%s\", COUNT(*) AS count FROM %s%s GROUP BY \"%s\" ORDER BY count desc, \"%s\" LIMIT %d;",
+	query := fmt.Sprintf("SELECT replace(%s, '_', ' ') AS \"%s\", COUNT(*) AS count FROM %s%s GROUP BY %s ORDER BY count desc, %s LIMIT %d;",
 		fieldSelect, prefixedVarName, dataset, where, fieldSelect, fieldSelect, catResultLimit)
 
 	// execute the postgres query
