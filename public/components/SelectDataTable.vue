@@ -163,9 +163,9 @@ export default Vue.extend({
 				return null;
 			}
 			if (this.includedActive) {
-				return createFilterFromHighlightRoot(this.highlights.root, INCLUDE_FILTER);
+				return createFilterFromHighlightRoot(this.$store, this.highlights.root, INCLUDE_FILTER);
 			}
-			return createFilterFromHighlightRoot(this.highlights.root, EXCLUDE_FILTER);
+			return createFilterFromHighlightRoot(this.$store, this.highlights.root, EXCLUDE_FILTER);
 		},
 
 		filters(): Filter[] {
@@ -214,7 +214,7 @@ export default Vue.extend({
 		onExcludeClick() {
 			let filter = null;
 			if (this.isFilteringHighlights) {
-				filter = createFilterFromHighlightRoot(this.highlights.root, EXCLUDE_FILTER);
+				filter = createFilterFromHighlightRoot(this.$store, this.highlights.root, EXCLUDE_FILTER);
 			} else {
 				filter = createFilterFromRowSelection(this.rowSelection, EXCLUDE_FILTER);
 			}
@@ -230,7 +230,7 @@ export default Vue.extend({
 		onReincludeClick() {
 			let filter = null;
 			if (this.isFilteringHighlights) {
-				filter = createFilterFromHighlightRoot(this.highlights.root, INCLUDE_FILTER);
+				filter = createFilterFromHighlightRoot(this.$store, this.highlights.root, INCLUDE_FILTER);
 			} else {
 				filter = createFilterFromRowSelection(this.rowSelection, INCLUDE_FILTER);
 			}

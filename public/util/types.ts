@@ -1,11 +1,15 @@
 import _ from 'lodash';
+import { Store } from 'vuex';
 import { Dictionary } from './dict';
+import { getters as datasetGetters } from '../store/dataset/module';
+import { FEATURE_FILTER, CATEGORICAL_FILTER, NUMERICAL_FILTER } from '../util/filters';
 
 const EMAIL_REGEX = /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
 const URI_REGEX = /^(?:(?:(?:https?|ftp):)?\/\/)(?:\S+(?::\S*)?@)?(?:(?!(?:10|127)(?:\.\d{1,3}){3})(?!(?:169\.254|192\.168)(?:\.\d{1,3}){2})(?!172\.(?:1[6-9]|2\d|3[0-1])(?:\.\d{1,3}){2})(?:[1-9]\d?|1\d\d|2[01]\d|22[0-3])(?:\.(?:1?\d{1,2}|2[0-4]\d|25[0-5])){2}(?:\.(?:[1-9]\d?|1\d\d|2[0-4]\d|25[0-4]))|(?:(?:[a-z\u00a1-\uffff0-9]-*)*[a-z\u00a1-\uffff0-9]+)(?:\.(?:[a-z\u00a1-\uffff0-9]-*)*[a-z\u00a1-\uffff0-9]+)*(?:\.(?:[a-z\u00a1-\uffff]{2,})))(?::\d{2,5})?(?:[/?#]\S*)?$/i;
 const BOOL_REGEX = /^(0|1|true|false|t|f)$/i;
 const PHONE_REGEX = /^(\+\d{1,2}\s)?\(?\d{3}\)?[\s.-]\d{3}[\s.-]\d{4}$/
 const IMAGE_REGEX = /\.(gif|jpg|jpeg|png|tif|tiff|bmp)$/i;
+const META_PREFIX = '_feature_';
 
 const TYPES_TO_LABELS: Dictionary<string> = {
 	integer: 'Integer',
@@ -41,6 +45,11 @@ const FLOATING_POINT_TYPES = [
 	'float',
 	'latitude',
 	'longitude'
+];
+
+const META_TYPES = [
+	'image',
+	'timeseries'
 ];
 
 const NUMERIC_TYPES = INTEGER_TYPES.concat(FLOATING_POINT_TYPES);
@@ -145,6 +154,10 @@ const BASIC_SUGGESTIONS = [
 	'unknown'
 ];
 
+export function getVarType(store: Store<any>, varname: string): string {
+	return datasetGetters.getVariableTypesMap(store)[varname];
+}
+
 export function formatValue(colValue: any, colType: string): any {
 	// If there is no assigned schema, fix precision for a number, pass through otherwise.
 	if (!colType || colType === '') {
@@ -185,6 +198,15 @@ export function formatValue(colValue: any, colType: string): any {
 	return colValue.toFixed(4);
 }
 
+export function getFilterType(type: string): string {
+	if (isMetaType(type)) {
+		return FEATURE_FILTER;
+	} else if (isNumericType(type)) {
+		return NUMERICAL_FILTER;
+	}
+	return CATEGORICAL_FILTER;
+}
+
 export function isNumericType(type: string): boolean {
 	return NUMERIC_TYPES.indexOf(type) !== -1;
 }
@@ -199,6 +221,18 @@ export function isIntegerType(type: string): boolean {
 
 export function isTextType(type: string): boolean {
 	return TEXT_TYPES.indexOf(type) !== -1;
+}
+
+export function isMetaType(type: string): boolean {
+	return META_TYPES.indexOf(type) !== -1;
+}
+
+export function addMetaPrefix(varName: string): string {
+	return `${META_PREFIX}${varName}`;
+}
+
+export function removeMetaPrefix(varName: string): string {
+	return varName.replace(META_PREFIX, '');
 }
 
 export function addTypeSuggestions(type: string, values: any[]): string[] {
