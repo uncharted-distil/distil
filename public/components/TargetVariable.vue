@@ -78,7 +78,7 @@ export default Vue.extend({
 	methods: {
 		defaultTargetHighlight() {
 			// only default higlight numeric types
-			if (!this.targetVariable || !isNumericType(this.targetVariable.type)) {
+			if (!this.targetVariable) {
 				return;
 			}
 
@@ -88,14 +88,32 @@ export default Vue.extend({
 			}
 
 			if (this.targetVariableSummaries.length > 0) {
-				updateHighlightRoot(this, {
-					context: this.instanceName,
-					key: this.target,
-					value: this.getValidFacetRangeBoundary()
-				});
+				if (isNumericType(this.targetVariable.type)) {
+					this.selectDefaultNumerical();
+				} else {
+					this.selectDefaultCategorical();
+				}
 			}
 		},
-		getValidFacetRangeBoundary(): any {
+		selectDefaultNumerical() {
+			updateHighlightRoot(this, {
+				context: this.instanceName,
+				key: this.target,
+				value: this.getNumericalFacetValue()
+			});
+		},
+		selectDefaultCategorical() {
+			updateHighlightRoot(this, {
+				context: this.instanceName,
+				key: this.target,
+				value: this.getCategoricalFacetValue()
+			});
+		},
+		getCategoricalFacetValue(): string {
+			const summary = this.targetVariableSummaries[0];
+			return summary.buckets[0].key;
+		},
+		getNumericalFacetValue(): any {
 			// facet library is incapable of selecting a range that isnt exactly
 			// on a bin boundary, so we need to iterate through and find it
 			// manually.
