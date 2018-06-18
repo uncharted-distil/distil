@@ -190,7 +190,7 @@ function createCategoricalSummaryFacet(summary: VariableSummary): Group {
 			selected: selected,
 			segments: segments,
 			filterable: false,
-			file: summary.files[index]
+			file: summary.files ? summary.files[index] : null
 		};
 		total += b.count;
 		return facet;
