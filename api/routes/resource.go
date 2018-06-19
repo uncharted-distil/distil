@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"path"
 
 	"goji.io/pat"
 )
@@ -12,20 +13,33 @@ import (
 func ResourceHandler(resourceDir string, proxy bool) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// resources can either be local or remote
+		dataset := pat.Param(r, "dataset")
 		mediaFolder := pat.Param(r, "folder")
 		file := pat.Param(r, "file")
 		if proxy {
-			proxyResourceHandler(resourceDir, mediaFolder, file).ServeHTTP(w, r)
+			proxyResourceHandler(resourceDir, dataset, mediaFolder, file).ServeHTTP(w, r)
 		} else {
-			http.FileServer(http.Dir(resourceDir)).ServeHTTP(w, r)
+			localFileHandler(resourceDir, dataset, mediaFolder, file).ServeHTTP(w, r)
 		}
 	}
 }
 
-func proxyResourceHandler(server string, folder string, file string) http.HandlerFunc {
+func localFileHandler(server string, dataset string, folder string, file string) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		// read the file locally
+		filename := path.Join(server, dataset, folder, file)
+		bytes, err := ioutil.ReadFile(filename)
+		if err != nil {
+			handleError(w, err)
+		}
+		w.Write(bytes)
+	}
+}
+
+func proxyResourceHandler(server string, dataset string, folder string, file string) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// create the URL based on the input
-		url := fmt.Sprintf("%s/%s/%s", server, folder, file)
+		url := fmt.Sprintf("%s/%s/%s/%s", server, dataset, folder, file)
 		req, err := http.NewRequest("GET", url, nil)
 		if err != nil {
 			handleError(w, err)
