@@ -14,11 +14,11 @@
 			<b-badge variant="info" v-bind:key="`${score.metric}-${solutionId}`" v-for="score in scores">
 				{{metricName(score.metric)}}: {{score.value}}
 			</b-badge>
-			<facets v-if="resultGroups.length" class="result-container"
+			<facets v-if="predictedGroups.length" class="result-container"
 				@facet-click="onResultCategoricalClick"
 				@numerical-click="onResultNumericalClick"
 				@range-change="onResultRangeChange"
-				:groups="resultGroups"
+				:groups="predictedGroups"
 				:highlights="highlights"
 				:instanceName="predictedInstanceName"
 				:html="residualHtml">
@@ -86,14 +86,6 @@ export default Vue.extend({
 		residualHtml: String
 	},
 
-	data() {
-		return {
-			predictedInstanceName: 'predicted-result-facet',
-			residualInstanceName: 'residual-result-facet',
-			correctnessInstanceName: 'correctness-result-facet'
-		};
-	},
-
 	components: {
 		Facets
 	},
@@ -102,6 +94,18 @@ export default Vue.extend({
 
 		target(): string {
 			return routeGetters.getRouteTargetVariable(this.$store);
+		},
+
+		predictedInstanceName(): string {
+			return `predicted-result-facet-${this.solutionId}`;
+		},
+
+		residualInstanceName(): string {
+			return `residual-result-facet-${this.solutionId}`;
+		},
+
+		correctnessInstanceName(): string {
+			return `correctness-result-facet-${this.solutionId}`;
 		},
 
 		predictedColumnName(): string {
@@ -124,12 +128,12 @@ export default Vue.extend({
 			return 'unknown';
 		},
 
-		resultGroups(): Group[] {
-			return this.getAndActivateGroups(this.predictedSummary);
+		predictedGroups(): Group[] {
+			return this.getAndActivateGroups(this.predictedSummary, this.predictedInstanceName);
 		},
 
 		correctnessGroups(): Group[] {
-			return this.getAndActivateGroups(this.correctnessSummary);
+			return this.getAndActivateGroups(this.correctnessSummary, this.correctnessInstanceName);
 		},
 
 		residualGroups(): Group[] {
@@ -231,10 +235,10 @@ export default Vue.extend({
 			}
 		},
 
-		getAndActivateGroups(summary: VariableSummary): Group[] {
+		getAndActivateGroups(summary: VariableSummary, contextName: string): Group[] {
 			if (summary) {
 				const groups = createGroups([ summary ]);
-				if (this.highlights.root) {
+				if (this.highlights.root && this.highlights.root.context === contextName) {
 					const group = groups[0];
 					if (group.key === this.highlights.root.key) {
 						group.facets.forEach(facet => facet.filterable = true);
