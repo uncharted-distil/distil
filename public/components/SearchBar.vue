@@ -39,7 +39,18 @@ export default Vue.extend({
 
 	mounted() {
 		if (!_.isEmpty(this.terms)) {
-			(<any>this.$refs.searchbox).focus();
+			const component = this.$refs.searchbox as any;
+			const elem = component.$el;
+			// NOTE: hack to get the cursor at the end of the text after focus
+			if (typeof elem.selectionStart === 'number') {
+				elem.focus();
+				elem.selectionStart = elem.selectionEnd = elem.value.length;
+			} else if (typeof elem.createTextRange !== 'undefined') {
+				elem.focus();
+				const range = elem.createTextRange();
+				range.collapse(false);
+				range.select();
+			}
 		}
 	}
 });
