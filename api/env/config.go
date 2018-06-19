@@ -78,6 +78,7 @@ type Config struct {
 	SkipIngest                         bool    `env:"SKIP_INGEST" envDefault:"false"`
 	ServiceRetryCount                  int     `env:"SERVICE_RETRY_COUNT" envDefault:"10"`
 	VerboseError                       bool    `env:"VERBOSE_ERROR" envDefault:"false"`
+	RootResourceDirectory              string  `env:"ROOT_RESOURCE_DIRECTORY" envDefault:"HTTP://10.108.4.104"`
 }
 
 // LoadConfig loads the config from the environment if necessary and returns a
