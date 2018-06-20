@@ -213,7 +213,7 @@ export const actions = {
 			return null;
 		}
 
-		return axios.get(`/distil/results-extrema/${ES_INDEX}/${args.dataset}/${solution.resultId}`)
+		return axios.get(`/distil/predicted-extrema/${ES_INDEX}/${args.dataset}/${solution.resultId}`)
 			.then(response => {
 				mutations.updatePredictedExtremas(context, {
 					solutionId: args.solutionId,
@@ -310,7 +310,7 @@ export const actions = {
 			extremaMax = args.extrema.max;
 		}
 		const solution = getSolutionById(context.rootState.solutionModule, args.solutionId);
-		const endPoint = `/distil/results-summary/${ES_INDEX}/${args.dataset}/${extremaMin}/${extremaMax}`
+		const endPoint = `/distil/predicted-summary/${ES_INDEX}/${args.dataset}/${extremaMin}/${extremaMax}`
 		const nameFunc = (p: Solution) => getPredictedCol(p.feature);
 		const labelFunc = (p: Solution) => 'Predicted';
 
@@ -335,7 +335,7 @@ export const actions = {
 			extremaMax = args.extrema.max;
 		}
 		const solutions = getSolutionsByRequestIds(context.rootState.solutionModule, args.requestIds);
-		const endPoint = `/distil/results-summary/${ES_INDEX}/${args.dataset}/${extremaMin}/${extremaMax}`
+		const endPoint = `/distil/predicted-summary/${ES_INDEX}/${args.dataset}/${extremaMin}/${extremaMax}`
 		const nameFunc = (p: Solution) => getPredictedCol(p.feature);
 		const labelFunc = (p: Solution) => 'Predicted';
 		getSummaries(context, endPoint, solutions, nameFunc, labelFunc, mutations.updatePredictedSummaries, null);
@@ -396,7 +396,7 @@ export const actions = {
 
 		// only use extrema if this is the feature variable
 		const solution = getSolutionById(context.rootState.solutionModule, args.solutionId);
-		const endPoint = `/distil/results-summary/${ES_INDEX}/${args.dataset}/null/null`;
+		const endPoint = `/distil/predicted-summary/${ES_INDEX}/${args.dataset}/null/null`;
 		const nameFunc = (p: Solution) => getCorrectnessCol(p.feature);
 		const labelFunc = (p: Solution) => 'Error Summary';
 
@@ -415,7 +415,7 @@ export const actions = {
 		}
 		// only use extrema if this is the feature variable
 		const solutions = getSolutionsByRequestIds(context.rootState.solutionModule, args.requestIds);
-		const endPoint = `/distil/results-summary/${ES_INDEX}/${args.dataset}/null/null`
+		const endPoint = `/distil/predicted-summary/${ES_INDEX}/${args.dataset}/null/null`
 		const nameFunc = (p: Solution) => getCorrectnessCol(p.feature);
 		const labelFunc = (p: Solution) => 'Error Summary';
 		getSummaries(context, endPoint, solutions, nameFunc, labelFunc, updateCorrectnessSummary, null);
