@@ -61,6 +61,7 @@ type Config struct {
 	ClassificationFunctionName         string  `env:"CLASSIFICATION_FUNCTION_NAME" envDefault:"fileUpload"`
 	ClassificationOutputPath           string  `env:"CLASSIFICATION_OUTPUT_PATH" envDefault:"tables/classification.json"`
 	ClassificationProbabilityThreshold float64 `env:"CLASSIFICATION_PROBABILITY_THRESHOLD" envDefault:"0.8"`
+	ClassificationEnabled              bool    `env:"CLASSIFICATION_ENABLED" envDefault:"true"`
 	RankingEndpoint                    string  `env:"RANKING_ENDPOINT" envDefault:"http://localhost:5001"`
 	RankingWait                        bool    `env:"RANKING_WAIT" envDefault:"false"`
 	RankingFunctionName                string  `env:"RANKING_FUNCTION_NAME" envDefault:"pca"`
