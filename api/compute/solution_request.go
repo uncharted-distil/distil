@@ -211,6 +211,10 @@ func (s *SolutionRequest) createProduceSolutionRequest(datasetURI string, fitted
 				},
 			},
 		},
+		ExposeOutputs: []string{defaultExposedOutputKey},
+		ExposeValueTypes: []pipeline.ValueType{
+			pipeline.ValueType_CSV_URI,
+		},
 	}
 }
 
