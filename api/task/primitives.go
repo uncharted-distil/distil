@@ -223,7 +223,9 @@ func FeaturizePrimitive(index string, dataset string, config *IngestTaskConfig) 
 	mainDR := meta.GetMainDataResource()
 
 	// create & submit the solution request
-	pip, err := description.CreateCrocPipeline("leather", "")
+	// TODO: use proper input columns - need to look at col types in resource and featurize any that are
+	// image URI
+	pip, err := description.CreateCrocPipeline("leather", "", []string{"image_column"}, []string{"image_column_featurized"})
 	if err != nil {
 		return errors.Wrap(err, "unable to create Croc pipeline")
 	}
