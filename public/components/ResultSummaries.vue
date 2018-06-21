@@ -2,7 +2,7 @@
 	<div class='result-summaries'>
 		<p class="nav-link font-weight-bold">Results<p>
 		<div v-if="regressionEnabled" class="result-summaries-error">
-			<error-threshold-slider/>
+			<error-threshold-slider></error-threshold-slider>
 		</div>
 		<p class="nav-link font-weight-bold">Predictions by Model</p>
 		<result-facets
