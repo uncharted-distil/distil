@@ -1,5 +1,5 @@
 <template>
-	<div class="error-threshold-slider" v-if="hasThreshold">
+	<div class="error-threshold-slider" v-if="hasThreshold && hasExtrema">
 
 		<div>
 			<div class="error-header">
@@ -73,7 +73,7 @@ export default Vue.extend({
 
 		residualExtrema(): Extrema {
 			const extrema = resultsGetters.getResidualExtrema(this.$store);
-			if (!extrema) {
+			if (!extrema || extrema.min == null || extrema.max == null) {
 				return {
 					min: null,
 					max: null
@@ -112,6 +112,10 @@ export default Vue.extend({
 
 		hasThreshold(): boolean {
 			return this.thresholdMin !== null && this.thresholdMax !== null;
+		},
+
+		hasExtrema(): boolean {
+			return this.residualExtrema.min !== null && this.residualExtrema.max !== null;
 		}
 	},
 

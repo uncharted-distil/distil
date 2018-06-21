@@ -21,7 +21,7 @@ export const getters = {
 	},
 
 	getResultsPaginatedVariables(state: ViewState, getters: any): Variable[] {
-		const trainingVars = getters.getTrainingVariables;
+		const trainingVars = getters.getActiveSolutionTrainingVariables;
 		const targetVar = getters.getTargetVariable;
 		const resultTrainingVarsPage = getters.getRouteResultTrainingVarsPage;
 		const paginatedTrainingVars = filterVariablesByPage(resultTrainingVarsPage, NUM_PER_PAGE, sortVariablesByImportance(trainingVars));

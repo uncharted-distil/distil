@@ -68,12 +68,17 @@ export const getters = {
 		return _.find(solutions, solution => solution.solutionId === solutionId);
 	},
 
-	getActiveSolutionTrainingMap(state: SolutionState, getters: any): Dictionary<boolean> {
+	getActiveSolutionTrainingVariables(state: SolutionState, getters: any): Variable[] {
 		const activeSolution = getters.getActiveSolution;
 		if (!activeSolution || !activeSolution.features) {
-			return {};
+			return [];
 		}
-		const training = activeSolution.features.filter(f => f.featureType === 'train').map(f => f.featureName);
+		const variables = getters.getVariablesMap;
+		return activeSolution.features.filter(f => f.featureType === 'train').map(f => variables[f.featureName]);
+	},
+
+	getActiveSolutionTrainingMap(state: SolutionState, getters: any): Dictionary<boolean> {
+		const training = getters.getActiveSolutionTrainingVariables.map(f => f.name);
 		const trainingMap = {};
 		training.forEach(t => {
 			trainingMap[t] = true;
