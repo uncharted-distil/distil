@@ -143,6 +143,7 @@ func main() {
 		ClassificationFunctionName:         config.ClassificationFunctionName,
 		ClassificationOutputPathRelative:   config.ClassificationOutputPath,
 		ClassificationProbabilityThreshold: config.ClassificationProbabilityThreshold,
+		ClassificationEnabled:              config.ClassificationEnabled,
 		RankingRESTEndpoint:                config.RankingEndpoint,
 		RankingFunctionName:                config.RankingFunctionName,
 		RankingOutputPathRelative:          config.RankingOutputPath,

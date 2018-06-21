@@ -54,6 +54,7 @@ type IngestTaskConfig struct {
 	ClassificationFunctionName         string
 	ClassificationOutputPathRelative   string
 	ClassificationProbabilityThreshold float64
+	ClassificationEnabled              bool
 	RankingRESTEndpoint                string
 	RankingFunctionName                string
 	RankingOutputPathRelative          string
@@ -198,15 +199,38 @@ func Merge(index string, dataset string, config *IngestTaskConfig) error {
 // Classify uses the merged datafile and determines the data types of
 // every variable specified in the merged schema file.
 func Classify(index string, dataset string, config *IngestTaskConfig) error {
-	client := rest.NewClient(config.ClassificationRESTEndpoint)
+	var classification *rest.ClassificationResult
+	var err error
+	if config.ClassificationEnabled {
+		client := rest.NewClient(config.ClassificationRESTEndpoint)
 
-	// create classifier
-	classifier := rest.NewClassifier(config.ClassificationFunctionName, client)
+		// create classifier
+		classifier := rest.NewClassifier(config.ClassificationFunctionName, client)
 
-	// classify the file
-	classification, err := classifier.ClassifyFile(config.getTmpAbsolutePath(config.MergedOutputPathRelative))
-	if err != nil {
-		return errors.Wrap(err, "unable to classify dataset")
+		// classify the file
+		classification, err = classifier.ClassifyFile(config.getTmpAbsolutePath(config.MergedOutputPathRelative))
+		if err != nil {
+			return errors.Wrap(err, "unable to classify dataset")
+		}
+
+	} else {
+		log.Infof("classification disabled, writing out schema types")
+		meta, err := metadata.LoadMetadataFromMergedSchema(config.getTmpAbsolutePath(config.MergedOutputSchemaPathRelative))
+		if err != nil {
+			return errors.Wrap(err, "unable to load metadata")
+		}
+		if len(meta.DataResources) != 1 {
+			return errors.Wrap(err, "loaded metadata not a merged schema")
+		}
+		classification = &rest.ClassificationResult{
+			Labels:        make([][]string, len(meta.DataResources[0].Variables)),
+			Probabilities: make([][]float64, len(meta.DataResources[0].Variables)),
+			Path:          config.getTmpAbsolutePath(config.MergedOutputPathRelative),
+		}
+		for i, v := range meta.DataResources[0].Variables {
+			classification.Labels[i] = []string{v.Type}
+			classification.Probabilities[i] = []float64{float64(1)}
+		}
 	}
 
 	// marshall result
