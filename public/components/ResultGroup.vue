@@ -281,6 +281,7 @@ export default Vue.extend({
 }
 
 .result-container {
+	position: relative;
 	box-shadow: none;
 }
 
