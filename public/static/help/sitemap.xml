@@ -1,69 +1,48 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   
-
-
-  
-  
-  
+  <url>
+    <loc>/404.html</loc>
+  </url>
   
   <url>
     <loc>/create-models.html</loc>
   </url>
   
-  
-  
   <url>
     <loc>/css/customstyles.css</loc>
   </url>
-  
-  
-  
-  
   
   <url>
     <loc>/glossary.html</loc>
   </url>
   
-  
-  
   <url>
     <loc>/home.html</loc>
   </url>
-  
-  
   
   <url>
     <loc>/index.html</loc>
   </url>
   
-  
-  
   <url>
-    <loc>/results.html</loc>
+    <loc>/select-data.html</loc>
   </url>
-  
-  
-  
-  
-  
-  <url>
-    <loc>/search.html</loc>
-  </url>
-  
-  
   
   <url>
     <loc>/select-target.html</loc>
   </url>
   
+  <url>
+    <loc>/sitemap.xml</loc>
+  </url>
   
-  
-  
+  <url>
+    <loc>/view-models.html</loc>
+  </url>
   
   <url>
     <loc>/workflow-overview.html</loc>
   </url>
-  
   
 </urlset>

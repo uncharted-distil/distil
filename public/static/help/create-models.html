@@ -13,8 +13,8 @@
 <!--<link rel="stylesheet" type="text/css" href="css/bootstrap.min.css">-->
 <link rel="stylesheet" href="css/modern-business.css">
 <link rel="stylesheet" href="css/lavish-bootstrap.css">
-<link rel="stylesheet" href="css/customstyles.css?1517864259540471000">
-<link rel="stylesheet" href="css/theme-black.css?1517864259540471000">
+<link rel="stylesheet" href="css/customstyles.css?1529688526703516000">
+<link rel="stylesheet" href="css/theme-black.css?1529688526703516000">
 
 <script src="js/lib/jquery.min.js"></script>
 <script src="js/lib/jquery.cookie.min.js"></script>
@@ -27,9 +27,6 @@
 <script src="js/customscripts.js"></script>
 
 <link rel="shortcut icon" href="images/favicon.ico">
-
-<link rel="alternate" type="application/rss+xml" title="" href="feed.xml">
-
     <script>
         $(document).ready(function() {
             // Initialize navgoco with default options
@@ -100,27 +97,6 @@
                 <!-- entries with drop-downs appear here -->
                 <!-- conditional logic to control which topnav appears for the audience defined in the configuration file.-->
                 
-                <!--comment out this block if you want to hide search
-                <li>
-                    <!--start search
-                    <div id="search-demo-container">
-                        <input type="text" id="search-input" placeholder="search...">
-                        <ul id="results-container"></ul>
-                    </div>
-                    <script src="js/jekyll-search.js" type="text/javascript"></script>
-                    <script type="text/javascript">
-                            SimpleJekyllSearch.init({
-                                searchInput: document.getElementById('search-input'),
-                                resultsContainer: document.getElementById('results-container'),
-                                dataSource: 'search.json',
-                                searchResultTemplate: '<li><a href="{url}" title="Step 3 - Create Models">{title}</a></li>',
-                    noResultsText: 'No results found.',
-                            limit: 10,
-                            fuzzy: true,
-                    })
-                    </script>
-                    <!--end search
-                </li>-->
             </ul>
         </div>
         </div>
@@ -136,10 +112,6 @@
         <div class="col-md-3">
 
           
-
-
-
-
 
 <ul id="mysidebar" class="nav">
     <li class="sidebarTitle">Getting Started </li>
@@ -183,7 +155,7 @@
             
             
             
-            <li><a href="search.html">1. Select Data</a></li>
+            <li><a href="select-data.html">1. Select Data</a></li>
             
             
             
@@ -204,7 +176,7 @@
             
             
             
-            <li><a href="results.html">4. View Models</a></li>
+            <li><a href="view-models.html">4. View Models</a></li>
             
             
             
@@ -262,72 +234,81 @@ $('#toc').on('click', 'a', function() {
 
     
 
-  <p>You must choose a set of features that you think will inform the predictions. Distil will automatically generate models to predict the target using the features you select in this step.</p>
+  <p>You must choose features that you think will inform the predictions. Distil will use the chosen features to automatically generate models that predict the target.</p>
 
-<h2 id="create-models-view-summary">Create Models View Summary</h2>
+<h2 id="overview">Overview</h2>
 
-<figure id="#select-view-training-close"><a href="#select-view-training"><img class="diagram" src="images/diagrams/select-training.png?1517864259540471000" alt="Select training set features" /><figcaption>Click to enlarge</figcaption></a></figure>
-<div class="lightbox-target" id="select-view-training"><img src="images/diagrams/select-training.png?1517864259540471000" /><a class="lightbox-close" href="#select-view-training-close"></a></div>
+<figure id="#create-models-view-close"><a href="#create-models-view"><img class="diagram" src="images/diagrams/create-models.png?1529688526703516000" alt="Create Models" /><figcaption>Click to enlarge</figcaption></a></figure>
+<div class="lightbox-target" id="create-models-view"><img src="images/diagrams/create-models.png?1529688526703516000" /><a class="lightbox-close" href="#create-models-view-close"></a></div>
 
-<h2 id="selecting-the-features-to-model">Selecting the Features to Model</h2>
+<h2 id="select-the-features-to-model">Select the features to model</h2>
 
 <h5 class="procedure">To choose the features that your model should use in its predictions:</h5>
 
 <ol>
   <li>
-    <p>Click <strong>Add</strong> under any feature. In this example, add <strong>horsepower</strong> and <strong>cylinders</strong>.</p>
+    <p>Click <strong>Add</strong> under the <strong>horsepower</strong> and <strong>cylinders</strong> features.</p>
 
-    <figure><img class="docimage" src="images/workflow/select-add-to-training-set.png?1517864259540471000" alt="Add cylinders to features to model" /></figure>
+    <figure><img class="docimage" src="images/workflow/create-models/available-features-add.png?1529688526703516000" alt="Add cylinders to features to model" /></figure>
 
-    <p>Distil adds the selected features to the list of Features to Model. You can filter or change the <strong>type <sup class="fa fa-sort-desc" aria-hidden="true" style="display: inline;"></sup></strong> of any of the features to model.</p>
+    <p>In this example, Distil adds the selected features to the list of Features to Model. You can filter or change the <strong>type <sup class="fa fa-sort-desc" aria-hidden="true" style="display: inline;"></sup></strong> of any of the features to model.</p>
 
-    <figure><img class="docimage" src="images/workflow/select-training-features.png?1517864259540471000" alt="Cylinders and horsepower added as features that inform the prediction made by the model" /></figure>
+    <figure><img class="docimage" src="images/workflow/create-models/features-to-model.png?1529688526703516000" alt="Cylinders and horsepower added as features that inform the prediction made by the model" /></figure>
 
     <div class="panel-group" id="accordion">
  <div class="panel panel-default">
    <div class="panel-heading">
-     <h4 class="panel-title"><a class="noCrossRef accordion-toggle" data-toggle="collapse" data-parent="#accordion" href="#collapseOne"><span class="fa fa-plus"></span> To remove a feature from the features to model</a></h4>
+     <h4 class="panel-title"><a class="noCrossRef accordion-toggle" data-toggle="collapse" data-parent="#accordion" href="#collapseOne"><span class="fa fa-plus" aria-hidden="true"></span> To remove a feature from the features to model</a></h4>
    </div>
    <div id="collapseOne" class="panel-collapse collapse noCrossRef">
      <div class="panel-body">
-       Click <strong>Remove</strong> under the feature name in the Features to Model pane.
-       <figure><img class="docimage" src="images/workflow/select-remove-feature.png?1517864259540471000" alt="Remove feature from the features to model" /></figure>
+       Click <strong>Remove</strong> under the feature name in the Features to Model pane or click **Remove All** above the list of features.
+       <figure><img class="docimage" src="images/workflow/create-models/features-to-model-remove.png?1529688526703516000" alt="Remove feature from the features to model" /></figure>
      </div>
    </div>
  </div>
 </div>
   </li>
   <li>
-    <p>Note the distribution of categories for the <strong>cylinders</strong> feature. Four, six and eight cylinder engines appear often in the dataset, while three and five cylinder engines appear much less frequently. Click the infrequent categories to omit them from the model.</p>
+    <p>Note the distribution of categories for the <strong>cylinders</strong> feature. Four, six and eight cylinder engines appear often, while three and five cylinder engines appear much less frequently.</p>
 
-    <figure><img class="docimage" src="images/workflow/select-toggle-category.png?1517864259540471000" alt="Omit records with a specific categorical value" /></figure>
+    <figure><img class="docimage" src="images/workflow/create-models/cylinders.png?1529688526703516000" alt="Distribution of cylinder values in the dataset" /></figure>
+  </li>
+  <li>Click the three-cylinder category to view samples that match the value in the Samples to Model From table.</li>
+  <li>To exclude these samples from the model, click <span class="fa fa-minus-circle pr-1 exclude-highlight"></span> <strong>Exclude</strong>.
+    <figure><img class="docimage" src="images/workflow/create-models/exclude-category.png?1529688526703516000" alt="Omit records with a specific categorical value" /></figure>
+  </li>
+  <li>Repeat steps 3–4 for the five-cylinder category as well.</li>
+  <li>
+    <p>Review the updated Samples to Model From table. Click the column headers to sort by feature and check for extreme values that may indicate problems with the data. Note that one row has a value of <em>0</em> for <strong>horsepower</strong>, which is likely an error.</p>
 
-    <p>Greyed out categories are not included in the model.</p>
+    <figure><img class="docimage" src="images/workflow/create-models/samples-to-model-from-error.png?1529688526703516000" alt="Record with 0 horsepower value" /></figure>
+  </li>
+  <li>To focus on records with this value, drag the slider at the end of the distribution of <strong>horsepower</strong> values to the left so the range ends at <em>5</em>.</li>
+  <li>
+    <p>To remove these records, click <span class="fa fa-minus-circle pr-1 exclude-highlight"></span> <strong>Exclude</strong>.</p>
+
+    <figure><img class="docimage" src="images/workflow/create-models/features-to-model-range.png?1529688526703516000" alt="Omit records with 0 horsepower" /></figure>
   </li>
   <li>
-    <p>Review the updated sample table. Click the column headers to sort by feature and check for extreme values that may indicate problems with the data. Note that one row has a value of <em>0</em> for <strong>horsepower</strong>, which is likely an error.</p>
+    <p>Click Excluded Samples to review the records you removed. There is a collection of three and five cylinder vehicles, as well as some four cylinder vehicles with horsepower 0.</p>
 
-    <figure><img class="docimage" src="images/workflow/select-sample-table-error.png?1517864259540471000" alt="Record with 0 horsepower value" /></figure>
-  </li>
-  <li>
-    <p>To omit records with this value, drag the slider at the beginning of the distribution of <strong>horsepower</strong> values to the right so the range starts above <em>0</em>.</p>
-
-    <figure><img class="docimage" src="images/workflow/select-adjust-range.png?1517864259540471000" alt="Omit records with 0 horsepower" /></figure>
+    <figure><img class="docimage" src="images/workflow/create-models/excluded-samples.png?1529688526703516000" alt="Samples removed from consideration" /></figure>
   </li>
 </ol>
 
 <p>Depending on your task, next you can:</p>
 
 <ul>
-  <li><a href="#exporting-the-problem">Export the Problem</a> to export the model definition without generating models or predicting <strong>acceleration</strong></li>
-  <li><a href="#generating-the-models">Generate the Models</a> to predict <strong>acceleration</strong> using <strong>horsepower</strong> and <strong>cylinders</strong></li>
+  <li><a href="#export-the-problem">Export the problem</a> to export the model definition without generating models or predicting <strong>acceleration</strong></li>
+  <li><a href="#generate-the-models">Generate the models</a> to predict <strong>acceleration</strong> using <strong>horsepower</strong> and <strong>cylinders</strong></li>
 </ul>
 
-<div class="alert alert-warning" role="alert"><i class="fa fa-warning"></i> <b>Important:</b> You must select a target feature and at least one feature to model from before you can export the problem or generate the models.</div>
+<div class="alert alert-warning" role="alert"><i class="fa fa-warning"></i> <b>Important:</b> You must select a target feature and at least one feature to model from before you can proceed.</div>
 
-<h2 id="exporting-the-problem">Exporting the Problem</h2>
+<h2 id="export-the-problem">Export the problem</h2>
 
-<p>If your task is to discover a problem without generating a predictive model, you can now export your model definition. Otherwise, skip ahead to <a href="#generating-the-models">Generating the Models</a>.</p>
+<p>If your task is to discover a problem without generating a predictive model, you can now export your model definition. Otherwise, skip ahead to <a href="#generate-the-models">Generate the Models</a>.</p>
 
 <h5 class="procedure">To export the problem:</h5>
 
@@ -335,9 +316,9 @@ $('#toc').on('click', 'a', function() {
   <li>Click <strong>Export Problem</strong>.</li>
 </ul>
 
-<figure><img class="docimage" src="images/workflow/select-export-problem.png?1517864259540471000" alt="Export Problem" /></figure>
+<figure><img class="docimage" src="images/workflow/create-models/export-problem.png?1529688526703516000" alt="Export Problem" /></figure>
 
-<h2 id="generating-the-models">Generating the Models</h2>
+<h2 id="generate-the-models">Generate the Models</h2>
 
 <p>If your task to build a predictive model, you can now begin the model generation. Based on your selections, Distil:</p>
 
@@ -353,11 +334,11 @@ $('#toc').on('click', 'a', function() {
   <li>Click <strong>Create Models</strong>.</li>
 </ul>
 
-<figure><img class="docimage" src="images/workflow/select-create-models.png?1517864259540471000" alt="Create models" /></figure>
+<figure><img class="docimage" src="images/workflow/create-models/create-models.png?1529688526703516000" alt="Create models" /></figure>
 
 <p>In this example, Distil will attempt to predict the <strong>acceleration</strong> based on the <strong>horsepower</strong> and <strong>cylinders</strong> features for a subset of the dataset.</p>
 
-<h2 id="next-steps">Next Steps</h2>
+<h2 id="next-steps">Next steps</h2>
 
 <p>Review the generated models to determine whether they accurately predict the target feature.</p>
 
@@ -370,7 +351,7 @@ $('#toc').on('click', 'a', function() {
     </div>
     <div class="nav-right align-left">
         
-          <a href="results.html" class="next-pg">Next</a>
+          <a href="view-models.html" class="next-pg">Next</a>
         
     </div>
   </div>
@@ -401,5 +382,4 @@ $('#toc').on('click', 'a', function() {
     </div>
 
 </body>
-
 </html>
