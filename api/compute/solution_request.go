@@ -314,7 +314,7 @@ func (s *SolutionRequest) persistSolutionResults(statusChan chan SolutionStatus,
 func (s *SolutionRequest) dispatchSolution(statusChan chan SolutionStatus, client *Client, solutionStorage model.SolutionStorage, dataStorage model.DataStorage, searchID string, solutionID string, dataset string, datasetURITrain string, datasetURITest string) {
 
 	// score solution
-	solutionScoreResponses, err := client.GenerateSolutionScores(context.Background(), solutionID)
+	solutionScoreResponses, err := client.GenerateSolutionScores(context.Background(), solutionID, datasetURITest, s.Metrics)
 	if err != nil {
 		s.persistSolutionError(statusChan, solutionStorage, searchID, solutionID, err)
 		return

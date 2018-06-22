@@ -138,10 +138,21 @@ func (c *Client) SearchSolutions(ctx context.Context, searchID string, solutionH
 }
 
 // GenerateSolutionScores generates scrores for candidate solutions.
-func (c *Client) GenerateSolutionScores(ctx context.Context, solutionID string) ([]*pipeline.GetScoreSolutionResultsResponse, error) {
+func (c *Client) GenerateSolutionScores(ctx context.Context, solutionID string, datasetURI string, metrics []string) ([]*pipeline.GetScoreSolutionResultsResponse, error) {
 
 	scoreSolutionRequest := &pipeline.ScoreSolutionRequest{
 		SolutionId: solutionID,
+		Inputs: []*pipeline.Value{
+			{
+				Value: &pipeline.Value_DatasetUri{
+					DatasetUri: datasetURI,
+				},
+			},
+		},
+		PerformanceMetrics: convertMetricsFromTA3ToTA2(metrics),
+		Configuration: &pipeline.ScoringConfiguration{
+			Method: pipeline.EvaluationMethod_HOLDOUT,
+		},
 	}
 
 	scoreSolutionResponse, err := c.client.ScoreSolution(ctx, scoreSolutionRequest)
