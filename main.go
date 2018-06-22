@@ -98,7 +98,7 @@ func main() {
 		if err == nil {
 			log.Infof("Service '%s' is up", name)
 		} else {
-			log.Error(err)
+			log.Errorf("%+v", err)
 			os.Exit(1)
 		}
 	}
@@ -116,13 +116,22 @@ func main() {
 	solutionClient, err := compute.NewClient(config.SolutionComputeEndpoint, config.SolutionDataDir, config.SolutionComputeTrace,
 		userAgent, time.Duration(config.SolutionComputePullTimeout)*time.Second, config.SolutionComputePullMax)
 	if err != nil {
-		log.Errorf("%v", err)
+		log.Errorf("%+v", err)
 		os.Exit(1)
 	}
 	defer solutionClient.Close()
 
 	// instantiate the REST client for primitives.
 	restClient := rest.NewClient(config.PrimitiveEndPoint)
+
+	// set the ingest functions to use
+	if config.IngestPrimitive {
+		task.SetClassify(task.ClassifyPrimitive)
+		task.SetRank(task.RankPrimmitive)
+		task.SetSummarize(task.SummarizePrimitive)
+		//task.SetFeaturize(task.FeaturizePrimitive)
+		task.SetClient(solutionClient)
+	}
 
 	// build the ingest configuration.
 	ingestConfig := &task.IngestTaskConfig{
@@ -167,7 +176,7 @@ func main() {
 		log.Infof("Loading initial dataset '%s'", config.InitialDataset)
 		err = task.IngestDataset(metadataStorageCtor, config.ESDatasetsIndex, config.InitialDataset, ingestConfig)
 		if err != nil {
-			log.Error(err)
+			log.Errorf("%+v", err)
 			os.Exit(1)
 		}
 	}
@@ -212,7 +221,7 @@ func main() {
 	log.Infof("Listening on port %s", config.AppPort)
 	err = graceful.ListenAndServe(":"+config.AppPort, mux)
 	if err != nil {
-		log.Error(err)
+		log.Errorf("%+v", err)
 		os.Exit(1)
 	}
 

@@ -1,4 +1,4 @@
-package compute
+package result
 
 import (
 	"encoding/csv"
@@ -14,7 +14,7 @@ import (
 func ParseResultCSV(path string) ([][]interface{}, error) {
 	csvFile, err := os.Open(path)
 	if err != nil {
-		return nil, errors.Wrap(err, "error opening result file")
+		return nil, errors.Wrapf(err, "error opening result file '%s'", path)
 	}
 
 	csvReader := csv.NewReader(csvFile)
@@ -24,7 +24,7 @@ func ParseResultCSV(path string) ([][]interface{}, error) {
 		if err == io.EOF {
 			break
 		} else if err != nil {
-			return nil, errors.Wrap(err, "error parsing result file")
+			return nil, errors.Wrapf(err, "error parsing result file - '%s'", line)
 		}
 
 		record := []interface{}{}

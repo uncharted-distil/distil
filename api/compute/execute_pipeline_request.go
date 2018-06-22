@@ -7,6 +7,7 @@ import (
 
 	"github.com/pkg/errors"
 	"github.com/unchartedsoftware/distil/api/pipeline"
+	"github.com/unchartedsoftware/plog"
 )
 
 // ExecPipelineStatus contains status / result information for a pipeline status
@@ -35,7 +36,7 @@ type ExecPipelineRequest struct {
 
 // NewExecPipelineRequest creates a new request that will run the supplied dataset through
 // the pipeline description.
-func (e *ExecPipelineRequest) NewExecPipelineRequest(datasetURI string, pipelineDesc *pipeline.PipelineDescription) *ExecPipelineRequest {
+func NewExecPipelineRequest(datasetURI string, pipelineDesc *pipeline.PipelineDescription) *ExecPipelineRequest {
 	return &ExecPipelineRequest{
 		datasetURI:    datasetURI,
 		pipelineDesc:  pipelineDesc,
@@ -62,6 +63,16 @@ func (e *ExecPipelineRequest) Dispatch(client *Client) error {
 		Version:   GetAPIVersion(),
 		UserAgent: client.UserAgent,
 		Template:  e.pipelineDesc,
+		AllowedValueTypes: []pipeline.ValueType{
+			pipeline.ValueType_CSV_URI,
+		},
+		Inputs: []*pipeline.Value{
+			{
+				Value: &pipeline.Value_DatasetUri{
+					DatasetUri: e.datasetURI,
+				},
+			},
+		},
 	})
 	if err != nil {
 		return err
@@ -82,38 +93,32 @@ func (e *ExecPipelineRequest) dispatchRequest(client *Client, requestID string) 
 	var produceCalled bool
 	// Search for solutions, this wont return until the produce finishes or it times out.
 	err := client.SearchSolutions(context.Background(), requestID, func(solution *pipeline.GetSearchSolutionsResultsResponse) {
-		defer e.wg.Done()
-
 		// A complete pipeline specification should result in a single solution being generated.  Consider it an
 		// error condition when that is not the case.
 		if firstSolution == "" {
+			e.wg.Add(1)
 			firstSolution = solution.GetSolutionId()
 		} else if firstSolution != solution.GetSolutionId() {
-			err := errors.Errorf("multiple solutions found for request %s, expected 1", requestID)
-			e.notifyError(e.statusChannel, requestID, err)
+			log.Warnf("multiple solutions found for request %s, expected 1", requestID)
 			return
 		}
 
 		// handle solution search update - status codes pertain to the search itself, and not a particular
 		// solution
-		switch solution.GetProgress().GetState() {
-		case pipeline.ProgressState_ERRORED:
+		if solution.GetProgress().GetState() == pipeline.ProgressState_ERRORED {
 			// search errored - most likely case is that the supplied pipeline had a problem in its specification
 			err := errors.Errorf("could not generate solution for request - %s", solution.GetProgress().GetStatus())
 			e.notifyError(e.statusChannel, requestID, err)
-			return
-		case pipeline.ProgressState_RUNNING:
-			fallthrough
-		case pipeline.ProgressState_COMPLETED:
-			// sarch is actively running or has completed - safe to call produce at this point, but we should
-			// only do so once.  A status update with no actual solution ID is valid.
+			e.wg.Done()
+		} else {
+			// search is actively running or has completed - safe to call produce at this point, but we should
+			// only do so once.  A status update with no actual solution ID is valid in the API.
 			e.notifyStatus(e.statusChannel, requestID, RequestRunningStatus)
 			if solution.GetSolutionId() != "" && !produceCalled {
 				produceCalled = true
 				e.dispatchProduce(e.statusChannel, client, requestID, solution.GetSolutionId())
+				e.wg.Done()
 			}
-		default:
-			e.notifyStatus(e.statusChannel, requestID, RequestRunningStatus)
 		}
 	})
 

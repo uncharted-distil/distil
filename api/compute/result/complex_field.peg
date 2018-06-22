@@ -1,4 +1,4 @@
-package compute
+package result
 
 # Parser for an array field exported from a Python PANDAS dataframe via its to_csv() method.
 # The exported file is RFC 4180 compatible, and is loaded using the CSV loader from the golang
@@ -23,7 +23,8 @@ array <- ws* obracket { p.pushArray() } ws* (item ws* (comma ws* item ws* )*)? c
 item <- array / string / <value*> { p.addElement(buffer[begin:end]) }
 string <- dquote_string / squote_string
 dquote_string <- escdquote <(textdata / squote / lf / cr / obracket / cbracket / comma)*> escdquote { p.addElement(buffer[begin:end]) }
-squote_string <- squote <(escquote / escdquote / textdata / lf / cr / obracket / cbracket)*> squote { p.addElement(buffer[begin:end]) }
+squote_string <- squote <(escsquote / escdquote / textdata / lf / cr / obracket / cbracket)*> squote { p.addElement(buffer[begin:end]) }
+value <- negative? number+ (decimal_point number+)?
 
 # terminals
 ws <- ' '
@@ -35,5 +36,7 @@ escsquote <- '\\\''
 squote <- '\''
 obracket <- '['
 cbracket <- ']'
-value <- [a-zA-Z0-9]
+number <- [a-zA-Z0-9]
+negative <- '-'
+decimal_point <- '.'
 textdata <- [a-zA-Z0-9 !#$&%()*+\-./:;<->?\\^_`{|}~]
