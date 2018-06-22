@@ -12,14 +12,13 @@ postgres:
     -d postgres
 mitfl:
   image:
-    registry.datadrivendiscovery.org/mit-featurelabs/btb-dockerimage:stable
+    registry.datadrivendiscovery.org/jkanter/mit-fl-ta2:stable
   ports:
-    - "45042:45042"
+    - "45042:50051"
   environment:
-    - CONFIG_JSON_PATH=/tmp/d3m/config/config.json
+    - D3MTIMEOUT=60
+    - D3MINPUTDIR=/input
+    - D3MOUTPUTDIR=/output
+    - D3MRUN=ta2ta3
   volumes:
-    - /tmp/d3m:/tmp/d3m
-  command:
-    - ta2_grpc_server
-  entrypoint:
-    - /bin/bash
+    - $PWD/datasets:/output
