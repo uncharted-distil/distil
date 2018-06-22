@@ -23,6 +23,11 @@ postgres:
     - "5432:5432"
   command:
     -d postgres
+resources:
+  image:
+    docker.uncharted.software/distil_res_server:latest
+  ports:
+    - "8001:80"
 # nk_classification_rest:
 #   image:
 #     registry.datadrivendiscovery.org/j18_ta1eval/distil/simon:latest

@@ -79,6 +79,8 @@ type Config struct {
 	SkipIngest                         bool    `env:"SKIP_INGEST" envDefault:"false"`
 	ServiceRetryCount                  int     `env:"SERVICE_RETRY_COUNT" envDefault:"10"`
 	VerboseError                       bool    `env:"VERBOSE_ERROR" envDefault:"false"`
+	RootResourceDirectory              string  `env:"ROOT_RESOURCE_DIRECTORY" envDefault:"http://localhost:8001"`
+	ResourceProxy                      bool    `env:"RESOURCE_PROXY" envDefault:"true"`
 	IngestPrimitive                    bool    `env:"INGEST_PRIMITIVE" envDefault:"false"`
 }
 

@@ -18,7 +18,7 @@ func handleErr(conn *Connection, msg *Message, err error) {
 		errOther := conn.SendResponse(map[string]interface{}{
 			"id":      msg.ID,
 			"success": false,
-			"error":   err,
+			"error":   err.Error(),
 		})
 		// log error
 		if errOther != nil {

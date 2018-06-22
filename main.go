@@ -212,6 +212,7 @@ func main() {
 	registerRoutePost(mux, "/distil/predicted-summary/:index/:dataset/:min/:max/:results-uuid", routes.PredictedSummaryHandler(pgSolutionStorageCtor, pgDataStorageCtor))
 
 	// static
+	registerRoute(mux, "/distil/image/:dataset/:folder/:file", routes.ResourceHandler(config.RootResourceDirectory, config.ResourceProxy))
 	registerRoute(mux, "/*", routes.FileHandler("./dist"))
 
 	// catch kill signals for graceful shutdown

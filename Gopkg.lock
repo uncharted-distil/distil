@@ -159,6 +159,7 @@
   name = "github.com/unchartedsoftware/distil-ingest"
   packages = [
     "conf",
+    "csv",
     "feature",
     "merge",
     "metadata",
@@ -290,6 +291,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "f5a6c1440a5d92e5b85ce4a986356b92380151baaa94e82f81396074d7fb5b71"
+  inputs-digest = "9b001fee0eae633b518111fa7eb5b6d76990b2f122a9d28f8b54350495d51ec1"
   solver-name = "gps-cdcl"
   solver-version = 1
