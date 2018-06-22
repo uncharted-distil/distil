@@ -18,6 +18,7 @@
 <script lang="ts">
 
 import Vue from 'vue';
+import { getters as routeGetters } from '../store/route/module';
 import { circleSpinnerHTML } from '../util/spinner';
 
 export default Vue.extend({
@@ -47,6 +48,9 @@ export default Vue.extend({
 		spinnerHTML(): string {
 			return circleSpinnerHTML();
 		},
+		dataset(): string {
+			return routeGetters.getRouteDataset(this.$store);
+		}
 	},
 
 	mounted() {
@@ -80,11 +84,6 @@ export default Vue.extend({
 		},
 
 		requestImage(url: string) {
-			const IMAGES = [
-				'a.jpeg',
-				'b.jpeg',
-				'c.jpeg'
-			];
 			return new Promise((resolve, reject) => {
 				const image = new Image();
 				image.onload = () => {
@@ -96,8 +95,7 @@ export default Vue.extend({
 					reject(err);
 				};
 				image.crossOrigin = 'anonymous';
-				image.src = `images/${IMAGES[Math.floor(Math.random() * IMAGES.length)]}`;
-				//image.src = `images/${url}`;
+				image.src = `distil/image/${this.dataset}_dataset/media/${url}`;
 			});
 		}
 	}
