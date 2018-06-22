@@ -47,7 +47,7 @@ func submitPrimitive(dataset string, step *pipeline.PipelineDescription) (string
 			errPipeline = status.Error
 		}
 
-		if status.Progress == pipeline.ProgressState_name[int32(pipeline.ProgressState_COMPLETED)] {
+		if status.Progress == compute.RequestCompletedStatus {
 			datasetURI = status.ResultURI
 		}
 	})
@@ -63,8 +63,8 @@ func submitPrimitive(dataset string, step *pipeline.PipelineDescription) (string
 	return datasetURI, nil
 }
 
-// ClassifyPrimmitive will classify the dataset using a primitive.
-func ClassifyPrimmitive(index string, dataset string, config *IngestTaskConfig) error {
+// ClassifyPrimitive will classify the dataset using a primitive.
+func ClassifyPrimitive(index string, dataset string, config *IngestTaskConfig) error {
 	// create & submit the solution request
 	pip, err := description.CreateSimonPipeline("says", "")
 	if err != nil {
@@ -87,8 +87,12 @@ func ClassifyPrimmitive(index string, dataset string, config *IngestTaskConfig) 
 	labels := make([][]string, len(res)-1)
 	for i, v := range res {
 		if i > 0 {
-			labels[i-1] = v[1].([]string)
-			probabilities[i-1] = v[2].([]float64)
+			labels[i-1] = toStringArray(v[1].([]interface{}))
+			res, err := toFloat64Array(v[2].([]interface{}))
+			if err != nil {
+				return err
+			}
+			probabilities[i-1] = res
 		}
 	}
 	classification := &rest.ClassificationResult{
@@ -325,4 +329,24 @@ func FeaturizePrimitive(index string, dataset string, config *IngestTaskConfig) 
 	}
 
 	return nil
+}
+
+func toStringArray(in []interface{}) []string {
+	strArr := make([]string, len(in))
+	for _, v := range in {
+		strArr = append(strArr, v.(string))
+	}
+	return strArr
+}
+
+func toFloat64Array(in []interface{}) ([]float64, error) {
+	strArr := make([]float64, len(in))
+	for _, v := range in {
+		strFloat, err := strconv.ParseFloat(v.(string), 64)
+		if err != nil {
+			return nil, errors.Wrap(err, "failed to convert interface array to float array")
+		}
+		strArr = append(strArr, strFloat)
+	}
+	return strArr, nil
 }
