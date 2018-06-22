@@ -22,6 +22,7 @@ export const getters = {
 	// variables
 	getVariables: read(moduleGetters.getVariables),
 	getVariablesMap: read(moduleGetters.getVariablesMap),
+	getVariableTypesMap: read(moduleGetters.getVariableTypesMap),
 	getVariableSummaries: read(moduleGetters.getVariableSummaries),
 	// included data
 	hasIncludedTableData: read(moduleGetters.hasIncludedTableData),

@@ -29,6 +29,8 @@ type Config struct {
 	RedisEndpoint                      string  `env:"REDIS_ENDPOINT" envDefault:"localhost:6379"`
 	RedisExpiry                        int     `env:"REDIS_EXPIRY" envDefault:"-1"`
 	SolutionComputeEndpoint            string  `env:"SOLUTION_COMPUTE_ENDPOINT" envDefault:"localhost:50051"`
+	SolutionComputePullTimeout         int     `env:"SOLUTION_COMPUTE_PULL_TIMEOUT" envDefault:"60"`
+	SolutionComputePullMax             int     `env:"SOLUTION_COMPUTE_PULL_MAX" envDefault:"10"`
 	SolutionDataDir                    string  `env:"SOLUTION_DATA_DIR" envDefault:"datasets"`
 	SolutionComputeTrace               bool    `env:"SOLUTION_COMPUTE_TRACE" envDefault:"false"`
 	ExportPath                         string  `env:"EXPORT_PATH"`
@@ -59,6 +61,7 @@ type Config struct {
 	ClassificationFunctionName         string  `env:"CLASSIFICATION_FUNCTION_NAME" envDefault:"fileUpload"`
 	ClassificationOutputPath           string  `env:"CLASSIFICATION_OUTPUT_PATH" envDefault:"tables/classification.json"`
 	ClassificationProbabilityThreshold float64 `env:"CLASSIFICATION_PROBABILITY_THRESHOLD" envDefault:"0.8"`
+	ClassificationEnabled              bool    `env:"CLASSIFICATION_ENABLED" envDefault:"true"`
 	RankingEndpoint                    string  `env:"RANKING_ENDPOINT" envDefault:"http://localhost:5001"`
 	RankingWait                        bool    `env:"RANKING_WAIT" envDefault:"false"`
 	RankingFunctionName                string  `env:"RANKING_FUNCTION_NAME" envDefault:"pca"`

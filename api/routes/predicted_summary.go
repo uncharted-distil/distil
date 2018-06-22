@@ -1,7 +1,6 @@
 package routes
 
 import (
-	"math"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -12,13 +11,13 @@ import (
 	"github.com/unchartedsoftware/distil/api/model"
 )
 
-// ResultsSummary contains a fetch result histogram.
-type ResultsSummary struct {
-	ResultsSummary *model.Histogram `json:"histogram"`
+// PredictedSummary contains a fetch result histogram.
+type PredictedSummary struct {
+	PredictedSummary *model.Histogram `json:"histogram"`
 }
 
-// ResultsSummaryHandler bins predicted result data for consumption in a downstream summary view.
-func ResultsSummaryHandler(solutionCtor model.SolutionStorageCtor, dataCtor model.DataStorageCtor) func(http.ResponseWriter, *http.Request) {
+// PredictedSummaryHandler bins predicted result data for consumption in a downstream summary view.
+func PredictedSummaryHandler(solutionCtor model.SolutionStorageCtor, dataCtor model.DataStorageCtor) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// extract route parameters
 		dataset := pat.Param(r, "dataset")
@@ -30,21 +29,22 @@ func ResultsSummaryHandler(solutionCtor model.SolutionStorageCtor, dataCtor mode
 		}
 
 		minStr := pat.Param(r, "min")
-		extremaMin := -math.MaxFloat64
-		if minStr != "" && minStr != "null" {
-			extremaMin, err = strconv.ParseFloat(minStr, 64)
+		maxStr := pat.Param(r, "max")
+		var extrema *model.Extrema
+		if minStr != "null" && maxStr != "null" {
+			extremaMin, err := strconv.ParseFloat(minStr, 64)
 			if err != nil {
 				handleError(w, errors.Wrap(err, "unable to parse extrema min"))
 				return
 			}
-		}
-
-		maxStr := pat.Param(r, "max")
-		extremaMax := math.MaxFloat64
-		if maxStr != "" && maxStr != "null" {
-			extremaMax, err = strconv.ParseFloat(maxStr, 64)
+			extremaMax, err := strconv.ParseFloat(maxStr, 64)
 			if err != nil {
 				handleError(w, errors.Wrap(err, "unable to parse extrema max"))
+				return
+			}
+			extrema, err = model.NewExtrema(extremaMin, extremaMax)
+			if err != nil {
+				handleError(w, err)
 				return
 			}
 		}
@@ -82,12 +82,6 @@ func ResultsSummaryHandler(solutionCtor model.SolutionStorageCtor, dataCtor mode
 			return
 		}
 
-		extrema, err := model.NewExtrema(extremaMin, extremaMax)
-		if err != nil {
-			handleError(w, err)
-			return
-		}
-
 		// fetch summary histogram
 		histogram, err := data.FetchResultsSummary(dataset, res.ResultURI, filterParams, extrema)
 		if err != nil {
@@ -96,8 +90,8 @@ func ResultsSummaryHandler(solutionCtor model.SolutionStorageCtor, dataCtor mode
 		}
 
 		// marshall data and sent the response back
-		err = handleJSON(w, ResultsSummary{
-			ResultsSummary: histogram,
+		err = handleJSON(w, PredictedSummary{
+			PredictedSummary: histogram,
 		})
 		if err != nil {
 			handleError(w, errors.Wrap(err, "unable marshal result histogram into JSON"))

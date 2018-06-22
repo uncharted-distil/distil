@@ -31,4 +31,5 @@ type Histogram struct {
 	NumRows int       `json:"numRows"`
 	Extrema *Extrema  `json:"extrema,omitempty"`
 	Buckets []*Bucket `json:"buckets"`
+	Files   []string  `json:"files"`
 }

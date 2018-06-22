@@ -30,6 +30,7 @@ export interface CategoricalFacet {
 	countLabel: string;
 	filterable: boolean;
 	segments: Segment[];
+	file: string;
 }
 
 export interface Slice {
@@ -172,7 +173,7 @@ export function getCategoricalChunkSize(type: string):number {
 // creates a categorical facet
 function createCategoricalSummaryFacet(summary: VariableSummary): Group {
 	let total = 0;
-	const facets =  summary.buckets.map(b => {
+	const facets =  summary.buckets.map((b, index) => {
 		const segments = [];
 		const selected = {
 			count: b.count
@@ -188,7 +189,8 @@ function createCategoricalSummaryFacet(summary: VariableSummary): Group {
 			count: b.count,
 			selected: selected,
 			segments: segments,
-			filterable: false
+			filterable: false,
+			file: summary.files ? summary.files[index] : null
 		};
 		total += b.count;
 		return facet;

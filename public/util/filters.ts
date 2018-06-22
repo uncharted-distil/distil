@@ -24,6 +24,12 @@ export const NUMERICAL_FILTER = 'numerical';
 export const ROW_FILTER = 'row';
 
 /**
+ * Feature filter, omitting documents that have the specified feature value;
+ * @constant {string}
+ */
+export const FEATURE_FILTER = 'feature';
+
+/**
  * Include filter, excluding documents that do not fall within the filter.
  * @constant {string}
  */
@@ -162,6 +168,15 @@ function removeFilter(filters: string, filter: Filter): string {
 	}
 	// encode the filters back into a url string
 	return encodeFilters(decoded);
+}
+
+export function hasFilterInRoute(component: Vue, variable: string): boolean {
+	// retrieve the filters from the route
+	const filters = routeGetters.getRouteFilters(component.$store);
+	const decoded = decodeFilters(filters);
+	return decoded.filter(filter => {
+		return filter.name && filter.name === variable;
+	}).length > 0;
 }
 
 export function addFilterToRoute(component: Vue, filter: Filter) {

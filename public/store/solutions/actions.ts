@@ -18,6 +18,7 @@ interface CreateSolutionRequest {
 	target: string;
 	task: string;
 	maxSolutions: number;
+	maxTime: number; 
 	metrics: string[];
 	filters: FilterParams;
 }
@@ -270,6 +271,7 @@ export const actions = {
 				task: request.task,
 				metrics: request.metrics,
 				maxSolutions: request.maxSolutions,
+				maxTime: request.maxTime,
 				filters: request.filters
 			});
 		});

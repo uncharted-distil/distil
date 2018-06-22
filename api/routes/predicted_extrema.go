@@ -10,8 +10,8 @@ import (
 	"github.com/unchartedsoftware/distil/api/model"
 )
 
-// ResultsExtremaHandler returns the extremas for a results summary.
-func ResultsExtremaHandler(solutionCtor model.SolutionStorageCtor, dataCtor model.DataStorageCtor) func(http.ResponseWriter, *http.Request) {
+// PredictedExtremaHandler returns the extremas for a results summary.
+func PredictedExtremaHandler(solutionCtor model.SolutionStorageCtor, dataCtor model.DataStorageCtor) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// extract route parameters
 		dataset := pat.Param(r, "dataset")

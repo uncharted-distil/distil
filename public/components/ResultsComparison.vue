@@ -159,7 +159,6 @@ export default Vue.extend({
 }
 .two-tables .results-data-table {
 	max-height: 50%;
-	min-height: 50%;
 }
 .one-table .results-data-table {
 	height: 100%;

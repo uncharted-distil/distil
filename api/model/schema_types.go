@@ -72,6 +72,35 @@ const (
 	TA2CategoricalType = "https://metadata.datadrivendiscovery.org/types/CategoricalData"
 	// TA2OrdinalType is the TA2 semantic type for ordinal (ordered categorical) data
 	TA2OrdinalType = "https://metadata.datadrivendiscovery.org/types/OrdinalData"
+	// TA2ImageType is the TA2 semantic type for image data
+	TA2ImageType = "http://schema.org/ImageObject"
+	// TA2TimeSeriesType is the TA2 semantic type for timeseries data
+	TA2TimeSeriesType = "https://metadata.datadrivendiscovery.org/types/Timeseries"
+
+	// TA2 Schema keys
+
+	// BooleanSchemaType is the schema doc type for boolean data
+	BooleanSchemaType = "boolean"
+	// IntegerSchemaType is the schema doc type for integer data
+	IntegerSchemaType = "integer"
+	// RealSchemaType is the schema doc type for real data
+	RealSchemaType = "real"
+	// StringSchemaType is the schema doc type for string/text data
+	StringSchemaType = "string"
+	// CategoricalSchemaType is the schema doc type for categorical data
+	CategoricalSchemaType = "categorical"
+	// DatetimeSchemaType is the schema doc type for datetime data
+	DatetimeSchemaType = "dateTime"
+	// RealVectorSchemaType is the schema doc type for a vector of real data
+	RealVectorSchemaType = "realVector"
+	// JSONSchemaType is the schema doc type for json data
+	JSONSchemaType = "json"
+	// GeoJSONSchemaType is the schema doc type for geo json data
+	GeoJSONSchemaType = "geojson"
+	// ImageSchemaType is the schema doc type for image data
+	ImageSchemaType = "image"
+	// TimeSeriesSchemaType is the schema doc type for image data
+	TimeSeriesSchemaType = "timeseries"
 
 	// TA2 Role keys
 
@@ -93,7 +122,6 @@ var (
 		StateType:       true,
 		URIType:         true,
 		UnknownType:     true,
-		ImageType:       true,
 		TimeSeriesType:  true}
 	numericalTypes = map[string]bool{
 		LongitudeType: true,
@@ -127,6 +155,32 @@ var (
 		PostalCodeType:  TA2StringType,
 		StateType:       TA2StringType,
 		URIType:         TA2StringType,
+		ImageType:       TA2ImageType,
+		TimeSeriesType:  TA2TimeSeriesType,
+	}
+	schemaTypeMap = map[string]string{
+		AddressType:     StringSchemaType,
+		IndexType:       IntegerSchemaType,
+		IntegerType:     IntegerSchemaType,
+		FloatType:       RealSchemaType,
+		RealType:        RealSchemaType,
+		BoolType:        BooleanSchemaType,
+		DateTimeType:    DatetimeSchemaType,
+		OrdinalType:     CategoricalSchemaType,
+		CategoricalType: CategoricalSchemaType,
+		NumericalType:   RealSchemaType,
+		TextType:        StringSchemaType,
+		CityType:        StringSchemaType,
+		CountryType:     StringSchemaType,
+		EmailType:       StringSchemaType,
+		LatitudeType:    RealSchemaType,
+		LongitudeType:   RealSchemaType,
+		PhoneType:       StringSchemaType,
+		PostalCodeType:  StringSchemaType,
+		StateType:       StringSchemaType,
+		URIType:         StringSchemaType,
+		ImageType:       ImageSchemaType,
+		TimeSeriesType:  TimeSeriesSchemaType,
 	}
 )
 
@@ -154,7 +208,29 @@ func IsText(typ string) bool {
 	return typ == TextType
 }
 
+// IsImage indicates whether or not a schema type is an image for the purposes
+// of analysis.
+func IsImage(typ string) bool {
+	return typ == ImageType
+}
+
+// IsTimeSeries indicates whether or not a schema type is an timeseries for the purposes
+// of analysis.
+func IsTimeSeries(typ string) bool {
+	return typ == TimeSeriesType
+}
+
+// HasMetadataVar indicates whether or not a schema type has a corresponding metadata var.
+func HasMetadataVar(typ string) bool {
+	return IsImage(typ) || IsTimeSeries(typ)
+}
+
 // MapTA2Type maps a type to a simple type.
 func MapTA2Type(typ string) string {
 	return ta2TypeMap[typ]
+}
+
+// MapSchemaType maps a type to a dataset doc type.
+func MapSchemaType(typ string) string {
+	return schemaTypeMap[typ]
 }

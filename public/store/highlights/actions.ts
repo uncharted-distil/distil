@@ -26,7 +26,7 @@ export const actions = {
 			return null;
 		}
 
-		const filterParams = addHighlightToFilterParams(args.filterParams, args.highlightRoot, INCLUDE_FILTER);
+		const filterParams = addHighlightToFilterParams(context, args.filterParams, args.highlightRoot, INCLUDE_FILTER);
 
 		// fetch the data using the supplied filtered
 		return axios.post(`distil/data/${ES_INDEX}/${args.dataset}/false`, filterParams)
@@ -49,7 +49,7 @@ export const actions = {
 			return null;
 		}
 
-		const filterParams = addHighlightToFilterParams(args.filterParams, args.highlightRoot, INCLUDE_FILTER);
+		const filterParams = addHighlightToFilterParams(context, args.filterParams, args.highlightRoot, INCLUDE_FILTER);
 
 		// commit empty place holders, if there is no data
 		return Promise.all(args.variables.map(variable => {
@@ -100,7 +100,7 @@ export const actions = {
 			variables: [],
 			filters: []
 		}
-		filterParams = addHighlightToFilterParams(filterParams, args.highlightRoot, INCLUDE_FILTER, getVarFromTarget);
+		filterParams = addHighlightToFilterParams(context, filterParams, args.highlightRoot, INCLUDE_FILTER, getVarFromTarget);
 
 		// commit empty place holders, if there is no data
 		return Promise.all(args.variables.map(variable => {
@@ -131,10 +131,10 @@ export const actions = {
 			variables: [],
 			filters: []
 		}
-		filterParams = addHighlightToFilterParams(filterParams, args.highlightRoot, INCLUDE_FILTER, getVarFromTarget);
+		filterParams = addHighlightToFilterParams(context, filterParams, args.highlightRoot, INCLUDE_FILTER, getVarFromTarget);
 
 		const solutions = getSolutionsByRequestIds(context.rootState.solutionModule, args.requestIds);
-		const endPoint = `/distil/results-summary/${ES_INDEX}/${args.dataset}/${args.extrema.min}/${args.extrema.max}`
+		const endPoint = `/distil/predicted-summary/${ES_INDEX}/${args.dataset}/${args.extrema.min}/${args.extrema.max}`
 		const nameFunc = (p: Solution) => getPredictedCol(p.feature);
 		const labelFunc = (p: Solution) => '';
 		getSummaries(context, endPoint, solutions, nameFunc, labelFunc, mutations.updatePredictedHighlightSummaries, filterParams);
@@ -150,10 +150,10 @@ export const actions = {
 			variables: [],
 			filters: []
 		}
-		filterParams = addHighlightToFilterParams(filterParams, args.highlightRoot, INCLUDE_FILTER, getVarFromTarget);
+		filterParams = addHighlightToFilterParams(context, filterParams, args.highlightRoot, INCLUDE_FILTER, getVarFromTarget);
 
 		const solutions = getSolutionsByRequestIds(context.rootState.solutionModule, args.requestIds);
-		const endPoint = `/distil/results-summary/${ES_INDEX}/${args.dataset}/${args.extrema.min}/${args.extrema.max}`
+		const endPoint = `/distil/predicted-summary/${ES_INDEX}/${args.dataset}/${args.extrema.min}/${args.extrema.max}`
 		const nameFunc = (p: Solution) => getCorrectnessCol(p.feature);
 		const labelFunc = (p: Solution) => '';
 		getSummaries(context, endPoint, solutions, nameFunc, labelFunc, updateCorrectnessHighlightSummary, filterParams);
@@ -179,7 +179,7 @@ export const actions = {
 			variables: [],
 			filters: []
 		}
-		filterParams = addHighlightToFilterParams(filterParams, args.highlightRoot, INCLUDE_FILTER, getVarFromTarget);
+		filterParams = addHighlightToFilterParams(context, filterParams, args.highlightRoot, INCLUDE_FILTER, getVarFromTarget);
 
 		// fetch the data using the supplied filtered
 		return context.dispatch('fetchResultTableData', {

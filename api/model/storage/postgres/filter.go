@@ -67,7 +67,8 @@ func (s *Storage) buildIncludeFilter(wheres []string, params []interface{}, filt
 	switch filter.Type {
 	case model.NumericalFilter:
 		// numerical
-		where := fmt.Sprintf("%s >= $%d AND %s <= $%d", name, len(params)+1, name, len(params)+2)
+		// cast to double precision in case of string based representation
+		where := fmt.Sprintf("cast(%s as double precision) >= $%d AND cast(%s as double precision) <= $%d", name, len(params)+1, name, len(params)+2)
 		wheres = append(wheres, where)
 		params = append(params, *filter.Min)
 		params = append(params, *filter.Max)
@@ -91,6 +92,14 @@ func (s *Storage) buildIncludeFilter(wheres []string, params []interface{}, filt
 		}
 		where := fmt.Sprintf("\"%s\" IN (%s)", model.D3MIndexFieldName, strings.Join(indices, ", "))
 		wheres = append(wheres, where)
+	case model.FeatureFilter:
+		// feature
+		offset := len(params) + 1
+		for i, category := range filter.Categories {
+			where := fmt.Sprintf("%s ~ (%s)", name, fmt.Sprintf("$%d", offset+i))
+			params = append(params, category)
+			wheres = append(wheres, where)
+		}
 	}
 	return wheres, params
 }
@@ -150,10 +159,17 @@ func (s *Storage) buildFilteredQueryWhere(dataset string, filters []*model.Filte
 
 func (s *Storage) buildFilteredQueryField(dataset string, variables []*model.Variable, filterVariables []string) (string, error) {
 	fields := make([]string, 0)
+	indexIncluded := false
 	for _, variable := range model.GetFilterVariables(filterVariables, variables) {
 		fields = append(fields, fmt.Sprintf("\"%s\"", variable.Name))
+		if variable.Name == model.D3MIndexFieldName {
+			indexIncluded = true
+		}
 	}
-	fields = append(fields, fmt.Sprintf("\"%s\"", model.D3MIndexFieldName))
+	// if the index is not already in the field list, then append it
+	if !indexIncluded {
+		fields = append(fields, fmt.Sprintf("\"%s\"", model.D3MIndexFieldName))
+	}
 	return strings.Join(fields, ","), nil
 }
 
@@ -267,7 +283,7 @@ func (s *Storage) filterIncludesIndex(filterParams *model.FilterParams) bool {
 // results to a user selected set of fields, with rows further filtered based on allowed ranges and
 // categories.
 func (s *Storage) FetchData(dataset string, filterParams *model.FilterParams, invert bool) (*model.FilteredData, error) {
-	variables, err := s.metadata.FetchVariables(dataset, true)
+	variables, err := s.metadata.FetchVariables(dataset, true, true)
 	if err != nil {
 		return nil, errors.Wrap(err, "Could not pull variables from ES")
 	}

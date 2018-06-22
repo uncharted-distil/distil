@@ -18,7 +18,7 @@ const (
 	datasetsListSize = 1000
 )
 
-func (s *Storage) parseDatasets(res *elastic.SearchResult, includeIndex bool) ([]*model.Dataset, error) {
+func (s *Storage) parseDatasets(res *elastic.SearchResult, includeIndex bool, includeMeta bool) ([]*model.Dataset, error) {
 	var datasets []*model.Dataset
 	for _, hit := range res.Hits.Hits {
 		// parse hit into JSON
@@ -54,7 +54,7 @@ func (s *Storage) parseDatasets(res *elastic.SearchResult, includeIndex bool) ([
 			summary = ""
 		}
 		// extract the variables list
-		variables, err := s.parseVariables(hit, includeIndex)
+		variables, err := s.parseVariables(hit, includeIndex, includeMeta)
 		if err != nil {
 			return nil, errors.Wrap(err, "failed to parse dataset")
 		}
@@ -73,7 +73,7 @@ func (s *Storage) parseDatasets(res *elastic.SearchResult, includeIndex bool) ([
 }
 
 // FetchDatasets returns all datasets in the provided index.
-func (s *Storage) FetchDatasets(includeIndex bool) ([]*model.Dataset, error) {
+func (s *Storage) FetchDatasets(includeIndex bool, includeMeta bool) ([]*model.Dataset, error) {
 	// execute the ES query
 	res, err := s.client.Search().
 		Index(s.index).
@@ -83,12 +83,12 @@ func (s *Storage) FetchDatasets(includeIndex bool) ([]*model.Dataset, error) {
 	if err != nil {
 		return nil, errors.Wrap(err, "elasticsearch dataset fetch query failed")
 	}
-	return s.parseDatasets(res, includeIndex)
+	return s.parseDatasets(res, includeIndex, includeMeta)
 }
 
 // SearchDatasets returns the datasets that match the search criteria in the
 // provided index.
-func (s *Storage) SearchDatasets(terms string, includeIndex bool) ([]*model.Dataset, error) {
+func (s *Storage) SearchDatasets(terms string, includeIndex bool, includeMeta bool) ([]*model.Dataset, error) {
 	query := elastic.NewMultiMatchQuery(terms, "_id", "description", "variables.colName", "summaryMachine").
 		Analyzer("standard")
 	// execute the ES query
@@ -101,7 +101,7 @@ func (s *Storage) SearchDatasets(terms string, includeIndex bool) ([]*model.Data
 	if err != nil {
 		return nil, errors.Wrap(err, "elasticsearch dataset search query failed")
 	}
-	return s.parseDatasets(res, includeIndex)
+	return s.parseDatasets(res, includeIndex, includeMeta)
 }
 
 func (s *Storage) updateVariables(dataset string, variables []*model.Variable) error {
@@ -143,7 +143,7 @@ func (s *Storage) updateVariables(dataset string, variables []*model.Variable) e
 // SetDataType updates the data type of the field in ES.
 func (s *Storage) SetDataType(dataset string, varName string, varType string) error {
 	// Fetch all existing variables
-	vars, err := s.FetchVariables(dataset, true)
+	vars, err := s.FetchVariables(dataset, true, true)
 	if err != nil {
 		return errors.Wrapf(err, "failed to fetch existing variable")
 	}
@@ -161,7 +161,7 @@ func (s *Storage) SetDataType(dataset string, varName string, varType string) er
 // AddVariable adds a new variable to the dataset.
 func (s *Storage) AddVariable(dataset string, varName string, varType string, varRole string) error {
 	// query for existing variables
-	vars, err := s.FetchVariables(dataset, true)
+	vars, err := s.FetchVariables(dataset, true, true)
 	if err != nil {
 		return errors.Wrapf(err, "failed to fetch existing variable")
 	}
@@ -183,7 +183,7 @@ func (s *Storage) AddVariable(dataset string, varName string, varType string, va
 // DeleteVariable flags a variable as deleted.
 func (s *Storage) DeleteVariable(dataset string, varName string) error {
 	// query for existing variables
-	vars, err := s.FetchVariables(dataset, true)
+	vars, err := s.FetchVariables(dataset, true, true)
 	if err != nil {
 		return errors.Wrapf(err, "failed to fetch existing variable")
 	}

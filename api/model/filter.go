@@ -1,6 +1,7 @@
 package model
 
 import (
+	"fmt"
 	"sort"
 
 	"github.com/pkg/errors"
@@ -17,6 +18,8 @@ const (
 	CategoricalFilter = "categorical"
 	// NumericalFilter represents a numerical filter type.
 	NumericalFilter = "numerical"
+	// FeatureFilter represents a categorical filter type.
+	FeatureFilter = "feature"
 	// RowFilter represents a numerical filter type.
 	RowFilter = "row"
 	// IncludeFilter represents an inclusive filter mode.
@@ -130,6 +133,17 @@ func NewCategoricalFilter(name string, mode string, categories []string) *Filter
 	}
 }
 
+// NewFeatureFilter instantiates a feature filter.
+func NewFeatureFilter(name string, mode string, categories []string) *Filter {
+	sort.Strings(categories)
+	return &Filter{
+		Name:       name,
+		Type:       FeatureFilter,
+		Mode:       mode,
+		Categories: categories,
+	}
+}
+
 // NewRowFilter instantiates a row filter.
 func NewRowFilter(mode string, d3mIndices []string) *Filter {
 	return &Filter{
@@ -149,6 +163,14 @@ func GetFilterVariables(filterVariables []string, variables []*Variable) []*Vari
 	filtered := make([]*Variable, 0)
 	for _, variable := range filterVariables {
 		filtered = append(filtered, variableLookup[variable])
+		// check for metadata var type
+		if HasMetadataVar(variableLookup[variable].Type) {
+			metadataVarName := fmt.Sprintf("%s%s", MetadataVarPrefix, variable)
+			metadataVar, ok := variableLookup[metadataVarName]
+			if ok {
+				filtered = append(filtered, metadataVar)
+			}
+		}
 	}
 
 	return filtered
@@ -204,6 +226,19 @@ func ParseFilterParamsFromJSON(params map[string]interface{}) (*FilterParams, er
 					return nil, errors.Errorf("no `categories` provided for filter")
 				}
 				filterParams.Filters = append(filterParams.Filters, NewCategoricalFilter(name, mode, categories))
+			}
+
+			// feature
+			if typ == FeatureFilter {
+				name, ok := json.String(filter, "name")
+				if !ok {
+					return nil, errors.Errorf("no `name` provided for filter")
+				}
+				categories, ok := json.StringArray(filter, "categories")
+				if !ok {
+					return nil, errors.Errorf("no `categories` provided for filter")
+				}
+				filterParams.Filters = append(filterParams.Filters, NewFeatureFilter(name, mode, categories))
 			}
 
 			// row

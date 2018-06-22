@@ -1,10 +1,10 @@
 <template>
 	<div class="filter-badge" v-bind:class="{ active: activeFilter }">
-		{{filter.name}}
+		{{filterName}}
 		<span v-if="filter.type==='numerical'">
 			{{filter.min}} : {{filter.max}}
 		</span>
-		<span v-if="filter.type==='categorical'">
+		<span v-if="filter.type==='categorical' || filter.type==='feature'">
 			{{filter.categories.join(',')}}
 		</span>
 
@@ -19,6 +19,7 @@
 import Vue from 'vue';
 import { removeFilterFromRoute } from '../util/filters';
 import { clearHighlightRoot } from '../util/highlights';
+import { removeMetaPrefix } from '../util/types';
 
 export default Vue.extend({
 	name: 'filter-badge',
@@ -26,6 +27,12 @@ export default Vue.extend({
 	props: {
 		filter: Object,
 		activeFilter: Boolean
+	},
+
+	computed: {
+		filterName(): string {
+			return removeMetaPrefix(this.filter.name);
+		}
 	},
 
 	methods: {
