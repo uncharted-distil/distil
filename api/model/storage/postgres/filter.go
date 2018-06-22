@@ -67,7 +67,8 @@ func (s *Storage) buildIncludeFilter(wheres []string, params []interface{}, filt
 	switch filter.Type {
 	case model.NumericalFilter:
 		// numerical
-		where := fmt.Sprintf("%s >= $%d AND %s <= $%d", name, len(params)+1, name, len(params)+2)
+		// cast to double precision in case of string based representation
+		where := fmt.Sprintf("cast(%s as double precision) >= $%d AND cast(%s as double precision) <= $%d", name, len(params)+1, name, len(params)+2)
 		wheres = append(wheres, where)
 		params = append(params, *filter.Min)
 		params = append(params, *filter.Max)

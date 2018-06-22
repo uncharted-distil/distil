@@ -1,4 +1,4 @@
-package compute
+package result
 
 import (
 	"fmt"
@@ -19,4 +19,5 @@ func TestCSVResultParser(t *testing.T) {
 	assert.Equal(t, []interface{}{"1", []interface{}{"charlie", "delta's oscar"}, "hotel"}, result[2])
 	assert.Equal(t, []interface{}{"2", []interface{}{"a", "[", "b"}, []interface{}{"c", "\"", "e"}}, result[3])
 	assert.Equal(t, []interface{}{"3", []interface{}{"a", "['\"", "b"}, []interface{}{"c", "\"", "e"}}, result[4])
+	assert.Equal(t, []interface{}{"4", []interface{}{"-10.001", "20.1"}, []interface{}{"30", "40"}}, result[5])
 }

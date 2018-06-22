@@ -98,7 +98,7 @@ func main() {
 		if err == nil {
 			log.Infof("Service '%s' is up", name)
 		} else {
-			log.Error(err)
+			log.Errorf("%+v", err)
 			os.Exit(1)
 		}
 	}
@@ -116,13 +116,22 @@ func main() {
 	solutionClient, err := compute.NewClient(config.SolutionComputeEndpoint, config.SolutionDataDir, config.SolutionComputeTrace,
 		userAgent, time.Duration(config.SolutionComputePullTimeout)*time.Second, config.SolutionComputePullMax)
 	if err != nil {
-		log.Errorf("%v", err)
+		log.Errorf("%+v", err)
 		os.Exit(1)
 	}
 	defer solutionClient.Close()
 
 	// instantiate the REST client for primitives.
 	restClient := rest.NewClient(config.PrimitiveEndPoint)
+
+	// set the ingest functions to use
+	if config.IngestPrimitive {
+		task.SetClassify(task.ClassifyPrimitive)
+		task.SetRank(task.RankPrimmitive)
+		task.SetSummarize(task.SummarizePrimitive)
+		//task.SetFeaturize(task.FeaturizePrimitive)
+		task.SetClient(solutionClient)
+	}
 
 	// build the ingest configuration.
 	ingestConfig := &task.IngestTaskConfig{
@@ -143,6 +152,7 @@ func main() {
 		ClassificationFunctionName:         config.ClassificationFunctionName,
 		ClassificationOutputPathRelative:   config.ClassificationOutputPath,
 		ClassificationProbabilityThreshold: config.ClassificationProbabilityThreshold,
+		ClassificationEnabled:              config.ClassificationEnabled,
 		RankingRESTEndpoint:                config.RankingEndpoint,
 		RankingFunctionName:                config.RankingFunctionName,
 		RankingOutputPathRelative:          config.RankingOutputPath,
@@ -166,7 +176,7 @@ func main() {
 		log.Infof("Loading initial dataset '%s'", config.InitialDataset)
 		err = task.IngestDataset(metadataStorageCtor, config.ESDatasetsIndex, config.InitialDataset, ingestConfig)
 		if err != nil {
-			log.Error(err)
+			log.Errorf("%+v", err)
 			os.Exit(1)
 		}
 	}
@@ -182,7 +192,7 @@ func main() {
 	registerRoute(mux, "/distil/solutions/:dataset/:target/:solution-id", routes.SolutionHandler(pgSolutionStorageCtor))
 	registerRoute(mux, "/distil/variables/:index/:dataset", routes.VariablesHandler(metadataStorageCtor))
 	registerRoute(mux, "/distil/results-variable-extrema/:index/:dataset/:variable/:results-uuid", routes.ResultVariableExtremaHandler(pgSolutionStorageCtor, pgDataStorageCtor))
-	registerRoute(mux, "/distil/results-extrema/:index/:dataset/:results-uuid", routes.ResultsExtremaHandler(pgSolutionStorageCtor, pgDataStorageCtor))
+	registerRoute(mux, "/distil/predicted-extrema/:index/:dataset/:results-uuid", routes.PredictedExtremaHandler(pgSolutionStorageCtor, pgDataStorageCtor))
 	registerRoute(mux, "/distil/residuals-extrema/:index/:dataset/:results-uuid", routes.ResidualsExtremaHandler(pgSolutionStorageCtor, pgDataStorageCtor))
 	registerRoute(mux, "/distil/ranking/:index/:dataset/:target", routes.RankingHandler(pgDataStorageCtor, restClient, config.SolutionDataDir))
 	registerRoute(mux, "/distil/abort", routes.AbortHandler())
@@ -199,7 +209,7 @@ func main() {
 	registerRoutePost(mux, "/distil/variable-summary/:index/:dataset/:variable", routes.VariableSummaryHandler(pgDataStorageCtor))
 	registerRoutePost(mux, "/distil/results-variable-summary/:index/:dataset/:variable/:min/:max/:results-uuid", routes.ResultVariableSummaryHandler(pgSolutionStorageCtor, pgDataStorageCtor))
 	registerRoutePost(mux, "/distil/residuals-summary/:index/:dataset/:min/:max/:results-uuid", routes.ResidualsSummaryHandler(pgSolutionStorageCtor, pgDataStorageCtor))
-	registerRoutePost(mux, "/distil/results-summary/:index/:dataset/:min/:max/:results-uuid", routes.ResultsSummaryHandler(pgSolutionStorageCtor, pgDataStorageCtor))
+	registerRoutePost(mux, "/distil/predicted-summary/:index/:dataset/:min/:max/:results-uuid", routes.PredictedSummaryHandler(pgSolutionStorageCtor, pgDataStorageCtor))
 
 	// static
 	registerRoute(mux, "/distil/image/:dataset/:folder/:file", routes.ResourceHandler(config.RootResourceDirectory, config.ResourceProxy))
@@ -212,7 +222,7 @@ func main() {
 	log.Infof("Listening on port %s", config.AppPort)
 	err = graceful.ListenAndServe(":"+config.AppPort, mux)
 	if err != nil {
-		log.Error(err)
+		log.Errorf("%+v", err)
 		os.Exit(1)
 	}
 

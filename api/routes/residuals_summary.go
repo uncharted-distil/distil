@@ -85,8 +85,8 @@ func ResidualsSummaryHandler(solutionCtor model.SolutionStorageCtor, dataCtor mo
 		}
 
 		// marshall data and sent the response back
-		err = handleJSON(w, ResultsSummary{
-			ResultsSummary: histogram,
+		err = handleJSON(w, PredictedSummary{
+			PredictedSummary: histogram,
 		})
 		if err != nil {
 			handleError(w, errors.Wrap(err, "unable marshal result histogram into JSON"))
