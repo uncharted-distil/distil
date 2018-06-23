@@ -14,8 +14,8 @@ qntfy_ta2:
   image: registry.datadrivendiscovery.org/uncharted_qntfy/ta3ta2_integration/qntfy_main:latest
   environment:
     - DEBUG=true
-    - OUTPUT_DIR=/output
+    - OUTPUT_DIR=$PWD/datasets
   volumes:
-    - $PWD/datasets:/output
+    - $PWD/datasets:$PWD/datasets
   ports:
     - "45042:45042"
