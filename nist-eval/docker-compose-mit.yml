@@ -17,8 +17,8 @@ mitfl:
     - "45042:50051"
   environment:
     - D3MTIMEOUT=60
-    - D3MINPUTDIR=/input
-    - D3MOUTPUTDIR=/output
+    - D3MINPUTDIR=$PWD/datasets
+    - D3MOUTPUTDIR=$PWD/datasets
     - D3MRUN=ta2ta3
   volumes:
-    - $PWD/datasets:/output
+    - $PWD/datasets:$PWD/datasets
