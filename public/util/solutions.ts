@@ -138,18 +138,18 @@ const regressionMetrics: Dictionary<NameInfo> = {
 	// 	displayName: 'Root Mean Squared Error',
 	// 	schemaName: 'root_mean_squared_error'
 	// },
-	// meanSquaredError: {
-	// 	displayName: 'Mean Squared Error',
-	// 	schemaName: 'mean_squared_error'
-	// },
+	meanSquaredError: {
+		displayName: 'Mean Squared Error',
+		schemaName: 'mean_squared_error'
+	}
 	// meanAbsoluteErr: {
 	// 	displayName: 'Mean Absolute Error',
 	// 	schemaName: 'mean_absolute_error'
 	// },
-	rSquared: {
-		displayName: 'R Squared',
-		schemaName: 'r_squared'
-	}
+	// rSquared: {
+	// 	displayName: 'R Squared',
+	// 	schemaName: 'r_squared'
+	// }
 };
 
 const metrics = [classificationMetrics, regressionMetrics];

@@ -323,7 +323,13 @@ func (s *SolutionRequest) dispatchSolution(statusChan chan SolutionStatus, clien
 	// persist the scores
 	for _, response := range solutionScoreResponses {
 		for _, score := range response.Scores {
-			err := solutionStorage.PersistSolutionScore(solutionID, score.Metric.Metric.String(), score.Value.GetDouble())
+			metric := ""
+			if score.GetMetric() == nil {
+				metric = convertMetricsFromTA3ToTA2(s.Metrics)[0].GetMetric().String()
+			} else {
+				metric = score.Metric.Metric.String()
+			}
+			err := solutionStorage.PersistSolutionScore(solutionID, metric, score.Value.GetDouble())
 			if err != nil {
 				s.persistSolutionError(statusChan, solutionStorage, searchID, solutionID, err)
 				return
