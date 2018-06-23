@@ -13,8 +13,8 @@
 <!--<link rel="stylesheet" type="text/css" href="css/bootstrap.min.css">-->
 <link rel="stylesheet" href="css/modern-business.css">
 <link rel="stylesheet" href="css/lavish-bootstrap.css">
-<link rel="stylesheet" href="css/customstyles.css?1517864259540471000">
-<link rel="stylesheet" href="css/theme-black.css?1517864259540471000">
+<link rel="stylesheet" href="css/customstyles.css?1529688526703516000">
+<link rel="stylesheet" href="css/theme-black.css?1529688526703516000">
 
 <script src="js/lib/jquery.min.js"></script>
 <script src="js/lib/jquery.cookie.min.js"></script>
@@ -27,9 +27,6 @@
 <script src="js/customscripts.js"></script>
 
 <link rel="shortcut icon" href="images/favicon.ico">
-
-<link rel="alternate" type="application/rss+xml" title="" href="feed.xml">
-
     <script>
         $(document).ready(function() {
             // Initialize navgoco with default options
@@ -100,27 +97,6 @@
                 <!-- entries with drop-downs appear here -->
                 <!-- conditional logic to control which topnav appears for the audience defined in the configuration file.-->
                 
-                <!--comment out this block if you want to hide search
-                <li>
-                    <!--start search
-                    <div id="search-demo-container">
-                        <input type="text" id="search-input" placeholder="search...">
-                        <ul id="results-container"></ul>
-                    </div>
-                    <script src="js/jekyll-search.js" type="text/javascript"></script>
-                    <script type="text/javascript">
-                            SimpleJekyllSearch.init({
-                                searchInput: document.getElementById('search-input'),
-                                resultsContainer: document.getElementById('results-container'),
-                                dataSource: 'search.json',
-                                searchResultTemplate: '<li><a href="{url}" title="Step 1 - Select Data">{title}</a></li>',
-                    noResultsText: 'No results found.',
-                            limit: 10,
-                            fuzzy: true,
-                    })
-                    </script>
-                    <!--end search
-                </li>-->
             </ul>
         </div>
         </div>
@@ -136,10 +112,6 @@
         <div class="col-md-3">
 
           
-
-
-
-
 
 <ul id="mysidebar" class="nav">
     <li class="sidebarTitle">Getting Started </li>
@@ -183,7 +155,7 @@
             
             
             
-            <li class="active"><a href="search.html">1. Select Data</a></li>
+            <li class="active"><a href="select-data.html">1. Select Data</a></li>
             
             
             
@@ -204,7 +176,7 @@
             
             
             
-            <li><a href="results.html">4. View Models</a></li>
+            <li><a href="view-models.html">4. View Models</a></li>
             
             
             
@@ -262,36 +234,38 @@ $('#toc').on('click', 'a', function() {
 
     
 
-  <p>To begin, you must first find a dataset that is relevant to your problem. You can search for datasets from the Distil Home page or the Select Data view.</p>
+  <p>To begin, you need to find a dataset relevant to your problem. You can search for datasets from the Distil <a href="home.html">Home page</a> or the Select Data view.</p>
 
-<h2 id="select-data-view-summary">Select Data View Summary</h2>
+<h2 id="overview">Overview</h2>
 
-<p>The following diagram shows the features of the Select Data view. You can search for datasets using keywords (e.g. <em>vehicle acceleration</em>) or by expressing your intent in natural language (e.g. <em>Predict vehicle acceleration</em>).</p>
+<p>In the Select Data view, you can search for datasets using keywords (e.g. <em>vehicle acceleration</em>) or by expressing your intent in natural language (e.g. <em>Predict vehicle acceleration</em>).</p>
 
-<figure id="#search-view-close"><a href="#search-view"><img class="diagram" src="images/diagrams/search.png?1517864259540471000" alt="Search" /><figcaption>Click to enlarge</figcaption></a></figure>
-<div class="lightbox-target" id="search-view"><img src="images/diagrams/search.png?1517864259540471000" /><a class="lightbox-close" href="#search-view-close"></a></div>
+<figure id="#select-data-view-close"><a href="#select-data-view"><img class="diagram" src="images/diagrams/select-data.png?1529688526703516000" alt="Select data" /><figcaption>Click to enlarge</figcaption></a></figure>
+<div class="lightbox-target" id="select-data-view"><img src="images/diagrams/select-data.png?1529688526703516000" /><a class="lightbox-close" href="#select-data-view-close"></a></div>
 
-<h2 id="searching-for-a-dataset">Searching for a Dataset</h2>
+<h2 id="search-for-a-dataset">Search for a Dataset</h2>
 
 <h5 class="procedure">To find datasets related to automotive attributes:</h5>
 
 <ol>
-  <li>
-    <p>Enter <em>acceleration</em> in the <strong>Search</strong> field on the Home page or the Select Data view.</p>
-
-    <p>As you type, Distil returns all datasets that contain either keyword in their list of features or full description.</p>
+  <li>Enter <em>acceleration</em> in the <strong>Search</strong> field on the Home page or the Select Data view. As you type, Distil returns each dataset that contains the keyword in its list of features or full description.</li>
+  <li>Review the <strong>d_196_ag_dataset_TRAIN</strong> result to determine its relevancy.
+    <ul>
+      <li>The <strong>Top Features</strong>, which indicate the most <a href="#" data-toggle="tooltip" data-original-title="Importance is based on how features influence other columns.">important</a> features (columns), list <strong>acceleration</strong> and several other quantitative features such as <strong>displacement</strong> and <strong>weight</strong>.
+        <div class="alert alert-info" role="alert"><i class="fa fa-info-circle"></i> <b>Note:</b> Features are listed in order of importance, a measure of how much influence a feature has on other features in the dataset.</div>
+      </li>
+      <li>The <strong>Description</strong>, inferred from <a href="#" data-toggle="tooltip" data-original-title="From column headers and text values in columns.">text</a> in the dataset, indicates that the dataset is about engine configurations.</li>
+    </ul>
   </li>
-  <li>Review the <strong>d_196_autoMpg</strong> result to determine its relevancy. Click <strong>More Details</strong> to see a complete summary.
-    <figure><img class="docimage" src="images/workflow/search-more-details.png?1517864259540471000" alt="Expand to view more dataset details" /></figure>
-    <p>In addition to <strong>acceleration</strong>, the Top Features include several quantitative features such as <strong>displacement</strong> and <strong>weight</strong>.</p>
-    <div class="alert alert-info" role="alert"><i class="fa fa-info-circle"></i> <b>Note:</b> Features are listed in order of importance, a measure of how much influence they have on other features in the dataset.</div>
+  <li>Click <strong>More Details</strong> to see a complete summary.
+    <figure><img class="docimage" src="images/workflow/select-data/more-details.png?1529688526703516000" alt="Expand to view more dataset details" /></figure>
   </li>
-  <li>Click <strong>Name: d_196_autoMpg</strong> to choose the automotive dataset for further inspection.
-    <figure><img class="docimage" src="images/workflow/search-select-dataset.png?1517864259540471000" alt="Choose a dataset to begin selecting which features to include in your model" /></figure>
+  <li>Click <strong>Name: d_196_ag_dataset_TRAIN</strong> to choose the automotive dataset for further inspection.
+    <figure><img class="docimage" src="images/workflow/select-data/select-dataset.png?1529688526703516000" alt="Choose a dataset to begin selecting which features to include in your model" /></figure>
   </li>
 </ol>
 
-<h2 id="next-steps">Next Steps</h2>
+<h2 id="next-steps">Next steps</h2>
 
 <p>Choose a feature in the dataset that you want to predict with your model.</p>
 
@@ -335,5 +309,4 @@ $('#toc').on('click', 'a', function() {
     </div>
 
 </body>
-
 </html>

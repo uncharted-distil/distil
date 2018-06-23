@@ -13,8 +13,8 @@
 <!--<link rel="stylesheet" type="text/css" href="css/bootstrap.min.css">-->
 <link rel="stylesheet" href="css/modern-business.css">
 <link rel="stylesheet" href="css/lavish-bootstrap.css">
-<link rel="stylesheet" href="css/customstyles.css?1517864259540471000">
-<link rel="stylesheet" href="css/theme-black.css?1517864259540471000">
+<link rel="stylesheet" href="css/customstyles.css?1529688526703516000">
+<link rel="stylesheet" href="css/theme-black.css?1529688526703516000">
 
 <script src="js/lib/jquery.min.js"></script>
 <script src="js/lib/jquery.cookie.min.js"></script>
@@ -27,9 +27,6 @@
 <script src="js/customscripts.js"></script>
 
 <link rel="shortcut icon" href="images/favicon.ico">
-
-<link rel="alternate" type="application/rss+xml" title="" href="feed.xml">
-
     <script>
         $(document).ready(function() {
             // Initialize navgoco with default options
@@ -100,27 +97,6 @@
                 <!-- entries with drop-downs appear here -->
                 <!-- conditional logic to control which topnav appears for the audience defined in the configuration file.-->
                 
-                <!--comment out this block if you want to hide search
-                <li>
-                    <!--start search
-                    <div id="search-demo-container">
-                        <input type="text" id="search-input" placeholder="search...">
-                        <ul id="results-container"></ul>
-                    </div>
-                    <script src="js/jekyll-search.js" type="text/javascript"></script>
-                    <script type="text/javascript">
-                            SimpleJekyllSearch.init({
-                                searchInput: document.getElementById('search-input'),
-                                resultsContainer: document.getElementById('results-container'),
-                                dataSource: 'search.json',
-                                searchResultTemplate: '<li><a href="{url}" title="Step 2 - Select Target">{title}</a></li>',
-                    noResultsText: 'No results found.',
-                            limit: 10,
-                            fuzzy: true,
-                    })
-                    </script>
-                    <!--end search
-                </li>-->
             </ul>
         </div>
         </div>
@@ -136,10 +112,6 @@
         <div class="col-md-3">
 
           
-
-
-
-
 
 <ul id="mysidebar" class="nav">
     <li class="sidebarTitle">Getting Started </li>
@@ -183,7 +155,7 @@
             
             
             
-            <li><a href="search.html">1. Select Data</a></li>
+            <li><a href="select-data.html">1. Select Data</a></li>
             
             
             
@@ -204,7 +176,7 @@
             
             
             
-            <li><a href="results.html">4. View Models</a></li>
+            <li><a href="view-models.html">4. View Models</a></li>
             
             
             
@@ -262,31 +234,34 @@ $('#toc').on('click', 'a', function() {
 
     
 
-  <p>Once you have identified a relevant dataset, you must choose the target feature that you want to predict.</p>
+  <p>Now that you have a relevant dataset, you must choose the target feature that you want to predict.</p>
 
-<h2 id="select-target-view-summary">Select Target View Summary</h2>
+<h2 id="overview">Overview</h2>
 
-<figure id="#select-view-target-close"><a href="#select-view-target"><img class="diagram" src="images/diagrams/select-target.png?1517864259540471000" alt="Select target feature" /><figcaption>Click to enlarge</figcaption></a></figure>
-<div class="lightbox-target" id="select-view-target"><img src="images/diagrams/select-target.png?1517864259540471000" /><a class="lightbox-close" href="#select-view-target-close"></a></div>
+<figure id="#select-view-target-close"><a href="#select-view-target"><img class="diagram" src="images/diagrams/select-target.png?1529688526703516000" alt="Select target feature" /><figcaption>Click to enlarge</figcaption></a></figure>
+<div class="lightbox-target" id="select-view-target"><img src="images/diagrams/select-target.png?1529688526703516000" /><a class="lightbox-close" href="#select-view-target-close"></a></div>
 
-<h2 id="selecting-the-target-feature-to-predict">Selecting the Target Feature to Predict</h2>
+<h2 id="select-the-target-feature-to-predict">Select the target feature to predict</h2>
 
 <h5 class="procedure">To choose the target feature that you want to predict:</h5>
 
 <ol>
-  <li>
-    <p>Review the list of available features in the Select Target Feature dialog. Use the <strong>Filter</strong> field to search for <em>acceleration</em>.</p>
-
-    <figure><img class="docimage" src="images/workflow/select-target-feature.png?1517864259540471000" alt="Set acceleration feature as target" /></figure>
-
-    <div class="alert alert-info" role="alert"><i class="fa fa-info-circle"></i> <b>Note:</b> Feature summaries visualize the values for each column/field in the dataset. Distil automatically infers the type of data stored for each feature. To change the inferred value, use the <strong>type <sup class="fa fa-sort-desc" aria-hidden="true" style="display: inline;"></sup></strong> drop-down on the upper right corner of the summary.</div>
+  <li>Review the list of available features in the Select Target view.
+    <div class="alert alert-info" role="alert"><i class="fa fa-info-circle"></i> <b>Note:</b> Feature summaries show the values for each column/field in the dataset. Distil automatically infers the type of data stored for each feature. To change the inferred value, use the <strong>type <sup class="fa fa-sort-desc" aria-hidden="true" style="display: inline;"></sup></strong> drop-down on the upper right corner of the summary.</div>
+  </li>
+  <li>Use the <strong>Search</strong> field to filter on <em>acceleration</em>.
+    <figure><img class="docimage" src="images/workflow/select-target/target-feature-search.png?1529688526703516000" alt="Search available features for acceleration" /></figure>
   </li>
   <li>
-    <p>On the <strong>acceleration</strong> feature summary, click <strong>Select Target</strong>. Distil adds the feature to the model definition and lists a sample of actual acceleration values.</p>
+    <p>On the <strong>acceleration</strong> feature summary, click <strong>Select Target</strong>.</p>
 
-    <figure><img class="docimage" src="images/workflow/select-target-feature-set.png?1517864259540471000" alt="Sample of values for selected target (acceleration)" /></figure>
+    <figure><img class="docimage" src="images/workflow/select-target/target-feature-select.png?1529688526703516000" alt="Set acceleration feature as target" /></figure>
 
-    <div class="alert alert-info" role="alert"><i class="fa fa-info-circle"></i> <b>Note:</b> You can change the target at any time by clicking <strong>Select Target</strong> in the navigation bar to return to the Select Target view.</div>
+    <p>Distil automatically sends you to the next step, adding the feature to the model definition and listing a sample of actual acceleration values.</p>
+
+    <figure><img class="docimage" src="images/workflow/select-target/target-feature-samples.png?1529688526703516000" alt="Sample of values for selected target (acceleration)" /></figure>
+
+    <div class="alert alert-info" role="alert"><i class="fa fa-info-circle"></i> <b>Note:</b> You can change the target at any time by returning to the Select Target view. Click <strong>Select Target</strong> in the navigation bar to go back. </div>
   </li>
 </ol>
 
@@ -295,8 +270,8 @@ $('#toc').on('click', 'a', function() {
 <table>
   <thead>
     <tr class="header">
-      <th>Feature Type</th>
-      <th>Model Type</th>
+      <th>Feature type</th>
+      <th>Model type</th>
       <th>Prediction</th>
       <th>Results</th>
     </tr>
@@ -319,7 +294,7 @@ $('#toc').on('click', 'a', function() {
 
 <p><strong>Acceleration</strong> is a continuous feature that will produce regression results.</p>
 
-<h2 id="next-steps">Next Steps</h2>
+<h2 id="next-steps">Next steps</h2>
 
 <p>Select the features that the model should use to predict the target feature and begin the model generation.</p>
 
@@ -327,7 +302,7 @@ $('#toc').on('click', 'a', function() {
   <div class="section-nav">
     <div class="nav-left align-right">
         
-          <a href="search.html" class="prev-pg">Back</a>
+          <a href="select-data.html" class="prev-pg">Back</a>
         
     </div>
     <div class="nav-right align-left">
@@ -363,5 +338,4 @@ $('#toc').on('click', 'a', function() {
     </div>
 
 </body>
-
 </html>

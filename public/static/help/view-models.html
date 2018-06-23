@@ -13,8 +13,8 @@
 <!--<link rel="stylesheet" type="text/css" href="css/bootstrap.min.css">-->
 <link rel="stylesheet" href="css/modern-business.css">
 <link rel="stylesheet" href="css/lavish-bootstrap.css">
-<link rel="stylesheet" href="css/customstyles.css?1517864259540471000">
-<link rel="stylesheet" href="css/theme-black.css?1517864259540471000">
+<link rel="stylesheet" href="css/customstyles.css?1529688526703516000">
+<link rel="stylesheet" href="css/theme-black.css?1529688526703516000">
 
 <script src="js/lib/jquery.min.js"></script>
 <script src="js/lib/jquery.cookie.min.js"></script>
@@ -27,9 +27,6 @@
 <script src="js/customscripts.js"></script>
 
 <link rel="shortcut icon" href="images/favicon.ico">
-
-<link rel="alternate" type="application/rss+xml" title="" href="feed.xml">
-
     <script>
         $(document).ready(function() {
             // Initialize navgoco with default options
@@ -100,27 +97,6 @@
                 <!-- entries with drop-downs appear here -->
                 <!-- conditional logic to control which topnav appears for the audience defined in the configuration file.-->
                 
-                <!--comment out this block if you want to hide search
-                <li>
-                    <!--start search
-                    <div id="search-demo-container">
-                        <input type="text" id="search-input" placeholder="search...">
-                        <ul id="results-container"></ul>
-                    </div>
-                    <script src="js/jekyll-search.js" type="text/javascript"></script>
-                    <script type="text/javascript">
-                            SimpleJekyllSearch.init({
-                                searchInput: document.getElementById('search-input'),
-                                resultsContainer: document.getElementById('results-container'),
-                                dataSource: 'search.json',
-                                searchResultTemplate: '<li><a href="{url}" title="Step 4 - View Models">{title}</a></li>',
-                    noResultsText: 'No results found.',
-                            limit: 10,
-                            fuzzy: true,
-                    })
-                    </script>
-                    <!--end search
-                </li>-->
             </ul>
         </div>
         </div>
@@ -136,10 +112,6 @@
         <div class="col-md-3">
 
           
-
-
-
-
 
 <ul id="mysidebar" class="nav">
     <li class="sidebarTitle">Getting Started </li>
@@ -183,7 +155,7 @@
             
             
             
-            <li><a href="search.html">1. Select Data</a></li>
+            <li><a href="select-data.html">1. Select Data</a></li>
             
             
             
@@ -204,7 +176,7 @@
             
             
             
-            <li class="active"><a href="results.html">4. View Models</a></li>
+            <li class="active"><a href="view-models.html">4. View Models</a></li>
             
             
             
@@ -262,7 +234,7 @@ $('#toc').on('click', 'a', function() {
 
     
 
-  <p>The View Models view lets you compare the accuracy of models that Distil generates from your feature selections. Depending on your target, Distil builds models of the following types:</p>
+  <p>The View Models view lets you compare the accuracy of models generated from your feature selections. Depending on your target, Distil builds models of the following types:</p>
 
 <ul>
   <li><strong>Regression models</strong> when your target is <a href="#" data-toggle="tooltip" data-original-title="Has values that are real numbers">continuous</a></li>
@@ -276,42 +248,49 @@ $('#toc').on('click', 'a', function() {
   <li>Export the one you think is most accurate</li>
 </ul>
 
-<h2 id="regression-model-summary">Regression Model Summary</h2>
+<h2 id="overview">Overview</h2>
 
-<p>The following diagram shows the features of regression models. Regression models allow you to configure the acceptable error (distance from the actual value) in predictions. Distil then lists the correctly and incorrectly predicted values based on your selection.</p>
+<p>Regression models allow you to configure the acceptable error (distance from the actual value) in predictions. Distil then lists the correctly and incorrectly predicted values based on your selection.</p>
 
-<figure id="#regression-results-view-close"><a href="#regression-results-view"><img class="diagram" src="images/diagrams/results-regression.png?1517864259540471000" alt="Regression results" /><figcaption>Click to enlarge</figcaption></a></figure>
-<div class="lightbox-target" id="regression-results-view"><img src="images/diagrams/results-regression.png?1517864259540471000" /><a class="lightbox-close" href="#regression-results-view-close"></a></div>
+<figure id="#regression-results-view-close"><a href="#regression-results-view"><img class="diagram" src="images/diagrams/view-models-regression.png?1529688526703516000" alt="Regression results" /><figcaption>Click to enlarge</figcaption></a></figure>
+<div class="lightbox-target" id="regression-results-view"><img src="images/diagrams/view-models-regression.png?1529688526703516000" /><a class="lightbox-close" href="#regression-results-view-close"></a></div>
 
 <div class="panel-group" id="accordion">
   <div class="panel panel-default">
     <div class="panel-heading">
-      <h4 class="panel-title"><a class="noCrossRef accordion-toggle" data-toggle="collapse" data-parent="#accordion" href="#collapseOne"><span class="fa fa-plus"></span> Classification model results</a></h4>
+      <h4 class="panel-title"><a class="noCrossRef accordion-toggle" data-toggle="collapse" data-parent="#accordion" href="#collapseOne"><span class="fa fa-plus" aria-hidden="true"></span> Classification model results</a></h4>
     </div>
     <div id="collapseOne" class="panel-collapse collapse noCrossRef">
       <div class="panel-body">
         <p>If your target feature was a categorical feature instead of a continuous one, Distil would generate classification models instead of regression models.</p>
         
-        <p>Classification model results are similar to regression models, but they do not require you to specify an error threshold. They only report whether the predicted values correctly or incorrectly matched the actual values.</p>
-        <figure id="#classification-results-view-close"><a href="#classification-results-view"><img class="diagram" src="images/diagrams/results-classification.png?1517864259540471000" alt="Classification results" /><figcaption>Click to enlarge</figcaption></a></figure><div class="lightbox-target" id="classification-results-view"><img src="images/diagrams/results-classification.png?1517864259540471000" /><a class="lightbox-close" href="#classification-results-view-close"></a></div>
+        <p>Classification model results are similar to regression models, but they do not require you to specify an error threshold. They only report whether the predicted values matched the actual values.</p>
+        <figure id="#classification-results-view-close"><a href="#classification-results-view"><img class="diagram" src="images/diagrams/view-models-classification.png?1529688526703516000" alt="Classification results" /><figcaption>Click to enlarge</figcaption></a></figure><div class="lightbox-target" id="classification-results-view"><img src="images/diagrams/view-models-classification.png?1529688526703516000" /><a class="lightbox-close" href="#classification-results-view-close"></a></div>
       </div>
     </div>
   </div>
 </div>
 
-<h2 id="reviewing-model-results">Reviewing Model Results</h2>
+<h2 id="review-model-results">Review model results</h2>
 
-<p>In the View Models view, you can inspect the models generated by Distil to determine which one is most accurate and understand how specific features and values influence the results. The View Models view is made up of the following components:</p>
+<p>In the View Models view, you can inspect the models generated by Distil to:</p>
 
 <ul>
-  <li><a href="#model-results-pane">Model Results Pane</a></li>
-  <li><a href="#prediction-tables">Prediction Tables</a></li>
-  <li><a href="#feature-summaries">Feature Summaries</a></li>
+  <li>Determine which one is most accurate</li>
+  <li>Understand how specific features and values influence the results.</li>
+</ul>
+
+<p>The View Models view is made up of the following components:</p>
+
+<ul>
+  <li><a href="#model-results-pane">Model Results pane</a></li>
+  <li><a href="#prediction-tables">Prediction tables</a></li>
+  <li><a href="#feature-summaries">Feature summaries</a></li>
 </ul>
 
 <div class="alert alert-info" role="alert"><i class="fa fa-info-circle"></i> <b>Note:</b> The models only predict values for a subset of the actual dataset. The rest of the actual data is used to train the models.</div>
 
-<h3 id="model-results-pane">Model Results Pane</h3>
+<h3 id="model-results-pane">Model Results pane</h3>
 
 <p>The Model Results pane on the right lists each model that Distil generated for your problem. Distil ranks the models in descending order of estimated accuracy (ranging from 0–1).</p>
 
@@ -322,10 +301,11 @@ $('#toc').on('click', 'a', function() {
 <ol>
   <li>Scroll through the models at the bottom of the pane.</li>
   <li>Compare the distribution of predictions in each model against the distribution of the actual values from the dataset. Which model looks most similar to the actual target feature?
-    <figure><img class="docimage" src="images/workflow/results-pane.png?1517864259540471000" alt="Compare model results to actual results" /></figure>
+    <figure><img class="docimage" src="images/workflow/view-models/results.png?1529688526703516000" alt="Compare model results to actual results" /></figure>
   </li>
-  <li>Click any of the bars in the distribution chart to highlight records that have the corresponding values.
-    <figure><img class="docimage" src="images/workflow/results-pane-highlight-model.png?1517864259540471000" alt="Highlight distribution of predicted values to view context of correct/incorrect predictions" /></figure>
+  <li>Select a range in the Predicted distribution chart to split the Prediction tables based on the corresponding values.
+    <figure><img class="docimage" src="images/workflow/view-models/predicted-highlight.png?1529688526703516000" alt="Highlight distribution of predicted values to view context of correct/incorrect predictions" /></figure>
+    <p>The top table lists records that match your selection, while the bottom table lists all other records.</p>
   </li>
   <li>Click a different model to load its results in the <a href="#prediction-tables">Prediction Tables</a>.</li>
 </ol>
@@ -336,11 +316,12 @@ $('#toc').on('click', 'a', function() {
 
 <ol>
   <li>Review the distribution of error in the predicted results. Is the error relatively consistent across all the predictions?
-    <figure><img class="docimage" src="images/workflow/results-pane-error-distribution.png?1517864259540471000" alt="Compare distribution of error across models" /></figure>
+    <figure><img class="docimage" src="images/workflow/view-models/predictions-by-model-error-distribution.png?1529688526703516000" alt="Compare distribution of error across models" /></figure>
     <p>Error charts are centered on 0. Positive error values indicate that the prediction was higher than the actual value, while negative error values indicate the opposite.</p>
   </li>
   <li>Drag the left or right error sliders to adjust the acceptable error in the predictions. By default, Distil sets the acceptable error to the 25th percentile. How does changing this value affect the number of correct/incorrect predictions?
-    <figure><img class="docimage" src="images/workflow/results-pane-error-adjust.png?1517864259540471000" alt="Adjust acceptable error in models" /></figure>
+    <figure><img class="docimage" src="images/workflow/view-models/results-error-adjust.png?1529688526703516000" alt="Adjust acceptable error in models" /></figure>
+    <div class="alert alert-info" role="alert"><i class="fa fa-info-circle"></i> <b>Note:</b> Toggle between the buttons above the <strong>Error</strong> bar to adjust the range symmetrically (default) or one at a time.</div>
   </li>
 </ol>
 
@@ -351,54 +332,51 @@ $('#toc').on('click', 'a', function() {
   <li>Click the model you want to review to refresh the <a href="#prediction-tables">Prediction Tables</a>.</li>
 </ol>
 
-<h3 id="prediction-tables">Prediction Tables</h3>
+<h3 id="prediction-tables">Prediction tables</h3>
 
-<p>The Prediction Tables list records that the selected model correctly and incorrectly predicted. In regression models, like the one you generated for <strong>acceleration</strong>, the correctness of a predictions is determined by the configurable error threshold.</p>
-
-<h5 class="procedure">To investigate individual predictions:</h5>
+<p>The Prediction tables list records that the model predicted. When you first access the View Models page, a single Prediction table lists all the records. As you interact with feature summaries or model predictions to filter the view, the Prediction table is split into:</p>
 
 <ul>
-  <li>Click individual records to highlight where in the distribution of the feature summaries and predicted values they fall. What values do correct and incorrect predictions tend to have?
-    <figure><img class="docimage" src="images/workflow/results-prediction-table-highlight.png?1517864259540471000" alt="View values for specific records in context of the whole dataset" /></figure>
+  <li><strong>Matching</strong> samples that contain the selected values.</li>
+  <li><strong>Other</strong> samples that do not.</li>
+</ul>
+
+<p>You can compare the results in the two tables to understand how certain values affect the correctness of the predictions. In regression models, like the one you generated for <strong>acceleration</strong>, correctness is determined by the configurable error threshold.</p>
+
+<h5 class="procedure">To split the predictions tables:</h5>
+
+<ul>
+  <li>Select a category or a range of values in the target feature, feature summaries, or model predictions. What values do correct and incorrect predictions tend to have?
+    <figure><img class="docimage" src="images/workflow/view-models/correct-predictions-highlight.png?1529688526703516000" alt="View values for specific records in context of the whole dataset" /></figure>
   </li>
 </ul>
 
-<h3 id="feature-summaries">Feature Summaries</h3>
+<h3 id="feature-summaries">Feature summaries</h3>
 
-<p>The Feature Summaries show the range of values in the features used to model the predictions. The distribution of values can help you understand how they influence correct/predictions. You can toggle or filter specific values to understand how predictions would change if you omitted them from the model.</p>
-
-<h5 class="procedure">To investigate feature summaries:</h5>
-
-<ul>
-  <li>Click spikes, dips or outliers in the distribution of continuous features or values for categorical features to highlight relevant records in the Predictions tables. Are records with these values correctly or incorrectly predicted by the model?
-    <figure><img class="docimage" src="images/workflow/results-feature-summaries-click.png?1517864259540471000" alt="View values for specific records in context of the whole dataset" /></figure>
-  </li>
-</ul>
+<p>The Feature summaries show the range of values in the features used to model the predictions. The distribution of values can help you understand how they influence correct/predictions. You can filter the Prediction tables on specific values to understand how results would change if you omitted them from the model.</p>
 
 <h5 class="procedure">To understand how the models would change if you omitted records with specific values:</h5>
 
 <ul>
-  <li>For continuous features, drag the sliders on either end of the timeline to omit records that contain values beyond the new placement. Does this improve the predictions?
-    <figure><img class="docimage" src="images/workflow/results-feature-summary-adjust-range.png?1517864259540471000" alt="Drag range sliders to omit outliers" /></figure>
+  <li>For continuous features, drag the sliders on either end of the timeline to focus records that contain values beyond the new placement. Does this improve the predictions?
+    <figure><img class="docimage" src="images/workflow/view-models/feature-summaries-range-adjust.png?1529688526703516000" alt="Drag range sliders to omit outliers" /></figure>
   </li>
-  <li>For categorical features, click to deselect individual values. Does this improve the predictions?
-    <figure><img class="docimage" src="images/workflow/results-feature-summary-adjust-categorical.png?1517864259540471000" alt="Deselect categorical values" /></figure>
-  </li>
+  <li>For categorical features, click to select individual values. Does this improve the predictions?</li>
 </ul>
 
-<h2 id="refining-a-model">Refining a Model</h2>
+<h2 id="refine-a-model">Refine a model</h2>
 
-<p>To refine the models that Distil produced, click <span class="fa fa-dot-circle-o"></span> <strong>Select Target</strong> or <span class="fa fa-code-fork"></span> <strong>Create Models</strong> to go back to a previous step.</p>
+<p>To refine the models that Distil produced, click <span class="fa fa-dot-circle-o" aria-hidden="true"></span> <strong>Select Target</strong> or <span class="fa fa-code-fork" aria-hidden="true"></span> <strong>Create Models</strong> to go back to a previous step.</p>
 
-<figure><img class="docimage" src="images/workflow/results-return-to-select.png?1517864259540471000" alt="Return to Select to refine the models" /></figure>
+<figure><img class="docimage" src="images/workflow/view-models/return-to-select-target.png?1529688526703516000" alt="Return to Select to refine the models" /></figure>
 
 <p>When refining the model, you can change the target feature, add or remove features used to model the predictions, or adjust the values included for specific features.</p>
 
-<h2 id="finishing-a-problem">Finishing a Problem</h2>
+<h2 id="finish-a-problem">Finish a problem</h2>
 
 <p>When you are satisfied with the results of a model, click <strong>Export Model</strong> to save it and move on to the next problem.</p>
 
-<figure><img class="docimage" src="images/workflow/results-export.png?1517864259540471000" alt="Export models" /></figure>
+<figure><img class="docimage" src="images/workflow/view-models/export-model.png?1529688526703516000" alt="Export models" /></figure>
 
 <div class="alert alert-info" role="alert"><i class="fa fa-info-circle"></i> <b>Note:</b> If you want to abandon your model configuration and move on to the next problem, click <strong>Abort</strong> in the header.</div>
 
@@ -442,5 +420,4 @@ $('#toc').on('click', 'a', function() {
     </div>
 
 </body>
-
 </html>
