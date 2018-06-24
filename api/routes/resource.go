@@ -10,13 +10,13 @@ import (
 )
 
 // ResourceHandler provides a static file lookup route using simple directory mapping.
-func ResourceHandler(resourceDir string, proxy bool) func(http.ResponseWriter, *http.Request) {
+func ResourceHandler(resourceDir string, proxy map[string]bool) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// resources can either be local or remote
 		dataset := pat.Param(r, "dataset")
 		mediaFolder := pat.Param(r, "folder")
 		file := pat.Param(r, "file")
-		if proxy {
+		if proxy[dataset] {
 			proxyResourceHandler(resourceDir, dataset, mediaFolder, file).ServeHTTP(w, r)
 		} else {
 			localFileHandler(resourceDir, dataset, mediaFolder, file).ServeHTTP(w, r)
