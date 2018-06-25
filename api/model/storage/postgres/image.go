@@ -78,10 +78,10 @@ func (f *ImageField) fetchHistogram(dataset string, variable *model.Variable, fi
 	}
 
 	prefixedVarName := f.metadataVarName(variable.Name)
-	fieldSelect := fmt.Sprintf("unnest(string_to_array(\"%s\", ' '))", prefixedVarName)
+	fieldSelect := fmt.Sprintf("unnest(string_to_array(\"%s\", ','))", prefixedVarName)
 
 	// Get count by category.
-	query := fmt.Sprintf("SELECT replace(%s, '_', ' ') AS \"%s\", COUNT(*) AS count FROM %s%s GROUP BY %s ORDER BY count desc, %s LIMIT %d;",
+	query := fmt.Sprintf("SELECT %s AS \"%s\", COUNT(*) AS count FROM %s%s GROUP BY %s ORDER BY count desc, %s LIMIT %d;",
 		fieldSelect, prefixedVarName, dataset, where, fieldSelect, fieldSelect, catResultLimit)
 
 	// execute the postgres query
