@@ -73,8 +73,6 @@ func SolutionHandler(solutionCtor model.SolutionStorageCtor) func(http.ResponseW
 			solutions := make([]*Solution, 0)
 			for _, pip := range req.Solutions {
 
-				fmt.Println("### SCORE:", pip.Scores)
-
 				solution := &Solution{
 					// request
 					RequestID: req.RequestID,
