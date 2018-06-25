@@ -31,9 +31,9 @@ type Config struct {
 	SolutionComputeEndpoint            string  `env:"SOLUTION_COMPUTE_ENDPOINT" envDefault:"localhost:50051"`
 	SolutionComputePullTimeout         int     `env:"SOLUTION_COMPUTE_PULL_TIMEOUT" envDefault:"60"`
 	SolutionComputePullMax             int     `env:"SOLUTION_COMPUTE_PULL_MAX" envDefault:"10"`
-	SolutionDataDir                    string  `env:"SOLUTION_DATA_DIR" envDefault:"datasets"`
+	D3MInputDir                        string  `env:"D3MINPUTDIR" envDefault:"datasets"`
 	SolutionComputeTrace               bool    `env:"SOLUTION_COMPUTE_TRACE" envDefault:"false"`
-	ExportPath                         string  `env:"EXPORT_PATH"`
+	D3MOutputDir                       string  `env:"D3MOUTPUTDIR"`
 	StartupConfigFile                  string  `env:"JSON_CONFIG_PATH" envDefault:"/d3m/config"`
 	PostgresHost                       string  `env:"PG_HOST" envDefault:"localhost"`
 	PostgresPort                       int     `env:"PG_PORT" envDefault:"5432"`
@@ -130,13 +130,13 @@ func overideFromStartupFile(cfg *Config) error {
 
 	result, ok := json.String(startupData, tempStorageRoot)
 	if ok {
-		cfg.SolutionDataDir = result
+		cfg.D3MInputDir = result
 		cfg.TmpDataPath = result
 	}
 
 	result, ok = json.String(startupData, executablesRoot)
 	if ok {
-		cfg.ExportPath = result
+		cfg.D3MOutputDir = result
 	}
 
 	result, ok = json.String(startupData, userProblemsRoot)

@@ -60,7 +60,7 @@ func main() {
 	log.Infof("%+v", spew.Sdump(config))
 
 	// set dataset directory
-	compute.SetDatasetDir(config.SolutionDataDir)
+	compute.SetDatasetDir(config.D3MInputDir)
 
 	// instantiate elastic client constructor.
 	esClientCtor := elastic.NewClient(config.ElasticEndpoint, false)
@@ -113,7 +113,7 @@ func main() {
 	pgSolutionStorageCtor := pg.NewSolutionStorage(postgresClientCtor, metadataStorageCtor)
 
 	// Instantiate the solution compute client
-	solutionClient, err := compute.NewClient(config.SolutionComputeEndpoint, config.SolutionDataDir, config.SolutionComputeTrace,
+	solutionClient, err := compute.NewClient(config.SolutionComputeEndpoint, config.D3MInputDir, config.SolutionComputeTrace,
 		userAgent, time.Duration(config.SolutionComputePullTimeout)*time.Second, config.SolutionComputePullMax)
 	if err != nil {
 		log.Errorf("%+v", err)
@@ -196,9 +196,9 @@ func main() {
 	registerRoute(mux, "/distil/results-variable-extrema/:index/:dataset/:variable/:results-uuid", routes.ResultVariableExtremaHandler(pgSolutionStorageCtor, pgDataStorageCtor))
 	registerRoute(mux, "/distil/predicted-extrema/:index/:dataset/:results-uuid", routes.PredictedExtremaHandler(pgSolutionStorageCtor, pgDataStorageCtor))
 	registerRoute(mux, "/distil/residuals-extrema/:index/:dataset/:results-uuid", routes.ResidualsExtremaHandler(pgSolutionStorageCtor, pgDataStorageCtor))
-	registerRoute(mux, "/distil/ranking/:index/:dataset/:target", routes.RankingHandler(pgDataStorageCtor, restClient, config.SolutionDataDir))
+	registerRoute(mux, "/distil/ranking/:index/:dataset/:target", routes.RankingHandler(pgDataStorageCtor, restClient, config.D3MInputDir))
 	registerRoute(mux, "/distil/abort", routes.AbortHandler())
-	registerRoute(mux, "/distil/export/:solution-id", routes.ExportHandler(pgSolutionStorageCtor, metadataStorageCtor, solutionClient, config.ExportPath))
+	registerRoute(mux, "/distil/export/:solution-id", routes.ExportHandler(pgSolutionStorageCtor, metadataStorageCtor, solutionClient, config.D3MOUTPUTDIR))
 	registerRoute(mux, "/distil/ingest/:index/:dataset", routes.IngestHandler(metadataStorageCtor, ingestConfig))
 	registerRoute(mux, "/distil/version", routes.VersionHandler(version, timestamp))
 	registerRoute(mux, "/ws", ws.SolutionHandler(solutionClient, metadataStorageCtor, pgDataStorageCtor, pgSolutionStorageCtor))

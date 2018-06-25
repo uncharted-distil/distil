@@ -7,7 +7,7 @@ docker run \
     -e SOLUTION_COMPUTE_ENDPOINT=pipeline_server:45042 \
     -e ES_ENDPOINT=http://elastic:9200 \
     -e PG_HOST=postgres \
-    -e SOLUTION_DATA_DIR=/tmp/d3m/temp_storage \
+    -e D3MINPUTDIR=/tmp/d3m/temp_storage \
     -e SOLUTION_COMPUTE_TRACE=true \
     -e PG_LOG_LEVEL=none \
     -e SKIP_INGEST=false \
