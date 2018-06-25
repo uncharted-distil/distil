@@ -35,12 +35,12 @@ type Feature struct {
 
 // Solution is a container for a TA2 solution.
 type Solution struct {
-	SolutionID  string            `json:"solutionId"`
-	RequestID   string            `json:"requestId"`
-	Progress    string            `json:"progress"`
-	CreatedTime time.Time         `json:"timestamp"`
-	Results     []*SolutionResult `json:"results"`
-	Scores      []*SolutionScore  `json:"scores"`
+	SolutionID  string           `json:"solutionId"`
+	RequestID   string           `json:"requestId"`
+	Progress    string           `json:"progress"`
+	CreatedTime time.Time        `json:"timestamp"`
+	Result      *SolutionResult  `json:"result"`
+	Scores      []*SolutionScore `json:"scores"`
 }
 
 // SolutionResult represents the solution result metadata.

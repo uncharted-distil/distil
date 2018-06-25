@@ -12,7 +12,7 @@
 		</div>
 		<div v-if="isCompleted">
 			<b-badge variant="info" v-bind:key="`${score.metric}-${solutionId}`" v-for="score in scores">
-				{{metricName(score.metric)}}: {{score.value}}
+				{{metricName(score.metric)}}: {{score.value.toFixed(2)}}
 			</b-badge>
 			<facets v-if="predictedGroups.length" class="result-container"
 				@facet-click="onResultCategoricalClick"
