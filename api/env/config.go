@@ -131,7 +131,6 @@ func overideFromStartupFile(cfg *Config) error {
 	result, ok := json.String(startupData, tempStorageRoot)
 	if ok {
 		cfg.D3MInputDir = result
-		cfg.TmpDataPath = result
 	}
 
 	result, ok = json.String(startupData, executablesRoot)
@@ -149,5 +148,10 @@ func overideFromStartupFile(cfg *Config) error {
 		cfg.DataFolderPath = result
 		cfg.InitialDataset = result
 	}
+
+	cfg.TmpDataPath = cfg.D3MOutputDir
+	cfg.DataFolderPath = cfg.D3MInputDir
+	cfg.InitialDataset = cfg.D3MInputDir
+
 	return nil
 }
