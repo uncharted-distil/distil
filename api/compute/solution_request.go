@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"math/rand"
-	"path"
 	"path/filepath"
 	"strings"
 	"sync"
@@ -384,7 +383,7 @@ func (s *SolutionRequest) dispatchSolution(statusChan chan SolutionStatus, clien
 			return
 		}
 
-		datasetURI, ok := output.Value.(*pipeline.Value_DatasetUri)
+		csvURI, ok := output.Value.(*pipeline.Value_CsvUri)
 		if !ok {
 			err := errors.Errorf("output is not of correct format")
 			s.persistSolutionError(statusChan, solutionStorage, searchID, solutionID, err)
@@ -393,11 +392,8 @@ func (s *SolutionRequest) dispatchSolution(statusChan chan SolutionStatus, clien
 
 		// remove the protocol portion if it exists. The returned value is either a
 		// csv file or a directory.
-		resultURI := datasetURI.DatasetUri
+		resultURI := csvURI.CsvUri
 		resultURI = strings.Replace(resultURI, "file://", "", 1)
-		if !strings.HasSuffix(resultURI, ".csv") {
-			resultURI = path.Join(resultURI, D3MLearningData)
-		}
 
 		// get the result UUID. NOTE: Doing sha1 for now.
 		hasher := sha1.New()

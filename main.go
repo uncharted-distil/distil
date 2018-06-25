@@ -180,6 +180,8 @@ func main() {
 			os.Exit(1)
 		}
 	}
+	datasetsToProxy := parseResourceProxy(config.ResourceProxy)
+
 	// register routes
 	mux := goji.NewMux()
 	mux.Use(middleware.Log)
@@ -212,7 +214,7 @@ func main() {
 	registerRoutePost(mux, "/distil/predicted-summary/:index/:dataset/:min/:max/:results-uuid", routes.PredictedSummaryHandler(pgSolutionStorageCtor, pgDataStorageCtor))
 
 	// static
-	registerRoute(mux, "/distil/image/:dataset/:folder/:file", routes.ResourceHandler(config.RootResourceDirectory, config.ResourceProxy))
+	registerRoute(mux, "/distil/image/:dataset/:folder/:file", routes.ResourceHandler(config.RootResourceDirectory, datasetsToProxy))
 	registerRoute(mux, "/*", routes.FileHandler("./dist"))
 
 	// catch kill signals for graceful shutdown
@@ -248,4 +250,14 @@ func waitForPostEndpoint(endpoint string) bool {
 	}
 
 	return up
+}
+
+func parseResourceProxy(datasets string) map[string]bool {
+	toProxy := make(map[string]bool)
+	datasetIds := strings.Split(datasets, ",")
+	for _, d := range datasetIds {
+		toProxy[d] = true
+	}
+
+	return toProxy
 }

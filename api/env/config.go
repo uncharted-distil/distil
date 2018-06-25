@@ -80,7 +80,7 @@ type Config struct {
 	ServiceRetryCount                  int     `env:"SERVICE_RETRY_COUNT" envDefault:"10"`
 	VerboseError                       bool    `env:"VERBOSE_ERROR" envDefault:"false"`
 	RootResourceDirectory              string  `env:"ROOT_RESOURCE_DIRECTORY" envDefault:"http://localhost:8001"`
-	ResourceProxy                      bool    `env:"RESOURCE_PROXY" envDefault:"true"`
+	ResourceProxy                      string  `env:"RESOURCE_PROXY" envDefault:"d_22_hy_dataset_TRAIN_dataset"`
 	IngestPrimitive                    bool    `env:"INGEST_PRIMITIVE" envDefault:"false"`
 }
 
