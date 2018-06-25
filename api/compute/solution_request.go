@@ -376,7 +376,8 @@ func (s *SolutionRequest) dispatchSolution(statusChan chan SolutionStatus, clien
 			continue
 		}
 
-		output, ok := response.ExposedOutputs[defaultExposedOutputKey]
+		//output, ok := response.ExposedOutputs[defaultExposedOutputKey]
+		output, ok := response.ExposedOutputs["final_output"]
 		if !ok {
 			err := errors.Errorf("output is missing from response")
 			s.persistSolutionError(statusChan, solutionStorage, searchID, solutionID, err)
