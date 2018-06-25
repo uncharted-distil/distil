@@ -1,6 +1,7 @@
 package routes
 
 import (
+	"fmt"
 	"net/http"
 	"time"
 
@@ -72,6 +73,8 @@ func SolutionHandler(solutionCtor model.SolutionStorageCtor) func(http.ResponseW
 			solutions := make([]*Solution, 0)
 			for _, pip := range req.Solutions {
 
+				fmt.Println("### SCORE:", pip.Scores)
+
 				solution := &Solution{
 					// request
 					RequestID: req.RequestID,
@@ -85,11 +88,11 @@ func SolutionHandler(solutionCtor model.SolutionStorageCtor) func(http.ResponseW
 					Timestamp:  pip.CreatedTime,
 					Progress:   pip.Progress,
 				}
-				for _, res := range pip.Results {
+				if pip.Result != nil {
 					// result
-					solution.Timestamp = res.CreatedTime
-					solution.ResultUUID = res.ResultUUID
-					solution.Progress = res.Progress
+					solution.Timestamp = pip.Result.CreatedTime
+					solution.ResultUUID = pip.Result.ResultUUID
+					solution.Progress = pip.Result.Progress
 				}
 				solutions = append(solutions, solution)
 			}

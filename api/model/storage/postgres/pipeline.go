@@ -63,11 +63,23 @@ func (s *Storage) parseSolution(rows *pgx.Rows) (*model.Solution, error) {
 		return nil, errors.Wrap(err, "Unable to parse solution from Postgres")
 	}
 
+	result, err := s.FetchSolutionResult(solutionID)
+	if err != nil {
+		return nil, errors.Wrap(err, "Unable to parse solution result from Postgres")
+	}
+
+	scores, err := s.FetchSolutionScores(solutionID)
+	if err != nil {
+		return nil, errors.Wrap(err, "Unable to parse solution scores from Postgres")
+	}
+
 	return &model.Solution{
 		RequestID:   requestID,
 		SolutionID:  solutionID,
 		Progress:    progress,
 		CreatedTime: createdTime,
+		Result:      result,
+		Scores:      scores,
 	}, nil
 }
 
@@ -96,44 +108,7 @@ func (s *Storage) parseSolutionResult(rows *pgx.Rows) ([]*model.SolutionResult, 
 		})
 	}
 
-	// TODO: This should not be in the parsing code. The calling code
-	// should be loading the required data.
-	// for _, result := range results {
-	// 	features, err := s.FetchRequestFeatures(result.RequestID)
-	// 	if err != nil {
-	// 		return nil, err
-	// 	}
-	// 	result.Features = features
-	// }
-	//
-	// for _, result := range results {
-	// 	filters, err := s.FetchRequestFilters(result.RequestID, result.Features)
-	// 	if err != nil {
-	// 		return nil, err
-	// 	}
-	// 	result.Filters = filters
-	// }
-
 	return results, nil
-}
-
-// FetchSolutionResultByRequestID pulls solution result information from Postgres.
-func (s *Storage) FetchSolutionResultByRequestID(requestID string) ([]*model.SolutionResult, error) {
-	sql := fmt.Sprintf("SELECT result.solution_id, result.result_uuid, "+
-		"result.result_uri, result.progress, result.created_time, request.dataset "+
-		"FROM %s AS result INNER JOIN %s AS solution ON result.solution_id = solution.solution_id "+
-		"INNER JOIN %s AS request ON solution.request_id = request.request_id "+
-		"WHERE request.request_id = $1;", solutionResultTableName, solutionTableName, requestTableName)
-
-	rows, err := s.client.Query(sql, requestID)
-	if err != nil {
-		return nil, errors.Wrap(err, "Unable to pull request results from Postgres")
-	}
-	if rows != nil {
-		defer rows.Close()
-	}
-
-	return s.parseSolutionResult(rows)
 }
 
 // FetchSolutionResult pulls solution result information from Postgres.
@@ -195,8 +170,8 @@ func (s *Storage) FetchSolutionResultByUUID(resultUUID string) (*model.SolutionR
 	return res, nil
 }
 
-// FetchSolutionScore pulls solution score from Postgres.
-func (s *Storage) FetchSolutionScore(solutionID string) ([]*model.SolutionScore, error) {
+// FetchSolutionScores pulls solution score from Postgres.
+func (s *Storage) FetchSolutionScores(solutionID string) ([]*model.SolutionScore, error) {
 	sql := fmt.Sprintf("SELECT solution_id, metric, score FROM %s WHERE solution_id = $1;", solutionScoreTableName)
 
 	rows, err := s.client.Query(sql, solutionID)
@@ -207,7 +182,7 @@ func (s *Storage) FetchSolutionScore(solutionID string) ([]*model.SolutionScore,
 		defer rows.Close()
 	}
 
-	results := make([]*model.SolutionScore, 0)
+	var results []*model.SolutionScore
 	for rows.Next() {
 		var solutionID string
 		var metric string
