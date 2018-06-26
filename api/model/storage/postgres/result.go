@@ -236,30 +236,38 @@ func isCorrectnessCategory(categoryName string) bool {
 	return strings.EqualFold(CorrectCategory, categoryName) || strings.EqualFold(categoryName, IncorrectCategory)
 }
 
-func addIncludeCorrectnessFilterToWhere(target *model.Variable, correctnessCategory string, wheres string) string {
+func addIncludeCorrectnessFilterToWhere(wheres []string, params []interface{}, correctnessFilter *model.Filter, target *model.Variable) ([]string, []interface{}, error) {
+	if len(correctnessFilter.Categories[0]) == 0 {
+		return nil, nil, fmt.Errorf("no category")
+	}
 	// filter for result correctness which is based on well know category values
-	categoryWhere := ""
+	where := ""
 	op := ""
-	if strings.EqualFold(correctnessCategory, CorrectCategory) {
+	if strings.EqualFold(correctnessFilter.Categories[0], CorrectCategory) {
 		op = "="
-	} else if strings.EqualFold(correctnessCategory, IncorrectCategory) {
+	} else if strings.EqualFold(correctnessFilter.Categories[0], IncorrectCategory) {
 		op = "!="
 	}
-	categoryWhere = fmt.Sprintf("predicted.value %s data.\"%s\"", op, target.Name)
-	return appendAndClause(wheres, categoryWhere)
+	where = fmt.Sprintf("predicted.value %s data.\"%s\"", op, target.Name)
+	wheres = append(wheres, where)
+	return wheres, params, nil
 }
 
-func addExcludeCorrectnessFilterToWhere(target *model.Variable, correctnessCategory string, wheres string) string {
+func addExcludeCorrectnessFilterToWhere(wheres []string, params []interface{}, correctnessFilter *model.Filter, target *model.Variable) ([]string, []interface{}, error) {
 	// filter for result correctness which is based on well know category values
-	categoryWhere := ""
+	if len(correctnessFilter.Categories[0]) == 0 {
+		return nil, nil, fmt.Errorf("no category")
+	}
+	where := ""
 	op := ""
-	if strings.EqualFold(correctnessCategory, CorrectCategory) {
+	if strings.EqualFold(correctnessFilter.Categories[0], CorrectCategory) {
 		op = "!="
-	} else if strings.EqualFold(correctnessCategory, IncorrectCategory) {
+	} else if strings.EqualFold(correctnessFilter.Categories[0], IncorrectCategory) {
 		op = "="
 	}
-	categoryWhere = fmt.Sprintf("predicted.value %s data.\"%s\"", op, target.Name)
-	return appendAndClause(wheres, categoryWhere)
+	where = fmt.Sprintf("predicted.value %s data.\"%s\"", op, target.Name)
+	wheres = append(wheres, where)
+	return wheres, params, nil
 }
 
 func addIncludePredictedFilterToWhere(wheres []string, params []interface{}, dataset string, predictedFilter *model.Filter, target *model.Variable) ([]string, []interface{}, error) {
@@ -275,24 +283,17 @@ func addIncludePredictedFilterToWhere(wheres []string, params []interface{}, dat
 	case model.CategoricalFilter:
 		// categorical label based filter, with checks for special correct/incorrect metafilters
 		categories := make([]string, 0)
-		correctnessCategory := ""
 		offset := len(params) + 1
 
 		for i, category := range predictedFilter.Categories {
 			if !isCorrectnessCategory(category) {
 				categories = append(categories, fmt.Sprintf("$%d", offset+i))
 				params = append(params, category)
-			} else {
-				correctnessCategory = category
 			}
 		}
 
 		if len(categories) >= 1 {
 			where = fmt.Sprintf("value IN (%s)", strings.Join(categories, ", "))
-		}
-
-		if correctnessCategory != "" {
-			where = addIncludeCorrectnessFilterToWhere(target, correctnessCategory, where)
 		}
 
 	case model.RowFilter:
@@ -330,24 +331,17 @@ func addExcludePredictedFilterToWhere(wheres []string, params []interface{}, dat
 	case model.CategoricalFilter:
 		// categorical label based filter, with checks for special correct/incorrect metafilters
 		categories := make([]string, 0)
-		correctnessCategory := ""
 		offset := len(params) + 1
 
 		for i, category := range predictedFilter.Categories {
 			if !isCorrectnessCategory(category) {
 				categories = append(categories, fmt.Sprintf("$%d", offset+i))
 				params = append(params, category)
-			} else {
-				correctnessCategory = category
 			}
 		}
 
 		if len(categories) >= 1 {
 			where = fmt.Sprintf("value NOT IN (%s)", strings.Join(categories, ", "))
-		}
-
-		if correctnessCategory != "" {
-			where = addExcludeCorrectnessFilterToWhere(target, correctnessCategory, where)
 		}
 
 	case model.RowFilter:
@@ -439,6 +433,21 @@ func (s *Storage) FetchFilteredResults(dataset string, resultURI string, filterP
 			}
 		} else {
 			wheres, params, err = addExcludePredictedFilterToWhere(wheres, params, dataset, filters.predictedFilter, variable)
+			if err != nil {
+				return nil, errors.Wrap(err, "Could not add result to where clause")
+			}
+		}
+	}
+
+	// Add the correctness filter into the where clause if it was included in the filter set
+	if filters.correctnessFilter != nil {
+		if filters.correctnessFilter.Mode == model.IncludeFilter {
+			wheres, params, err = addIncludeCorrectnessFilterToWhere(wheres, params, filters.correctnessFilter, variable)
+			if err != nil {
+				return nil, errors.Wrap(err, "Could not add result to where clause")
+			}
+		} else {
+			wheres, params, err = addExcludeCorrectnessFilterToWhere(wheres, params, filters.correctnessFilter, variable)
 			if err != nil {
 				return nil, errors.Wrap(err, "Could not add result to where clause")
 			}
