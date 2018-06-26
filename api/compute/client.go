@@ -14,6 +14,8 @@ import (
 	"google.golang.org/grpc"
 )
 
+const defaultTrainTestRatio = 3
+
 // Client provides facilities for managing GPRC solution requests. Requests are
 // isssued and a context object containing rx channels is returned to the caller for consumption
 // of results. The context for running requests can also be fetched, along with their buffered
@@ -151,7 +153,8 @@ func (c *Client) GenerateSolutionScores(ctx context.Context, solutionID string, 
 		},
 		PerformanceMetrics: convertMetricsFromTA3ToTA2(metrics),
 		Configuration: &pipeline.ScoringConfiguration{
-			Method: pipeline.EvaluationMethod_HOLDOUT,
+			Method:         pipeline.EvaluationMethod_HOLDOUT,
+			TrainTestRatio: defaultTrainTestRatio,
 		},
 	}
 
