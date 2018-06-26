@@ -35,6 +35,13 @@ func convertTaskTypeFromTA3ToTA2(taskType string) pipeline.TaskType {
 	return pipeline.TaskType(pipeline.TaskType_value[strings.ToUpper(taskType)])
 }
 
+func convertTaskSubTypeFromTA3ToTA2(taskSubType string) pipeline.TaskSubtype {
+	if taskSubType == "" {
+		return pipeline.TaskSubtype_TASK_SUBTYPE_UNDEFINED
+	}
+	return pipeline.TaskSubtype(pipeline.TaskSubtype_value[strings.ToUpper(taskSubType)])
+}
+
 func convertTargetFeaturesTA3ToTA2(target string, targetIndex int) []*pipeline.ProblemTarget {
 	return []*pipeline.ProblemTarget{
 		{

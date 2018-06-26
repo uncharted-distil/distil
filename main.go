@@ -205,7 +205,7 @@ func main() {
 
 	// POST
 	registerRoutePost(mux, "/distil/variables/:index/:dataset", routes.VariableTypeHandler(pgDataStorageCtor, metadataStorageCtor))
-	registerRoutePost(mux, "/distil/discovery/:index/:dataset/:target", routes.ProblemDiscoveryHandler(pgDataStorageCtor, metadataStorageCtor, config.UserProblemPath))
+	registerRoutePost(mux, "/distil/discovery/:index/:dataset/:target", routes.ProblemDiscoveryHandler(pgDataStorageCtor, metadataStorageCtor, config.UserProblemPath, userAgent))
 	registerRoutePost(mux, "/distil/data/:esIndex/:dataset/:invert", routes.DataHandler(pgDataStorageCtor, metadataStorageCtor))
 	registerRoutePost(mux, "/distil/results/:index/:dataset/:solution-id", routes.ResultsHandler(pgSolutionStorageCtor, pgDataStorageCtor))
 	registerRoutePost(mux, "/distil/variable-summary/:index/:dataset/:variable", routes.VariableSummaryHandler(pgDataStorageCtor))
