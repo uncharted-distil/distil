@@ -83,7 +83,7 @@ func PredictedSummaryHandler(solutionCtor model.SolutionStorageCtor, dataCtor mo
 		}
 
 		// fetch summary histogram
-		histogram, err := data.FetchResultsSummary(dataset, res.ResultURI, filterParams, extrema)
+		histogram, err := data.FetchPredictedSummary(dataset, res.ResultURI, filterParams, extrema)
 		if err != nil {
 			handleError(w, err)
 			return

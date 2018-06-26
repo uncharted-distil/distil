@@ -3,6 +3,7 @@ package postgres
 import (
 	"fmt"
 	"math"
+	"strings"
 
 	"github.com/jackc/pgx"
 	"github.com/pkg/errors"
@@ -38,14 +39,18 @@ func (f *TextField) FetchSummaryData(dataset string, variable *model.Variable, r
 
 func (f *TextField) fetchHistogram(dataset string, variable *model.Variable, filterParams *model.FilterParams) (*model.Histogram, error) {
 	// create the filter for the query.
-	where, params := f.Storage.buildFilteredQueryWhere(dataset, filterParams.Filters)
-	if len(where) > 0 {
-		where = fmt.Sprintf(" WHERE %s", where)
+	wheres := make([]string, 0)
+	params := make([]interface{}, 0)
+	wheres, params = f.Storage.buildFilteredQueryWhere(wheres, params, dataset, filterParams.Filters)
+
+	where := ""
+	if len(wheres) > 0 {
+		where = fmt.Sprintf("WHERE %s", strings.Join(wheres, " AND "))
 	}
 
 	// Get count by category.
 	query := fmt.Sprintf("SELECT w.word as %s, COUNT(*) as count "+
-		"FROM (SELECT unnest(tsvector_to_array(to_tsvector(\"%s\"))) as stem FROM %s%s) as r "+
+		"FROM (SELECT unnest(tsvector_to_array(to_tsvector(\"%s\"))) as stem FROM %s %s) as r "+
 		"INNER JOIN %s as w on r.stem = w.stem "+
 		"GROUP BY w.word ORDER BY count desc, w.word LIMIT %d;",
 		variable.Name, variable.Name, dataset, where, wordStemTableName, catResultLimit)
@@ -64,16 +69,21 @@ func (f *TextField) fetchHistogram(dataset string, variable *model.Variable, fil
 
 func (f *TextField) fetchHistogramByResult(dataset string, variable *model.Variable, resultURI string, filterParams *model.FilterParams) (*model.Histogram, error) {
 	// create the filter for the query.
-	where, params := f.Storage.buildFilteredQueryWhere(dataset, filterParams.Filters)
-	if len(where) > 0 {
-		where = fmt.Sprintf(" AND %s", where)
-	}
+	wheres := make([]string, 0)
+	params := make([]interface{}, 0)
+	wheres, params = f.Storage.buildFilteredQueryWhere(wheres, params, dataset, filterParams.Filters)
+
 	params = append(params, resultURI)
+
+	where := ""
+	if len(wheres) > 0 {
+		where = fmt.Sprintf("AND %s", strings.Join(wheres, " AND "))
+	}
 
 	// Get count by category.
 	query := fmt.Sprintf("SELECT w.word as \"%s\", COUNT(*) as count "+
 		"FROM (SELECT unnest(tsvector_to_array(to_tsvector(\"%s\"))) as stem "+
-		"FROM %s data INNER JOIN %s result ON data.\"%s\" = result.index WHERE result.result_id = $%d%s) as r "+
+		"FROM %s data INNER JOIN %s result ON data.\"%s\" = result.index WHERE result.result_id = $%d %s) as r "+
 		"INNER JOIN %s as w on r.stem = w.stem "+
 		"GROUP BY w.word ORDER BY count desc, w.word LIMIT %d;",
 		variable.Name, variable.Name, dataset, f.Storage.getResultTable(dataset),
@@ -206,18 +216,23 @@ func (f *TextField) parseBivariateHistogram(rows *pgx.Rows, variable *model.Vari
 	}, nil
 }
 
-// FetchResultSummaryData pulls data from the result table and builds
+// FetchPredictedSummaryData pulls data from the result table and builds
 // the categorical histogram for the field.
-func (f *TextField) FetchResultSummaryData(resultURI string, dataset string, datasetResult string, variable *model.Variable, filterParams *model.FilterParams, extrema *model.Extrema) (*model.Histogram, error) {
+func (f *TextField) FetchPredictedSummaryData(resultURI string, dataset string, datasetResult string, variable *model.Variable, filterParams *model.FilterParams, extrema *model.Extrema) (*model.Histogram, error) {
 	targetName := variable.Name
 
-	where, params := f.Storage.buildFilteredQueryWhere(dataset, filterParams.Filters)
-	if len(where) > 0 {
-		where = fmt.Sprintf(" WHERE %s AND result.result_id = $%d and result.target = $%d", where, len(params)+1, len(params)+2)
-	} else {
-		where = " WHERE result.result_id = $1 and result.target = $2"
-	}
+	wheres := make([]string, 0)
+	params := make([]interface{}, 0)
+	wheres, params = f.Storage.buildFilteredQueryWhere(wheres, params, dataset, filterParams.Filters)
+
+	wheres = append(wheres, fmt.Sprintf("result.result_id = $%d AND result.target = $%d ", len(params)+1, len(params)+2))
 	params = append(params, resultURI, targetName)
+
+	where := ""
+	if len(wheres) > 0 {
+		where = fmt.Sprintf("WHERE %s", strings.Join(wheres, " AND "))
+	}
+
 	query := fmt.Sprintf("SELECT word_b.word as \"%s\", word_v.word as value, COUNT(*) as count "+
 		"FROM (SELECT unnest(tsvector_to_array(to_tsvector(base.\"%s\"))) as stem_b, "+
 		"unnest(tsvector_to_array(to_tsvector(result.value))) as stem_v "+

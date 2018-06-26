@@ -140,11 +140,7 @@ func (s *Storage) buildExcludeFilter(wheres []string, params []interface{}, filt
 	return wheres, params
 }
 
-func (s *Storage) buildFilteredQueryWhere(dataset string, filters []*model.Filter) (string, []interface{}) {
-
-	wheres := make([]string, 0)
-	params := make([]interface{}, 0)
-
+func (s *Storage) buildFilteredQueryWhere(wheres []string, params []interface{}, dataset string, filters []*model.Filter) ([]string, []interface{}) {
 	for _, filter := range filters {
 		switch filter.Mode {
 		case model.IncludeFilter:
@@ -153,8 +149,7 @@ func (s *Storage) buildFilteredQueryWhere(dataset string, filters []*model.Filte
 			wheres, params = s.buildExcludeFilter(wheres, params, filter)
 		}
 	}
-
-	return strings.Join(wheres, " AND "), params
+	return wheres, params
 }
 
 func (s *Storage) buildFilteredQueryField(dataset string, variables []*model.Variable, filterVariables []string) (string, error) {
@@ -184,12 +179,12 @@ func (s *Storage) buildFilteredResultQueryField(dataset string, variables []*mod
 	return strings.Join(fields, ","), nil
 }
 
-func (s *Storage) buildCorrectnessResultWhere(dataset string, resultURI string, resultFilter *model.Filter) (string, error) {
+func (s *Storage) buildCorrectnessResultWhere(wheres []string, params []interface{}, dataset string, resultURI string, resultFilter *model.Filter) ([]string, []interface{}, error) {
 	// get the target variable name
 	datasetResult := s.getResultTable(dataset)
 	targetName, err := s.getResultTargetName(datasetResult, resultURI)
 	if err != nil {
-		return "", err
+		return nil, nil, err
 	}
 
 	// correct/incorrect are well known categories that require the predicted category to be compared
@@ -205,16 +200,30 @@ func (s *Storage) buildCorrectnessResultWhere(dataset string, resultURI string, 
 		}
 	}
 	if op == "" {
-		return "", err
+		return nil, nil, err
 	}
 	where := fmt.Sprintf("result.value %s data.\"%s\"", op, targetName)
-	return where, nil
+	wheres = append(wheres, where)
+	return wheres, params, nil
 }
 
-func (s *Storage) buildPredictedResultWhere(dataset string, resultURI string, resultFilter *model.Filter) (string, []interface{}, error) {
+func (s *Storage) buildErrorResultWhere(wheres []string, params []interface{}, errorFilter *model.Filter) ([]string, []interface{}, error) {
+	// Add a clause to filter residuals to the existing where
+	nameWithoutSuffix := strings.Replace(errorFilter.Name, errorSuffix, "", -1)
+	typedError := getErrorTyped(nameWithoutSuffix)
+	where := fmt.Sprintf("(%s >= $%d AND %s <= $%d)", typedError, len(params)+1, typedError, len(params)+2)
+	params = append(params, *errorFilter.Min)
+	params = append(params, *errorFilter.Max)
+
+	// Append the AND clause
+	wheres = append(wheres, where)
+	return wheres, params, nil
+}
+
+func (s *Storage) buildPredictedResultWhere(wheres []string, params []interface{}, dataset string, resultURI string, resultFilter *model.Filter) ([]string, []interface{}, error) {
 	// handle the general category case
-	where, params := s.buildFilteredQueryWhere(dataset, []*model.Filter{resultFilter})
-	return where, params, nil
+	wheres, params = s.buildFilteredQueryWhere(wheres, params, dataset, []*model.Filter{resultFilter})
+	return wheres, params, nil
 }
 
 type filters struct {
@@ -301,13 +310,15 @@ func (s *Storage) FetchData(dataset string, filterParams *model.FilterParams, in
 	// construct a Postgres query that fetches documents from the dataset with the supplied variable filters applied
 	query := fmt.Sprintf("SELECT %s FROM %s", fields, dataset)
 
-	where, params := s.buildFilteredQueryWhere(dataset, filterParams.Filters)
+	wheres := make([]string, 0)
+	params := make([]interface{}, 0)
+	wheres, params = s.buildFilteredQueryWhere(wheres, params, dataset, filterParams.Filters)
 
-	if len(where) > 0 {
+	if len(wheres) > 0 {
 		if invert {
-			query = fmt.Sprintf("%s WHERE NOT(%s)", query, where)
+			query = fmt.Sprintf("%s WHERE NOT(%s)", query, strings.Join(wheres, " AND "))
 		} else {
-			query = fmt.Sprintf("%s WHERE %s", query, where)
+			query = fmt.Sprintf("%s WHERE %s", query, strings.Join(wheres, " AND "))
 		}
 	} else {
 		// if there are not WHERE's and we are inverting, that means we expect

@@ -3,6 +3,7 @@ package postgres
 import (
 	"fmt"
 	"math"
+	"strings"
 
 	"github.com/jackc/pgx"
 	"github.com/pkg/errors"
@@ -73,15 +74,20 @@ func (f *TimeSeriesField) fetchRepresentationTimeSeriess(dataset string, variabl
 
 func (f *TimeSeriesField) fetchHistogram(dataset string, variable *model.Variable, filterParams *model.FilterParams) (*model.Histogram, error) {
 	// create the filter for the query.
-	where, params := f.Storage.buildFilteredQueryWhere(dataset, filterParams.Filters)
-	if len(where) > 0 {
-		where = fmt.Sprintf(" WHERE %s", where)
-	}
+	wheres := make([]string, 0)
+	params := make([]interface{}, 0)
+	wheres, params = f.Storage.buildFilteredQueryWhere(wheres, params, dataset, filterParams.Filters)
 
 	prefixedVarName := f.metadataVarName(variable.Name)
 
+	where := ""
+	if len(wheres) > 0 {
+		where = fmt.Sprintf("WHERE %s", strings.Join(wheres, " AND "))
+	}
+
 	// Get count by category.
-	query := fmt.Sprintf("SELECT \"%s\", COUNT(*) AS count FROM %s%s GROUP BY \"%s\" ORDER BY count desc, \"%s\" LIMIT %d;", prefixedVarName, dataset, where, prefixedVarName, prefixedVarName, catResultLimit)
+	query := fmt.Sprintf("SELECT \"%s\", COUNT(*) AS count FROM %s %s GROUP BY \"%s\" ORDER BY count desc, \"%s\" LIMIT %d;",
+		prefixedVarName, dataset, where, prefixedVarName, prefixedVarName, catResultLimit)
 
 	// execute the postgres query
 	res, err := f.Storage.client.Query(query, params...)
@@ -111,31 +117,32 @@ func (f *TimeSeriesField) fetchHistogramByResult(dataset string, variable *model
 	filters := f.Storage.splitFilters(filterParams)
 
 	// create the filter for the query.
-	where, params := f.Storage.buildFilteredQueryWhere(dataset, filters.genericFilters)
+	wheres := make([]string, 0)
+	params := make([]interface{}, 0)
+	wheres, params = f.Storage.buildFilteredQueryWhere(wheres, params, dataset, filters.genericFilters)
 
+	var err error
 	// apply the predicted result filter
 	if filters.predictedFilter != nil {
-		resultWhere, predictedParams, err := f.Storage.buildPredictedResultWhere(dataset, resultURI, filters.predictedFilter)
+		wheres, params, err = f.Storage.buildPredictedResultWhere(wheres, params, dataset, resultURI, filters.predictedFilter)
 		if err != nil {
 			return nil, err
 		}
-		where = appendAndClause(where, resultWhere)
-		params = append(params, predictedParams...)
 	} else if filters.correctnessFilter != nil {
-		resultWhere, err := f.Storage.buildCorrectnessResultWhere(dataset, resultURI, filters.correctnessFilter)
+		wheres, params, err = f.Storage.buildCorrectnessResultWhere(wheres, params, dataset, resultURI, filters.correctnessFilter)
 		if err != nil {
 			return nil, err
 		}
-		where = appendAndClause(where, resultWhere)
-	}
-
-	if where != "" {
-		where = "AND " + where
 	}
 
 	params = append(params, resultURI)
 
 	prefixedVarName := f.metadataVarName(variable.Name)
+
+	where := ""
+	if len(wheres) > 0 {
+		where = fmt.Sprintf("AND %s", strings.Join(wheres, " AND "))
+	}
 
 	// Get count by category.
 	query := fmt.Sprintf(
@@ -288,38 +295,34 @@ func (f *TimeSeriesField) parseBivariateHistogram(rows *pgx.Rows, variable *mode
 	}, nil
 }
 
-// FetchResultSummaryData pulls predicted data from the result table and builds
+// FetchPredictedSummaryData pulls predicted data from the result table and builds
 // the timeseries histogram for the field.
-func (f *TimeSeriesField) FetchResultSummaryData(resultURI string, dataset string, datasetResult string, variable *model.Variable, filterParams *model.FilterParams, extrema *model.Extrema) (*model.Histogram, error) {
+func (f *TimeSeriesField) FetchPredictedSummaryData(resultURI string, dataset string, datasetResult string, variable *model.Variable, filterParams *model.FilterParams, extrema *model.Extrema) (*model.Histogram, error) {
 	targetName := f.metadataVarName(variable.Name)
 
 	// pull filters generated against the result facet out for special handling
 	filters := f.Storage.splitFilters(filterParams)
 
 	// create the filter for the query.
-	where, params := f.Storage.buildFilteredQueryWhere(dataset, filters.genericFilters)
+	wheres := make([]string, 0)
+	params := make([]interface{}, 0)
+	wheres, params = f.Storage.buildFilteredQueryWhere(wheres, params, dataset, filters.genericFilters)
 
+	var err error
 	// apply the predicted result filter
 	if filters.predictedFilter != nil {
-		resultWhere, predictedParams, err := f.Storage.buildPredictedResultWhere(dataset, resultURI, filters.predictedFilter)
+		wheres, params, err = f.Storage.buildPredictedResultWhere(wheres, params, dataset, resultURI, filters.predictedFilter)
 		if err != nil {
 			return nil, err
 		}
-		where = appendAndClause(where, resultWhere)
-		params = append(params, predictedParams...)
 	} else if filters.correctnessFilter != nil {
-		resultWhere, err := f.Storage.buildCorrectnessResultWhere(dataset, resultURI, filters.correctnessFilter)
+		wheres, params, err = f.Storage.buildCorrectnessResultWhere(wheres, params, dataset, resultURI, filters.correctnessFilter)
 		if err != nil {
 			return nil, err
 		}
-		where = appendAndClause(where, resultWhere)
 	}
 
-	if len(where) > 0 {
-		where = fmt.Sprintf(" %s AND result.result_id = $%d and result.target = $%d", where, len(params)+1, len(params)+2)
-	} else {
-		where = " result.result_id = $1 and result.target = $2"
-	}
+	wheres = append(wheres, fmt.Sprintf("result.result_id = $%d AND result.target = $%d ", len(params)+1, len(params)+2))
 	params = append(params, resultURI, targetName)
 
 	query := fmt.Sprintf(
@@ -328,7 +331,7 @@ func (f *TimeSeriesField) FetchResultSummaryData(resultURI string, dataset strin
 		 WHERE %s
 		 GROUP BY result.value, data."%s"
 		 ORDER BY count desc;`,
-		targetName, datasetResult, dataset, model.D3MIndexFieldName, where, targetName)
+		targetName, datasetResult, dataset, model.D3MIndexFieldName, strings.Join(wheres, " AND "), targetName)
 
 	// execute the postgres query
 	res, err := f.Storage.client.Query(query, params...)

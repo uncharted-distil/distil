@@ -3,6 +3,7 @@ package postgres
 import (
 	"fmt"
 	"strconv"
+	"strings"
 
 	"github.com/jackc/pgx"
 	"github.com/pkg/errors"
@@ -38,10 +39,9 @@ func (f *NumericalField) FetchSummaryData(dataset string, variable *model.Variab
 
 func (f *NumericalField) fetchHistogram(dataset string, variable *model.Variable, filterParams *model.FilterParams) (*model.Histogram, error) {
 	// create the filter for the query.
-	where, params := f.Storage.buildFilteredQueryWhere(dataset, filterParams.Filters)
-	if len(where) > 0 {
-		where = fmt.Sprintf(" WHERE %s", where)
-	}
+	wheres := make([]string, 0)
+	params := make([]interface{}, 0)
+	wheres, params = f.Storage.buildFilteredQueryWhere(wheres, params, dataset, filterParams.Filters)
 
 	// need the extrema to calculate the histogram interval
 	extrema, err := f.fetchExtrema(dataset, variable)
@@ -52,8 +52,13 @@ func (f *NumericalField) fetchHistogram(dataset string, variable *model.Variable
 	// size is derived from the min/max and desired bucket count.
 	histogramName, bucketQuery, histogramQuery := f.getHistogramAggQuery(extrema)
 
+	where := ""
+	if len(wheres) > 0 {
+		where = fmt.Sprintf("WHERE %s", strings.Join(wheres, " AND "))
+	}
+
 	// Create the complete query string.
-	query := fmt.Sprintf("SELECT %s as bucket, CAST(%s as double precision) AS %s, COUNT(*) AS count FROM %s%s GROUP BY %s ORDER BY %s;",
+	query := fmt.Sprintf("SELECT %s as bucket, CAST(%s as double precision) AS %s, COUNT(*) AS count FROM %s %s GROUP BY %s ORDER BY %s;",
 		bucketQuery, histogramQuery, histogramName, dataset, where, bucketQuery, histogramName)
 
 	// execute the postgres query
@@ -74,32 +79,27 @@ func (f *NumericalField) fetchHistogramByResult(dataset string, variable *model.
 	splitFilters := f.Storage.splitFilters(filterParams)
 
 	// create the filter for the query.
-	where, params := f.Storage.buildFilteredQueryWhere(dataset, splitFilters.genericFilters)
+	wheres := make([]string, 0)
+	params := make([]interface{}, 0)
+	wheres, params = f.Storage.buildFilteredQueryWhere(wheres, params, dataset, splitFilters.genericFilters)
 
+	var err error
 	// apply the result filter
 	if splitFilters.predictedFilter != nil {
-		resultWhere, predictedParams, err := f.Storage.buildPredictedResultWhere(dataset, resultURI, splitFilters.predictedFilter)
+		wheres, params, err = f.Storage.buildPredictedResultWhere(wheres, params, dataset, resultURI, splitFilters.predictedFilter)
 		if err != nil {
 			return nil, err
 		}
-		where = appendAndClause(where, resultWhere)
-		params = append(params, predictedParams...)
-	} else if splitFilters.correctnessFilter != nil {
-		resultWhere, err := f.Storage.buildCorrectnessResultWhere(dataset, resultURI, splitFilters.correctnessFilter)
+	} else if splitFilters.errorFilter != nil {
+		wheres, params, err = f.Storage.buildErrorResultWhere(wheres, params, splitFilters.errorFilter)
 		if err != nil {
 			return nil, err
 		}
-		where = appendAndClause(where, resultWhere)
-	}
-
-	if where != "" {
-		where = " AND " + where
 	}
 
 	params = append(params, resultURI)
 
 	// need the extrema to calculate the histogram interval
-	var err error
 	if extrema == nil {
 		extrema, err = f.fetchExtremaByURI(dataset, resultURI, variable)
 		if err != nil {
@@ -113,11 +113,16 @@ func (f *NumericalField) fetchHistogramByResult(dataset string, variable *model.
 	// size is derived from the min/max and desired bucket count.
 	histogramName, bucketQuery, histogramQuery := f.getHistogramAggQuery(extrema)
 
+	where := ""
+	if len(wheres) > 0 {
+		where = fmt.Sprintf("AND %s", strings.Join(wheres, " AND "))
+	}
+
 	// Create the complete query string.
 	query := fmt.Sprintf(`
 		SELECT %s as bucket, CAST(%s as double precision) AS %s, COUNT(*) AS count
 		FROM %s data INNER JOIN %s result ON data."%s" = result.index
-		WHERE result.result_id = $%d%s
+		WHERE result.result_id = $%d %s
 		GROUP BY %s
 		ORDER BY %s;`,
 		bucketQuery, histogramQuery, histogramName, dataset,
@@ -284,9 +289,9 @@ func (f *NumericalField) fetchExtremaByURI(dataset string, resultURI string, var
 	return f.parseExtrema(res, variable)
 }
 
-// FetchResultSummaryData pulls data from the result table and builds
+// FetchPredictedSummaryData pulls data from the result table and builds
 // the numerical histogram for the field.
-func (f *NumericalField) FetchResultSummaryData(resultURI string, dataset string, datasetResult string, variable *model.Variable, filterParams *model.FilterParams, extrema *model.Extrema) (*model.Histogram, error) {
+func (f *NumericalField) FetchPredictedSummaryData(resultURI string, dataset string, datasetResult string, variable *model.Variable, filterParams *model.FilterParams, extrema *model.Extrema) (*model.Histogram, error) {
 	resultVariable := &model.Variable{
 		Name: "value",
 		Type: model.TextType,
@@ -307,14 +312,29 @@ func (f *NumericalField) FetchResultSummaryData(resultURI string, dataset string
 	// size is derived from the min/max and desired bucket count.
 	histogramName, bucketQuery, histogramQuery := f.getResultHistogramAggQuery(extrema, variable, resultVariable)
 
+	// pull filters generated against the result facet out for special handling
+	splitFilters := f.Storage.splitFilters(filterParams)
+
 	// create the filter for the query.
-	where, params := f.Storage.buildFilteredQueryWhere(dataset, filterParams.Filters)
-	if len(where) > 0 {
-		where = fmt.Sprintf(" %s AND result.result_id = $%d AND result.target = $%d", where, len(params)+1, len(params)+2)
-	} else {
-		where = " result.result_id = $1 AND result.target = $2"
-	}
+	wheres := make([]string, 0)
+	params := make([]interface{}, 0)
+	wheres, params = f.Storage.buildFilteredQueryWhere(wheres, params, dataset, splitFilters.genericFilters)
+
+	wheres = append(wheres, fmt.Sprintf("result.result_id = $%d AND result.target = $%d ", len(params)+1, len(params)+2))
 	params = append(params, resultURI, variable.Name)
+
+	// apply the result filter
+	if splitFilters.predictedFilter != nil {
+		wheres, params, err = f.Storage.buildPredictedResultWhere(wheres, params, dataset, resultURI, splitFilters.predictedFilter)
+		if err != nil {
+			return nil, err
+		}
+	} else if splitFilters.errorFilter != nil {
+		wheres, params, err = f.Storage.buildErrorResultWhere(wheres, params, splitFilters.errorFilter)
+		if err != nil {
+			return nil, err
+		}
+	}
 
 	// Create the complete query string.
 	query := fmt.Sprintf(`
@@ -324,7 +344,7 @@ func (f *NumericalField) FetchResultSummaryData(resultURI string, dataset string
 		GROUP BY %s
 		ORDER BY %s;`,
 		bucketQuery, histogramQuery, histogramName, dataset, datasetResult,
-		model.D3MIndexFieldName, where, bucketQuery, histogramName)
+		model.D3MIndexFieldName, strings.Join(wheres, " AND "), bucketQuery, histogramName)
 
 	// execute the postgres query
 	res, err := f.Storage.client.Query(query, params...)
