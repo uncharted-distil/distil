@@ -35,6 +35,6 @@ export const actions = {
 export const mutations = {
 	setAborted: commit(moduleMutations.setAborted),
 	setVersionNumber: commit(moduleMutations.setVersionNumber),
-	setVersionTimestamp: commit(moduleMutations.setVersionTimestamp)
+	setVersionTimestamp: commit(moduleMutations.setVersionTimestamp),
 	setIsDiscovery: commit(moduleMutations.setIsDiscovery)
 }
