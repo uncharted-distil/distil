@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+	"path"
 
 	"github.com/caarlos0/env"
 	"github.com/unchartedsoftware/distil/api/util/json"
@@ -31,9 +32,9 @@ type Config struct {
 	SolutionComputeEndpoint            string  `env:"SOLUTION_COMPUTE_ENDPOINT" envDefault:"localhost:50051"`
 	SolutionComputePullTimeout         int     `env:"SOLUTION_COMPUTE_PULL_TIMEOUT" envDefault:"60"`
 	SolutionComputePullMax             int     `env:"SOLUTION_COMPUTE_PULL_MAX" envDefault:"10"`
-	SolutionDataDir                    string  `env:"SOLUTION_DATA_DIR" envDefault:"datasets"`
+	D3MInputDir                        string  `env:"D3MINPUTDIR" envDefault:"datasets"`
 	SolutionComputeTrace               bool    `env:"SOLUTION_COMPUTE_TRACE" envDefault:"false"`
-	ExportPath                         string  `env:"EXPORT_PATH"`
+	D3MOutputDir                       string  `env:"D3MOUTPUTDIR"`
 	StartupConfigFile                  string  `env:"JSON_CONFIG_PATH" envDefault:"/d3m/config"`
 	PostgresHost                       string  `env:"PG_HOST" envDefault:"localhost"`
 	PostgresPort                       int     `env:"PG_PORT" envDefault:"5432"`
@@ -82,6 +83,7 @@ type Config struct {
 	RootResourceDirectory              string  `env:"ROOT_RESOURCE_DIRECTORY" envDefault:"http://localhost:8001"`
 	ResourceProxy                      string  `env:"RESOURCE_PROXY" envDefault:"d_22_hy_dataset_TRAIN_dataset"`
 	IngestPrimitive                    bool    `env:"INGEST_PRIMITIVE" envDefault:"false"`
+	IsProblemDiscovery                 bool    `env:"IS_PROBLEM_DISCOVERY" envDefault:"false"`
 }
 
 // LoadConfig loads the config from the environment if necessary and returns a
@@ -98,6 +100,8 @@ func LoadConfig() (Config, error) {
 		if err != nil {
 			return Config{}, err
 		}
+
+		cfg.IsProblemDiscovery = isProblemDiscovery(cfg.D3MInputDir)
 	}
 	return *cfg, nil
 }
@@ -128,15 +132,16 @@ func overideFromStartupFile(cfg *Config) error {
 
 	// override / add values
 
-	result, ok := json.String(startupData, tempStorageRoot)
+	result, ok := json.String(startupData, executablesRoot)
 	if ok {
-		cfg.SolutionDataDir = result
-		cfg.TmpDataPath = result
+		cfg.D3MOutputDir = result
 	}
 
-	result, ok = json.String(startupData, executablesRoot)
+	result, ok = json.String(startupData, tempStorageRoot)
 	if ok {
-		cfg.ExportPath = result
+		cfg.TmpDataPath = result
+	} else {
+		cfg.TmpDataPath = cfg.D3MOutputDir
 	}
 
 	result, ok = json.String(startupData, userProblemsRoot)
@@ -148,6 +153,23 @@ func overideFromStartupFile(cfg *Config) error {
 	if ok {
 		cfg.DataFolderPath = result
 		cfg.InitialDataset = result
+	} else {
+		dataPath := path.Join(cfg.D3MInputDir, "TRAIN", "dataset_TRAIN")
+		cfg.DataFolderPath = dataPath
+		cfg.InitialDataset = dataPath
 	}
+
 	return nil
+}
+
+func isProblemDiscovery(inputPath string) bool {
+	// inputPath points to the root folder of a dataset.
+	// If Task 1 (problem discovery) then the train folder will not have
+	// a problem sub folder.
+	isDiscovery := true
+	if _, err := os.Stat(path.Join(inputPath, "TRAIN", "problem_TRAIN")); err == nil {
+		isDiscovery = false
+	}
+
+	return isDiscovery
 }
