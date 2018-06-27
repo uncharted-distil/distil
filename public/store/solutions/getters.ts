@@ -1,7 +1,7 @@
 import _ from 'lodash';
 import moment from 'moment';
 import { Variable } from '../dataset/index';
-import { regression, getTask } from '../../util/solutions';
+import { REGRESSION_TASK, getTask } from '../../util/solutions';
 import { SolutionState, Solution, SolutionRequest, SOLUTION_RUNNING, SOLUTION_COMPLETED } from './index';
 import { Dictionary } from '../../util/dict';
 import { Stream } from '../../util/ws';
@@ -98,7 +98,7 @@ export const getters = {
 		const target = getters.getRouteTargetVariable;
 		const targetVariable = variables.find(s => s.name === target);
 		const task = getTask(targetVariable.type);
-		return task.schemaName === regression.schemaName;
+		return task.schemaName === REGRESSION_TASK.schemaName;
 	},
 
 	getRequestStreams(state: SolutionState, getters: any): Dictionary<Stream> {

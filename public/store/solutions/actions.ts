@@ -8,7 +8,7 @@ import { ES_INDEX } from '../dataset/index';
 import { mutations } from './module';
 import { getWebSocketConnection } from '../../util/ws';
 import { FilterParams } from '../../util/filters';
-import { regression } from '../../util/solutions';
+import { REGRESSION_TASK } from '../../util/solutions';
 
 const CREATE_SOLUTIONS = 'CREATE_SOLUTIONS';
 const STOP_SOLUTIONS = 'STOP_SOLUTIONS';
@@ -18,7 +18,7 @@ interface CreateSolutionRequest {
 	target: string;
 	task: string;
 	maxSolutions: number;
-	maxTime: number; 
+	maxTime: number;
 	metrics: string[];
 	filters: FilterParams;
 }
@@ -45,7 +45,7 @@ function updateCurrentSolutionResults(context: SolutionContext, req: CreateSolut
 	});
 
 	// if this is a regression task, pull extrema as a first step
-	const isRegression = req.task.toLowerCase() === regression.schemaName.toLowerCase();
+	const isRegression = req.task.toLowerCase() === REGRESSION_TASK.schemaName.toLowerCase();
 	let extremaFetches = [];
 	if (isRegression) {
 		extremaFetches = [
@@ -106,7 +106,7 @@ function updateCurrentSolutionResults(context: SolutionContext, req: CreateSolut
 }
 
 function updateSolutionResults(context: SolutionContext, req: CreateSolutionRequest, res: SolutionStatus) {
-	const isRegression = req.task.toLowerCase() === regression.schemaName.toLowerCase();
+	const isRegression = req.task.toLowerCase() === REGRESSION_TASK.schemaName.toLowerCase();
 	let extremaFetches = [];
 	if (isRegression) {
 		extremaFetches = [

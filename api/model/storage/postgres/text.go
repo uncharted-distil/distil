@@ -68,10 +68,32 @@ func (f *TextField) fetchHistogram(dataset string, variable *model.Variable, fil
 }
 
 func (f *TextField) fetchHistogramByResult(dataset string, variable *model.Variable, resultURI string, filterParams *model.FilterParams) (*model.Histogram, error) {
+	// pull filters generated against the result facet out for special handling
+	filters := f.Storage.splitFilters(filterParams)
+
 	// create the filter for the query.
 	wheres := make([]string, 0)
 	params := make([]interface{}, 0)
-	wheres, params = f.Storage.buildFilteredQueryWhere(wheres, params, dataset, filterParams.Filters)
+	wheres, params = f.Storage.buildFilteredQueryWhere(wheres, params, dataset, filters.genericFilters)
+
+	var err error
+	// apply the result filter
+	if filters.predictedFilter != nil {
+		wheres, params, err = f.Storage.buildPredictedResultWhere(wheres, params, dataset, resultURI, filters.predictedFilter)
+		if err != nil {
+			return nil, err
+		}
+	} else if filters.correctnessFilter != nil {
+		wheres, params, err = f.Storage.buildCorrectnessResultWhere(wheres, params, dataset, resultURI, filters.correctnessFilter)
+		if err != nil {
+			return nil, err
+		}
+	} else if filters.errorFilter != nil {
+		wheres, params, err = f.Storage.buildErrorResultWhere(wheres, params, filters.errorFilter)
+		if err != nil {
+			return nil, err
+		}
+	}
 
 	params = append(params, resultURI)
 
@@ -221,25 +243,43 @@ func (f *TextField) parseBivariateHistogram(rows *pgx.Rows, variable *model.Vari
 func (f *TextField) FetchPredictedSummaryData(resultURI string, dataset string, datasetResult string, variable *model.Variable, filterParams *model.FilterParams, extrema *model.Extrema) (*model.Histogram, error) {
 	targetName := variable.Name
 
+	// pull filters generated against the result facet out for special handling
+	filters := f.Storage.splitFilters(filterParams)
+
+	// create the filter for the query.
 	wheres := make([]string, 0)
 	params := make([]interface{}, 0)
-	wheres, params = f.Storage.buildFilteredQueryWhere(wheres, params, dataset, filterParams.Filters)
+	wheres, params = f.Storage.buildFilteredQueryWhere(wheres, params, dataset, filters.genericFilters)
+
+	var err error
+	// apply the predicted result filter
+	if filters.predictedFilter != nil {
+		wheres, params, err = f.Storage.buildPredictedResultWhere(wheres, params, dataset, resultURI, filters.predictedFilter)
+		if err != nil {
+			return nil, err
+		}
+	} else if filters.correctnessFilter != nil {
+		wheres, params, err = f.Storage.buildCorrectnessResultWhere(wheres, params, dataset, resultURI, filters.correctnessFilter)
+		if err != nil {
+			return nil, err
+		}
+	} else if filters.errorFilter != nil {
+		wheres, params, err = f.Storage.buildErrorResultWhere(wheres, params, filters.errorFilter)
+		if err != nil {
+			return nil, err
+		}
+	}
 
 	wheres = append(wheres, fmt.Sprintf("result.result_id = $%d AND result.target = $%d ", len(params)+1, len(params)+2))
 	params = append(params, resultURI, targetName)
-
-	where := ""
-	if len(wheres) > 0 {
-		where = fmt.Sprintf("WHERE %s", strings.Join(wheres, " AND "))
-	}
 
 	query := fmt.Sprintf("SELECT word_b.word as \"%s\", word_v.word as value, COUNT(*) as count "+
 		"FROM (SELECT unnest(tsvector_to_array(to_tsvector(base.\"%s\"))) as stem_b, "+
 		"unnest(tsvector_to_array(to_tsvector(result.value))) as stem_v "+
 		"FROM %s AS result INNER JOIN %s AS base ON result.index = base.\"d3mIndex\" "+
-		"%s) r INNER JOIN %s word_b ON r.stem_b = word_b.stem INNER JOIN %s word_v ON r.stem_v = word_v.stem "+
+		"WHERE %s) r INNER JOIN %s word_b ON r.stem_b = word_b.stem INNER JOIN %s word_v ON r.stem_v = word_v.stem "+
 		"GROUP BY word_v.word, word_b.word "+
-		"ORDER BY count desc;", targetName, targetName, datasetResult, dataset, where, wordStemTableName, wordStemTableName)
+		"ORDER BY count desc;", targetName, targetName, datasetResult, dataset, strings.Join(wheres, " AND "), wordStemTableName, wordStemTableName)
 
 	// execute the postgres query
 	res, err := f.Storage.client.Query(query, params...)

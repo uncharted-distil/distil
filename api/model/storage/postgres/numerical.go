@@ -76,28 +76,38 @@ func (f *NumericalField) fetchHistogram(dataset string, variable *model.Variable
 func (f *NumericalField) fetchHistogramByResult(dataset string, variable *model.Variable, resultURI string, filterParams *model.FilterParams, extrema *model.Extrema) (*model.Histogram, error) {
 
 	// pull filters generated against the result facet out for special handling
-	splitFilters := f.Storage.splitFilters(filterParams)
+	filters := f.Storage.splitFilters(filterParams)
 
 	// create the filter for the query.
 	wheres := make([]string, 0)
 	params := make([]interface{}, 0)
-	wheres, params = f.Storage.buildFilteredQueryWhere(wheres, params, dataset, splitFilters.genericFilters)
+	wheres, params = f.Storage.buildFilteredQueryWhere(wheres, params, dataset, filters.genericFilters)
 
 	var err error
 	// apply the result filter
-	if splitFilters.predictedFilter != nil {
-		wheres, params, err = f.Storage.buildPredictedResultWhere(wheres, params, dataset, resultURI, splitFilters.predictedFilter)
+	if filters.predictedFilter != nil {
+		wheres, params, err = f.Storage.buildPredictedResultWhere(wheres, params, dataset, resultURI, filters.predictedFilter)
 		if err != nil {
 			return nil, err
 		}
-	} else if splitFilters.errorFilter != nil {
-		wheres, params, err = f.Storage.buildErrorResultWhere(wheres, params, splitFilters.errorFilter)
+	} else if filters.correctnessFilter != nil {
+		wheres, params, err = f.Storage.buildCorrectnessResultWhere(wheres, params, dataset, resultURI, filters.correctnessFilter)
+		if err != nil {
+			return nil, err
+		}
+	} else if filters.errorFilter != nil {
+		wheres, params, err = f.Storage.buildErrorResultWhere(wheres, params, filters.errorFilter)
 		if err != nil {
 			return nil, err
 		}
 	}
 
 	params = append(params, resultURI)
+
+	where := ""
+	if len(wheres) > 0 {
+		where = fmt.Sprintf("AND %s", strings.Join(wheres, " AND "))
+	}
 
 	// need the extrema to calculate the histogram interval
 	if extrema == nil {
@@ -112,11 +122,6 @@ func (f *NumericalField) fetchHistogramByResult(dataset string, variable *model.
 	// for each returned aggregation, create a histogram aggregation. Bucket
 	// size is derived from the min/max and desired bucket count.
 	histogramName, bucketQuery, histogramQuery := f.getHistogramAggQuery(extrema)
-
-	where := ""
-	if len(wheres) > 0 {
-		where = fmt.Sprintf("AND %s", strings.Join(wheres, " AND "))
-	}
 
 	// Create the complete query string.
 	query := fmt.Sprintf(`
@@ -313,24 +318,29 @@ func (f *NumericalField) FetchPredictedSummaryData(resultURI string, dataset str
 	histogramName, bucketQuery, histogramQuery := f.getResultHistogramAggQuery(extrema, variable, resultVariable)
 
 	// pull filters generated against the result facet out for special handling
-	splitFilters := f.Storage.splitFilters(filterParams)
+	filters := f.Storage.splitFilters(filterParams)
 
 	// create the filter for the query.
 	wheres := make([]string, 0)
 	params := make([]interface{}, 0)
-	wheres, params = f.Storage.buildFilteredQueryWhere(wheres, params, dataset, splitFilters.genericFilters)
+	wheres, params = f.Storage.buildFilteredQueryWhere(wheres, params, dataset, filters.genericFilters)
 
 	wheres = append(wheres, fmt.Sprintf("result.result_id = $%d AND result.target = $%d ", len(params)+1, len(params)+2))
 	params = append(params, resultURI, variable.Name)
 
 	// apply the result filter
-	if splitFilters.predictedFilter != nil {
-		wheres, params, err = f.Storage.buildPredictedResultWhere(wheres, params, dataset, resultURI, splitFilters.predictedFilter)
+	if filters.predictedFilter != nil {
+		wheres, params, err = f.Storage.buildPredictedResultWhere(wheres, params, dataset, resultURI, filters.predictedFilter)
 		if err != nil {
 			return nil, err
 		}
-	} else if splitFilters.errorFilter != nil {
-		wheres, params, err = f.Storage.buildErrorResultWhere(wheres, params, splitFilters.errorFilter)
+	} else if filters.correctnessFilter != nil {
+		wheres, params, err = f.Storage.buildCorrectnessResultWhere(wheres, params, dataset, resultURI, filters.correctnessFilter)
+		if err != nil {
+			return nil, err
+		}
+	} else if filters.errorFilter != nil {
+		wheres, params, err = f.Storage.buildErrorResultWhere(wheres, params, filters.errorFilter)
 		if err != nil {
 			return nil, err
 		}

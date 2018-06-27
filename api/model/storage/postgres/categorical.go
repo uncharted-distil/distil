@@ -85,6 +85,11 @@ func (f *CategoricalField) fetchHistogramByResult(dataset string, variable *mode
 		if err != nil {
 			return nil, err
 		}
+	} else if filters.errorFilter != nil {
+		wheres, params, err = f.Storage.buildErrorResultWhere(wheres, params, filters.errorFilter)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	params = append(params, resultURI)
@@ -254,6 +259,11 @@ func (f *CategoricalField) FetchPredictedSummaryData(resultURI string, dataset s
 		}
 	} else if filters.correctnessFilter != nil {
 		wheres, params, err = f.Storage.buildCorrectnessResultWhere(wheres, params, dataset, resultURI, filters.correctnessFilter)
+		if err != nil {
+			return nil, err
+		}
+	} else if filters.errorFilter != nil {
+		wheres, params, err = f.Storage.buildErrorResultWhere(wheres, params, filters.errorFilter)
 		if err != nil {
 			return nil, err
 		}

@@ -133,16 +133,21 @@ func (f *TimeSeriesField) fetchHistogramByResult(dataset string, variable *model
 		if err != nil {
 			return nil, err
 		}
+	} else if filters.errorFilter != nil {
+		wheres, params, err = f.Storage.buildErrorResultWhere(wheres, params, filters.errorFilter)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	params = append(params, resultURI)
-
-	prefixedVarName := f.metadataVarName(variable.Name)
 
 	where := ""
 	if len(wheres) > 0 {
 		where = fmt.Sprintf("AND %s", strings.Join(wheres, " AND "))
 	}
+
+	prefixedVarName := f.metadataVarName(variable.Name)
 
 	// Get count by category.
 	query := fmt.Sprintf(
@@ -317,6 +322,11 @@ func (f *TimeSeriesField) FetchPredictedSummaryData(resultURI string, dataset st
 		}
 	} else if filters.correctnessFilter != nil {
 		wheres, params, err = f.Storage.buildCorrectnessResultWhere(wheres, params, dataset, resultURI, filters.correctnessFilter)
+		if err != nil {
+			return nil, err
+		}
+	} else if filters.errorFilter != nil {
+		wheres, params, err = f.Storage.buildErrorResultWhere(wheres, params, filters.errorFilter)
 		if err != nil {
 			return nil, err
 		}

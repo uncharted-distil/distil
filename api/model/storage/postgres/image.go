@@ -86,7 +86,7 @@ func (f *ImageField) fetchHistogram(dataset string, variable *model.Variable, fi
 	}
 
 	// Get count by category.
-	query := fmt.Sprintf("SELECT %s AS \"%s\", COUNT(*) AS count FROM %s%s GROUP BY %s ORDER BY count desc, %s LIMIT %d;",
+	query := fmt.Sprintf("SELECT %s AS \"%s\", COUNT(*) AS count FROM %s %s GROUP BY %s ORDER BY count desc, %s LIMIT %d;",
 		fieldSelect, prefixedVarName, dataset, where, fieldSelect, fieldSelect, catResultLimit)
 
 	// execute the postgres query
@@ -133,16 +133,21 @@ func (f *ImageField) fetchHistogramByResult(dataset string, variable *model.Vari
 		if err != nil {
 			return nil, err
 		}
+	} else if filters.errorFilter != nil {
+		wheres, params, err = f.Storage.buildErrorResultWhere(wheres, params, filters.errorFilter)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	params = append(params, resultURI)
-
-	prefixedVarName := f.metadataVarName(variable.Name)
 
 	where := ""
 	if len(wheres) > 0 {
 		where = fmt.Sprintf("AND %s", strings.Join(wheres, " AND "))
 	}
+
+	prefixedVarName := f.metadataVarName(variable.Name)
 
 	// Get count by category.
 	query := fmt.Sprintf(
@@ -317,6 +322,11 @@ func (f *ImageField) FetchPredictedSummaryData(resultURI string, dataset string,
 		}
 	} else if filters.correctnessFilter != nil {
 		wheres, params, err = f.Storage.buildCorrectnessResultWhere(wheres, params, dataset, resultURI, filters.correctnessFilter)
+		if err != nil {
+			return nil, err
+		}
+	} else if filters.errorFilter != nil {
+		wheres, params, err = f.Storage.buildErrorResultWhere(wheres, params, filters.errorFilter)
 		if err != nil {
 			return nil, err
 		}

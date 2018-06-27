@@ -28,7 +28,6 @@
 					<div class="error-bar-container">
 						<div class="error-bar" v-bind:style="{ 'background-color': errorBarColor(data.item[targetErrorCol]), width: errorBarWidth(data.item[targetErrorCol]), left: errorBarLeft(data.item[targetErrorCol]) }"></div>
 						<div class="error-bar-center"></div>
-						{{data.item[targetErrorCol]}}
 					</div>
 				</template>
 			</b-table>

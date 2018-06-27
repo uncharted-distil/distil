@@ -410,14 +410,14 @@ func (s *Storage) FetchFilteredResults(dataset string, resultURI string, filterP
 		return nil, errors.Wrap(err, "Could not pull variables from ES")
 	}
 
-	// break filters out groups for specific handling
-	filters := s.splitFilters(filterParams)
-
 	// generate variable list for inclusion in query select
 	fields, err := s.buildFilteredResultQueryField(dataset, variables, variable, filterParams.Variables)
 	if err != nil {
 		return nil, errors.Wrap(err, "Could not build field list")
 	}
+
+	// break filters out groups for specific handling
+	filters := s.splitFilters(filterParams)
 
 	// Create the filter portion of the where clause.
 	wheres := make([]string, 0)
