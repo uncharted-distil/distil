@@ -13,8 +13,8 @@
 <!--<link rel="stylesheet" type="text/css" href="css/bootstrap.min.css">-->
 <link rel="stylesheet" href="css/modern-business.css">
 <link rel="stylesheet" href="css/lavish-bootstrap.css">
-<link rel="stylesheet" href="css/customstyles.css?1529688526703516000">
-<link rel="stylesheet" href="css/theme-black.css?1529688526703516000">
+<link rel="stylesheet" href="css/customstyles.css?1530130170673715000">
+<link rel="stylesheet" href="css/theme-black.css?1530130170673715000">
 
 <script src="js/lib/jquery.min.js"></script>
 <script src="js/lib/jquery.cookie.min.js"></script>
@@ -238,8 +238,8 @@ $('#toc').on('click', 'a', function() {
 
 <h2 id="overview">Overview</h2>
 
-<figure id="#create-models-view-close"><a href="#create-models-view"><img class="diagram" src="images/diagrams/create-models.png?1529688526703516000" alt="Create Models" /><figcaption>Click to enlarge</figcaption></a></figure>
-<div class="lightbox-target" id="create-models-view"><img src="images/diagrams/create-models.png?1529688526703516000" /><a class="lightbox-close" href="#create-models-view-close"></a></div>
+<figure id="#create-models-view-close"><a href="#create-models-view"><img class="diagram" src="images/diagrams/create-models.png?1530130170673715000" alt="Create Models" /><figcaption>Click to enlarge</figcaption></a></figure>
+<div class="lightbox-target" id="create-models-view"><img src="images/diagrams/create-models.png?1530130170673715000" /><a class="lightbox-close" href="#create-models-view-close"></a></div>
 
 <h2 id="select-the-features-to-model">Select the features to model</h2>
 
@@ -249,11 +249,11 @@ $('#toc').on('click', 'a', function() {
   <li>
     <p>Click <strong>Add</strong> under the <strong>horsepower</strong> and <strong>cylinders</strong> features.</p>
 
-    <figure><img class="docimage" src="images/workflow/create-models/available-features-add.png?1529688526703516000" alt="Add cylinders to features to model" /></figure>
+    <figure><img class="docimage" src="images/workflow/create-models/available-features-add.png?1530130170673715000" alt="Add cylinders to features to model" /></figure>
 
     <p>In this example, Distil adds the selected features to the list of Features to Model. You can filter or change the <strong>type <sup class="fa fa-sort-desc" aria-hidden="true" style="display: inline;"></sup></strong> of any of the features to model.</p>
 
-    <figure><img class="docimage" src="images/workflow/create-models/features-to-model.png?1529688526703516000" alt="Cylinders and horsepower added as features that inform the prediction made by the model" /></figure>
+    <figure><img class="docimage" src="images/workflow/create-models/features-to-model.png?1530130170673715000" alt="Cylinders and horsepower added as features that inform the prediction made by the model" /></figure>
 
     <div class="panel-group" id="accordion">
  <div class="panel panel-default">
@@ -263,7 +263,7 @@ $('#toc').on('click', 'a', function() {
    <div id="collapseOne" class="panel-collapse collapse noCrossRef">
      <div class="panel-body">
        Click <strong>Remove</strong> under the feature name in the Features to Model pane or click **Remove All** above the list of features.
-       <figure><img class="docimage" src="images/workflow/create-models/features-to-model-remove.png?1529688526703516000" alt="Remove feature from the features to model" /></figure>
+       <figure><img class="docimage" src="images/workflow/create-models/features-to-model-remove.png?1530130170673715000" alt="Remove feature from the features to model" /></figure>
      </div>
    </div>
  </div>
@@ -272,28 +272,28 @@ $('#toc').on('click', 'a', function() {
   <li>
     <p>Note the distribution of categories for the <strong>cylinders</strong> feature. Four, six and eight cylinder engines appear often, while three and five cylinder engines appear much less frequently.</p>
 
-    <figure><img class="docimage" src="images/workflow/create-models/cylinders.png?1529688526703516000" alt="Distribution of cylinder values in the dataset" /></figure>
+    <figure><img class="docimage" src="images/workflow/create-models/cylinders.png?1530130170673715000" alt="Distribution of cylinder values in the dataset" /></figure>
   </li>
   <li>Click the three-cylinder category to view samples that match the value in the Samples to Model From table.</li>
   <li>To exclude these samples from the model, click <span class="fa fa-minus-circle pr-1 exclude-highlight"></span> <strong>Exclude</strong>.
-    <figure><img class="docimage" src="images/workflow/create-models/exclude-category.png?1529688526703516000" alt="Omit records with a specific categorical value" /></figure>
+    <figure><img class="docimage" src="images/workflow/create-models/exclude-category.png?1530130170673715000" alt="Omit records with a specific categorical value" /></figure>
   </li>
   <li>Repeat steps 3–4 for the five-cylinder category as well.</li>
   <li>
     <p>Review the updated Samples to Model From table. Click the column headers to sort by feature and check for extreme values that may indicate problems with the data. Note that one row has a value of <em>0</em> for <strong>horsepower</strong>, which is likely an error.</p>
 
-    <figure><img class="docimage" src="images/workflow/create-models/samples-to-model-from-error.png?1529688526703516000" alt="Record with 0 horsepower value" /></figure>
+    <figure><img class="docimage" src="images/workflow/create-models/samples-to-model-from-error.png?1530130170673715000" alt="Record with 0 horsepower value" /></figure>
   </li>
   <li>To focus on records with this value, drag the slider at the end of the distribution of <strong>horsepower</strong> values to the left so the range ends at <em>5</em>.</li>
   <li>
     <p>To remove these records, click <span class="fa fa-minus-circle pr-1 exclude-highlight"></span> <strong>Exclude</strong>.</p>
 
-    <figure><img class="docimage" src="images/workflow/create-models/features-to-model-range.png?1529688526703516000" alt="Omit records with 0 horsepower" /></figure>
+    <figure><img class="docimage" src="images/workflow/create-models/features-to-model-range.png?1530130170673715000" alt="Omit records with 0 horsepower" /></figure>
   </li>
   <li>
     <p>Click Excluded Samples to review the records you removed. There is a collection of three and five cylinder vehicles, as well as some four cylinder vehicles with horsepower 0.</p>
 
-    <figure><img class="docimage" src="images/workflow/create-models/excluded-samples.png?1529688526703516000" alt="Samples removed from consideration" /></figure>
+    <figure><img class="docimage" src="images/workflow/create-models/excluded-samples.png?1530130170673715000" alt="Samples removed from consideration" /></figure>
   </li>
 </ol>
 
@@ -304,7 +304,7 @@ $('#toc').on('click', 'a', function() {
   <li><a href="#generate-the-models">Generate the models</a> to predict <strong>acceleration</strong> using <strong>horsepower</strong> and <strong>cylinders</strong></li>
 </ul>
 
-<div class="alert alert-warning" role="alert"><i class="fa fa-warning"></i> <b>Important:</b> You must select a target feature and at least one feature to model from before you can proceed.</div>
+<div class="alert alert-warning" role="alert"><i class="fa fa-warning"></i> <b>Important:</b> You must select at least one feature to model from before you can proceed.</div>
 
 <h2 id="export-the-problem">Export the problem</h2>
 
@@ -316,7 +316,7 @@ $('#toc').on('click', 'a', function() {
   <li>Click <strong>Export Problem</strong>.</li>
 </ul>
 
-<figure><img class="docimage" src="images/workflow/create-models/export-problem.png?1529688526703516000" alt="Export Problem" /></figure>
+<figure><img class="docimage" src="images/workflow/create-models/export-problem.png?1530130170673715000" alt="Export Problem" /></figure>
 
 <h2 id="generate-the-models">Generate the Models</h2>
 
@@ -334,7 +334,7 @@ $('#toc').on('click', 'a', function() {
   <li>Click <strong>Create Models</strong>.</li>
 </ul>
 
-<figure><img class="docimage" src="images/workflow/create-models/create-models.png?1529688526703516000" alt="Create models" /></figure>
+<figure><img class="docimage" src="images/workflow/create-models/create-models.png?1530130170673715000" alt="Create models" /></figure>
 
 <p>In this example, Distil will attempt to predict the <strong>acceleration</strong> based on the <strong>horsepower</strong> and <strong>cylinders</strong> features for a subset of the dataset.</p>
 
