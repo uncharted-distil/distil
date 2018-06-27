@@ -2,6 +2,7 @@ import _ from 'lodash';
 import { Store } from 'vuex';
 import { Dictionary } from './dict';
 import { getters as datasetGetters } from '../store/dataset/module';
+import { D3M_INDEX_FIELD } from '../store/dataset/index';
 import { FEATURE_FILTER, CATEGORICAL_FILTER, NUMERICAL_FILTER } from '../util/filters';
 
 const EMAIL_REGEX = /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
@@ -160,7 +161,7 @@ export function getVarType(store: Store<any>, varname: string): string {
 
 export function formatValue(colValue: any, colType: string): any {
 	// If there is no assigned schema, fix precision for a number, pass through otherwise.
-	if (!colType || colType === '') {
+	if (!colType || colType === '' || colType === D3M_INDEX_FIELD) {
 		if (_.isNumber(colValue)) {
 			return _.isInteger(colValue) ? colValue : colValue.toFixed(4);
 		}
@@ -291,7 +292,7 @@ export function getLabelFromType(schemaType: string) {
 	if (_.has(TYPES_TO_LABELS, schemaType)) {
 		return TYPES_TO_LABELS[schemaType];
 	}
-	console.warn(`No label exists for type ${schemaType} - using type as default label`);
+	console.warn(`No label exists for type \`${schemaType}\` - using type as default label`);
 	return schemaType;
 }
 
@@ -302,6 +303,6 @@ export function getTypeFromLabel(label: string) {
 	if (_.has(LABELS_TO_TYPES, label)) {
 		return LABELS_TO_TYPES[label];
 	};
-	console.warn(`No type exists for label ${label}`);
+	console.warn(`No type exists for label \`${label}\``);
 	return label;
 }
