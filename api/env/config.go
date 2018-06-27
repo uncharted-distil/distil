@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+	"path"
 
 	"github.com/caarlos0/env"
 	"github.com/unchartedsoftware/distil/api/util/json"
@@ -82,6 +83,7 @@ type Config struct {
 	RootResourceDirectory              string  `env:"ROOT_RESOURCE_DIRECTORY" envDefault:"http://localhost:8001"`
 	ResourceProxy                      string  `env:"RESOURCE_PROXY" envDefault:"d_22_hy_dataset_TRAIN_dataset"`
 	IngestPrimitive                    bool    `env:"INGEST_PRIMITIVE" envDefault:"false"`
+	IsProblemDiscovery                 bool    `env:"IS_PROBLEM_DISCOVERY" envDefault:"false"`
 }
 
 // LoadConfig loads the config from the environment if necessary and returns a
@@ -98,6 +100,8 @@ func LoadConfig() (Config, error) {
 		if err != nil {
 			return Config{}, err
 		}
+
+		cfg.IsProblemDiscovery = isProblemDiscovery(cfg.D3MInputDir)
 	}
 	return *cfg, nil
 }
@@ -128,14 +132,16 @@ func overideFromStartupFile(cfg *Config) error {
 
 	// override / add values
 
-	result, ok := json.String(startupData, tempStorageRoot)
-	if ok {
-		cfg.D3MInputDir = result
-	}
-
-	result, ok = json.String(startupData, executablesRoot)
+	result, ok := json.String(startupData, executablesRoot)
 	if ok {
 		cfg.D3MOutputDir = result
+	}
+
+	result, ok = json.String(startupData, tempStorageRoot)
+	if ok {
+		cfg.TmpDataPath = result
+	} else {
+		cfg.TmpDataPath = cfg.D3MOutputDir
 	}
 
 	result, ok = json.String(startupData, userProblemsRoot)
@@ -147,11 +153,23 @@ func overideFromStartupFile(cfg *Config) error {
 	if ok {
 		cfg.DataFolderPath = result
 		cfg.InitialDataset = result
+	} else {
+		dataPath := path.Join(cfg.D3MInputDir, "TRAIN", "dataset_TRAIN")
+		cfg.DataFolderPath = dataPath
+		cfg.InitialDataset = dataPath
 	}
 
-	cfg.TmpDataPath = cfg.D3MOutputDir
-	cfg.DataFolderPath = cfg.D3MInputDir
-	cfg.InitialDataset = cfg.D3MInputDir
-
 	return nil
+}
+
+func isProblemDiscovery(inputPath string) bool {
+	// inputPath points to the root folder of a dataset.
+	// If Task 1 (problem discovery) then the train folder will not have
+	// a problem sub folder.
+	isDiscovery := true
+	if _, err := os.Stat(path.Join(inputPath, "TRAIN", "problem_TRAIN")); err == nil {
+		isDiscovery = false
+	}
+
+	return isDiscovery
 }
