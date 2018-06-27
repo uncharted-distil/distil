@@ -17,6 +17,7 @@ const (
 	executablesRoot  = "executables_root"
 	userProblemsRoot = "user_problems_root"
 	trainingDataRoot = "training_data_root"
+	startConfigFile  = "startup-config.json"
 )
 
 var (
@@ -108,9 +109,8 @@ func LoadConfig() (Config, error) {
 
 func overideFromStartupFile(cfg *Config) error {
 	// Override env/default value with the command line value if set.
-	if len(os.Args) > 1 {
-		cfg.StartupConfigFile = os.Args[1]
-	}
+	// startup config file is assumed to be in the input directory.
+	cfg.StartupConfigFile = path.Join(cfg.D3MInputDir, startConfigFile)
 
 	log.Infof("Loading overrides from config file (%s)", cfg.StartupConfigFile)
 
