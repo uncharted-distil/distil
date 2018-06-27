@@ -5,6 +5,7 @@
 
 import _ from 'lodash';
 import { Dictionary } from './dict';
+import { VariableSummary } from '../store/dataset/index';
 import { SolutionState, Solution } from '../store/solutions/index';
 
 export interface NameInfo {
@@ -17,6 +18,10 @@ export interface Task {
 	schemaName: string,
 	metrics: Dictionary<NameInfo>
 };
+
+export function getSolutionSummaryKey(summary: VariableSummary): string {
+	return summary.solutionId ? `${summary.name}:${summary.solutionId}` : summary.name;
+}
 
 // Utility function to return all solution results associated with a given request ID
 export function getSolutionsByRequestIds(state: SolutionState, requestIds: string[]): Solution[] {

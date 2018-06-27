@@ -211,6 +211,7 @@ func main() {
 	registerRoutePost(mux, "/distil/variable-summary/:index/:dataset/:variable", routes.VariableSummaryHandler(pgDataStorageCtor))
 	registerRoutePost(mux, "/distil/results-variable-summary/:index/:dataset/:variable/:min/:max/:results-uuid", routes.ResultVariableSummaryHandler(pgSolutionStorageCtor, pgDataStorageCtor))
 	registerRoutePost(mux, "/distil/residuals-summary/:index/:dataset/:min/:max/:results-uuid", routes.ResidualsSummaryHandler(pgSolutionStorageCtor, pgDataStorageCtor))
+	registerRoutePost(mux, "/distil/correctness-summary/:index/:dataset/:results-uuid", routes.CorrectnessSummaryHandler(pgSolutionStorageCtor, pgDataStorageCtor))
 	registerRoutePost(mux, "/distil/predicted-summary/:index/:dataset/:min/:max/:results-uuid", routes.PredictedSummaryHandler(pgSolutionStorageCtor, pgDataStorageCtor))
 
 	// static

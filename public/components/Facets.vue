@@ -10,9 +10,10 @@ import $ from 'jquery';
 import Vue from 'vue';
 import { Group, CategoricalFacet, isCategoricalFacet, getCategoricalChunkSize } from '../util/facets';
 import { Highlight, RowSelection } from '../store/highlights/index';
+import { VariableSummary } from '../store/dataset/index';
 import { Dictionary } from '../util/dict';
 import { getSelectedRows } from '../util/row';
-
+import { getSolutionSummaryKey } from '../util/solutions';
 import Facets from '@uncharted.software/stories-facets';
 import ImagePreview from '../components/ImagePreview';
 import SparklinePreview from '../components/SparklinePreview';
@@ -361,6 +362,13 @@ export default Vue.extend({
 			return null;
 		},
 
+		getHighlightSummary(highlights: Highlight, key: string): VariableSummary {
+			const highlightSummaries = this.getHighlightSummaries(highlights);
+			return _.find(highlightSummaries, s => {
+				return getSolutionSummaryKey(s) === key;
+			});
+		},
+
 		selectCategoricalFacet(facet: any, count?: number) {
 			if (count === undefined && facet._spec.segments && facet._spec.segments.length > 0) {
 				facet.select(facet._spec.segments);
@@ -511,12 +519,13 @@ export default Vue.extend({
 				}
 				if (facet._histogram) {
 					facet.deselect();
+				} else {
+					this.selectCategoricalFacet(facet);
 				}
-				this.selectCategoricalFacet(facet);
 			});
 
 			const highlightRootValue = this.getHighlightRootValue(highlights);
-			const highlightSummaries = this.getHighlightSummaries(highlights);
+			const highlightSummary = this.getHighlightSummary(highlights, group.key);
 
 			for (const facet of group.facets) {
 
@@ -540,18 +549,14 @@ export default Vue.extend({
 
 					} else {
 
-						const summary = _.find(highlightSummaries, s => {
-							return s.name === group.key;
-						});
-
 						const bars = facet._histogram.bars;
 
-						if (summary && summary.buckets.length === bars.length) {
+						if (highlightSummary && highlightSummary.buckets.length === bars.length) {
 							this.removeSpinnerFromGroup(group);
 
 							const slices = {};
 
-							summary.buckets.forEach((bucket, index) => {
+							highlightSummary.buckets.forEach((bucket, index) => {
 								const entry: any = _.last(bars[index].metadata);
 								slices[entry.label] = bucket.count;
 							});
@@ -581,14 +586,10 @@ export default Vue.extend({
 
 					} else {
 
-						const summary = _.find(highlightSummaries, s => {
-							return s.name === group.key;
-						});
-
-						if (summary) {
+						if (highlightSummary) {
 							this.removeSpinnerFromGroup(group);
 
-							const bucket = _.find(summary.buckets, b => {
+							const bucket = _.find(highlightSummary.buckets, b => {
 								return b.key === facet.value;
 							});
 

@@ -24,12 +24,13 @@ type Bucket struct {
 
 // Histogram represents a single variable histogram.
 type Histogram struct {
-	Name    string    `json:"name"`
-	Type    string    `json:"type"`
-	Dataset string    `json:"dataset"`
-	VarType string    `json:"varType"`
-	NumRows int       `json:"numRows"`
-	Extrema *Extrema  `json:"extrema,omitempty"`
-	Buckets []*Bucket `json:"buckets"`
-	Files   []string  `json:"files"`
+	Name       string    `json:"name"`
+	Type       string    `json:"type"`
+	Dataset    string    `json:"dataset"`
+	VarType    string    `json:"varType"`
+	NumRows    int       `json:"numRows"`
+	Extrema    *Extrema  `json:"extrema,omitempty"`
+	Buckets    []*Bucket `json:"buckets"`
+	Files      []string  `json:"files"`
+	SolutionID string    `json:"solutionId,omitempty"`
 }

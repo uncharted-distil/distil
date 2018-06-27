@@ -23,7 +23,7 @@ export const mutations = {
 		state.highlightValues.summaries.push(summary);
 	},
 
-	updatePredictedHighlightSummaries(state: HighlightState, summary: VariableSummary) {
+	updatePredictedHighlightSummaries(state: HighlightState, summary: VariableSummary, solutionId?: string) {
 		if (!summary) {
 			return;
 		}

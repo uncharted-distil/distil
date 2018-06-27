@@ -3,7 +3,7 @@
 		<div class="request-group-container" :key="request.requestId" v-for="(request, index) in requestGroups">
 
 			<p class="nav-link font-weight-bold">
-				Solution <sup>{{index}}</sup>
+				Run <sup>{{index}}</sup>
 
 				<div v-if="isPending(request.progress)">
 					<b-badge variant="info">{{request.progress}}</b-badge>
