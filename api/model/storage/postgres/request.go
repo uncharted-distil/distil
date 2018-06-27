@@ -297,9 +297,16 @@ func (s *Storage) FetchSolutionResultByDatasetTarget(dataset string, target stri
 		}
 
 		if result != nil {
-			request.Solutions[0].Results = []*model.SolutionResult{
-				result,
-			}
+			request.Solutions[0].Result = result
+		}
+
+		scores, err := s.FetchSolutionScores(solutionID)
+		if err != nil {
+			return nil, errors.Wrap(err, "Unable to parse solution result from Postgres")
+		}
+
+		if scores != nil {
+			request.Solutions[0].Scores = scores
 		}
 
 		requests = append(requests, request)

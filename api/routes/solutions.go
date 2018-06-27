@@ -85,11 +85,11 @@ func SolutionHandler(solutionCtor model.SolutionStorageCtor) func(http.ResponseW
 					Timestamp:  pip.CreatedTime,
 					Progress:   pip.Progress,
 				}
-				for _, res := range pip.Results {
+				if pip.Result != nil {
 					// result
-					solution.Timestamp = res.CreatedTime
-					solution.ResultUUID = res.ResultUUID
-					solution.Progress = res.Progress
+					solution.Timestamp = pip.Result.CreatedTime
+					solution.ResultUUID = pip.Result.ResultUUID
+					solution.Progress = pip.Result.Progress
 				}
 				solutions = append(solutions, solution)
 			}

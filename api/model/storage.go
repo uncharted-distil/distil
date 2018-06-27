@@ -49,11 +49,10 @@ type SolutionStorage interface {
 	FetchRequestFeatures(requestID string) ([]*Feature, error)
 	FetchRequestFilters(requestID string, features []*Feature) (*FilterParams, error)
 	FetchSolution(solutionID string) (*Solution, error)
-	FetchSolutionResultByRequestID(requestID string) ([]*SolutionResult, error)
 	FetchSolutionResultByUUID(resultUUID string) (*SolutionResult, error)
 	FetchSolutionResult(solutionID string) (*SolutionResult, error)
 	FetchSolutionResultByDatasetTarget(dataset string, target string, solutionID string) ([]*Request, error)
-	FetchSolutionScore(solutionID string) ([]*SolutionScore, error)
+	FetchSolutionScores(solutionID string) ([]*SolutionScore, error)
 }
 
 // MetadataStorageCtor represents a client constructor to instantiate a

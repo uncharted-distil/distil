@@ -89,10 +89,10 @@ export function getMetricDisplayName(schemaName: string): string {
 // metrics used in classification tasks
 const classificationMetrics: Dictionary<NameInfo> = {
 	// Limit the metrics since not all are supported.
-	accuracy: {
-		displayName: 'Accuracy',
-		schemaName: 'accuracy'
-	}
+	// accuracy: {
+	// 	displayName: 'Accuracy',
+	// 	schemaName: 'accuracy'
+	// }
 	// Commented out because We are only using accuracy for classification at the moment.
 	//
 	// ,
@@ -100,10 +100,10 @@ const classificationMetrics: Dictionary<NameInfo> = {
 	// 	displayName: 'F1',
 	// 	schemaName: 'f1',
 	// },
-	// f1Micro: {
-	// 	displayName: 'F1 Micro',
-	// 	schemaName: 'f1_micro'
-	// },
+	f1Micro: {
+		displayName: 'F1 Micro',
+		schemaName: 'f1_micro'
+	}
 	// f1Macro: {
 	// 	displayName: 'F1 Macro',
 	// 	schemaName: 'f1_macro'
@@ -138,18 +138,18 @@ const regressionMetrics: Dictionary<NameInfo> = {
 	// 	displayName: 'Root Mean Squared Error',
 	// 	schemaName: 'root_mean_squared_error'
 	// },
-	// meanSquaredError: {
-	// 	displayName: 'Mean Squared Error',
-	// 	schemaName: 'mean_squared_error'
-	// },
+	meanSquaredError: {
+		displayName: 'Mean Squared Error',
+		schemaName: 'mean_squared_error'
+	}
 	// meanAbsoluteErr: {
 	// 	displayName: 'Mean Absolute Error',
 	// 	schemaName: 'mean_absolute_error'
 	// },
-	rSquared: {
-		displayName: 'R Squared',
-		schemaName: 'r_squared'
-	}
+	// rSquared: {
+	// 	displayName: 'R Squared',
+	// 	schemaName: 'r_squared'
+	// }
 };
 
 const metrics = [classificationMetrics, regressionMetrics];
