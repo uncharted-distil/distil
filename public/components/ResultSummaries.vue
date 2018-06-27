@@ -8,7 +8,7 @@
 		<result-facets
 			:regression="regressionEnabled">
 			</result-facets>
-		<b-btn v-b-modal.export variant="primary" class="check-button" :visible="isExport">Task 2: Export Model</b-btn>
+		<b-btn v-b-modal.export variant="primary" class="check-button" v-if="isExport">Task 2: Export Model</b-btn>
 
 		<b-modal id="export" title="Export" @ok="onExport">
 			<div class="check-message-container">

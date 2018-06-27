@@ -12,7 +12,7 @@
 			</div>
 		</b-modal>
 		<div class="row justify-content-center">
-			<b-button class="export-button" :variant="exportVariant" @click="exportData" :visible="isDiscovery" :disabled="disableExport">
+			<b-button class="export-button" :variant="exportVariant" @click="exportData" v-if="isDiscovery" :disabled="disableExport">
 				Task 1: Export Problem
 			</b-button>
 			<b-button class="create-button" :variant="createVariant" @click="create" :disabled="disableCreate">
