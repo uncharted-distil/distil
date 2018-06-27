@@ -7,5 +7,7 @@ export SOLUTION_COMPUTE_TRACE=true
 export PG_LOG_LEVEL=none # debug, error, warn, info, none
 export SKIP_INGEST=true
 export ROOT_RESOURCE_DIRECTORY=http://localhost:5440
+export TEMP_STORAGE_ROOT=datasets
+export D3MOUTPUTDIR=datasets
 
 witch --cmd="make compile && make fmt && go run main.go" --watch="main.go,api/**/*.go" --ignore=""

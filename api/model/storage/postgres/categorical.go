@@ -201,12 +201,12 @@ func (f *CategoricalField) FetchPredictedSummaryData(resultURI string, dataset s
 	params = append(params, resultURI, targetName)
 
 	query := fmt.Sprintf(
-		`SELECT data."%s", COUNT(*) AS count
+		`SELECT result.value, COUNT(*) AS count
 		 FROM %s AS result INNER JOIN %s AS data ON result.index = data."%s"
 		 WHERE %s
-		 GROUP BY data."%s"
+		 GROUP BY result.value
 		 ORDER BY count desc;`,
-		targetName, datasetResult, dataset, model.D3MIndexFieldName, strings.Join(wheres, " AND "), targetName)
+		datasetResult, dataset, model.D3MIndexFieldName, strings.Join(wheres, " AND "))
 
 	// execute the postgres query
 	res, err := f.Storage.client.Query(query, params...)
