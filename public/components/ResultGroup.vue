@@ -21,6 +21,7 @@
 				:groups="predictedGroups"
 				:highlights="highlights"
 				:instanceName="predictedInstanceName"
+				:row-selection="rowSelection"
 				:html="residualHtml">
 			</facets>
 			<div class="residual-group-container">
@@ -31,6 +32,7 @@
 					:highlights="highlights"
 					:deemphasis="residualThreshold"
 					:instanceName="residualInstanceName"
+					:row-selection="rowSelection"
 					:html="resultHtml">
 				</facets>
 				<div class="residual-center-line"></div>
@@ -41,6 +43,7 @@
 				:groups="correctnessGroups"
 				:highlights="highlights"
 				:instanceName="correctnessInstanceName"
+				:row-selection="rowSelection"
 				:html="residualHtml">
 			</facets>
 		</div>
@@ -61,7 +64,7 @@ import Vue from 'vue';
 import Facets from '../components/Facets';
 import { createGroups, Group } from '../util/facets';
 import { Extrema, VariableSummary } from '../store/dataset/index';
-import { Highlight } from '../store/highlights/index';
+import { Highlight, RowSelection } from '../store/highlights/index';
 import { SOLUTION_COMPLETED, SOLUTION_ERRORED } from '../store/solutions/index';
 import { getPredictedCol, getErrorCol, getCorrectnessCol } from '../util/data';
 import { getters as routeGetters } from '../store/route/module';
@@ -127,6 +130,10 @@ export default Vue.extend({
 				return solution.progress;
 			}
 			return 'unknown';
+		},
+
+		rowSelection(): RowSelection {
+			return routeGetters.getDecodedRowSelection(this.$store);
 		},
 
 		solutionIndex(): number {

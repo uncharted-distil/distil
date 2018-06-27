@@ -8,7 +8,7 @@ import { ES_INDEX } from '../dataset/index';
 import { mutations } from './module';
 import { getWebSocketConnection } from '../../util/ws';
 import { FilterParams } from '../../util/filters';
-import { REGRESSION_TASK } from '../../util/solutions';
+import { REGRESSION_TASK, CLASSIFICATION_TASK } from '../../util/solutions';
 
 const CREATE_SOLUTIONS = 'CREATE_SOLUTIONS';
 const STOP_SOLUTIONS = 'STOP_SOLUTIONS';
@@ -46,6 +46,7 @@ function updateCurrentSolutionResults(context: SolutionContext, req: CreateSolut
 
 	// if this is a regression task, pull extrema as a first step
 	const isRegression = req.task.toLowerCase() === REGRESSION_TASK.schemaName.toLowerCase();
+	const isClassification = req.task.toLowerCase() === CLASSIFICATION_TASK.schemaName.toLowerCase();
 	let extremaFetches = [];
 	if (isRegression) {
 		extremaFetches = [
@@ -82,7 +83,8 @@ function updateCurrentSolutionResults(context: SolutionContext, req: CreateSolut
 			extrema: context.getters.getPredictedExtrema,
 			solutionId: res.solutionId,
 			requestIds: context.getters.getSolutions,
-			variables: context.getters.getActiveSolutionVariables
+			variables: context.getters.getActiveSolutionVariables,
+			includeCorrectness: isClassification
 		});
 	});
 
@@ -97,7 +99,7 @@ function updateCurrentSolutionResults(context: SolutionContext, req: CreateSolut
 				extrema: context.getters.getResidualExtrema
 			});
 		});
-	} else {
+	} else if (isClassification) {
 		context.dispatch('fetchCorrectnessSummary', {
 			dataset: req.dataset,
 			solutionId: res.solutionId
@@ -107,6 +109,7 @@ function updateCurrentSolutionResults(context: SolutionContext, req: CreateSolut
 
 function updateSolutionResults(context: SolutionContext, req: CreateSolutionRequest, res: SolutionStatus) {
 	const isRegression = req.task.toLowerCase() === REGRESSION_TASK.schemaName.toLowerCase();
+	const isClassification = req.task.toLowerCase() === CLASSIFICATION_TASK.schemaName.toLowerCase();
 	let extremaFetches = [];
 	if (isRegression) {
 		extremaFetches = [
@@ -140,7 +143,7 @@ function updateSolutionResults(context: SolutionContext, req: CreateSolutionRequ
 				extrema: context.getters.getResidualExtrema
 			});
 		});
-	} else {
+	} else if (isClassification) {
 		context.dispatch('fetchCorrectnessSummary', {
 			dataset: req.dataset,
 			solutionId: res.solutionId

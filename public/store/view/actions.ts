@@ -128,6 +128,7 @@ export const actions = {
 		const dataset = context.getters.getRouteDataset;
 		const target = context.getters.getRouteTargetVariable;
 		const isRegression = context.getters.isRegression;
+		const isClassification = context.getters.isClassification;
 		const variables = context.getters.getVariables;
 		const requestIds = context.getters.getSolutionRequestIds;
 		const solutionId = context.getters.getRouteSolutionId;
@@ -167,7 +168,8 @@ export const actions = {
 				solutionId: solutionId,
 				requestIds: requestIds,
 				extrema: predictedExtrema,
-				variables: paginatedVariables
+				variables: paginatedVariables,
+				includeCorrectness: isClassification
 			});
 		});
 
@@ -183,7 +185,7 @@ export const actions = {
 					extrema: residualExtrema
 				});
 			});
-		} else {
+		} else if (isClassification) {
 			context.dispatch('fetchCorrectnessSummaries', {
 				dataset: dataset,
 				requestIds: requestIds
@@ -223,6 +225,7 @@ export const actions = {
 		const requestIds = context.getters.getSolutionRequestIds;
 		const solutionId = context.getters.getRouteSolutionId;
 		const predictedExtrema = context.getters.getPredictedExtrema;
+		const isClassification = context.getters.isClassification;
 		const paginatedVariables = context.getters.getResultsPaginatedVariables;
 		const highlightRoot = context.getters.getDecodedHighlightRoot;
 
@@ -233,7 +236,8 @@ export const actions = {
 				solutionId: solutionId,
 				requestIds: requestIds,
 				extrema: predictedExtrema,
-				variables: paginatedVariables
+				variables: paginatedVariables,
+				includeCorrectness: isClassification
 			}),
 			context.dispatch('fetchResultTableData', {
 				dataset: dataset,

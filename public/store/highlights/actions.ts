@@ -196,8 +196,9 @@ export const actions = {
 			});
 	},
 
-	fetchResultHighlightValues(context: HighlightsContext, args: { highlightRoot: HighlightRoot, dataset: string, variables: Variable[], solutionId: string, requestIds: string[], extrema: Extrema }) {
-		return Promise.all([
+	fetchResultHighlightValues(context: HighlightsContext, args: { highlightRoot: HighlightRoot, dataset: string, variables: Variable[], solutionId: string, requestIds: string[], extrema: Extrema, includeCorrectness: boolean }) {
+
+		const ps = [
 			context.dispatch('fetchResultHighlightSamples', {
 				highlightRoot: args.highlightRoot,
 				dataset: args.dataset,
@@ -215,12 +216,16 @@ export const actions = {
 				dataset: args.dataset,
 				requestIds: args.requestIds,
 				extrema: args.extrema
-			}),
-			context.dispatch('fetchCorrectnessHighlightSummaries', {
-				highlightRoot: args.highlightRoot,
-				dataset: args.dataset,
-				requestIds: args.requestIds
 			})
-		]);
+		];
+		if (args.includeCorrectness) {
+			ps.push(
+				context.dispatch('fetchCorrectnessHighlightSummaries', {
+					highlightRoot: args.highlightRoot,
+					dataset: args.dataset,
+					requestIds: args.requestIds
+				}));
+		}
+		return Promise.all(ps);
 	}
 }
