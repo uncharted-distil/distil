@@ -1,7 +1,7 @@
 <template>
 	<div v-bind:class="currentClass"
 		@click="click()">
-		{{name}} <sup>{{index}}</sup> {{timestamp}}
+		{{name}} <sup>{{solutionIndex}}</sup> {{timestamp}}
 		<div v-if="isPending">
 			<b-badge variant="info">{{solutionStatus}}</b-badge>
 			<b-progress
@@ -65,6 +65,7 @@ import { Highlight } from '../store/highlights/index';
 import { SOLUTION_COMPLETED, SOLUTION_ERRORED } from '../store/solutions/index';
 import { getPredictedCol, getErrorCol, getCorrectnessCol } from '../util/data';
 import { getters as routeGetters } from '../store/route/module';
+import { getters as solutionGetters } from '../store/solutions/module';
 import { getSolutionById, getMetricDisplayName } from '../util/solutions';
 import { overlayRouteEntry } from '../util/routes';
 import { getHighlights, updateHighlightRoot, clearHighlightRoot } from '../util/highlights';
@@ -75,7 +76,6 @@ export default Vue.extend({
 
 	props: {
 		name: String,
-		index: Number,
 		timestamp: String,
 		requestId: String,
 		solutionId: String,
@@ -127,6 +127,12 @@ export default Vue.extend({
 				return solution.progress;
 			}
 			return 'unknown';
+		},
+
+		solutionIndex(): number {
+			return _.findIndex(solutionGetters.getSolutions(this.$store), (solution: any) => {
+				return solution.solutionId === this.solutionId;
+			});
 		},
 
 		predictedGroups(): Group[] {

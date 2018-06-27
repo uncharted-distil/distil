@@ -36,5 +36,5 @@ export const getters = {
 	getAvailableVariableSummaries: read(moduleGetters.getAvailableVariableSummaries),
 	getDecodedHighlightRoot: read(moduleGetters.getDecodedHighlightRoot),
 	getDecodedRowSelection: read(moduleGetters.getDecodedRowSelection),
-	getSolutionIndex: read(moduleGetters.getSolutionIndex)
+	getActiveSolutionIndex: read(moduleGetters.getActiveSolutionIndex)
 };

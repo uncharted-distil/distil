@@ -69,7 +69,7 @@ export default Vue.extend({
 		return {
 			hasDefaultedAlready: false
 		};
-	}
+	},
 
 	watch: {
 		targetVariableSummaries() {
