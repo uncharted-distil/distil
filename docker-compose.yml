@@ -27,7 +27,7 @@ resources:
   image:
     docker.uncharted.software/distil_res_server:latest
   ports:
-    - "8001:80"
+    - "5440:5440"
 # nk_classification_rest:
 #   image:
 #     registry.datadrivendiscovery.org/j18_ta1eval/distil/simon:latest

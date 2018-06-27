@@ -10,7 +10,7 @@ func NewSimonStep() *StepData {
 	return NewStepData(
 		&pipeline.Primitive{
 			Id:         "d2fa8df2-6517-3c26-bafc-87b701c4043a",
-			Version:    "1.0.0",
+			Version:    "1.1.1",
 			Name:       "simon",
 			PythonPath: "d3m.primitives.distil.simon",
 		},
@@ -18,16 +18,29 @@ func NewSimonStep() *StepData {
 	)
 }
 
-// NewPunkStep creates a punk PCA-based feature ranking call that can be added to
-// a pipeline.
-// ** TODO: Placeholder.  Not yet in TA1 image.
-func NewPunkStep() *StepData {
+// NewSlothStep creates a Sloth timeseries clustering step.
+func NewSlothStep() *StepData {
 	return NewStepData(
 		&pipeline.Primitive{
-			Id:         "d2fa8df2-6517-3c26-bafc-87b701c4043a",
+			Id:         "77bf4b92-2faa-3e38-bb7e-804131243a7f",
 			Version:    "1.0.0",
-			Name:       "punk",
-			PythonPath: "d3m.primitives.distil.punk",
+			Name:       "Sloth",
+			PythonPath: "d3m.primitives.distil.Sloth.cluster",
+		},
+		[]string{"produce"},
+	)
+}
+
+// NewPCAFeaturesStep creates a PCA-based feature ranking call that can be added to
+// a pipeline.
+// ** TODO: Placeholder.  Not yet in TA1 image.
+func NewPCAFeaturesStep() *StepData {
+	return NewStepData(
+		&pipeline.Primitive{
+			Id:         "04573880-d64f-4791-8932-52b7c3877639",
+			Version:    "3.0.0",
+			Name:       "PCA Features",
+			PythonPath: "d3m.primitives.distil.pcafeatures",
 		},
 		[]string{"produce"},
 	)
@@ -38,7 +51,7 @@ func NewDukeStep() *StepData {
 	return NewStepData(
 		&pipeline.Primitive{
 			Id:         "46612a42-6120-3559-9db9-3aa9a76eb94f",
-			Version:    "1.0.0",
+			Version:    "1.1.1",
 			Name:       "duke",
 			PythonPath: "d3m.primitives.distil.duke",
 		},
@@ -50,8 +63,8 @@ func NewDukeStep() *StepData {
 func NewCrocStep(targetColumns []string, outputLabels []string) *StepData {
 	return NewStepDataWithHyperparameters(
 		&pipeline.Primitive{
-			Id:         "46612a42-6120-3559-9db9-3aa9a76eb94f",
-			Version:    "1.0.0",
+			Id:         "404fae2a-2f0a-4c9b-9ad2-fb1528990561",
+			Version:    "1.2.2",
 			Name:       "croc",
 			PythonPath: "d3m.primitives.distil.croc",
 		},

@@ -118,20 +118,20 @@ func ClassifyPrimitive(index string, dataset string, config *IngestTaskConfig) e
 // RankPrimmitive will rank the dataset using a primitive.
 func RankPrimmitive(index string, dataset string, config *IngestTaskConfig) error {
 	// create & submit the solution request
-	pip, err := description.CreatePunkPipeline("harry", "")
+	pip, err := description.CreatePCAFeaturesPipeline("harry", "")
 	if err != nil {
-		return errors.Wrap(err, "unable to create Punk pipeline")
+		return errors.Wrap(err, "unable to create PCA pipeline")
 	}
 
 	datasetURI, err := submitPrimitive(dataset, pip)
 	if err != nil {
-		return errors.Wrap(err, "unable to run Punk pipeline")
+		return errors.Wrap(err, "unable to run PCA pipeline")
 	}
 
 	// parse primitive response (variable,importance)
 	res, err := result.ParseResultCSV(datasetURI)
 	if err != nil {
-		return errors.Wrap(err, "unable to parse Punk pipeline result")
+		return errors.Wrap(err, "unable to parse PCA pipeline result")
 	}
 
 	ranks := make([]float64, len(res)-1)
@@ -139,7 +139,7 @@ func RankPrimmitive(index string, dataset string, config *IngestTaskConfig) erro
 		if i > 0 {
 			vInt, err := strconv.ParseFloat(v[1].(string), 64)
 			if err != nil {
-				return errors.Wrap(err, "unable to parse Punk rank value")
+				return errors.Wrap(err, "unable to parse PCA rank value")
 			}
 			ranks[i-1] = vInt
 		}

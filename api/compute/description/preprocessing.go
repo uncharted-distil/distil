@@ -90,6 +90,20 @@ func CreateUserDatasetPipeline(name string, description string, allFeatures []*m
 	return pipeline, nil
 }
 
+// CreateSlothPipeline creates a pipeline to peform timeseries clustering on a dataset.
+func CreateSlothPipeline(name string, description string) (*pipeline.PipelineDescription, error) {
+	// insantiate the pipeline
+	pipeline, err := NewBuilder(name, description).
+		Add(NewDatasetToDataframeStep()).
+		Add(NewSlothStep()).
+		Compile()
+
+	if err != nil {
+		return nil, err
+	}
+	return pipeline, nil
+}
+
 // CreateDukePipeline creates a pipeline to peform image featurization on a dataset.
 func CreateDukePipeline(name string, description string) (*pipeline.PipelineDescription, error) {
 	// insantiate the pipeline
@@ -133,12 +147,12 @@ func CreateCrocPipeline(name string, description string, targetColumns []string,
 	return pipeline, nil
 }
 
-// CreatePunkPipeline creates a pipeline to run feature ranking on an input dataset.
-func CreatePunkPipeline(name string, description string) (*pipeline.PipelineDescription, error) {
+// CreatePCAFeaturesPipeline creates a pipeline to run feature ranking on an input dataset.
+func CreatePCAFeaturesPipeline(name string, description string) (*pipeline.PipelineDescription, error) {
 	// insantiate the pipeline
 	pipeline, err := NewBuilder(name, description).
 		Add(NewDatasetToDataframeStep()).
-		Add(NewPunkStep()).
+		Add(NewPCAFeaturesStep()).
 		Compile()
 
 	if err != nil {
