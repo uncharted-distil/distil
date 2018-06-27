@@ -26,7 +26,6 @@ type Client struct {
 	client      pipeline.CoreClient
 	conn        *grpc.ClientConn
 	mu          *sync.Mutex
-	DataDir     string
 	UserAgent   string
 	PullTimeout time.Duration
 	PullMax     int
@@ -37,7 +36,7 @@ type SearchSolutionHandler func(*pipeline.GetSearchSolutionsResultsResponse)
 
 // NewClient creates a new pipline request dispatcher instance. This will establish
 // the connection to the solution server or return an error on fail
-func NewClient(serverAddr string, dataDir string, trace bool, userAgent string,
+func NewClient(serverAddr string, trace bool, userAgent string,
 	pullTimeout time.Duration, pullMax int) (*Client, error) {
 	conn, err := grpc.Dial(
 		serverAddr,
@@ -55,7 +54,6 @@ func NewClient(serverAddr string, dataDir string, trace bool, userAgent string,
 	client := Client{}
 	client.client = pipeline.NewCoreClient(conn)
 	client.conn = conn
-	client.DataDir = dataDir
 	client.UserAgent = userAgent
 	client.PullTimeout = pullTimeout
 	client.PullMax = pullMax

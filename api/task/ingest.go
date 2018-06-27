@@ -140,23 +140,28 @@ func IngestDataset(metaCtor model.MetadataStorageCtor, index string, dataset str
 	if err != nil {
 		return errors.Wrap(err, "unable to featurize all data")
 	}
+	log.Infof("finished featurizing the dataset")
 
 	err = Merge(index, dataset, config)
 	if err != nil {
 		return errors.Wrap(err, "unable to merge all data into a single file")
 	}
+	log.Infof("finished merging the dataset")
 
 	err = classify(index, dataset, config)
 	if err != nil {
 		return errors.Wrap(err, "unable to classify fields")
 	}
+	log.Infof("finished classifying the dataset")
 
 	err = rank(index, dataset, config)
 	if err != nil {
 		return errors.Wrap(err, "unable to rank field importance")
 	}
+	log.Infof("finished ranking the dataset")
 
 	err = summarize(index, dataset, config)
+	log.Infof("finished summarizing the dataset")
 	// NOTE: For now ignore summary errors!
 	//if err != nil {
 	//	return errors.Wrap(err, "unable to summarize the dataset")
@@ -166,6 +171,7 @@ func IngestDataset(metaCtor model.MetadataStorageCtor, index string, dataset str
 	if err != nil {
 		return errors.Wrap(err, "unable to ingest ranked data")
 	}
+	log.Infof("finished ingestig the dataset")
 
 	return nil
 }
