@@ -35,9 +35,6 @@ interface SolutionStatus {
 export type SolutionContext = ActionContext<SolutionState, DistilState>;
 
 function updateCurrentSolutionResults(context: SolutionContext, req: CreateSolutionRequest, res: SolutionStatus) {
-
-	const currentSolutionId = context.getters.getRouteSolutionId;
-
 	// pull new table results
 	context.dispatch('fetchResultTableData', {
 		dataset: req.dataset,
@@ -63,18 +60,15 @@ function updateCurrentSolutionResults(context: SolutionContext, req: CreateSolut
 	}
 
 	Promise.all(extremaFetches).then(() => {
-		// if current solutionId, pull result summaries
-		if (res.solutionId === currentSolutionId) {
-			context.dispatch('fetchTrainingResultSummaries', {
-				dataset: req.dataset,
-				solutionId: res.solutionId,
-				variables: context.getters.getActiveSolutionVariables,
-				extrema: context.getters.getPredictedExtrema
-			});
-		}
 		context.dispatch('fetchPredictedSummary', {
 			dataset: req.dataset,
 			solutionId: res.solutionId,
+			extrema: context.getters.getPredictedExtrema
+		});
+		context.dispatch('fetchTrainingResultSummaries', {
+			dataset: req.dataset,
+			solutionId: res.solutionId,
+			variables: context.getters.getActiveSolutionVariables,
 			extrema: context.getters.getPredictedExtrema
 		});
 		context.dispatch('fetchResultHighlightValues', {
@@ -108,6 +102,7 @@ function updateCurrentSolutionResults(context: SolutionContext, req: CreateSolut
 }
 
 function updateSolutionResults(context: SolutionContext, req: CreateSolutionRequest, res: SolutionStatus) {
+	// if this is a regression task, pull extrema as a first step
 	const isRegression = req.task.toLowerCase() === REGRESSION_TASK.schemaName.toLowerCase();
 	const isClassification = req.task.toLowerCase() === CLASSIFICATION_TASK.schemaName.toLowerCase();
 	let extremaFetches = [];
@@ -124,7 +119,9 @@ function updateSolutionResults(context: SolutionContext, req: CreateSolutionRequ
 			})
 		]
 	}
+
 	Promise.all(extremaFetches).then(() => {
+		// if current solutionId, pull result summaries
 		context.dispatch('fetchPredictedSummary', {
 			dataset: req.dataset,
 			solutionId: res.solutionId,

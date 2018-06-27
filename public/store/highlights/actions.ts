@@ -197,7 +197,6 @@ export const actions = {
 	},
 
 	fetchResultHighlightValues(context: HighlightsContext, args: { highlightRoot: HighlightRoot, dataset: string, variables: Variable[], solutionId: string, requestIds: string[], extrema: Extrema, includeCorrectness: boolean }) {
-
 		const ps = [
 			context.dispatch('fetchResultHighlightSamples', {
 				highlightRoot: args.highlightRoot,
