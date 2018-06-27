@@ -19,7 +19,9 @@ import (
 const (
 	apiExportFile     = "ssapi.json"
 	problemSchemaFile = "schema.json"
-	problemLabelFile  = "labels.csv"
+
+	// ProblemLabelFile is the file listing the exported problems.
+	ProblemLabelFile = "labels.csv"
 )
 
 // ProblemDiscoveryHandler creates a route that saves a discovered problem.
@@ -132,7 +134,7 @@ func ProblemDiscoveryHandler(ctorData model.DataStorageCtor, ctorMeta model.Meta
 		// update the problem listing
 		// the listing is shared between all problems
 		// need to append a row to the listing
-		problemListingFile := path.Join(problemDir, problemLabelFile)
+		problemListingFile := path.Join(problemDir, ProblemLabelFile)
 		problemLabel := fmt.Sprintf("%s,\"user\",\"%s\"\n", problemID, meaningful)
 		f, err := os.OpenFile(problemListingFile, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 		if err != nil {

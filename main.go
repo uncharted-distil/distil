@@ -2,8 +2,10 @@ package main
 
 import (
 	"fmt"
+	"io/ioutil"
 	"net/http"
 	"os"
+	"path"
 	"strings"
 	"syscall"
 	"time"
@@ -120,6 +122,12 @@ func main() {
 		os.Exit(1)
 	}
 	defer solutionClient.Close()
+
+	// reset the exported problem list
+	if config.IsProblemDiscovery {
+		problemListingFile := path.Join(config.UserProblemPath, routes.ProblemLabelFile)
+		ioutil.WriteFile(problemListingFile, []byte("problem_id,system,meaningful"), 0644)
+	}
 
 	// instantiate the REST client for primitives.
 	restClient := rest.NewClient(config.PrimitiveEndPoint)
