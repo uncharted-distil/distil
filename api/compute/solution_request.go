@@ -15,7 +15,6 @@ import (
 	uuid "github.com/satori/go.uuid"
 	"github.com/unchartedsoftware/distil/api/compute/description"
 	"github.com/unchartedsoftware/distil/api/pipeline"
-	"github.com/unchartedsoftware/plog"
 
 	"github.com/unchartedsoftware/distil/api/model"
 )
@@ -621,14 +620,12 @@ func CreateSearchSolutionRequest(allFeatures []*model.Variable,
 	task := getTaskType(targetVariable.Type)
 	taskSubType := getTaskSubType(targetVariable.Type)
 	metrics := []string{getMetric(targetVariable.Type)}
-	log.Infof("metrics: %v", metrics)
 
 	// create search solutions request
 	searchRequest, err := createSearchSolutionsRequest(targetIndex, preprocessingPipeline, sourceURI, userAgent, target, dataset, metrics, task, taskSubType, 600)
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to create search solution request")
 	}
-	log.Infof("request: %v", searchRequest)
 
 	return searchRequest, nil
 }
