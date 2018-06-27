@@ -12,7 +12,7 @@
 			</div>
 		</b-modal>
 		<div class="row justify-content-center">
-			<b-button class="export-button" :variant="exportVariant" @click="exportData" :disabled="disableExport">
+			<b-button class="export-button" :variant="exportVariant" @click="exportData" :visible="isDiscovery" :disabled="disableExport">
 				Task 1: Export Problem
 			</b-button>
 			<b-button class="create-button" :variant="createVariant" @click="create" :disabled="disableCreate">
@@ -34,7 +34,7 @@
 import _ from 'lodash';
 import { createRouteEntry } from '../util/routes';
 import { getTask, getMetricDisplayNames, getMetricSchemaName } from '../util/solutions';
-import { actions as appActions } from '../store/app/module';
+import { actions as appActions, getters as appGetters } from '../store/app/module';
 import { getters as datasetGetters } from '../store/dataset/module';
 import { getters as routeGetters } from '../store/route/module';
 import { RESULTS_ROUTE } from '../store/route/index';
@@ -97,6 +97,9 @@ export default Vue.extend({
 		},
 		isPending(): boolean {
 			return this.pending;
+		},
+		isDiscovery(): boolean {
+			return appGetters.isDiscovery(this.$store);
 		},
 		disableCreate(): boolean {
 			return this.isPending || (!this.targetSelected || !this.trainingSelected);

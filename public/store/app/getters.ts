@@ -12,5 +12,9 @@ export const getters = {
 
 	getVersionTimestamp(state: AppState) {
 		return state.versionTimestamp;
+	},
+
+	isDiscovery(state: AppState) {
+		return state.isDiscovery;
 	}
 };

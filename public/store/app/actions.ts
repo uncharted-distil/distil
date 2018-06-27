@@ -60,10 +60,11 @@ export const actions = {
 	},
 
 	fetchVersion(context: AppContext) {
-		return axios.get(`/distil/version`)
+		return axios.get(`/distil/config`)
 			.then(response => {
 				mutations.setVersionNumber(context, response.data.version);
 				mutations.setVersionTimestamp(context, response.data.timestamp);
+				mutations.setIsDiscovery(context, response.data.discovery);
 			})
 			.catch((err: string) => {
 				console.warn(err);
