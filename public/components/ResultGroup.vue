@@ -25,7 +25,8 @@
 			</facets>
 			<div class="residual-group-container">
 				<facets v-if="residualGroups.length" class="residual-container"
-					ignore-highlights
+					@numerical-click="onResidualNumericalClick"
+					@range-change="onResidualRangeChange"
 					:groups="residualGroups"
 					:highlights="highlights"
 					:deemphasis="residualThreshold"
@@ -137,10 +138,7 @@ export default Vue.extend({
 		},
 
 		residualGroups(): Group[] {
-			if (this.residualsSummary) {
-				return createGroups([this.residualsSummary]);
-			}
-			return [];
+			return this.getAndActivateGroups(this.residualsSummary, this.residualInstanceName);
 		},
 
 		highlights(): Highlight {
@@ -221,6 +219,25 @@ export default Vue.extend({
 			updateHighlightRoot(this, {
 				context: context,
 				key: this.predictedColumnName,
+				value: value
+			});
+			this.$emit('range-change', key, value);
+		},
+
+		onResidualNumericalClick(context: string, key: string, value: { from: number, to: number }) {
+			if (!this.highlights.root || this.highlights.root.key !== key) {
+				updateHighlightRoot(this, {
+					context: context,
+					key: this.errorColumnName,
+					value: value
+				});
+			}
+		},
+
+		onResidualRangeChange(context: string, key: string, value: { from: number, to: number }) {
+			updateHighlightRoot(this, {
+				context: context,
+				key: this.errorColumnName,
 				value: value
 			});
 			this.$emit('range-change', key, value);

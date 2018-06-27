@@ -90,7 +90,7 @@ func (e *ExecPipelineRequest) dispatchRequest(client *Client, requestID string) 
 	e.notifyStatus(e.statusChannel, requestID, RequestPendingStatus)
 
 	var firstSolution string
-	var produceCalled bool
+	var fitCalled bool
 	// Search for solutions, this wont return until the produce finishes or it times out.
 	err := client.SearchSolutions(context.Background(), requestID, func(solution *pipeline.GetSearchSolutionsResultsResponse) {
 		// A complete pipeline specification should result in a single solution being generated.  Consider it an
@@ -111,14 +111,23 @@ func (e *ExecPipelineRequest) dispatchRequest(client *Client, requestID string) 
 			e.notifyError(e.statusChannel, requestID, err)
 			e.wg.Done()
 		} else {
-			// search is actively running or has completed - safe to call produce at this point, but we should
+			// search is actively running or has completed - safe to call fit at this point, but we should
 			// only do so once.  A status update with no actual solution ID is valid in the API.
 			e.notifyStatus(e.statusChannel, requestID, RequestRunningStatus)
-			if solution.GetSolutionId() != "" && !produceCalled {
-				produceCalled = true
-				e.dispatchProduce(e.statusChannel, client, requestID, solution.GetSolutionId())
+			if solution.GetSolutionId() != "" && !fitCalled {
+				fitCalled = true
+				fittedSolutionID := e.dispatchFit(e.statusChannel, client, requestID, solution.GetSolutionId())
+				if fittedSolutionID == "" {
+					e.wg.Done()
+					return
+				}
+
+				// fit complete, safe to produce results
+				e.notifyStatus(e.statusChannel, requestID, RequestRunningStatus)
+				e.dispatchProduce(e.statusChannel, client, requestID, fittedSolutionID)
 				e.wg.Done()
 			}
+
 		}
 	})
 
@@ -131,6 +140,30 @@ func (e *ExecPipelineRequest) dispatchRequest(client *Client, requestID string) 
 
 	// end search
 	e.finished <- client.EndSearch(context.Background(), requestID)
+}
+
+func (e *ExecPipelineRequest) dispatchFit(statusChan chan ExecPipelineStatus, client *Client, requestID string, solutionID string) string {
+	// run produce - this blocks until all responses are returned
+	responses, err := client.GenerateSolutionFit(context.Background(), solutionID, e.datasetURI)
+	if err != nil {
+		e.notifyError(statusChan, requestID, err)
+		return ""
+	}
+
+	// find the completed response
+	var completed *pipeline.GetFitSolutionResultsResponse
+	for _, response := range responses {
+		if response.Progress.State == pipeline.ProgressState_COMPLETED {
+			completed = response
+			break
+		}
+	}
+	if completed == nil {
+		err := errors.Errorf("no completed response found")
+		e.notifyError(statusChan, requestID, err)
+		return ""
+	}
+	return completed.GetFittedSolutionId()
 }
 
 func (e *ExecPipelineRequest) createProduceSolutionRequest(datsetURI string, solutionID string) *pipeline.ProduceSolutionRequest {
@@ -150,9 +183,9 @@ func (e *ExecPipelineRequest) createProduceSolutionRequest(datsetURI string, sol
 	}
 }
 
-func (e *ExecPipelineRequest) dispatchProduce(statusChan chan ExecPipelineStatus, client *Client, requestID string, solutionID string) {
+func (e *ExecPipelineRequest) dispatchProduce(statusChan chan ExecPipelineStatus, client *Client, requestID string, fittedSolutionID string) {
 	// generate predictions
-	produceRequest := e.createProduceSolutionRequest(e.datasetURI, solutionID)
+	produceRequest := e.createProduceSolutionRequest(e.datasetURI, fittedSolutionID)
 
 	// run produce - this blocks until all responses are returned
 	responses, err := client.GeneratePredictions(context.Background(), produceRequest)

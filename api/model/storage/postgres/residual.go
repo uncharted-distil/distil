@@ -51,7 +51,7 @@ func (s *Storage) FetchResidualsSummary(dataset string, resultURI string, filter
 }
 
 func getErrorTyped(variableName string) string {
-	return fmt.Sprintf("cast(value as double precision) - cast(\"%s\" as double precision)", variableName)
+	return fmt.Sprintf("(cast(value as double precision) - cast(\"%s\" as double precision))", variableName)
 }
 
 func (s *Storage) getResidualsHistogramAggQuery(extrema *model.Extrema, variable *model.Variable, resultVariable *model.Variable) (string, string, string) {
