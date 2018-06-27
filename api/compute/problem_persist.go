@@ -19,7 +19,7 @@ const (
 	problemVersion       = "1.0"
 	problemSchemaVersion = "3.0"
 
-	numericalMetric   = "rSquared"
+	numericalMetric   = "r_squared"
 	categoricalMetric = "accuracy"
 
 	problemTaskTypeNumerical   = "regression"
