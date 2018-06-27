@@ -8,6 +8,8 @@ import (
 	"path"
 
 	"github.com/pkg/errors"
+	"github.com/unchartedsoftware/plog"
+
 	"github.com/unchartedsoftware/distil/api/compute"
 	"github.com/unchartedsoftware/distil/api/model"
 	"github.com/unchartedsoftware/distil/api/util/json"
@@ -87,6 +89,12 @@ func ProblemDiscoveryHandler(ctorData model.DataStorageCtor, ctorMeta model.Meta
 		}
 
 		problemOutputDirectory := path.Join(problemDir, problemID)
+		err = os.MkdirAll(problemOutputDirectory, 0777)
+		if err != nil {
+			handleError(w, err)
+			return
+		}
+		log.Infof("Writing problem information to %s", problemOutputDirectory)
 
 		problemJSON, err := json.Marshal(problem)
 		if err != nil {
@@ -125,7 +133,7 @@ func ProblemDiscoveryHandler(ctorData model.DataStorageCtor, ctorMeta model.Meta
 		// the listing is shared between all problems
 		// need to append a row to the listing
 		problemListingFile := path.Join(problemDir, problemLabelFile)
-		problemLabel := fmt.Sprintf("%s,\"user\"\"%s\"\n", problemID, meaningful)
+		problemLabel := fmt.Sprintf("%s,\"user\",\"%s\"\n", problemID, meaningful)
 		f, err := os.OpenFile(problemListingFile, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 		if err != nil {
 			handleError(w, errors.Wrap(err, "unable to open problem listing"))

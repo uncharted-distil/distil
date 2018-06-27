@@ -1,9 +1,7 @@
 package compute
 
 import (
-	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path"
 	"strconv"
@@ -162,16 +160,6 @@ func CreateProblemSchema(datasetDir string, dataset string, targetVar *model.Var
 	problem := &ProblemPersist{
 		Properties: pProps,
 		Inputs:     pInput,
-	}
-
-	data, err := json.Marshal(problem)
-	if err != nil {
-		return nil, "", errors.Wrap(err, "unable to marshal problem data")
-	}
-
-	err = ioutil.WriteFile(pFilePath, data, 0644)
-	if err != nil {
-		return nil, "", errors.Wrap(err, "Unable to write problem data")
 	}
 
 	return problem, strconv.FormatUint(hash, 10), nil

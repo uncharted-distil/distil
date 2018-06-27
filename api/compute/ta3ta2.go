@@ -24,8 +24,16 @@ var (
 func convertMetricsFromTA3ToTA2(metrics []string) []*pipeline.ProblemPerformanceMetric {
 	var res []*pipeline.ProblemPerformanceMetric
 	for _, metric := range metrics {
+		var metricSet pipeline.PerformanceMetric
+		metricAdjusted, ok := pipeline.PerformanceMetric_value[strings.ToUpper(metric)]
+		if !ok {
+			log.Warnf("undefined performance metric found ('%s') so defaulting to undefined", metric)
+			metricSet = pipeline.PerformanceMetric_METRIC_UNDEFINED
+		} else {
+			metricSet = pipeline.PerformanceMetric(metricAdjusted)
+		}
 		res = append(res, &pipeline.ProblemPerformanceMetric{
-			Metric: pipeline.PerformanceMetric(pipeline.PerformanceMetric_value[strings.ToUpper(metric)]),
+			Metric: metricSet,
 		})
 	}
 	return res
