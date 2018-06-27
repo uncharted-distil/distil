@@ -49,6 +49,8 @@ const (
 	ImageType = "image"
 	// TimeSeriesType is the schema type for Image values
 	TimeSeriesType = "timeseries"
+	// StringType is the schema type for Image values
+	StringType = "string"
 	// UnknownType is the schema type for unknown values
 	UnknownType = "unknown"
 
@@ -135,6 +137,7 @@ var (
 		LatitudeType:  true,
 		FloatType:     true}
 	ta2TypeMap = map[string]string{
+		StringType:      TA2StringType,
 		AddressType:     TA2StringType,
 		IndexType:       TA2IntegerType,
 		IntegerType:     TA2IntegerType,
@@ -159,6 +162,7 @@ var (
 		TimeSeriesType:  TA2TimeSeriesType,
 	}
 	schemaTypeMap = map[string]string{
+		StringType:      StringSchemaType,
 		AddressType:     StringSchemaType,
 		IndexType:       IntegerSchemaType,
 		IntegerType:     IntegerSchemaType,

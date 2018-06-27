@@ -52,7 +52,7 @@ export function getSolutionById(state: SolutionState, solutionId: string): Solut
 // Gets a task object based on a variable type.
 export function getTask(varType: string): Task {
 	const lowerType = _.toLower(varType);
-	return _.get(variableType, lowerType);
+	return _.get(TASKS_BY_VARIABLES, lowerType);
 }
 
 // Gets the display names for the metrics from a given task.
@@ -86,13 +86,13 @@ export function getMetricDisplayName(schemaName: string): string {
 	return undefined;
 }
 
-// metrics used in classification tasks
+// metrics used in CLASSIFICATION_TASK tasks
 const classificationMetrics: Dictionary<NameInfo> = {
 	// Limit the metrics since not all are supported.
-	// accuracy: {
-	// 	displayName: 'Accuracy',
-	// 	schemaName: 'accuracy'
-	// }
+	accuracy: {
+		displayName: 'Accuracy',
+		schemaName: 'accuracy'
+	},
 	// Commented out because We are only using accuracy for classification at the moment.
 	//
 	// ,
@@ -141,51 +141,53 @@ const regressionMetrics: Dictionary<NameInfo> = {
 	meanSquaredError: {
 		displayName: 'Mean Squared Error',
 		schemaName: 'mean_squared_error'
-	}
+	},
 	// meanAbsoluteErr: {
 	// 	displayName: 'Mean Absolute Error',
 	// 	schemaName: 'mean_absolute_error'
 	// },
-	// rSquared: {
-	// 	displayName: 'R Squared',
-	// 	schemaName: 'r_squared'
-	// }
+	rSquared: {
+		displayName: 'R Squared',
+		schemaName: 'r_squared'
+	}
 };
 
 const metrics = [classificationMetrics, regressionMetrics];
 
-// classification task info
-export const classification: Task = {
+// CLASSIFICATION_TASK task info
+export const CLASSIFICATION_TASK: Task = {
 	displayName: 'Classification',
 	schemaName: 'classification',
 	metrics: classificationMetrics,
 };
 
 // regression task info
-export const regression: Task = {
+export const REGRESSION_TASK: Task = {
 	displayName: 'Regression',
 	schemaName: 'regression',
 	metrics: regressionMetrics,
 };
 
 // variable type to task mappings
-const variableType: Dictionary<Task> = {
-	float:  regression,
-	latitude:  regression,
-	longitude:  regression,
-	integer: regression,
-	categorical: classification,
-	ordinal: classification,
-	address: classification,
-	city: classification,
-	state: classification,
-	country: classification,
-	email: classification,
-	phone: classification,
-	postal_code: classification,
-	uri: classification,
-	datetime: classification,
-	text: classification,
-	unknown: classification,
-	boolean: classification
+const TASKS_BY_VARIABLES: Dictionary<Task> = {
+	float:  REGRESSION_TASK,
+	latitude:  REGRESSION_TASK,
+	longitude:  REGRESSION_TASK,
+	integer: REGRESSION_TASK,
+	image: CLASSIFICATION_TASK,
+	timeseries: CLASSIFICATION_TASK,
+	categorical: CLASSIFICATION_TASK,
+	ordinal: CLASSIFICATION_TASK,
+	address: CLASSIFICATION_TASK,
+	city: CLASSIFICATION_TASK,
+	state: CLASSIFICATION_TASK,
+	country: CLASSIFICATION_TASK,
+	email: CLASSIFICATION_TASK,
+	phone: CLASSIFICATION_TASK,
+	postal_code: CLASSIFICATION_TASK,
+	uri: CLASSIFICATION_TASK,
+	datetime: CLASSIFICATION_TASK,
+	text: CLASSIFICATION_TASK,
+	unknown: CLASSIFICATION_TASK,
+	boolean: CLASSIFICATION_TASK
 };
