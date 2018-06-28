@@ -86,7 +86,7 @@ export default Vue.extend({
 					const err = _.toNumber(item[getErrorCol(this.target)]);
 					return err < this.residualThresholdMin || err > this.residualThresholdMax;
 				} else {
-					return item[getTargetCol(this.target)] !== item[getPredictedCol(this.target)]
+					return item[getTargetCol(this.target)] !== item[getPredictedCol(this.target)];
 				}				
 			}).length;
 		},
@@ -105,7 +105,7 @@ export default Vue.extend({
 					const err = _.toNumber(item[getErrorCol(this.target)]);
 					return err < this.residualThresholdMin || err > this.residualThresholdMax;
 				} else {
-					return item[getTargetCol(this.target)] !== item[getPredictedCol(this.target)]
+					return item[getTargetCol(this.target)] !== item[getPredictedCol(this.target)];
 				}
 			}).length;
 		},
