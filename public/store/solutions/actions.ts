@@ -8,7 +8,7 @@ import { ES_INDEX } from '../dataset/index';
 import { mutations } from './module';
 import { getWebSocketConnection } from '../../util/ws';
 import { FilterParams } from '../../util/filters';
-import { REGRESSION_TASK } from '../../util/solutions';
+import { REGRESSION_TASK, CLASSIFICATION_TASK } from '../../util/solutions';
 
 const CREATE_SOLUTIONS = 'CREATE_SOLUTIONS';
 const STOP_SOLUTIONS = 'STOP_SOLUTIONS';
@@ -35,9 +35,6 @@ interface SolutionStatus {
 export type SolutionContext = ActionContext<SolutionState, DistilState>;
 
 function updateCurrentSolutionResults(context: SolutionContext, req: CreateSolutionRequest, res: SolutionStatus) {
-
-	const currentSolutionId = context.getters.getRouteSolutionId;
-
 	// pull new table results
 	context.dispatch('fetchResultTableData', {
 		dataset: req.dataset,
@@ -46,6 +43,68 @@ function updateCurrentSolutionResults(context: SolutionContext, req: CreateSolut
 
 	// if this is a regression task, pull extrema as a first step
 	const isRegression = req.task.toLowerCase() === REGRESSION_TASK.schemaName.toLowerCase();
+	const isClassification = req.task.toLowerCase() === CLASSIFICATION_TASK.schemaName.toLowerCase();
+	let extremaFetches = [];
+	if (isRegression) {
+		extremaFetches = [
+			context.dispatch('fetchResultExtrema', {
+				dataset: req.dataset,
+				variable: req.target,
+				solutionId: res.solutionId
+			}),
+			context.dispatch('fetchPredictedExtrema', {
+				dataset: req.dataset,
+				solutionId: res.solutionId
+			})
+		]
+	}
+
+	Promise.all(extremaFetches).then(() => {
+		context.dispatch('fetchPredictedSummary', {
+			dataset: req.dataset,
+			solutionId: res.solutionId,
+			extrema: context.getters.getPredictedExtrema
+		});
+		context.dispatch('fetchTrainingResultSummaries', {
+			dataset: req.dataset,
+			solutionId: res.solutionId,
+			variables: context.getters.getActiveSolutionVariables,
+			extrema: context.getters.getPredictedExtrema
+		});
+		context.dispatch('fetchResultHighlightValues', {
+			dataset: req.dataset,
+			highlightRoot: context.getters.getDecodedHighlightRoot,
+			extrema: context.getters.getPredictedExtrema,
+			solutionId: res.solutionId,
+			requestIds: context.getters.getSolutions,
+			variables: context.getters.getActiveSolutionVariables,
+			includeCorrectness: isClassification
+		});
+	});
+
+	if (isRegression) {
+		context.dispatch('fetchResidualsExtrema', {
+			dataset: req.dataset,
+			solutionId: res.solutionId
+		}).then(() => {
+			context.dispatch('fetchResidualsSummary', {
+				dataset: req.dataset,
+				solutionId: res.solutionId,
+				extrema: context.getters.getResidualExtrema
+			});
+		});
+	} else if (isClassification) {
+		context.dispatch('fetchCorrectnessSummary', {
+			dataset: req.dataset,
+			solutionId: res.solutionId
+		});
+	}
+}
+
+function updateSolutionResults(context: SolutionContext, req: CreateSolutionRequest, res: SolutionStatus) {
+	// if this is a regression task, pull extrema as a first step
+	const isRegression = req.task.toLowerCase() === REGRESSION_TASK.schemaName.toLowerCase();
+	const isClassification = req.task.toLowerCase() === CLASSIFICATION_TASK.schemaName.toLowerCase();
 	let extremaFetches = [];
 	if (isRegression) {
 		extremaFetches = [
@@ -63,65 +122,6 @@ function updateCurrentSolutionResults(context: SolutionContext, req: CreateSolut
 
 	Promise.all(extremaFetches).then(() => {
 		// if current solutionId, pull result summaries
-		if (res.solutionId === currentSolutionId) {
-			context.dispatch('fetchTrainingResultSummaries', {
-				dataset: req.dataset,
-				solutionId: res.solutionId,
-				variables: context.getters.getActiveSolutionVariables,
-				extrema: context.getters.getPredictedExtrema
-			});
-		}
-		context.dispatch('fetchPredictedSummary', {
-			dataset: req.dataset,
-			solutionId: res.solutionId,
-			extrema: context.getters.getPredictedExtrema
-		});
-		context.dispatch('fetchResultHighlightValues', {
-			dataset: req.dataset,
-			highlightRoot: context.getters.getDecodedHighlightRoot,
-			extrema: context.getters.getPredictedExtrema,
-			solutionId: res.solutionId,
-			requestIds: context.getters.getSolutions,
-			variables: context.getters.getActiveSolutionVariables
-		});
-	});
-
-	if (isRegression) {
-		context.dispatch('fetchResidualsExtrema', {
-			dataset: req.dataset,
-			solutionId: res.solutionId
-		}).then(() => {
-			context.dispatch('fetchResidualsSummary', {
-				dataset: req.dataset,
-				solutionId: res.solutionId,
-				extrema: context.getters.getResidualExtrema
-			});
-		});
-	} else {
-		context.dispatch('fetchCorrectnessSummary', {
-			dataset: req.dataset,
-			solutionId: res.solutionId
-		});
-	}
-}
-
-function updateSolutionResults(context: SolutionContext, req: CreateSolutionRequest, res: SolutionStatus) {
-	const isRegression = req.task.toLowerCase() === REGRESSION_TASK.schemaName.toLowerCase();
-	let extremaFetches = [];
-	if (isRegression) {
-		extremaFetches = [
-			context.dispatch('fetchResultExtrema', {
-				dataset: req.dataset,
-				variable: req.target,
-				solutionId: res.solutionId
-			}),
-			context.dispatch('fetchPredictedExtrema', {
-				dataset: req.dataset,
-				solutionId: res.solutionId
-			})
-		]
-	}
-	Promise.all(extremaFetches).then(() => {
 		context.dispatch('fetchPredictedSummary', {
 			dataset: req.dataset,
 			solutionId: res.solutionId,
@@ -140,7 +140,7 @@ function updateSolutionResults(context: SolutionContext, req: CreateSolutionRequ
 				extrema: context.getters.getResidualExtrema
 			});
 		});
-	} else {
+	} else if (isClassification) {
 		context.dispatch('fetchCorrectnessSummary', {
 			dataset: req.dataset,
 			solutionId: res.solutionId

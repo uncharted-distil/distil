@@ -2,8 +2,10 @@ import { RowSelection, Row } from '../store/highlights/index';
 import { D3M_INDEX_FIELD } from '../store/dataset/index';
 import { getters as routeGetters } from '../store/route/module';
 import { getters as dataGetters } from '../store/dataset/module';
+import { getters as resultsGetters } from '../store/results/module';
 import { overlayRouteEntry } from '../util/routes'
 import { Filter, ROW_FILTER } from '../util/filters';
+import { CREATE_ROUTE, RESULTS_ROUTE } from '../store/route/index';
 import _ from 'lodash';
 import Vue from 'vue';
 
@@ -100,8 +102,18 @@ export function getSelectedRows(component: Vue, selection: RowSelection): Row[] 
 		return [];
 	}
 
-	const includedData = dataGetters.getIncludedTableDataItems(component.$store);
-	const excludedData = dataGetters.getExcludedTableDataItems(component.$store);
+	const path = routeGetters.getRoutePath(component.$store);
+
+	let includedData = [];
+	let excludedData = [];
+
+	if (path === CREATE_ROUTE) {
+		includedData = dataGetters.getIncludedTableDataItems(component.$store);
+		excludedData = dataGetters.getExcludedTableDataItems(component.$store);
+	} else if (path === RESULTS_ROUTE) {
+		includedData = resultsGetters.getIncludedResultTableDataItems(component.$store);
+		excludedData = resultsGetters.getExcludedResultTableDataItems(component.$store);
+	}
 
 	const d3mIndices = {};
 	selection.d3mIndices.forEach(index => {

@@ -68,7 +68,7 @@ export default Vue.extend({
 		},
 
 		solutionIndex(): number {
-			return routeGetters.getSolutionIndex(this.$store);
+			return routeGetters.getActiveSolutionIndex(this.$store);
 		},
 
 		target(): string {

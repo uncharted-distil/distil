@@ -170,7 +170,7 @@ export const getters = {
 		return summaries.filter(summary => !lookup[summary.name.toLowerCase()]);
 	},
 
-	getSolutionIndex(state: Route, getters: any): number {
+	getActiveSolutionIndex(state: Route, getters: any): number {
 		const solutionId = getters.getRouteSolutionId;
 		const solutions = getters.getSolutions;
 		return _.findIndex(solutions, (solution: any) => {

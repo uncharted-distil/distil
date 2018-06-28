@@ -3,7 +3,6 @@ package routes
 import (
 	"net/http"
 	"net/url"
-	"strconv"
 
 	"github.com/pkg/errors"
 	"goji.io/pat"
@@ -11,13 +10,13 @@ import (
 	"github.com/unchartedsoftware/distil/api/model"
 )
 
-// ResidualsSummary contains a fetch result histogram.
-type ResidualsSummary struct {
-	ResidualsSummary *model.Histogram `json:"histogram"`
+// CorrectnessSummary contains a fetch result histogram.
+type CorrectnessSummary struct {
+	CorrectnessSummary *model.Histogram `json:"histogram"`
 }
 
-// ResidualsSummaryHandler bins predicted result data for consumption in a downstream summary view.
-func ResidualsSummaryHandler(solutionCtor model.SolutionStorageCtor, dataCtor model.DataStorageCtor) func(http.ResponseWriter, *http.Request) {
+// CorrectnessSummaryHandler bins predicted result data for consumption in a downstream summary view.
+func CorrectnessSummaryHandler(solutionCtor model.SolutionStorageCtor, dataCtor model.DataStorageCtor) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// extract route parameters
 		dataset := pat.Param(r, "dataset")
@@ -25,16 +24,6 @@ func ResidualsSummaryHandler(solutionCtor model.SolutionStorageCtor, dataCtor mo
 		resultUUID, err := url.PathUnescape(pat.Param(r, "results-uuid"))
 		if err != nil {
 			handleError(w, errors.Wrap(err, "unable to unescape results uuid"))
-			return
-		}
-		extremaMin, err := strconv.ParseFloat(pat.Param(r, "min"), 64)
-		if err != nil {
-			handleError(w, errors.Wrap(err, "unable to parse extrema min"))
-			return
-		}
-		extremaMax, err := strconv.ParseFloat(pat.Param(r, "max"), 64)
-		if err != nil {
-			handleError(w, errors.Wrap(err, "unable to parse extrema max"))
 			return
 		}
 
@@ -71,14 +60,8 @@ func ResidualsSummaryHandler(solutionCtor model.SolutionStorageCtor, dataCtor mo
 			return
 		}
 
-		extrema, err := model.NewExtrema(extremaMin, extremaMax)
-		if err != nil {
-			handleError(w, err)
-			return
-		}
-
 		// fetch summary histogram
-		histogram, err := data.FetchResidualsSummary(dataset, res.ResultURI, filterParams, extrema)
+		histogram, err := data.FetchCorrectnessSummary(dataset, res.ResultURI, filterParams)
 		if err != nil {
 			handleError(w, err)
 			return
@@ -86,8 +69,8 @@ func ResidualsSummaryHandler(solutionCtor model.SolutionStorageCtor, dataCtor mo
 		histogram.SolutionID = res.SolutionID
 
 		// marshall data and sent the response back
-		err = handleJSON(w, PredictedSummary{
-			PredictedSummary: histogram,
+		err = handleJSON(w, CorrectnessSummary{
+			CorrectnessSummary: histogram,
 		})
 		if err != nil {
 			handleError(w, errors.Wrap(err, "unable marshal result histogram into JSON"))

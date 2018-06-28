@@ -140,7 +140,7 @@ export const actions = {
 		getSummaries(context, endPoint, solutions, nameFunc, labelFunc, mutations.updatePredictedHighlightSummaries, filterParams);
 	},
 
-	fetchCorrectnessHighlightSummaries(context: HighlightsContext, args: { highlightRoot: HighlightRoot, dataset: string, requestIds: string[], extrema: Extrema }) {
+	fetchCorrectnessHighlightSummaries(context: HighlightsContext, args: { highlightRoot: HighlightRoot, dataset: string, requestIds: string[]}) {
 		if (!args.dataset) {
 			console.warn('`dataset` argument is missing');
 			return null;
@@ -153,7 +153,7 @@ export const actions = {
 		filterParams = addHighlightToFilterParams(context, filterParams, args.highlightRoot, INCLUDE_FILTER, getVarFromTarget);
 
 		const solutions = getSolutionsByRequestIds(context.rootState.solutionModule, args.requestIds);
-		const endPoint = `/distil/predicted-summary/${ES_INDEX}/${args.dataset}/${args.extrema.min}/${args.extrema.max}`
+		const endPoint = `/distil/correctness-summary/${ES_INDEX}/${args.dataset}`
 		const nameFunc = (p: Solution) => getCorrectnessCol(p.feature);
 		const labelFunc = (p: Solution) => '';
 		getSummaries(context, endPoint, solutions, nameFunc, labelFunc, updateCorrectnessHighlightSummary, filterParams);
@@ -196,8 +196,8 @@ export const actions = {
 			});
 	},
 
-	fetchResultHighlightValues(context: HighlightsContext, args: { highlightRoot: HighlightRoot, dataset: string, variables: Variable[], solutionId: string, requestIds: string[], extrema: Extrema }) {
-		return Promise.all([
+	fetchResultHighlightValues(context: HighlightsContext, args: { highlightRoot: HighlightRoot, dataset: string, variables: Variable[], solutionId: string, requestIds: string[], extrema: Extrema, includeCorrectness: boolean }) {
+		const ps = [
 			context.dispatch('fetchResultHighlightSamples', {
 				highlightRoot: args.highlightRoot,
 				dataset: args.dataset,
@@ -215,13 +215,16 @@ export const actions = {
 				dataset: args.dataset,
 				requestIds: args.requestIds,
 				extrema: args.extrema
-			}),
-			context.dispatch('fetchCorrectnessHighlightSummaries', {
-				highlightRoot: args.highlightRoot,
-				dataset: args.dataset,
-				requestIds: args.requestIds,
-				extrema: args.extrema
 			})
-		]);
+		];
+		if (args.includeCorrectness) {
+			ps.push(
+				context.dispatch('fetchCorrectnessHighlightSummaries', {
+					highlightRoot: args.highlightRoot,
+					dataset: args.dataset,
+					requestIds: args.requestIds
+				}));
+		}
+		return Promise.all(ps);
 	}
 }

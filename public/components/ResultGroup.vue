@@ -1,7 +1,7 @@
 <template>
 	<div v-bind:class="currentClass"
 		@click="click()">
-		{{name}} <sup>{{index}}</sup> {{timestamp}}
+		{{name}} <sup>{{solutionIndex}}</sup> {{timestamp}}
 		<div v-if="isPending">
 			<b-badge variant="info">{{solutionStatus}}</b-badge>
 			<b-progress
@@ -21,6 +21,7 @@
 				:groups="predictedGroups"
 				:highlights="highlights"
 				:instanceName="predictedInstanceName"
+				:row-selection="rowSelection"
 				:html="residualHtml">
 			</facets>
 			<div class="residual-group-container">
@@ -31,6 +32,7 @@
 					:highlights="highlights"
 					:deemphasis="residualThreshold"
 					:instanceName="residualInstanceName"
+					:row-selection="rowSelection"
 					:html="resultHtml">
 				</facets>
 				<div class="residual-center-line"></div>
@@ -41,6 +43,7 @@
 				:groups="correctnessGroups"
 				:highlights="highlights"
 				:instanceName="correctnessInstanceName"
+				:row-selection="rowSelection"
 				:html="residualHtml">
 			</facets>
 		</div>
@@ -61,10 +64,11 @@ import Vue from 'vue';
 import Facets from '../components/Facets';
 import { createGroups, Group } from '../util/facets';
 import { Extrema, VariableSummary } from '../store/dataset/index';
-import { Highlight } from '../store/highlights/index';
+import { Highlight, RowSelection } from '../store/highlights/index';
 import { SOLUTION_COMPLETED, SOLUTION_ERRORED } from '../store/solutions/index';
 import { getPredictedCol, getErrorCol, getCorrectnessCol } from '../util/data';
 import { getters as routeGetters } from '../store/route/module';
+import { getters as solutionGetters } from '../store/solutions/module';
 import { getSolutionById, getMetricDisplayName } from '../util/solutions';
 import { overlayRouteEntry } from '../util/routes';
 import { getHighlights, updateHighlightRoot, clearHighlightRoot } from '../util/highlights';
@@ -75,7 +79,6 @@ export default Vue.extend({
 
 	props: {
 		name: String,
-		index: Number,
 		timestamp: String,
 		requestId: String,
 		solutionId: String,
@@ -127,6 +130,16 @@ export default Vue.extend({
 				return solution.progress;
 			}
 			return 'unknown';
+		},
+
+		rowSelection(): RowSelection {
+			return routeGetters.getDecodedRowSelection(this.$store);
+		},
+
+		solutionIndex(): number {
+			return _.findIndex(solutionGetters.getSolutions(this.$store), (solution: any) => {
+				return solution.solutionId === this.solutionId;
+			});
 		},
 
 		predictedGroups(): Group[] {

@@ -396,7 +396,7 @@ export const actions = {
 
 		// only use extrema if this is the feature variable
 		const solution = getSolutionById(context.rootState.solutionModule, args.solutionId);
-		const endPoint = `/distil/predicted-summary/${ES_INDEX}/${args.dataset}/null/null`;
+		const endPoint = `/distil/correctness-summary/${ES_INDEX}/${args.dataset}`;
 		const nameFunc = (p: Solution) => getCorrectnessCol(p.feature);
 		const labelFunc = (p: Solution) => 'Error Summary';
 
@@ -415,7 +415,7 @@ export const actions = {
 		}
 		// only use extrema if this is the feature variable
 		const solutions = getSolutionsByRequestIds(context.rootState.solutionModule, args.requestIds);
-		const endPoint = `/distil/predicted-summary/${ES_INDEX}/${args.dataset}/null/null`
+		const endPoint = `/distil/correctness-summary/${ES_INDEX}/${args.dataset}`
 		const nameFunc = (p: Solution) => getCorrectnessCol(p.feature);
 		const labelFunc = (p: Solution) => 'Error Summary';
 		getSummaries(context, endPoint, solutions, nameFunc, labelFunc, updateCorrectnessSummary, null);

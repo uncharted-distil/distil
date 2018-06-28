@@ -65,6 +65,12 @@ export default Vue.extend({
 		}
 	},
 
+	data() {
+		return {
+			hasDefaultedAlready: false
+		};
+	},
+
 	watch: {
 		targetVariableSummaries() {
 			this.defaultTargetHighlight();
@@ -83,7 +89,7 @@ export default Vue.extend({
 			}
 
 			// if we have no current highlight, and no filters, highlight default range
-			if (this.highlights.root || this.hasFilters) {
+			if (this.highlights.root || this.hasFilters || this.hasDefaultedAlready) {
 				return;
 			}
 
@@ -93,6 +99,7 @@ export default Vue.extend({
 				} else {
 					this.selectDefaultCategorical();
 				}
+				this.hasDefaultedAlready = true;
 			}
 		},
 		selectDefaultNumerical() {

@@ -19,6 +19,7 @@ type DataStorage interface {
 	FetchFilteredResults(dataset string, resultURI string, filterParams *FilterParams) (*FilteredData, error)
 	FetchPredictedSummary(dataset string, resultURI string, filterParams *FilterParams, extrema *Extrema) (*Histogram, error)
 	FetchResultsExtremaByURI(dataset string, resultURI string) (*Extrema, error)
+	FetchCorrectnessSummary(dataset string, resultURI string, filterParams *FilterParams) (*Histogram, error)
 	FetchResidualsSummary(dataset string, resultURI string, filterParams *FilterParams, extrema *Extrema) (*Histogram, error)
 	FetchResidualsExtremaByURI(dataset string, resultURI string) (*Extrema, error)
 	FetchExtremaByURI(dataset string, resultURI string, variable string) (*Extrema, error)

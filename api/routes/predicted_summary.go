@@ -88,6 +88,7 @@ func PredictedSummaryHandler(solutionCtor model.SolutionStorageCtor, dataCtor mo
 			handleError(w, err)
 			return
 		}
+		histogram.SolutionID = res.SolutionID
 
 		// marshall data and sent the response back
 		err = handleJSON(w, PredictedSummary{

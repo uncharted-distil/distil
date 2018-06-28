@@ -91,11 +91,13 @@ export const getters = {
 			const vmap = getters.getVariableTypesMap;
 			const result = {};
 			for (const col of data.columns) {
-				result[col] = {
-					label: col,
-					type: vmap[col],
-					sortable: true
-				};
+				if (col !== D3M_INDEX_FIELD) {
+					result[col] = {
+						label: col,
+						type: vmap[col],
+						sortable: true
+					};
+				}
 			}
 			return result;
 		}

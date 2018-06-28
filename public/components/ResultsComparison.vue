@@ -4,7 +4,6 @@
 			<p class="nav-link font-weight-bold">Samples Modeled</p>
 			<results-data-table
 				refName="topTable"
-				instanceName="top-results-data-table"
 				:title="topTableTitle"
 				:data-fields="includedResultTableDataFields"
 				:data-items="includedResultTableDataItems"
@@ -12,7 +11,6 @@
 			<br>
 			<results-data-table
 				refName="bottomTable"
-				instanceName="bottom-results-data-table"
 				:title="bottomTableTitle"
 				:data-fields="excludedResultTableDataFields"
 				:data-items="excludedResultTableDataItems"
@@ -22,7 +20,6 @@
 			<p class="nav-link font-weight-bold">Samples Modeled</p>
 			<results-data-table
 				refName="singleTable"
-				instanceName="single-results-data-table"
 				:title="singleTableTitle"
 				:data-fields="includedResultTableDataFields"
 				:data-items="includedResultTableDataItems"

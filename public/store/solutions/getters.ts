@@ -1,7 +1,7 @@
 import _ from 'lodash';
 import moment from 'moment';
 import { Variable } from '../dataset/index';
-import { REGRESSION_TASK, getTask } from '../../util/solutions';
+import { REGRESSION_TASK, CLASSIFICATION_TASK, getTask } from '../../util/solutions';
 import { SolutionState, Solution, SolutionRequest, SOLUTION_RUNNING, SOLUTION_COMPLETED } from './index';
 import { Dictionary } from '../../util/dict';
 import { Stream } from '../../util/ws';
@@ -99,6 +99,14 @@ export const getters = {
 		const targetVariable = variables.find(s => s.name === target);
 		const task = getTask(targetVariable.type);
 		return task.schemaName === REGRESSION_TASK.schemaName;
+	},
+
+	isClassification(state: SolutionState, getters: any): boolean {
+		const variables = getters.getVariables;
+		const target = getters.getRouteTargetVariable;
+		const targetVariable = variables.find(s => s.name === target);
+		const task = getTask(targetVariable.type);
+		return task.schemaName === CLASSIFICATION_TASK.schemaName;
 	},
 
 	getRequestStreams(state: SolutionState, getters: any): Dictionary<Stream> {

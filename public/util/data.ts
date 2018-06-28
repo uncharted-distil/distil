@@ -2,7 +2,7 @@ import _ from 'lodash';
 import axios from 'axios';
 import Vue from 'vue';
 import localStorage from 'store';
-import { Dataset, VariableSummary, SummaryType, TableData, TableRow } from '../store/dataset/index';
+import { Dataset, VariableSummary, SummaryType, TableData, TableRow, D3M_INDEX_FIELD } from '../store/dataset/index';
 import { TargetRow, TableColumn, Variable } from '../store/dataset/index';
 import { Solution, SOLUTION_COMPLETED } from '../store/solutions/index';
 import { Dictionary } from './dict';
@@ -58,7 +58,7 @@ export function removeNonTrainingItems(items: TargetRow[], training: Dictionary<
 	return _.map(items, item => {
 		const row: TargetRow = <TargetRow>{};
 		_.forIn(item, (val, col) => {
-			if (isInTrainingSet(col, training)) {
+			if (isInTrainingSet(col, training) || col === D3M_INDEX_FIELD) {
 				row[col] = val;
 			}
 		});
@@ -361,7 +361,7 @@ export function getTableDataItems(data: TableData, typeMap: Dictionary<string>):
 			const row = {} as TargetRow;
 			resultRow.forEach((colValue, colIndex) => {
 				const colName = data.columns[colIndex];
-				const colType = typeMap[colName];
+				const colType = colName === D3M_INDEX_FIELD ? D3M_INDEX_FIELD : typeMap[colName];
 				row[colName] = formatValue(colValue, colType);
 			});
 			row._key = rowIndex;
@@ -390,6 +390,7 @@ export function getResultDataItems(data: TableData, getters: any): TargetRow[] {
 	resultVariableTypeMap[getTargetCol(targetVarName)] = targetVarType;
 	resultVariableTypeMap[getPredictedCol(targetVarName)] = targetVarType;
 	resultVariableTypeMap[getErrorCol(targetVarName)] = targetVarType;
+
 
 	// Fetch data items using modified type map
 	return getTableDataItems(data, resultVariableTypeMap) as TargetRow[];

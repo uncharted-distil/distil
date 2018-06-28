@@ -125,19 +125,6 @@ func (f *CategoricalField) fetchHistogramByResult(dataset string, variable *mode
 func (f *CategoricalField) parseHistogram(rows *pgx.Rows, variable *model.Variable) (*model.Histogram, error) {
 	termsAggName := model.TermsAggPrefix + variable.Name
 
-	// parse as either one dimension or two dimension category histogram.  This could be collapsed down into a
-	// single function.
-	dimension := len(rows.FieldDescriptions()) - 1
-	if dimension == 1 {
-		return f.parseUnivariateHistogram(rows, variable, termsAggName)
-	} else if dimension == 2 {
-		return f.parseBivariateHistogram(rows, variable, termsAggName)
-	} else {
-		return nil, errors.Errorf("Unhandled dimension of %d for histogram %s", dimension, termsAggName)
-	}
-}
-
-func (f *CategoricalField) parseUnivariateHistogram(rows *pgx.Rows, variable *model.Variable, termsAggName string) (*model.Histogram, error) {
 	// Parse bucket results.
 	buckets := make([]*model.Bucket, 0)
 	min := int64(math.MaxInt32)
@@ -170,65 +157,6 @@ func (f *CategoricalField) parseUnivariateHistogram(rows *pgx.Rows, variable *mo
 		Name:    variable.Name,
 		Type:    model.CategoricalType,
 		VarType: variable.Type,
-		Buckets: buckets,
-		Extrema: &model.Extrema{
-			Min: float64(min),
-			Max: float64(max),
-		},
-	}, nil
-}
-
-func (f *CategoricalField) parseBivariateHistogram(rows *pgx.Rows, variable *model.Variable, termsAggName string) (*model.Histogram, error) {
-	// extract the counts
-	countMap := map[string]map[string]int64{}
-	if rows != nil {
-		for rows.Next() {
-			var predictedTerm string
-			var targetTerm string
-			var bucketCount int64
-			err := rows.Scan(&targetTerm, &predictedTerm, &bucketCount)
-			if err != nil {
-				return nil, errors.Wrap(err, fmt.Sprintf("no %s histogram aggregation found", termsAggName))
-			}
-			if len(countMap[predictedTerm]) == 0 {
-				countMap[predictedTerm] = map[string]int64{}
-			}
-			countMap[predictedTerm][targetTerm] = bucketCount
-		}
-	}
-
-	// convert the extracted counts into buckets suitable for serialization
-	buckets := make([]*model.Bucket, 0)
-	min := int64(math.MaxInt32)
-	max := int64(-math.MaxInt32)
-
-	for predictedKey, targetCounts := range countMap {
-		bucket := model.Bucket{
-			Key:     predictedKey,
-			Count:   0,
-			Buckets: []*model.Bucket{},
-		}
-		for targetKey, count := range targetCounts {
-			targetBucket := model.Bucket{
-				Key:   targetKey,
-				Count: count,
-			}
-			bucket.Count = bucket.Count + count
-			bucket.Buckets = append(bucket.Buckets, &targetBucket)
-		}
-		buckets = append(buckets, &bucket)
-		if bucket.Count < min {
-			min = bucket.Count
-		}
-		if bucket.Count > max {
-			max = bucket.Count
-		}
-	}
-	// assign histogram attributes
-	return &model.Histogram{
-		Name:    variable.Name,
-		VarType: variable.Type,
-		Type:    model.CategoricalType,
 		Buckets: buckets,
 		Extrema: &model.Extrema{
 			Min: float64(min),
@@ -273,12 +201,12 @@ func (f *CategoricalField) FetchPredictedSummaryData(resultURI string, dataset s
 	params = append(params, resultURI, targetName)
 
 	query := fmt.Sprintf(
-		`SELECT data."%s", result.value, COUNT(*) AS count
+		`SELECT result.value, COUNT(*) AS count
 		 FROM %s AS result INNER JOIN %s AS data ON result.index = data."%s"
 		 WHERE %s
-		 GROUP BY result.value, data."%s"
+		 GROUP BY result.value
 		 ORDER BY count desc;`,
-		targetName, datasetResult, dataset, model.D3MIndexFieldName, strings.Join(wheres, " AND "), targetName)
+		datasetResult, dataset, model.D3MIndexFieldName, strings.Join(wheres, " AND "))
 
 	// execute the postgres query
 	res, err := f.Storage.client.Query(query, params...)
