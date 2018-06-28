@@ -3,7 +3,7 @@
 
 		<b-nav-toggle target="nav_collapse"></b-nav-toggle>
 
-		<img src="/images/Pokeball.svg" class="app-icon"></img>
+		<img src="/images/uncharted.svg" class="app-icon"></img>
 		<span class="navbar-brand">Distil</span>
 
 		<b-collapse v-if="!isAborted" is-nav id="nav_collapse">
@@ -52,7 +52,7 @@
 </template>
 
 <script lang="ts">
-import '../assets/images/Pokeball.svg';
+import '../assets/images/uncharted.svg';
 import { gotoHome, gotoSearch, gotoSelectTarget, gotoSelectData, gotoResults } from '../util/nav';
 import { actions as appActions,  getters as appGetters } from '../store/app/module';
 import { getters as routeGetters } from '../store/route/module';
