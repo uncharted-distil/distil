@@ -38,7 +38,7 @@ import { Dictionary } from '../util/dict';
 import { getters as datasetGetters} from '../store/dataset/module';
 import { getters as resultsGetters} from '../store/results/module';
 import { getters as routeGetters} from '../store/route/module';
-import { getErrorCol } from '../util/data';
+import { getErrorCol, getTargetCol, getPredictedCol } from '../util/data';
 import { Variable, TargetRow, TableColumn } from '../store/dataset/index';
 import { getHighlights } from '../util/highlights';
 
@@ -82,8 +82,12 @@ export default Vue.extend({
 
 		includedResultErrors(): number {
 			return this.includedResultTableDataItems.filter(item => {
-				const err = _.toNumber(item[getErrorCol(this.target)]);
-				return err < this.residualThresholdMin || err > this.residualThresholdMax;
+				if (this.regressionEnabled) {
+					const err = _.toNumber(item[getErrorCol(this.target)]);
+					return err < this.residualThresholdMin || err > this.residualThresholdMax;
+				} else {
+					return item[getTargetCol(this.target)] !== item[getPredictedCol(this.target)]
+				}				
 			}).length;
 		},
 
@@ -97,8 +101,12 @@ export default Vue.extend({
 
 		excludedResultErrors(): number {
 			return this.excludedResultTableDataItems.filter(item => {
-				const err = _.toNumber(item[getErrorCol(this.target)]);
-				return err < this.residualThresholdMin || err > this.residualThresholdMax;
+				if (this.regressionEnabled) {
+					const err = _.toNumber(item[getErrorCol(this.target)]);
+					return err < this.residualThresholdMin || err > this.residualThresholdMax;
+				} else {
+					return item[getTargetCol(this.target)] !== item[getPredictedCol(this.target)]
+				}
 			}).length;
 		},
 
