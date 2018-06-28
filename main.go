@@ -126,7 +126,7 @@ func main() {
 	// reset the exported problem list
 	if config.IsProblemDiscovery {
 		problemListingFile := path.Join(config.UserProblemPath, routes.ProblemLabelFile)
-		ioutil.WriteFile(problemListingFile, []byte("problem_id,system,meaningful"), 0644)
+		ioutil.WriteFile(problemListingFile, []byte("problem_id,system,meaningful\n"), 0644)
 	}
 
 	// instantiate the REST client for primitives.

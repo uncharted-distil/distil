@@ -1,6 +1,6 @@
 <template>
 	<div class="create-solutions-form">
-		<b-modal id="export-modal" title="Export Succeeded"
+		<b-modal id="export-success-modal" title="Export Succeeded"
 			@hide="clearExportResults"
 			:visible="!!exportResults"
 			cancel-disabled
@@ -11,8 +11,24 @@
 				<b-btn class="mt-3 close-modal" variant="success" block @click="clearExportResults">OK</b-btn>
 			</div>
 		</b-modal>
+		<b-modal id="export-start-modal" title="Export Problem"
+			:visible="!!meaningful"
+			cancel-disabled
+			hide-header
+			hide-footer>
+			<div class="row justify-content-center">
+				<div>
+					<p>
+						Is this a meaningful problem?
+						<input type="radio" value="Yes" v-model="meaningful">Yes</input>
+						<input type="radio" value="No" v-model="meaningful">No</input>
+					</p>
+				</div>
+				<b-btn class="mt-3 close-modal" variant="success" block @click="exportData">Export</b-btn>
+			</div>
+		</b-modal>
 		<div class="row justify-content-center">
-			<b-button class="export-button" :variant="exportVariant" @click="exportData" v-if="isDiscovery" :disabled="disableExport">
+			<b-button class="export-button" :variant="exportVariant" @click="exportParams" v-if="isDiscovery" :disabled="disableExport">
 				Task 1: Export Problem
 			</b-button>
 			<b-button class="create-button" :variant="createVariant" @click="create" :disabled="disableCreate">
@@ -54,7 +70,8 @@ export default Vue.extend({
 			metric: 'Metric',
 			metricSet: false,
 			exportResults: null,
-			pending: false
+			pending: false,
+			meaningful: null
 		};
 	},
 	computed: {
@@ -147,14 +164,20 @@ export default Vue.extend({
 		},
 
 		// export button handler
+		exportParams() {
+			this.meaningful = true;
+		},
+
 		exportData() {
 			appActions.exportProblem(this.$store, {
 				dataset: this.dataset,
 				target: this.target,
 				filterParams: this.filterParams,
+				meaningful: this.meaningful
 			}).then(res => {
 				this.exportResults = res;
 			});
+			this.meaningful = null;
 		},
 
 		clearExportResults() {

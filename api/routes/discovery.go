@@ -43,7 +43,7 @@ func ProblemDiscoveryHandler(ctorData model.DataStorageCtor, ctorMeta model.Meta
 		}
 
 		// get variable names and ranges out of the params
-		filterParams, err := model.ParseFilterParamsFromJSON(params)
+		filterParams, err := model.ParseFilterParamsFromJSON(params["filterParams"].(map[string]interface{}))
 		if err != nil {
 			handleError(w, err)
 			return

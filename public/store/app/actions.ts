@@ -40,7 +40,7 @@ export const actions = {
 			});
 	},
 
-	exportProblem(context: AppContext, args: { dataset: string, target: string, filterParams: FilterParams }) {
+	exportProblem(context: AppContext, args: { dataset: string, target: string, filterParams: FilterParams, meaningful: string }) {
 		if (!args.dataset) {
 			console.warn('`dataset` argument is missing');
 			return null;
@@ -53,7 +53,11 @@ export const actions = {
 			console.warn('`filters` argument is missing');
 			return null;
 		}
-		return axios.post(`/distil/discovery/${ES_INDEX}/${args.dataset}/${args.target}`, args.filterParams)
+		if (!args.meaningful) {
+			console.warn('`meaningful` argument is missing');
+			return null;
+		}
+		return axios.post(`/distil/discovery/${ES_INDEX}/${args.dataset}/${args.target}`, { filterParams: args.filterParams, meaningful: args.meaningful})
 			.catch(error => {
 				console.error(error);
 			});
