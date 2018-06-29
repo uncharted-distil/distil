@@ -126,7 +126,17 @@ func main() {
 	// reset the exported problem list
 	if config.IsProblemDiscovery {
 		problemListingFile := path.Join(config.UserProblemPath, routes.ProblemLabelFile)
-		ioutil.WriteFile(problemListingFile, []byte("problem_id,system,meaningful\n"), 0644)
+		err = os.MkdirAll(config.UserProblemPath, 0644)
+		if err != nil {
+			log.Errorf("%+v", err)
+			os.Exit(1)
+		}
+
+		err = ioutil.WriteFile(problemListingFile, []byte("problem_id,system,meaningful\n"), 0644)
+		if err != nil {
+			log.Errorf("%+v", err)
+			os.Exit(1)
+		}
 	}
 
 	// instantiate the REST client for primitives.
