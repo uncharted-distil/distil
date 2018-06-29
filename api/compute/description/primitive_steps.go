@@ -119,9 +119,9 @@ func NewUpdateSemanticTypeStep(resourceID string, add []*ColumnUpdate, remove []
 	return NewStepDataWithHyperparameters(
 		&pipeline.Primitive{
 			Id:         "98c79128-555a-4a6b-85fb-d4f4064c94ab",
-			Version:    "0.1.0",
+			Version:    "0.2.0",
 			Name:       "Semantic type updater",
-			PythonPath: "d3m.primitives.datasets.UpdateSemanticTypes",
+			PythonPath: "d3m.primitives.data.UpdateSemanticTypes",
 		},
 		[]string{"produce"},
 		map[string]interface{}{
@@ -136,18 +136,18 @@ func NewUpdateSemanticTypeStep(resourceID string, add []*ColumnUpdate, remove []
 
 // NewRemoveColumnsStep removes columns from an input dataframe.  Columns
 // are specified by name and the match is case insensitive.
-func NewRemoveColumnsStep(resourceID string, colNames []string) (*StepData, error) {
+func NewRemoveColumnsStep(resourceID string, colIndices []int) (*StepData, error) {
 	return NewStepDataWithHyperparameters(
 		&pipeline.Primitive{
 			Id:         "2eeff053-395a-497d-88db-7374c27812e6",
-			Version:    "0.1.0",
+			Version:    "0.2.0",
 			Name:       "Column remover",
-			PythonPath: "d3m.primitives.datasets.RemoveColumns",
+			PythonPath: "d3m.primitives.data.RemoveColumns",
 		},
 		[]string{"produce"},
 		map[string]interface{}{
 			"resource_id": resourceID,
-			"columns":     colNames,
+			"columns":     colIndices,
 		},
 	), nil
 }

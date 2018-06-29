@@ -22,10 +22,10 @@ func CreateUserDatasetPipeline(name string, description string, allFeatures []*m
 	}
 
 	// create a list of features to remove
-	removeFeatures := []string{}
+	removeFeatures := []int{}
 	for _, v := range allFeatures {
 		if !selectedSet[strings.ToLower(v.Name)] {
-			removeFeatures = append(removeFeatures, v.Name)
+			removeFeatures = append(removeFeatures, v.Index)
 		}
 	}
 
