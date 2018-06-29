@@ -15,6 +15,8 @@ const (
 	Variables = "variables"
 	// VarNameField is the field name for the variable name.
 	VarNameField = "colName"
+	// VarIndexField is the field name for the variable index.
+	VarIndexField = "colIndex"
 	// VarRoleField is the field name for the variable role.
 	VarRoleField = "selectedRole"
 	// VarDisplayVariableField is the field name for the display variable.
@@ -43,6 +45,10 @@ func (s *Storage) parseRawVariable(child map[string]interface{}) (*model.Variabl
 	name, ok := json.String(child, VarNameField)
 	if !ok {
 		return nil, errors.New("unable to parse name from variable data")
+	}
+	index, ok := json.Int(child, VarIndexField)
+	if !ok {
+		return nil, errors.New("unable to parse index from variable data")
 	}
 	typ, ok := json.String(child, VarTypeField)
 	if !ok {
@@ -88,6 +94,7 @@ func (s *Storage) parseRawVariable(child map[string]interface{}) (*model.Variabl
 
 	return &model.Variable{
 		Name:             name,
+		Index:            index,
 		Type:             typ,
 		OriginalType:     originalType,
 		Importance:       importance,

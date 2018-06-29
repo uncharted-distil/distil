@@ -110,6 +110,7 @@ func (s *Storage) updateVariables(dataset string, variables []*model.Variable) e
 	for _, v := range variables {
 		serialized = append(serialized, map[string]interface{}{
 			VarNameField:             v.Name,
+			VarIndexField:            v.Index,
 			VarRoleField:             v.Role,
 			VarTypeField:             v.Type,
 			VarOriginalTypeField:     v.OriginalType,
@@ -169,6 +170,7 @@ func (s *Storage) AddVariable(dataset string, varName string, varType string, va
 	// add the new variables
 	vars = append(vars, &model.Variable{
 		Name:             varName,
+		Index:            len(vars),
 		Type:             varType,
 		OriginalType:     varType,
 		OriginalVariable: varName,
