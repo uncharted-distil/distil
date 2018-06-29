@@ -77,7 +77,7 @@ type Config struct {
 	ElasticDatasetPrefix               string  `env:"ES_DATASET_PREFIX" envDefault:"d_"`
 	InitialDataset                     string  `env:"INITIAL_DATASET" envDefault:""`
 	ESDatasetsIndex                    string  `env:"ES_DATASETS_INDEX" envDefault:"datasets"`
-	UserProblemPath                    string  `env:"USER_PROBLEM_PATH" envDefault:"outputs/problems"`
+	UserProblemPath                    string  `env:"USER_PROBLEM_PATH" envDefault:"/outputs/problems"`
 	SkipIngest                         bool    `env:"SKIP_INGEST" envDefault:"false"`
 	ServiceRetryCount                  int     `env:"SERVICE_RETRY_COUNT" envDefault:"10"`
 	VerboseError                       bool    `env:"VERBOSE_ERROR" envDefault:"false"`
