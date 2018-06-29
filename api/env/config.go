@@ -35,7 +35,7 @@ type Config struct {
 	SolutionComputePullMax             int     `env:"SOLUTION_COMPUTE_PULL_MAX" envDefault:"10"`
 	D3MInputDir                        string  `env:"D3MINPUTDIR" envDefault:"datasets"`
 	SolutionComputeTrace               bool    `env:"SOLUTION_COMPUTE_TRACE" envDefault:"false"`
-	D3MOutputDir                       string  `env:"D3MOUTPUTDIR"`
+	D3MOutputDir                       string  `env:"D3MOUTPUTDIR" envDefault:"outputs"`
 	StartupConfigFile                  string  `env:"JSON_CONFIG_PATH" envDefault:"/d3m/config"`
 	PostgresHost                       string  `env:"PG_HOST" envDefault:"localhost"`
 	PostgresPort                       int     `env:"PG_PORT" envDefault:"5432"`
@@ -77,7 +77,7 @@ type Config struct {
 	ElasticDatasetPrefix               string  `env:"ES_DATASET_PREFIX" envDefault:"d_"`
 	InitialDataset                     string  `env:"INITIAL_DATASET" envDefault:""`
 	ESDatasetsIndex                    string  `env:"ES_DATASETS_INDEX" envDefault:"datasets"`
-	UserProblemPath                    string  `env:"USER_PROBLEM_PATH" envDefault:"datasets"`
+	UserProblemPath                    string  `env:"USER_PROBLEM_PATH" envDefault:"outputs/problems"`
 	SkipIngest                         bool    `env:"SKIP_INGEST" envDefault:"false"`
 	ServiceRetryCount                  int     `env:"SERVICE_RETRY_COUNT" envDefault:"10"`
 	VerboseError                       bool    `env:"VERBOSE_ERROR" envDefault:"false"`
