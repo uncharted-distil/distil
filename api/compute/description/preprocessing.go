@@ -13,7 +13,7 @@ const defaultResource = "0"
 // CreateUserDatasetPipeline creates a pipeline description to capture user feature selection and
 // semantic type information.
 func CreateUserDatasetPipeline(name string, description string, allFeatures []*model.Variable,
-	selectedFeatures []string, target string) (*pipeline.PipelineDescription, error) {
+	selectedFeatures []string) (*pipeline.PipelineDescription, error) {
 
 	// save the selected features in a set for quick lookup
 	selectedSet := map[string]bool{}
@@ -21,6 +21,31 @@ func CreateUserDatasetPipeline(name string, description string, allFeatures []*m
 		selectedSet[strings.ToLower(v)] = true
 	}
 
+	// create the feature selection primitive
+	removeFeatures, err := createRemoveFeatures(allFeatures, selectedSet)
+	if err != nil {
+		return nil, err
+	}
+
+	// create the semantic type update primitive
+	updateSemanticTypes, err := createUpdateSemanticTypes(allFeatures, selectedSet)
+	if err != nil {
+		return nil, err
+	}
+
+	// instantiate the pipeline
+	builder := NewBuilder(name, description).Add(removeFeatures)
+	for _, v := range updateSemanticTypes {
+		builder = builder.Add(v)
+	}
+	pipeline, err := builder.AddInferencePoint().Compile()
+	if err != nil {
+		return nil, err
+	}
+	return pipeline, nil
+}
+
+func createRemoveFeatures(allFeatures []*model.Variable, selectedSet map[string]bool) (*StepData, error) {
 	// create a list of features to remove
 	removeFeatures := []int{}
 	for _, v := range allFeatures {
@@ -29,9 +54,30 @@ func CreateUserDatasetPipeline(name string, description string, allFeatures []*m
 		}
 	}
 
-	// create the added/removed semantic types
-	addedTypes := []*ColumnUpdate{}
-	removedTypes := []*ColumnUpdate{}
+	// instantiate the feature remove primitive
+	featureSelect, err := NewRemoveColumnsStep(defaultResource, removeFeatures)
+	if err != nil {
+		return nil, err
+	}
+	return featureSelect, nil
+}
+
+type update struct {
+	removeIndices []int
+	addIndices    []int
+}
+
+func newUpdate() *update {
+	return &update{
+		addIndices:    []int{},
+		removeIndices: []int{},
+	}
+}
+
+func createUpdateSemanticTypes(allFeatures []*model.Variable, selectedSet map[string]bool) ([]*StepData, error) {
+	// create maps of (semantic type, index list) - primitive allows for semantic types to be added to /
+	// remove from multiple columns in a single operation
+	updateMap := map[string]*update{}
 	for _, v := range allFeatures {
 		if selectedSet[strings.ToLower(v.Name)] {
 			addType := model.MapTA2Type(v.Type)
@@ -45,49 +91,45 @@ func CreateUserDatasetPipeline(name string, description string, allFeatures []*m
 
 			// only apply change when types are different
 			if addType != removeType {
-				addedTypes = append(addedTypes, &ColumnUpdate{
-					Name:         v.Name,
-					SemanticType: addType,
-				})
+				if _, ok := updateMap[addType]; !ok {
+					updateMap[addType] = newUpdate()
+				}
+				updateMap[addType].addIndices = append(updateMap[addType].addIndices, v.Index)
 
-				removedTypes = append(removedTypes, &ColumnUpdate{
-					Name:         v.Name,
-					SemanticType: removeType,
-				})
+				if _, ok := updateMap[removeType]; !ok {
+					updateMap[removeType] = newUpdate()
+				}
+				updateMap[removeType].removeIndices = append(updateMap[removeType].removeIndices, v.Index)
 			}
 		}
+	}
 
-		if strings.EqualFold(v.Name, target) {
-			// Add the target role type to the target variable.  TA2 systems can key off of the
-			// problem description or the presence of this semantic type when searching solutions.
-			addedTypes = append(addedTypes, &ColumnUpdate{
-				Name:         v.Name,
-				SemanticType: model.TA2TargetType,
-			})
+	// Copy the created maps into the column update structure used by the primitive
+	semanticTypeUpdates := []*StepData{}
+	for k, v := range updateMap {
+		var addKey string
+		if len(v.addIndices) > 0 {
+			addKey = k
 		}
+		add := &ColumnUpdate{
+			SemanticTypes: []string{addKey},
+			Indices:       v.addIndices,
+		}
+		var removeKey string
+		if len(v.removeIndices) > 0 {
+			removeKey = k
+		}
+		remove := &ColumnUpdate{
+			SemanticTypes: []string{removeKey},
+			Indices:       v.removeIndices,
+		}
+		semanticTypeUpdate, err := NewUpdateSemanticTypeStep(defaultResource, add, remove)
+		if err != nil {
+			return nil, err
+		}
+		semanticTypeUpdates = append(semanticTypeUpdates, semanticTypeUpdate)
 	}
-
-	featureSelect, err := NewRemoveColumnsStep(defaultResource, removeFeatures)
-	if err != nil {
-		return nil, err
-	}
-
-	semanticTypeUpdate, _ := NewUpdateSemanticTypeStep(defaultResource, addedTypes, removedTypes)
-	if err != nil {
-		return nil, err
-	}
-
-	// insantiate the pipeline
-	pipeline, err := NewBuilder(name, description).
-		Add(featureSelect).
-		Add(semanticTypeUpdate).
-		AddInferencePoint().
-		Compile()
-
-	if err != nil {
-		return nil, err
-	}
-	return pipeline, nil
+	return semanticTypeUpdates, nil
 }
 
 // CreateSlothPipeline creates a pipeline to peform timeseries clustering on a dataset.

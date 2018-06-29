@@ -33,7 +33,6 @@ func NewSlothStep() *StepData {
 
 // NewPCAFeaturesStep creates a PCA-based feature ranking call that can be added to
 // a pipeline.
-// ** TODO: Placeholder.  Not yet in TA1 image.
 func NewPCAFeaturesStep() *StepData {
 	return NewStepData(
 		&pipeline.Primitive{
@@ -90,32 +89,17 @@ func NewDatasetToDataframeStep() *StepData {
 	)
 }
 
-// ColumnUpdate defines a column name and a semantic type to add/remove
-// from that column.
+// ColumnUpdate defines a set of column indices to add/remvoe
+// a set of semantic types to/from.
 type ColumnUpdate struct {
-	Name         string
-	SemanticType string
+	Indices       []int
+	SemanticTypes []string
 }
 
 // NewUpdateSemanticTypeStep adds and removes semantic data values from an input
-// dataset.
-func NewUpdateSemanticTypeStep(resourceID string, add []*ColumnUpdate, remove []*ColumnUpdate) (*StepData, error) {
-	// extract into two lists for compatibility with hyperparams interface
-	addNames := []string{}
-	addTypes := []string{}
-
-	for _, val := range add {
-		addNames = append(addNames, val.Name)
-		addTypes = append(addTypes, val.SemanticType)
-	}
-
-	removeNames := []string{}
-	removeTypes := []string{}
-	for _, val := range remove {
-		removeNames = append(removeNames, val.Name)
-		removeTypes = append(removeTypes, val.SemanticType)
-	}
-
+// dataset.  An add of (1, 2), ("type a", "type b") would result in "type a" and "type b"
+// being added to index 1 and 2.
+func NewUpdateSemanticTypeStep(resourceID string, add *ColumnUpdate, remove *ColumnUpdate) (*StepData, error) {
 	return NewStepDataWithHyperparameters(
 		&pipeline.Primitive{
 			Id:         "98c79128-555a-4a6b-85fb-d4f4064c94ab",
@@ -126,10 +110,10 @@ func NewUpdateSemanticTypeStep(resourceID string, add []*ColumnUpdate, remove []
 		[]string{"produce"},
 		map[string]interface{}{
 			"resource_id":    resourceID,
-			"add_columns":    addNames,
-			"add_types":      addTypes,
-			"remove_columns": removeNames,
-			"remove_types":   removeTypes,
+			"add_indices":    add.Indices,
+			"add_types":      add.SemanticTypes,
+			"remove_indices": remove.Indices,
+			"remove_types":   remove.SemanticTypes,
 		},
 	), nil
 }
