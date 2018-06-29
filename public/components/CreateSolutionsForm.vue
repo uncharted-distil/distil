@@ -1,6 +1,6 @@
 <template>
 	<div class="create-solutions-form">
-		<b-modal id="export-modal" title="Export Succeeded"
+		<b-modal id="export-success-modal" title="Export Succeeded"
 			@hide="clearExportResults"
 			:visible="!!exportResults"
 			cancel-disabled
@@ -11,8 +11,24 @@
 				<b-btn class="mt-3 close-modal" variant="success" block @click="clearExportResults">OK</b-btn>
 			</div>
 		</b-modal>
+		<b-modal id="export-start-modal" title="Export Problem"
+			:visible="!!meaningful"
+			cancel-disabled
+			hide-header
+			hide-footer>
+			<div class="row justify-content-center">
+				<div>
+					<p>
+						Is this a meaningful problem?
+						<input type="radio" value="Yes" v-model="meaningful">Yes</input>
+						<input type="radio" value="No" v-model="meaningful">No</input>
+					</p>
+				</div>
+				<b-btn class="mt-3 close-modal" variant="success" block @click="exportData">Export</b-btn>
+			</div>
+		</b-modal>
 		<div class="row justify-content-center">
-			<b-button class="export-button" :variant="exportVariant" @click="exportData" :disabled="disableExport">
+			<b-button class="export-button" :variant="exportVariant" @click="exportParams" v-if="isDiscovery" :disabled="disableExport">
 				Task 1: Export Problem
 			</b-button>
 			<b-button class="create-button" :variant="createVariant" @click="create" :disabled="disableCreate">
@@ -34,7 +50,7 @@
 import _ from 'lodash';
 import { createRouteEntry } from '../util/routes';
 import { getTask, getMetricDisplayNames, getMetricSchemaName } from '../util/solutions';
-import { actions as appActions } from '../store/app/module';
+import { actions as appActions, getters as appGetters } from '../store/app/module';
 import { getters as datasetGetters } from '../store/dataset/module';
 import { getters as routeGetters } from '../store/route/module';
 import { RESULTS_ROUTE } from '../store/route/index';
@@ -54,7 +70,8 @@ export default Vue.extend({
 			metric: 'Metric',
 			metricSet: false,
 			exportResults: null,
-			pending: false
+			pending: false,
+			meaningful: null
 		};
 	},
 	computed: {
@@ -97,6 +114,9 @@ export default Vue.extend({
 		},
 		isPending(): boolean {
 			return this.pending;
+		},
+		isDiscovery(): boolean {
+			return appGetters.isDiscovery(this.$store);
 		},
 		disableCreate(): boolean {
 			return this.isPending || (!this.targetSelected || !this.trainingSelected);
@@ -144,14 +164,20 @@ export default Vue.extend({
 		},
 
 		// export button handler
+		exportParams() {
+			this.meaningful = true;
+		},
+
 		exportData() {
 			appActions.exportProblem(this.$store, {
 				dataset: this.dataset,
 				target: this.target,
 				filterParams: this.filterParams,
+				meaningful: this.meaningful
 			}).then(res => {
 				this.exportResults = res;
 			});
+			this.meaningful = null;
 		},
 
 		clearExportResults() {

@@ -13,4 +13,8 @@ export const mutations = {
 	setVersionTimestamp(state: AppState, versionTimestamp: string) {
 		state.versionTimestamp = versionTimestamp;
 	},
+
+	setIsDiscovery(state: AppState, isDiscovery: boolean) {
+		state.isDiscovery = isDiscovery;
+	},
 };
