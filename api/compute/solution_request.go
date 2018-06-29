@@ -449,10 +449,8 @@ func splitTrainTest(dataset *model.QueriedDataset) (*model.QueriedDataset, *mode
 		Filters:  dataset.Filters,
 		IsTrain:  true,
 		Data: &model.FilteredData{
-			Name:    dataset.Data.Name,
 			NumRows: dataset.Data.NumRows,
 			Columns: dataset.Data.Columns,
-			Types:   dataset.Data.Types,
 			Values:  make([][]interface{}, 0),
 		},
 	}
@@ -461,10 +459,8 @@ func splitTrainTest(dataset *model.QueriedDataset) (*model.QueriedDataset, *mode
 		Filters:  dataset.Filters,
 		IsTrain:  false,
 		Data: &model.FilteredData{
-			Name:    dataset.Data.Name,
 			NumRows: dataset.Data.NumRows,
 			Columns: dataset.Data.Columns,
-			Types:   dataset.Data.Types,
 			Values:  make([][]interface{}, 0),
 		},
 	}

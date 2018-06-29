@@ -18,6 +18,7 @@
 				@facet-click="onResultCategoricalClick"
 				@numerical-click="onResultNumericalClick"
 				@range-change="onResultRangeChange"
+				:solution-id="solutionId"
 				:groups="predictedGroups"
 				:highlights="highlights"
 				:instanceName="predictedInstanceName"
@@ -28,6 +29,7 @@
 				<facets v-if="residualGroups.length" class="residual-container"
 					@numerical-click="onResidualNumericalClick"
 					@range-change="onResidualRangeChange"
+					:solution-id="solutionId"
 					:groups="residualGroups"
 					:highlights="highlights"
 					:deemphasis="residualThreshold"
@@ -40,6 +42,7 @@
 			</div>
 			<facets v-if="correctnessGroups.length" class="result-container"
 				@facet-click="onCorrectnessCategoricalClick"
+				:solution-id="solutionId"
 				:groups="correctnessGroups"
 				:highlights="highlights"
 				:instanceName="correctnessInstanceName"

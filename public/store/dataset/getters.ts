@@ -15,8 +15,8 @@ export const getters = {
 	getVariablesMap(state: DatasetState): Dictionary<Variable> {
 		const map = {};
 		state.variables.forEach(variable => {
-			map[variable.name] = variable;
-			map[variable.name.toLowerCase()] = variable;
+			map[variable.key] = variable;
+			map[variable.key.toLowerCase()] = variable;
 		});
 		return map;
 	},
@@ -24,8 +24,8 @@ export const getters = {
 	getVariableTypesMap(state: DatasetState): Dictionary<string> {
 		const map = {};
 		state.variables.forEach(variable => {
-			map[variable.name] = variable.type;
-			map[variable.name.toLowerCase()] = variable.type;
+			map[variable.key] = variable.type;
+			map[variable.key.toLowerCase()] = variable.type;
 		});
 		return map;
 	},
@@ -47,19 +47,19 @@ export const getters = {
 	},
 
 	getIncludedTableDataItems(state: DatasetState, getters: any): TableRow[] {
-		return getTableDataItems(state.includedTableData, getters.getVariableTypesMap);
+		return getTableDataItems(state.includedTableData);
 	},
 
 	getIncludedTableDataFields(state: DatasetState, getters: any): Dictionary<TableColumn> {
 		const data = state.includedTableData;
 		if (validateData(data)) {
-			const vmap = getters.getVariableTypesMap;
 			const result = {};
 			for (const col of data.columns) {
-				if (col !== D3M_INDEX_FIELD) {
-					result[col] = {
-						label: col,
-						type: vmap[col],
+				if (col.key !== D3M_INDEX_FIELD) {
+					result[col.key] = {
+						label: col.label,
+						key: col.key,
+						type: col.type,
 						sortable: true
 					};
 				}
@@ -82,19 +82,19 @@ export const getters = {
 	},
 
 	getExcludedTableDataItems(state: DatasetState, getters: any): TableRow[] {
-		return getTableDataItems(state.excludedTableData, getters.getVariableTypesMap);
+		return getTableDataItems(state.excludedTableData);
 	},
 
 	getExcludedTableDataFields(state: DatasetState, getters: any): Dictionary<TableColumn> {
 		const data = state.excludedTableData;
 		if (validateData(data)) {
-			const vmap = getters.getVariableTypesMap;
 			const result = {};
 			for (const col of data.columns) {
-				if (col !== D3M_INDEX_FIELD) {
-					result[col] = {
-						label: col,
-						type: vmap[col],
+				if (col.key !== D3M_INDEX_FIELD) {
+					result[col.key] = {
+						label: col.label,
+						key: col.key,
+						type: col.type,
 						sortable: true
 					};
 				}

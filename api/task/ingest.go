@@ -380,7 +380,7 @@ func matchDataset(storage model.MetadataStorage, meta *metadata.Metadata, index 
 	for _, dataset := range datasets {
 		variables := make([]string, 0)
 		for _, v := range dataset.Variables {
-			variables = append(variables, v.Name)
+			variables = append(variables, v.Key)
 		}
 		if meta.DatasetMatches(variables) {
 			// Return the name of the matching set.

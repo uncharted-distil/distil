@@ -109,7 +109,7 @@ func (s *Storage) updateVariables(dataset string, variables []*model.Variable) e
 	var serialized []map[string]interface{}
 	for _, v := range variables {
 		serialized = append(serialized, map[string]interface{}{
-			VarNameField:             v.Name,
+			VarNameField:             v.Key,
 			VarRoleField:             v.Role,
 			VarTypeField:             v.Type,
 			VarOriginalTypeField:     v.OriginalType,
@@ -150,7 +150,7 @@ func (s *Storage) SetDataType(dataset string, varName string, varType string) er
 
 	// Update only the variable we care about
 	for _, v := range vars {
-		if v.Name == varName {
+		if v.Key == varName {
 			v.Type = varType
 		}
 	}
@@ -168,7 +168,8 @@ func (s *Storage) AddVariable(dataset string, varName string, varType string, va
 
 	// add the new variables
 	vars = append(vars, &model.Variable{
-		Name:             varName,
+		Label:            varName,
+		Key:              varName,
 		Type:             varType,
 		OriginalType:     varType,
 		OriginalVariable: varName,
@@ -190,7 +191,7 @@ func (s *Storage) DeleteVariable(dataset string, varName string) error {
 
 	// soft delete the variable
 	for _, v := range vars {
-		if v.Name == varName {
+		if v.Key == varName {
 			v.Deleted = true
 		}
 	}

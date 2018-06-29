@@ -12,17 +12,17 @@ func TestCreateUserDatasetPipeline(t *testing.T) {
 
 	variables := []*model.Variable{
 		{
-			Name:         "test_var_0",
+			Key:          "test_var_0",
 			OriginalType: "ordinal",
 			Type:         "categorical",
 		},
 		{
-			Name:         "test_var_1",
+			Key:          "test_var_1",
 			OriginalType: "categorical",
 			Type:         "integer",
 		},
 		{
-			Name:         "test_var_2",
+			Key:          "test_var_2",
 			OriginalType: "categorical",
 			Type:         "integer",
 		},
@@ -38,7 +38,7 @@ func TestCreateUserDatasetPipelineMappingError(t *testing.T) {
 
 	variables := []*model.Variable{
 		{
-			Name:         "test_var_0",
+			Key:          "test_var_0",
 			OriginalType: "blordinal",
 			Type:         "categorical",
 		},

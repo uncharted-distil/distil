@@ -24,8 +24,8 @@ func CreateUserDatasetPipeline(name string, description string, allFeatures []*m
 	// create a list of features to remove
 	removeFeatures := []string{}
 	for _, v := range allFeatures {
-		if !selectedSet[strings.ToLower(v.Name)] {
-			removeFeatures = append(removeFeatures, v.Name)
+		if !selectedSet[strings.ToLower(v.Key)] {
+			removeFeatures = append(removeFeatures, v.Key)
 		}
 	}
 
@@ -33,35 +33,35 @@ func CreateUserDatasetPipeline(name string, description string, allFeatures []*m
 	addedTypes := []*ColumnUpdate{}
 	removedTypes := []*ColumnUpdate{}
 	for _, v := range allFeatures {
-		if selectedSet[strings.ToLower(v.Name)] {
+		if selectedSet[strings.ToLower(v.Key)] {
 			addType := model.MapTA2Type(v.Type)
 			if addType == "" {
-				return nil, errors.Errorf("variable `%s` internal type `%s` can't be mapped to ta2", v.Name, v.Type)
+				return nil, errors.Errorf("variable `%s` internal type `%s` can't be mapped to ta2", v.Key, v.Type)
 			}
 			removeType := model.MapTA2Type(v.OriginalType)
 			if removeType == "" {
-				return nil, errors.Errorf("remove variable `%s` internal type `%s` can't be mapped to ta2", v.Name, v.OriginalType)
+				return nil, errors.Errorf("remove variable `%s` internal type `%s` can't be mapped to ta2", v.Key, v.OriginalType)
 			}
 
 			// only apply change when types are different
 			if addType != removeType {
 				addedTypes = append(addedTypes, &ColumnUpdate{
-					Name:         v.Name,
+					Name:         v.Key,
 					SemanticType: addType,
 				})
 
 				removedTypes = append(removedTypes, &ColumnUpdate{
-					Name:         v.Name,
+					Name:         v.Key,
 					SemanticType: removeType,
 				})
 			}
 		}
 
-		if strings.EqualFold(v.Name, target) {
+		if strings.EqualFold(v.Key, target) {
 			// Add the target role type to the target variable.  TA2 systems can key off of the
 			// problem description or the presence of this semantic type when searching solutions.
 			addedTypes = append(addedTypes, &ColumnUpdate{
-				Name:         v.Name,
+				Name:         v.Key,
 				SemanticType: model.TA2TargetType,
 			})
 		}

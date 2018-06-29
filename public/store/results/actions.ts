@@ -36,27 +36,27 @@ export const actions = {
 		const promises = [];
 		args.variables.forEach(variable => {
 			const summary = _.find(context.state.resultSummaries, v => {
-				return v.name === variable.name;
+				return v.key === variable.key;
 			});
 
-			const name = variable.name;
-			const label = variable.name;
+			const key = variable.key;
+			const label = variable.label;
 			const dataset = args.dataset;
 
 			if (solution.progress === SOLUTION_ERRORED) {
-				mutations.updateResultSummaries(context, createErrorSummary(name, label, dataset, `No data available due to error`));
+				mutations.updateResultSummaries(context, createErrorSummary(key, label, dataset, `No data available due to error`));
 				return;
 			}
 			// update if none exists, or doesn't match latest resultId
 			if (!summary || summary.resultId !== solution.resultId) {
 				// add placeholder
 				const solutionId = args.solutionId;
-				mutations.updateResultSummaries(context, createPendingSummary(name, label, dataset, solutionId));
+				mutations.updateResultSummaries(context, createPendingSummary(key, label, dataset, solutionId));
 				// fetch summary
 				promises.push(context.dispatch('fetchResultSummary', {
 					dataset: args.dataset,
 					solutionId: args.solutionId,
-					variable: variable.name,
+					variable: variable.key,
 					extrema: args.extrema
 				}));
 			}
@@ -154,7 +154,7 @@ export const actions = {
 			})
 			.catch(error => {
 				console.error(`Failed to fetch results from ${args.solutionId} with error ${error}`);
-				mutations.setIncludedResultTableData(context, createEmptyTableData(args.dataset));
+				mutations.setIncludedResultTableData(context, createEmptyTableData());
 			});
 	},
 
@@ -178,7 +178,7 @@ export const actions = {
 			})
 			.catch(error => {
 				console.error(`Failed to fetch results from ${args.solutionId} with error ${error}`);
-				mutations.setExcludedResultTableData(context, createEmptyTableData(args.dataset));
+				mutations.setExcludedResultTableData(context, createEmptyTableData());
 			});
 	},
 

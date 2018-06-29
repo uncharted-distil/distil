@@ -2,8 +2,7 @@ import _ from 'lodash';
 import axios from 'axios';
 import Vue from 'vue';
 import localStorage from 'store';
-import { Dataset, VariableSummary, SummaryType, TableData, TableRow, D3M_INDEX_FIELD } from '../store/dataset/index';
-import { TargetRow, TableColumn, Variable } from '../store/dataset/index';
+import { Dataset, Variable, VariableSummary, SummaryType, TableData, TableColumn, TableRow, TargetRow, D3M_INDEX_FIELD } from '../store/dataset/index';
 import { Solution, SOLUTION_COMPLETED } from '../store/solutions/index';
 import { Dictionary } from './dict';
 import { mutations as resultMutations } from '../store/results/module';
@@ -46,12 +45,12 @@ export function addRecentDataset(dataset: string) {
 	}
 }
 
-export function isInTrainingSet(col: string, training: Dictionary<boolean>) {
-	return (isPredicted(col) ||
-		isError(col) ||
-		isTarget(col) ||
-		isHiddenField(col) ||
-		training[col]);
+export function isInTrainingSet(key: string, training: Dictionary<boolean>) {
+	return (isPredicted(key) ||
+		isError(key) ||
+		isTarget(key) ||
+		isHiddenField(key) ||
+		training[key]);
 }
 
 export function removeNonTrainingItems(items: TargetRow[], training: Dictionary<boolean>):  TargetRow[] {
@@ -68,9 +67,9 @@ export function removeNonTrainingItems(items: TargetRow[], training: Dictionary<
 
 export function removeNonTrainingFields(fields: Dictionary<TableColumn>, training: Dictionary<boolean>): Dictionary<TableColumn> {
 	const res: Dictionary<TableColumn> = {};
-	_.forIn(fields, (val, col) => {
-		if (isInTrainingSet(col, training)) {
-			res[col] = val;
+	_.forIn(fields, col => {
+		if (isInTrainingSet(col.key, training)) {
+			res[col.key] = col;
 		}
 	});
 	return res;
@@ -79,42 +78,50 @@ export function removeNonTrainingFields(fields: Dictionary<TableColumn>, trainin
 // Identifies column names as one of the special result types.
 // Examples: weight_predicted, weight_error, weight_target
 
-export function isPredicted(col: string): boolean {
-	return col.endsWith(PREDICTED_POSTFIX);
+export function isPredicted(key: string): boolean {
+	return key.endsWith(PREDICTED_POSTFIX);
 }
 
-export function isError(col: string): boolean {
-	return col.endsWith(ERROR_POSTFIX);
+export function isError(key: string): boolean {
+	return key.endsWith(ERROR_POSTFIX);
 }
 
-export function isTarget(col: string): boolean {
-	return col.endsWith(TARGET_POSTFIX);
+export function isTarget(key: string): boolean {
+	return key.endsWith(TARGET_POSTFIX);
 }
 
-export function isCorrectness(col: string): boolean {
-	return col.endsWith(CORRECTNESS_POSTFIX);
+export function isCorrectness(key: string): boolean {
+	return key.endsWith(CORRECTNESS_POSTFIX);
 }
 
-export function isHiddenField(col: string): boolean {
-	return col.startsWith('_');
+export function isHiddenField(key: string): boolean {
+	return key.startsWith('_');
 }
 
 // Finds the index of a server-side column.
 
-export function getPredictedIndex(columns: string[]): number {
-	return _.findIndex(columns, isPredicted);
+export function getPredictedIndex(columns: TableColumn[]): number {
+	return _.findIndex(columns, col => {
+		return isPredicted(col.key);
+	});
 }
 
-export function getErrorIndex(columns: string[]): number {
-	return _.findIndex(columns, isError);
+export function getErrorIndex(columns: TableColumn[]): number {
+	return _.findIndex(columns, col => {
+		return isError(col.key);
+	});
 }
 
-export function getTargetIndex(columns: string[]): number {
-	return _.findIndex(columns, isTarget);
+export function getTargetIndex(columns: TableColumn[]): number {
+	return _.findIndex(columns, col => {
+		return isTarget(col.key);
+	});
 }
 
-export function getCorrectnessIndex(columns: string[]): number {
-	return _.findIndex(columns, isCorrectness);
+export function getCorrectnessIndex(columns: TableColumn[]): number {
+	return _.findIndex(columns, col => {
+		return isCorrectness(col.key);
+	});
 }
 
 // Converts from variable name to a server-side result column name
@@ -171,19 +178,17 @@ export function filterSummariesByDataset(summaries: VariableSummary[], dataset: 
 	});
 }
 
-export function createEmptyTableData(name: string): TableData {
+export function createEmptyTableData(): TableData {
 	return {
-		name: name,
 		numRows: 0,
 		columns: [],
-		types: [],
 		values: []
 	};
 }
 
-export function createPendingSummary(name: string, label: string, dataset: string, solutionId?: string): VariableSummary {
+export function createPendingSummary(key: string, label: string, dataset: string, solutionId?: string): VariableSummary {
 	return {
-		name: name,
+		key: key,
 		label: label,
 		dataset: dataset,
 		feature: '',
@@ -198,9 +203,9 @@ export function createPendingSummary(name: string, label: string, dataset: strin
 	};
 }
 
-export function createErrorSummary(name: string, label: string, dataset: string, error: any): VariableSummary {
+export function createErrorSummary(key: string, label: string, dataset: string, error: any): VariableSummary {
 	return {
-		name: name,
+		key: key,
 		label: label,
 		dataset: dataset,
 		feature: '',
@@ -223,7 +228,7 @@ export function getSummary(
 	updateFunction: (any, VariableSummary) => void,
 	filterParams: FilterParams): Promise<any> {
 
-	const name = nameFunc(solution);
+	const key = nameFunc(solution);
 	const label = labelFunc(solution);
 	const feature = solution.feature;
 	const dataset = solution.dataset;
@@ -231,7 +236,7 @@ export function getSummary(
 	const resultId = solution.resultId;
 
 	// save a placeholder histogram
-	updateFunction(context, createPendingSummary(name, label, dataset, solutionId));
+	updateFunction(context, createPendingSummary(key, label, dataset, solutionId));
 
 	// fetch the results for each solution
 	if (solution.progress !== SOLUTION_COMPLETED) {
@@ -300,7 +305,7 @@ export function sortGroupsByImportance(groups: Group[], variables: Variable[]): 
 	// create importance lookup map
 	const importance: Dictionary<number> = {};
 	variables.forEach(variable => {
-		importance[variable.name] = variable.importance;
+		importance[variable.key] = variable.importance;
 	});
 	// sort by importance
 	groups.sort((a, b) => {
@@ -354,14 +359,14 @@ export function validateData(data: TableData) {
 		!_.isEmpty(data.columns);
 }
 
-export function getTableDataItems(data: TableData, typeMap: Dictionary<string>): TableRow[] {
+export function getTableDataItems(data: TableData): TableRow[] {
 	if (validateData(data)) {
 		// convert fetched result data rows into table data rows
 		return data.values.map((resultRow, rowIndex) => {
 			const row = {} as TargetRow;
 			resultRow.forEach((colValue, colIndex) => {
-				const colName = data.columns[colIndex];
-				const colType = colName === D3M_INDEX_FIELD ? D3M_INDEX_FIELD : typeMap[colName];
+				const colName = data.columns[colIndex].key;
+				const colType = data.columns[colIndex].type;
 				row[colName] = formatValue(colValue, colType);
 			});
 			row._key = rowIndex;
@@ -378,22 +383,8 @@ export function getResultDataItems(data: TableData, getters: any): TargetRow[] {
 		return [];
 	}
 
-	// Find the target index and name in the result table
-	const targetIndex = getTargetIndex(data.columns);
-	const targetVarName = getVarFromTarget(data.columns[targetIndex]);
-
-	// Make a copy of the variable type map and add entries for target, predicted and error
-	// types.
-	const resultVariableTypeMap = _.clone(<Dictionary<string>>getters.getVariableTypesMap);
-
-	const targetVarType = resultVariableTypeMap[targetVarName];
-	resultVariableTypeMap[getTargetCol(targetVarName)] = targetVarType;
-	resultVariableTypeMap[getPredictedCol(targetVarName)] = targetVarType;
-	resultVariableTypeMap[getErrorCol(targetVarName)] = targetVarType;
-
-
 	// Fetch data items using modified type map
-	return getTableDataItems(data, resultVariableTypeMap) as TargetRow[];
+	return getTableDataItems(data) as TargetRow[];
 }
 
 export function getResultDataFields(data: TableData): Dictionary<TableColumn> {
@@ -407,29 +398,32 @@ export function getResultDataFields(data: TableData): Dictionary<TableColumn> {
 		// assign column names, ignoring target, predicted and error
 		for (const [idx, col] of data.columns.entries()) {
 			if (idx !== predictedIndex && idx !== targetIndex && idx !== errorIndex) {
-				result[col] = {
-					label: col,
+				result[col.key] = {
+					label: col.label,
+					key: col.key,
 					sortable: true,
 					type: ""
 				};
 			}
 		}
 		// add target, predicted and error at end with customized labels
-		const targetName = data.columns[targetIndex];
-		result[targetName] = {
-			label: targetName.replace(TARGET_POSTFIX, ''),
+		result[data.columns[targetIndex].key] = {
+			label: data.columns[targetIndex].label,
+			key: data.columns[targetIndex].key,
 			sortable: true,
 			type: ""
 		};
 		const predictedName = data.columns[predictedIndex];
-		result[data.columns[predictedIndex]] = {
-			label: `Predicted ${predictedName.replace(PREDICTED_POSTFIX, '')}`,
+		result[data.columns[predictedIndex].key] = {
+			label: `Predicted ${predictedName.label}`,
+			key: data.columns[predictedIndex].key,
 			sortable: true,
 			type: ""
 		};
 		if (errorIndex >= 0) {
-			result[data.columns[errorIndex]] = {
+			result[data.columns[errorIndex].key] = {
 				label: 'Error',
+				key: data.columns[errorIndex].key,
 				sortable: true,
 				type: ""
 			};

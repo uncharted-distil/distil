@@ -72,7 +72,7 @@ func (s *Storage) FetchCorrectnessSummary(dataset string, resultURI string, filt
 
 func (s *Storage) parseHistogram(rows *pgx.Rows, variable *model.Variable) (*model.Histogram, error) {
 
-	termsAggName := model.TermsAggPrefix + variable.Name
+	termsAggName := model.TermsAggPrefix + variable.Key
 
 	// extract the counts
 	countMap := map[string]map[string]int64{}
@@ -121,7 +121,8 @@ func (s *Storage) parseHistogram(rows *pgx.Rows, variable *model.Variable) (*mod
 	}
 	// assign histogram attributes
 	return &model.Histogram{
-		Name:    variable.Name,
+		Label:   variable.Label,
+		Key:     variable.Key,
 		VarType: variable.Type,
 		Type:    model.CategoricalType,
 		Buckets: buckets,

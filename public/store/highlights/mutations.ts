@@ -15,7 +15,7 @@ export const mutations = {
 		if (!summary) {
 			return;
 		}
-		const index = _.findIndex(state.highlightValues.summaries, s => s.name === summary.name);
+		const index = _.findIndex(state.highlightValues.summaries, s => s.key === summary.key);
 		if (index !== -1) {
 			Vue.set(state.highlightValues.summaries, index, summary);
 			return;
@@ -27,7 +27,7 @@ export const mutations = {
 		if (!summary) {
 			return;
 		}
-		const index = _.findIndex(state.highlightValues.summaries, s => s.solutionId === summary.solutionId && isPredicted(s.name));
+		const index = _.findIndex(state.highlightValues.summaries, s => s.solutionId === summary.solutionId && isPredicted(s.key));
 		if (index !== -1) {
 			Vue.set(state.highlightValues.summaries, index, summary);
 			return;
@@ -39,7 +39,7 @@ export const mutations = {
 		if (!summary) {
 			return;
 		}
-		const index = _.findIndex(state.highlightValues.summaries, s => s.solutionId === summary.solutionId && isCorrectness(s.name));
+		const index = _.findIndex(state.highlightValues.summaries, s => s.solutionId === summary.solutionId && isCorrectness(s.key));
 		if (index !== -1) {
 			Vue.set(state.highlightValues.summaries, index, summary);
 			return;

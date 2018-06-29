@@ -9,7 +9,8 @@ export const D3M_INDEX_FIELD = 'd3mIndex';
 export const ES_INDEX = 'datasets';
 
 export interface Variable {
-	name: string;
+	label: string;
+	key: string;
 	type: string;
 	importance: number;
 	novelty: number;
@@ -37,8 +38,8 @@ export interface Bucket {
 }
 
 export interface VariableSummary {
-	name: string;
 	label: string;
+	key: string;
 	feature: string;
 	dataset: string;
 	buckets: Bucket[];
@@ -54,17 +55,16 @@ export interface VariableSummary {
 }
 
 export interface TableData {
-	name: string;
 	numRows: number;
-	columns: string[];
-	types: string[];
+	columns: TableColumn[];
 	values: any[][];
 }
 
 export interface TableColumn {
-	label: string,
-	type: string,
-	sortable: boolean
+	label: string;
+	key: string;
+	type: string;
+	sortable?: boolean;
 }
 
 export interface TableRow {

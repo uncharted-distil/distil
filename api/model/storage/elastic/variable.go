@@ -87,7 +87,8 @@ func (s *Storage) parseRawVariable(child map[string]interface{}) (*model.Variabl
 	}
 
 	return &model.Variable{
-		Name:             name,
+		Label:            name,
+		Key:              name,
 		Type:             typ,
 		OriginalType:     originalType,
 		Importance:       importance,
@@ -118,7 +119,7 @@ func (s *Storage) parseVariable(searchHit *elastic.SearchHit, varName string) (*
 			return nil, errors.Wrap(err, "unable to parse variable")
 		}
 		if variable != nil {
-			if variable.Name == varName {
+			if variable.Key == varName {
 				return variable, nil
 			}
 		}
@@ -243,7 +244,7 @@ func (s *Storage) FetchVariablesDisplay(dataset string) ([]*model.Variable, erro
 	// create a lookup for the variables.
 	varsLookup := make(map[string]*model.Variable)
 	for _, v := range vars {
-		varsLookup[v.Name] = v
+		varsLookup[v.Key] = v
 	}
 
 	// build the slice by cycling through the variables and using the lookup
@@ -251,7 +252,7 @@ func (s *Storage) FetchVariablesDisplay(dataset string) ([]*model.Variable, erro
 	resultIncludes := make(map[string]bool)
 	result := make([]*model.Variable, 0)
 	for _, v := range vars {
-		name := v.Name
+		name := v.Key
 		if !resultIncludes[name] {
 			result = append(result, varsLookup[name])
 			resultIncludes[name] = true

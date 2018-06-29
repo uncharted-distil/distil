@@ -160,7 +160,6 @@ func (s *Storage) parseVariableValue(value string, variable *model.Variable) (in
 
 func (s *Storage) parseFilteredResults(dataset string, numRows int, rows *pgx.Rows, target *model.Variable) (*model.FilteredData, error) {
 	result := &model.FilteredData{
-		Name:    dataset,
 		NumRows: numRows,
 		Values:  make([][]interface{}, 0),
 	}
@@ -168,15 +167,17 @@ func (s *Storage) parseFilteredResults(dataset string, numRows int, rows *pgx.Ro
 	// Parse the columns.
 	if rows != nil {
 		fields := rows.FieldDescriptions()
-		columns := make([]string, len(fields))
-		types := make([]string, len(fields))
+		columns := make([]model.Column, len(fields))
 		for i := 0; i < len(fields); i++ {
-			columns[i] = fields[i].Name
-			types[i] = fields[i].DataTypeName
+			columns[i] = model.Column{
+				Key:   fields[i].Name,
+				Label: fields[i].Name,
+				Type:  fields[i].DataTypeName,
+			}
 		}
 
 		// Result type provided by DB needs to be overridden with defined target type.
-		types[0] = target.Type
+		columns[0].Type = target.Type
 
 		// Parse the row data.
 		for rows.Next() {
@@ -186,11 +187,9 @@ func (s *Storage) parseFilteredResults(dataset string, numRows int, rows *pgx.Ro
 			}
 			result.Values = append(result.Values, columnValues)
 			result.Columns = columns
-			result.Types = types
 		}
 	} else {
-		result.Columns = make([]string, 0)
-		result.Types = make([]string, 0)
+		result.Columns = make([]model.Column, 0)
 	}
 
 	return result, nil
@@ -214,11 +213,15 @@ func (s *Storage) parseResults(dataset string, numRows int, rows *pgx.Rows, vari
 	}
 	// Build the filtered data.
 	return &model.FilteredData{
-		Name:    dataset,
 		NumRows: numRows,
-		Columns: []string{variable.Name},
-		Types:   []string{variable.Type},
-		Values:  values,
+		Columns: []model.Column{
+			model.Column{
+				Key:   variable.Key,
+				Label: variable.Label,
+				Type:  variable.Type,
+			},
+		},
+		Values: values,
 	}, nil
 }
 
@@ -248,7 +251,7 @@ func addIncludeCorrectnessFilterToWhere(wheres []string, params []interface{}, c
 	} else if strings.EqualFold(correctnessFilter.Categories[0], IncorrectCategory) {
 		op = "!="
 	}
-	where = fmt.Sprintf("predicted.value %s data.\"%s\"", op, target.Name)
+	where = fmt.Sprintf("predicted.value %s data.\"%s\"", op, target.Key)
 	wheres = append(wheres, where)
 	return wheres, params, nil
 }
@@ -265,7 +268,7 @@ func addExcludeCorrectnessFilterToWhere(wheres []string, params []interface{}, c
 	} else if strings.EqualFold(correctnessFilter.Categories[0], IncorrectCategory) {
 		op = "="
 	}
-	where = fmt.Sprintf("predicted.value %s data.\"%s\"", op, target.Name)
+	where = fmt.Sprintf("predicted.value %s data.\"%s\"", op, target.Key)
 	wheres = append(wheres, where)
 	return wheres, params, nil
 }
@@ -310,7 +313,7 @@ func addIncludePredictedFilterToWhere(wheres []string, params []interface{}, dat
 		}
 
 	default:
-		return nil, nil, errors.Errorf("unexpected type %s for variable %s", predictedFilter.Type, predictedFilter.Name)
+		return nil, nil, errors.Errorf("unexpected type %s for variable %s", predictedFilter.Type, predictedFilter.Key)
 	}
 
 	// Append the AND clause
@@ -358,7 +361,7 @@ func addExcludePredictedFilterToWhere(wheres []string, params []interface{}, dat
 		}
 
 	default:
-		return nil, nil, errors.Errorf("unexpected type %s for variable %s", predictedFilter.Type, predictedFilter.Name)
+		return nil, nil, errors.Errorf("unexpected type %s for variable %s", predictedFilter.Type, predictedFilter.Key)
 	}
 
 	// Append the AND clause
@@ -473,7 +476,7 @@ func (s *Storage) FetchFilteredResults(dataset string, resultURI string, filterP
 	errorExpr := ""
 	errorCol := targetName + errorSuffix
 	if model.IsNumerical(variable.Type) {
-		errorExpr = fmt.Sprintf("%s as \"%s\",", getErrorTyped(variable.Name), errorCol)
+		errorExpr = fmt.Sprintf("%s as \"%s\",", getErrorTyped(variable.Key), errorCol)
 	}
 
 	predictedCol := targetName + predictedSuffix
@@ -527,7 +530,7 @@ func (s *Storage) FetchResults(dataset string, resultURI string) (*model.Filtere
 		return nil, err
 	}
 
-	predictedCol := variable.Name + predictedSuffix
+	predictedCol := variable.Key + predictedSuffix
 	sql := fmt.Sprintf("SELECT value FROM %s as %s WHERE result_id = $1 AND target = $2;", datasetResult, predictedCol)
 
 	rows, err := s.client.Query(sql, resultURI, targetName)
@@ -549,11 +552,11 @@ func (s *Storage) FetchResults(dataset string, resultURI string) (*model.Filtere
 
 func (s *Storage) getResultMinMaxAggsQuery(variable *model.Variable, resultVariable *model.Variable) string {
 	// get min / max agg names
-	minAggName := model.MinAggPrefix + resultVariable.Name
-	maxAggName := model.MaxAggPrefix + resultVariable.Name
+	minAggName := model.MinAggPrefix + resultVariable.Key
+	maxAggName := model.MaxAggPrefix + resultVariable.Key
 
 	// Only numeric types should occur.
-	fieldTyped := fmt.Sprintf("cast(\"%s\" as double precision)", resultVariable.Name)
+	fieldTyped := fmt.Sprintf("cast(\"%s\" as double precision)", resultVariable.Key)
 
 	// create aggregations
 	queryPart := fmt.Sprintf("MIN(%s) AS \"%s\", MAX(%s) AS \"%s\"", fieldTyped, minAggName, fieldTyped, maxAggName)
@@ -566,10 +569,10 @@ func (s *Storage) getResultHistogramAggQuery(extrema *model.Extrema, variable *m
 	interval := extrema.GetBucketInterval()
 
 	// Only numeric types should occur.
-	fieldTyped := fmt.Sprintf("cast(\"%s\" as double precision)", resultVariable.Name)
+	fieldTyped := fmt.Sprintf("cast(\"%s\" as double precision)", resultVariable.Key)
 
 	// get histogram agg name & query string.
-	histogramAggName := fmt.Sprintf("\"%s%s\"", model.HistogramAggPrefix, extrema.Name)
+	histogramAggName := fmt.Sprintf("\"%s%s\"", model.HistogramAggPrefix, extrema.Key)
 	rounded := extrema.GetBucketMinMax()
 	bucketQueryString := fmt.Sprintf("width_bucket(%s, %g, %g, %d) - 1",
 		fieldTyped, rounded.Min, rounded.Max, extrema.GetBucketCount())
@@ -586,7 +589,7 @@ func (s *Storage) fetchResultsExtrema(resultURI string, dataset string, variable
 	queryString := fmt.Sprintf("SELECT %s FROM %s WHERE result_id = $1 AND target = $2;", aggQuery, dataset)
 
 	// execute the postgres query
-	res, err := s.client.Query(queryString, resultURI, variable.Name)
+	res, err := s.client.Query(queryString, resultURI, variable.Key)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to fetch extrema for result from postgres")
 	}
@@ -607,7 +610,7 @@ func (s *Storage) FetchResultsExtremaByURI(dataset string, resultURI string) (*m
 		return nil, err
 	}
 	resultVariable := &model.Variable{
-		Name: "value",
+		Key:  "value",
 		Type: model.TextType,
 	}
 
@@ -639,7 +642,7 @@ func (s *Storage) FetchPredictedSummary(dataset string, resultURI string, filter
 		// fetch categorical histograms
 		field = NewCategoricalField(s)
 	} else {
-		return nil, errors.Errorf("variable %s of type %s does not support summary", variable.Name, variable.Type)
+		return nil, errors.Errorf("variable %s of type %s does not support summary", variable.Key, variable.Type)
 	}
 
 	histogram, err = field.FetchPredictedSummaryData(resultURI, dataset, datasetResult, variable, filterParams, extrema)

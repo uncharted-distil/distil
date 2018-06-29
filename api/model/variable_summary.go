@@ -24,7 +24,8 @@ type Bucket struct {
 
 // Histogram represents a single variable histogram.
 type Histogram struct {
-	Name       string    `json:"name"`
+	Label      string    `json:"label"`
+	Key        string    `json:"key"`
 	Type       string    `json:"type"`
 	Dataset    string    `json:"dataset"`
 	VarType    string    `json:"varType"`

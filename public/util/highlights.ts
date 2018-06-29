@@ -72,10 +72,10 @@ export function parseHighlightSamples(data: TableData): Dictionary<string[]>  {
 	for (let rowIdx = 0; rowIdx < data.values.length; rowIdx++) {
 		for (const [colIdx, col] of data.columns.entries()) {
 			const val = data.values[rowIdx][colIdx];
-			let colData = samples[col];
+			let colData = samples[col.key];
 			if (!colData) {
 				colData = [];
-				samples[col] = colData;
+				samples[col.key] = colData;
 			}
 			colData.push(val);
 		}

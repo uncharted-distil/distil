@@ -15,7 +15,8 @@ const (
 
 // Variable represents a single variable description within a dataset.
 type Variable struct {
-	Name             string      `json:"name"`
+	Label            string      `json:"label"`
+	Key              string      `json:"key"`
 	Type             string      `json:"type"`
 	OriginalType     string      `json:"originalType"` // needed for eval only
 	Role             string      `json:"role"`

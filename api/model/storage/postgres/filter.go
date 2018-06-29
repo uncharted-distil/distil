@@ -19,7 +19,6 @@ const (
 
 func (s *Storage) parseFilteredData(dataset string, numRows int, rows *pgx.Rows) (*model.FilteredData, error) {
 	result := &model.FilteredData{
-		Name:    dataset,
 		NumRows: numRows,
 		Values:  make([][]interface{}, 0),
 	}
@@ -27,14 +26,15 @@ func (s *Storage) parseFilteredData(dataset string, numRows int, rows *pgx.Rows)
 	// Parse the columns.
 	if rows != nil {
 		fields := rows.FieldDescriptions()
-		columns := make([]string, len(fields))
-		types := make([]string, len(fields))
+		columns := make([]model.Column, len(fields))
 		for i := 0; i < len(fields); i++ {
-			columns[i] = fields[i].Name
-			types[i] = fields[i].DataTypeName
+			columns[i] = model.Column{
+				Key:   fields[i].Name,
+				Label: fields[i].Name,
+				Type:  fields[i].DataTypeName,
+			}
 		}
 		result.Columns = columns
-		result.Types = types
 
 		// Parse the row data.
 		for rows.Next() {
@@ -45,16 +45,14 @@ func (s *Storage) parseFilteredData(dataset string, numRows int, rows *pgx.Rows)
 			result.Values = append(result.Values, columnValues)
 		}
 	} else {
-		result.Columns = make([]string, 0)
-		result.Types = make([]string, 0)
+		result.Columns = make([]model.Column, 0)
 	}
 
 	return result, nil
 }
 
-func (s *Storage) formatFilterName(name string) string {
+func (s *Storage) formatFilterKey(name string) string {
 	if strings.HasSuffix(name, predictedSuffix) || strings.HasSuffix(name, correctnessSuffix) {
-		//name = "value"
 		return "result.value"
 	}
 	return fmt.Sprintf("\"%s\"", name)
@@ -62,7 +60,7 @@ func (s *Storage) formatFilterName(name string) string {
 
 func (s *Storage) buildIncludeFilter(wheres []string, params []interface{}, filter *model.Filter) ([]string, []interface{}) {
 
-	name := s.formatFilterName(filter.Name)
+	name := s.formatFilterKey(filter.Key)
 
 	switch filter.Type {
 	case model.NumericalFilter:
@@ -106,7 +104,7 @@ func (s *Storage) buildIncludeFilter(wheres []string, params []interface{}, filt
 
 func (s *Storage) buildExcludeFilter(wheres []string, params []interface{}, filter *model.Filter) ([]string, []interface{}) {
 
-	name := s.formatFilterName(filter.Name)
+	name := s.formatFilterKey(filter.Key)
 
 	switch filter.Type {
 	case model.NumericalFilter:
@@ -156,8 +154,8 @@ func (s *Storage) buildFilteredQueryField(dataset string, variables []*model.Var
 	fields := make([]string, 0)
 	indexIncluded := false
 	for _, variable := range model.GetFilterVariables(filterVariables, variables) {
-		fields = append(fields, fmt.Sprintf("\"%s\"", variable.Name))
-		if variable.Name == model.D3MIndexFieldName {
+		fields = append(fields, fmt.Sprintf("\"%s\"", variable.Key))
+		if variable.Key == model.D3MIndexFieldName {
 			indexIncluded = true
 		}
 	}
@@ -171,8 +169,8 @@ func (s *Storage) buildFilteredQueryField(dataset string, variables []*model.Var
 func (s *Storage) buildFilteredResultQueryField(dataset string, variables []*model.Variable, targetVariable *model.Variable, filterVariables []string) (string, error) {
 	fields := make([]string, 0)
 	for _, variable := range model.GetFilterVariables(filterVariables, variables) {
-		if strings.Compare(targetVariable.Name, variable.Name) != 0 {
-			fields = append(fields, fmt.Sprintf("\"%s\"", variable.Name))
+		if strings.Compare(targetVariable.Key, variable.Key) != 0 {
+			fields = append(fields, fmt.Sprintf("\"%s\"", variable.Key))
 		}
 	}
 	fields = append(fields, fmt.Sprintf("\"%s\"", model.D3MIndexFieldName))
@@ -209,7 +207,7 @@ func (s *Storage) buildCorrectnessResultWhere(wheres []string, params []interfac
 
 func (s *Storage) buildErrorResultWhere(wheres []string, params []interface{}, errorFilter *model.Filter) ([]string, []interface{}, error) {
 	// Add a clause to filter residuals to the existing where
-	nameWithoutSuffix := strings.Replace(errorFilter.Name, errorSuffix, "", -1)
+	nameWithoutSuffix := strings.Replace(errorFilter.Key, errorSuffix, "", -1)
 	typedError := getErrorTyped(nameWithoutSuffix)
 	where := fmt.Sprintf("(%s >= $%d AND %s <= $%d)", typedError, len(params)+1, typedError, len(params)+2)
 	params = append(params, *errorFilter.Min)
@@ -240,11 +238,11 @@ func (s *Storage) splitFilters(filterParams *model.FilterParams) *filters {
 	var correctnessFilter *model.Filter
 	var remaining []*model.Filter
 	for _, filter := range filterParams.Filters {
-		if strings.HasSuffix(filter.Name, predictedSuffix) {
+		if strings.HasSuffix(filter.Key, predictedSuffix) {
 			predictedFilter = filter
-		} else if strings.HasSuffix(filter.Name, errorSuffix) {
+		} else if strings.HasSuffix(filter.Key, errorSuffix) {
 			errorFilter = filter
-		} else if strings.HasSuffix(filter.Name, correctnessSuffix) {
+		} else if strings.HasSuffix(filter.Key, correctnessSuffix) {
 			correctnessFilter = filter
 		} else {
 			remaining = append(remaining, filter)
@@ -280,7 +278,7 @@ func (s *Storage) FetchNumRows(dataset string, filters map[string]interface{}) (
 
 func (s *Storage) filterIncludesIndex(filterParams *model.FilterParams) bool {
 	for _, v := range filterParams.Filters {
-		if v.Name == model.D3MIndexFieldName {
+		if v.Key == model.D3MIndexFieldName {
 			return true
 		}
 	}
@@ -325,10 +323,8 @@ func (s *Storage) FetchData(dataset string, filterParams *model.FilterParams, in
 		// no results.
 		if invert {
 			return &model.FilteredData{
-				Name:    dataset,
 				NumRows: numRows,
-				Columns: make([]string, 0),
-				Types:   make([]string, 0),
+				Columns: make([]model.Column, 0),
 				Values:  make([][]interface{}, 0),
 			}, nil
 		}

@@ -44,12 +44,12 @@ func (s *Storage) PersistRequestFilters(requestID string, filters *model.FilterP
 	for _, filter := range filters.Filters {
 		switch filter.Type {
 		case model.NumericalFilter:
-			_, err := s.client.Exec(sql, requestID, filter.Name, model.NumericalFilter, filter.Mode, filter.Min, filter.Max, "", "")
+			_, err := s.client.Exec(sql, requestID, filter.Key, model.NumericalFilter, filter.Mode, filter.Min, filter.Max, "", "")
 			if err != nil {
 				return err
 			}
 		case model.CategoricalFilter:
-			_, err := s.client.Exec(sql, requestID, filter.Name, model.CategoricalFilter, filter.Mode, 0, 0, strings.Join(filter.Categories, ","), "")
+			_, err := s.client.Exec(sql, requestID, filter.Key, model.CategoricalFilter, filter.Mode, 0, 0, strings.Join(filter.Categories, ","), "")
 			if err != nil {
 				return err
 			}

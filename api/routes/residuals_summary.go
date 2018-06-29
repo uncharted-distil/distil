@@ -83,6 +83,7 @@ func ResidualsSummaryHandler(solutionCtor model.SolutionStorageCtor, dataCtor mo
 			handleError(w, err)
 			return
 		}
+		histogram.Key = histogram.Label + ":" + res.SolutionID
 		histogram.SolutionID = res.SolutionID
 
 		// marshall data and sent the response back

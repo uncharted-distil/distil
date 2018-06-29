@@ -53,7 +53,7 @@ export const actions = {
 
 		// commit empty place holders, if there is no data
 		return Promise.all(args.variables.map(variable => {
-			return axios.post(`/distil/variable-summary/${ES_INDEX}/${args.dataset}/${variable.name}`, filterParams)
+			return axios.post(`/distil/variable-summary/${ES_INDEX}/${args.dataset}/${variable.key}`, filterParams)
 				.then(response => {
 					mutations.updateHighlightSummaries(context, response.data.histogram);
 				})
@@ -107,11 +107,11 @@ export const actions = {
 			// only use extrema if this is the feature variable
 			let extremaMin = null;
 			let extremaMax = null;
-			if (variable.name === solution.feature) {
+			if (variable.key === solution.feature) {
 				extremaMin = args.extrema.min;
 				extremaMax = args.extrema.max;
 			}
-			return axios.post(`/distil/results-variable-summary/${ES_INDEX}/${args.dataset}/${variable.name}/${extremaMin}/${extremaMax}/${solution.resultId}`, filterParams)
+			return axios.post(`/distil/results-variable-summary/${ES_INDEX}/${args.dataset}/${variable.key}/${extremaMin}/${extremaMax}/${solution.resultId}`, filterParams)
 				.then(response => {
 					mutations.updateHighlightSummaries(context, response.data.histogram);
 				})

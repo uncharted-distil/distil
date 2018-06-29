@@ -47,10 +47,10 @@ func (f *TimeSeriesField) fetchRepresentationTimeSeriess(dataset string, variabl
 
 	for _, bucket := range categoryBuckets {
 
-		prefixedVarName := f.metadataVarName(variable.Name)
+		prefixedVarName := f.metadataVarName(variable.Key)
 
 		// pull sample row containing bucket
-		query := fmt.Sprintf("SELECT \"%s\" FROM %s WHERE \"%s\" = $1 LIMIT 1;", variable.Name, dataset, prefixedVarName)
+		query := fmt.Sprintf("SELECT \"%s\" FROM %s WHERE \"%s\" = $1 LIMIT 1;", variable.Key, dataset, prefixedVarName)
 
 		// execute the postgres query
 		rows, err := f.Storage.client.Query(query, bucket.Key)
@@ -78,7 +78,7 @@ func (f *TimeSeriesField) fetchHistogram(dataset string, variable *model.Variabl
 	params := make([]interface{}, 0)
 	wheres, params = f.Storage.buildFilteredQueryWhere(wheres, params, dataset, filterParams.Filters)
 
-	prefixedVarName := f.metadataVarName(variable.Name)
+	prefixedVarName := f.metadataVarName(variable.Key)
 
 	where := ""
 	if len(wheres) > 0 {
@@ -147,7 +147,7 @@ func (f *TimeSeriesField) fetchHistogramByResult(dataset string, variable *model
 		where = fmt.Sprintf("AND %s", strings.Join(wheres, " AND "))
 	}
 
-	prefixedVarName := f.metadataVarName(variable.Name)
+	prefixedVarName := f.metadataVarName(variable.Key)
 
 	// Get count by category.
 	query := fmt.Sprintf(
@@ -183,7 +183,7 @@ func (f *TimeSeriesField) fetchHistogramByResult(dataset string, variable *model
 }
 
 func (f *TimeSeriesField) parseHistogram(rows *pgx.Rows, variable *model.Variable) (*model.Histogram, error) {
-	prefixedVarName := f.metadataVarName(variable.Name)
+	prefixedVarName := f.metadataVarName(variable.Key)
 
 	termsAggName := model.TermsAggPrefix + prefixedVarName
 
@@ -230,7 +230,8 @@ func (f *TimeSeriesField) parseUnivariateHistogram(rows *pgx.Rows, variable *mod
 
 	// assign histogram attributes
 	return &model.Histogram{
-		Name:    variable.Name,
+		Key:     variable.Key,
+		Label:   variable.Label,
 		Type:    model.CategoricalType,
 		VarType: variable.Type,
 		Buckets: buckets,
@@ -289,7 +290,7 @@ func (f *TimeSeriesField) parseBivariateHistogram(rows *pgx.Rows, variable *mode
 	}
 	// assign histogram attributes
 	return &model.Histogram{
-		Name:    variable.Name,
+		Key:     variable.Key,
 		VarType: variable.Type,
 		Type:    model.CategoricalType,
 		Buckets: buckets,
@@ -303,7 +304,7 @@ func (f *TimeSeriesField) parseBivariateHistogram(rows *pgx.Rows, variable *mode
 // FetchPredictedSummaryData pulls predicted data from the result table and builds
 // the timeseries histogram for the field.
 func (f *TimeSeriesField) FetchPredictedSummaryData(resultURI string, dataset string, datasetResult string, variable *model.Variable, filterParams *model.FilterParams, extrema *model.Extrema) (*model.Histogram, error) {
-	targetName := f.metadataVarName(variable.Name)
+	targetName := f.metadataVarName(variable.Key)
 
 	// pull filters generated against the result facet out for special handling
 	filters := f.Storage.splitFilters(filterParams)

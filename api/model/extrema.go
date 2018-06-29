@@ -13,7 +13,7 @@ const (
 
 // Extrema represents the extrema for a single variable.
 type Extrema struct {
-	Name string  `json:"-"`
+	Key  string  `json:"-"`
 	Type string  `json:"-"`
 	Min  float64 `json:"min"`
 	Max  float64 `json:"max"`

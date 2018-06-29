@@ -86,18 +86,18 @@ export const actions = {
 		const promises = [];
 		args.variables.forEach(variable => {
 			const exists = _.find(context.state.variableSummaries, v => {
-				return v.name === variable.name;
+				return v.key === variable.key;
 			});
 			if (!exists) {
 				// add placeholder
-				const name = variable.name;
-				const label = variable.name;
+				const key = variable.key;
+				const label = variable.label;
 				const dataset = args.dataset;
-				mutations.updateVariableSummaries(context,  createPendingSummary(name, label, dataset));
+				mutations.updateVariableSummaries(context,  createPendingSummary(key, label, dataset));
 				// fetch summary
 				promises.push(context.dispatch('fetchVariableSummary', {
 					dataset: args.dataset,
-					variable: variable.name
+					variable: variable.key
 				}));
 			}
 		});
@@ -147,7 +147,7 @@ export const actions = {
 			})
 			.catch(error => {
 				console.error(error);
-				mutations.setIncludedTableData(context, createEmptyTableData(args.dataset));
+				mutations.setIncludedTableData(context, createEmptyTableData());
 			});
 	},
 
@@ -168,7 +168,7 @@ export const actions = {
 			})
 			.catch(error => {
 				console.error(error);
-				mutations.setExcludedTableData(context, createEmptyTableData(args.dataset));
+				mutations.setExcludedTableData(context, createEmptyTableData());
 			});
 	},
 

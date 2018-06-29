@@ -62,8 +62,8 @@ func ExportHandler(solutionCtor model.SolutionStorageCtor, metaCtor model.Metada
 
 		// fail if the solution target was not the original dataset target
 		if variable.Role != "suggestedTarget" {
-			log.Warnf("Target %s is not the expected target variable", variable.Name)
-			http.Error(w, fmt.Sprintf("The selected target `%s` does not match the required target variable.", variable.Name), http.StatusBadRequest)
+			log.Warnf("Target %s is not the expected target variable", variable.Key)
+			http.Error(w, fmt.Sprintf("The selected target `%s` does not match the required target variable.", variable.Key), http.StatusBadRequest)
 			return
 		}
 

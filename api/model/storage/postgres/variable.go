@@ -16,10 +16,10 @@ func (s *Storage) getHistogramAggQuery(extrema *model.Extrema) (string, string, 
 	interval := extrema.GetBucketInterval()
 
 	// get histogram agg name & query string.
-	histogramAggName := fmt.Sprintf("\"%s%s\"", model.HistogramAggPrefix, extrema.Name)
+	histogramAggName := fmt.Sprintf("\"%s%s\"", model.HistogramAggPrefix, extrema.Key)
 	rounded := extrema.GetBucketMinMax()
 	bucketQueryString := fmt.Sprintf("width_bucket(\"%s\", %g, %g, %d) - 1",
-		extrema.Name, rounded.Min, rounded.Max, extrema.GetBucketCount())
+		extrema.Key, rounded.Min, rounded.Max, extrema.GetBucketCount())
 	histogramQueryString := fmt.Sprintf("(%s) * %g + %g", bucketQueryString, interval, rounded.Min)
 
 	return histogramAggName, bucketQueryString, histogramQueryString
@@ -42,7 +42,7 @@ func (s *Storage) parseExtrema(row *pgx.Rows, variable *model.Variable) (*model.
 	}
 	// assign attributes
 	return &model.Extrema{
-		Name: variable.Name,
+		Key:  variable.Key,
 		Type: variable.Type,
 		Min:  *minValue,
 		Max:  *maxValue,
@@ -51,11 +51,11 @@ func (s *Storage) parseExtrema(row *pgx.Rows, variable *model.Variable) (*model.
 
 func (s *Storage) getMinMaxAggsQuery(variable *model.Variable) string {
 	// get min / max agg names
-	minAggName := model.MinAggPrefix + variable.Name
-	maxAggName := model.MaxAggPrefix + variable.Name
+	minAggName := model.MinAggPrefix + variable.Key
+	maxAggName := model.MaxAggPrefix + variable.Key
 
 	// create aggregations
-	queryPart := fmt.Sprintf("MIN(\"%s\") AS \"%s\", MAX(\"%s\") AS \"%s\"", variable.Name, minAggName, variable.Name, maxAggName)
+	queryPart := fmt.Sprintf("MIN(\"%s\") AS \"%s\", MAX(\"%s\") AS \"%s\"", variable.Key, minAggName, variable.Key, maxAggName)
 	// add aggregations
 	return queryPart
 }
@@ -135,7 +135,7 @@ func (s *Storage) fetchSummaryData(dataset string, varName string, resultURI str
 		/*else if model.IsTimeSeries(variable.Type) {
 			field = NewTimeSeries(s)
 		}*/
-		return nil, errors.Errorf("variable %s of type %s does not support summary", variable.Name, variable.Type)
+		return nil, errors.Errorf("variable %s of type %s does not support summary", variable.Key, variable.Type)
 	}
 
 	histogram, err := field.FetchSummaryData(dataset, variable, resultURI, filterParams, extrema)

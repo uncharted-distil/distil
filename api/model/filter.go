@@ -64,7 +64,7 @@ func (f *FilterParams) Merge(other *FilterParams) {
 	for _, filter := range other.Filters {
 		found := false
 		for _, currentFilter := range f.Filters {
-			if filter.Name == currentFilter.Name &&
+			if filter.Key == currentFilter.Key &&
 				filter.Min == currentFilter.Min &&
 				filter.Max == currentFilter.Max &&
 				stringSliceEqual(filter.Categories, currentFilter.Categories) {
@@ -90,19 +90,24 @@ func (f *FilterParams) Merge(other *FilterParams) {
 	}
 }
 
+// Column represents a column for filtered data.
+type Column struct {
+	Label string `json:"label"`
+	Key   string `json:"key"`
+	Type  string `json:"type"`
+}
+
 // FilteredData provides the metadata and raw data values that match a supplied
 // input filter.
 type FilteredData struct {
-	Name    string          `json:"name"`
 	NumRows int             `json:"numRows"`
-	Columns []string        `json:"columns"`
-	Types   []string        `json:"types"`
+	Columns []Column        `json:"columns"`
 	Values  [][]interface{} `json:"values"`
 }
 
 // Filter defines a variable filter.
 type Filter struct {
-	Name       string   `json:"name"`
+	Key        string   `json:"key"`
 	Type       string   `json:"type"`
 	Mode       string   `json:"mode"`
 	Min        *float64 `json:"min"`
@@ -114,7 +119,7 @@ type Filter struct {
 // NewNumericalFilter instantiates a numerical filter.
 func NewNumericalFilter(name string, mode string, min float64, max float64) *Filter {
 	return &Filter{
-		Name: name,
+		Key:  name,
 		Type: NumericalFilter,
 		Mode: mode,
 		Min:  &min,
@@ -126,7 +131,7 @@ func NewNumericalFilter(name string, mode string, min float64, max float64) *Fil
 func NewCategoricalFilter(name string, mode string, categories []string) *Filter {
 	sort.Strings(categories)
 	return &Filter{
-		Name:       name,
+		Key:        name,
 		Type:       CategoricalFilter,
 		Mode:       mode,
 		Categories: categories,
@@ -137,7 +142,7 @@ func NewCategoricalFilter(name string, mode string, categories []string) *Filter
 func NewFeatureFilter(name string, mode string, categories []string) *Filter {
 	sort.Strings(categories)
 	return &Filter{
-		Name:       name,
+		Key:        name,
 		Type:       FeatureFilter,
 		Mode:       mode,
 		Categories: categories,
@@ -157,7 +162,7 @@ func NewRowFilter(mode string, d3mIndices []string) *Filter {
 func GetFilterVariables(filterVariables []string, variables []*Variable) []*Variable {
 	variableLookup := make(map[string]*Variable)
 	for _, v := range variables {
-		variableLookup[v.Name] = v
+		variableLookup[v.Key] = v
 	}
 
 	filtered := make([]*Variable, 0)
@@ -258,7 +263,7 @@ func ParseFilterParamsFromJSON(params map[string]interface{}) (*FilterParams, er
 	}
 
 	sort.SliceStable(filterParams.Filters, func(i, j int) bool {
-		return filterParams.Filters[i].Name < filterParams.Filters[j].Name
+		return filterParams.Filters[i].Key < filterParams.Filters[j].Key
 	})
 
 	return filterParams, nil

@@ -66,6 +66,7 @@ func CorrectnessSummaryHandler(solutionCtor model.SolutionStorageCtor, dataCtor 
 			handleError(w, err)
 			return
 		}
+		histogram.Key = histogram.Label + ":" + res.SolutionID
 		histogram.SolutionID = res.SolutionID
 
 		// marshall data and sent the response back
