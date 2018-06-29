@@ -5,10 +5,10 @@ import (
 	"fmt"
 	"net/http"
 	"os"
-	"path"
 
 	"goji.io/pat"
 
+	"github.com/pkg/errors"
 	"github.com/unchartedsoftware/distil/api/compute"
 	"github.com/unchartedsoftware/distil/api/model"
 	"github.com/unchartedsoftware/plog"
@@ -42,6 +42,13 @@ func ExportHandler(solutionCtor model.SolutionStorageCtor, metaCtor model.Metada
 			return
 		}
 
+		// export relies on a fitted model
+		fittedSolutionID := pip.Result.FittedSolutionID
+		if fittedSolutionID == "" {
+			handleError(w, errors.Errorf("export failed - no fitted solution found for solution %s", solutionID))
+			return
+		}
+
 		m, err := solution.FetchRequest(pip.RequestID)
 		if err != nil {
 			handleError(w, err)
@@ -67,16 +74,12 @@ func ExportHandler(solutionCtor model.SolutionStorageCtor, metaCtor model.Metada
 			return
 		}
 
-		exportPath := path.Join(exportPath, solutionID+".d3m")
-		exportURI := fmt.Sprintf("file://%s", exportPath)
-		log.Infof("Exporting to %s", exportURI)
-
-		err = client.ExportSolution(context.Background(), solutionID, exportURI)
+		err = client.ExportSolution(context.Background(), fittedSolutionID)
 		if err != nil {
-			log.Infof("Failed solution export request to %s", exportURI)
+			log.Infof("Failed solution export request for %s", fittedSolutionID)
 			os.Exit(1)
 		} else {
-			log.Infof("Completed export request to %s", exportURI)
+			log.Infof("Completed export request for %s", fittedSolutionID)
 			os.Exit(0)
 		}
 		return
