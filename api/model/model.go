@@ -45,13 +45,14 @@ type Solution struct {
 
 // SolutionResult represents the solution result metadata.
 type SolutionResult struct {
-	SolutionID  string    `json:"solutionId"`
-	Dataset     string    `json:"dataset"`
-	ResultURI   string    `json:"requestUri"`
-	ResultUUID  string    `json:"resultId"`
-	Progress    string    `json:"progress"`
-	OutputType  string    `json:"outputType"`
-	CreatedTime time.Time `json:"timestamp"`
+	FittedSolutionID string    `json:"fittedSolutionId"`
+	SolutionID       string    `json:"solutionId"`
+	Dataset          string    `json:"dataset"`
+	ResultURI        string    `json:"requestUri"`
+	ResultUUID       string    `json:"resultId"`
+	Progress         string    `json:"progress"`
+	OutputType       string    `json:"outputType"`
+	CreatedTime      time.Time `json:"timestamp"`
 }
 
 // SolutionScore represents the result score data.

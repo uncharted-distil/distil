@@ -19,10 +19,10 @@ func (s *Storage) PersistSolution(requestID string, solutionID string, progress 
 }
 
 // PersistSolutionResult persists the solution result metadata to Postgres.
-func (s *Storage) PersistSolutionResult(solutionID string, resultUUID string, resultURI string, progress string, createdTime time.Time) error {
-	sql := fmt.Sprintf("INSERT INTO %s (solution_id, result_uuid, result_uri, progress, created_time) VALUES ($1, $2, $3, $4, $5);", solutionResultTableName)
+func (s *Storage) PersistSolutionResult(solutionID string, fittedSolutionID string, resultUUID string, resultURI string, progress string, createdTime time.Time) error {
+	sql := fmt.Sprintf("INSERT INTO %s (solution_id, fitted_solution_id, result_uuid, result_uri, progress, created_time) VALUES ($1, $2, $3, $4, $5, $6);", solutionResultTableName)
 
-	_, err := s.client.Exec(sql, solutionID, resultUUID, resultURI, progress, createdTime)
+	_, err := s.client.Exec(sql, solutionID, fittedSolutionID, resultUUID, resultURI, progress, createdTime)
 
 	return err
 }
@@ -87,24 +87,26 @@ func (s *Storage) parseSolutionResult(rows *pgx.Rows) ([]*model.SolutionResult, 
 	results := make([]*model.SolutionResult, 0)
 	for rows.Next() {
 		var solutionID string
+		var fittedSolutionID string
 		var resultUUID string
 		var resultURI string
 		var progress string
 		var createdTime time.Time
 		var dataset string
 
-		err := rows.Scan(&solutionID, &resultUUID, &resultURI, &progress, &createdTime, &dataset)
+		err := rows.Scan(&solutionID, &fittedSolutionID, &resultUUID, &resultURI, &progress, &createdTime, &dataset)
 		if err != nil {
 			return nil, errors.Wrap(err, "Unable to parse solution results from Postgres")
 		}
 
 		results = append(results, &model.SolutionResult{
-			SolutionID:  solutionID,
-			ResultURI:   resultURI,
-			ResultUUID:  resultUUID,
-			Progress:    progress,
-			CreatedTime: createdTime,
-			Dataset:     dataset,
+			SolutionID:       solutionID,
+			FittedSolutionID: fittedSolutionID,
+			ResultURI:        resultURI,
+			ResultUUID:       resultUUID,
+			Progress:         progress,
+			CreatedTime:      createdTime,
+			Dataset:          dataset,
 		})
 	}
 
@@ -113,7 +115,7 @@ func (s *Storage) parseSolutionResult(rows *pgx.Rows) ([]*model.SolutionResult, 
 
 // FetchSolutionResult pulls solution result information from Postgres.
 func (s *Storage) FetchSolutionResult(solutionID string) (*model.SolutionResult, error) {
-	sql := fmt.Sprintf("SELECT result.solution_id, result.result_uuid, "+
+	sql := fmt.Sprintf("SELECT result.solution_id, result.fitted_solution_id, result.result_uuid, "+
 		"result.result_uri, result.progress, result.created_time, request.dataset "+
 		"FROM %s AS result INNER JOIN %s AS solution ON result.solution_id = solution.solution_id "+
 		"INNER JOIN %s AS request ON solution.request_id = request.request_id "+
@@ -143,7 +145,7 @@ func (s *Storage) FetchSolutionResult(solutionID string) (*model.SolutionResult,
 
 // FetchSolutionResultByUUID pulls solution result information from Postgres.
 func (s *Storage) FetchSolutionResultByUUID(resultUUID string) (*model.SolutionResult, error) {
-	sql := fmt.Sprintf("SELECT result.solution_id, result.result_uuid, "+
+	sql := fmt.Sprintf("SELECT result.solution_id, result.fitted_solution_id, result.result_uuid, "+
 		"result.result_uri, result.progress, result.created_time, request.dataset "+
 		"FROM %s AS result INNER JOIN %s AS solution ON result.solution_id = solution.solution_id "+
 		"INNER JOIN %s AS request ON solution.request_id = request.request_id "+
