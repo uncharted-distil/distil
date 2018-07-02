@@ -24,8 +24,16 @@ var (
 func convertMetricsFromTA3ToTA2(metrics []string) []*pipeline.ProblemPerformanceMetric {
 	var res []*pipeline.ProblemPerformanceMetric
 	for _, metric := range metrics {
+		var metricSet pipeline.PerformanceMetric
+		metricAdjusted, ok := pipeline.PerformanceMetric_value[strings.ToUpper(metric)]
+		if !ok {
+			log.Warnf("undefined performance metric found ('%s') so defaulting to undefined", metric)
+			metricSet = pipeline.PerformanceMetric_METRIC_UNDEFINED
+		} else {
+			metricSet = pipeline.PerformanceMetric(metricAdjusted)
+		}
 		res = append(res, &pipeline.ProblemPerformanceMetric{
-			Metric: pipeline.PerformanceMetric(pipeline.PerformanceMetric_value[strings.ToUpper(metric)]),
+			Metric: metricSet,
 		})
 	}
 	return res
@@ -33,6 +41,13 @@ func convertMetricsFromTA3ToTA2(metrics []string) []*pipeline.ProblemPerformance
 
 func convertTaskTypeFromTA3ToTA2(taskType string) pipeline.TaskType {
 	return pipeline.TaskType(pipeline.TaskType_value[strings.ToUpper(taskType)])
+}
+
+func convertTaskSubTypeFromTA3ToTA2(taskSubType string) pipeline.TaskSubtype {
+	if taskSubType == "" {
+		return pipeline.TaskSubtype_TASK_SUBTYPE_UNDEFINED
+	}
+	return pipeline.TaskSubtype(pipeline.TaskSubtype_value[strings.ToUpper(taskSubType)])
 }
 
 func convertTargetFeaturesTA3ToTA2(target string, targetIndex int) []*pipeline.ProblemTarget {

@@ -42,7 +42,7 @@ type SolutionStorage interface {
 	PersistRequestFeature(requestID string, featureName string, featureType string) error
 	PersistRequestFilters(requestID string, filters *FilterParams) error
 	PersistSolution(requestID string, solutionID string, progress string, createdTime time.Time) error
-	PersistSolutionResult(solutionID string, resultUUID string, resultURI string, progress string, createdTime time.Time) error
+	PersistSolutionResult(solutionID string, fittedSolutionID, resultUUID string, resultURI string, progress string, createdTime time.Time) error
 	PersistSolutionScore(solutionID string, metric string, score float64) error
 	UpdateRequest(requestID string, progress string, updatedTime time.Time) error
 	FetchRequest(requestID string) (*Request, error)

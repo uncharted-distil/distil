@@ -15,21 +15,50 @@ func TestCreateUserDatasetPipeline(t *testing.T) {
 			Key:          "test_var_0",
 			OriginalType: "ordinal",
 			Type:         "categorical",
+			Index:        0,
 		},
 		{
 			Key:          "test_var_1",
 			OriginalType: "categorical",
 			Type:         "integer",
+			Index:        1,
 		},
 		{
 			Key:          "test_var_2",
 			OriginalType: "categorical",
 			Type:         "integer",
+			Index:        2,
+		},
+		{
+			Name:         "test_var_3",
+			OriginalType: "categorical",
+			Type:         "integer",
+			Index:        3,
 		},
 	}
 
 	pipeline, err := CreateUserDatasetPipeline(
-		"test_user_pipeline", "a test user pipeline", variables, []string{"test_var_0", "test_var_1"}, "test_var_1")
+		"test_user_pipeline", "a test user pipeline", variables, []string{"test_var_0", "test_var_1", "test_var_3"})
+
+	// assert first step is column remove and index two was remove
+	hyperParams := pipeline.GetSteps()[0].GetPrimitive().GetHyperparams()
+	assert.Equal(t, "0", hyperParams["resource_id"].GetValue().GetData().GetString_(), "0")
+	assert.Equal(t, []int64{2}, hyperParams["columns"].GetValue().GetData().GetInt64List().GetList())
+
+	// assert 2nd is a semantic type update
+	hyperParams = pipeline.GetSteps()[1].GetPrimitive().GetHyperparams()
+	assert.Equal(t, []int64{1, 3}, hyperParams["add_indices"].GetValue().GetData().GetInt64List().GetList())
+	assert.Equal(t, []string{"http://schema.org/Integer"}, hyperParams["add_types"].GetValue().GetData().GetStringList().GetList())
+	assert.Equal(t, []int64{}, hyperParams["remove_indices"].GetValue().GetData().GetInt64List().GetList())
+	assert.Equal(t, []string{""}, hyperParams["remove_types"].GetValue().GetData().GetStringList().GetList())
+
+	// assert 3rd is a semantic type update
+	hyperParams = pipeline.GetSteps()[2].GetPrimitive().GetHyperparams()
+	assert.Equal(t, []int64{}, hyperParams["add_indices"].GetValue().GetData().GetInt64List().GetList())
+	assert.Equal(t, []string{""}, hyperParams["add_types"].GetValue().GetData().GetStringList().GetList())
+	assert.Equal(t, []int64{1, 3}, hyperParams["remove_indices"].GetValue().GetData().GetInt64List().GetList())
+	assert.Equal(t, []string{"https://metadata.datadrivendiscovery.org/types/CategoricalData"}, hyperParams["remove_types"].GetValue().GetData().GetStringList().GetList())
+
 	assert.NoError(t, err)
 	t.Logf("\n%s", proto.MarshalTextString(pipeline))
 }
@@ -41,11 +70,12 @@ func TestCreateUserDatasetPipelineMappingError(t *testing.T) {
 			Key:          "test_var_0",
 			OriginalType: "blordinal",
 			Type:         "categorical",
+			Index:        0,
 		},
 	}
 
 	pipeline, err := CreateUserDatasetPipeline(
-		"test_user_pipeline", "a test user pipeline", variables, []string{"test_var_0"}, "test_var_1")
+		"test_user_pipeline", "a test user pipeline", variables, []string{"test_var_0"})
 	assert.Error(t, err)
 	t.Logf("\n%s", proto.MarshalTextString(pipeline))
 }

@@ -301,6 +301,11 @@ func (c *Client) EndSearch(ctx context.Context, searchID string) error {
 }
 
 // ExportSolution exports the solution.
-func (c *Client) ExportSolution(ctx context.Context, solutionID string, exportURI string) error {
-	return errors.New("export not implemented")
+func (c *Client) ExportSolution(ctx context.Context, fittedSolutionID string) error {
+	exportSolution := &pipeline.SolutionExportRequest{
+		Rank:             1,
+		FittedSolutionId: fittedSolutionID,
+	}
+	_, err := c.client.SolutionExport(ctx, exportSolution)
+	return errors.Wrap(err, "failed to export solution")
 }

@@ -40,7 +40,7 @@ export const actions = {
 			});
 	},
 
-	exportProblem(context: AppContext, args: { dataset: string, target: string, filterParams: FilterParams }) {
+	exportProblem(context: AppContext, args: { dataset: string, target: string, filterParams: FilterParams, meaningful: string }) {
 		if (!args.dataset) {
 			console.warn('`dataset` argument is missing');
 			return null;
@@ -53,17 +53,22 @@ export const actions = {
 			console.warn('`filters` argument is missing');
 			return null;
 		}
-		return axios.post(`/distil/discovery/${ES_INDEX}/${args.dataset}/${args.target}`, args.filterParams)
+		if (!args.meaningful) {
+			console.warn('`meaningful` argument is missing');
+			return null;
+		}
+		return axios.post(`/distil/discovery/${ES_INDEX}/${args.dataset}/${args.target}`, { filterParams: args.filterParams, meaningful: args.meaningful})
 			.catch(error => {
 				console.error(error);
 			});
 	},
 
 	fetchVersion(context: AppContext) {
-		return axios.get(`/distil/version`)
+		return axios.get(`/distil/config`)
 			.then(response => {
 				mutations.setVersionNumber(context, response.data.version);
 				mutations.setVersionTimestamp(context, response.data.timestamp);
+				mutations.setIsDiscovery(context, response.data.discovery);
 			})
 			.catch((err: string) => {
 				console.warn(err);

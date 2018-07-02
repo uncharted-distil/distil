@@ -2,8 +2,10 @@ package main
 
 import (
 	"fmt"
+	"io/ioutil"
 	"net/http"
 	"os"
+	"path"
 	"strings"
 	"syscall"
 	"time"
@@ -121,6 +123,22 @@ func main() {
 	}
 	defer solutionClient.Close()
 
+	// reset the exported problem list
+	if config.IsProblemDiscovery {
+		problemListingFile := path.Join(config.UserProblemPath, routes.ProblemLabelFile)
+		err = os.MkdirAll(config.UserProblemPath, 0644)
+		if err != nil {
+			log.Errorf("%+v", err)
+			os.Exit(1)
+		}
+
+		err = ioutil.WriteFile(problemListingFile, []byte("problem_id,system,meaningful\n"), 0644)
+		if err != nil {
+			log.Errorf("%+v", err)
+			os.Exit(1)
+		}
+	}
+
 	// instantiate the REST client for primitives.
 	restClient := rest.NewClient(config.PrimitiveEndPoint)
 
@@ -200,12 +218,12 @@ func main() {
 	registerRoute(mux, "/distil/abort", routes.AbortHandler())
 	registerRoute(mux, "/distil/export/:solution-id", routes.ExportHandler(pgSolutionStorageCtor, metadataStorageCtor, solutionClient, config.D3MOutputDir))
 	registerRoute(mux, "/distil/ingest/:index/:dataset", routes.IngestHandler(metadataStorageCtor, ingestConfig))
-	registerRoute(mux, "/distil/version", routes.VersionHandler(version, timestamp))
+	registerRoute(mux, "/distil/config", routes.ConfigHandler(config, version, timestamp))
 	registerRoute(mux, "/ws", ws.SolutionHandler(solutionClient, metadataStorageCtor, pgDataStorageCtor, pgSolutionStorageCtor))
 
 	// POST
 	registerRoutePost(mux, "/distil/variables/:index/:dataset", routes.VariableTypeHandler(pgDataStorageCtor, metadataStorageCtor))
-	registerRoutePost(mux, "/distil/discovery/:index/:dataset/:target", routes.ProblemDiscoveryHandler(pgDataStorageCtor, metadataStorageCtor, config.UserProblemPath))
+	registerRoutePost(mux, "/distil/discovery/:index/:dataset/:target", routes.ProblemDiscoveryHandler(pgDataStorageCtor, metadataStorageCtor, config.UserProblemPath, userAgent))
 	registerRoutePost(mux, "/distil/data/:esIndex/:dataset/:invert", routes.DataHandler(pgDataStorageCtor, metadataStorageCtor))
 	registerRoutePost(mux, "/distil/results/:index/:dataset/:solution-id", routes.ResultsHandler(pgSolutionStorageCtor, pgDataStorageCtor))
 	registerRoutePost(mux, "/distil/variable-summary/:index/:dataset/:variable", routes.VariableSummaryHandler(pgDataStorageCtor))

@@ -17,6 +17,7 @@ const (
 type Variable struct {
 	Label            string      `json:"label"`
 	Key              string      `json:"key"`
+	Index            int         `json:"colIndex"`
 	Type             string      `json:"type"`
 	OriginalType     string      `json:"originalType"` // needed for eval only
 	Role             string      `json:"role"`

@@ -1,9 +1,7 @@
 package compute
 
 import (
-	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path"
 	"strconv"
@@ -21,7 +19,7 @@ const (
 	problemVersion       = "1.0"
 	problemSchemaVersion = "3.0"
 
-	numericalMetric   = "rSquared"
+	numericalMetric   = "r_squared"
 	categoricalMetric = "accuracy"
 
 	problemTaskTypeNumerical   = "regression"
@@ -106,13 +104,13 @@ func getTaskSubType(targetType string) string {
 	return problemTaskSubTypeNumerical
 }
 
-// PersistProblem stores the problem information in the required D3M
+// CreateProblemSchema captures the problem information in the required D3M
 // problem format.
-func PersistProblem(datasetDir string, dataset string, targetVar *model.Variable, filters *model.FilterParams) (string, error) {
+func CreateProblemSchema(datasetDir string, dataset string, targetVar *model.Variable, filters *model.FilterParams) (*ProblemPersist, string, error) {
 	// parse the dataset and its filter state and generate a hashcode from both
 	hash, err := getFilteredDatasetHash(dataset, targetVar.Key, filters, true)
 	if err != nil {
-		return "", errors.Wrap(err, "unable to build dataset filter hash")
+		return nil, "", errors.Wrap(err, "unable to build dataset filter hash")
 	}
 
 	// check to see if we already have this problem saved - return the path
@@ -121,7 +119,7 @@ func PersistProblem(datasetDir string, dataset string, targetVar *model.Variable
 	pFilePath := path.Join(pPath, D3MProblem)
 	if dirExists(pPath) && fileExists(pFilePath) {
 		log.Infof("Found stored problem for %s with hash %d", dataset, hash)
-		return pPath, nil
+		return nil, pPath, nil
 	}
 
 	metric := getMetric(targetVar.Type)
@@ -164,15 +162,5 @@ func PersistProblem(datasetDir string, dataset string, targetVar *model.Variable
 		Inputs:     pInput,
 	}
 
-	data, err := json.Marshal(problem)
-	if err != nil {
-		return "", errors.Wrap(err, "unable to marshal problem data")
-	}
-
-	err = ioutil.WriteFile(pFilePath, data, 0644)
-	if err != nil {
-		return "", errors.Wrap(err, "Unable to write problem data")
-	}
-
-	return pPath, nil
+	return problem, strconv.FormatUint(hash, 10), nil
 }

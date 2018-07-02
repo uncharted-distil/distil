@@ -63,6 +63,7 @@ type SolutionRequest struct {
 	Index            string              `json:"index"`
 	TargetFeature    string              `json:"target"`
 	Task             string              `json:"task"`
+	SubTask          string              `json:"subTask"`
 	MaxSolutions     int32               `json:"maxSolutions"`
 	MaxTime          int64               `json:"maxTime"`
 	Filters          *model.FilterParams `json:"filters"`
@@ -146,17 +147,23 @@ func (s *SolutionRequest) Listen(listener SolutionStatusListener) error {
 
 func (s *SolutionRequest) createSearchSolutionsRequest(targetIndex int, preprocessing *pipeline.PipelineDescription,
 	datasetURI string, userAgent string) (*pipeline.SearchSolutionsRequest, error) {
+	return createSearchSolutionsRequest(targetIndex, preprocessing, datasetURI, userAgent, s.TargetFeature, s.Dataset, s.Metrics, s.Task, s.SubTask, s.MaxTime)
+}
+
+func createSearchSolutionsRequest(targetIndex int, preprocessing *pipeline.PipelineDescription,
+	datasetURI string, userAgent string, targetFeature string, dataset string, metrics []string, task string, subTask string, maxTime int64) (*pipeline.SearchSolutionsRequest, error) {
 
 	return &pipeline.SearchSolutionsRequest{
 		Problem: &pipeline.ProblemDescription{
 			Problem: &pipeline.Problem{
-				TaskType:           convertTaskTypeFromTA3ToTA2(s.Task),
-				PerformanceMetrics: convertMetricsFromTA3ToTA2(s.Metrics),
+				TaskType:           convertTaskTypeFromTA3ToTA2(task),
+				TaskSubtype:        convertTaskSubTypeFromTA3ToTA2(subTask),
+				PerformanceMetrics: convertMetricsFromTA3ToTA2(metrics),
 			},
 			Inputs: []*pipeline.ProblemInput{
 				{
-					DatasetId: convertDatasetTA3ToTA2(s.Dataset),
-					Targets:   convertTargetFeaturesTA3ToTA2(s.TargetFeature, targetIndex),
+					DatasetId: convertDatasetTA3ToTA2(dataset),
+					Targets:   convertTargetFeaturesTA3ToTA2(targetFeature, targetIndex),
 				},
 			},
 		},
@@ -166,7 +173,7 @@ func (s *SolutionRequest) createSearchSolutionsRequest(targetIndex int, preproce
 		Version:   GetAPIVersion(),
 
 		// Requested max time for solution search - not guaranteed to be honoured
-		TimeBound: float64(s.MaxTime),
+		TimeBound: float64(maxTime),
 
 		// we accept dataset and csv uris as return types
 		AllowedValueTypes: []pipeline.ValueType{
@@ -192,7 +199,7 @@ func (s *SolutionRequest) createPreprocessingPipeline(featureVariables []*model.
 	name := fmt.Sprintf("preprocessing-%s-%s", s.Dataset, uuid.String())
 	desc := fmt.Sprintf("Preprocessing pipeline capturing user feature selection and type information. Dataset: `%s` ID: `%s`", s.Dataset, uuid.String())
 
-	preprocessingPipeline, err := description.CreateUserDatasetPipeline(name, desc, featureVariables, variables, s.TargetFeature)
+	preprocessingPipeline, err := description.CreateUserDatasetPipeline(name, desc, featureVariables, variables)
 	if err != nil {
 		return nil, err
 	}
@@ -278,7 +285,7 @@ func (s *SolutionRequest) persistRequestStatus(statusChan chan SolutionStatus, s
 	return nil
 }
 
-func (s *SolutionRequest) persistSolutionResults(statusChan chan SolutionStatus, client *Client, solutionStorage model.SolutionStorage, dataStorage model.DataStorage, searchID string, dataset string, solutionID string, resultID string, resultURI string) {
+func (s *SolutionRequest) persistSolutionResults(statusChan chan SolutionStatus, client *Client, solutionStorage model.SolutionStorage, dataStorage model.DataStorage, searchID string, dataset string, solutionID string, fittedSolutionID string, resultID string, resultURI string) {
 	// persist the completed state
 	err := solutionStorage.PersistSolution(searchID, solutionID, SolutionCompletedStatus, time.Now())
 	if err != nil {
@@ -287,7 +294,7 @@ func (s *SolutionRequest) persistSolutionResults(statusChan chan SolutionStatus,
 		return
 	}
 	// persist result metadata
-	err = solutionStorage.PersistSolutionResult(solutionID, resultID, resultURI, SolutionCompletedStatus, time.Now())
+	err = solutionStorage.PersistSolutionResult(solutionID, fittedSolutionID, resultID, resultURI, SolutionCompletedStatus, time.Now())
 	if err != nil {
 		// notify of error
 		s.persistSolutionError(statusChan, solutionStorage, searchID, solutionID, err)
@@ -402,7 +409,7 @@ func (s *SolutionRequest) dispatchSolution(statusChan chan SolutionStatus, clien
 		resultID := fmt.Sprintf("%x", bs)
 
 		// persist results
-		s.persistSolutionResults(statusChan, client, solutionStorage, dataStorage, searchID, dataset, solutionID, resultID, resultURI)
+		s.persistSolutionResults(statusChan, client, solutionStorage, dataStorage, searchID, dataset, solutionID, fittedSolutionID, resultID, resultURI)
 	}
 }
 
@@ -574,4 +581,47 @@ func (s *SolutionRequest) PersistAndDispatch(client *Client, solutionStorage mod
 	go s.dispatchRequest(client, solutionStorage, dataStorage, requestID, dataset.Metadata.Name, datasetPathTrain, datasetPathTest)
 
 	return nil
+}
+
+// CreateSearchSolutionRequest creates a search solution request, including
+// the pipeline steps required to process the data.
+func CreateSearchSolutionRequest(allFeatures []*model.Variable,
+	selectedFeatures []string, target string, sourceURI string, dataset string,
+	userAgent string) (*pipeline.SearchSolutionsRequest, error) {
+	uuid := uuid.NewV4()
+	name := fmt.Sprintf("preprocessing-%s-%s", dataset, uuid.String())
+	desc := fmt.Sprintf("Preprocessing pipeline capturing user feature selection and type information. Dataset: `%s` ID: `%s`", dataset, uuid.String())
+
+	preprocessingPipeline, err := description.CreateUserDatasetPipeline(name, desc, allFeatures, selectedFeatures)
+	if err != nil {
+		return nil, errors.Wrap(err, "unable to create preprocessing pipeline")
+	}
+
+	targetIndex := 0
+	for i, v := range selectedFeatures {
+		if v == target {
+			targetIndex = i
+		}
+	}
+
+	var targetVariable *model.Variable
+	for _, v := range allFeatures {
+		if v.Name == target {
+			targetVariable = v
+		}
+	}
+	if targetVariable == nil {
+		return nil, errors.Errorf("unable to find target variable '%s'", target)
+	}
+	task := getTaskType(targetVariable.Type)
+	taskSubType := getTaskSubType(targetVariable.Type)
+	metrics := []string{getMetric(targetVariable.Type)}
+
+	// create search solutions request
+	searchRequest, err := createSearchSolutionsRequest(targetIndex, preprocessingPipeline, sourceURI, userAgent, target, dataset, metrics, task, taskSubType, 600)
+	if err != nil {
+		return nil, errors.Wrap(err, "unable to create search solution request")
+	}
+
+	return searchRequest, nil
 }
