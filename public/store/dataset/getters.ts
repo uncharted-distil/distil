@@ -1,6 +1,6 @@
-import { Variable, DatasetState, Dataset, VariableSummary, TableData, TableRow, TableColumn, D3M_INDEX_FIELD } from './index';
+import { Variable, DatasetState, Dataset, VariableSummary, TableData, TableRow, TableColumn } from './index';
 import { Dictionary } from '../../util/dict';
-import { getTableDataItems, validateData } from '../../util/data';
+import { getTableDataItems, getTableDataFields } from '../../util/data';
 
 export const getters = {
 
@@ -51,22 +51,7 @@ export const getters = {
 	},
 
 	getIncludedTableDataFields(state: DatasetState, getters: any): Dictionary<TableColumn> {
-		const data = state.includedTableData;
-		if (validateData(data)) {
-			const result = {};
-			for (const col of data.columns) {
-				if (col.key !== D3M_INDEX_FIELD) {
-					result[col.key] = {
-						label: col.label,
-						key: col.key,
-						type: col.type,
-						sortable: true
-					};
-				}
-			}
-			return result;
-		}
-		return {};
+		return getTableDataFields(state.includedTableData);
 	},
 
 	hasExcludedTableData(state: DatasetState): boolean {
@@ -86,21 +71,6 @@ export const getters = {
 	},
 
 	getExcludedTableDataFields(state: DatasetState, getters: any): Dictionary<TableColumn> {
-		const data = state.excludedTableData;
-		if (validateData(data)) {
-			const result = {};
-			for (const col of data.columns) {
-				if (col.key !== D3M_INDEX_FIELD) {
-					result[col.key] = {
-						label: col.label,
-						key: col.key,
-						type: col.type,
-						sortable: true
-					};
-				}
-			}
-			return result;
-		}
-		return {};
+		return getTableDataFields(state.excludedTableData);
 	}
 }

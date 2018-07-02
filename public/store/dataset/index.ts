@@ -70,9 +70,6 @@ export interface TableColumn {
 export interface TableRow {
 	_key: number;
 	_rowVariant: string;
-}
-
-export interface TargetRow extends TableRow {
 	_cellVariants: Dictionary<string>;
 }
 

@@ -84,7 +84,7 @@ export default Vue.extend({
 			return '';
 		},
 		groups(): Group[] {
-			const summaries = resultGetters.getResultSummaries(this.$store).filter(summary => this.training[summary.name]);
+			const summaries = resultGetters.getResultSummaries(this.$store).filter(summary => this.training[summary.key]);
 			return createGroups(summaries);
 		},
 		variables(): Variable[] {

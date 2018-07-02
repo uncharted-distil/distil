@@ -1,7 +1,7 @@
 import _ from 'lodash';
-import { VariableSummary, Extrema, TableData, TargetRow, TableColumn } from '../dataset/index';
+import { VariableSummary, Extrema, TableData, TableRow, TableColumn } from '../dataset/index';
 import { ResultsState } from './index';
-import { getResultDataItems, getResultDataFields } from '../../util/data';
+import { getTableDataItems, getTableDataFields } from '../../util/data';
 import { Dictionary } from '../../util/dict';
 
 export const getters = {
@@ -24,12 +24,12 @@ export const getters = {
 		return state.includedResultTableData;
 	},
 
-	getIncludedResultTableDataItems(state: ResultsState, getters: any): TargetRow[] {
-		return getResultDataItems(state.includedResultTableData, getters);
+	getIncludedResultTableDataItems(state: ResultsState, getters: any): TableRow[] {
+		return getTableDataItems(state.includedResultTableData);
 	},
 
 	getIncludedResultTableDataFields(state: ResultsState): Dictionary<TableColumn> {
-		return getResultDataFields(state.includedResultTableData);
+		return getTableDataFields(state.includedResultTableData);
 	},
 
 	hasExcludedResultTableData(state: ResultsState): boolean {
@@ -40,12 +40,12 @@ export const getters = {
 		return state.excludedResultTableData;
 	},
 
-	getExcludedResultTableDataItems(state: ResultsState, getters: any): TargetRow[] {
-		return getResultDataItems(state.excludedResultTableData, getters);
+	getExcludedResultTableDataItems(state: ResultsState, getters: any): TableRow[] {
+		return getTableDataItems(state.excludedResultTableData);
 	},
 
 	getExcludedResultTableDataFields(state: ResultsState): Dictionary<TableColumn> {
-		return getResultDataFields(state.excludedResultTableData);
+		return getTableDataFields(state.excludedResultTableData);
 	},
 
 	// predicted

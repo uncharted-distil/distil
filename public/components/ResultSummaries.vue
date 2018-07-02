@@ -76,7 +76,7 @@ export default Vue.extend({
 		},
 
 		regressionEnabled(): boolean {
-			const targetVar = _.find(datasetGetters.getVariables(this.$store), v => _.toLower(v.name) === _.toLower(this.target));
+			const targetVar = _.find(datasetGetters.getVariables(this.$store), v => _.toLower(v.key) === _.toLower(this.target));
 			if (_.isEmpty(targetVar)) {
 				return false;
 			}

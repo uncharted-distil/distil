@@ -80,7 +80,7 @@ func ResultsHandler(solutionCtor model.SolutionStorageCtor, dataCtor model.DataS
 			return
 		}
 
-		results, err := data.FetchFilteredResults(dataset, res.ResultURI, filterParams)
+		results, err := data.FetchResults(dataset, res.ResultURI, solutionID, filterParams)
 		if err != nil {
 			handleError(w, err)
 			return

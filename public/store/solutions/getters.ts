@@ -78,7 +78,7 @@ export const getters = {
 	},
 
 	getActiveSolutionTrainingMap(state: SolutionState, getters: any): Dictionary<boolean> {
-		const training = getters.getActiveSolutionTrainingVariables.map(f => f.name);
+		const training = getters.getActiveSolutionTrainingVariables.map(f => f.key);
 		const trainingMap = {};
 		training.forEach(t => {
 			trainingMap[t] = true;
@@ -90,13 +90,13 @@ export const getters = {
 		const trainingMap = getters.getActiveSolutionTrainingMap;
 		const target = getters.getRouteTargetVariable;
 		const variables = getters.getVariables;
-		return variables.filter(variable => trainingMap[variable.name] || variable.name === target);
+		return variables.filter(variable => trainingMap[variable.key] || variable.key === target);
 	},
 
 	isRegression(state: SolutionState, getters: any): boolean {
 		const variables = getters.getVariables;
 		const target = getters.getRouteTargetVariable;
-		const targetVariable = variables.find(s => s.name === target);
+		const targetVariable = variables.find(s => s.key === target);
 		const task = getTask(targetVariable.type);
 		return task.schemaName === REGRESSION_TASK.schemaName;
 	},
@@ -104,7 +104,7 @@ export const getters = {
 	isClassification(state: SolutionState, getters: any): boolean {
 		const variables = getters.getVariables;
 		const target = getters.getRouteTargetVariable;
-		const targetVariable = variables.find(s => s.name === target);
+		const targetVariable = variables.find(s => s.key === target);
 		const task = getTask(targetVariable.type);
 		return task.schemaName === CLASSIFICATION_TASK.schemaName;
 	},

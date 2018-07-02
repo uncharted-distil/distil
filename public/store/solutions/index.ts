@@ -36,6 +36,8 @@ export interface Solution {
 	dataset: string;
 	filters: FilterParams;
 	features: SolutionFeature[];
+	predictedKey: string;
+	errorKey: string;
 }
 
 export interface SolutionRequest {

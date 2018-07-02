@@ -51,11 +51,11 @@ func (s *Storage) parseFilteredData(dataset string, numRows int, rows *pgx.Rows)
 	return result, nil
 }
 
-func (s *Storage) formatFilterKey(name string) string {
-	if strings.HasSuffix(name, predictedSuffix) || strings.HasSuffix(name, correctnessSuffix) {
+func (s *Storage) formatFilterKey(key string) string {
+	if model.IsResultKey(key) {
 		return "result.value"
 	}
-	return fmt.Sprintf("\"%s\"", name)
+	return fmt.Sprintf("\"%s\"", key)
 }
 
 func (s *Storage) buildIncludeFilter(wheres []string, params []interface{}, filter *model.Filter) ([]string, []interface{}) {
@@ -205,13 +205,13 @@ func (s *Storage) buildCorrectnessResultWhere(wheres []string, params []interfac
 	return wheres, params, nil
 }
 
-func (s *Storage) buildErrorResultWhere(wheres []string, params []interface{}, errorFilter *model.Filter) ([]string, []interface{}, error) {
+func (s *Storage) buildErrorResultWhere(wheres []string, params []interface{}, residualFilter *model.Filter) ([]string, []interface{}, error) {
 	// Add a clause to filter residuals to the existing where
-	nameWithoutSuffix := strings.Replace(errorFilter.Key, errorSuffix, "", -1)
+	nameWithoutSuffix := model.StripKeySuffix(residualFilter.Key)
 	typedError := getErrorTyped(nameWithoutSuffix)
 	where := fmt.Sprintf("(%s >= $%d AND %s <= $%d)", typedError, len(params)+1, typedError, len(params)+2)
-	params = append(params, *errorFilter.Min)
-	params = append(params, *errorFilter.Max)
+	params = append(params, *residualFilter.Min)
+	params = append(params, *residualFilter.Max)
 
 	// Append the AND clause
 	wheres = append(wheres, where)
@@ -227,23 +227,25 @@ func (s *Storage) buildPredictedResultWhere(wheres []string, params []interface{
 type filters struct {
 	genericFilters    []*model.Filter
 	predictedFilter   *model.Filter
-	errorFilter       *model.Filter
+	residualFilter    *model.Filter
 	correctnessFilter *model.Filter
 }
 
 func (s *Storage) splitFilters(filterParams *model.FilterParams) *filters {
 	// Groups filters for handling downstream
 	var predictedFilter *model.Filter
-	var errorFilter *model.Filter
+	var residualFilter *model.Filter
 	var correctnessFilter *model.Filter
 	var remaining []*model.Filter
 	for _, filter := range filterParams.Filters {
-		if strings.HasSuffix(filter.Key, predictedSuffix) {
+		if model.IsPredictedKey(filter.Key) {
 			predictedFilter = filter
-		} else if strings.HasSuffix(filter.Key, errorSuffix) {
-			errorFilter = filter
-		} else if strings.HasSuffix(filter.Key, correctnessSuffix) {
-			correctnessFilter = filter
+		} else if model.IsErrorKey(filter.Key) {
+			if filter.Type == model.NumericalFilter {
+				residualFilter = filter
+			} else if filter.Type == model.CategoricalFilter {
+				correctnessFilter = filter
+			}
 		} else {
 			remaining = append(remaining, filter)
 		}
@@ -251,7 +253,7 @@ func (s *Storage) splitFilters(filterParams *model.FilterParams) *filters {
 	return &filters{
 		genericFilters:    remaining,
 		predictedFilter:   predictedFilter,
-		errorFilter:       errorFilter,
+		residualFilter:    residualFilter,
 		correctnessFilter: correctnessFilter,
 	}
 }

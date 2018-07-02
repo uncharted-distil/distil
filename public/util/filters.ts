@@ -44,7 +44,7 @@ export const EXCLUDE_FILTER = 'exclude';
 export interface Filter {
 	type: string;
 	mode: string;
-	name?: string;
+	key?: string;
 	min?: number;
 	max?: number;
 	categories?: string[];
@@ -175,7 +175,7 @@ export function hasFilterInRoute(component: Vue, variable: string): boolean {
 	const filters = routeGetters.getRouteFilters(component.$store);
 	const decoded = decodeFilters(filters);
 	return decoded.filter(filter => {
-		return filter.name && filter.name === variable;
+		return filter.key && filter.key === variable;
 	}).length > 0;
 }
 
@@ -201,12 +201,12 @@ export function removeFilterFromRoute(component: Vue, filter: Filter) {
 	component.$router.push(entry);
 }
 
-export function removeFiltersByName(component: Vue, name: string) {
+export function removeFiltersByName(component: Vue, key: string) {
 	// retrieve the filters from the route
 	const filters = routeGetters.getRouteFilters(component.$store);
 	let decoded = decodeFilters(filters);
 	decoded = decoded.filter(filter => {
-		return (filter.name !== name);
+		return (filter.key !== key);
 	});
 	const encoded = encodeFilters(decoded);
 	const entry = overlayRouteEntry(routeGetters.getRoute(component.$store), {

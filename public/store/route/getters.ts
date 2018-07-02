@@ -123,21 +123,21 @@ export const getters = {
 		const training = getters.getDecodedTrainingVariableNames;
 		const lookup = buildLookup(training);
 		const variables = getters.getVariables;
-		return variables.filter(variable => lookup[variable.name.toLowerCase()]);
+		return variables.filter(variable => lookup[variable.key.toLowerCase()]);
 	},
 
 	getTrainingVariableSummaries(state: Route, getters: any): VariableSummary[] {
 		const training = getters.getDecodedTrainingVariableNames;
 		const lookup = buildLookup(training);
 		const summaries = getters.getVariableSummaries;
-		return summaries.filter(summary => lookup[summary.name.toLowerCase()]);
+		return summaries.filter(summary => lookup[summary.key.toLowerCase()]);
 	},
 
 	getTargetVariable(state: Route, getters: any): Variable {
 		const target = getters.getRouteTargetVariable;
 		if (target) {
 			const variables = getters.getVariables;
-			const found = variables.filter(summary => target.toLowerCase() === summary.name.toLowerCase());
+			const found = variables.filter(summary => target.toLowerCase() === summary.key.toLowerCase());
 			if (found) {
 				return found[0];
 			}
@@ -149,7 +149,7 @@ export const getters = {
 		const target = getters.getRouteTargetVariable;
 		if (target) {
 			const summaries = getters.getVariableSummaries;
-			return summaries.filter(summary => target.toLowerCase() === summary.name.toLowerCase());
+			return summaries.filter(summary => target.toLowerCase() === summary.key.toLowerCase());
 		}
 		return [];
 	},
@@ -159,7 +159,7 @@ export const getters = {
 		const target = getters.getRouteTargetVariable;
 		const lookup = buildLookup(training.concat([ target ]));
 		const variables = getters.getVariables;
-		return variables.filter(variable => !lookup[variable.name.toLowerCase()]);
+		return variables.filter(variable => !lookup[variable.key.toLowerCase()]);
 	},
 
 	getAvailableVariableSummaries(state: Route, getters: any): VariableSummary[] {
@@ -167,7 +167,7 @@ export const getters = {
 		const target = getters.getRouteTargetVariable;
 		const lookup = buildLookup(training.concat([ target ]));
 		const summaries = getters.getVariableSummaries;
-		return summaries.filter(summary => !lookup[summary.name.toLowerCase()]);
+		return summaries.filter(summary => !lookup[summary.key.toLowerCase()]);
 	},
 
 	getActiveSolutionIndex(state: Route, getters: any): number {

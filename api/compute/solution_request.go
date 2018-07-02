@@ -606,7 +606,7 @@ func CreateSearchSolutionRequest(allFeatures []*model.Variable,
 
 	var targetVariable *model.Variable
 	for _, v := range allFeatures {
-		if v.Name == target {
+		if v.Key == target {
 			targetVariable = v
 		}
 	}

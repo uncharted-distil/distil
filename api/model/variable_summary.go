@@ -17,9 +17,8 @@ const (
 
 // Bucket represents a single histogram bucket.
 type Bucket struct {
-	Key     string    `json:"key"`
-	Count   int64     `json:"count"`
-	Buckets []*Bucket `json:"buckets,omitempty"`
+	Key   string `json:"key"`
+	Count int64  `json:"count"`
 }
 
 // Histogram represents a single variable histogram.

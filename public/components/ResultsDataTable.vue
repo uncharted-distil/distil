@@ -23,12 +23,13 @@
 					{{target}}<sup>{{solutionIndex}}</sup>
 				</template>
 
-				<template :slot="targetErrorCol" slot-scope="data">
+				<template :slot="errorCol" slot-scope="data">
 					<!-- A custom formatted data column cell -->
 					<div class="error-bar-container">
-						<div class="error-bar" v-bind:style="{ 'background-color': errorBarColor(data.item[targetErrorCol]), width: errorBarWidth(data.item[targetErrorCol]), left: errorBarLeft(data.item[targetErrorCol]) }"></div>
+						<div class="error-bar" v-bind:style="{ 'background-color': errorBarColor(data.item[errorCol]), width: errorBarWidth(data.item[errorCol]), left: errorBarLeft(data.item[errorCol]) }"></div>
 						<div class="error-bar-center"></div>
 					</div>
+					{{data.item[errorCol]}}
 				</template>
 			</b-table>
 		</div>
@@ -41,13 +42,13 @@
 import _ from 'lodash';
 import { spinnerHTML } from '../util/spinner';
 import { Extrema } from '../store/dataset/index';
-import { TargetRow, TableRow, TableColumn, D3M_INDEX_FIELD } from '../store/dataset/index';
+import { TableRow, TableColumn, D3M_INDEX_FIELD } from '../store/dataset/index';
 import { RowSelection } from '../store/highlights/index';
 import { getters as resultsGetters } from '../store/results/module';
 import { getters as routeGetters } from '../store/route/module';
 import { getters as solutionGetters } from '../store/solutions/module';
+import { Solution } from '../store/solutions/index';
 import { Dictionary } from '../util/dict';
-import { removeNonTrainingItems, removeNonTrainingFields, getPredictedCol, getErrorCol } from '../util/data';
 import { addRowSelection, removeRowSelection, isRowSelected, updateTableRowSelection } from '../util/row';
 import Vue from 'vue';
 
@@ -67,6 +68,10 @@ export default Vue.extend({
 			return routeGetters.getRouteSolutionId(this.$store);
 		},
 
+		solution(): Solution {
+			return solutionGetters.getActiveSolution(this.$store);
+		},
+
 		solutionIndex(): number {
 			return routeGetters.getActiveSolutionIndex(this.$store);
 		},
@@ -76,11 +81,11 @@ export default Vue.extend({
 		},
 
 		predictedCol(): string {
-			return `HEAD_${getPredictedCol(this.target)}`;
+			return `HEAD_${this.solution.predictedKey}`;
 		},
 
-		targetErrorCol(): string {
-			return getErrorCol(this.target);
+		errorCol(): string {
+			return this.solution.errorKey;
 		},
 
 		residualExtrema(): Extrema {
@@ -95,13 +100,12 @@ export default Vue.extend({
 			return !!this.dataItems;
 		},
 
-		items(): TargetRow[] {
-			const filtered = removeNonTrainingItems(this.dataItems, this.training);
-			return updateTableRowSelection(filtered, this.rowSelection, this.instanceName);
+		items(): TableRow[] {
+			return updateTableRowSelection(this.dataItems, this.rowSelection, this.instanceName);
 		},
 
 		fields(): Dictionary<TableColumn> {
-			return removeNonTrainingFields(this.dataFields, this.training);
+			return this.dataFields;
 		},
 
 		rowSelection(): RowSelection {
@@ -135,6 +139,8 @@ export default Vue.extend({
 			const range = this.residualExtrema.max - this.residualExtrema.min;
 			return (error - this.residualExtrema.min) / range;
 		},
+
+		// TODO: fix these to work for correctness values too
 
 		errorBarWidth(error: number): string {
 			return `${Math.abs((this.normalizeError(error)*50))}%`;

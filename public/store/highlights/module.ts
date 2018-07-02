@@ -33,7 +33,5 @@ export const actions = {
 export const mutations = {
 	updateHighlightSamples: commit(moduleMutations.updateHighlightSamples),
 	updateHighlightSummaries: commit(moduleMutations.updateHighlightSummaries),
-	updatePredictedHighlightSummaries: commit(moduleMutations.updatePredictedHighlightSummaries),
-	updateCorrectnessHighlightSummaries: commit(moduleMutations.updateCorrectnessHighlightSummaries),
 	clearHighlightSummaries: commit(moduleMutations.clearHighlightSummaries)
 }

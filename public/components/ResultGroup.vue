@@ -69,7 +69,6 @@ import { createGroups, Group } from '../util/facets';
 import { Extrema, VariableSummary } from '../store/dataset/index';
 import { Highlight, RowSelection } from '../store/highlights/index';
 import { SOLUTION_COMPLETED, SOLUTION_ERRORED } from '../store/solutions/index';
-import { getPredictedCol, getErrorCol, getCorrectnessCol } from '../util/data';
 import { getters as routeGetters } from '../store/route/module';
 import { getters as solutionGetters } from '../store/solutions/module';
 import { getSolutionById, getMetricDisplayName } from '../util/solutions';
@@ -113,18 +112,6 @@ export default Vue.extend({
 
 		correctnessInstanceName(): string {
 			return `correctness-result-facet-${this.solutionId}`;
-		},
-
-		predictedColumnName(): string {
-			return getPredictedCol(this.target);
-		},
-
-		errorColumnName(): string {
-			return getErrorCol(this.target);
-		},
-
-		correctnessColumnName(): string {
-			return getCorrectnessCol(this.target);
 		},
 
 		solutionStatus(): String {
@@ -200,7 +187,7 @@ export default Vue.extend({
 				// extract the var name from the key
 				updateHighlightRoot(this, {
 					context: context,
-					key: this.predictedColumnName,
+					key: key,
 					value: value
 				});
 			} else {
@@ -213,7 +200,7 @@ export default Vue.extend({
 				// extract the var name from the key
 				updateHighlightRoot(this, {
 					context: context,
-					key: this.correctnessColumnName,
+					key: key,
 					value: value
 				});
 			} else {
@@ -225,7 +212,7 @@ export default Vue.extend({
 			if (!this.highlights.root || this.highlights.root.key !== key) {
 				updateHighlightRoot(this, {
 					context: context,
-					key: this.predictedColumnName,
+					key: key,
 					value: value
 				});
 			}
@@ -234,7 +221,7 @@ export default Vue.extend({
 		onResultRangeChange(context: string, key: string, value: { from: { label: string[] }, to: { label: string[] } }) {
 			updateHighlightRoot(this, {
 				context: context,
-				key: this.predictedColumnName,
+				key: key,
 				value: value
 			});
 			this.$emit('range-change', key, value);
@@ -244,7 +231,7 @@ export default Vue.extend({
 			if (!this.highlights.root || this.highlights.root.key !== key) {
 				updateHighlightRoot(this, {
 					context: context,
-					key: this.errorColumnName,
+					key: key,
 					value: value
 				});
 			}
@@ -253,7 +240,7 @@ export default Vue.extend({
 		onResidualRangeChange(context: string, key: string, value: { from: number, to: number }) {
 			updateHighlightRoot(this, {
 				context: context,
-				key: this.errorColumnName,
+				key: key,
 				value: value
 			});
 			this.$emit('range-change', key, value);

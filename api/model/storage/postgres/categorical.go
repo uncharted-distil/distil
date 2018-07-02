@@ -85,8 +85,8 @@ func (f *CategoricalField) fetchHistogramByResult(dataset string, variable *mode
 		if err != nil {
 			return nil, err
 		}
-	} else if filters.errorFilter != nil {
-		wheres, params, err = f.Storage.buildErrorResultWhere(wheres, params, filters.errorFilter)
+	} else if filters.residualFilter != nil {
+		wheres, params, err = f.Storage.buildErrorResultWhere(wheres, params, filters.residualFilter)
 		if err != nil {
 			return nil, err
 		}
@@ -191,8 +191,8 @@ func (f *CategoricalField) FetchPredictedSummaryData(resultURI string, dataset s
 		if err != nil {
 			return nil, err
 		}
-	} else if filters.errorFilter != nil {
-		wheres, params, err = f.Storage.buildErrorResultWhere(wheres, params, filters.errorFilter)
+	} else if filters.residualFilter != nil {
+		wheres, params, err = f.Storage.buildErrorResultWhere(wheres, params, filters.residualFilter)
 		if err != nil {
 			return nil, err
 		}

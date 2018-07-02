@@ -217,7 +217,11 @@ func Ingest(storage model.MetadataStorage, index string, dataset string, config 
 	// Adjust the ID & name of the dataset as needed
 	fixDatasetIDName(meta)
 
-	err = meta.LoadImportance(config.getTmpAbsolutePath(config.RankingOutputPathRelative))
+	indices := make([]int, len(meta.DataResources[0].Variables))
+	for i := 0; i < len(indices); i++ {
+		indices[i] = i
+	}
+	err = meta.LoadImportance(config.getTmpAbsolutePath(config.RankingOutputPathRelative), indices)
 	if err != nil {
 		return errors.Wrap(err, "unable to load importance from file")
 	}

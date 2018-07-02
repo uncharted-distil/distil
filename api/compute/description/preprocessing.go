@@ -49,7 +49,7 @@ func createRemoveFeatures(allFeatures []*model.Variable, selectedSet map[string]
 	// create a list of features to remove
 	removeFeatures := []int{}
 	for _, v := range allFeatures {
-		if !selectedSet[strings.ToLower(v.Name)] {
+		if !selectedSet[strings.ToLower(v.Key)] {
 			removeFeatures = append(removeFeatures, v.Index)
 		}
 	}

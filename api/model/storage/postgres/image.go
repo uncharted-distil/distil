@@ -133,8 +133,8 @@ func (f *ImageField) fetchHistogramByResult(dataset string, variable *model.Vari
 		if err != nil {
 			return nil, err
 		}
-	} else if filters.errorFilter != nil {
-		wheres, params, err = f.Storage.buildErrorResultWhere(wheres, params, filters.errorFilter)
+	} else if filters.residualFilter != nil {
+		wheres, params, err = f.Storage.buildErrorResultWhere(wheres, params, filters.residualFilter)
 		if err != nil {
 			return nil, err
 		}
@@ -187,21 +187,6 @@ func (f *ImageField) parseHistogram(rows *pgx.Rows, variable *model.Variable) (*
 
 	termsAggName := model.TermsAggPrefix + prefixedVarName
 
-	// parse as either one dimension or two dimension category histogram.  This could be collapsed down into a
-	// single function.
-	dimension := len(rows.FieldDescriptions()) - 1
-
-	if dimension == 1 {
-		return f.parseUnivariateHistogram(rows, variable, termsAggName)
-	} else if dimension == 2 {
-		return f.parseBivariateHistogram(rows, variable, termsAggName)
-	} else {
-		return nil, errors.Errorf("Unhandled dimension of %d for histogram %s", dimension, termsAggName)
-	}
-}
-
-func (f *ImageField) parseUnivariateHistogram(rows *pgx.Rows, variable *model.Variable, termsAggName string) (*model.Histogram, error) {
-	// Parse bucket results.
 	buckets := make([]*model.Bucket, 0)
 	min := int64(math.MaxInt32)
 	max := int64(-math.MaxInt32)
@@ -242,66 +227,6 @@ func (f *ImageField) parseUnivariateHistogram(rows *pgx.Rows, variable *model.Va
 	}, nil
 }
 
-func (f *ImageField) parseBivariateHistogram(rows *pgx.Rows, variable *model.Variable, termsAggName string) (*model.Histogram, error) {
-	// extract the counts
-	countMap := map[string]map[string]int64{}
-	if rows != nil {
-		for rows.Next() {
-			var predictedTerm string
-			var targetTerm string
-			var bucketCount int64
-			err := rows.Scan(&targetTerm, &predictedTerm, &bucketCount)
-			if err != nil {
-				return nil, errors.Wrap(err, fmt.Sprintf("no %s histogram aggregation found", termsAggName))
-			}
-			if len(countMap[predictedTerm]) == 0 {
-				countMap[predictedTerm] = map[string]int64{}
-			}
-			countMap[predictedTerm][targetTerm] = bucketCount
-		}
-	}
-
-	// convert the extracted counts into buckets suitable for serialization
-	buckets := make([]*model.Bucket, 0)
-	min := int64(math.MaxInt32)
-	max := int64(-math.MaxInt32)
-
-	for predictedKey, targetCounts := range countMap {
-		bucket := model.Bucket{
-			Key:     predictedKey,
-			Count:   0,
-			Buckets: []*model.Bucket{},
-		}
-		for targetKey, count := range targetCounts {
-			targetBucket := model.Bucket{
-				Key:   targetKey,
-				Count: count,
-			}
-			bucket.Count = bucket.Count + count
-			bucket.Buckets = append(bucket.Buckets, &targetBucket)
-		}
-		buckets = append(buckets, &bucket)
-		if bucket.Count < min {
-			min = bucket.Count
-		}
-		if bucket.Count > max {
-			max = bucket.Count
-		}
-	}
-	// assign histogram attributes
-	return &model.Histogram{
-		Label:   variable.Label,
-		Key:     variable.Key,
-		VarType: variable.Type,
-		Type:    model.CategoricalType,
-		Buckets: buckets,
-		Extrema: &model.Extrema{
-			Min: float64(min),
-			Max: float64(max),
-		},
-	}, nil
-}
-
 // FetchPredictedSummaryData pulls predicted data from the result table and builds
 // the image histogram for the field.
 func (f *ImageField) FetchPredictedSummaryData(resultURI string, dataset string, datasetResult string, variable *model.Variable, filterParams *model.FilterParams, extrema *model.Extrema) (*model.Histogram, error) {
@@ -327,8 +252,8 @@ func (f *ImageField) FetchPredictedSummaryData(resultURI string, dataset string,
 		if err != nil {
 			return nil, err
 		}
-	} else if filters.errorFilter != nil {
-		wheres, params, err = f.Storage.buildErrorResultWhere(wheres, params, filters.errorFilter)
+	} else if filters.residualFilter != nil {
+		wheres, params, err = f.Storage.buildErrorResultWhere(wheres, params, filters.residualFilter)
 		if err != nil {
 			return nil, err
 		}

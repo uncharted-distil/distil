@@ -88,7 +88,8 @@ func PredictedSummaryHandler(solutionCtor model.SolutionStorageCtor, dataCtor mo
 			handleError(w, err)
 			return
 		}
-		histogram.Key = histogram.Label + ":" + res.SolutionID
+		histogram.Key = model.GetPredictedKey(histogram.Key, res.SolutionID)
+		histogram.Label = "Predicted"
 		histogram.SolutionID = res.SolutionID
 
 		// marshall data and sent the response back

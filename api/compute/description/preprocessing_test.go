@@ -30,7 +30,7 @@ func TestCreateUserDatasetPipeline(t *testing.T) {
 			Index:        2,
 		},
 		{
-			Name:         "test_var_3",
+			Key:          "test_var_3",
 			OriginalType: "categorical",
 			Type:         "integer",
 			Index:        3,

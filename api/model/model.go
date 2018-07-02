@@ -1,7 +1,13 @@
 package model
 
 import (
+	"regexp"
+	"strings"
 	"time"
+)
+
+var (
+	suffixReg = regexp.MustCompile(`_\S+_error|_\S+_predicted$`)
 )
 
 // Request represents the request metadata.
@@ -60,4 +66,34 @@ type SolutionScore struct {
 	SolutionID string  `json:"solutionId"`
 	Metric     string  `json:"metric"`
 	Score      float64 `json:"value"`
+}
+
+// GetPredictedKey returns a solutions predicted col key.
+func GetPredictedKey(target string, solutionID string) string {
+	return target + "_" + solutionID + "_predicted"
+}
+
+// GetErrorKey returns a solutions error col key.
+func GetErrorKey(target string, solutionID string) string {
+	return target + "_" + solutionID + "_error"
+}
+
+// IsPredictedKey returns true if the key matches a predicted key.
+func IsPredictedKey(key string) bool {
+	return strings.HasSuffix(key, "_predicted")
+}
+
+// IsErrorKey returns true if the key matches an error key.
+func IsErrorKey(key string) bool {
+	return strings.HasSuffix(key, "_error")
+}
+
+// IsResultKey returns true if the key matches an predicted or error key.
+func IsResultKey(key string) bool {
+	return IsPredictedKey(key) || IsErrorKey(key)
+}
+
+// StripKeySuffix removes any result key suffix.
+func StripKeySuffix(key string) string {
+	return suffixReg.ReplaceAllString(key, "")
 }

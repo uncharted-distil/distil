@@ -35,11 +35,12 @@ import { getTask } from '../util/solutions';
 import _ from 'lodash';
 import Vue from 'vue';
 import { Dictionary } from '../util/dict';
-import { getters as datasetGetters} from '../store/dataset/module';
-import { getters as resultsGetters} from '../store/results/module';
-import { getters as routeGetters} from '../store/route/module';
-import { getErrorCol, getTargetCol, getPredictedCol } from '../util/data';
-import { Variable, TargetRow, TableColumn } from '../store/dataset/index';
+import { getters as datasetGetters } from '../store/dataset/module';
+import { getters as resultsGetters } from '../store/results/module';
+import { getters as routeGetters } from '../store/route/module';
+import { getters as solutionGetters } from '../store/solutions/module';
+import { Solution } from '../store/solutions/index';
+import { Variable, TableRow, TableColumn } from '../store/dataset/index';
 import { getHighlights } from '../util/highlights';
 
 export default Vue.extend({
@@ -59,6 +60,10 @@ export default Vue.extend({
 			return routeGetters.getRouteSolutionId(this.$store);
 		},
 
+		solution(): Solution {
+			return solutionGetters.getActiveSolution(this.$store);
+		},
+
 		target(): string {
 			return routeGetters.getRouteTargetVariable(this.$store);
 		},
@@ -72,7 +77,7 @@ export default Vue.extend({
 			return highlights && highlights.root && highlights.root.value;
 		},
 
-		includedResultTableDataItems(): TargetRow[] {
+		includedResultTableDataItems(): TableRow[] {
 			return resultsGetters.getIncludedResultTableDataItems(this.$store);
 		},
 
@@ -83,15 +88,15 @@ export default Vue.extend({
 		includedResultErrors(): number {
 			return this.includedResultTableDataItems.filter(item => {
 				if (this.regressionEnabled) {
-					const err = _.toNumber(item[getErrorCol(this.target)]);
+					const err = _.toNumber(item[this.solution.errorKey]);
 					return err < this.residualThresholdMin || err > this.residualThresholdMax;
 				} else {
-					return item[getTargetCol(this.target)] !== item[getPredictedCol(this.target)];
-				}				
+					return item[this.target] !== item[this.solution.predictedKey];
+				}
 			}).length;
 		},
 
-		excludedResultTableDataItems(): TargetRow[] {
+		excludedResultTableDataItems(): TableRow[] {
 			return resultsGetters.getExcludedResultTableDataItems(this.$store);
 		},
 
@@ -102,10 +107,10 @@ export default Vue.extend({
 		excludedResultErrors(): number {
 			return this.excludedResultTableDataItems.filter(item => {
 				if (this.regressionEnabled) {
-					const err = _.toNumber(item[getErrorCol(this.target)]);
+					const err = _.toNumber(item[this.solution.errorKey]);
 					return err < this.residualThresholdMin || err > this.residualThresholdMax;
 				} else {
-					return item[getTargetCol(this.target)] !== item[getPredictedCol(this.target)];
+					return item[this.target] !== item[this.solution.predictedKey];
 				}
 			}).length;
 		},
@@ -122,7 +127,7 @@ export default Vue.extend({
 			const targetVarName = this.target;
 			const variables = this.variables;
 			const targetVar = _.find(variables, v => {
-				return _.toLower(v.name) === _.toLower(targetVarName);
+				return _.toLower(v.key) === _.toLower(targetVarName);
 			});
 			if (_.isEmpty(targetVar)) {
 				return false;

@@ -4,7 +4,6 @@ import (
 	"bufio"
 	"encoding/csv"
 	"fmt"
-	"math"
 	"os"
 	"strconv"
 	"strings"
@@ -13,13 +12,6 @@ import (
 	"github.com/pkg/errors"
 	"github.com/unchartedsoftware/distil/api/model"
 	log "github.com/unchartedsoftware/plog"
-)
-
-const (
-	predictedSuffix   = "_predicted"
-	errorSuffix       = "_error"
-	correctnessSuffix = "_correctness"
-	targetSuffix      = "_target"
 )
 
 func (s *Storage) getResultTable(dataset string) string {
@@ -132,32 +124,6 @@ func (s *Storage) executeInsertResultStatement(dataset string, resultID string, 
 	return err
 }
 
-func (s *Storage) parseVariableValue(value string, variable *model.Variable) (interface{}, error) {
-	// Integer types can be returned as floats.
-	switch variable.Type {
-	case model.IntegerType:
-		return strconv.ParseFloat(value, 64)
-	case model.FloatType:
-		return strconv.ParseFloat(value, 64)
-	case model.LongitudeType:
-		return strconv.ParseFloat(value, 64)
-	case model.LatitudeType:
-		return strconv.ParseFloat(value, 64)
-	case model.CategoricalType:
-		fallthrough
-	case model.TextType:
-		fallthrough
-	case model.DateTimeType:
-		fallthrough
-	case model.OrdinalType:
-		return value, nil
-	case model.BoolType:
-		return strconv.ParseBool(value)
-	default:
-		return value, nil
-	}
-}
-
 func (s *Storage) parseFilteredResults(dataset string, numRows int, rows *pgx.Rows, target *model.Variable) (*model.FilteredData, error) {
 	result := &model.FilteredData{
 		NumRows: numRows,
@@ -169,9 +135,16 @@ func (s *Storage) parseFilteredResults(dataset string, numRows int, rows *pgx.Ro
 		fields := rows.FieldDescriptions()
 		columns := make([]model.Column, len(fields))
 		for i := 0; i < len(fields); i++ {
+			key := fields[i].Name
+			label := key
+			if model.IsPredictedKey(key) {
+				label = "Predicted " + model.StripKeySuffix(key)
+			} else if model.IsErrorKey(key) {
+				label = "Error"
+			}
 			columns[i] = model.Column{
-				Key:   fields[i].Name,
-				Label: fields[i].Name,
+				Key:   key,
+				Label: label,
 				Type:  fields[i].DataTypeName,
 			}
 		}
@@ -193,36 +166,6 @@ func (s *Storage) parseFilteredResults(dataset string, numRows int, rows *pgx.Ro
 	}
 
 	return result, nil
-}
-
-func (s *Storage) parseResults(dataset string, numRows int, rows *pgx.Rows, variable *model.Variable) (*model.FilteredData, error) {
-	// Scan the rows. Each row has only the value as a string.
-	values := [][]interface{}{}
-	for rows.Next() {
-		var value string
-		err := rows.Scan(&value)
-		if err != nil {
-			return nil, errors.Wrap(err, "Unable to parse result row")
-		}
-
-		val, err := s.parseVariableValue(value, variable)
-		if err != nil {
-			return nil, errors.Wrap(err, "failed string value parsing")
-		}
-		values = append(values, []interface{}{val})
-	}
-	// Build the filtered data.
-	return &model.FilteredData{
-		NumRows: numRows,
-		Columns: []model.Column{
-			model.Column{
-				Key:   variable.Key,
-				Label: variable.Label,
-				Type:  variable.Type,
-			},
-		},
-		Values: values,
-	}, nil
 }
 
 func appendAndClause(expression string, andClause string) string {
@@ -369,32 +312,32 @@ func addExcludePredictedFilterToWhere(wheres []string, params []interface{}, dat
 	return wheres, params, nil
 }
 
-func addIncludeErrorFilterToWhere(wheres []string, params []interface{}, dataset string, targetName string, errorFilter *model.Filter) ([]string, []interface{}, error) {
+func addIncludeErrorFilterToWhere(wheres []string, params []interface{}, dataset string, targetName string, residualFilter *model.Filter) ([]string, []interface{}, error) {
 	// Add a clause to filter residuals to the existing where
 	typedError := getErrorTyped(targetName)
 	where := fmt.Sprintf("(%s >= $%d AND %s <= $%d)", typedError, len(params)+1, typedError, len(params)+2)
-	params = append(params, *errorFilter.Min)
-	params = append(params, *errorFilter.Max)
+	params = append(params, *residualFilter.Min)
+	params = append(params, *residualFilter.Max)
 
 	// Append the AND clause
 	wheres = append(wheres, where)
 	return wheres, params, nil
 }
 
-func addExcludeErrorFilterToWhere(wheres []string, params []interface{}, dataset string, targetName string, errorFilter *model.Filter) ([]string, []interface{}, error) {
+func addExcludeErrorFilterToWhere(wheres []string, params []interface{}, dataset string, targetName string, residualFilter *model.Filter) ([]string, []interface{}, error) {
 	// Add a clause to filter residuals to the existing where
 	typedError := getErrorTyped(targetName)
 	where := fmt.Sprintf("(%s < $%d OR %s > $%d)", typedError, len(params)+1, typedError, len(params)+2)
-	params = append(params, *errorFilter.Min)
-	params = append(params, *errorFilter.Max)
+	params = append(params, *residualFilter.Min)
+	params = append(params, *residualFilter.Max)
 
 	// Append the AND clause
 	wheres = append(wheres, where)
 	return wheres, params, nil
 }
 
-// FetchFilteredResults pulls the results from the Postgres database.
-func (s *Storage) FetchFilteredResults(dataset string, resultURI string, filterParams *model.FilterParams) (*model.FilteredData, error) {
+// FetchResults pulls the results from the Postgres database.
+func (s *Storage) FetchResults(dataset string, resultURI string, solutionID string, filterParams *model.FilterParams) (*model.FilteredData, error) {
 	datasetResult := s.getResultTable(dataset)
 	targetName, err := s.getResultTargetName(datasetResult, resultURI)
 	if err != nil {
@@ -458,14 +401,14 @@ func (s *Storage) FetchFilteredResults(dataset string, resultURI string, filterP
 	}
 
 	// Add the error filter into the where clause if it was included in the filter set
-	if filters.errorFilter != nil {
-		if filters.errorFilter.Mode == model.IncludeFilter {
-			wheres, params, err = addIncludeErrorFilterToWhere(wheres, params, dataset, targetName, filters.errorFilter)
+	if filters.residualFilter != nil {
+		if filters.residualFilter.Mode == model.IncludeFilter {
+			wheres, params, err = addIncludeErrorFilterToWhere(wheres, params, dataset, targetName, filters.residualFilter)
 			if err != nil {
 				return nil, errors.Wrap(err, "Could not add error to where clause")
 			}
 		} else {
-			wheres, params, err = addExcludeErrorFilterToWhere(wheres, params, dataset, targetName, filters.errorFilter)
+			wheres, params, err = addExcludeErrorFilterToWhere(wheres, params, dataset, targetName, filters.residualFilter)
 			if err != nil {
 				return nil, errors.Wrap(err, "Could not add error to where clause")
 			}
@@ -473,14 +416,14 @@ func (s *Storage) FetchFilteredResults(dataset string, resultURI string, filterP
 	}
 
 	// If our results are numerical we need to compute residuals and store them in a column called 'error'
+	predictedCol := model.GetPredictedKey(targetName, solutionID)
+	errorCol := model.GetErrorKey(targetName, solutionID)
+	targetCol := targetName
+
 	errorExpr := ""
-	errorCol := targetName + errorSuffix
 	if model.IsNumerical(variable.Type) {
 		errorExpr = fmt.Sprintf("%s as \"%s\",", getErrorTyped(variable.Key), errorCol)
 	}
-
-	predictedCol := targetName + predictedSuffix
-	targetCol := targetName + targetSuffix
 
 	query := fmt.Sprintf(
 		"SELECT value as \"%s\", "+
@@ -517,37 +460,6 @@ func (s *Storage) FetchFilteredResults(dataset string, resultURI string, filterP
 	}
 
 	return s.parseFilteredResults(dataset, numRows, rows, variable)
-}
-
-// FetchResults pulls the results from the Postgres database.
-func (s *Storage) FetchResults(dataset string, resultURI string) (*model.FilteredData, error) {
-
-	// fetch the variable info to resolve its type - skip the first column since that will be the d3m_index value
-	datasetResult := s.getResultTable(dataset)
-	targetName, err := s.getResultTargetName(datasetResult, resultURI)
-	variable, err := s.getResultTargetVariable(dataset, targetName)
-	if err != nil {
-		return nil, err
-	}
-
-	predictedCol := variable.Key + predictedSuffix
-	sql := fmt.Sprintf("SELECT value FROM %s as %s WHERE result_id = $1 AND target = $2;", datasetResult, predictedCol)
-
-	rows, err := s.client.Query(sql, resultURI, targetName)
-	if err != nil {
-		return nil, errors.Wrap(err, "Error querying results")
-	}
-	defer rows.Close()
-
-	countFilter := map[string]interface{}{
-		"result_id": resultURI,
-	}
-	numRows, err := s.FetchNumRows(datasetResult, countFilter)
-	if err != nil {
-		return nil, errors.Wrap(err, "Could not pull num rows")
-	}
-
-	return s.parseResults(dataset, numRows, rows, variable)
 }
 
 func (s *Storage) getResultMinMaxAggsQuery(variable *model.Variable, resultVariable *model.Variable) string {
@@ -666,26 +578,4 @@ func (s *Storage) FetchPredictedSummary(dataset string, resultURI string, filter
 	histogram.Dataset = dataset
 
 	return histogram, nil
-
-}
-
-func toFloat(value interface{}) (float64, error) {
-	switch t := value.(type) {
-	case int:
-		return float64(t), nil
-	case int8:
-		return float64(t), nil
-	case int16:
-		return float64(t), nil
-	case int32:
-		return float64(t), nil
-	case int64:
-		return float64(t), nil
-	case float32:
-		return float64(t), nil
-	case float64:
-		return float64(t), nil
-	default:
-		return math.NaN(), errors.Errorf("unhandled type %T for %v in conversion to float64", t, value)
-	}
 }

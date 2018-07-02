@@ -21,7 +21,7 @@ export const mutations = {
 
 
 	updateVariableSummaries(state: DatasetState, summary: VariableSummary) {
-		updateSummaries(summary, state.variableSummaries, 'name');
+		updateSummaries(summary, state.variableSummaries);
 	},
 
 	// sets the current selected data into the store

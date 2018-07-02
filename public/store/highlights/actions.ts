@@ -4,13 +4,11 @@ import { HighlightState } from './index';
 import { DistilState } from '../store';
 import { FilterParams, INCLUDE_FILTER } from '../../util/filters';
 import { getSolutionsByRequestIds, getSolutionById } from '../../util/solutions';
-import { getSummaries, updateCorrectnessHighlightSummary, getCorrectnessCol } from '../../util/data';
+import { getSummary } from '../../util/data';
 import { Variable, Extrema, ES_INDEX } from '../dataset/index';
 import { mutations } from './module'
-import { Solution } from '../solutions/index';
 import { HighlightRoot } from './index';
 import { addHighlightToFilterParams, parseHighlightSamples } from '../../util/highlights';
-import { getPredictedCol, getVarFromTarget } from '../../util/data';
 
 export type HighlightsContext = ActionContext<HighlightState, DistilState>;
 
@@ -100,7 +98,7 @@ export const actions = {
 			variables: [],
 			filters: []
 		}
-		filterParams = addHighlightToFilterParams(context, filterParams, args.highlightRoot, INCLUDE_FILTER, getVarFromTarget);
+		filterParams = addHighlightToFilterParams(context, filterParams, args.highlightRoot, INCLUDE_FILTER);
 
 		// commit empty place holders, if there is no data
 		return Promise.all(args.variables.map(variable => {
@@ -131,13 +129,16 @@ export const actions = {
 			variables: [],
 			filters: []
 		}
-		filterParams = addHighlightToFilterParams(context, filterParams, args.highlightRoot, INCLUDE_FILTER, getVarFromTarget);
+		filterParams = addHighlightToFilterParams(context, filterParams, args.highlightRoot, INCLUDE_FILTER);
 
 		const solutions = getSolutionsByRequestIds(context.rootState.solutionModule, args.requestIds);
-		const endPoint = `/distil/predicted-summary/${ES_INDEX}/${args.dataset}/${args.extrema.min}/${args.extrema.max}`
-		const nameFunc = (p: Solution) => getPredictedCol(p.feature);
-		const labelFunc = (p: Solution) => '';
-		getSummaries(context, endPoint, solutions, nameFunc, labelFunc, mutations.updatePredictedHighlightSummaries, filterParams);
+		const endpoint = `/distil/predicted-summary/${ES_INDEX}/${args.dataset}/${args.extrema.min}/${args.extrema.max}`
+
+		return Promise.all(solutions.map(solution => {
+			const key = solution.errorKey;
+			const label = 'Error';
+			return getSummary(context, endpoint, solution, key, label, mutations.updateHighlightSummaries, filterParams);
+		}));
 	},
 
 	fetchCorrectnessHighlightSummaries(context: HighlightsContext, args: { highlightRoot: HighlightRoot, dataset: string, requestIds: string[]}) {
@@ -150,13 +151,16 @@ export const actions = {
 			variables: [],
 			filters: []
 		}
-		filterParams = addHighlightToFilterParams(context, filterParams, args.highlightRoot, INCLUDE_FILTER, getVarFromTarget);
+		filterParams = addHighlightToFilterParams(context, filterParams, args.highlightRoot, INCLUDE_FILTER);
 
 		const solutions = getSolutionsByRequestIds(context.rootState.solutionModule, args.requestIds);
-		const endPoint = `/distil/correctness-summary/${ES_INDEX}/${args.dataset}`
-		const nameFunc = (p: Solution) => getCorrectnessCol(p.feature);
-		const labelFunc = (p: Solution) => '';
-		getSummaries(context, endPoint, solutions, nameFunc, labelFunc, updateCorrectnessHighlightSummary, filterParams);
+		const endpoint = `/distil/correctness-summary/${ES_INDEX}/${args.dataset}`
+
+		return Promise.all(solutions.map(solution => {
+			const key = solution.errorKey;
+			const label = 'Error';
+			return getSummary(context, endpoint, solution, key, label, mutations.updateHighlightSummaries, filterParams);
+		}));
 	},
 
 	fetchResultHighlightSamples(context: HighlightsContext, args: { highlightRoot: HighlightRoot, dataset: string, solutionId: string }) {
@@ -179,7 +183,7 @@ export const actions = {
 			variables: [],
 			filters: []
 		}
-		filterParams = addHighlightToFilterParams(context, filterParams, args.highlightRoot, INCLUDE_FILTER, getVarFromTarget);
+		filterParams = addHighlightToFilterParams(context, filterParams, args.highlightRoot, INCLUDE_FILTER);
 
 		// fetch the data using the supplied filtered
 		return context.dispatch('fetchResultTableData', {

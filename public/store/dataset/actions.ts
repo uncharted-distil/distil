@@ -120,10 +120,10 @@ export const actions = {
 			})
 			.catch(error => {
 				console.error(error);
-				const name = args.variable;
+				const key = args.variable;
 				const label = args.variable;
 				const dataset = args.dataset;
-				mutations.updateVariableSummaries(context,  createErrorSummary(name, label, dataset, error));
+				mutations.updateVariableSummaries(context,  createErrorSummary(key, label, dataset, error));
 			});
 	},
 

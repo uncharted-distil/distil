@@ -31,7 +31,7 @@ export default Vue.extend({
 
 	computed: {
 		filterName(): string {
-			return removeMetaPrefix(this.filter.name);
+			return removeMetaPrefix(this.filter.key);
 		}
 	},
 

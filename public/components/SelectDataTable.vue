@@ -135,25 +135,25 @@ export default Vue.extend({
 		},
 
 		imageFields(): string[] {
-			return _.map(this.fields, (field, name) => {
+			return _.map(this.fields, (field, key) => {
 				return {
-					name: name,
+					key: key,
 					type: field.type
 				};
 			})
 			.filter(field => field.type === 'image')
-			.map(field => field.name);
+			.map(field => field.key);
 		},
 
 		timeseriesFields(): string[] {
-			return _.map(this.fields, (field, name) => {
+			return _.map(this.fields, (field, key) => {
 				return {
-					name: name,
+					key: key,
 					type: field.type
 				};
 			})
 			.filter(field => field.type === 'timeseries')
-			.map(field => field.name);
+			.map(field => field.key);
 		},
 
 		activeFilter(): Filter {

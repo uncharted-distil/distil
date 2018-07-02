@@ -12,16 +12,18 @@ import (
 
 // Solution represents a pipeline solution.
 type Solution struct {
-	RequestID  string                 `json:"requestId"`
-	Feature    string                 `json:"feature"`
-	SolutionID string                 `json:"solutionId"`
-	ResultUUID string                 `json:"resultId"`
-	Progress   string                 `json:"progress"`
-	Scores     []*model.SolutionScore `json:"scores"`
-	Timestamp  time.Time              `json:"timestamp"`
-	Dataset    string                 `json:"dataset"`
-	Features   []*model.Feature       `json:"features"`
-	Filters    *model.FilterParams    `json:"filters"`
+	RequestID    string                 `json:"requestId"`
+	Feature      string                 `json:"feature"`
+	SolutionID   string                 `json:"solutionId"`
+	ResultUUID   string                 `json:"resultId"`
+	Progress     string                 `json:"progress"`
+	Scores       []*model.SolutionScore `json:"scores"`
+	Timestamp    time.Time              `json:"timestamp"`
+	Dataset      string                 `json:"dataset"`
+	Features     []*model.Feature       `json:"features"`
+	Filters      *model.FilterParams    `json:"filters"`
+	PredictedKey string                 `json:"predictedKey"`
+	ErrorKey     string                 `json:"errorKey"`
 }
 
 // RequestResponse represents a request response.
@@ -84,6 +86,9 @@ func SolutionHandler(solutionCtor model.SolutionStorageCtor) func(http.ResponseW
 					Scores:     pip.Scores,
 					Timestamp:  pip.CreatedTime,
 					Progress:   pip.Progress,
+					// keys
+					PredictedKey: model.GetPredictedKey(req.TargetFeature(), pip.SolutionID),
+					ErrorKey:     model.GetErrorKey(req.TargetFeature(), pip.SolutionID),
 				}
 				if pip.Result != nil {
 					// result
