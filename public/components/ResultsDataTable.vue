@@ -19,17 +19,27 @@
 				@row-clicked="onRowClick">
 
 				<template :slot="predictedCol" slot-scope="data">
-					<!-- A custom formatted header cell for predicted field -->
 					{{target}}<sup>{{solutionIndex}}</sup>
 				</template>
 
 				<template :slot="errorCol" slot-scope="data">
-					<!-- A custom formatted data column cell -->
-					<div class="error-bar-container">
+					<!-- residual error -->
+					<div class="error-bar-container" v-if="isTargetNumerical">
 						<div class="error-bar" v-bind:style="{ 'background-color': errorBarColor(data.item[errorCol]), width: errorBarWidth(data.item[errorCol]), left: errorBarLeft(data.item[errorCol]) }"></div>
 						<div class="error-bar-center"></div>
 					</div>
+					<!-- correctness error -->
+					<div v-if="isTargetCategorical">
+						<div v-if="data.item[predictedCol]==data.item[this.target]">
+							Correct
+						</div>
+						<div v-if="data.item[predictedCol]!=data.item[this.target]">
+							Incorrect
+						</div>
+					</div>
+
 					{{data.item[errorCol]}}
+
 				</template>
 			</b-table>
 		</div>
@@ -49,6 +59,7 @@ import { getters as routeGetters } from '../store/route/module';
 import { getters as solutionGetters } from '../store/solutions/module';
 import { Solution } from '../store/solutions/index';
 import { Dictionary } from '../util/dict';
+import { getVarType, isTextType } from '../util/types';
 import { addRowSelection, removeRowSelection, isRowSelected, updateTableRowSelection } from '../util/row';
 import Vue from 'vue';
 
@@ -78,6 +89,14 @@ export default Vue.extend({
 
 		target(): string {
 			return routeGetters.getRouteTargetVariable(this.$store);
+		},
+
+		isTargetCategorical(): boolean {
+			return isTextType(getVarType(this.$store, this.target));
+		},
+
+		isTargetNumerical(): boolean {
+			return !this.isTargetCategorical;
 		},
 
 		predictedCol(): string {
