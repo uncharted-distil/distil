@@ -254,11 +254,12 @@ func Ingest(storage model.MetadataStorage, index string, dataset string, config 
 
 	// Connect to the database.
 	postgresConfig := &conf.Conf{
-		DBPassword: config.DatabasePassword,
-		DBUser:     config.DatabaseUser,
-		Database:   config.Database,
-		DBHost:     config.DatabaseHost,
-		DBPort:     config.DatabasePort,
+		DBPassword:  config.DatabasePassword,
+		DBUser:      config.DatabaseUser,
+		Database:    config.Database,
+		DBHost:      config.DatabaseHost,
+		DBPort:      config.DatabasePort,
+		DBBatchSize: 1000,
 	}
 	pg, err := postgres.NewDatabase(postgresConfig)
 	if err != nil {
@@ -325,8 +326,10 @@ func Ingest(storage model.MetadataStorage, index string, dataset string, config 
 	}
 
 	// Load the data.
+	log.Infof("inserting rows into database")
 	reader, err := os.Open(config.getTmpAbsolutePath(config.MergedOutputPathRelative))
 	scanner := bufio.NewScanner(reader)
+	count := 0
 	for scanner.Scan() {
 		line := scanner.Text()
 
@@ -339,12 +342,20 @@ func Ingest(storage model.MetadataStorage, index string, dataset string, config 
 		if err != nil {
 			return errors.Wrap(err, "unable to ingest row")
 		}
+
+		count = count + 1
+		if count%10000 == 0 {
+			log.Infof("inserted %d rows so far", count)
+		}
 	}
 
+	log.Infof("ingesting final rows")
 	err = pg.InsertRemainingRows()
 	if err != nil {
 		return errors.Wrap(err, "unable to ingest last rows")
 	}
+
+	log.Infof("all data ingested")
 
 	return nil
 }
