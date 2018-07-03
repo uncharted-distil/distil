@@ -76,7 +76,7 @@ function updateCurrentSolutionResults(context: SolutionContext, req: CreateSolut
 			highlightRoot: context.getters.getDecodedHighlightRoot,
 			extrema: context.getters.getPredictedExtrema,
 			solutionId: res.solutionId,
-			requestIds: context.getters.getSolutions,
+			requestIds: context.getters.getSolutionRequestIds,
 			variables: context.getters.getActiveSolutionVariables,
 			includeCorrectness: isClassification,
 			includeResidual: isRegression
@@ -127,6 +127,16 @@ function updateSolutionResults(context: SolutionContext, req: CreateSolutionRequ
 			dataset: req.dataset,
 			solutionId: res.solutionId,
 			extrema: context.getters.getPredictedExtrema
+		});
+		context.dispatch('fetchResultHighlightValues', {
+			dataset: req.dataset,
+			highlightRoot: context.getters.getDecodedHighlightRoot,
+			extrema: context.getters.getPredictedExtrema,
+			solutionId: res.solutionId,
+			requestIds: context.getters.getSolutionRequestIds,
+			variables: context.getters.getActiveSolutionVariables,
+			includeCorrectness: isClassification,
+			includeResidual: isRegression
 		});
 	});
 
