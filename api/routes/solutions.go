@@ -60,7 +60,7 @@ func SolutionHandler(solutionCtor model.SolutionStorageCtor) func(http.ResponseW
 			return
 		}
 
-		requests, err := solution.FetchSolutionResultByDatasetTarget(dataset, target, solutionID)
+		requests, err := solution.FetchRequestByDatasetTarget(dataset, target, solutionID)
 		if err != nil {
 			handleError(w, err)
 			return
@@ -92,9 +92,7 @@ func SolutionHandler(solutionCtor model.SolutionStorageCtor) func(http.ResponseW
 				}
 				if pip.Result != nil {
 					// result
-					solution.Timestamp = pip.Result.CreatedTime
 					solution.ResultUUID = pip.Result.ResultUUID
-					solution.Progress = pip.Result.Progress
 				}
 				solutions = append(solutions, solution)
 			}

@@ -46,12 +46,12 @@ type SolutionStorage interface {
 	UpdateRequest(requestID string, progress string, updatedTime time.Time) error
 	FetchRequest(requestID string) (*Request, error)
 	FetchRequestBySolutionID(requestID string) (*Request, error)
+	FetchRequestByDatasetTarget(dataset string, target string, solutionID string) ([]*Request, error)
 	FetchRequestFeatures(requestID string) ([]*Feature, error)
 	FetchRequestFilters(requestID string, features []*Feature) (*FilterParams, error)
 	FetchSolution(solutionID string) (*Solution, error)
 	FetchSolutionResultByUUID(resultUUID string) (*SolutionResult, error)
 	FetchSolutionResult(solutionID string) (*SolutionResult, error)
-	FetchSolutionResultByDatasetTarget(dataset string, target string, solutionID string) ([]*Request, error)
 	FetchSolutionScores(solutionID string) ([]*SolutionScore, error)
 }
 

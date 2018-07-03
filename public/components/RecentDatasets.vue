@@ -40,7 +40,8 @@ export default Vue.extend({
 
 	computed: {
 		recentDatasets(): Dataset[] {
-			const datasets = localStorage.get('recent-datasets').slice(0, this.maxDatasets) || [];
+			const recent = localStorage.get('recent-datasets') || [];
+			const datasets = recent.slice(0, this.maxDatasets);
 			return this.filterDatasets(datasets, datasetGetters.getDatasets(this.$store));
 		},
 	},

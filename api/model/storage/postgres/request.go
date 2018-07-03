@@ -239,10 +239,10 @@ func (s *Storage) loadRequestFromSolutionID(solutionID string) (*model.Request, 
 	return request, nil
 }
 
-// FetchSolutionResultByDatasetTarget pulls a request with solution
+// FetchRequestByDatasetTarget pulls a request with solution
 // result information from Postgres. Only the latest result for each
 // solution is fetched.
-func (s *Storage) FetchSolutionResultByDatasetTarget(dataset string, target string, solutionID string) ([]*model.Request, error) {
+func (s *Storage) FetchRequestByDatasetTarget(dataset string, target string, solutionID string) ([]*model.Request, error) {
 
 	// get the solution ids
 	sql := fmt.Sprintf("SELECT DISTINCT solution.solution_id "+
