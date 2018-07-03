@@ -93,7 +93,7 @@ export default Vue.extend({
 				return;
 			}
 
-			if (this.targetVariableSummaries.length > 0) {
+			if (this.targetVariableSummaries.length > 0 && !this.targetVariableSummaries[0].pending) {
 				if (isNumericType(this.targetVariable.type)) {
 					this.selectDefaultNumerical();
 				} else {
