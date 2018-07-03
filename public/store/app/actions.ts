@@ -58,9 +58,6 @@ export const actions = {
 			return null;
 		}
 		return axios.post(`/distil/discovery/${ES_INDEX}/${args.dataset}/${args.target}`, { filterParams: args.filterParams, meaningful: args.meaningful})
-			.catch(error => {
-				console.error(error);
-			});
 	},
 
 	fetchVersion(context: AppContext) {

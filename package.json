@@ -15,7 +15,7 @@
     "@uncharted.software/stories-facets": "2.12.5",
     "axios": "0.18.0",
     "bootstrap": "4.1.1",
-    "bootstrap-vue": "2.0.0-rc.11",
+    "bootstrap-vue": "1.5.0",
     "cssnano": "^3.10.0",
     "d3": "^5.4.0",
     "font-awesome": "4.7.0",

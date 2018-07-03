@@ -1,34 +1,53 @@
 <template>
 	<div class="create-solutions-form">
 		<b-modal id="export-success-modal" title="Export Succeeded"
-			@hide="clearExportResults"
-			:visible="!!exportResults"
+			v-model="showExportSuccess"
 			cancel-disabled
 			hide-header
 			hide-footer>
-			<div class="row justify-content-center">Export Succeeded</div>
 			<div class="row justify-content-center">
-				<b-btn class="mt-3 close-modal" variant="success" block @click="clearExportResults">OK</b-btn>
+				<div class="check-message-container">
+					<i class="fa fa-check-circle fa-3x check-icon"></i>
+					<div><b>Export Succeded</b></div>
+				</div>
+			</div>
+			<div class="row justify-content-center">
+				<b-btn class="mt-3 close-modal" variant="success" block @click="showExportSuccess = !showExportSuccess">OK</b-btn>
+			</div>
+		</b-modal>
+		<b-modal id="export-failure-modal" title="Export Failed"
+			v-model="showExportFailure"
+			cancel-disabled
+			hide-header
+			hide-footer>
+			<div class="row justify-content-center">
+				<div class="check-message-container">
+					<i class="fa fa-exclamation-triangle fa-3x fail-icon"></i>
+					<div><b>Export Failed:</b> Internal server error</div>
+				</div>
+			</div>
+			<div class="row justify-content-center">
+				<b-btn class="mt-3 close-modal" variant="success" block @click="showExportFailure = !showExportFailure">OK</b-btn>
 			</div>
 		</b-modal>
 		<b-modal id="export-start-modal" title="Export Problem"
-			:visible="!!meaningful"
+			v-model="showExport"
 			cancel-disabled
 			hide-header
 			hide-footer>
 			<div class="row justify-content-center">
-				<div>
-					<p>
-						Is this a meaningful problem?
-						<input type="radio" value="Yes" v-model="meaningful">Yes</input>
-						<input type="radio" value="No" v-model="meaningful">No</input>
-					</p>
-				</div>
+				<b-radio-group v-model="meaningful">
+					<div class="meaningful-text">Is this a meaningful problem?</div>
+					<b-radio value=true>Yes</b-radio>
+					<b-radio value=false>No</b-radio>
+				</b-radio-group>
+			</div>
+			<div class="row justify-content-center">
 				<b-btn class="mt-3 close-modal" variant="success" block @click="exportData">Export</b-btn>
 			</div>
 		</b-modal>
 		<div class="row justify-content-center">
-			<b-button class="export-button" :variant="exportVariant" @click="exportParams" v-if="isDiscovery" :disabled="disableExport">
+			<b-button class="export-button" :variant="exportVariant" @click="showExport = !showExport" v-if="isDiscovery">
 				Task 1: Export Problem
 			</b-button>
 			<b-button class="create-button" :variant="createVariant" @click="create" :disabled="disableCreate">
@@ -69,9 +88,11 @@ export default Vue.extend({
 			featureSet: false,
 			metric: 'Metric',
 			metricSet: false,
-			exportResults: null,
 			pending: false,
-			meaningful: null
+			meaningful: true,
+			showExport: false,
+			showExportSuccess: false,
+			showExportFailure: false,
 		};
 	},
 	computed: {
@@ -163,25 +184,19 @@ export default Vue.extend({
 			});
 		},
 
-		// export button handler
-		exportParams() {
-			this.meaningful = true;
-		},
-
 		exportData() {
 			appActions.exportProblem(this.$store, {
 				dataset: this.dataset,
 				target: this.target,
 				filterParams: this.filterParams,
-				meaningful: this.meaningful
+				meaningful: this.meaningful ? 'Yes' : 'No'
 			}).then(res => {
-				this.exportResults = res;
+				this.showExportSuccess = !this.showExportSuccess;
+				this.meaningful = true;
+			}).catch(err => {
+				this.showExportFailure = !this.showExportFailure;
+				this.meaningful = true;
 			});
-			this.meaningful = null;
-		},
-
-		clearExportResults() {
-			this.exportResults = null;
 		}
 	}
 });
@@ -192,27 +207,43 @@ export default Vue.extend({
 	margin: 0 8px;
 	width: 35%;
 }
+
 .export-button {
 	margin: 0 8px;
 	width: 35%;
 }
+
 .close-modal {
-	width: 50%;
+	width: 35%;
 }
-.selected-icon {
-	padding-right: 4px;
-}
-.requirement-met {
-	padding: 0.5rem;
-}
-.dropdown-button-style {
-	position: relative !important;
-	width: 100%;
-}
-.dropdown-toggle {
-	width: 100%;
-}
+
 .solution-progress {
 	margin: 6px 10%;
+}
+
+.check-message-container {
+	display: flex;
+	justify-content: flex-start;
+	flex-direction: row;
+	align-items: center;
+}
+
+.check-icon {
+	display: flex;
+	flex-shrink: 0;
+	color:#00C851;
+	padding-right: 15px;
+}
+
+.fail-icon {
+	display: flex;
+	flex-shrink: 0;
+	color:#ee0701;
+	padding-right: 15px;
+}
+
+.check-button {
+	width: 60%;
+	margin: 0 20%;
 }
 </style>
