@@ -169,7 +169,8 @@ export const actions = {
 				requestIds: requestIds,
 				extrema: predictedExtrema,
 				variables: paginatedVariables,
-				includeCorrectness: isClassification
+				includeCorrectness: isClassification,
+				includeResidual: isRegression
 			});
 		});
 
@@ -226,6 +227,7 @@ export const actions = {
 		const solutionId = context.getters.getRouteSolutionId;
 		const predictedExtrema = context.getters.getPredictedExtrema;
 		const isClassification = context.getters.isClassification;
+		const isRegression = context.getters.isRegression;
 		const paginatedVariables = context.getters.getResultsPaginatedVariables;
 		const highlightRoot = context.getters.getDecodedHighlightRoot;
 
@@ -237,7 +239,8 @@ export const actions = {
 				requestIds: requestIds,
 				extrema: predictedExtrema,
 				variables: paginatedVariables,
-				includeCorrectness: isClassification
+				includeCorrectness: isClassification,
+				includeResidual: isRegression
 			}),
 			context.dispatch('fetchResultTableData', {
 				dataset: dataset,

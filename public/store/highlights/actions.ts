@@ -135,6 +135,28 @@ export const actions = {
 		const endpoint = `/distil/predicted-summary/${ES_INDEX}/${args.dataset}/${args.extrema.min}/${args.extrema.max}`
 
 		return Promise.all(solutions.map(solution => {
+			const key = solution.predictedKey;
+			const label = 'Predicted';
+			return getSummary(context, endpoint, solution, key, label, mutations.updateHighlightSummaries, filterParams);
+		}));
+	},
+
+	fetchResidualHighlightSummaries(context: HighlightsContext, args: { highlightRoot: HighlightRoot, dataset: string, requestIds: string[], extrema: Extrema }) {
+		if (!args.dataset) {
+			console.warn('`dataset` argument is missing');
+			return null;
+		}
+
+		let filterParams = {
+			variables: [],
+			filters: []
+		}
+		filterParams = addHighlightToFilterParams(context, filterParams, args.highlightRoot, INCLUDE_FILTER);
+
+		const solutions = getSolutionsByRequestIds(context.rootState.solutionModule, args.requestIds);
+		const endpoint = `/distil/residuals-summary/${ES_INDEX}/${args.dataset}/${args.extrema.min}/${args.extrema.max}`;
+
+		return Promise.all(solutions.map(solution => {
 			const key = solution.errorKey;
 			const label = 'Error';
 			return getSummary(context, endpoint, solution, key, label, mutations.updateHighlightSummaries, filterParams);
@@ -200,7 +222,7 @@ export const actions = {
 			});
 	},
 
-	fetchResultHighlightValues(context: HighlightsContext, args: { highlightRoot: HighlightRoot, dataset: string, variables: Variable[], solutionId: string, requestIds: string[], extrema: Extrema, includeCorrectness: boolean }) {
+	fetchResultHighlightValues(context: HighlightsContext, args: { highlightRoot: HighlightRoot, dataset: string, variables: Variable[], solutionId: string, requestIds: string[], extrema: Extrema, includeCorrectness: boolean, includeResidual: boolean }) {
 		const ps = [
 			context.dispatch('fetchResultHighlightSamples', {
 				highlightRoot: args.highlightRoot,
@@ -224,6 +246,14 @@ export const actions = {
 		if (args.includeCorrectness) {
 			ps.push(
 				context.dispatch('fetchCorrectnessHighlightSummaries', {
+					highlightRoot: args.highlightRoot,
+					dataset: args.dataset,
+					requestIds: args.requestIds
+				}));
+		}
+		if (args.includeResidual) {
+			ps.push(
+				context.dispatch('fetchResidualHighlightSummaries', {
 					highlightRoot: args.highlightRoot,
 					dataset: args.dataset,
 					requestIds: args.requestIds

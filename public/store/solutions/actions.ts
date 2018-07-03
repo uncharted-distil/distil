@@ -78,7 +78,8 @@ function updateCurrentSolutionResults(context: SolutionContext, req: CreateSolut
 			solutionId: res.solutionId,
 			requestIds: context.getters.getSolutions,
 			variables: context.getters.getActiveSolutionVariables,
-			includeCorrectness: isClassification
+			includeCorrectness: isClassification,
+			includeResidual: isRegression
 		});
 	});
 
