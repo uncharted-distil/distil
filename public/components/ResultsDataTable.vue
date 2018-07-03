@@ -28,6 +28,7 @@
 						<div class="error-bar" v-bind:style="{ 'background-color': errorBarColor(data.item[errorCol]), width: errorBarWidth(data.item[errorCol]), left: errorBarLeft(data.item[errorCol]) }"></div>
 						<div class="error-bar-center"></div>
 					</div>
+
 					<!-- correctness error -->
 					<div v-if="isTargetCategorical">
 						<div v-if="data.item[predictedCol]==data.item[this.target]">
@@ -37,9 +38,6 @@
 							Incorrect
 						</div>
 					</div>
-
-					{{data.item[errorCol]}}
-
 				</template>
 			</b-table>
 		</div>
@@ -156,7 +154,7 @@ export default Vue.extend({
 
 		normalizeError(error: number): number {
 			const range = this.residualExtrema.max - this.residualExtrema.min;
-			return (error - this.residualExtrema.min) / range;
+			return ((error - this.residualExtrema.min) / range) * 2 - 1;
 		},
 
 		// TODO: fix these to work for correctness values too

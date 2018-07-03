@@ -5,6 +5,7 @@
 			@facet-click="onCategoricalClick"
 			@numerical-click="onNumericalClick"
 			@range-change="onRangeChange"
+			:row-selection="rowSelection"
 			:instanceName="instanceName"
 			:groups="targetGroups"
 			:highlights="highlights"></facets>
@@ -21,7 +22,7 @@ import { getters as resultsGetters } from '../store/results/module';
 import { Group, createGroups } from '../util/facets';
 import { getHighlights, updateHighlightRoot, clearHighlightRoot } from '../util/highlights';
 import { VariableSummary } from '../store/dataset/index';
-import { Highlight } from '../store/highlights/index';
+import { Highlight, RowSelection } from '../store/highlights/index';
 
 export default Vue.extend({
 	name: 'result-target-variable',
@@ -63,6 +64,9 @@ export default Vue.extend({
 		highlights(): Highlight {
 			return getHighlights(this.$store);
 		},
+		rowSelection(): RowSelection {
+			return routeGetters.getDecodedRowSelection(this.$store);
+		}
 	},
 
 	methods: {
