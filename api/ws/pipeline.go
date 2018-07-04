@@ -28,6 +28,8 @@ var (
 	problemFile = ""
 )
 
+// SetProblemFile sets the problem file containing the metrics to use
+// when submitting pipelines
 func SetProblemFile(file string) {
 	problemFile = file
 }
