@@ -42,6 +42,7 @@
 
 <script lang="ts">
 
+import _ from 'lodash';
 import Facets from '../components/Facets';
 import { overlayRouteEntry, getRouteFacetPage } from '../util/routes';
 import { Dictionary } from '../util/dict';
@@ -117,12 +118,14 @@ export default Vue.extend({
 		paginatedGroups(): Group[] {
 			const paginated = filterVariablesByPage(this.currentPage, this.rowsPerPage, this.sortedFilteredGroups);
 
+			// TODO: fix this at the Facets component level
+			const cloned = _.cloneDeep(paginated);
+
 			// highlight
 			if (this.enableHighlighting && this.highlights.root) {
-				paginated.forEach(group => {
+				cloned.forEach(group => {
 					if (group) {
 						if (group.key === this.highlights.root.key) {
-							console.log(group.key, 'matches', this.highlights.root.key);
 							group.facets.forEach(facet => {
 								facet.filterable = true;
 							});
@@ -131,7 +134,7 @@ export default Vue.extend({
 				});
 			}
 
-			return paginated;
+			return cloned;
 		},
 
 		highlights(): Highlight {

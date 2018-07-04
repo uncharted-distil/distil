@@ -261,7 +261,9 @@ export default Vue.extend({
 				if (this.highlights.root && this.highlights.root.context === contextName) {
 					const group = groups[0];
 					if (group.key === this.highlights.root.key) {
-						group.facets.forEach(facet => facet.filterable = true);
+						group.facets.forEach(facet => {
+							facet.filterable = true;
+						});
 					}
 				}
 				return groups;
