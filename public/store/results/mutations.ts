@@ -6,6 +6,14 @@ export const mutations = {
 
 	// training / target
 
+	clearTrainingSummaries(state: ResultsState) {
+		state.trainingSummaries = [];
+	},
+
+	clearTargetSummary(state: ResultsState) {
+		state.targetSummary = null;
+	},
+
 	updateTrainingSummary(state: ResultsState, summary: VariableSummary) {
 		updateSummaries(summary, state.trainingSummaries);
 	},

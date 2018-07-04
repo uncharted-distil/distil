@@ -89,8 +89,10 @@ export const actions = {
 
 	fetchResultsData(context: ViewContext) {
 		// clear previous state
+		context.commit('clearTargetSummary')
+		context.commit('clearTrainingSummaries')
 		context.commit('clearHighlightSummaries');
-		context.commit('clearResidualsExtrema', null);
+		context.commit('clearResidualsExtrema');
 		context.commit('setIncludedResultTableData', null);
 		context.commit('setExcludedResultTableData', null);
 
@@ -112,6 +114,8 @@ export const actions = {
 
 	updateResultsSolution(context: ViewContext) {
 		// clear previous state
+		context.commit('clearTargetSummary')
+		context.commit('clearTrainingSummaries')
 		context.commit('clearHighlightSummaries');
 		context.commit('clearResidualsExtrema', null);
 		context.commit('setIncludedResultTableData', null);
@@ -132,7 +136,6 @@ export const actions = {
 			solutionId: solutionId,
 			highlightRoot: highlightRoot
 		})
-
 		context.dispatch('fetchTargetSummary', {
 			dataset: dataset,
 			target: target,

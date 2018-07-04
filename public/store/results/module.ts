@@ -61,6 +61,8 @@ export const actions = {
 // Typed mutations
 export const mutations = {
 	// training / target
+	clearTrainingSummaries: commit(moduleMutations.clearTrainingSummaries),
+	clearTargetSummary: commit(moduleMutations.clearTargetSummary),
 	updateTrainingSummary: commit(moduleMutations.updateTrainingSummary),
 	updateTargetSummary: commit(moduleMutations.updateTargetSummary),
 	// result
