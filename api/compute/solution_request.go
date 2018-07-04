@@ -228,6 +228,8 @@ func (s *SolutionRequest) persistSolutionError(statusChan chan SolutionStatus, s
 	// persist the updated state
 	// NOTE: ignoring error
 	solutionStorage.PersistSolution(searchID, solutionID, SolutionErroredStatus, time.Now())
+	// HACK: we shouldnt need these
+	time.Sleep(time.Second)
 	// notify of error
 	statusChan <- SolutionStatus{
 		RequestID:  searchID,
@@ -246,6 +248,8 @@ func (s *SolutionRequest) persistSolutionStatus(statusChan chan SolutionStatus, 
 		s.persistSolutionError(statusChan, solutionStorage, searchID, solutionID, err)
 		return
 	}
+	// HACK: we shouldnt need these
+	time.Sleep(time.Second)
 	// notify of update
 	statusChan <- SolutionStatus{
 		RequestID:  searchID,
@@ -259,6 +263,8 @@ func (s *SolutionRequest) persistRequestError(statusChan chan SolutionStatus, so
 	// persist the updated state
 	// NOTE: ignoring error
 	solutionStorage.PersistRequest(searchID, dataset, RequestErroredStatus, time.Now())
+	// HACK: we shouldnt need these
+	time.Sleep(time.Second)
 	// notify of error
 	statusChan <- SolutionStatus{
 		RequestID: searchID,
@@ -276,6 +282,8 @@ func (s *SolutionRequest) persistRequestStatus(statusChan chan SolutionStatus, s
 		s.persistRequestError(statusChan, solutionStorage, searchID, dataset, err)
 		return err
 	}
+	// HACK: we shouldnt need these
+	time.Sleep(time.Second)
 	// notify of update
 	statusChan <- SolutionStatus{
 		RequestID: searchID,
@@ -307,6 +315,8 @@ func (s *SolutionRequest) persistSolutionResults(statusChan chan SolutionStatus,
 		s.persistSolutionError(statusChan, solutionStorage, searchID, solutionID, err)
 		return
 	}
+	// HACK: we shouldnt need these
+	time.Sleep(time.Second)
 	// notify client of update
 	statusChan <- SolutionStatus{
 		RequestID:  searchID,
