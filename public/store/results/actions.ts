@@ -150,13 +150,19 @@ export const actions = {
 		]);
 	},
 
-	fetchResidualsExtrema(context: ResultsContext, args: { dataset: string, target: string }) {
+	fetchResidualsExtrema(context: ResultsContext, args: { dataset: string, target: string, solutionId: string }) {
 		if (!args.dataset) {
 			console.warn('`dataset` argument is missing');
 			return null;
 		}
 		if (!args.target) {
 			console.warn('`target` argument is missing');
+			return null;
+		}
+
+		const solution = getSolutionById(context.rootState.solutionModule, args.solutionId);
+		if (!solution.resultId) {
+			// no results ready to pull
 			return null;
 		}
 
@@ -185,6 +191,11 @@ export const actions = {
 		}
 
 		const solution = getSolutionById(context.rootState.solutionModule, args.solutionId);
+		if (!solution.resultId) {
+			// no results ready to pull
+			return null;
+		}
+
 		const endpoint = `/distil/predicted-summary/${args.dataset}/${args.target}`
 		const key = solution.predictedKey;
 		const label = 'Predicted';
@@ -221,7 +232,13 @@ export const actions = {
 			console.warn('`solutionId` argument is missing');
 			return null;
 		}
+
 		const solution = getSolutionById(context.rootState.solutionModule, args.solutionId);
+		if (!solution.resultId) {
+			// no results ready to pull
+			return null;
+		}
+
 		const endPoint = `/distil/residuals-summary/${args.dataset}/${args.target}`
 		const key = solution.errorKey;
 		const label = 'Error';
@@ -254,7 +271,13 @@ export const actions = {
 			console.warn('`pipelineId` argument is missing');
 			return null;
 		}
+
 		const solution = getSolutionById(context.rootState.solutionModule, args.solutionId);
+		if (!solution.resultId) {
+			// no results ready to pull
+			return null;
+		}
+
 		const endPoint = `/distil/correctness-summary/${args.dataset}`;
 		const key = solution.errorKey;
 		const label = 'Error';

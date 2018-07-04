@@ -165,7 +165,8 @@ export const actions = {
 		if (isRegression) {
 			context.dispatch('fetchResidualsExtrema', {
 				dataset: dataset,
-				target: target
+				target: target,
+				solutionId: solutionId
 			});
 			context.dispatch('fetchResidualsSummaries', {
 				dataset: dataset,

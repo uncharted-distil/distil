@@ -70,7 +70,8 @@ function updateCurrentSolutionResults(context: SolutionContext, req: CreateSolut
 	if (isRegression) {
 		context.dispatch('fetchResidualsExtrema', {
 			dataset: req.dataset,
-			target: req.target
+			target: req.target,
+			solutionId: res.solutionId
 		});
 		context.dispatch('fetchResidualsSummary', {
 			dataset: req.dataset,
@@ -109,7 +110,8 @@ function updateSolutionResults(context: SolutionContext, req: CreateSolutionRequ
 	if (isRegression) {
 		context.dispatch('fetchResidualsExtrema', {
 			dataset: req.dataset,
-			target: req.target
+			target: req.target,
+			solutionId: res.solutionId
 		});
 		context.dispatch('fetchResidualsSummary', {
 			dataset: req.dataset,
