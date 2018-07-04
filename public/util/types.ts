@@ -14,7 +14,9 @@ const META_PREFIX = '_feature_';
 
 const TYPES_TO_LABELS: Dictionary<string> = {
 	integer: 'Integer',
+	int4: 'Integer',
 	float: 'Decimal',
+	float8: 'Decimal',
 	latitude: 'Latitude',
 	longitude: 'Longitude',
 	text: 'Text',
@@ -40,10 +42,12 @@ const LABELS_TO_TYPES = _.invert(TYPES_TO_LABELS);
 
 const INTEGER_TYPES = [
 	'integer',
+	'int4'
 ];
 
 const FLOATING_POINT_TYPES = [
 	'float',
+	'float8',
 	'latitude',
 	'longitude'
 ];
@@ -81,6 +85,7 @@ const BOOL_SUGGESTIONS = [
 	'categorical',
 	'boolean',
 	'integer',
+	'int4',
 	'keyword',
 	'unknown'
 ];
@@ -100,6 +105,7 @@ const URI_SUGGESTIONS = [
 const PHONE_SUGGESTIONS= [
 	'text',
 	'integer',
+	'int4',
 	'phone',
 	'unknown'
 ];
@@ -109,6 +115,7 @@ const TEXT_SUGGESTIONS = [
 	'categorical',
 	'ordinal',
 	'integer',
+	'int4',
 	'address',
 	'city',
 	'state',
@@ -122,7 +129,9 @@ const TEXT_SUGGESTIONS = [
 
 const INTEGER_SUGGESTIONS = [
 	'integer',
+	'int4',
 	'float',
+	'float8',
 	'latitude',
 	'longitude',
 	'categorical',
@@ -132,7 +141,9 @@ const INTEGER_SUGGESTIONS = [
 
 const DECIMAL_SUGGESTIONS = [
 	'integer',
+	'int4',
 	'float',
+	'float8',
 	'latitude',
 	'longitude',
 	'unknown'
@@ -146,7 +157,9 @@ const IMAGE_SUGGESTIONS = [
 
 const BASIC_SUGGESTIONS = [
 	'integer',
+	'int4',
 	'float',
+	'float8',
 	'categorical',
 	'ordinal',
 	'text',
@@ -177,7 +190,7 @@ export function formatValue(colValue: any, colType: string): any {
 
 	// If the schema type is an integer, round.
 	if (isIntegerType(colType)) {
-		return Math.round(colValue);
+		return Math.round(colValue).toFixed(0);
 	}
 
 	// If the schema type is text or not float, pass through.

@@ -541,8 +541,6 @@ export default Vue.extend({
 					// if this is the highlighted group, create filter selection
 					if (this.isHighlightedGroup(highlights, group.key)) {
 
-						console.log('setting selection for', group.key);
-
 						// NOTE: the `from` / `to` values MUST be strings.
 						selection.range = {
 							from: `${highlightRootValue.from}`,

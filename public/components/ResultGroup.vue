@@ -249,7 +249,8 @@ export default Vue.extend({
 		click() {
 			if (this.predictedSummary) {
 				const routeEntry = overlayRouteEntry(this.$route, {
-					solutionId: this.predictedSummary.solutionId
+					solutionId: this.predictedSummary.solutionId,
+					highlights: null
 				});
 				this.$router.push(routeEntry);
 			}
