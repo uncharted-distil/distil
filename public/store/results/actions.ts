@@ -4,7 +4,7 @@ import { ActionContext } from 'vuex';
 import { DistilState } from '../store';
 import { INCLUDE_FILTER, EXCLUDE_FILTER } from '../../util/filters';
 import { getSolutionsByRequestIds, getSolutionById } from '../../util/solutions';
-import { Variable, Extrema, ES_INDEX } from '../dataset/index';
+import { Variable, Extrema } from '../dataset/index';
 import { HighlightRoot } from '../highlights/index';
 import { SOLUTION_ERRORED } from '../solutions/index';
 import { mutations } from './module'
@@ -89,7 +89,7 @@ export const actions = {
 			extremaMin = args.extrema.min;
 			extremaMax = args.extrema.max;
 		}
-		return axios.post(`/distil/results-variable-summary/${ES_INDEX}/${args.dataset}/${args.variable}/${extremaMin}/${extremaMax}/${solution.resultId}`, {})
+		return axios.post(`/distil/results-variable-summary/${args.dataset}/${args.variable}/${extremaMin}/${extremaMax}/${solution.resultId}`, {})
 			.then(response => {
 				mutations.updateResultSummaries(context, response.data.histogram);
 			})
@@ -122,7 +122,7 @@ export const actions = {
 			return null;
 		}
 
-		return axios.get(`/distil/results-variable-extrema/${ES_INDEX}/${args.dataset}/${args.variable}/${solution.resultId}`)
+		return axios.get(`/distil/results-variable-extrema/${args.dataset}/${args.variable}/${solution.resultId}`)
 			.then(response => {
 				mutations.updateResultExtrema(context, {
 					extrema: response.data.extrema
@@ -147,7 +147,7 @@ export const actions = {
 		};
 		filterParams = addHighlightToFilterParams(context, filterParams, args.highlightRoot, INCLUDE_FILTER);
 
-		return axios.post(`/distil/results/${ES_INDEX}/${args.dataset}/${encodeURIComponent(args.solutionId)}`, filterParams)
+		return axios.post(`/distil/results/${args.dataset}/${encodeURIComponent(args.solutionId)}`, filterParams)
 			.then(response => {
 				mutations.setIncludedResultTableData(context, response.data);
 			})
@@ -171,7 +171,7 @@ export const actions = {
 		};
 		filterParams = addHighlightToFilterParams(context, filterParams, args.highlightRoot, EXCLUDE_FILTER);
 
-		return axios.post(`/distil/results/${ES_INDEX}/${args.dataset}/${encodeURIComponent(args.solutionId)}`, filterParams)
+		return axios.post(`/distil/results/${args.dataset}/${encodeURIComponent(args.solutionId)}`, filterParams)
 			.then(response => {
 				mutations.setExcludedResultTableData(context, response.data);
 			})
@@ -212,7 +212,7 @@ export const actions = {
 			return null;
 		}
 
-		return axios.get(`/distil/predicted-extrema/${ES_INDEX}/${args.dataset}/${solution.resultId}`)
+		return axios.get(`/distil/predicted-extrema/${args.dataset}/${solution.resultId}`)
 			.then(response => {
 				mutations.updatePredictedExtremas(context, {
 					solutionId: args.solutionId,
@@ -259,7 +259,7 @@ export const actions = {
 			return null;
 		}
 
-		return axios.get(`/distil/residuals-extrema/${ES_INDEX}/${args.dataset}/${solution.resultId}`)
+		return axios.get(`/distil/residuals-extrema/${args.dataset}/${solution.resultId}`)
 			.then(response => {
 				mutations.updateResidualsExtremas(context, {
 					solutionId: args.solutionId,
@@ -309,7 +309,7 @@ export const actions = {
 			extremaMax = args.extrema.max;
 		}
 		const solution = getSolutionById(context.rootState.solutionModule, args.solutionId);
-		const endpoint = `/distil/predicted-summary/${ES_INDEX}/${args.dataset}/${extremaMin}/${extremaMax}`
+		const endpoint = `/distil/predicted-summary/${args.dataset}/${extremaMin}/${extremaMax}`
 		const key = solution.predictedKey;
 		const label = 'Predicted';
 		getSummary(context, endpoint, solution, key, label, mutations.updatePredictedSummaries, null);
@@ -346,7 +346,7 @@ export const actions = {
 			return null;
 		}
 		const solution = getSolutionById(context.rootState.solutionModule, args.solutionId);
-		const endPoint = `/distil/residuals-summary/${ES_INDEX}/${args.dataset}/${args.extrema.min}/${args.extrema.max}`
+		const endPoint = `/distil/residuals-summary/${args.dataset}/${args.extrema.min}/${args.extrema.max}`
 		const key = solution.errorKey;
 		const label = 'Error';
 		getSummary(context, endPoint, solution, key, label, mutations.updateResidualsSummaries, null);
@@ -379,7 +379,7 @@ export const actions = {
 			return null;
 		}
 		const solution = getSolutionById(context.rootState.solutionModule, args.solutionId);
-		const endPoint = `/distil/correctness-summary/${ES_INDEX}/${args.dataset}`;
+		const endPoint = `/distil/correctness-summary/${args.dataset}`;
 		const key = solution.errorKey;
 		const label = 'Error';
 		getSummary(context, endPoint, solution, key, label, mutations.updateCorrectnessSummaries, null);

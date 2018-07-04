@@ -5,7 +5,7 @@ import { DistilState } from '../store';
 import { FilterParams, INCLUDE_FILTER } from '../../util/filters';
 import { getSolutionsByRequestIds, getSolutionById } from '../../util/solutions';
 import { getSummary } from '../../util/data';
-import { Variable, Extrema, ES_INDEX } from '../dataset/index';
+import { Variable, Extrema } from '../dataset/index';
 import { mutations } from './module'
 import { HighlightRoot } from './index';
 import { addHighlightToFilterParams, parseHighlightSamples } from '../../util/highlights';
@@ -27,7 +27,7 @@ export const actions = {
 		const filterParams = addHighlightToFilterParams(context, args.filterParams, args.highlightRoot, INCLUDE_FILTER);
 
 		// fetch the data using the supplied filtered
-		return axios.post(`distil/data/${ES_INDEX}/${args.dataset}/false`, filterParams)
+		return axios.post(`distil/data/${args.dataset}/false`, filterParams)
 			.then(res => {
 				mutations.updateHighlightSamples(context, parseHighlightSamples(res.data));
 			})
@@ -51,7 +51,7 @@ export const actions = {
 
 		// commit empty place holders, if there is no data
 		return Promise.all(args.variables.map(variable => {
-			return axios.post(`/distil/variable-summary/${ES_INDEX}/${args.dataset}/${variable.key}`, filterParams)
+			return axios.post(`/distil/variable-summary/${args.dataset}/${variable.key}`, filterParams)
 				.then(response => {
 					mutations.updateHighlightSummaries(context, response.data.histogram);
 				})
@@ -109,7 +109,7 @@ export const actions = {
 				extremaMin = args.extrema.min;
 				extremaMax = args.extrema.max;
 			}
-			return axios.post(`/distil/results-variable-summary/${ES_INDEX}/${args.dataset}/${variable.key}/${extremaMin}/${extremaMax}/${solution.resultId}`, filterParams)
+			return axios.post(`/distil/results-variable-summary/${args.dataset}/${variable.key}/${extremaMin}/${extremaMax}/${solution.resultId}`, filterParams)
 				.then(response => {
 					mutations.updateHighlightSummaries(context, response.data.histogram);
 				})
@@ -132,7 +132,7 @@ export const actions = {
 		filterParams = addHighlightToFilterParams(context, filterParams, args.highlightRoot, INCLUDE_FILTER);
 
 		const solutions = getSolutionsByRequestIds(context.rootState.solutionModule, args.requestIds);
-		const endpoint = `/distil/predicted-summary/${ES_INDEX}/${args.dataset}/${args.extrema.min}/${args.extrema.max}`
+		const endpoint = `/distil/predicted-summary/${args.dataset}/${args.extrema.min}/${args.extrema.max}`
 
 		return Promise.all(solutions.map(solution => {
 			const key = solution.predictedKey;
@@ -154,7 +154,7 @@ export const actions = {
 		filterParams = addHighlightToFilterParams(context, filterParams, args.highlightRoot, INCLUDE_FILTER);
 
 		const solutions = getSolutionsByRequestIds(context.rootState.solutionModule, args.requestIds);
-		const endpoint = `/distil/residuals-summary/${ES_INDEX}/${args.dataset}/${args.extrema.min}/${args.extrema.max}`;
+		const endpoint = `/distil/residuals-summary/${args.dataset}/${args.extrema.min}/${args.extrema.max}`;
 
 		return Promise.all(solutions.map(solution => {
 			const key = solution.errorKey;
@@ -176,7 +176,7 @@ export const actions = {
 		filterParams = addHighlightToFilterParams(context, filterParams, args.highlightRoot, INCLUDE_FILTER);
 
 		const solutions = getSolutionsByRequestIds(context.rootState.solutionModule, args.requestIds);
-		const endpoint = `/distil/correctness-summary/${ES_INDEX}/${args.dataset}`
+		const endpoint = `/distil/correctness-summary/${args.dataset}`
 
 		return Promise.all(solutions.map(solution => {
 			const key = solution.errorKey;

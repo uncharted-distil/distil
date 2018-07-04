@@ -4,7 +4,6 @@ import { SolutionState,
  	REQUEST_PENDING, REQUEST_RUNNING, REQUEST_COMPLETED, REQUEST_ERRORED } from './index';
 import { ActionContext } from 'vuex';
 import { DistilState } from '../store';
-import { ES_INDEX } from '../dataset/index';
 import { mutations } from './module';
 import { getWebSocketConnection } from '../../util/ws';
 import { FilterParams } from '../../util/filters';
@@ -33,6 +32,12 @@ interface SolutionStatus {
 }
 
 export type SolutionContext = ActionContext<SolutionState, DistilState>;
+
+/*
+	- fetch table data
+	- fetch extremas for result summaries and predicted summary
+	-
+*/
 
 function updateCurrentSolutionResults(context: SolutionContext, req: CreateSolutionRequest, res: SolutionStatus) {
 	// pull new table results
@@ -276,7 +281,6 @@ export const actions = {
 			// send create solutions request
 			stream.send({
 				type: CREATE_SOLUTIONS,
-				index: ES_INDEX,
 				dataset: request.dataset,
 				target: request.target,
 				task: request.task,

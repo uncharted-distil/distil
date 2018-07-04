@@ -497,7 +497,7 @@ func (s *SolutionRequest) PersistAndDispatch(client *Client, solutionStorage mod
 	}
 
 	// fetch the queried dataset
-	dataset, err := model.FetchDataset(s.Dataset, s.Index, true, true, s.Filters, metaStorage, dataStorage)
+	dataset, err := model.FetchDataset(s.Dataset, true, true, s.Filters, metaStorage, dataStorage)
 	if err != nil {
 		return err
 	}
