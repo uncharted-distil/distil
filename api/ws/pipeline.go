@@ -191,7 +191,7 @@ func parseMetrics(filename string) ([]string, error) {
 
 	metrics := make([]string, 0)
 	for _, m := range problemInfo.Inputs.PerformanceMetrics {
-		metrics = append(metrics, m.Metric)
+		metrics = append(metrics, compute.ConvertProblemMetricToTA3(m.Metric))
 	}
 
 	return metrics, nil

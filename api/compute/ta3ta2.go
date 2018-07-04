@@ -18,7 +18,27 @@ const (
 
 var (
 	// cached ta3ta2 API version
-	apiVersion string
+	apiVersion       string
+	problemMetricMap = map[string]string{
+		"accuracy":                    "ACCURACY",
+		"precision":                   "PRECISION",
+		"recall":                      "RECALL",
+		"f1":                          "F1",
+		"f1Micro":                     "F1_MICRO",
+		"f1Macro":                     "F1_MACRO",
+		"rocAuc":                      "ROC_AUC",
+		"rocAucMicro":                 "ROC_AUC_MICRO",
+		"rocAucMacro":                 "ROC_AUC_MACRO",
+		"meanSquaredError":            "MEAN_SQUARED_ERROR",
+		"rootMeanSquaredError":        "ROOT_MEAN_SQUARED_ERROR",
+		"rootMeanSquaredErrorAvg":     "ROOT_MEAN_SQUARED_ERROR_AVG",
+		"meanAbsoluteError":           "MEAN_ABSOLUTE_ERROR",
+		"rSquared":                    "R_SQUARED",
+		"normalizedMutualInformation": "NORMALIZED_MUTUAL_INFORMATION",
+		"jaccardSimilarityScore":      "JACCARD_SIMILARITY_SCORE",
+		"precisionAtTopK":             "PRECISION_AT_TOP_K",
+		"objectDetectionAP":           "OBJECT_DETECTION_AVERAGE_PRECISION",
+	}
 )
 
 func convertMetricsFromTA3ToTA2(metrics []string) []*pipeline.ProblemPerformanceMetric {
@@ -37,6 +57,11 @@ func convertMetricsFromTA3ToTA2(metrics []string) []*pipeline.ProblemPerformance
 		})
 	}
 	return res
+}
+
+// ConvertProblemMetricToTA3 converts a problem schema metric to a TA3 metric.
+func ConvertProblemMetricToTA3(metric string) string {
+	return problemMetricMap[metric]
 }
 
 func convertTaskTypeFromTA3ToTA2(taskType string) pipeline.TaskType {
