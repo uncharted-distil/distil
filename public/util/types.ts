@@ -85,7 +85,6 @@ const BOOL_SUGGESTIONS = [
 	'categorical',
 	'boolean',
 	'integer',
-	'int4',
 	'keyword',
 	'unknown'
 ];
@@ -102,10 +101,9 @@ const URI_SUGGESTIONS = [
 	'unknown'
 ];
 
-const PHONE_SUGGESTIONS= [
+const PHONE_SUGGESTIONS = [
 	'text',
 	'integer',
-	'int4',
 	'phone',
 	'unknown'
 ];
@@ -115,7 +113,6 @@ const TEXT_SUGGESTIONS = [
 	'categorical',
 	'ordinal',
 	'integer',
-	'int4',
 	'address',
 	'city',
 	'state',
@@ -129,9 +126,7 @@ const TEXT_SUGGESTIONS = [
 
 const INTEGER_SUGGESTIONS = [
 	'integer',
-	'int4',
 	'float',
-	'float8',
 	'latitude',
 	'longitude',
 	'categorical',
@@ -141,9 +136,7 @@ const INTEGER_SUGGESTIONS = [
 
 const DECIMAL_SUGGESTIONS = [
 	'integer',
-	'int4',
 	'float',
-	'float8',
 	'latitude',
 	'longitude',
 	'unknown'
@@ -157,9 +150,7 @@ const IMAGE_SUGGESTIONS = [
 
 const BASIC_SUGGESTIONS = [
 	'integer',
-	'int4',
 	'float',
-	'float8',
 	'categorical',
 	'ordinal',
 	'text',
