@@ -1,22 +1,17 @@
-import Vue from 'vue';
 import { ResultsState } from './index';
 import { VariableSummary, Extrema, TableData } from '../dataset/index';
 import { updateSummaries } from '../../util/data';
 
 export const mutations = {
 
-	// results
+	// training / target
 
-	updateResultSummaries(state: ResultsState, summary: VariableSummary) {
-		updateSummaries(summary, state.resultSummaries);
+	updateTrainingSummary(state: ResultsState, summary: VariableSummary) {
+		updateSummaries(summary, state.trainingSummaries);
 	},
 
-	updateResultExtrema(state: ResultsState, args: { extrema: Extrema }) {
-		state.targetResultExtrema = args.extrema;
-	},
-
-	clearResultExtrema(state: ResultsState) {
-		state.targetResultExtrema = null;
+	updateTargetSummary(state: ResultsState, summary: VariableSummary) {
+		state.targetSummary = summary;
 	},
 
 	// sets the current result data into the store
@@ -35,34 +30,21 @@ export const mutations = {
 		updateSummaries(summary, state.predictedSummaries);
 	},
 
-	updatePredictedExtremas(state: ResultsState, args: { solutionId: string, extrema: Extrema }) {
-		Vue.set(state.predictedExtremas, args.solutionId, args.extrema);
-	},
-
-	clearPredictedExtrema(state: ResultsState, solutionId: string) {
-		Vue.delete(state.predictedExtremas, solutionId);
-	},
-
-	clearPredictedExtremas(state: ResultsState) {
-		state.predictedExtremas = {};
-	},
-
 	// residuals
 
 	updateResidualsSummaries(state: ResultsState, summary: VariableSummary) {
 		updateSummaries(summary, state.residualSummaries);
 	},
 
-	updateResidualsExtremas(state: ResultsState, args: { solutionId: string, extrema: Extrema }) {
-		Vue.set(state.residualExtremas, args.solutionId, args.extrema);
+	updateResidualsExtrema(state: ResultsState, extrema: Extrema ) {
+		state.residualsExtrema = extrema;
 	},
 
 	clearResidualsExtrema(state: ResultsState, solutionId: string) {
-		Vue.delete(state.residualExtremas, solutionId);
-	},
-
-	clearResidualsExtremas(state: ResultsState) {
-		state.residualExtremas = {};
+		state.residualsExtrema = {
+			min: null,
+			max: null
+		};
 	},
 
 	// correctness

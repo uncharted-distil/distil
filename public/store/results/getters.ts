@@ -1,4 +1,3 @@
-import _ from 'lodash';
 import { VariableSummary, Extrema, TableData, TableRow, TableColumn } from '../dataset/index';
 import { ResultsState } from './index';
 import { getTableDataItems, getTableDataFields } from '../../util/data';
@@ -8,8 +7,12 @@ export const getters = {
 
 	// results
 
-	getResultSummaries(state: ResultsState): VariableSummary[] {
-		return state.resultSummaries;
+	getTrainingSummaries(state: ResultsState): VariableSummary[] {
+		return state.trainingSummaries;
+	},
+
+	getTargetSummary(state: ResultsState): VariableSummary {
+		return state.targetSummary;
 	},
 
 	getResultDataNumRows(state: ResultsState): number {
@@ -54,44 +57,14 @@ export const getters = {
 		return state.predictedSummaries;
 	},
 
-	getPredictedExtrema(state: ResultsState): Extrema {
-		if (_.isEmpty(state.predictedExtremas) && !state.targetResultExtrema) {
-			return {
-				min: null,
-				max: null
-			};
-		}
-		const res = { min: Infinity, max: -Infinity };
-		_.forIn(state.predictedExtremas, extrema => {
-			res.min = Math.min(res.min, extrema.min);
-			res.max = Math.max(res.max, extrema.max);
-		});
-		if (state.targetResultExtrema) {
-			res.min = Math.min(res.min, state.targetResultExtrema.min);
-			res.max = Math.max(res.max, state.targetResultExtrema.max);
-		}
-		return res;
-	},
-
 	// residual
 
 	getResidualsSummaries(state: ResultsState): VariableSummary[] {
 		return state.residualSummaries;
 	},
 
-	getResidualExtrema(state: ResultsState): Extrema {
-		if (_.isEmpty(state.residualExtremas)) {
-			return {
-				min: null,
-				max: null
-			};
-		}
-		const res = { min: Infinity, max: -Infinity };
-		_.forIn(state.residualExtremas, extrema => {
-			res.min = Math.min(res.min, extrema.min);
-			res.max = Math.max(res.max, extrema.max);
-		});
-		return res;
+	getResidualsExtrema(state: ResultsState): Extrema {
+		return state.residualsExtrema;
 	},
 
 	// correctness

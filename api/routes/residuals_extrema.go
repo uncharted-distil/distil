@@ -3,7 +3,6 @@ package routes
 import (
 	"math"
 	"net/http"
-	"net/url"
 
 	"github.com/pkg/errors"
 	"goji.io/pat"
@@ -11,13 +10,62 @@ import (
 	"github.com/unchartedsoftware/distil/api/model"
 )
 
+// ResidualsExtrema contains a residual extrema response.
+type ResidualsExtrema struct {
+	Extrema *model.Extrema `json:"extrema"`
+}
+
+func fetchSolutionResidualExtrema(meta model.MetadataStorage, data model.DataStorage, solution model.SolutionStorage, dataset string, target string, solutionID string) (*model.Extrema, error) {
+	// check target var type
+	variable, err := meta.FetchVariable(dataset, target)
+	if err != nil {
+		return nil, err
+	}
+
+	if !model.IsNumerical(variable.Type) {
+		return nil, nil
+	}
+
+	// we need to get extrema min and max for all solutions sharing dataset and target
+	requests, err := solution.FetchRequestByDatasetTarget(dataset, target, solutionID)
+	if err != nil {
+		return nil, err
+	}
+
+	// get extrema
+	min := math.MaxFloat64
+	max := -math.MaxFloat64
+	for _, req := range requests {
+		for _, sol := range req.Solutions {
+			if sol.Result != nil {
+				// result uri
+				resultURI := sol.Result.ResultURI
+				// predicted extrema
+				residualExtrema, err := data.FetchResidualsExtremaByURI(dataset, resultURI)
+				if err != nil {
+					return nil, err
+				}
+				max = math.Max(max, residualExtrema.Max)
+				min = math.Min(min, residualExtrema.Min)
+			}
+		}
+	}
+
+	// make symmetrical
+	extremum := math.Max(math.Abs(min), math.Abs(max))
+
+	return model.NewExtrema(-extremum, extremum)
+}
+
 // ResidualsExtremaHandler returns the extremas for a residual summary.
-func ResidualsExtremaHandler(solutionCtor model.SolutionStorageCtor, dataCtor model.DataStorageCtor) func(http.ResponseWriter, *http.Request) {
+func ResidualsExtremaHandler(metaCtor model.MetadataStorageCtor, solutionCtor model.SolutionStorageCtor, dataCtor model.DataStorageCtor) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		dataset := pat.Param(r, "dataset")
-		resultUUID, err := url.PathUnescape(pat.Param(r, "results-uuid"))
+		target := pat.Param(r, "target")
+
+		meta, err := metaCtor()
 		if err != nil {
-			handleError(w, errors.Wrap(err, "unable to unescape results uuid"))
+			handleError(w, err)
 			return
 		}
 
@@ -33,27 +81,16 @@ func ResidualsExtremaHandler(solutionCtor model.SolutionStorageCtor, dataCtor mo
 			return
 		}
 
-		// get the result URI. Error ignored to make it ES compatible.
-		res, err := solution.FetchSolutionResultByUUID(resultUUID)
+		// extract extrema for solution
+		extrema, err := fetchSolutionResidualExtrema(meta, data, solution, dataset, target, "")
 		if err != nil {
 			handleError(w, err)
 			return
 		}
-
-		extrema, err := data.FetchResidualsExtremaByURI(dataset, res.ResultURI)
-		if err != nil {
-			handleError(w, err)
-			return
-		}
-
-		extremum := math.Max(math.Abs(extrema.Min), math.Abs(extrema.Max))
 
 		// marshall data and sent the response back
-		err = handleJSON(w, map[string]interface{}{
-			"extrema": model.Extrema{
-				Min: -extremum,
-				Max: extremum,
-			},
+		err = handleJSON(w, ResidualsExtrema{
+			Extrema: extrema,
 		})
 		if err != nil {
 			handleError(w, errors.Wrap(err, "unable marshal result histogram into JSON"))

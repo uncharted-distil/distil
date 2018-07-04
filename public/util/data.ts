@@ -162,7 +162,7 @@ export function getTableDataItems(data: TableData): TableRow[] {
 			return row;
 		});
 	}
-	return [];
+	return !_.isEmpty(data) ? [] : null;
 }
 
 export function getTableDataFields(data: TableData) {

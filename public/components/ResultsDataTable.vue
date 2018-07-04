@@ -8,7 +8,7 @@
 			<div class="results-data-no-results" v-if="hasData && items.length===0">
 				No results available
 			</div>
-			<b-table v-if="items.length>0"
+			<b-table v-if="hasData && items.length>0"
 				bordered
 				hover
 				small
@@ -106,11 +106,7 @@ export default Vue.extend({
 		},
 
 		residualExtrema(): Extrema {
-			return resultsGetters.getResidualExtrema(this.$store);
-		},
-
-		training(): Dictionary<boolean> {
-			return solutionGetters.getActiveSolutionTrainingMap(this.$store);
+			return resultsGetters.getResidualsExtrema(this.$store);
 		},
 
 		hasData(): boolean {

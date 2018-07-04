@@ -31,6 +31,5 @@ export const actions = {
 	updateSelectTrainingData: dispatch(moduleActions.updateSelectTrainingData),
 	fetchResultsData: dispatch(moduleActions.fetchResultsData),
 	updateResultsSolution: dispatch(moduleActions.updateResultsSolution),
-	updateResultsActiveSolution: dispatch(moduleActions.updateResultsSolution),
 	updateResultsHighlights: dispatch(moduleActions.updateResultsHighlights)
 }

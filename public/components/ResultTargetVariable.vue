@@ -14,7 +14,6 @@
 
 <script lang="ts">
 
-import _ from 'lodash';
 import Vue from 'vue';
 import Facets from '../components/Facets';
 import { getters as routeGetters } from '../store/route/module';
@@ -43,8 +42,7 @@ export default Vue.extend({
 			return routeGetters.getRouteTargetVariable(this.$store);
 		},
 		targetSummary() : VariableSummary {
-			const varSummaries = resultsGetters.getResultSummaries(this.$store);
-			return _.find(varSummaries, v => _.toLower(v.key) === _.toLower(this.target));
+			return resultsGetters.getTargetSummary(this.$store);
 		},
 		targetGroups(): Group[] {
 			if (this.targetSummary) {

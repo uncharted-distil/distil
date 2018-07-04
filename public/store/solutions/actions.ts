@@ -7,7 +7,6 @@ import { DistilState } from '../store';
 import { mutations } from './module';
 import { getWebSocketConnection } from '../../util/ws';
 import { FilterParams } from '../../util/filters';
-import { REGRESSION_TASK, CLASSIFICATION_TASK } from '../../util/solutions';
 
 const CREATE_SOLUTIONS = 'CREATE_SOLUTIONS';
 const STOP_SOLUTIONS = 'STOP_SOLUTIONS';
@@ -34,65 +33,49 @@ interface SolutionStatus {
 export type SolutionContext = ActionContext<SolutionState, DistilState>;
 
 function updateCurrentSolutionResults(context: SolutionContext, req: CreateSolutionRequest, res: SolutionStatus) {
-	// pull new table results
+	const isRegression = context.getters.isRegression;
+	const isClassification = context.getters.isClassification;
+
 	context.dispatch('fetchResultTableData', {
 		dataset: req.dataset,
 		solutionId: res.solutionId,
 		highlightRoot: context.getters.getDecodedHighlightRoot
 	});
-
-	// if this is a regression task, pull extrema as a first step
-	const isRegression = req.task.toLowerCase() === REGRESSION_TASK.schemaName.toLowerCase();
-	const isClassification = req.task.toLowerCase() === CLASSIFICATION_TASK.schemaName.toLowerCase();
-	let extremaFetches = [];
-	if (isRegression) {
-		extremaFetches = [
-			context.dispatch('fetchResultExtrema', {
-				dataset: req.dataset,
-				variable: req.target,
-				solutionId: res.solutionId
-			}),
-			context.dispatch('fetchPredictedExtrema', {
-				dataset: req.dataset,
-				solutionId: res.solutionId
-			})
-		]
-	}
-
-	Promise.all(extremaFetches).then(() => {
-		context.dispatch('fetchPredictedSummary', {
-			dataset: req.dataset,
-			solutionId: res.solutionId,
-			extrema: context.getters.getPredictedExtrema
-		});
-		context.dispatch('fetchTrainingResultSummaries', {
-			dataset: req.dataset,
-			solutionId: res.solutionId,
-			variables: context.getters.getActiveSolutionVariables,
-			extrema: context.getters.getPredictedExtrema
-		});
-		context.dispatch('fetchResultHighlightValues', {
-			dataset: req.dataset,
-			highlightRoot: context.getters.getDecodedHighlightRoot,
-			extrema: context.getters.getPredictedExtrema,
-			solutionId: res.solutionId,
-			requestIds: context.getters.getSolutionRequestIds,
-			variables: context.getters.getActiveSolutionVariables,
-			includeCorrectness: isClassification,
-			includeResidual: isRegression
-		});
+	context.dispatch('fetchPredictedSummary', {
+		dataset: req.dataset,
+		target: req.target,
+		solutionId: res.solutionId
+	});
+	context.dispatch('fetchTrainingSummaries', {
+		dataset: req.dataset,
+		training: context.getters.getResultsPaginatedVariables,
+		solutionId: res.solutionId,
+	});
+	context.dispatch('fetchTargetSummary', {
+		dataset: req.dataset,
+		target: req.target,
+		solutionId: res.solutionId
+	});
+	context.dispatch('fetchResultHighlightValues', {
+		dataset: req.dataset,
+		target: req.target,
+		training: context.getters.getResultsPaginatedVariables,
+		highlightRoot: context.getters.getDecodedHighlightRoot,
+		solutionId: res.solutionId,
+		requestIds: context.getters.getSolutionRequestIds,
+		includeCorrectness: isClassification,
+		includeResidual: isRegression
 	});
 
 	if (isRegression) {
 		context.dispatch('fetchResidualsExtrema', {
 			dataset: req.dataset,
+			target: req.target
+		});
+		context.dispatch('fetchResidualsSummary', {
+			dataset: req.dataset,
+			target: req.target,
 			solutionId: res.solutionId
-		}).then(() => {
-			context.dispatch('fetchResidualsSummary', {
-				dataset: req.dataset,
-				solutionId: res.solutionId,
-				extrema: context.getters.getResidualExtrema
-			});
 		});
 	} else if (isClassification) {
 		context.dispatch('fetchCorrectnessSummary', {
@@ -103,53 +86,35 @@ function updateCurrentSolutionResults(context: SolutionContext, req: CreateSolut
 }
 
 function updateSolutionResults(context: SolutionContext, req: CreateSolutionRequest, res: SolutionStatus) {
-	// if this is a regression task, pull extrema as a first step
-	const isRegression = req.task.toLowerCase() === REGRESSION_TASK.schemaName.toLowerCase();
-	const isClassification = req.task.toLowerCase() === CLASSIFICATION_TASK.schemaName.toLowerCase();
-	let extremaFetches = [];
-	if (isRegression) {
-		extremaFetches = [
-			context.dispatch('fetchResultExtrema', {
-				dataset: req.dataset,
-				variable: req.target,
-				solutionId: res.solutionId
-			}),
-			context.dispatch('fetchPredictedExtrema', {
-				dataset: req.dataset,
-				solutionId: res.solutionId
-			})
-		]
-	}
+	const isRegression = context.getters.isRegression;
+	const isClassification = context.getters.isClassification;
 
-	Promise.all(extremaFetches).then(() => {
-		// if current solutionId, pull result summaries
-		context.dispatch('fetchPredictedSummary', {
-			dataset: req.dataset,
-			solutionId: res.solutionId,
-			extrema: context.getters.getPredictedExtrema
-		});
-		context.dispatch('fetchResultHighlightValues', {
-			dataset: req.dataset,
-			highlightRoot: context.getters.getDecodedHighlightRoot,
-			extrema: context.getters.getPredictedExtrema,
-			solutionId: res.solutionId,
-			requestIds: context.getters.getSolutionRequestIds,
-			variables: context.getters.getActiveSolutionVariables,
-			includeCorrectness: isClassification,
-			includeResidual: isRegression
-		});
+	// if current solutionId, pull result summaries
+	context.dispatch('fetchPredictedSummary', {
+		dataset: req.dataset,
+		target: req.target,
+		solutionId: res.solutionId
+	});
+	context.dispatch('fetchResultHighlightValues', {
+		dataset: req.dataset,
+		target: req.target,
+		training: context.getters.getResultsPaginatedVariables,
+		highlightRoot: context.getters.getDecodedHighlightRoot,
+		solutionId: res.solutionId,
+		requestIds: context.getters.getSolutionRequestIds,
+		includeCorrectness: isClassification,
+		includeResidual: isRegression
 	});
 
 	if (isRegression) {
 		context.dispatch('fetchResidualsExtrema', {
 			dataset: req.dataset,
+			target: req.target
+		});
+		context.dispatch('fetchResidualsSummary', {
+			dataset: req.dataset,
+			target: req.target,
 			solutionId: res.solutionId
-		}).then(() => {
-			context.dispatch('fetchResidualsSummary', {
-				dataset: req.dataset,
-				solutionId: res.solutionId,
-				extrema: context.getters.getResidualExtrema
-			});
 		});
 	} else if (isClassification) {
 		context.dispatch('fetchCorrectnessSummary', {

@@ -72,7 +72,7 @@ func SolutionHandler(solutionCtor model.SolutionStorageCtor) func(http.ResponseW
 
 			// gather solutions
 			solutions := make([]*Solution, 0)
-			for _, pip := range req.Solutions {
+			for _, sol := range req.Solutions {
 
 				solution := &Solution{
 					// request
@@ -82,17 +82,17 @@ func SolutionHandler(solutionCtor model.SolutionStorageCtor) func(http.ResponseW
 					Features:  req.Features,
 					Filters:   req.Filters,
 					// solution
-					SolutionID: pip.SolutionID,
-					Scores:     pip.Scores,
-					Timestamp:  pip.CreatedTime,
-					Progress:   pip.Progress,
+					SolutionID: sol.SolutionID,
+					Scores:     sol.Scores,
+					Timestamp:  sol.CreatedTime,
+					Progress:   sol.Progress,
 					// keys
-					PredictedKey: model.GetPredictedKey(req.TargetFeature(), pip.SolutionID),
-					ErrorKey:     model.GetErrorKey(req.TargetFeature(), pip.SolutionID),
+					PredictedKey: model.GetPredictedKey(req.TargetFeature(), sol.SolutionID),
+					ErrorKey:     model.GetErrorKey(req.TargetFeature(), sol.SolutionID),
 				}
-				if pip.Result != nil {
+				if sol.Result != nil {
 					// result
-					solution.ResultUUID = pip.Result.ResultUUID
+					solution.ResultUUID = sol.Result.ResultUUID
 				}
 				solutions = append(solutions, solution)
 			}

@@ -122,6 +122,7 @@ export default Vue.extend({
 				paginated.forEach(group => {
 					if (group) {
 						if (group.key === this.highlights.root.key) {
+							console.log(group.key, 'matches', this.highlights.root.key);
 							group.facets.forEach(facet => {
 								facet.filterable = true;
 							});

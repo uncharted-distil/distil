@@ -77,20 +77,10 @@ export const getters = {
 		return activeSolution.features.filter(f => f.featureType === 'train').map(f => variables[f.featureName]);
 	},
 
-	getActiveSolutionTrainingMap(state: SolutionState, getters: any): Dictionary<boolean> {
-		const training = getters.getActiveSolutionTrainingVariables.map(f => f.key);
-		const trainingMap = {};
-		training.forEach(t => {
-			trainingMap[t] = true;
-		});
-		return trainingMap;
-	},
-
-	getActiveSolutionVariables(state: SolutionState, getters: any): Variable[] {
-		const trainingMap = getters.getActiveSolutionTrainingMap;
+	getActiveSolutionTargetVariable(state: SolutionState, getters: any): Variable[] {
 		const target = getters.getRouteTargetVariable;
 		const variables = getters.getVariables;
-		return variables.filter(variable => trainingMap[variable.key] || variable.key === target);
+		return variables.filter(variable => variable.key === target);
 	},
 
 	isRegression(state: SolutionState, getters: any): boolean {

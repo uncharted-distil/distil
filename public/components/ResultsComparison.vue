@@ -85,7 +85,14 @@ export default Vue.extend({
 			return resultsGetters.getIncludedResultTableDataFields(this.$store);
 		},
 
-		includedResultErrors(): number {
+		numIncludedResultItems(): number {
+			return this.includedResultTableDataItems ? this.includedResultTableDataItems.length : 0;
+		},
+
+		numIncludedResultErrors(): number {
+			if (!this.includedResultTableDataItems) {
+				return 0;
+			}
 			return this.includedResultTableDataItems.filter(item => {
 				if (this.regressionEnabled) {
 					const err = _.toNumber(item[this.solution.errorKey]);
@@ -104,7 +111,14 @@ export default Vue.extend({
 			return resultsGetters.getExcludedResultTableDataFields(this.$store);
 		},
 
-		excludedResultErrors(): number {
+		numExcludedResultItems(): number {
+			return this.excludedResultTableDataItems ? this.excludedResultTableDataItems.length : 0;
+		},
+
+		numExcludedResultErrors(): number {
+			if (!this.excludedResultTableDataItems) {
+				return 0;
+			}
 			return this.excludedResultTableDataItems.filter(item => {
 				if (this.regressionEnabled) {
 					const err = _.toNumber(item[this.solution.errorKey]);
@@ -141,15 +155,15 @@ export default Vue.extend({
 		},
 
 		topTableTitle(): string {
-			return `${this.includedResultTableDataItems.length} <b class="matching-color">matching</b> samples of ${this.numRows}, including ${this.includedResultErrors} <b class="erroneous-color">erroneous</b> predictions`;
+			return `${this.numIncludedResultItems} <b class="matching-color">matching</b> samples of ${this.numRows}, including ${this.numIncludedResultErrors} <b class="erroneous-color">erroneous</b> predictions`;
 		},
 
 		bottomTableTitle(): string {
-			return `${this.excludedResultTableDataItems.length} <b class="other-color">other</b> samples of ${this.numRows}, including ${this.excludedResultErrors} <b class="erroneous-color">erroneous</b> predictions`;
+			return `${this.numExcludedResultItems} <b class="other-color">other</b> samples of ${this.numRows}, including ${this.numExcludedResultErrors} <b class="erroneous-color">erroneous</b> predictions`;
 		},
 
 		singleTableTitle(): string {
-			return `Displaying ${this.excludedResultTableDataItems.length} of ${this.numRows}, including ${this.excludedResultErrors} <b>erroneous</b> predictions`;
+			return `Displaying ${this.numExcludedResultItems} of ${this.numRows}, including ${this.numExcludedResultErrors} <b>erroneous</b> predictions`;
 		}
 	}
 });

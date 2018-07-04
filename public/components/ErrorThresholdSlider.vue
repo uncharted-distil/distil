@@ -1,5 +1,5 @@
 <template>
-	<div class="error-threshold-slider" v-if="hasThreshold && hasExtrema">
+	<div class="error-threshold-slider" v-if="hasExtrema">
 
 		<div>
 			<div class="error-header">
@@ -65,15 +65,15 @@ export default Vue.extend({
 			symmetricSlider: true,
 			min: null,
 			max: null,
-			hasDefaultedThreshold: false
+			hasModified: false
 		};
 	},
 
 	computed: {
 
 		residualExtrema(): Extrema {
-			const extrema = resultsGetters.getResidualExtrema(this.$store);
-			if (!extrema || extrema.min == null || extrema.max == null) {
+			const extrema = resultsGetters.getResidualsExtrema(this.$store);
+			if (extrema.min == null || extrema.max == null) {
 				return {
 					min: null,
 					max: null
@@ -159,6 +159,7 @@ export default Vue.extend({
 		},
 
 		onSlide(value: number[]) {
+			this.hasModified = true;
 			const newValues = this.forceSymmetric(value);
 			this.updateThreshold(newValues[0], newValues[1]);
 		}
@@ -166,15 +167,14 @@ export default Vue.extend({
 
 	watch: {
 		residualExtrema() {
-			if (this.hasDefaultedThreshold || this.hasThreshold) {
-				return;
-			}
-			if (!this.hasDefaultedThreshold && this.residualExtrema) {
+			// update threshold if there isnt one, or if the user hasn't touched
+			// the slider yet.
+			if ((this.hasExtrema && !this.hasThreshold) ||
+				(this.hasExtrema && !this.hasModified)) {
 				// set the route
 				const defaultMin = -this.range/2 * DEFAULT_PERCENTILE;
 				const defaultMax = this.range/2 * DEFAULT_PERCENTILE;
 				this.updateThreshold(defaultMin, defaultMax);
-				this.hasDefaultedThreshold = true;
 			}
 		}
 	}

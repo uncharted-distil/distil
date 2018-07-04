@@ -1,7 +1,5 @@
 import { Store } from 'vuex';
-import { TableData } from '../store/dataset/index';
 import { Highlight, HighlightRoot } from '../store/highlights/index';
-import { Dictionary } from '../util/dict';
 import { Filter, NUMERICAL_FILTER } from '../util/filters';
 import { getters as routeGetters } from '../store/route/module';
 import { getters as highlightGetters } from '../store/highlights/module';
@@ -65,25 +63,6 @@ export function addHighlightToFilterParams(store: any, filterParams: FilterParam
 	return params;
 }
 
-export function parseHighlightSamples(data: TableData): Dictionary<string[]>  {
-	const samples: Dictionary<string[]> = {};
-	if (!data) {
-		return samples;
-	}
-	for (let rowIdx = 0; rowIdx < data.values.length; rowIdx++) {
-		for (const [colIdx, col] of data.columns.entries()) {
-			const val = data.values[rowIdx][colIdx];
-			let colData = samples[col.key];
-			if (!colData) {
-				colData = [];
-				samples[col.key] = colData;
-			}
-			colData.push(val);
-		}
-	}
-	return samples;
-}
-
 export function updateHighlightRoot(component: Vue, highlightRoot: HighlightRoot) {
 	const entry = overlayRouteEntry(routeGetters.getRoute(component.$store), {
 		highlights: encodeHighlights(highlightRoot),
@@ -104,7 +83,6 @@ export function getHighlights(store: Store<any>): Highlight {
 	return {
 		root: routeGetters.getDecodedHighlightRoot(store),
 		values: {
-			samples: highlightGetters.getHighlightedSamples(store),
 			summaries: highlightGetters.getHighlightedSummaries(store)
 		}
 	};

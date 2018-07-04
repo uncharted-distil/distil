@@ -29,8 +29,8 @@
 				class="col-12 col-md-3 border-gray-right results-variable-summaries"
 				enable-search
 				enable-highlighting
-				:instance-name="instanceName"
-				:groups="groups"
+				instance-name="resultTrainingVars"
+				:groups="trainingGroups"
 				:dataset="dataset"></variable-summaries>
 			<results-comparison
 				class="col-12 col-md-6 results-result-comparison"></results-comparison>
@@ -51,9 +51,6 @@ import { actions as viewActions } from '../store/view/module';
 import { getters as datasetGetters } from '../store/dataset/module';
 import { getters as resultGetters } from '../store/results/module';
 import { getters as routeGetters } from '../store/route/module';
-import { getters as solutionGetters } from '../store/solutions/module';
-import { Variable } from '../store/dataset/index';
-import { Dictionary } from '../util/dict';
 import { Group, createGroups } from '../util/facets';
 
 export default Vue.extend({
@@ -67,9 +64,6 @@ export default Vue.extend({
 	},
 
 	computed: {
-		instanceName(): string {
-			return 'resultTrainingVars';
-		},
 		dataset(): string {
 			return routeGetters.getRouteDataset(this.$store);
 		},
@@ -83,15 +77,9 @@ export default Vue.extend({
 			}
 			return '';
 		},
-		groups(): Group[] {
-			const summaries = resultGetters.getResultSummaries(this.$store).filter(summary => this.training[summary.key]);
+		trainingGroups(): Group[] {
+			const summaries = resultGetters.getTrainingSummaries(this.$store);
 			return createGroups(summaries);
-		},
-		variables(): Variable[] {
-			return solutionGetters.getActiveSolutionVariables(this.$store);
-		},
-		training(): Dictionary<boolean> {
-			return solutionGetters.getActiveSolutionTrainingMap(this.$store);
 		},
 		solutionId(): string {
 			return routeGetters.getRouteSolutionId(this.$store);
@@ -110,7 +98,7 @@ export default Vue.extend({
 			viewActions.updateResultsHighlights(this.$store);
 		},
 		solutionId() {
-			viewActions.updateResultsActiveSolution(this.$store);
+			viewActions.updateResultsSolution(this.$store);
 		}
 	}
 });

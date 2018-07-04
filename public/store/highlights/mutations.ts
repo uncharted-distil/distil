@@ -2,13 +2,8 @@ import _ from 'lodash';
 import Vue from 'vue';
 import { HighlightState } from './index';
 import { VariableSummary } from '../dataset/index';
-import { Dictionary } from '../../util/dict';
 
 export const mutations = {
-
-	updateHighlightSamples(state: HighlightState, samples: Dictionary<string[]>) {
-		state.highlightValues.samples = samples;
-	},
 
 	updateHighlightSummaries(state: HighlightState, summary: VariableSummary) {
 		if (!summary) {

@@ -3,7 +3,6 @@ package routes
 import (
 	"net/http"
 	"net/url"
-	"strconv"
 
 	"github.com/pkg/errors"
 	"goji.io/pat"
@@ -17,24 +16,15 @@ type ResidualsSummary struct {
 }
 
 // ResidualsSummaryHandler bins predicted result data for consumption in a downstream summary view.
-func ResidualsSummaryHandler(solutionCtor model.SolutionStorageCtor, dataCtor model.DataStorageCtor) func(http.ResponseWriter, *http.Request) {
+func ResidualsSummaryHandler(metaCtor model.MetadataStorageCtor, solutionCtor model.SolutionStorageCtor, dataCtor model.DataStorageCtor) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// extract route parameters
 		dataset := pat.Param(r, "dataset")
+		target := pat.Param(r, "target")
 
 		resultUUID, err := url.PathUnescape(pat.Param(r, "results-uuid"))
 		if err != nil {
 			handleError(w, errors.Wrap(err, "unable to unescape results uuid"))
-			return
-		}
-		extremaMin, err := strconv.ParseFloat(pat.Param(r, "min"), 64)
-		if err != nil {
-			handleError(w, errors.Wrap(err, "unable to parse extrema min"))
-			return
-		}
-		extremaMax, err := strconv.ParseFloat(pat.Param(r, "max"), 64)
-		if err != nil {
-			handleError(w, errors.Wrap(err, "unable to parse extrema max"))
 			return
 		}
 
@@ -47,6 +37,12 @@ func ResidualsSummaryHandler(solutionCtor model.SolutionStorageCtor, dataCtor mo
 
 		// get variable names and ranges out of the params
 		filterParams, err := model.ParseFilterParamsFromJSON(params)
+		if err != nil {
+			handleError(w, err)
+			return
+		}
+
+		meta, err := metaCtor()
 		if err != nil {
 			handleError(w, err)
 			return
@@ -71,7 +67,8 @@ func ResidualsSummaryHandler(solutionCtor model.SolutionStorageCtor, dataCtor mo
 			return
 		}
 
-		extrema, err := model.NewExtrema(extremaMin, extremaMax)
+		// extract extrema for solution
+		extrema, err := fetchSolutionResidualExtrema(meta, data, solution, dataset, target, "")
 		if err != nil {
 			handleError(w, err)
 			return
