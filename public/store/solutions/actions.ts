@@ -33,17 +33,12 @@ interface SolutionStatus {
 
 export type SolutionContext = ActionContext<SolutionState, DistilState>;
 
-/*
-	- fetch table data
-	- fetch extremas for result summaries and predicted summary
-	-
-*/
-
 function updateCurrentSolutionResults(context: SolutionContext, req: CreateSolutionRequest, res: SolutionStatus) {
 	// pull new table results
 	context.dispatch('fetchResultTableData', {
 		dataset: req.dataset,
-		solutionId: res.solutionId
+		solutionId: res.solutionId,
+		highlightRoot: context.getters.getDecodedHighlightRoot
 	});
 
 	// if this is a regression task, pull extrema as a first step
