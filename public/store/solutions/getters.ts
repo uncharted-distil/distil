@@ -54,12 +54,41 @@ export const getters = {
 		return solutions.sort(sortSolutions);
 	},
 
-	getSolutionsRequests(state: SolutionState): SolutionRequest[] {
-		return state.requests.slice();
+	getRelevantSolutions(state: SolutionState, getters: any): Solution[] {
+		const target = getters.getRouteTargetVariable;
+		const dataset = getters.getRouteDataset;
+		const requests = state.requests.filter(request => {
+			return request.dataset === dataset && request.feature === target;
+		});
+		let solutions = [];
+		requests.forEach(request => {
+			solutions = solutions.concat(request.solutions);
+		});
+		return solutions.sort(sortSolutions);
 	},
 
-	getSolutionRequestIds(state: SolutionState): string[] {
-		return state.requests.map(r => r.requestId);
+	getRelevantSolutionRequests(state: SolutionState, getters: any): SolutionRequest[] {
+		const target = getters.getRouteTargetVariable;
+		const dataset = getters.getRouteDataset;
+		// get only matching dataset / target
+		const requests = state.requests.filter(request => {
+			return request.dataset === dataset && request.feature === target;
+		});
+		// sort and return
+		requests.sort(sortRequests);
+		return requests;
+	},
+
+	getRelevantSolutionRequestIds(state: SolutionState, getters: any): string[] {
+		const target = getters.getRouteTargetVariable;
+		const dataset = getters.getRouteDataset;
+		// get only matching dataset / targer
+		const requests = state.requests.filter(request => {
+			return request.dataset === dataset && request.feature === target;
+		});
+		// sort and return
+		requests.sort(sortRequests);
+		return requests.map(r => r.requestId);
 	},
 
 	getActiveSolution(state: SolutionState, getters: any): Solution {

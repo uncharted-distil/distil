@@ -7,6 +7,10 @@ export type ViewContext = ActionContext<ViewState, DistilState>;
 export const actions = {
 
 	fetchHomeData(context: ViewContext) {
+		// clear any previous state
+		context.commit('clearSolutionRequests');
+
+		// fetch new state
 		return context.dispatch('fetchSolutions', {});
 	},
 
@@ -126,7 +130,7 @@ export const actions = {
 		const target = context.getters.getRouteTargetVariable;
 		const isRegression = context.getters.isRegression;
 		const isClassification = context.getters.isClassification;
-		const requestIds = context.getters.getSolutionRequestIds;
+		const requestIds = context.getters.getRelevantSolutionRequestIds;
 		const solutionId = context.getters.getRouteSolutionId;
 		const paginatedVariables = context.getters.getResultsPaginatedVariables;
 		const highlightRoot = context.getters.getDecodedHighlightRoot;
@@ -189,7 +193,7 @@ export const actions = {
 
 		const dataset = context.getters.getRouteDataset;
 		const target = context.getters.getRouteTargetVariable;
-		const requestIds = context.getters.getSolutionRequestIds;
+		const requestIds = context.getters.getRelevantSolutionRequestIds;
 		const solutionId = context.getters.getRouteSolutionId;
 		const isClassification = context.getters.isClassification;
 		const isRegression = context.getters.isRegression;

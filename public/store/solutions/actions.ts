@@ -62,7 +62,7 @@ function updateCurrentSolutionResults(context: SolutionContext, req: CreateSolut
 		training: context.getters.getResultsPaginatedVariables,
 		highlightRoot: context.getters.getDecodedHighlightRoot,
 		solutionId: res.solutionId,
-		requestIds: context.getters.getSolutionRequestIds,
+		requestIds: context.getters.getRelevantSolutionRequestIds,
 		includeCorrectness: isClassification,
 		includeResidual: isRegression
 	});
@@ -102,7 +102,7 @@ function updateSolutionResults(context: SolutionContext, req: CreateSolutionRequ
 		training: context.getters.getResultsPaginatedVariables,
 		highlightRoot: context.getters.getDecodedHighlightRoot,
 		solutionId: res.solutionId,
-		requestIds: context.getters.getSolutionRequestIds,
+		requestIds: context.getters.getRelevantSolutionRequestIds,
 		includeCorrectness: isClassification,
 		includeResidual: isRegression
 	});

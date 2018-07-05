@@ -102,14 +102,11 @@ export default Vue.extend({
 		},
 
 		requestGroups(): RequestGroup[] {
-			const requests = solutionGetters.getSolutionsRequests(this.$store);
-			const filtered = requests.filter(request => {
-				return request.dataset === this.dataset && request.feature === this.target;
-			});
+			const requests = solutionGetters.getRelevantSolutionRequests(this.$store);
 			const predictedSummaries = this.predictedSummaries;
 			const residualsSummaries = this.residualSummaries;
 			const correctnessSummaries = this.correctnessSummaries;
-			return filtered.map(request => {
+			return requests.map(request => {
 				return {
 					requestId: request.requestId,
 					progress: request.progress,

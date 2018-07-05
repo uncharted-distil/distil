@@ -127,7 +127,8 @@ export default Vue.extend({
 		},
 
 		solutionIndex(): number {
-			return _.findIndex(solutionGetters.getSolutions(this.$store), (solution: any) => {
+			const solutions = solutionGetters.getRelevantSolutions(this.$store);
+			return _.findIndex(solutions, solution => {
 				return solution.solutionId === this.solutionId;
 			});
 		},

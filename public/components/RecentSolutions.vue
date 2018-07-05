@@ -1,7 +1,7 @@
 <template>
 	<b-card header="Recent Models">
 		<div v-if="recentSolutions.length === 0">None</div>
-		<b-list-group v-bind:key="solution.timestamp" v-for="solution in recentSolutions">
+		<b-list-group v-bind:key="solution.solutionId" v-for="solution in recentSolutions">
 			<b-list-group-item href="#" v-bind:key="solution.solutionId">
 				<solution-preview :result="solution"></solution-preview>
 			</b-list-group-item>
@@ -32,10 +32,7 @@ export default Vue.extend({
 
 	computed: {
 		recentSolutions(): Solution[] {
-			return solutionGetters.getSolutions(this.$store)
-				.slice()
-				.sort((a, b) => b.timestamp - a.timestamp)
-				.slice(0, this.maxSolutions);
+			return solutionGetters.getSolutions(this.$store).slice(0, this.maxSolutions);
 		}
 	}
 });
