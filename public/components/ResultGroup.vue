@@ -37,8 +37,6 @@
 					:row-selection="rowSelection"
 					:html="resultHtml">
 				</facets>
-				<div class="residual-center-line"></div>
-				<div class="residual-center-label">0</div>
 			</div>
 			<facets v-if="correctnessGroups.length" class="result-container"
 				@facet-click="onCorrectnessCategoricalClick"
@@ -142,7 +140,15 @@ export default Vue.extend({
 		},
 
 		residualGroups(): Group[] {
-			return this.getAndActivateGroups(this.residualsSummary, this.residualInstanceName);
+			const groups = this.getAndActivateGroups(this.residualsSummary, this.residualInstanceName);
+			groups.forEach(group => {
+				group.facets.forEach((facet: any) => {
+					if (facet.histogram) {
+						facet.histogram.showOrigin = true;
+					}
+				});
+			});
+			return groups;
 		},
 
 		highlights(): Highlight {
@@ -349,24 +355,4 @@ export default Vue.extend({
 .residual-group-container {
 	position: relative;
 }
-
-.residual-center-line {
-	position: absolute;
-	left: 50%;
-	top: 20px;
-	height: 42px;
-	width: 1px;
-	background-color: #666;
-}
-
-.residual-center-label {
-	position: absolute;
-	top: 68px;
-	width: 100%;
-	color: #666;
-	text-align: center;
-	font-family: Helvetica Neue,Helvetica,Arial,sans-serif;
-    font-size: 11px;
-}
-
 </style>

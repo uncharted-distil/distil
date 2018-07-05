@@ -1,14 +1,14 @@
 <template>
 	<div class="results-data-table">
-		<p><small v-html="title"></small></p>
+		<p v-if="hasResults"><small v-html="title"></small></p>
 		<div class="results-data-table-container">
-			<div class="results-data-no-results" v-if="!hasData">
+			<div class="results-data-no-results" v-if="isPending">
 				<div v-html="spinnerHTML"></div>
 			</div>
-			<div class="results-data-no-results" v-if="hasData && items.length===0">
+			<div class="results-data-no-results" v-if="hasNoResults">
 				No results available
 			</div>
-			<b-table v-if="hasData && items.length>0"
+			<b-table v-if="hasResults"
 				bordered
 				hover
 				small
@@ -55,7 +55,7 @@ import { RowSelection } from '../store/highlights/index';
 import { getters as resultsGetters } from '../store/results/module';
 import { getters as routeGetters } from '../store/route/module';
 import { getters as solutionGetters } from '../store/solutions/module';
-import { Solution } from '../store/solutions/index';
+import { Solution, SOLUTION_ERRORED } from '../store/solutions/index';
 import { Dictionary } from '../util/dict';
 import { getVarType, isTextType } from '../util/types';
 import { addRowSelection, removeRowSelection, isRowSelected, updateTableRowSelection } from '../util/row';
@@ -83,6 +83,22 @@ export default Vue.extend({
 
 		solutionIndex(): number {
 			return routeGetters.getActiveSolutionIndex(this.$store);
+		},
+
+		solutionHasErrored(): boolean {
+			return this.solution ? this.solution.progress === SOLUTION_ERRORED : false;
+		},
+
+		isPending(): boolean {
+			return !this.hasData && !this.solutionHasErrored;
+		},
+
+		hasNoResults(): boolean {
+			return this.solutionHasErrored || (this.hasData && this.items.length === 0);
+		},
+
+		hasResults(): boolean {
+			return this.hasData && this.items.length > 0;
 		},
 
 		target(): string {
