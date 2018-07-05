@@ -151,7 +151,7 @@ func main() {
 		task.SetClassify(task.ClassifyPrimitive)
 		task.SetRank(task.RankPrimmitive)
 		task.SetSummarize(task.SummarizePrimitive)
-		//task.SetFeaturize(task.FeaturizePrimitive)
+		task.SetFeaturize(task.FeaturizePrimitive)
 		task.SetClient(solutionClient)
 	}
 

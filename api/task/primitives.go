@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/csv"
 	"encoding/json"
+	"fmt"
 	"io"
 	"io/ioutil"
 	"os"
@@ -226,10 +227,32 @@ func FeaturizePrimitive(index string, dataset string, config *IngestTaskConfig) 
 	}
 	mainDR := meta.GetMainDataResource()
 
+	// add feature variables
+	inputFeatureNames := make([]string, 0)
+	outputFeatureNames := make([]string, 0)
+	for _, v := range mainDR.Variables {
+		if v.RefersTo != nil && v.RefersTo["resID"] != nil {
+			// get the refered DR
+			resID := v.RefersTo["resID"].(string)
+
+			res := getDataResource(meta, resID)
+
+			// check if needs to be featurized
+			if res.CanBeFeaturized() {
+				// create the new resource to hold the featured output
+				indexName := fmt.Sprintf("_feature_%s", v.Name)
+
+				// add the feature variable
+				mainDR.AddVariable(indexName, v.Name, "string", []string{"attribute"}, metadata.VarRoleMetadata)
+
+				inputFeatureNames = append(inputFeatureNames, v.Name)
+				outputFeatureNames = append(outputFeatureNames, indexName)
+			}
+		}
+	}
+
 	// create & submit the solution request
-	// TODO: use proper input columns - need to look at col types in resource and featurize any that are
-	// image URI
-	pip, err := description.CreateCrocPipeline("leather", "", []string{"image_column"}, []string{"image_column_featurized"})
+	pip, err := description.CreateCrocPipeline("leather", "", inputFeatureNames, outputFeatureNames)
 	if err != nil {
 		return errors.Wrap(err, "unable to create Croc pipeline")
 	}
@@ -349,4 +372,15 @@ func toFloat64Array(in []interface{}) ([]float64, error) {
 		strArr = append(strArr, strFloat)
 	}
 	return strArr, nil
+}
+
+func getDataResource(meta *metadata.Metadata, resID string) *metadata.DataResource {
+	// main data resource has d3m index variable
+	for _, dr := range meta.DataResources {
+		if dr.ResID == resID {
+			return dr
+		}
+	}
+
+	return nil
 }
