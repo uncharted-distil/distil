@@ -14,8 +14,10 @@ export const mutations = {
 			query: args.route.query
 		};
 		// store under dataset
-		Vue.set(state.stack[args.view], args.dataset, value);
-		localStorage.set(`${args.view}:${args.dataset}`, value);
+		if (args.dataset) {
+			Vue.set(state.stack[args.view], args.dataset, value);
+			localStorage.set(`${args.view}:${args.dataset}`, value);
+		}
 		// store last as well in case no dataset available
 		Vue.set(state.stack[args.view], LAST_STATE, value);
 		localStorage.set(`${args.view}:${LAST_STATE}`, value);

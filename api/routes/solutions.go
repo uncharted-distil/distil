@@ -12,16 +12,18 @@ import (
 
 // Solution represents a pipeline solution.
 type Solution struct {
-	RequestID  string                 `json:"requestId"`
-	Feature    string                 `json:"feature"`
-	SolutionID string                 `json:"solutionId"`
-	ResultUUID string                 `json:"resultId"`
-	Progress   string                 `json:"progress"`
-	Scores     []*model.SolutionScore `json:"scores"`
-	Timestamp  time.Time              `json:"timestamp"`
-	Dataset    string                 `json:"dataset"`
-	Features   []*model.Feature       `json:"features"`
-	Filters    *model.FilterParams    `json:"filters"`
+	RequestID    string                 `json:"requestId"`
+	Feature      string                 `json:"feature"`
+	SolutionID   string                 `json:"solutionId"`
+	ResultUUID   string                 `json:"resultId"`
+	Progress     string                 `json:"progress"`
+	Scores       []*model.SolutionScore `json:"scores"`
+	Timestamp    time.Time              `json:"timestamp"`
+	Dataset      string                 `json:"dataset"`
+	Features     []*model.Feature       `json:"features"`
+	Filters      *model.FilterParams    `json:"filters"`
+	PredictedKey string                 `json:"predictedKey"`
+	ErrorKey     string                 `json:"errorKey"`
 }
 
 // RequestResponse represents a request response.
@@ -58,7 +60,7 @@ func SolutionHandler(solutionCtor model.SolutionStorageCtor) func(http.ResponseW
 			return
 		}
 
-		requests, err := solution.FetchSolutionResultByDatasetTarget(dataset, target, solutionID)
+		requests, err := solution.FetchRequestByDatasetTarget(dataset, target, solutionID)
 		if err != nil {
 			handleError(w, err)
 			return
@@ -70,7 +72,7 @@ func SolutionHandler(solutionCtor model.SolutionStorageCtor) func(http.ResponseW
 
 			// gather solutions
 			solutions := make([]*Solution, 0)
-			for _, pip := range req.Solutions {
+			for _, sol := range req.Solutions {
 
 				solution := &Solution{
 					// request
@@ -80,16 +82,17 @@ func SolutionHandler(solutionCtor model.SolutionStorageCtor) func(http.ResponseW
 					Features:  req.Features,
 					Filters:   req.Filters,
 					// solution
-					SolutionID: pip.SolutionID,
-					Scores:     pip.Scores,
-					Timestamp:  pip.CreatedTime,
-					Progress:   pip.Progress,
+					SolutionID: sol.SolutionID,
+					Scores:     sol.Scores,
+					Timestamp:  sol.CreatedTime,
+					Progress:   sol.Progress,
+					// keys
+					PredictedKey: model.GetPredictedKey(req.TargetFeature(), sol.SolutionID),
+					ErrorKey:     model.GetErrorKey(req.TargetFeature(), sol.SolutionID),
 				}
-				if pip.Result != nil {
+				if sol.Result != nil {
 					// result
-					solution.Timestamp = pip.Result.CreatedTime
-					solution.ResultUUID = pip.Result.ResultUUID
-					solution.Progress = pip.Result.Progress
+					solution.ResultUUID = sol.Result.ResultUUID
 				}
 				solutions = append(solutions, solution)
 			}

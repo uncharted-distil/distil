@@ -1,5 +1,4 @@
 import { VariableSummary } from '../dataset/index';
-import { Dictionary } from '../../util/dict';
 
 export interface HighlightRoot {
 	context: string;
@@ -9,7 +8,6 @@ export interface HighlightRoot {
 
 export interface HighlightValues {
 	summaries?: VariableSummary[];
-	samples?: Dictionary<string[]>;
 }
 
 export interface Highlight {
@@ -41,7 +39,6 @@ export interface RowSelection {
 export const state: HighlightState = {
 	// highlighted values fetched from the server
 	highlightValues: {
-		summaries: [],
-		samples: {}
+		summaries: []
 	}
 }

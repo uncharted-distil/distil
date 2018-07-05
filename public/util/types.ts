@@ -14,7 +14,9 @@ const META_PREFIX = '_feature_';
 
 const TYPES_TO_LABELS: Dictionary<string> = {
 	integer: 'Integer',
+	int4: 'Integer',
 	float: 'Decimal',
+	float8: 'Decimal',
 	latitude: 'Latitude',
 	longitude: 'Longitude',
 	text: 'Text',
@@ -40,10 +42,12 @@ const LABELS_TO_TYPES = _.invert(TYPES_TO_LABELS);
 
 const INTEGER_TYPES = [
 	'integer',
+	'int4'
 ];
 
 const FLOATING_POINT_TYPES = [
 	'float',
+	'float8',
 	'latitude',
 	'longitude'
 ];
@@ -97,7 +101,7 @@ const URI_SUGGESTIONS = [
 	'unknown'
 ];
 
-const PHONE_SUGGESTIONS= [
+const PHONE_SUGGESTIONS = [
 	'text',
 	'integer',
 	'phone',
@@ -177,7 +181,7 @@ export function formatValue(colValue: any, colType: string): any {
 
 	// If the schema type is an integer, round.
 	if (isIntegerType(colType)) {
-		return Math.round(colValue);
+		return Math.round(colValue).toFixed(0);
 	}
 
 	// If the schema type is text or not float, pass through.

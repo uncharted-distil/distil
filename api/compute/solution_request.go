@@ -228,6 +228,8 @@ func (s *SolutionRequest) persistSolutionError(statusChan chan SolutionStatus, s
 	// persist the updated state
 	// NOTE: ignoring error
 	solutionStorage.PersistSolution(searchID, solutionID, SolutionErroredStatus, time.Now())
+	// HACK: we shouldnt need these
+	time.Sleep(time.Second)
 	// notify of error
 	statusChan <- SolutionStatus{
 		RequestID:  searchID,
@@ -246,6 +248,8 @@ func (s *SolutionRequest) persistSolutionStatus(statusChan chan SolutionStatus, 
 		s.persistSolutionError(statusChan, solutionStorage, searchID, solutionID, err)
 		return
 	}
+	// HACK: we shouldnt need these
+	time.Sleep(time.Second)
 	// notify of update
 	statusChan <- SolutionStatus{
 		RequestID:  searchID,
@@ -259,6 +263,8 @@ func (s *SolutionRequest) persistRequestError(statusChan chan SolutionStatus, so
 	// persist the updated state
 	// NOTE: ignoring error
 	solutionStorage.PersistRequest(searchID, dataset, RequestErroredStatus, time.Now())
+	// HACK: we shouldnt need these
+	time.Sleep(time.Second)
 	// notify of error
 	statusChan <- SolutionStatus{
 		RequestID: searchID,
@@ -276,6 +282,8 @@ func (s *SolutionRequest) persistRequestStatus(statusChan chan SolutionStatus, s
 		s.persistRequestError(statusChan, solutionStorage, searchID, dataset, err)
 		return err
 	}
+	// HACK: we shouldnt need these
+	time.Sleep(time.Second)
 	// notify of update
 	statusChan <- SolutionStatus{
 		RequestID: searchID,
@@ -307,6 +315,8 @@ func (s *SolutionRequest) persistSolutionResults(statusChan chan SolutionStatus,
 		s.persistSolutionError(statusChan, solutionStorage, searchID, solutionID, err)
 		return
 	}
+	// HACK: we shouldnt need these
+	time.Sleep(time.Second)
 	// notify client of update
 	statusChan <- SolutionStatus{
 		RequestID:  searchID,
@@ -456,10 +466,8 @@ func splitTrainTest(dataset *model.QueriedDataset) (*model.QueriedDataset, *mode
 		Filters:  dataset.Filters,
 		IsTrain:  true,
 		Data: &model.FilteredData{
-			Name:    dataset.Data.Name,
 			NumRows: dataset.Data.NumRows,
 			Columns: dataset.Data.Columns,
-			Types:   dataset.Data.Types,
 			Values:  make([][]interface{}, 0),
 		},
 	}
@@ -468,10 +476,8 @@ func splitTrainTest(dataset *model.QueriedDataset) (*model.QueriedDataset, *mode
 		Filters:  dataset.Filters,
 		IsTrain:  false,
 		Data: &model.FilteredData{
-			Name:    dataset.Data.Name,
 			NumRows: dataset.Data.NumRows,
 			Columns: dataset.Data.Columns,
-			Types:   dataset.Data.Types,
 			Values:  make([][]interface{}, 0),
 		},
 	}
@@ -501,7 +507,7 @@ func (s *SolutionRequest) PersistAndDispatch(client *Client, solutionStorage mod
 	}
 
 	// fetch the queried dataset
-	dataset, err := model.FetchDataset(s.Dataset, s.Index, true, true, s.Filters, metaStorage, dataStorage)
+	dataset, err := model.FetchDataset(s.Dataset, true, true, s.Filters, metaStorage, dataStorage)
 	if err != nil {
 		return err
 	}
@@ -610,7 +616,7 @@ func CreateSearchSolutionRequest(allFeatures []*model.Variable,
 
 	var targetVariable *model.Variable
 	for _, v := range allFeatures {
-		if v.Name == target {
+		if v.Key == target {
 			targetVariable = v
 		}
 	}

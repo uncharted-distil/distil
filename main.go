@@ -132,7 +132,7 @@ func main() {
 			os.Exit(1)
 		}
 
-		err = ioutil.WriteFile(problemListingFile, []byte("problem_id,system,meaningful\n"), 0644)
+		err = ioutil.WriteFile(problemListingFile, []byte("problem_id,system,meaningful\n"), 0777)
 		if err != nil {
 			log.Errorf("%+v", err)
 			os.Exit(1)
@@ -208,12 +208,10 @@ func main() {
 	routes.SetVerboseError(config.VerboseError)
 
 	// GET
-	registerRoute(mux, "/distil/datasets/:index", routes.DatasetsHandler(metadataStorageCtor))
+	registerRoute(mux, "/distil/datasets", routes.DatasetsHandler(metadataStorageCtor))
 	registerRoute(mux, "/distil/solutions/:dataset/:target/:solution-id", routes.SolutionHandler(pgSolutionStorageCtor))
-	registerRoute(mux, "/distil/variables/:index/:dataset", routes.VariablesHandler(metadataStorageCtor))
-	registerRoute(mux, "/distil/results-variable-extrema/:index/:dataset/:variable/:results-uuid", routes.ResultVariableExtremaHandler(pgSolutionStorageCtor, pgDataStorageCtor))
-	registerRoute(mux, "/distil/predicted-extrema/:index/:dataset/:results-uuid", routes.PredictedExtremaHandler(pgSolutionStorageCtor, pgDataStorageCtor))
-	registerRoute(mux, "/distil/residuals-extrema/:index/:dataset/:results-uuid", routes.ResidualsExtremaHandler(pgSolutionStorageCtor, pgDataStorageCtor))
+	registerRoute(mux, "/distil/variables/:dataset", routes.VariablesHandler(metadataStorageCtor))
+	registerRoute(mux, "/distil/residuals-extrema/:dataset/:target", routes.ResidualsExtremaHandler(metadataStorageCtor, pgSolutionStorageCtor, pgDataStorageCtor))
 	registerRoute(mux, "/distil/ranking/:index/:dataset/:target", routes.RankingHandler(pgDataStorageCtor, restClient, config.D3MInputDir))
 	registerRoute(mux, "/distil/abort", routes.AbortHandler())
 	registerRoute(mux, "/distil/export/:solution-id", routes.ExportHandler(pgSolutionStorageCtor, metadataStorageCtor, solutionClient, config.D3MOutputDir))
@@ -222,15 +220,16 @@ func main() {
 	registerRoute(mux, "/ws", ws.SolutionHandler(solutionClient, metadataStorageCtor, pgDataStorageCtor, pgSolutionStorageCtor))
 
 	// POST
-	registerRoutePost(mux, "/distil/variables/:index/:dataset", routes.VariableTypeHandler(pgDataStorageCtor, metadataStorageCtor))
-	registerRoutePost(mux, "/distil/discovery/:index/:dataset/:target", routes.ProblemDiscoveryHandler(pgDataStorageCtor, metadataStorageCtor, config.UserProblemPath, userAgent))
-	registerRoutePost(mux, "/distil/data/:esIndex/:dataset/:invert", routes.DataHandler(pgDataStorageCtor, metadataStorageCtor))
-	registerRoutePost(mux, "/distil/results/:index/:dataset/:solution-id", routes.ResultsHandler(pgSolutionStorageCtor, pgDataStorageCtor))
-	registerRoutePost(mux, "/distil/variable-summary/:index/:dataset/:variable", routes.VariableSummaryHandler(pgDataStorageCtor))
-	registerRoutePost(mux, "/distil/results-variable-summary/:index/:dataset/:variable/:min/:max/:results-uuid", routes.ResultVariableSummaryHandler(pgSolutionStorageCtor, pgDataStorageCtor))
-	registerRoutePost(mux, "/distil/residuals-summary/:index/:dataset/:min/:max/:results-uuid", routes.ResidualsSummaryHandler(pgSolutionStorageCtor, pgDataStorageCtor))
-	registerRoutePost(mux, "/distil/correctness-summary/:index/:dataset/:results-uuid", routes.CorrectnessSummaryHandler(pgSolutionStorageCtor, pgDataStorageCtor))
-	registerRoutePost(mux, "/distil/predicted-summary/:index/:dataset/:min/:max/:results-uuid", routes.PredictedSummaryHandler(pgSolutionStorageCtor, pgDataStorageCtor))
+	registerRoutePost(mux, "/distil/variables/:dataset", routes.VariableTypeHandler(pgDataStorageCtor, metadataStorageCtor))
+	registerRoutePost(mux, "/distil/discovery/:dataset/:target", routes.ProblemDiscoveryHandler(pgDataStorageCtor, metadataStorageCtor, config.UserProblemPath, userAgent))
+	registerRoutePost(mux, "/distil/data/:dataset/:invert", routes.DataHandler(pgDataStorageCtor, metadataStorageCtor))
+	registerRoutePost(mux, "/distil/results/:dataset/:solution-id", routes.ResultsHandler(pgSolutionStorageCtor, pgDataStorageCtor))
+	registerRoutePost(mux, "/distil/variable-summary/:dataset/:variable", routes.VariableSummaryHandler(pgDataStorageCtor))
+	registerRoutePost(mux, "/distil/training-summary/:dataset/:variable/:results-uuid", routes.TrainingSummaryHandler(pgSolutionStorageCtor, pgDataStorageCtor))
+	registerRoutePost(mux, "/distil/target-summary/:dataset/:target/:results-uuid", routes.TargetSummaryHandler(metadataStorageCtor, pgSolutionStorageCtor, pgDataStorageCtor))
+	registerRoutePost(mux, "/distil/residuals-summary/:dataset/:target/:results-uuid", routes.ResidualsSummaryHandler(metadataStorageCtor, pgSolutionStorageCtor, pgDataStorageCtor))
+	registerRoutePost(mux, "/distil/correctness-summary/:dataset/:results-uuid", routes.CorrectnessSummaryHandler(pgSolutionStorageCtor, pgDataStorageCtor))
+	registerRoutePost(mux, "/distil/predicted-summary/:dataset/:target/:results-uuid", routes.PredictedSummaryHandler(metadataStorageCtor, pgSolutionStorageCtor, pgDataStorageCtor))
 
 	// static
 	registerRoute(mux, "/distil/image/:dataset/:folder/:file", routes.ResourceHandler(config.RootResourceDirectory, datasetsToProxy))

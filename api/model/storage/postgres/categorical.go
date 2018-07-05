@@ -49,7 +49,7 @@ func (f *CategoricalField) fetchHistogram(dataset string, variable *model.Variab
 	}
 
 	// Get count by category.
-	query := fmt.Sprintf("SELECT \"%s\", COUNT(*) AS count FROM %s %s GROUP BY \"%s\" ORDER BY count desc, \"%s\" LIMIT %d;", variable.Name, dataset, where, variable.Name, variable.Name, catResultLimit)
+	query := fmt.Sprintf("SELECT \"%s\", COUNT(*) AS count FROM %s %s GROUP BY \"%s\" ORDER BY count desc, \"%s\" LIMIT %d;", variable.Key, dataset, where, variable.Key, variable.Key, catResultLimit)
 
 	// execute the postgres query
 	res, err := f.Storage.client.Query(query, params...)
@@ -85,8 +85,8 @@ func (f *CategoricalField) fetchHistogramByResult(dataset string, variable *mode
 		if err != nil {
 			return nil, err
 		}
-	} else if filters.errorFilter != nil {
-		wheres, params, err = f.Storage.buildErrorResultWhere(wheres, params, filters.errorFilter)
+	} else if filters.residualFilter != nil {
+		wheres, params, err = f.Storage.buildErrorResultWhere(wheres, params, filters.residualFilter)
 		if err != nil {
 			return nil, err
 		}
@@ -106,9 +106,9 @@ func (f *CategoricalField) fetchHistogramByResult(dataset string, variable *mode
 		 WHERE result.result_id = $%d %s
 		 GROUP BY "%s"
 		 ORDER BY count desc, "%s" LIMIT %d;`,
-		variable.Name, dataset, f.Storage.getResultTable(dataset),
-		model.D3MIndexFieldName, len(params), where, variable.Name,
-		variable.Name, catResultLimit)
+		variable.Key, dataset, f.Storage.getResultTable(dataset),
+		model.D3MIndexFieldName, len(params), where, variable.Key,
+		variable.Key, catResultLimit)
 
 	// execute the postgres query
 	res, err := f.Storage.client.Query(query, params...)
@@ -123,7 +123,7 @@ func (f *CategoricalField) fetchHistogramByResult(dataset string, variable *mode
 }
 
 func (f *CategoricalField) parseHistogram(rows *pgx.Rows, variable *model.Variable) (*model.Histogram, error) {
-	termsAggName := model.TermsAggPrefix + variable.Name
+	termsAggName := model.TermsAggPrefix + variable.Key
 
 	// Parse bucket results.
 	buckets := make([]*model.Bucket, 0)
@@ -154,7 +154,8 @@ func (f *CategoricalField) parseHistogram(rows *pgx.Rows, variable *model.Variab
 
 	// assign histogram attributes
 	return &model.Histogram{
-		Name:    variable.Name,
+		Label:   variable.Label,
+		Key:     variable.Key,
 		Type:    model.CategoricalType,
 		VarType: variable.Type,
 		Buckets: buckets,
@@ -168,7 +169,7 @@ func (f *CategoricalField) parseHistogram(rows *pgx.Rows, variable *model.Variab
 // FetchPredictedSummaryData pulls predicted data from the result table and builds
 // the categorical histogram for the field.
 func (f *CategoricalField) FetchPredictedSummaryData(resultURI string, dataset string, datasetResult string, variable *model.Variable, filterParams *model.FilterParams, extrema *model.Extrema) (*model.Histogram, error) {
-	targetName := variable.Name
+	targetName := variable.Key
 
 	// pull filters generated against the result facet out for special handling
 	filters := f.Storage.splitFilters(filterParams)
@@ -190,8 +191,8 @@ func (f *CategoricalField) FetchPredictedSummaryData(resultURI string, dataset s
 		if err != nil {
 			return nil, err
 		}
-	} else if filters.errorFilter != nil {
-		wheres, params, err = f.Storage.buildErrorResultWhere(wheres, params, filters.errorFilter)
+	} else if filters.residualFilter != nil {
+		wheres, params, err = f.Storage.buildErrorResultWhere(wheres, params, filters.residualFilter)
 		if err != nil {
 			return nil, err
 		}

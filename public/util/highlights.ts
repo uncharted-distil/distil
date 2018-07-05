@@ -1,7 +1,5 @@
 import { Store } from 'vuex';
-import { TableData } from '../store/dataset/index';
 import { Highlight, HighlightRoot } from '../store/highlights/index';
-import { Dictionary } from '../util/dict';
 import { Filter, NUMERICAL_FILTER } from '../util/filters';
 import { getters as routeGetters } from '../store/route/module';
 import { getters as highlightGetters } from '../store/highlights/module';
@@ -25,19 +23,20 @@ export function decodeHighlights(highlightRoot: string): HighlightRoot {
 	return JSON.parse(atob(highlightRoot)) as HighlightRoot;
 }
 
-export function createFilterFromHighlightRoot(store: Store<any>, highlightRoot: HighlightRoot, mode: string, nameFunc?: Function): Filter {
+export function createFilterFromHighlightRoot(store: Store<any>, highlightRoot: HighlightRoot, mode: string): Filter {
 	if (!highlightRoot || highlightRoot.value == null) {
 		return null;
 	}
-	let name = nameFunc ? nameFunc(highlightRoot.key) : highlightRoot.key;
-	const type = getVarType(store, name);
+	// inject metadata prefix for metadata vars
+	let key = highlightRoot.key;
+	const type = getVarType(store, key);
 	if (isMetaType(type)) {
-		name = addMetaPrefix(name);
+		key = addMetaPrefix(key);
 	}
 	const filterType = getFilterType(type);
 	if (_.isString(highlightRoot.value)) {
 		return {
-			name: name,
+			key: key,
 			type: filterType,
 			mode: mode,
 			categories: [highlightRoot.value]
@@ -45,7 +44,7 @@ export function createFilterFromHighlightRoot(store: Store<any>, highlightRoot: 
 	}
 	if (highlightRoot.value.from !== undefined && highlightRoot.value.to !== undefined) {
 		return {
-			name: name,
+			key: key,
 			type: NUMERICAL_FILTER,
 			mode: mode,
 			min: highlightRoot.value.from,
@@ -55,32 +54,13 @@ export function createFilterFromHighlightRoot(store: Store<any>, highlightRoot: 
 	return null;
 }
 
-export function addHighlightToFilterParams(store: any, filterParams: FilterParams, highlightRoot: HighlightRoot, mode: string, nameFunc?: Function): FilterParams {
+export function addHighlightToFilterParams(store: any, filterParams: FilterParams, highlightRoot: HighlightRoot, mode: string): FilterParams {
 	const params = _.cloneDeep(filterParams);
-	const highlightFilter = createFilterFromHighlightRoot(store, highlightRoot, mode, nameFunc);
+	const highlightFilter = createFilterFromHighlightRoot(store, highlightRoot, mode);
 	if (highlightFilter) {
 		params.filters.push(highlightFilter);
 	}
 	return params;
-}
-
-export function parseHighlightSamples(data: TableData): Dictionary<string[]>  {
-	const samples: Dictionary<string[]> = {};
-	if (!data) {
-		return samples;
-	}
-	for (let rowIdx = 0; rowIdx < data.values.length; rowIdx++) {
-		for (const [colIdx, col] of data.columns.entries()) {
-			const val = data.values[rowIdx][colIdx];
-			let colData = samples[col];
-			if (!colData) {
-				colData = [];
-				samples[col] = colData;
-			}
-			colData.push(val);
-		}
-	}
-	return samples;
 }
 
 export function updateHighlightRoot(component: Vue, highlightRoot: HighlightRoot) {
@@ -103,7 +83,6 @@ export function getHighlights(store: Store<any>): Highlight {
 	return {
 		root: routeGetters.getDecodedHighlightRoot(store),
 		values: {
-			samples: highlightGetters.getHighlightedSamples(store),
 			summaries: highlightGetters.getHighlightedSummaries(store)
 		}
 	};

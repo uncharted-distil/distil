@@ -42,8 +42,8 @@ func (s *Storage) FetchCorrectnessSummary(dataset string, resultURI string, filt
 		if err != nil {
 			return nil, err
 		}
-	} else if filters.errorFilter != nil {
-		wheres, params, err = s.buildErrorResultWhere(wheres, params, filters.errorFilter)
+	} else if filters.residualFilter != nil {
+		wheres, params, err = s.buildErrorResultWhere(wheres, params, filters.residualFilter)
 		if err != nil {
 			return nil, err
 		}
@@ -72,7 +72,7 @@ func (s *Storage) FetchCorrectnessSummary(dataset string, resultURI string, filt
 
 func (s *Storage) parseHistogram(rows *pgx.Rows, variable *model.Variable) (*model.Histogram, error) {
 
-	termsAggName := model.TermsAggPrefix + variable.Name
+	termsAggName := model.TermsAggPrefix + variable.Key
 
 	// extract the counts
 	countMap := map[string]map[string]int64{}
@@ -92,39 +92,43 @@ func (s *Storage) parseHistogram(rows *pgx.Rows, variable *model.Variable) (*mod
 		}
 	}
 
-	// convert the extracted counts into buckets suitable for serialization
-	buckets := make([]*model.Bucket, 0)
-	min := int64(math.MaxInt32)
-	max := int64(-math.MaxInt32)
+	correctBucket := &model.Bucket{
+		Key: "Correct",
+	}
+	incorrectBucket := &model.Bucket{
+		Key: "Incorrect",
+	}
 
 	for predictedKey, targetCounts := range countMap {
-		bucket := model.Bucket{
-			Key:     predictedKey,
-			Count:   0,
-			Buckets: []*model.Bucket{},
-		}
 		for targetKey, count := range targetCounts {
-			targetBucket := model.Bucket{
-				Key:   targetKey,
-				Count: count,
+			if predictedKey == targetKey {
+				correctBucket.Count += count
+			} else {
+				incorrectBucket.Count += count
 			}
-			bucket.Count = bucket.Count + count
-			bucket.Buckets = append(bucket.Buckets, &targetBucket)
-		}
-		buckets = append(buckets, &bucket)
-		if bucket.Count < min {
-			min = bucket.Count
-		}
-		if bucket.Count > max {
-			max = bucket.Count
 		}
 	}
+
+	min := int64(math.MaxInt32)
+	max := int64(-math.MaxInt32)
+	if incorrectBucket.Count < correctBucket.Count {
+		min = incorrectBucket.Count
+		max = correctBucket.Count
+	} else {
+		min = correctBucket.Count
+		max = incorrectBucket.Count
+	}
+
 	// assign histogram attributes
 	return &model.Histogram{
-		Name:    variable.Name,
+		Label:   variable.Label,
+		Key:     variable.Key,
 		VarType: variable.Type,
 		Type:    model.CategoricalType,
-		Buckets: buckets,
+		Buckets: []*model.Bucket{
+			correctBucket,
+			incorrectBucket,
+		},
 		Extrema: &model.Extrema{
 			Min: float64(min),
 			Max: float64(max),

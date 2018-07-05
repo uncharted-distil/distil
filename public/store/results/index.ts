@@ -1,34 +1,33 @@
-import { Dictionary } from '../../util/dict';
 import { VariableSummary, Extrema, TableData } from '../dataset/index';
 
 export interface ResultsState {
-	// result
-	resultSummaries: VariableSummary[];
-	targetResultExtrema: Extrema;
+	// table data
 	includedResultTableData: TableData;
 	excludedResultTableData: TableData;
+	// training / target
+	trainingSummaries: VariableSummary[];
+	targetSummary: VariableSummary;
 	// predicted
 	predictedSummaries: VariableSummary[];
-	predictedExtremas: Dictionary<Extrema>;
 	// residuals
 	residualSummaries: VariableSummary[];
-	residualExtremas: Dictionary<Extrema>;
+	residualsExtrema: Extrema;
 	// correctness summary (correct vs. incorrect) for predicted categorical data
 	correctnessSummaries: VariableSummary[];
 }
 
 export const state: ResultsState = {
-	// result
-	resultSummaries: <VariableSummary[]>[],
-	targetResultExtrema: null,
+	// table data
 	includedResultTableData: null,
 	excludedResultTableData: null,
+	// training / target
+	trainingSummaries: [],
+	targetSummary: null,
 	// predicted
-	predictedSummaries: <VariableSummary[]>[],
-	predictedExtremas: {},
+	predictedSummaries:[],
 	// residuals
-	residualSummaries: <VariableSummary[]>[],
-	residualExtremas: {},
+	residualSummaries: [],
+	residualsExtrema: { min: null, max: null },
 	// correctness summary (correct vs. incorrect) for predicted categorical data
-	correctnessSummaries: <VariableSummary[]>[],
+	correctnessSummaries: [],
 }

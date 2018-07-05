@@ -18,7 +18,6 @@ const { commit, read, dispatch } = getStoreAccessors<HighlightState, DistilState
 // Typed getters
 export const getters = {
 	// highlights
-	getHighlightedSamples: read(moduleGetters.getHighlightedSamples),
 	getHighlightedSummaries: read(moduleGetters.getHighlightedSummaries)
 }
 
@@ -31,9 +30,6 @@ export const actions = {
 
 // Typed mutations
 export const mutations = {
-	updateHighlightSamples: commit(moduleMutations.updateHighlightSamples),
 	updateHighlightSummaries: commit(moduleMutations.updateHighlightSummaries),
-	updatePredictedHighlightSummaries: commit(moduleMutations.updatePredictedHighlightSummaries),
-	updateCorrectnessHighlightSummaries: commit(moduleMutations.updateCorrectnessHighlightSummaries),
 	clearHighlightSummaries: commit(moduleMutations.clearHighlightSummaries)
 }

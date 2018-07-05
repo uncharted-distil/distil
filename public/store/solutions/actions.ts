@@ -4,11 +4,9 @@ import { SolutionState,
  	REQUEST_PENDING, REQUEST_RUNNING, REQUEST_COMPLETED, REQUEST_ERRORED } from './index';
 import { ActionContext } from 'vuex';
 import { DistilState } from '../store';
-import { ES_INDEX } from '../dataset/index';
 import { mutations } from './module';
 import { getWebSocketConnection } from '../../util/ws';
 import { FilterParams } from '../../util/filters';
-import { REGRESSION_TASK, CLASSIFICATION_TASK } from '../../util/solutions';
 
 const CREATE_SOLUTIONS = 'CREATE_SOLUTIONS';
 const STOP_SOLUTIONS = 'STOP_SOLUTIONS';
@@ -35,63 +33,50 @@ interface SolutionStatus {
 export type SolutionContext = ActionContext<SolutionState, DistilState>;
 
 function updateCurrentSolutionResults(context: SolutionContext, req: CreateSolutionRequest, res: SolutionStatus) {
-	// pull new table results
+	const isRegression = context.getters.isRegression;
+	const isClassification = context.getters.isClassification;
+
 	context.dispatch('fetchResultTableData', {
 		dataset: req.dataset,
+		solutionId: res.solutionId,
+		highlightRoot: context.getters.getDecodedHighlightRoot
+	});
+	context.dispatch('fetchPredictedSummary', {
+		dataset: req.dataset,
+		target: req.target,
 		solutionId: res.solutionId
 	});
-
-	// if this is a regression task, pull extrema as a first step
-	const isRegression = req.task.toLowerCase() === REGRESSION_TASK.schemaName.toLowerCase();
-	const isClassification = req.task.toLowerCase() === CLASSIFICATION_TASK.schemaName.toLowerCase();
-	let extremaFetches = [];
-	if (isRegression) {
-		extremaFetches = [
-			context.dispatch('fetchResultExtrema', {
-				dataset: req.dataset,
-				variable: req.target,
-				solutionId: res.solutionId
-			}),
-			context.dispatch('fetchPredictedExtrema', {
-				dataset: req.dataset,
-				solutionId: res.solutionId
-			})
-		]
-	}
-
-	Promise.all(extremaFetches).then(() => {
-		context.dispatch('fetchPredictedSummary', {
-			dataset: req.dataset,
-			solutionId: res.solutionId,
-			extrema: context.getters.getPredictedExtrema
-		});
-		context.dispatch('fetchTrainingResultSummaries', {
-			dataset: req.dataset,
-			solutionId: res.solutionId,
-			variables: context.getters.getActiveSolutionVariables,
-			extrema: context.getters.getPredictedExtrema
-		});
-		context.dispatch('fetchResultHighlightValues', {
-			dataset: req.dataset,
-			highlightRoot: context.getters.getDecodedHighlightRoot,
-			extrema: context.getters.getPredictedExtrema,
-			solutionId: res.solutionId,
-			requestIds: context.getters.getSolutions,
-			variables: context.getters.getActiveSolutionVariables,
-			includeCorrectness: isClassification
-		});
+	context.dispatch('fetchTrainingSummaries', {
+		dataset: req.dataset,
+		training: context.getters.getResultsPaginatedVariables,
+		solutionId: res.solutionId,
+	});
+	context.dispatch('fetchTargetSummary', {
+		dataset: req.dataset,
+		target: req.target,
+		solutionId: res.solutionId
+	});
+	context.dispatch('fetchResultHighlightValues', {
+		dataset: req.dataset,
+		target: req.target,
+		training: context.getters.getResultsPaginatedVariables,
+		highlightRoot: context.getters.getDecodedHighlightRoot,
+		solutionId: res.solutionId,
+		requestIds: context.getters.getRelevantSolutionRequestIds,
+		includeCorrectness: isClassification,
+		includeResidual: isRegression
 	});
 
 	if (isRegression) {
 		context.dispatch('fetchResidualsExtrema', {
 			dataset: req.dataset,
+			target: req.target,
 			solutionId: res.solutionId
-		}).then(() => {
-			context.dispatch('fetchResidualsSummary', {
-				dataset: req.dataset,
-				solutionId: res.solutionId,
-				extrema: context.getters.getResidualExtrema
-			});
+		});
+		context.dispatch('fetchResidualsSummary', {
+			dataset: req.dataset,
+			target: req.target,
+			solutionId: res.solutionId
 		});
 	} else if (isClassification) {
 		context.dispatch('fetchCorrectnessSummary', {
@@ -102,43 +87,36 @@ function updateCurrentSolutionResults(context: SolutionContext, req: CreateSolut
 }
 
 function updateSolutionResults(context: SolutionContext, req: CreateSolutionRequest, res: SolutionStatus) {
-	// if this is a regression task, pull extrema as a first step
-	const isRegression = req.task.toLowerCase() === REGRESSION_TASK.schemaName.toLowerCase();
-	const isClassification = req.task.toLowerCase() === CLASSIFICATION_TASK.schemaName.toLowerCase();
-	let extremaFetches = [];
-	if (isRegression) {
-		extremaFetches = [
-			context.dispatch('fetchResultExtrema', {
-				dataset: req.dataset,
-				variable: req.target,
-				solutionId: res.solutionId
-			}),
-			context.dispatch('fetchPredictedExtrema', {
-				dataset: req.dataset,
-				solutionId: res.solutionId
-			})
-		]
-	}
+	const isRegression = context.getters.isRegression;
+	const isClassification = context.getters.isClassification;
 
-	Promise.all(extremaFetches).then(() => {
-		// if current solutionId, pull result summaries
-		context.dispatch('fetchPredictedSummary', {
-			dataset: req.dataset,
-			solutionId: res.solutionId,
-			extrema: context.getters.getPredictedExtrema
-		});
+	// if current solutionId, pull result summaries
+	context.dispatch('fetchPredictedSummary', {
+		dataset: req.dataset,
+		target: req.target,
+		solutionId: res.solutionId
+	});
+	context.dispatch('fetchResultHighlightValues', {
+		dataset: req.dataset,
+		target: req.target,
+		training: context.getters.getResultsPaginatedVariables,
+		highlightRoot: context.getters.getDecodedHighlightRoot,
+		solutionId: res.solutionId,
+		requestIds: context.getters.getRelevantSolutionRequestIds,
+		includeCorrectness: isClassification,
+		includeResidual: isRegression
 	});
 
 	if (isRegression) {
 		context.dispatch('fetchResidualsExtrema', {
 			dataset: req.dataset,
+			target: req.target,
 			solutionId: res.solutionId
-		}).then(() => {
-			context.dispatch('fetchResidualsSummary', {
-				dataset: req.dataset,
-				solutionId: res.solutionId,
-				extrema: context.getters.getResidualExtrema
-			});
+		});
+		context.dispatch('fetchResidualsSummary', {
+			dataset: req.dataset,
+			target: req.target,
+			solutionId: res.solutionId
 		});
 	} else if (isClassification) {
 		context.dispatch('fetchCorrectnessSummary', {
@@ -265,7 +243,6 @@ export const actions = {
 			// send create solutions request
 			stream.send({
 				type: CREATE_SOLUTIONS,
-				index: ES_INDEX,
 				dataset: request.dataset,
 				target: request.target,
 				task: request.task,

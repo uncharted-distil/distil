@@ -117,7 +117,7 @@ func PersistFilteredData(datasetDir string, target string, dataset *model.Querie
 	// find the index of the target variable
 	targetIdx := -1
 	for idx, column := range dataset.Data.Columns {
-		if column == target {
+		if column.Key == target {
 			targetIdx = idx
 			break
 		}
@@ -161,7 +161,7 @@ func PersistData(dataDir string, filename string, data *model.FilteredData) erro
 	// write out the header, including the d3m_index field
 	variableNames := make([]string, len(data.Columns))
 	for i, column := range data.Columns {
-		variableNames[i] = column
+		variableNames[i] = column.Key
 	}
 	err = writer.Write(variableNames)
 	if err != nil {
@@ -209,13 +209,13 @@ func writeData(dataPath string, datasetDir string, filteredData *model.FilteredD
 	// map the name to the display name
 	variableNamesDisplay := make(map[string]string)
 	for _, v := range variables {
-		variableNamesDisplay[v.Name] = v.DisplayVariable
+		variableNamesDisplay[v.Key] = v.DisplayVariable
 	}
 
 	// write out the header, including the d3m_index field
 	variableNames := make([]string, 0)
 	for _, column := range filteredData.Columns {
-		variableNames = append(variableNames, variableNamesDisplay[column])
+		variableNames = append(variableNames, variableNamesDisplay[column.Key])
 	}
 	err = writer.Write(variableNames)
 	if err != nil {
@@ -241,7 +241,7 @@ func writeDataSchema(schemaPath string, dataset string, filteredData *model.Filt
 	// Build a map of variable name to variable.
 	vars := make(map[string]*model.Variable)
 	for _, v := range variables {
-		vars[v.Name] = v
+		vars[v.Key] = v
 	}
 
 	// Build the schema data for output.
@@ -270,14 +270,14 @@ func writeDataSchema(schemaPath string, dataset string, filteredData *model.Filt
 		if i == targetIdx {
 			role[0] = "suggestedTarget"
 		}
-		if c == model.D3MIndexFieldName {
+		if c.Key == model.D3MIndexFieldName {
 			// Set the specific values for the d3m index.
 			role[0] = "index"
 		}
 		v := &DataVariable{
-			ColName:  vars[c].DisplayVariable,
+			ColName:  vars[c.Key].DisplayVariable,
 			Role:     role,
-			ColType:  model.MapSchemaType(vars[c].Type),
+			ColType:  model.MapSchemaType(vars[c.Key].Type),
 			ColIndex: i,
 		}
 		ds.DataResources[0].Variables = append(ds.DataResources[0].Variables, v)

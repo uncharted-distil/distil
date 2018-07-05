@@ -108,7 +108,7 @@ func getTaskSubType(targetType string) string {
 // problem format.
 func CreateProblemSchema(datasetDir string, dataset string, targetVar *model.Variable, filters *model.FilterParams) (*ProblemPersist, string, error) {
 	// parse the dataset and its filter state and generate a hashcode from both
-	hash, err := getFilteredDatasetHash(dataset, targetVar.Name, filters, true)
+	hash, err := getFilteredDatasetHash(dataset, targetVar.Key, filters, true)
 	if err != nil {
 		return nil, "", errors.Wrap(err, "unable to build dataset filter hash")
 	}

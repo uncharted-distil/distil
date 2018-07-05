@@ -18,6 +18,7 @@
 				@facet-click="onResultCategoricalClick"
 				@numerical-click="onResultNumericalClick"
 				@range-change="onResultRangeChange"
+				:solution-id="solutionId"
 				:groups="predictedGroups"
 				:highlights="highlights"
 				:instanceName="predictedInstanceName"
@@ -28,6 +29,7 @@
 				<facets v-if="residualGroups.length" class="residual-container"
 					@numerical-click="onResidualNumericalClick"
 					@range-change="onResidualRangeChange"
+					:solution-id="solutionId"
 					:groups="residualGroups"
 					:highlights="highlights"
 					:deemphasis="residualThreshold"
@@ -40,6 +42,7 @@
 			</div>
 			<facets v-if="correctnessGroups.length" class="result-container"
 				@facet-click="onCorrectnessCategoricalClick"
+				:solution-id="solutionId"
 				:groups="correctnessGroups"
 				:highlights="highlights"
 				:instanceName="correctnessInstanceName"
@@ -66,7 +69,6 @@ import { createGroups, Group } from '../util/facets';
 import { Extrema, VariableSummary } from '../store/dataset/index';
 import { Highlight, RowSelection } from '../store/highlights/index';
 import { SOLUTION_COMPLETED, SOLUTION_ERRORED } from '../store/solutions/index';
-import { getPredictedCol, getErrorCol, getCorrectnessCol } from '../util/data';
 import { getters as routeGetters } from '../store/route/module';
 import { getters as solutionGetters } from '../store/solutions/module';
 import { getSolutionById, getMetricDisplayName } from '../util/solutions';
@@ -112,18 +114,6 @@ export default Vue.extend({
 			return `correctness-result-facet-${this.solutionId}`;
 		},
 
-		predictedColumnName(): string {
-			return getPredictedCol(this.target);
-		},
-
-		errorColumnName(): string {
-			return getErrorCol(this.target);
-		},
-
-		correctnessColumnName(): string {
-			return getCorrectnessCol(this.target);
-		},
-
 		solutionStatus(): String {
 			const solution = getSolutionById(this.$store.state.solutionModule, this.solutionId);
 			if (solution) {
@@ -137,7 +127,8 @@ export default Vue.extend({
 		},
 
 		solutionIndex(): number {
-			return _.findIndex(solutionGetters.getSolutions(this.$store), (solution: any) => {
+			const solutions = solutionGetters.getRelevantSolutions(this.$store);
+			return _.findIndex(solutions, solution => {
 				return solution.solutionId === this.solutionId;
 			});
 		},
@@ -197,7 +188,7 @@ export default Vue.extend({
 				// extract the var name from the key
 				updateHighlightRoot(this, {
 					context: context,
-					key: this.predictedColumnName,
+					key: key,
 					value: value
 				});
 			} else {
@@ -210,7 +201,7 @@ export default Vue.extend({
 				// extract the var name from the key
 				updateHighlightRoot(this, {
 					context: context,
-					key: this.correctnessColumnName,
+					key: key,
 					value: value
 				});
 			} else {
@@ -222,7 +213,7 @@ export default Vue.extend({
 			if (!this.highlights.root || this.highlights.root.key !== key) {
 				updateHighlightRoot(this, {
 					context: context,
-					key: this.predictedColumnName,
+					key: key,
 					value: value
 				});
 			}
@@ -231,7 +222,7 @@ export default Vue.extend({
 		onResultRangeChange(context: string, key: string, value: { from: { label: string[] }, to: { label: string[] } }) {
 			updateHighlightRoot(this, {
 				context: context,
-				key: this.predictedColumnName,
+				key: key,
 				value: value
 			});
 			this.$emit('range-change', key, value);
@@ -241,7 +232,7 @@ export default Vue.extend({
 			if (!this.highlights.root || this.highlights.root.key !== key) {
 				updateHighlightRoot(this, {
 					context: context,
-					key: this.errorColumnName,
+					key: key,
 					value: value
 				});
 			}
@@ -250,7 +241,7 @@ export default Vue.extend({
 		onResidualRangeChange(context: string, key: string, value: { from: number, to: number }) {
 			updateHighlightRoot(this, {
 				context: context,
-				key: this.errorColumnName,
+				key: key,
 				value: value
 			});
 			this.$emit('range-change', key, value);
@@ -259,7 +250,8 @@ export default Vue.extend({
 		click() {
 			if (this.predictedSummary) {
 				const routeEntry = overlayRouteEntry(this.$route, {
-					solutionId: this.predictedSummary.solutionId
+					solutionId: this.predictedSummary.solutionId,
+					highlights: null
 				});
 				this.$router.push(routeEntry);
 			}
@@ -271,7 +263,9 @@ export default Vue.extend({
 				if (this.highlights.root && this.highlights.root.context === contextName) {
 					const group = groups[0];
 					if (group.key === this.highlights.root.key) {
-						group.facets.forEach(facet => facet.filterable = true);
+						group.facets.forEach(facet => {
+							facet.filterable = true;
+						});
 					}
 				}
 				return groups;

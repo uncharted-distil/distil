@@ -1,15 +1,18 @@
-import _ from 'lodash';
-import { VariableSummary, Extrema, TableData, TargetRow, TableColumn } from '../dataset/index';
+import { VariableSummary, Extrema, TableData, TableRow, TableColumn } from '../dataset/index';
 import { ResultsState } from './index';
-import { getResultDataItems, getResultDataFields } from '../../util/data';
+import { getTableDataItems, getTableDataFields } from '../../util/data';
 import { Dictionary } from '../../util/dict';
 
 export const getters = {
 
 	// results
 
-	getResultSummaries(state: ResultsState): VariableSummary[] {
-		return state.resultSummaries;
+	getTrainingSummaries(state: ResultsState): VariableSummary[] {
+		return state.trainingSummaries;
+	},
+
+	getTargetSummary(state: ResultsState): VariableSummary {
+		return state.targetSummary;
 	},
 
 	getResultDataNumRows(state: ResultsState): number {
@@ -24,12 +27,12 @@ export const getters = {
 		return state.includedResultTableData;
 	},
 
-	getIncludedResultTableDataItems(state: ResultsState, getters: any): TargetRow[] {
-		return getResultDataItems(state.includedResultTableData, getters);
+	getIncludedResultTableDataItems(state: ResultsState, getters: any): TableRow[] {
+		return getTableDataItems(state.includedResultTableData);
 	},
 
 	getIncludedResultTableDataFields(state: ResultsState): Dictionary<TableColumn> {
-		return getResultDataFields(state.includedResultTableData);
+		return getTableDataFields(state.includedResultTableData);
 	},
 
 	hasExcludedResultTableData(state: ResultsState): boolean {
@@ -40,12 +43,12 @@ export const getters = {
 		return state.excludedResultTableData;
 	},
 
-	getExcludedResultTableDataItems(state: ResultsState, getters: any): TargetRow[] {
-		return getResultDataItems(state.excludedResultTableData, getters);
+	getExcludedResultTableDataItems(state: ResultsState, getters: any): TableRow[] {
+		return getTableDataItems(state.excludedResultTableData);
 	},
 
 	getExcludedResultTableDataFields(state: ResultsState): Dictionary<TableColumn> {
-		return getResultDataFields(state.excludedResultTableData);
+		return getTableDataFields(state.excludedResultTableData);
 	},
 
 	// predicted
@@ -54,44 +57,14 @@ export const getters = {
 		return state.predictedSummaries;
 	},
 
-	getPredictedExtrema(state: ResultsState): Extrema {
-		if (_.isEmpty(state.predictedExtremas) && !state.targetResultExtrema) {
-			return {
-				min: null,
-				max: null
-			};
-		}
-		const res = { min: Infinity, max: -Infinity };
-		_.forIn(state.predictedExtremas, extrema => {
-			res.min = Math.min(res.min, extrema.min);
-			res.max = Math.max(res.max, extrema.max);
-		});
-		if (state.targetResultExtrema) {
-			res.min = Math.min(res.min, state.targetResultExtrema.min);
-			res.max = Math.max(res.max, state.targetResultExtrema.max);
-		}
-		return res;
-	},
-
 	// residual
 
 	getResidualsSummaries(state: ResultsState): VariableSummary[] {
 		return state.residualSummaries;
 	},
 
-	getResidualExtrema(state: ResultsState): Extrema {
-		if (_.isEmpty(state.residualExtremas)) {
-			return {
-				min: null,
-				max: null
-			};
-		}
-		const res = { min: Infinity, max: -Infinity };
-		_.forIn(state.residualExtremas, extrema => {
-			res.min = Math.min(res.min, extrema.min);
-			res.max = Math.max(res.max, extrema.max);
-		});
-		return res;
+	getResidualsExtrema(state: ResultsState): Extrema {
+		return state.residualsExtrema;
 	},
 
 	// correctness

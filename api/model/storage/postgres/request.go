@@ -44,12 +44,12 @@ func (s *Storage) PersistRequestFilters(requestID string, filters *model.FilterP
 	for _, filter := range filters.Filters {
 		switch filter.Type {
 		case model.NumericalFilter:
-			_, err := s.client.Exec(sql, requestID, filter.Name, model.NumericalFilter, filter.Mode, filter.Min, filter.Max, "", "")
+			_, err := s.client.Exec(sql, requestID, filter.Key, model.NumericalFilter, filter.Mode, filter.Min, filter.Max, "", "")
 			if err != nil {
 				return err
 			}
 		case model.CategoricalFilter:
-			_, err := s.client.Exec(sql, requestID, filter.Name, model.CategoricalFilter, filter.Mode, 0, 0, strings.Join(filter.Categories, ","), "")
+			_, err := s.client.Exec(sql, requestID, filter.Key, model.CategoricalFilter, filter.Mode, 0, 0, strings.Join(filter.Categories, ","), "")
 			if err != nil {
 				return err
 			}
@@ -239,10 +239,10 @@ func (s *Storage) loadRequestFromSolutionID(solutionID string) (*model.Request, 
 	return request, nil
 }
 
-// FetchSolutionResultByDatasetTarget pulls a request with solution
+// FetchRequestByDatasetTarget pulls a request with solution
 // result information from Postgres. Only the latest result for each
 // solution is fetched.
-func (s *Storage) FetchSolutionResultByDatasetTarget(dataset string, target string, solutionID string) ([]*model.Request, error) {
+func (s *Storage) FetchRequestByDatasetTarget(dataset string, target string, solutionID string) ([]*model.Request, error) {
 
 	// get the solution ids
 	sql := fmt.Sprintf("SELECT DISTINCT solution.solution_id "+

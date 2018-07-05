@@ -64,7 +64,7 @@ func (f *FilterParams) Merge(other *FilterParams) {
 	for _, filter := range other.Filters {
 		found := false
 		for _, currentFilter := range f.Filters {
-			if filter.Name == currentFilter.Name &&
+			if filter.Key == currentFilter.Key &&
 				filter.Min == currentFilter.Min &&
 				filter.Max == currentFilter.Max &&
 				stringSliceEqual(filter.Categories, currentFilter.Categories) {
@@ -90,19 +90,24 @@ func (f *FilterParams) Merge(other *FilterParams) {
 	}
 }
 
+// Column represents a column for filtered data.
+type Column struct {
+	Label string `json:"label"`
+	Key   string `json:"key"`
+	Type  string `json:"type"`
+}
+
 // FilteredData provides the metadata and raw data values that match a supplied
 // input filter.
 type FilteredData struct {
-	Name    string          `json:"name"`
 	NumRows int             `json:"numRows"`
-	Columns []string        `json:"columns"`
-	Types   []string        `json:"types"`
+	Columns []Column        `json:"columns"`
 	Values  [][]interface{} `json:"values"`
 }
 
 // Filter defines a variable filter.
 type Filter struct {
-	Name       string   `json:"name"`
+	Key        string   `json:"key"`
 	Type       string   `json:"type"`
 	Mode       string   `json:"mode"`
 	Min        *float64 `json:"min"`
@@ -112,9 +117,9 @@ type Filter struct {
 }
 
 // NewNumericalFilter instantiates a numerical filter.
-func NewNumericalFilter(name string, mode string, min float64, max float64) *Filter {
+func NewNumericalFilter(key string, mode string, min float64, max float64) *Filter {
 	return &Filter{
-		Name: name,
+		Key:  key,
 		Type: NumericalFilter,
 		Mode: mode,
 		Min:  &min,
@@ -123,10 +128,10 @@ func NewNumericalFilter(name string, mode string, min float64, max float64) *Fil
 }
 
 // NewCategoricalFilter instantiates a categorical filter.
-func NewCategoricalFilter(name string, mode string, categories []string) *Filter {
+func NewCategoricalFilter(key string, mode string, categories []string) *Filter {
 	sort.Strings(categories)
 	return &Filter{
-		Name:       name,
+		Key:        key,
 		Type:       CategoricalFilter,
 		Mode:       mode,
 		Categories: categories,
@@ -134,10 +139,10 @@ func NewCategoricalFilter(name string, mode string, categories []string) *Filter
 }
 
 // NewFeatureFilter instantiates a feature filter.
-func NewFeatureFilter(name string, mode string, categories []string) *Filter {
+func NewFeatureFilter(key string, mode string, categories []string) *Filter {
 	sort.Strings(categories)
 	return &Filter{
-		Name:       name,
+		Key:        key,
 		Type:       FeatureFilter,
 		Mode:       mode,
 		Categories: categories,
@@ -157,7 +162,7 @@ func NewRowFilter(mode string, d3mIndices []string) *Filter {
 func GetFilterVariables(filterVariables []string, variables []*Variable) []*Variable {
 	variableLookup := make(map[string]*Variable)
 	for _, v := range variables {
-		variableLookup[v.Name] = v
+		variableLookup[v.Key] = v
 	}
 
 	filtered := make([]*Variable, 0)
@@ -200,9 +205,9 @@ func ParseFilterParamsFromJSON(params map[string]interface{}) (*FilterParams, er
 
 			// numeric
 			if typ == NumericalFilter {
-				name, ok := json.String(filter, "name")
+				key, ok := json.String(filter, "key")
 				if !ok {
-					return nil, errors.Errorf("no `name` provided for filter")
+					return nil, errors.Errorf("no `key` provided for filter")
 				}
 				min, ok := json.Float(filter, "min")
 				if !ok {
@@ -212,33 +217,33 @@ func ParseFilterParamsFromJSON(params map[string]interface{}) (*FilterParams, er
 				if !ok {
 					return nil, errors.Errorf("no `max` provided for filter")
 				}
-				filterParams.Filters = append(filterParams.Filters, NewNumericalFilter(name, mode, min, max))
+				filterParams.Filters = append(filterParams.Filters, NewNumericalFilter(key, mode, min, max))
 			}
 
 			// categorical
 			if typ == CategoricalFilter {
-				name, ok := json.String(filter, "name")
+				key, ok := json.String(filter, "key")
 				if !ok {
-					return nil, errors.Errorf("no `name` provided for filter")
+					return nil, errors.Errorf("no `key` provided for filter")
 				}
 				categories, ok := json.StringArray(filter, "categories")
 				if !ok {
 					return nil, errors.Errorf("no `categories` provided for filter")
 				}
-				filterParams.Filters = append(filterParams.Filters, NewCategoricalFilter(name, mode, categories))
+				filterParams.Filters = append(filterParams.Filters, NewCategoricalFilter(key, mode, categories))
 			}
 
 			// feature
 			if typ == FeatureFilter {
-				name, ok := json.String(filter, "name")
+				key, ok := json.String(filter, "key")
 				if !ok {
-					return nil, errors.Errorf("no `name` provided for filter")
+					return nil, errors.Errorf("no `key` provided for filter")
 				}
 				categories, ok := json.StringArray(filter, "categories")
 				if !ok {
 					return nil, errors.Errorf("no `categories` provided for filter")
 				}
-				filterParams.Filters = append(filterParams.Filters, NewFeatureFilter(name, mode, categories))
+				filterParams.Filters = append(filterParams.Filters, NewFeatureFilter(key, mode, categories))
 			}
 
 			// row
@@ -258,7 +263,7 @@ func ParseFilterParamsFromJSON(params map[string]interface{}) (*FilterParams, er
 	}
 
 	sort.SliceStable(filterParams.Filters, func(i, j int) bool {
-		return filterParams.Filters[i].Name < filterParams.Filters[j].Name
+		return filterParams.Filters[i].Key < filterParams.Filters[j].Key
 	})
 
 	return filterParams, nil

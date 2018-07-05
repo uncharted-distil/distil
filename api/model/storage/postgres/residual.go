@@ -19,7 +19,7 @@ func (s *Storage) FetchResidualsExtremaByURI(dataset string, resultURI string) (
 		return nil, err
 	}
 	resultVariable := &model.Variable{
-		Name: "value",
+		Key:  "value",
 		Type: model.TextType,
 	}
 	return s.fetchResidualsExtrema(resultURI, dataset, targetVariable, resultVariable)
@@ -59,10 +59,10 @@ func (s *Storage) getResidualsHistogramAggQuery(extrema *model.Extrema, variable
 	interval := extrema.GetBucketInterval()
 
 	// Only numeric types should occur.
-	errorTyped := getErrorTyped(variable.Name)
+	errorTyped := getErrorTyped(variable.Key)
 
 	// get histogram agg name & query string.
-	histogramAggName := fmt.Sprintf("\"%s%s\"", model.HistogramAggPrefix, extrema.Name)
+	histogramAggName := fmt.Sprintf("\"%s%s\"", model.HistogramAggPrefix, extrema.Key)
 	rounded := extrema.GetBucketMinMax()
 	bucketQueryString := fmt.Sprintf("width_bucket(%s, %g, %g, %d) - 1",
 		errorTyped, rounded.Min, rounded.Max, extrema.GetBucketCount())
@@ -78,11 +78,11 @@ func getResultJoin(dataset string) string {
 
 func getResidualsMinMaxAggsQuery(variable *model.Variable, resultVariable *model.Variable) string {
 	// get min / max agg names
-	minAggName := model.MinAggPrefix + resultVariable.Name
-	maxAggName := model.MaxAggPrefix + resultVariable.Name
+	minAggName := model.MinAggPrefix + resultVariable.Key
+	maxAggName := model.MaxAggPrefix + resultVariable.Key
 
 	// Only numeric types should occur.
-	errorTyped := getErrorTyped(variable.Name)
+	errorTyped := getErrorTyped(variable.Key)
 
 	// create aggregations
 	queryPart := fmt.Sprintf("MIN(%s) AS \"%s\", MAX(%s) AS \"%s\"", errorTyped, minAggName, errorTyped, maxAggName)
@@ -102,7 +102,7 @@ func (s *Storage) fetchResidualsExtrema(resultURI string, dataset string, variab
 	queryString := fmt.Sprintf("SELECT %s FROM %s WHERE result_id = $1 AND target = $2;", aggQuery, fromClause)
 
 	// execute the postgres query
-	res, err := s.client.Query(queryString, resultURI, variable.Name)
+	res, err := s.client.Query(queryString, resultURI, variable.Key)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to fetch extrema for result from postgres")
 	}
@@ -113,7 +113,7 @@ func (s *Storage) fetchResidualsExtrema(resultURI string, dataset string, variab
 
 func (s *Storage) fetchResidualsHistogram(resultURI string, dataset string, variable *model.Variable, extrema *model.Extrema) (*model.Histogram, error) {
 	resultVariable := &model.Variable{
-		Name: "value",
+		Key:  "value",
 		Type: model.TextType,
 	}
 
@@ -125,7 +125,7 @@ func (s *Storage) fetchResidualsHistogram(resultURI string, dataset string, vari
 			return nil, errors.Wrap(err, "failed to fetch result variable extrema for summary")
 		}
 	} else {
-		extrema.Name = variable.Name
+		extrema.Key = variable.Key
 		extrema.Type = variable.Type
 	}
 	// for each returned aggregation, create a histogram aggregation. Bucket
@@ -141,7 +141,7 @@ func (s *Storage) fetchResidualsHistogram(resultURI string, dataset string, vari
 		GROUP BY %s ORDER BY %s;`, bucketQuery, histogramQuery, histogramName, fromClause, bucketQuery, histogramName)
 
 	// execute the postgres query
-	res, err := s.client.Query(query, resultURI, variable.Name)
+	res, err := s.client.Query(query, resultURI, variable.Key)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to fetch histograms for result variable summaries from postgres")
 	}
@@ -149,5 +149,5 @@ func (s *Storage) fetchResidualsHistogram(resultURI string, dataset string, vari
 
 	field := NewNumericalField(s)
 
-	return field.parseHistogram(variable.Type, res, extrema)
+	return field.parseHistogram(variable, res, extrema)
 }

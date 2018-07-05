@@ -2,8 +2,8 @@ import _ from 'lodash';
 import moment from 'moment';
 import Vue from 'vue';
 import { SolutionState, SolutionRequest } from './index';
-import { sortSolutions, sortRequests } from './getters';
 import { Stream } from '../../util/ws';
+import { sortSolutions } from './getters';
 
 export const mutations = {
 
@@ -14,6 +14,8 @@ export const mutations = {
 		if (index === -1) {
 			// add if it does not exist already
 			state.requests.push(request);
+			// sort solutions
+			request.solutions.sort(sortSolutions);
 		} else {
 			const existing = state.requests[index];
 			// update progress
@@ -33,13 +35,9 @@ export const mutations = {
 					}
 				}
 			});
+			// sort solutions
+			existing.solutions.sort(sortSolutions);
 		}
-
-		// sort requests and solutions
-		state.requests.forEach(request => {
-			request.solutions.sort(sortSolutions);
-		});
-		state.requests.sort(sortRequests);
 	},
 
 	clearSolutionRequests(state: SolutionState) {

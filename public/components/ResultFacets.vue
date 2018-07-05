@@ -3,7 +3,7 @@
 		<div class="request-group-container" :key="request.requestId" v-for="(request, index) in requestGroups">
 
 			<p class="nav-link font-weight-bold">
-				Run <sup>{{requestGroups.length - index - 1}}</sup>
+				Search <sup>{{requestGroups.length - index - 1}}</sup>
 
 				<div v-if="isPending(request.progress)">
 					<b-badge variant="info">{{request.progress}}</b-badge>
@@ -102,14 +102,11 @@ export default Vue.extend({
 		},
 
 		requestGroups(): RequestGroup[] {
-			const requests = solutionGetters.getSolutionsRequests(this.$store);
-			const filtered = requests.filter(request => {
-				return request.dataset === this.dataset && request.feature === this.target;
-			});
+			const requests = solutionGetters.getRelevantSolutionRequests(this.$store);
 			const predictedSummaries = this.predictedSummaries;
 			const residualsSummaries = this.residualSummaries;
 			const correctnessSummaries = this.correctnessSummaries;
-			return filtered.map(request => {
+			return requests.map(request => {
 				return {
 					requestId: request.requestId,
 					progress: request.progress,

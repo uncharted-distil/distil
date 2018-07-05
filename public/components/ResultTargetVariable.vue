@@ -5,6 +5,7 @@
 			@facet-click="onCategoricalClick"
 			@numerical-click="onNumericalClick"
 			@range-change="onRangeChange"
+			:row-selection="rowSelection"
 			:instanceName="instanceName"
 			:groups="targetGroups"
 			:highlights="highlights"></facets>
@@ -13,16 +14,14 @@
 
 <script lang="ts">
 
-import _ from 'lodash';
 import Vue from 'vue';
 import Facets from '../components/Facets';
 import { getters as routeGetters } from '../store/route/module';
 import { getters as resultsGetters } from '../store/results/module';
 import { Group, createGroups } from '../util/facets';
 import { getHighlights, updateHighlightRoot, clearHighlightRoot } from '../util/highlights';
-import { isTarget, getVarFromTarget, getTargetCol } from '../util/data';
 import { VariableSummary } from '../store/dataset/index';
-import { Highlight } from '../store/highlights/index';
+import { Highlight, RowSelection } from '../store/highlights/index';
 
 export default Vue.extend({
 	name: 'result-target-variable',
@@ -43,8 +42,7 @@ export default Vue.extend({
 			return routeGetters.getRouteTargetVariable(this.$store);
 		},
 		targetSummary() : VariableSummary {
-			const varSummaries = resultsGetters.getResultSummaries(this.$store);
-			return _.find(varSummaries, v => _.toLower(v.name) === _.toLower(this.target));
+			return resultsGetters.getTargetSummary(this.$store);
 		},
 		targetGroups(): Group[] {
 			if (this.targetSummary) {
@@ -62,32 +60,20 @@ export default Vue.extend({
 			return [];
 		},
 		highlights(): Highlight {
-			// find var marked as 'target' and set associated values as highlights
-			const highlights = _.cloneDeep(getHighlights(this.$store));
-			if (_.isEmpty(highlights)) {
-				return highlights;
-			}
-			_.forEach(highlights.values.samples, (values, varName) => {
-				if (isTarget(varName)) {
-					highlights.values.samples[getVarFromTarget(varName)] = values;
-				}
-			});
-			if (highlights.root && isTarget(highlights.root.key)) {
-				highlights.root.key = getVarFromTarget(highlights.root.key);
-			}
-			return highlights;
+			return getHighlights(this.$store);
 		},
+		rowSelection(): RowSelection {
+			return routeGetters.getDecodedRowSelection(this.$store);
+		}
 	},
 
 	methods: {
 
 		onCategoricalClick(context: string, key: string, value: string) {
 			if (key && value) {
-				// extract the var name from the key
-				const colKey = getTargetCol(this.target);
 				updateHighlightRoot(this, {
 					context: context,
-					key: colKey,
+					key: this.target,
 					value: value
 				});
 			} else {
@@ -97,20 +83,18 @@ export default Vue.extend({
 
 		onNumericalClick(context: string, key: string, value: { from: number, to: number }) {
 			if (!this.highlights.root || this.highlights.root.key !== key) {
-				const colKey = getTargetCol(this.target);
 				updateHighlightRoot(this, {
 					context: this.instanceName,
-					key: colKey,
+					key: this.target,
 					value: value
 				});
 			}
 		},
 
 		onRangeChange(context: string, key: string, value: { from: { label: string[] }, to: { label: string[] } }) {
-			const colKey = getTargetCol(this.target);
 			updateHighlightRoot(this, {
-				context: context,
-				key: colKey,
+				context: this.instanceName,
+				key: this.target,
 				value: value
 			});
 			this.$emit('range-change', key, value);

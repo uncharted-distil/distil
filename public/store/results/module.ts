@@ -17,8 +17,10 @@ const { commit, read, dispatch } = getStoreAccessors<ResultsState, DistilState>(
 
 // Typed getters
 export const getters = {
+	// training / target
+	getTrainingSummaries: read(moduleGetters.getTrainingSummaries),
+	getTargetSummary: read(moduleGetters.getTargetSummary),
 	// result
-	getResultSummaries: read(moduleGetters.getResultSummaries),
 	hasIncludedResultTableData: read(moduleGetters.hasIncludedResultTableData),
 	getIncludedResultTableData: read(moduleGetters.getIncludedResultTableData),
 	getIncludedResultTableDataItems: read(moduleGetters.getIncludedResultTableDataItems),
@@ -29,10 +31,9 @@ export const getters = {
 	getExcludedResultTableDataFields: read(moduleGetters.getExcludedResultTableDataFields),
 	// predicted
 	getPredictedSummaries: read(moduleGetters.getPredictedSummaries),
-	getPredictedExtrema: read(moduleGetters.getPredictedExtrema),
 	// residual
 	getResidualsSummaries: read(moduleGetters.getResidualsSummaries),
-	getResidualExtrema: read(moduleGetters.getResidualExtrema),
+	getResidualsExtrema: read(moduleGetters.getResidualsExtrema),
 	// correctness
 	getCorrectnessSummaries: read(moduleGetters.getCorrectnessSummaries),
 	// result table data
@@ -41,43 +42,38 @@ export const getters = {
 
 // Typed actions
 export const actions = {
+	// training / target
+	fetchTrainingSummaries: dispatch(moduleActions.fetchTrainingSummaries),
+	fetchTargetSummary: dispatch(moduleActions.fetchTargetSummary),
 	// result
-	fetchResultSummary: dispatch(moduleActions.fetchResultSummary),
-	fetchResultExtrema: dispatch(moduleActions.fetchResultExtrema),
-	fetchTrainingResultSummaries: dispatch(moduleActions.fetchTrainingResultSummaries),
 	fetchIncludedResultTableData: dispatch(moduleActions.fetchIncludedResultTableData),
 	fetchExcludedResultTableData: dispatch(moduleActions.fetchExcludedResultTableData),
 	fetchResultTableData: dispatch(moduleActions.fetchExcludedResultTableData),
 	// predicted
 	fetchPredictedSummaries: dispatch(moduleActions.fetchPredictedSummaries),
-	fetchPredictedExtrema: dispatch(moduleActions.fetchPredictedExtrema),
-	fetchPredictedExtremas: dispatch(moduleActions.fetchPredictedExtremas),
 	// residuals
 	fetchResidualsSummaries: dispatch(moduleActions.fetchResidualsSummaries),
 	fetchResidualsExtrema: dispatch(moduleActions.fetchResidualsExtrema),
-	fetchResidualsExtremas: dispatch(moduleActions.fetchResidualsExtremas),
 	// correctness
 	fetchCorrectnessSummaries: dispatch(moduleActions.fetchCorrectnessSummaries)
 }
 
 // Typed mutations
 export const mutations = {
+	// training / target
+	clearTrainingSummaries: commit(moduleMutations.clearTrainingSummaries),
+	clearTargetSummary: commit(moduleMutations.clearTargetSummary),
+	updateTrainingSummary: commit(moduleMutations.updateTrainingSummary),
+	updateTargetSummary: commit(moduleMutations.updateTargetSummary),
 	// result
-	updateResultSummaries: commit(moduleMutations.updateResultSummaries),
-	updateResultExtrema: commit(moduleMutations.updateResultExtrema),
-	clearResultExtrema: commit(moduleMutations.clearResultExtrema),
 	setIncludedResultTableData: commit(moduleMutations.setIncludedResultTableData),
 	setExcludedResultTableData: commit(moduleMutations.setExcludedResultTableData),
 	// predicted
 	updatePredictedSummaries: commit(moduleMutations.updatePredictedSummaries),
-	updatePredictedExtremas: commit(moduleMutations.updatePredictedExtremas),
-	clearPredictedExtrema: commit(moduleMutations.clearPredictedExtrema),
-	clearPredictedExtremas: commit(moduleMutations.clearPredictedExtremas),
 	// residuals
 	updateResidualsSummaries: commit(moduleMutations.updateResidualsSummaries),
-	updateResidualsExtremas: commit(moduleMutations.updateResidualsExtremas),
+	updateResidualsExtrema: commit(moduleMutations.updateResidualsExtrema),
 	clearResidualsExtrema: commit(moduleMutations.clearResidualsExtrema),
-	clearResidualsExtremas: commit(moduleMutations.clearResidualsExtremas),
 	// correctness
 	updateCorrectnessSummaries: commit(moduleMutations.updateCorrectnessSummaries)
 }

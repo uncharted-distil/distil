@@ -1,7 +1,6 @@
 import _ from 'lodash';
 import { spinnerHTML } from '../util/spinner';
 import { formatValue } from '../util/types';
-import { getSolutionSummaryKey } from '../util/solutions';
 import { VariableSummary } from '../store/dataset/index';
 
 export const CATEGORICAL_CHUNK_SIZE = 10;
@@ -89,8 +88,8 @@ export function createGroups(summaries: VariableSummary[]): Group[] {
 // creates a facet to display a data fetch error
 export function createErrorFacet(summary: VariableSummary): Group {
 	return {
-		label: summary.label ? summary.label : summary.name,
-		key: getSolutionSummaryKey(summary),
+		label: summary.label,
+		key: summary.key,
 		type: summary.varType,
 		collapsible: false,
 		collapsed: false,
@@ -106,8 +105,8 @@ export function createErrorFacet(summary: VariableSummary): Group {
 // creates a place holder facet to dispay a spinner
 export function createPendingFacet(summary: VariableSummary): Group {
 	return {
-		label: summary.label ? summary.label : summary.name,
-		key: getSolutionSummaryKey(summary),
+		label: summary.label,
+		key: summary.key,
 		type: summary.varType,
 		collapsible: false,
 		collapsed: false,
@@ -211,8 +210,8 @@ function createCategoricalSummaryFacet(summary: VariableSummary): Group {
 
 	// Generate a facet group
 	return {
-		label: summary.label ? summary.label : summary.name,
-		key: summary.solutionId ? `${summary.name}:${summary.solutionId}` : summary.name,
+		label: summary.label,
+		key: summary.key,
 		type: summary.varType,
 		collapsible: false,
 		collapsed: false,
@@ -245,8 +244,8 @@ function getHistogramSlices(summary: VariableSummary) {
 function createNumericalSummaryFacet(summary: VariableSummary): Group {
 	const slices = getHistogramSlices(summary);
 	return {
-		label: summary.label ? summary.label : summary.name,
-		key: getSolutionSummaryKey(summary),
+		label: summary.label,
+		key: summary.key,
 		type: summary.varType,
 		collapsible: false,
 		collapsed: false,

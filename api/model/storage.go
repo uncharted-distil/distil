@@ -15,8 +15,7 @@ type DataStorage interface {
 	FetchSummary(dataset string, varName string, filterParams *FilterParams) (*Histogram, error)
 	FetchSummaryByResult(dataset string, varName string, resultURI string, filterParams *FilterParams, extrema *Extrema) (*Histogram, error)
 	PersistResult(dataset string, resultURI string) error
-	FetchResults(dataset string, resultURI string) (*FilteredData, error)
-	FetchFilteredResults(dataset string, resultURI string, filterParams *FilterParams) (*FilteredData, error)
+	FetchResults(dataset string, resultURI string, solutionID string, filterParams *FilterParams) (*FilteredData, error)
 	FetchPredictedSummary(dataset string, resultURI string, filterParams *FilterParams, extrema *Extrema) (*Histogram, error)
 	FetchResultsExtremaByURI(dataset string, resultURI string) (*Extrema, error)
 	FetchCorrectnessSummary(dataset string, resultURI string, filterParams *FilterParams) (*Histogram, error)
@@ -47,12 +46,12 @@ type SolutionStorage interface {
 	UpdateRequest(requestID string, progress string, updatedTime time.Time) error
 	FetchRequest(requestID string) (*Request, error)
 	FetchRequestBySolutionID(requestID string) (*Request, error)
+	FetchRequestByDatasetTarget(dataset string, target string, solutionID string) ([]*Request, error)
 	FetchRequestFeatures(requestID string) ([]*Feature, error)
 	FetchRequestFilters(requestID string, features []*Feature) (*FilterParams, error)
 	FetchSolution(solutionID string) (*Solution, error)
 	FetchSolutionResultByUUID(resultUUID string) (*SolutionResult, error)
 	FetchSolutionResult(solutionID string) (*SolutionResult, error)
-	FetchSolutionResultByDatasetTarget(dataset string, target string, solutionID string) ([]*Request, error)
 	FetchSolutionScores(solutionID string) ([]*SolutionScore, error)
 }
 

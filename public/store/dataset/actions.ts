@@ -1,7 +1,7 @@
 import _ from 'lodash';
 import axios from 'axios';
 import { ActionContext } from 'vuex';
-import { DatasetState, Variable, ES_INDEX } from './index';
+import { DatasetState, Variable } from './index';
 import { mutations } from './module'
 import { DistilState } from '../store';
 import { HighlightRoot } from '../highlights/index';
@@ -16,7 +16,7 @@ export const actions = {
 	// searches dataset descriptions and column names for supplied terms
 	searchDatasets(context: DatasetContext, terms: string): Promise<void> {
 		const params = !_.isEmpty(terms) ? `?search=${terms}` : '';
-		return axios.get(`/distil/datasets/${ES_INDEX}${params}`)
+		return axios.get(`/distil/datasets${params}`)
 			.then(response => {
 				mutations.setDatasets(context, response.data.datasets);
 			})
@@ -32,7 +32,7 @@ export const actions = {
 			console.warn('`dataset` argument is missing');
 			return null;
 		}
-		return axios.get(`/distil/variables/${ES_INDEX}/${args.dataset}`)
+		return axios.get(`/distil/variables/${args.dataset}`)
 			.then(response => {
 				mutations.setVariables(context, response.data.variables);
 			})
@@ -55,7 +55,7 @@ export const actions = {
 			console.warn('`type` argument is missing');
 			return null;
 		}
-		return axios.post(`/distil/variables/${ES_INDEX}/${args.dataset}`, {
+		return axios.post(`/distil/variables/${args.dataset}`, {
 				field: args.field,
 				type: args.type
 			})
@@ -86,18 +86,18 @@ export const actions = {
 		const promises = [];
 		args.variables.forEach(variable => {
 			const exists = _.find(context.state.variableSummaries, v => {
-				return v.name === variable.name;
+				return v.key === variable.key;
 			});
 			if (!exists) {
 				// add placeholder
-				const name = variable.name;
-				const label = variable.name;
+				const key = variable.key;
+				const label = variable.label;
 				const dataset = args.dataset;
-				mutations.updateVariableSummaries(context,  createPendingSummary(name, label, dataset));
+				mutations.updateVariableSummaries(context,  createPendingSummary(key, label, dataset));
 				// fetch summary
 				promises.push(context.dispatch('fetchVariableSummary', {
 					dataset: args.dataset,
-					variable: variable.name
+					variable: variable.key
 				}));
 			}
 		});
@@ -114,16 +114,16 @@ export const actions = {
 			console.warn('`variable` argument is missing');
 			return null;
 		}
-		return axios.post(`/distil/variable-summary/${ES_INDEX}/${args.dataset}/${args.variable}`, {})
+		return axios.post(`/distil/variable-summary/${args.dataset}/${args.variable}`, {})
 			.then(response => {
 				mutations.updateVariableSummaries(context, response.data.histogram);
 			})
 			.catch(error => {
 				console.error(error);
-				const name = args.variable;
+				const key = args.variable;
 				const label = args.variable;
 				const dataset = args.dataset;
-				mutations.updateVariableSummaries(context,  createErrorSummary(name, label, dataset, error));
+				mutations.updateVariableSummaries(context,  createErrorSummary(key, label, dataset, error));
 			});
 	},
 
@@ -141,13 +141,13 @@ export const actions = {
 		const filterParams = addHighlightToFilterParams(context, args.filterParams, args.highlightRoot, INCLUDE_FILTER);
 
 		// request filtered data from server - no data is valid given filter settings
-		return axios.post(`distil/data/${ES_INDEX}/${args.dataset}/false`, filterParams)
+		return axios.post(`distil/data/${args.dataset}/false`, filterParams)
 			.then(response => {
 				mutations.setIncludedTableData(context, response.data);
 			})
 			.catch(error => {
 				console.error(error);
-				mutations.setIncludedTableData(context, createEmptyTableData(args.dataset));
+				mutations.setIncludedTableData(context, createEmptyTableData());
 			});
 	},
 
@@ -162,13 +162,13 @@ export const actions = {
 			return null;
 		}
 
-		return axios.post(`distil/data/${ES_INDEX}/${args.dataset}/true`, args.filterParams)
+		return axios.post(`distil/data/${args.dataset}/true`, args.filterParams)
 			.then(response => {
 				mutations.setExcludedTableData(context, response.data);
 			})
 			.catch(error => {
 				console.error(error);
-				mutations.setExcludedTableData(context, createEmptyTableData(args.dataset));
+				mutations.setExcludedTableData(context, createEmptyTableData());
 			});
 	},
 

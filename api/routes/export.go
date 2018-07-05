@@ -36,20 +36,20 @@ func ExportHandler(solutionCtor model.SolutionStorageCtor, metaCtor model.Metada
 		solutionTarget := req.TargetFeature()
 
 		// get the initial target
-		pip, err := solution.FetchSolution(solutionID)
+		sol, err := solution.FetchSolution(solutionID)
 		if err != nil {
 			handleError(w, err)
 			return
 		}
 
 		// export relies on a fitted model
-		fittedSolutionID := pip.Result.FittedSolutionID
+		fittedSolutionID := sol.Result.FittedSolutionID
 		if fittedSolutionID == "" {
 			handleError(w, errors.Errorf("export failed - no fitted solution found for solution %s", solutionID))
 			return
 		}
 
-		m, err := solution.FetchRequest(pip.RequestID)
+		m, err := solution.FetchRequest(sol.RequestID)
 		if err != nil {
 			handleError(w, err)
 			return
@@ -69,8 +69,8 @@ func ExportHandler(solutionCtor model.SolutionStorageCtor, metaCtor model.Metada
 
 		// fail if the solution target was not the original dataset target
 		if variable.Role != "suggestedTarget" {
-			log.Warnf("Target %s is not the expected target variable", variable.Name)
-			http.Error(w, fmt.Sprintf("The selected target `%s` does not match the required target variable.", variable.Name), http.StatusBadRequest)
+			log.Warnf("Target %s is not the expected target variable", variable.Key)
+			http.Error(w, fmt.Sprintf("The selected target `%s` does not match the required target variable.", variable.Key), http.StatusBadRequest)
 			return
 		}
 

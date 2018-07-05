@@ -28,7 +28,6 @@ const (
 func ProblemDiscoveryHandler(ctorData model.DataStorageCtor, ctorMeta model.MetadataStorageCtor, problemDir string, userAgent string) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		dataset := pat.Param(r, "dataset")
-		esIndex := pat.Param(r, "index")
 		target := pat.Param(r, "target")
 
 		// parse POST params
@@ -72,7 +71,7 @@ func ProblemDiscoveryHandler(ctorData model.DataStorageCtor, ctorMeta model.Meta
 			return
 		}
 
-		ds, err := model.FetchDataset(dataset, esIndex, true, true, filterParams, metadataStorage, dataStorage)
+		ds, err := model.FetchDataset(dataset, true, true, filterParams, metadataStorage, dataStorage)
 		if err != nil {
 			handleError(w, err)
 			return

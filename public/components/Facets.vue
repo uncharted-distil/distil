@@ -13,7 +13,6 @@ import { Highlight, RowSelection } from '../store/highlights/index';
 import { VariableSummary } from '../store/dataset/index';
 import { Dictionary } from '../util/dict';
 import { getSelectedRows } from '../util/row';
-import { getSolutionSummaryKey } from '../util/solutions';
 import Facets from '@uncharted.software/stories-facets';
 import ImagePreview from '../components/ImagePreview';
 import SparklinePreview from '../components/SparklinePreview';
@@ -38,6 +37,7 @@ export default Vue.extend({
 		html: [ String, Object, Function ],
 		instanceName: String,
 		highlightArrows: Boolean,
+		solutionId: String,
 		sort: {
 			default: (a: { key: string }, b: { key: string }) => {
 				const textA = a.key.toLowerCase();
@@ -365,7 +365,7 @@ export default Vue.extend({
 		getHighlightSummary(highlights: Highlight, key: string): VariableSummary {
 			const highlightSummaries = this.getHighlightSummaries(highlights);
 			return _.find(highlightSummaries, s => {
-				return getSolutionSummaryKey(s) === key;
+				return s.key === key;
 			});
 		},
 

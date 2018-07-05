@@ -54,12 +54,41 @@ export const getters = {
 		return solutions.sort(sortSolutions);
 	},
 
-	getSolutionsRequests(state: SolutionState): SolutionRequest[] {
-		return state.requests.slice();
+	getRelevantSolutions(state: SolutionState, getters: any): Solution[] {
+		const target = getters.getRouteTargetVariable;
+		const dataset = getters.getRouteDataset;
+		const requests = state.requests.filter(request => {
+			return request.dataset === dataset && request.feature === target;
+		});
+		let solutions = [];
+		requests.forEach(request => {
+			solutions = solutions.concat(request.solutions);
+		});
+		return solutions.sort(sortSolutions);
 	},
 
-	getSolutionRequestIds(state: SolutionState): string[] {
-		return state.requests.map(r => r.requestId);
+	getRelevantSolutionRequests(state: SolutionState, getters: any): SolutionRequest[] {
+		const target = getters.getRouteTargetVariable;
+		const dataset = getters.getRouteDataset;
+		// get only matching dataset / target
+		const requests = state.requests.filter(request => {
+			return request.dataset === dataset && request.feature === target;
+		});
+		// sort and return
+		requests.sort(sortRequests);
+		return requests;
+	},
+
+	getRelevantSolutionRequestIds(state: SolutionState, getters: any): string[] {
+		const target = getters.getRouteTargetVariable;
+		const dataset = getters.getRouteDataset;
+		// get only matching dataset / targer
+		const requests = state.requests.filter(request => {
+			return request.dataset === dataset && request.feature === target;
+		});
+		// sort and return
+		requests.sort(sortRequests);
+		return requests.map(r => r.requestId);
 	},
 
 	getActiveSolution(state: SolutionState, getters: any): Solution {
@@ -77,26 +106,16 @@ export const getters = {
 		return activeSolution.features.filter(f => f.featureType === 'train').map(f => variables[f.featureName]);
 	},
 
-	getActiveSolutionTrainingMap(state: SolutionState, getters: any): Dictionary<boolean> {
-		const training = getters.getActiveSolutionTrainingVariables.map(f => f.name);
-		const trainingMap = {};
-		training.forEach(t => {
-			trainingMap[t] = true;
-		});
-		return trainingMap;
-	},
-
-	getActiveSolutionVariables(state: SolutionState, getters: any): Variable[] {
-		const trainingMap = getters.getActiveSolutionTrainingMap;
+	getActiveSolutionTargetVariable(state: SolutionState, getters: any): Variable[] {
 		const target = getters.getRouteTargetVariable;
 		const variables = getters.getVariables;
-		return variables.filter(variable => trainingMap[variable.name] || variable.name === target);
+		return variables.filter(variable => variable.key === target);
 	},
 
 	isRegression(state: SolutionState, getters: any): boolean {
 		const variables = getters.getVariables;
 		const target = getters.getRouteTargetVariable;
-		const targetVariable = variables.find(s => s.name === target);
+		const targetVariable = variables.find(s => s.key === target);
 		const task = getTask(targetVariable.type);
 		return task.schemaName === REGRESSION_TASK.schemaName;
 	},
@@ -104,7 +123,7 @@ export const getters = {
 	isClassification(state: SolutionState, getters: any): boolean {
 		const variables = getters.getVariables;
 		const target = getters.getRouteTargetVariable;
-		const targetVariable = variables.find(s => s.name === target);
+		const targetVariable = variables.find(s => s.key === target);
 		const task = getTask(targetVariable.type);
 		return task.schemaName === CLASSIFICATION_TASK.schemaName;
 	},

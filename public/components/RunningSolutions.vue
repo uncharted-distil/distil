@@ -1,7 +1,7 @@
 <template>
 	<b-card header="Pending Models">
 		<div v-if="runningSolutions.length === 0">None</div>
-		<b-list-group v-bind:key="solution.timestamp" v-for="solution in runningSolutions">
+		<b-list-group v-bind:key="solution.solutionId" v-for="solution in runningSolutions">
 			<solution-preview :result="solution"></solution-preview>
 		</b-list-group>
 	</b-card>
@@ -30,10 +30,7 @@ export default Vue.extend({
 
 	computed: {
 		runningSolutions(): Solution[] {
-			return getters.getRunningSolutions(this.$store)
-				.slice()
-				.sort((a, b) => b.timestamp - a.timestamp)
-				.slice(0, this.maxSolutions);
+			return getters.getRunningSolutions(this.$store).slice(0, this.maxSolutions);
 		}
 	}
 });

@@ -3,7 +3,6 @@ import { AppState } from './index';
 import { DistilState } from '../store';
 import { ActionContext } from 'vuex';
 import { mutations } from './module';
-import { ES_INDEX } from '../dataset/index';
 import { FilterParams } from '../../util/filters';
 
 export type AppContext = ActionContext<AppState, DistilState>;
@@ -60,7 +59,7 @@ export const actions = {
 			console.warn('`meaningful` argument is missing');
 			return null;
 		}
-		return axios.post(`/distil/discovery/${ES_INDEX}/${args.dataset}/${args.target}`, { filterParams: args.filterParams, meaningful: args.meaningful})
+		return axios.post(`/distil/discovery/${args.dataset}/${args.target}`, { filterParams: args.filterParams, meaningful: args.meaningful})
 	},
 
 	fetchVersion(context: AppContext) {

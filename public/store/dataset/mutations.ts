@@ -13,14 +13,15 @@ export const mutations = {
 	},
 
 	updateVariableType(state: DatasetState, update) {
-		const index = _.findIndex(state.variables, elem => {
-			return elem.name === update.field;
+		const index = _.findIndex(state.variables, v => {
+			return v.key === update.field;
 		});
 		state.variables[index].type = update.type;
 	},
 
+
 	updateVariableSummaries(state: DatasetState, summary: VariableSummary) {
-		updateSummaries(summary, state.variableSummaries, 'name');
+		updateSummaries(summary, state.variableSummaries);
 	},
 
 	// sets the current selected data into the store

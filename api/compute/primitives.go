@@ -84,12 +84,12 @@ func Rank(restClient *rest.Client, data model.DataStorage, dataset string, index
 		// adjust for target not being in the result so need to shift
 		adjustment := 0
 		for i := 0; i < len(importance.Importance); i++ {
-			if rawData.Columns[i] == targetName {
+			if rawData.Columns[i].Key == targetName {
 				adjustment = 1
 			}
 
 			importance.Importance[i] = &VariableImportance{
-				ColName:       rawData.Columns[i+adjustment],
+				ColName:       rawData.Columns[i+adjustment].Key,
 				ColImportance: rawResults.Features[i],
 			}
 		}
