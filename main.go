@@ -137,6 +137,10 @@ func main() {
 			log.Errorf("%+v", err)
 			os.Exit(1)
 		}
+	} else {
+		// NOTE: EVAL ONLY OVERRIDE SETUP FOR METRICS!
+		problemPath := path.Join(config.D3MInputDir, "TRAIN", "problem_TRAIN", "problemDoc.json")
+		ws.SetProblemFile(problemPath)
 	}
 
 	// instantiate the REST client for primitives.

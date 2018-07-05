@@ -29,7 +29,10 @@ export const actions = {
 				mutations.setAborted(context);
 			})
 			.catch(error => {
-				if (error.response) {
+				 // If there's a proxy involved (NGINX) we will end up getting a 502 on a successful export because
+				 // the server exits.  We need to explicitly check for the condition here so that we don't interpret
+				// a success case as a failure.
+				if (error.response && error.response.status != 502) {
 					return new Error(error.response.data);
 				} else {
 					// NOTE: request always fails because we exit on the server
