@@ -81,7 +81,7 @@ func NewDatasetToDataframeStep() *StepData {
 	return NewStepData(
 		&pipeline.Primitive{
 			Id:         "4b42ce1e-9b98-4a25-b68e-fad13311eb65",
-			Version:    "0.2.0",
+			Version:    "0.3.0",
 			Name:       "Dataset to DataFrame converter",
 			PythonPath: "d3m.primitives.datasets.DatasetToDataFrame",
 		},
