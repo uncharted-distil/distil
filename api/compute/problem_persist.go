@@ -34,13 +34,15 @@ type VariableProvider func(dataset string, index string, name string) (*model.Va
 
 // ProblemPersist contains the problem file data.
 type ProblemPersist struct {
-	Properties *ProblemPersistProperties `json:"about"`
-	Inputs     *ProblemPersistInput      `json:"inputs"`
+	Properties      *ProblemPersistProperties     `json:"about"`
+	Inputs          *ProblemPersistInput          `json:"inputs"`
+	ExpectedOutputs *ProblemPersistExpectedOutput `json:"expectedOutputs"`
 }
 
 // ProblemPersistProperties represents the basic information of a problem.
 type ProblemPersistProperties struct {
 	ProblemID            string `json:"problemID"`
+	ProblemName          string `json:"problemName"`
 	TaskType             string `json:"taskType"`
 	TaskSubType          string `json:"taskSubType"`
 	ProblemVersion       string `json:"problemVersion"`
@@ -49,8 +51,19 @@ type ProblemPersistProperties struct {
 
 // ProblemPersistInput lists the information of a problem.
 type ProblemPersistInput struct {
-	Data               *ProblemPersistData                `json:"data"`
+	Data               []*ProblemPersistData              `json:"data"`
 	PerformanceMetrics []*ProblemPersistPerformanceMetric `json:"performanceMetrics"`
+	DataSplits         *ProblemPersistDataSplits          `json:"dataSplits"`
+}
+
+// ProblemPersistDataSplits contains the information about the data splits.
+type ProblemPersistDataSplits struct {
+	Method     string  `json:"method"`
+	TestSize   float64 `json:"testSize"`
+	Stratified bool    `json:"stratified"`
+	NumRepeats int     `json:"numRepeats"`
+	RandomSeed int     `json:"randomSeed"`
+	SplitsFile string  `json:"splitsFile"`
 }
 
 // ProblemPersistData ties targets to a dataset.
@@ -70,6 +83,11 @@ type ProblemPersistTarget struct {
 // ProblemPersistPerformanceMetric captures the metrics of a problem.
 type ProblemPersistPerformanceMetric struct {
 	Metric string `json:"metric"`
+}
+
+// ProblemPersistExpectedOutput represents the expected output of a problem.
+type ProblemPersistExpectedOutput struct {
+	PredictionsFile string `json:"predictionsFile"`
 }
 
 func fileExists(filename string) bool {
@@ -143,7 +161,7 @@ func CreateProblemSchema(datasetDir string, dataset string, targetVar *model.Var
 	}
 
 	pInput := &ProblemPersistInput{
-		Data:               pData,
+		Data:               []*ProblemPersistData{pData},
 		PerformanceMetrics: []*ProblemPersistPerformanceMetric{pMetric},
 	}
 

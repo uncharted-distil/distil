@@ -3,6 +3,7 @@ package ws
 import (
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"net/http"
 	"time"
 
@@ -22,6 +23,16 @@ const (
 	defaultResourceID = "0"
 	datasetSizeLimit  = 10000
 )
+
+var (
+	problemFile = ""
+)
+
+// SetProblemFile sets the problem file containing the metrics to use
+// when submitting pipelines
+func SetProblemFile(file string) {
+	problemFile = file
+}
 
 // SolutionHandler represents a solution websocket handler.
 func SolutionHandler(client *compute.Client, metadataCtor model.MetadataStorageCtor, dataCtor model.DataStorageCtor, solutionCtor model.SolutionStorageCtor) func(http.ResponseWriter, *http.Request) {
@@ -92,6 +103,16 @@ func handleCreateSolutions(conn *Connection, client *compute.Client, metadataCto
 		return
 	}
 
+	// override metric if problem file present
+	if problemFile != "" {
+		metrics, err := parseMetrics(problemFile)
+		if err == nil {
+			request.Metrics = metrics
+		} else {
+			log.Warnf("error parsing metrics from %s: %v", problemFile, err)
+		}
+	}
+
 	// initialize the storage
 	dataStorage, err := dataCtor()
 	if err != nil {
@@ -154,4 +175,24 @@ func handleStopSolutions(conn *Connection, client *compute.Client, msg *Message)
 		return
 	}
 	return
+}
+
+func parseMetrics(filename string) ([]string, error) {
+	b, err := ioutil.ReadFile(filename)
+	if err != nil {
+		return nil, errors.Wrap(err, "unable to read problem file")
+	}
+
+	problemInfo := &compute.ProblemPersist{}
+	err = json.Unmarshal(b, problemInfo)
+	if err != nil {
+		return nil, errors.Wrap(err, "Unable to unmarshal classification response")
+	}
+
+	metrics := make([]string, 0)
+	for _, m := range problemInfo.Inputs.PerformanceMetrics {
+		metrics = append(metrics, compute.ConvertProblemMetricToTA3(m.Metric))
+	}
+
+	return metrics, nil
 }
