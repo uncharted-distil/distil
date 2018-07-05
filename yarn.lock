@@ -25,9 +25,9 @@
   version "4.14.108"
   resolved "https://registry.yarnpkg.com/@types/lodash/-/lodash-4.14.108.tgz#02656af3add2e5b3174f830862c47421c00ef817"
 
-"@uncharted.software/stories-facets@2.12.5":
-  version "2.12.5"
-  resolved "https://registry.yarnpkg.com/@uncharted.software/stories-facets/-/stories-facets-2.12.5.tgz#ba9cb1c53aa12c544ebbf037f5b67e0d7c43be99"
+"@uncharted.software/stories-facets@2.12.6":
+  version "2.12.6"
+  resolved "https://registry.yarnpkg.com/@uncharted.software/stories-facets/-/stories-facets-2.12.6.tgz#6d19ba1e5d291acabda599d6fcc118f79e8844b4"
 
 "@webassemblyjs/ast@1.4.3":
   version "1.4.3"
