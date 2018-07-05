@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/csv"
 	"encoding/json"
+	"fmt"
 	"io"
 	"io/ioutil"
 	"os"
@@ -226,101 +227,129 @@ func FeaturizePrimitive(index string, dataset string, config *IngestTaskConfig) 
 	}
 	mainDR := meta.GetMainDataResource()
 
-	// create & submit the solution request
-	// TODO: use proper input columns - need to look at col types in resource and featurize any that are
-	// image URI
-	pip, err := description.CreateCrocPipeline("leather", "", []string{"image_column"}, []string{"image_column_featurized"})
-	if err != nil {
-		return errors.Wrap(err, "unable to create Croc pipeline")
-	}
-
-	datasetURI, err := submitPrimitive(dataset, pip)
-	if err != nil {
-		return errors.Wrap(err, "unable to run Croc pipeline")
-	}
-
-	// parse primitive response (d3mIndex,labels,probabilities)
-	res, err := result.ParseResultCSV(datasetURI)
-	if err != nil {
-		return errors.Wrap(err, "unable to parse Croc pipeline result")
-	}
-
-	// build the lookup for the new field
-	features := make(map[string]string)
-	for i, v := range res {
-		// skip header
-		if i > 0 {
-			d3mIndex := v[0].(string)
-			labels := v[1].(string)
-			features[d3mIndex] = labels
-		}
-	}
-
-	dataPath := path.Join(config.ContainerDataPath, mainDR.ResPath)
-	csvFile, err := os.Open(dataPath)
-	if err != nil {
-		return errors.Wrap(err, "failed to open data file")
-	}
-	defer csvFile.Close()
-	reader := csv.NewReader(csvFile)
-
-	// initialize csv writer
-	output := &bytes.Buffer{}
-	writer := csv.NewWriter(output)
-
-	// write the header as needed
-	if config.HasHeader {
-		header := make([]string, len(mainDR.Variables))
-		for _, v := range mainDR.Variables {
-			header[v.Index] = v.Name
-		}
-		err = writer.Write(header)
-		if err != nil {
-			return errors.Wrap(err, "error writing header to output")
-		}
-	}
-
-	// skip header
-	if config.HasHeader {
-		_, err = reader.Read()
-		if err != nil {
-			return errors.Wrap(err, "failed to read header from file")
-		}
-	}
-
-	d3mIndexField := -1
+	// add feature variables
+	inputFeatureNames := make([]string, 0)
+	outputFeatureNames := make([]string, 0)
 	for _, v := range mainDR.Variables {
-		if v.Name == metadata.D3MIndexName {
-			d3mIndexField = v.Index
+		if v.RefersTo != nil && v.RefersTo["resID"] != nil {
+			// get the refered DR
+			resID := v.RefersTo["resID"].(string)
+
+			res := getDataResource(meta, resID)
+
+			// check if needs to be featurized
+			if res.CanBeFeaturized() {
+				// create the new resource to hold the featured output
+				indexName := fmt.Sprintf("_feature_%s", v.Name)
+
+				// add the feature variable
+				mainDR.AddVariable(indexName, v.Name, "string", []string{"attribute"}, metadata.VarRoleMetadata)
+
+				inputFeatureNames = append(inputFeatureNames, v.Name)
+				outputFeatureNames = append(outputFeatureNames, indexName)
+			}
 		}
 	}
 
-	// read the raw data and add the features column to the output
-	for {
-		line, err := reader.Read()
-		if err == io.EOF {
-			break
-		} else if err != nil {
-			return errors.Wrap(err, "failed to read line from file")
-		}
-
-		d3mIndex := line[d3mIndexField]
-		feature := features[d3mIndex]
-		line = append(line, feature)
-
-		writer.Write(line)
+	// create & submit the solution request
+	if len(inputFeatureNames) > 0 {
+		pip, err := description.CreateCrocPipeline("leather", "", inputFeatureNames, outputFeatureNames)
 		if err != nil {
-			return errors.Wrap(err, "error storing featured output")
+			return errors.Wrap(err, "unable to create Croc pipeline")
 		}
-	}
-	mainDR.ResPath = config.FeaturizationOutputDataRelative
 
-	// output the data with the new feature
-	writer.Flush()
-	err = ioutil.WriteFile(config.getTmpAbsolutePath(config.FeaturizationOutputDataRelative), output.Bytes(), 0644)
-	if err != nil {
-		return errors.Wrap(err, "error writing feature output")
+		datasetURI, err := submitPrimitive(dataset, pip)
+		if err != nil {
+			return errors.Wrap(err, "unable to run Croc pipeline")
+		}
+
+		// parse primitive response (d3mIndex,labels,probabilities)
+		res, err := result.ParseResultCSV(datasetURI)
+		if err != nil {
+			return errors.Wrap(err, "unable to parse Croc pipeline result")
+		}
+
+		// build the lookup for the new field
+		features := make(map[string]string)
+		for i, v := range res {
+			// skip header
+			if i > 0 {
+				d3mIndex := v[0].(string)
+				labels := v[1].(string)
+				features[d3mIndex] = labels
+			}
+		}
+
+		dataPath := path.Join(config.ContainerDataPath, mainDR.ResPath)
+		csvFile, err := os.Open(dataPath)
+		if err != nil {
+			return errors.Wrap(err, "failed to open data file")
+		}
+		defer csvFile.Close()
+		reader := csv.NewReader(csvFile)
+
+		// initialize csv writer
+		output := &bytes.Buffer{}
+		writer := csv.NewWriter(output)
+
+		// write the header as needed
+		if config.HasHeader {
+			header := make([]string, len(mainDR.Variables))
+			for _, v := range mainDR.Variables {
+				header[v.Index] = v.Name
+			}
+			err = writer.Write(header)
+			if err != nil {
+				return errors.Wrap(err, "error writing header to output")
+			}
+		}
+
+		// skip header
+		if config.HasHeader {
+			_, err = reader.Read()
+			if err != nil {
+				return errors.Wrap(err, "failed to read header from file")
+			}
+		}
+
+		d3mIndexField := -1
+		for _, v := range mainDR.Variables {
+			if v.Name == metadata.D3MIndexName {
+				d3mIndexField = v.Index
+			}
+		}
+
+		// read the raw data and add the features column to the output
+		for {
+			line, err := reader.Read()
+			if err == io.EOF {
+				break
+			} else if err != nil {
+				return errors.Wrap(err, "failed to read line from file")
+			}
+
+			d3mIndex := line[d3mIndexField]
+			feature := features[d3mIndex]
+			line = append(line, feature)
+
+			writer.Write(line)
+			if err != nil {
+				return errors.Wrap(err, "error storing featured output")
+			}
+		}
+
+		// output the data with the new feature
+		writer.Flush()
+		err = ioutil.WriteFile(config.getTmpAbsolutePath(config.FeaturizationOutputDataRelative), output.Bytes(), 0644)
+		if err != nil {
+			return errors.Wrap(err, "error writing feature output")
+		}
+	} else {
+		// copy input to make merging happy
+		copyFileContents(path.Join(config.ContainerDataPath, mainDR.ResPath), config.getTmpAbsolutePath(config.FeaturizationOutputDataRelative))
 	}
+
+	mainDR.ResPath = config.FeaturizationOutputDataRelative
 
 	// write the new schema to file
 	err = meta.WriteSchema(config.getTmpAbsolutePath(config.FeaturizationOutputSchemaRelative))
@@ -349,4 +378,43 @@ func toFloat64Array(in []interface{}) ([]float64, error) {
 		strArr = append(strArr, strFloat)
 	}
 	return strArr, nil
+}
+
+func getDataResource(meta *metadata.Metadata, resID string) *metadata.DataResource {
+	// main data resource has d3m index variable
+	for _, dr := range meta.DataResources {
+		if dr.ResID == resID {
+			return dr
+		}
+	}
+
+	return nil
+}
+
+func copyFileContents(source string, destination string) error {
+	in, err := os.Open(source)
+	if err != nil {
+		return errors.Wrap(err, "unable to open source")
+	}
+	defer in.Close()
+	out, err := os.Create(destination)
+	if err != nil {
+		return errors.Wrap(err, "unable to open destination")
+	}
+	defer func() {
+		cerr := out.Close()
+		if err == nil {
+			err = cerr
+		}
+	}()
+
+	if _, err = io.Copy(out, in); err != nil {
+		return errors.Wrap(err, "unable to copy data")
+	}
+	err = out.Sync()
+	if err != nil {
+		return errors.Wrap(err, "unable to finalize copy")
+	}
+
+	return nil
 }
