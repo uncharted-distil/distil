@@ -61,6 +61,8 @@ func submitPrimitive(dataset string, step *pipeline.PipelineDescription) (string
 		return "", errors.Wrap(errPipeline, "error executing pipeline")
 	}
 
+	datasetURI = strings.Replace(datasetURI, "file://", "", -1)
+
 	return datasetURI, nil
 }
 
