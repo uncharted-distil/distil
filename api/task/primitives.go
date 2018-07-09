@@ -85,17 +85,21 @@ func ClassifyPrimitive(index string, dataset string, config *IngestTaskConfig) e
 		return errors.Wrap(err, "unable to parse Simon pipeline result")
 	}
 
-	// First row is header, then all other rows are field name, types, probabilities.
+	// First row is header, then all other rows are col index, types, probabilities.
 	probabilities := make([][]float64, len(res)-1)
 	labels := make([][]string, len(res)-1)
 	for i, v := range res {
 		if i > 0 {
-			labels[i-1] = toStringArray(v[1].([]interface{}))
-			res, err := toFloat64Array(v[2].([]interface{}))
+			colIndex, err := strconv.ParseInt(v[0].(string), 10, 64)
 			if err != nil {
 				return err
 			}
-			probabilities[i-1] = res
+			labels[colIndex] = toStringArray(v[1].([]interface{}))
+			probs, err := toFloat64Array(v[2].([]interface{}))
+			if err != nil {
+				return err
+			}
+			probabilities[colIndex] = probs
 		}
 	}
 	classification := &rest.ClassificationResult{
@@ -131,7 +135,7 @@ func RankPrimmitive(index string, dataset string, config *IngestTaskConfig) erro
 		return errors.Wrap(err, "unable to run PCA pipeline")
 	}
 
-	// parse primitive response (variable,importance)
+	// parse primitive response (col index,importance)
 	res, err := result.ParseResultCSV(datasetURI)
 	if err != nil {
 		return errors.Wrap(err, "unable to parse PCA pipeline result")
@@ -140,11 +144,15 @@ func RankPrimmitive(index string, dataset string, config *IngestTaskConfig) erro
 	ranks := make([]float64, len(res)-1)
 	for i, v := range res {
 		if i > 0 {
+			colIndex, err := strconv.ParseInt(v[0].(string), 10, 64)
+			if err != nil {
+				return errors.Wrap(err, "unable to parse PCA col index")
+			}
 			vInt, err := strconv.ParseFloat(v[1].(string), 64)
 			if err != nil {
 				return errors.Wrap(err, "unable to parse PCA rank value")
 			}
-			ranks[i-1] = vInt
+			ranks[colIndex] = vInt
 		}
 	}
 
