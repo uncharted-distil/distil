@@ -2,6 +2,8 @@ package compute
 
 import (
 	"context"
+	"fmt"
+	"path"
 	"sync"
 	"time"
 
@@ -38,7 +40,7 @@ type ExecPipelineRequest struct {
 // the pipeline description.
 func NewExecPipelineRequest(datasetURI string, pipelineDesc *pipeline.PipelineDescription) *ExecPipelineRequest {
 	return &ExecPipelineRequest{
-		datasetURI:    datasetURI,
+		datasetURI:    fmt.Sprintf("file://%s", path.Join(datasetURI, "datasetDoc.json")),
 		pipelineDesc:  pipelineDesc,
 		wg:            &sync.WaitGroup{},
 		finished:      make(chan error),
