@@ -20,7 +20,9 @@ export const getters = {
 	isAborted: read(moduleGetters.isAborted),
 	getVersionNumber: read(moduleGetters.getVersionNumber),
 	getVersionTimestamp: read(moduleGetters.getVersionTimestamp),
-	isDiscovery: read(moduleGetters.isDiscovery)
+	isDiscovery: read(moduleGetters.isDiscovery),
+	getProblemDataset: read(moduleGetters.getProblemDataset),
+	getProblemTarget: read(moduleGetters.getProblemTarget),
 }
 
 // typed actions
@@ -36,5 +38,7 @@ export const mutations = {
 	setAborted: commit(moduleMutations.setAborted),
 	setVersionNumber: commit(moduleMutations.setVersionNumber),
 	setVersionTimestamp: commit(moduleMutations.setVersionTimestamp),
-	setIsDiscovery: commit(moduleMutations.setIsDiscovery)
+	setIsDiscovery: commit(moduleMutations.setIsDiscovery),
+	setProblemDataset: commit(moduleMutations.setProblemDataset),
+	setProblemTarget: commit(moduleMutations.setProblemTarget)
 }

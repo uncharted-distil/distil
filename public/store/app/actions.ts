@@ -68,6 +68,8 @@ export const actions = {
 				mutations.setVersionNumber(context, response.data.version);
 				mutations.setVersionTimestamp(context, response.data.timestamp);
 				mutations.setIsDiscovery(context, response.data.discovery);
+				mutations.setProblemDataset(context, response.data.dataset);
+				mutations.setProblemTarget(context, response.data.target);
 			})
 			.catch((err: string) => {
 				console.warn(err);

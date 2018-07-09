@@ -15,6 +15,7 @@ import { getters as appGetters, actions as appActions } from './store/app/module
 import { ROOT_ROUTE, HOME_ROUTE, SEARCH_ROUTE, SELECT_ROUTE, CREATE_ROUTE, RESULTS_ROUTE, EXPORT_SUCCESS_ROUTE, ABORT_SUCCESS_ROUTE } from './store/route/index';
 import store from './store/store';
 import BootstrapVue from 'bootstrap-vue';
+import { createRouteEntry } from './util/routes';
 
 import 'bootstrap-vue/dist/bootstrap-vue.css';
 
@@ -63,9 +64,21 @@ new Vue({
 			<router-view class="view"></router-view>
 		</div>`,
 	beforeMount() {
-		appActions.fetchConfig(this.$store);
-		if (appGetters.isDiscovery(this.$store)) {
-			console.log('shieeet');
-		}
+		// NOTE: eval only code
+		appActions.fetchConfig(this.$store).then(() => {
+			const dataset = appGetters.getProblemDataset(this.$store);
+			const target = appGetters.getProblemTarget(this.$store);
+			// if dataset / target exist in problem file, immediately route to
+			// create models view.
+			if (dataset !== 'unknown' && target !== 'unknown') {
+				console.log(`Routing directly to create models view with dataset=\`${dataset}\` and target=\`${target}\``, dataset, target);
+				const entry = createRouteEntry(CREATE_ROUTE, {
+					dataset: dataset,
+					target: target
+				});
+				this.$router.push(entry);
+			}
+		});
+
 	}
 }).$mount('#app');
