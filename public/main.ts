@@ -11,7 +11,7 @@ import ExportSuccess from './views/ExportSuccess.vue';
 import AbortSuccess from './views/AbortSuccess.vue';
 import { getters as routeGetters } from './store/route/module';
 import { mutations as viewMutations } from './store/view/module';
-import { actions as appActions } from './store/app/module';
+import { getters as appGetters, actions as appActions } from './store/app/module';
 import { ROOT_ROUTE, HOME_ROUTE, SEARCH_ROUTE, SELECT_ROUTE, CREATE_ROUTE, RESULTS_ROUTE, EXPORT_SUCCESS_ROUTE, ABORT_SUCCESS_ROUTE } from './store/route/index';
 import store from './store/store';
 import BootstrapVue from 'bootstrap-vue';
@@ -62,7 +62,10 @@ new Vue({
 			<navigation></navigation>
 			<router-view class="view"></router-view>
 		</div>`,
-	mounted() {
-		appActions.fetchVersion(this.$store);
+	beforeMount() {
+		appActions.fetchConfig(this.$store);
+		if (appGetters.isDiscovery(this.$store)) {
+			console.log('shieeet');
+		}
 	}
 }).$mount('#app');

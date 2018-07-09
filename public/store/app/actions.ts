@@ -62,7 +62,7 @@ export const actions = {
 		return axios.post(`/distil/discovery/${args.dataset}/${args.target}`, { filterParams: args.filterParams, meaningful: args.meaningful})
 	},
 
-	fetchVersion(context: AppContext) {
+	fetchConfig(context: AppContext) {
 		return axios.get(`/distil/config`)
 			.then(response => {
 				mutations.setVersionNumber(context, response.data.version);

@@ -28,7 +28,7 @@ export const actions = {
 	abort: dispatch(moduleActions.abort),
 	exportSolution: dispatch(moduleActions.exportSolution),
 	exportProblem: dispatch(moduleActions.exportProblem),
-	fetchVersion: dispatch(moduleActions.fetchVersion)
+	fetchConfig: dispatch(moduleActions.fetchConfig)
 }
 
 // type mutators
