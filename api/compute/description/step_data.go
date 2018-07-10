@@ -1,6 +1,7 @@
 package description
 
 import (
+	"fmt"
 	"reflect"
 
 	"github.com/pkg/errors"
@@ -102,7 +103,7 @@ func (s *StepData) BuildDescriptionStep() (*pipeline.PipelineDescriptionStep, er
 	for k, v := range s.Hyperparameters {
 		rawValue, err := parseValue(v)
 		if err != nil {
-			return nil, errors.Errorf("compile failed: hyperparameter `%s` - %s", k, err)
+			return nil, errors.Errorf("compile failed: hyperparameter `%s` - %s", k, err.Error())
 		}
 
 		hyperparameters[k] = &pipeline.PrimitiveStepHyperparameter{
@@ -142,22 +143,28 @@ func (s *StepData) BuildDescriptionStep() (*pipeline.PipelineDescriptionStep, er
 	}, nil
 }
 
-func parseList(list []interface{}) (*pipeline.ValueRaw, error) {
+func parseList(v interface{}) (*pipeline.ValueRaw, error) {
 	// parse list contents as a list, map, or value
 	valueList := []*pipeline.ValueRaw{}
 	var value *pipeline.ValueRaw
 	var err error
 
-	for _, v := range list {
-		switch t := v.(type) {
-		case int, int8, int16, int32, int64, string, bool:
-			value, err = parseValue(t)
-		case []interface{}:
-			value, err = parseList(t)
-		case map[string]interface{}:
-			value, err = parseMap(t)
+	// type switches to work well with generic arrays/maps so we have to revert to using reflection
+	refValue := reflect.ValueOf(v)
+	if refValue.Kind() != reflect.Slice {
+		return nil, errors.Errorf("unexpected parameter %s", refValue.Kind())
+	}
+	for i := 0; i < refValue.Len(); i++ {
+		refElement := refValue.Index(i)
+		switch refElement.Kind() {
+		case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64, reflect.String, reflect.Bool:
+			value, err = parseValue(refElement.Interface())
+		case reflect.Slice:
+			value, err = parseList(refElement.Interface())
+		case reflect.Map:
+			value, err = parseMap(refElement.Interface())
 		default:
-			err = errors.Errorf("unhandled list arg type %s", reflect.TypeOf(v))
+			err = errors.Errorf("unhandled list arg type %s", refElement.Kind())
 		}
 
 		if err != nil {
@@ -166,40 +173,47 @@ func parseList(list []interface{}) (*pipeline.ValueRaw, error) {
 
 		valueList = append(valueList, value)
 	}
-	v := &pipeline.ValueRaw{
+	rawValue := &pipeline.ValueRaw{
 		Raw: &pipeline.ValueRaw_List{
 			List: &pipeline.ValueList{
 				Items: valueList,
 			},
 		},
 	}
-	return v, nil
+	return rawValue, nil
 }
 
-func parseMap(vmap map[string]interface{}) (*pipeline.ValueRaw, error) {
+func parseMap(vmap interface{}) (*pipeline.ValueRaw, error) {
 	// parse map contents as list, map or value
 	valueMap := map[string]*pipeline.ValueRaw{}
 	var value *pipeline.ValueRaw
 	var err error
 
-	for k, v := range vmap {
-		switch t := v.(type) {
-		case int, int8, int16, int32, int64, string, bool:
-			value, err = parseValue(t)
-		case []interface{}:
-			value, err = parseList(t)
-		case map[string]interface{}:
-			value, err = parseMap(t)
+	// type switches to work well with generic arrays/maps so we have to revert to using reflection
+	refValue := reflect.ValueOf(vmap)
+	if refValue.Kind() != reflect.Map {
+		return nil, errors.Errorf("unexpected parameter %s", refValue.Kind())
+	}
+	keys := refValue.MapKeys()
+	for _, key := range keys {
+		refElement := refValue.MapIndex(key)
+		switch refElement.Kind() {
+		case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64, reflect.String, reflect.Bool:
+			value, err = parseValue(refElement.Interface)
+		case reflect.Slice:
+			value, err = parseList(refElement.Interface)
+		case reflect.Map:
+			value, err = parseMap(refElement.Interface)
 		default:
-			err = errors.Errorf("unhandled map arg type %s", reflect.TypeOf(v))
+			err = errors.Errorf("unhandled map arg type %s", refElement.Kind())
 		}
 
 		if err != nil {
 			return nil, err
 		}
-
-		valueMap[k] = value
+		refValue.SetMapIndex(key, reflect.ValueOf(value))
 	}
+
 	v := &pipeline.ValueRaw{
 		Raw: &pipeline.ValueRaw_Dict{
 			Dict: &pipeline.ValueDict{
@@ -211,31 +225,33 @@ func parseMap(vmap map[string]interface{}) (*pipeline.ValueRaw, error) {
 }
 
 func parseValue(v interface{}) (*pipeline.ValueRaw, error) {
-	switch t := v.(type) {
+	refValue := reflect.ValueOf(v)
+	switch refValue.Kind() {
 	// parse a numeric, string or boolean value
-	case int, int8, int16, int32, int64:
+	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
 		return &pipeline.ValueRaw{
 			Raw: &pipeline.ValueRaw_Int64{
-				Int64: reflect.ValueOf(t).Int(),
+				Int64: refValue.Int(),
 			},
 		}, nil
-	case string:
+	case reflect.String:
 		return &pipeline.ValueRaw{
 			Raw: &pipeline.ValueRaw_String_{
-				String_: t,
+				String_: refValue.String(),
 			},
 		}, nil
-	case bool:
+	case reflect.Bool:
 		return &pipeline.ValueRaw{
 			Raw: &pipeline.ValueRaw_Bool{
-				Bool: t,
+				Bool: refValue.Bool(),
 			},
 		}, nil
-	case []interface{}:
-		return parseList(t)
-	case map[string]interface{}:
-		return parseMap(t)
+	case reflect.Slice:
+		fmt.Printf("%v\n", v)
+		return parseList(v)
+	case reflect.Map:
+		return parseMap(v)
 	default:
-		return nil, errors.Errorf("unhandled value arg type %s", reflect.TypeOf(v))
+		return nil, errors.Errorf("unhandled value arg type %s", refValue.Kind())
 	}
 }
