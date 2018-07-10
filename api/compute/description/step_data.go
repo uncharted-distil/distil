@@ -83,107 +83,148 @@ func (s *StepData) GetOutputMethods() []string {
 // BuildDescriptionStep creates protobuf structures from a pipeline step
 // definition.
 func (s *StepData) BuildDescriptionStep() (*pipeline.PipelineDescriptionStep, error) {
-	// generate arguments entries
-	arguments := map[string]*pipeline.PrimitiveStepArgument{}
-	for k, v := range s.Arguments {
-		arguments[k] = &pipeline.PrimitiveStepArgument{
-			// only handle container args rights now - extend to others if required
-			Argument: &pipeline.PrimitiveStepArgument_Container{
-				Container: &pipeline.ContainerArgument{
-					Data: v,
-				},
-			},
-		}
-	}
+	// // generate arguments entries
+	// arguments := map[string]*pipeline.PrimitiveStepArgument{}
+	// for k, v := range s.Arguments {
+	// 	arguments[k] = &pipeline.PrimitiveStepArgument{
+	// 		// only handle container args rights now - extend to others if required
+	// 		Argument: &pipeline.PrimitiveStepArgument_Container{
+	// 			Container: &pipeline.ContainerArgument{
+	// 				Data: v,
+	// 			},
+	// 		},
+	// 	}
+	// }
 
-	// generate arguments entries - accepted types are currently intXX, string, bool.  The underlying
-	// protobuf structure allows for others - introducing them should be a matter of expanding this
-	// list.
-	hyperparameters := map[string]*pipeline.PrimitiveStepHyperparameter{}
-	for k, v := range s.Hyperparameters {
-		var value *pipeline.Value
+	// // generate arguments entries - accepted types are currently intXX, string, bool.  The underlying
+	// // protobuf structure allows for others - introducing them should be a matter of expanding this
+	// // list.
+	// hyperparameters := map[string]*pipeline.PrimitiveStepHyperparameter{}
+	// for k, v := range s.Hyperparameters {
+	// 	var value *pipeline.Value
+	// 	switch t := v.(type) {
+	// 	case int, int8, int16, int32, int64:
+	// 		value = &pipeline.Value{
+	// 			Value: &pipeline.Value_Int64{
+	// 				Int64: reflect.ValueOf(t).Int(),
+	// 			},
+	// 		}
+	// 	case []int, []int8, []int16, []int32, []int64:
+	// 		arr := []int64{}
+	// 		s := reflect.ValueOf(t)
+	// 		if s.Kind() == reflect.Slice {
+	// 			for i := 0; i < s.Len(); i++ {
+	// 				arr = append(arr, s.Index(i).Int())
+	// 			}
+	// 		}
+	// 		value = &pipeline.Value{
+	// 			Value: &pipeline.Value_Int64List{
+	// 				Int64List: &pipeline.Int64List{
+	// 					List: arr,
+	// 				},
+	// 			},
+	// 		}
+	// 	case string:
+	// 		value = &pipeline.Value{
+	// 			Value: &pipeline.Value_String_{
+	// 				String_: t,
+	// 			},
+	// 		}
+	// 	case []string:
+	// 		value = &pipeline.Value{
+	// 			Value: &pipeline.Value_StringList{
+	// 				StringList: &pipeline.StringList{
+	// 					List: t,
+	// 				},
+	// 			},
+	// 		}
+	// 	case bool:
+	// 		value = &pipeline.Value{
+	// 			Value: &pipeline.Value_Bool{
+	// 				Bool: t,
+	// 			},
+	// 		}
+	// 	case []bool:
+	// 		value = &pipeline.Value{
+	// 			Value: &pipeline.Value_BoolList{
+	// 				BoolList: &pipeline.BoolList{
+	// 					List: t,
+	// 				},
+	// 			},
+	// 		}
+	// 	default:
+	// 		return nil, errors.Errorf("compile failed: unhandled type `%v` for hyperparameter `%s`", v, k)
+	// 	}
+	// 	hyperparameters[k] = &pipeline.PrimitiveStepHyperparameter{
+	// 		// only handle value args rights now - extend to others if required
+	// 		Argument: &pipeline.PrimitiveStepHyperparameter_Value{
+	// 			Value: &pipeline.ValueArgument{
+	// 				Data: value,
+	// 			},
+	// 		},
+	// 	}
+	// }
+
+	// // list of methods that will generate output - order matters because the steps are
+	// // numbered
+	// outputMethods := []*pipeline.StepOutput{}
+	// for _, outputMethod := range s.OutputMethods {
+	// 	outputMethods = append(outputMethods,
+	// 		&pipeline.StepOutput{
+	// 			Id: outputMethod,
+	// 		})
+	// }
+
+	// // create the pipeline description structure
+	// return &pipeline.PipelineDescriptionStep{
+	// 	Step: &pipeline.PipelineDescriptionStep_Primitive{
+	// 		Primitive: &pipeline.PrimitivePipelineDescriptionStep{
+	// 			Primitive:   s.Primitive,
+	// 			Arguments:   arguments,
+	// 			Hyperparams: hyperparameters,
+	// 			Outputs:     outputMethods,
+	// 		},
+	// 	},
+	// }, nil
+	return nil, nil
+}
+
+func parseList(list []interface{}) (*pipeline.ValueRaw, error) {
+	valueList := []*pipeline.ValueRaw{}
+	for _, v := range list {
 		switch t := v.(type) {
-		case int, int8, int16, int32, int64:
-			value = &pipeline.Value{
-				Value: &pipeline.Value_Int64{
-					Int64: reflect.ValueOf(t).Int(),
-				},
+		case int, int8, int16, int32, int64, string, bool:
+			value, err := parseTerminal(t)
+			valueList = append(valueList, value)
+			if err != nil {
+				return nil, err
 			}
-		case []int, []int8, []int16, []int32, []int64:
-			arr := []int64{}
-			s := reflect.ValueOf(t)
-			if s.Kind() == reflect.Slice {
-				for i := 0; i < s.Len(); i++ {
-					arr = append(arr, s.Index(i).Int())
-				}
-			}
-			value = &pipeline.Value{
-				Value: &pipeline.Value_Int64List{
-					Int64List: &pipeline.Int64List{
-						List: arr,
-					},
-				},
-			}
-		case string:
-			value = &pipeline.Value{
-				Value: &pipeline.Value_String_{
-					String_: t,
-				},
-			}
-		case []string:
-			value = &pipeline.Value{
-				Value: &pipeline.Value_StringList{
-					StringList: &pipeline.StringList{
-						List: t,
-					},
-				},
-			}
-		case bool:
-			value = &pipeline.Value{
-				Value: &pipeline.Value_Bool{
-					Bool: t,
-				},
-			}
-		case []bool:
-			value = &pipeline.Value{
-				Value: &pipeline.Value_BoolList{
-					BoolList: &pipeline.BoolList{
-						List: t,
-					},
-				},
-			}
+		case []interface{}:
+			value, err := parseList(t)
+			valueList = append(valueList, value)
+			return nil, err
+		case map[string]interface{}:
+			value, err := parseMap(t)
+			valueList = append(valueList, value)
+			return nil, err
 		default:
-			return nil, errors.Errorf("compile failed: unhandled type `%v` for hyperparameter `%s`", v, k)
-		}
-		hyperparameters[k] = &pipeline.PrimitiveStepHyperparameter{
-			// only handle value args rights now - extend to others if required
-			Argument: &pipeline.PrimitiveStepHyperparameter_Value{
-				Value: &pipeline.ValueArgument{
-					Data: value,
-				},
-			},
+			return nil, errors.Errorf("bad argument type %s", reflect.TypeOf(v))
 		}
 	}
-
-	// list of methods that will generate output - order matters because the steps are
-	// numbered
-	outputMethods := []*pipeline.StepOutput{}
-	for _, outputMethod := range s.OutputMethods {
-		outputMethods = append(outputMethods,
-			&pipeline.StepOutput{
-				Id: outputMethod,
-			})
-	}
-
-	// create the pipeline description structure
-	return &pipeline.PipelineDescriptionStep{
-		Step: &pipeline.PipelineDescriptionStep_Primitive{
-			Primitive: &pipeline.PrimitivePipelineDescriptionStep{
-				Primitive:   s.Primitive,
-				Arguments:   arguments,
-				Hyperparams: hyperparameters,
-				Outputs:     outputMethods,
+	v := &pipeline.ValueRaw{
+		Raw: &pipeline.ValueRaw_List{
+			List: &pipeline.ValueList{
+				Items: valueList,
 			},
 		},
-	}, nil
+	}
+	return v, nil
+}
+
+func parseMap(value map[string]interface{}) (*pipeline.ValueRaw, error) {
+	return nil, nil
+}
+
+func parseTerminal(value interface{}) (*pipeline.ValueRaw, error) {
+	return nil, nil
 }
