@@ -13,6 +13,7 @@ func NewSimonStep() *StepData {
 			Version:    "1.1.1",
 			Name:       "simon",
 			PythonPath: "d3m.primitives.distil.simon",
+			Digest:     "0673d166f157944d3b6fdfa451f31fdfdbead7315ede3d6d9edb20f3f220b836",
 		},
 		[]string{"produce"},
 	)
@@ -26,6 +27,7 @@ func NewSlothStep() *StepData {
 			Version:    "1.0.0",
 			Name:       "Sloth",
 			PythonPath: "d3m.primitives.distil.Sloth.cluster",
+			Digest:     "f94f1aacc23792b680af0bd895f0fd2bac7336b29967b6ad766df4cb3c1933ab",
 		},
 		[]string{"produce"},
 	)
@@ -40,6 +42,7 @@ func NewPCAFeaturesStep() *StepData {
 			Version:    "3.0.0",
 			Name:       "PCA Features",
 			PythonPath: "d3m.primitives.distil.pcafeatures",
+			Digest:     "5302eebf2fb8a80e9f00e7b74888aba9eb448a9c0463d9d26786dab717a62c61",
 		},
 		[]string{"produce"},
 	)
@@ -53,6 +56,7 @@ func NewDukeStep() *StepData {
 			Version:    "1.1.1",
 			Name:       "duke",
 			PythonPath: "d3m.primitives.distil.duke",
+			Digest:     "ea522d2adc756c3ad76f5848d28cd396304d4dfdc0cc55aa8b90fbaf04e8fc30",
 		},
 		[]string{"produce"},
 	)
@@ -66,6 +70,7 @@ func NewCrocStep(targetColumns []string, outputLabels []string) *StepData {
 			Version:    "1.2.2",
 			Name:       "croc",
 			PythonPath: "d3m.primitives.distil.croc",
+			Digest:     "09cd99d609e317559feff580b8d893d0188f12915ab8d84a98de34eb344e340c",
 		},
 		[]string{"produce"},
 		map[string]interface{}{
@@ -84,6 +89,7 @@ func NewDatasetToDataframeStep() *StepData {
 			Version:    "0.3.0",
 			Name:       "Dataset to DataFrame converter",
 			PythonPath: "d3m.primitives.datasets.DatasetToDataFrame",
+			Digest:     "85b946aa6123354fe51a288c3be56aaca82e76d4071c1edc13be6f9e0e100144",
 		},
 		[]string{"produce"},
 	)
@@ -106,6 +112,7 @@ func NewUpdateSemanticTypeStep(resourceID string, add *ColumnUpdate, remove *Col
 			Version:    "0.2.0",
 			Name:       "Semantic type updater",
 			PythonPath: "d3m.primitives.data.UpdateSemanticTypes",
+			Digest:     "85b946aa6123354fe51a288c3be56aaca82e76d4071c1edc13be6f9e0e100144",
 		},
 		[]string{"produce"},
 		map[string]interface{}{
@@ -127,6 +134,7 @@ func NewRemoveColumnsStep(resourceID string, colIndices []int) (*StepData, error
 			Version:    "0.2.0",
 			Name:       "Column remover",
 			PythonPath: "d3m.primitives.data.RemoveColumns",
+			Digest:     "85b946aa6123354fe51a288c3be56aaca82e76d4071c1edc13be6f9e0e100144",
 		},
 		[]string{"produce"},
 		map[string]interface{}{
