@@ -42,22 +42,22 @@ func TestCreateUserDatasetPipeline(t *testing.T) {
 
 	// assert first step is column remove and index two was remove
 	hyperParams := pipeline.GetSteps()[0].GetPrimitive().GetHyperparams()
-	assert.Equal(t, "0", hyperParams["resource_id"].GetValue().GetData().GetString_(), "0")
-	assert.Equal(t, []int64{2}, hyperParams["columns"].GetValue().GetData().GetInt64List().GetList())
+	assert.Equal(t, "0", hyperParams["resource_id"].GetValue().GetData().GetRaw().GetString_(), "0")
+	assert.Equal(t, []int64{2}, hyperParams["columns"].GetValue().GetData().GetRaw().GetList())
 
 	// assert 2nd is a semantic type update
 	hyperParams = pipeline.GetSteps()[1].GetPrimitive().GetHyperparams()
-	assert.Equal(t, []int64{1, 3}, hyperParams["add_indices"].GetValue().GetData().GetInt64List().GetList())
-	assert.Equal(t, []string{"http://schema.org/Integer"}, hyperParams["add_types"].GetValue().GetData().GetStringList().GetList())
-	assert.Equal(t, []int64{}, hyperParams["remove_indices"].GetValue().GetData().GetInt64List().GetList())
-	assert.Equal(t, []string{""}, hyperParams["remove_types"].GetValue().GetData().GetStringList().GetList())
+	assert.Equal(t, []int64{1, 3}, hyperParams["add_indices"].GetValue().GetData().GetRaw().GetList())
+	assert.Equal(t, []string{"http://schema.org/Integer"}, hyperParams["add_types"].GetValue().GetData().GetRaw().GetList())
+	assert.Equal(t, []int64{}, hyperParams["remove_indices"].GetValue().GetData().GetRaw().GetList())
+	assert.Equal(t, []string{""}, hyperParams["remove_types"].GetValue().GetData().GetRaw().GetList())
 
 	// assert 3rd is a semantic type update
 	hyperParams = pipeline.GetSteps()[2].GetPrimitive().GetHyperparams()
-	assert.Equal(t, []int64{}, hyperParams["add_indices"].GetValue().GetData().GetInt64List().GetList())
-	assert.Equal(t, []string{""}, hyperParams["add_types"].GetValue().GetData().GetStringList().GetList())
-	assert.Equal(t, []int64{1, 3}, hyperParams["remove_indices"].GetValue().GetData().GetInt64List().GetList())
-	assert.Equal(t, []string{"https://metadata.datadrivendiscovery.org/types/CategoricalData"}, hyperParams["remove_types"].GetValue().GetData().GetStringList().GetList())
+	assert.Equal(t, []int64{}, hyperParams["add_indices"].GetValue().GetData().GetRaw().GetList())
+	assert.Equal(t, []string{""}, hyperParams["add_types"].GetValue().GetData().GetRaw().GetList())
+	assert.Equal(t, []int64{1, 3}, hyperParams["remove_indices"].GetValue().GetData().GetRaw().GetList())
+	assert.Equal(t, []string{"https://metadata.datadrivendiscovery.org/types/CategoricalData"}, hyperParams["remove_types"].GetValue().GetData().GetRaw().GetList())
 
 	assert.NoError(t, err)
 	t.Logf("\n%s", proto.MarshalTextString(pipeline))

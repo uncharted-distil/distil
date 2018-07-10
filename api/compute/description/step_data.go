@@ -96,70 +96,24 @@ func (s *StepData) BuildDescriptionStep() (*pipeline.PipelineDescriptionStep, er
 		}
 	}
 
-	// generate arguments entries - accepted types are currently intXX, string, bool.  The underlying
-	// protobuf structure allows for others - introducing them should be a matter of expanding this
-	// list.
+	// generate arguments entries - accepted types are currently intXX, string, bool, as well as list, map[string]
+	// of those types.  The underlying protobuf structure allows for others that can be handled here as needed.
 	hyperparameters := map[string]*pipeline.PrimitiveStepHyperparameter{}
 	for k, v := range s.Hyperparameters {
-		var value *pipeline.Value
-		switch t := v.(type) {
-		case int, int8, int16, int32, int64:
-			value = &pipeline.Value{
-				Value: &pipeline.Value_Int64{
-					Int64: reflect.ValueOf(t).Int(),
-				},
-			}
-		case []int, []int8, []int16, []int32, []int64:
-			arr := []int64{}
-			s := reflect.ValueOf(t)
-			if s.Kind() == reflect.Slice {
-				for i := 0; i < s.Len(); i++ {
-					arr = append(arr, s.Index(i).Int())
-				}
-			}
-			value = &pipeline.Value{
-				Value: &pipeline.Value_Int64List{
-					Int64List: &pipeline.Int64List{
-						List: arr,
-					},
-				},
-			}
-		case string:
-			value = &pipeline.Value{
-				Value: &pipeline.Value_String_{
-					String_: t,
-				},
-			}
-		case []string:
-			value = &pipeline.Value{
-				Value: &pipeline.Value_StringList{
-					StringList: &pipeline.StringList{
-						List: t,
-					},
-				},
-			}
-		case bool:
-			value = &pipeline.Value{
-				Value: &pipeline.Value_Bool{
-					Bool: t,
-				},
-			}
-		case []bool:
-			value = &pipeline.Value{
-				Value: &pipeline.Value_BoolList{
-					BoolList: &pipeline.BoolList{
-						List: t,
-					},
-				},
-			}
-		default:
-			return nil, errors.Errorf("compile failed: unhandled type `%v` for hyperparameter `%s`", v, k)
+		rawValue, err := parseValue(v)
+		if err != nil {
+			return nil, errors.Errorf("compile failed: hyperparameter `%s` - %s", k, err)
 		}
+
 		hyperparameters[k] = &pipeline.PrimitiveStepHyperparameter{
 			// only handle value args rights now - extend to others if required
 			Argument: &pipeline.PrimitiveStepHyperparameter_Value{
 				Value: &pipeline.ValueArgument{
-					Data: value,
+					Data: &pipeline.Value{
+						Value: &pipeline.Value_Raw{
+							Raw: rawValue,
+						},
+					},
 				},
 			},
 		}
@@ -186,4 +140,102 @@ func (s *StepData) BuildDescriptionStep() (*pipeline.PipelineDescriptionStep, er
 			},
 		},
 	}, nil
+}
+
+func parseList(list []interface{}) (*pipeline.ValueRaw, error) {
+	// parse list contents as a list, map, or value
+	valueList := []*pipeline.ValueRaw{}
+	var value *pipeline.ValueRaw
+	var err error
+
+	for _, v := range list {
+		switch t := v.(type) {
+		case int, int8, int16, int32, int64, string, bool:
+			value, err = parseValue(t)
+		case []interface{}:
+			value, err = parseList(t)
+		case map[string]interface{}:
+			value, err = parseMap(t)
+		default:
+			err = errors.Errorf("unhandled list arg type %s", reflect.TypeOf(v))
+		}
+
+		if err != nil {
+			return nil, err
+		}
+
+		valueList = append(valueList, value)
+	}
+	v := &pipeline.ValueRaw{
+		Raw: &pipeline.ValueRaw_List{
+			List: &pipeline.ValueList{
+				Items: valueList,
+			},
+		},
+	}
+	return v, nil
+}
+
+func parseMap(vmap map[string]interface{}) (*pipeline.ValueRaw, error) {
+	// parse map contents as list, map or value
+	valueMap := map[string]*pipeline.ValueRaw{}
+	var value *pipeline.ValueRaw
+	var err error
+
+	for k, v := range vmap {
+		switch t := v.(type) {
+		case int, int8, int16, int32, int64, string, bool:
+			value, err = parseValue(t)
+		case []interface{}:
+			value, err = parseList(t)
+		case map[string]interface{}:
+			value, err = parseMap(t)
+		default:
+			err = errors.Errorf("unhandled map arg type %s", reflect.TypeOf(v))
+		}
+
+		if err != nil {
+			return nil, err
+		}
+
+		valueMap[k] = value
+	}
+	v := &pipeline.ValueRaw{
+		Raw: &pipeline.ValueRaw_Dict{
+			Dict: &pipeline.ValueDict{
+				Items: valueMap,
+			},
+		},
+	}
+	return v, nil
+}
+
+func parseValue(v interface{}) (*pipeline.ValueRaw, error) {
+	switch t := v.(type) {
+	// parse a numeric, string or boolean value
+	case int, int8, int16, int32, int64:
+		return &pipeline.ValueRaw{
+			Raw: &pipeline.ValueRaw_Int64{
+				Int64: reflect.ValueOf(t).Int(),
+			},
+		}, nil
+	case string:
+		return &pipeline.ValueRaw{
+			Raw: &pipeline.ValueRaw_String_{
+				String_: t,
+			},
+		}, nil
+	case bool:
+		return &pipeline.ValueRaw{
+			Raw: &pipeline.ValueRaw_Bool{
+				Bool: t,
+			},
+		}, nil
+	case []interface{}:
+		return parseList(t)
+	case map[string]interface{}:
+		return parseMap(t)
+	default:
+		return nil, errors.Errorf("unhandled value arg type %s", reflect.TypeOf(v))
+	}
 }
