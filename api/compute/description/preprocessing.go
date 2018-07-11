@@ -189,6 +189,20 @@ func CreateCrocPipeline(name string, description string, targetColumns []string,
 	return pipeline, nil
 }
 
+// CreateUnicornPipeline creates a pipeline to run image clustering on a dataset.
+func CreateUnicornPipeline(name string, description string, targetColumns []string, outputLabels []string) (*pipeline.PipelineDescription, error) {
+	// insantiate the pipeline
+	pipeline, err := NewBuilder(name, description).
+		Add(NewDatasetToDataframeStep()).
+		Add(NewUnicornStep(targetColumns, outputLabels)).
+		Compile()
+
+	if err != nil {
+		return nil, err
+	}
+	return pipeline, nil
+}
+
 // CreatePCAFeaturesPipeline creates a pipeline to run feature ranking on an input dataset.
 func CreatePCAFeaturesPipeline(name string, description string) (*pipeline.PipelineDescription, error) {
 	// insantiate the pipeline
