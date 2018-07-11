@@ -1,0 +1,31 @@
+elastic:
+  image:
+    docker.uncharted.software/distil_dev_es:latest
+  ports:
+    - "9200:9200"
+postgres:
+  image:
+    docker.uncharted.software/distil_dev_postgres:latest
+  ports:
+    - "5432:5432"
+  command:
+    -d postgres
+resources:
+  image:
+    docker.uncharted.software/distil_res_server:latest
+  ports:
+    - "5440:5440"
+brown_ta2:
+  image: registry.datadrivendiscovery.org/zshang/brown:ta2
+  environment:
+    - D3MRUN=ta2ta3
+    - D3MINPUTDIR=$PWD/datasets
+    - D3MOUTPUTDIR=$PWD/datasets
+    - D3MTESTOPT=/output/bestfit.py
+    - D3MCPU=1
+    - D3MRAM=512Mi
+    - D3MTIMEOUT=10
+  volumes:
+    - $PWD/datasets:$PWD/datasets
+  ports:
+    - "45042:45042"
