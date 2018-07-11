@@ -38,11 +38,16 @@ func CreateUserDatasetPipeline(name string, description string, allFeatures []*m
 	for _, v := range updateSemanticTypes {
 		builder = builder.Add(v)
 	}
-	pipeline, err := builder.AddInferencePoint().Compile()
+	pip, err := builder.AddInferencePoint().Compile()
 	if err != nil {
 		return nil, err
 	}
-	return pipeline, nil
+
+	// Input set to arbitrary string for now
+	pip.Inputs = []*pipeline.PipelineDescriptionInput{{
+		Name: "dataset",
+	}}
+	return pip, nil
 }
 
 func createRemoveFeatures(allFeatures []*model.Variable, selectedSet map[string]bool) (*StepData, error) {
