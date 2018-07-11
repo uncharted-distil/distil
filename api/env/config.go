@@ -85,6 +85,7 @@ type Config struct {
 	ResourceProxy                      string  `env:"RESOURCE_PROXY" envDefault:"d_22_hy_dataset_TRAIN_dataset"`
 	IngestPrimitive                    bool    `env:"INGEST_PRIMITIVE" envDefault:"false"`
 	IsProblemDiscovery                 bool    `env:"IS_PROBLEM_DISCOVERY" envDefault:"false"`
+	SkipPreprocessing                  bool    `env:"SKIP_PREPROCESSING" envDefault:"false"`
 }
 
 // LoadConfig loads the config from the environment if necessary and returns a

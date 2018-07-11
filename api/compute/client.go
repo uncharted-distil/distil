@@ -23,12 +23,13 @@ const defaultTrainTestRatio = 3
 // is designed such that multiple go routines make RPC calls to a single shared client, and synch
 // is managed internally.
 type Client struct {
-	client      pipeline.CoreClient
-	conn        *grpc.ClientConn
-	mu          *sync.Mutex
-	UserAgent   string
-	PullTimeout time.Duration
-	PullMax     int
+	client            pipeline.CoreClient
+	conn              *grpc.ClientConn
+	mu                *sync.Mutex
+	UserAgent         string
+	PullTimeout       time.Duration
+	PullMax           int
+	SkipPreprocessing bool
 }
 
 // SearchSolutionHandler is executed when a new search solution is returned.
@@ -37,7 +38,7 @@ type SearchSolutionHandler func(*pipeline.GetSearchSolutionsResultsResponse)
 // NewClient creates a new pipline request dispatcher instance. This will establish
 // the connection to the solution server or return an error on fail
 func NewClient(serverAddr string, trace bool, userAgent string,
-	pullTimeout time.Duration, pullMax int) (*Client, error) {
+	pullTimeout time.Duration, pullMax int, skipPreprocessing bool) (*Client, error) {
 	conn, err := grpc.Dial(
 		serverAddr,
 		grpc.WithInsecure(),
@@ -57,6 +58,7 @@ func NewClient(serverAddr string, trace bool, userAgent string,
 	client.UserAgent = userAgent
 	client.PullTimeout = pullTimeout
 	client.PullMax = pullMax
+	client.SkipPreprocessing = skipPreprocessing
 
 	// check for basic ta2 connectivity
 	helloResponse, err := client.client.Hello(context.Background(), &pipeline.HelloRequest{})

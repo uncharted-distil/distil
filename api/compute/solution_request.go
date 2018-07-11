@@ -178,6 +178,7 @@ func createSearchSolutionsRequest(targetIndex int, preprocessing *pipeline.Pipel
 		// we accept dataset and csv uris as return types
 		AllowedValueTypes: []pipeline.ValueType{
 			pipeline.ValueType_DATASET_URI,
+			pipeline.ValueType_CSV_URI,
 		},
 
 		// URI of the input dataset
@@ -537,9 +538,12 @@ func (s *SolutionRequest) PersistAndDispatch(client *Client, solutionStorage mod
 	datasetPathTest = fmt.Sprintf("file://%s", filepath.Join(datasetPathTest, D3MDataSchema))
 
 	// generate the pre-processing pipeline to enforce feature selection and semantic type changes
-	preprocessing, err := s.createPreprocessingPipeline(variables, s.Filters.Variables)
-	if err != nil {
-		return err
+	var preprocessing *pipeline.PipelineDescription
+	if !client.SkipPreprocessing {
+		preprocessing, err = s.createPreprocessingPipeline(variables, s.Filters.Variables)
+		if err != nil {
+			return err
+		}
 	}
 
 	// create search solutions request
@@ -597,14 +601,18 @@ func (s *SolutionRequest) PersistAndDispatch(client *Client, solutionStorage mod
 // the pipeline steps required to process the data.
 func CreateSearchSolutionRequest(allFeatures []*model.Variable,
 	selectedFeatures []string, target string, sourceURI string, dataset string,
-	userAgent string) (*pipeline.SearchSolutionsRequest, error) {
+	userAgent string, skipPreprocessing bool) (*pipeline.SearchSolutionsRequest, error) {
 	uuid := uuid.NewV4()
 	name := fmt.Sprintf("preprocessing-%s-%s", dataset, uuid.String())
 	desc := fmt.Sprintf("Preprocessing pipeline capturing user feature selection and type information. Dataset: `%s` ID: `%s`", dataset, uuid.String())
 
-	preprocessingPipeline, err := description.CreateUserDatasetPipeline(name, desc, allFeatures, selectedFeatures)
-	if err != nil {
-		return nil, errors.Wrap(err, "unable to create preprocessing pipeline")
+	var err error
+	var preprocessingPipeline *pipeline.PipelineDescription
+	if !skipPreprocessing {
+		preprocessingPipeline, err = description.CreateUserDatasetPipeline(name, desc, allFeatures, selectedFeatures)
+		if err != nil {
+			return nil, errors.Wrap(err, "unable to create preprocessing pipeline")
+		}
 	}
 
 	targetIndex := 0

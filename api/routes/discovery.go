@@ -25,7 +25,7 @@ const (
 )
 
 // ProblemDiscoveryHandler creates a route that saves a discovered problem.
-func ProblemDiscoveryHandler(ctorData model.DataStorageCtor, ctorMeta model.MetadataStorageCtor, problemDir string, userAgent string) func(http.ResponseWriter, *http.Request) {
+func ProblemDiscoveryHandler(ctorData model.DataStorageCtor, ctorMeta model.MetadataStorageCtor, problemDir string, userAgent string, skipPrepends bool) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		dataset := pat.Param(r, "dataset")
 		target := pat.Param(r, "target")
@@ -111,7 +111,7 @@ func ProblemDiscoveryHandler(ctorData model.DataStorageCtor, ctorMeta model.Meta
 		}
 
 		// store the search solution request for this problem
-		request, err := compute.CreateSearchSolutionRequest(ds.Metadata.Variables, filterParams.Variables, target, problemDir, dataset, userAgent)
+		request, err := compute.CreateSearchSolutionRequest(ds.Metadata.Variables, filterParams.Variables, target, problemDir, dataset, userAgent, skipPrepends)
 		if err != nil {
 			handleError(w, err)
 			return
