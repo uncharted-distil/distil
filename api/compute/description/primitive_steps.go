@@ -117,9 +117,9 @@ func NewUpdateSemanticTypeStep(resourceID string, add *ColumnUpdate, remove *Col
 		[]string{"produce"},
 		map[string]interface{}{
 			"resource_id":    resourceID,
-			"add_indices":    add.Indices,
+			"add_columns":    add.Indices,
 			"add_types":      add.SemanticTypes,
-			"remove_indices": remove.Indices,
+			"remove_columns": remove.Indices,
 			"remove_types":   remove.SemanticTypes,
 		},
 	), nil
