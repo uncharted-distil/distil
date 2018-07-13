@@ -196,14 +196,19 @@ func parseMap(vmap interface{}) (*pipeline.ValueRaw, error) {
 	}
 	keys := refValue.MapKeys()
 	for _, key := range keys {
+
+		if key.Kind() != reflect.String {
+			return nil, errors.Errorf("non-string map key type %s", refValue.Kind())
+		}
+
 		refElement := refValue.MapIndex(key)
 		switch refElement.Kind() {
 		case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64, reflect.String, reflect.Bool:
-			value, err = parseValue(refElement.Interface)
+			value, err = parseValue(refElement.Interface())
 		case reflect.Slice:
-			value, err = parseList(refElement.Interface)
+			value, err = parseList(refElement.Interface())
 		case reflect.Map:
-			value, err = parseMap(refElement.Interface)
+			value, err = parseMap(refElement.Interface())
 		default:
 			err = errors.Errorf("unhandled map arg type %s", refElement.Kind())
 		}
@@ -211,7 +216,7 @@ func parseMap(vmap interface{}) (*pipeline.ValueRaw, error) {
 		if err != nil {
 			return nil, err
 		}
-		refValue.SetMapIndex(key, reflect.ValueOf(value))
+		valueMap[key.String()] = value
 	}
 
 	v := &pipeline.ValueRaw{
