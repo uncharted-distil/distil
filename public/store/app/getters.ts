@@ -16,5 +16,13 @@ export const getters = {
 
 	isDiscovery(state: AppState) {
 		return state.isDiscovery;
+	},
+
+	getProblemDataset(state: AppState) {
+		return state.problemDataset;
+	},
+
+	getProblemTarget(state: AppState) {
+		return state.problemTarget;
 	}
 };

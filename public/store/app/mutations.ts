@@ -17,4 +17,12 @@ export const mutations = {
 	setIsDiscovery(state: AppState, isDiscovery: boolean) {
 		state.isDiscovery = isDiscovery;
 	},
+
+	setProblemDataset(state: AppState, dataset: string) {
+		state.problemDataset = dataset;
+	},
+
+	setProblemTarget(state: AppState, target: string) {
+		state.problemTarget = target;
+	}
 };
