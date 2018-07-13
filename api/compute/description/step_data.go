@@ -1,7 +1,6 @@
 package description
 
 import (
-	"fmt"
 	"reflect"
 
 	"github.com/pkg/errors"
@@ -84,18 +83,19 @@ func (s *StepData) GetOutputMethods() []string {
 // BuildDescriptionStep creates protobuf structures from a pipeline step
 // definition.
 func (s *StepData) BuildDescriptionStep() (*pipeline.PipelineDescriptionStep, error) {
-	// // generate arguments entries
-	// arguments := map[string]*pipeline.PrimitiveStepArgument{}
-	// for k, v := range s.Arguments {
-	// 	arguments[k] = &pipeline.PrimitiveStepArgument{
-	// 		// only handle container args rights now - extend to others if required
-	// 		Argument: &pipeline.PrimitiveStepArgument_Container{
-	// 			Container: &pipeline.ContainerArgument{
-	// 				Data: v,
-	// 			},
-	// 		},
-	// 	}
-	// }
+
+	// generate arguments entries
+	arguments := map[string]*pipeline.PrimitiveStepArgument{}
+	for k, v := range s.Arguments {
+		arguments[k] = &pipeline.PrimitiveStepArgument{
+			// only handle container args rights now - extend to others if required
+			Argument: &pipeline.PrimitiveStepArgument_Container{
+				Container: &pipeline.ContainerArgument{
+					Data: v,
+				},
+			},
+		}
+	}
 
 	// generate arguments entries - accepted types are currently intXX, string, bool, as well as list, map[string]
 	// of those types.  The underlying protobuf structure allows for others that can be handled here as needed.
@@ -117,17 +117,30 @@ func (s *StepData) BuildDescriptionStep() (*pipeline.PipelineDescriptionStep, er
 					},
 				},
 			},
-		},
+		}
 	}
-	return v, nil
-}
 
-func parseMap(value map[string]interface{}) (*pipeline.ValueRaw, error) {
-	return nil, nil
-}
+	// list of methods that will generate output - order matters because the steps are
+	// numbered
+	outputMethods := []*pipeline.StepOutput{}
+	for _, outputMethod := range s.OutputMethods {
+		outputMethods = append(outputMethods,
+			&pipeline.StepOutput{
+				Id: outputMethod,
+			})
+	}
 
-func parseTerminal(value interface{}) (*pipeline.ValueRaw, error) {
-	return nil, nil
+	// create the pipeline description structure
+	return &pipeline.PipelineDescriptionStep{
+		Step: &pipeline.PipelineDescriptionStep_Primitive{
+			Primitive: &pipeline.PrimitivePipelineDescriptionStep{
+				Primitive:   s.Primitive,
+				Arguments:   arguments,
+				Hyperparams: hyperparameters,
+				Outputs:     outputMethods,
+			},
+		},
+	}, nil
 }
 
 func parseList(v interface{}) (*pipeline.ValueRaw, error) {
@@ -234,7 +247,6 @@ func parseValue(v interface{}) (*pipeline.ValueRaw, error) {
 			},
 		}, nil
 	case reflect.Slice:
-		fmt.Printf("%v\n", v)
 		return parseList(v)
 	case reflect.Map:
 		return parseMap(v)
