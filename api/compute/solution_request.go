@@ -346,7 +346,7 @@ func (s *SolutionRequest) dispatchSolution(statusChan chan SolutionStatus, clien
 			} else {
 				metric = score.Metric.Metric.String()
 			}
-			err := solutionStorage.PersistSolutionScore(solutionID, metric, score.Value.GetDouble())
+			err := solutionStorage.PersistSolutionScore(solutionID, metric, score.Value.GetRaw().GetDouble())
 			if err != nil {
 				s.persistSolutionError(statusChan, solutionStorage, searchID, solutionID, err)
 				return
