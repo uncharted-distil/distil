@@ -32,15 +32,15 @@ func testStep(t *testing.T, index int, step *StepData, steps []*pipeline.Pipelin
 	assert.Equal(t, "produce", steps[index].GetPrimitive().GetOutputs()[0].GetId())
 
 	assert.Equal(t, fmt.Sprintf("hyperparam-%d", index),
-		steps[index].GetPrimitive().GetHyperparams()["testString"].GetValue().GetData().GetString_())
-	assert.Equal(t, int64(index), steps[index].GetPrimitive().GetHyperparams()["testInt"].GetValue().GetData().GetInt64())
-	assert.Equal(t, index%2 == 0, steps[index].GetPrimitive().GetHyperparams()["testBool"].GetValue().GetData().GetBool())
+		steps[index].GetPrimitive().GetHyperparams()["testString"].GetValue().GetData().GetRaw().GetString_())
+	assert.Equal(t, int64(index), steps[index].GetPrimitive().GetHyperparams()["testInt"].GetValue().GetData().GetRaw().GetInt64())
+	assert.Equal(t, index%2 == 0, steps[index].GetPrimitive().GetHyperparams()["testBool"].GetValue().GetData().GetRaw().GetBool())
 	assert.Equal(t, []string{fmt.Sprintf("alpha-%d", index), fmt.Sprintf("bravo-%d", index)},
-		steps[index].GetPrimitive().GetHyperparams()["testStringArray"].GetValue().GetData().GetStringList().GetList())
+		steps[index].GetPrimitive().GetHyperparams()["testStringArray"].GetValue().GetData().GetRaw().GetList())
 	assert.Equal(t, []int64{int64(index), int64(index) + 1},
-		steps[index].GetPrimitive().GetHyperparams()["testIntArray"].GetValue().GetData().GetInt64List().GetList())
+		steps[index].GetPrimitive().GetHyperparams()["testIntArray"].GetValue().GetData().GetRaw().GetList())
 	assert.Equal(t, []bool{index%2 == 0, index%2 != 0},
-		steps[index].GetPrimitive().GetHyperparams()["testBoolArray"].GetValue().GetData().GetBoolList().GetList())
+		steps[index].GetPrimitive().GetHyperparams()["testBoolArray"].GetValue().GetData().GetRaw().GetList())
 
 	assert.EqualValues(t, step.GetPrimitive(), steps[index].GetPrimitive().GetPrimitive())
 }
