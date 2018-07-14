@@ -195,12 +195,12 @@ func createSearchSolutionsRequest(targetIndex int, preprocessing *pipeline.Pipel
 }
 
 // createPreprocessingPipeline creates pipeline to enfore user feature selection and typing
-func (s *SolutionRequest) createPreprocessingPipeline(featureVariables []*model.Variable, variables []string) (*pipeline.PipelineDescription, error) {
+func (s *SolutionRequest) createPreprocessingPipeline(featureVariables []*model.Variable, targetVariable string, variables []string) (*pipeline.PipelineDescription, error) {
 	uuid := uuid.NewV4()
 	name := fmt.Sprintf("preprocessing-%s-%s", s.Dataset, uuid.String())
 	desc := fmt.Sprintf("Preprocessing pipeline capturing user feature selection and type information. Dataset: `%s` ID: `%s`", s.Dataset, uuid.String())
 
-	preprocessingPipeline, err := description.CreateUserDatasetPipeline(name, desc, featureVariables, variables)
+	preprocessingPipeline, err := description.CreateUserDatasetPipeline(name, desc, featureVariables, targetVariable, variables)
 	if err != nil {
 		return nil, err
 	}
@@ -540,7 +540,7 @@ func (s *SolutionRequest) PersistAndDispatch(client *Client, solutionStorage mod
 	// generate the pre-processing pipeline to enforce feature selection and semantic type changes
 	var preprocessing *pipeline.PipelineDescription
 	if !client.SkipPreprocessing {
-		preprocessing, err = s.createPreprocessingPipeline(variables, s.Filters.Variables)
+		preprocessing, err = s.createPreprocessingPipeline(variables, s.TargetFeature, s.Filters.Variables)
 		if err != nil {
 			return err
 		}
@@ -609,7 +609,7 @@ func CreateSearchSolutionRequest(allFeatures []*model.Variable,
 	var err error
 	var preprocessingPipeline *pipeline.PipelineDescription
 	if !skipPreprocessing {
-		preprocessingPipeline, err = description.CreateUserDatasetPipeline(name, desc, allFeatures, selectedFeatures)
+		preprocessingPipeline, err = description.CreateUserDatasetPipeline(name, desc, allFeatures, target, selectedFeatures)
 		if err != nil {
 			return nil, errors.Wrap(err, "unable to create preprocessing pipeline")
 		}

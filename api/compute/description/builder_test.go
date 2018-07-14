@@ -36,7 +36,7 @@ func createTestStep(step int64) *StepData {
 	)
 }
 
-func convertToStringArray(list *pipeline.ValueList) []string {
+func ConvertToStringArray(list *pipeline.ValueList) []string {
 	arr := []string{}
 	for _, v := range list.Items {
 		arr = append(arr, v.GetString_())
@@ -44,7 +44,7 @@ func convertToStringArray(list *pipeline.ValueList) []string {
 	return arr
 }
 
-func convertToBoolArray(list *pipeline.ValueList) []bool {
+func ConvertToBoolArray(list *pipeline.ValueList) []bool {
 	arr := []bool{}
 	for _, v := range list.Items {
 		arr = append(arr, v.GetBool())
@@ -52,7 +52,7 @@ func convertToBoolArray(list *pipeline.ValueList) []bool {
 	return arr
 }
 
-func convertToIntArray(list *pipeline.ValueList) []int64 {
+func ConvertToIntArray(list *pipeline.ValueList) []int64 {
 	arr := []int64{}
 	for _, v := range list.Items {
 		arr = append(arr, v.GetInt64())
@@ -60,7 +60,7 @@ func convertToIntArray(list *pipeline.ValueList) []int64 {
 	return arr
 }
 
-func convertToIntMap(dict *pipeline.ValueDict) map[string]int64 {
+func ConvertToIntMap(dict *pipeline.ValueDict) map[string]int64 {
 	mp := map[string]int64{}
 	for k, v := range dict.Items {
 		mp[k] = v.GetInt64()
@@ -68,7 +68,7 @@ func convertToIntMap(dict *pipeline.ValueDict) map[string]int64 {
 	return mp
 }
 
-func convertToNestedIntArray(list *pipeline.ValueList) [][]int64 {
+func ConvertToNestedIntArray(list *pipeline.ValueList) [][]int64 {
 	arr := [][]int64{}
 	for _, v := range list.Items {
 		inner := []int64{}
@@ -80,7 +80,7 @@ func convertToNestedIntArray(list *pipeline.ValueList) [][]int64 {
 	return arr
 }
 
-func convertToNestedIntMap(dict *pipeline.ValueDict) map[string][]int64 {
+func ConvertToNestedIntMap(dict *pipeline.ValueDict) map[string][]int64 {
 	mp := map[string][]int64{}
 	for k, v := range dict.Items {
 		inner := []int64{}
@@ -105,22 +105,22 @@ func testStep(t *testing.T, index int64, step *StepData, steps []*pipeline.Pipel
 	assert.Equal(t, index%2 == 0, steps[index].GetPrimitive().GetHyperparams()["testBool"].GetValue().GetData().GetRaw().GetBool())
 
 	assert.Equal(t, labels,
-		convertToStringArray(steps[index].GetPrimitive().GetHyperparams()["testStringArray"].GetValue().GetData().GetRaw().GetList()))
+		ConvertToStringArray(steps[index].GetPrimitive().GetHyperparams()["testStringArray"].GetValue().GetData().GetRaw().GetList()))
 
 	assert.Equal(t, []int64{int64(index), int64(index) + 1},
-		convertToIntArray(steps[index].GetPrimitive().GetHyperparams()["testIntArray"].GetValue().GetData().GetRaw().GetList()))
+		ConvertToIntArray(steps[index].GetPrimitive().GetHyperparams()["testIntArray"].GetValue().GetData().GetRaw().GetList()))
 
 	assert.Equal(t, []bool{index%2 == 0, index%2 != 0},
-		convertToBoolArray(steps[index].GetPrimitive().GetHyperparams()["testBoolArray"].GetValue().GetData().GetRaw().GetList()))
+		ConvertToBoolArray(steps[index].GetPrimitive().GetHyperparams()["testBoolArray"].GetValue().GetData().GetRaw().GetList()))
 
 	assert.Equal(t, map[string]int64{labels[0]: int64(index), labels[1]: int64(index)},
-		convertToIntMap(steps[index].GetPrimitive().GetHyperparams()["testIntMap"].GetValue().GetData().GetRaw().GetDict()))
+		ConvertToIntMap(steps[index].GetPrimitive().GetHyperparams()["testIntMap"].GetValue().GetData().GetRaw().GetDict()))
 
 	assert.Equal(t, [][]int64{{index, index + 1}, {index + 2, index + 3}},
-		convertToNestedIntArray(steps[index].GetPrimitive().GetHyperparams()["testNestedIntArray"].GetValue().GetData().GetRaw().GetList()))
+		ConvertToNestedIntArray(steps[index].GetPrimitive().GetHyperparams()["testNestedIntArray"].GetValue().GetData().GetRaw().GetList()))
 
 	assert.Equal(t, map[string][]int64{labels[0]: {index, index + 1}, labels[1]: {index + 2, index + 3}},
-		convertToNestedIntMap(steps[index].GetPrimitive().GetHyperparams()["testNestedIntMap"].GetValue().GetData().GetRaw().GetDict()))
+		ConvertToNestedIntMap(steps[index].GetPrimitive().GetHyperparams()["testNestedIntMap"].GetValue().GetData().GetRaw().GetDict()))
 
 	assert.EqualValues(t, step.GetPrimitive(), steps[index].GetPrimitive().GetPrimitive())
 }
