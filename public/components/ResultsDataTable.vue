@@ -106,7 +106,7 @@ export default Vue.extend({
 		},
 
 		isTargetCategorical(): boolean {
-			return isTextType(getVarType(this.$store, this.target));
+			return isTextType(getVarType(this.target));
 		},
 
 		isTargetNumerical(): boolean {

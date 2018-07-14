@@ -1,5 +1,5 @@
 import _ from 'lodash';
-import { Store } from 'vuex';
+import store from '../store/store';
 import { Dictionary } from './dict';
 import { getters as datasetGetters } from '../store/dataset/module';
 import { D3M_INDEX_FIELD } from '../store/dataset/index';
@@ -159,7 +159,7 @@ const BASIC_SUGGESTIONS = [
 	'unknown'
 ];
 
-export function getVarType(store: Store<any>, varname: string): string {
+export function getVarType(varname: string): string {
 	return datasetGetters.getVariableTypesMap(store)[varname];
 }
 

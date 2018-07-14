@@ -30,7 +30,7 @@ export function createFilterFromHighlightRoot(store: Store<any>, highlightRoot: 
 	}
 	// inject metadata prefix for metadata vars
 	let key = highlightRoot.key;
-	const type = getVarType(store, key);
+	const type = getVarType(key);
 	if (isMetaType(type)) {
 		key = addMetaPrefix(key);
 	}
