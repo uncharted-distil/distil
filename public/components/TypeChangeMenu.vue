@@ -51,8 +51,7 @@ export default Vue.extend({
 			return routeGetters.getDecodedHighlightRoot(this.$store);
 		},
 		isDisabled(): boolean {
-			return hasFilterInRoute(this, this.field) ||
-				(this.highlightRoot && this.highlightRoot.key === this.field);
+			return hasFilterInRoute(this.field) || (this.highlightRoot && this.highlightRoot.key === this.field);
 		},
 		delay(): any {
 			return {

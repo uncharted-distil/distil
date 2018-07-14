@@ -38,7 +38,7 @@ export default Vue.extend({
 	methods: {
 		onClick() {
 			if (!this.activeFilter) {
-				removeFilterFromRoute(this, this.filter);
+				removeFilterFromRoute(this.$router, this.filter);
 			} else {
 				clearHighlightRoot(this);
 			}
