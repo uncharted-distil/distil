@@ -53,7 +53,7 @@ export default Vue.extend({
 		},
 
 		highlights(): Highlight {
-			return getHighlights(this.$store);
+			return getHighlights();
 		},
 
 		hasFilters(): boolean {
@@ -103,14 +103,14 @@ export default Vue.extend({
 			}
 		},
 		selectDefaultNumerical() {
-			updateHighlightRoot(this, {
+			updateHighlightRoot(this.$router, {
 				context: this.instanceName,
 				key: this.target,
 				value: this.getNumericalFacetValue()
 			});
 		},
 		selectDefaultCategorical() {
-			updateHighlightRoot(this, {
+			updateHighlightRoot(this.$router, {
 				context: this.instanceName,
 				key: this.target,
 				value: this.getCategoricalFacetValue()

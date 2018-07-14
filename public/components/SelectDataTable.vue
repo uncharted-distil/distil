@@ -112,7 +112,7 @@ export default Vue.extend({
 		},
 
 		highlights(): Highlight {
-			return getHighlights(this.$store);
+			return getHighlights();
 		},
 
 		numRows(): number {
@@ -226,7 +226,7 @@ export default Vue.extend({
 			addFilterToRoute(this.$router, filter);
 
 			if (this.isFilteringHighlights) {
-				clearHighlightRoot(this);
+				clearHighlightRoot(this.$router);
 			} else {
 				clearRowSelection(this);
 			}
@@ -242,7 +242,7 @@ export default Vue.extend({
 			addFilterToRoute(this.$router, filter);
 
 			if (this.isFilteringHighlights) {
-				clearHighlightRoot(this);
+				clearHighlightRoot(this.$router);
 			} else {
 				clearRowSelection(this);
 			}

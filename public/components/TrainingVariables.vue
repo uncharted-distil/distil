@@ -61,7 +61,7 @@ export default Vue.extend({
 			return NUM_PER_PAGE;
 		},
 		highlights(): Highlight {
-			return getHighlights(this.$store);
+			return getHighlights();
 		},
 		trainingVariableSummaries(): VariableSummary[] {
 			return routeGetters.getTrainingVariableSummaries(this.$store);
