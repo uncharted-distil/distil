@@ -7,8 +7,8 @@ import { overlayRouteEntry } from '../util/routes'
 import { Filter, ROW_FILTER } from '../util/filters';
 import { CREATE_ROUTE, RESULTS_ROUTE } from '../store/route/index';
 import _ from 'lodash';
-import Vue from 'vue';
 import store from '../store/store';
+import VueRouter from 'vue-router';
 
 export function encodeRowSelection(row: RowSelection): string {
 	if (_.isEmpty(row)) {
@@ -154,7 +154,7 @@ export function getSelectedRows(selection: RowSelection): Row[] {
 	return rows;
 }
 
-export function addRowSelection(component: Vue, context: string, selection: RowSelection, d3mIndex: number) {
+export function addRowSelection(router: VueRouter, context: string, selection: RowSelection, d3mIndex: number) {
 	if (!selection || selection.context !== context) {
 		selection = {
 			context: context,
@@ -162,28 +162,28 @@ export function addRowSelection(component: Vue, context: string, selection: RowS
 		};
 	}
 	selection.d3mIndices.push(d3mIndex);
-	const entry = overlayRouteEntry(routeGetters.getRoute(component.$store), {
+	const entry = overlayRouteEntry(routeGetters.getRoute(store), {
 		row: encodeRowSelection(selection),
 	});
-	component.$router.push(entry);
+	router.push(entry);
 }
 
-export function removeRowSelection(component: Vue, context: string, selection: RowSelection, d3mIndex: number) {
+export function removeRowSelection(router: VueRouter, context: string, selection: RowSelection, d3mIndex: number) {
 	_.remove(selection.d3mIndices, r => {
 		return r === d3mIndex;
 	});
 	if (selection.d3mIndices.length === 0) {
 		selection = null;
 	}
-	const entry = overlayRouteEntry(routeGetters.getRoute(component.$store), {
+	const entry = overlayRouteEntry(routeGetters.getRoute(store), {
 		row: encodeRowSelection(selection),
 	});
-	component.$router.push(entry);
+	router.push(entry);
 }
 
-export function clearRowSelection(component: Vue) {
-	const entry = overlayRouteEntry(routeGetters.getRoute(component.$store), {
+export function clearRowSelection(router: VueRouter) {
+	const entry = overlayRouteEntry(routeGetters.getRoute(store), {
 		row: null
 	});
-	component.$router.push(entry);
+	router.push(entry);
 }

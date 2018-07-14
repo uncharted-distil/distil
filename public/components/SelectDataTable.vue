@@ -228,7 +228,7 @@ export default Vue.extend({
 			if (this.isFilteringHighlights) {
 				clearHighlightRoot(this.$router);
 			} else {
-				clearRowSelection(this);
+				clearRowSelection(this.$router);
 			}
 		},
 		onReincludeClick() {
@@ -244,14 +244,14 @@ export default Vue.extend({
 			if (this.isFilteringHighlights) {
 				clearHighlightRoot(this.$router);
 			} else {
-				clearRowSelection(this);
+				clearRowSelection(this.$router);
 			}
 		},
 		onRowClick(row: TableRow) {
 			if (!isRowSelected(this.rowSelection, row[D3M_INDEX_FIELD])) {
-				addRowSelection(this, this.instanceName, this.rowSelection, row[D3M_INDEX_FIELD]);
+				addRowSelection(this.$router, this.instanceName, this.rowSelection, row[D3M_INDEX_FIELD]);
 			} else {
-				removeRowSelection(this, this.instanceName, this.rowSelection, row[D3M_INDEX_FIELD]);
+				removeRowSelection(this.$router, this.instanceName, this.rowSelection, row[D3M_INDEX_FIELD]);
 			}
 		},
 		invertFilters(filters: Filter[]): Filter[] {
