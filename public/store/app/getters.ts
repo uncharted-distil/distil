@@ -14,16 +14,16 @@ export const getters = {
 		return state.versionTimestamp;
 	},
 
-	isDiscovery(state: AppState): boolean {
-		return state.isDiscovery;
-	},
-
 	getProblemDataset(state: AppState): string {
 		return state.problemDataset;
 	},
 
 	getProblemTarget(state: AppState): string {
 		return state.problemTarget;
+	},
+
+	isTask1(state: AppState): boolean {
+		return state.isDiscovery;
 	},
 
 	isTask2(state: AppState): boolean {

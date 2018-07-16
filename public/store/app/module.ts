@@ -20,7 +20,7 @@ export const getters = {
 	isAborted: read(moduleGetters.isAborted),
 	getVersionNumber: read(moduleGetters.getVersionNumber),
 	getVersionTimestamp: read(moduleGetters.getVersionTimestamp),
-	isDiscovery: read(moduleGetters.isDiscovery),
+	isTask1: read(moduleGetters.isTask1),
 	isTask2: read(moduleGetters.isTask2),
 	getProblemDataset: read(moduleGetters.getProblemDataset),
 	getProblemTarget: read(moduleGetters.getProblemTarget),
