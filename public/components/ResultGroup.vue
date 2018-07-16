@@ -190,6 +190,7 @@ export default Vue.extend({
 		},
 
 		onResultCategoricalClick(context: string, key: string, value: string) {
+			console.log(context, key, value);
 			if (key && value) {
 				// extract the var name from the key
 				updateHighlightRoot(this.$router, {
@@ -203,6 +204,7 @@ export default Vue.extend({
 		},
 
 		onCorrectnessCategoricalClick(context: string, key: string, value: string) {
+			console.log(context, key, value);
 			if (key && value) {
 				// extract the var name from the key
 				updateHighlightRoot(this.$router, {
@@ -254,7 +256,7 @@ export default Vue.extend({
 		},
 
 		click() {
-			if (this.predictedSummary) {
+			if (this.predictedSummary && this.solutionId !== this.predictedSummary.solutionId) {
 				const routeEntry = overlayRouteEntry(this.$route, {
 					solutionId: this.predictedSummary.solutionId,
 					highlights: null
