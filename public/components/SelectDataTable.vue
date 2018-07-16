@@ -14,7 +14,7 @@
 						active-filter
 						:filter="activeFilter">
 					</filter-badge>
-					<filter-badge v-if="!includedActive && filter.type !== 'row'" v-for="filter in filters" :filter="filter">
+					<filter-badge v-if="!includedActive && filter.type !== 'row'" v-for="filter in filters" :key="filter.key" :filter="filter">
 					</filter-badge>
 				</div>
 			</div>
