@@ -8,16 +8,16 @@
 
 		<b-collapse v-if="!isAborted" is-nav id="nav_collapse">
 			<b-navbar-nav>
-				<b-nav-item @click="onHome" :active="isActive(HOME_ROUTE)" v-bind:class="{ active: isActive(HOME_ROUTE) }">
+				<b-nav-item @click="onHome" v-if="!isTask2" :active="isActive(HOME_ROUTE)" v-bind:class="{ active: isActive(HOME_ROUTE) }">
 					<i class="fa fa-home nav-icon"></i>
 					<b-nav-text>Home</b-nav-text>
 				</b-nav-item>
-				<b-nav-item @click="onSearch" :active="isActive(SEARCH_ROUTE)" v-bind:class="{ active: isActive(SEARCH_ROUTE) }">
+				<b-nav-item @click="onSearch" v-if="!isTask2" :active="isActive(SEARCH_ROUTE)" v-bind:class="{ active: isActive(SEARCH_ROUTE) }">
 					<i class="fa fa-angle-right nav-arrow"></i>
 					<i class="fa fa-file-text-o nav-icon"></i>
 					<b-nav-text>Select Data</b-nav-text>
 				</b-nav-item>
-				<b-nav-item @click="onSelectTarget" :active="isActive(SELECT_ROUTE)" :disabled="!hasSelectView()" v-bind:class="{ active: isActive(SELECT_ROUTE) }">
+				<b-nav-item @click="onSelectTarget" v-if="!isTask2" :active="isActive(SELECT_ROUTE)" :disabled="!hasSelectView()" v-bind:class="{ active: isActive(SELECT_ROUTE) }">
 					<i class="fa fa-angle-right nav-arrow"></i>
 					<i class="fa fa-dot-circle-o  nav-icon"></i>
 					<b-nav-text>Select Target</b-nav-text>
@@ -82,6 +82,9 @@ export default Vue.extend({
 		},
 		isAborted(): boolean {
 			return appGetters.isAborted(this.$store);
+		},
+		isTask2(): boolean {
+			return appGetters.isTask2(this.$store);
 		}
 	},
 
