@@ -254,7 +254,7 @@ export default Vue.extend({
 		},
 
 		click() {
-			if (this.predictedSummary) {
+			if (this.predictedSummary && this.solutionId !== this.predictedSummary.solutionId) {
 				const routeEntry = overlayRouteEntry(this.$route, {
 					solutionId: this.predictedSummary.solutionId,
 					highlights: null
