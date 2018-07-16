@@ -18,7 +18,7 @@ func ConfigHandler(config env.Config, version string, timestamp string, problemP
 		problem, err := compute.LoadProblemSchemaFromFile(problemPath)
 		if err == nil {
 			if len(problem.Inputs.Data) > 0 {
-				dataset = problem.Inputs.Data[0].DatasetID
+				dataset = "d_" + problem.Inputs.Data[0].DatasetID
 				if len(problem.Inputs.Data[0].Targets) > 0 {
 					target = problem.Inputs.Data[0].Targets[0].ColName
 				}
