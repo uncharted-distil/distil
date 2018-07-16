@@ -14,9 +14,7 @@ const META_PREFIX = '_feature_';
 
 const TYPES_TO_LABELS: Dictionary<string> = {
 	integer: 'Integer',
-	int4: 'Integer',
 	float: 'Decimal',
-	float8: 'Decimal',
 	latitude: 'Latitude',
 	longitude: 'Longitude',
 	text: 'Text',
@@ -41,13 +39,11 @@ const TYPES_TO_LABELS: Dictionary<string> = {
 const LABELS_TO_TYPES = _.invert(TYPES_TO_LABELS);
 
 const INTEGER_TYPES = [
-	'integer',
-	'int4'
+	'integer'
 ];
 
 const FLOATING_POINT_TYPES = [
 	'float',
-	'float8',
 	'latitude',
 	'longitude'
 ];
