@@ -112,7 +112,7 @@ export default Vue.extend({
 		},
 
 		highlights(): Highlight {
-			return getHighlights(this.$store);
+			return getHighlights();
 		},
 
 		numRows(): number {
@@ -189,14 +189,14 @@ export default Vue.extend({
 
 		tableTitle(): string {
 			if (this.includedActive) {
-				const included = getNumIncludedRows(this, this.rowSelection);
+				const included = getNumIncludedRows(this.rowSelection);
 				if (included > 0) {
 					return `${this.numItems} <b class="matching-color">matching</b> samples of ${this.numRows} to model, ${included} <b class="selected-color">selected</b>`;
 				} else {
 					return `${this.numItems} <b class="matching-color">matching</b> samples of ${this.numRows} to model`;
 				}
 			} else {
-				const excluded = getNumExcludedRows(this, this.rowSelection);
+				const excluded = getNumExcludedRows(this.rowSelection);
 				if (excluded > 0) {
 					return `${this.numItems} <b class="matching-color">matching</b> samples of ${this.numRows} to model, ${excluded} <b class="selected-color">selected</b>`;
 				} else {
@@ -223,12 +223,12 @@ export default Vue.extend({
 				filter = createFilterFromRowSelection(this.rowSelection, EXCLUDE_FILTER);
 			}
 
-			addFilterToRoute(this, filter);
+			addFilterToRoute(this.$router, filter);
 
 			if (this.isFilteringHighlights) {
-				clearHighlightRoot(this);
+				clearHighlightRoot(this.$router);
 			} else {
-				clearRowSelection(this);
+				clearRowSelection(this.$router);
 			}
 		},
 		onReincludeClick() {
@@ -239,19 +239,19 @@ export default Vue.extend({
 				filter = createFilterFromRowSelection(this.rowSelection, INCLUDE_FILTER);
 			}
 
-			addFilterToRoute(this, filter);
+			addFilterToRoute(this.$router, filter);
 
 			if (this.isFilteringHighlights) {
-				clearHighlightRoot(this);
+				clearHighlightRoot(this.$router);
 			} else {
-				clearRowSelection(this);
+				clearRowSelection(this.$router);
 			}
 		},
 		onRowClick(row: TableRow) {
 			if (!isRowSelected(this.rowSelection, row[D3M_INDEX_FIELD])) {
-				addRowSelection(this, this.instanceName, this.rowSelection, row[D3M_INDEX_FIELD]);
+				addRowSelection(this.$router, this.instanceName, this.rowSelection, row[D3M_INDEX_FIELD]);
 			} else {
-				removeRowSelection(this, this.instanceName, this.rowSelection, row[D3M_INDEX_FIELD]);
+				removeRowSelection(this.$router, this.instanceName, this.rowSelection, row[D3M_INDEX_FIELD]);
 			}
 		},
 		invertFilters(filters: Filter[]): Filter[] {

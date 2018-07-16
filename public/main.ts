@@ -12,8 +12,9 @@ import AbortSuccess from './views/AbortSuccess.vue';
 import { getters as routeGetters } from './store/route/module';
 import { mutations as viewMutations } from './store/view/module';
 import { getters as appGetters, actions as appActions } from './store/app/module';
-import { ROOT_ROUTE, HOME_ROUTE, SEARCH_ROUTE, SELECT_ROUTE, CREATE_ROUTE, RESULTS_ROUTE, EXPORT_SUCCESS_ROUTE, ABORT_SUCCESS_ROUTE } from './store/route/index';
+import { ROOT_ROUTE, HOME_ROUTE, SEARCH_ROUTE, SELECT_ROUTE, CREATE_ROUTE, RESULTS_ROUTE, EXPORT_SUCCESS_ROUTE, ABORT_SUCCESS_ROUTE } from './store/route';
 import store from './store/store';
+import { setStore } from './store/storeProvider';
 import BootstrapVue from 'bootstrap-vue';
 import { createRouteEntry } from './util/routes';
 
@@ -50,6 +51,11 @@ router.beforeEach((route, _, next) => {
 
 // sync store and router
 VueRouterSync.sync(store, router, { moduleName: 'routeModule' });
+
+// create globally accessible store so that we don't have to have reference
+// to the component to use it.  Importing the instance directly leads to ciculcar
+// dependency errors from webpack, so we use a store provider and lazy init.
+setStore(store)
 
 // init app
 new Vue({

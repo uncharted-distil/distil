@@ -60,7 +60,7 @@ export default Vue.extend({
 			return [];
 		},
 		highlights(): Highlight {
-			return getHighlights(this.$store);
+			return getHighlights();
 		},
 		rowSelection(): RowSelection {
 			return routeGetters.getDecodedRowSelection(this.$store);
@@ -71,19 +71,19 @@ export default Vue.extend({
 
 		onCategoricalClick(context: string, key: string, value: string) {
 			if (key && value) {
-				updateHighlightRoot(this, {
+				updateHighlightRoot(this.$router, {
 					context: context,
 					key: this.target,
 					value: value
 				});
 			} else {
-				clearHighlightRoot(this);
+				clearHighlightRoot(this.$router);
 			}
 		},
 
 		onNumericalClick(context: string, key: string, value: { from: number, to: number }) {
 			if (!this.highlights.root || this.highlights.root.key !== key) {
-				updateHighlightRoot(this, {
+				updateHighlightRoot(this.$router, {
 					context: this.instanceName,
 					key: this.target,
 					value: value
@@ -92,7 +92,7 @@ export default Vue.extend({
 		},
 
 		onRangeChange(context: string, key: string, value: { from: { label: string[] }, to: { label: string[] } }) {
-			updateHighlightRoot(this, {
+			updateHighlightRoot(this.$router, {
 				context: this.instanceName,
 				key: this.target,
 				value: value

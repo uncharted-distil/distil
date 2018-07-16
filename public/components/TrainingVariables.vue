@@ -61,7 +61,7 @@ export default Vue.extend({
 			return NUM_PER_PAGE;
 		},
 		highlights(): Highlight {
-			return getHighlights(this.$store);
+			return getHighlights();
 		},
 		trainingVariableSummaries(): VariableSummary[] {
 			return routeGetters.getTrainingVariableSummaries(this.$store);
@@ -85,7 +85,7 @@ export default Vue.extend({
 						training: training.join(',')
 					});
 					this.$router.push(entry);
-					removeFiltersByName(this, group.key);
+					removeFiltersByName(this.$router, group.key);
 				});
 				container.appendChild(remove);
 				return container;

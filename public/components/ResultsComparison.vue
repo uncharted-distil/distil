@@ -73,7 +73,7 @@ export default Vue.extend({
 		},
 
 		hasHighlights(): boolean {
-			const highlights = getHighlights(this.$store);
+			const highlights = getHighlights();
 			return highlights && highlights.root && highlights.root.value;
 		},
 

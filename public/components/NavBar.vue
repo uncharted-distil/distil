@@ -90,19 +90,19 @@ export default Vue.extend({
 			return view === this.path;
 		},
 		onHome() {
-			gotoHome(this.$store, this.$router);
+			gotoHome(this.$router);
 		},
 		onSearch() {
-			gotoSearch(this.$store, this.$router);
+			gotoSearch(this.$router);
 		},
 		onSelectTarget() {
-			gotoSelectTarget(this.$store, this.$router);
+			gotoSelectTarget(this.$router);
 		},
 		onSelectData() {
-			gotoSelectData(this.$store, this.$router);
+			gotoSelectData(this.$router);
 		},
 		onResults() {
-			gotoResults(this.$store, this.$router);
+			gotoResults(this.$router);
 		},
 		onAbort() {
 			this.$router.replace(ABORT_SUCCESS_ROUTE);
