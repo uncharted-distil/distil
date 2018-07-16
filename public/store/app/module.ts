@@ -21,6 +21,7 @@ export const getters = {
 	getVersionNumber: read(moduleGetters.getVersionNumber),
 	getVersionTimestamp: read(moduleGetters.getVersionTimestamp),
 	isDiscovery: read(moduleGetters.isDiscovery),
+	isTask2: read(moduleGetters.isTask2),
 	getProblemDataset: read(moduleGetters.getProblemDataset),
 	getProblemTarget: read(moduleGetters.getProblemTarget),
 }
