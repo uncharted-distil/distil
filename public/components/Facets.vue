@@ -453,7 +453,7 @@ export default Vue.extend({
 				return;
 			}
 
-			const rows = getSelectedRows(this, selection);
+			const rows = getSelectedRows(selection);
 			rows.forEach(row => {
 
 				// get col

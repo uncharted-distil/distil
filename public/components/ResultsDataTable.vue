@@ -106,7 +106,7 @@ export default Vue.extend({
 		},
 
 		isTargetCategorical(): boolean {
-			return isTextType(getVarType(this.$store, this.target));
+			return isTextType(getVarType(this.target));
 		},
 
 		isTargetNumerical(): boolean {
@@ -158,9 +158,9 @@ export default Vue.extend({
 
 		onRowClick(row: TableRow) {
 			if (!isRowSelected(this.rowSelection, row[D3M_INDEX_FIELD])) {
-				addRowSelection(this, this.instanceName, this.rowSelection, row[D3M_INDEX_FIELD]);
+				addRowSelection(this.$router, this.instanceName, this.rowSelection, row[D3M_INDEX_FIELD]);
 			} else {
-				removeRowSelection(this, this.instanceName, this.rowSelection, row[D3M_INDEX_FIELD]);
+				removeRowSelection(this.$router, this.instanceName, this.rowSelection, row[D3M_INDEX_FIELD]);
 			}
 		},
 

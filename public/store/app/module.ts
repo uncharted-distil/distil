@@ -20,7 +20,10 @@ export const getters = {
 	isAborted: read(moduleGetters.isAborted),
 	getVersionNumber: read(moduleGetters.getVersionNumber),
 	getVersionTimestamp: read(moduleGetters.getVersionTimestamp),
-	isDiscovery: read(moduleGetters.isDiscovery)
+	isTask1: read(moduleGetters.isTask1),
+	isTask2: read(moduleGetters.isTask2),
+	getProblemDataset: read(moduleGetters.getProblemDataset),
+	getProblemTarget: read(moduleGetters.getProblemTarget),
 }
 
 // typed actions
@@ -28,7 +31,7 @@ export const actions = {
 	abort: dispatch(moduleActions.abort),
 	exportSolution: dispatch(moduleActions.exportSolution),
 	exportProblem: dispatch(moduleActions.exportProblem),
-	fetchVersion: dispatch(moduleActions.fetchVersion)
+	fetchConfig: dispatch(moduleActions.fetchConfig)
 }
 
 // type mutators
@@ -36,5 +39,7 @@ export const mutations = {
 	setAborted: commit(moduleMutations.setAborted),
 	setVersionNumber: commit(moduleMutations.setVersionNumber),
 	setVersionTimestamp: commit(moduleMutations.setVersionTimestamp),
-	setIsDiscovery: commit(moduleMutations.setIsDiscovery)
+	setIsDiscovery: commit(moduleMutations.setIsDiscovery),
+	setProblemDataset: commit(moduleMutations.setProblemDataset),
+	setProblemTarget: commit(moduleMutations.setProblemTarget)
 }

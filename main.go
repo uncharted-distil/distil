@@ -31,8 +31,9 @@ import (
 )
 
 var (
-	version   = "unset"
-	timestamp = "unset"
+	version     = "unset"
+	timestamp   = "unset"
+	problemPath = ""
 )
 
 func registerRoute(mux *goji.Mux, pattern string, handler func(http.ResponseWriter, *http.Request)) {
@@ -140,7 +141,7 @@ func main() {
 		}
 	} else {
 		// NOTE: EVAL ONLY OVERRIDE SETUP FOR METRICS!
-		problemPath := path.Join(config.D3MInputDir, "TRAIN", "problem_TRAIN", "problemDoc.json")
+		problemPath = path.Join(config.D3MInputDir, "TRAIN", "problem_TRAIN", "problemDoc.json")
 		ws.SetProblemFile(problemPath)
 	}
 
@@ -221,7 +222,7 @@ func main() {
 	registerRoute(mux, "/distil/abort", routes.AbortHandler())
 	registerRoute(mux, "/distil/export/:solution-id", routes.ExportHandler(pgSolutionStorageCtor, metadataStorageCtor, solutionClient, config.D3MOutputDir))
 	registerRoute(mux, "/distil/ingest/:index/:dataset", routes.IngestHandler(metadataStorageCtor, ingestConfig))
-	registerRoute(mux, "/distil/config", routes.ConfigHandler(config, version, timestamp))
+	registerRoute(mux, "/distil/config", routes.ConfigHandler(config, version, timestamp, problemPath))
 	registerRoute(mux, "/ws", ws.SolutionHandler(solutionClient, metadataStorageCtor, pgDataStorageCtor, pgSolutionStorageCtor))
 
 	// POST

@@ -138,7 +138,7 @@ export default Vue.extend({
 		},
 
 		highlights(): Highlight {
-			return getHighlights(this.$store);
+			return getHighlights();
 		},
 
 		rowSelection(): RowSelection {
@@ -178,7 +178,7 @@ export default Vue.extend({
 		},
 
 		onRangeChange(context: string, key: string, value: { from: number, to: number }) {
-			updateHighlightRoot(this, {
+			updateHighlightRoot(this.$router, {
 				context: context,
 				key: key,
 				value: value
@@ -190,13 +190,13 @@ export default Vue.extend({
 			if (this.enableHighlighting) {
 				if (key && value) {
 					// extract the var name from the key
-					updateHighlightRoot(this, {
+					updateHighlightRoot(this.$router, {
 						context: context,
 						key: key,
 						value: value
 					});
 				} else {
-					clearHighlightRoot(this);
+					clearHighlightRoot(this.$router);
 				}
 			}
 			this.$emit('facet-click', context, key, value);
@@ -209,7 +209,7 @@ export default Vue.extend({
 		onNumericalClick(context: string, key: string, value: { from: number, to: number }) {
 			if (this.enableHighlighting) {
 				if (!this.highlights.root || this.highlights.root.key !== key) {
-					updateHighlightRoot(this, {
+					updateHighlightRoot(this.$router, {
 						context: this.instanceName,
 						key: key,
 						value: value

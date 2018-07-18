@@ -1,7 +1,8 @@
 import _ from 'lodash';
-import Vue from 'vue';
 import { getters as routeGetters } from '../store/route/module';
 import { overlayRouteEntry } from './routes';
+import { store } from '../store/storeProvider';
+import VueRouter from 'vue-router';
 
 /**
  * Categorical filter, omitting documents that do not contain the provided
@@ -170,47 +171,48 @@ function removeFilter(filters: string, filter: Filter): string {
 	return encodeFilters(decoded);
 }
 
-export function hasFilterInRoute(component: Vue, variable: string): boolean {
+export function hasFilterInRoute(variable: string): boolean {
 	// retrieve the filters from the route
-	const filters = routeGetters.getRouteFilters(component.$store);
+
+	const filters = routeGetters.getRouteFilters(store());
 	const decoded = decodeFilters(filters);
 	return decoded.filter(filter => {
 		return filter.key && filter.key === variable;
 	}).length > 0;
 }
 
-export function addFilterToRoute(component: Vue, filter: Filter) {
+export function addFilterToRoute(router: VueRouter, filter: Filter) {
 	// retrieve the filters from the route
-	const filters = routeGetters.getRouteFilters(component.$store);
+	const filters = routeGetters.getRouteFilters(store());
 	// merge the updated filters back into the route query params
 	const updated = addFilter(filters, filter);
-	const entry = overlayRouteEntry(routeGetters.getRoute(component.$store), {
+	const entry = overlayRouteEntry(routeGetters.getRoute(store()), {
 		filters: updated
 	});
-	component.$router.push(entry);
+	router.push(entry);
 }
 
-export function removeFilterFromRoute(component: Vue, filter: Filter) {
+export function removeFilterFromRoute(router: VueRouter, filter: Filter) {
 	// retrieve the filters from the route
-	const filters = routeGetters.getRouteFilters(component.$store);
+	const filters = routeGetters.getRouteFilters(store());
 	// merge the updated filters back into the route query params
 	const updated = removeFilter(filters, filter);
-	const entry = overlayRouteEntry(routeGetters.getRoute(component.$store), {
+	const entry = overlayRouteEntry(routeGetters.getRoute(store()), {
 		filters: updated
 	});
-	component.$router.push(entry);
+	router.push(entry);
 }
 
-export function removeFiltersByName(component: Vue, key: string) {
+export function removeFiltersByName(router: VueRouter, key: string) {
 	// retrieve the filters from the route
-	const filters = routeGetters.getRouteFilters(component.$store);
+	const filters = routeGetters.getRouteFilters(store());
 	let decoded = decodeFilters(filters);
 	decoded = decoded.filter(filter => {
 		return (filter.key !== key);
 	});
 	const encoded = encodeFilters(decoded);
-	const entry = overlayRouteEntry(routeGetters.getRoute(component.$store), {
+	const entry = overlayRouteEntry(routeGetters.getRoute(store()), {
 		filters: encoded
 	});
-	component.$router.push(entry);
+	router.push(entry);
 }

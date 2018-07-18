@@ -8,7 +8,12 @@ import (
 	"github.com/unchartedsoftware/distil/api/pipeline"
 )
 
-func createTestStep(step int) *StepData {
+func createLabels(counter int64) []string {
+	return []string{fmt.Sprintf("alpha-%d", counter), fmt.Sprintf("bravo-%d", counter)}
+}
+
+func createTestStep(step int64) *StepData {
+	labels := createLabels(step)
 	return NewStepDataWithHyperparameters(
 		&pipeline.Primitive{
 			Id:         fmt.Sprintf("0000-primtive-%d", step),
@@ -18,29 +23,104 @@ func createTestStep(step int) *StepData {
 		},
 		[]string{"produce"},
 		map[string]interface{}{
-			"testString":      fmt.Sprintf("hyperparam-%d", step),
-			"testBool":        step%2 == 0,
-			"testInt":         step,
-			"testStringArray": []string{fmt.Sprintf("alpha-%d", step), fmt.Sprintf("bravo-%d", step)},
-			"testBoolArray":   []bool{step%2 == 0, step%2 != 0},
-			"testIntArray":    []int{step, step + 1},
+			"testString":         fmt.Sprintf("hyperparam-%d", step),
+			"testBool":           step%2 == 0,
+			"testInt":            step,
+			"testStringArray":    labels,
+			"testBoolArray":      []bool{step%2 == 0, step%2 != 0},
+			"testIntArray":       []int64{step, step + 1},
+			"testIntMap":         map[string]int64{labels[0]: int64(step), labels[1]: int64(step)},
+			"testNestedIntArray": [][]int64{{step, step + 1}, {step + 2, step + 3}},
+			"testNestedIntMap":   map[string][]int64{labels[0]: {step, step + 1}, labels[1]: {step + 2, step + 3}},
 		},
 	)
 }
 
-func testStep(t *testing.T, index int, step *StepData, steps []*pipeline.PipelineDescriptionStep) {
+func ConvertToStringArray(list *pipeline.ValueList) []string {
+	arr := []string{}
+	for _, v := range list.Items {
+		arr = append(arr, v.GetString_())
+	}
+	return arr
+}
+
+func ConvertToBoolArray(list *pipeline.ValueList) []bool {
+	arr := []bool{}
+	for _, v := range list.Items {
+		arr = append(arr, v.GetBool())
+	}
+	return arr
+}
+
+func ConvertToIntArray(list *pipeline.ValueList) []int64 {
+	arr := []int64{}
+	for _, v := range list.Items {
+		arr = append(arr, v.GetInt64())
+	}
+	return arr
+}
+
+func ConvertToIntMap(dict *pipeline.ValueDict) map[string]int64 {
+	mp := map[string]int64{}
+	for k, v := range dict.Items {
+		mp[k] = v.GetInt64()
+	}
+	return mp
+}
+
+func ConvertToNestedIntArray(list *pipeline.ValueList) [][]int64 {
+	arr := [][]int64{}
+	for _, v := range list.Items {
+		inner := []int64{}
+		for _, w := range v.GetList().Items {
+			inner = append(inner, w.GetInt64())
+		}
+		arr = append(arr, inner)
+	}
+	return arr
+}
+
+func ConvertToNestedIntMap(dict *pipeline.ValueDict) map[string][]int64 {
+	mp := map[string][]int64{}
+	for k, v := range dict.Items {
+		inner := []int64{}
+		for _, w := range v.GetList().Items {
+			inner = append(inner, w.GetInt64())
+		}
+		mp[k] = inner
+	}
+	return mp
+}
+
+func testStep(t *testing.T, index int64, step *StepData, steps []*pipeline.PipelineDescriptionStep) {
+	labels := createLabels(index)
+
 	assert.Equal(t, "produce", steps[index].GetPrimitive().GetOutputs()[0].GetId())
 
 	assert.Equal(t, fmt.Sprintf("hyperparam-%d", index),
-		steps[index].GetPrimitive().GetHyperparams()["testString"].GetValue().GetData().GetString_())
-	assert.Equal(t, int64(index), steps[index].GetPrimitive().GetHyperparams()["testInt"].GetValue().GetData().GetInt64())
-	assert.Equal(t, index%2 == 0, steps[index].GetPrimitive().GetHyperparams()["testBool"].GetValue().GetData().GetBool())
-	assert.Equal(t, []string{fmt.Sprintf("alpha-%d", index), fmt.Sprintf("bravo-%d", index)},
-		steps[index].GetPrimitive().GetHyperparams()["testStringArray"].GetValue().GetData().GetStringList().GetList())
+		steps[index].GetPrimitive().GetHyperparams()["testString"].GetValue().GetData().GetRaw().GetString_())
+
+	assert.Equal(t, int64(index), steps[index].GetPrimitive().GetHyperparams()["testInt"].GetValue().GetData().GetRaw().GetInt64())
+
+	assert.Equal(t, index%2 == 0, steps[index].GetPrimitive().GetHyperparams()["testBool"].GetValue().GetData().GetRaw().GetBool())
+
+	assert.Equal(t, labels,
+		ConvertToStringArray(steps[index].GetPrimitive().GetHyperparams()["testStringArray"].GetValue().GetData().GetRaw().GetList()))
+
 	assert.Equal(t, []int64{int64(index), int64(index) + 1},
-		steps[index].GetPrimitive().GetHyperparams()["testIntArray"].GetValue().GetData().GetInt64List().GetList())
+		ConvertToIntArray(steps[index].GetPrimitive().GetHyperparams()["testIntArray"].GetValue().GetData().GetRaw().GetList()))
+
 	assert.Equal(t, []bool{index%2 == 0, index%2 != 0},
-		steps[index].GetPrimitive().GetHyperparams()["testBoolArray"].GetValue().GetData().GetBoolList().GetList())
+		ConvertToBoolArray(steps[index].GetPrimitive().GetHyperparams()["testBoolArray"].GetValue().GetData().GetRaw().GetList()))
+
+	assert.Equal(t, map[string]int64{labels[0]: int64(index), labels[1]: int64(index)},
+		ConvertToIntMap(steps[index].GetPrimitive().GetHyperparams()["testIntMap"].GetValue().GetData().GetRaw().GetDict()))
+
+	assert.Equal(t, [][]int64{{index, index + 1}, {index + 2, index + 3}},
+		ConvertToNestedIntArray(steps[index].GetPrimitive().GetHyperparams()["testNestedIntArray"].GetValue().GetData().GetRaw().GetList()))
+
+	assert.Equal(t, map[string][]int64{labels[0]: {index, index + 1}, labels[1]: {index + 2, index + 3}},
+		ConvertToNestedIntMap(steps[index].GetPrimitive().GetHyperparams()["testNestedIntMap"].GetValue().GetData().GetRaw().GetDict()))
 
 	assert.EqualValues(t, step.GetPrimitive(), steps[index].GetPrimitive().GetPrimitive())
 }

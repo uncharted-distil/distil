@@ -7,7 +7,8 @@ import { overlayRouteEntry } from '../util/routes'
 import { Filter, ROW_FILTER } from '../util/filters';
 import { CREATE_ROUTE, RESULTS_ROUTE } from '../store/route/index';
 import _ from 'lodash';
-import Vue from 'vue';
+import { store } from '../store/storeProvider';
+import VueRouter from 'vue-router';
 
 export function encodeRowSelection(row: RowSelection): string {
 	if (_.isEmpty(row)) {
@@ -34,11 +35,11 @@ export function createFilterFromRowSelection(selection: RowSelection, mode: stri
 	};
 }
 
-export function getNumIncludedRows(component: Vue, selection: RowSelection): number {
+export function getNumIncludedRows(selection: RowSelection): number {
 	if (!selection || selection.d3mIndices.length === 0) {
 		return 0;
 	}
-	const includedData = dataGetters.getIncludedTableDataItems(component.$store);
+	const includedData = dataGetters.getIncludedTableDataItems(store());
 	const d3mIndices = {};
 	selection.d3mIndices.forEach(index => {
 		d3mIndices[index] = true;
@@ -46,11 +47,11 @@ export function getNumIncludedRows(component: Vue, selection: RowSelection): num
 	return includedData.filter(data => d3mIndices[data[D3M_INDEX_FIELD]]).length;
 }
 
-export function getNumExcludedRows(component: Vue, selection: RowSelection,): number {
+export function getNumExcludedRows(selection: RowSelection,): number {
 	if (!selection || selection.d3mIndices.length === 0) {
 		return 0;
 	}
-	const excludedData = dataGetters.getExcludedTableDataItems(component.$store);
+	const excludedData = dataGetters.getExcludedTableDataItems(store());
 	const d3mIndices = {};
 	selection.d3mIndices.forEach(index => {
 		d3mIndices[index] = true;
@@ -97,22 +98,22 @@ export function updateTableRowSelection(items: any, selection: RowSelection, con
 	return items;
 }
 
-export function getSelectedRows(component: Vue, selection: RowSelection): Row[] {
+export function getSelectedRows(selection: RowSelection): Row[] {
 	if (!selection || selection.d3mIndices.length === 0) {
 		return [];
 	}
 
-	const path = routeGetters.getRoutePath(component.$store);
+	const path = routeGetters.getRoutePath(store());
 
 	let includedData = [];
 	let excludedData = [];
 
 	if (path === CREATE_ROUTE) {
-		includedData = dataGetters.getIncludedTableDataItems(component.$store);
-		excludedData = dataGetters.getExcludedTableDataItems(component.$store);
+		includedData = dataGetters.getIncludedTableDataItems(store());
+		excludedData = dataGetters.getExcludedTableDataItems(store());
 	} else if (path === RESULTS_ROUTE) {
-		includedData = resultsGetters.getIncludedResultTableDataItems(component.$store);
-		excludedData = resultsGetters.getExcludedResultTableDataItems(component.$store);
+		includedData = resultsGetters.getIncludedResultTableDataItems(store());
+		excludedData = resultsGetters.getExcludedResultTableDataItems(store());
 	}
 
 	const d3mIndices = {};
@@ -153,7 +154,7 @@ export function getSelectedRows(component: Vue, selection: RowSelection): Row[] 
 	return rows;
 }
 
-export function addRowSelection(component: Vue, context: string, selection: RowSelection, d3mIndex: number) {
+export function addRowSelection(router: VueRouter, context: string, selection: RowSelection, d3mIndex: number) {
 	if (!selection || selection.context !== context) {
 		selection = {
 			context: context,
@@ -161,28 +162,28 @@ export function addRowSelection(component: Vue, context: string, selection: RowS
 		};
 	}
 	selection.d3mIndices.push(d3mIndex);
-	const entry = overlayRouteEntry(routeGetters.getRoute(component.$store), {
+	const entry = overlayRouteEntry(routeGetters.getRoute(store()), {
 		row: encodeRowSelection(selection),
 	});
-	component.$router.push(entry);
+	router.push(entry);
 }
 
-export function removeRowSelection(component: Vue, context: string, selection: RowSelection, d3mIndex: number) {
+export function removeRowSelection(router: VueRouter, context: string, selection: RowSelection, d3mIndex: number) {
 	_.remove(selection.d3mIndices, r => {
 		return r === d3mIndex;
 	});
 	if (selection.d3mIndices.length === 0) {
 		selection = null;
 	}
-	const entry = overlayRouteEntry(routeGetters.getRoute(component.$store), {
+	const entry = overlayRouteEntry(routeGetters.getRoute(store()), {
 		row: encodeRowSelection(selection),
 	});
-	component.$router.push(entry);
+	router.push(entry);
 }
 
-export function clearRowSelection(component: Vue) {
-	const entry = overlayRouteEntry(routeGetters.getRoute(component.$store), {
+export function clearRowSelection(router: VueRouter) {
+	const entry = overlayRouteEntry(routeGetters.getRoute(store()), {
 		row: null
 	});
-	component.$router.push(entry);
+	router.push(entry);
 }

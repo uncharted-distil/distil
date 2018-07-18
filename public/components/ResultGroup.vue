@@ -152,7 +152,7 @@ export default Vue.extend({
 		},
 
 		highlights(): Highlight {
-			return getHighlights(this.$store);
+			return getHighlights();
 		},
 
 		currentClass(): string {
@@ -192,32 +192,32 @@ export default Vue.extend({
 		onResultCategoricalClick(context: string, key: string, value: string) {
 			if (key && value) {
 				// extract the var name from the key
-				updateHighlightRoot(this, {
+				updateHighlightRoot(this.$router, {
 					context: context,
 					key: key,
 					value: value
 				});
 			} else {
-				clearHighlightRoot(this);
+				clearHighlightRoot(this.$router);
 			}
 		},
 
 		onCorrectnessCategoricalClick(context: string, key: string, value: string) {
 			if (key && value) {
 				// extract the var name from the key
-				updateHighlightRoot(this, {
+				updateHighlightRoot(this.$router, {
 					context: context,
 					key: key,
 					value: value
 				});
 			} else {
-				clearHighlightRoot(this);
+				clearHighlightRoot(this.$router);
 			}
 		},
 
 		onResultNumericalClick(context: string, key: string, value: { from: number, to: number }) {
 			if (!this.highlights.root || this.highlights.root.key !== key) {
-				updateHighlightRoot(this, {
+				updateHighlightRoot(this.$router, {
 					context: context,
 					key: key,
 					value: value
@@ -226,7 +226,7 @@ export default Vue.extend({
 		},
 
 		onResultRangeChange(context: string, key: string, value: { from: { label: string[] }, to: { label: string[] } }) {
-			updateHighlightRoot(this, {
+			updateHighlightRoot(this.$router, {
 				context: context,
 				key: key,
 				value: value
@@ -236,7 +236,7 @@ export default Vue.extend({
 
 		onResidualNumericalClick(context: string, key: string, value: { from: number, to: number }) {
 			if (!this.highlights.root || this.highlights.root.key !== key) {
-				updateHighlightRoot(this, {
+				updateHighlightRoot(this.$router, {
 					context: context,
 					key: key,
 					value: value
@@ -245,7 +245,7 @@ export default Vue.extend({
 		},
 
 		onResidualRangeChange(context: string, key: string, value: { from: number, to: number }) {
-			updateHighlightRoot(this, {
+			updateHighlightRoot(this.$router, {
 				context: context,
 				key: key,
 				value: value
@@ -254,7 +254,7 @@ export default Vue.extend({
 		},
 
 		click() {
-			if (this.predictedSummary) {
+			if (this.predictedSummary && this.solutionId !== this.predictedSummary.solutionId) {
 				const routeEntry = overlayRouteEntry(this.$route, {
 					solutionId: this.predictedSummary.solutionId,
 					highlights: null

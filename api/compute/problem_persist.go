@@ -1,7 +1,9 @@
 package compute
 
 import (
+	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"os"
 	"path"
 	"strconv"
@@ -181,4 +183,19 @@ func CreateProblemSchema(datasetDir string, dataset string, targetVar *model.Var
 	}
 
 	return problem, strconv.FormatUint(hash, 10), nil
+}
+
+// LoadProblemSchemaFromFile loads the problem schema from file.
+func LoadProblemSchemaFromFile(filename string) (*ProblemPersist, error) {
+	b, err := ioutil.ReadFile(filename)
+	if err != nil {
+		return nil, err
+	}
+
+	problemInfo := &ProblemPersist{}
+	err = json.Unmarshal(b, problemInfo)
+	if err != nil {
+		return nil, err
+	}
+	return problemInfo, nil
 }

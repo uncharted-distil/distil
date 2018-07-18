@@ -7,7 +7,8 @@ import { overlayRouteEntry } from '../util/routes'
 import { FilterParams } from '../util/filters'
 import { getFilterType, getVarType, isMetaType, addMetaPrefix } from '../util/types'
 import _ from 'lodash';
-import Vue from 'vue';
+import { store } from '../store/storeProvider';
+import VueRouter from 'vue-router';
 
 export function encodeHighlights(highlightRoot: HighlightRoot): string {
 	if (_.isEmpty(highlightRoot)) {
@@ -29,7 +30,7 @@ export function createFilterFromHighlightRoot(store: Store<any>, highlightRoot: 
 	}
 	// inject metadata prefix for metadata vars
 	let key = highlightRoot.key;
-	const type = getVarType(store, key);
+	const type = getVarType(key);
 	if (isMetaType(type)) {
 		key = addMetaPrefix(key);
 	}
@@ -63,27 +64,27 @@ export function addHighlightToFilterParams(store: any, filterParams: FilterParam
 	return params;
 }
 
-export function updateHighlightRoot(component: Vue, highlightRoot: HighlightRoot) {
-	const entry = overlayRouteEntry(routeGetters.getRoute(component.$store), {
+export function updateHighlightRoot(router: VueRouter, highlightRoot: HighlightRoot) {
+	const entry = overlayRouteEntry(routeGetters.getRoute(store()), {
 		highlights: encodeHighlights(highlightRoot),
 		row: null // clear row
 	});
-	component.$router.push(entry);
+	router.push(entry);
 }
 
-export function clearHighlightRoot(component: Vue) {
-	const entry = overlayRouteEntry(routeGetters.getRoute(component.$store), {
+export function clearHighlightRoot(router: VueRouter) {
+	const entry = overlayRouteEntry(routeGetters.getRoute(store()), {
 		highlights: null,
 		row: null // clear row
 	});
-	component.$router.push(entry);
+	router.push(entry);
 }
 
-export function getHighlights(store: Store<any>): Highlight {
+export function getHighlights(): Highlight {
 	return {
-		root: routeGetters.getDecodedHighlightRoot(store),
+		root: routeGetters.getDecodedHighlightRoot(store()),
 		values: {
-			summaries: highlightGetters.getHighlightedSummaries(store)
+			summaries: highlightGetters.getHighlightedSummaries(store())
 		}
 	};
 }

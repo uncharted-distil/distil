@@ -13,13 +13,15 @@ const defaultResource = "0"
 // CreateUserDatasetPipeline creates a pipeline description to capture user feature selection and
 // semantic type information.
 func CreateUserDatasetPipeline(name string, description string, allFeatures []*model.Variable,
-	selectedFeatures []string) (*pipeline.PipelineDescription, error) {
+	targetFeature string, selectedFeatures []string) (*pipeline.PipelineDescription, error) {
 
-	// save the selected features in a set for quick lookup
+	// save the selected features in a set for quick lookup, add the target as well since we
+	// don't want it removed
 	selectedSet := map[string]bool{}
 	for _, v := range selectedFeatures {
 		selectedSet[strings.ToLower(v)] = true
 	}
+	selectedSet[strings.ToLower(targetFeature)] = true
 
 	// create the feature selection primitive
 	removeFeatures, err := createRemoveFeatures(allFeatures, selectedSet)
@@ -38,11 +40,16 @@ func CreateUserDatasetPipeline(name string, description string, allFeatures []*m
 	for _, v := range updateSemanticTypes {
 		builder = builder.Add(v)
 	}
-	pipeline, err := builder.AddInferencePoint().Compile()
+	pip, err := builder.AddInferencePoint().Compile()
 	if err != nil {
 		return nil, err
 	}
-	return pipeline, nil
+
+	// Input set to arbitrary string for now
+	pip.Inputs = []*pipeline.PipelineDescriptionInput{{
+		Name: "dataset",
+	}}
+	return pip, nil
 }
 
 func createRemoveFeatures(allFeatures []*model.Variable, selectedSet map[string]bool) (*StepData, error) {

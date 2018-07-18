@@ -83,6 +83,7 @@ func (s *StepData) GetOutputMethods() []string {
 // BuildDescriptionStep creates protobuf structures from a pipeline step
 // definition.
 func (s *StepData) BuildDescriptionStep() (*pipeline.PipelineDescriptionStep, error) {
+
 	// generate arguments entries
 	arguments := map[string]*pipeline.PrimitiveStepArgument{}
 	for k, v := range s.Arguments {
@@ -96,70 +97,24 @@ func (s *StepData) BuildDescriptionStep() (*pipeline.PipelineDescriptionStep, er
 		}
 	}
 
-	// generate arguments entries - accepted types are currently intXX, string, bool.  The underlying
-	// protobuf structure allows for others - introducing them should be a matter of expanding this
-	// list.
+	// generate arguments entries - accepted types are currently intXX, string, bool, as well as list, map[string]
+	// of those types.  The underlying protobuf structure allows for others that can be handled here as needed.
 	hyperparameters := map[string]*pipeline.PrimitiveStepHyperparameter{}
 	for k, v := range s.Hyperparameters {
-		var value *pipeline.Value
-		switch t := v.(type) {
-		case int, int8, int16, int32, int64:
-			value = &pipeline.Value{
-				Value: &pipeline.Value_Int64{
-					Int64: reflect.ValueOf(t).Int(),
-				},
-			}
-		case []int, []int8, []int16, []int32, []int64:
-			arr := []int64{}
-			s := reflect.ValueOf(t)
-			if s.Kind() == reflect.Slice {
-				for i := 0; i < s.Len(); i++ {
-					arr = append(arr, s.Index(i).Int())
-				}
-			}
-			value = &pipeline.Value{
-				Value: &pipeline.Value_Int64List{
-					Int64List: &pipeline.Int64List{
-						List: arr,
-					},
-				},
-			}
-		case string:
-			value = &pipeline.Value{
-				Value: &pipeline.Value_String_{
-					String_: t,
-				},
-			}
-		case []string:
-			value = &pipeline.Value{
-				Value: &pipeline.Value_StringList{
-					StringList: &pipeline.StringList{
-						List: t,
-					},
-				},
-			}
-		case bool:
-			value = &pipeline.Value{
-				Value: &pipeline.Value_Bool{
-					Bool: t,
-				},
-			}
-		case []bool:
-			value = &pipeline.Value{
-				Value: &pipeline.Value_BoolList{
-					BoolList: &pipeline.BoolList{
-						List: t,
-					},
-				},
-			}
-		default:
-			return nil, errors.Errorf("compile failed: unhandled type `%v` for hyperparameter `%s`", v, k)
+		rawValue, err := parseValue(v)
+		if err != nil {
+			return nil, errors.Errorf("compile failed: hyperparameter `%s` - %s", k, err.Error())
 		}
+
 		hyperparameters[k] = &pipeline.PrimitiveStepHyperparameter{
 			// only handle value args rights now - extend to others if required
 			Argument: &pipeline.PrimitiveStepHyperparameter_Value{
 				Value: &pipeline.ValueArgument{
-					Data: value,
+					Data: &pipeline.Value{
+						Value: &pipeline.Value_Raw{
+							Raw: rawValue,
+						},
+					},
 				},
 			},
 		}
@@ -186,4 +141,121 @@ func (s *StepData) BuildDescriptionStep() (*pipeline.PipelineDescriptionStep, er
 			},
 		},
 	}, nil
+}
+
+func parseList(v interface{}) (*pipeline.ValueRaw, error) {
+	// parse list contents as a list, map, or value
+	valueList := []*pipeline.ValueRaw{}
+	var value *pipeline.ValueRaw
+	var err error
+
+	// type switches to work well with generic arrays/maps so we have to revert to using reflection
+	refValue := reflect.ValueOf(v)
+	if refValue.Kind() != reflect.Slice {
+		return nil, errors.Errorf("unexpected parameter %s", refValue.Kind())
+	}
+	for i := 0; i < refValue.Len(); i++ {
+		refElement := refValue.Index(i)
+		switch refElement.Kind() {
+		case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64, reflect.String, reflect.Bool:
+			value, err = parseValue(refElement.Interface())
+		case reflect.Slice:
+			value, err = parseList(refElement.Interface())
+		case reflect.Map:
+			value, err = parseMap(refElement.Interface())
+		default:
+			err = errors.Errorf("unhandled list arg type %s", refElement.Kind())
+		}
+
+		if err != nil {
+			return nil, err
+		}
+
+		valueList = append(valueList, value)
+	}
+	rawValue := &pipeline.ValueRaw{
+		Raw: &pipeline.ValueRaw_List{
+			List: &pipeline.ValueList{
+				Items: valueList,
+			},
+		},
+	}
+	return rawValue, nil
+}
+
+func parseMap(vmap interface{}) (*pipeline.ValueRaw, error) {
+	// parse map contents as list, map or value
+	valueMap := map[string]*pipeline.ValueRaw{}
+	var value *pipeline.ValueRaw
+	var err error
+
+	// type switches to work well with generic arrays/maps so we have to revert to using reflection
+	refValue := reflect.ValueOf(vmap)
+	if refValue.Kind() != reflect.Map {
+		return nil, errors.Errorf("unexpected parameter %s", refValue.Kind())
+	}
+	keys := refValue.MapKeys()
+	for _, key := range keys {
+
+		if key.Kind() != reflect.String {
+			return nil, errors.Errorf("non-string map key type %s", refValue.Kind())
+		}
+
+		refElement := refValue.MapIndex(key)
+		switch refElement.Kind() {
+		case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64, reflect.String, reflect.Bool:
+			value, err = parseValue(refElement.Interface())
+		case reflect.Slice:
+			value, err = parseList(refElement.Interface())
+		case reflect.Map:
+			value, err = parseMap(refElement.Interface())
+		default:
+			err = errors.Errorf("unhandled map arg type %s", refElement.Kind())
+		}
+
+		if err != nil {
+			return nil, err
+		}
+		valueMap[key.String()] = value
+	}
+
+	v := &pipeline.ValueRaw{
+		Raw: &pipeline.ValueRaw_Dict{
+			Dict: &pipeline.ValueDict{
+				Items: valueMap,
+			},
+		},
+	}
+	return v, nil
+}
+
+func parseValue(v interface{}) (*pipeline.ValueRaw, error) {
+	refValue := reflect.ValueOf(v)
+	switch refValue.Kind() {
+	// parse a numeric, string or boolean value
+	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
+		return &pipeline.ValueRaw{
+			Raw: &pipeline.ValueRaw_Int64{
+				Int64: refValue.Int(),
+			},
+		}, nil
+	case reflect.String:
+		return &pipeline.ValueRaw{
+			Raw: &pipeline.ValueRaw_String_{
+				String_: refValue.String(),
+			},
+		}, nil
+	case reflect.Bool:
+		return &pipeline.ValueRaw{
+			Raw: &pipeline.ValueRaw_Bool{
+				Bool: refValue.Bool(),
+			},
+		}, nil
+	case reflect.Slice:
+		return parseList(v)
+	case reflect.Map:
+		return parseMap(v)
+	default:
+		return nil, errors.Errorf("unhandled value arg type %s", refValue.Kind())
+	}
 }

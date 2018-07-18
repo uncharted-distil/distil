@@ -47,7 +47,7 @@
 			</div>
 		</b-modal>
 		<div class="row justify-content-center">
-			<b-button class="export-button" :variant="exportVariant" @click="showExport = !showExport" v-if="isDiscovery">
+			<b-button class="export-button" :variant="exportVariant" @click="showExport = !showExport" v-if="isTask1">
 				Task 1: Export Problem
 			</b-button>
 			<b-button class="create-button" :variant="createVariant" @click="create" :disabled="disableCreate">
@@ -136,8 +136,8 @@ export default Vue.extend({
 		isPending(): boolean {
 			return this.pending;
 		},
-		isDiscovery(): boolean {
-			return appGetters.isDiscovery(this.$store);
+		isTask1(): boolean {
+			return appGetters.isTask1(this.$store);
 		},
 		disableCreate(): boolean {
 			return this.isPending || (!this.targetSelected || !this.trainingSelected);

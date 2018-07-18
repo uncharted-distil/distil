@@ -1,5 +1,5 @@
 import _ from 'lodash';
-import { Store } from 'vuex';
+import { store } from '../store/storeProvider';
 import { Dictionary } from './dict';
 import { getters as datasetGetters } from '../store/dataset/module';
 import { D3M_INDEX_FIELD } from '../store/dataset/index';
@@ -14,9 +14,7 @@ const META_PREFIX = '_feature_';
 
 const TYPES_TO_LABELS: Dictionary<string> = {
 	integer: 'Integer',
-	int4: 'Integer',
 	float: 'Decimal',
-	float8: 'Decimal',
 	latitude: 'Latitude',
 	longitude: 'Longitude',
 	text: 'Text',
@@ -41,13 +39,11 @@ const TYPES_TO_LABELS: Dictionary<string> = {
 const LABELS_TO_TYPES = _.invert(TYPES_TO_LABELS);
 
 const INTEGER_TYPES = [
-	'integer',
-	'int4'
+	'integer'
 ];
 
 const FLOATING_POINT_TYPES = [
 	'float',
-	'float8',
 	'latitude',
 	'longitude'
 ];
@@ -159,8 +155,8 @@ const BASIC_SUGGESTIONS = [
 	'unknown'
 ];
 
-export function getVarType(store: Store<any>, varname: string): string {
-	return datasetGetters.getVariableTypesMap(store)[varname];
+export function getVarType(varname: string): string {
+	return datasetGetters.getVariableTypesMap(store())[varname];
 }
 
 export function formatValue(colValue: any, colType: string): any {

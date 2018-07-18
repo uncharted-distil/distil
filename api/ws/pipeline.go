@@ -3,7 +3,6 @@ package ws
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"net/http"
 	"time"
 
@@ -178,13 +177,7 @@ func handleStopSolutions(conn *Connection, client *compute.Client, msg *Message)
 }
 
 func parseMetrics(filename string) ([]string, error) {
-	b, err := ioutil.ReadFile(filename)
-	if err != nil {
-		return nil, errors.Wrap(err, "unable to read problem file")
-	}
-
-	problemInfo := &compute.ProblemPersist{}
-	err = json.Unmarshal(b, problemInfo)
+	problemInfo, err := compute.LoadProblemSchemaFromFile(filename)
 	if err != nil {
 		return nil, errors.Wrap(err, "Unable to unmarshal classification response")
 	}
