@@ -476,23 +476,6 @@ func (s *Storage) getResultMinMaxAggsQuery(variable *model.Variable, resultVaria
 	return queryPart
 }
 
-func (s *Storage) getResultHistogramAggQuery(extrema *model.Extrema, variable *model.Variable, resultVariable *model.Variable) (string, string, string) {
-	// compute the bucket interval for the histogram
-	interval := extrema.GetBucketInterval()
-
-	// Only numeric types should occur.
-	fieldTyped := fmt.Sprintf("cast(\"%s\" as double precision)", resultVariable.Key)
-
-	// get histogram agg name & query string.
-	histogramAggName := fmt.Sprintf("\"%s%s\"", model.HistogramAggPrefix, extrema.Key)
-	rounded := extrema.GetBucketMinMax()
-	bucketQueryString := fmt.Sprintf("width_bucket(%s, %g, %g, %d) - 1",
-		fieldTyped, rounded.Min, rounded.Max, extrema.GetBucketCount())
-	histogramQueryString := fmt.Sprintf("(%s) * %g + %g", bucketQueryString, interval, rounded.Min)
-
-	return histogramAggName, bucketQueryString, histogramQueryString
-}
-
 func (s *Storage) fetchResultsExtrema(resultURI string, dataset string, variable *model.Variable, resultVariable *model.Variable) (*model.Extrema, error) {
 	// add min / max aggregation
 	aggQuery := s.getResultMinMaxAggsQuery(variable, resultVariable)
