@@ -18,6 +18,36 @@ import (
 )
 
 // FeaturizeContainer uses containers to obtain a featurized view of complex variables.
+func ClusterContainer(index string, dataset string, config *IngestTaskConfig) error {
+	client := rest.NewClient(config.ClusteringRESTEndpoint)
+
+	// create required folders for outputPath
+	createContainingDirs(config.getTmpAbsolutePath(config.ClusteringOutputDataRelative))
+	createContainingDirs(config.getTmpAbsolutePath(config.ClusteringOutputSchemaRelative))
+
+	// create featurizer
+	featurizer := rest.NewFeaturizer(config.ClusteringFunctionName, client)
+
+	// load metadata from original schema
+	meta, err := metadata.LoadMetadataFromOriginalSchema(config.getAbsolutePath(config.SchemaPathRelative))
+	if err != nil {
+		return errors.Wrap(err, "unable to load original schema file")
+	}
+
+	// cluster data
+	err = feature.ClusterDataset(meta, featurizer, config.ContainerDataPath,
+		config.MediaPath, config.TmpDataPath,
+		config.ClusteringOutputDataRelative, config.ClusteringOutputSchemaRelative, config.HasHeader)
+	if err != nil {
+		return errors.Wrap(err, "unable to cluster data")
+	}
+
+	log.Infof("Clustered data written to %s", config.getAbsolutePath(config.TmpDataPath))
+
+	return nil
+}
+
+// FeaturizeContainer uses containers to obtain a featurized view of complex variables.
 func FeaturizeContainer(index string, dataset string, config *IngestTaskConfig) error {
 	client := rest.NewClient(config.FeaturizationRESTEndpoint)
 
@@ -28,10 +58,10 @@ func FeaturizeContainer(index string, dataset string, config *IngestTaskConfig) 
 	// create featurizer
 	featurizer := rest.NewFeaturizer(config.FeaturizationFunctionName, client)
 
-	// load metadata from original schema
-	meta, err := metadata.LoadMetadataFromOriginalSchema(config.getAbsolutePath(config.SchemaPathRelative))
+	// load metadata from cluster schema
+	meta, err := metadata.LoadMetadataFromOriginalSchema(config.getTmpAbsolutePath(config.ClusteringOutputSchemaRelative))
 	if err != nil {
-		return errors.Wrap(err, "unable to load original schema file")
+		return errors.Wrap(err, "unable to load cluster schema file")
 	}
 
 	// featurize data

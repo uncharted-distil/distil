@@ -33,6 +33,7 @@ var (
 	rank      = RankContainer
 	summarize = SummarizeContainer
 	featurize = FeaturizeContainer
+	cluster   = ClusterContainer
 )
 
 // Classify function that will classify variables within the dataset.
@@ -47,6 +48,10 @@ type Summarize func(index string, dataset string, config *IngestTaskConfig) erro
 // Featurize function that will extract features from dataset variables
 // and add them to the dataset.
 type Featurize func(index string, dataset string, config *IngestTaskConfig) error
+
+// Cluster function that will cluster features from dataset variables
+// and add them to the dataset.
+type Cluster func(index string, dataset string, config *IngestTaskConfig) error
 
 // SetClassify sets the classification function to use.
 func SetClassify(classificationFunc Classify) {
@@ -68,6 +73,11 @@ func SetFeaturize(featurizeFunc Featurize) {
 	featurize = featurizeFunc
 }
 
+// SetCluster sets the clustering function to use.
+func SetCluster(clusterFunc Cluster) {
+	cluster = clusterFunc
+}
+
 // IngestTaskConfig captures the necessary configuration for an data ingest.
 type IngestTaskConfig struct {
 	ContainerDataPath                  string
@@ -76,6 +86,10 @@ type IngestTaskConfig struct {
 	DatasetFolderSuffix                string
 	MediaPath                          string
 	HasHeader                          bool
+	ClusteringRESTEndpoint             string
+	ClusteringFunctionName             string
+	ClusteringOutputDataRelative       string
+	ClusteringOutputSchemaRelative     string
 	FeaturizationRESTEndpoint          string
 	FeaturizationFunctionName          string
 	FeaturizationOutputDataRelative    string
@@ -135,6 +149,12 @@ func IngestDataset(metaCtor model.MetadataStorageCtor, index string, dataset str
 	if err != nil {
 		return errors.Wrap(err, "unable to initialize metadata storage")
 	}
+
+	err = cluster(index, dataset, config)
+	if err != nil {
+		return errors.Wrap(err, "unable to cluster all data")
+	}
+	log.Infof("finished clustering the dataset")
 
 	err = featurize(index, dataset, config)
 	if err != nil {
