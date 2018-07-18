@@ -51,6 +51,10 @@ type Config struct {
 	DataFilePath                       string  `env:"DATA_FILE_PATH" envDefault:"/tables/learningData.csv"`
 	DatasetFolderSuffix                string  `env:"DATASET_FOLDER_SUFFIX" envDefault:"_dataset"`
 	MediaPath                          string  `env:"MEDIA_PATH" envDefault:"HTTP://10.108.4.104"`
+	ClusteringnRESTEndpoint            string  `env:"CLUSTERING_ENDPOINT" envDefault:"http://127.0.0.1:5004"`
+	ClusteringFunctionName             string  `env:"CLUSTERING_FUNCTION_NAME" envDefault:"fileupload"`
+	ClusteringOutputDataRelative       string  `env:"CLUSTERING_OUTPUT_DATA" envDefault:"clusters/clusters.csv"`
+	ClusteringOutputSchemaRelative     string  `env:"CLUSTERING_OUTPUT_SCHEMA" envDefault:"clustersDatasetDoc.json"`
 	FeaturizationRESTEndpoint          string  `env:"FEATURIZATION_ENDPOINT" envDefault:"http://10.108.4.42:5002"`
 	FeaturizationFunctionName          string  `env:"FEATURIZATION_FUNCTION_NAME" envDefault:"fileupload"`
 	FeaturizationOutputDataRelative    string  `env:"FEATURIZATION_OUTPUT_DATA" envDefault:"features/features.csv"`

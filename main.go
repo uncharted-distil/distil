@@ -154,6 +154,7 @@ func main() {
 		task.SetRank(task.RankPrimmitive)
 		task.SetSummarize(task.SummarizePrimitive)
 		task.SetFeaturize(task.FeaturizePrimitive)
+		task.SetCluster(task.ClusterPrimitive)
 		task.SetClient(solutionClient)
 	}
 
@@ -165,6 +166,10 @@ func main() {
 		DatasetFolderSuffix:                config.DatasetFolderSuffix,
 		MediaPath:                          config.MediaPath,
 		HasHeader:                          true,
+		ClusteringRESTEndpoint:             config.ClusteringnRESTEndpoint,
+		ClusteringFunctionName:             config.ClusteringFunctionName,
+		ClusteringOutputDataRelative:       config.ClusteringOutputDataRelative,
+		ClusteringOutputSchemaRelative:     config.ClusteringOutputSchemaRelative,
 		FeaturizationRESTEndpoint:          config.FeaturizationRESTEndpoint,
 		FeaturizationFunctionName:          config.FeaturizationFunctionName,
 		FeaturizationOutputDataRelative:    config.FeaturizationOutputDataRelative,
