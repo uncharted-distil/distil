@@ -17,7 +17,7 @@ import (
 	"github.com/unchartedsoftware/distil-ingest/rest"
 )
 
-// FeaturizeContainer uses containers to obtain a featurized view of complex variables.
+// ClusterContainer uses containers to obtain a clustered view of complex variables.
 func ClusterContainer(index string, dataset string, config *IngestTaskConfig) error {
 	client := rest.NewClient(config.ClusteringRESTEndpoint)
 
