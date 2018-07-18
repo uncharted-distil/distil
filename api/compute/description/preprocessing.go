@@ -15,13 +15,11 @@ const defaultResource = "0"
 func CreateUserDatasetPipeline(name string, description string, allFeatures []*model.Variable,
 	targetFeature string, selectedFeatures []string) (*pipeline.PipelineDescription, error) {
 
-	// save the selected features in a set for quick lookup, add the target as well since we
-	// don't want it removed
+	// save the selected features in a set for quick lookup
 	selectedSet := map[string]bool{}
 	for _, v := range selectedFeatures {
 		selectedSet[strings.ToLower(v)] = true
 	}
-	selectedSet[strings.ToLower(targetFeature)] = true
 
 	// create the feature selection primitive
 	removeFeatures, err := createRemoveFeatures(allFeatures, selectedSet)
