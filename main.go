@@ -154,6 +154,7 @@ func main() {
 		task.SetRank(task.RankPrimmitive)
 		task.SetSummarize(task.SummarizePrimitive)
 		task.SetFeaturize(task.FeaturizePrimitive)
+		task.SetCluster(task.ClusterPrimitive)
 		task.SetClient(solutionClient)
 	}
 
