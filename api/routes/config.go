@@ -35,7 +35,7 @@ func ConfigHandler(config env.Config, version string, timestamp string, problemP
 				// get metrics
 				if problem.Inputs.PerformanceMetrics != nil {
 					for _, metric := range problem.Inputs.PerformanceMetrics {
-						metrics = append(metrics, metric.Metric)
+						metrics = append(metrics, compute.ConvertProblemMetricToTA3(metric.Metric))
 					}
 				}
 			}
