@@ -112,6 +112,10 @@ export default Vue.extend({
 			return `correctness-result-facet-${this.solutionId}`;
 		},
 
+		routeSolutionId(): string {
+			return routeGetters.getRouteSolutionId(this.$store);
+		},
+
 		solutionStatus(): String {
 			const solution = getSolutionById(this.$store.state.solutionModule, this.solutionId);
 			if (solution) {
@@ -156,9 +160,7 @@ export default Vue.extend({
 		},
 
 		currentClass(): string {
-			const selectedId = routeGetters.getRouteSolutionId(this.$store);
-			const predicted = this.predictedSummary;
-			return (predicted && predicted.solutionId === selectedId)
+			return (this.predictedSummary && this.solutionId === this.routeSolutionId)
 				? 'result-group-selected result-group' : 'result-group';
 		},
 
@@ -250,9 +252,9 @@ export default Vue.extend({
 		},
 
 		click() {
-			if (this.predictedSummary && this.solutionId !== this.predictedSummary.solutionId) {
+			if (this.predictedSummary && this.routeSolutionId !== this.solutionId) {
 				const routeEntry = overlayRouteEntry(this.$route, {
-					solutionId: this.predictedSummary.solutionId,
+					solutionId: this.solutionId,
 					highlights: null
 				});
 				this.$router.push(routeEntry);
