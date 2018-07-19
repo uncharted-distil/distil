@@ -15,13 +15,11 @@ const defaultResource = "0"
 func CreateUserDatasetPipeline(name string, description string, allFeatures []*model.Variable,
 	targetFeature string, selectedFeatures []string) (*pipeline.PipelineDescription, error) {
 
-	// save the selected features in a set for quick lookup, add the target as well since we
-	// don't want it removed
+	// save the selected features in a set for quick lookup
 	selectedSet := map[string]bool{}
 	for _, v := range selectedFeatures {
 		selectedSet[strings.ToLower(v)] = true
 	}
-	selectedSet[strings.ToLower(targetFeature)] = true
 
 	// create the feature selection primitive
 	removeFeatures, err := createRemoveFeatures(allFeatures, selectedSet)
@@ -188,6 +186,20 @@ func CreateCrocPipeline(name string, description string, targetColumns []string,
 	pipeline, err := NewBuilder(name, description).
 		Add(NewDatasetToDataframeStep()).
 		Add(NewCrocStep(targetColumns, outputLabels)).
+		Compile()
+
+	if err != nil {
+		return nil, err
+	}
+	return pipeline, nil
+}
+
+// CreateUnicornPipeline creates a pipeline to run image clustering on a dataset.
+func CreateUnicornPipeline(name string, description string, targetColumns []string, outputLabels []string) (*pipeline.PipelineDescription, error) {
+	// insantiate the pipeline
+	pipeline, err := NewBuilder(name, description).
+		Add(NewDatasetToDataframeStep()).
+		Add(NewUnicornStep(targetColumns, outputLabels)).
 		Compile()
 
 	if err != nil {

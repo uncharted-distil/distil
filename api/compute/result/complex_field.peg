@@ -18,12 +18,14 @@ type ComplexField Peg {
 
 ComplexField <- array !.
 
-# non-terminals
-array <- ws* obracket { p.pushArray() } ws* (item ws* (comma ws* item ws* )*)? cbracket { p.popArray() }
-item <- array / string / <value*> { p.addElement(buffer[begin:end]) }
+# non-terminals 
+array <- ws* obracket { p.pushArray() } array_contents cbracket { p.popArray() } /
+    ws* oparen { p.pushArray() } array_contents comma? ws* cparen { p.popArray() }
+array_contents <- ws* (item ws* (comma ws* item ws* )*)?
+item <- array / string / <value> { p.addElement(buffer[begin:end]) }
 string <- dquote_string / squote_string
-dquote_string <- escdquote <(textdata / squote / lf / cr / obracket / cbracket / comma)*> escdquote { p.addElement(buffer[begin:end]) }
-squote_string <- squote <(escsquote / escdquote / textdata / lf / cr / obracket / cbracket)*> squote { p.addElement(buffer[begin:end]) }
+dquote_string <- escdquote <(textdata / squote / lf / cr / obracket / cbracket / oparen / cparen / comma)*> escdquote { p.addElement(buffer[begin:end]) }
+squote_string <- squote <(escsquote / escdquote / textdata / lf / cr / obracket / cbracket / oparen / cparen)*> squote { p.addElement(buffer[begin:end]) }
 value <- negative? number+ (decimal_point number+)?
 
 # terminals
@@ -36,7 +38,9 @@ escsquote <- '\\\''
 squote <- '\''
 obracket <- '['
 cbracket <- ']'
+oparen <- '('
+cparen <- ')'
 number <- [a-zA-Z0-9]
 negative <- '-'
 decimal_point <- '.'
-textdata <- [a-zA-Z0-9 !#$&%()*+\-./:;<->?\\^_`{|}~]
+textdata <- [a-zA-Z0-9 !#$&%*+\-./:;<->?\\^_`{|}~]

@@ -238,28 +238,7 @@ func FeaturizePrimitive(index string, dataset string, config *IngestTaskConfig) 
 	mainDR := meta.GetMainDataResource()
 
 	// add feature variables
-	inputFeatureNames := make([]string, 0)
-	outputFeatureNames := make([]string, 0)
-	for _, v := range mainDR.Variables {
-		if v.RefersTo != nil && v.RefersTo["resID"] != nil {
-			// get the refered DR
-			resID := v.RefersTo["resID"].(string)
-
-			res := getDataResource(meta, resID)
-
-			// check if needs to be featurized
-			if res.CanBeFeaturized() {
-				// create the new resource to hold the featured output
-				indexName := fmt.Sprintf("_feature_%s", v.Name)
-
-				// add the feature variable
-				mainDR.AddVariable(indexName, v.Name, "string", []string{"attribute"}, metadata.VarRoleMetadata)
-
-				inputFeatureNames = append(inputFeatureNames, v.Name)
-				outputFeatureNames = append(outputFeatureNames, indexName)
-			}
-		}
-	}
+	inputFeatureNames, outputFeatureNames := getFeatureVariables(meta, "_feature_")
 
 	// create & submit the solution request
 	if len(inputFeatureNames) > 0 {
@@ -370,8 +349,161 @@ func FeaturizePrimitive(index string, dataset string, config *IngestTaskConfig) 
 	return nil
 }
 
+// ClusterPrimitive will cluster the dataset fields using a primitive.
+func ClusterPrimitive(index string, dataset string, config *IngestTaskConfig) error {
+	// create required folders for outputPath
+	createContainingDirs(config.getTmpAbsolutePath(config.ClusteringOutputDataRelative))
+	createContainingDirs(config.getTmpAbsolutePath(config.ClusteringOutputSchemaRelative))
+
+	// load metadata from original schema
+	meta, err := metadata.LoadMetadataFromOriginalSchema(config.getAbsolutePath(config.SchemaPathRelative))
+	if err != nil {
+		return errors.Wrap(err, "unable to load original schema file")
+	}
+	mainDR := meta.GetMainDataResource()
+
+	// add feature variables
+	inputFeatureNames, outputFeatureNames := getFeatureVariables(meta, "_cluster_")
+
+	// create & submit the solution request
+	if len(inputFeatureNames) > 0 {
+		pip, err := description.CreateUnicornPipeline("horned", "", inputFeatureNames, outputFeatureNames)
+		if err != nil {
+			return errors.Wrap(err, "unable to create Unicorn pipeline")
+		}
+
+		datasetURI, err := submitPrimitive(dataset, pip)
+		if err != nil {
+			return errors.Wrap(err, "unable to run Unicorn pipeline")
+		}
+
+		// parse primitive response (d3mIndex,labels,probabilities)
+		res, err := result.ParseResultCSV(datasetURI)
+		if err != nil {
+			return errors.Wrap(err, "unable to parse Unicorn pipeline result")
+		}
+
+		// build the lookup for the new field
+		features := make(map[string]string)
+		for i, v := range res {
+			// skip header
+			if i > 0 {
+				d3mIndex := v[0].(string)
+				labels := v[1].(string)
+				features[d3mIndex] = labels
+			}
+		}
+
+		dataPath := path.Join(config.ContainerDataPath, mainDR.ResPath)
+		csvFile, err := os.Open(dataPath)
+		if err != nil {
+			return errors.Wrap(err, "failed to open data file")
+		}
+		defer csvFile.Close()
+		reader := csv.NewReader(csvFile)
+
+		// initialize csv writer
+		output := &bytes.Buffer{}
+		writer := csv.NewWriter(output)
+
+		// write the header as needed
+		if config.HasHeader {
+			header := make([]string, len(mainDR.Variables))
+			for _, v := range mainDR.Variables {
+				header[v.Index] = v.Name
+			}
+			err = writer.Write(header)
+			if err != nil {
+				return errors.Wrap(err, "error writing header to output")
+			}
+		}
+
+		// skip header
+		if config.HasHeader {
+			_, err = reader.Read()
+			if err != nil {
+				return errors.Wrap(err, "failed to read header from file")
+			}
+		}
+
+		d3mIndexField := -1
+		for _, v := range mainDR.Variables {
+			if v.Name == metadata.D3MIndexName {
+				d3mIndexField = v.Index
+			}
+		}
+
+		// read the raw data and add the features column to the output
+		for {
+			line, err := reader.Read()
+			if err == io.EOF {
+				break
+			} else if err != nil {
+				return errors.Wrap(err, "failed to read line from file")
+			}
+
+			d3mIndex := line[d3mIndexField]
+			feature := features[d3mIndex]
+			line = append(line, feature)
+
+			writer.Write(line)
+			if err != nil {
+				return errors.Wrap(err, "error storing cluster output")
+			}
+		}
+
+		// output the data with the new feature
+		writer.Flush()
+		err = ioutil.WriteFile(config.getTmpAbsolutePath(config.ClusteringOutputDataRelative), output.Bytes(), 0644)
+		if err != nil {
+			return errors.Wrap(err, "error writing cluster output")
+		}
+	} else {
+		// copy input to make merging happy
+		copyFileContents(path.Join(config.ContainerDataPath, mainDR.ResPath), config.getTmpAbsolutePath(config.ClusteringOutputDataRelative))
+	}
+
+	mainDR.ResPath = config.ClusteringOutputDataRelative
+
+	// write the new schema to file
+	err = meta.WriteSchema(config.getTmpAbsolutePath(config.ClusteringOutputSchemaRelative))
+	if err != nil {
+		return errors.Wrap(err, "unable to store cluster schema")
+	}
+
+	return nil
+}
+
+func getFeatureVariables(meta *metadata.Metadata, prefix string) ([]string, []string) {
+	mainDR := meta.GetMainDataResource()
+	inputFeatureNames := make([]string, 0)
+	outputFeatureNames := make([]string, 0)
+	for _, v := range mainDR.Variables {
+		if v.RefersTo != nil && v.RefersTo["resID"] != nil {
+			// get the refered DR
+			resID := v.RefersTo["resID"].(string)
+
+			res := getDataResource(meta, resID)
+
+			// check if needs to be featurized
+			if res.CanBeFeaturized() {
+				// create the new resource to hold the featured output
+				indexName := fmt.Sprintf("%s%s", prefix, v.Name)
+
+				// add the feature variable
+				mainDR.AddVariable(indexName, v.Name, "string", []string{"attribute"}, metadata.VarRoleMetadata)
+
+				inputFeatureNames = append(inputFeatureNames, v.Name)
+				outputFeatureNames = append(outputFeatureNames, indexName)
+			}
+		}
+	}
+
+	return inputFeatureNames, outputFeatureNames
+}
+
 func toStringArray(in []interface{}) []string {
-	strArr := make([]string, len(in))
+	strArr := make([]string, 0)
 	for _, v := range in {
 		strArr = append(strArr, v.(string))
 	}
@@ -379,7 +511,7 @@ func toStringArray(in []interface{}) []string {
 }
 
 func toFloat64Array(in []interface{}) ([]float64, error) {
-	strArr := make([]float64, len(in))
+	strArr := make([]float64, 0)
 	for _, v := range in {
 		strFloat, err := strconv.ParseFloat(v.(string), 64)
 		if err != nil {

@@ -33,6 +33,24 @@ func NewSlothStep() *StepData {
 	)
 }
 
+// NewUnicornStep creates a unicorn image clustering step.
+func NewUnicornStep(targetColumns []string, outputLabels []string) *StepData {
+	return NewStepDataWithHyperparameters(
+		&pipeline.Primitive{
+			Id:         "475c26dc-eb2e-43d3-acdb-159b80d9f099",
+			Version:    "1.0.0",
+			Name:       "unicorn",
+			PythonPath: "d3m.primitives.distil.unicorn",
+			Digest:     "2b0c0784fc077b106a9547a197be92ab02298dc206d60610929c50f831e86e84",
+		},
+		[]string{"produce"},
+		map[string]interface{}{
+			"target_columns": targetColumns,
+			"output_labels":  outputLabels,
+		},
+	)
+}
+
 // NewPCAFeaturesStep creates a PCA-based feature ranking call that can be added to
 // a pipeline.
 func NewPCAFeaturesStep() *StepData {
