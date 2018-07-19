@@ -503,7 +503,7 @@ func getFeatureVariables(meta *metadata.Metadata, prefix string) ([]string, []st
 }
 
 func toStringArray(in []interface{}) []string {
-	strArr := make([]string, len(in))
+	strArr := make([]string, 0)
 	for _, v := range in {
 		strArr = append(strArr, v.(string))
 	}
@@ -511,7 +511,7 @@ func toStringArray(in []interface{}) []string {
 }
 
 func toFloat64Array(in []interface{}) ([]float64, error) {
-	strArr := make([]float64, len(in))
+	strArr := make([]float64, 0)
 	for _, v := range in {
 		strFloat, err := strconv.ParseFloat(v.(string), 64)
 		if err != nil {
