@@ -63,7 +63,7 @@ func TestParserNested(t *testing.T) {
 }
 
 func TestParserTuple(t *testing.T) {
-	field := &ComplexField{Buffer: "(10, 20, 30)"}
+	field := &ComplexField{Buffer: "(10, 20, 30,)"}
 	field.Init()
 
 	err := field.Parse()
@@ -73,6 +73,19 @@ func TestParserTuple(t *testing.T) {
 	field.Execute()
 
 	assert.Equal(t, []interface{}{"10", "20", "30"}, field.arrayElements.elements)
+}
+
+func TestParserSingleTuple(t *testing.T) {
+	field := &ComplexField{Buffer: "(10, )"}
+	field.Init()
+
+	err := field.Parse()
+	field.PrintSyntaxTree()
+	assert.NoError(t, err)
+
+	field.Execute()
+
+	assert.Equal(t, []interface{}{"10"}, field.arrayElements.elements)
 }
 
 func TestParserNestedTuple(t *testing.T) {

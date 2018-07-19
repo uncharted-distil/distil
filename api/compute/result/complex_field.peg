@@ -20,9 +20,9 @@ ComplexField <- array !.
 
 # non-terminals 
 array <- ws* obracket { p.pushArray() } array_contents cbracket { p.popArray() } /
-    ws* oparen { p.pushArray() } array_contents cparen { p.popArray() }
+    ws* oparen { p.pushArray() } array_contents comma? ws* cparen { p.popArray() }
 array_contents <- ws* (item ws* (comma ws* item ws* )*)?
-item <- array / string / <value*> { p.addElement(buffer[begin:end]) }
+item <- array / string / <value> { p.addElement(buffer[begin:end]) }
 string <- dquote_string / squote_string
 dquote_string <- escdquote <(textdata / squote / lf / cr / obracket / cbracket / oparen / cparen / comma)*> escdquote { p.addElement(buffer[begin:end]) }
 squote_string <- squote <(escsquote / escdquote / textdata / lf / cr / obracket / cbracket / oparen / cparen)*> squote { p.addElement(buffer[begin:end]) }
