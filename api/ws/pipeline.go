@@ -102,16 +102,6 @@ func handleCreateSolutions(conn *Connection, client *compute.Client, metadataCto
 		return
 	}
 
-	// override metric if problem file present
-	if problemFile != "" {
-		metrics, err := parseMetrics(problemFile)
-		if err == nil {
-			request.Metrics = metrics
-		} else {
-			log.Warnf("error parsing metrics from %s: %v", problemFile, err)
-		}
-	}
-
 	// initialize the storage
 	dataStorage, err := dataCtor()
 	if err != nil {
