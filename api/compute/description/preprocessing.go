@@ -21,14 +21,14 @@ func CreateUserDatasetPipeline(name string, description string, allFeatures []*m
 		selectedSet[strings.ToLower(v)] = true
 	}
 
-	// create the feature selection primitive
-	removeFeatures, err := createRemoveFeatures(allFeatures, selectedSet)
+	// create the semantic type update primitive
+	updateSemanticTypes, err := createUpdateSemanticTypes(allFeatures, selectedSet)
 	if err != nil {
 		return nil, err
 	}
 
-	// create the semantic type update primitive
-	updateSemanticTypes, err := createUpdateSemanticTypes(allFeatures, selectedSet)
+	// create the feature selection primitive
+	removeFeatures, err := createRemoveFeatures(allFeatures, selectedSet)
 	if err != nil {
 		return nil, err
 	}
