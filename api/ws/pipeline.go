@@ -141,7 +141,7 @@ func handleCreateSolutions(conn *Connection, client *compute.Client, metadataCto
 	}
 	if len(request.Metrics) == 0 {
 		request.Metrics = compute.DefaultMetrics(targetVar.Type)
-		log.Infof("Defaulting task type to `%s`", strings.Join(request.Metrics, ","))
+		log.Infof("Defaulting metrics to `%s`", strings.Join(request.Metrics, ","))
 	}
 
 	// persist the request information and dispatch the request
