@@ -339,17 +339,20 @@ func (s *SolutionRequest) dispatchSolution(statusChan chan SolutionStatus, clien
 
 	// persist the scores
 	for _, response := range solutionScoreResponses {
-		for _, score := range response.Scores {
-			metric := ""
-			if score.GetMetric() == nil {
-				metric = convertMetricsFromTA3ToTA2(s.Metrics)[0].GetMetric().String()
-			} else {
-				metric = score.Metric.Metric.String()
-			}
-			err := solutionStorage.PersistSolutionScore(solutionID, metric, score.Value.GetRaw().GetDouble())
-			if err != nil {
-				s.persistSolutionError(statusChan, solutionStorage, searchID, solutionID, err)
-				return
+		// only persist scores from COMPLETED responses
+		if response.Progress.State == pipeline.ProgressState_COMPLETED {
+			for _, score := range response.Scores {
+				metric := ""
+				if score.GetMetric() == nil {
+					metric = convertMetricsFromTA3ToTA2(s.Metrics)[0].GetMetric().String()
+				} else {
+					metric = score.Metric.Metric.String()
+				}
+				err := solutionStorage.PersistSolutionScore(solutionID, metric, score.Value.GetRaw().GetDouble())
+				if err != nil {
+					s.persistSolutionError(statusChan, solutionStorage, searchID, solutionID, err)
+					return
+				}
 			}
 		}
 	}
