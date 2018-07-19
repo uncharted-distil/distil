@@ -24,5 +24,17 @@ export const mutations = {
 
 	setProblemTarget(state: AppState, target: string) {
 		state.problemTarget = target;
-	}
+	},
+
+	setProblemTaskType(state: AppState, task: string) {
+		state.problemTaskType = task;
+	},
+
+	setProblemTaskSubType(state: AppState, subtask: string) {
+		state.problemTaskSubType = subtask;
+	},
+
+	setProblemMetrics(state: AppState, metrics: string[]) {
+		state.problemMetrics = metrics;
+	},
 };

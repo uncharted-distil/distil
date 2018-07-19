@@ -111,10 +111,21 @@ export default Vue.extend({
 			if (!this.target || _.isEmpty(this.variables)) {
 				return [];
 			}
+			if (this.isTask2) {
+				return appGetters.getProblemMetrics(this.$store);
+			}
 			// get the task info associated with that variable type
 			const taskData = getTask(this.targetVariable.type);
 			// grab the valid metrics from the task data to use as labels in the UI
-			return getMetricDisplayNames(taskData);
+			const displayNames = getMetricDisplayNames(taskData);
+			return _.map(displayNames, m => getMetricSchemaName(m));
+		},
+		taskType(): string {
+			if (this.isTask2) {
+				return appGetters.getProblemTaskType(this.$store);
+			}
+			const taskData = getTask(this.targetVariable.type);
+			return taskData.schemaName;
 		},
 		trainingSelected(): boolean {
 			return !_.isEmpty(this.training);
@@ -139,6 +150,9 @@ export default Vue.extend({
 		isTask1(): boolean {
 			return appGetters.isTask1(this.$store);
 		},
+		isTask2(): boolean {
+			return appGetters.isTask2(this.$store);
+		},
 		disableCreate(): boolean {
 			return this.isPending || (!this.targetSelected || !this.trainingSelected);
 		},
@@ -158,18 +172,15 @@ export default Vue.extend({
 	methods: {
 		// create button handler
 		create() {
-			// compute schema values for request
-			const taskData = getTask(this.targetVariable.type);
-			const task = taskData.schemaName;
-			const metrics = _.map(this.metrics as string[], m => getMetricSchemaName(m));
+			// flag as pending
 			this.pending = true;
 			// dispatch action that triggers request send to server
 			solutionActions.createSolutionRequest(this.$store, {
 				dataset: this.dataset,
 				filters: this.filterParams,
 				target: routeGetters.getRouteTargetVariable(this.$store),
-				task: task,
-				metrics: metrics,
+				task: this.taskType,
+				metrics: this.metrics,
 				maxSolutions: NUM_SOLUTIONS,
 				maxTime: MAX_SOLUTION_SEARCH_TIME,
 			}).then((res: Solution) => {

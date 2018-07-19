@@ -29,4 +29,16 @@ export const getters = {
 	isTask2(state: AppState): boolean {
 		return state.problemTarget !== 'unknown' && state.problemDataset !== 'unknown';
 	},
+
+	getProblemTaskType(state: AppState): string {
+		return state.problemTaskType;
+	},
+
+	getProblemTaskSubType(state: AppState): string {
+		return state.problemTaskSubType;
+	},
+
+	getProblemMetrics(state: AppState): string[] {
+		return state.problemMetrics;
+	}
 };

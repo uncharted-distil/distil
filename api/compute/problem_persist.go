@@ -36,13 +36,13 @@ type VariableProvider func(dataset string, index string, name string) (*model.Va
 
 // ProblemPersist contains the problem file data.
 type ProblemPersist struct {
-	Properties      *ProblemPersistProperties     `json:"about"`
+	About           *ProblemPersistAbout          `json:"about"`
 	Inputs          *ProblemPersistInput          `json:"inputs"`
 	ExpectedOutputs *ProblemPersistExpectedOutput `json:"expectedOutputs"`
 }
 
-// ProblemPersistProperties represents the basic information of a problem.
-type ProblemPersistProperties struct {
+// ProblemPersistAbout represents the basic information of a problem.
+type ProblemPersistAbout struct {
 	ProblemID            string `json:"problemID"`
 	ProblemName          string `json:"problemName"`
 	TaskType             string `json:"taskType"`
@@ -169,7 +169,7 @@ func CreateProblemSchema(datasetDir string, dataset string, targetVar *model.Var
 
 	problemID := strings.Replace(dataset, "_dataset", "", -1)
 	problemID = fmt.Sprintf("%s%s", problemID, "_problem")
-	pProps := &ProblemPersistProperties{
+	pProps := &ProblemPersistAbout{
 		ProblemID:            problemID,
 		ProblemVersion:       problemVersion,
 		ProblemSchemaVersion: problemSchemaVersion,
@@ -178,8 +178,8 @@ func CreateProblemSchema(datasetDir string, dataset string, targetVar *model.Var
 	}
 
 	problem := &ProblemPersist{
-		Properties: pProps,
-		Inputs:     pInput,
+		About:  pProps,
+		Inputs: pInput,
 	}
 
 	return problem, strconv.FormatUint(hash, 10), nil

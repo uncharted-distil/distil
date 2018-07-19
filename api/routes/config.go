@@ -14,24 +14,49 @@ func ConfigHandler(config env.Config, version string, timestamp string, problemP
 
 		target := "unknown"
 		dataset := "unknown"
+		taskType := "unknown"
+		taskSubType := "unknown"
+		var metrics []string
 		// load problem file
 		problem, err := compute.LoadProblemSchemaFromFile(problemPath)
 		if err == nil {
-			if len(problem.Inputs.Data) > 0 {
-				dataset = "d_" + problem.Inputs.Data[0].DatasetID
-				if len(problem.Inputs.Data[0].Targets) > 0 {
-					target = problem.Inputs.Data[0].Targets[0].ColName
+
+			// get inputs
+			if problem.Inputs != nil {
+				if len(problem.Inputs.Data) > 0 {
+					// get dataset
+					dataset = "d_" + problem.Inputs.Data[0].DatasetID
+					// get targets
+					if len(problem.Inputs.Data[0].Targets) > 0 {
+						target = problem.Inputs.Data[0].Targets[0].ColName
+					}
 				}
+
+				// get metrics
+				if problem.Inputs.PerformanceMetrics != nil {
+					for _, metric := range problem.Inputs.PerformanceMetrics {
+						metrics = append(metrics, metric.Metric)
+					}
+				}
+			}
+
+			// get task types
+			if problem.About != nil {
+				taskType = problem.About.TaskType
+				taskSubType = problem.About.TaskSubType
 			}
 		}
 
 		// marshall version
 		err = handleJSON(w, map[string]interface{}{
-			"version":   version,
-			"timestamp": timestamp,
-			"discovery": config.IsProblemDiscovery,
-			"dataset":   dataset,
-			"target":    target,
+			"version":     version,
+			"timestamp":   timestamp,
+			"discovery":   config.IsProblemDiscovery,
+			"dataset":     dataset,
+			"target":      target,
+			"taskType":    taskType,
+			"taskSubType": taskSubType,
+			"metrics":     metrics,
 		})
 		if err != nil {
 			handleError(w, errors.Wrap(err, "unable marshal version into JSON and write response"))
