@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/pkg/errors"
@@ -123,6 +124,26 @@ func handleCreateSolutions(conn *Connection, client *compute.Client, metadataCto
 		return
 	}
 
+	targetVar, err := metaStorage.FetchVariable(request.Dataset, request.TargetFeature)
+	if err != nil {
+		handleErr(conn, msg, err)
+		return
+	}
+
+	// load defaults
+	if request.Task == "" {
+		request.Task = compute.DefaultTaskType(targetVar.Type)
+		log.Infof("Defaulting task type to `%s`", request.Task)
+	}
+	if request.SubTask == "" {
+		request.SubTask = compute.DefaultTaskSubType(targetVar.Type)
+		log.Infof("Defaulting task sub type to `%s`", request.SubTask)
+	}
+	if len(request.Metrics) == 0 {
+		request.Metrics = compute.DefaultMetrics(targetVar.Type)
+		log.Infof("Defaulting task type to `%s`", strings.Join(request.Metrics, ","))
+	}
+
 	// persist the request information and dispatch the request
 	err = request.PersistAndDispatch(client, solutionStorage, metaStorage, dataStorage)
 	if err != nil {
@@ -164,18 +185,4 @@ func handleStopSolutions(conn *Connection, client *compute.Client, msg *Message)
 		return
 	}
 	return
-}
-
-func parseMetrics(filename string) ([]string, error) {
-	problemInfo, err := compute.LoadProblemSchemaFromFile(filename)
-	if err != nil {
-		return nil, errors.Wrap(err, "Unable to unmarshal classification response")
-	}
-
-	metrics := make([]string, 0)
-	for _, m := range problemInfo.Inputs.PerformanceMetrics {
-		metrics = append(metrics, compute.ConvertProblemMetricToTA3(m.Metric))
-	}
-
-	return metrics, nil
 }

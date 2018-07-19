@@ -70,6 +70,9 @@ export const actions = {
 				mutations.setIsDiscovery(context, response.data.discovery);
 				mutations.setProblemDataset(context, response.data.dataset);
 				mutations.setProblemTarget(context, response.data.target);
+				mutations.setProblemTaskType(context, response.data.taskType);
+				mutations.setProblemTaskSubType(context, response.data.taskSubType);
+				mutations.setProblemMetrics(context, response.data.metrics);
 			})
 			.catch((err: string) => {
 				console.warn(err);

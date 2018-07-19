@@ -32,15 +32,16 @@
 
 <script lang="ts">
 
-import _ from 'lodash';
 import ResultFacets from '../components/ResultFacets.vue';
 import Facets from '../components/Facets.vue';
 import ErrorThresholdSlider from '../components/ErrorThresholdSlider.vue';
-import { getSolutionById, getTask } from '../util/solutions';
+import { getSolutionById } from '../util/solutions';
 import { getters as datasetGetters } from '../store/dataset/module';
 import { getters as routeGetters } from '../store/route/module';
+import { getters as solutionGetters } from '../store/solutions/module';
 import { actions as appActions, getters as appGetters } from '../store/app/module';
 import { EXPORT_SUCCESS_ROUTE } from '../store/route/index';
+import { Variable } from '../store/dataset/index';
 import vueSlider from 'vue-slider-component';
 import Vue from 'vue';
 import 'font-awesome/css/font-awesome.css';
@@ -75,13 +76,12 @@ export default Vue.extend({
 			return routeGetters.getRouteTargetVariable(this.$store);
 		},
 
+		variables(): Variable[] {
+			return datasetGetters.getVariables(this.$store);
+		},
+
 		regressionEnabled(): boolean {
-			const targetVar = _.find(datasetGetters.getVariables(this.$store), v => _.toLower(v.key) === _.toLower(this.target));
-			if (_.isEmpty(targetVar)) {
-				return false;
-			}
-			const task = getTask(targetVar.type);
-			return task.schemaName === 'regression';
+			return solutionGetters.isRegression(this.$store);
 		},
 
 		solutionId(): string {

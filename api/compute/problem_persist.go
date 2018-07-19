@@ -21,14 +21,14 @@ const (
 	problemVersion       = "1.0"
 	problemSchemaVersion = "3.0"
 
-	numericalMetric   = "r_squared"
-	categoricalMetric = "accuracy"
+	defaultNumericalMetric   = "meanSquaredError"
+	defaultCategoricalMetric = "f1Micro"
 
-	problemTaskTypeNumerical   = "regression"
-	problemTaskTypeCategorical = "classification"
+	defaultTaskTypeNumerical   = "regression"
+	defaultTaskTypeCategorical = "classification"
 
-	problemTaskSubTypeNumerical   = "univariate"
-	problemTaskSubTypeCategorical = "multiClass"
+	defaultTaskSubTypeNumerical   = "univariate"
+	defaultTaskSubTypeCategorical = "multiClass"
 )
 
 // VariableProvider defines a function that will get the provided variable.
@@ -103,25 +103,28 @@ func fileExists(filename string) bool {
 	return true
 }
 
-func getMetric(targetType string) string {
+// DefaultMetrics returns default metrics.
+func DefaultMetrics(targetType string) []string {
 	if model.IsCategorical(targetType) {
-		return categoricalMetric
+		return []string{defaultCategoricalMetric}
 	}
-	return numericalMetric
+	return []string{defaultNumericalMetric}
 }
 
-func getTaskType(targetType string) string {
+// DefaultTaskType returns a default task.
+func DefaultTaskType(targetType string) string {
 	if model.IsCategorical(targetType) {
-		return problemTaskTypeCategorical
+		return defaultTaskTypeCategorical
 	}
-	return problemTaskTypeNumerical
+	return defaultTaskTypeNumerical
 }
 
-func getTaskSubType(targetType string) string {
+// DefaultTaskSubType returns a default sub task.
+func DefaultTaskSubType(targetType string) string {
 	if model.IsCategorical(targetType) {
-		return problemTaskSubTypeCategorical
+		return defaultTaskSubTypeCategorical
 	}
-	return problemTaskSubTypeNumerical
+	return defaultTaskSubTypeNumerical
 }
 
 // CreateProblemSchema captures the problem information in the required D3M
@@ -142,7 +145,7 @@ func CreateProblemSchema(datasetDir string, dataset string, targetVar *model.Var
 		return nil, pPath, nil
 	}
 
-	metric := getMetric(targetVar.Type)
+	metrics := DefaultMetrics(targetVar.Type)
 
 	targetIdx := -1
 
@@ -154,7 +157,7 @@ func CreateProblemSchema(datasetDir string, dataset string, targetVar *model.Var
 	}
 
 	pMetric := &ProblemPersistPerformanceMetric{
-		Metric: metric,
+		Metric: metrics[0],
 	}
 
 	pData := &ProblemPersistData{
@@ -173,8 +176,8 @@ func CreateProblemSchema(datasetDir string, dataset string, targetVar *model.Var
 		ProblemID:            problemID,
 		ProblemVersion:       problemVersion,
 		ProblemSchemaVersion: problemSchemaVersion,
-		TaskType:             getTaskType(targetVar.Type),
-		TaskSubType:          getTaskSubType(targetVar.Type),
+		TaskType:             DefaultTaskType(targetVar.Type),
+		TaskSubType:          DefaultTaskSubType(targetVar.Type),
 	}
 
 	problem := &ProblemPersist{

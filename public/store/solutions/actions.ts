@@ -14,10 +14,11 @@ const STOP_SOLUTIONS = 'STOP_SOLUTIONS';
 interface CreateSolutionRequest {
 	dataset: string;
 	target: string;
-	task: string;
+	task?: string;
+	subTask?: string;
+	metrics: string[];
 	maxSolutions: number;
 	maxTime: number;
-	metrics: string[];
 	filters: FilterParams;
 }
 
@@ -240,12 +241,15 @@ export const actions = {
 				});
 			});
 
+			console.log('Sending create solutions request:', request);
+
 			// send create solutions request
 			stream.send({
 				type: CREATE_SOLUTIONS,
 				dataset: request.dataset,
 				target: request.target,
 				task: request.task,
+				subTask: request.subTask,
 				metrics: request.metrics,
 				maxSolutions: request.maxSolutions,
 				maxTime: request.maxTime,
