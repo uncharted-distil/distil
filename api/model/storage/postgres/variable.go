@@ -12,19 +12,6 @@ const (
 	catResultLimit = 100
 )
 
-func (s *Storage) getHistogramAggQuery(extrema *model.Extrema) (string, string, string) {
-	interval := extrema.GetBucketInterval()
-
-	// get histogram agg name & query string.
-	histogramAggName := fmt.Sprintf("\"%s%s\"", model.HistogramAggPrefix, extrema.Key)
-	rounded := extrema.GetBucketMinMax()
-	bucketQueryString := fmt.Sprintf("width_bucket(\"%s\", %g, %g, %d) - 1",
-		extrema.Key, rounded.Min, rounded.Max, extrema.GetBucketCount())
-	histogramQueryString := fmt.Sprintf("(%s) * %g + %g", bucketQueryString, interval, rounded.Min)
-
-	return histogramAggName, bucketQueryString, histogramQueryString
-}
-
 func (s *Storage) parseExtrema(row *pgx.Rows, variable *model.Variable) (*model.Extrema, error) {
 	var minValue *float64
 	var maxValue *float64

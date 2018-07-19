@@ -61,3 +61,57 @@ func TestParserNested(t *testing.T) {
 	assert.Equal(t, []interface{}{"alpha", "bravo"}, field.arrayElements.elements[0].([]interface{})[3].([]interface{}))
 	assert.Equal(t, []interface{}{"40", "50", "60"}, field.arrayElements.elements[1].([]interface{}))
 }
+
+func TestParserTuple(t *testing.T) {
+	field := &ComplexField{Buffer: "(10, 20, 30,)"}
+	field.Init()
+
+	err := field.Parse()
+	field.PrintSyntaxTree()
+	assert.NoError(t, err)
+
+	field.Execute()
+
+	assert.Equal(t, []interface{}{"10", "20", "30"}, field.arrayElements.elements)
+}
+
+func TestParserSingleTuple(t *testing.T) {
+	field := &ComplexField{Buffer: "(10, )"}
+	field.Init()
+
+	err := field.Parse()
+	field.PrintSyntaxTree()
+	assert.NoError(t, err)
+
+	field.Execute()
+
+	assert.Equal(t, []interface{}{"10"}, field.arrayElements.elements)
+}
+
+func TestParserNestedTuple(t *testing.T) {
+	field := &ComplexField{Buffer: "((10, 20, 30, (alpha, bravo)), (40, 50, 60))"}
+	field.Init()
+
+	err := field.Parse()
+	field.PrintSyntaxTree()
+	assert.NoError(t, err)
+
+	field.Execute()
+
+	assert.Equal(t, []interface{}{"alpha", "bravo"}, field.arrayElements.elements[0].([]interface{})[3].([]interface{}))
+	assert.Equal(t, []interface{}{"40", "50", "60"}, field.arrayElements.elements[1].([]interface{}))
+}
+
+func TestParserNestedMixed(t *testing.T) {
+	field := &ComplexField{Buffer: "([10, 20, 30, (alpha, bravo)], [40, 50, 60])"}
+	field.Init()
+
+	err := field.Parse()
+	field.PrintSyntaxTree()
+	assert.NoError(t, err)
+
+	field.Execute()
+
+	assert.Equal(t, []interface{}{"alpha", "bravo"}, field.arrayElements.elements[0].([]interface{})[3].([]interface{}))
+	assert.Equal(t, []interface{}{"40", "50", "60"}, field.arrayElements.elements[1].([]interface{}))
+}

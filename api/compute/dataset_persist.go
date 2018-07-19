@@ -88,7 +88,7 @@ func getFilteredDatasetHash(dataset string, target string, filterParams *model.F
 // PersistFilteredData creates a hash code from the combination of the dataset name, the target name, and its filter
 // state, and saves the filtered data and target data to disk if they haven't been previously.  The path to the data
 // is returned.
-func PersistFilteredData(datasetDir string, target string, dataset *model.QueriedDataset) (string, int, error) {
+func PersistFilteredData(datasetDir string, target string, dataset *model.QueriedDataset, variables []*model.Variable) (string, int, error) {
 	// parse the dataset and its filter state and generate a hashcode from both
 	hash, err := getFilteredDatasetHash(dataset.Metadata.Name, target, dataset.Filters, dataset.IsTrain)
 	if err != nil {
@@ -116,9 +116,9 @@ func PersistFilteredData(datasetDir string, target string, dataset *model.Querie
 
 	// find the index of the target variable
 	targetIdx := -1
-	for idx, column := range dataset.Data.Columns {
-		if column.Key == target {
-			targetIdx = idx
+	for _, variable := range variables {
+		if variable.Key == target {
+			targetIdx = variable.Index
 			break
 		}
 	}
@@ -131,13 +131,19 @@ func PersistFilteredData(datasetDir string, target string, dataset *model.Querie
 		return "", -1, errors.Wrapf(err, "unable to create dataset dir %s", datasetDir)
 	}
 
+	// create a var name lookup table
+	variablesByKey := map[string]*model.Variable{}
+	for _, variable := range variables {
+		variablesByKey[variable.Key] = variable
+	}
+
 	// write the filtered data (minus the target field) to csv file
-	err = writeData(path, datasetDir, dataset.Data, dataset.Metadata.Variables, targetIdx)
+	err = writeData(path, datasetDir, dataset.Data, variablesByKey, targetIdx)
 	if err != nil {
 		return "", -1, err
 	}
 
-	err = writeDataSchema(path, dataset.Metadata.Name, dataset.Data, targetIdx, dataset.Metadata.Variables)
+	err = writeDataSchema(path, dataset.Metadata.Name, dataset.Data, targetIdx, variablesByKey)
 	if err != nil {
 		return "", -1, err
 	}
@@ -189,7 +195,7 @@ func dirExists(path string) bool {
 	return true
 }
 
-func writeData(dataPath string, datasetDir string, filteredData *model.FilteredData, variables []*model.Variable, targetIdx int) error {
+func writeData(dataPath string, datasetDir string, filteredData *model.FilteredData, variables map[string]*model.Variable, targetIdx int) error {
 	// make sure the output folder exists
 	dataFolder := path.Join(dataPath, D3MDataFolder)
 	err := os.MkdirAll(dataFolder, os.ModePerm)
@@ -206,16 +212,29 @@ func writeData(dataPath string, datasetDir string, filteredData *model.FilteredD
 	writer := csv.NewWriter(file)
 	defer writer.Flush()
 
+	// create a map of col idx to original idx
+	columnToOriginal := make([]int, len(filteredData.Columns))
+	for i, column := range filteredData.Columns {
+		if columnVar, ok := variables[column.Key]; ok {
+			columnToOriginal[i] = columnVar.Index
+		} else {
+			columnToOriginal[i] = -1
+		}
+	}
+
 	// map the name to the display name
 	variableNamesDisplay := make(map[string]string)
 	for _, v := range variables {
 		variableNamesDisplay[v.Key] = v.DisplayVariable
 	}
 
-	// write out the header, including the d3m_index field
-	variableNames := make([]string, 0)
-	for _, column := range filteredData.Columns {
-		variableNames = append(variableNames, variableNamesDisplay[column.Key])
+	// write out the header, including the d3m_index field - we remap from col index
+	// back to the original dataset index to enforce the original column ordering
+	variableNames := make([]string, len(variables))
+	for i, column := range filteredData.Columns {
+		if columnToOriginal[i] >= 0 {
+			variableNames[columnToOriginal[i]] = variableNamesDisplay[column.Key]
+		}
 	}
 	err = writer.Write(variableNames)
 	if err != nil {
@@ -223,11 +242,13 @@ func writeData(dataPath string, datasetDir string, filteredData *model.FilteredD
 	}
 
 	for _, row := range filteredData.Values {
-		strVals := make([]string, 0)
+		strVals := make([]string, len(variables))
 
-		// convert vals in row to string
-		for _, value := range row {
-			strVals = append(strVals, fmt.Sprintf("%v", value))
+		// convert vals in row to string and reorder to reflect original column ordering
+		for i, value := range row {
+			if columnToOriginal[i] >= 0 {
+				strVals[columnToOriginal[i]] = fmt.Sprintf("%v", value)
+			}
 		}
 		err := writer.Write(strVals)
 		if err != nil {
@@ -237,12 +258,7 @@ func writeData(dataPath string, datasetDir string, filteredData *model.FilteredD
 	return nil
 }
 
-func writeDataSchema(schemaPath string, dataset string, filteredData *model.FilteredData, targetIdx int, variables []*model.Variable) error {
-	// Build a map of variable name to variable.
-	vars := make(map[string]*model.Variable)
-	for _, v := range variables {
-		vars[v.Key] = v
-	}
+func writeDataSchema(schemaPath string, dataset string, filteredData *model.FilteredData, targetIdx int, variables map[string]*model.Variable) error {
 
 	// Build the schema data for output.
 	drs := make([]*DataResource, 1)
@@ -274,13 +290,20 @@ func writeDataSchema(schemaPath string, dataset string, filteredData *model.Filt
 			// Set the specific values for the d3m index.
 			role[0] = "index"
 		}
-		v := &DataVariable{
-			ColName:  vars[c.Key].DisplayVariable,
-			Role:     role,
-			ColType:  model.MapSchemaType(vars[c.Key].Type),
-			ColIndex: i,
+		// Write out the original index and type for the variable - column removal and semantic type
+		// updates are preprended to all generated pipelines, so we want the data we pass through
+		// to be the original version (minus any filtered rows).
+		// TODO: Metadata variables are always fetched regardless of filter state, so we do a check to
+		// ignore them when persisting.
+		if columnVar, ok := variables[c.Key]; ok {
+			v := &DataVariable{
+				ColName:  columnVar.DisplayVariable,
+				Role:     role,
+				ColType:  columnVar.OriginalType,
+				ColIndex: columnVar.Index,
+			}
+			ds.DataResources[0].Variables = append(ds.DataResources[0].Variables, v)
 		}
-		ds.DataResources[0].Variables = append(ds.DataResources[0].Variables, v)
 	}
 
 	dsJSON, err := json.Marshal(ds)

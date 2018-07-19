@@ -46,7 +46,15 @@ func (e *Extrema) GetBucketCount() int {
 	interval := e.GetBucketInterval()
 	rounded := e.GetBucketMinMax()
 	rang := rounded.Max - rounded.Min
-	return int(round(rang / interval))
+
+	// rounding issues could lead to negative numbers
+	count := int(round(rang / interval))
+	if count < 0 {
+		count = 1
+	} else if count > maxNumBuckets {
+		count = maxNumBuckets
+	}
+	return count
 }
 
 // GetBucketMinMax calculates the bucket min and max for the extrema.

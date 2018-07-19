@@ -500,15 +500,31 @@ func (s *SolutionRequest) PersistAndDispatch(client *Client, solutionStorage mod
 
 	// NOTE: D3M index field is needed in the persisted data.
 	s.Filters.Variables = append(s.Filters.Variables, model.D3MIndexFieldName)
-
 	// fetch the full set of variables associated with the dataset
 	variables, err := metaStorage.FetchVariables(s.Dataset, true, true)
 	if err != nil {
 		return err
 	}
 
+	// remove generated features from our var list
+	dataVariables := []*model.Variable{}
+	for _, variable := range variables {
+		if variable.DistilRole != "metadata" {
+			dataVariables = append(dataVariables, variable)
+		}
+	}
+
+	// make sure that we include all non-generated variables in our persisted dataset - the column removal
+	// preprocessing step will mark them for removal by ta2
+	allVarFilters := *s.Filters
+	allVarFilters.Variables = []string{}
+	for _, variable := range dataVariables {
+		// Exclude cluster/feature generated columns
+		allVarFilters.Variables = append(allVarFilters.Variables, variable.Key)
+	}
+
 	// fetch the queried dataset
-	dataset, err := model.FetchDataset(s.Dataset, true, true, s.Filters, metaStorage, dataStorage)
+	dataset, err := model.FetchDataset(s.Dataset, true, true, &allVarFilters, metaStorage, dataStorage)
 	if err != nil {
 		return err
 	}
@@ -517,11 +533,11 @@ func (s *SolutionRequest) PersistAndDispatch(client *Client, solutionStorage mod
 	trainDataset, testDataset, err := splitTrainTest(dataset)
 
 	// perist the datasets and get URI
-	datasetPathTrain, targetIndex, err := PersistFilteredData(datasetDir, s.TargetFeature, trainDataset)
+	datasetPathTrain, targetIndex, err := PersistFilteredData(datasetDir, s.TargetFeature, trainDataset, dataVariables)
 	if err != nil {
 		return err
 	}
-	datasetPathTest, _, err := PersistFilteredData(datasetDir, s.TargetFeature, testDataset)
+	datasetPathTest, _, err := PersistFilteredData(datasetDir, s.TargetFeature, testDataset, dataVariables)
 	if err != nil {
 		return err
 	}
@@ -540,7 +556,7 @@ func (s *SolutionRequest) PersistAndDispatch(client *Client, solutionStorage mod
 	// generate the pre-processing pipeline to enforce feature selection and semantic type changes
 	var preprocessing *pipeline.PipelineDescription
 	if !client.SkipPreprocessing {
-		preprocessing, err = s.createPreprocessingPipeline(variables, s.TargetFeature, s.Filters.Variables)
+		preprocessing, err = s.createPreprocessingPipeline(dataVariables, s.TargetFeature, s.Filters.Variables)
 		if err != nil {
 			return err
 		}
