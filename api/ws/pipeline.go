@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/pkg/errors"
@@ -102,16 +103,6 @@ func handleCreateSolutions(conn *Connection, client *compute.Client, metadataCto
 		return
 	}
 
-	// override metric if problem file present
-	if problemFile != "" {
-		metrics, err := parseMetrics(problemFile)
-		if err == nil {
-			request.Metrics = metrics
-		} else {
-			log.Warnf("error parsing metrics from %s: %v", problemFile, err)
-		}
-	}
-
 	// initialize the storage
 	dataStorage, err := dataCtor()
 	if err != nil {
@@ -131,6 +122,26 @@ func handleCreateSolutions(conn *Connection, client *compute.Client, metadataCto
 	if err != nil {
 		handleErr(conn, msg, err)
 		return
+	}
+
+	targetVar, err := metaStorage.FetchVariable(request.Dataset, request.TargetFeature)
+	if err != nil {
+		handleErr(conn, msg, err)
+		return
+	}
+
+	// load defaults
+	if request.Task == "" {
+		request.Task = compute.DefaultTaskType(targetVar.Type)
+		log.Infof("Defaulting task type to `%s`", request.Task)
+	}
+	if request.SubTask == "" {
+		request.SubTask = compute.DefaultTaskSubType(targetVar.Type)
+		log.Infof("Defaulting task sub type to `%s`", request.SubTask)
+	}
+	if len(request.Metrics) == 0 {
+		request.Metrics = compute.DefaultMetrics(targetVar.Type)
+		log.Infof("Defaulting metrics to `%s`", strings.Join(request.Metrics, ","))
 	}
 
 	// persist the request information and dispatch the request
@@ -174,18 +185,4 @@ func handleStopSolutions(conn *Connection, client *compute.Client, msg *Message)
 		return
 	}
 	return
-}
-
-func parseMetrics(filename string) ([]string, error) {
-	problemInfo, err := compute.LoadProblemSchemaFromFile(filename)
-	if err != nil {
-		return nil, errors.Wrap(err, "Unable to unmarshal classification response")
-	}
-
-	metrics := make([]string, 0)
-	for _, m := range problemInfo.Inputs.PerformanceMetrics {
-		metrics = append(metrics, compute.ConvertProblemMetricToTA3(m.Metric))
-	}
-
-	return metrics, nil
 }

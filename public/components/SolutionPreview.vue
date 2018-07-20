@@ -22,7 +22,7 @@
 					</b-badge>
 					<div v-if="isCompleted()">
 						<b-badge variant="info" v-bind:key="score.metric" v-for="score in result.scores">
-							{{metricName(score.metric)}}: {{score.value.toFixed(2)}}
+							{{score.metric}}: {{score.value.toFixed(2)}}
 						</b-badge>
 					</div>
 					<div v-if="isErrored()">
@@ -46,7 +46,6 @@
 
 <script lang="ts">
 import moment from 'moment';
-import { getMetricDisplayName } from '../util/solutions';
 import { createRouteEntry } from '../util/routes';
 import { Solution, SOLUTION_PENDING, SOLUTION_RUNNING, SOLUTION_COMPLETED, SOLUTION_ERRORED } from '../store/solutions/index';
 import { RESULTS_ROUTE } from '../store/route/index';
@@ -72,9 +71,6 @@ export default Vue.extend({
 	methods: {
 		status(): string {
 			return this.result.progress;
-		},
-		metricName(metric): string {
-			return getMetricDisplayName(metric);
 		},
 		isPending(): boolean {
 			return (<Solution>this.result).progress === SOLUTION_PENDING;

@@ -30,10 +30,9 @@
 
 <script lang="ts">
 
-import ResultsDataTable from '../components/ResultsDataTable.vue';
-import { getTask } from '../util/solutions';
 import _ from 'lodash';
 import Vue from 'vue';
+import ResultsDataTable from '../components/ResultsDataTable.vue';
 import { Dictionary } from '../util/dict';
 import { getters as datasetGetters } from '../store/dataset/module';
 import { getters as resultsGetters } from '../store/results/module';
@@ -138,16 +137,7 @@ export default Vue.extend({
 		},
 
 		regressionEnabled(): boolean {
-			const targetVarName = this.target;
-			const variables = this.variables;
-			const targetVar = _.find(variables, v => {
-				return _.toLower(v.key) === _.toLower(targetVarName);
-			});
-			if (_.isEmpty(targetVar)) {
-				return false;
-			}
-			const task = getTask(targetVar.type);
-			return task.schemaName === 'regression';
+			return solutionGetters.isRegression(this.$store);
 		},
 
 		numRows(): number {

@@ -650,9 +650,9 @@ func CreateSearchSolutionRequest(allFeatures []*model.Variable,
 	if targetVariable == nil {
 		return nil, errors.Errorf("unable to find target variable '%s'", target)
 	}
-	task := getTaskType(targetVariable.Type)
-	taskSubType := getTaskSubType(targetVariable.Type)
-	metrics := []string{getMetric(targetVariable.Type)}
+	task := DefaultTaskType(targetVariable.Type)
+	taskSubType := DefaultTaskSubType(targetVariable.Type)
+	metrics := DefaultMetrics(targetVariable.Type)
 
 	// create search solutions request
 	searchRequest, err := createSearchSolutionsRequest(targetIndex, preprocessingPipeline, sourceURI, userAgent, target, dataset, metrics, task, taskSubType, 600)
