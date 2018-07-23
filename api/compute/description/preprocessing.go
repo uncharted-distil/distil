@@ -21,22 +21,25 @@ func CreateUserDatasetPipeline(name string, description string, allFeatures []*m
 		selectedSet[strings.ToLower(v)] = true
 	}
 
-	// create the feature selection primitive
-	removeFeatures, err := createRemoveFeatures(allFeatures, selectedSet)
-	if err != nil {
-		return nil, err
-	}
-
 	// create the semantic type update primitive
 	updateSemanticTypes, err := createUpdateSemanticTypes(allFeatures, selectedSet)
 	if err != nil {
 		return nil, err
 	}
 
+	// create the feature selection primitive
+	removeFeatures, err := createRemoveFeatures(allFeatures, selectedSet)
+	if err != nil {
+		return nil, err
+	}
+
 	// instantiate the pipeline
-	builder := NewBuilder(name, description).Add(removeFeatures)
+	builder := NewBuilder(name, description)
 	for _, v := range updateSemanticTypes {
 		builder = builder.Add(v)
+	}
+	if removeFeatures != nil {
+		builder = builder.Add(removeFeatures)
 	}
 	pip, err := builder.AddInferencePoint().Compile()
 	if err != nil {
@@ -57,6 +60,10 @@ func createRemoveFeatures(allFeatures []*model.Variable, selectedSet map[string]
 		if !selectedSet[strings.ToLower(v.Key)] {
 			removeFeatures = append(removeFeatures, v.Index)
 		}
+	}
+
+	if len(removeFeatures) == 0 {
+		return nil, nil
 	}
 
 	// instantiate the feature remove primitive
