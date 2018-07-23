@@ -20,8 +20,8 @@ func NewSimonStep() *StepData {
 }
 
 // NewSlothStep creates a Sloth timeseries clustering step.
-func NewSlothStep() *StepData {
-	return NewStepData(
+func NewSlothStep(targetColumns []string, outputLabels []string) *StepData {
+	return NewStepDataWithHyperparameters(
 		&pipeline.Primitive{
 			Id:         "77bf4b92-2faa-3e38-bb7e-804131243a7f",
 			Version:    "1.0.0",
@@ -30,6 +30,10 @@ func NewSlothStep() *StepData {
 			Digest:     "f94f1aacc23792b680af0bd895f0fd2bac7336b29967b6ad766df4cb3c1933ab",
 		},
 		[]string{"produce"},
+		map[string]interface{}{
+			"target_columns": targetColumns,
+			"output_labels":  outputLabels,
+		},
 	)
 }
 

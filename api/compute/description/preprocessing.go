@@ -138,11 +138,11 @@ func createUpdateSemanticTypes(allFeatures []*model.Variable, selectedSet map[st
 }
 
 // CreateSlothPipeline creates a pipeline to peform timeseries clustering on a dataset.
-func CreateSlothPipeline(name string, description string) (*pipeline.PipelineDescription, error) {
+func CreateSlothPipeline(name string, description string, targetColumns []string, outputLabels []string) (*pipeline.PipelineDescription, error) {
 	// insantiate the pipeline
 	pipeline, err := NewBuilder(name, description).
 		Add(NewDatasetToDataframeStep()).
-		Add(NewSlothStep()).
+		Add(NewSlothStep(targetColumns, outputLabels)).
 		Compile()
 
 	if err != nil {
