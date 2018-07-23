@@ -4,12 +4,12 @@ import (
 	"bytes"
 	"compress/gzip"
 	"io/ioutil"
-	"strings"
 
 	"github.com/golang/protobuf/proto"
 	protobuf "github.com/golang/protobuf/protoc-gen-go/descriptor"
+	"github.com/unchartedsoftware/plog"
+
 	"github.com/unchartedsoftware/distil/api/pipeline"
-	log "github.com/unchartedsoftware/plog"
 )
 
 const (
@@ -39,18 +39,62 @@ var (
 		"precisionAtTopK":             "PRECISION_AT_TOP_K",
 		"objectDetectionAP":           "OBJECT_DETECTION_AVERAGE_PRECISION",
 	}
+	problemTaskMap = map[string]string{
+		"classification":         "CLASSIFICATION",
+		"regression":             "REGRESSION",
+		"clustering":             "CLUSTERING",
+		"linkPrediction":         "LINK_PREDICTION",
+		"vertexNomination":       "VERTEX_NOMINATION",
+		"communityDetection":     "COMMUNITY_DETECTION",
+		"graphClustering":        "GRAPH_CLUSTERING",
+		"graphMatching":          "GRAPH_MATCHING",
+		"timeSeriesForecasting":  "TIME_SERIES_FORECASTING",
+		"collaborativeFiltering": "COLLABORATIVE_FILTERING",
+		"objectDetection":        "OBJECT_DETECTION",
+	}
+	problemTaskSubMap = map[string]string{
+		"none":           "NONE",
+		"binary":         "BINARY",
+		"multiClass":     "MULTICLASS",
+		"multiLabel":     "MULTILABEL",
+		"univariate":     "UNIVARIATE",
+		"multivariate":   "MULTIVARIATE",
+		"overlapping":    "OVERLAPPING",
+		"nonOverlapping": "NONOVERLAPPING",
+	}
 )
+
+// ConvertProblemMetricToTA2 converts a problem schema metric to a TA2 metric.
+func ConvertProblemMetricToTA2(metric string) string {
+	return problemMetricMap[metric]
+}
+
+// ConvertProblemTaskToTA2 converts a problem schema metric to a TA2 task.
+func ConvertProblemTaskToTA2(metric string) string {
+	return problemTaskMap[metric]
+}
+
+// ConvertProblemTaskSubToTA2 converts a problem schema metric to a TA2 task sub.
+func ConvertProblemTaskSubToTA2(metric string) string {
+	return problemTaskSubMap[metric]
+}
 
 func convertMetricsFromTA3ToTA2(metrics []string) []*pipeline.ProblemPerformanceMetric {
 	var res []*pipeline.ProblemPerformanceMetric
 	for _, metric := range metrics {
+		ta2Metric := ConvertProblemMetricToTA2(metric)
 		var metricSet pipeline.PerformanceMetric
-		metricAdjusted, ok := pipeline.PerformanceMetric_value[strings.ToUpper(metric)]
-		if !ok {
-			log.Warnf("undefined performance metric found ('%s') so defaulting to undefined", metric)
+		if ta2Metric == "" {
+			log.Warnf("unrecognized metric ('%s'), defaulting to undefined", metric)
 			metricSet = pipeline.PerformanceMetric_METRIC_UNDEFINED
 		} else {
-			metricSet = pipeline.PerformanceMetric(metricAdjusted)
+			metricAdjusted, ok := pipeline.PerformanceMetric_value[ta2Metric]
+			if !ok {
+				log.Warnf("undefined metric found ('%s'), defaulting to undefined", ta2Metric)
+				metricSet = pipeline.PerformanceMetric_METRIC_UNDEFINED
+			} else {
+				metricSet = pipeline.PerformanceMetric(metricAdjusted)
+			}
 		}
 		res = append(res, &pipeline.ProblemPerformanceMetric{
 			Metric: metricSet,
@@ -59,20 +103,32 @@ func convertMetricsFromTA3ToTA2(metrics []string) []*pipeline.ProblemPerformance
 	return res
 }
 
-// ConvertProblemMetricToTA3 converts a problem schema metric to a TA3 metric.
-func ConvertProblemMetricToTA3(metric string) string {
-	return problemMetricMap[metric]
-}
-
 func convertTaskTypeFromTA3ToTA2(taskType string) pipeline.TaskType {
-	return pipeline.TaskType(pipeline.TaskType_value[strings.ToUpper(taskType)])
+	ta2Task := ConvertProblemTaskToTA2(taskType)
+	if ta2Task == "" {
+		log.Warnf("unrecognized task type ('%s'), defaulting to undefined", taskType)
+		return pipeline.TaskType_TASK_TYPE_UNDEFINED
+	}
+	task, ok := pipeline.TaskType_value[ta2Task]
+	if !ok {
+		log.Warnf("undefined task type found ('%s'), defaulting to undefined", ta2Task)
+		return pipeline.TaskType_TASK_TYPE_UNDEFINED
+	}
+	return pipeline.TaskType(task)
 }
 
 func convertTaskSubTypeFromTA3ToTA2(taskSubType string) pipeline.TaskSubtype {
-	if taskSubType == "" {
+	ta2TaskSub := ConvertProblemTaskSubToTA2(taskSubType)
+	if ta2TaskSub == "" {
+		log.Warnf("unrecognized task sub type ('%s'), defaulting to undefined", taskSubType)
 		return pipeline.TaskSubtype_TASK_SUBTYPE_UNDEFINED
 	}
-	return pipeline.TaskSubtype(pipeline.TaskSubtype_value[strings.ToUpper(taskSubType)])
+	task, ok := pipeline.TaskSubtype_value[ta2TaskSub]
+	if !ok {
+		log.Warnf("undefined task sub type found ('%s'), defaulting to undefined", ta2TaskSub)
+		return pipeline.TaskSubtype_TASK_SUBTYPE_UNDEFINED
+	}
+	return pipeline.TaskSubtype(task)
 }
 
 func convertTargetFeaturesTA3ToTA2(target string, targetIndex int) []*pipeline.ProblemTarget {
