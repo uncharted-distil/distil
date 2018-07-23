@@ -17,7 +17,16 @@ const (
 	IncorrectCategory = "incorrect"
 )
 
-func (s *Storage) parseFilteredData(dataset string, numRows int, rows *pgx.Rows) (*model.FilteredData, error) {
+func getVariableByKey(key string, variables []*model.Variable) *model.Variable {
+	for _, variable := range variables {
+		if variable.Key == key {
+			return variable
+		}
+	}
+	return nil
+}
+
+func (s *Storage) parseFilteredData(dataset string, variables []*model.Variable, numRows int, rows *pgx.Rows) (*model.FilteredData, error) {
 	result := &model.FilteredData{
 		NumRows: numRows,
 		Values:  make([][]interface{}, 0),
@@ -28,10 +37,16 @@ func (s *Storage) parseFilteredData(dataset string, numRows int, rows *pgx.Rows)
 		fields := rows.FieldDescriptions()
 		columns := make([]model.Column, len(fields))
 		for i := 0; i < len(fields); i++ {
+			key := fields[i].Name
+
+			v := getVariableByKey(key, variables)
+			if v == nil {
+				return nil, fmt.Errorf("unable to lookup variable for %s", key)
+			}
 			columns[i] = model.Column{
-				Key:   fields[i].Name,
-				Label: fields[i].Name,
-				Type:  fields[i].DataTypeName,
+				Key:   key,
+				Label: key,
+				Type:  v.Type,
 			}
 		}
 		result.Columns = columns
@@ -349,5 +364,5 @@ func (s *Storage) FetchData(dataset string, filterParams *model.FilterParams, in
 	}
 
 	// parse the result
-	return s.parseFilteredData(dataset, numRows, res)
+	return s.parseFilteredData(dataset, variables, numRows, res)
 }

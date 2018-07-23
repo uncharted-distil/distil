@@ -124,7 +124,7 @@ func (s *Storage) executeInsertResultStatement(dataset string, resultID string, 
 	return err
 }
 
-func (s *Storage) parseFilteredResults(dataset string, numRows int, rows *pgx.Rows, target *model.Variable) (*model.FilteredData, error) {
+func (s *Storage) parseFilteredResults(dataset string, variables []*model.Variable, numRows int, rows *pgx.Rows, target *model.Variable) (*model.FilteredData, error) {
 	result := &model.FilteredData{
 		NumRows: numRows,
 		Values:  make([][]interface{}, 0),
@@ -137,15 +137,24 @@ func (s *Storage) parseFilteredResults(dataset string, numRows int, rows *pgx.Ro
 		for i := 0; i < len(fields); i++ {
 			key := fields[i].Name
 			label := key
+			typ := "unknown"
 			if model.IsPredictedKey(key) {
 				label = "Predicted " + model.StripKeySuffix(key)
+				typ = target.Type
 			} else if model.IsErrorKey(key) {
 				label = "Error"
+				typ = target.Type
+			} else {
+				v := getVariableByKey(key, variables)
+				if v != nil {
+					typ = v.Type
+				}
 			}
+
 			columns[i] = model.Column{
 				Key:   key,
 				Label: label,
-				Type:  fields[i].DataTypeName,
+				Type:  typ,
 			}
 		}
 
@@ -459,7 +468,7 @@ func (s *Storage) FetchResults(dataset string, resultURI string, solutionID stri
 		return nil, errors.Wrap(err, "Could not pull num rows")
 	}
 
-	return s.parseFilteredResults(dataset, numRows, rows, variable)
+	return s.parseFilteredResults(dataset, variables, numRows, rows, variable)
 }
 
 func (s *Storage) getResultMinMaxAggsQuery(variable *model.Variable, resultVariable *model.Variable) string {

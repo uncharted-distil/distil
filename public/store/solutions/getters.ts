@@ -116,6 +116,9 @@ export const getters = {
 		const variables = getters.getVariables;
 		const target = getters.getRouteTargetVariable;
 		const targetVariable = variables.find(s => _.toLower(s.key) === _.toLower(target));
+		if (!targetVariable) {
+			return false;
+		}
 		const task = getTask(targetVariable.type);
 		return task.schemaName === REGRESSION_TASK.schemaName;
 	},
@@ -124,6 +127,9 @@ export const getters = {
 		const variables = getters.getVariables;
 		const target = getters.getRouteTargetVariable;
 		const targetVariable = variables.find(s => _.toLower(s.key) === _.toLower(target));
+		if (!targetVariable) {
+			return false;
+		}
 		const task = getTask(targetVariable.type);
 		return task.schemaName === CLASSIFICATION_TASK.schemaName;
 	},
