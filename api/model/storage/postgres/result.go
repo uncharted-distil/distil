@@ -137,21 +137,24 @@ func (s *Storage) parseFilteredResults(dataset string, variables []*model.Variab
 		for i := 0; i < len(fields); i++ {
 			key := fields[i].Name
 			label := key
+			typ := "unknown"
 			if model.IsPredictedKey(key) {
 				label = "Predicted " + model.StripKeySuffix(key)
+				typ = target.Type
 			} else if model.IsErrorKey(key) {
 				label = "Error"
-			}
-
-			v := getVariableByKey(key, variables)
-			if v == nil {
-				return nil, fmt.Errorf("unable to lookup variable for %s", key)
+				typ = target.Type
+			} else {
+				v := getVariableByKey(key, variables)
+				if v != nil {
+					typ = v.Type
+				}
 			}
 
 			columns[i] = model.Column{
 				Key:   key,
 				Label: label,
-				Type:  v.Type,
+				Type:  typ,
 			}
 		}
 
