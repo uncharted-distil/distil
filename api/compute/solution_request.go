@@ -638,6 +638,7 @@ func CreateSearchSolutionRequest(allFeatures []*model.Variable,
 	for i, v := range selectedFeatures {
 		if v == target {
 			targetIndex = i
+			break
 		}
 	}
 
@@ -645,6 +646,7 @@ func CreateSearchSolutionRequest(allFeatures []*model.Variable,
 	for _, v := range allFeatures {
 		if v.Key == target {
 			targetVariable = v
+			break
 		}
 	}
 	if targetVariable == nil {
