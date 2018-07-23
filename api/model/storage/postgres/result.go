@@ -124,7 +124,7 @@ func (s *Storage) executeInsertResultStatement(dataset string, resultID string, 
 	return err
 }
 
-func (s *Storage) parseFilteredResults(dataset string, numRows int, rows *pgx.Rows, target *model.Variable) (*model.FilteredData, error) {
+func (s *Storage) parseFilteredResults(dataset string, variables []*model.Variable, numRows int, rows *pgx.Rows, target *model.Variable) (*model.FilteredData, error) {
 	result := &model.FilteredData{
 		NumRows: numRows,
 		Values:  make([][]interface{}, 0),
@@ -142,10 +142,16 @@ func (s *Storage) parseFilteredResults(dataset string, numRows int, rows *pgx.Ro
 			} else if model.IsErrorKey(key) {
 				label = "Error"
 			}
+
+			v := getVariableByKey(key, variables)
+			if v == nil {
+				return nil, fmt.Errorf("unable to lookup variable for %s", key)
+			}
+
 			columns[i] = model.Column{
 				Key:   key,
 				Label: label,
-				Type:  fields[i].DataTypeName,
+				Type:  v.Type,
 			}
 		}
 
@@ -459,7 +465,7 @@ func (s *Storage) FetchResults(dataset string, resultURI string, solutionID stri
 		return nil, errors.Wrap(err, "Could not pull num rows")
 	}
 
-	return s.parseFilteredResults(dataset, numRows, rows, variable)
+	return s.parseFilteredResults(dataset, variables, numRows, rows, variable)
 }
 
 func (s *Storage) getResultMinMaxAggsQuery(variable *model.Variable, resultVariable *model.Variable) string {
