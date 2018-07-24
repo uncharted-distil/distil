@@ -31,9 +31,10 @@ import (
 )
 
 var (
-	version     = "unset"
-	timestamp   = "unset"
-	problemPath = ""
+	version        = "unset"
+	timestamp      = "unset"
+	problemPath    = ""
+	datasetDocPath = ""
 )
 
 func registerRoute(mux *goji.Mux, pattern string, handler func(http.ResponseWriter, *http.Request)) {
@@ -126,7 +127,7 @@ func main() {
 	defer solutionClient.Close()
 
 	// reset the exported problem list
-	if config.IsProblemDiscovery {
+	if config.IsTask1 {
 		problemListingFile := path.Join(config.UserProblemPath, routes.ProblemLabelFile)
 		err = os.MkdirAll(config.UserProblemPath, 0755)
 		if err != nil {
@@ -139,6 +140,7 @@ func main() {
 			log.Errorf("%+v", err)
 			os.Exit(1)
 		}
+		datasetDocPath = path.Join(config.D3MInputDir, "TRAIN", "dataset_TRAIN", "datasetDoc.json")
 	} else {
 		// NOTE: EVAL ONLY OVERRIDE SETUP FOR METRICS!
 		problemPath = path.Join(config.D3MInputDir, "TRAIN", "problem_TRAIN", "problemDoc.json")
@@ -227,7 +229,7 @@ func main() {
 	registerRoute(mux, "/distil/abort", routes.AbortHandler())
 	registerRoute(mux, "/distil/export/:solution-id", routes.ExportHandler(pgSolutionStorageCtor, metadataStorageCtor, solutionClient, config.D3MOutputDir))
 	registerRoute(mux, "/distil/ingest/:index/:dataset", routes.IngestHandler(metadataStorageCtor, ingestConfig))
-	registerRoute(mux, "/distil/config", routes.ConfigHandler(config, version, timestamp, problemPath))
+	registerRoute(mux, "/distil/config", routes.ConfigHandler(config, version, timestamp, problemPath, datasetDocPath))
 	registerRoute(mux, "/ws", ws.SolutionHandler(solutionClient, metadataStorageCtor, pgDataStorageCtor, pgSolutionStorageCtor))
 
 	// POST

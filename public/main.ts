@@ -74,10 +74,19 @@ new Vue({
 		appActions.fetchConfig(this.$store).then(() => {
 			// if dataset / target exist in problem file, immediately route to
 			// create models view.
+			if (appGetters.isTask1(this.$store)) {
+				const dataset = appGetters.getProblemDataset(this.$store);
+				console.log(`Task 1: Routing directly to select target view with dataset=\`${dataset}\``, dataset);
+				const entry = createRouteEntry(SELECT_ROUTE, {
+					dataset: dataset
+				});
+				this.$router.push(entry);
+			}
+
 			if (appGetters.isTask2(this.$store)) {
 				const dataset = appGetters.getProblemDataset(this.$store);
 				const target = appGetters.getProblemTarget(this.$store);
-				console.log(`Routing directly to create models view with dataset=\`${dataset}\` and target=\`${target}\``, dataset, target);
+				console.log(`Task 2: Routing directly to create models view with dataset=\`${dataset}\` and target=\`${target}\``, dataset, target);
 				const entry = createRouteEntry(CREATE_ROUTE, {
 					dataset: dataset,
 					target: target

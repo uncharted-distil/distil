@@ -67,7 +67,8 @@ export const actions = {
 			.then(response => {
 				mutations.setVersionNumber(context, response.data.version);
 				mutations.setVersionTimestamp(context, response.data.timestamp);
-				mutations.setIsDiscovery(context, response.data.discovery);
+				mutations.setIsTask1(context, response.data.isTask1);
+				mutations.setIsTask2(context, response.data.isTask2);
 				mutations.setProblemDataset(context, response.data.dataset);
 				mutations.setProblemTarget(context, response.data.target);
 				mutations.setProblemTaskType(context, response.data.taskType);
