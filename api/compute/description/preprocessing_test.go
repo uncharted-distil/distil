@@ -80,3 +80,23 @@ func TestCreateUserDatasetPipelineMappingError(t *testing.T) {
 	assert.Error(t, err)
 	t.Logf("\n%s", proto.MarshalTextString(pipeline))
 }
+
+func TestCreateUserDatasetEmpty(t *testing.T) {
+
+	variables := []*model.Variable{
+		{
+			Key:          "test_var_0",
+			OriginalType: "categorical",
+			Type:         "categorical",
+			Index:        0,
+		},
+	}
+
+	pipeline, err := CreateUserDatasetPipeline(
+		"test_user_pipeline", "a test user pipeline", variables, "test_target", []string{"test_var_0"})
+
+	assert.Nil(t, pipeline)
+	assert.Nil(t, err)
+
+	t.Logf("\n%s", proto.MarshalTextString(pipeline))
+}
