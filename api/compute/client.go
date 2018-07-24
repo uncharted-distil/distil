@@ -39,6 +39,8 @@ type SearchSolutionHandler func(*pipeline.GetSearchSolutionsResultsResponse)
 // the connection to the solution server or return an error on fail
 func NewClient(serverAddr string, trace bool, userAgent string,
 	pullTimeout time.Duration, pullMax int, skipPreprocessing bool) (*Client, error) {
+	log.Infof("connecting to ta2 at %s", serverAddr)
+
 	conn, err := grpc.Dial(
 		serverAddr,
 		grpc.WithInsecure(),

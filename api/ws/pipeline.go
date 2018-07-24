@@ -11,6 +11,7 @@ import (
 	"github.com/unchartedsoftware/plog"
 
 	"github.com/unchartedsoftware/distil/api/compute"
+	"github.com/unchartedsoftware/distil/api/env"
 	"github.com/unchartedsoftware/distil/api/model"
 	jutil "github.com/unchartedsoftware/distil/api/util/json"
 )
@@ -131,6 +132,7 @@ func handleCreateSolutions(conn *Connection, client *compute.Client, metadataCto
 	}
 
 	// load defaults
+	config, _ := env.LoadConfig()
 	if request.Task == "" {
 		request.Task = compute.DefaultTaskType(targetVar.Type)
 		log.Infof("Defaulting task type to `%s`", request.Task)
@@ -142,6 +144,10 @@ func handleCreateSolutions(conn *Connection, client *compute.Client, metadataCto
 	if len(request.Metrics) == 0 {
 		request.Metrics = compute.DefaultMetrics(targetVar.Type)
 		log.Infof("Defaulting metrics to `%s`", strings.Join(request.Metrics, ","))
+	}
+	if request.MaxTime == 0 {
+		request.MaxTime = int64(config.SolutionSearchMaxTime)
+		log.Infof("Defaulting max search time to `%d`", request.MaxTime)
 	}
 
 	// persist the request information and dispatch the request

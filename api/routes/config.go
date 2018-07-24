@@ -1,8 +1,9 @@
 package routes
 
 import (
-	"github.com/pkg/errors"
 	"net/http"
+
+	"github.com/pkg/errors"
 
 	"github.com/unchartedsoftware/distil/api/compute"
 	"github.com/unchartedsoftware/distil/api/env"
@@ -35,7 +36,7 @@ func ConfigHandler(config env.Config, version string, timestamp string, problemP
 				// get metrics
 				if problem.Inputs.PerformanceMetrics != nil {
 					for _, metric := range problem.Inputs.PerformanceMetrics {
-						metrics = append(metrics, compute.ConvertProblemMetricToTA2(metric.Metric))
+						metrics = append(metrics, metric.Metric)
 					}
 				}
 			}
