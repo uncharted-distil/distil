@@ -173,7 +173,7 @@ function handleProgress(context: SolutionContext, request: CreateSolutionRequest
 		console.log(`Progress for solution ${response.solutionId} updated to ${response.progress}`);
 	}
 
-	context.dispatch('fetchRequests', {
+	context.dispatch('fetchSolutionRequests', {
 		dataset: request.dataset,
 		target: request.target,
 		solutionId: response.solutionId,
@@ -191,7 +191,7 @@ function handleProgress(context: SolutionContext, request: CreateSolutionRequest
 
 export const actions = {
 
-	fetchRequests(context: SolutionContext, args: { dataset?: string, target?: string, solutionId?: string }) {
+	fetchSolutionRequests(context: SolutionContext, args: { dataset?: string, target?: string, solutionId?: string }) {
 		if (!args.dataset) {
 			args.dataset = null;
 		}

@@ -11,7 +11,7 @@ export const actions = {
 		context.commit('clearSolutionRequests');
 
 		// fetch new state
-		return context.dispatch('fetchRequests', {});
+		return context.dispatch('fetchSolutionRequests', {});
 	},
 
 	fetchSearchData(context: ViewContext) {
@@ -107,7 +107,7 @@ export const actions = {
 			dataset: dataset
 		}).then(() => {
 			const target = context.getters.getRouteTargetVariable;
-			context.dispatch('fetchRequests', {
+			context.dispatch('fetchSolutionRequests', {
 				dataset: dataset,
 				target: target
 			}).then(() => {
