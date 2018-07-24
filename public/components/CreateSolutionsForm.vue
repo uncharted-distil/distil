@@ -12,7 +12,7 @@
 				</div>
 			</div>
 			<div class="row justify-content-center">
-				<b-btn class="mt-3 close-modal" variant="success" block @click="showExportSuccess = !showExportSuccess">OK</b-btn>
+				<b-btn class="mt-3 close-modal" block @click="showExportSuccess = !showExportSuccess">OK</b-btn>
 			</div>
 		</b-modal>
 		<b-modal id="export-failure-modal" title="Export Failed"
@@ -27,7 +27,7 @@
 				</div>
 			</div>
 			<div class="row justify-content-center">
-				<b-btn class="mt-3 close-modal" variant="success" block @click="showExportFailure = !showExportFailure">OK</b-btn>
+				<b-btn class="mt-3 close-modal" block @click="showExportFailure = !showExportFailure">OK</b-btn>
 			</div>
 		</b-modal>
 		<b-modal id="export-start-modal" title="Export Problem"
@@ -44,6 +44,21 @@
 			</div>
 			<div class="row justify-content-center">
 				<b-btn class="mt-3 close-modal" variant="success" block @click="exportData">Export</b-btn>
+			</div>
+		</b-modal>
+		<b-modal id="create-failure-modal" title="Model Creation Failed"
+			v-model="showCreateFailure"
+			cancel-disabled
+			hide-header
+			hide-footer>
+			<div class="row justify-content-center">
+				<div class="check-message-container">
+					<i class="fa fa-exclamation-triangle fa-3x fail-icon"></i>
+					<div><b>Model Failed:</b> {{createErrorMessage}}</div>
+				</div>
+			</div>
+			<div class="row justify-content-center">
+				<b-btn class="mt-3 close-modal" block @click="showCreateFailure = !showCreateFailure">OK</b-btn>
 			</div>
 		</b-modal>
 		<div class="row justify-content-center">
@@ -87,6 +102,8 @@ export default Vue.extend({
 			showExport: false,
 			showExportSuccess: false,
 			showExportFailure: false,
+			showCreateFailure: false,
+			createErrorMessage: null
 		};
 	},
 	computed: {
@@ -183,6 +200,11 @@ export default Vue.extend({
 					solutionId: res.solutionId
 				});
 				this.$router.push(entry);
+			}).catch(err => {
+				// display error modal
+				this.pending = false;
+				this.createErrorMessage = err.message;
+				this.showCreateFailure = true;
 			});
 		},
 
