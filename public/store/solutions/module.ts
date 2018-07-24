@@ -31,7 +31,7 @@ export const getters = {
 }
 
 export const actions = {
-	fetchSolutions: dispatch(moduleActions.fetchSolutions),
+	fetchRequests: dispatch(moduleActions.fetchRequests),
 	createSolutionRequest: dispatch(moduleActions.createSolutionRequest),
 	stopSolutionRequest: dispatch(moduleActions.stopSolutionRequest),
 }
