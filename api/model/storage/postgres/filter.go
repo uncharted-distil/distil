@@ -45,7 +45,7 @@ func (s *Storage) parseFilteredData(dataset string, variables []*model.Variable,
 			}
 			columns[i] = model.Column{
 				Key:   key,
-				Label: key,
+				Label: v.DisplayVariable,
 				Type:  v.Type,
 			}
 		}
