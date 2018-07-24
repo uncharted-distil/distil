@@ -133,6 +133,7 @@ export const actions = {
 		const requestIds = context.getters.getRelevantSolutionRequestIds;
 		const solutionId = context.getters.getRouteSolutionId;
 		const paginatedVariables = context.getters.getResultsPaginatedVariables;
+		const trainingVariables = context.getters.getActiveSolutionTrainingVariables;
 		const highlightRoot = context.getters.getDecodedHighlightRoot;
 
 		context.dispatch('fetchResultTableData', {
@@ -147,7 +148,7 @@ export const actions = {
 		});
 		context.dispatch('fetchTrainingSummaries', {
 			dataset: dataset,
-			training: paginatedVariables,
+			training: trainingVariables,
 			solutionId: solutionId
 		});
 		context.dispatch('fetchPredictedSummaries', {

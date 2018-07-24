@@ -49,7 +49,7 @@ function updateCurrentSolutionResults(context: SolutionContext, req: CreateSolut
 	});
 	context.dispatch('fetchTrainingSummaries', {
 		dataset: req.dataset,
-		training: context.getters.getResultsPaginatedVariables,
+		training: context.getters.getActiveSolutionTrainingVariables,
 		solutionId: res.solutionId,
 	});
 	context.dispatch('fetchTargetSummary', {
