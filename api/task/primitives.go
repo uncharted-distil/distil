@@ -22,9 +22,21 @@ import (
 	"github.com/unchartedsoftware/distil/api/pipeline"
 )
 
+const (
+	denormFieldName = "filename"
+)
+
 var (
 	client *compute.Client
 )
+
+// FeatureRequest captures the properties of a request to a primitive.
+type FeatureRequest struct {
+	SourceVariableName  string
+	FeatureVariableName string
+	Variable            *metadata.Variable
+	Step                *pipeline.PipelineDescription
+}
 
 // SetClient sets the compute client to use when invoking primitives.
 func SetClient(computeClient *compute.Client) {
@@ -238,104 +250,56 @@ func FeaturizePrimitive(index string, dataset string, config *IngestTaskConfig) 
 	mainDR := meta.GetMainDataResource()
 
 	// add feature variables
-	inputFeatureNames, outputFeatureNames := getFeatureVariables(meta, "_feature_")
+	features, err := getClusterVariables(meta, "_feature_")
+	if err != nil {
+		return errors.Wrap(err, "unable to get feature variables")
+	}
 
-	// create & submit the solution request
-	if len(inputFeatureNames) > 0 {
-		pip, err := description.CreateCrocPipeline("leather", "", inputFeatureNames, outputFeatureNames)
+	d3mIndexField := getD3MIndexField(mainDR)
+
+	// open the input file
+	dataPath := path.Join(config.ContainerDataPath, mainDR.ResPath)
+	lines, err := readCSVFile(dataPath, config.HasHeader)
+	if err != nil {
+		return errors.Wrap(err, "error reading raw data")
+	}
+
+	// add the cluster data to the raw data
+	for _, f := range features {
+		mainDR.Variables = append(mainDR.Variables, f.Variable)
+
+		lines, err = appendFeature(dataset, d3mIndexField, config.HasHeader, f, lines)
 		if err != nil {
-			return errors.Wrap(err, "unable to create Croc pipeline")
+			return errors.Wrap(err, "error appending feature data")
 		}
+	}
 
-		datasetURI, err := submitPrimitive(dataset, pip)
+	// initialize csv writer
+	output := &bytes.Buffer{}
+	writer := csv.NewWriter(output)
+
+	// output the header
+	header := make([]string, len(mainDR.Variables))
+	for _, v := range mainDR.Variables {
+		header[v.Index] = v.Name
+	}
+	err = writer.Write(header)
+	if err != nil {
+		return errors.Wrap(err, "error storing feature header")
+	}
+
+	for _, line := range lines {
+		err = writer.Write(line)
 		if err != nil {
-			return errors.Wrap(err, "unable to run Croc pipeline")
+			return errors.Wrap(err, "error storing feature output")
 		}
+	}
 
-		// parse primitive response (d3mIndex,labels,probabilities)
-		res, err := result.ParseResultCSV(datasetURI)
-		if err != nil {
-			return errors.Wrap(err, "unable to parse Croc pipeline result")
-		}
-
-		// build the lookup for the new field
-		features := make(map[string]string)
-		for i, v := range res {
-			// skip header
-			if i > 0 {
-				d3mIndex := v[0].(string)
-				labels := v[1].(string)
-				features[d3mIndex] = labels
-			}
-		}
-
-		dataPath := path.Join(config.ContainerDataPath, mainDR.ResPath)
-		csvFile, err := os.Open(dataPath)
-		if err != nil {
-			return errors.Wrap(err, "failed to open data file")
-		}
-		defer csvFile.Close()
-		reader := csv.NewReader(csvFile)
-
-		// initialize csv writer
-		output := &bytes.Buffer{}
-		writer := csv.NewWriter(output)
-
-		// write the header as needed
-		if config.HasHeader {
-			header := make([]string, len(mainDR.Variables))
-			for _, v := range mainDR.Variables {
-				header[v.Index] = v.Name
-			}
-			err = writer.Write(header)
-			if err != nil {
-				return errors.Wrap(err, "error writing header to output")
-			}
-		}
-
-		// skip header
-		if config.HasHeader {
-			_, err = reader.Read()
-			if err != nil {
-				return errors.Wrap(err, "failed to read header from file")
-			}
-		}
-
-		d3mIndexField := -1
-		for _, v := range mainDR.Variables {
-			if v.Name == metadata.D3MIndexName {
-				d3mIndexField = v.Index
-			}
-		}
-
-		// read the raw data and add the features column to the output
-		for {
-			line, err := reader.Read()
-			if err == io.EOF {
-				break
-			} else if err != nil {
-				return errors.Wrap(err, "failed to read line from file")
-			}
-
-			d3mIndex := line[d3mIndexField]
-			feature := features[d3mIndex]
-			line = append(line, feature)
-
-			writer.Write(line)
-			if err != nil {
-				return errors.Wrap(err, "error storing featured output")
-			}
-		}
-
-		// output the data with the new feature
-		writer.Flush()
-		err = ioutil.WriteFile(config.getTmpAbsolutePath(config.FeaturizationOutputDataRelative), output.Bytes(), 0644)
-		if err != nil {
-			return errors.Wrap(err, "error writing feature output")
-		}
-	} else {
-		// copy input to make merging happy
-		copyFileContents(path.Join(config.ContainerDataPath, mainDR.ResPath), config.getTmpAbsolutePath(config.FeaturizationOutputDataRelative))
+	// output the data with the new feature
+	writer.Flush()
+	err = ioutil.WriteFile(config.getTmpAbsolutePath(config.FeaturizationOutputDataRelative), output.Bytes(), 0644)
+	if err != nil {
+		return errors.Wrap(err, "error writing feature output")
 	}
 
 	mainDR.ResPath = config.FeaturizationOutputDataRelative
@@ -363,104 +327,56 @@ func ClusterPrimitive(index string, dataset string, config *IngestTaskConfig) er
 	mainDR := meta.GetMainDataResource()
 
 	// add feature variables
-	inputFeatureNames, outputFeatureNames := getFeatureVariables(meta, "_cluster_")
+	features, err := getFeatureVariables(meta, "_cluster_")
+	if err != nil {
+		return errors.Wrap(err, "unable to get cluster variables")
+	}
 
-	// create & submit the solution request
-	if len(inputFeatureNames) > 0 {
-		pip, err := description.CreateUnicornPipeline("horned", "", inputFeatureNames, outputFeatureNames)
+	d3mIndexField := getD3MIndexField(mainDR)
+
+	// open the input file
+	dataPath := path.Join(config.ContainerDataPath, mainDR.ResPath)
+	lines, err := readCSVFile(dataPath, config.HasHeader)
+	if err != nil {
+		return errors.Wrap(err, "error reading raw data")
+	}
+
+	// add the cluster data to the raw data
+	for _, f := range features {
+		mainDR.Variables = append(mainDR.Variables, f.Variable)
+
+		lines, err = appendFeature(dataset, d3mIndexField, config.HasHeader, f, lines)
 		if err != nil {
-			return errors.Wrap(err, "unable to create Unicorn pipeline")
+			return errors.Wrap(err, "error appending clustered data")
 		}
+	}
 
-		datasetURI, err := submitPrimitive(dataset, pip)
+	// initialize csv writer
+	output := &bytes.Buffer{}
+	writer := csv.NewWriter(output)
+
+	// output the header
+	header := make([]string, len(mainDR.Variables))
+	for _, v := range mainDR.Variables {
+		header[v.Index] = v.Name
+	}
+	err = writer.Write(header)
+	if err != nil {
+		return errors.Wrap(err, "error storing clustered header")
+	}
+
+	for _, line := range lines {
+		err = writer.Write(line)
 		if err != nil {
-			return errors.Wrap(err, "unable to run Unicorn pipeline")
+			return errors.Wrap(err, "error storing clustered output")
 		}
+	}
 
-		// parse primitive response (d3mIndex,labels,probabilities)
-		res, err := result.ParseResultCSV(datasetURI)
-		if err != nil {
-			return errors.Wrap(err, "unable to parse Unicorn pipeline result")
-		}
-
-		// build the lookup for the new field
-		features := make(map[string]string)
-		for i, v := range res {
-			// skip header
-			if i > 0 {
-				d3mIndex := v[0].(string)
-				labels := v[1].(string)
-				features[d3mIndex] = labels
-			}
-		}
-
-		dataPath := path.Join(config.ContainerDataPath, mainDR.ResPath)
-		csvFile, err := os.Open(dataPath)
-		if err != nil {
-			return errors.Wrap(err, "failed to open data file")
-		}
-		defer csvFile.Close()
-		reader := csv.NewReader(csvFile)
-
-		// initialize csv writer
-		output := &bytes.Buffer{}
-		writer := csv.NewWriter(output)
-
-		// write the header as needed
-		if config.HasHeader {
-			header := make([]string, len(mainDR.Variables))
-			for _, v := range mainDR.Variables {
-				header[v.Index] = v.Name
-			}
-			err = writer.Write(header)
-			if err != nil {
-				return errors.Wrap(err, "error writing header to output")
-			}
-		}
-
-		// skip header
-		if config.HasHeader {
-			_, err = reader.Read()
-			if err != nil {
-				return errors.Wrap(err, "failed to read header from file")
-			}
-		}
-
-		d3mIndexField := -1
-		for _, v := range mainDR.Variables {
-			if v.Name == metadata.D3MIndexName {
-				d3mIndexField = v.Index
-			}
-		}
-
-		// read the raw data and add the features column to the output
-		for {
-			line, err := reader.Read()
-			if err == io.EOF {
-				break
-			} else if err != nil {
-				return errors.Wrap(err, "failed to read line from file")
-			}
-
-			d3mIndex := line[d3mIndexField]
-			feature := features[d3mIndex]
-			line = append(line, feature)
-
-			writer.Write(line)
-			if err != nil {
-				return errors.Wrap(err, "error storing cluster output")
-			}
-		}
-
-		// output the data with the new feature
-		writer.Flush()
-		err = ioutil.WriteFile(config.getTmpAbsolutePath(config.ClusteringOutputDataRelative), output.Bytes(), 0644)
-		if err != nil {
-			return errors.Wrap(err, "error writing cluster output")
-		}
-	} else {
-		// copy input to make merging happy
-		copyFileContents(path.Join(config.ContainerDataPath, mainDR.ResPath), config.getTmpAbsolutePath(config.ClusteringOutputDataRelative))
+	// output the data with the new feature
+	writer.Flush()
+	err = ioutil.WriteFile(config.getTmpAbsolutePath(config.ClusteringOutputDataRelative), output.Bytes(), 0644)
+	if err != nil {
+		return errors.Wrap(err, "error writing clustered output")
 	}
 
 	mainDR.ResPath = config.ClusteringOutputDataRelative
@@ -474,10 +390,86 @@ func ClusterPrimitive(index string, dataset string, config *IngestTaskConfig) er
 	return nil
 }
 
-func getFeatureVariables(meta *metadata.Metadata, prefix string) ([]string, []string) {
+func readCSVFile(filename string, hasHeader bool) ([][]string, error) {
+	// open the file
+	csvFile, err := os.Open(filename)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to open data file")
+	}
+	defer csvFile.Close()
+	reader := csv.NewReader(csvFile)
+
+	lines := make([][]string, 0)
+
+	// skip the header as needed
+	if hasHeader {
+		_, err = reader.Read()
+		if err != nil {
+			return nil, errors.Wrap(err, "failed to read header from file")
+		}
+	}
+
+	// read the raw data
+	for {
+		line, err := reader.Read()
+		if err == io.EOF {
+			break
+		} else if err != nil {
+			return nil, errors.Wrap(err, "failed to read line from file")
+		}
+
+		lines = append(lines, line)
+	}
+
+	return lines, nil
+}
+
+func appendFeature(dataset string, d3mIndexField int, hasHeader bool, feature *FeatureRequest, lines [][]string) ([][]string, error) {
+	datasetURI, err := submitPrimitive(dataset, feature.Step)
+	if err != nil {
+		return nil, errors.Wrap(err, "unable to run pipeline primitive")
+	}
+
+	// parse primitive response (new field contains output)
+	res, err := result.ParseResultCSV(datasetURI)
+	if err != nil {
+		return nil, errors.Wrap(err, "unable to parse pipeline primitive result")
+	}
+
+	// find the field with the feature output
+	labelIndex := 1
+	for i, f := range res[0] {
+		if f == feature.FeatureVariableName {
+			labelIndex = i
+		}
+	}
+
+	// build the lookup for the new field
+	features := make(map[string]string)
+	for i, v := range res {
+		// skip header
+		if i > 0 {
+			d3mIndex := v[0].(string)
+			labels := v[labelIndex].(string)
+			features[d3mIndex] = labels
+		}
+	}
+
+	// add the new feature to the raw data
+	for i, line := range lines {
+		if i > 0 || !hasHeader {
+			d3mIndex := line[d3mIndexField]
+			feature := features[d3mIndex]
+			line = append(line, feature)
+		}
+	}
+
+	return lines, nil
+}
+
+func getFeatureVariables(meta *metadata.Metadata, prefix string) ([]*FeatureRequest, error) {
 	mainDR := meta.GetMainDataResource()
-	inputFeatureNames := make([]string, 0)
-	outputFeatureNames := make([]string, 0)
+	features := make([]*FeatureRequest, 0)
 	for _, v := range mainDR.Variables {
 		if v.RefersTo != nil && v.RefersTo["resID"] != nil {
 			// get the refered DR
@@ -491,15 +483,79 @@ func getFeatureVariables(meta *metadata.Metadata, prefix string) ([]string, []st
 				indexName := fmt.Sprintf("%s%s", prefix, v.Name)
 
 				// add the feature variable
-				mainDR.AddVariable(indexName, v.Name, "string", []string{"attribute"}, metadata.VarRoleMetadata)
+				v := metadata.NewVariable(len(mainDR.Variables), indexName, "label", v.Name, "string", "string", "", "", []string{"attribute"}, metadata.VarRoleMetadata, nil, mainDR.Variables, false)
 
-				inputFeatureNames = append(inputFeatureNames, v.Name)
-				outputFeatureNames = append(outputFeatureNames, indexName)
+				// create the required pipeline
+				step, err := description.CreateCrocPipeline("leather", "", []string{v.Name}, []string{indexName})
+				if err != nil {
+					return nil, errors.Wrap(err, "unable to create step pipeline")
+				}
+
+				features = append(features, &FeatureRequest{
+					SourceVariableName:  denormFieldName,
+					FeatureVariableName: indexName,
+					Variable:            v,
+					Step:                step,
+				})
 			}
 		}
 	}
 
-	return inputFeatureNames, outputFeatureNames
+	return features, nil
+}
+
+func getClusterVariables(meta *metadata.Metadata, prefix string) ([]*FeatureRequest, error) {
+	mainDR := meta.GetMainDataResource()
+	features := make([]*FeatureRequest, 0)
+	for _, v := range mainDR.Variables {
+		if v.RefersTo != nil && v.RefersTo["resID"] != nil {
+			// get the refered DR
+			resID := v.RefersTo["resID"].(string)
+
+			res := getDataResource(meta, resID)
+
+			// check if needs to be featurized
+			if res.CanBeFeaturized() || res.ResType == "timeseries" {
+				// create the new resource to hold the featured output
+				indexName := fmt.Sprintf("%s%s", prefix, v.Name)
+
+				// add the feature variable
+				v := metadata.NewVariable(len(mainDR.Variables), indexName, "group", v.Name, "string", "string", "", "", []string{"attribute"}, metadata.VarRoleMetadata, nil, mainDR.Variables, false)
+
+				// create the required pipeline
+				var step *pipeline.PipelineDescription
+				var err error
+				if res.CanBeFeaturized() {
+					step, err = description.CreateUnicornPipeline("horned", "", []string{v.Name}, []string{indexName})
+				} else {
+					step, err = description.CreateSlothPipeline("leaf", "", []string{v.Name}, []string{indexName})
+				}
+				if err != nil {
+					return nil, errors.Wrap(err, "unable to create step pipeline")
+				}
+
+				features = append(features, &FeatureRequest{
+					SourceVariableName:  denormFieldName,
+					FeatureVariableName: indexName,
+					Variable:            v,
+					Step:                step,
+				})
+			}
+		}
+	}
+
+	return features, nil
+}
+
+func getD3MIndexField(dr *metadata.DataResource) int {
+	d3mIndexField := -1
+	for _, v := range dr.Variables {
+		if v.Name == metadata.D3MIndexName {
+			d3mIndexField = v.Index
+		}
+	}
+
+	return d3mIndexField
 }
 
 func toStringArray(in []interface{}) []string {
