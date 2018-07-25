@@ -23,11 +23,11 @@ export const getters = {
 	},
 
 	isTask1(state: AppState): boolean {
-		return state.isDiscovery;
+		return state.isTask1;
 	},
 
 	isTask2(state: AppState): boolean {
-		return state.problemTarget !== 'unknown' && state.problemDataset !== 'unknown';
+		return state.isTask2;
 	},
 
 	getProblemTaskType(state: AppState): string {

@@ -89,7 +89,8 @@ type Config struct {
 	RootResourceDirectory              string  `env:"ROOT_RESOURCE_DIRECTORY" envDefault:"http://localhost:8001"`
 	ResourceProxy                      string  `env:"RESOURCE_PROXY" envDefault:"d_22_hy_dataset_TRAIN_dataset"`
 	IngestPrimitive                    bool    `env:"INGEST_PRIMITIVE" envDefault:"false"`
-	IsProblemDiscovery                 bool    `env:"IS_PROBLEM_DISCOVERY" envDefault:"false"`
+	IsTask1                            bool    `env:"TASK1" envDefault:"false"`
+	IsTask2                            bool    `env:"TASK2" envDefault:"false"`
 	SkipPreprocessing                  bool    `env:"SKIP_PREPROCESSING" envDefault:"false"`
 }
 
@@ -108,7 +109,8 @@ func LoadConfig() (Config, error) {
 			return Config{}, err
 		}
 
-		cfg.IsProblemDiscovery = isProblemDiscovery(cfg.D3MInputDir)
+		cfg.IsTask1 = isTask1(cfg.D3MInputDir)
+		cfg.IsTask2 = isTask2(cfg.D3MInputDir)
 	}
 	return *cfg, nil
 }
@@ -168,14 +170,17 @@ func overideFromStartupFile(cfg *Config) error {
 	return nil
 }
 
-func isProblemDiscovery(inputPath string) bool {
-	// inputPath points to the root folder of a dataset.
-	// If Task 1 (problem discovery) then the train folder will not have
-	// a problem sub folder.
-	isDiscovery := true
-	if _, err := os.Stat(path.Join(inputPath, "TRAIN", "problem_TRAIN")); err == nil {
-		isDiscovery = false
-	}
+func isTask1(inputPath string) bool {
+	// if Task1 (problem discovery), dataset folder will exist, problem folder
+	// will not.
+	_, datasetErr := os.Stat(path.Join(inputPath, "TRAIN", "dataset_TRAIN"))
+	_, problemErr := os.Stat(path.Join(inputPath, "TRAIN", "problem_TRAIN"))
+	return datasetErr == nil && problemErr != nil
+}
 
-	return isDiscovery
+func isTask2(inputPath string) bool {
+	// if Task2 dataset folder AND problem folder will exist
+	_, datasetErr := os.Stat(path.Join(inputPath, "TRAIN", "dataset_TRAIN"))
+	_, problemErr := os.Stat(path.Join(inputPath, "TRAIN", "problem_TRAIN"))
+	return datasetErr == nil && problemErr == nil
 }

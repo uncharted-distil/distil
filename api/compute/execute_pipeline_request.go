@@ -40,7 +40,7 @@ type ExecPipelineRequest struct {
 // the pipeline description.
 func NewExecPipelineRequest(datasetURI string, pipelineDesc *pipeline.PipelineDescription) *ExecPipelineRequest {
 	return &ExecPipelineRequest{
-		datasetURI:    fmt.Sprintf("file://%s", path.Join(datasetURI, "datasetDoc.json")),
+		datasetURI:    fmt.Sprintf("file://%s", path.Join(datasetURI, D3MDataSchema)),
 		pipelineDesc:  pipelineDesc,
 		wg:            &sync.WaitGroup{},
 		finished:      make(chan error),
