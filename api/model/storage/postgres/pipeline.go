@@ -6,6 +6,8 @@ import (
 
 	"github.com/jackc/pgx"
 	"github.com/pkg/errors"
+
+	"github.com/unchartedsoftware/distil/api/compute"
 	"github.com/unchartedsoftware/distil/api/model"
 )
 
@@ -196,9 +198,10 @@ func (s *Storage) FetchSolutionScores(solutionID string) ([]*model.SolutionScore
 		}
 
 		results = append(results, &model.SolutionScore{
-			SolutionID: solutionID,
-			Metric:     metric,
-			Score:      score,
+			SolutionID:     solutionID,
+			Metric:         metric,
+			Score:          score,
+			SortMultiplier: compute.GetMetricScoreMultiplier(metric),
 		})
 	}
 

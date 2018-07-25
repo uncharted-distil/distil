@@ -62,6 +62,26 @@ var (
 		"overlapping":    "OVERLAPPING",
 		"nonOverlapping": "NONOVERLAPPING",
 	}
+	metricScoreMultiplier = map[string]float64{
+		"ACCURACY":                           1,
+		"PRECISION":                          1,
+		"RECALL":                             1,
+		"F1":                                 1,
+		"F1_MICRO":                           1,
+		"F1_MACRO":                           1,
+		"ROC_AUC":                            1,
+		"ROC_AUC_MICRO":                      1,
+		"ROC_AUC_MACRO":                      1,
+		"MEAN_SQUARED_ERROR":                 -1,
+		"ROOT_MEAN_SQUARED_ERROR":            -1,
+		"ROOT_MEAN_SQUARED_ERROR_AVG":        -1,
+		"MEAN_ABSOLUTE_ERROR":                -1,
+		"R_SQUARED":                          1,
+		"NORMALIZED_MUTUAL_INFORMATION":      1,
+		"JACCARD_SIMILARITY_SCORE":           1,
+		"PRECISION_AT_TOP_K":                 1,
+		"OBJECT_DETECTION_AVERAGE_PRECISION": 1,
+	}
 )
 
 // ConvertProblemMetricToTA2 converts a problem schema metric to a TA2 metric.
@@ -77,6 +97,12 @@ func ConvertProblemTaskToTA2(metric string) string {
 // ConvertProblemTaskSubToTA2 converts a problem schema metric to a TA2 task sub.
 func ConvertProblemTaskSubToTA2(metric string) string {
 	return problemTaskSubMap[metric]
+}
+
+// GetMetricScoreMultiplier returns a weight to determine whether a higher or
+// lower score is `better`.
+func GetMetricScoreMultiplier(metric string) float64 {
+	return metricScoreMultiplier[metric]
 }
 
 func convertMetricsFromTA3ToTA2(metrics []string) []*pipeline.ProblemPerformanceMetric {

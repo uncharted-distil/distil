@@ -63,9 +63,10 @@ type SolutionResult struct {
 
 // SolutionScore represents the result score data.
 type SolutionScore struct {
-	SolutionID string  `json:"solutionId"`
-	Metric     string  `json:"metric"`
-	Score      float64 `json:"value"`
+	SolutionID     string  `json:"solutionId"`
+	Metric         string  `json:"metric"`
+	Score          float64 `json:"value"`
+	SortMultiplier float64 `json:"sortMultiplier"`
 }
 
 // GetPredictedKey returns a solutions predicted col key.

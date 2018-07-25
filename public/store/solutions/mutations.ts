@@ -3,7 +3,7 @@ import moment from 'moment';
 import Vue from 'vue';
 import { SolutionState, SolutionRequest } from './index';
 import { Stream } from '../../util/ws';
-import { sortSolutions } from './getters';
+import { sortSolutionsByScore } from './getters';
 
 export const mutations = {
 
@@ -15,7 +15,7 @@ export const mutations = {
 			// add if it does not exist already
 			state.requests.push(request);
 			// sort solutions
-			request.solutions.sort(sortSolutions);
+			request.solutions.sort(sortSolutionsByScore);
 		} else {
 			const existing = state.requests[index];
 			// update progress
@@ -36,7 +36,7 @@ export const mutations = {
 				}
 			});
 			// sort solutions
-			existing.solutions.sort(sortSolutions);
+			existing.solutions.sort(sortSolutionsByScore);
 		}
 	},
 
