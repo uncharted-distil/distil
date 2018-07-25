@@ -22,10 +22,15 @@ import (
 	"github.com/unchartedsoftware/distil/api/pipeline"
 )
 
+const (
+	denormFieldName = "filename"
+)
+
 var (
 	client *compute.Client
 )
 
+// FeatureRequest captures the properties of a request to a primitive.
 type FeatureRequest struct {
 	SourceVariableName  string
 	FeatureVariableName string
@@ -425,10 +430,18 @@ func appendFeature(dataset string, d3mIndexField int, hasHeader bool, feature *F
 		return nil, errors.Wrap(err, "unable to run pipeline primitive")
 	}
 
-	// parse primitive response (d3mIndex,labels,probabilities)
+	// parse primitive response (new field contains output)
 	res, err := result.ParseResultCSV(datasetURI)
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to parse pipeline primitive result")
+	}
+
+	// find the field with the feature output
+	labelIndex := 1
+	for i, f := range res[0] {
+		if f == feature.FeatureVariableName {
+			labelIndex = i
+		}
 	}
 
 	// build the lookup for the new field
@@ -437,7 +450,7 @@ func appendFeature(dataset string, d3mIndexField int, hasHeader bool, feature *F
 		// skip header
 		if i > 0 {
 			d3mIndex := v[0].(string)
-			labels := v[1].(string)
+			labels := v[labelIndex].(string)
 			features[d3mIndex] = labels
 		}
 	}
@@ -470,8 +483,7 @@ func getFeatureVariables(meta *metadata.Metadata, prefix string) ([]*FeatureRequ
 				indexName := fmt.Sprintf("%s%s", prefix, v.Name)
 
 				// add the feature variable
-				mainDR.AddVariable(indexName, v.Name, "string", []string{"attribute"}, metadata.VarRoleMetadata)
-				v := metadata.NewVariable(len(mainDR.Variables), indexName, v.Name, "string", "string", "", "", []string{"attribute"}, metadata.VarRoleMetadata, nil, mainDR.Variables, false)
+				v := metadata.NewVariable(len(mainDR.Variables), indexName, "label", v.Name, "string", "string", "", "", []string{"attribute"}, metadata.VarRoleMetadata, nil, mainDR.Variables, false)
 
 				// create the required pipeline
 				step, err := description.CreateCrocPipeline("leather", "", []string{v.Name}, []string{indexName})
@@ -480,7 +492,7 @@ func getFeatureVariables(meta *metadata.Metadata, prefix string) ([]*FeatureRequ
 				}
 
 				features = append(features, &FeatureRequest{
-					SourceVariableName:  v.Name,
+					SourceVariableName:  denormFieldName,
 					FeatureVariableName: indexName,
 					Variable:            v,
 					Step:                step,
@@ -508,8 +520,7 @@ func getClusterVariables(meta *metadata.Metadata, prefix string) ([]*FeatureRequ
 				indexName := fmt.Sprintf("%s%s", prefix, v.Name)
 
 				// add the feature variable
-				mainDR.AddVariable(indexName, v.Name, "string", []string{"attribute"}, metadata.VarRoleMetadata)
-				v := metadata.NewVariable(len(mainDR.Variables), indexName, v.Name, "string", "string", "", "", []string{"attribute"}, metadata.VarRoleMetadata, nil, mainDR.Variables, false)
+				v := metadata.NewVariable(len(mainDR.Variables), indexName, "group", v.Name, "string", "string", "", "", []string{"attribute"}, metadata.VarRoleMetadata, nil, mainDR.Variables, false)
 
 				// create the required pipeline
 				var step *pipeline.PipelineDescription
@@ -524,7 +535,7 @@ func getClusterVariables(meta *metadata.Metadata, prefix string) ([]*FeatureRequ
 				}
 
 				features = append(features, &FeatureRequest{
-					SourceVariableName:  v.Name,
+					SourceVariableName:  denormFieldName,
 					FeatureVariableName: indexName,
 					Variable:            v,
 					Step:                step,
