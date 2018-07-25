@@ -154,6 +154,7 @@ func createUpdateSemanticTypes(allFeatures []*model.Variable, selectedSet map[st
 func CreateSlothPipeline(name string, description string, targetColumns []string, outputLabels []string) (*pipeline.PipelineDescription, error) {
 	// insantiate the pipeline
 	pipeline, err := NewBuilder(name, description).
+		Add(NewDenormalizeStep()).
 		Add(NewDatasetToDataframeStep()).
 		Add(NewSlothStep(targetColumns, outputLabels)).
 		Compile()
@@ -197,6 +198,7 @@ func CreateSimonPipeline(name string, description string) (*pipeline.PipelineDes
 func CreateCrocPipeline(name string, description string, targetColumns []string, outputLabels []string) (*pipeline.PipelineDescription, error) {
 	// insantiate the pipeline
 	pipeline, err := NewBuilder(name, description).
+		Add(NewDenormalizeStep()).
 		Add(NewDatasetToDataframeStep()).
 		Add(NewCrocStep(targetColumns, outputLabels)).
 		Compile()
@@ -211,6 +213,7 @@ func CreateCrocPipeline(name string, description string, targetColumns []string,
 func CreateUnicornPipeline(name string, description string, targetColumns []string, outputLabels []string) (*pipeline.PipelineDescription, error) {
 	// insantiate the pipeline
 	pipeline, err := NewBuilder(name, description).
+		Add(NewDenormalizeStep()).
 		Add(NewDatasetToDataframeStep()).
 		Add(NewUnicornStep(targetColumns, outputLabels)).
 		Compile()

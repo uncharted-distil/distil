@@ -147,6 +147,20 @@ func NewUpdateSemanticTypeStep(resourceID string, add *ColumnUpdate, remove *Col
 	), nil
 }
 
+// NewDenormalizeStep denormalize data that is contained in multiple resource files.
+func NewDenormalizeStep() *StepData {
+	return NewStepData(
+		&pipeline.Primitive{
+			Id:         "f31f8c1f-d1c5-43e5-a4b2-2ae4a761ef2e",
+			Version:    "0.2.0",
+			Name:       "Denormalize datasets",
+			PythonPath: "d3m.primitives.datasets.Denormalize",
+			Digest:     "c39e3436373aed1944edbbc9b1cf24af5c71919d73bf0bb545cba0b685812df1",
+		},
+		[]string{"produce"},
+	)
+}
+
 // NewRemoveColumnsStep removes columns from an input dataframe.  Columns
 // are specified by name and the match is case insensitive.
 func NewRemoveColumnsStep(resourceID string, colIndices []int) (*StepData, error) {
