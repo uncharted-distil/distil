@@ -140,10 +140,10 @@ func main() {
 			log.Errorf("%+v", err)
 			os.Exit(1)
 		}
-		datasetDocPath = path.Join(config.D3MInputDir, "TRAIN", "dataset_TRAIN", "datasetDoc.json")
+		datasetDocPath = path.Join(config.D3MInputDir, "TRAIN", "dataset_TRAIN", compute.D3MDataSchema)
 	} else {
 		// NOTE: EVAL ONLY OVERRIDE SETUP FOR METRICS!
-		problemPath = path.Join(config.D3MInputDir, "TRAIN", "problem_TRAIN", "problemDoc.json")
+		problemPath = path.Join(config.D3MInputDir, "TRAIN", "problem_TRAIN", compute.D3MProblem)
 		ws.SetProblemFile(problemPath)
 	}
 

@@ -202,28 +202,3 @@ func LoadProblemSchemaFromFile(filename string) (*ProblemPersist, error) {
 	}
 	return problemInfo, nil
 }
-
-// DatasetDoc represents the dataset doc file.
-type DatasetDoc struct {
-	About *DatasetAbout `json:"about"`
-}
-
-// DatasetAbout represents the dataset doc file about object.
-type DatasetAbout struct {
-	DatasetID string `json:"datasetID"`
-}
-
-// LoadDatasetSchemaFromFile loads the dataset schema from file.
-func LoadDatasetSchemaFromFile(filename string) (*DatasetDoc, error) {
-	b, err := ioutil.ReadFile(filename)
-	if err != nil {
-		return nil, err
-	}
-
-	dataDoc := &DatasetDoc{}
-	err = json.Unmarshal(b, dataDoc)
-	if err != nil {
-		return nil, err
-	}
-	return dataDoc, nil
-}

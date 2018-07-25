@@ -40,12 +40,12 @@ type VariablesProvider func(dataset string, index string) ([]*model.Variable, er
 
 // DataSchema encapsulates the data schema json structure.
 type DataSchema struct {
-	Properties    *DataSchemaProperties `json:"about"`
-	DataResources []*DataResource       `json:"dataResources"`
+	About         *DataSchemaAbout `json:"about"`
+	DataResources []*DataResource  `json:"dataResources"`
 }
 
-// DataSchemaProperties contains the basic properties of a dataset.
-type DataSchemaProperties struct {
+// DataSchemaAbout contains the basic properties of a dataset.
+type DataSchemaAbout struct {
 	DatasetID       string `json:"datasetID"`
 	DatasetName     string `json:"datasetName"`
 	Description     string `json:"description"`
@@ -270,13 +270,13 @@ func writeDataSchema(schemaPath string, dataset string, filteredData *model.Filt
 		IsCollection: false,
 		Variables:    make([]*DataVariable, 0),
 	}
-	dsProperties := &DataSchemaProperties{
+	dsProperties := &DataSchemaAbout{
 		DatasetID:     dataset,
 		Redacted:      true,
 		SchemaVersion: D3MDatasetSchemaVersion,
 	}
 	ds := &DataSchema{
-		Properties:    dsProperties,
+		About:         dsProperties,
 		DataResources: drs,
 	}
 
@@ -317,4 +317,19 @@ func writeDataSchema(schemaPath string, dataset string, filteredData *model.Filt
 	}
 
 	return nil
+}
+
+// LoadDatasetSchemaFromFile loads the dataset schema from file.
+func LoadDatasetSchemaFromFile(filename string) (*DataSchema, error) {
+	b, err := ioutil.ReadFile(filename)
+	if err != nil {
+		return nil, err
+	}
+
+	dataDoc := &DataSchema{}
+	err = json.Unmarshal(b, dataDoc)
+	if err != nil {
+		return nil, err
+	}
+	return dataDoc, nil
 }
