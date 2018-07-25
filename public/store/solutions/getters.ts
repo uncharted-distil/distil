@@ -6,14 +6,16 @@ import { SolutionState, Solution, SolutionRequest, SOLUTION_RUNNING, SOLUTION_CO
 import { Dictionary } from '../../util/dict';
 import { Stream } from '../../util/ws';
 
-export function sortRequests(a: SolutionRequest, b: SolutionRequest): number {
+export function sortRequestsByTimestamp(a: SolutionRequest, b: SolutionRequest): number {
 	// descending order
 	return moment(b.timestamp).unix() - moment(a.timestamp).unix();
 }
 
-export function sortSolutions(a: Solution, b: Solution): number {
-	// ascending order
-	return moment(a.timestamp).unix() - moment(b.timestamp).unix();
+export function sortSolutionsByScore(a: Solution, b: Solution): number {
+	const aScore = (a.scores.length > 0) ? (a.scores[0].value * a.scores[0].sortMultiplier) : 0;
+	const bScore = (b.scores.length > 0) ? (b.scores[0].value * b.scores[0].sortMultiplier) : 0;
+	// descending order of score
+	return bScore - aScore;
 }
 
 export const getters = {
@@ -29,7 +31,7 @@ export const getters = {
 				}
 			});
 		});
-		return running.sort(sortSolutions);
+		return running.sort(sortSolutionsByScore);
 	},
 
 	// Returns a dictionary of dictionaries, where the first key is the solution create request ID, and the second
@@ -43,7 +45,7 @@ export const getters = {
 				}
 			});
 		});
-		return running.sort(sortSolutions);
+		return running.sort(sortSolutionsByScore);
 	},
 
 	getSolutions(state: SolutionState): Solution[] {
@@ -51,7 +53,7 @@ export const getters = {
 		state.requests.forEach(request => {
 			solutions = solutions.concat(request.solutions);
 		});
-		return solutions.sort(sortSolutions);
+		return solutions.sort(sortSolutionsByScore);
 	},
 
 	getRelevantSolutions(state: SolutionState, getters: any): Solution[] {
@@ -64,7 +66,7 @@ export const getters = {
 		requests.forEach(request => {
 			solutions = solutions.concat(request.solutions);
 		});
-		return solutions.sort(sortSolutions);
+		return solutions.sort(sortSolutionsByScore);
 	},
 
 	getRelevantSolutionRequests(state: SolutionState, getters: any): SolutionRequest[] {
@@ -75,7 +77,7 @@ export const getters = {
 			return request.dataset === dataset && request.feature === target;
 		});
 		// sort and return
-		requests.sort(sortRequests);
+		requests.sort(sortRequestsByTimestamp);
 		return requests;
 	},
 
@@ -87,7 +89,7 @@ export const getters = {
 			return request.dataset === dataset && request.feature === target;
 		});
 		// sort and return
-		requests.sort(sortRequests);
+		requests.sort(sortRequestsByTimestamp);
 		return requests.map(r => r.requestId);
 	},
 
