@@ -11,7 +11,7 @@ export const actions = {
 		context.commit('clearSolutionRequests');
 
 		// fetch new state
-		return context.dispatch('fetchSolutions', {});
+		return context.dispatch('fetchSolutionRequests', {});
 	},
 
 	fetchSearchData(context: ViewContext) {
@@ -107,7 +107,7 @@ export const actions = {
 			dataset: dataset
 		}).then(() => {
 			const target = context.getters.getRouteTargetVariable;
-			context.dispatch('fetchSolutions', {
+			context.dispatch('fetchSolutionRequests', {
 				dataset: dataset,
 				target: target
 			}).then(() => {
@@ -133,6 +133,7 @@ export const actions = {
 		const requestIds = context.getters.getRelevantSolutionRequestIds;
 		const solutionId = context.getters.getRouteSolutionId;
 		const paginatedVariables = context.getters.getResultsPaginatedVariables;
+		const trainingVariables = context.getters.getActiveSolutionTrainingVariables;
 		const highlightRoot = context.getters.getDecodedHighlightRoot;
 
 		context.dispatch('fetchResultTableData', {
@@ -147,7 +148,7 @@ export const actions = {
 		});
 		context.dispatch('fetchTrainingSummaries', {
 			dataset: dataset,
-			training: paginatedVariables,
+			training: trainingVariables,
 			solutionId: solutionId
 		});
 		context.dispatch('fetchPredictedSummaries', {

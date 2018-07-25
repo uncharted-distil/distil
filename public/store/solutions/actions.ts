@@ -14,10 +14,11 @@ const STOP_SOLUTIONS = 'STOP_SOLUTIONS';
 interface CreateSolutionRequest {
 	dataset: string;
 	target: string;
-	task: string;
+	task?: string;
+	subTask?: string;
+	metrics: string[];
 	maxSolutions: number;
 	maxTime: number;
-	metrics: string[];
 	filters: FilterParams;
 }
 
@@ -48,7 +49,7 @@ function updateCurrentSolutionResults(context: SolutionContext, req: CreateSolut
 	});
 	context.dispatch('fetchTrainingSummaries', {
 		dataset: req.dataset,
-		training: context.getters.getResultsPaginatedVariables,
+		training: context.getters.getActiveSolutionTrainingVariables,
 		solutionId: res.solutionId,
 	});
 	context.dispatch('fetchTargetSummary', {
@@ -127,22 +128,10 @@ function updateSolutionResults(context: SolutionContext, req: CreateSolutionRequ
 }
 
 function handleRequestProgress(context: SolutionContext, request: CreateSolutionRequest, response: SolutionStatus) {
-
-	console.log(`Progress for request ${response.requestId} updated to ${response.progress}`);
-
-	switch (response.progress) {
-		case REQUEST_PENDING:
-		case REQUEST_RUNNING:
-		case REQUEST_COMPLETED:
-		case REQUEST_ERRORED:
-			break;
-	}
+	// no-op
 }
 
 function handleSolutionProgress(context: SolutionContext, request: CreateSolutionRequest, response: SolutionStatus) {
-
-	console.log(`Progress for solution ${response.solutionId} updated to ${response.progress}`);
-
 	switch (response.progress) {
 		case SOLUTION_COMPLETED:
 		case SOLUTION_ERRORED:
@@ -158,9 +147,51 @@ function handleSolutionProgress(context: SolutionContext, request: CreateSolutio
 	}
 }
 
+function isRequestResponse(response: SolutionStatus) {
+	const progress = response.progress;
+	return progress === REQUEST_PENDING ||
+		progress === REQUEST_RUNNING ||
+		progress === REQUEST_COMPLETED ||
+		progress === REQUEST_ERRORED;
+}
+
+function isSolutionResponse(response: SolutionStatus) {
+	const progress = response.progress;
+	return progress === SOLUTION_PENDING ||
+		progress === SOLUTION_RUNNING ||
+		progress === SOLUTION_COMPLETED ||
+		progress === SOLUTION_ERRORED;
+}
+
+function handleProgress(context: SolutionContext, request: CreateSolutionRequest, response: SolutionStatus) {
+
+	if (isRequestResponse(response)) {
+		// request
+		console.log(`Progress for request ${response.requestId} updated to ${response.progress}`);
+	} else if (isSolutionResponse(response)) {
+		// solution
+		console.log(`Progress for solution ${response.solutionId} updated to ${response.progress}`);
+	}
+
+	context.dispatch('fetchSolutionRequests', {
+		dataset: request.dataset,
+		target: request.target,
+		solutionId: response.solutionId,
+	}).then(() => {
+		// handle response
+		if (isRequestResponse(response)) {
+			// request
+			handleRequestProgress(context, request, response);
+		} else if (isSolutionResponse(response)) {
+			// solution
+			handleSolutionProgress(context, request, response);
+		}
+	});
+}
+
 export const actions = {
 
-	fetchSolutions(context: SolutionContext, args: { dataset?: string, target?: string, solutionId?: string }) {
+	fetchSolutionRequests(context: SolutionContext, args: { dataset?: string, target?: string, solutionId?: string }) {
 		if (!args.dataset) {
 			args.dataset = null;
 		}
@@ -192,53 +223,51 @@ export const actions = {
 
 			const conn = getWebSocketConnection();
 
+			let receivedFirstSolution = false;
 			let receivedFirstResponse = false;
 
 			const stream = conn.stream(response => {
 
+				// log any error
 				if (response.error) {
 					console.error(response.error);
-					return;
+				}
+
+				// handle request / solution progress
+				if (response.progress) {
+					handleProgress(context, request, response);
+				}
+
+				if (response.requestId && !receivedFirstResponse) {
+					receivedFirstResponse = true;
+					// add the request stream
+					mutations.addRequestStream(context, { requestId: response.requestId, stream: stream });
+				}
+
+				if (response.solutionId && !receivedFirstSolution) {
+					receivedFirstSolution = true;
+					// resolve
+					resolve(response);
 				}
 
 				// close stream on complete
 				if (response.complete) {
 					console.log('Solution request has completed, closing stream');
+					// remove request stream
+					if (receivedFirstResponse) {
+						mutations.removeRequestStream(context, { requestId: response.requestId });
+					}
+					// check for failure to generate solutions
+					if (!receivedFirstSolution) {
+						reject(new Error('No valid solutions found'));
+					}
+					// close stream
 					stream.close();
-					mutations.removeRequestStream(context, { requestId: response.requestId });
 				}
 
-				// pull updated solution info
-
-				context.dispatch('fetchSolutions', {
-					dataset: request.dataset,
-					target: request.target,
-					solutionId: response.solutionId,
-				}).then(() => {
-					// handle response
-					switch (response.progress) {
-						case REQUEST_PENDING:
-						case REQUEST_RUNNING:
-						case REQUEST_COMPLETED:
-						case REQUEST_ERRORED:
-							handleRequestProgress(context, request, response);
-							break;
-						case SOLUTION_PENDING:
-						case SOLUTION_RUNNING:
-						case SOLUTION_COMPLETED:
-						case SOLUTION_ERRORED:
-							// resolve promise on first solution response
-							if (!receivedFirstResponse) {
-								receivedFirstResponse = true;
-								// add the request stream
-								mutations.addRequestStream(context, { requestId: response.requestId, stream: stream });
-								resolve(response);
-							}
-							handleSolutionProgress(context, request, response);
-							break;
-					}
-				});
 			});
+
+			console.log('Sending create solutions request:', request);
 
 			// send create solutions request
 			stream.send({
@@ -246,6 +275,7 @@ export const actions = {
 				dataset: request.dataset,
 				target: request.target,
 				task: request.task,
+				subTask: request.subTask,
 				metrics: request.metrics,
 				maxSolutions: request.maxSolutions,
 				maxTime: request.maxTime,

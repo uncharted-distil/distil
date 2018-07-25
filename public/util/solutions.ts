@@ -9,8 +9,7 @@ export interface NameInfo {
 
 export interface Task {
 	displayName: string,
-	schemaName: string,
-	metrics: Dictionary<NameInfo>
+	schemaName: string
 };
 
 // Utility function to return all solution results associated with a given request ID
@@ -50,117 +49,16 @@ export function getTask(varType: string): Task {
 	return _.get(TASKS_BY_VARIABLES, lowerType);
 }
 
-// Gets the display names for the metrics from a given task.
-export function getMetricDisplayNames(task: Task): string[] {
-	if (!task.metrics) {
-		return [];
-	}
-	return _.map(task.metrics, s => s.displayName);
-}
-
-// Gets the schema name for a metric given its display name.
-export function getMetricSchemaName(displayName: string): string {
-	for(const m of metrics) {
-		const result = _.find(m, s => s.displayName === displayName);
-		if (!_.isEmpty(result)) {
-			return result.schemaName;
-		}
-	}
-	return undefined;
-}
-
-// Gets the display name for a metric given its schema name.
-export function getMetricDisplayName(schemaName: string): string {
-	const lowerName = _.toLower(schemaName);
-	for(const m of metrics) {
-		const result = _.find(m, s => s.schemaName === lowerName);
-		if (!_.isEmpty(result)) {
-			return result.displayName;
-		}
-	}
-	return undefined;
-}
-
-// metrics used in CLASSIFICATION_TASK tasks
-const classificationMetrics: Dictionary<NameInfo> = {
-	// Limit the metrics since not all are supported.
-	// accuracy: {
-	// 	displayName: 'Accuracy',
-	// 	schemaName: 'accuracy'
-	// },
-	// Commented out because We are only using accuracy for classification at the moment.
-	//
-	// ,
-	// f1: {
-	// 	displayName: 'F1',
-	// 	schemaName: 'f1',
-	// },
-	f1Micro: {
-		displayName: 'F1 Micro',
-		schemaName: 'f1_micro'
-	}
-	// f1Macro: {
-	// 	displayName: 'F1 Macro',
-	// 	schemaName: 'f1_macro'
-	// },
-	// rocAuc: {
-	// 	displayName: 'ROC-AUC',
-	// 	schemaName: 'roc_auc'
-	// },
-	// rocAucMicro: {
-	// 	displayName: 'ROC-AUC Micro',
-	// 	schemaName: 'roc_auc_micro'
-	// },
-	// rocAucMacro: {
-	// 	displayName: 'ROC-AUC Macro',
-	// 	schemaName: 'roc_auc_macro'
-	// },
-	// jaccardSimilarityScore: {
-	// 	displayName: 'Jaccard Similarity',
-	// 	schemaName: 'jaccard_similarity_score'
-	// },
-	// normalizedMutualInformation: {
-	// 	displayName: 'Normalized Mutual Information',
-	// 	schemaName: 'normalized_mutual_information'
-	// }
-};
-
-// metrics used in regression tasks
-const regressionMetrics: Dictionary<NameInfo> = {
-	// Commented out because We are only using R2 for regression at the moment.
-	//
-	// rootMeanSquaredError: {
-	// 	displayName: 'Root Mean Squared Error',
-	// 	schemaName: 'root_mean_squared_error'
-	// },
-	meanSquaredError: {
-		displayName: 'Mean Squared Error',
-		schemaName: 'mean_squared_error'
-	}
-	// meanAbsoluteErr: {
-	// 	displayName: 'Mean Absolute Error',
-	// 	schemaName: 'mean_absolute_error'
-	// },
-	// rSquared: {
-	// 	displayName: 'R Squared',
-	// 	schemaName: 'r_squared'
-	// }
-};
-
-const metrics = [classificationMetrics, regressionMetrics];
-
 // CLASSIFICATION_TASK task info
 export const CLASSIFICATION_TASK: Task = {
 	displayName: 'Classification',
-	schemaName: 'classification',
-	metrics: classificationMetrics,
+	schemaName: 'classification'
 };
 
 // regression task info
 export const REGRESSION_TASK: Task = {
 	displayName: 'Regression',
-	schemaName: 'regression',
-	metrics: regressionMetrics,
+	schemaName: 'regression'
 };
 
 // variable type to task mappings

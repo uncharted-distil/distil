@@ -24,6 +24,9 @@ export const getters = {
 	isTask2: read(moduleGetters.isTask2),
 	getProblemDataset: read(moduleGetters.getProblemDataset),
 	getProblemTarget: read(moduleGetters.getProblemTarget),
+	getProblemTaskType: read(moduleGetters.getProblemTaskType),
+	getProblemTaskSubType: read(moduleGetters.getProblemTaskSubType),
+	getProblemMetrics: read(moduleGetters.getProblemMetrics)
 }
 
 // typed actions
@@ -41,5 +44,8 @@ export const mutations = {
 	setVersionTimestamp: commit(moduleMutations.setVersionTimestamp),
 	setIsDiscovery: commit(moduleMutations.setIsDiscovery),
 	setProblemDataset: commit(moduleMutations.setProblemDataset),
-	setProblemTarget: commit(moduleMutations.setProblemTarget)
+	setProblemTarget: commit(moduleMutations.setProblemTarget),
+	setProblemTaskType: commit(moduleMutations.setProblemTaskType),
+	setProblemTaskSubType: commit(moduleMutations.setProblemTaskSubType),
+	setProblemMetrics: commit(moduleMutations.setProblemMetrics)
 }

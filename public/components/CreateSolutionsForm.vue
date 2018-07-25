@@ -12,7 +12,7 @@
 				</div>
 			</div>
 			<div class="row justify-content-center">
-				<b-btn class="mt-3 close-modal" variant="success" block @click="showExportSuccess = !showExportSuccess">OK</b-btn>
+				<b-btn class="mt-3 close-modal" block @click="showExportSuccess = !showExportSuccess">OK</b-btn>
 			</div>
 		</b-modal>
 		<b-modal id="export-failure-modal" title="Export Failed"
@@ -27,7 +27,7 @@
 				</div>
 			</div>
 			<div class="row justify-content-center">
-				<b-btn class="mt-3 close-modal" variant="success" block @click="showExportFailure = !showExportFailure">OK</b-btn>
+				<b-btn class="mt-3 close-modal" block @click="showExportFailure = !showExportFailure">OK</b-btn>
 			</div>
 		</b-modal>
 		<b-modal id="export-start-modal" title="Export Problem"
@@ -44,6 +44,21 @@
 			</div>
 			<div class="row justify-content-center">
 				<b-btn class="mt-3 close-modal" variant="success" block @click="exportData">Export</b-btn>
+			</div>
+		</b-modal>
+		<b-modal id="create-failure-modal" title="Model Creation Failed"
+			v-model="showCreateFailure"
+			cancel-disabled
+			hide-header
+			hide-footer>
+			<div class="row justify-content-center">
+				<div class="check-message-container">
+					<i class="fa fa-exclamation-triangle fa-3x fail-icon"></i>
+					<div><b>Model Failed:</b> {{createErrorMessage}}</div>
+				</div>
+			</div>
+			<div class="row justify-content-center">
+				<b-btn class="mt-3 close-modal" block @click="showCreateFailure = !showCreateFailure">OK</b-btn>
 			</div>
 		</b-modal>
 		<div class="row justify-content-center">
@@ -68,7 +83,6 @@
 
 import _ from 'lodash';
 import { createRouteEntry } from '../util/routes';
-import { getTask, getMetricDisplayNames, getMetricSchemaName } from '../util/solutions';
 import { actions as appActions, getters as appGetters } from '../store/app/module';
 import { getters as datasetGetters } from '../store/dataset/module';
 import { getters as routeGetters } from '../store/route/module';
@@ -83,16 +97,13 @@ export default Vue.extend({
 	name: 'create-solutions-form',
 	data() {
 		return {
-			descriptionText: '',
-			feature: 'Feature',
-			featureSet: false,
-			metric: 'Metric',
-			metricSet: false,
 			pending: false,
 			meaningful: true,
 			showExport: false,
 			showExportSuccess: false,
 			showExportFailure: false,
+			showCreateFailure: false,
+			createErrorMessage: null
 		};
 	},
 	computed: {
@@ -105,16 +116,23 @@ export default Vue.extend({
 		filterParams(): FilterParams {
 			return routeGetters.getDecodedFilterParams(this.$store);
 		},
-		// gets the metrics that are used to score predictions against the user selected variable
 		metrics(): string[] {
-			// get the variable entry from the store that matches the user selection
-			if (!this.target || _.isEmpty(this.variables)) {
-				return [];
+			if (this.isTask2) {
+				return appGetters.getProblemMetrics(this.$store);
 			}
-			// get the task info associated with that variable type
-			const taskData = getTask(this.targetVariable.type);
-			// grab the valid metrics from the task data to use as labels in the UI
-			return getMetricDisplayNames(taskData);
+			return null;
+		},
+		taskType(): string {
+			if (this.isTask2) {
+				return appGetters.getProblemTaskType(this.$store);
+			}
+			return null;
+		},
+		taskSubType(): string {
+			if (this.isTask2) {
+				return appGetters.getProblemTaskSubType(this.$store);
+			}
+			return null;
 		},
 		trainingSelected(): boolean {
 			return !_.isEmpty(this.training);
@@ -139,6 +157,9 @@ export default Vue.extend({
 		isTask1(): boolean {
 			return appGetters.isTask1(this.$store);
 		},
+		isTask2(): boolean {
+			return appGetters.isTask2(this.$store);
+		},
 		disableCreate(): boolean {
 			return this.isPending || (!this.targetSelected || !this.trainingSelected);
 		},
@@ -158,18 +179,16 @@ export default Vue.extend({
 	methods: {
 		// create button handler
 		create() {
-			// compute schema values for request
-			const taskData = getTask(this.targetVariable.type);
-			const task = taskData.schemaName;
-			const metrics = _.map(this.metrics as string[], m => getMetricSchemaName(m));
+			// flag as pending
 			this.pending = true;
 			// dispatch action that triggers request send to server
 			solutionActions.createSolutionRequest(this.$store, {
 				dataset: this.dataset,
 				filters: this.filterParams,
 				target: routeGetters.getRouteTargetVariable(this.$store),
-				task: task,
-				metrics: metrics,
+				task: this.taskType,
+				subTask: this.taskSubType,
+				metrics: this.metrics,
 				maxSolutions: NUM_SOLUTIONS,
 				maxTime: MAX_SOLUTION_SEARCH_TIME,
 			}).then((res: Solution) => {
@@ -181,6 +200,11 @@ export default Vue.extend({
 					solutionId: res.solutionId
 				});
 				this.$router.push(entry);
+			}).catch(err => {
+				// display error modal
+				this.pending = false;
+				this.createErrorMessage = err.message;
+				this.showCreateFailure = true;
 			});
 		},
 

@@ -2,7 +2,6 @@ package routes
 
 import (
 	"context"
-	"fmt"
 	"net/http"
 	"os"
 
@@ -27,13 +26,6 @@ func ExportHandler(solutionCtor model.SolutionStorageCtor, metaCtor model.Metada
 			handleError(w, err)
 			return
 		}
-		req, err := solution.FetchRequestBySolutionID(solutionID)
-		if err != nil {
-			handleError(w, err)
-			return
-		}
-
-		solutionTarget := req.TargetFeature()
 
 		// get the initial target
 		sol, err := solution.FetchSolution(solutionID)
@@ -46,31 +38,6 @@ func ExportHandler(solutionCtor model.SolutionStorageCtor, metaCtor model.Metada
 		fittedSolutionID := sol.Result.FittedSolutionID
 		if fittedSolutionID == "" {
 			handleError(w, errors.Errorf("export failed - no fitted solution found for solution %s", solutionID))
-			return
-		}
-
-		m, err := solution.FetchRequest(sol.RequestID)
-		if err != nil {
-			handleError(w, err)
-			return
-		}
-
-		meta, err := metaCtor()
-		if err != nil {
-			handleError(w, err)
-			return
-		}
-
-		variable, err := meta.FetchVariable(m.Dataset, solutionTarget)
-		if err != nil {
-			handleError(w, err)
-			return
-		}
-
-		// fail if the solution target was not the original dataset target
-		if variable.Role != "suggestedTarget" {
-			log.Warnf("Target %s is not the expected target variable", variable.Key)
-			http.Error(w, fmt.Sprintf("The selected target `%s` does not match the required target variable.", variable.Key), http.StatusBadRequest)
 			return
 		}
 

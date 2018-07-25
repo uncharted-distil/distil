@@ -12,7 +12,7 @@
 		</div>
 		<div v-if="isCompleted">
 			<b-badge variant="info" v-bind:key="`${score.metric}-${solutionId}`" v-for="score in scores">
-				{{metricName(score.metric)}}: {{score.value.toFixed(2)}}
+				{{score.metric}}: {{score.value.toFixed(2)}}
 			</b-badge>
 			<facets v-if="predictedGroups.length" class="result-container"
 				@facet-click="onResultCategoricalClick"
@@ -69,7 +69,7 @@ import { Highlight, RowSelection } from '../store/highlights/index';
 import { SOLUTION_COMPLETED, SOLUTION_ERRORED } from '../store/solutions/index';
 import { getters as routeGetters } from '../store/route/module';
 import { getters as solutionGetters } from '../store/solutions/module';
-import { getSolutionById, getMetricDisplayName } from '../util/solutions';
+import { getSolutionById } from '../util/solutions';
 import { overlayRouteEntry } from '../util/routes';
 import { getHighlights, updateHighlightRoot, clearHighlightRoot } from '../util/highlights';
 import _ from 'lodash';
@@ -186,10 +186,6 @@ export default Vue.extend({
 	},
 
 	methods: {
-
-		metricName(metric): string {
-			return getMetricDisplayName(metric);
-		},
 
 		onResultCategoricalClick(context: string, key: string, value: string) {
 			if (key && value) {

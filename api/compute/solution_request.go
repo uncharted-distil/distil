@@ -339,17 +339,20 @@ func (s *SolutionRequest) dispatchSolution(statusChan chan SolutionStatus, clien
 
 	// persist the scores
 	for _, response := range solutionScoreResponses {
-		for _, score := range response.Scores {
-			metric := ""
-			if score.GetMetric() == nil {
-				metric = convertMetricsFromTA3ToTA2(s.Metrics)[0].GetMetric().String()
-			} else {
-				metric = score.Metric.Metric.String()
-			}
-			err := solutionStorage.PersistSolutionScore(solutionID, metric, score.Value.GetRaw().GetDouble())
-			if err != nil {
-				s.persistSolutionError(statusChan, solutionStorage, searchID, solutionID, err)
-				return
+		// only persist scores from COMPLETED responses
+		if response.Progress.State == pipeline.ProgressState_COMPLETED {
+			for _, score := range response.Scores {
+				metric := ""
+				if score.GetMetric() == nil {
+					metric = convertMetricsFromTA3ToTA2(s.Metrics)[0].GetMetric().String()
+				} else {
+					metric = score.Metric.Metric.String()
+				}
+				err := solutionStorage.PersistSolutionScore(solutionID, metric, score.Value.GetRaw().GetDouble())
+				if err != nil {
+					s.persistSolutionError(statusChan, solutionStorage, searchID, solutionID, err)
+					return
+				}
 			}
 		}
 	}
@@ -635,6 +638,7 @@ func CreateSearchSolutionRequest(allFeatures []*model.Variable,
 	for i, v := range selectedFeatures {
 		if v == target {
 			targetIndex = i
+			break
 		}
 	}
 
@@ -642,14 +646,15 @@ func CreateSearchSolutionRequest(allFeatures []*model.Variable,
 	for _, v := range allFeatures {
 		if v.Key == target {
 			targetVariable = v
+			break
 		}
 	}
 	if targetVariable == nil {
 		return nil, errors.Errorf("unable to find target variable '%s'", target)
 	}
-	task := getTaskType(targetVariable.Type)
-	taskSubType := getTaskSubType(targetVariable.Type)
-	metrics := []string{getMetric(targetVariable.Type)}
+	task := DefaultTaskType(targetVariable.Type)
+	taskSubType := DefaultTaskSubType(targetVariable.Type)
+	metrics := DefaultMetrics(targetVariable.Type)
 
 	// create search solutions request
 	searchRequest, err := createSearchSolutionsRequest(targetIndex, preprocessingPipeline, sourceURI, userAgent, target, dataset, metrics, task, taskSubType, 600)

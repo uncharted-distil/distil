@@ -33,11 +33,20 @@ func CreateUserDatasetPipeline(name string, description string, allFeatures []*m
 		return nil, err
 	}
 
+	// If neither have any content, we'll skip the template altogether.
+	if len(updateSemanticTypes) == 0 && removeFeatures == nil {
+		return nil, nil
+	}
+
 	// instantiate the pipeline
-	builder := NewBuilder(name, description).Add(removeFeatures)
+	builder := NewBuilder(name, description)
 	for _, v := range updateSemanticTypes {
 		builder = builder.Add(v)
 	}
+	if removeFeatures != nil {
+		builder = builder.Add(removeFeatures)
+	}
+
 	pip, err := builder.AddInferencePoint().Compile()
 	if err != nil {
 		return nil, err
@@ -57,6 +66,10 @@ func createRemoveFeatures(allFeatures []*model.Variable, selectedSet map[string]
 		if !selectedSet[strings.ToLower(v.Key)] {
 			removeFeatures = append(removeFeatures, v.Index)
 		}
+	}
+
+	if len(removeFeatures) == 0 {
+		return nil, nil
 	}
 
 	// instantiate the feature remove primitive
