@@ -145,12 +145,12 @@ func (s *SolutionRequest) Listen(listener SolutionStatusListener) error {
 	return <-s.finished
 }
 
-func (s *SolutionRequest) createSearchSolutionsRequest(targetIndex int, preprocessing *pipeline.PipelineDescription,
+func (s *SolutionRequest) createSearchSolutionsRequest(columnIndex int, preprocessing *pipeline.PipelineDescription,
 	datasetURI string, userAgent string) (*pipeline.SearchSolutionsRequest, error) {
-	return createSearchSolutionsRequest(targetIndex, preprocessing, datasetURI, userAgent, s.TargetFeature, s.Dataset, s.Metrics, s.Task, s.SubTask, s.MaxTime)
+	return createSearchSolutionsRequest(columnIndex, preprocessing, datasetURI, userAgent, s.TargetFeature, s.Dataset, s.Metrics, s.Task, s.SubTask, s.MaxTime)
 }
 
-func createSearchSolutionsRequest(targetIndex int, preprocessing *pipeline.PipelineDescription,
+func createSearchSolutionsRequest(columnIndex int, preprocessing *pipeline.PipelineDescription,
 	datasetURI string, userAgent string, targetFeature string, dataset string, metrics []string, task string, subTask string, maxTime int64) (*pipeline.SearchSolutionsRequest, error) {
 
 	return &pipeline.SearchSolutionsRequest{
@@ -163,7 +163,7 @@ func createSearchSolutionsRequest(targetIndex int, preprocessing *pipeline.Pipel
 			Inputs: []*pipeline.ProblemInput{
 				{
 					DatasetId: convertDatasetTA3ToTA2(dataset),
-					Targets:   convertTargetFeaturesTA3ToTA2(targetFeature, targetIndex),
+					Targets:   convertTargetFeaturesTA3ToTA2(targetFeature, columnIndex),
 				},
 			},
 		},
@@ -536,7 +536,7 @@ func (s *SolutionRequest) PersistAndDispatch(client *Client, solutionStorage mod
 	trainDataset, testDataset, err := splitTrainTest(dataset)
 
 	// perist the datasets and get URI
-	datasetPathTrain, targetIndex, err := PersistFilteredData(datasetDir, s.TargetFeature, trainDataset, dataVariables)
+	datasetPathTrain, _, err := PersistFilteredData(datasetDir, s.TargetFeature, trainDataset, dataVariables)
 	if err != nil {
 		return err
 	}
@@ -565,8 +565,16 @@ func (s *SolutionRequest) PersistAndDispatch(client *Client, solutionStorage mod
 		}
 	}
 
+	// use the filter variables to determine the column index
+	columnIndex := 0
+	for i, v := range s.Filters.Variables {
+		if v == s.TargetFeature {
+			columnIndex = i
+		}
+	}
+
 	// create search solutions request
-	searchRequest, err := s.createSearchSolutionsRequest(targetIndex, preprocessing, datasetPathTrain, client.UserAgent)
+	searchRequest, err := s.createSearchSolutionsRequest(columnIndex, preprocessing, datasetPathTrain, client.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -634,10 +642,10 @@ func CreateSearchSolutionRequest(allFeatures []*model.Variable,
 		}
 	}
 
-	targetIndex := 0
+	columnIndex := 0
 	for i, v := range selectedFeatures {
 		if v == target {
-			targetIndex = i
+			columnIndex = i
 			break
 		}
 	}
@@ -657,7 +665,7 @@ func CreateSearchSolutionRequest(allFeatures []*model.Variable,
 	metrics := DefaultMetrics(targetVariable.Type)
 
 	// create search solutions request
-	searchRequest, err := createSearchSolutionsRequest(targetIndex, preprocessingPipeline, sourceURI, userAgent, target, dataset, metrics, task, taskSubType, 600)
+	searchRequest, err := createSearchSolutionsRequest(columnIndex, preprocessingPipeline, sourceURI, userAgent, target, dataset, metrics, task, taskSubType, 600)
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to create search solution request")
 	}
