@@ -10,24 +10,27 @@ import (
 )
 
 // ResourceHandler provides a static file lookup route using simple directory mapping.
-func ResourceHandler(resourceDir string, proxy map[string]bool) func(http.ResponseWriter, *http.Request) {
+func ResourceHandler(resourceDir string, proxyServer string, proxy map[string]bool) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// resources can either be local or remote
 		dataset := pat.Param(r, "dataset")
 		mediaFolder := pat.Param(r, "folder")
 		file := pat.Param(r, "file")
+
+		file = path.Join(mediaFolder, file)
 		if proxy[dataset] {
-			proxyResourceHandler(resourceDir, dataset, mediaFolder, file).ServeHTTP(w, r)
+			proxyResourceHandler(proxyServer, dataset, file).ServeHTTP(w, r)
 		} else {
-			localFileHandler(resourceDir, dataset, mediaFolder, file).ServeHTTP(w, r)
+			// resource directory should be the input directory
+			localFileHandler(resourceDir, file).ServeHTTP(w, r)
 		}
 	}
 }
 
-func localFileHandler(server string, dataset string, folder string, file string) http.HandlerFunc {
+func localFileHandler(resourceDir string, file string) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// read the file locally
-		filename := path.Join(server, dataset, folder, file)
+		filename := path.Join(resourceDir, file)
 		bytes, err := ioutil.ReadFile(filename)
 		if err != nil {
 			handleError(w, err)
@@ -36,10 +39,10 @@ func localFileHandler(server string, dataset string, folder string, file string)
 	}
 }
 
-func proxyResourceHandler(server string, dataset string, folder string, file string) http.HandlerFunc {
+func proxyResourceHandler(server string, dataset string, file string) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// create the URL based on the input
-		url := fmt.Sprintf("%s/%s/%s/%s", server, dataset, folder, file)
+		url := fmt.Sprintf("%s/%s/%s/%s", server, dataset, file)
 		req, err := http.NewRequest("GET", url, nil)
 		if err != nil {
 			handleError(w, err)
