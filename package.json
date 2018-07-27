@@ -12,7 +12,7 @@
   "dependencies": {
     "@types/jquery": "3.3.2",
     "@types/lodash": "4.14.108",
-    "@uncharted.software/stories-facets": "2.12.6",
+    "@uncharted.software/stories-facets": "2.12.8",
     "axios": "0.18.0",
     "bootstrap": "4.1.1",
     "bootstrap-vue": "1.5.0",
