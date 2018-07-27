@@ -168,7 +168,7 @@ func (s *Storage) parseVariables(searchHit *elastic.SearchHit, includeIndex bool
 // FetchVariable returns the variable for the provided index, dataset, and variable.
 func (s *Storage) FetchVariable(dataset string, varName string) (*model.Variable, error) {
 	// get dataset id
-	datasetID := dataset + DatasetSuffix
+	datasetID := dataset
 	// create match query
 	query := elastic.NewMatchQuery("_id", datasetID)
 	// create fetch context
@@ -216,7 +216,7 @@ func (s *Storage) FetchVariableDisplay(dataset string, varName string) (*model.V
 // FetchVariables returns all the variables for the provided index and dataset.
 func (s *Storage) FetchVariables(dataset string, includeIndex bool, includeMeta bool) ([]*model.Variable, error) {
 	// get dataset id
-	datasetID := dataset + DatasetSuffix
+	datasetID := dataset
 	// create match query
 	query := elastic.NewMatchQuery("_id", datasetID)
 	// create fetch context
