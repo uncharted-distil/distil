@@ -316,7 +316,7 @@ func (f *NumericalField) FetchPredictedSummaryData(resultURI string, dataset str
 	// need the extrema to calculate the histogram interval
 	var err error
 	if extrema == nil {
-		extrema, err = f.fetchResultsExtrema(resultURI, dataset, variable, resultVariable)
+		extrema, err = f.fetchResultsExtrema(resultURI, datasetResult, variable, resultVariable)
 		if err != nil {
 			return nil, errors.Wrap(err, "failed to fetch result variable extrema for summary")
 		}
