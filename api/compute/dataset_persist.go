@@ -65,7 +65,7 @@ type DataResource struct {
 	ResType      string          `json:"resType"`
 	ResFormat    []string        `json:"resFormat"`
 	IsCollection bool            `json:"isCollection"`
-	Variables    []*DataVariable `json:"columns"`
+	Variables    []*DataVariable `json:"columns,omitempty"`
 }
 
 // DataVariable captures the data schema representation of a variable.
