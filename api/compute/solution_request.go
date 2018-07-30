@@ -44,11 +44,18 @@ const (
 var (
 	// folder for dataset data exchanged with TA2
 	datasetDir string
+	// folder containing the input dataset
+	inputDir string
 )
 
 // SetDatasetDir sets the output data dir
 func SetDatasetDir(dir string) {
 	datasetDir = dir
+}
+
+// SetInputDir sets the input data dir
+func SetInputDir(dir string) {
+	inputDir = dir
 }
 
 func newStatusChannel() chan SolutionStatus {
@@ -536,11 +543,11 @@ func (s *SolutionRequest) PersistAndDispatch(client *Client, solutionStorage mod
 	trainDataset, testDataset, err := splitTrainTest(dataset)
 
 	// perist the datasets and get URI
-	datasetPathTrain, targetIndex, err := PersistFilteredData(datasetDir, s.TargetFeature, trainDataset, dataVariables)
+	datasetPathTrain, targetIndex, err := PersistFilteredData(inputDir, datasetDir, s.TargetFeature, trainDataset, dataVariables)
 	if err != nil {
 		return err
 	}
-	datasetPathTest, _, err := PersistFilteredData(datasetDir, s.TargetFeature, testDataset, dataVariables)
+	datasetPathTest, _, err := PersistFilteredData(inputDir, datasetDir, s.TargetFeature, testDataset, dataVariables)
 	if err != nil {
 		return err
 	}
