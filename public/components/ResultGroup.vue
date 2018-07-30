@@ -1,58 +1,76 @@
 <template>
 	<div v-bind:class="currentClass"
-		@click="click()">
-		{{name}} <sup>{{solutionIndex}}</sup> {{timestamp}}
-		<div v-if="isPending">
-			<b-badge variant="info">{{solutionStatus}}</b-badge>
-			<b-progress
-				:value="100"
-				variant="outline-secondary"
-				striped
-				:animated="true"></b-progress>
+		@click="onClick()">
+		<div class="result-group-title">
+			<b>{{name}} <sup>{{solutionIndex}}</sup></b></span>
+			<template v-if="!isErrored">
+				<div class="pull-right pl-2 solution-button" @click.stop="minimized=!minimized"><i class="fa" v-bind:class="{'fa-angle-down': !isMaximized, 'fa-angle-up': isMaximized}"></i></div>
+				<div class="pull-right">|</div>
+			</template>
+			<div class="pull-right pr-2 solution-button" @click.stop="onDelete"><i class="fa fa-trash"></i></div>
+			<template v-if="isPending">
+				<b-badge variant="info">{{solutionStatus}}</b-badge>
+				<b-progress
+					:value="100"
+					variant="outline-secondary"
+					striped
+					:animated="true"></b-progress>
+			</template>
+			<template v-if="isCompleted">
+				<b-badge variant="info" v-bind:key="`${score.metric}-${solutionId}`" v-for="score in scores">
+					{{score.metric}}: {{score.value.toFixed(2)}}
+				</b-badge>
+			</template>
+			<template v-if="isErrored">
+				<b-badge variant="danger">
+					ERROR
+				</b-badge>
+			</template>
 		</div>
-		<div v-if="isCompleted">
-			<b-badge variant="info" v-bind:key="`${score.metric}-${solutionId}`" v-for="score in scores">
-				{{score.metric}}: {{score.value.toFixed(2)}}
-			</b-badge>
-			<facets v-if="predictedGroups.length" class="result-container"
-				@facet-click="onResultCategoricalClick"
-				@numerical-click="onResultNumericalClick"
-				@range-change="onResultRangeChange"
-				:solution-id="solutionId"
-				:groups="predictedGroups"
-				:highlights="highlights"
-				:instanceName="predictedInstanceName"
-				:row-selection="rowSelection"
-				:html="residualHtml">
-			</facets>
-			<div class="residual-group-container">
-				<facets v-if="residualGroups.length" class="residual-container"
-					@numerical-click="onResidualNumericalClick"
-					@range-change="onResidualRangeChange"
+		<div class="result-group-body" v-if="isMaximized">
+			<template v-if="isCompleted">
+				<facets v-if="predictedGroups.length" class="result-container"
+					@facet-click="onResultCategoricalClick"
+					@numerical-click="onResultNumericalClick"
+					@range-change="onResultRangeChange"
 					:solution-id="solutionId"
-					:groups="residualGroups"
+					:groups="predictedGroups"
 					:highlights="highlights"
-					:deemphasis="residualThreshold"
-					:instanceName="residualInstanceName"
+					:instanceName="predictedInstanceName"
 					:row-selection="rowSelection"
-					:html="resultHtml">
+					:html="residualHtml">
 				</facets>
-			</div>
-			<facets v-if="correctnessGroups.length" class="result-container"
-				@facet-click="onCorrectnessCategoricalClick"
-				:solution-id="solutionId"
-				:groups="correctnessGroups"
-				:highlights="highlights"
-				:instanceName="correctnessInstanceName"
-				:row-selection="rowSelection"
-				:html="residualHtml">
-			</facets>
+				<div class="residual-group-container">
+					<facets v-if="residualGroups.length" class="residual-container"
+						@numerical-click="onResidualNumericalClick"
+						@range-change="onResidualRangeChange"
+						:solution-id="solutionId"
+						:groups="residualGroups"
+						:highlights="highlights"
+						:deemphasis="residualThreshold"
+						:instanceName="residualInstanceName"
+						:row-selection="rowSelection"
+						:html="resultHtml">
+					</facets>
+				</div>
+				<facets v-if="correctnessGroups.length" class="result-container"
+					@facet-click="onCorrectnessCategoricalClick"
+					:solution-id="solutionId"
+					:groups="correctnessGroups"
+					:highlights="highlights"
+					:instanceName="correctnessInstanceName"
+					:row-selection="rowSelection"
+					:html="residualHtml">
+				</facets>
+			</template>
 		</div>
-		<div v-if="isErrored">
-			<b-badge variant="danger">
-				ERROR
-			</b-badge>
-		</div>
+		<b-modal v-model="openDeleteModal" hide-footer hide-header>
+			<h6 class="my-4 text-center">Are you sure you would like to delete this solution?</h6>
+			<footer class="modal-footer">
+				<b-btn class="mt-3" variant="danger" @click="deleteSolution">Delete</b-btn>
+				<b-btn class="mt-3" variant="secondary" @click="openDeleteModal=false">Cancel</b-btn>
+			</footer>
+		</b-modal>
 	</div>
 </template>
 
@@ -88,6 +106,13 @@ export default Vue.extend({
 		correctnessSummary: Object,
 		resultHtml: String,
 		residualHtml: String
+	},
+
+	data() {
+		return {
+			minimized: false,
+			openDeleteModal: false
+		};
 	},
 
 	components: {
@@ -181,6 +206,11 @@ export default Vue.extend({
 
 		isErrored(): boolean {
 			return this.solutionStatus === SOLUTION_ERRORED;
+		},
+
+		isMaximized(): boolean {
+			return this.routeSolutionId === this.solutionId ||
+				(!this.minimized && !this.isErrored);
 		}
 
 	},
@@ -251,8 +281,9 @@ export default Vue.extend({
 			this.$emit('range-change', key, value);
 		},
 
-		click() {
+		onClick() {
 			if (this.predictedSummary && this.routeSolutionId !== this.solutionId) {
+				this.minimized = false;
 				const routeEntry = overlayRouteEntry(this.$route, {
 					solutionId: this.solutionId,
 					highlights: null
@@ -275,6 +306,15 @@ export default Vue.extend({
 				return groups;
 			}
 			return [];
+		},
+
+		onDelete() {
+			this.openDeleteModal = true;
+		},
+
+		deleteSolution() {
+			this.openDeleteModal = false;
+			console.log('Deleting', this.solutionId);
 		}
 	}
 });
@@ -285,8 +325,29 @@ export default Vue.extend({
 	margin: 5px;
 	padding: 10px;
 	border-bottom-style: solid;
-	border-bottom-color:lightgray;
+	border-bottom-color: lightgray;
 	border-bottom-width: 1px;
+}
+
+.result-group-title {
+	vertical-align: middle;
+}
+
+.result-group-title .badge {
+	display: inline;
+	vertical-align: middle;
+	padding: 0.45em 0.4em 0.3em 0.4em;
+}
+
+.result-group-body {
+	padding: 4px 0;
+}
+
+.solution-button {
+	cursor: pointer;
+}
+.solution-button:hover {
+	opacity: 0.5;
 }
 
 .result-group-selected {
