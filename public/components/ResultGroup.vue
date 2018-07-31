@@ -7,7 +7,9 @@
 				<div class="pull-right pl-2 solution-button" @click.stop="minimized=!minimized"><i class="fa" v-bind:class="{'fa-angle-down': !isMaximized, 'fa-angle-up': isMaximized}"></i></div>
 				<div class="pull-right">|</div>
 			</template>
+			<!--
 			<div class="pull-right pr-2 solution-button" @click.stop="onDelete"><i class="fa fa-trash"></i></div>
+			-->
 			<template v-if="isPending">
 				<b-badge variant="info">{{solutionStatus}}</b-badge>
 				<b-progress
