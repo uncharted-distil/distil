@@ -157,13 +157,13 @@ func convertTaskSubTypeFromTA3ToTA2(taskSubType string) pipeline.TaskSubtype {
 	return pipeline.TaskSubtype(task)
 }
 
-func convertTargetFeaturesTA3ToTA2(target string, targetIndex int) []*pipeline.ProblemTarget {
+func convertTargetFeaturesTA3ToTA2(target string, columnIndex int) []*pipeline.ProblemTarget {
 	return []*pipeline.ProblemTarget{
 		{
 			ColumnName:  target,
 			ResourceId:  defaultResourceID,
-			TargetIndex: int32(targetIndex),
-			ColumnIndex: int32(targetIndex), // TODO: is this correct?
+			TargetIndex: 0,
+			ColumnIndex: int32(columnIndex),
 		},
 	}
 }
