@@ -528,9 +528,13 @@ func (s *SolutionRequest) PersistAndDispatch(client *Client, solutionStorage mod
 	// preprocessing step will mark them for removal by ta2
 	allVarFilters := *s.Filters
 	allVarFilters.Variables = []string{}
+	var targetVariable *model.Variable
 	for _, variable := range dataVariables {
 		// Exclude cluster/feature generated columns
 		allVarFilters.Variables = append(allVarFilters.Variables, variable.Key)
+		if variable.Key == s.TargetFeature {
+			targetVariable = variable
+		}
 	}
 
 	// fetch the queried dataset
@@ -538,6 +542,8 @@ func (s *SolutionRequest) PersistAndDispatch(client *Client, solutionStorage mod
 	if err != nil {
 		return err
 	}
+
+	columnIndex := getColumnIndex(targetVariable, s.Filters.Variables)
 
 	// split the train & test data into separate datasets to be submitted to TA2
 	trainDataset, testDataset, err := splitTrainTest(dataset)
@@ -569,14 +575,6 @@ func (s *SolutionRequest) PersistAndDispatch(client *Client, solutionStorage mod
 		preprocessing, err = s.createPreprocessingPipeline(dataVariables, s.TargetFeature, s.Filters.Variables)
 		if err != nil {
 			return err
-		}
-	}
-
-	// use the filter variables to determine the column index
-	columnIndex := 0
-	for i, v := range s.Filters.Variables {
-		if v == s.TargetFeature {
-			columnIndex = i
 		}
 	}
 
@@ -649,14 +647,6 @@ func CreateSearchSolutionRequest(allFeatures []*model.Variable,
 		}
 	}
 
-	columnIndex := 0
-	for i, v := range selectedFeatures {
-		if v == target {
-			columnIndex = i
-			break
-		}
-	}
-
 	var targetVariable *model.Variable
 	for _, v := range allFeatures {
 		if v.Key == target {
@@ -667,6 +657,7 @@ func CreateSearchSolutionRequest(allFeatures []*model.Variable,
 	if targetVariable == nil {
 		return nil, errors.Errorf("unable to find target variable '%s'", target)
 	}
+	columnIndex := getColumnIndex(targetVariable, selectedFeatures)
 	task := DefaultTaskType(targetVariable.Type)
 	taskSubType := DefaultTaskSubType(targetVariable.Type)
 	metrics := DefaultMetrics(targetVariable.Type)
@@ -678,4 +669,16 @@ func CreateSearchSolutionRequest(allFeatures []*model.Variable,
 	}
 
 	return searchRequest, nil
+}
+
+func getColumnIndex(variable *model.Variable, selectedVariables []string) int {
+	colIndex := 0
+	for i := 0; i < len(selectedVariables); i++ {
+		if selectedVariables[i] == variable.Key {
+			break
+		}
+		colIndex = colIndex + 1
+	}
+
+	return colIndex
 }
