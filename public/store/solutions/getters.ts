@@ -12,8 +12,8 @@ export function sortRequestsByTimestamp(a: SolutionRequest, b: SolutionRequest):
 }
 
 export function sortSolutionsByScore(a: Solution, b: Solution): number {
-	const aScore = (a.scores.length > 0) ? (a.scores[0].value * a.scores[0].sortMultiplier) : 0;
-	const bScore = (b.scores.length > 0) ? (b.scores[0].value * b.scores[0].sortMultiplier) : 0;
+	const aScore = (a.scores && a.scores.length > 0) ? (a.scores[0].value * a.scores[0].sortMultiplier) : 0;
+	const bScore = (b.scores && b.scores.length > 0) ? (b.scores[0].value * b.scores[0].sortMultiplier) : 0;
 	// descending order of score
 	return bScore - aScore;
 }
