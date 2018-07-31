@@ -65,15 +65,22 @@ type DataResource struct {
 	ResType      string          `json:"resType"`
 	ResFormat    []string        `json:"resFormat"`
 	IsCollection bool            `json:"isCollection"`
-	Variables    []*DataVariable `json:"columns"`
+	Variables    []*DataVariable `json:"columns,omitempty"`
 }
 
 // DataVariable captures the data schema representation of a variable.
 type DataVariable struct {
-	ColName  string   `json:"colName"`
-	Role     []string `json:"role"`
-	ColType  string   `json:"colType"`
-	ColIndex int      `json:"colIndex"`
+	ColName  string         `json:"colName"`
+	Role     []string       `json:"role"`
+	ColType  string         `json:"colType"`
+	ColIndex int            `json:"colIndex"`
+	RefersTo *DataReference `json:"refersTo,omitempty"`
+}
+
+// DataReference captures the data schema representation of a resource reference.
+type DataReference struct {
+	ResID     string `json:"resID"`
+	ResObject string `json:"resObject"`
 }
 
 // Hash the filter set
@@ -88,7 +95,7 @@ func getFilteredDatasetHash(dataset string, target string, filterParams *model.F
 // PersistFilteredData creates a hash code from the combination of the dataset name, the target name, and its filter
 // state, and saves the filtered data and target data to disk if they haven't been previously.  The path to the data
 // is returned.
-func PersistFilteredData(datasetDir string, target string, dataset *model.QueriedDataset, variables []*model.Variable) (string, int, error) {
+func PersistFilteredData(inputPath string, datasetDir string, target string, dataset *model.QueriedDataset, variables []*model.Variable) (string, int, error) {
 	// parse the dataset and its filter state and generate a hashcode from both
 	hash, err := getFilteredDatasetHash(dataset.Metadata.Name, target, dataset.Filters, dataset.IsTrain)
 	if err != nil {
@@ -143,7 +150,7 @@ func PersistFilteredData(datasetDir string, target string, dataset *model.Querie
 		return "", -1, err
 	}
 
-	err = writeDataSchema(path, dataset.Metadata.Name, dataset.Data, targetIdx, variablesByKey)
+	err = writeDataSchema(inputPath, path, dataset.Metadata.Name, dataset.Data, targetIdx, variablesByKey)
 	if err != nil {
 		return "", -1, err
 	}
@@ -258,7 +265,7 @@ func writeData(dataPath string, datasetDir string, filteredData *model.FilteredD
 	return nil
 }
 
-func writeDataSchema(schemaPath string, dataset string, filteredData *model.FilteredData, targetIdx int, variables map[string]*model.Variable) error {
+func writeDataSchema(rootPath string, schemaPath string, dataset string, filteredData *model.FilteredData, targetIdx int, variables map[string]*model.Variable) error {
 
 	// Build the schema data for output.
 	drs := make([]*DataResource, 1)
@@ -302,6 +309,21 @@ func writeDataSchema(schemaPath string, dataset string, filteredData *model.Filt
 				ColType:  columnVar.OriginalType,
 				ColIndex: columnVar.Index,
 			}
+			// if a resource is references (images), add it.
+			if referencesResource(columnVar) {
+				resID := fmt.Sprintf("%d", len(ds.DataResources))
+				ds.DataResources = append(ds.DataResources, &DataResource{
+					ResID:        resID,
+					ResPath:      path.Join(rootPath, "TRAIN", "dataset_TRAIN", "media/"),
+					ResType:      columnVar.Type,
+					ResFormat:    []string{"image/jpeg"},
+					IsCollection: true,
+				})
+				v.RefersTo = &DataReference{
+					ResID:     resID,
+					ResObject: "item",
+				}
+			}
 			ds.DataResources[0].Variables = append(ds.DataResources[0].Variables, v)
 		}
 	}
@@ -332,4 +354,12 @@ func LoadDatasetSchemaFromFile(filename string) (*DataSchema, error) {
 		return nil, err
 	}
 	return dataDoc, nil
+}
+
+func referencesResource(variable *model.Variable) bool {
+	if variable.Type == "image" {
+		return true
+	}
+
+	return false
 }
