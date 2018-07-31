@@ -200,6 +200,7 @@ func (s *Storage) FetchSolutionScores(solutionID string) ([]*model.SolutionScore
 		results = append(results, &model.SolutionScore{
 			SolutionID:     solutionID,
 			Metric:         metric,
+			Label:          compute.GetMetricLabel(metric),
 			Score:          score,
 			SortMultiplier: compute.GetMetricScoreMultiplier(metric),
 		})

@@ -5,7 +5,9 @@
 			<b>{{name}} <sup>{{solutionIndex}}</sup></b></span>
 			<template v-if="!isErrored">
 				<div class="pull-right pl-2 solution-button" @click.stop="minimized=!minimized"><i class="fa" v-bind:class="{'fa-angle-down': !isMaximized, 'fa-angle-up': isMaximized}"></i></div>
+				<!--
 				<div class="pull-right">|</div>
+				-->
 			</template>
 			<!--
 			<div class="pull-right pr-2 solution-button" @click.stop="onDelete"><i class="fa fa-trash"></i></div>
@@ -20,7 +22,7 @@
 			</template>
 			<template v-if="isCompleted">
 				<b-badge variant="info" v-bind:key="`${score.metric}-${solutionId}`" v-for="score in scores">
-					{{score.metric}}: {{score.value.toFixed(2)}}
+					{{score.label}}: {{score.value.toFixed(2)}}
 				</b-badge>
 			</template>
 			<template v-if="isErrored">
