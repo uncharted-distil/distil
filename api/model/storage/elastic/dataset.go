@@ -2,7 +2,6 @@ package elastic
 
 import (
 	"context"
-	"strings"
 
 	"github.com/pkg/errors"
 	"github.com/unchartedsoftware/distil/api/model"
@@ -13,7 +12,6 @@ import (
 const (
 	// DatasetSuffix is the suffix for the dataset entry when stored in
 	// elasticsearch.
-	DatasetSuffix    = "_dataset"
 	metadataType     = "metadata"
 	datasetsListSize = 1000
 )
@@ -27,7 +25,7 @@ func (s *Storage) parseDatasets(res *elastic.SearchResult, includeIndex bool, in
 			return nil, errors.Wrap(err, "failed to parse dataset")
 		}
 		// extract dataset id
-		name := strings.TrimSuffix(hit.Id, DatasetSuffix)
+		name := hit.Id
 		// extract the description
 		description, ok := json.String(src, "description")
 		if !ok {
@@ -131,7 +129,7 @@ func (s *Storage) updateVariables(dataset string, variables []*model.Variable) e
 	_, err := s.client.Update().
 		Index(s.index).
 		Type(metadataType).
-		Id(dataset + DatasetSuffix).
+		Id(dataset).
 		Doc(source).
 		Do(context.Background())
 	if err != nil {

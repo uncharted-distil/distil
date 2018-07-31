@@ -63,7 +63,7 @@ export interface Group {
 	more?: number;
 	moreTotal?: number;
 	total?: number;
-	remaining?: (PlaceHolderFacet | CategoricalFacet | NumericalFacet)[];
+	all?: (PlaceHolderFacet | CategoricalFacet | NumericalFacet)[];
 }
 
 // creates the set of facets from the supplied summary data
@@ -220,7 +220,7 @@ function createCategoricalSummaryFacet(summary: VariableSummary): Group {
 		numRows: summary.numRows,
 		more: remaining.length,
 		moreTotal: remainingTotal,
-		remaining: remaining
+		all: facets
 	};
 }
 
