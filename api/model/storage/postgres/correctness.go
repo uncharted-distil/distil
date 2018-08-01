@@ -23,30 +23,10 @@ func (s *Storage) FetchCorrectnessSummary(dataset string, resultURI string, filt
 		return nil, err
 	}
 
-	// pull filters generated against the result facet out for special handling
-	filters := s.splitFilters(filterParams)
-
-	// create the filter for the query.
-	wheres := make([]string, 0)
-	params := make([]interface{}, 0)
-	wheres, params = s.buildFilteredQueryWhere(wheres, params, dataset, filters.genericFilters)
-
-	// apply the predicted result filter
-	if filters.predictedFilter != nil {
-		wheres, params, err = s.buildPredictedResultWhere(wheres, params, dataset, resultURI, filters.predictedFilter)
-		if err != nil {
-			return nil, err
-		}
-	} else if filters.correctnessFilter != nil {
-		wheres, params, err = s.buildCorrectnessResultWhere(wheres, params, dataset, resultURI, filters.correctnessFilter)
-		if err != nil {
-			return nil, err
-		}
-	} else if filters.residualFilter != nil {
-		wheres, params, err = s.buildErrorResultWhere(wheres, params, filters.residualFilter)
-		if err != nil {
-			return nil, err
-		}
+	// get filter where / params
+	wheres, params, err := s.buildResultQueryFilters(dataset, resultURI, filterParams)
+	if err != nil {
+		return nil, err
 	}
 
 	wheres = append(wheres, fmt.Sprintf("result.result_id = $%d AND result.target = $%d ", len(params)+1, len(params)+2))

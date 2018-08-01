@@ -239,6 +239,36 @@ func (s *Storage) buildPredictedResultWhere(wheres []string, params []interface{
 	return wheres, params, nil
 }
 
+func (s *Storage) buildResultQueryFilters(dataset string, resultURI string, filterParams *model.FilterParams) ([]string, []interface{}, error) {
+	// pull filters generated against the result facet out for special handling
+	filters := s.splitFilters(filterParams)
+
+	// create the filter for the query
+	wheres := make([]string, 0)
+	params := make([]interface{}, 0)
+	wheres, params = s.buildFilteredQueryWhere(wheres, params, dataset, filters.genericFilters)
+
+	// assemble split filters
+	var err error
+	if filters.predictedFilter != nil {
+		wheres, params, err = s.buildPredictedResultWhere(wheres, params, dataset, resultURI, filters.predictedFilter)
+		if err != nil {
+			return nil, nil, err
+		}
+	} else if filters.correctnessFilter != nil {
+		wheres, params, err = s.buildCorrectnessResultWhere(wheres, params, dataset, resultURI, filters.correctnessFilter)
+		if err != nil {
+			return nil, nil, err
+		}
+	} else if filters.residualFilter != nil {
+		wheres, params, err = s.buildErrorResultWhere(wheres, params, filters.residualFilter)
+		if err != nil {
+			return nil, nil, err
+		}
+	}
+	return wheres, params, nil
+}
+
 type filters struct {
 	genericFilters    []*model.Filter
 	predictedFilter   *model.Filter
