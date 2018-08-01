@@ -22,7 +22,7 @@ import { isNumericType } from '../util/types';
 
 import 'font-awesome/css/font-awesome.css';
 
-const BELL_CURVE_HIGHLIGHT = 'bell';
+const MID_RANGE_HIGHLIGHT = 'bell';
 const TOP_RANGE_HIGHLIGHT = 'top';
 const BOTTOM_RANGE_HIGHLIGHT = 'bottom';
 const DEFAULT_HIGHLIGHT_PERCENTILE = 0.75;
@@ -147,7 +147,7 @@ export default Vue.extend({
 						to = summary.mean - (summary.stddev * DEFAULT_HIGHLIGHT_PERCENTILE);
 						break;
 
-					case BELL_CURVE_HIGHLIGHT:
+					case MID_RANGE_HIGHLIGHT:
 						from = summary.mean - (summary.stddev * DEFAULT_HIGHLIGHT_PERCENTILE);
 						to = summary.mean + (summary.stddev * DEFAULT_HIGHLIGHT_PERCENTILE);
 						break;
@@ -164,7 +164,7 @@ export default Vue.extend({
 						to = extrema.max - (range * DEFAULT_HIGHLIGHT_PERCENTILE);
 						break;
 
-					case BELL_CURVE_HIGHLIGHT:
+					case MID_RANGE_HIGHLIGHT:
 						from = mid - (range * DEFAULT_HIGHLIGHT_PERCENTILE);
 						to = mid + (range * DEFAULT_HIGHLIGHT_PERCENTILE);
 						break;
