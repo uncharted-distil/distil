@@ -41,7 +41,7 @@ func (f *TimeSeriesField) metadataVarName(varName string) string {
 	return fmt.Sprintf("%s%s", model.MetadataVarPrefix, varName)
 }
 
-func (f *TimeSeriesField) fetchRepresentationTimeSeriess(dataset string, variable *model.Variable, categoryBuckets []*model.Bucket) ([]string, error) {
+func (f *TimeSeriesField) fetchRepresentationTimeSeries(dataset string, variable *model.Variable, categoryBuckets []*model.Bucket) ([]string, error) {
 
 	var timeseriesFiles []string
 
@@ -103,7 +103,7 @@ func (f *TimeSeriesField) fetchHistogram(dataset string, variable *model.Variabl
 		return nil, err
 	}
 
-	files, err := f.fetchRepresentationTimeSeriess(dataset, variable, histogram.Buckets)
+	files, err := f.fetchRepresentationTimeSeries(dataset, variable, histogram.Buckets)
 	if err != nil {
 		return nil, err
 	}
@@ -153,7 +153,7 @@ func (f *TimeSeriesField) fetchHistogramByResult(dataset string, variable *model
 		return nil, err
 	}
 
-	files, err := f.fetchRepresentationTimeSeriess(dataset, variable, histogram.Buckets)
+	files, err := f.fetchRepresentationTimeSeries(dataset, variable, histogram.Buckets)
 	if err != nil {
 		return nil, err
 	}
@@ -241,7 +241,7 @@ func (f *TimeSeriesField) FetchPredictedSummaryData(resultURI string, dataset st
 		return nil, err
 	}
 
-	files, err := f.fetchRepresentationTimeSeriess(dataset, variable, histogram.Buckets)
+	files, err := f.fetchRepresentationTimeSeries(dataset, variable, histogram.Buckets)
 	if err != nil {
 		return nil, err
 	}

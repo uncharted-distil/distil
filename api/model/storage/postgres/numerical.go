@@ -30,10 +30,36 @@ func (f *NumericalField) FetchSummaryData(dataset string, variable *model.Variab
 	var err error
 	if resultURI == "" {
 		histogram, err = f.fetchHistogram(dataset, variable, filterParams)
+		if err != nil {
+			return nil, err
+		}
+		stddev, err := f.Storage.fetchStdDev(dataset, variable, filterParams)
+		if err != nil {
+			return nil, err
+		}
+		histogram.StdDev = stddev
+		mean, err := f.Storage.fetchMean(dataset, variable, filterParams)
+		if err != nil {
+			return nil, err
+		}
+		histogram.Mean = mean
 	} else {
 		histogram, err = f.fetchHistogramByResult(dataset, variable, resultURI, filterParams, extrema)
+		if err != nil {
+			return nil, err
+		}
+		stddev, err := f.Storage.fetchStdDevByResult(dataset, variable, resultURI, filterParams)
+		if err != nil {
+			return nil, err
+		}
+		histogram.StdDev = stddev
+		mean, err := f.Storage.fetchMeanByResult(dataset, variable, resultURI, filterParams)
+		if err != nil {
+			return nil, err
+		}
+		histogram.Mean = mean
 	}
-	return histogram, err
+	return histogram, nil
 }
 
 func (f *NumericalField) fetchHistogram(dataset string, variable *model.Variable, filterParams *model.FilterParams) (*model.Histogram, error) {
