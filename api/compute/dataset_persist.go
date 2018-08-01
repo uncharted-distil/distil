@@ -144,8 +144,8 @@ func PersistFilteredData(inputPath string, datasetDir string, target string, dat
 		variablesByKey[variable.Key] = variable
 	}
 
-	// write the filtered data (minus the target field) to csv file
-	err = writeData(path, datasetDir, dataset.Data, variablesByKey, targetIdx)
+	// write the filtered data to csv file
+	err = writeData(path, datasetDir, dataset.Data, variablesByKey)
 	if err != nil {
 		return "", -1, err
 	}
@@ -202,7 +202,7 @@ func dirExists(path string) bool {
 	return true
 }
 
-func writeData(dataPath string, datasetDir string, filteredData *model.FilteredData, variables map[string]*model.Variable, targetIdx int) error {
+func writeData(dataPath string, datasetDir string, filteredData *model.FilteredData, variables map[string]*model.Variable) error {
 	// make sure the output folder exists
 	dataFolder := path.Join(dataPath, D3MDataFolder)
 	err := os.MkdirAll(dataFolder, os.ModePerm)
@@ -310,6 +310,7 @@ func writeDataSchema(rootPath string, schemaPath string, dataset string, filtere
 				ColIndex: columnVar.Index,
 			}
 			// if a resource is references (images), add it.
+			// TODO: need a general solution for resource collections - image is only one type
 			if referencesResource(columnVar) {
 				resID := fmt.Sprintf("%d", len(ds.DataResources))
 				ds.DataResources = append(ds.DataResources, &DataResource{
@@ -357,7 +358,7 @@ func LoadDatasetSchemaFromFile(filename string) (*DataSchema, error) {
 }
 
 func referencesResource(variable *model.Variable) bool {
-	if variable.Type == "image" {
+	if variable.Type == model.ImageType {
 		return true
 	}
 
