@@ -113,31 +113,10 @@ func (f *TimeSeriesField) fetchHistogram(dataset string, variable *model.Variabl
 
 func (f *TimeSeriesField) fetchHistogramByResult(dataset string, variable *model.Variable, resultURI string, filterParams *model.FilterParams) (*model.Histogram, error) {
 
-	// pull filters generated against the result facet out for special handling
-	filters := f.Storage.splitFilters(filterParams)
-
-	// create the filter for the query.
-	wheres := make([]string, 0)
-	params := make([]interface{}, 0)
-	wheres, params = f.Storage.buildFilteredQueryWhere(wheres, params, dataset, filters.genericFilters)
-
-	var err error
-	// apply the predicted result filter
-	if filters.predictedFilter != nil {
-		wheres, params, err = f.Storage.buildPredictedResultWhere(wheres, params, dataset, resultURI, filters.predictedFilter)
-		if err != nil {
-			return nil, err
-		}
-	} else if filters.correctnessFilter != nil {
-		wheres, params, err = f.Storage.buildCorrectnessResultWhere(wheres, params, dataset, resultURI, filters.correctnessFilter)
-		if err != nil {
-			return nil, err
-		}
-	} else if filters.residualFilter != nil {
-		wheres, params, err = f.Storage.buildErrorResultWhere(wheres, params, filters.residualFilter)
-		if err != nil {
-			return nil, err
-		}
+	// get filter where / params
+	wheres, params, err := f.Storage.buildResultQueryFilters(dataset, resultURI, filterParams)
+	if err != nil {
+		return nil, err
 	}
 
 	params = append(params, resultURI)
@@ -233,31 +212,10 @@ func (f *TimeSeriesField) parseHistogram(rows *pgx.Rows, variable *model.Variabl
 func (f *TimeSeriesField) FetchPredictedSummaryData(resultURI string, dataset string, datasetResult string, variable *model.Variable, filterParams *model.FilterParams, extrema *model.Extrema) (*model.Histogram, error) {
 	targetName := f.metadataVarName(variable.Key)
 
-	// pull filters generated against the result facet out for special handling
-	filters := f.Storage.splitFilters(filterParams)
-
-	// create the filter for the query.
-	wheres := make([]string, 0)
-	params := make([]interface{}, 0)
-	wheres, params = f.Storage.buildFilteredQueryWhere(wheres, params, dataset, filters.genericFilters)
-
-	var err error
-	// apply the predicted result filter
-	if filters.predictedFilter != nil {
-		wheres, params, err = f.Storage.buildPredictedResultWhere(wheres, params, dataset, resultURI, filters.predictedFilter)
-		if err != nil {
-			return nil, err
-		}
-	} else if filters.correctnessFilter != nil {
-		wheres, params, err = f.Storage.buildCorrectnessResultWhere(wheres, params, dataset, resultURI, filters.correctnessFilter)
-		if err != nil {
-			return nil, err
-		}
-	} else if filters.residualFilter != nil {
-		wheres, params, err = f.Storage.buildErrorResultWhere(wheres, params, filters.residualFilter)
-		if err != nil {
-			return nil, err
-		}
+	// get filter where / params
+	wheres, params, err := f.Storage.buildResultQueryFilters(dataset, resultURI, filterParams)
+	if err != nil {
+		return nil, err
 	}
 
 	wheres = append(wheres, fmt.Sprintf("result.result_id = $%d AND result.target = $%d ", len(params)+1, len(params)+2))

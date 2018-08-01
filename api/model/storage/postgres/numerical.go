@@ -33,7 +33,6 @@ func (f *NumericalField) FetchSummaryData(dataset string, variable *model.Variab
 	} else {
 		histogram, err = f.fetchHistogramByResult(dataset, variable, resultURI, filterParams, extrema)
 	}
-
 	return histogram, err
 }
 
@@ -76,31 +75,10 @@ func (f *NumericalField) fetchHistogram(dataset string, variable *model.Variable
 
 func (f *NumericalField) fetchHistogramByResult(dataset string, variable *model.Variable, resultURI string, filterParams *model.FilterParams, extrema *model.Extrema) (*model.Histogram, error) {
 
-	// pull filters generated against the result facet out for special handling
-	filters := f.Storage.splitFilters(filterParams)
-
-	// create the filter for the query.
-	wheres := make([]string, 0)
-	params := make([]interface{}, 0)
-	wheres, params = f.Storage.buildFilteredQueryWhere(wheres, params, dataset, filters.genericFilters)
-
-	var err error
-	// apply the result filter
-	if filters.predictedFilter != nil {
-		wheres, params, err = f.Storage.buildPredictedResultWhere(wheres, params, dataset, resultURI, filters.predictedFilter)
-		if err != nil {
-			return nil, err
-		}
-	} else if filters.correctnessFilter != nil {
-		wheres, params, err = f.Storage.buildCorrectnessResultWhere(wheres, params, dataset, resultURI, filters.correctnessFilter)
-		if err != nil {
-			return nil, err
-		}
-	} else if filters.residualFilter != nil {
-		wheres, params, err = f.Storage.buildErrorResultWhere(wheres, params, filters.residualFilter)
-		if err != nil {
-			return nil, err
-		}
+	// get filter where / params
+	wheres, params, err := f.Storage.buildResultQueryFilters(dataset, resultURI, filterParams)
+	if err != nil {
+		return nil, err
 	}
 
 	params = append(params, resultURI)
@@ -328,34 +306,14 @@ func (f *NumericalField) FetchPredictedSummaryData(resultURI string, dataset str
 	// size is derived from the min/max and desired bucket count.
 	histogramName, bucketQuery, histogramQuery := f.getResultHistogramAggQuery(extrema, variable, resultVariable)
 
-	// pull filters generated against the result facet out for special handling
-	filters := f.Storage.splitFilters(filterParams)
-
-	// create the filter for the query.
-	wheres := make([]string, 0)
-	params := make([]interface{}, 0)
-	wheres, params = f.Storage.buildFilteredQueryWhere(wheres, params, dataset, filters.genericFilters)
+	// get filter where / params
+	wheres, params, err := f.Storage.buildResultQueryFilters(dataset, resultURI, filterParams)
+	if err != nil {
+		return nil, err
+	}
 
 	wheres = append(wheres, fmt.Sprintf("result.result_id = $%d AND result.target = $%d ", len(params)+1, len(params)+2))
 	params = append(params, resultURI, variable.Key)
-
-	// apply the result filter
-	if filters.predictedFilter != nil {
-		wheres, params, err = f.Storage.buildPredictedResultWhere(wheres, params, dataset, resultURI, filters.predictedFilter)
-		if err != nil {
-			return nil, err
-		}
-	} else if filters.correctnessFilter != nil {
-		wheres, params, err = f.Storage.buildCorrectnessResultWhere(wheres, params, dataset, resultURI, filters.correctnessFilter)
-		if err != nil {
-			return nil, err
-		}
-	} else if filters.residualFilter != nil {
-		wheres, params, err = f.Storage.buildErrorResultWhere(wheres, params, filters.residualFilter)
-		if err != nil {
-			return nil, err
-		}
-	}
 
 	// Create the complete query string.
 	query := fmt.Sprintf(`
