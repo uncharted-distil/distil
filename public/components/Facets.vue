@@ -209,7 +209,6 @@ export default Vue.extend({
 
 					// track how many are already added
 					if (this.numAddedToDisplay[group.key] && this.numAddedToDisplay[group.key] > 0) {
-						console.log('less is', this.numAddedToDisplay[group.key]);
 						group.less = this.numAddedToDisplay[group.key];
 					}
 				}

@@ -22,7 +22,10 @@ import { isNumericType } from '../util/types';
 
 import 'font-awesome/css/font-awesome.css';
 
-const DEFAULT_HIGHLIGHT_PERCENTILE = 0.6;
+const BELL_CURVE_HIGHLIGHT = 'bell';
+const TOP_RANGE_HIGHLIGHT = 'top';
+const BOTTOM_RANGE_HIGHLIGHT = 'bottom';
+const DEFAULT_HIGHLIGHT_PERCENTILE = 0.75;
 
 export default Vue.extend({
 	name: 'target-variable',
@@ -62,6 +65,10 @@ export default Vue.extend({
 
 		instanceName(): string {
 			return 'targetVar';
+		},
+
+		defaultHighlightType(): string {
+			return TOP_RANGE_HIGHLIGHT;
 		}
 	},
 
@@ -127,9 +134,42 @@ export default Vue.extend({
 			const summary = this.targetVariableSummaries[0];
 			const extrema = summary.extrema;
 			const group = this.groups[0];
-			const range = extrema.max - extrema.min;
-			const from = extrema.min + (range * DEFAULT_HIGHLIGHT_PERCENTILE);
-			const to = extrema.max;
+
+			let from = extrema.min;
+			let to = extrema.max;
+			if (summary.mean !== undefined && summary.stddev !== undefined) {
+				switch (this.defaultHighlightType) {
+					case TOP_RANGE_HIGHLIGHT:
+						from = summary.mean + (summary.stddev * DEFAULT_HIGHLIGHT_PERCENTILE);
+						break;
+
+					case BOTTOM_RANGE_HIGHLIGHT:
+						to = summary.mean - (summary.stddev * DEFAULT_HIGHLIGHT_PERCENTILE);
+						break;
+
+					case BELL_CURVE_HIGHLIGHT:
+						from = summary.mean - (summary.stddev * DEFAULT_HIGHLIGHT_PERCENTILE);
+						to = summary.mean + (summary.stddev * DEFAULT_HIGHLIGHT_PERCENTILE);
+						break;
+				}
+			} else {
+				const range = extrema.max - extrema.min;
+				const mid = (extrema.max + extrema.min) / 2;
+				switch (this.defaultHighlightType) {
+					case TOP_RANGE_HIGHLIGHT:
+						from = extrema.min + (range * DEFAULT_HIGHLIGHT_PERCENTILE);
+						break;
+
+					case BOTTOM_RANGE_HIGHLIGHT:
+						to = extrema.max - (range * DEFAULT_HIGHLIGHT_PERCENTILE);
+						break;
+
+					case BELL_CURVE_HIGHLIGHT:
+						from = mid - (range * DEFAULT_HIGHLIGHT_PERCENTILE);
+						to = mid + (range * DEFAULT_HIGHLIGHT_PERCENTILE);
+						break;
+				}
+			}
 			const facet = group.facets[0] as any;
 			const slices = facet.histogram.slices;
 			// case case set to full range
