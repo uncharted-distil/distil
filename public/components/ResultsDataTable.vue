@@ -22,6 +22,14 @@
 					{{target}}<sup>{{solutionIndex}}</sup>
 				</template>
 
+				<template v-for="imageField in imageFields" :slot="imageField" slot-scope="data">
+					<image-preview :key="imageField" :image-url="data.item[imageField]"></image-preview>
+				</template>
+
+				<template v-for="timeseriesField in timeseriesFields" :slot="timeseriesField" slot-scope="data">
+					<sparkline-preview :key="timeseriesField" :time-series-url="data.item[timeseriesField]"></sparkline-preview>
+				</template>
+
 				<template :slot="errorCol" slot-scope="data">
 					<!-- residual error -->
 					<div class="error-bar-container" v-if="isTargetNumerical">
@@ -151,6 +159,28 @@ export default Vue.extend({
 
 		residualThresholdMax(): number {
 			return _.toNumber(routeGetters.getRouteResidualThresholdMax(this.$store));
+		},
+
+		imageFields(): string[] {
+			return _.map(this.fields, (field, key) => {
+				return {
+					key: key,
+					type: field.type
+				};
+			})
+			.filter(field => field.type === 'image')
+			.map(field => field.key);
+		},
+
+		timeseriesFields(): string[] {
+			return _.map(this.fields, (field, key) => {
+				return {
+					key: key,
+					type: field.type
+				};
+			})
+			.filter(field => field.type === 'timeseries')
+			.map(field => field.key);
 		},
 	},
 
