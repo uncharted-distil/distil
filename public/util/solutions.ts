@@ -52,7 +52,8 @@ export function isTopSolutionByScore(state: SolutionState, requestId: string, so
 		return req.requestId === requestId;
 	});
 
-	const sortedByScore = request.solutions.slice().sort(sortSolutionsByScore);
+	const sortedByScore = request.solutions.slice().sort(sortSolutionsByScore).slice(0, n);
+
 	return !!_.find(sortedByScore, sol => {
 		return sol.solutionId === solutionId;
 	});
