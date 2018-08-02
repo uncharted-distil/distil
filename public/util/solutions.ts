@@ -1,5 +1,6 @@
 import _ from 'lodash';
 import { Dictionary } from './dict';
+import { sortSolutionsByScore } from '../store/solutions/getters';
 import { SolutionState, Solution } from '../store/solutions/index';
 
 export interface NameInfo {
@@ -41,6 +42,20 @@ export function getSolutionById(state: SolutionState, solutionId: string): Solut
 		});
 	});
 	return found;
+}
+
+export function isTopSolutionByScore(state: SolutionState, requestId: string, solutionId: string, n: number): boolean {
+	if (!solutionId) {
+		return null;
+	}
+	const request = _.find(state.requests, req => {
+		return req.requestId === requestId;
+	});
+
+	const sortedByScore = request.solutions.slice().sort(sortSolutionsByScore);
+	return !!_.find(sortedByScore, sol => {
+		return sol.solutionId === solutionId;
+	});
 }
 
 // Gets a task object based on a variable type.

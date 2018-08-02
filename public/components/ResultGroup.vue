@@ -91,7 +91,7 @@ import { Highlight, RowSelection } from '../store/highlights/index';
 import { SOLUTION_COMPLETED, SOLUTION_ERRORED } from '../store/solutions/index';
 import { getters as routeGetters } from '../store/route/module';
 import { getters as solutionGetters } from '../store/solutions/module';
-import { getSolutionById } from '../util/solutions';
+import { getSolutionById, isTopSolutionByScore } from '../util/solutions';
 import { overlayRouteEntry } from '../util/routes';
 import { getHighlights, updateHighlightRoot, clearHighlightRoot } from '../util/highlights';
 import _ from 'lodash';
@@ -114,7 +114,7 @@ export default Vue.extend({
 
 	data() {
 		return {
-			minimized: false,
+			minimized: null,
 			openDeleteModal: false
 		};
 	},
@@ -212,11 +212,18 @@ export default Vue.extend({
 			return this.solutionStatus === SOLUTION_ERRORED;
 		},
 
+		isMinimized(): boolean {
+			return this.minimized !== null ? this.minimized : !this.isTopN;
+		},
+
 		isMaximized(): boolean {
 			return this.routeSolutionId === this.solutionId ||
-				(!this.minimized && !this.isErrored);
-		}
+				(!this.isMinimized && !this.isErrored);
+		},
 
+		isTopN(): boolean {
+			return isTopSolutionByScore(this.$store.state.solutionModule, this.requestId, this.solutionId, 3);
+		}
 	},
 
 	methods: {
