@@ -294,7 +294,6 @@ export default Vue.extend({
 
 		onClick() {
 			if (this.predictedSummary && this.routeSolutionId !== this.solutionId) {
-				this.minimized = false;
 				const routeEntry = overlayRouteEntry(this.$route, {
 					solutionId: this.solutionId,
 					highlights: null

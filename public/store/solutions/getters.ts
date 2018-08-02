@@ -2,7 +2,7 @@ import _ from 'lodash';
 import moment from 'moment';
 import { Variable } from '../dataset/index';
 import { REGRESSION_TASK, CLASSIFICATION_TASK, getTask } from '../../util/solutions';
-import { SolutionState, Solution, SolutionRequest, SOLUTION_RUNNING, SOLUTION_COMPLETED } from './index';
+import { SolutionState, Solution, SolutionRequest, SOLUTION_RUNNING, SOLUTION_ERRORED, SOLUTION_COMPLETED } from './index';
 import { Dictionary } from '../../util/dict';
 import { Stream } from '../../util/ws';
 
@@ -11,11 +11,16 @@ export function sortRequestsByTimestamp(a: SolutionRequest, b: SolutionRequest):
 	return moment(b.timestamp).unix() - moment(a.timestamp).unix();
 }
 
+function getScoreValue(s: Solution): number {
+	if (s.progress === SOLUTION_ERRORED) {
+		return -1;
+	}
+	return (s.scores && s.scores.length > 0) ? (s.scores[0].value * s.scores[0].sortMultiplier) : -1;
+}
+
 export function sortSolutionsByScore(a: Solution, b: Solution): number {
-	const aScore = (a.scores && a.scores.length > 0) ? (a.scores[0].value * a.scores[0].sortMultiplier) : 0;
-	const bScore = (b.scores && b.scores.length > 0) ? (b.scores[0].value * b.scores[0].sortMultiplier) : 0;
 	// descending order of score
-	return bScore - aScore;
+	return getScoreValue(b) - getScoreValue(a);
 }
 
 export const getters = {
