@@ -52,7 +52,7 @@ func (s *Storage) getResultTargetVariable(dataset string, targetName string) (*m
 }
 
 // PersistResult stores the solution result to Postgres.
-func (s *Storage) PersistResult(dataset string, resultURI string) error {
+func (s *Storage) PersistResult(dataset string, resultURI string, target string) error {
 	// Read the results file.
 	file, err := os.Open(resultURI)
 	if err != nil {
@@ -73,8 +73,17 @@ func (s *Storage) PersistResult(dataset string, resultURI string) error {
 		log.Warnf("Result contains %s columns, expected 2.  Additional columns will be ignored.", len(records[0]))
 	}
 
-	// Header row will have the target.
-	targetName := records[0][1]
+	// Header row will have the target. Find the index.
+	targetName := target
+	targetIndex := -1
+	d3mIndexIndex := -1
+	for i, v := range records[0] {
+		if v == target {
+			targetIndex = i
+		} else if v == model.D3MIndexFieldName {
+			d3mIndexIndex = i
+		}
+	}
 
 	// Translate from display name to storage name.
 	variables, err := s.metadata.FetchVariables(dataset, false, false)
@@ -97,9 +106,9 @@ func (s *Storage) PersistResult(dataset string, resultURI string) error {
 		if err != nil {
 			return errors.Wrap(err, "failed csv value parsing")
 		}
-		parsedVal, err := strconv.ParseInt(records[i][0], 10, 64)
+		parsedVal, err := strconv.ParseInt(records[i][d3mIndexIndex], 10, 64)
 		if err != nil {
-			parsedValFloat, err := strconv.ParseFloat(records[i][0], 64)
+			parsedValFloat, err := strconv.ParseFloat(records[i][d3mIndexIndex], 64)
 			if err != nil {
 				return errors.Wrap(err, "failed csv index parsing")
 			}
@@ -107,7 +116,7 @@ func (s *Storage) PersistResult(dataset string, resultURI string) error {
 		}
 
 		// store the result to the storage
-		err = s.executeInsertResultStatement(dataset, resultURI, parsedVal, targetName, records[i][1])
+		err = s.executeInsertResultStatement(dataset, resultURI, parsedVal, targetName, records[i][targetIndex])
 		if err != nil {
 			return errors.Wrap(err, "failed to insert result in database")
 		}
