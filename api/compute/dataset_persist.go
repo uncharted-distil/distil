@@ -150,7 +150,7 @@ func PersistFilteredData(inputPath string, datasetDir string, target string, dat
 		return "", -1, err
 	}
 
-	err = writeDataSchema(inputPath, path, dataset.Metadata.Name, dataset.Data, targetIdx, variablesByKey)
+	err = writeDataSchema(inputPath, path, dataset.Metadata.Name, targetIdx, variablesByKey)
 	if err != nil {
 		return "", -1, err
 	}
@@ -265,7 +265,7 @@ func writeData(dataPath string, datasetDir string, filteredData *model.FilteredD
 	return nil
 }
 
-func writeDataSchema(rootPath string, schemaPath string, dataset string, filteredData *model.FilteredData, targetIdx int, variables map[string]*model.Variable) error {
+func writeDataSchema(rootPath string, schemaPath string, dataset string, targetIdx int, variables map[string]*model.Variable) error {
 
 	// Build the schema data for output.
 	drs := make([]*DataResource, 1)
@@ -275,7 +275,7 @@ func writeDataSchema(rootPath string, schemaPath string, dataset string, filtere
 		ResType:      D3MResourceType,
 		ResFormat:    []string{D3MResourceFormat},
 		IsCollection: false,
-		Variables:    make([]*DataVariable, 0),
+		Variables:    make([]*DataVariable, len(variables)),
 	}
 	dsProperties := &DataSchemaAbout{
 		DatasetID:     dataset,
@@ -288,12 +288,11 @@ func writeDataSchema(rootPath string, schemaPath string, dataset string, filtere
 	}
 
 	// NOTE: the target is identified by the suggested target role.
-	for i, c := range filteredData.Columns {
+	for k, v := range variables {
 		role := []string{"attribute"}
-		if i == targetIdx {
+		if v.Index == targetIdx {
 			role[0] = "suggestedTarget"
-		}
-		if c.Key == model.D3MIndexFieldName {
+		} else if k == model.D3MIndexFieldName {
 			// Set the specific values for the d3m index.
 			role[0] = "index"
 		}
@@ -302,33 +301,32 @@ func writeDataSchema(rootPath string, schemaPath string, dataset string, filtere
 		// to be the original version (minus any filtered rows).
 		// TODO: Metadata variables are always fetched regardless of filter state, so we do a check to
 		// ignore them when persisting.
-		if columnVar, ok := variables[c.Key]; ok {
-			v := &DataVariable{
-				ColName:  columnVar.DisplayVariable,
-				Role:     role,
-				ColType:  columnVar.OriginalType,
-				ColIndex: columnVar.Index,
-			}
-			// if a resource is references (images), add it.
-			// TODO: need a general solution for resource collections - image is only one type
-			if referencesResource(columnVar) {
-				resID := fmt.Sprintf("%d", len(ds.DataResources))
-				// manually append separator because path.Join cleans the path, which will remove it
-				resPath := fmt.Sprintf("%s%c", path.Join(rootPath, "TRAIN", "dataset_TRAIN", "media"), os.PathSeparator)
-				ds.DataResources = append(ds.DataResources, &DataResource{
-					ResID:        resID,
-					ResPath:      resPath,
-					ResType:      columnVar.Type,
-					ResFormat:    []string{"image/jpeg"},
-					IsCollection: true,
-				})
-				v.RefersTo = &DataReference{
-					ResID:     resID,
-					ResObject: "item",
-				}
-			}
-			ds.DataResources[0].Variables = append(ds.DataResources[0].Variables, v)
+		dataVariable := &DataVariable{
+			ColName:  v.DisplayVariable,
+			Role:     role,
+			ColType:  v.OriginalType,
+			ColIndex: v.Index,
 		}
+
+		// if a resource is references (images), add it.
+		// TODO: need a general solution for resource collections - image is only one type
+		if referencesResource(v) {
+			resID := fmt.Sprintf("%d", len(ds.DataResources))
+			// manually append separator because path.Join cleans the path, which will remove it
+			resPath := fmt.Sprintf("%s%c", path.Join(rootPath, "TRAIN", "dataset_TRAIN", "media"), os.PathSeparator)
+			ds.DataResources = append(ds.DataResources, &DataResource{
+				ResID:        resID,
+				ResPath:      resPath,
+				ResType:      v.Type,
+				ResFormat:    []string{"image/jpeg"},
+				IsCollection: true,
+			})
+			dataVariable.RefersTo = &DataReference{
+				ResID:     resID,
+				ResObject: "item",
+			}
+		}
+		ds.DataResources[0].Variables[dataVariable.ColIndex] = dataVariable
 	}
 
 	dsJSON, err := json.Marshal(ds)
