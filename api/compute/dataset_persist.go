@@ -313,9 +313,11 @@ func writeDataSchema(rootPath string, schemaPath string, dataset string, filtere
 			// TODO: need a general solution for resource collections - image is only one type
 			if referencesResource(columnVar) {
 				resID := fmt.Sprintf("%d", len(ds.DataResources))
+				// manually append separator because path.Join cleans the path, which will remove it
+				resPath := fmt.Sprintf("%s%c", path.Join(rootPath, "TRAIN", "dataset_TRAIN", "media"), os.PathSeparator)
 				ds.DataResources = append(ds.DataResources, &DataResource{
 					ResID:        resID,
-					ResPath:      path.Join(rootPath, "TRAIN", "dataset_TRAIN", "media/"),
+					ResPath:      resPath,
 					ResType:      columnVar.Type,
 					ResFormat:    []string{"image/jpeg"},
 					IsCollection: true,
