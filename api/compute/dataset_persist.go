@@ -275,7 +275,7 @@ func writeDataSchema(rootPath string, schemaPath string, dataset string, targetI
 		ResType:      D3MResourceType,
 		ResFormat:    []string{D3MResourceFormat},
 		IsCollection: false,
-		Variables:    make([]*DataVariable, 0),
+		Variables:    make([]*DataVariable, len(variables)),
 	}
 	dsProperties := &DataSchemaAbout{
 		DatasetID:     dataset,
@@ -326,7 +326,7 @@ func writeDataSchema(rootPath string, schemaPath string, dataset string, targetI
 				ResObject: "item",
 			}
 		}
-		ds.DataResources[0].Variables = append(ds.DataResources[0].Variables, dataVariable)
+		ds.DataResources[0].Variables[dataVariable.ColIndex] = dataVariable
 	}
 
 	dsJSON, err := json.Marshal(ds)
