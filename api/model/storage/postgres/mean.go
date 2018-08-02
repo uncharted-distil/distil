@@ -50,7 +50,7 @@ func (s *Storage) fetchMeanByResult(dataset string, variable *model.Variable, re
 	}
 
 	// Create the complete query string.
-	query := fmt.Sprintf("SELECT avg(%s) FROM %s data INNER JOIN %s result ON data.\"%s\" = result.index WHERE result.result_id = $%d %s;",
+	query := fmt.Sprintf("SELECT avg(\"%s\") FROM %s data INNER JOIN %s result ON data.\"%s\" = result.index WHERE result.result_id = $%d %s;",
 		variable.Key, dataset, s.getResultTable(dataset), model.D3MIndexFieldName, len(params), where)
 
 	// execute the postgres query
