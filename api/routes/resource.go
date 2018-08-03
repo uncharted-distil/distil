@@ -42,7 +42,7 @@ func localFileHandler(resourceDir string, file string) http.HandlerFunc {
 func proxyResourceHandler(server string, dataset string, file string) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// create the URL based on the input
-		url := fmt.Sprintf("%s/%s/%s/%s", server, dataset, file)
+		url := fmt.Sprintf("%s/%s/%s", server, dataset, file)
 		req, err := http.NewRequest("GET", url, nil)
 		if err != nil {
 			handleError(w, err)
