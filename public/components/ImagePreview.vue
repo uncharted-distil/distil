@@ -95,7 +95,7 @@ export default Vue.extend({
 					reject(err);
 				};
 				image.crossOrigin = 'anonymous';
-				image.src = `distil/image/${this.dataset}_dataset/${url}`;
+				image.src = `distil/image/${this.dataset}/media/${url}`;
 			});
 		}
 	}
