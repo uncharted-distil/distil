@@ -123,7 +123,6 @@ func NewClient(host string, port int, user string, password string, database str
 			log.Infof("Postgres connection established to endpoint %s", endpoint)
 			clients[endpoint] = client
 		}
-		log.Infof("Obtained Postgres connection to endpoint %s", endpoint)
 		return client, nil
 	}
 }
