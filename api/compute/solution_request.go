@@ -44,11 +44,18 @@ const (
 var (
 	// folder for dataset data exchanged with TA2
 	datasetDir string
+	// folder containing the input dataset
+	inputDir string
 )
 
 // SetDatasetDir sets the output data dir
 func SetDatasetDir(dir string) {
 	datasetDir = dir
+}
+
+// SetInputDir sets the input data dir
+func SetInputDir(dir string) {
+	inputDir = dir
 }
 
 func newStatusChannel() chan SolutionStatus {
@@ -145,12 +152,12 @@ func (s *SolutionRequest) Listen(listener SolutionStatusListener) error {
 	return <-s.finished
 }
 
-func (s *SolutionRequest) createSearchSolutionsRequest(targetIndex int, preprocessing *pipeline.PipelineDescription,
+func (s *SolutionRequest) createSearchSolutionsRequest(columnIndex int, preprocessing *pipeline.PipelineDescription,
 	datasetURI string, userAgent string) (*pipeline.SearchSolutionsRequest, error) {
-	return createSearchSolutionsRequest(targetIndex, preprocessing, datasetURI, userAgent, s.TargetFeature, s.Dataset, s.Metrics, s.Task, s.SubTask, s.MaxTime)
+	return createSearchSolutionsRequest(columnIndex, preprocessing, datasetURI, userAgent, s.TargetFeature, s.Dataset, s.Metrics, s.Task, s.SubTask, s.MaxTime)
 }
 
-func createSearchSolutionsRequest(targetIndex int, preprocessing *pipeline.PipelineDescription,
+func createSearchSolutionsRequest(columnIndex int, preprocessing *pipeline.PipelineDescription,
 	datasetURI string, userAgent string, targetFeature string, dataset string, metrics []string, task string, subTask string, maxTime int64) (*pipeline.SearchSolutionsRequest, error) {
 
 	return &pipeline.SearchSolutionsRequest{
@@ -163,7 +170,7 @@ func createSearchSolutionsRequest(targetIndex int, preprocessing *pipeline.Pipel
 			Inputs: []*pipeline.ProblemInput{
 				{
 					DatasetId: convertDatasetTA3ToTA2(dataset),
-					Targets:   convertTargetFeaturesTA3ToTA2(targetFeature, targetIndex),
+					Targets:   convertTargetFeaturesTA3ToTA2(targetFeature, columnIndex),
 				},
 			},
 		},
@@ -310,7 +317,7 @@ func (s *SolutionRequest) persistSolutionResults(statusChan chan SolutionStatus,
 		return
 	}
 	// persist results
-	err = dataStorage.PersistResult(dataset, resultURI)
+	err = dataStorage.PersistResult(dataset, resultURI, s.TargetFeature)
 	if err != nil {
 		// notify of error
 		s.persistSolutionError(statusChan, solutionStorage, searchID, solutionID, err)
@@ -521,9 +528,13 @@ func (s *SolutionRequest) PersistAndDispatch(client *Client, solutionStorage mod
 	// preprocessing step will mark them for removal by ta2
 	allVarFilters := *s.Filters
 	allVarFilters.Variables = []string{}
+	var targetVariable *model.Variable
 	for _, variable := range dataVariables {
 		// Exclude cluster/feature generated columns
 		allVarFilters.Variables = append(allVarFilters.Variables, variable.Key)
+		if variable.Key == s.TargetFeature {
+			targetVariable = variable
+		}
 	}
 
 	// fetch the queried dataset
@@ -532,15 +543,17 @@ func (s *SolutionRequest) PersistAndDispatch(client *Client, solutionStorage mod
 		return err
 	}
 
+	columnIndex := getColumnIndex(targetVariable, s.Filters.Variables)
+
 	// split the train & test data into separate datasets to be submitted to TA2
 	trainDataset, testDataset, err := splitTrainTest(dataset)
 
 	// perist the datasets and get URI
-	datasetPathTrain, targetIndex, err := PersistFilteredData(datasetDir, s.TargetFeature, trainDataset, dataVariables)
+	datasetPathTrain, _, err := PersistFilteredData(inputDir, datasetDir, s.TargetFeature, trainDataset, dataVariables)
 	if err != nil {
 		return err
 	}
-	datasetPathTest, _, err := PersistFilteredData(datasetDir, s.TargetFeature, testDataset, dataVariables)
+	datasetPathTest, _, err := PersistFilteredData(inputDir, datasetDir, s.TargetFeature, testDataset, dataVariables)
 	if err != nil {
 		return err
 	}
@@ -566,7 +579,7 @@ func (s *SolutionRequest) PersistAndDispatch(client *Client, solutionStorage mod
 	}
 
 	// create search solutions request
-	searchRequest, err := s.createSearchSolutionsRequest(targetIndex, preprocessing, datasetPathTrain, client.UserAgent)
+	searchRequest, err := s.createSearchSolutionsRequest(columnIndex, preprocessing, datasetPathTrain, client.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -634,14 +647,6 @@ func CreateSearchSolutionRequest(allFeatures []*model.Variable,
 		}
 	}
 
-	targetIndex := 0
-	for i, v := range selectedFeatures {
-		if v == target {
-			targetIndex = i
-			break
-		}
-	}
-
 	var targetVariable *model.Variable
 	for _, v := range allFeatures {
 		if v.Key == target {
@@ -652,15 +657,28 @@ func CreateSearchSolutionRequest(allFeatures []*model.Variable,
 	if targetVariable == nil {
 		return nil, errors.Errorf("unable to find target variable '%s'", target)
 	}
+	columnIndex := getColumnIndex(targetVariable, selectedFeatures)
 	task := DefaultTaskType(targetVariable.Type)
 	taskSubType := DefaultTaskSubType(targetVariable.Type)
 	metrics := DefaultMetrics(targetVariable.Type)
 
 	// create search solutions request
-	searchRequest, err := createSearchSolutionsRequest(targetIndex, preprocessingPipeline, sourceURI, userAgent, target, dataset, metrics, task, taskSubType, 600)
+	searchRequest, err := createSearchSolutionsRequest(columnIndex, preprocessingPipeline, sourceURI, userAgent, target, dataset, metrics, task, taskSubType, 600)
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to create search solution request")
 	}
 
 	return searchRequest, nil
+}
+
+func getColumnIndex(variable *model.Variable, selectedVariables []string) int {
+	colIndex := 0
+	for i := 0; i < len(selectedVariables); i++ {
+		if selectedVariables[i] == variable.Key {
+			break
+		}
+		colIndex = colIndex + 1
+	}
+
+	return colIndex
 }

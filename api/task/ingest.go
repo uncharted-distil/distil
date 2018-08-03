@@ -25,7 +25,6 @@ import (
 const (
 	rankingFilename = "rank-no-missing.csv"
 	baseTableSuffix = "_base"
-	datasetIDSuffix = "_dataset"
 )
 
 var (
@@ -254,12 +253,12 @@ func Ingest(storage model.MetadataStorage, index string, dataset string, config 
 		return errors.Wrap(err, "unable to load summary")
 	}
 
-	// load stats
+	// load machine summary
 	err = meta.LoadSummaryMachine(config.getTmpAbsolutePath(config.SummaryMachineOutputPathRelative))
 	// NOTE: For now ignore summary errors!
-	//if err != nil {
-	//	return errors.Wrap(err, "unable to load stats")
-	//}
+	if err != nil {
+		log.Errorf("unable to load machine summary: %v", err)
+	}
 
 	// create elasticsearch client
 	elasticClient, err := elastic.NewClient(
@@ -311,7 +310,7 @@ func Ingest(storage model.MetadataStorage, index string, dataset string, config 
 		return errors.Wrap(err, "unable to ingest metadata")
 	}
 
-	dbTable := strings.Replace(meta.ID, datasetIDSuffix, "", -1)
+	dbTable := meta.ID
 	dbTable = fmt.Sprintf("%s%s", config.ESDatasetPrefix, dbTable)
 
 	// Drop the current table if requested.
@@ -385,10 +384,6 @@ func fixDatasetIDName(meta *metadata.Metadata) {
 	// The ID MUST end in _dataset, and the name should be representative.
 	if isTrainDataset(meta) {
 		meta.ID = strings.TrimSuffix(meta.ID, "_TRAIN")
-		if !strings.HasSuffix(meta.ID, datasetIDSuffix) {
-			meta.ID = fmt.Sprintf("%s%s", meta.ID, datasetIDSuffix)
-		}
-		meta.Name = strings.TrimSuffix(meta.ID, datasetIDSuffix)
 	}
 }
 
@@ -420,7 +415,7 @@ func matchDataset(storage model.MetadataStorage, meta *metadata.Metadata, index 
 }
 
 func deleteDataset(name string, index string, pg *postgres.Database, es *elastic.Client) error {
-	id := fmt.Sprintf("%s%s", name, datasetIDSuffix)
+	id := name
 	success := false
 	for i := 0; i < 10 && !success; i++ {
 		_, err := es.Delete().Index(index).Id(id).Type("metadata").Do(context.Background())

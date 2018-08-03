@@ -17,6 +17,7 @@ export const MAX_SOLUTION_SEARCH_TIME = 10; // in minutes
 
 export interface Score {
 	metric: string;
+	label: string;
 	value: number;
 	sortMultiplier: number;
 }

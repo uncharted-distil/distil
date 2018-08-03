@@ -5,10 +5,7 @@ import (
 )
 
 const (
-	// DatasetSuffix is the suffix for the dataset entry when stored in
-	// elasticsearch.
-	DatasetSuffix = "_dataset"
-	metadataType  = "metadata"
+	metadataType = "metadata"
 )
 
 // Dataset represents a decsription of a dataset.

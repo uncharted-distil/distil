@@ -51,6 +51,8 @@ export interface VariableSummary {
 	varType?: string;
 	err?: string;
 	pending?: boolean;
+	stddev?: number;
+	mean?: number;
 }
 
 export interface TableData {

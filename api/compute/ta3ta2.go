@@ -82,6 +82,26 @@ var (
 		"PRECISION_AT_TOP_K":                 1,
 		"OBJECT_DETECTION_AVERAGE_PRECISION": 1,
 	}
+	metricLabel = map[string]string{
+		"ACCURACY":                           "Accuracy",
+		"PRECISION":                          "Precision",
+		"RECALL":                             "Recall",
+		"F1":                                 "F1",
+		"F1_MICRO":                           "F1 Micro",
+		"F1_MACRO":                           "F1 Macro",
+		"ROC_AUC":                            "ROC AUC",
+		"ROC_AUC_MICRO":                      "ROC AUC Micro",
+		"ROC_AUC_MACRO":                      "ROC AUC Macro",
+		"MEAN_SQUARED_ERROR":                 "MSE",
+		"ROOT_MEAN_SQUARED_ERROR":            "RMSE",
+		"ROOT_MEAN_SQUARED_ERROR_AVG":        "RMSE Avg",
+		"MEAN_ABSOLUTE_ERROR":                "MAE",
+		"R_SQUARED":                          "R Squared",
+		"NORMALIZED_MUTUAL_INFORMATION":      "Normalized MI",
+		"JACCARD_SIMILARITY_SCORE":           "Jaccard Similarity",
+		"PRECISION_AT_TOP_K":                 "Precision Top K",
+		"OBJECT_DETECTION_AVERAGE_PRECISION": "Avg Precision",
+	}
 )
 
 // ConvertProblemMetricToTA2 converts a problem schema metric to a TA2 metric.
@@ -103,6 +123,11 @@ func ConvertProblemTaskSubToTA2(metric string) string {
 // lower score is `better`.
 func GetMetricScoreMultiplier(metric string) float64 {
 	return metricScoreMultiplier[metric]
+}
+
+// GetMetricLabel returns a label string for a metric.
+func GetMetricLabel(metric string) string {
+	return metricLabel[metric]
 }
 
 func convertMetricsFromTA3ToTA2(metrics []string) []*pipeline.ProblemPerformanceMetric {
@@ -157,13 +182,13 @@ func convertTaskSubTypeFromTA3ToTA2(taskSubType string) pipeline.TaskSubtype {
 	return pipeline.TaskSubtype(task)
 }
 
-func convertTargetFeaturesTA3ToTA2(target string, targetIndex int) []*pipeline.ProblemTarget {
+func convertTargetFeaturesTA3ToTA2(target string, columnIndex int) []*pipeline.ProblemTarget {
 	return []*pipeline.ProblemTarget{
 		{
 			ColumnName:  target,
 			ResourceId:  defaultResourceID,
-			TargetIndex: int32(targetIndex),
-			ColumnIndex: int32(targetIndex), // TODO: is this correct?
+			TargetIndex: 0,
+			ColumnIndex: int32(columnIndex),
 		},
 	}
 }

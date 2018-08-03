@@ -22,7 +22,7 @@
 					</b-badge>
 					<div v-if="isCompleted()">
 						<b-badge variant="info" v-bind:key="score.metric" v-for="score in result.scores">
-							{{score.metric}}: {{score.value.toFixed(2)}}
+							{{score.label}}: {{score.value.toFixed(2)}}
 						</b-badge>
 					</div>
 					<div v-if="isErrored()">

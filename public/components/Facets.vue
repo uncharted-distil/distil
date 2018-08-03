@@ -53,7 +53,8 @@ export default Vue.extend({
 		return {
 			facets: <any>{},
 			debouncedInjection: _.debounce(component.injectHighlights, INJECT_DEBOUNCE),
-			more: {}
+			numToDisplay: {},
+			numAddedToDisplay: {}
 		};
 	},
 
@@ -110,12 +111,27 @@ export default Vue.extend({
 		// more events
 
 		this.facets.on('facet-group:more', (event: Event, key: string) => {
-			component.$emit('facet-more', key);
-			if (!component.more[key]) {
-				Vue.set(component.more, key, 0);
-			}
 			const group = _.find(this.groups, g => g.key === key);
-			Vue.set(component.more, key, component.more[key] + getCategoricalChunkSize(group.type));
+			const chunkSize = getCategoricalChunkSize(group.type);
+			if (!component.numToDisplay[key]) {
+				Vue.set(component.numToDisplay, key, chunkSize);
+				Vue.set(component.numAddedToDisplay, key, 0);
+			}
+			Vue.set(component.numToDisplay, key, component.numToDisplay[key] + chunkSize);
+			Vue.set(component.numAddedToDisplay, key, component.numAddedToDisplay[key] + chunkSize);
+			component.$emit('facet-more', key);
+		});
+
+		this.facets.on('facet-group:less', (event: Event, key: string) => {
+			const group = _.find(this.groups, g => g.key === key);
+			const chunkSize = getCategoricalChunkSize(group.type);
+			if (!component.numToDisplay[key]) {
+				Vue.set(component.numToDisplay, key, chunkSize);
+				Vue.set(component.numAddedToDisplay, key, 0);
+			}
+			Vue.set(component.numToDisplay, key, component.numToDisplay[key] - chunkSize);
+			Vue.set(component.numAddedToDisplay, key, component.numAddedToDisplay[key] - chunkSize);
+			component.$emit('facet-less', key);
 		});
 
 		// click events
@@ -178,16 +194,23 @@ export default Vue.extend({
 		processedGroups(): Group[] {
 			const groups = _.cloneDeep(this.groups);
 			groups.forEach(group => {
-				const more = this.more[group.key];
-				if (more) {
-					group.facets = group.facets.concat(group.remaining.slice(0, more));
-					group.remaining = group.remaining.slice(more);
+				const numToDisplay = this.numToDisplay[group.key];
+				if (numToDisplay) {
+					const show = group.all.slice(0, numToDisplay);
+					const hide = group.all.slice(numToDisplay);
+					group.facets = show;
+
 					let remainingTotal = 0;
-					group.remaining.forEach(facet => {
+					hide.forEach(facet => {
 						remainingTotal += facet.count;
 					});
-					group.more = group.remaining.length;
+					group.more = group.all.length - numToDisplay;
 					group.moreTotal = remainingTotal;
+
+					// track how many are already added
+					if (this.numAddedToDisplay[group.key] && this.numAddedToDisplay[group.key] > 0) {
+						group.less = this.numAddedToDisplay[group.key];
+					}
 				}
 			});
 			return groups;

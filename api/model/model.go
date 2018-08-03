@@ -65,6 +65,7 @@ type SolutionResult struct {
 type SolutionScore struct {
 	SolutionID     string  `json:"solutionId"`
 	Metric         string  `json:"metric"`
+	Label          string  `json:"label"`
 	Score          float64 `json:"value"`
 	SortMultiplier float64 `json:"sortMultiplier"`
 }

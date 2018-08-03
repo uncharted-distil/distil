@@ -158,7 +158,7 @@ var (
 		PostalCodeType:  TA2StringType,
 		StateType:       TA2StringType,
 		URIType:         TA2StringType,
-		ImageType:       TA2ImageType,
+		ImageType:       TA2StringType,
 		TimeSeriesType:  TA2TimeSeriesType,
 	}
 	schemaTypeMap = map[string]string{
