@@ -233,9 +233,6 @@ func Ingest(storage model.MetadataStorage, index string, dataset string, config 
 		return errors.Wrap(err, "unable to load metadata")
 	}
 
-	// Adjust the ID & name of the dataset as needed
-	fixDatasetIDName(meta)
-
 	err = meta.LoadImportance(config.getTmpAbsolutePath(config.RankingOutputPathRelative))
 	if err != nil {
 		return errors.Wrap(err, "unable to load importance from file")
