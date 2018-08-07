@@ -170,7 +170,7 @@
   ]
   revision = "6082b8b56c10120a7b741ab7b530dac1f04613cc"
   source = "git@github.com:unchartedsoftware/distil-ingest.git"
-  version = "0.5.1"
+  version = "0.5.2"
 
 [[projects]]
   branch = "master"
