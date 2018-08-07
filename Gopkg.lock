@@ -168,8 +168,7 @@
     "rest",
     "smmry"
   ]
-  revision = "6082b8b56c10120a7b741ab7b530dac1f04613cc"
-  source = "git@github.com:unchartedsoftware/distil-ingest.git"
+  revision = "cc84ef1d925ee80d4370e0dc0a968940bc6d3141"
   version = "0.5.2"
 
 [[projects]]
@@ -291,6 +290,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "34ec0080cef6745c5a4b4bcd9b1cb95fce69102fd5d677323e77ae36bb7980da"
+  inputs-digest = "58bb79bd75cd11bac6de5614830be6461ebf5a7b78db65e0241542ef953f61a5"
   solver-name = "gps-cdcl"
   solver-version = 1
