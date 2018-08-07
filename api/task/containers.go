@@ -42,7 +42,7 @@ func ClusterContainer(index string, dataset string, config *IngestTaskConfig) er
 		return errors.Wrap(err, "unable to cluster data")
 	}
 
-	log.Infof("Clustered data written to %s", config.getAbsolutePath(config.TmpDataPath))
+	log.Infof("Clustered data written to %s", config.TmpDataPath)
 
 	return nil
 }
