@@ -65,7 +65,7 @@ func FeaturizeContainer(index string, dataset string, config *IngestTaskConfig) 
 	}
 
 	// featurize data
-	err = feature.FeaturizeDataset(meta, featurizer, config.ContainerDataPath,
+	err = feature.FeaturizeDataset(meta, featurizer, config.TmpDataPath,
 		config.ContainerDataPath, config.TmpDataPath,
 		config.FeaturizationOutputDataRelative, config.FeaturizationOutputSchemaRelative, config.HasHeader)
 	if err != nil {
