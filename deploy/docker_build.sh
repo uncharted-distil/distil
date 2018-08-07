@@ -4,5 +4,6 @@
 pushd .
 cd ..
 make build_static
+yarn build
 popd
 docker build -t docker.uncharted.software/distil:latest ..
