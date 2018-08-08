@@ -16,3 +16,4 @@ package-lock.json
 public/static
 .history
 /outputs/temp
+/inputs
