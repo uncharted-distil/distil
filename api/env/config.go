@@ -56,26 +56,26 @@ type Config struct {
 	ClusteringFunctionName             string  `env:"CLUSTERING_FUNCTION_NAME" envDefault:"fileupload"`
 	ClusteringOutputDataRelative       string  `env:"CLUSTERING_OUTPUT_DATA" envDefault:"clusters/clusters.csv"`
 	ClusteringOutputSchemaRelative     string  `env:"CLUSTERING_OUTPUT_SCHEMA" envDefault:"clustersDatasetDoc.json"`
-	FeaturizationRESTEndpoint          string  `env:"FEATURIZATION_ENDPOINT" envDefault:"http://10.108.4.42:5002"`
+	FeaturizationRESTEndpoint          string  `env:"FEATURIZATION_ENDPOINT" envDefault:"http://127.0.0.1:5002"`
 	FeaturizationFunctionName          string  `env:"FEATURIZATION_FUNCTION_NAME" envDefault:"fileupload"`
 	FeaturizationOutputDataRelative    string  `env:"FEATURIZATION_OUTPUT_DATA" envDefault:"features/features.csv"`
 	FeaturizationOutputSchemaRelative  string  `env:"FEATURIZATION_OUTPUT_SCHEMA" envDefault:"featuresDatasetDoc.json"`
 	MergedOutputDataPath               string  `env:"MERGED_OUTPUT_DATA_PATH" envDefault:"tables/merged.csv"`
 	MergedOutputSchemaPath             string  `env:"MERGED_OUTPUT_SCHEMA_PATH" envDefault:"tables/mergedDataSchema.json"`
 	SchemaPath                         string  `env:"SCHEMA_PATH" envDefault:"datasetDoc.json"`
-	ClassificationEndpoint             string  `env:"CLASSIFICATION_ENDPOINT" envDefault:"http://localhost:5000"`
+	ClassificationEndpoint             string  `env:"CLASSIFICATION_ENDPOINT" envDefault:"http://127.0.0.1:5000"`
 	ClassificationWait                 bool    `env:"CLASSIFICATION_WAIT" envDefault:"false"`
 	ClassificationFunctionName         string  `env:"CLASSIFICATION_FUNCTION_NAME" envDefault:"fileUpload"`
 	ClassificationOutputPath           string  `env:"CLASSIFICATION_OUTPUT_PATH" envDefault:"tables/classification.json"`
 	ClassificationProbabilityThreshold float64 `env:"CLASSIFICATION_PROBABILITY_THRESHOLD" envDefault:"0.8"`
 	ClassificationEnabled              bool    `env:"CLASSIFICATION_ENABLED" envDefault:"true"`
-	RankingEndpoint                    string  `env:"RANKING_ENDPOINT" envDefault:"http://localhost:5001"`
+	RankingEndpoint                    string  `env:"RANKING_ENDPOINT" envDefault:"http://127.0.0.1:5001"`
 	RankingWait                        bool    `env:"RANKING_WAIT" envDefault:"false"`
 	RankingFunctionName                string  `env:"RANKING_FUNCTION_NAME" envDefault:"pca"`
 	RankingOutputPath                  string  `env:"RANKING_OUTPUT_PATH" envDefault:"tables/importance.json"`
 	RankingRowLimit                    int     `env:"RANKING_ROW_LIMIT" envDefault:"1000"`
 	SummaryPath                        string  `env:"SUMMARY_PATH" envDefault:"summary.txt"`
-	SummaryEndpoint                    string  `env:"SUMMARY_ENDPOINT" envDefault:"http://10.108.4.42:5001"`
+	SummaryEndpoint                    string  `env:"SUMMARY_ENDPOINT" envDefault:"http://10.108.4.42:5003"`
 	SummaryFunctionName                string  `env:"SUMMARY_FUNCTION_NAME" envDefault:"fileUpload"`
 	SummaryMachinePath                 string  `env:"SUMMARY_MACHINE_PATH" envDefault:"summary-machine.json"`
 	ElasticTimeout                     int     `env:"ES_TIMEOUT" envDefault:"300"`
@@ -87,7 +87,7 @@ type Config struct {
 	ServiceRetryCount                  int     `env:"SERVICE_RETRY_COUNT" envDefault:"10"`
 	VerboseError                       bool    `env:"VERBOSE_ERROR" envDefault:"false"`
 	RootResourceDirectory              string  `env:"ROOT_RESOURCE_DIRECTORY" envDefault:"http://localhost:8001"`
-	ResourceProxy                      string  `env:"RESOURCE_PROXY" envDefault:"d_22_hy_dataset_TRAIN_dataset"`
+	ResourceProxy                      string  `env:"RESOURCE_PROXY" envDefault:"d_22_hy_dataset_TRAIN"`
 	IngestPrimitive                    bool    `env:"INGEST_PRIMITIVE" envDefault:"false"`
 	IsTask1                            bool    `env:"TASK1" envDefault:"false"`
 	IsTask2                            bool    `env:"TASK2" envDefault:"false"`

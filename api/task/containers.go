@@ -36,13 +36,13 @@ func ClusterContainer(index string, dataset string, config *IngestTaskConfig) er
 
 	// cluster data
 	err = feature.ClusterDataset(meta, featurizer, config.ContainerDataPath,
-		config.MediaPath, config.TmpDataPath,
+		config.ContainerDataPath, config.TmpDataPath,
 		config.ClusteringOutputDataRelative, config.ClusteringOutputSchemaRelative, config.HasHeader)
 	if err != nil {
 		return errors.Wrap(err, "unable to cluster data")
 	}
 
-	log.Infof("Clustered data written to %s", config.getAbsolutePath(config.TmpDataPath))
+	log.Infof("Clustered data written to %s", config.TmpDataPath)
 
 	return nil
 }
@@ -65,8 +65,8 @@ func FeaturizeContainer(index string, dataset string, config *IngestTaskConfig) 
 	}
 
 	// featurize data
-	err = feature.FeaturizeDataset(meta, featurizer, config.ContainerDataPath,
-		config.MediaPath, config.TmpDataPath,
+	err = feature.FeaturizeDataset(meta, featurizer, config.TmpDataPath,
+		config.ContainerDataPath, config.TmpDataPath,
 		config.FeaturizationOutputDataRelative, config.FeaturizationOutputSchemaRelative, config.HasHeader)
 	if err != nil {
 		return errors.Wrap(err, "unable to featurize data")

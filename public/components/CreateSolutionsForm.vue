@@ -88,7 +88,7 @@ import { getters as datasetGetters } from '../store/dataset/module';
 import { getters as routeGetters } from '../store/route/module';
 import { RESULTS_ROUTE } from '../store/route/index';
 import { actions as solutionActions } from '../store/solutions/module';
-import { Solution, NUM_SOLUTIONS, MAX_SOLUTION_SEARCH_TIME } from '../store/solutions/index';
+import { Solution, NUM_SOLUTIONS } from '../store/solutions/index';
 import { Variable } from '../store/dataset/index';
 import { FilterParams } from '../util/filters';
 import Vue from 'vue';
@@ -190,7 +190,8 @@ export default Vue.extend({
 				subTask: this.taskSubType,
 				metrics: this.metrics,
 				maxSolutions: NUM_SOLUTIONS,
-				maxTime: MAX_SOLUTION_SEARCH_TIME,
+				// intentionally nulled for now - should be made user settable in the future
+				maxTime: null,
 			}).then((res: Solution) => {
 				this.pending = false;
 				// transition to result screen

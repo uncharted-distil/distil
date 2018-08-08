@@ -21,7 +21,7 @@ const (
 	problemVersion       = "1.0"
 	problemSchemaVersion = "3.0"
 
-	defaultNumericalMetric   = "meanSquaredError"
+	defaultNumericalMetric   = "rSquared"
 	defaultCategoricalMetric = "f1Micro"
 
 	defaultTaskTypeNumerical   = "regression"

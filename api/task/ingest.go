@@ -233,9 +233,6 @@ func Ingest(storage model.MetadataStorage, index string, dataset string, config 
 		return errors.Wrap(err, "unable to load metadata")
 	}
 
-	// Adjust the ID & name of the dataset as needed
-	fixDatasetIDName(meta)
-
 	err = meta.LoadImportance(config.getTmpAbsolutePath(config.RankingOutputPathRelative))
 	if err != nil {
 		return errors.Wrap(err, "unable to load importance from file")
@@ -253,12 +250,12 @@ func Ingest(storage model.MetadataStorage, index string, dataset string, config 
 		return errors.Wrap(err, "unable to load summary")
 	}
 
-	// load stats
+	// load machine summary
 	err = meta.LoadSummaryMachine(config.getTmpAbsolutePath(config.SummaryMachineOutputPathRelative))
 	// NOTE: For now ignore summary errors!
-	//if err != nil {
-	//	return errors.Wrap(err, "unable to load stats")
-	//}
+	if err != nil {
+		log.Errorf("unable to load machine summary: %v", err)
+	}
 
 	// create elasticsearch client
 	elasticClient, err := elastic.NewClient(
