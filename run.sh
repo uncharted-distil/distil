@@ -10,5 +10,6 @@ export D3MINPUTDIR=`pwd`/datasets
 export D3MOUTPUTDIR=`pwd`/outputs
 export TEMP_STORAGE_ROOT=`pwd`/outputs/temp
 export USER_PROBLEM_PATH=`pwd`/outputs/problem
+export SOLUTION_SEARCH_MAX_TIME=3
 
 witch --cmd="make compile && make fmt && go run main.go" --watch="main.go,api/**/*.go" --ignore=""
