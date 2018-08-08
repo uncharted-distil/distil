@@ -56,6 +56,8 @@
 <script lang="ts">
 
 import _ from 'lodash';
+import SparklinePreview from './SparklinePreview';
+import ImagePreview from './ImagePreview';
 import { spinnerHTML } from '../util/spinner';
 import { Extrema } from '../store/dataset/index';
 import { TableRow, TableColumn, D3M_INDEX_FIELD } from '../store/dataset/index';
@@ -71,6 +73,11 @@ import Vue from 'vue';
 
 export default Vue.extend({
 	name: 'results-data-table',
+
+	components: {
+		ImagePreview,
+		SparklinePreview
+	},
 
 	props: {
 		title: String,
