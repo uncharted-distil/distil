@@ -73,27 +73,21 @@ func (s *Storage) PersistResult(dataset string, resultURI string, target string)
 		log.Warnf("Result contains %s columns, expected 2.  Additional columns will be ignored.", len(records[0]))
 	}
 
-	// Header row will have the target. Find the index.
+	// Translate from display name to storage name.
 	targetName := target
+	targetDisplayName, err := s.getDisplayName(dataset, targetName)
+	if err != nil {
+		return errors.Wrap(err, "unable to map target name")
+	}
+
+	// Header row will have the target. Find the index.
 	targetIndex := -1
 	d3mIndexIndex := -1
 	for i, v := range records[0] {
-		if v == target {
+		if v == targetDisplayName {
 			targetIndex = i
 		} else if v == model.D3MIndexFieldName {
 			d3mIndexIndex = i
-		}
-	}
-
-	// Translate from display name to storage name.
-	variables, err := s.metadata.FetchVariables(dataset, false, false)
-	if err != nil {
-		return errors.Wrap(err, "unable load solution result as csv")
-	}
-
-	for _, v := range variables {
-		if v.DisplayVariable == targetName {
-			targetName = v.OriginalVariable
 		}
 	}
 
@@ -579,4 +573,20 @@ func (s *Storage) FetchPredictedSummary(dataset string, resultURI string, filter
 	histogram.Dataset = dataset
 
 	return histogram, nil
+}
+
+func (s *Storage) getDisplayName(dataset string, columnName string) (string, error) {
+	displayName := ""
+	variables, err := s.metadata.FetchVariables(dataset, false, false)
+	if err != nil {
+		return "", errors.Wrap(err, "unable fetch variables for name mapping")
+	}
+
+	for _, v := range variables {
+		if v.Key == columnName {
+			displayName = v.DisplayVariable
+		}
+	}
+
+	return displayName, nil
 }
