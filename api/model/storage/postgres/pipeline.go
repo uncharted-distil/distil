@@ -2,6 +2,7 @@ package postgres
 
 import (
 	"fmt"
+	"math"
 	"time"
 
 	"github.com/jackc/pgx"
@@ -38,6 +39,53 @@ func (s *Storage) PersistSolutionScore(solutionID string, metric string, score f
 	return err
 }
 
+func (s *Storage) isBadSolution(solution *model.Solution) (bool, error) {
+
+	if solution.Result == nil {
+		return false, nil
+	}
+
+	request, err := s.FetchRequest(solution.RequestID)
+	if err != nil {
+		return false, err
+	}
+
+	dataset := request.Dataset
+	target := request.TargetFeature()
+
+	// check target var type
+	variable, err := s.metadata.FetchVariable(dataset, target)
+	if err != nil {
+		return false, err
+	}
+
+	if !model.IsNumerical(variable.Type) {
+		return false, nil
+	}
+
+	// predicted extrema
+	predictedExtrema, err := s.FetchResultsExtremaByURI(dataset, solution.Result.ResultURI)
+	if err != nil {
+		return false, err
+	}
+
+	// result mean and stddev
+	resultMean, err := s.FetchMean(dataset, variable, &model.FilterParams{})
+	if err != nil {
+		return false, err
+	}
+	resultStdDev, err := s.FetchStdDev(dataset, variable, &model.FilterParams{})
+	if err != nil {
+		return false, err
+	}
+
+	minDiff := math.Abs(predictedExtrema.Min - resultMean)
+	maxDiff := math.Abs(predictedExtrema.Max - resultMean)
+	numStdDevs := 10.0
+
+	return minDiff > (numStdDevs*resultStdDev) || maxDiff > (numStdDevs*resultStdDev), nil
+}
+
 // FetchSolution pulls solution information from Postgres.
 func (s *Storage) FetchSolution(solutionID string) (*model.Solution, error) {
 	sql := fmt.Sprintf("SELECT request_id, solution_id, progress, created_time FROM %s WHERE solution_id = $1 ORDER BY created_time desc LIMIT 1;", solutionTableName)
@@ -51,7 +99,18 @@ func (s *Storage) FetchSolution(solutionID string) (*model.Solution, error) {
 	}
 	rows.Next()
 
-	return s.parseSolution(rows)
+	solution, err := s.parseSolution(rows)
+	if err != nil {
+		return nil, err
+	}
+
+	isBad, err := s.isBadSolution(solution)
+	if err != nil {
+		return nil, err
+	}
+
+	solution.IsBad = isBad
+	return solution, nil
 }
 
 func (s *Storage) parseSolution(rows *pgx.Rows) (*model.Solution, error) {

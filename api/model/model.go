@@ -47,6 +47,7 @@ type Solution struct {
 	CreatedTime time.Time        `json:"timestamp"`
 	Result      *SolutionResult  `json:"result"`
 	Scores      []*SolutionScore `json:"scores"`
+	IsBad       bool             `json:"isBad"`
 }
 
 // SolutionResult represents the solution result metadata.

@@ -3,7 +3,7 @@
 		<div class="solution-preview" @click="onResult()">
 			<div class="solution-header">
 				<div>
-					<strong>Dataset:</strong> {{result.dataset}}
+					<strong>Dataset:</strong> {{solution.dataset}}
 				</div>
 				<div>
 					<strong>Date:</strong> {{formattedTime}}
@@ -11,7 +11,7 @@
 			</div>
 			<div class="solution-body">
 				<div>
-					<strong>Feature:</strong> {{result.feature}}
+					<strong>Feature:</strong> {{solution.feature}}
 				</div>
 				<div>
 					<b-badge v-if="isPending()">
@@ -21,7 +21,7 @@
 						{{status()}}
 					</b-badge>
 					<div v-if="isCompleted()">
-						<b-badge variant="info" v-bind:key="score.metric" v-for="score in result.scores">
+						<b-badge variant="info" v-bind:key="score.metric" v-for="score in solution.scores">
 							{{score.label}}: {{score.value.toFixed(2)}}
 						</b-badge>
 					</div>
@@ -47,7 +47,7 @@
 <script lang="ts">
 import moment from 'moment';
 import { createRouteEntry } from '../util/routes';
-import { Solution, SOLUTION_PENDING, SOLUTION_RUNNING, SOLUTION_COMPLETED, SOLUTION_ERRORED } from '../store/solutions/index';
+import { SOLUTION_PENDING, SOLUTION_RUNNING, SOLUTION_COMPLETED, SOLUTION_ERRORED } from '../store/solutions/index';
 import { RESULTS_ROUTE } from '../store/route/index';
 import Vue from 'vue';
 
@@ -55,7 +55,7 @@ export default Vue.extend({
 	name: 'solution-preview',
 
 	props: {
-		'result': Object
+		solution: Object
 	},
 
 	computed: {
@@ -63,33 +63,36 @@ export default Vue.extend({
 			return 100;
 		},
 		formattedTime(): string {
-			const t = moment(this.result.timestamp);
+			const t = moment(this.solution.timestamp);
 			return t.format('MMM Do YYYY, h:mm:ss a');
+		},
+		status(): string {
+			return this.solution.progress;
+		},
+		isPending(): boolean {
+			return this.solution.progress === SOLUTION_PENDING;
+		},
+		isRunning(): boolean {
+			return this.solution.progress === SOLUTION_RUNNING;
+		},
+		isCompleted(): boolean {
+			return this.solution.progress === SOLUTION_COMPLETED;
+		},
+		isErrored(): boolean {
+			return this.solution.progress === SOLUTION_ERRORED || this.isBad;
+		},
+		isBad(): boolean {
+			return this.solution.isBad;
 		}
 	},
 
 	methods: {
-		status(): string {
-			return this.result.progress;
-		},
-		isPending(): boolean {
-			return (<Solution>this.result).progress === SOLUTION_PENDING;
-		},
-		isRunning(): boolean {
-			return (<Solution>this.result).progress === SOLUTION_RUNNING;
-		},
-		isCompleted(): boolean {
-			return (<Solution>this.result).progress === SOLUTION_COMPLETED;
-		},
-		isErrored(): boolean {
-			return (<Solution>this.result).progress === SOLUTION_ERRORED;
-		},
 		onResult() {
-			const result = <Solution>this.result;
+			const solution = this.solution;
 			const entry = createRouteEntry(RESULTS_ROUTE, {
-				dataset: result.dataset,
-				target: result.feature,
-				solutionId: result.solutionId
+				dataset: solution.dataset,
+				target: solution.feature,
+				solutionId: solution.solutionId
 			});
 			this.$router.push(entry);
 		}

@@ -38,7 +38,7 @@ func fetchSolutionPredictedExtrema(meta model.MetadataStorage, data model.DataSt
 	max := -math.MaxFloat64
 	for _, req := range requests {
 		for _, sol := range req.Solutions {
-			if sol.Result != nil {
+			if sol.Result != nil && !sol.IsBad {
 				// result uri
 				resultURI := sol.Result.ResultURI
 				// predicted extrema

@@ -33,12 +33,12 @@ func (f *NumericalField) FetchSummaryData(dataset string, variable *model.Variab
 		if err != nil {
 			return nil, err
 		}
-		stddev, err := f.Storage.fetchStdDev(dataset, variable, filterParams)
+		stddev, err := f.Storage.FetchStdDev(dataset, variable, filterParams)
 		if err != nil {
 			return nil, err
 		}
 		histogram.StdDev = stddev
-		mean, err := f.Storage.fetchMean(dataset, variable, filterParams)
+		mean, err := f.Storage.FetchMean(dataset, variable, filterParams)
 		if err != nil {
 			return nil, err
 		}
@@ -48,12 +48,12 @@ func (f *NumericalField) FetchSummaryData(dataset string, variable *model.Variab
 		if err != nil {
 			return nil, err
 		}
-		stddev, err := f.Storage.fetchStdDevByResult(dataset, variable, resultURI, filterParams)
+		stddev, err := f.Storage.FetchStdDevByResult(dataset, variable, resultURI, filterParams)
 		if err != nil {
 			return nil, err
 		}
 		histogram.StdDev = stddev
-		mean, err := f.Storage.fetchMeanByResult(dataset, variable, resultURI, filterParams)
+		mean, err := f.Storage.FetchMeanByResult(dataset, variable, resultURI, filterParams)
 		if err != nil {
 			return nil, err
 		}

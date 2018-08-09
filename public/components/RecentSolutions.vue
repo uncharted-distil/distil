@@ -3,7 +3,7 @@
 		<div v-if="recentSolutions.length === 0">None</div>
 		<b-list-group v-bind:key="solution.solutionId" v-for="solution in recentSolutions">
 			<b-list-group-item href="#" v-bind:key="solution.solutionId">
-				<solution-preview :result="solution"></solution-preview>
+				<solution-preview :solution="solution"></solution-preview>
 			</b-list-group-item>
 		</b-list-group>
 	</b-card>
