@@ -173,6 +173,7 @@ func main() {
 		ClusteringFunctionName:             config.ClusteringFunctionName,
 		ClusteringOutputDataRelative:       config.ClusteringOutputDataRelative,
 		ClusteringOutputSchemaRelative:     config.ClusteringOutputSchemaRelative,
+		ClusteringEnabled:                  config.ClusteringEnabled,
 		FeaturizationRESTEndpoint:          config.FeaturizationRESTEndpoint,
 		FeaturizationFunctionName:          config.FeaturizationFunctionName,
 		FeaturizationOutputDataRelative:    config.FeaturizationOutputDataRelative,

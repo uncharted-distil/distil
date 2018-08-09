@@ -56,6 +56,7 @@ type Config struct {
 	ClusteringFunctionName             string  `env:"CLUSTERING_FUNCTION_NAME" envDefault:"fileupload"`
 	ClusteringOutputDataRelative       string  `env:"CLUSTERING_OUTPUT_DATA" envDefault:"clusters/clusters.csv"`
 	ClusteringOutputSchemaRelative     string  `env:"CLUSTERING_OUTPUT_SCHEMA" envDefault:"clustersDatasetDoc.json"`
+	ClusteringEnabled                  bool    `env:"CLUSTERING_ENABLED" envDefault:"false"`
 	FeaturizationRESTEndpoint          string  `env:"FEATURIZATION_ENDPOINT" envDefault:"http://127.0.0.1:5002"`
 	FeaturizationFunctionName          string  `env:"FEATURIZATION_FUNCTION_NAME" envDefault:"fileupload"`
 	FeaturizationOutputDataRelative    string  `env:"FEATURIZATION_OUTPUT_DATA" envDefault:"features/features.csv"`
