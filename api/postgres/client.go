@@ -112,7 +112,7 @@ func NewClient(host string, port int, user string, password string, database str
 
 			poolConfig := pgx.ConnPoolConfig{
 				ConnConfig:     dbConfig,
-				MaxConnections: 16,
+				MaxConnections: 64,
 			}
 			//TODO: Need to close the pool eventually. Not sure how to hook that in.
 			client, err := pgx.NewConnPool(poolConfig)
@@ -123,6 +123,7 @@ func NewClient(host string, port int, user string, password string, database str
 			log.Infof("Postgres connection established to endpoint %s", endpoint)
 			clients[endpoint] = client
 		}
+		log.Infof("Postgres connection being used to endpoint %s", endpoint)
 		return client, nil
 	}
 }

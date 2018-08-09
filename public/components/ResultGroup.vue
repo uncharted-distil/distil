@@ -209,7 +209,15 @@ export default Vue.extend({
 		},
 
 		isErrored(): boolean {
-			return this.solutionStatus === SOLUTION_ERRORED;
+			return this.solutionStatus === SOLUTION_ERRORED || this.isBad;
+		},
+
+		isBad(): boolean {
+			const solution = getSolutionById(this.$store.state.solutionModule, this.solutionId);
+			if (solution) {
+				return solution.isBad;
+			}
+			return false;
 		},
 
 		isMinimized(): boolean {

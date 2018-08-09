@@ -9,7 +9,8 @@ import (
 	"github.com/unchartedsoftware/distil/api/model"
 )
 
-func (s *Storage) fetchMean(dataset string, variable *model.Variable, filterParams *model.FilterParams) (float64, error) {
+// FetchMean returns the mean for a given dataset and variable.
+func (s *Storage) FetchMean(dataset string, variable *model.Variable, filterParams *model.FilterParams) (float64, error) {
 	// create the filter for the query.
 	wheres := make([]string, 0)
 	params := make([]interface{}, 0)
@@ -35,7 +36,8 @@ func (s *Storage) fetchMean(dataset string, variable *model.Variable, filterPara
 	return s.parseMean(res)
 }
 
-func (s *Storage) fetchMeanByResult(dataset string, variable *model.Variable, resultURI string, filterParams *model.FilterParams) (float64, error) {
+// FetchMeanByResult returns the mean for a given dataset, variable, and result.
+func (s *Storage) FetchMeanByResult(dataset string, variable *model.Variable, resultURI string, filterParams *model.FilterParams) (float64, error) {
 	// get filter where / params
 	wheres, params, err := s.buildResultQueryFilters(dataset, resultURI, filterParams)
 	if err != nil {

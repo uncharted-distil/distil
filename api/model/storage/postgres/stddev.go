@@ -9,7 +9,8 @@ import (
 	"github.com/unchartedsoftware/distil/api/model"
 )
 
-func (s *Storage) fetchStdDev(dataset string, variable *model.Variable, filterParams *model.FilterParams) (float64, error) {
+// FetchStdDev returns the stddev for a given dataset and variable.
+func (s *Storage) FetchStdDev(dataset string, variable *model.Variable, filterParams *model.FilterParams) (float64, error) {
 	// create the filter for the query.
 	wheres := make([]string, 0)
 	params := make([]interface{}, 0)
@@ -35,7 +36,8 @@ func (s *Storage) fetchStdDev(dataset string, variable *model.Variable, filterPa
 	return s.parseStdDev(res)
 }
 
-func (s *Storage) fetchStdDevByResult(dataset string, variable *model.Variable, resultURI string, filterParams *model.FilterParams) (float64, error) {
+// FetchStdDevByResult returns the stddev for a given dataset, variable, and result.
+func (s *Storage) FetchStdDevByResult(dataset string, variable *model.Variable, resultURI string, filterParams *model.FilterParams) (float64, error) {
 	// get filter where / params
 	wheres, params, err := s.buildResultQueryFilters(dataset, resultURI, filterParams)
 	if err != nil {

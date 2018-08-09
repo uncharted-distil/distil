@@ -39,6 +39,7 @@ export interface Solution {
 	features: SolutionFeature[];
 	predictedKey: string;
 	errorKey: string;
+	isBad: boolean;
 }
 
 export interface SolutionRequest {
