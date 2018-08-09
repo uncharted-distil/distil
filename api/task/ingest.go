@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"context"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"net/http"
 	"os"
@@ -89,6 +90,7 @@ type IngestTaskConfig struct {
 	ClusteringFunctionName             string
 	ClusteringOutputDataRelative       string
 	ClusteringOutputSchemaRelative     string
+	ClusteringEnabled                  bool
 	FeaturizationRESTEndpoint          string
 	FeaturizationFunctionName          string
 	FeaturizationOutputDataRelative    string
@@ -149,11 +151,34 @@ func IngestDataset(metaCtor model.MetadataStorageCtor, index string, dataset str
 		return errors.Wrap(err, "unable to initialize metadata storage")
 	}
 
-	err = cluster(index, dataset, config)
-	if err != nil {
-		return errors.Wrap(err, "unable to cluster all data")
+	if config.ClusteringEnabled {
+		err = cluster(index, dataset, config)
+		if err != nil {
+			return errors.Wrap(err, "unable to cluster all data")
+		}
+		log.Infof("finished clustering the dataset")
+	} else {
+		log.Infof("clustering disable - copying input to output")
+		createContainingDirs(config.getTmpAbsolutePath(config.ClusteringOutputDataRelative))
+		createContainingDirs(config.getTmpAbsolutePath(config.ClusteringOutputSchemaRelative))
+
+		// get the raw data filename
+		meta, err := metadata.LoadMetadataFromOriginalSchema(config.getAbsolutePath(config.SchemaPathRelative))
+		if err != nil {
+			return errors.Wrap(err, "unable to load original schema file")
+		}
+		mainDR := meta.GetMainDataResource()
+
+		// copy the schema and data to the expected output.
+		err = copyFileContents(config.getAbsolutePath(config.SchemaPathRelative), config.getTmpAbsolutePath(config.ClusteringOutputSchemaRelative))
+		if err != nil {
+			return errors.Wrap(err, "unable to copy original schema file")
+		}
+		err = copyFileContents(config.getAbsolutePath(mainDR.ResPath), config.getTmpAbsolutePath(config.ClusteringOutputDataRelative))
+		if err != nil {
+			return errors.Wrap(err, "unable to copy original data file")
+		}
 	}
-	log.Infof("finished clustering the dataset")
 
 	err = featurize(index, dataset, config)
 	if err != nil {
@@ -425,6 +450,34 @@ func deleteDataset(name string, index string, pg *postgres.Database, es *elastic
 
 	if success {
 		pg.DeleteDataset(name)
+	}
+
+	return nil
+}
+
+func copyFileContents(source string, destination string) error {
+	in, err := os.Open(source)
+	if err != nil {
+		return errors.Wrap(err, "unable to open source")
+	}
+	defer in.Close()
+	out, err := os.Create(destination)
+	if err != nil {
+		return errors.Wrap(err, "unable to open destination")
+	}
+	defer func() {
+		cerr := out.Close()
+		if err == nil {
+			err = cerr
+		}
+	}()
+
+	if _, err = io.Copy(out, in); err != nil {
+		return errors.Wrap(err, "unable to copy data")
+	}
+	err = out.Sync()
+	if err != nil {
+		return errors.Wrap(err, "unable to finalize copy")
 	}
 
 	return nil

@@ -588,31 +588,3 @@ func getDataResource(meta *metadata.Metadata, resID string) *metadata.DataResour
 
 	return nil
 }
-
-func copyFileContents(source string, destination string) error {
-	in, err := os.Open(source)
-	if err != nil {
-		return errors.Wrap(err, "unable to open source")
-	}
-	defer in.Close()
-	out, err := os.Create(destination)
-	if err != nil {
-		return errors.Wrap(err, "unable to open destination")
-	}
-	defer func() {
-		cerr := out.Close()
-		if err == nil {
-			err = cerr
-		}
-	}()
-
-	if _, err = io.Copy(out, in); err != nil {
-		return errors.Wrap(err, "unable to copy data")
-	}
-	err = out.Sync()
-	if err != nil {
-		return errors.Wrap(err, "unable to finalize copy")
-	}
-
-	return nil
-}
