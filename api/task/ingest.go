@@ -170,14 +170,16 @@ func IngestDataset(metaCtor model.MetadataStorageCtor, index string, dataset str
 		mainDR := meta.GetMainDataResource()
 
 		// copy the schema and data to the expected output.
-		err = copyFileContents(config.getAbsolutePath(config.SchemaPathRelative), config.getTmpAbsolutePath(config.ClusteringOutputSchemaRelative))
-		if err != nil {
-			return errors.Wrap(err, "unable to copy original schema file")
-		}
 		err = copyFileContents(config.getAbsolutePath(mainDR.ResPath), config.getTmpAbsolutePath(config.ClusteringOutputDataRelative))
 		if err != nil {
 			return errors.Wrap(err, "unable to copy original data file")
 		}
+		mainDR.ResPath = config.ClusteringOutputDataRelative
+		err = meta.WriteSchema(config.getTmpAbsolutePath(config.ClusteringOutputSchemaRelative))
+		if err != nil {
+			return errors.Wrap(err, "unable to copy original schema file")
+		}
+		log.Infof("copied raw data to clustering output")
 	}
 
 	err = featurize(index, dataset, config)
