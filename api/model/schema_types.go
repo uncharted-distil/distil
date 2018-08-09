@@ -79,7 +79,7 @@ const (
 	// TA2TimeSeriesType is the TA2 semantic type for timeseries data
 	TA2TimeSeriesType = "https://metadata.datadrivendiscovery.org/types/Timeseries"
 
-	// TA2 Schema keys
+	// D3M Dataset Type Keys - these are the types used by for the D3M dataset format.
 
 	// BooleanSchemaType is the schema doc type for boolean data
 	BooleanSchemaType = "boolean"
@@ -136,6 +136,8 @@ var (
 		LongitudeType: true,
 		LatitudeType:  true,
 		FloatType:     true}
+
+	// Maps from Distil internal type to TA2 supported type
 	ta2TypeMap = map[string]string{
 		StringType:      TA2StringType,
 		AddressType:     TA2StringType,
@@ -160,7 +162,10 @@ var (
 		URIType:         TA2StringType,
 		ImageType:       TA2StringType,
 		TimeSeriesType:  TA2TimeSeriesType,
+		UnknownType:     TA2StringType,
 	}
+
+	// Maps from Distil internal type to D3M dataset doc type
 	schemaTypeMap = map[string]string{
 		StringType:      StringSchemaType,
 		AddressType:     StringSchemaType,
@@ -229,12 +234,12 @@ func HasMetadataVar(typ string) bool {
 	return IsImage(typ) || IsTimeSeries(typ)
 }
 
-// MapTA2Type maps a type to a simple type.
+// MapTA2Type maps an internal Distil type to a TA2 type.
 func MapTA2Type(typ string) string {
 	return ta2TypeMap[typ]
 }
 
-// MapSchemaType maps a type to a dataset doc type.
+// MapSchemaType maps a type to a D3M dataset doc type.
 func MapSchemaType(typ string) string {
 	return schemaTypeMap[typ]
 }
