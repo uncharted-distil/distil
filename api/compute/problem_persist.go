@@ -135,14 +135,14 @@ func CreateProblemSchema(datasetDir string, dataset string, targetVar *model.Var
 	if err != nil {
 		return nil, "", errors.Wrap(err, "unable to build dataset filter hash")
 	}
-	problemID := fmt.Sprintf("p%s", strconv.FormatUint(hash, 10))
+	problemIDHash := fmt.Sprintf("p%s", strconv.FormatUint(hash, 10))
 
 	// check to see if we already have this problem saved - return the path
 	// if so
-	pPath := path.Join(datasetDir, problemID)
+	pPath := path.Join(datasetDir, problemIDHash)
 	pFilePath := path.Join(pPath, D3MProblem)
 	if dirExists(pPath) && fileExists(pFilePath) {
-		log.Infof("Found stored problem for %s with hash %d", dataset, problemID)
+		log.Infof("Found stored problem for %s with hash %d", dataset, problemIDHash)
 		return nil, pPath, nil
 	}
 
@@ -186,7 +186,7 @@ func CreateProblemSchema(datasetDir string, dataset string, targetVar *model.Var
 		Inputs: pInput,
 	}
 
-	return problem, problemID, nil
+	return problem, problemIDHash, nil
 }
 
 // LoadProblemSchemaFromFile loads the problem schema from file.
