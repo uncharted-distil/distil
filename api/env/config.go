@@ -17,7 +17,6 @@ const (
 	executablesRoot  = "executables_root"
 	userProblemsRoot = "user_problems_root"
 	trainingDataRoot = "training_data_root"
-	startConfigFile  = "startup-config.json"
 )
 
 var (
@@ -37,7 +36,7 @@ type Config struct {
 	D3MInputDir                        string  `env:"D3MINPUTDIR" envDefault:"datasets"`
 	SolutionComputeTrace               bool    `env:"SOLUTION_COMPUTE_TRACE" envDefault:"false"`
 	D3MOutputDir                       string  `env:"D3MOUTPUTDIR" envDefault:"outputs"`
-	StartupConfigFile                  string  `env:"JSON_CONFIG_PATH" envDefault:"/d3m/config"`
+	StartupConfigFile                  string  `env:"STARTUP_CONFIG_FILE" envDefault:"search_config.json"`
 	PostgresHost                       string  `env:"PG_HOST" envDefault:"localhost"`
 	PostgresPort                       int     `env:"PG_PORT" envDefault:"5432"`
 	PostgresUser                       string  `env:"PG_USER" envDefault:"distil"`
@@ -119,17 +118,17 @@ func LoadConfig() (Config, error) {
 func overideFromStartupFile(cfg *Config) error {
 	// Override env/default value with the command line value if set.
 	// startup config file is assumed to be in the input directory.
-	cfg.StartupConfigFile = path.Join(cfg.D3MInputDir, startConfigFile)
+	startConfigFile := path.Join(cfg.D3MInputDir, cfg.StartupConfigFile)
 
-	log.Infof("Loading overrides from config file (%s)", cfg.StartupConfigFile)
+	log.Infof("Loading overrides from config file (%s)", startConfigFile)
 
 	// read startup config JSON file
-	startupConfig, err := ioutil.ReadFile(cfg.StartupConfigFile)
+	startupConfig, err := ioutil.ReadFile(startConfigFile)
 	if err != nil {
 		if !os.IsNotExist(err) {
-			return fmt.Errorf("Failed to read startup config file (%s): %v", cfg.StartupConfigFile, err)
+			return fmt.Errorf("Failed to read startup config file (%s): %v", startConfigFile, err)
 		}
-		log.Infof("No config file found at (%s)", cfg.StartupConfigFile)
+		log.Infof("No config file found at (%s)", startConfigFile)
 		return nil
 	}
 	// parse out the entries
