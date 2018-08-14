@@ -27,8 +27,6 @@ var (
 type Config struct {
 	AppPort                            string  `env:"PORT" envDefault:"8080"`
 	ElasticEndpoint                    string  `env:"ES_ENDPOINT" envDefault:"http://localhost:9200"`
-	RedisEndpoint                      string  `env:"REDIS_ENDPOINT" envDefault:"localhost:6379"`
-	RedisExpiry                        int     `env:"REDIS_EXPIRY" envDefault:"-1"`
 	SolutionComputeEndpoint            string  `env:"SOLUTION_COMPUTE_ENDPOINT" envDefault:"localhost:50051"`
 	SolutionComputePullTimeout         int     `env:"SOLUTION_COMPUTE_PULL_TIMEOUT" envDefault:"60"`
 	SolutionComputePullMax             int     `env:"SOLUTION_COMPUTE_PULL_MAX" envDefault:"10"`
@@ -42,15 +40,9 @@ type Config struct {
 	PostgresUser                       string  `env:"PG_USER" envDefault:"distil"`
 	PostgresPassword                   string  `env:"PG_PASSWORD" envDefault:""`
 	PostgresDatabase                   string  `env:"PG_DATABASE" envDefault:"distil"`
-	PostgresRetryCount                 int     `env:"PG_RETRY_COUNT" envDefault:"100"`
-	PostgresRetryTimeout               int     `env:"PG_RETRY_TIMEOUT" envDefault:"4000"`
 	PostgresLogLevel                   string  `env:"PG_LOG_LEVEL" envDefault:"none"`
-	PrimitiveEndPoint                  string  `env:"PRIMITIVE_END_POINT" envDefault:"http://localhost:5000"`
 	TmpDataPath                        string  `env:"TEMP_STORAGE_ROOT" envDefault:"/d3m/data"`
 	DataFolderPath                     string  `env:"DATA_FOLDER_PATH" envDefault:"/d3m/data"`
-	DataFilePath                       string  `env:"DATA_FILE_PATH" envDefault:"/tables/learningData.csv"`
-	DatasetFolderSuffix                string  `env:"DATASET_FOLDER_SUFFIX" envDefault:"_dataset"`
-	MediaPath                          string  `env:"MEDIA_PATH" envDefault:"HTTP://10.108.4.104"`
 	ClusteringnRESTEndpoint            string  `env:"CLUSTERING_ENDPOINT" envDefault:"http://127.0.0.1:5004"`
 	ClusteringFunctionName             string  `env:"CLUSTERING_FUNCTION_NAME" envDefault:"fileupload"`
 	ClusteringOutputDataRelative       string  `env:"CLUSTERING_OUTPUT_DATA" envDefault:"clusters/clusters.csv"`

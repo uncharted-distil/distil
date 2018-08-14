@@ -82,9 +82,6 @@ func SetCluster(clusterFunc Cluster) {
 type IngestTaskConfig struct {
 	ContainerDataPath                  string
 	TmpDataPath                        string
-	DataPathRelative                   string
-	DatasetFolderSuffix                string
-	MediaPath                          string
 	HasHeader                          bool
 	ClusteringRESTEndpoint             string
 	ClusteringFunctionName             string
@@ -119,10 +116,6 @@ type IngestTaskConfig struct {
 	ESEndpoint                         string
 	ESTimeout                          int
 	ESDatasetPrefix                    string
-}
-
-func (c *IngestTaskConfig) getRootPath(dataset string) string {
-	return fmt.Sprintf("%s/%s/%s%s", c.ContainerDataPath, dataset, dataset, c.DatasetFolderSuffix)
 }
 
 func (c *IngestTaskConfig) getAbsolutePath(relativePath string) string {

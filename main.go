@@ -16,7 +16,6 @@ import (
 	"goji.io"
 	"goji.io/pat"
 
-	"github.com/unchartedsoftware/distil-ingest/rest"
 	"github.com/unchartedsoftware/distil/api/compute"
 	"github.com/unchartedsoftware/distil/api/elastic"
 	"github.com/unchartedsoftware/distil/api/env"
@@ -148,9 +147,6 @@ func main() {
 		ws.SetProblemFile(problemPath)
 	}
 
-	// instantiate the REST client for primitives.
-	restClient := rest.NewClient(config.PrimitiveEndPoint)
-
 	// set the ingest functions to use
 	if config.IngestPrimitive {
 		task.SetClassify(task.ClassifyPrimitive)
@@ -165,9 +161,6 @@ func main() {
 	ingestConfig := &task.IngestTaskConfig{
 		ContainerDataPath:                  config.DataFolderPath,
 		TmpDataPath:                        config.TmpDataPath,
-		DataPathRelative:                   config.DataFilePath,
-		DatasetFolderSuffix:                config.DatasetFolderSuffix,
-		MediaPath:                          config.MediaPath,
 		HasHeader:                          true,
 		ClusteringRESTEndpoint:             config.ClusteringnRESTEndpoint,
 		ClusteringFunctionName:             config.ClusteringFunctionName,
@@ -227,7 +220,6 @@ func main() {
 	registerRoute(mux, "/distil/solutions/:dataset/:target/:solution-id", routes.SolutionHandler(pgSolutionStorageCtor))
 	registerRoute(mux, "/distil/variables/:dataset", routes.VariablesHandler(metadataStorageCtor))
 	registerRoute(mux, "/distil/residuals-extrema/:dataset/:target", routes.ResidualsExtremaHandler(metadataStorageCtor, pgSolutionStorageCtor, pgDataStorageCtor))
-	registerRoute(mux, "/distil/ranking/:index/:dataset/:target", routes.RankingHandler(pgDataStorageCtor, restClient, config.D3MInputDir))
 	registerRoute(mux, "/distil/abort", routes.AbortHandler())
 	registerRoute(mux, "/distil/export/:solution-id", routes.ExportHandler(pgSolutionStorageCtor, metadataStorageCtor, solutionClient, config.D3MOutputDir))
 	registerRoute(mux, "/distil/ingest/:index/:dataset", routes.IngestHandler(metadataStorageCtor, ingestConfig))
