@@ -47,7 +47,7 @@ type Summarize func(index string, dataset string, config *IngestTaskConfig) erro
 
 // Featurize function that will extract features from dataset variables
 // and add them to the dataset.
-type Featurize func(index string, dataset string, config *IngestTaskConfig) error
+type Featurize func(schemaFile string, index string, dataset string, config *IngestTaskConfig) error
 
 // Cluster function that will cluster features from dataset variables
 // and add them to the dataset.
@@ -150,36 +150,17 @@ func IngestDataset(metaCtor model.MetadataStorageCtor, index string, dataset str
 	if config.ClusteringEnabled {
 		err = cluster(index, dataset, config)
 		if err != nil {
-			return errors.Wrap(err, "unable to cluster all data")
+			if config.HardFail {
+				return errors.Wrap(err, "unable to cluster all data")
+			}
+			log.Errorf("unable to cluster all data: %v", err)
 		}
-		log.Infof("finished clustering the dataset")
 	} else {
-		log.Infof("clustering disable - copying input to output")
-		createContainingDirs(config.getTmpAbsolutePath(config.ClusteringOutputDataRelative))
-		createContainingDirs(config.getTmpAbsolutePath(config.ClusteringOutputSchemaRelative))
-
-		// get the raw data filename
-		meta, err := metadata.LoadMetadataFromOriginalSchema(config.getAbsolutePath(config.SchemaPathRelative))
-		if err != nil {
-			return errors.Wrap(err, "unable to load original schema file")
-		}
-		mainDR := meta.GetMainDataResource()
-
-		// copy the schema and data to the expected output.
-		err = copyFileContents(config.getAbsolutePath(mainDR.ResPath), config.getTmpAbsolutePath(config.ClusteringOutputDataRelative))
-		if err != nil {
-			return errors.Wrap(err, "unable to copy original data file")
-		}
-		mainDR.ResPath = config.ClusteringOutputDataRelative
-		err = meta.WriteSchema(config.getTmpAbsolutePath(config.ClusteringOutputSchemaRelative))
-		if err != nil {
-			return errors.Wrap(err, "unable to copy original schema file")
-		}
-		log.Infof("copied raw data to clustering output")
+		latestSchemaOutput = config.getTmpAbsolutePath(config.ClusteringOutputSchemaRelative)
 	}
-	latestSchemaOutput = config.getTmpAbsolutePath(config.ClusteringOutputSchemaRelative)
+	log.Infof("finished clustering the dataset")
 
-	err = featurize(index, dataset, config)
+	err = featurize(latestSchemaOutput, index, dataset, config)
 	if err != nil {
 		if config.HardFail {
 			return errors.Wrap(err, "unable to featurize all data")
