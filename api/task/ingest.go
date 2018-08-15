@@ -47,7 +47,7 @@ type Summarize func(index string, dataset string, config *IngestTaskConfig) erro
 
 // Featurize function that will extract features from dataset variables
 // and add them to the dataset.
-type Featurize func(index string, dataset string, config *IngestTaskConfig) error
+type Featurize func(schemaFile string, index string, dataset string, config *IngestTaskConfig) error
 
 // Cluster function that will cluster features from dataset variables
 // and add them to the dataset.
@@ -116,6 +116,7 @@ type IngestTaskConfig struct {
 	ESEndpoint                         string
 	ESTimeout                          int
 	ESDatasetPrefix                    string
+	HardFail                           bool
 }
 
 func (c *IngestTaskConfig) getAbsolutePath(relativePath string) string {
@@ -144,44 +145,33 @@ func IngestDataset(metaCtor model.MetadataStorageCtor, index string, dataset str
 		return errors.Wrap(err, "unable to initialize metadata storage")
 	}
 
+	latestSchemaOutput := config.getAbsolutePath(config.SchemaPathRelative)
+
 	if config.ClusteringEnabled {
 		err = cluster(index, dataset, config)
 		if err != nil {
-			return errors.Wrap(err, "unable to cluster all data")
+			if config.HardFail {
+				return errors.Wrap(err, "unable to cluster all data")
+			}
+			log.Errorf("unable to cluster all data: %v", err)
 		}
-		log.Infof("finished clustering the dataset")
 	} else {
-		log.Infof("clustering disable - copying input to output")
-		createContainingDirs(config.getTmpAbsolutePath(config.ClusteringOutputDataRelative))
-		createContainingDirs(config.getTmpAbsolutePath(config.ClusteringOutputSchemaRelative))
-
-		// get the raw data filename
-		meta, err := metadata.LoadMetadataFromOriginalSchema(config.getAbsolutePath(config.SchemaPathRelative))
-		if err != nil {
-			return errors.Wrap(err, "unable to load original schema file")
-		}
-		mainDR := meta.GetMainDataResource()
-
-		// copy the schema and data to the expected output.
-		err = copyFileContents(config.getAbsolutePath(mainDR.ResPath), config.getTmpAbsolutePath(config.ClusteringOutputDataRelative))
-		if err != nil {
-			return errors.Wrap(err, "unable to copy original data file")
-		}
-		mainDR.ResPath = config.ClusteringOutputDataRelative
-		err = meta.WriteSchema(config.getTmpAbsolutePath(config.ClusteringOutputSchemaRelative))
-		if err != nil {
-			return errors.Wrap(err, "unable to copy original schema file")
-		}
-		log.Infof("copied raw data to clustering output")
+		latestSchemaOutput = config.getTmpAbsolutePath(config.ClusteringOutputSchemaRelative)
 	}
+	log.Infof("finished clustering the dataset")
 
-	err = featurize(index, dataset, config)
+	err = featurize(latestSchemaOutput, index, dataset, config)
 	if err != nil {
-		return errors.Wrap(err, "unable to featurize all data")
+		if config.HardFail {
+			return errors.Wrap(err, "unable to featurize all data")
+		}
+		log.Errorf("unable to featurize all data: %v", err)
+	} else {
+		latestSchemaOutput = config.getTmpAbsolutePath(config.FeaturizationOutputSchemaRelative)
 	}
 	log.Infof("finished featurizing the dataset")
 
-	err = Merge(index, dataset, config)
+	err = Merge(latestSchemaOutput, index, dataset, config)
 	if err != nil {
 		return errors.Wrap(err, "unable to merge all data into a single file")
 	}
@@ -202,9 +192,12 @@ func IngestDataset(metaCtor model.MetadataStorageCtor, index string, dataset str
 	err = summarize(index, dataset, config)
 	log.Infof("finished summarizing the dataset")
 	// NOTE: For now ignore summary errors!
-	//if err != nil {
-	//	return errors.Wrap(err, "unable to summarize the dataset")
-	//}
+	if err != nil {
+		if config.HardFail {
+			return errors.Wrap(err, "unable to summarize the dataset")
+		}
+		log.Errorf("unable to summarize the dataset: %v", err)
+	}
 
 	err = Ingest(storage, index, dataset, config)
 	if err != nil {
@@ -216,9 +209,9 @@ func IngestDataset(metaCtor model.MetadataStorageCtor, index string, dataset str
 }
 
 // Merge combines all the source data files into a single datafile.
-func Merge(index string, dataset string, config *IngestTaskConfig) error {
+func Merge(schemaFile string, index string, dataset string, config *IngestTaskConfig) error {
 	// load the metadata from schema
-	meta, err := metadata.LoadMetadataFromOriginalSchema(config.getTmpAbsolutePath(config.FeaturizationOutputSchemaRelative))
+	meta, err := metadata.LoadMetadataFromOriginalSchema(schemaFile)
 	if err != nil {
 		return errors.Wrap(err, "unable to load metadata schema")
 	}

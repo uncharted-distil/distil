@@ -195,6 +195,7 @@ func main() {
 		ESEndpoint:                         config.ElasticEndpoint,
 		ESTimeout:                          config.ElasticTimeout,
 		ESDatasetPrefix:                    config.ElasticDatasetPrefix,
+		HardFail:                           config.IngestHardFail,
 	}
 
 	// Ingest the data specified by the environment

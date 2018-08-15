@@ -237,13 +237,13 @@ func SummarizePrimitive(index string, dataset string, config *IngestTaskConfig) 
 }
 
 // FeaturizePrimitive will featurize the dataset fields using a primitive.
-func FeaturizePrimitive(index string, dataset string, config *IngestTaskConfig) error {
+func FeaturizePrimitive(schemaFile string, index string, dataset string, config *IngestTaskConfig) error {
 	// create required folders for outputPath
 	createContainingDirs(config.getTmpAbsolutePath(config.FeaturizationOutputDataRelative))
 	createContainingDirs(config.getTmpAbsolutePath(config.FeaturizationOutputSchemaRelative))
 
 	// load metadata from original schema
-	meta, err := metadata.LoadMetadataFromOriginalSchema(config.getAbsolutePath(config.SchemaPathRelative))
+	meta, err := metadata.LoadMetadataFromOriginalSchema(schemaFile)
 	if err != nil {
 		return errors.Wrap(err, "unable to load original schema file")
 	}

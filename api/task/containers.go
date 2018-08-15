@@ -48,7 +48,7 @@ func ClusterContainer(index string, dataset string, config *IngestTaskConfig) er
 }
 
 // FeaturizeContainer uses containers to obtain a featurized view of complex variables.
-func FeaturizeContainer(index string, dataset string, config *IngestTaskConfig) error {
+func FeaturizeContainer(schemaFile string, index string, dataset string, config *IngestTaskConfig) error {
 	client := rest.NewClient(config.FeaturizationRESTEndpoint)
 
 	// create required folders for outputPath
@@ -59,7 +59,7 @@ func FeaturizeContainer(index string, dataset string, config *IngestTaskConfig) 
 	featurizer := rest.NewFeaturizer(config.FeaturizationFunctionName, client)
 
 	// load metadata from cluster schema
-	meta, err := metadata.LoadMetadataFromOriginalSchema(config.getTmpAbsolutePath(config.ClusteringOutputSchemaRelative))
+	meta, err := metadata.LoadMetadataFromOriginalSchema(schemaFile)
 	if err != nil {
 		return errors.Wrap(err, "unable to load cluster schema file")
 	}
