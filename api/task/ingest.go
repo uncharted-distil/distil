@@ -116,6 +116,7 @@ type IngestTaskConfig struct {
 	ESEndpoint                         string
 	ESTimeout                          int
 	ESDatasetPrefix                    string
+	HardFail                           bool
 }
 
 func (c *IngestTaskConfig) getAbsolutePath(relativePath string) string {
@@ -143,6 +144,8 @@ func IngestDataset(metaCtor model.MetadataStorageCtor, index string, dataset str
 	if err != nil {
 		return errors.Wrap(err, "unable to initialize metadata storage")
 	}
+
+	latestSchemaOutput := config.getAbsolutePath(config.SchemaPathRelative)
 
 	if config.ClusteringEnabled {
 		err = cluster(index, dataset, config)
@@ -174,14 +177,20 @@ func IngestDataset(metaCtor model.MetadataStorageCtor, index string, dataset str
 		}
 		log.Infof("copied raw data to clustering output")
 	}
+	latestSchemaOutput = config.getTmpAbsolutePath(config.ClusteringOutputSchemaRelative)
 
 	err = featurize(index, dataset, config)
 	if err != nil {
-		return errors.Wrap(err, "unable to featurize all data")
+		if config.HardFail {
+			return errors.Wrap(err, "unable to featurize all data")
+		}
+		log.Errorf("unable to featurize all data: %v", err)
+	} else {
+		latestSchemaOutput = config.getTmpAbsolutePath(config.FeaturizationOutputSchemaRelative)
 	}
 	log.Infof("finished featurizing the dataset")
 
-	err = Merge(index, dataset, config)
+	err = Merge(latestSchemaOutput, index, dataset, config)
 	if err != nil {
 		return errors.Wrap(err, "unable to merge all data into a single file")
 	}
@@ -202,9 +211,12 @@ func IngestDataset(metaCtor model.MetadataStorageCtor, index string, dataset str
 	err = summarize(index, dataset, config)
 	log.Infof("finished summarizing the dataset")
 	// NOTE: For now ignore summary errors!
-	//if err != nil {
-	//	return errors.Wrap(err, "unable to summarize the dataset")
-	//}
+	if err != nil {
+		if config.HardFail {
+			return errors.Wrap(err, "unable to summarize the dataset")
+		}
+		log.Errorf("unable to summarize the dataset: %v", err)
+	}
 
 	err = Ingest(storage, index, dataset, config)
 	if err != nil {
@@ -216,9 +228,9 @@ func IngestDataset(metaCtor model.MetadataStorageCtor, index string, dataset str
 }
 
 // Merge combines all the source data files into a single datafile.
-func Merge(index string, dataset string, config *IngestTaskConfig) error {
+func Merge(schemaFile string, index string, dataset string, config *IngestTaskConfig) error {
 	// load the metadata from schema
-	meta, err := metadata.LoadMetadataFromOriginalSchema(config.getTmpAbsolutePath(config.FeaturizationOutputSchemaRelative))
+	meta, err := metadata.LoadMetadataFromOriginalSchema(schemaFile)
 	if err != nil {
 		return errors.Wrap(err, "unable to load metadata schema")
 	}
@@ -476,4 +488,27 @@ func copyFileContents(source string, destination string) error {
 	}
 
 	return nil
+}
+
+func fileExists(filename string) bool {
+	_, err := os.Stat(filename)
+	if err == nil {
+		return true
+	}
+	if os.IsNotExist(err) {
+		return false
+	}
+	return true
+}
+
+func selectExistingFile(potentialFiles []string) string {
+	// get the first file that exists
+	fileToUse := ""
+	for _, file := range potentialFiles {
+		if fileExists(file) {
+			fileToUse = file
+		}
+	}
+
+	return fileToUse
 }

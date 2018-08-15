@@ -76,6 +76,7 @@ type Config struct {
 	ESDatasetsIndex                    string  `env:"ES_DATASETS_INDEX" envDefault:"datasets"`
 	UserProblemPath                    string  `env:"USER_PROBLEM_PATH" envDefault:"/outputs/problems"`
 	SkipIngest                         bool    `env:"SKIP_INGEST" envDefault:"false"`
+	IngestHardFail                     bool    `env:"INGEST_HARD_FAIL" envDefault:"false"`
 	ServiceRetryCount                  int     `env:"SERVICE_RETRY_COUNT" envDefault:"10"`
 	VerboseError                       bool    `env:"VERBOSE_ERROR" envDefault:"false"`
 	RootResourceDirectory              string  `env:"ROOT_RESOURCE_DIRECTORY" envDefault:"http://localhost:8001"`
