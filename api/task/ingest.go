@@ -470,26 +470,3 @@ func copyFileContents(source string, destination string) error {
 
 	return nil
 }
-
-func fileExists(filename string) bool {
-	_, err := os.Stat(filename)
-	if err == nil {
-		return true
-	}
-	if os.IsNotExist(err) {
-		return false
-	}
-	return true
-}
-
-func selectExistingFile(potentialFiles []string) string {
-	// get the first file that exists
-	fileToUse := ""
-	for _, file := range potentialFiles {
-		if fileExists(file) {
-			fileToUse = file
-		}
-	}
-
-	return fileToUse
-}
