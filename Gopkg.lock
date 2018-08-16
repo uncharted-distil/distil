@@ -13,15 +13,6 @@
   revision = "87df7c60d5820d0f8ae11afede5aa52325c09717"
 
 [[projects]]
-  name = "github.com/garyburd/redigo"
-  packages = [
-    "internal",
-    "redis"
-  ]
-  revision = "d1ed5c67e5794de818ea85e6b522fda02623a484"
-  version = "v1.5.0"
-
-[[projects]]
   name = "github.com/go-pg/pg"
   packages = [
     ".",
