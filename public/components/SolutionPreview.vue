@@ -14,18 +14,18 @@
 					<strong>Feature:</strong> {{solution.feature}}
 				</div>
 				<div>
-					<b-badge v-if="isPending()">
-						{{status()}}
+					<b-badge v-if="isPending">
+						{{status}}
 					</b-badge>
-					<b-badge variant="info" v-if="isRunning()">
-						{{status()}}
+					<b-badge variant="info" v-if="isRunning">
+						{{status}}
 					</b-badge>
-					<div v-if="isCompleted()">
+					<div v-if="isCompleted">
 						<b-badge variant="info" v-bind:key="score.metric" v-for="score in solution.scores">
 							{{score.label}}: {{score.value.toFixed(2)}}
 						</b-badge>
 					</div>
-					<div v-if="isErrored()">
+					<div v-if="isErrored">
 						<b-badge variant="danger">
 							ERROR
 						</b-badge>
@@ -35,7 +35,7 @@
 			</div>
 		</div>
 		<div class="solution-progress">
-			<b-progress v-if="isRunning()"
+			<b-progress v-if="isRunning"
 				:value="percentComplete"
 				variant="outline-secondary"
 				striped
