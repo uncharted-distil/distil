@@ -39,7 +39,7 @@
 			<div v-if='expanded' class='card-expanded'>
 				<span><h3>Full Description:</h3></span>
 				<p v-html='highlightedDescription()'></p>
-				<b-button class='full-width hover'variant='outline-secondary' v-on:click='toggleExpansion()'>
+				<b-button class='full-width hover' variant='outline-secondary' v-on:click='toggleExpansion()'>
 					Less Details...
 				</b-button>
 			</div>

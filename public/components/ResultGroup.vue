@@ -2,7 +2,7 @@
 	<div v-bind:class="currentClass"
 		@click="onClick()">
 		<div class="result-group-title">
-			<b>{{name}} <sup>{{solutionIndex}}</sup></b></span>
+			<b>{{name}} <sup>{{solutionIndex}}</sup></b>
 			<template v-if="!isErrored">
 				<div class="pull-right pl-2 solution-button" @click.stop="minimized=!minimized"><i class="fa" v-bind:class="{'fa-angle-down': !isMaximized, 'fa-angle-up': isMaximized}"></i></div>
 				<!--

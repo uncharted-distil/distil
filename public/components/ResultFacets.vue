@@ -15,9 +15,8 @@
 						ERROR
 					</b-badge>
 				</div>
-			</p>
-
-			<result-group class="result-group-container" :key="group.solutionId" v-for="(group, index) in request.groups"
+			
+			<result-group class="result-group-container" :key="group.solutionId" v-for="(group) in request.groups"
 				:name="group.groupName"
 				:timestamp="group.timestamp"
 				:request-id="group.requestId"
