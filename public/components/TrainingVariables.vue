@@ -31,7 +31,7 @@
 <script lang="ts">
 
 import Vue from 'vue';
-import VariableFacets from '../components/VariableFacets';
+import VariableFacets from '../components/VariableFacets.vue';
 import { VariableSummary } from '../store/dataset/index';
 import { Highlight } from '../store/highlights/index';
 import { getters as routeGetters } from '../store/route/module';
@@ -98,7 +98,7 @@ export default Vue.extend({
 			const facets = this.$refs.facets as any;
 			const training = routeGetters.getRouteTrainingVariables(this.$store);
 			const trainingArray = training ? training.split(',') : [];
-			facets.availableVariables().forEach(variable => {
+			(facets.availableVariables() as string[]).forEach(variable => {
 				trainingArray.splice(trainingArray.indexOf(variable), 1);
 			});
 			const entry = overlayRouteEntry(routeGetters.getRoute(this.$store), {

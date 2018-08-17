@@ -100,7 +100,7 @@ export const actions = {
 			variables: [],
 			filters: []
 		};
-		filterParams = addHighlightToFilterParams(context, filterParams, args.highlightRoot, INCLUDE_FILTER);
+		filterParams = addHighlightToFilterParams(filterParams, args.highlightRoot, INCLUDE_FILTER);
 
 		return axios.post(`/distil/results/${args.dataset}/${encodeURIComponent(args.solutionId)}`, filterParams)
 			.then(response => {
@@ -123,7 +123,7 @@ export const actions = {
 			variables: [],
 			filters: []
 		};
-		filterParams = addHighlightToFilterParams(context, filterParams, args.highlightRoot, EXCLUDE_FILTER);
+		filterParams = addHighlightToFilterParams(filterParams, args.highlightRoot, EXCLUDE_FILTER);
 
 		return axios.post(`/distil/results/${args.dataset}/${encodeURIComponent(args.solutionId)}`, filterParams)
 			.then(response => {

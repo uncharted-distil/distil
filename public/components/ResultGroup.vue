@@ -84,7 +84,7 @@
 // of prediction-truth residuals, and scoring information.
 
 import Vue from 'vue';
-import Facets from '../components/Facets';
+import Facets from '../components/Facets.vue';
 import { createGroups, Group } from '../util/facets';
 import { Extrema, VariableSummary } from '../store/dataset/index';
 import { Highlight, RowSelection } from '../store/highlights/index';
@@ -100,16 +100,16 @@ export default Vue.extend({
 	name: 'result-group',
 
 	props: {
-		name: String,
-		timestamp: String,
-		requestId: String,
-		solutionId: String,
-		scores: Array,
-		predictedSummary: Object,
-		residualsSummary: Object,
-		correctnessSummary: Object,
-		resultHtml: String,
-		residualHtml: String
+		name: String as () => string,
+		timestamp: String as () => string,
+		requestId: String as () => string,
+		solutionId: String as () => string,
+		scores: Array as () => Array<number>,
+		predictedSummary: Object as () => VariableSummary,
+		residualsSummary: Object as () => VariableSummary,
+		correctnessSummary: Object as () => VariableSummary,
+		resultHtml: String as () => string,
+		residualHtml: String as () => string
 	},
 
 	data() {
