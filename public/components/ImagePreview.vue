@@ -1,7 +1,7 @@
 <template>
 	<div>
 		<div class="image-container">
-			<div class="image-elem" ref="imageElem" @click.stop="onClick">
+			<div class="image-elem" ref="imageElem" @click.stop="onClick" v-bind:style="{'max-width': `${width}px`}">
 				<div v-if="isErrored">Error</div>
 				<div v-if="!isErrored && !isLoaded" v-html="spinnerHTML"></div>
 			</div>
@@ -17,6 +17,7 @@
 
 <script lang="ts">
 
+import $ from 'jquery';
 import Vue from 'vue';
 import { getters as routeGetters } from '../store/route/module';
 import { circleSpinnerHTML } from '../util/spinner';
@@ -26,6 +27,14 @@ export default Vue.extend({
 
 	props: {
 		imageUrl: String,
+		width: {
+			default: 64,
+			type: Number
+		},
+		height: {
+			default: 64,
+			type: Number
+		}
 	},
 
 	data() {
@@ -63,7 +72,7 @@ export default Vue.extend({
 		}
 		const $elem = this.$refs.imageElem as any;
 		$elem.innerHTML = '';
-		$elem.appendChild(this.image.cloneNode());
+		$elem.appendChild(this.clonedImageElement());
 		const icon = document.createElement('i');
 		icon.className += 'fa fa-plus zoom-icon';
 		$elem.appendChild(icon);
@@ -74,13 +83,20 @@ export default Vue.extend({
 			if (this.image) {
 				const $elem = this.$refs.imageElemZoom as any;
 				$elem.innerHTML = '';
-				$elem.appendChild(this.image.cloneNode());
+				$elem.appendChild(this.clonedImageElement());
 			}
 			this.zoomImage = true;
 		},
 
 		hideModal() {
 			this.zoomImage = false;
+		},
+
+		clonedImageElement(): HTMLImageElement {
+			const img = this.image.cloneNode();
+			$(img).css('max-width', `${this.width}px`);
+			$(img).css('max-height', `${this.height}px`);
+			return img as HTMLImageElement;
 		},
 
 		requestImage(url: string) {
@@ -106,17 +122,12 @@ export default Vue.extend({
 
 .image-elem {
 	position: relative;
-	max-width: 64px;
-	border-radius: 4px;
 }
 .image-elem:hover {
 	background-color: #000;
 }
 .image-elem img {
 	position: relative;
-	max-height: 64px;
-	max-width: 64px;
-	border-radius: 4px;
 }
 .image-elem img:hover {
 	opacity: 0.7;

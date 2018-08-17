@@ -1,5 +1,5 @@
 <template>
-	<div class="select-data-table">
+	<div class="select-image-mosaic">
 		<p>
 			<b-nav tabs>
 				<b-nav-item class="font-weight-bold" @click="includedActive=true" :active="includedActive">Samples to Model From</b-nav-item>
@@ -36,32 +36,34 @@
 			<small class="row-number-label" v-html="tableTitle"></small>
 		</p>
 
-		<div class="select-data-table-container">
+		<div class="select-image-mosaic-container">
 			<div class="select-data-no-results" v-if="!hasData">
 				<div v-html="spinnerHTML"></div>
 			</div>
 			<div class="select-data-no-results" v-if="hasData && items.length===0">
 				No data available
 			</div>
-			<b-table v-if="hasData && items.length>0"
-				ref="selectTable"
-				bordered
-				hover
-				small
-				responsive
-				:items="items"
-				:fields="fields"
-				@row-clicked="onRowClick">
 
-				<template v-for="imageField in imageFields" :slot="imageField" slot-scope="data">
-					<image-preview :key="imageField" :image-url="data.item[imageField]"></image-preview>
+
+			<template v-for="imageField in imageFields">
+				<template v-for="item in items">
+					<div class="image-tile">
+						<template v-for="(fieldInfo, fieldKey) in fields">
+							<image-preview v-if="fieldKey===imageField"
+								class="image-preview"
+								:image-url="item[fieldKey]"
+								:width="imageWidth"
+								:height="imageHeight"></image-preview>
+							<div v-if="fieldKey!==imageField && fieldKey[0] !== '_'"
+								class="image-label">
+								{{item[fieldKey]}}
+							</div>
+						</template>
+					</div>
 				</template>
+			</template>
 
-				<template v-for="timeseriesField in timeseriesFields" :slot="timeseriesField" slot-scope="data">
-					<sparkline-preview :key="timeseriesField" :time-series-url="data.item[timeseriesField]"></sparkline-preview>
-				</template>
 
-			</b-table>
 		</div>
 
 	</div>
@@ -87,7 +89,7 @@ import { getHighlights, clearHighlightRoot, createFilterFromHighlightRoot } from
 import { addRowSelection, removeRowSelection, clearRowSelection, isRowSelected, getNumIncludedRows, getNumExcludedRows, updateTableRowSelection, createFilterFromRowSelection } from '../util/row';
 
 export default Vue.extend({
-	name: 'selected-data-table',
+	name: 'select-image-mosaic',
 
 	components: {
 		FilterBadge,
@@ -101,7 +103,9 @@ export default Vue.extend({
 
 	data() {
 		return {
-			includedActive: true
+			includedActive: true,
+			imageWidth: 128,
+			imageHeight: 128
 		};
 	},
 
@@ -264,15 +268,40 @@ export default Vue.extend({
 
 <style>
 
-.select-data-table {
+/*
+.select-image-mosaic {
 	display: flex;
 	flex-direction: column;
 }
-.select-data-table-container {
+*/
+
+.select-image-mosaic-container {
 	display: flex;
-	overflow: auto;
 	background-color: white;
+	overflow: auto;
+	flex-flow: wrap;
 }
+
+.image-tile {
+	display: flex;
+	position: relative;
+	flex-grow: 1;
+	margin: 4px;
+}
+
+.image-preview {
+	position: relative;
+}
+
+.image-label {
+	position: absolute;
+	top: 0;
+	left: 0;
+	background-color: #424242;
+	color: #fff;
+	padding: 0 4px;
+}
+
 .select-data-no-results {
 	width: 100%;
 	background-color: #eee;
@@ -282,19 +311,7 @@ export default Vue.extend({
 .missing-icon {
 	padding-right: 4px;
 }
-table.b-table>tfoot>tr>th.sorting:before,
-table.b-table>thead>tr>th.sorting:before,
-table.b-table>tfoot>tr>th.sorting:after,
-table.b-table>thead>tr>th.sorting:after {
-	top: 0;
-}
 
-table tr {
-	cursor: pointer;
-}
-.select-data-table .small-margin {
-	margin-bottom: 0.5rem
-}
 .select-view .nav-tabs .nav-item a {
 	padding-left: 0.5rem;
 	padding-right: 0.5rem;
@@ -328,12 +345,5 @@ table tr {
 	background-color: #eee;
 	border: 1px solid #ccc;
 	border-radius: 0.2rem;
-}
-.selected-color {
-	color: #ff0067;
-}
-.table-selected-row {
-	border-left: 4px solid #ff0067;
-	background-color: rgba(255, 0, 103, 0.2);
 }
 </style>

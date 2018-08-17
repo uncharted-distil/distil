@@ -38,7 +38,8 @@
 				<div class="row flex-12">
 					<div class="col-12 d-flex flex-column">
 						<div class="row responsive-flex pb-3">
-							<select-data-table class="col-12 d-flex flex-column select-data-table pt-2"></select-data-table>
+							<select-data-table v-if="!isImageDataset" class="col-12 d-flex flex-column select-data-table pt-2"></select-data-table>
+							<select-image-mosaic v-if="isImageDataset" class="col-12 d-flex flex-column select-image-mosaic pt-2"></select-image-mosaic>
 						</div>
 						<div class="row align-items-center">
 							<div class="col-12 d-flex flex-column">
@@ -58,12 +59,15 @@
 import Vue from 'vue';
 import CreateSolutionsForm from '../components/CreateSolutionsForm.vue';
 import SelectDataTable from '../components/SelectDataTable.vue';
+import SelectImageMosaic from '../components/SelectImageMosaic.vue';
 import AvailableTrainingVariables from '../components/AvailableTrainingVariables.vue';
 import TrainingVariables from '../components/TrainingVariables.vue';
 import TargetVariable from '../components/TargetVariable.vue';
 import TypeChangeMenu from '../components/TypeChangeMenu.vue';
 import { actions as viewActions } from '../store/view/module';
 import { getters as routeGetters } from '../store/route/module';
+import { Variable } from '../store/dataset/index';
+import { getters as datasetGetters } from '../store/dataset/module';
 
 export default Vue.extend({
 	name: 'select-view',
@@ -71,6 +75,7 @@ export default Vue.extend({
 	components: {
 		CreateSolutionsForm,
 		SelectDataTable,
+		SelectImageMosaic,
 		AvailableTrainingVariables,
 		TrainingVariables,
 		TargetVariable,
@@ -97,6 +102,12 @@ export default Vue.extend({
 				return summary.buckets;
 			}
 			return [];
+		},
+		isImageDataset(): boolean {
+			return this.variables.filter(v => v.type === 'image').length  > 0;
+		},
+		variables(): Variable[] {
+			return datasetGetters.getVariables(this.$store);
 		}
 	},
 
