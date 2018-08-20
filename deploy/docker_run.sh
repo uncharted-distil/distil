@@ -10,5 +10,4 @@ docker run \
     -e PG_STORAGE=true \
     -e SOLUTION_COMPUTE_TRACE=true \
     -e PG_LOG_LEVEL=none \
-    --entrypoint ta3_search \
     docker.uncharted.software/distil:latest
