@@ -76,6 +76,23 @@ const TEXT_TYPES = [
 	'unknown'
 ];
 
+const TEXT_SIMPLE_TYPES = [
+	'text',
+	'address',
+	'city',
+	'state',
+	'country',
+	'country_code',
+	'email',
+	'phone',
+	'postal_code',
+	'uri',
+	'keyword',
+	'dateTime',
+	'boolean',
+	'unknown'
+];
+
 const BOOL_SUGGESTIONS = [
 	'text',
 	'categorical',
@@ -204,6 +221,8 @@ export function getFilterType(type: string): string {
 		return FEATURE_FILTER;
 	} else if (isNumericType(type)) {
 		return NUMERICAL_FILTER;
+	} else if (isTextSimpleType(type)) {
+		return TEXT_FILTER;
 	}
 	return CATEGORICAL_FILTER;
 }
@@ -222,6 +241,10 @@ export function isIntegerType(type: string): boolean {
 
 export function isTextType(type: string): boolean {
 	return TEXT_TYPES.indexOf(type) !== -1;
+}
+
+export function isTextSimpleType(type: string): boolean {
+	return TEXT_SIMPLE_TYPES.indexOf(type) !== -1;
 }
 
 export function isMetaType(type: string): boolean {
