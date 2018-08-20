@@ -1,2 +1,0 @@
-#!/bin/sh
-./distil $1
