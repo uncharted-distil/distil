@@ -3,7 +3,7 @@ import { store } from '../store/storeProvider';
 import { Dictionary } from './dict';
 import { getters as datasetGetters } from '../store/dataset/module';
 import { D3M_INDEX_FIELD } from '../store/dataset/index';
-import { FEATURE_FILTER, CATEGORICAL_FILTER, NUMERICAL_FILTER } from '../util/filters';
+import { FEATURE_FILTER, CATEGORICAL_FILTER, NUMERICAL_FILTER, TEXT_FILTER } from '../util/filters';
 
 const EMAIL_REGEX = /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
 const URI_REGEX = /^(?:(?:(?:https?|ftp):)?\/\/)(?:\S+(?::\S*)?@)?(?:(?!(?:10|127)(?:\.\d{1,3}){3})(?!(?:169\.254|192\.168)(?:\.\d{1,3}){2})(?!172\.(?:1[6-9]|2\d|3[0-1])(?:\.\d{1,3}){2})(?:[1-9]\d?|1\d\d|2[01]\d|22[0-3])(?:\.(?:1?\d{1,2}|2[0-4]\d|25[0-5])){2}(?:\.(?:[1-9]\d?|1\d\d|2[0-4]\d|25[0-4]))|(?:(?:[a-z\u00a1-\uffff0-9]-*)*[a-z\u00a1-\uffff0-9]+)(?:\.(?:[a-z\u00a1-\uffff0-9]-*)*[a-z\u00a1-\uffff0-9]+)*(?:\.(?:[a-z\u00a1-\uffff]{2,})))(?::\d{2,5})?(?:[/?#]\S*)?$/i;
@@ -61,6 +61,23 @@ const TEXT_TYPES = [
 	'timeseries',
 	'categorical',
 	'ordinal',
+	'address',
+	'city',
+	'state',
+	'country',
+	'country_code',
+	'email',
+	'phone',
+	'postal_code',
+	'uri',
+	'keyword',
+	'dateTime',
+	'boolean',
+	'unknown'
+];
+
+const TEXT_SIMPLE_TYPES = [
+	'text',
 	'address',
 	'city',
 	'state',
@@ -204,6 +221,8 @@ export function getFilterType(type: string): string {
 		return FEATURE_FILTER;
 	} else if (isNumericType(type)) {
 		return NUMERICAL_FILTER;
+	} else if (isTextSimpleType(type)) {
+		return TEXT_FILTER;
 	}
 	return CATEGORICAL_FILTER;
 }
@@ -222,6 +241,10 @@ export function isIntegerType(type: string): boolean {
 
 export function isTextType(type: string): boolean {
 	return TEXT_TYPES.indexOf(type) !== -1;
+}
+
+export function isTextSimpleType(type: string): boolean {
+	return TEXT_SIMPLE_TYPES.indexOf(type) !== -1;
 }
 
 export function isMetaType(type: string): boolean {
