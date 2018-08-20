@@ -18,8 +18,10 @@ const (
 	CategoricalFilter = "categorical"
 	// NumericalFilter represents a numerical filter type.
 	NumericalFilter = "numerical"
-	// FeatureFilter represents a categorical filter type.
+	// FeatureFilter represents a feature filter type.
 	FeatureFilter = "feature"
+	// TextFilter represents a text filter type.
+	TextFilter = "text"
 	// RowFilter represents a numerical filter type.
 	RowFilter = "row"
 	// IncludeFilter represents an inclusive filter mode.
@@ -149,6 +151,17 @@ func NewFeatureFilter(key string, mode string, categories []string) *Filter {
 	}
 }
 
+// NewTextFilter instantiates a text filter.
+func NewTextFilter(key string, mode string, categories []string) *Filter {
+	sort.Strings(categories)
+	return &Filter{
+		Key:        key,
+		Type:       TextFilter,
+		Mode:       mode,
+		Categories: categories,
+	}
+}
+
 // NewRowFilter instantiates a row filter.
 func NewRowFilter(mode string, d3mIndices []string) *Filter {
 	return &Filter{
@@ -203,6 +216,7 @@ func ParseFilterParamsFromJSON(params map[string]interface{}) (*FilterParams, er
 				return nil, errors.Errorf("no `mode` provided for filter")
 			}
 
+			// TODO: update to a switch statement with a default to error
 			// numeric
 			if typ == NumericalFilter {
 				key, ok := json.String(filter, "key")
@@ -244,6 +258,19 @@ func ParseFilterParamsFromJSON(params map[string]interface{}) (*FilterParams, er
 					return nil, errors.Errorf("no `categories` provided for filter")
 				}
 				filterParams.Filters = append(filterParams.Filters, NewFeatureFilter(key, mode, categories))
+			}
+
+			// text
+			if typ == TextFilter {
+				key, ok := json.String(filter, "key")
+				if !ok {
+					return nil, errors.Errorf("no `key` provided for filter")
+				}
+				categories, ok := json.StringArray(filter, "categories")
+				if !ok {
+					return nil, errors.Errorf("no `categories` provided for filter")
+				}
+				filterParams.Filters = append(filterParams.Filters, NewTextFilter(key, mode, categories))
 			}
 
 			// row

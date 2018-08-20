@@ -9,13 +9,6 @@ import (
 	"goji.io/pat"
 )
 
-const (
-	// NumericalFilter represents a numerical type of filter.
-	NumericalFilter = "numerical"
-	// CategoricalFilter represents a categorcial type of filter.
-	CategoricalFilter = "categorical"
-)
-
 // DataHandler creates a route that fetches filtered data from backing storage instance.
 func DataHandler(storageCtor model.DataStorageCtor, metaCtor model.MetadataStorageCtor) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
