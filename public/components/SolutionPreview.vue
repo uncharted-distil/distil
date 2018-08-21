@@ -30,7 +30,6 @@
 							ERROR
 						</b-badge>
 					</div>
-					</b-badge>
 				</div>
 			</div>
 		</div>
@@ -47,7 +46,7 @@
 <script lang="ts">
 import moment from 'moment';
 import { createRouteEntry } from '../util/routes';
-import { SOLUTION_PENDING, SOLUTION_RUNNING, SOLUTION_COMPLETED, SOLUTION_ERRORED } from '../store/solutions/index';
+import { SOLUTION_PENDING, SOLUTION_RUNNING, SOLUTION_COMPLETED, SOLUTION_ERRORED, Solution } from '../store/solutions/index';
 import { RESULTS_ROUTE } from '../store/route/index';
 import Vue from 'vue';
 
@@ -55,7 +54,7 @@ export default Vue.extend({
 	name: 'solution-preview',
 
 	props: {
-		solution: Object
+		solution: Object as () => Solution
 	},
 
 	computed: {
@@ -79,7 +78,7 @@ export default Vue.extend({
 			return this.solution.progress === SOLUTION_COMPLETED;
 		},
 		isErrored(): boolean {
-			return this.solution.progress === SOLUTION_ERRORED || this.isBad;
+			return this.solution.progress === SOLUTION_ERRORED;
 		},
 		isBad(): boolean {
 			return this.solution.isBad;
@@ -88,11 +87,10 @@ export default Vue.extend({
 
 	methods: {
 		onResult() {
-			const solution = this.solution;
 			const entry = createRouteEntry(RESULTS_ROUTE, {
-				dataset: solution.dataset,
-				target: solution.feature,
-				solutionId: solution.solutionId
+				dataset: this.solution.dataset,
+				target: this.solution.feature,
+				solutionId: this.solution.solutionId
 			});
 			this.$router.push(entry);
 		}

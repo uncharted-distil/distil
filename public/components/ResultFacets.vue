@@ -15,9 +15,8 @@
 						ERROR
 					</b-badge>
 				</div>
-			</p>
-
-			<result-group class="result-group-container" :key="group.solutionId" v-for="(group, index) in request.groups"
+			
+			<result-group class="result-group-container" :key="group.solutionId" v-for="(group) in request.groups"
 				:name="group.groupName"
 				:timestamp="group.timestamp"
 				:request-id="group.requestId"
@@ -39,7 +38,7 @@
 import Vue from 'vue';
 import _ from 'lodash';
 import moment from 'moment';
-import Facets from '../components/Facets';
+import Facets from '../components/Facets.vue';
 import ResultGroup from '../components/ResultGroup.vue';
 import { VariableSummary } from '../store/dataset/index';
 import { REQUEST_COMPLETED, REQUEST_ERRORED } from '../store/solutions/index';
@@ -75,8 +74,8 @@ export default Vue.extend({
 	},
 
 	props: {
-		html: String,
-		regression: Boolean
+		html: String as () => string,
+		regression: Boolean as () => boolean
 	},
 
 	computed: {

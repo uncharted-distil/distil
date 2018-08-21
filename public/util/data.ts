@@ -113,7 +113,7 @@ export function getSummary(
 		});
 }
 
-export function filterVariablesByPage(pageIndex: number, numPerPage: number, variables: any[]) {
+export function filterVariablesByPage<T>(pageIndex: number, numPerPage: number, variables: T[]): T[] {
 	if (variables.length > numPerPage) {
 		const firstIndex = numPerPage * (pageIndex - 1);
 		const lastIndex = Math.min(firstIndex + numPerPage, variables.length);

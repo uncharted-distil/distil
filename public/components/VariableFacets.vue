@@ -43,7 +43,7 @@
 <script lang="ts">
 
 import _ from 'lodash';
-import Facets from '../components/Facets';
+import Facets from '../components/Facets.vue';
 import { overlayRouteEntry, getRouteFacetPage } from '../util/routes';
 import { Dictionary } from '../util/dict';
 import { sortGroupsByImportance, filterVariablesByPage } from '../util/data';
@@ -65,17 +65,17 @@ export default Vue.extend({
 	},
 
 	props: {
-		enableSearch: Boolean,
-		enableTitle: Boolean,
-		enableTypeChange: Boolean,
-		enableHighlighting: Boolean,
-		ignoreHighlights: Boolean,
-		groups: Array,
-		dataset: String,
-		subtitle: String,
-		html: [ String, Object, Function ],
-		instanceName: { type: String, default: 'variableFacets' },
-		rowsPerPage: { type: Number, default: 10 }
+		enableSearch: Boolean as () => boolean,
+		enableTitle: Boolean as () => boolean,
+		enableTypeChange: Boolean as () => boolean,
+		enableHighlighting: Boolean as () => boolean,
+		ignoreHighlights: Boolean as () => boolean,
+		groups: Array as () => Array<Group>,
+		dataset: String as () => string,
+		subtitle: String as () => string,
+		html: [ String as () => string, Object as () => any, Function as () => Function ],
+		instanceName: { type: String as () => string, default: 'variableFacets' },
+		rowsPerPage: { type: Number as () => number, default: 10 }
 	},
 
 	data() {

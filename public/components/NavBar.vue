@@ -3,7 +3,7 @@
 
 		<b-nav-toggle target="nav_collapse"></b-nav-toggle>
 
-		<img src="/images/uncharted.svg" class="app-icon"></img>
+		<img src="/images/uncharted.svg" class="app-icon">
 		<span class="navbar-brand">Distil</span>
 
 		<b-collapse v-if="!isAborted" is-nav id="nav_collapse">

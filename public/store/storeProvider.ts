@@ -4,7 +4,7 @@ import { DistilState } from "./store";
 let storeInstance: Store<DistilState> = null;
 
 // Provides global access to Vuex store without requiring the presence of the component
-export function store() {
+export function store(): Store<DistilState> {
 	if (storeInstance === null) {
 		console.error('Tried to access uninitialized store instance');
 	}

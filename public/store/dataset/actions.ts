@@ -138,7 +138,7 @@ export const actions = {
 			return null;
 		}
 
-		const filterParams = addHighlightToFilterParams(context, args.filterParams, args.highlightRoot, INCLUDE_FILTER);
+		const filterParams = addHighlightToFilterParams(args.filterParams, args.highlightRoot, INCLUDE_FILTER);
 
 		// request filtered data from server - no data is valid given filter settings
 		return axios.post(`distil/data/${args.dataset}/false`, filterParams)

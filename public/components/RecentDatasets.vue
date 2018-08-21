@@ -18,7 +18,7 @@
 <script lang="ts">
 
 import _ from 'lodash';
-import DatasetPreview from '../components/DatasetPreview';
+import DatasetPreview from '../components/DatasetPreview.vue';
 import { getters as datasetGetters } from '../store/dataset/module';
 import { Dataset } from '../store/dataset/index';
 import Vue from 'vue';
@@ -34,7 +34,7 @@ export default Vue.extend({
 	props: {
 		maxDatasets: {
 			default: 5,
-			type: Number
+			type: Number as () => number
 		}
 	},
 

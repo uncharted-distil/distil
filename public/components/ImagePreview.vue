@@ -25,7 +25,7 @@ export default Vue.extend({
 	name: 'image-preview',
 
 	props: {
-		imageUrl: String,
+		imageUrl: String as () => string,
 	},
 
 	data() {

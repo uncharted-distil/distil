@@ -25,7 +25,7 @@ export default Vue.extend({
 	name: 'sparkline-preview',
 	props: {
 		margin: {
-			type: Object,
+			type: Object as () => any,
 			default: () => ({
 				top: 8,
 				right: 4,
@@ -34,27 +34,27 @@ export default Vue.extend({
 			})
 		},
 		smoothing: {
-			type: String,
+			type: String as () => string,
 			default: 'basis'
 		},
 		zeroBased: {
-			type: Boolean,
+			type: Boolean as () => boolean,
 			default: false
 		},
 		className: {
-			type: String,
+			type: String as () => string,
 			default: null
 		},
 		lastPointRadius: {
-			type: Number,
+			type: Number as () => number,
 			default: 0
 		},
 		xScaleType: {
-			type: String,
+			type: String as () => string,
 			default: 'band'
 		},
 		timeSeriesUrl: {
-			type: String
+			type: String as () => string
 		}
 	},
 	data() {

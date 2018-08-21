@@ -1,4 +1,3 @@
-import { Store } from 'vuex';
 import { Highlight, HighlightRoot } from '../store/highlights/index';
 import { Filter, NUMERICAL_FILTER } from '../util/filters';
 import { getters as routeGetters } from '../store/route/module';
@@ -24,7 +23,7 @@ export function decodeHighlights(highlightRoot: string): HighlightRoot {
 	return JSON.parse(atob(highlightRoot)) as HighlightRoot;
 }
 
-export function createFilterFromHighlightRoot(store: Store<any>, highlightRoot: HighlightRoot, mode: string): Filter {
+export function createFilterFromHighlightRoot(highlightRoot: HighlightRoot, mode: string): Filter {
 	if (!highlightRoot || highlightRoot.value == null) {
 		return null;
 	}
@@ -55,9 +54,9 @@ export function createFilterFromHighlightRoot(store: Store<any>, highlightRoot: 
 	return null;
 }
 
-export function addHighlightToFilterParams(store: any, filterParams: FilterParams, highlightRoot: HighlightRoot, mode: string): FilterParams {
+export function addHighlightToFilterParams(filterParams: FilterParams, highlightRoot: HighlightRoot, mode: string): FilterParams {
 	const params = _.cloneDeep(filterParams);
-	const highlightFilter = createFilterFromHighlightRoot(store, highlightRoot, mode);
+	const highlightFilter = createFilterFromHighlightRoot(highlightRoot, mode);
 	if (highlightFilter) {
 		params.filters.push(highlightFilter);
 	}
@@ -80,7 +79,7 @@ export function clearHighlightRoot(router: VueRouter) {
 	router.push(entry);
 }
 
-export function getHighlights(): Highlight {
+export function getHighlights(): Highlight { 
 	return {
 		root: routeGetters.getDecodedHighlightRoot(store()),
 		values: {

@@ -31,8 +31,8 @@ export default Vue.extend({
 	name: 'enable-type-change-menu',
 
 	props: {
-		field: String,
-		values: Array
+		field: String as () => string,
+		values: Array as () => Array<any>,
 	},
 
 	computed: {

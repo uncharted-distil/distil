@@ -17,7 +17,7 @@
 <script lang="ts">
 
 import Vue from 'vue';
-import { removeFilterFromRoute } from '../util/filters';
+import { removeFilterFromRoute, Filter } from '../util/filters';
 import { clearHighlightRoot } from '../util/highlights';
 import { removeMetaPrefix } from '../util/types';
 
@@ -25,8 +25,8 @@ export default Vue.extend({
 	name: 'filter-badge',
 
 	props: {
-		filter: Object,
-		activeFilter: Boolean
+		filter: Object as () => Filter,
+		activeFilter: Boolean as () => boolean
 	},
 
 	computed: {
