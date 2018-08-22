@@ -216,9 +216,11 @@ func Merge(schemaFile string, index string, dataset string, config *IngestTaskCo
 	if err != nil {
 		return errors.Wrap(err, "unable to load metadata schema")
 	}
+	mainDR := meta.GetMainDataResource()
+	dataFilename := translateSchemaRelativeToAbsoluteFilename(schemaFile, mainDR.ResPath)
 
 	// merge file links in dataset
-	mergedDR, output, err := merge.InjectFileLinksFromFile(meta, config.getTmpAbsolutePath(config.FeaturizationOutputDataRelative), config.getRawDataPath(), config.MergedOutputPathRelative, config.HasHeader)
+	mergedDR, output, err := merge.InjectFileLinksFromFile(meta, dataFilename, config.getRawDataPath(), config.MergedOutputPathRelative, config.HasHeader)
 	if err != nil {
 		return errors.Wrap(err, "unable to merge linked files")
 	}
@@ -470,4 +472,8 @@ func copyFileContents(source string, destination string) error {
 	}
 
 	return nil
+}
+
+func translateSchemaRelativeToAbsoluteFilename(schemalFilename string, dataFilename string) string {
+	return path.Join(path.Dir(schemalFilename), dataFilename)
 }
