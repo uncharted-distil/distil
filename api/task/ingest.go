@@ -154,10 +154,11 @@ func IngestDataset(metaCtor model.MetadataStorageCtor, index string, dataset str
 				return errors.Wrap(err, "unable to cluster all data")
 			}
 			log.Errorf("unable to cluster all data: %v", err)
+		} else {
+			latestSchemaOutput = config.getTmpAbsolutePath(config.ClusteringOutputSchemaRelative)
 		}
-	} else {
-		latestSchemaOutput = config.getTmpAbsolutePath(config.ClusteringOutputSchemaRelative)
 	}
+
 	log.Infof("finished clustering the dataset")
 
 	err = featurize(latestSchemaOutput, index, dataset, config)

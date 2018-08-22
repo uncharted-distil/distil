@@ -59,6 +59,7 @@ func FeaturizeContainer(schemaFile string, index string, dataset string, config 
 	featurizer := rest.NewFeaturizer(config.FeaturizationFunctionName, client)
 
 	// load metadata from cluster schema
+	log.Infof("Loading metadata from `%s`", schemaFile)
 	meta, err := metadata.LoadMetadataFromOriginalSchema(schemaFile)
 	if err != nil {
 		return errors.Wrap(err, "unable to load cluster schema file")
