@@ -63,6 +63,7 @@ export interface Group {
 	more?: number;
 	moreTotal?: number;
 	total?: number;
+	less?: number;
 	all?: (PlaceHolderFacet | CategoricalFacet | NumericalFacet)[];
 }
 

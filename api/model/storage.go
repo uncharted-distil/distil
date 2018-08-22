@@ -22,10 +22,6 @@ type DataStorage interface {
 	FetchResidualsSummary(dataset string, resultURI string, filterParams *FilterParams, extrema *Extrema) (*Histogram, error)
 	FetchResidualsExtremaByURI(dataset string, resultURI string) (*Extrema, error)
 	FetchExtremaByURI(dataset string, resultURI string, variable string) (*Extrema, error)
-	FetchStdDev(dataset string, variable *Variable, filterParams *FilterParams) (float64, error)
-	FetchStdDevByResult(dataset string, variable *Variable, resultURI string, filterParams *FilterParams) (float64, error)
-	FetchMean(dataset string, variable *Variable, filterParams *FilterParams) (float64, error)
-	FetchMeanByResult(dataset string, variable *Variable, resultURI string, filterParams *FilterParams) (float64, error)
 
 	// Dataset manipulation
 	SetDataType(dataset string, varName string, varType string) error

@@ -39,7 +39,7 @@
 			<div v-if='expanded' class='card-expanded'>
 				<span><h3>Full Description:</h3></span>
 				<p v-html='highlightedDescription()'></p>
-				<b-button class='full-width hover'variant='outline-secondary' v-on:click='toggleExpansion()'>
+				<b-button class='full-width hover' variant='outline-secondary' v-on:click='toggleExpansion()'>
 					Less Details...
 				</b-button>
 			</div>
@@ -75,18 +75,18 @@ export default Vue.extend({
 	name: 'dataset-preview',
 
 	props: {
-		'name': String,
-		'description': String,
-		'summary': String,
-		'summaryML': String,
-		'variables': Array,
-		'numRows': Number,
-		'numBytes': Number
+		'name': String as () => string,
+		'description': String as () => string,
+		'summary': String as () => string,
+		'summaryML': String as () => string,
+		'variables': Array as () => Array<Variable>,
+		'numRows': Number as () => number,
+		'numBytes': Number as () => number
 	},
 
 	computed: {
 		topVariables(): Variable[] {
-			return (<Variable[]>this.variables).slice(0).sort((a, b) => {
+			return this.variables.slice(0).sort((a, b) => {
 				return b.importance - a.importance;
 			}).slice(0, NUM_TOP_FEATURES);
 		}

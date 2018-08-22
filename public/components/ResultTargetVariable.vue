@@ -15,7 +15,7 @@
 <script lang="ts">
 
 import Vue from 'vue';
-import Facets from '../components/Facets';
+import Facets from '../components/Facets.vue';
 import { getters as routeGetters } from '../store/route/module';
 import { getters as resultsGetters } from '../store/results/module';
 import { Group, createGroups } from '../util/facets';

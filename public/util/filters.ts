@@ -31,6 +31,12 @@ export const ROW_FILTER = 'row';
 export const FEATURE_FILTER = 'feature';
 
 /**
+ * Text filter, omitting documents that have the specified text value;
+ * @constant {string}
+ */
+export const TEXT_FILTER = 'text';
+
+/**
  * Include filter, excluding documents that do not fall within the filter.
  * @constant {string}
  */

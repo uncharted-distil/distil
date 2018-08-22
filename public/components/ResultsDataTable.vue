@@ -80,11 +80,14 @@ export default Vue.extend({
 	},
 
 	props: {
-		title: String,
-		refName: String,
-		dataItems: Array,
-		dataFields: Object,
-		instanceName: { type: String, default: 'results-table-table' }
+		title: String as () => string,
+		refName: String as () => string,
+		dataItems: Array as () => Array<any>,
+		dataFields: Object as () => Dictionary<TableColumn>,
+		instanceName: { 
+			type: String as () => string, 
+			default: 'results-table-table'
+		}
 	},
 
 	computed: {

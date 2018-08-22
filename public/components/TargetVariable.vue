@@ -12,9 +12,9 @@
 
 import _ from 'lodash';
 import Vue from 'vue';
-import VariableFacets from '../components/VariableFacets';
+import VariableFacets from '../components/VariableFacets.vue';
 import { getters as routeGetters} from '../store/route/module';
-import { Group, createGroups } from '../util/facets';
+import { Group, createGroups, NumericalFacet } from '../util/facets';
 import { Highlight } from '../store/highlights/index';
 import { Variable, VariableSummary } from '../store/dataset/index';
 import { getHighlights, updateHighlightRoot } from '../util/highlights';
@@ -127,7 +127,7 @@ export default Vue.extend({
 			const summary = this.targetVariableSummaries[0];
 			return summary.buckets[0].key;
 		},
-		getNumericalFacetValue(): any {
+		getNumericalFacetValue(): {from: number, to: number} {
 			// facet library is incapable of selecting a range that isnt exactly
 			// on a bin boundary, so we need to iterate through and find it
 			// manually.
@@ -170,7 +170,7 @@ export default Vue.extend({
 						break;
 				}
 			}
-			const facet = group.facets[0] as any;
+			const facet = group.facets[0] as NumericalFacet;
 			const slices = facet.histogram.slices;
 			// case case set to full range
 			let fromSlice = _.toNumber(slices[0].label);

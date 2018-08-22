@@ -16,10 +16,11 @@
 <script lang="ts">
 
 import Vue from 'vue';
-import VariableFacets from '../components/VariableFacets';
+import VariableFacets from '../components/VariableFacets.vue';
 import { NUM_PER_PAGE } from '../util/data';
 
 import 'font-awesome/css/font-awesome.css';
+import { Group } from '../util/facets';
 
 export default Vue.extend({
 	name: 'variable-summaries',
@@ -29,11 +30,11 @@ export default Vue.extend({
 	},
 
 	props: {
-		groups: Array,
-		dataset: String,
-		instanceName: String,
-		enableHighlighting: Boolean,
-		enableTypeChange: Boolean
+		groups: Array as () => Array<Group>,
+		dataset: String as () => string,
+		instanceName: String as () => string,
+		enableHighlighting: Boolean as () => boolean,
+		enableTypeChange: Boolean as () => boolean
 	},
 
 	computed: {

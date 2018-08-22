@@ -24,7 +24,7 @@ export const actions = {
 			return null;
 		}
 
-		const filterParams = addHighlightToFilterParams(context, args.filterParams, args.highlightRoot, INCLUDE_FILTER);
+		const filterParams = addHighlightToFilterParams(args.filterParams, args.highlightRoot, INCLUDE_FILTER);
 
 		// commit empty place holders, if there is no data
 		return Promise.all(args.variables.map(variable => {
@@ -71,7 +71,7 @@ export const actions = {
 			variables: [],
 			filters: []
 		}
-		filterParams = addHighlightToFilterParams(context, filterParams, args.highlightRoot, INCLUDE_FILTER);
+		filterParams = addHighlightToFilterParams(filterParams, args.highlightRoot, INCLUDE_FILTER);
 
 		return Promise.all(args.training.map(variable => {
 			return axios.post(`/distil/training-summary/${args.dataset}/${variable.key}/${solution.resultId}`, filterParams)
@@ -108,7 +108,7 @@ export const actions = {
 			variables: [],
 			filters: []
 		}
-		filterParams = addHighlightToFilterParams(context, filterParams, args.highlightRoot, INCLUDE_FILTER);
+		filterParams = addHighlightToFilterParams(filterParams, args.highlightRoot, INCLUDE_FILTER);
 
 		return axios.post(`/distil/target-summary/${args.dataset}/${args.target}/${solution.resultId}`, filterParams)
 			.then(response => {
@@ -137,7 +137,7 @@ export const actions = {
 			variables: [],
 			filters: []
 		}
-		filterParams = addHighlightToFilterParams(context, filterParams, args.highlightRoot, INCLUDE_FILTER);
+		filterParams = addHighlightToFilterParams(filterParams, args.highlightRoot, INCLUDE_FILTER);
 
 		const solutions = getSolutionsByRequestIds(context.rootState.solutionModule, args.requestIds);
 		const endpoint = `/distil/predicted-summary/${args.dataset}/${args.target}`
@@ -166,7 +166,7 @@ export const actions = {
 			variables: [],
 			filters: []
 		}
-		filterParams = addHighlightToFilterParams(context, filterParams, args.highlightRoot, INCLUDE_FILTER);
+		filterParams = addHighlightToFilterParams(filterParams, args.highlightRoot, INCLUDE_FILTER);
 
 		const solutions = getSolutionsByRequestIds(context.rootState.solutionModule, args.requestIds);
 		const endpoint = `/distil/residuals-summary/${args.dataset}/${args.target}`;
@@ -192,7 +192,7 @@ export const actions = {
 			variables: [],
 			filters: []
 		}
-		filterParams = addHighlightToFilterParams(context, filterParams, args.highlightRoot, INCLUDE_FILTER);
+		filterParams = addHighlightToFilterParams(filterParams, args.highlightRoot, INCLUDE_FILTER);
 
 		const solutions = getSolutionsByRequestIds(context.rootState.solutionModule, args.requestIds);
 		const endpoint = `/distil/correctness-summary/${args.dataset}`

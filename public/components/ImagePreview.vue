@@ -21,7 +21,7 @@ import $ from 'jquery';
 import Vue from 'vue';
 import { getters as routeGetters } from '../store/route/module';
 import { circleSpinnerHTML } from '../util/spinner';
-import { D3M_INDEX_FIELD } from '../store/dataset/index';
+import { D3M_INDEX_FIELD, TableRow } from '../store/dataset/index';
 import { RowSelection } from '../store/highlights/index';
 import { isRowSelected } from '../util/row';
 
@@ -29,15 +29,15 @@ export default Vue.extend({
 	name: 'image-preview',
 
 	props: {
-		row: Object,
-		imageUrl: String,
+		row: Object as () => TableRow,
+		imageUrl: String as () => string,
 		width: {
 			default: 64,
-			type: Number
+			type: Number as () => number
 		},
 		height: {
 			default: 64,
-			type: Number
+			type: Number as () => number
 		},
 		onClick: Function
 	},

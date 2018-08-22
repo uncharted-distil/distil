@@ -48,8 +48,8 @@ func (s *Storage) PersistRequestFilters(requestID string, filters *model.FilterP
 			if err != nil {
 				return err
 			}
-		case model.CategoricalFilter:
-			_, err := s.client.Exec(sql, requestID, filter.Key, model.CategoricalFilter, filter.Mode, 0, 0, strings.Join(filter.Categories, ","), "")
+		case model.CategoricalFilter, model.FeatureFilter, model.TextFilter:
+			_, err := s.client.Exec(sql, requestID, filter.Key, filter.Type, filter.Mode, 0, 0, strings.Join(filter.Categories, ","), "")
 			if err != nil {
 				return err
 			}
@@ -198,6 +198,18 @@ func (s *Storage) FetchRequestFilters(requestID string, features []*model.Featur
 		switch filterType {
 		case model.CategoricalFilter:
 			filters.Filters = append(filters.Filters, model.NewCategoricalFilter(
+				featureName,
+				filterMode,
+				strings.Split(filterCategories, ","),
+			))
+		case model.FeatureFilter:
+			filters.Filters = append(filters.Filters, model.NewFeatureFilter(
+				featureName,
+				filterMode,
+				strings.Split(filterCategories, ","),
+			))
+		case model.TextFilter:
+			filters.Filters = append(filters.Filters, model.NewTextFilter(
 				featureName,
 				filterMode,
 				strings.Split(filterCategories, ","),

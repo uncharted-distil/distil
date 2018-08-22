@@ -8,15 +8,15 @@
 import _ from 'lodash';
 import $ from 'jquery';
 import Vue from 'vue';
-import { Group, CategoricalFacet, isCategoricalFacet, getCategoricalChunkSize } from '../util/facets';
+import { Group, CategoricalFacet, isCategoricalFacet, getCategoricalChunkSize, isNumericalFacet } from '../util/facets';
 import { Highlight, RowSelection } from '../store/highlights/index';
 import { VariableSummary } from '../store/dataset/index';
 import { Dictionary } from '../util/dict';
 import { getSelectedRows } from '../util/row';
 import Facets from '@uncharted.software/stories-facets';
-import ImagePreview from '../components/ImagePreview';
-import SparklinePreview from '../components/SparklinePreview';
-import TypeChangeMenu from '../components/TypeChangeMenu';
+import ImagePreview from '../components/ImagePreview.vue';
+import SparklinePreview from '../components/SparklinePreview.vue';
+import TypeChangeMenu from '../components/TypeChangeMenu.vue';
 import { circleSpinnerHTML } from '../util/spinner';
 
 import '@uncharted.software/stories-facets/dist/facets.css';
@@ -27,34 +27,34 @@ export default Vue.extend({
 	name: 'facets',
 
 	props: {
-		groups: Array,
-		highlights: Object,
-		rowSelection: Object,
-		deemphasis: Object,
-		enableTypeChange: Boolean,
-		enableHighlighting: Boolean,
-		ignoreHighlights: Boolean,
-		html: [ String, Object, Function ],
-		instanceName: String,
-		highlightArrows: Boolean,
-		solutionId: String,
+		groups: Array as () => Array<Group>,
+		highlights: Object as () => Highlight,
+		rowSelection: Object as () => RowSelection,
+		deemphasis: Object as () => any,
+		enableTypeChange: Boolean as () => boolean,
+		enableHighlighting: Boolean as () => boolean,
+		ignoreHighlights: Boolean as () => boolean,
+		html: [ String as () => string, Object as () => any, Function as () => Function ],
+		instanceName: String as () => string,
+		highlightArrows: Boolean as () => boolean,
+		solutionId: String as () => string,
 		sort: {
 			default: (a: { key: string }, b: { key: string }) => {
 				const textA = a.key.toLowerCase();
 				const textB = b.key.toLowerCase();
 				return (textA < textB) ? -1 : (textA > textB) ? 1 : 0;
 			},
-			type: Function
+			type: Function as () => Function
 		}
 	},
 
 	data() {
 		const component = this as any;
 		return {
-			facets: <any>{},
+			facets: {} as any,
 			debouncedInjection: _.debounce(component.injectHighlights, INJECT_DEBOUNCE),
-			numToDisplay: {},
-			numAddedToDisplay: {}
+			numToDisplay: {} as Dictionary<number>,
+			numAddedToDisplay: {} as Dictionary<number>
 		};
 	},
 
@@ -202,7 +202,9 @@ export default Vue.extend({
 
 					let remainingTotal = 0;
 					hide.forEach(facet => {
-						remainingTotal += facet.count;
+						if (isCategoricalFacet(facet)) {
+							remainingTotal += facet.count;
+						}
 					});
 					group.more = group.all.length - numToDisplay;
 					group.moreTotal = remainingTotal;
@@ -255,52 +257,39 @@ export default Vue.extend({
 	},
 
 	methods: {
-
-		isCategorical(group: any): boolean {
-			if (group.facets.length === 0) {
-				return false;
-			}
-			if (group.facets[0].histogram) {
-				return false;
-			}
-			return true;
-		},
-
-		isNumerical(group: any): boolean {
-			if (group.facets.length === 0) {
-				return false;
-			}
-			if (group.facets[0].histogram) {
-				return true;
-			}
-			return false;
-		},
-
-		injectHTML(group: any, $elem: JQuery) {
+		injectHTML(group: Group, $elem: JQuery) {
 			$elem.click(event => {
-				if (this.isNumerical(group)) {
-					const slices = group.facets[0].histogram.slices;
-					const first = slices[0];
-					const last = slices[slices.length - 1];
-					const range = {
-						from: _.toNumber(first.label),
-						to: _.toNumber(last.toLabel)
-					};
-					this.$emit('numerical-click', this.instanceName, group.key, range);
-				} else if (this.isCategorical(group)) {
-					this.$emit('categorical-click', this.instanceName, group.key);
+				if (group.facets.length >= 1) {
+					const facet = group.facets[0];
+					if (isNumericalFacet(facet)) {
+						const slices = facet.histogram.slices;						
+						const first = slices[0];
+						const last = slices[slices.length - 1];
+						const range = {
+							from: _.toNumber(first.label),
+							to: _.toNumber(last.toLabel)
+						};
+						this.$emit('numerical-click', this.instanceName, group.key, range);
+					} else if (isCategoricalFacet(facet)) {
+						this.$emit('categorical-click', this.instanceName, group.key);
+					}
 				}
 			});
 
 			$elem.find('.facet-histogram g').click(event => {
-				const slices = group.facets[0].histogram.slices;
-				const first = slices[0];
-				const last = slices[slices.length - 1];
-				const range = {
-					from: _.toNumber(first.label),
-					to: _.toNumber(last.toLabel)
-				};
-				this.$emit('numerical-click', this.instanceName, group.key, range);
+				if (group.facets.length >= 1) {
+					const facet = group.facets[0];
+					if (isNumericalFacet(facet)) {
+						const slices = facet.histogram.slices;
+						const first = slices[0];
+						const last = slices[slices.length - 1];
+						const range = {
+							from: _.toNumber(first.label),
+							to: _.toNumber(last.toLabel)
+						};
+						this.$emit('numerical-click', this.instanceName, group.key, range);
+					}
+				}
 			});
 
 			// inject type icon in group header
@@ -354,7 +343,7 @@ export default Vue.extend({
 				_.get(highlights, 'root.key') === key;
 		},
 
-		isHighlightedValue(highlights: any, key: string, value: any): boolean {
+		isHighlightedValue(highlights: Highlight, key: string, value: any): boolean {
 			// if not instance, return false
 			if (!this.isHighlightedGroup(highlights, key)) {
 				return false;
@@ -378,7 +367,7 @@ export default Vue.extend({
 			return null;
 		},
 
-		getHighlightSummaries(highlights: Highlight): any {
+		getHighlightSummaries(highlights: Highlight): VariableSummary[] {
 			if (highlights.values) {
 				return highlights.values.summaries;
 			}
@@ -745,10 +734,10 @@ export default Vue.extend({
 
 		getGroupSampleValues(group: Group): any[] {
 			let values = [];
-			group.facets.forEach((facet: any) => {
-				if (facet.histogram) {
+			group.facets.forEach(facet => {
+				if (isNumericalFacet(facet)) {
 					values = facet.histogram.slices.slice(0, 10).map(b => _.toNumber(b.label));
-				} else {
+				} else if (isCategoricalFacet(facet)) {
 					values.push(facet.value);
 				}
 			});

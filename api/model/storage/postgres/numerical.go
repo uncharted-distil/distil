@@ -15,6 +15,12 @@ type NumericalField struct {
 	Storage *Storage
 }
 
+// NumericalStats contains summary information on a numerical fields.
+type NumericalStats struct {
+	StdDev float64
+	Mean   float64
+}
+
 // NewNumericalField creates a new field for numerical types.
 func NewNumericalField(storage *Storage) *NumericalField {
 	field := &NumericalField{
@@ -33,31 +39,23 @@ func (f *NumericalField) FetchSummaryData(dataset string, variable *model.Variab
 		if err != nil {
 			return nil, err
 		}
-		stddev, err := f.Storage.FetchStdDev(dataset, variable, filterParams)
+		stats, err := f.FetchNumericalStats(dataset, variable, filterParams)
 		if err != nil {
 			return nil, err
 		}
-		histogram.StdDev = stddev
-		mean, err := f.Storage.FetchMean(dataset, variable, filterParams)
-		if err != nil {
-			return nil, err
-		}
-		histogram.Mean = mean
+		histogram.StdDev = stats.StdDev
+		histogram.Mean = stats.Mean
 	} else {
 		histogram, err = f.fetchHistogramByResult(dataset, variable, resultURI, filterParams, extrema)
 		if err != nil {
 			return nil, err
 		}
-		stddev, err := f.Storage.FetchStdDevByResult(dataset, variable, resultURI, filterParams)
+		stats, err := f.FetchNumericalStatsByResult(dataset, variable, resultURI, filterParams)
 		if err != nil {
 			return nil, err
 		}
-		histogram.StdDev = stddev
-		mean, err := f.Storage.FetchMeanByResult(dataset, variable, resultURI, filterParams)
-		if err != nil {
-			return nil, err
-		}
-		histogram.Mean = mean
+		histogram.StdDev = stats.StdDev
+		histogram.Mean = stats.Mean
 	}
 	return histogram, nil
 }
@@ -415,4 +413,85 @@ func (f *NumericalField) fetchResultsExtrema(resultURI string, dataset string, v
 	defer res.Close()
 
 	return f.parseExtrema(res, variable)
+}
+
+// FetchNumericalStats gets the variable's numerical summary info (mean, stddev).
+func (f *NumericalField) FetchNumericalStats(dataset string, variable *model.Variable, filterParams *model.FilterParams) (*NumericalStats, error) {
+	// create the filter for the query.
+	wheres := make([]string, 0)
+	params := make([]interface{}, 0)
+	wheres, params = f.Storage.buildFilteredQueryWhere(wheres, params, dataset, filterParams.Filters)
+
+	where := ""
+	if len(wheres) > 0 {
+		where = fmt.Sprintf("WHERE %s", strings.Join(wheres, " AND "))
+	}
+
+	// Create the complete query string.
+	query := fmt.Sprintf("SELECT stddev(\"%s\") as stddev, avg(\"%s\") as avg FROM %s %s;", variable.Key, variable.Key, dataset, where)
+
+	// execute the postgres query
+	res, err := f.Storage.client.Query(query, params...)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to fetch stats for variable from postgres")
+	}
+	if res != nil {
+		defer res.Close()
+	}
+
+	return f.parseStats(res)
+}
+
+// FetchNumericalStatsByResult gets the variable's numerical summary info (mean, stddev) for a result set.
+func (f *NumericalField) FetchNumericalStatsByResult(dataset string, variable *model.Variable, resultURI string, filterParams *model.FilterParams) (*NumericalStats, error) {
+	// get filter where / params
+	wheres, params, err := f.Storage.buildResultQueryFilters(dataset, resultURI, filterParams)
+	if err != nil {
+		return nil, err
+	}
+
+	params = append(params, resultURI)
+
+	where := ""
+	if len(wheres) > 0 {
+		where = fmt.Sprintf("AND %s", strings.Join(wheres, " AND "))
+	}
+
+	// Create the complete query string.
+	query := fmt.Sprintf("SELECT stddev(\"%s\") as stddev, avg(\"%s\") as avg FROM %s data INNER JOIN %s result ON data.\"%s\" = result.index WHERE result.result_id = $%d %s;",
+		variable.Key, variable.Key, dataset, f.Storage.getResultTable(dataset), model.D3MIndexFieldName, len(params), where)
+
+	// execute the postgres query
+	res, err := f.Storage.client.Query(query, params...)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to fetch stats for variable from postgres")
+	}
+	if res != nil {
+		defer res.Close()
+	}
+
+	return f.parseStats(res)
+}
+
+func (f *NumericalField) parseStats(row *pgx.Rows) (*NumericalStats, error) {
+	var stats *NumericalStats
+	if row != nil {
+		var stddev *float64
+		var mean *float64
+		// Expect one row of data.
+		row.Next()
+		err := row.Scan(&stddev, &mean)
+		if err != nil {
+			return nil, errors.Wrap(err, "no stats found")
+		}
+
+		stats = &NumericalStats{
+			StdDev: *stddev,
+			Mean:   *mean,
+		}
+	} else {
+		return nil, errors.Errorf("no stats found")
+	}
+
+	return stats, nil
 }

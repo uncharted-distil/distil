@@ -11,7 +11,7 @@
 
 <script lang="ts">
 
-import SolutionPreview from '../components/SolutionPreview';
+import SolutionPreview from '../components/SolutionPreview.vue';
 import { getters as solutionGetters } from '../store/solutions/module';
 import { Solution } from '../store/solutions/index';
 import Vue from 'vue';
@@ -26,7 +26,7 @@ export default Vue.extend({
 	props: {
 		maxSolutions: {
 		default: 20,
-			type: Number
+			type: Number as () => number
 		}
 	},
 
