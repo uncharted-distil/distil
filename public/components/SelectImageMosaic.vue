@@ -44,8 +44,8 @@ export default Vue.extend({
 	},
 
 	props: {
-		instanceName: String,
-		includedActive: Boolean,
+		instanceName: String as () => string,
+		includedActive: Boolean as () => boolean
 	},
 
 	data() {
