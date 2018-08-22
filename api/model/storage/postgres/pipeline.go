@@ -62,6 +62,7 @@ func (s *Storage) isBadSolution(solution *model.Solution) (bool, error) {
 	if !model.IsNumerical(variable.Type) {
 		return false, nil
 	}
+	f := NewNumericalField(s)
 
 	// predicted extrema
 	predictedExtrema, err := s.FetchResultsExtremaByURI(dataset, solution.Result.ResultURI)
@@ -70,20 +71,16 @@ func (s *Storage) isBadSolution(solution *model.Solution) (bool, error) {
 	}
 
 	// result mean and stddev
-	resultMean, err := s.FetchMean(dataset, variable, &model.FilterParams{})
-	if err != nil {
-		return false, err
-	}
-	resultStdDev, err := s.FetchStdDev(dataset, variable, &model.FilterParams{})
+	stats, err := f.FetchNumericalStats(dataset, variable, &model.FilterParams{})
 	if err != nil {
 		return false, err
 	}
 
-	minDiff := math.Abs(predictedExtrema.Min - resultMean)
-	maxDiff := math.Abs(predictedExtrema.Max - resultMean)
+	minDiff := math.Abs(predictedExtrema.Min - stats.Mean)
+	maxDiff := math.Abs(predictedExtrema.Max - stats.Mean)
 	numStdDevs := 10.0
 
-	return minDiff > (numStdDevs*resultStdDev) || maxDiff > (numStdDevs*resultStdDev), nil
+	return minDiff > (numStdDevs*stats.StdDev) || maxDiff > (numStdDevs*stats.StdDev), nil
 }
 
 // FetchSolution pulls solution information from Postgres.
