@@ -38,7 +38,7 @@
 				<div class="row flex-12">
 					<div class="col-12 d-flex flex-column">
 						<div class="row responsive-flex pb-3">
-							<select-data-table class="col-12 d-flex flex-column select-data-table pt-2"></select-data-table>
+							<select-data-slot class="col-12 d-flex flex-column pt-2"></select-data-slot>
 						</div>
 						<div class="row align-items-center">
 							<div class="col-12 d-flex flex-column">
@@ -57,7 +57,7 @@
 
 import Vue from 'vue';
 import CreateSolutionsForm from '../components/CreateSolutionsForm.vue';
-import SelectDataTable from '../components/SelectDataTable.vue';
+import SelectDataSlot from '../components/SelectDataSlot.vue';
 import AvailableTrainingVariables from '../components/AvailableTrainingVariables.vue';
 import TrainingVariables from '../components/TrainingVariables.vue';
 import TargetVariable from '../components/TargetVariable.vue';
@@ -70,7 +70,7 @@ export default Vue.extend({
 
 	components: {
 		CreateSolutionsForm,
-		SelectDataTable,
+		SelectDataSlot,
 		AvailableTrainingVariables,
 		TrainingVariables,
 		TargetVariable,

@@ -1,7 +1,7 @@
 <template>
 	<div>
-		<div class="image-container">
-			<div class="image-elem" ref="imageElem" @click.stop="onClick">
+		<div class="image-container" v-bind:class="{'selected': isSelected&&isLoaded}">
+			<div class="image-elem" v-bind:class="{'clickable': hasClick}" ref="imageElem" @click.stop="handleClick" v-bind:style="{'max-width': `${width}px`}">
 				<div v-if="isErrored">Error</div>
 				<div v-if="!isErrored && !isLoaded" v-html="spinnerHTML"></div>
 			</div>
@@ -17,21 +17,37 @@
 
 <script lang="ts">
 
+import $ from 'jquery';
 import Vue from 'vue';
 import { getters as routeGetters } from '../store/route/module';
 import { circleSpinnerHTML } from '../util/spinner';
+import { D3M_INDEX_FIELD, TableRow } from '../store/dataset/index';
+import { RowSelection } from '../store/highlights/index';
+import { isRowSelected } from '../util/row';
 
 export default Vue.extend({
 	name: 'image-preview',
 
 	props: {
+		row: Object as () => TableRow,
 		imageUrl: String as () => string,
+		width: {
+			default: 64,
+			type: Number as () => number
+		},
+		height: {
+			default: 64,
+			type: Number as () => number
+		},
+		onClick: Function
 	},
 
 	data() {
 		return {
 			zoomImage: false,
-			entry: null
+			entry: null,
+			zoomedWidth: 400,
+			zoomedHeight: 400
 		};
 	},
 
@@ -50,6 +66,17 @@ export default Vue.extend({
 		},
 		dataset(): string {
 			return routeGetters.getRouteDataset(this.$store);
+		},
+		hasClick(): boolean {
+			return !!this.onClick;
+		},
+		rowSelection(): RowSelection {
+			return routeGetters.getDecodedRowSelection(this.$store);
+		},
+		isSelected(): boolean {
+			if (this.row) {
+				return isRowSelected(this.rowSelection, this.row[D3M_INDEX_FIELD]);
+			}
 		}
 	},
 
@@ -61,26 +88,50 @@ export default Vue.extend({
 		if (!this.image) {
 			return;
 		}
-		const $elem = this.$refs.imageElem as any;
-		$elem.innerHTML = '';
-		$elem.appendChild(this.image.cloneNode());
-		const icon = document.createElement('i');
-		icon.className += 'fa fa-plus zoom-icon';
-		$elem.appendChild(icon);
+		const elem = this.$refs.imageElem as any;
+		if (elem) {
+			elem.innerHTML = '';
+			elem.appendChild(this.clonedImageElement(this.width, this.height));
+			const icon = document.createElement('i');
+			icon.className += 'fa fa-search-plus zoom-icon';
+			$(icon).click(event => {
+				this.showZoomedImage();
+				event.stopPropagation();
+			});
+			elem.appendChild(icon);
+		}
 	},
 
 	methods: {
-		onClick() {
+
+		handleClick() {
+			if (this.onClick) {
+				this.onClick({
+					row: this.row,
+					imageUrl: this.imageUrl,
+					image: this.image
+				});
+			}
+		},
+
+		showZoomedImage() {
 			if (this.image) {
 				const $elem = this.$refs.imageElemZoom as any;
 				$elem.innerHTML = '';
-				$elem.appendChild(this.image.cloneNode());
+				$elem.appendChild(this.clonedImageElement(this.zoomedWidth, this.zoomedHeight));
 			}
 			this.zoomImage = true;
 		},
 
 		hideModal() {
 			this.zoomImage = false;
+		},
+
+		clonedImageElement(width: number, height: number): HTMLImageElement {
+			const img = this.image.cloneNode();
+			$(img).css('max-width', `${width}px`);
+			$(img).css('max-height', `${height}px`);
+			return img as HTMLImageElement;
 		},
 
 		requestImage(url: string) {
@@ -104,23 +155,33 @@ export default Vue.extend({
 
 <style>
 
+.image-container {
+	border: 2px solid rgba(0,0,0,0);
+}
+.image-container.selected {
+	border: 2px solid #ff0067;
+}
+
 .image-elem {
 	position: relative;
-	max-width: 64px;
-	border-radius: 4px;
 }
 .image-elem:hover {
 	background-color: #000;
 }
 .image-elem img {
 	position: relative;
-	max-height: 64px;
-	max-width: 64px;
-	border-radius: 4px;
 }
-.image-elem img:hover {
+.image-elem.clickable {
+	cursor: pointer;
+}
+.image-elem.clickable img:hover {
 	opacity: 0.7;
 }
+
+.image-elem.clickable zoom-icon:hover {
+	opacity: 0.7;
+}
+
 .image-elem-zoom {
 	position: relative;
 	text-align: center;
@@ -133,8 +194,9 @@ export default Vue.extend({
 }
 .image-elem .zoom-icon {
 	position: absolute;
-	right: 4px;
-	top: 4px;
+	right: 0;
+	top: 0;
+	padding: 4px;
 	color: #fff;
 	visibility: hidden;
 }
@@ -143,6 +205,8 @@ export default Vue.extend({
 }
 
 .zoom-icon {
-	pointer-events: none;
+	cursor: pointer;
+	background-color: #424242;
+	/*pointer-events: none;*/
 }
 </style>
