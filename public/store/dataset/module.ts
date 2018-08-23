@@ -24,6 +24,8 @@ export const getters = {
 	getVariablesMap: read(moduleGetters.getVariablesMap),
 	getVariableTypesMap: read(moduleGetters.getVariableTypesMap),
 	getVariableSummaries: read(moduleGetters.getVariableSummaries),
+	// files
+	getFiles: read(moduleGetters.getFiles),
 	// included data
 	hasIncludedTableData: read(moduleGetters.hasIncludedTableData),
 	getIncludedTableData: read(moduleGetters.getIncludedTableData),
@@ -47,6 +49,11 @@ export const actions = {
 	setVariableType: dispatch(moduleActions.setVariableType),
 	fetchVariableSummary: dispatch(moduleActions.fetchVariableSummary),
 	fetchVariableSummaries: dispatch(moduleActions.fetchVariableSummaries),
+	// files
+	fetchFiles: dispatch(moduleActions.fetchFiles),
+	fetchImage: dispatch(moduleActions.fetchImage),
+	fetchTimeseries: dispatch(moduleActions.fetchTimeseries),
+	fetchFile: dispatch(moduleActions.fetchFile),
 	// included / excluded table data
 	fetchIncludedTableData: dispatch(moduleActions.fetchIncludedTableData),
 	fetchExcludedTableData: dispatch(moduleActions.fetchExcludedTableData),
@@ -60,6 +67,8 @@ export const mutations = {
 	setVariables: commit(moduleMutations.setVariables),
 	updateVariableType: commit(moduleMutations.updateVariableType),
 	updateVariableSummaries: commit(moduleMutations.updateVariableSummaries),
+	// files
+	updateFile: commit(moduleMutations.updateFile),
 	// included / excluded table data
 	setIncludedTableData: commit(moduleMutations.setIncludedTableData),
 	setExcludedTableData: commit(moduleMutations.setExcludedTableData),

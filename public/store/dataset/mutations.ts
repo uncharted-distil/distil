@@ -1,4 +1,5 @@
 import _ from 'lodash';
+import Vue from 'vue';
 import { DatasetState, Variable, Dataset, VariableSummary, TableData } from './index';
 import { updateSummaries } from '../../util/data';
 
@@ -19,9 +20,12 @@ export const mutations = {
 		state.variables[index].type = update.type;
 	},
 
-
 	updateVariableSummaries(state: DatasetState, summary: VariableSummary) {
 		updateSummaries(summary, state.variableSummaries);
+	},
+
+	updateFile(state: DatasetState, args: { url: string, file: any }) {
+		Vue.set(state.files, args.url, args.file);
 	},
 
 	// sets the current selected data into the store

@@ -78,6 +78,7 @@ export interface DatasetState {
 	datasets: Dataset[];
 	variables: Variable[];
 	variableSummaries: VariableSummary[];
+	files: Dictionary<any>;
 	includedTableData: TableData;
 	excludedTableData: TableData;
 }
@@ -91,6 +92,9 @@ export const state: DatasetState = {
 
 	// variable summary data for the active dataset
 	variableSummaries: [],
+
+	// linked files
+	files: {},
 
 	// selected data entries for the active dataset
 	includedTableData: null,

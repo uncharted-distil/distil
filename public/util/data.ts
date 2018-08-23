@@ -17,6 +17,22 @@ export const NUM_PER_PAGE = 10;
 // Identifies column names as one of the special result types.
 // Examples: weight_predicted, weight_error, weight_target
 
+export function parseTimeseriesFile(file: string): number[][] {
+	if (!file || file === '') {
+		console.warn('empty timeseries file');
+		return [];
+	}
+	let lines = file.split('\n');
+	lines = lines.slice(1, lines.length - 1); // remove header
+	return lines.map(entry => {
+		const split = entry.split(',');
+		return [
+			_.toNumber(split[0]), // x
+			_.toNumber(split[1]) // y
+		];
+	});
+}
+
 export function updateSummaries(summary: VariableSummary, summaries: VariableSummary[]) {
 	// TODO: add and check timestamps to ensure we don't overwrite old data?
 	const index = _.findIndex(summaries, r => r.key === summary.key);

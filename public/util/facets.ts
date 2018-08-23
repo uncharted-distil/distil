@@ -2,6 +2,9 @@ import _ from 'lodash';
 import { spinnerHTML } from '../util/spinner';
 import { formatValue } from '../util/types';
 import { VariableSummary } from '../store/dataset/index';
+import { parseTimeseriesFile } from '../util/data';
+import { store } from '../store/storeProvider';
+import { getters as datasetGetters } from '../store/dataset/module';
 
 export const CATEGORICAL_CHUNK_SIZE = 10;
 export const IMAGE_CHUNK_SIZE = 5;
@@ -30,6 +33,7 @@ export interface CategoricalFacet {
 	countLabel: string;
 	filterable: boolean;
 	segments: Segment[];
+	timeseries?: number[][];
 	file: string;
 }
 
@@ -124,7 +128,11 @@ export function createPendingFacet(summary: VariableSummary): Group {
 export function createSummaryFacet(summary: VariableSummary): Group {
 	switch (summary.type) {
 		case 'categorical':
-			return createCategoricalSummaryFacet(summary);
+			if (summary.varType === 'timeseries') {
+				return createTimeseriesSummaryFacet(summary);
+			} else {
+				return createCategoricalSummaryFacet(summary);
+			}
 		case 'numerical':
 			return createNumericalSummaryFacet(summary);
 	}
@@ -220,9 +228,17 @@ function createCategoricalSummaryFacet(summary: VariableSummary): Group {
 		total: total,
 		numRows: summary.numRows,
 		more: remaining.length,
-		moreTotal: remainingTotal,
-		all: facets
+		moreTotal: remainingTotal
 	};
+}
+
+function createTimeseriesSummaryFacet(summary: VariableSummary): Group {
+	const group = createCategoricalSummaryFacet(summary);
+	const files = datasetGetters.getFiles(store());
+	group.facets.forEach((facet: CategoricalFacet) => {
+		facet.timeseries = parseTimeseriesFile(files[facet.file]);
+	});
+	return group;
 }
 
 function getHistogramSlices(summary: VariableSummary) {
