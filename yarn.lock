@@ -25,9 +25,9 @@
   version "4.14.108"
   resolved "https://registry.yarnpkg.com/@types/lodash/-/lodash-4.14.108.tgz#02656af3add2e5b3174f830862c47421c00ef817"
 
-"@uncharted.software/stories-facets@2.12.6":
-  version "2.12.6"
-  resolved "https://registry.yarnpkg.com/@uncharted.software/stories-facets/-/stories-facets-2.12.6.tgz#6d19ba1e5d291acabda599d6fcc118f79e8844b4"
+"@uncharted.software/stories-facets@2.12.8":
+  version "2.12.8"
+  resolved "https://registry.yarnpkg.com/@uncharted.software/stories-facets/-/stories-facets-2.12.8.tgz#30d25a729ec32894998b8d4329d19c8b8940e470"
 
 "@webassemblyjs/ast@1.4.3":
   version "1.4.3"
@@ -6560,6 +6560,10 @@ vue-loader@14.2.2:
     vue-hot-reload-api "^2.2.0"
     vue-style-loader "^4.0.1"
     vue-template-es2015-compiler "^1.6.0"
+
+vue-observe-visibility@^0.4.1:
+  version "0.4.1"
+  resolved "https://registry.yarnpkg.com/vue-observe-visibility/-/vue-observe-visibility-0.4.1.tgz#741dfc6c7894f4f41abab9efa1a86b1eb5012b18"
 
 vue-router@3.0.1:
   version "3.0.1"

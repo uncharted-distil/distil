@@ -1,8 +1,8 @@
 <template>
-	<div>
+	<div v-observe-visibility="visibilityChanged" v-bind:class="{'is-hidden': !isVisible}">
 		<div class="image-container" v-bind:class="{'selected': isSelected&&isLoaded}">
 			<div class="image-elem" v-bind:class="{'clickable': hasClick}" ref="imageElem" @click.stop="handleClick" v-bind:style="{'max-width': `${width}px`}">
-				<div v-if="!isLoaded" v-html="spinnerHTML"></div>
+				<div v-if="!isLoaded" v-html="spinnerHTML" v-bind:style="{'width': `${width}px`, 'height': `${height}px`}"></div>
 			</div>
 		</div>
 		<b-modal id="image-zoom-modal" :title="imageUrl"
@@ -48,7 +48,10 @@ export default Vue.extend({
 			zoomImage: false,
 			entry: null,
 			zoomedWidth: 400,
-			zoomedHeight: 400
+			zoomedHeight: 400,
+			isVisible: false,
+			hasRendered: false,
+			hasRequested: false
 		};
 	},
 
@@ -81,11 +84,18 @@ export default Vue.extend({
 		}
 	},
 
-	mounted() {
-		this.requestImage();
-	},
-
 	methods: {
+
+		visibilityChanged(isVisible: boolean) {
+			this.isVisible = isVisible;
+			if (this.isVisible && !this.hasRequested) {
+				this.requestImage();
+				return;
+			}
+			if (this.isVisible && this.hasRequested && !this.hasRendered) {
+				this.injectImage();
+			}
+		},
 
 		handleClick() {
 			if (this.onClick) {
@@ -132,15 +142,19 @@ export default Vue.extend({
 					event.stopPropagation();
 				});
 				elem.appendChild(icon);
+				this.hasRendered;
 			}
 		},
 
 		requestImage() {
+			this.hasRequested = true;
 			datasetActions.fetchImage(this.$store, {
 				dataset: this.dataset,
 				url: this.imageUrl
 			}).then(() => {
-				this.injectImage();
+				if (this.isVisible) {
+					this.injectImage();
+				}
 			});
 		}
 	}
@@ -201,6 +215,9 @@ export default Vue.extend({
 .zoom-icon {
 	cursor: pointer;
 	background-color: #424242;
-	/*pointer-events: none;*/
+}
+
+.is-hidden {
+	visibility: hidden;
 }
 </style>

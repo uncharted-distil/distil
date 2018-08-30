@@ -1,6 +1,6 @@
 <template>
-	<div class="sparkline-container">
-		<svg v-if="isLoaded" ref="svg" class="line-chart" @click.stop="onClick"></svg>
+	<div class="sparkline-container" v-observe-visibility="visibilityChanged" v-bind:class="{'is-hidden': !isVisible}">
+		<svg v-if="isLoaded" ref="svg" class="line-chart" @click.stop="onClick" ></svg>
 		<i class="fa fa-plus zoom-icon"></i>
 		<div v-if="!isLoaded" v-html="spinnerHTML"></div>
 		<b-modal id="sparkline-zoom-modal" :title="timeSeriesUrl"
@@ -29,26 +29,10 @@ export default Vue.extend({
 			type: Object as () => any,
 			default: () => ({
 				top: 8,
-				right: 4,
+				right: 16,
 				bottom: 8,
-				left: 4
+				left: 16
 			})
-		},
-		smoothing: {
-			type: String as () => string,
-			default: 'basis'
-		},
-		className: {
-			type: String as () => string,
-			default: null
-		},
-		lastPointRadius: {
-			type: Number as () => number,
-			default: 0
-		},
-		xScaleType: {
-			type: String as () => string,
-			default: 'band'
 		},
 		timeSeriesUrl: {
 			type: String as () => string
@@ -57,7 +41,10 @@ export default Vue.extend({
 	data() {
 		return {
 			zoomSparkline: false,
-			entry: null
+			entry: null,
+			isVisible: false,
+			hasRendered: false,
+			hasRequested: false
 		};
 	},
 	computed: {
@@ -77,10 +64,17 @@ export default Vue.extend({
 			return circleSpinnerHTML();
 		}
 	},
-	mounted() {
-		this.requestTimeseries();
-	},
 	methods: {
+		visibilityChanged(isVisible: boolean) {
+			this.isVisible = isVisible;
+			if (this.isVisible && !this.hasRequested) {
+				this.requestTimeseries();
+				return;
+			}
+			if (this.isVisible && this.hasRequested && !this.hasRendered) {
+				this.injectTimeseries();
+			}
+		},
 		onClick() {
 			const $svg = this.$refs.svg as any;
 			const $elem = this.$refs.sparklineElemZoom as any;
@@ -101,14 +95,10 @@ export default Vue.extend({
 			svg.selectAll('*').remove();
 
 			const timeseries = this.timeseries;
-			const hasLastPoint = (this.lastPointRadius > 0 && timeseries.length > 0);
 			const dims = $svg.getBoundingClientRect();
 
 			let width = dims.width - this.margin.left - this.margin.right;
 			let height = dims.height - this.margin.top - this.margin.bottom;
-
-			height = hasLastPoint ? height - this.lastPointRadius : height;
-			width = hasLastPoint ? width - this.lastPointRadius : width;
 
 			if (width <= 0) {
 				console.warn('Invalid width for line chart');
@@ -120,12 +110,7 @@ export default Vue.extend({
 				return;
 			}
 
-			let xScale;
-			if (this.xScaleType === 'point') {
-				xScale = d3.scalePoint().range([0, width]);
-			} else {
-				xScale = d3.scaleBand().rangeRound([0, width], 0);
-			}
+			const xScale = d3.scalePoint().range([0, width]);
 			xScale.domain(timeseries.map(d => d[0]));
 
 			const min = d3.min(this.timeseries, d => d[1]);
@@ -135,17 +120,14 @@ export default Vue.extend({
 				.domain([min, max])
 				.range([height, 0]);
 
-			let curveType = d3.curveBasis;
-			if (this.smoothing === 'linear') {
-				curveType = d3.curveLinear;
-			}
+			const curveType = d3.curveLinear;
 
 			const line = d3.line()
 				.x(d => xScale(d[0]))
 				.y(d => yScale(d[1]))
 				.curve(curveType);
 
-			const className = this.className || 'line-chart';
+			const className = 'line-chart';
 			const g = svg.append('g')
 				.attr('transform', `translate(${this.margin.left}, ${this.margin.top})`)
 				.attr('class', className);
@@ -157,21 +139,17 @@ export default Vue.extend({
 				.attr('class', 'line')
 				.attr('d', line);
 
-			if (hasLastPoint) {
-				const lastPoint = timeseries[timeseries.length - 1];
-				g.append('circle')
-					.attr('cx', xScale(lastPoint[0]))
-					.attr('cy', yScale(lastPoint[1]))
-					.attr('r', this.lastPointRadius)
-					.attr('class', 'last-point');
-			}
+			this.hasRendered = true;
 		},
 		requestTimeseries() {
+			this.hasRequested = true;
 			datasetActions.fetchTimeseries(this.$store, {
 				dataset: this.dataset,
 				url: this.timeSeriesUrl
 			}).then(() => {
-				this.injectTimeseries();
+				if (this.isVisible) {
+					this.injectTimeseries();
+				}
 			});
 		}
 	}
@@ -227,4 +205,7 @@ svg.line-chart:hover g {
 	max-width: 50%;
 }
 
+.is-hidden {
+	visibility: hidden;
+}
 </style>
