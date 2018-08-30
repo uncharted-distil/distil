@@ -18,10 +18,11 @@ import * as d3 from 'd3';
 import _ from 'lodash';
 import Vue from 'vue';
 import { Dictionary } from '../util/dict';
-import { parseTimeseriesFile } from '../util/data';
 import { circleSpinnerHTML } from '../util/spinner';
 import { getters as routeGetters } from '../store/route/module';
 import { getters as datasetGetters, actions as datasetActions } from '../store/dataset/module';
+
+const INJECT_DEBOUNCE = 200;
 
 export default Vue.extend({
 	name: 'sparkline-preview',
@@ -60,7 +61,9 @@ export default Vue.extend({
 		}
 	},
 	data() {
+		const component = this as any;
 		return {
+			debouncedInjection: _.debounce(component.injectTimeseries, INJECT_DEBOUNCE),
 			zoomSparkline: false,
 			entry: null
 		};
@@ -76,8 +79,7 @@ export default Vue.extend({
 			return this.files[this.timeSeriesUrl];
 		},
 		timeseries(): number[][] {
-			const file = this.files[this.timeSeriesUrl];
-			return file ? parseTimeseriesFile(file) : null;
+			return this.files[this.timeSeriesUrl];
 		},
 		spinnerHTML(): string {
 			return circleSpinnerHTML();
@@ -87,7 +89,7 @@ export default Vue.extend({
 		this.requestTimeseries();
 	},
 	updated() {
-		this.injectTimeseries();
+		this.debouncedInjection();
 	},
 	methods: {
 		onClick() {
@@ -104,6 +106,8 @@ export default Vue.extend({
 			if (_.isEmpty(this.timeseries)) {
 				return;
 			}
+
+			console.log('draw');
 
 			const timeseries = this.timeseries;
 
@@ -139,7 +143,7 @@ export default Vue.extend({
 			xScale.domain(timeseries.map(d => d[0]));
 
 			const min = this.zeroBased ? 0 : d3.min(this.timeseries, d => d[1]);
-			const max = d3.max(timeseries, d => d[0]);
+			const max = d3.max(timeseries, d => d[1]);
 
 			const yScale = d3.scaleLinear()
 				.domain([min, max])
@@ -178,11 +182,11 @@ export default Vue.extend({
 		},
 		requestTimeseries() {
 
-			datasetActions.fetchFile(this.$store, {
+			datasetActions.fetchTimeseries(this.$store, {
 				dataset: this.dataset,
 				url: this.timeSeriesUrl
 			}).then(() => {
-				this.injectTimeseries();
+				this.debouncedInjection();
 			});
 		}
 	}

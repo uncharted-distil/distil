@@ -2,7 +2,6 @@ import _ from 'lodash';
 import { spinnerHTML } from '../util/spinner';
 import { formatValue } from '../util/types';
 import { VariableSummary } from '../store/dataset/index';
-import { parseTimeseriesFile } from '../util/data';
 import { store } from '../store/storeProvider';
 import { getters as datasetGetters } from '../store/dataset/module';
 
@@ -236,7 +235,7 @@ function createTimeseriesSummaryFacet(summary: VariableSummary): Group {
 	const group = createCategoricalSummaryFacet(summary);
 	const files = datasetGetters.getFiles(store());
 	group.facets.forEach((facet: CategoricalFacet) => {
-		facet.timeseries = parseTimeseriesFile(files[facet.file]);
+		facet.timeseries = files[facet.file];
 	});
 	return group;
 }

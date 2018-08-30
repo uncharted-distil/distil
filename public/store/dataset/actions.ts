@@ -10,6 +10,7 @@ import { createPendingSummary, createErrorSummary, createEmptyTableData } from '
 import { addHighlightToFilterParams } from '../../util/highlights';
 import { loadImage } from '../../util/image';
 import { getVarType } from '../../util/types';
+import { parseTimeseriesFile } from '../../util/data';
 
 export type DatasetContext = ActionContext<DatasetState, DistilState>;
 
@@ -120,7 +121,9 @@ export const actions = {
 			.then(response => {
 
 				const histogram = response.data.histogram;
+				console.log('histo: ', histogram);
 				if (histogram.files) {
+					console.log('fetching: ', histogram.files);
 					// if there a linked files, fetch those before resolving
 					return context.dispatch('fetchFiles', {
 						dataset: args.dataset,
@@ -179,25 +182,7 @@ export const actions = {
 			console.warn('`dataset` argument is missing');
 			return null;
 		}
-		return loadImage(`distil/image/${args.dataset}/media/${args.url}`)
-			.then(response => {
-				mutations.updateFile(context, { url: args.url, file: response });
-			})
-			.catch(error => {
-				console.error(error);
-			});
-	},
-
-	fetchFile(context: DatasetContext, args: { dataset: string, url: string }) {
-		if (!args.url) {
-			console.warn('`url` argument is missing');
-			return null;
-		}
-		if (!args.dataset) {
-			console.warn('`dataset` argument is missing');
-			return null;
-		}
-		return axios.get(`distil/timeseries/${args.dataset}/media/${args.url}`)
+		return loadImage(`distil/resource/${args.dataset}/media/${args.url}`)
 			.then(response => {
 				mutations.updateFile(context, { url: args.url, file: response });
 			})
@@ -215,9 +200,30 @@ export const actions = {
 			console.warn('`dataset` argument is missing');
 			return null;
 		}
-		return axios.get(`distil/timeseries/${args.dataset}/media/${args.url}`)
+		return axios.get(`distil/resource/${args.dataset}/timeseries/${args.url}`)
 			.then(response => {
-				mutations.updateFile(context, { url: args.url, file: response });
+				const file = parseTimeseriesFile(response.data);
+				if (file) {
+					mutations.updateFile(context, { url: args.url, file: file });
+				}
+			})
+			.catch(error => {
+				console.error(error);
+			});
+	},
+
+	fetchFile(context: DatasetContext, args: { dataset: string, url: string }) {
+		if (!args.url) {
+			console.warn('`url` argument is missing');
+			return null;
+		}
+		if (!args.dataset) {
+			console.warn('`dataset` argument is missing');
+			return null;
+		}
+		return axios.get(`distil/resource/${args.dataset}/${args.url}`)
+			.then(response => {
+				mutations.updateFile(context, { url: args.url, file: response.data });
 			})
 			.catch(error => {
 				console.error(error);
