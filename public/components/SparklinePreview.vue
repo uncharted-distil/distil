@@ -22,8 +22,6 @@ import { circleSpinnerHTML } from '../util/spinner';
 import { getters as routeGetters } from '../store/route/module';
 import { getters as datasetGetters, actions as datasetActions } from '../store/dataset/module';
 
-const INJECT_DEBOUNCE = 200;
-
 export default Vue.extend({
 	name: 'sparkline-preview',
 	props: {
@@ -39,10 +37,6 @@ export default Vue.extend({
 		smoothing: {
 			type: String as () => string,
 			default: 'basis'
-		},
-		zeroBased: {
-			type: Boolean as () => boolean,
-			default: false
 		},
 		className: {
 			type: String as () => string,
@@ -61,9 +55,7 @@ export default Vue.extend({
 		}
 	},
 	data() {
-		const component = this as any;
 		return {
-			debouncedInjection: _.debounce(component.injectTimeseries, INJECT_DEBOUNCE),
 			zoomSparkline: false,
 			entry: null
 		};
@@ -88,9 +80,6 @@ export default Vue.extend({
 	mounted() {
 		this.requestTimeseries();
 	},
-	updated() {
-		this.debouncedInjection();
-	},
 	methods: {
 		onClick() {
 			const $svg = this.$refs.svg as any;
@@ -107,14 +96,11 @@ export default Vue.extend({
 				return;
 			}
 
-			console.log('draw');
-
-			const timeseries = this.timeseries;
-
 			const $svg = this.$refs.svg as any;
 			const svg = d3.select($svg);
 			svg.selectAll('*').remove();
 
+			const timeseries = this.timeseries;
 			const hasLastPoint = (this.lastPointRadius > 0 && timeseries.length > 0);
 			const dims = $svg.getBoundingClientRect();
 
@@ -142,7 +128,7 @@ export default Vue.extend({
 			}
 			xScale.domain(timeseries.map(d => d[0]));
 
-			const min = this.zeroBased ? 0 : d3.min(this.timeseries, d => d[1]);
+			const min = d3.min(this.timeseries, d => d[1]);
 			const max = d3.max(timeseries, d => d[1]);
 
 			const yScale = d3.scaleLinear()
@@ -181,12 +167,11 @@ export default Vue.extend({
 			}
 		},
 		requestTimeseries() {
-
 			datasetActions.fetchTimeseries(this.$store, {
 				dataset: this.dataset,
 				url: this.timeSeriesUrl
 			}).then(() => {
-				this.debouncedInjection();
+				this.injectTimeseries();
 			});
 		}
 	}

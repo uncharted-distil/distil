@@ -85,10 +85,6 @@ export default Vue.extend({
 		this.requestImage();
 	},
 
-	updated() {
-		this.injectImage();
-	},
-
 	methods: {
 
 		handleClick() {
