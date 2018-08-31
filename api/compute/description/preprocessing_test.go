@@ -38,7 +38,7 @@ func TestCreateUserDatasetPipeline(t *testing.T) {
 	}
 
 	pipeline, err := CreateUserDatasetPipeline(
-		"test_user_pipeline", "a test user pipeline", variables, "test_target", []string{"test_var_0", "test_var_1", "test_var_3"})
+		"test_user_pipeline", "a test user pipeline", variables, "test_target", []string{"test_var_0", "test_var_1", "test_var_3"}, nil)
 
 	// assert 1st is a semantic type update
 	hyperParams := pipeline.GetSteps()[0].GetPrimitive().GetHyperparams()
@@ -76,7 +76,7 @@ func TestCreateUserDatasetPipelineMappingError(t *testing.T) {
 	}
 
 	pipeline, err := CreateUserDatasetPipeline(
-		"test_user_pipeline", "a test user pipeline", variables, "test_target", []string{"test_var_0"})
+		"test_user_pipeline", "a test user pipeline", variables, "test_target", []string{"test_var_0"}, nil)
 	assert.Error(t, err)
 	t.Logf("\n%s", proto.MarshalTextString(pipeline))
 }
@@ -93,7 +93,7 @@ func TestCreateUserDatasetEmpty(t *testing.T) {
 	}
 
 	pipeline, err := CreateUserDatasetPipeline(
-		"test_user_pipeline", "a test user pipeline", variables, "test_target", []string{"test_var_0"})
+		"test_user_pipeline", "a test user pipeline", variables, "test_target", []string{"test_var_0"}, nil)
 
 	assert.Nil(t, pipeline)
 	assert.Nil(t, err)

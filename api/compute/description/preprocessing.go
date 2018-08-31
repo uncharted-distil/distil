@@ -13,13 +13,14 @@ const defaultResource = "0"
 // CreateUserDatasetPipeline creates a pipeline description to capture user feature selection and
 // semantic type information.
 func CreateUserDatasetPipeline(name string, description string, allFeatures []*model.Variable,
-	targetFeature string, selectedFeatures []string) (*pipeline.PipelineDescription, error) {
+	targetFeature string, selectedFeatures []string, filters []*model.Filter) (*pipeline.PipelineDescription, error) {
 
 	// save the selected features in a set for quick lookup
 	selectedSet := map[string]bool{}
 	for _, v := range selectedFeatures {
 		selectedSet[strings.ToLower(v)] = true
 	}
+	columnIndices := mapColumns(allFeatures, selectedSet)
 
 	// create the semantic type update primitive
 	updateSemanticTypes, err := createUpdateSemanticTypes(allFeatures, selectedSet)
@@ -38,6 +39,8 @@ func CreateUserDatasetPipeline(name string, description string, allFeatures []*m
 		return nil, nil
 	}
 
+	filterData := createFilterData(filters, columnIndices)
+
 	// instantiate the pipeline
 	builder := NewBuilder(name, description)
 	for _, v := range updateSemanticTypes {
@@ -45,6 +48,9 @@ func CreateUserDatasetPipeline(name string, description string, allFeatures []*m
 	}
 	if removeFeatures != nil {
 		builder = builder.Add(removeFeatures)
+	}
+	for _, f := range filterData {
+		builder = builder.Add(f)
 	}
 
 	pip, err := builder.AddInferencePoint().Compile()
@@ -150,6 +156,31 @@ func createUpdateSemanticTypes(allFeatures []*model.Variable, selectedSet map[st
 	return semanticTypeUpdates, nil
 }
 
+func createFilterData(filters []*model.Filter, columnIndices map[string]int) []*StepData {
+
+	// Map the fiters to pipeline primitives
+	filterSteps := []*StepData{}
+	for _, f := range filters {
+		var filter *StepData
+		inclusive := f.Mode == model.IncludeFilter
+		colIndex := columnIndices[f.Key]
+
+		switch f.Type {
+		case model.NumericalFilter:
+			filter = NewNumericRangeFilterStep(defaultResource, colIndex, inclusive, *f.Min, *f.Max, false)
+		case model.CategoricalFilter:
+			filter = NewTermFilterStep(defaultResource, colIndex, inclusive, f.Categories, true)
+		case model.RowFilter:
+			filter = NewTermFilterStep(defaultResource, colIndex, inclusive, f.D3mIndices, true)
+		case model.FeatureFilter, model.TextFilter:
+			filter = NewTermFilterStep(defaultResource, colIndex, inclusive, f.Categories, false)
+		}
+
+		filterSteps = append(filterSteps, filter)
+	}
+	return filterSteps
+}
+
 // CreateSlothPipeline creates a pipeline to peform timeseries clustering on a dataset.
 func CreateSlothPipeline(name string, description string, targetColumns []string, outputLabels []string) (*pipeline.PipelineDescription, error) {
 	// insantiate the pipeline
@@ -236,4 +267,17 @@ func CreatePCAFeaturesPipeline(name string, description string) (*pipeline.Pipel
 		return nil, err
 	}
 	return pipeline, nil
+}
+
+func mapColumns(allFeatures []*model.Variable, selectedSet map[string]bool) map[string]int {
+	colIndices := make(map[string]int)
+	index := 0
+	for _, f := range allFeatures {
+		if selectedSet[f.Key] {
+			colIndices[f.Key] = index
+			index = index + 1
+		}
+	}
+
+	return colIndices
 }
