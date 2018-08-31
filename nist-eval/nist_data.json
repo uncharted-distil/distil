@@ -1,7 +1,0 @@
-{
-    "nist_deploy": true,
-    "distil_image": "registry.datadrivendiscovery.org/j18_ta3eval/distil/distil:stable",
-    "pg_image": "registry.datadrivendiscovery.org/j18_ta3eval/distil/distil_dev_postgres:stable",
-    "es_image": "registry.datadrivendiscovery.org/j18_ta3eval/distil/distil_dev_es:stable",
-    "ta2_image": "docker.uncharted.software/distil-pipeline-server:latest"
-}
