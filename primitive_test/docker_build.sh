@@ -1,3 +1,3 @@
 #!/bin/bash
 
-docker build -t primitive_test .
+docker build --no-cache -t primitive_test .
