@@ -157,7 +157,7 @@ func parseList(v interface{}) (*pipeline.ValueRaw, error) {
 	for i := 0; i < refValue.Len(); i++ {
 		refElement := refValue.Index(i)
 		switch refElement.Kind() {
-		case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64, reflect.String, reflect.Bool:
+		case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64, reflect.String, reflect.Bool, reflect.Float32, reflect.Float64:
 			value, err = parseValue(refElement.Interface())
 		case reflect.Slice:
 			value, err = parseList(refElement.Interface())
@@ -203,7 +203,7 @@ func parseMap(vmap interface{}) (*pipeline.ValueRaw, error) {
 
 		refElement := refValue.MapIndex(key)
 		switch refElement.Kind() {
-		case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64, reflect.String, reflect.Bool:
+		case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64, reflect.String, reflect.Bool, reflect.Float32, reflect.Float64:
 			value, err = parseValue(refElement.Interface())
 		case reflect.Slice:
 			value, err = parseList(refElement.Interface())
@@ -237,6 +237,12 @@ func parseValue(v interface{}) (*pipeline.ValueRaw, error) {
 		return &pipeline.ValueRaw{
 			Raw: &pipeline.ValueRaw_Int64{
 				Int64: refValue.Int(),
+			},
+		}, nil
+	case reflect.Float32, reflect.Float64:
+		return &pipeline.ValueRaw{
+			Raw: &pipeline.ValueRaw_Double{
+				Double: refValue.Float(),
 			},
 		}, nil
 	case reflect.String:

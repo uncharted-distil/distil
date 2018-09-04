@@ -26,10 +26,13 @@ func createTestStep(step int64) *StepData {
 			"testString":         fmt.Sprintf("hyperparam-%d", step),
 			"testBool":           step%2 == 0,
 			"testInt":            step,
+			"testFloat":          float64(step) + 0.5,
 			"testStringArray":    labels,
 			"testBoolArray":      []bool{step%2 == 0, step%2 != 0},
 			"testIntArray":       []int64{step, step + 1},
-			"testIntMap":         map[string]int64{labels[0]: int64(step), labels[1]: int64(step)},
+			"testFloatArray":     []float64{float64(step) + 0.5, float64(step) + 1.5},
+			"testIntMap":         map[string]int64{labels[0]: int64(step), labels[1]: int64(step + 1)},
+			"testFloatMap":       map[string]float64{labels[0]: float64(step) + 0.5, labels[1]: float64(step) + 1.5},
 			"testNestedIntArray": [][]int64{{step, step + 1}, {step + 2, step + 3}},
 			"testNestedIntMap":   map[string][]int64{labels[0]: {step, step + 1}, labels[1]: {step + 2, step + 3}},
 		},
@@ -60,10 +63,26 @@ func ConvertToIntArray(list *pipeline.ValueList) []int64 {
 	return arr
 }
 
+func ConvertToFloatArray(list *pipeline.ValueList) []float64 {
+	arr := []float64{}
+	for _, v := range list.Items {
+		arr = append(arr, v.GetDouble())
+	}
+	return arr
+}
+
 func ConvertToIntMap(dict *pipeline.ValueDict) map[string]int64 {
 	mp := map[string]int64{}
 	for k, v := range dict.Items {
 		mp[k] = v.GetInt64()
+	}
+	return mp
+}
+
+func ConvertToFloatMap(dict *pipeline.ValueDict) map[string]float64 {
+	mp := map[string]float64{}
+	for k, v := range dict.Items {
+		mp[k] = v.GetDouble()
 	}
 	return mp
 }
@@ -104,17 +123,25 @@ func testStep(t *testing.T, index int64, step *StepData, steps []*pipeline.Pipel
 
 	assert.Equal(t, index%2 == 0, steps[index].GetPrimitive().GetHyperparams()["testBool"].GetValue().GetData().GetRaw().GetBool())
 
+	assert.Equal(t, float64(index)+0.5, steps[index].GetPrimitive().GetHyperparams()["testFloat"].GetValue().GetData().GetRaw().GetDouble())
+
 	assert.Equal(t, labels,
 		ConvertToStringArray(steps[index].GetPrimitive().GetHyperparams()["testStringArray"].GetValue().GetData().GetRaw().GetList()))
 
 	assert.Equal(t, []int64{int64(index), int64(index) + 1},
 		ConvertToIntArray(steps[index].GetPrimitive().GetHyperparams()["testIntArray"].GetValue().GetData().GetRaw().GetList()))
 
+	assert.Equal(t, []float64{float64(index) + 0.5, float64(index) + 1.5},
+		ConvertToFloatArray(steps[index].GetPrimitive().GetHyperparams()["testFloatArray"].GetValue().GetData().GetRaw().GetList()))
+
 	assert.Equal(t, []bool{index%2 == 0, index%2 != 0},
 		ConvertToBoolArray(steps[index].GetPrimitive().GetHyperparams()["testBoolArray"].GetValue().GetData().GetRaw().GetList()))
 
-	assert.Equal(t, map[string]int64{labels[0]: int64(index), labels[1]: int64(index)},
+	assert.Equal(t, map[string]int64{labels[0]: int64(index), labels[1]: int64(index + 1)},
 		ConvertToIntMap(steps[index].GetPrimitive().GetHyperparams()["testIntMap"].GetValue().GetData().GetRaw().GetDict()))
+
+	assert.Equal(t, map[string]float64{labels[0]: float64(index) + 0.5, labels[1]: float64(index) + 1.5},
+		ConvertToFloatMap(steps[index].GetPrimitive().GetHyperparams()["testFloatMap"].GetValue().GetData().GetRaw().GetDict()))
 
 	assert.Equal(t, [][]int64{{index, index + 1}, {index + 2, index + 3}},
 		ConvertToNestedIntArray(steps[index].GetPrimitive().GetHyperparams()["testNestedIntArray"].GetValue().GetData().GetRaw().GetList()))
