@@ -8,6 +8,8 @@ import { HighlightRoot } from '../highlights/index';
 import { FilterParams, INCLUDE_FILTER } from '../../util/filters';
 import { createPendingSummary, createErrorSummary, createEmptyTableData } from '../../util/data';
 import { addHighlightToFilterParams } from '../../util/highlights';
+import { loadImage } from '../../util/image';
+import { getVarType } from '../../util/types';
 
 export type DatasetContext = ActionContext<DatasetState, DistilState>;
 
@@ -116,7 +118,21 @@ export const actions = {
 		}
 		return axios.post(`/distil/variable-summary/${args.dataset}/${args.variable}`, {})
 			.then(response => {
-				mutations.updateVariableSummaries(context, response.data.histogram);
+
+				const histogram = response.data.histogram;
+				if (histogram.files) {
+					// if there a linked files, fetch those before resolving
+					return context.dispatch('fetchFiles', {
+						dataset: args.dataset,
+						variable: args.variable,
+						urls: histogram.files
+					}).then(() => {
+						mutations.updateVariableSummaries(context, histogram);
+					});
+				} else {
+					mutations.updateVariableSummaries(context, histogram);
+				}
+
 			})
 			.catch(error => {
 				console.error(error);
@@ -124,6 +140,87 @@ export const actions = {
 				const label = args.variable;
 				const dataset = args.dataset;
 				mutations.updateVariableSummaries(context,  createErrorSummary(key, label, dataset, error));
+			});
+	},
+
+	// update filtered data based on the current filter state
+	fetchFiles(context: DatasetContext, args: { dataset: string, variable: string, urls: string[] }) {
+		if (!args.urls) {
+			console.warn('`url` argument is missing');
+			return null;
+		}
+		const type = getVarType(args.variable);
+		return Promise.all(args.urls.map(url => {
+			if (type == 'image') {
+				return context.dispatch('fetchImage', {
+					dataset: args.dataset,
+					url: url
+				});
+			}
+			if (type == 'timeseries') {
+				return context.dispatch('fetchTimeseries', {
+					dataset: args.dataset,
+					url: url
+				});
+			}
+			return context.dispatch('fetchFile', {
+				dataset: args.dataset,
+				url: url
+			});
+		}));
+	},
+
+	fetchImage(context: DatasetContext, args: { dataset: string, url: string }) {
+		if (!args.url) {
+			console.warn('`url` argument is missing');
+			return null;
+		}
+		if (!args.dataset) {
+			console.warn('`dataset` argument is missing');
+			return null;
+		}
+		return loadImage(`distil/image/${args.dataset}/${args.url}`)
+			.then(response => {
+				mutations.updateFile(context, { url: args.url, file: response });
+			})
+			.catch(error => {
+				console.error(error);
+			});
+	},
+
+	fetchTimeseries(context: DatasetContext, args: { dataset: string, url: string }) {
+		if (!args.url) {
+			console.warn('`url` argument is missing');
+			return null;
+		}
+		if (!args.dataset) {
+			console.warn('`dataset` argument is missing');
+			return null;
+		}
+		return axios.get(`distil/timeseries/${args.dataset}/${args.url}`)
+			.then(response => {
+				mutations.updateFile(context, { url: args.url, file: response.data.timeseries });
+			})
+			.catch(error => {
+				console.error(error);
+			});
+	},
+
+	fetchFile(context: DatasetContext, args: { dataset: string, url: string }) {
+		if (!args.url) {
+			console.warn('`url` argument is missing');
+			return null;
+		}
+		if (!args.dataset) {
+			console.warn('`dataset` argument is missing');
+			return null;
+		}
+		return axios.get(`distil/resource/${args.dataset}/${args.url}`)
+			.then(response => {
+				mutations.updateFile(context, { url: args.url, file: response.data });
+			})
+			.catch(error => {
+				console.error(error);
 			});
 	},
 

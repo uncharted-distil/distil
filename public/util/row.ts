@@ -40,6 +40,9 @@ export function getNumIncludedRows(selection: RowSelection): number {
 		return 0;
 	}
 	const includedData = dataGetters.getIncludedTableDataItems(store());
+	if (!includedData) {
+		return 0;
+	}
 	const d3mIndices = {};
 	selection.d3mIndices.forEach(index => {
 		d3mIndices[index] = true;
@@ -114,6 +117,10 @@ export function getSelectedRows(selection: RowSelection): Row[] {
 	} else if (path === RESULTS_ROUTE) {
 		includedData = resultsGetters.getIncludedResultTableDataItems(store());
 		excludedData = resultsGetters.getExcludedResultTableDataItems(store());
+	}
+
+	if (!includedData) {
+		return [];
 	}
 
 	const d3mIndices = {};

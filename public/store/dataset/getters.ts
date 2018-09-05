@@ -34,6 +34,10 @@ export const getters = {
 		return state.variableSummaries;
 	},
 
+	getFiles(state: DatasetState): Dictionary<any> {
+		return state.files;
+	},
+
 	hasIncludedTableData(state: DatasetState): boolean {
 		return !!state.includedTableData;
 	},

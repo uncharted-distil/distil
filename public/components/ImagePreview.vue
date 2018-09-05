@@ -1,9 +1,8 @@
 <template>
-	<div>
+	<div v-observe-visibility="visibilityChanged" v-bind:class="{'is-hidden': !isVisible}">
 		<div class="image-container" v-bind:class="{'selected': isSelected&&isLoaded}">
 			<div class="image-elem" v-bind:class="{'clickable': hasClick}" ref="imageElem" @click.stop="handleClick" v-bind:style="{'max-width': `${width}px`}">
-				<div v-if="isErrored">Error</div>
-				<div v-if="!isErrored && !isLoaded" v-html="spinnerHTML"></div>
+				<div v-if="!isLoaded" v-html="spinnerHTML" v-bind:style="{'width': `${width}px`, 'height': `${height}px`}"></div>
 			</div>
 		</div>
 		<b-modal id="image-zoom-modal" :title="imageUrl"
@@ -19,11 +18,13 @@
 
 import $ from 'jquery';
 import Vue from 'vue';
+import { getters as datasetGetters, actions as datasetActions } from '../store/dataset/module';
 import { getters as routeGetters } from '../store/route/module';
 import { circleSpinnerHTML } from '../util/spinner';
 import { D3M_INDEX_FIELD, TableRow } from '../store/dataset/index';
 import { RowSelection } from '../store/highlights/index';
 import { isRowSelected } from '../util/row';
+import { Dictionary } from '../util/dict';
 
 export default Vue.extend({
 	name: 'image-preview',
@@ -47,19 +48,22 @@ export default Vue.extend({
 			zoomImage: false,
 			entry: null,
 			zoomedWidth: 400,
-			zoomedHeight: 400
+			zoomedHeight: 400,
+			isVisible: false,
+			hasRendered: false,
+			hasRequested: false
 		};
 	},
 
 	computed: {
-		isLoaded(): boolean {
-			return this.entry && this.entry.image;
+		files(): Dictionary<any> {
+			return datasetGetters.getFiles(this.$store);
 		},
-		isErrored(): boolean {
-			return this.entry && this.entry.err;
+		isLoaded(): boolean {
+			return !!this.files[this.imageUrl];
 		},
 		image(): HTMLImageElement {
-			return this.entry ? this.entry.image : null;
+			return this.files[this.imageUrl];
 		},
 		spinnerHTML(): string {
 			return circleSpinnerHTML();
@@ -80,29 +84,18 @@ export default Vue.extend({
 		}
 	},
 
-	mounted() {
-		this.requestImage(this.imageUrl);
-	},
-
-	updated() {
-		if (!this.image) {
-			return;
-		}
-		const elem = this.$refs.imageElem as any;
-		if (elem) {
-			elem.innerHTML = '';
-			elem.appendChild(this.clonedImageElement(this.width, this.height));
-			const icon = document.createElement('i');
-			icon.className += 'fa fa-search-plus zoom-icon';
-			$(icon).click(event => {
-				this.showZoomedImage();
-				event.stopPropagation();
-			});
-			elem.appendChild(icon);
-		}
-	},
-
 	methods: {
+
+		visibilityChanged(isVisible: boolean) {
+			this.isVisible = isVisible;
+			if (this.isVisible && !this.hasRequested) {
+				this.requestImage();
+				return;
+			}
+			if (this.isVisible && this.hasRequested && !this.hasRendered) {
+				this.injectImage();
+			}
+		},
 
 		handleClick() {
 			if (this.onClick) {
@@ -134,19 +127,34 @@ export default Vue.extend({
 			return img as HTMLImageElement;
 		},
 
-		requestImage(url: string) {
-			return new Promise((resolve, reject) => {
-				const image = new Image();
-				image.onload = () => {
-					this.entry = { url: url, image: image };
-				};
-				image.onerror = (event: any) => {
-					const err = new Error(`Unable to load image from URL: \`${event.path[0].currentSrc}\``);
-					this.entry = { url: url, err: err };
-					reject(err);
-				};
-				image.crossOrigin = 'anonymous';
-				image.src = `distil/image/${this.dataset}/media/${url}`;
+		injectImage() {
+			if (!this.image) {
+				return;
+			}
+			const elem = this.$refs.imageElem as any;
+			if (elem) {
+				elem.innerHTML = '';
+				elem.appendChild(this.clonedImageElement(this.width, this.height));
+				const icon = document.createElement('i');
+				icon.className += 'fa fa-search-plus zoom-icon';
+				$(icon).click(event => {
+					this.showZoomedImage();
+					event.stopPropagation();
+				});
+				elem.appendChild(icon);
+				this.hasRendered;
+			}
+		},
+
+		requestImage() {
+			this.hasRequested = true;
+			datasetActions.fetchImage(this.$store, {
+				dataset: this.dataset,
+				url: this.imageUrl
+			}).then(() => {
+				if (this.isVisible) {
+					this.injectImage();
+				}
 			});
 		}
 	}
@@ -207,6 +215,9 @@ export default Vue.extend({
 .zoom-icon {
 	cursor: pointer;
 	background-color: #424242;
-	/*pointer-events: none;*/
+}
+
+.is-hidden {
+	visibility: hidden;
 }
 </style>

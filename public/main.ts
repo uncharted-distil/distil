@@ -1,6 +1,7 @@
 import Vue from 'vue';
 import VueRouter from 'vue-router';
 import VueRouterSync from 'vuex-router-sync';
+import VueObserveVisibility from 'vue-observe-visibility'
 import Home from './views/Home.vue';
 import Search from './views/Search.vue';
 import SelectTarget from './views/SelectTarget.vue';
@@ -25,6 +26,7 @@ import './styles/main.css';
 
 Vue.use(VueRouter);
 Vue.use(BootstrapVue);
+Vue.use(VueObserveVisibility);
 
 export const router = new VueRouter({
 	routes: [

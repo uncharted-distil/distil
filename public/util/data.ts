@@ -14,9 +14,6 @@ export const ERROR_SUFFIX = '_error';
 
 export const NUM_PER_PAGE = 10;
 
-// Identifies column names as one of the special result types.
-// Examples: weight_predicted, weight_error, weight_target
-
 export function updateSummaries(summary: VariableSummary, summaries: VariableSummary[]) {
 	// TODO: add and check timestamps to ensure we don't overwrite old data?
 	const index = _.findIndex(summaries, r => r.key === summary.key);

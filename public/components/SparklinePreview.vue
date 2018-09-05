@@ -1,9 +1,8 @@
 <template>
-	<div class="sparkline-container">
-		<svg v-if="isLoaded" ref="svg" class="line-chart" @click.stop="onClick"></svg>
+	<div class="sparkline-container" v-observe-visibility="visibilityChanged" v-bind:class="{'is-hidden': !isVisible}">
+		<svg v-if="isLoaded" ref="svg" class="line-chart" @click.stop="onClick" ></svg>
 		<i class="fa fa-plus zoom-icon"></i>
-		<div v-if="isErrored">Error</div>
-		<div v-if="!isErrored && !isLoaded" v-html="spinnerHTML"></div>
+		<div v-if="!isLoaded" v-html="spinnerHTML"></div>
 		<b-modal id="sparkline-zoom-modal" :title="timeSeriesUrl"
 			@hide="hideModal"
 			:visible="!!zoomSparkline"
@@ -17,9 +16,11 @@
 
 import * as d3 from 'd3';
 import _ from 'lodash';
-import axios from 'axios';
 import Vue from 'vue';
+import { Dictionary } from '../util/dict';
 import { circleSpinnerHTML } from '../util/spinner';
+import { getters as routeGetters } from '../store/route/module';
+import { getters as datasetGetters, actions as datasetActions } from '../store/dataset/module';
 
 export default Vue.extend({
 	name: 'sparkline-preview',
@@ -28,30 +29,10 @@ export default Vue.extend({
 			type: Object as () => any,
 			default: () => ({
 				top: 8,
-				right: 4,
+				right: 16,
 				bottom: 8,
-				left: 4
+				left: 16
 			})
-		},
-		smoothing: {
-			type: String as () => string,
-			default: 'basis'
-		},
-		zeroBased: {
-			type: Boolean as () => boolean,
-			default: false
-		},
-		className: {
-			type: String as () => string,
-			default: null
-		},
-		lastPointRadius: {
-			type: Number as () => number,
-			default: 0
-		},
-		xScaleType: {
-			type: String as () => string,
-			default: 'band'
 		},
 		timeSeriesUrl: {
 			type: String as () => string
@@ -60,103 +41,40 @@ export default Vue.extend({
 	data() {
 		return {
 			zoomSparkline: false,
-			entry: null
+			entry: null,
+			isVisible: false,
+			hasRendered: false,
+			hasRequested: false
 		};
 	},
 	computed: {
+		dataset(): string {
+			return routeGetters.getRouteDataset(this.$store);
+		},
+		files(): Dictionary<any> {
+			return datasetGetters.getFiles(this.$store);
+		},
 		isLoaded(): boolean {
-			return this.entry && this.entry.timeseries;
+			return this.files[this.timeSeriesUrl];
 		},
-		isErrored(): boolean {
-			return this.entry && this.entry.err;
-		},
-		timeseries(): any[] {
-			return this.entry ? this.entry.timeseries : null;
+		timeseries(): number[][] {
+			return this.files[this.timeSeriesUrl];
 		},
 		spinnerHTML(): string {
 			return circleSpinnerHTML();
 		}
 	},
-	mounted() {
-		this.requestTimeseries(this.timeSeriesUrl);
-	},
-	updated() {
-		if (_.isEmpty(this.timeseries)) {
-			return;
-		}
-
-		const timeseries = this.timeseries;
-
-		const $svg = this.$refs.svg as any;
-		const svg = d3.select($svg);
-		svg.selectAll('*').remove();
-
-		const hasLastPoint = (this.lastPointRadius > 0 && timeseries.length > 0);
-		const dims = $svg.getBoundingClientRect();
-
-		let width = dims.width - this.margin.left - this.margin.right;
-		let height = dims.height - this.margin.top - this.margin.bottom;
-
-		height = hasLastPoint ? height - this.lastPointRadius : height;
-		width = hasLastPoint ? width - this.lastPointRadius : width;
-
-		if (width <= 0) {
-			console.warn('Invalid width for line chart');
-			return;
-		}
-
-		if (height <= 0) {
-			console.warn('Invalid height for line chart');
-			return;
-		}
-
-		let xScale;
-		if (this.xScaleType === 'point') {
-			xScale = d3.scalePoint().range([0, width]);
-		} else {
-			xScale = d3.scaleBand().rangeRound([0, width], 0);
-		}
-		xScale.domain(timeseries.map(d => d.timestamp));
-
-		const min = this.zeroBased ? 0 : d3.min(this.timeseries, d => d.count);
-		const max = d3.max(timeseries, d => d.count);
-
-		const yScale = d3.scaleLinear()
-			.domain([min, max])
-			.range([height, 0]);
-
-		let curveType = d3.curveBasis;
-		if (this.smoothing === 'linear') {
-			curveType = d3.curveLinear;
-		}
-
-		const line = d3.line()
-			.x(d => xScale(d.timestamp))
-			.y(d => yScale(d.count))
-			.curve(curveType);
-
-		const className = this.className || 'line-chart';
-		const g = svg.append('g')
-			.attr('transform', `translate(${this.margin.left}, ${this.margin.top})`)
-			.attr('class', className);
-
-		g.datum(timeseries);
-
-		g.append('path')
-			.attr('fill', 'none')
-			.attr('class', 'line')
-			.attr('d', line);
-
-		if (hasLastPoint) {
-			const lastPoint = timeseries[timeseries.length - 1];
-			g.append('circle')
-				.attr('cx', xScale(lastPoint.timestamp))
-				.attr('cy', yScale(lastPoint.count))
-				.attr('r', this.lastPointRadius)
-				.attr('class', 'last-point');
-		}
-	},
 	methods: {
+		visibilityChanged(isVisible: boolean) {
+			this.isVisible = isVisible;
+			if (this.isVisible && !this.hasRequested) {
+				this.requestTimeseries();
+				return;
+			}
+			if (this.isVisible && this.hasRequested && !this.hasRendered) {
+				this.injectTimeseries();
+			}
+		},
 		onClick() {
 			const $svg = this.$refs.svg as any;
 			const $elem = this.$refs.sparklineElemZoom as any;
@@ -167,31 +85,72 @@ export default Vue.extend({
 		hideModal() {
 			this.zoomSparkline = false;
 		},
-		requestTimeseries(url: string) {
-			// DEBUG:
-			const TIME_SERIES = [
-				'a.csv',
-				'b.csv',
-				'c.csv',
-				'd.csv',
-				'e.csv'
-			];
-			return axios.get(`timeseries/${TIME_SERIES[Math.floor(Math.random() * TIME_SERIES.length)]}`)
-				.then(response => {
-					const lines = response.data.split('\n');
-					const timeseries = lines.slice(1, lines.length - 1).map(entry => {
-						const split = entry.split(',');
-						return {
-							timestamp: split[0],
-							count: _.toNumber(split[1])
-						};
-					});
-					this.entry = { url: url, timeseries: timeseries };
-				})
-				.catch(err => {
-					console.error(err);
-					this.entry = { url: url, err: err };
-				});
+		injectTimeseries() {
+			if (_.isEmpty(this.timeseries)) {
+				return;
+			}
+
+			const $svg = this.$refs.svg as any;
+			const svg = d3.select($svg);
+			svg.selectAll('*').remove();
+
+			const timeseries = this.timeseries;
+			const dims = $svg.getBoundingClientRect();
+
+			let width = dims.width - this.margin.left - this.margin.right;
+			let height = dims.height - this.margin.top - this.margin.bottom;
+
+			if (width <= 0) {
+				console.warn('Invalid width for line chart');
+				return;
+			}
+
+			if (height <= 0) {
+				console.warn('Invalid height for line chart');
+				return;
+			}
+
+			const xScale = d3.scalePoint().range([0, width]);
+			xScale.domain(timeseries.map(d => d[0]));
+
+			const min = d3.min(this.timeseries, d => d[1]);
+			const max = d3.max(timeseries, d => d[1]);
+
+			const yScale = d3.scaleLinear()
+				.domain([min, max])
+				.range([height, 0]);
+
+			const curveType = d3.curveLinear;
+
+			const line = d3.line()
+				.x(d => xScale(d[0]))
+				.y(d => yScale(d[1]))
+				.curve(curveType);
+
+			const className = 'line-chart';
+			const g = svg.append('g')
+				.attr('transform', `translate(${this.margin.left}, ${this.margin.top})`)
+				.attr('class', className);
+
+			g.datum(timeseries);
+
+			g.append('path')
+				.attr('fill', 'none')
+				.attr('class', 'line')
+				.attr('d', line);
+
+			this.hasRendered = true;
+		},
+		requestTimeseries() {
+			this.hasRequested = true;
+			datasetActions.fetchTimeseries(this.$store, {
+				dataset: this.dataset,
+				url: this.timeSeriesUrl
+			}).then(() => {
+				if (this.isVisible) {
+					this.injectTimeseries();
+				}
+			});
 		}
 	}
 
@@ -246,4 +205,7 @@ svg.line-chart:hover g {
 	max-width: 50%;
 }
 
+.is-hidden {
+	visibility: hidden;
+}
 </style>

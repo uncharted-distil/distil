@@ -32,7 +32,7 @@ const TYPES_TO_LABELS: Dictionary<string> = {
 	dateTime: 'Date/Time',
 	boolean: 'Boolean',
 	image: 'Image',
-	timeseries: 'Time Series',
+	timeseries: 'Timeseries',
 	unknown: 'Unknown'
 };
 

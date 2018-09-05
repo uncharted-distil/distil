@@ -15,7 +15,6 @@ import { Dictionary } from '../util/dict';
 import { getSelectedRows } from '../util/row';
 import Facets from '@uncharted.software/stories-facets';
 import ImagePreview from '../components/ImagePreview.vue';
-import SparklinePreview from '../components/SparklinePreview.vue';
 import TypeChangeMenu from '../components/TypeChangeMenu.vue';
 import { circleSpinnerHTML } from '../util/spinner';
 
@@ -262,7 +261,7 @@ export default Vue.extend({
 				if (group.facets.length >= 1) {
 					const facet = group.facets[0];
 					if (isNumericalFacet(facet)) {
-						const slices = facet.histogram.slices;						
+						const slices = facet.histogram.slices;
 						const first = slices[0];
 						const last = slices[slices.length - 1];
 						const range = {
@@ -300,9 +299,6 @@ export default Vue.extend({
 
 			// inject image preview if image type
 			this.injectImagePreview(group, $elem);
-
-			// inject sparkline preview if timeseries type
-			this.injectSparklinePreview(group, $elem);
 
 			if (!this.html) {
 				return;
@@ -773,25 +769,6 @@ export default Vue.extend({
 							store: this.$store,
 							propsData: {
 								imageUrl: facet.file || facet.value
-							}
-						});
-					preview.$mount($slot[0]);
-				});
-			}
-		},
-
-		injectSparklinePreview(group: Group, $elem: JQuery) {
-			if (group.type === 'timeseries') {
-				const $facets = $elem.find('.facet-block');
-				group.facets.forEach((facet: any, index) => {
-					const $facet = $($facets.get(index));
-					const $slot = $('<span/>');
-					$facet.append($slot);
-					const preview = new SparklinePreview(
-						{
-							store: this.$store,
-							propsData: {
-								timeSeriesUrl: facet.file || facet.value
 							}
 						});
 					preview.$mount($slot[0]);
