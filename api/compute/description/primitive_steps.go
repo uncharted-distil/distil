@@ -179,3 +179,66 @@ func NewRemoveColumnsStep(resourceID string, colIndices []int) (*StepData, error
 		},
 	), nil
 }
+
+// NewTermFilterStep .
+func NewTermFilterStep(resourceID string, colindex int, inclusive bool, terms []string, matchWhole bool) *StepData {
+	return NewStepDataWithHyperparameters(
+		&pipeline.Primitive{
+			Id:         "622893c7-42fc-4561-a6f6-071fb85d610a",
+			Version:    "0.1.0",
+			Name:       "Term list dataset filter",
+			PythonPath: "d3m.primitives.datasets.TermFilter",
+			Digest:     "",
+		},
+		[]string{"produce"},
+		map[string]interface{}{
+			"resource_id": resourceID,
+			"column":      colindex,
+			"inclusive":   inclusive,
+			"terms":       terms,
+			"match_whole": matchWhole,
+		},
+	)
+}
+
+// NewRegexFilterStep .
+func NewRegexFilterStep(resourceID string, colindex int, inclusive bool, regex string) *StepData {
+	return NewStepDataWithHyperparameters(
+		&pipeline.Primitive{
+			Id:         "d1b4c4b7-63ba-4ee6-ab30-035157cccf22",
+			Version:    "0.1.0",
+			Name:       "Regex dataset filter",
+			PythonPath: "d3m.primitives.datasets.RegexFilter",
+			Digest:     "",
+		},
+		[]string{"produce"},
+		map[string]interface{}{
+			"resource_id": resourceID,
+			"column":      colindex,
+			"inclusive":   inclusive,
+			"regex":       regex,
+		},
+	)
+}
+
+// NewNumericRangeFilterStep .
+func NewNumericRangeFilterStep(resourceID string, colindex int, inclusive bool, min float64, max float64, strict bool) *StepData {
+	return NewStepDataWithHyperparameters(
+		&pipeline.Primitive{
+			Id:         "8b1c1140-8c21-4f41-aeca-662b7d35aa29",
+			Version:    "0.1.0",
+			Name:       "Numeric range filter",
+			PythonPath: "d3m.primitives.datasets.NumericRangeFilter",
+			Digest:     "",
+		},
+		[]string{"produce"},
+		map[string]interface{}{
+			"resource_id": resourceID,
+			"column":      colindex,
+			"inclusive":   inclusive,
+			"min":         min,
+			"max":         max,
+			"strict":      strict,
+		},
+	)
+}
