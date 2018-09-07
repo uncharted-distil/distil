@@ -75,8 +75,8 @@
   version = "5.0.62"
 
 [[constraint]]
-  name = "https://github.com/otiai10/copy"
-  version = "7e9a647135a142c2669943d4a4d29be015ce9392"
+  name = "github.com/otiai10/copy"
+  source = "git@github.com:otiai10/copy.git"
 
 [prune]
   go-tests = true
