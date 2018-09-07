@@ -74,8 +74,6 @@ type SolutionRequest struct {
 	MaxTime          int64               `json:"maxTime"`
 	Filters          *model.FilterParams `json:"filters"`
 	Metrics          []string            `json:"metrics"`
-	SourceDataFolder string              `json:"sourceDataFolder"`
-	TmpDataFolder    string              `json:"tmpDataFolder"`
 	mu               *sync.Mutex
 	wg               *sync.WaitGroup
 	requestChannel   chan SolutionStatus
@@ -85,14 +83,12 @@ type SolutionRequest struct {
 }
 
 // NewSolutionRequest instantiates a new SolutionRequest.
-func NewSolutionRequest(data []byte, sourceDataFolder string, tmpDataFolder string) (*SolutionRequest, error) {
+func NewSolutionRequest(data []byte) (*SolutionRequest, error) {
 	req := &SolutionRequest{
-		mu:               &sync.Mutex{},
-		wg:               &sync.WaitGroup{},
-		finished:         make(chan error),
-		requestChannel:   newStatusChannel(),
-		SourceDataFolder: sourceDataFolder,
-		TmpDataFolder:    tmpDataFolder,
+		mu:             &sync.Mutex{},
+		wg:             &sync.WaitGroup{},
+		finished:       make(chan error),
+		requestChannel: newStatusChannel(),
 	}
 	err := json.Unmarshal(data, &req)
 	if err != nil {
@@ -515,7 +511,7 @@ func (s *SolutionRequest) PersistAndDispatch(client *Client, solutionStorage mod
 	columnIndex := getColumnIndex(targetVariable, s.Filters.Variables)
 
 	// perist the datasets and get URI
-	datasetPathTrain, datasetPathTest, err := PersistOriginalData(s.Dataset, D3MDataSchema, s.SourceDataFolder, s.TmpDataFolder)
+	datasetPathTrain, datasetPathTest, err := PersistOriginalData(s.Dataset, D3MDataSchema, inputDir, datasetDir)
 
 	// make sure the path is absolute and contains the URI prefix
 	datasetPathTrain, err = filepath.Abs(datasetPathTrain)

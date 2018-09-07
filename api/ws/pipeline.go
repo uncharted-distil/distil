@@ -98,7 +98,7 @@ func handleMessage(conn *Connection, client *compute.Client, metadataCtor model.
 
 func handleCreateSolutions(conn *Connection, client *compute.Client, metadataCtor model.MetadataStorageCtor, dataCtor model.DataStorageCtor, solutionCtor model.SolutionStorageCtor, msg *Message) {
 	// unmarshal request
-	request, err := compute.NewSolutionRequest(msg.Raw, client.DataFolderPath, client.TmpFolderPath)
+	request, err := compute.NewSolutionRequest(msg.Raw)
 	if err != nil {
 		handleErr(conn, msg, err)
 		return
