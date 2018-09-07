@@ -5,7 +5,6 @@ import (
 	"crypto/sha1"
 	"encoding/json"
 	"fmt"
-	"math/rand"
 	"path/filepath"
 	"strings"
 	"sync"
@@ -75,6 +74,8 @@ type SolutionRequest struct {
 	MaxTime          int64               `json:"maxTime"`
 	Filters          *model.FilterParams `json:"filters"`
 	Metrics          []string            `json:"metrics"`
+	SourceDataFolder string              `json:"sourceDataFolder"`
+	TmpDataFolder    string              `json:"tmpDataFolder"`
 	mu               *sync.Mutex
 	wg               *sync.WaitGroup
 	requestChannel   chan SolutionStatus
@@ -84,12 +85,14 @@ type SolutionRequest struct {
 }
 
 // NewSolutionRequest instantiates a new SolutionRequest.
-func NewSolutionRequest(data []byte) (*SolutionRequest, error) {
+func NewSolutionRequest(data []byte, sourceDataFolder string, tmpDataFolder string) (*SolutionRequest, error) {
 	req := &SolutionRequest{
-		mu:             &sync.Mutex{},
-		wg:             &sync.WaitGroup{},
-		finished:       make(chan error),
-		requestChannel: newStatusChannel(),
+		mu:               &sync.Mutex{},
+		wg:               &sync.WaitGroup{},
+		finished:         make(chan error),
+		requestChannel:   newStatusChannel(),
+		SourceDataFolder: sourceDataFolder,
+		TmpDataFolder:    tmpDataFolder,
 	}
 	err := json.Unmarshal(data, &req)
 	if err != nil {
@@ -471,40 +474,6 @@ func (s *SolutionRequest) dispatchRequest(client *Client, solutionStorage model.
 	s.finished <- client.EndSearch(context.Background(), searchID)
 }
 
-func splitTrainTest(dataset *model.QueriedDataset) (*model.QueriedDataset, *model.QueriedDataset, error) {
-	trainDataset := &model.QueriedDataset{
-		Metadata: dataset.Metadata,
-		Filters:  dataset.Filters,
-		IsTrain:  true,
-		Data: &model.FilteredData{
-			NumRows: dataset.Data.NumRows,
-			Columns: dataset.Data.Columns,
-			Values:  make([][]interface{}, 0),
-		},
-	}
-	testDataset := &model.QueriedDataset{
-		Metadata: dataset.Metadata,
-		Filters:  dataset.Filters,
-		IsTrain:  false,
-		Data: &model.FilteredData{
-			NumRows: dataset.Data.NumRows,
-			Columns: dataset.Data.Columns,
-			Values:  make([][]interface{}, 0),
-		},
-	}
-
-	// randomly split the dataset between train and test
-	for _, r := range dataset.Data.Values {
-		if rand.Float64() < trainTestSplitThreshold {
-			trainDataset.Data.Values = append(trainDataset.Data.Values, r)
-		} else {
-			testDataset.Data.Values = append(testDataset.Data.Values, r)
-		}
-	}
-
-	return trainDataset, testDataset, nil
-}
-
 // PersistAndDispatch persists the solution request and dispatches it.
 func (s *SolutionRequest) PersistAndDispatch(client *Client, solutionStorage model.SolutionStorage, metaStorage model.MetadataStorage, dataStorage model.DataStorage) error {
 
@@ -545,18 +514,9 @@ func (s *SolutionRequest) PersistAndDispatch(client *Client, solutionStorage mod
 
 	columnIndex := getColumnIndex(targetVariable, s.Filters.Variables)
 
-	// split the train & test data into separate datasets to be submitted to TA2
-	trainDataset, testDataset, err := splitTrainTest(dataset)
-
 	// perist the datasets and get URI
-	datasetPathTrain, _, err := PersistFilteredData(inputDir, datasetDir, s.TargetFeature, trainDataset, dataVariables)
-	if err != nil {
-		return err
-	}
-	datasetPathTest, _, err := PersistFilteredData(inputDir, datasetDir, s.TargetFeature, testDataset, dataVariables)
-	if err != nil {
-		return err
-	}
+	datasetPathTrain, datasetPathTest, err := PersistOriginalData(s.Dataset, D3MDataSchema, s.SourceDataFolder, s.TmpDataFolder)
+
 	// make sure the path is absolute and contains the URI prefix
 	datasetPathTrain, err = filepath.Abs(datasetPathTrain)
 	if err != nil {

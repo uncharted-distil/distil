@@ -1,17 +1,22 @@
 package compute
 
 import (
+	"bytes"
 	"encoding/csv"
 	"encoding/json"
 	"fmt"
+	"io"
 	"io/ioutil"
+	"math/rand"
 	"os"
 	"path"
 	"strconv"
 	"time"
 
 	"github.com/mitchellh/hashstructure"
+	"github.com/otiai10/copy"
 	"github.com/pkg/errors"
+	"github.com/unchartedsoftware/distil-ingest/metadata"
 	"github.com/unchartedsoftware/distil/api/model"
 	"github.com/unchartedsoftware/plog"
 )
@@ -29,6 +34,9 @@ const (
 	D3MResourceType = "table"
 	// D3MResourceFormat is the resource format of persisted dataset
 	D3MResourceFormat = "text/csv"
+
+	trainFilenamePrefix = "train"
+	testFilenamePrefix  = "test"
 )
 
 // FilteredDataProvider defines a function that will fetch data from a back end source given
@@ -90,6 +98,135 @@ func getFilteredDatasetHash(dataset string, target string, filterParams *model.F
 		return 0, errors.Wrapf(err, "failed to generate hashcode for %s", dataset)
 	}
 	return hash, nil
+}
+
+func splitTrainTest(sourceFile string, trainFile string, testFile string, hasHeader bool) error {
+	// create the writers
+	outputTrain := &bytes.Buffer{}
+	writerTrain := csv.NewWriter(outputTrain)
+	outputTest := &bytes.Buffer{}
+	writerTest := csv.NewWriter(outputTest)
+
+	// open the file
+	file, err := os.Open(sourceFile)
+	if err != nil {
+		return errors.Wrap(err, "failed to open source file")
+	}
+	reader := csv.NewReader(file)
+
+	// write header to both outputs
+	if hasHeader {
+		header, err := reader.Read()
+		if err != nil {
+			return errors.Wrap(err, "unable to read header row")
+		}
+		err = writerTrain.Write(header)
+		if err != nil {
+			return errors.Wrap(err, "unable to write header to train output")
+		}
+		err = writerTest.Write(header)
+		if err != nil {
+			return errors.Wrap(err, "unable to write header to test output")
+		}
+	}
+
+	// randomly assign rows to either train or test
+	for {
+		line, err := reader.Read()
+		if err == io.EOF {
+			break
+		} else if err != nil {
+			return errors.Wrap(err, "failed to read line from file")
+		}
+		if rand.Float64() < trainTestSplitThreshold {
+			err = writerTrain.Write(line)
+			if err != nil {
+				return errors.Wrap(err, "unable to write data to train output")
+			}
+		} else {
+			err = writerTest.Write(line)
+			if err != nil {
+				return errors.Wrap(err, "unable to write data to test output")
+			}
+		}
+	}
+	writerTrain.Flush()
+	writerTest.Flush()
+
+	err = ioutil.WriteFile(trainFile, outputTrain.Bytes(), 0644)
+	if err != nil {
+		return errors.Wrap(err, "unable to output train data")
+	}
+
+	err = ioutil.WriteFile(testFile, outputTest.Bytes(), 0644)
+	if err != nil {
+		return errors.Wrap(err, "unable to output test data")
+	}
+
+	return nil
+}
+
+// PersistOriginalData copies the original data and splits it into a train &
+// test subset to be used as needed.
+func PersistOriginalData(datasetName string, schemaFile string, sourceDataFolder string, tmpDataFolder string) (string, string, error) {
+	targetFolder := path.Join(tmpDataFolder, datasetName)
+	trainSchemaFile := path.Join(targetFolder, fmt.Sprintf("%s-%s", trainFilenamePrefix, schemaFile))
+	testSchemaFile := path.Join(targetFolder, fmt.Sprintf("%s-%s", testFilenamePrefix, schemaFile))
+
+	// check if the data has already been split
+	if dirExists(targetFolder) {
+		if fileExists(trainSchemaFile) && fileExists(testSchemaFile) {
+			return trainSchemaFile, testSchemaFile, nil
+		}
+
+		// Something went wrong in the initial persist so wipe the folder
+		// and try again
+		err := os.RemoveAll(targetFolder)
+		if err != nil {
+			return "", "", errors.Wrap(err, "unable to remove previous split attempt")
+		}
+	}
+
+	// copy the data over
+	err := copy.Copy(sourceDataFolder, targetFolder)
+	if err != nil {
+		return "", "", errors.Wrap(err, "unable to copy dataset folder")
+	}
+
+	// read the dataset document
+	meta, err := metadata.LoadMetadataFromOriginalSchema(path.Join(targetFolder, schemaFile))
+	if err != nil {
+		return "", "", err
+	}
+
+	// determine where the d3m index would be
+	mainDR := meta.GetMainDataResource()
+
+	// split the source data into train & test
+	dataFolder := path.Dir(mainDR.ResPath)
+	dataFile := path.Base(mainDR.ResPath)
+	dataPath := path.Join(targetFolder, mainDR.ResPath)
+	trainDataFile := path.Join(dataFolder, fmt.Sprintf("%s-%s", trainFilenamePrefix, dataFile))
+	testDataFile := path.Join(dataFolder, fmt.Sprintf("%s-%s", testFilenamePrefix, dataFile))
+	err = splitTrainTest(dataPath, path.Join(targetFolder, trainDataFile), path.Join(targetFolder, testDataFile), true)
+	if err != nil {
+		return "", "", err
+	}
+
+	// write out the schema docs for train & test
+	mainDR.ResPath = trainDataFile
+	err = meta.WriteSchema(trainSchemaFile)
+	if err != nil {
+		return "", "", err
+	}
+
+	mainDR.ResPath = testDataFile
+	err = meta.WriteSchema(testSchemaFile)
+	if err != nil {
+		return "", "", err
+	}
+
+	return trainSchemaFile, testSchemaFile, nil
 }
 
 // PersistFilteredData creates a hash code from the combination of the dataset name, the target name, and its filter

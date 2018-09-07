@@ -30,6 +30,8 @@ type Client struct {
 	PullTimeout       time.Duration
 	PullMax           int
 	SkipPreprocessing bool
+	DataFolderPath    string
+	TmpFolderPath     string
 }
 
 // SearchSolutionHandler is executed when a new search solution is returned.
@@ -38,7 +40,8 @@ type SearchSolutionHandler func(*pipeline.GetSearchSolutionsResultsResponse)
 // NewClient creates a new pipline request dispatcher instance. This will establish
 // the connection to the solution server or return an error on fail
 func NewClient(serverAddr string, trace bool, userAgent string,
-	pullTimeout time.Duration, pullMax int, skipPreprocessing bool) (*Client, error) {
+	pullTimeout time.Duration, pullMax int, skipPreprocessing bool,
+	dataFolderPath string, tmpFolderPath string) (*Client, error) {
 	log.Infof("connecting to ta2 at %s", serverAddr)
 
 	conn, err := grpc.Dial(
@@ -54,13 +57,16 @@ func NewClient(serverAddr string, trace bool, userAgent string,
 
 	log.Infof("connected to %s", serverAddr)
 
-	client := Client{}
-	client.client = pipeline.NewCoreClient(conn)
-	client.conn = conn
-	client.UserAgent = userAgent
-	client.PullTimeout = pullTimeout
-	client.PullMax = pullMax
-	client.SkipPreprocessing = skipPreprocessing
+	client := Client{
+		client:            pipeline.NewCoreClient(conn),
+		conn:              conn,
+		UserAgent:         userAgent,
+		PullTimeout:       pullTimeout,
+		PullMax:           pullMax,
+		SkipPreprocessing: skipPreprocessing,
+		DataFolderPath:    dataFolderPath,
+		TmpFolderPath:     tmpFolderPath,
+	}
 
 	// check for basic ta2 connectivity
 	helloResponse, err := client.client.Hello(context.Background(), &pipeline.HelloRequest{})
