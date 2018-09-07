@@ -74,7 +74,7 @@
   name = "gopkg.in/olivere/elastic.v5"
   version = "5.0.62"
 
-[[constrain]]
+[[constraint]]
   name = "https://github.com/otiai10/copy"
   version = "7e9a647135a142c2669943d4a4d29be015ce9392"
 
