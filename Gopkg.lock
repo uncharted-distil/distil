@@ -159,8 +159,8 @@
     "rest",
     "smmry"
   ]
-  revision = "cc84ef1d925ee80d4370e0dc0a968940bc6d3141"
-  version = "0.5.2"
+  revision = "386ed8b9fb40e1139b90313cee91bbc1b7a98d94"
+  version = "0.5.3"
 
 [[projects]]
   branch = "master"

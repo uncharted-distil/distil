@@ -119,7 +119,7 @@ func main() {
 	// Instantiate the solution compute client
 	solutionClient, err := compute.NewClient(config.SolutionComputeEndpoint, config.SolutionComputeTrace,
 		userAgent, time.Duration(config.SolutionComputePullTimeout)*time.Second, config.SolutionComputePullMax,
-		config.SkipPreprocessing)
+		config.SkipPreprocessing, config.DataFolderPath, config.TmpDataPath)
 	if err != nil {
 		log.Errorf("%+v", err)
 		os.Exit(1)
