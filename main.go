@@ -64,7 +64,7 @@ func main() {
 
 	// set dataset directory
 	compute.SetDatasetDir(config.TmpDataPath)
-	compute.SetInputDir(config.D3MInputDir)
+	compute.SetInputDir(path.Join(config.D3MInputDir, "TRAIN", "dataset_TRAIN"))
 
 	// instantiate elastic client constructor.
 	esClientCtor := elastic.NewClient(config.ElasticEndpoint, false)

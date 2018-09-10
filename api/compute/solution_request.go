@@ -512,18 +512,21 @@ func (s *SolutionRequest) PersistAndDispatch(client *Client, solutionStorage mod
 
 	// perist the datasets and get URI
 	datasetPathTrain, datasetPathTest, err := PersistOriginalData(s.Dataset, D3MDataSchema, inputDir, datasetDir)
+	if err != nil {
+		return err
+	}
 
 	// make sure the path is absolute and contains the URI prefix
 	datasetPathTrain, err = filepath.Abs(datasetPathTrain)
 	if err != nil {
 		return err
 	}
-	datasetPathTrain = fmt.Sprintf("file://%s", filepath.Join(datasetPathTrain, D3MDataSchema))
+	datasetPathTrain = fmt.Sprintf("file://%s", datasetPathTrain)
 	datasetPathTest, err = filepath.Abs(datasetPathTest)
 	if err != nil {
 		return err
 	}
-	datasetPathTest = fmt.Sprintf("file://%s", filepath.Join(datasetPathTest, D3MDataSchema))
+	datasetPathTest = fmt.Sprintf("file://%s", datasetPathTest)
 
 	// generate the pre-processing pipeline to enforce feature selection and semantic type changes
 	var preprocessing *pipeline.PipelineDescription

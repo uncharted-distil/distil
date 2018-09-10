@@ -174,8 +174,10 @@ func PersistOriginalData(datasetName string, schemaFile string, sourceDataFolder
 	testSchemaFile := path.Join(targetFolder, fmt.Sprintf("%s-%s", testFilenamePrefix, schemaFile))
 
 	// check if the data has already been split
+	log.Infof("checking folder `%s` to see if the dataset has been previously split", targetFolder)
 	if dirExists(targetFolder) {
 		if fileExists(trainSchemaFile) && fileExists(testSchemaFile) {
+			log.Infof("dataset '%s' already split", datasetName)
 			return trainSchemaFile, testSchemaFile, nil
 		}
 
