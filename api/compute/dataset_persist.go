@@ -11,6 +11,7 @@ import (
 	"os"
 	"path"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/mitchellh/hashstructure"
@@ -98,6 +99,10 @@ func getFilteredDatasetHash(dataset string, target string, filterParams *model.F
 		return 0, errors.Wrapf(err, "failed to generate hashcode for %s", dataset)
 	}
 	return hash, nil
+}
+
+func updateSchemaReferenceFile(schema string, prevReferenceFile string, newReferenceFile string) string {
+	return strings.Replace(schema, fmt.Sprintf("\"resPath\": \"%s\"", prevReferenceFile), fmt.Sprintf("\"resPath\": \"%s\"", newReferenceFile), 1)
 }
 
 func splitTrainTest(sourceFile string, trainFile string, testFile string, hasHeader bool) error {
@@ -196,7 +201,8 @@ func PersistOriginalData(datasetName string, schemaFile string, sourceDataFolder
 	}
 
 	// read the dataset document
-	meta, err := metadata.LoadMetadataFromOriginalSchema(path.Join(targetFolder, schemaFile))
+	schemaFilename := path.Join(targetFolder, schemaFile)
+	meta, err := metadata.LoadMetadataFromOriginalSchema(schemaFilename)
 	if err != nil {
 		return "", "", err
 	}
@@ -216,16 +222,22 @@ func PersistOriginalData(datasetName string, schemaFile string, sourceDataFolder
 	}
 
 	// write out the schema docs for train & test
-	mainDR.ResPath = trainDataFile
-	err = meta.WriteSchema(trainSchemaFile)
+	schemaRawBytes, err := ioutil.ReadFile(schemaFilename)
 	if err != nil {
-		return "", "", err
+		return "", "", errors.Wrap(err, "unable to load raw schema file")
+	}
+	schemaRaw := string(schemaRawBytes)
+
+	trainSchema := updateSchemaReferenceFile(schemaRaw, mainDR.ResPath, trainDataFile)
+	err = ioutil.WriteFile(trainSchemaFile, []byte(trainSchema), 0644)
+	if err != nil {
+		return "", "", errors.Wrap(err, "unable to load save train schema file")
 	}
 
-	mainDR.ResPath = testDataFile
-	err = meta.WriteSchema(testSchemaFile)
+	testSchema := updateSchemaReferenceFile(schemaRaw, mainDR.ResPath, testDataFile)
+	err = ioutil.WriteFile(testSchemaFile, []byte(testSchema), 0644)
 	if err != nil {
-		return "", "", err
+		return "", "", errors.Wrap(err, "unable to load save test schema file")
 	}
 
 	return trainSchemaFile, testSchemaFile, nil
