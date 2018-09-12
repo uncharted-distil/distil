@@ -174,34 +174,47 @@ func splitTrainTest(sourceFile string, trainFile string, testFile string, hasHea
 // PersistOriginalData copies the original data and splits it into a train &
 // test subset to be used as needed.
 func PersistOriginalData(datasetName string, schemaFile string, sourceDataFolder string, tmpDataFolder string) (string, string, error) {
-	targetFolder := path.Join(tmpDataFolder, datasetName)
-	trainSchemaFile := path.Join(targetFolder, fmt.Sprintf("%s-%s", trainFilenamePrefix, schemaFile))
-	testSchemaFile := path.Join(targetFolder, fmt.Sprintf("%s-%s", testFilenamePrefix, schemaFile))
+	// The complete data is copied into separate train & test folders.
+	// The main data is then split randomly.
+	trainFolder := path.Join(tmpDataFolder, datasetName, trainFilenamePrefix)
+	testFolder := path.Join(tmpDataFolder, datasetName, testFilenamePrefix)
+	trainSchemaFile := path.Join(trainFolder, schemaFile)
+	testSchemaFile := path.Join(testFolder, schemaFile)
 
 	// check if the data has already been split
-	log.Infof("checking folder `%s` to see if the dataset has been previously split", targetFolder)
-	if dirExists(targetFolder) {
-		if fileExists(trainSchemaFile) && fileExists(testSchemaFile) {
-			log.Infof("dataset '%s' already split", datasetName)
-			return trainSchemaFile, testSchemaFile, nil
-		}
+	log.Infof("checking folders `%s` & `%s` to see if the dataset has been previously split", trainFolder, testFolder)
+	if fileExists(trainSchemaFile) && fileExists(testSchemaFile) {
+		log.Infof("dataset '%s' already split", datasetName)
+		return trainSchemaFile, testSchemaFile, nil
+	}
 
-		// Something went wrong in the initial persist so wipe the folder
-		// and try again
-		err := os.RemoveAll(targetFolder)
+	if dirExists(trainFolder) {
+		err := os.RemoveAll(trainFolder)
 		if err != nil {
-			return "", "", errors.Wrap(err, "unable to remove previous split attempt")
+			return "", "", errors.Wrap(err, "unable to remove train folder from previous split attempt")
+		}
+	}
+
+	if dirExists(testFolder) {
+		err := os.RemoveAll(testFolder)
+		if err != nil {
+			return "", "", errors.Wrap(err, "unable to remove test folder from previous split attempt")
 		}
 	}
 
 	// copy the data over
-	err := copy.Copy(sourceDataFolder, targetFolder)
+	err := copy.Copy(sourceDataFolder, trainFolder)
 	if err != nil {
-		return "", "", errors.Wrap(err, "unable to copy dataset folder")
+		return "", "", errors.Wrap(err, "unable to copy dataset folder to train")
+	}
+
+	err = copy.Copy(sourceDataFolder, testFolder)
+	if err != nil {
+		return "", "", errors.Wrap(err, "unable to copy dataset folder to test")
 	}
 
 	// read the dataset document
-	schemaFilename := path.Join(targetFolder, schemaFile)
+	schemaFilename := path.Join(sourceDataFolder, schemaFile)
 	meta, err := metadata.LoadMetadataFromOriginalSchema(schemaFilename)
 	if err != nil {
 		return "", "", err
@@ -211,33 +224,12 @@ func PersistOriginalData(datasetName string, schemaFile string, sourceDataFolder
 	mainDR := meta.GetMainDataResource()
 
 	// split the source data into train & test
-	dataFolder := path.Dir(mainDR.ResPath)
-	dataFile := path.Base(mainDR.ResPath)
-	dataPath := path.Join(targetFolder, mainDR.ResPath)
-	trainDataFile := path.Join(dataFolder, fmt.Sprintf("%s-%s", trainFilenamePrefix, dataFile))
-	testDataFile := path.Join(dataFolder, fmt.Sprintf("%s-%s", testFilenamePrefix, dataFile))
-	err = splitTrainTest(dataPath, path.Join(targetFolder, trainDataFile), path.Join(targetFolder, testDataFile), true)
+	dataPath := path.Join(sourceDataFolder, mainDR.ResPath)
+	trainDataFile := path.Join(trainFolder, mainDR.ResPath)
+	testDataFile := path.Join(testFolder, mainDR.ResPath)
+	err = splitTrainTest(dataPath, trainDataFile, testDataFile, true)
 	if err != nil {
 		return "", "", err
-	}
-
-	// write out the schema docs for train & test
-	schemaRawBytes, err := ioutil.ReadFile(schemaFilename)
-	if err != nil {
-		return "", "", errors.Wrap(err, "unable to load raw schema file")
-	}
-	schemaRaw := string(schemaRawBytes)
-
-	trainSchema := updateSchemaReferenceFile(schemaRaw, mainDR.ResPath, trainDataFile)
-	err = ioutil.WriteFile(trainSchemaFile, []byte(trainSchema), 0644)
-	if err != nil {
-		return "", "", errors.Wrap(err, "unable to load save train schema file")
-	}
-
-	testSchema := updateSchemaReferenceFile(schemaRaw, mainDR.ResPath, testDataFile)
-	err = ioutil.WriteFile(testSchemaFile, []byte(testSchema), 0644)
-	if err != nil {
-		return "", "", errors.Wrap(err, "unable to load save test schema file")
 	}
 
 	return trainSchemaFile, testSchemaFile, nil
