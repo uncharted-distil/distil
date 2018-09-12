@@ -64,8 +64,9 @@ export default Vue.extend({
 			const timeseries = this.timeseries;
 
 			this.xScale = d3.scalePoint()
-				.domain(timeseries.map(d => d[0]))
 				.rangeRound([0, this.width]);
+
+			this.xScale.domain(timeseries.map(d => d[0]));
 
 			const min = d3.min(timeseries, d => d[1]);
 			const max = d3.max(timeseries, d => d[1]);
@@ -76,7 +77,7 @@ export default Vue.extend({
 
 			// Create axes
 			const xAxis = d3.axisBottom(this.xScale)
-				.tickValues(this.timeseries.filter((_, i) => {
+				.tickValues(this.timeseries.filter((d, i) => {
 					return i % 10 === 0;
 				}).map(d => d[0]));
 			const yAxis = d3.axisLeft(this.yScale)
