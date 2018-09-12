@@ -10,6 +10,7 @@
     "test-debug": "mocha --compilers js:babel-core/register ./public/test/**/*.js --inspect --debug-brk"
   },
   "dependencies": {
+    "@types/d3": "^5.0.0",
     "@types/jquery": "3.3.2",
     "@types/lodash": "4.14.108",
     "@uncharted.software/stories-facets": "2.12.8",
