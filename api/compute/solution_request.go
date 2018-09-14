@@ -5,7 +5,6 @@ import (
 	"crypto/sha1"
 	"encoding/json"
 	"fmt"
-	"math/rand"
 	"path/filepath"
 	"strings"
 	"sync"
@@ -471,40 +470,6 @@ func (s *SolutionRequest) dispatchRequest(client *Client, solutionStorage model.
 	s.finished <- client.EndSearch(context.Background(), searchID)
 }
 
-func splitTrainTest(dataset *model.QueriedDataset) (*model.QueriedDataset, *model.QueriedDataset, error) {
-	trainDataset := &model.QueriedDataset{
-		Metadata: dataset.Metadata,
-		Filters:  dataset.Filters,
-		IsTrain:  true,
-		Data: &model.FilteredData{
-			NumRows: dataset.Data.NumRows,
-			Columns: dataset.Data.Columns,
-			Values:  make([][]interface{}, 0),
-		},
-	}
-	testDataset := &model.QueriedDataset{
-		Metadata: dataset.Metadata,
-		Filters:  dataset.Filters,
-		IsTrain:  false,
-		Data: &model.FilteredData{
-			NumRows: dataset.Data.NumRows,
-			Columns: dataset.Data.Columns,
-			Values:  make([][]interface{}, 0),
-		},
-	}
-
-	// randomly split the dataset between train and test
-	for _, r := range dataset.Data.Values {
-		if rand.Float64() < trainTestSplitThreshold {
-			trainDataset.Data.Values = append(trainDataset.Data.Values, r)
-		} else {
-			testDataset.Data.Values = append(testDataset.Data.Values, r)
-		}
-	}
-
-	return trainDataset, testDataset, nil
-}
-
 // PersistAndDispatch persists the solution request and dispatches it.
 func (s *SolutionRequest) PersistAndDispatch(client *Client, solutionStorage model.SolutionStorage, metaStorage model.MetadataStorage, dataStorage model.DataStorage) error {
 
@@ -545,29 +510,23 @@ func (s *SolutionRequest) PersistAndDispatch(client *Client, solutionStorage mod
 
 	columnIndex := getColumnIndex(targetVariable, s.Filters.Variables)
 
-	// split the train & test data into separate datasets to be submitted to TA2
-	trainDataset, testDataset, err := splitTrainTest(dataset)
-
 	// perist the datasets and get URI
-	datasetPathTrain, _, err := PersistFilteredData(inputDir, datasetDir, s.TargetFeature, trainDataset, dataVariables)
+	datasetPathTrain, datasetPathTest, err := PersistOriginalData(s.Dataset, D3MDataSchema, inputDir, datasetDir)
 	if err != nil {
 		return err
 	}
-	datasetPathTest, _, err := PersistFilteredData(inputDir, datasetDir, s.TargetFeature, testDataset, dataVariables)
-	if err != nil {
-		return err
-	}
+
 	// make sure the path is absolute and contains the URI prefix
 	datasetPathTrain, err = filepath.Abs(datasetPathTrain)
 	if err != nil {
 		return err
 	}
-	datasetPathTrain = fmt.Sprintf("file://%s", filepath.Join(datasetPathTrain, D3MDataSchema))
+	datasetPathTrain = fmt.Sprintf("file://%s", datasetPathTrain)
 	datasetPathTest, err = filepath.Abs(datasetPathTest)
 	if err != nil {
 		return err
 	}
-	datasetPathTest = fmt.Sprintf("file://%s", filepath.Join(datasetPathTest, D3MDataSchema))
+	datasetPathTest = fmt.Sprintf("file://%s", datasetPathTest)
 
 	// generate the pre-processing pipeline to enforce feature selection and semantic type changes
 	var preprocessing *pipeline.PipelineDescription

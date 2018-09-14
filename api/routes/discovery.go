@@ -77,12 +77,6 @@ func ProblemDiscoveryHandler(ctorData model.DataStorageCtor, ctorMeta model.Meta
 			return
 		}
 
-		//path, _, err := compute.PersistFilteredData(datasetDir, target, ds)
-		//if err != nil {
-		//	handleError(w, err)
-		//	return
-		//}
-
 		problem, problemID, err := compute.CreateProblemSchema(problemDir, dataset, targetVar, filterParams)
 		if err != nil {
 			handleError(w, err)

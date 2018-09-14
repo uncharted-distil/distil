@@ -54,13 +54,14 @@ func NewClient(serverAddr string, trace bool, userAgent string,
 
 	log.Infof("connected to %s", serverAddr)
 
-	client := Client{}
-	client.client = pipeline.NewCoreClient(conn)
-	client.conn = conn
-	client.UserAgent = userAgent
-	client.PullTimeout = pullTimeout
-	client.PullMax = pullMax
-	client.SkipPreprocessing = skipPreprocessing
+	client := Client{
+		client:            pipeline.NewCoreClient(conn),
+		conn:              conn,
+		UserAgent:         userAgent,
+		PullTimeout:       pullTimeout,
+		PullMax:           pullMax,
+		SkipPreprocessing: skipPreprocessing,
+	}
 
 	// check for basic ta2 connectivity
 	helloResponse, err := client.client.Hello(context.Background(), &pipeline.HelloRequest{})
