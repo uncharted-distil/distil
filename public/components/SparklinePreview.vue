@@ -5,9 +5,9 @@
 		<div v-if="!isLoaded" v-html="spinnerHTML"></div>
 		<b-modal id="sparkline-zoom-modal" :title="timeSeriesUrl"
 			@hide="hideModal"
-			:visible="!!zoomSparkline"
+			:visible="zoomSparkline"
 			hide-footer>
-			<div class="sparkline-elem-zoom" ref="sparklineElemZoom"></div>
+			<sparkline-chart :timeseries="timeseries" v-if="zoomSparkline"></sparkline-chart>
 		</b-modal>
 	</div>
 </template>
@@ -17,6 +17,7 @@
 import * as d3 from 'd3';
 import _ from 'lodash';
 import Vue from 'vue';
+import SparklineChart from '../components/SparklineChart.vue';
 import { Dictionary } from '../util/dict';
 import { circleSpinnerHTML } from '../util/spinner';
 import { getters as routeGetters } from '../store/route/module';
@@ -24,6 +25,11 @@ import { getters as datasetGetters, actions as datasetActions } from '../store/d
 
 export default Vue.extend({
 	name: 'sparkline-preview',
+
+	components: {
+		SparklineChart
+	},
+
 	props: {
 		margin: {
 			type: Object as () => any,
@@ -44,7 +50,11 @@ export default Vue.extend({
 			entry: null,
 			isVisible: false,
 			hasRendered: false,
-			hasRequested: false
+			hasRequested: false,
+			xAxisTitle: '',
+			yAxisTitle: '',
+			xScale: null,
+			yScale: null
 		};
 	},
 	computed: {
@@ -62,6 +72,20 @@ export default Vue.extend({
 		},
 		spinnerHTML(): string {
 			return circleSpinnerHTML();
+		},
+		svg(): d3.Selection<SVGElement, {}, HTMLElement, any> {
+			const $svg = this.$refs.svg as any;
+			return  d3.select($svg);
+		},
+		width(): number {
+			const $svg = this.$refs.svg as any;
+			const dims = $svg.getBoundingClientRect();
+			return dims.width - this.margin.left - this.margin.right;
+		},
+		height(): number {
+			const $svg = this.$refs.svg as any;
+			const dims = $svg.getBoundingClientRect();
+			return dims.height - this.margin.top - this.margin.bottom;
 		}
 	},
 	methods: {
@@ -76,68 +100,62 @@ export default Vue.extend({
 			}
 		},
 		onClick() {
-			const $svg = this.$refs.svg as any;
-			const $elem = this.$refs.sparklineElemZoom as any;
-			$elem.innerHTML = '';
-			$elem.appendChild($svg.cloneNode(true));
 			this.zoomSparkline = true;
 		},
 		hideModal() {
 			this.zoomSparkline = false;
+		},
+		clearSVG() {
+			this.svg.selectAll('*').remove();
+		},
+		injectSparkline() {
+			const timeseries = this.timeseries;
+
+			this.xScale = d3.scalePoint()
+				.range([0, this.width]);
+			this.xScale.domain(timeseries.map(d => d[0]));
+
+			const min = d3.min(timeseries, d => d[1]);
+			const max = d3.max(timeseries, d => d[1]);
+
+			this.yScale = d3.scaleLinear()
+				.domain([min, max])
+				.range([this.height, 0]);
+
+			const line = d3.line()
+				.x(d => this.xScale(d[0]))
+				.y(d => this.yScale(d[1]))
+				.curve(d3.curveLinear);
+
+			const className = 'line-chart';
+			const g = this.svg.append('g')
+				.attr('transform', `translate(${this.margin.left}, ${this.margin.top})`)
+				.attr('class', className);
+
+			g.datum(this.timeseries);
+
+			g.append('path')
+				.attr('fill', 'none')
+				.attr('class', 'line')
+				.attr('d', line);
 		},
 		injectTimeseries() {
 			if (_.isEmpty(this.timeseries)) {
 				return;
 			}
 
-			const $svg = this.$refs.svg as any;
-			const svg = d3.select($svg);
-			svg.selectAll('*').remove();
-
-			const timeseries = this.timeseries;
-			const dims = $svg.getBoundingClientRect();
-
-			let width = dims.width - this.margin.left - this.margin.right;
-			let height = dims.height - this.margin.top - this.margin.bottom;
-
-			if (width <= 0) {
+			if (this.width <= 0) {
 				console.warn('Invalid width for line chart');
 				return;
 			}
 
-			if (height <= 0) {
+			if (this.height <= 0) {
 				console.warn('Invalid height for line chart');
 				return;
 			}
 
-			const xScale = d3.scalePoint().range([0, width]);
-			xScale.domain(timeseries.map(d => d[0]));
-
-			const min = d3.min(this.timeseries, d => d[1]);
-			const max = d3.max(timeseries, d => d[1]);
-
-			const yScale = d3.scaleLinear()
-				.domain([min, max])
-				.range([height, 0]);
-
-			const curveType = d3.curveLinear;
-
-			const line = d3.line()
-				.x(d => xScale(d[0]))
-				.y(d => yScale(d[1]))
-				.curve(curveType);
-
-			const className = 'line-chart';
-			const g = svg.append('g')
-				.attr('transform', `translate(${this.margin.left}, ${this.margin.top})`)
-				.attr('class', className);
-
-			g.datum(timeseries);
-
-			g.append('path')
-				.attr('fill', 'none')
-				.attr('class', 'line')
-				.attr('d', line);
+			this.clearSVG();
+			this.injectSparkline();
 
 			this.hasRendered = true;
 		},
