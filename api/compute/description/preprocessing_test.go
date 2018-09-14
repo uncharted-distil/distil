@@ -1,6 +1,7 @@
 package description
 
 import (
+	"io/ioutil"
 	"testing"
 
 	"github.com/golang/protobuf/proto"
@@ -99,4 +100,64 @@ func TestCreateUserDatasetEmpty(t *testing.T) {
 	assert.Nil(t, err)
 
 	t.Logf("\n%s", proto.MarshalTextString(pipeline))
+}
+
+func TestCreatePCAFeaturesPipeline(t *testing.T) {
+	pipeline, err := CreatePCAFeaturesPipeline("pca_features_test", "test pca feature ranking pipeline")
+	assert.NoError(t, err)
+
+	data, err := proto.Marshal(pipeline)
+	assert.NoError(t, err)
+	assert.NotNil(t, data)
+
+	err = ioutil.WriteFile("/tmp/create_pca_features.pln", data, 0644)
+	assert.NoError(t, err)
+}
+
+func TestCreateSimonPipeline(t *testing.T) {
+	pipeline, err := CreateSimonPipeline("simon_test", "test simon classification pipeline")
+	assert.NoError(t, err)
+
+	data, err := proto.Marshal(pipeline)
+	assert.NoError(t, err)
+	assert.NotNil(t, data)
+
+	err = ioutil.WriteFile("/tmp/create_simon.pln", data, 0644)
+	assert.NoError(t, err)
+}
+
+func TestCreateCrocPipeline(t *testing.T) {
+	pipeline, err := CreateCrocPipeline("croc_test", "test croc object detection pipeline", []string{"filename"}, []string{"objects"})
+	assert.NoError(t, err)
+
+	data, err := proto.Marshal(pipeline)
+	assert.NoError(t, err)
+	assert.NotNil(t, data)
+
+	err = ioutil.WriteFile("/tmp/create_croc.pln", data, 0644)
+	assert.NoError(t, err)
+}
+
+func TestCreateUnicornPipeline(t *testing.T) {
+	pipeline, err := CreateUnicornPipeline("unicorn test", "test unicorn image detection pipeline", []string{"filename"}, []string{"objects"})
+	assert.NoError(t, err)
+
+	data, err := proto.Marshal(pipeline)
+	assert.NoError(t, err)
+	assert.NotNil(t, data)
+
+	err = ioutil.WriteFile("/tmp/create_unicorn.pln", data, 0644)
+	assert.NoError(t, err)
+}
+
+func TestCreateSlothPipeline(t *testing.T) {
+	pipeline, err := CreateSlothPipeline("sloth_test", "test sloth object detection pipeline")
+	assert.NoError(t, err)
+
+	data, err := proto.Marshal(pipeline)
+	assert.NoError(t, err)
+	assert.NotNil(t, data)
+
+	err = ioutil.WriteFile("/tmp/create_sloth.pln", data, 0644)
+	assert.NoError(t, err)
 }
