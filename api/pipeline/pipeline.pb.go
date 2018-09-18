@@ -59,7 +59,7 @@ func (PipelineContext) EnumDescriptor() ([]byte, []int) {
 
 type ContainerArgument struct {
 	// Data reference.
-	Data                 string   `protobuf:"bytes,1,opt,name=data" json:"data,omitempty"`
+	Data                 string   `protobuf:"bytes,1,opt,name=data,proto3" json:"data,omitempty"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
 	XXX_unrecognized     []byte   `json:"-"`
 	XXX_sizecache        int32    `json:"-"`
@@ -98,7 +98,7 @@ func (m *ContainerArgument) GetData() string {
 
 type DataArgument struct {
 	// Data reference.
-	Data                 string   `protobuf:"bytes,1,opt,name=data" json:"data,omitempty"`
+	Data                 string   `protobuf:"bytes,1,opt,name=data,proto3" json:"data,omitempty"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
 	XXX_unrecognized     []byte   `json:"-"`
 	XXX_sizecache        int32    `json:"-"`
@@ -136,7 +136,7 @@ func (m *DataArgument) GetData() string {
 }
 
 type DataArguments struct {
-	Data                 []string `protobuf:"bytes,1,rep,name=data" json:"data,omitempty"`
+	Data                 []string `protobuf:"bytes,1,rep,name=data,proto3" json:"data,omitempty"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
 	XXX_unrecognized     []byte   `json:"-"`
 	XXX_sizecache        int32    `json:"-"`
@@ -175,7 +175,7 @@ func (m *DataArguments) GetData() []string {
 
 type PrimitiveArgument struct {
 	// 0-based index identifying a step of which primitive is used as a value.
-	Data                 int32    `protobuf:"varint,1,opt,name=data" json:"data,omitempty"`
+	Data                 int32    `protobuf:"varint,1,opt,name=data,proto3" json:"data,omitempty"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
 	XXX_unrecognized     []byte   `json:"-"`
 	XXX_sizecache        int32    `json:"-"`
@@ -214,7 +214,7 @@ func (m *PrimitiveArgument) GetData() int32 {
 
 type PrimitiveArguments struct {
 	// 0-based index identifying a step of which primitive is used as a value.
-	Data                 []int32  `protobuf:"varint,1,rep,packed,name=data" json:"data,omitempty"`
+	Data                 []int32  `protobuf:"varint,1,rep,packed,name=data,proto3" json:"data,omitempty"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
 	XXX_unrecognized     []byte   `json:"-"`
 	XXX_sizecache        int32    `json:"-"`
@@ -252,7 +252,7 @@ func (m *PrimitiveArguments) GetData() []int32 {
 }
 
 type ValueArgument struct {
-	Data                 *Value   `protobuf:"bytes,1,opt,name=data" json:"data,omitempty"`
+	Data                 *Value   `protobuf:"bytes,1,opt,name=data,proto3" json:"data,omitempty"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
 	XXX_unrecognized     []byte   `json:"-"`
 	XXX_sizecache        int32    `json:"-"`
@@ -328,10 +328,10 @@ type isPrimitiveStepArgument_Argument interface {
 }
 
 type PrimitiveStepArgument_Container struct {
-	Container *ContainerArgument `protobuf:"bytes,1,opt,name=container,oneof"`
+	Container *ContainerArgument `protobuf:"bytes,1,opt,name=container,proto3,oneof"`
 }
 type PrimitiveStepArgument_Data struct {
-	Data *DataArgument `protobuf:"bytes,2,opt,name=data,oneof"`
+	Data *DataArgument `protobuf:"bytes,2,opt,name=data,proto3,oneof"`
 }
 
 func (*PrimitiveStepArgument_Container) isPrimitiveStepArgument_Argument() {}
@@ -475,22 +475,22 @@ type isPrimitiveStepHyperparameter_Argument interface {
 }
 
 type PrimitiveStepHyperparameter_Container struct {
-	Container *ContainerArgument `protobuf:"bytes,1,opt,name=container,oneof"`
+	Container *ContainerArgument `protobuf:"bytes,1,opt,name=container,proto3,oneof"`
 }
 type PrimitiveStepHyperparameter_Data struct {
-	Data *DataArgument `protobuf:"bytes,2,opt,name=data,oneof"`
+	Data *DataArgument `protobuf:"bytes,2,opt,name=data,proto3,oneof"`
 }
 type PrimitiveStepHyperparameter_Primitive struct {
-	Primitive *PrimitiveArgument `protobuf:"bytes,3,opt,name=primitive,oneof"`
+	Primitive *PrimitiveArgument `protobuf:"bytes,3,opt,name=primitive,proto3,oneof"`
 }
 type PrimitiveStepHyperparameter_Value struct {
-	Value *ValueArgument `protobuf:"bytes,4,opt,name=value,oneof"`
+	Value *ValueArgument `protobuf:"bytes,4,opt,name=value,proto3,oneof"`
 }
 type PrimitiveStepHyperparameter_DataSet struct {
-	DataSet *DataArguments `protobuf:"bytes,5,opt,name=data_set,json=dataSet,oneof"`
+	DataSet *DataArguments `protobuf:"bytes,5,opt,name=data_set,json=dataSet,proto3,oneof"`
 }
 type PrimitiveStepHyperparameter_PrimitivesSet struct {
-	PrimitivesSet *PrimitiveArguments `protobuf:"bytes,6,opt,name=primitives_set,json=primitivesSet,oneof"`
+	PrimitivesSet *PrimitiveArguments `protobuf:"bytes,6,opt,name=primitives_set,json=primitivesSet,proto3,oneof"`
 }
 
 func (*PrimitiveStepHyperparameter_Container) isPrimitiveStepHyperparameter_Argument()     {}
@@ -701,7 +701,7 @@ func _PrimitiveStepHyperparameter_OneofSizer(msg proto.Message) (n int) {
 
 type StepInput struct {
 	// Data reference.
-	Data                 string   `protobuf:"bytes,1,opt,name=data" json:"data,omitempty"`
+	Data                 string   `protobuf:"bytes,1,opt,name=data,proto3" json:"data,omitempty"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
 	XXX_unrecognized     []byte   `json:"-"`
 	XXX_sizecache        int32    `json:"-"`
@@ -740,7 +740,7 @@ func (m *StepInput) GetData() string {
 
 type StepOutput struct {
 	// Name which becomes part of the data reference.
-	Id                   string   `protobuf:"bytes,1,opt,name=id" json:"id,omitempty"`
+	Id                   string   `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
 	XXX_unrecognized     []byte   `json:"-"`
 	XXX_sizecache        int32    `json:"-"`
@@ -779,11 +779,11 @@ func (m *StepOutput) GetId() string {
 
 type PipelineSource struct {
 	// String representing name of the author, team.
-	Name string `protobuf:"bytes,1,opt,name=name" json:"name,omitempty"`
+	Name string `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
 	// An URI to contact the source.
-	Contact string `protobuf:"bytes,2,opt,name=contact" json:"contact,omitempty"`
+	Contact string `protobuf:"bytes,2,opt,name=contact,proto3" json:"contact,omitempty"`
 	// A list of pipeline IDs used to derive the pipeline.
-	Pipelines            []string `protobuf:"bytes,3,rep,name=pipelines" json:"pipelines,omitempty"`
+	Pipelines            []string `protobuf:"bytes,3,rep,name=pipelines,proto3" json:"pipelines,omitempty"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
 	XXX_unrecognized     []byte   `json:"-"`
 	XXX_sizecache        int32    `json:"-"`
@@ -841,13 +841,13 @@ type PipelineDescriptionUser struct {
 	// and name to an ID in your system's database. It does not have to map to any real ID, just
 	// that it is possible to connect mutliple pipelines/templates by the same user together,
 	// if necessary.
-	Id string `protobuf:"bytes,1,opt,name=id" json:"id,omitempty"`
+	Id string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
 	// A natural language description of what the user did to be on the list, e.g., "Picked
 	// a pipeline from a list of pipelines.".
-	Reason string `protobuf:"bytes,2,opt,name=reason" json:"reason,omitempty"`
+	Reason string `protobuf:"bytes,2,opt,name=reason,proto3" json:"reason,omitempty"`
 	// A natural language description by the user of what the user did,
 	// e.g., "I picked a pipeline because it looks short in comparison with others.".
-	Rationale            string   `protobuf:"bytes,3,opt,name=rationale" json:"rationale,omitempty"`
+	Rationale            string   `protobuf:"bytes,3,opt,name=rationale,proto3" json:"rationale,omitempty"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
 	XXX_unrecognized     []byte   `json:"-"`
 	XXX_sizecache        int32    `json:"-"`
@@ -901,7 +901,7 @@ func (m *PipelineDescriptionUser) GetRationale() string {
 // Possible input to the pipeline or template.
 type PipelineDescriptionInput struct {
 	// Human friendly name of the input.
-	Name                 string   `protobuf:"bytes,1,opt,name=name" json:"name,omitempty"`
+	Name                 string   `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
 	XXX_unrecognized     []byte   `json:"-"`
 	XXX_sizecache        int32    `json:"-"`
@@ -941,9 +941,9 @@ func (m *PipelineDescriptionInput) GetName() string {
 // Available output of the pipeline or template.
 type PipelineDescriptionOutput struct {
 	// Human friendly name of the output.
-	Name string `protobuf:"bytes,1,opt,name=name" json:"name,omitempty"`
+	Name string `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
 	// Data reference, probably of an output of a step.
-	Data                 string   `protobuf:"bytes,2,opt,name=data" json:"data,omitempty"`
+	Data                 string   `protobuf:"bytes,2,opt,name=data,proto3" json:"data,omitempty"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
 	XXX_unrecognized     []byte   `json:"-"`
 	XXX_sizecache        int32    `json:"-"`
@@ -988,22 +988,22 @@ func (m *PipelineDescriptionOutput) GetData() string {
 }
 
 type PrimitivePipelineDescriptionStep struct {
-	Primitive *Primitive `protobuf:"bytes,1,opt,name=primitive" json:"primitive,omitempty"`
+	Primitive *Primitive `protobuf:"bytes,1,opt,name=primitive,proto3" json:"primitive,omitempty"`
 	// Arguments to the primitive. Constructor arguments should not be listed here, because they
 	// can be automatically created from other information. All these arguments are listed as kind
 	// "PIPELINE" in primitive's metadata.
-	Arguments map[string]*PrimitiveStepArgument `protobuf:"bytes,2,rep,name=arguments" json:"arguments,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
+	Arguments map[string]*PrimitiveStepArgument `protobuf:"bytes,2,rep,name=arguments,proto3" json:"arguments,omitempty" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"bytes,2,opt,name=value,proto3"`
 	// List of produce metods providing data. One can reference using data reference these outputs
 	// then in arguments (inputs) in other steps or pipeline outputs.
-	Outputs []*StepOutput `protobuf:"bytes,3,rep,name=outputs" json:"outputs,omitempty"`
+	Outputs []*StepOutput `protobuf:"bytes,3,rep,name=outputs,proto3" json:"outputs,omitempty"`
 	// Some hyper-parameters are not really tunable and should be fixed as part of template/pipeline.
 	// This can be done here. Hyper-parameters listed here cannot be tuned or overridden. Author of a
 	// template/pipeline decides which hyper-parameter are which, probably based on their semantic type.
 	// TA3 can specify a list of hyper-parameters to fix, and TA2 can add to the list additional
 	// hyper-paramaters in found pipelines.
-	Hyperparams map[string]*PrimitiveStepHyperparameter `protobuf:"bytes,4,rep,name=hyperparams" json:"hyperparams,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
+	Hyperparams map[string]*PrimitiveStepHyperparameter `protobuf:"bytes,4,rep,name=hyperparams,proto3" json:"hyperparams,omitempty" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"bytes,2,opt,name=value,proto3"`
 	// List of users associated with selection of this primitive/arguments/hyper-parameters. Optional.
-	Users                []*PipelineDescriptionUser `protobuf:"bytes,5,rep,name=users" json:"users,omitempty"`
+	Users                []*PipelineDescriptionUser `protobuf:"bytes,5,rep,name=users,proto3" json:"users,omitempty"`
 	XXX_NoUnkeyedLiteral struct{}                   `json:"-"`
 	XXX_unrecognized     []byte                     `json:"-"`
 	XXX_sizecache        int32                      `json:"-"`
@@ -1070,12 +1070,12 @@ func (m *PrimitivePipelineDescriptionStep) GetUsers() []*PipelineDescriptionUser
 
 type SubpipelinePipelineDescriptionStep struct {
 	// Only "id" field is required in this case to reference another pipeline in the template.
-	Pipeline *PipelineDescription `protobuf:"bytes,1,opt,name=pipeline" json:"pipeline,omitempty"`
+	Pipeline *PipelineDescription `protobuf:"bytes,1,opt,name=pipeline,proto3" json:"pipeline,omitempty"`
 	// List of data references, probably of an output of a step or pipeline input,
 	// mapped to sub-pipeline's inputs in order.
-	Inputs []*StepInput `protobuf:"bytes,2,rep,name=inputs" json:"inputs,omitempty"`
+	Inputs []*StepInput `protobuf:"bytes,2,rep,name=inputs,proto3" json:"inputs,omitempty"`
 	// List of IDs to be used in data references, mapping sub-pipeline's outputs in order.
-	Outputs              []*StepOutput `protobuf:"bytes,3,rep,name=outputs" json:"outputs,omitempty"`
+	Outputs              []*StepOutput `protobuf:"bytes,3,rep,name=outputs,proto3" json:"outputs,omitempty"`
 	XXX_NoUnkeyedLiteral struct{}      `json:"-"`
 	XXX_unrecognized     []byte        `json:"-"`
 	XXX_sizecache        int32         `json:"-"`
@@ -1133,9 +1133,9 @@ func (m *SubpipelinePipelineDescriptionStep) GetOutputs() []*StepOutput {
 type PlaceholderPipelineDescriptionStep struct {
 	// List of inputs which can be used as inputs to resulting sub-pipeline. Resulting
 	// sub-pipeline does not have to use all the inputs, but it cannot use any other inputs.
-	Inputs []*StepInput `protobuf:"bytes,1,rep,name=inputs" json:"inputs,omitempty"`
+	Inputs []*StepInput `protobuf:"bytes,1,rep,name=inputs,proto3" json:"inputs,omitempty"`
 	// A list of outputs of the resulting sub-pipeline.
-	Outputs              []*StepOutput `protobuf:"bytes,2,rep,name=outputs" json:"outputs,omitempty"`
+	Outputs              []*StepOutput `protobuf:"bytes,2,rep,name=outputs,proto3" json:"outputs,omitempty"`
 	XXX_NoUnkeyedLiteral struct{}      `json:"-"`
 	XXX_unrecognized     []byte        `json:"-"`
 	XXX_sizecache        int32         `json:"-"`
@@ -1219,13 +1219,13 @@ type isPipelineDescriptionStep_Step interface {
 }
 
 type PipelineDescriptionStep_Primitive struct {
-	Primitive *PrimitivePipelineDescriptionStep `protobuf:"bytes,1,opt,name=primitive,oneof"`
+	Primitive *PrimitivePipelineDescriptionStep `protobuf:"bytes,1,opt,name=primitive,proto3,oneof"`
 }
 type PipelineDescriptionStep_Pipeline struct {
-	Pipeline *SubpipelinePipelineDescriptionStep `protobuf:"bytes,2,opt,name=pipeline,oneof"`
+	Pipeline *SubpipelinePipelineDescriptionStep `protobuf:"bytes,2,opt,name=pipeline,proto3,oneof"`
 }
 type PipelineDescriptionStep_Placeholder struct {
-	Placeholder *PlaceholderPipelineDescriptionStep `protobuf:"bytes,3,opt,name=placeholder,oneof"`
+	Placeholder *PlaceholderPipelineDescriptionStep `protobuf:"bytes,3,opt,name=placeholder,proto3,oneof"`
 }
 
 func (*PipelineDescriptionStep_Primitive) isPipelineDescriptionStep_Step()   {}
@@ -1364,35 +1364,35 @@ type PipelineDescription struct {
 	// "ListSolutionsResponse" and other related messages. Those IDs are about whole solutions
 	// (pipeline, potentially fitted, with set hyper-parameters). This here ID is about this
 	// particular ID description.
-	Id string `protobuf:"bytes,1,opt,name=id" json:"id,omitempty"`
+	Id string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
 	// "schema" field is not needed because it is fixed by the TA2-TA3 protocol version.
 	// System which generated a pipeline or a template. Optional.
-	Source *PipelineSource `protobuf:"bytes,2,opt,name=source" json:"source,omitempty"`
+	Source *PipelineSource `protobuf:"bytes,2,opt,name=source,proto3" json:"source,omitempty"`
 	// TA2: Timestamp when created. Templates do not have this timestamp. TA3 might provide it for
 	// a fully specified pipeline.
-	Created *timestamp.Timestamp `protobuf:"bytes,3,opt,name=created" json:"created,omitempty"`
+	Created *timestamp.Timestamp `protobuf:"bytes,3,opt,name=created,proto3" json:"created,omitempty"`
 	// In which context a template or pipeline was made. This is helpful to distinguish evaluation
 	// context from other contexts. The value should not really influence different behavior from
 	// either system, but it is useful when recording metalearning information to understand this.
-	Context PipelineContext `protobuf:"varint,4,opt,name=context,enum=PipelineContext" json:"context,omitempty"`
+	Context PipelineContext `protobuf:"varint,4,opt,name=context,proto3,enum=PipelineContext" json:"context,omitempty"`
 	// Human friendly name of the pipeline. For templates it can be a hint to
 	// TA2 how to name found pipelines. Optional.
-	Name string `protobuf:"bytes,5,opt,name=name" json:"name,omitempty"`
+	Name string `protobuf:"bytes,5,opt,name=name,proto3" json:"name,omitempty"`
 	// Human friendly description of the pipeline. Optional.
-	Description string `protobuf:"bytes,6,opt,name=description" json:"description,omitempty"`
+	Description string `protobuf:"bytes,6,opt,name=description,proto3" json:"description,omitempty"`
 	// List of users associated with the creation of the template and consequently of the pipeline.
 	// TA2 can store this information into metalearning database. TA2 is not really expected to use
 	// this information during pipeline search. TA2 should not have to understand TA3 users, mapping
 	// between users and pipeline search IDs is something TA3 should handle. Optional.
-	Users []*PipelineDescriptionUser `protobuf:"bytes,7,rep,name=users" json:"users,omitempty"`
+	Users []*PipelineDescriptionUser `protobuf:"bytes,7,rep,name=users,proto3" json:"users,omitempty"`
 	// In most cases inputs are datasets. But if TA3 wants to jut run a primitive, it can send a
 	// template with only that primitive in the template, and then pass anything to its inputs during
 	// execution. Here, we are describing possible inputs to the pipeline or template. Order matters.
-	Inputs []*PipelineDescriptionInput `protobuf:"bytes,8,rep,name=inputs" json:"inputs,omitempty"`
+	Inputs []*PipelineDescriptionInput `protobuf:"bytes,8,rep,name=inputs,proto3" json:"inputs,omitempty"`
 	// Available outputs of the pipeline or template.
-	Outputs []*PipelineDescriptionOutput `protobuf:"bytes,9,rep,name=outputs" json:"outputs,omitempty"`
+	Outputs []*PipelineDescriptionOutput `protobuf:"bytes,9,rep,name=outputs,proto3" json:"outputs,omitempty"`
 	// Steps defining the pipeline.
-	Steps                []*PipelineDescriptionStep `protobuf:"bytes,10,rep,name=steps" json:"steps,omitempty"`
+	Steps                []*PipelineDescriptionStep `protobuf:"bytes,10,rep,name=steps,proto3" json:"steps,omitempty"`
 	XXX_NoUnkeyedLiteral struct{}                   `json:"-"`
 	XXX_unrecognized     []byte                     `json:"-"`
 	XXX_sizecache        int32                      `json:"-"`

@@ -21,13 +21,13 @@ const _ = proto.ProtoPackageIsVersion2 // please upgrade the proto package
 
 // Description of the primitive.
 type Primitive struct {
-	Id         string `protobuf:"bytes,1,opt,name=id" json:"id,omitempty"`
-	Version    string `protobuf:"bytes,2,opt,name=version" json:"version,omitempty"`
-	PythonPath string `protobuf:"bytes,3,opt,name=python_path,json=pythonPath" json:"python_path,omitempty"`
-	Name       string `protobuf:"bytes,4,opt,name=name" json:"name,omitempty"`
+	Id         string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	Version    string `protobuf:"bytes,2,opt,name=version,proto3" json:"version,omitempty"`
+	PythonPath string `protobuf:"bytes,3,opt,name=python_path,json=pythonPath,proto3" json:"python_path,omitempty"`
+	Name       string `protobuf:"bytes,4,opt,name=name,proto3" json:"name,omitempty"`
 	// Digest is optional, because some locally registered primitives might not have it.
 	// But for all primitives published it is available and it should be provided here as well.
-	Digest               string   `protobuf:"bytes,5,opt,name=digest" json:"digest,omitempty"`
+	Digest               string   `protobuf:"bytes,5,opt,name=digest,proto3" json:"digest,omitempty"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
 	XXX_unrecognized     []byte   `json:"-"`
 	XXX_sizecache        int32    `json:"-"`

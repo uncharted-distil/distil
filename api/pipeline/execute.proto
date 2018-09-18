@@ -1,0 +1,17 @@
+syntax = "proto3";
+
+import "pipeline.proto";
+import "value.proto";
+
+message PipelineExecuteRequest {
+    PipelineDescription pipelineDescription = 1;
+    repeated Value inputs = 2;
+}
+
+message PipelineExecuteResponse {
+    string resultURI = 1;
+}
+
+service Executor {
+    rpc ExecutePipeline (PipelineExecuteRequest) returns (PipelineExecuteResponse) {}
+}

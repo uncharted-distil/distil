@@ -207,10 +207,10 @@ func (PerformanceMetric) EnumDescriptor() ([]byte, []int) {
 }
 
 type ProblemPerformanceMetric struct {
-	Metric PerformanceMetric `protobuf:"varint,1,opt,name=metric,enum=PerformanceMetric" json:"metric,omitempty"`
+	Metric PerformanceMetric `protobuf:"varint,1,opt,name=metric,proto3,enum=PerformanceMetric" json:"metric,omitempty"`
 	// Additional params used by some metrics.
-	K                    int32    `protobuf:"varint,2,opt,name=k" json:"k,omitempty"`
-	PosLabel             string   `protobuf:"bytes,3,opt,name=pos_label,json=posLabel" json:"pos_label,omitempty"`
+	K                    int32    `protobuf:"varint,2,opt,name=k,proto3" json:"k,omitempty"`
+	PosLabel             string   `protobuf:"bytes,3,opt,name=pos_label,json=posLabel,proto3" json:"pos_label,omitempty"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
 	XXX_unrecognized     []byte   `json:"-"`
 	XXX_sizecache        int32    `json:"-"`
@@ -263,14 +263,14 @@ func (m *ProblemPerformanceMetric) GetPosLabel() string {
 
 type Problem struct {
 	// ID of this problem.
-	Id string `protobuf:"bytes,1,opt,name=id" json:"id,omitempty"`
+	Id string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
 	// Version of this problem.
-	Version              string                      `protobuf:"bytes,2,opt,name=version" json:"version,omitempty"`
-	Name                 string                      `protobuf:"bytes,3,opt,name=name" json:"name,omitempty"`
-	Description          string                      `protobuf:"bytes,4,opt,name=description" json:"description,omitempty"`
-	TaskType             TaskType                    `protobuf:"varint,5,opt,name=task_type,json=taskType,enum=TaskType" json:"task_type,omitempty"`
-	TaskSubtype          TaskSubtype                 `protobuf:"varint,6,opt,name=task_subtype,json=taskSubtype,enum=TaskSubtype" json:"task_subtype,omitempty"`
-	PerformanceMetrics   []*ProblemPerformanceMetric `protobuf:"bytes,7,rep,name=performance_metrics,json=performanceMetrics" json:"performance_metrics,omitempty"`
+	Version              string                      `protobuf:"bytes,2,opt,name=version,proto3" json:"version,omitempty"`
+	Name                 string                      `protobuf:"bytes,3,opt,name=name,proto3" json:"name,omitempty"`
+	Description          string                      `protobuf:"bytes,4,opt,name=description,proto3" json:"description,omitempty"`
+	TaskType             TaskType                    `protobuf:"varint,5,opt,name=task_type,json=taskType,proto3,enum=TaskType" json:"task_type,omitempty"`
+	TaskSubtype          TaskSubtype                 `protobuf:"varint,6,opt,name=task_subtype,json=taskSubtype,proto3,enum=TaskSubtype" json:"task_subtype,omitempty"`
+	PerformanceMetrics   []*ProblemPerformanceMetric `protobuf:"bytes,7,rep,name=performance_metrics,json=performanceMetrics,proto3" json:"performance_metrics,omitempty"`
 	XXX_NoUnkeyedLiteral struct{}                    `json:"-"`
 	XXX_unrecognized     []byte                      `json:"-"`
 	XXX_sizecache        int32                       `json:"-"`
@@ -350,11 +350,11 @@ func (m *Problem) GetPerformanceMetrics() []*ProblemPerformanceMetric {
 }
 
 type ProblemTarget struct {
-	TargetIndex          int32    `protobuf:"varint,1,opt,name=target_index,json=targetIndex" json:"target_index,omitempty"`
-	ResourceId           string   `protobuf:"bytes,2,opt,name=resource_id,json=resourceId" json:"resource_id,omitempty"`
-	ColumnIndex          int32    `protobuf:"varint,3,opt,name=column_index,json=columnIndex" json:"column_index,omitempty"`
-	ColumnName           string   `protobuf:"bytes,4,opt,name=column_name,json=columnName" json:"column_name,omitempty"`
-	ClustersNumber       int32    `protobuf:"varint,5,opt,name=clusters_number,json=clustersNumber" json:"clusters_number,omitempty"`
+	TargetIndex          int32    `protobuf:"varint,1,opt,name=target_index,json=targetIndex,proto3" json:"target_index,omitempty"`
+	ResourceId           string   `protobuf:"bytes,2,opt,name=resource_id,json=resourceId,proto3" json:"resource_id,omitempty"`
+	ColumnIndex          int32    `protobuf:"varint,3,opt,name=column_index,json=columnIndex,proto3" json:"column_index,omitempty"`
+	ColumnName           string   `protobuf:"bytes,4,opt,name=column_name,json=columnName,proto3" json:"column_name,omitempty"`
+	ClustersNumber       int32    `protobuf:"varint,5,opt,name=clusters_number,json=clustersNumber,proto3" json:"clusters_number,omitempty"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
 	XXX_unrecognized     []byte   `json:"-"`
 	XXX_sizecache        int32    `json:"-"`
@@ -423,9 +423,9 @@ type ProblemInput struct {
 	// Should match one of input datasets given to the pipeline search.
 	// Every "Dataset" object has an "id" associated with it and is available
 	// in its metadata. That ID is then used here to reference those inputs.
-	DatasetId string `protobuf:"bytes,1,opt,name=dataset_id,json=datasetId" json:"dataset_id,omitempty"`
+	DatasetId string `protobuf:"bytes,1,opt,name=dataset_id,json=datasetId,proto3" json:"dataset_id,omitempty"`
 	// Targets should resolve to columns in a given dataset.
-	Targets              []*ProblemTarget `protobuf:"bytes,2,rep,name=targets" json:"targets,omitempty"`
+	Targets              []*ProblemTarget `protobuf:"bytes,2,rep,name=targets,proto3" json:"targets,omitempty"`
 	XXX_NoUnkeyedLiteral struct{}         `json:"-"`
 	XXX_unrecognized     []byte           `json:"-"`
 	XXX_sizecache        int32            `json:"-"`
@@ -475,8 +475,8 @@ func (m *ProblemInput) GetTargets() []*ProblemTarget {
 // and are needed only when executing an exported pipeline, but then
 // TA2 gets full problem description anyway directly.
 type ProblemDescription struct {
-	Problem              *Problem        `protobuf:"bytes,1,opt,name=problem" json:"problem,omitempty"`
-	Inputs               []*ProblemInput `protobuf:"bytes,2,rep,name=inputs" json:"inputs,omitempty"`
+	Problem              *Problem        `protobuf:"bytes,1,opt,name=problem,proto3" json:"problem,omitempty"`
+	Inputs               []*ProblemInput `protobuf:"bytes,2,rep,name=inputs,proto3" json:"inputs,omitempty"`
 	XXX_NoUnkeyedLiteral struct{}        `json:"-"`
 	XXX_unrecognized     []byte          `json:"-"`
 	XXX_sizecache        int32           `json:"-"`
