@@ -150,7 +150,7 @@ func main() {
 	// set the ingest functions to use
 	if config.IngestPrimitive {
 		task.SetClassify(task.ClassifyPrimitive)
-		task.SetRank(task.RankPrimmitive)
+		task.SetRank(task.RankPrimitive)
 		task.SetSummarize(task.SummarizePrimitive)
 		task.SetFeaturize(task.FeaturizePrimitive)
 		task.SetCluster(task.ClusterPrimitive)

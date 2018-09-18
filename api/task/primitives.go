@@ -2,6 +2,7 @@ package task
 
 import (
 	"bytes"
+	"context"
 	"encoding/csv"
 	"encoding/json"
 	"fmt"
@@ -23,11 +24,13 @@ import (
 )
 
 const (
-	denormFieldName = "filename"
+	denormFieldName  = "filename"
+	useMockTA2System = true
 )
 
 var (
-	client *compute.Client
+	client     *compute.Client
+	clientMock *compute.ClientMock
 )
 
 // FeatureRequest captures the properties of a request to a primitive.
@@ -43,7 +46,22 @@ func SetClient(computeClient *compute.Client) {
 	client = computeClient
 }
 
+// SetClientMock sets the compute client to use when invoking primitives.
+func SetClientMock(computeClient *compute.ClientMock) {
+	clientMock = computeClient
+}
+
 func submitPrimitive(dataset string, step *pipeline.PipelineDescription) (string, error) {
+
+	if useMockTA2System {
+		res, err := clientMock.ExecutePipeline(context.Background(), step)
+		if err != nil {
+			return "", errors.Wrap(err, "unable to dispatch mocked pipeline")
+		}
+		resultURI := strings.Replace(res.ResultURI, "file://", "", -1)
+		return resultURI, nil
+	}
+
 	request := compute.NewExecPipelineRequest(dataset, step)
 
 	err := request.Dispatch(client)
@@ -64,7 +82,6 @@ func submitPrimitive(dataset string, step *pipeline.PipelineDescription) (string
 			datasetURI = status.ResultURI
 		}
 	})
-
 	if err != nil {
 		return "", errors.Wrap(err, "unable to listen to pipeline")
 	}
@@ -134,8 +151,8 @@ func ClassifyPrimitive(index string, dataset string, config *IngestTaskConfig) e
 	return nil
 }
 
-// RankPrimmitive will rank the dataset using a primitive.
-func RankPrimmitive(index string, dataset string, config *IngestTaskConfig) error {
+// RankPrimitive will rank the dataset using a primitive.
+func RankPrimitive(index string, dataset string, config *IngestTaskConfig) error {
 	// create & submit the solution request
 	pip, err := description.CreatePCAFeaturesPipeline("harry", "")
 	if err != nil {
