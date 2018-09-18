@@ -66,9 +66,10 @@ func FeaturizeContainer(schemaFile string, index string, dataset string, config 
 	}
 
 	// featurize data
+	// TODO: need to configure the threshold rather than use 0.2.
 	err = feature.FeaturizeDataset(meta, featurizer, config.TmpDataPath,
 		config.ContainerDataPath, config.TmpDataPath,
-		config.FeaturizationOutputDataRelative, config.FeaturizationOutputSchemaRelative, config.HasHeader)
+		config.FeaturizationOutputDataRelative, config.FeaturizationOutputSchemaRelative, config.HasHeader, 0.2)
 	if err != nil {
 		return errors.Wrap(err, "unable to featurize data")
 	}

@@ -52,7 +52,7 @@
 [[constraint]]
   name = "github.com/unchartedsoftware/distil-ingest"
   source = "git@github.com:unchartedsoftware/distil-ingest.git"
-  version = "0.5.2"
+  version = "0.5.3"
 
 [[constraint]]
   branch = "master"
@@ -73,6 +73,10 @@
 [[constraint]]
   name = "gopkg.in/olivere/elastic.v5"
   version = "5.0.62"
+
+[[constraint]]
+  name = "github.com/otiai10/copy"
+  source = "git@github.com:otiai10/copy.git"
 
 [prune]
   go-tests = true
