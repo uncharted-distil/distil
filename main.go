@@ -116,13 +116,34 @@ func main() {
 	// instantiate the postgres solution storage constructor.
 	pgSolutionStorageCtor := pg.NewSolutionStorage(postgresClientCtor, metadataStorageCtor)
 
-	// Instantiate the solution compute client
-	solutionClient, err := compute.NewClient(config.SolutionComputeEndpoint, config.SolutionComputeTrace,
-		userAgent, time.Duration(config.SolutionComputePullTimeout)*time.Second, config.SolutionComputePullMax,
-		config.SkipPreprocessing)
-	if err != nil {
-		log.Errorf("%+v", err)
-		os.Exit(1)
+	var solutionClient *compute.Client
+	if config.UseTA2Mock {
+		// Instantiate the solution compute client mock
+		solutionClient, err = compute.NewClientWithMock(
+			config.SolutionComputeEndpoint,
+			config.SolutionComputeMockEndpoint,
+			config.SolutionComputeTrace,
+			userAgent,
+			time.Duration(config.SolutionComputePullTimeout)*time.Second,
+			config.SolutionComputePullMax,
+			config.SkipPreprocessing)
+		if err != nil {
+			log.Errorf("%+v", err)
+			os.Exit(1)
+		}
+	} else {
+		// Instantiate the solution compute client
+		solutionClient, err = compute.NewClient(
+			config.SolutionComputeEndpoint,
+			config.SolutionComputeTrace,
+			userAgent,
+			time.Duration(config.SolutionComputePullTimeout)*time.Second,
+			config.SolutionComputePullMax,
+			config.SkipPreprocessing)
+		if err != nil {
+			log.Errorf("%+v", err)
+			os.Exit(1)
+		}
 	}
 	defer solutionClient.Close()
 

@@ -2,17 +2,22 @@
 
 
 [[projects]]
+  digest = "1:a0c0204285adc9c6764284233f9f66737623801b224144797db8194e651ece8c"
   name = "github.com/caarlos0/env"
   packages = ["."]
+  pruneopts = "UT"
   revision = "7cd7992b3bc86f920394f8de92c13900da1a46b7"
   version = "v3.2.0"
 
 [[projects]]
+  digest = "1:ffe9824d294da03b391f44e1ae8281281b4afc1bdaa9588c9097785e3af10cec"
   name = "github.com/davecgh/go-spew"
   packages = ["spew"]
+  pruneopts = "UT"
   revision = "87df7c60d5820d0f8ae11afede5aa52325c09717"
 
 [[projects]]
+  digest = "1:f55bccb09fe462179589d323ccc1b1ee507fdf29b8433626f02ecc197170c3f1"
   name = "github.com/go-pg/pg"
   packages = [
     ".",
@@ -20,17 +25,21 @@
     "internal/parser",
     "internal/pool",
     "orm",
-    "types"
+    "types",
   ]
+  pruneopts = "UT"
   revision = "9c148d3cd18e6038c96c43973bcd115342435c12"
   version = "v6.8.1"
 
 [[projects]]
+  digest = "1:b9dd62eb71d308d6c4b44af0bae869174975b40baab2ccd65724cefcdb561d55"
   name = "github.com/golang/mock"
   packages = ["gomock"]
+  pruneopts = "UT"
   revision = "b3e60bcdc577185fce3cf625fc96b62857ce5574"
 
 [[projects]]
+  digest = "1:14834e04828af9e53954f1be45ea7f190c4c26d746009c2ab07c5828595539e9"
   name = "github.com/golang/protobuf"
   packages = [
     "proto",
@@ -38,17 +47,21 @@
     "ptypes",
     "ptypes/any",
     "ptypes/duration",
-    "ptypes/timestamp"
+    "ptypes/timestamp",
   ]
+  pruneopts = "UT"
   revision = "b4deda0973fb4c70b50d226b1af49f3da59f5265"
   version = "v1.1.0"
 
 [[projects]]
+  digest = "1:4270036df1c56eb3975b029da5ae3fc2075ab72432dea52fd41f12ec70d7e588"
   name = "github.com/gorilla/websocket"
   packages = ["."]
+  pruneopts = "UT"
   revision = "4ac909741dfa57448bfadfdbca0cf7eeaa68f0e2"
 
 [[projects]]
+  digest = "1:df2a3a508f26abf0be2f41ab68c71da0707901714f2be4dc47d3ecec870321cb"
   name = "github.com/jackc/pgx"
   packages = [
     ".",
@@ -56,104 +69,136 @@
     "internal/sanitize",
     "pgio",
     "pgproto3",
-    "pgtype"
+    "pgtype",
   ]
+  pruneopts = "UT"
   revision = "606697ffdfe6603013560dbc171656de57b4f542"
 
 [[projects]]
+  digest = "1:eb4d1ca4b70eaa434556f4b26dc02e02948bc7287dc2354470cee0942bb0a827"
   name = "github.com/jeffail/gabs"
   packages = ["."]
+  pruneopts = "UT"
   revision = "44cbc27138518b15305cb3eef220d04f2d641b9b"
 
 [[projects]]
+  digest = "1:2cf1e05311b662e68d938f6655c6c5a44ae0e6b3995e390c75fcd8224afa48df"
   name = "github.com/jinzhu/inflection"
   packages = ["."]
+  pruneopts = "UT"
   revision = "1c35d901db3da928c72a72d8458480cc9ade058f"
 
 [[projects]]
+  digest = "1:97c5df4b017afec3bafe72dc7a0de80c9b4509a464d419bb0e74f5dd4a5500b8"
   name = "github.com/mailru/easyjson"
   packages = [
     ".",
     "buffer",
     "jlexer",
-    "jwriter"
+    "jwriter",
   ]
+  pruneopts = "UT"
   revision = "32fa128f234d041f196a9f3e0fea5ac9772c08e1"
 
 [[projects]]
+  digest = "1:0f96ec4151a24d7bfd4298fc13cc320a000e31b4e5431cf88e3ffc961db846fd"
   name = "github.com/mattn/go-colorable"
   packages = ["."]
+  pruneopts = "UT"
   revision = "7dc3415be66d7cc68bf0182f35c8d31f8d2ad8a7"
 
 [[projects]]
   branch = "master"
+  digest = "1:0981502f9816113c9c8c4ac301583841855c8cf4da8c72f696b3ebedf6d0e4e5"
   name = "github.com/mattn/go-isatty"
   packages = ["."]
+  pruneopts = "UT"
   revision = "6ca4dbf54d38eea1a992b3c722a76a5d1c4cb25c"
 
 [[projects]]
   branch = "master"
+  digest = "1:2b32af4d2a529083275afc192d1067d8126b578c7a9613b26600e4df9c735155"
   name = "github.com/mgutz/ansi"
   packages = ["."]
+  pruneopts = "UT"
   revision = "9520e82c474b0a04dd04f8a40959027271bab992"
 
 [[projects]]
+  digest = "1:e83a8cf54ecc5c4efdbc88aa914578773d4d6897470b698ae315b5734081e8ed"
   name = "github.com/microcosm-cc/bluemonday"
   packages = ["."]
+  pruneopts = "UT"
   revision = "542fd4642604d0d0c26112396ce5b1a9d01eee0b"
 
 [[projects]]
   branch = "master"
+  digest = "1:544635141f5fb084637823f438f3563be046a9730c256d2e7760dbb741cd88b5"
   name = "github.com/mitchellh/hashstructure"
   packages = ["."]
+  pruneopts = "UT"
   revision = "2bca23e0e452137f789efbc8610126fd8b94f73b"
 
 [[projects]]
   branch = "master"
+  digest = "1:6d4d9067e639d96a804ee9a30fa89c7233c5c5edbfe736072ff00d48c97bccc4"
   name = "github.com/otiai10/copy"
   packages = ["."]
+  pruneopts = "UT"
   revision = "7e9a647135a142c2669943d4a4d29be015ce9392"
   source = "git@github.com:otiai10/copy.git"
 
 [[projects]]
+  digest = "1:40e195917a951a8bf867cd05de2a46aaf1806c50cf92eebf4c16f78cd196f747"
   name = "github.com/pkg/errors"
   packages = ["."]
+  pruneopts = "UT"
   revision = "645ef00459ed84a119197bfb8d8205042c6df63d"
   version = "v0.8.0"
 
 [[projects]]
+  digest = "1:0028cb19b2e4c3112225cd871870f2d9cf49b9b4276531f03438a88e94be86fe"
   name = "github.com/pmezard/go-difflib"
   packages = ["difflib"]
+  pruneopts = "UT"
   revision = "792786c7400a136282c1664665ae0a8db921c6c2"
   version = "v1.0.0"
 
 [[projects]]
+  digest = "1:029109bbf5af9159157ba977a5c783a6725f3f01a671c2c3860ebbb0d4dae26c"
   name = "github.com/russross/blackfriday"
   packages = ["."]
+  pruneopts = "UT"
   revision = "6d1ef893fcb01b4f50cb6e57ed7df3e2e627b6b2"
 
 [[projects]]
+  digest = "1:274f67cb6fed9588ea2521ecdac05a6d62a8c51c074c1fccc6a49a40ba80e925"
   name = "github.com/satori/go.uuid"
   packages = ["."]
+  pruneopts = "UT"
   revision = "f58768cc1a7a7e77a3bd49e98cdd21419399b6a3"
   version = "v1.2.0"
 
 [[projects]]
+  digest = "1:25f2747b063c0a656195ef85413cef8c9f2bbe128deab7d39563a6ca1e536070"
   name = "github.com/stretchr/testify"
   packages = ["assert"]
+  pruneopts = "UT"
   revision = "69483b4bd14f5845b5a1e55bca19e954e827f1d0"
   version = "v1.1.4"
 
 [[projects]]
   branch = "master"
+  digest = "1:02ac3313f120dc17b832e92c8b65097f258565c610cc50e004a03b813b29a301"
   name = "github.com/unchartedsoftware/deluge"
   packages = [
     "document",
-    "util"
+    "util",
   ]
+  pruneopts = "UT"
   revision = "f967d93bead1da1df483356f0819caa2ecfb1bc8"
 
 [[projects]]
+  digest = "1:fb5de354dc9f712e45bf7c8ae32e62a11faefdbab5150e2e7c896a526ac0a031"
   name = "github.com/unchartedsoftware/distil-ingest"
   packages = [
     "conf",
@@ -164,43 +209,54 @@
     "postgres",
     "postgres/model",
     "rest",
-    "smmry"
+    "smmry",
   ]
+  pruneopts = "UT"
   revision = "386ed8b9fb40e1139b90313cee91bbc1b7a98d94"
+  source = "git@github.com:unchartedsoftware/distil-ingest.git"
   version = "0.5.3"
 
 [[projects]]
   branch = "master"
+  digest = "1:5e969d32a6c01904b2ad695007113b8e088e7b4511d54a400cc45b6143b0342f"
   name = "github.com/unchartedsoftware/plog"
   packages = ["."]
+  pruneopts = "UT"
   revision = "34d2bbd3c0a9458feb0752af2b578a23eb8ddc4f"
 
 [[projects]]
   branch = "master"
+  digest = "1:a7cbc2532c48a223b5d702e2207e29d12998f45516f68b4acf946808ba2ba7f9"
   name = "github.com/vova616/xxhash"
   packages = ["."]
+  pruneopts = "UT"
   revision = "f0a9a8b74d487f9563a527daf3bd6b4fbd3f5d00"
 
 [[projects]]
+  digest = "1:e2801f9ea1288e844cff8eac2e7590318f85988fa321f075987dd3923b1e5df5"
   name = "github.com/zenazn/goji"
   packages = [
     "graceful",
-    "graceful/listener"
+    "graceful/listener",
   ]
+  pruneopts = "UT"
   revision = "c05078ca81941f8e801bba3ddc0e6b86b7fdc893"
 
 [[projects]]
+  digest = "1:02bac7bfd3bf25d03cdcf343a7054e04c1149e11e62c443f602538adc529d714"
   name = "goji.io"
   packages = [
     ".",
     "internal",
     "pat",
-    "pattern"
+    "pattern",
   ]
+  pruneopts = "UT"
   revision = "0d89ff54b2c18c9c4ba530e32496aef902d3c6cd"
   version = "v2.0"
 
 [[projects]]
+  digest = "1:146f6ee103b4d91b04332dca5145d44b0fcf1bf62e1c6d452ae172351dbba903"
   name = "golang.org/x/net"
   packages = [
     "context",
@@ -211,16 +267,20 @@
     "idna",
     "internal/timeseries",
     "lex/httplex",
-    "trace"
+    "trace",
   ]
+  pruneopts = "UT"
   revision = "2fb46b16b8dda405028c50f7c7f0f9dd1fa6bfb1"
 
 [[projects]]
+  digest = "1:ba7d5e85e8b4f084fae02a1a9d7462980e889d1eb689c747507b30a30b8bfa67"
   name = "golang.org/x/sys"
   packages = ["unix"]
+  pruneopts = "UT"
   revision = "37707fdb30a5b38865cfb95e5aab41707daec7fd"
 
 [[projects]]
+  digest = "1:a2ab62866c75542dd18d2b069fec854577a20211d7c0ea6ae746072a1dccdd18"
   name = "golang.org/x/text"
   packages = [
     "collate",
@@ -236,16 +296,20 @@
     "unicode/bidi",
     "unicode/cldr",
     "unicode/norm",
-    "unicode/rangetable"
+    "unicode/rangetable",
   ]
+  pruneopts = "UT"
   revision = "e19ae1496984b1c655b8044a65c0300a3c878dd3"
 
 [[projects]]
+  digest = "1:cd018653a358d4b743a9d3bee89e825521f2ab2f2ec0770164bf7632d8d73ab7"
   name = "google.golang.org/genproto"
   packages = ["googleapis/rpc/status"]
+  pruneopts = "UT"
   revision = "2b5a72b8730b0b16380010cfe5286c42108d88e7"
 
 [[projects]]
+  digest = "1:f47fb9bd1a9173285be23a1a1342e019abddfd787216e7f2c555ddba837e98ce"
   name = "google.golang.org/grpc"
   packages = [
     ".",
@@ -270,24 +334,60 @@
     "stats",
     "status",
     "tap",
-    "transport"
+    "transport",
   ]
+  pruneopts = "UT"
   revision = "d11072e7ca9811b1100b80ca0269ac831f06d024"
   version = "v1.11.3"
 
 [[projects]]
+  digest = "1:41a3deb47f4523cf2d27ef4d15716bd8d66e3c7360a3499ffbbd85e5160179d1"
   name = "gopkg.in/olivere/elastic.v5"
   packages = [
     ".",
     "config",
-    "uritemplates"
+    "uritemplates",
   ]
+  pruneopts = "UT"
   revision = "1094ee281ca61a783c9ba22bf86e7e0a8aa2d112"
   version = "v5.0.62"
 
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "58bb79bd75cd11bac6de5614830be6461ebf5a7b78db65e0241542ef953f61a5"
+  input-imports = [
+    "github.com/caarlos0/env",
+    "github.com/davecgh/go-spew/spew",
+    "github.com/golang/mock/gomock",
+    "github.com/golang/protobuf/proto",
+    "github.com/golang/protobuf/protoc-gen-go/descriptor",
+    "github.com/golang/protobuf/ptypes/timestamp",
+    "github.com/gorilla/websocket",
+    "github.com/jackc/pgx",
+    "github.com/mattn/go-isatty",
+    "github.com/mgutz/ansi",
+    "github.com/microcosm-cc/bluemonday",
+    "github.com/mitchellh/hashstructure",
+    "github.com/otiai10/copy",
+    "github.com/pkg/errors",
+    "github.com/russross/blackfriday",
+    "github.com/satori/go.uuid",
+    "github.com/stretchr/testify/assert",
+    "github.com/unchartedsoftware/distil-ingest/conf",
+    "github.com/unchartedsoftware/distil-ingest/feature",
+    "github.com/unchartedsoftware/distil-ingest/merge",
+    "github.com/unchartedsoftware/distil-ingest/metadata",
+    "github.com/unchartedsoftware/distil-ingest/postgres",
+    "github.com/unchartedsoftware/distil-ingest/rest",
+    "github.com/unchartedsoftware/plog",
+    "github.com/vova616/xxhash",
+    "github.com/zenazn/goji/graceful",
+    "goji.io",
+    "goji.io/pat",
+    "goji.io/pattern",
+    "golang.org/x/net/context",
+    "google.golang.org/grpc",
+    "gopkg.in/olivere/elastic.v5",
+  ]
   solver-name = "gps-cdcl"
   solver-version = 1

@@ -25,6 +25,7 @@ const defaultTrainTestRatio = 3
 type Client struct {
 	client            pipeline.CoreClient
 	conn              *grpc.ClientConn
+	mock              *grpc.ClientConn
 	mu                *sync.Mutex
 	UserAgent         string
 	PullTimeout       time.Duration
@@ -78,6 +79,34 @@ func NewClient(serverAddr string, trace bool, userAgent string,
 	}
 
 	return &client, nil
+}
+
+// NewClientWithMock creates a new pipline request dispatcher instance. This will establish
+// the connection to the solution server or return an error on fail
+func NewClientWithMock(serverAddr string, mockAddr string, trace bool, userAgent string, pullTimeout time.Duration, pullMax int, skipPreprocessing bool) (*Client, error) {
+
+	client, err := NewClient(serverAddr, trace, userAgent, pullTimeout, pullMax, skipPreprocessing)
+	if err != nil {
+		return nil, err
+	}
+
+	log.Infof("connecting to ta2 mock at %s", mockAddr)
+
+	mock, err := grpc.Dial(
+		mockAddr,
+		grpc.WithInsecure(),
+		grpc.WithBlock(),
+		grpc.WithUnaryInterceptor(middleware.GenerateUnaryClientInterceptor(trace)),
+		grpc.WithStreamInterceptor(middleware.GenerateStreamClientInterceptor(trace)),
+	)
+	if err != nil {
+		return nil, errors.Wrapf(err, "failed to connect to %s", mockAddr)
+	}
+
+	log.Infof("connected to %s", mockAddr)
+
+	client.mock = mock
+	return client, nil
 }
 
 // Close the connection to the solution service
@@ -313,4 +342,17 @@ func (c *Client) ExportSolution(ctx context.Context, fittedSolutionID string) er
 	}
 	_, err := c.client.SolutionExport(ctx, exportSolution)
 	return errors.Wrap(err, "failed to export solution")
+}
+
+// ExecutePipeline executes a pre-specified pipeline.
+func (c *Client) ExecutePipeline(ctx context.Context, pipelineDesc *pipeline.PipelineDescription) (*pipeline.PipelineExecuteResponse, error) {
+	in := &pipeline.PipelineExecuteRequest{
+		PipelineDescription: pipelineDesc,
+	}
+	out := new(pipeline.PipelineExecuteResponse)
+	err := c.mock.Invoke(ctx, "/Executor/ExecutePipeline", in, out)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
 }

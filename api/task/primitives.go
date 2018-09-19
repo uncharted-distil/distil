@@ -20,6 +20,7 @@ import (
 	"github.com/unchartedsoftware/distil/api/compute"
 	"github.com/unchartedsoftware/distil/api/compute/description"
 	"github.com/unchartedsoftware/distil/api/compute/result"
+	"github.com/unchartedsoftware/distil/api/env"
 	"github.com/unchartedsoftware/distil/api/pipeline"
 )
 
@@ -29,8 +30,7 @@ const (
 )
 
 var (
-	client     *compute.Client
-	clientMock *compute.ClientMock
+	client *compute.Client
 )
 
 // FeatureRequest captures the properties of a request to a primitive.
@@ -45,16 +45,15 @@ type FeatureRequest struct {
 func SetClient(computeClient *compute.Client) {
 	client = computeClient
 }
-
-// SetClientMock sets the compute client to use when invoking primitives.
-func SetClientMock(computeClient *compute.ClientMock) {
-	clientMock = computeClient
-}
-
 func submitPrimitive(dataset string, step *pipeline.PipelineDescription) (string, error) {
 
-	if useMockTA2System {
-		res, err := clientMock.ExecutePipeline(context.Background(), step)
+	config, err := env.LoadConfig()
+	if err != nil {
+		return "", errors.Wrap(err, "unable to load config")
+	}
+
+	if config.UseTA2Mock {
+		res, err := client.ExecutePipeline(context.Background(), step)
 		if err != nil {
 			return "", errors.Wrap(err, "unable to dispatch mocked pipeline")
 		}
@@ -64,7 +63,7 @@ func submitPrimitive(dataset string, step *pipeline.PipelineDescription) (string
 
 	request := compute.NewExecPipelineRequest(dataset, step)
 
-	err := request.Dispatch(client)
+	err = request.Dispatch(client)
 	if err != nil {
 		return "", errors.Wrap(err, "unable to dispatch pipeline")
 	}
