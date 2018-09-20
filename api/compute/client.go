@@ -1,7 +1,9 @@
 package compute
 
 import (
+	"fmt"
 	"io"
+	"path"
 	"strings"
 	"sync"
 	"time"
@@ -345,9 +347,19 @@ func (c *Client) ExportSolution(ctx context.Context, fittedSolutionID string) er
 }
 
 // ExecutePipeline executes a pre-specified pipeline.
-func (c *Client) ExecutePipeline(ctx context.Context, pipelineDesc *pipeline.PipelineDescription) (*pipeline.PipelineExecuteResponse, error) {
+func (c *Client) ExecutePipeline(ctx context.Context, datasetURI string, pipelineDesc *pipeline.PipelineDescription) (*pipeline.PipelineExecuteResponse, error) {
+
+	datasetURI = fmt.Sprintf("file://%s", path.Join(datasetURI, D3MDataSchema))
+
 	in := &pipeline.PipelineExecuteRequest{
 		PipelineDescription: pipelineDesc,
+		Inputs: []*pipeline.Value{
+			{
+				Value: &pipeline.Value_DatasetUri{
+					DatasetUri: datasetURI,
+				},
+			},
+		},
 	}
 	out := new(pipeline.PipelineExecuteResponse)
 	err := c.mock.Invoke(ctx, "/Executor/ExecutePipeline", in, out)

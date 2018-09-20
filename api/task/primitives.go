@@ -53,7 +53,7 @@ func submitPrimitive(dataset string, step *pipeline.PipelineDescription) (string
 	}
 
 	if config.UseTA2Mock {
-		res, err := client.ExecutePipeline(context.Background(), step)
+		res, err := client.ExecutePipeline(context.Background(), dataset, step)
 		if err != nil {
 			return "", errors.Wrap(err, "unable to dispatch mocked pipeline")
 		}
