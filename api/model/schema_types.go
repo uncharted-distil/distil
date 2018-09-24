@@ -129,12 +129,14 @@ var (
 		LongitudeType: true,
 		LatitudeType:  true,
 		FloatType:     true,
+		RealType:      true,
 		IntegerType:   true,
 		IndexType:     true,
 		DateTimeType:  true}
 	floatingPointTypes = map[string]bool{
 		LongitudeType: true,
 		LatitudeType:  true,
+		RealType:      true,
 		FloatType:     true}
 
 	// Maps from Distil internal type to TA2 supported type
