@@ -80,6 +80,7 @@ export const REGRESSION_TASK: Task = {
 // variable type to task mappings
 const TASKS_BY_VARIABLES: Dictionary<Task> = {
 	float:  REGRESSION_TASK,
+	real:  REGRESSION_TASK,
 	latitude:  REGRESSION_TASK,
 	longitude:  REGRESSION_TASK,
 	integer: REGRESSION_TASK,
