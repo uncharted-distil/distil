@@ -448,7 +448,7 @@ func (f *NumericalField) FetchNumericalStats(dataset string, variable *model.Var
 	}
 
 	// Create the complete query string.
-	query := fmt.Sprintf("SELECT stddev(\"%s\") as stddev, avg(\"%s\") as avg FROM %s %s;", variable.Key, variable.Key, fromClause, where)
+	query := fmt.Sprintf("SELECT coalesce(stddev(\"%s\"), 0) as stddev, avg(\"%s\") as avg FROM %s %s;", variable.Key, variable.Key, fromClause, where)
 
 	// execute the postgres query
 	res, err := f.Storage.client.Query(query, params...)
@@ -480,7 +480,7 @@ func (f *NumericalField) FetchNumericalStatsByResult(dataset string, variable *m
 	}
 
 	// Create the complete query string.
-	query := fmt.Sprintf("SELECT stddev(\"%s\") as stddev, avg(\"%s\") as avg FROM %s data INNER JOIN %s result ON data.\"%s\" = result.index WHERE result.result_id = $%d %s;",
+	query := fmt.Sprintf("SELECT coalesce(stddev(\"%s\"), 0) as stddev, avg(\"%s\") as avg FROM %s data INNER JOIN %s result ON data.\"%s\" = result.index WHERE result.result_id = $%d %s;",
 		variable.Key, variable.Key, fromClause, f.Storage.getResultTable(dataset), model.D3MIndexFieldName, len(params), where)
 
 	// execute the postgres query
