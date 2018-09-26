@@ -12,13 +12,25 @@ import (
 
 // CategoricalField defines behaviour for the categorical field type.
 type CategoricalField struct {
-	Storage *Storage
+	Storage   *Storage
+	subSelect func(string, *model.Variable) string
 }
 
 // NewCategoricalField creates a new field for categorical types.
 func NewCategoricalField(storage *Storage) *CategoricalField {
 	field := &CategoricalField{
 		Storage: storage,
+	}
+
+	return field
+}
+
+// NewCategoricalFieldSubSelect creates a new field for categorical types
+// and specifies a sub select query to pull the raw data.
+func NewCategoricalFieldSubSelect(storage *Storage, fieldSubSelect func(string, *model.Variable) string) *CategoricalField {
+	field := &CategoricalField{
+		Storage:   storage,
+		subSelect: fieldSubSelect,
 	}
 
 	return field
@@ -38,6 +50,8 @@ func (f *CategoricalField) FetchSummaryData(dataset string, variable *model.Vari
 }
 
 func (f *CategoricalField) fetchHistogram(dataset string, variable *model.Variable, filterParams *model.FilterParams) (*model.Histogram, error) {
+	fromClause := f.getFromClause(dataset, variable, true)
+
 	// create the filter for the query
 	wheres := make([]string, 0)
 	params := make([]interface{}, 0)
@@ -49,7 +63,7 @@ func (f *CategoricalField) fetchHistogram(dataset string, variable *model.Variab
 	}
 
 	// Get count by category.
-	query := fmt.Sprintf("SELECT \"%s\", COUNT(*) AS count FROM %s %s GROUP BY \"%s\" ORDER BY count desc, \"%s\" LIMIT %d;", variable.Key, dataset, where, variable.Key, variable.Key, catResultLimit)
+	query := fmt.Sprintf("SELECT \"%s\", COUNT(*) AS count FROM %s %s GROUP BY \"%s\" ORDER BY count desc, \"%s\" LIMIT %d;", variable.Key, fromClause, where, variable.Key, variable.Key, catResultLimit)
 
 	// execute the postgres query
 	res, err := f.Storage.client.Query(query, params...)
@@ -64,6 +78,7 @@ func (f *CategoricalField) fetchHistogram(dataset string, variable *model.Variab
 }
 
 func (f *CategoricalField) fetchHistogramByResult(dataset string, variable *model.Variable, resultURI string, filterParams *model.FilterParams) (*model.Histogram, error) {
+	fromClause := f.getFromClause(dataset, variable, false)
 
 	// get filter where / params
 	wheres, params, err := f.Storage.buildResultQueryFilters(dataset, resultURI, filterParams)
@@ -85,7 +100,7 @@ func (f *CategoricalField) fetchHistogramByResult(dataset string, variable *mode
 		 WHERE result.result_id = $%d %s
 		 GROUP BY "%s"
 		 ORDER BY count desc, "%s" LIMIT %d;`,
-		variable.Key, dataset, f.Storage.getResultTable(dataset),
+		variable.Key, fromClause, f.Storage.getResultTable(dataset),
 		model.D3MIndexFieldName, len(params), where, variable.Key,
 		variable.Key, catResultLimit)
 
@@ -175,4 +190,16 @@ func (f *CategoricalField) FetchPredictedSummaryData(resultURI string, dataset s
 	defer res.Close()
 
 	return f.parseHistogram(res, variable)
+}
+
+func (f *CategoricalField) getFromClause(dataset string, variable *model.Variable, alias bool) string {
+	fromClause := dataset
+	if f.subSelect != nil {
+		fromClause = f.subSelect(dataset, variable)
+		if alias {
+			fromClause = fmt.Sprintf("%s as %s", fromClause, dataset)
+		}
+	}
+
+	return fromClause
 }

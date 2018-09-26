@@ -12,7 +12,8 @@ import (
 
 // NumericalField defines behaviour for the numerical field type.
 type NumericalField struct {
-	Storage *Storage
+	Storage   *Storage
+	subSelect func(string, *model.Variable) string
 }
 
 // NumericalStats contains summary information on a numerical fields.
@@ -25,6 +26,17 @@ type NumericalStats struct {
 func NewNumericalField(storage *Storage) *NumericalField {
 	field := &NumericalField{
 		Storage: storage,
+	}
+
+	return field
+}
+
+// NewNumericalFieldSubSelect creates a new field for numerical types
+// and specifies a sub select query to pull the raw data.
+func NewNumericalFieldSubSelect(storage *Storage, fieldSubSelect func(string, *model.Variable) string) *NumericalField {
+	field := &NumericalField{
+		Storage:   storage,
+		subSelect: fieldSubSelect,
 	}
 
 	return field
@@ -61,6 +73,8 @@ func (f *NumericalField) FetchSummaryData(dataset string, variable *model.Variab
 }
 
 func (f *NumericalField) fetchHistogram(dataset string, variable *model.Variable, filterParams *model.FilterParams) (*model.Histogram, error) {
+	fromClause := f.getFromClause(dataset, variable, true)
+
 	// create the filter for the query.
 	wheres := make([]string, 0)
 	params := make([]interface{}, 0)
@@ -83,7 +97,7 @@ func (f *NumericalField) fetchHistogram(dataset string, variable *model.Variable
 
 	// Create the complete query string.
 	query := fmt.Sprintf("SELECT %s as bucket, CAST(%s as double precision) AS %s, COUNT(*) AS count FROM %s %s GROUP BY %s ORDER BY %s;",
-		bucketQuery, histogramQuery, histogramName, dataset, where, bucketQuery, histogramName)
+		bucketQuery, histogramQuery, histogramName, fromClause, where, bucketQuery, histogramName)
 
 	// execute the postgres query
 	res, err := f.Storage.client.Query(query, params...)
@@ -98,6 +112,7 @@ func (f *NumericalField) fetchHistogram(dataset string, variable *model.Variable
 }
 
 func (f *NumericalField) fetchHistogramByResult(dataset string, variable *model.Variable, resultURI string, filterParams *model.FilterParams, extrema *model.Extrema) (*model.Histogram, error) {
+	fromClause := f.getFromClause(dataset, variable, false)
 
 	// get filter where / params
 	wheres, params, err := f.Storage.buildResultQueryFilters(dataset, resultURI, filterParams)
@@ -133,7 +148,7 @@ func (f *NumericalField) fetchHistogramByResult(dataset string, variable *model.
 		WHERE result.result_id = $%d %s
 		GROUP BY %s
 		ORDER BY %s;`,
-		bucketQuery, histogramQuery, histogramName, dataset,
+		bucketQuery, histogramQuery, histogramName, fromClause,
 		f.Storage.getResultTable(dataset), model.D3MIndexFieldName, len(params), where, bucketQuery, histogramName)
 
 	// execute the postgres query
@@ -149,11 +164,12 @@ func (f *NumericalField) fetchHistogramByResult(dataset string, variable *model.
 }
 
 func (f *NumericalField) fetchExtrema(dataset string, variable *model.Variable) (*model.Extrema, error) {
+	fromClause := f.getFromClause(dataset, variable, true)
 	// add min / max aggregation
 	aggQuery := f.getMinMaxAggsQuery(variable)
 
 	// create a query that does min and max aggregations for each variable
-	queryString := fmt.Sprintf("SELECT %s FROM %s;", aggQuery, dataset)
+	queryString := fmt.Sprintf("SELECT %s FROM %s;", aggQuery, fromClause)
 
 	// execute the postgres query
 	// NOTE: We may want to use the regular Query operation since QueryRow
@@ -286,12 +302,14 @@ func (f *NumericalField) getMinMaxAggsQuery(variable *model.Variable) string {
 }
 
 func (f *NumericalField) fetchExtremaByURI(dataset string, resultURI string, variable *model.Variable) (*model.Extrema, error) {
+	fromClause := f.getFromClause(dataset, variable, false)
+
 	// add min / max aggregation
 	aggQuery := f.getMinMaxAggsQuery(variable)
 
 	// create a query that does min and max aggregations for each variable
 	queryString := fmt.Sprintf("SELECT %s FROM %s data INNER JOIN %s result ON data.\"%s\" = result.index WHERE result.result_id = $1;",
-		aggQuery, dataset, f.Storage.getResultTable(dataset), model.D3MIndexFieldName)
+		aggQuery, fromClause, f.Storage.getResultTable(dataset), model.D3MIndexFieldName)
 
 	// execute the postgres query
 	// NOTE: We may want to use the regular Query operation since QueryRow
@@ -417,6 +435,8 @@ func (f *NumericalField) fetchResultsExtrema(resultURI string, dataset string, v
 
 // FetchNumericalStats gets the variable's numerical summary info (mean, stddev).
 func (f *NumericalField) FetchNumericalStats(dataset string, variable *model.Variable, filterParams *model.FilterParams) (*NumericalStats, error) {
+	fromClause := f.getFromClause(dataset, variable, true)
+
 	// create the filter for the query.
 	wheres := make([]string, 0)
 	params := make([]interface{}, 0)
@@ -428,7 +448,7 @@ func (f *NumericalField) FetchNumericalStats(dataset string, variable *model.Var
 	}
 
 	// Create the complete query string.
-	query := fmt.Sprintf("SELECT stddev(\"%s\") as stddev, avg(\"%s\") as avg FROM %s %s;", variable.Key, variable.Key, dataset, where)
+	query := fmt.Sprintf("SELECT stddev(\"%s\") as stddev, avg(\"%s\") as avg FROM %s %s;", variable.Key, variable.Key, fromClause, where)
 
 	// execute the postgres query
 	res, err := f.Storage.client.Query(query, params...)
@@ -444,6 +464,8 @@ func (f *NumericalField) FetchNumericalStats(dataset string, variable *model.Var
 
 // FetchNumericalStatsByResult gets the variable's numerical summary info (mean, stddev) for a result set.
 func (f *NumericalField) FetchNumericalStatsByResult(dataset string, variable *model.Variable, resultURI string, filterParams *model.FilterParams) (*NumericalStats, error) {
+	fromClause := f.getFromClause(dataset, variable, false)
+
 	// get filter where / params
 	wheres, params, err := f.Storage.buildResultQueryFilters(dataset, resultURI, filterParams)
 	if err != nil {
@@ -459,7 +481,7 @@ func (f *NumericalField) FetchNumericalStatsByResult(dataset string, variable *m
 
 	// Create the complete query string.
 	query := fmt.Sprintf("SELECT stddev(\"%s\") as stddev, avg(\"%s\") as avg FROM %s data INNER JOIN %s result ON data.\"%s\" = result.index WHERE result.result_id = $%d %s;",
-		variable.Key, variable.Key, dataset, f.Storage.getResultTable(dataset), model.D3MIndexFieldName, len(params), where)
+		variable.Key, variable.Key, fromClause, f.Storage.getResultTable(dataset), model.D3MIndexFieldName, len(params), where)
 
 	// execute the postgres query
 	res, err := f.Storage.client.Query(query, params...)
@@ -494,4 +516,16 @@ func (f *NumericalField) parseStats(row *pgx.Rows) (*NumericalStats, error) {
 	}
 
 	return stats, nil
+}
+
+func (f *NumericalField) getFromClause(dataset string, variable *model.Variable, alias bool) string {
+	fromClause := dataset
+	if f.subSelect != nil {
+		fromClause = f.subSelect(dataset, variable)
+		if alias {
+			fromClause = fmt.Sprintf("%s as %s", fromClause, dataset)
+		}
+	}
+
+	return fromClause
 }
