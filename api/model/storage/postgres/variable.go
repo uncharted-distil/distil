@@ -114,6 +114,8 @@ func (s *Storage) fetchSummaryData(dataset string, varName string, resultURI str
 		field = NewNumericalField(s)
 	} else if model.IsCategorical(variable.Type) {
 		field = NewCategoricalField(s)
+	} else if model.IsVector(variable.Type) {
+		field = NewVectorField(s)
 	} else if model.IsText(variable.Type) {
 		field = NewTextField(s)
 	} else if model.IsImage(variable.Type) {
