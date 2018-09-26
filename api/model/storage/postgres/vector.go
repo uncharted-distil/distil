@@ -13,7 +13,9 @@ type VectorField struct {
 	Storage *Storage
 }
 
-// NewVectorField creates a new field of the vector type.
+// NewVectorField creates a new field of the vector type. A vector field
+// uses unnest to flatten the database array and then uses the underlying
+// data type to get summaries.
 func NewVectorField(storage *Storage) *VectorField {
 	field := &VectorField{
 		Storage: storage,
