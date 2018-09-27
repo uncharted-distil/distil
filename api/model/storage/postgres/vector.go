@@ -10,13 +10,15 @@ import (
 
 // VectorField defines behaviour for any Vector type.
 type VectorField struct {
-	Storage *Storage
+	Storage  *Storage
+	Dataset  string
+	Variable *model.Variable
 }
 
 // NewVectorField creates a new field of the vector type. A vector field
 // uses unnest to flatten the database array and then uses the underlying
 // data type to get summaries.
-func NewVectorField(storage *Storage) *VectorField {
+func NewVectorField(storage *Storage, dataset string, variable *model.Variable) *VectorField {
 	field := &VectorField{
 		Storage: storage,
 	}
@@ -25,28 +27,28 @@ func NewVectorField(storage *Storage) *VectorField {
 }
 
 // FetchSummaryData pulls summary data from the database and builds a histogram.
-func (f *VectorField) FetchSummaryData(dataset string, variable *model.Variable, resultURI string, filterParams *model.FilterParams, extrema *model.Extrema) (*model.Histogram, error) {
+func (f *VectorField) FetchSummaryData(resultURI string, filterParams *model.FilterParams, extrema *model.Extrema) (*model.Histogram, error) {
 	var underlyingField Field
-	if f.isNumerical(variable) {
-		underlyingField = NewNumericalFieldSubSelect(f.Storage, f.subSelect)
+	if f.isNumerical(f.Variable) {
+		underlyingField = NewNumericalFieldSubSelect(f.Storage, f.Dataset, f.Variable, f.subSelect)
 	} else {
-		underlyingField = NewCategoricalFieldSubSelect(f.Storage, f.subSelect)
+		underlyingField = NewCategoricalFieldSubSelect(f.Storage, f.Dataset, f.Variable, f.subSelect)
 	}
 
-	return underlyingField.FetchSummaryData(dataset, variable, resultURI, filterParams, extrema)
+	return underlyingField.FetchSummaryData(resultURI, filterParams, extrema)
 }
 
 // FetchNumericalStats gets the variable's numerical summary info (mean, stddev).
-func (f *VectorField) FetchNumericalStats(dataset string, variable *model.Variable, filterParams *model.FilterParams) (*NumericalStats, error) {
+func (f *VectorField) FetchNumericalStats(filterParams *model.FilterParams) (*NumericalStats, error) {
 	// confirm that the underlying type is numerical
-	if !f.isNumerical(variable) {
-		return nil, errors.Errorf("field '%s' is not a numerical vector", variable.Key)
+	if !f.isNumerical(f.Variable) {
+		return nil, errors.Errorf("field '%s' is not a numerical vector", f.Variable.Key)
 	}
 
 	// use the underlying numerical field implementation
-	field := NewNumericalFieldSubSelect(f.Storage, f.subSelect)
+	field := NewNumericalFieldSubSelect(f.Storage, f.Dataset, f.Variable, f.subSelect)
 
-	return field.FetchNumericalStats(dataset, variable, filterParams)
+	return field.FetchNumericalStats(filterParams)
 }
 
 // FetchNumericalStatsByResult gets the variable's numerical summary info (mean, stddev) for a result set.
@@ -57,14 +59,14 @@ func (f *VectorField) FetchNumericalStatsByResult(dataset string, variable *mode
 	}
 
 	// use the underlying numerical field implementation
-	field := NewNumericalFieldSubSelect(f.Storage, f.subSelect)
+	field := NewNumericalFieldSubSelect(f.Storage, f.Dataset, f.Variable, f.subSelect)
 
 	return field.FetchNumericalStatsByResult(dataset, variable, resultURI, filterParams)
 }
 
 // FetchPredictedSummaryData pulls predicted data from the result table and builds
 // the categorical histogram for the field.
-func (f *VectorField) FetchPredictedSummaryData(resultURI string, dataset string, datasetResult string, variable *model.Variable, filterParams *model.FilterParams, extrema *model.Extrema) (*model.Histogram, error) {
+func (f *VectorField) FetchPredictedSummaryData(resultURI string, datasetResult string, filterParams *model.FilterParams, extrema *model.Extrema) (*model.Histogram, error) {
 	return nil, errors.Errorf("vector field cannot be a target so no result will be pulled")
 }
 

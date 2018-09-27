@@ -13,11 +13,13 @@ import (
 // CategoricalField defines behaviour for the categorical field type.
 type CategoricalField struct {
 	Storage   *Storage
+	Dataset   string
+	Variable  *model.Variable
 	subSelect func(string, *model.Variable) string
 }
 
 // NewCategoricalField creates a new field for categorical types.
-func NewCategoricalField(storage *Storage) *CategoricalField {
+func NewCategoricalField(storage *Storage, dataset string, variable *model.Variable) *CategoricalField {
 	field := &CategoricalField{
 		Storage: storage,
 	}
@@ -27,7 +29,7 @@ func NewCategoricalField(storage *Storage) *CategoricalField {
 
 // NewCategoricalFieldSubSelect creates a new field for categorical types
 // and specifies a sub select query to pull the raw data.
-func NewCategoricalFieldSubSelect(storage *Storage, fieldSubSelect func(string, *model.Variable) string) *CategoricalField {
+func NewCategoricalFieldSubSelect(storage *Storage, dataset string, variable *model.Variable, fieldSubSelect func(string, *model.Variable) string) *CategoricalField {
 	field := &CategoricalField{
 		Storage:   storage,
 		subSelect: fieldSubSelect,
@@ -37,13 +39,13 @@ func NewCategoricalFieldSubSelect(storage *Storage, fieldSubSelect func(string, 
 }
 
 // FetchSummaryData pulls summary data from the database and builds a histogram.
-func (f *CategoricalField) FetchSummaryData(dataset string, variable *model.Variable, resultURI string, filterParams *model.FilterParams, extrema *model.Extrema) (*model.Histogram, error) {
+func (f *CategoricalField) FetchSummaryData(resultURI string, filterParams *model.FilterParams, extrema *model.Extrema) (*model.Histogram, error) {
 	var histogram *model.Histogram
 	var err error
 	if resultURI == "" {
-		histogram, err = f.fetchHistogram(dataset, variable, filterParams)
+		histogram, err = f.fetchHistogram(f.Dataset, f.Variable, filterParams)
 	} else {
-		histogram, err = f.fetchHistogramByResult(dataset, variable, resultURI, filterParams)
+		histogram, err = f.fetchHistogramByResult(f.Dataset, f.Variable, resultURI, filterParams)
 	}
 
 	return histogram, err
@@ -162,11 +164,11 @@ func (f *CategoricalField) parseHistogram(rows *pgx.Rows, variable *model.Variab
 
 // FetchPredictedSummaryData pulls predicted data from the result table and builds
 // the categorical histogram for the field.
-func (f *CategoricalField) FetchPredictedSummaryData(resultURI string, dataset string, datasetResult string, variable *model.Variable, filterParams *model.FilterParams, extrema *model.Extrema) (*model.Histogram, error) {
-	targetName := variable.Key
+func (f *CategoricalField) FetchPredictedSummaryData(resultURI string, datasetResult string, filterParams *model.FilterParams, extrema *model.Extrema) (*model.Histogram, error) {
+	targetName := f.Variable.Key
 
 	// get filter where / params
-	wheres, params, err := f.Storage.buildResultQueryFilters(dataset, resultURI, filterParams)
+	wheres, params, err := f.Storage.buildResultQueryFilters(f.Dataset, resultURI, filterParams)
 	if err != nil {
 		return nil, err
 	}
@@ -180,7 +182,7 @@ func (f *CategoricalField) FetchPredictedSummaryData(resultURI string, dataset s
 		 WHERE %s
 		 GROUP BY result.value
 		 ORDER BY count desc;`,
-		datasetResult, dataset, model.D3MIndexFieldName, strings.Join(wheres, " AND "))
+		datasetResult, f.Dataset, model.D3MIndexFieldName, strings.Join(wheres, " AND "))
 
 	// execute the postgres query
 	res, err := f.Storage.client.Query(query, params...)
@@ -189,7 +191,7 @@ func (f *CategoricalField) FetchPredictedSummaryData(resultURI string, dataset s
 	}
 	defer res.Close()
 
-	return f.parseHistogram(res, variable)
+	return f.parseHistogram(res, f.Variable)
 }
 
 func (f *CategoricalField) getFromClause(dataset string, variable *model.Variable, alias bool) string {

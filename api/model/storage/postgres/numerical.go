@@ -13,6 +13,8 @@ import (
 // NumericalField defines behaviour for the numerical field type.
 type NumericalField struct {
 	Storage   *Storage
+	Dataset   string
+	Variable  *model.Variable
 	subSelect func(string, *model.Variable) string
 }
 
@@ -23,7 +25,7 @@ type NumericalStats struct {
 }
 
 // NewNumericalField creates a new field for numerical types.
-func NewNumericalField(storage *Storage) *NumericalField {
+func NewNumericalField(storage *Storage, dataset string, variable *model.Variable) *NumericalField {
 	field := &NumericalField{
 		Storage: storage,
 	}
@@ -33,7 +35,7 @@ func NewNumericalField(storage *Storage) *NumericalField {
 
 // NewNumericalFieldSubSelect creates a new field for numerical types
 // and specifies a sub select query to pull the raw data.
-func NewNumericalFieldSubSelect(storage *Storage, fieldSubSelect func(string, *model.Variable) string) *NumericalField {
+func NewNumericalFieldSubSelect(storage *Storage, dataset string, variable *model.Variable, fieldSubSelect func(string, *model.Variable) string) *NumericalField {
 	field := &NumericalField{
 		Storage:   storage,
 		subSelect: fieldSubSelect,
@@ -43,26 +45,26 @@ func NewNumericalFieldSubSelect(storage *Storage, fieldSubSelect func(string, *m
 }
 
 // FetchSummaryData pulls summary data from the database and builds a histogram.
-func (f *NumericalField) FetchSummaryData(dataset string, variable *model.Variable, resultURI string, filterParams *model.FilterParams, extrema *model.Extrema) (*model.Histogram, error) {
+func (f *NumericalField) FetchSummaryData(resultURI string, filterParams *model.FilterParams, extrema *model.Extrema) (*model.Histogram, error) {
 	var histogram *model.Histogram
 	var err error
 	if resultURI == "" {
-		histogram, err = f.fetchHistogram(dataset, variable, filterParams)
+		histogram, err = f.fetchHistogram(f.Dataset, f.Variable, filterParams)
 		if err != nil {
 			return nil, err
 		}
-		stats, err := f.FetchNumericalStats(dataset, variable, filterParams)
+		stats, err := f.FetchNumericalStats(filterParams)
 		if err != nil {
 			return nil, err
 		}
 		histogram.StdDev = stats.StdDev
 		histogram.Mean = stats.Mean
 	} else {
-		histogram, err = f.fetchHistogramByResult(dataset, variable, resultURI, filterParams, extrema)
+		histogram, err = f.fetchHistogramByResult(f.Dataset, f.Variable, resultURI, filterParams, extrema)
 		if err != nil {
 			return nil, err
 		}
-		stats, err := f.FetchNumericalStatsByResult(dataset, variable, resultURI, filterParams)
+		stats, err := f.FetchNumericalStatsByResult(f.Dataset, f.Variable, resultURI, filterParams)
 		if err != nil {
 			return nil, err
 		}
@@ -327,7 +329,7 @@ func (f *NumericalField) fetchExtremaByURI(dataset string, resultURI string, var
 
 // FetchPredictedSummaryData pulls data from the result table and builds
 // the numerical histogram for the field.
-func (f *NumericalField) FetchPredictedSummaryData(resultURI string, dataset string, datasetResult string, variable *model.Variable, filterParams *model.FilterParams, extrema *model.Extrema) (*model.Histogram, error) {
+func (f *NumericalField) FetchPredictedSummaryData(resultURI string, datasetResult string, filterParams *model.FilterParams, extrema *model.Extrema) (*model.Histogram, error) {
 	resultVariable := &model.Variable{
 		Key:  "value",
 		Type: model.TextType,
@@ -336,26 +338,26 @@ func (f *NumericalField) FetchPredictedSummaryData(resultURI string, dataset str
 	// need the extrema to calculate the histogram interval
 	var err error
 	if extrema == nil {
-		extrema, err = f.fetchResultsExtrema(resultURI, datasetResult, variable, resultVariable)
+		extrema, err = f.fetchResultsExtrema(resultURI, datasetResult, f.Variable, resultVariable)
 		if err != nil {
 			return nil, errors.Wrap(err, "failed to fetch result variable extrema for summary")
 		}
 	} else {
-		extrema.Key = variable.Key
-		extrema.Type = variable.Type
+		extrema.Key = f.Variable.Key
+		extrema.Type = f.Variable.Type
 	}
 	// for each returned aggregation, create a histogram aggregation. Bucket
 	// size is derived from the min/max and desired bucket count.
-	histogramName, bucketQuery, histogramQuery := f.getResultHistogramAggQuery(extrema, variable, resultVariable)
+	histogramName, bucketQuery, histogramQuery := f.getResultHistogramAggQuery(extrema, f.Variable, resultVariable)
 
 	// get filter where / params
-	wheres, params, err := f.Storage.buildResultQueryFilters(dataset, resultURI, filterParams)
+	wheres, params, err := f.Storage.buildResultQueryFilters(f.Dataset, resultURI, filterParams)
 	if err != nil {
 		return nil, err
 	}
 
 	wheres = append(wheres, fmt.Sprintf("result.result_id = $%d AND result.target = $%d ", len(params)+1, len(params)+2))
-	params = append(params, resultURI, variable.Key)
+	params = append(params, resultURI, f.Variable.Key)
 
 	// Create the complete query string.
 	query := fmt.Sprintf(`
@@ -364,7 +366,7 @@ func (f *NumericalField) FetchPredictedSummaryData(resultURI string, dataset str
 		WHERE %s
 		GROUP BY %s
 		ORDER BY %s;`,
-		bucketQuery, histogramQuery, histogramName, dataset, datasetResult,
+		bucketQuery, histogramQuery, histogramName, f.Dataset, datasetResult,
 		model.D3MIndexFieldName, strings.Join(wheres, " AND "), bucketQuery, histogramName)
 
 	// execute the postgres query
@@ -374,7 +376,7 @@ func (f *NumericalField) FetchPredictedSummaryData(resultURI string, dataset str
 	}
 	defer res.Close()
 
-	return f.parseHistogram(variable, res, extrema)
+	return f.parseHistogram(f.Variable, res, extrema)
 }
 
 func (f *NumericalField) getResultMinMaxAggsQuery(variable *model.Variable, resultVariable *model.Variable) string {
@@ -434,13 +436,13 @@ func (f *NumericalField) fetchResultsExtrema(resultURI string, dataset string, v
 }
 
 // FetchNumericalStats gets the variable's numerical summary info (mean, stddev).
-func (f *NumericalField) FetchNumericalStats(dataset string, variable *model.Variable, filterParams *model.FilterParams) (*NumericalStats, error) {
-	fromClause := f.getFromClause(dataset, variable, true)
+func (f *NumericalField) FetchNumericalStats(filterParams *model.FilterParams) (*NumericalStats, error) {
+	fromClause := f.getFromClause(f.Dataset, f.Variable, true)
 
 	// create the filter for the query.
 	wheres := make([]string, 0)
 	params := make([]interface{}, 0)
-	wheres, params = f.Storage.buildFilteredQueryWhere(wheres, params, dataset, filterParams.Filters)
+	wheres, params = f.Storage.buildFilteredQueryWhere(wheres, params, f.Dataset, filterParams.Filters)
 
 	where := ""
 	if len(wheres) > 0 {
@@ -448,7 +450,7 @@ func (f *NumericalField) FetchNumericalStats(dataset string, variable *model.Var
 	}
 
 	// Create the complete query string.
-	query := fmt.Sprintf("SELECT coalesce(stddev(\"%s\"), 0) as stddev, avg(\"%s\") as avg FROM %s %s;", variable.Key, variable.Key, fromClause, where)
+	query := fmt.Sprintf("SELECT coalesce(stddev(\"%s\"), 0) as stddev, avg(\"%s\") as avg FROM %s %s;", f.Variable.Key, f.Variable.Key, fromClause, where)
 
 	// execute the postgres query
 	res, err := f.Storage.client.Query(query, params...)

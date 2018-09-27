@@ -111,15 +111,15 @@ func (s *Storage) fetchSummaryData(dataset string, varName string, resultURI str
 
 	var field Field
 	if model.IsNumerical(variable.Type) {
-		field = NewNumericalField(s)
+		field = NewNumericalField(s, dataset, variable)
 	} else if model.IsCategorical(variable.Type) {
-		field = NewCategoricalField(s)
+		field = NewCategoricalField(s, dataset, variable)
 	} else if model.IsVector(variable.Type) {
-		field = NewVectorField(s)
+		field = NewVectorField(s, dataset, variable)
 	} else if model.IsText(variable.Type) {
-		field = NewTextField(s)
+		field = NewTextField(s, dataset, variable)
 	} else if model.IsImage(variable.Type) {
-		field = NewImageField(s)
+		field = NewImageField(s, dataset, variable)
 	} else {
 		/*else if model.IsTimeSeries(variable.Type) {
 			field = NewTimeSeries(s)
@@ -127,7 +127,7 @@ func (s *Storage) fetchSummaryData(dataset string, varName string, resultURI str
 		return nil, errors.Errorf("variable %s of type %s does not support summary", variable.Key, variable.Type)
 	}
 
-	histogram, err := field.FetchSummaryData(dataset, variable, resultURI, filterParams, extrema)
+	histogram, err := field.FetchSummaryData(resultURI, filterParams, extrema)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to fetch summary data")
 	}

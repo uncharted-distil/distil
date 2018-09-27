@@ -12,11 +12,13 @@ import (
 
 // ImageField defines behaviour for the image field type.
 type ImageField struct {
-	Storage *Storage
+	Storage  *Storage
+	Dataset  string
+	Variable *model.Variable
 }
 
 // NewImageField creates a new field for image types.
-func NewImageField(storage *Storage) *ImageField {
+func NewImageField(storage *Storage, dataset string, variable *model.Variable) *ImageField {
 	field := &ImageField{
 		Storage: storage,
 	}
@@ -25,13 +27,13 @@ func NewImageField(storage *Storage) *ImageField {
 }
 
 // FetchSummaryData pulls summary data from the database and builds a histogram.
-func (f *ImageField) FetchSummaryData(dataset string, variable *model.Variable, resultURI string, filterParams *model.FilterParams, extrema *model.Extrema) (*model.Histogram, error) {
+func (f *ImageField) FetchSummaryData(resultURI string, filterParams *model.FilterParams, extrema *model.Extrema) (*model.Histogram, error) {
 	var histogram *model.Histogram
 	var err error
 	if resultURI == "" {
-		histogram, err = f.fetchHistogram(dataset, variable, filterParams)
+		histogram, err = f.fetchHistogram(f.Dataset, f.Variable, filterParams)
 	} else {
-		histogram, err = f.fetchHistogramByResult(dataset, variable, resultURI, filterParams)
+		histogram, err = f.fetchHistogramByResult(f.Dataset, f.Variable, resultURI, filterParams)
 	}
 
 	return histogram, err
@@ -208,11 +210,11 @@ func (f *ImageField) parseHistogram(rows *pgx.Rows, variable *model.Variable) (*
 
 // FetchPredictedSummaryData pulls predicted data from the result table and builds
 // the image histogram for the field.
-func (f *ImageField) FetchPredictedSummaryData(resultURI string, dataset string, datasetResult string, variable *model.Variable, filterParams *model.FilterParams, extrema *model.Extrema) (*model.Histogram, error) {
-	targetName := f.metadataVarName(variable.Key)
+func (f *ImageField) FetchPredictedSummaryData(resultURI string, datasetResult string, filterParams *model.FilterParams, extrema *model.Extrema) (*model.Histogram, error) {
+	targetName := f.metadataVarName(f.Variable.Key)
 
 	// get filter where / params
-	wheres, params, err := f.Storage.buildResultQueryFilters(dataset, resultURI, filterParams)
+	wheres, params, err := f.Storage.buildResultQueryFilters(f.Dataset, resultURI, filterParams)
 	if err != nil {
 		return nil, err
 	}
@@ -226,7 +228,7 @@ func (f *ImageField) FetchPredictedSummaryData(resultURI string, dataset string,
 		 WHERE %s
 		 GROUP BY result.value, data."%s"
 		 ORDER BY count desc;`,
-		targetName, datasetResult, dataset, model.D3MIndexFieldName, strings.Join(wheres, " AND "), targetName)
+		targetName, datasetResult, f.Dataset, model.D3MIndexFieldName, strings.Join(wheres, " AND "), targetName)
 
 	// execute the postgres query
 	res, err := f.Storage.client.Query(query, params...)
@@ -235,12 +237,12 @@ func (f *ImageField) FetchPredictedSummaryData(resultURI string, dataset string,
 	}
 	defer res.Close()
 
-	histogram, err := f.parseHistogram(res, variable)
+	histogram, err := f.parseHistogram(res, f.Variable)
 	if err != nil {
 		return nil, err
 	}
 
-	files, err := f.fetchRepresentationImages(dataset, variable, histogram.Buckets)
+	files, err := f.fetchRepresentationImages(f.Dataset, f.Variable, histogram.Buckets)
 	if err != nil {
 		return nil, err
 	}

@@ -12,11 +12,13 @@ import (
 
 // TimeSeriesField defines behaviour for the timeseries field type.
 type TimeSeriesField struct {
-	Storage *Storage
+	Storage  *Storage
+	Dataset  string
+	Variable *model.Variable
 }
 
 // NewTimeSeriesField creates a new field for timeseries types.
-func NewTimeSeriesField(storage *Storage) *TimeSeriesField {
+func NewTimeSeriesField(storage *Storage, dataset string, variable *model.Variable) *TimeSeriesField {
 	field := &TimeSeriesField{
 		Storage: storage,
 	}
@@ -25,13 +27,13 @@ func NewTimeSeriesField(storage *Storage) *TimeSeriesField {
 }
 
 // FetchSummaryData pulls summary data from the database and builds a histogram.
-func (f *TimeSeriesField) FetchSummaryData(dataset string, variable *model.Variable, resultURI string, filterParams *model.FilterParams, extrema *model.Extrema) (*model.Histogram, error) {
+func (f *TimeSeriesField) FetchSummaryData(resultURI string, filterParams *model.FilterParams, extrema *model.Extrema) (*model.Histogram, error) {
 	var histogram *model.Histogram
 	var err error
 	if resultURI == "" {
-		histogram, err = f.fetchHistogram(dataset, variable, filterParams)
+		histogram, err = f.fetchHistogram(f.Dataset, f.Variable, filterParams)
 	} else {
-		histogram, err = f.fetchHistogramByResult(dataset, variable, resultURI, filterParams)
+		histogram, err = f.fetchHistogramByResult(f.Dataset, f.Variable, resultURI, filterParams)
 	}
 
 	return histogram, err
@@ -209,11 +211,11 @@ func (f *TimeSeriesField) parseHistogram(rows *pgx.Rows, variable *model.Variabl
 
 // FetchPredictedSummaryData pulls predicted data from the result table and builds
 // the timeseries histogram for the field.
-func (f *TimeSeriesField) FetchPredictedSummaryData(resultURI string, dataset string, datasetResult string, variable *model.Variable, filterParams *model.FilterParams, extrema *model.Extrema) (*model.Histogram, error) {
-	targetName := f.metadataVarName(variable.Key)
+func (f *TimeSeriesField) FetchPredictedSummaryData(resultURI string, datasetResult string, filterParams *model.FilterParams, extrema *model.Extrema) (*model.Histogram, error) {
+	targetName := f.metadataVarName(f.Variable.Key)
 
 	// get filter where / params
-	wheres, params, err := f.Storage.buildResultQueryFilters(dataset, resultURI, filterParams)
+	wheres, params, err := f.Storage.buildResultQueryFilters(f.Dataset, resultURI, filterParams)
 	if err != nil {
 		return nil, err
 	}
@@ -227,7 +229,7 @@ func (f *TimeSeriesField) FetchPredictedSummaryData(resultURI string, dataset st
 		 WHERE %s
 		 GROUP BY result.value, data."%s"
 		 ORDER BY count desc;`,
-		targetName, datasetResult, dataset, model.D3MIndexFieldName, strings.Join(wheres, " AND "), targetName)
+		targetName, datasetResult, f.Dataset, model.D3MIndexFieldName, strings.Join(wheres, " AND "), targetName)
 
 	// execute the postgres query
 	res, err := f.Storage.client.Query(query, params...)
@@ -236,12 +238,12 @@ func (f *TimeSeriesField) FetchPredictedSummaryData(resultURI string, dataset st
 	}
 	defer res.Close()
 
-	histogram, err := f.parseHistogram(res, variable)
+	histogram, err := f.parseHistogram(res, f.Variable)
 	if err != nil {
 		return nil, err
 	}
 
-	files, err := f.fetchRepresentationTimeSeries(dataset, variable, histogram.Buckets)
+	files, err := f.fetchRepresentationTimeSeries(f.Dataset, f.Variable, histogram.Buckets)
 	if err != nil {
 		return nil, err
 	}
