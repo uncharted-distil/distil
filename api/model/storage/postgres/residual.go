@@ -149,5 +149,5 @@ func (s *Storage) fetchResidualsHistogram(resultURI string, dataset string, vari
 
 	field := NewNumericalField(s, dataset, variable)
 
-	return field.parseHistogram(variable, res, extrema)
+	return field.parseHistogram(res, extrema)
 }

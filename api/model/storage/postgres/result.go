@@ -522,7 +522,7 @@ func (s *Storage) FetchResultsExtremaByURI(dataset string, resultURI string) (*m
 	}
 
 	field := NewNumericalField(s, dataset, targetVariable)
-	return field.fetchResultsExtrema(resultURI, datasetResult, targetVariable, resultVariable)
+	return field.fetchResultsExtrema(resultURI, datasetResult, resultVariable)
 }
 
 // FetchPredictedSummary gets the summary data about a target variable from the

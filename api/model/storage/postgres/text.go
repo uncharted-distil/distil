@@ -33,19 +33,19 @@ func (f *TextField) FetchSummaryData(resultURI string, filterParams *model.Filte
 	var histogram *model.Histogram
 	var err error
 	if resultURI == "" {
-		histogram, err = f.fetchHistogram(f.Dataset, f.Variable, filterParams)
+		histogram, err = f.fetchHistogram(filterParams)
 	} else {
-		histogram, err = f.fetchHistogramByResult(f.Dataset, f.Variable, resultURI, filterParams)
+		histogram, err = f.fetchHistogramByResult(resultURI, filterParams)
 	}
 
 	return histogram, err
 }
 
-func (f *TextField) fetchHistogram(dataset string, variable *model.Variable, filterParams *model.FilterParams) (*model.Histogram, error) {
+func (f *TextField) fetchHistogram(filterParams *model.FilterParams) (*model.Histogram, error) {
 	// create the filter for the query.
 	wheres := make([]string, 0)
 	params := make([]interface{}, 0)
-	wheres, params = f.Storage.buildFilteredQueryWhere(wheres, params, dataset, filterParams.Filters)
+	wheres, params = f.Storage.buildFilteredQueryWhere(wheres, params, f.Dataset, filterParams.Filters)
 
 	where := ""
 	if len(wheres) > 0 {
@@ -57,7 +57,7 @@ func (f *TextField) fetchHistogram(dataset string, variable *model.Variable, fil
 		"FROM (SELECT unnest(tsvector_to_array(to_tsvector(\"%s\"))) as stem FROM %s %s) as r "+
 		"INNER JOIN %s as w on r.stem = w.stem "+
 		"GROUP BY w.word ORDER BY count desc, w.word LIMIT %d;",
-		variable.Key, variable.Key, dataset, where, wordStemTableName, catResultLimit)
+		f.Variable.Key, f.Variable.Key, f.Dataset, where, wordStemTableName, catResultLimit)
 
 	// execute the postgres query
 	res, err := f.Storage.client.Query(query, params...)
@@ -68,13 +68,13 @@ func (f *TextField) fetchHistogram(dataset string, variable *model.Variable, fil
 		defer res.Close()
 	}
 
-	return f.parseHistogram(res, variable)
+	return f.parseHistogram(res)
 }
 
-func (f *TextField) fetchHistogramByResult(dataset string, variable *model.Variable, resultURI string, filterParams *model.FilterParams) (*model.Histogram, error) {
+func (f *TextField) fetchHistogramByResult(resultURI string, filterParams *model.FilterParams) (*model.Histogram, error) {
 
 	// get filter where / params
-	wheres, params, err := f.Storage.buildResultQueryFilters(dataset, resultURI, filterParams)
+	wheres, params, err := f.Storage.buildResultQueryFilters(f.Dataset, resultURI, filterParams)
 	if err != nil {
 		return nil, err
 	}
@@ -92,7 +92,7 @@ func (f *TextField) fetchHistogramByResult(dataset string, variable *model.Varia
 		"FROM %s data INNER JOIN %s result ON data.\"%s\" = result.index WHERE result.result_id = $%d %s) as r "+
 		"INNER JOIN %s as w on r.stem = w.stem "+
 		"GROUP BY w.word ORDER BY count desc, w.word LIMIT %d;",
-		variable.Key, variable.Key, dataset, f.Storage.getResultTable(dataset),
+		f.Variable.Key, f.Variable.Key, f.Dataset, f.Storage.getResultTable(f.Dataset),
 		model.D3MIndexFieldName, len(params), where, wordStemTableName, catResultLimit)
 
 	// execute the postgres query
@@ -104,11 +104,11 @@ func (f *TextField) fetchHistogramByResult(dataset string, variable *model.Varia
 		defer res.Close()
 	}
 
-	return f.parseHistogram(res, variable)
+	return f.parseHistogram(res)
 }
 
-func (f *TextField) parseHistogram(rows *pgx.Rows, variable *model.Variable) (*model.Histogram, error) {
-	termsAggName := model.TermsAggPrefix + variable.Key
+func (f *TextField) parseHistogram(rows *pgx.Rows) (*model.Histogram, error) {
+	termsAggName := model.TermsAggPrefix + f.Variable.Key
 
 	buckets := make([]*model.Bucket, 0)
 	min := int64(math.MaxInt32)
@@ -138,10 +138,10 @@ func (f *TextField) parseHistogram(rows *pgx.Rows, variable *model.Variable) (*m
 
 	// assign histogram attributes
 	return &model.Histogram{
-		Label:   variable.Label,
-		Key:     variable.Key,
+		Label:   f.Variable.Label,
+		Key:     f.Variable.Key,
 		Type:    model.CategoricalType,
-		VarType: variable.Type,
+		VarType: f.Variable.Type,
 		Buckets: buckets,
 		Extrema: &model.Extrema{
 			Min: float64(min),
@@ -179,5 +179,5 @@ func (f *TextField) FetchPredictedSummaryData(resultURI string, datasetResult st
 	}
 	defer res.Close()
 
-	return f.parseHistogram(res, f.Variable)
+	return f.parseHistogram(res)
 }

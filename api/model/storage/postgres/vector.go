@@ -31,7 +31,7 @@ func NewVectorField(storage *Storage, dataset string, variable *model.Variable) 
 // FetchSummaryData pulls summary data from the database and builds a histogram.
 func (f *VectorField) FetchSummaryData(resultURI string, filterParams *model.FilterParams, extrema *model.Extrema) (*model.Histogram, error) {
 	var underlyingField Field
-	if f.isNumerical(f.Variable) {
+	if f.isNumerical() {
 		underlyingField = NewNumericalFieldSubSelect(f.Storage, f.Dataset, f.Variable, f.subSelect)
 	} else {
 		underlyingField = NewCategoricalFieldSubSelect(f.Storage, f.Dataset, f.Variable, f.subSelect)
@@ -43,7 +43,7 @@ func (f *VectorField) FetchSummaryData(resultURI string, filterParams *model.Fil
 // FetchNumericalStats gets the variable's numerical summary info (mean, stddev).
 func (f *VectorField) FetchNumericalStats(filterParams *model.FilterParams) (*NumericalStats, error) {
 	// confirm that the underlying type is numerical
-	if !f.isNumerical(f.Variable) {
+	if !f.isNumerical() {
 		return nil, errors.Errorf("field '%s' is not a numerical vector", f.Variable.Key)
 	}
 
@@ -54,16 +54,16 @@ func (f *VectorField) FetchNumericalStats(filterParams *model.FilterParams) (*Nu
 }
 
 // FetchNumericalStatsByResult gets the variable's numerical summary info (mean, stddev) for a result set.
-func (f *VectorField) FetchNumericalStatsByResult(dataset string, variable *model.Variable, resultURI string, filterParams *model.FilterParams) (*NumericalStats, error) {
+func (f *VectorField) FetchNumericalStatsByResult(resultURI string, filterParams *model.FilterParams) (*NumericalStats, error) {
 	// confirm that the underlying type is numerical
-	if !f.isNumerical(variable) {
-		return nil, errors.Errorf("field '%s' is not a numerical vector", variable.Key)
+	if !f.isNumerical() {
+		return nil, errors.Errorf("field '%s' is not a numerical vector", f.Variable.Key)
 	}
 
 	// use the underlying numerical field implementation
 	field := NewNumericalFieldSubSelect(f.Storage, f.Dataset, f.Variable, f.subSelect)
 
-	return field.FetchNumericalStatsByResult(dataset, variable, resultURI, filterParams)
+	return field.FetchNumericalStatsByResult(resultURI, filterParams)
 }
 
 // FetchPredictedSummaryData pulls predicted data from the result table and builds
@@ -72,11 +72,11 @@ func (f *VectorField) FetchPredictedSummaryData(resultURI string, datasetResult 
 	return nil, errors.Errorf("vector field cannot be a target so no result will be pulled")
 }
 
-func (f *VectorField) isNumerical(variable *model.Variable) bool {
-	return model.IsNumerical(strings.Replace(variable.Type, "Vector", "", -1))
+func (f *VectorField) isNumerical() bool {
+	return model.IsNumerical(strings.Replace(f.Variable.Type, "Vector", "", -1))
 }
 
-func (f *VectorField) subSelect(dataset string, variable *model.Variable) string {
+func (f *VectorField) subSelect() string {
 	return fmt.Sprintf("(SELECT \"%s\", unnest(\"%s\") as %s FROM %s)",
-		model.D3MIndexFieldName, variable.Key, variable.Key, dataset)
+		model.D3MIndexFieldName, f.Variable.Key, f.Variable.Key, f.Dataset)
 }

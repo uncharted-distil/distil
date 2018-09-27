@@ -33,9 +33,9 @@ func (f *TimeSeriesField) FetchSummaryData(resultURI string, filterParams *model
 	var histogram *model.Histogram
 	var err error
 	if resultURI == "" {
-		histogram, err = f.fetchHistogram(f.Dataset, f.Variable, filterParams)
+		histogram, err = f.fetchHistogram(filterParams)
 	} else {
-		histogram, err = f.fetchHistogramByResult(f.Dataset, f.Variable, resultURI, filterParams)
+		histogram, err = f.fetchHistogramByResult(resultURI, filterParams)
 	}
 
 	return histogram, err
@@ -45,16 +45,17 @@ func (f *TimeSeriesField) metadataVarName(varName string) string {
 	return fmt.Sprintf("%s%s", model.MetadataVarPrefix, varName)
 }
 
-func (f *TimeSeriesField) fetchRepresentationTimeSeries(dataset string, variable *model.Variable, categoryBuckets []*model.Bucket) ([]string, error) {
+func (f *TimeSeriesField) fetchRepresentationTimeSeries(categoryBuckets []*model.Bucket) ([]string, error) {
 
 	var timeseriesFiles []string
 
 	for _, bucket := range categoryBuckets {
 
-		prefixedVarName := f.metadataVarName(variable.Key)
+		prefixedVarName := f.metadataVarName(f.Variable.Key)
 
 		// pull sample row containing bucket
-		query := fmt.Sprintf("SELECT \"%s\" FROM %s WHERE \"%s\" = $1 LIMIT 1;", variable.Key, dataset, prefixedVarName)
+		query := fmt.Sprintf("SELECT \"%s\" FROM %s WHERE \"%s\" = $1 LIMIT 1;",
+			f.Variable.Key, f.Dataset, prefixedVarName)
 
 		// execute the postgres query
 		rows, err := f.Storage.client.Query(query, bucket.Key)
@@ -76,13 +77,13 @@ func (f *TimeSeriesField) fetchRepresentationTimeSeries(dataset string, variable
 	return timeseriesFiles, nil
 }
 
-func (f *TimeSeriesField) fetchHistogram(dataset string, variable *model.Variable, filterParams *model.FilterParams) (*model.Histogram, error) {
+func (f *TimeSeriesField) fetchHistogram(filterParams *model.FilterParams) (*model.Histogram, error) {
 	// create the filter for the query.
 	wheres := make([]string, 0)
 	params := make([]interface{}, 0)
-	wheres, params = f.Storage.buildFilteredQueryWhere(wheres, params, dataset, filterParams.Filters)
+	wheres, params = f.Storage.buildFilteredQueryWhere(wheres, params, f.Dataset, filterParams.Filters)
 
-	prefixedVarName := f.metadataVarName(variable.Key)
+	prefixedVarName := f.metadataVarName(f.Variable.Key)
 
 	where := ""
 	if len(wheres) > 0 {
@@ -91,7 +92,7 @@ func (f *TimeSeriesField) fetchHistogram(dataset string, variable *model.Variabl
 
 	// Get count by category.
 	query := fmt.Sprintf("SELECT \"%s\", COUNT(*) AS count FROM %s %s GROUP BY \"%s\" ORDER BY count desc, \"%s\" LIMIT %d;",
-		prefixedVarName, dataset, where, prefixedVarName, prefixedVarName, catResultLimit)
+		prefixedVarName, f.Dataset, where, prefixedVarName, prefixedVarName, catResultLimit)
 
 	// execute the postgres query
 	res, err := f.Storage.client.Query(query, params...)
@@ -102,12 +103,12 @@ func (f *TimeSeriesField) fetchHistogram(dataset string, variable *model.Variabl
 		defer res.Close()
 	}
 
-	histogram, err := f.parseHistogram(res, variable)
+	histogram, err := f.parseHistogram(res)
 	if err != nil {
 		return nil, err
 	}
 
-	files, err := f.fetchRepresentationTimeSeries(dataset, variable, histogram.Buckets)
+	files, err := f.fetchRepresentationTimeSeries(histogram.Buckets)
 	if err != nil {
 		return nil, err
 	}
@@ -115,10 +116,10 @@ func (f *TimeSeriesField) fetchHistogram(dataset string, variable *model.Variabl
 	return histogram, nil
 }
 
-func (f *TimeSeriesField) fetchHistogramByResult(dataset string, variable *model.Variable, resultURI string, filterParams *model.FilterParams) (*model.Histogram, error) {
+func (f *TimeSeriesField) fetchHistogramByResult(resultURI string, filterParams *model.FilterParams) (*model.Histogram, error) {
 
 	// get filter where / params
-	wheres, params, err := f.Storage.buildResultQueryFilters(dataset, resultURI, filterParams)
+	wheres, params, err := f.Storage.buildResultQueryFilters(f.Dataset, resultURI, filterParams)
 	if err != nil {
 		return nil, err
 	}
@@ -130,7 +131,7 @@ func (f *TimeSeriesField) fetchHistogramByResult(dataset string, variable *model
 		where = fmt.Sprintf("AND %s", strings.Join(wheres, " AND "))
 	}
 
-	prefixedVarName := f.metadataVarName(variable.Key)
+	prefixedVarName := f.metadataVarName(f.Variable.Key)
 
 	// Get count by category.
 	query := fmt.Sprintf(
@@ -139,7 +140,7 @@ func (f *TimeSeriesField) fetchHistogramByResult(dataset string, variable *model
 		 WHERE result.result_id = $%d %s
 		 GROUP BY "%s"
 		 ORDER BY count desc, "%s" LIMIT %d;`,
-		prefixedVarName, dataset, f.Storage.getResultTable(dataset),
+		prefixedVarName, f.Dataset, f.Storage.getResultTable(f.Dataset),
 		model.D3MIndexFieldName, len(params), where, prefixedVarName,
 		prefixedVarName, catResultLimit)
 
@@ -152,12 +153,12 @@ func (f *TimeSeriesField) fetchHistogramByResult(dataset string, variable *model
 		defer res.Close()
 	}
 
-	histogram, err := f.parseHistogram(res, variable)
+	histogram, err := f.parseHistogram(res)
 	if err != nil {
 		return nil, err
 	}
 
-	files, err := f.fetchRepresentationTimeSeries(dataset, variable, histogram.Buckets)
+	files, err := f.fetchRepresentationTimeSeries(histogram.Buckets)
 	if err != nil {
 		return nil, err
 	}
@@ -165,8 +166,8 @@ func (f *TimeSeriesField) fetchHistogramByResult(dataset string, variable *model
 	return histogram, nil
 }
 
-func (f *TimeSeriesField) parseHistogram(rows *pgx.Rows, variable *model.Variable) (*model.Histogram, error) {
-	prefixedVarName := f.metadataVarName(variable.Key)
+func (f *TimeSeriesField) parseHistogram(rows *pgx.Rows) (*model.Histogram, error) {
+	prefixedVarName := f.metadataVarName(f.Variable.Key)
 
 	termsAggName := model.TermsAggPrefix + prefixedVarName
 
@@ -199,10 +200,10 @@ func (f *TimeSeriesField) parseHistogram(rows *pgx.Rows, variable *model.Variabl
 
 	// assign histogram attributes
 	return &model.Histogram{
-		Key:     variable.Key,
-		Label:   variable.Label,
+		Key:     f.Variable.Key,
+		Label:   f.Variable.Label,
 		Type:    model.CategoricalType,
-		VarType: variable.Type,
+		VarType: f.Variable.Type,
 		Buckets: buckets,
 		Extrema: &model.Extrema{
 			Min: float64(min),
@@ -240,12 +241,12 @@ func (f *TimeSeriesField) FetchPredictedSummaryData(resultURI string, datasetRes
 	}
 	defer res.Close()
 
-	histogram, err := f.parseHistogram(res, f.Variable)
+	histogram, err := f.parseHistogram(res)
 	if err != nil {
 		return nil, err
 	}
 
-	files, err := f.fetchRepresentationTimeSeries(f.Dataset, f.Variable, histogram.Buckets)
+	files, err := f.fetchRepresentationTimeSeries(histogram.Buckets)
 	if err != nil {
 		return nil, err
 	}
