@@ -73,6 +73,6 @@ func (f *VectorField) isNumerical(variable *model.Variable) bool {
 }
 
 func (f *VectorField) subSelect(dataset string, variable *model.Variable) string {
-	return fmt.Sprintf("(SELECT %s, unnest(\"%s\") as %s FROM %s)",
+	return fmt.Sprintf("(SELECT \"%s\", unnest(\"%s\") as %s FROM %s)",
 		model.D3MIndexFieldName, variable.Key, variable.Key, dataset)
 }
