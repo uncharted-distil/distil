@@ -21,7 +21,9 @@ type CategoricalField struct {
 // NewCategoricalField creates a new field for categorical types.
 func NewCategoricalField(storage *Storage, dataset string, variable *model.Variable) *CategoricalField {
 	field := &CategoricalField{
-		Storage: storage,
+		Storage:  storage,
+		Dataset:  dataset,
+		Variable: variable,
 	}
 
 	return field
@@ -32,6 +34,8 @@ func NewCategoricalField(storage *Storage, dataset string, variable *model.Varia
 func NewCategoricalFieldSubSelect(storage *Storage, dataset string, variable *model.Variable, fieldSubSelect func(string, *model.Variable) string) *CategoricalField {
 	field := &CategoricalField{
 		Storage:   storage,
+		Dataset:   dataset,
+		Variable:  variable,
 		subSelect: fieldSubSelect,
 	}
 

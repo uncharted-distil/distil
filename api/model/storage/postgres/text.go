@@ -20,7 +20,9 @@ type TextField struct {
 // NewTextField creates a new field for text types.
 func NewTextField(storage *Storage, dataset string, variable *model.Variable) *TextField {
 	field := &TextField{
-		Storage: storage,
+		Storage:  storage,
+		Dataset:  dataset,
+		Variable: variable,
 	}
 
 	return field

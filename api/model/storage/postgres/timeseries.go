@@ -20,7 +20,9 @@ type TimeSeriesField struct {
 // NewTimeSeriesField creates a new field for timeseries types.
 func NewTimeSeriesField(storage *Storage, dataset string, variable *model.Variable) *TimeSeriesField {
 	field := &TimeSeriesField{
-		Storage: storage,
+		Storage:  storage,
+		Dataset:  dataset,
+		Variable: variable,
 	}
 
 	return field

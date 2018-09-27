@@ -20,7 +20,9 @@ type ImageField struct {
 // NewImageField creates a new field for image types.
 func NewImageField(storage *Storage, dataset string, variable *model.Variable) *ImageField {
 	field := &ImageField{
-		Storage: storage,
+		Storage:  storage,
+		Dataset:  dataset,
+		Variable: variable,
 	}
 
 	return field

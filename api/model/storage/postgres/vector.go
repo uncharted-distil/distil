@@ -20,7 +20,9 @@ type VectorField struct {
 // data type to get summaries.
 func NewVectorField(storage *Storage, dataset string, variable *model.Variable) *VectorField {
 	field := &VectorField{
-		Storage: storage,
+		Storage:  storage,
+		Dataset:  dataset,
+		Variable: variable,
 	}
 
 	return field

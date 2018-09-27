@@ -27,7 +27,9 @@ type NumericalStats struct {
 // NewNumericalField creates a new field for numerical types.
 func NewNumericalField(storage *Storage, dataset string, variable *model.Variable) *NumericalField {
 	field := &NumericalField{
-		Storage: storage,
+		Storage:  storage,
+		Dataset:  dataset,
+		Variable: variable,
 	}
 
 	return field
@@ -38,6 +40,8 @@ func NewNumericalField(storage *Storage, dataset string, variable *model.Variabl
 func NewNumericalFieldSubSelect(storage *Storage, dataset string, variable *model.Variable, fieldSubSelect func(string, *model.Variable) string) *NumericalField {
 	field := &NumericalField{
 		Storage:   storage,
+		Dataset:   dataset,
+		Variable:  variable,
 		subSelect: fieldSubSelect,
 	}
 
