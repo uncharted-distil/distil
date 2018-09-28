@@ -62,7 +62,7 @@ func (s *Storage) isBadSolution(solution *model.Solution) (bool, error) {
 	if !model.IsNumerical(variable.Type) {
 		return false, nil
 	}
-	f := NewNumericalField(s)
+	f := NewNumericalField(s, dataset, variable)
 
 	// predicted extrema
 	predictedExtrema, err := s.FetchResultsExtremaByURI(dataset, solution.Result.ResultURI)
@@ -71,7 +71,7 @@ func (s *Storage) isBadSolution(solution *model.Solution) (bool, error) {
 	}
 
 	// result mean and stddev
-	stats, err := f.FetchNumericalStats(dataset, variable, &model.FilterParams{})
+	stats, err := f.FetchNumericalStats(&model.FilterParams{})
 	if err != nil {
 		return false, err
 	}

@@ -12,26 +12,30 @@ import (
 
 // ImageField defines behaviour for the image field type.
 type ImageField struct {
-	Storage *Storage
+	Storage  *Storage
+	Dataset  string
+	Variable *model.Variable
 }
 
 // NewImageField creates a new field for image types.
-func NewImageField(storage *Storage) *ImageField {
+func NewImageField(storage *Storage, dataset string, variable *model.Variable) *ImageField {
 	field := &ImageField{
-		Storage: storage,
+		Storage:  storage,
+		Dataset:  dataset,
+		Variable: variable,
 	}
 
 	return field
 }
 
 // FetchSummaryData pulls summary data from the database and builds a histogram.
-func (f *ImageField) FetchSummaryData(dataset string, variable *model.Variable, resultURI string, filterParams *model.FilterParams, extrema *model.Extrema) (*model.Histogram, error) {
+func (f *ImageField) FetchSummaryData(resultURI string, filterParams *model.FilterParams, extrema *model.Extrema) (*model.Histogram, error) {
 	var histogram *model.Histogram
 	var err error
 	if resultURI == "" {
-		histogram, err = f.fetchHistogram(dataset, variable, filterParams)
+		histogram, err = f.fetchHistogram(filterParams)
 	} else {
-		histogram, err = f.fetchHistogramByResult(dataset, variable, resultURI, filterParams)
+		histogram, err = f.fetchHistogramByResult(resultURI, filterParams)
 	}
 
 	return histogram, err
@@ -41,16 +45,17 @@ func (f *ImageField) metadataVarName(varName string) string {
 	return fmt.Sprintf("%s%s", model.MetadataVarPrefix, varName)
 }
 
-func (f *ImageField) fetchRepresentationImages(dataset string, variable *model.Variable, categoryBuckets []*model.Bucket) ([]string, error) {
+func (f *ImageField) fetchRepresentationImages(categoryBuckets []*model.Bucket) ([]string, error) {
 
 	var imageFiles []string
 
 	for _, bucket := range categoryBuckets {
 
-		prefixedVarName := f.metadataVarName(variable.Key)
+		prefixedVarName := f.metadataVarName(f.Variable.Key)
 
 		// pull sample row containing bucket
-		query := fmt.Sprintf("SELECT \"%s\" FROM %s WHERE \"%s\" ~ $1 LIMIT 1;", variable.Key, dataset, prefixedVarName)
+		query := fmt.Sprintf("SELECT \"%s\" FROM %s WHERE \"%s\" ~ $1 LIMIT 1;",
+			f.Variable.Key, f.Dataset, prefixedVarName)
 
 		// execute the postgres query
 		rows, err := f.Storage.client.Query(query, bucket.Key)
@@ -71,13 +76,13 @@ func (f *ImageField) fetchRepresentationImages(dataset string, variable *model.V
 	return imageFiles, nil
 }
 
-func (f *ImageField) fetchHistogram(dataset string, variable *model.Variable, filterParams *model.FilterParams) (*model.Histogram, error) {
+func (f *ImageField) fetchHistogram(filterParams *model.FilterParams) (*model.Histogram, error) {
 	// create the filter for the query.
 	wheres := make([]string, 0)
 	params := make([]interface{}, 0)
-	wheres, params = f.Storage.buildFilteredQueryWhere(wheres, params, dataset, filterParams.Filters)
+	wheres, params = f.Storage.buildFilteredQueryWhere(wheres, params, f.Dataset, filterParams.Filters)
 
-	prefixedVarName := f.metadataVarName(variable.Key)
+	prefixedVarName := f.metadataVarName(f.Variable.Key)
 	fieldSelect := fmt.Sprintf("unnest(string_to_array(\"%s\", ','))", prefixedVarName)
 
 	where := ""
@@ -87,7 +92,7 @@ func (f *ImageField) fetchHistogram(dataset string, variable *model.Variable, fi
 
 	// Get count by category.
 	query := fmt.Sprintf("SELECT %s AS \"%s\", COUNT(*) AS count FROM %s %s GROUP BY %s ORDER BY count desc, %s LIMIT %d;",
-		fieldSelect, prefixedVarName, dataset, where, fieldSelect, fieldSelect, catResultLimit)
+		fieldSelect, prefixedVarName, f.Dataset, where, fieldSelect, fieldSelect, catResultLimit)
 
 	// execute the postgres query
 	res, err := f.Storage.client.Query(query, params...)
@@ -98,12 +103,12 @@ func (f *ImageField) fetchHistogram(dataset string, variable *model.Variable, fi
 		defer res.Close()
 	}
 
-	histogram, err := f.parseHistogram(res, variable)
+	histogram, err := f.parseHistogram(res)
 	if err != nil {
 		return nil, err
 	}
 
-	files, err := f.fetchRepresentationImages(dataset, variable, histogram.Buckets)
+	files, err := f.fetchRepresentationImages(histogram.Buckets)
 	if err != nil {
 		return nil, err
 	}
@@ -111,10 +116,10 @@ func (f *ImageField) fetchHistogram(dataset string, variable *model.Variable, fi
 	return histogram, nil
 }
 
-func (f *ImageField) fetchHistogramByResult(dataset string, variable *model.Variable, resultURI string, filterParams *model.FilterParams) (*model.Histogram, error) {
+func (f *ImageField) fetchHistogramByResult(resultURI string, filterParams *model.FilterParams) (*model.Histogram, error) {
 
 	// get filter where / params
-	wheres, params, err := f.Storage.buildResultQueryFilters(dataset, resultURI, filterParams)
+	wheres, params, err := f.Storage.buildResultQueryFilters(f.Dataset, resultURI, filterParams)
 	if err != nil {
 		return nil, err
 	}
@@ -126,7 +131,7 @@ func (f *ImageField) fetchHistogramByResult(dataset string, variable *model.Vari
 		where = fmt.Sprintf("AND %s", strings.Join(wheres, " AND "))
 	}
 
-	prefixedVarName := f.metadataVarName(variable.Key)
+	prefixedVarName := f.metadataVarName(f.Variable.Key)
 
 	// Get count by category.
 	query := fmt.Sprintf(
@@ -135,7 +140,7 @@ func (f *ImageField) fetchHistogramByResult(dataset string, variable *model.Vari
 		 WHERE result.result_id = $%d %s
 		 GROUP BY "%s"
 		 ORDER BY count desc, "%s" LIMIT %d;`,
-		prefixedVarName, dataset, f.Storage.getResultTable(dataset),
+		prefixedVarName, f.Dataset, f.Storage.getResultTable(f.Dataset),
 		model.D3MIndexFieldName, len(params), where, prefixedVarName,
 		prefixedVarName, catResultLimit)
 
@@ -148,12 +153,12 @@ func (f *ImageField) fetchHistogramByResult(dataset string, variable *model.Vari
 		defer res.Close()
 	}
 
-	histogram, err := f.parseHistogram(res, variable)
+	histogram, err := f.parseHistogram(res)
 	if err != nil {
 		return nil, err
 	}
 
-	files, err := f.fetchRepresentationImages(dataset, variable, histogram.Buckets)
+	files, err := f.fetchRepresentationImages(histogram.Buckets)
 	if err != nil {
 		return nil, err
 	}
@@ -161,8 +166,8 @@ func (f *ImageField) fetchHistogramByResult(dataset string, variable *model.Vari
 	return histogram, nil
 }
 
-func (f *ImageField) parseHistogram(rows *pgx.Rows, variable *model.Variable) (*model.Histogram, error) {
-	prefixedVarName := f.metadataVarName(variable.Key)
+func (f *ImageField) parseHistogram(rows *pgx.Rows) (*model.Histogram, error) {
+	prefixedVarName := f.metadataVarName(f.Variable.Key)
 
 	termsAggName := model.TermsAggPrefix + prefixedVarName
 
@@ -194,10 +199,10 @@ func (f *ImageField) parseHistogram(rows *pgx.Rows, variable *model.Variable) (*
 
 	// assign histogram attributes
 	return &model.Histogram{
-		Label:   variable.Label,
-		Key:     variable.Key,
+		Label:   f.Variable.Label,
+		Key:     f.Variable.Key,
 		Type:    model.CategoricalType,
-		VarType: variable.Type,
+		VarType: f.Variable.Type,
 		Buckets: buckets,
 		Extrema: &model.Extrema{
 			Min: float64(min),
@@ -208,11 +213,11 @@ func (f *ImageField) parseHistogram(rows *pgx.Rows, variable *model.Variable) (*
 
 // FetchPredictedSummaryData pulls predicted data from the result table and builds
 // the image histogram for the field.
-func (f *ImageField) FetchPredictedSummaryData(resultURI string, dataset string, datasetResult string, variable *model.Variable, filterParams *model.FilterParams, extrema *model.Extrema) (*model.Histogram, error) {
-	targetName := f.metadataVarName(variable.Key)
+func (f *ImageField) FetchPredictedSummaryData(resultURI string, datasetResult string, filterParams *model.FilterParams, extrema *model.Extrema) (*model.Histogram, error) {
+	targetName := f.metadataVarName(f.Variable.Key)
 
 	// get filter where / params
-	wheres, params, err := f.Storage.buildResultQueryFilters(dataset, resultURI, filterParams)
+	wheres, params, err := f.Storage.buildResultQueryFilters(f.Dataset, resultURI, filterParams)
 	if err != nil {
 		return nil, err
 	}
@@ -226,7 +231,7 @@ func (f *ImageField) FetchPredictedSummaryData(resultURI string, dataset string,
 		 WHERE %s
 		 GROUP BY result.value, data."%s"
 		 ORDER BY count desc;`,
-		targetName, datasetResult, dataset, model.D3MIndexFieldName, strings.Join(wheres, " AND "), targetName)
+		targetName, datasetResult, f.Dataset, model.D3MIndexFieldName, strings.Join(wheres, " AND "), targetName)
 
 	// execute the postgres query
 	res, err := f.Storage.client.Query(query, params...)
@@ -235,12 +240,12 @@ func (f *ImageField) FetchPredictedSummaryData(resultURI string, dataset string,
 	}
 	defer res.Close()
 
-	histogram, err := f.parseHistogram(res, variable)
+	histogram, err := f.parseHistogram(res)
 	if err != nil {
 		return nil, err
 	}
 
-	files, err := f.fetchRepresentationImages(dataset, variable, histogram.Buckets)
+	files, err := f.fetchRepresentationImages(histogram.Buckets)
 	if err != nil {
 		return nil, err
 	}

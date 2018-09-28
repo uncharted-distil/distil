@@ -521,8 +521,8 @@ func (s *Storage) FetchResultsExtremaByURI(dataset string, resultURI string) (*m
 		Type: model.TextType,
 	}
 
-	field := NewNumericalField(s)
-	return field.fetchResultsExtrema(resultURI, datasetResult, targetVariable, resultVariable)
+	field := NewNumericalField(s, dataset, targetVariable)
+	return field.fetchResultsExtrema(resultURI, datasetResult, resultVariable)
 }
 
 // FetchPredictedSummary gets the summary data about a target variable from the
@@ -543,16 +543,16 @@ func (s *Storage) FetchPredictedSummary(dataset string, resultURI string, filter
 	var field Field
 	var histogram *model.Histogram
 	if model.IsNumerical(variable.Type) {
-		// fetch numeric histograms
-		field = NewNumericalField(s)
+		field = NewNumericalField(s, dataset, variable)
 	} else if model.IsCategorical(variable.Type) {
-		// fetch categorical histograms
-		field = NewCategoricalField(s)
+		field = NewCategoricalField(s, dataset, variable)
+	} else if model.IsVector(variable.Type) {
+		field = NewVectorField(s, dataset, variable)
 	} else {
 		return nil, errors.Errorf("variable %s of type %s does not support summary", variable.Key, variable.Type)
 	}
 
-	histogram, err = field.FetchPredictedSummaryData(resultURI, dataset, datasetResult, variable, filterParams, extrema)
+	histogram, err = field.FetchPredictedSummaryData(resultURI, datasetResult, filterParams, extrema)
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to fetch result summary")
 	}

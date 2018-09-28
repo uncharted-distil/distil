@@ -15,6 +15,8 @@ const (
 	FloatType = "float"
 	// RealType is the schema type for real values, and is equivalent to FloatType
 	RealType = "real"
+	// RealVectorType is the schema type for a vector of real values
+	RealVectorType = "realVector"
 	// BoolType is the schema type for bool values
 	BoolType = "boolean"
 	// DateTimeType is the schema type for date/time values
@@ -217,6 +219,12 @@ func IsCategorical(typ string) bool {
 // of analysis.
 func IsText(typ string) bool {
 	return typ == TextType
+}
+
+// IsVector indicates whether or not a schema type is a vector for the purposes
+// of analysis.
+func IsVector(typ string) bool {
+	return typ == RealVectorType
 }
 
 // IsImage indicates whether or not a schema type is an image for the purposes
