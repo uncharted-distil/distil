@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"io/ioutil"
 	"net/http"
 	"os"
 	"path"
@@ -26,6 +25,7 @@ import (
 	"github.com/unchartedsoftware/distil/api/routes"
 	"github.com/unchartedsoftware/distil/api/service"
 	"github.com/unchartedsoftware/distil/api/task"
+	"github.com/unchartedsoftware/distil/api/util"
 	"github.com/unchartedsoftware/distil/api/ws"
 )
 
@@ -156,7 +156,7 @@ func main() {
 			os.Exit(1)
 		}
 
-		err = ioutil.WriteFile(problemListingFile, []byte("problem_id,system,meaningful\n"), 0777)
+		err = util.WriteFileWithDirs(problemListingFile, []byte("problem_id,system,meaningful\n"), 0777)
 		if err != nil {
 			log.Errorf("%+v", err)
 			os.Exit(1)
@@ -244,7 +244,7 @@ func main() {
 	registerRoute(mux, "/distil/residuals-extrema/:dataset/:target", routes.ResidualsExtremaHandler(metadataStorageCtor, pgSolutionStorageCtor, pgDataStorageCtor))
 	registerRoute(mux, "/distil/abort", routes.AbortHandler())
 	registerRoute(mux, "/distil/export/:solution-id", routes.ExportHandler(pgSolutionStorageCtor, metadataStorageCtor, solutionClient, config.D3MOutputDir))
-	registerRoute(mux, "/distil/ingest/:index/:dataset", routes.IngestHandler(metadataStorageCtor, ingestConfig))
+	registerRoute(mux, "/distil/ingest/:index/:dataset/:dataset", routes.IngestHandler(metadataStorageCtor, ingestConfig))
 	registerRoute(mux, "/distil/config", routes.ConfigHandler(config, version, timestamp, problemPath, datasetDocPath))
 	registerRoute(mux, "/ws", ws.SolutionHandler(solutionClient, metadataStorageCtor, pgDataStorageCtor, pgSolutionStorageCtor))
 

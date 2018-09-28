@@ -5,16 +5,16 @@ import (
 	"encoding/csv"
 	"encoding/json"
 	"io"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 
 	"github.com/pkg/errors"
-	"github.com/unchartedsoftware/plog"
-
 	"github.com/unchartedsoftware/distil-ingest/feature"
 	"github.com/unchartedsoftware/distil-ingest/metadata"
 	"github.com/unchartedsoftware/distil-ingest/rest"
+	"github.com/unchartedsoftware/plog"
+
+	"github.com/unchartedsoftware/distil/api/util"
 )
 
 // ClusterContainer uses containers to obtain a clustered view of complex variables.
@@ -122,7 +122,7 @@ func ClassifyContainer(index string, dataset string, config *IngestTaskConfig) e
 		return errors.Wrap(err, "unable to serialize classification result")
 	}
 	// write to file
-	err = ioutil.WriteFile(config.getTmpAbsolutePath(config.ClassificationOutputPathRelative), bytes, 0644)
+	err = util.WriteFileWithDirs(config.getTmpAbsolutePath(config.ClassificationOutputPathRelative), bytes, os.ModePerm)
 	if err != nil {
 		return errors.Wrap(err, "unable to store classification result")
 	}
@@ -177,7 +177,7 @@ func RankContainer(index string, dataset string, config *IngestTaskConfig) error
 
 	// write to file
 	outputPath := config.getTmpAbsolutePath(config.RankingOutputPathRelative)
-	err = ioutil.WriteFile(outputPath, bytes, 0644)
+	err = util.WriteFileWithDirs(outputPath, bytes, os.ModePerm)
 	if err != nil {
 		return errors.Wrapf(err, "unable to write importance ranking to '%s'", outputPath)
 	}
@@ -205,7 +205,7 @@ func SummarizeContainer(index string, dataset string, config *IngestTaskConfig) 
 
 	// write to file
 	outputPath := config.getTmpAbsolutePath(config.SummaryMachineOutputPathRelative)
-	err = ioutil.WriteFile(outputPath, bytes, 0644)
+	err = util.WriteFileWithDirs(outputPath, bytes, os.ModePerm)
 	if err != nil {
 		return errors.Wrapf(err, "unable to write summary to '%s'", outputPath)
 	}
@@ -252,7 +252,7 @@ func removeMissingValues(sourceFile string, destinationFile string, hasHeader bo
 	// flush writer
 	writer.Flush()
 
-	err = ioutil.WriteFile(destinationFile, output.Bytes(), 0644)
+	err = util.WriteFileWithDirs(destinationFile, output.Bytes(), os.ModePerm)
 	if err != nil {
 		return errors.Wrap(err, "failed to close output file")
 	}

@@ -7,21 +7,21 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"os"
 	"path"
 	"strconv"
 	"strings"
 
 	"github.com/pkg/errors"
-
 	"github.com/unchartedsoftware/distil-ingest/metadata"
 	"github.com/unchartedsoftware/distil-ingest/rest"
+
 	"github.com/unchartedsoftware/distil/api/compute"
 	"github.com/unchartedsoftware/distil/api/compute/description"
 	"github.com/unchartedsoftware/distil/api/compute/result"
 	"github.com/unchartedsoftware/distil/api/env"
 	"github.com/unchartedsoftware/distil/api/pipeline"
+	"github.com/unchartedsoftware/distil/api/util"
 )
 
 const (
@@ -142,7 +142,7 @@ func ClassifyPrimitive(index string, dataset string, config *IngestTaskConfig) e
 		return errors.Wrap(err, "unable to serialize classification result")
 	}
 	// write to file
-	err = ioutil.WriteFile(config.getTmpAbsolutePath(config.ClassificationOutputPathRelative), bytes, 0644)
+	err = util.WriteFileWithDirs(config.getTmpAbsolutePath(config.ClassificationOutputPathRelative), bytes, os.ModePerm)
 	if err != nil {
 		return errors.Wrap(err, "unable to store classification result")
 	}
@@ -194,8 +194,9 @@ func RankPrimitive(index string, dataset string, config *IngestTaskConfig) error
 	if err != nil {
 		return errors.Wrap(err, "unable to serialize ranking result")
 	}
+
 	// write to file
-	err = ioutil.WriteFile(config.getTmpAbsolutePath(config.RankingOutputPathRelative), bytes, 0644)
+	err = util.WriteFileWithDirs(config.getTmpAbsolutePath(config.RankingOutputPathRelative), bytes, os.ModePerm)
 	if err != nil {
 		return errors.Wrap(err, "unable to store ranking result")
 	}
@@ -244,7 +245,7 @@ func SummarizePrimitive(index string, dataset string, config *IngestTaskConfig) 
 		return errors.Wrap(err, "unable to serialize summary result")
 	}
 	// write to file
-	err = ioutil.WriteFile(config.getTmpAbsolutePath(config.SummaryOutputPathRelative), bytes, 0644)
+	err = util.WriteFileWithDirs(config.getTmpAbsolutePath(config.SummaryOutputPathRelative), bytes, os.ModePerm)
 	if err != nil {
 		return errors.Wrap(err, "unable to store summary result")
 	}
@@ -313,7 +314,7 @@ func FeaturizePrimitive(schemaFile string, index string, dataset string, config 
 
 	// output the data with the new feature
 	writer.Flush()
-	err = ioutil.WriteFile(config.getTmpAbsolutePath(config.FeaturizationOutputDataRelative), output.Bytes(), 0644)
+	err = util.WriteFileWithDirs(config.getTmpAbsolutePath(config.FeaturizationOutputDataRelative), output.Bytes(), os.ModePerm)
 	if err != nil {
 		return errors.Wrap(err, "error writing feature output")
 	}
@@ -390,7 +391,8 @@ func ClusterPrimitive(index string, dataset string, config *IngestTaskConfig) er
 
 	// output the data with the new feature
 	writer.Flush()
-	err = ioutil.WriteFile(config.getTmpAbsolutePath(config.ClusteringOutputDataRelative), output.Bytes(), 0644)
+
+	err = util.WriteFileWithDirs(config.getTmpAbsolutePath(config.ClusteringOutputDataRelative), output.Bytes(), os.ModePerm)
 	if err != nil {
 		return errors.Wrap(err, "error writing clustered output")
 	}
