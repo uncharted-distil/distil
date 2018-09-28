@@ -156,7 +156,7 @@ func IngestDataset(metaCtor model.MetadataStorageCtor, index string, dataset str
 		log.Infof("finished clustering the dataset")
 	}
 
-	err := featurize(latestSchemaOutput, index, dataset, config)
+	err = featurize(latestSchemaOutput, index, dataset, config)
 	if err != nil {
 		if config.HardFail {
 			return errors.Wrap(err, "unable to featurize all data")
