@@ -156,16 +156,16 @@ func IngestDataset(metaCtor model.MetadataStorageCtor, index string, dataset str
 		log.Infof("finished clustering the dataset")
 	}
 
-	// err := featurize(latestSchemaOutput, index, dataset, config)
-	// if err != nil {
-	// 	if config.HardFail {
-	// 		return errors.Wrap(err, "unable to featurize all data")
-	// 	}
-	// 	log.Errorf("unable to featurize all data: %v", err)
-	// } else {
-	// 	latestSchemaOutput = config.getTmpAbsolutePath(config.FeaturizationOutputSchemaRelative)
-	// }
-	// log.Infof("finished featurizing the dataset")
+	err := featurize(latestSchemaOutput, index, dataset, config)
+	if err != nil {
+		if config.HardFail {
+			return errors.Wrap(err, "unable to featurize all data")
+		}
+		log.Errorf("unable to featurize all data: %v", err)
+	} else {
+		latestSchemaOutput = config.getTmpAbsolutePath(config.FeaturizationOutputSchemaRelative)
+	}
+	log.Infof("finished featurizing the dataset")
 
 	err = Merge(latestSchemaOutput, index, dataset, config)
 	if err != nil {
@@ -185,15 +185,15 @@ func IngestDataset(metaCtor model.MetadataStorageCtor, index string, dataset str
 	}
 	log.Infof("finished ranking the dataset")
 
-	// err = summarize(index, dataset, config)
-	// log.Infof("finished summarizing the dataset")
-	// // NOTE: For now ignore summary errors!
-	// if err != nil {
-	// 	if config.HardFail {
-	// 		return errors.Wrap(err, "unable to summarize the dataset")
-	// 	}
-	// 	log.Errorf("unable to summarize the dataset: %v", err)
-	// }
+	err = summarize(index, dataset, config)
+	log.Infof("finished summarizing the dataset")
+	// NOTE: For now ignore summary errors!
+	if err != nil {
+		if config.HardFail {
+			return errors.Wrap(err, "unable to summarize the dataset")
+		}
+		log.Errorf("unable to summarize the dataset: %v", err)
+	}
 
 	err = Ingest(storage, index, dataset, config)
 	if err != nil {
