@@ -53,6 +53,7 @@
 
 import _ from 'lodash';
 import { createRouteEntry } from '../util/routes';
+import { sortVariablesByImportance } from '../util/data';
 import { getters } from '../store/route/module';
 import { Variable } from '../store/dataset/index';
 import { SELECT_ROUTE } from '../store/route/index';
@@ -86,9 +87,7 @@ export default Vue.extend({
 
 	computed: {
 		topVariables(): Variable[] {
-			return this.variables.slice(0).sort((a, b) => {
-				return a.importance - b.importance;
-			}).slice(0, NUM_TOP_FEATURES);
+			return this.variables.slice(0).sort(sortVariablesByImportance).slice(0, NUM_TOP_FEATURES);
 		}
 	},
 
