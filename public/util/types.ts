@@ -15,6 +15,7 @@ const META_PREFIX = '_feature_';
 const TYPES_TO_LABELS: Dictionary<string> = {
 	integer: 'Integer',
 	float: 'Decimal',
+	real: 'Real',
 	latitude: 'Latitude',
 	longitude: 'Longitude',
 	text: 'Text',
@@ -44,6 +45,7 @@ const INTEGER_TYPES = [
 
 const FLOATING_POINT_TYPES = [
 	'float',
+	'real',
 	'latitude',
 	'longitude'
 ];
@@ -140,6 +142,7 @@ const TEXT_SUGGESTIONS = [
 const INTEGER_SUGGESTIONS = [
 	'integer',
 	'float',
+	'real',
 	'latitude',
 	'longitude',
 	'categorical',
@@ -150,6 +153,7 @@ const INTEGER_SUGGESTIONS = [
 const DECIMAL_SUGGESTIONS = [
 	'integer',
 	'float',
+	'real',
 	'latitude',
 	'longitude',
 	'unknown'
@@ -164,6 +168,7 @@ const IMAGE_SUGGESTIONS = [
 const BASIC_SUGGESTIONS = [
 	'integer',
 	'float',
+	'real',
 	'categorical',
 	'ordinal',
 	'text',
@@ -274,6 +279,41 @@ export function guessTypeByType(type: string): string[] {
 	return TEXT_SUGGESTIONS;
 }
 
+function combineTypeWithUnion(types: string[][]): string[] {
+	let res = [];
+	types.forEach(ts => {
+		res = res.concat(ts);
+	});
+	return _.uniq(res);
+}
+
+function combineTypeWithIntersection(types: string[][]): string[] {
+	const counts = {};
+	types.forEach(ts => {
+		ts.forEach(type => {
+			if (counts[type] === undefined) {
+				counts[type] = 0;
+			}
+			counts[type]++;
+		});
+	});
+	const res = [];
+	_.forIn(counts, (val, key) => {
+		if (val === types.length) {
+			res.push(key);
+		}
+	});
+	return res;
+}
+
+function combineSampledTypes(types: string[][]): string[] {
+	const USE_INTERSECTION = true;
+	if (USE_INTERSECTION) {
+		return combineTypeWithIntersection(types);
+	}
+	return combineTypeWithUnion(types);
+}
+
 export function guessTypeByValue(value: any): string[] {
 	if (value === undefined) {
 		return TEXT_SUGGESTIONS;
@@ -281,9 +321,9 @@ export function guessTypeByValue(value: any): string[] {
 	if (_.isArray(value)) {
 		let types = [];
 		value.forEach(val => {
-			types = types.concat(guessTypeByValue(val));
+			types.push(guessTypeByValue(val));
 		});
-		return _.uniq(types);
+		return combineSampledTypes(types);
 	}
 	if (BOOL_REGEX.test(value)) {
 		return BOOL_SUGGESTIONS;
