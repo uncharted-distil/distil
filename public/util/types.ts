@@ -14,8 +14,7 @@ const META_PREFIX = '_feature_';
 
 const TYPES_TO_LABELS: Dictionary<string> = {
 	integer: 'Integer',
-	float: 'Decimal',
-	real: 'Real',
+	real: 'Decimal',
 	latitude: 'Latitude',
 	longitude: 'Longitude',
 	text: 'Text',
@@ -44,7 +43,6 @@ const INTEGER_TYPES = [
 ];
 
 const FLOATING_POINT_TYPES = [
-	'float',
 	'real',
 	'latitude',
 	'longitude'
@@ -141,7 +139,6 @@ const TEXT_SUGGESTIONS = [
 
 const INTEGER_SUGGESTIONS = [
 	'integer',
-	'float',
 	'real',
 	'latitude',
 	'longitude',
@@ -152,7 +149,6 @@ const INTEGER_SUGGESTIONS = [
 
 const DECIMAL_SUGGESTIONS = [
 	'integer',
-	'float',
 	'real',
 	'latitude',
 	'longitude',
@@ -167,7 +163,6 @@ const IMAGE_SUGGESTIONS = [
 
 const BASIC_SUGGESTIONS = [
 	'integer',
-	'float',
 	'real',
 	'categorical',
 	'ordinal',
