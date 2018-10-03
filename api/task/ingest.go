@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"os"
 	"path"
+	"path/filepath"
 	"strings"
 	"time"
 
@@ -28,80 +29,22 @@ const (
 	baseTableSuffix = "_base"
 )
 
-var (
-	classify  = ClassifyContainer
-	rank      = RankContainer
-	summarize = SummarizeContainer
-	featurize = FeaturizeContainer
-	cluster   = ClusterContainer
-)
-
-// Classify function that will classify variables within the dataset.
-type Classify func(index string, dataset string, config *IngestTaskConfig) error
-
-// Rank function that will rank relative variable importance within the dataset.
-type Rank func(index string, dataset string, config *IngestTaskConfig) error
-
-// Summarize function that will provide a summary of the dataset.
-type Summarize func(index string, dataset string, config *IngestTaskConfig) error
-
-// Featurize function that will extract features from dataset variables
-// and add them to the dataset.
-type Featurize func(schemaFile string, index string, dataset string, config *IngestTaskConfig) error
-
-// Cluster function that will cluster features from dataset variables
-// and add them to the dataset.
-type Cluster func(index string, dataset string, config *IngestTaskConfig) error
-
-// SetClassify sets the classification function to use.
-func SetClassify(classificationFunc Classify) {
-	classify = classificationFunc
-}
-
-// SetRank sets the ranking function to use.
-func SetRank(rankFunc Rank) {
-	rank = rankFunc
-}
-
-// SetSummarize sets the summarization function to use.
-func SetSummarize(summarizeFunc Summarize) {
-	summarize = summarizeFunc
-}
-
-// SetFeaturize sets the featurization function to use.
-func SetFeaturize(featurizeFunc Featurize) {
-	featurize = featurizeFunc
-}
-
-// SetCluster sets the clustering function to use.
-func SetCluster(clusterFunc Cluster) {
-	cluster = clusterFunc
-}
-
 // IngestTaskConfig captures the necessary configuration for an data ingest.
 type IngestTaskConfig struct {
 	ContainerDataPath                  string
 	TmpDataPath                        string
 	HasHeader                          bool
-	ClusteringRESTEndpoint             string
-	ClusteringFunctionName             string
 	ClusteringOutputDataRelative       string
 	ClusteringOutputSchemaRelative     string
 	ClusteringEnabled                  bool
-	FeaturizationRESTEndpoint          string
-	FeaturizationFunctionName          string
 	FeaturizationOutputDataRelative    string
 	FeaturizationOutputSchemaRelative  string
 	MergedOutputPathRelative           string
 	MergedOutputSchemaPathRelative     string
 	SchemaPathRelative                 string
-	ClassificationRESTEndpoint         string
-	ClassificationFunctionName         string
 	ClassificationOutputPathRelative   string
 	ClassificationProbabilityThreshold float64
 	ClassificationEnabled              bool
-	RankingRESTEndpoint                string
-	RankingFunctionName                string
 	RankingOutputPathRelative          string
 	RankingRowLimit                    int
 	DatabasePassword                   string
@@ -111,8 +54,6 @@ type IngestTaskConfig struct {
 	DatabasePort                       int
 	SummaryOutputPathRelative          string
 	SummaryMachineOutputPathRelative   string
-	SummaryRESTEndpoint                string
-	SummaryFunctionName                string
 	ESEndpoint                         string
 	ESTimeout                          int
 	ESDatasetPrefix                    string
@@ -144,7 +85,7 @@ func IngestDataset(metaCtor model.MetadataStorageCtor, index string, dataset str
 	latestSchemaOutput := config.getAbsolutePath(config.SchemaPathRelative)
 
 	if config.ClusteringEnabled {
-		err := cluster(index, dataset, config)
+		err := ClusterPrimitive(index, dataset, config)
 		if err != nil {
 			if config.HardFail {
 				return errors.Wrap(err, "unable to cluster all data")
@@ -156,7 +97,7 @@ func IngestDataset(metaCtor model.MetadataStorageCtor, index string, dataset str
 		log.Infof("finished clustering the dataset")
 	}
 
-	err = featurize(latestSchemaOutput, index, dataset, config)
+	err = FeaturizePrimitive(latestSchemaOutput, index, dataset, config)
 	if err != nil {
 		if config.HardFail {
 			return errors.Wrap(err, "unable to featurize all data")
@@ -173,19 +114,19 @@ func IngestDataset(metaCtor model.MetadataStorageCtor, index string, dataset str
 	}
 	log.Infof("finished merging the dataset")
 
-	err = classify(index, dataset, config)
+	err = ClassifyPrimitive(index, dataset, config)
 	if err != nil {
 		return errors.Wrap(err, "unable to classify fields")
 	}
 	log.Infof("finished classifying the dataset")
 
-	err = rank(index, dataset, config)
+	err = RankPrimitive(index, dataset, config)
 	if err != nil {
 		return errors.Wrap(err, "unable to rank field importance")
 	}
 	log.Infof("finished ranking the dataset")
 
-	err = summarize(index, dataset, config)
+	err = SummarizePrimitive(index, dataset, config)
 	log.Infof("finished summarizing the dataset")
 	// NOTE: For now ignore summary errors!
 	if err != nil {
@@ -471,4 +412,16 @@ func copyFileContents(source string, destination string) error {
 
 func translateSchemaRelativeToAbsoluteFilename(schemalFilename string, dataFilename string) string {
 	return path.Join(path.Dir(schemalFilename), dataFilename)
+}
+
+func createContainingDirs(filePath string) error {
+	dirToCreate := filepath.Dir(filePath)
+	if dirToCreate != "/" && dirToCreate != "." {
+		err := os.MkdirAll(dirToCreate, 0777)
+		if err != nil {
+			return errors.Wrap(err, "unable to create containing directory")
+		}
+	}
+
+	return nil
 }
