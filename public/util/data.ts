@@ -121,7 +121,7 @@ export function filterVariablesByPage<T>(pageIndex: number, numPerPage: number, 
 
 export function sortVariablesByImportance(variables: Variable[]): Variable[] {
 	variables.sort((a, b) => {
-		return b.importance - a.importance;
+		return a.importance - b.importance;
 	});
 	return variables;
 }
