@@ -130,7 +130,6 @@ export default Vue.extend({
 		},
 		injectTimeseries() {
 			if (_.isEmpty(this.timeseries)) {
-				console.log('no data');
 				return;
 			}
 
