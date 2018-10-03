@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"io/ioutil"
 	"net/http"
 	"os"
 	"path"
@@ -26,6 +25,7 @@ import (
 	"github.com/unchartedsoftware/distil/api/routes"
 	"github.com/unchartedsoftware/distil/api/service"
 	"github.com/unchartedsoftware/distil/api/task"
+	"github.com/unchartedsoftware/distil/api/util"
 	"github.com/unchartedsoftware/distil/api/ws"
 )
 
@@ -116,13 +116,34 @@ func main() {
 	// instantiate the postgres solution storage constructor.
 	pgSolutionStorageCtor := pg.NewSolutionStorage(postgresClientCtor, metadataStorageCtor)
 
-	// Instantiate the solution compute client
-	solutionClient, err := compute.NewClient(config.SolutionComputeEndpoint, config.SolutionComputeTrace,
-		userAgent, time.Duration(config.SolutionComputePullTimeout)*time.Second, config.SolutionComputePullMax,
-		config.SkipPreprocessing)
-	if err != nil {
-		log.Errorf("%+v", err)
-		os.Exit(1)
+	var solutionClient *compute.Client
+	if config.UseTA2Runner {
+		// Instantiate the solution compute client mock
+		solutionClient, err = compute.NewClientWithRunner(
+			config.SolutionComputeEndpoint,
+			config.SolutionComputeMockEndpoint,
+			config.SolutionComputeTrace,
+			userAgent,
+			time.Duration(config.SolutionComputePullTimeout)*time.Second,
+			config.SolutionComputePullMax,
+			config.SkipPreprocessing)
+		if err != nil {
+			log.Errorf("%+v", err)
+			os.Exit(1)
+		}
+	} else {
+		// Instantiate the solution compute client
+		solutionClient, err = compute.NewClient(
+			config.SolutionComputeEndpoint,
+			config.SolutionComputeTrace,
+			userAgent,
+			time.Duration(config.SolutionComputePullTimeout)*time.Second,
+			config.SolutionComputePullMax,
+			config.SkipPreprocessing)
+		if err != nil {
+			log.Errorf("%+v", err)
+			os.Exit(1)
+		}
 	}
 	defer solutionClient.Close()
 
@@ -135,7 +156,7 @@ func main() {
 			os.Exit(1)
 		}
 
-		err = ioutil.WriteFile(problemListingFile, []byte("problem_id,system,meaningful\n"), 0777)
+		err = util.WriteFileWithDirs(problemListingFile, []byte("problem_id,system,meaningful\n"), 0777)
 		if err != nil {
 			log.Errorf("%+v", err)
 			os.Exit(1)
@@ -150,7 +171,7 @@ func main() {
 	// set the ingest functions to use
 	if config.IngestPrimitive {
 		task.SetClassify(task.ClassifyPrimitive)
-		task.SetRank(task.RankPrimmitive)
+		task.SetRank(task.RankPrimitive)
 		task.SetSummarize(task.SummarizePrimitive)
 		task.SetFeaturize(task.FeaturizePrimitive)
 		task.SetCluster(task.ClusterPrimitive)

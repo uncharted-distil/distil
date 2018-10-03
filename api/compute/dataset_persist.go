@@ -15,9 +15,11 @@ import (
 	"github.com/mitchellh/hashstructure"
 	"github.com/otiai10/copy"
 	"github.com/pkg/errors"
+	"github.com/unchartedsoftware/plog"
+
 	"github.com/unchartedsoftware/distil-ingest/metadata"
 	"github.com/unchartedsoftware/distil/api/model"
-	"github.com/unchartedsoftware/plog"
+	"github.com/unchartedsoftware/distil/api/util"
 )
 
 const (
@@ -156,12 +158,12 @@ func splitTrainTest(sourceFile string, trainFile string, testFile string, hasHea
 	writerTrain.Flush()
 	writerTest.Flush()
 
-	err = ioutil.WriteFile(trainFile, outputTrain.Bytes(), 0644)
+	err = util.WriteFileWithDirs(trainFile, outputTrain.Bytes(), os.ModePerm)
 	if err != nil {
 		return errors.Wrap(err, "unable to output train data")
 	}
 
-	err = ioutil.WriteFile(testFile, outputTest.Bytes(), 0644)
+	err = util.WriteFileWithDirs(testFile, outputTest.Bytes(), os.ModePerm)
 	if err != nil {
 		return errors.Wrap(err, "unable to output test data")
 	}

@@ -1,7 +1,9 @@
 package compute
 
 import (
+	"fmt"
 	"io"
+	"path"
 	"strings"
 	"sync"
 	"time"
@@ -25,6 +27,7 @@ const defaultTrainTestRatio = 3
 type Client struct {
 	client            pipeline.CoreClient
 	conn              *grpc.ClientConn
+	runner            *grpc.ClientConn
 	mu                *sync.Mutex
 	UserAgent         string
 	PullTimeout       time.Duration
@@ -78,6 +81,34 @@ func NewClient(serverAddr string, trace bool, userAgent string,
 	}
 
 	return &client, nil
+}
+
+// NewClientWithRunner creates a new pipline request dispatcher instance. This will establish
+// the connection to the solution server or return an error on fail
+func NewClientWithRunner(serverAddr string, runnerAddr string, trace bool, userAgent string, pullTimeout time.Duration, pullMax int, skipPreprocessing bool) (*Client, error) {
+
+	client, err := NewClient(serverAddr, trace, userAgent, pullTimeout, pullMax, skipPreprocessing)
+	if err != nil {
+		return nil, err
+	}
+
+	log.Infof("connecting to ta2 runner at %s", runnerAddr)
+
+	runner, err := grpc.Dial(
+		runnerAddr,
+		grpc.WithInsecure(),
+		grpc.WithBlock(),
+		grpc.WithUnaryInterceptor(middleware.GenerateUnaryClientInterceptor(trace)),
+		grpc.WithStreamInterceptor(middleware.GenerateStreamClientInterceptor(trace)),
+	)
+	if err != nil {
+		return nil, errors.Wrapf(err, "failed to connect to %s", runnerAddr)
+	}
+
+	log.Infof("connected to %s", runnerAddr)
+
+	client.runner = runner
+	return client, nil
 }
 
 // Close the connection to the solution service
@@ -313,4 +344,27 @@ func (c *Client) ExportSolution(ctx context.Context, fittedSolutionID string) er
 	}
 	_, err := c.client.SolutionExport(ctx, exportSolution)
 	return errors.Wrap(err, "failed to export solution")
+}
+
+// ExecutePipeline executes a pre-specified pipeline.
+func (c *Client) ExecutePipeline(ctx context.Context, datasetURI string, pipelineDesc *pipeline.PipelineDescription) (*pipeline.PipelineExecuteResponse, error) {
+
+	datasetURI = fmt.Sprintf("file://%s", path.Join(datasetURI, D3MDataSchema))
+
+	in := &pipeline.PipelineExecuteRequest{
+		PipelineDescription: pipelineDesc,
+		Inputs: []*pipeline.Value{
+			{
+				Value: &pipeline.Value_DatasetUri{
+					DatasetUri: datasetURI,
+				},
+			},
+		},
+	}
+	out := new(pipeline.PipelineExecuteResponse)
+	err := c.runner.Invoke(ctx, "/Executor/ExecutePipeline", in, out)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
 }

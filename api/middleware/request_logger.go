@@ -62,8 +62,7 @@ func (r *requestLogger) request(request string) *requestLogger {
 
 func (r *requestLogger) message(request proto.Message) *requestLogger {
 	protoString := proto.MarshalTextString(request)
-	r.write(ansi.DefaultFG, "/")
-	r.write(ansi.Green, protoString)
+	r.write(ansi.Green, "\n"+protoString)
 	return r
 }
 

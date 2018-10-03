@@ -63,6 +63,9 @@ export default Vue.extend({
 
 	methods: {
 		addMissingSuggestions(): string[] {
+			if (this.type === '' || this.values.length === 0) {
+				return [];
+			}
 			const type = getTypeFromLabel(this.type);
 			return _.map(addTypeSuggestions(type, this.values), t => getLabelFromType(t));
 		},
