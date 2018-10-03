@@ -2,18 +2,18 @@ package routes
 
 import (
 	"fmt"
-	"io/ioutil"
 	"net/http"
 	"os"
 	"path"
 
 	"github.com/pkg/errors"
 	"github.com/unchartedsoftware/plog"
+	"goji.io/pat"
 
 	"github.com/unchartedsoftware/distil/api/compute"
 	"github.com/unchartedsoftware/distil/api/model"
+	"github.com/unchartedsoftware/distil/api/util"
 	"github.com/unchartedsoftware/distil/api/util/json"
-	"goji.io/pat"
 )
 
 const (
@@ -98,7 +98,7 @@ func ProblemDiscoveryHandler(ctorData model.DataStorageCtor, ctorMeta model.Meta
 		}
 
 		problemSchemaOutputFile := path.Join(problemOutputDirectory, problemSchemaFile)
-		err = ioutil.WriteFile(problemSchemaOutputFile, problemJSON, 0644)
+		err = util.WriteFileWithDirs(problemSchemaOutputFile, problemJSON, os.ModePerm)
 		if err != nil {
 			handleError(w, errors.Wrap(err, "unable to write problem schema"))
 			return
@@ -118,7 +118,7 @@ func ProblemDiscoveryHandler(ctorData model.DataStorageCtor, ctorMeta model.Meta
 		}
 
 		problemAPIExportFile := path.Join(problemOutputDirectory, apiExportFile)
-		err = ioutil.WriteFile(problemAPIExportFile, requestJSON, 0644)
+		err = util.WriteFileWithDirs(problemAPIExportFile, requestJSON, os.ModePerm)
 		if err != nil {
 			handleError(w, errors.Wrap(err, "unable to write search solution request"))
 			return
@@ -129,7 +129,7 @@ func ProblemDiscoveryHandler(ctorData model.DataStorageCtor, ctorMeta model.Meta
 		// need to append a row to the listing
 		problemListingFile := path.Join(problemDir, ProblemLabelFile)
 		problemLabel := fmt.Sprintf("%s,\"user\",\"%s\"\n", problemID, meaningful)
-		f, err := os.OpenFile(problemListingFile, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+		f, err := os.OpenFile(problemListingFile, os.O_APPEND|os.O_CREATE|os.O_WRONLY, os.ModePerm)
 		if err != nil {
 			handleError(w, errors.Wrap(err, "unable to open problem listing"))
 			return

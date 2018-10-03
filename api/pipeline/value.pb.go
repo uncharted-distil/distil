@@ -97,7 +97,7 @@ type ValueError struct {
 	// would otherwise support a given value, then the error message should communicate this error.
 	// If there was such an error but some later value type allowed for recovery, then there
 	// should be no error.
-	Message              string   `protobuf:"bytes,1,opt,name=message" json:"message,omitempty"`
+	Message              string   `protobuf:"bytes,1,opt,name=message,proto3" json:"message,omitempty"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
 	XXX_unrecognized     []byte   `json:"-"`
 	XXX_sizecache        int32    `json:"-"`
@@ -135,7 +135,7 @@ func (m *ValueError) GetMessage() string {
 }
 
 type ValueList struct {
-	Items                []*ValueRaw `protobuf:"bytes,1,rep,name=items" json:"items,omitempty"`
+	Items                []*ValueRaw `protobuf:"bytes,1,rep,name=items,proto3" json:"items,omitempty"`
 	XXX_NoUnkeyedLiteral struct{}    `json:"-"`
 	XXX_unrecognized     []byte      `json:"-"`
 	XXX_sizecache        int32       `json:"-"`
@@ -173,7 +173,7 @@ func (m *ValueList) GetItems() []*ValueRaw {
 }
 
 type ValueDict struct {
-	Items                map[string]*ValueRaw `protobuf:"bytes,1,rep,name=items" json:"items,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
+	Items                map[string]*ValueRaw `protobuf:"bytes,1,rep,name=items,proto3" json:"items,omitempty" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"bytes,2,opt,name=value,proto3"`
 	XXX_NoUnkeyedLiteral struct{}             `json:"-"`
 	XXX_unrecognized     []byte               `json:"-"`
 	XXX_sizecache        int32                `json:"-"`
@@ -255,28 +255,28 @@ type isValueRaw_Raw interface {
 }
 
 type ValueRaw_Null struct {
-	Null NullValue `protobuf:"varint,1,opt,name=null,enum=NullValue,oneof"`
+	Null NullValue `protobuf:"varint,1,opt,name=null,proto3,enum=NullValue,oneof"`
 }
 type ValueRaw_Double struct {
-	Double float64 `protobuf:"fixed64,2,opt,name=double,oneof"`
+	Double float64 `protobuf:"fixed64,2,opt,name=double,proto3,oneof"`
 }
 type ValueRaw_Int64 struct {
-	Int64 int64 `protobuf:"varint,3,opt,name=int64,oneof"`
+	Int64 int64 `protobuf:"varint,3,opt,name=int64,proto3,oneof"`
 }
 type ValueRaw_Bool struct {
-	Bool bool `protobuf:"varint,4,opt,name=bool,oneof"`
+	Bool bool `protobuf:"varint,4,opt,name=bool,proto3,oneof"`
 }
 type ValueRaw_String_ struct {
-	String_ string `protobuf:"bytes,5,opt,name=string,oneof"`
+	String_ string `protobuf:"bytes,5,opt,name=string,proto3,oneof"`
 }
 type ValueRaw_Bytes struct {
 	Bytes []byte `protobuf:"bytes,6,opt,name=bytes,proto3,oneof"`
 }
 type ValueRaw_List struct {
-	List *ValueList `protobuf:"bytes,7,opt,name=list,oneof"`
+	List *ValueList `protobuf:"bytes,7,opt,name=list,proto3,oneof"`
 }
 type ValueRaw_Dict struct {
-	Dict *ValueDict `protobuf:"bytes,8,opt,name=dict,oneof"`
+	Dict *ValueDict `protobuf:"bytes,8,opt,name=dict,proto3,oneof"`
 }
 
 func (*ValueRaw_Null) isValueRaw_Raw()    {}
@@ -559,19 +559,19 @@ type isValue_Value interface {
 }
 
 type Value_Error struct {
-	Error *ValueError `protobuf:"bytes,1,opt,name=error,oneof"`
+	Error *ValueError `protobuf:"bytes,1,opt,name=error,proto3,oneof"`
 }
 type Value_Raw struct {
-	Raw *ValueRaw `protobuf:"bytes,2,opt,name=raw,oneof"`
+	Raw *ValueRaw `protobuf:"bytes,2,opt,name=raw,proto3,oneof"`
 }
 type Value_DatasetUri struct {
-	DatasetUri string `protobuf:"bytes,3,opt,name=dataset_uri,json=datasetUri,oneof"`
+	DatasetUri string `protobuf:"bytes,3,opt,name=dataset_uri,json=datasetUri,proto3,oneof"`
 }
 type Value_CsvUri struct {
-	CsvUri string `protobuf:"bytes,4,opt,name=csv_uri,json=csvUri,oneof"`
+	CsvUri string `protobuf:"bytes,4,opt,name=csv_uri,json=csvUri,proto3,oneof"`
 }
 type Value_PickleUri struct {
-	PickleUri string `protobuf:"bytes,5,opt,name=pickle_uri,json=pickleUri,oneof"`
+	PickleUri string `protobuf:"bytes,5,opt,name=pickle_uri,json=pickleUri,proto3,oneof"`
 }
 type Value_PickleBlob struct {
 	PickleBlob []byte `protobuf:"bytes,6,opt,name=pickle_blob,json=pickleBlob,proto3,oneof"`

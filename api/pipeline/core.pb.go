@@ -108,17 +108,17 @@ func (ProgressState) EnumDescriptor() ([]byte, []int) {
 
 type ScoringConfiguration struct {
 	// The evaluation method to use.
-	Method EvaluationMethod `protobuf:"varint,1,opt,name=method,enum=EvaluationMethod" json:"method,omitempty"`
+	Method EvaluationMethod `protobuf:"varint,1,opt,name=method,proto3,enum=EvaluationMethod" json:"method,omitempty"`
 	// Number of folds made, if applicable.
-	Folds int32 `protobuf:"varint,2,opt,name=folds" json:"folds,omitempty"`
+	Folds int32 `protobuf:"varint,2,opt,name=folds,proto3" json:"folds,omitempty"`
 	// Ratio of train set vs. test set, if applicable.
-	TrainTestRatio float64 `protobuf:"fixed64,3,opt,name=train_test_ratio,json=trainTestRatio" json:"train_test_ratio,omitempty"`
+	TrainTestRatio float64 `protobuf:"fixed64,3,opt,name=train_test_ratio,json=trainTestRatio,proto3" json:"train_test_ratio,omitempty"`
 	// Shuffle data? Set to true if employed.
-	Shuffle bool `protobuf:"varint,4,opt,name=shuffle" json:"shuffle,omitempty"`
+	Shuffle bool `protobuf:"varint,4,opt,name=shuffle,proto3" json:"shuffle,omitempty"`
 	// Value for random seed to use for shuffling. Optional.
-	RandomSeed int32 `protobuf:"varint,5,opt,name=random_seed,json=randomSeed" json:"random_seed,omitempty"`
+	RandomSeed int32 `protobuf:"varint,5,opt,name=random_seed,json=randomSeed,proto3" json:"random_seed,omitempty"`
 	// Do stratified k-fold? Set to true if employed.
-	Stratified           bool     `protobuf:"varint,6,opt,name=stratified" json:"stratified,omitempty"`
+	Stratified           bool     `protobuf:"varint,6,opt,name=stratified,proto3" json:"stratified,omitempty"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
 	XXX_unrecognized     []byte   `json:"-"`
 	XXX_sizecache        int32    `json:"-"`
@@ -191,15 +191,15 @@ func (m *ScoringConfiguration) GetStratified() bool {
 }
 
 type Score struct {
-	Metric *ProblemPerformanceMetric `protobuf:"bytes,1,opt,name=metric" json:"metric,omitempty"`
+	Metric *ProblemPerformanceMetric `protobuf:"bytes,1,opt,name=metric,proto3" json:"metric,omitempty"`
 	// When doing multiple folds, which fold is this score associated with, 0-based.
 	// We do not aggregate scores across folds on the TA2 side, but expose everything to the TA3.
 	// If scoring was not done as part of the cross-validation, then it can be returned
 	// as the first and only fold, in which case the value of this field should be 0.
-	Fold int32 `protobuf:"varint,2,opt,name=fold" json:"fold,omitempty"`
+	Fold int32 `protobuf:"varint,2,opt,name=fold,proto3" json:"fold,omitempty"`
 	// To which target or targets does this score apply?
-	Targets              []*ProblemTarget `protobuf:"bytes,3,rep,name=targets" json:"targets,omitempty"`
-	Value                *Value           `protobuf:"bytes,4,opt,name=value" json:"value,omitempty"`
+	Targets              []*ProblemTarget `protobuf:"bytes,3,rep,name=targets,proto3" json:"targets,omitempty"`
+	Value                *Value           `protobuf:"bytes,4,opt,name=value,proto3" json:"value,omitempty"`
 	XXX_NoUnkeyedLiteral struct{}         `json:"-"`
 	XXX_unrecognized     []byte           `json:"-"`
 	XXX_sizecache        int32            `json:"-"`
@@ -265,13 +265,13 @@ func (m *Score) GetValue() *Value {
 // should contain information to supplement the progress state, such as specific failure details
 // in the case of an "ERRORED" state being returned.
 type Progress struct {
-	State  ProgressState `protobuf:"varint,1,opt,name=state,enum=ProgressState" json:"state,omitempty"`
-	Status string        `protobuf:"bytes,2,opt,name=status" json:"status,omitempty"`
+	State  ProgressState `protobuf:"varint,1,opt,name=state,proto3,enum=ProgressState" json:"state,omitempty"`
+	Status string        `protobuf:"bytes,2,opt,name=status,proto3" json:"status,omitempty"`
 	// Set only after state becomes "RUNNING". If it never really properly runs, but errors
 	// when attempted to run, then it should be the timestamp of the error.
-	Start *timestamp.Timestamp `protobuf:"bytes,3,opt,name=start" json:"start,omitempty"`
+	Start *timestamp.Timestamp `protobuf:"bytes,3,opt,name=start,proto3" json:"start,omitempty"`
 	// Set only when state is "COMPLETED" or "ERRORED".
-	End                  *timestamp.Timestamp `protobuf:"bytes,4,opt,name=end" json:"end,omitempty"`
+	End                  *timestamp.Timestamp `protobuf:"bytes,4,opt,name=end,proto3" json:"end,omitempty"`
 	XXX_NoUnkeyedLiteral struct{}             `json:"-"`
 	XXX_unrecognized     []byte               `json:"-"`
 	XXX_sizecache        int32                `json:"-"`
@@ -337,10 +337,10 @@ func (m *Progress) GetEnd() *timestamp.Timestamp {
 // this call returns, all reported solutions for searches associated with this problem
 // should be for the updated problem description.
 type UpdateProblemRequest struct {
-	SearchId string `protobuf:"bytes,1,opt,name=search_id,json=searchId" json:"search_id,omitempty"`
+	SearchId string `protobuf:"bytes,1,opt,name=search_id,json=searchId,proto3" json:"search_id,omitempty"`
 	// New problem description. It has to be provided in full and it replaces existing
 	// problem description.
-	Problem              *ProblemDescription `protobuf:"bytes,2,opt,name=problem" json:"problem,omitempty"`
+	Problem              *ProblemDescription `protobuf:"bytes,2,opt,name=problem,proto3" json:"problem,omitempty"`
 	XXX_NoUnkeyedLiteral struct{}            `json:"-"`
 	XXX_unrecognized     []byte              `json:"-"`
 	XXX_sizecache        int32               `json:"-"`
@@ -420,25 +420,25 @@ var xxx_messageInfo_UpdateProblemResponse proto.InternalMessageInfo
 // Multiple parallel solution searches can happen at the same time.
 type SearchSolutionsRequest struct {
 	// Some string identifying the name and version of the TA3 system.
-	UserAgent string `protobuf:"bytes,1,opt,name=user_agent,json=userAgent" json:"user_agent,omitempty"`
+	UserAgent string `protobuf:"bytes,1,opt,name=user_agent,json=userAgent,proto3" json:"user_agent,omitempty"`
 	// Shall be set to "protocol_version" above.
-	Version string `protobuf:"bytes,2,opt,name=version" json:"version,omitempty"`
+	Version string `protobuf:"bytes,2,opt,name=version,proto3" json:"version,omitempty"`
 	// Desired upper limit of time for solution search, expressed in minutes.
 	// Is suggestion, and TA2's should attempt to obey, but TA3's should realize may be
 	// violated. Default value of 0 (and any negative number) signifies no time bound.
-	TimeBound float64 `protobuf:"fixed64,3,opt,name=time_bound,json=timeBound" json:"time_bound,omitempty"`
+	TimeBound float64 `protobuf:"fixed64,3,opt,name=time_bound,json=timeBound,proto3" json:"time_bound,omitempty"`
 	// Value stating the priority of the search. If multiple searches are queued then highest
 	// priority (largest number) should be started next by TA2. Primarily used to sort any
 	// queue, but no further guarantee that TA2 can give more resources to high priority
 	// searches. If unspecified, by default search will have priority 0. Negative numbers have
 	// still lower priority.
-	Priority float64 `protobuf:"fixed64,4,opt,name=priority" json:"priority,omitempty"`
+	Priority float64 `protobuf:"fixed64,4,opt,name=priority,proto3" json:"priority,omitempty"`
 	// Which value types can a TA2 system use to communicate values to a TA3 system?
 	// The order is important as a TA2 system will try value types in order until one works out,
 	// or an error will be returned instead of the value.
-	AllowedValueTypes []ValueType `protobuf:"varint,5,rep,packed,name=allowed_value_types,json=allowedValueTypes,enum=ValueType" json:"allowed_value_types,omitempty"`
+	AllowedValueTypes []ValueType `protobuf:"varint,5,rep,packed,name=allowed_value_types,json=allowedValueTypes,proto3,enum=ValueType" json:"allowed_value_types,omitempty"`
 	// Problem description to use for the solution search.
-	Problem *ProblemDescription `protobuf:"bytes,6,opt,name=problem" json:"problem,omitempty"`
+	Problem *ProblemDescription `protobuf:"bytes,6,opt,name=problem,proto3" json:"problem,omitempty"`
 	// A pipeline template to use for search or to execute. If template is omitted, then a
 	// regular solution search is done. If template consists only of one placeholder step,
 	// then a regular solution search is done to replace that step. If there is no placeholder
@@ -453,11 +453,11 @@ type SearchSolutionsRequest struct {
 	// inputs and any outputs. Otherwise pipelines have to be from a Dataset container value
 	// to predictions Pandas dataframe. While there are all these options possible, only a
 	// subset has to be supported by all systems. See README for more details.
-	Template *PipelineDescription `protobuf:"bytes,7,opt,name=template" json:"template,omitempty"`
+	Template *PipelineDescription `protobuf:"bytes,7,opt,name=template,proto3" json:"template,omitempty"`
 	// Pipeline inputs used during solution search. They have to point to Dataset container
 	// values. Order matters as each input is mapped to a template's input in order. Optional
 	// for templates without a placeholder and with all hyper-parameters fixed.
-	Inputs               []*Value `protobuf:"bytes,8,rep,name=inputs" json:"inputs,omitempty"`
+	Inputs               []*Value `protobuf:"bytes,8,rep,name=inputs,proto3" json:"inputs,omitempty"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
 	XXX_unrecognized     []byte   `json:"-"`
 	XXX_sizecache        int32    `json:"-"`
@@ -547,7 +547,7 @@ func (m *SearchSolutionsRequest) GetInputs() []*Value {
 type SearchSolutionsResponse struct {
 	// An ID identifying this solution search. This string should be at least 22 characters
 	// long to ensure enough entropy to not be guessable.
-	SearchId             string   `protobuf:"bytes,1,opt,name=search_id,json=searchId" json:"search_id,omitempty"`
+	SearchId             string   `protobuf:"bytes,1,opt,name=search_id,json=searchId,proto3" json:"search_id,omitempty"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
 	XXX_unrecognized     []byte   `json:"-"`
 	XXX_sizecache        int32    `json:"-"`
@@ -591,7 +591,7 @@ func (m *SearchSolutionsResponse) GetSearchId() string {
 // by "StopSearchSolutions"). Found solution IDs during the search are no longer valid
 // after this call.
 type EndSearchSolutionsRequest struct {
-	SearchId             string   `protobuf:"bytes,1,opt,name=search_id,json=searchId" json:"search_id,omitempty"`
+	SearchId             string   `protobuf:"bytes,1,opt,name=search_id,json=searchId,proto3" json:"search_id,omitempty"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
 	XXX_unrecognized     []byte   `json:"-"`
 	XXX_sizecache        int32    `json:"-"`
@@ -663,7 +663,7 @@ var xxx_messageInfo_EndSearchSolutionsResponse proto.InternalMessageInfo
 // the "GetSearchSolutionsResults" stream is closed by the TA2 (as happens when the search
 // is concluded on its own). Search cannot be re-started after it has been stopped.
 type StopSearchSolutionsRequest struct {
-	SearchId             string   `protobuf:"bytes,1,opt,name=search_id,json=searchId" json:"search_id,omitempty"`
+	SearchId             string   `protobuf:"bytes,1,opt,name=search_id,json=searchId,proto3" json:"search_id,omitempty"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
 	XXX_unrecognized     []byte   `json:"-"`
 	XXX_sizecache        int32    `json:"-"`
@@ -734,8 +734,8 @@ var xxx_messageInfo_StopSearchSolutionsResponse proto.InternalMessageInfo
 // potential approaches a TA2 can use to score candidate solutions this might not capture what
 //  your TA2 is doing. Feel free to request additions to be able to describe your approach.
 type SolutionSearchScore struct {
-	ScoringConfiguration *ScoringConfiguration `protobuf:"bytes,1,opt,name=scoring_configuration,json=scoringConfiguration" json:"scoring_configuration,omitempty"`
-	Scores               []*Score              `protobuf:"bytes,2,rep,name=scores" json:"scores,omitempty"`
+	ScoringConfiguration *ScoringConfiguration `protobuf:"bytes,1,opt,name=scoring_configuration,json=scoringConfiguration,proto3" json:"scoring_configuration,omitempty"`
+	Scores               []*Score              `protobuf:"bytes,2,rep,name=scores,proto3" json:"scores,omitempty"`
 	XXX_NoUnkeyedLiteral struct{}              `json:"-"`
 	XXX_unrecognized     []byte                `json:"-"`
 	XXX_sizecache        int32                 `json:"-"`
@@ -782,7 +782,7 @@ func (m *SolutionSearchScore) GetScores() []*Score {
 // Get all solutions presently identified by the search and start receiving any
 // further solutions also found as well.
 type GetSearchSolutionsResultsRequest struct {
-	SearchId             string   `protobuf:"bytes,1,opt,name=search_id,json=searchId" json:"search_id,omitempty"`
+	SearchId             string   `protobuf:"bytes,1,opt,name=search_id,json=searchId,proto3" json:"search_id,omitempty"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
 	XXX_unrecognized     []byte   `json:"-"`
 	XXX_sizecache        int32    `json:"-"`
@@ -822,19 +822,19 @@ func (m *GetSearchSolutionsResultsRequest) GetSearchId() string {
 type GetSearchSolutionsResultsResponse struct {
 	// Overall process progress, not progress per solution. While solutions are being found and
 	// returned, or scores computed and updated, progress state should be kept at "RUNNING".
-	Progress *Progress `protobuf:"bytes,1,opt,name=progress" json:"progress,omitempty"`
+	Progress *Progress `protobuf:"bytes,1,opt,name=progress,proto3" json:"progress,omitempty"`
 	// A measure of progress during search. It can be any number of internal steps or
 	// actions a TA2 is doing during search. It can be even number of how many candidate
 	// solutions were already examined. It does not even have to be an integer.
 	// How regularly a change to this number is reported to TA3 is left to TA2's discretion,
 	// but a rule of thumb is at least once a minute if the number changes.
-	DoneTicks float64 `protobuf:"fixed64,2,opt,name=done_ticks,json=doneTicks" json:"done_ticks,omitempty"`
+	DoneTicks float64 `protobuf:"fixed64,2,opt,name=done_ticks,json=doneTicks,proto3" json:"done_ticks,omitempty"`
 	// If TA2 knows how many internal steps or actions are there, it can set this field.
 	// This can also be updated through time if more (or even less) internal steps or
 	// actions are determined to be necessary. If this value is non-zero, then it should
 	// always hold that "done_ticks" <= "all_ticks".
-	AllTicks   float64 `protobuf:"fixed64,3,opt,name=all_ticks,json=allTicks" json:"all_ticks,omitempty"`
-	SolutionId string  `protobuf:"bytes,4,opt,name=solution_id,json=solutionId" json:"solution_id,omitempty"`
+	AllTicks   float64 `protobuf:"fixed64,3,opt,name=all_ticks,json=allTicks,proto3" json:"all_ticks,omitempty"`
+	SolutionId string  `protobuf:"bytes,4,opt,name=solution_id,json=solutionId,proto3" json:"solution_id,omitempty"`
 	// Internal score for this solution between 0.0 and 1.0 where 1.0 is the highest score.
 	// There is no other meaning to this score and it does not necessary depend on scores
 	// listed in the problem description. Optional.
@@ -842,11 +842,11 @@ type GetSearchSolutionsResultsResponse struct {
 	// valid value for this field. Because of that you should never omit the field.
 	// If you do not have internal score to provide, use NaN for the value of this field
 	// to signal that.
-	InternalScore float64 `protobuf:"fixed64,5,opt,name=internal_score,json=internalScore" json:"internal_score,omitempty"`
+	InternalScore float64 `protobuf:"fixed64,5,opt,name=internal_score,json=internalScore,proto3" json:"internal_score,omitempty"`
 	// TA2 might be able to provide more meaningful scores as well, depending on its
 	// approach to solution search. Moreover, even the same TA2 might not use the same scoring
 	// approach for all of its solutions. Optional.
-	Scores               []*SolutionSearchScore `protobuf:"bytes,6,rep,name=scores" json:"scores,omitempty"`
+	Scores               []*SolutionSearchScore `protobuf:"bytes,6,rep,name=scores,proto3" json:"scores,omitempty"`
 	XXX_NoUnkeyedLiteral struct{}               `json:"-"`
 	XXX_unrecognized     []byte                 `json:"-"`
 	XXX_sizecache        int32                  `json:"-"`
@@ -920,7 +920,7 @@ func (m *GetSearchSolutionsResultsResponse) GetScores() []*SolutionSearchScore {
 
 // Request a detailed description of the found solution.
 type DescribeSolutionRequest struct {
-	SolutionId           string   `protobuf:"bytes,1,opt,name=solution_id,json=solutionId" json:"solution_id,omitempty"`
+	SolutionId           string   `protobuf:"bytes,1,opt,name=solution_id,json=solutionId,proto3" json:"solution_id,omitempty"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
 	XXX_unrecognized     []byte   `json:"-"`
 	XXX_sizecache        int32    `json:"-"`
@@ -959,7 +959,7 @@ func (m *DescribeSolutionRequest) GetSolutionId() string {
 
 type PrimitiveStepDescription struct {
 	// Selected value for free pipeline hyper-parameters.
-	Hyperparams          map[string]*Value `protobuf:"bytes,1,rep,name=hyperparams" json:"hyperparams,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
+	Hyperparams          map[string]*Value `protobuf:"bytes,1,rep,name=hyperparams,proto3" json:"hyperparams,omitempty" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"bytes,2,opt,name=value,proto3"`
 	XXX_NoUnkeyedLiteral struct{}          `json:"-"`
 	XXX_unrecognized     []byte            `json:"-"`
 	XXX_sizecache        int32             `json:"-"`
@@ -999,7 +999,7 @@ func (m *PrimitiveStepDescription) GetHyperparams() map[string]*Value {
 type SubpipelineStepDescription struct {
 	// Each step in a sub-pipeline has a description. These are reported in the order of steps
 	// in the sub-pipeline.
-	Steps                []*StepDescription `protobuf:"bytes,1,rep,name=steps" json:"steps,omitempty"`
+	Steps                []*StepDescription `protobuf:"bytes,1,rep,name=steps,proto3" json:"steps,omitempty"`
 	XXX_NoUnkeyedLiteral struct{}           `json:"-"`
 	XXX_unrecognized     []byte             `json:"-"`
 	XXX_sizecache        int32              `json:"-"`
@@ -1075,10 +1075,10 @@ type isStepDescription_Step interface {
 }
 
 type StepDescription_Primitive struct {
-	Primitive *PrimitiveStepDescription `protobuf:"bytes,1,opt,name=primitive,oneof"`
+	Primitive *PrimitiveStepDescription `protobuf:"bytes,1,opt,name=primitive,proto3,oneof"`
 }
 type StepDescription_Pipeline struct {
-	Pipeline *SubpipelineStepDescription `protobuf:"bytes,2,opt,name=pipeline,oneof"`
+	Pipeline *SubpipelineStepDescription `protobuf:"bytes,2,opt,name=pipeline,proto3,oneof"`
 }
 
 func (*StepDescription_Primitive) isStepDescription_Step() {}
@@ -1181,10 +1181,10 @@ func _StepDescription_OneofSizer(msg proto.Message) (n int) {
 
 type DescribeSolutionResponse struct {
 	// A pipeline description. Nested pipelines should be fully described as well.
-	Pipeline *PipelineDescription `protobuf:"bytes,1,opt,name=pipeline" json:"pipeline,omitempty"`
+	Pipeline *PipelineDescription `protobuf:"bytes,1,opt,name=pipeline,proto3" json:"pipeline,omitempty"`
 	// Each step in a pipeline has description. These are reported in the order of steps in
 	// the pipeline.
-	Steps                []*StepDescription `protobuf:"bytes,2,rep,name=steps" json:"steps,omitempty"`
+	Steps                []*StepDescription `protobuf:"bytes,2,rep,name=steps,proto3" json:"steps,omitempty"`
 	XXX_NoUnkeyedLiteral struct{}           `json:"-"`
 	XXX_unrecognized     []byte             `json:"-"`
 	XXX_sizecache        int32              `json:"-"`
@@ -1229,12 +1229,12 @@ func (m *DescribeSolutionResponse) GetSteps() []*StepDescription {
 }
 
 type StepProgress struct {
-	Progress *Progress `protobuf:"bytes,1,opt,name=progress" json:"progress,omitempty"`
+	Progress *Progress `protobuf:"bytes,1,opt,name=progress,proto3" json:"progress,omitempty"`
 	// If step is a sub-pipeline, then this list contains progress for each step in the
 	// sub-pipeline, in order.
 	// List can be incomplete while the process is in progress. Systems can provide
 	// steps only at the end (when "progress" equals COMPLETED) and not during running.
-	Steps                []*StepProgress `protobuf:"bytes,2,rep,name=steps" json:"steps,omitempty"`
+	Steps                []*StepProgress `protobuf:"bytes,2,rep,name=steps,proto3" json:"steps,omitempty"`
 	XXX_NoUnkeyedLiteral struct{}        `json:"-"`
 	XXX_unrecognized     []byte          `json:"-"`
 	XXX_sizecache        int32           `json:"-"`
@@ -1282,11 +1282,11 @@ func (m *StepProgress) GetSteps() []*StepProgress {
 type SolutionRunUser struct {
 	// A UUID of the user. It does not have to map to any real ID, just that it is possible
 	// to connect multiple solution actions by the same user together, if necessary.
-	Id string `protobuf:"bytes,1,opt,name=id" json:"id,omitempty"`
+	Id string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
 	// Was this run because solution was choosen by this user.
-	Choosen bool `protobuf:"varint,2,opt,name=choosen" json:"choosen,omitempty"`
+	Choosen bool `protobuf:"varint,2,opt,name=choosen,proto3" json:"choosen,omitempty"`
 	// Textual reason provided by the user why the run was choosen by this user.
-	Reason               string   `protobuf:"bytes,3,opt,name=reason" json:"reason,omitempty"`
+	Reason               string   `protobuf:"bytes,3,opt,name=reason,proto3" json:"reason,omitempty"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
 	XXX_unrecognized     []byte   `json:"-"`
 	XXX_sizecache        int32    `json:"-"`
@@ -1342,12 +1342,12 @@ func (m *SolutionRunUser) GetReason() string {
 // runs of the pipeline on permutations of inputs data (e.g., for cross-validation). This is
 // also why we cannot expose outputs here.
 type ScoreSolutionRequest struct {
-	SolutionId         string                      `protobuf:"bytes,1,opt,name=solution_id,json=solutionId" json:"solution_id,omitempty"`
-	Inputs             []*Value                    `protobuf:"bytes,2,rep,name=inputs" json:"inputs,omitempty"`
-	PerformanceMetrics []*ProblemPerformanceMetric `protobuf:"bytes,3,rep,name=performance_metrics,json=performanceMetrics" json:"performance_metrics,omitempty"`
+	SolutionId         string                      `protobuf:"bytes,1,opt,name=solution_id,json=solutionId,proto3" json:"solution_id,omitempty"`
+	Inputs             []*Value                    `protobuf:"bytes,2,rep,name=inputs,proto3" json:"inputs,omitempty"`
+	PerformanceMetrics []*ProblemPerformanceMetric `protobuf:"bytes,3,rep,name=performance_metrics,json=performanceMetrics,proto3" json:"performance_metrics,omitempty"`
 	// Any users associated with this call itself. Optional.
-	Users                []*SolutionRunUser    `protobuf:"bytes,4,rep,name=users" json:"users,omitempty"`
-	Configuration        *ScoringConfiguration `protobuf:"bytes,5,opt,name=configuration" json:"configuration,omitempty"`
+	Users                []*SolutionRunUser    `protobuf:"bytes,4,rep,name=users,proto3" json:"users,omitempty"`
+	Configuration        *ScoringConfiguration `protobuf:"bytes,5,opt,name=configuration,proto3" json:"configuration,omitempty"`
 	XXX_NoUnkeyedLiteral struct{}              `json:"-"`
 	XXX_unrecognized     []byte                `json:"-"`
 	XXX_sizecache        int32                 `json:"-"`
@@ -1413,7 +1413,7 @@ func (m *ScoreSolutionRequest) GetConfiguration() *ScoringConfiguration {
 }
 
 type ScoreSolutionResponse struct {
-	RequestId            string   `protobuf:"bytes,1,opt,name=request_id,json=requestId" json:"request_id,omitempty"`
+	RequestId            string   `protobuf:"bytes,1,opt,name=request_id,json=requestId,proto3" json:"request_id,omitempty"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
 	XXX_unrecognized     []byte   `json:"-"`
 	XXX_sizecache        int32    `json:"-"`
@@ -1453,7 +1453,7 @@ func (m *ScoreSolutionResponse) GetRequestId() string {
 // Get all score results computed until now and start receiving any
 // new score results computed as well.
 type GetScoreSolutionResultsRequest struct {
-	RequestId            string   `protobuf:"bytes,1,opt,name=request_id,json=requestId" json:"request_id,omitempty"`
+	RequestId            string   `protobuf:"bytes,1,opt,name=request_id,json=requestId,proto3" json:"request_id,omitempty"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
 	XXX_unrecognized     []byte   `json:"-"`
 	XXX_sizecache        int32    `json:"-"`
@@ -1492,9 +1492,9 @@ func (m *GetScoreSolutionResultsRequest) GetRequestId() string {
 
 type GetScoreSolutionResultsResponse struct {
 	// Overall process progress.
-	Progress *Progress `protobuf:"bytes,1,opt,name=progress" json:"progress,omitempty"`
+	Progress *Progress `protobuf:"bytes,1,opt,name=progress,proto3" json:"progress,omitempty"`
 	// List of score results. List can be incomplete while the process is in progress.
-	Scores               []*Score `protobuf:"bytes,2,rep,name=scores" json:"scores,omitempty"`
+	Scores               []*Score `protobuf:"bytes,2,rep,name=scores,proto3" json:"scores,omitempty"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
 	XXX_unrecognized     []byte   `json:"-"`
 	XXX_sizecache        int32    `json:"-"`
@@ -1542,23 +1542,23 @@ func (m *GetScoreSolutionResultsResponse) GetScores() []*Score {
 // (if no additional outputs should be exposed). This can happen when a TA2 simultaneously
 // fits the solution as part of the solution search phase.
 type FitSolutionRequest struct {
-	SolutionId string   `protobuf:"bytes,1,opt,name=solution_id,json=solutionId" json:"solution_id,omitempty"`
-	Inputs     []*Value `protobuf:"bytes,2,rep,name=inputs" json:"inputs,omitempty"`
+	SolutionId string   `protobuf:"bytes,1,opt,name=solution_id,json=solutionId,proto3" json:"solution_id,omitempty"`
+	Inputs     []*Value `protobuf:"bytes,2,rep,name=inputs,proto3" json:"inputs,omitempty"`
 	// List of data references of step outputs which should be exposed to the TA3 system.
 	// If you want to expose outputs of the whole pipeline (e.g., predictions themselves),
 	// list them here as well. These can be recursive data references like
 	// "steps.1.steps.4.produce" to point to an output inside a sub-pipeline.
 	// Systems only have to support exposing final outputs and can return "ValueError" for
 	// intermediate values.
-	ExposeOutputs []string `protobuf:"bytes,3,rep,name=expose_outputs,json=exposeOutputs" json:"expose_outputs,omitempty"`
+	ExposeOutputs []string `protobuf:"bytes,3,rep,name=expose_outputs,json=exposeOutputs,proto3" json:"expose_outputs,omitempty"`
 	// Which value types should be used for exposing outputs. If not provided, the allowed
 	// value types list from hello call is used instead.
 	// The order is important as TA2 system will try value types in order until one works out,
 	// or an error will be returned instead of the value. An error exposing a value does not
 	// stop the overall process.
-	ExposeValueTypes []ValueType `protobuf:"varint,4,rep,packed,name=expose_value_types,json=exposeValueTypes,enum=ValueType" json:"expose_value_types,omitempty"`
+	ExposeValueTypes []ValueType `protobuf:"varint,4,rep,packed,name=expose_value_types,json=exposeValueTypes,proto3,enum=ValueType" json:"expose_value_types,omitempty"`
 	// Any users associated with this call itself. Optional.
-	Users                []*SolutionRunUser `protobuf:"bytes,5,rep,name=users" json:"users,omitempty"`
+	Users                []*SolutionRunUser `protobuf:"bytes,5,rep,name=users,proto3" json:"users,omitempty"`
 	XXX_NoUnkeyedLiteral struct{}           `json:"-"`
 	XXX_unrecognized     []byte             `json:"-"`
 	XXX_sizecache        int32              `json:"-"`
@@ -1624,7 +1624,7 @@ func (m *FitSolutionRequest) GetUsers() []*SolutionRunUser {
 }
 
 type FitSolutionResponse struct {
-	RequestId            string   `protobuf:"bytes,1,opt,name=request_id,json=requestId" json:"request_id,omitempty"`
+	RequestId            string   `protobuf:"bytes,1,opt,name=request_id,json=requestId,proto3" json:"request_id,omitempty"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
 	XXX_unrecognized     []byte   `json:"-"`
 	XXX_sizecache        int32    `json:"-"`
@@ -1664,7 +1664,7 @@ func (m *FitSolutionResponse) GetRequestId() string {
 // Get all fitted results currently available and start receiving any further
 // new fitted results as well.
 type GetFitSolutionResultsRequest struct {
-	RequestId            string   `protobuf:"bytes,1,opt,name=request_id,json=requestId" json:"request_id,omitempty"`
+	RequestId            string   `protobuf:"bytes,1,opt,name=request_id,json=requestId,proto3" json:"request_id,omitempty"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
 	XXX_unrecognized     []byte   `json:"-"`
 	XXX_sizecache        int32    `json:"-"`
@@ -1703,15 +1703,15 @@ func (m *GetFitSolutionResultsRequest) GetRequestId() string {
 
 type GetFitSolutionResultsResponse struct {
 	// Overall process progress.
-	Progress *Progress `protobuf:"bytes,1,opt,name=progress" json:"progress,omitempty"`
+	Progress *Progress `protobuf:"bytes,1,opt,name=progress,proto3" json:"progress,omitempty"`
 	// The list contains progress for each step in the pipeline, in order.
 	// List can be incomplete while the process is in progress. Systems can provide
 	// steps only at the end (when "progress" equals COMPLETED) and not during running.
-	Steps []*StepProgress `protobuf:"bytes,2,rep,name=steps" json:"steps,omitempty"`
+	Steps []*StepProgress `protobuf:"bytes,2,rep,name=steps,proto3" json:"steps,omitempty"`
 	// A mapping between data references of step outputs and values.
-	ExposedOutputs map[string]*Value `protobuf:"bytes,3,rep,name=exposed_outputs,json=exposedOutputs" json:"exposed_outputs,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
+	ExposedOutputs map[string]*Value `protobuf:"bytes,3,rep,name=exposed_outputs,json=exposedOutputs,proto3" json:"exposed_outputs,omitempty" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"bytes,2,opt,name=value,proto3"`
 	// The fitted solution ID, once progress = COMPLETED.
-	FittedSolutionId     string   `protobuf:"bytes,4,opt,name=fitted_solution_id,json=fittedSolutionId" json:"fitted_solution_id,omitempty"`
+	FittedSolutionId     string   `protobuf:"bytes,4,opt,name=fitted_solution_id,json=fittedSolutionId,proto3" json:"fitted_solution_id,omitempty"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
 	XXX_unrecognized     []byte   `json:"-"`
 	XXX_sizecache        int32    `json:"-"`
@@ -1772,23 +1772,23 @@ func (m *GetFitSolutionResultsResponse) GetFittedSolutionId() string {
 // Produce (execute) the solution on given inputs. A solution has to have been fitted for this
 // to be possible (even if in cases where this is just created by transformations).
 type ProduceSolutionRequest struct {
-	FittedSolutionId string   `protobuf:"bytes,1,opt,name=fitted_solution_id,json=fittedSolutionId" json:"fitted_solution_id,omitempty"`
-	Inputs           []*Value `protobuf:"bytes,2,rep,name=inputs" json:"inputs,omitempty"`
+	FittedSolutionId string   `protobuf:"bytes,1,opt,name=fitted_solution_id,json=fittedSolutionId,proto3" json:"fitted_solution_id,omitempty"`
+	Inputs           []*Value `protobuf:"bytes,2,rep,name=inputs,proto3" json:"inputs,omitempty"`
 	// List of data references of step outputs which should be exposed to the TA3 system.
 	// If you want to expose outputs of the whole pipeline (e.g., predictions themselves),
 	// list them here as well. These can be recursive data references like
 	// "steps.1.steps.4.produce" to point to an output inside a sub-pipeline.
 	// Systems only have to support exposing final outputs and can return "ValueError" for
 	// intermediate values.
-	ExposeOutputs []string `protobuf:"bytes,3,rep,name=expose_outputs,json=exposeOutputs" json:"expose_outputs,omitempty"`
+	ExposeOutputs []string `protobuf:"bytes,3,rep,name=expose_outputs,json=exposeOutputs,proto3" json:"expose_outputs,omitempty"`
 	// Which value types should be used for exposing outputs. If not provided, the allowed
 	// value types list from a hello call is used instead.
 	// The order is important as the TA2 system will try value types in order until one works
 	// out, or an error will be returned instead of the value. An error exposing a value does
 	// not stop the overall process.
-	ExposeValueTypes []ValueType `protobuf:"varint,4,rep,packed,name=expose_value_types,json=exposeValueTypes,enum=ValueType" json:"expose_value_types,omitempty"`
+	ExposeValueTypes []ValueType `protobuf:"varint,4,rep,packed,name=expose_value_types,json=exposeValueTypes,proto3,enum=ValueType" json:"expose_value_types,omitempty"`
 	// Any users associated with this call itself. Optional.
-	Users                []*SolutionRunUser `protobuf:"bytes,5,rep,name=users" json:"users,omitempty"`
+	Users                []*SolutionRunUser `protobuf:"bytes,5,rep,name=users,proto3" json:"users,omitempty"`
 	XXX_NoUnkeyedLiteral struct{}           `json:"-"`
 	XXX_unrecognized     []byte             `json:"-"`
 	XXX_sizecache        int32              `json:"-"`
@@ -1854,7 +1854,7 @@ func (m *ProduceSolutionRequest) GetUsers() []*SolutionRunUser {
 }
 
 type ProduceSolutionResponse struct {
-	RequestId            string   `protobuf:"bytes,1,opt,name=request_id,json=requestId" json:"request_id,omitempty"`
+	RequestId            string   `protobuf:"bytes,1,opt,name=request_id,json=requestId,proto3" json:"request_id,omitempty"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
 	XXX_unrecognized     []byte   `json:"-"`
 	XXX_sizecache        int32    `json:"-"`
@@ -1894,7 +1894,7 @@ func (m *ProduceSolutionResponse) GetRequestId() string {
 // Get all producing results computed until now and start receiving any
 // new producing results computed as well.
 type GetProduceSolutionResultsRequest struct {
-	RequestId            string   `protobuf:"bytes,1,opt,name=request_id,json=requestId" json:"request_id,omitempty"`
+	RequestId            string   `protobuf:"bytes,1,opt,name=request_id,json=requestId,proto3" json:"request_id,omitempty"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
 	XXX_unrecognized     []byte   `json:"-"`
 	XXX_sizecache        int32    `json:"-"`
@@ -1933,13 +1933,13 @@ func (m *GetProduceSolutionResultsRequest) GetRequestId() string {
 
 type GetProduceSolutionResultsResponse struct {
 	// Overall process progress.
-	Progress *Progress `protobuf:"bytes,1,opt,name=progress" json:"progress,omitempty"`
+	Progress *Progress `protobuf:"bytes,1,opt,name=progress,proto3" json:"progress,omitempty"`
 	// The list contains progress for each step in the pipeline, in order.
 	// List can be incomplete while the process is in progress. Systems can provide
 	// steps only at the end (when "progress" equals COMPLETED) and not during running.
-	Steps []*StepProgress `protobuf:"bytes,2,rep,name=steps" json:"steps,omitempty"`
+	Steps []*StepProgress `protobuf:"bytes,2,rep,name=steps,proto3" json:"steps,omitempty"`
 	// A mapping between data references of step outputs and values.
-	ExposedOutputs       map[string]*Value `protobuf:"bytes,3,rep,name=exposed_outputs,json=exposedOutputs" json:"exposed_outputs,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
+	ExposedOutputs       map[string]*Value `protobuf:"bytes,3,rep,name=exposed_outputs,json=exposedOutputs,proto3" json:"exposed_outputs,omitempty" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"bytes,2,opt,name=value,proto3"`
 	XXX_NoUnkeyedLiteral struct{}          `json:"-"`
 	XXX_unrecognized     []byte            `json:"-"`
 	XXX_sizecache        int32             `json:"-"`
@@ -1993,12 +1993,12 @@ func (m *GetProduceSolutionResultsResponse) GetExposedOutputs() map[string]*Valu
 // Exports a solution for evaluation purposes based on NIST specifications.
 type SolutionExportRequest struct {
 	// Found solution to export.
-	FittedSolutionId string `protobuf:"bytes,1,opt,name=fitted_solution_id,json=fittedSolutionId" json:"fitted_solution_id,omitempty"`
+	FittedSolutionId string `protobuf:"bytes,1,opt,name=fitted_solution_id,json=fittedSolutionId,proto3" json:"fitted_solution_id,omitempty"`
 	// Solution rank to be used for the exported solution. Lower numbers represent
 	// better solutions. Presently NIST requirements are that ranks should be non-negative
 	// and that each exported pipeline have a different rank. TA3 should make sure not to repeat ranks.
 	// Filenames of exported files are left to be chosen by the TA2 system.
-	Rank                 float64  `protobuf:"fixed64,2,opt,name=rank" json:"rank,omitempty"`
+	Rank                 float64  `protobuf:"fixed64,2,opt,name=rank,proto3" json:"rank,omitempty"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
 	XXX_unrecognized     []byte   `json:"-"`
 	XXX_sizecache        int32    `json:"-"`
@@ -2109,7 +2109,7 @@ func (m *ListPrimitivesRequest) XXX_DiscardUnknown() {
 var xxx_messageInfo_ListPrimitivesRequest proto.InternalMessageInfo
 
 type ListPrimitivesResponse struct {
-	Primitives           []*Primitive `protobuf:"bytes,1,rep,name=primitives" json:"primitives,omitempty"`
+	Primitives           []*Primitive `protobuf:"bytes,1,rep,name=primitives,proto3" json:"primitives,omitempty"`
 	XXX_NoUnkeyedLiteral struct{}     `json:"-"`
 	XXX_unrecognized     []byte       `json:"-"`
 	XXX_sizecache        int32        `json:"-"`
@@ -2181,15 +2181,15 @@ var xxx_messageInfo_HelloRequest proto.InternalMessageInfo
 
 type HelloResponse struct {
 	// Some string identifying the name and version of the TA2 system.
-	UserAgent string `protobuf:"bytes,1,opt,name=user_agent,json=userAgent" json:"user_agent,omitempty"`
+	UserAgent string `protobuf:"bytes,1,opt,name=user_agent,json=userAgent,proto3" json:"user_agent,omitempty"`
 	// Shall be set to "protocol_version" above.
-	Version string `protobuf:"bytes,2,opt,name=version" json:"version,omitempty"`
+	Version string `protobuf:"bytes,2,opt,name=version,proto3" json:"version,omitempty"`
 	// List of value types that a TA3 system can use to communicate values to a TA2 system.
 	// The order is important as a TA3 system should try value types in order until one works
 	// out, or an error will be returned instead of the value.
-	AllowedValueTypes []ValueType `protobuf:"varint,3,rep,packed,name=allowed_value_types,json=allowedValueTypes,enum=ValueType" json:"allowed_value_types,omitempty"`
+	AllowedValueTypes []ValueType `protobuf:"varint,3,rep,packed,name=allowed_value_types,json=allowedValueTypes,proto3,enum=ValueType" json:"allowed_value_types,omitempty"`
 	// List of API extensions that a TA2 supports.
-	SupportedExtensions  []string `protobuf:"bytes,4,rep,name=supported_extensions,json=supportedExtensions" json:"supported_extensions,omitempty"`
+	SupportedExtensions  []string `protobuf:"bytes,4,rep,name=supported_extensions,json=supportedExtensions,proto3" json:"supported_extensions,omitempty"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
 	XXX_unrecognized     []byte   `json:"-"`
 	XXX_sizecache        int32    `json:"-"`

@@ -5,7 +5,6 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"os"
 	"path"
@@ -13,14 +12,15 @@ import (
 	"time"
 
 	"github.com/pkg/errors"
-	"github.com/unchartedsoftware/plog"
-	"gopkg.in/olivere/elastic.v5"
-
 	"github.com/unchartedsoftware/distil-ingest/conf"
 	"github.com/unchartedsoftware/distil-ingest/merge"
 	"github.com/unchartedsoftware/distil-ingest/metadata"
 	"github.com/unchartedsoftware/distil-ingest/postgres"
+	"github.com/unchartedsoftware/plog"
+	"gopkg.in/olivere/elastic.v5"
+
 	"github.com/unchartedsoftware/distil/api/model"
+	"github.com/unchartedsoftware/distil/api/util"
 )
 
 const (
@@ -133,10 +133,6 @@ func (c *IngestTaskConfig) getRawDataPath() string {
 
 // IngestDataset executes the complete ingest process for the specified dataset.
 func IngestDataset(metaCtor model.MetadataStorageCtor, index string, dataset string, config *IngestTaskConfig) error {
-	// Make sure the temp data directory exists.
-	tmpPath := path.Dir(config.getTmpAbsolutePath(config.MergedOutputSchemaPathRelative))
-	os.MkdirAll(tmpPath, os.ModePerm)
-
 	// Set the probability threshold
 	metadata.SetTypeProbabilityThreshold(config.ClassificationProbabilityThreshold)
 
@@ -148,7 +144,7 @@ func IngestDataset(metaCtor model.MetadataStorageCtor, index string, dataset str
 	latestSchemaOutput := config.getAbsolutePath(config.SchemaPathRelative)
 
 	if config.ClusteringEnabled {
-		err = cluster(index, dataset, config)
+		err := cluster(index, dataset, config)
 		if err != nil {
 			if config.HardFail {
 				return errors.Wrap(err, "unable to cluster all data")
@@ -157,9 +153,8 @@ func IngestDataset(metaCtor model.MetadataStorageCtor, index string, dataset str
 		} else {
 			latestSchemaOutput = config.getTmpAbsolutePath(config.ClusteringOutputSchemaRelative)
 		}
+		log.Infof("finished clustering the dataset")
 	}
-
-	log.Infof("finished clustering the dataset")
 
 	err = featurize(latestSchemaOutput, index, dataset, config)
 	if err != nil {
@@ -226,7 +221,7 @@ func Merge(schemaFile string, index string, dataset string, config *IngestTaskCo
 	}
 
 	// write copy to disk
-	err = ioutil.WriteFile(config.getTmpAbsolutePath(config.MergedOutputPathRelative), output, 0644)
+	err = util.WriteFileWithDirs(config.getTmpAbsolutePath(config.MergedOutputPathRelative), output, os.ModePerm)
 	if err != nil {
 		return errors.Wrap(err, "unable to write merged data")
 	}
