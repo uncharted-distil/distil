@@ -27,7 +27,7 @@ var (
 type Config struct {
 	AppPort                            string  `env:"PORT" envDefault:"8080"`
 	ElasticEndpoint                    string  `env:"ES_ENDPOINT" envDefault:"http://localhost:9200"`
-	UseTA2Mock                         bool    `env:"USE_TA2_MOCK" envDefault:"false"`
+	UseTA2Runner                       bool    `env:"USE_TA2_RUNNER" envDefault:"false"`
 	SolutionComputeEndpoint            string  `env:"SOLUTION_COMPUTE_ENDPOINT" envDefault:"localhost:50051"`
 	SolutionComputeMockEndpoint        string  `env:"SOLUTION_COMPUTE_MOCK_ENDPOINT" envDefault:"localhost:50051"`
 	SolutionComputePullTimeout         int     `env:"SOLUTION_COMPUTE_PULL_TIMEOUT" envDefault:"60"`

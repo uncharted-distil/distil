@@ -117,9 +117,9 @@ func main() {
 	pgSolutionStorageCtor := pg.NewSolutionStorage(postgresClientCtor, metadataStorageCtor)
 
 	var solutionClient *compute.Client
-	if config.UseTA2Mock {
+	if config.UseTA2Runner {
 		// Instantiate the solution compute client mock
-		solutionClient, err = compute.NewClientWithMock(
+		solutionClient, err = compute.NewClientWithRunner(
 			config.SolutionComputeEndpoint,
 			config.SolutionComputeMockEndpoint,
 			config.SolutionComputeTrace,
