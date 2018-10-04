@@ -21,15 +21,18 @@ func NewSimonStep() *StepData {
 
 // NewSlothStep creates a Sloth timeseries clustering step.
 func NewSlothStep() *StepData {
-	return NewStepData(
+	return NewStepDataWithHyperparameters(
 		&pipeline.Primitive{
 			Id:         "77bf4b92-2faa-3e38-bb7e-804131243a7f",
-			Version:    "1.0.0",
+			Version:    "2.0.0",
 			Name:       "Sloth",
 			PythonPath: "d3m.primitives.distil.Sloth.cluster",
 			Digest:     "f94f1aacc23792b680af0bd895f0fd2bac7336b29967b6ad766df4cb3c1933ab",
 		},
 		[]string{"produce"},
+		map[string]interface{}{
+			"nclusters": 4,
+		},
 	)
 }
 
@@ -176,7 +179,8 @@ func NewRemoveColumnsStep(resourceID string, colIndices []int) (*StepData, error
 	), nil
 }
 
-// NewTermFilterStep .
+// NewTermFilterStep creates a primitive step that filters dataset rows based on a match against a
+// term list.  The term match can be partial, or apply to whole terms only.
 func NewTermFilterStep(resourceID string, colindex int, inclusive bool, terms []string, matchWhole bool) *StepData {
 	return NewStepDataWithHyperparameters(
 		&pipeline.Primitive{
@@ -197,7 +201,7 @@ func NewTermFilterStep(resourceID string, colindex int, inclusive bool, terms []
 	)
 }
 
-// NewRegexFilterStep .
+// NewRegexFilterStep creates a primitive step that filter dataset rows based on a regex match.
 func NewRegexFilterStep(resourceID string, colindex int, inclusive bool, regex string) *StepData {
 	return NewStepDataWithHyperparameters(
 		&pipeline.Primitive{
@@ -217,7 +221,8 @@ func NewRegexFilterStep(resourceID string, colindex int, inclusive bool, regex s
 	)
 }
 
-// NewNumericRangeFilterStep .
+// NewNumericRangeFilterStep creates a primitive step that filters dataset rows based on an
+// included/excluded numeric range.  Inclusion of boundaries is controlled by the strict flag.
 func NewNumericRangeFilterStep(resourceID string, colindex int, inclusive bool, min float64, max float64, strict bool) *StepData {
 	return NewStepDataWithHyperparameters(
 		&pipeline.Primitive{
@@ -235,6 +240,27 @@ func NewNumericRangeFilterStep(resourceID string, colindex int, inclusive bool, 
 			"min":         min,
 			"max":         max,
 			"strict":      strict,
+		},
+	)
+}
+
+// NewTimeSeriesReaderStep creates a primitive step that reads time series values using a dataframe
+// containing a file URI column.  The result is a new dataframe that stores the timetamps as the column headers,
+// and the accompanying values for each file as a row.
+func NewTimeSeriesReaderStep(fileColIndex int, timeColIndex int, valueColIndex int) *StepData {
+	return NewStepDataWithHyperparameters(
+		&pipeline.Primitive{
+			Id:         "1689aafa-16dc-4c55-8ad4-76cadcf46086",
+			Version:    "0.1.0",
+			Name:       "Time series reader",
+			PythonPath: "d3m.primitives.data.TimeSeriesReader",
+			Digest:     "",
+		},
+		[]string{"produce"},
+		map[string]interface{}{
+			"file_col_index":  fileColIndex,
+			"time_col_index":  timeColIndex,
+			"value_col_index": valueColIndex,
 		},
 	)
 }

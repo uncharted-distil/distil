@@ -187,6 +187,7 @@ func CreateSlothPipeline(name string, description string) (*pipeline.PipelineDes
 	pipeline, err := NewBuilder(name, description).
 		Add(NewDenormalizeStep()).
 		Add(NewDatasetToDataframeStep()).
+		Add(NewTimeSeriesReaderStep(1, 0, 1)).
 		Add(NewSlothStep()).
 		Compile()
 

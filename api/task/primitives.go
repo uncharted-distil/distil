@@ -546,7 +546,7 @@ func getClusterVariables(meta *metadata.Metadata, prefix string) ([]*FeatureRequ
 				if res.CanBeFeaturized() {
 					step, err = description.CreateUnicornPipeline("horned", "", []string{v.Name}, []string{indexName})
 				} else {
-					step, err = description.CreateSlothPipeline("leaf", "", []string{v.Name}, []string{indexName})
+					step, err = description.CreateSlothPipeline("leaf", "")
 				}
 				if err != nil {
 					return nil, errors.Wrap(err, "unable to create step pipeline")
