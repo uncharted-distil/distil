@@ -163,6 +163,12 @@ export const actions = {
 					url: url
 				});
 			}
+			if (type == 'graph') {
+				return context.dispatch('fetchGraph', {
+					dataset: args.dataset,
+					url: url
+				});
+			}
 			return context.dispatch('fetchFile', {
 				dataset: args.dataset,
 				url: url
@@ -200,6 +206,47 @@ export const actions = {
 		return axios.get(`distil/timeseries/${args.dataset}/${args.url}`)
 			.then(response => {
 				mutations.updateFile(context, { url: args.url, file: response.data.timeseries });
+			})
+			.catch(error => {
+				console.error(error);
+			});
+	},
+
+	fetchGraph(context: DatasetContext, args: { dataset: string, url: string }) {
+		if (!args.url) {
+			console.warn('`url` argument is missing');
+			return null;
+		}
+		if (!args.dataset) {
+			console.warn('`dataset` argument is missing');
+			return null;
+		}
+		return axios.get(`distil/graphs/${args.dataset}/${args.url}`)
+			.then(response => {
+				if (response.data.graphs.length > 0) {
+					const graph = response.data.graphs[0];
+					const parsed = {
+						nodes: graph.nodes.map(n => {
+							return {
+								id: n.id,
+								label: n.label,
+								x: n.attributes.attr1,
+								y: n.attributes.attr2,
+								size: 1,
+								color: '#ec5148'
+							};
+						}),
+						edges: graph.edges.map((e, i) => {
+							return {
+								id: `e${i}`,
+								source: e.source,
+								target: e.target,
+								color: '#aaa'
+							};
+						})
+					};
+					mutations.updateFile(context, { url: args.url, file: parsed });
+				}
 			})
 			.catch(error => {
 				console.error(error);

@@ -153,8 +153,6 @@ func ParseGML(gml string) ([]*Graph, error) {
 			}
 			nodeInternal := node[1]
 
-			fmt.Printf("%v\n", nodeInternal)
-
 			n := NewNode()
 			lines := strings.Split(nodeInternal, "\n")
 			for _, line := range lines {
@@ -185,8 +183,6 @@ func ParseGML(gml string) ([]*Graph, error) {
 				return nil, fmt.Errorf("error parsing edge")
 			}
 			edgeInternal := edge[1]
-
-			fmt.Printf("%v\n", edgeInternal)
 
 			e := NewEdge()
 			lines := strings.Split(edgeInternal, "\n")
