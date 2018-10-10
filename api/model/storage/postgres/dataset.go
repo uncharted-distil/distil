@@ -20,7 +20,7 @@ func (s *Storage) mapType(typ string) string {
 		return dataTypeInteger
 	case model.IntegerType, model.FloatType, model.LongitudeType, model.LatitudeType, model.RealType:
 		return dataTypeFloat
-	case model.OrdinalType, model.CategoricalType, model.TextType, model.DateTimeType:
+	case model.OrdinalType, model.CategoricalType, model.TextType, model.DateTimeType, model.StringType:
 		return dataTypeText
 	default:
 		return dataTypeText
