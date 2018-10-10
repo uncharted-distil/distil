@@ -57,6 +57,7 @@ const NUMERIC_TYPES = INTEGER_TYPES.concat(FLOATING_POINT_TYPES);
 
 const TEXT_TYPES = [
 	'text',
+	'string',
 	'image',
 	'timeseries',
 	'categorical',
@@ -78,6 +79,7 @@ const TEXT_TYPES = [
 
 const TEXT_SIMPLE_TYPES = [
 	'text',
+	'string',
 	'address',
 	'city',
 	'state',
