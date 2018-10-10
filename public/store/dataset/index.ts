@@ -7,12 +7,20 @@ export enum SummaryType {
 
 export const D3M_INDEX_FIELD = 'd3mIndex';
 
+export interface SuggestedType {
+	probability: string;
+	provenance: string;
+	type: string;
+}
+
 export interface Variable {
 	label: string;
 	key: string;
 	type: string;
 	importance: number;
 	novelty: number;
+	originalType: string;
+	suggestedTypes: SuggestedType[];
 }
 
 export interface Dataset {
