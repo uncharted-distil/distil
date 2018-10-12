@@ -218,7 +218,7 @@ func IsCategorical(typ string) bool {
 // IsText indicates whether or not a schema type is text for the purposes
 // of analysis.
 func IsText(typ string) bool {
-	return typ == TextType
+	return typ == TextType || typ == StringType
 }
 
 // IsVector indicates whether or not a schema type is a vector for the purposes
