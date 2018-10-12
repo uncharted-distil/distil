@@ -183,6 +183,39 @@ const BASIC_SUGGESTIONS = [
 	'unknown'
 ];
 
+const EQUIV_TYPES = {
+	integer: [ 'integer' ],
+	real: [ 'float', 'real' ],
+	realVector: [ 'realVector' ],
+	latitude: [ 'latitude' ],
+	longitude: [ 'longitude' ],
+	string: [ 'string', 'text' ],
+	text:  [ 'string', 'text' ],
+	categorical: [ 'categorical' ],
+	ordinal: [ 'ordinal' ],
+	address: [ 'address' ],
+	city: [ 'city' ],
+	state: [ 'state' ],
+	country: [ 'country' ],
+	email: [ 'email' ],
+	phone: [ 'phone' ],
+	postal_code: [ 'postal_code' ],
+	uri: [ 'uri' ],
+	keyword: [ 'keyword' ],
+	dateTime: [ 'dateTime' ],
+	boolean: [ 'boolean' ],
+	image: [ 'image' ],
+	timeseries: [ 'timeseries' ],
+	unknown: [ 'unknown' ]
+};
+
+export function isEquivalentType(a: string, b: string): boolean {
+	const matches = EQUIV_TYPES[a].filter(type => {
+		return type === b;
+	});
+	return matches.length > 0;
+}
+
 export function getVarType(varname: string): string {
 	return datasetGetters.getVariableTypesMap(store())[varname];
 }

@@ -26,7 +26,7 @@ import { SuggestedType, Variable } from '../store/dataset/index';
 import { HighlightRoot } from '../store/highlights/index';
 import { actions as datasetActions, getters as datasetGetters } from '../store/dataset/module';
 import { getters as routeGetters } from '../store/route/module';
-import { addTypeSuggestions, getLabelFromType, getTypeFromLabel } from '../util/types';
+import { addTypeSuggestions, getLabelFromType, getTypeFromLabel, isEquivalentType } from '../util/types';
 import { hasFilterInRoute } from '../util/filters';
 
 export default Vue.extend({
@@ -91,7 +91,7 @@ export default Vue.extend({
 		isUnsure(): boolean {
 			return (this.type === this.originalType && // we haven't changed the type
 				this.hasSchemaType && this.hasNonSchemaTypes && // it has both schema and ML types
-				this.schemaType.type !== this.topNonSchemaType.type); // they don't agree
+				!isEquivalentType(this.schemaType.type, this.topNonSchemaType.type)); // they don't agree
 		},
 		delay(): any {
 			return {
@@ -107,7 +107,6 @@ export default Vue.extend({
 				return [];
 			}
 			const type = getTypeFromLabel(this.label);
-			console.log(this.suggestedTypes);
 			return _.map(addTypeSuggestions(type, this.values), t => getLabelFromType(t));
 		},
 		onTypeChange(suggested) {
