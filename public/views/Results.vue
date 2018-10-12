@@ -25,13 +25,18 @@
 		</div>
 
 		<div class="row flex-12 pb-3">
-			<variable-summaries
-				class="col-12 col-md-3 border-gray-right results-variable-summaries"
-				enable-search
-				enable-highlighting
-				instance-name="resultTrainingVars"
-				:groups="trainingGroups"
-				:dataset="dataset"></variable-summaries>
+
+			<div class='variable-summaries col-12 col-md-3 border-gray-right results-variable-summaries'>
+				<p class="nav-link font-weight-bold">Feature Summaries</p>
+				<variable-facets
+					enable-search
+					enable-highlighting
+					instance-name="resultTrainingVars"
+					:groups="trainingGroups"
+					:dataset="dataset">
+				</variable-facets>
+			</div>
+
 			<results-comparison
 				class="col-12 col-md-6 results-result-comparison"></results-comparison>
 			<result-summaries
@@ -43,7 +48,7 @@
 <script lang="ts">
 
 import Vue from 'vue';
-import VariableSummaries from '../components/VariableSummaries.vue';
+import VariableFacets from '../components/VariableFacets.vue';
 import ResultsComparison from '../components/ResultsComparison.vue';
 import ResultSummaries from '../components/ResultSummaries.vue';
 import ResultTargetVariable from '../components/ResultTargetVariable.vue';
@@ -57,7 +62,7 @@ export default Vue.extend({
 	name: 'results-view',
 
 	components: {
-		VariableSummaries,
+		VariableFacets,
 		ResultTargetVariable,
 		ResultsComparison,
 		ResultSummaries
@@ -105,6 +110,10 @@ export default Vue.extend({
 </script>
 
 <style>
+.variable-summaries {
+	display: flex;
+	flex-direction: column;
+}
 .variable-summaries .facets-group {
 	padding-bottom: 20px;
 }
