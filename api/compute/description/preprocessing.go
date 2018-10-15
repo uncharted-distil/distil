@@ -182,12 +182,13 @@ func createFilterData(filters []*model.Filter, columnIndices map[string]int) []*
 }
 
 // CreateSlothPipeline creates a pipeline to peform timeseries clustering on a dataset.
-func CreateSlothPipeline(name string, description string, targetColumns []string, outputLabels []string) (*pipeline.PipelineDescription, error) {
+func CreateSlothPipeline(name string, description string) (*pipeline.PipelineDescription, error) {
 	// insantiate the pipeline
 	pipeline, err := NewBuilder(name, description).
 		Add(NewDenormalizeStep()).
 		Add(NewDatasetToDataframeStep()).
-		Add(NewSlothStep(targetColumns, outputLabels)).
+		Add(NewTimeSeriesReaderStep(1, 0, 1)).
+		Add(NewSlothStep()).
 		Compile()
 
 	if err != nil {
