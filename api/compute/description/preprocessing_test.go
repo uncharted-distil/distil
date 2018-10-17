@@ -161,3 +161,15 @@ func TestCreateSlothPipeline(t *testing.T) {
 	err = ioutil.WriteFile("/tmp/create_sloth.pln", data, 0644)
 	assert.NoError(t, err)
 }
+
+func TestCreateDukePipeline(t *testing.T) {
+	pipeline, err := CreateDukePipeline("duke_test", "test duke data summary pipeline")
+	assert.NoError(t, err)
+
+	data, err := proto.Marshal(pipeline)
+	assert.NoError(t, err)
+	assert.NotNil(t, data)
+
+	err = ioutil.WriteFile("/tmp/create_duke.pln", data, 0644)
+	assert.NoError(t, err)
+}
