@@ -285,7 +285,8 @@ func FeaturizePrimitive(schemaFile string, index string, dataset string, config 
 	for _, f := range features {
 		mainDR.Variables = append(mainDR.Variables, f.Variable)
 
-		lines, err = appendFeature(dataset, d3mIndexField, config.HasHeader, f, lines)
+		// header already removed, lines does not have a header
+		lines, err = appendFeature(dataset, d3mIndexField, false, f, lines)
 		if err != nil {
 			return errors.Wrap(err, "error appending feature data")
 		}
@@ -344,7 +345,7 @@ func ClusterPrimitive(index string, dataset string, config *IngestTaskConfig) er
 	mainDR := meta.GetMainDataResource()
 
 	// add feature variables
-	features, err := getFeatureVariables(meta, "_cluster_")
+	features, err := getClusterVariables(meta, "_cluster_")
 	if err != nil {
 		return errors.Wrap(err, "unable to get cluster variables")
 	}
@@ -362,7 +363,8 @@ func ClusterPrimitive(index string, dataset string, config *IngestTaskConfig) er
 	for _, f := range features {
 		mainDR.Variables = append(mainDR.Variables, f.Variable)
 
-		lines, err = appendFeature(dataset, d3mIndexField, config.HasHeader, f, lines)
+		// header already removed, lines does not have a header
+		lines, err = appendFeature(dataset, d3mIndexField, false, f, lines)
 		if err != nil {
 			return errors.Wrap(err, "error appending clustered data")
 		}
