@@ -24,6 +24,8 @@ import 'bootstrap-vue/dist/bootstrap-vue.css';
 import './styles/bootstrap-v4beta2-custom.css';
 import './styles/main.css';
 
+import './assets/graphs/G1.gml';
+
 Vue.use(VueRouter);
 Vue.use(BootstrapVue);
 Vue.use(VueObserveVisibility);

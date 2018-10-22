@@ -56,6 +56,10 @@ module.exports = {
 				loader: 'file-loader?name=images/[name].[ext]'
 			},
 			{
+				test: /graphs\/.*\.(gml)$/,
+				loader: 'file-loader?name=graphs/[name].[ext]'
+			},
+			{
 				test: /fonts\/.*\.(ttf|otf|eot|svg|woff(2)?)(\?[a-z0-9]+)?$/,
 				loader: 'file-loader?name=fonts/[name].[ext]'
 			}
