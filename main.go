@@ -82,16 +82,6 @@ func main() {
 		_, err := esClientCtor()
 		return err == nil
 	}
-	if config.ClassificationWait {
-		servicesToWait["classification"] = func() bool {
-			return waitForPostEndpoint(fmt.Sprintf("%s%s", config.ClassificationEndpoint, "/aaaa"))
-		}
-	}
-	if config.RankingWait {
-		servicesToWait["ranking"] = func() bool {
-			return waitForPostEndpoint(fmt.Sprintf("%s%s", config.RankingEndpoint, "/aaaa"))
-		}
-	}
 
 	// make sure a connection can be made to postgres - doesn't appear to be thread safe and
 	// causes panic if deferred, so we'll do it an a retry loop here.  We need to provide
@@ -168,40 +158,25 @@ func main() {
 		ws.SetProblemFile(problemPath)
 	}
 
-	// set the ingest functions to use
-	if config.IngestPrimitive {
-		task.SetClassify(task.ClassifyPrimitive)
-		task.SetRank(task.RankPrimitive)
-		task.SetSummarize(task.SummarizePrimitive)
-		task.SetFeaturize(task.FeaturizePrimitive)
-		task.SetCluster(task.ClusterPrimitive)
-		task.SetClient(solutionClient)
-	}
+	// set the ingest client to use
+	task.SetClient(solutionClient)
 
 	// build the ingest configuration.
 	ingestConfig := &task.IngestTaskConfig{
 		ContainerDataPath:                  config.DataFolderPath,
 		TmpDataPath:                        config.TmpDataPath,
 		HasHeader:                          true,
-		ClusteringRESTEndpoint:             config.ClusteringnRESTEndpoint,
-		ClusteringFunctionName:             config.ClusteringFunctionName,
 		ClusteringOutputDataRelative:       config.ClusteringOutputDataRelative,
 		ClusteringOutputSchemaRelative:     config.ClusteringOutputSchemaRelative,
 		ClusteringEnabled:                  config.ClusteringEnabled,
-		FeaturizationRESTEndpoint:          config.FeaturizationRESTEndpoint,
-		FeaturizationFunctionName:          config.FeaturizationFunctionName,
 		FeaturizationOutputDataRelative:    config.FeaturizationOutputDataRelative,
 		FeaturizationOutputSchemaRelative:  config.FeaturizationOutputSchemaRelative,
 		MergedOutputPathRelative:           config.MergedOutputDataPath,
 		MergedOutputSchemaPathRelative:     config.MergedOutputSchemaPath,
 		SchemaPathRelative:                 config.SchemaPath,
-		ClassificationRESTEndpoint:         config.ClassificationEndpoint,
-		ClassificationFunctionName:         config.ClassificationFunctionName,
 		ClassificationOutputPathRelative:   config.ClassificationOutputPath,
 		ClassificationProbabilityThreshold: config.ClassificationProbabilityThreshold,
 		ClassificationEnabled:              config.ClassificationEnabled,
-		RankingRESTEndpoint:                config.RankingEndpoint,
-		RankingFunctionName:                config.RankingFunctionName,
 		RankingOutputPathRelative:          config.RankingOutputPath,
 		RankingRowLimit:                    config.RankingRowLimit,
 		DatabasePassword:                   config.PostgresPassword,
@@ -210,8 +185,6 @@ func main() {
 		DatabaseHost:                       config.PostgresHost,
 		DatabasePort:                       config.PostgresPort,
 		SummaryOutputPathRelative:          config.SummaryPath,
-		SummaryRESTEndpoint:                config.SummaryEndpoint,
-		SummaryFunctionName:                config.SummaryFunctionName,
 		SummaryMachineOutputPathRelative:   config.SummaryMachinePath,
 		ESEndpoint:                         config.ElasticEndpoint,
 		ESTimeout:                          config.ElasticTimeout,

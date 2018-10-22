@@ -15,8 +15,10 @@ const META_PREFIX = '_feature_';
 const TYPES_TO_LABELS: Dictionary<string> = {
 	integer: 'Integer',
 	real: 'Decimal',
+	realVector: 'Vector',
 	latitude: 'Latitude',
 	longitude: 'Longitude',
+	string: 'String',
 	text: 'Text',
 	categorical: 'Categorical',
 	ordinal: 'Ordinal',
@@ -44,6 +46,7 @@ const INTEGER_TYPES = [
 
 const FLOATING_POINT_TYPES = [
 	'real',
+	'realVector',
 	'latitude',
 	'longitude'
 ];
@@ -57,6 +60,7 @@ const NUMERIC_TYPES = INTEGER_TYPES.concat(FLOATING_POINT_TYPES);
 
 const TEXT_TYPES = [
 	'text',
+	'string',
 	'image',
 	'timeseries',
 	'categorical',
@@ -78,6 +82,7 @@ const TEXT_TYPES = [
 
 const TEXT_SIMPLE_TYPES = [
 	'text',
+	'string',
 	'address',
 	'city',
 	'state',
@@ -95,6 +100,7 @@ const TEXT_SIMPLE_TYPES = [
 
 const BOOL_SUGGESTIONS = [
 	'text',
+	'string',
 	'categorical',
 	'boolean',
 	'integer',
@@ -104,12 +110,14 @@ const BOOL_SUGGESTIONS = [
 
 const EMAIL_SUGGESTIONS = [
 	'text',
+	'string',
 	'email',
 	'unknown'
 ];
 
 const URI_SUGGESTIONS = [
 	'text',
+	'string',
 	'uri',
 	'unknown'
 ];
@@ -123,6 +131,7 @@ const PHONE_SUGGESTIONS = [
 
 const TEXT_SUGGESTIONS = [
 	'text',
+	'string',
 	'categorical',
 	'ordinal',
 	'integer',
@@ -150,6 +159,7 @@ const INTEGER_SUGGESTIONS = [
 const DECIMAL_SUGGESTIONS = [
 	'integer',
 	'real',
+	'realVector',
 	'latitude',
 	'longitude',
 	'unknown'
@@ -158,6 +168,7 @@ const DECIMAL_SUGGESTIONS = [
 const IMAGE_SUGGESTIONS = [
 	'image',
 	'text',
+	'string',
 	'categorical'
 ];
 
@@ -171,6 +182,39 @@ const BASIC_SUGGESTIONS = [
 	'timeseries',
 	'unknown'
 ];
+
+const EQUIV_TYPES = {
+	integer: [ 'integer' ],
+	real: [ 'float', 'real' ],
+	realVector: [ 'realVector' ],
+	latitude: [ 'latitude' ],
+	longitude: [ 'longitude' ],
+	string: [ 'string', 'text' ],
+	text:  [ 'string', 'text' ],
+	categorical: [ 'categorical' ],
+	ordinal: [ 'ordinal' ],
+	address: [ 'address' ],
+	city: [ 'city' ],
+	state: [ 'state' ],
+	country: [ 'country' ],
+	email: [ 'email' ],
+	phone: [ 'phone' ],
+	postal_code: [ 'postal_code' ],
+	uri: [ 'uri' ],
+	keyword: [ 'keyword' ],
+	dateTime: [ 'dateTime' ],
+	boolean: [ 'boolean' ],
+	image: [ 'image' ],
+	timeseries: [ 'timeseries' ],
+	unknown: [ 'unknown' ]
+};
+
+export function isEquivalentType(a: string, b: string): boolean {
+	const matches = EQUIV_TYPES[a].filter(type => {
+		return type === b;
+	});
+	return matches.length > 0;
+}
 
 export function getVarType(varname: string): string {
 	return datasetGetters.getVariableTypesMap(store())[varname];
@@ -212,6 +256,8 @@ export function formatValue(colValue: any, colType: string): any {
 		case 'longitude':
 		case 'latitude':
 			return colValue.toFixed(6);
+		case 'realVector':
+			return colValue;
 	}
 	return colValue.toFixed(4);
 }
