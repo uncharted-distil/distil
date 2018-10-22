@@ -72,6 +72,7 @@ import Vue from 'vue';
 import { spinnerHTML } from '../util/spinner';
 import SelectDataTable from './SelectDataTable';
 import SelectImageMosaic from './SelectImageMosaic';
+import SelectGeoPlot from './SelectGeoPlot';
 import FilterBadge from './FilterBadge';
 import { getters as datasetGetters } from '../store/dataset/module';
 import { Filter } from '../util/filters';
@@ -88,13 +89,14 @@ export default Vue.extend({
 	components: {
 		FilterBadge,
 		SelectDataTable,
-		SelectImageMosaic
+		SelectImageMosaic,
+		SelectGeoPlot
 	},
 
 	data() {
 		return {
 			instanceName: 'select-data',
-			viewType: 'table',
+			viewType: 'geo',
 			includedActive: true
 		};
 	},

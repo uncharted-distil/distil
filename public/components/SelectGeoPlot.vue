@@ -19,6 +19,8 @@ import { Dictionary } from '../util/dict';
 import { TableColumn, TableRow, D3M_INDEX_FIELD } from '../store/dataset/index';
 import { addRowSelection, removeRowSelection, isRowSelected, updateTableRowSelection } from '../util/row';
 
+import 'leaflet/dist/leaflet.css';
+
 export default Vue.extend({
 	name: 'select-geo-plot',
 
@@ -48,9 +50,9 @@ export default Vue.extend({
 <style>
 
 .select-geo-plot {
-	display: flex;
-	overflow: auto;
-	flex-flow: wrap;
+	position: relative;
+	height: 100%;
+	width: 100%;
 }
 
 </style>
