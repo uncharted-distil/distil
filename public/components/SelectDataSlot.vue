@@ -54,11 +54,11 @@
 			<div class="select-data-no-results" v-if="!hasData">
 				<div v-html="spinnerHTML"></div>
 			</div>
-			<div class="select-data-no-results" v-if="hasData && items.length===0">
+			<div class="select-data-no-results" v-if="hasData && numItems===0">
 				No data available
 			</div>
 
-			<template v-if="hasData && items.length>0">
+			<template v-if="hasData && numItems>0">
 				<select-data-table v-if="viewType==='table'" :included-active="includedActive" :instance-name="instanceName"></select-data-table>
 				<select-image-mosaic v-if="viewType==='image'" :included-active="includedActive" :instance-name="instanceName"></select-image-mosaic>
 				<select-graph-view v-if="viewType==='graph'" :included-active="includedActive" :instance-name="instanceName"></select-graph-view>
