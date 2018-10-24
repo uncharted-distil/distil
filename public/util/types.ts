@@ -172,13 +172,14 @@ const IMAGE_SUGGESTIONS = [
 	'categorical'
 ];
 
-const BASIC_SUGGESTIONS = [
+export const BASIC_SUGGESTIONS = [
 	'integer',
 	'real',
 	'categorical',
 	'ordinal',
 	'text',
 	'image',
+	'dateTime',
 	'timeseries',
 	'unknown'
 ];

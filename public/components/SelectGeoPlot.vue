@@ -1,7 +1,5 @@
 <template>
-
 	<div class="select-geo-plot" id="map"></div>
-
 </template>
 
 <script lang="ts">
@@ -29,12 +27,12 @@ export default Vue.extend({
 			map: null,
 			layer: null,
 			markers: null,
-			internalLatLons: [],
 			fieldName: 'lat_lon'
 		};
 	},
 
 	mounted() {
+		// NOTE: this component re-mounts on any change, so do everything in here
 		this.map = leaflet.map('map', {
 			center: [30, 0],
 			zoom: 2,
@@ -46,12 +44,9 @@ export default Vue.extend({
 		this.markers = leaflet.layerGroup([]);
 		this.markers.addTo(this.map);
 
-		setInterval(() => {
-			this.markers.clearLayers();
-			this.internalLatLons.forEach(lonLat => {
-				this.markers.addLayer(leaflet.marker(lonLat));
-			});
-		}, 1000);
+		this.lonLats.forEach(lonLat => {
+			this.markers.addLayer(leaflet.marker(lonLat));
+		});
 	},
 
 	computed: {
@@ -68,7 +63,6 @@ export default Vue.extend({
 			if (!this.items || !this.fields || !this.fields[this.fieldName]) {
 				return [];
 			}
-			console.log('re-computing');
 
 			return this.items.map(item => {
 				return [
@@ -78,12 +72,6 @@ export default Vue.extend({
 			});
 		}
 	},
-
-	watch: {
-		lonLats() {
-			console.log('WATCH lonLats:', this.lonLats);
-		}
-	}
 });
 
 </script>
