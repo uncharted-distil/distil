@@ -17,7 +17,7 @@
   revision = "87df7c60d5820d0f8ae11afede5aa52325c09717"
 
 [[projects]]
-  digest = "1:f55bccb09fe462179589d323ccc1b1ee507fdf29b8433626f02ecc197170c3f1"
+  digest = "1:940a4619dc60302a0017fbd46962c419d7d22555e63700e40f60cab9326c4e87"
   name = "github.com/go-pg/pg"
   packages = [
     ".",
@@ -39,7 +39,7 @@
   revision = "b3e60bcdc577185fce3cf625fc96b62857ce5574"
 
 [[projects]]
-  digest = "1:14834e04828af9e53954f1be45ea7f190c4c26d746009c2ab07c5828595539e9"
+  digest = "1:36e4005db79c71991a5b53b2e6a1754b75aba6fb6c154b7a8d69c8fdced3a3ef"
   name = "github.com/golang/protobuf"
   packages = [
     "proto",
@@ -61,7 +61,7 @@
   revision = "4ac909741dfa57448bfadfdbca0cf7eeaa68f0e2"
 
 [[projects]]
-  digest = "1:df2a3a508f26abf0be2f41ab68c71da0707901714f2be4dc47d3ecec870321cb"
+  digest = "1:b682f6778c7213d88afe99680359691557157232b53568d1a2fb6c3acaacb384"
   name = "github.com/jackc/pgx"
   packages = [
     ".",
@@ -89,7 +89,7 @@
   revision = "1c35d901db3da928c72a72d8458480cc9ade058f"
 
 [[projects]]
-  digest = "1:97c5df4b017afec3bafe72dc7a0de80c9b4509a464d419bb0e74f5dd4a5500b8"
+  digest = "1:f5bb9d34d0e5cbba940ff9a1d97780fa3834820e9a34ebe6b900a3b79d685528"
   name = "github.com/mailru/easyjson"
   packages = [
     ".",
@@ -140,7 +140,7 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:6d4d9067e639d96a804ee9a30fa89c7233c5c5edbfe736072ff00d48c97bccc4"
+  digest = "1:d15b2fd801f2341f1bf31293085717ab203572baa271e8b495e6a0a5a2bea316"
   name = "github.com/otiai10/copy"
   packages = ["."]
   pruneopts = "UT"
@@ -188,7 +188,7 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:02ac3313f120dc17b832e92c8b65097f258565c610cc50e004a03b813b29a301"
+  digest = "1:33665763e8e2317862c0b90ccdfac9d288179bafa98067803094b63f5e477d3e"
   name = "github.com/unchartedsoftware/deluge"
   packages = [
     "document",
@@ -198,7 +198,7 @@
   revision = "f967d93bead1da1df483356f0819caa2ecfb1bc8"
 
 [[projects]]
-  digest = "1:fb5de354dc9f712e45bf7c8ae32e62a11faefdbab5150e2e7c896a526ac0a031"
+  digest = "1:0fbf440b1d045462fb4e2896f967fb4c0ec849829b675a253a11cfb542f481af"
   name = "github.com/unchartedsoftware/distil-ingest"
   packages = [
     "conf",
@@ -233,7 +233,7 @@
   revision = "f0a9a8b74d487f9563a527daf3bd6b4fbd3f5d00"
 
 [[projects]]
-  digest = "1:e2801f9ea1288e844cff8eac2e7590318f85988fa321f075987dd3923b1e5df5"
+  digest = "1:43fda1c0955f60a4de33c2f07b42c1b046e95f1ca5b59b6b4ecbb89a73024500"
   name = "github.com/zenazn/goji"
   packages = [
     "graceful",
@@ -243,7 +243,7 @@
   revision = "c05078ca81941f8e801bba3ddc0e6b86b7fdc893"
 
 [[projects]]
-  digest = "1:02bac7bfd3bf25d03cdcf343a7054e04c1149e11e62c443f602538adc529d714"
+  digest = "1:f06029fc51891083e1bcc2a643b7958b7610de8605bfcca48415bc4d536bfe45"
   name = "goji.io"
   packages = [
     ".",
@@ -256,7 +256,7 @@
   version = "v2.0"
 
 [[projects]]
-  digest = "1:146f6ee103b4d91b04332dca5145d44b0fcf1bf62e1c6d452ae172351dbba903"
+  digest = "1:64f0e7f7954964a881cba8197d037cc15c6ad6710e58112a48563f4af331727e"
   name = "golang.org/x/net"
   packages = [
     "context",
@@ -280,7 +280,7 @@
   revision = "37707fdb30a5b38865cfb95e5aab41707daec7fd"
 
 [[projects]]
-  digest = "1:a2ab62866c75542dd18d2b069fec854577a20211d7c0ea6ae746072a1dccdd18"
+  digest = "1:7509ba4347d1f8de6ae9be8818b0cd1abc3deeffe28aeaf4be6d4b6b5178d9ca"
   name = "golang.org/x/text"
   packages = [
     "collate",
@@ -309,7 +309,7 @@
   revision = "2b5a72b8730b0b16380010cfe5286c42108d88e7"
 
 [[projects]]
-  digest = "1:f47fb9bd1a9173285be23a1a1342e019abddfd787216e7f2c555ddba837e98ce"
+  digest = "1:4d7b5d9746840266938cdb21a40f8eba7137d9153c4ed404d6bb2a450d06f690"
   name = "google.golang.org/grpc"
   packages = [
     ".",
@@ -341,7 +341,7 @@
   version = "v1.11.3"
 
 [[projects]]
-  digest = "1:41a3deb47f4523cf2d27ef4d15716bd8d66e3c7360a3499ffbbd85e5160179d1"
+  digest = "1:dcf494c169f56e38682de86210e13ea5bc0da09612ede9866b3f64f552813d54"
   name = "gopkg.in/olivere/elastic.v5"
   packages = [
     ".",
