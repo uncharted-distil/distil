@@ -530,7 +530,8 @@ func (f *NumericalField) getFromClause(alias bool) string {
 	if f.subSelect != nil {
 		fromClause = f.subSelect()
 		if alias {
-			fromClause = fmt.Sprintf("%s as %s", fromClause, f.Dataset)
+			fromClause = fmt.Sprintf("%s as nested INNER JOIN %s as data on nested.\"%s\" = data.\"%s\"", fromClause, f.Dataset, model.D3MIndexFieldName, model.D3MIndexFieldName)
+			//fromClause = fmt.Sprintf("%s as %s", fromClause, f.Dataset)
 		}
 	}
 
