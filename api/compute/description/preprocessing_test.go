@@ -151,7 +151,17 @@ func TestCreateUnicornPipeline(t *testing.T) {
 }
 
 func TestCreateSlothPipeline(t *testing.T) {
-	pipeline, err := CreateSlothPipeline("sloth_test", "test sloth object detection pipeline")
+
+	baseVriables := []*model.Variable{
+		{Key: "filename", Index: 1},
+	}
+
+	timeSeriesVariables := []*model.Variable{
+		{Key: "time", Index: 0},
+		{Key: "value", Index: 1},
+	}
+
+	pipeline, err := CreateSlothPipeline("sloth_test", "test sloth object detection pipeline", "filename", "time", "value", baseVriables, timeSeriesVariables)
 	assert.NoError(t, err)
 
 	data, err := proto.Marshal(pipeline)
