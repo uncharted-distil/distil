@@ -20,7 +20,6 @@ import (
 	"github.com/unchartedsoftware/distil/api/compute/description"
 	"github.com/unchartedsoftware/distil/api/compute/result"
 	"github.com/unchartedsoftware/distil/api/env"
-	"github.com/unchartedsoftware/distil/api/model"
 	"github.com/unchartedsoftware/distil/api/pipeline"
 	"github.com/unchartedsoftware/distil/api/util"
 )
@@ -545,12 +544,13 @@ func getClusterVariables(meta *metadata.Metadata, prefix string) ([]*FeatureRequ
 				var step *pipeline.PipelineDescription
 				var err error
 				if res.CanBeFeaturized() {
-					step, err = description.CreateUnicornPipeline("horned", "", []string{v.Name}, []string{indexName})
+					step, err = description.CreateUnicornPipeline("horned",
+						"clustering based on resnet-50 detected objects", []string{v.Name}, []string{indexName})
 				} else {
-					// TODO: Properly compute var lists and un-hardcode the column names.
-					baseVariables := []*model.Variable{}
-					timeSeriesVariables := []*model.Variable{}
-					step, err = description.CreateSlothPipeline("leaf", "", "filename", "time", "value", baseVariables, timeSeriesVariables)
+					if colNames, ok := getTimeValueCols(mainDR); ok {
+						step, err = description.CreateSlothPipeline("time series clustering",
+							"k-means time series clustering", colNames.timeCol, colNames.valueCol, res.Variables)
+					}
 				}
 				if err != nil {
 					return nil, errors.Wrap(err, "unable to create step pipeline")
@@ -609,4 +609,37 @@ func getDataResource(meta *metadata.Metadata, resID string) *metadata.DataResour
 	}
 
 	return nil
+}
+
+type timeValueCols struct {
+	timeCol  string
+	valueCol string
+}
+
+func getTimeValueCols(dr *metadata.DataResource) (*timeValueCols, bool) {
+	// find the first column marked as a time and the first that is an
+	// attribute and use those as series values
+	var timeCol string
+	var valueCol string
+	if dr.ResType == "timeseries" {
+		// find a suitable time column and value column - we take the first that works in each
+		// case
+		for _, v := range dr.Variables {
+			for _, r := range v.Role {
+				if r == "timeIndicator" && timeCol != "" {
+					timeCol = v.Name
+				}
+				if r == "attribute" && valueCol != "" {
+					valueCol = v.Name
+				}
+			}
+		}
+		if timeCol != "" && valueCol != "" {
+			return &timeValueCols{
+				timeCol:  timeCol,
+				valueCol: valueCol,
+			}, true
+		}
+	}
+	return nil, false
 }

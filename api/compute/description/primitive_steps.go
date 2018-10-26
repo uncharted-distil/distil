@@ -245,9 +245,22 @@ func NewNumericRangeFilterStep(resourceID string, colindex int, inclusive bool, 
 }
 
 // NewTimeSeriesLoaderStep creates a primitive step that reads time series values using a dataframe
-// containing a file URI column.  The result is a new dataframe that stores the timetamps as the column headers,
-// and the accompanying values for each file as a row.
+// containing a file URI column.  The file URIs are expected to point to CSV files, with the
+// supplied time and value indices pointing the columns in the CSV that form the series data.
+// The result is a new dataframe that stores the timetamps as the column headers,
+// and the accompanying values for each file as a row.  Note that the file index column is negative,
+// the primitive will use the first CSV file name column if finds.
 func NewTimeSeriesLoaderStep(fileColIndex int, timeColIndex int, valueColIndex int) *StepData {
+	// exclude the file col index val ue in the case of a negative index so that the
+	// primitive will infer the colum
+	args := map[string]interface{}{
+		"time_col_index":  timeColIndex,
+		"value_col_index": valueColIndex,
+	}
+	if fileColIndex >= 0 {
+		args["file_col_index"] = fileColIndex
+	}
+
 	return NewStepDataWithHyperparameters(
 		&pipeline.Primitive{
 			Id:         "1689aafa-16dc-4c55-8ad4-76cadcf46086",
