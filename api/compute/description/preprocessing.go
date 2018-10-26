@@ -182,18 +182,36 @@ func createFilterData(filters []*model.Filter, columnIndices map[string]int) []*
 }
 
 // CreateSlothPipeline creates a pipeline to peform timeseries clustering on a dataset.
-func CreateSlothPipeline(name string, description string) (*pipeline.PipelineDescription, error) {
+func CreateSlothPipeline(name string, description string, targetColumn string, timeColumn string, valueColumn string,
+	baseFeatures []*model.Variable, timeSeriesFeatures []*model.Variable) (*pipeline.PipelineDescription, error) {
+
+	targetIdx, err := getIndex(baseFeatures, targetColumn)
+	if err != nil {
+		return nil, err
+	}
+
+	timeIdx, err := getIndex(timeSeriesFeatures, timeColumn)
+	if err != nil {
+		return nil, err
+	}
+
+	valueIdx, err := getIndex(timeSeriesFeatures, valueColumn)
+	if err != nil {
+		return nil, err
+	}
+
 	// insantiate the pipeline
 	pipeline, err := NewBuilder(name, description).
 		Add(NewDenormalizeStep()).
 		Add(NewDatasetToDataframeStep()).
-		Add(NewTimeSeriesReaderStep(1, 0, 1)).
+		Add(NewTimeSeriesLoaderStep(targetIdx, timeIdx, valueIdx)).
 		Add(NewSlothStep()).
 		Compile()
 
 	if err != nil {
 		return nil, err
 	}
+
 	return pipeline, nil
 }
 
@@ -281,4 +299,13 @@ func mapColumns(allFeatures []*model.Variable, selectedSet map[string]bool) map[
 	}
 
 	return colIndices
+}
+
+func getIndex(allFeatures []*model.Variable, name string) (int, error) {
+	for _, f := range allFeatures {
+		if strings.EqualFold(name, f.Key) {
+			return f.Index, nil
+		}
+	}
+	return -1, errors.Errorf("can't find var '%s'", name)
 }

@@ -244,16 +244,16 @@ func NewNumericRangeFilterStep(resourceID string, colindex int, inclusive bool, 
 	)
 }
 
-// NewTimeSeriesReaderStep creates a primitive step that reads time series values using a dataframe
+// NewTimeSeriesLoaderStep creates a primitive step that reads time series values using a dataframe
 // containing a file URI column.  The result is a new dataframe that stores the timetamps as the column headers,
 // and the accompanying values for each file as a row.
-func NewTimeSeriesReaderStep(fileColIndex int, timeColIndex int, valueColIndex int) *StepData {
+func NewTimeSeriesLoaderStep(fileColIndex int, timeColIndex int, valueColIndex int) *StepData {
 	return NewStepDataWithHyperparameters(
 		&pipeline.Primitive{
 			Id:         "1689aafa-16dc-4c55-8ad4-76cadcf46086",
 			Version:    "0.1.0",
-			Name:       "Time series reader",
-			PythonPath: "d3m.primitives.data.TimeSeriesReader",
+			Name:       "Time series loader",
+			PythonPath: "d3m.primitives.distil.TimeSeriesLoader",
 			Digest:     "",
 		},
 		[]string{"produce"},

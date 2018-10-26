@@ -20,6 +20,7 @@ import (
 	"github.com/unchartedsoftware/distil/api/compute/description"
 	"github.com/unchartedsoftware/distil/api/compute/result"
 	"github.com/unchartedsoftware/distil/api/env"
+	"github.com/unchartedsoftware/distil/api/model"
 	"github.com/unchartedsoftware/distil/api/pipeline"
 	"github.com/unchartedsoftware/distil/api/util"
 )
@@ -546,7 +547,10 @@ func getClusterVariables(meta *metadata.Metadata, prefix string) ([]*FeatureRequ
 				if res.CanBeFeaturized() {
 					step, err = description.CreateUnicornPipeline("horned", "", []string{v.Name}, []string{indexName})
 				} else {
-					step, err = description.CreateSlothPipeline("leaf", "")
+					// TODO: Properly compute var lists and un-hardcode the column names.
+					baseVariables := []*model.Variable{}
+					timeSeriesVariables := []*model.Variable{}
+					step, err = description.CreateSlothPipeline("leaf", "", "filename", "time", "value", baseVariables, timeSeriesVariables)
 				}
 				if err != nil {
 					return nil, errors.Wrap(err, "unable to create step pipeline")
