@@ -8,11 +8,16 @@ import (
 	"github.com/unchartedsoftware/distil/api/model"
 )
 
+const (
+	unnestedSuffix = "_unnested"
+)
+
 // VectorField defines behaviour for any Vector type.
 type VectorField struct {
 	Storage  *Storage
 	Dataset  string
 	Variable *model.Variable
+	Unnested string
 }
 
 // NewVectorField creates a new field of the vector type. A vector field
@@ -23,8 +28,9 @@ func NewVectorField(storage *Storage, dataset string, variable *model.Variable) 
 		Storage:  storage,
 		Dataset:  dataset,
 		Variable: variable,
+		Unnested: variable.Key,
 	}
-
+	field.Variable.Key = field.Variable.Key + unnestedSuffix
 	return field
 }
 
@@ -37,7 +43,12 @@ func (f *VectorField) FetchSummaryData(resultURI string, filterParams *model.Fil
 		underlyingField = NewCategoricalFieldSubSelect(f.Storage, f.Dataset, f.Variable, f.subSelect)
 	}
 
-	return underlyingField.FetchSummaryData(resultURI, filterParams, extrema)
+	histo, err := underlyingField.FetchSummaryData(resultURI, filterParams, extrema)
+	if err != nil {
+		return nil, err
+	}
+	histo.Key = f.Unnested
+	return histo, nil
 }
 
 // FetchNumericalStats gets the variable's numerical summary info (mean, stddev).
@@ -78,5 +89,5 @@ func (f *VectorField) isNumerical() bool {
 
 func (f *VectorField) subSelect() string {
 	return fmt.Sprintf("(SELECT \"%s\", unnest(\"%s\") as %s FROM %s)",
-		model.D3MIndexFieldName, f.Variable.Key, f.Variable.Key, f.Dataset)
+		model.D3MIndexFieldName, f.Unnested, f.Variable.Key, f.Dataset)
 }

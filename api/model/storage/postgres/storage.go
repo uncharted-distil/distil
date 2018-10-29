@@ -18,7 +18,9 @@ const (
 	dataTypeText    = "TEXT"
 	dataTypeDouble  = "double precision"
 	dataTypeFloat   = "FLOAT8"
+	dataTypeVector  = "FLOAT8[]"
 	dataTypeInteger = "INTEGER"
+	dataTypeDate    = "TIMESTAMP"
 )
 
 // Storage accesses the underlying postgres database.

@@ -3,9 +3,14 @@ package postgres
 import (
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/pkg/errors"
 	"github.com/unchartedsoftware/distil/api/model"
+)
+
+const (
+	dateFormat = "2006-01-02T15:04:05Z"
 )
 
 func (s *Storage) getViewField(name string, displayName string, typ string, defaultValue interface{}) string {
@@ -20,8 +25,12 @@ func (s *Storage) mapType(typ string) string {
 		return dataTypeInteger
 	case model.IntegerType, model.FloatType, model.LongitudeType, model.LatitudeType, model.RealType:
 		return dataTypeFloat
-	case model.OrdinalType, model.CategoricalType, model.TextType, model.DateTimeType, model.StringType:
+	case model.OrdinalType, model.CategoricalType, model.TextType, model.StringType:
 		return dataTypeText
+	case model.DateTimeType:
+		return dataTypeDate
+	case model.RealVectorType:
+		return dataTypeVector
 	default:
 		return dataTypeText
 	}
@@ -35,6 +44,10 @@ func (s *Storage) defaultValue(typ string) interface{} {
 		return float64(0)
 	case dataTypeInteger:
 		return int(0)
+	case dataTypeDate:
+		return fmt.Sprintf("'%s'", time.Time{}.Format(dateFormat))
+	case dataTypeVector:
+		return "'{}'"
 	default:
 		return "''"
 	}
