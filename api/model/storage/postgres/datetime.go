@@ -196,6 +196,14 @@ func (f *DateTimeField) getHistogramAggQuery(extrema *model.Extrema) (string, st
 	return histogramAggName, bucketQueryString, histogramQueryString
 }
 
+func (f *DateTimeField) parseValueToDateString(value string) (string, error) {
+	ival, err := strconv.ParseInt(value, 10, 64)
+	if err != nil {
+		return "", err
+	}
+	return time.Unix(ival, 0).Format(time.RFC3339), nil
+}
+
 func (f *DateTimeField) parseHistogram(rows *pgx.Rows, extrema *model.Extrema) (*model.Histogram, error) {
 	// get histogram agg name
 	histogramAggName := model.HistogramAggPrefix + extrema.Key
@@ -214,8 +222,13 @@ func (f *DateTimeField) parseHistogram(rows *pgx.Rows, extrema *model.Extrema) (
 			keyString = strconv.Itoa(int(key))
 		}
 
+		dateString, err := f.parseValueToDateString(keyString)
+		if err != nil {
+			return nil, err
+		}
+
 		buckets[i] = &model.Bucket{
-			Key:   keyString,
+			Key:   dateString,
 			Count: 0,
 		}
 
@@ -244,6 +257,7 @@ func (f *DateTimeField) parseHistogram(rows *pgx.Rows, extrema *model.Extrema) (
 
 		}
 	}
+
 	// assign histogram attributes
 	return &model.Histogram{
 		Label:   f.Variable.Label,
