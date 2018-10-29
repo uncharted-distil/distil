@@ -6,6 +6,7 @@ import (
 
 	"github.com/golang/protobuf/proto"
 	"github.com/stretchr/testify/assert"
+	"github.com/unchartedsoftware/distil-ingest/metadata"
 	"github.com/unchartedsoftware/distil/api/model"
 )
 
@@ -151,7 +152,12 @@ func TestCreateUnicornPipeline(t *testing.T) {
 }
 
 func TestCreateSlothPipeline(t *testing.T) {
-	pipeline, err := CreateSlothPipeline("sloth_test", "test sloth object detection pipeline")
+	timeSeriesVariables := []*metadata.Variable{
+		{Name: "time", Index: 0},
+		{Name: "value", Index: 1},
+	}
+
+	pipeline, err := CreateSlothPipeline("sloth_test", "test sloth object detection pipeline", "time", "value", timeSeriesVariables)
 	assert.NoError(t, err)
 
 	data, err := proto.Marshal(pipeline)
@@ -159,5 +165,17 @@ func TestCreateSlothPipeline(t *testing.T) {
 	assert.NotNil(t, data)
 
 	err = ioutil.WriteFile("/tmp/create_sloth.pln", data, 0644)
+	assert.NoError(t, err)
+}
+
+func TestCreateDukePipeline(t *testing.T) {
+	pipeline, err := CreateDukePipeline("duke_test", "test duke data summary pipeline")
+	assert.NoError(t, err)
+
+	data, err := proto.Marshal(pipeline)
+	assert.NoError(t, err)
+	assert.NotNil(t, data)
+
+	err = ioutil.WriteFile("/tmp/create_duke.pln", data, 0644)
 	assert.NoError(t, err)
 }

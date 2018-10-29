@@ -18,10 +18,11 @@ type ComplexField Peg {
 
 ComplexField <- array !.
 
-# non-terminals 
-array <- ws* obracket { p.pushArray() } array_contents cbracket { p.popArray() } /
-    ws* oparen { p.pushArray() } array_contents comma? ws* cparen { p.popArray() }
-array_contents <- ws* (item ws* (comma ws* item ws* )*)?
+# non-terminals
+array <- ws* obracket { p.pushArray() } ws* array_contents ws* cbracket { p.popArray() } /
+    ws* oparen { p.pushArray() } ws* tuple_contents ws* cparen { p.popArray() }
+array_contents <- (ws* item ws*) (comma ws* item ws*)* comma?
+tuple_contents <- (item ws* comma ws*)+ (ws* item ws*)?
 item <- array / string / <value> { p.addElement(buffer[begin:end]) }
 string <- dquote_string / squote_string
 dquote_string <- escdquote <(textdata / squote / lf / cr / obracket / cbracket / oparen / cparen / comma)*> escdquote { p.addElement(buffer[begin:end]) }

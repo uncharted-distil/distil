@@ -1,0 +1,3 @@
+[submodule "api/pipeline/ta3ta2-api"]
+	path = api/pipeline/ta3ta2-api
+	url = https://gitlab.com/datadrivendiscovery/ta3ta2-api
