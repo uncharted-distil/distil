@@ -4,6 +4,7 @@ import (
 	"strings"
 
 	"github.com/pkg/errors"
+	"github.com/unchartedsoftware/distil-ingest/metadata"
 	"github.com/unchartedsoftware/distil/api/model"
 	"github.com/unchartedsoftware/distil/api/pipeline"
 )
@@ -182,18 +183,31 @@ func createFilterData(filters []*model.Filter, columnIndices map[string]int) []*
 }
 
 // CreateSlothPipeline creates a pipeline to peform timeseries clustering on a dataset.
-func CreateSlothPipeline(name string, description string) (*pipeline.PipelineDescription, error) {
+func CreateSlothPipeline(name string, description string, timeColumn string, valueColumn string,
+	timeSeriesFeatures []*metadata.Variable) (*pipeline.PipelineDescription, error) {
+
+	timeIdx, err := getIndex(timeSeriesFeatures, timeColumn)
+	if err != nil {
+		return nil, err
+	}
+
+	valueIdx, err := getIndex(timeSeriesFeatures, valueColumn)
+	if err != nil {
+		return nil, err
+	}
+
 	// insantiate the pipeline
 	pipeline, err := NewBuilder(name, description).
 		Add(NewDenormalizeStep()).
 		Add(NewDatasetToDataframeStep()).
-		Add(NewTimeSeriesReaderStep(1, 0, 1)).
+		Add(NewTimeSeriesLoaderStep(-1, timeIdx, valueIdx)).
 		Add(NewSlothStep()).
 		Compile()
 
 	if err != nil {
 		return nil, err
 	}
+
 	return pipeline, nil
 }
 
@@ -281,4 +295,13 @@ func mapColumns(allFeatures []*model.Variable, selectedSet map[string]bool) map[
 	}
 
 	return colIndices
+}
+
+func getIndex(allFeatures []*metadata.Variable, name string) (int, error) {
+	for _, f := range allFeatures {
+		if strings.EqualFold(name, f.Name) {
+			return f.Index, nil
+		}
+	}
+	return -1, errors.Errorf("can't find var '%s'", name)
 }

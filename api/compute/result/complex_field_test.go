@@ -75,6 +75,15 @@ func TestParserTuple(t *testing.T) {
 	assert.Equal(t, []interface{}{"10", "20", "30"}, field.arrayElements.elements)
 }
 
+func TestParserTupleFail(t *testing.T) {
+	field := &ComplexField{Buffer: "(10)"}
+	field.Init()
+
+	err := field.Parse()
+	field.PrintSyntaxTree()
+	assert.Error(t, err)
+}
+
 func TestParserSingleTuple(t *testing.T) {
 	field := &ComplexField{Buffer: "(10, )"}
 	field.Init()

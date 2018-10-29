@@ -22,4 +22,5 @@ func TestCSVResultParser(t *testing.T) {
 	assert.Equal(t, []interface{}{"4", []interface{}{"-10.001", "20.1"}, []interface{}{"30", "40"}}, result[5])
 	assert.Equal(t, []interface{}{"5", []interface{}{"int"}, []interface{}{"0.989599347114563"}}, result[6])
 	assert.Equal(t, []interface{}{"7", []interface{}{"int", "categorical"}, []interface{}{"0.9885959029197693", "1"}}, result[8])
+	assert.Equal(t, []interface{}{"10", "( ibid )", "hotel"}, result[11])
 }

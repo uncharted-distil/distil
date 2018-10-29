@@ -6,6 +6,7 @@ import (
 
 	"github.com/golang/protobuf/proto"
 	"github.com/stretchr/testify/assert"
+	"github.com/unchartedsoftware/distil-ingest/metadata"
 	"github.com/unchartedsoftware/distil/api/model"
 )
 
@@ -151,7 +152,12 @@ func TestCreateUnicornPipeline(t *testing.T) {
 }
 
 func TestCreateSlothPipeline(t *testing.T) {
-	pipeline, err := CreateSlothPipeline("sloth_test", "test sloth object detection pipeline")
+	timeSeriesVariables := []*metadata.Variable{
+		{Name: "time", Index: 0},
+		{Name: "value", Index: 1},
+	}
+
+	pipeline, err := CreateSlothPipeline("sloth_test", "test sloth object detection pipeline", "time", "value", timeSeriesVariables)
 	assert.NoError(t, err)
 
 	data, err := proto.Marshal(pipeline)
