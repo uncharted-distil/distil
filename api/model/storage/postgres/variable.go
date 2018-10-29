@@ -120,6 +120,8 @@ func (s *Storage) fetchSummaryData(dataset string, varName string, resultURI str
 		field = NewTextField(s, dataset, variable)
 	} else if model.IsImage(variable.Type) {
 		field = NewImageField(s, dataset, variable)
+	} else if model.IsDateTime(variable.Type) {
+		field = NewDateTimeField(s, dataset, variable)
 	} else {
 		/*else if model.IsTimeSeries(variable.Type) {
 			field = NewTimeSeries(s)
