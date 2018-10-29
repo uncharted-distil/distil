@@ -16,6 +16,9 @@
 						<b-form-radio value="graph" class="view-button">
 							<i class="fa fa-share-alt"></i>
 						</b-form-radio >
+						<b-form-radio value="geo" class="view-button">
+							<i class="fa fa-globe"></i>
+						</b-form-radio >
 					</b-form-radio-group>
 				</b-form-group>
 			</b-nav>
@@ -102,7 +105,7 @@ export default Vue.extend({
 	data() {
 		return {
 			instanceName: 'select-data',
-			viewType: 'geo',
+			viewType: 'table',
 			includedActive: true
 		};
 	},
