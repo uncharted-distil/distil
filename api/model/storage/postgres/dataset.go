@@ -29,6 +29,8 @@ func (s *Storage) mapType(typ string) string {
 		return dataTypeText
 	case model.DateTimeType:
 		return dataTypeDate
+	case model.RealVectorType:
+		return dataTypeVector
 	default:
 		return dataTypeText
 	}
@@ -44,6 +46,8 @@ func (s *Storage) defaultValue(typ string) interface{} {
 		return int(0)
 	case dataTypeDate:
 		return fmt.Sprintf("'%s'", time.Time{}.Format(dateFormat))
+	case dataTypeVector:
+		return "'{}'"
 	default:
 		return "''"
 	}
