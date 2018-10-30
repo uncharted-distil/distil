@@ -270,10 +270,6 @@ func NewTimeSeriesLoaderStep(fileColIndex int, timeColIndex int, valueColIndex i
 			Digest:     "",
 		},
 		[]string{"produce"},
-		map[string]interface{}{
-			"file_col_index":  fileColIndex,
-			"time_col_index":  timeColIndex,
-			"value_col_index": valueColIndex,
-		},
+		args,
 	)
 }

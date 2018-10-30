@@ -126,7 +126,8 @@ var (
 		StateType:       true,
 		URIType:         true,
 		UnknownType:     true,
-		TimeSeriesType:  true}
+		TimeSeriesType:  true,
+	}
 	numericalTypes = map[string]bool{
 		LongitudeType: true,
 		LatitudeType:  true,
@@ -134,12 +135,13 @@ var (
 		RealType:      true,
 		IntegerType:   true,
 		IndexType:     true,
-		DateTimeType:  true}
+	}
 	floatingPointTypes = map[string]bool{
 		LongitudeType: true,
 		LatitudeType:  true,
 		RealType:      true,
-		FloatType:     true}
+		FloatType:     true,
+	}
 
 	// Maps from Distil internal type to TA2 supported type
 	ta2TypeMap = map[string]string{
@@ -237,6 +239,12 @@ func IsImage(typ string) bool {
 // of analysis.
 func IsTimeSeries(typ string) bool {
 	return typ == TimeSeriesType
+}
+
+// IsDateTime indicates whether or not a schema type is a date time for the purposes
+// of analysis.
+func IsDateTime(typ string) bool {
+	return typ == DateTimeType
 }
 
 // HasMetadataVar indicates whether or not a schema type has a corresponding metadata var.

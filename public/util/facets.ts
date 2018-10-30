@@ -1,4 +1,5 @@
 import _ from 'lodash';
+import moment from 'moment';
 import { spinnerHTML } from '../util/spinner';
 import { formatValue } from '../util/types';
 import { VariableSummary } from '../store/dataset/index';
@@ -246,8 +247,16 @@ function getHistogramSlices(summary: VariableSummary) {
 	const slices = new Array(buckets.length);
 	for (let i=0; i<buckets.length; i++) {
 		const bucket = buckets[i];
-		const from = _.toNumber(bucket.key);
-		const to = (i < buckets.length-1) ? _.toNumber(buckets[i+1].key) : extrema.max;
+		let from, to;
+		if (summary.varType === 'dateTime') {
+			from = bucket.key;
+			to = (i < buckets.length-1) ? buckets[i+1].key : buckets[i].key;
+			from = moment(from).format('YYYY/MM/DD');
+			to = moment(to).format('YYYY/MM/DD');
+		} else {
+			from = _.toNumber(bucket.key);
+			to = (i < buckets.length-1) ? _.toNumber(buckets[i+1].key) : extrema.max;
+		}
 		slices[i] = {
 			label: `${formatValue(from, summary.varType)}`,
 			toLabel: `${formatValue(to, summary.varType)}`,

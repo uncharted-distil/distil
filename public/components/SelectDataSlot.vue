@@ -16,6 +16,9 @@
 						<b-form-radio value="graph" class="view-button">
 							<i class="fa fa-share-alt"></i>
 						</b-form-radio >
+						<b-form-radio value="geo" class="view-button">
+							<i class="fa fa-globe"></i>
+						</b-form-radio >
 					</b-form-radio-group>
 				</b-form-group>
 			</b-nav>
@@ -54,14 +57,15 @@
 			<div class="select-data-no-results" v-if="!hasData">
 				<div v-html="spinnerHTML"></div>
 			</div>
-			<div class="select-data-no-results" v-if="hasData && items.length===0">
+			<div class="select-data-no-results" v-if="hasData && numItems===0">
 				No data available
 			</div>
 
-			<template v-if="hasData && items.length>0">
+			<template v-if="hasData && numItems>0">
 				<select-data-table v-if="viewType==='table'" :included-active="includedActive" :instance-name="instanceName"></select-data-table>
 				<select-image-mosaic v-if="viewType==='image'" :included-active="includedActive" :instance-name="instanceName"></select-image-mosaic>
 				<select-graph-view v-if="viewType==='graph'" :included-active="includedActive" :instance-name="instanceName"></select-graph-view>
+				<select-geo-plot v-if="viewType==='geo'" :included-active="includedActive" :instance-name="instanceName"></select-geo-plot>
 			</template>
 
 		</div>
@@ -75,6 +79,7 @@ import Vue from 'vue';
 import { spinnerHTML } from '../util/spinner';
 import SelectDataTable from './SelectDataTable';
 import SelectImageMosaic from './SelectImageMosaic';
+import SelectGeoPlot from './SelectGeoPlot';
 import SelectGraphView from './SelectGraphView';
 import FilterBadge from './FilterBadge';
 import { getters as datasetGetters } from '../store/dataset/module';
@@ -93,7 +98,8 @@ export default Vue.extend({
 		FilterBadge,
 		SelectDataTable,
 		SelectImageMosaic,
-		SelectGraphView
+		SelectGraphView,
+		SelectGeoPlot
 	},
 
 	data() {

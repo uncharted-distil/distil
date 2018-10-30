@@ -2,6 +2,7 @@ const path = require('path');
 const webpack = require('webpack');
 const HtmlPlugin = require('html-webpack-plugin');
 const CopyWebpackPlugin = require('copy-webpack-plugin');
+const { VueLoaderPlugin } = require('vue-loader');
 
 module.exports = {
 	entry: './public/main.ts',
@@ -66,7 +67,7 @@ module.exports = {
 		]
 	},
 	plugins: [
-		// generates index.html based on generated bundle
+		new VueLoaderPlugin(),
 		new HtmlPlugin({
 			template: './public/templates/index.template.ejs',
 			inject: 'body'

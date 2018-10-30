@@ -26,7 +26,7 @@ import { SuggestedType, Variable } from '../store/dataset/index';
 import { HighlightRoot } from '../store/highlights/index';
 import { actions as datasetActions, getters as datasetGetters } from '../store/dataset/module';
 import { getters as routeGetters } from '../store/route/module';
-import { addTypeSuggestions, getLabelFromType, getTypeFromLabel, isEquivalentType } from '../util/types';
+import { addTypeSuggestions, getLabelFromType, getTypeFromLabel, isEquivalentType, BASIC_SUGGESTIONS } from '../util/types';
 import { hasFilterInRoute } from '../util/filters';
 
 export default Vue.extend({
@@ -104,7 +104,7 @@ export default Vue.extend({
 	methods: {
 		addMissingSuggestions(): string[] {
 			if (this.label === '' || this.values.length === 0) {
-				return [];
+				return _.map(BASIC_SUGGESTIONS, t => getLabelFromType(t));
 			}
 			const type = getTypeFromLabel(this.label);
 			return _.map(addTypeSuggestions(type, this.values), t => getLabelFromType(t));
