@@ -69,6 +69,24 @@ func NewPCAFeaturesStep() *StepData {
 	)
 }
 
+// NewTargetRankingStep creates a target ranking call that can be added to
+// a pipeline.
+func NewTargetRankingStep(target string) *StepData {
+	return NewStepDataWithHyperparameters(
+		&pipeline.Primitive{
+			Id:         "04573880-d64f-4791-8932-52b7c3877639",
+			Version:    "3.0.0",
+			Name:       "PCA Features",
+			PythonPath: "d3m.primitives.distil.pcafeatures",
+			Digest:     "5302eebf2fb8a80e9f00e7b74888aba9eb448a9c0463d9d26786dab717a62c61",
+		},
+		[]string{"produce"},
+		map[string]interface{}{
+			"target": target,
+		},
+	)
+}
+
 // NewDukeStep creates a wrapper for the Duke dataset classifier.
 func NewDukeStep() *StepData {
 	return NewStepData(

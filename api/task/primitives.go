@@ -330,6 +330,44 @@ func FeaturizePrimitive(schemaFile string, index string, dataset string, config 
 	return nil
 }
 
+// TargetRankPrimitive will rank the dataset relative to a target variable using
+// a primitive.
+func TargetRankPrimitive(dataset string, target string) ([]float64, error) {
+	// create & submit the solution request
+	pip, err := description.CreateTargetRankingPipeline("roger", "", target)
+	if err != nil {
+		return nil, errors.Wrap(err, "unable to create ranking pipeline")
+	}
+
+	datasetURI, err := submitPrimitive(dataset, pip)
+	if err != nil {
+		return nil, errors.Wrap(err, "unable to run ranking pipeline")
+	}
+
+	// parse primitive response (col index,importance)
+	res, err := result.ParseResultCSV(datasetURI)
+	if err != nil {
+		return nil, errors.Wrap(err, "unable to parse ranking pipeline result")
+	}
+
+	ranks := make([]float64, len(res)-1)
+	for i, v := range res {
+		if i > 0 {
+			colIndex, err := strconv.ParseInt(v[0].(string), 10, 64)
+			if err != nil {
+				return nil, errors.Wrap(err, "unable to parse rank index")
+			}
+			vInt, err := strconv.ParseFloat(v[1].(string), 64)
+			if err != nil {
+				return nil, errors.Wrap(err, "unable to parse rank value")
+			}
+			ranks[colIndex] = vInt
+		}
+	}
+
+	return ranks, nil
+}
+
 // ClusterPrimitive will cluster the dataset fields using a primitive.
 func ClusterPrimitive(index string, dataset string, config *IngestTaskConfig) error {
 	// create required folders for outputPath

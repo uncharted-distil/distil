@@ -285,11 +285,10 @@ func CreatePCAFeaturesPipeline(name string, description string) (*pipeline.Pipel
 }
 
 // CreateTargetRankingPipeline creates a pipeline to run feature ranking on an input dataset.
-func CreateTargetRankingPipeline(name string, description string) (*pipeline.PipelineDescription, error) {
+func CreateTargetRankingPipeline(name string, description string, target string) (*pipeline.PipelineDescription, error) {
 	// insantiate the pipeline
 	pipeline, err := NewBuilder(name, description).
-		Add(NewDatasetToDataframeStep()).
-		Add(NewPCAFeaturesStep()).
+		Add(NewTargetRankingStep(target)).
 		Compile()
 
 	if err != nil {

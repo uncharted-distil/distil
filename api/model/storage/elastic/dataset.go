@@ -84,6 +84,26 @@ func (s *Storage) FetchDatasets(includeIndex bool, includeMeta bool) ([]*model.D
 	return s.parseDatasets(res, includeIndex, includeMeta)
 }
 
+// FetchDataset returns a dataset in the provided index.
+func (s *Storage) FetchDataset(datasetName string, includeIndex bool, includeMeta bool) (*model.Dataset, error) {
+	query := elastic.NewTermQuery("dataset", datasetName)
+	// execute the ES query
+	res, err := s.client.Search().
+		Query(query).
+		Index(s.index).
+		FetchSource(true).
+		Size(datasetsListSize).
+		Do(context.Background())
+	if err != nil {
+		return nil, errors.Wrap(err, "elasticsearch dataset fetch query failed")
+	}
+	datasets, err := s.parseDatasets(res, includeIndex, includeMeta)
+	if err != nil {
+		return nil, err
+	}
+	return datasets[0], nil
+}
+
 // SearchDatasets returns the datasets that match the search criteria in the
 // provided index.
 func (s *Storage) SearchDatasets(terms string, includeIndex bool, includeMeta bool) ([]*model.Dataset, error) {
