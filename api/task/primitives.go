@@ -229,7 +229,7 @@ func getClusterVariables(meta *metadata.Metadata, prefix string) ([]*FeatureRequ
 					step, err = description.CreateUnicornPipeline("horned",
 						"clustering based on resnet-50 detected objects", []string{v.Name}, []string{indexName})
 				} else {
-					if colNames, ok := getTimeValueCols(mainDR); ok {
+					if colNames, ok := getTimeValueCols(res); ok {
 						step, err = description.CreateSlothPipeline("time series clustering",
 							"k-means time series clustering", colNames.timeCol, colNames.valueCol, res.Variables)
 					}

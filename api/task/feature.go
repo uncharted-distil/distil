@@ -26,7 +26,7 @@ func FeaturizePrimitive(schemaFile string, index string, dataset string, config 
 	mainDR := meta.GetMainDataResource()
 
 	// add feature variables
-	features, err := getClusterVariables(meta, "_feature_")
+	features, err := getFeatureVariables(meta, "_feature_")
 	if err != nil {
 		return errors.Wrap(err, "unable to get feature variables")
 	}
