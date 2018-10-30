@@ -46,7 +46,7 @@ import _ from 'lodash';
 import Facets from '../components/Facets.vue';
 import { overlayRouteEntry, getRouteFacetPage } from '../util/routes';
 import { Dictionary } from '../util/dict';
-import { sortGroupsByImportance, filterVariablesByPage } from '../util/data';
+import { sortGroupsByImportance, filterVariablesByPage, getVariableImportance } from '../util/data';
 import { Variable } from '../store/dataset/index';
 import { Highlight, RowSelection } from '../store/highlights/index';
 import { getters as datasetGetters } from '../store/dataset/module';
@@ -148,7 +148,7 @@ export default Vue.extend({
 		importance(): Dictionary<number> {
 			const importance: Dictionary<number> = {};
 			this.variables.forEach(variable => {
-				importance[variable.key] = variable.importance;
+				importance[variable.key] = getVariableImportance(variable);
 			});
 			return importance;
 		}

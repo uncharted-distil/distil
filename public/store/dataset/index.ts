@@ -18,6 +18,7 @@ export interface Variable {
 	key: string;
 	type: string;
 	importance: number;
+	ranking?: number;
 	novelty: number;
 	originalType: string;
 	suggestedTypes: SuggestedType[];
