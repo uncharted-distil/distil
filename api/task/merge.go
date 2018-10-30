@@ -16,11 +16,11 @@ import (
 )
 
 // MergePrimitive will merge data resources into a single data resource.
-func MergePrimitive(index string, dataset string, config *IngestTaskConfig) error {
-	sourceFolder := config.ContainerDataPath
-	outputFolder := path.Dir(config.getTmpAbsolutePath(config.ClusteringOutputSchemaRelative))
-	outputSchemaPath := config.getTmpAbsolutePath(config.ClusteringOutputSchemaRelative)
-	outputDataPath := config.getTmpAbsolutePath(config.ClusteringOutputDataRelative)
+func MergePrimitive(schemaFile string, index string, dataset string, config *IngestTaskConfig) error {
+	sourceFolder := path.Dir(schemaFile)
+	outputSchemaPath := config.getTmpAbsolutePath(config.MergedOutputSchemaPathRelative)
+	outputDataPath := config.getTmpAbsolutePath(config.MergedOutputPathRelative)
+	outputFolder := path.Dir(outputSchemaPath)
 
 	// copy the source folder to have all the linked files for merging
 	err := copy.Copy(sourceFolder, outputFolder)

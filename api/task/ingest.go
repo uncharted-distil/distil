@@ -108,7 +108,7 @@ func IngestDataset(metaCtor model.MetadataStorageCtor, index string, dataset str
 	}
 	log.Infof("finished featurizing the dataset")
 
-	err = Merge(latestSchemaOutput, index, dataset, config)
+	err = MergePrimitive(latestSchemaOutput, index, dataset, config)
 	if err != nil {
 		return errors.Wrap(err, "unable to merge all data into a single file")
 	}

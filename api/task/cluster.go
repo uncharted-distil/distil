@@ -6,6 +6,7 @@ import (
 	"os"
 	"path"
 
+	"github.com/otiai10/copy"
 	"github.com/pkg/errors"
 	"github.com/unchartedsoftware/distil-ingest/metadata"
 
@@ -14,9 +15,20 @@ import (
 
 // ClusterPrimitive will cluster the dataset fields using a primitive.
 func ClusterPrimitive(index string, dataset string, config *IngestTaskConfig) error {
-	// create required folders for outputPath
-	createContainingDirs(config.getTmpAbsolutePath(config.ClusteringOutputDataRelative))
-	createContainingDirs(config.getTmpAbsolutePath(config.ClusteringOutputSchemaRelative))
+	sourceFolder := path.Dir(config.getAbsolutePath(config.SchemaPathRelative))
+	outputSchemaPath := config.getTmpAbsolutePath(config.ClusteringOutputSchemaRelative)
+	outputDataPath := config.getTmpAbsolutePath(config.ClusteringOutputDataRelative)
+	outputFolder := path.Dir(outputSchemaPath)
+
+	// copy the source folder to have all the linked files for merging
+	err := copy.Copy(sourceFolder, outputFolder)
+	if err != nil {
+		return errors.Wrap(err, "unable to copy source data")
+	}
+
+	// delete the existing files that will be overwritten
+	os.Remove(outputSchemaPath)
+	os.Remove(outputDataPath)
 
 	// load metadata from original schema
 	meta, err := metadata.LoadMetadataFromOriginalSchema(config.getAbsolutePath(config.SchemaPathRelative))
@@ -80,7 +92,8 @@ func ClusterPrimitive(index string, dataset string, config *IngestTaskConfig) er
 		return errors.Wrap(err, "error writing clustered output")
 	}
 
-	mainDR.ResPath = config.ClusteringOutputDataRelative
+	relativePath := getRelativePath(path.Dir(outputSchemaPath), outputDataPath)
+	mainDR.ResPath = relativePath
 
 	// write the new schema to file
 	err = meta.WriteSchema(config.getTmpAbsolutePath(config.ClusteringOutputSchemaRelative))

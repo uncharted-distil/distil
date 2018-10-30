@@ -348,3 +348,10 @@ func mapDenormFields(mainDR *metadata.DataResource) map[string]*metadata.Variabl
 	}
 	return fields
 }
+
+func getRelativePath(rootPath string, filePath string) string {
+	relativePath := strings.TrimPrefix(filePath, rootPath)
+	relativePath = strings.TrimPrefix(relativePath, "/")
+
+	return relativePath
+}
