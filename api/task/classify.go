@@ -15,13 +15,15 @@ import (
 
 // ClassifyPrimitive will classify the dataset using a primitive.
 func ClassifyPrimitive(index string, dataset string, config *IngestTaskConfig) error {
+	schemaDoc := config.getTmpAbsolutePath(config.MergedOutputSchemaPathRelative)
+
 	// create & submit the solution request
 	pip, err := description.CreateSimonPipeline("says", "")
 	if err != nil {
 		return errors.Wrap(err, "unable to create Simon pipeline")
 	}
 
-	datasetURI, err := submitPrimitive(dataset, pip)
+	datasetURI, err := submitPrimitive(schemaDoc, pip)
 	if err != nil {
 		return errors.Wrap(err, "unable to run Simon pipeline")
 	}

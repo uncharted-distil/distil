@@ -15,13 +15,15 @@ import (
 
 // RankPrimitive will rank the dataset using a primitive.
 func RankPrimitive(index string, dataset string, config *IngestTaskConfig) error {
+	schemaDoc := config.getTmpAbsolutePath(config.MergedOutputSchemaPathRelative)
+
 	// create & submit the solution request
 	pip, err := description.CreatePCAFeaturesPipeline("harry", "")
 	if err != nil {
 		return errors.Wrap(err, "unable to create PCA pipeline")
 	}
 
-	datasetURI, err := submitPrimitive(dataset, pip)
+	datasetURI, err := submitPrimitive(schemaDoc, pip)
 	if err != nil {
 		return errors.Wrap(err, "unable to run PCA pipeline")
 	}

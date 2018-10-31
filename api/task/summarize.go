@@ -15,13 +15,15 @@ import (
 
 // SummarizePrimitive will summarize the dataset using a primitive.
 func SummarizePrimitive(index string, dataset string, config *IngestTaskConfig) error {
+	schemaDoc := config.getTmpAbsolutePath(config.MergedOutputSchemaPathRelative)
+
 	// create & submit the solution request
 	pip, err := description.CreateDukePipeline("wellington", "")
 	if err != nil {
 		return errors.Wrap(err, "unable to create Duke pipeline")
 	}
 
-	datasetURI, err := submitPrimitive(dataset, pip)
+	datasetURI, err := submitPrimitive(schemaDoc, pip)
 	if err != nil {
 		return errors.Wrap(err, "unable to run Duke pipeline")
 	}

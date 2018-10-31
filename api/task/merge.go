@@ -51,7 +51,7 @@ func MergePrimitive(schemaFile string, index string, dataset string, config *Ing
 	}
 
 	// need to manually build the metadata and output it.
-	meta, err := metadata.LoadMetadataFromOriginalSchema(dataset)
+	meta, err := metadata.LoadMetadataFromOriginalSchema(schemaFile)
 	if err != nil {
 		return errors.Wrap(err, "unable to load original metadata")
 	}
