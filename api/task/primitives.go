@@ -32,6 +32,7 @@ var (
 type FeatureRequest struct {
 	SourceVariableName  string
 	FeatureVariableName string
+	OutputVariableName  string
 	Variable            *metadata.Variable
 	Step                *pipeline.PipelineDescription
 }
@@ -138,7 +139,7 @@ func appendFeature(dataset string, d3mIndexField int, hasHeader bool, feature *F
 	// find the field with the feature output
 	labelIndex := 1
 	for i, f := range res[0] {
-		if f == feature.FeatureVariableName {
+		if f == feature.OutputVariableName {
 			labelIndex = i
 		}
 	}
@@ -225,9 +226,11 @@ func getClusterVariables(meta *metadata.Metadata, prefix string) ([]*FeatureRequ
 				// create the required pipeline
 				var step *pipeline.PipelineDescription
 				var err error
+				outputName := ""
 				if res.CanBeFeaturized() {
 					step, err = description.CreateUnicornPipeline("horned",
 						"clustering based on resnet-50 detected objects", []string{denormFieldName}, []string{indexName})
+					outputName = unicornResultFieldName
 				} else {
 					if colNames, ok := getTimeValueCols(res); ok {
 						step, err = description.CreateSlothPipeline("time series clustering",
@@ -241,6 +244,7 @@ func getClusterVariables(meta *metadata.Metadata, prefix string) ([]*FeatureRequ
 				features = append(features, &FeatureRequest{
 					SourceVariableName:  denormFieldName,
 					FeatureVariableName: indexName,
+					OutputVariableName:  outputName,
 					Variable:            v,
 					Step:                step,
 				})

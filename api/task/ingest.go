@@ -297,6 +297,9 @@ func Ingest(storage model.MetadataStorage, index string, dataset string, config 
 	log.Infof("inserting rows into database")
 	reader, err := os.Open(config.getTmpAbsolutePath(config.MergedOutputPathRelative))
 	scanner := bufio.NewScanner(reader)
+
+	// skip header
+	scanner.Scan()
 	count := 0
 	for scanner.Scan() {
 		line := scanner.Text()

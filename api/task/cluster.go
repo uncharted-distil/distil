@@ -13,6 +13,10 @@ import (
 	"github.com/unchartedsoftware/distil/api/util"
 )
 
+const (
+	unicornResultFieldName = "pred_class"
+)
+
 // ClusterPrimitive will cluster the dataset fields using a primitive.
 func ClusterPrimitive(index string, dataset string, config *IngestTaskConfig) error {
 	sourceFolder := path.Dir(config.getAbsolutePath(config.SchemaPathRelative))

@@ -29,7 +29,7 @@ func SummarizePrimitive(index string, dataset string, config *IngestTaskConfig) 
 		return errors.Wrap(err, "unable to run Duke pipeline")
 	}
 
-	// parse primitive response (token,probability)
+	// parse primitive response (row,token,probability)
 	res, err := result.ParseResultCSV(datasetURI)
 	if err != nil {
 		return errors.Wrap(err, "unable to parse Duke pipeline result")
@@ -39,7 +39,7 @@ func SummarizePrimitive(index string, dataset string, config *IngestTaskConfig) 
 	for i, v := range res {
 		// skip the header
 		if i > 0 {
-			token, ok := v[0].(string)
+			token, ok := v[1].(string)
 			if !ok {
 				return errors.Wrap(err, "unable to parse Duke token")
 			}
@@ -57,7 +57,7 @@ func SummarizePrimitive(index string, dataset string, config *IngestTaskConfig) 
 		return errors.Wrap(err, "unable to serialize summary result")
 	}
 	// write to file
-	err = util.WriteFileWithDirs(config.getTmpAbsolutePath(config.SummaryOutputPathRelative), bytes, os.ModePerm)
+	err = util.WriteFileWithDirs(config.getTmpAbsolutePath(config.SummaryMachineOutputPathRelative), bytes, os.ModePerm)
 	if err != nil {
 		return errors.Wrap(err, "unable to store summary result")
 	}
