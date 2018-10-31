@@ -3,6 +3,7 @@ package task
 import (
 	"encoding/json"
 	"os"
+	"path"
 	"strconv"
 
 	"github.com/pkg/errors"
@@ -15,7 +16,7 @@ import (
 
 // RankPrimitive will rank the dataset using a primitive.
 func RankPrimitive(index string, dataset string, config *IngestTaskConfig) error {
-	schemaDoc := config.getTmpAbsolutePath(config.MergedOutputSchemaPathRelative)
+	schemaDoc := path.Dir(config.getTmpAbsolutePath(config.MergedOutputSchemaPathRelative))
 
 	// create & submit the solution request
 	pip, err := description.CreatePCAFeaturesPipeline("harry", "")

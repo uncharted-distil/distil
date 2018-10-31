@@ -3,6 +3,7 @@ package task
 import (
 	"encoding/json"
 	"os"
+	"path"
 	"strings"
 
 	"github.com/pkg/errors"
@@ -15,7 +16,7 @@ import (
 
 // SummarizePrimitive will summarize the dataset using a primitive.
 func SummarizePrimitive(index string, dataset string, config *IngestTaskConfig) error {
-	schemaDoc := config.getTmpAbsolutePath(config.MergedOutputSchemaPathRelative)
+	schemaDoc := path.Dir(config.getTmpAbsolutePath(config.MergedOutputSchemaPathRelative))
 
 	// create & submit the solution request
 	pip, err := description.CreateDukePipeline("wellington", "")

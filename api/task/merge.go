@@ -107,7 +107,8 @@ func MergePrimitive(schemaFile string, index string, dataset string, config *Ing
 		return errors.Wrap(err, "error writing merged output")
 	}
 
-	outputMeta.DataResources[0].ResPath = config.ClusteringOutputDataRelative
+	relativePath := getRelativePath(path.Dir(outputSchemaPath), outputDataPath)
+	outputMeta.DataResources[0].ResPath = relativePath
 
 	// write the new schema to file
 	err = outputMeta.WriteSchema(outputSchemaPath)
