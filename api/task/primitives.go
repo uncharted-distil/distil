@@ -195,6 +195,7 @@ func getFeatureVariables(meta *metadata.Metadata, prefix string) ([]*FeatureRequ
 				features = append(features, &FeatureRequest{
 					SourceVariableName:  denormFieldName,
 					FeatureVariableName: indexName,
+					OutputVariableName:  fmt.Sprintf("%s_object_label", indexName),
 					Variable:            v,
 					Step:                step,
 				})
