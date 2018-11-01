@@ -29,6 +29,8 @@ import { getters as routeGetters } from '../store/route/module';
 import { addTypeSuggestions, getLabelFromType, getTypeFromLabel, isEquivalentType, BASIC_SUGGESTIONS } from '../util/types';
 import { hasFilterInRoute } from '../util/filters';
 
+const PROBABILITY_THRESHOLD = 0.8;
+
 export default Vue.extend({
 	name: 'enable-type-change-menu',
 
@@ -90,7 +92,8 @@ export default Vue.extend({
 		},
 		isUnsure(): boolean {
 			return (this.type === this.originalType && // we haven't changed the type
-				this.hasSchemaType && this.hasNonSchemaTypes && // it has both schema and ML types
+				this.hasSchemaType && this.hasNonSchemaTypes &&
+				this.topNonSchemaType.probability >= PROBABILITY_THRESHOLD && // it has both schema and ML types
 				!isEquivalentType(this.schemaType.type, this.topNonSchemaType.type)); // they don't agree
 		},
 		delay(): any {
