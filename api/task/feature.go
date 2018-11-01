@@ -3,14 +3,21 @@ package task
 import (
 	"bytes"
 	"encoding/csv"
+	"encoding/json"
+	"fmt"
 	"os"
 	"path"
+	"regexp"
 
 	"github.com/otiai10/copy"
 	"github.com/pkg/errors"
 	"github.com/unchartedsoftware/distil-ingest/metadata"
 
 	"github.com/unchartedsoftware/distil/api/util"
+)
+
+var (
+	pythonDictRE = regexp.MustCompile("'([^'\"]*)'")
 )
 
 // FeaturizePrimitive will featurize the dataset fields using a primitive.
@@ -77,7 +84,17 @@ func FeaturizePrimitive(schemaFile string, index string, dataset string, config 
 		return errors.Wrap(err, "error storing feature header")
 	}
 
+	// parse the raw output and write the line out
 	for _, line := range lines {
+		if len(features) > 0 {
+			fieldIndex := len(line) - 1
+			p, err := parseFeatureOutput(line[fieldIndex])
+			if err != nil {
+				return errors.Wrap(err, "unable to parse raw feature output")
+			}
+			line[fieldIndex] = p
+		}
+
 		err = writer.Write(line)
 		if err != nil {
 			return errors.Wrap(err, "error storing feature output")
@@ -101,4 +118,20 @@ func FeaturizePrimitive(schemaFile string, index string, dataset string, config 
 	}
 
 	return nil
+}
+
+func parseFeatureOutput(field string) (string, error) {
+	fieldAugmented := pythonDictRE.ReplaceAllString(field, "\"$1\"")
+	parsed := make(map[string]interface{})
+	err := json.Unmarshal([]byte(fieldAugmented), &parsed)
+	if err != nil {
+		return "", errors.Wrap(err, "unable to parse raw output field")
+	}
+
+	joined := ""
+	for _, v := range parsed {
+		joined = fmt.Sprintf("%s,%s", joined, v.(string))
+	}
+
+	return joined[1:], nil
 }

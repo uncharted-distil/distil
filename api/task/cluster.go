@@ -15,6 +15,7 @@ import (
 
 const (
 	unicornResultFieldName = "pred_class"
+	slothResultFieldName   = "0"
 )
 
 // ClusterPrimitive will cluster the dataset fields using a primitive.
