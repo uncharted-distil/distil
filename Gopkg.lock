@@ -212,9 +212,9 @@
     "smmry",
   ]
   pruneopts = "UT"
-  revision = "bbf4dc922494eaef1749a70507f111fcf33118d6"
+  revision = "c44a1460a2368540affe89bb462f6776a79602db"
   source = "git@github.com:unchartedsoftware/distil-ingest.git"
-  version = "0.5.4"
+  version = "0.6.0"
 
 [[projects]]
   branch = "master"

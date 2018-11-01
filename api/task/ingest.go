@@ -108,7 +108,7 @@ func IngestDataset(metaCtor model.MetadataStorageCtor, index string, dataset str
 	}
 	log.Infof("finished featurizing the dataset")
 
-	err = Merge(latestSchemaOutput, index, dataset, config)
+	err = MergePrimitive(latestSchemaOutput, index, dataset, config)
 	if err != nil {
 		return errors.Wrap(err, "unable to merge all data into a single file")
 	}
@@ -297,6 +297,9 @@ func Ingest(storage model.MetadataStorage, index string, dataset string, config 
 	log.Infof("inserting rows into database")
 	reader, err := os.Open(config.getTmpAbsolutePath(config.MergedOutputPathRelative))
 	scanner := bufio.NewScanner(reader)
+
+	// skip header
+	scanner.Scan()
 	count := 0
 	for scanner.Scan() {
 		line := scanner.Text()
