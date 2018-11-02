@@ -36,6 +36,11 @@ func (s *Storage) parseDatasets(res *elastic.SearchResult, includeIndex bool, in
 		if !ok {
 			summary = ""
 		}
+		// extract the folder
+		folder, ok := json.String(src, "datasetFolder")
+		if !ok {
+			summary = ""
+		}
 		// extract the summary
 		summaryMachine, ok := json.String(src, "summaryMachine")
 		if !ok {
@@ -60,6 +65,7 @@ func (s *Storage) parseDatasets(res *elastic.SearchResult, includeIndex bool, in
 		datasets = append(datasets, &model.Dataset{
 			Name:        name,
 			Description: description,
+			Folder:      folder,
 			Summary:     summary,
 			SummaryML:   summaryMachine,
 			NumRows:     int64(numRows),
