@@ -50,12 +50,17 @@ export const actions = {
 			dataset: dataset
 		}).then(() => {
 			const variables = context.getters.getVariables;
+			const target = context.getters.getRouteTargetVariable;
 			return Promise.all([
 				context.dispatch('fetchVariableSummaries', {
 					dataset: dataset,
 					variables: variables
 				}),
-				context.dispatch('updateSelectTrainingData')
+				context.dispatch('fetchVariableRankings', {
+					dataset: dataset,
+					target: target
+				}),
+				context.dispatch('updateSelectTrainingData'),
 			]);
 		});
 	},

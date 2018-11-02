@@ -113,7 +113,6 @@ export default Vue.extend({
 			if (this.filtersStr) {
 				viewActions.updateSelectTrainingData(this.$store);
 			}
-
 		}
 	},
 

@@ -49,6 +49,8 @@ export const actions = {
 	setVariableType: dispatch(moduleActions.setVariableType),
 	fetchVariableSummary: dispatch(moduleActions.fetchVariableSummary),
 	fetchVariableSummaries: dispatch(moduleActions.fetchVariableSummaries),
+	// ranking
+	fetchVariableRankings: dispatch(moduleActions.fetchVariableRankings),
 	// files
 	fetchFiles: dispatch(moduleActions.fetchFiles),
 	fetchImage: dispatch(moduleActions.fetchImage),
@@ -68,6 +70,8 @@ export const mutations = {
 	setVariables: commit(moduleMutations.setVariables),
 	updateVariableType: commit(moduleMutations.updateVariableType),
 	updateVariableSummaries: commit(moduleMutations.updateVariableSummaries),
+	// ranking
+	updateVariableRankings: commit(moduleMutations.updateVariableRankings),
 	// files
 	updateFile: commit(moduleMutations.updateFile),
 	// included / excluded table data

@@ -298,6 +298,19 @@ func CreateDenormalizePipeline(name string, description string) (*pipeline.Pipel
 	return pipeline, nil
 }
 
+// CreateTargetRankingPipeline creates a pipeline to run feature ranking on an input dataset.
+func CreateTargetRankingPipeline(name string, description string, target string) (*pipeline.PipelineDescription, error) {
+	// insantiate the pipeline
+	pipeline, err := NewBuilder(name, description).
+		Add(NewTargetRankingStep(target)).
+		Compile()
+
+	if err != nil {
+		return nil, err
+	}
+	return pipeline, nil
+}
+
 func mapColumns(allFeatures []*model.Variable, selectedSet map[string]bool) map[string]int {
 	colIndices := make(map[string]int)
 	index := 0
