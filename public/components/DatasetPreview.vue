@@ -1,6 +1,6 @@
 <template>
 	<div class='card card-result'>
-		<div class='dataset-header btn btn-success hover card-header' v-on:click='setActiveDataset()' v-bind:class='{collapsed: !expanded}'>
+		<div class='dataset-header btn-success hover card-header' v-on:click='setActiveDataset()' v-bind:class='{collapsed: !expanded}'>
 			<a class='nav-link'><b>Name:</b> {{name}}</a>
 			<a class='nav-link'><b>Features:</b> {{variables.length}}</a>
 			<a class='nav-link'><b>Rows:</b> {{numRows}}</a>
@@ -47,6 +47,7 @@
 		</div>
 
 	</div>
+
 </template>
 
 <script lang="ts">

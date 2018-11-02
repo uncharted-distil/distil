@@ -8,7 +8,7 @@ export enum SummaryType {
 export const D3M_INDEX_FIELD = 'd3mIndex';
 
 export interface SuggestedType {
-	probability: string;
+	probability: number;
 	provenance: string;
 	type: string;
 }

@@ -1,27 +1,22 @@
 package task
 
 import (
-	"bytes"
 	"context"
 	"encoding/csv"
-	"encoding/json"
 	"fmt"
 	"io"
 	"os"
-	"path"
 	"strconv"
 	"strings"
 
 	"github.com/pkg/errors"
 	"github.com/unchartedsoftware/distil-ingest/metadata"
-	"github.com/unchartedsoftware/distil-ingest/rest"
 
 	"github.com/unchartedsoftware/distil/api/compute"
 	"github.com/unchartedsoftware/distil/api/compute/description"
 	"github.com/unchartedsoftware/distil/api/compute/result"
 	"github.com/unchartedsoftware/distil/api/env"
 	"github.com/unchartedsoftware/distil/api/pipeline"
-	"github.com/unchartedsoftware/distil/api/util"
 )
 
 const (
@@ -37,6 +32,7 @@ var (
 type FeatureRequest struct {
 	SourceVariableName  string
 	FeatureVariableName string
+	OutputVariableName  string
 	Variable            *metadata.Variable
 	Step                *pipeline.PipelineDescription
 }
@@ -94,241 +90,6 @@ func submitPrimitive(dataset string, step *pipeline.PipelineDescription) (string
 	return datasetURI, nil
 }
 
-// ClassifyPrimitive will classify the dataset using a primitive.
-func ClassifyPrimitive(index string, dataset string, config *IngestTaskConfig) error {
-	// create & submit the solution request
-	pip, err := description.CreateSimonPipeline("says", "")
-	if err != nil {
-		return errors.Wrap(err, "unable to create Simon pipeline")
-	}
-
-	datasetURI, err := submitPrimitive(dataset, pip)
-	if err != nil {
-		return errors.Wrap(err, "unable to run Simon pipeline")
-	}
-
-	// parse primitive response (variable,probabilities,labels)
-	res, err := result.ParseResultCSV(datasetURI)
-	if err != nil {
-		return errors.Wrap(err, "unable to parse Simon pipeline result")
-	}
-
-	// First row is header, then all other rows are col index, types, probabilities.
-	probabilities := make([][]float64, len(res)-1)
-	labels := make([][]string, len(res)-1)
-	for i, v := range res {
-		if i > 0 {
-			colIndex, err := strconv.ParseInt(v[0].(string), 10, 64)
-			if err != nil {
-				return err
-			}
-			labels[colIndex] = toStringArray(v[1].([]interface{}))
-			probs, err := toFloat64Array(v[2].([]interface{}))
-			if err != nil {
-				return err
-			}
-			probabilities[colIndex] = probs
-		}
-	}
-	classification := &rest.ClassificationResult{
-		Path:          datasetURI,
-		Labels:        labels,
-		Probabilities: probabilities,
-	}
-
-	// output the classification in the expected JSON format
-	bytes, err := json.MarshalIndent(classification, "", "    ")
-	if err != nil {
-		return errors.Wrap(err, "unable to serialize classification result")
-	}
-	// write to file
-	err = util.WriteFileWithDirs(config.getTmpAbsolutePath(config.ClassificationOutputPathRelative), bytes, os.ModePerm)
-	if err != nil {
-		return errors.Wrap(err, "unable to store classification result")
-	}
-
-	return nil
-}
-
-// RankPrimitive will rank the dataset using a primitive.
-func RankPrimitive(index string, dataset string, config *IngestTaskConfig) error {
-	// create & submit the solution request
-	pip, err := description.CreatePCAFeaturesPipeline("harry", "")
-	if err != nil {
-		return errors.Wrap(err, "unable to create PCA pipeline")
-	}
-
-	datasetURI, err := submitPrimitive(dataset, pip)
-	if err != nil {
-		return errors.Wrap(err, "unable to run PCA pipeline")
-	}
-
-	// parse primitive response (col index,importance)
-	res, err := result.ParseResultCSV(datasetURI)
-	if err != nil {
-		return errors.Wrap(err, "unable to parse PCA pipeline result")
-	}
-
-	ranks := make([]float64, len(res)-1)
-	for i, v := range res {
-		if i > 0 {
-			colIndex, err := strconv.ParseInt(v[0].(string), 10, 64)
-			if err != nil {
-				return errors.Wrap(err, "unable to parse PCA col index")
-			}
-			vInt, err := strconv.ParseFloat(v[1].(string), 64)
-			if err != nil {
-				return errors.Wrap(err, "unable to parse PCA rank value")
-			}
-			ranks[colIndex] = vInt
-		}
-	}
-
-	importance := &rest.ImportanceResult{
-		Path:     datasetURI,
-		Features: ranks,
-	}
-
-	// output the classification in the expected JSON format
-	bytes, err := json.MarshalIndent(importance, "", "    ")
-	if err != nil {
-		return errors.Wrap(err, "unable to serialize ranking result")
-	}
-
-	// write to file
-	err = util.WriteFileWithDirs(config.getTmpAbsolutePath(config.RankingOutputPathRelative), bytes, os.ModePerm)
-	if err != nil {
-		return errors.Wrap(err, "unable to store ranking result")
-	}
-
-	return nil
-}
-
-// SummarizePrimitive will summarize the dataset using a primitive.
-func SummarizePrimitive(index string, dataset string, config *IngestTaskConfig) error {
-	// create & submit the solution request
-	pip, err := description.CreateDukePipeline("wellington", "")
-	if err != nil {
-		return errors.Wrap(err, "unable to create Duke pipeline")
-	}
-
-	datasetURI, err := submitPrimitive(dataset, pip)
-	if err != nil {
-		return errors.Wrap(err, "unable to run Duke pipeline")
-	}
-
-	// parse primitive response (token,probability)
-	res, err := result.ParseResultCSV(datasetURI)
-	if err != nil {
-		return errors.Wrap(err, "unable to parse Duke pipeline result")
-	}
-
-	tokens := make([]string, len(res)-1)
-	for i, v := range res {
-		// skip the header
-		if i > 0 {
-			token, ok := v[0].(string)
-			if !ok {
-				return errors.Wrap(err, "unable to parse Duke token")
-			}
-			tokens[i-1] = token
-		}
-	}
-
-	sum := &rest.SummaryResult{
-		Summary: strings.Join(tokens, ", "),
-	}
-
-	// output the classification in the expected JSON format
-	bytes, err := json.MarshalIndent(sum, "", "    ")
-	if err != nil {
-		return errors.Wrap(err, "unable to serialize summary result")
-	}
-	// write to file
-	err = util.WriteFileWithDirs(config.getTmpAbsolutePath(config.SummaryOutputPathRelative), bytes, os.ModePerm)
-	if err != nil {
-		return errors.Wrap(err, "unable to store summary result")
-	}
-
-	return nil
-}
-
-// FeaturizePrimitive will featurize the dataset fields using a primitive.
-func FeaturizePrimitive(schemaFile string, index string, dataset string, config *IngestTaskConfig) error {
-	// create required folders for outputPath
-	createContainingDirs(config.getTmpAbsolutePath(config.FeaturizationOutputDataRelative))
-	createContainingDirs(config.getTmpAbsolutePath(config.FeaturizationOutputSchemaRelative))
-
-	// load metadata from original schema
-	meta, err := metadata.LoadMetadataFromOriginalSchema(schemaFile)
-	if err != nil {
-		return errors.Wrap(err, "unable to load original schema file")
-	}
-	mainDR := meta.GetMainDataResource()
-
-	// add feature variables
-	features, err := getClusterVariables(meta, "_feature_")
-	if err != nil {
-		return errors.Wrap(err, "unable to get feature variables")
-	}
-
-	d3mIndexField := getD3MIndexField(mainDR)
-
-	// open the input file
-	dataPath := path.Join(config.ContainerDataPath, mainDR.ResPath)
-	lines, err := readCSVFile(dataPath, config.HasHeader)
-	if err != nil {
-		return errors.Wrap(err, "error reading raw data")
-	}
-
-	// add the cluster data to the raw data
-	for _, f := range features {
-		mainDR.Variables = append(mainDR.Variables, f.Variable)
-
-		lines, err = appendFeature(dataset, d3mIndexField, config.HasHeader, f, lines)
-		if err != nil {
-			return errors.Wrap(err, "error appending feature data")
-		}
-	}
-
-	// initialize csv writer
-	output := &bytes.Buffer{}
-	writer := csv.NewWriter(output)
-
-	// output the header
-	header := make([]string, len(mainDR.Variables))
-	for _, v := range mainDR.Variables {
-		header[v.Index] = v.Name
-	}
-	err = writer.Write(header)
-	if err != nil {
-		return errors.Wrap(err, "error storing feature header")
-	}
-
-	for _, line := range lines {
-		err = writer.Write(line)
-		if err != nil {
-			return errors.Wrap(err, "error storing feature output")
-		}
-	}
-
-	// output the data with the new feature
-	writer.Flush()
-	err = util.WriteFileWithDirs(config.getTmpAbsolutePath(config.FeaturizationOutputDataRelative), output.Bytes(), os.ModePerm)
-	if err != nil {
-		return errors.Wrap(err, "error writing feature output")
-	}
-
-	mainDR.ResPath = config.FeaturizationOutputDataRelative
-
-	// write the new schema to file
-	err = meta.WriteSchema(config.getTmpAbsolutePath(config.FeaturizationOutputSchemaRelative))
-	if err != nil {
-		return errors.Wrap(err, "unable to store feature schema")
-	}
-
-	return nil
-}
 
 // TargetRankPrimitive will rank the dataset relative to a target variable using
 // a primitive.
@@ -368,83 +129,6 @@ func TargetRankPrimitive(dataset string, target string) ([]float64, error) {
 	return ranks, nil
 }
 
-// ClusterPrimitive will cluster the dataset fields using a primitive.
-func ClusterPrimitive(index string, dataset string, config *IngestTaskConfig) error {
-	// create required folders for outputPath
-	createContainingDirs(config.getTmpAbsolutePath(config.ClusteringOutputDataRelative))
-	createContainingDirs(config.getTmpAbsolutePath(config.ClusteringOutputSchemaRelative))
-
-	// load metadata from original schema
-	meta, err := metadata.LoadMetadataFromOriginalSchema(config.getAbsolutePath(config.SchemaPathRelative))
-	if err != nil {
-		return errors.Wrap(err, "unable to load original schema file")
-	}
-	mainDR := meta.GetMainDataResource()
-
-	// add feature variables
-	features, err := getFeatureVariables(meta, "_cluster_")
-	if err != nil {
-		return errors.Wrap(err, "unable to get cluster variables")
-	}
-
-	d3mIndexField := getD3MIndexField(mainDR)
-
-	// open the input file
-	dataPath := path.Join(config.ContainerDataPath, mainDR.ResPath)
-	lines, err := readCSVFile(dataPath, config.HasHeader)
-	if err != nil {
-		return errors.Wrap(err, "error reading raw data")
-	}
-
-	// add the cluster data to the raw data
-	for _, f := range features {
-		mainDR.Variables = append(mainDR.Variables, f.Variable)
-
-		lines, err = appendFeature(dataset, d3mIndexField, config.HasHeader, f, lines)
-		if err != nil {
-			return errors.Wrap(err, "error appending clustered data")
-		}
-	}
-
-	// initialize csv writer
-	output := &bytes.Buffer{}
-	writer := csv.NewWriter(output)
-
-	// output the header
-	header := make([]string, len(mainDR.Variables))
-	for _, v := range mainDR.Variables {
-		header[v.Index] = v.Name
-	}
-	err = writer.Write(header)
-	if err != nil {
-		return errors.Wrap(err, "error storing clustered header")
-	}
-
-	for _, line := range lines {
-		err = writer.Write(line)
-		if err != nil {
-			return errors.Wrap(err, "error storing clustered output")
-		}
-	}
-
-	// output the data with the new feature
-	writer.Flush()
-
-	err = util.WriteFileWithDirs(config.getTmpAbsolutePath(config.ClusteringOutputDataRelative), output.Bytes(), os.ModePerm)
-	if err != nil {
-		return errors.Wrap(err, "error writing clustered output")
-	}
-
-	mainDR.ResPath = config.ClusteringOutputDataRelative
-
-	// write the new schema to file
-	err = meta.WriteSchema(config.getTmpAbsolutePath(config.ClusteringOutputSchemaRelative))
-	if err != nil {
-		return errors.Wrap(err, "unable to store cluster schema")
-	}
-
-	return nil
-}
 
 func readCSVFile(filename string, hasHeader bool) ([][]string, error) {
 	// open the file
@@ -495,7 +179,7 @@ func appendFeature(dataset string, d3mIndexField int, hasHeader bool, feature *F
 	// find the field with the feature output
 	labelIndex := 1
 	for i, f := range res[0] {
-		if f == feature.FeatureVariableName {
+		if f == feature.OutputVariableName {
 			labelIndex = i
 		}
 	}
@@ -517,6 +201,7 @@ func appendFeature(dataset string, d3mIndexField int, hasHeader bool, feature *F
 			d3mIndex := line[d3mIndexField]
 			feature := features[d3mIndex]
 			line = append(line, feature)
+			lines[i] = line
 		}
 	}
 
@@ -542,7 +227,7 @@ func getFeatureVariables(meta *metadata.Metadata, prefix string) ([]*FeatureRequ
 				v := metadata.NewVariable(len(mainDR.Variables), indexName, "label", v.Name, "string", "string", "", "", []string{"attribute"}, metadata.VarRoleMetadata, nil, mainDR.Variables, false)
 
 				// create the required pipeline
-				step, err := description.CreateCrocPipeline("leather", "", []string{v.Name}, []string{indexName})
+				step, err := description.CreateCrocPipeline("leather", "", []string{denormFieldName}, []string{indexName})
 				if err != nil {
 					return nil, errors.Wrap(err, "unable to create step pipeline")
 				}
@@ -550,6 +235,7 @@ func getFeatureVariables(meta *metadata.Metadata, prefix string) ([]*FeatureRequ
 				features = append(features, &FeatureRequest{
 					SourceVariableName:  denormFieldName,
 					FeatureVariableName: indexName,
+					OutputVariableName:  fmt.Sprintf("%s_object_label", indexName),
 					Variable:            v,
 					Step:                step,
 				})
@@ -581,13 +267,16 @@ func getClusterVariables(meta *metadata.Metadata, prefix string) ([]*FeatureRequ
 				// create the required pipeline
 				var step *pipeline.PipelineDescription
 				var err error
+				outputName := ""
 				if res.CanBeFeaturized() {
 					step, err = description.CreateUnicornPipeline("horned",
-						"clustering based on resnet-50 detected objects", []string{v.Name}, []string{indexName})
+						"clustering based on resnet-50 detected objects", []string{denormFieldName}, []string{indexName})
+					outputName = unicornResultFieldName
 				} else {
-					if colNames, ok := getTimeValueCols(mainDR); ok {
+					if colNames, ok := getTimeValueCols(res); ok {
 						step, err = description.CreateSlothPipeline("time series clustering",
 							"k-means time series clustering", colNames.timeCol, colNames.valueCol, res.Variables)
+						outputName = slothResultFieldName
 					}
 				}
 				if err != nil {
@@ -597,6 +286,7 @@ func getClusterVariables(meta *metadata.Metadata, prefix string) ([]*FeatureRequ
 				features = append(features, &FeatureRequest{
 					SourceVariableName:  denormFieldName,
 					FeatureVariableName: indexName,
+					OutputVariableName:  outputName,
 					Variable:            v,
 					Step:                step,
 				})
@@ -664,10 +354,10 @@ func getTimeValueCols(dr *metadata.DataResource) (*timeValueCols, bool) {
 		// case
 		for _, v := range dr.Variables {
 			for _, r := range v.Role {
-				if r == "timeIndicator" && timeCol != "" {
+				if r == "timeIndicator" && timeCol == "" {
 					timeCol = v.Name
 				}
-				if r == "attribute" && valueCol != "" {
+				if r == "attribute" && valueCol == "" {
 					valueCol = v.Name
 				}
 			}
@@ -680,4 +370,34 @@ func getTimeValueCols(dr *metadata.DataResource) (*timeValueCols, bool) {
 		}
 	}
 	return nil, false
+}
+
+func mapFields(meta *metadata.Metadata) map[string]*metadata.Variable {
+	// cycle through each data resource, mapping field names to variables.
+	fields := make(map[string]*metadata.Variable)
+	for _, dr := range meta.DataResources {
+		for _, v := range dr.Variables {
+			fields[v.Name] = v
+		}
+	}
+
+	return fields
+}
+
+func mapDenormFields(mainDR *metadata.DataResource) map[string]*metadata.Variable {
+	fields := make(map[string]*metadata.Variable)
+	for _, field := range mainDR.Variables {
+		if field.IsMediaReference() {
+			// DENORM PRIMITIVE RENAMES REFERENCE FIELDS TO `filename`
+			fields[denormFieldName] = field
+		}
+	}
+	return fields
+}
+
+func getRelativePath(rootPath string, filePath string) string {
+	relativePath := strings.TrimPrefix(filePath, rootPath)
+	relativePath = strings.TrimPrefix(relativePath, "/")
+
+	return relativePath
 }
