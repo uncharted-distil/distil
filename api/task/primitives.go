@@ -90,7 +90,6 @@ func submitPrimitive(dataset string, step *pipeline.PipelineDescription) (string
 	return datasetURI, nil
 }
 
-
 // TargetRankPrimitive will rank the dataset relative to a target variable using
 // a primitive.
 func TargetRankPrimitive(dataset string, target string) ([]float64, error) {
@@ -128,7 +127,6 @@ func TargetRankPrimitive(dataset string, target string) ([]float64, error) {
 
 	return ranks, nil
 }
-
 
 func readCSVFile(filename string, hasHeader bool) ([][]string, error) {
 	// open the file
