@@ -512,8 +512,7 @@ func (s *SolutionRequest) PersistAndDispatch(client *Client, solutionStorage mod
 	columnIndex := getColumnIndex(targetVariable, s.Filters.Variables)
 
 	// add dataset name to path
-	// TODO: do a lookup here for the proper path rather than dataset
-	datasetInputDir := path.Join(inputDir, s.Dataset, "TRAIN", "dataset_TRAIN")
+	datasetInputDir := path.Join(inputDir, dataset.Metadata.Folder, "TRAIN", "dataset_TRAIN")
 
 	// perist the datasets and get URI
 	datasetPathTrain, datasetPathTest, err := PersistOriginalData(s.Dataset, D3MDataSchema, datasetInputDir, datasetDir)
