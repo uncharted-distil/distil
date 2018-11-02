@@ -5,6 +5,7 @@ import (
 	"crypto/sha1"
 	"encoding/json"
 	"fmt"
+	"path"
 	"path/filepath"
 	"strings"
 	"sync"
@@ -510,8 +511,11 @@ func (s *SolutionRequest) PersistAndDispatch(client *Client, solutionStorage mod
 
 	columnIndex := getColumnIndex(targetVariable, s.Filters.Variables)
 
+	// add dataset name to path
+	datasetInputDir := path.Join(inputDir, dataset.Metadata.Folder, "TRAIN", "dataset_TRAIN")
+
 	// perist the datasets and get URI
-	datasetPathTrain, datasetPathTest, err := PersistOriginalData(s.Dataset, D3MDataSchema, inputDir, datasetDir)
+	datasetPathTrain, datasetPathTest, err := PersistOriginalData(s.Dataset, D3MDataSchema, datasetInputDir, datasetDir)
 	if err != nil {
 		return err
 	}

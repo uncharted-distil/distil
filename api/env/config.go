@@ -33,7 +33,8 @@ type Config struct {
 	SolutionComputePullTimeout         int     `env:"SOLUTION_COMPUTE_PULL_TIMEOUT" envDefault:"60"`
 	SolutionComputePullMax             int     `env:"SOLUTION_COMPUTE_PULL_MAX" envDefault:"10"`
 	SolutionSearchMaxTime              int     `env:"SOLUTION_SEARCH_MAX_TIME" envDefault:"10"`
-	D3MInputDir                        string  `env:"D3MINPUTDIR" envDefault:"datasets"`
+	D3MInputDir                        string  `env:"D3MINPUTDIR" envDefault:""`
+	D3MInputDirRoot                    string  `env:"D3MINPUTDIR_ROOT" envDefault:"datasets"`
 	SolutionComputeTrace               bool    `env:"SOLUTION_COMPUTE_TRACE" envDefault:"false"`
 	D3MOutputDir                       string  `env:"D3MOUTPUTDIR" envDefault:"outputs"`
 	StartupConfigFile                  string  `env:"STARTUP_CONFIG_FILE" envDefault:"search_config.json"`

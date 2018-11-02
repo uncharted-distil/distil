@@ -11,6 +11,7 @@ const (
 // Dataset represents a decsription of a dataset.
 type Dataset struct {
 	Name        string      `json:"name"`
+	Folder      string      `json:"folder"`
 	Description string      `json:"description"`
 	Summary     string      `json:"summary"`
 	SummaryML   string      `json:"summaryML"`
