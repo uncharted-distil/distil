@@ -1,22 +1,7 @@
 package env
 
 import (
-	enjson "encoding/json"
-	"fmt"
-	"io/ioutil"
-	"os"
-	"path"
-
 	"github.com/caarlos0/env"
-	"github.com/unchartedsoftware/distil/api/util/json"
-	"github.com/unchartedsoftware/plog"
-)
-
-const (
-	tempStorageRoot  = "temp_storage_root"
-	executablesRoot  = "executables_root"
-	userProblemsRoot = "user_problems_root"
-	trainingDataRoot = "training_data_root"
 )
 
 var (
@@ -86,84 +71,6 @@ func LoadConfig() (Config, error) {
 		if err != nil {
 			return Config{}, err
 		}
-		// load any overrides from startup file
-		err = overideFromStartupFile(cfg)
-		if err != nil {
-			return Config{}, err
-		}
-
-		cfg.IsTask1 = isTask1(cfg.D3MInputDir)
-		cfg.IsTask2 = isTask2(cfg.D3MInputDir)
 	}
 	return *cfg, nil
-}
-
-func overideFromStartupFile(cfg *Config) error {
-	// Override env/default value with the command line value if set.
-	// startup config file is assumed to be in the input directory.
-	startConfigFile := path.Join(cfg.D3MInputDir, cfg.StartupConfigFile)
-
-	log.Infof("Loading overrides from config file (%s)", startConfigFile)
-
-	// read startup config JSON file
-	startupConfig, err := ioutil.ReadFile(startConfigFile)
-	if err != nil {
-		if !os.IsNotExist(err) {
-			return fmt.Errorf("Failed to read startup config file (%s): %v", startConfigFile, err)
-		}
-		log.Infof("No config file found at (%s)", startConfigFile)
-		return nil
-	}
-	// parse out the entries
-	var startupData map[string]interface{}
-	err = enjson.Unmarshal(startupConfig, &startupData)
-	if err != nil {
-		return fmt.Errorf("Failed to parse startup config file (%s): %v", cfg.StartupConfigFile, err)
-	}
-
-	// override / add values
-
-	result, ok := json.String(startupData, executablesRoot)
-	if ok {
-		cfg.D3MOutputDir = result
-	}
-
-	result, ok = json.String(startupData, tempStorageRoot)
-	if ok {
-		cfg.TmpDataPath = result
-	} else {
-		cfg.TmpDataPath = cfg.D3MOutputDir
-	}
-
-	result, ok = json.String(startupData, userProblemsRoot)
-	if ok {
-		cfg.UserProblemPath = result
-	}
-
-	result, ok = json.String(startupData, trainingDataRoot)
-	if ok {
-		cfg.DataFolderPath = result
-		cfg.InitialDataset = result
-	} else {
-		dataPath := path.Join(cfg.D3MInputDir, "TRAIN", "dataset_TRAIN")
-		cfg.DataFolderPath = dataPath
-		cfg.InitialDataset = dataPath
-	}
-
-	return nil
-}
-
-func isTask1(inputPath string) bool {
-	// if Task1 (problem discovery), dataset folder will exist, problem folder
-	// will not.
-	_, datasetErr := os.Stat(path.Join(inputPath, "TRAIN", "dataset_TRAIN"))
-	_, problemErr := os.Stat(path.Join(inputPath, "TRAIN", "problem_TRAIN"))
-	return datasetErr == nil && problemErr != nil
-}
-
-func isTask2(inputPath string) bool {
-	// if Task2 dataset folder AND problem folder will exist
-	_, datasetErr := os.Stat(path.Join(inputPath, "TRAIN", "dataset_TRAIN"))
-	_, problemErr := os.Stat(path.Join(inputPath, "TRAIN", "problem_TRAIN"))
-	return datasetErr == nil && problemErr == nil
 }
