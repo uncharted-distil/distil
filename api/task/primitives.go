@@ -90,12 +90,11 @@ func submitPrimitive(dataset string, step *pipeline.PipelineDescription) (string
 	return datasetURI, nil
 }
 
-
 // TargetRankPrimitive will rank the dataset relative to a target variable using
 // a primitive.
 func TargetRankPrimitive(dataset string, target string) ([]float64, error) {
 	// create & submit the solution request
-	pip, err := description.CreateTargetRankingPipeline("roger", "", target)
+	pip, err := description.CreateTargetRankingPipeline("roger", "", target, nil)
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to create ranking pipeline")
 	}
@@ -128,7 +127,6 @@ func TargetRankPrimitive(dataset string, target string) ([]float64, error) {
 
 	return ranks, nil
 }
-
 
 func readCSVFile(filename string, hasHeader bool) ([][]string, error) {
 	// open the file

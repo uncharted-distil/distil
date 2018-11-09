@@ -179,3 +179,18 @@ func TestCreateDukePipeline(t *testing.T) {
 	err = ioutil.WriteFile("/tmp/create_duke.pln", data, 0644)
 	assert.NoError(t, err)
 }
+
+func TestTargetRankingPipeline(t *testing.T) {
+	variables := []*metadata.Variable{
+		{Name: "hall_of_fame", Index: 18},
+	}
+
+	pipeline, err := CreateTargetRankingPipeline("ranking_test", "test target ranking pipeline", "hall_of_fame", variables)
+
+	data, err := proto.Marshal(pipeline)
+	assert.NoError(t, err)
+	assert.NotNil(t, data)
+
+	err = ioutil.WriteFile("/tmp/create_target_ranking.pln", data, 0644)
+	assert.NoError(t, err)
+}

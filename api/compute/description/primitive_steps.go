@@ -70,19 +70,22 @@ func NewPCAFeaturesStep() *StepData {
 }
 
 // NewTargetRankingStep creates a target ranking call that can be added to
-// a pipeline.
-func NewTargetRankingStep(target string) *StepData {
+// a pipeline. Ranking is based on mutual information between features and a selected
+// target.  Returns a DataFrame containing (col_idx, col_name, score) tuples for
+// each ranked feature. Features that could not be ranked are excluded
+// from the returned set.
+func NewTargetRankingStep(targetCol int) *StepData {
 	return NewStepDataWithHyperparameters(
 		&pipeline.Primitive{
-			Id:         "04573880-d64f-4791-8932-52b7c3877639",
-			Version:    "3.0.0",
-			Name:       "PCA Features",
-			PythonPath: "d3m.primitives.distil.pcafeatures",
+			Id:         "a31b0c26-cca8-4d54-95b9-886e23df8886",
+			Version:    "0.1.0",
+			Name:       "Mutual Information Feature Ranking",
+			PythonPath: "d3m.primitives.distil.MIRanking",
 			Digest:     "5302eebf2fb8a80e9f00e7b74888aba9eb448a9c0463d9d26786dab717a62c61",
 		},
 		[]string{"produce"},
 		map[string]interface{}{
-			"target": target,
+			"target_col_index": targetCol,
 		},
 	)
 }
@@ -173,6 +176,21 @@ func NewDenormalizeStep() *StepData {
 			Name:       "Denormalize datasets",
 			PythonPath: "d3m.primitives.datasets.Denormalize",
 			Digest:     "c39e3436373aed1944edbbc9b1cf24af5c71919d73bf0bb545cba0b685812df1",
+		},
+		[]string{"produce"},
+	)
+}
+
+// NewColumnParserStep takes obj/string columns in a dataframe and parses them into their
+// associated raw python types based on the attached d3m metadata.
+func NewColumnParserStep() *StepData {
+	return NewStepData(
+		&pipeline.Primitive{
+			Id:         "d510cb7a-1782-4f51-b44c-58f0236e47c7",
+			Version:    "0.4.0",
+			Name:       "Parses strings into their types",
+			PythonPath: "d3m.primitives.data.ColumnParser",
+			Digest:     "",
 		},
 		[]string{"produce"},
 	)

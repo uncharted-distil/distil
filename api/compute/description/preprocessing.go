@@ -299,10 +299,19 @@ func CreateDenormalizePipeline(name string, description string) (*pipeline.Pipel
 }
 
 // CreateTargetRankingPipeline creates a pipeline to run feature ranking on an input dataset.
-func CreateTargetRankingPipeline(name string, description string, target string) (*pipeline.PipelineDescription, error) {
+func CreateTargetRankingPipeline(name string, description string, target string, features []*metadata.Variable) (*pipeline.PipelineDescription, error) {
+	// compute index associated with column name
+	targetIdx, err := getIndex(features, target)
+	if err != nil {
+		return nil, err
+	}
+
 	// insantiate the pipeline
 	pipeline, err := NewBuilder(name, description).
-		Add(NewTargetRankingStep(target)).
+		Add(NewDenormalizeStep()).            // denormalize
+		Add(NewDatasetToDataframeStep()).     // extract main dataframe
+		Add(NewColumnParserStep()).           // convert obj/str to python raw types
+		Add(NewTargetRankingStep(targetIdx)). // compute feature ranks relative to target
 		Compile()
 
 	if err != nil {
