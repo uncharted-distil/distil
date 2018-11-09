@@ -14,8 +14,8 @@ export interface SuggestedType {
 }
 
 export interface Variable {
-	label: string;
-	key: string;
+	colDisplayName: string;
+	colName: string;
 	type: string;
 	importance: number;
 	novelty: number;

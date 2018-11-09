@@ -148,7 +148,7 @@ export default Vue.extend({
 		},
 		targetVariable(): Variable {
 			return _.find(this.variables, v => {
-				return _.toLower(v.key) === _.toLower(this.target);
+				return _.toLower(v.colName) === _.toLower(this.target);
 			});
 		},
 		isPending(): boolean {

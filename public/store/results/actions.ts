@@ -38,8 +38,8 @@ export const actions = {
 		const solutionId = args.solutionId;
 
 		return Promise.all(args.training.map(variable => {
-			const key = variable.key;
-			const label = variable.label;
+			const key = variable.colName;
+			const label = variable.colDisplayName;
 
 			mutations.updateTrainingSummary(context, createPendingSummary(key, label, dataset, solutionId));
 
