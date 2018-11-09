@@ -9,7 +9,7 @@ import (
 	protobuf "github.com/golang/protobuf/protoc-gen-go/descriptor"
 	"github.com/unchartedsoftware/plog"
 
-	"github.com/unchartedsoftware/distil/api/pipeline"
+	"github.com/unchartedsoftware/distil-compute/pipeline"
 )
 
 const (

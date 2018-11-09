@@ -10,8 +10,9 @@ import (
 	"github.com/pkg/errors"
 	"github.com/unchartedsoftware/distil-ingest/metadata"
 
-	"github.com/unchartedsoftware/distil/api/compute/description"
-	"github.com/unchartedsoftware/distil/api/compute/result"
+	"github.com/unchartedsoftware/distil-compute/model"
+	"github.com/unchartedsoftware/distil-compute/primitive/compute/description"
+	"github.com/unchartedsoftware/distil-compute/primitive/compute/result"
 	"github.com/unchartedsoftware/distil/api/util"
 )
 
@@ -62,8 +63,8 @@ func MergePrimitive(schemaFile string, index string, dataset string, config *Ing
 		vars[k] = v
 	}
 
-	outputMeta := metadata.NewMetadata(meta.ID, meta.Name, meta.Description)
-	outputMeta.DataResources = append(outputMeta.DataResources, metadata.NewDataResource("0", mainDR.ResType, mainDR.ResFormat))
+	outputMeta := model.NewMetadata(meta.ID, meta.Name, meta.Description)
+	outputMeta.DataResources = append(outputMeta.DataResources, model.NewDataResource("0", mainDR.ResType, mainDR.ResFormat))
 	header := rawResults[0]
 	for i, field := range header {
 		// the first column is a row idnex and should be discarded.
@@ -111,7 +112,7 @@ func MergePrimitive(schemaFile string, index string, dataset string, config *Ing
 	outputMeta.DataResources[0].ResPath = relativePath
 
 	// write the new schema to file
-	err = outputMeta.WriteSchema(outputSchemaPath)
+	err = metadata.WriteSchema(outputMeta, outputSchemaPath)
 	if err != nil {
 		return errors.Wrap(err, "unable to store merged schema")
 	}

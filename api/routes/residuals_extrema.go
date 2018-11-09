@@ -7,15 +7,16 @@ import (
 	"github.com/pkg/errors"
 	"goji.io/pat"
 
-	"github.com/unchartedsoftware/distil/api/model"
+	"github.com/unchartedsoftware/distil-compute/model"
+	api "github.com/unchartedsoftware/distil/api/model"
 )
 
 // ResidualsExtrema contains a residual extrema response.
 type ResidualsExtrema struct {
-	Extrema *model.Extrema `json:"extrema"`
+	Extrema *api.Extrema `json:"extrema"`
 }
 
-func fetchSolutionResidualExtrema(meta model.MetadataStorage, data model.DataStorage, solution model.SolutionStorage, dataset string, target string, solutionID string) (*model.Extrema, error) {
+func fetchSolutionResidualExtrema(meta api.MetadataStorage, data api.DataStorage, solution api.SolutionStorage, dataset string, target string, solutionID string) (*api.Extrema, error) {
 	// check target var type
 	variable, err := meta.FetchVariable(dataset, target)
 	if err != nil {
@@ -54,11 +55,11 @@ func fetchSolutionResidualExtrema(meta model.MetadataStorage, data model.DataSto
 	// make symmetrical
 	extremum := math.Max(math.Abs(min), math.Abs(max))
 
-	return model.NewExtrema(-extremum, extremum)
+	return api.NewExtrema(-extremum, extremum)
 }
 
 // ResidualsExtremaHandler returns the extremas for a residual summary.
-func ResidualsExtremaHandler(metaCtor model.MetadataStorageCtor, solutionCtor model.SolutionStorageCtor, dataCtor model.DataStorageCtor) func(http.ResponseWriter, *http.Request) {
+func ResidualsExtremaHandler(metaCtor api.MetadataStorageCtor, solutionCtor api.SolutionStorageCtor, dataCtor api.DataStorageCtor) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		dataset := pat.Param(r, "dataset")
 		target := pat.Param(r, "target")

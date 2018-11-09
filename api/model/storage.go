@@ -2,6 +2,8 @@ package model
 
 import (
 	"time"
+
+	"github.com/unchartedsoftware/distil-compute/model"
 )
 
 // DataStorageCtor represents a client constructor to instantiate a data
@@ -62,10 +64,10 @@ type MetadataStorageCtor func() (MetadataStorage, error)
 // MetadataStorage defines the functions available to query the underlying
 // metadata storage.
 type MetadataStorage interface {
-	FetchVariables(dataset string, includeIndex bool, includeMeta bool) ([]*Variable, error)
-	FetchVariablesDisplay(dataset string) ([]*Variable, error)
-	FetchVariable(dataset string, varName string) (*Variable, error)
-	FetchVariableDisplay(dataset string, varName string) (*Variable, error)
+	FetchVariables(dataset string, includeIndex bool, includeMeta bool) ([]*model.Variable, error)
+	FetchVariablesDisplay(dataset string) ([]*model.Variable, error)
+	FetchVariable(dataset string, varName string) (*model.Variable, error)
+	FetchVariableDisplay(dataset string, varName string) (*model.Variable, error)
 	FetchDatasets(includeIndex bool, includeMeta bool) ([]*Dataset, error)
 	SearchDatasets(terms string, includeIndex bool, includeMeta bool) ([]*Dataset, error)
 

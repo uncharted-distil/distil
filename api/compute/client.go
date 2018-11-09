@@ -9,8 +9,8 @@ import (
 	"time"
 
 	"github.com/pkg/errors"
-	"github.com/unchartedsoftware/distil/api/middleware"
-	"github.com/unchartedsoftware/distil/api/pipeline"
+	"github.com/unchartedsoftware/distil-compute/middleware"
+	"github.com/unchartedsoftware/distil-compute/pipeline"
 	"github.com/unchartedsoftware/plog"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"

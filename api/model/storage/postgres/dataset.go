@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/pkg/errors"
-	"github.com/unchartedsoftware/distil/api/model"
+	"github.com/unchartedsoftware/distil-compute/model"
 )
 
 const (
@@ -106,7 +106,7 @@ func (s *Storage) createView(dataset string, fields map[string]*model.Variable) 
 	// Build the select statement of the query.
 	fieldList := make([]string, 0)
 	for _, v := range fields {
-		fieldList = append(fieldList, s.getViewField(v.Key, v.OriginalVariable, v.Type, s.defaultValue(v.Type)))
+		fieldList = append(fieldList, s.getViewField(v.Name, v.OriginalVariable, v.Type, s.defaultValue(v.Type)))
 	}
 	sql = fmt.Sprintf(sql, dataset, strings.Join(fieldList, ","), dataset)
 
@@ -163,8 +163,8 @@ func (s *Storage) createViewFromMetadataFields(dataset string, fields map[string
 	// map the types to db types.
 	for field, v := range fields {
 		dbFields[field] = &model.Variable{
-			Key:              v.Key,
-			OriginalVariable: v.OriginalVariable,
+			Name:             v.Name,
+			OriginalVariable: v.OriginalName,
 			Type:             s.mapType(v.Type),
 		}
 	}
@@ -212,7 +212,7 @@ func (s *Storage) AddVariable(dataset string, varName string, varType string) er
 	if fields[varName] == nil {
 		// need to add the field to the view
 		fields[varName] = &model.Variable{
-			Key:              varName,
+			Name:             varName,
 			OriginalVariable: varName,
 			Type:             varType,
 		}

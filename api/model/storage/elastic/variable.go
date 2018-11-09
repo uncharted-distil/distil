@@ -6,85 +6,65 @@ import (
 	"github.com/pkg/errors"
 	"gopkg.in/olivere/elastic.v5"
 
-	"github.com/unchartedsoftware/distil/api/model"
+	"github.com/unchartedsoftware/distil-compute/model"
 	"github.com/unchartedsoftware/distil/api/util/json"
 )
 
-const (
-	// Variables is the field name which stores the variables in elasticsearch.
-	Variables = "variables"
-	// VarNameField is the field name for the variable name.
-	VarNameField = "colName"
-	// VarIndexField is the field name for the variable index.
-	VarIndexField = "colIndex"
-	// VarRoleField is the field name for the variable role.
-	VarRoleField = "selectedRole"
-	// VarDisplayVariableField is the field name for the display variable.
-	VarDisplayVariableField = "colDisplayName"
-	// VarOriginalVariableField is the field name for the original variable.
-	VarOriginalVariableField = "colOriginalName"
-	// VarTypeField is the field name for the variable type.
-	VarTypeField = "colType"
-	// VarOriginalTypeField is the field name for the orginal variable type.
-	VarOriginalTypeField = "colOriginalType"
-	// VarImportanceField is the field name for the variable importnace.
-	VarImportanceField = "importance"
-	// VarSuggestedTypesField is the field name for the suggested variable types.
-	VarSuggestedTypesField = "suggestedTypes"
-	// VarRoleIndex is the variable role of an index field.
-	VarRoleIndex = "index"
-	// VarRoleMetadata is the variable role of a generated field.
-	VarRoleMetadata = "metadata"
-	// VarDistilRole is the variable role in distil.
-	VarDistilRole = "distilRole"
-	// VarDeleted flags whether the variable is deleted.
-	VarDeleted = "deleted"
-)
-
 func (s *Storage) parseRawVariable(child map[string]interface{}) (*model.Variable, error) {
-	name, ok := json.String(child, VarNameField)
+	name, ok := json.String(child, model.VarNameField)
 	if !ok {
 		return nil, errors.New("unable to parse name from variable data")
 	}
-	index, ok := json.Int(child, VarIndexField)
+	index, ok := json.Int(child, model.VarIndexField)
 	if !ok {
 		return nil, errors.New("unable to parse index from variable data")
 	}
-	typ, ok := json.String(child, VarTypeField)
+	typ, ok := json.String(child, model.VarTypeField)
 	if !ok {
 		return nil, errors.New("unable to parse type from variable data")
 	}
-	originalType, ok := json.String(child, VarOriginalTypeField)
+	originalType, ok := json.String(child, model.VarOriginalTypeField)
 	if !ok {
 		return nil, errors.New("unable to parse original type from variable data")
 	}
-	importance, ok := json.Int(child, VarImportanceField)
+	importance, ok := json.Int(child, model.VarImportanceField)
 	if !ok {
 		importance = 0
 	}
-	role, ok := json.String(child, VarRoleField)
+	role, ok := json.StringArray(child, model.VarRoleField)
 	if !ok {
-		role = ""
+		role = make([]string, 0)
 	}
-	originalVariable, ok := json.String(child, VarOriginalVariableField)
+	selectedRole, ok := json.String(child, model.VarSelectedRoleField)
+	if !ok {
+		selectedRole = ""
+	}
+	originalVariable, ok := json.String(child, model.VarOriginalVariableField)
 	if !ok {
 		originalVariable = name
 	}
-	displayVariable, ok := json.String(child, VarDisplayVariableField)
+	displayVariable, ok := json.String(child, model.VarDisplayVariableField)
 	if !ok {
 		displayVariable = ""
 	}
-	distilRole, ok := json.String(child, VarDistilRole)
+	distilRole, ok := json.String(child, model.VarDistilRole)
 	if !ok {
 		distilRole = ""
 	}
-	deleted, ok := json.Bool(child, VarDeleted)
+	deleted, ok := json.Bool(child, model.VarDeleted)
 	if !ok {
 		deleted = false
 	}
-	suggestedTypes, ok := json.Array(child, VarSuggestedTypesField)
-	if !ok {
-		suggestedTypes = make([]map[string]interface{}, 0)
+	suggestedTypes, ok := json.Array(child, model.VarSuggestedTypesField)
+	suggestedTypesParsed := make([]*model.SuggestedType, 0)
+	if ok {
+		for _, t := range suggestedTypes {
+			suggestedType, err := s.parseSuggestedType(t)
+			if err != nil {
+				return nil, errors.Wrap(err, "unable to parse suggested type")
+			}
+			suggestedTypesParsed = append(suggestedTypesParsed, suggestedType)
+		}
 	}
 
 	// default the display name to the normalized name
@@ -93,18 +73,39 @@ func (s *Storage) parseRawVariable(child map[string]interface{}) (*model.Variabl
 	}
 
 	return &model.Variable{
-		Label:            name,
-		Key:              name,
+		Name:             name,
 		Index:            index,
 		Type:             typ,
 		OriginalType:     originalType,
 		Importance:       importance,
 		Role:             role,
-		SuggestedTypes:   suggestedTypes,
+		SelectedRole:     selectedRole,
+		SuggestedTypes:   suggestedTypesParsed,
 		OriginalVariable: originalVariable,
-		DisplayVariable:  displayVariable,
+		DisplayName:      displayVariable,
 		DistilRole:       distilRole,
 		Deleted:          deleted,
+	}, nil
+}
+
+func (s *Storage) parseSuggestedType(json map[string]interface{}) (*model.SuggestedType, error) {
+	typ, ok := json[model.TypeTypeField].(string)
+	if !ok {
+		return nil, errors.New("unable to parse type from suggested type data")
+	}
+	probability, ok := json[model.TypeProbabilityField].(float64)
+	if !ok {
+		return nil, errors.New("unable to parse probability from suggested type data")
+	}
+	provenance, ok := json[model.TypeProvenanceField].(string)
+	if !ok {
+		return nil, errors.New("unable to parse provenance from suggested type data")
+	}
+
+	return &model.SuggestedType{
+		Type:        typ,
+		Probability: probability,
+		Provenance:  provenance,
 	}, nil
 }
 
@@ -115,7 +116,7 @@ func (s *Storage) parseVariable(searchHit *elastic.SearchHit, varName string) (*
 		return nil, errors.Wrap(err, "unable to parse search result")
 	}
 	// get the variables array
-	children, ok := json.Array(src, Variables)
+	children, ok := json.Array(src, model.Variables)
 	if !ok {
 		return nil, errors.New("unable to parse variables from search result")
 	}
@@ -126,7 +127,7 @@ func (s *Storage) parseVariable(searchHit *elastic.SearchHit, varName string) (*
 			return nil, errors.Wrap(err, "unable to parse variable")
 		}
 		if variable != nil {
-			if variable.Key == varName {
+			if variable.Name == varName {
 				return variable, nil
 			}
 		}
@@ -141,7 +142,7 @@ func (s *Storage) parseVariables(searchHit *elastic.SearchHit, includeIndex bool
 		return nil, errors.Wrap(err, "unable to parse search result")
 	}
 	// get the variables array
-	children, ok := json.Array(src, Variables)
+	children, ok := json.Array(src, model.Variables)
 	if !ok {
 		return nil, errors.New("unable to parse variables from search result")
 	}
@@ -152,10 +153,10 @@ func (s *Storage) parseVariables(searchHit *elastic.SearchHit, includeIndex bool
 		if err != nil {
 			return nil, errors.Wrap(err, "unable to parse variable")
 		}
-		if !includeIndex && variable.Role == VarRoleIndex {
+		if !includeIndex && variable.Role[0] == model.VarRoleIndex {
 			continue
 		}
-		if !includeMeta && variable.DistilRole == VarRoleMetadata {
+		if !includeMeta && variable.DistilRole == model.VarRoleMetadata {
 			continue
 		}
 		if variable != nil {
@@ -173,7 +174,7 @@ func (s *Storage) FetchVariable(dataset string, varName string) (*model.Variable
 	query := elastic.NewMatchQuery("_id", datasetID)
 	// create fetch context
 	fetchContext := elastic.NewFetchSourceContext(true)
-	fetchContext.Include(Variables)
+	fetchContext.Include(model.Variables)
 	// execute the ES query
 	res, err := s.client.Search().
 		Query(query).
@@ -206,8 +207,8 @@ func (s *Storage) FetchVariableDisplay(dataset string, varName string) (*model.V
 
 	// DisplayVariable will identify the variable to return.
 	// If not set, no other fetch is needed.
-	if variable.DisplayVariable != "" && variable.DisplayVariable != varName {
-		return s.FetchVariable(dataset, variable.DisplayVariable)
+	if variable.DisplayName != "" && variable.DisplayName != varName {
+		return s.FetchVariable(dataset, variable.DisplayName)
 	}
 
 	return variable, nil
@@ -221,7 +222,7 @@ func (s *Storage) FetchVariables(dataset string, includeIndex bool, includeMeta 
 	query := elastic.NewMatchQuery("_id", datasetID)
 	// create fetch context
 	fetchContext := elastic.NewFetchSourceContext(true)
-	fetchContext.Include(Variables)
+	fetchContext.Include(model.Variables)
 	// execute the ES query
 	res, err := s.client.Search().
 		Query(query).
@@ -251,7 +252,7 @@ func (s *Storage) FetchVariablesDisplay(dataset string) ([]*model.Variable, erro
 	// create a lookup for the variables.
 	varsLookup := make(map[string]*model.Variable)
 	for _, v := range vars {
-		varsLookup[v.Key] = v
+		varsLookup[v.Name] = v
 	}
 
 	// build the slice by cycling through the variables and using the lookup
@@ -259,7 +260,7 @@ func (s *Storage) FetchVariablesDisplay(dataset string) ([]*model.Variable, erro
 	resultIncludes := make(map[string]bool)
 	result := make([]*model.Variable, 0)
 	for _, v := range vars {
-		name := v.Key
+		name := v.Name
 		if !resultIncludes[name] {
 			result = append(result, varsLookup[name])
 			resultIncludes[name] = true

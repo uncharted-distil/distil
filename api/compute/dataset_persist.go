@@ -17,8 +17,9 @@ import (
 	"github.com/pkg/errors"
 	"github.com/unchartedsoftware/plog"
 
+	"github.com/unchartedsoftware/distil-compute/model"
 	"github.com/unchartedsoftware/distil-ingest/metadata"
-	"github.com/unchartedsoftware/distil/api/model"
+	api "github.com/unchartedsoftware/distil/api/model"
 	"github.com/unchartedsoftware/distil/api/util"
 )
 
@@ -42,7 +43,7 @@ const (
 
 // FilteredDataProvider defines a function that will fetch data from a back end source given
 // a set of filter parameters.
-type FilteredDataProvider func(dataset string, index string, filters *model.FilterParams) (*model.FilteredData, error)
+type FilteredDataProvider func(dataset string, index string, filters *api.FilterParams) (*api.FilteredData, error)
 
 // VariablesProvider defines a function that will get the variables for a dataset.
 type VariablesProvider func(dataset string, index string) ([]*model.Variable, error)
@@ -93,7 +94,7 @@ type DataReference struct {
 }
 
 // Hash the filter set
-func getFilteredDatasetHash(dataset string, target string, filterParams *model.FilterParams, isTrain bool) (uint64, error) {
+func getFilteredDatasetHash(dataset string, target string, filterParams *api.FilterParams, isTrain bool) (uint64, error) {
 	hash, err := hashstructure.Hash([]interface{}{dataset, target, *filterParams, isTrain}, nil)
 	if err != nil {
 		return 0, errors.Wrapf(err, "failed to generate hashcode for %s", dataset)

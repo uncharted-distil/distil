@@ -5,14 +5,15 @@ import (
 
 	"github.com/jackc/pgx"
 	"github.com/pkg/errors"
-	"github.com/unchartedsoftware/distil/api/model"
+	"github.com/unchartedsoftware/distil-compute/model"
+	api "github.com/unchartedsoftware/distil/api/model"
 )
 
 const (
 	catResultLimit = 100
 )
 
-func (s *Storage) parseExtrema(row *pgx.Rows, variable *model.Variable) (*model.Extrema, error) {
+func (s *Storage) parseExtrema(row *pgx.Rows, variable *model.Variable) (*api.Extrema, error) {
 	var minValue *float64
 	var maxValue *float64
 	if row != nil {
@@ -28,8 +29,8 @@ func (s *Storage) parseExtrema(row *pgx.Rows, variable *model.Variable) (*model.
 		return nil, errors.Errorf("no min / max aggregation values found")
 	}
 	// assign attributes
-	return &model.Extrema{
-		Key:  variable.Key,
+	return &api.Extrema{
+		Key:  variable.Name,
 		Type: variable.Type,
 		Min:  *minValue,
 		Max:  *maxValue,
@@ -38,16 +39,16 @@ func (s *Storage) parseExtrema(row *pgx.Rows, variable *model.Variable) (*model.
 
 func (s *Storage) getMinMaxAggsQuery(variable *model.Variable) string {
 	// get min / max agg names
-	minAggName := model.MinAggPrefix + variable.Key
-	maxAggName := model.MaxAggPrefix + variable.Key
+	minAggName := api.MinAggPrefix + variable.Name
+	maxAggName := api.MaxAggPrefix + variable.Name
 
 	// create aggregations
-	queryPart := fmt.Sprintf("MIN(\"%s\") AS \"%s\", MAX(\"%s\") AS \"%s\"", variable.Key, minAggName, variable.Key, maxAggName)
+	queryPart := fmt.Sprintf("MIN(\"%s\") AS \"%s\", MAX(\"%s\") AS \"%s\"", variable.Name, minAggName, variable.Name, maxAggName)
 	// add aggregations
 	return queryPart
 }
 
-func (s *Storage) fetchExtrema(dataset string, variable *model.Variable) (*model.Extrema, error) {
+func (s *Storage) fetchExtrema(dataset string, variable *model.Variable) (*api.Extrema, error) {
 	// add min / max aggregation
 	aggQuery := s.getMinMaxAggsQuery(variable)
 
@@ -68,7 +69,7 @@ func (s *Storage) fetchExtrema(dataset string, variable *model.Variable) (*model
 	return s.parseExtrema(res, variable)
 }
 
-func (s *Storage) fetchExtremaByURI(dataset string, resultURI string, variable *model.Variable) (*model.Extrema, error) {
+func (s *Storage) fetchExtremaByURI(dataset string, resultURI string, variable *model.Variable) (*api.Extrema, error) {
 	// add min / max aggregation
 	aggQuery := s.getMinMaxAggsQuery(variable)
 
@@ -91,7 +92,7 @@ func (s *Storage) fetchExtremaByURI(dataset string, resultURI string, variable *
 }
 
 // FetchExtremaByURI return extrema of a variable in a result set.
-func (s *Storage) FetchExtremaByURI(dataset string, resultURI string, varName string) (*model.Extrema, error) {
+func (s *Storage) FetchExtremaByURI(dataset string, resultURI string, varName string) (*api.Extrema, error) {
 
 	variable, err := s.metadata.FetchVariable(dataset, varName)
 	if err != nil {
@@ -100,7 +101,7 @@ func (s *Storage) FetchExtremaByURI(dataset string, resultURI string, varName st
 	return s.fetchExtremaByURI(dataset, resultURI, variable)
 }
 
-func (s *Storage) fetchSummaryData(dataset string, varName string, resultURI string, filterParams *model.FilterParams, extrema *model.Extrema) (*model.Histogram, error) {
+func (s *Storage) fetchSummaryData(dataset string, varName string, resultURI string, filterParams *api.FilterParams, extrema *api.Extrema) (*api.Histogram, error) {
 	// need description of the variables to request aggregation against.
 	variable, err := s.metadata.FetchVariable(dataset, varName)
 	if err != nil {
@@ -126,7 +127,7 @@ func (s *Storage) fetchSummaryData(dataset string, varName string, resultURI str
 		/*else if model.IsTimeSeries(variable.Type) {
 			field = NewTimeSeries(s)
 		}*/
-		return nil, errors.Errorf("variable %s of type %s does not support summary", variable.Key, variable.Type)
+		return nil, errors.Errorf("variable %s of type %s does not support summary", variable.Name, variable.Type)
 	}
 
 	histogram, err := field.FetchSummaryData(resultURI, filterParams, extrema)
@@ -148,12 +149,12 @@ func (s *Storage) fetchSummaryData(dataset string, varName string, resultURI str
 }
 
 // FetchSummary returns the summary for the provided dataset and variable.
-func (s *Storage) FetchSummary(dataset string, varName string, filterParams *model.FilterParams) (*model.Histogram, error) {
+func (s *Storage) FetchSummary(dataset string, varName string, filterParams *api.FilterParams) (*api.Histogram, error) {
 	return s.fetchSummaryData(dataset, varName, "", filterParams, nil)
 }
 
 // FetchSummaryByResult returns the summary for the provided dataset
 // and variable for data that is part of the result set.
-func (s *Storage) FetchSummaryByResult(dataset string, varName string, resultURI string, filterParams *model.FilterParams, extrema *model.Extrema) (*model.Histogram, error) {
+func (s *Storage) FetchSummaryByResult(dataset string, varName string, resultURI string, filterParams *api.FilterParams, extrema *api.Extrema) (*api.Histogram, error) {
 	return s.fetchSummaryData(dataset, varName, resultURI, filterParams, extrema)
 }

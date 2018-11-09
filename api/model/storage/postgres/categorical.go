@@ -7,7 +7,8 @@ import (
 
 	"github.com/jackc/pgx"
 	"github.com/pkg/errors"
-	"github.com/unchartedsoftware/distil/api/model"
+	"github.com/unchartedsoftware/distil-compute/model"
+	api "github.com/unchartedsoftware/distil/api/model"
 )
 
 // CategoricalField defines behaviour for the categorical field type.
@@ -43,8 +44,8 @@ func NewCategoricalFieldSubSelect(storage *Storage, dataset string, variable *mo
 }
 
 // FetchSummaryData pulls summary data from the database and builds a histogram.
-func (f *CategoricalField) FetchSummaryData(resultURI string, filterParams *model.FilterParams, extrema *model.Extrema) (*model.Histogram, error) {
-	var histogram *model.Histogram
+func (f *CategoricalField) FetchSummaryData(resultURI string, filterParams *api.FilterParams, extrema *api.Extrema) (*api.Histogram, error) {
+	var histogram *api.Histogram
 	var err error
 	if resultURI == "" {
 		histogram, err = f.fetchHistogram(filterParams)
@@ -55,7 +56,7 @@ func (f *CategoricalField) FetchSummaryData(resultURI string, filterParams *mode
 	return histogram, err
 }
 
-func (f *CategoricalField) fetchHistogram(filterParams *model.FilterParams) (*model.Histogram, error) {
+func (f *CategoricalField) fetchHistogram(filterParams *api.FilterParams) (*api.Histogram, error) {
 	fromClause := f.getFromClause(true)
 
 	// create the filter for the query
@@ -70,7 +71,7 @@ func (f *CategoricalField) fetchHistogram(filterParams *model.FilterParams) (*mo
 
 	// Get count by category.
 	query := fmt.Sprintf("SELECT \"%s\", COUNT(*) AS count FROM %s %s GROUP BY \"%s\" ORDER BY count desc, \"%s\" LIMIT %d;",
-		f.Variable.Key, fromClause, where, f.Variable.Key, f.Variable.Key, catResultLimit)
+		f.Variable.Name, fromClause, where, f.Variable.Name, f.Variable.Name, catResultLimit)
 
 	// execute the postgres query
 	res, err := f.Storage.client.Query(query, params...)
@@ -84,7 +85,7 @@ func (f *CategoricalField) fetchHistogram(filterParams *model.FilterParams) (*mo
 	return f.parseHistogram(res)
 }
 
-func (f *CategoricalField) fetchHistogramByResult(resultURI string, filterParams *model.FilterParams) (*model.Histogram, error) {
+func (f *CategoricalField) fetchHistogramByResult(resultURI string, filterParams *api.FilterParams) (*api.Histogram, error) {
 	fromClause := f.getFromClause(false)
 
 	// get filter where / params
@@ -107,9 +108,9 @@ func (f *CategoricalField) fetchHistogramByResult(resultURI string, filterParams
 		 WHERE result.result_id = $%d %s
 		 GROUP BY "%s"
 		 ORDER BY count desc, "%s" LIMIT %d;`,
-		f.Variable.Key, fromClause, f.Storage.getResultTable(f.Dataset),
-		model.D3MIndexFieldName, len(params), where, f.Variable.Key,
-		f.Variable.Key, catResultLimit)
+		f.Variable.Name, fromClause, f.Storage.getResultTable(f.Dataset),
+		model.D3MIndexFieldName, len(params), where, f.Variable.Name,
+		f.Variable.Name, catResultLimit)
 
 	// execute the postgres query
 	res, err := f.Storage.client.Query(query, params...)
@@ -123,11 +124,11 @@ func (f *CategoricalField) fetchHistogramByResult(resultURI string, filterParams
 	return f.parseHistogram(res)
 }
 
-func (f *CategoricalField) parseHistogram(rows *pgx.Rows) (*model.Histogram, error) {
-	termsAggName := model.TermsAggPrefix + f.Variable.Key
+func (f *CategoricalField) parseHistogram(rows *pgx.Rows) (*api.Histogram, error) {
+	termsAggName := api.TermsAggPrefix + f.Variable.Name
 
 	// Parse bucket results.
-	buckets := make([]*model.Bucket, 0)
+	buckets := make([]*api.Bucket, 0)
 	min := int64(math.MaxInt32)
 	max := int64(-math.MaxInt32)
 
@@ -140,7 +141,7 @@ func (f *CategoricalField) parseHistogram(rows *pgx.Rows) (*model.Histogram, err
 				return nil, errors.Wrap(err, fmt.Sprintf("no %s histogram aggregation found", termsAggName))
 			}
 
-			buckets = append(buckets, &model.Bucket{
+			buckets = append(buckets, &api.Bucket{
 				Key:   term,
 				Count: bucketCount,
 			})
@@ -154,13 +155,13 @@ func (f *CategoricalField) parseHistogram(rows *pgx.Rows) (*model.Histogram, err
 	}
 
 	// assign histogram attributes
-	return &model.Histogram{
-		Label:   f.Variable.Label,
-		Key:     f.Variable.Key,
+	return &api.Histogram{
+		Label:   f.Variable.DisplayName,
+		Key:     f.Variable.Name,
 		Type:    model.CategoricalType,
 		VarType: f.Variable.Type,
 		Buckets: buckets,
-		Extrema: &model.Extrema{
+		Extrema: &api.Extrema{
 			Min: float64(min),
 			Max: float64(max),
 		},
@@ -169,8 +170,8 @@ func (f *CategoricalField) parseHistogram(rows *pgx.Rows) (*model.Histogram, err
 
 // FetchPredictedSummaryData pulls predicted data from the result table and builds
 // the categorical histogram for the field.
-func (f *CategoricalField) FetchPredictedSummaryData(resultURI string, datasetResult string, filterParams *model.FilterParams, extrema *model.Extrema) (*model.Histogram, error) {
-	targetName := f.Variable.Key
+func (f *CategoricalField) FetchPredictedSummaryData(resultURI string, datasetResult string, filterParams *api.FilterParams, extrema *api.Extrema) (*api.Histogram, error) {
+	targetName := f.Variable.Name
 
 	// get filter where / params
 	wheres, params, err := f.Storage.buildResultQueryFilters(f.Dataset, resultURI, filterParams)

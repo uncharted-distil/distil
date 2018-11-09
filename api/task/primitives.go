@@ -10,13 +10,13 @@ import (
 	"strings"
 
 	"github.com/pkg/errors"
-	"github.com/unchartedsoftware/distil-ingest/metadata"
+	"github.com/unchartedsoftware/distil-compute/model"
+	"github.com/unchartedsoftware/distil-compute/pipeline"
+	"github.com/unchartedsoftware/distil-compute/primitive/compute/description"
+	"github.com/unchartedsoftware/distil-compute/primitive/compute/result"
 
 	"github.com/unchartedsoftware/distil/api/compute"
-	"github.com/unchartedsoftware/distil/api/compute/description"
-	"github.com/unchartedsoftware/distil/api/compute/result"
 	"github.com/unchartedsoftware/distil/api/env"
-	"github.com/unchartedsoftware/distil/api/pipeline"
 )
 
 const (
@@ -33,7 +33,7 @@ type FeatureRequest struct {
 	SourceVariableName  string
 	FeatureVariableName string
 	OutputVariableName  string
-	Variable            *metadata.Variable
+	Variable            *model.Variable
 	Step                *pipeline.PipelineDescription
 }
 
@@ -168,7 +168,7 @@ func appendFeature(dataset string, d3mIndexField int, hasHeader bool, feature *F
 	return lines, nil
 }
 
-func getFeatureVariables(meta *metadata.Metadata, prefix string) ([]*FeatureRequest, error) {
+func getFeatureVariables(meta *model.Metadata, prefix string) ([]*FeatureRequest, error) {
 	mainDR := meta.GetMainDataResource()
 	features := make([]*FeatureRequest, 0)
 	for _, v := range mainDR.Variables {
@@ -184,7 +184,7 @@ func getFeatureVariables(meta *metadata.Metadata, prefix string) ([]*FeatureRequ
 				indexName := fmt.Sprintf("%s%s", prefix, v.Name)
 
 				// add the feature variable
-				v := metadata.NewVariable(len(mainDR.Variables), indexName, "label", v.Name, "string", "string", "", "", []string{"attribute"}, metadata.VarRoleMetadata, nil, mainDR.Variables, false)
+				v := model.NewVariable(len(mainDR.Variables), indexName, "label", v.Name, "string", "string", []string{"attribute"}, model.VarRoleMetadata, nil, mainDR.Variables, false)
 
 				// create the required pipeline
 				step, err := description.CreateCrocPipeline("leather", "", []string{denormFieldName}, []string{indexName})
@@ -206,7 +206,7 @@ func getFeatureVariables(meta *metadata.Metadata, prefix string) ([]*FeatureRequ
 	return features, nil
 }
 
-func getClusterVariables(meta *metadata.Metadata, prefix string) ([]*FeatureRequest, error) {
+func getClusterVariables(meta *model.Metadata, prefix string) ([]*FeatureRequest, error) {
 	mainDR := meta.GetMainDataResource()
 	features := make([]*FeatureRequest, 0)
 	for _, v := range mainDR.Variables {
@@ -222,7 +222,7 @@ func getClusterVariables(meta *metadata.Metadata, prefix string) ([]*FeatureRequ
 				indexName := fmt.Sprintf("%s%s", prefix, v.Name)
 
 				// add the feature variable
-				v := metadata.NewVariable(len(mainDR.Variables), indexName, "group", v.Name, "string", "string", "", "", []string{"attribute"}, metadata.VarRoleMetadata, nil, mainDR.Variables, false)
+				v := model.NewVariable(len(mainDR.Variables), indexName, "group", v.Name, "string", "string", []string{"attribute"}, model.VarRoleMetadata, nil, mainDR.Variables, false)
 
 				// create the required pipeline
 				var step *pipeline.PipelineDescription
@@ -257,10 +257,10 @@ func getClusterVariables(meta *metadata.Metadata, prefix string) ([]*FeatureRequ
 	return features, nil
 }
 
-func getD3MIndexField(dr *metadata.DataResource) int {
+func getD3MIndexField(dr *model.DataResource) int {
 	d3mIndexField := -1
 	for _, v := range dr.Variables {
-		if v.Name == metadata.D3MIndexName {
+		if v.Name == model.D3MIndexName {
 			d3mIndexField = v.Index
 		}
 	}
@@ -288,7 +288,7 @@ func toFloat64Array(in []interface{}) ([]float64, error) {
 	return strArr, nil
 }
 
-func getDataResource(meta *metadata.Metadata, resID string) *metadata.DataResource {
+func getDataResource(meta *model.Metadata, resID string) *model.DataResource {
 	// main data resource has d3m index variable
 	for _, dr := range meta.DataResources {
 		if dr.ResID == resID {
@@ -304,7 +304,7 @@ type timeValueCols struct {
 	valueCol string
 }
 
-func getTimeValueCols(dr *metadata.DataResource) (*timeValueCols, bool) {
+func getTimeValueCols(dr *model.DataResource) (*timeValueCols, bool) {
 	// find the first column marked as a time and the first that is an
 	// attribute and use those as series values
 	var timeCol string
@@ -332,9 +332,9 @@ func getTimeValueCols(dr *metadata.DataResource) (*timeValueCols, bool) {
 	return nil, false
 }
 
-func mapFields(meta *metadata.Metadata) map[string]*metadata.Variable {
+func mapFields(meta *model.Metadata) map[string]*model.Variable {
 	// cycle through each data resource, mapping field names to variables.
-	fields := make(map[string]*metadata.Variable)
+	fields := make(map[string]*model.Variable)
 	for _, dr := range meta.DataResources {
 		for _, v := range dr.Variables {
 			fields[v.Name] = v
@@ -344,8 +344,8 @@ func mapFields(meta *metadata.Metadata) map[string]*metadata.Variable {
 	return fields
 }
 
-func mapDenormFields(mainDR *metadata.DataResource) map[string]*metadata.Variable {
-	fields := make(map[string]*metadata.Variable)
+func mapDenormFields(mainDR *model.DataResource) map[string]*model.Variable {
+	fields := make(map[string]*model.Variable)
 	for _, field := range mainDR.Variables {
 		if field.IsMediaReference() {
 			// DENORM PRIMITIVE RENAMES REFERENCE FIELDS TO `filename`

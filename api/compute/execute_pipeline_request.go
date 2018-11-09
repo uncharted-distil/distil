@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/pkg/errors"
-	"github.com/unchartedsoftware/distil/api/pipeline"
+	"github.com/unchartedsoftware/distil-compute/pipeline"
 	"github.com/unchartedsoftware/plog"
 )
 

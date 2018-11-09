@@ -4,6 +4,8 @@ import (
 	"regexp"
 	"strings"
 	"time"
+
+	"github.com/unchartedsoftware/distil-compute/model"
 )
 
 var (
@@ -25,7 +27,7 @@ type Request struct {
 // TargetFeature returns the target feature out of the feature set.
 func (r *Request) TargetFeature() string {
 	for _, f := range r.Features {
-		if f.FeatureType == FeatureTypeTarget {
+		if f.FeatureType == model.FeatureTypeTarget {
 			return f.FeatureName
 		}
 	}
