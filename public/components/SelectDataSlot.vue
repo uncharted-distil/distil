@@ -195,7 +195,7 @@ export default Vue.extend({
 		},
 
 		isImageDataset(): boolean {
-			return this.variables.filter(v => v.type === 'image').length  > 0;
+			return this.variables.filter(v => v.colType === 'image').length  > 0;
 		}
 	},
 

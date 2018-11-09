@@ -48,13 +48,13 @@ export default Vue.extend({
 			return vars[this.field.toLowerCase()];
 		},
 		type(): string {
-			return this.variable ? this.variable.type : '';
+			return this.variable ? this.variable.colType : '';
 		},
 		label(): string {
 			return this.type !== '' ? getLabelFromType(this.type) : '';
 		},
 		originalType(): string {
-			return this.variable ? this.variable.originalType : '';
+			return this.variable ? this.variable.colOriginalType : '';
 		},
 		suggestedTypes(): SuggestedType[] {
 			return this.variable ? this.variable.suggestedTypes : [];

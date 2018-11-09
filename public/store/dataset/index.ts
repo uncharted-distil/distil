@@ -16,10 +16,10 @@ export interface SuggestedType {
 export interface Variable {
 	colDisplayName: string;
 	colName: string;
-	type: string;
+	colType: string;
 	importance: number;
 	novelty: number;
-	originalType: string;
+	colOriginalType: string;
 	suggestedTypes: SuggestedType[];
 }
 

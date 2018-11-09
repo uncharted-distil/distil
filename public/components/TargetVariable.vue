@@ -101,7 +101,7 @@ export default Vue.extend({
 			}
 
 			if (this.targetVariableSummaries.length > 0 && !this.targetVariableSummaries[0].pending) {
-				if (isNumericType(this.targetVariable.type)) {
+				if (isNumericType(this.targetVariable.colType)) {
 					this.selectDefaultNumerical();
 				} else {
 					this.selectDefaultCategorical();

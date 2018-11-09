@@ -17,7 +17,7 @@ export const mutations = {
 		const index = _.findIndex(state.variables, v => {
 			return v.colName === update.field;
 		});
-		state.variables[index].type = update.type;
+		state.variables[index].colType = update.type;
 	},
 
 	updateVariableSummaries(state: DatasetState, summary: VariableSummary) {

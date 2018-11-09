@@ -78,7 +78,7 @@ export default Vue.extend({
 		targetType(): string {
 			const variables = datasetGetters.getVariablesMap(this.$store);
 			if (variables && variables[this.target]) {
-				return variables[this.target].type;
+				return variables[this.target].colType;
 			}
 			return '';
 		},
