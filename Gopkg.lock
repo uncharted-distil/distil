@@ -210,7 +210,7 @@
     "primitive/compute/description",
     "primitive/compute/result",
   ]
-  revision = "8e1b7e6641163b12cdbe80a6633593f776260956"
+  revision = "670cb49c2ed08bfc09f2b9264dc14bc1b5b74257"
 
 [[projects]]
   digest = "1:0fbf440b1d045462fb4e2896f967fb4c0ec849829b675a253a11cfb542f481af"
