@@ -24,13 +24,6 @@ func VariableRankingHandler(metaCtor model.MetadataStorageCtor) func(http.Respon
 		// get variabloe name
 		target := pat.Param(r, "target")
 
-		// get rankings
-		rankings, err := task.TargetRankPrimitive(dataset, target)
-		if err != nil {
-			handleError(w, err)
-			return
-		}
-
 		// get storage client
 		storage, err := metaCtor()
 		if err != nil {
@@ -39,6 +32,13 @@ func VariableRankingHandler(metaCtor model.MetadataStorageCtor) func(http.Respon
 		}
 
 		d, err := storage.FetchDataset(dataset, false, false)
+		if err != nil {
+			handleError(w, err)
+			return
+		}
+
+		// compute rankings
+		rankings, err := task.TargetRankPrimitive(dataset, target, d.Variables)
 		if err != nil {
 			handleError(w, err)
 			return

@@ -70,7 +70,7 @@ func (s *Storage) PersistResult(dataset string, resultURI string, target string)
 
 	// currently only support a single result column.
 	if len(records[0]) > 2 {
-		log.Warnf("Result contains %s columns, expected 2.  Additional columns will be ignored.", len(records[0]))
+		log.Warnf("Result contains %d columns, expected 2.  Additional columns will be ignored.", len(records[0]))
 	}
 
 	// Translate from display name to storage name.

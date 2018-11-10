@@ -181,8 +181,8 @@ func TestCreateDukePipeline(t *testing.T) {
 }
 
 func TestTargetRankingPipeline(t *testing.T) {
-	variables := []*metadata.Variable{
-		{Name: "hall_of_fame", Index: 18},
+	variables := []*model.Variable{
+		{Key: "hall_of_fame", Index: 18},
 	}
 
 	pipeline, err := CreateTargetRankingPipeline("ranking_test", "test target ranking pipeline", "hall_of_fame", variables)

@@ -92,7 +92,7 @@ func (s *Storage) FetchDatasets(includeIndex bool, includeMeta bool) ([]*model.D
 
 // FetchDataset returns a dataset in the provided index.
 func (s *Storage) FetchDataset(datasetName string, includeIndex bool, includeMeta bool) (*model.Dataset, error) {
-	query := elastic.NewTermQuery("dataset", datasetName)
+	query := elastic.NewMatchQuery("_id", datasetName)
 	// execute the ES query
 	res, err := s.client.Search().
 		Query(query).

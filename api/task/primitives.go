@@ -16,6 +16,7 @@ import (
 	"github.com/unchartedsoftware/distil/api/compute/description"
 	"github.com/unchartedsoftware/distil/api/compute/result"
 	"github.com/unchartedsoftware/distil/api/env"
+	"github.com/unchartedsoftware/distil/api/model"
 	"github.com/unchartedsoftware/distil/api/pipeline"
 )
 
@@ -92,9 +93,9 @@ func submitPrimitive(dataset string, step *pipeline.PipelineDescription) (string
 
 // TargetRankPrimitive will rank the dataset relative to a target variable using
 // a primitive.
-func TargetRankPrimitive(dataset string, target string) ([]float64, error) {
+func TargetRankPrimitive(dataset string, target string, features []*model.Variable) ([]float64, error) {
 	// create & submit the solution request
-	pip, err := description.CreateTargetRankingPipeline("roger", "", target, nil)
+	pip, err := description.CreateTargetRankingPipeline("roger", "", target, features)
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to create ranking pipeline")
 	}
@@ -113,11 +114,11 @@ func TargetRankPrimitive(dataset string, target string) ([]float64, error) {
 	ranks := make([]float64, len(res)-1)
 	for i, v := range res {
 		if i > 0 {
-			colIndex, err := strconv.ParseInt(v[0].(string), 10, 64)
+			colIndex, err := strconv.ParseInt(v[1].(string), 10, 64)
 			if err != nil {
 				return nil, errors.Wrap(err, "unable to parse rank index")
 			}
-			vInt, err := strconv.ParseFloat(v[1].(string), 64)
+			vInt, err := strconv.ParseFloat(v[2].(string), 64)
 			if err != nil {
 				return nil, errors.Wrap(err, "unable to parse rank value")
 			}
