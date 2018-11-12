@@ -15,6 +15,7 @@ import (
 	uuid "github.com/satori/go.uuid"
 	"github.com/unchartedsoftware/distil-compute/model"
 	"github.com/unchartedsoftware/distil-compute/pipeline"
+	"github.com/unchartedsoftware/distil-compute/primitive/compute"
 	"github.com/unchartedsoftware/distil-compute/primitive/compute/description"
 
 	api "github.com/unchartedsoftware/distil/api/model"
@@ -164,21 +165,21 @@ func createSearchSolutionsRequest(columnIndex int, preprocessing *pipeline.Pipel
 	return &pipeline.SearchSolutionsRequest{
 		Problem: &pipeline.ProblemDescription{
 			Problem: &pipeline.Problem{
-				TaskType:           convertTaskTypeFromTA3ToTA2(task),
-				TaskSubtype:        convertTaskSubTypeFromTA3ToTA2(subTask),
-				PerformanceMetrics: convertMetricsFromTA3ToTA2(metrics),
+				TaskType:           compute.ConvertTaskTypeFromTA3ToTA2(task),
+				TaskSubtype:        compute.ConvertTaskSubTypeFromTA3ToTA2(subTask),
+				PerformanceMetrics: compute.ConvertMetricsFromTA3ToTA2(metrics),
 			},
 			Inputs: []*pipeline.ProblemInput{
 				{
-					DatasetId: convertDatasetTA3ToTA2(dataset),
-					Targets:   convertTargetFeaturesTA3ToTA2(targetFeature, columnIndex),
+					DatasetId: compute.ConvertDatasetTA3ToTA2(dataset),
+					Targets:   compute.ConvertTargetFeaturesTA3ToTA2(targetFeature, columnIndex),
 				},
 			},
 		},
 
 		// Our agent/version info
 		UserAgent: userAgent,
-		Version:   GetAPIVersion(),
+		Version:   compute.GetAPIVersion(),
 
 		// Requested max time for solution search - not guaranteed to be honoured
 		TimeBound: float64(maxTime),
@@ -302,7 +303,7 @@ func (s *SolutionRequest) persistRequestStatus(statusChan chan SolutionStatus, s
 	return nil
 }
 
-func (s *SolutionRequest) persistSolutionResults(statusChan chan SolutionStatus, client *Client, solutionStorage api.SolutionStorage, dataStorage api.DataStorage, searchID string, dataset string, solutionID string, fittedSolutionID string, resultID string, resultURI string) {
+func (s *SolutionRequest) persistSolutionResults(statusChan chan SolutionStatus, client *compute.Client, solutionStorage api.SolutionStorage, dataStorage api.DataStorage, searchID string, dataset string, solutionID string, fittedSolutionID string, resultID string, resultURI string) {
 	// persist the completed state
 	err := solutionStorage.PersistSolution(searchID, solutionID, SolutionCompletedStatus, time.Now())
 	if err != nil {
@@ -336,7 +337,7 @@ func (s *SolutionRequest) persistSolutionResults(statusChan chan SolutionStatus,
 	}
 }
 
-func (s *SolutionRequest) dispatchSolution(statusChan chan SolutionStatus, client *Client, solutionStorage api.SolutionStorage, dataStorage api.DataStorage, searchID string, solutionID string, dataset string, datasetURITrain string, datasetURITest string) {
+func (s *SolutionRequest) dispatchSolution(statusChan chan SolutionStatus, client *compute.Client, solutionStorage api.SolutionStorage, dataStorage api.DataStorage, searchID string, solutionID string, dataset string, datasetURITrain string, datasetURITest string) {
 
 	// score solution
 	solutionScoreResponses, err := client.GenerateSolutionScores(context.Background(), solutionID, datasetURITest, s.Metrics)
@@ -352,7 +353,7 @@ func (s *SolutionRequest) dispatchSolution(statusChan chan SolutionStatus, clien
 			for _, score := range response.Scores {
 				metric := ""
 				if score.GetMetric() == nil {
-					metric = convertMetricsFromTA3ToTA2(s.Metrics)[0].GetMetric().String()
+					metric = compute.ConvertMetricsFromTA3ToTA2(s.Metrics)[0].GetMetric().String()
 				} else {
 					metric = score.Metric.Metric.String()
 				}
@@ -435,7 +436,7 @@ func (s *SolutionRequest) dispatchSolution(statusChan chan SolutionStatus, clien
 	}
 }
 
-func (s *SolutionRequest) dispatchRequest(client *Client, solutionStorage api.SolutionStorage, dataStorage api.DataStorage, searchID string, dataset string, datasetURITrain string, datasetURITest string) {
+func (s *SolutionRequest) dispatchRequest(client *compute.Client, solutionStorage api.SolutionStorage, dataStorage api.DataStorage, searchID string, dataset string, datasetURITrain string, datasetURITest string) {
 
 	// update request status
 	err := s.persistRequestStatus(s.requestChannel, solutionStorage, searchID, dataset, RequestRunningStatus)
@@ -473,7 +474,7 @@ func (s *SolutionRequest) dispatchRequest(client *Client, solutionStorage api.So
 }
 
 // PersistAndDispatch persists the solution request and dispatches it.
-func (s *SolutionRequest) PersistAndDispatch(client *Client, solutionStorage api.SolutionStorage, metaStorage api.MetadataStorage, dataStorage api.DataStorage) error {
+func (s *SolutionRequest) PersistAndDispatch(client *compute.Client, solutionStorage api.SolutionStorage, metaStorage api.MetadataStorage, dataStorage api.DataStorage) error {
 
 	// NOTE: D3M index field is needed in the persisted data.
 	s.Filters.Variables = append(s.Filters.Variables, model.D3MIndexFieldName)
@@ -516,7 +517,7 @@ func (s *SolutionRequest) PersistAndDispatch(client *Client, solutionStorage api
 	datasetInputDir := path.Join(inputDir, dataset.Metadata.Folder, "TRAIN", "dataset_TRAIN")
 
 	// perist the datasets and get URI
-	datasetPathTrain, datasetPathTest, err := PersistOriginalData(s.Dataset, D3MDataSchema, datasetInputDir, datasetDir)
+	datasetPathTrain, datasetPathTest, err := PersistOriginalData(s.Dataset, compute.D3MDataSchema, datasetInputDir, datasetDir)
 	if err != nil {
 		return err
 	}

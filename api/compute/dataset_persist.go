@@ -24,19 +24,6 @@ import (
 )
 
 const (
-	// D3MLearningData provides the name of the training csv file as defined in the D3M schema
-	D3MLearningData = "learningData.csv"
-	// D3MDataFolder provides the name of the directory containing the dataset
-	D3MDataFolder = "tables"
-	// D3MDataSchema provides the name of the D3M data schema file
-	D3MDataSchema = "datasetDoc.json"
-	// D3MDatasetSchemaVersion is the current version supported when persisting
-	D3MDatasetSchemaVersion = "3.0"
-	// D3MResourceType is the resource type of persisted datasets
-	D3MResourceType = "table"
-	// D3MResourceFormat is the resource format of persisted dataset
-	D3MResourceFormat = "text/csv"
-
 	trainFilenamePrefix = "train"
 	testFilenamePrefix  = "test"
 )
