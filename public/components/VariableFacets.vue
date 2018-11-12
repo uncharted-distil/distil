@@ -157,7 +157,7 @@ export default Vue.extend({
 	methods: {
 		importanceDesc(a: { key: string }, b: { key: string }): number {
 			const importance = this.importance;
-			return importance[a.key] - importance[b.key];
+			return importance[b.key] - importance[a.key];
 		},
 
 		availableVariables(): string[] {

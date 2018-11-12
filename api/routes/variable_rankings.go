@@ -44,10 +44,14 @@ func VariableRankingHandler(metaCtor model.MetadataStorageCtor) func(http.Respon
 			return
 		}
 
-		var res map[string]interface{}
-
-		for index, variable := range d.Variables {
-			res[variable.Key] = rankings[index]
+		res := make(map[string]interface{})
+		for _, variable := range d.Variables {
+			rank, ok := rankings[variable.Key]
+			if ok {
+				res[variable.Key] = rank
+			} else {
+				res[variable.Key] = 0
+			}
 		}
 
 		// marshall output into JSON

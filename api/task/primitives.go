@@ -99,7 +99,7 @@ func submitPrimitive(dataset string, step *pipeline.PipelineDescription) (string
 
 // TargetRankPrimitive will rank the dataset relative to a target variable using
 // a primitive.
-func TargetRankPrimitive(dataset string, target string, features []*model.Variable) ([]float64, error) {
+func TargetRankPrimitive(dataset string, target string, features []*model.Variable) (map[string]float64, error) {
 	// create & submit the solution request
 	pip, err := description.CreateTargetRankingPipeline("roger", "", target, features)
 	if err != nil {
@@ -117,18 +117,18 @@ func TargetRankPrimitive(dataset string, target string, features []*model.Variab
 		return nil, errors.Wrap(err, "unable to parse ranking pipeline result")
 	}
 
-	ranks := make([]float64, len(res)-1)
+	ranks := make(map[string]float64)
 	for i, v := range res {
 		if i > 0 {
-			colIndex, err := strconv.ParseInt(v[1].(string), 10, 64)
-			if err != nil {
-				return nil, errors.Wrap(err, "unable to parse rank index")
+			key, ok := v[2].(string)
+			if !ok {
+				return nil, fmt.Errorf("unable to parse rank key")
 			}
-			vInt, err := strconv.ParseFloat(v[3].(string), 64)
+			rank, err := strconv.ParseFloat(v[3].(string), 64)
 			if err != nil {
 				return nil, errors.Wrap(err, "unable to parse rank value")
 			}
-			ranks[colIndex] = vInt
+			ranks[key] = rank
 		}
 	}
 

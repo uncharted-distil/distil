@@ -146,7 +146,7 @@ export const actions = {
 	fetchVariableRankings(context: DatasetContext, args: { dataset: string, target: string }) {
 		return axios.get(`/distil/variable-rankings/${args.dataset}/${args.target}`)
 			.then(response => {
-				mutations.updateVariableRankings(context, response.data);
+				mutations.updateVariableRankings(context, response.data.rankings);
 			})
 			.catch(error => {
 				console.error(error);

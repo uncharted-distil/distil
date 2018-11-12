@@ -29,7 +29,7 @@ export const mutations = {
 		state.variables.forEach(v => {
 			if (rankings[v.key]) {
 				// add ranking
-				v.ranking = rankings[v.key];
+				Vue.set(v, 'ranking', rankings[v.key]);
 			}
 		});
 	},

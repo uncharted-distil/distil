@@ -125,7 +125,7 @@ export function getVariableImportance(v: Variable): number {
 
 export function sortVariablesByImportance(variables: Variable[]): Variable[] {
 	variables.sort((a, b) => {
-		return getVariableImportance(a) - getVariableImportance(b);
+		return getVariableImportance(b) - getVariableImportance(a);
 	});
 	return variables;
 }
@@ -138,7 +138,7 @@ export function sortGroupsByImportance(groups: Group[], variables: Variable[]): 
 	});
 	// sort by importance
 	groups.sort((a, b) => {
-		return importance[a.key] - importance[b.key];
+		return importance[b.key] - importance[a.key];
 	});
 	return groups;
 }
