@@ -12,5 +12,6 @@ export D3MOUTPUTDIR=`pwd`/outputs
 export TEMP_STORAGE_ROOT=`pwd`/outputs/temp
 export USER_PROBLEM_PATH=`pwd`/outputs/problems
 export SOLUTION_SEARCH_MAX_TIME=3
+export USE_TA2_RUNNER=true #false
 
 witch --cmd="make compile && make fmt && go run main.go" --watch="main.go,api/**/*.go" --ignore=""

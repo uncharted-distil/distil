@@ -38,7 +38,7 @@ func VariableRankingHandler(metaCtor model.MetadataStorageCtor) func(http.Respon
 		}
 
 		// compute rankings
-		rankings, err := task.TargetRankPrimitive(dataset, target, d.Variables)
+		rankings, err := task.TargetRankPrimitive(d.Folder, target, d.Variables)
 		if err != nil {
 			handleError(w, err)
 			return
