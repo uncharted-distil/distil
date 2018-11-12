@@ -10,8 +10,9 @@ import (
 	"github.com/unchartedsoftware/plog"
 	"goji.io/pat"
 
+	"github.com/unchartedsoftware/distil-compute/model"
 	"github.com/unchartedsoftware/distil/api/compute"
-	"github.com/unchartedsoftware/distil/api/model"
+	api "github.com/unchartedsoftware/distil/api/model"
 	"github.com/unchartedsoftware/distil/api/util"
 	"github.com/unchartedsoftware/distil/api/util/json"
 )
@@ -25,7 +26,7 @@ const (
 )
 
 // ProblemDiscoveryHandler creates a route that saves a discovered problem.
-func ProblemDiscoveryHandler(ctorData model.DataStorageCtor, ctorMeta model.MetadataStorageCtor, problemDir string, userAgent string, skipPrepends bool) func(http.ResponseWriter, *http.Request) {
+func ProblemDiscoveryHandler(ctorData api.DataStorageCtor, ctorMeta api.MetadataStorageCtor, problemDir string, userAgent string, skipPrepends bool) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		dataset := pat.Param(r, "dataset")
 		target := pat.Param(r, "target")
@@ -42,7 +43,7 @@ func ProblemDiscoveryHandler(ctorData model.DataStorageCtor, ctorMeta model.Meta
 		}
 
 		// get variable names and ranges out of the params
-		filterParams, err := model.ParseFilterParamsFromJSON(params["filterParams"].(map[string]interface{}))
+		filterParams, err := api.ParseFilterParamsFromJSON(params["filterParams"].(map[string]interface{}))
 		if err != nil {
 			handleError(w, err)
 			return
@@ -71,7 +72,7 @@ func ProblemDiscoveryHandler(ctorData model.DataStorageCtor, ctorMeta model.Meta
 			return
 		}
 
-		ds, err := model.FetchDataset(dataset, true, true, filterParams, metadataStorage, dataStorage)
+		ds, err := api.FetchDataset(dataset, true, true, filterParams, metadataStorage, dataStorage)
 		if err != nil {
 			handleError(w, err)
 			return

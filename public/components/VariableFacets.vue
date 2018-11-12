@@ -148,7 +148,7 @@ export default Vue.extend({
 		importance(): Dictionary<number> {
 			const importance: Dictionary<number> = {};
 			this.variables.forEach(variable => {
-				importance[variable.key] = variable.importance;
+				importance[variable.colName] = variable.importance;
 			});
 			return importance;
 		}

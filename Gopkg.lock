@@ -198,6 +198,21 @@
   revision = "f967d93bead1da1df483356f0819caa2ecfb1bc8"
 
 [[projects]]
+  branch = "master"
+  name = "github.com/unchartedsoftware/distil-compute"
+  packages = [
+    ".",
+    "middleware",
+    "model",
+    "pipeline",
+    "equalizer",
+    "primitive/compute",
+    "primitive/compute/description",
+    "primitive/compute/result",
+  ]
+  revision = "3896f0ca13d539a5104e8810b816c1efed15d617"
+
+[[projects]]
   digest = "1:0fbf440b1d045462fb4e2896f967fb4c0ec849829b675a253a11cfb542f481af"
   name = "github.com/unchartedsoftware/distil-ingest"
   packages = [
@@ -212,9 +227,9 @@
     "smmry",
   ]
   pruneopts = "UT"
-  revision = "c44a1460a2368540affe89bb462f6776a79602db"
+  revision = "1cafd450fec6d567058cc61c776a4a6a4a7ed9b2"
   source = "git@github.com:unchartedsoftware/distil-ingest.git"
-  version = "0.6.0"
+  version = "0.7.0"
 
 [[projects]]
   branch = "master"

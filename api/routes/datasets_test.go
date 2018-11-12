@@ -38,28 +38,32 @@ func TestDatasetsHandler(t *testing.T) {
 		`{
 			"datasets": [
 				{
-					"name": "o_185",
+					"name": "o_185_dataset",
 					"description": "<p><strong>Author</strong>: Jeffrey S. Simonoff</p>\n",
 					"summary": "",
 					"summaryML": "",
+					"folder":"",
 					"numRows": 1073,
 					"numBytes": 744647,
 					"variables": [
-						{"name":"Player","type":"categorical","importance": 0,"deleted": false,"role": "attribute","distilRole": "","suggestedTypes": [{ "type": "categorical", "probability": 1.00 }], "varOriginalName": "", "varDisplayName": "Player"},
-						{"name":"Number_seasons","type":"integer","importance": 1,"deleted": false,"role": "attribute","distilRole": "","suggestedTypes":[ { "type": "integer", "probability": 1.00 }], "varOriginalName": "", "varDisplayName": "Number_seasons"},
-						{"name":"Games_played","type":"integer","importance": 2,"deleted": false,"role": "attribute","distilRole": "","suggestedTypes": [{ "type": "integer", "probability": 1.00 }], "varOriginalName": "", "varDisplayName": "Games_played"}
+						{"colName":"d3mIndex","colType":"integer","importance": 0,"deleted": false,"selectedRole": "index","suggestedTypes": [{ "type": "integer", "probability": 1.00, "provenance": "TEST" }], "colOriginalVariable": "","colIndex": 0, "colOriginalType":"integer", "role": ["TEST"], "colDisplayName": "d3mIndex"},
+						{"colName":"Player","colType":"categorical","importance": 0,"deleted": false,"selectedRole": "attribute","suggestedTypes": [{ "type": "categorical", "probability": 1.00, "provenance": "TEST" }], "colOriginalVariable": "","colIndex": 1, "colOriginalType":"categorical", "role": ["TEST"], "colDisplayName": "Player"},
+						{"colName":"Number_seasons","colType":"integer","importance": 1,"deleted": false,"selectedRole": "attribute","suggestedTypes":[ { "type": "integer", "probability": 1.00, "provenance": "TEST" }], "colOriginalVariable": "","colIndex": 2, "colOriginalType":"integer", "role": ["TEST"], "colDisplayName": "Number_seasons"},
+						{"colName":"Games_played","colType":"integer","importance": 2,"deleted": false,"selectedRole": "attribute","suggestedTypes": [{ "type": "integer", "probability": 1.00, "provenance": "TEST" }], "colOriginalVariable": "","colIndex": 3, "colOriginalType":"integer", "role": ["TEST"], "colDisplayName": "Games_played"}
 					]
 				},
 				{
-					"name": "o_196",
+					"name": "o_196_dataset",
 					"description": "<p><strong>Author</strong>: Mr. Somebody</p>\n",
 					"summary": "",
 					"summaryML": "",
+					"folder":"",
 					"numRows": 1073,
 					"numBytes": 744647,
 					"variables": [
-						{"name":"cylinders","type":"categorical","importance": 0,"deleted": false,"role": "attribute","distilRole": "","suggestedTypes":  [{ "type": "categorical", "probability": 1.00 }], "varOriginalName": "", "varDisplayName": "cylinders"},
-						{"name":"displacement","type":"categorical","importance": 0,"deleted": false,"role": "attribute","distilRole": "","suggestedTypes":  [{ "type": "categorical", "probability": 1.00 }], "varOriginalName": "", "varDisplayName": "displacement"}
+						{"colName":"d3mIndex","colType":"integer","importance": 0,"deleted": false,"selectedRole": "index","suggestedTypes": [{ "type": "integer", "probability": 1.00, "provenance": "TEST" }], "colOriginalVariable": "","colIndex": 0, "colOriginalType":"integer", "role": ["TEST"], "colDisplayName": "d3mIndex"},
+						{"colName":"cylinders","colType":"categorical","importance": 0,"deleted": false,"selectedRole": "attribute","suggestedTypes":  [{ "type": "categorical", "probability": 1.00, "provenance": "TEST" }], "colOriginalVariable": "","colIndex": 1, "colOriginalType":"categorical", "role": ["TEST"], "colDisplayName": "cylinders"},
+						{"colName":"displacement","colType":"categorical","importance": 0,"deleted": false,"selectedRole": "attribute","suggestedTypes":  [{ "type": "categorical", "probability": 1.00, "provenance": "TEST" }], "colOriginalVariable": "","colIndex": 2, "colOriginalType":"categorical", "role": ["TEST"], "colDisplayName": "displacement"}
 					]
 				}
 			]
@@ -103,28 +107,32 @@ func TestDatasetsHandlerWithSearch(t *testing.T) {
 		`{
 			"datasets": [
 				{
-					"name": "o_185",
+					"name": "o_185_dataset",
 					"description": "<p><strong>Author</strong>: Jeffrey S. Simonoff</p>\n",
 					"summary": "",
 					"summaryML": "",
+					"folder":"",
 					"numRows": 1073,
 					"numBytes": 744647,
 					"variables": [
-						{"name":"Player","type":"categorical","importance": 0,"deleted": false,"role": "attribute","distilRole": "","suggestedTypes": [{ "type": "categorical", "probability": 1.00 }], "varOriginalName": "", "varDisplayName": "Player"},
-						{"name":"Number_seasons","type":"integer","importance": 1,"deleted": false,"role": "attribute","distilRole": "","suggestedTypes":[ { "type": "integer", "probability": 1.00 }], "varOriginalName": "", "varDisplayName": "Number_seasons"},
-						{"name":"Games_played","type":"integer","importance": 2,"deleted": false,"role": "attribute","distilRole": "","suggestedTypes": [{ "type": "integer", "probability": 1.00 }], "varOriginalName": "", "varDisplayName": "Games_played"}
+						{"colName":"d3mIndex","colType":"integer","importance": 0,"deleted": false,"selectedRole": "index","suggestedTypes": [{ "type": "integer", "probability": 1.00, "provenance": "TEST" }], "colOriginalVariable": "","colIndex": 0, "colOriginalType":"integer", "role": ["TEST"], "colDisplayName": "d3mIndex"},
+						{"colName":"Player","colType":"categorical","importance": 0,"deleted": false,"selectedRole": "attribute","suggestedTypes": [{ "type": "categorical", "probability": 1.00, "provenance": "TEST" }], "colOriginalVariable": "","colIndex": 1, "colOriginalType":"categorical", "role": ["TEST"], "colDisplayName": "Player"},
+						{"colName":"Number_seasons","colType":"integer","importance": 1,"deleted": false,"selectedRole": "attribute","suggestedTypes":[ { "type": "integer", "probability": 1.00, "provenance": "TEST" }], "colOriginalVariable": "","colIndex": 2, "colOriginalType":"integer", "role": ["TEST"], "colDisplayName": "Number_seasons"},
+						{"colName":"Games_played","colType":"integer","importance": 2,"deleted": false,"selectedRole": "attribute","suggestedTypes": [{ "type": "integer", "probability": 1.00, "provenance": "TEST" }], "colOriginalVariable": "","colIndex": 3, "colOriginalType":"integer", "role": ["TEST"], "colDisplayName": "Games_played"}
 					]
 				},
 				{
-					"name": "o_196",
+					"name": "o_196_dataset",
 					"description": "<p><strong>Author</strong>: Mr. Somebody</p>\n",
 					"summary": "",
 					"summaryML": "",
+					"folder":"",
 					"numRows": 1073,
 					"numBytes": 744647,
 					"variables": [
-						{"name":"cylinders","type":"categorical","importance": 0,"deleted": false,"role": "attribute","distilRole": "","suggestedTypes":  [{ "type": "categorical", "probability": 1.00 }], "varOriginalName": "", "varDisplayName": "cylinders"},
-						{"name":"displacement","type":"categorical","importance": 0,"deleted": false,"role": "attribute","distilRole": "","suggestedTypes":  [{ "type": "categorical", "probability": 1.00 }], "varOriginalName": "", "varDisplayName": "displacement"}
+						{"colName":"d3mIndex","colType":"integer","importance": 0,"deleted": false,"selectedRole": "index","suggestedTypes": [{ "type": "integer", "probability": 1.00, "provenance": "TEST" }], "colOriginalVariable": "","colIndex": 0, "colOriginalType":"integer", "role": ["TEST"], "colDisplayName": "d3mIndex"},
+						{"colName":"cylinders","colType":"categorical","importance": 0,"deleted": false,"selectedRole": "attribute","suggestedTypes":  [{ "type": "categorical", "probability": 1.00, "provenance": "TEST" }], "colOriginalVariable": "","colIndex": 1, "colOriginalType":"categorical", "role": ["TEST"], "colDisplayName": "cylinders"},
+						{"colName":"displacement","colType":"categorical","importance": 0,"deleted": false,"selectedRole": "attribute","suggestedTypes":  [{ "type": "categorical", "probability": 1.00, "provenance": "TEST" }], "colOriginalVariable": "","colIndex": 2, "colOriginalType":"categorical", "role": ["TEST"], "colDisplayName": "displacement"}
 					]
 				}
 			]

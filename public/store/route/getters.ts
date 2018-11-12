@@ -123,7 +123,7 @@ export const getters = {
 		const training = getters.getDecodedTrainingVariableNames;
 		const lookup = buildLookup(training);
 		const variables = getters.getVariables;
-		return variables.filter(variable => lookup[variable.key.toLowerCase()]);
+		return variables.filter(variable => lookup[variable.colName.toLowerCase()]);
 	},
 
 	getTrainingVariableSummaries(state: Route, getters: any): VariableSummary[] {
@@ -137,7 +137,7 @@ export const getters = {
 		const target = getters.getRouteTargetVariable;
 		if (target) {
 			const variables = getters.getVariables;
-			const found = variables.filter(summary => target.toLowerCase() === summary.key.toLowerCase());
+			const found = variables.filter(summary => target.toLowerCase() === summary.colName.toLowerCase());
 			if (found) {
 				return found[0];
 			}
@@ -159,7 +159,7 @@ export const getters = {
 		const target = getters.getRouteTargetVariable;
 		const lookup = buildLookup(training.concat([ target ]));
 		const variables = getters.getVariables;
-		return variables.filter(variable => !lookup[variable.key.toLowerCase()]);
+		return variables.filter(variable => !lookup[variable.colName.toLowerCase()]);
 	},
 
 	getAvailableVariableSummaries(state: Route, getters: any): VariableSummary[] {

@@ -101,7 +101,7 @@ func ClusterPrimitive(index string, dataset string, config *IngestTaskConfig) er
 	mainDR.ResPath = relativePath
 
 	// write the new schema to file
-	err = meta.WriteSchema(config.getTmpAbsolutePath(config.ClusteringOutputSchemaRelative))
+	err = metadata.WriteSchema(meta, config.getTmpAbsolutePath(config.ClusteringOutputSchemaRelative))
 	if err != nil {
 		return errors.Wrap(err, "unable to store cluster schema")
 	}

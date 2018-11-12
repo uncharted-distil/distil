@@ -19,6 +19,7 @@
                     "datasetID": "o_185_dataset",
                     "description": "**Author**: Jeffrey S. Simonoff",
                     "summary": "",
+                    "summaryMachine": "",
                     "numRows": 1073,
                     "numBytes": 744647,
                     "variables": [
@@ -28,8 +29,11 @@
                             "colOriginalName": "",
                             "colDisplayName": "",
                             "colType": "integer",
+                            "colOriginalType": "integer",
+                            "colIndex": 0,
                             "importance": 0,
-                            "suggestedTypes": [ { "type": "integer", "probability": 1.00 } ]
+                            "suggestedTypes": [ { "type": "integer", "probability": 1.00, "provenance": "TEST" } ],
+                            "role": ["TEST"]
                         },
                         {
                             "colName": "Player",
@@ -37,8 +41,11 @@
                             "colOriginalName": "",
                             "colDisplayName": "",
                             "colType": "categorical",
+                            "colOriginalType": "categorical",
+                            "colIndex": 1,
                             "importance": 0,
-                            "suggestedTypes": [ { "type": "categorical", "probability": 1.00 } ]
+                            "suggestedTypes": [ { "type": "categorical", "probability": 1.00, "provenance": "TEST" } ],
+                            "role": ["TEST"]
                         },
                         {
                             "colName": "Number_seasons",
@@ -46,8 +53,11 @@
                             "colOriginalName": "",
                             "colDisplayName": "",
                             "colType": "integer",
+                            "colOriginalType": "integer",
+                            "colIndex": 2,
                             "importance": 1,
-                            "suggestedTypes": [ { "type": "integer", "probability": 1.00 } ]
+                            "suggestedTypes": [ { "type": "integer", "probability": 1.00, "provenance": "TEST" } ],
+                            "role": ["TEST"]
                         },
                         {
                             "colName": "Games_played",
@@ -55,8 +65,11 @@
                             "colOriginalName": "",
                             "colDisplayName": "",
                             "colType": "integer",
+                            "colOriginalType": "integer",
+                            "colIndex": 3,
                             "importance": 2,
-                            "suggestedTypes": [ { "type": "integer", "probability": 1.00 } ]
+                            "suggestedTypes": [ { "type": "integer", "probability": 1.00, "provenance": "TEST" } ],
+                            "role": ["TEST"]
                         }
                     ]
                 }
@@ -70,6 +83,7 @@
                     "datasetID": "o_196_dataset",
                     "description": "**Author**: Mr. Somebody",
                     "summary": "",
+                    "summaryMachine": "",
                     "numRows": 1073,
                     "numBytes": 744647,
                     "variables": [
@@ -79,8 +93,11 @@
                             "colOriginalName": "",
                             "colDisplayName": "",
                             "colType": "integer",
+                            "colOriginalType": "integer",
+                            "colIndex": 0,
                             "importance": 0,
-                            "suggestedTypes": [ { "type": "integer", "probability": 1.00 } ]
+                            "suggestedTypes": [ { "type": "integer", "probability": 1.00, "provenance": "TEST" } ],
+                            "role": ["TEST"]
                         },
                         {
                             "colName": "cylinders",
@@ -88,8 +105,11 @@
                             "colOriginalName": "",
                             "colDisplayName": "",
                             "colType": "categorical",
+                            "colOriginalType": "categorical",
+                            "colIndex": 1,
                             "importance": 0,
-                            "suggestedTypes": [ { "type": "categorical", "probability": 1.00 } ]
+                            "suggestedTypes": [ { "type": "categorical", "probability": 1.00, "provenance": "TEST" } ],
+                            "role": ["TEST"]
                         },
                         {
                             "colName": "displacement",
@@ -97,8 +117,11 @@
                             "colOriginalName": "",
                             "colDisplayName": "",
                             "colType": "categorical",
+                            "colOriginalType": "categorical",
+                            "colIndex": 2,
                             "importance": 0,
-                            "suggestedTypes": [ { "type": "categorical", "probability": 1.00 } ]
+                            "suggestedTypes": [ { "type": "categorical", "probability": 1.00, "provenance": "TEST" } ],
+                            "role": ["TEST"]
                         }
                     ]
                 }

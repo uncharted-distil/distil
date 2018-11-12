@@ -9,8 +9,8 @@ import (
 	"github.com/pkg/errors"
 	"github.com/unchartedsoftware/distil-ingest/rest"
 
-	"github.com/unchartedsoftware/distil/api/compute/description"
-	"github.com/unchartedsoftware/distil/api/compute/result"
+	"github.com/unchartedsoftware/distil-compute/primitive/compute/description"
+	"github.com/unchartedsoftware/distil-compute/primitive/compute/result"
 	"github.com/unchartedsoftware/distil/api/util"
 )
 

@@ -13,10 +13,12 @@ import (
 
 	"github.com/pkg/errors"
 	uuid "github.com/satori/go.uuid"
-	"github.com/unchartedsoftware/distil/api/compute/description"
-	"github.com/unchartedsoftware/distil/api/pipeline"
+	"github.com/unchartedsoftware/distil-compute/model"
+	"github.com/unchartedsoftware/distil-compute/pipeline"
+	"github.com/unchartedsoftware/distil-compute/primitive/compute"
+	"github.com/unchartedsoftware/distil-compute/primitive/compute/description"
 
-	"github.com/unchartedsoftware/distil/api/model"
+	api "github.com/unchartedsoftware/distil/api/model"
 )
 
 const (
@@ -66,15 +68,15 @@ func newStatusChannel() chan SolutionStatus {
 
 // SolutionRequest represents a solution search request.
 type SolutionRequest struct {
-	Dataset          string              `json:"dataset"`
-	Index            string              `json:"index"`
-	TargetFeature    string              `json:"target"`
-	Task             string              `json:"task"`
-	SubTask          string              `json:"subTask"`
-	MaxSolutions     int32               `json:"maxSolutions"`
-	MaxTime          int64               `json:"maxTime"`
-	Filters          *model.FilterParams `json:"filters"`
-	Metrics          []string            `json:"metrics"`
+	Dataset          string            `json:"dataset"`
+	Index            string            `json:"index"`
+	TargetFeature    string            `json:"target"`
+	Task             string            `json:"task"`
+	SubTask          string            `json:"subTask"`
+	MaxSolutions     int32             `json:"maxSolutions"`
+	MaxTime          int64             `json:"maxTime"`
+	Filters          *api.FilterParams `json:"filters"`
+	Metrics          []string          `json:"metrics"`
 	mu               *sync.Mutex
 	wg               *sync.WaitGroup
 	requestChannel   chan SolutionStatus
@@ -163,21 +165,21 @@ func createSearchSolutionsRequest(columnIndex int, preprocessing *pipeline.Pipel
 	return &pipeline.SearchSolutionsRequest{
 		Problem: &pipeline.ProblemDescription{
 			Problem: &pipeline.Problem{
-				TaskType:           convertTaskTypeFromTA3ToTA2(task),
-				TaskSubtype:        convertTaskSubTypeFromTA3ToTA2(subTask),
-				PerformanceMetrics: convertMetricsFromTA3ToTA2(metrics),
+				TaskType:           compute.ConvertTaskTypeFromTA3ToTA2(task),
+				TaskSubtype:        compute.ConvertTaskSubTypeFromTA3ToTA2(subTask),
+				PerformanceMetrics: compute.ConvertMetricsFromTA3ToTA2(metrics),
 			},
 			Inputs: []*pipeline.ProblemInput{
 				{
-					DatasetId: convertDatasetTA3ToTA2(dataset),
-					Targets:   convertTargetFeaturesTA3ToTA2(targetFeature, columnIndex),
+					DatasetId: compute.ConvertDatasetTA3ToTA2(dataset),
+					Targets:   compute.ConvertTargetFeaturesTA3ToTA2(targetFeature, columnIndex),
 				},
 			},
 		},
 
 		// Our agent/version info
 		UserAgent: userAgent,
-		Version:   GetAPIVersion(),
+		Version:   compute.GetAPIVersion(),
 
 		// Requested max time for solution search - not guaranteed to be honoured
 		TimeBound: float64(maxTime),
@@ -232,7 +234,7 @@ func (s *SolutionRequest) createProduceSolutionRequest(datasetURI string, fitted
 	}
 }
 
-func (s *SolutionRequest) persistSolutionError(statusChan chan SolutionStatus, solutionStorage model.SolutionStorage, searchID string, solutionID string, err error) {
+func (s *SolutionRequest) persistSolutionError(statusChan chan SolutionStatus, solutionStorage api.SolutionStorage, searchID string, solutionID string, err error) {
 	// persist the updated state
 	// NOTE: ignoring error
 	solutionStorage.PersistSolution(searchID, solutionID, SolutionErroredStatus, time.Now())
@@ -248,7 +250,7 @@ func (s *SolutionRequest) persistSolutionError(statusChan chan SolutionStatus, s
 	}
 }
 
-func (s *SolutionRequest) persistSolutionStatus(statusChan chan SolutionStatus, solutionStorage model.SolutionStorage, searchID string, solutionID string, status string) {
+func (s *SolutionRequest) persistSolutionStatus(statusChan chan SolutionStatus, solutionStorage api.SolutionStorage, searchID string, solutionID string, status string) {
 	// persist the updated state
 	err := solutionStorage.PersistSolution(searchID, solutionID, status, time.Now())
 	if err != nil {
@@ -267,7 +269,7 @@ func (s *SolutionRequest) persistSolutionStatus(statusChan chan SolutionStatus, 
 	}
 }
 
-func (s *SolutionRequest) persistRequestError(statusChan chan SolutionStatus, solutionStorage model.SolutionStorage, searchID string, dataset string, err error) {
+func (s *SolutionRequest) persistRequestError(statusChan chan SolutionStatus, solutionStorage api.SolutionStorage, searchID string, dataset string, err error) {
 	// persist the updated state
 	// NOTE: ignoring error
 	solutionStorage.PersistRequest(searchID, dataset, RequestErroredStatus, time.Now())
@@ -282,7 +284,7 @@ func (s *SolutionRequest) persistRequestError(statusChan chan SolutionStatus, so
 	}
 }
 
-func (s *SolutionRequest) persistRequestStatus(statusChan chan SolutionStatus, solutionStorage model.SolutionStorage, searchID string, dataset string, status string) error {
+func (s *SolutionRequest) persistRequestStatus(statusChan chan SolutionStatus, solutionStorage api.SolutionStorage, searchID string, dataset string, status string) error {
 	// persist the updated state
 	err := solutionStorage.PersistRequest(searchID, dataset, status, time.Now())
 	if err != nil {
@@ -301,7 +303,7 @@ func (s *SolutionRequest) persistRequestStatus(statusChan chan SolutionStatus, s
 	return nil
 }
 
-func (s *SolutionRequest) persistSolutionResults(statusChan chan SolutionStatus, client *Client, solutionStorage model.SolutionStorage, dataStorage model.DataStorage, searchID string, dataset string, solutionID string, fittedSolutionID string, resultID string, resultURI string) {
+func (s *SolutionRequest) persistSolutionResults(statusChan chan SolutionStatus, client *compute.Client, solutionStorage api.SolutionStorage, dataStorage api.DataStorage, searchID string, dataset string, solutionID string, fittedSolutionID string, resultID string, resultURI string) {
 	// persist the completed state
 	err := solutionStorage.PersistSolution(searchID, solutionID, SolutionCompletedStatus, time.Now())
 	if err != nil {
@@ -335,7 +337,7 @@ func (s *SolutionRequest) persistSolutionResults(statusChan chan SolutionStatus,
 	}
 }
 
-func (s *SolutionRequest) dispatchSolution(statusChan chan SolutionStatus, client *Client, solutionStorage model.SolutionStorage, dataStorage model.DataStorage, searchID string, solutionID string, dataset string, datasetURITrain string, datasetURITest string) {
+func (s *SolutionRequest) dispatchSolution(statusChan chan SolutionStatus, client *compute.Client, solutionStorage api.SolutionStorage, dataStorage api.DataStorage, searchID string, solutionID string, dataset string, datasetURITrain string, datasetURITest string) {
 
 	// score solution
 	solutionScoreResponses, err := client.GenerateSolutionScores(context.Background(), solutionID, datasetURITest, s.Metrics)
@@ -351,7 +353,7 @@ func (s *SolutionRequest) dispatchSolution(statusChan chan SolutionStatus, clien
 			for _, score := range response.Scores {
 				metric := ""
 				if score.GetMetric() == nil {
-					metric = convertMetricsFromTA3ToTA2(s.Metrics)[0].GetMetric().String()
+					metric = compute.ConvertMetricsFromTA3ToTA2(s.Metrics)[0].GetMetric().String()
 				} else {
 					metric = score.Metric.Metric.String()
 				}
@@ -434,7 +436,7 @@ func (s *SolutionRequest) dispatchSolution(statusChan chan SolutionStatus, clien
 	}
 }
 
-func (s *SolutionRequest) dispatchRequest(client *Client, solutionStorage model.SolutionStorage, dataStorage model.DataStorage, searchID string, dataset string, datasetURITrain string, datasetURITest string) {
+func (s *SolutionRequest) dispatchRequest(client *compute.Client, solutionStorage api.SolutionStorage, dataStorage api.DataStorage, searchID string, dataset string, datasetURITrain string, datasetURITest string) {
 
 	// update request status
 	err := s.persistRequestStatus(s.requestChannel, solutionStorage, searchID, dataset, RequestRunningStatus)
@@ -472,7 +474,7 @@ func (s *SolutionRequest) dispatchRequest(client *Client, solutionStorage model.
 }
 
 // PersistAndDispatch persists the solution request and dispatches it.
-func (s *SolutionRequest) PersistAndDispatch(client *Client, solutionStorage model.SolutionStorage, metaStorage model.MetadataStorage, dataStorage model.DataStorage) error {
+func (s *SolutionRequest) PersistAndDispatch(client *compute.Client, solutionStorage api.SolutionStorage, metaStorage api.MetadataStorage, dataStorage api.DataStorage) error {
 
 	// NOTE: D3M index field is needed in the persisted data.
 	s.Filters.Variables = append(s.Filters.Variables, model.D3MIndexFieldName)
@@ -497,14 +499,14 @@ func (s *SolutionRequest) PersistAndDispatch(client *Client, solutionStorage mod
 	var targetVariable *model.Variable
 	for _, variable := range dataVariables {
 		// Exclude cluster/feature generated columns
-		allVarFilters.Variables = append(allVarFilters.Variables, variable.Key)
-		if variable.Key == s.TargetFeature {
+		allVarFilters.Variables = append(allVarFilters.Variables, variable.Name)
+		if variable.Name == s.TargetFeature {
 			targetVariable = variable
 		}
 	}
 
 	// fetch the queried dataset
-	dataset, err := model.FetchDataset(s.Dataset, true, true, &allVarFilters, metaStorage, dataStorage)
+	dataset, err := api.FetchDataset(s.Dataset, true, true, &allVarFilters, metaStorage, dataStorage)
 	if err != nil {
 		return err
 	}
@@ -515,7 +517,7 @@ func (s *SolutionRequest) PersistAndDispatch(client *Client, solutionStorage mod
 	datasetInputDir := path.Join(inputDir, dataset.Metadata.Folder, "TRAIN", "dataset_TRAIN")
 
 	// perist the datasets and get URI
-	datasetPathTrain, datasetPathTest, err := PersistOriginalData(s.Dataset, D3MDataSchema, datasetInputDir, datasetDir)
+	datasetPathTrain, datasetPathTest, err := PersistOriginalData(s.Dataset, compute.D3MDataSchema, datasetInputDir, datasetDir)
 	if err != nil {
 		return err
 	}
@@ -612,7 +614,7 @@ func CreateSearchSolutionRequest(allFeatures []*model.Variable,
 
 	var targetVariable *model.Variable
 	for _, v := range allFeatures {
-		if v.Key == target {
+		if v.Name == target {
 			targetVariable = v
 			break
 		}
@@ -637,7 +639,7 @@ func CreateSearchSolutionRequest(allFeatures []*model.Variable,
 func getColumnIndex(variable *model.Variable, selectedVariables []string) int {
 	colIndex := 0
 	for i := 0; i < len(selectedVariables); i++ {
-		if selectedVariables[i] == variable.Key {
+		if selectedVariables[i] == variable.Name {
 			break
 		}
 		colIndex = colIndex + 1
