@@ -8,7 +8,7 @@ import (
 	"goji.io/pat"
 
 	"github.com/pkg/errors"
-	"github.com/unchartedsoftware/distil/api/compute"
+	"github.com/unchartedsoftware/distil-compute/primitive/compute"
 	"github.com/unchartedsoftware/distil/api/model"
 	"github.com/unchartedsoftware/plog"
 )

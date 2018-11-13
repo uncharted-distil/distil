@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"github.com/pkg/errors"
+	"github.com/unchartedsoftware/distil-compute/model"
 	"github.com/unchartedsoftware/distil-ingest/conf"
 	"github.com/unchartedsoftware/distil-ingest/merge"
 	"github.com/unchartedsoftware/distil-ingest/metadata"
@@ -20,7 +21,7 @@ import (
 	"github.com/unchartedsoftware/plog"
 	"gopkg.in/olivere/elastic.v5"
 
-	"github.com/unchartedsoftware/distil/api/model"
+	api "github.com/unchartedsoftware/distil/api/model"
 	"github.com/unchartedsoftware/distil/api/util"
 )
 
@@ -73,7 +74,7 @@ func (c *IngestTaskConfig) getRawDataPath() string {
 }
 
 // IngestDataset executes the complete ingest process for the specified dataset.
-func IngestDataset(metaCtor model.MetadataStorageCtor, index string, dataset string, config *IngestTaskConfig) error {
+func IngestDataset(metaCtor api.MetadataStorageCtor, index string, dataset string, config *IngestTaskConfig) error {
 	// Set the probability threshold
 	metadata.SetTypeProbabilityThreshold(config.ClassificationProbabilityThreshold)
 
@@ -168,7 +169,7 @@ func Merge(schemaFile string, index string, dataset string, config *IngestTaskCo
 	}
 
 	// write merged metadata out to disk
-	err = meta.WriteMergedSchema(config.getTmpAbsolutePath(config.MergedOutputSchemaPathRelative), mergedDR)
+	err = metadata.WriteMergedSchema(meta, config.getTmpAbsolutePath(config.MergedOutputSchemaPathRelative), mergedDR)
 	if err != nil {
 		return errors.Wrap(err, "unable to write merged schema")
 	}
@@ -177,7 +178,7 @@ func Merge(schemaFile string, index string, dataset string, config *IngestTaskCo
 }
 
 // Ingest the metadata to ES and the data to Postgres.
-func Ingest(storage model.MetadataStorage, index string, dataset string, config *IngestTaskConfig) error {
+func Ingest(storage api.MetadataStorage, index string, dataset string, config *IngestTaskConfig) error {
 	meta, err := metadata.LoadMetadataFromClassification(
 		config.getTmpAbsolutePath(config.MergedOutputSchemaPathRelative),
 		config.getTmpAbsolutePath(config.ClassificationOutputPathRelative))
@@ -185,25 +186,25 @@ func Ingest(storage model.MetadataStorage, index string, dataset string, config 
 		return errors.Wrap(err, "unable to load metadata")
 	}
 
-	err = meta.LoadImportance(config.getTmpAbsolutePath(config.RankingOutputPathRelative))
+	err = metadata.LoadImportance(meta, config.getTmpAbsolutePath(config.RankingOutputPathRelative))
 	if err != nil {
 		return errors.Wrap(err, "unable to load importance from file")
 	}
 
 	// load stats
-	err = meta.LoadDatasetStats(config.getTmpAbsolutePath(config.MergedOutputPathRelative))
+	err = metadata.LoadDatasetStats(meta, config.getTmpAbsolutePath(config.MergedOutputPathRelative))
 	if err != nil {
 		return errors.Wrap(err, "unable to load stats")
 	}
 
 	// load summary
-	err = meta.LoadSummaryFromDescription(config.getTmpAbsolutePath(config.SummaryOutputPathRelative))
+	err = metadata.LoadSummaryFromDescription(meta, config.getTmpAbsolutePath(config.SummaryOutputPathRelative))
 	if err != nil {
 		return errors.Wrap(err, "unable to load summary")
 	}
 
 	// load machine summary
-	err = meta.LoadSummaryMachine(config.getTmpAbsolutePath(config.SummaryMachineOutputPathRelative))
+	err = metadata.LoadSummaryMachine(meta, config.getTmpAbsolutePath(config.SummaryMachineOutputPathRelative))
 	// NOTE: For now ignore summary errors!
 	if err != nil {
 		log.Errorf("unable to load machine summary: %v", err)
@@ -331,7 +332,7 @@ func Ingest(storage model.MetadataStorage, index string, dataset string, config 
 	return nil
 }
 
-func fixDatasetIDName(meta *metadata.Metadata) {
+func fixDatasetIDName(meta *model.Metadata) {
 	// Train dataset ID & name need to be adjusted to fit the expected format.
 	// The ID MUST end in _dataset, and the name should be representative.
 	if isTrainDataset(meta) {
@@ -339,11 +340,11 @@ func fixDatasetIDName(meta *metadata.Metadata) {
 	}
 }
 
-func isTrainDataset(meta *metadata.Metadata) bool {
+func isTrainDataset(meta *model.Metadata) bool {
 	return strings.HasSuffix(meta.ID, "_TRAIN")
 }
 
-func matchDataset(storage model.MetadataStorage, meta *metadata.Metadata, index string) (string, error) {
+func matchDataset(storage api.MetadataStorage, meta *model.Metadata, index string) (string, error) {
 	// load the datasets from ES.
 	datasets, err := storage.FetchDatasets(true, true)
 	if err != nil {
@@ -354,9 +355,9 @@ func matchDataset(storage model.MetadataStorage, meta *metadata.Metadata, index 
 	for _, dataset := range datasets {
 		variables := make([]string, 0)
 		for _, v := range dataset.Variables {
-			variables = append(variables, v.Key)
+			variables = append(variables, v.Name)
 		}
-		if meta.DatasetMatches(variables) {
+		if metadata.DatasetMatches(meta, variables) {
 			// Return the name of the matching set.
 			return dataset.Name, nil
 		}

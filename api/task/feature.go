@@ -112,7 +112,7 @@ func FeaturizePrimitive(schemaFile string, index string, dataset string, config 
 	mainDR.ResPath = relativePath
 
 	// write the new schema to file
-	err = meta.WriteSchema(config.getTmpAbsolutePath(config.FeaturizationOutputSchemaRelative))
+	err = metadata.WriteSchema(meta, config.getTmpAbsolutePath(config.FeaturizationOutputSchemaRelative))
 	if err != nil {
 		return errors.Wrap(err, "unable to store feature schema")
 	}

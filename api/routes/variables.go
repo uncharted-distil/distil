@@ -9,7 +9,8 @@ import (
 	"github.com/pkg/errors"
 	"goji.io/pat"
 
-	"github.com/unchartedsoftware/distil/api/model"
+	"github.com/unchartedsoftware/distil-compute/model"
+	api "github.com/unchartedsoftware/distil/api/model"
 )
 
 // VariablesResult represents the result of a variables response.
@@ -20,7 +21,7 @@ type VariablesResult struct {
 // VariablesHandler generates a route handler that facilitates a search of
 // variable names and descriptions, returning a variable list for the specified
 // dataset.
-func VariablesHandler(metaCtor model.MetadataStorageCtor) func(http.ResponseWriter, *http.Request) {
+func VariablesHandler(metaCtor api.MetadataStorageCtor) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// get dataset name
 		dataset := pat.Param(r, "dataset")
@@ -49,7 +50,7 @@ func VariablesHandler(metaCtor model.MetadataStorageCtor) func(http.ResponseWrit
 
 // VariableTypeHandler generates a route handler that facilitates the update
 // of a variable type.
-func VariableTypeHandler(storageCtor model.DataStorageCtor, metaCtor model.MetadataStorageCtor) func(http.ResponseWriter, *http.Request) {
+func VariableTypeHandler(storageCtor api.DataStorageCtor, metaCtor api.MetadataStorageCtor) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		params, err := getPostParameters(r)
 		if err != nil {

@@ -23,8 +23,11 @@
                             "colOriginalName": "",
                             "colDisplayName": "",
                             "selectedRole": "index",
+                            "colOriginalType": "integer",
+                            "colIndex": 0,
                             "importance": 0,
-                            "suggestedTypes": [ { "type": "integer", "probability": 1.00 } ]
+                            "suggestedTypes": [ { "type": "integer", "probability": 1.00, "provenance": "TEST" } ],
+                            "role": ["TEST"]
                         },
                         {
                             "colName": "Position",
@@ -32,8 +35,11 @@
                             "colOriginalName": "",
                             "colDisplayName": "",
                             "selectedRole": "attribute",
+                            "colOriginalType": "categorical",
+                            "colIndex": 1,
                             "importance": 0,
-                            "suggestedTypes": [ { "type": "categorical", "probability": 1.00 } ]
+                            "suggestedTypes": [ { "type": "categorical", "probability": 1.00, "provenance": "TEST" } ],
+                            "role": ["TEST"]
                         },
                         {
                             "colName": "Number_seasons",
@@ -41,8 +47,11 @@
                             "colOriginalName": "",
                             "colDisplayName": "",
                             "selectedRole": "attribute",
+                            "colOriginalType": "integer",
+                            "colIndex": 2,
                             "importance": 1,
-                            "suggestedTypes": [ { "type": "integer", "probability": 1.00 } ]
+                            "suggestedTypes": [ { "type": "integer", "probability": 1.00, "provenance": "TEST" } ],
+                            "role": ["TEST"]
                         },
                         {
                             "colName": "Games_played",
@@ -50,8 +59,11 @@
                             "colOriginalName": "",
                             "colDisplayName": "",
                             "selectedRole": "attribute",
+                            "colOriginalType": "integer",
+                            "colIndex": 3,
                             "importance": 2,
-                            "suggestedTypes": [ { "type": "integer", "probability": 1.00 } ]
+                            "suggestedTypes": [ { "type": "integer", "probability": 1.00, "provenance": "TEST" } ],
+                            "role": ["TEST"]
                         },
                         {
                             "colName": "On_base_pct",
@@ -59,8 +71,11 @@
                             "colOriginalName": "",
                             "colDisplayName": "",
                             "selectedRole": "attribute",
+                            "colOriginalType": "float",
+                            "colIndex": 4,
                             "importance": 3,
-                            "suggestedTypes": [ { "type": "float", "probability": 1.00 } ]
+                            "suggestedTypes": [ { "type": "float", "probability": 1.00, "provenance": "TEST" } ],
+                            "role": ["TEST"]
                         }
                     ]
                 }

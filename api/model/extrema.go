@@ -4,6 +4,8 @@ import (
 	"errors"
 	"fmt"
 	"math"
+
+	"github.com/unchartedsoftware/distil-compute/model"
 )
 
 const (
@@ -35,7 +37,7 @@ func NewExtrema(min float64, max float64) (*Extrema, error) {
 
 // GetBucketInterval calculates the size of the buckets given the extrema.
 func (e *Extrema) GetBucketInterval() float64 {
-	if IsFloatingPoint(e.Type) {
+	if model.IsFloatingPoint(e.Type) {
 		return e.getFloatingPointInterval()
 	}
 	return e.getIntegerInterval()

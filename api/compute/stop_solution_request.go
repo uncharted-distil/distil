@@ -3,6 +3,8 @@ package compute
 import (
 	"context"
 	"encoding/json"
+
+	"github.com/unchartedsoftware/distil-compute/primitive/compute"
 )
 
 // StopSolutionSearchRequest represents a request to stop any pending siolution searches.
@@ -21,6 +23,6 @@ func NewStopSolutionSearchRequest(data []byte) (*StopSolutionSearchRequest, erro
 }
 
 // Dispatch dispatches the stop search request.
-func (s *StopSolutionSearchRequest) Dispatch(client *Client) error {
+func (s *StopSolutionSearchRequest) Dispatch(client *compute.Client) error {
 	return client.StopSearch(context.Background(), s.RequestID)
 }

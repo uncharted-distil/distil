@@ -15,7 +15,8 @@ import (
 	"goji.io"
 	"goji.io/pat"
 
-	"github.com/unchartedsoftware/distil/api/compute"
+	"github.com/unchartedsoftware/distil-compute/primitive/compute"
+	api "github.com/unchartedsoftware/distil/api/compute"
 	"github.com/unchartedsoftware/distil/api/elastic"
 	"github.com/unchartedsoftware/distil/api/env"
 	"github.com/unchartedsoftware/distil/api/middleware"
@@ -63,8 +64,8 @@ func main() {
 	log.Infof("%+v", spew.Sdump(config))
 
 	// set dataset directory
-	compute.SetDatasetDir(config.TmpDataPath)
-	compute.SetInputDir(config.D3MInputDirRoot)
+	api.SetDatasetDir(config.TmpDataPath)
+	api.SetInputDir(config.D3MInputDirRoot)
 
 	// instantiate elastic client constructor.
 	esClientCtor := elastic.NewClient(config.ElasticEndpoint, false)
@@ -154,7 +155,7 @@ func main() {
 		datasetDocPath = path.Join(config.D3MInputDir, "TRAIN", "dataset_TRAIN", compute.D3MDataSchema)
 	} else {
 		// NOTE: EVAL ONLY OVERRIDE SETUP FOR METRICS!
-		problemPath = path.Join(config.D3MInputDir, "TRAIN", "problem_TRAIN", compute.D3MProblem)
+		problemPath = path.Join(config.D3MInputDir, "TRAIN", "problem_TRAIN", api.D3MProblem)
 		ws.SetProblemFile(problemPath)
 	}
 

@@ -28,7 +28,7 @@ export const actions = {
 
 		// commit empty place holders, if there is no data
 		return Promise.all(args.variables.map(variable => {
-			return axios.post(`/distil/variable-summary/${args.dataset}/${variable.key}`, filterParams)
+			return axios.post(`/distil/variable-summary/${args.dataset}/${variable.colName}`, filterParams)
 				.then(response => {
 					mutations.updateHighlightSummaries(context, response.data.histogram);
 				})
@@ -74,7 +74,7 @@ export const actions = {
 		filterParams = addHighlightToFilterParams(filterParams, args.highlightRoot, INCLUDE_FILTER);
 
 		return Promise.all(args.training.map(variable => {
-			return axios.post(`/distil/training-summary/${args.dataset}/${variable.key}/${solution.resultId}`, filterParams)
+			return axios.post(`/distil/training-summary/${args.dataset}/${variable.colName}/${solution.resultId}`, filterParams)
 				.then(response => {
 					mutations.updateHighlightSummaries(context, response.data.histogram);
 				})
