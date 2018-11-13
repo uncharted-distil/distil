@@ -27,9 +27,9 @@ export const mutations = {
 
 	updateVariableRankings(state: DatasetState, rankings: Dictionary<number>) {
 		state.variables.forEach(v => {
-			if (rankings[v.key]) {
+			if (rankings[v.colName]) {
 				// add ranking
-				Vue.set(v, 'ranking', rankings[v.key]);
+				Vue.set(v, 'ranking', rankings[v.colName]);
 			}
 		});
 	},
