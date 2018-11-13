@@ -6,7 +6,9 @@ import (
 	"github.com/pkg/errors"
 	"goji.io/pat"
 
-	"github.com/unchartedsoftware/distil/api/model"
+	//"github.com/unchartedsoftware/distil-compute/model"
+
+	api "github.com/unchartedsoftware/distil/api/model"
 	"github.com/unchartedsoftware/distil/api/task"
 )
 
@@ -17,7 +19,7 @@ type RankingResult struct {
 
 // VariableRankingHandler generates a route handler that allows to ranking
 // variables of a dataset relative to the importance of a selected variable.
-func VariableRankingHandler(metaCtor model.MetadataStorageCtor) func(http.ResponseWriter, *http.Request) {
+func VariableRankingHandler(metaCtor api.MetadataStorageCtor) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// get dataset name
 		dataset := pat.Param(r, "dataset")
@@ -46,11 +48,11 @@ func VariableRankingHandler(metaCtor model.MetadataStorageCtor) func(http.Respon
 
 		res := make(map[string]interface{})
 		for _, variable := range d.Variables {
-			rank, ok := rankings[variable.Key]
+			rank, ok := rankings[variable.Name]
 			if ok {
-				res[variable.Key] = rank
+				res[variable.Name] = rank
 			} else {
-				res[variable.Key] = 0
+				res[variable.Name] = 0
 			}
 		}
 

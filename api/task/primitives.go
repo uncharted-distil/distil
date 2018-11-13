@@ -18,8 +18,6 @@ import (
 	"github.com/unchartedsoftware/distil-compute/primitive/compute/result"
 
 	"github.com/unchartedsoftware/distil/api/env"
-	"github.com/unchartedsoftware/distil/api/model"
-	"github.com/unchartedsoftware/distil/api/pipeline"
 )
 
 const (
