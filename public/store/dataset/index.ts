@@ -18,6 +18,7 @@ export interface Variable {
 	colName: string;
 	colType: string;
 	importance: number;
+	ranking?: number;
 	novelty: number;
 	colOriginalType: string;
 	suggestedTypes: SuggestedType[];

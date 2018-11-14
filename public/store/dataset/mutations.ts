@@ -1,5 +1,6 @@
 import _ from 'lodash';
 import Vue from 'vue';
+import { Dictionary } from '../../util/dict';
 import { DatasetState, Variable, Dataset, VariableSummary, TableData } from './index';
 import { updateSummaries } from '../../util/data';
 
@@ -22,6 +23,15 @@ export const mutations = {
 
 	updateVariableSummaries(state: DatasetState, summary: VariableSummary) {
 		updateSummaries(summary, state.variableSummaries);
+	},
+
+	updateVariableRankings(state: DatasetState, rankings: Dictionary<number>) {
+		state.variables.forEach(v => {
+			if (rankings[v.colName]) {
+				// add ranking
+				Vue.set(v, 'ranking', rankings[v.colName]);
+			}
+		});
 	},
 
 	updateFile(state: DatasetState, args: { url: string, file: any }) {

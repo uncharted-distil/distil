@@ -62,6 +62,9 @@ export default Vue.extend({
 		dataset(): string {
 			return routeGetters.getRouteDataset(this.$store);
 		},
+		target(): string {
+			return routeGetters.getRouteTargetVariable(this.$store);
+		},
 		highlightRoot(): HighlightRoot {
 			return routeGetters.getDecodedHighlightRoot(this.$store);
 		},
@@ -118,6 +121,13 @@ export default Vue.extend({
 				dataset: this.dataset,
 				field: this.field,
 				type: type
+			}).then(() => {
+				if (this.target) {
+					datasetActions.fetchVariableRankings(this.$store, {
+						dataset: this.dataset,
+						target: this.target
+					});
+				}
 			});
 		},
 	}

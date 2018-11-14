@@ -143,6 +143,16 @@ export const actions = {
 			});
 	},
 
+	fetchVariableRankings(context: DatasetContext, args: { dataset: string, target: string }) {
+		return axios.get(`/distil/variable-rankings/${args.dataset}/${args.target}`)
+			.then(response => {
+				mutations.updateVariableRankings(context, response.data.rankings);
+			})
+			.catch(error => {
+				console.error(error);
+			});
+	},
+
 	// update filtered data based on the current filter state
 	fetchFiles(context: DatasetContext, args: { dataset: string, variable: string, urls: string[] }) {
 		if (!args.urls) {

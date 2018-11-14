@@ -3,6 +3,7 @@ elastic:
     docker.uncharted.software/distil_dev_es:latest
   ports:
     - "9200:9200"
+
 pipeline_server:
   image:
     docker.uncharted.software/distil-pipeline-server:latest
@@ -16,6 +17,7 @@ pipeline_server:
     - SOLUTION_ERR_PERCENT=0.1
   volumes:
     - $PWD/datasets:$PWD/datasets
+
 postgres:
   image:
     docker.uncharted.software/distil_dev_postgres:latest
@@ -23,18 +25,23 @@ postgres:
     - "5432:5432"
   command:
     -d postgres
+
+runner:
+  image:
+    docker.uncharted.software/distil-pipeline-runner:latest
+  ports:
+    - "50051:50051"
+  environment:
+    - D3MOUTPUTDIR=$PWD/outputs
+    - VERBOSE_PRIMITIVE_OUTPUT=1
+    #- STATIC_RESOURCE_PATH=/static_resources
+  volumes:
+    - $PWD/datasets:/$PWD/datasets
+    - $PWD/outputs:/$PWD/outputs
+    #- $PWD/static_resources:/static_resources
+
 resources:
   image:
     docker.uncharted.software/distil_res_server:latest
   ports:
     - "5440:5440"
-# nk_classification_rest:
-#   image:
-#     registry.datadrivendiscovery.org/j18_ta1eval/distil/simon:latest
-#   ports:
-#     - "5000:5000"
-# nk_ranking_rest:
-#   image:
-#     registry.datadrivendiscovery.org/j18_ta1eval/distil/punk_1:0.4
-#   ports:
-#     - "5001:5000"

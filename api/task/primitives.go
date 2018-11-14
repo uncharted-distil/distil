@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"path"
 	"strconv"
 	"strings"
 
@@ -25,7 +26,8 @@ const (
 )
 
 var (
-	client *compute.Client
+	client       *compute.Client
+	inputRootDir string
 )
 
 // FeatureRequest captures the properties of a request to a primitive.
@@ -41,6 +43,7 @@ type FeatureRequest struct {
 func SetClient(computeClient *compute.Client) {
 	client = computeClient
 }
+
 func submitPrimitive(dataset string, step *pipeline.PipelineDescription) (string, error) {
 
 	config, err := env.LoadConfig()
@@ -48,8 +51,11 @@ func submitPrimitive(dataset string, step *pipeline.PipelineDescription) (string
 		return "", errors.Wrap(err, "unable to load config")
 	}
 
+	// create a reference to the original data path
+	datasetInputDir := path.Join(config.D3MInputDirRoot, dataset, "TRAIN", "dataset_TRAIN")
+
 	if config.UseTA2Runner {
-		res, err := client.ExecutePipeline(context.Background(), dataset, step)
+		res, err := client.ExecutePipeline(context.Background(), datasetInputDir, step)
 		if err != nil {
 			return "", errors.Wrap(err, "unable to dispatch mocked pipeline")
 		}
@@ -88,6 +94,44 @@ func submitPrimitive(dataset string, step *pipeline.PipelineDescription) (string
 	datasetURI = strings.Replace(datasetURI, "file://", "", -1)
 
 	return datasetURI, nil
+}
+
+// TargetRankPrimitive will rank the dataset relative to a target variable using
+// a primitive.
+func TargetRankPrimitive(dataset string, target string, features []*model.Variable) (map[string]float64, error) {
+	// create & submit the solution request
+	pip, err := description.CreateTargetRankingPipeline("roger", "", target, features)
+	if err != nil {
+		return nil, errors.Wrap(err, "unable to create ranking pipeline")
+	}
+
+	datasetURI, err := submitPrimitive(dataset, pip)
+	if err != nil {
+		return nil, errors.Wrap(err, "unable to run ranking pipeline")
+	}
+
+	// parse primitive response (col index,importance)
+	res, err := result.ParseResultCSV(datasetURI)
+	if err != nil {
+		return nil, errors.Wrap(err, "unable to parse ranking pipeline result")
+	}
+
+	ranks := make(map[string]float64)
+	for i, v := range res {
+		if i > 0 {
+			key, ok := v[2].(string)
+			if !ok {
+				return nil, fmt.Errorf("unable to parse rank key")
+			}
+			rank, err := strconv.ParseFloat(v[3].(string), 64)
+			if err != nil {
+				return nil, errors.Wrap(err, "unable to parse rank value")
+			}
+			ranks[key] = rank
+		}
+	}
+
+	return ranks, nil
 }
 
 func readCSVFile(filename string, hasHeader bool) ([][]string, error) {
