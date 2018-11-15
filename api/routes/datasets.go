@@ -64,7 +64,7 @@ func DatasetsHandler(metaCtor model.MetadataStorageCtor) func(http.ResponseWrite
 
 func renderMarkdown(markdown string) string {
 	// process the markdown into HTML
-	unsafe := blackfriday.MarkdownCommon([]byte(markdown))
+	unsafe := blackfriday.Run([]byte(markdown))
 	// just to be safe, sanatize the HTML
 	return string(bluemonday.UGCPolicy().SanitizeBytes(unsafe))
 }
