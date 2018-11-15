@@ -1,10 +1,10 @@
 <template>
 	<div class="filter-badge" v-bind:class="{ active: activeFilter }">
 		{{filterName}}
-		<span v-if="filter.type==='numerical'">
+		<span v-if="filter.type===NUMERICAL_FILTER">
 			{{filter.min}} : {{filter.max}}
 		</span>
-		<span v-if="filter.type==='categorical' || filter.type==='feature'">
+		<span v-if="filter.type===CATEGORICAL_FILTER || filter.type===FEATURE_FILTER || filter.type===CLUSTER_FILTER">
 			{{filter.categories.join(',')}}
 		</span>
 
@@ -17,9 +17,9 @@
 <script lang="ts">
 
 import Vue from 'vue';
-import { removeFilterFromRoute, Filter } from '../util/filters';
+import { removeFilterFromRoute, Filter, NUMERICAL_FILTER, CATEGORICAL_FILTER, FEATURE_FILTER, CLUSTER_FILTER } from '../util/filters';
 import { clearHighlightRoot } from '../util/highlights';
-import { removeMetaPrefix } from '../util/types';
+import { getVarType, isFeatureType, removeFeaturePrefix, isClusterType, removeClusterPrefix } from '../util/types';
 
 export default Vue.extend({
 	name: 'filter-badge',
@@ -31,8 +31,27 @@ export default Vue.extend({
 
 	computed: {
 		filterName(): string {
-			return removeMetaPrefix(this.filter.key);
-		}
+			const type = getVarType(this.filter.key);
+			if (isFeatureType(type)) {
+				return removeFeaturePrefix(this.filter.key);
+			}
+			if (isClusterType(type)) {
+				return removeClusterPrefix(this.filter.key);
+			}
+			return this.filter.key;
+		},
+		NUMERICAL_FILTER(): string {
+			return NUMERICAL_FILTER;
+		},
+		CATEGORICAL_FILTER(): string {
+			return CATEGORICAL_FILTER;
+		},
+		FEATURE_FILTER(): string {
+			return FEATURE_FILTER;
+		},
+		CLUSTER_FILTER(): string {
+			return CLUSTER_FILTER;
+		},
 	},
 
 	methods: {

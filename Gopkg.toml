@@ -27,27 +27,63 @@
 
 [[constraint]]
   name = "github.com/caarlos0/env"
-  version = "3.2.0"
+  version = "3.5.0"
+
+[[constraint]]
+  name = "github.com/davecgh/go-spew"
+  version = "1.1.1"
+
+[[constraint]]
+  name = "github.com/golang/mock"
+  version = "1.1.1"
 
 [[constraint]]
   name = "github.com/golang/protobuf"
-  version = "1.1.0"
+  version = "1.2.0"
 
 [[constraint]]
-  branch = "master"
+  name = "github.com/gorilla/websocket"
+  version = "1.4.0"
+
+[[constraint]]
+  name = "github.com/jackc/pgx"
+  version = "3.2.0"
+
+[[constraint]]
   name = "github.com/mattn/go-isatty"
+  version = "0.0.2"
 
 [[constraint]]
   branch = "master"
   name = "github.com/mgutz/ansi"
 
 [[constraint]]
-  branch = "master"
+  name = "github.com/microcosm-cc/bluemonday"
+  version = "1.0.1"
+
+[[constraint]]
   name = "github.com/mitchellh/hashstructure"
+  version = "1.0.0"
+
+[[constraint]]
+  branch = "master"
+  name = "github.com/otiai10/copy"
+
+[[constraint]]
+  name = "github.com/pkg/errors"
+  version = "0.8.0"
+
+[[constraint]]
+  name = "github.com/russross/blackfriday"
+  version = "2.0.1"
+
+[[constraint]]
+  name = "github.com/satori/go.uuid"
+  version = "1.2.0"
 
 [[constraint]]
   name = "github.com/stretchr/testify"
-  version = "1.1.4"
+  version = "1.2.2"
 
 [[constraint]]
   branch = "master"
@@ -55,7 +91,6 @@
 
 [[constraint]]
   name = "github.com/unchartedsoftware/distil-ingest"
-  source = "git@github.com:unchartedsoftware/distil-ingest.git"
   version = "0.7.0"
 
 [[constraint]]
@@ -67,20 +102,24 @@
   name = "github.com/vova616/xxhash"
 
 [[constraint]]
+  name = "github.com/zenazn/goji"
+  version = "1.0.0"
+
+[[constraint]]
   name = "goji.io"
-  version = "2.0.0"
+  version = "2.0.1"
+
+[[constraint]]
+  branch = "master"
+  name = "golang.org/x/net"
 
 [[constraint]]
   name = "google.golang.org/grpc"
-  version = "1.11.3"
+  version = "1.16.0"
 
 [[constraint]]
   name = "gopkg.in/olivere/elastic.v5"
-  version = "5.0.62"
-
-[[constraint]]
-  name = "github.com/otiai10/copy"
-  source = "git@github.com:otiai10/copy.git"
+  version = "5.0.76"
 
 [prune]
   go-tests = true

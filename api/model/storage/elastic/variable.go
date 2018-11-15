@@ -153,7 +153,7 @@ func (s *Storage) parseVariables(searchHit *elastic.SearchHit, includeIndex bool
 		if err != nil {
 			return nil, errors.Wrap(err, "unable to parse variable")
 		}
-		if !includeIndex && variable.Role[0] == model.VarRoleIndex {
+		if !includeIndex && len(variable.Role) > 0 && variable.Role[0] == model.VarRoleIndex {
 			continue
 		}
 		if !includeMeta && variable.DistilRole == model.VarRoleMetadata {

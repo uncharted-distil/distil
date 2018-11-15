@@ -42,8 +42,8 @@ func (f *ImageField) FetchSummaryData(resultURI string, filterParams *api.Filter
 	return histogram, err
 }
 
-func (f *ImageField) metadataVarName(varName string) string {
-	return fmt.Sprintf("%s%s", model.MetadataVarPrefix, varName)
+func (f *ImageField) featureVarName(varName string) string {
+	return fmt.Sprintf("%s%s", model.FeatureVarPrefix, varName)
 }
 
 func (f *ImageField) fetchRepresentationImages(categoryBuckets []*api.Bucket) ([]string, error) {
@@ -52,7 +52,7 @@ func (f *ImageField) fetchRepresentationImages(categoryBuckets []*api.Bucket) ([
 
 	for _, bucket := range categoryBuckets {
 
-		prefixedVarName := f.metadataVarName(f.Variable.Name)
+		prefixedVarName := f.featureVarName(f.Variable.Name)
 
 		// pull sample row containing bucket
 		query := fmt.Sprintf("SELECT \"%s\" FROM %s WHERE \"%s\" ~ $1 LIMIT 1;",
@@ -83,7 +83,7 @@ func (f *ImageField) fetchHistogram(filterParams *api.FilterParams) (*api.Histog
 	params := make([]interface{}, 0)
 	wheres, params = f.Storage.buildFilteredQueryWhere(wheres, params, f.Dataset, filterParams.Filters)
 
-	prefixedVarName := f.metadataVarName(f.Variable.Name)
+	prefixedVarName := f.featureVarName(f.Variable.Name)
 	fieldSelect := fmt.Sprintf("unnest(string_to_array(\"%s\", ','))", prefixedVarName)
 
 	where := ""
@@ -132,7 +132,7 @@ func (f *ImageField) fetchHistogramByResult(resultURI string, filterParams *api.
 		where = fmt.Sprintf("AND %s", strings.Join(wheres, " AND "))
 	}
 
-	prefixedVarName := f.metadataVarName(f.Variable.Name)
+	prefixedVarName := f.featureVarName(f.Variable.Name)
 
 	// Get count by category.
 	query := fmt.Sprintf(
@@ -168,7 +168,7 @@ func (f *ImageField) fetchHistogramByResult(resultURI string, filterParams *api.
 }
 
 func (f *ImageField) parseHistogram(rows *pgx.Rows) (*api.Histogram, error) {
-	prefixedVarName := f.metadataVarName(f.Variable.Name)
+	prefixedVarName := f.featureVarName(f.Variable.Name)
 
 	termsAggName := api.TermsAggPrefix + prefixedVarName
 
@@ -215,7 +215,7 @@ func (f *ImageField) parseHistogram(rows *pgx.Rows) (*api.Histogram, error) {
 // FetchPredictedSummaryData pulls predicted data from the result table and builds
 // the image histogram for the field.
 func (f *ImageField) FetchPredictedSummaryData(resultURI string, datasetResult string, filterParams *api.FilterParams, extrema *api.Extrema) (*api.Histogram, error) {
-	targetName := f.metadataVarName(f.Variable.Name)
+	targetName := f.featureVarName(f.Variable.Name)
 
 	// get filter where / params
 	wheres, params, err := f.Storage.buildResultQueryFilters(f.Dataset, resultURI, filterParams)

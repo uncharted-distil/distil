@@ -4,7 +4,7 @@ import { getters as routeGetters } from '../store/route/module';
 import { getters as highlightGetters } from '../store/highlights/module';
 import { overlayRouteEntry } from '../util/routes'
 import { FilterParams } from '../util/filters'
-import { getFilterType, getVarType, isMetaType, addMetaPrefix } from '../util/types'
+import { getFilterType, getVarType, isFeatureType, addFeaturePrefix, isClusterType, addClusterPrefix } from '../util/types'
 import _ from 'lodash';
 import { store } from '../store/storeProvider';
 import VueRouter from 'vue-router';
@@ -30,8 +30,11 @@ export function createFilterFromHighlightRoot(highlightRoot: HighlightRoot, mode
 	// inject metadata prefix for metadata vars
 	let key = highlightRoot.key;
 	const type = getVarType(key);
-	if (isMetaType(type)) {
-		key = addMetaPrefix(key);
+	if (isFeatureType(type)) {
+		key = addFeaturePrefix(key);
+	}
+	if (isClusterType(type)) {
+		key = addClusterPrefix(key);
 	}
 	const filterType = getFilterType(type);
 	if (_.isString(highlightRoot.value)) {
@@ -79,7 +82,7 @@ export function clearHighlightRoot(router: VueRouter) {
 	router.push(entry);
 }
 
-export function getHighlights(): Highlight { 
+export function getHighlights(): Highlight {
 	return {
 		root: routeGetters.getDecodedHighlightRoot(store()),
 		values: {

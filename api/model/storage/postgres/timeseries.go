@@ -42,8 +42,8 @@ func (f *TimeSeriesField) FetchSummaryData(resultURI string, filterParams *api.F
 	return histogram, err
 }
 
-func (f *TimeSeriesField) metadataVarName(varName string) string {
-	return fmt.Sprintf("%s%s", model.MetadataVarPrefix, varName)
+func (f *TimeSeriesField) clusterVarName(varName string) string {
+	return fmt.Sprintf("%s%s", model.ClusterVarPrefix, varName)
 }
 
 func (f *TimeSeriesField) fetchRepresentationTimeSeries(categoryBuckets []*api.Bucket) ([]string, error) {
@@ -52,7 +52,7 @@ func (f *TimeSeriesField) fetchRepresentationTimeSeries(categoryBuckets []*api.B
 
 	for _, bucket := range categoryBuckets {
 
-		prefixedVarName := f.metadataVarName(f.Variable.Name)
+		prefixedVarName := f.clusterVarName(f.Variable.Name)
 
 		// pull sample row containing bucket
 		query := fmt.Sprintf("SELECT \"%s\" FROM %s WHERE \"%s\" = $1 LIMIT 1;",
@@ -84,7 +84,7 @@ func (f *TimeSeriesField) fetchHistogram(filterParams *api.FilterParams) (*api.H
 	params := make([]interface{}, 0)
 	wheres, params = f.Storage.buildFilteredQueryWhere(wheres, params, f.Dataset, filterParams.Filters)
 
-	prefixedVarName := f.metadataVarName(f.Variable.Name)
+	prefixedVarName := f.clusterVarName(f.Variable.Name)
 
 	where := ""
 	if len(wheres) > 0 {
@@ -132,7 +132,7 @@ func (f *TimeSeriesField) fetchHistogramByResult(resultURI string, filterParams 
 		where = fmt.Sprintf("AND %s", strings.Join(wheres, " AND "))
 	}
 
-	prefixedVarName := f.metadataVarName(f.Variable.Name)
+	prefixedVarName := f.clusterVarName(f.Variable.Name)
 
 	// Get count by category.
 	query := fmt.Sprintf(
@@ -168,7 +168,7 @@ func (f *TimeSeriesField) fetchHistogramByResult(resultURI string, filterParams 
 }
 
 func (f *TimeSeriesField) parseHistogram(rows *pgx.Rows) (*api.Histogram, error) {
-	prefixedVarName := f.metadataVarName(f.Variable.Name)
+	prefixedVarName := f.clusterVarName(f.Variable.Name)
 
 	termsAggName := api.TermsAggPrefix + prefixedVarName
 
@@ -216,7 +216,7 @@ func (f *TimeSeriesField) parseHistogram(rows *pgx.Rows) (*api.Histogram, error)
 // FetchPredictedSummaryData pulls predicted data from the result table and builds
 // the timeseries histogram for the field.
 func (f *TimeSeriesField) FetchPredictedSummaryData(resultURI string, datasetResult string, filterParams *api.FilterParams, extrema *api.Extrema) (*api.Histogram, error) {
-	targetName := f.metadataVarName(f.Variable.Name)
+	targetName := f.clusterVarName(f.Variable.Name)
 
 	// get filter where / params
 	wheres, params, err := f.Storage.buildResultQueryFilters(f.Dataset, resultURI, filterParams)

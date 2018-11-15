@@ -79,12 +79,20 @@ func GetFilterVariables(filterVariables []string, variables []*model.Variable) [
 	filtered := make([]*model.Variable, 0)
 	for _, variable := range filterVariables {
 		filtered = append(filtered, variableLookup[variable])
-		// check for metadata var type
-		if model.HasMetadataVar(variableLookup[variable].Type) {
-			metadataVarName := fmt.Sprintf("%s%s", model.MetadataVarPrefix, variable)
-			metadataVar, ok := variableLookup[metadataVarName]
+		// check for feature var type
+		if model.HasFeatureVar(variableLookup[variable].Type) {
+			featureVarName := fmt.Sprintf("%s%s", model.FeatureVarPrefix, variable)
+			featureVar, ok := variableLookup[featureVarName]
 			if ok {
-				filtered = append(filtered, metadataVar)
+				filtered = append(filtered, featureVar)
+			}
+		}
+		// check for cluster var type
+		if model.HasClusterVar(variableLookup[variable].Type) {
+			clusterVarName := fmt.Sprintf("%s%s", model.ClusterVarPrefix, variable)
+			clusterVar, ok := variableLookup[clusterVarName]
+			if ok {
+				filtered = append(filtered, clusterVar)
 			}
 		}
 	}
