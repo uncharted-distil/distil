@@ -11,6 +11,7 @@ import (
 
 	"github.com/otiai10/copy"
 	"github.com/pkg/errors"
+	"github.com/unchartedsoftware/distil-compute/model"
 	"github.com/unchartedsoftware/distil-ingest/metadata"
 
 	"github.com/unchartedsoftware/distil/api/util"
@@ -45,7 +46,7 @@ func FeaturizePrimitive(schemaFile string, index string, dataset string, config 
 	mainDR := meta.GetMainDataResource()
 
 	// add feature variables
-	features, err := getFeatureVariables(meta, "_feature_")
+	features, err := getFeatureVariables(meta, model.FeatureVarPrefix)
 	if err != nil {
 		return errors.Wrap(err, "unable to get feature variables")
 	}

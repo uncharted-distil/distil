@@ -879,4 +879,8 @@ export default Vue.extend({
 	border-style: solid;
 	border-color: #333 transparent transparent transparent;
 }
+.facet-sparkline,
+.facet-sparkline-container {
+	overflow: visible !important;
+}
 </style>
