@@ -8,6 +8,7 @@ import (
 
 	"github.com/otiai10/copy"
 	"github.com/pkg/errors"
+	"github.com/unchartedsoftware/distil-compute/model"
 	"github.com/unchartedsoftware/distil-ingest/metadata"
 
 	"github.com/unchartedsoftware/distil/api/util"
@@ -43,7 +44,7 @@ func ClusterPrimitive(index string, dataset string, config *IngestTaskConfig) er
 	mainDR := meta.GetMainDataResource()
 
 	// add feature variables
-	features, err := getClusterVariables(meta, "_cluster_")
+	features, err := getClusterVariables(meta, model.ClusterVarPrefix)
 	if err != nil {
 		return errors.Wrap(err, "unable to get cluster variables")
 	}
@@ -101,7 +102,7 @@ func ClusterPrimitive(index string, dataset string, config *IngestTaskConfig) er
 	mainDR.ResPath = relativePath
 
 	// write the new schema to file
-	err = meta.WriteSchema(config.getTmpAbsolutePath(config.ClusteringOutputSchemaRelative))
+	err = metadata.WriteSchema(meta, config.getTmpAbsolutePath(config.ClusteringOutputSchemaRelative))
 	if err != nil {
 		return errors.Wrap(err, "unable to store cluster schema")
 	}

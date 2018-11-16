@@ -5,7 +5,8 @@ import (
 	"strings"
 
 	"github.com/pkg/errors"
-	"github.com/unchartedsoftware/distil/api/model"
+	"github.com/unchartedsoftware/distil-compute/model"
+	api "github.com/unchartedsoftware/distil/api/model"
 )
 
 const (
@@ -28,14 +29,14 @@ func NewVectorField(storage *Storage, dataset string, variable *model.Variable) 
 		Storage:  storage,
 		Dataset:  dataset,
 		Variable: variable,
-		Unnested: variable.Key,
+		Unnested: variable.Name,
 	}
-	field.Variable.Key = field.Variable.Key + unnestedSuffix
+	field.Variable.Name = field.Variable.Name + unnestedSuffix
 	return field
 }
 
 // FetchSummaryData pulls summary data from the database and builds a histogram.
-func (f *VectorField) FetchSummaryData(resultURI string, filterParams *model.FilterParams, extrema *model.Extrema) (*model.Histogram, error) {
+func (f *VectorField) FetchSummaryData(resultURI string, filterParams *api.FilterParams, extrema *api.Extrema) (*api.Histogram, error) {
 	var underlyingField Field
 	if f.isNumerical() {
 		underlyingField = NewNumericalFieldSubSelect(f.Storage, f.Dataset, f.Variable, f.subSelect)
@@ -52,10 +53,10 @@ func (f *VectorField) FetchSummaryData(resultURI string, filterParams *model.Fil
 }
 
 // FetchNumericalStats gets the variable's numerical summary info (mean, stddev).
-func (f *VectorField) FetchNumericalStats(filterParams *model.FilterParams) (*NumericalStats, error) {
+func (f *VectorField) FetchNumericalStats(filterParams *api.FilterParams) (*NumericalStats, error) {
 	// confirm that the underlying type is numerical
 	if !f.isNumerical() {
-		return nil, errors.Errorf("field '%s' is not a numerical vector", f.Variable.Key)
+		return nil, errors.Errorf("field '%s' is not a numerical vector", f.Variable.Name)
 	}
 
 	// use the underlying numerical field implementation
@@ -65,10 +66,10 @@ func (f *VectorField) FetchNumericalStats(filterParams *model.FilterParams) (*Nu
 }
 
 // FetchNumericalStatsByResult gets the variable's numerical summary info (mean, stddev) for a result set.
-func (f *VectorField) FetchNumericalStatsByResult(resultURI string, filterParams *model.FilterParams) (*NumericalStats, error) {
+func (f *VectorField) FetchNumericalStatsByResult(resultURI string, filterParams *api.FilterParams) (*NumericalStats, error) {
 	// confirm that the underlying type is numerical
 	if !f.isNumerical() {
-		return nil, errors.Errorf("field '%s' is not a numerical vector", f.Variable.Key)
+		return nil, errors.Errorf("field '%s' is not a numerical vector", f.Variable.Name)
 	}
 
 	// use the underlying numerical field implementation
@@ -79,7 +80,7 @@ func (f *VectorField) FetchNumericalStatsByResult(resultURI string, filterParams
 
 // FetchPredictedSummaryData pulls predicted data from the result table and builds
 // the categorical histogram for the field.
-func (f *VectorField) FetchPredictedSummaryData(resultURI string, datasetResult string, filterParams *model.FilterParams, extrema *model.Extrema) (*model.Histogram, error) {
+func (f *VectorField) FetchPredictedSummaryData(resultURI string, datasetResult string, filterParams *api.FilterParams, extrema *api.Extrema) (*api.Histogram, error) {
 	return nil, errors.Errorf("vector field cannot be a target so no result will be pulled")
 }
 
@@ -89,5 +90,5 @@ func (f *VectorField) isNumerical() bool {
 
 func (f *VectorField) subSelect() string {
 	return fmt.Sprintf("(SELECT \"%s\", unnest(\"%s\") as %s FROM %s)",
-		model.D3MIndexFieldName, f.Unnested, f.Variable.Key, f.Dataset)
+		model.D3MIndexFieldName, f.Unnested, f.Variable.Name, f.Dataset)
 }

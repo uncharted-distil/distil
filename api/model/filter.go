@@ -6,54 +6,16 @@ import (
 
 	"github.com/pkg/errors"
 
+	"github.com/unchartedsoftware/distil-compute/model"
 	"github.com/unchartedsoftware/distil/api/util/json"
-)
-
-const (
-	// DefaultFilterSize represents the default filter search size.
-	DefaultFilterSize = 100
-	// FilterSizeLimit represents the largest filter size.
-	FilterSizeLimit = 1000
-	// CategoricalFilter represents a categorical filter type.
-	CategoricalFilter = "categorical"
-	// NumericalFilter represents a numerical filter type.
-	NumericalFilter = "numerical"
-	// FeatureFilter represents a feature filter type.
-	FeatureFilter = "feature"
-	// TextFilter represents a text filter type.
-	TextFilter = "text"
-	// RowFilter represents a numerical filter type.
-	RowFilter = "row"
-	// IncludeFilter represents an inclusive filter mode.
-	IncludeFilter = "include"
-	// ExcludeFilter represents an exclusive filter mode.
-	ExcludeFilter = "exclude"
 )
 
 // FilterParams defines the set of numeric range and categorical filters. Variables
 // with no range or category filters are also allowed.
 type FilterParams struct {
-	Size      int       `json:"size"`
-	Filters   []*Filter `json:"filters"`
-	Variables []string  `json:"variables"`
-}
-
-func stringSliceEqual(a, b []string) bool {
-	if a == nil && b == nil {
-		return true
-	}
-	if a == nil || b == nil {
-		return false
-	}
-	if len(a) != len(b) {
-		return false
-	}
-	for i := range a {
-		if a[i] != b[i] {
-			return false
-		}
-	}
-	return true
+	Size      int             `json:"size"`
+	Filters   []*model.Filter `json:"filters"`
+	Variables []string        `json:"variables"`
 }
 
 // Merge merges another set of filter params into this set, expanding all
@@ -69,7 +31,7 @@ func (f *FilterParams) Merge(other *FilterParams) {
 			if filter.Key == currentFilter.Key &&
 				filter.Min == currentFilter.Min &&
 				filter.Max == currentFilter.Max &&
-				stringSliceEqual(filter.Categories, currentFilter.Categories) {
+				model.StringSliceEqual(filter.Categories, currentFilter.Categories) {
 				found = true
 				break
 			}
@@ -107,86 +69,30 @@ type FilteredData struct {
 	Values  [][]interface{} `json:"values"`
 }
 
-// Filter defines a variable filter.
-type Filter struct {
-	Key        string   `json:"key"`
-	Type       string   `json:"type"`
-	Mode       string   `json:"mode"`
-	Min        *float64 `json:"min"`
-	Max        *float64 `json:"max"`
-	Categories []string `json:"categories"`
-	D3mIndices []string `json:"d3mIndices"`
-}
-
-// NewNumericalFilter instantiates a numerical filter.
-func NewNumericalFilter(key string, mode string, min float64, max float64) *Filter {
-	return &Filter{
-		Key:  key,
-		Type: NumericalFilter,
-		Mode: mode,
-		Min:  &min,
-		Max:  &max,
-	}
-}
-
-// NewCategoricalFilter instantiates a categorical filter.
-func NewCategoricalFilter(key string, mode string, categories []string) *Filter {
-	sort.Strings(categories)
-	return &Filter{
-		Key:        key,
-		Type:       CategoricalFilter,
-		Mode:       mode,
-		Categories: categories,
-	}
-}
-
-// NewFeatureFilter instantiates a feature filter.
-func NewFeatureFilter(key string, mode string, categories []string) *Filter {
-	sort.Strings(categories)
-	return &Filter{
-		Key:        key,
-		Type:       FeatureFilter,
-		Mode:       mode,
-		Categories: categories,
-	}
-}
-
-// NewTextFilter instantiates a text filter.
-func NewTextFilter(key string, mode string, categories []string) *Filter {
-	sort.Strings(categories)
-	return &Filter{
-		Key:        key,
-		Type:       TextFilter,
-		Mode:       mode,
-		Categories: categories,
-	}
-}
-
-// NewRowFilter instantiates a row filter.
-func NewRowFilter(mode string, d3mIndices []string) *Filter {
-	return &Filter{
-		Type:       RowFilter,
-		Mode:       mode,
-		D3mIndices: d3mIndices,
-	}
-}
-
 // GetFilterVariables builds the filtered list of fields based on the filtering parameters.
-func GetFilterVariables(filterVariables []string, variables []*Variable) []*Variable {
-	variableLookup := make(map[string]*Variable)
+func GetFilterVariables(filterVariables []string, variables []*model.Variable) []*model.Variable {
+	variableLookup := make(map[string]*model.Variable)
 	for _, v := range variables {
-		variableLookup[v.Key] = v
+		variableLookup[v.Name] = v
 	}
 
-	filtered := make([]*Variable, 0)
+	filtered := make([]*model.Variable, 0)
 	for _, variable := range filterVariables {
 		filtered = append(filtered, variableLookup[variable])
-		// check for metadata var type
-		if HasMetadataVar(variableLookup[variable].Type) {
-			metadataVarName := fmt.Sprintf("%s%s", MetadataVarPrefix, variable)
-			metadataVar, ok := variableLookup[metadataVarName]
+		// check for feature var type
+		if model.HasFeatureVar(variableLookup[variable].Type) {
+			featureVarName := fmt.Sprintf("%s%s", model.FeatureVarPrefix, variable)
+			featureVar, ok := variableLookup[featureVarName]
 			if ok {
-				filtered = append(filtered, metadataVar)
+				filtered = append(filtered, featureVar)
+			}
+		}
+		// check for cluster var type
+		if model.HasClusterVar(variableLookup[variable].Type) {
+			clusterVarName := fmt.Sprintf("%s%s", model.ClusterVarPrefix, variable)
+			clusterVar, ok := variableLookup[clusterVarName]
+			if ok {
+				filtered = append(filtered, clusterVar)
 			}
 		}
 	}
@@ -197,7 +103,7 @@ func GetFilterVariables(filterVariables []string, variables []*Variable) []*Vari
 // ParseFilterParamsFromJSON parses filter parameters out of a map[string]interface{}
 func ParseFilterParamsFromJSON(params map[string]interface{}) (*FilterParams, error) {
 	filterParams := &FilterParams{
-		Size: json.IntDefault(params, DefaultFilterSize, "size"),
+		Size: json.IntDefault(params, model.DefaultFilterSize, "size"),
 	}
 
 	filters, ok := json.Array(params, "filters")
@@ -218,7 +124,7 @@ func ParseFilterParamsFromJSON(params map[string]interface{}) (*FilterParams, er
 
 			// TODO: update to a switch statement with a default to error
 			// numeric
-			if typ == NumericalFilter {
+			if typ == model.NumericalFilter {
 				key, ok := json.String(filter, "key")
 				if !ok {
 					return nil, errors.Errorf("no `key` provided for filter")
@@ -231,11 +137,11 @@ func ParseFilterParamsFromJSON(params map[string]interface{}) (*FilterParams, er
 				if !ok {
 					return nil, errors.Errorf("no `max` provided for filter")
 				}
-				filterParams.Filters = append(filterParams.Filters, NewNumericalFilter(key, mode, min, max))
+				filterParams.Filters = append(filterParams.Filters, model.NewNumericalFilter(key, mode, min, max))
 			}
 
 			// categorical
-			if typ == CategoricalFilter {
+			if typ == model.CategoricalFilter {
 				key, ok := json.String(filter, "key")
 				if !ok {
 					return nil, errors.Errorf("no `key` provided for filter")
@@ -244,11 +150,11 @@ func ParseFilterParamsFromJSON(params map[string]interface{}) (*FilterParams, er
 				if !ok {
 					return nil, errors.Errorf("no `categories` provided for filter")
 				}
-				filterParams.Filters = append(filterParams.Filters, NewCategoricalFilter(key, mode, categories))
+				filterParams.Filters = append(filterParams.Filters, model.NewCategoricalFilter(key, mode, categories))
 			}
 
 			// feature
-			if typ == FeatureFilter {
+			if typ == model.FeatureFilter {
 				key, ok := json.String(filter, "key")
 				if !ok {
 					return nil, errors.Errorf("no `key` provided for filter")
@@ -257,11 +163,11 @@ func ParseFilterParamsFromJSON(params map[string]interface{}) (*FilterParams, er
 				if !ok {
 					return nil, errors.Errorf("no `categories` provided for filter")
 				}
-				filterParams.Filters = append(filterParams.Filters, NewFeatureFilter(key, mode, categories))
+				filterParams.Filters = append(filterParams.Filters, model.NewFeatureFilter(key, mode, categories))
 			}
 
 			// text
-			if typ == TextFilter {
+			if typ == model.TextFilter {
 				key, ok := json.String(filter, "key")
 				if !ok {
 					return nil, errors.Errorf("no `key` provided for filter")
@@ -270,16 +176,16 @@ func ParseFilterParamsFromJSON(params map[string]interface{}) (*FilterParams, er
 				if !ok {
 					return nil, errors.Errorf("no `categories` provided for filter")
 				}
-				filterParams.Filters = append(filterParams.Filters, NewTextFilter(key, mode, categories))
+				filterParams.Filters = append(filterParams.Filters, model.NewTextFilter(key, mode, categories))
 			}
 
 			// row
-			if typ == RowFilter {
+			if typ == model.RowFilter {
 				indices, ok := json.StringArray(filter, "d3mIndices")
 				if !ok {
 					return nil, errors.Errorf("no `d3mIndices` provided for filter")
 				}
-				filterParams.Filters = append(filterParams.Filters, NewRowFilter(mode, indices))
+				filterParams.Filters = append(filterParams.Filters, model.NewRowFilter(mode, indices))
 			}
 		}
 	}

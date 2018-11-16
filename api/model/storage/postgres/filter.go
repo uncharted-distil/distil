@@ -6,7 +6,8 @@ import (
 
 	"github.com/jackc/pgx"
 	"github.com/pkg/errors"
-	"github.com/unchartedsoftware/distil/api/model"
+	"github.com/unchartedsoftware/distil-compute/model"
+	api "github.com/unchartedsoftware/distil/api/model"
 )
 
 const (
@@ -19,15 +20,15 @@ const (
 
 func getVariableByKey(key string, variables []*model.Variable) *model.Variable {
 	for _, variable := range variables {
-		if variable.Key == key {
+		if variable.Name == key {
 			return variable
 		}
 	}
 	return nil
 }
 
-func (s *Storage) parseFilteredData(dataset string, variables []*model.Variable, numRows int, rows *pgx.Rows) (*model.FilteredData, error) {
-	result := &model.FilteredData{
+func (s *Storage) parseFilteredData(dataset string, variables []*model.Variable, numRows int, rows *pgx.Rows) (*api.FilteredData, error) {
+	result := &api.FilteredData{
 		NumRows: numRows,
 		Values:  make([][]interface{}, 0),
 	}
@@ -35,7 +36,7 @@ func (s *Storage) parseFilteredData(dataset string, variables []*model.Variable,
 	// Parse the columns.
 	if rows != nil {
 		fields := rows.FieldDescriptions()
-		columns := make([]model.Column, len(fields))
+		columns := make([]api.Column, len(fields))
 		for i := 0; i < len(fields); i++ {
 			key := fields[i].Name
 
@@ -43,9 +44,9 @@ func (s *Storage) parseFilteredData(dataset string, variables []*model.Variable,
 			if v == nil {
 				return nil, fmt.Errorf("unable to lookup variable for %s", key)
 			}
-			columns[i] = model.Column{
+			columns[i] = api.Column{
 				Key:   key,
-				Label: v.DisplayVariable,
+				Label: v.DisplayName,
 				Type:  v.Type,
 			}
 		}
@@ -60,14 +61,14 @@ func (s *Storage) parseFilteredData(dataset string, variables []*model.Variable,
 			result.Values = append(result.Values, columnValues)
 		}
 	} else {
-		result.Columns = make([]model.Column, 0)
+		result.Columns = make([]api.Column, 0)
 	}
 
 	return result, nil
 }
 
 func (s *Storage) formatFilterKey(key string) string {
-	if model.IsResultKey(key) {
+	if api.IsResultKey(key) {
 		return "result.value"
 	}
 	return fmt.Sprintf("\"%s\"", key)
@@ -176,9 +177,9 @@ func (s *Storage) buildFilteredQueryWhere(wheres []string, params []interface{},
 func (s *Storage) buildFilteredQueryField(dataset string, variables []*model.Variable, filterVariables []string) (string, error) {
 	fields := make([]string, 0)
 	indexIncluded := false
-	for _, variable := range model.GetFilterVariables(filterVariables, variables) {
-		fields = append(fields, fmt.Sprintf("\"%s\"", variable.Key))
-		if variable.Key == model.D3MIndexFieldName {
+	for _, variable := range api.GetFilterVariables(filterVariables, variables) {
+		fields = append(fields, fmt.Sprintf("\"%s\"", variable.Name))
+		if variable.Name == model.D3MIndexFieldName {
 			indexIncluded = true
 		}
 	}
@@ -191,9 +192,9 @@ func (s *Storage) buildFilteredQueryField(dataset string, variables []*model.Var
 
 func (s *Storage) buildFilteredResultQueryField(dataset string, variables []*model.Variable, targetVariable *model.Variable, filterVariables []string) (string, error) {
 	fields := make([]string, 0)
-	for _, variable := range model.GetFilterVariables(filterVariables, variables) {
-		if strings.Compare(targetVariable.Key, variable.Key) != 0 {
-			fields = append(fields, fmt.Sprintf("\"%s\"", variable.Key))
+	for _, variable := range api.GetFilterVariables(filterVariables, variables) {
+		if strings.Compare(targetVariable.Name, variable.Name) != 0 {
+			fields = append(fields, fmt.Sprintf("\"%s\"", variable.Name))
 		}
 	}
 	fields = append(fields, fmt.Sprintf("\"%s\"", model.D3MIndexFieldName))
@@ -230,7 +231,7 @@ func (s *Storage) buildCorrectnessResultWhere(wheres []string, params []interfac
 
 func (s *Storage) buildErrorResultWhere(wheres []string, params []interface{}, residualFilter *model.Filter) ([]string, []interface{}, error) {
 	// Add a clause to filter residuals to the existing where
-	nameWithoutSuffix := model.StripKeySuffix(residualFilter.Key)
+	nameWithoutSuffix := api.StripKeySuffix(residualFilter.Key)
 	typedError := getErrorTyped(nameWithoutSuffix)
 	where := fmt.Sprintf("(%s >= $%d AND %s <= $%d)", typedError, len(params)+1, typedError, len(params)+2)
 	params = append(params, *residualFilter.Min)
@@ -247,7 +248,7 @@ func (s *Storage) buildPredictedResultWhere(wheres []string, params []interface{
 	return wheres, params, nil
 }
 
-func (s *Storage) buildResultQueryFilters(dataset string, resultURI string, filterParams *model.FilterParams) ([]string, []interface{}, error) {
+func (s *Storage) buildResultQueryFilters(dataset string, resultURI string, filterParams *api.FilterParams) ([]string, []interface{}, error) {
 	// pull filters generated against the result facet out for special handling
 	filters := s.splitFilters(filterParams)
 
@@ -284,16 +285,16 @@ type filters struct {
 	correctnessFilter *model.Filter
 }
 
-func (s *Storage) splitFilters(filterParams *model.FilterParams) *filters {
+func (s *Storage) splitFilters(filterParams *api.FilterParams) *filters {
 	// Groups filters for handling downstream
 	var predictedFilter *model.Filter
 	var residualFilter *model.Filter
 	var correctnessFilter *model.Filter
 	var remaining []*model.Filter
 	for _, filter := range filterParams.Filters {
-		if model.IsPredictedKey(filter.Key) {
+		if api.IsPredictedKey(filter.Key) {
 			predictedFilter = filter
-		} else if model.IsErrorKey(filter.Key) {
+		} else if api.IsErrorKey(filter.Key) {
 			if filter.Type == model.NumericalFilter {
 				residualFilter = filter
 			} else if filter.Type == model.CategoricalFilter {
@@ -331,7 +332,7 @@ func (s *Storage) FetchNumRows(dataset string, filters map[string]interface{}) (
 	return numRows, nil
 }
 
-func (s *Storage) filterIncludesIndex(filterParams *model.FilterParams) bool {
+func (s *Storage) filterIncludesIndex(filterParams *api.FilterParams) bool {
 	for _, v := range filterParams.Filters {
 		if v.Key == model.D3MIndexFieldName {
 			return true
@@ -344,7 +345,7 @@ func (s *Storage) filterIncludesIndex(filterParams *model.FilterParams) bool {
 // FetchData creates a postgres query to fetch a set of rows.  Applies filters to restrict the
 // results to a user selected set of fields, with rows further filtered based on allowed ranges and
 // categories.
-func (s *Storage) FetchData(dataset string, filterParams *model.FilterParams, invert bool) (*model.FilteredData, error) {
+func (s *Storage) FetchData(dataset string, filterParams *api.FilterParams, invert bool) (*api.FilteredData, error) {
 	variables, err := s.metadata.FetchVariables(dataset, true, true)
 	if err != nil {
 		return nil, errors.Wrap(err, "Could not pull variables from ES")
@@ -377,9 +378,9 @@ func (s *Storage) FetchData(dataset string, filterParams *model.FilterParams, in
 		// if there are not WHERE's and we are inverting, that means we expect
 		// no results.
 		if invert {
-			return &model.FilteredData{
+			return &api.FilteredData{
 				NumRows: numRows,
-				Columns: make([]model.Column, 0),
+				Columns: make([]api.Column, 0),
 				Values:  make([][]interface{}, 0),
 			}, nil
 		}

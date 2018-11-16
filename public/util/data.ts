@@ -119,9 +119,13 @@ export function filterVariablesByPage<T>(pageIndex: number, numPerPage: number, 
 	return variables;
 }
 
+export function getVariableImportance(v: Variable): number {
+	return v.ranking !== undefined ? v.ranking : v.importance;
+}
+
 export function sortVariablesByImportance(variables: Variable[]): Variable[] {
 	variables.sort((a, b) => {
-		return a.importance - b.importance;
+		return getVariableImportance(b) - getVariableImportance(a);
 	});
 	return variables;
 }
@@ -130,11 +134,11 @@ export function sortGroupsByImportance(groups: Group[], variables: Variable[]): 
 	// create importance lookup map
 	const importance: Dictionary<number> = {};
 	variables.forEach(variable => {
-		importance[variable.key] = variable.importance;
+		importance[variable.colName] = variable.importance;
 	});
 	// sort by importance
 	groups.sort((a, b) => {
-		return importance[a.key] - importance[b.key];
+		return importance[b.key] - importance[a.key];
 	});
 	return groups;
 }

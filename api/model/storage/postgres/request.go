@@ -7,7 +7,8 @@ import (
 
 	"github.com/jackc/pgx"
 	"github.com/pkg/errors"
-	"github.com/unchartedsoftware/distil/api/model"
+	"github.com/unchartedsoftware/distil-compute/model"
+	api "github.com/unchartedsoftware/distil/api/model"
 )
 
 // PersistRequest persists a request to Postgres.
@@ -38,7 +39,7 @@ func (s *Storage) PersistRequestFeature(requestID string, featureName string, fe
 }
 
 // PersistRequestFilters persists request filters information to Postgres.
-func (s *Storage) PersistRequestFilters(requestID string, filters *model.FilterParams) error {
+func (s *Storage) PersistRequestFilters(requestID string, filters *api.FilterParams) error {
 	sql := fmt.Sprintf("INSERT INTO %s (request_id, feature_name, filter_type, filter_mode, filter_min, filter_max, filter_categories, filter_indices) VALUES ($1, $2, $3, $4, $5, $6, $7, $8);", filterTableName)
 
 	for _, filter := range filters.Filters {
@@ -64,7 +65,7 @@ func (s *Storage) PersistRequestFilters(requestID string, filters *model.FilterP
 }
 
 // FetchRequest pulls request information from Postgres.
-func (s *Storage) FetchRequest(requestID string) (*model.Request, error) {
+func (s *Storage) FetchRequest(requestID string) (*api.Request, error) {
 	sql := fmt.Sprintf("SELECT request_id, dataset, progress, created_time, last_updated_time FROM %s WHERE request_id = $1 ORDER BY created_time desc LIMIT 1;", requestTableName)
 
 	rows, err := s.client.Query(sql, requestID)
@@ -81,7 +82,7 @@ func (s *Storage) FetchRequest(requestID string) (*model.Request, error) {
 
 // FetchRequestBySolutionID pulls request information from Postgres using
 // a solution ID.
-func (s *Storage) FetchRequestBySolutionID(solutionID string) (*model.Request, error) {
+func (s *Storage) FetchRequestBySolutionID(solutionID string) (*api.Request, error) {
 	sql := fmt.Sprintf("SELECT req.request_id, req.dataset, req.progress, req.created_time, req.last_updated_time "+
 		"FROM %s as req INNER JOIN %s as sol ON req.request_id = sol.request_id "+
 		"WHERE sol.solution_id = $1;", requestTableName, solutionTableName)
@@ -98,7 +99,7 @@ func (s *Storage) FetchRequestBySolutionID(solutionID string) (*model.Request, e
 	return s.loadRequest(rows)
 }
 
-func (s *Storage) loadRequest(rows *pgx.Rows) (*model.Request, error) {
+func (s *Storage) loadRequest(rows *pgx.Rows) (*api.Request, error) {
 	var requestID string
 	var dataset string
 	var progress string
@@ -120,7 +121,7 @@ func (s *Storage) loadRequest(rows *pgx.Rows) (*model.Request, error) {
 		return nil, errors.Wrap(err, "Unable to get request filters from Postgres")
 	}
 
-	return &model.Request{
+	return &api.Request{
 		RequestID:       requestID,
 		Dataset:         dataset,
 		Progress:        progress,
@@ -132,7 +133,7 @@ func (s *Storage) loadRequest(rows *pgx.Rows) (*model.Request, error) {
 }
 
 // FetchRequestFeatures pulls request feature information from Postgres.
-func (s *Storage) FetchRequestFeatures(requestID string) ([]*model.Feature, error) {
+func (s *Storage) FetchRequestFeatures(requestID string) ([]*api.Feature, error) {
 	sql := fmt.Sprintf("SELECT request_id, feature_name, feature_type FROM %s WHERE request_id = $1;", featureTableName)
 
 	rows, err := s.client.Query(sql, requestID)
@@ -143,7 +144,7 @@ func (s *Storage) FetchRequestFeatures(requestID string) ([]*model.Feature, erro
 		defer rows.Close()
 	}
 
-	results := make([]*model.Feature, 0)
+	results := make([]*api.Feature, 0)
 	for rows.Next() {
 		var requestID string
 		var featureName string
@@ -154,7 +155,7 @@ func (s *Storage) FetchRequestFeatures(requestID string) ([]*model.Feature, erro
 			return nil, errors.Wrap(err, "Unable to parse request features from Postgres")
 		}
 
-		results = append(results, &model.Feature{
+		results = append(results, &api.Feature{
 			RequestID:   requestID,
 			FeatureName: featureName,
 			FeatureType: featureType,
@@ -165,7 +166,7 @@ func (s *Storage) FetchRequestFeatures(requestID string) ([]*model.Feature, erro
 }
 
 // FetchRequestFilters pulls request filter information from Postgres.
-func (s *Storage) FetchRequestFilters(requestID string, features []*model.Feature) (*model.FilterParams, error) {
+func (s *Storage) FetchRequestFilters(requestID string, features []*api.Feature) (*api.FilterParams, error) {
 	sql := fmt.Sprintf("SELECT request_id, feature_name, filter_type, filter_mode, filter_min, filter_max, filter_categories, filter_indices FROM %s WHERE request_id = $1;", filterTableName)
 
 	rows, err := s.client.Query(sql, requestID)
@@ -176,7 +177,7 @@ func (s *Storage) FetchRequestFilters(requestID string, features []*model.Featur
 		defer rows.Close()
 	}
 
-	filters := &model.FilterParams{
+	filters := &api.FilterParams{
 		Size: model.DefaultFilterSize,
 	}
 
@@ -236,7 +237,7 @@ func (s *Storage) FetchRequestFilters(requestID string, features []*model.Featur
 	return filters, nil
 }
 
-func (s *Storage) loadRequestFromSolutionID(solutionID string) (*model.Request, error) {
+func (s *Storage) loadRequestFromSolutionID(solutionID string) (*api.Request, error) {
 	solution, err := s.FetchSolution(solutionID)
 	if err != nil {
 		return nil, errors.Wrap(err, "Unable to fetch solution from Postgres")
@@ -246,7 +247,7 @@ func (s *Storage) loadRequestFromSolutionID(solutionID string) (*model.Request, 
 	if err != nil {
 		return nil, errors.Wrap(err, "Unable to fetch request from Postgres")
 	}
-	request.Solutions = []*model.Solution{solution}
+	request.Solutions = []*api.Solution{solution}
 
 	return request, nil
 }
@@ -254,7 +255,7 @@ func (s *Storage) loadRequestFromSolutionID(solutionID string) (*model.Request, 
 // FetchRequestByDatasetTarget pulls a request with solution
 // result information from Postgres. Only the latest result for each
 // solution is fetched.
-func (s *Storage) FetchRequestByDatasetTarget(dataset string, target string, solutionID string) ([]*model.Request, error) {
+func (s *Storage) FetchRequestByDatasetTarget(dataset string, target string, solutionID string) ([]*api.Request, error) {
 
 	// get the solution ids
 	sql := fmt.Sprintf("SELECT DISTINCT solution.solution_id "+
@@ -289,7 +290,7 @@ func (s *Storage) FetchRequestByDatasetTarget(dataset string, target string, sol
 	// TODO: code should be changed to not have a request / result built.
 	// Would need to lookup to see if the request was already loaded.
 	// Then would need to see if the solution was loaded.
-	requests := make([]*model.Request, 0)
+	requests := make([]*api.Request, 0)
 	for rows.Next() {
 		var solutionID string
 

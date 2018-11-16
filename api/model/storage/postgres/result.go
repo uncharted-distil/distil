@@ -10,7 +10,8 @@ import (
 
 	"github.com/jackc/pgx"
 	"github.com/pkg/errors"
-	"github.com/unchartedsoftware/distil/api/model"
+	"github.com/unchartedsoftware/distil-compute/model"
+	api "github.com/unchartedsoftware/distil/api/model"
 	log "github.com/unchartedsoftware/plog"
 )
 
@@ -70,7 +71,7 @@ func (s *Storage) PersistResult(dataset string, resultURI string, target string)
 
 	// currently only support a single result column.
 	if len(records[0]) > 2 {
-		log.Warnf("Result contains %s columns, expected 2.  Additional columns will be ignored.", len(records[0]))
+		log.Warnf("Result contains %d columns, expected 2.  Additional columns will be ignored.", len(records[0]))
 	}
 
 	// Translate from display name to storage name.
@@ -127,8 +128,8 @@ func (s *Storage) executeInsertResultStatement(dataset string, resultID string, 
 	return err
 }
 
-func (s *Storage) parseFilteredResults(dataset string, variables []*model.Variable, numRows int, rows *pgx.Rows, target *model.Variable) (*model.FilteredData, error) {
-	result := &model.FilteredData{
+func (s *Storage) parseFilteredResults(dataset string, variables []*model.Variable, numRows int, rows *pgx.Rows, target *model.Variable) (*api.FilteredData, error) {
+	result := &api.FilteredData{
 		NumRows: numRows,
 		Values:  make([][]interface{}, 0),
 	}
@@ -136,15 +137,15 @@ func (s *Storage) parseFilteredResults(dataset string, variables []*model.Variab
 	// Parse the columns.
 	if rows != nil {
 		fields := rows.FieldDescriptions()
-		columns := make([]model.Column, len(fields))
+		columns := make([]api.Column, len(fields))
 		for i := 0; i < len(fields); i++ {
 			key := fields[i].Name
 			label := key
 			typ := "unknown"
-			if model.IsPredictedKey(key) {
-				label = "Predicted " + model.StripKeySuffix(key)
+			if api.IsPredictedKey(key) {
+				label = "Predicted " + api.StripKeySuffix(key)
 				typ = target.Type
-			} else if model.IsErrorKey(key) {
+			} else if api.IsErrorKey(key) {
 				label = "Error"
 				typ = target.Type
 			} else {
@@ -154,7 +155,7 @@ func (s *Storage) parseFilteredResults(dataset string, variables []*model.Variab
 				}
 			}
 
-			columns[i] = model.Column{
+			columns[i] = api.Column{
 				Key:   key,
 				Label: label,
 				Type:  typ,
@@ -174,7 +175,7 @@ func (s *Storage) parseFilteredResults(dataset string, variables []*model.Variab
 			result.Columns = columns
 		}
 	} else {
-		result.Columns = make([]model.Column, 0)
+		result.Columns = make([]api.Column, 0)
 	}
 
 	return result, nil
@@ -206,7 +207,7 @@ func addIncludeCorrectnessFilterToWhere(wheres []string, params []interface{}, c
 	} else if strings.EqualFold(correctnessFilter.Categories[0], IncorrectCategory) {
 		op = "!="
 	}
-	where = fmt.Sprintf("predicted.value %s data.\"%s\"", op, target.Key)
+	where = fmt.Sprintf("predicted.value %s data.\"%s\"", op, target.Name)
 	wheres = append(wheres, where)
 	return wheres, params, nil
 }
@@ -223,7 +224,7 @@ func addExcludeCorrectnessFilterToWhere(wheres []string, params []interface{}, c
 	} else if strings.EqualFold(correctnessFilter.Categories[0], IncorrectCategory) {
 		op = "="
 	}
-	where = fmt.Sprintf("predicted.value %s data.\"%s\"", op, target.Key)
+	where = fmt.Sprintf("predicted.value %s data.\"%s\"", op, target.Name)
 	wheres = append(wheres, where)
 	return wheres, params, nil
 }
@@ -349,7 +350,7 @@ func addExcludeErrorFilterToWhere(wheres []string, params []interface{}, dataset
 }
 
 // FetchResults pulls the results from the Postgres database.
-func (s *Storage) FetchResults(dataset string, resultURI string, solutionID string, filterParams *model.FilterParams) (*model.FilteredData, error) {
+func (s *Storage) FetchResults(dataset string, resultURI string, solutionID string, filterParams *api.FilterParams) (*api.FilteredData, error) {
 	datasetResult := s.getResultTable(dataset)
 	targetName, err := s.getResultTargetName(datasetResult, resultURI)
 	if err != nil {
@@ -428,13 +429,13 @@ func (s *Storage) FetchResults(dataset string, resultURI string, solutionID stri
 	}
 
 	// If our results are numerical we need to compute residuals and store them in a column called 'error'
-	predictedCol := model.GetPredictedKey(targetName, solutionID)
-	errorCol := model.GetErrorKey(targetName, solutionID)
+	predictedCol := api.GetPredictedKey(targetName, solutionID)
+	errorCol := api.GetErrorKey(targetName, solutionID)
 	targetCol := targetName
 
 	errorExpr := ""
 	if model.IsNumerical(variable.Type) {
-		errorExpr = fmt.Sprintf("%s as \"%s\",", getErrorTyped(variable.Key), errorCol)
+		errorExpr = fmt.Sprintf("%s as \"%s\",", getErrorTyped(variable.Name), errorCol)
 	}
 
 	query := fmt.Sprintf(
@@ -476,11 +477,11 @@ func (s *Storage) FetchResults(dataset string, resultURI string, solutionID stri
 
 func (s *Storage) getResultMinMaxAggsQuery(variable *model.Variable, resultVariable *model.Variable) string {
 	// get min / max agg names
-	minAggName := model.MinAggPrefix + resultVariable.Key
-	maxAggName := model.MaxAggPrefix + resultVariable.Key
+	minAggName := api.MinAggPrefix + resultVariable.Name
+	maxAggName := api.MaxAggPrefix + resultVariable.Name
 
 	// Only numeric types should occur.
-	fieldTyped := fmt.Sprintf("cast(\"%s\" as double precision)", resultVariable.Key)
+	fieldTyped := fmt.Sprintf("cast(\"%s\" as double precision)", resultVariable.Name)
 
 	// create aggregations
 	queryPart := fmt.Sprintf("MIN(%s) AS \"%s\", MAX(%s) AS \"%s\"", fieldTyped, minAggName, fieldTyped, maxAggName)
@@ -488,7 +489,7 @@ func (s *Storage) getResultMinMaxAggsQuery(variable *model.Variable, resultVaria
 	return queryPart
 }
 
-func (s *Storage) fetchResultsExtrema(resultURI string, dataset string, variable *model.Variable, resultVariable *model.Variable) (*model.Extrema, error) {
+func (s *Storage) fetchResultsExtrema(resultURI string, dataset string, variable *model.Variable, resultVariable *model.Variable) (*api.Extrema, error) {
 	// add min / max aggregation
 	aggQuery := s.getResultMinMaxAggsQuery(variable, resultVariable)
 
@@ -496,7 +497,7 @@ func (s *Storage) fetchResultsExtrema(resultURI string, dataset string, variable
 	queryString := fmt.Sprintf("SELECT %s FROM %s WHERE result_id = $1 AND target = $2;", aggQuery, dataset)
 
 	// execute the postgres query
-	res, err := s.client.Query(queryString, resultURI, variable.Key)
+	res, err := s.client.Query(queryString, resultURI, variable.Name)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to fetch extrema for result from postgres")
 	}
@@ -506,7 +507,7 @@ func (s *Storage) fetchResultsExtrema(resultURI string, dataset string, variable
 }
 
 // FetchResultsExtremaByURI fetches the results extrema by resultURI.
-func (s *Storage) FetchResultsExtremaByURI(dataset string, resultURI string) (*model.Extrema, error) {
+func (s *Storage) FetchResultsExtremaByURI(dataset string, resultURI string) (*api.Extrema, error) {
 	datasetResult := s.getResultTable(dataset)
 	targetName, err := s.getResultTargetName(datasetResult, resultURI)
 	if err != nil {
@@ -517,7 +518,7 @@ func (s *Storage) FetchResultsExtremaByURI(dataset string, resultURI string) (*m
 		return nil, err
 	}
 	resultVariable := &model.Variable{
-		Key:  "value",
+		Name: "value",
 		Type: model.TextType,
 	}
 
@@ -527,7 +528,7 @@ func (s *Storage) FetchResultsExtremaByURI(dataset string, resultURI string) (*m
 
 // FetchPredictedSummary gets the summary data about a target variable from the
 // results table.
-func (s *Storage) FetchPredictedSummary(dataset string, resultURI string, filterParams *model.FilterParams, extrema *model.Extrema) (*model.Histogram, error) {
+func (s *Storage) FetchPredictedSummary(dataset string, resultURI string, filterParams *api.FilterParams, extrema *api.Extrema) (*api.Histogram, error) {
 	datasetResult := s.getResultTable(dataset)
 	targetName, err := s.getResultTargetName(datasetResult, resultURI)
 	if err != nil {
@@ -541,7 +542,7 @@ func (s *Storage) FetchPredictedSummary(dataset string, resultURI string, filter
 
 	// use the variable type to guide the summary creation.
 	var field Field
-	var histogram *model.Histogram
+	var histogram *api.Histogram
 	if model.IsNumerical(variable.Type) {
 		field = NewNumericalField(s, dataset, variable)
 	} else if model.IsCategorical(variable.Type) {
@@ -549,7 +550,7 @@ func (s *Storage) FetchPredictedSummary(dataset string, resultURI string, filter
 	} else if model.IsVector(variable.Type) {
 		field = NewVectorField(s, dataset, variable)
 	} else {
-		return nil, errors.Errorf("variable %s of type %s does not support summary", variable.Key, variable.Type)
+		return nil, errors.Errorf("variable %s of type %s does not support summary", variable.Name, variable.Type)
 	}
 
 	histogram, err = field.FetchPredictedSummaryData(resultURI, datasetResult, filterParams, extrema)
@@ -583,8 +584,8 @@ func (s *Storage) getDisplayName(dataset string, columnName string) (string, err
 	}
 
 	for _, v := range variables {
-		if v.Key == columnName {
-			displayName = v.DisplayVariable
+		if v.Name == columnName {
+			displayName = v.DisplayName
 		}
 	}
 

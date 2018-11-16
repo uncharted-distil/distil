@@ -7,11 +7,12 @@ import (
 
 	"github.com/jackc/pgx"
 	"github.com/pkg/errors"
-	"github.com/unchartedsoftware/distil/api/model"
+	"github.com/unchartedsoftware/distil-compute/model"
+	api "github.com/unchartedsoftware/distil/api/model"
 )
 
 // FetchCorrectnessSummary fetches a histogram of the residuals associated with a set of numerical predictions.
-func (s *Storage) FetchCorrectnessSummary(dataset string, resultURI string, filterParams *model.FilterParams) (*model.Histogram, error) {
+func (s *Storage) FetchCorrectnessSummary(dataset string, resultURI string, filterParams *api.FilterParams) (*api.Histogram, error) {
 	datasetResult := s.getResultTable(dataset)
 	targetName, err := s.getResultTargetName(datasetResult, resultURI)
 	if err != nil {
@@ -50,9 +51,9 @@ func (s *Storage) FetchCorrectnessSummary(dataset string, resultURI string, filt
 	return s.parseHistogram(res, variable)
 }
 
-func (s *Storage) parseHistogram(rows *pgx.Rows, variable *model.Variable) (*model.Histogram, error) {
+func (s *Storage) parseHistogram(rows *pgx.Rows, variable *model.Variable) (*api.Histogram, error) {
 
-	termsAggName := model.TermsAggPrefix + variable.Key
+	termsAggName := api.TermsAggPrefix + variable.Name
 
 	// extract the counts
 	countMap := map[string]map[string]int64{}
@@ -72,10 +73,10 @@ func (s *Storage) parseHistogram(rows *pgx.Rows, variable *model.Variable) (*mod
 		}
 	}
 
-	correctBucket := &model.Bucket{
+	correctBucket := &api.Bucket{
 		Key: "Correct",
 	}
-	incorrectBucket := &model.Bucket{
+	incorrectBucket := &api.Bucket{
 		Key: "Incorrect",
 	}
 
@@ -100,16 +101,16 @@ func (s *Storage) parseHistogram(rows *pgx.Rows, variable *model.Variable) (*mod
 	}
 
 	// assign histogram attributes
-	return &model.Histogram{
-		Label:   variable.Label,
-		Key:     variable.Key,
+	return &api.Histogram{
+		Label:   variable.DisplayName,
+		Key:     variable.Name,
 		VarType: variable.Type,
 		Type:    model.CategoricalType,
-		Buckets: []*model.Bucket{
+		Buckets: []*api.Bucket{
 			correctBucket,
 			incorrectBucket,
 		},
-		Extrema: &model.Extrema{
+		Extrema: &api.Extrema{
 			Min: float64(min),
 			Max: float64(max),
 		},

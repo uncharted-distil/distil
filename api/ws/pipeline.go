@@ -10,7 +10,8 @@ import (
 	"github.com/pkg/errors"
 	"github.com/unchartedsoftware/plog"
 
-	"github.com/unchartedsoftware/distil/api/compute"
+	"github.com/unchartedsoftware/distil-compute/primitive/compute"
+	api "github.com/unchartedsoftware/distil/api/compute"
 	"github.com/unchartedsoftware/distil/api/env"
 	"github.com/unchartedsoftware/distil/api/model"
 	jutil "github.com/unchartedsoftware/distil/api/util/json"
@@ -98,7 +99,7 @@ func handleMessage(conn *Connection, client *compute.Client, metadataCtor model.
 
 func handleCreateSolutions(conn *Connection, client *compute.Client, metadataCtor model.MetadataStorageCtor, dataCtor model.DataStorageCtor, solutionCtor model.SolutionStorageCtor, msg *Message) {
 	// unmarshal request
-	request, err := compute.NewSolutionRequest(msg.Raw)
+	request, err := api.NewSolutionRequest(msg.Raw)
 	if err != nil {
 		handleErr(conn, msg, err)
 		return
@@ -134,15 +135,15 @@ func handleCreateSolutions(conn *Connection, client *compute.Client, metadataCto
 	// load defaults
 	config, _ := env.LoadConfig()
 	if request.Task == "" {
-		request.Task = compute.DefaultTaskType(targetVar.Type)
+		request.Task = api.DefaultTaskType(targetVar.Type)
 		log.Infof("Defaulting task type to `%s`", request.Task)
 	}
 	if request.SubTask == "" {
-		request.SubTask = compute.DefaultTaskSubType(targetVar.Type)
+		request.SubTask = api.DefaultTaskSubType(targetVar.Type)
 		log.Infof("Defaulting task sub type to `%s`", request.SubTask)
 	}
 	if len(request.Metrics) == 0 {
-		request.Metrics = compute.DefaultMetrics(targetVar.Type)
+		request.Metrics = api.DefaultMetrics(targetVar.Type)
 		log.Infof("Defaulting metrics to `%s`", strings.Join(request.Metrics, ","))
 	}
 	if request.MaxTime == 0 {
@@ -158,7 +159,7 @@ func handleCreateSolutions(conn *Connection, client *compute.Client, metadataCto
 	}
 
 	// listen for solution updates
-	err = request.Listen(func(status compute.SolutionStatus) {
+	err = request.Listen(func(status api.SolutionStatus) {
 		// check for error
 		if status.Error != nil {
 			handleErr(conn, msg, status.Error)
@@ -178,7 +179,7 @@ func handleCreateSolutions(conn *Connection, client *compute.Client, metadataCto
 
 func handleStopSolutions(conn *Connection, client *compute.Client, msg *Message) {
 	// unmarshal request
-	request, err := compute.NewStopSolutionSearchRequest(msg.Raw)
+	request, err := api.NewStopSolutionSearchRequest(msg.Raw)
 	if err != nil {
 		handleErr(conn, msg, err)
 		return

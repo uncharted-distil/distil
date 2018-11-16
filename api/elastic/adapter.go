@@ -8,5 +8,5 @@ import (
 type elasticPlogAdapter struct{}
 
 func (elasticPlogAdapter) Printf(format string, v ...interface{}) {
-	log.Infof(format, v)
+	log.Infof(format, v...)
 }

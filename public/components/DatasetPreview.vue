@@ -11,8 +11,8 @@
 				<div class='col-4'>
 					<span><b>Top features:</b></span>
 					<ul id='example-1'>
-						<li :key="variable.key" v-for='variable in topVariables'>
-							{{variable.label}}
+						<li :key="variable.name" v-for='variable in topVariables'>
+							{{variable.colDisplayName}}
 						</li>
 					</ul>
 				</div>

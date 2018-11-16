@@ -7,7 +7,8 @@ import (
 
 	"github.com/jackc/pgx"
 	"github.com/pkg/errors"
-	"github.com/unchartedsoftware/distil/api/model"
+	"github.com/unchartedsoftware/distil-compute/model"
+	api "github.com/unchartedsoftware/distil/api/model"
 )
 
 // TextField defines behaviour for the text field type.
@@ -29,8 +30,8 @@ func NewTextField(storage *Storage, dataset string, variable *model.Variable) *T
 }
 
 // FetchSummaryData pulls summary data from the database and builds a histogram.
-func (f *TextField) FetchSummaryData(resultURI string, filterParams *model.FilterParams, extrema *model.Extrema) (*model.Histogram, error) {
-	var histogram *model.Histogram
+func (f *TextField) FetchSummaryData(resultURI string, filterParams *api.FilterParams, extrema *api.Extrema) (*api.Histogram, error) {
+	var histogram *api.Histogram
 	var err error
 	if resultURI == "" {
 		histogram, err = f.fetchHistogram(filterParams)
@@ -41,7 +42,7 @@ func (f *TextField) FetchSummaryData(resultURI string, filterParams *model.Filte
 	return histogram, err
 }
 
-func (f *TextField) fetchHistogram(filterParams *model.FilterParams) (*model.Histogram, error) {
+func (f *TextField) fetchHistogram(filterParams *api.FilterParams) (*api.Histogram, error) {
 	// create the filter for the query.
 	wheres := make([]string, 0)
 	params := make([]interface{}, 0)
@@ -57,7 +58,7 @@ func (f *TextField) fetchHistogram(filterParams *model.FilterParams) (*model.His
 		"FROM (SELECT unnest(tsvector_to_array(to_tsvector(\"%s\"))) as stem FROM %s %s) as r "+
 		"INNER JOIN %s as w on r.stem = w.stem "+
 		"GROUP BY w.word ORDER BY count desc, w.word LIMIT %d;",
-		f.Variable.Key, f.Variable.Key, f.Dataset, where, wordStemTableName, catResultLimit)
+		f.Variable.Name, f.Variable.Name, f.Dataset, where, wordStemTableName, catResultLimit)
 
 	// execute the postgres query
 	res, err := f.Storage.client.Query(query, params...)
@@ -71,7 +72,7 @@ func (f *TextField) fetchHistogram(filterParams *model.FilterParams) (*model.His
 	return f.parseHistogram(res)
 }
 
-func (f *TextField) fetchHistogramByResult(resultURI string, filterParams *model.FilterParams) (*model.Histogram, error) {
+func (f *TextField) fetchHistogramByResult(resultURI string, filterParams *api.FilterParams) (*api.Histogram, error) {
 
 	// get filter where / params
 	wheres, params, err := f.Storage.buildResultQueryFilters(f.Dataset, resultURI, filterParams)
@@ -92,7 +93,7 @@ func (f *TextField) fetchHistogramByResult(resultURI string, filterParams *model
 		"FROM %s data INNER JOIN %s result ON data.\"%s\" = result.index WHERE result.result_id = $%d %s) as r "+
 		"INNER JOIN %s as w on r.stem = w.stem "+
 		"GROUP BY w.word ORDER BY count desc, w.word LIMIT %d;",
-		f.Variable.Key, f.Variable.Key, f.Dataset, f.Storage.getResultTable(f.Dataset),
+		f.Variable.Name, f.Variable.Name, f.Dataset, f.Storage.getResultTable(f.Dataset),
 		model.D3MIndexFieldName, len(params), where, wordStemTableName, catResultLimit)
 
 	// execute the postgres query
@@ -107,10 +108,10 @@ func (f *TextField) fetchHistogramByResult(resultURI string, filterParams *model
 	return f.parseHistogram(res)
 }
 
-func (f *TextField) parseHistogram(rows *pgx.Rows) (*model.Histogram, error) {
-	termsAggName := model.TermsAggPrefix + f.Variable.Key
+func (f *TextField) parseHistogram(rows *pgx.Rows) (*api.Histogram, error) {
+	termsAggName := api.TermsAggPrefix + f.Variable.Name
 
-	buckets := make([]*model.Bucket, 0)
+	buckets := make([]*api.Bucket, 0)
 	min := int64(math.MaxInt32)
 	max := int64(-math.MaxInt32)
 
@@ -123,7 +124,7 @@ func (f *TextField) parseHistogram(rows *pgx.Rows) (*model.Histogram, error) {
 				return nil, errors.Wrap(err, fmt.Sprintf("no %s histogram aggregation found", termsAggName))
 			}
 
-			buckets = append(buckets, &model.Bucket{
+			buckets = append(buckets, &api.Bucket{
 				Key:   term,
 				Count: bucketCount,
 			})
@@ -137,13 +138,13 @@ func (f *TextField) parseHistogram(rows *pgx.Rows) (*model.Histogram, error) {
 	}
 
 	// assign histogram attributes
-	return &model.Histogram{
-		Label:   f.Variable.Label,
-		Key:     f.Variable.Key,
+	return &api.Histogram{
+		Label:   f.Variable.DisplayName,
+		Key:     f.Variable.Name,
 		Type:    model.CategoricalType,
 		VarType: f.Variable.Type,
 		Buckets: buckets,
-		Extrema: &model.Extrema{
+		Extrema: &api.Extrema{
 			Min: float64(min),
 			Max: float64(max),
 		},
@@ -152,8 +153,8 @@ func (f *TextField) parseHistogram(rows *pgx.Rows) (*model.Histogram, error) {
 
 // FetchPredictedSummaryData pulls data from the result table and builds
 // the categorical histogram for the field.
-func (f *TextField) FetchPredictedSummaryData(resultURI string, datasetResult string, filterParams *model.FilterParams, extrema *model.Extrema) (*model.Histogram, error) {
-	targetName := f.Variable.Key
+func (f *TextField) FetchPredictedSummaryData(resultURI string, datasetResult string, filterParams *api.FilterParams, extrema *api.Extrema) (*api.Histogram, error) {
+	targetName := f.Variable.Name
 
 	// get filter where / params
 	wheres, params, err := f.Storage.buildResultQueryFilters(f.Dataset, resultURI, filterParams)

@@ -14,12 +14,13 @@ export interface SuggestedType {
 }
 
 export interface Variable {
-	label: string;
-	key: string;
-	type: string;
+	colDisplayName: string;
+	colName: string;
+	colType: string;
 	importance: number;
+	ranking?: number;
 	novelty: number;
-	originalType: string;
+	colOriginalType: string;
 	suggestedTypes: SuggestedType[];
 }
 

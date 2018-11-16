@@ -15,8 +15,8 @@ export const getters = {
 	getVariablesMap(state: DatasetState): Dictionary<Variable> {
 		const map = {};
 		state.variables.forEach(variable => {
-			map[variable.key] = variable;
-			map[variable.key.toLowerCase()] = variable;
+			map[variable.colName] = variable;
+			map[variable.colName.toLowerCase()] = variable;
 		});
 		return map;
 	},
@@ -24,8 +24,8 @@ export const getters = {
 	getVariableTypesMap(state: DatasetState): Dictionary<string> {
 		const map = {};
 		state.variables.forEach(variable => {
-			map[variable.key] = variable.type;
-			map[variable.key.toLowerCase()] = variable.type;
+			map[variable.colName] = variable.colType;
+			map[variable.colName.toLowerCase()] = variable.colType;
 		});
 		return map;
 	},

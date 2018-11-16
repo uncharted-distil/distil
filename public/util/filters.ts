@@ -31,6 +31,12 @@ export const ROW_FILTER = 'row';
 export const FEATURE_FILTER = 'feature';
 
 /**
+ * Cluster filter, omitting documents that have the specified cluster value;
+ * @constant {string}
+ */
+export const CLUSTER_FILTER = 'cluster';
+
+/**
  * Text filter, omitting documents that have the specified text value;
  * @constant {string}
  */

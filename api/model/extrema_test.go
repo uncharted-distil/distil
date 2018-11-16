@@ -5,6 +5,8 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+
+	"github.com/unchartedsoftware/distil-compute/model"
 )
 
 const (
@@ -15,52 +17,52 @@ const (
 var (
 	samples = []*Extrema{
 		{
-			Type: FloatType,
+			Type: model.FloatType,
 			Min:  0.2667,
 			Max:  1.4630,
 		},
 		{
-			Type: IntegerType,
+			Type: model.IntegerType,
 			Min:  1,
 			Max:  20,
 		},
 		{
-			Type: IntegerType,
+			Type: model.IntegerType,
 			Min:  1,
 			Max:  60,
 		},
 		{
-			Type: FloatType,
+			Type: model.FloatType,
 			Min:  -1.4630,
 			Max:  -0.2667,
 		},
 		{
-			Type: IntegerType,
+			Type: model.IntegerType,
 			Min:  -20,
 			Max:  -1,
 		},
 		{
-			Type: IntegerType,
+			Type: model.IntegerType,
 			Min:  -60,
 			Max:  -1,
 		},
 		{
-			Type: FloatType,
+			Type: model.FloatType,
 			Min:  -1.4630,
 			Max:  3.2667,
 		},
 		{
-			Type: IntegerType,
+			Type: model.IntegerType,
 			Min:  -21,
 			Max:  57,
 		},
 		{
-			Type: IntegerType,
+			Type: model.IntegerType,
 			Min:  -3,
 			Max:  5,
 		},
 		{
-			Type: FloatType,
+			Type: model.FloatType,
 			Min:  -512.4630,
 			Max:  1097.2667,
 		},

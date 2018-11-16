@@ -8,15 +8,16 @@ import (
 	"github.com/pkg/errors"
 	"goji.io/pat"
 
-	"github.com/unchartedsoftware/distil/api/model"
+	"github.com/unchartedsoftware/distil-compute/model"
+	api "github.com/unchartedsoftware/distil/api/model"
 )
 
 // PredictedSummary contains a fetch result histogram.
 type PredictedSummary struct {
-	PredictedSummary *model.Histogram `json:"histogram"`
+	PredictedSummary *api.Histogram `json:"histogram"`
 }
 
-func fetchSolutionPredictedExtrema(meta model.MetadataStorage, data model.DataStorage, solution model.SolutionStorage, dataset string, target string, solutionID string) (*model.Extrema, error) {
+func fetchSolutionPredictedExtrema(meta api.MetadataStorage, data api.DataStorage, solution api.SolutionStorage, dataset string, target string, solutionID string) (*api.Extrema, error) {
 	// check target var type
 	variable, err := meta.FetchVariable(dataset, target)
 	if err != nil {
@@ -58,11 +59,11 @@ func fetchSolutionPredictedExtrema(meta model.MetadataStorage, data model.DataSt
 			}
 		}
 	}
-	return model.NewExtrema(min, max)
+	return api.NewExtrema(min, max)
 }
 
 // PredictedSummaryHandler bins predicted result data for consumption in a downstream summary view.
-func PredictedSummaryHandler(metaCtor model.MetadataStorageCtor, solutionCtor model.SolutionStorageCtor, dataCtor model.DataStorageCtor) func(http.ResponseWriter, *http.Request) {
+func PredictedSummaryHandler(metaCtor api.MetadataStorageCtor, solutionCtor api.SolutionStorageCtor, dataCtor api.DataStorageCtor) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// extract route parameters
 		dataset := pat.Param(r, "dataset")
@@ -82,7 +83,7 @@ func PredictedSummaryHandler(metaCtor model.MetadataStorageCtor, solutionCtor mo
 		}
 
 		// get variable names and ranges out of the params
-		filterParams, err := model.ParseFilterParamsFromJSON(params)
+		filterParams, err := api.ParseFilterParamsFromJSON(params)
 		if err != nil {
 			handleError(w, err)
 			return
@@ -126,7 +127,7 @@ func PredictedSummaryHandler(metaCtor model.MetadataStorageCtor, solutionCtor mo
 			handleError(w, err)
 			return
 		}
-		histogram.Key = model.GetPredictedKey(histogram.Key, res.SolutionID)
+		histogram.Key = api.GetPredictedKey(histogram.Key, res.SolutionID)
 		histogram.Label = "Predicted"
 		histogram.SolutionID = res.SolutionID
 

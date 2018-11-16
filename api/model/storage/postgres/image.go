@@ -7,7 +7,8 @@ import (
 
 	"github.com/jackc/pgx"
 	"github.com/pkg/errors"
-	"github.com/unchartedsoftware/distil/api/model"
+	"github.com/unchartedsoftware/distil-compute/model"
+	api "github.com/unchartedsoftware/distil/api/model"
 )
 
 // ImageField defines behaviour for the image field type.
@@ -29,8 +30,8 @@ func NewImageField(storage *Storage, dataset string, variable *model.Variable) *
 }
 
 // FetchSummaryData pulls summary data from the database and builds a histogram.
-func (f *ImageField) FetchSummaryData(resultURI string, filterParams *model.FilterParams, extrema *model.Extrema) (*model.Histogram, error) {
-	var histogram *model.Histogram
+func (f *ImageField) FetchSummaryData(resultURI string, filterParams *api.FilterParams, extrema *api.Extrema) (*api.Histogram, error) {
+	var histogram *api.Histogram
 	var err error
 	if resultURI == "" {
 		histogram, err = f.fetchHistogram(filterParams)
@@ -41,21 +42,21 @@ func (f *ImageField) FetchSummaryData(resultURI string, filterParams *model.Filt
 	return histogram, err
 }
 
-func (f *ImageField) metadataVarName(varName string) string {
-	return fmt.Sprintf("%s%s", model.MetadataVarPrefix, varName)
+func (f *ImageField) featureVarName(varName string) string {
+	return fmt.Sprintf("%s%s", model.FeatureVarPrefix, varName)
 }
 
-func (f *ImageField) fetchRepresentationImages(categoryBuckets []*model.Bucket) ([]string, error) {
+func (f *ImageField) fetchRepresentationImages(categoryBuckets []*api.Bucket) ([]string, error) {
 
 	var imageFiles []string
 
 	for _, bucket := range categoryBuckets {
 
-		prefixedVarName := f.metadataVarName(f.Variable.Key)
+		prefixedVarName := f.featureVarName(f.Variable.Name)
 
 		// pull sample row containing bucket
 		query := fmt.Sprintf("SELECT \"%s\" FROM %s WHERE \"%s\" ~ $1 LIMIT 1;",
-			f.Variable.Key, f.Dataset, prefixedVarName)
+			f.Variable.Name, f.Dataset, prefixedVarName)
 
 		// execute the postgres query
 		rows, err := f.Storage.client.Query(query, bucket.Key)
@@ -76,13 +77,13 @@ func (f *ImageField) fetchRepresentationImages(categoryBuckets []*model.Bucket) 
 	return imageFiles, nil
 }
 
-func (f *ImageField) fetchHistogram(filterParams *model.FilterParams) (*model.Histogram, error) {
+func (f *ImageField) fetchHistogram(filterParams *api.FilterParams) (*api.Histogram, error) {
 	// create the filter for the query.
 	wheres := make([]string, 0)
 	params := make([]interface{}, 0)
 	wheres, params = f.Storage.buildFilteredQueryWhere(wheres, params, f.Dataset, filterParams.Filters)
 
-	prefixedVarName := f.metadataVarName(f.Variable.Key)
+	prefixedVarName := f.featureVarName(f.Variable.Name)
 	fieldSelect := fmt.Sprintf("unnest(string_to_array(\"%s\", ','))", prefixedVarName)
 
 	where := ""
@@ -116,7 +117,7 @@ func (f *ImageField) fetchHistogram(filterParams *model.FilterParams) (*model.Hi
 	return histogram, nil
 }
 
-func (f *ImageField) fetchHistogramByResult(resultURI string, filterParams *model.FilterParams) (*model.Histogram, error) {
+func (f *ImageField) fetchHistogramByResult(resultURI string, filterParams *api.FilterParams) (*api.Histogram, error) {
 
 	// get filter where / params
 	wheres, params, err := f.Storage.buildResultQueryFilters(f.Dataset, resultURI, filterParams)
@@ -131,7 +132,7 @@ func (f *ImageField) fetchHistogramByResult(resultURI string, filterParams *mode
 		where = fmt.Sprintf("AND %s", strings.Join(wheres, " AND "))
 	}
 
-	prefixedVarName := f.metadataVarName(f.Variable.Key)
+	prefixedVarName := f.featureVarName(f.Variable.Name)
 
 	// Get count by category.
 	query := fmt.Sprintf(
@@ -166,12 +167,12 @@ func (f *ImageField) fetchHistogramByResult(resultURI string, filterParams *mode
 	return histogram, nil
 }
 
-func (f *ImageField) parseHistogram(rows *pgx.Rows) (*model.Histogram, error) {
-	prefixedVarName := f.metadataVarName(f.Variable.Key)
+func (f *ImageField) parseHistogram(rows *pgx.Rows) (*api.Histogram, error) {
+	prefixedVarName := f.featureVarName(f.Variable.Name)
 
-	termsAggName := model.TermsAggPrefix + prefixedVarName
+	termsAggName := api.TermsAggPrefix + prefixedVarName
 
-	buckets := make([]*model.Bucket, 0)
+	buckets := make([]*api.Bucket, 0)
 	min := int64(math.MaxInt32)
 	max := int64(-math.MaxInt32)
 
@@ -184,7 +185,7 @@ func (f *ImageField) parseHistogram(rows *pgx.Rows) (*model.Histogram, error) {
 				return nil, errors.Wrap(err, fmt.Sprintf("no %s histogram aggregation found", termsAggName))
 			}
 
-			buckets = append(buckets, &model.Bucket{
+			buckets = append(buckets, &api.Bucket{
 				Key:   term,
 				Count: bucketCount,
 			})
@@ -198,13 +199,13 @@ func (f *ImageField) parseHistogram(rows *pgx.Rows) (*model.Histogram, error) {
 	}
 
 	// assign histogram attributes
-	return &model.Histogram{
-		Label:   f.Variable.Label,
-		Key:     f.Variable.Key,
+	return &api.Histogram{
+		Label:   f.Variable.DisplayName,
+		Key:     f.Variable.Name,
 		Type:    model.CategoricalType,
 		VarType: f.Variable.Type,
 		Buckets: buckets,
-		Extrema: &model.Extrema{
+		Extrema: &api.Extrema{
 			Min: float64(min),
 			Max: float64(max),
 		},
@@ -213,8 +214,8 @@ func (f *ImageField) parseHistogram(rows *pgx.Rows) (*model.Histogram, error) {
 
 // FetchPredictedSummaryData pulls predicted data from the result table and builds
 // the image histogram for the field.
-func (f *ImageField) FetchPredictedSummaryData(resultURI string, datasetResult string, filterParams *model.FilterParams, extrema *model.Extrema) (*model.Histogram, error) {
-	targetName := f.metadataVarName(f.Variable.Key)
+func (f *ImageField) FetchPredictedSummaryData(resultURI string, datasetResult string, filterParams *api.FilterParams, extrema *api.Extrema) (*api.Histogram, error) {
+	targetName := f.featureVarName(f.Variable.Name)
 
 	// get filter where / params
 	wheres, params, err := f.Storage.buildResultQueryFilters(f.Dataset, resultURI, filterParams)

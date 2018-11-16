@@ -36,10 +36,11 @@ func TestVariableHandler(t *testing.T) {
 	expected, err := json.Unmarshal([]byte(
 		`{
 			"variables": [
-				{"name":"Position","type":"categorical","importance": 0,"deleted": false,"role": "attribute","distilRole": "","suggestedTypes": [{ "type": "categorical", "probability": 1.00 }], "varOriginalName": "", "varDisplayName": "Position"},
-				{"name":"Number_seasons","type":"integer","importance": 1,"deleted": false,"role": "attribute","distilRole": "","suggestedTypes": [ { "type": "integer", "probability": 1.00 }], "varOriginalName": "", "varDisplayName": "Number_seasons"},
-				{"name":"Games_played","type":"integer","importance": 2,"deleted": false,"role": "attribute","distilRole": "","suggestedTypes": [ { "type": "integer", "probability": 1.00 }], "varOriginalName": "", "varDisplayName": "Games_played"},
-				{"name":"On_base_pct","type":"float","importance": 3,"deleted": false,"role": "attribute","distilRole": "","suggestedTypes": [ { "type": "float", "probability": 1.00 }], "varOriginalName": "", "varDisplayName": "On_base_pct"}
+				{"colName":"d3mIndex","colType":"integer","importance": 0,"deleted": false,"selectedRole": "index","suggestedTypes": [{ "type": "integer", "probability": 1.00, "provenance": "TEST" }], "colOriginalVariable": "","colIndex": 0, "colOriginalType":"integer", "role": ["TEST"], "colDisplayName": "d3mIndex"},
+				{"colName":"Position","colType":"categorical","importance": 0,"deleted": false,"selectedRole": "attribute","suggestedTypes": [{ "type": "categorical", "probability": 1.00, "provenance": "TEST" }], "colOriginalVariable": "","colIndex": 1, "colOriginalType":"categorical", "role": ["TEST"], "colDisplayName": "Position"},
+				{"colName":"Number_seasons","colType":"integer","importance": 1,"deleted": false,"selectedRole": "attribute","suggestedTypes": [ { "type": "integer", "probability": 1.00, "provenance": "TEST" }], "colOriginalVariable": "","colIndex": 2, "colOriginalType":"integer", "role": ["TEST"], "colDisplayName": "Number_seasons"},
+				{"colName":"Games_played","colType":"integer","importance": 2,"deleted": false,"selectedRole": "attribute","suggestedTypes": [ { "type": "integer", "probability": 1.00, "provenance": "TEST" }], "colOriginalVariable": "","colIndex": 3, "colOriginalType":"integer", "role": ["TEST"], "colDisplayName": "Games_played"},
+				{"colName":"On_base_pct","colType":"float","importance": 3,"deleted": false,"selectedRole": "attribute","suggestedTypes": [ { "type": "float", "probability": 1.00, "provenance": "TEST" }], "colOriginalVariable": "","colIndex": 4, "colOriginalType":"float", "role": ["TEST"], "colDisplayName": "On_base_pct"}
 			]
 		}`))
 	assert.NoError(t, err)

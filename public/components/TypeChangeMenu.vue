@@ -48,19 +48,22 @@ export default Vue.extend({
 			return vars[this.field.toLowerCase()];
 		},
 		type(): string {
-			return this.variable ? this.variable.type : '';
+			return this.variable ? this.variable.colType : '';
 		},
 		label(): string {
 			return this.type !== '' ? getLabelFromType(this.type) : '';
 		},
 		originalType(): string {
-			return this.variable ? this.variable.originalType : '';
+			return this.variable ? this.variable.colOriginalType : '';
 		},
 		suggestedTypes(): SuggestedType[] {
 			return this.variable ? this.variable.suggestedTypes : [];
 		},
 		dataset(): string {
 			return routeGetters.getRouteDataset(this.$store);
+		},
+		target(): string {
+			return routeGetters.getRouteTargetVariable(this.$store);
 		},
 		highlightRoot(): HighlightRoot {
 			return routeGetters.getDecodedHighlightRoot(this.$store);
@@ -118,6 +121,13 @@ export default Vue.extend({
 				dataset: this.dataset,
 				field: this.field,
 				type: type
+			}).then(() => {
+				if (this.target) {
+					datasetActions.fetchVariableRankings(this.$store, {
+						dataset: this.dataset,
+						target: this.target
+					});
+				}
 			});
 		},
 	}

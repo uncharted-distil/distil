@@ -10,7 +10,8 @@ const URI_REGEX = /^(?:(?:(?:https?|ftp):)?\/\/)(?:\S+(?::\S*)?@)?(?:(?!(?:10|12
 const BOOL_REGEX = /^(0|1|true|false|t|f)$/i;
 const PHONE_REGEX = /^(\+\d{1,2}\s)?\(?\d{3}\)?[\s.-]\d{3}[\s.-]\d{4}$/
 const IMAGE_REGEX = /\.(gif|jpg|jpeg|png|tif|tiff|bmp)$/i;
-const META_PREFIX = '_feature_';
+const FEATURE_PREFIX = '_feature_';
+const CLUSTER_PREFIX = '_cluster_';
 
 const TYPES_TO_LABELS: Dictionary<string> = {
 	integer: 'Integer',
@@ -51,8 +52,11 @@ const FLOATING_POINT_TYPES = [
 	'longitude'
 ];
 
-const META_TYPES = [
-	'image',
+const FEATURE_TYPES = [
+	'image'
+];
+
+const CLUSTER_TYPES = [
 	'timeseries'
 ];
 
@@ -264,7 +268,7 @@ export function formatValue(colValue: any, colType: string): any {
 }
 
 export function getFilterType(type: string): string {
-	if (isMetaType(type)) {
+	if (isFeatureType(type)) {
 		return FEATURE_FILTER;
 	} else if (isNumericType(type)) {
 		return NUMERICAL_FILTER;
@@ -294,16 +298,28 @@ export function isTextSimpleType(type: string): boolean {
 	return TEXT_SIMPLE_TYPES.indexOf(type) !== -1;
 }
 
-export function isMetaType(type: string): boolean {
-	return META_TYPES.indexOf(type) !== -1;
+export function isFeatureType(type: string): boolean {
+	return FEATURE_TYPES.indexOf(type) !== -1;
 }
 
-export function addMetaPrefix(varName: string): string {
-	return `${META_PREFIX}${varName}`;
+export function addFeaturePrefix(varName: string): string {
+	return `${FEATURE_PREFIX}${varName}`;
 }
 
-export function removeMetaPrefix(varName: string): string {
-	return varName.replace(META_PREFIX, '');
+export function removeFeaturePrefix(varName: string): string {
+	return varName.replace(FEATURE_PREFIX, '');
+}
+
+export function isClusterType(type: string): boolean {
+	return CLUSTER_TYPES.indexOf(type) !== -1;
+}
+
+export function addClusterPrefix(varName: string): string {
+	return `${CLUSTER_PREFIX}${varName}`;
+}
+
+export function removeClusterPrefix(varName: string): string {
+	return varName.replace(CLUSTER_PREFIX, '');
 }
 
 export function addTypeSuggestions(type: string, values: any[]): string[] {

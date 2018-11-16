@@ -88,18 +88,18 @@ export const actions = {
 		const promises = [];
 		args.variables.forEach(variable => {
 			const exists = _.find(context.state.variableSummaries, v => {
-				return v.key === variable.key;
+				return v.key === variable.colName;
 			});
 			if (!exists) {
 				// add placeholder
-				const key = variable.key;
-				const label = variable.label;
+				const key = variable.colName;
+				const label = variable.colDisplayName;
 				const dataset = args.dataset;
 				mutations.updateVariableSummaries(context,  createPendingSummary(key, label, dataset));
 				// fetch summary
 				promises.push(context.dispatch('fetchVariableSummary', {
 					dataset: args.dataset,
-					variable: variable.key
+					variable: variable.colName
 				}));
 			}
 		});
@@ -140,6 +140,16 @@ export const actions = {
 				const label = args.variable;
 				const dataset = args.dataset;
 				mutations.updateVariableSummaries(context,  createErrorSummary(key, label, dataset, error));
+			});
+	},
+
+	fetchVariableRankings(context: DatasetContext, args: { dataset: string, target: string }) {
+		return axios.get(`/distil/variable-rankings/${args.dataset}/${args.target}`)
+			.then(response => {
+				mutations.updateVariableRankings(context, response.data.rankings);
+			})
+			.catch(error => {
+				console.error(error);
 			});
 	},
 

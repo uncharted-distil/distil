@@ -10,7 +10,8 @@ import (
 	"strings"
 
 	"github.com/pkg/errors"
-	"github.com/unchartedsoftware/distil/api/model"
+	"github.com/unchartedsoftware/distil-compute/model"
+	api "github.com/unchartedsoftware/distil/api/model"
 	"github.com/unchartedsoftware/plog"
 )
 
@@ -129,9 +130,9 @@ func DefaultTaskSubType(targetType string) string {
 
 // CreateProblemSchema captures the problem information in the required D3M
 // problem format.
-func CreateProblemSchema(datasetDir string, dataset string, targetVar *model.Variable, filters *model.FilterParams) (*ProblemPersist, string, error) {
+func CreateProblemSchema(datasetDir string, dataset string, targetVar *model.Variable, filters *api.FilterParams) (*ProblemPersist, string, error) {
 	// parse the dataset and its filter state and generate a hashcode from both
-	hash, err := getFilteredDatasetHash(dataset, targetVar.Key, filters, true)
+	hash, err := getFilteredDatasetHash(dataset, targetVar.Name, filters, true)
 	if err != nil {
 		return nil, "", errors.Wrap(err, "unable to build dataset filter hash")
 	}
@@ -142,7 +143,7 @@ func CreateProblemSchema(datasetDir string, dataset string, targetVar *model.Var
 	pPath := path.Join(datasetDir, problemIDHash)
 	pFilePath := path.Join(pPath, D3MProblem)
 	if dirExists(pPath) && fileExists(pFilePath) {
-		log.Infof("Found stored problem for %s with hash %d", dataset, problemIDHash)
+		log.Infof("Found stored problem for %s with hash %s", dataset, problemIDHash)
 		return nil, pPath, nil
 	}
 
@@ -154,7 +155,7 @@ func CreateProblemSchema(datasetDir string, dataset string, targetVar *model.Var
 		TargetIndex: 0,
 		ResID:       "0",
 		ColIndex:    targetIdx,
-		ColName:     targetVar.DisplayVariable,
+		ColName:     targetVar.DisplayName,
 	}
 
 	pMetric := &ProblemPersistPerformanceMetric{
