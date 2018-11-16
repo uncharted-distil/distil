@@ -51,11 +51,8 @@ func submitPrimitive(dataset string, step *pipeline.PipelineDescription) (string
 		return "", errors.Wrap(err, "unable to load config")
 	}
 
-	// create a reference to the original data path
-	datasetInputDir := path.Join(config.D3MInputDirRoot, dataset, "TRAIN", "dataset_TRAIN")
-
 	if config.UseTA2Runner {
-		res, err := client.ExecutePipeline(context.Background(), datasetInputDir, step)
+		res, err := client.ExecutePipeline(context.Background(), dataset, step)
 		if err != nil {
 			return "", errors.Wrap(err, "unable to dispatch mocked pipeline")
 		}
@@ -105,7 +102,14 @@ func TargetRankPrimitive(dataset string, target string, features []*model.Variab
 		return nil, errors.Wrap(err, "unable to create ranking pipeline")
 	}
 
-	datasetURI, err := submitPrimitive(dataset, pip)
+	// create a reference to the original data path
+	config, err := env.LoadConfig()
+	if err != nil {
+		return nil, errors.Wrap(err, "unable to load config")
+	}
+	datasetInputDir := path.Join(config.D3MInputDirRoot, dataset, "TRAIN", "dataset_TRAIN")
+
+	datasetURI, err := submitPrimitive(datasetInputDir, pip)
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to run ranking pipeline")
 	}
