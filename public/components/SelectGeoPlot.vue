@@ -1,9 +1,15 @@
 <template>
-	<div class="select-geo-plot" id="map"></div>
+	<div class="select-geo-plot" id="map"
+		v-on:mousedown="onMouseDown"
+		v-on:mouseup="onMouseUp"
+		v-on:mousemove="onMouseMove"
+		v-on:keydown="onKeyDown"
+		v-on:keyup="onKeyUp"></div>
 </template>
 
 <script lang="ts">
 
+import $ from 'jquery';
 import leaflet from 'leaflet';
 import Vue from 'vue';
 import { getters as datasetGetters } from '../store/dataset/module';
@@ -27,8 +33,82 @@ export default Vue.extend({
 			map: null,
 			layer: null,
 			markers: null,
+			rect: null,
+			ctrlDown: false,
+			startingLatLng: null,
+			currentRect: null,
+			selectedRect: null,
 			fieldName: 'lat_lon'
 		};
+	},
+
+	methods: {
+		onMouseDown(event: MouseEvent) {
+			if (this.ctrlDown) {
+				const offset = $(this.map.getContainer()).offset();
+				this.startingLatLng = this.map.containerPointToLatLng({
+					x: event.pageX - offset.left,
+					y: event.pageY - offset.top
+				});
+
+				const bounds = [this.startingLatLng, this.startingLatLng];
+				this.currentRect = leaflet.rectangle(bounds, {
+					color: 'blue',
+					weight: 1,
+					bubblingMouseEvents: false
+				});
+				this.currentRect.on('click', e => {
+					this.setSelection(e.target);
+				});
+				this.currentRect.addTo(this.map);
+				this.map.off('click', this.clearSelection);
+				this.map.dragging.disable();
+			}
+		},
+		onMouseUp(event: MouseEvent) {
+			if (this.currentRect) {
+				this.setSelection(this.currentRect);
+			}
+			this.currentRect = null;
+			this.map.dragging.enable();
+			this.map.on('click', this.clearSelection);
+		},
+		onMouseMove(event: MouseEvent) {
+			if (this.currentRect) {
+				const offset = $(this.map.getContainer()).offset();
+				const latLng = this.map.containerPointToLatLng({
+					x: event.pageX - offset.left,
+					y: event.pageY - offset.top
+				});
+				const bounds = [
+					this.startingLatLng,
+					latLng
+				];
+				this.currentRect.setBounds(bounds);
+			}
+		},
+		onKeyDown(event: KeyboardEvent) {
+			const CTRL = 17;
+			if (event.keyCode === CTRL) {
+				this.ctrlDown = true;
+			}
+		},
+		onKeyUp(event: KeyboardEvent) {
+			const CTRL = 17;
+			if (event.keyCode === CTRL) {
+				this.ctrlDown = false;
+			}
+		},
+		setSelection(rect) {
+			this.clearSelection();
+			this.selectedRect = rect;
+			$(this.selectedRect._path).addClass('selected');
+		},
+		clearSelection() {
+			if (this.selectedRect) {
+				$(this.selectedRect._path).removeClass('selected');
+			}
+		}
 	},
 
 	mounted() {
@@ -37,6 +117,7 @@ export default Vue.extend({
 			center: [30, 0],
 			zoom: 2,
 		});
+		this.map.on('click', this.clearSelection);
 
 		this.layer = leaflet.tileLayer('http://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png');
 		this.layer.addTo(this.map);
@@ -82,6 +163,11 @@ export default Vue.extend({
 	position: relative;
 	height: 100%;
 	width: 100%;
+}
+
+path.selected {
+	stroke-width: 2;
+	fill-opacity: 0.4;
 }
 
 </style>
