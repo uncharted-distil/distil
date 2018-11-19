@@ -31,6 +31,10 @@ func (f *FilterParams) Merge(other *FilterParams) {
 			if filter.Key == currentFilter.Key &&
 				filter.Min == currentFilter.Min &&
 				filter.Max == currentFilter.Max &&
+				filter.MinX == currentFilter.MinX &&
+				filter.MaxX == currentFilter.MaxX &&
+				filter.MinY == currentFilter.MinY &&
+				filter.MaxY == currentFilter.MaxY &&
 				model.StringSliceEqual(filter.Categories, currentFilter.Categories) {
 				found = true
 				break
@@ -123,6 +127,7 @@ func ParseFilterParamsFromJSON(params map[string]interface{}) (*FilterParams, er
 			}
 
 			// TODO: update to a switch statement with a default to error
+
 			// numeric
 			if typ == model.NumericalFilter {
 				key, ok := json.String(filter, "key")
@@ -138,6 +143,31 @@ func ParseFilterParamsFromJSON(params map[string]interface{}) (*FilterParams, er
 					return nil, errors.Errorf("no `max` provided for filter")
 				}
 				filterParams.Filters = append(filterParams.Filters, model.NewNumericalFilter(key, mode, min, max))
+			}
+
+			// bivariate
+			if typ == model.BivariateFilter {
+				key, ok := json.String(filter, "key")
+				if !ok {
+					return nil, errors.Errorf("no `key` provided for filter")
+				}
+				minX, ok := json.Float(filter, "minX")
+				if !ok {
+					return nil, errors.Errorf("no `minX` provided for filter")
+				}
+				maxX, ok := json.Float(filter, "maxX")
+				if !ok {
+					return nil, errors.Errorf("no `maxX` provided for filter")
+				}
+				minY, ok := json.Float(filter, "minY")
+				if !ok {
+					return nil, errors.Errorf("no `minY` provided for filter")
+				}
+				maxY, ok := json.Float(filter, "maxY")
+				if !ok {
+					return nil, errors.Errorf("no `maxY` provided for filter")
+				}
+				filterParams.Filters = append(filterParams.Filters, model.NewBivariateFilter(key, mode, minX, maxX, minY, maxY))
 			}
 
 			// categorical

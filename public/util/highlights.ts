@@ -1,5 +1,5 @@
 import { Highlight, HighlightRoot } from '../store/highlights/index';
-import { Filter, NUMERICAL_FILTER } from '../util/filters';
+import { Filter, NUMERICAL_FILTER, BIVARIATE_FILTER } from '../util/filters';
 import { getters as routeGetters } from '../store/route/module';
 import { getters as highlightGetters } from '../store/highlights/module';
 import { overlayRouteEntry } from '../util/routes'
@@ -45,13 +45,28 @@ export function createFilterFromHighlightRoot(highlightRoot: HighlightRoot, mode
 			categories: [highlightRoot.value]
 		};
 	}
-	if (highlightRoot.value.from !== undefined && highlightRoot.value.to !== undefined) {
+	if (highlightRoot.value.from !== undefined &&
+		highlightRoot.value.to !== undefined) {
 		return {
 			key: key,
 			type: NUMERICAL_FILTER,
 			mode: mode,
 			min: highlightRoot.value.from,
 			max: highlightRoot.value.to
+		};
+	}
+	if (highlightRoot.value.minX !== undefined &&
+		highlightRoot.value.maxX !== undefined &&
+		highlightRoot.value.minY !== undefined &&
+		highlightRoot.value.maxY !== undefined) {
+		return {
+			key: key,
+			type: BIVARIATE_FILTER,
+			mode: mode,
+			minX: highlightRoot.value.minX,
+			maxX: highlightRoot.value.maxX,
+			minY: highlightRoot.value.minY,
+			maxY: highlightRoot.value.maxY,
 		};
 	}
 	return null;
