@@ -241,20 +241,12 @@ func addIncludePredictedFilterToWhere(wheres []string, params []interface{}, dat
 
 	case model.BivariateFilter:
 		// cast to double precision in case of string based representation
-		split := strings.Split(filter.Key, ":")
-		where := ""
-		if len(split) > 1 {
-			xKey := split[0]
-			yKey := split[1]
-			where = fmt.Sprintf("cast(%s as double precision) >= $%d AND cast(%s as double precision) <= $%d AND cast(%s as double precision) >= $%d AND cast(%s as double precision) <= $%d", xKey, len(params)+1, xKey, len(params)+2, yKey, len(params)+3, yKey, len(params)+4)
-		} else {
-			where = fmt.Sprintf("cast(%s[0] as double precision) >= $%d AND cast(%s[0] as double precision) <= $%d cast(%s[1] as double precision) >= $%d AND cast(%s[1] as double precision) <= $%d", name, len(params)+1, name, len(params)+2, name, len(params)+3, name, len(params)+4)
-		}
+		where := fmt.Sprintf("cast(value[0] as double precision) >= $%d AND cast(value[0] as double precision) <= $%d cast(value[1] as double precision) >= $%d AND cast(value[1] as double precision) <= $%d", len(params)+1, len(params)+2, len(params)+3, len(params)+4)
 		wheres = append(wheres, where)
-		params = append(params, *filter.MinX)
-		params = append(params, *filter.MaxX)
-		params = append(params, *filter.MinY)
-		params = append(params, *filter.MaxY)
+		params = append(params, predictedFilter.Bounds.MinX)
+		params = append(params, predictedFilter.Bounds.MaxX)
+		params = append(params, predictedFilter.Bounds.MinY)
+		params = append(params, predictedFilter.Bounds.MaxY)
 
 	case model.CategoricalFilter:
 		// categorical label based filter, with checks for special correct/incorrect metafilters
@@ -307,20 +299,12 @@ func addExcludePredictedFilterToWhere(wheres []string, params []interface{}, dat
 	case model.BivariateFilter:
 		// bivariate
 		// cast to double precision in case of string based representation
-		split := strings.Split(filter.Key, ":")
-		where := ""
-		if len(split) > 1 {
-			xKey := split[0]
-			yKey := split[1]
-			where = fmt.Sprintf("(%s < $%d OR %s > $%d) AND (%s < $%d OR %s > $%d)", xKey, len(params)+1, xKey, len(params)+2, yKey, len(params)+3, yKey, len(params)+4)
-		} else {
-			where = fmt.Sprintf("(%s[0] < $%d OR %s[0] > $%d) AND (%s[1] < $%d OR %s[1] > $%d)", name, len(params)+1, name, len(params)+2, name, len(params)+3, name, len(params)+4)
-		}
+		where := fmt.Sprintf("(value[0] < $%d OR value[0] > $%d) AND (value[1] < $%d OR value[1] > $%d)", len(params)+1, len(params)+2, len(params)+3, len(params)+4)
 		wheres = append(wheres, where)
-		params = append(params, *filter.MinX)
-		params = append(params, *filter.MaxX)
-		params = append(params, *filter.MinY)
-		params = append(params, *filter.MaxY)
+		params = append(params, predictedFilter.Bounds.MinX)
+		params = append(params, predictedFilter.Bounds.MaxX)
+		params = append(params, predictedFilter.Bounds.MinY)
+		params = append(params, predictedFilter.Bounds.MaxY)
 
 	case model.CategoricalFilter:
 		// categorical label based filter, with checks for special correct/incorrect metafilters

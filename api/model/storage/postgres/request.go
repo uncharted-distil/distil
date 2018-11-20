@@ -50,7 +50,7 @@ func (s *Storage) PersistRequestFilters(requestID string, filters *api.FilterPar
 				return err
 			}
 		case model.BivariateFilter:
-			_, err := s.client.Exec(sql, requestID, filter.Key, model.BivariateFilter, filter.Mode, 0, 0, filter.MinX, filter.MaxX, filter.MinY, filter.MaxY, "", "")
+			_, err := s.client.Exec(sql, requestID, filter.Key, model.BivariateFilter, filter.Mode, 0, 0, filter.Bounds.MinX, filter.Bounds.MaxX, filter.Bounds.MinY, filter.Bounds.MaxY, "", "")
 			if err != nil {
 				return err
 			}

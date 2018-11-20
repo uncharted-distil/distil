@@ -100,10 +100,10 @@ func (s *Storage) buildIncludeFilter(wheres []string, params []interface{}, filt
 			where = fmt.Sprintf("cast(%s[0] as double precision) >= $%d AND cast(%s[0] as double precision) <= $%d cast(%s[1] as double precision) >= $%d AND cast(%s[1] as double precision) <= $%d", name, len(params)+1, name, len(params)+2, name, len(params)+3, name, len(params)+4)
 		}
 		wheres = append(wheres, where)
-		params = append(params, *filter.MinX)
-		params = append(params, *filter.MaxX)
-		params = append(params, *filter.MinY)
-		params = append(params, *filter.MaxY)
+		params = append(params, filter.Bounds.MinX)
+		params = append(params, filter.Bounds.MaxX)
+		params = append(params, filter.Bounds.MinY)
+		params = append(params, filter.Bounds.MaxY)
 
 	case model.CategoricalFilter:
 		// categorical
@@ -162,10 +162,10 @@ func (s *Storage) buildExcludeFilter(wheres []string, params []interface{}, filt
 			where = fmt.Sprintf("(%s[0] < $%d OR %s[0] > $%d) AND (%s[1] < $%d OR %s[1] > $%d)", name, len(params)+1, name, len(params)+2, name, len(params)+3, name, len(params)+4)
 		}
 		wheres = append(wheres, where)
-		params = append(params, *filter.MinX)
-		params = append(params, *filter.MaxX)
-		params = append(params, *filter.MinY)
-		params = append(params, *filter.MaxY)
+		params = append(params, filter.Bounds.MinX)
+		params = append(params, filter.Bounds.MaxX)
+		params = append(params, filter.Bounds.MinY)
+		params = append(params, filter.Bounds.MaxY)
 
 	case model.CategoricalFilter:
 		// categorical

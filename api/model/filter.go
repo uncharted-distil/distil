@@ -31,10 +31,10 @@ func (f *FilterParams) Merge(other *FilterParams) {
 			if filter.Key == currentFilter.Key &&
 				filter.Min == currentFilter.Min &&
 				filter.Max == currentFilter.Max &&
-				filter.MinX == currentFilter.MinX &&
-				filter.MaxX == currentFilter.MaxX &&
-				filter.MinY == currentFilter.MinY &&
-				filter.MaxY == currentFilter.MaxY &&
+				filter.Bounds.MinX == currentFilter.Bounds.MinX &&
+				filter.Bounds.MaxX == currentFilter.Bounds.MaxX &&
+				filter.Bounds.MinY == currentFilter.Bounds.MinY &&
+				filter.Bounds.MaxY == currentFilter.Bounds.MaxY &&
 				model.StringSliceEqual(filter.Categories, currentFilter.Categories) {
 				found = true
 				break
