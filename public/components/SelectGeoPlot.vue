@@ -13,8 +13,10 @@ import $ from 'jquery';
 import leaflet from 'leaflet';
 import Vue from 'vue';
 import { getters as datasetGetters } from '../store/dataset/module';
+import { getters as routeGetters } from '../store/route/module';
 import { Dictionary } from '../util/dict';
 import { TableColumn, TableRow } from '../store/dataset/index';
+import { HighlightRoot } from '../store/highlights/index';
 import { updateHighlightRoot, clearHighlightRoot } from '../util/highlights';
 
 import 'leaflet/dist/leaflet.css';
@@ -47,6 +49,20 @@ export default Vue.extend({
 	methods: {
 		onMouseDown(event: MouseEvent) {
 			if (this.ctrlDown) {
+
+				if (this.selectedRect) {
+					this.selectedRect.remove();
+					this.selectedRect = null;
+				}
+				if (this.currentRect) {
+					this.currentRect.remove();
+					this.currentRect = null;
+				}
+				if (this.closeButton) {
+					this.closeButton.remove();
+					this.closeButton = null;
+				}
+
 				const offset = $(this.map.getContainer()).offset();
 				this.startingLatLng = this.map.containerPointToLatLng({
 					x: event.pageX - offset.left,
@@ -55,7 +71,7 @@ export default Vue.extend({
 
 				const bounds = [this.startingLatLng, this.startingLatLng];
 				this.currentRect = leaflet.rectangle(bounds, {
-					color: 'blue',
+					color: '#00c6e1',
 					weight: 1,
 					bubblingMouseEvents: false
 				});
@@ -63,17 +79,21 @@ export default Vue.extend({
 					this.setSelection(e.target);
 				});
 				this.currentRect.addTo(this.map);
-				this.map.off('click', this.clearSelection);
+
+				// enable drawing mode
+				//this.map.off('click', this.clearSelection);
 				this.map.dragging.disable();
 			}
 		},
 		onMouseUp(event: MouseEvent) {
 			if (this.currentRect) {
 				this.setSelection(this.currentRect);
+				this.currentRect = null;
+
+				// disable drawing mode
+				this.map.dragging.enable();
+				//this.map.on('click', this.clearSelection);
 			}
-			this.currentRect = null;
-			this.map.dragging.enable();
-			this.map.on('click', this.clearSelection);
 		},
 		onMouseMove(event: MouseEvent) {
 			if (this.currentRect) {
@@ -102,7 +122,9 @@ export default Vue.extend({
 			}
 		},
 		setSelection(rect) {
+
 			this.clearSelection();
+
 			this.selectedRect = rect;
 			const $selected = $(this.selectedRect._path);
 			$selected.addClass('selected');
@@ -118,13 +140,18 @@ export default Vue.extend({
 				icon: icon
 			});
 			this.closeButton.addTo(this.map);
+			this.closeButton.on('click', () => {
+				this.selectedRect.remove();
+				this.selectedRect = null;
+				this.closeButton.remove();
+				this.closeButton = null;
+			});
 			this.createHighlight({
 				minX: sw.lng,
 				maxX: ne.lng,
 				minY: sw.lat,
 				maxY: ne.lat
 			});
-
 		},
 		clearSelection() {
 			if (this.selectedRect) {
@@ -139,13 +166,39 @@ export default Vue.extend({
 			updateHighlightRoot(this.$router, {
 				context: this.instanceName,
 				key: this.fieldName,
-				value: {
-					minX: value.minX,
-					maxX: value.maxX,
-					minY: value.minY,
-					maxY: value.maxY
-				}
+				value: value
 			});
+		},
+		drawHighlight() {
+			if (this.highlightRoot &&
+				this.highlightRoot.value.minX !== undefined &&
+				this.highlightRoot.value.maxX !== undefined &&
+				this.highlightRoot.value.minY !== undefined &&
+				this.highlightRoot.value.maxY !== undefined) {
+
+				const rect = leaflet.rectangle([
+					[
+						this.highlightRoot.value.minY,
+						this.highlightRoot.value.minX
+					],
+					[
+						this.highlightRoot.value.maxY,
+						this.highlightRoot.value.maxX
+					]], {
+					color: '#00c6e1',
+					weight: 1,
+					bubblingMouseEvents: false
+				});
+				rect.on('click', e => {
+					this.setSelection(e.target);
+				});
+				rect.addTo(this.map);
+
+				this.setSelection(rect);
+			}
+		},
+		drawFilters() {
+
 		}
 	},
 
@@ -155,7 +208,7 @@ export default Vue.extend({
 			center: [30, 0],
 			zoom: 2,
 		});
-		this.map.on('click', this.clearSelection);
+		//this.map.on('click', this.clearSelection);
 
 		this.layer = leaflet.tileLayer('http://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png');
 		this.layer.addTo(this.map);
@@ -166,6 +219,9 @@ export default Vue.extend({
 		this.lonLats.forEach(lonLat => {
 			this.markers.addLayer(leaflet.marker(lonLat));
 		});
+
+		this.drawHighlight();
+		this.drawFilters();
 	},
 
 	computed: {
@@ -189,6 +245,14 @@ export default Vue.extend({
 					item[this.fieldName].Elements[1].Float
 				];
 			});
+		},
+
+		hasGeoField(): boolean {
+			return !!datasetGetters.getVariablesMap(this.$store)[this.fieldName];
+		},
+
+		highlightRoot(): HighlightRoot {
+			return routeGetters.getDecodedHighlightRoot(this.$store);
 		}
 	},
 });

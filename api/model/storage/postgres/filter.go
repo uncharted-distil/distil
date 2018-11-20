@@ -97,7 +97,7 @@ func (s *Storage) buildIncludeFilter(wheres []string, params []interface{}, filt
 			yKey := split[1]
 			where = fmt.Sprintf("cast(%s as double precision) >= $%d AND cast(%s as double precision) <= $%d AND cast(%s as double precision) >= $%d AND cast(%s as double precision) <= $%d", xKey, len(params)+1, xKey, len(params)+2, yKey, len(params)+3, yKey, len(params)+4)
 		} else {
-			where = fmt.Sprintf("cast(%s[0] as double precision) >= $%d AND cast(%s[0] as double precision) <= $%d cast(%s[1] as double precision) >= $%d AND cast(%s[1] as double precision) <= $%d", name, len(params)+1, name, len(params)+2, name, len(params)+3, name, len(params)+4)
+			where = fmt.Sprintf("%s[0] >= $%d AND %s[0] <= $%d AND %s[1] >= $%d AND %s[1] <= $%d", filter.Key, len(params)+1, filter.Key, len(params)+2, filter.Key, len(params)+3, filter.Key, len(params)+4)
 		}
 		wheres = append(wheres, where)
 		params = append(params, filter.Bounds.MinX)
@@ -159,7 +159,7 @@ func (s *Storage) buildExcludeFilter(wheres []string, params []interface{}, filt
 			yKey := split[1]
 			where = fmt.Sprintf("(%s < $%d OR %s > $%d) AND (%s < $%d OR %s > $%d)", xKey, len(params)+1, xKey, len(params)+2, yKey, len(params)+3, yKey, len(params)+4)
 		} else {
-			where = fmt.Sprintf("(%s[0] < $%d OR %s[0] > $%d) AND (%s[1] < $%d OR %s[1] > $%d)", name, len(params)+1, name, len(params)+2, name, len(params)+3, name, len(params)+4)
+			where = fmt.Sprintf("(%s[0] < $%d OR %s[0] > $%d) AND (%s[1] < $%d OR %s[1] > $%d)", filter.Key, len(params)+1, filter.Key, len(params)+2, filter.Key, len(params)+3, filter.Key, len(params)+4)
 		}
 		wheres = append(wheres, where)
 		params = append(params, filter.Bounds.MinX)

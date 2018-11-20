@@ -57,7 +57,13 @@
 			<div class="select-data-no-results" v-if="!hasData">
 				<div v-html="spinnerHTML"></div>
 			</div>
-			<div class="select-data-no-results" v-if="hasData && numItems===0">
+			<template v-if="hasData">
+				<select-data-table v-if="viewType==='table'" :included-active="includedActive" :instance-name="instanceName"></select-data-table>
+				<select-image-mosaic v-if="viewType==='image'" :included-active="includedActive" :instance-name="instanceName"></select-image-mosaic>
+				<select-graph-view v-if="viewType==='graph'" :included-active="includedActive" :instance-name="instanceName"></select-graph-view>
+				<select-geo-plot v-if="viewType==='geo'" :included-active="includedActive" :instance-name="instanceName"></select-geo-plot>
+			</template>
+			<!-- <div class="select-data-no-results" v-if="hasData && numItems===0">
 				No data available
 			</div>
 
@@ -66,8 +72,7 @@
 				<select-image-mosaic v-if="viewType==='image'" :included-active="includedActive" :instance-name="instanceName"></select-image-mosaic>
 				<select-graph-view v-if="viewType==='graph'" :included-active="includedActive" :instance-name="instanceName"></select-graph-view>
 				<select-geo-plot v-if="viewType==='geo'" :included-active="includedActive" :instance-name="instanceName"></select-geo-plot>
-			</template>
-
+			</template> -->
 		</div>
 
 	</div>

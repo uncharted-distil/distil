@@ -3,54 +3,14 @@ package postgres
 import (
 	"fmt"
 	"strings"
-	"time"
 
 	"github.com/pkg/errors"
 	"github.com/unchartedsoftware/distil-compute/model"
 )
 
-const (
-	dateFormat = "2006-01-02T15:04:05Z"
-)
-
 func (s *Storage) getViewField(name string, displayName string, typ string, defaultValue interface{}) string {
 	return fmt.Sprintf("COALESCE(CAST(\"%s\" AS %s), %v) AS \"%s\"",
 		name, typ, defaultValue, displayName)
-}
-
-func (s *Storage) mapType(typ string) string {
-	// Integer types can be returned as floats.
-	switch typ {
-	case model.IndexType:
-		return dataTypeInteger
-	case model.IntegerType, model.FloatType, model.LongitudeType, model.LatitudeType, model.RealType:
-		return dataTypeFloat
-	case model.OrdinalType, model.CategoricalType, model.TextType, model.StringType:
-		return dataTypeText
-	case model.DateTimeType:
-		return dataTypeDate
-	case model.RealVectorType:
-		return dataTypeVector
-	default:
-		return dataTypeText
-	}
-}
-
-func (s *Storage) defaultValue(typ string) interface{} {
-	switch typ {
-	case dataTypeDouble:
-		return float64(0)
-	case dataTypeFloat:
-		return float64(0)
-	case dataTypeInteger:
-		return int(0)
-	case dataTypeDate:
-		return fmt.Sprintf("'%s'", time.Time{}.Format(dateFormat))
-	case dataTypeVector:
-		return "'{}'"
-	default:
-		return "''"
-	}
 }
 
 func (s *Storage) getDatabaseFields(tableName string) ([]string, error) {
@@ -106,7 +66,7 @@ func (s *Storage) createView(dataset string, fields map[string]*model.Variable) 
 	// Build the select statement of the query.
 	fieldList := make([]string, 0)
 	for _, v := range fields {
-		fieldList = append(fieldList, s.getViewField(v.Name, v.OriginalVariable, v.Type, s.defaultValue(v.Type)))
+		fieldList = append(fieldList, s.getViewField(v.Name, v.OriginalVariable, v.Type, model.DefaultPostgresValueFromType(v.Type)))
 	}
 	sql = fmt.Sprintf(sql, dataset, strings.Join(fieldList, ","), dataset)
 
@@ -145,7 +105,7 @@ func (s *Storage) SetDataType(dataset string, varName string, varType string) er
 
 	// map the types to db types.
 	for field, v := range fields {
-		fields[field].Type = s.mapType(v.Type)
+		fields[field].Type = model.MapD3MTypeToPostgresType(v.Type)
 	}
 
 	// create view based on field lookup.
@@ -165,7 +125,7 @@ func (s *Storage) createViewFromMetadataFields(dataset string, fields map[string
 		dbFields[field] = &model.Variable{
 			Name:             v.Name,
 			OriginalVariable: v.OriginalName,
-			Type:             s.mapType(v.Type),
+			Type:             model.MapD3MTypeToPostgresType(v.Type),
 		}
 	}
 
