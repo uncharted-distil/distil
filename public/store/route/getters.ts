@@ -176,5 +176,26 @@ export const getters = {
 		return _.findIndex(solutions, (solution: any) => {
 			return solution.solutionId === solutionId;
 		});
+	},
+
+	getGeoCenter(state: Route, getters: any): number[] {
+		const geo = state.query.geo;
+		if (!geo) {
+			return null;
+		}
+		const split = geo.split(',');
+		return [
+			_.toNumber(split[0]),
+			_.toNumber(split[1])
+		];
+	},
+
+	getGeoZoom(state: Route, getters: any): number {
+		const geo = state.query.geo;
+		if (!geo) {
+			return null;
+		}
+		const split = geo.split(',');
+		return _.toNumber(split[2]);
 	}
 }

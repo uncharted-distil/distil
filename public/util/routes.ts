@@ -12,7 +12,8 @@ export interface RouteArgs {
 	highlights?: string,
 	row?: string;
 	residualThresholdMin?: string,
-	residualThresholdMax?: string
+	residualThresholdMax?: string,
+	geo?: string
 }
 
 /**
@@ -35,6 +36,7 @@ export function createRouteEntry(path: string, args: RouteArgs = {}): Location {
 	if (args.residualThresholdMin) { query.residualThresholdMin = args.residualThresholdMin; }
 	if (args.residualThresholdMax) { query.residualThresholdMax = args.residualThresholdMax; }
 	if (!_.isEmpty(args.highlights)) { query.highlights = args.highlights; }
+	if (args.geo) { query.geo = args.geo; }
 
 	const routeEntry: Location = {
 		path: path,

@@ -18,6 +18,7 @@ import { Dictionary } from '../util/dict';
 import { TableColumn, TableRow } from '../store/dataset/index';
 import { HighlightRoot } from '../store/highlights/index';
 import { updateHighlightRoot, clearHighlightRoot } from '../util/highlights';
+import { overlayRouteEntry } from '../util/routes';
 
 import 'leaflet/dist/leaflet.css';
 import 'leaflet/dist/images/marker-icon.png';
@@ -141,6 +142,7 @@ export default Vue.extend({
 			});
 			this.closeButton.addTo(this.map);
 			this.closeButton.on('click', () => {
+				this.clearSelection();
 				this.selectedRect.remove();
 				this.selectedRect = null;
 				this.closeButton.remove();
@@ -199,6 +201,15 @@ export default Vue.extend({
 		},
 		drawFilters() {
 
+		},
+		updateRoute() {
+			const center = this.map.getCenter();
+			const zoom  = this.map.getZoom();
+			const arg = `${center.lng},${center.lat},${zoom}`;
+			const entry = overlayRouteEntry(this.$route, {
+				geo: arg,
+			});
+			this.$router.push(entry);
 		}
 	},
 
@@ -208,6 +219,23 @@ export default Vue.extend({
 			center: [30, 0],
 			zoom: 2,
 		});
+		if (this.mapZoom) {
+			this.map.setZoom(this.mapZoom, {animate: false});
+		}
+		if (this.mapCenter) {
+			this.map.panTo({
+				lat: this.mapCenter[1],
+				lng: this.mapCenter[0]
+			}, {animate: false});
+		}
+
+		this.map.on('moveend', event => {
+			this.updateRoute();
+		});
+		this.map.on('zoomend', event => {
+			this.updateRoute();
+		});
+
 		//this.map.on('click', this.clearSelection);
 
 		this.layer = leaflet.tileLayer('http://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png');
@@ -253,6 +281,14 @@ export default Vue.extend({
 
 		highlightRoot(): HighlightRoot {
 			return routeGetters.getDecodedHighlightRoot(this.$store);
+		},
+
+		mapCenter(): number[] {
+			return routeGetters.getGeoCenter(this.$store);
+		},
+
+		mapZoom(): number {
+			return routeGetters.getGeoZoom(this.$store);
 		}
 	},
 });

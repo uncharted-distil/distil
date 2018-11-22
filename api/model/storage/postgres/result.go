@@ -241,7 +241,7 @@ func addIncludePredictedFilterToWhere(wheres []string, params []interface{}, dat
 
 	case model.BivariateFilter:
 		// cast to double precision in case of string based representation
-		where := fmt.Sprintf("cast(value[0] as double precision) >= $%d AND cast(value[0] as double precision) <= $%d cast(value[1] as double precision) >= $%d AND cast(value[1] as double precision) <= $%d", len(params)+1, len(params)+2, len(params)+3, len(params)+4)
+		where := fmt.Sprintf("cast(value[1] as double precision) >= $%d AND cast(value[1] as double precision) <= $%d cast(value[2] as double precision) >= $%d AND cast(value[2] as double precision) <= $%d", len(params)+1, len(params)+2, len(params)+3, len(params)+4)
 		wheres = append(wheres, where)
 		params = append(params, predictedFilter.Bounds.MinX)
 		params = append(params, predictedFilter.Bounds.MaxX)
@@ -299,7 +299,7 @@ func addExcludePredictedFilterToWhere(wheres []string, params []interface{}, dat
 	case model.BivariateFilter:
 		// bivariate
 		// cast to double precision in case of string based representation
-		where := fmt.Sprintf("(value[0] < $%d OR value[0] > $%d) AND (value[1] < $%d OR value[1] > $%d)", len(params)+1, len(params)+2, len(params)+3, len(params)+4)
+		where := fmt.Sprintf("(value[1] < $%d OR value[1] > $%d) AND (value[2] < $%d OR value[2] > $%d)", len(params)+1, len(params)+2, len(params)+3, len(params)+4)
 		wheres = append(wheres, where)
 		params = append(params, predictedFilter.Bounds.MinX)
 		params = append(params, predictedFilter.Bounds.MaxX)
