@@ -26,12 +26,18 @@ export const mutations = {
 	},
 
 	updateVariableRankings(state: DatasetState, rankings: Dictionary<number>) {
-		state.variables.forEach(v => {
-			if (rankings[v.colName]) {
-				// add ranking
-				Vue.set(v, 'ranking', rankings[v.colName]);
-			}
-		});
+		// add rank property if ranking data returned, otherwise don't include it
+		if (!_.isEmpty(rankings)) {
+			state.variables.forEach(v => {
+				let rank = 0;
+				if (rankings[v.colName]) {
+					rank = rankings[v.colName];
+				}
+				Vue.set(v, 'ranking', rank);
+			});
+		} else {
+			state.variables.forEach(v => Vue.delete(v, 'ranking'));
+		}
 	},
 
 	updateFile(state: DatasetState, args: { url: string, file: any }) {

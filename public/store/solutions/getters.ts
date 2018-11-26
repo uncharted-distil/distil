@@ -127,6 +127,10 @@ export const getters = {
 			return false;
 		}
 		const task = getTask(targetVariable.type);
+		if (!task) {
+			console.error("NULL task for regression task type check - defaulting to FALSE.  This should not happen.");
+			return false;
+		}
 		return task.schemaName === REGRESSION_TASK.schemaName;
 	},
 
@@ -138,6 +142,10 @@ export const getters = {
 			return false;
 		}
 		const task = getTask(targetVariable.type);
+		if (!task) {
+			console.error("NULL task for classification task type check - defaulting to FALSE.  This should not happen.");
+			return false;
+		}
 		return task.schemaName === CLASSIFICATION_TASK.schemaName;
 	},
 
