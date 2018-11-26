@@ -16,7 +16,9 @@ export const viewModule: Module<ViewState, DistilState> = {
 const { commit, read, dispatch } = getStoreAccessors<ViewState, DistilState>(null);
 
 export const getters = {
-	getPrevView: read(moduleGetters.getPrevView)
+	getPrevView: read(moduleGetters.getPrevView),
+	getSelectTrainingPaginatedVariables: read(moduleGetters.getSelectTrainingPaginatedVariables),
+	getResultsPaginatedVariables: read(moduleGetters.getResultsPaginatedVariables)
 };
 
 export const mutations = {
