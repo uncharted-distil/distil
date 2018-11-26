@@ -239,6 +239,16 @@ func addIncludePredictedFilterToWhere(wheres []string, params []interface{}, dat
 		params = append(params, *predictedFilter.Min)
 		params = append(params, *predictedFilter.Max)
 
+	case model.BivariateFilter:
+		// cast to double precision in case of string based representation
+		// hardcode [lat, lon] format for now
+		where := fmt.Sprintf("value[2] >= $%d AND value[2] <= $%d value[1] >= $%d AND value[1] <= $%d", len(params)+1, len(params)+2, len(params)+3, len(params)+4)
+		wheres = append(wheres, where)
+		params = append(params, predictedFilter.Bounds.MinX)
+		params = append(params, predictedFilter.Bounds.MaxX)
+		params = append(params, predictedFilter.Bounds.MinY)
+		params = append(params, predictedFilter.Bounds.MaxY)
+
 	case model.CategoricalFilter:
 		// categorical label based filter, with checks for special correct/incorrect metafilters
 		categories := make([]string, 0)
@@ -286,6 +296,17 @@ func addExcludePredictedFilterToWhere(wheres []string, params []interface{}, dat
 		where = fmt.Sprintf("(cast(value AS double precision) < $%d OR cast(value AS double precision) > $%d)", len(params)+1, len(params)+2)
 		params = append(params, *predictedFilter.Min)
 		params = append(params, *predictedFilter.Max)
+
+	case model.BivariateFilter:
+		// bivariate
+		// cast to double precision in case of string based representation
+		// hardcode [lat, lon] format for now
+		where := fmt.Sprintf("(value[2] < $%d OR value[2] > $%d) OR (value[1] < $%d OR value[1] > $%d)", len(params)+1, len(params)+2, len(params)+3, len(params)+4)
+		wheres = append(wheres, where)
+		params = append(params, predictedFilter.Bounds.MinX)
+		params = append(params, predictedFilter.Bounds.MaxX)
+		params = append(params, predictedFilter.Bounds.MinY)
+		params = append(params, predictedFilter.Bounds.MaxY)
 
 	case model.CategoricalFilter:
 		// categorical label based filter, with checks for special correct/incorrect metafilters

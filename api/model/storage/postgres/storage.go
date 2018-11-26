@@ -13,14 +13,6 @@ const (
 	featureTableName        = "request_feature"
 	filterTableName         = "request_filter"
 	wordStemTableName       = "word_stem"
-
-	// Database data types
-	dataTypeText    = "TEXT"
-	dataTypeDouble  = "double precision"
-	dataTypeFloat   = "FLOAT8"
-	dataTypeVector  = "FLOAT8[]"
-	dataTypeInteger = "INTEGER"
-	dataTypeDate    = "TIMESTAMP"
 )
 
 // Storage accesses the underlying postgres database.

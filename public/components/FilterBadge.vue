@@ -2,7 +2,10 @@
 	<div class="filter-badge" v-bind:class="{ active: activeFilter }">
 		{{filterName}}
 		<span v-if="filter.type===NUMERICAL_FILTER">
-			{{filter.min}} : {{filter.max}}
+			{{filter.min.toFixed(2)}} : {{filter.max.toFixed(2)}}
+		</span>
+		<span v-if="filter.type===BIVARIATE_FILTER">
+			[{{filter.minX.toFixed(2)}}, {{filter.minY.toFixed(2)}}] to [{{filter.maxX.toFixed(2)}}, {{filter.maxY.toFixed(2)}}]
 		</span>
 		<span v-if="filter.type===CATEGORICAL_FILTER || filter.type===FEATURE_FILTER || filter.type===CLUSTER_FILTER">
 			{{filter.categories.join(',')}}
@@ -17,7 +20,7 @@
 <script lang="ts">
 
 import Vue from 'vue';
-import { removeFilterFromRoute, Filter, NUMERICAL_FILTER, CATEGORICAL_FILTER, FEATURE_FILTER, CLUSTER_FILTER } from '../util/filters';
+import { removeFilterFromRoute, Filter, NUMERICAL_FILTER, BIVARIATE_FILTER, CATEGORICAL_FILTER, FEATURE_FILTER, CLUSTER_FILTER } from '../util/filters';
 import { clearHighlightRoot } from '../util/highlights';
 import { getVarType, isFeatureType, removeFeaturePrefix, isClusterType, removeClusterPrefix } from '../util/types';
 
@@ -52,6 +55,9 @@ export default Vue.extend({
 		CLUSTER_FILTER(): string {
 			return CLUSTER_FILTER;
 		},
+		BIVARIATE_FILTER(): string {
+			return BIVARIATE_FILTER;
+		}
 	},
 
 	methods: {
@@ -82,7 +88,7 @@ export default Vue.extend({
 	background-color: #00c6e1;
 }
 
-.remove-button {
+button.remove-button {
 	color: #fff;
 	margin-left: 8px;
 	background: none;
@@ -92,14 +98,14 @@ export default Vue.extend({
 	border: none;
 	border-left: 1px solid #fff;
 }
-.remove-button:hover {
+button.remove-button:hover {
 	color: #fff;
 	background-color: #0089a4;
 	border: none;
 	border-left: 1px solid #fff;
 }
 
-.active .remove-button:hover {
+.active button.remove-button:hover {
 	background-color: #0089a4;
 }
 </style>

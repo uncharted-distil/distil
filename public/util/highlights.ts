@@ -1,10 +1,10 @@
 import { Highlight, HighlightRoot } from '../store/highlights/index';
-import { Filter, NUMERICAL_FILTER } from '../util/filters';
+import { Filter, CATEGORICAL_FILTER, NUMERICAL_FILTER, BIVARIATE_FILTER } from '../util/filters';
 import { getters as routeGetters } from '../store/route/module';
 import { getters as highlightGetters } from '../store/highlights/module';
 import { overlayRouteEntry } from '../util/routes'
 import { FilterParams } from '../util/filters'
-import { getFilterType, getVarType, isFeatureType, addFeaturePrefix, isClusterType, addClusterPrefix } from '../util/types'
+import { getVarType, isFeatureType, addFeaturePrefix, isClusterType, addClusterPrefix } from '../util/types'
 import _ from 'lodash';
 import { store } from '../store/storeProvider';
 import VueRouter from 'vue-router';
@@ -36,22 +36,40 @@ export function createFilterFromHighlightRoot(highlightRoot: HighlightRoot, mode
 	if (isClusterType(type)) {
 		key = addClusterPrefix(key);
 	}
-	const filterType = getFilterType(type);
+
+
 	if (_.isString(highlightRoot.value)) {
 		return {
 			key: key,
-			type: filterType,
+			type: CATEGORICAL_FILTER,
 			mode: mode,
 			categories: [highlightRoot.value]
 		};
 	}
-	if (highlightRoot.value.from !== undefined && highlightRoot.value.to !== undefined) {
+	if (highlightRoot.value.from !== undefined &&
+		highlightRoot.value.to !== undefined) {
 		return {
 			key: key,
 			type: NUMERICAL_FILTER,
 			mode: mode,
 			min: highlightRoot.value.from,
 			max: highlightRoot.value.to
+		};
+	}
+	if (highlightRoot.value.minX !== undefined &&
+		highlightRoot.value.maxX !== undefined &&
+		highlightRoot.value.minY !== undefined &&
+		highlightRoot.value.maxY !== undefined) {
+
+		console.log('BIVARIATE_FILTER', highlightRoot);
+		return {
+			key: key,
+			type: BIVARIATE_FILTER,
+			mode: mode,
+			minX: highlightRoot.value.minX,
+			maxX: highlightRoot.value.maxX,
+			minY: highlightRoot.value.minY,
+			maxY: highlightRoot.value.maxY,
 		};
 	}
 	return null;

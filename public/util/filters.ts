@@ -19,6 +19,13 @@ export const CATEGORICAL_FILTER = 'categorical';
 export const NUMERICAL_FILTER = 'numerical';
 
 /**
+ * Bivariate filter, omitting documents that do not fall within the provided
+ * variable range.
+ * @constant {string}
+ */
+export const BIVARIATE_FILTER = 'bivariate';
+
+/**
  * Row filter, omitting documents that have the specified d3mIndices;
  * @constant {string}
  */
@@ -60,6 +67,10 @@ export interface Filter {
 	key?: string;
 	min?: number;
 	max?: number;
+	minX?: number;
+	maxX?: number;
+	minY?: number;
+	maxY?: number;
 	categories?: string[];
 	d3mIndices?: string[];
 }

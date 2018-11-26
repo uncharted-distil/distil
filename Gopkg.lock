@@ -216,7 +216,7 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:a06b62f8c48e0f633970ce831cefd3127540a46cc5448d0c8929980c4be0c887"
+  digest = "1:8cf3f44204e58d375b2acbc7297f8e25dafbe8f13eb1402e658425e03895456a"
   name = "github.com/unchartedsoftware/distil-compute"
   packages = [
     "middleware",
@@ -227,7 +227,7 @@
     "primitive/compute/result",
   ]
   pruneopts = "UT"
-  revision = "acc21a36d7a1741476c389a7ca8e2af47ae975a1"
+  revision = "8761d779f911d56979670856e00653f1ee6fb296"
 
 [[projects]]
   digest = "1:70f616a0a3abaf3ca5529b76f8de22471c1d3e56fe2a2689760f6b46d8d67fef"
@@ -292,7 +292,7 @@
   name = "golang.org/x/crypto"
   packages = ["pbkdf2"]
   pruneopts = "UT"
-  revision = "3d3f9f413869b949e48070b5bc593aa22cc2b8f2"
+  revision = "e657309f52e71501f9934566ac06dc5c2f7f11a1"
 
 [[projects]]
   branch = "master"
@@ -314,11 +314,11 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:7ba061af4131fb44b30448572acd0d6fefbf63a61b97b7ef1dea0be5871c2742"
+  digest = "1:225564f71149334315118db714e1ea87513e4a11cf4acb27e26bc7577cebfa0b"
   name = "golang.org/x/sys"
   packages = ["unix"]
   pruneopts = "UT"
-  revision = "66b7b1311ac80bbafcd2daeef9a5e6e2cd1e2399"
+  revision = "62eef0e2fa9b2c385f7b2778e763486da6880d37"
 
 [[projects]]
   digest = "1:a2ab62866c75542dd18d2b069fec854577a20211d7c0ea6ae746072a1dccdd18"
