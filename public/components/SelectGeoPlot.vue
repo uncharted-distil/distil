@@ -24,6 +24,29 @@ import 'leaflet/dist/leaflet.css';
 import 'leaflet/dist/images/marker-icon.png';
 import 'leaflet/dist/images/marker-shadow.png';
 
+const SINGLE_FIELD = 1;
+const SPLIT_FIELD = 2;
+
+/*eslint-disable */
+interface GeoField {
+	type: number;
+	latField?: string;
+	lngField?: string;
+	field?: string;
+}
+
+/*eslint-disable */
+interface LatLng {
+	lat: number;
+	lng: number;
+}
+
+/*eslint-disable */
+interface PointGroup {
+	field: GeoField;
+	points: LatLng[];
+}
+
 export default Vue.extend({
 	name: 'select-geo-plot',
 
@@ -42,8 +65,7 @@ export default Vue.extend({
 			ctrlDown: false,
 			startingLatLng: null,
 			currentRect: null,
-			selectedRect: null,
-			fieldName: 'lat_lon'
+			selectedRect: null
 		};
 	},
 
@@ -158,6 +180,7 @@ export default Vue.extend({
 		clearSelection() {
 			if (this.selectedRect) {
 				$(this.selectedRect._path).removeClass('selected');
+				console.log('clearHighlightRoot');
 				clearHighlightRoot(this.$router);
 			}
 			if (this.closeButton) {
@@ -165,9 +188,12 @@ export default Vue.extend({
 			}
 		},
 		createHighlight(value: { minX: number, maxX: number, minY: number, maxY: number }) {
+			// TODO: support filtering multiple vars?
+			const fieldSpec = this.fieldSpecs[0];
+			const key = fieldSpec.type === SINGLE_FIELD ? fieldSpec.field : this.fieldHash(fieldSpec);
 			updateHighlightRoot(this.$router, {
 				context: this.instanceName,
-				key: this.fieldName,
+				key: key,
 				value: value
 			});
 		},
@@ -210,7 +236,29 @@ export default Vue.extend({
 				geo: arg,
 			});
 			this.$router.push(entry);
+		},
+
+		lngValue(fieldSpec: GeoField, row: TableRow): number {
+			if (fieldSpec.type === SINGLE_FIELD) {
+				return row[fieldSpec.field].Elements[0].Float;
+			}
+			return row[fieldSpec.lngField];
+		},
+
+		latValue(fieldSpec: GeoField, row: TableRow): number {
+			if (fieldSpec.type === SINGLE_FIELD) {
+				return row[fieldSpec.field].Elements[1].Float;
+			}
+			return row[fieldSpec.latField];
+		},
+
+		fieldHash(fieldSpec: GeoField): string {
+			if (fieldSpec.type === SINGLE_FIELD) {
+				return fieldSpec.field;
+			}
+			return fieldSpec.lngField + ':' + fieldSpec.latField;
 		}
+
 	},
 
 	mounted() {
@@ -241,11 +289,15 @@ export default Vue.extend({
 		this.layer = leaflet.tileLayer('http://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png');
 		this.layer.addTo(this.map);
 
-		this.markers = leaflet.layerGroup([]);
-		this.markers.addTo(this.map);
-
-		this.lonLats.forEach(lonLat => {
-			this.markers.addLayer(leaflet.marker(lonLat));
+		this.markers = {};
+		this.pointGroups.forEach(group => {
+			const hash = this.fieldHash(group.field);
+			const layer = leaflet.layerGroup([]);
+			group.points.forEach(p => {
+				layer.addLayer(leaflet.marker(p));
+			});
+			layer.addTo(this.map);
+			this.markers[hash] = layer;
 		});
 
 		this.drawHighlight();
@@ -262,21 +314,69 @@ export default Vue.extend({
 			return this.includedActive ? datasetGetters.getIncludedTableDataItems(this.$store) : datasetGetters.getExcludedTableDataItems(this.$store);
 		},
 
-		lonLats(): number[][] {
-			if (!this.items || !this.fields || !this.fields[this.fieldName]) {
-				return [];
-			}
+		fieldSpecs(): GeoField[] {
 
-			return this.items.map(item => {
-				return [
-					item[this.fieldName].Elements[0].Float,
-					item[this.fieldName].Elements[1].Float
-				];
+			const variables = datasetGetters.getVariables(this.$store);
+
+			const matches = variables.filter(v => {
+				return v.colType === 'longitude' ||
+					v.colType === 'latitude' ||
+					v.colType === 'vector';
 			});
+
+			let lng = null;
+			let lat = null;
+			const fields = [];
+			matches.forEach(match => {
+				if (match.colType === 'longitude') {
+					lng = match.colName;
+				}
+				if (match.colType === 'latitude') {
+					lat = match.colName;
+				}
+				if (match.colType === 'vector') {
+					fields.push({
+						type: SINGLE_FIELD,
+						field: match.colName
+					});
+				}
+				// TODO: currently we pair any two random lat / lngs
+				if (lng && lat) {
+					fields.push({
+						type: SPLIT_FIELD,
+						lngField: lng,
+						latField: lat
+					});
+					lng = null;
+					lat = null;
+				}
+			});
+
+			return fields;
 		},
 
-		hasGeoField(): boolean {
-			return !!datasetGetters.getVariablesMap(this.$store)[this.fieldName];
+		pointGroups(): PointGroup[] {
+			const groups = [];
+
+			if (!this.items) {
+				return groups;
+			}
+
+			this.fieldSpecs.forEach(fieldSpec => {
+				const group = {
+					field: fieldSpec,
+					points: []
+				};
+				group.points = this.items.map(item => {
+					return {
+						lng: this.lngValue(fieldSpec, item),
+						lat: this.latValue(fieldSpec, item)
+					};
+				});
+				groups.push(group);
+			});
+
+			return groups;
 		},
 
 		highlightRoot(): HighlightRoot {

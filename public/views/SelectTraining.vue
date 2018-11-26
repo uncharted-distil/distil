@@ -102,9 +102,7 @@ export default Vue.extend({
 
 	watch: {
 		highlightRootStr() {
-			if (this.highlightRootStr) {
-				viewActions.updateSelectTrainingData(this.$store);
-			}
+			viewActions.updateSelectTrainingData(this.$store);
 		},
 		training() {
 			viewActions.updateSelectTrainingData(this.$store);
