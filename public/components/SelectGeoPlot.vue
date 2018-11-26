@@ -257,51 +257,67 @@ export default Vue.extend({
 				return fieldSpec.field;
 			}
 			return fieldSpec.lngField + ':' + fieldSpec.latField;
+		},
+
+		paint() {
+			if (this.map) {
+				this.map.remove();
+				this.map = null;
+			}
+
+			// NOTE: this component re-mounts on any change, so do everything in here
+			this.map = leaflet.map('map', {
+				center: [30, 0],
+				zoom: 2,
+			});
+			if (this.mapZoom) {
+				this.map.setZoom(this.mapZoom, {animate: false});
+			}
+			if (this.mapCenter) {
+				this.map.panTo({
+					lat: this.mapCenter[1],
+					lng: this.mapCenter[0]
+				}, {animate: false});
+			}
+
+			this.map.on('moveend', event => {
+				this.updateRoute();
+			});
+			this.map.on('zoomend', event => {
+				this.updateRoute();
+			});
+
+			//this.map.on('click', this.clearSelection);
+
+			this.layer = leaflet.tileLayer('http://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png');
+			this.layer.addTo(this.map);
+
+			this.markers = {};
+			this.pointGroups.forEach(group => {
+				const hash = this.fieldHash(group.field);
+				const layer = leaflet.layerGroup([]);
+				group.points.forEach(p => {
+					layer.addLayer(leaflet.marker(p));
+				});
+				layer.addTo(this.map);
+				this.markers[hash] = layer;
+			});
+
+			this.drawHighlight();
+			this.drawFilters();
 		}
 
 	},
 
 	mounted() {
-		// NOTE: this component re-mounts on any change, so do everything in here
-		this.map = leaflet.map('map', {
-			center: [30, 0],
-			zoom: 2,
-		});
-		if (this.mapZoom) {
-			this.map.setZoom(this.mapZoom, {animate: false});
+		this.paint();
+	},
+
+	watch: {
+		includedActive() {
+			console.log('repaint');
+			this.paint();
 		}
-		if (this.mapCenter) {
-			this.map.panTo({
-				lat: this.mapCenter[1],
-				lng: this.mapCenter[0]
-			}, {animate: false});
-		}
-
-		this.map.on('moveend', event => {
-			this.updateRoute();
-		});
-		this.map.on('zoomend', event => {
-			this.updateRoute();
-		});
-
-		//this.map.on('click', this.clearSelection);
-
-		this.layer = leaflet.tileLayer('http://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png');
-		this.layer.addTo(this.map);
-
-		this.markers = {};
-		this.pointGroups.forEach(group => {
-			const hash = this.fieldHash(group.field);
-			const layer = leaflet.layerGroup([]);
-			group.points.forEach(p => {
-				layer.addLayer(leaflet.marker(p));
-			});
-			layer.addTo(this.map);
-			this.markers[hash] = layer;
-		});
-
-		this.drawHighlight();
-		this.drawFilters();
 	},
 
 	computed: {

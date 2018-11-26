@@ -158,10 +158,10 @@ func (s *Storage) buildExcludeFilter(wheres []string, params []interface{}, filt
 		if len(split) > 1 {
 			xKey := split[0]
 			yKey := split[1]
-			where = fmt.Sprintf("(%s < $%d OR %s > $%d) AND (%s < $%d OR %s > $%d)", xKey, len(params)+1, xKey, len(params)+2, yKey, len(params)+3, yKey, len(params)+4)
+			where = fmt.Sprintf("(%s < $%d OR %s > $%d) OR (%s < $%d OR %s > $%d)", xKey, len(params)+1, xKey, len(params)+2, yKey, len(params)+3, yKey, len(params)+4)
 		} else {
 			// hardcode [lat, lon] format for now
-			where = fmt.Sprintf("(%s[2] < $%d OR %s[2] > $%d) AND (%s[1] < $%d OR %s[1] > $%d)", filter.Key, len(params)+1, filter.Key, len(params)+2, filter.Key, len(params)+3, filter.Key, len(params)+4)
+			where = fmt.Sprintf("(%s[2] < $%d OR %s[2] > $%d) OR (%s[1] < $%d OR %s[1] > $%d)", filter.Key, len(params)+1, filter.Key, len(params)+2, filter.Key, len(params)+3, filter.Key, len(params)+4)
 		}
 		wheres = append(wheres, where)
 		params = append(params, filter.Bounds.MinX)
