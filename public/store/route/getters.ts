@@ -10,8 +10,10 @@ import _ from 'lodash';
 function buildLookup(strs: any[]): Dictionary<boolean> {
 	const lookup = {};
 	strs.forEach(str => {
-		lookup[str] = true;
-		lookup[str.toLowerCase()] = true;
+		if (str) {
+			lookup[str] = true;
+			lookup[str.toLowerCase()] = true;
+		}
 	});
 	return lookup;
 }

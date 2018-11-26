@@ -127,7 +127,7 @@ export const getters = {
 			return false;
 		}
 		const task = getTask(targetVariable.type);
-		return task.schemaName === REGRESSION_TASK.schemaName;
+		return task ? task.schemaName === REGRESSION_TASK.schemaName : false;
 	},
 
 	isClassification(state: SolutionState, getters: any): boolean {
@@ -138,7 +138,7 @@ export const getters = {
 			return false;
 		}
 		const task = getTask(targetVariable.type);
-		return task.schemaName === CLASSIFICATION_TASK.schemaName;
+		return task ? task.schemaName === CLASSIFICATION_TASK.schemaName : false;
 	},
 
 	getRequestStreams(state: SolutionState, getters: any): Dictionary<Stream> {
