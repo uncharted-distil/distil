@@ -127,7 +127,11 @@ export const getters = {
 			return false;
 		}
 		const task = getTask(targetVariable.type);
-		return task ? task.schemaName === REGRESSION_TASK.schemaName : false;
+		if (!task) {
+			console.error("NULL task for regression task type check - defaulting to FALSE.  This should not happen.");
+			return false;
+		}
+		return task.schemaName === REGRESSION_TASK.schemaName;
 	},
 
 	isClassification(state: SolutionState, getters: any): boolean {
@@ -138,7 +142,11 @@ export const getters = {
 			return false;
 		}
 		const task = getTask(targetVariable.type);
-		return task ? task.schemaName === CLASSIFICATION_TASK.schemaName : false;
+		if (!task) {
+			console.error("NULL task for classification task type check - defaulting to FALSE.  This should not happen.");
+			return false;
+		}
+		return task.schemaName === CLASSIFICATION_TASK.schemaName;
 	},
 
 	getRequestStreams(state: SolutionState, getters: any): Dictionary<Stream> {
