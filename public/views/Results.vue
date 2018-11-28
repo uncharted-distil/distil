@@ -91,6 +91,9 @@ export default Vue.extend({
 		},
 		highlightRootStr(): string {
 			return routeGetters.getRouteHighlightRoot(this.$store);
+		},
+		resultTrainingVarsPage(): number {
+			return routeGetters.getRouteResultTrainingVarsPage(this.$store);
 		}
 	},
 
@@ -104,6 +107,9 @@ export default Vue.extend({
 		},
 		solutionId() {
 			viewActions.updateResultsSolution(this.$store);
+		},
+		resultTrainingVarsPage() {
+			viewActions.updateResultsHighlights(this.$store);
 		}
 	}
 });

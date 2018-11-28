@@ -51,6 +51,7 @@ import { Variable } from '../store/dataset/index';
 import { Highlight, RowSelection } from '../store/highlights/index';
 import { getters as datasetGetters } from '../store/dataset/module';
 import { getters as routeGetters } from '../store/route/module';
+import { ROUTE_PAGE_SUFFIX } from '../store/route/index';
 import { Group } from '../util/facets';
 import { updateHighlightRoot, getHighlights, clearHighlightRoot } from '../util/highlights';
 import 'font-awesome/css/font-awesome.css';
@@ -171,10 +172,7 @@ export default Vue.extend({
 		// creates a facet key for the route from the instance-name component arg
 		// or uses a default if unset
 		routePageKey(): string {
-			if (this.instanceName) {
-				return `${this.instanceName}Page`;
-			}
-			return 'facetPage';
+			return `${this.instanceName}${ROUTE_PAGE_SUFFIX}`;
 		},
 
 		onRangeChange(context: string, key: string, value: { from: number, to: number }) {

@@ -15,6 +15,7 @@ import Vue from 'vue';
 import VariableFacets from '../components/VariableFacets.vue';
 import { getters as routeGetters} from '../store/route/module';
 import { Group, createGroups, NumericalFacet } from '../util/facets';
+import { TARGET_VAR_INSTANCE } from '../store/route/index';
 import { Highlight } from '../store/highlights/index';
 import { Variable, VariableSummary } from '../store/dataset/index';
 import { getHighlights, updateHighlightRoot } from '../util/highlights';
@@ -64,7 +65,7 @@ export default Vue.extend({
 		},
 
 		instanceName(): string {
-			return 'targetVar';
+			return TARGET_VAR_INSTANCE;
 		},
 
 		defaultHighlightType(): string {

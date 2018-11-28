@@ -1,5 +1,6 @@
 import { Variable, VariableSummary } from '../dataset/index';
 import { HighlightRoot, RowSelection } from '../highlights/index';
+import { AVAILABLE_TRAINING_VARS_INSTANCE, AVAILABLE_TARGET_VARS_INSTSANCE, TRAINING_VARS_INSTANCE, RESULT_TRAINING_VARS_INSTANCE, ROUTE_PAGE_SUFFIX } from '../route/index';
 import { decodeFilters, Filter, FilterParams } from '../../util/filters';
 import { decodeHighlights } from '../../util/highlights'
 import { decodeRowSelection } from '../../util/row';
@@ -41,16 +42,24 @@ export const getters = {
 		return state.query.training ? state.query.training : null
 	},
 
-	getRouteTrainingVarsPage(state: Route): number {
-		return state.query.trainingVarsPage ? _.toNumber(state.query.trainingVarsPage) : 1
+	getRouteAvailableTrainingVarsPage(state: Route): number {
+		const pageVar = `${AVAILABLE_TRAINING_VARS_INSTANCE}${ROUTE_PAGE_SUFFIX}`;
+		return state.query[pageVar] ? _.toNumber(state.query[pageVar]) : 1;
 	},
 
-	getRouteAvailableVarsPage(state: Route): number {
-		return state.query.availableVarsPage ? _.toNumber(state.query.availableVarsPage) : 1
+	getRouteTrainingVarsPage(state: Route): number {
+		const pageVar = `${TRAINING_VARS_INSTANCE}${ROUTE_PAGE_SUFFIX}`;
+		return state.query[pageVar] ? _.toNumber(state.query[pageVar]) : 1;
+	},
+
+	getRouteAvailableTargetVarsPage(state: Route): number {
+		const pageVar = `${AVAILABLE_TARGET_VARS_INSTSANCE}${ROUTE_PAGE_SUFFIX}`;
+		return state.query[pageVar] ? _.toNumber(state.query[pageVar]) : 1;
 	},
 
 	getRouteResultTrainingVarsPage(state: Route): number {
-		return state.query.resultTrainingVarsPage ? _.toNumber(state.query.resultTrainingVarsPage) : 1
+		const pageVar = `${RESULT_TRAINING_VARS_INSTANCE}${ROUTE_PAGE_SUFFIX}`;
+		return state.query[pageVar] ? _.toNumber(state.query[pageVar]) : 1;
 	},
 
 	getRouteTargetVariable(state: Route): string {
