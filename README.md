@@ -20,37 +20,13 @@ git clone git@github.com:unchartedsoftware/distil.git
 cd distil
 ```
 
-#### Install protocol buffer compiler:
-
-Linux
-
-```bash
-curl -OL https://github.com/google/protobuf/releases/download/v3.3.0/protoc-3.3.0-linux-x86_64.zip
-unzip protoc-3.3.0-linux-x86_64.zip -d protoc3
-sudo mv protoc3/bin/protoc /usr/bin/protoc
-```
-
-OSX
-
-```bash
-curl -OL https://github.com/google/protobuf/releases/download/v3.3.0/protoc-3.3.0-osx-x86_64.zip
-unzip protoc-3.3.0-osx-x86_64.zip -d protoc3
-mv protoc3/bin/protoc /usr/bin/protoc
-```
-
-#### Install remaining dependencies:
+#### Install dependencies:
 
 ```bash
 make install
 ```
 
 #### OPTIONAL - Generate code:
-
-To regenerate TA3TA2 interface protobuf files *if the `api/pipeline/*.proto` sources change, run:
-
-```bash
-make proto
-```
 
 To regenerate the PANDAS dataframe parser if the `api/compute/result/complex_field.peg` file is changed, run:
 
