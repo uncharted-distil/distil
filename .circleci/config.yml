@@ -8,6 +8,9 @@ jobs:
           password: $UNCHARTED_DOCKER_PW
     working_directory: /go/src/github.com/unchartedsoftware/distil
     steps:
+      - add_ssh_keys:
+          fingerprints:
+            - "fb:7f:1c:95:48:cd:e3:b6:eb:7d:c3:1c:fc:b4:06:e8"
       - checkout
       - setup_remote_docker
       - run:
