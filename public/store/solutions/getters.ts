@@ -116,17 +116,17 @@ export const getters = {
 	getActiveSolutionTargetVariable(state: SolutionState, getters: any): Variable[] {
 		const target = getters.getRouteTargetVariable;
 		const variables = getters.getVariables;
-		return variables.filter(variable => variable.key === target);
+		return variables.filter(variable => variable.colName === target);
 	},
 
 	isRegression(state: SolutionState, getters: any): boolean {
 		const variables = getters.getVariables;
 		const target = getters.getRouteTargetVariable;
-		const targetVariable = variables.find(s => _.toLower(s.key) === _.toLower(target));
+		const targetVariable = variables.find(s => _.toLower(s.colName) === _.toLower(target));
 		if (!targetVariable) {
 			return false;
 		}
-		const task = getTask(targetVariable.type);
+		const task = getTask(targetVariable.colType);
 		if (!task) {
 			console.error("NULL task for regression task type check - defaulting to FALSE.  This should not happen.");
 			return false;
@@ -137,11 +137,11 @@ export const getters = {
 	isClassification(state: SolutionState, getters: any): boolean {
 		const variables = getters.getVariables;
 		const target = getters.getRouteTargetVariable;
-		const targetVariable = variables.find(s => _.toLower(s.key) === _.toLower(target));
+		const targetVariable = variables.find(s => _.toLower(s.colName) === _.toLower(target));
 		if (!targetVariable) {
 			return false;
 		}
-		const task = getTask(targetVariable.type);
+		const task = getTask(targetVariable.colType);
 		if (!task) {
 			console.error("NULL task for classification task type check - defaulting to FALSE.  This should not happen.");
 			return false;
