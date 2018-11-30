@@ -97,6 +97,12 @@ export default Vue.extend({
 				return summary.buckets;
 			}
 			return [];
+		},
+		availableTrainingVarsPage(): number {
+			return routeGetters.getRouteAvailableTrainingVarsPage(this.$store);
+		},
+		trainingVarsPage(): number {
+			return routeGetters.getRouteTrainingVarsPage(this.$store);
 		}
 	},
 
@@ -111,6 +117,12 @@ export default Vue.extend({
 			if (this.filtersStr) {
 				viewActions.updateSelectTrainingData(this.$store);
 			}
+		},
+		availableTrainingVarsPage() {
+			viewActions.updateSelectTrainingData(this.$store);
+		},
+		trainingVarsPage() {
+			viewActions.updateSelectTrainingData(this.$store);
 		}
 	},
 

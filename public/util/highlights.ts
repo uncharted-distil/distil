@@ -60,8 +60,6 @@ export function createFilterFromHighlightRoot(highlightRoot: HighlightRoot, mode
 		highlightRoot.value.maxX !== undefined &&
 		highlightRoot.value.minY !== undefined &&
 		highlightRoot.value.maxY !== undefined) {
-
-		console.log('BIVARIATE_FILTER', highlightRoot);
 		return {
 			key: key,
 			type: BIVARIATE_FILTER,

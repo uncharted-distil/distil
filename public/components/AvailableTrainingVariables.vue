@@ -7,7 +7,7 @@
 			ref="facets"
 			enable-search
 			enable-type-change
-			instance-name="availableTrainingVars"
+			:instance-name="instanceName"
 			:rows-per-page="numRowsPerPage"
 			:groups="groups"
 			:dataset="dataset"
@@ -31,6 +31,7 @@ import { overlayRouteEntry } from '../util/routes';
 import { VariableSummary } from '../store/dataset/index';
 import { getters as routeGetters } from '../store/route/module';
 import { filterSummariesByDataset, NUM_PER_PAGE } from '../util/data';
+import { AVAILABLE_TRAINING_VARS_INSTANCE } from '../store/route/index';
 import { Group, createGroups } from '../util/facets';
 import VariableFacets from '../components/VariableFacets.vue';
 
@@ -59,6 +60,9 @@ export default Vue.extend({
 		},
 		numRowsPerPage(): number {
 			return NUM_PER_PAGE;
+		},
+		instanceName(): string {
+			return AVAILABLE_TRAINING_VARS_INSTANCE;
 		},
 		html(): ( { key: string } ) => HTMLDivElement {
 			return (group: { key: string }) => {

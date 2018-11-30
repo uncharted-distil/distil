@@ -180,7 +180,6 @@ export default Vue.extend({
 		clearSelection() {
 			if (this.selectedRect) {
 				$(this.selectedRect._path).removeClass('selected');
-				console.log('clearHighlightRoot');
 				clearHighlightRoot(this.$router);
 			}
 			if (this.closeButton) {
@@ -315,7 +314,6 @@ export default Vue.extend({
 
 	watch: {
 		includedActive() {
-			console.log('repaint');
 			this.paint();
 		}
 	},
