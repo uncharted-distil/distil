@@ -31,10 +31,9 @@ import ImagePreview from './ImagePreview';
 import { getters as datasetGetters } from '../store/dataset/module';
 import { Dictionary } from '../util/dict';
 import { Filter } from '../util/filters';
-import { TableColumn, D3M_INDEX_FIELD } from '../store/dataset/index';
+import { TableColumn, TableRow, D3M_INDEX_FIELD } from '../store/dataset/index';
 import { RowSelection } from '../store/highlights/index';
 import { getters as routeGetters } from '../store/route/module';
-import { TableRow } from '../store/dataset/index';
 import { addRowSelection, removeRowSelection, isRowSelected, updateTableRowSelection } from '../util/row';
 
 export default Vue.extend({

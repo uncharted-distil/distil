@@ -1,14 +1,7 @@
 <template>
 	<div class="sparkline-container" v-observe-visibility="visibilityChanged" v-bind:class="{'is-hidden': !isVisible}">
 		<svg v-if="isLoaded" ref="svg" class="line-chart" @click.stop="onClick" ></svg>
-		<i class="fa fa-plus zoom-sparkline-icon"></i>
 		<div v-if="!isLoaded" v-html="spinnerHTML"></div>
-		<b-modal id="sparkline-zoom-modal" :title="timeSeriesUrl"
-			@hide="hideModal"
-			:visible="zoomSparkline"
-			hide-footer>
-			<sparkline-chart :timeseries="timeseries" v-if="zoomSparkline"></sparkline-chart>
-		</b-modal>
 	</div>
 </template>
 
@@ -17,32 +10,29 @@
 import * as d3 from 'd3';
 import _ from 'lodash';
 import Vue from 'vue';
-import SparklineChart from '../components/SparklineChart.vue';
 import { Dictionary } from '../util/dict';
 import { circleSpinnerHTML } from '../util/spinner';
 import { getters as routeGetters } from '../store/route/module';
 import { getters as datasetGetters, actions as datasetActions } from '../store/dataset/module';
 
 export default Vue.extend({
-	name: 'sparkline-preview',
-
-	components: {
-		SparklineChart
-	},
+	name: 'sparkline-row',
 
 	props: {
 		margin: {
 			type: Object as () => any,
 			default: () => ({
-				top: 8,
+				top: 2,
 				right: 16,
-				bottom: 8,
+				bottom: 2,
 				left: 16
 			})
 		},
 		timeSeriesUrl: {
 			type: String as () => string
-		}
+		},
+		min: number,
+		max: number
 	},
 	data() {
 		return {
@@ -193,34 +183,8 @@ svg.line-chart:hover g {
 	stroke: #00c6e1;
 }
 
-.zoom-sparkline-icon {
-	position: absolute;
-	right: 4px;
-	top: 4px;
-	color: #666;
-	visibility: hidden;
-}
-
 .sparkline-container {
 	position: relative;
-}
-
-.sparkline-container:hover .zoom-sparkline-icon {
-	visibility: visible;
-}
-
-.zoom-sparkline-icon {
-	pointer-events: none;
-}
-
-.sparkline-elem-zoom {
-	position: relative;
-	padding: 32px 16px;
-	border-radius: 4px;
-}
-
-#sparkline-zoom-modal .modal-dialog {
-	max-width: 50%;
 }
 
 .is-hidden {
