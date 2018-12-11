@@ -35,13 +35,13 @@ export default Vue.extend({
 		},
 		timeseriesUrl: {
 			type: String as () => string
-		}/*,
-		min:  {
+		},
+		minX:  {
 			type: Number as () => number
 		},
-		max: {
+		maxX: {
 			type: Number as () => number
-		}*/
+		}
 	},
 	data() {
 		return {
