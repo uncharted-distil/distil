@@ -106,7 +106,7 @@ export default Vue.extend({
 	data() {
 		return {
 			instanceName: 'select-data',
-			viewType: 'table',
+			viewType: 'timeseries',
 			includedActive: true
 		};
 	},

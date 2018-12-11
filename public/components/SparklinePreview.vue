@@ -3,7 +3,7 @@
 		<svg v-if="isLoaded" ref="svg" class="line-chart" @click.stop="onClick" ></svg>
 		<i class="fa fa-plus zoom-sparkline-icon"></i>
 		<div v-if="!isLoaded" v-html="spinnerHTML"></div>
-		<b-modal id="sparkline-zoom-modal" :title="timeSeriesUrl"
+		<b-modal id="sparkline-zoom-modal" :title="timeseriesUrl"
 			@hide="hideModal"
 			:visible="zoomSparkline"
 			hide-footer>
@@ -40,7 +40,7 @@ export default Vue.extend({
 				left: 16
 			})
 		},
-		timeSeriesUrl: {
+		timeseriesUrl: {
 			type: String as () => string
 		}
 	},
@@ -65,10 +65,10 @@ export default Vue.extend({
 			return datasetGetters.getFiles(this.$store);
 		},
 		isLoaded(): boolean {
-			return this.files[this.timeSeriesUrl];
+			return this.files[this.timeseriesUrl];
 		},
 		timeseries(): number[][] {
-			return this.files[this.timeSeriesUrl];
+			return this.files[this.timeseriesUrl];
 		},
 		spinnerHTML(): string {
 			return circleSpinnerHTML();
@@ -163,7 +163,7 @@ export default Vue.extend({
 			this.hasRequested = true;
 			datasetActions.fetchTimeseries(this.$store, {
 				dataset: this.dataset,
-				url: this.timeSeriesUrl
+				url: this.timeseriesUrl
 			}).then(() => {
 				if (this.isVisible) {
 					this.injectTimeseries();
