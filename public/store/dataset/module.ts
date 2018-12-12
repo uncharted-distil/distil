@@ -26,6 +26,7 @@ export const getters = {
 	getVariableSummaries: read(moduleGetters.getVariableSummaries),
 	// files
 	getFiles: read(moduleGetters.getFiles),
+	getTimeseriesExtrema: read(moduleGetters.getTimeseriesExtrema),
 	// included data
 	hasIncludedTableData: read(moduleGetters.hasIncludedTableData),
 	getIncludedTableData: read(moduleGetters.getIncludedTableData),
@@ -74,6 +75,7 @@ export const mutations = {
 	updateVariableRankings: commit(moduleMutations.updateVariableRankings),
 	// files
 	updateFile: commit(moduleMutations.updateFile),
+	updateTimeseriesFile: commit(moduleMutations.updateTimeseriesFile),
 	// included / excluded table data
 	setIncludedTableData: commit(moduleMutations.setIncludedTableData),
 	setExcludedTableData: commit(moduleMutations.setExcludedTableData),

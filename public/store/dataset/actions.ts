@@ -215,7 +215,7 @@ export const actions = {
 		}
 		return axios.get(`distil/timeseries/${args.dataset}/${args.url}`)
 			.then(response => {
-				mutations.updateFile(context, { url: args.url, file: response.data.timeseries });
+				mutations.updateTimeseriesFile(context, { dataset: args.dataset, url: args.url, file: response.data.timeseries });
 			})
 			.catch(error => {
 				console.error(error);

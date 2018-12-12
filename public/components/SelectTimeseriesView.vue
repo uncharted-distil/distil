@@ -1,14 +1,19 @@
 <template>
 
-	<div class="select-timeseries-view" @mousemove="mouseMove" @mouseenter="mouseOver" @mouseleave="mouseOut">
+	<div class="select-timeseries-view" @mousemove="mouseMove">
 		<div class="timeseries-row-header">
-			<div class="timeseries-var-col"><b>VARIABLES</b></div>
-			<div class="timeseries-min-col"><b>MIN</b></div>
-			<div class="timeseries-max-col"><b>MAX</b></div>
-			<div class="timeseries-chart-col"></div>
+			<div class="timeseries-var-col pad-top"><b>VARIABLES</b></div>
+			<div class="timeseries-min-col pad-top"><b>MIN</b></div>
+			<div class="timeseries-max-col pad-top"><b>MAX</b></div>
+			<div class="timeseries-chart-axis">
+				<template v-if="!!timeseriesExtrema">
+					x: {{timeseriesExtrema.x.min}}, {{timeseriesExtrema.x.max}}
+					y: {{timeseriesExtrema.y.min}}, {{timeseriesExtrema.y.max}}
+				</template>
+			</div>
 		</div>
 		<div v-for="item in items">
-			<sparkline-row :timeseries-url="item[timeseriesField]">
+			<sparkline-row :timeseries-url="item[timeseriesField]" :timeseries-extrema="timeseriesExtrema">
 			</sparkline-row>
 		</div>
 		<div class="vertical-line"></div>
@@ -25,7 +30,7 @@ import SparklineRow from './SparklineRow';
 import { Dictionary } from '../util/dict';
 import { Filter } from '../util/filters';
 import { RowSelection } from '../store/highlights/index';
-import { TableRow, TableColumn } from '../store/dataset/index';
+import { TableRow, TableColumn, TimeseriesExtrema } from '../store/dataset/index';
 import { getters as routeGetters } from '../store/route/module';
 import { getters as datasetGetters } from '../store/dataset/module';
 
@@ -80,6 +85,11 @@ export default Vue.extend({
 
 		rowSelection(): RowSelection {
 			return routeGetters.getDecodedRowSelection(this.$store);
+		},
+
+		timeseriesExtrema(): TimeseriesExtrema {
+			const extrema = datasetGetters.getTimeseriesExtrema(this.$store);
+			return extrema[this.dataset];
 		}
 	},
 
@@ -91,14 +101,17 @@ export default Vue.extend({
 		mouseMove(event) {
 			const parentOffset = $('.select-timeseries-view').offset();
 			const relX = event.pageX - parentOffset.left;
-			$('.vertical-line').css('left', relX);
-		},
-		mouseOver(event) {
-			$('.vertical-line').show();
-		},
-		mouseOut(event) {
-			$('.vertical-line').hide();
-		},
+
+			const chartBounds = $('.timeseries-chart-axis').offset();
+			const chartLeft = chartBounds.left - parentOffset.left;
+			const chartWidth = $('.timeseries-chart-axis').width();
+			if (relX >= chartLeft && relX <= chartLeft + chartWidth) {
+				$('.vertical-line').show();
+				$('.vertical-line').css('left', relX);
+			} else {
+				$('.vertical-line').hide();
+			}
+		}
 	},
 
 	mounted() {
@@ -112,10 +125,9 @@ export default Vue.extend({
 .select-timeseries-view {
 	position: relative;
 	flex: 1;
-	overflow:hidden;
 }
 .timeseries-row-header {
-	height: 32px;
+	height: 64px;
 	line-height: 32px;
 	border-bottom: 1px solid #999;
 	padding: 0 8px;
@@ -147,6 +159,17 @@ export default Vue.extend({
 	line-height: 32px;
 	height: 32px;
 	width: calc(100% - 276px);
+}
+.timeseries-chart-axis {
+	float: left;
+	position: relative;
+	line-height: 32px;
+	height: 64px;
+	border: 1px solid red;
+	width: calc(100% - 276px);
+}
+.pad-top {
+	padding-top: 32px;
 }
 .vertical-line {
 	position: absolute;

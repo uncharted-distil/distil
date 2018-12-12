@@ -4,7 +4,7 @@
 		<div class="timeseries-min-col">{{min.toFixed(2)}}</div>
 		<div class="timeseries-max-col">{{max.toFixed(2)}}</div>
 		<div class="timeseries-chart-col">
-			<svg v-if="isLoaded" ref="svg" class="line-chart" @click.stop="onClick" ></svg>
+			<svg v-if="isLoaded" ref="svg" class="line-chart" @click.stop="onClick"></svg>
 			<div v-if="!isLoaded" v-html="spinnerHTML"></div>
 		</div>
 	</div>
@@ -18,6 +18,7 @@ import Vue from 'vue';
 import { Dictionary } from '../util/dict';
 import { circleSpinnerHTML } from '../util/spinner';
 import { getters as routeGetters } from '../store/route/module';
+import { TimeseriesExtrema } from '../store/dataset/index';
 import { getters as datasetGetters, actions as datasetActions } from '../store/dataset/module';
 
 export default Vue.extend({
@@ -36,11 +37,8 @@ export default Vue.extend({
 		timeseriesUrl: {
 			type: String as () => string
 		},
-		minX:  {
-			type: Number as () => number
-		},
-		maxX: {
-			type: Number as () => number
+		timeseriesExtrema: {
+			type: Object as () => TimeseriesExtrema
 		}
 	},
 	data() {
@@ -64,7 +62,7 @@ export default Vue.extend({
 			return datasetGetters.getFiles(this.$store);
 		},
 		isLoaded(): boolean {
-			return this.files[this.timeseriesUrl];
+			return !!this.files[this.timeseriesUrl];
 		},
 		timeseries(): number[][] {
 			return this.files[this.timeseriesUrl];
@@ -93,6 +91,29 @@ export default Vue.extend({
 			return this.timeseries ? d3.max(this.timeseries, d => d[1]) : 0;
 		}
 	},
+
+	watch: {
+		timeseriesExtrema: {
+			handler() {
+				if (this.isVisible && this.isLoaded) {
+					// only redraw if it is currently visible, the data has
+					// loaded
+					// NOTE: there is a race condition in which `isLoaded`
+					// returns true, but the svg element using `v-if="isLoaded"`
+					// has not yet rendered use this to ensure the DOM updates
+					// before attempting to inject
+					Vue.nextTick(() => {
+						this.injectTimeseries();
+					});
+				} else {
+					// ensure it re-renders once it comes back into view
+					this.hasRendered = false;
+				}
+			},
+			deep: true
+		}
+	},
+
 	methods: {
 		visibilityChanged(isVisible: boolean) {
 			this.isVisible = isVisible;
@@ -114,14 +135,18 @@ export default Vue.extend({
 			this.svg.selectAll('*').remove();
 		},
 		injectSparkline() {
-			const timeseries = this.timeseries;
 
-			this.xScale = d3.scalePoint()
+			const minX = this.timeseriesExtrema.x.min;
+			const maxX = this.timeseriesExtrema.x.max;
+			const minY = this.timeseriesExtrema.y.min;
+			const maxY = this.timeseriesExtrema.y.max;
+
+			this.xScale = d3.scaleLinear()
+				.domain([minX, maxX])
 				.range([0, this.width]);
-			this.xScale.domain(timeseries.map(d => d[0]));
 
 			this.yScale = d3.scaleLinear()
-				.domain([this.min, this.max])
+				.domain([minY, maxY])
 				.range([this.height, 0]);
 
 			const line = d3.line()

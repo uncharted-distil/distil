@@ -1,4 +1,4 @@
-import { Variable, DatasetState, Dataset, VariableSummary, TableData, TableRow, TableColumn } from './index';
+import { Variable, TimeseriesExtrema, DatasetState, Dataset, VariableSummary, TableData, TableRow, TableColumn } from './index';
 import { Dictionary } from '../../util/dict';
 import { getTableDataItems, getTableDataFields } from '../../util/data';
 
@@ -36,6 +36,10 @@ export const getters = {
 
 	getFiles(state: DatasetState): Dictionary<any> {
 		return state.files;
+	},
+
+	getTimeseriesExtrema(state: DatasetState): Dictionary<TimeseriesExtrema> {
+		return state.timeseriesExtrema;
 	},
 
 	hasIncludedTableData(state: DatasetState): boolean {

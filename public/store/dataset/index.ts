@@ -83,11 +83,17 @@ export interface TableRow {
 	_cellVariants: Dictionary<string>;
 }
 
+export interface TimeseriesExtrema {
+	x: Extrema;
+	y: Extrema;
+}
+
 export interface DatasetState {
 	datasets: Dataset[];
 	variables: Variable[];
 	variableSummaries: VariableSummary[];
 	files: Dictionary<any>;
+	timeseriesExtrema: Dictionary<TimeseriesExtrema>;
 	includedTableData: TableData;
 	excludedTableData: TableData;
 }
@@ -104,6 +110,8 @@ export const state: DatasetState = {
 
 	// linked files
 	files: {},
+
+	timeseriesExtrema: {},
 
 	// selected data entries for the active dataset
 	includedTableData: null,
