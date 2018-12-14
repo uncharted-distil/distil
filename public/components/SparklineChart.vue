@@ -90,7 +90,7 @@ export default Vue.extend({
 				.call(xAxis);
 
 			svgXAxis.append('text')
-				 .attr('class', 'axis-title')
+				.attr('class', 'axis-title')
 				.attr('x', this.width / 2)
 				.attr('y', this.margin.bottom)
 				.attr('dy', this.margin.bottom)
