@@ -4,8 +4,9 @@
 		<div class="timeseries-min-col">{{min.toFixed(2)}}</div>
 		<div class="timeseries-max-col">{{max.toFixed(2)}}</div>
 		<div class="timeseries-chart-col">
-			<svg v-if="isLoaded" ref="svg" class="line-chart" @click.stop="onClick"></svg>
+			<svg v-if="isLoaded" ref="svg" class="line-chart-row" @click.stop="onClick"></svg>
 			<div v-if="!isLoaded" v-html="spinnerHTML"></div>
+			<div class="highlight-tooltip" ref="tooltip"></div>
 		</div>
 	</div>
 </template>
@@ -14,6 +15,7 @@
 
 import * as d3 from 'd3';
 import _ from 'lodash';
+import $ from 'jquery';
 import Vue from 'vue';
 import { Dictionary } from '../util/dict';
 import { circleSpinnerHTML } from '../util/spinner';
@@ -33,6 +35,9 @@ export default Vue.extend({
 				bottom: 2,
 				left: 16
 			})
+		},
+		highlightPixelX: {
+			type: Number as () => number
 		},
 		timeseriesUrl: {
 			type: String as () => string
@@ -111,6 +116,25 @@ export default Vue.extend({
 				}
 			},
 			deep: true
+		},
+		highlightPixelX() {
+			const tooltip = this.$refs.tooltip as any;
+			if (this.highlightPixelX !== null && this.hasRendered && this.isVisible) {
+				const xVal = this.xScale.invert(this.highlightPixelX);
+				const bisect = d3.bisector(d => {
+					return d[0];
+				}).left;
+				const index = bisect(this.timeseries, xVal);
+				if (index >= 0 && index < this.timeseries.length) {
+					const yVal = this.timeseries[index][1];
+					$(tooltip).css({
+						left: this.highlightPixelX,
+						visibility: 'visible'
+					}).text(yVal.toFixed(2));
+					return;
+				}
+			}
+			$(tooltip).css('visibility', 'hidden');
 		}
 	},
 
@@ -122,7 +146,9 @@ export default Vue.extend({
 				return;
 			}
 			if (this.isVisible && this.hasRequested && !this.hasRendered) {
-				this.injectTimeseries();
+				Vue.nextTick(() => {
+					this.injectTimeseries();
+				});
 			}
 		},
 		onClick() {
@@ -154,10 +180,8 @@ export default Vue.extend({
 				.y(d => this.yScale(d[1]))
 				.curve(d3.curveLinear);
 
-			const className = 'line-chart';
 			const g = this.svg.append('g')
-				.attr('transform', `translate(${this.margin.left}, ${this.margin.top})`)
-				.attr('class', className);
+				.attr('transform', `translate(${this.margin.left}, ${this.margin.top})`);
 
 			g.datum(this.timeseries);
 
@@ -193,7 +217,9 @@ export default Vue.extend({
 				url: this.timeseriesUrl
 			}).then(() => {
 				if (this.isVisible) {
-					this.injectTimeseries();
+					Vue.nextTick(() => {
+						this.injectTimeseries();
+					});
 				}
 			});
 		}
@@ -204,21 +230,22 @@ export default Vue.extend({
 
 <style>
 
-svg.line-chart {
+svg.line-chart-row {
 	position: relative;
 	max-height: 32px;
 	width: 100%;
-	border: 1px solid rgba(0,0,0,0);
 }
 
-svg.line-chart g {
+svg.line-chart-row g {
 	stroke: #666;
 	stroke-width: 2px;
 }
 
-svg.line-chart:hover g {
+/*
+svg.line-chart-row:hover g {
 	stroke: #00c6e1;
 }
+*/
 
 .sparkline-row {
 	position: relative;
@@ -233,4 +260,11 @@ svg.line-chart:hover g {
 .is-hidden {
 	visibility: hidden;
 }
+
+.highlight-tooltip {
+	position: absolute;
+	top: 0;
+	pointer-events: none;
+}
+
 </style>

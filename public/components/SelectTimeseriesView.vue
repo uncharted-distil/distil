@@ -15,7 +15,8 @@
 			<sparkline-row
 				:timeseries-url="item[timeseriesField]"
 				:timeseries-extrema="microExtrema"
-				:margin="margin">
+				:margin="margin"
+				:highlight-pixel-x="highlightPixelX">
 			</sparkline-row>
 		</div>
 		<div class="vertical-line"></div>
@@ -67,7 +68,8 @@ export default Vue.extend({
 			microScale: null,
 			microRangeSelection: null,
 			selectedMicroMin: null,
-			selectedMicroMax: null
+			selectedMicroMax: null,
+			highlightPixelX: null
 		};
 	},
 
@@ -183,13 +185,40 @@ export default Vue.extend({
 					'left': relX,
 					'top': chartScroll
 				});
+				this.highlightPixelX = relX - chartLeft - this.margin.left;
 			} else {
 				$('.vertical-line').hide();
+				this.highlightPixelX = null;
 			}
 		},
 		scroll(event) {
 			const chartScroll = $('.select-timeseries-view').parent().scrollTop();
 			$('.vertical-line').css('top', chartScroll);
+		},
+		injectMicroAxis() {
+
+			this.svg.select('.micro-axis').remove();
+			this.svg.select('.axis-selection-rect').remove();
+
+			this.microScale = d3.scaleLinear()
+				.domain([this.microMin, this.microMax])
+				.range([0, this.width]);
+
+			this.svg.append('g')
+				.attr('class', 'micro-axis')
+				.attr('transform', `translate(${this.margin.left}, ${-this.margin.bottom + this.height - TICK_SIZE * 2})`)
+				.call(d3.axisBottom(this.microScale));
+
+			this.svg.append('rect')
+				.attr('class', 'axis-selection-rect')
+				.attr('x', this.macroScale(this.microMin) + this.margin.left)
+				.attr('y', this.margin.top + TICK_SIZE * 2)
+				.attr('width', this.macroScale(this.microMax) - this.macroScale(this.microMin))
+				.attr('height', SELECTED_TICK_SIZE);
+
+			this.svg.select('.axis-selection').raise();
+
+			this.attachTranslationHandlers();
 		},
 		injectSVG() {
 
@@ -203,9 +232,10 @@ export default Vue.extend({
 				.domain([this.timeseriesExtrema.x.min, this.timeseriesExtrema.x.max])
 				.range([0, this.width]);
 
-			this.microScale = d3.scaleLinear()
-				.domain([this.microMin, this.microMax])
-				.range([0, this.width]);
+			this.svg.append('g')
+				.attr('class', 'macro-axis')
+				.attr('transform', `translate(${this.margin.left}, ${this.margin.top + SELECTED_TICK_SIZE + TICK_SIZE * 2})`)
+				.call(d3.axisTop(this.macroScale));
 
 			this.microRangeSelection = d3.axisTop(this.macroScale)
 				.tickSize(SELECTED_TICK_SIZE)
@@ -215,64 +245,76 @@ export default Vue.extend({
 				]);
 
 			this.svg.append('g')
-				.attr('class', 'macro-axis')
-				.attr('transform', `translate(${this.margin.left}, ${this.margin.top + SELECTED_TICK_SIZE + TICK_SIZE * 2})`)
-				.call(d3.axisTop(this.macroScale));
-
-			this.svg.append('g')
-				.attr('class', 'micro-axis')
-				.attr('transform', `translate(${this.margin.left}, ${-this.margin.bottom + this.height - TICK_SIZE * 2})`)
-				.call(d3.axisBottom(this.microScale));
-
-			this.svg.append('g')
 				.attr('class', 'axis-selection')
 				.attr('transform', `translate(${this.margin.left}, ${this.margin.top + SELECTED_TICK_SIZE + TICK_SIZE * 2})`)
 				.call(this.microRangeSelection);
 
-			this.attachHandlers();
-		},
-		attachHandlers() {
+			this.injectMicroAxis();
 
+			this.attachScalingHandlers();
+		},
+		attachScalingHandlers() {
 			const dragstarted = (d, index, elem) => {
-				d3.select(elem[index]).raise().classed('active', true);
+				this.highlightPixelX = null;
+				$('.vertical-line').hide();
 			};
 
 			const dragged = (d, index, elem) => {
-				const MIN = 0;
-				const MAX = this.width;
+				const minX = 0;
+				const maxX = this.width;
 
-				const px = Math.max(Math.min(d3.event.x, MAX), MIN);
+				const px = _.clamp(d3.event.x, minX, maxX);
 				const x = this.macroScale.invert(px);
 				if (index === 0) {
 					this.selectedMicroMin = x;
 				} else {
 					this.selectedMicroMax = x;
 				}
+
 				d3.select(elem[index]).attr('transform', `translate(${px}, 0)`);
 				d3.select(elem[index]).select('text').text(x.toFixed(2));
 
-				this.svg.select('.micro-axis').remove();
-
-				this.microScale = d3.scaleLinear()
-					.domain([this.microMin, this.microMax])
-					.range([0, this.width]);
-
-				this.svg.append('g')
-					.attr('class', 'micro-axis')
-					.attr('transform', `translate(${this.margin.left}, ${-this.margin.bottom + this.height - TICK_SIZE * 2})`)
-					.call(d3.axisBottom(this.microScale));
-
-			};
-
-			const dragended = (d, index, elem) => {
-				d3.select(elem[index]).classed('active', false);
+				this.injectMicroAxis();
 			};
 
 			this.svg.selectAll('.axis-selection .tick')
 				.call(d3.drag()
 					.on('start', dragstarted)
-					.on('drag', dragged)
-					.on('end', dragended));
+					.on('drag', dragged));
+		},
+		attachTranslationHandlers() {
+
+			const dragged = (d, index, elem) => {
+
+				const maxDelta = this.timeseriesExtrema.x.max - this.selectedMicroMax;
+				const minDelta = this.timeseriesExtrema.x.min - this.selectedMicroMin;
+
+				const delta = _.clamp(this.macroScale.invert(d3.event.dx), minDelta, maxDelta);
+
+
+				if (this.selectedMicroMin === null) {
+					this.selectedMicroMin = this.timeseriesExtrema.x.min;
+				}
+				if (this.selectedMicroMax === null) {
+					this.selectedMicroMax = this.timeseriesExtrema.x.max;
+				}
+				this.selectedMicroMin += delta;
+				this.selectedMicroMax += delta;
+
+				const x = this.macroScale(this.selectedMicroMin);
+				d3.select(elem[index]).attr('x', x + this.margin.left);
+
+				// TODO: update the ticks
+				// const $lower = this.svg.select('.axis-selection tick:nth-child(1)');
+				// const $upper = this.svg.select('.axis-selection tick:nth-child(2)');
+
+				this.injectMicroAxis();
+			};
+
+			this.svg.selectAll('.axis-selection-rect')
+				.call(d3.drag()
+					.on('drag', dragged));
+				// const
 		},
 		clearSVG() {
 			this.svg.selectAll('*').remove();
@@ -372,6 +414,11 @@ svg.axis {
 
 .axis-selection path.domain {
 	visibility: hidden;
+}
+
+.axis-selection-rect {
+	fill: #00c6e1;
+	opacity: 0.25;
 }
 
 </style>
