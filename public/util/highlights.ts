@@ -1,10 +1,9 @@
 import { Highlight, HighlightRoot } from '../store/highlights/index';
-import { Filter, CATEGORICAL_FILTER, NUMERICAL_FILTER, BIVARIATE_FILTER } from '../util/filters';
+import { Filter, FilterParams, CATEGORICAL_FILTER, NUMERICAL_FILTER, BIVARIATE_FILTER } from '../util/filters';
 import { getters as routeGetters } from '../store/route/module';
 import { getters as highlightGetters } from '../store/highlights/module';
-import { overlayRouteEntry } from '../util/routes'
-import { FilterParams } from '../util/filters'
-import { getVarType, isFeatureType, addFeaturePrefix, isClusterType, addClusterPrefix } from '../util/types'
+import { overlayRouteEntry } from '../util/routes';
+import { getVarType, isFeatureType, addFeaturePrefix, isClusterType, addClusterPrefix } from '../util/types';
 import _ from 'lodash';
 import { store } from '../store/storeProvider';
 import VueRouter from 'vue-router';
@@ -24,11 +23,12 @@ export function decodeHighlights(highlightRoot: string): HighlightRoot {
 }
 
 export function createFilterFromHighlightRoot(highlightRoot: HighlightRoot, mode: string): Filter {
-	if (!highlightRoot || highlightRoot.value == null) {
+	if (!highlightRoot || highlightRoot.value === null) {
 		return null;
 	}
 	// inject metadata prefix for metadata vars
 	let key = highlightRoot.key;
+
 	const type = getVarType(key);
 	if (isFeatureType(type)) {
 		key = addFeaturePrefix(key);
@@ -37,6 +37,10 @@ export function createFilterFromHighlightRoot(highlightRoot: HighlightRoot, mode
 		key = addClusterPrefix(key);
 	}
 
+	// TODO: remove this once timeseries filters are impl'd
+	if (type === 'timeseries') {
+		return null;
+	}
 
 	if (_.isString(highlightRoot.value)) {
 		return {

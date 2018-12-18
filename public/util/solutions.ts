@@ -4,14 +4,14 @@ import { sortSolutionsByScore } from '../store/solutions/getters';
 import { SolutionState, Solution } from '../store/solutions/index';
 
 export interface NameInfo {
-	displayName: string,
-	schemaName: string
+	displayName: string;
+	schemaName: string;
 }
 
 export interface Task {
-	displayName: string,
-	schemaName: string
-};
+	displayName: string;
+	schemaName: string;
+}
 
 // Utility function to return all solution results associated with a given request ID
 export function getSolutionsByRequestIds(state: SolutionState, requestIds: string[]): Solution[] {

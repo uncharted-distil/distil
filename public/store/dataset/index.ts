@@ -1,8 +1,8 @@
 import { Dictionary } from '../../util/dict';
 
 export enum SummaryType {
-	Categorical = "categorical",
-	Numerical = "numerical"
+	Categorical = 'categorical',
+	Numerical = 'numerical'
 }
 
 export const D3M_INDEX_FIELD = 'd3mIndex';
@@ -118,4 +118,4 @@ export const state: DatasetState = {
 
 	// excluded data entries for the active dataset
 	excludedTableData: null
-}
+};

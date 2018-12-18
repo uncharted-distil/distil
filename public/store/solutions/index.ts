@@ -59,4 +59,4 @@ export interface SolutionState {
 export const state: SolutionState = {
 	requests: [],
 	streams: {}
-}
+};

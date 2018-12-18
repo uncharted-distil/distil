@@ -128,7 +128,7 @@ export const getters = {
 		}
 		const task = getTask(targetVariable.colType);
 		if (!task) {
-			console.error("NULL task for regression task type check - defaulting to FALSE.  This should not happen.");
+			console.error('NULL task for regression task type check - defaulting to FALSE.  This should not happen.');
 			return false;
 		}
 		return task.schemaName === REGRESSION_TASK.schemaName;
@@ -143,7 +143,7 @@ export const getters = {
 		}
 		const task = getTask(targetVariable.colType);
 		if (!task) {
-			console.error("NULL task for classification task type check - defaulting to FALSE.  This should not happen.");
+			console.error('NULL task for classification task type check - defaulting to FALSE.  This should not happen.');
 			return false;
 		}
 		return task.schemaName === CLASSIFICATION_TASK.schemaName;
@@ -152,4 +152,4 @@ export const getters = {
 	getRequestStreams(state: SolutionState, getters: any): Dictionary<Stream> {
 		return state.streams;
 	}
-}
+};

@@ -137,7 +137,7 @@ function dedupeRowFilters(filters: Filter[]): Filter[] {
 		type: ROW_FILTER,
 		mode: INCLUDE_FILTER,
 		d3mIndices: []
-	};;
+	};
 	const excludes = {
 		type: ROW_FILTER,
 		mode: EXCLUDE_FILTER,

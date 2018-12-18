@@ -22,4 +22,4 @@ export const mutations = {
 		Vue.set(state.stack[args.view], LAST_STATE, value);
 		localStorage.set(`${args.view}:${LAST_STATE}`, value);
 	}
-}
+};

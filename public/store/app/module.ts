@@ -11,7 +11,7 @@ export const appModule: Module<AppState, DistilState> = {
 	getters: moduleGetters,
 	actions: moduleActions,
 	mutations: moduleMutations
-}
+};
 
 const { commit, read, dispatch } = getStoreAccessors<AppState, DistilState>(null);
 
@@ -27,7 +27,7 @@ export const getters = {
 	getProblemTaskType: read(moduleGetters.getProblemTaskType),
 	getProblemTaskSubType: read(moduleGetters.getProblemTaskSubType),
 	getProblemMetrics: read(moduleGetters.getProblemMetrics)
-}
+};
 
 // typed actions
 export const actions = {
@@ -35,7 +35,7 @@ export const actions = {
 	exportSolution: dispatch(moduleActions.exportSolution),
 	exportProblem: dispatch(moduleActions.exportProblem),
 	fetchConfig: dispatch(moduleActions.fetchConfig)
-}
+};
 
 // type mutators
 export const mutations = {
@@ -49,4 +49,4 @@ export const mutations = {
 	setProblemTaskType: commit(moduleMutations.setProblemTaskType),
 	setProblemTaskSubType: commit(moduleMutations.setProblemTaskSubType),
 	setProblemMetrics: commit(moduleMutations.setProblemMetrics)
-}
+};

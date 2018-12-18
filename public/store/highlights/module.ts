@@ -11,7 +11,7 @@ export const highlightsModule: Module<HighlightState, DistilState> = {
 	actions: moduleActions,
 	mutations: moduleMutations,
 	state: state
-}
+};
 
 const { commit, read, dispatch } = getStoreAccessors<HighlightState, DistilState>(null);
 
@@ -19,17 +19,17 @@ const { commit, read, dispatch } = getStoreAccessors<HighlightState, DistilState
 export const getters = {
 	// highlights
 	getHighlightedSummaries: read(moduleGetters.getHighlightedSummaries)
-}
+};
 
 // Typed actions
 export const actions = {
 	// highlight values
 	fetchDataHighlightValues: dispatch(moduleActions.fetchDataHighlightValues),
 	fetchResultHighlightValues: dispatch(moduleActions.fetchResultHighlightValues)
-}
+};
 
 // Typed mutations
 export const mutations = {
 	updateHighlightSummaries: commit(moduleMutations.updateHighlightSummaries),
 	clearHighlightSummaries: commit(moduleMutations.clearHighlightSummaries)
-}
+};

@@ -1,5 +1,5 @@
-import { Store } from "vuex";
-import { DistilState } from "./store";
+import { Store } from 'vuex';
+import { DistilState } from './store';
 
 let storeInstance: Store<DistilState> = null;
 

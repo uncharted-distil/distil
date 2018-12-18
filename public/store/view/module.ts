@@ -34,4 +34,4 @@ export const actions = {
 	fetchResultsData: dispatch(moduleActions.fetchResultsData),
 	updateResultsSolution: dispatch(moduleActions.updateResultsSolution),
 	updateResultsHighlights: dispatch(moduleActions.updateResultsHighlights)
-}
+};

@@ -81,4 +81,4 @@ export const getters = {
 	getExcludedTableDataFields(state: DatasetState, getters: any): Dictionary<TableColumn> {
 		return getTableDataFields(state.excludedTableData);
 	}
-}
+};

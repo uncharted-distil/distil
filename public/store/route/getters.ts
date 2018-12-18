@@ -2,7 +2,7 @@ import { Variable, VariableSummary } from '../dataset/index';
 import { HighlightRoot, RowSelection } from '../highlights/index';
 import { AVAILABLE_TRAINING_VARS_INSTANCE, AVAILABLE_TARGET_VARS_INSTSANCE, TRAINING_VARS_INSTANCE, RESULT_TRAINING_VARS_INSTANCE, ROUTE_PAGE_SUFFIX } from '../route/index';
 import { decodeFilters, Filter, FilterParams } from '../../util/filters';
-import { decodeHighlights } from '../../util/highlights'
+import { decodeHighlights } from '../../util/highlights';
 import { decodeRowSelection } from '../../util/row';
 import { Dictionary } from '../../util/dict';
 import { Route } from 'vue-router';
@@ -15,7 +15,7 @@ function buildLookup(strs: any[]): Dictionary<boolean> {
 			lookup[str] = true;
 			lookup[str.toLowerCase()] = true;
 		} else {
-			console.error("Ignoring NULL string in look-up parameter list.  This shouldn't happen.")
+			console.error('Ignoring NULL string in look-up parameter list.  This should not happen.');
 		}
 	});
 	return lookup;
@@ -39,7 +39,7 @@ export const getters = {
 	},
 
 	getRouteTrainingVariables(state: Route): string {
-		return state.query.training ? state.query.training : null
+		return state.query.training ? state.query.training : null;
 	},
 
 	getRouteAvailableTrainingVarsPage(state: Route): number {
@@ -75,15 +75,15 @@ export const getters = {
 	},
 
 	getRouteFilters(state: Route): string {
-		return state.query.filters ? state.query.filters : null
+		return state.query.filters ? state.query.filters : null;
 	},
 
 	getRouteHighlightRoot(state: Route): string {
-		return state.query.highlights ? state.query.highlights : null
+		return state.query.highlights ? state.query.highlights : null;
 	},
 
 	getRouteRowSelection(state: Route): string {
-		return state.query.row ? state.query.row : null
+		return state.query.row ? state.query.row : null;
 	},
 
 	getRouteResultFilters(state: Route): string {
@@ -211,4 +211,4 @@ export const getters = {
 		const split = geo.split(',');
 		return _.toNumber(split[2]);
 	}
-}
+};

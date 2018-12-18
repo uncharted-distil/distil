@@ -2,7 +2,7 @@ import _ from 'lodash';
 import axios from 'axios';
 import { ActionContext } from 'vuex';
 import { DatasetState, Variable } from './index';
-import { mutations } from './module'
+import { mutations } from './module';
 import { DistilState } from '../store';
 import { HighlightRoot } from '../highlights/index';
 import { FilterParams, INCLUDE_FILTER } from '../../util/filters';

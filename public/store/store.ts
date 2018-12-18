@@ -1,6 +1,5 @@
 import Vue from 'vue';
-import Vuex from 'vuex';
-import { Store } from 'vuex';
+import Vuex, { Store } from 'vuex';
 import { routeModule } from './route/module';
 import { Route } from 'vue-router';
 import { datasetModule } from './dataset/module';
@@ -21,9 +20,9 @@ Vue.use(Vuex);
 export interface DistilState {
 	routeModule: Route;
 	datasetModule: DatasetState;
-	highlightsModule: HighlightState,
+	highlightsModule: HighlightState;
 	solutionModule: SolutionState;
-	resultsModule: ResultsState,
+	resultsModule: ResultsState;
 	viewModule: ViewState;
 	appModule: AppState;
 }

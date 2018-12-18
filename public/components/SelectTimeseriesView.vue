@@ -33,10 +33,11 @@ import Vue from 'vue';
 import SparklineRow from './SparklineRow';
 import { Dictionary } from '../util/dict';
 import { Filter } from '../util/filters';
-import { RowSelection } from '../store/highlights/index';
+import { RowSelection, HighlightRoot } from '../store/highlights/index';
 import { TableRow, TableColumn, TimeseriesExtrema } from '../store/dataset/index';
 import { getters as routeGetters } from '../store/route/module';
 import { getters as datasetGetters } from '../store/dataset/module';
+import { updateHighlightRoot } from '../util/highlights';
 
 const TICK_SIZE = 8;
 const SELECTED_TICK_SIZE = 18;
@@ -114,6 +115,10 @@ export default Vue.extend({
 			return extrema[this.dataset];
 		},
 
+		highlightRoot(): HighlightRoot {
+			return routeGetters.getDecodedHighlightRoot(this.$store);
+		},
+
 		microExtrema(): TimeseriesExtrema {
 			return {
 				x: {
@@ -145,8 +150,11 @@ export default Vue.extend({
 		},
 
 		microMin(): number {
-			if (this.selectedMicroMin) {
+			if (this.selectedMicroMin !== null) {
 				return this.selectedMicroMin;
+			}
+			if (this.highlightRoot && this.highlightRoot.key === this.timeseriesField) {
+				return this.highlightRoot.value.from;
 			}
 			if (this.timeseriesExtrema) {
 				return this.timeseriesExtrema.x.min;
@@ -155,8 +163,11 @@ export default Vue.extend({
 		},
 
 		microMax(): number {
-			if (this.selectedMicroMax) {
+			if (this.selectedMicroMax !== null) {
 				return this.selectedMicroMax;
+			}
+			if (this.highlightRoot && this.highlightRoot.key === this.timeseriesField) {
+				return this.highlightRoot.value.to;
 			}
 			if (this.timeseriesExtrema) {
 				return this.timeseriesExtrema.x.max;
@@ -222,11 +233,12 @@ export default Vue.extend({
 		},
 		injectSVG() {
 
-			this.clearSVG();
-
 			if (!this.timeseriesExtrema) {
+				console.log('not drawing because extrema isnt here');
 				return;
 			}
+
+			this.clearSVG();
 
 			this.macroScale = d3.scaleLinear()
 				.domain([this.timeseriesExtrema.x.min, this.timeseriesExtrema.x.max])
@@ -277,10 +289,23 @@ export default Vue.extend({
 				this.injectMicroAxis();
 			};
 
+			const dragended = (d, index, elem) => {
+				updateHighlightRoot(this.$router, {
+					context: this.instanceName,
+					key: this.timeseriesField,
+					value: {
+						from: this.microMin,
+						to: this.microMax
+					}
+				});
+			};
+
 			this.svg.selectAll('.axis-selection .tick')
 				.call(d3.drag()
 					.on('start', dragstarted)
-					.on('drag', dragged));
+					.on('drag', dragged)
+					.on('end', dragended)
+				);
 		},
 		attachTranslationHandlers() {
 
@@ -314,7 +339,6 @@ export default Vue.extend({
 			this.svg.selectAll('.axis-selection-rect')
 				.call(d3.drag()
 					.on('drag', dragged));
-				// const
 		},
 		clearSVG() {
 			this.svg.selectAll('*').remove();
@@ -333,7 +357,7 @@ export default Vue.extend({
 	},
 
 	mounted() {
-		//this.injectSVG();
+		this.injectSVG();
 	}
 
 });

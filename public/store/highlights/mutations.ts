@@ -20,4 +20,4 @@ export const mutations = {
 	clearHighlightSummaries(state: HighlightState) {
 		state.highlightValues.summaries = [];
 	}
-}
+};

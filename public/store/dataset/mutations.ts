@@ -84,4 +84,4 @@ export const mutations = {
 		state.excludedTableData = excludedTableData;
 	}
 
-}
+};

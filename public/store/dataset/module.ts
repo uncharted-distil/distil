@@ -11,7 +11,7 @@ export const datasetModule: Module<DatasetState, DistilState> = {
 	actions: moduleActions,
 	mutations: moduleMutations,
 	state: state
-}
+};
 
 const { commit, read, dispatch } = getStoreAccessors<DatasetState, DistilState>(null);
 
@@ -39,7 +39,7 @@ export const getters = {
 	getExcludedTableDataNumRows: read(moduleGetters.getExcludedTableDataNumRows),
 	getExcludedTableDataItems: read(moduleGetters.getExcludedTableDataItems),
 	getExcludedTableDataFields: read(moduleGetters.getExcludedTableDataFields),
-}
+};
 
 // Typed actions
 export const actions = {
@@ -61,7 +61,7 @@ export const actions = {
 	// included / excluded table data
 	fetchIncludedTableData: dispatch(moduleActions.fetchIncludedTableData),
 	fetchExcludedTableData: dispatch(moduleActions.fetchExcludedTableData),
-}
+};
 
 // Typed mutations
 export const mutations = {
@@ -80,4 +80,4 @@ export const mutations = {
 	setIncludedTableData: commit(moduleMutations.setIncludedTableData),
 	setExcludedTableData: commit(moduleMutations.setExcludedTableData),
 
-}
+};
