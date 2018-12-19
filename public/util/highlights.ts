@@ -37,11 +37,6 @@ export function createFilterFromHighlightRoot(highlightRoot: HighlightRoot, mode
 		key = addClusterPrefix(key);
 	}
 
-	// TODO: remove this once timeseries filters are impl'd
-	if (type === 'timeseries') {
-		return null;
-	}
-
 	if (_.isString(highlightRoot.value)) {
 		return {
 			key: key,
@@ -52,6 +47,13 @@ export function createFilterFromHighlightRoot(highlightRoot: HighlightRoot, mode
 	}
 	if (highlightRoot.value.from !== undefined &&
 		highlightRoot.value.to !== undefined) {
+
+		// TODO: we currently have no support for filter timeseries data by
+		// ranges and handle it in the client.
+		if (type === 'timeseries') {
+			return null;
+		}
+
 		return {
 			key: key,
 			type: NUMERICAL_FILTER,
