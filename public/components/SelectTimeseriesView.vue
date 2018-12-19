@@ -152,11 +152,19 @@ export default Vue.extend({
 			return d3.select($svg);
 		},
 
+		isTimeseriesViewHighlight(): boolean {
+			// ignore any highlights unless they are range highlights
+			return this.highlightRoot &&
+				this.highlightRoot.key === this.timeseriesField &&
+				this.highlightRoot.value.from !== undefined &&
+				this.highlightRoot.value.to !== undefined;
+		},
+
 		microMin(): number {
 			if (this.selectedMicroMin !== null) {
 				return this.selectedMicroMin;
 			}
-			if (this.highlightRoot && this.highlightRoot.key === this.timeseriesField) {
+			if (this.isTimeseriesViewHighlight) {
 				return this.highlightRoot.value.from;
 			}
 			if (this.timeseriesExtrema) {
@@ -169,7 +177,7 @@ export default Vue.extend({
 			if (this.selectedMicroMax !== null) {
 				return this.selectedMicroMax;
 			}
-			if (this.highlightRoot && this.highlightRoot.key === this.timeseriesField) {
+			if (this.isTimeseriesViewHighlight) {
 				return this.highlightRoot.value.to;
 			}
 			if (this.timeseriesExtrema) {
