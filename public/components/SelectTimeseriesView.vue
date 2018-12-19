@@ -11,13 +11,15 @@
 				</template>
 			</div>
 		</div>
-		<div v-for="item in items">
-			<sparkline-row
-				:timeseries-url="item[timeseriesField]"
-				:timeseries-extrema="microExtrema"
-				:margin="margin"
-				:highlight-pixel-x="highlightPixelX">
-			</sparkline-row>
+		<div class="timeseries-rows">
+			<div v-for="item in items">
+				<sparkline-row
+					:timeseries-url="item[timeseriesField]"
+					:timeseries-extrema="microExtrema"
+					:margin="margin"
+					:highlight-pixel-x="highlightPixelX">
+				</sparkline-row>
+			</div>
 		</div>
 		<div class="vertical-line"></div>
 	</div>
@@ -410,10 +412,19 @@ svg.axis {
 	flex: 1;
 }
 .timeseries-row-header {
+	position: relative;
+	width: 100%;
 	height: 64px;
 	line-height: 32px;
 	border-bottom: 1px solid #999;
 	padding: 0 8px;
+	background-color: #fff;
+}
+.timeseries-rows {
+	position: relative;
+	height: calc(100% - 64px);
+	z-index: 0;
+	overflow: scroll;
 }
 .timeseries-var-col {
 	float: left;
