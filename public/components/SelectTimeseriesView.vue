@@ -41,6 +41,7 @@ import { updateHighlightRoot } from '../util/highlights';
 
 const TICK_SIZE = 8;
 const SELECTED_TICK_SIZE = 18;
+const MIN_PIXEL_WIDTH = 32;
 
 export default Vue.extend({
 	name: 'select-timeseries-view',
@@ -234,7 +235,6 @@ export default Vue.extend({
 		injectSVG() {
 
 			if (!this.timeseriesExtrema) {
-				console.log('not drawing because extrema isnt here');
 				return;
 			}
 
@@ -265,6 +265,26 @@ export default Vue.extend({
 
 			this.attachScalingHandlers();
 		},
+		repositionMicroMin(xVal: number) {
+			const px = this.macroScale(xVal);
+			const $lower = this.svg.select('.axis-selection .tick');
+			$lower.attr('transform', `translate(${px}, 0)`);
+			$lower.select('text').text(xVal.toFixed(2));
+		},
+		repositionMicroMax(xVal: number) {
+			const px = this.macroScale(xVal);
+			const $upper = this.svg.select('.axis-selection .tick:last-child');
+			$upper.attr('transform', `translate(${px}, 0)`);
+			$upper.select('text').text(xVal.toFixed(2));
+		},
+		repositionMicroRange(xMin: number, xMax: number) {
+			const minPx = this.macroScale(xMin);
+			const maxPx = this.macroScale(xMax);
+			const widthPx = maxPx - minPx;
+			const $range = this.svg.select('.axis-selection-rect');
+			$range .attr('x', minPx + this.margin.left);
+			$range .attr('width', widthPx);
+		},
 		attachScalingHandlers() {
 			const dragstarted = (d, index, elem) => {
 				this.highlightPixelX = null;
@@ -276,15 +296,18 @@ export default Vue.extend({
 				const maxX = this.width;
 
 				const px = _.clamp(d3.event.x, minX, maxX);
-				const x = this.macroScale.invert(px);
-				if (index === 0) {
-					this.selectedMicroMin = x;
-				} else {
-					this.selectedMicroMax = x;
-				}
 
-				d3.select(elem[index]).attr('transform', `translate(${px}, 0)`);
-				d3.select(elem[index]).select('text').text(x.toFixed(2));
+				if (index === 0) {
+					const maxPx = this.macroScale(this.microMax);
+					const clampedPx = Math.min(px, maxPx - MIN_PIXEL_WIDTH);
+					this.selectedMicroMin = this.macroScale.invert(clampedPx);
+					this.repositionMicroMin(this.selectedMicroMin);
+				} else {
+					const minPx = this.macroScale(this.microMin);
+					const clampedPx = Math.max(px, minPx + MIN_PIXEL_WIDTH);
+					this.selectedMicroMax = this.macroScale.invert(clampedPx);
+					this.repositionMicroMax(this.selectedMicroMax);
+				}
 
 				this.injectMicroAxis();
 			};
@@ -311,34 +334,47 @@ export default Vue.extend({
 
 			const dragged = (d, index, elem) => {
 
+				if (this.selectedMicroMin === null) {
+					this.selectedMicroMin = this.microMin;
+				}
+				if (this.selectedMicroMax === null) {
+					this.selectedMicroMax = this.microMax;
+				}
+
 				const maxDelta = this.timeseriesExtrema.x.max - this.selectedMicroMax;
 				const minDelta = this.timeseriesExtrema.x.min - this.selectedMicroMin;
 
-				const delta = _.clamp(this.macroScale.invert(d3.event.dx), minDelta, maxDelta);
+				const delta = this.macroScale.invert(d3.event.dx);
+				const clampedDelta = _.clamp(delta, minDelta, maxDelta);
 
+				this.selectedMicroMin += clampedDelta;
+				this.selectedMicroMax += clampedDelta;
 
-				if (this.selectedMicroMin === null) {
-					this.selectedMicroMin = this.timeseriesExtrema.x.min;
-				}
-				if (this.selectedMicroMax === null) {
-					this.selectedMicroMax = this.timeseriesExtrema.x.max;
-				}
-				this.selectedMicroMin += delta;
-				this.selectedMicroMax += delta;
+				// update rect
+				this.repositionMicroRange(this.selectedMicroMin, this.selectedMicroMax);
 
-				const x = this.macroScale(this.selectedMicroMin);
-				d3.select(elem[index]).attr('x', x + this.margin.left);
-
-				// TODO: update the ticks
-				// const $lower = this.svg.select('.axis-selection tick:nth-child(1)');
-				// const $upper = this.svg.select('.axis-selection tick:nth-child(2)');
+				// update ticks
+				this.repositionMicroMin(this.selectedMicroMin);
+				this.repositionMicroMax(this.selectedMicroMax);
 
 				this.injectMicroAxis();
 			};
 
+			const dragended = (d, index, elem) => {
+				updateHighlightRoot(this.$router, {
+					context: this.instanceName,
+					key: this.timeseriesField,
+					value: {
+						from: this.microMin,
+						to: this.microMax
+					}
+				});
+			};
+
 			this.svg.selectAll('.axis-selection-rect')
 				.call(d3.drag()
-					.on('drag', dragged));
+					.on('drag', dragged)
+					.on('end', dragended));
 		},
 		clearSVG() {
 			this.svg.selectAll('*').remove();
@@ -443,6 +479,7 @@ svg.axis {
 .axis-selection-rect {
 	fill: #00c6e1;
 	opacity: 0.25;
+	cursor: pointer;
 }
 
 </style>
