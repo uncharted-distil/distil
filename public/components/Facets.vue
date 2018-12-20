@@ -394,6 +394,14 @@ export default Vue.extend({
 			}
 		},
 
+		selectTimeseriesFacet(facet: any, count?: number) {
+			facet._sparklineContainer.parent().css('background-color', 'rgba(0, 198, 225, .2)');
+		},
+
+		deselectTimeseriesFacet(facet: any) {
+			facet._sparklineContainer.parent().css('background-color', '');
+		},
+
 		injectDeemphasis(group: any, deemphasis: any) {
 			if (!deemphasis) {
 				return;
@@ -635,8 +643,10 @@ export default Vue.extend({
 						const highlightValue = this.getHighlightRootValue(highlights);
 						if (highlightValue.toLowerCase() === facet.value.toLowerCase()) {
 							this.selectCategoricalFacet(facet);
+							this.selectTimeseriesFacet(facet);
 						} else {
 							this.deselectCategoricalFacet(facet);
+							this.deselectTimeseriesFacet(facet);
 						}
 
 					} else {
