@@ -16,7 +16,10 @@
 				:ref="refName"
 				:items="items"
 				:fields="fields"
-				@row-clicked="onRowClick">
+				:sort-by="errorCol"
+				:sort-compare="sortingByResidualError ? sortingByErrorFunction : undefined"
+				@row-clicked="onRowClick"
+				@sort-changed="onSortChanged">
 
 				<template :slot="predictedCol" slot-scope="data">
 					{{target}}<sup>{{solutionIndex}}</sup>
@@ -79,13 +82,19 @@ export default Vue.extend({
 		SparklinePreview
 	},
 
+	data() {
+		return {
+			sortingBy: undefined
+		};
+	},
+
 	props: {
 		title: String as () => string,
 		refName: String as () => string,
 		dataItems: Array as () => Array<any>,
 		dataFields: Object as () => Dictionary<TableColumn>,
-		instanceName: { 
-			type: String as () => string, 
+		instanceName: {
+			type: String as () => string,
 			default: 'results-table-table'
 		}
 	},
@@ -192,6 +201,17 @@ export default Vue.extend({
 			.filter(field => field.type === 'timeseries')
 			.map(field => field.key);
 		},
+
+		isRegression(): boolean {
+			return solutionGetters.isRegression(this.$store);
+		},
+
+		sortingByResidualError(): boolean {
+			if (this.isRegression && this.sortingBy === this.errorCol || this.sortingBy === undefined) {
+				return true;
+			}
+			return false;
+		}
 	},
 
 	methods: {
@@ -228,8 +248,15 @@ export default Vue.extend({
 				return '#e05353';
 			}
 			return '#9e9e9e';
-		}
+		},
 
+		sortingByErrorFunction(a, b, key): number {
+			return Math.abs(_.toNumber(a[key])) - Math.abs(_.toNumber(b[key]));
+		},
+
+		onSortChanged(event) {
+			this.sortingBy = event.sortBy;
+		}
 	}
 
 });
