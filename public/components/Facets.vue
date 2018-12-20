@@ -815,6 +815,9 @@ export default Vue.extend({
 						{
 							store: this.$store,
 							propsData: {
+								// NOTE: there seems to be an issue with the visibility plugin used
+								// when injecting this way. Cancel the visibility flagging for facets.
+								preventHiding: true,
 								imageUrl: facet.file || facet.value
 							}
 						});
