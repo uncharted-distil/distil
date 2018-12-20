@@ -44,6 +44,36 @@ export const mutations = {
 		Vue.set(state.files, args.url, args.file);
 	},
 
+	updateTimeseriesFile(state: DatasetState, args: { dataset: string, url: string, file: number[][] }) {
+
+		Vue.set(state.files, args.url, args.file);
+
+		const minX = _.minBy(args.file, d => d[0])[0];
+		const maxX = _.maxBy(args.file, d => d[0])[0];
+		const minY = _.minBy(args.file, d => d[1])[1];
+		const maxY = _.maxBy(args.file, d => d[1])[1];
+
+		if (!state.timeseriesExtrema[args.dataset]) {
+			Vue.set(state.timeseriesExtrema, args.dataset, {
+				x: {
+					min: minX,
+					max: maxX
+				},
+				y: {
+					min: minY,
+					max: maxY
+				}
+			});
+			return;
+		}
+		const x = state.timeseriesExtrema[args.dataset].x;
+		const y = state.timeseriesExtrema[args.dataset].y;
+		Vue.set(x, 'min', Math.min(x.min, minX));
+		Vue.set(x, 'max', Math.max(x.max, maxX));
+		Vue.set(y, 'min', Math.min(y.min, minY));
+		Vue.set(y, 'max', Math.max(y.max, maxY));
+	},
+
 	// sets the current selected data into the store
 	setIncludedTableData(state: DatasetState, includedTableData: TableData) {
 		state.includedTableData = includedTableData;
@@ -54,4 +84,4 @@ export const mutations = {
 		state.excludedTableData = excludedTableData;
 	}
 
-}
+};

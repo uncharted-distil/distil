@@ -3,17 +3,17 @@ import { Route, Location } from 'vue-router';
 import { Dictionary } from './dict';
 
 export interface RouteArgs {
-	dataset?: string,
-	terms?: string,
-	filters?: string,
-	training?: string,
-	target?: string,
-	solutionId?: string,
-	highlights?: string,
+	dataset?: string;
+	terms?: string;
+	filters?: string;
+	training?: string;
+	target?: string;
+	solutionId?: string;
+	highlights?: string;
 	row?: string;
-	residualThresholdMin?: string,
-	residualThresholdMax?: string,
-	geo?: string
+	residualThresholdMin?: string;
+	residualThresholdMax?: string;
+	geo?: string;
 }
 
 /**

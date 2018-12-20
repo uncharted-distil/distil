@@ -1,8 +1,8 @@
 import { Dictionary } from '../../util/dict';
 
 export enum SummaryType {
-	Categorical = "categorical",
-	Numerical = "numerical"
+	Categorical = 'categorical',
+	Numerical = 'numerical'
 }
 
 export const D3M_INDEX_FIELD = 'd3mIndex';
@@ -83,11 +83,17 @@ export interface TableRow {
 	_cellVariants: Dictionary<string>;
 }
 
+export interface TimeseriesExtrema {
+	x: Extrema;
+	y: Extrema;
+}
+
 export interface DatasetState {
 	datasets: Dataset[];
 	variables: Variable[];
 	variableSummaries: VariableSummary[];
 	files: Dictionary<any>;
+	timeseriesExtrema: Dictionary<TimeseriesExtrema>;
 	includedTableData: TableData;
 	excludedTableData: TableData;
 }
@@ -105,9 +111,11 @@ export const state: DatasetState = {
 	// linked files
 	files: {},
 
+	timeseriesExtrema: {},
+
 	// selected data entries for the active dataset
 	includedTableData: null,
 
 	// excluded data entries for the active dataset
 	excludedTableData: null
-}
+};

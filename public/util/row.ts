@@ -3,7 +3,7 @@ import { D3M_INDEX_FIELD } from '../store/dataset/index';
 import { getters as routeGetters } from '../store/route/module';
 import { getters as dataGetters } from '../store/dataset/module';
 import { getters as resultsGetters } from '../store/results/module';
-import { overlayRouteEntry } from '../util/routes'
+import { overlayRouteEntry } from '../util/routes';
 import { Filter, ROW_FILTER } from '../util/filters';
 import { CREATE_ROUTE, RESULTS_ROUTE } from '../store/route/index';
 import _ from 'lodash';
@@ -50,7 +50,7 @@ export function getNumIncludedRows(selection: RowSelection): number {
 	return includedData.filter(data => d3mIndices[data[D3M_INDEX_FIELD]]).length;
 }
 
-export function getNumExcludedRows(selection: RowSelection,): number {
+export function getNumExcludedRows(selection: RowSelection): number {
 	if (!selection || selection.d3mIndices.length === 0) {
 		return 0;
 	}
@@ -66,7 +66,7 @@ export function isRowSelected(selection: RowSelection, d3mIndex: number): boolea
 	if (!selection || selection.d3mIndices.length === 0) {
 		return false;
 	}
-	for (let i=0; i<selection.d3mIndices.length; i++) {
+	for (let i = 0; i < selection.d3mIndices.length; i++) {
 		if (selection.d3mIndices[i] === d3mIndex) {
 			return true;
 		}

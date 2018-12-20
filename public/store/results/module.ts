@@ -11,7 +11,7 @@ export const resultsModule: Module<ResultsState, DistilState> = {
 	actions: moduleActions,
 	mutations: moduleMutations,
 	state: state
-}
+};
 
 const { commit, read, dispatch } = getStoreAccessors<ResultsState, DistilState>(null);
 
@@ -38,7 +38,7 @@ export const getters = {
 	getCorrectnessSummaries: read(moduleGetters.getCorrectnessSummaries),
 	// result table data
 	getResultDataNumRows: read(moduleGetters.getResultDataNumRows)
-}
+};
 
 // Typed actions
 export const actions = {
@@ -56,7 +56,7 @@ export const actions = {
 	fetchResidualsExtrema: dispatch(moduleActions.fetchResidualsExtrema),
 	// correctness
 	fetchCorrectnessSummaries: dispatch(moduleActions.fetchCorrectnessSummaries)
-}
+};
 
 // Typed mutations
 export const mutations = {
@@ -76,4 +76,4 @@ export const mutations = {
 	clearResidualsExtrema: commit(moduleMutations.clearResidualsExtrema),
 	// correctness
 	updateCorrectnessSummaries: commit(moduleMutations.updateCorrectnessSummaries)
-}
+};

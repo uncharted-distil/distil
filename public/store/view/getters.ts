@@ -13,8 +13,7 @@ export const getters = {
 	},
 
 	getSelectTrainingPaginatedVariables(state: ViewState): Variable[] {
-
-		const availableTrainingVarsPage = routeGetters.getRouteAvailableTrainingVarsPage(store())
+		const availableTrainingVarsPage = routeGetters.getRouteAvailableTrainingVarsPage(store());
 		const trainingVarsPage = routeGetters.getRouteTrainingVarsPage(store());
 		const availableVariables = routeGetters.getAvailableVariables(store());
 		const trainingVariables = routeGetters.getTrainingVariables(store());
@@ -29,4 +28,4 @@ export const getters = {
 		const resultTrainingVarsPage = routeGetters.getRouteResultTrainingVarsPage(store());
 		return filterVariablesByPage(resultTrainingVarsPage, NUM_PER_PAGE, sortVariablesByImportance(trainingVars));
 	}
-}
+};

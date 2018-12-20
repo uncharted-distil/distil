@@ -48,7 +48,7 @@ export const mutations = {
 		Vue.set(state.streams, args.requestId, args.stream);
 	},
 
-	removeRequestStream(state: SolutionState, args: { requestId: string } ) {
+	removeRequestStream(state: SolutionState, args: { requestId: string }) {
 		Vue.delete(state.streams, args.requestId);
 	}
-}
+};

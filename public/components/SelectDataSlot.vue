@@ -19,6 +19,9 @@
 						<b-form-radio value="geo" class="view-button">
 							<i class="fa fa-globe"></i>
 						</b-form-radio >
+						<b-form-radio value="timeseries" class="view-button">
+							<i class="fa fa-line-chart"></i>
+						</b-form-radio >
 					</b-form-radio-group>
 				</b-form-group>
 			</b-nav>
@@ -62,17 +65,8 @@
 				<select-image-mosaic v-if="viewType==='image'" :included-active="includedActive" :instance-name="instanceName"></select-image-mosaic>
 				<select-graph-view v-if="viewType==='graph'" :included-active="includedActive" :instance-name="instanceName"></select-graph-view>
 				<select-geo-plot v-if="viewType==='geo'" :included-active="includedActive" :instance-name="instanceName"></select-geo-plot>
+				<select-timeseries-view v-if="viewType==='timeseries'" :included-active="includedActive" :instance-name="instanceName"></select-timeseries-view>
 			</template>
-			<!-- <div class="select-data-no-results" v-if="hasData && numItems===0">
-				No data available
-			</div>
-
-			<template v-if="hasData && numItems>0">
-				<select-data-table v-if="viewType==='table'" :included-active="includedActive" :instance-name="instanceName"></select-data-table>
-				<select-image-mosaic v-if="viewType==='image'" :included-active="includedActive" :instance-name="instanceName"></select-image-mosaic>
-				<select-graph-view v-if="viewType==='graph'" :included-active="includedActive" :instance-name="instanceName"></select-graph-view>
-				<select-geo-plot v-if="viewType==='geo'" :included-active="includedActive" :instance-name="instanceName"></select-geo-plot>
-			</template> -->
 		</div>
 
 	</div>
@@ -84,6 +78,7 @@ import Vue from 'vue';
 import { spinnerHTML } from '../util/spinner';
 import SelectDataTable from './SelectDataTable';
 import SelectImageMosaic from './SelectImageMosaic';
+import SelectTimeseriesView from './SelectTimeseriesView';
 import SelectGeoPlot from './SelectGeoPlot';
 import SelectGraphView from './SelectGraphView';
 import FilterBadge from './FilterBadge';
@@ -104,7 +99,8 @@ export default Vue.extend({
 		SelectDataTable,
 		SelectImageMosaic,
 		SelectGraphView,
-		SelectGeoPlot
+		SelectGeoPlot,
+		SelectTimeseriesView
 	},
 
 	data() {

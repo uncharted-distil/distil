@@ -1,13 +1,12 @@
 import axios from 'axios';
 import { ActionContext } from 'vuex';
-import { HighlightState } from './index';
+import { HighlightState, HighlightRoot } from './index';
 import { DistilState } from '../store';
 import { FilterParams, INCLUDE_FILTER } from '../../util/filters';
 import { getSolutionsByRequestIds, getSolutionById } from '../../util/solutions';
 import { getSummary } from '../../util/data';
 import { Variable } from '../dataset/index';
-import { mutations } from './module'
-import { HighlightRoot } from './index';
+import { mutations } from './module';
 import { addHighlightToFilterParams } from '../../util/highlights';
 
 export type HighlightsContext = ActionContext<HighlightState, DistilState>;
@@ -70,7 +69,7 @@ export const actions = {
 		let filterParams = {
 			variables: [],
 			filters: []
-		}
+		};
 		filterParams = addHighlightToFilterParams(filterParams, args.highlightRoot, INCLUDE_FILTER);
 
 		return Promise.all(args.training.map(variable => {
@@ -107,7 +106,7 @@ export const actions = {
 		let filterParams = {
 			variables: [],
 			filters: []
-		}
+		};
 		filterParams = addHighlightToFilterParams(filterParams, args.highlightRoot, INCLUDE_FILTER);
 
 		return axios.post(`/distil/target-summary/${args.dataset}/${args.target}/${solution.resultId}`, filterParams)
@@ -136,11 +135,11 @@ export const actions = {
 		let filterParams = {
 			variables: [],
 			filters: []
-		}
+		};
 		filterParams = addHighlightToFilterParams(filterParams, args.highlightRoot, INCLUDE_FILTER);
 
 		const solutions = getSolutionsByRequestIds(context.rootState.solutionModule, args.requestIds);
-		const endpoint = `/distil/predicted-summary/${args.dataset}/${args.target}`
+		const endpoint = `/distil/predicted-summary/${args.dataset}/${args.target}`;
 		return Promise.all(solutions.map(solution => {
 			const key = solution.predictedKey;
 			const label = 'Predicted';
@@ -165,7 +164,7 @@ export const actions = {
 		let filterParams = {
 			variables: [],
 			filters: []
-		}
+		};
 		filterParams = addHighlightToFilterParams(filterParams, args.highlightRoot, INCLUDE_FILTER);
 
 		const solutions = getSolutionsByRequestIds(context.rootState.solutionModule, args.requestIds);
@@ -191,11 +190,11 @@ export const actions = {
 		let filterParams = {
 			variables: [],
 			filters: []
-		}
+		};
 		filterParams = addHighlightToFilterParams(filterParams, args.highlightRoot, INCLUDE_FILTER);
 
 		const solutions = getSolutionsByRequestIds(context.rootState.solutionModule, args.requestIds);
-		const endpoint = `/distil/correctness-summary/${args.dataset}`
+		const endpoint = `/distil/correctness-summary/${args.dataset}`;
 
 		return Promise.all(solutions.map(solution => {
 			const key = solution.errorKey;
@@ -244,4 +243,4 @@ export const actions = {
 		}
 		return Promise.all(ps);
 	}
-}
+};

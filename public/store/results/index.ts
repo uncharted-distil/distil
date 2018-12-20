@@ -24,10 +24,10 @@ export const state: ResultsState = {
 	trainingSummaries: [],
 	targetSummary: null,
 	// predicted
-	predictedSummaries:[],
+	predictedSummaries: [],
 	// residuals
 	residualSummaries: [],
 	residualsExtrema: { min: null, max: null },
 	// correctness summary (correct vs. incorrect) for predicted categorical data
 	correctnessSummaries: [],
-}
+};
