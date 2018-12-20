@@ -207,7 +207,7 @@ export default Vue.extend({
 		},
 
 		sortingByResidualError(): boolean {
-			if (this.isRegression && this.sortingBy === this.errorCol || this.sortingBy === undefined) {
+			if (this.isRegression && (this.sortingBy === this.errorCol || this.sortingBy === undefined)) {
 				return true;
 			}
 			return false;
