@@ -116,12 +116,12 @@
   version = "v0.0.9"
 
 [[projects]]
-  digest = "1:fa610f9fe6a93f4a75e64c83673dfff9bf1a34bbb21e6102021b6bc7850834a3"
+  digest = "1:0981502f9816113c9c8c4ac301583841855c8cf4da8c72f696b3ebedf6d0e4e5"
   name = "github.com/mattn/go-isatty"
   packages = ["."]
   pruneopts = "UT"
-  revision = "fc9e8d8ef48496124e79ae0df75490096eccf6fe"
-  version = "v0.0.2"
+  revision = "6ca4dbf54d38eea1a992b3c722a76a5d1c4cb25c"
+  version = "v0.0.4"
 
 [[projects]]
   branch = "master"
@@ -216,7 +216,7 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:a06b62f8c48e0f633970ce831cefd3127540a46cc5448d0c8929980c4be0c887"
+  digest = "1:fc7ddabe73f96c54aff68e9b51642211239dfdee244113530504a6e6688770d2"
   name = "github.com/unchartedsoftware/distil-compute"
   packages = [
     "middleware",
@@ -227,10 +227,10 @@
     "primitive/compute/result",
   ]
   pruneopts = "UT"
-  revision = "bbf7f3d69181a76034d09af955365ee01f98b150"
+  revision = "15f5626a95f0d1158529e47e6a5babcbf675ba8e"
 
 [[projects]]
-  digest = "1:70f616a0a3abaf3ca5529b76f8de22471c1d3e56fe2a2689760f6b46d8d67fef"
+  digest = "1:86ba32d7f62245d94ba502c517e2c0602bb3d4bea4d2f777c56dbe81fa10250d"
   name = "github.com/unchartedsoftware/distil-ingest"
   packages = [
     "conf",
@@ -241,10 +241,11 @@
     "postgres/model",
     "rest",
     "smmry",
+    "util",
   ]
   pruneopts = "UT"
-  revision = "1cafd450fec6d567058cc61c776a4a6a4a7ed9b2"
-  version = "0.7.0"
+  revision = "c8293d6fdeea574b4280e59f8a1e1fd57bbbd2c6"
+  version = "0.9.0"
 
 [[projects]]
   branch = "master"
@@ -292,7 +293,7 @@
   name = "golang.org/x/crypto"
   packages = ["pbkdf2"]
   pruneopts = "UT"
-  revision = "3d3f9f413869b949e48070b5bc593aa22cc2b8f2"
+  revision = "eb0de9b17e854e9b1ccd9963efafc79862359959"
 
 [[projects]]
   branch = "master"
@@ -310,15 +311,15 @@
     "trace",
   ]
   pruneopts = "UT"
-  revision = "adae6a3d119ae4890b46832a2e88a95adc62b8e7"
+  revision = "fae4c4e3ad76c295c3d6d259f898136b4bf833a8"
 
 [[projects]]
   branch = "master"
-  digest = "1:7ba061af4131fb44b30448572acd0d6fefbf63a61b97b7ef1dea0be5871c2742"
+  digest = "1:8775d8a768d9e65e8b659172804aac5db1fc8d563ba766470a6c2698c57c61a7"
   name = "golang.org/x/sys"
   packages = ["unix"]
   pruneopts = "UT"
-  revision = "66b7b1311ac80bbafcd2daeef9a5e6e2cd1e2399"
+  revision = "4ed8d59d0b35e1e29334a206d1b3f38b1e5dfb31"
 
 [[projects]]
   digest = "1:a2ab62866c75542dd18d2b069fec854577a20211d7c0ea6ae746072a1dccdd18"
@@ -349,7 +350,7 @@
   name = "google.golang.org/genproto"
   packages = ["googleapis/rpc/status"]
   pruneopts = "UT"
-  revision = "b5d43981345bdb2c233eb4bf3277847b48c6fdc6"
+  revision = "31ac5d88444a9e7ad18077db9a165d793ad06a2e"
 
 [[projects]]
   digest = "1:c3ad9841823db6da420a5625b367913b4ff54bbe60e8e3c98bd20e243e62e2d2"
@@ -435,6 +436,7 @@
     "github.com/unchartedsoftware/distil-ingest/metadata",
     "github.com/unchartedsoftware/distil-ingest/postgres",
     "github.com/unchartedsoftware/distil-ingest/rest",
+    "github.com/unchartedsoftware/distil-ingest/util",
     "github.com/unchartedsoftware/plog",
     "github.com/vova616/xxhash",
     "github.com/zenazn/goji/graceful",

@@ -40,6 +40,8 @@ type IngestTaskConfig struct {
 	ClusteringEnabled                  bool
 	FeaturizationOutputDataRelative    string
 	FeaturizationOutputSchemaRelative  string
+	GeocodingOutputDataRelative        string
+	GeocodingOutputSchemaRelative      string
 	MergedOutputPathRelative           string
 	MergedOutputSchemaPathRelative     string
 	SchemaPathRelative                 string

@@ -9,7 +9,6 @@ import (
 	"path"
 	"regexp"
 
-	"github.com/otiai10/copy"
 	"github.com/pkg/errors"
 	"github.com/unchartedsoftware/distil-compute/model"
 	"github.com/unchartedsoftware/distil-ingest/metadata"
@@ -23,20 +22,10 @@ var (
 
 // FeaturizePrimitive will featurize the dataset fields using a primitive.
 func FeaturizePrimitive(schemaFile string, index string, dataset string, config *IngestTaskConfig) error {
-	sourceFolder := path.Dir(schemaFile)
-	outputSchemaPath := config.getTmpAbsolutePath(config.FeaturizationOutputSchemaRelative)
-	outputDataPath := config.getTmpAbsolutePath(config.FeaturizationOutputDataRelative)
-	outputFolder := path.Dir(outputSchemaPath)
-
-	// copy the source folder to have all the linked files for merging
-	err := copy.Copy(sourceFolder, outputFolder)
+	outputPath, err := initializeDatasetCopy(schemaFile, config.FeaturizationOutputSchemaRelative, config.FeaturizationOutputDataRelative, config)
 	if err != nil {
-		return errors.Wrap(err, "unable to copy source data")
+		return errors.Wrap(err, "unable to copy source data folder")
 	}
-
-	// delete the existing files that will be overwritten
-	os.Remove(outputSchemaPath)
-	os.Remove(outputDataPath)
 
 	// load metadata from original schema
 	meta, err := metadata.LoadMetadataFromOriginalSchema(schemaFile)
@@ -54,8 +43,8 @@ func FeaturizePrimitive(schemaFile string, index string, dataset string, config 
 	d3mIndexField := getD3MIndexField(mainDR)
 
 	// open the input file
-	dataPath := path.Join(sourceFolder, mainDR.ResPath)
-	lines, err := readCSVFile(dataPath, config.HasHeader)
+	dataPath := path.Join(outputPath.sourceFolder, mainDR.ResPath)
+	lines, err := ReadCSVFile(dataPath, config.HasHeader)
 	if err != nil {
 		return errors.Wrap(err, "error reading raw data")
 	}
@@ -109,7 +98,7 @@ func FeaturizePrimitive(schemaFile string, index string, dataset string, config 
 		return errors.Wrap(err, "error writing feature output")
 	}
 
-	relativePath := getRelativePath(path.Dir(outputSchemaPath), outputDataPath)
+	relativePath := getRelativePath(path.Dir(outputPath.outputSchema), outputPath.outputData)
 	mainDR.ResPath = relativePath
 
 	// write the new schema to file

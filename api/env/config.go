@@ -36,6 +36,8 @@ type Config struct {
 	ClusteringEnabled                  bool    `env:"CLUSTERING_ENABLED" envDefault:"false"`
 	FeaturizationOutputDataRelative    string  `env:"FEATURIZATION_OUTPUT_DATA" envDefault:"features/tables/learningData.csv"`
 	FeaturizationOutputSchemaRelative  string  `env:"FEATURIZATION_OUTPUT_SCHEMA" envDefault:"features/datasetDoc.json"`
+	GeocodingOutputDataRelative        string  `env:"FEATURIZATION_OUTPUT_DATA" envDefault:"geocoded/tables/learningData.csv"`
+	GeocodingOutputSchemaRelative      string  `env:"FEATURIZATION_OUTPUT_SCHEMA" envDefault:"geocoded/datasetDoc.json"`
 	MergedOutputDataPath               string  `env:"MERGED_OUTPUT_DATA_PATH" envDefault:"merged/tables/learningData.csv"`
 	MergedOutputSchemaPath             string  `env:"MERGED_OUTPUT_SCHEMA_PATH" envDefault:"merged/datasetDoc.json"`
 	SchemaPath                         string  `env:"SCHEMA_PATH" envDefault:"datasetDoc.json"`

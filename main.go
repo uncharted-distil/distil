@@ -172,6 +172,8 @@ func main() {
 		ClusteringEnabled:                  config.ClusteringEnabled,
 		FeaturizationOutputDataRelative:    config.FeaturizationOutputDataRelative,
 		FeaturizationOutputSchemaRelative:  config.FeaturizationOutputSchemaRelative,
+		GeocodingOutputDataRelative:        config.GeocodingOutputDataRelative,
+		GeocodingOutputSchemaRelative:      config.GeocodingOutputSchemaRelative,
 		MergedOutputPathRelative:           config.MergedOutputDataPath,
 		MergedOutputSchemaPathRelative:     config.MergedOutputSchemaPath,
 		SchemaPathRelative:                 config.SchemaPath,

@@ -71,8 +71,21 @@ func GeocodingHandler(metaCtor api.MetadataStorageCtor, dataCtor api.DataStorage
 			return
 		}
 
+		// build the row index since geocoding does not return the d3m index
+		lines, err := task.ReadCSVFile(d.Folder, true)
+		if err != nil {
+			handleError(w, err)
+			return
+		}
+
+		d3mIndex := d.GetD3MIndexVariable()
+		rowIndex := make(map[int]string)
+		for i, line := range lines {
+			rowIndex[i] = line[d3mIndex.Index]
+		}
+
 		// geocode data
-		geocoded, err := task.GeocodeForward(d.Folder, variable, d.Variables)
+		geocoded, err := task.GeocodeForward(d.Folder, dataset, variable, rowIndex)
 		if err != nil {
 			handleError(w, err)
 			return

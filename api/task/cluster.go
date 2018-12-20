@@ -6,7 +6,6 @@ import (
 	"os"
 	"path"
 
-	"github.com/otiai10/copy"
 	"github.com/pkg/errors"
 	"github.com/unchartedsoftware/distil-compute/model"
 	"github.com/unchartedsoftware/distil-ingest/metadata"
@@ -21,20 +20,10 @@ const (
 
 // ClusterPrimitive will cluster the dataset fields using a primitive.
 func ClusterPrimitive(index string, dataset string, config *IngestTaskConfig) error {
-	sourceFolder := path.Dir(config.getAbsolutePath(config.SchemaPathRelative))
-	outputSchemaPath := config.getTmpAbsolutePath(config.ClusteringOutputSchemaRelative)
-	outputDataPath := config.getTmpAbsolutePath(config.ClusteringOutputDataRelative)
-	outputFolder := path.Dir(outputSchemaPath)
-
-	// copy the source folder to have all the linked files for merging
-	err := copy.Copy(sourceFolder, outputFolder)
+	outputPath, err := initializeDatasetCopy(config.getAbsolutePath(config.SchemaPathRelative), config.ClusteringOutputSchemaRelative, config.ClusteringOutputDataRelative, config)
 	if err != nil {
-		return errors.Wrap(err, "unable to copy source data")
+		return errors.Wrap(err, "unable to copy source data folder")
 	}
-
-	// delete the existing files that will be overwritten
-	os.Remove(outputSchemaPath)
-	os.Remove(outputDataPath)
 
 	// load metadata from original schema
 	meta, err := metadata.LoadMetadataFromOriginalSchema(config.getAbsolutePath(config.SchemaPathRelative))
@@ -53,7 +42,7 @@ func ClusterPrimitive(index string, dataset string, config *IngestTaskConfig) er
 
 	// open the input file
 	dataPath := path.Join(config.ContainerDataPath, mainDR.ResPath)
-	lines, err := readCSVFile(dataPath, config.HasHeader)
+	lines, err := ReadCSVFile(dataPath, config.HasHeader)
 	if err != nil {
 		return errors.Wrap(err, "error reading raw data")
 	}
@@ -98,7 +87,7 @@ func ClusterPrimitive(index string, dataset string, config *IngestTaskConfig) er
 		return errors.Wrap(err, "error writing clustered output")
 	}
 
-	relativePath := getRelativePath(path.Dir(outputSchemaPath), outputDataPath)
+	relativePath := getRelativePath(path.Dir(outputPath.outputSchema), outputPath.outputData)
 	mainDR.ResPath = relativePath
 
 	// write the new schema to file
