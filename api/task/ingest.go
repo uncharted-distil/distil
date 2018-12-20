@@ -139,6 +139,12 @@ func IngestDataset(metaCtor api.MetadataStorageCtor, index string, dataset strin
 		log.Errorf("unable to summarize the dataset: %v", err)
 	}
 
+	err = GeocodeForwardPrimitive(config.getTmpAbsolutePath(config.MergedOutputSchemaPathRelative), index, dataset, config)
+	if err != nil {
+		return errors.Wrap(err, "unable to geocode all data")
+	}
+	log.Infof("finished geocoding the dataset")
+
 	err = Ingest(storage, index, dataset, config)
 	if err != nil {
 		return errors.Wrap(err, "unable to ingest ranked data")
@@ -182,7 +188,7 @@ func Merge(schemaFile string, index string, dataset string, config *IngestTaskCo
 // Ingest the metadata to ES and the data to Postgres.
 func Ingest(storage api.MetadataStorage, index string, dataset string, config *IngestTaskConfig) error {
 	meta, err := metadata.LoadMetadataFromClassification(
-		config.getTmpAbsolutePath(config.MergedOutputSchemaPathRelative),
+		config.getTmpAbsolutePath(config.GeocodingOutputSchemaRelative),
 		config.getTmpAbsolutePath(config.ClassificationOutputPathRelative))
 	if err != nil {
 		return errors.Wrap(err, "unable to load metadata")
@@ -194,7 +200,7 @@ func Ingest(storage api.MetadataStorage, index string, dataset string, config *I
 	}
 
 	// load stats
-	err = metadata.LoadDatasetStats(meta, config.getTmpAbsolutePath(config.MergedOutputPathRelative))
+	err = metadata.LoadDatasetStats(meta, config.getTmpAbsolutePath(config.GeocodingOutputDataRelative))
 	if err != nil {
 		return errors.Wrap(err, "unable to load stats")
 	}
@@ -298,7 +304,7 @@ func Ingest(storage api.MetadataStorage, index string, dataset string, config *I
 
 	// Load the data.
 	log.Infof("inserting rows into database")
-	reader, err := os.Open(config.getTmpAbsolutePath(config.MergedOutputPathRelative))
+	reader, err := os.Open(config.getTmpAbsolutePath(config.GeocodingOutputDataRelative))
 	scanner := bufio.NewScanner(reader)
 
 	// skip header
