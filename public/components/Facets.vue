@@ -9,7 +9,7 @@ import _ from 'lodash';
 import $ from 'jquery';
 import Vue from 'vue';
 import { Group, CategoricalFacet, isCategoricalFacet, getCategoricalChunkSize, isNumericalFacet } from '../util/facets';
-import { Highlight, RowSelection } from '../store/highlights/index';
+import { Highlight, RowSelection, Row } from '../store/highlights/index';
 import { VariableSummary } from '../store/dataset/index';
 import { Dictionary } from '../util/dict';
 import { getSelectedRows } from '../util/row';
@@ -17,6 +17,7 @@ import Facets from '@uncharted.software/stories-facets';
 import ImagePreview from '../components/ImagePreview.vue';
 import TypeChangeMenu from '../components/TypeChangeMenu.vue';
 import { circleSpinnerHTML } from '../util/spinner';
+import { getVarType, isClusterType, isFeatureType, addClusterPrefix, addFeaturePrefix } from '../util/types';
 
 import '@uncharted.software/stories-facets/dist/facets.css';
 
@@ -435,6 +436,49 @@ export default Vue.extend({
 			}
 		},
 
+		findClusterCol(key: string, row: Row) {
+			const clustered = addClusterPrefix(key);
+			return _.find(row.cols, c => {
+				return c.key === clustered;
+			});
+		},
+
+		findFeatureCol(key: string, row: Row) {
+			const feature = addFeaturePrefix(key);
+			return _.find(row.cols, c => {
+				return c.key === feature;
+			});
+		},
+
+		addRowSelectionToFacet(facet: any, col: any) {
+			if (facet._histogram) {
+				facet._histogram.bars.forEach(bar => {
+					const entry: any = _.last(bar.metadata);
+					if (col.value >= _.toNumber(entry.label) &&
+						col.value < _.toNumber(entry.toLabel)) {
+						bar._element.css('fill', '#ff0067');
+						bar._element.addClass('row-selected');
+					}
+				});
+			} else {
+				facet._sparklineContainer.parent().css('box-shadow', 'inset 0 0 0 1000px rgba(255,0,103,.2)');
+				facet._barForeground.css('box-shadow', 'inset 0 0 0 1000px #ff0067');
+			}
+
+		},
+
+		removeRowSelectionFromFacet(facet: any) {
+			if (facet._histogram) {
+				facet._histogram.bars.forEach(bar => {
+					bar._element.css('fill', '');
+					bar._element.removeClass('row-selected');
+				});
+			} else {
+				facet._barForeground.css('box-shadow', '');
+				facet._sparklineContainer.parent().css('box-shadow', '');
+			}
+		},
+
 		injectSelectedRowIntoGroup(group: any, selection: RowSelection) {
 
 			// clear existing selections
@@ -445,15 +489,7 @@ export default Vue.extend({
 					continue;
 				}
 
-				if (facet._histogram) {
-					facet._histogram.bars.forEach(bar => {
-						bar._element.css('fill', '');
-						bar._element.removeClass('row-selected');
-					});
-				} else {
-					facet._barForeground.css('box-shadow', '');
-					facet._barBackground.css('box-shadow', '');
-				}
+				this.removeRowSelectionFromFacet(facet);
 			}
 
 			// if no selection, exit early
@@ -483,20 +519,31 @@ export default Vue.extend({
 
 					if (facet._histogram) {
 
-						facet._histogram.bars.forEach(bar => {
-							const entry: any = _.last(bar.metadata);
-							if (col.value >= _.toNumber(entry.label) &&
-								col.value < _.toNumber(entry.toLabel)) {
-								bar._element.css('fill', '#ff0067');
-								bar._element.addClass('row-selected');
-							}
-						});
+						this.addRowSelectionToFacet(facet, col);
 
 					} else {
 
+						const type = getVarType(facet.key);
+
+						if (isClusterType(type)) {
+							const clusterCol = this.findClusterCol(facet.key, row);
+							if (facet.value === clusterCol.value) {
+								this.addRowSelectionToFacet(facet, col);
+							}
+							continue;
+						}
+
+						if (isFeatureType(type)) {
+							const featureCol = this.findFeatureCol(facet.key, row);
+							const features = featureCol.value.split(',');
+							if (_.includes(features, facet.value)) {
+								this.addRowSelectionToFacet(facet, col);
+							}
+							continue;
+						}
+
 						if (facet.value === col.value) {
-							facet._barForeground.css('box-shadow', 'inset 0 0 0 1000px #ff0067');
-							facet._barBackground.css('box-shadow', 'inset 0 0 0 1000px #ff0067');
+							this.addRowSelectionToFacet(facet, col);
 						}
 
 					}
