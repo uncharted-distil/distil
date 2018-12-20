@@ -1,14 +1,13 @@
 <template>
-	<div class="sparkline-container" v-observe-visibility="visibilityChanged" v-bind:class="{'is-hidden': !isVisible}">
-		<svg v-if="isLoaded" ref="svg" class="line-chart" @click.stop="onClick" ></svg>
-		<i class="fa fa-plus zoom-sparkline-icon"></i>
-		<div v-if="!isLoaded" v-html="spinnerHTML"></div>
-		<b-modal id="sparkline-zoom-modal" :title="timeseriesUrl"
-			@hide="hideModal"
-			:visible="zoomSparkline"
-			hide-footer>
-			<sparkline-chart :timeseries="timeseries" v-if="zoomSparkline"></sparkline-chart>
-		</b-modal>
+	<div class="sparkline-row" v-observe-visibility="visibilityChanged" v-bind:class="{'is-hidden': !isVisible}">
+		<div class="timeseries-var-col">{{timeseriesUrl}}</div>
+		<div class="timeseries-min-col">{{min.toFixed(2)}}</div>
+		<div class="timeseries-max-col">{{max.toFixed(2)}}</div>
+		<div class="timeseries-chart-col">
+			<svg v-if="isLoaded" ref="svg" class="line-chart-row" @click.stop="onClick"></svg>
+			<div v-if="!isLoaded" v-html="spinnerHTML"></div>
+			<div class="highlight-tooltip" ref="tooltip"></div>
+		</div>
 	</div>
 </template>
 
@@ -16,32 +15,35 @@
 
 import * as d3 from 'd3';
 import _ from 'lodash';
+import $ from 'jquery';
 import Vue from 'vue';
-import SparklineChart from '../components/SparklineChart.vue';
 import { Dictionary } from '../util/dict';
 import { circleSpinnerHTML } from '../util/spinner';
 import { getters as routeGetters } from '../store/route/module';
+import { TimeseriesExtrema } from '../store/dataset/index';
 import { getters as datasetGetters, actions as datasetActions } from '../store/dataset/module';
 
 export default Vue.extend({
-	name: 'sparkline-preview',
-
-	components: {
-		SparklineChart
-	},
+	name: 'sparkline-row',
 
 	props: {
 		margin: {
 			type: Object as () => any,
 			default: () => ({
-				top: 8,
+				top: 2,
 				right: 16,
-				bottom: 8,
+				bottom: 2,
 				left: 16
 			})
 		},
+		highlightPixelX: {
+			type: Number as () => number
+		},
 		timeseriesUrl: {
 			type: String as () => string
+		},
+		timeseriesExtrema: {
+			type: Object as () => TimeseriesExtrema
 		}
 	},
 	data() {
@@ -65,7 +67,7 @@ export default Vue.extend({
 			return datasetGetters.getFiles(this.$store);
 		},
 		isLoaded(): boolean {
-			return this.files[this.timeseriesUrl];
+			return !!this.files[this.timeseriesUrl];
 		},
 		timeseries(): number[][] {
 			return this.files[this.timeseriesUrl];
@@ -86,8 +88,56 @@ export default Vue.extend({
 			const $svg = this.$refs.svg as any;
 			const dims = $svg.getBoundingClientRect();
 			return dims.height - this.margin.top - this.margin.bottom;
+		},
+		min(): number {
+			return this.timeseries ? d3.min(this.timeseries, d => d[1]) : 0;
+		},
+		max(): number {
+			return this.timeseries ? d3.max(this.timeseries, d => d[1]) : 0;
 		}
 	},
+
+	watch: {
+		timeseriesExtrema: {
+			handler() {
+				if (this.isVisible && this.isLoaded) {
+					// only redraw if it is currently visible, the data has
+					// loaded
+					// NOTE: there is a race condition in which `isLoaded`
+					// returns true, but the svg element using `v-if="isLoaded"`
+					// has not yet rendered use this to ensure the DOM updates
+					// before attempting to inject
+					Vue.nextTick(() => {
+						this.injectTimeseries();
+					});
+				} else {
+					// ensure it re-renders once it comes back into view
+					this.hasRendered = false;
+				}
+			},
+			deep: true
+		},
+		highlightPixelX() {
+			const tooltip = this.$refs.tooltip as any;
+			if (this.highlightPixelX !== null && this.hasRendered && this.isVisible) {
+				const xVal = this.xScale.invert(this.highlightPixelX);
+				const bisect = d3.bisector(d => {
+					return d[0];
+				}).left;
+				const index = bisect(this.timeseries, xVal);
+				if (index >= 0 && index < this.timeseries.length) {
+					const yVal = this.timeseries[index][1];
+					$(tooltip).css({
+						left: this.highlightPixelX,
+						visibility: 'visible'
+					}).text(yVal.toFixed(2));
+					return;
+				}
+			}
+			$(tooltip).css('visibility', 'hidden');
+		}
+	},
+
 	methods: {
 		visibilityChanged(isVisible: boolean) {
 			this.isVisible = isVisible;
@@ -96,7 +146,9 @@ export default Vue.extend({
 				return;
 			}
 			if (this.isVisible && this.hasRequested && !this.hasRendered) {
-				this.injectTimeseries();
+				Vue.nextTick(() => {
+					this.injectTimeseries();
+				});
 			}
 		},
 		onClick() {
@@ -109,17 +161,18 @@ export default Vue.extend({
 			this.svg.selectAll('*').remove();
 		},
 		injectSparkline() {
-			const timeseries = this.timeseries;
 
-			this.xScale = d3.scalePoint()
+			const minX = this.timeseriesExtrema.x.min;
+			const maxX = this.timeseriesExtrema.x.max;
+			const minY = this.timeseriesExtrema.y.min;
+			const maxY = this.timeseriesExtrema.y.max;
+
+			this.xScale = d3.scaleLinear()
+				.domain([minX, maxX])
 				.range([0, this.width]);
-			this.xScale.domain(timeseries.map(d => d[0]));
-
-			const min = d3.min(timeseries, d => d[1]);
-			const max = d3.max(timeseries, d => d[1]);
 
 			this.yScale = d3.scaleLinear()
-				.domain([min, max])
+				.domain([minY, maxY])
 				.range([this.height, 0]);
 
 			const line = d3.line()
@@ -127,10 +180,8 @@ export default Vue.extend({
 				.y(d => this.yScale(d[1]))
 				.curve(d3.curveLinear);
 
-			const className = 'line-chart';
 			const g = this.svg.append('g')
-				.attr('transform', `translate(${this.margin.left}, ${this.margin.top})`)
-				.attr('class', className);
+				.attr('transform', `translate(${this.margin.left}, ${this.margin.top})`);
 
 			g.datum(this.timeseries);
 
@@ -166,7 +217,9 @@ export default Vue.extend({
 				url: this.timeseriesUrl
 			}).then(() => {
 				if (this.isVisible) {
-					this.injectTimeseries();
+					Vue.nextTick(() => {
+						this.injectTimeseries();
+					});
 				}
 			});
 		}
@@ -177,53 +230,41 @@ export default Vue.extend({
 
 <style>
 
-svg.line-chart {
+svg.line-chart-row {
 	position: relative;
 	max-height: 32px;
 	width: 100%;
-	border: 1px solid rgba(0,0,0,0);
 }
 
-svg.line-chart g {
+svg.line-chart-row g {
 	stroke: #666;
 	stroke-width: 2px;
 }
 
-svg.line-chart:hover g {
+/*
+svg.line-chart-row:hover g {
 	stroke: #00c6e1;
 }
+*/
 
-.zoom-sparkline-icon {
-	position: absolute;
-	right: 4px;
-	top: 4px;
-	color: #666;
-	visibility: hidden;
-}
-
-.sparkline-container {
+.sparkline-row {
 	position: relative;
-}
-
-.sparkline-container:hover .zoom-sparkline-icon {
-	visibility: visible;
-}
-
-.zoom-sparkline-icon {
-	pointer-events: none;
-}
-
-.sparkline-elem-zoom {
-	position: relative;
-	padding: 32px 16px;
-	border-radius: 4px;
-}
-
-#sparkline-zoom-modal .modal-dialog {
-	max-width: 50%;
+	width: 100%;
+	height: 32px;
+	line-height: 32px;
+	vertical-align: middle;
+	border-bottom: 1px solid #999;
+	padding: 0 8px;
 }
 
 .is-hidden {
 	visibility: hidden;
 }
+
+.highlight-tooltip {
+	position: absolute;
+	top: 0;
+	pointer-events: none;
+}
+
 </style>

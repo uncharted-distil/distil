@@ -5,10 +5,10 @@ import { INCLUDE_FILTER, EXCLUDE_FILTER } from '../../util/filters';
 import { getSolutionsByRequestIds, getSolutionById } from '../../util/solutions';
 import { Variable } from '../dataset/index';
 import { HighlightRoot } from '../highlights/index';
-import { mutations } from './module'
-import { ResultsState } from './index'
+import { mutations } from './module';
+import { ResultsState } from './index';
 import { addHighlightToFilterParams } from '../../util/highlights';
-import { getSummary, createPendingSummary, createErrorSummary, createEmptyTableData} from '../../util/data';
+import { getSummary, createPendingSummary, createErrorSummary, createEmptyTableData } from '../../util/data';
 
 export type ResultsContext = ActionContext<ResultsState, DistilState>;
 
@@ -196,7 +196,7 @@ export const actions = {
 			return null;
 		}
 
-		const endpoint = `/distil/predicted-summary/${args.dataset}/${args.target}`
+		const endpoint = `/distil/predicted-summary/${args.dataset}/${args.target}`;
 		const key = solution.predictedKey;
 		const label = 'Predicted';
 		getSummary(context, endpoint, solution, key, label, mutations.updatePredictedSummaries, null);
@@ -239,7 +239,7 @@ export const actions = {
 			return null;
 		}
 
-		const endPoint = `/distil/residuals-summary/${args.dataset}/${args.target}`
+		const endPoint = `/distil/residuals-summary/${args.dataset}/${args.target}`;
 		const key = solution.errorKey;
 		const label = 'Error';
 		getSummary(context, endPoint, solution, key, label, mutations.updateResidualsSummaries, null);
@@ -299,4 +299,4 @@ export const actions = {
 		}));
 	}
 
-}
+};

@@ -509,10 +509,21 @@ func (f *NumericalField) parseStats(row *pgx.Rows) (*NumericalStats, error) {
 		var stddev *float64
 		var mean *float64
 		// Expect one row of data.
-		row.Next()
+		exists := row.Next()
+		if !exists {
+			return nil, fmt.Errorf("No result found")
+		}
 		err := row.Scan(&stddev, &mean)
 		if err != nil {
 			return nil, errors.Wrap(err, "no stats found")
+		}
+
+		if stddev == nil {
+			return nil, fmt.Errorf("no stddev found")
+		}
+
+		if mean == nil {
+			return nil, fmt.Errorf("no mean found")
 		}
 
 		stats = &NumericalStats{
@@ -532,7 +543,6 @@ func (f *NumericalField) getFromClause(alias bool) string {
 		fromClause = f.subSelect()
 		if alias {
 			fromClause = fmt.Sprintf("%s as nested INNER JOIN %s as data on nested.\"%s\" = data.\"%s\"", fromClause, f.Dataset, model.D3MIndexFieldName, model.D3MIndexFieldName)
-			//fromClause = fmt.Sprintf("%s as %s", fromClause, f.Dataset)
 		}
 	}
 

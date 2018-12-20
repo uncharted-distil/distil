@@ -216,7 +216,7 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:fc7ddabe73f96c54aff68e9b51642211239dfdee244113530504a6e6688770d2"
+  digest = "1:0d9010aab6b5099bee35813a1ce1d441f6842888b101203375acb50c42bf7740"
   name = "github.com/unchartedsoftware/distil-compute"
   packages = [
     "middleware",
@@ -230,7 +230,7 @@
   revision = "15f5626a95f0d1158529e47e6a5babcbf675ba8e"
 
 [[projects]]
-  digest = "1:86ba32d7f62245d94ba502c517e2c0602bb3d4bea4d2f777c56dbe81fa10250d"
+  digest = "1:755645cf8bbbb0b00c33bbd53d940d4124d631a87996213000904fc9ab1615b1"
   name = "github.com/unchartedsoftware/distil-ingest"
   packages = [
     "conf",

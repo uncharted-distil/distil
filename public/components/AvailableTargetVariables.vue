@@ -5,7 +5,7 @@
 			enable-type-change
 			enable-title
 			ignore-highlights
-			instance-name="availableTargetVars"
+			:instance-name="instanceName"
 			:rows-per-page="numRowsPerPage"
 			:groups="groups"
 			:dataset="dataset"
@@ -21,11 +21,13 @@ import { getters as datasetGetters } from '../store/dataset/module';
 import { getters as routeGetters } from '../store/route/module';
 import { createRouteEntry } from '../util/routes';
 import { filterSummariesByDataset } from '../util/data';
+import { AVAILABLE_TARGET_VARS_INSTSANCE } from '../store/route/index';
 import VariableFacets from '../components/VariableFacets.vue';
 import { CREATE_ROUTE } from '../store/route/index';
 import { Group, createGroups } from '../util/facets';
 import 'font-awesome/css/font-awesome.css';
 import Vue from 'vue';
+
 
 // 9 so it makes a nice clean grid
 const NUM_TARGET_PER_PAGE = 9;
@@ -48,6 +50,9 @@ export default Vue.extend({
 		},
 		numRowsPerPage(): number {
 			return NUM_TARGET_PER_PAGE;
+		},
+		instanceName(): string {
+			return AVAILABLE_TARGET_VARS_INSTSANCE;
 		},
 		html(): ( { key: string } ) => HTMLDivElement {
 			return (group: { key: string }) => {

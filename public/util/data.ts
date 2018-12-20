@@ -134,7 +134,7 @@ export function sortGroupsByImportance(groups: Group[], variables: Variable[]): 
 	// create importance lookup map
 	const importance: Dictionary<number> = {};
 	variables.forEach(variable => {
-		importance[variable.colName] = variable.importance;
+		importance[variable.colName] = getVariableImportance(variable);
 	});
 	// sort by importance
 	groups.sort((a, b) => {

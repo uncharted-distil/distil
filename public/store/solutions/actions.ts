@@ -1,7 +1,7 @@
 import axios from 'axios';
 import { SolutionState,
 	SOLUTION_PENDING, SOLUTION_RUNNING, SOLUTION_COMPLETED, SOLUTION_ERRORED,
- 	REQUEST_PENDING, REQUEST_RUNNING, REQUEST_COMPLETED, REQUEST_ERRORED } from './index';
+	REQUEST_PENDING, REQUEST_RUNNING, REQUEST_COMPLETED, REQUEST_ERRORED } from './index';
 import { ActionContext } from 'vuex';
 import { DistilState } from '../store';
 import { mutations } from './module';
@@ -296,4 +296,4 @@ export const actions = {
 			requestId: args.requestId
 		});
 	},
-}
+};

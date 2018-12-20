@@ -40,22 +40,27 @@ func (s *Storage) PersistRequestFeature(requestID string, featureName string, fe
 
 // PersistRequestFilters persists request filters information to Postgres.
 func (s *Storage) PersistRequestFilters(requestID string, filters *api.FilterParams) error {
-	sql := fmt.Sprintf("INSERT INTO %s (request_id, feature_name, filter_type, filter_mode, filter_min, filter_max, filter_categories, filter_indices) VALUES ($1, $2, $3, $4, $5, $6, $7, $8);", filterTableName)
+	sql := fmt.Sprintf("INSERT INTO %s (request_id, feature_name, filter_type, filter_mode, filter_min, filter_max, filter_min_x, filter_max_x, filter_min_y, filter_max_y, filter_categories, filter_indices) VALUES ($1, $2, $3, $4, $5, $6, $7, $8);", filterTableName)
 
 	for _, filter := range filters.Filters {
 		switch filter.Type {
 		case model.NumericalFilter:
-			_, err := s.client.Exec(sql, requestID, filter.Key, model.NumericalFilter, filter.Mode, filter.Min, filter.Max, "", "")
+			_, err := s.client.Exec(sql, requestID, filter.Key, model.NumericalFilter, filter.Mode, filter.Min, filter.Max, 0, 0, 0, 0, "", "")
+			if err != nil {
+				return err
+			}
+		case model.BivariateFilter:
+			_, err := s.client.Exec(sql, requestID, filter.Key, model.BivariateFilter, filter.Mode, 0, 0, filter.Bounds.MinX, filter.Bounds.MaxX, filter.Bounds.MinY, filter.Bounds.MaxY, "", "")
 			if err != nil {
 				return err
 			}
 		case model.CategoricalFilter, model.FeatureFilter, model.TextFilter:
-			_, err := s.client.Exec(sql, requestID, filter.Key, filter.Type, filter.Mode, 0, 0, strings.Join(filter.Categories, ","), "")
+			_, err := s.client.Exec(sql, requestID, filter.Key, filter.Type, filter.Mode, 0, 0, 0, 0, 0, 0, strings.Join(filter.Categories, ","), "")
 			if err != nil {
 				return err
 			}
 		case model.RowFilter:
-			_, err := s.client.Exec(sql, requestID, "", model.RowFilter, filter.Mode, 0, 0, "", strings.Join(filter.D3mIndices, ","))
+			_, err := s.client.Exec(sql, requestID, "", model.RowFilter, filter.Mode, 0, 0, 0, 0, 0, 0, "", strings.Join(filter.D3mIndices, ","))
 			if err != nil {
 				return err
 			}
@@ -167,7 +172,7 @@ func (s *Storage) FetchRequestFeatures(requestID string) ([]*api.Feature, error)
 
 // FetchRequestFilters pulls request filter information from Postgres.
 func (s *Storage) FetchRequestFilters(requestID string, features []*api.Feature) (*api.FilterParams, error) {
-	sql := fmt.Sprintf("SELECT request_id, feature_name, filter_type, filter_mode, filter_min, filter_max, filter_categories, filter_indices FROM %s WHERE request_id = $1;", filterTableName)
+	sql := fmt.Sprintf("SELECT request_id, feature_name, filter_type, filter_mode, filter_min, filter_max, filter_min_x, filter_max_x, filter_min_y, filter_max_y, filter_categories, filter_indices FROM %s WHERE request_id = $1;", filterTableName)
 
 	rows, err := s.client.Query(sql, requestID)
 	if err != nil {
@@ -188,10 +193,14 @@ func (s *Storage) FetchRequestFilters(requestID string, features []*api.Feature)
 		var filterMode string
 		var filterMin float64
 		var filterMax float64
+		var filterMinX float64
+		var filterMaxX float64
+		var filterMinY float64
+		var filterMaxY float64
 		var filterCategories string
 		var filterIndices string
 
-		err = rows.Scan(&requestID, &featureName, &filterType, &filterMode, &filterMin, &filterMax, &filterCategories, &filterIndices)
+		err = rows.Scan(&requestID, &featureName, &filterType, &filterMode, &filterMin, &filterMax, &filterMinX, &filterMaxX, &filterMinY, &filterMaxY, &filterCategories, &filterIndices)
 		if err != nil {
 			return nil, errors.Wrap(err, "Unable to parse request filters from Postgres")
 		}
@@ -221,6 +230,15 @@ func (s *Storage) FetchRequestFilters(requestID string, features []*api.Feature)
 				filterMode,
 				filterMin,
 				filterMax,
+			))
+		case model.BivariateFilter:
+			filters.Filters = append(filters.Filters, model.NewBivariateFilter(
+				featureName,
+				filterMode,
+				filterMinX,
+				filterMaxX,
+				filterMinY,
+				filterMaxY,
 			))
 		case model.RowFilter:
 			filters.Filters = append(filters.Filters, model.NewRowFilter(

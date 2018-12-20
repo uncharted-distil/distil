@@ -25,7 +25,7 @@ function getHost() {
 function establishConnection(conn: Connection, callback: (x: any, c: Connection) => void) {
 	conn.socket = new WebSocket(`${getHost()}${conn.url}`);
 	// on open
-	conn.socket.onopen = function() {
+	conn.socket.onopen = () => {
 		conn.isOpen = true;
 		console.log(`WebSocket conn established on /${conn.url}`);
 		// send pending messages
@@ -43,7 +43,7 @@ function establishConnection(conn: Connection, callback: (x: any, c: Connection)
 		callback(null, conn);
 	};
 	// on message
-	conn.socket.onmessage = function(event) {
+	conn.socket.onmessage = event => {
 		const res = JSON.parse(event.data);
 		if (!conn.tracking.has(res.id)) {
 			console.error('Unrecognized response: ', res,  ', discarding');
@@ -70,7 +70,7 @@ function establishConnection(conn: Connection, callback: (x: any, c: Connection)
 		}
 	};
 	// on close
-	conn.socket.onclose = function() {
+	conn.socket.onclose = () => {
 		// log close only if conn was ever open
 		if (conn.isOpen) {
 			console.warn(`WebSocket connection on /${conn.url} lost, attempting to reconnect in ${RETRY_INTERVAL_MS}ms`);
@@ -84,14 +84,14 @@ function establishConnection(conn: Connection, callback: (x: any, c: Connection)
 		conn.isOpen = false;
 		// attempt to re-establish conn
 		setTimeout(() => {
-			establishConnection(conn, () => {});
+			establishConnection(conn, () => { return null; });
 		}, RETRY_INTERVAL_MS);
 	};
 }
 
 function stripURL(url) {
 	if (!url || !_.isString(url)) {
-		throw `Provided URL \`${url}\` is invalid`;
+		throw new Error(`Provided URL \`${url}\` is invalid`);
 	}
 	// strip leading `/`
 	url = (url[0] === '/') ? url.substring(1, url.length) : url;
@@ -162,7 +162,7 @@ export default class Connection {
 	pending: Message[];
 	tracking: Map<string, Symbol>;
 	isOpen: boolean;
-	socket: WebSocket | null
+	socket: WebSocket | null;
 
 	constructor(url: string, callback) {
 		this.url = stripURL(url);

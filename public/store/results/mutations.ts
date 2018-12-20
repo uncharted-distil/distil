@@ -44,7 +44,7 @@ export const mutations = {
 		updateSummaries(summary, state.residualSummaries);
 	},
 
-	updateResidualsExtrema(state: ResultsState, extrema: Extrema ) {
+	updateResidualsExtrema(state: ResultsState, extrema: Extrema) {
 		state.residualsExtrema = extrema;
 	},
 
@@ -60,4 +60,4 @@ export const mutations = {
 	updateCorrectnessSummaries(state: ResultsState, summary: VariableSummary) {
 		updateSummaries(summary, state.correctnessSummaries);
 	}
-}
+};

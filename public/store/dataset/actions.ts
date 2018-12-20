@@ -2,7 +2,7 @@ import _ from 'lodash';
 import axios from 'axios';
 import { ActionContext } from 'vuex';
 import { DatasetState, Variable } from './index';
-import { mutations } from './module'
+import { mutations } from './module';
 import { DistilState } from '../store';
 import { HighlightRoot } from '../highlights/index';
 import { FilterParams, INCLUDE_FILTER } from '../../util/filters';
@@ -215,7 +215,7 @@ export const actions = {
 		}
 		return axios.get(`distil/timeseries/${args.dataset}/${args.url}`)
 			.then(response => {
-				mutations.updateFile(context, { url: args.url, file: response.data.timeseries });
+				mutations.updateTimeseriesFile(context, { dataset: args.dataset, url: args.url, file: response.data.timeseries });
 			})
 			.catch(error => {
 				console.error(error);

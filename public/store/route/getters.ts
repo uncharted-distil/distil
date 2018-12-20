@@ -1,7 +1,8 @@
 import { Variable, VariableSummary } from '../dataset/index';
 import { HighlightRoot, RowSelection } from '../highlights/index';
+import { AVAILABLE_TRAINING_VARS_INSTANCE, AVAILABLE_TARGET_VARS_INSTSANCE, TRAINING_VARS_INSTANCE, RESULT_TRAINING_VARS_INSTANCE, ROUTE_PAGE_SUFFIX } from '../route/index';
 import { decodeFilters, Filter, FilterParams } from '../../util/filters';
-import { decodeHighlights } from '../../util/highlights'
+import { decodeHighlights } from '../../util/highlights';
 import { decodeRowSelection } from '../../util/row';
 import { Dictionary } from '../../util/dict';
 import { Route } from 'vue-router';
@@ -10,8 +11,12 @@ import _ from 'lodash';
 function buildLookup(strs: any[]): Dictionary<boolean> {
 	const lookup = {};
 	strs.forEach(str => {
-		lookup[str] = true;
-		lookup[str.toLowerCase()] = true;
+		if (str) {
+			lookup[str] = true;
+			lookup[str.toLowerCase()] = true;
+		} else {
+			console.error('Ignoring NULL string in look-up parameter list.  This should not happen.');
+		}
 	});
 	return lookup;
 }
@@ -34,19 +39,27 @@ export const getters = {
 	},
 
 	getRouteTrainingVariables(state: Route): string {
-		return state.query.training ? state.query.training : null
+		return state.query.training ? state.query.training : null;
+	},
+
+	getRouteAvailableTrainingVarsPage(state: Route): number {
+		const pageVar = `${AVAILABLE_TRAINING_VARS_INSTANCE}${ROUTE_PAGE_SUFFIX}`;
+		return state.query[pageVar] ? _.toNumber(state.query[pageVar]) : 1;
 	},
 
 	getRouteTrainingVarsPage(state: Route): number {
-		return state.query.trainingVarsPage ? _.toNumber(state.query.trainingVarsPage) : 1
+		const pageVar = `${TRAINING_VARS_INSTANCE}${ROUTE_PAGE_SUFFIX}`;
+		return state.query[pageVar] ? _.toNumber(state.query[pageVar]) : 1;
 	},
 
-	getRouteAvailableVarsPage(state: Route): number {
-		return state.query.availableVarsPage ? _.toNumber(state.query.availableVarsPage) : 1
+	getRouteAvailableTargetVarsPage(state: Route): number {
+		const pageVar = `${AVAILABLE_TARGET_VARS_INSTSANCE}${ROUTE_PAGE_SUFFIX}`;
+		return state.query[pageVar] ? _.toNumber(state.query[pageVar]) : 1;
 	},
 
 	getRouteResultTrainingVarsPage(state: Route): number {
-		return state.query.resultTrainingVarsPage ? _.toNumber(state.query.resultTrainingVarsPage) : 1
+		const pageVar = `${RESULT_TRAINING_VARS_INSTANCE}${ROUTE_PAGE_SUFFIX}`;
+		return state.query[pageVar] ? _.toNumber(state.query[pageVar]) : 1;
 	},
 
 	getRouteTargetVariable(state: Route): string {
@@ -62,15 +75,15 @@ export const getters = {
 	},
 
 	getRouteFilters(state: Route): string {
-		return state.query.filters ? state.query.filters : null
+		return state.query.filters ? state.query.filters : null;
 	},
 
 	getRouteHighlightRoot(state: Route): string {
-		return state.query.highlights ? state.query.highlights : null
+		return state.query.highlights ? state.query.highlights : null;
 	},
 
 	getRouteRowSelection(state: Route): string {
-		return state.query.row ? state.query.row : null
+		return state.query.row ? state.query.row : null;
 	},
 
 	getRouteResultFilters(state: Route): string {
@@ -176,5 +189,26 @@ export const getters = {
 		return _.findIndex(solutions, (solution: any) => {
 			return solution.solutionId === solutionId;
 		});
+	},
+
+	getGeoCenter(state: Route, getters: any): number[] {
+		const geo = state.query.geo;
+		if (!geo) {
+			return null;
+		}
+		const split = geo.split(',');
+		return [
+			_.toNumber(split[0]),
+			_.toNumber(split[1])
+		];
+	},
+
+	getGeoZoom(state: Route, getters: any): number {
+		const geo = state.query.geo;
+		if (!geo) {
+			return null;
+		}
+		const split = geo.split(',');
+		return _.toNumber(split[2]);
 	}
-}
+};

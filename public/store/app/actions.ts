@@ -29,10 +29,10 @@ export const actions = {
 				mutations.setAborted(context);
 			})
 			.catch(error => {
-				 // If there's a proxy involved (NGINX) we will end up getting a 502 on a successful export because
-				 // the server exits.  We need to explicitly check for the condition here so that we don't interpret
+				// If there's a proxy involved (NGINX) we will end up getting a 502 on a successful export because
+				// the server exits.  We need to explicitly check for the condition here so that we don't interpret
 				// a success case as a failure.
-				if (error.response && error.response.status != 502) {
+				if (error.response && error.response.status !== 502) {
 					return new Error(error.response.data);
 				} else {
 					// NOTE: request always fails because we exit on the server
@@ -59,7 +59,7 @@ export const actions = {
 			console.warn('`meaningful` argument is missing');
 			return null;
 		}
-		return axios.post(`/distil/discovery/${args.dataset}/${args.target}`, { filterParams: args.filterParams, meaningful: args.meaningful})
+		return axios.post(`/distil/discovery/${args.dataset}/${args.target}`, { filterParams: args.filterParams, meaningful: args.meaningful});
 	},
 
 	fetchConfig(context: AppContext) {

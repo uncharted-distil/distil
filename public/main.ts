@@ -1,7 +1,7 @@
 import Vue from 'vue';
 import VueRouter from 'vue-router';
 import VueRouterSync from 'vuex-router-sync';
-import VueObserveVisibility from 'vue-observe-visibility'
+import VueObserveVisibility from 'vue-observe-visibility';
 import Home from './views/Home.vue';
 import Search from './views/Search.vue';
 import SelectTarget from './views/SelectTarget.vue';
@@ -59,7 +59,7 @@ VueRouterSync.sync(store, router, { moduleName: 'routeModule' });
 // create globally accessible store so that we don't have to have reference
 // to the component to use it.  Importing the instance directly leads to ciculcar
 // dependency errors from webpack, so we use a store provider and lazy init.
-setStore(store)
+setStore(store);
 
 // init app
 new Vue({
@@ -79,7 +79,7 @@ new Vue({
 			const path = routeGetters.getRoutePath(store);
 			// if dataset / target exist in problem file, immediately route to
 			// create models view.
-			if (appGetters.isTask1(this.$store) && path == HOME_ROUTE) {
+			if (appGetters.isTask1(this.$store) && path === HOME_ROUTE) {
 				const dataset = appGetters.getProblemDataset(this.$store);
 				console.log(`Task 1: Routing directly to select target view with dataset=\`${dataset}\``, dataset);
 				const entry = createRouteEntry(SELECT_ROUTE, {
@@ -88,7 +88,7 @@ new Vue({
 				this.$router.push(entry);
 			}
 
-			if (appGetters.isTask2(this.$store) && (path == HOME_ROUTE || path == SELECT_ROUTE)) {
+			if (appGetters.isTask2(this.$store) && (path === HOME_ROUTE || path === SELECT_ROUTE)) {
 				const dataset = appGetters.getProblemDataset(this.$store);
 				const target = appGetters.getProblemTarget(this.$store);
 				console.log(`Task 2: Routing directly to create models view with dataset=\`${dataset}\` and target=\`${target}\``, dataset, target);

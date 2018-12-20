@@ -16,7 +16,8 @@ export const getters = {
 	getRouteTerms: read(moduleGetters.getRouteTerms),
 	getRouteDataset: read(moduleGetters.getRouteDataset),
 	getRouteTrainingVariables: read(moduleGetters.getRouteTrainingVariables),
-	getRouteAvailableVarsPage: read(moduleGetters.getRouteAvailableVarsPage),
+	getRouteAvailableTrainingVarsPage: read(moduleGetters.getRouteAvailableTrainingVarsPage),
+	getRouteAvailableTargetVarsPage: read(moduleGetters.getRouteAvailableTargetVarsPage),
 	getRouteTrainingVarsPage: read(moduleGetters.getRouteTrainingVarsPage),
 	getRouteResultTrainingVarsPage: read(moduleGetters.getRouteResultTrainingVarsPage),
 	getRouteTargetVariable: read(moduleGetters.getRouteTargetVariable),
@@ -36,5 +37,7 @@ export const getters = {
 	getAvailableVariableSummaries: read(moduleGetters.getAvailableVariableSummaries),
 	getDecodedHighlightRoot: read(moduleGetters.getDecodedHighlightRoot),
 	getDecodedRowSelection: read(moduleGetters.getDecodedRowSelection),
-	getActiveSolutionIndex: read(moduleGetters.getActiveSolutionIndex)
+	getActiveSolutionIndex: read(moduleGetters.getActiveSolutionIndex),
+	getGeoCenter: read(moduleGetters.getGeoCenter),
+	getGeoZoom: read(moduleGetters.getGeoZoom)
 };

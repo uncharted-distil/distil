@@ -98,8 +98,8 @@ export const actions = {
 
 	fetchResultsData(context: ViewContext) {
 		// clear previous state
-		context.commit('clearTargetSummary')
-		context.commit('clearTrainingSummaries')
+		context.commit('clearTargetSummary');
+		context.commit('clearTrainingSummaries');
 		context.commit('clearHighlightSummaries');
 		context.commit('clearResidualsExtrema');
 		context.commit('setIncludedResultTableData', null);
@@ -123,8 +123,8 @@ export const actions = {
 
 	updateResultsSolution(context: ViewContext) {
 		// clear previous state
-		context.commit('clearTargetSummary')
-		context.commit('clearTrainingSummaries')
+		context.commit('clearTargetSummary');
+		context.commit('clearTrainingSummaries');
 		context.commit('clearHighlightSummaries');
 		context.commit('clearResidualsExtrema', null);
 		context.commit('setIncludedResultTableData', null);
@@ -145,7 +145,7 @@ export const actions = {
 			dataset: dataset,
 			solutionId: solutionId,
 			highlightRoot: highlightRoot
-		})
+		});
 		context.dispatch('fetchTargetSummary', {
 			dataset: dataset,
 			target: target,
@@ -224,4 +224,4 @@ export const actions = {
 			})
 		]);
 	}
-}
+};

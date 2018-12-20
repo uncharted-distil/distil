@@ -72,4 +72,4 @@ export const getters = {
 	getCorrectnessSummaries(state: ResultsState): VariableSummary[] {
 		return state.correctnessSummaries;
 	}
-}
+};

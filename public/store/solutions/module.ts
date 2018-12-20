@@ -11,7 +11,7 @@ export const solutionModule: Module<SolutionState, DistilState> = {
 	getters: moduleGetters,
 	actions: moduleActions,
 	mutations: moduleMutations
-}
+};
 
 const { commit, read, dispatch } = getStoreAccessors<SolutionState, DistilState>(null);
 
@@ -28,17 +28,17 @@ export const getters = {
 	isRegression: read(moduleGetters.isRegression),
 	isClassification: read(moduleGetters.isClassification),
 	getRequestStreams: read(moduleGetters.getRequestStreams),
-}
+};
 
 export const actions = {
 	fetchSolutionRequests: dispatch(moduleActions.fetchSolutionRequests),
 	createSolutionRequest: dispatch(moduleActions.createSolutionRequest),
 	stopSolutionRequest: dispatch(moduleActions.stopSolutionRequest),
-}
+};
 
 export const mutations = {
 	updateSolutionRequests: commit(moduleMutations.updateSolutionRequests),
 	clearSolutionRequests: commit(moduleMutations.clearSolutionRequests),
 	addRequestStream: commit(moduleMutations.addRequestStream),
 	removeRequestStream: commit(moduleMutations.removeRequestStream),
-}
+};

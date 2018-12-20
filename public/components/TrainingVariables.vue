@@ -35,6 +35,7 @@ import VariableFacets from '../components/VariableFacets.vue';
 import { VariableSummary } from '../store/dataset/index';
 import { Highlight } from '../store/highlights/index';
 import { getters as routeGetters } from '../store/route/module';
+import { TRAINING_VARS_INSTANCE } from '../store/route/index';
 import { Group, createGroups } from '../util/facets';
 import { getHighlights } from '../util/highlights';
 import { NUM_PER_PAGE } from '../util/data';
@@ -54,9 +55,6 @@ export default Vue.extend({
 		dataset(): string {
 			return routeGetters.getRouteDataset(this.$store);
 		},
-		instanceName(): string {
-			return 'trainingVars';
-		},
 		numRowsPerPage(): number {
 			return NUM_PER_PAGE;
 		},
@@ -71,6 +69,9 @@ export default Vue.extend({
 		},
 		subtitle(): string {
 			return `${this.groups.length} features selected`;
+		},
+		instanceName(): string {
+			return TRAINING_VARS_INSTANCE;
 		},
 		html(): (Group) => HTMLDivElement {
 			return (group: Group) => {

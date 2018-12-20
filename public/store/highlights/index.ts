@@ -41,4 +41,4 @@ export const state: HighlightState = {
 	highlightValues: {
 		summaries: []
 	}
-}
+};

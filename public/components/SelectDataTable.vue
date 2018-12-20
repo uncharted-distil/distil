@@ -15,7 +15,7 @@
 		</template>
 
 		<template v-for="timeseriesField in timeseriesFields" :slot="timeseriesField" slot-scope="data">
-			<sparkline-preview :key="timeseriesField" :time-series-url="data.item[timeseriesField]"></sparkline-preview>
+			<sparkline-preview :key="timeseriesField" :timeseries-url="data.item[timeseriesField]"></sparkline-preview>
 		</template>
 
 	</b-table>
@@ -31,10 +31,9 @@ import ImagePreview from './ImagePreview';
 import { getters as datasetGetters } from '../store/dataset/module';
 import { Dictionary } from '../util/dict';
 import { Filter } from '../util/filters';
-import { TableColumn, D3M_INDEX_FIELD } from '../store/dataset/index';
+import { TableColumn, TableRow, D3M_INDEX_FIELD } from '../store/dataset/index';
 import { RowSelection } from '../store/highlights/index';
 import { getters as routeGetters } from '../store/route/module';
-import { TableRow } from '../store/dataset/index';
 import { addRowSelection, removeRowSelection, isRowSelected, updateTableRowSelection } from '../util/row';
 
 export default Vue.extend({
