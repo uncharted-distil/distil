@@ -66,7 +66,7 @@ func (s *Storage) createView(dataset string, fields map[string]*model.Variable) 
 	// Build the select statement of the query.
 	fieldList := make([]string, 0)
 	for _, v := range fields {
-		fieldList = append(fieldList, s.getViewField(v.Name, v.OriginalVariable, v.Type, model.DefaultPostgresValueFromType(v.Type)))
+		fieldList = append(fieldList, s.getViewField(v.Name, v.OriginalVariable, v.Type, model.DefaultPostgresValueFromD3MType(v.Type)))
 	}
 	sql = fmt.Sprintf(sql, dataset, strings.Join(fieldList, ","), dataset)
 
