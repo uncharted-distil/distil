@@ -82,7 +82,7 @@ func ClusterPrimitive(index string, dataset string, config *IngestTaskConfig) er
 	// output the data with the new feature
 	writer.Flush()
 
-	err = util.WriteFileWithDirs(config.getTmpAbsolutePath(config.ClusteringOutputDataRelative), output.Bytes(), os.ModePerm)
+	err = util.WriteFileWithDirs(config.GetTmpAbsolutePath(config.ClusteringOutputDataRelative), output.Bytes(), os.ModePerm)
 	if err != nil {
 		return errors.Wrap(err, "error writing clustered output")
 	}
@@ -91,7 +91,7 @@ func ClusterPrimitive(index string, dataset string, config *IngestTaskConfig) er
 	mainDR.ResPath = relativePath
 
 	// write the new schema to file
-	err = metadata.WriteSchema(meta, config.getTmpAbsolutePath(config.ClusteringOutputSchemaRelative))
+	err = metadata.WriteSchema(meta, config.GetTmpAbsolutePath(config.ClusteringOutputSchemaRelative))
 	if err != nil {
 		return errors.Wrap(err, "unable to store cluster schema")
 	}

@@ -16,7 +16,7 @@ import (
 
 // SummarizePrimitive will summarize the dataset using a primitive.
 func SummarizePrimitive(index string, dataset string, config *IngestTaskConfig) error {
-	schemaDoc := path.Dir(config.getTmpAbsolutePath(config.MergedOutputSchemaPathRelative))
+	schemaDoc := path.Dir(config.GetTmpAbsolutePath(config.MergedOutputSchemaPathRelative))
 
 	// create & submit the solution request
 	pip, err := description.CreateDukePipeline("wellington", "")
@@ -57,7 +57,7 @@ func SummarizePrimitive(index string, dataset string, config *IngestTaskConfig) 
 		return errors.Wrap(err, "unable to serialize summary result")
 	}
 	// write to file
-	err = util.WriteFileWithDirs(config.getTmpAbsolutePath(config.SummaryMachineOutputPathRelative), bytes, os.ModePerm)
+	err = util.WriteFileWithDirs(config.GetTmpAbsolutePath(config.SummaryMachineOutputPathRelative), bytes, os.ModePerm)
 	if err != nil {
 		return errors.Wrap(err, "unable to store summary result")
 	}

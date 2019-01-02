@@ -93,7 +93,7 @@ func FeaturizePrimitive(schemaFile string, index string, dataset string, config 
 
 	// output the data with the new feature
 	writer.Flush()
-	err = util.WriteFileWithDirs(config.getTmpAbsolutePath(config.FeaturizationOutputDataRelative), output.Bytes(), os.ModePerm)
+	err = util.WriteFileWithDirs(config.GetTmpAbsolutePath(config.FeaturizationOutputDataRelative), output.Bytes(), os.ModePerm)
 	if err != nil {
 		return errors.Wrap(err, "error writing feature output")
 	}
@@ -102,7 +102,7 @@ func FeaturizePrimitive(schemaFile string, index string, dataset string, config 
 	mainDR.ResPath = relativePath
 
 	// write the new schema to file
-	err = metadata.WriteSchema(meta, config.getTmpAbsolutePath(config.FeaturizationOutputSchemaRelative))
+	err = metadata.WriteSchema(meta, config.GetTmpAbsolutePath(config.FeaturizationOutputSchemaRelative))
 	if err != nil {
 		return errors.Wrap(err, "unable to store feature schema")
 	}

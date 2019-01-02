@@ -3,6 +3,7 @@ package routes
 import (
 	"fmt"
 	"net/http"
+	"path"
 
 	"github.com/pkg/errors"
 	"goji.io/pat"
@@ -20,7 +21,7 @@ type GeocodingResult struct {
 
 // GeocodingHandler generates a route handler that enables geocoding
 // of a variable and the creation of two new columns to hold the lat and lon.
-func GeocodingHandler(metaCtor api.MetadataStorageCtor, dataCtor api.DataStorageCtor) func(http.ResponseWriter, *http.Request) {
+func GeocodingHandler(metaCtor api.MetadataStorageCtor, dataCtor api.DataStorageCtor, sourceFolder string) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// get dataset name
 		dataset := pat.Param(r, "dataset")
@@ -41,51 +42,51 @@ func GeocodingHandler(metaCtor api.MetadataStorageCtor, dataCtor api.DataStorage
 		latVarName := fmt.Sprintf("_lat_%s", variable)
 		lonVarName := fmt.Sprintf("_lon_%s", variable)
 
-		// create the new metadata variables
-		err = metaStorage.AddVariable(dataset, latVarName, model.LatitudeType, "geocoding")
-		if err != nil {
-			handleError(w, err)
-			return
-		}
-		err = metaStorage.AddVariable(dataset, latVarName, model.LongitudeType, "geocoding")
-		if err != nil {
-			handleError(w, err)
-			return
-		}
+		// check if the lat and lon variables exist
+		latVarExist, _ := metaStorage.FetchVariable(dataset, latVarName)
+		lonVarExist, _ := metaStorage.FetchVariable(dataset, lonVarName)
 
-		// create the database variables
-		err = dataStorage.AddVariable(dataset, latVarName, model.LatitudeType)
-		if err != nil {
-			handleError(w, err)
-			return
+		// create the new metadata and database variables
+		if latVarExist == nil {
+			err = metaStorage.AddVariable(dataset, latVarName, model.LatitudeType, "geocoding")
+			if err != nil {
+				handleError(w, err)
+				return
+			}
+			err = dataStorage.AddVariable(dataset, latVarName, model.LatitudeType)
+			if err != nil {
+				handleError(w, err)
+				return
+			}
 		}
-		err = dataStorage.AddVariable(dataset, latVarName, model.LongitudeType)
-		if err != nil {
-			handleError(w, err)
-			return
-		}
-
-		d, err := metaStorage.FetchDataset(dataset, false, false)
-		if err != nil {
-			handleError(w, err)
-			return
+		if lonVarExist == nil {
+			err = metaStorage.AddVariable(dataset, latVarName, model.LongitudeType, "geocoding")
+			if err != nil {
+				handleError(w, err)
+				return
+			}
+			err = dataStorage.AddVariable(dataset, latVarName, model.LongitudeType)
+			if err != nil {
+				handleError(w, err)
+				return
+			}
 		}
 
 		// build the row index since geocoding does not return the d3m index
-		lines, err := task.ReadCSVFile(d.Folder, true)
+		lines, err := task.ReadCSVFile(path.Join(sourceFolder, "tables", "learningData.csv"), true)
 		if err != nil {
 			handleError(w, err)
 			return
 		}
 
-		d3mIndex := d.GetD3MIndexVariable()
+		d3mIndex, _ := metaStorage.FetchVariable(dataset, model.D3MIndexName)
 		rowIndex := make(map[int]string)
 		for i, line := range lines {
 			rowIndex[i] = line[d3mIndex.Index]
 		}
 
 		// geocode data
-		geocoded, err := task.GeocodeForward(d.Folder, dataset, variable, rowIndex)
+		geocoded, err := task.GeocodeForward(sourceFolder, dataset, variable, rowIndex)
 		if err != nil {
 			handleError(w, err)
 			return

@@ -35,7 +35,7 @@ func GeocodeForwardPrimitive(schemaFile string, index string, dataset string, co
 	}
 
 	// load metadata from original schema
-	meta, err := metadata.LoadMetadataFromClassification(schemaFile, config.getTmpAbsolutePath(config.ClassificationOutputPathRelative))
+	meta, err := metadata.LoadMetadataFromClassification(schemaFile, config.GetTmpAbsolutePath(config.ClassificationOutputPathRelative))
 	if err != nil {
 		return errors.Wrap(err, "unable to load original schema file")
 	}
@@ -57,10 +57,11 @@ func GeocodeForwardPrimitive(schemaFile string, index string, dataset string, co
 	}
 
 	// Geocode location fields
+	datasetInputDir := path.Join(outputPath.sourceFolder, dataset, "TRAIN", "dataset_TRAIN")
 	colsToGeocode := geocodeColumns(meta)
 	geocodedData := make([][]*GeocodedPoint, 0)
 	for _, col := range colsToGeocode {
-		geocoded, err := GeocodeForward(outputPath.sourceFolder, dataset, col, rowIndex)
+		geocoded, err := GeocodeForward(datasetInputDir, dataset, col, rowIndex)
 		if err != nil {
 			return err
 		}
@@ -137,8 +138,7 @@ func GeocodeForwardPrimitive(schemaFile string, index string, dataset string, co
 }
 
 // GeocodeForward will geocode a column into lat & lon values.
-func GeocodeForward(sourceFolder string, dataset string, variable string, rowIndex map[int]string) ([]*GeocodedPoint, error) {
-	datasetInputDir := path.Join(sourceFolder, dataset, "TRAIN", "dataset_TRAIN")
+func GeocodeForward(datasetInputDir string, dataset string, variable string, rowIndex map[int]string) ([]*GeocodedPoint, error) {
 
 	// create & submit the solution request
 	pip, err := description.CreateGoatForwardPipeline("mountain", "", variable)
