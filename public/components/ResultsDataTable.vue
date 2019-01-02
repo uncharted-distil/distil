@@ -16,7 +16,10 @@
 				:ref="refName"
 				:items="items"
 				:fields="fields"
-				@row-clicked="onRowClick">
+				:sort-by="errorCol"
+				:sort-compare="sortingByResidualError ? sortingByErrorFunction : undefined"
+				@row-clicked="onRowClick"
+				@sort-changed="onSortChanged">
 
 				<template :slot="predictedCol" slot-scope="data">
 					{{target}}<sup>{{solutionIndex}}</sup>
@@ -59,8 +62,7 @@ import _ from 'lodash';
 import SparklinePreview from './SparklinePreview';
 import ImagePreview from './ImagePreview';
 import { spinnerHTML } from '../util/spinner';
-import { Extrema } from '../store/dataset/index';
-import { TableRow, TableColumn, D3M_INDEX_FIELD } from '../store/dataset/index';
+import { Extrema, TableRow, TableColumn, D3M_INDEX_FIELD } from '../store/dataset/index';
 import { RowSelection } from '../store/highlights/index';
 import { getters as resultsGetters } from '../store/results/module';
 import { getters as routeGetters } from '../store/route/module';
@@ -79,13 +81,19 @@ export default Vue.extend({
 		SparklinePreview
 	},
 
+	data() {
+		return {
+			sortingBy: undefined
+		};
+	},
+
 	props: {
 		title: String as () => string,
 		refName: String as () => string,
-		dataItems: Array as () => Array<any>,
+		dataItems: Array as () => any[],
 		dataFields: Object as () => Dictionary<TableColumn>,
-		instanceName: { 
-			type: String as () => string, 
+		instanceName: {
+			type: String as () => string,
 			default: 'results-table-table'
 		}
 	},
@@ -192,6 +200,17 @@ export default Vue.extend({
 			.filter(field => field.type === 'timeseries')
 			.map(field => field.key);
 		},
+
+		isRegression(): boolean {
+			return solutionGetters.isRegression(this.$store);
+		},
+
+		sortingByResidualError(): boolean {
+			if (this.isRegression && (this.sortingBy === this.errorCol || this.sortingBy === undefined)) {
+				return true;
+			}
+			return false;
+		}
 	},
 
 	methods: {
@@ -212,7 +231,7 @@ export default Vue.extend({
 		// TODO: fix these to work for correctness values too
 
 		errorBarWidth(error: number): string {
-			return `${Math.abs((this.normalizeError(error)*50))}%`;
+			return `${Math.abs((this.normalizeError(error) * 50))}%`;
 		},
 
 		errorBarLeft(error: number): string {
@@ -228,8 +247,15 @@ export default Vue.extend({
 				return '#e05353';
 			}
 			return '#9e9e9e';
-		}
+		},
 
+		sortingByErrorFunction(a, b, key): number {
+			return Math.abs(_.toNumber(a[key])) - Math.abs(_.toNumber(b[key]));
+		},
+
+		onSortChanged(event) {
+			this.sortingBy = event.sortBy;
+		}
 	}
 
 });

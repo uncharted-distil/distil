@@ -21,9 +21,8 @@ import { getters as datasetGetters } from '../store/dataset/module';
 import { getters as routeGetters } from '../store/route/module';
 import { createRouteEntry } from '../util/routes';
 import { filterSummariesByDataset } from '../util/data';
-import { AVAILABLE_TARGET_VARS_INSTSANCE } from '../store/route/index';
 import VariableFacets from '../components/VariableFacets.vue';
-import { CREATE_ROUTE } from '../store/route/index';
+import { AVAILABLE_TARGET_VARS_INSTSANCE, CREATE_ROUTE } from '../store/route/index';
 import { Group, createGroups } from '../util/facets';
 import 'font-awesome/css/font-awesome.css';
 import Vue from 'vue';
@@ -54,7 +53,7 @@ export default Vue.extend({
 		instanceName(): string {
 			return AVAILABLE_TARGET_VARS_INSTSANCE;
 		},
-		html(): ( { key: string } ) => HTMLDivElement {
+		html(): (group: { key: string }) => HTMLDivElement {
 			return (group: { key: string }) => {
 				const container = document.createElement('div');
 				const targetElem = document.createElement('button');

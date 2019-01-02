@@ -77,7 +77,7 @@ export function getSummary(
 	solution: Solution,
 	key: string,
 	label: string,
-	updateFunction: (any, VariableSummary) => void,
+	updateFunction: (arg: any, summary: VariableSummary) => void,
 	filterParams: FilterParams): Promise<any> {
 
 	const feature = solution.feature;
@@ -95,7 +95,7 @@ export function getSummary(
 	}
 
 	// return promise
-	return axios.post(`${endpoint}/${resultId}`, filterParams ? filterParams: {})
+	return axios.post(`${endpoint}/${resultId}`, filterParams ? filterParams : {})
 		.then(response => {
 			// save the histogram data
 			const histogram = response.data.histogram;

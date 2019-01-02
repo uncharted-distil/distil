@@ -1,5 +1,5 @@
 <template>
-	<div v-observe-visibility="visibilityChanged" v-bind:class="{'is-hidden': !isVisible}">
+	<div v-observe-visibility="visibilityChanged" v-bind:class="{'is-hidden': !isVisible && !preventHiding}">
 		<div class="image-container" v-bind:class="{'selected': isSelected&&isLoaded}">
 			<div class="image-elem" v-bind:class="{'clickable': hasClick}" ref="imageElem" @click.stop="handleClick" v-bind:style="{'max-width': `${width}px`}">
 				<div v-if="!isLoaded" v-html="spinnerHTML" v-bind:style="{'width': `${width}px`, 'height': `${height}px`}"></div>
@@ -39,6 +39,10 @@ export default Vue.extend({
 		height: {
 			default: 64,
 			type: Number as () => number
+		},
+		preventHiding: {
+			default: false,
+			type: Boolean as () => boolean
 		},
 		onClick: Function
 	},
@@ -142,7 +146,7 @@ export default Vue.extend({
 					event.stopPropagation();
 				});
 				elem.appendChild(icon);
-				this.hasRendered;
+				this.hasRendered = true;
 			}
 		},
 

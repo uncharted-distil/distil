@@ -36,7 +36,7 @@ export default Vue.extend({
 
 	props: {
 		field: String as () => string,
-		values: Array as () => Array<any>,
+		values: Array as () => any[],
 	},
 
 	computed: {

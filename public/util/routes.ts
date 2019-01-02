@@ -56,6 +56,6 @@ export function overlayRouteEntry(route: Route, args: RouteArgs): Location {
 }
 
 export function getRouteFacetPage(key: string, route: Route): number {
-	const page = route.query[key];
+	const page = route.query[key] as string;
 	return page ? parseInt(page) : 1;
 }

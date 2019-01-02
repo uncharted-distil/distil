@@ -31,15 +31,15 @@ export const getters = {
 	},
 
 	getRouteTerms(state: Route): string {
-		return state.query.terms;
+		return state.query.terms as string;
 	},
 
 	getRouteDataset(state: Route): string {
-		return state.query.dataset;
+		return state.query.dataset as string;
 	},
 
 	getRouteTrainingVariables(state: Route): string {
-		return state.query.training ? state.query.training : null;
+		return state.query.training ? state.query.training as string : null;
 	},
 
 	getRouteAvailableTrainingVarsPage(state: Route): number {
@@ -63,39 +63,39 @@ export const getters = {
 	},
 
 	getRouteTargetVariable(state: Route): string {
-		return state.query.target ? state.query.target : null;
+		return state.query.target ? state.query.target as string : null;
 	},
 
 	getRouteSolutionId(state: Route): string {
-		return state.query.solutionId ? state.query.solutionId : null;
+		return state.query.solutionId ? state.query.solutionId as string : null;
 	},
 
 	getRouteResultId(state: Route): string {
-		return state.query.resultId ? state.query.resultId : null;
+		return state.query.resultId ? state.query.resultId  as string : null;
 	},
 
 	getRouteFilters(state: Route): string {
-		return state.query.filters ? state.query.filters : null;
+		return state.query.filters ? state.query.filters  as string : null;
 	},
 
 	getRouteHighlightRoot(state: Route): string {
-		return state.query.highlights ? state.query.highlights : null;
+		return state.query.highlights ? state.query.highlights  as string : null;
 	},
 
 	getRouteRowSelection(state: Route): string {
-		return state.query.row ? state.query.row : null;
+		return state.query.row ? state.query.row as string : null;
 	},
 
 	getRouteResultFilters(state: Route): string {
-		return state.query.results ? state.query.results : null;
+		return state.query.results ? state.query.results as string : null;
 	},
 
 	getRouteResidualThresholdMin(state: Route): string {
-		return state.query.residualThresholdMin;
+		return state.query.residualThresholdMin as string;
 	},
 
 	getRouteResidualThresholdMax(state: Route): string {
-		return state.query.residualThresholdMax;
+		return state.query.residualThresholdMax as string;
 	},
 
 	getDecodedTrainingVariableNames(state: Route, getters: any): string[] {
@@ -104,7 +104,7 @@ export const getters = {
 	},
 
 	getDecodedFilters(state: Route, getters: any): Filter[] {
-		return decodeFilters(state.query.filters);
+		return decodeFilters(state.query.filters as string);
 	},
 
 	getDecodedFilterParams(state: Route, getters: any): FilterParams {
@@ -125,11 +125,11 @@ export const getters = {
 	},
 
 	getDecodedHighlightRoot(state: Route): HighlightRoot {
-		return decodeHighlights(state.query.highlights);
+		return decodeHighlights(state.query.highlights as string);
 	},
 
 	getDecodedRowSelection(state: Route): RowSelection {
-		return decodeRowSelection(state.query.row);
+		return decodeRowSelection(state.query.row as string);
 	},
 
 	getTrainingVariables(state: Route, getters: any): Variable[] {
@@ -192,7 +192,7 @@ export const getters = {
 	},
 
 	getGeoCenter(state: Route, getters: any): number[] {
-		const geo = state.query.geo;
+		const geo = state.query.geo as string;
 		if (!geo) {
 			return null;
 		}
@@ -204,7 +204,7 @@ export const getters = {
 	},
 
 	getGeoZoom(state: Route, getters: any): number {
-		const geo = state.query.geo;
+		const geo = state.query.geo as string;
 		if (!geo) {
 			return null;
 		}

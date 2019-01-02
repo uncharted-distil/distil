@@ -15,7 +15,7 @@
 						ERROR
 					</b-badge>
 				</div>
-			
+
 			<result-group class="result-group-container" :key="group.solutionId" v-for="(group) in request.groups"
 				:name="group.groupName"
 				:timestamp="group.timestamp"
@@ -49,7 +49,6 @@ import { getters as solutionGetters, actions as solutionActions } from '../store
 import 'font-awesome/css/font-awesome.css';
 import '../styles/spinner.css';
 
-/*eslint-disable */
 interface SummaryGroup {
 	requestId: string;
 	solutionId: string;
@@ -63,7 +62,6 @@ interface RequestGroup {
 	requestId: string;
 	groups: SummaryGroup[];
 }
-/*eslint-enable */
 
 export default Vue.extend({
 	name: 'result-facets',

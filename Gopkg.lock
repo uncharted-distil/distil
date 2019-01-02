@@ -132,12 +132,12 @@
   revision = "9520e82c474b0a04dd04f8a40959027271bab992"
 
 [[projects]]
-  digest = "1:1fc201f179a7d45f944655de3cdbfb0a8a226fd525569454e31ca87f9e4bb677"
+  digest = "1:6ff1026b8d873d074ddec82ad60bb0eb537dc013f456ef26b63d30beba2f99e7"
   name = "github.com/microcosm-cc/bluemonday"
   packages = ["."]
   pruneopts = "UT"
-  revision = "82c7118e8ccf7403d4860175d97bb635e8e28239"
-  version = "v1.0.1"
+  revision = "506f3da9b7c86d737e91f16b7431df8635871552"
+  version = "v1.0.2"
 
 [[projects]]
   digest = "1:61332bb44d05257bbf0356d8400a8b30fe0b9fdc3b72b8b55661da8f0a4f39ae"
@@ -188,12 +188,12 @@
   version = "v1.2.0"
 
 [[projects]]
-  branch = "master"
-  digest = "1:def689e73e9252f6f7fe66834a76751a41b767e03daab299e607e7226c58a855"
+  digest = "1:9421f6e9e28ef86933e824b5caff441366f2b69bb281085b9dca40e1f27a1602"
   name = "github.com/shurcooL/sanitized_anchor_name"
   packages = ["."]
   pruneopts = "UT"
-  revision = "86672fcb3f950f35f2e675df2240550f2a50762f"
+  revision = "7bfe4c7ecddb3666a94b053b422cdd8f5aaa3615"
+  version = "v1.0.0"
 
 [[projects]]
   digest = "1:18752d0b95816a1b777505a97f71c7467a8445b8ffb55631a7bf779f6ba4fa83"
@@ -216,7 +216,7 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:0d9010aab6b5099bee35813a1ce1d441f6842888b101203375acb50c42bf7740"
+  digest = "1:eab673275caec2ec389bd1fd57746f07920fe8246e8073857bd68e74a19b8bc1"
   name = "github.com/unchartedsoftware/distil-compute"
   packages = [
     "middleware",
@@ -227,10 +227,10 @@
     "primitive/compute/result",
   ]
   pruneopts = "UT"
-  revision = "613d68872d3a40be1a9722450b282f6646fad14c"
+  revision = "b5ba6205a6fab09e11d7abb90f5783efa75a4133"
 
 [[projects]]
-  digest = "1:755645cf8bbbb0b00c33bbd53d940d4124d631a87996213000904fc9ab1615b1"
+  digest = "1:849bf55f73becce78e5582efe4d18083a188b8572d0dffb3239bea413ff25e6e"
   name = "github.com/unchartedsoftware/distil-ingest"
   packages = [
     "conf",
@@ -241,7 +241,6 @@
     "postgres/model",
     "rest",
     "smmry",
-    "util",
   ]
   pruneopts = "UT"
   revision = "c8293d6fdeea574b4280e59f8a1e1fd57bbbd2c6"
@@ -311,15 +310,15 @@
     "trace",
   ]
   pruneopts = "UT"
-  revision = "e147a9138326bc0e9d4e179541ffd8af41cff8a9"
+  revision = "927f97764cc334a6575f4b7a1584a147864d5723"
 
 [[projects]]
   branch = "master"
-  digest = "1:8864ec180b1fec636016929439dd92b8bdb69b863d173aa4bb9c221be95b83c9"
+  digest = "1:9652da56be8fe4998e79e36be6b9d30fe4fd4aacb73ecf0d9b3a33228189dc7e"
   name = "golang.org/x/sys"
   packages = ["unix"]
   pruneopts = "UT"
-  revision = "97b4c2a9293883a2418b8bba5485dc86b24460f7"
+  revision = "b4a75ba826a64a70990f11a225237acd6ef35c9f"
 
 [[projects]]
   digest = "1:a2ab62866c75542dd18d2b069fec854577a20211d7c0ea6ae746072a1dccdd18"
@@ -350,7 +349,7 @@
   name = "google.golang.org/genproto"
   packages = ["googleapis/rpc/status"]
   pruneopts = "UT"
-  revision = "5a97ab628bfb2f65f6befec18f4bc7bc7f382b77"
+  revision = "bd9b4fb69e2ffd37621a6caa54dcbead29b546f2"
 
 [[projects]]
   digest = "1:9edd250a3c46675d0679d87540b30c9ed253b19bd1fd1af08f4f5fb3c79fc487"
@@ -441,7 +440,6 @@
     "github.com/unchartedsoftware/distil-ingest/metadata",
     "github.com/unchartedsoftware/distil-ingest/postgres",
     "github.com/unchartedsoftware/distil-ingest/rest",
-    "github.com/unchartedsoftware/distil-ingest/util",
     "github.com/unchartedsoftware/plog",
     "github.com/vova616/xxhash",
     "github.com/zenazn/goji/graceful",

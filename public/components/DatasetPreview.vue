@@ -77,13 +77,13 @@ export default Vue.extend({
 	name: 'dataset-preview',
 
 	props: {
-		'name': String as () => string,
-		'description': String as () => string,
-		'summary': String as () => string,
-		'summaryML': String as () => string,
-		'variables': Array as () => Array<Variable>,
-		'numRows': Number as () => number,
-		'numBytes': Number as () => number
+		name: String as () => string,
+		description: String as () => string,
+		summary: String as () => string,
+		summaryML: String as () => string,
+		variables: Array as () => Variable[],
+		numRows: Number as () => number,
+		numBytes: Number as () => number
 	},
 
 	computed: {
@@ -102,7 +102,7 @@ export default Vue.extend({
 		formatBytes(n: number): string {
 			function formatRecursive(size: number, powerOfThousand: number): string {
 				if (size > 1024) {
-					return formatRecursive(size/1024, powerOfThousand+1);
+					return formatRecursive(size / 1024, powerOfThousand + 1);
 				}
 				return `${size.toFixed(2)}${SUFFIXES[powerOfThousand]}`;
 			}

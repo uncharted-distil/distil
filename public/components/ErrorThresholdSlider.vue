@@ -40,7 +40,7 @@
 import _ from 'lodash';
 import { overlayRouteEntry } from '../util/routes';
 import { Extrema } from '../store/dataset/index';
-import { getters as resultsGetters} from '../store/results/module';
+import { getters as resultsGetters } from '../store/results/module';
 import { getters as routeGetters } from '../store/route/module';
 import vueSlider from 'vue-slider-component';
 import Vue from 'vue';
@@ -73,7 +73,7 @@ export default Vue.extend({
 
 		residualExtrema(): Extrema {
 			const extrema = resultsGetters.getResidualsExtrema(this.$store);
-			if (extrema.min == null || extrema.max == null) {
+			if (extrema.min === null || extrema.max === null) {
 				return {
 					min: null,
 					max: null
@@ -172,8 +172,8 @@ export default Vue.extend({
 			if ((this.hasExtrema && !this.hasThreshold) ||
 				(this.hasExtrema && !this.hasModified)) {
 				// set the route
-				const defaultMin = -this.range/2 * DEFAULT_PERCENTILE;
-				const defaultMax = this.range/2 * DEFAULT_PERCENTILE;
+				const defaultMin = (-this.range / 2) * DEFAULT_PERCENTILE;
+				const defaultMax = (this.range / 2) * DEFAULT_PERCENTILE;
 				this.updateThreshold(defaultMin, defaultMax);
 			}
 		}

@@ -27,7 +27,6 @@ import 'leaflet/dist/images/marker-shadow.png';
 const SINGLE_FIELD = 1;
 const SPLIT_FIELD = 2;
 
-/*eslint-disable */
 interface GeoField {
 	type: number;
 	latField?: string;
@@ -35,13 +34,11 @@ interface GeoField {
 	field?: string;
 }
 
-/*eslint-disable */
 interface LatLng {
 	lat: number;
 	lng: number;
 }
 
-/*eslint-disable */
 interface PointGroup {
 	field: GeoField;
 	points: LatLng[];
@@ -104,7 +101,7 @@ export default Vue.extend({
 				this.currentRect.addTo(this.map);
 
 				// enable drawing mode
-				//this.map.off('click', this.clearSelection);
+				// this.map.off('click', this.clearSelection);
 				this.map.dragging.disable();
 			}
 		},
@@ -115,7 +112,7 @@ export default Vue.extend({
 
 				// disable drawing mode
 				this.map.dragging.enable();
-				//this.map.on('click', this.clearSelection);
+				// this.map.on('click', this.clearSelection);
 			}
 		},
 		onMouseMove(event: MouseEvent) {
@@ -157,7 +154,7 @@ export default Vue.extend({
 			const icon = leaflet.divIcon({
 				className: 'geo-close-button',
 				iconSize: null,
-				html:'<i class="fa fa-times"></i>'
+				html: '<i class="fa fa-times"></i>'
 			});
 			this.closeButton = leaflet.marker([ ne.lat, ne.lng ], {
 				icon: icon
@@ -225,7 +222,7 @@ export default Vue.extend({
 			}
 		},
 		drawFilters() {
-
+			// TODO: impl this
 		},
 		updateRoute() {
 			const center = this.map.getCenter();
@@ -286,7 +283,7 @@ export default Vue.extend({
 				this.updateRoute();
 			});
 
-			//this.map.on('click', this.clearSelection);
+			// this.map.on('click', this.clearSelection);
 
 			this.layer = leaflet.tileLayer('http://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png');
 			this.layer.addTo(this.map);

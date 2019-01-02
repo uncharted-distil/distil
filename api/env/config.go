@@ -22,7 +22,6 @@ type Config struct {
 	D3MInputDirRoot                    string  `env:"D3MINPUTDIR_ROOT" envDefault:"datasets"`
 	SolutionComputeTrace               bool    `env:"SOLUTION_COMPUTE_TRACE" envDefault:"false"`
 	D3MOutputDir                       string  `env:"D3MOUTPUTDIR" envDefault:"outputs"`
-	StartupConfigFile                  string  `env:"STARTUP_CONFIG_FILE" envDefault:"search_config.json"`
 	PostgresHost                       string  `env:"PG_HOST" envDefault:"localhost"`
 	PostgresPort                       int     `env:"PG_PORT" envDefault:"5432"`
 	PostgresUser                       string  `env:"PG_USER" envDefault:"distil"`

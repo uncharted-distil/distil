@@ -1,7 +1,7 @@
 <template>
 	<div class="sparkline-container" v-observe-visibility="visibilityChanged" v-bind:class="{'is-hidden': !isVisible}">
-		<svg v-if="isLoaded" ref="svg" class="line-chart" @click.stop="onClick" ></svg>
-		<i class="fa fa-plus zoom-sparkline-icon"></i>
+		<svg v-if="isLoaded" ref="svg" class="line-chart"></svg>
+		<i class="fa fa-plus zoom-sparkline-icon" @click.stop="onClick"></i>
 		<div v-if="!isLoaded" v-html="spinnerHTML"></div>
 		<b-modal id="sparkline-zoom-modal" :title="timeseriesUrl"
 			@hide="hideModal"
@@ -188,11 +188,11 @@ svg.line-chart g {
 	stroke: #666;
 	stroke-width: 2px;
 }
-
+/*
 svg.line-chart:hover g {
 	stroke: #00c6e1;
 }
-
+*/
 .zoom-sparkline-icon {
 	position: absolute;
 	right: 4px;
@@ -209,8 +209,8 @@ svg.line-chart:hover g {
 	visibility: visible;
 }
 
-.zoom-sparkline-icon {
-	pointer-events: none;
+.zoom-sparkline-icon:hover {
+	opacity: 0.7;
 }
 
 .sparkline-elem-zoom {

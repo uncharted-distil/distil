@@ -3,7 +3,7 @@ import moment from 'moment';
 import { spinnerHTML } from '../util/spinner';
 import { formatValue } from '../util/types';
 import { VariableSummary } from '../store/dataset/index';
-import { store } from '../store/storeProvider';
+import store from '../store/store';
 import { getters as datasetGetters } from '../store/dataset/module';
 
 export const CATEGORICAL_CHUNK_SIZE = 10;
@@ -47,7 +47,7 @@ export interface Selection {
 	range: {
 		to: string;
 		from: string;
-	}
+	};
 }
 
 export interface NumericalFacet {
@@ -172,7 +172,7 @@ export function getGroupIcon(summary: VariableSummary): string {
 	}
 }
 
-export function getCategoricalChunkSize(type: string):number {
+export function getCategoricalChunkSize(type: string): number {
 	if (type === 'image') {
 		return IMAGE_CHUNK_SIZE;
 	}
@@ -187,7 +187,7 @@ function createCategoricalSummaryFacet(summary: VariableSummary): Group {
 		const selected = {
 			count: b.count
 		};
-		let countLabel = b.count.toString();
+		const countLabel = b.count.toString();
 
 		const facet: CategoricalFacet = {
 			icon : {
@@ -210,7 +210,7 @@ function createCategoricalSummaryFacet(summary: VariableSummary): Group {
 	});
 
 	const chunkSize = getCategoricalChunkSize(summary.varType);
-	const top = facets.slice(0, chunkSize)
+	const top = facets.slice(0, chunkSize);
 	const remaining = (facets.length > chunkSize) ? facets.slice(chunkSize) : [];
 	let remainingTotal = 0;
 	remaining.forEach(facet => {
@@ -228,13 +228,14 @@ function createCategoricalSummaryFacet(summary: VariableSummary): Group {
 		total: total,
 		numRows: summary.numRows,
 		more: remaining.length,
-		moreTotal: remainingTotal
+		moreTotal: remainingTotal,
+		all: facets
 	};
 }
 
 function createTimeseriesSummaryFacet(summary: VariableSummary): Group {
 	const group = createCategoricalSummaryFacet(summary);
-	const files = datasetGetters.getFiles(store());
+	const files = datasetGetters.getFiles(store);
 	group.facets.forEach((facet: CategoricalFacet) => {
 		facet.timeseries = files[facet.file];
 	});
@@ -245,17 +246,17 @@ function getHistogramSlices(summary: VariableSummary) {
 	const buckets = summary.buckets;
 	const extrema = summary.extrema;
 	const slices = new Array(buckets.length);
-	for (let i=0; i<buckets.length; i++) {
+	for (let i = 0; i < buckets.length; i++) {
 		const bucket = buckets[i];
-		let from, to;
+		let from: any, to: any;
 		if (summary.varType === 'dateTime') {
 			from = bucket.key;
-			to = (i < buckets.length-1) ? buckets[i+1].key : buckets[i].key;
+			to = (i < buckets.length - 1) ? buckets[i + 1].key : buckets[i].key;
 			from = moment(from).format('YYYY/MM/DD');
 			to = moment(to).format('YYYY/MM/DD');
 		} else {
 			from = _.toNumber(bucket.key);
-			to = (i < buckets.length-1) ? _.toNumber(buckets[i+1].key) : extrema.max;
+			to = (i < buckets.length - 1) ? _.toNumber(buckets[i + 1].key) : extrema.max;
 		}
 		slices[i] = {
 			label: `${formatValue(from, summary.varType)}`,
