@@ -48,7 +48,7 @@ export const mutations = {
 		state.residualsExtrema = extrema;
 	},
 
-	clearResidualsExtrema(state: ResultsState, solutionId: string) {
+	clearResidualsExtrema(state: ResultsState) {
 		state.residualsExtrema = {
 			min: null,
 			max: null

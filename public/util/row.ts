@@ -7,7 +7,7 @@ import { overlayRouteEntry } from '../util/routes';
 import { Filter, ROW_FILTER } from '../util/filters';
 import { CREATE_ROUTE, RESULTS_ROUTE } from '../store/route/index';
 import _ from 'lodash';
-import { store } from '../store/storeProvider';
+import store from '../store/store';
 import VueRouter from 'vue-router';
 
 export function encodeRowSelection(row: RowSelection): string {
@@ -39,7 +39,7 @@ export function getNumIncludedRows(selection: RowSelection): number {
 	if (!selection || selection.d3mIndices.length === 0) {
 		return 0;
 	}
-	const includedData = dataGetters.getIncludedTableDataItems(store());
+	const includedData = dataGetters.getIncludedTableDataItems(store);
 	if (!includedData) {
 		return 0;
 	}
@@ -54,7 +54,7 @@ export function getNumExcludedRows(selection: RowSelection): number {
 	if (!selection || selection.d3mIndices.length === 0) {
 		return 0;
 	}
-	const excludedData = dataGetters.getExcludedTableDataItems(store());
+	const excludedData = dataGetters.getExcludedTableDataItems(store);
 	const d3mIndices = {};
 	selection.d3mIndices.forEach(index => {
 		d3mIndices[index] = true;
@@ -76,7 +76,7 @@ export function isRowSelected(selection: RowSelection, d3mIndex: number): boolea
 
 export function updateTableRowSelection(items: any, selection: RowSelection, context: string) {
 	// clear selections
-	_.forEach(items, (row, rowNum) => {
+	_.forEach(items, (row) => {
 		row._rowVariant = null;
 	});
 
@@ -93,7 +93,7 @@ export function updateTableRowSelection(items: any, selection: RowSelection, con
 	selection.d3mIndices.forEach(index => {
 		d3mIndices[index] = true;
 	});
-	items.forEach(item => {
+	items.forEach((item: any) => {
 		if (d3mIndices[item[D3M_INDEX_FIELD]]) {
 			item._rowVariant = 'selected-row';
 		}
@@ -106,17 +106,17 @@ export function getSelectedRows(selection: RowSelection): Row[] {
 		return [];
 	}
 
-	const path = routeGetters.getRoutePath(store());
+	const path = routeGetters.getRoutePath(store);
 
 	let includedData = [];
 	let excludedData = [];
 
 	if (path === CREATE_ROUTE) {
-		includedData = dataGetters.getIncludedTableDataItems(store());
-		excludedData = dataGetters.getExcludedTableDataItems(store());
+		includedData = dataGetters.getIncludedTableDataItems(store);
+		excludedData = dataGetters.getExcludedTableDataItems(store);
 	} else if (path === RESULTS_ROUTE) {
-		includedData = resultsGetters.getIncludedResultTableDataItems(store());
-		excludedData = resultsGetters.getExcludedResultTableDataItems(store());
+		includedData = resultsGetters.getIncludedResultTableDataItems(store);
+		excludedData = resultsGetters.getExcludedResultTableDataItems(store);
 	}
 
 	if (!includedData) {
@@ -169,7 +169,7 @@ export function addRowSelection(router: VueRouter, context: string, selection: R
 		};
 	}
 	selection.d3mIndices.push(d3mIndex);
-	const entry = overlayRouteEntry(routeGetters.getRoute(store()), {
+	const entry = overlayRouteEntry(routeGetters.getRoute(store), {
 		row: encodeRowSelection(selection),
 	});
 	router.push(entry);
@@ -182,14 +182,14 @@ export function removeRowSelection(router: VueRouter, context: string, selection
 	if (selection.d3mIndices.length === 0) {
 		selection = null;
 	}
-	const entry = overlayRouteEntry(routeGetters.getRoute(store()), {
+	const entry = overlayRouteEntry(routeGetters.getRoute(store), {
 		row: encodeRowSelection(selection),
 	});
 	router.push(entry);
 }
 
 export function clearRowSelection(router: VueRouter) {
-	const entry = overlayRouteEntry(routeGetters.getRoute(store()), {
+	const entry = overlayRouteEntry(routeGetters.getRoute(store), {
 		row: null
 	});
 	router.push(entry);

@@ -27,7 +27,7 @@ export interface DistilState {
 	appModule: AppState;
 }
 
-export default new Store<DistilState>({
+const store = new Store<DistilState>({
 	modules:  {
 		routeModule,
 		datasetModule,
@@ -39,3 +39,18 @@ export default new Store<DistilState>({
 	},
 	strict: true
 });
+
+export default store;
+
+// export default new Store<DistilState>({
+// 	modules:  {
+// 		routeModule,
+// 		datasetModule,
+// 		highlightsModule,
+// 		solutionModule,
+// 		resultsModule,
+// 		viewModule,
+// 		appModule
+// 	},
+// 	strict: true
+// });
