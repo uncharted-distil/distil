@@ -5,7 +5,7 @@ import { getters as highlightGetters } from '../store/highlights/module';
 import { overlayRouteEntry } from '../util/routes';
 import { getVarType, isFeatureType, addFeaturePrefix, isClusterType, addClusterPrefix } from '../util/types';
 import _ from 'lodash';
-import { store } from '../store/storeProvider';
+import store from '../store/store';
 import VueRouter from 'vue-router';
 
 export function encodeHighlights(highlightRoot: HighlightRoot): string {
@@ -89,7 +89,7 @@ export function addHighlightToFilterParams(filterParams: FilterParams, highlight
 }
 
 export function updateHighlightRoot(router: VueRouter, highlightRoot: HighlightRoot) {
-	const entry = overlayRouteEntry(routeGetters.getRoute(store()), {
+	const entry = overlayRouteEntry(routeGetters.getRoute(store), {
 		highlights: encodeHighlights(highlightRoot),
 		row: null // clear row
 	});
@@ -97,7 +97,7 @@ export function updateHighlightRoot(router: VueRouter, highlightRoot: HighlightR
 }
 
 export function clearHighlightRoot(router: VueRouter) {
-	const entry = overlayRouteEntry(routeGetters.getRoute(store()), {
+	const entry = overlayRouteEntry(routeGetters.getRoute(store), {
 		highlights: null,
 		row: null // clear row
 	});
@@ -106,9 +106,9 @@ export function clearHighlightRoot(router: VueRouter) {
 
 export function getHighlights(): Highlight {
 	return {
-		root: routeGetters.getDecodedHighlightRoot(store()),
+		root: routeGetters.getDecodedHighlightRoot(store),
 		values: {
-			summaries: highlightGetters.getHighlightedSummaries(store())
+			summaries: highlightGetters.getHighlightedSummaries(store)
 		}
 	};
 }

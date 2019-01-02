@@ -89,7 +89,7 @@ function establishConnection(conn: Connection, callback: (x: any, c: Connection)
 	};
 }
 
-function stripURL(url) {
+function stripURL(url: string) {
 	if (!url || !_.isString(url)) {
 		throw new Error(`Provided URL \`${url}\` is invalid`);
 	}
@@ -164,7 +164,7 @@ export default class Connection {
 	isOpen: boolean;
 	socket: WebSocket | null;
 
-	constructor(url: string, callback) {
+	constructor(url: string, callback: (x: any, c: Connection) => void) {
 		this.url = stripURL(url);
 		this.streams = new Map();
 		this.messages = new Map();

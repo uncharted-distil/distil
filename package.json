@@ -13,6 +13,7 @@
     "@types/d3": "^5.0.0",
     "@types/jquery": "^3.3.2",
     "@types/lodash": "^4.14.108",
+    "@types/store": "^2.0.1",
     "@uncharted.software/stories-facets": "2.12.8",
     "axios": "0.18.0",
     "bootstrap": "4.2.1",

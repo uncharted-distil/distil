@@ -3,7 +3,7 @@ import moment from 'moment';
 import { spinnerHTML } from '../util/spinner';
 import { formatValue } from '../util/types';
 import { VariableSummary } from '../store/dataset/index';
-import { store } from '../store/storeProvider';
+import store from '../store/store';
 import { getters as datasetGetters } from '../store/dataset/module';
 
 export const CATEGORICAL_CHUNK_SIZE = 10;
@@ -235,7 +235,7 @@ function createCategoricalSummaryFacet(summary: VariableSummary): Group {
 
 function createTimeseriesSummaryFacet(summary: VariableSummary): Group {
 	const group = createCategoricalSummaryFacet(summary);
-	const files = datasetGetters.getFiles(store());
+	const files = datasetGetters.getFiles(store);
 	group.facets.forEach((facet: CategoricalFacet) => {
 		facet.timeseries = files[facet.file];
 	});
@@ -248,7 +248,7 @@ function getHistogramSlices(summary: VariableSummary) {
 	const slices = new Array(buckets.length);
 	for (let i = 0; i < buckets.length; i++) {
 		const bucket = buckets[i];
-		let from, to;
+		let from: any, to: any;
 		if (summary.varType === 'dateTime') {
 			from = bucket.key;
 			to = (i < buckets.length - 1) ? buckets[i + 1].key : buckets[i].key;

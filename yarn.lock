@@ -208,6 +208,10 @@
   version "2.3.2"
   resolved "https://registry.yarnpkg.com/@types/sizzle/-/sizzle-2.3.2.tgz#a811b8c18e2babab7d542b3365887ae2e4d9de47"
 
+"@types/store@^2.0.1":
+  version "2.0.1"
+  resolved "https://registry.yarnpkg.com/@types/store/-/store-2.0.1.tgz#7307dce59365b14b8030b0dadc0f7e584749da44"
+
 "@uncharted.software/stories-facets@2.12.8":
   version "2.12.8"
   resolved "https://registry.yarnpkg.com/@uncharted.software/stories-facets/-/stories-facets-2.12.8.tgz#30d25a729ec32894998b8d4329d19c8b8940e470"
