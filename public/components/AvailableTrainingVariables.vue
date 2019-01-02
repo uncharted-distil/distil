@@ -64,7 +64,7 @@ export default Vue.extend({
 		instanceName(): string {
 			return AVAILABLE_TRAINING_VARS_INSTANCE;
 		},
-		html(): ( { key: string } ) => HTMLDivElement {
+		html(): (group: { key: string }) => HTMLDivElement {
 			return (group: { key: string }) => {
 				const container = document.createElement('div');
 				const trainingElem = document.createElement('button');

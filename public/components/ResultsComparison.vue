@@ -80,7 +80,7 @@ export default Vue.extend({
 			return resultsGetters.getIncludedResultTableDataItems(this.$store);
 		},
 
-		includedResultTableDataFields():  Dictionary<TableColumn> {
+		includedResultTableDataFields(): Dictionary<TableColumn> {
 			return resultsGetters.getIncludedResultTableDataFields(this.$store);
 		},
 
@@ -106,7 +106,7 @@ export default Vue.extend({
 			return resultsGetters.getExcludedResultTableDataItems(this.$store);
 		},
 
-		excludedResultTableDataFields():  Dictionary<TableColumn> {
+		excludedResultTableDataFields(): Dictionary<TableColumn> {
 			return resultsGetters.getExcludedResultTableDataFields(this.$store);
 		},
 

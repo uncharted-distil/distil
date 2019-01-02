@@ -22,10 +22,24 @@ module.exports = {
 	module: {
 		rules: [
 			{
-				test: /\.(js|vue)$/,
+				test: /\.vue$/,
+				loader: 'vue-loader'
+			},
+			{
+				test: /\.(ts|tsx)?$/,
 				exclude: /node_modules/,
-				enforce: 'pre',
-				use: ['eslint-loader']
+				use: [
+					{
+						loader: 'ts-loader',
+						options: {
+							// Needed for <script lang="ts"> to work in *.vue files; see https://github.com/vuejs/vue-loader/issues/109
+							appendTsSuffixTo: [ /\.vue$/ ]
+						}
+					},
+					{
+						loader: 'tslint-loader'
+					}
+				]
 			},
 			{
 				test: /\.css$/,
@@ -34,23 +48,6 @@ module.exports = {
 					'css-loader',
 					'postcss-loader'
 				]
-			},
-			{
-				test: /\.vue$/,
-				loader: 'vue-loader'
-			},
-			{
-				test: /\.js$/,
-				exclude: /node_modules/,
-				loader: 'babel-loader'
-			},
-			{
-				test: /\.tsx?$/,
-				exclude: /node_modules/,
-				loader: 'ts-loader',
-				options: {
-					appendTsSuffixTo: [/\.vue$/]
-				}
 			},
 			{
 				test: /images\/.*\.(png|jpg|jpeg|gif|svg)$/,
@@ -83,5 +80,5 @@ module.exports = {
 			{ from: 'public/assets/favicons', to: 'favicons' }
 		])
 	],
-	devtool: 'source-map-eval'
+	devtool: '#source-map-eval'
 };

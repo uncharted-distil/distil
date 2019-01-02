@@ -71,7 +71,7 @@ export default Vue.extend({
 		enableTypeChange: Boolean as () => boolean,
 		enableHighlighting: Boolean as () => boolean,
 		ignoreHighlights: Boolean as () => boolean,
-		groups: Array as () => Array<Group>,
+		groups: Array as () => Group[],
 		dataset: String as () => string,
 		subtitle: String as () => string,
 		html: [ String as () => string, Object as () => any, Function as () => Function ],

@@ -41,7 +41,7 @@ export default Vue.extend({
 		target(): string {
 			return routeGetters.getRouteTargetVariable(this.$store);
 		},
-		targetSummary() : VariableSummary {
+		targetSummary(): VariableSummary {
 			return resultsGetters.getTargetSummary(this.$store);
 		},
 		targetGroups(): Group[] {

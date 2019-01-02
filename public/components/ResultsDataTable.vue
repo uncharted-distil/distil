@@ -62,8 +62,7 @@ import _ from 'lodash';
 import SparklinePreview from './SparklinePreview';
 import ImagePreview from './ImagePreview';
 import { spinnerHTML } from '../util/spinner';
-import { Extrema } from '../store/dataset/index';
-import { TableRow, TableColumn, D3M_INDEX_FIELD } from '../store/dataset/index';
+import { Extrema, TableRow, TableColumn, D3M_INDEX_FIELD } from '../store/dataset/index';
 import { RowSelection } from '../store/highlights/index';
 import { getters as resultsGetters } from '../store/results/module';
 import { getters as routeGetters } from '../store/route/module';
@@ -91,7 +90,7 @@ export default Vue.extend({
 	props: {
 		title: String as () => string,
 		refName: String as () => string,
-		dataItems: Array as () => Array<any>,
+		dataItems: Array as () => any[],
 		dataFields: Object as () => Dictionary<TableColumn>,
 		instanceName: {
 			type: String as () => string,
@@ -232,7 +231,7 @@ export default Vue.extend({
 		// TODO: fix these to work for correctness values too
 
 		errorBarWidth(error: number): string {
-			return `${Math.abs((this.normalizeError(error)*50))}%`;
+			return `${Math.abs((this.normalizeError(error) * 50))}%`;
 		},
 
 		errorBarLeft(error: number): string {

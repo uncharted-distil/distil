@@ -13,7 +13,7 @@
 import _ from 'lodash';
 import Vue from 'vue';
 import VariableFacets from '../components/VariableFacets.vue';
-import { getters as routeGetters} from '../store/route/module';
+import { getters as routeGetters } from '../store/route/module';
 import { Group, createGroups, NumericalFacet } from '../util/facets';
 import { TARGET_VAR_INSTANCE } from '../store/route/index';
 import { Highlight } from '../store/highlights/index';
@@ -177,14 +177,14 @@ export default Vue.extend({
 			let fromSlice = _.toNumber(slices[0].label);
 			let toSlice = _.toNumber(slices[slices.length - 1].toLabel);
 			// try to narrow into percentile
-			for (let i=0; i<slices.length; i++) {
+			for (let i = 0; i < slices.length; i++) {
 				const slice = _.toNumber(slices[i].label);
 				if (from <= slice) {
 					fromSlice = slice;
 					break;
 				}
 			}
-			for (let i=slices.length-1;  i >= 0; i--) {
+			for (let i = slices.length - 1;  i >= 0; i--) {
 				const slice = _.toNumber(slices[i].toLabel);
 				if (to >= slice) {
 					toSlice = slice;
