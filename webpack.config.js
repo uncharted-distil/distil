@@ -41,12 +41,6 @@ module.exports = {
 					}
 				]
 			},
-			// {
-			// 	test: /\.vue.(ts|tsx)$/,
-			// 	exclude: /node_modules/,
-			// 	enforce: 'pre',
-			// 	use: ['tslint-loader']
-			// },
 			{
 				test: /\.css$/,
 				use: [
