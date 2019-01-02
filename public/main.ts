@@ -44,7 +44,7 @@ export const router = new VueRouter({
 });
 
 router.beforeEach((route, _, next) => {
-	const dataset = route.query ? route.query.dataset : routeGetters.getRouteDataset(store);
+	const dataset = routeGetters.getRouteDataset(store);
 	viewMutations.saveView(store, {
 		view: route.path,
 		dataset: dataset,
