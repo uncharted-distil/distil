@@ -21,7 +21,7 @@ export default Vue.extend({
 
 	props: {
 		instanceName: String as () => string,
-		//graphUrl: String as () => string
+		// graphUrl: String as () => string
 	},
 
 	data() {
