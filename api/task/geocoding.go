@@ -161,24 +161,25 @@ func GeocodeForward(datasetInputDir string, dataset string, variable string, row
 	geocodedData := make([]*GeocodedPoint, len(res)-1)
 	for i, v := range res {
 		if i > 0 {
-			d3mIndex, ok := v[0].(string)
+			coords, ok := v[1].([]interface{})
 			if !ok {
-				return nil, errors.Errorf("unable to parse d3m index from result")
+				return nil, errors.Errorf("unable to parse coords from result")
 			}
-			lat, err := strconv.ParseFloat(v[1].(string), 64)
+			lat, err := strconv.ParseFloat(coords[0].(string), 64)
 			if err != nil {
 				return nil, errors.Wrap(err, "unable to parse latitude from result")
 			}
-			lon, err := strconv.ParseFloat(v[2].(string), 64)
+			lon, err := strconv.ParseFloat(coords[1].(string), 64)
 			if err != nil {
 				return nil, errors.Wrap(err, "unable to parse longitude from result")
 			}
 
-			geocodedData = append(geocodedData, &GeocodedPoint{
-				D3MIndex:  d3mIndex,
-				Latitude:  lat,
-				Longitude: lon,
-			})
+			geocodedData[i-1] = &GeocodedPoint{
+				D3MIndex:    rowIndex[i-1],
+				SourceField: variable,
+				Latitude:    lat,
+				Longitude:   lon,
+			}
 		}
 	}
 
