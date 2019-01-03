@@ -83,11 +83,10 @@ import SelectGeoPlot from './SelectGeoPlot';
 import SelectGraphView from './SelectGraphView';
 import FilterBadge from './FilterBadge';
 import { getters as datasetGetters } from '../store/dataset/module';
-import { Filter } from '../util/filters';
 import { TableRow, D3M_INDEX_FIELD, Variable } from '../store/dataset/index';
 import { Highlight, RowSelection } from '../store/highlights/index';
 import { getters as routeGetters } from '../store/route/module';
-import { addFilterToRoute, EXCLUDE_FILTER, INCLUDE_FILTER } from '../util/filters';
+import { Filter, addFilterToRoute, EXCLUDE_FILTER, INCLUDE_FILTER } from '../util/filters';
 import { getHighlights, clearHighlightRoot, createFilterFromHighlightRoot } from '../util/highlights';
 import { addRowSelection, removeRowSelection, clearRowSelection, isRowSelected, getNumIncludedRows, getNumExcludedRows, createFilterFromRowSelection } from '../util/row';
 

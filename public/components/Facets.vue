@@ -27,7 +27,7 @@ export default Vue.extend({
 	name: 'facets',
 
 	props: {
-		groups: Array as () => Array<Group>,
+		groups: Array as () => Group[],
 		highlights: Object as () => Highlight,
 		rowSelection: Object as () => RowSelection,
 		deemphasis: Object as () => any,
@@ -97,7 +97,7 @@ export default Vue.extend({
 		});
 
 		this.facets.on('facet-histogram:mouseleave', (event: Event, key: string) => {
-			 component.$emit('histogram-mouse-leave', key);
+			component.$emit('histogram-mouse-leave', key);
 		});
 
 		this.facets.on('facet:mouseenter', (event: Event, key: string, value: number) => {
@@ -699,7 +699,7 @@ export default Vue.extend({
 			if (a.facets.length !== b.facets.length) {
 				return false;
 			}
-			for (let i=0; i<a.facets.length; i++) {
+			for (let i = 0; i < a.facets.length; i++) {
 				if (!_.isEqual(
 					_.omit(a.facets[i], OMITTED_FIELDS),
 					_.omit(b.facets[i], OMITTED_FIELDS))) {

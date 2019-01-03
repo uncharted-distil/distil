@@ -161,19 +161,19 @@ export const actions = {
 		}
 		const type = getVarType(args.variable);
 		return Promise.all(args.urls.map(url => {
-			if (type == 'image') {
+			if (type === 'image') {
 				return context.dispatch('fetchImage', {
 					dataset: args.dataset,
 					url: url
 				});
 			}
-			if (type == 'timeseries') {
+			if (type === 'timeseries') {
 				return context.dispatch('fetchTimeseries', {
 					dataset: args.dataset,
 					url: url
 				});
 			}
-			if (type == 'graph') {
+			if (type === 'graph') {
 				return context.dispatch('fetchGraph', {
 					dataset: args.dataset,
 					url: url
@@ -326,4 +326,4 @@ export const actions = {
 			});
 	},
 
-}
+};

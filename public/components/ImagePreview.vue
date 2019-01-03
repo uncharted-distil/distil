@@ -146,7 +146,7 @@ export default Vue.extend({
 					event.stopPropagation();
 				});
 				elem.appendChild(icon);
-				this.hasRendered;
+				this.hasRendered = true;
 			}
 		},
 

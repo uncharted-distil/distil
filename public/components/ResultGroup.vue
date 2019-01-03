@@ -104,7 +104,7 @@ export default Vue.extend({
 		timestamp: String as () => string,
 		requestId: String as () => string,
 		solutionId: String as () => string,
-		scores: Array as () => Array<number>,
+		scores: Array as () => number[],
 		predictedSummary: Object as () => VariableSummary,
 		residualsSummary: Object as () => VariableSummary,
 		correctnessSummary: Object as () => VariableSummary,

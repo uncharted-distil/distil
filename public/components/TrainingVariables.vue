@@ -65,7 +65,7 @@ export default Vue.extend({
 			return routeGetters.getTrainingVariableSummaries(this.$store);
 		},
 		groups(): Group[] {
-		 	return createGroups(this.trainingVariableSummaries);
+			return createGroups(this.trainingVariableSummaries);
 		},
 		subtitle(): string {
 			return `${this.groups.length} features selected`;

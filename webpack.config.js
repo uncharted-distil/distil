@@ -9,23 +9,42 @@ module.exports = {
 	mode: 'development',
 	output: {
 		path: path.resolve(__dirname, './dist'),
-		filename: 'build.js'
+		filename: 'build.js',
+		// Taken from https://www.mistergoodcat.com/post/the-joy-that-is-source-maps-with-vuejs-and-typescript to prevent duplicate sources in chrome debugger
+		devtoolModuleFilenameTemplate: info => {
+			let $filename = 'sources://' + info.resourcePath;
+			if (info.resourcePath.match(/\.vue$/) && !info.query.match(/type=script/)) {
+				$filename = 'webpack-generated:///' + info.resourcePath + '?' + info.hash;
+			}
+			return $filename;
+		},
+		devtoolFallbackModuleFilenameTemplate: 'webpack:///[resource-path]?[hash]'
 	},
 	resolve: {
 		extensions: ['.js', '.vue', '.json', '.ts'],
-		symlinks: false,
-		alias: {
-			'vue$': 'vue/dist/vue.esm.js',
-			'@': path.resolve('./public')
-		}
+		symlinks: false
 	},
 	module: {
 		rules: [
 			{
-				test: /\.(js|vue)$/,
+				test: /\.vue$/,
+				loader: 'vue-loader'
+			},
+			{
+				test: /\.(ts|tsx)?$/,
 				exclude: /node_modules/,
-				enforce: 'pre',
-				use: ['eslint-loader']
+				use: [
+					{
+						loader: 'ts-loader',
+						options: {
+							// Needed for <script lang="ts"> to work in *.vue files; see https://github.com/vuejs/vue-loader/issues/109
+							appendTsSuffixTo: [ /\.vue$/ ]
+						}
+					},
+					{
+						loader: 'tslint-loader'
+					}
+				]
 			},
 			{
 				test: /\.css$/,
@@ -34,23 +53,6 @@ module.exports = {
 					'css-loader',
 					'postcss-loader'
 				]
-			},
-			{
-				test: /\.vue$/,
-				loader: 'vue-loader'
-			},
-			{
-				test: /\.js$/,
-				exclude: /node_modules/,
-				loader: 'babel-loader'
-			},
-			{
-				test: /\.tsx?$/,
-				exclude: /node_modules/,
-				loader: 'ts-loader',
-				options: {
-					appendTsSuffixTo: [/\.vue$/]
-				}
 			},
 			{
 				test: /images\/.*\.(png|jpg|jpeg|gif|svg)$/,
@@ -73,6 +75,7 @@ module.exports = {
 			inject: 'body'
 		}),
 		new webpack.ProvidePlugin({
+			// Required for facets.js peer dependency
 			$: 'jquery',
 			jQuery: 'jquery'
 		}),
@@ -83,5 +86,5 @@ module.exports = {
 			{ from: 'public/assets/favicons', to: 'favicons' }
 		])
 	],
-	devtool: 'source-map-eval'
+	devtool: 'eval-source-map'
 };

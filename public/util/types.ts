@@ -1,5 +1,5 @@
 import _ from 'lodash';
-import { store } from '../store/storeProvider';
+import store from '../store/store';
 import { Dictionary } from './dict';
 import { getters as datasetGetters } from '../store/dataset/module';
 import { D3M_INDEX_FIELD } from '../store/dataset/index';
@@ -214,14 +214,14 @@ const EQUIV_TYPES = {
 };
 
 export function isEquivalentType(a: string, b: string): boolean {
-	const matches = EQUIV_TYPES[a].filter(type => {
+	const matches = EQUIV_TYPES[a].filter((type: string) => {
 		return type === b;
 	});
 	return matches.length > 0;
 }
 
 export function getVarType(varname: string): string {
-	return datasetGetters.getVariableTypesMap(store())[varname];
+	return datasetGetters.getVariableTypesMap(store)[varname];
 }
 
 export function formatValue(colValue: any, colType: string): any {

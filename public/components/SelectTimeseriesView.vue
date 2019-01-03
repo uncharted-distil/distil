@@ -204,8 +204,8 @@ export default Vue.extend({
 			if (relX >= chartLeft && relX <= chartLeft + chartWidth) {
 				$('.vertical-line').show();
 				$('.vertical-line').css({
-					'left': relX,
-					'top': chartScroll
+					left: relX,
+					top: chartScroll
 				});
 				this.highlightPixelX = relX - chartLeft - this.margin.left;
 			} else {
