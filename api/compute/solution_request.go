@@ -368,7 +368,7 @@ func (s *SolutionRequest) dispatchSolution(statusChan chan SolutionStatus, clien
 
 	// fit solution
 	var fitResults []*pipeline.GetFitSolutionResultsResponse
-	fitResults, err = client.GenerateSolutionFit(context.Background(), solutionID, datasetURITrain)
+	fitResults, err = client.GenerateSolutionFit(context.Background(), solutionID, []string{datasetURITrain})
 	if err != nil {
 		s.persistSolutionError(statusChan, solutionStorage, searchID, solutionID, err)
 		return
