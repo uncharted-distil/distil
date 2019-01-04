@@ -22,7 +22,8 @@ const (
 
 // FetchDatasets returns all datasets in the provided index.
 func (s *Storage) FetchDatasets(includeIndex bool, includeMeta bool) ([]*api.Dataset, error) {
-	return nil, errors.Errorf("Not implemented")
+	// use default string in search to get complete list
+	return s.SearchDatasets("", includeIndex, includeMeta)
 }
 
 // FetchDataset returns a dataset in the provided index.
@@ -95,7 +96,7 @@ func (s *Storage) searchFolders(terms []string) ([]*model.Metadata, error) {
 			return nil, errors.Errorf("'%s' is not a directory but is in the dataset directory", info.Name())
 		}
 		// load the metadata
-		schemaFilename := path.Join(info.Name(), compute.D3MDataSchema)
+		schemaFilename := path.Join(s.uri, info.Name(), compute.D3MDataSchema)
 		meta, err := metadata.LoadMetadataFromOriginalSchema(schemaFilename)
 		if err != nil {
 			return nil, errors.Wrap(err, "unable to read metadata")
@@ -136,5 +137,6 @@ func matches(text string, terms []string) bool {
 		}
 	}
 
-	return false
+	// if no terms provided, assume match
+	return len(terms) == 0
 }
