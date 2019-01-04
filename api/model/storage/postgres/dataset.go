@@ -66,7 +66,7 @@ func (s *Storage) createView(dataset string, fields map[string]*model.Variable) 
 	// Build the select statement of the query.
 	fieldList := make([]string, 0)
 	for _, v := range fields {
-		fieldList = append(fieldList, s.getViewField(v.Name, v.OriginalVariable, v.Type, model.DefaultPostgresValueFromD3MType(v.Type)))
+		fieldList = append(fieldList, s.getViewField(v.Name, v.OriginalVariable, model.MapD3MTypeToPostgresType(v.Type), model.DefaultPostgresValueFromD3MType(v.Type)))
 	}
 	sql = fmt.Sprintf(sql, dataset, strings.Join(fieldList, ","), dataset)
 
@@ -103,11 +103,6 @@ func (s *Storage) SetDataType(dataset string, varName string, varType string) er
 	}
 	fields[varName].Type = varType
 
-	// map the types to db types.
-	for field, v := range fields {
-		fields[field].Type = model.MapD3MTypeToPostgresType(v.Type)
-	}
-
 	// create view based on field lookup.
 	err = s.createView(dataset, fields)
 	if err != nil {
@@ -125,7 +120,7 @@ func (s *Storage) createViewFromMetadataFields(dataset string, fields map[string
 		dbFields[field] = &model.Variable{
 			Name:             v.Name,
 			OriginalVariable: v.OriginalName,
-			Type:             model.MapD3MTypeToPostgresType(v.Type),
+			Type:             v.Type,
 		}
 	}
 
