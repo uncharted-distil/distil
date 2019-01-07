@@ -87,14 +87,20 @@ func (s *Storage) searchFolders(terms []string) ([]*model.Metadata, error) {
 	// cycle through each folder
 	folders, err := ioutil.ReadDir(s.uri)
 	if err != nil {
-		return nil, errors.Wrap(err, "unable to read dataset directory")
+		return nil, errors.Wrap(err, "unable to read datamart directory")
 	}
 
 	matches := make([]*model.Metadata, 0)
 	for _, info := range folders {
 		if !info.IsDir() {
-			return nil, errors.Errorf("'%s' is not a directory but is in the dataset directory", info.Name())
+			if info.Name()[0] == '.' {
+				// we ignore any files prefixed with `.`, ex. `.gitkeep`
+				continue
+			} else {
+				return nil, errors.Errorf("'%s' is not a directory and is not prefixed with `.` but is in the datamart directory", info.Name())
+			}
 		}
+
 		// load the metadata
 		schemaFilename := path.Join(s.uri, info.Name(), compute.D3MDataSchema)
 		meta, err := metadata.LoadMetadataFromOriginalSchema(schemaFilename)
