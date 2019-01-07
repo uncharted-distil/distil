@@ -51,7 +51,7 @@ func (e *Extrema) GetBucketCount() int {
 
 	// rounding issues could lead to negative numbers
 	count := int(round(rang / interval))
-	if count < 0 {
+	if count <= 0 {
 		count = 1
 	} else if count > maxNumBuckets {
 		count = maxNumBuckets
