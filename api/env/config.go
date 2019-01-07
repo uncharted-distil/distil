@@ -20,6 +20,7 @@ type Config struct {
 	SolutionSearchMaxTime              int     `env:"SOLUTION_SEARCH_MAX_TIME" envDefault:"10"`
 	D3MInputDir                        string  `env:"D3MINPUTDIR" envDefault:""`
 	D3MInputDirRoot                    string  `env:"D3MINPUTDIR_ROOT" envDefault:"datasets"`
+	DatamartURI                        string  `env:"DATAMART_URI" envDefault:"/data/datamart/"`
 	SolutionComputeTrace               bool    `env:"SOLUTION_COMPUTE_TRACE" envDefault:"false"`
 	D3MOutputDir                       string  `env:"D3MOUTPUTDIR" envDefault:"outputs"`
 	PostgresHost                       string  `env:"PG_HOST" envDefault:"localhost"`

@@ -20,6 +20,7 @@ type Dataset struct {
 	Variables   []*model.Variable `json:"variables"`
 	NumRows     int64             `json:"numRows"`
 	NumBytes    int64             `json:"numBytes"`
+	Provenance  string            `json:"provenance"`
 }
 
 // QueriedDataset wraps dataset querying components into a single entity.

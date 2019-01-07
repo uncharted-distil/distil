@@ -22,35 +22,41 @@ type DatasetResult struct {
 // it contains the search terms if set, and if unset, flags that a list of all
 // datasets should be returned.  The full list will be contain names only,
 // descriptions and variable lists will not be included.
-func DatasetsHandler(metaCtor model.MetadataStorageCtor) func(http.ResponseWriter, *http.Request) {
+func DatasetsHandler(metaCtors []model.MetadataStorageCtor) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
+		var datasets []*model.Dataset
 		// check for search terms
 		terms, err := url.QueryUnescape(r.URL.Query().Get("search"))
 		if err != nil {
 			handleError(w, errors.Wrap(err, "Malformed datasets query"))
 			return
 		}
-		// get elasticsearch client
-		storage, err := metaCtor()
-		if err != nil {
-			handleError(w, err)
-			return
+		for _, ctor := range metaCtors {
+			// get metadata client
+			storage, err := ctor()
+			if err != nil {
+				handleError(w, err)
+				return
+			}
+			// if its present, forward a search, otherwise fetch all datasets
+			var datasetsPart []*model.Dataset
+			if terms != "" {
+				datasetsPart, err = storage.SearchDatasets(terms, false, false)
+			} else {
+				datasetsPart, err = storage.FetchDatasets(false, false)
+			}
+			if err != nil {
+				handleError(w, err)
+				return
+			}
+			// render dataset description as HTML
+			for _, dataset := range datasetsPart {
+				dataset.Description = renderMarkdown(dataset.Description)
+			}
+
+			datasets = append(datasets, datasetsPart...)
 		}
-		// if its present, forward a search, otherwise fetch all datasets
-		var datasets []*model.Dataset
-		if terms != "" {
-			datasets, err = storage.SearchDatasets(terms, false, false)
-		} else {
-			datasets, err = storage.FetchDatasets(false, false)
-		}
-		if err != nil {
-			handleError(w, err)
-			return
-		}
-		// render dataset description as HTML
-		for _, dataset := range datasets {
-			dataset.Description = renderMarkdown(dataset.Description)
-		}
+
 		// marshall data
 		err = handleJSON(w, DatasetResult{
 			Dataset: datasets,

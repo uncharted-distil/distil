@@ -20,6 +20,8 @@ import (
 	"github.com/unchartedsoftware/distil/api/elastic"
 	"github.com/unchartedsoftware/distil/api/env"
 	"github.com/unchartedsoftware/distil/api/middleware"
+	"github.com/unchartedsoftware/distil/api/model"
+	dm "github.com/unchartedsoftware/distil/api/model/storage/datamart"
 	es "github.com/unchartedsoftware/distil/api/model/storage/elastic"
 	pg "github.com/unchartedsoftware/distil/api/model/storage/postgres"
 	"github.com/unchartedsoftware/distil/api/postgres"
@@ -100,6 +102,9 @@ func main() {
 
 	// instantiate the metadata storage (using ES).
 	metadataStorageCtor := es.NewMetadataStorage(config.ESDatasetsIndex, esClientCtor)
+
+	// instantiate the metadata storage (using datamart).
+	datamartMetadataStorageCtor := dm.NewMetadataStorage(config.DatamartURI)
 
 	// instantiate the postgres data storage constructor.
 	pgDataStorageCtor := pg.NewDataStorage(postgresClientCtor, metadataStorageCtor)
@@ -212,7 +217,7 @@ func main() {
 	routes.SetVerboseError(config.VerboseError)
 
 	// GET
-	registerRoute(mux, "/distil/datasets", routes.DatasetsHandler(metadataStorageCtor))
+	registerRoute(mux, "/distil/datasets", routes.DatasetsHandler([]model.MetadataStorageCtor{metadataStorageCtor, datamartMetadataStorageCtor}))
 	registerRoute(mux, "/distil/solutions/:dataset/:target/:solution-id", routes.SolutionHandler(pgSolutionStorageCtor))
 	registerRoute(mux, "/distil/variables/:dataset", routes.VariablesHandler(metadataStorageCtor))
 	registerRoute(mux, "/distil/variable-rankings/:dataset/:target", routes.VariableRankingHandler(metadataStorageCtor))
