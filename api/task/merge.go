@@ -40,7 +40,7 @@ func MergePrimitive(schemaFile string, index string, dataset string, config *Ing
 	}
 
 	// pipeline execution assumes datasetDoc.json as schema file
-	datasetURI, err := submitPrimitive(sourceFolder, pip)
+	datasetURI, err := submitPrimitive([]string{sourceFolder}, pip)
 	if err != nil {
 		return errors.Wrap(err, "unable to run denormalize pipeline")
 	}

@@ -24,7 +24,7 @@ func ClassifyPrimitive(index string, dataset string, config *IngestTaskConfig) e
 		return errors.Wrap(err, "unable to create Simon pipeline")
 	}
 
-	datasetURI, err := submitPrimitive(schemaDoc, pip)
+	datasetURI, err := submitPrimitive([]string{schemaDoc}, pip)
 	if err != nil {
 		return errors.Wrap(err, "unable to run Simon pipeline")
 	}

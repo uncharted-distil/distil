@@ -24,7 +24,7 @@ func RankPrimitive(index string, dataset string, config *IngestTaskConfig) error
 		return errors.Wrap(err, "unable to create PCA pipeline")
 	}
 
-	datasetURI, err := submitPrimitive(schemaDoc, pip)
+	datasetURI, err := submitPrimitive([]string{schemaDoc}, pip)
 	if err != nil {
 		return errors.Wrap(err, "unable to run PCA pipeline")
 	}

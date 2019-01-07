@@ -231,6 +231,7 @@ func main() {
 	registerRoute(mux, "/distil/ingest/:index/:dataset", routes.IngestHandler(metadataStorageCtor, ingestConfig))
 	registerRoute(mux, "/distil/config", routes.ConfigHandler(config, version, timestamp, problemPath, datasetDocPath))
 	registerRoute(mux, "/ws", ws.SolutionHandler(solutionClient, metadataStorageCtor, pgDataStorageCtor, pgSolutionStorageCtor))
+	registerRoute(mux, "/distil/join/:dataset-left/:column-left/:dataset-right/:column-right", routes.JoinHandler(metadataStorageCtor))
 
 	// POST
 	registerRoutePost(mux, "/distil/variables/:dataset", routes.VariableTypeHandler(pgDataStorageCtor, metadataStorageCtor))
