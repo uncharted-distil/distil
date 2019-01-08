@@ -2,8 +2,10 @@ package routes
 
 import (
 	"net/http"
+	"path"
 
 	"github.com/pkg/errors"
+	"goji.io/pat"
 
 	"github.com/unchartedsoftware/distil/api/model"
 	"github.com/unchartedsoftware/distil/api/task"
@@ -19,8 +21,8 @@ func ImportHandler(metaCtor model.MetadataStorageCtor, config *task.IngestTaskCo
 			return
 		}
 		uri := params["uri"].(string)
-		index := params["index"].(string)
-		dataset := params["dataset"].(string)
+		index := pat.Param(r, "index")
+		dataset := pat.Param(r, "dataset")
 
 		meta, err := metaCtor()
 		if err != nil {
@@ -37,7 +39,7 @@ func ImportHandler(metaCtor model.MetadataStorageCtor, config *task.IngestTaskCo
 
 		// update ingest config to use ingest URI.
 		resolver := util.NewPathResolver(&util.PathConfig{
-			InputFolder:  ingestURI,
+			InputFolder:  path.Dir(ingestURI),
 			OutputFolder: config.Resolver.Config.OutputFolder,
 		})
 		ingestConfig := *config
