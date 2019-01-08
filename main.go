@@ -168,9 +168,13 @@ func main() {
 	task.SetClient(solutionClient)
 
 	// build the ingest configuration.
+	resolver := util.NewPathResolver(&util.PathConfig{
+		InputFolder:     config.DataFolderPath,
+		InputSubFolders: path.Join("TRAIN", "dataset_TRAIN"),
+		OutputFolder:    config.TmpDataPath,
+	})
 	ingestConfig := &task.IngestTaskConfig{
-		ContainerDataPath:                  config.DataFolderPath,
-		TmpDataPath:                        config.TmpDataPath,
+		Resolver:                           resolver,
 		HasHeader:                          true,
 		ClusteringOutputDataRelative:       config.ClusteringOutputDataRelative,
 		ClusteringOutputSchemaRelative:     config.ClusteringOutputSchemaRelative,

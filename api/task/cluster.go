@@ -52,7 +52,7 @@ func ClusterPrimitive(index string, dataset string, config *IngestTaskConfig) er
 	d3mIndexField := getD3MIndexField(mainDR)
 
 	// open the input file
-	dataPath := path.Join(config.ContainerDataPath, mainDR.ResPath)
+	dataPath := config.getAbsolutePath(mainDR.ResPath)
 	lines, err := readCSVFile(dataPath, config.HasHeader)
 	if err != nil {
 		return errors.Wrap(err, "error reading raw data")
