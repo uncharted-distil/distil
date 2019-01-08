@@ -18,6 +18,11 @@ const (
 	datasetsListSize = 1000
 )
 
+// ImportDataset is not supported (ES datasets are already ingested).
+func (s *Storage) ImportDataset(uri string) (string, error) {
+	return "", errors.Errorf("Not Supported")
+}
+
 func (s *Storage) parseDatasets(res *elastic.SearchResult, includeIndex bool, includeMeta bool) ([]*api.Dataset, error) {
 	var datasets []*api.Dataset
 	for _, hit := range res.Hits.Hits {

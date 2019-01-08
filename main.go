@@ -168,9 +168,13 @@ func main() {
 	task.SetClient(solutionClient)
 
 	// build the ingest configuration.
+	resolver := util.NewPathResolver(&util.PathConfig{
+		InputFolder:     config.DataFolderPath,
+		InputSubFolders: path.Join("TRAIN", "dataset_TRAIN"),
+		OutputFolder:    config.TmpDataPath,
+	})
 	ingestConfig := &task.IngestTaskConfig{
-		ContainerDataPath:                  config.DataFolderPath,
-		TmpDataPath:                        config.TmpDataPath,
+		Resolver:                           resolver,
 		HasHeader:                          true,
 		ClusteringOutputDataRelative:       config.ClusteringOutputDataRelative,
 		ClusteringOutputSchemaRelative:     config.ClusteringOutputSchemaRelative,
@@ -232,6 +236,7 @@ func main() {
 	registerRoutePost(mux, "/distil/variables/:dataset", routes.VariableTypeHandler(pgDataStorageCtor, metadataStorageCtor))
 	registerRoutePost(mux, "/distil/discovery/:dataset/:target", routes.ProblemDiscoveryHandler(pgDataStorageCtor, metadataStorageCtor, config.UserProblemPath, userAgent, config.SkipPreprocessing))
 	registerRoutePost(mux, "/distil/data/:dataset/:invert", routes.DataHandler(pgDataStorageCtor, metadataStorageCtor))
+	registerRoutePost(mux, "/distil/import/:dataset/:index", routes.ImportHandler(datamartMetadataStorageCtor, ingestConfig))
 	registerRoutePost(mux, "/distil/results/:dataset/:solution-id", routes.ResultsHandler(pgSolutionStorageCtor, pgDataStorageCtor))
 	registerRoutePost(mux, "/distil/variable-summary/:dataset/:variable", routes.VariableSummaryHandler(pgDataStorageCtor))
 	registerRoutePost(mux, "/distil/training-summary/:dataset/:variable/:results-uuid", routes.TrainingSummaryHandler(pgSolutionStorageCtor, pgDataStorageCtor))

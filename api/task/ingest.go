@@ -15,7 +15,6 @@ import (
 	"github.com/pkg/errors"
 	"github.com/unchartedsoftware/distil-compute/model"
 	"github.com/unchartedsoftware/distil-ingest/conf"
-	"github.com/unchartedsoftware/distil-ingest/merge"
 	"github.com/unchartedsoftware/distil-ingest/metadata"
 	"github.com/unchartedsoftware/distil-ingest/postgres"
 	"github.com/unchartedsoftware/plog"
@@ -32,8 +31,7 @@ const (
 
 // IngestTaskConfig captures the necessary configuration for an data ingest.
 type IngestTaskConfig struct {
-	ContainerDataPath                  string
-	TmpDataPath                        string
+	Resolver                           *util.PathResolver
 	HasHeader                          bool
 	ClusteringOutputDataRelative       string
 	ClusteringOutputSchemaRelative     string
@@ -62,15 +60,11 @@ type IngestTaskConfig struct {
 }
 
 func (c *IngestTaskConfig) getAbsolutePath(relativePath string) string {
-	return fmt.Sprintf("%s/%s", c.ContainerDataPath, relativePath)
+	return c.Resolver.ResolveInputAbsolute(relativePath)
 }
 
 func (c *IngestTaskConfig) getTmpAbsolutePath(relativePath string) string {
-	return fmt.Sprintf("%s/%s", c.TmpDataPath, relativePath)
-}
-
-func (c *IngestTaskConfig) getRawDataPath() string {
-	return fmt.Sprintf("%s/", c.ContainerDataPath)
+	return c.Resolver.ResolveOutputAbsolute(relativePath)
 }
 
 // IngestDataset executes the complete ingest process for the specified dataset.
@@ -142,37 +136,6 @@ func IngestDataset(metaCtor api.MetadataStorageCtor, index string, dataset strin
 		return errors.Wrap(err, "unable to ingest ranked data")
 	}
 	log.Infof("finished ingestig the dataset")
-
-	return nil
-}
-
-// Merge combines all the source data files into a single datafile.
-func Merge(schemaFile string, index string, dataset string, config *IngestTaskConfig) error {
-	// load the metadata from schema
-	meta, err := metadata.LoadMetadataFromOriginalSchema(schemaFile)
-	if err != nil {
-		return errors.Wrap(err, "unable to load metadata schema")
-	}
-	mainDR := meta.GetMainDataResource()
-	dataFilename := translateSchemaRelativeToAbsoluteFilename(schemaFile, mainDR.ResPath)
-
-	// merge file links in dataset
-	mergedDR, output, err := merge.InjectFileLinksFromFile(meta, dataFilename, config.getRawDataPath(), config.MergedOutputPathRelative, config.HasHeader)
-	if err != nil {
-		return errors.Wrap(err, "unable to merge linked files")
-	}
-
-	// write copy to disk
-	err = util.WriteFileWithDirs(config.getTmpAbsolutePath(config.MergedOutputPathRelative), output, os.ModePerm)
-	if err != nil {
-		return errors.Wrap(err, "unable to write merged data")
-	}
-
-	// write merged metadata out to disk
-	err = metadata.WriteMergedSchema(meta, config.getTmpAbsolutePath(config.MergedOutputSchemaPathRelative), mergedDR)
-	if err != nil {
-		return errors.Wrap(err, "unable to write merged schema")
-	}
 
 	return nil
 }
