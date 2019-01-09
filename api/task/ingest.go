@@ -135,7 +135,7 @@ func IngestDataset(metaCtor api.MetadataStorageCtor, index string, dataset strin
 		log.Errorf("unable to summarize the dataset: %v", err)
 	}
 
-	err = GeocodeForwardPrimitive(config.GetTmpAbsolutePath(config.MergedOutputSchemaPathRelative), index, dataset, config)
+	err = GeocodeForwardDataset(config.GetTmpAbsolutePath(config.MergedOutputSchemaPathRelative), index, dataset, config)
 	if err != nil {
 		return errors.Wrap(err, "unable to geocode all data")
 	}

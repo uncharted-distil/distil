@@ -26,9 +26,9 @@ type GeocodedPoint struct {
 	Longitude   float64
 }
 
-// GeocodeForwardPrimitive geocodes fields that are types of locations.
+// GeocodeForwardDataset geocodes fields that are types of locations.
 // The results are append to the dataset and the whole is output to disk.
-func GeocodeForwardPrimitive(schemaFile string, index string, dataset string, config *IngestTaskConfig) error {
+func GeocodeForwardDataset(schemaFile string, index string, dataset string, config *IngestTaskConfig) error {
 	outputPath, err := initializeDatasetCopy(schemaFile, config.GeocodingOutputSchemaRelative, config.GeocodingOutputDataRelative, config)
 	if err != nil {
 		return errors.Wrap(err, "unable to copy source data folder")
