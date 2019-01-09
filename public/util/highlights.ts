@@ -1,5 +1,5 @@
 import { Highlight, HighlightRoot } from '../store/highlights/index';
-import { Filter, FilterParams, CATEGORICAL_FILTER, NUMERICAL_FILTER, BIVARIATE_FILTER } from '../util/filters';
+import { Filter, FilterParams, CATEGORICAL_FILTER, NUMERICAL_FILTER, BIVARIATE_FILTER, FEATURE_FILTER } from '../util/filters';
 import { getters as routeGetters } from '../store/route/module';
 import { getters as highlightGetters } from '../store/highlights/module';
 import { overlayRouteEntry } from '../util/routes';
@@ -32,6 +32,12 @@ export function createFilterFromHighlightRoot(highlightRoot: HighlightRoot, mode
 	const type = getVarType(key);
 	if (isFeatureType(type)) {
 		key = addFeaturePrefix(key);
+		return {
+			key: key,
+			type: FEATURE_FILTER,
+			mode: mode,
+			categories: [highlightRoot.value]
+		};
 	}
 	if (isClusterType(type)) {
 		key = addClusterPrefix(key);

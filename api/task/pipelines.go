@@ -52,7 +52,7 @@ func SetClient(computeClient *compute.Client) {
 	client = computeClient
 }
 
-func submitPrimitive(dataset string, step *pipeline.PipelineDescription) (string, error) {
+func submitPipeline(datasets []string, step *pipeline.PipelineDescription) (string, error) {
 
 	config, err := env.LoadConfig()
 	if err != nil {
@@ -60,7 +60,7 @@ func submitPrimitive(dataset string, step *pipeline.PipelineDescription) (string
 	}
 
 	if config.UseTA2Runner {
-		res, err := client.ExecutePipeline(context.Background(), dataset, step)
+		res, err := client.ExecutePipeline(context.Background(), datasets, step)
 		if err != nil {
 			return "", errors.Wrap(err, "unable to dispatch mocked pipeline")
 		}
@@ -68,7 +68,7 @@ func submitPrimitive(dataset string, step *pipeline.PipelineDescription) (string
 		return resultURI, nil
 	}
 
-	request := compute.NewExecPipelineRequest(dataset, step)
+	request := compute.NewExecPipelineRequest(datasets, step)
 
 	err = request.Dispatch(client)
 	if err != nil {
@@ -101,52 +101,7 @@ func submitPrimitive(dataset string, step *pipeline.PipelineDescription) (string
 	return datasetURI, nil
 }
 
-// TargetRankPrimitive will rank the dataset relative to a target variable using
-// a primitive.
-func TargetRankPrimitive(dataset string, target string, features []*model.Variable) (map[string]float64, error) {
-	// create & submit the solution request
-	pip, err := description.CreateTargetRankingPipeline("roger", "", target, features)
-	if err != nil {
-		return nil, errors.Wrap(err, "unable to create ranking pipeline")
-	}
-
-	// create a reference to the original data path
-	config, err := env.LoadConfig()
-	if err != nil {
-		return nil, errors.Wrap(err, "unable to load config")
-	}
-	datasetInputDir := path.Join(config.D3MInputDirRoot, dataset, "TRAIN", "dataset_TRAIN")
-
-	datasetURI, err := submitPrimitive(datasetInputDir, pip)
-	if err != nil {
-		return nil, errors.Wrap(err, "unable to run ranking pipeline")
-	}
-
-	// parse primitive response (col index,importance)
-	res, err := result.ParseResultCSV(datasetURI)
-	if err != nil {
-		return nil, errors.Wrap(err, "unable to parse ranking pipeline result")
-	}
-
-	ranks := make(map[string]float64)
-	for i, v := range res {
-		if i > 0 {
-			key, ok := v[2].(string)
-			if !ok {
-				return nil, fmt.Errorf("unable to parse rank key")
-			}
-			rank, err := strconv.ParseFloat(v[3].(string), 64)
-			if err != nil {
-				return nil, errors.Wrap(err, "unable to parse rank value")
-			}
-			ranks[key] = rank
-		}
-	}
-
-	return ranks, nil
-}
-
-// ReadCSVFile reads the contents of a csv file into memory.
+// ReadCSVFile reads a csv file and returns the string slice representation of the data.
 func ReadCSVFile(filename string, hasHeader bool) ([][]string, error) {
 	// open the file
 	csvFile, err := os.Open(filename)
@@ -182,7 +137,7 @@ func ReadCSVFile(filename string, hasHeader bool) ([][]string, error) {
 }
 
 func appendFeature(dataset string, d3mIndexField int, hasHeader bool, feature *FeatureRequest, lines [][]string) ([][]string, error) {
-	datasetURI, err := submitPrimitive(dataset, feature.Step)
+	datasetURI, err := submitPipeline([]string{dataset}, feature.Step)
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to run pipeline primitive")
 	}

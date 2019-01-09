@@ -40,7 +40,7 @@ func VariableRankingHandler(metaCtor api.MetadataStorageCtor) func(http.Response
 		}
 
 		// compute rankings
-		rankings, err := task.TargetRankPrimitive(d.Folder, target, d.Variables)
+		rankings, err := task.TargetRank(d.Folder, target, d.Variables)
 		if err != nil {
 			handleError(w, err)
 			return

@@ -15,8 +15,8 @@ import (
 	"github.com/unchartedsoftware/distil/api/util"
 )
 
-// MergePrimitive will merge data resources into a single data resource.
-func MergePrimitive(schemaFile string, index string, dataset string, config *IngestTaskConfig) error {
+// Merge will merge data resources into a single data resource.
+func Merge(schemaFile string, index string, dataset string, config *IngestTaskConfig) error {
 	outputPath, err := initializeDatasetCopy(schemaFile, config.MergedOutputSchemaPathRelative, config.MergedOutputPathRelative, config)
 	if err != nil {
 		return errors.Wrap(err, "unable to copy source data folder")
@@ -29,7 +29,7 @@ func MergePrimitive(schemaFile string, index string, dataset string, config *Ing
 	}
 
 	// pipeline execution assumes datasetDoc.json as schema file
-	datasetURI, err := submitPrimitive(outputPath.sourceFolder, pip)
+	datasetURI, err := submitPipeline([]string{outputPath.sourceFolder}, pip)
 	if err != nil {
 		return errors.Wrap(err, "unable to run denormalize pipeline")
 	}

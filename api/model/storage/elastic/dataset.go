@@ -14,8 +14,14 @@ const (
 	// DatasetSuffix is the suffix for the dataset entry when stored in
 	// elasticsearch.
 	metadataType     = "metadata"
+	provenance       = "elastic"
 	datasetsListSize = 1000
 )
+
+// ImportDataset is not supported (ES datasets are already ingested).
+func (s *Storage) ImportDataset(uri string) (string, error) {
+	return "", errors.Errorf("Not Supported")
+}
 
 func (s *Storage) parseDatasets(res *elastic.SearchResult, includeIndex bool, includeMeta bool) ([]*api.Dataset, error) {
 	var datasets []*api.Dataset
@@ -72,6 +78,7 @@ func (s *Storage) parseDatasets(res *elastic.SearchResult, includeIndex bool, in
 			NumRows:     int64(numRows),
 			NumBytes:    int64(numBytes),
 			Variables:   variables,
+			Provenance:  provenance,
 		})
 	}
 	return datasets, nil

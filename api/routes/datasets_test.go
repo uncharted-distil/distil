@@ -6,6 +6,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
+	"github.com/unchartedsoftware/distil/api/model"
 	"github.com/unchartedsoftware/distil/api/model/storage/elastic"
 	"github.com/unchartedsoftware/distil/api/util/json"
 	"github.com/unchartedsoftware/distil/api/util/mock"
@@ -29,7 +30,7 @@ func TestDatasetsHandler(t *testing.T) {
 
 	// execute the test request - stubbed ES server will return the JSON
 	// loaded above
-	res := mock.HTTPResponse(t, req, DatasetsHandler(ctorStorage))
+	res := mock.HTTPResponse(t, req, DatasetsHandler([]model.MetadataStorageCtor{ctorStorage}))
 	assert.Equal(t, http.StatusOK, res.Code)
 
 	// compare expected and acutal results - unmarshall first to ensure object
@@ -45,6 +46,7 @@ func TestDatasetsHandler(t *testing.T) {
 					"folder":"",
 					"numRows": 1073,
 					"numBytes": 744647,
+					"provenance": "elastic",
 					"variables": [
 						{"colName":"d3mIndex","colType":"integer","importance": 0,"deleted": false,"selectedRole": "index","suggestedTypes": [{ "type": "integer", "probability": 1.00, "provenance": "TEST" }], "colOriginalVariable": "","colIndex": 0, "colOriginalType":"integer", "role": ["TEST"], "colDisplayName": "d3mIndex"},
 						{"colName":"Player","colType":"categorical","importance": 0,"deleted": false,"selectedRole": "attribute","suggestedTypes": [{ "type": "categorical", "probability": 1.00, "provenance": "TEST" }], "colOriginalVariable": "","colIndex": 1, "colOriginalType":"categorical", "role": ["TEST"], "colDisplayName": "Player"},
@@ -60,6 +62,7 @@ func TestDatasetsHandler(t *testing.T) {
 					"folder":"",
 					"numRows": 1073,
 					"numBytes": 744647,
+					"provenance": "elastic",
 					"variables": [
 						{"colName":"d3mIndex","colType":"integer","importance": 0,"deleted": false,"selectedRole": "index","suggestedTypes": [{ "type": "integer", "probability": 1.00, "provenance": "TEST" }], "colOriginalVariable": "","colIndex": 0, "colOriginalType":"integer", "role": ["TEST"], "colDisplayName": "d3mIndex"},
 						{"colName":"cylinders","colType":"categorical","importance": 0,"deleted": false,"selectedRole": "attribute","suggestedTypes":  [{ "type": "categorical", "probability": 1.00, "provenance": "TEST" }], "colOriginalVariable": "","colIndex": 1, "colOriginalType":"categorical", "role": ["TEST"], "colDisplayName": "cylinders"},
@@ -98,7 +101,7 @@ func TestDatasetsHandlerWithSearch(t *testing.T) {
 
 	// execute the test request - stubbed ES server will return the JSON
 	// loaded above
-	res := mock.HTTPResponse(t, req, DatasetsHandler(ctorStorage))
+	res := mock.HTTPResponse(t, req, DatasetsHandler([]model.MetadataStorageCtor{ctorStorage}))
 	assert.Equal(t, http.StatusOK, res.Code)
 
 	// compare expected and actual results - unmarshall first to ensure object
@@ -114,6 +117,7 @@ func TestDatasetsHandlerWithSearch(t *testing.T) {
 					"folder":"",
 					"numRows": 1073,
 					"numBytes": 744647,
+					"provenance": "elastic",
 					"variables": [
 						{"colName":"d3mIndex","colType":"integer","importance": 0,"deleted": false,"selectedRole": "index","suggestedTypes": [{ "type": "integer", "probability": 1.00, "provenance": "TEST" }], "colOriginalVariable": "","colIndex": 0, "colOriginalType":"integer", "role": ["TEST"], "colDisplayName": "d3mIndex"},
 						{"colName":"Player","colType":"categorical","importance": 0,"deleted": false,"selectedRole": "attribute","suggestedTypes": [{ "type": "categorical", "probability": 1.00, "provenance": "TEST" }], "colOriginalVariable": "","colIndex": 1, "colOriginalType":"categorical", "role": ["TEST"], "colDisplayName": "Player"},
@@ -129,6 +133,7 @@ func TestDatasetsHandlerWithSearch(t *testing.T) {
 					"folder":"",
 					"numRows": 1073,
 					"numBytes": 744647,
+					"provenance": "elastic",
 					"variables": [
 						{"colName":"d3mIndex","colType":"integer","importance": 0,"deleted": false,"selectedRole": "index","suggestedTypes": [{ "type": "integer", "probability": 1.00, "provenance": "TEST" }], "colOriginalVariable": "","colIndex": 0, "colOriginalType":"integer", "role": ["TEST"], "colDisplayName": "d3mIndex"},
 						{"colName":"cylinders","colType":"categorical","importance": 0,"deleted": false,"selectedRole": "attribute","suggestedTypes":  [{ "type": "categorical", "probability": 1.00, "provenance": "TEST" }], "colOriginalVariable": "","colIndex": 1, "colOriginalType":"categorical", "role": ["TEST"], "colDisplayName": "cylinders"},

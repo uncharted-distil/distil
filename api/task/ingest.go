@@ -15,11 +15,10 @@ import (
 	"github.com/pkg/errors"
 	"github.com/unchartedsoftware/distil-compute/model"
 	"github.com/unchartedsoftware/distil-ingest/conf"
-	"github.com/unchartedsoftware/distil-ingest/merge"
 	"github.com/unchartedsoftware/distil-ingest/metadata"
 	"github.com/unchartedsoftware/distil-ingest/postgres"
-	"github.com/unchartedsoftware/plog"
-	"gopkg.in/olivere/elastic.v5"
+	log "github.com/unchartedsoftware/plog"
+	elastic "gopkg.in/olivere/elastic.v5"
 
 	api "github.com/unchartedsoftware/distil/api/model"
 	"github.com/unchartedsoftware/distil/api/util"
@@ -32,8 +31,7 @@ const (
 
 // IngestTaskConfig captures the necessary configuration for an data ingest.
 type IngestTaskConfig struct {
-	ContainerDataPath                  string
-	TmpDataPath                        string
+	Resolver                           *util.PathResolver
 	HasHeader                          bool
 	ClusteringOutputDataRelative       string
 	ClusteringOutputSchemaRelative     string
@@ -63,17 +61,14 @@ type IngestTaskConfig struct {
 	HardFail                           bool
 }
 
-func (c *IngestTaskConfig) getAbsolutePath(relativePath string) string {
-	return fmt.Sprintf("%s/%s", c.ContainerDataPath, relativePath)
+// GetAbsolutePath builds the absolute input path.
+func (c *IngestTaskConfig) GetAbsolutePath(relativePath string) string {
+	return c.Resolver.ResolveInputAbsolute(relativePath)
 }
 
-// GetTmpAbsolutePath combines the temporary writable folder with the relative path.
+// GetTmpAbsolutePath builds the absolute tmp path.
 func (c *IngestTaskConfig) GetTmpAbsolutePath(relativePath string) string {
-	return fmt.Sprintf("%s/%s", c.TmpDataPath, relativePath)
-}
-
-func (c *IngestTaskConfig) getRawDataPath() string {
-	return fmt.Sprintf("%s/", c.ContainerDataPath)
+	return c.Resolver.ResolveOutputAbsolute(relativePath)
 }
 
 // IngestDataset executes the complete ingest process for the specified dataset.
@@ -86,10 +81,10 @@ func IngestDataset(metaCtor api.MetadataStorageCtor, index string, dataset strin
 		return errors.Wrap(err, "unable to initialize metadata storage")
 	}
 
-	latestSchemaOutput := config.getAbsolutePath(config.SchemaPathRelative)
+	latestSchemaOutput := config.GetAbsolutePath(config.SchemaPathRelative)
 
 	if config.ClusteringEnabled {
-		err := ClusterPrimitive(index, dataset, config)
+		err := Cluster(index, dataset, config)
 		if err != nil {
 			if config.HardFail {
 				return errors.Wrap(err, "unable to cluster all data")
@@ -101,7 +96,7 @@ func IngestDataset(metaCtor api.MetadataStorageCtor, index string, dataset strin
 		log.Infof("finished clustering the dataset")
 	}
 
-	err = FeaturizePrimitive(latestSchemaOutput, index, dataset, config)
+	err = Featurize(latestSchemaOutput, index, dataset, config)
 	if err != nil {
 		if config.HardFail {
 			return errors.Wrap(err, "unable to featurize all data")
@@ -112,25 +107,25 @@ func IngestDataset(metaCtor api.MetadataStorageCtor, index string, dataset strin
 	}
 	log.Infof("finished featurizing the dataset")
 
-	err = MergePrimitive(latestSchemaOutput, index, dataset, config)
+	err = Merge(latestSchemaOutput, index, dataset, config)
 	if err != nil {
 		return errors.Wrap(err, "unable to merge all data into a single file")
 	}
 	log.Infof("finished merging the dataset")
 
-	err = ClassifyPrimitive(index, dataset, config)
+	err = Classify(index, dataset, config)
 	if err != nil {
 		return errors.Wrap(err, "unable to classify fields")
 	}
 	log.Infof("finished classifying the dataset")
 
-	err = RankPrimitive(index, dataset, config)
+	err = Rank(index, dataset, config)
 	if err != nil {
 		return errors.Wrap(err, "unable to rank field importance")
 	}
 	log.Infof("finished ranking the dataset")
 
-	err = SummarizePrimitive(index, dataset, config)
+	err = Summarize(index, dataset, config)
 	log.Infof("finished summarizing the dataset")
 	// NOTE: For now ignore summary errors!
 	if err != nil {
@@ -151,37 +146,6 @@ func IngestDataset(metaCtor api.MetadataStorageCtor, index string, dataset strin
 		return errors.Wrap(err, "unable to ingest ranked data")
 	}
 	log.Infof("finished ingestig the dataset")
-
-	return nil
-}
-
-// Merge combines all the source data files into a single datafile.
-func Merge(schemaFile string, index string, dataset string, config *IngestTaskConfig) error {
-	// load the metadata from schema
-	meta, err := metadata.LoadMetadataFromOriginalSchema(schemaFile)
-	if err != nil {
-		return errors.Wrap(err, "unable to load metadata schema")
-	}
-	mainDR := meta.GetMainDataResource()
-	dataFilename := translateSchemaRelativeToAbsoluteFilename(schemaFile, mainDR.ResPath)
-
-	// merge file links in dataset
-	mergedDR, output, err := merge.InjectFileLinksFromFile(meta, dataFilename, config.getRawDataPath(), config.MergedOutputPathRelative, config.HasHeader)
-	if err != nil {
-		return errors.Wrap(err, "unable to merge linked files")
-	}
-
-	// write copy to disk
-	err = util.WriteFileWithDirs(config.GetTmpAbsolutePath(config.MergedOutputPathRelative), output, os.ModePerm)
-	if err != nil {
-		return errors.Wrap(err, "unable to write merged data")
-	}
-
-	// write merged metadata out to disk
-	err = metadata.WriteMergedSchema(meta, config.GetTmpAbsolutePath(config.MergedOutputSchemaPathRelative), mergedDR)
-	if err != nil {
-		return errors.Wrap(err, "unable to write merged schema")
-	}
 
 	return nil
 }

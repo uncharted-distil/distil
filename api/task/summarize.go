@@ -14,8 +14,8 @@ import (
 	"github.com/unchartedsoftware/distil/api/util"
 )
 
-// SummarizePrimitive will summarize the dataset using a primitive.
-func SummarizePrimitive(index string, dataset string, config *IngestTaskConfig) error {
+// Summarize will summarize the dataset using a primitive.
+func Summarize(index string, dataset string, config *IngestTaskConfig) error {
 	schemaDoc := path.Dir(config.GetTmpAbsolutePath(config.MergedOutputSchemaPathRelative))
 
 	// create & submit the solution request
@@ -24,7 +24,7 @@ func SummarizePrimitive(index string, dataset string, config *IngestTaskConfig) 
 		return errors.Wrap(err, "unable to create Duke pipeline")
 	}
 
-	datasetURI, err := submitPrimitive(schemaDoc, pip)
+	datasetURI, err := submitPipeline([]string{schemaDoc}, pip)
 	if err != nil {
 		return errors.Wrap(err, "unable to run Duke pipeline")
 	}

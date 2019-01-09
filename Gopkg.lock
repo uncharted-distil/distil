@@ -149,7 +149,7 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:6d4d9067e639d96a804ee9a30fa89c7233c5c5edbfe736072ff00d48c97bccc4"
+  digest = "1:c1072f27d5b8be1032af14ed7776f475bc58d35723a753c4b92c953d92e3eb33"
   name = "github.com/otiai10/copy"
   packages = ["."]
   pruneopts = "UT"
@@ -216,7 +216,7 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:eab673275caec2ec389bd1fd57746f07920fe8246e8073857bd68e74a19b8bc1"
+  digest = "1:eee8c475402bf10d57c43dd841bfd8038adb9d8d1f8a09361be8e2ad343dcac1"
   name = "github.com/unchartedsoftware/distil-compute"
   packages = [
     "middleware",
@@ -227,20 +227,20 @@
     "primitive/compute/result",
   ]
   pruneopts = "UT"
-  revision = "b5ba6205a6fab09e11d7abb90f5783efa75a4133"
+  revision = "96acf44e9e5b079bf90f45072b5e9d86ed8cf93f"
 
 [[projects]]
-  digest = "1:849bf55f73becce78e5582efe4d18083a188b8572d0dffb3239bea413ff25e6e"
+  digest = "1:ed12c9311bd6a699eb9d9ef82f1d50d3251052444484509c291aee29740011bc"
   name = "github.com/unchartedsoftware/distil-ingest"
   packages = [
     "conf",
     "csv",
-    "merge",
     "metadata",
     "postgres",
     "postgres/model",
     "rest",
     "smmry",
+    "util",
   ]
   pruneopts = "UT"
   revision = "c8293d6fdeea574b4280e59f8a1e1fd57bbbd2c6"
@@ -436,10 +436,10 @@
     "github.com/unchartedsoftware/distil-compute/primitive/compute/description",
     "github.com/unchartedsoftware/distil-compute/primitive/compute/result",
     "github.com/unchartedsoftware/distil-ingest/conf",
-    "github.com/unchartedsoftware/distil-ingest/merge",
     "github.com/unchartedsoftware/distil-ingest/metadata",
     "github.com/unchartedsoftware/distil-ingest/postgres",
     "github.com/unchartedsoftware/distil-ingest/rest",
+    "github.com/unchartedsoftware/distil-ingest/util",
     "github.com/unchartedsoftware/plog",
     "github.com/vova616/xxhash",
     "github.com/zenazn/goji/graceful",

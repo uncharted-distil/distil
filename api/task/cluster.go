@@ -18,15 +18,15 @@ const (
 	slothResultFieldName   = "0"
 )
 
-// ClusterPrimitive will cluster the dataset fields using a primitive.
-func ClusterPrimitive(index string, dataset string, config *IngestTaskConfig) error {
-	outputPath, err := initializeDatasetCopy(config.getAbsolutePath(config.SchemaPathRelative), config.ClusteringOutputSchemaRelative, config.ClusteringOutputDataRelative, config)
+// Cluster will cluster the dataset fields using a primitive.
+func Cluster(index string, dataset string, config *IngestTaskConfig) error {
+	outputPath, err := initializeDatasetCopy(config.GetAbsolutePath(config.SchemaPathRelative), config.ClusteringOutputSchemaRelative, config.ClusteringOutputDataRelative, config)
 	if err != nil {
 		return errors.Wrap(err, "unable to copy source data folder")
 	}
 
 	// load metadata from original schema
-	meta, err := metadata.LoadMetadataFromOriginalSchema(config.getAbsolutePath(config.SchemaPathRelative))
+	meta, err := metadata.LoadMetadataFromOriginalSchema(config.GetAbsolutePath(config.SchemaPathRelative))
 	if err != nil {
 		return errors.Wrap(err, "unable to load original schema file")
 	}
@@ -41,7 +41,7 @@ func ClusterPrimitive(index string, dataset string, config *IngestTaskConfig) er
 	d3mIndexField := getD3MIndexField(mainDR)
 
 	// open the input file
-	dataPath := path.Join(config.ContainerDataPath, mainDR.ResPath)
+	dataPath := config.GetAbsolutePath(mainDR.ResPath)
 	lines, err := ReadCSVFile(dataPath, config.HasHeader)
 	if err != nil {
 		return errors.Wrap(err, "error reading raw data")
