@@ -10,6 +10,7 @@ import (
 
 	"github.com/pkg/errors"
 	"github.com/unchartedsoftware/distil-compute/model"
+	"github.com/unchartedsoftware/distil-compute/pipeline"
 	"github.com/unchartedsoftware/distil-compute/primitive/compute/description"
 	ingestMetadata "github.com/unchartedsoftware/distil-ingest/metadata"
 	"github.com/unchartedsoftware/distil/api/env"
@@ -18,24 +19,32 @@ import (
 
 const lineCount = 100
 
+type primitiveSubmitter interface {
+	submit(datasetURIs []string, pipelineDesc *pipeline.PipelineDescription) (string, error)
+}
+
 // JoinPrimitive will make all your dreams come true.
-func JoinPrimitive(datasetLeft string, datasetRight string, colLeft string, colRight string, varsLeft []*model.Variable, varsRight []*model.Variable) (*apiModel.FilteredData, error) {
+func JoinPrimitive(datasetLeft string, datasetRight string, colLeft string, colRight string,
+	varsLeft []*model.Variable, varsRight []*model.Variable) (*apiModel.FilteredData, error) {
+	cfg, err := env.LoadConfig()
+	if err != nil {
+		return nil, err
+	}
+	return joinPrimitive(datasetLeft, datasetRight, colLeft, colRight, varsLeft, varsRight, defaultSubmitter{}, &cfg)
+}
+
+func joinPrimitive(datasetLeft string, datasetRight string, colLeft string, colRight string,
+	varsLeft []*model.Variable, varsRight []*model.Variable, submitter primitiveSubmitter,
+	config *env.Config) (*apiModel.FilteredData, error) {
+
 	// create & submit the solution request
 	pipelineDesc, err := description.CreateJoinPipeline("Join Preview", "Join to be reviewed by user", colLeft, colRight)
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to create join pipeline")
 	}
 
-	// create references to the data paths
-	config, err := env.LoadConfig()
-	if err != nil {
-		return nil, errors.Wrap(err, "unable to load config")
-	}
-	datasetLeftInputDir := path.Join(config.D3MInputDirRoot, datasetLeft, "TRAIN", "dataset_TRAIN")
-	datasetRightInputDir := path.Join(config.TmpDataPath, datasetLeft)
-
 	// returns a URI pointing to the merged CSV file
-	resultURI, err := submitPrimitive([]string{datasetLeftInputDir, datasetRightInputDir}, pipelineDesc)
+	resultURI, err := submitter.submit([]string{datasetLeft, datasetRight}, pipelineDesc)
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to run join pipeline")
 	}
@@ -47,7 +56,9 @@ func JoinPrimitive(datasetLeft string, datasetRight string, colLeft string, colR
 	defer csvFile.Close()
 
 	// create a new dataset from the merged CSV file
-	datasetName := strings.Join([]string{datasetLeft, datasetRight}, "-")
+	leftName := path.Base(path.Dir(strings.TrimPrefix(datasetLeft, "file://")))
+	rightName := path.Base(path.Dir(strings.TrimPrefix(datasetRight, "file://")))
+	datasetName := strings.Join([]string{leftName, rightName}, "-")
 	mergedVariables, err := createDatasetFromCSV(config, csvFile, datasetName, varsLeft, varsRight)
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to create dataset from result CSV")
@@ -60,6 +71,12 @@ func JoinPrimitive(datasetLeft string, datasetRight string, colLeft string, colR
 	}
 
 	return data, nil
+}
+
+type defaultSubmitter struct{}
+
+func (defaultSubmitter) submit(datasetURIs []string, pipelineDesc *pipeline.PipelineDescription) (string, error) {
+	return submitPrimitive(datasetURIs, pipelineDesc)
 }
 
 func createVarMap(vars []*model.Variable) map[string]*model.Variable {
@@ -89,7 +106,7 @@ func createMergedVariables(varNames []string, varsLeft []*model.Variable, varsRi
 	return mergedVariables, nil
 }
 
-func createDatasetFromCSV(config env.Config, csvFile *os.File, datasetName string, varsLeft []*model.Variable, varsRight []*model.Variable) ([]*model.Variable, error) {
+func createDatasetFromCSV(config *env.Config, csvFile *os.File, datasetName string, varsLeft []*model.Variable, varsRight []*model.Variable) ([]*model.Variable, error) {
 	reader := csv.NewReader(csvFile)
 	fields, err := reader.Read()
 	if err != nil {
@@ -102,14 +119,17 @@ func createDatasetFromCSV(config env.Config, csvFile *os.File, datasetName strin
 	mergedVariables, err := createMergedVariables(fields, varsLeft, varsRight)
 	dataResource.Variables = mergedVariables
 
+	metadata.DataResources = []*model.DataResource{dataResource}
+
 	// save the metadata to the output dataset path
 	outputPath := path.Join(config.TmpDataPath, datasetName, "tables")
-	err = os.MkdirAll(outputPath, 0644)
+	err = os.MkdirAll(outputPath, 0774)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to create join dataset dir structure")
 	}
 
-	err = ingestMetadata.WriteSchema(metadata, outputPath) // may write out augmented data structure
+	outputFilePath := path.Join(outputPath, "datasetDoc.json")
+	err = ingestMetadata.WriteSchema(metadata, outputFilePath) // may write out augmented data structure
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to write schema")
 	}
@@ -127,6 +147,7 @@ func createDatasetFromCSV(config env.Config, csvFile *os.File, datasetName strin
 		}
 	}()
 
+	csvFile.Seek(0, 0)
 	if _, err = io.Copy(out, csvFile); err != nil {
 		return nil, errors.Wrap(err, "unable to copy data")
 	}
@@ -150,6 +171,7 @@ func createFilteredData(csvFile *os.File, variables []*model.Variable, lineCount
 		})
 	}
 
+	csvFile.Seek(0, 0)
 	reader := csv.NewReader(csvFile)
 	_, err := reader.Read()
 	if err != nil {
