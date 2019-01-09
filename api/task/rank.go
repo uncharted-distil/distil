@@ -14,8 +14,8 @@ import (
 	"github.com/unchartedsoftware/distil/api/util"
 )
 
-// RankPrimitive will rank the dataset using a primitive.
-func RankPrimitive(index string, dataset string, config *IngestTaskConfig) error {
+// Rank will rank the dataset using a primitive.
+func Rank(index string, dataset string, config *IngestTaskConfig) error {
 	schemaDoc := path.Dir(config.getTmpAbsolutePath(config.MergedOutputSchemaPathRelative))
 
 	// create & submit the solution request
@@ -24,7 +24,7 @@ func RankPrimitive(index string, dataset string, config *IngestTaskConfig) error
 		return errors.Wrap(err, "unable to create PCA pipeline")
 	}
 
-	datasetURI, err := submitPrimitive([]string{schemaDoc}, pip)
+	datasetURI, err := submitPipeline([]string{schemaDoc}, pip)
 	if err != nil {
 		return errors.Wrap(err, "unable to run PCA pipeline")
 	}

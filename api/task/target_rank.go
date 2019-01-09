@@ -12,9 +12,9 @@ import (
 	"github.com/unchartedsoftware/distil/api/env"
 )
 
-// TargetRankPrimitive will rank the dataset relative to a target variable using
+// TargetRank will rank the dataset relative to a target variable using
 // a primitive.
-func TargetRankPrimitive(dataset string, target string, features []*model.Variable) (map[string]float64, error) {
+func TargetRank(dataset string, target string, features []*model.Variable) (map[string]float64, error) {
 	// create & submit the solution request
 	pip, err := description.CreateTargetRankingPipeline("roger", "", target, features)
 	if err != nil {
@@ -28,7 +28,7 @@ func TargetRankPrimitive(dataset string, target string, features []*model.Variab
 	}
 	datasetInputDir := path.Join(config.D3MInputDirRoot, dataset, "TRAIN", "dataset_TRAIN")
 
-	datasetURI, err := submitPrimitive([]string{datasetInputDir}, pip)
+	datasetURI, err := submitPipeline([]string{datasetInputDir}, pip)
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to run ranking pipeline")
 	}

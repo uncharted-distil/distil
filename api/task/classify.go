@@ -14,8 +14,8 @@ import (
 	"github.com/unchartedsoftware/distil/api/util"
 )
 
-// ClassifyPrimitive will classify the dataset using a primitive.
-func ClassifyPrimitive(index string, dataset string, config *IngestTaskConfig) error {
+// Classify will classify the dataset using a primitive.
+func Classify(index string, dataset string, config *IngestTaskConfig) error {
 	schemaDoc := path.Dir(config.getTmpAbsolutePath(config.MergedOutputSchemaPathRelative))
 
 	// create & submit the solution request
@@ -24,7 +24,7 @@ func ClassifyPrimitive(index string, dataset string, config *IngestTaskConfig) e
 		return errors.Wrap(err, "unable to create Simon pipeline")
 	}
 
-	datasetURI, err := submitPrimitive([]string{schemaDoc}, pip)
+	datasetURI, err := submitPipeline([]string{schemaDoc}, pip)
 	if err != nil {
 		return errors.Wrap(err, "unable to run Simon pipeline")
 	}

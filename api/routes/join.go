@@ -41,7 +41,7 @@ func JoinHandler(metaCtor api.MetadataStorageCtor) func(http.ResponseWriter, *ht
 		}
 
 		// run joining pipeline
-		data, err := task.JoinPrimitive(datasetLeft, datasetRight, columnLeft, columnRight, varsLeft, varsRight)
+		data, err := task.Join(datasetLeft, datasetRight, columnLeft, columnRight, varsLeft, varsRight)
 		if err != nil {
 			handleError(w, err)
 			return

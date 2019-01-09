@@ -24,17 +24,17 @@ type primitiveSubmitter interface {
 	submit(datasetURIs []string, pipelineDesc *pipeline.PipelineDescription) (string, error)
 }
 
-// JoinPrimitive will make all your dreams come true.
-func JoinPrimitive(datasetLeft string, datasetRight string, colLeft string, colRight string,
+// Join will make all your dreams come true.
+func Join(datasetLeft string, datasetRight string, colLeft string, colRight string,
 	varsLeft []*model.Variable, varsRight []*model.Variable) (*apiModel.FilteredData, error) {
 	cfg, err := env.LoadConfig()
 	if err != nil {
 		return nil, err
 	}
-	return joinPrimitive(datasetLeft, datasetRight, colLeft, colRight, varsLeft, varsRight, defaultSubmitter{}, &cfg)
+	return join(datasetLeft, datasetRight, colLeft, colRight, varsLeft, varsRight, defaultSubmitter{}, &cfg)
 }
 
-func joinPrimitive(datasetLeft string, datasetRight string, colLeft string, colRight string,
+func join(datasetLeft string, datasetRight string, colLeft string, colRight string,
 	varsLeft []*model.Variable, varsRight []*model.Variable, submitter primitiveSubmitter,
 	config *env.Config) (*apiModel.FilteredData, error) {
 
@@ -77,7 +77,7 @@ func joinPrimitive(datasetLeft string, datasetRight string, colLeft string, colR
 type defaultSubmitter struct{}
 
 func (defaultSubmitter) submit(datasetURIs []string, pipelineDesc *pipeline.PipelineDescription) (string, error) {
-	return submitPrimitive(datasetURIs, pipelineDesc)
+	return submitPipeline(datasetURIs, pipelineDesc)
 }
 
 func createVarMap(vars []*model.Variable) map[string]*model.Variable {

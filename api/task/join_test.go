@@ -61,7 +61,7 @@ func TestJoin(t *testing.T) {
 	cfg.TmpDataPath = "test_data"
 	cfg.D3MInputDir = "test_data"
 
-	result, err := joinPrimitive("file://test_data/test_1/datasetDoc.json", "file://test_data/test_2/datasetDoc.json",
+	result, err := join("file://test_data/test_1/datasetDoc.json", "file://test_data/test_2/datasetDoc.json",
 		"alpha", "bravo", varsLeft, varsRight, testSubmitter{}, &cfg)
 
 	assert.NoError(t, err)

@@ -17,8 +17,8 @@ import (
 	"github.com/unchartedsoftware/distil-ingest/conf"
 	"github.com/unchartedsoftware/distil-ingest/metadata"
 	"github.com/unchartedsoftware/distil-ingest/postgres"
-	"github.com/unchartedsoftware/plog"
-	"gopkg.in/olivere/elastic.v5"
+	log "github.com/unchartedsoftware/plog"
+	elastic "gopkg.in/olivere/elastic.v5"
 
 	api "github.com/unchartedsoftware/distil/api/model"
 	"github.com/unchartedsoftware/distil/api/util"
@@ -80,7 +80,7 @@ func IngestDataset(metaCtor api.MetadataStorageCtor, index string, dataset strin
 	latestSchemaOutput := config.getAbsolutePath(config.SchemaPathRelative)
 
 	if config.ClusteringEnabled {
-		err := ClusterPrimitive(index, dataset, config)
+		err := Cluster(index, dataset, config)
 		if err != nil {
 			if config.HardFail {
 				return errors.Wrap(err, "unable to cluster all data")
@@ -92,7 +92,7 @@ func IngestDataset(metaCtor api.MetadataStorageCtor, index string, dataset strin
 		log.Infof("finished clustering the dataset")
 	}
 
-	err = FeaturizePrimitive(latestSchemaOutput, index, dataset, config)
+	err = Featurize(latestSchemaOutput, index, dataset, config)
 	if err != nil {
 		if config.HardFail {
 			return errors.Wrap(err, "unable to featurize all data")
@@ -103,25 +103,25 @@ func IngestDataset(metaCtor api.MetadataStorageCtor, index string, dataset strin
 	}
 	log.Infof("finished featurizing the dataset")
 
-	err = MergePrimitive(latestSchemaOutput, index, dataset, config)
+	err = Merge(latestSchemaOutput, index, dataset, config)
 	if err != nil {
 		return errors.Wrap(err, "unable to merge all data into a single file")
 	}
 	log.Infof("finished merging the dataset")
 
-	err = ClassifyPrimitive(index, dataset, config)
+	err = Classify(index, dataset, config)
 	if err != nil {
 		return errors.Wrap(err, "unable to classify fields")
 	}
 	log.Infof("finished classifying the dataset")
 
-	err = RankPrimitive(index, dataset, config)
+	err = Rank(index, dataset, config)
 	if err != nil {
 		return errors.Wrap(err, "unable to rank field importance")
 	}
 	log.Infof("finished ranking the dataset")
 
-	err = SummarizePrimitive(index, dataset, config)
+	err = Summarize(index, dataset, config)
 	log.Infof("finished summarizing the dataset")
 	// NOTE: For now ignore summary errors!
 	if err != nil {

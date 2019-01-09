@@ -19,8 +19,8 @@ const (
 	slothResultFieldName   = "0"
 )
 
-// ClusterPrimitive will cluster the dataset fields using a primitive.
-func ClusterPrimitive(index string, dataset string, config *IngestTaskConfig) error {
+// Cluster will cluster the dataset fields using a primitive.
+func Cluster(index string, dataset string, config *IngestTaskConfig) error {
 	sourceFolder := path.Dir(config.getAbsolutePath(config.SchemaPathRelative))
 	outputSchemaPath := config.getTmpAbsolutePath(config.ClusteringOutputSchemaRelative)
 	outputDataPath := config.getTmpAbsolutePath(config.ClusteringOutputDataRelative)

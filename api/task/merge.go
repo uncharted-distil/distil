@@ -16,8 +16,8 @@ import (
 	"github.com/unchartedsoftware/distil/api/util"
 )
 
-// MergePrimitive will merge data resources into a single data resource.
-func MergePrimitive(schemaFile string, index string, dataset string, config *IngestTaskConfig) error {
+// Merge will merge data resources into a single data resource.
+func Merge(schemaFile string, index string, dataset string, config *IngestTaskConfig) error {
 	sourceFolder := path.Dir(schemaFile)
 	outputSchemaPath := config.getTmpAbsolutePath(config.MergedOutputSchemaPathRelative)
 	outputDataPath := config.getTmpAbsolutePath(config.MergedOutputPathRelative)
@@ -40,7 +40,7 @@ func MergePrimitive(schemaFile string, index string, dataset string, config *Ing
 	}
 
 	// pipeline execution assumes datasetDoc.json as schema file
-	datasetURI, err := submitPrimitive([]string{sourceFolder}, pip)
+	datasetURI, err := submitPipeline([]string{sourceFolder}, pip)
 	if err != nil {
 		return errors.Wrap(err, "unable to run denormalize pipeline")
 	}

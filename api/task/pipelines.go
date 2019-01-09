@@ -43,7 +43,7 @@ func SetClient(computeClient *compute.Client) {
 	client = computeClient
 }
 
-func submitPrimitive(datasets []string, step *pipeline.PipelineDescription) (string, error) {
+func submitPipeline(datasets []string, step *pipeline.PipelineDescription) (string, error) {
 
 	config, err := env.LoadConfig()
 	if err != nil {
@@ -127,7 +127,7 @@ func readCSVFile(filename string, hasHeader bool) ([][]string, error) {
 }
 
 func appendFeature(dataset string, d3mIndexField int, hasHeader bool, feature *FeatureRequest, lines [][]string) ([][]string, error) {
-	datasetURI, err := submitPrimitive([]string{dataset}, feature.Step)
+	datasetURI, err := submitPipeline([]string{dataset}, feature.Step)
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to run pipeline primitive")
 	}
