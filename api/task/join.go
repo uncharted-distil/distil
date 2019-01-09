@@ -11,6 +11,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/unchartedsoftware/distil-compute/model"
 	"github.com/unchartedsoftware/distil-compute/pipeline"
+	"github.com/unchartedsoftware/distil-compute/primitive/compute"
 	"github.com/unchartedsoftware/distil-compute/primitive/compute/description"
 	ingestMetadata "github.com/unchartedsoftware/distil-ingest/metadata"
 	"github.com/unchartedsoftware/distil/api/env"
@@ -114,7 +115,7 @@ func createDatasetFromCSV(config *env.Config, csvFile *os.File, datasetName stri
 	}
 
 	metadata := model.NewMetadata(datasetName, datasetName, datasetName)
-	dataResource := model.NewDataResource("0", "table", []string{"text/csv"})
+	dataResource := model.NewDataResource("0", compute.D3MResourceType, []string{compute.D3MResourceFormat})
 
 	mergedVariables, err := createMergedVariables(fields, varsLeft, varsRight)
 	dataResource.Variables = mergedVariables
@@ -122,20 +123,20 @@ func createDatasetFromCSV(config *env.Config, csvFile *os.File, datasetName stri
 	metadata.DataResources = []*model.DataResource{dataResource}
 
 	// save the metadata to the output dataset path
-	outputPath := path.Join(config.TmpDataPath, datasetName, "tables")
+	outputPath := path.Join(config.TmpDataPath, datasetName, compute.D3MDataFolder)
 	err = os.MkdirAll(outputPath, 0774)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to create join dataset dir structure")
 	}
 
-	outputFilePath := path.Join(outputPath, "datasetDoc.json")
+	outputFilePath := path.Join(outputPath, compute.D3MDataSchema)
 	err = ingestMetadata.WriteSchema(metadata, outputFilePath) // may write out augmented data structure
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to write schema")
 	}
 
 	// copy the csv data to the output dataset path
-	csvDestPath := path.Join(outputPath, "learningData.csv")
+	csvDestPath := path.Join(outputPath, compute.D3MLearningData)
 	out, err := os.Create(csvDestPath)
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to open destination")
