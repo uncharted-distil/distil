@@ -46,6 +46,7 @@ func TestDatasetsHandler(t *testing.T) {
 					"folder":"",
 					"numRows": 1073,
 					"numBytes": 744647,
+					"provenance": "elastic",
 					"variables": [
 						{"colName":"d3mIndex","colType":"integer","importance": 0,"deleted": false,"selectedRole": "index","suggestedTypes": [{ "type": "integer", "probability": 1.00, "provenance": "TEST" }], "colOriginalVariable": "","colIndex": 0, "colOriginalType":"integer", "role": ["TEST"], "colDisplayName": "d3mIndex"},
 						{"colName":"Player","colType":"categorical","importance": 0,"deleted": false,"selectedRole": "attribute","suggestedTypes": [{ "type": "categorical", "probability": 1.00, "provenance": "TEST" }], "colOriginalVariable": "","colIndex": 1, "colOriginalType":"categorical", "role": ["TEST"], "colDisplayName": "Player"},
@@ -61,6 +62,7 @@ func TestDatasetsHandler(t *testing.T) {
 					"folder":"",
 					"numRows": 1073,
 					"numBytes": 744647,
+					"provenance": "elastic",
 					"variables": [
 						{"colName":"d3mIndex","colType":"integer","importance": 0,"deleted": false,"selectedRole": "index","suggestedTypes": [{ "type": "integer", "probability": 1.00, "provenance": "TEST" }], "colOriginalVariable": "","colIndex": 0, "colOriginalType":"integer", "role": ["TEST"], "colDisplayName": "d3mIndex"},
 						{"colName":"cylinders","colType":"categorical","importance": 0,"deleted": false,"selectedRole": "attribute","suggestedTypes":  [{ "type": "categorical", "probability": 1.00, "provenance": "TEST" }], "colOriginalVariable": "","colIndex": 1, "colOriginalType":"categorical", "role": ["TEST"], "colDisplayName": "cylinders"},
@@ -115,6 +117,7 @@ func TestDatasetsHandlerWithSearch(t *testing.T) {
 					"folder":"",
 					"numRows": 1073,
 					"numBytes": 744647,
+					"provenance": "elastic",
 					"variables": [
 						{"colName":"d3mIndex","colType":"integer","importance": 0,"deleted": false,"selectedRole": "index","suggestedTypes": [{ "type": "integer", "probability": 1.00, "provenance": "TEST" }], "colOriginalVariable": "","colIndex": 0, "colOriginalType":"integer", "role": ["TEST"], "colDisplayName": "d3mIndex"},
 						{"colName":"Player","colType":"categorical","importance": 0,"deleted": false,"selectedRole": "attribute","suggestedTypes": [{ "type": "categorical", "probability": 1.00, "provenance": "TEST" }], "colOriginalVariable": "","colIndex": 1, "colOriginalType":"categorical", "role": ["TEST"], "colDisplayName": "Player"},
@@ -130,6 +133,7 @@ func TestDatasetsHandlerWithSearch(t *testing.T) {
 					"folder":"",
 					"numRows": 1073,
 					"numBytes": 744647,
+					"provenance": "elastic",
 					"variables": [
 						{"colName":"d3mIndex","colType":"integer","importance": 0,"deleted": false,"selectedRole": "index","suggestedTypes": [{ "type": "integer", "probability": 1.00, "provenance": "TEST" }], "colOriginalVariable": "","colIndex": 0, "colOriginalType":"integer", "role": ["TEST"], "colDisplayName": "d3mIndex"},
 						{"colName":"cylinders","colType":"categorical","importance": 0,"deleted": false,"selectedRole": "attribute","suggestedTypes":  [{ "type": "categorical", "probability": 1.00, "provenance": "TEST" }], "colOriginalVariable": "","colIndex": 1, "colOriginalType":"categorical", "role": ["TEST"], "colDisplayName": "cylinders"},
