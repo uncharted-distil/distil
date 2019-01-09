@@ -1,11 +1,14 @@
 package env
 
 import (
+	"sync"
+
 	"github.com/caarlos0/env"
 )
 
 var (
-	cfg *Config
+	cfg  *Config
+	once sync.Once
 )
 
 // Config represents the application configuration state loaded from env vars.
@@ -65,12 +68,13 @@ type Config struct {
 // LoadConfig loads the config from the environment if necessary and returns a
 // copy.
 func LoadConfig() (Config, error) {
-	if cfg == nil {
+	var err error
+	once.Do(func() {
 		cfg = &Config{}
-		err := env.Parse(cfg)
+		err = env.Parse(cfg)
 		if err != nil {
-			return Config{}, err
+			cfg = &Config{}
 		}
-	}
-	return *cfg, nil
+	})
+	return *cfg, err
 }

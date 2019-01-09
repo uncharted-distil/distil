@@ -24,7 +24,7 @@ func SummarizePrimitive(index string, dataset string, config *IngestTaskConfig) 
 		return errors.Wrap(err, "unable to create Duke pipeline")
 	}
 
-	datasetURI, err := submitPrimitive(schemaDoc, pip)
+	datasetURI, err := submitPrimitive([]string{schemaDoc}, pip)
 	if err != nil {
 		return errors.Wrap(err, "unable to run Duke pipeline")
 	}
