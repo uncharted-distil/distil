@@ -202,31 +202,37 @@ export const BASIC_SUGGESTIONS = [
 // NOTE: this seems to exist solely to deal with mismatched types between d3m
 // and non-conforming TA2s.
 const EQUIV_TYPES = {
-	integer: [ INTEGER_TYPE ],
-	real: [ FLOAT_TYPE, REAL_TYPE ],
-	realVector: [ REAL_VECTOR_TYPE ],
-	latitude: [ LATITUDE_TYPE ],
-	longitude: [ LONGITUDE_TYPE ],
-	text:  [ TEXT_TYPE ],
-	categorical: [ CATEGORICAL_TYPE ],
-	ordinal: [ ORDINAL_TYPE ],
-	address: [ ADDRESS_TYPE ],
-	city: [ CITY_TYPE ],
-	state: [ STATE_TYPE ],
-	country: [ COUNTRY_TYPE ],
-	email: [ EMAIL_TYPE ],
-	phone: [ PHONE_TYPE ],
-	postal_code: [ POSTAL_CODE_TYPE ],
-	uri: [ URI_TYPE ],
-	dateTime: [ DATE_TIME_TYPE ],
-	boolean: [ BOOL_TYPE ],
-	image: [ IMAGE_TYPE ],
-	timeseries: [ TIMESERIES_TYPE ],
-	unknown: [ UNKNOWN_TYPE ]
+	INTEGER_TYPE: [ INTEGER_TYPE ],
+	REAL_TYPE: [ FLOAT_TYPE, REAL_TYPE ],
+	REAL_VECTOR_TYPE: [ REAL_VECTOR_TYPE ],
+	LATITUDE_TYPE: [ LATITUDE_TYPE ],
+	LONGITUDE_TYPE: [ LONGITUDE_TYPE ],
+	TEXT_TYPE:  [ TEXT_TYPE ],
+	CATEGORICAL_TYPE: [ CATEGORICAL_TYPE ],
+	ORDINAL_TYPE: [ ORDINAL_TYPE ],
+	ADDRESS_TYPE: [ ADDRESS_TYPE ],
+	CITY_TYPE: [ CITY_TYPE ],
+	STATE_TYPE: [ STATE_TYPE ],
+	COUNTRY_TYPE: [ COUNTRY_TYPE ],
+	EMAIL_TYPE: [ EMAIL_TYPE ],
+	PHONE_TYPE: [ PHONE_TYPE ],
+	POSTAL_CODE_TYPE: [ POSTAL_CODE_TYPE ],
+	URI_TYPE: [ URI_TYPE ],
+	DATE_TIME_TYPE: [ DATE_TIME_TYPE ],
+	BOOL_TYPE: [ BOOL_TYPE ],
+	IMAGE_TYPE: [ IMAGE_TYPE ],
+	TIMESERIES_TYPE: [ TIMESERIES_TYPE ],
+	UNKNOWN_TYPE: [ UNKNOWN_TYPE ]
 };
 
 export function isEquivalentType(a: string, b: string): boolean {
-	const matches = EQUIV_TYPES[a].filter((type: string) => {
+
+	const equiv = EQUIV_TYPES[a];
+	if (!equiv) {
+		console.warn(`Unable to find equivalent types for type '${a}', type unrecognized`);
+		return false;
+	}
+	const matches = equiv.filter((type: string) => {
 		return type === b;
 	});
 	return matches.length > 0;
