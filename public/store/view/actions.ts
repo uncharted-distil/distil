@@ -59,9 +59,10 @@ export const actions = {
 				context.dispatch('fetchVariableRankings', {
 					dataset: dataset,
 					target: target
-				}),
-				context.dispatch('updateSelectTrainingData'),
-			]);
+				})
+			]).then(() => {
+				return context.dispatch('updateSelectTrainingData');
+			});
 		});
 	},
 
