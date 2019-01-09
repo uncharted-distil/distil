@@ -9,7 +9,7 @@ import { FilterParams, INCLUDE_FILTER } from '../../util/filters';
 import { createPendingSummary, createErrorSummary, createEmptyTableData } from '../../util/data';
 import { addHighlightToFilterParams } from '../../util/highlights';
 import { loadImage } from '../../util/image';
-import { getVarType } from '../../util/types';
+import { getVarType, IMAGE_TYPE, TIMESERIES_TYPE } from '../../util/types';
 
 export type DatasetContext = ActionContext<DatasetState, DistilState>;
 
@@ -161,13 +161,13 @@ export const actions = {
 		}
 		const type = getVarType(args.variable);
 		return Promise.all(args.urls.map(url => {
-			if (type === 'image') {
+			if (type === IMAGE_TYPE) {
 				return context.dispatch('fetchImage', {
 					dataset: args.dataset,
 					url: url
 				});
 			}
-			if (type === 'timeseries') {
+			if (type === TIMESERIES_TYPE) {
 				return context.dispatch('fetchTimeseries', {
 					dataset: args.dataset,
 					url: url

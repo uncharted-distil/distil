@@ -19,6 +19,7 @@ import { TableColumn, TableRow } from '../store/dataset/index';
 import { HighlightRoot } from '../store/highlights/index';
 import { updateHighlightRoot, clearHighlightRoot } from '../util/highlights';
 import { overlayRouteEntry } from '../util/routes';
+import { LATITUDE_TYPE, LONGITUDE_TYPE } from '../util/types';
 
 import 'leaflet/dist/leaflet.css';
 import 'leaflet/dist/images/marker-icon.png';
@@ -330,8 +331,8 @@ export default Vue.extend({
 			const variables = datasetGetters.getVariables(this.$store);
 
 			const matches = variables.filter(v => {
-				return v.colType === 'longitude' ||
-					v.colType === 'latitude' ||
+				return v.colType === LONGITUDE_TYPE ||
+					v.colType === LATITUDE_TYPE ||
 					v.colType === 'vector';
 			});
 
@@ -339,10 +340,10 @@ export default Vue.extend({
 			let lat = null;
 			const fields = [];
 			matches.forEach(match => {
-				if (match.colType === 'longitude') {
+				if (match.colType === LONGITUDE_TYPE) {
 					lng = match.colName;
 				}
-				if (match.colType === 'latitude') {
+				if (match.colType === LATITUDE_TYPE) {
 					lat = match.colName;
 				}
 				if (match.colType === 'vector') {

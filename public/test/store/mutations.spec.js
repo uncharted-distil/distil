@@ -57,8 +57,8 @@
 // 		it('should replace the filtered data with the caller supplied object', () => {
 // 			const testData = {
 // 				metadata: [
-// 					{ name: 'alpha', type: 'integer' },
-// 					{ name: 'bravo', type: 'text' }
+// 					{ name: 'alpha', type: INTEGER_TYPE },
+// 					{ name: 'bravo', type: TEXT_TYPE }
 // 				],
 // 				values: [
 // 					[0, 'a'],

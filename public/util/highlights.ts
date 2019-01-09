@@ -1,5 +1,6 @@
 import { Highlight, HighlightRoot } from '../store/highlights/index';
-import { Filter, FilterParams, CATEGORICAL_FILTER, NUMERICAL_FILTER, BIVARIATE_FILTER, FEATURE_FILTER } from '../util/filters';
+import { Filter, FilterParams, CATEGORICAL_FILTER, NUMERICAL_FILTER,
+	BIVARIATE_FILTER, FEATURE_FILTER, TIMESERIES_FILTER } from '../util/filters';
 import { getters as routeGetters } from '../store/route/module';
 import { getters as highlightGetters } from '../store/highlights/module';
 import { overlayRouteEntry } from '../util/routes';
@@ -56,7 +57,7 @@ export function createFilterFromHighlightRoot(highlightRoot: HighlightRoot, mode
 
 		// TODO: we currently have no support for filter timeseries data by
 		// ranges and handle it in the client.
-		if (type === 'timeseries') {
+		if (type === TIMESERIES_FILTER) {
 			return null;
 		}
 

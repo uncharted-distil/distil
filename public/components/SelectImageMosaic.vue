@@ -35,6 +35,7 @@ import { getters as routeGetters } from '../store/route/module';
 import { Dictionary } from '../util/dict';
 import { TableColumn, TableRow, D3M_INDEX_FIELD } from '../store/dataset/index';
 import { addRowSelection, removeRowSelection, isRowSelected, updateTableRowSelection } from '../util/row';
+import { IMAGE_TYPE } from '../util/types';
 
 export default Vue.extend({
 	name: 'select-image-mosaic',
@@ -77,7 +78,7 @@ export default Vue.extend({
 					type: field.type
 				};
 			})
-			.filter(field => field.type === 'image')
+			.filter(field => field.type === IMAGE_TYPE)
 			.map(field => field.key);
 		}
 	},

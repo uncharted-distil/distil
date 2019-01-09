@@ -1,9 +1,7 @@
 import { Dictionary } from '../../util/dict';
 
-export enum SummaryType {
-	Categorical = 'categorical',
-	Numerical = 'numerical'
-}
+export const CATEGORICAL_SUMMARY = 'categorical';
+export const NUMERICAL_SUMMARY = 'numerical';
 
 export const D3M_INDEX_FIELD = 'd3mIndex';
 

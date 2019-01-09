@@ -55,8 +55,8 @@
 // 	describe('#getFilteredData()', () => {
 // 		const testData = {
 // 			metadata:[
-// 				{name: 'alpha', type: 'integer'},
-// 				{name: 'bravo', type: 'text'}
+// 				{name: 'alpha', type: INTEGER_TYPE},
+// 				{name: 'bravo', type: TEXT_TYPE}
 // 			],
 // 			values: [
 // 				[0, 'a'],

@@ -40,6 +40,7 @@ import { TableRow, TableColumn, TimeseriesExtrema } from '../store/dataset/index
 import { getters as routeGetters } from '../store/route/module';
 import { getters as datasetGetters } from '../store/dataset/module';
 import { updateHighlightRoot } from '../util/highlights';
+import { TIMESERIES_TYPE } from '../util/types';
 
 const TICK_SIZE = 8;
 const SELECTED_TICK_SIZE = 18;
@@ -97,7 +98,7 @@ export default Vue.extend({
 						type: field.type
 					};
 				})
-				.filter(field => field.type === 'timeseries')
+				.filter(field => field.type === TIMESERIES_TYPE)
 				.map(field => field.key);
 			return fields[0];
 		},

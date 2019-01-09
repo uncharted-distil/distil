@@ -23,6 +23,19 @@ import '@uncharted.software/stories-facets/dist/facets.css';
 
 const INJECT_DEBOUNCE = 200;
 
+/*
+In 1989 the japanese-american animated musical film `Little Nemo: Adventures in
+Slumberland` was released in North America. In the film a young boy named Nemo
+is summoned to Slumberland by King Morpheus to become his heir to the throne.
+Morpheus gives Nemo a golden key that opens every door in the kingdom, and warns
+him of a door with a dragon insignia that must never be opened as it contains
+the dreaded Nightmare King.
+
+This file is the door with the dragon insignia. The facets component is the
+Nightmare King. We must keep its evil contained within this file and it must
+never be allowed to escape lest the Kingdom of Slumberland fall to darkness.
+*/
+
 export default Vue.extend({
 	name: 'facets',
 
