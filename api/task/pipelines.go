@@ -224,7 +224,7 @@ func getClusterVariables(meta *model.Metadata, prefix string) ([]*FeatureRequest
 				indexName := fmt.Sprintf("%s%s", prefix, v.Name)
 
 				// add the feature variable
-				v := model.NewVariable(len(mainDR.Variables), indexName, "group", v.Name,  model.TextType, model.TextType, []string{"attribute"}, model.VarRoleMetadata, nil, mainDR.Variables, false)
+				v := model.NewVariable(len(mainDR.Variables), indexName, "group", v.Name, model.TextType, model.TextType, []string{"attribute"}, model.VarRoleMetadata, nil, mainDR.Variables, false)
 
 				// create the required pipeline
 				var step *pipeline.PipelineDescription
