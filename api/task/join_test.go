@@ -23,17 +23,17 @@ func TestJoin(t *testing.T) {
 		{
 			Name:        "d3mIndex",
 			DisplayName: "D3M Index",
-			Type:        "integer",
+			Type:        model.IntegerType,
 		},
 		{
 			Name:        "alpha",
 			DisplayName: "Alpha",
-			Type:        "real",
+			Type:        model.FloatType,
 		},
 		{
 			Name:        "bravo",
 			DisplayName: "Bravo",
-			Type:        "integer",
+			Type:        model.IntegerType,
 		},
 	}
 
@@ -41,17 +41,17 @@ func TestJoin(t *testing.T) {
 		{
 			Name:        "d3mIndex",
 			DisplayName: "D3M Index",
-			Type:        "integer",
+			Type:        model.IntegerType,
 		},
 		{
 			Name:        "charlie",
 			DisplayName: "Charlie",
-			Type:        "categorical",
+			Type:        model.CategoricalType,
 		},
 		{
 			Name:        "delta",
 			DisplayName: "Delta",
-			Type:        "integer",
+			Type:        model.IntegerType,
 		},
 	}
 
@@ -71,17 +71,17 @@ func TestJoin(t *testing.T) {
 		{
 			Label: "D3M Index",
 			Key:   "d3mIndex",
-			Type:  "integer",
+			Type:  model.IntegerType,
 		},
 		{
 			Label: "Alpha",
 			Key:   "alpha",
-			Type:  "real",
+			Type:  model.FloatType,
 		},
 		{
 			Label: "Charlie",
 			Key:   "charlie",
-			Type:  "categorical",
+			Type:  model.CategoricalType,
 		},
 	})
 
