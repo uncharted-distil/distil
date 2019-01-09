@@ -216,7 +216,7 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:eab673275caec2ec389bd1fd57746f07920fe8246e8073857bd68e74a19b8bc1"
+  digest = "1:eee8c475402bf10d57c43dd841bfd8038adb9d8d1f8a09361be8e2ad343dcac1"
   name = "github.com/unchartedsoftware/distil-compute"
   packages = [
     "middleware",
@@ -227,15 +227,14 @@
     "primitive/compute/result",
   ]
   pruneopts = "UT"
-  revision = "b5ba6205a6fab09e11d7abb90f5783efa75a4133"
+  revision = "96acf44e9e5b079bf90f45072b5e9d86ed8cf93f"
 
 [[projects]]
-  digest = "1:849bf55f73becce78e5582efe4d18083a188b8572d0dffb3239bea413ff25e6e"
+  digest = "1:cb836aba12b44c6287ccf8b57547faca1626e3a602256d40ec930ed93c688b27"
   name = "github.com/unchartedsoftware/distil-ingest"
   packages = [
     "conf",
     "csv",
-    "merge",
     "metadata",
     "postgres",
     "postgres/model",
@@ -436,7 +435,6 @@
     "github.com/unchartedsoftware/distil-compute/primitive/compute/description",
     "github.com/unchartedsoftware/distil-compute/primitive/compute/result",
     "github.com/unchartedsoftware/distil-ingest/conf",
-    "github.com/unchartedsoftware/distil-ingest/merge",
     "github.com/unchartedsoftware/distil-ingest/metadata",
     "github.com/unchartedsoftware/distil-ingest/postgres",
     "github.com/unchartedsoftware/distil-ingest/rest",

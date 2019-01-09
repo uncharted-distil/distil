@@ -19,8 +19,8 @@ const (
 	slothResultFieldName   = "0"
 )
 
-// ClusterPrimitive will cluster the dataset fields using a primitive.
-func ClusterPrimitive(index string, dataset string, config *IngestTaskConfig) error {
+// Cluster will cluster the dataset fields using a primitive.
+func Cluster(index string, dataset string, config *IngestTaskConfig) error {
 	sourceFolder := path.Dir(config.getAbsolutePath(config.SchemaPathRelative))
 	outputSchemaPath := config.getTmpAbsolutePath(config.ClusteringOutputSchemaRelative)
 	outputDataPath := config.getTmpAbsolutePath(config.ClusteringOutputDataRelative)
@@ -52,7 +52,7 @@ func ClusterPrimitive(index string, dataset string, config *IngestTaskConfig) er
 	d3mIndexField := getD3MIndexField(mainDR)
 
 	// open the input file
-	dataPath := path.Join(config.ContainerDataPath, mainDR.ResPath)
+	dataPath := config.getAbsolutePath(mainDR.ResPath)
 	lines, err := readCSVFile(dataPath, config.HasHeader)
 	if err != nil {
 		return errors.Wrap(err, "error reading raw data")

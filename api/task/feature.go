@@ -21,8 +21,8 @@ var (
 	pythonDictRE = regexp.MustCompile("'([^'\"]*)'")
 )
 
-// FeaturizePrimitive will featurize the dataset fields using a primitive.
-func FeaturizePrimitive(schemaFile string, index string, dataset string, config *IngestTaskConfig) error {
+// Featurize will featurize the dataset fields using a primitive.
+func Featurize(schemaFile string, index string, dataset string, config *IngestTaskConfig) error {
 	sourceFolder := path.Dir(schemaFile)
 	outputSchemaPath := config.getTmpAbsolutePath(config.FeaturizationOutputSchemaRelative)
 	outputDataPath := config.getTmpAbsolutePath(config.FeaturizationOutputDataRelative)
