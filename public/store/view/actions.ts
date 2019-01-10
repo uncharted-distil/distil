@@ -112,7 +112,14 @@ export const actions = {
 		return context.dispatch('fetchVariables', {
 			dataset: dataset
 		}).then(() => {
+
 			const target = context.getters.getRouteTargetVariable;
+
+			context.dispatch('fetchVariableRankings', {
+				dataset: dataset,
+				target: target
+			});
+
 			context.dispatch('fetchSolutionRequests', {
 				dataset: dataset,
 				target: target
