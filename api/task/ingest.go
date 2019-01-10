@@ -228,7 +228,7 @@ func Ingest(storage api.MetadataStorage, index string, dataset string, config *I
 	}
 
 	// Ingest the dataset info into the metadata index
-	err = metadata.IngestMetadata(elasticClient, index, config.ESDatasetPrefix, meta)
+	err = metadata.IngestMetadata(elasticClient, index, config.ESDatasetPrefix, metadata.Contrib, meta)
 	if err != nil {
 		return errors.Wrap(err, "unable to ingest metadata")
 	}
