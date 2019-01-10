@@ -9,6 +9,11 @@ import { getters as datasetGetters } from '../store/dataset/module';
 export const CATEGORICAL_CHUNK_SIZE = 10;
 export const IMAGE_CHUNK_SIZE = 5;
 
+export const MID_RANGE_HIGHLIGHT = 'bell';
+export const TOP_RANGE_HIGHLIGHT = 'top';
+export const BOTTOM_RANGE_HIGHLIGHT = 'bottom';
+export const DEFAULT_HIGHLIGHT_PERCENTILE = 0.75;
+
 export interface PlaceHolderFacet {
 	placeholder: boolean;
 	html: string;
@@ -298,4 +303,76 @@ export function isNumericalFacet(facet: PlaceHolderFacet | CategoricalFacet | Nu
 
 export function isPlaceHolderFacet(facet: PlaceHolderFacet | CategoricalFacet | NumericalFacet): facet is PlaceHolderFacet {
 	return (<PlaceHolderFacet>facet).placeholder !== undefined;
+}
+
+export function getCategoricalFacetValue(summary: VariableSummary): string {
+	return summary.buckets[0].key;
+}
+
+export function getNumericalFacetValue(summary: VariableSummary, group: Group, type: string): {from: number, to: number} {
+
+	// facet library is incapable of selecting a range that isnt exactly
+	// on a bin boundary, so we need to iterate through and find it
+	// manually.
+	const extrema = summary.extrema;
+
+	let from = extrema.min;
+	let to = extrema.max;
+	if (summary.mean !== undefined && summary.stddev !== undefined) {
+		switch (type) {
+			case TOP_RANGE_HIGHLIGHT:
+				from = summary.mean + (summary.stddev * DEFAULT_HIGHLIGHT_PERCENTILE);
+				break;
+
+			case BOTTOM_RANGE_HIGHLIGHT:
+				to = summary.mean - (summary.stddev * DEFAULT_HIGHLIGHT_PERCENTILE);
+				break;
+
+			case MID_RANGE_HIGHLIGHT:
+				from = summary.mean - (summary.stddev * DEFAULT_HIGHLIGHT_PERCENTILE);
+				to = summary.mean + (summary.stddev * DEFAULT_HIGHLIGHT_PERCENTILE);
+				break;
+		}
+	} else {
+		const range = extrema.max - extrema.min;
+		const mid = (extrema.max + extrema.min) / 2;
+		switch (type) {
+			case TOP_RANGE_HIGHLIGHT:
+				from = extrema.min + (range * DEFAULT_HIGHLIGHT_PERCENTILE);
+				break;
+
+			case BOTTOM_RANGE_HIGHLIGHT:
+				to = extrema.max - (range * DEFAULT_HIGHLIGHT_PERCENTILE);
+				break;
+
+			case MID_RANGE_HIGHLIGHT:
+				from = mid - (range * DEFAULT_HIGHLIGHT_PERCENTILE);
+				to = mid + (range * DEFAULT_HIGHLIGHT_PERCENTILE);
+				break;
+		}
+	}
+	const facet = group.facets[0] as NumericalFacet;
+	const slices = facet.histogram.slices;
+	// case case set to full range
+	let fromSlice = _.toNumber(slices[0].label);
+	let toSlice = _.toNumber(slices[slices.length - 1].toLabel);
+	// try to narrow into percentile
+	for (let i = 0; i < slices.length; i++) {
+		const slice = _.toNumber(slices[i].label);
+		if (from <= slice) {
+			fromSlice = slice;
+			break;
+		}
+	}
+	for (let i = slices.length - 1;  i >= 0; i--) {
+		const slice = _.toNumber(slices[i].toLabel);
+		if (to >= slice) {
+			toSlice = slice;
+			break;
+		}
+	}
+	return {
+		from: fromSlice,
+		to: toSlice
+	};
 }

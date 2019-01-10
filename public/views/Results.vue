@@ -1,7 +1,6 @@
 <template>
 	<div class="container-fluid d-flex flex-column h-100 results-view">
-		<div class="row flex-0-nav">
-		</div>
+		<div class="row flex-0-nav"></div>
 
 		<div class="row align-items-center justify-content-center bg-white">
 
@@ -20,8 +19,9 @@
 				</div>
 			</div>
 
-			<result-target-variable
-				class="col-12 col-md-6 d-flex flex-column"></result-target-variable>
+			<div class="col-12 col-md-6 d-flex flex-column">
+				<result-target-variable class="col-12 d-flex flex-column select-target-variables"></result-target-variable>
+			</div>
 		</div>
 
 		<div class="row flex-12 pb-3">
