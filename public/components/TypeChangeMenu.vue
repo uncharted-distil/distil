@@ -26,7 +26,7 @@ import { SuggestedType, Variable } from '../store/dataset/index';
 import { HighlightRoot } from '../store/highlights/index';
 import { actions as datasetActions, getters as datasetGetters } from '../store/dataset/module';
 import { getters as routeGetters } from '../store/route/module';
-import { addTypeSuggestions, getLabelFromType, getTypeFromLabel, isEquivalentType, BASIC_SUGGESTIONS } from '../util/types';
+import { addTypeSuggestions, getLabelFromType, getTypeFromLabel, isEquivalentType, isLocationType, BASIC_SUGGESTIONS } from '../util/types';
 import { hasFilterInRoute } from '../util/filters';
 
 const PROBABILITY_THRESHOLD = 0.8;
@@ -126,6 +126,12 @@ export default Vue.extend({
 					datasetActions.fetchVariableRankings(this.$store, {
 						dataset: this.dataset,
 						target: this.target
+					});
+				}
+				if (isLocationType(type)) {
+					datasetActions.geocodeVariable(this.$store, {
+						dataset: this.dataset,
+						field: this.field
 					});
 				}
 			});

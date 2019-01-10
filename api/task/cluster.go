@@ -6,7 +6,6 @@ import (
 	"os"
 	"path"
 
-	"github.com/otiai10/copy"
 	"github.com/pkg/errors"
 	"github.com/unchartedsoftware/distil-compute/model"
 	"github.com/unchartedsoftware/distil-ingest/metadata"
@@ -21,23 +20,13 @@ const (
 
 // Cluster will cluster the dataset fields using a primitive.
 func Cluster(index string, dataset string, config *IngestTaskConfig) error {
-	sourceFolder := path.Dir(config.getAbsolutePath(config.SchemaPathRelative))
-	outputSchemaPath := config.getTmpAbsolutePath(config.ClusteringOutputSchemaRelative)
-	outputDataPath := config.getTmpAbsolutePath(config.ClusteringOutputDataRelative)
-	outputFolder := path.Dir(outputSchemaPath)
-
-	// copy the source folder to have all the linked files for merging
-	err := copy.Copy(sourceFolder, outputFolder)
+	outputPath, err := initializeDatasetCopy(config.GetAbsolutePath(config.SchemaPathRelative), config.ClusteringOutputSchemaRelative, config.ClusteringOutputDataRelative, config)
 	if err != nil {
-		return errors.Wrap(err, "unable to copy source data")
+		return errors.Wrap(err, "unable to copy source data folder")
 	}
 
-	// delete the existing files that will be overwritten
-	os.Remove(outputSchemaPath)
-	os.Remove(outputDataPath)
-
 	// load metadata from original schema
-	meta, err := metadata.LoadMetadataFromOriginalSchema(config.getAbsolutePath(config.SchemaPathRelative))
+	meta, err := metadata.LoadMetadataFromOriginalSchema(config.GetAbsolutePath(config.SchemaPathRelative))
 	if err != nil {
 		return errors.Wrap(err, "unable to load original schema file")
 	}
@@ -52,8 +41,8 @@ func Cluster(index string, dataset string, config *IngestTaskConfig) error {
 	d3mIndexField := getD3MIndexField(mainDR)
 
 	// open the input file
-	dataPath := config.getAbsolutePath(mainDR.ResPath)
-	lines, err := readCSVFile(dataPath, config.HasHeader)
+	dataPath := config.GetAbsolutePath(mainDR.ResPath)
+	lines, err := ReadCSVFile(dataPath, config.HasHeader)
 	if err != nil {
 		return errors.Wrap(err, "error reading raw data")
 	}
@@ -93,16 +82,16 @@ func Cluster(index string, dataset string, config *IngestTaskConfig) error {
 	// output the data with the new feature
 	writer.Flush()
 
-	err = util.WriteFileWithDirs(config.getTmpAbsolutePath(config.ClusteringOutputDataRelative), output.Bytes(), os.ModePerm)
+	err = util.WriteFileWithDirs(config.GetTmpAbsolutePath(config.ClusteringOutputDataRelative), output.Bytes(), os.ModePerm)
 	if err != nil {
 		return errors.Wrap(err, "error writing clustered output")
 	}
 
-	relativePath := getRelativePath(path.Dir(outputSchemaPath), outputDataPath)
+	relativePath := getRelativePath(path.Dir(outputPath.outputSchema), outputPath.outputData)
 	mainDR.ResPath = relativePath
 
 	// write the new schema to file
-	err = metadata.WriteSchema(meta, config.getTmpAbsolutePath(config.ClusteringOutputSchemaRelative))
+	err = metadata.WriteSchema(meta, config.GetTmpAbsolutePath(config.ClusteringOutputSchemaRelative))
 	if err != nil {
 		return errors.Wrap(err, "unable to store cluster schema")
 	}

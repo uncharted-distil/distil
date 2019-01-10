@@ -44,6 +44,23 @@ export const actions = {
 			});
 	},
 
+	geocodeVariable(context: DatasetContext, args: { dataset: string, field: string }): Promise<void>  {
+		if (!args.dataset) {
+			console.warn('`dataset` argument is missing');
+			return null;
+		}
+		if (!args.field) {
+			console.warn('`field` argument is missing');
+			return null;
+		}
+		return axios.post(`/distil/geocode/${args.dataset}/${args.field}`, {})
+			.then(() => {
+			})
+			.catch(error => {
+				console.error(error);
+			});
+	},
+
 	setVariableType(context: DatasetContext, args: { dataset: string, field: string, type: string }): Promise<void>  {
 		if (!args.dataset) {
 			console.warn('`dataset` argument is missing');

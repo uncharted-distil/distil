@@ -83,6 +83,15 @@ const TEXT_TYPES = [
 	'unknown'
 ];
 
+const LOCATION_TYPES = [
+	'address',
+	'city',
+	'state',
+	'country',
+	'country_code',
+	'postal_code'
+];
+
 const TEXT_SIMPLE_TYPES = [
 	'text',
 	'string',
@@ -280,6 +289,10 @@ export function isIntegerType(type: string): boolean {
 
 export function isTextType(type: string): boolean {
 	return TEXT_TYPES.indexOf(type) !== -1;
+}
+
+export function isLocationType(type: string): boolean {
+	return LOCATION_TYPES.indexOf(type) !== -1;
 }
 
 export function isTextSimpleType(type: string): boolean {

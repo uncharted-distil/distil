@@ -16,7 +16,7 @@ import (
 
 // Classify will classify the dataset using a primitive.
 func Classify(index string, dataset string, config *IngestTaskConfig) error {
-	schemaDoc := path.Dir(config.getTmpAbsolutePath(config.MergedOutputSchemaPathRelative))
+	schemaDoc := path.Dir(config.GetTmpAbsolutePath(config.MergedOutputSchemaPathRelative))
 
 	// create & submit the solution request
 	pip, err := description.CreateSimonPipeline("says", "")
@@ -64,7 +64,7 @@ func Classify(index string, dataset string, config *IngestTaskConfig) error {
 		return errors.Wrap(err, "unable to serialize classification result")
 	}
 	// write to file
-	err = util.WriteFileWithDirs(config.getTmpAbsolutePath(config.ClassificationOutputPathRelative), bytes, os.ModePerm)
+	err = util.WriteFileWithDirs(config.GetTmpAbsolutePath(config.ClassificationOutputPathRelative), bytes, os.ModePerm)
 	if err != nil {
 		return errors.Wrap(err, "unable to store classification result")
 	}
