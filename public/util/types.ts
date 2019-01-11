@@ -105,6 +105,15 @@ const TEXT_TYPES = [
 	UNKNOWN_TYPE
 ];
 
+const LOCATION_TYPES = [
+	'address',
+	'city',
+	'state',
+	'country',
+	'country_code',
+	'postal_code'
+];
+
 const TEXT_SIMPLE_TYPES = [
 	TEXT_TYPE,
 	ADDRESS_TYPE,
@@ -298,6 +307,10 @@ export function isIntegerType(type: string): boolean {
 
 export function isTextType(type: string): boolean {
 	return TEXT_TYPES.indexOf(type) !== -1;
+}
+
+export function isLocationType(type: string): boolean {
+	return LOCATION_TYPES.indexOf(type) !== -1;
 }
 
 export function isTextSimpleType(type: string): boolean {

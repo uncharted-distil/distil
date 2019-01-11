@@ -6,7 +6,6 @@ import (
 	"os"
 	"path"
 
-	"github.com/otiai10/copy"
 	"github.com/pkg/errors"
 	"github.com/unchartedsoftware/distil-ingest/metadata"
 
@@ -18,20 +17,10 @@ import (
 
 // Merge will merge data resources into a single data resource.
 func Merge(schemaFile string, index string, dataset string, config *IngestTaskConfig) error {
-	sourceFolder := path.Dir(schemaFile)
-	outputSchemaPath := config.getTmpAbsolutePath(config.MergedOutputSchemaPathRelative)
-	outputDataPath := config.getTmpAbsolutePath(config.MergedOutputPathRelative)
-	outputFolder := path.Dir(outputSchemaPath)
-
-	// copy the source folder to have all the linked files for merging
-	err := copy.Copy(sourceFolder, outputFolder)
+	outputPath, err := initializeDatasetCopy(schemaFile, config.MergedOutputSchemaPathRelative, config.MergedOutputPathRelative, config)
 	if err != nil {
-		return errors.Wrap(err, "unable to copy source data")
+		return errors.Wrap(err, "unable to copy source data folder")
 	}
-
-	// delete the existing files that will be overwritten
-	os.Remove(outputSchemaPath)
-	os.Remove(outputDataPath)
 
 	// create & submit the solution request
 	pip, err := description.CreateDenormalizePipeline("3NF", "")
@@ -40,7 +29,7 @@ func Merge(schemaFile string, index string, dataset string, config *IngestTaskCo
 	}
 
 	// pipeline execution assumes datasetDoc.json as schema file
-	datasetURI, err := submitPipeline([]string{sourceFolder}, pip)
+	datasetURI, err := submitPipeline([]string{outputPath.sourceFolder}, pip)
 	if err != nil {
 		return errors.Wrap(err, "unable to run denormalize pipeline")
 	}
@@ -103,16 +92,16 @@ func Merge(schemaFile string, index string, dataset string, config *IngestTaskCo
 
 	// output the data
 	writer.Flush()
-	err = util.WriteFileWithDirs(outputDataPath, output.Bytes(), os.ModePerm)
+	err = util.WriteFileWithDirs(outputPath.outputData, output.Bytes(), os.ModePerm)
 	if err != nil {
 		return errors.Wrap(err, "error writing merged output")
 	}
 
-	relativePath := getRelativePath(path.Dir(outputSchemaPath), outputDataPath)
+	relativePath := getRelativePath(path.Dir(outputPath.outputSchema), outputPath.outputData)
 	outputMeta.DataResources[0].ResPath = relativePath
 
 	// write the new schema to file
-	err = metadata.WriteSchema(outputMeta, outputSchemaPath)
+	err = metadata.WriteSchema(outputMeta, outputPath.outputSchema)
 	if err != nil {
 		return errors.Wrap(err, "unable to store merged schema")
 	}

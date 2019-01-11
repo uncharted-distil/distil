@@ -57,3 +57,14 @@ func FetchDataset(dataset string, includeIndex bool, includeMeta bool, filterPar
 		Filters:  filterParams,
 	}, nil
 }
+
+// GetD3MIndexVariable returns the D3M index variable.
+func (d *Dataset) GetD3MIndexVariable() *model.Variable {
+	for _, v := range d.Variables {
+		if v.Name == model.D3MIndexName {
+			return v
+		}
+	}
+
+	return nil
+}

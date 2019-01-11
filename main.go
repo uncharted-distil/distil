@@ -181,6 +181,8 @@ func main() {
 		ClusteringEnabled:                  config.ClusteringEnabled,
 		FeaturizationOutputDataRelative:    config.FeaturizationOutputDataRelative,
 		FeaturizationOutputSchemaRelative:  config.FeaturizationOutputSchemaRelative,
+		GeocodingOutputDataRelative:        config.GeocodingOutputDataRelative,
+		GeocodingOutputSchemaRelative:      config.GeocodingOutputSchemaRelative,
 		MergedOutputPathRelative:           config.MergedOutputDataPath,
 		MergedOutputSchemaPathRelative:     config.MergedOutputSchemaPath,
 		SchemaPathRelative:                 config.SchemaPath,
@@ -201,6 +203,7 @@ func main() {
 		ESDatasetPrefix:                    config.ElasticDatasetPrefix,
 		HardFail:                           config.IngestHardFail,
 	}
+	sourceFolder := config.DataFolderPath
 
 	// Ingest the data specified by the environment
 	if config.InitialDataset != "" && !config.SkipIngest {
@@ -210,6 +213,7 @@ func main() {
 			log.Errorf("%+v", err)
 			os.Exit(1)
 		}
+		sourceFolder = path.Dir(ingestConfig.GetTmpAbsolutePath(ingestConfig.GeocodingOutputSchemaRelative))
 	}
 	datasetsToProxy := parseResourceProxy(config.ResourceProxy)
 
@@ -245,6 +249,7 @@ func main() {
 	registerRoutePost(mux, "/distil/residuals-summary/:dataset/:target/:results-uuid", routes.ResidualsSummaryHandler(metadataStorageCtor, pgSolutionStorageCtor, pgDataStorageCtor))
 	registerRoutePost(mux, "/distil/correctness-summary/:dataset/:results-uuid", routes.CorrectnessSummaryHandler(pgSolutionStorageCtor, pgDataStorageCtor))
 	registerRoutePost(mux, "/distil/predicted-summary/:dataset/:target/:results-uuid", routes.PredictedSummaryHandler(metadataStorageCtor, pgSolutionStorageCtor, pgDataStorageCtor))
+	registerRoutePost(mux, "/distil/geocode/:dataset/:variable", routes.GeocodingHandler(metadataStorageCtor, pgDataStorageCtor, sourceFolder))
 
 	// static
 	registerRoute(mux, "/distil/image/:dataset/:file", routes.ImageHandler(config.DataFolderPath, config.RootResourceDirectory, datasetsToProxy))

@@ -6,9 +6,11 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"path"
 	"strconv"
 	"strings"
 
+	"github.com/otiai10/copy"
 	"github.com/pkg/errors"
 	"github.com/unchartedsoftware/distil-compute/model"
 	"github.com/unchartedsoftware/distil-compute/pipeline"
@@ -36,6 +38,13 @@ type FeatureRequest struct {
 	OutputVariableName  string
 	Variable            *model.Variable
 	Step                *pipeline.PipelineDescription
+}
+
+type datasetCopyPath struct {
+	sourceFolder string
+	outputFolder string
+	outputSchema string
+	outputData   string
 }
 
 // SetClient sets the compute client to use when invoking primitives.
@@ -92,7 +101,8 @@ func submitPipeline(datasets []string, step *pipeline.PipelineDescription) (stri
 	return datasetURI, nil
 }
 
-func readCSVFile(filename string, hasHeader bool) ([][]string, error) {
+// ReadCSVFile reads a csv file and returns the string slice representation of the data.
+func ReadCSVFile(filename string, hasHeader bool) ([][]string, error) {
 	// open the file
 	csvFile, err := os.Open(filename)
 	if err != nil {
@@ -362,4 +372,28 @@ func getRelativePath(rootPath string, filePath string) string {
 	relativePath = strings.TrimPrefix(relativePath, "/")
 
 	return relativePath
+}
+
+func initializeDatasetCopy(dataset string, schemaPathRelative string, dataPathRelative string, config *IngestTaskConfig) (*datasetCopyPath, error) {
+	sourceFolder := path.Dir(dataset)
+	outputSchemaPath := config.GetTmpAbsolutePath(schemaPathRelative)
+	outputDataPath := config.GetTmpAbsolutePath(dataPathRelative)
+	outputFolder := path.Dir(outputSchemaPath)
+
+	// copy the source folder to have all the linked files for merging
+	err := copy.Copy(sourceFolder, outputFolder)
+	if err != nil {
+		return nil, errors.Wrap(err, "unable to copy source data")
+	}
+
+	// delete the existing files that will be overwritten
+	os.Remove(outputSchemaPath)
+	os.Remove(outputDataPath)
+
+	return &datasetCopyPath{
+		sourceFolder: sourceFolder,
+		outputFolder: outputFolder,
+		outputSchema: outputSchemaPath,
+		outputData:   outputDataPath,
+	}, nil
 }

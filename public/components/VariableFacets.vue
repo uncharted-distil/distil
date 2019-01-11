@@ -12,6 +12,7 @@
 				</div>
 			</div>
 			<div class="pl-1 pr-1">
+				<!-- injectable slot -->
 				<slot></slot>
 			</div>
 			<div class="row flex-11">
@@ -159,14 +160,6 @@ export default Vue.extend({
 		importanceDesc(a: { key: string }, b: { key: string }): number {
 			const importance = this.importance;
 			return importance[b.key] - importance[a.key];
-		},
-
-		availableVariables(): string[] {
-			// filter by search
-			const searchFiltered = this.groups.filter(group => {
-				return this.filter === '' || group.key.toLowerCase().includes(this.filter.toLowerCase());
-			});
-			return searchFiltered.map(v => v.key);
 		},
 
 		// creates a facet key for the route from the instance-name component arg
