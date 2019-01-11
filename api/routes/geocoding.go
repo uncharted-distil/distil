@@ -43,7 +43,6 @@ func GeocodingHandler(metaCtor api.MetadataStorageCtor, dataCtor api.DataStorage
 		lonVarName := fmt.Sprintf("_lon_%s", variable)
 
 		// check if the lat and lon variables exist
-		// NOTE: ignore the errors,
 		latVarExist, err := metaStorage.DoesVariableExist(dataset, latVarName)
 		if err != nil {
 			handleError(w, err)
