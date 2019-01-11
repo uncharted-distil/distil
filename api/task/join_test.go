@@ -61,8 +61,19 @@ func TestJoin(t *testing.T) {
 	cfg.TmpDataPath = "test_data"
 	cfg.D3MInputDir = "test_data"
 
-	result, err := join("file://test_data/test_1/datasetDoc.json", "file://test_data/test_2/datasetDoc.json",
-		"alpha", "bravo", varsLeft, varsRight, testSubmitter{}, &cfg)
+	leftJoin := &JoinSpec{
+		Column:        "alpha",
+		DatasetFolder: "test_1",
+		DatasetSource: "contrib",
+	}
+
+	rightJoin := &JoinSpec{
+		Column:        "charlie",
+		DatasetFolder: "test_2",
+		DatasetSource: "contrib",
+	}
+
+	result, err := join(leftJoin, rightJoin, varsLeft, varsRight, testSubmitter{}, &cfg)
 
 	assert.NoError(t, err)
 	assert.NotNil(t, result)

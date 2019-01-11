@@ -230,7 +230,7 @@
   revision = "ba3a645273428c7970429802fc46aee684561a1d"
 
 [[projects]]
-  digest = "1:6821075586b145735f1d6ccbcda89ba1d0b047fff4d815f2202449f7f895006a"
+  digest = "1:646927f4ca90269343b8a288e715a8daa35ba2b1cad26cf72549178c22b58486"
   name = "github.com/unchartedsoftware/distil-ingest"
   packages = [
     "conf",
@@ -243,8 +243,8 @@
     "util",
   ]
   pruneopts = "UT"
-  revision = "bb16a622776c107d28ded95d68f0b5cefb927199"
-  version = "0.10.0"
+  revision = "0cb013bc07eb6cec756a062e59fc4e2080b3fae9"
+  version = "0.11.0"
 
 [[projects]]
   branch = "master"
