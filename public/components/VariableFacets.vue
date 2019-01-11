@@ -208,6 +208,16 @@ export default Vue.extend({
 				}
 			}
 			this.$emit('numerical-click', key);
+		},
+
+		availableVariables(): string[] {
+			// NOTE: used externally, not internally by the component
+
+			// filter by search
+			const searchFiltered = this.groups.filter(group => {
+				return this.filter === '' || group.key.toLowerCase().includes(this.filter.toLowerCase());
+			});
+			return searchFiltered.map(v => v.key);
 		}
 	}
 });
