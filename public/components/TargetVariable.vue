@@ -78,6 +78,9 @@ export default Vue.extend({
 	watch: {
 		targetSummaries() {
 			this.defaultTargetHighlight();
+		},
+		targetVariable() {
+			this.defaultTargetHighlight();
 		}
 	},
 

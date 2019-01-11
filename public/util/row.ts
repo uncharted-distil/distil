@@ -5,7 +5,7 @@ import { getters as dataGetters } from '../store/dataset/module';
 import { getters as resultsGetters } from '../store/results/module';
 import { overlayRouteEntry } from '../util/routes';
 import { Filter, ROW_FILTER } from '../util/filters';
-import { CREATE_ROUTE, RESULTS_ROUTE } from '../store/route/index';
+import { SELECT_TRAINING_ROUTE, RESULTS_ROUTE } from '../store/route/index';
 import _ from 'lodash';
 import store from '../store/store';
 import VueRouter from 'vue-router';
@@ -111,7 +111,7 @@ export function getSelectedRows(selection: RowSelection): Row[] {
 	let includedData = [];
 	let excludedData = [];
 
-	if (path === CREATE_ROUTE) {
+	if (path === SELECT_TRAINING_ROUTE) {
 		includedData = dataGetters.getIncludedTableDataItems(store);
 		excludedData = dataGetters.getExcludedTableDataItems(store);
 	} else if (path === RESULTS_ROUTE) {

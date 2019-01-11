@@ -17,12 +17,12 @@
 					<i class="fa fa-file-text-o nav-icon"></i>
 					<b-nav-text>Select Data</b-nav-text>
 				</b-nav-item>
-				<b-nav-item @click="onSelectTarget" v-if="!isTask2" :active="isActive(SELECT_ROUTE)" :disabled="!hasSelectView()" v-bind:class="{ active: isActive(SELECT_ROUTE) }">
+				<b-nav-item @click="onSelectTarget" v-if="!isTask2" :active="isActive(SELECT_TARGET_ROUTE)" :disabled="!hasSelectTargetView()" v-bind:class="{ active: isActive(SELECT_TARGET_ROUTE) }">
 					<i class="fa fa-angle-right nav-arrow"></i>
 					<i class="fa fa-dot-circle-o  nav-icon"></i>
 					<b-nav-text>Select Target</b-nav-text>
 				</b-nav-item>
-				<b-nav-item @click="onSelectData" :active="isActive(CREATE_ROUTE)" :disabled="!hasCreateView()" v-bind:class="{ active: isActive(CREATE_ROUTE) }">
+				<b-nav-item @click="onSelectData" :active="isActive(SELECT_TRAINING_ROUTE)" :disabled="!hasSelectTrainingView()" v-bind:class="{ active: isActive(SELECT_TRAINING_ROUTE) }">
 					<i class="fa fa-angle-right nav-arrow"></i>
 					<i class="fa fa-code-fork  nav-icon"></i>
 					<b-nav-text>Create Models</b-nav-text>
@@ -56,7 +56,7 @@ import '../assets/images/uncharted.svg';
 import { gotoHome, gotoSearch, gotoSelectTarget, gotoSelectData, gotoResults } from '../util/nav';
 import { actions as appActions,  getters as appGetters } from '../store/app/module';
 import { getters as routeGetters } from '../store/route/module';
-import { HOME_ROUTE, SEARCH_ROUTE, SELECT_ROUTE, CREATE_ROUTE, RESULTS_ROUTE, ABORT_SUCCESS_ROUTE } from '../store/route/index';
+import { HOME_ROUTE, SEARCH_ROUTE, SELECT_TARGET_ROUTE, SELECT_TRAINING_ROUTE, RESULTS_ROUTE, ABORT_SUCCESS_ROUTE } from '../store/route/index';
 import { restoreView } from '../util/view';
 import Vue from 'vue';
 
@@ -67,8 +67,8 @@ export default Vue.extend({
 		return {
 			HOME_ROUTE: HOME_ROUTE,
 			SEARCH_ROUTE: SEARCH_ROUTE,
-			SELECT_ROUTE: SELECT_ROUTE,
-			CREATE_ROUTE: CREATE_ROUTE,
+			SELECT_TARGET_ROUTE: SELECT_TARGET_ROUTE,
+			SELECT_TRAINING_ROUTE: SELECT_TRAINING_ROUTE,
 			RESULTS_ROUTE: RESULTS_ROUTE
 		};
 	},
@@ -114,11 +114,11 @@ export default Vue.extend({
 			this.$router.replace(ABORT_SUCCESS_ROUTE);
 			appActions.abort(this.$store);
 		},
-		hasSelectView(): boolean {
-			return !!restoreView(this.$store, SELECT_ROUTE, this.dataset);
+		hasSelectTargetView(): boolean {
+			return !!restoreView(this.$store, SELECT_TARGET_ROUTE, this.dataset);
 		},
-		hasCreateView(): boolean {
-			return !!restoreView(this.$store, CREATE_ROUTE, this.dataset);
+		hasSelectTrainingView(): boolean {
+			return !!restoreView(this.$store, SELECT_TRAINING_ROUTE, this.dataset);
 		},
 		hasResultView(): boolean {
 			return !!restoreView(this.$store, RESULTS_ROUTE, this.dataset);

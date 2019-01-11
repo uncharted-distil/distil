@@ -16,7 +16,7 @@ import store from './store/store';
 import router from './router/router';
 import { getters as routeGetters } from './store/route/module';
 import { getters as appGetters, actions as appActions } from './store/app/module';
-import { HOME_ROUTE, SELECT_ROUTE, CREATE_ROUTE } from './store/route';
+import { HOME_ROUTE, SELECT_TARGET_ROUTE, SELECT_TRAINING_ROUTE } from './store/route';
 import { createRouteEntry } from './util/routes';
 
 import 'bootstrap-vue/dist/bootstrap-vue.css';
@@ -50,17 +50,17 @@ export default Vue.extend({
 			if (appGetters.isTask1(this.$store) && path === HOME_ROUTE) {
 				const dataset = appGetters.getProblemDataset(this.$store);
 				console.log(`Task 1: Routing directly to select target view with dataset=\`${dataset}\``, dataset);
-				const entry = createRouteEntry(SELECT_ROUTE, {
+				const entry = createRouteEntry(SELECT_TARGET_ROUTE, {
 					dataset: dataset
 				});
 				this.$router.push(entry);
 			}
 
-			if (appGetters.isTask2(this.$store) && (path === HOME_ROUTE || path === SELECT_ROUTE)) {
+			if (appGetters.isTask2(this.$store) && (path === HOME_ROUTE || path === SELECT_TARGET_ROUTE)) {
 				const dataset = appGetters.getProblemDataset(this.$store);
 				const target = appGetters.getProblemTarget(this.$store);
 				console.log(`Task 2: Routing directly to create models view with dataset=\`${dataset}\` and target=\`${target}\``, dataset, target);
-				const entry = createRouteEntry(CREATE_ROUTE, {
+				const entry = createRouteEntry(SELECT_TRAINING_ROUTE, {
 					dataset: dataset,
 					target: target
 				});
