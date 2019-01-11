@@ -12,75 +12,96 @@ const IMAGE_REGEX = /\.(gif|jpg|jpeg|png|tif|tiff|bmp)$/i;
 const FEATURE_PREFIX = '_feature_';
 const CLUSTER_PREFIX = '_cluster_';
 
+// NOTE: these are copied from `distil-compute/model/schema_types.go` and
+// should be kept up to date in case of changes.
+
+export const ADDRESS_TYPE = 'address';
+export const INDEX_TYPE = 'index';
+export const INTEGER_TYPE = 'integer';
+export const REAL_TYPE = 'real';
+export const REAL_VECTOR_TYPE = 'realVector';
+export const BOOL_TYPE = 'boolean';
+export const DATE_TIME_TYPE = 'dateTime';
+export const ORDINAL_TYPE = 'ordinal';
+export const CATEGORICAL_TYPE = 'categorical';
+export const TEXT_TYPE = 'text';
+export const CITY_TYPE = 'city';
+export const STATE_TYPE = 'state';
+export const COUNTRY_TYPE = 'country';
+export const EMAIL_TYPE = 'email';
+export const LATITUDE_TYPE = 'latitude';
+export const LONGITUDE_TYPE = 'longitude';
+export const PHONE_TYPE = 'phone';
+export const POSTAL_CODE_TYPE = 'postal_code';
+export const URI_TYPE = 'uri';
+export const IMAGE_TYPE = 'image';
+export const TIMESERIES_TYPE = 'timeseries';
+export const UNKNOWN_TYPE = 'unknown';
+
 const TYPES_TO_LABELS: Dictionary<string> = {
-	integer: 'Integer',
-	real: 'Decimal',
-	realVector: 'Vector',
-	latitude: 'Latitude',
-	longitude: 'Longitude',
-	string: 'String',
-	text: 'Text',
-	categorical: 'Categorical',
-	ordinal: 'Ordinal',
-	address: 'Address',
-	city: 'City',
-	state: 'State/Province',
-	country: 'Country',
-	email: 'Email',
-	phone: 'Phone Number',
-	postal_code: 'Postal Code',
-	uri: 'URI',
-	keyword: 'Keyword',
-	dateTime: 'Date/Time',
-	boolean: 'Boolean',
-	image: 'Image',
-	timeseries: 'Timeseries',
-	unknown: 'Unknown'
+	[INTEGER_TYPE]: 'Integer',
+	[REAL_TYPE]: 'Decimal',
+	[REAL_VECTOR_TYPE]: 'Vector',
+	[LATITUDE_TYPE]: 'Latitude',
+	[LONGITUDE_TYPE]: 'Longitude',
+	[TEXT_TYPE]: 'Text',
+	[CATEGORICAL_TYPE]: 'Categorical',
+	[ORDINAL_TYPE]: 'Ordinal',
+	[ADDRESS_TYPE]: 'Address',
+	[CITY_TYPE]: 'City',
+	[STATE_TYPE]: 'State/Province',
+	[COUNTRY_TYPE]: 'Country',
+	[EMAIL_TYPE]: 'Email',
+	[PHONE_TYPE]: 'Phone Number',
+	[POSTAL_CODE_TYPE]: 'Postal Code',
+	[URI_TYPE]: 'URI',
+	[DATE_TIME_TYPE]: 'Date/Time',
+	[BOOL_TYPE]: 'Boolean',
+	[IMAGE_TYPE]: 'Image',
+	[TIMESERIES_TYPE]: 'Timeseries',
+	[UNKNOWN_TYPE]: 'Unknown'
 };
 
 const LABELS_TO_TYPES = _.invert(TYPES_TO_LABELS);
 
 const INTEGER_TYPES = [
-	'integer'
+	INTEGER_TYPE
 ];
 
 const FLOATING_POINT_TYPES = [
-	'real',
-	'realVector',
-	'latitude',
-	'longitude'
+	REAL_TYPE,
+	REAL_VECTOR_TYPE,
+	LATITUDE_TYPE,
+	LONGITUDE_TYPE
 ];
 
 const FEATURE_TYPES = [
-	'image'
+	IMAGE_TYPE
 ];
 
 const CLUSTER_TYPES = [
-	'timeseries'
+	TIMESERIES_TYPE
 ];
 
 const NUMERIC_TYPES = INTEGER_TYPES.concat(FLOATING_POINT_TYPES);
 
 const TEXT_TYPES = [
-	'text',
-	'string',
-	'image',
-	'timeseries',
-	'categorical',
-	'ordinal',
-	'address',
-	'city',
-	'state',
-	'country',
-	'country_code',
-	'email',
-	'phone',
-	'postal_code',
-	'uri',
-	'keyword',
-	'dateTime',
-	'boolean',
-	'unknown'
+	TEXT_TYPE,
+	IMAGE_TYPE,
+	TIMESERIES_TYPE,
+	CATEGORICAL_TYPE,
+	ORDINAL_TYPE,
+	ADDRESS_TYPE,
+	CITY_TYPE,
+	STATE_TYPE,
+	COUNTRY_TYPE,
+	EMAIL_TYPE,
+	PHONE_TYPE,
+	POSTAL_CODE_TYPE,
+	URI_TYPE,
+	DATE_TIME_TYPE,
+	BOOL_TYPE,
+	UNKNOWN_TYPE
 ];
 
 const LOCATION_TYPES = [
@@ -93,137 +114,131 @@ const LOCATION_TYPES = [
 ];
 
 const TEXT_SIMPLE_TYPES = [
-	'text',
-	'string',
-	'address',
-	'city',
-	'state',
-	'country',
-	'country_code',
-	'email',
-	'phone',
-	'postal_code',
-	'uri',
-	'keyword',
-	'dateTime',
-	'boolean',
-	'unknown'
+	TEXT_TYPE,
+	ADDRESS_TYPE,
+	CITY_TYPE,
+	STATE_TYPE,
+	COUNTRY_TYPE,
+	EMAIL_TYPE,
+	PHONE_TYPE,
+	POSTAL_CODE_TYPE,
+	URI_TYPE,
+	DATE_TIME_TYPE,
+	BOOL_TYPE,
+	UNKNOWN_TYPE
 ];
 
 const BOOL_SUGGESTIONS = [
-	'text',
-	'string',
-	'categorical',
-	'boolean',
-	'integer',
-	'keyword',
-	'unknown'
+	TEXT_TYPE,
+	CATEGORICAL_TYPE,
+	BOOL_TYPE,
+	INTEGER_TYPE,
+	UNKNOWN_TYPE
 ];
 
 const EMAIL_SUGGESTIONS = [
-	'text',
-	'string',
-	'email',
-	'unknown'
+	TEXT_TYPE,
+	EMAIL_TYPE,
+	UNKNOWN_TYPE
 ];
 
 const URI_SUGGESTIONS = [
-	'text',
-	'string',
-	'uri',
-	'unknown'
+	TEXT_TYPE,
+	URI_TYPE,
+	UNKNOWN_TYPE
 ];
 
 const PHONE_SUGGESTIONS = [
-	'text',
-	'integer',
-	'phone',
-	'unknown'
+	TEXT_TYPE,
+	INTEGER_TYPE,
+	PHONE_TYPE,
+	UNKNOWN_TYPE
 ];
 
 const TEXT_SUGGESTIONS = [
-	'text',
-	'string',
-	'categorical',
-	'ordinal',
-	'integer',
-	'address',
-	'city',
-	'state',
-	'country',
-	'postal_code',
-	'keyword',
-	'dateTime',
-	'image',
-	'unknown'
+	TEXT_TYPE,
+	CATEGORICAL_TYPE,
+	ORDINAL_TYPE,
+	INTEGER_TYPE,
+	ADDRESS_TYPE,
+	CITY_TYPE,
+	STATE_TYPE,
+	COUNTRY_TYPE,
+	POSTAL_CODE_TYPE,
+	DATE_TIME_TYPE,
+	IMAGE_TYPE,
+	UNKNOWN_TYPE
 ];
 
 const INTEGER_SUGGESTIONS = [
-	'integer',
-	'real',
-	'latitude',
-	'longitude',
-	'categorical',
-	'ordinal',
-	'unknown'
+	INTEGER_TYPE,
+	REAL_TYPE,
+	LATITUDE_TYPE,
+	LONGITUDE_TYPE,
+	CATEGORICAL_TYPE,
+	ORDINAL_TYPE,
+	UNKNOWN_TYPE
 ];
 
 const DECIMAL_SUGGESTIONS = [
-	'integer',
-	'real',
-	'realVector',
-	'latitude',
-	'longitude',
-	'unknown'
+	INTEGER_TYPE,
+	REAL_TYPE,
+	REAL_VECTOR_TYPE,
+	LATITUDE_TYPE,
+	LONGITUDE_TYPE,
+	UNKNOWN_TYPE
 ];
 
 const IMAGE_SUGGESTIONS = [
-	'image',
-	'text',
-	'string',
-	'categorical'
+	IMAGE_TYPE,
+	TEXT_TYPE,
+	CATEGORICAL_TYPE
 ];
 
 export const BASIC_SUGGESTIONS = [
-	'integer',
-	'real',
-	'categorical',
-	'ordinal',
-	'text',
-	'image',
-	'dateTime',
-	'timeseries',
-	'unknown'
+	INTEGER_TYPE,
+	REAL_TYPE,
+	CATEGORICAL_TYPE,
+	ORDINAL_TYPE,
+	TEXT_TYPE,
+	IMAGE_TYPE,
+	DATE_TIME_TYPE,
+	TIMESERIES_TYPE,
+	UNKNOWN_TYPE
 ];
 
 const EQUIV_TYPES = {
-	integer: [ 'integer' ],
-	real: [ 'float', 'real' ],
-	realVector: [ 'realVector' ],
-	latitude: [ 'latitude' ],
-	longitude: [ 'longitude' ],
-	string: [ 'string', 'text' ],
-	text:  [ 'string', 'text' ],
-	categorical: [ 'categorical' ],
-	ordinal: [ 'ordinal' ],
-	address: [ 'address' ],
-	city: [ 'city' ],
-	state: [ 'state' ],
-	country: [ 'country' ],
-	email: [ 'email' ],
-	phone: [ 'phone' ],
-	postal_code: [ 'postal_code' ],
-	uri: [ 'uri' ],
-	keyword: [ 'keyword' ],
-	dateTime: [ 'dateTime' ],
-	boolean: [ 'boolean' ],
-	image: [ 'image' ],
-	timeseries: [ 'timeseries' ],
-	unknown: [ 'unknown' ]
+	[INTEGER_TYPE]: [ INTEGER_TYPE ],
+	[REAL_TYPE]: [ REAL_TYPE ],
+	[REAL_VECTOR_TYPE]: [ REAL_VECTOR_TYPE ],
+	[LATITUDE_TYPE]: [ LATITUDE_TYPE ],
+	[LONGITUDE_TYPE]: [ LONGITUDE_TYPE ],
+	[TEXT_TYPE]:  [ TEXT_TYPE ],
+	[CATEGORICAL_TYPE]: [ CATEGORICAL_TYPE ],
+	[ORDINAL_TYPE]: [ ORDINAL_TYPE ],
+	[ADDRESS_TYPE]: [ ADDRESS_TYPE ],
+	[CITY_TYPE]: [ CITY_TYPE ],
+	[STATE_TYPE]: [ STATE_TYPE ],
+	[COUNTRY_TYPE]: [ COUNTRY_TYPE ],
+	[EMAIL_TYPE]: [ EMAIL_TYPE ],
+	[PHONE_TYPE]: [ PHONE_TYPE ],
+	[POSTAL_CODE_TYPE]: [ POSTAL_CODE_TYPE ],
+	[URI_TYPE]: [ URI_TYPE ],
+	[DATE_TIME_TYPE]: [ DATE_TIME_TYPE ],
+	[BOOL_TYPE]: [ BOOL_TYPE ],
+	[IMAGE_TYPE]: [ IMAGE_TYPE ],
+	[TIMESERIES_TYPE]: [ TIMESERIES_TYPE ],
+	[UNKNOWN_TYPE]: [ UNKNOWN_TYPE ]
 };
 
 export function isEquivalentType(a: string, b: string): boolean {
-	const matches = EQUIV_TYPES[a].filter((type: string) => {
+
+	const equiv = EQUIV_TYPES[a];
+	if (!equiv) {
+		console.warn(`Unable to find equivalent types for type '${a}', type unrecognized`);
+		return false;
+	}
+	const matches = equiv.filter((type: string) => {
 		return type === b;
 	});
 	return matches.length > 0;
@@ -266,10 +281,10 @@ export function formatValue(colValue: any, colType: string): any {
 	// We've got a floating point value - set precision based on
 	// type.
 	switch (colType) {
-		case 'longitude':
-		case 'latitude':
+		case LONGITUDE_TYPE:
+		case LATITUDE_TYPE:
 			return colValue.toFixed(6);
-		case 'realVector':
+		case REAL_VECTOR_TYPE:
 			return colValue;
 	}
 	return colValue.toFixed(4);

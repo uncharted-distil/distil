@@ -9,14 +9,14 @@
 
 // 	describe('#getTask()', () => {
 // 		it('should return a task for a valid variable type', () => {
-// 			expect(solutions.getTask('float').displayName).to.equal('Regression');
-// 			expect(solutions.getTask('float').schemaName).to.equal('regression');
+// 			expect(solutions.getTask(FLOAT_TYPE).displayName).to.equal('Regression');
+// 			expect(solutions.getTask(FLOAT_TYPE).schemaName).to.equal('regression');
 // 		});
 // 	});
 
 // 	describe('#getMetricDisplayNames()', () => {
 // 		it('should return a list of associated metric display names for a task', () => {
-// 			const task = solutions.getTask('float');
+// 			const task = solutions.getTask(FLOAT_TYPE);
 // 			expect(solutions.getMetricDisplayNames(task).length).to.not.equal(0);
 // 			expect(solutions.getMetricDisplayNames(task)).to.include('Mean Absolute Error');
 // 		});
@@ -24,9 +24,9 @@
 
 // 	describe('#getOutputSchemaNames()', () => {
 // 		it('should return a list of associated output schema names for a task', () => {
-// 			const task = solutions.getTask('float');
+// 			const task = solutions.getTask(FLOAT_TYPE);
 // 			expect(solutions.getOutputSchemaNames(task).length).to.not.equal(0);
-// 			expect(solutions.getOutputSchemaNames(task)).to.include('real');
+// 			expect(solutions.getOutputSchemaNames(task)).to.include(REAL_TYPE);
 // 		});
 // 	});
 

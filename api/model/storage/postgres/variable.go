@@ -126,7 +126,7 @@ func (s *Storage) fetchSummaryData(dataset string, varName string, resultURI str
 	} else if model.IsTimeSeries(variable.Type) {
 		field = NewTimeSeriesField(s, dataset, variable)
 	} else {
-		return nil, errors.Errorf("variable %s of type %s does not support summary", variable.Name, variable.Type)
+		return nil, errors.Errorf("variable `%s` of type `%s` does not support summary", variable.Name, variable.Type)
 	}
 
 	histogram, err := field.FetchSummaryData(resultURI, filterParams, extrema)

@@ -34,6 +34,7 @@ import { Filter } from '../util/filters';
 import { TableColumn, TableRow, D3M_INDEX_FIELD } from '../store/dataset/index';
 import { RowSelection } from '../store/highlights/index';
 import { getters as routeGetters } from '../store/route/module';
+import { IMAGE_TYPE, TIMESERIES_TYPE } from '../util/types';
 import { addRowSelection, removeRowSelection, isRowSelected, updateTableRowSelection } from '../util/row';
 
 export default Vue.extend({
@@ -70,7 +71,7 @@ export default Vue.extend({
 					type: field.type
 				};
 			})
-			.filter(field => field.type === 'image')
+			.filter(field => field.type === IMAGE_TYPE)
 			.map(field => field.key);
 		},
 
@@ -81,7 +82,7 @@ export default Vue.extend({
 					type: field.type
 				};
 			})
-			.filter(field => field.type === 'timeseries')
+			.filter(field => field.type === TIMESERIES_TYPE)
 			.map(field => field.key);
 		},
 

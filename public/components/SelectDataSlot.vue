@@ -7,19 +7,19 @@
 
 				<b-form-group class="view-button ml-auto">
 					<b-form-radio-group buttons v-model="viewType" button-variant="outline-secondary">
-						<b-form-radio value="image" v-if="isImageDataset" class="view-button">
+						<b-form-radio :value="IMAGE_VIEW" v-if="isImageDataset" class="view-button">
 							<i class="fa fa-image"></i>
 						</b-form-radio >
-						<b-form-radio value="table" class="view-button">
+						<b-form-radio :value="TABLE_VIEW" class="view-button">
 							<i class="fa fa-columns"></i>
 						</b-form-radio >
-						<b-form-radio value="graph" class="view-button">
+						<b-form-radio :value="GRAPH_VIEW" class="view-button">
 							<i class="fa fa-share-alt"></i>
 						</b-form-radio >
-						<b-form-radio value="geo" class="view-button">
+						<b-form-radio :value="GEO_VIEW" class="view-button">
 							<i class="fa fa-globe"></i>
 						</b-form-radio >
-						<b-form-radio value="timeseries" class="view-button">
+						<b-form-radio :value="TIMESERIES_VIEW" class="view-button">
 							<i class="fa fa-line-chart"></i>
 						</b-form-radio >
 					</b-form-radio-group>
@@ -61,11 +61,11 @@
 				<div v-html="spinnerHTML"></div>
 			</div>
 			<template v-if="hasData">
-				<select-data-table v-if="viewType==='table'" :included-active="includedActive" :instance-name="instanceName"></select-data-table>
-				<select-image-mosaic v-if="viewType==='image'" :included-active="includedActive" :instance-name="instanceName"></select-image-mosaic>
-				<select-graph-view v-if="viewType==='graph'" :included-active="includedActive" :instance-name="instanceName"></select-graph-view>
-				<select-geo-plot v-if="viewType==='geo'" :included-active="includedActive" :instance-name="instanceName"></select-geo-plot>
-				<select-timeseries-view v-if="viewType==='timeseries'" :included-active="includedActive" :instance-name="instanceName"></select-timeseries-view>
+				<select-data-table v-if="viewType===TABLE_VIEW" :included-active="includedActive" :instance-name="instanceName"></select-data-table>
+				<select-image-mosaic v-if="viewType===IMAGE_VIEW" :included-active="includedActive" :instance-name="instanceName"></select-image-mosaic>
+				<select-graph-view v-if="viewType===GRAPH_VIEW" :included-active="includedActive" :instance-name="instanceName"></select-graph-view>
+				<select-geo-plot v-if="viewType===GEO_VIEW" :included-active="includedActive" :instance-name="instanceName"></select-geo-plot>
+				<select-timeseries-view v-if="viewType===TIMESERIES_VIEW" :included-active="includedActive" :instance-name="instanceName"></select-timeseries-view>
 			</template>
 		</div>
 
@@ -90,6 +90,11 @@ import { Filter, addFilterToRoute, EXCLUDE_FILTER, INCLUDE_FILTER } from '../uti
 import { getHighlights, clearHighlightRoot, createFilterFromHighlightRoot } from '../util/highlights';
 import { addRowSelection, removeRowSelection, clearRowSelection, isRowSelected, getNumIncludedRows, getNumExcludedRows, createFilterFromRowSelection } from '../util/row';
 
+const TABLE_VIEW = 'table';
+const IMAGE_VIEW = 'image';
+const GRAPH_VIEW = 'graph';
+const GEO_VIEW = 'geo';
+
 export default Vue.extend({
 	name: 'select-data-slot',
 
@@ -105,8 +110,13 @@ export default Vue.extend({
 	data() {
 		return {
 			instanceName: 'select-data',
-			viewType: 'table',
-			includedActive: true
+			viewType: TABLE_VIEW,
+			includedActive: true,
+			TABLE_VIEW: TABLE_VIEW,
+			IMAGE_VIEW: IMAGE_VIEW,
+			GRAPH_VIEW: GRAPH_VIEW,
+			GEO_VIEW: GEO_VIEW,
+			TIMESERIES_VIEW: 'timeseries'
 		};
 	},
 

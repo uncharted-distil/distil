@@ -162,10 +162,10 @@ func TestFloat(t *testing.T) {
 	j = JSON(t,
 		`{
 			"test": {
-				"string": "hello"
+				"text": "hello"
 			}
 		}`)
-	_, ok = Float(j, "test", "string")
+	_, ok = Float(j, "test", "text")
 	assert.False(t, ok)
 }
 
@@ -211,10 +211,10 @@ func TestInt(t *testing.T) {
 	j = JSON(t,
 		`{
 			"test": {
-				"string": "hello"
+				"text": "hello"
 			}
 		}`)
-	_, ok = Int(j, "test", "string")
+	_, ok = Int(j, "test", "text")
 	assert.False(t, ok)
 }
 
@@ -223,20 +223,20 @@ func TestString(t *testing.T) {
 	j := JSON(t,
 		`{
 			"test": {
-				"string": "hello"
+				"text": "hello"
 			}
 		}`)
-	_, ok := String(j, "test", "string")
+	_, ok := String(j, "test", "text")
 	assert.True(t, ok)
 
 	// should return a string if the value is a string
 	j = JSON(t,
 		`{
 			"test": {
-				"string": "hello"
+				"text": "hello"
 			}
 		}`)
-	val, ok := String(j, "test", "string")
+	val, ok := String(j, "test", "text")
 	assert.True(t, ok)
 	assert.Equal(t, val, "hello")
 

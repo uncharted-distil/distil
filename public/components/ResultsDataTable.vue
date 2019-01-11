@@ -69,7 +69,7 @@ import { getters as routeGetters } from '../store/route/module';
 import { getters as solutionGetters } from '../store/solutions/module';
 import { Solution, SOLUTION_ERRORED } from '../store/solutions/index';
 import { Dictionary } from '../util/dict';
-import { getVarType, isTextType } from '../util/types';
+import { getVarType, isTextType, IMAGE_TYPE, TIMESERIES_TYPE } from '../util/types';
 import { addRowSelection, removeRowSelection, isRowSelected, updateTableRowSelection } from '../util/row';
 import Vue from 'vue';
 
@@ -186,7 +186,7 @@ export default Vue.extend({
 					type: field.type
 				};
 			})
-			.filter(field => field.type === 'image')
+			.filter(field => field.type === IMAGE_TYPE)
 			.map(field => field.key);
 		},
 
@@ -197,7 +197,7 @@ export default Vue.extend({
 					type: field.type
 				};
 			})
-			.filter(field => field.type === 'timeseries')
+			.filter(field => field.type === TIMESERIES_TYPE)
 			.map(field => field.key);
 		},
 

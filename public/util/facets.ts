@@ -1,8 +1,10 @@
 import _ from 'lodash';
 import moment from 'moment';
 import { spinnerHTML } from '../util/spinner';
-import { formatValue } from '../util/types';
-import { VariableSummary } from '../store/dataset/index';
+import { formatValue, TIMESERIES_TYPE, CATEGORICAL_TYPE, ORDINAL_TYPE,
+	BOOL_TYPE, ADDRESS_TYPE, CITY_TYPE, STATE_TYPE, COUNTRY_TYPE, EMAIL_TYPE,
+	POSTAL_CODE_TYPE, PHONE_TYPE, URI_TYPE, DATE_TIME_TYPE, IMAGE_TYPE } from '../util/types';
+import { VariableSummary, CATEGORICAL_SUMMARY, NUMERICAL_SUMMARY } from '../store/dataset/index';
 import store from '../store/store';
 import { getters as datasetGetters } from '../store/dataset/module';
 
@@ -132,13 +134,13 @@ export function createPendingFacet(summary: VariableSummary): Group {
 // creates categorical or numerical summary facets based on the input summary type
 export function createSummaryFacet(summary: VariableSummary): Group {
 	switch (summary.type) {
-		case 'categorical':
-			if (summary.varType === 'timeseries') {
+		case CATEGORICAL_SUMMARY:
+			if (summary.varType === TIMESERIES_TYPE) {
 				return createTimeseriesSummaryFacet(summary);
 			} else {
 				return createCategoricalSummaryFacet(summary);
 			}
-		case 'numerical':
+		case NUMERICAL_SUMMARY:
 			return createNumericalSummaryFacet(summary);
 	}
 	console.warn('unrecognized summary type', summary.type);
@@ -147,29 +149,29 @@ export function createSummaryFacet(summary: VariableSummary): Group {
 
 export function getGroupIcon(summary: VariableSummary): string {
 	switch (summary.varType) {
-		case 'categorical':
-		case 'ordinal':
-		case 'boolean':
+		case CATEGORICAL_TYPE:
+		case ORDINAL_TYPE:
+		case BOOL_TYPE:
 			return 'fa fa-info';
 
-		case 'address':
-		case 'city':
-		case 'state':
-		case 'country':
+		case ADDRESS_TYPE:
+		case CITY_TYPE:
+		case STATE_TYPE:
+		case COUNTRY_TYPE:
 			return 'fa fa-globe';
 
-		case 'email':
-		case 'postal_code':
+		case EMAIL_TYPE:
+		case POSTAL_CODE_TYPE:
 			return 'fa fa-envelope';
 
-		case 'phone':
+		case PHONE_TYPE:
 			return 'fa fa-phone';
 
-		case 'uri':
+		case URI_TYPE:
 		case 'keyword':
 			return 'fa fa-book';
 
-		case 'dateTime':
+		case DATE_TIME_TYPE:
 			return 'fa fa-calendar';
 
 		default:
@@ -178,7 +180,7 @@ export function getGroupIcon(summary: VariableSummary): string {
 }
 
 export function getCategoricalChunkSize(type: string): number {
-	if (type === 'image') {
+	if (type === IMAGE_TYPE) {
 		return IMAGE_CHUNK_SIZE;
 	}
 	return CATEGORICAL_CHUNK_SIZE;
@@ -254,7 +256,7 @@ function getHistogramSlices(summary: VariableSummary) {
 	for (let i = 0; i < buckets.length; i++) {
 		const bucket = buckets[i];
 		let from: any, to: any;
-		if (summary.varType === 'dateTime') {
+		if (summary.varType === DATE_TIME_TYPE) {
 			from = bucket.key;
 			to = (i < buckets.length - 1) ? buckets[i + 1].key : buckets[i].key;
 			from = moment(from).format('YYYY/MM/DD');

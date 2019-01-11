@@ -26,6 +26,13 @@ export const NUMERICAL_FILTER = 'numerical';
 export const BIVARIATE_FILTER = 'bivariate';
 
 /**
+ * Timeseries filter, omitting documents that do not fall within the provided
+ * timeseries range.
+ * @constant {string}
+ */
+export const TIMESERIES_FILTER = 'timeseries';
+
+/**
  * Row filter, omitting documents that have the specified d3mIndices;
  * @constant {string}
  */
