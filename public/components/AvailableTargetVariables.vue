@@ -22,7 +22,7 @@ import { getters as routeGetters } from '../store/route/module';
 import { createRouteEntry } from '../util/routes';
 import { filterSummariesByDataset } from '../util/data';
 import VariableFacets from '../components/VariableFacets.vue';
-import { AVAILABLE_TARGET_VARS_INSTSANCE, CREATE_ROUTE } from '../store/route/index';
+import { AVAILABLE_TARGET_VARS_INSTSANCE, SELECT_TRAINING_ROUTE } from '../store/route/index';
 import { Group, createGroups } from '../util/facets';
 import 'font-awesome/css/font-awesome.css';
 import Vue from 'vue';
@@ -68,7 +68,7 @@ export default Vue.extend({
 					if (index !== -1) {
 						training.splice(index, 1);
 					}
-					const entry = createRouteEntry(CREATE_ROUTE, {
+					const entry = createRouteEntry(SELECT_TRAINING_ROUTE, {
 						target: group.key,
 						dataset: routeGetters.getRouteDataset(this.$store),
 						filters: routeGetters.getRouteFilters(this.$store),
