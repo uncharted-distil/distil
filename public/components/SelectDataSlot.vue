@@ -263,9 +263,6 @@ export default Vue.extend({
 	padding: 8px;
 	text-align: center;
 }
-.missing-icon {
-	padding-right: 4px;
-}
 table.b-table>tfoot>tr>th.sorting:before,
 table.b-table>thead>tr>th.sorting:before,
 table.b-table>tfoot>tr>th.sorting:after,

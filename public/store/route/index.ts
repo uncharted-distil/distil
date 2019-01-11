@@ -13,4 +13,5 @@ export const AVAILABLE_TARGET_VARS_INSTSANCE = 'availableTargetVars';
 export const TRAINING_VARS_INSTANCE = 'trainingVar';
 export const TARGET_VAR_INSTANCE = 'targetVar';
 export const RESULT_TRAINING_VARS_INSTANCE = 'resultTrainingVars';
+export const RESULT_TARGET_VAR_INSTANCE = 'resultTargetVar';
 export const ROUTE_PAGE_SUFFIX = 'Page';
