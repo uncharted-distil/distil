@@ -119,7 +119,7 @@ func (s *Storage) createViewFromMetadataFields(dataset string, fields map[string
 	for field, v := range fields {
 		dbFields[field] = &model.Variable{
 			Name:             v.Name,
-			OriginalVariable: v.OriginalName,
+			OriginalVariable: v.OriginalVariable,
 			Type:             v.Type,
 		}
 	}

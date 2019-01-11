@@ -7,7 +7,7 @@ import (
 )
 
 func handleJSON(w http.ResponseWriter, data interface{}) error {
-	// marshall data
+	// marshal data
 	bytes, err := json.Marshal(data)
 	if err != nil {
 		return err

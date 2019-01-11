@@ -89,7 +89,7 @@ func ResidualsExtremaHandler(metaCtor api.MetadataStorageCtor, solutionCtor api.
 			return
 		}
 
-		// marshall data and sent the response back
+		// marshal data and sent the response back
 		err = handleJSON(w, ResidualsExtrema{
 			Extrema: extrema,
 		})

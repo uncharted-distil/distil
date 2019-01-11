@@ -131,7 +131,7 @@ func PredictedSummaryHandler(metaCtor api.MetadataStorageCtor, solutionCtor api.
 		histogram.Label = "Predicted"
 		histogram.SolutionID = res.SolutionID
 
-		// marshall data and sent the response back
+		// marshal data and sent the response back
 		err = handleJSON(w, PredictedSummary{
 			PredictedSummary: histogram,
 		})

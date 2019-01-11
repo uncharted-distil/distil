@@ -24,7 +24,7 @@ func IngestHandler(metaCtor model.MetadataStorageCtor, config *task.IngestTaskCo
 			return
 		}
 
-		// marshall data and sent the response back
+		// marshal data and sent the response back
 		err = handleJSON(w, map[string]interface{}{"result": "ingested"})
 		if err != nil {
 			handleError(w, errors.Wrap(err, "unable marshal result histogram into JSON"))

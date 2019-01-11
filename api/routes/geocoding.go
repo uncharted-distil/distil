@@ -43,11 +43,20 @@ func GeocodingHandler(metaCtor api.MetadataStorageCtor, dataCtor api.DataStorage
 		lonVarName := fmt.Sprintf("_lon_%s", variable)
 
 		// check if the lat and lon variables exist
-		latVarExist, _ := metaStorage.FetchVariable(dataset, latVarName)
-		lonVarExist, _ := metaStorage.FetchVariable(dataset, lonVarName)
+		// NOTE: ignore the errors,
+		latVarExist, err := metaStorage.DoesVariableExist(dataset, latVarName)
+		if err != nil {
+			handleError(w, err)
+			return
+		}
+		lonVarExist, err := metaStorage.DoesVariableExist(dataset, lonVarName)
+		if err != nil {
+			handleError(w, err)
+			return
+		}
 
 		// create the new metadata and database variables
-		if latVarExist == nil {
+		if latVarExist {
 			err = metaStorage.AddVariable(dataset, latVarName, model.LatitudeType, "geocoding")
 			if err != nil {
 				handleError(w, err)
@@ -59,13 +68,13 @@ func GeocodingHandler(metaCtor api.MetadataStorageCtor, dataCtor api.DataStorage
 				return
 			}
 		}
-		if lonVarExist == nil {
-			err = metaStorage.AddVariable(dataset, latVarName, model.LongitudeType, "geocoding")
+		if lonVarExist {
+			err = metaStorage.AddVariable(dataset, lonVarName, model.LongitudeType, "geocoding")
 			if err != nil {
 				handleError(w, err)
 				return
 			}
-			err = dataStorage.AddVariable(dataset, latVarName, model.LongitudeType)
+			err = dataStorage.AddVariable(dataset, lonVarName, model.LongitudeType)
 			if err != nil {
 				handleError(w, err)
 				return
@@ -105,7 +114,7 @@ func GeocodingHandler(metaCtor api.MetadataStorageCtor, dataCtor api.DataStorage
 			}
 		}
 
-		// marshall output into JSON
+		// marshal output into JSON
 		err = handleJSON(w, GeocodingResult{
 			LatitudeField:  latVarName,
 			LongitudeField: lonVarName,

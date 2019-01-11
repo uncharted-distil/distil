@@ -70,7 +70,7 @@ func CorrectnessSummaryHandler(solutionCtor model.SolutionStorageCtor, dataCtor 
 		histogram.Label = "Error"
 		histogram.SolutionID = res.SolutionID
 
-		// marshall data and sent the response back
+		// marshal data and sent the response back
 		err = handleJSON(w, CorrectnessSummary{
 			CorrectnessSummary: histogram,
 		})

@@ -226,6 +226,7 @@ func main() {
 
 	// GET
 	registerRoute(mux, "/distil/datasets", routes.DatasetsHandler([]model.MetadataStorageCtor{metadataStorageCtor, datamartMetadataStorageCtor}))
+	registerRoute(mux, "/distil/datasets/:dataset", routes.DatasetHandler(metadataStorageCtor))
 	registerRoute(mux, "/distil/solutions/:dataset/:target/:solution-id", routes.SolutionHandler(pgSolutionStorageCtor))
 	registerRoute(mux, "/distil/variables/:dataset", routes.VariablesHandler(metadataStorageCtor))
 	registerRoute(mux, "/distil/variable-rankings/:dataset/:target", routes.VariableRankingHandler(metadataStorageCtor))

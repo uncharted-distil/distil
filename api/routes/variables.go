@@ -34,7 +34,7 @@ func VariablesHandler(metaCtor api.MetadataStorageCtor) func(http.ResponseWriter
 			handleError(w, err)
 			return
 		}
-		// marshall data
+		// marshal data
 		err = handleJSON(w, VariablesResult{
 			Variables: variables,
 		})
