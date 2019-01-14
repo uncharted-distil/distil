@@ -149,7 +149,7 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:6d4d9067e639d96a804ee9a30fa89c7233c5c5edbfe736072ff00d48c97bccc4"
+  digest = "1:c1072f27d5b8be1032af14ed7776f475bc58d35723a753c4b92c953d92e3eb33"
   name = "github.com/otiai10/copy"
   packages = ["."]
   pruneopts = "UT"

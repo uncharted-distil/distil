@@ -48,7 +48,7 @@ import 'font-awesome/css/font-awesome.css';
 
 const DEFAULT_PERCENTILE = 0.25;
 const NUM_STEPS = 100;
-const ERROR_DECIMALS = 0;
+const ERROR_DECIMALS = 2;
 
 export default Vue.extend({
 	name: 'error-threshold-slider',
