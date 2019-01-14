@@ -149,7 +149,7 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:6d4d9067e639d96a804ee9a30fa89c7233c5c5edbfe736072ff00d48c97bccc4"
+  digest = "1:c1072f27d5b8be1032af14ed7776f475bc58d35723a753c4b92c953d92e3eb33"
   name = "github.com/otiai10/copy"
   packages = ["."]
   pruneopts = "UT"
@@ -227,7 +227,7 @@
     "primitive/compute/result",
   ]
   pruneopts = "UT"
-  revision = "96acf44e9e5b079bf90f45072b5e9d86ed8cf93f"
+  revision = "ba3a645273428c7970429802fc46aee684561a1d"
 
 [[projects]]
   digest = "1:6821075586b145735f1d6ccbcda89ba1d0b047fff4d815f2202449f7f895006a"
