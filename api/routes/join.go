@@ -2,11 +2,13 @@ package routes
 
 import (
 	"net/http"
+	"strings"
 
 	"goji.io/pat"
 
 	"github.com/pkg/errors"
 	"github.com/unchartedsoftware/distil-ingest/metadata"
+	"github.com/unchartedsoftware/distil/api/env"
 	api "github.com/unchartedsoftware/distil/api/model"
 	"github.com/unchartedsoftware/distil/api/task"
 	"github.com/unchartedsoftware/distil/api/util/json"
@@ -32,26 +34,31 @@ func JoinHandler(metaCtor api.MetadataStorageCtor) func(http.ResponseWriter, *ht
 		}
 
 		// fetch vars for each dataset
-		varsLeft, err := storage.FetchVariables(datasetLeft, false, true)
+		varsLeft, err := storage.FetchVariables(datasetLeft, true, true)
 		if err != nil {
 			handleError(w, err)
 			return
 		}
 
-		varsRight, err := storage.FetchVariables(datasetRight, false, true)
+		varsRight, err := storage.FetchVariables(datasetRight, true, true)
+		if err != nil {
+			handleError(w, err)
+		}
+
+		cfg, err := env.LoadConfig()
 		if err != nil {
 			handleError(w, err)
 		}
 
 		leftJoin := &task.JoinSpec{
 			Column:        columnLeft,
-			DatasetFolder: datasetLeft,
+			DatasetFolder: strings.TrimPrefix(datasetLeft, cfg.ElasticDatasetPrefix),
 			DatasetSource: metadata.DatasetSource(sourceLeft),
 		}
 
 		rightJoin := &task.JoinSpec{
 			Column:        columnRight,
-			DatasetFolder: datasetRight,
+			DatasetFolder: strings.TrimPrefix(datasetRight, cfg.ElasticDatasetPrefix),
 			DatasetSource: metadata.DatasetSource(sourceRight),
 		}
 

@@ -235,7 +235,6 @@ func main() {
 	registerRoute(mux, "/distil/export/:solution-id", routes.ExportHandler(pgSolutionStorageCtor, metadataStorageCtor, solutionClient, config.D3MOutputDir))
 	registerRoute(mux, "/distil/config", routes.ConfigHandler(config, version, timestamp, problemPath, datasetDocPath))
 	registerRoute(mux, "/ws", ws.SolutionHandler(solutionClient, metadataStorageCtor, pgDataStorageCtor, pgSolutionStorageCtor))
-	registerRoute(mux, "/distil/join/:dataset-left:/:column-left:/source-left/:dataset-right/:column-right/:source-right", routes.JoinHandler(metadataStorageCtor))
 
 	// POST
 	registerRoutePost(mux, "/distil/variables/:dataset", routes.VariableTypeHandler(pgDataStorageCtor, metadataStorageCtor))
@@ -250,6 +249,7 @@ func main() {
 	registerRoutePost(mux, "/distil/correctness-summary/:dataset/:results-uuid", routes.CorrectnessSummaryHandler(pgSolutionStorageCtor, pgDataStorageCtor))
 	registerRoutePost(mux, "/distil/predicted-summary/:dataset/:target/:results-uuid", routes.PredictedSummaryHandler(metadataStorageCtor, pgSolutionStorageCtor, pgDataStorageCtor))
 	registerRoutePost(mux, "/distil/geocode/:dataset/:variable", routes.GeocodingHandler(metadataStorageCtor, pgDataStorageCtor, sourceFolder))
+	registerRoutePost(mux, "/distil/join/:dataset-left/:column-left/:source-left/:dataset-right/:column-right/:source-right", routes.JoinHandler(metadataStorageCtor))
 
 	// static
 	registerRoute(mux, "/distil/image/:dataset/:file", routes.ImageHandler(config.DataFolderPath, config.RootResourceDirectory, datasetsToProxy))

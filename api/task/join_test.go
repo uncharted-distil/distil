@@ -1,6 +1,8 @@
 package task
 
 import (
+	"encoding/csv"
+	"os"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -78,6 +80,26 @@ func TestJoin(t *testing.T) {
 	assert.NoError(t, err)
 	assert.NotNil(t, result)
 
+	expected := [][]string{
+		{"d3mIndex", "alpha", "charlie"},
+		{"0", "1.0", "a"},
+		{"1", "2.0", "b"},
+		{"2", "3.0", "c"},
+		{"3", "4.0", "d"},
+	}
+
+	csvFile, err := os.Open("test_data/augmented/test_1-test_2/tables/learningData.csv")
+	assert.NoError(t, err)
+	defer csvFile.Close()
+
+	csvReader := csv.NewReader(csvFile)
+	records, err := csvReader.ReadAll()
+	assert.NoError(t, err)
+	assert.Equal(t, len(expected), len(records))
+	for i := 0; i < len(records); i++ {
+		assert.ElementsMatch(t, records[i], expected[i])
+	}
+
 	assert.ElementsMatch(t, result.Columns, []apiModel.Column{
 		{
 			Label: "D3M Index",
@@ -96,14 +118,17 @@ func TestJoin(t *testing.T) {
 		},
 	})
 
-	expected := [][]interface{}{
+	expectedTyped := [][]interface{}{
+		{"d3mIndex", "alpha", "charlie"},
 		{int64(0), 1.0, "a"},
 		{int64(1), 2.0, "b"},
 		{int64(2), 3.0, "c"},
 		{int64(3), 4.0, "d"},
 	}
-	assert.Equal(t, result.NumRows, 4)
-	for i, row := range result.Values {
-		assert.ElementsMatch(t, row, expected[i])
+
+	assert.Equal(t, len(expectedTyped), len(records))
+	assert.Equal(t, result.NumRows, 5)
+	for i := 0; i < len(expectedTyped); i++ {
+		assert.ElementsMatch(t, result.Values[i], expectedTyped[i])
 	}
 }
