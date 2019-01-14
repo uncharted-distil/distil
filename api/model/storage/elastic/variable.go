@@ -194,9 +194,9 @@ func (s *Storage) DoesVariableExist(dataset string, varName string) (bool, error
 	}
 	_, err = s.parseVariable(res.Hits.Hits[0], varName)
 	if err != nil {
-		return false, errors.Wrap(err, "unable to parse search result")
+		return false, nil
 	}
-	return true, err
+	return true, nil
 }
 
 // FetchVariable returns the variable for the provided index, dataset, and variable.
