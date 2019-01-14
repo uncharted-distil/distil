@@ -192,7 +192,11 @@ func (s *Storage) DoesVariableExist(dataset string, varName string) (bool, error
 	if len(res.Hits.Hits) > 1 {
 		return false, errors.New("elasticSearch variable fetch query len(hits) > 1")
 	}
-	return true, nil
+	_, err = s.parseVariable(res.Hits.Hits[0], varName)
+	if err != nil {
+		return false, errors.Wrap(err, "unable to parse search result")
+	}
+	return true, err
 }
 
 // FetchVariable returns the variable for the provided index, dataset, and variable.
@@ -219,11 +223,11 @@ func (s *Storage) FetchVariable(dataset string, varName string) (*model.Variable
 		return nil, errors.New("elasticSearch variable fetch query len(hits) != 1")
 	}
 	// extract output into JSON ready structs
-	variables, err := s.parseVariable(res.Hits.Hits[0], varName)
+	variable, err := s.parseVariable(res.Hits.Hits[0], varName)
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to parse search result")
 	}
-	return variables, err
+	return variable, err
 }
 
 // FetchVariableDisplay returns the display variable for the provided index, dataset, and variable.
