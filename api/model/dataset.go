@@ -4,6 +4,7 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/unchartedsoftware/distil-compute/model"
+	"github.com/unchartedsoftware/distil-ingest/metadata"
 )
 
 const (
@@ -12,15 +13,16 @@ const (
 
 // Dataset represents a decsription of a dataset.
 type Dataset struct {
-	Name        string            `json:"name"`
-	Folder      string            `json:"folder"`
-	Description string            `json:"description"`
-	Summary     string            `json:"summary"`
-	SummaryML   string            `json:"summaryML"`
-	Variables   []*model.Variable `json:"variables"`
-	NumRows     int64             `json:"numRows"`
-	NumBytes    int64             `json:"numBytes"`
-	Provenance  string            `json:"provenance"`
+	Name        string                 `json:"name"`
+	Folder      string                 `json:"folder"`
+	Description string                 `json:"description"`
+	Summary     string                 `json:"summary"`
+	SummaryML   string                 `json:"summaryML"`
+	Variables   []*model.Variable      `json:"variables"`
+	NumRows     int64                  `json:"numRows"`
+	NumBytes    int64                  `json:"numBytes"`
+	Provenance  string                 `json:"provenance"`
+	Source      metadata.DatasetSource `json:"source"`
 }
 
 // QueriedDataset wraps dataset querying components into a single entity.
