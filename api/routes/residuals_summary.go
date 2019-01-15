@@ -84,7 +84,7 @@ func ResidualsSummaryHandler(metaCtor model.MetadataStorageCtor, solutionCtor mo
 		histogram.Label = "Error"
 		histogram.SolutionID = res.SolutionID
 
-		// marshall data and sent the response back
+		// marshal data and sent the response back
 		err = handleJSON(w, PredictedSummary{
 			PredictedSummary: histogram,
 		})

@@ -1,4 +1,4 @@
-package datamart
+package file
 
 import (
 	"github.com/pkg/errors"

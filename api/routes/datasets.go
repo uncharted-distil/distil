@@ -7,13 +7,52 @@ import (
 	"github.com/microcosm-cc/bluemonday"
 	"github.com/pkg/errors"
 	"github.com/russross/blackfriday"
+	"goji.io/pat"
 
 	"github.com/unchartedsoftware/distil/api/model"
 )
 
-// DatasetResult represents the result of a datasets response.
+// DatasetResult represents the result of a dataset response.
 type DatasetResult struct {
-	Dataset []*model.Dataset `json:"datasets"`
+	Dataset *model.Dataset `json:"dataset"`
+}
+
+// DatasetsResult represents the result of a datasets response.
+type DatasetsResult struct {
+	Datasets []*model.Dataset `json:"datasets"`
+}
+
+// DatasetHandler generates a route handler that returns a specified dataset
+// summary.
+func DatasetHandler(ctor model.MetadataStorageCtor) func(http.ResponseWriter, *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request) {
+
+		// get dataset name
+		dataset := pat.Param(r, "dataset")
+
+		// get metadata client
+		storage, err := ctor()
+		if err != nil {
+			handleError(w, err)
+			return
+		}
+
+		// get dataset summary
+		res, err := storage.FetchDataset(dataset, false, false)
+		if err != nil {
+			handleError(w, err)
+			return
+		}
+
+		// marshal data
+		err = handleJSON(w, DatasetResult{
+			Dataset: res,
+		})
+		if err != nil {
+			handleError(w, errors.Wrap(err, "unable marshal dataset result into JSON"))
+			return
+		}
+	}
 }
 
 // DatasetsHandler generates a route handler that facilitates a search of
@@ -57,9 +96,9 @@ func DatasetsHandler(metaCtors []model.MetadataStorageCtor) func(http.ResponseWr
 			datasets = append(datasets, datasetsPart...)
 		}
 
-		// marshall data
-		err = handleJSON(w, DatasetResult{
-			Dataset: datasets,
+		// marshal data
+		err = handleJSON(w, DatasetsResult{
+			Datasets: datasets,
 		})
 		if err != nil {
 			handleError(w, errors.Wrap(err, "unable marshal dataset result into JSON"))

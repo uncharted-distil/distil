@@ -107,7 +107,7 @@ func SolutionHandler(solutionCtor model.SolutionStorageCtor) func(http.ResponseW
 			})
 		}
 
-		// marshall data and sent the response back
+		// marshal data and sent the response back
 		err = handleJSON(w, response)
 		if err != nil {
 			handleError(w, errors.Wrap(err, "unable marshal session solutions into JSON"))

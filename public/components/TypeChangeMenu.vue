@@ -117,21 +117,23 @@ export default Vue.extend({
 		},
 		onTypeChange(suggested) {
 			const type = getTypeFromLabel(suggested);
+			const dataset = this.dataset;
+			const field = this.field;
 			datasetActions.setVariableType(this.$store, {
-				dataset: this.dataset,
-				field: this.field,
+				dataset: dataset,
+				field: field,
 				type: type
 			}).then(() => {
 				if (this.target) {
 					datasetActions.fetchVariableRankings(this.$store, {
-						dataset: this.dataset,
+						dataset: dataset,
 						target: this.target
 					});
 				}
 				if (isLocationType(type)) {
 					datasetActions.geocodeVariable(this.$store, {
-						dataset: this.dataset,
-						field: this.field
+						dataset: dataset,
+						field: field
 					});
 				}
 			});
