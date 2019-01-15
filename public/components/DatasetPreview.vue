@@ -5,6 +5,7 @@
 			<a class='nav-link'><b>Features:</b> {{variables.length}}</a>
 			<a class='nav-link'><b>Rows:</b> {{numRows}}</a>
 			<a class='nav-link'><b>Size:</b> {{formatBytes(numBytes)}}</a>
+			<a v-if="provenance==='datamart'"><b-button variant="danger">Import</b-button></a>
 		</div>
 		<div class='card-body'>
 			<div class='row'>
@@ -83,7 +84,8 @@ export default Vue.extend({
 		summaryML: String as () => string,
 		variables: Array as () => Variable[],
 		numRows: Number as () => number,
-		numBytes: Number as () => number
+		numBytes: Number as () => number,
+		provenance: String as () => string
 	},
 
 	computed: {

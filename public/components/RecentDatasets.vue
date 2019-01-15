@@ -9,7 +9,8 @@
 				:summaryML="dataset.summaryML"
 				:variables="dataset.variables"
 				:numBytes="dataset.numBytes"
-				:numRows="dataset.numRows">
+				:numRows="dataset.numRows"
+				:provenance="dataset.provenance">
 			</dataset-preview>
 		</b-list-group>
 	</b-card>
