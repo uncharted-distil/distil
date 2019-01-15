@@ -25,6 +25,7 @@ import (
 	es "github.com/unchartedsoftware/distil/api/model/storage/elastic"
 	pg "github.com/unchartedsoftware/distil/api/model/storage/postgres"
 	"github.com/unchartedsoftware/distil/api/postgres"
+	"github.com/unchartedsoftware/distil/api/rest"
 	"github.com/unchartedsoftware/distil/api/routes"
 	"github.com/unchartedsoftware/distil/api/service"
 	"github.com/unchartedsoftware/distil/api/task"
@@ -104,7 +105,8 @@ func main() {
 	metadataStorageCtor := es.NewMetadataStorage(config.ESDatasetsIndex, esClientCtor)
 
 	// instantiate the metadata storage (using datamart).
-	datamartMetadataStorageCtor := dm.NewMetadataStorage(config.DatamartURI)
+	datamartClientCtor := rest.NewClient(config.DatamartURI)
+	datamartMetadataStorageCtor := dm.NewMetadataStorage(datamartClientCtor)
 
 	// instantiate the postgres data storage constructor.
 	pgDataStorageCtor := pg.NewDataStorage(postgresClientCtor, metadataStorageCtor)
