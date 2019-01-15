@@ -1,38 +1,24 @@
-package datamart
+package file
 
 import (
-	"encoding/json"
+	"io/ioutil"
+	"path"
 	"strings"
 
 	"github.com/pkg/errors"
 	"github.com/unchartedsoftware/distil-compute/model"
+	"github.com/unchartedsoftware/distil-compute/primitive/compute"
+	"github.com/unchartedsoftware/distil-ingest/metadata"
 	api "github.com/unchartedsoftware/distil/api/model"
-	log "github.com/unchartedsoftware/plog"
 )
 
 const (
 	// DatasetSuffix is the suffix for the dataset entry when stored in
 	// elasticsearch.
-	metadataType       = "metadata"
-	datasetsListSize   = 1000
-	provenance         = "datamart"
-	searchRESTFunction = "search"
+	metadataType     = "metadata"
+	datasetsListSize = 1000
+	provenance       = "file"
 )
-
-type SearchQuery struct {
-	Properties *SearchQueryProperties `json:"properties"`
-}
-
-type SearchQueryProperties struct {
-	Dataset *SearchQueryDatasetProperties `json:"dataset"`
-}
-
-type SearchQueryDatasetProperties struct {
-	About       string   `json:"about"`
-	Description []string `json:"description"`
-	Name        []string `json:"name"`
-	Keywords    []string `json:"keywords"`
-}
 
 // ImportDataset makes the dataset available for ingest and returns
 // the URI to use for ingest.
@@ -55,7 +41,7 @@ func (s *Storage) FetchDataset(datasetName string, includeIndex bool, includeMet
 // SearchDatasets returns the datasets that match the search criteria in the
 // provided index.
 func (s *Storage) SearchDatasets(terms string, includeIndex bool, includeMeta bool) ([]*api.Dataset, error) {
-	rawSets, err := s.searchREST(terms)
+	rawSets, err := s.searchFolders(strings.Fields(terms))
 	if err != nil {
 		return nil, err
 	}
@@ -104,30 +90,66 @@ func (s *Storage) parseDatasets(raw []*model.Metadata) ([]*api.Dataset, error) {
 	return datasets, nil
 }
 
-func (s *Storage) searchREST(searchText string) ([]*model.Metadata, error) {
-	terms := strings.Fields(searchText)
-
-	// get complete URI for the endpoint
-	query := &SearchQuery{
-		Properties: &SearchQueryProperties{
-			Dataset: &SearchQueryDatasetProperties{
-				About:       searchText,
-				Name:        terms,
-				Description: terms,
-				Keywords:    terms,
-			},
-		},
-	}
-	queryJSON, err := json.Marshal(query)
+func (s *Storage) searchFolders(terms []string) ([]*model.Metadata, error) {
+	// cycle through each folder
+	folders, err := ioutil.ReadDir(s.folder)
 	if err != nil {
-		return nil, errors.Wrap(err, "unable to marshal datamart query")
+		return nil, errors.Wrap(err, "unable to read datamart directory")
 	}
 
-	responseRaw, err := s.client.PostJSON(searchRESTFunction, queryJSON)
-	if err != nil {
-		return nil, errors.Wrap(err, "unable to post datamart search request")
-	}
-	log.Infof("DATAMART POST %v", responseRaw)
+	matches := make([]*model.Metadata, 0)
+	for _, info := range folders {
+		if !info.IsDir() {
+			if info.Name()[0] == '.' {
+				// we ignore any files prefixed with `.`, ex. `.gitkeep`
+				continue
+			} else {
+				return nil, errors.Errorf("'%s' is not a directory and is not prefixed with `.` but is in the datamart directory", info.Name())
+			}
+		}
 
-	return nil, nil
+		// load the metadata
+		schemaFilename := path.Join(s.folder, info.Name(), compute.D3MDataSchema)
+		meta, err := metadata.LoadMetadataFromOriginalSchema(schemaFilename)
+		if err != nil {
+			return nil, errors.Wrap(err, "unable to read metadata")
+		}
+
+		// check if match
+		if datasetMatches(meta, terms) {
+			matches = append(matches, meta)
+		}
+	}
+
+	return matches, nil
+}
+
+func datasetMatches(meta *model.Metadata, terms []string) bool {
+	// search the columns & description
+	if matches(meta.Description, terms) || matches(meta.Summary, terms) ||
+		matches(meta.Name, terms) {
+		return true
+	}
+
+	for _, dr := range meta.DataResources {
+		for _, f := range dr.Variables {
+			if matches(f.Name, terms) {
+				return true
+			}
+		}
+	}
+
+	return false
+}
+
+func matches(text string, terms []string) bool {
+	//TODO: probably want to weigh matches in some way (more terms matched = better?)
+	for _, t := range terms {
+		if strings.Contains(text, t) {
+			return true
+		}
+	}
+
+	// if no terms provided, assume match
+	return len(terms) == 0
 }
