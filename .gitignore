@@ -18,5 +18,5 @@ public/static
 /inputs
 /datasets
 outputs/
-api/task/test_data/test_1-test_2 
-
+/datamart
+api/task/test_data/augmented
