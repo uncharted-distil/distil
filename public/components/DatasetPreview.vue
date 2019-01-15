@@ -1,11 +1,11 @@
 <template>
 	<div class='card card-result'>
-		<div class='dataset-header btn-success hover card-header' v-on:click='setActiveDataset()' v-bind:class='{collapsed: !expanded}'>
+		<div class='dataset-header btn-success hover card-header' @click.stop='setActiveDataset()' v-bind:class='{collapsed: !expanded}'>
 			<a class='nav-link'><b>Name:</b> {{name}}</a>
 			<a class='nav-link'><b>Features:</b> {{variables.length}}</a>
 			<a class='nav-link'><b>Rows:</b> {{numRows}}</a>
 			<a class='nav-link'><b>Size:</b> {{formatBytes(numBytes)}}</a>
-			<a v-if="provenance==='datamart'"><b-button variant="danger">Import</b-button></a>
+			<a v-if="provenance==='datamart'"><b-button variant="danger" @click.stop='importDataset()'>Import</b-button></a>
 		</div>
 		<div class='card-body'>
 			<div class='row'>
@@ -58,6 +58,7 @@ import { createRouteEntry } from '../util/routes';
 import { sortVariablesByImportance } from '../util/data';
 import { getters } from '../store/route/module';
 import { Variable } from '../store/dataset/index';
+import { actions as datasetActions } from '../store/dataset/module';
 import { SELECT_TARGET_ROUTE } from '../store/route/index';
 import localStorage from 'store';
 
@@ -137,6 +138,13 @@ export default Vue.extend({
 				datasets.unshift(dataset);
 				localStorage.set('recent-datasets', datasets);
 			}
+		},
+		importDataset() {
+			datasetActions.importDataset(this.$store, {
+				dataset: this.name,
+				source: 'contrib',
+				index: this.name
+			});
 		}
 
 	}

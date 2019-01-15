@@ -88,6 +88,29 @@ export const actions = {
 			});
 	},
 
+	importDataset(context: DatasetContext, args: { dataset: string, source: string, index: string }): Promise<void>  {
+		if (!args.dataset) {
+			console.warn('`dataset` argument is missing');
+			return null;
+		}
+		if (!args.source) {
+			console.warn('`source` argument is missing');
+			return null;
+		}
+		if (!args.index) {
+			console.warn('`index` argument is missing');
+			return null;
+		}
+		return axios.post(`/distil/import/${args.dataset}/${args.source}/${args.index}`)
+			.then(response => {
+				mutations.setVariables(context, response.data.variables);
+			})
+			.catch(error => {
+				console.error(error);
+				mutations.setVariables(context, []);
+			});
+	},
+
 	setVariableType(context: DatasetContext, args: { dataset: string, field: string, type: string }): Promise<void>  {
 		if (!args.dataset) {
 			console.warn('`dataset` argument is missing');

@@ -47,6 +47,7 @@ export const actions = {
 	fetchDataset: dispatch(moduleActions.fetchDataset),
 	searchDatasets: dispatch(moduleActions.searchDatasets),
 	geocodeVariable: dispatch(moduleActions.geocodeVariable),
+	importDataset: dispatch(moduleActions.importDataset),
 	// variables
 	fetchVariables: dispatch(moduleActions.fetchVariables),
 	setVariableType: dispatch(moduleActions.setVariableType),
