@@ -30,8 +30,8 @@ type SearchQueryProperties struct {
 
 // SearchQueryDatasetProperties represents queryin on metadata.
 type SearchQueryDatasetProperties struct {
-	About       string   `json:"about,omitempty"`
-	Description []string `json:"description,omitempty"`
+	About       string   `json:"about"`
+	Description []string `json:"description"`
 	Name        []string `json:"name,omitempty"`
 	Keywords    []string `json:"keywords,omitempty"`
 }
