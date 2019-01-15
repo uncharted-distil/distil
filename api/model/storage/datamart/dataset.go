@@ -116,9 +116,8 @@ func (s *Storage) parseDatasets(raw *SearchResults) ([]*api.Dataset, error) {
 		vars := make([]*model.Variable, 0)
 		for _, c := range res.Metadata.Columns {
 			vars = append(vars, &model.Variable{
-				Name:         c.Name,
-				OriginalName: c.Name,
-				DisplayName:  c.Name,
+				Name:        c.Name,
+				DisplayName: c.Name,
 			})
 		}
 		datasets = append(datasets, &api.Dataset{

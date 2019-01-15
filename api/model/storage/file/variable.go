@@ -6,6 +6,11 @@ import (
 	"github.com/unchartedsoftware/distil-compute/model"
 )
 
+// DoesVariableExist returns whether or not a variable exists.
+func (s *Storage) DoesVariableExist(dataset string, varName string) (bool, error) {
+	return false, errors.Errorf("Not implemented")
+}
+
 // FetchVariable returns the variable for the provided index, dataset, and variable.
 func (s *Storage) FetchVariable(dataset string, varName string) (*model.Variable, error) {
 	return nil, errors.Errorf("Not implemented")
