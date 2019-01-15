@@ -44,6 +44,7 @@ export const getters = {
 // Typed actions
 export const actions = {
 	// dataset
+	fetchDataset: dispatch(moduleActions.fetchDataset),
 	searchDatasets: dispatch(moduleActions.searchDatasets),
 	geocodeVariable: dispatch(moduleActions.geocodeVariable),
 	// variables
@@ -67,6 +68,7 @@ export const actions = {
 // Typed mutations
 export const mutations = {
 	// dataset
+	setDataset: commit(moduleMutations.setDataset),
 	setDatasets: commit(moduleMutations.setDatasets),
 	// variables
 	setVariables: commit(moduleMutations.setVariables),

@@ -86,7 +86,7 @@ func ResultsHandler(solutionCtor model.SolutionStorageCtor, dataCtor model.DataS
 			return
 		}
 
-		// marshall data and sent the response back
+		// marshal data and sent the response back
 		err = handleJSON(w, results)
 		if err != nil {
 			handleError(w, errors.Wrap(err, "unable marshal solution result into JSON"))

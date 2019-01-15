@@ -54,7 +54,7 @@ func VariableTypeHandler(storageCtor api.DataStorageCtor, metaCtor api.MetadataS
 		// TODO: fix this, this shouldn't be necessary
 		time.Sleep(time.Second)
 
-		// marshall data
+		// marshal data
 		err = handleJSON(w, map[string]interface{}{
 			"success": true,
 		})

@@ -47,7 +47,7 @@ func DataHandler(storageCtor model.DataStorageCtor, metaCtor model.MetadataStora
 			return
 		}
 
-		// marshall output into JSON
+		// marshal output into JSON
 		bytes, err := json.Marshal(data)
 		if err != nil {
 			handleError(w, errors.Wrap(err, "unable marshal filtered data result into JSON"))

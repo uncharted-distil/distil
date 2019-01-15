@@ -6,6 +6,10 @@ import { updateSummaries } from '../../util/data';
 
 export const mutations = {
 
+	setDataset(state: DatasetState, dataset: Dataset) {
+		Vue.set(state.datasets, dataset.name, dataset);
+	},
+
 	setDatasets(state: DatasetState, datasets: Dataset[]) {
 		state.datasets = datasets;
 	},

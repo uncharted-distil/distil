@@ -56,7 +56,7 @@ func VariableRankingHandler(metaCtor api.MetadataStorageCtor) func(http.Response
 			}
 		}
 
-		// marshall output into JSON
+		// marshal output into JSON
 		err = handleJSON(w, RankingResult{
 			Rankings: res,
 		})

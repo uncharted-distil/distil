@@ -9,8 +9,11 @@ const URI_REGEX = /^(?:(?:(?:https?|ftp):)?\/\/)(?:\S+(?::\S*)?@)?(?:(?!(?:10|12
 const BOOL_REGEX = /^(0|1|true|false|t|f)$/i;
 const PHONE_REGEX = /^(\+\d{1,2}\s)?\(?\d{3}\)?[\s.-]\d{3}[\s.-]\d{4}$/;
 const IMAGE_REGEX = /\.(gif|jpg|jpeg|png|tif|tiff|bmp)$/i;
-const FEATURE_PREFIX = '_feature_';
-const CLUSTER_PREFIX = '_cluster_';
+
+export const FEATURE_PREFIX = '_feature_';
+export const CLUSTER_PREFIX = '_cluster_';
+export const GEOCODED_LAT_PREFIX = '_lat_';
+export const GEOCODED_LON_PREFIX = '_lon_';
 
 // NOTE: these are copied from `distil-compute/model/schema_types.go` and
 // should be kept up to date in case of changes.
@@ -28,6 +31,7 @@ export const TEXT_TYPE = 'text';
 export const CITY_TYPE = 'city';
 export const STATE_TYPE = 'state';
 export const COUNTRY_TYPE = 'country';
+export const COUNTRY_CODE_TYPE = 'country_code';
 export const EMAIL_TYPE = 'email';
 export const LATITUDE_TYPE = 'latitude';
 export const LONGITUDE_TYPE = 'longitude';
@@ -54,6 +58,7 @@ const TYPES_TO_LABELS: Dictionary<string> = {
 	[EMAIL_TYPE]: 'Email',
 	[PHONE_TYPE]: 'Phone Number',
 	[POSTAL_CODE_TYPE]: 'Postal Code',
+	[COUNTRY_CODE_TYPE]: 'Country Code',
 	[URI_TYPE]: 'URI',
 	[DATE_TIME_TYPE]: 'Date/Time',
 	[BOOL_TYPE]: 'Boolean',
@@ -105,12 +110,12 @@ const TEXT_TYPES = [
 ];
 
 const LOCATION_TYPES = [
-	'address',
-	'city',
-	'state',
-	'country',
-	'country_code',
-	'postal_code'
+	ADDRESS_TYPE,
+	CITY_TYPE,
+	STATE_TYPE,
+	COUNTRY_TYPE,
+	COUNTRY_CODE_TYPE,
+	POSTAL_CODE_TYPE
 ];
 
 const TEXT_SIMPLE_TYPES = [

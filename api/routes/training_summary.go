@@ -68,7 +68,7 @@ func TrainingSummaryHandler(solutionCtor model.SolutionStorageCtor, dataCtor mod
 			return
 		}
 
-		// marshall output into JSON
+		// marshal output into JSON
 		err = handleJSON(w, SummaryResult{
 			Histogram: histogram,
 		})

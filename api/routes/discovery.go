@@ -146,7 +146,7 @@ func ProblemDiscoveryHandler(ctorData api.DataStorageCtor, ctorMeta api.Metadata
 			return
 		}
 
-		// marshall output into JSON
+		// marshal output into JSON
 		bytes, err := json.Marshal(map[string]interface{}{"result": "discovered", "problemPath": problemSchemaOutputFile, "apiPath": problemAPIExportFile})
 		if err != nil {
 			handleError(w, errors.Wrap(err, "unable marshal result into JSON"))

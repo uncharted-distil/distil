@@ -80,7 +80,7 @@ func TargetSummaryHandler(metaCtor model.MetadataStorageCtor, solutionCtor model
 			return
 		}
 
-		// marshall output into JSON
+		// marshal output into JSON
 		err = handleJSON(w, SummaryResult{
 			Histogram: histogram,
 		})

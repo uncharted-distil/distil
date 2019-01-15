@@ -56,7 +56,7 @@ func ConfigHandler(config env.Config, version string, timestamp string, problemP
 			}
 		}
 
-		// marshall version
+		// marshal version
 		err := handleJSON(w, map[string]interface{}{
 			"version":     version,
 			"timestamp":   timestamp,

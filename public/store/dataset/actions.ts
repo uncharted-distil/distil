@@ -9,11 +9,23 @@ import { FilterParams, INCLUDE_FILTER } from '../../util/filters';
 import { createPendingSummary, createErrorSummary, createEmptyTableData } from '../../util/data';
 import { addHighlightToFilterParams } from '../../util/highlights';
 import { loadImage } from '../../util/image';
-import { getVarType, IMAGE_TYPE, TIMESERIES_TYPE } from '../../util/types';
+import { getVarType, IMAGE_TYPE, TIMESERIES_TYPE, GEOCODED_LON_PREFIX, GEOCODED_LAT_PREFIX } from '../../util/types';
 
 export type DatasetContext = ActionContext<DatasetState, DistilState>;
 
 export const actions = {
+
+	// fetches a dataset description.
+	fetchDataset(context: DatasetContext, dataset: string): Promise<void> {
+		return axios.get(`/distil/datasets/${dataset}`)
+			.then(response => {
+				mutations.setDataset(context, response.data.dataset);
+			})
+			.catch(error => {
+				console.error(error);
+				mutations.setDatasets(context, []);
+			});
+	},
 
 	// searches dataset descriptions and column names for supplied terms
 	searchDatasets(context: DatasetContext, terms: string): Promise<void> {
@@ -44,7 +56,7 @@ export const actions = {
 			});
 	},
 
-	geocodeVariable(context: DatasetContext, args: { dataset: string, field: string }): Promise<void>  {
+	geocodeVariable(context: DatasetContext, args: { dataset: string, field: string }): Promise<any>  {
 		if (!args.dataset) {
 			console.warn('`dataset` argument is missing');
 			return null;
@@ -55,7 +67,21 @@ export const actions = {
 		}
 		return axios.post(`/distil/geocode/${args.dataset}/${args.field}`, {})
 			.then(() => {
-				// TODO: impl this
+				// upon success pull the updated dataset, vars, and summaries
+				return Promise.all([
+					context.dispatch('fetchDataset', args.dataset),
+					context.dispatch('fetchVariables', {
+						dataset: args.dataset
+					}),
+					context.dispatch('fetchVariableSummary', {
+						dataset: args.dataset,
+						variable: GEOCODED_LON_PREFIX + args.field
+					}),
+					context.dispatch('fetchVariableSummary', {
+						dataset: args.dataset,
+						variable: GEOCODED_LAT_PREFIX + args.field
+					})
+				]);
 			})
 			.catch(error => {
 				console.error(error);
