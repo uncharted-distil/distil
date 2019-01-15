@@ -5,9 +5,10 @@ import (
 
 	"github.com/pkg/errors"
 	"github.com/unchartedsoftware/distil-compute/model"
+	"github.com/unchartedsoftware/distil-ingest/metadata"
 	api "github.com/unchartedsoftware/distil/api/model"
 	"github.com/unchartedsoftware/distil/api/util/json"
-	"gopkg.in/olivere/elastic.v5"
+	elastic "gopkg.in/olivere/elastic.v5"
 )
 
 const (
@@ -68,6 +69,12 @@ func (s *Storage) parseDatasets(res *elastic.SearchResult, includeIndex bool, in
 		if err != nil {
 			return nil, errors.Wrap(err, "failed to parse dataset")
 		}
+		// extract source
+		source, ok := json.String(src, "source")
+		if !ok {
+			source = string(metadata.Seed)
+		}
+
 		// write everythign out to result struct
 		datasets = append(datasets, &api.Dataset{
 			Name:        name,
@@ -79,6 +86,7 @@ func (s *Storage) parseDatasets(res *elastic.SearchResult, includeIndex bool, in
 			NumBytes:    int64(numBytes),
 			Variables:   variables,
 			Provenance:  provenance,
+			Source:      metadata.DatasetSource(source),
 		})
 	}
 	return datasets, nil

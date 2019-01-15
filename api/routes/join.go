@@ -2,10 +2,13 @@ package routes
 
 import (
 	"net/http"
+	"strings"
 
 	"goji.io/pat"
 
 	"github.com/pkg/errors"
+	"github.com/unchartedsoftware/distil-ingest/metadata"
+	"github.com/unchartedsoftware/distil/api/env"
 	api "github.com/unchartedsoftware/distil/api/model"
 	"github.com/unchartedsoftware/distil/api/task"
 	"github.com/unchartedsoftware/distil/api/util/json"
@@ -17,9 +20,11 @@ func JoinHandler(metaCtor api.MetadataStorageCtor) func(http.ResponseWriter, *ht
 	return func(w http.ResponseWriter, r *http.Request) {
 		// get dataset name
 		datasetLeft := pat.Param(r, "dataset-left")
-		datasetRight := pat.Param(r, "dataset-right")
+		sourceLeft := pat.Param(r, "source-left")
 		columnLeft := pat.Param(r, "column-left")
+		datasetRight := pat.Param(r, "dataset-right")
 		columnRight := pat.Param(r, "column-right")
+		sourceRight := pat.Param(r, "source-right")
 
 		// get storage client
 		storage, err := metaCtor()
@@ -29,19 +34,36 @@ func JoinHandler(metaCtor api.MetadataStorageCtor) func(http.ResponseWriter, *ht
 		}
 
 		// fetch vars for each dataset
-		varsLeft, err := storage.FetchVariables(datasetLeft, false, true)
+		varsLeft, err := storage.FetchVariables(datasetLeft, true, true)
 		if err != nil {
 			handleError(w, err)
 			return
 		}
 
-		varsRight, err := storage.FetchVariables(datasetRight, false, true)
+		varsRight, err := storage.FetchVariables(datasetRight, true, true)
 		if err != nil {
 			handleError(w, err)
 		}
 
+		cfg, err := env.LoadConfig()
+		if err != nil {
+			handleError(w, err)
+		}
+
+		leftJoin := &task.JoinSpec{
+			Column:        columnLeft,
+			DatasetFolder: strings.TrimPrefix(datasetLeft, cfg.ElasticDatasetPrefix),
+			DatasetSource: metadata.DatasetSource(sourceLeft),
+		}
+
+		rightJoin := &task.JoinSpec{
+			Column:        columnRight,
+			DatasetFolder: strings.TrimPrefix(datasetRight, cfg.ElasticDatasetPrefix),
+			DatasetSource: metadata.DatasetSource(sourceRight),
+		}
+
 		// run joining pipeline
-		data, err := task.Join(datasetLeft, datasetRight, columnLeft, columnRight, varsLeft, varsRight)
+		data, err := task.Join(leftJoin, rightJoin, varsLeft, varsRight)
 		if err != nil {
 			handleError(w, err)
 			return

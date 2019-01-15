@@ -72,7 +72,7 @@ func (c *IngestTaskConfig) GetTmpAbsolutePath(relativePath string) string {
 }
 
 // IngestDataset executes the complete ingest process for the specified dataset.
-func IngestDataset(metaCtor api.MetadataStorageCtor, index string, dataset string, config *IngestTaskConfig) error {
+func IngestDataset(metaCtor api.MetadataStorageCtor, index string, dataset string, source metadata.DatasetSource, config *IngestTaskConfig) error {
 	// Set the probability threshold
 	metadata.SetTypeProbabilityThreshold(config.ClassificationProbabilityThreshold)
 
@@ -141,7 +141,7 @@ func IngestDataset(metaCtor api.MetadataStorageCtor, index string, dataset strin
 	}
 	log.Infof("finished geocoding the dataset")
 
-	err = Ingest(storage, index, dataset, config)
+	err = Ingest(storage, index, dataset, source, config)
 	if err != nil {
 		return errors.Wrap(err, "unable to ingest ranked data")
 	}
@@ -151,10 +151,13 @@ func IngestDataset(metaCtor api.MetadataStorageCtor, index string, dataset strin
 }
 
 // Ingest the metadata to ES and the data to Postgres.
-func Ingest(storage api.MetadataStorage, index string, dataset string, config *IngestTaskConfig) error {
+func Ingest(storage api.MetadataStorage, index string, dataset string, source metadata.DatasetSource, config *IngestTaskConfig) error {
 	meta, err := metadata.LoadMetadataFromClassification(
 		config.GetTmpAbsolutePath(config.GeocodingOutputSchemaRelative),
 		config.GetTmpAbsolutePath(config.ClassificationOutputPathRelative))
+
+	meta.DatasetFolder = dataset
+
 	if err != nil {
 		return errors.Wrap(err, "unable to load metadata")
 	}
@@ -228,7 +231,7 @@ func Ingest(storage api.MetadataStorage, index string, dataset string, config *I
 	}
 
 	// Ingest the dataset info into the metadata index
-	err = metadata.IngestMetadata(elasticClient, index, config.ESDatasetPrefix, metadata.Contrib, meta)
+	err = metadata.IngestMetadata(elasticClient, index, config.ESDatasetPrefix, source, meta)
 	if err != nil {
 		return errors.Wrap(err, "unable to ingest metadata")
 	}
