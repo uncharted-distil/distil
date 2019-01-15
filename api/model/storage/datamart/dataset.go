@@ -7,7 +7,6 @@ import (
 	"github.com/pkg/errors"
 	"github.com/unchartedsoftware/distil-compute/model"
 	api "github.com/unchartedsoftware/distil/api/model"
-	log "github.com/unchartedsoftware/plog"
 )
 
 const (
@@ -19,19 +18,51 @@ const (
 	searchRESTFunction = "search"
 )
 
+// SearchQuery is the basic search query container.
 type SearchQuery struct {
-	Properties *SearchQueryProperties `json:"properties"`
+	Query *SearchQueryProperties `json:"query,omitempty"`
 }
 
+// SearchQueryProperties contains the basic properties to query.
 type SearchQueryProperties struct {
-	Dataset *SearchQueryDatasetProperties `json:"dataset"`
+	Dataset *SearchQueryDatasetProperties `json:"dataset,omitempty"`
 }
 
+// SearchQueryDatasetProperties represents queryin on metadata.
 type SearchQueryDatasetProperties struct {
-	About       string   `json:"about"`
-	Description []string `json:"description"`
-	Name        []string `json:"name"`
-	Keywords    []string `json:"keywords"`
+	About       string   `json:"about,omitempty"`
+	Description []string `json:"description,omitempty"`
+	Name        []string `json:"name,omitempty"`
+	Keywords    []string `json:"keywords,omitempty"`
+}
+
+// SearchResults is the basic search result container.
+type SearchResults struct {
+	Results []*SearchResult `json:"results"`
+}
+
+// SearchResult contains the basic dataset info.
+type SearchResult struct {
+	ID         string                `json:"id"`
+	Score      float64               `json:"score"`
+	Discoverer string                `json:"discoverer"`
+	Metadata   *SearchResultMetadata `json:"metadata"`
+}
+
+// SearchResultMetadata represents the dataset metadata.
+type SearchResultMetadata struct {
+	Name        string                `json:"name"`
+	Description string                `json:"description"`
+	Size        float64               `json:"size"`
+	NumRows     float64               `json:"nb_rows"`
+	Columns     []*SearchResultColumn `json:"columns"`
+	Date        string                `json:"date"`
+}
+
+// SearchResultColumn has information on a dataset column.
+type SearchResultColumn struct {
+	Name           string `json:"name"`
+	StructuralType string `json:"structural_type"`
 }
 
 // ImportDataset makes the dataset available for ingest and returns
@@ -78,24 +109,23 @@ func (s *Storage) DeleteVariable(dataset string, varName string) error {
 	return errors.Errorf("Not supported")
 }
 
-func (s *Storage) parseDatasets(raw []*model.Metadata) ([]*api.Dataset, error) {
+func (s *Storage) parseDatasets(raw *SearchResults) ([]*api.Dataset, error) {
 	datasets := make([]*api.Dataset, 0)
 
-	for _, meta := range raw {
-		// merge all variables into a single set
-		// TODO: figure out how we handle multiple data resources!
+	for _, res := range raw.Results {
 		vars := make([]*model.Variable, 0)
-		for _, dr := range meta.DataResources {
-			vars = append(vars, dr.Variables...)
+		for _, c := range res.Metadata.Columns {
+			vars = append(vars, &model.Variable{
+				Name:         c.Name,
+				OriginalName: c.Name,
+				DisplayName:  c.Name,
+			})
 		}
 		datasets = append(datasets, &api.Dataset{
-			Name:        meta.Name,
-			Description: meta.Description,
-			Folder:      meta.DatasetFolder,
-			Summary:     meta.Summary,
-			SummaryML:   meta.SummaryMachine,
-			NumRows:     int64(meta.NumRows),
-			NumBytes:    int64(meta.NumBytes),
+			Name:        res.Metadata.Name,
+			Description: res.Metadata.Description,
+			NumRows:     int64(res.Metadata.NumRows),
+			NumBytes:    int64(res.Metadata.Size),
 			Variables:   vars,
 			Provenance:  provenance,
 		})
@@ -104,17 +134,17 @@ func (s *Storage) parseDatasets(raw []*model.Metadata) ([]*api.Dataset, error) {
 	return datasets, nil
 }
 
-func (s *Storage) searchREST(searchText string) ([]*model.Metadata, error) {
+func (s *Storage) searchREST(searchText string) (*SearchResults, error) {
 	terms := strings.Fields(searchText)
 
 	// get complete URI for the endpoint
 	query := &SearchQuery{
-		Properties: &SearchQueryProperties{
+		Query: &SearchQueryProperties{
 			Dataset: &SearchQueryDatasetProperties{
-				About:       searchText,
-				Name:        terms,
+				About: searchText,
+				//Name:        terms,
 				Description: terms,
-				Keywords:    terms,
+				//Keywords:    terms,
 			},
 		},
 	}
@@ -127,7 +157,13 @@ func (s *Storage) searchREST(searchText string) ([]*model.Metadata, error) {
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to post datamart search request")
 	}
-	log.Infof("DATAMART POST %v", responseRaw)
 
-	return nil, nil
+	// parse result
+	var dmResult SearchResults
+	err = json.Unmarshal(responseRaw, &dmResult)
+	if err != nil {
+		return nil, errors.Wrap(err, "unable to parse datamart search request")
+	}
+
+	return &dmResult, nil
 }
