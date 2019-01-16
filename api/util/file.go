@@ -7,6 +7,8 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+
+	"github.com/pkg/errors"
 )
 
 // PathConfig contains basic configuration for path resolving.
@@ -58,7 +60,7 @@ func WriteFileWithDirs(filename string, data []byte, perm os.FileMode) error {
 func Unzip(zipFile string, destination string) error {
 	r, err := zip.OpenReader(zipFile)
 	if err != nil {
-		return err
+		return errors.Wrap(err, "unable to open archive")
 	}
 	defer func() {
 		if err := r.Close(); err != nil {
@@ -72,7 +74,7 @@ func Unzip(zipFile string, destination string) error {
 	extractAndWriteFile := func(f *zip.File) error {
 		rc, err := f.Open()
 		if err != nil {
-			return err
+			return errors.Wrap(err, "unable to open archived file")
 		}
 		defer func() {
 			if err := rc.Close(); err != nil {
@@ -88,7 +90,7 @@ func Unzip(zipFile string, destination string) error {
 			os.MkdirAll(filepath.Dir(path), f.Mode())
 			f, err := os.OpenFile(path, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, f.Mode())
 			if err != nil {
-				return err
+				return errors.Wrap(err, "unable to write archived file")
 			}
 			defer func() {
 				if err := f.Close(); err != nil {
@@ -98,7 +100,7 @@ func Unzip(zipFile string, destination string) error {
 
 			_, err = io.Copy(f, rc)
 			if err != nil {
-				return err
+				return errors.Wrap(err, "unable to copy archived file")
 			}
 		}
 		return nil
@@ -107,7 +109,7 @@ func Unzip(zipFile string, destination string) error {
 	for _, f := range r.File {
 		err := extractAndWriteFile(f)
 		if err != nil {
-			return err
+			return errors.Wrap(err, "unable to extract files")
 		}
 	}
 

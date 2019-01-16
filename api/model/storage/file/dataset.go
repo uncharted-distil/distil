@@ -22,7 +22,7 @@ const (
 
 // ImportDataset makes the dataset available for ingest and returns
 // the URI to use for ingest.
-func (s *Storage) ImportDataset(uri string) (string, error) {
+func (s *Storage) ImportDataset(id string, uri string) (string, error) {
 	// dataset is already on local file system and accessible for ingest
 	return uri, nil
 }

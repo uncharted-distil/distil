@@ -20,7 +20,7 @@ const (
 )
 
 // ImportDataset is not supported (ES datasets are already ingested).
-func (s *Storage) ImportDataset(uri string) (string, error) {
+func (s *Storage) ImportDataset(id string, uri string) (string, error) {
 	return "", errors.Errorf("Not Supported")
 }
 

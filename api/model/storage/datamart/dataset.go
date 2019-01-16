@@ -11,6 +11,7 @@ import (
 	"github.com/unchartedsoftware/distil-compute/model"
 	api "github.com/unchartedsoftware/distil/api/model"
 	"github.com/unchartedsoftware/distil/api/util"
+	log "github.com/unchartedsoftware/plog"
 )
 
 const (
@@ -20,6 +21,7 @@ const (
 	datasetsListSize   = 1000
 	provenance         = "datamart"
 	searchRESTFunction = "search"
+	getRESTFunction    = "download"
 )
 
 // SearchQuery is the basic search query container.
@@ -71,25 +73,30 @@ type SearchResultColumn struct {
 
 // ImportDataset makes the dataset available for ingest and returns
 // the URI to use for ingest.
-func (s *Storage) ImportDataset(uri string) (string, error) {
+func (s *Storage) ImportDataset(id string, uri string) (string, error) {
+	name := path.Base(uri)
+	log.Infof("URI: %s", uri)
+	log.Infof("ID: %s", id)
 	// get the compressed dataset
+	requestURI := fmt.Sprintf("%s/%s", getRESTFunction, id)
 	params := map[string]string{
 		"format": "d3m",
 	}
-	data, err := s.client.Get(uri, params)
+	data, err := s.client.Get(requestURI, params)
 	if err != nil {
 		return "", err
 	}
 
 	// write the compressed dataset to disk
-	zipFilename := path.Join(s.outputPath, fmt.Sprintf("%s.zip", uri))
+	zipFilename := path.Join(s.outputPath, fmt.Sprintf("%s.zip", name))
 	err = util.WriteFileWithDirs(zipFilename, data, os.ModePerm)
 	if err != nil {
 		return "", errors.Wrap(err, "unable to store dataset from datamart")
 	}
 
 	// expand the archive into a dataset folder
-	extractedArchivePath := path.Join(s.outputPath, uri)
+	log.Infof("ZIP FILE: %s", zipFilename)
+	extractedArchivePath := path.Join(s.outputPath, name)
 	err = util.Unzip(zipFilename, extractedArchivePath)
 	if err != nil {
 		return "", errors.Wrap(err, "unable to extract datamart archive")

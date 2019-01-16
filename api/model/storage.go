@@ -72,7 +72,7 @@ type MetadataStorage interface {
 	FetchDataset(dataset string, includeIndex bool, includeMeta bool) (*Dataset, error)
 	FetchDatasets(includeIndex bool, includeMeta bool) ([]*Dataset, error)
 	SearchDatasets(terms string, includeIndex bool, includeMeta bool) ([]*Dataset, error)
-	ImportDataset(uri string) (string, error)
+	ImportDataset(id string, uri string) (string, error)
 
 	// Dataset manipulation
 	SetDataType(dataset string, varName string, varType string) error
