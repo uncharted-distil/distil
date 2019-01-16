@@ -9,7 +9,9 @@ import (
 
 	"github.com/pkg/errors"
 	"github.com/unchartedsoftware/distil-compute/model"
+	"github.com/unchartedsoftware/distil-compute/primitive/compute"
 	api "github.com/unchartedsoftware/distil/api/model"
+	"github.com/unchartedsoftware/distil/api/task"
 	"github.com/unchartedsoftware/distil/api/util"
 )
 
@@ -73,6 +75,7 @@ type SearchResultColumn struct {
 // ImportDataset makes the dataset available for ingest and returns
 // the URI to use for ingest.
 func (s *Storage) ImportDataset(id string, uri string) (string, error) {
+	//TODO: MAKE THIS WORK ON APIs OTHER THAN NYU!
 	name := path.Base(uri)
 	// get the compressed dataset
 	requestURI := fmt.Sprintf("%s/%s", getRESTFunction, id)
@@ -98,8 +101,15 @@ func (s *Storage) ImportDataset(id string, uri string) (string, error) {
 		return "", errors.Wrap(err, "unable to extract datamart archive")
 	}
 
+	// format the dataset
+	extractedSchema := path.Join(extractedArchivePath, compute.D3MDataSchema)
+	formattedPath, err := task.Format(extractedSchema, s.config)
+	if err != nil {
+		return "", errors.Wrap(err, "unable to format datamart dataset")
+	}
+
 	// return the location of the expanded dataset folder
-	return extractedArchivePath, nil
+	return formattedPath, nil
 }
 
 // FetchDatasets returns all datasets in the provided index.

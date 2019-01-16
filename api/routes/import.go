@@ -26,7 +26,10 @@ func ImportHandler(metaCtor model.MetadataStorageCtor, config *task.IngestTaskCo
 			handleError(w, err)
 			return
 		}
-		id := params["id"].(string)
+		id := ""
+		if params["id"] != nil {
+			id = params["id"].(string)
+		}
 
 		// update ingest config to use ingest URI.
 		serverConfig, err := env.LoadConfig()
@@ -45,14 +48,14 @@ func ImportHandler(metaCtor model.MetadataStorageCtor, config *task.IngestTaskCo
 		resolver := createResolverForSource(source, dataset, &serverConfig, config)
 		uri := resolver.ResolveInputAbsolute(dataset)
 
+		ingestConfig := *config
+		ingestConfig.Resolver = resolver
+
 		_, err = meta.ImportDataset(id, uri)
 		if err != nil {
 			handleError(w, err)
 			return
 		}
-
-		ingestConfig := *config
-		ingestConfig.Resolver = resolver
 
 		// ingest the imported dataset.
 		err = task.IngestDataset(metaCtor, index, dataset, source, &ingestConfig)

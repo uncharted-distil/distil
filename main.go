@@ -105,10 +105,6 @@ func main() {
 	// instantiate the metadata storage (using ES).
 	metadataStorageCtor := es.NewMetadataStorage(config.ESDatasetsIndex, esClientCtor)
 
-	// instantiate the metadata storage (using datamart).
-	datamartClientCtor := rest.NewClient(config.DatamartURI)
-	datamartMetadataStorageCtor := dm.NewMetadataStorage(config.DatamartImportFolder, datamartClientCtor)
-
 	// instantiate the postgres data storage constructor.
 	pgDataStorageCtor := pg.NewDataStorage(postgresClientCtor, metadataStorageCtor)
 
@@ -207,6 +203,10 @@ func main() {
 		HardFail:                           config.IngestHardFail,
 	}
 	sourceFolder := config.DataFolderPath
+
+	// instantiate the metadata storage (using datamart).
+	datamartClientCtor := rest.NewClient(config.DatamartURI)
+	datamartMetadataStorageCtor := dm.NewMetadataStorage(config.DatamartImportFolder, ingestConfig, datamartClientCtor)
 
 	// Ingest the data specified by the environment
 	if config.InitialDataset != "" && !config.SkipIngest {
