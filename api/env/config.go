@@ -24,6 +24,7 @@ type Config struct {
 	D3MInputDir                        string  `env:"D3MINPUTDIR" envDefault:""`
 	D3MInputDirRoot                    string  `env:"D3MINPUTDIR_ROOT" envDefault:"datasets"`
 	DatamartURI                        string  `env:"DATAMART_URI" envDefault:"https://datamart.d3m.vida-nyu.org"`
+	DatamartImportFolder               string  `env:"DATAMART_IMPORT_FOLDER" envDefault:"/data/datamart"`
 	SolutionComputeTrace               bool    `env:"SOLUTION_COMPUTE_TRACE" envDefault:"false"`
 	D3MOutputDir                       string  `env:"D3MOUTPUTDIR" envDefault:"outputs"`
 	PostgresHost                       string  `env:"PG_HOST" envDefault:"localhost"`

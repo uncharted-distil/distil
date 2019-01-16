@@ -85,10 +85,10 @@ func Unzip(zipFile string, destination string) error {
 		path := filepath.Join(destination, f.Name)
 
 		if f.FileInfo().IsDir() {
-			os.MkdirAll(path, f.Mode())
+			os.MkdirAll(path, os.ModePerm)
 		} else {
-			os.MkdirAll(filepath.Dir(path), f.Mode())
-			f, err := os.OpenFile(path, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, f.Mode())
+			os.MkdirAll(filepath.Dir(path), os.ModePerm)
+			f, err := os.OpenFile(path, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, os.ModePerm)
 			if err != nil {
 				return errors.Wrap(err, "unable to write archived file")
 			}

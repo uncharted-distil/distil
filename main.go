@@ -107,7 +107,7 @@ func main() {
 
 	// instantiate the metadata storage (using datamart).
 	datamartClientCtor := rest.NewClient(config.DatamartURI)
-	datamartMetadataStorageCtor := dm.NewMetadataStorage(config.D3MOutputDir, datamartClientCtor)
+	datamartMetadataStorageCtor := dm.NewMetadataStorage(config.DatamartImportFolder, datamartClientCtor)
 
 	// instantiate the postgres data storage constructor.
 	pgDataStorageCtor := pg.NewDataStorage(postgresClientCtor, metadataStorageCtor)

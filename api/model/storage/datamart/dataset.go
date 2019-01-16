@@ -11,7 +11,6 @@ import (
 	"github.com/unchartedsoftware/distil-compute/model"
 	api "github.com/unchartedsoftware/distil/api/model"
 	"github.com/unchartedsoftware/distil/api/util"
-	log "github.com/unchartedsoftware/plog"
 )
 
 const (
@@ -75,8 +74,6 @@ type SearchResultColumn struct {
 // the URI to use for ingest.
 func (s *Storage) ImportDataset(id string, uri string) (string, error) {
 	name := path.Base(uri)
-	log.Infof("URI: %s", uri)
-	log.Infof("ID: %s", id)
 	// get the compressed dataset
 	requestURI := fmt.Sprintf("%s/%s", getRESTFunction, id)
 	params := map[string]string{
@@ -95,7 +92,6 @@ func (s *Storage) ImportDataset(id string, uri string) (string, error) {
 	}
 
 	// expand the archive into a dataset folder
-	log.Infof("ZIP FILE: %s", zipFilename)
 	extractedArchivePath := path.Join(s.outputPath, name)
 	err = util.Unzip(zipFilename, extractedArchivePath)
 	if err != nil {

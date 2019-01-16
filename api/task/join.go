@@ -92,7 +92,7 @@ func join(joinLeft *JoinSpec, joinRight *JoinSpec, varsLeft []*model.Variable, v
 func createResolver(datasetSource ingestMetadata.DatasetSource, config *env.Config) *util.PathResolver {
 	if datasetSource == ingestMetadata.Contrib {
 		return util.NewPathResolver(&util.PathConfig{
-			InputFolder:  config.DatamartURI,
+			InputFolder:  config.DatamartImportFolder,
 			OutputFolder: path.Join(config.TmpDataPath, "augmented"),
 		})
 	}

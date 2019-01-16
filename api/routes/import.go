@@ -73,7 +73,7 @@ func ImportHandler(metaCtor model.MetadataStorageCtor, config *task.IngestTaskCo
 func createResolverForSource(datasetSource metadata.DatasetSource, dataset string, config *env.Config, taskConfig *task.IngestTaskConfig) *util.PathResolver {
 	if datasetSource == metadata.Contrib {
 		return util.NewPathResolver(&util.PathConfig{
-			InputFolder:  path.Join(config.DatamartURI, dataset),
+			InputFolder:  path.Join(config.DatamartImportFolder, dataset),
 			OutputFolder: taskConfig.Resolver.Config.OutputFolder,
 		})
 	}
