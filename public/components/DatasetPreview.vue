@@ -1,17 +1,18 @@
 <template>
 	<div class='card card-result'>
-		<div class='dataset-header btn-success hover card-header' @click.stop='setActiveDataset()' v-bind:class='{collapsed: !expanded}'>
+		<div class='dataset-header hover card-header'  variant="dark" @click.stop='setActiveDataset()' v-bind:class='{collapsed: !expanded}'>
 			<a class='nav-link'><b>Name:</b> {{name}}</a>
 			<a class='nav-link'><b>Features:</b> {{variables.length}}</a>
 			<a class='nav-link'><b>Rows:</b> {{numRows}}</a>
 			<a class='nav-link'><b>Size:</b> {{formatBytes(numBytes)}}</a>
-			<a v-if="provenance==='datamart'"><b-button variant="danger" @click.stop='importDataset()'>Import</b-button></a>
+			<a v-if="allowImport && provenance==='datamart'"><b-button variant="danger" @click.stop='importDataset()'>Import</b-button></a>
+			<a v-if="allowJoin"><b-button variant="primary" @click.stop='joinDataset()'>Join</b-button></a>
 		</div>
 		<div class='card-body'>
 			<div class='row'>
 				<div class='col-4'>
 					<span><b>Top features:</b></span>
-					<ul id='example-1'>
+					<ul>
 						<li :key="variable.name" v-for='variable in topVariables'>
 							{{variable.colDisplayName}}
 						</li>
@@ -46,7 +47,6 @@
 			</div>
 
 		</div>
-
 	</div>
 
 </template>
@@ -54,26 +54,17 @@
 <script lang="ts">
 
 import _ from 'lodash';
+import Vue from 'vue';
 import { createRouteEntry } from '../util/routes';
+import { formatBytes } from '../util/bytes';
 import { sortVariablesByImportance } from '../util/data';
-import { getters } from '../store/route/module';
+import { getters as routeGetters } from '../store/route/module';
 import { Variable } from '../store/dataset/index';
 import { actions as datasetActions } from '../store/dataset/module';
 import { SELECT_TARGET_ROUTE } from '../store/route/index';
 import localStorage from 'store';
 
-import Vue from 'vue';
-
 const NUM_TOP_FEATURES = 5;
-const SUFFIXES = {
-	0: 'B',
-	1: 'KB',
-	2: 'MB',
-	3: 'GB',
-	4: 'TB',
-	5: 'PB',
-	6: 'EB'
-};
 
 export default Vue.extend({
 	name: 'dataset-preview',
@@ -86,7 +77,9 @@ export default Vue.extend({
 		variables: Array as () => Variable[],
 		numRows: Number as () => number,
 		numBytes: Number as () => number,
-		provenance: String as () => string
+		provenance: String as () => string,
+		allowImport: Boolean as () => boolean,
+		allowJoin: Boolean as () => boolean
 	},
 
 	computed: {
@@ -103,17 +96,11 @@ export default Vue.extend({
 
 	methods: {
 		formatBytes(n: number): string {
-			function formatRecursive(size: number, powerOfThousand: number): string {
-				if (size > 1024) {
-					return formatRecursive(size / 1024, powerOfThousand + 1);
-				}
-				return `${size.toFixed(2)}${SUFFIXES[powerOfThousand]}`;
-			}
-			return formatRecursive(n, 0);
+			return formatBytes(n);
 		},
 		setActiveDataset() {
 			const entry = createRouteEntry(SELECT_TARGET_ROUTE, {
-				terms: getters.getRouteTerms(this.$store),
+				terms: routeGetters.getRouteTerms(this.$store),
 				dataset: this.name
 			});
 			this.$router.push(entry);
@@ -123,7 +110,7 @@ export default Vue.extend({
 			this.expanded = !this.expanded;
 		},
 		highlightedDescription(): string {
-			const terms = getters.getRouteTerms(this.$store);
+			const terms = routeGetters.getRouteTerms(this.$store);
 			if (_.isEmpty(terms)) {
 				return this.description;
 			}
@@ -145,6 +132,9 @@ export default Vue.extend({
 				source: 'contrib',
 				index: this.name
 			});
+		},
+		joinDataset() {
+			this.$emit('join-dataset', this.name);
 		}
 
 	}
@@ -162,10 +152,13 @@ export default Vue.extend({
 	justify-content: space-between;
 	border: none;
 	border-bottom: 1px solid rgba(0, 0, 0, 0.125);
-	text-decoration: underline;
 }
-.card-result .card-header{
-	background-color: #28a745;
+.card-result .card-header {
+	background-color: #424242;
+}
+.card-result .card-header:hover {
+	color: #fff;
+	background-color: #535353;
 }
 .dataset-header:hover {
 	text-decoration: underline;
@@ -176,10 +169,4 @@ export default Vue.extend({
 .card-expanded {
 	padding-top: 15px;
 }
-.card-result .card-header:hover {
-	color: #fff;
-	background-color: #218838;
-	border-color: #1e7e34;
-}
-
 </style>

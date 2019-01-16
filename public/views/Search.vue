@@ -14,17 +14,44 @@
 		</div>
 		<div class="row flex-10 justify-content-center pb-3">
 			<div class="col-12 col-md-10 d-flex">
-				<search-results class="search-search-results"></search-results>
+				<search-results class="search-search-results"
+					v-on:join-dataset="onJoin">
+				</search-results>
+			</div>
+		</div>
+		<div v-if="numJoiningDatasets !== 0">
+			<div class="row flex-1 align-items-center justify-content-center bg-white">
+				<div class="col-12 col-md-10">
+					<h5 class="header-label">Join Datasets</h5>
+					<b-button size="sm" variant="secondary" class="close-join-button" @click="closeJoin"><i class="fa fa-times"></i></b-button>
+				</div>
+			</div>
+			<div class="row flex-1 align-items-center justify-content-center">
+				<div class="col-4 mb-3" v-for="dataset in joiningDatasets">
+					<dataset-preview-card
+						:name="dataset.name"
+						:variables="dataset.variables"
+						:numBytes="dataset.numBytes"
+						:numRows="dataset.numRows">
+					</dataset-preview-card>
+				</div>
+				<div class="join-button col-2 mb-3" v-if="numJoiningDatasets === 2">
+					<b-button size="lg" large variant="primary">Join Datasets</b-button>
+				</div>
 			</div>
 		</div>
 	</div>
 </template>
 
 <script lang="ts">
+
+import _ from 'lodash';
+import DatasetPreviewCard from '../components/DatasetPreviewCard.vue';
 import SearchBar from '../components/SearchBar.vue';
 import SearchResults from '../components/SearchResults.vue';
+import { Dataset } from '../store/dataset/index';
 import { getters as routeGetters } from '../store/route/module';
-import { actions as datasetActions } from '../store/dataset/module';
+import { getters as datasetGetters, actions as datasetActions } from '../store/dataset/module';
 import Vue from 'vue';
 
 export default Vue.extend({
@@ -32,12 +59,25 @@ export default Vue.extend({
 
 	components: {
 		SearchBar,
-		SearchResults
+		SearchResults,
+		DatasetPreviewCard
+	},
+
+	data() {
+		return {
+			joiningDatasets: {}
+		};
 	},
 
 	computed: {
 		terms(): string {
 			return routeGetters.getRouteTerms(this.$store);
+		},
+		datasets(): Dataset[] {
+			return datasetGetters.getDatasets(this.$store);
+		},
+		numJoiningDatasets(): number {
+			return _.size(this.joiningDatasets);
 		}
 	},
 
@@ -54,7 +94,19 @@ export default Vue.extend({
 	methods: {
 		fetch() {
 			datasetActions.searchDatasets(this.$store, this.terms);
+		},
+		onJoin(name) {
+			if (this.numJoiningDatasets !== 2) {
+				const dataset = _.find(this.datasets, d => {
+					return d.name === name;
+				});
+				Vue.set(this.joiningDatasets, name, dataset);
+			}
+		},
+		closeJoin() {
+			this.joiningDatasets = {};
 		}
+
 	}
 });
 </script>
@@ -67,5 +119,14 @@ export default Vue.extend({
 .search-search-bar {
 	width: 100%;
 	box-shadow: 0 1px 2px 0 rgba(0,0,0,0.10);
+}
+.close-join-button {
+	position: absolute;
+	top: 4px;
+	right: 4px;
+	cursor: pointer;
+}
+.join-button {
+	text-align: center;
 }
 </style>

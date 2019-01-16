@@ -1,6 +1,6 @@
 <template>
 	<div class="search-results">
-		<div class="bg-faded rounded mb-3" :key="dataset.name" v-for="dataset in datasets">
+		<div class="mb-3" :key="dataset.name" v-for="dataset in datasets">
 			<dataset-preview
 				:name="dataset.name"
 				:description="dataset.description"
@@ -9,7 +9,10 @@
 				:variables="dataset.variables"
 				:numBytes="dataset.numBytes"
 				:numRows="dataset.numRows"
-				:provenance="dataset.provenance">
+				:provenance="dataset.provenance"
+				allow-join
+				allow-import
+				v-on:join-dataset="onJoin">
 			</dataset-preview>
 		</div>
 	</div>
@@ -34,6 +37,12 @@ export default Vue.extend({
 			return datasetGetters.getDatasets(this.$store);
 		}
 	},
+
+	methods: {
+		onJoin(arg) {
+			this.$emit('join-dataset', arg);
+		}
+	}
 
 });
 </script>
