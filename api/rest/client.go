@@ -30,6 +30,33 @@ func NewClient(endpoint string) ClientCtor {
 	}
 }
 
+// Get performs a get using the provided params as query string parameters.
+func (c *Client) Get(function string, params map[string]string) ([]byte, error) {
+	url := fmt.Sprintf("%s/%s", c.BaseEndpoint, function)
+	queryString := ""
+	for name, value := range params {
+		queryString = fmt.Sprintf("%s&%s=%s", queryString, name, value)
+	}
+	// skip first &
+	if len(queryString) > 0 {
+		queryString = queryString[1:]
+		url = fmt.Sprintf("%s?%s", url, queryString)
+	}
+
+	resp, err := http.Get(url)
+	if err != nil {
+		return nil, errors.Wrap(err, "unable to get result from json post")
+	}
+	defer resp.Body.Close()
+
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return nil, errors.Wrap(err, "unable to read response body")
+	}
+
+	return body, nil
+}
+
 // PostJSON posts json data to a URI.
 func (c *Client) PostJSON(function string, json []byte) ([]byte, error) {
 	url := fmt.Sprintf("%s/%s", c.BaseEndpoint, function)

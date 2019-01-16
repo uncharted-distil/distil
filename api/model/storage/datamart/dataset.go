@@ -2,11 +2,15 @@ package datamart
 
 import (
 	"encoding/json"
+	"fmt"
+	"os"
+	"path"
 	"strings"
 
 	"github.com/pkg/errors"
 	"github.com/unchartedsoftware/distil-compute/model"
 	api "github.com/unchartedsoftware/distil/api/model"
+	"github.com/unchartedsoftware/distil/api/util"
 )
 
 const (
@@ -68,8 +72,31 @@ type SearchResultColumn struct {
 // ImportDataset makes the dataset available for ingest and returns
 // the URI to use for ingest.
 func (s *Storage) ImportDataset(uri string) (string, error) {
-	// dataset is already on local file system and accessible for ingest
-	return uri, nil
+	// get the compressed dataset
+	params := map[string]string{
+		"format": "d3m",
+	}
+	data, err := s.client.Get(uri, params)
+	if err != nil {
+		return "", err
+	}
+
+	// write the compressed dataset to disk
+	zipFilename := path.Join(s.outputPath, fmt.Sprintf("%s.zip", uri))
+	err = util.WriteFileWithDirs(zipFilename, data, os.ModePerm)
+	if err != nil {
+		return "", errors.Wrap(err, "unable to store dataset from datamart")
+	}
+
+	// expand the archive into a dataset folder
+	extractedArchivePath := path.Join(s.outputPath, uri)
+	err = util.Unzip(zipFilename, extractedArchivePath)
+	if err != nil {
+		return "", errors.Wrap(err, "unable to extract datamart archive")
+	}
+
+	// return the location of the expanded dataset folder
+	return extractedArchivePath, nil
 }
 
 // FetchDatasets returns all datasets in the provided index.

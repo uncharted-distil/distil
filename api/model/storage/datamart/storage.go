@@ -7,14 +7,16 @@ import (
 
 // Storage accesses the underlying datamart instance.
 type Storage struct {
-	client *rest.Client
+	client     *rest.Client
+	outputPath string
 }
 
 // NewMetadataStorage returns a constructor for a metadata storage.
-func NewMetadataStorage(clientCtor rest.ClientCtor) model.MetadataStorageCtor {
+func NewMetadataStorage(outputPath string, clientCtor rest.ClientCtor) model.MetadataStorageCtor {
 	return func() (model.MetadataStorage, error) {
 		return &Storage{
-			client: clientCtor(),
+			client:     clientCtor(),
+			outputPath: outputPath,
 		}, nil
 	}
 }
