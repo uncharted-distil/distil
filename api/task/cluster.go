@@ -20,7 +20,7 @@ const (
 
 // Cluster will cluster the dataset fields using a primitive.
 func Cluster(index string, dataset string, config *IngestTaskConfig) (string, error) {
-	outputPath, err := initializeDatasetCopy(config.GetAbsolutePath(config.SchemaPathRelative), config.ClusteringOutputSchemaRelative, config.ClusteringOutputDataRelative, config)
+	outputPath, err := initializeDatasetCopy(config.GetAbsolutePath(config.SchemaPathRelative), dataset, config.ClusteringOutputSchemaRelative, config.ClusteringOutputDataRelative, config)
 	if err != nil {
 		return "", errors.Wrap(err, "unable to copy source data folder")
 	}
@@ -96,5 +96,5 @@ func Cluster(index string, dataset string, config *IngestTaskConfig) (string, er
 		return "", errors.Wrap(err, "unable to store cluster schema")
 	}
 
-	return path.Dir(outputPath.outputSchema), nil
+	return outputPath.outputSchema, nil
 }

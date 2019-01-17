@@ -375,11 +375,10 @@ func getRelativePath(rootPath string, filePath string) string {
 	return relativePath
 }
 
-func initializeDatasetCopy(dataset string, schemaPathRelative string, dataPathRelative string, config *IngestTaskConfig) (*datasetCopyPath, error) {
-	sourceFolder := path.Dir(dataset)
-	targetFolderName := path.Base(sourceFolder)
-	outputSchemaPath := config.GetTmpAbsolutePath(path.Join(targetFolderName, schemaPathRelative))
-	outputDataPath := config.GetTmpAbsolutePath(path.Join(targetFolderName, dataPathRelative))
+func initializeDatasetCopy(schemaFile string, dataset string, schemaPathRelative string, dataPathRelative string, config *IngestTaskConfig) (*datasetCopyPath, error) {
+	sourceFolder := path.Dir(schemaFile)
+	outputSchemaPath := config.GetTmpAbsolutePath(path.Join(dataset, schemaPathRelative))
+	outputDataPath := config.GetTmpAbsolutePath(path.Join(dataset, dataPathRelative))
 	outputFolder := path.Dir(outputSchemaPath)
 
 	// copy the source folder to have all the linked files for merging

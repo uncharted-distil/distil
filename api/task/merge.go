@@ -17,7 +17,7 @@ import (
 
 // Merge will merge data resources into a single data resource.
 func Merge(schemaFile string, index string, dataset string, config *IngestTaskConfig) (string, error) {
-	outputPath, err := initializeDatasetCopy(schemaFile, config.MergedOutputSchemaPathRelative, config.MergedOutputPathRelative, config)
+	outputPath, err := initializeDatasetCopy(schemaFile, dataset, config.MergedOutputSchemaPathRelative, config.MergedOutputPathRelative, config)
 	if err != nil {
 		return "", errors.Wrap(err, "unable to copy source data folder")
 	}
@@ -106,5 +106,5 @@ func Merge(schemaFile string, index string, dataset string, config *IngestTaskCo
 		return "", errors.Wrap(err, "unable to store merged schema")
 	}
 
-	return path.Dir(outputPath.outputSchema), nil
+	return outputPath.outputSchema, nil
 }

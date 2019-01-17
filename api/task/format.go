@@ -40,7 +40,7 @@ func addD3MIndex(schemaFile string, meta *model.Metadata, config *IngestTaskConf
 	}
 
 	// copy the data to a new directory
-	outputPath, err := initializeDatasetCopy(schemaFile, config.FormatOutputSchemaRelative, config.FormatOutputDataRelative, config)
+	outputPath, err := initializeDatasetCopy(schemaFile, path.Base(path.Dir(schemaFile)), config.FormatOutputSchemaRelative, config.FormatOutputDataRelative, config)
 	if err != nil {
 		return "", errors.Wrap(err, "unable to copy source data folder")
 	}
