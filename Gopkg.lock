@@ -227,7 +227,7 @@
     "primitive/compute/result",
   ]
   pruneopts = "UT"
-  revision = "1f765b454650d889ee510314dec0bba3cdc3ea5f"
+  revision = "2efb9e6b07844f9fb51b07cd7a614c03ca472045"
 
 [[projects]]
   digest = "1:646927f4ca90269343b8a288e715a8daa35ba2b1cad26cf72549178c22b58486"
@@ -243,8 +243,8 @@
     "util",
   ]
   pruneopts = "UT"
-  revision = "0cb013bc07eb6cec756a062e59fc4e2080b3fae9"
-  version = "0.11.0"
+  revision = "93082849016b04697cc4adcefda714e818f5e46c"
+  version = "0.12.1"
 
 [[projects]]
   branch = "master"

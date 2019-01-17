@@ -15,7 +15,7 @@ import (
 )
 
 // ImportHandler imports a dataset to the local file system and then ingests it.
-func ImportHandler(metaCtor model.MetadataStorageCtor, config *task.IngestTaskConfig) func(http.ResponseWriter, *http.Request) {
+func ImportHandler(metaCtor model.MetadataStorageCtor, localMetaCtor model.MetadataStorageCtor, config *task.IngestTaskConfig) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		index := pat.Param(r, "index")
 		dataset := pat.Param(r, "dataset")
@@ -58,7 +58,7 @@ func ImportHandler(metaCtor model.MetadataStorageCtor, config *task.IngestTaskCo
 		}
 
 		// ingest the imported dataset.
-		err = task.IngestDataset(metaCtor, index, dataset, source, &ingestConfig)
+		err = task.IngestDataset(localMetaCtor, index, dataset, source, &ingestConfig)
 		if err != nil {
 			handleError(w, err)
 			return

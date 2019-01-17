@@ -47,13 +47,13 @@ type Config struct {
 	MergedOutputDataPath               string  `env:"MERGED_OUTPUT_DATA_PATH" envDefault:"merged/tables/learningData.csv"`
 	MergedOutputSchemaPath             string  `env:"MERGED_OUTPUT_SCHEMA_PATH" envDefault:"merged/datasetDoc.json"`
 	SchemaPath                         string  `env:"SCHEMA_PATH" envDefault:"datasetDoc.json"`
-	ClassificationOutputPath           string  `env:"CLASSIFICATION_OUTPUT_PATH" envDefault:"tables/classification.json"`
+	ClassificationOutputPath           string  `env:"CLASSIFICATION_OUTPUT_PATH" envDefault:"merged/classification.json"`
 	ClassificationProbabilityThreshold float64 `env:"CLASSIFICATION_PROBABILITY_THRESHOLD" envDefault:"0.8"`
 	ClassificationEnabled              bool    `env:"CLASSIFICATION_ENABLED" envDefault:"true"`
-	RankingOutputPath                  string  `env:"RANKING_OUTPUT_PATH" envDefault:"tables/importance.json"`
+	RankingOutputPath                  string  `env:"RANKING_OUTPUT_PATH" envDefault:"merged/importance.json"`
 	RankingRowLimit                    int     `env:"RANKING_ROW_LIMIT" envDefault:"1000"`
 	SummaryPath                        string  `env:"SUMMARY_PATH" envDefault:"summary.txt"`
-	SummaryMachinePath                 string  `env:"SUMMARY_MACHINE_PATH" envDefault:"summary-machine.json"`
+	SummaryMachinePath                 string  `env:"SUMMARY_MACHINE_PATH" envDefault:"merged/summary-machine.json"`
 	ElasticTimeout                     int     `env:"ES_TIMEOUT" envDefault:"300"`
 	ElasticDatasetPrefix               string  `env:"ES_DATASET_PREFIX" envDefault:"d_"`
 	InitialDataset                     string  `env:"INITIAL_DATASET" envDefault:""`
