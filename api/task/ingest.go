@@ -86,33 +86,34 @@ func IngestDataset(metaCtor api.MetadataStorageCtor, index string, dataset strin
 	latestSchemaOutput := config.GetAbsolutePath(config.SchemaPathRelative)
 
 	if config.ClusteringEnabled {
-		err := Cluster(index, dataset, config)
+		output, err := Cluster(index, dataset, config)
 		if err != nil {
 			if config.HardFail {
 				return errors.Wrap(err, "unable to cluster all data")
 			}
 			log.Errorf("unable to cluster all data: %v", err)
 		} else {
-			latestSchemaOutput = config.GetTmpAbsolutePath(config.ClusteringOutputSchemaRelative)
+			latestSchemaOutput = output
 		}
 		log.Infof("finished clustering the dataset")
 	}
 
-	err = Featurize(latestSchemaOutput, index, dataset, config)
+	output, err := Featurize(latestSchemaOutput, index, dataset, config)
 	if err != nil {
 		if config.HardFail {
 			return errors.Wrap(err, "unable to featurize all data")
 		}
 		log.Errorf("unable to featurize all data: %v", err)
 	} else {
-		latestSchemaOutput = config.GetTmpAbsolutePath(config.FeaturizationOutputSchemaRelative)
+		latestSchemaOutput = output
 	}
 	log.Infof("finished featurizing the dataset")
 
-	err = Merge(latestSchemaOutput, index, dataset, config)
+	output, err = Merge(latestSchemaOutput, index, dataset, config)
 	if err != nil {
 		return errors.Wrap(err, "unable to merge all data into a single file")
 	}
+	latestSchemaOutput = output
 	log.Infof("finished merging the dataset")
 
 	err = Classify(index, dataset, config)
@@ -137,7 +138,7 @@ func IngestDataset(metaCtor api.MetadataStorageCtor, index string, dataset strin
 		log.Errorf("unable to summarize the dataset: %v", err)
 	}
 
-	err = GeocodeForwardDataset(config.GetTmpAbsolutePath(config.MergedOutputSchemaPathRelative), index, dataset, config)
+	err = GeocodeForwardDataset(latestSchemaOutput, index, dataset, config)
 	if err != nil {
 		return errors.Wrap(err, "unable to geocode all data")
 	}

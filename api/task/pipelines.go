@@ -16,6 +16,7 @@ import (
 	"github.com/unchartedsoftware/distil-compute/primitive/compute"
 	"github.com/unchartedsoftware/distil-compute/primitive/compute/description"
 	"github.com/unchartedsoftware/distil-compute/primitive/compute/result"
+	log "github.com/unchartedsoftware/plog"
 
 	"github.com/unchartedsoftware/distil/api/env"
 	"github.com/unchartedsoftware/distil/api/util"
@@ -382,6 +383,7 @@ func initializeDatasetCopy(dataset string, schemaPathRelative string, dataPathRe
 	outputFolder := path.Dir(outputSchemaPath)
 
 	// copy the source folder to have all the linked files for merging
+	log.Infof("COPYING FROM %s to %s", sourceFolder, outputFolder)
 	err := util.Copy(sourceFolder, outputFolder)
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to copy source data")

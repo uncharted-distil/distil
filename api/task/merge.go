@@ -16,34 +16,34 @@ import (
 )
 
 // Merge will merge data resources into a single data resource.
-func Merge(schemaFile string, index string, dataset string, config *IngestTaskConfig) error {
+func Merge(schemaFile string, index string, dataset string, config *IngestTaskConfig) (string, error) {
 	outputPath, err := initializeDatasetCopy(schemaFile, config.MergedOutputSchemaPathRelative, config.MergedOutputPathRelative, config)
 	if err != nil {
-		return errors.Wrap(err, "unable to copy source data folder")
+		return "", errors.Wrap(err, "unable to copy source data folder")
 	}
 
 	// create & submit the solution request
 	pip, err := description.CreateDenormalizePipeline("3NF", "")
 	if err != nil {
-		return errors.Wrap(err, "unable to create denormalize pipeline")
+		return "", errors.Wrap(err, "unable to create denormalize pipeline")
 	}
 
 	// pipeline execution assumes datasetDoc.json as schema file
 	datasetURI, err := submitPipeline([]string{outputPath.sourceFolder}, pip)
 	if err != nil {
-		return errors.Wrap(err, "unable to run denormalize pipeline")
+		return "", errors.Wrap(err, "unable to run denormalize pipeline")
 	}
 
 	// parse primitive response (raw data from the input dataset)
 	rawResults, err := result.ParseResultCSV(datasetURI)
 	if err != nil {
-		return errors.Wrap(err, "unable to parse denormalize result")
+		return "", errors.Wrap(err, "unable to parse denormalize result")
 	}
 
 	// need to manually build the metadata and output it.
 	meta, err := metadata.LoadMetadataFromOriginalSchema(schemaFile)
 	if err != nil {
-		return errors.Wrap(err, "unable to load original metadata")
+		return "", errors.Wrap(err, "unable to load original metadata")
 	}
 	mainDR := meta.GetMainDataResource()
 	vars := mapFields(meta)
@@ -60,7 +60,7 @@ func Merge(schemaFile string, index string, dataset string, config *IngestTaskCo
 		if i > 0 {
 			fieldName, ok := field.(string)
 			if !ok {
-				return errors.Errorf("unable to cast field name")
+				return "", errors.Errorf("unable to cast field name")
 			}
 
 			v := vars[fieldName]
@@ -76,7 +76,7 @@ func Merge(schemaFile string, index string, dataset string, config *IngestTaskCo
 	// returned header doesnt match expected header so use metadata header
 	headerMetadata, err := outputMeta.GenerateHeaders()
 	if err != nil {
-		return errors.Wrapf(err, "unable to generate header")
+		return "", errors.Wrapf(err, "unable to generate header")
 	}
 	writer.Write(headerMetadata[0])
 
@@ -94,7 +94,7 @@ func Merge(schemaFile string, index string, dataset string, config *IngestTaskCo
 	writer.Flush()
 	err = util.WriteFileWithDirs(outputPath.outputData, output.Bytes(), os.ModePerm)
 	if err != nil {
-		return errors.Wrap(err, "error writing merged output")
+		return "", errors.Wrap(err, "error writing merged output")
 	}
 
 	relativePath := getRelativePath(path.Dir(outputPath.outputSchema), outputPath.outputData)
@@ -103,8 +103,8 @@ func Merge(schemaFile string, index string, dataset string, config *IngestTaskCo
 	// write the new schema to file
 	err = metadata.WriteSchema(outputMeta, outputPath.outputSchema)
 	if err != nil {
-		return errors.Wrap(err, "unable to store merged schema")
+		return "", errors.Wrap(err, "unable to store merged schema")
 	}
 
-	return nil
+	return path.Dir(outputPath.outputSchema), nil
 }

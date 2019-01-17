@@ -48,7 +48,7 @@ func addD3MIndex(schemaFile string, meta *model.Metadata, config *IngestTaskConf
 	// add the d3m index variable to the metadata
 	dr := meta.DataResources[0]
 	name := model.D3MIndexFieldName
-	v := model.NewVariable(len(dr.Variables), name, name, name, model.IndexType, model.IndexType, []string{"index"}, model.VarRoleIndex, nil, dr.Variables, false)
+	v := model.NewVariable(len(dr.Variables), name, name, name, model.IntegerType, model.IntegerType, []string{"index"}, model.VarRoleIndex, nil, dr.Variables, false)
 	dr.Variables = append(dr.Variables, v)
 
 	// read the raw data
@@ -99,7 +99,7 @@ func addD3MIndex(schemaFile string, meta *model.Metadata, config *IngestTaskConf
 		return "", errors.Wrap(err, "unable to store feature schema")
 	}
 
-	return path.Dir(config.GetTmpAbsolutePath(config.FormatOutputSchemaRelative)), nil
+	return path.Dir(outputPath.outputSchema), nil
 }
 
 func checkD3MIndexExists(meta *model.Metadata) bool {
