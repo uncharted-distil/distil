@@ -19,6 +19,7 @@ func NewMetadataStorage(outputPath string, config *task.IngestTaskConfig, client
 		return &Storage{
 			client:     clientCtor(),
 			outputPath: outputPath,
+			config:     config,
 		}, nil
 	}
 }

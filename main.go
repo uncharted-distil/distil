@@ -180,6 +180,8 @@ func main() {
 		ClusteringEnabled:                  config.ClusteringEnabled,
 		FeaturizationOutputDataRelative:    config.FeaturizationOutputDataRelative,
 		FeaturizationOutputSchemaRelative:  config.FeaturizationOutputSchemaRelative,
+		FormatOutputDataRelative:           config.FormatOutputDataRelative,
+		FormatOutputSchemaRelative:         config.FormatOutputSchemaRelative,
 		GeocodingOutputDataRelative:        config.GeocodingOutputDataRelative,
 		GeocodingOutputSchemaRelative:      config.GeocodingOutputSchemaRelative,
 		MergedOutputPathRelative:           config.MergedOutputDataPath,

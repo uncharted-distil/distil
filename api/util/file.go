@@ -8,6 +8,7 @@ import (
 	"path"
 	"path/filepath"
 
+	"github.com/otiai10/copy"
 	"github.com/pkg/errors"
 )
 
@@ -111,6 +112,17 @@ func Unzip(zipFile string, destination string) error {
 		if err != nil {
 			return errors.Wrap(err, "unable to extract files")
 		}
+	}
+
+	return nil
+}
+
+// Copy copies a source folder to a destination folder.
+func Copy(sourceFolder string, destinationFolder string) error {
+	// copy the source folder to have all the linked files for merging
+	err := copy.Copy(sourceFolder, destinationFolder)
+	if err != nil {
+		return errors.Wrap(err, "unable to copy source data")
 	}
 
 	return nil

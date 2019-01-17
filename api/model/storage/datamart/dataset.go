@@ -75,6 +75,7 @@ type SearchResultColumn struct {
 // ImportDataset makes the dataset available for ingest and returns
 // the URI to use for ingest.
 func (s *Storage) ImportDataset(id string, uri string) (string, error) {
+	tmpOutputPath := s.config.GetTmpAbsolutePath("")
 	//TODO: MAKE THIS WORK ON APIs OTHER THAN NYU!
 	name := path.Base(uri)
 	// get the compressed dataset
@@ -88,14 +89,14 @@ func (s *Storage) ImportDataset(id string, uri string) (string, error) {
 	}
 
 	// write the compressed dataset to disk
-	zipFilename := path.Join(s.outputPath, fmt.Sprintf("%s.zip", name))
+	zipFilename := path.Join(tmpOutputPath, fmt.Sprintf("%s.zip", name))
 	err = util.WriteFileWithDirs(zipFilename, data, os.ModePerm)
 	if err != nil {
 		return "", errors.Wrap(err, "unable to store dataset from datamart")
 	}
 
 	// expand the archive into a dataset folder
-	extractedArchivePath := path.Join(s.outputPath, name)
+	extractedArchivePath := path.Join(tmpOutputPath, name)
 	err = util.Unzip(zipFilename, extractedArchivePath)
 	if err != nil {
 		return "", errors.Wrap(err, "unable to extract datamart archive")
@@ -107,6 +108,9 @@ func (s *Storage) ImportDataset(id string, uri string) (string, error) {
 	if err != nil {
 		return "", errors.Wrap(err, "unable to format datamart dataset")
 	}
+
+	// copy the formatted output to the datamart output path
+	util.Copy(formattedPath, s.outputPath)
 
 	// return the location of the expanded dataset folder
 	return formattedPath, nil

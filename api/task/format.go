@@ -85,7 +85,7 @@ func addD3MIndex(schemaFile string, meta *model.Metadata, config *IngestTaskConf
 
 	// output the data with the new feature
 	writer.Flush()
-	err = util.WriteFileWithDirs(config.GetTmpAbsolutePath(config.FormatOutputDataRelative), output.Bytes(), os.ModePerm)
+	err = util.WriteFileWithDirs(outputPath.outputData, output.Bytes(), os.ModePerm)
 	if err != nil {
 		return "", errors.Wrap(err, "error writing feature output")
 	}
@@ -94,7 +94,7 @@ func addD3MIndex(schemaFile string, meta *model.Metadata, config *IngestTaskConf
 	dr.ResPath = relativePath
 
 	// write the new schema to file
-	err = metadata.WriteSchema(meta, config.GetTmpAbsolutePath(config.FormatOutputSchemaRelative))
+	err = metadata.WriteSchema(meta, outputPath.outputSchema)
 	if err != nil {
 		return "", errors.Wrap(err, "unable to store feature schema")
 	}
