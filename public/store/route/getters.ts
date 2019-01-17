@@ -48,7 +48,7 @@ export const getters = {
 		return state.query.joinDatasets as string;
 	},
 
-	getJoinVariableSummaries(state: Route, getters: any): VariableSummary[] {
+	getJoinDatasetsVariables(state: Route, getters: any): Variable[] {
 		const datasetNames = getters.getRouteJoinDatasets;
 		if (datasetNames.length !== 2) {
 			return [];
@@ -63,9 +63,35 @@ export const getters = {
 		if (datasetB) {
 			variables = variables.concat(datasetB.variables);
 		}
+		return variables;
+	},
+
+	getJoinDatasetsVariableSummaries(state: Route, getters: any): VariableSummary[] {
+		const variables = getters.getJoinDatasetsVariables;
 		const lookup = buildLookup(variables.map(v => v.colName));
 		const summaries = getters.getVariableSummaries;
 		return summaries.filter(summary => lookup[summary.key.toLowerCase()]);
+	},
+
+	getDecodedJoinDatasetsFilterParams(state: Route, getters: any): Dictionary<FilterParams> {
+		const datasetNames = getters.getRouteJoinDatasets;
+		if (datasetNames.length !== 2) {
+			return {};
+		}
+		const datasets = getters.getDatasets;
+		const res = {};
+		datasetNames.forEach(datasetName => {
+			const dataset = datasets[datasetName];
+			if (dataset) {
+				const filters = getters.getDecodedFilters;
+				const filterParams = _.cloneDeep({
+					filters: filters,
+					variables: dataset.variables.map(v => v.colName)
+				});
+				res[datasetName] = filterParams;
+			}
+		});
+		return res;
 	},
 
 	getRouteTrainingVariables(state: Route): string {

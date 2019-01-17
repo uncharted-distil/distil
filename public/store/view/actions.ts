@@ -28,7 +28,7 @@ export const actions = {
 		Promise.all([
 				context.dispatch('fetchDataset', datasetNames[0]),
 				context.dispatch('fetchDataset', datasetNames[1]),
-				context.dispatch('fetchJoinVariables', {
+				context.dispatch('fetchJoinDatasetsVariables', {
 					datasets: datasetNames
 				})
 			])
@@ -46,39 +46,37 @@ export const actions = {
 						dataset: datasetB.name,
 						variables: datasetB.variables
 					})
-				]);
+				]).then(() => {
+					return context.dispatch('updateJoinDatasetsData');
+				});
 			});
 	},
 
 	updateJoinDatasetsData(context: ViewContext) {
-		// // clear any previous state
-		// context.commit('clearHighlightSummaries');
-		// context.commit('setIncludedTableData', null);
-		// context.commit('setExcludedTableData', null);
-		//
-		// const dataset = context.getters.getRouteDataset;
-		// const highlightRoot = context.getters.getDecodedHighlightRoot;
-		// const filterParams = context.getters.getDecodedFilterParams;
+		// clear any previous state
+		context.commit('clearHighlightSummaries');
+		context.commit('clearJoinDatasetsTableData');
+
+		const datasetNames = context.getters.getRouteJoinDatasets;
+		const dataset = context.getters.getRouteDataset;
+		const highlightRoot = context.getters.getDecodedHighlightRoot;
+		const filterParams = context.getters.getDecodedJoinDatasetsFilterParams;
 		// const paginatedVariables = context.getters.getSelectTrainingPaginatedVariables;
-		//
-		// return Promise.all([
-		// 	context.dispatch('fetchDataHighlightValues', {
-		// 		dataset: dataset,
-		// 		variables: paginatedVariables,
-		// 		highlightRoot: highlightRoot,
-		// 		filterParams: filterParams
-		// 	}),
-		// 	context.dispatch('fetchIncludedTableData', {
-		// 		dataset: dataset,
-		// 		filterParams: filterParams,
-		// 		highlightRoot: highlightRoot
-		// 	}),
-		// 	context.dispatch('fetchExcludedTableData', {
-		// 		dataset: dataset,
-		// 		filterParams: filterParams,
-		// 		highlightRoot: highlightRoot
-		// 	})
-		// ]);
+
+		return Promise.all([
+			// context.dispatch('fetchDataHighlightValues', {
+			// 	dataset: dataset,
+			// 	variables: paginatedVariables,
+			// 	highlightRoot: highlightRoot,
+			// 	filterParams: filterParams
+			// }),
+
+			context.dispatch('fetchJoinDatasetsTableData', {
+				datasets: datasetNames,
+				filterParams: filterParams,
+				highlightRoot: highlightRoot
+			}),
+		]);
 	},
 
 	fetchSelectTargetData(context: ViewContext) {

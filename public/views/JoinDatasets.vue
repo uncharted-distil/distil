@@ -1,5 +1,5 @@
 <template>
-	<div class="container-fluid d-flex flex-column h-100 select-view">
+	<div class="container-fluid d-flex flex-column h-100 join-view">
 		<div class="row flex-0-nav"></div>
 
 		<div class="row flex-1 align-items-center justify-content-center bg-white">
@@ -25,10 +25,20 @@
 				<div class="row flex-12">
 					<div class="col-12 d-flex flex-column">
 						<div class="row responsive-flex pb-3">
-							<select-data-slot class="col-12 d-flex flex-column pt-2"></select-data-slot>
+							<join-data-slot class="col-12 d-flex flex-column pt-2"
+								:items="topDatasetItems"
+								:fields="topDatasetFields"
+								:numRows="topDatasetNumRows"
+								:hasData="topDatasetHasData"
+								instance-name="join-dataset-top"></join-data-slot>
 						</div>
 						<div class="row responsive-flex pb-3">
-							<select-data-slot class="col-12 d-flex flex-column pt-2"></select-data-slot>
+							<join-data-slot class="col-12 d-flex flex-column pt-2"
+								:items="bottomDatasetItems"
+								:fields="bottomDatasetFields"
+								:numRows="bottomDatasetNumRows"
+								:hasData="bottomDatasetHasData"
+								instance-name="join-dataset-bottom"></join-data-slot>
 						</div>
 						<div class="row align-items-center">
 							<div class="col-12 d-flex flex-column">
@@ -47,22 +57,25 @@
 
 import Vue from 'vue';
 import JoinDatasetsForm from '../components/JoinDatasetsForm.vue';
-import SelectDataSlot from '../components/SelectDataSlot.vue';
+import JoinDataSlot from '../components/JoinDataSlot.vue';
 import VariableFacets from '../components/VariableFacets.vue';
 import TypeChangeMenu from '../components/TypeChangeMenu.vue';
-import { filterSummariesByDataset, NUM_PER_PAGE } from '../util/data';
-import { VariableSummary } from '../store/dataset/index';
+import { Dictionary } from '../util/dict';
+import { VariableSummary, TableData, TableColumn, TableRow } from '../store/dataset/index';
+import { filterSummariesByDataset, NUM_PER_PAGE,
+	getTableDataItems, getTableDataFields } from '../util/data';
 import { createGroups, Group } from '../util/facets';
 import { JOINED_VARS_INSTANCE } from '../store/route/index';
 import { actions as viewActions } from '../store/view/module';
 import { getters as routeGetters } from '../store/route/module';
+import { getters as datasetGetters } from '../store/dataset/module';
 
 export default Vue.extend({
 	name: 'join-datasets',
 
 	components: {
 		JoinDatasetsForm,
-		SelectDataSlot,
+		JoinDataSlot,
 		VariableFacets
 	},
 
@@ -71,7 +84,7 @@ export default Vue.extend({
 			return routeGetters.getRouteJoinDatasets(this.$store);
 		},
 		getVariableSummaries(): VariableSummary[] {
-			return routeGetters.getJoinVariableSummaries(this.$store);
+			return routeGetters.getJoinDatasetsVariableSummaries(this.$store);
 		},
 		groups(): Group[] {
 			return createGroups(this.getVariableSummaries);
@@ -90,6 +103,45 @@ export default Vue.extend({
 		},
 		joinedVarsPage(): number {
 			return routeGetters.getRouteJoinedVarsParge(this.$store);
+		},
+		joinDatasetsTableData(): Dictionary<TableData> {
+			return datasetGetters.getJoinDatasetsTableData(this.$store);
+		},
+		topDataset(): string {
+			return this.joinDatasets.length >= 1 ? this.joinDatasets[0] : null;
+		},
+		topDatasetTableData(): TableData {
+			return this.topDataset ? this.joinDatasetsTableData[this.topDataset] : null;
+		},
+		topDatasetItems(): TableRow[] {
+			return getTableDataItems(this.topDatasetTableData);
+		},
+		topDatasetFields(): Dictionary<TableColumn> {
+			return getTableDataFields(this.topDatasetTableData);
+		},
+		topDatasetNumRows(): number {
+			return this.topDatasetTableData ? this.topDatasetTableData.numRows : 0;
+		},
+		topDatasetHasData(): boolean {
+			return !!this.topDatasetTableData;
+		},
+		bottomDataset(): string {
+			return this.joinDatasets.length >= 2 ? this.joinDatasets[1] : null;
+		},
+		bottomDatasetTableData(): TableData {
+			return this.bottomDataset ? this.joinDatasetsTableData[this.bottomDataset] : null;
+		},
+		bottomDatasetItems(): TableRow[] {
+			return getTableDataItems(this.bottomDatasetTableData);
+		},
+		bottomDatasetFields(): Dictionary<TableColumn> {
+			return getTableDataFields(this.bottomDatasetTableData);
+		},
+		bottomDatasetNumRows(): number {
+			return this.bottomDatasetTableData ? this.bottomDatasetTableData.numRows : 0;
+		},
+		bottomDatasetHasData(): boolean {
+			return !!this.bottomDatasetTableData;
 		}
 	},
 
@@ -115,7 +167,7 @@ export default Vue.extend({
 </script>
 
 <style>
-.select-view .nav-link {
+.join-view .nav-link {
 	padding: 1rem 0 0.25rem 0;
 	border-bottom: 1px solid #E0E0E0;
 	color: rgba(0,0,0,.87);
@@ -124,11 +176,11 @@ export default Vue.extend({
 	padding: 1rem 0 0.5rem 0;
 	font-weight: bold;
 }
-.select-view .responsive-flex {
+.join-view .responsive-flex {
 	flex:4;
 }
 @media (min-width: 1200px) {
-	.select-view .responsive-flex {
+	.join-view .responsive-flex {
 		flex:6;
 	}
 }

@@ -27,6 +27,8 @@ export const getters = {
 	// files
 	getFiles: read(moduleGetters.getFiles),
 	getTimeseriesExtrema: read(moduleGetters.getTimeseriesExtrema),
+	// join data
+	getJoinDatasetsTableData: read(moduleGetters.getJoinDatasetsTableData),
 	// included data
 	hasIncludedTableData: read(moduleGetters.hasIncludedTableData),
 	getIncludedTableData: read(moduleGetters.getIncludedTableData),
@@ -50,7 +52,7 @@ export const actions = {
 	importDataset: dispatch(moduleActions.importDataset),
 	// variables
 	fetchVariables: dispatch(moduleActions.fetchVariables),
-	fetchJoinVariables: dispatch(moduleActions.fetchJoinVariables),
+	fetchJoinDatasetsVariables: dispatch(moduleActions.fetchJoinDatasetsVariables),
 	setVariableType: dispatch(moduleActions.setVariableType),
 	fetchVariableSummary: dispatch(moduleActions.fetchVariableSummary),
 	fetchVariableSummaries: dispatch(moduleActions.fetchVariableSummaries),
@@ -62,6 +64,8 @@ export const actions = {
 	fetchTimeseries: dispatch(moduleActions.fetchTimeseries),
 	fetchGraph: dispatch(moduleActions.fetchGraph),
 	fetchFile: dispatch(moduleActions.fetchFile),
+	// join data
+	fetchJoinDatasetsTableData: dispatch(moduleActions.fetchJoinDatasetsTableData),
 	// included / excluded table data
 	fetchIncludedTableData: dispatch(moduleActions.fetchIncludedTableData),
 	fetchExcludedTableData: dispatch(moduleActions.fetchExcludedTableData),
@@ -82,6 +86,8 @@ export const mutations = {
 	updateFile: commit(moduleMutations.updateFile),
 	updateTimeseriesFile: commit(moduleMutations.updateTimeseriesFile),
 	// included / excluded table data
+	setJoinDatasetsTableData: commit(moduleMutations.setJoinDatasetsTableData),
+	clearJoinDatasetsTableData: commit(moduleMutations.clearJoinDatasetsTableData),
 	setIncludedTableData: commit(moduleMutations.setIncludedTableData),
 	setExcludedTableData: commit(moduleMutations.setExcludedTableData),
 

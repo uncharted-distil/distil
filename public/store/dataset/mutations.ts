@@ -78,6 +78,14 @@ export const mutations = {
 		Vue.set(y, 'max', Math.max(y.max, maxY));
 	},
 
+	setJoinDatasetsTableData(state: DatasetState, args: { dataset: string, data: TableData }) {
+		Vue.set(state.joinTableData, args.dataset, args.data);
+	},
+
+	clearJoinDatasetsTableData(state: DatasetState) {
+		state.joinTableData = {};
+	},
+
 	// sets the current selected data into the store
 	setIncludedTableData(state: DatasetState, includedTableData: TableData) {
 		state.includedTableData = includedTableData;

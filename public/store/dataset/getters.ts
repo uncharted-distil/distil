@@ -42,6 +42,10 @@ export const getters = {
 		return state.timeseriesExtrema;
 	},
 
+	getJoinDatasetsTableData(state: DatasetState): Dictionary<TableData> {
+		return state.joinTableData;
+	},
+
 	hasIncludedTableData(state: DatasetState): boolean {
 		return !!state.includedTableData;
 	},

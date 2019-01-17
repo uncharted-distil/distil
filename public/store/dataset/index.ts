@@ -93,6 +93,7 @@ export interface DatasetState {
 	variableSummaries: VariableSummary[];
 	files: Dictionary<any>;
 	timeseriesExtrema: Dictionary<TimeseriesExtrema>;
+	joinTableData: Dictionary<TableData>;
 	includedTableData: TableData;
 	excludedTableData: TableData;
 }
@@ -111,6 +112,9 @@ export const state: DatasetState = {
 	files: {},
 
 	timeseriesExtrema: {},
+
+	// joined data table data
+	joinTableData: {},
 
 	// selected data entries for the active dataset
 	includedTableData: null,

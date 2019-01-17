@@ -1,5 +1,6 @@
 import _ from 'lodash';
 import axios from 'axios';
+import { Dictionary } from '../../util/dict';
 import { ActionContext } from 'vuex';
 import { DatasetState, Variable } from './index';
 import { mutations } from './module';
@@ -57,7 +58,7 @@ export const actions = {
 	},
 
 	// fetches all variables for a two datasets.
-	fetchJoinVariables(context: DatasetContext, args: { datasets: string[] }): Promise<void>  {
+	fetchJoinDatasetsVariables(context: DatasetContext, args: { datasets: string[] }): Promise<void>  {
 		if (!args.datasets) {
 			console.warn('`datasets` argument is missing');
 			return null;
@@ -366,6 +367,38 @@ export const actions = {
 			.catch(error => {
 				console.error(error);
 			});
+	},
+
+	// update filtered data based on the current filter state
+	fetchJoinDatasetsTableData(context: DatasetContext, args: { datasets: string[], filterParams: Dictionary<FilterParams>, highlightRoot: HighlightRoot }) {
+		if (!args.datasets) {
+			console.warn('`datasets` argument is missing');
+			return null;
+		}
+		if (!args.filterParams) {
+			console.warn('`filterParams` argument is missing');
+			return null;
+		}
+		return Promise.all(args.datasets.map(dataset => {
+			const filterParams = addHighlightToFilterParams(args.filterParams[dataset], args.highlightRoot, INCLUDE_FILTER);
+
+			console.log(args.filterParams, filterParams);
+
+			return axios.post(`distil/data/${dataset}/false`, filterParams)
+				.then(response => {
+					mutations.setJoinDatasetsTableData(context, {
+						dataset: dataset,
+						data: response.data
+					});
+				})
+				.catch(error => {
+					console.error(error);
+					mutations.setJoinDatasetsTableData(context, {
+						dataset: dataset,
+						data: createEmptyTableData()
+					});
+				});
+		}));
 	},
 
 	// update filtered data based on the current filter state

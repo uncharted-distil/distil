@@ -27,17 +27,16 @@ import _ from 'lodash';
 import Vue from 'vue';
 import SparklinePreview from './SparklinePreview';
 import ImagePreview from './ImagePreview';
-import { getters as datasetGetters } from '../store/dataset/module';
 import { Dictionary } from '../util/dict';
 import { Filter } from '../util/filters';
 import { TableColumn, TableRow, D3M_INDEX_FIELD } from '../store/dataset/index';
 import { RowSelection } from '../store/highlights/index';
 import { getters as routeGetters } from '../store/route/module';
 import { IMAGE_TYPE, TIMESERIES_TYPE } from '../util/types';
-import { addRowSelection, removeRowSelection, isRowSelected, updateTableRowSelection } from '../util/row';
+import { addRowSelection, removeRowSelection, isRowSelected } from '../util/row';
 
 export default Vue.extend({
-	name: 'selected-data-table',
+	name: 'join-data-table',
 
 	components: {
 		ImagePreview,
@@ -45,23 +44,12 @@ export default Vue.extend({
 	},
 
 	props: {
-		instanceName: String as () => string,
-		includedActive: Boolean as () => boolean
+		items: Array as () => TableRow[],
+		fields: Object as () => Dictionary<TableColumn>,
+		instanceName: String as () => string
 	},
 
 	computed: {
-		dataset(): string {
-			return routeGetters.getRouteDataset(this.$store);
-		},
-
-		items(): TableRow[] {
-			const items = this.includedActive ? datasetGetters.getIncludedTableDataItems(this.$store) : datasetGetters.getExcludedTableDataItems(this.$store);
-			return updateTableRowSelection(items, this.rowSelection, this.instanceName);
-		},
-
-		fields(): Dictionary<TableColumn> {
-			return this.includedActive ? datasetGetters.getIncludedTableDataFields(this.$store) : datasetGetters.getExcludedTableDataFields(this.$store);
-		},
 
 		imageFields(): string[] {
 			return _.map(this.fields, (field, key) => {
@@ -86,10 +74,7 @@ export default Vue.extend({
 		},
 
 		filters(): Filter[] {
-			if (this.includedActive) {
-				return this.invertFilters(routeGetters.getDecodedFilters(this.$store));
-			}
-			return routeGetters.getDecodedFilters(this.$store);
+			return this.invertFilters(routeGetters.getDecodedFilters(this.$store));
 		},
 
 		rowSelection(): RowSelection {

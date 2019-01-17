@@ -18,7 +18,7 @@ export const getters = {
 	getRouteJoinDatasets: read(moduleGetters.getRouteJoinDatasets),
 	getRouteJoinDatasetsHash: read(moduleGetters.getRouteJoinDatasetsHash),
 	getRouteJoinedVarsParge: read(moduleGetters.getRouteJoinedVarsParge),
-	getJoinVariableSummaries: read(moduleGetters.getJoinVariableSummaries),
+	getJoinDatasetsVariableSummaries: read(moduleGetters.getJoinDatasetsVariableSummaries),
 	getRouteTrainingVariables: read(moduleGetters.getRouteTrainingVariables),
 	getRouteAvailableTrainingVarsPage: read(moduleGetters.getRouteAvailableTrainingVarsPage),
 	getRouteAvailableTargetVarsPage: read(moduleGetters.getRouteAvailableTargetVarsPage),
