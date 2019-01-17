@@ -56,6 +56,26 @@ export const actions = {
 			});
 	},
 
+	// fetches all variables for a two datasets.
+	fetchJoinVariables(context: DatasetContext, args: { datasets: string[] }): Promise<void>  {
+		if (!args.datasets) {
+			console.warn('`datasets` argument is missing');
+			return null;
+		}
+		return Promise.all([
+			axios.get(`/distil/variables/${args.datasets[0]}`),
+			axios.get(`/distil/variables/${args.datasets[1]}`)
+		]).then(res => {
+			const varsA = res[0].data.variables;
+			const varsB = res[1].data.variables;
+			mutations.setVariables(context, varsA.concat(varsB));
+		})
+		.catch(error => {
+			console.error(error);
+			mutations.setVariables(context, []);
+		});
+	},
+
 	geocodeVariable(context: DatasetContext, args: { dataset: string, field: string }): Promise<any>  {
 		if (!args.dataset) {
 			console.warn('`dataset` argument is missing');

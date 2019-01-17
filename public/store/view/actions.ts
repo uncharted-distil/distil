@@ -1,3 +1,4 @@
+import _ from 'lodash';
 import { ViewState } from './index';
 import { ActionContext } from 'vuex';
 import { DistilState } from '../store';
@@ -17,6 +18,67 @@ export const actions = {
 	fetchSearchData(context: ViewContext) {
 		const terms = context.getters.getRouteTerms;
 		return context.dispatch('datasetActions', terms);
+	},
+
+	fetchJoinDatasetsData(context: ViewContext) {
+		// clear previous state
+		context.commit('clearHighlightSummaries');
+
+		const datasetNames = context.getters.getRouteJoinDatasets;
+		Promise.all([
+				context.dispatch('fetchDataset', datasetNames[0]),
+				context.dispatch('fetchDataset', datasetNames[1]),
+				context.dispatch('fetchJoinVariables', {
+					datasets: datasetNames
+				})
+			])
+			.then(() => {
+				// fetch new state
+				const datasets = context.getters.getDatasets;
+				const datasetA = datasets[datasetNames[0]];
+				const datasetB = datasets[datasetNames[1]];
+				return Promise.all([
+					context.dispatch('fetchVariableSummaries', {
+						dataset: datasetA.name,
+						variables: datasetA.variables
+					}),
+					context.dispatch('fetchVariableSummaries', {
+						dataset: datasetB.name,
+						variables: datasetB.variables
+					})
+				]);
+			});
+	},
+
+	updateJoinDatasetsData(context: ViewContext) {
+		// // clear any previous state
+		// context.commit('clearHighlightSummaries');
+		// context.commit('setIncludedTableData', null);
+		// context.commit('setExcludedTableData', null);
+		//
+		// const dataset = context.getters.getRouteDataset;
+		// const highlightRoot = context.getters.getDecodedHighlightRoot;
+		// const filterParams = context.getters.getDecodedFilterParams;
+		// const paginatedVariables = context.getters.getSelectTrainingPaginatedVariables;
+		//
+		// return Promise.all([
+		// 	context.dispatch('fetchDataHighlightValues', {
+		// 		dataset: dataset,
+		// 		variables: paginatedVariables,
+		// 		highlightRoot: highlightRoot,
+		// 		filterParams: filterParams
+		// 	}),
+		// 	context.dispatch('fetchIncludedTableData', {
+		// 		dataset: dataset,
+		// 		filterParams: filterParams,
+		// 		highlightRoot: highlightRoot
+		// 	}),
+		// 	context.dispatch('fetchExcludedTableData', {
+		// 		dataset: dataset,
+		// 		filterParams: filterParams,
+		// 		highlightRoot: highlightRoot
+		// 	})
+		// ]);
 	},
 
 	fetchSelectTargetData(context: ViewContext) {

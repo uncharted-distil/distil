@@ -17,6 +17,11 @@
 					<i class="fa fa-file-text-o nav-icon"></i>
 					<b-nav-text>Select Data</b-nav-text>
 				</b-nav-item>
+				<b-nav-item @click="onJoinDatasets" v-if="isJoinDatasets" :active="isActive(JOIN_DATASETS_ROUTE)" v-bind:class="{ active: isActive(JOIN_DATASETS_ROUTE) }">
+					<i class="fa fa-angle-right nav-arrow"></i>
+					<i class="fa fa-database nav-icon"></i>
+					<b-nav-text>Join Datasets</b-nav-text>
+				</b-nav-item>
 				<b-nav-item @click="onSelectTarget" v-if="!isTask2" :active="isActive(SELECT_TARGET_ROUTE)" :disabled="!hasSelectTargetView()" v-bind:class="{ active: isActive(SELECT_TARGET_ROUTE) }">
 					<i class="fa fa-angle-right nav-arrow"></i>
 					<i class="fa fa-dot-circle-o  nav-icon"></i>
@@ -53,10 +58,12 @@
 
 <script lang="ts">
 import '../assets/images/uncharted.svg';
-import { gotoHome, gotoSearch, gotoSelectTarget, gotoSelectData, gotoResults } from '../util/nav';
+import { gotoHome, gotoSearch, gotoJoinDatasets, gotoSelectTarget,
+	gotoSelectData, gotoResults } from '../util/nav';
 import { actions as appActions,  getters as appGetters } from '../store/app/module';
 import { getters as routeGetters } from '../store/route/module';
-import { HOME_ROUTE, SEARCH_ROUTE, SELECT_TARGET_ROUTE, SELECT_TRAINING_ROUTE, RESULTS_ROUTE, ABORT_SUCCESS_ROUTE } from '../store/route/index';
+import { HOME_ROUTE, SEARCH_ROUTE, JOIN_DATASETS_ROUTE, SELECT_TARGET_ROUTE,
+	SELECT_TRAINING_ROUTE, RESULTS_ROUTE, ABORT_SUCCESS_ROUTE } from '../store/route/index';
 import { restoreView } from '../util/view';
 import Vue from 'vue';
 
@@ -67,6 +74,7 @@ export default Vue.extend({
 		return {
 			HOME_ROUTE: HOME_ROUTE,
 			SEARCH_ROUTE: SEARCH_ROUTE,
+			JOIN_DATASETS_ROUTE: JOIN_DATASETS_ROUTE,
 			SELECT_TARGET_ROUTE: SELECT_TARGET_ROUTE,
 			SELECT_TRAINING_ROUTE: SELECT_TRAINING_ROUTE,
 			RESULTS_ROUTE: RESULTS_ROUTE
@@ -80,6 +88,12 @@ export default Vue.extend({
 		dataset(): string {
 			return routeGetters.getRouteDataset(this.$store);
 		},
+		joinDatasets(): string[] {
+			return routeGetters.getRouteJoinDatasets(this.$store);
+		},
+		joinDatasetsHash(): string {
+			return routeGetters.getRouteJoinDatasetsHash(this.$store);
+		},
 		isAborted(): boolean {
 			return appGetters.isAborted(this.$store);
 		},
@@ -88,6 +102,9 @@ export default Vue.extend({
 		},
 		isTask2(): boolean {
 			return appGetters.isTask2(this.$store);
+		},
+		isJoinDatasets(): boolean {
+			return this.joinDatasets.length === 2 || this.hasJoinDatasetView();
 		}
 	},
 
@@ -101,6 +118,9 @@ export default Vue.extend({
 		onSearch() {
 			gotoSearch(this.$router);
 		},
+		onJoinDatasets() {
+			gotoJoinDatasets(this.$router);
+		},
 		onSelectTarget() {
 			gotoSelectTarget(this.$router);
 		},
@@ -113,6 +133,9 @@ export default Vue.extend({
 		onAbort() {
 			this.$router.replace(ABORT_SUCCESS_ROUTE);
 			appActions.abort(this.$store);
+		},
+		hasJoinDatasetView(): boolean {
+			return !!restoreView(this.$store, SELECT_TARGET_ROUTE, this.joinDatasetsHash);
 		},
 		hasSelectTargetView(): boolean {
 			return !!restoreView(this.$store, SELECT_TARGET_ROUTE, this.dataset);

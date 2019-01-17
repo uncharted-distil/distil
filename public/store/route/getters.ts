@@ -1,6 +1,8 @@
 import { Variable, VariableSummary } from '../dataset/index';
 import { HighlightRoot, RowSelection } from '../highlights/index';
-import { AVAILABLE_TRAINING_VARS_INSTANCE, AVAILABLE_TARGET_VARS_INSTSANCE, TRAINING_VARS_INSTANCE, RESULT_TRAINING_VARS_INSTANCE, ROUTE_PAGE_SUFFIX } from '../route/index';
+import { JOINED_VARS_INSTANCE, AVAILABLE_TRAINING_VARS_INSTANCE,
+	AVAILABLE_TARGET_VARS_INSTSANCE, TRAINING_VARS_INSTANCE,
+	RESULT_TRAINING_VARS_INSTANCE, ROUTE_PAGE_SUFFIX } from '../route/index';
 import { decodeFilters, Filter, FilterParams } from '../../util/filters';
 import { decodeHighlights } from '../../util/highlights';
 import { decodeRowSelection } from '../../util/row';
@@ -38,8 +40,41 @@ export const getters = {
 		return state.query.dataset as string;
 	},
 
+	getRouteJoinDatasets(state: Route): string[] {
+		return state.query.joinDatasets ? (state.query.joinDatasets as string).split(',') : [];
+	},
+
+	getRouteJoinDatasetsHash(state: Route): string {
+		return state.query.joinDatasets as string;
+	},
+
+	getJoinVariableSummaries(state: Route, getters: any): VariableSummary[] {
+		const datasetNames = getters.getRouteJoinDatasets;
+		if (datasetNames.length !== 2) {
+			return [];
+		}
+		const datasets = getters.getDatasets;
+		const datasetA = datasets[datasetNames[0]];
+		const datasetB = datasets[datasetNames[1]];
+		let variables = [];
+		if (datasetA) {
+			variables = variables.concat(datasetA.variables);
+		}
+		if (datasetB) {
+			variables = variables.concat(datasetB.variables);
+		}
+		const lookup = buildLookup(variables.map(v => v.colName));
+		const summaries = getters.getVariableSummaries;
+		return summaries.filter(summary => lookup[summary.key.toLowerCase()]);
+	},
+
 	getRouteTrainingVariables(state: Route): string {
 		return state.query.training ? state.query.training as string : null;
+	},
+
+	getRouteJoinedVarsParge(state: Route): number {
+		const pageVar = `${JOINED_VARS_INSTANCE}${ROUTE_PAGE_SUFFIX}`;
+		return state.query[pageVar] ? _.toNumber(state.query[pageVar]) : 1;
 	},
 
 	getRouteAvailableTrainingVarsPage(state: Route): number {

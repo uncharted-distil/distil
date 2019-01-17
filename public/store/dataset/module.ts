@@ -50,6 +50,7 @@ export const actions = {
 	importDataset: dispatch(moduleActions.importDataset),
 	// variables
 	fetchVariables: dispatch(moduleActions.fetchVariables),
+	fetchJoinVariables: dispatch(moduleActions.fetchJoinVariables),
 	setVariableType: dispatch(moduleActions.setVariableType),
 	fetchVariableSummary: dispatch(moduleActions.fetchVariableSummary),
 	fetchVariableSummaries: dispatch(moduleActions.fetchVariableSummaries),
