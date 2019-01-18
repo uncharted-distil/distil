@@ -236,8 +236,7 @@ func Ingest(schemaFile string, storage api.MetadataStorage, index string, datase
 		return errors.Wrap(err, "unable to ingest metadata")
 	}
 
-	dbTable := meta.ID
-	dbTable = fmt.Sprintf("%s%s", config.ESDatasetPrefix, dbTable)
+	dbTable := meta.StorageName
 
 	// Drop the current table if requested.
 	// Hardcoded the base table name for now.
