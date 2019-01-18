@@ -1,7 +1,7 @@
 <template>
 	<div class="join-data-slot">
 
-		<div class="join-search-bar">
+		<!-- <div class="join-search-bar">
 			<div class="fake-search-input">
 				<div class="filter-badges">
 					<filter-badge v-if="activeFilter"
@@ -11,11 +11,7 @@
 					</filter-badge>
 				</div>
 			</div>
-		</div>
-
-		<p class="small-margin">
-			<small class="row-number-label" v-html="tableTitle"></small>
-		</p>
+		</div> -->
 
 		<div class="join-data-container">
 			<div class="join-data-no-results" v-if="!hasData">
