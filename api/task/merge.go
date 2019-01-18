@@ -52,7 +52,7 @@ func Merge(schemaFile string, index string, dataset string, config *IngestTaskCo
 		vars[k] = v
 	}
 
-	outputMeta := model.NewMetadata(meta.ID, meta.Name, meta.Description)
+	outputMeta := model.NewMetadata(meta.ID, meta.Name, meta.Description, meta.StorageName)
 	outputMeta.DataResources = append(outputMeta.DataResources, model.NewDataResource("0", mainDR.ResType, mainDR.ResFormat))
 	header := rawResults[0]
 	for i, field := range header {

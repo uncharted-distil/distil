@@ -34,6 +34,11 @@ func (s *Storage) parseDatasets(res *elastic.SearchResult, includeIndex bool, in
 		}
 		// extract dataset id
 		name := hit.Id
+		// extract the storage name
+		storageName, ok := json.String(src, "storageName")
+		if !ok {
+			storageName = model.NormalizeDatasetID(name)
+		}
 		// extract the description
 		description, ok := json.String(src, "description")
 		if !ok {
@@ -78,6 +83,7 @@ func (s *Storage) parseDatasets(res *elastic.SearchResult, includeIndex bool, in
 		// write everythign out to result struct
 		datasets = append(datasets, &api.Dataset{
 			Name:        name,
+			StorageName: storageName,
 			Description: description,
 			Folder:      folder,
 			Summary:     summary,

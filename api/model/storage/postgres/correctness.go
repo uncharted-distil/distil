@@ -12,9 +12,9 @@ import (
 )
 
 // FetchCorrectnessSummary fetches a histogram of the residuals associated with a set of numerical predictions.
-func (s *Storage) FetchCorrectnessSummary(dataset string, resultURI string, filterParams *api.FilterParams) (*api.Histogram, error) {
-	datasetResult := s.getResultTable(dataset)
-	targetName, err := s.getResultTargetName(datasetResult, resultURI)
+func (s *Storage) FetchCorrectnessSummary(dataset string, storageName string, resultURI string, filterParams *api.FilterParams) (*api.Histogram, error) {
+	storageNameResult := s.getResultTable(storageName)
+	targetName, err := s.getResultTargetName(storageNameResult, resultURI)
 	if err != nil {
 		return nil, err
 	}
@@ -25,7 +25,7 @@ func (s *Storage) FetchCorrectnessSummary(dataset string, resultURI string, filt
 	}
 
 	// get filter where / params
-	wheres, params, err := s.buildResultQueryFilters(dataset, resultURI, filterParams)
+	wheres, params, err := s.buildResultQueryFilters(storageName, resultURI, filterParams)
 	if err != nil {
 		return nil, err
 	}
@@ -39,7 +39,7 @@ func (s *Storage) FetchCorrectnessSummary(dataset string, resultURI string, filt
 		 WHERE %s
 		 GROUP BY result.value, data."%s"
 		 ORDER BY count desc;`,
-		targetName, datasetResult, dataset, model.D3MIndexFieldName, strings.Join(wheres, " AND "), targetName)
+		targetName, storageNameResult, storageName, model.D3MIndexFieldName, strings.Join(wheres, " AND "), targetName)
 
 	// execute the postgres query
 	res, err := s.client.Query(query, params...)
