@@ -74,6 +74,7 @@ export interface TableColumn {
 	key: string;
 	type: string;
 	sortable?: boolean;
+	variant?: string;
 }
 
 export interface TableRow {

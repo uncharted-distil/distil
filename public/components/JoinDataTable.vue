@@ -6,8 +6,8 @@
 		small
 		responsive
 		:items="items"
-		:fields="fields"
-		@row-clicked="onRowClick">
+		:fields="emphasizedFields"
+		@head-clicked="onColumnClicked">
 
 		<template v-for="imageField in imageFields" :slot="imageField" slot-scope="data">
 			<image-preview :key="imageField" :image-url="data.item[imageField]"></image-preview>
@@ -46,10 +46,46 @@ export default Vue.extend({
 	props: {
 		items: Array as () => TableRow[],
 		fields: Object as () => Dictionary<TableColumn>,
+		selectedColumn: Object as () => TableColumn,
+		otherSelectedColumn: Object as () => TableColumn,
 		instanceName: String as () => string
 	},
 
 	computed: {
+
+		emphasizedFields(): Dictionary<TableColumn> {
+			if (!this.selectedColumn && !this.otherSelectedColumn) {
+				return this.fields;
+			}
+			const emphasized = {};
+			_.forIn(this.fields, field => {
+				const emph = {
+					label: field.label,
+					key: field.key,
+					type: field.type,
+					sortable: field.sortable,
+					variant: null
+				};
+				if (this.selectedColumn && field.key === this.selectedColumn.key) {
+					emph.variant = 'primary';
+				} else if (this.otherSelectedColumn && field.type === this.otherSelectedColumn.type) {
+					// show matching column types
+					emph.variant = 'success';
+				} else if (this.otherSelectedColumn && field.type !== this.otherSelectedColumn.type) {
+					// show unmatched column types
+					emph.variant = 'warning';
+				}
+
+				if (this.otherSelectedColumn && this.selectedColumn &&
+					field.key === this.selectedColumn.key &&
+					this.selectedColumn.type !== this.otherSelectedColumn.type) {
+					// flag bad selection
+					emph.variant = 'danger';
+				}
+				emphasized[field.key] = emph;
+			});
+			return emphasized;
+		},
 
 		imageFields(): string[] {
 			return _.map(this.fields, (field, key) => {
@@ -83,16 +119,16 @@ export default Vue.extend({
 	},
 
 	methods: {
-		onRowClick(row: TableRow) {
-			if (!isRowSelected(this.rowSelection, row[D3M_INDEX_FIELD])) {
-				addRowSelection(this.$router, this.instanceName, this.rowSelection, row[D3M_INDEX_FIELD]);
-			} else {
-				removeRowSelection(this.$router, this.instanceName, this.rowSelection, row[D3M_INDEX_FIELD]);
-			}
-		},
 		invertFilters(filters: Filter[]): Filter[] {
 			// TODO: invert filters
 			return filters;
+		},
+		onColumnClicked(key, field) {
+			if (this.selectedColumn && this.selectedColumn.key === key) {
+				this.$emit('col-clicked', null);
+			} else {
+				this.$emit('col-clicked', field);
+			}
 		}
 	}
 });

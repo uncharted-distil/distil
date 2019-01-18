@@ -30,7 +30,10 @@
 								:fields="topDatasetFields"
 								:numRows="topDatasetNumRows"
 								:hasData="topDatasetHasData"
-								instance-name="join-dataset-top"></join-data-slot>
+								:selected-column="topColumn"
+								:other-selected-column="bottomColumn"
+								instance-name="join-dataset-top"
+								@col-clicked="onTopColumnClicked"></join-data-slot>
 						</div>
 						<div class="row responsive-flex pb-3">
 							<join-data-slot class="col-12 d-flex flex-column pt-2"
@@ -38,11 +41,16 @@
 								:fields="bottomDatasetFields"
 								:numRows="bottomDatasetNumRows"
 								:hasData="bottomDatasetHasData"
-								instance-name="join-dataset-bottom"></join-data-slot>
+								:selected-column="bottomColumn"
+								:other-selected-column="topColumn"
+								instance-name="join-dataset-bottom"
+								@col-clicked="onBottomColumnClicked"></join-data-slot>
 						</div>
 						<div class="row align-items-center">
 							<div class="col-12 d-flex flex-column">
-								<join-datasets-form class="select-create-solutions"></join-datasets-form>
+								<join-datasets-form class="select-create-solutions"
+									:dataset-a-column="topColumn"
+									:dataset-b-column="bottomColumn"></join-datasets-form>
 							</div>
 						</div>
 					</div>
@@ -77,6 +85,13 @@ export default Vue.extend({
 		JoinDatasetsForm,
 		JoinDataSlot,
 		VariableFacets
+	},
+
+	data() {
+		return {
+			topColumn: null,
+			bottomColumn: null
+		};
 	},
 
 	computed: {
@@ -161,6 +176,15 @@ export default Vue.extend({
 
 	beforeMount() {
 		viewActions.fetchJoinDatasetsData(this.$store);
+	},
+
+	methods: {
+		onTopColumnClicked(event) {
+			this.topColumn = event;
+		},
+		onBottomColumnClicked(event) {
+			this.bottomColumn = event;
+		}
 	}
 });
 

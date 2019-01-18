@@ -30,8 +30,12 @@
 				<b-btn class="mt-3 close-modal" block @click="showJoinFailure = !showJoinFailure">OK</b-btn>
 			</div>
 		</b-modal>
+		<div v-if="columnTypesDoNotMatch" class="row justify-content-center mt-3 mb-3 warning-text">
+			<i class="fa fa-exclamation-triangle warning-icon mr-2"></i>
+			<span v-html="joinWarning"></span>
+		</div>
 		<div class="row justify-content-center">
-			<b-button class="create-button" :variant="joinVariant" @click="join" :disabled="disableJoin">
+			<b-button class="join-button" :variant="joinVariant" @click="join" :disabled="disableJoin">
 				Join Datasets
 			</b-button>
 		</div>
@@ -50,10 +54,17 @@
 import _ from 'lodash';
 import { createRouteEntry } from '../util/routes';
 import { getters as routeGetters } from '../store/route/module';
+import { TableColumn } from '../store/dataset/index';
 import Vue from 'vue';
 
 export default Vue.extend({
 	name: 'join-datasets-form',
+
+	props: {
+		datasetAColumn: Object as () => TableColumn,
+		datasetBColumn: Object as () => TableColumn
+	},
+
 	data() {
 		return {
 			pending: false,
@@ -63,15 +74,25 @@ export default Vue.extend({
 			createErrorMessage: null
 		};
 	},
+
 	computed: {
 		columnsSelected(): boolean {
-			return false;
+			return !!this.datasetAColumn && !!this.datasetBColumn;
+		},
+		columnTypesDoNotMatch(): boolean {
+			return this.datasetAColumn && this.datasetBColumn &&
+			this.datasetAColumn.type !== this.datasetBColumn.type;
 		},
 		isPending(): boolean {
 			return this.pending;
 		},
+		joinWarning(): string {
+			if (this.columnTypesDoNotMatch) {
+				return `Unable to join column <b>${this.datasetAColumn.key}</b> of type <b>${this.datasetAColumn.type}</b> with <b>${this.datasetAColumn.key}</b> of type <b>${this.datasetAColumn.type}</b>`;
+			}
+		},
 		disableJoin(): boolean {
-			return this.isPending || !this.columnsSelected;
+			return this.isPending || !this.columnsSelected || this.columnTypesDoNotMatch;
 		},
 		joinVariant(): string {
 			return !this.disableJoin ? 'success' : 'outline-secondary';
@@ -80,6 +101,7 @@ export default Vue.extend({
 			return 100;
 		}
 	},
+
 	methods: {
 		join() {
 			// flag as pending
@@ -116,12 +138,7 @@ export default Vue.extend({
 </script>
 
 <style>
-.create-button {
-	margin: 0 8px;
-	width: 35%;
-}
-
-.export-button {
+.join-button {
 	margin: 0 8px;
 	width: 35%;
 }
@@ -148,11 +165,13 @@ export default Vue.extend({
 	padding-right: 15px;
 }
 
-.fail-icon {
-	display: flex;
-	flex-shrink: 0;
-	color:#ee0701;
-	padding-right: 15px;
+.warning-icon {
+	color: #ee0701;
+}
+
+.warning-text {
+	line-height: 16px;
+	font-size: 16px;
 }
 
 .check-button {

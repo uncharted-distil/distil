@@ -27,7 +27,10 @@
 					:fields="fields"
 					:numRows="numRows"
 					:hasData="hasData"
-					:instance-name="instanceName"></join-data-table>
+					:instance-name="instanceName"
+					:selected-column="selectedColumn"
+					:other-selected-column="otherSelectedColumn"
+					@col-clicked="onColumnClicked"></join-data-table>
 			</template>
 		</div>
 
@@ -62,6 +65,8 @@ export default Vue.extend({
 		fields: Object as () => Dictionary<TableColumn>,
 		numRows: Number as () => number,
 		hasData: Boolean as () => boolean,
+		selectedColumn: Object as () => TableColumn,
+		otherSelectedColumn: Object as () => TableColumn,
 		instanceName: String as () => string
 	},
 
@@ -110,6 +115,9 @@ export default Vue.extend({
 		invertFilters(filters: Filter[]): Filter[] {
 			// TODO: invert filters
 			return filters;
+		},
+		onColumnClicked(field) {
+			this.$emit('col-clicked', field);
 		}
 	}
 });

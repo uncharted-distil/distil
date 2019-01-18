@@ -381,9 +381,7 @@ export const actions = {
 		}
 		return Promise.all(args.datasets.map(dataset => {
 			const filterParams = addHighlightToFilterParams(args.filterParams[dataset], args.highlightRoot, INCLUDE_FILTER);
-
-			console.log(args.filterParams, filterParams);
-
+			
 			return axios.post(`distil/data/${dataset}/false`, filterParams)
 				.then(response => {
 					mutations.setJoinDatasetsTableData(context, {
