@@ -149,7 +149,7 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:c1072f27d5b8be1032af14ed7776f475bc58d35723a753c4b92c953d92e3eb33"
+  digest = "1:6d4d9067e639d96a804ee9a30fa89c7233c5c5edbfe736072ff00d48c97bccc4"
   name = "github.com/otiai10/copy"
   packages = ["."]
   pruneopts = "UT"
@@ -216,7 +216,7 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:f6e5c4ac101b0eddbaa9a7a65e55c29ebec36eaff2c42d2c3c6bb1b54b6a2b31"
+  digest = "1:ae0447a7102c72b72617efbc99092d20da23288e5ea0415390749524ac74a733"
   name = "github.com/unchartedsoftware/distil-compute"
   packages = [
     "middleware",
@@ -230,7 +230,7 @@
   revision = "50421fc44cbffbc7ad8e3757c928a1ec511f4398"
 
 [[projects]]
-  digest = "1:646927f4ca90269343b8a288e715a8daa35ba2b1cad26cf72549178c22b58486"
+  digest = "1:110eada153f876d681a2ad469df3b66915414dd18efff71c90d31d63bf3dbe75"
   name = "github.com/unchartedsoftware/distil-ingest"
   packages = [
     "conf",
