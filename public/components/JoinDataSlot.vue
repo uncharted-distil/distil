@@ -40,13 +40,7 @@ import { spinnerHTML } from '../util/spinner';
 import { Dictionary } from '../util/dict';
 import JoinDataTable from './JoinDataTable';
 import FilterBadge from './FilterBadge';
-import { getters as datasetGetters } from '../store/dataset/module';
-import { TableRow, TableColumn, D3M_INDEX_FIELD, Variable } from '../store/dataset/index';
-import { Highlight, RowSelection } from '../store/highlights/index';
-import { getters as routeGetters } from '../store/route/module';
-import { Filter, addFilterToRoute, EXCLUDE_FILTER, INCLUDE_FILTER } from '../util/filters';
-import { getHighlights, clearHighlightRoot, createFilterFromHighlightRoot } from '../util/highlights';
-import { addRowSelection, removeRowSelection, clearRowSelection, isRowSelected, getNumIncludedRows, getNumExcludedRows, createFilterFromRowSelection } from '../util/row';
+import { TableRow, TableColumn } from '../store/dataset/index';
 
 export default Vue.extend({
 	name: 'join-data-slot',
@@ -67,51 +61,12 @@ export default Vue.extend({
 	},
 
 	computed: {
-
 		spinnerHTML(): string {
 			return spinnerHTML();
-		},
-
-		highlights(): Highlight {
-			return getHighlights();
-		},
-
-		numItems(): number {
-			return this.items ? this.items.length : 0;
-		},
-
-		activeFilter(): Filter {
-			if (!this.highlights ||
-				!this.highlights.root ||
-				!this.highlights.root.value) {
-				return null;
-			}
-			return createFilterFromHighlightRoot(this.highlights.root, INCLUDE_FILTER);
-		},
-
-		filters(): Filter[] {
-			return this.invertFilters(routeGetters.getDecodedFilters(this.$store));
-		},
-
-		rowSelection(): RowSelection {
-			return routeGetters.getDecodedRowSelection(this.$store);
-		},
-
-		tableTitle(): string {
-			const included = getNumIncludedRows(this.rowSelection);
-			if (included > 0) {
-				return `${this.numItems} <b class="matching-color">matching</b> samples of ${this.numRows} to model, ${included} <b class="joined-color">joined</b>`;
-			} else {
-				return `${this.numItems} <b class="matching-color">matching</b> samples of ${this.numRows} to model`;
-			}
 		}
 	},
 
 	methods: {
-		invertFilters(filters: Filter[]): Filter[] {
-			// TODO: invert filters
-			return filters;
-		},
 		onColumnClicked(field) {
 			this.$emit('col-clicked', field);
 		}
