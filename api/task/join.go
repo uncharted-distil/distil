@@ -158,7 +158,7 @@ func createDatasetFromCSV(config *env.Config, csvFile *os.File, datasetName stri
 	// first column will be the dataframe index which we should ignore
 	fields = fields[1:]
 
-	metadata := model.NewMetadata(datasetName, datasetName, datasetName)
+	metadata := model.NewMetadata(datasetName, datasetName, datasetName, "")
 	dataResource := model.NewDataResource("0", compute.D3MResourceType, []string{compute.D3MResourceFormat})
 
 	mergedVariables, err := createMergedVariables(fields, varsLeft, varsRight)
