@@ -8,6 +8,10 @@ import (
 	"github.com/unchartedsoftware/distil-compute/model"
 )
 
+const (
+	maxBatchSize = 100
+)
+
 func (s *Storage) getViewField(name string, displayName string, typ string, defaultValue interface{}) string {
 	return fmt.Sprintf("COALESCE(CAST(\"%s\" AS %s), %v) AS \"%s\"",
 		name, typ, defaultValue, displayName)
@@ -224,6 +228,51 @@ func (s *Storage) UpdateVariable(dataset string, varName string, d3mIndex string
 	_, err := s.client.Exec(sql, value, d3mIndex)
 	if err != nil {
 		return errors.Wrap(err, "Unable to update value stored in the database")
+	}
+
+	return nil
+}
+
+// UpdateVariableBatch batches updates for a variable to increase performance.
+func (s *Storage) UpdateVariableBatch(dataset string, varName string, updates map[string]string) error {
+	// A couple of approaches are possible:
+	// 1. Batch the updates in a string and send many updates at once to diminish network time.
+	// 2. Batch insert the updates to a temp table, send an update command where a join
+	//		between the original table and the temp table is done to get the new values
+	//		and then delete the temp table.
+
+	// loop through the updates, building batches to minimize overhead
+	batchSql := ""
+	count := 0
+	params := make([]interface{}, 0)
+	for index, value := range updates {
+		updateStatement := fmt.Sprintf("UPDATE %s_base SET \"%s\" = $%d WHERE \"%s\" = $%d",
+			dataset, varName, count*2+1, model.D3MIndexFieldName, count*2+2)
+		batchSql = fmt.Sprintf("%s\n%s", batchSql, updateStatement)
+		params = append(params, value)
+		params = append(params, index)
+		count = count + 1
+
+		if count > maxBatchSize {
+			// submit the batch
+			_, err := s.client.Exec(batchSql, params...)
+			if err != nil {
+				return errors.Wrap(err, "unable to update batch")
+			}
+
+			// reset the batch
+			batchSql = ""
+			count = 0
+			params = make([]interface{}, 0)
+		}
+	}
+
+	// submit remaining rows
+	if count > 0 {
+		_, err := s.client.Exec(batchSql, params...)
+		if err != nil {
+			return errors.Wrap(err, "unable to update final batch")
+		}
 	}
 
 	return nil
