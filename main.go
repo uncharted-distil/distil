@@ -229,7 +229,7 @@ func main() {
 
 	// GET
 	// ** TEMPORARILY COMMENTED OUT DATAMART STORAGE DUE TO BREAKING API CHANGE.
-	registerRoute(mux, "/distil/datasets", routes.DatasetsHandler([]model.MetadataStorageCtor{metadataStorageCtor /*, datamartMetadataStorageCtor*/}))
+	registerRoute(mux, "/distil/datasets", routes.DatasetsHandler([]model.MetadataStorageCtor{metadataStorageCtor, datamartMetadataStorageCtor}))
 	registerRoute(mux, "/distil/datasets/:dataset", routes.DatasetHandler(metadataStorageCtor))
 	registerRoute(mux, "/distil/solutions/:dataset/:target/:solution-id", routes.SolutionHandler(pgSolutionStorageCtor))
 	registerRoute(mux, "/distil/variables/:dataset", routes.VariablesHandler(metadataStorageCtor))
