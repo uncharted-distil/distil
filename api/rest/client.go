@@ -11,6 +11,7 @@ import (
 	"os"
 
 	"github.com/pkg/errors"
+	"github.com/unchartedsoftware/distil/api/middleware"
 )
 
 // ClientCtor repressents a client constructor to instantiate a rest client.
@@ -39,7 +40,7 @@ func (c *Client) PostJSON(function string, json []byte) ([]byte, error) {
 	}
 	req.Header.Set("Content-Type", "application/json")
 
-	client := &http.Client{}
+	client := middleware.LoggingClient{}
 	resp, err := client.Do(req)
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to get result from json post")
@@ -91,7 +92,7 @@ func (c *Client) PostFile(function string, filename string, params map[string]st
 	}
 	req.Header.Set("Content-Type", w.FormDataContentType())
 
-	client := &http.Client{}
+	client := &middleware.LoggingClient{}
 	res, err := client.Do(req)
 	if err != nil {
 		return nil, errors.Wrap(err, "Unable to post request")
@@ -131,7 +132,7 @@ func (c *Client) PostRequest(function string, params map[string]string) ([]byte,
 	}
 	req.Header.Set("Content-Type", w.FormDataContentType())
 
-	client := &http.Client{}
+	client := &middleware.LoggingClient{}
 	res, err := client.Do(req)
 	if err != nil {
 		return nil, errors.Wrap(err, "Unable to post request")
