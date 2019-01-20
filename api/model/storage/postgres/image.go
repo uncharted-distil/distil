@@ -13,17 +13,17 @@ import (
 
 // ImageField defines behaviour for the image field type.
 type ImageField struct {
-	Storage  *Storage
-	Dataset  string
-	Variable *model.Variable
+	Storage     *Storage
+	StorageName string
+	Variable    *model.Variable
 }
 
 // NewImageField creates a new field for image types.
-func NewImageField(storage *Storage, dataset string, variable *model.Variable) *ImageField {
+func NewImageField(storage *Storage, storageName string, variable *model.Variable) *ImageField {
 	field := &ImageField{
-		Storage:  storage,
-		Dataset:  dataset,
-		Variable: variable,
+		Storage:     storage,
+		StorageName: storageName,
+		Variable:    variable,
 	}
 
 	return field
@@ -56,7 +56,7 @@ func (f *ImageField) fetchRepresentationImages(categoryBuckets []*api.Bucket) ([
 
 		// pull sample row containing bucket
 		query := fmt.Sprintf("SELECT \"%s\" FROM %s WHERE \"%s\" ~ $1 LIMIT 1;",
-			f.Variable.Name, f.Dataset, prefixedVarName)
+			f.Variable.Name, f.StorageName, prefixedVarName)
 
 		// execute the postgres query
 		rows, err := f.Storage.client.Query(query, bucket.Key)
@@ -81,7 +81,7 @@ func (f *ImageField) fetchHistogram(filterParams *api.FilterParams) (*api.Histog
 	// create the filter for the query.
 	wheres := make([]string, 0)
 	params := make([]interface{}, 0)
-	wheres, params = f.Storage.buildFilteredQueryWhere(wheres, params, f.Dataset, filterParams.Filters)
+	wheres, params = f.Storage.buildFilteredQueryWhere(wheres, params, filterParams.Filters)
 
 	prefixedVarName := f.featureVarName(f.Variable.Name)
 	fieldSelect := fmt.Sprintf("unnest(string_to_array(\"%s\", ','))", prefixedVarName)
@@ -93,7 +93,7 @@ func (f *ImageField) fetchHistogram(filterParams *api.FilterParams) (*api.Histog
 
 	// Get count by category.
 	query := fmt.Sprintf("SELECT %s AS \"%s\", COUNT(*) AS count FROM %s %s GROUP BY %s ORDER BY count desc, %s LIMIT %d;",
-		fieldSelect, prefixedVarName, f.Dataset, where, fieldSelect, fieldSelect, catResultLimit)
+		fieldSelect, prefixedVarName, f.StorageName, where, fieldSelect, fieldSelect, catResultLimit)
 
 	// execute the postgres query
 	res, err := f.Storage.client.Query(query, params...)
@@ -120,7 +120,7 @@ func (f *ImageField) fetchHistogram(filterParams *api.FilterParams) (*api.Histog
 func (f *ImageField) fetchHistogramByResult(resultURI string, filterParams *api.FilterParams) (*api.Histogram, error) {
 
 	// get filter where / params
-	wheres, params, err := f.Storage.buildResultQueryFilters(f.Dataset, resultURI, filterParams)
+	wheres, params, err := f.Storage.buildResultQueryFilters(f.StorageName, resultURI, filterParams)
 	if err != nil {
 		return nil, err
 	}
@@ -141,7 +141,7 @@ func (f *ImageField) fetchHistogramByResult(resultURI string, filterParams *api.
 		 WHERE result.result_id = $%d %s
 		 GROUP BY "%s"
 		 ORDER BY count desc, "%s" LIMIT %d;`,
-		prefixedVarName, f.Dataset, f.Storage.getResultTable(f.Dataset),
+		prefixedVarName, f.StorageName, f.Storage.getResultTable(f.StorageName),
 		model.D3MIndexFieldName, len(params), where, prefixedVarName,
 		prefixedVarName, catResultLimit)
 
@@ -218,7 +218,7 @@ func (f *ImageField) FetchPredictedSummaryData(resultURI string, datasetResult s
 	targetName := f.featureVarName(f.Variable.Name)
 
 	// get filter where / params
-	wheres, params, err := f.Storage.buildResultQueryFilters(f.Dataset, resultURI, filterParams)
+	wheres, params, err := f.Storage.buildResultQueryFilters(f.StorageName, resultURI, filterParams)
 	if err != nil {
 		return nil, err
 	}
@@ -232,7 +232,7 @@ func (f *ImageField) FetchPredictedSummaryData(resultURI string, datasetResult s
 		 WHERE %s
 		 GROUP BY result.value, data."%s"
 		 ORDER BY count desc;`,
-		targetName, datasetResult, f.Dataset, model.D3MIndexFieldName, strings.Join(wheres, " AND "), targetName)
+		targetName, datasetResult, f.StorageName, model.D3MIndexFieldName, strings.Join(wheres, " AND "), targetName)
 
 	// execute the postgres query
 	res, err := f.Storage.client.Query(query, params...)

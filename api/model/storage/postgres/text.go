@@ -13,17 +13,17 @@ import (
 
 // TextField defines behaviour for the text field type.
 type TextField struct {
-	Storage  *Storage
-	Dataset  string
-	Variable *model.Variable
+	Storage     *Storage
+	StorageName string
+	Variable    *model.Variable
 }
 
 // NewTextField creates a new field for text types.
-func NewTextField(storage *Storage, dataset string, variable *model.Variable) *TextField {
+func NewTextField(storage *Storage, storageName string, variable *model.Variable) *TextField {
 	field := &TextField{
-		Storage:  storage,
-		Dataset:  dataset,
-		Variable: variable,
+		Storage:     storage,
+		StorageName: storageName,
+		Variable:    variable,
 	}
 
 	return field
@@ -46,7 +46,7 @@ func (f *TextField) fetchHistogram(filterParams *api.FilterParams) (*api.Histogr
 	// create the filter for the query.
 	wheres := make([]string, 0)
 	params := make([]interface{}, 0)
-	wheres, params = f.Storage.buildFilteredQueryWhere(wheres, params, f.Dataset, filterParams.Filters)
+	wheres, params = f.Storage.buildFilteredQueryWhere(wheres, params, filterParams.Filters)
 
 	where := ""
 	if len(wheres) > 0 {
@@ -58,7 +58,7 @@ func (f *TextField) fetchHistogram(filterParams *api.FilterParams) (*api.Histogr
 		"FROM (SELECT unnest(tsvector_to_array(to_tsvector(\"%s\"))) as stem FROM %s %s) as r "+
 		"INNER JOIN %s as w on r.stem = w.stem "+
 		"GROUP BY w.word ORDER BY count desc, w.word LIMIT %d;",
-		f.Variable.Name, f.Variable.Name, f.Dataset, where, wordStemTableName, catResultLimit)
+		f.Variable.Name, f.Variable.Name, f.StorageName, where, wordStemTableName, catResultLimit)
 
 	// execute the postgres query
 	res, err := f.Storage.client.Query(query, params...)
@@ -75,7 +75,7 @@ func (f *TextField) fetchHistogram(filterParams *api.FilterParams) (*api.Histogr
 func (f *TextField) fetchHistogramByResult(resultURI string, filterParams *api.FilterParams) (*api.Histogram, error) {
 
 	// get filter where / params
-	wheres, params, err := f.Storage.buildResultQueryFilters(f.Dataset, resultURI, filterParams)
+	wheres, params, err := f.Storage.buildResultQueryFilters(f.StorageName, resultURI, filterParams)
 	if err != nil {
 		return nil, err
 	}
@@ -93,7 +93,7 @@ func (f *TextField) fetchHistogramByResult(resultURI string, filterParams *api.F
 		"FROM %s data INNER JOIN %s result ON data.\"%s\" = result.index WHERE result.result_id = $%d %s) as r "+
 		"INNER JOIN %s as w on r.stem = w.stem "+
 		"GROUP BY w.word ORDER BY count desc, w.word LIMIT %d;",
-		f.Variable.Name, f.Variable.Name, f.Dataset, f.Storage.getResultTable(f.Dataset),
+		f.Variable.Name, f.Variable.Name, f.StorageName, f.Storage.getResultTable(f.StorageName),
 		model.D3MIndexFieldName, len(params), where, wordStemTableName, catResultLimit)
 
 	// execute the postgres query
@@ -157,7 +157,7 @@ func (f *TextField) FetchPredictedSummaryData(resultURI string, datasetResult st
 	targetName := f.Variable.Name
 
 	// get filter where / params
-	wheres, params, err := f.Storage.buildResultQueryFilters(f.Dataset, resultURI, filterParams)
+	wheres, params, err := f.Storage.buildResultQueryFilters(f.StorageName, resultURI, filterParams)
 	if err != nil {
 		return nil, err
 	}
@@ -171,7 +171,7 @@ func (f *TextField) FetchPredictedSummaryData(resultURI string, datasetResult st
 		"FROM %s AS result INNER JOIN %s AS base ON result.index = base.\"d3mIndex\" "+
 		"WHERE %s) r INNER JOIN %s word_b ON r.stem_b = word_b.stem INNER JOIN %s word_v ON r.stem_v = word_v.stem "+
 		"GROUP BY word_v.word, word_b.word "+
-		"ORDER BY count desc;", targetName, targetName, datasetResult, f.Dataset, strings.Join(wheres, " AND "), wordStemTableName, wordStemTableName)
+		"ORDER BY count desc;", targetName, targetName, datasetResult, f.StorageName, strings.Join(wheres, " AND "), wordStemTableName, wordStemTableName)
 
 	// execute the postgres query
 	res, err := f.Storage.client.Query(query, params...)

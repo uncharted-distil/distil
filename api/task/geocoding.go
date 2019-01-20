@@ -28,16 +28,16 @@ type GeocodedPoint struct {
 
 // GeocodeForwardDataset geocodes fields that are types of locations.
 // The results are append to the dataset and the whole is output to disk.
-func GeocodeForwardDataset(schemaFile string, index string, dataset string, config *IngestTaskConfig) error {
-	outputPath, err := initializeDatasetCopy(schemaFile, config.GeocodingOutputSchemaRelative, config.GeocodingOutputDataRelative, config)
+func GeocodeForwardDataset(schemaFile string, index string, dataset string, config *IngestTaskConfig) (string, error) {
+	outputPath, err := initializeDatasetCopy(schemaFile, dataset, config.GeocodingOutputSchemaRelative, config.GeocodingOutputDataRelative, config)
 	if err != nil {
-		return errors.Wrap(err, "unable to copy source data folder")
+		return "", errors.Wrap(err, "unable to copy source data folder")
 	}
 
 	// load metadata from original schema
-	meta, err := metadata.LoadMetadataFromClassification(schemaFile, config.GetTmpAbsolutePath(config.ClassificationOutputPathRelative))
+	meta, err := metadata.LoadMetadataFromClassification(schemaFile, config.GetTmpAbsolutePath(path.Join(dataset, config.ClassificationOutputPathRelative)))
 	if err != nil {
-		return errors.Wrap(err, "unable to load original schema file")
+		return "", errors.Wrap(err, "unable to load original schema file")
 	}
 	mainDR := meta.GetMainDataResource()
 	d3mIndexVariable := getD3MIndexField(mainDR)
@@ -46,7 +46,7 @@ func GeocodeForwardDataset(schemaFile string, index string, dataset string, conf
 	dataPath := path.Join(outputPath.sourceFolder, mainDR.ResPath)
 	lines, err := ReadCSVFile(dataPath, config.HasHeader)
 	if err != nil {
-		return errors.Wrap(err, "error reading raw data")
+		return "", errors.Wrap(err, "error reading raw data")
 	}
 
 	// index d3m indices by row since primitive returns row numbers.
@@ -63,7 +63,7 @@ func GeocodeForwardDataset(schemaFile string, index string, dataset string, conf
 	for _, col := range colsToGeocode {
 		geocoded, err := GeocodeForward(datasetInputDir, dataset, col, rowIndex)
 		if err != nil {
-			return err
+			return "", err
 		}
 		geocodedData = append(geocodedData, geocoded)
 	}
@@ -108,13 +108,13 @@ func GeocodeForwardDataset(schemaFile string, index string, dataset string, conf
 	}
 	err = writer.Write(header)
 	if err != nil {
-		return errors.Wrap(err, "error storing feature header")
+		return "", errors.Wrap(err, "error storing feature header")
 	}
 
 	for _, line := range lines {
 		err = writer.Write(line)
 		if err != nil {
-			return errors.Wrap(err, "error storing geocoded output")
+			return "", errors.Wrap(err, "error storing geocoded output")
 		}
 	}
 
@@ -122,7 +122,7 @@ func GeocodeForwardDataset(schemaFile string, index string, dataset string, conf
 	writer.Flush()
 	err = util.WriteFileWithDirs(outputPath.outputData, output.Bytes(), os.ModePerm)
 	if err != nil {
-		return errors.Wrap(err, "error writing feature output")
+		return "", errors.Wrap(err, "error writing feature output")
 	}
 
 	relativePath := getRelativePath(path.Dir(outputPath.outputSchema), outputPath.outputData)
@@ -131,10 +131,10 @@ func GeocodeForwardDataset(schemaFile string, index string, dataset string, conf
 	// write the new schema to file
 	err = metadata.WriteSchema(meta, outputPath.outputSchema)
 	if err != nil {
-		return errors.Wrap(err, "unable to store feature schema")
+		return "", errors.Wrap(err, "unable to store feature schema")
 	}
 
-	return nil
+	return outputPath.outputSchema, nil
 }
 
 // GeocodeForward will geocode a column into lat & lon values.

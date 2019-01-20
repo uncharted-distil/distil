@@ -105,10 +105,6 @@ func main() {
 	// instantiate the metadata storage (using ES).
 	metadataStorageCtor := es.NewMetadataStorage(config.ESDatasetsIndex, esClientCtor)
 
-	// instantiate the metadata storage (using datamart).
-	datamartClientCtor := rest.NewClient(config.DatamartURI)
-	datamartMetadataStorageCtor := dm.NewMetadataStorage(datamartClientCtor)
-
 	// instantiate the postgres data storage constructor.
 	pgDataStorageCtor := pg.NewDataStorage(postgresClientCtor, metadataStorageCtor)
 
@@ -184,6 +180,8 @@ func main() {
 		ClusteringEnabled:                  config.ClusteringEnabled,
 		FeaturizationOutputDataRelative:    config.FeaturizationOutputDataRelative,
 		FeaturizationOutputSchemaRelative:  config.FeaturizationOutputSchemaRelative,
+		FormatOutputDataRelative:           config.FormatOutputDataRelative,
+		FormatOutputSchemaRelative:         config.FormatOutputSchemaRelative,
 		GeocodingOutputDataRelative:        config.GeocodingOutputDataRelative,
 		GeocodingOutputSchemaRelative:      config.GeocodingOutputSchemaRelative,
 		MergedOutputPathRelative:           config.MergedOutputDataPath,
@@ -207,6 +205,10 @@ func main() {
 		HardFail:                           config.IngestHardFail,
 	}
 	sourceFolder := config.DataFolderPath
+
+	// instantiate the metadata storage (using datamart).
+	datamartClientCtor := rest.NewClient(config.DatamartURI)
+	datamartMetadataStorageCtor := dm.NewMetadataStorage(config.DatamartImportFolder, ingestConfig, datamartClientCtor)
 
 	// Ingest the data specified by the environment
 	if config.InitialDataset != "" && !config.SkipIngest {
@@ -244,7 +246,7 @@ func main() {
 	registerRoutePost(mux, "/distil/variables/:dataset", routes.VariableTypeHandler(pgDataStorageCtor, metadataStorageCtor))
 	registerRoutePost(mux, "/distil/discovery/:dataset/:target", routes.ProblemDiscoveryHandler(pgDataStorageCtor, metadataStorageCtor, config.UserProblemPath, userAgent, config.SkipPreprocessing))
 	registerRoutePost(mux, "/distil/data/:dataset/:invert", routes.DataHandler(pgDataStorageCtor, metadataStorageCtor))
-	registerRoutePost(mux, "/distil/import/:dataset/:source/:index", routes.ImportHandler(datamartMetadataStorageCtor, ingestConfig))
+	registerRoutePost(mux, "/distil/import/:dataset/:source/:index", routes.ImportHandler(datamartMetadataStorageCtor, metadataStorageCtor, ingestConfig))
 	registerRoutePost(mux, "/distil/results/:dataset/:solution-id", routes.ResultsHandler(pgSolutionStorageCtor, pgDataStorageCtor))
 	registerRoutePost(mux, "/distil/variable-summary/:dataset/:variable", routes.VariableSummaryHandler(pgDataStorageCtor))
 	registerRoutePost(mux, "/distil/training-summary/:dataset/:variable/:results-uuid", routes.TrainingSummaryHandler(pgSolutionStorageCtor, pgDataStorageCtor))

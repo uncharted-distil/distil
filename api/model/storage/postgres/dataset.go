@@ -59,7 +59,7 @@ func (s *Storage) getExistingFields(dataset string) (map[string]*model.Variable,
 	return fields, nil
 }
 
-func (s *Storage) createView(dataset string, fields map[string]*model.Variable) error {
+func (s *Storage) createView(storageName string, fields map[string]*model.Variable) error {
 	// CREATE OR REPLACE VIEW requires the same column names and order (with additions at the end being allowed).
 	sql := "CREATE VIEW %s_tmp AS SELECT %s FROM %s_base;"
 
@@ -68,7 +68,7 @@ func (s *Storage) createView(dataset string, fields map[string]*model.Variable) 
 	for _, v := range fields {
 		fieldList = append(fieldList, s.getViewField(v.Name, v.OriginalVariable, model.MapD3MTypeToPostgresType(v.Type), model.DefaultPostgresValueFromD3MType(v.Type)))
 	}
-	sql = fmt.Sprintf(sql, dataset, strings.Join(fieldList, ","), dataset)
+	sql = fmt.Sprintf(sql, storageName, strings.Join(fieldList, ","), storageName)
 
 	// Create the temporary view with the new column type.
 	_, err := s.client.Exec(sql)
@@ -77,20 +77,20 @@ func (s *Storage) createView(dataset string, fields map[string]*model.Variable) 
 	}
 
 	// Drop the existing view.
-	_, err = s.client.Exec(fmt.Sprintf("DROP VIEW %s;", dataset))
+	_, err = s.client.Exec(fmt.Sprintf("DROP VIEW %s;", storageName))
 	if err != nil {
 		return errors.Wrap(err, "Unable to drop existing view")
 	}
 
 	// Rename the temporary view to the actual view name.
-	_, err = s.client.Exec(fmt.Sprintf("ALTER VIEW %s_tmp RENAME TO %s;", dataset, dataset))
+	_, err = s.client.Exec(fmt.Sprintf("ALTER VIEW %s_tmp RENAME TO %s;", storageName, storageName))
 
 	return err
 }
 
 // SetDataType updates the data type of the specified variable.
 // Multiple simultaneous calls to the function can result in discarded changes.
-func (s *Storage) SetDataType(dataset string, varName string, varType string) error {
+func (s *Storage) SetDataType(dataset string, storageName string, varName string, varType string) error {
 	// get all existing fields to rebuild the view.
 	fields, err := s.getExistingFields(dataset)
 	if err != nil {
@@ -104,7 +104,7 @@ func (s *Storage) SetDataType(dataset string, varName string, varType string) er
 	fields[varName].Type = varType
 
 	// create view based on field lookup.
-	err = s.createView(dataset, fields)
+	err = s.createView(storageName, fields)
 	if err != nil {
 		return errors.Wrap(err, "Unable to create the new view")
 	}
@@ -112,7 +112,7 @@ func (s *Storage) SetDataType(dataset string, varName string, varType string) er
 	return nil
 }
 
-func (s *Storage) createViewFromMetadataFields(dataset string, fields map[string]*model.Variable) error {
+func (s *Storage) createViewFromMetadataFields(storageName string, fields map[string]*model.Variable) error {
 	dbFields := make(map[string]*model.Variable)
 
 	// map the types to db types.
@@ -124,7 +124,7 @@ func (s *Storage) createViewFromMetadataFields(dataset string, fields map[string
 		}
 	}
 
-	err := s.createView(dataset, dbFields)
+	err := s.createView(storageName, dbFields)
 	if err != nil {
 		return errors.Wrap(err, "Unable to create the new view")
 	}
@@ -133,9 +133,9 @@ func (s *Storage) createViewFromMetadataFields(dataset string, fields map[string
 }
 
 // AddVariable adds a new variable to the dataset.
-func (s *Storage) AddVariable(dataset string, varName string, varType string) error {
+func (s *Storage) AddVariable(dataset string, storageName string, varName string, varType string) error {
 	// check to make sure the column doesnt exist already
-	dbFields, err := s.getDatabaseFields(fmt.Sprintf("%s_base", dataset))
+	dbFields, err := s.getDatabaseFields(fmt.Sprintf("%s_base", storageName))
 	if err != nil {
 		return errors.Wrap(err, "unable to read database fields")
 	}
@@ -148,11 +148,11 @@ func (s *Storage) AddVariable(dataset string, varName string, varType string) er
 		}
 	}
 	if found {
-		return errors.Errorf("dataset %s already has variable '%s' in postgres", dataset, varName)
+		return errors.Errorf("dataset %s already has variable '%s' in postgres", storageName, varName)
 	}
 
 	// add the empty column
-	sql := fmt.Sprintf("ALTER TABLE %s_base ADD COLUMN \"%s\" TEXT;", dataset, varName)
+	sql := fmt.Sprintf("ALTER TABLE %s_base ADD COLUMN \"%s\" TEXT;", storageName, varName)
 	_, err = s.client.Exec(sql)
 	if err != nil {
 		return errors.Wrap(err, "Unable to add new column to database table")
@@ -173,7 +173,7 @@ func (s *Storage) AddVariable(dataset string, varName string, varType string) er
 		}
 	}
 
-	err = s.createViewFromMetadataFields(dataset, fields)
+	err = s.createViewFromMetadataFields(storageName, fields)
 	if err != nil {
 		return errors.Wrap(err, "Unable to create the new view")
 	}
@@ -182,9 +182,9 @@ func (s *Storage) AddVariable(dataset string, varName string, varType string) er
 }
 
 // DeleteVariable flags a variable as deleted.
-func (s *Storage) DeleteVariable(dataset string, varName string) error {
+func (s *Storage) DeleteVariable(dataset string, storageName string, varName string) error {
 	// check if the variable is in the view
-	dbFields, err := s.getDatabaseFields(dataset)
+	dbFields, err := s.getDatabaseFields(storageName)
 	if err != nil {
 		return errors.Wrap(err, "unable to read database fields")
 	}
@@ -210,7 +210,7 @@ func (s *Storage) DeleteVariable(dataset string, varName string) error {
 		delete(fields, varName)
 	}
 
-	err = s.createViewFromMetadataFields(dataset, fields)
+	err = s.createViewFromMetadataFields(storageName, fields)
 	if err != nil {
 		return errors.Wrap(err, "Unable to create the new view")
 	}
@@ -219,8 +219,8 @@ func (s *Storage) DeleteVariable(dataset string, varName string) error {
 }
 
 // UpdateVariable updates the value of a variable stored in the database.
-func (s *Storage) UpdateVariable(dataset string, varName string, d3mIndex string, value string) error {
-	sql := fmt.Sprintf("UPDATE %s_base SET \"%s\" = $1 WHERE \"%s\" = $2", dataset, varName, model.D3MIndexFieldName)
+func (s *Storage) UpdateVariable(storageName string, varName string, d3mIndex string, value string) error {
+	sql := fmt.Sprintf("UPDATE %s_base SET \"%s\" = $1 WHERE \"%s\" = $2", storageName, varName, model.D3MIndexFieldName)
 	_, err := s.client.Exec(sql, value, d3mIndex)
 	if err != nil {
 		return errors.Wrap(err, "Unable to update value stored in the database")

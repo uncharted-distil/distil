@@ -16,7 +16,7 @@ type ResidualsExtrema struct {
 	Extrema *api.Extrema `json:"extrema"`
 }
 
-func fetchSolutionResidualExtrema(meta api.MetadataStorage, data api.DataStorage, solution api.SolutionStorage, dataset string, target string, solutionID string) (*api.Extrema, error) {
+func fetchSolutionResidualExtrema(meta api.MetadataStorage, data api.DataStorage, solution api.SolutionStorage, dataset string, storageName string, target string, solutionID string) (*api.Extrema, error) {
 	// check target var type
 	variable, err := meta.FetchVariable(dataset, target)
 	if err != nil {
@@ -42,7 +42,7 @@ func fetchSolutionResidualExtrema(meta api.MetadataStorage, data api.DataStorage
 				// result uri
 				resultURI := sol.Result.ResultURI
 				// predicted extrema
-				residualExtrema, err := data.FetchResidualsExtremaByURI(dataset, resultURI)
+				residualExtrema, err := data.FetchResidualsExtremaByURI(dataset, storageName, resultURI)
 				if err != nil {
 					return nil, err
 				}
@@ -63,6 +63,7 @@ func ResidualsExtremaHandler(metaCtor api.MetadataStorageCtor, solutionCtor api.
 	return func(w http.ResponseWriter, r *http.Request) {
 		dataset := pat.Param(r, "dataset")
 		target := pat.Param(r, "target")
+		storageName := model.NormalizeDatasetID(dataset)
 
 		meta, err := metaCtor()
 		if err != nil {
@@ -83,7 +84,7 @@ func ResidualsExtremaHandler(metaCtor api.MetadataStorageCtor, solutionCtor api.
 		}
 
 		// extract extrema for solution
-		extrema, err := fetchSolutionResidualExtrema(meta, data, solution, dataset, target, "")
+		extrema, err := fetchSolutionResidualExtrema(meta, data, solution, dataset, storageName, target, "")
 		if err != nil {
 			handleError(w, err)
 			return

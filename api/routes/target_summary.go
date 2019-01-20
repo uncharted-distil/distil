@@ -7,16 +7,18 @@ import (
 	"github.com/pkg/errors"
 	"goji.io/pat"
 
-	"github.com/unchartedsoftware/distil/api/model"
+	"github.com/unchartedsoftware/distil-compute/model"
+	api "github.com/unchartedsoftware/distil/api/model"
 )
 
 // TargetSummaryHandler generates a route handler that facilitates the
 // creation and retrieval of summary information about the specified variable
 // for data returned in a result set.
-func TargetSummaryHandler(metaCtor model.MetadataStorageCtor, solutionCtor model.SolutionStorageCtor, dataCtor model.DataStorageCtor) func(http.ResponseWriter, *http.Request) {
+func TargetSummaryHandler(metaCtor api.MetadataStorageCtor, solutionCtor api.SolutionStorageCtor, dataCtor api.DataStorageCtor) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// get dataset name
 		dataset := pat.Param(r, "dataset")
+		storageName := model.NormalizeDatasetID(dataset)
 		// get variable name
 		target := pat.Param(r, "target")
 
@@ -35,7 +37,7 @@ func TargetSummaryHandler(metaCtor model.MetadataStorageCtor, solutionCtor model
 		}
 
 		// get variable names and ranges out of the params
-		filterParams, err := model.ParseFilterParamsFromJSON(params)
+		filterParams, err := api.ParseFilterParamsFromJSON(params)
 		if err != nil {
 			handleError(w, err)
 			return
@@ -67,14 +69,14 @@ func TargetSummaryHandler(metaCtor model.MetadataStorageCtor, solutionCtor model
 		}
 
 		// extract extrema for solution
-		extrema, err := fetchSolutionPredictedExtrema(meta, data, solution, dataset, target, "")
+		extrema, err := fetchSolutionPredictedExtrema(meta, data, solution, dataset, storageName, target, "")
 		if err != nil {
 			handleError(w, err)
 			return
 		}
 
 		// fetch summary histogram
-		histogram, err := data.FetchSummaryByResult(dataset, target, result.ResultURI, filterParams, extrema)
+		histogram, err := data.FetchSummaryByResult(dataset, storageName, target, result.ResultURI, filterParams, extrema)
 		if err != nil {
 			handleError(w, err)
 			return

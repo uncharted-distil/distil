@@ -25,6 +25,7 @@ func GeocodingHandler(metaCtor api.MetadataStorageCtor, dataCtor api.DataStorage
 	return func(w http.ResponseWriter, r *http.Request) {
 		// get dataset name
 		dataset := pat.Param(r, "dataset")
+		storageName := model.NormalizeDatasetID(dataset)
 		// get variable name
 		variable := pat.Param(r, "variable")
 
@@ -61,7 +62,7 @@ func GeocodingHandler(metaCtor api.MetadataStorageCtor, dataCtor api.DataStorage
 				handleError(w, err)
 				return
 			}
-			err = dataStorage.AddVariable(dataset, latVarName, model.LatitudeType)
+			err = dataStorage.AddVariable(dataset, storageName, latVarName, model.LatitudeType)
 			if err != nil {
 				handleError(w, err)
 				return
@@ -73,7 +74,7 @@ func GeocodingHandler(metaCtor api.MetadataStorageCtor, dataCtor api.DataStorage
 				handleError(w, err)
 				return
 			}
-			err = dataStorage.AddVariable(dataset, lonVarName, model.LongitudeType)
+			err = dataStorage.AddVariable(dataset, storageName, lonVarName, model.LongitudeType)
 			if err != nil {
 				handleError(w, err)
 				return
@@ -101,12 +102,12 @@ func GeocodingHandler(metaCtor api.MetadataStorageCtor, dataCtor api.DataStorage
 		}
 
 		for _, point := range geocoded {
-			err = dataStorage.UpdateVariable(dataset, latVarName, point.D3MIndex, fmt.Sprintf("%f", point.Latitude))
+			err = dataStorage.UpdateVariable(storageName, latVarName, point.D3MIndex, fmt.Sprintf("%f", point.Latitude))
 			if err != nil {
 				handleError(w, err)
 				return
 			}
-			err = dataStorage.UpdateVariable(dataset, lonVarName, point.D3MIndex, fmt.Sprintf("%f", point.Longitude))
+			err = dataStorage.UpdateVariable(storageName, lonVarName, point.D3MIndex, fmt.Sprintf("%f", point.Longitude))
 			if err != nil {
 				handleError(w, err)
 				return

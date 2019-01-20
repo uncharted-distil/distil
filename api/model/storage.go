@@ -12,24 +12,24 @@ type DataStorageCtor func() (DataStorage, error)
 
 // DataStorage defines the functions available to query the underlying data storage.
 type DataStorage interface {
-	FetchNumRows(dataset string, filters map[string]interface{}) (int, error)
-	FetchData(dataset string, filterParams *FilterParams, invert bool) (*FilteredData, error)
-	FetchSummary(dataset string, varName string, filterParams *FilterParams) (*Histogram, error)
-	FetchSummaryByResult(dataset string, varName string, resultURI string, filterParams *FilterParams, extrema *Extrema) (*Histogram, error)
-	PersistResult(dataset string, resultURI string, target string) error
-	FetchResults(dataset string, resultURI string, solutionID string, filterParams *FilterParams) (*FilteredData, error)
-	FetchPredictedSummary(dataset string, resultURI string, filterParams *FilterParams, extrema *Extrema) (*Histogram, error)
-	FetchResultsExtremaByURI(dataset string, resultURI string) (*Extrema, error)
-	FetchCorrectnessSummary(dataset string, resultURI string, filterParams *FilterParams) (*Histogram, error)
-	FetchResidualsSummary(dataset string, resultURI string, filterParams *FilterParams, extrema *Extrema) (*Histogram, error)
-	FetchResidualsExtremaByURI(dataset string, resultURI string) (*Extrema, error)
-	FetchExtremaByURI(dataset string, resultURI string, variable string) (*Extrema, error)
+	FetchNumRows(storageName string, filters map[string]interface{}) (int, error)
+	FetchData(dataset string, storageName string, filterParams *FilterParams, invert bool) (*FilteredData, error)
+	FetchSummary(dataset string, storageName string, varName string, filterParams *FilterParams) (*Histogram, error)
+	FetchSummaryByResult(dataset string, storageName string, varName string, resultURI string, filterParams *FilterParams, extrema *Extrema) (*Histogram, error)
+	PersistResult(dataset string, storageName string, resultURI string, target string) error
+	FetchResults(dataset string, storageName string, resultURI string, solutionID string, filterParams *FilterParams) (*FilteredData, error)
+	FetchPredictedSummary(dataset string, storageName string, resultURI string, filterParams *FilterParams, extrema *Extrema) (*Histogram, error)
+	FetchResultsExtremaByURI(dataset string, storageName string, resultURI string) (*Extrema, error)
+	FetchCorrectnessSummary(dataset string, storageName string, resultURI string, filterParams *FilterParams) (*Histogram, error)
+	FetchResidualsSummary(dataset string, storageName string, resultURI string, filterParams *FilterParams, extrema *Extrema) (*Histogram, error)
+	FetchResidualsExtremaByURI(dataset string, storageName string, resultURI string) (*Extrema, error)
+	FetchExtremaByURI(dataset string, storageName string, resultURI string, variable string) (*Extrema, error)
 
 	// Dataset manipulation
-	SetDataType(dataset string, varName string, varType string) error
-	AddVariable(dataset string, varName string, varType string) error
-	DeleteVariable(dataset string, varName string) error
-	UpdateVariable(dataset string, varName string, d3mIndex string, value string) error
+	SetDataType(dataset string, storageName string, varName string, varType string) error
+	AddVariable(dataset string, storageName string, varName string, varType string) error
+	DeleteVariable(dataset string, storageName string, varName string) error
+	UpdateVariable(storageName string, varName string, d3mIndex string, value string) error
 }
 
 // SolutionStorageCtor represents a client constructor to instantiate a
@@ -72,7 +72,7 @@ type MetadataStorage interface {
 	FetchDataset(dataset string, includeIndex bool, includeMeta bool) (*Dataset, error)
 	FetchDatasets(includeIndex bool, includeMeta bool) ([]*Dataset, error)
 	SearchDatasets(terms string, includeIndex bool, includeMeta bool) ([]*Dataset, error)
-	ImportDataset(uri string) (string, error)
+	ImportDataset(id string, uri string) (string, error)
 
 	// Dataset manipulation
 	SetDataType(dataset string, varName string, varType string) error

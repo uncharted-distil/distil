@@ -69,13 +69,13 @@ func (s *Storage) fetchExtrema(dataset string, variable *model.Variable) (*api.E
 	return s.parseExtrema(res, variable)
 }
 
-func (s *Storage) fetchExtremaByURI(dataset string, resultURI string, variable *model.Variable) (*api.Extrema, error) {
+func (s *Storage) fetchExtremaByURI(storageName string, resultURI string, variable *model.Variable) (*api.Extrema, error) {
 	// add min / max aggregation
 	aggQuery := s.getMinMaxAggsQuery(variable)
 
 	// create a query that does min and max aggregations for each variable
 	queryString := fmt.Sprintf("SELECT %s FROM %s data INNER JOIN %s result ON data.\"%s\" = result.index WHERE result.result_id = $1;",
-		aggQuery, dataset, s.getResultTable(dataset), model.D3MIndexFieldName)
+		aggQuery, storageName, s.getResultTable(storageName), model.D3MIndexFieldName)
 
 	// execute the postgres query
 	// NOTE: We may want to use the regular Query operation since QueryRow
@@ -92,16 +92,16 @@ func (s *Storage) fetchExtremaByURI(dataset string, resultURI string, variable *
 }
 
 // FetchExtremaByURI return extrema of a variable in a result set.
-func (s *Storage) FetchExtremaByURI(dataset string, resultURI string, varName string) (*api.Extrema, error) {
+func (s *Storage) FetchExtremaByURI(dataset string, storageName string, resultURI string, varName string) (*api.Extrema, error) {
 
 	variable, err := s.metadata.FetchVariable(dataset, varName)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to fetch variable description for summary")
 	}
-	return s.fetchExtremaByURI(dataset, resultURI, variable)
+	return s.fetchExtremaByURI(storageName, resultURI, variable)
 }
 
-func (s *Storage) fetchSummaryData(dataset string, varName string, resultURI string, filterParams *api.FilterParams, extrema *api.Extrema) (*api.Histogram, error) {
+func (s *Storage) fetchSummaryData(dataset string, storageName string, varName string, resultURI string, filterParams *api.FilterParams, extrema *api.Extrema) (*api.Histogram, error) {
 	// need description of the variables to request aggregation against.
 	variable, err := s.metadata.FetchVariable(dataset, varName)
 	if err != nil {
@@ -112,19 +112,19 @@ func (s *Storage) fetchSummaryData(dataset string, varName string, resultURI str
 
 	var field Field
 	if model.IsNumerical(variable.Type) {
-		field = NewNumericalField(s, dataset, variable)
+		field = NewNumericalField(s, storageName, variable)
 	} else if model.IsCategorical(variable.Type) {
-		field = NewCategoricalField(s, dataset, variable)
+		field = NewCategoricalField(s, storageName, variable)
 	} else if model.IsVector(variable.Type) {
-		field = NewVectorField(s, dataset, variable)
+		field = NewVectorField(s, storageName, variable)
 	} else if model.IsText(variable.Type) {
-		field = NewTextField(s, dataset, variable)
+		field = NewTextField(s, storageName, variable)
 	} else if model.IsImage(variable.Type) {
-		field = NewImageField(s, dataset, variable)
+		field = NewImageField(s, storageName, variable)
 	} else if model.IsDateTime(variable.Type) {
-		field = NewDateTimeField(s, dataset, variable)
+		field = NewDateTimeField(s, storageName, variable)
 	} else if model.IsTimeSeries(variable.Type) {
-		field = NewTimeSeriesField(s, dataset, variable)
+		field = NewTimeSeriesField(s, storageName, variable)
 	} else {
 		return nil, errors.Errorf("variable `%s` of type `%s` does not support summary", variable.Name, variable.Type)
 	}
@@ -135,7 +135,7 @@ func (s *Storage) fetchSummaryData(dataset string, varName string, resultURI str
 	}
 
 	// get number of rows
-	numRows, err := s.FetchNumRows(dataset, nil)
+	numRows, err := s.FetchNumRows(storageName, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -148,12 +148,12 @@ func (s *Storage) fetchSummaryData(dataset string, varName string, resultURI str
 }
 
 // FetchSummary returns the summary for the provided dataset and variable.
-func (s *Storage) FetchSummary(dataset string, varName string, filterParams *api.FilterParams) (*api.Histogram, error) {
-	return s.fetchSummaryData(dataset, varName, "", filterParams, nil)
+func (s *Storage) FetchSummary(dataset string, storageName string, varName string, filterParams *api.FilterParams) (*api.Histogram, error) {
+	return s.fetchSummaryData(dataset, storageName, varName, "", filterParams, nil)
 }
 
 // FetchSummaryByResult returns the summary for the provided dataset
 // and variable for data that is part of the result set.
-func (s *Storage) FetchSummaryByResult(dataset string, varName string, resultURI string, filterParams *api.FilterParams, extrema *api.Extrema) (*api.Histogram, error) {
-	return s.fetchSummaryData(dataset, varName, resultURI, filterParams, extrema)
+func (s *Storage) FetchSummaryByResult(dataset string, storageName string, varName string, resultURI string, filterParams *api.FilterParams, extrema *api.Extrema) (*api.Histogram, error) {
+	return s.fetchSummaryData(dataset, storageName, varName, resultURI, filterParams, extrema)
 }
