@@ -7,7 +7,6 @@ import (
 	"io"
 	"os"
 	"path"
-	"strconv"
 	"strings"
 
 	"github.com/pkg/errors"
@@ -279,26 +278,6 @@ func getD3MIndexField(dr *model.DataResource) int {
 	}
 
 	return d3mIndexField
-}
-
-func toStringArray(in []interface{}) []string {
-	strArr := make([]string, 0)
-	for _, v := range in {
-		strArr = append(strArr, v.(string))
-	}
-	return strArr
-}
-
-func toFloat64Array(in []interface{}) ([]float64, error) {
-	strArr := make([]float64, 0)
-	for _, v := range in {
-		strFloat, err := strconv.ParseFloat(v.(string), 64)
-		if err != nil {
-			return nil, errors.Wrap(err, "failed to convert interface array to float array")
-		}
-		strArr = append(strArr, strFloat)
-	}
-	return strArr, nil
 }
 
 func getDataResource(meta *model.Metadata, resID string) *model.DataResource {

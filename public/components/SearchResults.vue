@@ -2,6 +2,7 @@
 	<div class="search-results">
 		<div class="mb-3" :key="dataset.name" v-for="dataset in datasets">
 			<dataset-preview
+				:id="dataset.id"
 				:name="dataset.name"
 				:description="dataset.description"
 				:summary="dataset.summary"

@@ -23,6 +23,7 @@ export interface Variable {
 }
 
 export interface Dataset {
+	id: string;
 	name: string;
 	description: string;
 	summary: string;

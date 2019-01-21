@@ -3,6 +3,7 @@
 		<div v-if="recentDatasets.length === 0">None</div>
 		<b-list-group v-bind:key="dataset.name" v-for="dataset in recentDatasets">
 			<dataset-preview
+				:id="dataset.id"
 				:name="dataset.name"
 				:description="dataset.description"
 				:summary="dataset.summary"

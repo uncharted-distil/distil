@@ -70,6 +70,7 @@ export default Vue.extend({
 	name: 'dataset-preview',
 
 	props: {
+		id: String as () => string,
 		name: String as () => string,
 		description: String as () => string,
 		summary: String as () => string,
@@ -128,9 +129,10 @@ export default Vue.extend({
 		},
 		importDataset() {
 			datasetActions.importDataset(this.$store, {
-				dataset: this.name,
-				source: 'contrib',
-				index: this.name
+				id: this.id,
+				dataset: this.id,
+				index: this.id,
+				source: 'contrib'
 			});
 		},
 		joinDataset() {

@@ -82,6 +82,7 @@ func (s *Storage) parseDatasets(res *elastic.SearchResult, includeIndex bool, in
 
 		// write everythign out to result struct
 		datasets = append(datasets, &api.Dataset{
+			ID:          name,
 			Name:        name,
 			StorageName: storageName,
 			Description: description,

@@ -167,6 +167,7 @@ func (s *Storage) parseDatasets(raw *SearchResults) ([]*api.Dataset, error) {
 			})
 		}
 		datasets = append(datasets, &api.Dataset{
+			ID:          res.ID,
 			Name:        res.Metadata.Name,
 			Description: res.Metadata.Description,
 			NumRows:     int64(res.Metadata.NumRows),

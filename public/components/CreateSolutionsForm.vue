@@ -263,7 +263,7 @@ export default Vue.extend({
 .fail-icon {
 	display: flex;
 	flex-shrink: 0;
-	color:#ee0701;
+	color: #ee0701;
 	padding-right: 15px;
 }
 
