@@ -36,7 +36,11 @@ router.afterEach((_, fromRoute) => {
 	if (dataset === '' || !dataset)  {
 		dataset = routeGetters.getRouteJoinDatasetsHash(store);
 	}
-	console.log('Saving view:', fromRoute.path, dataset);
+	if (dataset) {
+		console.log(`Saving view: ${fromRoute.path} for dataset ${dataset}`);
+	} else {
+		console.log(`Saving view: ${fromRoute.path}`);
+	}
 	viewMutations.saveView(store, {
 		view: fromRoute.path,
 		dataset: dataset,

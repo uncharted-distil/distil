@@ -1,12 +1,19 @@
 <template>
 	<div class='card card-result'>
 		<div class='dataset-header hover card-header'  variant="dark" @click.stop='setActiveDataset()' v-bind:class='{collapsed: !expanded}'>
-			<a class='nav-link'><b>Name:</b> {{name}}</a>
-			<a class='nav-link'><b>Features:</b> {{variables.length}}</a>
-			<a class='nav-link'><b>Rows:</b> {{numRows}}</a>
-			<a class='nav-link'><b>Size:</b> {{formatBytes(numBytes)}}</a>
-			<a v-if="allowImport && provenance==='datamart'"><b-button variant="danger" @click.stop='importDataset()'>Import</b-button></a>
-			<a v-if="allowJoin"><b-button variant="primary" @click.stop='joinDataset()'>Join</b-button></a>
+			<a class='nav-link'><b>Name:</b> {{dataset.name}}</a>
+			<a class='nav-link'><b>Features:</b> {{dataset.variables.length}}</a>
+			<a class='nav-link'><b>Rows:</b> {{dataset.numRows}}</a>
+			<a class='nav-link'><b>Size:</b> {{formatBytes(dataset.numBytes)}}</a>
+			<a v-if="allowImport && !importPending && dataset.provenance==='datamart'"><b-button variant="danger" @click.stop='importDataset()'>Import</b-button></a>
+			<a class="nav-link import-progress-bar" v-if="importPending">
+				<b-progress
+					:value="percentComplete"
+					variant="outline-secondary"
+					striped
+					:animated="true"></b-progress>
+			</a>
+			<a v-if="allowJoin && dataset.provenance!=='datamart'"><b-button variant="primary" @click.stop='joinDataset()'>Join</b-button></a>
 		</div>
 		<div class='card-body'>
 			<div class='row'>
@@ -19,15 +26,15 @@
 					</ul>
 				</div>
 				<div class='col-8'>
-					<div v-if="summaryML.length > 0">
+					<div v-if="dataset.summaryML.length > 0">
 						<span><b>Topics:</b></span>
 						<p class='small-text'>
-							{{summaryML}}
+							{{dataset.summaryML}}
 						</p>
 					</div>
 					<span><b>Summary:</b></span>
 					<p class='small-text'>
-						{{summary}}
+						{{dataset.summary}}
 					</p>
 				</div>
 			</div>
@@ -59,7 +66,7 @@ import { createRouteEntry } from '../util/routes';
 import { formatBytes } from '../util/bytes';
 import { sortVariablesByImportance } from '../util/data';
 import { getters as routeGetters } from '../store/route/module';
-import { Variable } from '../store/dataset/index';
+import { Dataset, Variable } from '../store/dataset/index';
 import { actions as datasetActions } from '../store/dataset/module';
 import { SELECT_TARGET_ROUTE } from '../store/route/index';
 import localStorage from 'store';
@@ -70,28 +77,27 @@ export default Vue.extend({
 	name: 'dataset-preview',
 
 	props: {
-		id: String as () => string,
-		name: String as () => string,
-		description: String as () => string,
-		summary: String as () => string,
-		summaryML: String as () => string,
-		variables: Array as () => Variable[],
-		numRows: Number as () => number,
-		numBytes: Number as () => number,
-		provenance: String as () => string,
+		dataset: Object as () => Dataset,
 		allowImport: Boolean as () => boolean,
 		allowJoin: Boolean as () => boolean
 	},
 
 	computed: {
+		terms(): string {
+			return routeGetters.getRouteTerms(this.$store);
+		},
 		topVariables(): Variable[] {
-			return sortVariablesByImportance(this.variables.slice(0)).slice(0, NUM_TOP_FEATURES);
+			return sortVariablesByImportance(this.dataset.variables.slice(0)).slice(0, NUM_TOP_FEATURES);
+		},
+		percentComplete(): number {
+			return 100;
 		}
 	},
 
 	data() {
 		return {
-			expanded: false
+			expanded: false,
+			importPending: false
 		};
 	},
 
@@ -101,24 +107,24 @@ export default Vue.extend({
 		},
 		setActiveDataset() {
 			const entry = createRouteEntry(SELECT_TARGET_ROUTE, {
-				terms: routeGetters.getRouteTerms(this.$store),
-				dataset: this.name
+				terms: this.terms,
+				dataset: this.dataset.name
 			});
 			this.$router.push(entry);
-			this.addRecentDataset(this.name);
+			this.addRecentDataset(this.dataset.name);
 		},
 		toggleExpansion() {
 			this.expanded = !this.expanded;
 		},
 		highlightedDescription(): string {
-			const terms = routeGetters.getRouteTerms(this.$store);
+			const terms = this.terms;
 			if (_.isEmpty(terms)) {
-				return this.description;
+				return this.dataset.description;
 			}
 			const split = terms.split(/[ ,]+/); // split on whitespace
 			const joined = split.join('|'); // join
 			const regex = new RegExp(`(${joined})(?![^<]*>)`, 'gm');
-			return this.description.replace(regex, '<span class="highlight">$1</span>');
+			return this.dataset.description.replace(regex, '<span class="highlight">$1</span>');
 		},
 		addRecentDataset(dataset: string) {
 			const datasets = localStorage.get('recent-datasets') || [];
@@ -128,12 +134,16 @@ export default Vue.extend({
 			}
 		},
 		importDataset() {
+			this.importPending = true;
 			datasetActions.importDataset(this.$store, {
-				datasetID: this.id
+				datasetID: this.dataset.id,
+				terms: this.terms
+			}).then(() => {
+				this.importPending = false;
 			});
 		},
 		joinDataset() {
-			this.$emit('join-dataset', this.name);
+			this.$emit('join-dataset', this.dataset.name);
 		}
 
 	}
@@ -167,5 +177,12 @@ export default Vue.extend({
 }
 .card-expanded {
 	padding-top: 15px;
+}
+.import-progress-bar {
+	position: relative;
+	width: 128px;
+}
+.import-progress-bar .progress {
+	height: 22px;
 }
 </style>

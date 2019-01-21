@@ -29,10 +29,7 @@
 			<div class="row flex-1 align-items-center justify-content-center">
 				<div class="col-4 mb-3" v-for="dataset in joiningDatasets">
 					<dataset-preview-card
-						:name="dataset.name"
-						:variables="dataset.variables"
-						:numBytes="dataset.numBytes"
-						:numRows="dataset.numRows">
+						:dataset="dataset">
 					</dataset-preview-card>
 				</div>
 				<div class="join-button col-2 mb-3" v-if="numJoiningDatasets === 2">

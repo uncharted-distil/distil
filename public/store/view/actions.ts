@@ -17,7 +17,8 @@ export const actions = {
 
 	fetchSearchData(context: ViewContext) {
 		const terms = context.getters.getRouteTerms;
-		return context.dispatch('datasetActions', terms);
+
+		return context.dispatch('searchDatasets', terms);
 	},
 
 	fetchJoinDatasetsData(context: ViewContext) {

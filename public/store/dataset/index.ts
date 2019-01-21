@@ -32,6 +32,7 @@ export interface Dataset {
 	numBytes: number;
 	numRows: number;
 	provenance: string;
+	source: string;
 }
 
 export interface Extrema {

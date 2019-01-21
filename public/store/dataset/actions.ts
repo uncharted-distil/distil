@@ -33,7 +33,6 @@ export const actions = {
 		const params = !_.isEmpty(terms) ? `?search=${terms}` : '';
 		return axios.get(`/distil/datasets${params}`)
 			.then(response => {
-				console.log(response.data.datasets);
 				mutations.setDatasets(context, response.data.datasets);
 			})
 			.catch(error => {
@@ -110,19 +109,21 @@ export const actions = {
 			});
 	},
 
-	importDataset(context: DatasetContext, args: { datasetID: string }): Promise<void>  {
+	importDataset(context: DatasetContext, args: { datasetID: string, terms: string }): Promise<void>  {
 		if (!args.datasetID) {
 			console.warn('`datasetID` argument is missing');
 			return null;
 		}
-
+		if (!args.terms) {
+			console.warn('`terms` argument is missing');
+			return null;
+		}
 		return axios.post(`/distil/import/${args.datasetID}/contrib`, {})
 			.then(response => {
-				mutations.setVariables(context, response.data.variables);
+				return context.dispatch('searchDatasets', args.terms);
 			})
 			.catch(error => {
 				console.error(error);
-				mutations.setVariables(context, []);
 			});
 	},
 

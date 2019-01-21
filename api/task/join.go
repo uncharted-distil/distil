@@ -173,7 +173,7 @@ func createDatasetFromCSV(config *env.Config, csvFile *os.File, datasetName stri
 	outputPath := outputResolver.ResolveOutputAbsolute(datasetName)
 
 	// save the metadata to the output dataset path
-	err = os.MkdirAll(outputPath, 0774)
+	err = os.MkdirAll(outputPath, os.ModePerm)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to create join dataset dir structure")
 	}

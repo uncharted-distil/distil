@@ -3,6 +3,7 @@ package routes
 import (
 	"net/http"
 	"net/url"
+	"sort"
 
 	"github.com/microcosm-cc/bluemonday"
 	"github.com/pkg/errors"
@@ -96,9 +97,37 @@ func DatasetsHandler(metaCtors []model.MetadataStorageCtor) func(http.ResponseWr
 			datasets = append(datasets, datasetsPart...)
 		}
 
+		// imported datasets override non-imported datasets
+		exists := make(map[string]*model.Dataset)
+		for _, dataset := range datasets {
+			existing, ok := exists[dataset.ID]
+			if !ok {
+				// we don't have it, add it
+				exists[dataset.ID] = dataset
+			} else {
+				// we already have it, if it is `dataset`, replace it
+				if existing.Provenance == "datamart" {
+					exists[dataset.ID] = dataset
+				}
+			}
+		}
+
+		var deconflicted []*model.Dataset
+		for _, dataset := range exists {
+			deconflicted = append(deconflicted, dataset)
+		}
+
+		// return ingested datasets first
+		sort.SliceStable(deconflicted, func(i, j int) bool {
+			if deconflicted[i].Provenance == "datamart" {
+				return false
+			}
+			return true
+		})
+
 		// marshal data
 		err = handleJSON(w, DatasetsResult{
-			Datasets: datasets,
+			Datasets: deconflicted,
 		})
 		if err != nil {
 			handleError(w, errors.Wrap(err, "unable marshal dataset result into JSON"))

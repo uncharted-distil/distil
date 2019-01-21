@@ -145,7 +145,7 @@ func main() {
 	// reset the exported problem list
 	if config.IsTask1 {
 		problemListingFile := path.Join(config.UserProblemPath, routes.ProblemLabelFile)
-		err = os.MkdirAll(config.UserProblemPath, 0755)
+		err = os.MkdirAll(config.UserProblemPath, os.ModePerm)
 		if err != nil {
 			log.Errorf("%+v", err)
 			os.Exit(1)
