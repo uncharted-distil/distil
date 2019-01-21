@@ -108,10 +108,10 @@ export default Vue.extend({
 		setActiveDataset() {
 			const entry = createRouteEntry(SELECT_TARGET_ROUTE, {
 				terms: this.terms,
-				dataset: this.dataset.name
+				dataset: this.dataset.id
 			});
 			this.$router.push(entry);
-			this.addRecentDataset(this.dataset.name);
+			this.addRecentDataset(this.dataset.id);
 		},
 		toggleExpansion() {
 			this.expanded = !this.expanded;
@@ -143,7 +143,7 @@ export default Vue.extend({
 			});
 		},
 		joinDataset() {
-			this.$emit('join-dataset', this.dataset.name);
+			this.$emit('join-dataset', this.dataset.id);
 		}
 
 	}

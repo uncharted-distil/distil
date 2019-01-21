@@ -1,7 +1,7 @@
 <template>
 	<b-card header="Recent Dataset">
 		<div v-if="recentDatasets.length === 0">None</div>
-		<b-list-group v-bind:key="dataset.name" v-for="dataset in recentDatasets">
+		<b-list-group v-bind:key="dataset.id" v-for="dataset in recentDatasets">
 			<dataset-preview
 				:dataset="dataset">
 			</dataset-preview>
@@ -46,7 +46,7 @@ export default Vue.extend({
 				return datasets;
 			}
 			const idSet = new Set(ids);
-			return _.filter(datasets, d => idSet.has(d.name));
+			return _.filter(datasets, d => idSet.has(d.id));
 		}
 	}
 

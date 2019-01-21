@@ -94,12 +94,12 @@ export default Vue.extend({
 		fetch() {
 			datasetActions.searchDatasets(this.$store, this.terms);
 		},
-		onJoin(name) {
+		onJoin(id) {
 			if (this.numJoiningDatasets !== 2) {
 				const dataset = _.find(this.datasets, d => {
-					return d.name === name;
+					return d.id === id;
 				});
-				Vue.set(this.joiningDatasets, name, dataset);
+				Vue.set(this.joiningDatasets, id, dataset);
 			}
 		},
 		closeJoin() {

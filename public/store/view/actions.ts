@@ -40,11 +40,11 @@ export const actions = {
 				const datasetB = datasets[datasetNames[1]];
 				return Promise.all([
 					context.dispatch('fetchVariableSummaries', {
-						dataset: datasetA.name,
+						dataset: datasetA.id,
 						variables: datasetA.variables
 					}),
 					context.dispatch('fetchVariableSummaries', {
-						dataset: datasetB.name,
+						dataset: datasetB.id,
 						variables: datasetB.variables
 					})
 				]).then(() => {
