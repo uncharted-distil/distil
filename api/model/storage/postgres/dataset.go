@@ -8,6 +8,10 @@ import (
 	"github.com/unchartedsoftware/distil-compute/model"
 )
 
+const (
+	maxBatchSize = 250
+)
+
 func (s *Storage) getViewField(name string, displayName string, typ string, defaultValue interface{}) string {
 	return fmt.Sprintf("COALESCE(CAST(\"%s\" AS %s), %v) AS \"%s\"",
 		name, typ, defaultValue, displayName)
@@ -225,6 +229,53 @@ func (s *Storage) UpdateVariable(storageName string, varName string, d3mIndex st
 	if err != nil {
 		return errors.Wrap(err, "Unable to update value stored in the database")
 	}
+
+	return nil
+}
+
+// UpdateVariableBatch batches updates for a variable to increase performance.
+func (s *Storage) UpdateVariableBatch(storageName string, varName string, updates map[string]string) error {
+	// A couple of approaches are possible:
+	// 1. Batch the updates in a string and send many updates at once to diminish network time.
+	// 2. Batch insert the updates to a temp table, send an update command where a join
+	//		between the original table and the temp table is done to get the new values
+	//		and then delete the temp table.
+
+	// loop through the updates, building batches to minimize overhead
+	db := s.client.GetUpdateClient()
+	dataSQL := ""
+	count := 0
+	params := make([]interface{}, 0)
+	for index, value := range updates {
+		dataSQL = fmt.Sprintf("%s UPDATE %s.%s.%s_base SET \"%s\" = ? WHERE \"%s\" = ?;",
+			dataSQL, "distil", "public", storageName, varName, model.D3MIndexName)
+		params = append(params, value)
+		params = append(params, index)
+		count = count + 1
+
+		if count > maxBatchSize {
+			// submit the batch
+			_, err := db.Exec(dataSQL, params...)
+			if err != nil {
+				return errors.Wrap(err, "unable to update batch")
+			}
+
+			// reset the batch
+			dataSQL = ""
+			count = 0
+			params = make([]interface{}, 0)
+		}
+	}
+
+	// submit remaining rows
+	if count > 0 {
+		_, err := db.Exec(dataSQL, params...)
+		if err != nil {
+			return errors.Wrap(err, "unable to update batch")
+		}
+	}
+
+	db.Close()
 
 	return nil
 }
