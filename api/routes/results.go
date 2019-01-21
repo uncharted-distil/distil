@@ -7,17 +7,18 @@ import (
 	"github.com/pkg/errors"
 	"goji.io/pat"
 
-	"github.com/unchartedsoftware/distil/api/model"
+	"github.com/unchartedsoftware/distil-compute/model"
+	api "github.com/unchartedsoftware/distil/api/model"
 )
 
 // Results represents a results response for a variable.
 type Results struct {
-	Results *model.FilteredData `json:"results"`
+	Results *api.FilteredData `json:"results"`
 }
 
 // ResultsHandler fetches predicted solution values and returns them to the client
 // in a JSON structure
-func ResultsHandler(solutionCtor model.SolutionStorageCtor, dataCtor model.DataStorageCtor) func(http.ResponseWriter, *http.Request) {
+func ResultsHandler(solutionCtor api.SolutionStorageCtor, dataCtor api.DataStorageCtor) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// parse POST params
 		params, err := getPostParameters(r)
@@ -27,13 +28,14 @@ func ResultsHandler(solutionCtor model.SolutionStorageCtor, dataCtor model.DataS
 		}
 
 		// get variable names and ranges out of the params
-		filterParams, err := model.ParseFilterParamsFromJSON(params)
+		filterParams, err := api.ParseFilterParamsFromJSON(params)
 		if err != nil {
 			handleError(w, err)
 			return
 		}
 
 		dataset := pat.Param(r, "dataset")
+		storageName := model.NormalizeDatasetID(dataset)
 
 		solutionID, err := url.PathUnescape(pat.Param(r, "solution-id"))
 		if err != nil {
@@ -80,7 +82,7 @@ func ResultsHandler(solutionCtor model.SolutionStorageCtor, dataCtor model.DataS
 			return
 		}
 
-		results, err := data.FetchResults(dataset, res.ResultURI, solutionID, filterParams)
+		results, err := data.FetchResults(dataset, storageName, res.ResultURI, solutionID, filterParams)
 		if err != nil {
 			handleError(w, err)
 			return

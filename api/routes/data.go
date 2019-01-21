@@ -4,13 +4,14 @@ import (
 	"net/http"
 
 	"github.com/pkg/errors"
-	"github.com/unchartedsoftware/distil/api/model"
+	"github.com/unchartedsoftware/distil-compute/model"
+	api "github.com/unchartedsoftware/distil/api/model"
 	"github.com/unchartedsoftware/distil/api/util/json"
 	"goji.io/pat"
 )
 
 // DataHandler creates a route that fetches filtered data from backing storage instance.
-func DataHandler(storageCtor model.DataStorageCtor, metaCtor model.MetadataStorageCtor) func(http.ResponseWriter, *http.Request) {
+func DataHandler(storageCtor api.DataStorageCtor, metaCtor api.MetadataStorageCtor) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// parse POST params
 		params, err := getPostParameters(r)
@@ -20,7 +21,7 @@ func DataHandler(storageCtor model.DataStorageCtor, metaCtor model.MetadataStora
 		}
 
 		// get variable names and ranges out of the params
-		filterParams, err := model.ParseFilterParamsFromJSON(params)
+		filterParams, err := api.ParseFilterParamsFromJSON(params)
 		if err != nil {
 			handleError(w, err)
 			return
@@ -41,7 +42,8 @@ func DataHandler(storageCtor model.DataStorageCtor, metaCtor model.MetadataStora
 		}
 
 		// fetch filtered data based on the supplied search parameters
-		data, err := storage.FetchData(dataset, filterParams, invertBool)
+		storageName := model.NormalizeDatasetID(dataset)
+		data, err := storage.FetchData(dataset, storageName, filterParams, invertBool)
 		if err != nil {
 			handleError(w, errors.Wrap(err, "unable fetch filtered data"))
 			return

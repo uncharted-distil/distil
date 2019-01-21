@@ -11,6 +11,7 @@ import (
 	"os"
 
 	"github.com/pkg/errors"
+	"github.com/unchartedsoftware/distil/api/middleware"
 )
 
 // ClientCtor repressents a client constructor to instantiate a rest client.
@@ -30,6 +31,33 @@ func NewClient(endpoint string) ClientCtor {
 	}
 }
 
+// Get performs a get using the provided params as query string parameters.
+func (c *Client) Get(function string, params map[string]string) ([]byte, error) {
+	url := fmt.Sprintf("%s/%s", c.BaseEndpoint, function)
+	queryString := ""
+	for name, value := range params {
+		queryString = fmt.Sprintf("%s&%s=%s", queryString, name, value)
+	}
+	// skip first &
+	if len(queryString) > 0 {
+		queryString = queryString[1:]
+		url = fmt.Sprintf("%s?%s", url, queryString)
+	}
+
+	resp, err := http.Get(url)
+	if err != nil {
+		return nil, errors.Wrap(err, "unable to get result from json post")
+	}
+	defer resp.Body.Close()
+
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return nil, errors.Wrap(err, "unable to read response body")
+	}
+
+	return body, nil
+}
+
 // PostJSON posts json data to a URI.
 func (c *Client) PostJSON(function string, json []byte) ([]byte, error) {
 	url := fmt.Sprintf("%s/%s", c.BaseEndpoint, function)
@@ -39,7 +67,7 @@ func (c *Client) PostJSON(function string, json []byte) ([]byte, error) {
 	}
 	req.Header.Set("Content-Type", "application/json")
 
-	client := &http.Client{}
+	client := middleware.LoggingClient{}
 	resp, err := client.Do(req)
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to get result from json post")
@@ -91,7 +119,7 @@ func (c *Client) PostFile(function string, filename string, params map[string]st
 	}
 	req.Header.Set("Content-Type", w.FormDataContentType())
 
-	client := &http.Client{}
+	client := &middleware.LoggingClient{}
 	res, err := client.Do(req)
 	if err != nil {
 		return nil, errors.Wrap(err, "Unable to post request")
@@ -131,7 +159,7 @@ func (c *Client) PostRequest(function string, params map[string]string) ([]byte,
 	}
 	req.Header.Set("Content-Type", w.FormDataContentType())
 
-	client := &http.Client{}
+	client := &middleware.LoggingClient{}
 	res, err := client.Do(req)
 	if err != nil {
 		return nil, errors.Wrap(err, "Unable to post request")

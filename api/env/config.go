@@ -24,6 +24,7 @@ type Config struct {
 	D3MInputDir                        string  `env:"D3MINPUTDIR" envDefault:""`
 	D3MInputDirRoot                    string  `env:"D3MINPUTDIR_ROOT" envDefault:"datasets"`
 	DatamartURI                        string  `env:"DATAMART_URI" envDefault:"https://datamart.d3m.vida-nyu.org"`
+	DatamartImportFolder               string  `env:"DATAMART_IMPORT_FOLDER" envDefault:"/data/datamart"`
 	SolutionComputeTrace               bool    `env:"SOLUTION_COMPUTE_TRACE" envDefault:"false"`
 	D3MOutputDir                       string  `env:"D3MOUTPUTDIR" envDefault:"outputs"`
 	PostgresHost                       string  `env:"PG_HOST" envDefault:"localhost"`
@@ -39,18 +40,20 @@ type Config struct {
 	ClusteringEnabled                  bool    `env:"CLUSTERING_ENABLED" envDefault:"false"`
 	FeaturizationOutputDataRelative    string  `env:"FEATURIZATION_OUTPUT_DATA" envDefault:"features/tables/learningData.csv"`
 	FeaturizationOutputSchemaRelative  string  `env:"FEATURIZATION_OUTPUT_SCHEMA" envDefault:"features/datasetDoc.json"`
+	FormatOutputDataRelative           string  `env:"FORMAT_OUTPUT_DATA" envDefault:"format/tables/learningData.csv"`
+	FormatOutputSchemaRelative         string  `env:"FORMAT_OUTPUT_SCHEMA" envDefault:"format/datasetDoc.json"`
 	GeocodingOutputDataRelative        string  `env:"FEATURIZATION_OUTPUT_DATA" envDefault:"geocoded/tables/learningData.csv"`
 	GeocodingOutputSchemaRelative      string  `env:"FEATURIZATION_OUTPUT_SCHEMA" envDefault:"geocoded/datasetDoc.json"`
 	MergedOutputDataPath               string  `env:"MERGED_OUTPUT_DATA_PATH" envDefault:"merged/tables/learningData.csv"`
 	MergedOutputSchemaPath             string  `env:"MERGED_OUTPUT_SCHEMA_PATH" envDefault:"merged/datasetDoc.json"`
 	SchemaPath                         string  `env:"SCHEMA_PATH" envDefault:"datasetDoc.json"`
-	ClassificationOutputPath           string  `env:"CLASSIFICATION_OUTPUT_PATH" envDefault:"tables/classification.json"`
+	ClassificationOutputPath           string  `env:"CLASSIFICATION_OUTPUT_PATH" envDefault:"merged/classification.json"`
 	ClassificationProbabilityThreshold float64 `env:"CLASSIFICATION_PROBABILITY_THRESHOLD" envDefault:"0.8"`
 	ClassificationEnabled              bool    `env:"CLASSIFICATION_ENABLED" envDefault:"true"`
-	RankingOutputPath                  string  `env:"RANKING_OUTPUT_PATH" envDefault:"tables/importance.json"`
+	RankingOutputPath                  string  `env:"RANKING_OUTPUT_PATH" envDefault:"merged/importance.json"`
 	RankingRowLimit                    int     `env:"RANKING_ROW_LIMIT" envDefault:"1000"`
 	SummaryPath                        string  `env:"SUMMARY_PATH" envDefault:"summary.txt"`
-	SummaryMachinePath                 string  `env:"SUMMARY_MACHINE_PATH" envDefault:"summary-machine.json"`
+	SummaryMachinePath                 string  `env:"SUMMARY_MACHINE_PATH" envDefault:"merged/summary-machine.json"`
 	ElasticTimeout                     int     `env:"ES_TIMEOUT" envDefault:"300"`
 	ElasticDatasetPrefix               string  `env:"ES_DATASET_PREFIX" envDefault:"d_"`
 	InitialDataset                     string  `env:"INITIAL_DATASET" envDefault:""`

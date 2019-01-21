@@ -14,18 +14,18 @@ import (
 
 // DateTimeField defines behaviour for the numerical field type.
 type DateTimeField struct {
-	Storage   *Storage
-	Dataset   string
-	Variable  *model.Variable
-	subSelect func() string
+	Storage     *Storage
+	StorageName string
+	Variable    *model.Variable
+	subSelect   func() string
 }
 
 // NewDateTimeField creates a new field for numerical types.
-func NewDateTimeField(storage *Storage, dataset string, variable *model.Variable) *DateTimeField {
+func NewDateTimeField(storage *Storage, storageName string, variable *model.Variable) *DateTimeField {
 	field := &DateTimeField{
-		Storage:  storage,
-		Dataset:  dataset,
-		Variable: variable,
+		Storage:     storage,
+		StorageName: storageName,
+		Variable:    variable,
 	}
 
 	return field
@@ -33,12 +33,12 @@ func NewDateTimeField(storage *Storage, dataset string, variable *model.Variable
 
 // NewDateTimeFieldSubSelect creates a new field for numerical types
 // and specifies a sub select query to pull the raw data.
-func NewDateTimeFieldSubSelect(storage *Storage, dataset string, variable *model.Variable, fieldSubSelect func() string) *DateTimeField {
+func NewDateTimeFieldSubSelect(storage *Storage, storageName string, variable *model.Variable, fieldSubSelect func() string) *DateTimeField {
 	field := &DateTimeField{
-		Storage:   storage,
-		Dataset:   dataset,
-		Variable:  variable,
-		subSelect: fieldSubSelect,
+		Storage:     storage,
+		StorageName: storageName,
+		Variable:    variable,
+		subSelect:   fieldSubSelect,
 	}
 
 	return field
@@ -68,7 +68,7 @@ func (f *DateTimeField) fetchHistogram(filterParams *api.FilterParams) (*api.His
 	// create the filter for the query.
 	wheres := make([]string, 0)
 	params := make([]interface{}, 0)
-	wheres, params = f.Storage.buildFilteredQueryWhere(wheres, params, f.Dataset, filterParams.Filters)
+	wheres, params = f.Storage.buildFilteredQueryWhere(wheres, params, filterParams.Filters)
 
 	// need the extrema to calculate the histogram interval
 	extrema, err := f.fetchExtrema()
@@ -105,7 +105,7 @@ func (f *DateTimeField) fetchHistogramByResult(resultURI string, filterParams *a
 	fromClause := f.getFromClause(false)
 
 	// get filter where / params
-	wheres, params, err := f.Storage.buildResultQueryFilters(f.Dataset, resultURI, filterParams)
+	wheres, params, err := f.Storage.buildResultQueryFilters(f.StorageName, resultURI, filterParams)
 	if err != nil {
 		return nil, err
 	}
@@ -139,7 +139,7 @@ func (f *DateTimeField) fetchHistogramByResult(resultURI string, filterParams *a
 		GROUP BY %s
 		ORDER BY %s;`,
 		bucketQuery, histogramQuery, histogramName, fromClause,
-		f.Storage.getResultTable(f.Dataset), model.D3MIndexFieldName, len(params), where, bucketQuery, histogramName)
+		f.Storage.getResultTable(f.StorageName), model.D3MIndexFieldName, len(params), where, bucketQuery, histogramName)
 
 	// execute the postgres query
 	res, err := f.Storage.client.Query(query, params...)
@@ -314,7 +314,7 @@ func (f *DateTimeField) fetchExtremaByURI(resultURI string) (*api.Extrema, error
 
 	// create a query that does min and max aggregations for each variable
 	queryString := fmt.Sprintf("SELECT %s FROM %s data INNER JOIN %s result ON data.\"%s\" = result.index WHERE result.result_id = $1;",
-		aggQuery, fromClause, f.Storage.getResultTable(f.Dataset), model.D3MIndexFieldName)
+		aggQuery, fromClause, f.Storage.getResultTable(f.StorageName), model.D3MIndexFieldName)
 
 	// execute the postgres query
 	// NOTE: We may want to use the regular Query operation since QueryRow
@@ -354,7 +354,7 @@ func (f *DateTimeField) FetchPredictedSummaryData(resultURI string, datasetResul
 	histogramName, bucketQuery, histogramQuery := f.getResultHistogramAggQuery(extrema, resultVariable)
 
 	// get filter where / params
-	wheres, params, err := f.Storage.buildResultQueryFilters(f.Dataset, resultURI, filterParams)
+	wheres, params, err := f.Storage.buildResultQueryFilters(f.StorageName, resultURI, filterParams)
 	if err != nil {
 		return nil, err
 	}
@@ -369,7 +369,7 @@ func (f *DateTimeField) FetchPredictedSummaryData(resultURI string, datasetResul
 		WHERE %s
 		GROUP BY %s
 		ORDER BY %s;`,
-		bucketQuery, histogramQuery, histogramName, f.Dataset, datasetResult,
+		bucketQuery, histogramQuery, histogramName, f.StorageName, datasetResult,
 		model.D3MIndexFieldName, strings.Join(wheres, " AND "), bucketQuery, histogramName)
 
 	// execute the postgres query
@@ -439,11 +439,11 @@ func (f *DateTimeField) fetchResultsExtrema(resultURI string, dataset string, re
 }
 
 func (f *DateTimeField) getFromClause(alias bool) string {
-	fromClause := f.Dataset
+	fromClause := f.StorageName
 	if f.subSelect != nil {
 		fromClause = f.subSelect()
 		if alias {
-			fromClause = fmt.Sprintf("%s as nested INNER JOIN %s as data on nested.\"%s\" = data.\"%s\"", fromClause, f.Dataset, model.D3MIndexFieldName, model.D3MIndexFieldName)
+			fromClause = fmt.Sprintf("%s as nested INNER JOIN %s as data on nested.\"%s\" = data.\"%s\"", fromClause, f.StorageName, model.D3MIndexFieldName, model.D3MIndexFieldName)
 			//fromClause = fmt.Sprintf("%s as %s", fromClause, f.Dataset)
 		}
 	}

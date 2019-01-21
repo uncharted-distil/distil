@@ -21,23 +21,23 @@ var (
 )
 
 // Featurize will featurize the dataset fields using a primitive.
-func Featurize(schemaFile string, index string, dataset string, config *IngestTaskConfig) error {
-	outputPath, err := initializeDatasetCopy(schemaFile, config.FeaturizationOutputSchemaRelative, config.FeaturizationOutputDataRelative, config)
+func Featurize(schemaFile string, index string, dataset string, config *IngestTaskConfig) (string, error) {
+	outputPath, err := initializeDatasetCopy(schemaFile, dataset, config.FeaturizationOutputSchemaRelative, config.FeaturizationOutputDataRelative, config)
 	if err != nil {
-		return errors.Wrap(err, "unable to copy source data folder")
+		return "", errors.Wrap(err, "unable to copy source data folder")
 	}
 
 	// load metadata from original schema
 	meta, err := metadata.LoadMetadataFromOriginalSchema(schemaFile)
 	if err != nil {
-		return errors.Wrap(err, "unable to load original schema file")
+		return "", errors.Wrap(err, "unable to load original schema file")
 	}
 	mainDR := meta.GetMainDataResource()
 
 	// add feature variables
 	features, err := getFeatureVariables(meta, model.FeatureVarPrefix)
 	if err != nil {
-		return errors.Wrap(err, "unable to get feature variables")
+		return "", errors.Wrap(err, "unable to get feature variables")
 	}
 
 	d3mIndexField := getD3MIndexField(mainDR)
@@ -46,7 +46,7 @@ func Featurize(schemaFile string, index string, dataset string, config *IngestTa
 	dataPath := path.Join(outputPath.sourceFolder, mainDR.ResPath)
 	lines, err := ReadCSVFile(dataPath, config.HasHeader)
 	if err != nil {
-		return errors.Wrap(err, "error reading raw data")
+		return "", errors.Wrap(err, "error reading raw data")
 	}
 
 	// add the cluster data to the raw data
@@ -56,7 +56,7 @@ func Featurize(schemaFile string, index string, dataset string, config *IngestTa
 		// header already removed, lines does not have a header
 		lines, err = appendFeature(dataset, d3mIndexField, false, f, lines)
 		if err != nil {
-			return errors.Wrap(err, "error appending feature data")
+			return "", errors.Wrap(err, "error appending feature data")
 		}
 	}
 
@@ -71,7 +71,7 @@ func Featurize(schemaFile string, index string, dataset string, config *IngestTa
 	}
 	err = writer.Write(header)
 	if err != nil {
-		return errors.Wrap(err, "error storing feature header")
+		return "", errors.Wrap(err, "error storing feature header")
 	}
 
 	// parse the raw output and write the line out
@@ -80,34 +80,34 @@ func Featurize(schemaFile string, index string, dataset string, config *IngestTa
 			fieldIndex := len(line) - 1
 			p, err := parseFeatureOutput(line[fieldIndex])
 			if err != nil {
-				return errors.Wrap(err, "unable to parse raw feature output")
+				return "", errors.Wrap(err, "unable to parse raw feature output")
 			}
 			line[fieldIndex] = p
 		}
 
 		err = writer.Write(line)
 		if err != nil {
-			return errors.Wrap(err, "error storing feature output")
+			return "", errors.Wrap(err, "error storing feature output")
 		}
 	}
 
 	// output the data with the new feature
 	writer.Flush()
-	err = util.WriteFileWithDirs(config.GetTmpAbsolutePath(config.FeaturizationOutputDataRelative), output.Bytes(), os.ModePerm)
+	err = util.WriteFileWithDirs(outputPath.outputData, output.Bytes(), os.ModePerm)
 	if err != nil {
-		return errors.Wrap(err, "error writing feature output")
+		return "", errors.Wrap(err, "error writing feature output")
 	}
 
 	relativePath := getRelativePath(path.Dir(outputPath.outputSchema), outputPath.outputData)
 	mainDR.ResPath = relativePath
 
 	// write the new schema to file
-	err = metadata.WriteSchema(meta, config.GetTmpAbsolutePath(config.FeaturizationOutputSchemaRelative))
+	err = metadata.WriteSchema(meta, outputPath.outputSchema)
 	if err != nil {
-		return errors.Wrap(err, "unable to store feature schema")
+		return "", errors.Wrap(err, "unable to store feature schema")
 	}
 
-	return nil
+	return outputPath.outputSchema, nil
 }
 
 func parseFeatureOutput(field string) (string, error) {

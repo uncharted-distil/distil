@@ -10,15 +10,16 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/otiai10/copy"
 	"github.com/pkg/errors"
 	"github.com/unchartedsoftware/distil-compute/model"
 	"github.com/unchartedsoftware/distil-compute/pipeline"
 	"github.com/unchartedsoftware/distil-compute/primitive/compute"
 	"github.com/unchartedsoftware/distil-compute/primitive/compute/description"
 	"github.com/unchartedsoftware/distil-compute/primitive/compute/result"
+	log "github.com/unchartedsoftware/plog"
 
 	"github.com/unchartedsoftware/distil/api/env"
+	"github.com/unchartedsoftware/distil/api/util"
 )
 
 const (
@@ -374,14 +375,15 @@ func getRelativePath(rootPath string, filePath string) string {
 	return relativePath
 }
 
-func initializeDatasetCopy(dataset string, schemaPathRelative string, dataPathRelative string, config *IngestTaskConfig) (*datasetCopyPath, error) {
-	sourceFolder := path.Dir(dataset)
-	outputSchemaPath := config.GetTmpAbsolutePath(schemaPathRelative)
-	outputDataPath := config.GetTmpAbsolutePath(dataPathRelative)
+func initializeDatasetCopy(schemaFile string, dataset string, schemaPathRelative string, dataPathRelative string, config *IngestTaskConfig) (*datasetCopyPath, error) {
+	sourceFolder := path.Dir(schemaFile)
+	outputSchemaPath := config.GetTmpAbsolutePath(path.Join(dataset, schemaPathRelative))
+	outputDataPath := config.GetTmpAbsolutePath(path.Join(dataset, dataPathRelative))
 	outputFolder := path.Dir(outputSchemaPath)
 
 	// copy the source folder to have all the linked files for merging
-	err := copy.Copy(sourceFolder, outputFolder)
+	log.Infof("COPYING FROM %s to %s", sourceFolder, outputFolder)
+	err := util.Copy(sourceFolder, outputFolder)
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to copy source data")
 	}

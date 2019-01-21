@@ -9,6 +9,7 @@ import (
 	"github.com/pkg/errors"
 	"goji.io/pat"
 
+	"github.com/unchartedsoftware/distil-compute/model"
 	api "github.com/unchartedsoftware/distil/api/model"
 )
 
@@ -24,6 +25,7 @@ func VariableTypeHandler(storageCtor api.DataStorageCtor, metaCtor api.MetadataS
 		field := params["field"].(string)
 		typ := params["type"].(string)
 		dataset := pat.Param(r, "dataset")
+		storageName := model.NormalizeDatasetID(dataset)
 
 		// get clients
 		storage, err := storageCtor()
@@ -38,7 +40,7 @@ func VariableTypeHandler(storageCtor api.DataStorageCtor, metaCtor api.MetadataS
 		}
 
 		// update the variable type in the storage
-		err = storage.SetDataType(dataset, field, typ)
+		err = storage.SetDataType(dataset, storageName, field, typ)
 		if err != nil {
 			handleError(w, errors.Wrap(err, "unable to update the data type in storage"))
 			return

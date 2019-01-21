@@ -52,6 +52,7 @@ func (s *Storage) isBadSolution(solution *api.Solution) (bool, error) {
 	}
 
 	dataset := request.Dataset
+	storageName := model.NormalizeDatasetID(request.Dataset)
 	target := request.TargetFeature()
 
 	// check target var type
@@ -63,10 +64,10 @@ func (s *Storage) isBadSolution(solution *api.Solution) (bool, error) {
 	if !model.IsNumerical(variable.Type) {
 		return false, nil
 	}
-	f := NewNumericalField(s, dataset, variable)
+	f := NewNumericalField(s, storageName, variable)
 
 	// predicted extrema
-	predictedExtrema, err := s.FetchResultsExtremaByURI(dataset, solution.Result.ResultURI)
+	predictedExtrema, err := s.FetchResultsExtremaByURI(dataset, storageName, solution.Result.ResultURI)
 	if err != nil {
 		return false, err
 	}

@@ -19,10 +19,10 @@ func (s *Storage) getResultTable(dataset string) string {
 	return fmt.Sprintf("%s_result", dataset)
 }
 
-func (s *Storage) getResultTargetName(dataset string, resultURI string) (string, error) {
+func (s *Storage) getResultTargetName(storageName string, resultURI string) (string, error) {
 	// Assume only a single target / result. Read the target name from the
 	// database table.
-	sql := fmt.Sprintf("SELECT target FROM %s WHERE result_id = $1 LIMIT 1;", dataset)
+	sql := fmt.Sprintf("SELECT target FROM %s WHERE result_id = $1 LIMIT 1;", storageName)
 
 	rows, err := s.client.Query(sql, resultURI)
 	if err != nil {
@@ -53,7 +53,7 @@ func (s *Storage) getResultTargetVariable(dataset string, targetName string) (*m
 }
 
 // PersistResult stores the solution result to Postgres.
-func (s *Storage) PersistResult(dataset string, resultURI string, target string) error {
+func (s *Storage) PersistResult(dataset string, storageName string, resultURI string, target string) error {
 	// Read the results file.
 	file, err := os.Open(resultURI)
 	if err != nil {
@@ -111,7 +111,7 @@ func (s *Storage) PersistResult(dataset string, resultURI string, target string)
 		}
 
 		// store the result to the storage
-		err = s.executeInsertResultStatement(dataset, resultURI, parsedVal, targetName, records[i][targetIndex])
+		err = s.executeInsertResultStatement(storageName, resultURI, parsedVal, targetName, records[i][targetIndex])
 		if err != nil {
 			return errors.Wrap(err, "failed to insert result in database")
 		}
@@ -120,15 +120,15 @@ func (s *Storage) PersistResult(dataset string, resultURI string, target string)
 	return nil
 }
 
-func (s *Storage) executeInsertResultStatement(dataset string, resultID string, index int64, target string, value string) error {
-	statement := fmt.Sprintf("INSERT INTO %s (result_id, index, target, value) VALUES ($1, $2, $3, $4);", s.getResultTable(dataset))
+func (s *Storage) executeInsertResultStatement(storageName string, resultID string, index int64, target string, value string) error {
+	statement := fmt.Sprintf("INSERT INTO %s (result_id, index, target, value) VALUES ($1, $2, $3, $4);", s.getResultTable(storageName))
 
 	_, err := s.client.Exec(statement, resultID, index, target, value)
 
 	return err
 }
 
-func (s *Storage) parseFilteredResults(dataset string, variables []*model.Variable, numRows int, rows *pgx.Rows, target *model.Variable) (*api.FilteredData, error) {
+func (s *Storage) parseFilteredResults(variables []*model.Variable, numRows int, rows *pgx.Rows, target *model.Variable) (*api.FilteredData, error) {
 	result := &api.FilteredData{
 		NumRows: numRows,
 		Values:  make([][]interface{}, 0),
@@ -229,7 +229,7 @@ func addExcludeCorrectnessFilterToWhere(wheres []string, params []interface{}, c
 	return wheres, params, nil
 }
 
-func addIncludePredictedFilterToWhere(wheres []string, params []interface{}, dataset string, predictedFilter *model.Filter, target *model.Variable) ([]string, []interface{}, error) {
+func addIncludePredictedFilterToWhere(wheres []string, params []interface{}, predictedFilter *model.Filter, target *model.Variable) ([]string, []interface{}, error) {
 	// Handle the predicted column, which is accessed as `value` in the result query
 	where := ""
 	switch predictedFilter.Type {
@@ -287,7 +287,7 @@ func addIncludePredictedFilterToWhere(wheres []string, params []interface{}, dat
 	return wheres, params, nil
 }
 
-func addExcludePredictedFilterToWhere(wheres []string, params []interface{}, dataset string, predictedFilter *model.Filter, target *model.Variable) ([]string, []interface{}, error) {
+func addExcludePredictedFilterToWhere(wheres []string, params []interface{}, predictedFilter *model.Filter, target *model.Variable) ([]string, []interface{}, error) {
 	// Handle the predicted column, which is accessed as `value` in the result query
 	where := ""
 	switch predictedFilter.Type {
@@ -346,7 +346,7 @@ func addExcludePredictedFilterToWhere(wheres []string, params []interface{}, dat
 	return wheres, params, nil
 }
 
-func addIncludeErrorFilterToWhere(wheres []string, params []interface{}, dataset string, targetName string, residualFilter *model.Filter) ([]string, []interface{}, error) {
+func addIncludeErrorFilterToWhere(wheres []string, params []interface{}, targetName string, residualFilter *model.Filter) ([]string, []interface{}, error) {
 	// Add a clause to filter residuals to the existing where
 	typedError := getErrorTyped(targetName)
 	where := fmt.Sprintf("(%s >= $%d AND %s <= $%d)", typedError, len(params)+1, typedError, len(params)+2)
@@ -358,7 +358,7 @@ func addIncludeErrorFilterToWhere(wheres []string, params []interface{}, dataset
 	return wheres, params, nil
 }
 
-func addExcludeErrorFilterToWhere(wheres []string, params []interface{}, dataset string, targetName string, residualFilter *model.Filter) ([]string, []interface{}, error) {
+func addExcludeErrorFilterToWhere(wheres []string, params []interface{}, targetName string, residualFilter *model.Filter) ([]string, []interface{}, error) {
 	// Add a clause to filter residuals to the existing where
 	typedError := getErrorTyped(targetName)
 	where := fmt.Sprintf("(%s < $%d OR %s > $%d)", typedError, len(params)+1, typedError, len(params)+2)
@@ -371,9 +371,9 @@ func addExcludeErrorFilterToWhere(wheres []string, params []interface{}, dataset
 }
 
 // FetchResults pulls the results from the Postgres database.
-func (s *Storage) FetchResults(dataset string, resultURI string, solutionID string, filterParams *api.FilterParams) (*api.FilteredData, error) {
-	datasetResult := s.getResultTable(dataset)
-	targetName, err := s.getResultTargetName(datasetResult, resultURI)
+func (s *Storage) FetchResults(dataset string, storageName string, resultURI string, solutionID string, filterParams *api.FilterParams) (*api.FilteredData, error) {
+	storageNameResult := s.getResultTable(storageName)
+	targetName, err := s.getResultTargetName(storageNameResult, resultURI)
 	if err != nil {
 		return nil, err
 	}
@@ -391,7 +391,7 @@ func (s *Storage) FetchResults(dataset string, resultURI string, solutionID stri
 	}
 
 	// generate variable list for inclusion in query select
-	fields, err := s.buildFilteredResultQueryField(dataset, variables, variable, filterParams.Variables)
+	fields, err := s.buildFilteredResultQueryField(variables, variable, filterParams.Variables)
 	if err != nil {
 		return nil, errors.Wrap(err, "Could not build field list")
 	}
@@ -402,17 +402,17 @@ func (s *Storage) FetchResults(dataset string, resultURI string, solutionID stri
 	// Create the filter portion of the where clause.
 	wheres := make([]string, 0)
 	params := make([]interface{}, 0)
-	wheres, params = s.buildFilteredQueryWhere(wheres, params, dataset, filters.genericFilters)
+	wheres, params = s.buildFilteredQueryWhere(wheres, params, filters.genericFilters)
 
 	// Add the predicted filter into the where clause if it was included in the filter set
 	if filters.predictedFilter != nil {
 		if filters.predictedFilter.Mode == model.IncludeFilter {
-			wheres, params, err = addIncludePredictedFilterToWhere(wheres, params, dataset, filters.predictedFilter, variable)
+			wheres, params, err = addIncludePredictedFilterToWhere(wheres, params, filters.predictedFilter, variable)
 			if err != nil {
 				return nil, errors.Wrap(err, "Could not add result to where clause")
 			}
 		} else {
-			wheres, params, err = addExcludePredictedFilterToWhere(wheres, params, dataset, filters.predictedFilter, variable)
+			wheres, params, err = addExcludePredictedFilterToWhere(wheres, params, filters.predictedFilter, variable)
 			if err != nil {
 				return nil, errors.Wrap(err, "Could not add result to where clause")
 			}
@@ -437,12 +437,12 @@ func (s *Storage) FetchResults(dataset string, resultURI string, solutionID stri
 	// Add the error filter into the where clause if it was included in the filter set
 	if filters.residualFilter != nil {
 		if filters.residualFilter.Mode == model.IncludeFilter {
-			wheres, params, err = addIncludeErrorFilterToWhere(wheres, params, dataset, targetName, filters.residualFilter)
+			wheres, params, err = addIncludeErrorFilterToWhere(wheres, params, targetName, filters.residualFilter)
 			if err != nil {
 				return nil, errors.Wrap(err, "Could not add error to where clause")
 			}
 		} else {
-			wheres, params, err = addExcludeErrorFilterToWhere(wheres, params, dataset, targetName, filters.residualFilter)
+			wheres, params, err = addExcludeErrorFilterToWhere(wheres, params, targetName, filters.residualFilter)
 			if err != nil {
 				return nil, errors.Wrap(err, "Could not add error to where clause")
 			}
@@ -466,7 +466,7 @@ func (s *Storage) FetchResults(dataset string, resultURI string, solutionID stri
 			"%s "+
 			"FROM %s as predicted inner join %s as data on data.\"%s\" = predicted.index "+
 			"WHERE result_id = $%d AND target = $%d",
-		predictedCol, targetName, targetCol, errorExpr, fields, datasetResult, dataset,
+		predictedCol, targetName, targetCol, errorExpr, fields, storageNameResult, storageName,
 		model.D3MIndexFieldName, len(params)+1, len(params)+2)
 
 	params = append(params, resultURI)
@@ -488,12 +488,12 @@ func (s *Storage) FetchResults(dataset string, resultURI string, solutionID stri
 	countFilter := map[string]interface{}{
 		"result_id": resultURI,
 	}
-	numRows, err := s.FetchNumRows(datasetResult, countFilter)
+	numRows, err := s.FetchNumRows(storageNameResult, countFilter)
 	if err != nil {
 		return nil, errors.Wrap(err, "Could not pull num rows")
 	}
 
-	return s.parseFilteredResults(dataset, variables, numRows, rows, variable)
+	return s.parseFilteredResults(variables, numRows, rows, variable)
 }
 
 func (s *Storage) getResultMinMaxAggsQuery(variable *model.Variable, resultVariable *model.Variable) string {
@@ -528,9 +528,9 @@ func (s *Storage) fetchResultsExtrema(resultURI string, dataset string, variable
 }
 
 // FetchResultsExtremaByURI fetches the results extrema by resultURI.
-func (s *Storage) FetchResultsExtremaByURI(dataset string, resultURI string) (*api.Extrema, error) {
-	datasetResult := s.getResultTable(dataset)
-	targetName, err := s.getResultTargetName(datasetResult, resultURI)
+func (s *Storage) FetchResultsExtremaByURI(dataset string, storageName string, resultURI string) (*api.Extrema, error) {
+	storageNameResult := s.getResultTable(storageName)
+	targetName, err := s.getResultTargetName(storageNameResult, resultURI)
 	if err != nil {
 		return nil, err
 	}
@@ -543,15 +543,15 @@ func (s *Storage) FetchResultsExtremaByURI(dataset string, resultURI string) (*a
 		Type: model.TextType,
 	}
 
-	field := NewNumericalField(s, dataset, targetVariable)
-	return field.fetchResultsExtrema(resultURI, datasetResult, resultVariable)
+	field := NewNumericalField(s, storageName, targetVariable)
+	return field.fetchResultsExtrema(resultURI, storageNameResult, resultVariable)
 }
 
 // FetchPredictedSummary gets the summary data about a target variable from the
 // results table.
-func (s *Storage) FetchPredictedSummary(dataset string, resultURI string, filterParams *api.FilterParams, extrema *api.Extrema) (*api.Histogram, error) {
-	datasetResult := s.getResultTable(dataset)
-	targetName, err := s.getResultTargetName(datasetResult, resultURI)
+func (s *Storage) FetchPredictedSummary(dataset string, storageName string, resultURI string, filterParams *api.FilterParams, extrema *api.Extrema) (*api.Histogram, error) {
+	storageNameResult := s.getResultTable(storageName)
+	targetName, err := s.getResultTargetName(storageNameResult, resultURI)
 	if err != nil {
 		return nil, err
 	}
@@ -574,7 +574,7 @@ func (s *Storage) FetchPredictedSummary(dataset string, resultURI string, filter
 		return nil, errors.Errorf("variable %s of type %s does not support summary", variable.Name, variable.Type)
 	}
 
-	histogram, err = field.FetchPredictedSummaryData(resultURI, datasetResult, filterParams, extrema)
+	histogram, err = field.FetchPredictedSummaryData(resultURI, storageNameResult, filterParams, extrema)
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to fetch result summary")
 	}
@@ -585,7 +585,7 @@ func (s *Storage) FetchPredictedSummary(dataset string, resultURI string, filter
 	}
 
 	// get number of rows
-	numRows, err := s.FetchNumRows(datasetResult, filter)
+	numRows, err := s.FetchNumRows(storageNameResult, filter)
 	if err != nil {
 		return nil, err
 	}

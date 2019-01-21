@@ -92,7 +92,7 @@ func join(joinLeft *JoinSpec, joinRight *JoinSpec, varsLeft []*model.Variable, v
 func createResolver(datasetSource ingestMetadata.DatasetSource, config *env.Config) *util.PathResolver {
 	if datasetSource == ingestMetadata.Contrib {
 		return util.NewPathResolver(&util.PathConfig{
-			InputFolder:  config.DatamartURI,
+			InputFolder:  config.DatamartImportFolder,
 			OutputFolder: path.Join(config.TmpDataPath, "augmented"),
 		})
 	}
@@ -158,7 +158,7 @@ func createDatasetFromCSV(config *env.Config, csvFile *os.File, datasetName stri
 	// first column will be the dataframe index which we should ignore
 	fields = fields[1:]
 
-	metadata := model.NewMetadata(datasetName, datasetName, datasetName)
+	metadata := model.NewMetadata(datasetName, datasetName, datasetName, model.NormalizeDatasetID(datasetName))
 	dataResource := model.NewDataResource("0", compute.D3MResourceType, []string{compute.D3MResourceFormat})
 
 	mergedVariables, err := createMergedVariables(fields, varsLeft, varsRight)

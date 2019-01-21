@@ -19,23 +19,23 @@ const (
 )
 
 // Cluster will cluster the dataset fields using a primitive.
-func Cluster(index string, dataset string, config *IngestTaskConfig) error {
-	outputPath, err := initializeDatasetCopy(config.GetAbsolutePath(config.SchemaPathRelative), config.ClusteringOutputSchemaRelative, config.ClusteringOutputDataRelative, config)
+func Cluster(index string, dataset string, config *IngestTaskConfig) (string, error) {
+	outputPath, err := initializeDatasetCopy(config.GetAbsolutePath(config.SchemaPathRelative), dataset, config.ClusteringOutputSchemaRelative, config.ClusteringOutputDataRelative, config)
 	if err != nil {
-		return errors.Wrap(err, "unable to copy source data folder")
+		return "", errors.Wrap(err, "unable to copy source data folder")
 	}
 
 	// load metadata from original schema
 	meta, err := metadata.LoadMetadataFromOriginalSchema(config.GetAbsolutePath(config.SchemaPathRelative))
 	if err != nil {
-		return errors.Wrap(err, "unable to load original schema file")
+		return "", errors.Wrap(err, "unable to load original schema file")
 	}
 	mainDR := meta.GetMainDataResource()
 
 	// add feature variables
 	features, err := getClusterVariables(meta, model.ClusterVarPrefix)
 	if err != nil {
-		return errors.Wrap(err, "unable to get cluster variables")
+		return "", errors.Wrap(err, "unable to get cluster variables")
 	}
 
 	d3mIndexField := getD3MIndexField(mainDR)
@@ -44,7 +44,7 @@ func Cluster(index string, dataset string, config *IngestTaskConfig) error {
 	dataPath := config.GetAbsolutePath(mainDR.ResPath)
 	lines, err := ReadCSVFile(dataPath, config.HasHeader)
 	if err != nil {
-		return errors.Wrap(err, "error reading raw data")
+		return "", errors.Wrap(err, "error reading raw data")
 	}
 
 	// add the cluster data to the raw data
@@ -54,7 +54,7 @@ func Cluster(index string, dataset string, config *IngestTaskConfig) error {
 		// header already removed, lines does not have a header
 		lines, err = appendFeature(dataset, d3mIndexField, false, f, lines)
 		if err != nil {
-			return errors.Wrap(err, "error appending clustered data")
+			return "", errors.Wrap(err, "error appending clustered data")
 		}
 	}
 
@@ -69,32 +69,32 @@ func Cluster(index string, dataset string, config *IngestTaskConfig) error {
 	}
 	err = writer.Write(header)
 	if err != nil {
-		return errors.Wrap(err, "error storing clustered header")
+		return "", errors.Wrap(err, "error storing clustered header")
 	}
 
 	for _, line := range lines {
 		err = writer.Write(line)
 		if err != nil {
-			return errors.Wrap(err, "error storing clustered output")
+			return "", errors.Wrap(err, "error storing clustered output")
 		}
 	}
 
 	// output the data with the new feature
 	writer.Flush()
 
-	err = util.WriteFileWithDirs(config.GetTmpAbsolutePath(config.ClusteringOutputDataRelative), output.Bytes(), os.ModePerm)
+	err = util.WriteFileWithDirs(outputPath.outputData, output.Bytes(), os.ModePerm)
 	if err != nil {
-		return errors.Wrap(err, "error writing clustered output")
+		return "", errors.Wrap(err, "error writing clustered output")
 	}
 
 	relativePath := getRelativePath(path.Dir(outputPath.outputSchema), outputPath.outputData)
 	mainDR.ResPath = relativePath
 
 	// write the new schema to file
-	err = metadata.WriteSchema(meta, config.GetTmpAbsolutePath(config.ClusteringOutputSchemaRelative))
+	err = metadata.WriteSchema(meta, outputPath.outputSchema)
 	if err != nil {
-		return errors.Wrap(err, "unable to store cluster schema")
+		return "", errors.Wrap(err, "unable to store cluster schema")
 	}
 
-	return nil
+	return outputPath.outputSchema, nil
 }
