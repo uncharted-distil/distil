@@ -14,6 +14,7 @@ const (
 // Dataset represents a decsription of a dataset.
 type Dataset struct {
 	Name        string                 `json:"name"`
+	StorageName string                 `json:"storageName"`
 	Folder      string                 `json:"folder"`
 	Description string                 `json:"description"`
 	Summary     string                 `json:"summary"`
@@ -48,7 +49,7 @@ func FetchDataset(dataset string, includeIndex bool, includeMeta bool, filterPar
 		}
 	}
 
-	data, err := storageData.FetchData(dataset, filterParams, false)
+	data, err := storageData.FetchData(dataset, metadata.StorageName, filterParams, false)
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to fetch data")
 	}

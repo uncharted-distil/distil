@@ -17,7 +17,7 @@ type PredictedSummary struct {
 	PredictedSummary *api.Histogram `json:"histogram"`
 }
 
-func fetchSolutionPredictedExtrema(meta api.MetadataStorage, data api.DataStorage, solution api.SolutionStorage, dataset string, target string, solutionID string) (*api.Extrema, error) {
+func fetchSolutionPredictedExtrema(meta api.MetadataStorage, data api.DataStorage, solution api.SolutionStorage, dataset string, storageName string, target string, solutionID string) (*api.Extrema, error) {
 	// check target var type
 	variable, err := meta.FetchVariable(dataset, target)
 	if err != nil {
@@ -43,14 +43,14 @@ func fetchSolutionPredictedExtrema(meta api.MetadataStorage, data api.DataStorag
 				// result uri
 				resultURI := sol.Result.ResultURI
 				// predicted extrema
-				predictedExtrema, err := data.FetchResultsExtremaByURI(dataset, resultURI)
+				predictedExtrema, err := data.FetchResultsExtremaByURI(dataset, storageName, resultURI)
 				if err != nil {
 					return nil, err
 				}
 				max = math.Max(max, predictedExtrema.Max)
 				min = math.Min(min, predictedExtrema.Min)
 				// result extrema
-				resultExtrema, err := data.FetchExtremaByURI(dataset, resultURI, target)
+				resultExtrema, err := data.FetchExtremaByURI(dataset, storageName, resultURI, target)
 				if err != nil {
 					return nil, err
 				}
@@ -68,6 +68,7 @@ func PredictedSummaryHandler(metaCtor api.MetadataStorageCtor, solutionCtor api.
 		// extract route parameters
 		dataset := pat.Param(r, "dataset")
 		target := pat.Param(r, "target")
+		storageName := model.NormalizeDatasetID(dataset)
 
 		resultUUID, err := url.PathUnescape(pat.Param(r, "results-uuid"))
 		if err != nil {
@@ -108,7 +109,7 @@ func PredictedSummaryHandler(metaCtor api.MetadataStorageCtor, solutionCtor api.
 		}
 
 		// extract extrema for solution
-		extrema, err := fetchSolutionPredictedExtrema(meta, data, solution, dataset, target, "")
+		extrema, err := fetchSolutionPredictedExtrema(meta, data, solution, dataset, storageName, target, "")
 		if err != nil {
 			handleError(w, err)
 			return
@@ -122,7 +123,7 @@ func PredictedSummaryHandler(metaCtor api.MetadataStorageCtor, solutionCtor api.
 		}
 
 		// fetch summary histogram
-		histogram, err := data.FetchPredictedSummary(dataset, res.ResultURI, filterParams, extrema)
+		histogram, err := data.FetchPredictedSummary(dataset, storageName, res.ResultURI, filterParams, extrema)
 		if err != nil {
 			handleError(w, err)
 			return

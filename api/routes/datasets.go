@@ -85,8 +85,8 @@ func DatasetsHandler(metaCtors []model.MetadataStorageCtor) func(http.ResponseWr
 				datasetsPart, err = storage.FetchDatasets(false, false)
 			}
 			if err != nil {
-				handleError(w, err)
-				return
+				//handleError(w, err)
+				continue
 			}
 			// render dataset description as HTML
 			for _, dataset := range datasetsPart {

@@ -7,19 +7,21 @@ import (
 	"github.com/pkg/errors"
 	"goji.io/pat"
 
-	"github.com/unchartedsoftware/distil/api/model"
+	"github.com/unchartedsoftware/distil-compute/model"
+	api "github.com/unchartedsoftware/distil/api/model"
 )
 
 // CorrectnessSummary contains a fetch result histogram.
 type CorrectnessSummary struct {
-	CorrectnessSummary *model.Histogram `json:"histogram"`
+	CorrectnessSummary *api.Histogram `json:"histogram"`
 }
 
 // CorrectnessSummaryHandler bins predicted result data for consumption in a downstream summary view.
-func CorrectnessSummaryHandler(solutionCtor model.SolutionStorageCtor, dataCtor model.DataStorageCtor) func(http.ResponseWriter, *http.Request) {
+func CorrectnessSummaryHandler(solutionCtor api.SolutionStorageCtor, dataCtor api.DataStorageCtor) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// extract route parameters
 		dataset := pat.Param(r, "dataset")
+		storageName := model.NormalizeDatasetID(dataset)
 
 		resultUUID, err := url.PathUnescape(pat.Param(r, "results-uuid"))
 		if err != nil {
@@ -35,7 +37,7 @@ func CorrectnessSummaryHandler(solutionCtor model.SolutionStorageCtor, dataCtor 
 		}
 
 		// get variable names and ranges out of the params
-		filterParams, err := model.ParseFilterParamsFromJSON(params)
+		filterParams, err := api.ParseFilterParamsFromJSON(params)
 		if err != nil {
 			handleError(w, err)
 			return
@@ -61,12 +63,12 @@ func CorrectnessSummaryHandler(solutionCtor model.SolutionStorageCtor, dataCtor 
 		}
 
 		// fetch summary histogram
-		histogram, err := data.FetchCorrectnessSummary(dataset, res.ResultURI, filterParams)
+		histogram, err := data.FetchCorrectnessSummary(dataset, storageName, res.ResultURI, filterParams)
 		if err != nil {
 			handleError(w, err)
 			return
 		}
-		histogram.Key = model.GetErrorKey(histogram.Key, res.SolutionID)
+		histogram.Key = api.GetErrorKey(histogram.Key, res.SolutionID)
 		histogram.Label = "Error"
 		histogram.SolutionID = res.SolutionID
 

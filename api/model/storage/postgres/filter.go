@@ -201,7 +201,7 @@ func (s *Storage) buildExcludeFilter(wheres []string, params []interface{}, filt
 	return wheres, params
 }
 
-func (s *Storage) buildFilteredQueryWhere(wheres []string, params []interface{}, dataset string, filters []*model.Filter) ([]string, []interface{}) {
+func (s *Storage) buildFilteredQueryWhere(wheres []string, params []interface{}, filters []*model.Filter) ([]string, []interface{}) {
 	for _, filter := range filters {
 		switch filter.Mode {
 		case model.IncludeFilter:
@@ -213,7 +213,7 @@ func (s *Storage) buildFilteredQueryWhere(wheres []string, params []interface{},
 	return wheres, params
 }
 
-func (s *Storage) buildFilteredQueryField(dataset string, variables []*model.Variable, filterVariables []string) (string, error) {
+func (s *Storage) buildFilteredQueryField(variables []*model.Variable, filterVariables []string) (string, error) {
 	fields := make([]string, 0)
 	indexIncluded := false
 	for _, variable := range api.GetFilterVariables(filterVariables, variables) {
@@ -229,7 +229,7 @@ func (s *Storage) buildFilteredQueryField(dataset string, variables []*model.Var
 	return strings.Join(fields, ","), nil
 }
 
-func (s *Storage) buildFilteredResultQueryField(dataset string, variables []*model.Variable, targetVariable *model.Variable, filterVariables []string) (string, error) {
+func (s *Storage) buildFilteredResultQueryField(variables []*model.Variable, targetVariable *model.Variable, filterVariables []string) (string, error) {
 	fields := make([]string, 0)
 	for _, variable := range api.GetFilterVariables(filterVariables, variables) {
 		if strings.Compare(targetVariable.Name, variable.Name) != 0 {
@@ -240,10 +240,10 @@ func (s *Storage) buildFilteredResultQueryField(dataset string, variables []*mod
 	return strings.Join(fields, ","), nil
 }
 
-func (s *Storage) buildCorrectnessResultWhere(wheres []string, params []interface{}, dataset string, resultURI string, resultFilter *model.Filter) ([]string, []interface{}, error) {
+func (s *Storage) buildCorrectnessResultWhere(wheres []string, params []interface{}, storageName string, resultURI string, resultFilter *model.Filter) ([]string, []interface{}, error) {
 	// get the target variable name
-	datasetResult := s.getResultTable(dataset)
-	targetName, err := s.getResultTargetName(datasetResult, resultURI)
+	storageNameResult := s.getResultTable(storageName)
+	targetName, err := s.getResultTargetName(storageNameResult, resultURI)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -281,30 +281,30 @@ func (s *Storage) buildErrorResultWhere(wheres []string, params []interface{}, r
 	return wheres, params, nil
 }
 
-func (s *Storage) buildPredictedResultWhere(wheres []string, params []interface{}, dataset string, resultURI string, resultFilter *model.Filter) ([]string, []interface{}, error) {
+func (s *Storage) buildPredictedResultWhere(wheres []string, params []interface{}, resultURI string, resultFilter *model.Filter) ([]string, []interface{}, error) {
 	// handle the general category case
-	wheres, params = s.buildFilteredQueryWhere(wheres, params, dataset, []*model.Filter{resultFilter})
+	wheres, params = s.buildFilteredQueryWhere(wheres, params, []*model.Filter{resultFilter})
 	return wheres, params, nil
 }
 
-func (s *Storage) buildResultQueryFilters(dataset string, resultURI string, filterParams *api.FilterParams) ([]string, []interface{}, error) {
+func (s *Storage) buildResultQueryFilters(storageName string, resultURI string, filterParams *api.FilterParams) ([]string, []interface{}, error) {
 	// pull filters generated against the result facet out for special handling
 	filters := s.splitFilters(filterParams)
 
 	// create the filter for the query
 	wheres := make([]string, 0)
 	params := make([]interface{}, 0)
-	wheres, params = s.buildFilteredQueryWhere(wheres, params, dataset, filters.genericFilters)
+	wheres, params = s.buildFilteredQueryWhere(wheres, params, filters.genericFilters)
 
 	// assemble split filters
 	var err error
 	if filters.predictedFilter != nil {
-		wheres, params, err = s.buildPredictedResultWhere(wheres, params, dataset, resultURI, filters.predictedFilter)
+		wheres, params, err = s.buildPredictedResultWhere(wheres, params, resultURI, filters.predictedFilter)
 		if err != nil {
 			return nil, nil, err
 		}
 	} else if filters.correctnessFilter != nil {
-		wheres, params, err = s.buildCorrectnessResultWhere(wheres, params, dataset, resultURI, filters.correctnessFilter)
+		wheres, params, err = s.buildCorrectnessResultWhere(wheres, params, storageName, resultURI, filters.correctnessFilter)
 		if err != nil {
 			return nil, nil, err
 		}
@@ -352,8 +352,8 @@ func (s *Storage) splitFilters(filterParams *api.FilterParams) *filters {
 }
 
 // FetchNumRows pulls the number of rows in the table.
-func (s *Storage) FetchNumRows(dataset string, filters map[string]interface{}) (int, error) {
-	query := fmt.Sprintf("SELECT count(*) FROM %s", dataset)
+func (s *Storage) FetchNumRows(storageName string, filters map[string]interface{}) (int, error) {
+	query := fmt.Sprintf("SELECT count(*) FROM %s", storageName)
 	params := make([]interface{}, 0)
 	if filters != nil && len(filters) > 0 {
 		clauses := make([]string, 0)
@@ -384,28 +384,28 @@ func (s *Storage) filterIncludesIndex(filterParams *api.FilterParams) bool {
 // FetchData creates a postgres query to fetch a set of rows.  Applies filters to restrict the
 // results to a user selected set of fields, with rows further filtered based on allowed ranges and
 // categories.
-func (s *Storage) FetchData(dataset string, filterParams *api.FilterParams, invert bool) (*api.FilteredData, error) {
+func (s *Storage) FetchData(dataset string, storageName string, filterParams *api.FilterParams, invert bool) (*api.FilteredData, error) {
 	variables, err := s.metadata.FetchVariables(dataset, true, true)
 	if err != nil {
 		return nil, errors.Wrap(err, "Could not pull variables from ES")
 	}
 
-	numRows, err := s.FetchNumRows(dataset, nil)
+	numRows, err := s.FetchNumRows(storageName, nil)
 	if err != nil {
 		return nil, errors.Wrap(err, "Could not pull num rows")
 	}
 
-	fields, err := s.buildFilteredQueryField(dataset, variables, filterParams.Variables)
+	fields, err := s.buildFilteredQueryField(variables, filterParams.Variables)
 	if err != nil {
 		return nil, errors.Wrap(err, "Could not build field list")
 	}
 
 	// construct a Postgres query that fetches documents from the dataset with the supplied variable filters applied
-	query := fmt.Sprintf("SELECT %s FROM %s", fields, dataset)
+	query := fmt.Sprintf("SELECT %s FROM %s", fields, storageName)
 
 	wheres := make([]string, 0)
 	params := make([]interface{}, 0)
-	wheres, params = s.buildFilteredQueryWhere(wheres, params, dataset, filterParams.Filters)
+	wheres, params = s.buildFilteredQueryWhere(wheres, params, filterParams.Filters)
 
 	if len(wheres) > 0 {
 		if invert {

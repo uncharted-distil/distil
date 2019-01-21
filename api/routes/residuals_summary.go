@@ -7,20 +7,22 @@ import (
 	"github.com/pkg/errors"
 	"goji.io/pat"
 
-	"github.com/unchartedsoftware/distil/api/model"
+	"github.com/unchartedsoftware/distil-compute/model"
+	api "github.com/unchartedsoftware/distil/api/model"
 )
 
 // ResidualsSummary contains a fetch result histogram.
 type ResidualsSummary struct {
-	ResidualsSummary *model.Histogram `json:"histogram"`
+	ResidualsSummary *api.Histogram `json:"histogram"`
 }
 
 // ResidualsSummaryHandler bins predicted result data for consumption in a downstream summary view.
-func ResidualsSummaryHandler(metaCtor model.MetadataStorageCtor, solutionCtor model.SolutionStorageCtor, dataCtor model.DataStorageCtor) func(http.ResponseWriter, *http.Request) {
+func ResidualsSummaryHandler(metaCtor api.MetadataStorageCtor, solutionCtor api.SolutionStorageCtor, dataCtor api.DataStorageCtor) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// extract route parameters
 		dataset := pat.Param(r, "dataset")
 		target := pat.Param(r, "target")
+		storageName := model.NormalizeDatasetID(dataset)
 
 		resultUUID, err := url.PathUnescape(pat.Param(r, "results-uuid"))
 		if err != nil {
@@ -36,7 +38,7 @@ func ResidualsSummaryHandler(metaCtor model.MetadataStorageCtor, solutionCtor mo
 		}
 
 		// get variable names and ranges out of the params
-		filterParams, err := model.ParseFilterParamsFromJSON(params)
+		filterParams, err := api.ParseFilterParamsFromJSON(params)
 		if err != nil {
 			handleError(w, err)
 			return
@@ -68,19 +70,19 @@ func ResidualsSummaryHandler(metaCtor model.MetadataStorageCtor, solutionCtor mo
 		}
 
 		// extract extrema for solution
-		extrema, err := fetchSolutionResidualExtrema(meta, data, solution, dataset, target, "")
+		extrema, err := fetchSolutionResidualExtrema(meta, data, solution, dataset, storageName, target, "")
 		if err != nil {
 			handleError(w, err)
 			return
 		}
 
 		// fetch summary histogram
-		histogram, err := data.FetchResidualsSummary(dataset, res.ResultURI, filterParams, extrema)
+		histogram, err := data.FetchResidualsSummary(dataset, storageName, res.ResultURI, filterParams, extrema)
 		if err != nil {
 			handleError(w, err)
 			return
 		}
-		histogram.Key = model.GetErrorKey(histogram.Key, res.SolutionID)
+		histogram.Key = api.GetErrorKey(histogram.Key, res.SolutionID)
 		histogram.Label = "Error"
 		histogram.SolutionID = res.SolutionID
 

@@ -13,18 +13,18 @@ import (
 
 // CategoricalField defines behaviour for the categorical field type.
 type CategoricalField struct {
-	Storage   *Storage
-	Dataset   string
-	Variable  *model.Variable
-	subSelect func() string
+	Storage     *Storage
+	StorageName string
+	Variable    *model.Variable
+	subSelect   func() string
 }
 
 // NewCategoricalField creates a new field for categorical types.
-func NewCategoricalField(storage *Storage, dataset string, variable *model.Variable) *CategoricalField {
+func NewCategoricalField(storage *Storage, storageName string, variable *model.Variable) *CategoricalField {
 	field := &CategoricalField{
-		Storage:  storage,
-		Dataset:  dataset,
-		Variable: variable,
+		Storage:     storage,
+		StorageName: storageName,
+		Variable:    variable,
 	}
 
 	return field
@@ -32,12 +32,12 @@ func NewCategoricalField(storage *Storage, dataset string, variable *model.Varia
 
 // NewCategoricalFieldSubSelect creates a new field for categorical types
 // and specifies a sub select query to pull the raw data.
-func NewCategoricalFieldSubSelect(storage *Storage, dataset string, variable *model.Variable, fieldSubSelect func() string) *CategoricalField {
+func NewCategoricalFieldSubSelect(storage *Storage, storageName string, variable *model.Variable, fieldSubSelect func() string) *CategoricalField {
 	field := &CategoricalField{
-		Storage:   storage,
-		Dataset:   dataset,
-		Variable:  variable,
-		subSelect: fieldSubSelect,
+		Storage:     storage,
+		StorageName: storageName,
+		Variable:    variable,
+		subSelect:   fieldSubSelect,
 	}
 
 	return field
@@ -62,7 +62,7 @@ func (f *CategoricalField) fetchHistogram(filterParams *api.FilterParams) (*api.
 	// create the filter for the query
 	wheres := make([]string, 0)
 	params := make([]interface{}, 0)
-	wheres, params = f.Storage.buildFilteredQueryWhere(wheres, params, f.Dataset, filterParams.Filters)
+	wheres, params = f.Storage.buildFilteredQueryWhere(wheres, params, filterParams.Filters)
 
 	where := ""
 	if len(wheres) > 0 {
@@ -89,7 +89,7 @@ func (f *CategoricalField) fetchHistogramByResult(resultURI string, filterParams
 	fromClause := f.getFromClause(false)
 
 	// get filter where / params
-	wheres, params, err := f.Storage.buildResultQueryFilters(f.Dataset, resultURI, filterParams)
+	wheres, params, err := f.Storage.buildResultQueryFilters(f.StorageName, resultURI, filterParams)
 	if err != nil {
 		return nil, err
 	}
@@ -108,7 +108,7 @@ func (f *CategoricalField) fetchHistogramByResult(resultURI string, filterParams
 		 WHERE result.result_id = $%d %s
 		 GROUP BY "%s"
 		 ORDER BY count desc, "%s" LIMIT %d;`,
-		f.Variable.Name, fromClause, f.Storage.getResultTable(f.Dataset),
+		f.Variable.Name, fromClause, f.Storage.getResultTable(f.StorageName),
 		model.D3MIndexFieldName, len(params), where, f.Variable.Name,
 		f.Variable.Name, catResultLimit)
 
@@ -174,7 +174,7 @@ func (f *CategoricalField) FetchPredictedSummaryData(resultURI string, datasetRe
 	targetName := f.Variable.Name
 
 	// get filter where / params
-	wheres, params, err := f.Storage.buildResultQueryFilters(f.Dataset, resultURI, filterParams)
+	wheres, params, err := f.Storage.buildResultQueryFilters(f.StorageName, resultURI, filterParams)
 	if err != nil {
 		return nil, err
 	}
@@ -188,7 +188,7 @@ func (f *CategoricalField) FetchPredictedSummaryData(resultURI string, datasetRe
 		 WHERE %s
 		 GROUP BY result.value
 		 ORDER BY count desc;`,
-		datasetResult, f.Dataset, model.D3MIndexFieldName, strings.Join(wheres, " AND "))
+		datasetResult, f.StorageName, model.D3MIndexFieldName, strings.Join(wheres, " AND "))
 
 	// execute the postgres query
 	res, err := f.Storage.client.Query(query, params...)
@@ -201,11 +201,11 @@ func (f *CategoricalField) FetchPredictedSummaryData(resultURI string, datasetRe
 }
 
 func (f *CategoricalField) getFromClause(alias bool) string {
-	fromClause := f.Dataset
+	fromClause := f.StorageName
 	if f.subSelect != nil {
 		fromClause = f.subSelect()
 		if alias {
-			fromClause = fmt.Sprintf("%s as %s", fromClause, f.Dataset)
+			fromClause = fmt.Sprintf("%s as %s", fromClause, f.StorageName)
 		}
 	}
 

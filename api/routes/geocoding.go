@@ -25,6 +25,7 @@ func GeocodingHandler(metaCtor api.MetadataStorageCtor, dataCtor api.DataStorage
 	return func(w http.ResponseWriter, r *http.Request) {
 		// get dataset name
 		dataset := pat.Param(r, "dataset")
+		storageName := model.NormalizeDatasetID(dataset)
 		// get variable name
 		variable := pat.Param(r, "variable")
 
@@ -61,7 +62,7 @@ func GeocodingHandler(metaCtor api.MetadataStorageCtor, dataCtor api.DataStorage
 				handleError(w, err)
 				return
 			}
-			err = dataStorage.AddVariable(dataset, latVarName, model.LatitudeType)
+			err = dataStorage.AddVariable(dataset, storageName, latVarName, model.LatitudeType)
 			if err != nil {
 				handleError(w, err)
 				return
@@ -73,7 +74,7 @@ func GeocodingHandler(metaCtor api.MetadataStorageCtor, dataCtor api.DataStorage
 				handleError(w, err)
 				return
 			}
-			err = dataStorage.AddVariable(dataset, lonVarName, model.LongitudeType)
+			err = dataStorage.AddVariable(dataset, storageName, lonVarName, model.LongitudeType)
 			if err != nil {
 				handleError(w, err)
 				return
@@ -109,12 +110,12 @@ func GeocodingHandler(metaCtor api.MetadataStorageCtor, dataCtor api.DataStorage
 		}
 
 		// update the batches
-		err = dataStorage.UpdateVariableBatch(dataset, latVarName, latData)
+		err = dataStorage.UpdateVariableBatch(storageName, latVarName, latData)
 		if err != nil {
 			handleError(w, err)
 			return
 		}
-		err = dataStorage.UpdateVariableBatch(dataset, latVarName, lonData)
+		err = dataStorage.UpdateVariableBatch(storageName, lonVarName, lonData)
 		if err != nil {
 			handleError(w, err)
 			return

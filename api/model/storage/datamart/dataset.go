@@ -2,11 +2,17 @@ package datamart
 
 import (
 	"encoding/json"
+	"fmt"
+	"os"
+	"path"
 	"strings"
 
 	"github.com/pkg/errors"
 	"github.com/unchartedsoftware/distil-compute/model"
+	"github.com/unchartedsoftware/distil-compute/primitive/compute"
 	api "github.com/unchartedsoftware/distil/api/model"
+	"github.com/unchartedsoftware/distil/api/task"
+	"github.com/unchartedsoftware/distil/api/util"
 )
 
 const (
@@ -16,15 +22,11 @@ const (
 	datasetsListSize   = 1000
 	provenance         = "datamart"
 	searchRESTFunction = "search"
+	getRESTFunction    = "download"
 )
 
-// SearchQuery is the basic search query container.
+// SearchQuery contains the basic properties to query.
 type SearchQuery struct {
-	Query *SearchQueryProperties `json:"query,omitempty"`
-}
-
-// SearchQueryProperties contains the basic properties to query.
-type SearchQueryProperties struct {
 	Dataset *SearchQueryDatasetProperties `json:"dataset,omitempty"`
 }
 
@@ -67,9 +69,53 @@ type SearchResultColumn struct {
 
 // ImportDataset makes the dataset available for ingest and returns
 // the URI to use for ingest.
-func (s *Storage) ImportDataset(uri string) (string, error) {
-	// dataset is already on local file system and accessible for ingest
-	return uri, nil
+func (s *Storage) ImportDataset(id string, uri string) (string, error) {
+	//TODO: MAKE THIS WORK ON APIs OTHER THAN NYU!
+	name := path.Base(uri)
+	// get the compressed dataset
+	requestURI := fmt.Sprintf("%s/%s", getRESTFunction, id)
+	params := map[string]string{
+		"format": "d3m",
+	}
+	data, err := s.client.Get(requestURI, params)
+	if err != nil {
+		return "", err
+	}
+
+	// write the compressed dataset to disk
+	zipFilename := path.Join(s.outputPath, fmt.Sprintf("%s.zip", name))
+	err = util.WriteFileWithDirs(zipFilename, data, os.ModePerm)
+	if err != nil {
+		return "", errors.Wrap(err, "unable to store dataset from datamart")
+	}
+
+	// expand the archive into a dataset folder
+	extractedArchivePath := path.Join(s.outputPath, name)
+	err = util.Unzip(zipFilename, extractedArchivePath)
+	if err != nil {
+		return "", errors.Wrap(err, "unable to extract datamart archive")
+	}
+
+	// format the dataset
+	extractedSchema := path.Join(extractedArchivePath, compute.D3MDataSchema)
+	formattedPath, err := task.Format(extractedSchema, s.config)
+	if err != nil {
+		return "", errors.Wrap(err, "unable to format datamart dataset")
+	}
+
+	// copy the formatted output to the datamart output path (delete existing copy)
+	err = os.RemoveAll(s.outputPath)
+	if err != nil {
+		return "", errors.Wrap(err, "unable to delete raw datamart dataset")
+	}
+
+	err = util.Copy(formattedPath, extractedArchivePath)
+	if err != nil {
+		return "", errors.Wrap(err, "unable to copy formatted datamart dataset")
+	}
+
+	// return the location of the expanded dataset folder
+	return formattedPath, nil
 }
 
 // FetchDatasets returns all datasets in the provided index.
@@ -138,13 +184,11 @@ func (s *Storage) searchREST(searchText string) (*SearchResults, error) {
 
 	// get complete URI for the endpoint
 	query := &SearchQuery{
-		Query: &SearchQueryProperties{
-			Dataset: &SearchQueryDatasetProperties{
-				About: searchText,
-				//Name:        terms,
-				Description: terms,
-				//Keywords:    terms,
-			},
+		Dataset: &SearchQueryDatasetProperties{
+			About: searchText,
+			//Name:        terms,
+			Description: terms,
+			//Keywords:    terms,
 		},
 	}
 	queryJSON, err := json.Marshal(query)
@@ -152,7 +196,7 @@ func (s *Storage) searchREST(searchText string) (*SearchResults, error) {
 		return nil, errors.Wrap(err, "unable to marshal datamart query")
 	}
 
-	responseRaw, err := s.client.PostJSON(searchRESTFunction, queryJSON)
+	responseRaw, err := s.client.PostRequest(searchRESTFunction, map[string]string{"query": string(queryJSON)})
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to post datamart search request")
 	}
