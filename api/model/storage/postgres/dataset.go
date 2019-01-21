@@ -4,8 +4,6 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/go-pg/pg"
-
 	"github.com/pkg/errors"
 	"github.com/unchartedsoftware/distil-compute/model"
 )
@@ -281,7 +279,7 @@ func (s *Storage) UpdateVariableBatch(storageName string, varName string, update
 
 	return nil
 }
-
+/*
 func (s *Storage) updateBatch(db *pg.DB, storageName string, varName string, dataSQL string, params []interface{}) error {
 	// NOT USED YET, BUT MAY PROVE USEFUL IN THE FUTURE!!!
 	// first insert the data into a temp table, then update the original table
@@ -308,3 +306,4 @@ func (s *Storage) updateBatch(db *pg.DB, storageName string, varName string, dat
 
 	return nil
 }
+*/
