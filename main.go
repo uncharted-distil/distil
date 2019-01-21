@@ -246,7 +246,7 @@ func main() {
 	registerRoutePost(mux, "/distil/variables/:dataset", routes.VariableTypeHandler(pgDataStorageCtor, metadataStorageCtor))
 	registerRoutePost(mux, "/distil/discovery/:dataset/:target", routes.ProblemDiscoveryHandler(pgDataStorageCtor, metadataStorageCtor, config.UserProblemPath, userAgent, config.SkipPreprocessing))
 	registerRoutePost(mux, "/distil/data/:dataset/:invert", routes.DataHandler(pgDataStorageCtor, metadataStorageCtor))
-	registerRoutePost(mux, "/distil/import/:dataset/:source/:index", routes.ImportHandler(datamartMetadataStorageCtor, metadataStorageCtor, ingestConfig))
+	registerRoutePost(mux, "/distil/import/:datasetID/:source", routes.ImportHandler(datamartMetadataStorageCtor, metadataStorageCtor, ingestConfig))
 	registerRoutePost(mux, "/distil/results/:dataset/:solution-id", routes.ResultsHandler(pgSolutionStorageCtor, pgDataStorageCtor))
 	registerRoutePost(mux, "/distil/variable-summary/:dataset/:variable", routes.VariableSummaryHandler(pgDataStorageCtor))
 	registerRoutePost(mux, "/distil/training-summary/:dataset/:variable/:results-uuid", routes.TrainingSummaryHandler(pgSolutionStorageCtor, pgDataStorageCtor))

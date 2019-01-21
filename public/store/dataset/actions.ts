@@ -110,26 +110,13 @@ export const actions = {
 			});
 	},
 
-	importDataset(context: DatasetContext, args: { dataset: string, id: string, source: string, index: string }): Promise<void>  {
-		if (!args.dataset) {
-			console.warn('`dataset` argument is missing');
+	importDataset(context: DatasetContext, args: { datasetID: string }): Promise<void>  {
+		if (!args.datasetID) {
+			console.warn('`datasetID` argument is missing');
 			return null;
 		}
-		if (!args.id) {
-			console.warn('`id` argument is missing');
-			return null;
-		}
-		if (!args.source) {
-			console.warn('`source` argument is missing');
-			return null;
-		}
-		if (!args.index) {
-			console.warn('`index` argument is missing');
-			return null;
-		}
-		return axios.post(`/distil/import/${args.id}/${args.source}/${args.index}`, {
-				id: args.id,
-			})
+
+		return axios.post(`/distil/import/${args.datasetID}/contrib`, {})
 			.then(response => {
 				mutations.setVariables(context, response.data.variables);
 			})

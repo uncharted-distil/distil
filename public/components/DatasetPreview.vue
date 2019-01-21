@@ -129,10 +129,7 @@ export default Vue.extend({
 		},
 		importDataset() {
 			datasetActions.importDataset(this.$store, {
-				id: this.id,
-				dataset: this.id,
-				index: this.id,
-				source: 'contrib'
+				datasetID: this.id
 			});
 		},
 		joinDataset() {

@@ -17,22 +17,17 @@ import (
 // ImportHandler imports a dataset to the local file system and then ingests it.
 func ImportHandler(metaCtor model.MetadataStorageCtor, localMetaCtor model.MetadataStorageCtor, config *task.IngestTaskConfig) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
-		index := pat.Param(r, "index")
-		dataset := pat.Param(r, "dataset")
+		datasetID := pat.Param(r, "datasetID")
 		source := metadata.DatasetSource(pat.Param(r, "source"))
 
-		params, err := getPostParameters(r)
-		if err != nil {
-			handleError(w, err)
-			return
-		}
-		id := ""
-		if params["id"] != nil {
-			id = params["id"].(string)
-		}
+		// params, err := getPostParameters(r)
+		// if err != nil {
+		// 	handleError(w, err)
+		// 	return
+		// }
 
 		// update ingest config to use ingest URI.
-		serverConfig, err := env.LoadConfig()
+		cfg, err := env.LoadConfig()
 		if err != nil {
 			handleError(w, err)
 			return
@@ -45,20 +40,20 @@ func ImportHandler(metaCtor model.MetadataStorageCtor, localMetaCtor model.Metad
 		}
 
 		// import the dataset to the local filesystem.
-		resolver := createResolverForSource(source, dataset, &serverConfig, config)
-		uri := resolver.ResolveInputAbsolute(dataset)
+		resolver := createResolverForSource(source, datasetID, &cfg, config)
+		uri := resolver.ResolveInputAbsolute(datasetID)
 
 		ingestConfig := *config
 		ingestConfig.Resolver = resolver
 
-		_, err = meta.ImportDataset(id, uri)
+		_, err = meta.ImportDataset(datasetID, uri)
 		if err != nil {
 			handleError(w, err)
 			return
 		}
 
-		// ingest the imported dataset.
-		err = task.IngestDataset(localMetaCtor, index, dataset, source, &ingestConfig)
+		// ingest the imported dataset
+		err = task.IngestDataset(localMetaCtor, cfg.ESDatasetsIndex, datasetID, source, &ingestConfig)
 		if err != nil {
 			handleError(w, err)
 			return
