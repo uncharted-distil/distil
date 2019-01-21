@@ -242,26 +242,24 @@ func (s *Storage) UpdateVariableBatch(storageName string, varName string, update
 	//		and then delete the temp table.
 
 	// loop through the updates, building batches to minimize overhead
-	batchSQL := ""
+	dataSQL := ""
 	count := 0
 	params := make([]interface{}, 0)
 	for index, value := range updates {
-		updateStatement := fmt.Sprintf("UPDATE %s_base SET \"%s\" = $%d WHERE \"%s\" = $%d",
-			storageName, varName, count*2+1, model.D3MIndexFieldName, count*2+2)
-		batchSQL = fmt.Sprintf("%s\n%s", batchSQL, updateStatement)
-		params = append(params, value)
+		dataSQL = fmt.Sprintf("%s,(?, ?)", dataSQL)
 		params = append(params, index)
+		params = append(params, value)
 		count = count + 1
 
 		if count > maxBatchSize {
 			// submit the batch
-			_, err := s.client.Exec(batchSQL, params...)
+			err := s.updateBatch(storageName, varName, dataSQL, params)
 			if err != nil {
 				return errors.Wrap(err, "unable to update batch")
 			}
 
 			// reset the batch
-			batchSQL = ""
+			dataSQL = ""
 			count = 0
 			params = make([]interface{}, 0)
 		}
@@ -269,10 +267,34 @@ func (s *Storage) UpdateVariableBatch(storageName string, varName string, update
 
 	// submit remaining rows
 	if count > 0 {
-		_, err := s.client.Exec(batchSQL, params...)
+		err := s.updateBatch(storageName, varName, dataSQL, params)
 		if err != nil {
-			return errors.Wrap(err, "unable to update final batch")
+			return errors.Wrap(err, "unable to update batch")
 		}
+	}
+
+	return nil
+}
+
+func (s *Storage) updateBatch(storageName string, varName string, dataSQL string, params []interface{}) error {
+	// first insert the data into a temp table, then update the original table
+	sql := fmt.Sprintf(`
+		CREATE TEMP TABLE data (
+			index TEXT,
+			value TEXT
+		)
+
+		INSERT INTO %s.%s.%s_base VALUES %s;
+
+		UPDATE %s.%s.%s_base AS d
+		SET "%s" = value
+		FROM (select index, value FROM #data) as updated
+		WHERE updated.index = d."%s";
+		`, "distil", "public", storageName, dataSQL[1:], "distil", "public", storageName, varName, model.D3MIndexName)
+
+	_, err := s.client.Exec(sql, params...)
+	if err != nil {
+		return errors.Wrap(err, "unable to update batch")
 	}
 
 	return nil
