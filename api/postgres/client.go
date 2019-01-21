@@ -61,17 +61,17 @@ func (ic IntegratedClient) GetUpdateClient() *pg.DB {
 
 // Query queries the database and returns the matching rows.
 func (ic IntegratedClient) Query(sql string, params ...interface{}) (*pgx.Rows, error) {
-	return ic.pgxClient.Query(sql, params)
+	return ic.pgxClient.Query(sql, params...)
 }
 
 // QueryRow returns the first row from the query execution.
 func (ic IntegratedClient) QueryRow(sql string, params ...interface{}) *pgx.Row {
-	return ic.pgxClient.QueryRow(sql, params)
+	return ic.pgxClient.QueryRow(sql, params...)
 }
 
 // Exec executes the sql command.
 func (ic IntegratedClient) Exec(sql string, params ...interface{}) (pgx.CommandTag, error) {
-	return ic.pgxClient.Exec(sql, params)
+	return ic.pgxClient.Exec(sql, params...)
 }
 
 func (p pgxLogAdapter) Log(level pgx.LogLevel, msg string, data map[string]interface{}) {
