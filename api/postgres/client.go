@@ -5,6 +5,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/go-pg/pg"
 	"github.com/jackc/pgx"
 	"github.com/pkg/errors"
 	"github.com/unchartedsoftware/plog"
@@ -16,11 +17,11 @@ const (
 
 var (
 	mu      = &sync.Mutex{}
-	clients map[string]*pgx.ConnPool
+	clients map[string]*IntegratedClient
 )
 
 func init() {
-	clients = make(map[string]*pgx.ConnPool)
+	clients = make(map[string]*IntegratedClient)
 }
 
 // DatabaseDriver defines the behaviour of the querying engine.
@@ -28,6 +29,7 @@ type DatabaseDriver interface {
 	Query(string, ...interface{}) (*pgx.Rows, error)
 	QueryRow(string, ...interface{}) *pgx.Row
 	Exec(string, ...interface{}) (pgx.CommandTag, error)
+	GetUpdateClient() *pg.DB
 }
 
 // ClientCtor repressents a client constructor to instantiate a postgres client.
@@ -35,6 +37,41 @@ type ClientCtor func() (DatabaseDriver, error)
 
 // Adapter for pgx logging
 type pgxLogAdapter struct {
+}
+
+// IntegratedClient is a postgres client that can be used to
+// query a postgres database.
+type IntegratedClient struct {
+	pgxClient *pgx.ConnPool
+	host      string
+	user      string
+	password  string
+	database  string
+}
+
+// GetUpdateClient returns the client to use for updates.
+func (ic IntegratedClient) GetUpdateClient() *pg.DB {
+	return pg.Connect(&pg.Options{
+		Addr:     ic.host,
+		User:     ic.user,
+		Password: ic.password,
+		Database: ic.database,
+	})
+}
+
+// Query queries the database and returns the matching rows.
+func (ic IntegratedClient) Query(sql string, params ...interface{}) (*pgx.Rows, error) {
+	return ic.pgxClient.Query(sql, params)
+}
+
+// QueryRow returns the first row from the query execution.
+func (ic IntegratedClient) QueryRow(sql string, params ...interface{}) *pgx.Row {
+	return ic.pgxClient.QueryRow(sql, params)
+}
+
+// Exec executes the sql command.
+func (ic IntegratedClient) Exec(sql string, params ...interface{}) (pgx.CommandTag, error) {
+	return ic.pgxClient.Exec(sql, params)
 }
 
 func (p pgxLogAdapter) Log(level pgx.LogLevel, msg string, data map[string]interface{}) {
@@ -115,7 +152,14 @@ func NewClient(host string, port int, user string, password string, database str
 				MaxConnections: 64,
 			}
 			//TODO: Need to close the pool eventually. Not sure how to hook that in.
-			client, err := pgx.NewConnPool(poolConfig)
+			pgxClient, err := pgx.NewConnPool(poolConfig)
+			client = &IntegratedClient{
+				pgxClient: pgxClient,
+				host:      fmt.Sprintf("%s:%d", host, port),
+				user:      user,
+				password:  password,
+				database:  database,
+			}
 
 			if err != nil {
 				return nil, errors.Wrap(err, "Postgres client init failed")

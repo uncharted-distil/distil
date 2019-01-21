@@ -4,12 +4,14 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/go-pg/pg"
+
 	"github.com/pkg/errors"
 	"github.com/unchartedsoftware/distil-compute/model"
 )
 
 const (
-	maxBatchSize = 100
+	maxBatchSize = 250
 )
 
 func (s *Storage) getViewField(name string, displayName string, typ string, defaultValue interface{}) string {
@@ -242,18 +244,20 @@ func (s *Storage) UpdateVariableBatch(storageName string, varName string, update
 	//		and then delete the temp table.
 
 	// loop through the updates, building batches to minimize overhead
+	db := s.client.GetUpdateClient()
 	dataSQL := ""
 	count := 0
 	params := make([]interface{}, 0)
 	for index, value := range updates {
-		dataSQL = fmt.Sprintf("%s,(?, ?)", dataSQL)
-		params = append(params, index)
+		dataSQL = fmt.Sprintf("%s UPDATE %s.%s.%s_base SET \"%s\" = ? WHERE \"%s\" = ?;",
+			dataSQL, "distil", "public", storageName, varName, model.D3MIndexName)
 		params = append(params, value)
+		params = append(params, index)
 		count = count + 1
 
 		if count > maxBatchSize {
 			// submit the batch
-			err := s.updateBatch(storageName, varName, dataSQL, params)
+			_, err := db.Exec(dataSQL, params...)
 			if err != nil {
 				return errors.Wrap(err, "unable to update batch")
 			}
@@ -267,32 +271,37 @@ func (s *Storage) UpdateVariableBatch(storageName string, varName string, update
 
 	// submit remaining rows
 	if count > 0 {
-		err := s.updateBatch(storageName, varName, dataSQL, params)
+		_, err := db.Exec(dataSQL, params...)
 		if err != nil {
 			return errors.Wrap(err, "unable to update batch")
 		}
 	}
 
+	db.Close()
+
 	return nil
 }
 
-func (s *Storage) updateBatch(storageName string, varName string, dataSQL string, params []interface{}) error {
+func (s *Storage) updateBatch(db *pg.DB, storageName string, varName string, dataSQL string, params []interface{}) error {
+	// NOT USED YET, BUT MAY PROVE USEFUL IN THE FUTURE!!!
 	// first insert the data into a temp table, then update the original table
 	sql := fmt.Sprintf(`
 		CREATE TEMP TABLE data (
 			index TEXT,
 			value TEXT
-		)
+		);
 
 		INSERT INTO %s.%s.%s_base VALUES %s;
 
 		UPDATE %s.%s.%s_base AS d
 		SET "%s" = value
-		FROM (select index, value FROM #data) as updated
+		FROM (select index, value FROM data) as updated
 		WHERE updated.index = d."%s";
+
+		DROP TABLE data;
 		`, "distil", "public", storageName, dataSQL[1:], "distil", "public", storageName, varName, model.D3MIndexName)
 
-	_, err := s.client.Exec(sql, params...)
+	_, err := db.Exec(sql, params...)
 	if err != nil {
 		return errors.Wrap(err, "unable to update batch")
 	}
