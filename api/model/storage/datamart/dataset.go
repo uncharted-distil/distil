@@ -25,13 +25,8 @@ const (
 	getRESTFunction    = "download"
 )
 
-// SearchQuery is the basic search query container.
+// SearchQuery contains the basic properties to query.
 type SearchQuery struct {
-	Query *SearchQueryProperties `json:"query,omitempty"`
-}
-
-// SearchQueryProperties contains the basic properties to query.
-type SearchQueryProperties struct {
 	Dataset *SearchQueryDatasetProperties `json:"dataset,omitempty"`
 }
 
@@ -189,13 +184,11 @@ func (s *Storage) searchREST(searchText string) (*SearchResults, error) {
 
 	// get complete URI for the endpoint
 	query := &SearchQuery{
-		Query: &SearchQueryProperties{
-			Dataset: &SearchQueryDatasetProperties{
-				About: searchText,
-				//Name:        terms,
-				Description: terms,
-				//Keywords:    terms,
-			},
+		Dataset: &SearchQueryDatasetProperties{
+			About: searchText,
+			//Name:        terms,
+			Description: terms,
+			//Keywords:    terms,
 		},
 	}
 	queryJSON, err := json.Marshal(query)
@@ -203,7 +196,7 @@ func (s *Storage) searchREST(searchText string) (*SearchResults, error) {
 		return nil, errors.Wrap(err, "unable to marshal datamart query")
 	}
 
-	responseRaw, err := s.client.PostJSON(searchRESTFunction, queryJSON)
+	responseRaw, err := s.client.PostRequest(searchRESTFunction, map[string]string{"query": string(queryJSON)})
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to post datamart search request")
 	}
