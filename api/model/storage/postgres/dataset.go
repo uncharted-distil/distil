@@ -279,31 +279,3 @@ func (s *Storage) UpdateVariableBatch(storageName string, varName string, update
 
 	return nil
 }
-/*
-func (s *Storage) updateBatch(db *pg.DB, storageName string, varName string, dataSQL string, params []interface{}) error {
-	// NOT USED YET, BUT MAY PROVE USEFUL IN THE FUTURE!!!
-	// first insert the data into a temp table, then update the original table
-	sql := fmt.Sprintf(`
-		CREATE TEMP TABLE data (
-			index TEXT,
-			value TEXT
-		);
-
-		INSERT INTO %s.%s.%s_base VALUES %s;
-
-		UPDATE %s.%s.%s_base AS d
-		SET "%s" = value
-		FROM (select index, value FROM data) as updated
-		WHERE updated.index = d."%s";
-
-		DROP TABLE data;
-		`, "distil", "public", storageName, dataSQL[1:], "distil", "public", storageName, varName, model.D3MIndexName)
-
-	_, err := db.Exec(sql, params...)
-	if err != nil {
-		return errors.Wrap(err, "unable to update batch")
-	}
-
-	return nil
-}
-*/
