@@ -1,12 +1,12 @@
 <template>
 	<b-navbar toggleable="md" type="dark"  class="fixed-top bottom-shadowed">
 
-		<b-nav-toggle target="nav_collapse"></b-nav-toggle>
+		<b-nav-toggle target="nav-collapse"></b-nav-toggle>
 
 		<img src="/images/uncharted.svg" class="app-icon">
 		<span class="navbar-brand">Distil</span>
 
-		<b-collapse v-if="!isAborted" is-nav id="nav_collapse">
+		<b-collapse v-if="!isAborted" is-nav id="nav-collapse">
 			<b-navbar-nav>
 				<b-nav-item @click="onHome" v-if="!isTask1 && !isTask2" :active="isActive(HOME_ROUTE)" v-bind:class="{ active: isActive(HOME_ROUTE) }">
 					<i class="fa fa-home nav-icon"></i>

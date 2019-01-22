@@ -1,21 +1,42 @@
 <template>
 	<div class="create-solutions-form">
-		<b-modal id="export-success-modal" title="Join Succeeded"
+		<b-modal title="Join Preview"
+			class="join-preview-modal"
 			v-model="showJoinSuccess"
 			cancel-disabled
 			hide-header
 			hide-footer>
+
 			<div class="row justify-content-center">
 				<div class="check-message-container">
-					<i class="fa fa-check-circle fa-3x check-icon"></i>
-					<div><b>Join Succeded</b></div>
+					<h5 class="mt-4 mb-4"><b>Join Preview</b></h5>
 				</div>
 			</div>
+
+			<join-data-preview-slot
+				:items="joinDataPreviewItems"
+				:fields="joinDataPreviewFields"
+				:numRows="joinDataPreviewNumRows"
+				:hasData="joinDataPreviewHasData"
+				instance-name="join-dataset-bottom"></join-data-preview-slot>
+
 			<div class="row justify-content-center">
-				<b-btn class="mt-3 close-modal" block @click="showJoinSuccess = !showJoinSuccess">OK</b-btn>
+				<b-btn class="mt-3 join-modal-button" variant="outline-success">
+					<div class="row justify-content-center">
+						<i class="fa fa-check-circle fa-2x mr-2 join-confirm-icon"></i>
+						<b>Commit join</b>
+					</div>
+				</b-btn>
+				<b-btn class="mt-3 join-modal-button" variant="outline-danger" @click="showJoinSuccess = !showJoinSuccess">
+					<div class="row justify-content-center">
+						<i class="fa fa-times-circle fa-2x mr-2 join-cancel-icon"></i>
+						<b>Cancel</b>
+					</div>
+				</b-btn>
 			</div>
+
 		</b-modal>
-		<b-modal id="export-failure-modal" title="Join Failed"
+		<b-modal title="Join Failed"
 			v-model="showJoinFailure"
 			cancel-disabled
 			hide-header
@@ -27,7 +48,7 @@
 				</div>
 			</div>
 			<div class="row justify-content-center">
-				<b-btn class="mt-3 close-modal" block @click="showJoinFailure = !showJoinFailure">OK</b-btn>
+				<b-btn class="mt-3 join-modal-button" block @click="showJoinFailure = !showJoinFailure">OK</b-btn>
 			</div>
 		</b-modal>
 		<div v-if="columnTypesDoNotMatch" class="row justify-content-center mt-3 mb-3 warning-text">
@@ -36,7 +57,10 @@
 		</div>
 		<div class="row justify-content-center">
 			<b-button class="join-button" :variant="joinVariant" @click="join" :disabled="disableJoin">
-				Join Datasets
+				<div class="row justify-content-center">
+					<i class="fa fa-check-circle fa-2x mr-2"></i>
+					<b>Join Datasets</b>
+				</div>
 			</b-button>
 		</div>
 		<div class="join-progress">
@@ -52,15 +76,25 @@
 <script lang="ts">
 
 import _ from 'lodash';
-import { createRouteEntry } from '../util/routes';
-import { getters as routeGetters } from '../store/route/module';
-import { TableColumn } from '../store/dataset/index';
 import Vue from 'vue';
+import JoinDataPreviewSlot from '../components/JoinDataPreviewSlot.vue';
+import { createRouteEntry } from '../util/routes';
+import { Dictionary } from '../util/dict';
+import { getters as routeGetters } from '../store/route/module';
+import { TableData, TableColumn, TableRow } from '../store/dataset/index';
+import { getters as datasetGetters, actions as datasetActions } from '../store/dataset/module';
+import { getTableDataItems, getTableDataFields } from '../util/data';
 
 export default Vue.extend({
 	name: 'join-datasets-form',
 
+	components: {
+		JoinDataPreviewSlot
+	},
+
 	props: {
+		datasetA: String as () => string,
+		datasetB: String as () => string,
 		datasetAColumn: Object as () => TableColumn,
 		datasetBColumn: Object as () => TableColumn
 	},
@@ -71,7 +105,7 @@ export default Vue.extend({
 			showJoin: false,
 			showJoinSuccess: false,
 			showJoinFailure: false,
-			createErrorMessage: null
+			joinErrorMessage: null
 		};
 	},
 
@@ -99,6 +133,21 @@ export default Vue.extend({
 		},
 		percentComplete(): number {
 			return 100;
+		},
+		joinDataPreviewTableData(): TableData {
+			return datasetGetters.getJoinDatasetsTableData(this.$store)[this.datasetA];
+		},
+		joinDataPreviewItems(): TableRow[] {
+			return getTableDataItems(this.joinDataPreviewTableData);
+		},
+		joinDataPreviewFields(): Dictionary<TableColumn> {
+			return getTableDataFields(this.joinDataPreviewTableData);
+		},
+		joinDataPreviewNumRows(): number {
+			return this.joinDataPreviewTableData ? this.joinDataPreviewTableData.numRows : 0;
+		},
+		joinDataPreviewHasData(): boolean {
+			return !!this.joinDataPreviewTableData;
 		}
 	},
 
@@ -106,32 +155,22 @@ export default Vue.extend({
 		join() {
 			// flag as pending
 			this.pending = true;
-			// // dispatch action that triggers request send to server
-			// solutionActions.createSolutionRequest(this.$store, {
-			// 	dataset: this.dataset,
-			// 	filters: this.filterParams,
-			// 	target: routeGetters.getRouteTargetVariable(this.$store),
-			// 	task: this.taskType,
-			// 	subTask: this.taskSubType,
-			// 	metrics: this.metrics,
-			// 	maxSolutions: NUM_SOLUTIONS,
-			// 	// intentionally nulled for now - should be made user settable in the future
-			// 	maxTime: null,
-			// }).then((res: Solution) => {
-			// 	this.pending = false;
-			// 	// transition to result screen
-			// 	const entry = createRouteEntry(RESULTS_ROUTE, {
-			// 		dataset: routeGetters.getRouteDataset(this.$store),
-			// 		target: routeGetters.getRouteTargetVariable(this.$store),
-			// 		solutionId: res.solutionId
-			// 	});
-			// 	this.$router.push(entry);
-			// }).catch(err => {
-			// 	// display error modal
-			// 	this.pending = false;
-			// 	this.createErrorMessage = err.message;
-			// 	this.showCreateFailure = true;
-			// });
+
+			// dispatch action that triggers request send to server
+			datasetActions.joinDatasetsPreview(this.$store, {
+				datasetA: this.datasetA,
+				datasetB: this.datasetB,
+				datasetAColumn: this.datasetAColumn.key,
+				datasetBColumn: this.datasetBColumn.key
+			}).then(() => {
+				this.pending = false;
+				this.showJoinSuccess = true;
+			}).catch(err => {
+				// display error modal
+				this.pending = false;
+				this.showJoinFailure = true;
+				this.joinErrorMessage = err.message;
+			});
 		}
 	}
 });
@@ -141,10 +180,19 @@ export default Vue.extend({
 .join-button {
 	margin: 0 8px;
 	width: 35%;
+	line-height: 32px !important;
 }
 
-.close-modal {
-	width: 35%;
+.join-modal-button {
+	margin: 0 8px;
+	width: 25% !important;
+	line-height: 32px !important;
+}
+
+.join-preview-modal .modal-dialog {
+	position: relative;
+	max-width: 80% !important;
+	max-height: 90%;
 }
 
 .join-progress {
@@ -158,11 +206,12 @@ export default Vue.extend({
 	align-items: center;
 }
 
-.check-icon {
-	display: flex;
-	flex-shrink: 0;
-	color:#00C851;
-	padding-right: 15px;
+.join-confirm-icon {
+	color: #00C851;
+}
+
+.join-cancel-icon {
+	color: #ee0701;
 }
 
 .warning-icon {

@@ -65,6 +65,7 @@ export const actions = {
 	fetchGraph: dispatch(moduleActions.fetchGraph),
 	fetchFile: dispatch(moduleActions.fetchFile),
 	// join data
+	joinDatasetsPreview : dispatch(moduleActions.joinDatasetsPreview),
 	fetchJoinDatasetsTableData: dispatch(moduleActions.fetchJoinDatasetsTableData),
 	// included / excluded table data
 	fetchIncludedTableData: dispatch(moduleActions.fetchIncludedTableData),

@@ -4,7 +4,6 @@
 		bordered
 		hover
 		small
-		responsive
 		:items="items"
 		:fields="emphasizedFields"
 		@head-clicked="onColumnClicked">
@@ -28,12 +27,9 @@ import Vue from 'vue';
 import SparklinePreview from './SparklinePreview';
 import ImagePreview from './ImagePreview';
 import { Dictionary } from '../util/dict';
-import { Filter } from '../util/filters';
 import { TableColumn, TableRow, D3M_INDEX_FIELD } from '../store/dataset/index';
-import { RowSelection } from '../store/highlights/index';
 import { getters as routeGetters } from '../store/route/module';
 import { IMAGE_TYPE, TIMESERIES_TYPE } from '../util/types';
-import { addRowSelection, removeRowSelection, isRowSelected } from '../util/row';
 
 export default Vue.extend({
 	name: 'join-data-table',
@@ -107,22 +103,10 @@ export default Vue.extend({
 			})
 			.filter(field => field.type === TIMESERIES_TYPE)
 			.map(field => field.key);
-		},
-
-		filters(): Filter[] {
-			return this.invertFilters(routeGetters.getDecodedFilters(this.$store));
-		},
-
-		rowSelection(): RowSelection {
-			return routeGetters.getDecodedRowSelection(this.$store);
 		}
 	},
 
 	methods: {
-		invertFilters(filters: Filter[]): Filter[] {
-			// TODO: invert filters
-			return filters;
-		},
 		onColumnClicked(key, field) {
 			if (this.selectedColumn && this.selectedColumn.key === key) {
 				this.$emit('col-clicked', null);
@@ -143,7 +127,6 @@ export default Vue.extend({
 .select-data-table-container {
 	display: flex;
 	overflow: auto;
-	background-color: white;
 }
 .select-data-no-results {
 	width: 100%;

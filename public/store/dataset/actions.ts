@@ -127,6 +127,28 @@ export const actions = {
 			});
 	},
 
+	joinDatasetsPreview(context: DatasetContext, args: { datasetA: string, datasetB: string, datasetAColumn: string, datasetBColumn: string }): Promise<void>  {
+		if (!args.datasetA) {
+			console.warn('`datasetA` argument is missing');
+			return null;
+		}
+		if (!args.datasetB) {
+			console.warn('`datasetB` argument is missing');
+			return null;
+		}
+		if (!args.datasetAColumn) {
+			console.warn('`datasetAColumn` argument is missing');
+			return null;
+		}
+		if (!args.datasetBColumn) {
+			console.warn('`datasetBColumn` argument is missing');
+			return null;
+		}
+		return new Promise((resolve, reject) => {
+			resolve();
+		});
+	},
+
 	setVariableType(context: DatasetContext, args: { dataset: string, field: string, type: string }): Promise<void>  {
 		if (!args.dataset) {
 			console.warn('`dataset` argument is missing');

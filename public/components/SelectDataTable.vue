@@ -4,7 +4,6 @@
 		bordered
 		hover
 		small
-		responsive
 		:items="items"
 		:fields="fields"
 		@row-clicked="onRowClick">

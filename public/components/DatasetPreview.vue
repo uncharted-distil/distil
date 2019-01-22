@@ -5,7 +5,13 @@
 			<a class='nav-link'><b>Features:</b> {{dataset.variables.length}}</a>
 			<a class='nav-link'><b>Rows:</b> {{dataset.numRows}}</a>
 			<a class='nav-link'><b>Size:</b> {{formatBytes(dataset.numBytes)}}</a>
-			<a v-if="allowImport && !importPending && dataset.provenance==='datamart'"><b-button variant="danger" @click.stop='importDataset()'>Import</b-button></a>
+			<a v-if="allowImport && !importPending && dataset.provenance==='datamart'">
+				<b-button class="dataset-preview-button" variant="danger" @click.stop='importDataset()'>
+					<div class="row justify-content-center pl-3 pr-3">
+						<i class="fa fa-cloud-download mr-2"></i>
+						<b>Import</b>
+					</div>
+				</b-button></a>
 			<a class="nav-link import-progress-bar" v-if="importPending">
 				<b-progress
 					:value="percentComplete"
@@ -13,7 +19,14 @@
 					striped
 					:animated="true"></b-progress>
 			</a>
-			<a v-if="allowJoin && dataset.provenance!=='datamart'"><b-button variant="primary" @click.stop='joinDataset()'>Join</b-button></a>
+			<a v-if="allowJoin && dataset.provenance!=='datamart'">
+				<b-button class="dataset-preview-button" variant="primary" @click.stop='joinDataset()'>
+					<div class="row justify-content-center pl-3 pr-3">
+						<i class="fa fa-compress mr-2"></i>
+						<b>Join</b>
+					</div>
+				</b-button>
+			</a>
 		</div>
 		<div class='card-body'>
 			<div class='row'>
@@ -168,6 +181,9 @@ export default Vue.extend({
 .card-result .card-header:hover {
 	color: #fff;
 	background-color: #535353;
+}
+.dataset-preview-button {
+	line-height: 14px !important;
 }
 .dataset-header:hover {
 	text-decoration: underline;

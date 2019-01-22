@@ -49,6 +49,8 @@
 						<div class="row align-items-center">
 							<div class="col-12 d-flex flex-column">
 								<join-datasets-form class="select-create-solutions"
+									:dataset-a="topDataset"
+									:dataset-b="bottomDataset"
 									:dataset-a-column="topColumn"
 									:dataset-b-column="bottomColumn"></join-datasets-form>
 							</div>
