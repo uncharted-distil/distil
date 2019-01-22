@@ -275,7 +275,10 @@ func (f *DateTimeField) parseExtrema(row *pgx.Rows) (*api.Extrema, error) {
 	var maxValue *time.Time
 	if row != nil {
 		// Expect one row of data.
-		row.Next()
+		exists := rows.Next()
+		if !exists {
+			return nil, fmt.Errorf("no rows in extrema query result")
+		}
 		err := row.Scan(&minValue, &maxValue)
 		if err != nil {
 			return nil, errors.Wrap(err, "no min / max aggregation found")
