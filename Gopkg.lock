@@ -216,7 +216,7 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:ae0447a7102c72b72617efbc99092d20da23288e5ea0415390749524ac74a733"
+  digest = "1:bba0a94e42ab4b1ca094ca133ce42ff71240e6dfc9057fd18dfedbd24fa84750"
   name = "github.com/unchartedsoftware/distil-compute"
   packages = [
     "middleware",
@@ -227,10 +227,10 @@
     "primitive/compute/result",
   ]
   pruneopts = "UT"
-  revision = "93f6871064b7772a4c61c39664afe48de3d4decf"
+  revision = "60827f066a012bd5174ccc15b18bc0e9336abe31"
 
 [[projects]]
-  digest = "1:110eada153f876d681a2ad469df3b66915414dd18efff71c90d31d63bf3dbe75"
+  digest = "1:267386e446002e5ddaa109e2d946374ef9a8d0b4e8f824b529899509857ae9f9"
   name = "github.com/unchartedsoftware/distil-ingest"
   packages = [
     "conf",
@@ -243,7 +243,7 @@
     "util",
   ]
   pruneopts = "UT"
-  revision = "5413be9e1d90b2021a62cd131d411ccdceba8b53"
+  revision = "fdcfbad73cf3610bffb6c88ea539c3b29ac44c80"
   version = "0.12.3"
 
 [[projects]]
@@ -417,6 +417,7 @@
   input-imports = [
     "github.com/caarlos0/env",
     "github.com/davecgh/go-spew/spew",
+    "github.com/go-pg/pg",
     "github.com/golang/mock/gomock",
     "github.com/golang/protobuf/proto",
     "github.com/gorilla/websocket",
