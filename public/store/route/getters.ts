@@ -97,7 +97,6 @@ export const getters = {
 				res[datasetID] = filterParams;
 			}
 		});
-		console.log(res);
 		return res;
 	},
 

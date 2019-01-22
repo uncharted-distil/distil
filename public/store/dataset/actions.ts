@@ -147,7 +147,6 @@ export const actions = {
 
 		return axios.post(`/distil/join/${args.datasetA.id}/${args.datasetAColumn}/${args.datasetA.source}/${args.datasetB.id}/${args.datasetBColumn}/${args.datasetB.source}`, {})
 			.then(response => {
-				console.log(response.data);
 				return response.data;
 			});
 	},

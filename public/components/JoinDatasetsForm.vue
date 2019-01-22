@@ -184,7 +184,7 @@ export default Vue.extend({
 			});
 		},
 		commitJoin() {
-			console.log('commit join');
+			// TODO: impl
 		}
 	}
 });
