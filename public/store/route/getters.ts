@@ -49,13 +49,17 @@ export const getters = {
 	},
 
 	getJoinDatasetsVariables(state: Route, getters: any): Variable[] {
-		const datasetNames = getters.getRouteJoinDatasets;
-		if (datasetNames.length !== 2) {
+		const datasetIDs = getters.getRouteJoinDatasets;
+		if (datasetIDs.length !== 2) {
 			return [];
 		}
 		const datasets = getters.getDatasets;
-		const datasetA = datasets[datasetNames[0]];
-		const datasetB = datasets[datasetNames[1]];
+		const datasetA = _.find(datasets, d => {
+			return d.id === datasetIDs[0];
+		});
+		const datasetB = _.find(datasets, d => {
+			return d.id === datasetIDs[1];
+		});
 		let variables = [];
 		if (datasetA) {
 			variables = variables.concat(datasetA.variables);
@@ -74,23 +78,26 @@ export const getters = {
 	},
 
 	getDecodedJoinDatasetsFilterParams(state: Route, getters: any): Dictionary<FilterParams> {
-		const datasetNames = getters.getRouteJoinDatasets;
-		if (datasetNames.length !== 2) {
+		const datasetIDs = getters.getRouteJoinDatasets;
+		if (datasetIDs.length !== 2) {
 			return {};
 		}
 		const datasets = getters.getDatasets;
 		const res = {};
-		datasetNames.forEach(datasetName => {
-			const dataset = datasets[datasetName];
+		datasetIDs.forEach(datasetID => {
+			const dataset = _.find(datasets, d => {
+				return d.id === datasetID;
+			});
 			if (dataset) {
 				const filters = getters.getDecodedFilters;
 				const filterParams = _.cloneDeep({
 					filters: filters,
 					variables: dataset.variables.map(v => v.colName)
 				});
-				res[datasetName] = filterParams;
+				res[datasetID] = filterParams;
 			}
 		});
+		console.log(res);
 		return res;
 	},
 

@@ -2,7 +2,7 @@ import _ from 'lodash';
 import axios from 'axios';
 import { Dictionary } from '../../util/dict';
 import { ActionContext } from 'vuex';
-import { DatasetState, Variable } from './index';
+import { Dataset, DatasetState, Variable } from './index';
 import { mutations } from './module';
 import { DistilState } from '../store';
 import { HighlightRoot } from '../highlights/index';
@@ -127,7 +127,7 @@ export const actions = {
 			});
 	},
 
-	joinDatasetsPreview(context: DatasetContext, args: { datasetA: string, datasetB: string, datasetAColumn: string, datasetBColumn: string }): Promise<void>  {
+	joinDatasetsPreview(context: DatasetContext, args: { datasetA: Dataset, datasetB: Dataset, datasetAColumn: string, datasetBColumn: string }): Promise<void>  {
 		if (!args.datasetA) {
 			console.warn('`datasetA` argument is missing');
 			return null;
@@ -144,9 +144,12 @@ export const actions = {
 			console.warn('`datasetBColumn` argument is missing');
 			return null;
 		}
-		return new Promise((resolve, reject) => {
-			resolve();
-		});
+
+		return axios.post(`/distil/join/${args.datasetA.id}/${args.datasetAColumn}/${args.datasetA.source}/${args.datasetB.id}/${args.datasetBColumn}/${args.datasetB.source}`, {})
+			.then(response => {
+				console.log(response.data);
+				return response.data;
+			});
 	},
 
 	setVariableType(context: DatasetContext, args: { dataset: string, field: string, type: string }): Promise<void>  {

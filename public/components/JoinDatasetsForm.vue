@@ -81,7 +81,7 @@ import JoinDataPreviewSlot from '../components/JoinDataPreviewSlot.vue';
 import { createRouteEntry } from '../util/routes';
 import { Dictionary } from '../util/dict';
 import { getters as routeGetters } from '../store/route/module';
-import { TableData, TableColumn, TableRow } from '../store/dataset/index';
+import { Dataset, TableData, TableColumn, TableRow } from '../store/dataset/index';
 import { getters as datasetGetters, actions as datasetActions } from '../store/dataset/module';
 import { getTableDataItems, getTableDataFields } from '../util/data';
 
@@ -105,11 +105,15 @@ export default Vue.extend({
 			showJoin: false,
 			showJoinSuccess: false,
 			showJoinFailure: false,
-			joinErrorMessage: null
+			joinErrorMessage: null,
+			previewTableData: null
 		};
 	},
 
 	computed: {
+		datasets(): Dataset[] {
+			return datasetGetters.getDatasets(this.$store);
+		},
 		columnsSelected(): boolean {
 			return !!this.datasetAColumn && !!this.datasetBColumn;
 		},
@@ -134,20 +138,17 @@ export default Vue.extend({
 		percentComplete(): number {
 			return 100;
 		},
-		joinDataPreviewTableData(): TableData {
-			return datasetGetters.getJoinDatasetsTableData(this.$store)[this.datasetA];
-		},
 		joinDataPreviewItems(): TableRow[] {
-			return getTableDataItems(this.joinDataPreviewTableData);
+			return getTableDataItems(this.previewTableData);
 		},
 		joinDataPreviewFields(): Dictionary<TableColumn> {
-			return getTableDataFields(this.joinDataPreviewTableData);
+			return getTableDataFields(this.previewTableData);
 		},
 		joinDataPreviewNumRows(): number {
-			return this.joinDataPreviewTableData ? this.joinDataPreviewTableData.numRows : 0;
+			return this.previewTableData ? this.previewTableData.numRows : 0;
 		},
 		joinDataPreviewHasData(): boolean {
-			return !!this.joinDataPreviewTableData;
+			return !!this.previewTableData;
 		}
 	},
 
@@ -156,20 +157,30 @@ export default Vue.extend({
 			// flag as pending
 			this.pending = true;
 
+			const a = _.find(this.datasets, d => {
+				return d.id === this.datasetA;
+			});
+
+			const b = _.find(this.datasets, d => {
+				return d.id === this.datasetB;
+			});
+
 			// dispatch action that triggers request send to server
 			datasetActions.joinDatasetsPreview(this.$store, {
-				datasetA: this.datasetA,
-				datasetB: this.datasetB,
+				datasetA: a,
+				datasetB: b,
 				datasetAColumn: this.datasetAColumn.key,
 				datasetBColumn: this.datasetBColumn.key
-			}).then(() => {
+			}).then(tableData => {
 				this.pending = false;
 				this.showJoinSuccess = true;
+				this.previewTableData = tableData;
 			}).catch(err => {
 				// display error modal
 				this.pending = false;
 				this.showJoinFailure = true;
 				this.joinErrorMessage = err.message;
+				this.previewTableData = null;
 			});
 		}
 	}

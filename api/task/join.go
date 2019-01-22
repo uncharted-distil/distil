@@ -99,7 +99,7 @@ func createResolver(datasetSource ingestMetadata.DatasetSource, config *env.Conf
 	if datasetSource == ingestMetadata.Seed {
 		return util.NewPathResolver(&util.PathConfig{
 			InputFolder:     config.D3MInputDir,
-			InputSubFolders: "TRAIN/DATASET_TRAIN",
+			InputSubFolders: "TRAIN/dataset_TRAIN",
 			OutputFolder:    path.Join(config.TmpDataPath, "augmented"),
 		})
 	}
@@ -111,7 +111,7 @@ func createResolver(datasetSource ingestMetadata.DatasetSource, config *env.Conf
 	}
 	return util.NewPathResolver(&util.PathConfig{
 		InputFolder:     config.D3MInputDir,
-		InputSubFolders: "TRAIN/DATASET_TRAIN",
+		InputSubFolders: "TRAIN/dataset_TRAIN",
 		OutputFolder:    path.Join(config.TmpDataPath, "augmented"),
 	})
 }

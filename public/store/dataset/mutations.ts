@@ -7,7 +7,14 @@ import { updateSummaries } from '../../util/data';
 export const mutations = {
 
 	setDataset(state: DatasetState, dataset: Dataset) {
-		Vue.set(state.datasets, dataset.id, dataset);
+		const index = _.findIndex(state.datasets, d => {
+			return d.id === dataset.id;
+		});
+		if (index === -1) {
+			state.datasets.push(dataset);
+		} else {
+			Vue.set(state.datasets, index, dataset);
+		}
 	},
 
 	setDatasets(state: DatasetState, datasets: Dataset[]) {

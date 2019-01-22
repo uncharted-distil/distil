@@ -25,19 +25,23 @@ export const actions = {
 		// clear previous state
 		context.commit('clearHighlightSummaries');
 
-		const datasetNames = context.getters.getRouteJoinDatasets;
+		const datasetIDs = context.getters.getRouteJoinDatasets;
 		Promise.all([
-				context.dispatch('fetchDataset', datasetNames[0]),
-				context.dispatch('fetchDataset', datasetNames[1]),
+				context.dispatch('fetchDataset', datasetIDs[0]),
+				context.dispatch('fetchDataset', datasetIDs[1]),
 				context.dispatch('fetchJoinDatasetsVariables', {
-					datasets: datasetNames
+					datasets: datasetIDs
 				})
 			])
 			.then(() => {
 				// fetch new state
 				const datasets = context.getters.getDatasets;
-				const datasetA = datasets[datasetNames[0]];
-				const datasetB = datasets[datasetNames[1]];
+				const datasetA = _.find(datasets, d => {
+					return d.id === datasetIDs[0];
+				});
+				const datasetB = _.find(datasets, d => {
+					return d.id === datasetIDs[1];
+				});
 				return Promise.all([
 					context.dispatch('fetchVariableSummaries', {
 						dataset: datasetA.id,
@@ -58,7 +62,7 @@ export const actions = {
 		context.commit('clearHighlightSummaries');
 		context.commit('clearJoinDatasetsTableData');
 
-		const datasetNames = context.getters.getRouteJoinDatasets;
+		const datasetIDs = context.getters.getRouteJoinDatasets;
 		const dataset = context.getters.getRouteDataset;
 		const highlightRoot = context.getters.getDecodedHighlightRoot;
 		const filterParams = context.getters.getDecodedJoinDatasetsFilterParams;
@@ -73,7 +77,7 @@ export const actions = {
 			// }),
 
 			context.dispatch('fetchJoinDatasetsTableData', {
-				datasets: datasetNames,
+				datasets: datasetIDs,
 				filterParams: filterParams,
 				highlightRoot: highlightRoot
 			}),
