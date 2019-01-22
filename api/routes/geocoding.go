@@ -101,17 +101,24 @@ func GeocodingHandler(metaCtor api.MetadataStorageCtor, dataCtor api.DataStorage
 			return
 		}
 
+		// build the data for batching
+		latData := make(map[string]string)
+		lonData := make(map[string]string)
 		for _, point := range geocoded {
-			err = dataStorage.UpdateVariable(storageName, latVarName, point.D3MIndex, fmt.Sprintf("%f", point.Latitude))
-			if err != nil {
-				handleError(w, err)
-				return
-			}
-			err = dataStorage.UpdateVariable(storageName, lonVarName, point.D3MIndex, fmt.Sprintf("%f", point.Longitude))
-			if err != nil {
-				handleError(w, err)
-				return
-			}
+			latData[point.D3MIndex] = fmt.Sprintf("%f", point.Latitude)
+			lonData[point.D3MIndex] = fmt.Sprintf("%f", point.Longitude)
+		}
+
+		// update the batches
+		err = dataStorage.UpdateVariableBatch(storageName, latVarName, latData)
+		if err != nil {
+			handleError(w, err)
+			return
+		}
+		err = dataStorage.UpdateVariableBatch(storageName, lonVarName, lonData)
+		if err != nil {
+			handleError(w, err)
+			return
 		}
 
 		// marshal output into JSON
