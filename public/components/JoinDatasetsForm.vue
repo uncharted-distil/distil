@@ -21,7 +21,7 @@
 				instance-name="join-dataset-bottom"></join-data-preview-slot>
 
 			<div class="row justify-content-center">
-				<b-btn class="mt-3 join-modal-button" variant="outline-success">
+				<b-btn class="mt-3 join-modal-button" variant="outline-success" @click="commitJoin">
 					<div class="row justify-content-center">
 						<i class="fa fa-check-circle fa-2x mr-2 join-confirm-icon"></i>
 						<b>Commit join</b>
@@ -56,7 +56,7 @@
 			<span v-html="joinWarning"></span>
 		</div>
 		<div class="row justify-content-center">
-			<b-button class="join-button" :variant="joinVariant" @click="join" :disabled="disableJoin">
+			<b-button class="join-button" :variant="joinVariant" @click="previewJoin" :disabled="disableJoin">
 				<div class="row justify-content-center">
 					<i class="fa fa-check-circle fa-2x mr-2"></i>
 					<b>Join Datasets</b>
@@ -153,7 +153,7 @@ export default Vue.extend({
 	},
 
 	methods: {
-		join() {
+		previewJoin() {
 			// flag as pending
 			this.pending = true;
 
@@ -182,6 +182,9 @@ export default Vue.extend({
 				this.joinErrorMessage = err.message;
 				this.previewTableData = null;
 			});
+		},
+		commitJoin() {
+			console.log('commit join');
 		}
 	}
 });
