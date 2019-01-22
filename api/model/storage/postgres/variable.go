@@ -18,7 +18,10 @@ func (s *Storage) parseExtrema(row *pgx.Rows, variable *model.Variable) (*api.Ex
 	var maxValue *float64
 	if row != nil {
 		// Expect one row of data.
-		row.Next()
+		exists := row.Next()
+		if !exists {
+			return nil, fmt.Errorf("no row found")
+		}
 		err := row.Scan(&minValue, &maxValue)
 		if err != nil {
 			return nil, errors.Wrap(err, "no min / max aggregation found")

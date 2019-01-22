@@ -514,7 +514,7 @@ func (f *NumericalField) parseStats(row *pgx.Rows) (*NumericalStats, error) {
 		// Expect one row of data.
 		exists := row.Next()
 		if !exists {
-			return nil, fmt.Errorf("No result found")
+			return nil, fmt.Errorf("no result found")
 		}
 		err := row.Scan(&stddev, &mean)
 		if err != nil {
