@@ -12,7 +12,7 @@
 					v-on:join-dataset="onJoin">
 				</dataset-preview>
 			</div>
-			<div class="row justify-content-center" v-if="!isPending && (!dataset || datasets.length === 0)">
+			<div class="row justify-content-center" v-if="!isPending && (!datasets || datasets.length === 0)">
 				<h5>No datasets found for search</h5>
 			</div>
 		</div>
