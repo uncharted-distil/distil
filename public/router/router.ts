@@ -11,6 +11,7 @@ import AbortSuccess from '../views/AbortSuccess.vue';
 import store from '../store/store';
 import { getters as routeGetters } from '../store/route/module';
 import { mutations as viewMutations } from '../store/view/module';
+import { saveView } from '../util/view';
 import { ROOT_ROUTE, HOME_ROUTE, SEARCH_ROUTE, JOIN_DATASETS_ROUTE,
 	SELECT_TARGET_ROUTE, SELECT_TRAINING_ROUTE, RESULTS_ROUTE,
 	EXPORT_SUCCESS_ROUTE, ABORT_SUCCESS_ROUTE } from '../store/route';
@@ -32,18 +33,18 @@ const router = new VueRouter({
 });
 
 router.afterEach((_, fromRoute) => {
-	let dataset = routeGetters.getRouteDataset(store);
-	if (dataset === '' || !dataset)  {
-		dataset = routeGetters.getRouteJoinDatasetsHash(store);
+	let key = routeGetters.getRouteDataset(store);
+	if (key === '' || !key)  {
+		key = routeGetters.getRouteJoinDatasetsHash(store);
 	}
-	if (dataset) {
-		console.log(`Saving view: ${fromRoute.path} for dataset ${dataset}`);
+	if (key) {
+		console.log(`Saving view: ${fromRoute.path} for key ${key}`);
 	} else {
 		console.log(`Saving view: ${fromRoute.path}`);
 	}
-	viewMutations.saveView(store, {
+	saveView({
 		view: fromRoute.path,
-		dataset: dataset,
+		key: key,
 		route: fromRoute
 	});
 });

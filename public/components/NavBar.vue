@@ -135,16 +135,16 @@ export default Vue.extend({
 			appActions.abort(this.$store);
 		},
 		hasJoinDatasetView(): boolean {
-			return !!restoreView(this.$store, SELECT_TARGET_ROUTE, this.joinDatasetsHash);
+			return !!restoreView(JOIN_DATASETS_ROUTE, this.joinDatasetsHash);
 		},
 		hasSelectTargetView(): boolean {
-			return !!restoreView(this.$store, SELECT_TARGET_ROUTE, this.dataset);
+			return !!restoreView(SELECT_TARGET_ROUTE, this.dataset);
 		},
 		hasSelectTrainingView(): boolean {
-			return !!restoreView(this.$store, SELECT_TRAINING_ROUTE, this.dataset);
+			return !!restoreView(SELECT_TRAINING_ROUTE, this.dataset);
 		},
 		hasResultView(): boolean {
-			return !!restoreView(this.$store, RESULTS_ROUTE, this.dataset);
+			return !!restoreView(RESULTS_ROUTE, this.dataset);
 		}
 	}
 });

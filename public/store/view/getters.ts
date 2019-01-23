@@ -8,9 +8,6 @@ import { getters as routeGetters } from '../route/module';
 import { getters as solutionGetters } from '../solutions/module';
 
 export const getters = {
-	getPrevView(state: ViewState): Dictionary<Dictionary<Location>> {
-		return state.stack;
-	},
 
 	getSelectTrainingPaginatedVariables(state: ViewState): Variable[] {
 		const availableTrainingVarsPage = routeGetters.getRouteAvailableTrainingVarsPage(store);
