@@ -173,19 +173,6 @@ func createDatasetFromCSV(config *env.Config, csvFile *os.File, datasetName stri
 	outputResolver := createResolver(ingestMetadata.Contrib, config)
 	outputPath := outputResolver.ResolveOutputAbsolute(datasetName)
 
-	// save the metadata to the output dataset path
-	err = os.MkdirAll(outputPath, os.ModePerm)
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to create join dataset dir structure")
-	}
-
-	// write out the metadata
-	metadataDestPath := path.Join(outputPath, compute.D3MDataSchema)
-	err = ingestMetadata.WriteSchema(metadata, metadataDestPath)
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to write schema")
-	}
-
 	// create dest csv file
 	csvDestFolder := path.Join(outputPath, compute.D3MDataFolder)
 	err = os.MkdirAll(path.Join(outputPath, compute.D3MDataFolder), os.ModePerm)
@@ -198,6 +185,21 @@ func createDatasetFromCSV(config *env.Config, csvFile *os.File, datasetName stri
 		return nil, errors.Wrapf(err, "unable to open destination %s", csvDestPath)
 	}
 	defer out.Close()
+
+	// save the metadata to the output dataset path
+	err = os.MkdirAll(outputPath, os.ModePerm)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to create join dataset dir structure")
+	}
+
+	// write out the metadata
+	metadataDestPath := path.Join(outputPath, compute.D3MDataSchema)
+	relativePath := getRelativePath(path.Dir(metadataDestPath), csvDestPath)
+	dataResource.ResPath = relativePath
+	err = ingestMetadata.WriteSchema(metadata, metadataDestPath)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to write schema")
+	}
 
 	// write out csv rows, ignoring the first column (contains dataframe index)
 	writer := csv.NewWriter(out)
