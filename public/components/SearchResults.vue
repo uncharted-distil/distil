@@ -28,6 +28,7 @@ import { spinnerHTML } from '../util/spinner';
 import { getters as datasetGetters } from '../store/dataset/module';
 import { Dataset } from '../store/dataset/index';
 
+
 export default Vue.extend({
 	name: 'search-results',
 
@@ -68,10 +69,9 @@ export default Vue.extend({
 <style>
 .search-results {
 	width: 100%;
+	overflow: auto;
 }
 .search-results-container {
 	width: 100%;
-	overflow-x: hidden;
-	overflow-y: auto;
 }
 </style>

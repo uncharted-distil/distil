@@ -14,7 +14,7 @@
 <script lang="ts">
 
 import _ from 'lodash';
-import { createRouteEntry } from '../util/routes';
+import { createRouteEntry, overlayRouteEntry } from '../util/routes';
 import { getters as routeGetters } from '../store/route/module';
 import { SEARCH_ROUTE } from '../store/route/index';
 import Vue from 'vue';
@@ -63,11 +63,18 @@ export default Vue.extend({
 
 	methods: {
 		submitSearch(arg) {
-			const path = !_.isEmpty(this.uncommittedTerms) ? SEARCH_ROUTE : routeGetters.getRoutePath(this.$store);
-			const routeEntry = createRouteEntry(path, {
-				terms: this.uncommittedTerms
-			});
-			this.$router.push(routeEntry);
+			const path = routeGetters.getRoutePath(this.$store);
+			if (path !== SEARCH_ROUTE) {
+				const routeEntry = createRouteEntry(SEARCH_ROUTE, {
+					terms: this.uncommittedTerms
+				});
+				this.$router.push(routeEntry);
+			} else {
+				const routeEntry = overlayRouteEntry(this.$route, {
+					terms: this.uncommittedTerms
+				});
+				this.$router.push(routeEntry);
+			}
 			this.uncommittedInput = false;
 		}
 	}

@@ -1,13 +1,12 @@
 <template>
 	<div class="create-solutions-form">
 
-		<b-modal title="Join Preview"
+		<b-modal
 			v-model="showJoinSuccess"
 			class="join-preview-modal"
 			cancel-disabled
 			hide-header
 			hide-footer>
-
 			<join-datasets-preview
 				:preview-table-data="previewTableData"
 				:dataset-a="datasetA"
@@ -16,24 +15,13 @@
 				@failure="onJoinCommitFailure"
 				@close="showJoinSuccess = !showJoinSuccess;">
 			</join-datasets-preview>
-
 		</b-modal>
 
-		<b-modal title="Join Failed"
-			v-model="showJoinFailure"
-			cancel-disabled
-			hide-header
-			hide-footer>
-			<div class="row justify-content-center">
-				<div class="check-message-container">
-					<i class="fa fa-exclamation-triangle fa-3x fail-icon"></i>
-					<div><b>Join Failed:</b> Internal server error</div>
-				</div>
-			</div>
-			<div class="row justify-content-center">
-				<b-btn class="mt-3 join-modal-button" variant="outline-secondary" block @click="showJoinFailure = !showJoinFailure">OK</b-btn>
-			</div>
-		</b-modal>
+		<error-modal
+			:show="showJoinFailure"
+			title="Join Failed"
+			@close="showJoinFailure = !showJoinFailure">
+		</error-modal>
 
 		<div v-if="columnTypesDoNotMatch" class="row justify-content-center mt-3 mb-3 warning-text">
 			<i class="fa fa-exclamation-triangle warning-icon mr-2"></i>
@@ -64,6 +52,7 @@
 import _ from 'lodash';
 import Vue from 'vue';
 import JoinDatasetsPreview from '../components/JoinDatasetsPreview.vue';
+import ErrorModal from '../components/ErrorModal.vue';
 import { createRouteEntry } from '../util/routes';
 import { Dictionary } from '../util/dict';
 import { getters as routeGetters } from '../store/route/module';
@@ -76,7 +65,8 @@ export default Vue.extend({
 	name: 'join-datasets-form',
 
 	components: {
-		JoinDatasetsPreview
+		JoinDatasetsPreview,
+		ErrorModal
 	},
 
 	props: {
@@ -174,7 +164,6 @@ export default Vue.extend({
 				// display error modal
 				this.pending = false;
 				this.showJoinFailure = true;
-				this.joinErrorMessage = err.message;
 				this.previewTableData = null;
 			});
 		},

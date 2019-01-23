@@ -67,6 +67,11 @@
 			</div>
 
 		</div>
+		<error-modal
+			:show="showImportFailure"
+			title="Import Failed"
+			@close="showImportFailure = !showImportFailure">
+		</error-modal>
 	</div>
 
 </template>
@@ -75,6 +80,7 @@
 
 import _ from 'lodash';
 import Vue from 'vue';
+import ErrorModal from '../components/ErrorModal.vue';
 import { createRouteEntry } from '../util/routes';
 import { formatBytes } from '../util/bytes';
 import { sortVariablesByImportance } from '../util/data';
@@ -89,10 +95,14 @@ const NUM_TOP_FEATURES = 5;
 export default Vue.extend({
 	name: 'dataset-preview',
 
+	components: {
+		ErrorModal
+	},
+
 	props: {
 		dataset: Object as () => Dataset,
 		allowImport: Boolean as () => boolean,
-		allowJoin: Boolean as () => boolean
+		allowJoin: Boolean as () => boolean,
 	},
 
 	computed: {
@@ -110,7 +120,8 @@ export default Vue.extend({
 	data() {
 		return {
 			expanded: false,
-			importPending: false
+			importPending: false,
+			showImportFailure: false
 		};
 	},
 
@@ -152,6 +163,9 @@ export default Vue.extend({
 				terms: this.terms,
 				source: 'contrib'
 			}).then(() => {
+				this.importPending = false;
+			}).catch(() => {
+				this.showImportFailure = true;
 				this.importPending = false;
 			});
 		},
