@@ -3,11 +3,11 @@
 		<b-form-input
 			ref="searchbox"
 			v-model="terms"
-			debounce="500"
 			type="text"
 			placeholder="Search datasets"
-			name="datasetsearch"></b-form-input>
-		<i class="fa fa-search search-icon"></i>
+			name="datasetsearch"
+			@change="submitSearch"></b-form-input>
+		<i class="fa fa-search search-icon" @click="submitSearch"></i>
 	</div>
 </template>
 
@@ -22,16 +22,23 @@ import Vue from 'vue';
 export default Vue.extend({
 	name: 'search-bar',
 
+	data() {
+		return {
+			uncommittedInput: false,
+			uncommittedTerms: ''
+		};
+	},
+
 	computed: {
 		terms: {
 			set(terms: string) {
-				const path = !_.isEmpty(terms) ? SEARCH_ROUTE : routeGetters.getRoutePath(this.$store);
-				const routeEntry = createRouteEntry(path, {
-					terms: terms
-				});
-				this.$router.push(routeEntry);
+				this.uncommittedTerms = terms;
+				this.uncommittedInput = true;
 			},
 			get(): string {
+				if (this.uncommittedInput) {
+					return this.uncommittedTerms;
+				}
 				return routeGetters.getRouteTerms(this.$store);
 			}
 		}
@@ -52,6 +59,17 @@ export default Vue.extend({
 				range.select();
 			}
 		}
+	},
+
+	methods: {
+		submitSearch(arg) {
+			const path = !_.isEmpty(this.uncommittedTerms) ? SEARCH_ROUTE : routeGetters.getRoutePath(this.$store);
+			const routeEntry = createRouteEntry(path, {
+				terms: this.uncommittedTerms
+			});
+			this.$router.push(routeEntry);
+			this.uncommittedInput = false;
+		}
 	}
 });
 </script>
@@ -67,6 +85,6 @@ export default Vue.extend({
 	line-height: 1.25;
 	top: 0;
 	right: 0;
-
+	cursor: pointer;
 }
 </style>

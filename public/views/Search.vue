@@ -15,6 +15,7 @@
 		<div class="row flex-10 justify-content-center pb-3">
 			<div class="col-12 col-md-10 d-flex">
 				<search-results class="search-search-results"
+					:is-pending="isPending"
 					v-on:join-dataset="onJoin">
 				</search-results>
 			</div>
@@ -68,6 +69,12 @@ export default Vue.extend({
 		DatasetPreviewCard
 	},
 
+	data() {
+		return {
+			isPending: false
+		};
+	},
+
 	computed: {
 		terms(): string {
 			return routeGetters.getRouteTerms(this.$store);
@@ -104,7 +111,11 @@ export default Vue.extend({
 
 	methods: {
 		fetch() {
-			datasetActions.searchDatasets(this.$store, this.terms);
+			this.isPending = true;
+			datasetActions.searchDatasets(this.$store, this.terms)
+				.then(() => {
+					this.isPending = false;
+				});
 		},
 		onJoin(id) {
 			// check if already exists
