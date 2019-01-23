@@ -16,13 +16,13 @@
 		<div class="row justify-content-center">
 			<b-btn class="mt-3 join-modal-button" variant="outline-success" @click="commitJoin">
 				<div class="row justify-content-center">
-					<i class="fa fa-check-circle fa-2x mr-2 join-confirm-icon"></i>
+					<i class="fa fa-check-circle fa-2x mr-2"></i>
 					<b>Commit join</b>
 				</div>
 			</b-btn>
 			<b-btn class="mt-3 join-modal-button" variant="outline-danger" @click="onClose">
 				<div class="row justify-content-center">
-					<i class="fa fa-times-circle fa-2x mr-2 join-cancel-icon"></i>
+					<i class="fa fa-times-circle fa-2x mr-2"></i>
 					<b>Cancel</b>
 				</div>
 			</b-btn>
@@ -142,14 +142,6 @@ export default Vue.extend({
 	justify-content: flex-start;
 	flex-direction: row;
 	align-items: center;
-}
-
-.join-confirm-icon {
-	color: #00C851;
-}
-
-.join-cancel-icon {
-	color: #ee0701;
 }
 
 .warning-icon {
