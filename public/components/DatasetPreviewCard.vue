@@ -2,6 +2,7 @@
 	<div class='card card-result'>
 		<div class='dataset-card-header hover card-header'  variant="dark">
 			<b>{{dataset.name}}</b>
+			<b-button size="sm" variant="secondary" class="remove-from-join-button" @click="removeFromJoin(dataset.id)"><i class="fa fa-times"></i></b-button>
 		</div>
 		<div class='card-body'>
 			<div class='row align-items-center justify-content-center'>
@@ -50,6 +51,9 @@ export default Vue.extend({
 	methods: {
 		formatBytes(n: number): string {
 			return formatBytes(n);
+		},
+		removeFromJoin(arg) {
+			this.$emit('remove-from-join', arg);
 		}
 	}
 });
@@ -67,4 +71,10 @@ export default Vue.extend({
 	background-color: #424242;
 }
 
+.remove-from-join-button {
+	position: absolute;
+	top: 8px;
+	right: 8px;
+	cursor: pointer;
+}
 </style>
