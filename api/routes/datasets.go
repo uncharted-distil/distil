@@ -122,7 +122,7 @@ func DatasetsHandler(metaCtors []model.MetadataStorageCtor) func(http.ResponseWr
 			if deconflicted[i].Provenance == "datamart" {
 				return false
 			}
-			return true
+			return deconflicted[i].ID < deconflicted[j].ID
 		})
 
 		// marshal data

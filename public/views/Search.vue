@@ -32,8 +32,13 @@
 						:dataset="dataset">
 					</dataset-preview-card>
 				</div>
-				<div class="join-button col-2 mb-3" v-if="numJoiningDatasets === 2">
-					<b-button size="lg" large variant="primary" @click="onJoinDatasets">Join Datasets</b-button>
+				<div class="join-button col-2 mb-3">
+					<b-button size="lg" large variant="primary" :disabled="numJoiningDatasets !== 2" @click="onJoinDatasets">
+						<div class="row justify-content-center join-datasets-button pl-4 pr-4">
+							<i class="fa fa-compress mr-2"></i>
+							<b>Join Datasets</b>
+						</div>
+					</b-button>
 				</div>
 			</div>
 		</div>
@@ -134,7 +139,9 @@ export default Vue.extend({
 	right: 4px;
 	cursor: pointer;
 }
-.join-button {
+.join-datasets-button,
+.join-datasets-button i {
+	line-height: 32px !important;
 	text-align: center;
 }
 </style>

@@ -56,7 +56,6 @@ export default Vue.extend({
 .join-data-preview-container {
 	display: flex;
 	flex-grow: 0;
-	justify-content: center;
 	overflow: auto;
 	margin: 12px 0;
 	max-height: 512px !important;

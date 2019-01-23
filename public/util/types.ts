@@ -292,7 +292,7 @@ export function formatValue(colValue: any, colType: string): any {
 		case REAL_VECTOR_TYPE:
 			return colValue;
 	}
-	return colValue.toFixed(4);
+	return colValue.toFixed ? colValue.toFixed(4) : colValue;
 }
 
 export function isNumericType(type: string): boolean {

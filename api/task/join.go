@@ -56,8 +56,8 @@ func join(joinLeft *JoinSpec, joinRight *JoinSpec, varsLeft []*model.Variable, v
 
 	leftResolver := createResolver(joinLeft.DatasetSource, config)
 	rightResolver := createResolver(joinRight.DatasetSource, config)
-	datasetLeftURI := leftResolver.ResolveInputAbsolute(joinLeft.DatasetFolder)
-	datasetRightURI := rightResolver.ResolveInputAbsolute(joinRight.DatasetFolder)
+	datasetLeftURI := leftResolver.ResolveInputAbsoluteFromRoot(joinLeft.DatasetFolder)
+	datasetRightURI := rightResolver.ResolveInputAbsoluteFromRoot(joinRight.DatasetFolder)
 
 	// returns a URI pointing to the merged CSV file
 	resultURI, err := submitter.submit([]string{datasetLeftURI, datasetRightURI}, pipelineDesc)
@@ -99,7 +99,7 @@ func createResolver(datasetSource ingestMetadata.DatasetSource, config *env.Conf
 	if datasetSource == ingestMetadata.Seed {
 		return util.NewPathResolver(&util.PathConfig{
 			InputFolder:     config.D3MInputDir,
-			InputSubFolders: "TRAIN/dataset_TRAIN",
+			InputSubFolders: "/TRAIN/dataset_TRAIN",
 			OutputFolder:    path.Join(config.TmpDataPath, "augmented"),
 		})
 	}
@@ -240,16 +240,12 @@ func createFilteredData(csvFile *os.File, variables []*model.Variable, lineCount
 
 	// write the header
 	reader := csv.NewReader(csvFile)
-	header, err := reader.Read()
+
+	// discard header
+	_, err = reader.Read()
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to read header line")
 	}
-	header = header[1:]
-	headerValues := make([]interface{}, len(header))
-	for i, value := range header {
-		headerValues[i] = value
-	}
-	data.Values = append(data.Values, headerValues)
 
 	errorCount := 0
 	discardCount := 0
@@ -281,9 +277,13 @@ func createFilteredData(csvFile *os.File, variables []*model.Variable, lineCount
 				} else {
 					typedRow[j-1], err = strconv.ParseInt(row[j], 10, 64)
 					if err != nil {
-						rowError = errors.Wrapf(err, "failed conversion for row %d", i)
-						errorCount++
-						break
+						flt, err := strconv.ParseFloat(row[j], 64)
+						if err != nil {
+							rowError = errors.Wrapf(err, "failed conversion for row %d", i)
+							errorCount++
+							break
+						}
+						typedRow[j-1] = int64(flt)
 					}
 				}
 			} else {
@@ -303,7 +303,7 @@ func createFilteredData(csvFile *os.File, variables []*model.Variable, lineCount
 	}
 
 	if discardCount > 0 {
-		log.Warnf("discared %d rows due to parsing parsing errors", discardCount)
+		log.Warnf("discarded %d rows due to parsing parsing errors", discardCount)
 	}
 
 	data.NumRows = len(data.Values)

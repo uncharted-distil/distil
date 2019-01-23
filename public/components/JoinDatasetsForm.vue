@@ -185,6 +185,14 @@ export default Vue.extend({
 		},
 		commitJoin() {
 			// TODO: impl
+
+			// this.importPending = true;
+			// datasetActions.importDataset(this.$store, {
+			// 	datasetID: this.dataset.id,
+			// 	terms: this.terms
+			// }).then(() => {
+			// 	this.importPending = false;
+			// });
 		}
 	}
 });

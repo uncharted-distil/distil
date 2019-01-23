@@ -95,7 +95,6 @@ func Classify(index string, dataset string, config *IngestTaskConfig) error {
 				}
 				typesArray = []interface{}{vs}
 			}
-			fmt.Printf("TYPES: %v\n", typesArray)
 
 			probabilitiesArray, ok := v[2].([]interface{})
 			if !ok {
@@ -105,7 +104,6 @@ func Classify(index string, dataset string, config *IngestTaskConfig) error {
 				}
 				probabilitiesArray = []interface{}{vs}
 			}
-			fmt.Printf("PROBS: %v\n", probabilitiesArray)
 
 			colIndex, err := strconv.ParseInt(colIndexString, 10, 64)
 			if err != nil {
