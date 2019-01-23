@@ -266,9 +266,4 @@ export default Vue.extend({
 	color: #ee0701;
 	padding-right: 15px;
 }
-
-.check-button {
-	width: 60%;
-	margin: 0 20%;
-}
 </style>

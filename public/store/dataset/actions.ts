@@ -122,9 +122,6 @@ export const actions = {
 		return axios.post(`/distil/import/${args.datasetID}/${args.source}`, {})
 			.then(response => {
 				return context.dispatch('searchDatasets', args.terms);
-			})
-			.catch(error => {
-				console.error(error);
 			});
 	},
 

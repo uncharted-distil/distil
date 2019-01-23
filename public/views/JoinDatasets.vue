@@ -185,13 +185,13 @@ export default Vue.extend({
 	methods: {
 		onTopColumnClicked(column) {
 			const entry = overlayRouteEntry(this.$route, {
-				joinColumnA: column.key
+				joinColumnA: column ? column.key : null
 			});
 			this.$router.push(entry);
 		},
 		onBottomColumnClicked(column) {
 			const entry = overlayRouteEntry(this.$route, {
-				joinColumnB: column.key
+				joinColumnB: column ? column.key : null
 			});
 			this.$router.push(entry);
 		}

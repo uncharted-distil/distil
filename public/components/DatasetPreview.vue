@@ -120,7 +120,6 @@ export default Vue.extend({
 		},
 		setActiveDataset() {
 			const entry = createRouteEntry(SELECT_TARGET_ROUTE, {
-				terms: this.terms,
 				dataset: this.dataset.id
 			});
 			this.$router.push(entry);

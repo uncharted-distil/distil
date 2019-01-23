@@ -1,41 +1,24 @@
 <template>
 	<div class="create-solutions-form">
+
 		<b-modal title="Join Preview"
-			class="join-preview-modal"
 			v-model="showJoinSuccess"
+			class="join-preview-modal"
 			cancel-disabled
 			hide-header
 			hide-footer>
 
-			<div class="row justify-content-center">
-				<div class="check-message-container">
-					<h5 class="mt-4 mb-4"><b>Join Preview</b></h5>
-				</div>
-			</div>
-
-			<join-data-preview-slot
-				:items="joinDataPreviewItems"
-				:fields="joinDataPreviewFields"
-				:numRows="joinDataPreviewNumRows"
-				:hasData="joinDataPreviewHasData"
-				instance-name="join-dataset-bottom"></join-data-preview-slot>
-
-			<div class="row justify-content-center">
-				<b-btn class="mt-3 join-modal-button" variant="outline-success" @click="commitJoin">
-					<div class="row justify-content-center">
-						<i class="fa fa-check-circle fa-2x mr-2 join-confirm-icon"></i>
-						<b>Commit join</b>
-					</div>
-				</b-btn>
-				<b-btn class="mt-3 join-modal-button" variant="outline-danger" @click="showJoinSuccess = !showJoinSuccess">
-					<div class="row justify-content-center">
-						<i class="fa fa-times-circle fa-2x mr-2 join-cancel-icon"></i>
-						<b>Cancel</b>
-					</div>
-				</b-btn>
-			</div>
+			<join-datasets-preview
+				:preview-table-data="previewTableData"
+				:dataset-a="datasetA"
+				:dataset-b="datasetB"
+				@success="onJoinCommitSuccess"
+				@failure="onJoinCommitFailure"
+				@close="showJoinSuccess = !showJoinSuccess;">
+			</join-datasets-preview>
 
 		</b-modal>
+
 		<b-modal title="Join Failed"
 			v-model="showJoinFailure"
 			cancel-disabled
@@ -48,13 +31,15 @@
 				</div>
 			</div>
 			<div class="row justify-content-center">
-				<b-btn class="mt-3 join-modal-button" block @click="showJoinFailure = !showJoinFailure">OK</b-btn>
+				<b-btn class="mt-3 join-modal-button" variant="outline-secondary" block @click="showJoinFailure = !showJoinFailure">OK</b-btn>
 			</div>
 		</b-modal>
+
 		<div v-if="columnTypesDoNotMatch" class="row justify-content-center mt-3 mb-3 warning-text">
 			<i class="fa fa-exclamation-triangle warning-icon mr-2"></i>
 			<span v-html="joinWarning"></span>
 		</div>
+
 		<div class="row justify-content-center">
 			<b-button class="join-button" :variant="joinVariant" @click="previewJoin" :disabled="disableJoin">
 				<div class="row justify-content-center">
@@ -63,6 +48,7 @@
 				</div>
 			</b-button>
 		</div>
+
 		<div class="join-progress">
 			<b-progress v-if="isPending"
 				:value="percentComplete"
@@ -77,19 +63,20 @@
 
 import _ from 'lodash';
 import Vue from 'vue';
-import JoinDataPreviewSlot from '../components/JoinDataPreviewSlot.vue';
+import JoinDatasetsPreview from '../components/JoinDatasetsPreview.vue';
 import { createRouteEntry } from '../util/routes';
 import { Dictionary } from '../util/dict';
 import { getters as routeGetters } from '../store/route/module';
 import { Dataset, TableData, TableColumn, TableRow } from '../store/dataset/index';
 import { getters as datasetGetters, actions as datasetActions } from '../store/dataset/module';
 import { getTableDataItems, getTableDataFields } from '../util/data';
+import { SELECT_TARGET_ROUTE } from '../store/route';
 
 export default Vue.extend({
 	name: 'join-datasets-form',
 
 	components: {
-		JoinDataPreviewSlot
+		JoinDatasetsPreview
 	},
 
 	props: {
@@ -111,9 +98,6 @@ export default Vue.extend({
 	},
 
 	computed: {
-		terms(): string {
-			return routeGetters.getRouteTerms(this.$store);
-		},
 		datasets(): Dataset[] {
 			return datasetGetters.getDatasets(this.$store);
 		},
@@ -156,6 +140,14 @@ export default Vue.extend({
 	},
 
 	methods: {
+
+		addRecentDataset(dataset: string) {
+			const datasets = localStorage.get('recent-datasets') || [];
+			if (datasets.indexOf(dataset) === -1) {
+				datasets.unshift(dataset);
+				localStorage.set('recent-datasets', datasets);
+			}
+		},
 		previewJoin() {
 			// flag as pending
 			this.pending = true;
@@ -186,15 +178,15 @@ export default Vue.extend({
 				this.previewTableData = null;
 			});
 		},
-		commitJoin() {
-			// this.importPending = true;
-			datasetActions.importDataset(this.$store, {
-				datasetID: `${this.datasetA}-${this.datasetB}`,
-				terms: this.terms,
-				source: 'augmented'
-			}).then(() => {
-				// this.importPending = false;
+		onJoinCommitSuccess(datasetID: string) {
+			const entry = createRouteEntry(SELECT_TARGET_ROUTE, {
+				dataset: datasetID
 			});
+			this.$router.push(entry);
+			this.addRecentDataset(datasetID);
+		},
+		onJoinCommitFailure() {
+			this.showJoinFailure = true;
 		}
 	}
 });
@@ -207,16 +199,16 @@ export default Vue.extend({
 	line-height: 32px !important;
 }
 
-.join-modal-button {
-	margin: 0 8px;
-	width: 25% !important;
-	line-height: 32px !important;
-}
-
 .join-preview-modal .modal-dialog {
 	position: relative;
 	max-width: 80% !important;
 	max-height: 90%;
+}
+
+.join-modal-button {
+	margin: 0 8px;
+	width: 25% !important;
+	line-height: 32px !important;
 }
 
 .join-progress {
@@ -230,14 +222,6 @@ export default Vue.extend({
 	align-items: center;
 }
 
-.join-confirm-icon {
-	color: #00C851;
-}
-
-.join-cancel-icon {
-	color: #ee0701;
-}
-
 .warning-icon {
 	color: #ee0701;
 }
@@ -245,10 +229,5 @@ export default Vue.extend({
 .warning-text {
 	line-height: 16px;
 	font-size: 16px;
-}
-
-.check-button {
-	width: 60%;
-	margin: 0 20%;
 }
 </style>
