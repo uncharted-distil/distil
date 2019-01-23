@@ -70,6 +70,7 @@ import JoinDatasetsForm from '../components/JoinDatasetsForm.vue';
 import JoinDataSlot from '../components/JoinDataSlot.vue';
 import VariableFacets from '../components/VariableFacets.vue';
 import TypeChangeMenu from '../components/TypeChangeMenu.vue';
+import { overlayRouteEntry } from '../util/routes';
 import { Dictionary } from '../util/dict';
 import { VariableSummary, TableData, TableColumn, TableRow } from '../store/dataset/index';
 import { filterSummariesByDataset, NUM_PER_PAGE,
@@ -87,13 +88,6 @@ export default Vue.extend({
 		JoinDatasetsForm,
 		JoinDataSlot,
 		VariableFacets
-	},
-
-	data() {
-		return {
-			topColumn: null,
-			bottomColumn: null
-		};
 	},
 
 	computed: {
@@ -124,6 +118,10 @@ export default Vue.extend({
 		joinDatasetsTableData(): Dictionary<TableData> {
 			return datasetGetters.getJoinDatasetsTableData(this.$store);
 		},
+		topColumn(): TableColumn {
+			const colKey = routeGetters.getJoinDatasetColumnA(this.$store);
+			return colKey ? this.topDatasetFields[colKey] : null;
+		},
 		topDataset(): string {
 			return this.joinDatasets.length >= 1 ? this.joinDatasets[0] : null;
 		},
@@ -141,6 +139,10 @@ export default Vue.extend({
 		},
 		topDatasetHasData(): boolean {
 			return !!this.topDatasetTableData;
+		},
+		bottomColumn(): TableColumn {
+			const colKey = routeGetters.getJoinDatasetColumnB(this.$store);
+			return colKey ? this.bottomDatasetFields[colKey] : null;
 		},
 		bottomDataset(): string {
 			return this.joinDatasets.length >= 2 ? this.joinDatasets[1] : null;
@@ -181,11 +183,17 @@ export default Vue.extend({
 	},
 
 	methods: {
-		onTopColumnClicked(event) {
-			this.topColumn = event;
+		onTopColumnClicked(column) {
+			const entry = overlayRouteEntry(this.$route, {
+				joinColumnA: column.key
+			});
+			this.$router.push(entry);
 		},
-		onBottomColumnClicked(event) {
-			this.bottomColumn = event;
+		onBottomColumnClicked(column) {
+			const entry = overlayRouteEntry(this.$route, {
+				joinColumnB: column.key
+			});
+			this.$router.push(entry);
 		}
 	}
 });

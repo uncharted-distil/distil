@@ -77,6 +77,14 @@ export const getters = {
 		return summaries.filter(summary => lookup[summary.key.toLowerCase()]);
 	},
 
+	getJoinDatasetColumnA(state: Route, getters: any): string {
+		return state.query.joinColumnA as string;
+	},
+
+	getJoinDatasetColumnB(state: Route, getters: any): string {
+		return state.query.joinColumnB as string;
+	},
+
 	getDecodedJoinDatasetsFilterParams(state: Route, getters: any): Dictionary<FilterParams> {
 		const datasetIDs = getters.getRouteJoinDatasets;
 		if (datasetIDs.length !== 2) {

@@ -15,6 +15,8 @@ export interface RouteArgs {
 	residualThresholdMax?: string;
 	geo?: string;
 	joinDatasets?: string;
+	joinColumnA?: string;
+	joinColumnB?: string;
 }
 
 /**
@@ -39,6 +41,8 @@ export function createRouteEntry(path: string, args: RouteArgs = {}): Location {
 	if (!_.isEmpty(args.highlights)) { query.highlights = args.highlights; }
 	if (args.geo) { query.geo = args.geo; }
 	if (args.joinDatasets) { query.joinDatasets = args.joinDatasets; }
+	if (args.joinColumnA) { query.joinColumnA = args.joinColumnA; }
+	if (args.joinColumnB) { query.joinColumnB = args.joinColumnB; }
 
 	const routeEntry: Location = {
 		path: path,
