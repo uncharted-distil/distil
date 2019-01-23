@@ -26,6 +26,7 @@ export interface Dataset {
 	id: string;
 	name: string;
 	description: string;
+	folder: string;
 	summary: string;
 	summaryML: string;
 	variables: Variable[];

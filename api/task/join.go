@@ -31,6 +31,7 @@ type primitiveSubmitter interface {
 
 // JoinSpec stores information for one side of a join operation.
 type JoinSpec struct {
+	DatasetID     string
 	DatasetFolder string
 	DatasetSource ingestMetadata.DatasetSource
 	Column        string
@@ -72,8 +73,8 @@ func join(joinLeft *JoinSpec, joinRight *JoinSpec, varsLeft []*model.Variable, v
 	defer csvFile.Close()
 
 	// create a new dataset from the merged CSV file
-	leftName := joinLeft.DatasetFolder
-	rightName := joinRight.DatasetFolder
+	leftName := joinLeft.DatasetID
+	rightName := joinRight.DatasetID
 	datasetName := strings.Join([]string{leftName, rightName}, "-")
 	mergedVariables, err := createDatasetFromCSV(config, csvFile, datasetName, varsLeft, varsRight)
 	if err != nil {

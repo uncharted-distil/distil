@@ -45,12 +45,14 @@ func JoinHandler(metaCtor api.MetadataStorageCtor) func(http.ResponseWriter, *ht
 
 		leftJoin := &task.JoinSpec{
 			Column:        columnLeft,
+			DatasetID:     datasetLeft.ID,
 			DatasetFolder: datasetLeft.Folder,
 			DatasetSource: metadata.DatasetSource(sourceLeft),
 		}
 
 		rightJoin := &task.JoinSpec{
 			Column:        columnRight,
+			DatasetID:     datasetRight.ID,
 			DatasetFolder: datasetRight.Folder,
 			DatasetSource: metadata.DatasetSource(sourceRight),
 		}

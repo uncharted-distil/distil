@@ -111,6 +111,9 @@ export default Vue.extend({
 	},
 
 	computed: {
+		terms(): string {
+			return routeGetters.getRouteTerms(this.$store);
+		},
 		datasets(): Dataset[] {
 			return datasetGetters.getDatasets(this.$store);
 		},
@@ -184,15 +187,14 @@ export default Vue.extend({
 			});
 		},
 		commitJoin() {
-			// TODO: impl
-
 			// this.importPending = true;
-			// datasetActions.importDataset(this.$store, {
-			// 	datasetID: this.dataset.id,
-			// 	terms: this.terms
-			// }).then(() => {
-			// 	this.importPending = false;
-			// });
+			datasetActions.importDataset(this.$store, {
+				datasetID: `${this.datasetA}-${this.datasetB}`,
+				terms: this.terms,
+				source: 'augmented'
+			}).then(() => {
+				// this.importPending = false;
+			});
 		}
 	}
 });
