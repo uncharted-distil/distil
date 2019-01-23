@@ -8,6 +8,10 @@ export const getters = {
 		return state.datasets;
 	},
 
+	getFilteredDatasets(state: DatasetState): Dataset[] {
+		return state.filteredDatasets;
+	},
+
 	getVariables(state: DatasetState): Variable[] {
 		return state.variables;
 	},

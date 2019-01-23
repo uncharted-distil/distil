@@ -4,7 +4,7 @@
 			<div v-html="spinnerHTML"></div>
 		</div>
 		<div class="search-results-container" ref="datasetResults">
-			<div class="mb-3" :key="dataset.id" v-for="dataset in datasets">
+			<div class="mb-3" :key="dataset.id" v-for="dataset in filteredDatasets">
 				<dataset-preview
 					:dataset="dataset"
 					allow-join
@@ -12,7 +12,7 @@
 					v-on:join-dataset="onJoin">
 				</dataset-preview>
 			</div>
-			<div class="row justify-content-center" v-if="!isPending && (!datasets || datasets.length === 0)">
+			<div class="row justify-content-center" v-if="!isPending && (!filteredDatasets || filteredDatasets.length === 0)">
 				<h5>No datasets found for search</h5>
 			</div>
 		</div>
@@ -41,8 +41,8 @@ export default Vue.extend({
 	},
 
 	computed: {
-		datasets(): Dataset[] {
-			return datasetGetters.getDatasets(this.$store);
+		filteredDatasets(): Dataset[] {
+			return datasetGetters.getFilteredDatasets(this.$store);
 		},
 		spinnerHTML(): string {
 			return spinnerHTML();
@@ -56,7 +56,7 @@ export default Vue.extend({
 	},
 
 	watch: {
-		datasets() {
+		filteredDatasets() {
 			// reset back to top on dataset change
 			const $results = this.$refs.datasetResults as Element;
 			$results.scrollTop = 0;
@@ -69,7 +69,8 @@ export default Vue.extend({
 <style>
 .search-results {
 	width: 100%;
-	overflow: auto;
+	overflow-x: hidden;
+	overflow-y: auto;
 }
 .search-results-container {
 	width: 100%;

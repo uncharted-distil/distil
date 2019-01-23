@@ -19,6 +19,7 @@ const { commit, read, dispatch } = getStoreAccessors<DatasetState, DistilState>(
 export const getters = {
 	// dataset
 	getDatasets: read(moduleGetters.getDatasets),
+	getFilteredDatasets: read(moduleGetters.getFilteredDatasets),
 	// variables
 	getVariables: read(moduleGetters.getVariables),
 	getVariablesMap: read(moduleGetters.getVariablesMap),

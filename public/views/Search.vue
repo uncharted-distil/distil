@@ -57,6 +57,7 @@ import SearchResults from '../components/SearchResults.vue';
 import { Dataset } from '../store/dataset/index';
 import { createRouteEntry, overlayRouteEntry } from '../util/routes';
 import { getters as routeGetters } from '../store/route/module';
+import { actions as viewActions } from '../store/view/module';
 import { getters as datasetGetters, actions as datasetActions } from '../store/dataset/module';
 import { SEARCH_ROUTE, JOIN_DATASETS_ROUTE } from '../store/route/index';
 
@@ -112,7 +113,7 @@ export default Vue.extend({
 	methods: {
 		fetch() {
 			this.isPending = true;
-			datasetActions.searchDatasets(this.$store, this.terms)
+			viewActions.fetchSearchData(this.$store)
 				.then(() => {
 					this.isPending = false;
 				});

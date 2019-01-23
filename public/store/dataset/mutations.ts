@@ -18,7 +18,24 @@ export const mutations = {
 	},
 
 	setDatasets(state: DatasetState, datasets: Dataset[]) {
-		state.datasets = datasets;
+		// individually add datasets if they do not exist
+		const lookup = {};
+		state.datasets.forEach((d, index) => {
+			lookup[d.id] = index;
+		});
+		datasets.forEach(d => {
+			const index = lookup[d.id];
+			if (index !== undefined) {
+				// update if it already exists
+				Vue.set(state.datasets, index, d);
+			} else {
+				// push if not
+				state.datasets.push(d);
+			}
+		});
+
+		// replace all filtered datasets
+		state.filteredDatasets = datasets;
 	},
 
 	setVariables(state: DatasetState, variables: Variable[]) {

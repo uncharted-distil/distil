@@ -93,6 +93,7 @@ export interface TimeseriesExtrema {
 
 export interface DatasetState {
 	datasets: Dataset[];
+	filteredDatasets: Dataset[];
 	variables: Variable[];
 	variableSummaries: VariableSummary[];
 	files: Dictionary<any>;
@@ -103,8 +104,9 @@ export interface DatasetState {
 }
 
 export const state: DatasetState = {
-	// description of matched datasets
+	// datasets and filtered datasets
 	datasets: [],
+	filteredDatasets: [],
 
 	// variable list for the active dataset
 	variables: [],

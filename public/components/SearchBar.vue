@@ -6,6 +6,7 @@
 			type="text"
 			placeholder="Search datasets"
 			name="datasetsearch"
+			@keypress.native="onEnter"
 			@change="submitSearch"></b-form-input>
 		<i class="fa fa-search search-icon" @click="submitSearch"></i>
 	</div>
@@ -18,6 +19,8 @@ import { createRouteEntry, overlayRouteEntry } from '../util/routes';
 import { getters as routeGetters } from '../store/route/module';
 import { SEARCH_ROUTE } from '../store/route/index';
 import Vue from 'vue';
+
+const ENTER_KEYCODE = 13;
 
 export default Vue.extend({
 	name: 'search-bar',
@@ -62,16 +65,23 @@ export default Vue.extend({
 	},
 
 	methods: {
-		submitSearch(arg) {
+		onEnter(event) {
+			if (event.keycode === ENTER_KEYCODE ||
+				event.charCode === ENTER_KEYCODE ||
+				event.which === ENTER_KEYCODE) {
+				this.submitSearch();
+			}
+		},
+		submitSearch() {
 			const path = routeGetters.getRoutePath(this.$store);
 			if (path !== SEARCH_ROUTE) {
 				const routeEntry = createRouteEntry(SEARCH_ROUTE, {
-					terms: this.uncommittedTerms
+					terms: this.terms
 				});
 				this.$router.push(routeEntry);
 			} else {
 				const routeEntry = overlayRouteEntry(this.$route, {
-					terms: this.uncommittedTerms
+					terms: this.terms
 				});
 				this.$router.push(routeEntry);
 			}

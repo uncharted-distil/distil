@@ -17,8 +17,14 @@ export const actions = {
 
 	fetchSearchData(context: ViewContext) {
 		const terms = context.getters.getRouteTerms;
+		const datasetIDs = context.getters.getRouteJoinDatasets;
 
-		return context.dispatch('searchDatasets', terms);
+		const promises = datasetIDs.map((id: string) => {
+			return context.dispatch('fetchDataset', id);
+		});
+		promises.push(context.dispatch('searchDatasets', terms));
+
+		return Promise.all(promises);
 	},
 
 	fetchJoinDatasetsData(context: ViewContext) {
