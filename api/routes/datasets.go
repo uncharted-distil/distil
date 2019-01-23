@@ -3,7 +3,6 @@ package routes
 import (
 	"net/http"
 	"net/url"
-	"sort"
 
 	"github.com/microcosm-cc/bluemonday"
 	"github.com/pkg/errors"
@@ -116,14 +115,6 @@ func DatasetsHandler(metaCtors []model.MetadataStorageCtor) func(http.ResponseWr
 		for _, dataset := range exists {
 			deconflicted = append(deconflicted, dataset)
 		}
-
-		// return ingested datasets first
-		sort.SliceStable(deconflicted, func(i, j int) bool {
-			if deconflicted[i].Provenance == "datamart" {
-				return false
-			}
-			return deconflicted[i].ID < deconflicted[j].ID
-		})
 
 		// marshal data
 		err = handleJSON(w, DatasetsResult{

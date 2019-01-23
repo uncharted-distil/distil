@@ -4,6 +4,26 @@ import { Dictionary } from '../../util/dict';
 import { DatasetState, Variable, Dataset, VariableSummary, TableData } from './index';
 import { updateSummaries } from '../../util/data';
 
+function sortDatasets(a: Dataset, b: Dataset) {
+
+	if (a.provenance === 'datamart' && b.provenance !== 'datamart') {
+		return 1;
+	}
+	if (b.provenance === 'datamart' && a.provenance !== 'datamart') {
+		return -1;
+	}
+	const aID = a.id.toUpperCase();
+	const bID = b.id.toUpperCase();
+	if (aID < bID) {
+		return -1;
+	}
+	if (aID > bID) {
+		return 1;
+	}
+
+	return 0;
+}
+
 export const mutations = {
 
 	setDataset(state: DatasetState, dataset: Dataset) {
@@ -15,6 +35,7 @@ export const mutations = {
 		} else {
 			Vue.set(state.datasets, index, dataset);
 		}
+		state.datasets.sort(sortDatasets);
 	},
 
 	setDatasets(state: DatasetState, datasets: Dataset[]) {
@@ -33,9 +54,11 @@ export const mutations = {
 				state.datasets.push(d);
 			}
 		});
+		state.datasets.sort(sortDatasets);
 
 		// replace all filtered datasets
 		state.filteredDatasets = datasets;
+		state.filteredDatasets.sort(sortDatasets);
 	},
 
 	setVariables(state: DatasetState, variables: Variable[]) {
