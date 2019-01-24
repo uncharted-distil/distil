@@ -93,7 +93,7 @@
   name = "github.com/unchartedsoftware/distil-compute"
   branch = "master"
 
-[[override]]
+[[constraint]]
   name = "github.com/unchartedsoftware/distil-ingest"
   branch = "master"
 
