@@ -19,6 +19,7 @@ export interface RouteArgs {
 	joinColumnB?: string;
 }
 
+
 /**
  * Builds a route entry object that can be directly pushed onto the stack
  * via  call to route.push(). This holds all the app view state to support
@@ -28,7 +29,30 @@ export interface RouteArgs {
  * @param {RouteArgs} args - the arguments for the route.
  */
 export function createRouteEntry(path: string, args: RouteArgs = {}): Location {
-	const query: Dictionary<string> = {};
+	const routeEntry: Location = {
+		path: path,
+		query: validateQueryArgs(args) as Dictionary<string>
+	};
+
+	return routeEntry;
+}
+
+export function overlayRouteEntry(route: Route, args: RouteArgs): Location {
+	// initialize a new object from the supplied route
+	const routeEntry: Location = {
+		path: route.path,
+		query: _.merge({}, route.query, validateQueryArgs(args))
+	};
+	return routeEntry;
+}
+
+export function getRouteFacetPage(key: string, route: Route): number {
+	const page = route.query[key] as string;
+	return page ? parseInt(page) : 1;
+}
+
+function validateQueryArgs(args: RouteArgs): RouteArgs {
+	const query: RouteArgs = {};
 
 	if (args.dataset) { query.dataset = args.dataset; }
 	if (args.terms) { query.terms = args.terms; }
@@ -44,24 +68,5 @@ export function createRouteEntry(path: string, args: RouteArgs = {}): Location {
 	if (args.joinColumnA) { query.joinColumnA = args.joinColumnA; }
 	if (args.joinColumnB) { query.joinColumnB = args.joinColumnB; }
 
-	const routeEntry: Location = {
-		path: path,
-		query: query
-	};
-
-	return routeEntry;
-}
-
-export function overlayRouteEntry(route: Route, args: RouteArgs): Location {
-	// initialize a new object from the supplied route
-	const routeEntry: Location = {
-		path: route.path,
-		query: _.merge({}, route.query, args)
-	};
-	return routeEntry;
-}
-
-export function getRouteFacetPage(key: string, route: Route): number {
-	const page = route.query[key] as string;
-	return page ? parseInt(page) : 1;
+	return query;
 }
