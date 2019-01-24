@@ -31,7 +31,7 @@ func UploadHandler(outputPath string) func(http.ResponseWriter, *http.Request) {
 
 		// save the csv file in the file system datasets folder
 		dataFilePath := path.Join(compute.D3MDataFolder, compute.D3MLearningData)
-		dataPath := path.Join(outputPath, dataFilePath)
+		dataPath := path.Join(outputPath, dataset, dataFilePath)
 		err = util.WriteFileWithDirs(dataPath, bytes, os.ModePerm)
 		if err != nil {
 			handleError(w, errors.Wrap(err, "unable to write raw data file"))
@@ -45,7 +45,7 @@ func UploadHandler(outputPath string) func(http.ResponseWriter, *http.Request) {
 		dr.ResPath = dataFilePath
 		meta.DataResources = []*model.DataResource{dr}
 
-		schemaPath := path.Join(outputPath, datasetID, compute.D3MDataSchema)
+		schemaPath := path.Join(outputPath, dataset, compute.D3MDataSchema)
 		err = metadata.WriteSchema(meta, schemaPath)
 		if err != nil {
 			handleError(w, errors.Wrap(err, "unable to output schema"))
