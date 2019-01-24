@@ -2,12 +2,13 @@ import VueRouter from 'vue-router';
 import store from '../store/store';
 import { createRouteEntry } from '../util/routes';
 import { restoreView } from '../util/view';
-import { HOME_ROUTE, SEARCH_ROUTE, SELECT_TARGET_ROUTE, SELECT_TRAINING_ROUTE, RESULTS_ROUTE } from '../store/route/index';
+import { HOME_ROUTE, SEARCH_ROUTE, JOIN_DATASETS_ROUTE, SELECT_TARGET_ROUTE, SELECT_TRAINING_ROUTE, RESULTS_ROUTE } from '../store/route/index';
 import { getters as routeGetters } from '../store/route/module';
 
 export function gotoView(router: VueRouter, view: string) {
-	const dataset = routeGetters.getRouteDataset(store);
-	const prev = restoreView(store, view, dataset);
+	const key = routeGetters.getRouteJoinDatasetsHash(store) || routeGetters.getRouteDataset(store);
+	const prev = restoreView(view, key);
+	console.log(`Restoring view: ${view} for key ${key}`);
 	const entry = createRouteEntry(view, prev ? prev.query : {});
 	router.push(entry);
 }
@@ -18,6 +19,10 @@ export function gotoHome(router: VueRouter) {
 
 export function gotoSearch(router: VueRouter) {
 	gotoView(router, SEARCH_ROUTE);
+}
+
+export function gotoJoinDatasets(router: VueRouter) {
+	gotoView(router, JOIN_DATASETS_ROUTE);
 }
 
 export function gotoSelectTarget(router: VueRouter) {

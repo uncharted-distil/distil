@@ -11,7 +11,6 @@
 			:instance-name="instanceName"
 			:rows-per-page="numRowsPerPage"
 			:groups="groups"
-			:dataset="dataset"
 			:html="html">
 			<div class="available-variables-menu">
 				<div>

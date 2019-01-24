@@ -12,7 +12,6 @@
 				bordered
 				hover
 				small
-				responsive
 				:ref="refName"
 				:items="items"
 				:fields="fields"

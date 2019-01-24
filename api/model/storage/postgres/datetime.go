@@ -270,13 +270,16 @@ func (f *DateTimeField) parseHistogram(rows *pgx.Rows, extrema *api.Extrema) (*a
 	}, nil
 }
 
-func (f *DateTimeField) parseExtrema(row *pgx.Rows) (*api.Extrema, error) {
+func (f *DateTimeField) parseExtrema(rows *pgx.Rows) (*api.Extrema, error) {
 	var minValue *time.Time
 	var maxValue *time.Time
-	if row != nil {
+	if rows != nil {
 		// Expect one row of data.
-		row.Next()
-		err := row.Scan(&minValue, &maxValue)
+		exists := rows.Next()
+		if !exists {
+			return nil, fmt.Errorf("no rows in extrema query result")
+		}
+		err := rows.Scan(&minValue, &maxValue)
 		if err != nil {
 			return nil, errors.Wrap(err, "no min / max aggregation found")
 		}

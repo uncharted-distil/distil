@@ -73,7 +73,6 @@ export default Vue.extend({
 		enableHighlighting: Boolean as () => boolean,
 		ignoreHighlights: Boolean as () => boolean,
 		groups: Array as () => Group[],
-		dataset: String as () => string,
 		subtitle: String as () => string,
 		html: [ String as () => string, Object as () => any, Function as () => Function ],
 		instanceName: { type: String as () => string, default: 'variableFacets' },

@@ -4,15 +4,23 @@ import { LAST_STATE } from '../store/view/index';
 import { getters as viewGetters } from '../store/view/module';
 import localStorage from 'store';
 
-export function restoreView(store: Store<any>, view: string, dataset: string): Location {
-	const prev = viewGetters.getPrevView(store);
-	const key = dataset || LAST_STATE;
-	if (!prev[view]) {
-		return localStorage.get(`${view}:${key}`) || null;
+export function saveView(args: { view: string, key: string, route: Location }) {
+	const value = {
+		path: args.route.path,
+		query: args.route.query
+	};
+	// store under dataset
+	if (args.key) {
+		localStorage.set(`${args.view}:${args.key}`, value);
 	}
+	// store last as well in case no dataset available
+	localStorage.set(`${args.view}:${LAST_STATE}`, value);
+}
 
-	if (!prev[view][key]) {
-		return localStorage.get(`${view}:${key}`) || null;
+export function restoreView(view: string, key: string): Location {
+	let res = localStorage.get(`${view}:${key}`);
+	if (!res) {
+		res = localStorage.get(`${view}:${LAST_STATE}`);
 	}
-	return prev[view][key];
+	return res || null;
 }

@@ -3,35 +3,45 @@
 		<b-form-input
 			ref="searchbox"
 			v-model="terms"
-			debounce="500"
 			type="text"
 			placeholder="Search datasets"
-			name="datasetsearch"></b-form-input>
-		<i class="fa fa-search search-icon"></i>
+			name="datasetsearch"
+			@keypress.native="onEnter"
+			@change="submitSearch"></b-form-input>
+		<i class="fa fa-search search-icon" @click="submitSearch"></i>
 	</div>
 </template>
 
 <script lang="ts">
 
 import _ from 'lodash';
-import { createRouteEntry } from '../util/routes';
+import { createRouteEntry, overlayRouteEntry } from '../util/routes';
 import { getters as routeGetters } from '../store/route/module';
 import { SEARCH_ROUTE } from '../store/route/index';
 import Vue from 'vue';
 
+const ENTER_KEYCODE = 13;
+
 export default Vue.extend({
 	name: 'search-bar',
+
+	data() {
+		return {
+			uncommittedInput: false,
+			uncommittedTerms: ''
+		};
+	},
 
 	computed: {
 		terms: {
 			set(terms: string) {
-				const path = !_.isEmpty(terms) ? SEARCH_ROUTE : routeGetters.getRoutePath(this.$store);
-				const routeEntry = createRouteEntry(path, {
-					terms: terms
-				});
-				this.$router.push(routeEntry);
+				this.uncommittedTerms = terms;
+				this.uncommittedInput = true;
 			},
 			get(): string {
+				if (this.uncommittedInput) {
+					return this.uncommittedTerms;
+				}
 				return routeGetters.getRouteTerms(this.$store);
 			}
 		}
@@ -52,6 +62,31 @@ export default Vue.extend({
 				range.select();
 			}
 		}
+	},
+
+	methods: {
+		onEnter(event) {
+			if (event.keycode === ENTER_KEYCODE ||
+				event.charCode === ENTER_KEYCODE ||
+				event.which === ENTER_KEYCODE) {
+				this.submitSearch();
+			}
+		},
+		submitSearch() {
+			const path = routeGetters.getRoutePath(this.$store);
+			if (path !== SEARCH_ROUTE) {
+				const routeEntry = createRouteEntry(SEARCH_ROUTE, {
+					terms: this.terms
+				});
+				this.$router.push(routeEntry);
+			} else {
+				const routeEntry = overlayRouteEntry(this.$route, {
+					terms: this.terms
+				});
+				this.$router.push(routeEntry);
+			}
+			this.uncommittedInput = false;
+		}
 	}
 });
 </script>
@@ -67,6 +102,6 @@ export default Vue.extend({
 	line-height: 1.25;
 	top: 0;
 	right: 0;
-
+	cursor: pointer;
 }
 </style>

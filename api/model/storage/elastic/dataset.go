@@ -14,8 +14,9 @@ import (
 const (
 	// DatasetSuffix is the suffix for the dataset entry when stored in
 	// elasticsearch.
-	metadataType     = "metadata"
-	provenance       = "elastic"
+	metadataType = "metadata"
+	// Provenance for elastic
+	Provenance       = "elastic"
 	datasetsListSize = 1000
 )
 
@@ -32,8 +33,16 @@ func (s *Storage) parseDatasets(res *elastic.SearchResult, includeIndex bool, in
 		if err != nil {
 			return nil, errors.Wrap(err, "failed to parse dataset")
 		}
-		// extract dataset id
-		name := hit.Id
+		// get id
+		id, ok := json.String(src, "datasetID")
+		if !ok {
+			id = hit.Id
+		}
+		// extract the name
+		name, ok := json.String(src, "datasetName")
+		if !ok || name == "NULL" {
+			name = id
+		}
 		// extract the storage name
 		storageName, ok := json.String(src, "storageName")
 		if !ok {
@@ -74,7 +83,7 @@ func (s *Storage) parseDatasets(res *elastic.SearchResult, includeIndex bool, in
 		if err != nil {
 			return nil, errors.Wrap(err, "failed to parse dataset")
 		}
-		// extract source
+		// extract sources
 		source, ok := json.String(src, "source")
 		if !ok {
 			source = string(metadata.Seed)
@@ -82,6 +91,7 @@ func (s *Storage) parseDatasets(res *elastic.SearchResult, includeIndex bool, in
 
 		// write everythign out to result struct
 		datasets = append(datasets, &api.Dataset{
+			ID:          id,
 			Name:        name,
 			StorageName: storageName,
 			Description: description,
@@ -91,7 +101,7 @@ func (s *Storage) parseDatasets(res *elastic.SearchResult, includeIndex bool, in
 			NumRows:     int64(numRows),
 			NumBytes:    int64(numBytes),
 			Variables:   variables,
-			Provenance:  provenance,
+			Provenance:  Provenance,
 			Source:      metadata.DatasetSource(source),
 		})
 	}

@@ -242,13 +242,6 @@ export default Vue.extend({
 				clearRowSelection(this.$router);
 			}
 		},
-		onRowClick(row: TableRow) {
-			if (!isRowSelected(this.rowSelection, row[D3M_INDEX_FIELD])) {
-				addRowSelection(this.$router, this.instanceName, this.rowSelection, row[D3M_INDEX_FIELD]);
-			} else {
-				removeRowSelection(this.$router, this.instanceName, this.rowSelection, row[D3M_INDEX_FIELD]);
-			}
-		},
 		invertFilters(filters: Filter[]): Filter[] {
 			// TODO: invert filters
 			return filters;

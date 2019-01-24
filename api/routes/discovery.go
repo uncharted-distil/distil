@@ -85,7 +85,7 @@ func ProblemDiscoveryHandler(ctorData api.DataStorageCtor, ctorMeta api.Metadata
 		}
 
 		problemOutputDirectory := path.Join(problemDir, problemID)
-		err = os.MkdirAll(problemOutputDirectory, 0777)
+		err = os.MkdirAll(problemOutputDirectory, os.ModePerm)
 		if err != nil {
 			handleError(w, err)
 			return

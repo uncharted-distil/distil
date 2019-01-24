@@ -1,6 +1,7 @@
 package routes
 
 import (
+	"fmt"
 	"net/http"
 	"path"
 
@@ -15,50 +16,39 @@ import (
 )
 
 // ImportHandler imports a dataset to the local file system and then ingests it.
-func ImportHandler(metaCtor model.MetadataStorageCtor, localMetaCtor model.MetadataStorageCtor, config *task.IngestTaskConfig) func(http.ResponseWriter, *http.Request) {
+func ImportHandler(datamartMetaCtor model.MetadataStorageCtor, fileMetaCtor model.MetadataStorageCtor, esMetaCtor model.MetadataStorageCtor, config *task.IngestTaskConfig) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
-		index := pat.Param(r, "index")
-		dataset := pat.Param(r, "dataset")
+		datasetID := pat.Param(r, "datasetID")
 		source := metadata.DatasetSource(pat.Param(r, "source"))
 
-		params, err := getPostParameters(r)
-		if err != nil {
-			handleError(w, err)
-			return
-		}
-		id := ""
-		if params["id"] != nil {
-			id = params["id"].(string)
-		}
-
 		// update ingest config to use ingest URI.
-		serverConfig, err := env.LoadConfig()
+		cfg, err := env.LoadConfig()
 		if err != nil {
 			handleError(w, err)
 			return
 		}
 
-		meta, err := metaCtor()
+		meta, err := createMetadataStorageForSource(source, datamartMetaCtor, fileMetaCtor, esMetaCtor)
 		if err != nil {
 			handleError(w, err)
 			return
 		}
 
 		// import the dataset to the local filesystem.
-		resolver := createResolverForSource(source, dataset, &serverConfig, config)
-		uri := resolver.ResolveInputAbsolute(dataset)
+		resolver := createResolverForSource(source, datasetID, &cfg, config)
+		uri := resolver.ResolveInputAbsolute(datasetID)
 
 		ingestConfig := *config
 		ingestConfig.Resolver = resolver
 
-		_, err = meta.ImportDataset(id, uri)
+		_, err = meta.ImportDataset(datasetID, uri)
 		if err != nil {
 			handleError(w, err)
 			return
 		}
 
-		// ingest the imported dataset.
-		err = task.IngestDataset(localMetaCtor, index, dataset, source, &ingestConfig)
+		// ingest the imported dataset
+		err = task.IngestDataset(datamartMetaCtor, cfg.ESDatasetsIndex, datasetID, source, &ingestConfig)
 		if err != nil {
 			handleError(w, err)
 			return
@@ -73,10 +63,23 @@ func ImportHandler(metaCtor model.MetadataStorageCtor, localMetaCtor model.Metad
 	}
 }
 
-func createResolverForSource(datasetSource metadata.DatasetSource, dataset string, config *env.Config, taskConfig *task.IngestTaskConfig) *util.PathResolver {
+func createMetadataStorageForSource(datasetSource metadata.DatasetSource, datamartMetaCtor model.MetadataStorageCtor, fileMetaCtor model.MetadataStorageCtor, esMetaCtor model.MetadataStorageCtor) (model.MetadataStorage, error) {
+	if datasetSource == metadata.Contrib {
+		return datamartMetaCtor()
+	}
+	if datasetSource == metadata.Seed {
+		return esMetaCtor()
+	}
+	if datasetSource == metadata.Augmented {
+		return fileMetaCtor()
+	}
+	return nil, fmt.Errorf("unrecognized source `%v`", datasetSource)
+}
+
+func createResolverForSource(datasetSource metadata.DatasetSource, datasetID string, config *env.Config, taskConfig *task.IngestTaskConfig) *util.PathResolver {
 	if datasetSource == metadata.Contrib {
 		return util.NewPathResolver(&util.PathConfig{
-			InputFolder:  path.Join(config.DatamartImportFolder, dataset),
+			InputFolder:  path.Join(config.DatamartImportFolder, datasetID),
 			OutputFolder: taskConfig.Resolver.Config.OutputFolder,
 		})
 	}
@@ -89,7 +92,7 @@ func createResolverForSource(datasetSource metadata.DatasetSource, dataset strin
 	}
 	if datasetSource == metadata.Augmented {
 		return util.NewPathResolver(&util.PathConfig{
-			InputFolder:  path.Join(config.TmpDataPath, "augmented", dataset),
+			InputFolder:  path.Join(config.TmpDataPath, "augmented", datasetID),
 			OutputFolder: taskConfig.Resolver.Config.OutputFolder,
 		})
 	}

@@ -5,8 +5,8 @@
 		hover
 		small
 		:items="items"
-		:fields="fields"
-		@row-clicked="onRowClick">
+		:fields="emphasizedFields"
+		@head-clicked="onColumnClicked">
 
 		<template v-for="imageField in imageFields" :slot="imageField" slot-scope="data">
 			<image-preview :key="imageField" :image-url="data.item[imageField]"></image-preview>
@@ -26,17 +26,13 @@ import _ from 'lodash';
 import Vue from 'vue';
 import SparklinePreview from './SparklinePreview';
 import ImagePreview from './ImagePreview';
-import { getters as datasetGetters } from '../store/dataset/module';
 import { Dictionary } from '../util/dict';
-import { Filter } from '../util/filters';
 import { TableColumn, TableRow, D3M_INDEX_FIELD } from '../store/dataset/index';
-import { RowSelection } from '../store/highlights/index';
 import { getters as routeGetters } from '../store/route/module';
 import { IMAGE_TYPE, TIMESERIES_TYPE } from '../util/types';
-import { addRowSelection, removeRowSelection, isRowSelected, updateTableRowSelection } from '../util/row';
 
 export default Vue.extend({
-	name: 'selected-data-table',
+	name: 'join-data-table',
 
 	components: {
 		ImagePreview,
@@ -44,22 +40,47 @@ export default Vue.extend({
 	},
 
 	props: {
-		instanceName: String as () => string,
-		includedActive: Boolean as () => boolean
+		items: Array as () => TableRow[],
+		fields: Object as () => Dictionary<TableColumn>,
+		selectedColumn: Object as () => TableColumn,
+		otherSelectedColumn: Object as () => TableColumn,
+		instanceName: String as () => string
 	},
 
 	computed: {
-		dataset(): string {
-			return routeGetters.getRouteDataset(this.$store);
-		},
 
-		items(): TableRow[] {
-			const items = this.includedActive ? datasetGetters.getIncludedTableDataItems(this.$store) : datasetGetters.getExcludedTableDataItems(this.$store);
-			return updateTableRowSelection(items, this.rowSelection, this.instanceName);
-		},
+		emphasizedFields(): Dictionary<TableColumn> {
+			if (!this.selectedColumn && !this.otherSelectedColumn) {
+				return this.fields;
+			}
+			const emphasized = {};
+			_.forIn(this.fields, field => {
+				const emph = {
+					label: field.label,
+					key: field.key,
+					type: field.type,
+					sortable: field.sortable,
+					variant: null
+				};
+				if (this.selectedColumn && field.key === this.selectedColumn.key) {
+					emph.variant = 'primary';
+				} else if (this.otherSelectedColumn && field.type === this.otherSelectedColumn.type) {
+					// show matching column types
+					emph.variant = 'success';
+				} else if (this.otherSelectedColumn && field.type !== this.otherSelectedColumn.type) {
+					// show unmatched column types
+					emph.variant = 'warning';
+				}
 
-		fields(): Dictionary<TableColumn> {
-			return this.includedActive ? datasetGetters.getIncludedTableDataFields(this.$store) : datasetGetters.getExcludedTableDataFields(this.$store);
+				if (this.otherSelectedColumn && this.selectedColumn &&
+					field.key === this.selectedColumn.key &&
+					this.selectedColumn.type !== this.otherSelectedColumn.type) {
+					// flag bad selection
+					emph.variant = 'danger';
+				}
+				emphasized[field.key] = emph;
+			});
+			return emphasized;
 		},
 
 		imageFields(): string[] {
@@ -82,31 +103,16 @@ export default Vue.extend({
 			})
 			.filter(field => field.type === TIMESERIES_TYPE)
 			.map(field => field.key);
-		},
-
-		filters(): Filter[] {
-			if (this.includedActive) {
-				return this.invertFilters(routeGetters.getDecodedFilters(this.$store));
-			}
-			return routeGetters.getDecodedFilters(this.$store);
-		},
-
-		rowSelection(): RowSelection {
-			return routeGetters.getDecodedRowSelection(this.$store);
 		}
 	},
 
 	methods: {
-		onRowClick(row: TableRow) {
-			if (!isRowSelected(this.rowSelection, row[D3M_INDEX_FIELD])) {
-				addRowSelection(this.$router, this.instanceName, this.rowSelection, row[D3M_INDEX_FIELD]);
+		onColumnClicked(key, field) {
+			if (this.selectedColumn && this.selectedColumn.key === key) {
+				this.$emit('col-clicked', null);
 			} else {
-				removeRowSelection(this.$router, this.instanceName, this.rowSelection, row[D3M_INDEX_FIELD]);
+				this.$emit('col-clicked', field);
 			}
-		},
-		invertFilters(filters: Filter[]): Filter[] {
-			// TODO: invert filters
-			return filters;
 		}
 	}
 });
@@ -121,7 +127,6 @@ export default Vue.extend({
 .select-data-table-container {
 	display: flex;
 	overflow: auto;
-	background-color: white;
 }
 .select-data-no-results {
 	width: 100%;

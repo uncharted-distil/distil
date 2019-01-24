@@ -1,6 +1,6 @@
 <template>
 	<div class="create-solutions-form">
-		<b-modal id="export-success-modal" title="Export Succeeded"
+		<b-modal
 			v-model="showExportSuccess"
 			cancel-disabled
 			hide-header
@@ -15,22 +15,15 @@
 				<b-btn class="mt-3 close-modal" block @click="showExportSuccess = !showExportSuccess">OK</b-btn>
 			</div>
 		</b-modal>
-		<b-modal id="export-failure-modal" title="Export Failed"
-			v-model="showExportFailure"
-			cancel-disabled
-			hide-header
-			hide-footer>
-			<div class="row justify-content-center">
-				<div class="check-message-container">
-					<i class="fa fa-exclamation-triangle fa-3x fail-icon"></i>
-					<div><b>Export Failed:</b> Internal server error</div>
-				</div>
-			</div>
-			<div class="row justify-content-center">
-				<b-btn class="mt-3 close-modal" block @click="showExportFailure = !showExportFailure">OK</b-btn>
-			</div>
-		</b-modal>
-		<b-modal id="export-start-modal" title="Export Problem"
+
+
+		<error-modal
+			:show="showExportFailure"
+			title="Export Failed"
+			@close="showExportFailure = !showExportFailure">
+		</error-modal>
+
+		<b-modal
 			v-model="showExport"
 			cancel-disabled
 			hide-header
@@ -46,21 +39,14 @@
 				<b-btn class="mt-3 close-modal" variant="success" block @click="exportData">Export</b-btn>
 			</div>
 		</b-modal>
-		<b-modal id="create-failure-modal" title="Model Creation Failed"
-			v-model="showCreateFailure"
-			cancel-disabled
-			hide-header
-			hide-footer>
-			<div class="row justify-content-center">
-				<div class="check-message-container">
-					<i class="fa fa-exclamation-triangle fa-3x fail-icon"></i>
-					<div><b>Model Failed:</b> {{createErrorMessage}}</div>
-				</div>
-			</div>
-			<div class="row justify-content-center">
-				<b-btn class="mt-3 close-modal" block @click="showCreateFailure = !showCreateFailure">OK</b-btn>
-			</div>
-		</b-modal>
+
+		<error-modal
+			:show="showCreateFailure"
+			title="Model Failed"
+			:error="createErrorMessage"
+			@close="showCreateFailure = !showCreateFailure">
+		</error-modal>
+
 		<div class="row justify-content-center">
 			<b-button class="export-button" :variant="exportVariant" @click="showExport = !showExport" v-if="isTask1">
 				Task 1: Export Problem
@@ -83,6 +69,7 @@
 
 import _ from 'lodash';
 import { createRouteEntry } from '../util/routes';
+import ErrorModal from '../components/ErrorModal.vue';
 import { actions as appActions, getters as appGetters } from '../store/app/module';
 import { getters as datasetGetters } from '../store/dataset/module';
 import { getters as routeGetters } from '../store/route/module';
@@ -95,6 +82,11 @@ import Vue from 'vue';
 
 export default Vue.extend({
 	name: 'create-solutions-form',
+
+	components: {
+		ErrorModal
+	},
+
 	data() {
 		return {
 			pending: false,
@@ -106,6 +98,7 @@ export default Vue.extend({
 			createErrorMessage: null
 		};
 	},
+
 	computed: {
 		dataset(): string {
 			return routeGetters.getRouteDataset(this.$store);
@@ -239,7 +232,7 @@ export default Vue.extend({
 }
 
 .close-modal {
-	width: 35%;
+	width: 35% !important;
 }
 
 .solution-progress {
@@ -263,12 +256,7 @@ export default Vue.extend({
 .fail-icon {
 	display: flex;
 	flex-shrink: 0;
-	color:#ee0701;
+	color: #ee0701;
 	padding-right: 15px;
-}
-
-.check-button {
-	width: 60%;
-	margin: 0 20%;
 }
 </style>

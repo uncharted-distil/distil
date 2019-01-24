@@ -36,6 +36,12 @@ func (r *PathResolver) ResolveInputAbsolute(relativePath string) string {
 	return path.Join(r.Config.InputFolder, r.Config.InputSubFolders, relativePath)
 }
 
+// ResolveInputAbsoluteFromRoot creates the input path as an absolute= from the
+// root datasets dir.
+func (r *PathResolver) ResolveInputAbsoluteFromRoot(relativePath string) string {
+	return path.Join(r.Config.InputFolder, relativePath, r.Config.InputSubFolders)
+}
+
 // ResolveOutputAbsolute creates the output path as an absolute.
 func (r *PathResolver) ResolveOutputAbsolute(relativePath string) string {
 	return path.Join(r.Config.OutputFolder, relativePath)

@@ -3,7 +3,6 @@
 		<variable-facets class="result-target-summary"
 			enable-highlighting
 			:groups="groups"
-			:dataset="dataset"
 			:instance-name="instanceName"></variable-facets>
 	</div>
 </template>

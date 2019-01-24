@@ -10,6 +10,7 @@ import (
 	"goji.io/pat"
 
 	"github.com/unchartedsoftware/distil/api/model"
+	"github.com/unchartedsoftware/distil/api/model/storage/datamart"
 )
 
 // DatasetResult represents the result of a dataset response.
@@ -96,9 +97,29 @@ func DatasetsHandler(metaCtors []model.MetadataStorageCtor) func(http.ResponseWr
 			datasets = append(datasets, datasetsPart...)
 		}
 
+		// imported datasets override non-imported datasets
+		exists := make(map[string]*model.Dataset)
+		for _, dataset := range datasets {
+			existing, ok := exists[dataset.ID]
+			if !ok {
+				// we don't have it, add it
+				exists[dataset.ID] = dataset
+			} else {
+				// we already have it, if it is `dataset`, replace it
+				if existing.Provenance == datamart.Provenance {
+					exists[dataset.ID] = dataset
+				}
+			}
+		}
+
+		var deconflicted []*model.Dataset
+		for _, dataset := range exists {
+			deconflicted = append(deconflicted, dataset)
+		}
+
 		// marshal data
 		err = handleJSON(w, DatasetsResult{
-			Datasets: datasets,
+			Datasets: deconflicted,
 		})
 		if err != nil {
 			handleError(w, errors.Wrap(err, "unable marshal dataset result into JSON"))

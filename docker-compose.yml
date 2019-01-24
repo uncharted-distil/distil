@@ -35,9 +35,12 @@ runner:
   environment:
     - D3MOUTPUTDIR=$PWD/outputs
     - VERBOSE_PRIMITIVE_OUTPUT=1
+    - STATIC_RESOURCE_PATH=$PWD/static_resources
   volumes:
+    - $PWD/datamart:/$PWD/datamart
     - $PWD/datasets:/$PWD/datasets
     - $PWD/outputs:/$PWD/outputs
+    - $PWD/static_resources:/$PWD/static_resources
 
 resources:
   image:

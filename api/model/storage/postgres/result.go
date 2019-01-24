@@ -565,11 +565,11 @@ func (s *Storage) FetchPredictedSummary(dataset string, storageName string, resu
 	var field Field
 	var histogram *api.Histogram
 	if model.IsNumerical(variable.Type) {
-		field = NewNumericalField(s, dataset, variable)
+		field = NewNumericalField(s, storageName, variable)
 	} else if model.IsCategorical(variable.Type) {
-		field = NewCategoricalField(s, dataset, variable)
+		field = NewCategoricalField(s, storageName, variable)
 	} else if model.IsVector(variable.Type) {
-		field = NewVectorField(s, dataset, variable)
+		field = NewVectorField(s, storageName, variable)
 	} else {
 		return nil, errors.Errorf("variable %s of type %s does not support summary", variable.Name, variable.Type)
 	}

@@ -1,3 +1,4 @@
+import _ from 'lodash';
 import { ViewState } from './index';
 import { ActionContext } from 'vuex';
 import { DistilState } from '../store';
@@ -16,7 +17,77 @@ export const actions = {
 
 	fetchSearchData(context: ViewContext) {
 		const terms = context.getters.getRouteTerms;
-		return context.dispatch('datasetActions', terms);
+		const datasetIDs = context.getters.getRouteJoinDatasets;
+
+		const promises = datasetIDs.map((id: string) => {
+			return context.dispatch('fetchDataset', id);
+		});
+		promises.push(context.dispatch('searchDatasets', terms));
+
+		return Promise.all(promises);
+	},
+
+	fetchJoinDatasetsData(context: ViewContext) {
+		// clear previous state
+		context.commit('clearHighlightSummaries');
+
+		const datasetIDs = context.getters.getRouteJoinDatasets;
+		Promise.all([
+				context.dispatch('fetchDataset', datasetIDs[0]),
+				context.dispatch('fetchDataset', datasetIDs[1]),
+				context.dispatch('fetchJoinDatasetsVariables', {
+					datasets: datasetIDs
+				})
+			])
+			.then(() => {
+				// fetch new state
+				const datasets = context.getters.getDatasets;
+				const datasetA = _.find(datasets, d => {
+					return d.id === datasetIDs[0];
+				});
+				const datasetB = _.find(datasets, d => {
+					return d.id === datasetIDs[1];
+				});
+				return Promise.all([
+					context.dispatch('fetchVariableSummaries', {
+						dataset: datasetA.id,
+						variables: datasetA.variables
+					}),
+					context.dispatch('fetchVariableSummaries', {
+						dataset: datasetB.id,
+						variables: datasetB.variables
+					})
+				]).then(() => {
+					return context.dispatch('updateJoinDatasetsData');
+				});
+			});
+	},
+
+	updateJoinDatasetsData(context: ViewContext) {
+		// clear any previous state
+		context.commit('clearHighlightSummaries');
+		context.commit('clearJoinDatasetsTableData');
+
+		const datasetIDs = context.getters.getRouteJoinDatasets;
+		const dataset = context.getters.getRouteDataset;
+		const highlightRoot = context.getters.getDecodedHighlightRoot;
+		const filterParams = context.getters.getDecodedJoinDatasetsFilterParams;
+		// const paginatedVariables = context.getters.getSelectTrainingPaginatedVariables;
+
+		return Promise.all([
+			// context.dispatch('fetchDataHighlightValues', {
+			// 	dataset: dataset,
+			// 	variables: paginatedVariables,
+			// 	highlightRoot: highlightRoot,
+			// 	filterParams: filterParams
+			// }),
+
+			context.dispatch('fetchJoinDatasetsTableData', {
+				datasets: datasetIDs,
+				filterParams: filterParams,
+				highlightRoot: highlightRoot
+			}),
+		]);
 	},
 
 	fetchSelectTargetData(context: ViewContext) {
