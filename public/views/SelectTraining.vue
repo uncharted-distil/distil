@@ -114,9 +114,7 @@ export default Vue.extend({
 			viewActions.updateSelectTrainingData(this.$store);
 		},
 		filtersStr() {
-			if (this.filtersStr) {
-				viewActions.updateSelectTrainingData(this.$store);
-			}
+			viewActions.updateSelectTrainingData(this.$store);
 		},
 		availableTrainingVarsPage() {
 			viewActions.updateSelectTrainingData(this.$store);

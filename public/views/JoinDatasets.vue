@@ -169,9 +169,7 @@ export default Vue.extend({
 			viewActions.updateJoinDatasetsData(this.$store);
 		},
 		filtersStr() {
-			if (this.filtersStr) {
-				viewActions.updateJoinDatasetsData(this.$store);
-			}
+			viewActions.updateJoinDatasetsData(this.$store);
 		},
 		joinedVarsPage() {
 			viewActions.updateJoinDatasetsData(this.$store);
