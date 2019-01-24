@@ -65,13 +65,15 @@ func TestJoin(t *testing.T) {
 
 	leftJoin := &JoinSpec{
 		Column:        "alpha",
-		DatasetFolder: "test_1",
+		DatasetID:     "test_1",
+		DatasetFolder: "test_1_TRAIN",
 		DatasetSource: "contrib",
 	}
 
 	rightJoin := &JoinSpec{
 		Column:        "charlie",
-		DatasetFolder: "test_2",
+		DatasetID:     "test_2",
+		DatasetFolder: "test_2_TRAIN",
 		DatasetSource: "contrib",
 	}
 

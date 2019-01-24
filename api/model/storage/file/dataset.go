@@ -17,7 +17,8 @@ const (
 	// elasticsearch.
 	metadataType     = "metadata"
 	datasetsListSize = 1000
-	provenance       = "file"
+	// Provenance for file
+	Provenance = "file"
 )
 
 // ImportDataset makes the dataset available for ingest and returns
@@ -83,7 +84,7 @@ func (s *Storage) parseDatasets(raw []*model.Metadata) ([]*api.Dataset, error) {
 			NumRows:     int64(meta.NumRows),
 			NumBytes:    int64(meta.NumBytes),
 			Variables:   vars,
-			Provenance:  provenance,
+			Provenance:  Provenance,
 		})
 	}
 

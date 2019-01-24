@@ -273,13 +273,16 @@ func (f *NumericalField) parseHistogram(rows *pgx.Rows, extrema *api.Extrema) (*
 	}, nil
 }
 
-func (f *NumericalField) parseExtrema(row *pgx.Rows) (*api.Extrema, error) {
+func (f *NumericalField) parseExtrema(rows *pgx.Rows) (*api.Extrema, error) {
 	var minValue *float64
 	var maxValue *float64
-	if row != nil {
+	if rows != nil {
 		// Expect one row of data.
-		row.Next()
-		err := row.Scan(&minValue, &maxValue)
+		exists := rows.Next()
+		if !exists {
+			return nil, fmt.Errorf("no rows in extrema query result")
+		}
+		err := rows.Scan(&minValue, &maxValue)
 		if err != nil {
 			return nil, errors.Wrap(err, "no min / max aggregation found")
 		}
@@ -511,7 +514,7 @@ func (f *NumericalField) parseStats(row *pgx.Rows) (*NumericalStats, error) {
 		// Expect one row of data.
 		exists := row.Next()
 		if !exists {
-			return nil, fmt.Errorf("No result found")
+			return nil, fmt.Errorf("no result found")
 		}
 		err := row.Scan(&stddev, &mean)
 		if err != nil {

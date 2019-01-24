@@ -396,7 +396,7 @@ func translateSchemaRelativeToAbsoluteFilename(schemalFilename string, dataFilen
 func createContainingDirs(filePath string) error {
 	dirToCreate := filepath.Dir(filePath)
 	if dirToCreate != "/" && dirToCreate != "." {
-		err := os.MkdirAll(dirToCreate, 0777)
+		err := os.MkdirAll(dirToCreate, os.ModePerm)
 		if err != nil {
 			return errors.Wrap(err, "unable to create containing directory")
 		}

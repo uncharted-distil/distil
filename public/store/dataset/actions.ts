@@ -1,7 +1,8 @@
 import _ from 'lodash';
 import axios from 'axios';
+import { Dictionary } from '../../util/dict';
 import { ActionContext } from 'vuex';
-import { DatasetState, Variable } from './index';
+import { Dataset, DatasetState, Variable, VariableSummary } from './index';
 import { mutations } from './module';
 import { DistilState } from '../store';
 import { HighlightRoot } from '../highlights/index';
@@ -56,6 +57,26 @@ export const actions = {
 			});
 	},
 
+	// fetches all variables for a two datasets.
+	fetchJoinDatasetsVariables(context: DatasetContext, args: { datasets: string[] }): Promise<void>  {
+		if (!args.datasets) {
+			console.warn('`datasets` argument is missing');
+			return null;
+		}
+		return Promise.all([
+			axios.get(`/distil/variables/${args.datasets[0]}`),
+			axios.get(`/distil/variables/${args.datasets[1]}`)
+		]).then(res => {
+			const varsA = res[0].data.variables;
+			const varsB = res[1].data.variables;
+			mutations.setVariables(context, varsA.concat(varsB));
+		})
+		.catch(error => {
+			console.error(error);
+			mutations.setVariables(context, []);
+		});
+	},
+
 	geocodeVariable(context: DatasetContext, args: { dataset: string, field: string }): Promise<any>  {
 		if (!args.dataset) {
 			console.warn('`dataset` argument is missing');
@@ -85,6 +106,46 @@ export const actions = {
 			})
 			.catch(error => {
 				console.error(error);
+			});
+	},
+
+	importDataset(context: DatasetContext, args: { datasetID: string, source: string, terms: string }): Promise<void>  {
+		if (!args.datasetID) {
+			console.warn('`datasetID` argument is missing');
+			return null;
+		}
+		if (!args.source) {
+			console.warn('`terms` argument is missing');
+			return null;
+
+		}
+		return axios.post(`/distil/import/${args.datasetID}/${args.source}`, {})
+			.then(response => {
+				return context.dispatch('searchDatasets', args.terms);
+			});
+	},
+
+	joinDatasetsPreview(context: DatasetContext, args: { datasetA: Dataset, datasetB: Dataset, datasetAColumn: string, datasetBColumn: string }): Promise<void>  {
+		if (!args.datasetA) {
+			console.warn('`datasetA` argument is missing');
+			return null;
+		}
+		if (!args.datasetB) {
+			console.warn('`datasetB` argument is missing');
+			return null;
+		}
+		if (!args.datasetAColumn) {
+			console.warn('`datasetAColumn` argument is missing');
+			return null;
+		}
+		if (!args.datasetBColumn) {
+			console.warn('`datasetBColumn` argument is missing');
+			return null;
+		}
+
+		return axios.post(`/distil/join/${args.datasetA.id}/${args.datasetAColumn}/${args.datasetA.source}/${args.datasetB.id}/${args.datasetBColumn}/${args.datasetB.source}`, {})
+			.then(response => {
+				return response.data;
 			});
 	},
 
@@ -132,14 +193,14 @@ export const actions = {
 		const promises = [];
 		args.variables.forEach(variable => {
 			const exists = _.find(context.state.variableSummaries, v => {
-				return v.key === variable.colName;
+				return v.dataset === args.dataset && v.key === variable.colName;
 			});
 			if (!exists) {
 				// add placeholder
 				const key = variable.colName;
 				const label = variable.colDisplayName;
 				const dataset = args.dataset;
-				mutations.updateVariableSummaries(context,  createPendingSummary(key, label, dataset));
+				mutations.updateVariableSummaries(context, createPendingSummary(key, label, dataset));
 				// fetch summary
 				promises.push(context.dispatch('fetchVariableSummary', {
 					dataset: args.dataset,
@@ -323,6 +384,36 @@ export const actions = {
 			.catch(error => {
 				console.error(error);
 			});
+	},
+
+	// update filtered data based on the current filter state
+	fetchJoinDatasetsTableData(context: DatasetContext, args: { datasets: string[], filterParams: Dictionary<FilterParams>, highlightRoot: HighlightRoot }) {
+		if (!args.datasets) {
+			console.warn('`datasets` argument is missing');
+			return null;
+		}
+		if (!args.filterParams) {
+			console.warn('`filterParams` argument is missing');
+			return null;
+		}
+		return Promise.all(args.datasets.map(dataset => {
+			const filterParams = addHighlightToFilterParams(args.filterParams[dataset], args.highlightRoot, INCLUDE_FILTER);
+
+			return axios.post(`distil/data/${dataset}/false`, filterParams)
+				.then(response => {
+					mutations.setJoinDatasetsTableData(context, {
+						dataset: dataset,
+						data: response.data
+					});
+				})
+				.catch(error => {
+					console.error(error);
+					mutations.setJoinDatasetsTableData(context, {
+						dataset: dataset,
+						data: createEmptyTableData()
+					});
+				});
+		}));
 	},
 
 	// update filtered data based on the current filter state

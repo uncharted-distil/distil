@@ -16,18 +16,18 @@ export const viewModule: Module<ViewState, DistilState> = {
 const { commit, read, dispatch } = getStoreAccessors<ViewState, DistilState>(null);
 
 export const getters = {
-	getPrevView: read(moduleGetters.getPrevView),
 	getSelectTrainingPaginatedVariables: read(moduleGetters.getSelectTrainingPaginatedVariables),
 	getResultsPaginatedVariables: read(moduleGetters.getResultsPaginatedVariables)
 };
 
 export const mutations = {
-	saveView: commit(moduleMutations.saveView)
 };
 
 export const actions = {
 	fetchHomeData: dispatch(moduleActions.fetchHomeData),
 	fetchSearchData: dispatch(moduleActions.fetchSearchData),
+	fetchJoinDatasetsData: dispatch(moduleActions.fetchJoinDatasetsData),
+	updateJoinDatasetsData: dispatch(moduleActions.updateJoinDatasetsData),
 	fetchSelectTargetData: dispatch(moduleActions.fetchSelectTargetData),
 	fetchSelectTrainingData: dispatch(moduleActions.fetchSelectTrainingData),
 	updateSelectTrainingData: dispatch(moduleActions.updateSelectTrainingData),

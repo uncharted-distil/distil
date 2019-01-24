@@ -10,14 +10,14 @@
 			</result-facets>
 		<b-btn v-b-modal.export variant="primary" class="check-button" v-if="isTask2">Task 2: Export Model</b-btn>
 
-		<b-modal id="export" title="Export" @ok="onExport">
+		<b-modal title="Export" @ok="onExport">
 			<div class="check-message-container">
 				<i class="fa fa-check-circle fa-3x check-icon"></i>
 				<div>This action will export solution <b>{{activeSolutionName}}</b> and terminate the session.</div>
 			</div>
 		</b-modal>
 
-		<b-modal id="export-failure-modal" ref="exportFailModal" title="Export Failed"
+		<b-modal ref="exportFailModal" title="Export Failed"
 			cancel-disabled
 			hide-header
 			hide-footer>

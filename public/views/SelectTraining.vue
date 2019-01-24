@@ -30,8 +30,8 @@
 		<div class="row flex-1 pb-3">
 			<div class="col-12 col-md-6 d-flex flex-column">
 				<div class="row flex-12">
-					<available-training-variables class="col-12 col-md-6 select-available-variables d-flex"></available-training-variables>
-					<training-variables class="col-12 col-md-6 select-training-variables nopadding d-flex"></training-variables>
+					<available-training-variables class="col-12 col-md-6 d-flex"></available-training-variables>
+					<training-variables class="col-12 col-md-6 nopadding d-flex"></training-variables>
 				</div>
 			</div>
 			<div class="col-12 col-md-6 d-flex flex-column">
@@ -114,9 +114,7 @@ export default Vue.extend({
 			viewActions.updateSelectTrainingData(this.$store);
 		},
 		filtersStr() {
-			if (this.filtersStr) {
-				viewActions.updateSelectTrainingData(this.$store);
-			}
+			viewActions.updateSelectTrainingData(this.$store);
 		},
 		availableTrainingVarsPage() {
 			viewActions.updateSelectTrainingData(this.$store);

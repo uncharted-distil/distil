@@ -19,6 +19,7 @@ const { commit, read, dispatch } = getStoreAccessors<DatasetState, DistilState>(
 export const getters = {
 	// dataset
 	getDatasets: read(moduleGetters.getDatasets),
+	getFilteredDatasets: read(moduleGetters.getFilteredDatasets),
 	// variables
 	getVariables: read(moduleGetters.getVariables),
 	getVariablesMap: read(moduleGetters.getVariablesMap),
@@ -27,6 +28,8 @@ export const getters = {
 	// files
 	getFiles: read(moduleGetters.getFiles),
 	getTimeseriesExtrema: read(moduleGetters.getTimeseriesExtrema),
+	// join data
+	getJoinDatasetsTableData: read(moduleGetters.getJoinDatasetsTableData),
 	// included data
 	hasIncludedTableData: read(moduleGetters.hasIncludedTableData),
 	getIncludedTableData: read(moduleGetters.getIncludedTableData),
@@ -47,8 +50,10 @@ export const actions = {
 	fetchDataset: dispatch(moduleActions.fetchDataset),
 	searchDatasets: dispatch(moduleActions.searchDatasets),
 	geocodeVariable: dispatch(moduleActions.geocodeVariable),
+	importDataset: dispatch(moduleActions.importDataset),
 	// variables
 	fetchVariables: dispatch(moduleActions.fetchVariables),
+	fetchJoinDatasetsVariables: dispatch(moduleActions.fetchJoinDatasetsVariables),
 	setVariableType: dispatch(moduleActions.setVariableType),
 	fetchVariableSummary: dispatch(moduleActions.fetchVariableSummary),
 	fetchVariableSummaries: dispatch(moduleActions.fetchVariableSummaries),
@@ -60,6 +65,9 @@ export const actions = {
 	fetchTimeseries: dispatch(moduleActions.fetchTimeseries),
 	fetchGraph: dispatch(moduleActions.fetchGraph),
 	fetchFile: dispatch(moduleActions.fetchFile),
+	// join data
+	joinDatasetsPreview : dispatch(moduleActions.joinDatasetsPreview),
+	fetchJoinDatasetsTableData: dispatch(moduleActions.fetchJoinDatasetsTableData),
 	// included / excluded table data
 	fetchIncludedTableData: dispatch(moduleActions.fetchIncludedTableData),
 	fetchExcludedTableData: dispatch(moduleActions.fetchExcludedTableData),
@@ -80,6 +88,8 @@ export const mutations = {
 	updateFile: commit(moduleMutations.updateFile),
 	updateTimeseriesFile: commit(moduleMutations.updateTimeseriesFile),
 	// included / excluded table data
+	setJoinDatasetsTableData: commit(moduleMutations.setJoinDatasetsTableData),
+	clearJoinDatasetsTableData: commit(moduleMutations.clearJoinDatasetsTableData),
 	setIncludedTableData: commit(moduleMutations.setIncludedTableData),
 	setExcludedTableData: commit(moduleMutations.setExcludedTableData),
 

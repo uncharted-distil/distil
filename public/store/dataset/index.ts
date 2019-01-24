@@ -5,6 +5,11 @@ export const NUMERICAL_SUMMARY = 'numerical';
 
 export const D3M_INDEX_FIELD = 'd3mIndex';
 
+export const DATAMART_PROVENANCE = 'datamart';
+export const ELASTIC_PROVENANCE = 'elastic';
+export const FILE_PROVENANCE = 'file';
+
+
 export interface SuggestedType {
 	probability: number;
 	provenance: string;
@@ -23,13 +28,17 @@ export interface Variable {
 }
 
 export interface Dataset {
+	id: string;
 	name: string;
 	description: string;
+	folder: string;
 	summary: string;
 	summaryML: string;
 	variables: Variable[];
 	numBytes: number;
 	numRows: number;
+	provenance: string;
+	source: string;
 }
 
 export interface Extrema {
@@ -73,6 +82,7 @@ export interface TableColumn {
 	key: string;
 	type: string;
 	sortable?: boolean;
+	variant?: string;
 }
 
 export interface TableRow {
@@ -88,17 +98,20 @@ export interface TimeseriesExtrema {
 
 export interface DatasetState {
 	datasets: Dataset[];
+	filteredDatasets: Dataset[];
 	variables: Variable[];
 	variableSummaries: VariableSummary[];
 	files: Dictionary<any>;
 	timeseriesExtrema: Dictionary<TimeseriesExtrema>;
+	joinTableData: Dictionary<TableData>;
 	includedTableData: TableData;
 	excludedTableData: TableData;
 }
 
 export const state: DatasetState = {
-	// description of matched datasets
+	// datasets and filtered datasets
 	datasets: [],
+	filteredDatasets: [],
 
 	// variable list for the active dataset
 	variables: [],
@@ -110,6 +123,9 @@ export const state: DatasetState = {
 	files: {},
 
 	timeseriesExtrema: {},
+
+	// joined data table data
+	joinTableData: {},
 
 	// selected data entries for the active dataset
 	includedTableData: null,

@@ -24,6 +24,7 @@ import (
 	"github.com/unchartedsoftware/distil/api/model"
 	dm "github.com/unchartedsoftware/distil/api/model/storage/datamart"
 	es "github.com/unchartedsoftware/distil/api/model/storage/elastic"
+	"github.com/unchartedsoftware/distil/api/model/storage/file"
 	pg "github.com/unchartedsoftware/distil/api/model/storage/postgres"
 	"github.com/unchartedsoftware/distil/api/postgres"
 	"github.com/unchartedsoftware/distil/api/rest"
@@ -103,13 +104,16 @@ func main() {
 	}
 
 	// instantiate the metadata storage (using ES).
-	metadataStorageCtor := es.NewMetadataStorage(config.ESDatasetsIndex, esClientCtor)
+	esMetadataStorageCtor := es.NewMetadataStorage(config.ESDatasetsIndex, esClientCtor)
+
+	// instantiate the metadata storage (using filesystem).
+	fileMetadataStorageCtor := file.NewMetadataStorage(config.D3MInputDirRoot)
 
 	// instantiate the postgres data storage constructor.
-	pgDataStorageCtor := pg.NewDataStorage(postgresClientCtor, metadataStorageCtor)
+	pgDataStorageCtor := pg.NewDataStorage(postgresClientCtor, esMetadataStorageCtor)
 
 	// instantiate the postgres solution storage constructor.
-	pgSolutionStorageCtor := pg.NewSolutionStorage(postgresClientCtor, metadataStorageCtor)
+	pgSolutionStorageCtor := pg.NewSolutionStorage(postgresClientCtor, esMetadataStorageCtor)
 
 	var solutionClient *compute.Client
 	if config.UseTA2Runner {
@@ -145,7 +149,7 @@ func main() {
 	// reset the exported problem list
 	if config.IsTask1 {
 		problemListingFile := path.Join(config.UserProblemPath, routes.ProblemLabelFile)
-		err = os.MkdirAll(config.UserProblemPath, 0755)
+		err = os.MkdirAll(config.UserProblemPath, os.ModePerm)
 		if err != nil {
 			log.Errorf("%+v", err)
 			os.Exit(1)
@@ -213,7 +217,7 @@ func main() {
 	// Ingest the data specified by the environment
 	if config.InitialDataset != "" && !config.SkipIngest {
 		log.Infof("Loading initial dataset '%s'", config.InitialDataset)
-		err = task.IngestDataset(metadataStorageCtor, config.ESDatasetsIndex, config.InitialDataset, metadata.Seed, ingestConfig)
+		err = task.IngestDataset(esMetadataStorageCtor, config.ESDatasetsIndex, config.InitialDataset, metadata.Seed, ingestConfig)
 		if err != nil {
 			log.Errorf("%+v", err)
 			os.Exit(1)
@@ -230,32 +234,31 @@ func main() {
 	routes.SetVerboseError(config.VerboseError)
 
 	// GET
-	// ** TEMPORARILY COMMENTED OUT DATAMART STORAGE DUE TO BREAKING API CHANGE.
-	registerRoute(mux, "/distil/datasets", routes.DatasetsHandler([]model.MetadataStorageCtor{metadataStorageCtor, datamartMetadataStorageCtor}))
-	registerRoute(mux, "/distil/datasets/:dataset", routes.DatasetHandler(metadataStorageCtor))
+	registerRoute(mux, "/distil/datasets", routes.DatasetsHandler([]model.MetadataStorageCtor{esMetadataStorageCtor, datamartMetadataStorageCtor}))
+	registerRoute(mux, "/distil/datasets/:dataset", routes.DatasetHandler(esMetadataStorageCtor))
 	registerRoute(mux, "/distil/solutions/:dataset/:target/:solution-id", routes.SolutionHandler(pgSolutionStorageCtor))
-	registerRoute(mux, "/distil/variables/:dataset", routes.VariablesHandler(metadataStorageCtor))
-	registerRoute(mux, "/distil/variable-rankings/:dataset/:target", routes.VariableRankingHandler(metadataStorageCtor))
-	registerRoute(mux, "/distil/residuals-extrema/:dataset/:target", routes.ResidualsExtremaHandler(metadataStorageCtor, pgSolutionStorageCtor, pgDataStorageCtor))
+	registerRoute(mux, "/distil/variables/:dataset", routes.VariablesHandler(esMetadataStorageCtor))
+	registerRoute(mux, "/distil/variable-rankings/:dataset/:target", routes.VariableRankingHandler(esMetadataStorageCtor))
+	registerRoute(mux, "/distil/residuals-extrema/:dataset/:target", routes.ResidualsExtremaHandler(esMetadataStorageCtor, pgSolutionStorageCtor, pgDataStorageCtor))
 	registerRoute(mux, "/distil/abort", routes.AbortHandler())
-	registerRoute(mux, "/distil/export/:solution-id", routes.ExportHandler(pgSolutionStorageCtor, metadataStorageCtor, solutionClient, config.D3MOutputDir))
+	registerRoute(mux, "/distil/export/:solution-id", routes.ExportHandler(pgSolutionStorageCtor, esMetadataStorageCtor, solutionClient, config.D3MOutputDir))
 	registerRoute(mux, "/distil/config", routes.ConfigHandler(config, version, timestamp, problemPath, datasetDocPath))
-	registerRoute(mux, "/ws", ws.SolutionHandler(solutionClient, metadataStorageCtor, pgDataStorageCtor, pgSolutionStorageCtor))
+	registerRoute(mux, "/ws", ws.SolutionHandler(solutionClient, esMetadataStorageCtor, pgDataStorageCtor, pgSolutionStorageCtor))
 
 	// POST
-	registerRoutePost(mux, "/distil/variables/:dataset", routes.VariableTypeHandler(pgDataStorageCtor, metadataStorageCtor))
-	registerRoutePost(mux, "/distil/discovery/:dataset/:target", routes.ProblemDiscoveryHandler(pgDataStorageCtor, metadataStorageCtor, config.UserProblemPath, userAgent, config.SkipPreprocessing))
-	registerRoutePost(mux, "/distil/data/:dataset/:invert", routes.DataHandler(pgDataStorageCtor, metadataStorageCtor))
-	registerRoutePost(mux, "/distil/import/:dataset/:source/:index", routes.ImportHandler(datamartMetadataStorageCtor, metadataStorageCtor, ingestConfig))
+	registerRoutePost(mux, "/distil/variables/:dataset", routes.VariableTypeHandler(pgDataStorageCtor, esMetadataStorageCtor))
+	registerRoutePost(mux, "/distil/discovery/:dataset/:target", routes.ProblemDiscoveryHandler(pgDataStorageCtor, esMetadataStorageCtor, config.UserProblemPath, userAgent, config.SkipPreprocessing))
+	registerRoutePost(mux, "/distil/data/:dataset/:invert", routes.DataHandler(pgDataStorageCtor, esMetadataStorageCtor))
+	registerRoutePost(mux, "/distil/import/:datasetID/:source", routes.ImportHandler(datamartMetadataStorageCtor, fileMetadataStorageCtor, esMetadataStorageCtor, ingestConfig))
 	registerRoutePost(mux, "/distil/results/:dataset/:solution-id", routes.ResultsHandler(pgSolutionStorageCtor, pgDataStorageCtor))
 	registerRoutePost(mux, "/distil/variable-summary/:dataset/:variable", routes.VariableSummaryHandler(pgDataStorageCtor))
 	registerRoutePost(mux, "/distil/training-summary/:dataset/:variable/:results-uuid", routes.TrainingSummaryHandler(pgSolutionStorageCtor, pgDataStorageCtor))
-	registerRoutePost(mux, "/distil/target-summary/:dataset/:target/:results-uuid", routes.TargetSummaryHandler(metadataStorageCtor, pgSolutionStorageCtor, pgDataStorageCtor))
-	registerRoutePost(mux, "/distil/residuals-summary/:dataset/:target/:results-uuid", routes.ResidualsSummaryHandler(metadataStorageCtor, pgSolutionStorageCtor, pgDataStorageCtor))
+	registerRoutePost(mux, "/distil/target-summary/:dataset/:target/:results-uuid", routes.TargetSummaryHandler(esMetadataStorageCtor, pgSolutionStorageCtor, pgDataStorageCtor))
+	registerRoutePost(mux, "/distil/residuals-summary/:dataset/:target/:results-uuid", routes.ResidualsSummaryHandler(esMetadataStorageCtor, pgSolutionStorageCtor, pgDataStorageCtor))
 	registerRoutePost(mux, "/distil/correctness-summary/:dataset/:results-uuid", routes.CorrectnessSummaryHandler(pgSolutionStorageCtor, pgDataStorageCtor))
-	registerRoutePost(mux, "/distil/predicted-summary/:dataset/:target/:results-uuid", routes.PredictedSummaryHandler(metadataStorageCtor, pgSolutionStorageCtor, pgDataStorageCtor))
-	registerRoutePost(mux, "/distil/geocode/:dataset/:variable", routes.GeocodingHandler(metadataStorageCtor, pgDataStorageCtor, sourceFolder))
-	registerRoutePost(mux, "/distil/join/:dataset-left/:column-left/:source-left/:dataset-right/:column-right/:source-right", routes.JoinHandler(metadataStorageCtor))
+	registerRoutePost(mux, "/distil/predicted-summary/:dataset/:target/:results-uuid", routes.PredictedSummaryHandler(esMetadataStorageCtor, pgSolutionStorageCtor, pgDataStorageCtor))
+	registerRoutePost(mux, "/distil/geocode/:dataset/:variable", routes.GeocodingHandler(esMetadataStorageCtor, pgDataStorageCtor, sourceFolder))
+	registerRoutePost(mux, "/distil/join/:dataset-left/:column-left/:source-left/:dataset-right/:column-right/:source-right", routes.JoinHandler(esMetadataStorageCtor))
 
 	// static
 	registerRoute(mux, "/distil/image/:dataset/:file", routes.ImageHandler(config.DataFolderPath, config.RootResourceDirectory, datasetsToProxy))

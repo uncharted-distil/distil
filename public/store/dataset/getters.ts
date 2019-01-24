@@ -8,6 +8,10 @@ export const getters = {
 		return state.datasets;
 	},
 
+	getFilteredDatasets(state: DatasetState): Dataset[] {
+		return state.filteredDatasets;
+	},
+
 	getVariables(state: DatasetState): Variable[] {
 		return state.variables;
 	},
@@ -40,6 +44,10 @@ export const getters = {
 
 	getTimeseriesExtrema(state: DatasetState): Dictionary<TimeseriesExtrema> {
 		return state.timeseriesExtrema;
+	},
+
+	getJoinDatasetsTableData(state: DatasetState): Dictionary<TableData> {
+		return state.joinTableData;
 	},
 
 	hasIncludedTableData(state: DatasetState): boolean {

@@ -1,25 +1,33 @@
 <template>
 	<div class="search-results">
-		<div class="bg-faded rounded mb-3" :key="dataset.name" v-for="dataset in datasets">
-			<dataset-preview
-				:name="dataset.name"
-				:description="dataset.description"
-				:summary="dataset.summary"
-				:summaryML="dataset.summaryML"
-				:variables="dataset.variables"
-				:numBytes="dataset.numBytes"
-				:numRows="dataset.numRows">
-			</dataset-preview>
+		<div class="row justify-content-center" v-if="isPending">
+			<div v-html="spinnerHTML"></div>
+		</div>
+		<div class="search-results-container" ref="datasetResults">
+			<div class="mb-3" :key="dataset.id" v-for="dataset in filteredDatasets">
+				<dataset-preview
+					:dataset="dataset"
+					allow-join
+					allow-import
+					v-on:join-dataset="onJoin">
+				</dataset-preview>
+			</div>
+			<div class="row justify-content-center" v-if="!isPending && (!filteredDatasets || filteredDatasets.length === 0)">
+				<h5>No datasets found for search</h5>
+			</div>
 		</div>
 	</div>
 </template>
 
 <script lang="ts">
 
+import $ from 'jquery';
 import DatasetPreview from '../components/DatasetPreview';
 import Vue from 'vue';
+import { spinnerHTML } from '../util/spinner';
 import { getters as datasetGetters } from '../store/dataset/module';
 import { Dataset } from '../store/dataset/index';
+
 
 export default Vue.extend({
 	name: 'search-results',
@@ -28,11 +36,32 @@ export default Vue.extend({
 		DatasetPreview
 	},
 
+	props: {
+		isPending: Boolean as () => boolean
+	},
+
 	computed: {
-		datasets(): Dataset[] {
-			return datasetGetters.getDatasets(this.$store);
+		filteredDatasets(): Dataset[] {
+			return datasetGetters.getFilteredDatasets(this.$store);
+		},
+		spinnerHTML(): string {
+			return spinnerHTML();
 		}
 	},
+
+	methods: {
+		onJoin(arg) {
+			this.$emit('join-dataset', arg);
+		}
+	},
+
+	watch: {
+		filteredDatasets() {
+			// reset back to top on dataset change
+			const $results = this.$refs.datasetResults as Element;
+			$results.scrollTop = 0;
+		}
+	}
 
 });
 </script>
@@ -40,6 +69,10 @@ export default Vue.extend({
 <style>
 .search-results {
 	width: 100%;
-	overflow: auto;
+	overflow-x: hidden;
+	overflow-y: auto;
+}
+.search-results-container {
+	width: 100%;
 }
 </style>

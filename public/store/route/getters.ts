@@ -1,6 +1,8 @@
 import { Variable, VariableSummary } from '../dataset/index';
 import { HighlightRoot, RowSelection } from '../highlights/index';
-import { AVAILABLE_TRAINING_VARS_INSTANCE, AVAILABLE_TARGET_VARS_INSTSANCE, TRAINING_VARS_INSTANCE, RESULT_TRAINING_VARS_INSTANCE, ROUTE_PAGE_SUFFIX } from '../route/index';
+import { JOINED_VARS_INSTANCE, AVAILABLE_TRAINING_VARS_INSTANCE,
+	AVAILABLE_TARGET_VARS_INSTSANCE, TRAINING_VARS_INSTANCE,
+	RESULT_TRAINING_VARS_INSTANCE, ROUTE_PAGE_SUFFIX } from '../route/index';
 import { decodeFilters, Filter, FilterParams } from '../../util/filters';
 import { decodeHighlights } from '../../util/highlights';
 import { decodeRowSelection } from '../../util/row';
@@ -38,8 +40,81 @@ export const getters = {
 		return state.query.dataset as string;
 	},
 
+	getRouteJoinDatasets(state: Route): string[] {
+		return state.query.joinDatasets ? (state.query.joinDatasets as string).split(',') : [];
+	},
+
+	getRouteJoinDatasetsHash(state: Route): string {
+		return state.query.joinDatasets as string;
+	},
+
+	getJoinDatasetsVariables(state: Route, getters: any): Variable[] {
+		const datasetIDs = getters.getRouteJoinDatasets;
+		if (datasetIDs.length !== 2) {
+			return [];
+		}
+		const datasets = getters.getDatasets;
+		const datasetA = _.find(datasets, d => {
+			return d.id === datasetIDs[0];
+		});
+		const datasetB = _.find(datasets, d => {
+			return d.id === datasetIDs[1];
+		});
+		let variables = [];
+		if (datasetA) {
+			variables = variables.concat(datasetA.variables);
+		}
+		if (datasetB) {
+			variables = variables.concat(datasetB.variables);
+		}
+		return variables;
+	},
+
+	getJoinDatasetsVariableSummaries(state: Route, getters: any): VariableSummary[] {
+		const variables = getters.getJoinDatasetsVariables;
+		const lookup = buildLookup(variables.map(v => v.colName));
+		const summaries = getters.getVariableSummaries;
+		return summaries.filter(summary => lookup[summary.key.toLowerCase()]);
+	},
+
+	getJoinDatasetColumnA(state: Route, getters: any): string {
+		return state.query.joinColumnA as string;
+	},
+
+	getJoinDatasetColumnB(state: Route, getters: any): string {
+		return state.query.joinColumnB as string;
+	},
+
+	getDecodedJoinDatasetsFilterParams(state: Route, getters: any): Dictionary<FilterParams> {
+		const datasetIDs = getters.getRouteJoinDatasets;
+		if (datasetIDs.length !== 2) {
+			return {};
+		}
+		const datasets = getters.getDatasets;
+		const res = {};
+		datasetIDs.forEach(datasetID => {
+			const dataset = _.find(datasets, d => {
+				return d.id === datasetID;
+			});
+			if (dataset) {
+				const filters = getters.getDecodedFilters;
+				const filterParams = _.cloneDeep({
+					filters: filters,
+					variables: dataset.variables.map(v => v.colName)
+				});
+				res[datasetID] = filterParams;
+			}
+		});
+		return res;
+	},
+
 	getRouteTrainingVariables(state: Route): string {
 		return state.query.training ? state.query.training as string : null;
+	},
+
+	getRouteJoinedVarsParge(state: Route): number {
+		const pageVar = `${JOINED_VARS_INSTANCE}${ROUTE_PAGE_SUFFIX}`;
+		return state.query[pageVar] ? _.toNumber(state.query[pageVar]) : 1;
 	},
 
 	getRouteAvailableTrainingVarsPage(state: Route): number {

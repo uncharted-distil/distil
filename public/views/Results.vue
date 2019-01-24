@@ -32,8 +32,7 @@
 					enable-search
 					enable-highlighting
 					instance-name="resultTrainingVars"
-					:groups="trainingGroups"
-					:dataset="dataset">
+					:groups="trainingGroups">
 				</variable-facets>
 			</div>
 

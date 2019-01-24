@@ -8,7 +8,6 @@
 			:instance-name="instanceName"
 			:rows-per-page="numRowsPerPage"
 			:groups="groups"
-			:dataset="dataset"
 			:html="html">
 		</variable-facets>
 	</div>
