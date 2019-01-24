@@ -17,8 +17,8 @@ import (
 )
 
 const (
-	defaultEmptyType  = model.TextType
-	defaultEmpotyPron = 1
+	defaultEmptyType = model.TextType
+	defaultEmptyProb = "1.0"
 )
 
 func castTypeArray(in []interface{}) ([]string, error) {
@@ -44,7 +44,7 @@ func castProbabilityArray(in []interface{}) ([]float64, error) {
 			return nil, fmt.Errorf("arg is not a string, %v", v)
 		}
 		if str == "" || str == "[]" || str == "()" {
-			str = "1.0"
+			str = defaultEmptyProb
 		}
 
 		flt, err := strconv.ParseFloat(str, 64)

@@ -1,15 +1,15 @@
 import _ from 'lodash';
 import Vue from 'vue';
 import { Dictionary } from '../../util/dict';
-import { DatasetState, Variable, Dataset, VariableSummary, TableData } from './index';
+import { DatasetState, Variable, Dataset, VariableSummary, TableData, DATAMART_PROVENANCE } from './index';
 import { updateSummaries } from '../../util/data';
 
 function sortDatasets(a: Dataset, b: Dataset) {
 
-	if (a.provenance === 'datamart' && b.provenance !== 'datamart') {
+	if (a.provenance === DATAMART_PROVENANCE && b.provenance !== DATAMART_PROVENANCE) {
 		return 1;
 	}
-	if (b.provenance === 'datamart' && a.provenance !== 'datamart') {
+	if (b.provenance === DATAMART_PROVENANCE && a.provenance !== DATAMART_PROVENANCE) {
 		return -1;
 	}
 	const aID = a.id.toUpperCase();

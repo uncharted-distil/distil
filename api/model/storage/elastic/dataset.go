@@ -14,8 +14,9 @@ import (
 const (
 	// DatasetSuffix is the suffix for the dataset entry when stored in
 	// elasticsearch.
-	metadataType     = "metadata"
-	provenance       = "elastic"
+	metadataType = "metadata"
+	// Provenance for elastic
+	Provenance       = "elastic"
 	datasetsListSize = 1000
 )
 
@@ -100,7 +101,7 @@ func (s *Storage) parseDatasets(res *elastic.SearchResult, includeIndex bool, in
 			NumRows:     int64(numRows),
 			NumBytes:    int64(numBytes),
 			Variables:   variables,
-			Provenance:  provenance,
+			Provenance:  Provenance,
 			Source:      metadata.DatasetSource(source),
 		})
 	}
