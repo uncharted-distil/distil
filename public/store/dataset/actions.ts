@@ -2,7 +2,7 @@ import _ from 'lodash';
 import axios from 'axios';
 import { Dictionary } from '../../util/dict';
 import { ActionContext } from 'vuex';
-import { Dataset, DatasetState, Variable } from './index';
+import { Dataset, DatasetState, Variable, VariableSummary } from './index';
 import { mutations } from './module';
 import { DistilState } from '../store';
 import { HighlightRoot } from '../highlights/index';
@@ -193,14 +193,14 @@ export const actions = {
 		const promises = [];
 		args.variables.forEach(variable => {
 			const exists = _.find(context.state.variableSummaries, v => {
-				return v.key === variable.colName;
+				return v.dataset === args.dataset && v.key === variable.colName;
 			});
 			if (!exists) {
 				// add placeholder
 				const key = variable.colName;
 				const label = variable.colDisplayName;
 				const dataset = args.dataset;
-				mutations.updateVariableSummaries(context,  createPendingSummary(key, label, dataset));
+				mutations.updateVariableSummaries(context, createPendingSummary(key, label, dataset));
 				// fetch summary
 				promises.push(context.dispatch('fetchVariableSummary', {
 					dataset: args.dataset,

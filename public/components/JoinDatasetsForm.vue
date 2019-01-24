@@ -51,6 +51,7 @@
 
 import _ from 'lodash';
 import Vue from 'vue';
+import localStorage from 'store';
 import JoinDatasetsPreview from '../components/JoinDatasetsPreview.vue';
 import ErrorModal from '../components/ErrorModal.vue';
 import { createRouteEntry } from '../util/routes';

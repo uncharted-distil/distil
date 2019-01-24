@@ -15,8 +15,9 @@ export const ERROR_SUFFIX = '_error';
 export const NUM_PER_PAGE = 10;
 
 export function updateSummaries(summary: VariableSummary, summaries: VariableSummary[]) {
-	// TODO: add and check timestamps to ensure we don't overwrite old data?
-	const index = _.findIndex(summaries, r => r.key === summary.key);
+	const index = _.findIndex(summaries, s => {
+		return s.dataset === summary.dataset && s.key === summary.key;
+	});
 	if (index >= 0) {
 		Vue.set(summaries, index, summary);
 	} else {
