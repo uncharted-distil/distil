@@ -50,7 +50,7 @@ func join(joinLeft *JoinSpec, joinRight *JoinSpec, varsLeft []*model.Variable, v
 	config *env.Config) (*apiModel.FilteredData, error) {
 
 	// create & submit the solution request
-	pipelineDesc, err := description.CreateJoinPipeline("Join Preview", "Join to be reviewed by user", joinLeft.Column, joinRight.Column)
+	pipelineDesc, err := description.CreateJoinPipeline("Join Preview", "Join to be reviewed by user", joinLeft.Column, joinRight.Column, 0.8)
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to create join pipeline")
 	}
