@@ -21,23 +21,11 @@ func Format(schemaFile string, config *IngestTaskConfig) (string, error) {
 		return "", errors.Wrap(err, "unable to load original schema file")
 	}
 
-	// fix for d3m index requirement
-	path := path.Dir(schemaFile)
-	if !checkD3MIndexExists(meta) {
-		path, err = addD3MIndex(schemaFile, meta, config)
-		if err != nil {
-			return "", errors.Wrap(err, "unable to load original schema file")
-		}
-	}
-
-	return path, nil
-}
-
-func addD3MIndex(schemaFile string, meta *model.Metadata, config *IngestTaskConfig) (string, error) {
 	// check to make sure only a single data resource exists
 	if len(meta.DataResources) != 1 {
 		return "", errors.Errorf("adding d3m index requires that the dataset have only 1 data resource (%d exist)", len(meta.DataResources))
 	}
+	dr := meta.DataResources[0]
 
 	// copy the data to a new directory
 	outputPath, err := initializeDatasetCopy(schemaFile, path.Base(path.Dir(schemaFile)), config.FormatOutputSchemaRelative, config.FormatOutputDataRelative, config)
@@ -45,17 +33,19 @@ func addD3MIndex(schemaFile string, meta *model.Metadata, config *IngestTaskConf
 		return "", errors.Wrap(err, "unable to copy source data folder")
 	}
 
-	// add the d3m index variable to the metadata
-	dr := meta.DataResources[0]
-	name := model.D3MIndexFieldName
-	v := model.NewVariable(len(dr.Variables), name, name, name, model.IntegerType, model.IntegerType, []string{"index"}, model.VarRoleIndex, nil, dr.Variables, false)
-	dr.Variables = append(dr.Variables, v)
-
 	// read the raw data
 	dataPath := path.Join(path.Dir(schemaFile), dr.ResPath)
 	lines, err := ReadCSVFile(dataPath, config.HasHeader)
 	if err != nil {
 		return "", errors.Wrap(err, "error reading raw data")
+	}
+
+	// fix for d3m index requirement
+	if !checkD3MIndexExists(meta) {
+		meta, lines, err = addD3MIndex(schemaFile, meta, lines)
+		if err != nil {
+			return "", errors.Wrap(err, "unable to load original schema file")
+		}
 	}
 
 	// append the row count as d3m index
@@ -73,15 +63,8 @@ func addD3MIndex(schemaFile string, meta *model.Metadata, config *IngestTaskConf
 		return "", errors.Wrap(err, "error storing format header")
 	}
 
-	// parse the raw output and write the line out
-	for i, line := range lines {
-		line = append(line, fmt.Sprintf("%d", i+1))
-
-		err = writer.Write(line)
-		if err != nil {
-			return "", errors.Wrap(err, "error storing feature output")
-		}
-	}
+	// output the formatted data
+	err = writer.WriteAll(lines)
 
 	// output the data with the new feature
 	writer.Flush()
@@ -92,6 +75,7 @@ func addD3MIndex(schemaFile string, meta *model.Metadata, config *IngestTaskConf
 
 	relativePath := getRelativePath(path.Dir(outputPath.outputSchema), outputPath.outputData)
 	dr.ResPath = relativePath
+	dr.ResType = model.ResTypeTable
 
 	// write the new schema to file
 	err = metadata.WriteSchema(meta, outputPath.outputSchema)
@@ -100,6 +84,21 @@ func addD3MIndex(schemaFile string, meta *model.Metadata, config *IngestTaskConf
 	}
 
 	return path.Dir(outputPath.outputSchema), nil
+}
+
+func addD3MIndex(schemaFile string, meta *model.Metadata, data [][]string) (*model.Metadata, [][]string, error) {
+	// add the d3m index variable to the metadata
+	dr := meta.DataResources[0]
+	name := model.D3MIndexFieldName
+	v := model.NewVariable(len(dr.Variables), name, name, name, model.IntegerType, model.IntegerType, []string{"index"}, model.VarRoleIndex, nil, dr.Variables, false)
+	dr.Variables = append(dr.Variables, v)
+
+	// parse the raw output and write the line out
+	for i, line := range data {
+		line = append(line, fmt.Sprintf("%d", i+1))
+	}
+
+	return meta, data, nil
 }
 
 func checkD3MIndexExists(meta *model.Metadata) bool {

@@ -42,7 +42,7 @@ func UploadHandler(outputPath string, config *task.IngestTaskConfig) func(http.R
 
 		// create the raw dataset schema doc
 		datasetID := model.NormalizeDatasetID(dataset)
-		meta := model.NewMetadata(datasetID, dataset, "", datasetID)
+		meta := model.NewMetadata(dataset, dataset, "", datasetID)
 		dr := model.NewDataResource("0", model.ResTypeRaw, []string{compute.D3MResourceFormat})
 		dr.ResPath = dataFilePath
 		meta.DataResources = []*model.DataResource{dr}
