@@ -64,6 +64,7 @@ export interface NumericalFacet {
 }
 
 export interface Group {
+	dataset: string;
 	label: string;
 	key: string;
 	type: string;
@@ -100,6 +101,7 @@ export function createGroups(summaries: VariableSummary[]): Group[] {
 // creates a facet to display a data fetch error
 export function createErrorFacet(summary: VariableSummary): Group {
 	return {
+		dataset: summary.dataset,
 		label: summary.label,
 		key: summary.key,
 		type: summary.varType,
@@ -117,6 +119,7 @@ export function createErrorFacet(summary: VariableSummary): Group {
 // creates a place holder facet to dispay a spinner
 export function createPendingFacet(summary: VariableSummary): Group {
 	return {
+		dataset: summary.dataset,
 		label: summary.label,
 		key: summary.key,
 		type: summary.varType,
@@ -226,6 +229,7 @@ function createCategoricalSummaryFacet(summary: VariableSummary): Group {
 
 	// Generate a facet group
 	return {
+		dataset: summary.dataset,
 		label: summary.label,
 		key: summary.key,
 		type: summary.varType,
@@ -277,6 +281,7 @@ function getHistogramSlices(summary: VariableSummary) {
 function createNumericalSummaryFacet(summary: VariableSummary): Group {
 	const slices = getHistogramSlices(summary);
 	return {
+		dataset: summary.dataset,
 		label: summary.label,
 		key: summary.key,
 		type: summary.varType,

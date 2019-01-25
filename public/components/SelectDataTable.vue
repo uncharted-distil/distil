@@ -114,21 +114,6 @@ export default Vue.extend({
 
 <style>
 
-.select-data-table {
-	display: flex;
-	flex-direction: column;
-}
-.select-data-table-container {
-	display: flex;
-	overflow: auto;
-	background-color: white;
-}
-.select-data-no-results {
-	width: 100%;
-	background-color: #eee;
-	padding: 8px;
-	text-align: center;
-}
 table.b-table>tfoot>tr>th.sorting:before,
 table.b-table>thead>tr>th.sorting:before,
 table.b-table>tfoot>tr>th.sorting:after,
@@ -139,48 +124,5 @@ table.b-table>thead>tr>th.sorting:after {
 table tr {
 	cursor: pointer;
 }
-.select-data-table .small-margin {
-	margin-bottom: 0.5rem
-}
-.select-view .nav-tabs .nav-item a {
-	padding-left: 0.5rem;
-	padding-right: 0.5rem;
-}
-.select-view .nav-tabs .nav-link {
-	color: #757575;
-}
-.select-view .nav-tabs .nav-link.active {
-	color: rgba(0, 0, 0, 0.87);
-}
-.include-highlight,
-.exclude-highlight {
-	color: #00c6e1;
-}
-.include-selection,
-.exclude-selection {
-	color: #ff0067;
-}
-.row-number-label {
-	position: relative;
-	top: 20px;
-}
-.matching-color {
-	color: #00c6e1;
-}
-.fake-search-input {
-	position: relative;
-	height: 38px;
-	padding: 2px 2px;
-	margin-bottom: 4px;
-	background-color: #eee;
-	border: 1px solid #ccc;
-	border-radius: 0.2rem;
-}
-.selected-color {
-	color: #ff0067;
-}
-.table-selected-row {
-	border-left: 4px solid #ff0067;
-	background-color: rgba(255, 0, 103, 0.2);
-}
+
 </style>

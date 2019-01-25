@@ -160,16 +160,10 @@ export default Vue.extend({
 </script>
 
 <style>
-.results-tables,
-.one-table,
-.two-tables {
+.results-tables {
 	display: flex;
 	flex-direction: column;
 	flex: none;
-}
-.results-data-table {
-	display: flex;
-	flex-direction: column;
 }
 .two-tables .results-data-table {
 	max-height: 50%;
