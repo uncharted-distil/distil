@@ -107,7 +107,7 @@ func main() {
 	esMetadataStorageCtor := es.NewMetadataStorage(config.ESDatasetsIndex, esClientCtor)
 
 	// instantiate the metadata storage (using filesystem).
-	fileMetadataStorageCtor := file.NewMetadataStorage(config.D3MInputDirRoot)
+	fileMetadataStorageCtor := file.NewMetadataStorage(config.TmpDataPath)
 
 	// instantiate the postgres data storage constructor.
 	pgDataStorageCtor := pg.NewDataStorage(postgresClientCtor, esMetadataStorageCtor)
@@ -258,7 +258,7 @@ func main() {
 	registerRoutePost(mux, "/distil/correctness-summary/:dataset/:results-uuid", routes.CorrectnessSummaryHandler(pgSolutionStorageCtor, pgDataStorageCtor))
 	registerRoutePost(mux, "/distil/predicted-summary/:dataset/:target/:results-uuid", routes.PredictedSummaryHandler(esMetadataStorageCtor, pgSolutionStorageCtor, pgDataStorageCtor))
 	registerRoutePost(mux, "/distil/geocode/:dataset/:variable", routes.GeocodingHandler(esMetadataStorageCtor, pgDataStorageCtor, sourceFolder))
-	registerRoutePost(mux, "/distil/upload/:dataset", routes.UploadHandler(path.Join(config.D3MInputDirRoot, "augmented")))
+	registerRoutePost(mux, "/distil/upload/:dataset", routes.UploadHandler(path.Join(config.TmpDataPath, "augmented")))
 	registerRoutePost(mux, "/distil/join/:dataset-left/:column-left/:source-left/:dataset-right/:column-right/:source-right", routes.JoinHandler(esMetadataStorageCtor))
 
 	// static
