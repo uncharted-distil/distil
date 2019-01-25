@@ -1,8 +1,7 @@
 import { Variable, VariableSummary } from '../dataset/index';
 import { HighlightRoot, RowSelection } from '../highlights/index';
-import { JOINED_VARS_INSTANCE, AVAILABLE_TRAINING_VARS_INSTANCE,
-	AVAILABLE_TARGET_VARS_INSTSANCE, TRAINING_VARS_INSTANCE,
-	RESULT_TRAINING_VARS_INSTANCE, ROUTE_PAGE_SUFFIX } from '../route/index';
+import { JOINED_VARS_INSTANCE_PAGE, AVAILABLE_TRAINING_VARS_INSTANCE_PAGE,
+	TRAINING_VARS_INSTANCE_PAGE, RESULT_TRAINING_VARS_INSTANCE_PAGE } from '../route/index';
 import { decodeFilters, Filter, FilterParams } from '../../util/filters';
 import { decodeHighlights } from '../../util/highlights';
 import { decodeRowSelection } from '../../util/row';
@@ -92,14 +91,26 @@ export const getters = {
 		}
 		const datasets = getters.getDatasets;
 		const res = {};
+
+		// build filter params for each dataset
 		datasetIDs.forEach(datasetID => {
 			const dataset = _.find(datasets, d => {
 				return d.id === datasetID;
 			});
 			if (dataset) {
 				const filters = getters.getDecodedFilters;
+
+				// only include filters for this dataset
+				const varLookup = {};
+				dataset.variables.forEach(v => {
+					varLookup[v.colName] = true;
+				});
+				const filtersForDataset = filters.filter(filter => {
+					return varLookup[filter.key];
+				});
+
 				const filterParams = _.cloneDeep({
-					filters: filters,
+					filters: filtersForDataset,
 					variables: dataset.variables.map(v => v.colName)
 				});
 				res[datasetID] = filterParams;
@@ -113,27 +124,22 @@ export const getters = {
 	},
 
 	getRouteJoinedVarsParge(state: Route): number {
-		const pageVar = `${JOINED_VARS_INSTANCE}${ROUTE_PAGE_SUFFIX}`;
+		const pageVar = JOINED_VARS_INSTANCE_PAGE;
 		return state.query[pageVar] ? _.toNumber(state.query[pageVar]) : 1;
 	},
 
 	getRouteAvailableTrainingVarsPage(state: Route): number {
-		const pageVar = `${AVAILABLE_TRAINING_VARS_INSTANCE}${ROUTE_PAGE_SUFFIX}`;
+		const pageVar = AVAILABLE_TRAINING_VARS_INSTANCE_PAGE;
 		return state.query[pageVar] ? _.toNumber(state.query[pageVar]) : 1;
 	},
 
 	getRouteTrainingVarsPage(state: Route): number {
-		const pageVar = `${TRAINING_VARS_INSTANCE}${ROUTE_PAGE_SUFFIX}`;
-		return state.query[pageVar] ? _.toNumber(state.query[pageVar]) : 1;
-	},
-
-	getRouteAvailableTargetVarsPage(state: Route): number {
-		const pageVar = `${AVAILABLE_TARGET_VARS_INSTSANCE}${ROUTE_PAGE_SUFFIX}`;
+		const pageVar = TRAINING_VARS_INSTANCE_PAGE;
 		return state.query[pageVar] ? _.toNumber(state.query[pageVar]) : 1;
 	},
 
 	getRouteResultTrainingVarsPage(state: Route): number {
-		const pageVar = `${RESULT_TRAINING_VARS_INSTANCE}${ROUTE_PAGE_SUFFIX}`;
+		const pageVar = RESULT_TRAINING_VARS_INSTANCE_PAGE;
 		return state.query[pageVar] ? _.toNumber(state.query[pageVar]) : 1;
 	},
 
