@@ -21,7 +21,7 @@ import { getters as routeGetters } from '../store/route/module';
 import { createRouteEntry } from '../util/routes';
 import { filterSummariesByDataset } from '../util/data';
 import VariableFacets from '../components/VariableFacets.vue';
-import { AVAILABLE_TARGET_VARS_INSTSANCE, SELECT_TRAINING_ROUTE } from '../store/route/index';
+import { AVAILABLE_TARGET_VARS_INSTANCE, SELECT_TRAINING_ROUTE } from '../store/route/index';
 import { Group, createGroups } from '../util/facets';
 import 'font-awesome/css/font-awesome.css';
 import Vue from 'vue';
@@ -50,7 +50,7 @@ export default Vue.extend({
 			return NUM_TARGET_PER_PAGE;
 		},
 		instanceName(): string {
-			return AVAILABLE_TARGET_VARS_INSTSANCE;
+			return AVAILABLE_TARGET_VARS_INSTANCE;
 		},
 		html(): (group: { key: string }) => HTMLDivElement {
 			return (group: { key: string }) => {
