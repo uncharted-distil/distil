@@ -9,6 +9,8 @@ import (
 
 	"github.com/pkg/errors"
 	"github.com/unchartedsoftware/distil-compute/model"
+	"github.com/unchartedsoftware/distil-compute/primitive/compute/description"
+	"github.com/unchartedsoftware/distil-compute/primitive/compute/result"
 	"github.com/unchartedsoftware/distil-ingest/metadata"
 
 	"github.com/unchartedsoftware/distil/api/util"
@@ -23,7 +25,7 @@ func Format(schemaFile string, config *IngestTaskConfig) (string, error) {
 
 	// check to make sure only a single data resource exists
 	if len(meta.DataResources) != 1 {
-		return "", errors.Errorf("adding d3m index requires that the dataset have only 1 data resource (%d exist)", len(meta.DataResources))
+		return "", errors.Errorf("formatting requires that the dataset have only 1 data resource (%d exist)", len(meta.DataResources))
 	}
 	dr := meta.DataResources[0]
 
@@ -31,6 +33,24 @@ func Format(schemaFile string, config *IngestTaskConfig) (string, error) {
 	outputPath, err := initializeDatasetCopy(schemaFile, path.Base(path.Dir(schemaFile)), config.FormatOutputSchemaRelative, config.FormatOutputDataRelative, config)
 	if err != nil {
 		return "", errors.Wrap(err, "unable to copy source data folder")
+	}
+
+	// create & submit the solution request
+	pip, err := description.CreateDataCleaningPipeline("Mary Poppins", "")
+	if err != nil {
+		return "", errors.Wrap(err, "unable to create format pipeline")
+	}
+
+	// pipeline execution assumes datasetDoc.json as schema file
+	datasetURI, err := submitPipeline([]string{outputPath.sourceFolder}, pip)
+	if err != nil {
+		return "", errors.Wrap(err, "unable to run format pipeline")
+	}
+
+	// parse primitive response (raw data from the input dataset)
+	_, err = result.ParseResultCSV(datasetURI)
+	if err != nil {
+		return "", errors.Wrap(err, "unable to parse format result")
 	}
 
 	// read the raw data
@@ -48,6 +68,18 @@ func Format(schemaFile string, config *IngestTaskConfig) (string, error) {
 		}
 	}
 
+	// output the data
+	err = outputDataset(outputPath, meta, lines)
+	if err != nil {
+		return "", errors.Wrap(err, "unable to store formatted dataset")
+	}
+
+	return path.Dir(outputPath.outputSchema), nil
+}
+
+func outputDataset(paths *datasetCopyPath, meta *model.Metadata, lines [][]string) error {
+	dr := meta.GetMainDataResource()
+
 	// append the row count as d3m index
 	// initialize csv writer
 	output := &bytes.Buffer{}
@@ -58,9 +90,9 @@ func Format(schemaFile string, config *IngestTaskConfig) (string, error) {
 	for _, v := range dr.Variables {
 		header[v.Index] = v.Name
 	}
-	err = writer.Write(header)
+	err := writer.Write(header)
 	if err != nil {
-		return "", errors.Wrap(err, "error storing format header")
+		return errors.Wrap(err, "error storing header")
 	}
 
 	// output the formatted data
@@ -68,22 +100,22 @@ func Format(schemaFile string, config *IngestTaskConfig) (string, error) {
 
 	// output the data with the new feature
 	writer.Flush()
-	err = util.WriteFileWithDirs(outputPath.outputData, output.Bytes(), os.ModePerm)
+	err = util.WriteFileWithDirs(paths.outputData, output.Bytes(), os.ModePerm)
 	if err != nil {
-		return "", errors.Wrap(err, "error writing feature output")
+		return errors.Wrap(err, "error writing output")
 	}
 
-	relativePath := getRelativePath(path.Dir(outputPath.outputSchema), outputPath.outputData)
+	relativePath := getRelativePath(path.Dir(paths.outputSchema), paths.outputData)
 	dr.ResPath = relativePath
 	dr.ResType = model.ResTypeTable
 
 	// write the new schema to file
-	err = metadata.WriteSchema(meta, outputPath.outputSchema)
+	err = metadata.WriteSchema(meta, paths.outputSchema)
 	if err != nil {
-		return "", errors.Wrap(err, "unable to store feature schema")
+		return errors.Wrap(err, "unable to store schema")
 	}
 
-	return path.Dir(outputPath.outputSchema), nil
+	return nil
 }
 
 func addD3MIndex(schemaFile string, meta *model.Metadata, data [][]string) (*model.Metadata, [][]string, error) {

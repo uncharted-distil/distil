@@ -85,8 +85,15 @@ func IngestDataset(metaCtor api.MetadataStorageCtor, index string, dataset strin
 
 	latestSchemaOutput := config.GetAbsolutePath(config.SchemaPathRelative)
 
+	output, err := Merge(latestSchemaOutput, index, dataset, config)
+	if err != nil {
+		return errors.Wrap(err, "unable to merge all data into a single file")
+	}
+	latestSchemaOutput = output
+	log.Infof("finished merging the dataset")
+
 	if config.ClusteringEnabled {
-		output, err := Cluster(index, dataset, config)
+		output, err = Cluster(latestSchemaOutput, index, dataset, config)
 		if err != nil {
 			if config.HardFail {
 				return errors.Wrap(err, "unable to cluster all data")
@@ -98,7 +105,7 @@ func IngestDataset(metaCtor api.MetadataStorageCtor, index string, dataset strin
 		log.Infof("finished clustering the dataset")
 	}
 
-	output, err := Featurize(latestSchemaOutput, index, dataset, config)
+	output, err = Featurize(latestSchemaOutput, index, dataset, config)
 	if err != nil {
 		if config.HardFail {
 			return errors.Wrap(err, "unable to featurize all data")
@@ -108,13 +115,6 @@ func IngestDataset(metaCtor api.MetadataStorageCtor, index string, dataset strin
 		latestSchemaOutput = output
 	}
 	log.Infof("finished featurizing the dataset")
-
-	output, err = Merge(latestSchemaOutput, index, dataset, config)
-	if err != nil {
-		return errors.Wrap(err, "unable to merge all data into a single file")
-	}
-	latestSchemaOutput = output
-	log.Infof("finished merging the dataset")
 
 	err = Classify(index, dataset, config)
 	if err != nil {
