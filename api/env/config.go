@@ -42,6 +42,8 @@ type Config struct {
 	FeaturizationOutputSchemaRelative  string  `env:"FEATURIZATION_OUTPUT_SCHEMA" envDefault:"features/datasetDoc.json"`
 	FormatOutputDataRelative           string  `env:"FORMAT_OUTPUT_DATA" envDefault:"format/tables/learningData.csv"`
 	FormatOutputSchemaRelative         string  `env:"FORMAT_OUTPUT_SCHEMA" envDefault:"format/datasetDoc.json"`
+	CleanOutputDataRelative            string  `env:"CLEAN_OUTPUT_DATA" envDefault:"clean/tables/learningData.csv"`
+	CleanOutputSchemaRelative          string  `env:"CLEAN_OUTPUT_SCHEMA" envDefault:"clean/datasetDoc.json"`
 	GeocodingOutputDataRelative        string  `env:"FEATURIZATION_OUTPUT_DATA" envDefault:"geocoded/tables/learningData.csv"`
 	GeocodingOutputSchemaRelative      string  `env:"FEATURIZATION_OUTPUT_SCHEMA" envDefault:"geocoded/datasetDoc.json"`
 	MergedOutputDataPath               string  `env:"MERGED_OUTPUT_DATA_PATH" envDefault:"merged/tables/learningData.csv"`

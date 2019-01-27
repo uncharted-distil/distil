@@ -40,6 +40,8 @@ type IngestTaskConfig struct {
 	FeaturizationOutputSchemaRelative  string
 	FormatOutputDataRelative           string
 	FormatOutputSchemaRelative         string
+	CleanOutputDataRelative            string
+	CleanOutputSchemaRelative          string
 	GeocodingOutputDataRelative        string
 	GeocodingOutputSchemaRelative      string
 	MergedOutputPathRelative           string
@@ -91,6 +93,13 @@ func IngestDataset(metaCtor api.MetadataStorageCtor, index string, dataset strin
 	}
 	latestSchemaOutput = output
 	log.Infof("finished merging the dataset")
+
+	output, err = Clean(latestSchemaOutput, index, dataset, config)
+	if err != nil {
+		return errors.Wrap(err, "unable to clean all data")
+	}
+	latestSchemaOutput = output
+	log.Infof("finished cleaning the dataset")
 
 	if config.ClusteringEnabled {
 		output, err = Cluster(latestSchemaOutput, index, dataset, config)
