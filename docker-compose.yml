@@ -17,6 +17,7 @@ pipeline_server:
     - SOLUTION_ERR_PERCENT=0.1
   volumes:
     - $PWD/datasets:$PWD/datasets
+    - $PWD/datamart:$PWD/datamart
     - $PWD/outputs/temp:$PWD/outputs/temp
 
 postgres:

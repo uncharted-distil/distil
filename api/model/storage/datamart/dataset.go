@@ -105,7 +105,7 @@ func (s *Storage) ImportDataset(id string, uri string) (string, error) {
 	}
 
 	// copy the formatted output to the datamart output path (delete existing copy)
-	err = os.RemoveAll(s.outputPath)
+	err = util.RemoveContents(s.outputPath)
 	if err != nil {
 		return "", errors.Wrap(err, "unable to delete raw datamart dataset")
 	}
