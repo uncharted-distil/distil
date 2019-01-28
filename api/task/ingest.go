@@ -165,31 +165,33 @@ func IngestDataset(metaCtor api.MetadataStorageCtor, index string, dataset strin
 
 // Ingest the metadata to ES and the data to Postgres.
 func Ingest(schemaFile string, storage api.MetadataStorage, index string, dataset string, source metadata.DatasetSource, config *IngestTaskConfig) error {
-	meta, err := metadata.LoadMetadataFromClassification(schemaFile, config.GetTmpAbsolutePath(path.Join(dataset, config.ClassificationOutputPathRelative)))
+	datasetDir := path.Dir(schemaFile)
+	meta, err := metadata.LoadMetadataFromClassification(schemaFile, path.Join(datasetDir, config.ClassificationOutputPathRelative))
 	if err != nil {
 		return errors.Wrap(err, "unable to load original schema file")
 	}
-	meta.DatasetFolder = dataset
+	meta.DatasetFolder = datasetDir
+	dataDir := path.Join(datasetDir, meta.DataResources[0].ResPath)
 
-	err = metadata.LoadImportance(meta, config.GetTmpAbsolutePath(path.Join(dataset, config.RankingOutputPathRelative)))
+	err = metadata.LoadImportance(meta, path.Join(datasetDir, config.RankingOutputPathRelative))
 	if err != nil {
 		return errors.Wrap(err, "unable to load importance from file")
 	}
 
 	// load stats
-	err = metadata.LoadDatasetStats(meta, config.GetTmpAbsolutePath(path.Join(dataset, config.GeocodingOutputDataRelative)))
+	err = metadata.LoadDatasetStats(meta, dataDir)
 	if err != nil {
 		return errors.Wrap(err, "unable to load stats")
 	}
 
 	// load summary
-	err = metadata.LoadSummaryFromDescription(meta, config.GetTmpAbsolutePath(path.Join(dataset, config.SummaryOutputPathRelative)))
+	err = metadata.LoadSummaryFromDescription(meta, path.Join(datasetDir, config.SummaryOutputPathRelative))
 	if err != nil {
 		return errors.Wrap(err, "unable to load summary")
 	}
 
 	// load machine summary
-	err = metadata.LoadSummaryMachine(meta, config.GetTmpAbsolutePath(path.Join(dataset, config.SummaryMachineOutputPathRelative)))
+	err = metadata.LoadSummaryMachine(meta, path.Join(datasetDir, config.SummaryMachineOutputPathRelative))
 	// NOTE: For now ignore summary errors!
 	if err != nil {
 		log.Errorf("unable to load machine summary: %v", err)
@@ -279,8 +281,8 @@ func Ingest(schemaFile string, storage api.MetadataStorage, index string, datase
 	}
 
 	// Load the data.
-	log.Infof("inserting rows into database")
-	reader, err := os.Open(config.GetTmpAbsolutePath(path.Join(dataset, config.GeocodingOutputDataRelative)))
+	log.Infof("inserting rows into database based on data found in %s", dataDir)
+	reader, err := os.Open(dataDir)
 	scanner := bufio.NewScanner(reader)
 
 	// skip header
