@@ -35,7 +35,7 @@ func GeocodeForwardDataset(schemaFile string, index string, dataset string, conf
 	}
 
 	// load metadata from original schema
-	meta, err := metadata.LoadMetadataFromClassification(schemaFile, config.GetTmpAbsolutePath(path.Join(dataset, config.ClassificationOutputPathRelative)))
+	meta, err := metadata.LoadMetadataFromClassification(schemaFile, path.Join(path.Dir(schemaFile), config.ClassificationOutputPathRelative))
 	if err != nil {
 		return "", errors.Wrap(err, "unable to load original schema file")
 	}
