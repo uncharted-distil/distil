@@ -186,6 +186,8 @@ func main() {
 		FeaturizationOutputSchemaRelative:  config.FeaturizationOutputSchemaRelative,
 		FormatOutputDataRelative:           config.FormatOutputDataRelative,
 		FormatOutputSchemaRelative:         config.FormatOutputSchemaRelative,
+		CleanOutputDataRelative:            config.CleanOutputDataRelative,
+		CleanOutputSchemaRelative:          config.CleanOutputSchemaRelative,
 		GeocodingOutputDataRelative:        config.GeocodingOutputDataRelative,
 		GeocodingOutputSchemaRelative:      config.GeocodingOutputSchemaRelative,
 		MergedOutputPathRelative:           config.MergedOutputDataPath,

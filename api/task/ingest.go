@@ -40,6 +40,8 @@ type IngestTaskConfig struct {
 	FeaturizationOutputSchemaRelative  string
 	FormatOutputDataRelative           string
 	FormatOutputSchemaRelative         string
+	CleanOutputDataRelative            string
+	CleanOutputSchemaRelative          string
 	GeocodingOutputDataRelative        string
 	GeocodingOutputSchemaRelative      string
 	MergedOutputPathRelative           string
@@ -85,8 +87,22 @@ func IngestDataset(metaCtor api.MetadataStorageCtor, index string, dataset strin
 
 	latestSchemaOutput := config.GetAbsolutePath(config.SchemaPathRelative)
 
+	output, err := Merge(latestSchemaOutput, index, dataset, config)
+	if err != nil {
+		return errors.Wrap(err, "unable to merge all data into a single file")
+	}
+	latestSchemaOutput = output
+	log.Infof("finished merging the dataset")
+
+	output, err = Clean(latestSchemaOutput, index, dataset, config)
+	if err != nil {
+		return errors.Wrap(err, "unable to clean all data")
+	}
+	latestSchemaOutput = output
+	log.Infof("finished cleaning the dataset")
+
 	if config.ClusteringEnabled {
-		output, err := Cluster(index, dataset, config)
+		output, err = Cluster(latestSchemaOutput, index, dataset, config)
 		if err != nil {
 			if config.HardFail {
 				return errors.Wrap(err, "unable to cluster all data")
@@ -98,7 +114,7 @@ func IngestDataset(metaCtor api.MetadataStorageCtor, index string, dataset strin
 		log.Infof("finished clustering the dataset")
 	}
 
-	output, err := Featurize(latestSchemaOutput, index, dataset, config)
+	output, err = Featurize(latestSchemaOutput, index, dataset, config)
 	if err != nil {
 		if config.HardFail {
 			return errors.Wrap(err, "unable to featurize all data")
@@ -109,26 +125,19 @@ func IngestDataset(metaCtor api.MetadataStorageCtor, index string, dataset strin
 	}
 	log.Infof("finished featurizing the dataset")
 
-	output, err = Merge(latestSchemaOutput, index, dataset, config)
-	if err != nil {
-		return errors.Wrap(err, "unable to merge all data into a single file")
-	}
-	latestSchemaOutput = output
-	log.Infof("finished merging the dataset")
-
-	err = Classify(index, dataset, config)
+	err = Classify(latestSchemaOutput, index, dataset, config)
 	if err != nil {
 		return errors.Wrap(err, "unable to classify fields")
 	}
 	log.Infof("finished classifying the dataset")
 
-	err = Rank(index, dataset, config)
+	err = Rank(latestSchemaOutput, index, dataset, config)
 	if err != nil {
 		return errors.Wrap(err, "unable to rank field importance")
 	}
 	log.Infof("finished ranking the dataset")
 
-	err = Summarize(index, dataset, config)
+	err = Summarize(latestSchemaOutput, index, dataset, config)
 	log.Infof("finished summarizing the dataset")
 	// NOTE: For now ignore summary errors!
 	if err != nil {
