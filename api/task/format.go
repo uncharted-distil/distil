@@ -108,6 +108,7 @@ func addD3MIndex(schemaFile string, meta *model.Metadata, data [][]string) (*mod
 	// parse the raw output and write the line out
 	for i, line := range data {
 		line = append(line, fmt.Sprintf("%d", i+1))
+		data[i] = line
 	}
 
 	return meta, data, nil
