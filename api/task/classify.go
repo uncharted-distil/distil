@@ -9,6 +9,7 @@ import (
 
 	"github.com/pkg/errors"
 	"github.com/unchartedsoftware/distil-ingest/rest"
+	log "github.com/unchartedsoftware/plog"
 
 	"github.com/unchartedsoftware/distil-compute/model"
 	"github.com/unchartedsoftware/distil-compute/primitive/compute/description"
@@ -134,7 +135,9 @@ func Classify(schemaPath string, index string, dataset string, config *IngestTas
 		return errors.Wrap(err, "unable to serialize classification result")
 	}
 	// write to file
-	err = util.WriteFileWithDirs(path.Join(schemaDoc, config.ClassificationOutputPathRelative), bytes, os.ModePerm)
+	outputPath := path.Join(schemaDoc, config.ClassificationOutputPathRelative)
+	log.Debugf("writing classification output to %s", outputPath)
+	err = util.WriteFileWithDirs(outputPath, bytes, os.ModePerm)
 	if err != nil {
 		return errors.Wrap(err, "unable to store classification result")
 	}

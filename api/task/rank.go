@@ -8,6 +8,7 @@ import (
 
 	"github.com/pkg/errors"
 	"github.com/unchartedsoftware/distil-ingest/rest"
+	log "github.com/unchartedsoftware/plog"
 
 	"github.com/unchartedsoftware/distil-compute/primitive/compute/description"
 	"github.com/unchartedsoftware/distil-compute/primitive/compute/result"
@@ -62,7 +63,9 @@ func Rank(schemaPath string, index string, dataset string, config *IngestTaskCon
 	}
 
 	// write to file
-	err = util.WriteFileWithDirs(path.Join(schemaDoc, config.RankingOutputPathRelative), bytes, os.ModePerm)
+	outputPath := path.Join(schemaDoc, config.RankingOutputPathRelative)
+	log.Debugf("writing ranking output to %s", outputPath)
+	err = util.WriteFileWithDirs(outputPath, bytes, os.ModePerm)
 	if err != nil {
 		return errors.Wrap(err, "unable to store ranking result")
 	}
