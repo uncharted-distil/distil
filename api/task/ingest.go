@@ -125,19 +125,19 @@ func IngestDataset(metaCtor api.MetadataStorageCtor, index string, dataset strin
 	}
 	log.Infof("finished featurizing the dataset")
 
-	err = Classify(index, dataset, config)
+	err = Classify(latestSchemaOutput, index, dataset, config)
 	if err != nil {
 		return errors.Wrap(err, "unable to classify fields")
 	}
 	log.Infof("finished classifying the dataset")
 
-	err = Rank(index, dataset, config)
+	err = Rank(latestSchemaOutput, index, dataset, config)
 	if err != nil {
 		return errors.Wrap(err, "unable to rank field importance")
 	}
 	log.Infof("finished ranking the dataset")
 
-	err = Summarize(index, dataset, config)
+	err = Summarize(latestSchemaOutput, index, dataset, config)
 	log.Infof("finished summarizing the dataset")
 	// NOTE: For now ignore summary errors!
 	if err != nil {

@@ -15,8 +15,8 @@ import (
 )
 
 // Rank will rank the dataset using a primitive.
-func Rank(index string, dataset string, config *IngestTaskConfig) error {
-	schemaDoc := path.Dir(config.GetTmpAbsolutePath(path.Join(dataset, config.MergedOutputSchemaPathRelative)))
+func Rank(schemaPath string, index string, dataset string, config *IngestTaskConfig) error {
+	schemaDoc := path.Dir(schemaPath)
 
 	// create & submit the solution request
 	pip, err := description.CreatePCAFeaturesPipeline("harry", "")
@@ -62,7 +62,7 @@ func Rank(index string, dataset string, config *IngestTaskConfig) error {
 	}
 
 	// write to file
-	err = util.WriteFileWithDirs(config.GetTmpAbsolutePath(path.Join(dataset, config.RankingOutputPathRelative)), bytes, os.ModePerm)
+	err = util.WriteFileWithDirs(path.Join(schemaDoc, config.RankingOutputPathRelative), bytes, os.ModePerm)
 	if err != nil {
 		return errors.Wrap(err, "unable to store ranking result")
 	}
