@@ -11,6 +11,10 @@ import (
 
 	"github.com/pkg/errors"
 	"goji.io/pat"
+
+	"github.com/unchartedsoftware/distil-ingest/metadata"
+	"github.com/unchartedsoftware/distil/api/env"
+	"github.com/unchartedsoftware/distil/api/util"
 )
 
 const (
@@ -23,14 +27,17 @@ type TimeseriesResult struct {
 }
 
 // TimeseriesHandler provides a static file lookup route using simple directory mapping.
-func TimeseriesHandler(resourceDir string, proxyServer string, proxy map[string]bool) func(http.ResponseWriter, *http.Request) {
+func TimeseriesHandler(resourceDir string, proxyServer string, proxy map[string]bool, config *env.Config) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// resources can either be local or remote
 		dataset := pat.Param(r, "dataset")
+		source := pat.Param(r, "source")
 		file := pat.Param(r, "file")
 		path := path.Join(timeseriesFolder, file)
 
-		bytes, err := fetchResourceBytes(resourceDir, proxyServer, proxy, dataset, path)
+		resolver := createResolverForResource(metadata.DatasetSource(source), dataset, config)
+
+		bytes, err := fetchResourceBytes(resolver.ResolveInputAbsolute(""), proxyServer, proxy, dataset, path)
 		if err != nil {
 			handleError(w, err)
 			return
@@ -82,4 +89,31 @@ func TimeseriesHandler(resourceDir string, proxyServer string, proxy map[string]
 			return
 		}
 	}
+}
+
+func createResolverForResource(datasetSource metadata.DatasetSource, datasetID string, config *env.Config) *util.PathResolver {
+	if datasetSource == metadata.Contrib {
+		return util.NewPathResolver(&util.PathConfig{
+			InputFolder:  path.Join(config.DatamartImportFolder, datasetID),
+			OutputFolder: path.Join(config.DatamartImportFolder, datasetID),
+		})
+	}
+	if datasetSource == metadata.Seed {
+		return util.NewPathResolver(&util.PathConfig{
+			InputFolder:     config.D3MInputDir,
+			InputSubFolders: "TRAIN/dataset_TRAIN",
+			OutputFolder:    config.D3MInputDir,
+		})
+	}
+	if datasetSource == metadata.Augmented {
+		return util.NewPathResolver(&util.PathConfig{
+			InputFolder:  path.Join(config.TmpDataPath, "augmented", datasetID),
+			OutputFolder: path.Join(config.TmpDataPath, "augmented", datasetID),
+		})
+	}
+	return util.NewPathResolver(&util.PathConfig{
+		InputFolder:     config.D3MInputDir,
+		InputSubFolders: "TRAIN/dataset_TRAIN",
+		OutputFolder:    config.D3MInputDir,
+	})
 }
