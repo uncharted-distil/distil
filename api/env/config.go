@@ -46,6 +46,7 @@ type Config struct {
 	CleanOutputSchemaRelative          string  `env:"CLEAN_OUTPUT_SCHEMA" envDefault:"clean/datasetDoc.json"`
 	GeocodingOutputDataRelative        string  `env:"GEOCODING_OUTPUT_DATA" envDefault:"geocoded/tables/learningData.csv"`
 	GeocodingOutputSchemaRelative      string  `env:"GEOCODING_OUTPUT_SCHEMA" envDefault:"geocoded/datasetDoc.json"`
+	GeocodingEnabled                   bool    `env:"GEOCODING_ENABLED" envDefault:"false"`
 	MergedOutputDataPath               string  `env:"MERGED_OUTPUT_DATA_PATH" envDefault:"merged/tables/learningData.csv"`
 	MergedOutputSchemaPath             string  `env:"MERGED_OUTPUT_SCHEMA_PATH" envDefault:"merged/datasetDoc.json"`
 	SchemaPath                         string  `env:"SCHEMA_PATH" envDefault:"datasetDoc.json"`

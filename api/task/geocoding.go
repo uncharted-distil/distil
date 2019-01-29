@@ -57,7 +57,7 @@ func GeocodeForwardDataset(schemaFile string, index string, dataset string, conf
 	}
 
 	// Geocode location fields
-	datasetInputDir := path.Join(outputPath.sourceFolder, dataset, "TRAIN", "dataset_TRAIN")
+	datasetInputDir := outputPath.sourceFolder
 	colsToGeocode := geocodeColumns(meta)
 	geocodedData := make([][]*GeocodedPoint, 0)
 	for _, col := range colsToGeocode {
