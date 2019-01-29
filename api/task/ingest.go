@@ -44,6 +44,7 @@ type IngestTaskConfig struct {
 	CleanOutputSchemaRelative          string
 	GeocodingOutputDataRelative        string
 	GeocodingOutputSchemaRelative      string
+	GeocodingEnabled                   bool
 	MergedOutputPathRelative           string
 	MergedOutputSchemaPathRelative     string
 	SchemaPathRelative                 string
@@ -147,12 +148,14 @@ func IngestDataset(metaCtor api.MetadataStorageCtor, index string, dataset strin
 		log.Errorf("unable to summarize the dataset: %v", err)
 	}
 
-	output, err = GeocodeForwardDataset(latestSchemaOutput, index, dataset, config)
-	if err != nil {
-		return errors.Wrap(err, "unable to geocode all data")
+	if config.GeocodingEnabled {
+		output, err = GeocodeForwardDataset(latestSchemaOutput, index, dataset, config)
+		if err != nil {
+			return errors.Wrap(err, "unable to geocode all data")
+		}
+		latestSchemaOutput = output
+		log.Infof("finished geocoding the dataset")
 	}
-	latestSchemaOutput = output
-	log.Infof("finished geocoding the dataset")
 
 	err = Ingest(latestSchemaOutput, storage, index, dataset, source, config)
 	if err != nil {

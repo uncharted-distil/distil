@@ -190,6 +190,7 @@ func main() {
 		CleanOutputSchemaRelative:          config.CleanOutputSchemaRelative,
 		GeocodingOutputDataRelative:        config.GeocodingOutputDataRelative,
 		GeocodingOutputSchemaRelative:      config.GeocodingOutputSchemaRelative,
+		GeocodingEnabled:                   config.GeocodingEnabled,
 		MergedOutputPathRelative:           config.MergedOutputDataPath,
 		MergedOutputSchemaPathRelative:     config.MergedOutputSchemaPath,
 		SchemaPathRelative:                 config.SchemaPath,
