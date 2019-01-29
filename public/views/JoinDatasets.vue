@@ -48,6 +48,15 @@
 						</div>
 						<div class="row align-items-center">
 							<div class="col-12 d-flex flex-column">
+								<vue-slider class="join-fuziness-slider"
+									:min="0"
+									:max="1"
+									:interval="0.01"
+									:value="0"
+									:lazy="true"
+									width="100px"
+									tooltip-dir="bottom"
+									@callback="onJoinFuzzinessChanged"/>
 								<join-datasets-form class="select-create-solutions"
 									:dataset-a="topDataset"
 									:dataset-b="bottomDataset"
@@ -66,6 +75,8 @@
 <script lang="ts">
 
 import Vue from 'vue';
+import vueSlider from 'vue-slider-component';
+import _ from 'lodash';
 import JoinDatasetsForm from '../components/JoinDatasetsForm.vue';
 import JoinDataSlot from '../components/JoinDataSlot.vue';
 import VariableFacets from '../components/VariableFacets.vue';
@@ -87,7 +98,8 @@ export default Vue.extend({
 	components: {
 		JoinDatasetsForm,
 		JoinDataSlot,
-		VariableFacets
+		VariableFacets,
+		vueSlider,
 	},
 
 	computed: {
@@ -192,7 +204,14 @@ export default Vue.extend({
 				joinColumnB: column ? column.key : null
 			});
 			this.$router.push(entry);
-		}
+		},
+		onJoinFuzzinessChanged(value: number) {
+			// console.log(value);
+			const entry = overlayRouteEntry(this.$route, {
+				joinFuziness: value.toString()
+			});
+			this.$router.push(entry);
+		},
 	}
 });
 

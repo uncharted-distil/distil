@@ -17,6 +17,7 @@ export interface RouteArgs {
 	joinDatasets?: string;
 	joinColumnA?: string;
 	joinColumnB?: string;
+	joinFuziness?: string;
 }
 
 
@@ -67,6 +68,7 @@ function validateQueryArgs(args: RouteArgs): RouteArgs {
 	if (args.joinDatasets) { query.joinDatasets = args.joinDatasets; }
 	if (args.joinColumnA) { query.joinColumnA = args.joinColumnA; }
 	if (args.joinColumnB) { query.joinColumnB = args.joinColumnB; }
+	if (args.joinFuziness) { query.joinFuziness = args.joinFuziness; }
 
 	return query;
 }
