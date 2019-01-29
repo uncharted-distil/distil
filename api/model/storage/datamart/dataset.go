@@ -198,7 +198,7 @@ func (s *Storage) searchREST(searchText string) (*SearchResults, error) {
 		return nil, errors.Wrap(err, "unable to marshal datamart query")
 	}
 
-	responseRaw, err := s.client.PostRequest(searchRESTFunction, map[string]string{"query": string(queryJSON)})
+	responseRaw, err := s.client.PostJSON(searchRESTFunction, queryJSON)
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to post datamart search request")
 	}
