@@ -163,6 +163,7 @@ export default Vue.extend({
 			this.hasRequested = true;
 			datasetActions.fetchTimeseries(this.$store, {
 				dataset: this.dataset,
+				source: 'seed',
 				url: this.timeseriesUrl
 			}).then(() => {
 				if (this.isVisible) {
