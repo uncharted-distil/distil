@@ -2,6 +2,7 @@ package rest
 
 import (
 	"bytes"
+	"crypto/tls"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -67,7 +68,7 @@ func (c *Client) PostJSON(function string, json []byte) ([]byte, error) {
 	}
 	req.Header.Set("Content-Type", "application/json")
 
-	client := middleware.LoggingClient{}
+	client := createClient()
 	resp, err := client.Do(req)
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to get result from json post")
@@ -119,7 +120,7 @@ func (c *Client) PostFile(function string, filename string, params map[string]st
 	}
 	req.Header.Set("Content-Type", w.FormDataContentType())
 
-	client := &middleware.LoggingClient{}
+	client := createClient()
 	res, err := client.Do(req)
 	if err != nil {
 		return nil, errors.Wrap(err, "Unable to post request")
@@ -159,7 +160,7 @@ func (c *Client) PostRequest(function string, params map[string]string) ([]byte,
 	}
 	req.Header.Set("Content-Type", w.FormDataContentType())
 
-	client := &middleware.LoggingClient{}
+	client := createClient()
 	res, err := client.Do(req)
 	if err != nil {
 		return nil, errors.Wrap(err, "Unable to post request")
@@ -207,4 +208,18 @@ func (c *Client) PostRequestRaw(function string, params map[string]interface{}) 
 	}
 
 	return result, nil
+}
+
+func createClient() *middleware.LoggingClient {
+	tr := &http.Transport{
+		TLSClientConfig: &tls.Config{
+			InsecureSkipVerify: true,
+		},
+	}
+	client := &middleware.LoggingClient{
+		Client: http.Client{
+			Transport: tr,
+		},
+	}
+	return client
 }
