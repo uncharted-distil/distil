@@ -589,7 +589,7 @@ func (s *SolutionRequest) PersistAndDispatch(client *compute.Client, solutionSto
 	}
 
 	// dispatch search request
-	go s.dispatchRequest(client, solutionStorage, dataStorage, requestID, dataset.Metadata.Name, datasetPathTrain, datasetPathTest)
+	go s.dispatchRequest(client, solutionStorage, dataStorage, requestID, dataset.Metadata.ID, datasetPathTrain, datasetPathTest)
 
 	return nil
 }
