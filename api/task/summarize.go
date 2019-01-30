@@ -8,6 +8,7 @@ import (
 
 	"github.com/pkg/errors"
 	"github.com/unchartedsoftware/distil-ingest/rest"
+	log "github.com/unchartedsoftware/plog"
 
 	"github.com/unchartedsoftware/distil-compute/primitive/compute/description"
 	"github.com/unchartedsoftware/distil-compute/primitive/compute/result"
@@ -15,8 +16,8 @@ import (
 )
 
 // Summarize will summarize the dataset using a primitive.
-func Summarize(index string, dataset string, config *IngestTaskConfig) error {
-	schemaDoc := path.Dir(config.GetTmpAbsolutePath(path.Join(dataset, config.MergedOutputSchemaPathRelative)))
+func Summarize(schemaPath string, index string, dataset string, config *IngestTaskConfig) error {
+	schemaDoc := path.Dir(schemaPath)
 
 	// create & submit the solution request
 	pip, err := description.CreateDukePipeline("wellington", "")
@@ -57,7 +58,9 @@ func Summarize(index string, dataset string, config *IngestTaskConfig) error {
 		return errors.Wrap(err, "unable to serialize summary result")
 	}
 	// write to file
-	err = util.WriteFileWithDirs(config.GetTmpAbsolutePath(path.Join(dataset, config.SummaryMachineOutputPathRelative)), bytes, os.ModePerm)
+	outputPath := path.Join(schemaDoc, config.SummaryMachineOutputPathRelative)
+	log.Debugf("writing ranking output to %s", outputPath)
+	err = util.WriteFileWithDirs(outputPath, bytes, os.ModePerm)
 	if err != nil {
 		return errors.Wrap(err, "unable to store summary result")
 	}

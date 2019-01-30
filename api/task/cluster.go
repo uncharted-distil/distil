@@ -19,14 +19,14 @@ const (
 )
 
 // Cluster will cluster the dataset fields using a primitive.
-func Cluster(index string, dataset string, config *IngestTaskConfig) (string, error) {
-	outputPath, err := initializeDatasetCopy(config.GetAbsolutePath(config.SchemaPathRelative), dataset, config.ClusteringOutputSchemaRelative, config.ClusteringOutputDataRelative, config)
+func Cluster(schemaFile string, index string, dataset string, config *IngestTaskConfig) (string, error) {
+	outputPath, err := initializeDatasetCopy(schemaFile, dataset, config.ClusteringOutputSchemaRelative, config.ClusteringOutputDataRelative, config)
 	if err != nil {
 		return "", errors.Wrap(err, "unable to copy source data folder")
 	}
 
 	// load metadata from original schema
-	meta, err := metadata.LoadMetadataFromOriginalSchema(config.GetAbsolutePath(config.SchemaPathRelative))
+	meta, err := metadata.LoadMetadataFromOriginalSchema(schemaFile)
 	if err != nil {
 		return "", errors.Wrap(err, "unable to load original schema file")
 	}

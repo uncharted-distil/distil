@@ -35,7 +35,7 @@ func GeocodeForwardDataset(schemaFile string, index string, dataset string, conf
 	}
 
 	// load metadata from original schema
-	meta, err := metadata.LoadMetadataFromClassification(schemaFile, config.GetTmpAbsolutePath(path.Join(dataset, config.ClassificationOutputPathRelative)))
+	meta, err := metadata.LoadMetadataFromClassification(schemaFile, path.Join(path.Dir(schemaFile), config.ClassificationOutputPathRelative))
 	if err != nil {
 		return "", errors.Wrap(err, "unable to load original schema file")
 	}
@@ -57,7 +57,7 @@ func GeocodeForwardDataset(schemaFile string, index string, dataset string, conf
 	}
 
 	// Geocode location fields
-	datasetInputDir := path.Join(outputPath.sourceFolder, dataset, "TRAIN", "dataset_TRAIN")
+	datasetInputDir := outputPath.sourceFolder
 	colsToGeocode := geocodeColumns(meta)
 	geocodedData := make([][]*GeocodedPoint, 0)
 	for _, col := range colsToGeocode {

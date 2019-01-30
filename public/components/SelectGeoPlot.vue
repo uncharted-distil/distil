@@ -23,6 +23,7 @@ import { LATITUDE_TYPE, LONGITUDE_TYPE } from '../util/types';
 
 import 'leaflet/dist/leaflet.css';
 import 'leaflet/dist/images/marker-icon.png';
+import 'leaflet/dist/images/marker-icon-2x.png';
 import 'leaflet/dist/images/marker-shadow.png';
 
 const SINGLE_FIELD = 1;

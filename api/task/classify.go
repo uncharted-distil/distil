@@ -9,6 +9,7 @@ import (
 
 	"github.com/pkg/errors"
 	"github.com/unchartedsoftware/distil-ingest/rest"
+	log "github.com/unchartedsoftware/plog"
 
 	"github.com/unchartedsoftware/distil-compute/model"
 	"github.com/unchartedsoftware/distil-compute/primitive/compute/description"
@@ -57,8 +58,8 @@ func castProbabilityArray(in []interface{}) ([]float64, error) {
 }
 
 // Classify will classify the dataset using a primitive.
-func Classify(index string, dataset string, config *IngestTaskConfig) error {
-	schemaDoc := path.Dir(config.GetTmpAbsolutePath(path.Join(dataset, config.MergedOutputSchemaPathRelative)))
+func Classify(schemaPath string, index string, dataset string, config *IngestTaskConfig) error {
+	schemaDoc := path.Dir(schemaPath)
 
 	// create & submit the solution request
 	pip, err := description.CreateSimonPipeline("says", "")
@@ -134,7 +135,9 @@ func Classify(index string, dataset string, config *IngestTaskConfig) error {
 		return errors.Wrap(err, "unable to serialize classification result")
 	}
 	// write to file
-	err = util.WriteFileWithDirs(config.GetTmpAbsolutePath(path.Join(dataset, config.ClassificationOutputPathRelative)), bytes, os.ModePerm)
+	outputPath := path.Join(schemaDoc, config.ClassificationOutputPathRelative)
+	log.Debugf("writing classification output to %s", outputPath)
+	err = util.WriteFileWithDirs(outputPath, bytes, os.ModePerm)
 	if err != nil {
 		return errors.Wrap(err, "unable to store classification result")
 	}

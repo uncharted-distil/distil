@@ -186,8 +186,11 @@ func main() {
 		FeaturizationOutputSchemaRelative:  config.FeaturizationOutputSchemaRelative,
 		FormatOutputDataRelative:           config.FormatOutputDataRelative,
 		FormatOutputSchemaRelative:         config.FormatOutputSchemaRelative,
+		CleanOutputDataRelative:            config.CleanOutputDataRelative,
+		CleanOutputSchemaRelative:          config.CleanOutputSchemaRelative,
 		GeocodingOutputDataRelative:        config.GeocodingOutputDataRelative,
 		GeocodingOutputSchemaRelative:      config.GeocodingOutputSchemaRelative,
+		GeocodingEnabled:                   config.GeocodingEnabled,
 		MergedOutputPathRelative:           config.MergedOutputDataPath,
 		MergedOutputSchemaPathRelative:     config.MergedOutputSchemaPath,
 		SchemaPathRelative:                 config.SchemaPath,
@@ -263,7 +266,7 @@ func main() {
 
 	// static
 	registerRoute(mux, "/distil/image/:dataset/:file", routes.ImageHandler(config.DataFolderPath, config.RootResourceDirectory, datasetsToProxy))
-	registerRoute(mux, "/distil/timeseries/:dataset/:file", routes.TimeseriesHandler(config.DataFolderPath, config.RootResourceDirectory, datasetsToProxy))
+	registerRoute(mux, "/distil/timeseries/:dataset/:source/:file", routes.TimeseriesHandler(esMetadataStorageCtor, config.DataFolderPath, config.RootResourceDirectory, datasetsToProxy, &config))
 	registerRoute(mux, "/distil/graphs/:dataset/:file", routes.GraphsHandler(config.DataFolderPath, config.RootResourceDirectory, datasetsToProxy))
 	registerRoute(mux, "/*", routes.FileHandler("./dist"))
 

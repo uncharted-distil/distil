@@ -105,7 +105,7 @@ func (s *Storage) ImportDataset(id string, uri string) (string, error) {
 	}
 
 	// copy the formatted output to the datamart output path (delete existing copy)
-	err = os.RemoveAll(s.outputPath)
+	err = util.RemoveContents(s.outputPath)
 	if err != nil {
 		return "", errors.Wrap(err, "unable to delete raw datamart dataset")
 	}
@@ -198,7 +198,7 @@ func (s *Storage) searchREST(searchText string) (*SearchResults, error) {
 		return nil, errors.Wrap(err, "unable to marshal datamart query")
 	}
 
-	responseRaw, err := s.client.PostRequest(searchRESTFunction, map[string]string{"query": string(queryJSON)})
+	responseRaw, err := s.client.PostJSON(searchRESTFunction, queryJSON)
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to post datamart search request")
 	}

@@ -103,6 +103,7 @@ export function getSummary(
 			histogram.feature = feature;
 			histogram.solutionId = solutionId;
 			histogram.resultId = resultId;
+			histogram.dataset = dataset;
 			updateFunction(context, histogram);
 		})
 		.catch(error => {
