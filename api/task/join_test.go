@@ -121,15 +121,14 @@ func TestJoin(t *testing.T) {
 	})
 
 	expectedTyped := [][]interface{}{
-		{"d3mIndex", "alpha", "charlie"},
 		{int64(0), 1.0, "a"},
 		{int64(1), 2.0, "b"},
 		{int64(2), 3.0, "c"},
 		{int64(3), 4.0, "d"},
 	}
 
-	assert.Equal(t, len(expectedTyped), len(records))
-	assert.Equal(t, result.NumRows, 5)
+	assert.Equal(t, len(expectedTyped), len(records)-1)
+	assert.Equal(t, result.NumRows, 4)
 	for i := 0; i < len(expectedTyped); i++ {
 		assert.ElementsMatch(t, result.Values[i], expectedTyped[i])
 	}
