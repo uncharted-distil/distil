@@ -137,7 +137,7 @@ func createMergedVariables(varNames []string, varsLeft []*model.Variable, varsRi
 	rightVarsMap := createVarMap(varsRight)
 
 	mergedVariables := []*model.Variable{}
-	for _, varName := range varNames {
+	for i, varName := range varNames {
 		v, ok := leftVarsMap[varName]
 		if !ok {
 			v, ok = rightVarsMap[varName]
@@ -145,6 +145,7 @@ func createMergedVariables(varNames []string, varsLeft []*model.Variable, varsRi
 				return nil, errors.Errorf("can't find data for result var \"%s\"", varName)
 			}
 		}
+		v.Index = i
 		mergedVariables = append(mergedVariables, v)
 	}
 	return mergedVariables, nil
