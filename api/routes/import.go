@@ -40,6 +40,7 @@ func ImportHandler(datamartMetaCtor model.MetadataStorageCtor, fileMetaCtor mode
 
 		ingestConfig := *config
 		ingestConfig.Resolver = resolver
+		ingestConfig.SummaryEnabled = false
 
 		_, err = meta.ImportDataset(datasetID, uri)
 		if err != nil {

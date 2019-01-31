@@ -57,6 +57,7 @@ type Config struct {
 	RankingRowLimit                    int     `env:"RANKING_ROW_LIMIT" envDefault:"1000"`
 	SummaryPath                        string  `env:"SUMMARY_PATH" envDefault:"summary.txt"`
 	SummaryMachinePath                 string  `env:"SUMMARY_MACHINE_PATH" envDefault:"summary-machine.json"`
+	SummaryEnabled                     bool    `env:"SUMMARY_ENABLED" envDefault:"true"`
 	ElasticTimeout                     int     `env:"ES_TIMEOUT" envDefault:"300"`
 	ElasticDatasetPrefix               string  `env:"ES_DATASET_PREFIX" envDefault:"d_"`
 	InitialDataset                     string  `env:"INITIAL_DATASET" envDefault:""`
