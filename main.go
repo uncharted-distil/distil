@@ -71,6 +71,7 @@ func main() {
 	// set dataset directory
 	api.SetDatasetDir(config.TmpDataPath)
 	api.SetInputDir(config.D3MInputDirRoot)
+	api.SetAugmentDir(path.Join(config.TmpDataPath, "augment"))
 
 	// instantiate elastic client constructor.
 	esClientCtor := elastic.NewClient(config.ElasticEndpoint, false)
