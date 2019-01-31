@@ -60,6 +60,7 @@ type IngestTaskConfig struct {
 	DatabasePort                       int
 	SummaryOutputPathRelative          string
 	SummaryMachineOutputPathRelative   string
+	SummaryEnabled                     bool
 	ESEndpoint                         string
 	ESTimeout                          int
 	ESDatasetPrefix                    string
@@ -139,14 +140,17 @@ func IngestDataset(metaCtor api.MetadataStorageCtor, index string, dataset strin
 	}
 	log.Infof("finished ranking the dataset")
 
-	err = Summarize(latestSchemaOutput, index, dataset, config)
-	log.Infof("finished summarizing the dataset")
-	// NOTE: For now ignore summary errors!
-	if err != nil {
-		if config.HardFail {
-			return errors.Wrap(err, "unable to summarize the dataset")
+	if config.SummaryEnabled {
+		err = Summarize(latestSchemaOutput, index, dataset, config)
+		log.Infof("finished summarizing the dataset")
+		if err != nil {
+			if config.HardFail {
+				return errors.Wrap(err, "unable to summarize the dataset")
+			}
+			log.Errorf("unable to summarize the dataset: %v", err)
 		}
-		log.Errorf("unable to summarize the dataset: %v", err)
+	} else {
+		log.Infof("summarization disabled")
 	}
 
 	if config.GeocodingEnabled {

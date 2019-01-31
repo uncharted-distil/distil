@@ -206,6 +206,7 @@ func main() {
 		DatabasePort:                       config.PostgresPort,
 		SummaryOutputPathRelative:          config.SummaryPath,
 		SummaryMachineOutputPathRelative:   config.SummaryMachinePath,
+		SummaryEnabled:                     config.SummaryEnabled,
 		ESEndpoint:                         config.ElasticEndpoint,
 		ESTimeout:                          config.ElasticTimeout,
 		ESDatasetPrefix:                    config.ElasticDatasetPrefix,
