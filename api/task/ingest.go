@@ -86,7 +86,8 @@ func IngestDataset(metaCtor api.MetadataStorageCtor, index string, dataset strin
 		return errors.Wrap(err, "unable to initialize metadata storage")
 	}
 
-	latestSchemaOutput := config.GetAbsolutePath(config.SchemaPathRelative)
+	originalSchemaFile := config.GetAbsolutePath(config.SchemaPathRelative)
+	latestSchemaOutput := originalSchemaFile
 
 	output, err := Merge(latestSchemaOutput, index, dataset, config)
 	if err != nil {
@@ -157,7 +158,7 @@ func IngestDataset(metaCtor api.MetadataStorageCtor, index string, dataset strin
 		log.Infof("finished geocoding the dataset")
 	}
 
-	err = Ingest(latestSchemaOutput, storage, index, dataset, source, config)
+	err = Ingest(originalSchemaFile, latestSchemaOutput, storage, index, dataset, source, config)
 	if err != nil {
 		return errors.Wrap(err, "unable to ingest ranked data")
 	}
@@ -167,13 +168,13 @@ func IngestDataset(metaCtor api.MetadataStorageCtor, index string, dataset strin
 }
 
 // Ingest the metadata to ES and the data to Postgres.
-func Ingest(schemaFile string, storage api.MetadataStorage, index string, dataset string, source metadata.DatasetSource, config *IngestTaskConfig) error {
+func Ingest(originalSchemaFile string, schemaFile string, storage api.MetadataStorage, index string, dataset string, source metadata.DatasetSource, config *IngestTaskConfig) error {
 	datasetDir := path.Dir(schemaFile)
 	meta, err := metadata.LoadMetadataFromClassification(schemaFile, path.Join(datasetDir, config.ClassificationOutputPathRelative))
 	if err != nil {
 		return errors.Wrap(err, "unable to load original schema file")
 	}
-	meta.DatasetFolder = datasetDir
+	meta.DatasetFolder = path.Base(path.Dir(originalSchemaFile))
 	dataDir := path.Join(datasetDir, meta.DataResources[0].ResPath)
 
 	err = metadata.LoadImportance(meta, path.Join(datasetDir, config.RankingOutputPathRelative))
