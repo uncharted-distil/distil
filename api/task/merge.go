@@ -11,7 +11,6 @@ import (
 
 	"github.com/unchartedsoftware/distil-compute/model"
 	"github.com/unchartedsoftware/distil-compute/primitive/compute/description"
-	"github.com/unchartedsoftware/distil-compute/primitive/compute/result"
 	"github.com/unchartedsoftware/distil/api/util"
 )
 
@@ -35,7 +34,9 @@ func Merge(schemaFile string, index string, dataset string, config *IngestTaskCo
 	}
 
 	// parse primitive response (raw data from the input dataset)
-	rawResults, err := result.ParseResultCSV(datasetURI)
+	// first row of the data is the header
+	// first column of the data is the dataframe index
+	csvData, err := ReadCSVFile(datasetURI, false)
 	if err != nil {
 		return "", errors.Wrap(err, "unable to parse denormalize result")
 	}
@@ -54,19 +55,11 @@ func Merge(schemaFile string, index string, dataset string, config *IngestTaskCo
 
 	outputMeta := model.NewMetadata(meta.ID, meta.Name, meta.Description, meta.StorageName)
 	outputMeta.DataResources = append(outputMeta.DataResources, model.NewDataResource("0", mainDR.ResType, mainDR.ResFormat))
-	header := rawResults[0]
+	header := csvData[0][1:]
 	for i, field := range header {
-		// the first column is a row idnex and should be discarded.
-		if i > 0 {
-			fieldName, ok := field.(string)
-			if !ok {
-				return "", errors.Errorf("unable to cast field name")
-			}
-
-			v := vars[fieldName]
-			v.Index = i - 1
-			outputMeta.DataResources[0].Variables = append(outputMeta.DataResources[0].Variables, v)
-		}
+		v := vars[field]
+		v.Index = i
+		outputMeta.DataResources[0].Variables = append(outputMeta.DataResources[0].Variables, v)
 	}
 
 	// initialize csv writer
@@ -81,13 +74,9 @@ func Merge(schemaFile string, index string, dataset string, config *IngestTaskCo
 	writer.Write(headerMetadata[0])
 
 	// rewrite the output without the first column
-	rawResults = rawResults[1:]
-	for _, line := range rawResults {
-		lineString := make([]string, len(line)-1)
-		for i := 1; i < len(line); i++ {
-			lineString[i-1] = line[i].(string)
-		}
-		writer.Write(lineString)
+	csvData = csvData[1:]
+	for _, line := range csvData {
+		writer.Write(line[1:])
 	}
 
 	// output the data
