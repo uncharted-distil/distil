@@ -71,6 +71,7 @@ func main() {
 	// set dataset directory
 	api.SetDatasetDir(config.TmpDataPath)
 	api.SetInputDir(config.D3MInputDirRoot)
+	api.SetAugmentDir(path.Join(config.TmpDataPath, "augmented"))
 
 	// instantiate elastic client constructor.
 	esClientCtor := elastic.NewClient(config.ElasticEndpoint, false)
@@ -107,7 +108,7 @@ func main() {
 	esMetadataStorageCtor := es.NewMetadataStorage(config.ESDatasetsIndex, esClientCtor)
 
 	// instantiate the metadata storage (using filesystem).
-	fileMetadataStorageCtor := file.NewMetadataStorage(config.D3MInputDirRoot)
+	fileMetadataStorageCtor := file.NewMetadataStorage(config.TmpDataPath)
 
 	// instantiate the postgres data storage constructor.
 	pgDataStorageCtor := pg.NewDataStorage(postgresClientCtor, esMetadataStorageCtor)
@@ -186,8 +187,11 @@ func main() {
 		FeaturizationOutputSchemaRelative:  config.FeaturizationOutputSchemaRelative,
 		FormatOutputDataRelative:           config.FormatOutputDataRelative,
 		FormatOutputSchemaRelative:         config.FormatOutputSchemaRelative,
+		CleanOutputDataRelative:            config.CleanOutputDataRelative,
+		CleanOutputSchemaRelative:          config.CleanOutputSchemaRelative,
 		GeocodingOutputDataRelative:        config.GeocodingOutputDataRelative,
 		GeocodingOutputSchemaRelative:      config.GeocodingOutputSchemaRelative,
+		GeocodingEnabled:                   config.GeocodingEnabled,
 		MergedOutputPathRelative:           config.MergedOutputDataPath,
 		MergedOutputSchemaPathRelative:     config.MergedOutputSchemaPath,
 		SchemaPathRelative:                 config.SchemaPath,
@@ -203,6 +207,7 @@ func main() {
 		DatabasePort:                       config.PostgresPort,
 		SummaryOutputPathRelative:          config.SummaryPath,
 		SummaryMachineOutputPathRelative:   config.SummaryMachinePath,
+		SummaryEnabled:                     config.SummaryEnabled,
 		ESEndpoint:                         config.ElasticEndpoint,
 		ESTimeout:                          config.ElasticTimeout,
 		ESDatasetPrefix:                    config.ElasticDatasetPrefix,
@@ -258,11 +263,12 @@ func main() {
 	registerRoutePost(mux, "/distil/correctness-summary/:dataset/:results-uuid", routes.CorrectnessSummaryHandler(pgSolutionStorageCtor, pgDataStorageCtor))
 	registerRoutePost(mux, "/distil/predicted-summary/:dataset/:target/:results-uuid", routes.PredictedSummaryHandler(esMetadataStorageCtor, pgSolutionStorageCtor, pgDataStorageCtor))
 	registerRoutePost(mux, "/distil/geocode/:dataset/:variable", routes.GeocodingHandler(esMetadataStorageCtor, pgDataStorageCtor, sourceFolder))
+	registerRoutePost(mux, "/distil/upload/:dataset", routes.UploadHandler(path.Join(config.TmpDataPath, "augmented"), ingestConfig))
 	registerRoutePost(mux, "/distil/join/:dataset-left/:column-left/:source-left/:dataset-right/:column-right/:source-right", routes.JoinHandler(esMetadataStorageCtor))
 
 	// static
 	registerRoute(mux, "/distil/image/:dataset/:file", routes.ImageHandler(config.DataFolderPath, config.RootResourceDirectory, datasetsToProxy))
-	registerRoute(mux, "/distil/timeseries/:dataset/:file", routes.TimeseriesHandler(config.DataFolderPath, config.RootResourceDirectory, datasetsToProxy))
+	registerRoute(mux, "/distil/timeseries/:dataset/:source/:file", routes.TimeseriesHandler(esMetadataStorageCtor, config.DataFolderPath, config.RootResourceDirectory, datasetsToProxy, &config))
 	registerRoute(mux, "/distil/graphs/:dataset/:file", routes.GraphsHandler(config.DataFolderPath, config.RootResourceDirectory, datasetsToProxy))
 	registerRoute(mux, "/*", routes.FileHandler("./dist"))
 

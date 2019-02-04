@@ -50,7 +50,7 @@ func join(joinLeft *JoinSpec, joinRight *JoinSpec, varsLeft []*model.Variable, v
 	config *env.Config) (*apiModel.FilteredData, error) {
 
 	// create & submit the solution request
-	pipelineDesc, err := description.CreateJoinPipeline("Join Preview", "Join to be reviewed by user", joinLeft.Column, joinRight.Column)
+	pipelineDesc, err := description.CreateJoinPipeline("Join Preview", "Join to be reviewed by user", joinLeft.Column, joinRight.Column, 0.8)
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to create join pipeline")
 	}
@@ -137,7 +137,7 @@ func createMergedVariables(varNames []string, varsLeft []*model.Variable, varsRi
 	rightVarsMap := createVarMap(varsRight)
 
 	mergedVariables := []*model.Variable{}
-	for _, varName := range varNames {
+	for i, varName := range varNames {
 		v, ok := leftVarsMap[varName]
 		if !ok {
 			v, ok = rightVarsMap[varName]
@@ -145,6 +145,7 @@ func createMergedVariables(varNames []string, varsLeft []*model.Variable, varsRi
 				return nil, errors.Errorf("can't find data for result var \"%s\"", varName)
 			}
 		}
+		v.Index = i
 		mergedVariables = append(mergedVariables, v)
 	}
 	return mergedVariables, nil

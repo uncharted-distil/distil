@@ -1,6 +1,8 @@
 import _ from 'lodash';
 import { Route, Location } from 'vue-router';
 import { Dictionary } from './dict';
+import { JOINED_VARS_INSTANCE_PAGE, AVAILABLE_TRAINING_VARS_INSTANCE_PAGE,
+	TRAINING_VARS_INSTANCE_PAGE, RESULT_TRAINING_VARS_INSTANCE_PAGE } from '../store/route/index';
 
 export interface RouteArgs {
 	dataset?: string;
@@ -18,6 +20,18 @@ export interface RouteArgs {
 	joinColumnA?: string;
 	joinColumnB?: string;
 	joinFuziness?: string;
+
+	// we currently don't have a way to add these to the interface
+	//
+	// JOINED_VARS_INSTANCE_PAGE?: string;
+	// AVAILABLE_TRAINING_VARS_INSTANCE_PAGE?: string;
+	// AVAILABLE_TARGET_VARS_INSTANCE_PAGE?: string;
+	// TRAINING_VARS_INSTANCE_PAGE?: string;
+	// RESULT_TRAINING_VARS_INSTANCE_PAGE?: string;
+}
+
+export interface Something {
+
 }
 
 
@@ -69,6 +83,11 @@ function validateQueryArgs(args: RouteArgs): RouteArgs {
 	if (args.joinColumnA) { query.joinColumnA = args.joinColumnA; }
 	if (args.joinColumnB) { query.joinColumnB = args.joinColumnB; }
 	if (args.joinFuziness) { query.joinFuziness = args.joinFuziness; }
+
+	if (args[JOINED_VARS_INSTANCE_PAGE]) { query[JOINED_VARS_INSTANCE_PAGE] = args[JOINED_VARS_INSTANCE_PAGE]; }
+	if (args[AVAILABLE_TRAINING_VARS_INSTANCE_PAGE]) { query[AVAILABLE_TRAINING_VARS_INSTANCE_PAGE] = args[AVAILABLE_TRAINING_VARS_INSTANCE_PAGE]; }
+	if (args[TRAINING_VARS_INSTANCE_PAGE]) { query[TRAINING_VARS_INSTANCE_PAGE] = args[TRAINING_VARS_INSTANCE_PAGE]; }
+	if (args[RESULT_TRAINING_VARS_INSTANCE_PAGE]) { query[RESULT_TRAINING_VARS_INSTANCE_PAGE] = args[RESULT_TRAINING_VARS_INSTANCE_PAGE]; }
 
 	return query;
 }

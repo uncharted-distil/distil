@@ -2,19 +2,19 @@ package task
 
 import (
 	"fmt"
-	"path"
 	"strconv"
 
 	"github.com/pkg/errors"
 	"github.com/unchartedsoftware/distil-compute/model"
 	"github.com/unchartedsoftware/distil-compute/primitive/compute/description"
 	"github.com/unchartedsoftware/distil-compute/primitive/compute/result"
+	"github.com/unchartedsoftware/distil-ingest/metadata"
 	"github.com/unchartedsoftware/distil/api/env"
 )
 
 // TargetRank will rank the dataset relative to a target variable using
 // a primitive.
-func TargetRank(dataset string, target string, features []*model.Variable) (map[string]float64, error) {
+func TargetRank(dataset string, target string, features []*model.Variable, source metadata.DatasetSource) (map[string]float64, error) {
 	// create & submit the solution request
 	pip, err := description.CreateTargetRankingPipeline("roger", "", target, features)
 	if err != nil {
@@ -26,7 +26,8 @@ func TargetRank(dataset string, target string, features []*model.Variable) (map[
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to load config")
 	}
-	datasetInputDir := path.Join(config.D3MInputDirRoot, dataset, "TRAIN", "dataset_TRAIN")
+	resolver := createResolver(source, &config)
+	datasetInputDir := resolver.ResolveInputAbsoluteFromRoot(dataset)
 
 	datasetURI, err := submitPipeline([]string{datasetInputDir}, pip)
 	if err != nil {

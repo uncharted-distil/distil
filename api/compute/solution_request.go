@@ -5,7 +5,6 @@ import (
 	"crypto/sha1"
 	"encoding/json"
 	"fmt"
-	"path"
 	"path/filepath"
 	"strings"
 	"sync"
@@ -18,7 +17,9 @@ import (
 	"github.com/unchartedsoftware/distil-compute/primitive/compute"
 	"github.com/unchartedsoftware/distil-compute/primitive/compute/description"
 
+	"github.com/unchartedsoftware/distil-ingest/metadata"
 	api "github.com/unchartedsoftware/distil/api/model"
+	"github.com/unchartedsoftware/distil/api/util"
 )
 
 const (
@@ -48,6 +49,8 @@ var (
 	datasetDir string
 	// folder containing the input dataset
 	inputDir string
+	// folder containing the augmented datasets
+	augmentDir string
 )
 
 // SetDatasetDir sets the output data dir
@@ -58,6 +61,11 @@ func SetDatasetDir(dir string) {
 // SetInputDir sets the input data dir
 func SetInputDir(dir string) {
 	inputDir = dir
+}
+
+// SetAugmentDir sets the augment data dir
+func SetAugmentDir(dir string) {
+	augmentDir = dir
 }
 
 func newStatusChannel() chan SolutionStatus {
@@ -514,7 +522,8 @@ func (s *SolutionRequest) PersistAndDispatch(client *compute.Client, solutionSto
 	columnIndex := getColumnIndex(targetVariable, s.Filters.Variables)
 
 	// add dataset name to path
-	datasetInputDir := path.Join(inputDir, dataset.Metadata.Folder, "TRAIN", "dataset_TRAIN")
+	resolver := createPathResolver(dataset.Metadata.Source, inputDir, augmentDir)
+	datasetInputDir := resolver.ResolveInputAbsoluteFromRoot(dataset.Metadata.Folder)
 
 	// perist the datasets and get URI
 	datasetPathTrain, datasetPathTest, err := PersistOriginalData(s.Dataset, compute.D3MDataSchema, datasetInputDir, datasetDir)
@@ -589,7 +598,7 @@ func (s *SolutionRequest) PersistAndDispatch(client *compute.Client, solutionSto
 	}
 
 	// dispatch search request
-	go s.dispatchRequest(client, solutionStorage, dataStorage, requestID, dataset.Metadata.Name, datasetPathTrain, datasetPathTest)
+	go s.dispatchRequest(client, solutionStorage, dataStorage, requestID, dataset.Metadata.ID, datasetPathTrain, datasetPathTest)
 
 	return nil
 }
@@ -646,4 +655,19 @@ func getColumnIndex(variable *model.Variable, selectedVariables []string) int {
 	}
 
 	return colIndex
+}
+
+func createPathResolver(datasetSource metadata.DatasetSource, inputDir string, augmentDir string) *util.PathResolver {
+	if datasetSource == metadata.Augmented {
+		return util.NewPathResolver(&util.PathConfig{
+			InputFolder:  augmentDir,
+			OutputFolder: augmentDir,
+		})
+	}
+
+	return util.NewPathResolver(&util.PathConfig{
+		InputFolder:     inputDir,
+		InputSubFolders: "TRAIN/dataset_TRAIN",
+		OutputFolder:    augmentDir,
+	})
 }

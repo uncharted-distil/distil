@@ -282,6 +282,7 @@ export const actions = {
 			if (type === TIMESERIES_TYPE) {
 				return context.dispatch('fetchTimeseries', {
 					dataset: args.dataset,
+					source: 'seed',
 					url: url
 				});
 			}
@@ -316,7 +317,7 @@ export const actions = {
 			});
 	},
 
-	fetchTimeseries(context: DatasetContext, args: { dataset: string, url: string }) {
+	fetchTimeseries(context: DatasetContext, args: { dataset: string, source: string, url: string }) {
 		if (!args.url) {
 			console.warn('`url` argument is missing');
 			return null;
@@ -325,7 +326,7 @@ export const actions = {
 			console.warn('`dataset` argument is missing');
 			return null;
 		}
-		return axios.get(`distil/timeseries/${args.dataset}/${args.url}`)
+		return axios.get(`distil/timeseries/${args.dataset}/${args.source}/${args.url}`)
 			.then(response => {
 				mutations.updateTimeseriesFile(context, { dataset: args.dataset, url: args.url, file: response.data.timeseries });
 			})
