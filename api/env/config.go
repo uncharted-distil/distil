@@ -21,6 +21,7 @@ type Config struct {
 	SolutionComputePullTimeout         int     `env:"SOLUTION_COMPUTE_PULL_TIMEOUT" envDefault:"60"`
 	SolutionComputePullMax             int     `env:"SOLUTION_COMPUTE_PULL_MAX" envDefault:"10"`
 	SolutionSearchMaxTime              int     `env:"SOLUTION_SEARCH_MAX_TIME" envDefault:"10"`
+	AugmentedSubFolder                 string  `env:"AUGMENTED_SUBFOLDER" envDefault:"augmented"`
 	D3MInputDir                        string  `env:"D3MINPUTDIR" envDefault:""`
 	D3MInputDirRoot                    string  `env:"D3MINPUTDIR_ROOT" envDefault:"datasets"`
 	DatamartURI                        string  `env:"DATAMART_URI" envDefault:"https://datamart.d3m.vida-nyu.org"`

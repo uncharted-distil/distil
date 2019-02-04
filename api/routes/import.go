@@ -93,7 +93,7 @@ func createResolverForSource(datasetSource metadata.DatasetSource, datasetID str
 	}
 	if datasetSource == metadata.Augmented {
 		return util.NewPathResolver(&util.PathConfig{
-			InputFolder:  path.Join(config.TmpDataPath, "augmented", datasetID),
+			InputFolder:  path.Join(config.TmpDataPath, config.AugmentedSubFolder, datasetID),
 			OutputFolder: taskConfig.Resolver.Config.OutputFolder,
 		})
 	}

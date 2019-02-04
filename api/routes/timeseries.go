@@ -121,8 +121,8 @@ func createResolverForResource(datasetSource api.DatasetSource, datasetFolder st
 	}
 	if datasetSource == api.Augmented {
 		return util.NewPathResolver(&util.PathConfig{
-			InputFolder:  path.Join(config.TmpDataPath, "augmented", datasetFolder),
-			OutputFolder: path.Join(config.TmpDataPath, "augmented", datasetFolder),
+			InputFolder:  path.Join(config.TmpDataPath, config.AugmentedSubFolder, datasetFolder),
+			OutputFolder: path.Join(config.TmpDataPath, config.AugmentedSubFolder, datasetFolder),
 		})
 	}
 	return util.NewPathResolver(&util.PathConfig{
