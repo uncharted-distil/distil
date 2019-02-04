@@ -74,7 +74,8 @@ export default Vue.extend({
 		datasetA: String as () => string,
 		datasetB: String as () => string,
 		datasetAColumn: Object as () => TableColumn,
-		datasetBColumn: Object as () => TableColumn
+		datasetBColumn: Object as () => TableColumn,
+		joinAccuracy: Number as () => number,
 	},
 
 	data() {
@@ -156,7 +157,8 @@ export default Vue.extend({
 				datasetA: a,
 				datasetB: b,
 				datasetAColumn: this.datasetAColumn.key,
-				datasetBColumn: this.datasetBColumn.key
+				datasetBColumn: this.datasetBColumn.key,
+				joinAccuracy: this.joinAccuracy
 			}).then(tableData => {
 				this.pending = false;
 				this.showJoinSuccess = true;

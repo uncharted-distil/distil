@@ -48,21 +48,21 @@
 						</div>
 						<div class="row align-items-center">
 							<div class="col-12 d-flex flex-column">
-								<vue-slider class="join-fuziness-slider"
+								<vue-slider class="join-accuracy-slider"
 									:min="0"
 									:max="1"
 									:interval="0.01"
-									:value="0"
+									:value="joinAccuracy"
 									:lazy="true"
 									width="100px"
 									tooltip-dir="bottom"
-									@callback="onJoinFuzzinessChanged"/>
+									@callback="onJoinAccuracyChanged"/>
 								<join-datasets-form class="select-create-solutions"
 									:dataset-a="topDataset"
 									:dataset-b="bottomDataset"
 									:dataset-a-column="topColumn"
 									:dataset-b-column="bottomColumn"
-									:join-fuziness="joinFuziness"></join-datasets-form>
+									:join-accuracy="joinAccuracy"></join-datasets-form>
 							</div>
 						</div>
 					</div>
@@ -135,8 +135,8 @@ export default Vue.extend({
 			const colKey = routeGetters.getJoinDatasetColumnA(this.$store);
 			return colKey ? this.topDatasetFields[colKey] : null;
 		},
-		joinFuziness(): number {
-			return routeGetters.getJoinFuziness(this.$store);
+		joinAccuracy(): number {
+			return routeGetters.getJoinAccuracy(this.$store);
 		},
 		topDataset(): string {
 			return this.joinDatasets.length >= 1 ? this.joinDatasets[0] : null;
@@ -209,10 +209,9 @@ export default Vue.extend({
 			});
 			this.$router.push(entry);
 		},
-		onJoinFuzzinessChanged(value: number) {
-			// console.log(value);
+		onJoinAccuracyChanged(value: number) {
 			const entry = overlayRouteEntry(this.$route, {
-				joinFuziness: value.toString()
+				joinAccuracy: value.toString()
 			});
 			this.$router.push(entry);
 		},

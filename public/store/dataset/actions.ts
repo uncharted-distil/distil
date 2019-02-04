@@ -125,7 +125,7 @@ export const actions = {
 			});
 	},
 
-	joinDatasetsPreview(context: DatasetContext, args: { datasetA: Dataset, datasetB: Dataset, datasetAColumn: string, datasetBColumn: string, joinFuziness: number }): Promise<void>  {
+	joinDatasetsPreview(context: DatasetContext, args: { datasetA: Dataset, datasetB: Dataset, datasetAColumn: string, datasetBColumn: string, joinAccuracy: number }): Promise<void>  {
 		if (!args.datasetA) {
 			console.warn('`datasetA` argument is missing');
 			return null;
@@ -143,13 +143,13 @@ export const actions = {
 			return null;
 		}
 
-		if (_.isNil(args.joinFuziness)) {
-			console.warn('`joinFuziness` argument is missing');
+		if (_.isNil(args.joinAccuracy)) {
+			console.warn('`joinAccuracy` argument is missing');
 			return null;
 		}
 
 		return axios.post(`/distil/join/${args.datasetA.id}/${args.datasetAColumn}/${args.datasetA.source}/${args.datasetB.id}/${args.datasetBColumn}/${args.datasetB.source}`, {
-			joinFuziness: args.joinFuziness
+			accuracy: args.joinAccuracy
 		})
 			.then(response => {
 				return response.data;

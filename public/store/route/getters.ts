@@ -84,9 +84,9 @@ export const getters = {
 		return state.query.joinColumnB as string;
 	},
 
-	getJoinFuziness(state: Route, getters: any): number {
-		const fuzinessValue = state.query.joinFuziness;
-		return fuzinessValue ? _.toNumber(fuzinessValue) : 0;
+	getJoinAccuracy(state: Route, getters: any): number {
+		const accuracy = state.query.joinAccuracy;
+		return accuracy ? _.toNumber(accuracy) : 1;
 	},
 
 	getDecodedJoinDatasetsFilterParams(state: Route, getters: any): Dictionary<FilterParams> {
