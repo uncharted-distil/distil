@@ -61,7 +61,8 @@
 									:dataset-a="topDataset"
 									:dataset-b="bottomDataset"
 									:dataset-a-column="topColumn"
-									:dataset-b-column="bottomColumn"></join-datasets-form>
+									:dataset-b-column="bottomColumn"
+									:join-fuziness="joinFuziness"></join-datasets-form>
 							</div>
 						</div>
 					</div>
@@ -133,6 +134,9 @@ export default Vue.extend({
 		topColumn(): TableColumn {
 			const colKey = routeGetters.getJoinDatasetColumnA(this.$store);
 			return colKey ? this.topDatasetFields[colKey] : null;
+		},
+		joinFuziness(): number {
+			return routeGetters.getJoinFuziness(this.$store);
 		},
 		topDataset(): string {
 			return this.joinDatasets.length >= 1 ? this.joinDatasets[0] : null;
