@@ -21,9 +21,8 @@ const (
 	metadataType     = "metadata"
 	datasetsListSize = 1000
 	// Provenance for datamart
-	Provenance         = "datamart"
-	searchRESTFunction = "search"
-	getRESTFunction    = "download"
+	Provenance      = "datamart"
+	getRESTFunction = "download"
 )
 
 // SearchQuery contains the basic properties to query.
@@ -37,35 +36,6 @@ type SearchQueryDatasetProperties struct {
 	Description []string `json:"description"`
 	Name        []string `json:"name,omitempty"`
 	Keywords    []string `json:"keywords,omitempty"`
-}
-
-// SearchResults is the basic search result container.
-type SearchResults struct {
-	Results []*SearchResult `json:"results"`
-}
-
-// SearchResult contains the basic dataset info.
-type SearchResult struct {
-	ID         string                `json:"id"`
-	Score      float64               `json:"score"`
-	Discoverer string                `json:"discoverer"`
-	Metadata   *SearchResultMetadata `json:"metadata"`
-}
-
-// SearchResultMetadata represents the dataset metadata.
-type SearchResultMetadata struct {
-	Name        string                `json:"name"`
-	Description string                `json:"description"`
-	Size        float64               `json:"size"`
-	NumRows     float64               `json:"nb_rows"`
-	Columns     []*SearchResultColumn `json:"columns"`
-	Date        string                `json:"date"`
-}
-
-// SearchResultColumn has information on a dataset column.
-type SearchResultColumn struct {
-	Name           string `json:"name"`
-	StructuralType string `json:"structural_type"`
 }
 
 // ImportDataset makes the dataset available for ingest and returns
@@ -198,7 +168,7 @@ func (s *Storage) searchREST(searchText string) (*SearchResults, error) {
 		return nil, errors.Wrap(err, "unable to marshal datamart query")
 	}
 
-	responseRaw, err := s.client.PostJSON(searchRESTFunction, queryJSON)
+	responseRaw, err := s.client.PostRequest(s.searchFunction, map[string]string{"query": string(queryJSON)})
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to post datamart search request")
 	}

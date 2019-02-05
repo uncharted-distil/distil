@@ -217,7 +217,7 @@ func main() {
 
 	// instantiate the metadata storage (using datamart).
 	datamartClientCtor := rest.NewClient(config.DatamartURI)
-	datamartMetadataStorageCtor := dm.NewMetadataStorage(config.DatamartImportFolder, ingestConfig, datamartClientCtor)
+	datamartMetadataStorageCtor := dm.NewISIMetadataStorage(config.DatamartImportFolder, ingestConfig, datamartClientCtor)
 
 	// Ingest the data specified by the environment
 	if config.InitialDataset != "" && !config.SkipIngest {
