@@ -46,9 +46,10 @@
 								instance-name="join-dataset-bottom"
 								@col-clicked="onBottomColumnClicked"></join-data-slot>
 						</div>
-						<div class="row align-items-center">
-							<div class="col-12 d-flex flex-column">
-								<vue-slider class="join-accuracy-slider"
+						<div class="row pb-5">
+							<div class="join-accuracy-slider col-12 d-flex flex-column align-items-center">
+								<div class="join-accuracy-label">Join Accuracy</div>
+								<vue-slider
 									:min="0"
 									:max="1"
 									:interval="0.01"
@@ -57,6 +58,10 @@
 									width="100px"
 									tooltip-dir="bottom"
 									@callback="onJoinAccuracyChanged"/>
+							</div>
+						</div>
+						<div class="row align-items-center">
+							<div class="col-12 d-flex flex-column">
 								<join-datasets-form class="select-create-solutions"
 									:dataset-a="topDataset"
 									:dataset-b="bottomDataset"
@@ -77,7 +82,6 @@
 
 import Vue from 'vue';
 import vueSlider from 'vue-slider-component';
-import _ from 'lodash';
 import JoinDatasetsForm from '../components/JoinDatasetsForm.vue';
 import JoinDataSlot from '../components/JoinDataSlot.vue';
 import VariableFacets from '../components/VariableFacets.vue';
