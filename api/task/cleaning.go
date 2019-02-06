@@ -8,7 +8,6 @@ import (
 
 	"github.com/pkg/errors"
 	"github.com/unchartedsoftware/distil-compute/primitive/compute/description"
-	"github.com/unchartedsoftware/distil-compute/primitive/compute/result"
 	"github.com/unchartedsoftware/distil-ingest/metadata"
 
 	"github.com/unchartedsoftware/distil/api/util"
@@ -56,25 +55,18 @@ func Clean(schemaFile string, index string, dataset string, config *IngestTaskCo
 	}
 
 	// parse primitive response (raw data from the input dataset)
-	rawResults, err := result.ParseResultCSV(datasetURI)
+	// first row of the data is the header
+	// first column of the data is the dataframe index
+	csvData, err := ReadCSVFile(datasetURI, true)
 	if err != nil {
 		return "", errors.Wrap(err, "unable to parse clean result")
 	}
 
 	// need to remove the first column of the output (row index)
-	for i, res := range rawResults {
-		// skip header row
-		if i >= 1 {
-			data := make([]string, len(res)-1)
-			for c, f := range res {
-				if c >= 1 {
-					data[c-1] = f.(string)
-				}
-			}
-			err = writer.Write(data)
-			if err != nil {
-				return "", errors.Wrap(err, "error storing clean data")
-			}
+	for _, res := range csvData {
+		err = writer.Write(res[1:])
+		if err != nil {
+			return "", errors.Wrap(err, "error storing clean data")
 		}
 	}
 
