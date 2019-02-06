@@ -9,6 +9,12 @@ import { getters as solutionGetters } from '../solutions/module';
 
 export const getters = {
 
+	getJoinDatasetsPaginatedVariables(state: ViewState): Variable[] {
+		const joinDatasetsVarsPage = routeGetters.getRouteJoinDatasetsVarsParge(store);
+		const joinDatasetsVariables = routeGetters.getJoinDatasetsVariables(store);
+		return filterVariablesByPage(joinDatasetsVarsPage, NUM_PER_PAGE, sortVariablesByImportance(joinDatasetsVariables));
+	},
+
 	getSelectTrainingPaginatedVariables(state: ViewState): Variable[] {
 		const availableTrainingVarsPage = routeGetters.getRouteAvailableTrainingVarsPage(store);
 		const trainingVarsPage = routeGetters.getRouteTrainingVarsPage(store);
