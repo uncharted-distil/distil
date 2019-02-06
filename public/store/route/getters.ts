@@ -72,6 +72,11 @@ export const getters = {
 		return state.query.joinColumnB as string;
 	},
 
+	getJoinAccuracy(state: Route, getters: any): number {
+		const accuracy = state.query.joinAccuracy;
+		return accuracy ? _.toNumber(accuracy) : 1;
+	},
+
 	getDecodedJoinDatasetsFilterParams(state: Route, getters: any): Dictionary<FilterParams> {
 		const datasetIDs = getters.getRouteJoinDatasets;
 		if (datasetIDs.length !== 2) {

@@ -18,6 +18,7 @@ export const getters = {
 	getRouteJoinDatasets: read(moduleGetters.getRouteJoinDatasets),
 	getJoinDatasetColumnA: read(moduleGetters.getJoinDatasetColumnA),
 	getJoinDatasetColumnB: read(moduleGetters.getJoinDatasetColumnB),
+	getJoinAccuracy: read(moduleGetters.getJoinAccuracy),
 	getDecodedJoinDatasetsFilterParams: read(moduleGetters.getDecodedJoinDatasetsFilterParams),
 	getRouteJoinDatasetsHash: read(moduleGetters.getRouteJoinDatasetsHash),
 	getRouteJoinDatasetsVarsParge: read(moduleGetters.getRouteJoinDatasetsVarsParge),
