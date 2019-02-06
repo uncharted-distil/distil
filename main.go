@@ -222,7 +222,8 @@ func main() {
 	// Ingest the data specified by the environment
 	if config.InitialDataset != "" && !config.SkipIngest {
 		log.Infof("Loading initial dataset '%s'", config.InitialDataset)
-		err = task.IngestDataset(esMetadataStorageCtor, config.ESDatasetsIndex, config.InitialDataset, metadata.Seed, ingestConfig)
+		util.Copy(config.InitialDataset, path.Join(config.D3MOutputDir, "initial"))
+		err = task.IngestDataset(esMetadataStorageCtor, config.ESDatasetsIndex, "initial", metadata.Contrib, ingestConfig)
 		if err != nil {
 			log.Errorf("%+v", err)
 			os.Exit(1)
