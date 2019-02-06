@@ -109,7 +109,7 @@ export const actions = {
 			});
 	},
 
-	importDataset(context: DatasetContext, args: { datasetID: string, source: string, terms: string }): Promise<void>  {
+	importDataset(context: DatasetContext, args: { datasetID: string, source: string, provenance: string, terms: string }): Promise<void>  {
 		if (!args.datasetID) {
 			console.warn('`datasetID` argument is missing');
 			return null;
@@ -119,7 +119,7 @@ export const actions = {
 			return null;
 
 		}
-		return axios.post(`/distil/import/${args.datasetID}/${args.source}`, {})
+		return axios.post(`/distil/import/${args.datasetID}/${args.source}/${args.provenance}`, {})
 			.then(response => {
 				return context.dispatch('searchDatasets', args.terms);
 			});

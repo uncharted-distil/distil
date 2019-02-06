@@ -67,7 +67,7 @@ func parseNYUSearchResult(responseRaw []byte) ([]*api.Dataset, error) {
 			NumRows:     int64(res.Metadata.NumRows),
 			NumBytes:    int64(res.Metadata.Size),
 			Variables:   vars,
-			Provenance:  Provenance,
+			Provenance:  ProvenanceNYU,
 		})
 	}
 

@@ -164,7 +164,8 @@ export default Vue.extend({
 			datasetActions.importDataset(this.$store, {
 				datasetID: this.dataset.id,
 				terms: this.terms,
-				source: 'contrib'
+				source: 'contrib',
+				provenance: this.dataset.provenance
 			}).then(() => {
 				this.importPending = false;
 			}).catch(() => {

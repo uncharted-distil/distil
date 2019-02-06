@@ -11,15 +11,17 @@ import (
 	"github.com/unchartedsoftware/distil-ingest/metadata"
 	"github.com/unchartedsoftware/distil/api/env"
 	"github.com/unchartedsoftware/distil/api/model"
+	"github.com/unchartedsoftware/distil/api/model/storage/datamart"
 	"github.com/unchartedsoftware/distil/api/task"
 	"github.com/unchartedsoftware/distil/api/util"
 )
 
 // ImportHandler imports a dataset to the local file system and then ingests it.
-func ImportHandler(datamartMetaCtor model.MetadataStorageCtor, fileMetaCtor model.MetadataStorageCtor, esMetaCtor model.MetadataStorageCtor, config *task.IngestTaskConfig) func(http.ResponseWriter, *http.Request) {
+func ImportHandler(nyuDatamartMetaCtor model.MetadataStorageCtor, isiDatamartMetaCtor model.MetadataStorageCtor, fileMetaCtor model.MetadataStorageCtor, esMetaCtor model.MetadataStorageCtor, config *task.IngestTaskConfig) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		datasetID := pat.Param(r, "datasetID")
 		source := metadata.DatasetSource(pat.Param(r, "source"))
+		provenance := pat.Param(r, "provenance")
 
 		// update ingest config to use ingest URI.
 		cfg, err := env.LoadConfig()
@@ -28,7 +30,7 @@ func ImportHandler(datamartMetaCtor model.MetadataStorageCtor, fileMetaCtor mode
 			return
 		}
 
-		meta, err := createMetadataStorageForSource(source, datamartMetaCtor, fileMetaCtor, esMetaCtor)
+		meta, err := createMetadataStorageForSource(source, provenance, nyuDatamartMetaCtor, isiDatamartMetaCtor, fileMetaCtor, esMetaCtor)
 		if err != nil {
 			handleError(w, err)
 			return
@@ -49,7 +51,7 @@ func ImportHandler(datamartMetaCtor model.MetadataStorageCtor, fileMetaCtor mode
 		}
 
 		// ingest the imported dataset
-		err = task.IngestDataset(datamartMetaCtor, cfg.ESDatasetsIndex, datasetID, source, &ingestConfig)
+		err = task.IngestDataset(esMetaCtor, cfg.ESDatasetsIndex, datasetID, source, &ingestConfig)
 		if err != nil {
 			handleError(w, err)
 			return
@@ -64,9 +66,15 @@ func ImportHandler(datamartMetaCtor model.MetadataStorageCtor, fileMetaCtor mode
 	}
 }
 
-func createMetadataStorageForSource(datasetSource metadata.DatasetSource, datamartMetaCtor model.MetadataStorageCtor, fileMetaCtor model.MetadataStorageCtor, esMetaCtor model.MetadataStorageCtor) (model.MetadataStorage, error) {
+func createMetadataStorageForSource(datasetSource metadata.DatasetSource, provenance string,
+	nyuDatamartMetaCtor model.MetadataStorageCtor, isiDatamartMetaCtor model.MetadataStorageCtor,
+	fileMetaCtor model.MetadataStorageCtor, esMetaCtor model.MetadataStorageCtor) (model.MetadataStorage, error) {
 	if datasetSource == metadata.Contrib {
-		return datamartMetaCtor()
+		if provenance == datamart.ProvenanceNYU {
+			return nyuDatamartMetaCtor()
+		} else if provenance == datamart.ProvenanceISI {
+			return isiDatamartMetaCtor()
+		}
 	}
 	if datasetSource == metadata.Seed {
 		return esMetaCtor()

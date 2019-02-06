@@ -14,8 +14,10 @@ const (
 	// elasticsearch.
 	metadataType     = "metadata"
 	datasetsListSize = 1000
-	// Provenance for datamart
-	Provenance      = "datamart"
+	// ProvenanceNYU for NYU datamart
+	ProvenanceNYU = "datamartNYU"
+	// ProvenanceISI for ISI datamart
+	ProvenanceISI   = "datamartISI"
 	getRESTFunction = "download"
 )
 
@@ -93,7 +95,7 @@ func (s *Storage) parseDatasets(raw *SearchResults) ([]*api.Dataset, error) {
 			NumRows:     int64(res.Metadata.NumRows),
 			NumBytes:    int64(res.Metadata.Size),
 			Variables:   vars,
-			Provenance:  Provenance,
+			Provenance:  ProvenanceNYU,
 		})
 	}
 

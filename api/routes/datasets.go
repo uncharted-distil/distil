@@ -106,7 +106,7 @@ func DatasetsHandler(metaCtors []model.MetadataStorageCtor) func(http.ResponseWr
 				exists[dataset.ID] = dataset
 			} else {
 				// we already have it, if it is `dataset`, replace it
-				if existing.Provenance == datamart.Provenance {
+				if existing.Provenance == datamart.ProvenanceNYU || existing.Provenance == datamart.ProvenanceISI {
 					exists[dataset.ID] = dataset
 				}
 			}

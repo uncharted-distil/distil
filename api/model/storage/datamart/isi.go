@@ -77,7 +77,7 @@ func parseISISearchResult(responseRaw []byte) ([]*api.Dataset, error) {
 			Name:        res.Metadata.Title,
 			Description: res.Metadata.Description,
 			Variables:   vars,
-			Provenance:  Provenance,
+			Provenance:  ProvenanceISI,
 			Summary:     res.Summary,
 		})
 	}
