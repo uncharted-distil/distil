@@ -29,7 +29,7 @@ import ImagePreview from './ImagePreview';
 import { Dictionary } from '../util/dict';
 import { TableColumn, TableRow, D3M_INDEX_FIELD } from '../store/dataset/index';
 import { getters as routeGetters } from '../store/route/module';
-import { IMAGE_TYPE, TIMESERIES_TYPE } from '../util/types';
+import { IMAGE_TYPE, TIMESERIES_TYPE, isNumericType } from '../util/types';
 
 export default Vue.extend({
 	name: 'join-data-table',
@@ -62,19 +62,23 @@ export default Vue.extend({
 					sortable: field.sortable,
 					variant: null
 				};
-				if (this.selectedColumn && field.key === this.selectedColumn.key) {
+
+				const isFieldSelected = this.selectedColumn && field.key === this.selectedColumn.key; 
+				const isFieldSameTypeMatching = this.otherSelectedColumn && (field.type === this.otherSelectedColumn.type); 
+				const isFieldNumericTypeMatching = this.otherSelectedColumn && isNumericType(field.type) && isNumericType(this.otherSelectedColumn.type)
+				const isFieldJoinable = isFieldSameTypeMatching || isFieldNumericTypeMatching;
+
+				if (isFieldSelected) {
 					emph.variant = 'primary';
-				} else if (this.otherSelectedColumn && field.type === this.otherSelectedColumn.type) {
+				} else if (isFieldJoinable) {
 					// show matching column types
 					emph.variant = 'success';
-				} else if (this.otherSelectedColumn && field.type !== this.otherSelectedColumn.type) {
+				} else if (!isFieldJoinable) {
 					// show unmatched column types
 					emph.variant = 'warning';
 				}
 
-				if (this.otherSelectedColumn && this.selectedColumn &&
-					field.key === this.selectedColumn.key &&
-					this.selectedColumn.type !== this.otherSelectedColumn.type) {
+				if (this.otherSelectedColumn && isFieldSelected && !isFieldJoinable) {
 					// flag bad selection
 					emph.variant = 'danger';
 				}
