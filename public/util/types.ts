@@ -343,6 +343,12 @@ export function removeClusterPrefix(varName: string): string {
 	return varName.replace(CLUSTER_PREFIX, '');
 }
 
+export function isJoinable(type: string, otherType: string): boolean {
+	const isSameType = type === otherType;
+	const isBothNumericType = isNumericType(type) && isNumericType(otherType);
+	return isSameType || isBothNumericType;
+}
+
 export function addTypeSuggestions(type: string, values: any[]): string[] {
 	let suggestions = guessTypeByValue(values);
 	if (!suggestions || suggestions.length === 0) {

@@ -29,7 +29,7 @@ import ImagePreview from './ImagePreview';
 import { Dictionary } from '../util/dict';
 import { TableColumn, TableRow, D3M_INDEX_FIELD } from '../store/dataset/index';
 import { getters as routeGetters } from '../store/route/module';
-import { IMAGE_TYPE, TIMESERIES_TYPE, isNumericType } from '../util/types';
+import { IMAGE_TYPE, TIMESERIES_TYPE, isJoinable } from '../util/types';
 
 export default Vue.extend({
 	name: 'join-data-table',
@@ -64,9 +64,7 @@ export default Vue.extend({
 				};
 
 				const isFieldSelected = this.selectedColumn && field.key === this.selectedColumn.key; 
-				const isFieldSameTypeMatching = this.otherSelectedColumn && (field.type === this.otherSelectedColumn.type); 
-				const isFieldNumericTypeMatching = this.otherSelectedColumn && isNumericType(field.type) && isNumericType(this.otherSelectedColumn.type)
-				const isFieldJoinable = isFieldSameTypeMatching || isFieldNumericTypeMatching;
+				const isFieldJoinable = this.otherSelectedColumn && isJoinable(field.type, this.otherSelectedColumn.type);
 
 				if (isFieldSelected) {
 					emph.variant = 'primary';
