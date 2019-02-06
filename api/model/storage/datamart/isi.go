@@ -55,11 +55,19 @@ type ISISearchResultVariable struct {
 	SemanticTypes []string `json:"semantic_type"`
 }
 
+// ISIMaterializedDataset container for the raw response from a materialize
+// call to the ISI datamart.
+type ISIMaterializedDataset struct {
+	Code    string `json:"code"`
+	Message string `json:"message"`
+	Data    string `json:"data"`
+}
+
 func parseISISearchResult(responseRaw []byte) ([]*api.Dataset, error) {
 	var dmResult ISISearchResults
 	err := json.Unmarshal(responseRaw, &dmResult)
 	if err != nil {
-		return nil, errors.Wrap(err, "unable to parse NYU datamart search request")
+		return nil, errors.Wrap(err, "unable to parse ISI datamart search request")
 	}
 
 	datasets := make([]*api.Dataset, 0)
@@ -96,10 +104,17 @@ func materializeISIDataset(datamart *Storage, id string, uri string) (string, er
 		return "", err
 	}
 
-	// create the dataset meeting the d3m spec
-	datasetPath, err := task.CreateDataset(id, data, datamart.outputPath, datamart.config)
+	// parse out the raw data
+	var dataset ISIMaterializedDataset
+	err = json.Unmarshal(data, &dataset)
 	if err != nil {
-		return "", errors.Wrap(err, "unable to store dataset from datamart")
+		return "", errors.Wrap(err, "unable to parse ISI datamart materialized dataset")
+	}
+
+	// create the dataset meeting the d3m spec
+	datasetPath, err := task.CreateDataset(id, []byte(dataset.Data), datamart.outputPath, datamart.config)
+	if err != nil {
+		return "", errors.Wrap(err, "unable to store dataset from ISI datamart")
 	}
 
 	// return the location of the expanded dataset folder

@@ -10,7 +10,7 @@ const (
 	nyuSearchFunction = "search"
 	nyuGetFunction    = "download"
 	isiSearchFunction = "new/search_data"
-	isiGetFunction    = "/new/materialize_data"
+	isiGetFunction    = "new/materialize_data"
 )
 
 type parseSearchResult func(responseRaw []byte) ([]*model.Dataset, error)

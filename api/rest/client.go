@@ -45,7 +45,8 @@ func (c *Client) Get(function string, params map[string]string) ([]byte, error) 
 		url = fmt.Sprintf("%s?%s", url, queryString)
 	}
 
-	resp, err := http.Get(url)
+	client := createClient()
+	resp, err := client.Get(url)
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to get result from json post")
 	}
