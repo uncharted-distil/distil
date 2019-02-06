@@ -2,10 +2,16 @@ package datamart
 
 import (
 	"encoding/json"
+	"fmt"
+	"os"
+	"path"
 
 	"github.com/pkg/errors"
 	"github.com/unchartedsoftware/distil-compute/model"
+	"github.com/unchartedsoftware/distil-compute/primitive/compute"
 	api "github.com/unchartedsoftware/distil/api/model"
+	"github.com/unchartedsoftware/distil/api/task"
+	"github.com/unchartedsoftware/distil/api/util"
 )
 
 // SearchResults is the basic search result container.
@@ -66,4 +72,53 @@ func parseNYUSearchResult(responseRaw []byte) ([]*api.Dataset, error) {
 	}
 
 	return datasets, nil
+}
+
+// materializeNYUDataset pulls a d3m directory and extracts its contents.
+func materializeNYUDataset(datamart *Storage, id string, uri string) (string, error) {
+	name := path.Base(uri)
+	// get the compressed dataset
+	requestURI := fmt.Sprintf("%s/%s", getRESTFunction, id)
+	params := map[string]string{
+		"format": "d3m",
+	}
+	data, err := datamart.client.Get(requestURI, params)
+	if err != nil {
+		return "", err
+	}
+
+	// write the compressed dataset to disk
+	zipFilename := path.Join(datamart.outputPath, fmt.Sprintf("%s.zip", name))
+	err = util.WriteFileWithDirs(zipFilename, data, os.ModePerm)
+	if err != nil {
+		return "", errors.Wrap(err, "unable to store dataset from datamart")
+	}
+
+	// expand the archive into a dataset folder
+	extractedArchivePath := path.Join(datamart.outputPath, name)
+	err = util.Unzip(zipFilename, extractedArchivePath)
+	if err != nil {
+		return "", errors.Wrap(err, "unable to extract datamart archive")
+	}
+
+	// format the dataset
+	extractedSchema := path.Join(extractedArchivePath, compute.D3MDataSchema)
+	formattedPath, err := task.Format(extractedSchema, datamart.config)
+	if err != nil {
+		return "", errors.Wrap(err, "unable to format datamart dataset")
+	}
+
+	// copy the formatted output to the datamart output path (delete existing copy)
+	err = util.RemoveContents(datamart.outputPath)
+	if err != nil {
+		return "", errors.Wrap(err, "unable to delete raw datamart dataset")
+	}
+
+	err = util.Copy(formattedPath, extractedArchivePath)
+	if err != nil {
+		return "", errors.Wrap(err, "unable to copy formatted datamart dataset")
+	}
+
+	// return the location of the expanded dataset folder
+	return formattedPath, nil
 }

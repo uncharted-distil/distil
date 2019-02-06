@@ -6,6 +6,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/unchartedsoftware/distil-compute/model"
 	api "github.com/unchartedsoftware/distil/api/model"
+	"github.com/unchartedsoftware/distil/api/task"
 )
 
 // ISISearchResults wraps the response from the ISI datamart.
@@ -82,4 +83,25 @@ func parseISISearchResult(responseRaw []byte) ([]*api.Dataset, error) {
 	}
 
 	return datasets, nil
+}
+
+// materializeISIDataset pulls a csv file from the ISI datamart.
+func materializeISIDataset(datamart *Storage, id string, uri string) (string, error) {
+	// get the csv file
+	params := map[string]string{
+		"datamart_id": id,
+	}
+	data, err := datamart.client.Get(datamart.getFunction, params)
+	if err != nil {
+		return "", err
+	}
+
+	// create the dataset meeting the d3m spec
+	datasetPath, err := task.CreateDataset(id, data, datamart.outputPath, datamart.config)
+	if err != nil {
+		return "", errors.Wrap(err, "unable to store dataset from datamart")
+	}
+
+	// return the location of the expanded dataset folder
+	return datasetPath, nil
 }

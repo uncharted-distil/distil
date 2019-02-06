@@ -163,7 +163,7 @@ func IngestDataset(metaCtor api.MetadataStorageCtor, index string, dataset strin
 	if err != nil {
 		return errors.Wrap(err, "unable to ingest ranked data")
 	}
-	log.Infof("finished ingestig the dataset")
+	log.Infof("finished ingesting the dataset")
 
 	return nil
 }

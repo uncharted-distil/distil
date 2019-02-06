@@ -8,18 +8,23 @@ import (
 
 const (
 	nyuSearchFunction = "search"
+	nyuGetFunction    = "download"
 	isiSearchFunction = "new/search_data"
+	isiGetFunction    = "/new/materialize_data"
 )
 
 type parseSearchResult func(responseRaw []byte) ([]*model.Dataset, error)
+type downloadDataset func(datamart *Storage, id string, uri string) (string, error)
 
 // Storage accesses the underlying datamart instance.
 type Storage struct {
 	client         *rest.Client
 	outputPath     string
 	searchFunction string
+	getFunction    string
 	config         *task.IngestTaskConfig
 	parser         parseSearchResult
+	download       downloadDataset
 }
 
 // NewNYUMetadataStorage returns a constructor for an NYU datamart.
@@ -29,8 +34,10 @@ func NewNYUMetadataStorage(outputPath string, config *task.IngestTaskConfig, cli
 			client:         clientCtor(),
 			outputPath:     outputPath,
 			searchFunction: nyuSearchFunction,
+			getFunction:    nyuGetFunction,
 			config:         config,
 			parser:         parseNYUSearchResult,
+			download:       materializeNYUDataset,
 		}, nil
 	}
 }
@@ -42,8 +49,10 @@ func NewISIMetadataStorage(outputPath string, config *task.IngestTaskConfig, cli
 			client:         clientCtor(),
 			outputPath:     outputPath,
 			searchFunction: isiSearchFunction,
+			getFunction:    isiGetFunction,
 			config:         config,
 			parser:         parseISISearchResult,
+			download:       materializeISIDataset,
 		}, nil
 	}
 }
