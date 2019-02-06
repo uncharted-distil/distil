@@ -398,7 +398,9 @@ export const actions = {
 			return null;
 		}
 		return Promise.all(args.datasets.map(dataset => {
-			const filterParams = addHighlightToFilterParams(args.filterParams[dataset], args.highlightRoot, INCLUDE_FILTER);
+
+			const highlightRoot = (args.highlightRoot && args.highlightRoot.dataset) === dataset ? args.highlightRoot : null;
+			const filterParams = addHighlightToFilterParams(args.filterParams[dataset], highlightRoot, INCLUDE_FILTER);
 
 			return axios.post(`distil/data/${dataset}/false`, filterParams)
 				.then(response => {

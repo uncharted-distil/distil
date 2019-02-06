@@ -86,6 +86,7 @@ export default Vue.extend({
 	},
 
 	computed: {
+
 		currentPage: {
 			set(page: number) {
 				const entry = overlayRouteEntry(this.$route, {
@@ -167,21 +168,23 @@ export default Vue.extend({
 			return `${this.instanceName}${ROUTE_PAGE_SUFFIX}`;
 		},
 
-		onRangeChange(context: string, key: string, value: { from: number, to: number }) {
+		onRangeChange(context: string, key: string, value: { from: number, to: number }, dataset: string) {
 			updateHighlightRoot(this.$router, {
 				context: context,
+				dataset: dataset,
 				key: key,
 				value: value
 			});
 			this.$emit('range-change', key, value);
 		},
 
-		onFacetClick(context: string, key: string, value: string) {
+		onFacetClick(context: string, key: string, value: string, dataset: string) {
 			if (this.enableHighlighting) {
 				if (key && value) {
 					// extract the var name from the key
 					updateHighlightRoot(this.$router, {
 						context: context,
+						dataset: dataset,
 						key: key,
 						value: value
 					});
@@ -196,11 +199,12 @@ export default Vue.extend({
 			this.$emit('categorical-click', key);
 		},
 
-		onNumericalClick(context: string, key: string, value: { from: number, to: number }) {
+		onNumericalClick(context: string, key: string, value: { from: number, to: number }, dataset: string) {
 			if (this.enableHighlighting) {
 				if (!this.highlights.root || this.highlights.root.key !== key) {
 					updateHighlightRoot(this.$router, {
 						context: this.instanceName,
+						dataset: dataset,
 						key: key,
 						value: value
 					});

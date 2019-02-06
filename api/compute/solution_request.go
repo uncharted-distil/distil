@@ -523,7 +523,12 @@ func (s *SolutionRequest) PersistAndDispatch(client *compute.Client, solutionSto
 
 	// add dataset name to path
 	resolver := createPathResolver(dataset.Metadata.Source, inputDir, augmentDir)
-	datasetInputDir := resolver.ResolveInputAbsoluteFromRoot(dataset.Metadata.Folder)
+	var datasetInputDir string
+	if util.IsDatasetDir(inputDir) {
+		datasetInputDir = resolver.ResolveInputFromDataset()
+	} else {
+		datasetInputDir = resolver.ResolveInputAbsoluteFromRoot(dataset.Metadata.Folder)
+	}
 
 	// perist the datasets and get URI
 	datasetPathTrain, datasetPathTest, err := PersistOriginalData(s.Dataset, compute.D3MDataSchema, datasetInputDir, datasetDir)

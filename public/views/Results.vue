@@ -131,9 +131,6 @@ export default Vue.extend({
 	padding: 1rem 0 0.5rem 0;
 	font-weight: bold;
 }
-.results-data-table-container {
-	background-color: white;
-}
 .results-view .table td {
 	text-align: right;
 }
