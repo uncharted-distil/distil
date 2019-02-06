@@ -24,6 +24,7 @@ export const getters = {
 // Typed actions
 export const actions = {
 	// highlight values
+	fetchJoinDatasetsHighlightValues: dispatch(moduleActions.fetchJoinDatasetsHighlightValues),
 	fetchDataHighlightValues: dispatch(moduleActions.fetchDataHighlightValues),
 	fetchResultHighlightValues: dispatch(moduleActions.fetchResultHighlightValues)
 };

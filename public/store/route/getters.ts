@@ -6,21 +6,9 @@ import { decodeFilters, Filter, FilterParams } from '../../util/filters';
 import { decodeHighlights } from '../../util/highlights';
 import { decodeRowSelection } from '../../util/row';
 import { Dictionary } from '../../util/dict';
+import { buildLookup } from '../../util/lookup';
 import { Route } from 'vue-router';
 import _ from 'lodash';
-
-function buildLookup(strs: any[]): Dictionary<boolean> {
-	const lookup = {};
-	strs.forEach(str => {
-		if (str) {
-			lookup[str] = true;
-			lookup[str.toLowerCase()] = true;
-		} else {
-			console.error('Ignoring NULL string in look-up parameter list.  This should not happen.');
-		}
-	});
-	return lookup;
-}
 
 export const getters = {
 	getRoute(state: Route): Route {
@@ -106,12 +94,9 @@ export const getters = {
 				const filters = getters.getDecodedFilters;
 
 				// only include filters for this dataset
-				const varLookup = {};
-				dataset.variables.forEach(v => {
-					varLookup[v.colName] = true;
-				});
-				const filtersForDataset = filters.filter(filter => {
-					return varLookup[filter.key];
+				const lookup = buildLookup(dataset.variables.map(v => v.colName));
+				const filtersForDataset = filters.filter(f => {
+					return lookup[f.key];
 				});
 
 				const filterParams = _.cloneDeep({
@@ -128,7 +113,7 @@ export const getters = {
 		return state.query.training ? state.query.training as string : null;
 	},
 
-	getRouteJoinedVarsParge(state: Route): number {
+	getRouteJoinDatasetsVarsParge(state: Route): number {
 		const pageVar = JOINED_VARS_INSTANCE_PAGE;
 		return state.query[pageVar] ? _.toNumber(state.query[pageVar]) : 1;
 	},

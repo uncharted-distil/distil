@@ -2,6 +2,7 @@ import { VariableSummary } from '../dataset/index';
 
 export interface HighlightRoot {
 	context: string;
+	dataset: string;
 	key: string;
 	value: any;
 }

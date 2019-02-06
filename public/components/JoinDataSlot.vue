@@ -1,17 +1,14 @@
 <template>
 	<div class="join-data-slot">
 
-		<!-- <div class="join-search-bar">
-			<div class="fake-search-input">
-				<div class="filter-badges">
-					<filter-badge v-if="activeFilter"
-						active-filter
-						:filter="activeFilter">
-					</filter-badge>
-					</filter-badge>
-				</div>
+		<div class="fake-search-input">
+			<div class="filter-badges">
+				<filter-badge v-if="activeFilter"
+					active-filter
+					:filter="activeFilter">
+				</filter-badge>
 			</div>
-		</div> -->
+		</div>
 
 		<div class="join-data-container">
 			<div class="join-data-no-results" v-if="!hasData">
@@ -41,6 +38,9 @@ import { Dictionary } from '../util/dict';
 import JoinDataTable from './JoinDataTable';
 import FilterBadge from './FilterBadge';
 import { TableRow, TableColumn } from '../store/dataset/index';
+import { Highlight } from '../store/highlights/index';
+import { getHighlights, createFilterFromHighlightRoot } from '../util/highlights';
+import { Filter, INCLUDE_FILTER  } from '../util/filters';
 
 export default Vue.extend({
 	name: 'join-data-slot',
@@ -51,6 +51,7 @@ export default Vue.extend({
 	},
 
 	props: {
+		dataset: String as () => string,
 		items: Array as () => TableRow[],
 		fields: Object as () => Dictionary<TableColumn>,
 		numRows: Number as () => number,
@@ -63,6 +64,22 @@ export default Vue.extend({
 	computed: {
 		spinnerHTML(): string {
 			return spinnerHTML();
+		},
+
+		highlights(): Highlight {
+			return getHighlights();
+		},
+
+		activeFilter(): Filter {
+			if (!this.highlights ||
+				!this.highlights.root ||
+				!this.highlights.root.value) {
+				return null;
+			}
+			if (this.highlights.root.dataset !== this.dataset) {
+				return null;
+			}
+			return createFilterFromHighlightRoot(this.highlights.root, INCLUDE_FILTER);
 		}
 	},
 
@@ -90,44 +107,6 @@ export default Vue.extend({
 	padding: 8px;
 	text-align: center;
 }
-table.b-table>tfoot>tr>th.sorting:before,
-table.b-table>thead>tr>th.sorting:before,
-table.b-table>tfoot>tr>th.sorting:after,
-table.b-table>thead>tr>th.sorting:after {
-	top: 0;
-}
-
-table tr {
-	cursor: pointer;
-}
-.join-data-table .small-margin {
-	margin-bottom: 0.5rem
-}
-.join-view .nav-tabs .nav-item a {
-	padding-left: 0.5rem;
-	padding-right: 0.5rem;
-}
-.join-view .nav-tabs .nav-link {
-	color: #757575;
-}
-.join-view .nav-tabs .nav-link.active {
-	color: rgba(0, 0, 0, 0.87);
-}
-.include-highlight,
-.exclude-highlight {
-	color: #00c6e1;
-}
-.include-joinion,
-.exclude-joinion {
-	color: #ff0067;
-}
-.row-number-label {
-	position: relative;
-	top: 20px;
-}
-.matching-color {
-	color: #00c6e1;
-}
 .fake-search-input {
 	position: relative;
 	height: 38px;
@@ -136,11 +115,5 @@ table tr {
 	background-color: #eee;
 	border: 1px solid #ccc;
 	border-radius: 0.2rem;
-}
-.joined-color {
-	color: #ff0067;
-}
-.view-button {
-	cursor: pointer;
 }
 </style>
