@@ -269,6 +269,7 @@ export default Vue.extend({
 .results-data-table-container {
 	display: flex;
 	overflow: auto;
+	background-color: white;
 }
 .results-data-no-results {
 	width: 100%;
@@ -301,8 +302,4 @@ table tr {
 	background-color: #666;
 }
 
-.table-selected-row {
-	border-left: 4px solid #ff0067;
-	background-color: rgba(255, 0, 103, 0.2);
-}
 </style>

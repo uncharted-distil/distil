@@ -35,7 +35,7 @@ func ConfigHandler(config env.Config, version string, timestamp string, problemP
 				if problem.Inputs != nil {
 					if len(problem.Inputs.Data) > 0 {
 						// get dataset
-						dataset = "d_" + problem.Inputs.Data[0].DatasetID
+						dataset = problem.Inputs.Data[0].DatasetID
 						// get targets
 						if len(problem.Inputs.Data[0].Targets) > 0 {
 							target = problem.Inputs.Data[0].Targets[0].ColName

@@ -326,6 +326,7 @@ export default Vue.extend({
 			const dragended = (d, index, elem) => {
 				updateHighlightRoot(this.$router, {
 					context: this.instanceName,
+					dataset: this.dataset,
 					key: this.timeseriesField,
 					value: {
 						from: this.microMin,
@@ -374,6 +375,7 @@ export default Vue.extend({
 			const dragended = (d, index, elem) => {
 				updateHighlightRoot(this.$router, {
 					context: this.instanceName,
+					dataset: this.dataset,
 					key: this.timeseriesField,
 					value: {
 						from: this.microMin,
