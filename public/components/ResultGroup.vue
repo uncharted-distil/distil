@@ -125,6 +125,10 @@ export default Vue.extend({
 
 	computed: {
 
+		dataset(): string {
+			return routeGetters.getRouteDataset(this.$store);
+		},
+
 		target(): string {
 			return routeGetters.getRouteTargetVariable(this.$store);
 		},
@@ -236,11 +240,12 @@ export default Vue.extend({
 
 	methods: {
 
-		onResultCategoricalClick(context: string, key: string, value: string) {
+		onResultCategoricalClick(context: string, key: string, value: string, dataset: string) {
 			if (key && value) {
 				// extract the var name from the key
 				updateHighlightRoot(this.$router, {
 					context: context,
+					dataset: dataset,
 					key: key,
 					value: value
 				});
@@ -249,11 +254,12 @@ export default Vue.extend({
 			}
 		},
 
-		onCorrectnessCategoricalClick(context: string, key: string, value: string) {
+		onCorrectnessCategoricalClick(context: string, key: string, value: string, dataset: string) {
 			if (key && value) {
 				// extract the var name from the key
 				updateHighlightRoot(this.$router, {
 					context: context,
+					dataset: dataset,
 					key: key,
 					value: value
 				});
@@ -262,38 +268,42 @@ export default Vue.extend({
 			}
 		},
 
-		onResultNumericalClick(context: string, key: string, value: { from: number, to: number }) {
+		onResultNumericalClick(context: string, key: string, value: { from: number, to: number }, dataset: string) {
 			if (!this.highlights.root || this.highlights.root.key !== key) {
 				updateHighlightRoot(this.$router, {
 					context: context,
+					dataset: dataset,
 					key: key,
 					value: value
 				});
 			}
 		},
 
-		onResultRangeChange(context: string, key: string, value: { from: { label: string[] }, to: { label: string[] } }) {
+		onResultRangeChange(context: string, key: string, value: { from: { label: string[] }, to: { label: string[] } }, dataset: string) {
 			updateHighlightRoot(this.$router, {
 				context: context,
+				dataset: dataset,
 				key: key,
 				value: value
 			});
 			this.$emit('range-change', key, value);
 		},
 
-		onResidualNumericalClick(context: string, key: string, value: { from: number, to: number }) {
+		onResidualNumericalClick(context: string, key: string, value: { from: number, to: number }, dataset: string) {
 			if (!this.highlights.root || this.highlights.root.key !== key) {
 				updateHighlightRoot(this.$router, {
 					context: context,
+					dataset: dataset,
 					key: key,
 					value: value
 				});
 			}
 		},
 
-		onResidualRangeChange(context: string, key: string, value: { from: number, to: number }) {
+		onResidualRangeChange(context: string, key: string, value: { from: number, to: number }, dataset: string) {
 			updateHighlightRoot(this.$router, {
 				context: context,
+				dataset: dataset,
 				key: key,
 				value: value
 			});

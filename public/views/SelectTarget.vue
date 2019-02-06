@@ -43,6 +43,16 @@ export default Vue.extend({
 	border-bottom: 1px solid #E0E0E0;
 	color: rgba(0,0,0,.87);
 }
+.select-view .nav-tabs .nav-item a {
+	padding-left: 0.5rem;
+	padding-right: 0.5rem;
+}
+.select-view .nav-tabs .nav-link {
+	color: #757575;
+}
+.select-view .nav-tabs .nav-link.active {
+	color: rgba(0, 0, 0, 0.87);
+}
 .header-label {
 	padding: 1rem 0 0.5rem 0;
 	font-weight: bold;
