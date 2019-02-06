@@ -27,16 +27,14 @@
 			</b-nav>
 		</p>
 
-		<div class="select-search-bar">
-			<div class="fake-search-input">
-				<div class="filter-badges">
-					<filter-badge v-if="activeFilter && includedActive"
-						active-filter
-						:filter="activeFilter">
-					</filter-badge>
-					<filter-badge v-if="!includedActive && filter.type !== 'row'" v-for="filter in filters" :key="filter.key" :filter="filter">
-					</filter-badge>
-				</div>
+		<div class="fake-search-input">
+			<div class="filter-badges">
+				<filter-badge v-if="activeFilter && includedActive"
+					active-filter
+					:filter="activeFilter">
+				</filter-badge>
+				<filter-badge v-if="!includedActive && filter.type !== 'row'" v-for="filter in filters" :key="filter.key" :filter="filter">
+				</filter-badge>
 			</div>
 		</div>
 
@@ -278,16 +276,6 @@ table tr {
 }
 .select-data-table .small-margin {
 	margin-bottom: 0.5rem
-}
-.select-view .nav-tabs .nav-item a {
-	padding-left: 0.5rem;
-	padding-right: 0.5rem;
-}
-.select-view .nav-tabs .nav-link {
-	color: #757575;
-}
-.select-view .nav-tabs .nav-link.active {
-	color: rgba(0, 0, 0, 0.87);
 }
 .include-highlight,
 .exclude-highlight {

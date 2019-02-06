@@ -82,6 +82,7 @@ export default Vue.extend({
 
 		// Call customization hook
 		this.processedGroups.forEach(group => {
+			this.augmentGroup(group, this.facets.getGroup(group.key));
 			this.injectHTML(group, this.facets.getGroup(group.key)._element);
 		});
 
@@ -95,12 +96,12 @@ export default Vue.extend({
 			component.$emit('collapse', key);
 		});
 
-		this.facets.on('facet-histogram:rangechangeduser', (event: Event, key: string, value: any) => {
+		this.facets.on('facet-histogram:rangechangeduser', (event: Event, key: string, value: any, facet: any) => {
 			const range = {
 				from: _.toNumber(value.from.label[0]),
 				to: _.toNumber(value.to.label[0])
 			};
-			component.$emit('range-change', this.instanceName, key, range);
+			component.$emit('range-change', this.instanceName, key, range, facet.dataset);
 		});
 
 		// hover over events
@@ -149,7 +150,7 @@ export default Vue.extend({
 
 		// click events
 
-		this.facets.on('facet-histogram:click', (event: Event, key: string, value: any) => {
+		this.facets.on('facet-histogram:click', (event: Event, key: string, value: any, facet: any) => {
 			// if this is a click on value previously used as highlight root, clear
 			const range = {
 				from: _.toNumber(value.label),
@@ -157,21 +158,21 @@ export default Vue.extend({
 			};
 			if (this.isHighlightedValue(this.highlights, key, range)) {
 				// clear current selection
-				component.$emit('histogram-click', this.instanceName);
+				component.$emit('histogram-click', this.instanceName, facet.dataset);
 			} else {
 				// set selection
-				component.$emit('histogram-click', this.instanceName, key, range);
+				component.$emit('histogram-click', this.instanceName, key, range, facet.dataset);
 			}
 		});
 
-		this.facets.on('facet:click', (event: Event, key: string, value: string) => {
+		this.facets.on('facet:click', (event: Event, key: string, value: string, count: number, facet: any) => {
 			// User clicked on the value that is currently the highlight root
 			if (this.isHighlightedValue(this.highlights, key, value)) {
 				// clear current selection
-				component.$emit('facet-click', this.instanceName);
+				component.$emit('facet-click', this.instanceName, facet.dataset);
 			} else {
 				// set selection
-				component.$emit('facet-click', this.instanceName, key, value);
+				component.$emit('facet-click', this.instanceName, key, value, facet.dataset);
 			}
 		});
 
@@ -703,6 +704,14 @@ export default Vue.extend({
 			});
 		},
 
+		augmentGroup(distilGroup: Group, facetsGroup: any) {
+			// inject any custom properties required for the distil app
+			facetsGroup.dataset = distilGroup.dataset;
+			facetsGroup.facets.forEach(f => {
+				f.dataset = distilGroup.dataset;
+			});
+		},
+
 		groupsEqual(a: Group, b: Group): boolean {
 			const OMITTED_FIELDS = ['selection', 'selected'];
 			// NOTE: we dont need to check key, we assume its already equal
@@ -745,6 +754,7 @@ export default Vue.extend({
 					}
 					// replace group if it is existing
 					this.facets.replaceGroup(_.cloneDeep(group));
+					this.augmentGroup(group, this.facets.getGroup(group.key));
 					this.injectHTML(group, this.facets.getGroup(group.key)._element);
 					this.injectHighlightsIntoGroup(this.facets.getGroup(group.key), this.highlights);
 					this.injectSelectedRowIntoGroup(this.facets.getGroup(group.key), this.rowSelection);
@@ -764,6 +774,7 @@ export default Vue.extend({
 				// append groups
 				this.facets.append(toAdd);
 				toAdd.forEach(groupSpec => {
+					this.augmentGroup(groupSpec, this.facets.getGroup(groupSpec.key));
 					this.injectHTML(groupSpec, this.facets.getGroup(groupSpec.key)._element);
 					this.injectHighlightsIntoGroup(this.facets.getGroup(groupSpec.key), this.highlights);
 					this.injectSelectedRowIntoGroup(this.facets.getGroup(groupSpec.key), this.rowSelection);

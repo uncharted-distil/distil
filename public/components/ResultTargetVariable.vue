@@ -123,6 +123,7 @@ export default Vue.extend({
 		selectDefaultNumerical() {
 			updateHighlightRoot(this.$router, {
 				context: this.instanceName,
+				dataset: this.dataset,
 				key: this.target,
 				value: getNumericalFacetValue(this.resultTargetSummary, this.groups[0], this.defaultHighlightType)
 			});
@@ -131,6 +132,7 @@ export default Vue.extend({
 		selectDefaultCategorical() {
 			updateHighlightRoot(this.$router, {
 				context: this.instanceName,
+				dataset: this.dataset,
 				key: this.target,
 				value: getCategoricalFacetValue(this.resultTargetSummary)
 			});

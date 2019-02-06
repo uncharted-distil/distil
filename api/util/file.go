@@ -47,6 +47,12 @@ func (r *PathResolver) ResolveOutputAbsolute(relativePath string) string {
 	return path.Join(r.Config.OutputFolder, relativePath)
 }
 
+// ResolveInputFromDataset creates the input path as an absolute where the path is fully
+// specified.
+func (r *PathResolver) ResolveInputFromDataset() string {
+	return path.Join(r.Config.InputFolder, r.Config.InputSubFolders)
+}
+
 // WriteFileWithDirs writes the file and creates any missing directories along
 // the way.
 func WriteFileWithDirs(filename string, data []byte, perm os.FileMode) error {
@@ -152,4 +158,11 @@ func RemoveContents(dir string) error {
 		}
 	}
 	return nil
+}
+
+// IsDatasetDir indicate whether or not a directory contains a single d3m dataset
+func IsDatasetDir(dir string) bool {
+	datasetPath := path.Join(dir, "TRAIN", "dataset_TRAIN")
+	_, err := os.Stat(datasetPath)
+	return !os.IsNotExist(err)
 }
