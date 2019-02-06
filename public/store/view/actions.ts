@@ -32,9 +32,11 @@ export const actions = {
 		context.commit('clearHighlightSummaries');
 
 		const datasetIDs = context.getters.getRouteJoinDatasets;
+		const datasetIDA = datasetIDs[0];
+		const datasetIDB = datasetIDs[1];
 		Promise.all([
-				context.dispatch('fetchDataset', datasetIDs[0]),
-				context.dispatch('fetchDataset', datasetIDs[1]),
+				context.dispatch('fetchDataset', datasetIDA),
+				context.dispatch('fetchDataset', datasetIDB),
 				context.dispatch('fetchJoinDatasetsVariables', {
 					datasets: datasetIDs
 				})
@@ -43,10 +45,10 @@ export const actions = {
 				// fetch new state
 				const datasets = context.getters.getDatasets;
 				const datasetA = _.find(datasets, d => {
-					return d.id === datasetIDs[0];
+					return d.id === datasetIDA;
 				});
 				const datasetB = _.find(datasets, d => {
-					return d.id === datasetIDs[1];
+					return d.id === datasetIDB;
 				});
 				return Promise.all([
 					context.dispatch('fetchVariableSummaries', {
@@ -69,19 +71,22 @@ export const actions = {
 		context.commit('clearJoinDatasetsTableData');
 
 		const datasetIDs = context.getters.getRouteJoinDatasets;
-		const dataset = context.getters.getRouteDataset;
 		const highlightRoot = context.getters.getDecodedHighlightRoot;
 		const filterParams = context.getters.getDecodedJoinDatasetsFilterParams;
-		// const paginatedVariables = context.getters.getSelectTrainingPaginatedVariables;
+		const paginatedVariables = context.getters.getJoinDatasetsPaginatedVariables;
+
+		const datasets = context.getters.getDatasets;
+		const joinDatasets = datasets.filter(d => {
+			return d.id === datasetIDs[0] || d.id === datasetIDs[1];
+		});
 
 		return Promise.all([
-			// context.dispatch('fetchDataHighlightValues', {
-			// 	dataset: dataset,
-			// 	variables: paginatedVariables,
-			// 	highlightRoot: highlightRoot,
-			// 	filterParams: filterParams
-			// }),
-
+			context.dispatch('fetchJoinDatasetsHighlightValues', {
+				datasets: datasets,
+				variables: paginatedVariables,
+				highlightRoot: highlightRoot,
+				filterParams: filterParams
+			}),
 			context.dispatch('fetchJoinDatasetsTableData', {
 				datasets: datasetIDs,
 				filterParams: filterParams,

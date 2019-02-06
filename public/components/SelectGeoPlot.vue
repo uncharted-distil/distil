@@ -191,6 +191,7 @@ export default Vue.extend({
 			const key = fieldSpec.type === SINGLE_FIELD ? fieldSpec.field : this.fieldHash(fieldSpec);
 			updateHighlightRoot(this.$router, {
 				context: this.instanceName,
+				dataset: this.dataset,
 				key: key,
 				value: value
 			});
@@ -318,6 +319,10 @@ export default Vue.extend({
 	},
 
 	computed: {
+
+		dataset(): string {
+			return routeGetters.getRouteDataset(this.$store);
+		},
 
 		fields(): Dictionary<TableColumn> {
 			return this.includedActive ? datasetGetters.getIncludedTableDataFields(this.$store) : datasetGetters.getExcludedTableDataFields(this.$store);

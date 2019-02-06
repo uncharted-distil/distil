@@ -5,9 +5,11 @@ import { DistilState } from '../store';
 import { FilterParams, INCLUDE_FILTER } from '../../util/filters';
 import { getSolutionsByRequestIds, getSolutionById } from '../../util/solutions';
 import { getSummary } from '../../util/data';
-import { Variable } from '../dataset/index';
+import { Variable, Dataset } from '../dataset/index';
 import { mutations } from './module';
 import { addHighlightToFilterParams } from '../../util/highlights';
+import { buildLookup } from '../../util/lookup';
+import { Dictionary } from '../../util/dict';
 
 export type HighlightsContext = ActionContext<HighlightState, DistilState>;
 
@@ -35,6 +37,39 @@ export const actions = {
 					console.error(error);
 				});
 		}));
+	},
+
+	fetchJoinDatasetsHighlightValues(context: HighlightsContext, args: { highlightRoot: HighlightRoot, datasets: Dataset[], filterParams: Dictionary<FilterParams>, variables: Variable[] }) {
+		if (!args.datasets) {
+			console.warn('`datasets` argument is missing');
+			return null;
+		}
+		if (!args.variables) {
+			console.warn('`variables` argument is missing');
+			return null;
+		}
+
+		const datasetA = args.datasets[0];
+		const datasetB = args.datasets[1];
+		const datasetALookup = buildLookup(datasetA.variables.map(v => v.colName));
+		const datasetBLookup = buildLookup(datasetB.variables.map(v => v.colName));
+		const datasetAVariables = args.variables.filter(v => datasetALookup[v.colName]);
+		const datasetBVariables = args.variables.filter(v => datasetBLookup[v.colName]);
+
+		return Promise.all([
+			context.dispatch('fetchDataHighlightSummaries', {
+				highlightRoot: args.highlightRoot && args.highlightRoot.dataset === datasetA.id ? args.highlightRoot : null,
+				dataset: datasetA.id,
+				variables: datasetAVariables,
+				filterParams: args.filterParams[datasetA.id]
+			}),
+			context.dispatch('fetchDataHighlightSummaries', {
+				highlightRoot:  args.highlightRoot && args.highlightRoot.dataset === datasetB.id ? args.highlightRoot : null,
+				dataset: datasetB.id,
+				variables: datasetBVariables,
+				filterParams: args.filterParams[datasetB.id]
+			})
+		]);
 	},
 
 	fetchDataHighlightValues(context: HighlightsContext, args: { highlightRoot: HighlightRoot, dataset: string, filterParams: FilterParams, variables: Variable[] }) {
