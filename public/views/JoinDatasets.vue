@@ -15,6 +15,7 @@
 						class="col-12 d-flex"
 							enable-search
 							enable-type-change
+							enable-highlighting
 							:instance-name="instanceName"
 							:rows-per-page="numRowsPerPage"
 							:groups="groups">
@@ -26,6 +27,7 @@
 					<div class="col-12 d-flex flex-column">
 						<div class="row responsive-flex pb-3">
 							<join-data-slot class="col-12 d-flex flex-column pt-2"
+								:dataset="topDataset"
 								:items="topDatasetItems"
 								:fields="topDatasetFields"
 								:numRows="topDatasetNumRows"
@@ -37,6 +39,7 @@
 						</div>
 						<div class="row responsive-flex pb-3">
 							<join-data-slot class="col-12 d-flex flex-column pt-2"
+								:dataset="bottomDataset"
 								:items="bottomDatasetItems"
 								:fields="bottomDatasetFields"
 								:numRows="bottomDatasetNumRows"
@@ -106,14 +109,11 @@ export default Vue.extend({
 		instanceName(): string {
 			return JOINED_VARS_INSTANCE;
 		},
-		filtersStr(): string {
-			return routeGetters.getRouteFilters(this.$store);
-		},
 		highlightRootStr(): string {
 			return routeGetters.getRouteHighlightRoot(this.$store);
 		},
 		joinedVarsPage(): number {
-			return routeGetters.getRouteJoinedVarsParge(this.$store);
+			return routeGetters.getRouteJoinDatasetsVarsParge(this.$store);
 		},
 		joinDatasetsTableData(): Dictionary<TableData> {
 			return datasetGetters.getJoinDatasetsTableData(this.$store);
@@ -166,9 +166,6 @@ export default Vue.extend({
 
 	watch: {
 		highlightRootStr() {
-			viewActions.updateJoinDatasetsData(this.$store);
-		},
-		filtersStr() {
 			viewActions.updateJoinDatasetsData(this.$store);
 		},
 		joinedVarsPage() {
