@@ -7,6 +7,7 @@ import (
 	"github.com/microcosm-cc/bluemonday"
 	"github.com/pkg/errors"
 	"github.com/russross/blackfriday"
+	log "github.com/unchartedsoftware/plog"
 	"goji.io/pat"
 
 	"github.com/unchartedsoftware/distil/api/model"
@@ -87,6 +88,7 @@ func DatasetsHandler(metaCtors []model.MetadataStorageCtor) func(http.ResponseWr
 			}
 			if err != nil {
 				//handleError(w, err)
+				log.Warnf("error querying dataset: %v", err)
 				continue
 			}
 			// render dataset description as HTML

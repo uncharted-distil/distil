@@ -24,7 +24,7 @@ type Storage struct {
 	getFunction string
 	config      *task.IngestTaskConfig
 	search      searchQuery
-	parser      parseSearchResult
+	parse       parseSearchResult
 	download    downloadDataset
 }
 
@@ -37,7 +37,7 @@ func NewNYUMetadataStorage(outputPath string, config *task.IngestTaskConfig, cli
 			getFunction: nyuGetFunction,
 			config:      config,
 			search:      nyuSearch,
-			parser:      parseNYUSearchResult,
+			parse:       parseNYUSearchResult,
 			download:    materializeNYUDataset,
 		}, nil
 	}
@@ -52,7 +52,7 @@ func NewISIMetadataStorage(outputPath string, config *task.IngestTaskConfig, cli
 			getFunction: isiGetFunction,
 			config:      config,
 			search:      isiSearch,
-			parser:      parseISISearchResult,
+			parse:       parseISISearchResult,
 			download:    materializeISIDataset,
 		}, nil
 	}

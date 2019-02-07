@@ -1,11 +1,9 @@
 package datamart
 
 import (
-	"encoding/json"
 	"strings"
 
 	"github.com/pkg/errors"
-	"github.com/unchartedsoftware/distil-compute/model"
 	api "github.com/unchartedsoftware/distil/api/model"
 )
 
@@ -54,12 +52,10 @@ func (s *Storage) FetchDataset(datasetName string, includeIndex bool, includeMet
 // SearchDatasets returns the datasets that match the search criteria in the
 // provided index.
 func (s *Storage) SearchDatasets(terms string, includeIndex bool, includeMeta bool) ([]*api.Dataset, error) {
-	rawSets, err := s.searchREST(terms)
-	if err != nil {
-		return nil, err
+	if terms == "" {
+		return make([]*api.Dataset, 0), nil
 	}
-
-	return s.parseDatasets(rawSets)
+	return s.searchREST(terms)
 }
 
 // SetDataType is not supported by the datamart.
@@ -77,32 +73,7 @@ func (s *Storage) DeleteVariable(dataset string, varName string) error {
 	return errors.Errorf("Not supported")
 }
 
-func (s *Storage) parseDatasets(raw *SearchResults) ([]*api.Dataset, error) {
-	datasets := make([]*api.Dataset, 0)
-
-	for _, res := range raw.Results {
-		vars := make([]*model.Variable, 0)
-		for _, c := range res.Metadata.Columns {
-			vars = append(vars, &model.Variable{
-				Name:        c.Name,
-				DisplayName: c.Name,
-			})
-		}
-		datasets = append(datasets, &api.Dataset{
-			ID:          res.ID,
-			Name:        res.Metadata.Name,
-			Description: res.Metadata.Description,
-			NumRows:     int64(res.Metadata.NumRows),
-			NumBytes:    int64(res.Metadata.Size),
-			Variables:   vars,
-			Provenance:  ProvenanceNYU,
-		})
-	}
-
-	return datasets, nil
-}
-
-func (s *Storage) searchREST(searchText string) (*SearchResults, error) {
+func (s *Storage) searchREST(searchText string) ([]*api.Dataset, error) {
 	terms := strings.Fields(searchText)
 
 	// get complete URI for the endpoint
@@ -120,12 +91,10 @@ func (s *Storage) searchREST(searchText string) (*SearchResults, error) {
 		return nil, errors.Wrap(err, "unable to post datamart search request")
 	}
 
-	// parse result
-	var dmResult SearchResults
-	err = json.Unmarshal(responseRaw, &dmResult)
+	datasets, err := s.parse(responseRaw)
 	if err != nil {
-		return nil, errors.Wrap(err, "unable to parse datamart search request")
+		return nil, errors.Wrap(err, "unable to parse datamart search response")
 	}
 
-	return &dmResult, nil
+	return datasets, nil
 }

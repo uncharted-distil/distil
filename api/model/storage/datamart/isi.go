@@ -31,7 +31,7 @@ type ISISearchResult struct {
 
 // ISISearchResultMetadata specifies the structure of the datamart dataset.
 type ISISearchResultMetadata struct {
-	DatamartID      string                          `json:"datamart_id"`
+	DatamartID      float64                         `json:"datamart_id"`
 	Title           string                          `json:"title"`
 	Description     string                          `json:"description"`
 	URL             string                          `json:"url"`
@@ -54,7 +54,7 @@ type ISISearchResultMaterialization struct {
 
 // ISISearchResultVariable has the specification for a variable in a dataset.
 type ISISearchResultVariable struct {
-	DatamartID    string   `json:"datamart_id"`
+	DatamartID    float64  `json:"datamart_id"`
 	Name          string   `json:"name"`
 	Description   string   `json:"description"`
 	SemanticTypes []string `json:"semantic_type"`
@@ -69,6 +69,7 @@ type ISIMaterializedDataset struct {
 }
 
 func isiSearch(datamart *Storage, query *SearchQuery) ([]byte, error) {
+	log.Infof("querying ISI datamart")
 	queryJSON, err := json.Marshal(query)
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to marshal datamart query")
@@ -85,6 +86,7 @@ func isiSearch(datamart *Storage, query *SearchQuery) ([]byte, error) {
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to store datamart query")
 	}
+	log.Infof("stored ISI query to filepath %s", filepath)
 
 	responseRaw, err := datamart.client.PostFile(isiSearchFunction, filepath, nil)
 	if err != nil {
@@ -119,11 +121,6 @@ func parseISISearchResult(responseRaw []byte) ([]*api.Dataset, error) {
 			Provenance:  ProvenanceISI,
 			Summary:     res.Summary,
 		})
-
-		if len(datasets) > 20 {
-			log.Warnf("TOO MANY RESULTS FROM ISI")
-			break
-		}
 	}
 
 	return datasets, nil
