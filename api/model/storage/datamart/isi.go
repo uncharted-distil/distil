@@ -88,7 +88,7 @@ func isiSearch(datamart *Storage, query *SearchQuery) ([]byte, error) {
 	}
 	log.Infof("stored ISI query to filepath %s", filepath)
 
-	responseRaw, err := datamart.client.PostFile(isiSearchFunction, filepath, nil)
+	responseRaw, err := datamart.client.PostFile(isiSearchFunction, "query", filepath, nil)
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to post to ISI datamart search request")
 	}

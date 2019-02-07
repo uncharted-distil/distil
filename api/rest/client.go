@@ -85,7 +85,7 @@ func (c *Client) PostJSON(function string, json []byte) ([]byte, error) {
 }
 
 // PostFile submits a file in a POST request using a multipart form.
-func (c *Client) PostFile(function string, filename string, params map[string]string) ([]byte, error) {
+func (c *Client) PostFile(function string, fileParameterName string, filename string, params map[string]string) ([]byte, error) {
 	url := fmt.Sprintf("%s/%s", c.BaseEndpoint, function)
 
 	var b bytes.Buffer
@@ -98,7 +98,7 @@ func (c *Client) PostFile(function string, filename string, params map[string]st
 	}
 	defer f.Close()
 
-	fw, err := w.CreateFormFile("file", filename)
+	fw, err := w.CreateFormFile(fileParameterName, filename)
 	if err != nil {
 		return nil, errors.Wrap(err, "Unable to create form request")
 	}
