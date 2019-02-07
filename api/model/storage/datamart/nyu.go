@@ -43,6 +43,20 @@ type SearchResultColumn struct {
 	StructuralType string `json:"structural_type"`
 }
 
+func nyuSearch(datamart *Storage, query *SearchQuery) ([]byte, error) {
+	queryJSON, err := json.Marshal(query)
+	if err != nil {
+		return nil, errors.Wrap(err, "unable to marshal datamart query")
+	}
+
+	responseRaw, err := datamart.client.PostRequest(nyuSearchFunction, map[string]string{"query": string(queryJSON)})
+	if err != nil {
+		return nil, errors.Wrap(err, "unable to post to NYU datamart search request")
+	}
+
+	return responseRaw, nil
+}
+
 func parseNYUSearchResult(responseRaw []byte) ([]*api.Dataset, error) {
 	var dmResult SearchResults
 	err := json.Unmarshal(responseRaw, &dmResult)

@@ -2,11 +2,16 @@ package datamart
 
 import (
 	"encoding/json"
+	"fmt"
+	"os"
 
+	"github.com/mitchellh/hashstructure"
 	"github.com/pkg/errors"
 	"github.com/unchartedsoftware/distil-compute/model"
 	api "github.com/unchartedsoftware/distil/api/model"
 	"github.com/unchartedsoftware/distil/api/task"
+	"github.com/unchartedsoftware/distil/api/util"
+	log "github.com/unchartedsoftware/plog"
 )
 
 // ISISearchResults wraps the response from the ISI datamart.
@@ -63,6 +68,32 @@ type ISIMaterializedDataset struct {
 	Data    string `json:"data"`
 }
 
+func isiSearch(datamart *Storage, query *SearchQuery) ([]byte, error) {
+	queryJSON, err := json.Marshal(query)
+	if err != nil {
+		return nil, errors.Wrap(err, "unable to marshal datamart query")
+	}
+
+	// need to store the query to file and send the file
+	hash, err := hashstructure.Hash(query, nil)
+	if err != nil {
+		return nil, errors.Wrap(err, "unable to hash datamart query")
+	}
+	filepath := datamart.config.GetTmpAbsolutePath(fmt.Sprintf("%v.json", hash))
+
+	err = util.WriteFileWithDirs(filepath, queryJSON, os.ModePerm)
+	if err != nil {
+		return nil, errors.Wrap(err, "unable to store datamart query")
+	}
+
+	responseRaw, err := datamart.client.PostFile(isiSearchFunction, filepath, nil)
+	if err != nil {
+		return nil, errors.Wrap(err, "unable to post to ISI datamart search request")
+	}
+
+	return responseRaw, nil
+}
+
 func parseISISearchResult(responseRaw []byte) ([]*api.Dataset, error) {
 	var dmResult ISISearchResults
 	err := json.Unmarshal(responseRaw, &dmResult)
@@ -88,6 +119,11 @@ func parseISISearchResult(responseRaw []byte) ([]*api.Dataset, error) {
 			Provenance:  ProvenanceISI,
 			Summary:     res.Summary,
 		})
+
+		if len(datasets) > 20 {
+			log.Warnf("TOO MANY RESULTS FROM ISI")
+			break
+		}
 	}
 
 	return datasets, nil
