@@ -71,7 +71,7 @@ func main() {
 	// set dataset directory
 	api.SetDatasetDir(config.TmpDataPath)
 	api.SetInputDir(config.D3MInputDirRoot)
-	api.SetAugmentDir(path.Join(config.TmpDataPath, "augmented"))
+	api.SetAugmentDir(path.Join(config.TmpDataPath, config.AugmentedSubFolder))
 
 	// instantiate elastic client constructor.
 	esClientCtor := elastic.NewClient(config.ElasticEndpoint, false)
@@ -224,7 +224,8 @@ func main() {
 	// Ingest the data specified by the environment
 	if config.InitialDataset != "" && !config.SkipIngest {
 		log.Infof("Loading initial dataset '%s'", config.InitialDataset)
-		err = task.IngestDataset(esMetadataStorageCtor, config.ESDatasetsIndex, config.InitialDataset, metadata.Seed, ingestConfig)
+		util.Copy(config.InitialDataset, path.Join(config.D3MOutputDir, "initial"))
+		err = task.IngestDataset(esMetadataStorageCtor, config.ESDatasetsIndex, "initial", metadata.Contrib, ingestConfig)
 		if err != nil {
 			log.Errorf("%+v", err)
 			os.Exit(1)
@@ -265,7 +266,7 @@ func main() {
 	registerRoutePost(mux, "/distil/correctness-summary/:dataset/:results-uuid", routes.CorrectnessSummaryHandler(pgSolutionStorageCtor, pgDataStorageCtor))
 	registerRoutePost(mux, "/distil/predicted-summary/:dataset/:target/:results-uuid", routes.PredictedSummaryHandler(esMetadataStorageCtor, pgSolutionStorageCtor, pgDataStorageCtor))
 	registerRoutePost(mux, "/distil/geocode/:dataset/:variable", routes.GeocodingHandler(esMetadataStorageCtor, pgDataStorageCtor, sourceFolder))
-	registerRoutePost(mux, "/distil/upload/:dataset", routes.UploadHandler(path.Join(config.TmpDataPath, "augmented"), ingestConfig))
+	registerRoutePost(mux, "/distil/upload/:dataset", routes.UploadHandler(path.Join(config.TmpDataPath, config.AugmentedSubFolder), ingestConfig))
 	registerRoutePost(mux, "/distil/join/:dataset-left/:column-left/:source-left/:dataset-right/:column-right/:source-right", routes.JoinHandler(esMetadataStorageCtor))
 
 	// static

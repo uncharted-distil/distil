@@ -61,6 +61,7 @@ import { Dataset, TableData, TableColumn, TableRow } from '../store/dataset/inde
 import { getters as datasetGetters, actions as datasetActions } from '../store/dataset/module';
 import { getTableDataItems, getTableDataFields } from '../util/data';
 import { SELECT_TARGET_ROUTE } from '../store/route';
+import { isJoinable } from '../util/types';
 
 export default Vue.extend({
 	name: 'join-datasets-form',
@@ -74,7 +75,8 @@ export default Vue.extend({
 		datasetA: String as () => string,
 		datasetB: String as () => string,
 		datasetAColumn: Object as () => TableColumn,
-		datasetBColumn: Object as () => TableColumn
+		datasetBColumn: Object as () => TableColumn,
+		joinAccuracy: Number as () => number,
 	},
 
 	data() {
@@ -96,8 +98,7 @@ export default Vue.extend({
 			return !!this.datasetAColumn && !!this.datasetBColumn;
 		},
 		columnTypesDoNotMatch(): boolean {
-			return this.datasetAColumn && this.datasetBColumn &&
-			this.datasetAColumn.type !== this.datasetBColumn.type;
+			return this.datasetAColumn && this.datasetBColumn && !isJoinable(this.datasetAColumn.type, this.datasetBColumn.type)
 		},
 		isPending(): boolean {
 			return this.pending;
@@ -156,7 +157,8 @@ export default Vue.extend({
 				datasetA: a,
 				datasetB: b,
 				datasetAColumn: this.datasetAColumn.key,
-				datasetBColumn: this.datasetBColumn.key
+				datasetBColumn: this.datasetBColumn.key,
+				joinAccuracy: this.joinAccuracy
 			}).then(tableData => {
 				this.pending = false;
 				this.showJoinSuccess = true;

@@ -40,14 +40,14 @@
 				</div>
 				<div class='col-8'>
 					<div v-if="dataset.summaryML.length > 0">
-						<span><b>Topics:</b></span>
+						<span><b>May relate to topics such as:</b></span>
 						<p class='small-text'>
 							{{dataset.summaryML}}
 						</p>
 					</div>
 					<span><b>Summary:</b></span>
 					<p class='small-text'>
-						{{dataset.summary}}
+						{{dataset.summary || 'n/a'}}
 					</p>
 				</div>
 			</div>

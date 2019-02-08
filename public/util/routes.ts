@@ -19,6 +19,7 @@ export interface RouteArgs {
 	joinDatasets?: string;
 	joinColumnA?: string;
 	joinColumnB?: string;
+	joinAccuracy?: string;
 
 	// we currently don't have a way to add these to the interface
 	//
@@ -80,6 +81,7 @@ function validateQueryArgs(args: RouteArgs): RouteArgs {
 	if (args.joinDatasets) { query.joinDatasets = args.joinDatasets; }
 	if (args.joinColumnA) { query.joinColumnA = args.joinColumnA; }
 	if (args.joinColumnB) { query.joinColumnB = args.joinColumnB; }
+	if (args.joinAccuracy) { query.joinAccuracy = args.joinAccuracy; }
 
 	if (args[JOINED_VARS_INSTANCE_PAGE]) { query[JOINED_VARS_INSTANCE_PAGE] = args[JOINED_VARS_INSTANCE_PAGE]; }
 	if (args[AVAILABLE_TRAINING_VARS_INSTANCE_PAGE]) { query[AVAILABLE_TRAINING_VARS_INSTANCE_PAGE] = args[AVAILABLE_TRAINING_VARS_INSTANCE_PAGE]; }

@@ -49,13 +49,28 @@
 								instance-name="join-dataset-bottom"
 								@col-clicked="onBottomColumnClicked"></join-data-slot>
 						</div>
+						<div class="row pb-5">
+							<div class="join-accuracy-slider col-12 d-flex flex-column align-items-center">
+								<div class="join-accuracy-label">Join Accuracy</div>
+								<vue-slider
+									:min="0"
+									:max="1"
+									:interval="0.01"
+									:value="joinAccuracy"
+									:lazy="true"
+									width="100px"
+									tooltip-dir="bottom"
+									@callback="onJoinAccuracyChanged"/>
+							</div>
+						</div>
 						<div class="row align-items-center">
 							<div class="col-12 d-flex flex-column">
 								<join-datasets-form class="select-create-solutions"
 									:dataset-a="topDataset"
 									:dataset-b="bottomDataset"
 									:dataset-a-column="topColumn"
-									:dataset-b-column="bottomColumn"></join-datasets-form>
+									:dataset-b-column="bottomColumn"
+									:join-accuracy="joinAccuracy"></join-datasets-form>
 							</div>
 						</div>
 					</div>
@@ -69,6 +84,7 @@
 <script lang="ts">
 
 import Vue from 'vue';
+import vueSlider from 'vue-slider-component';
 import JoinDatasetsForm from '../components/JoinDatasetsForm.vue';
 import JoinDataSlot from '../components/JoinDataSlot.vue';
 import VariableFacets from '../components/VariableFacets.vue';
@@ -90,7 +106,8 @@ export default Vue.extend({
 	components: {
 		JoinDatasetsForm,
 		JoinDataSlot,
-		VariableFacets
+		VariableFacets,
+		vueSlider,
 	},
 
 	computed: {
@@ -121,6 +138,9 @@ export default Vue.extend({
 		topColumn(): TableColumn {
 			const colKey = routeGetters.getJoinDatasetColumnA(this.$store);
 			return colKey ? this.topDatasetFields[colKey] : null;
+		},
+		joinAccuracy(): number {
+			return routeGetters.getJoinAccuracy(this.$store);
 		},
 		topDataset(): string {
 			return this.joinDatasets.length >= 1 ? this.joinDatasets[0] : null;
@@ -189,7 +209,13 @@ export default Vue.extend({
 				joinColumnB: column ? column.key : null
 			});
 			this.$router.push(entry);
-		}
+		},
+		onJoinAccuracyChanged(value: number) {
+			const entry = overlayRouteEntry(this.$route, {
+				joinAccuracy: value.toString()
+			});
+			this.$router.push(entry);
+		},
 	}
 });
 
