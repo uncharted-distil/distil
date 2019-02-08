@@ -5,7 +5,7 @@
 			<a class='nav-link'><b>Features:</b> {{dataset.variables.length}}</a>
 			<a class='nav-link'><b>Rows:</b> {{dataset.numRows}}</a>
 			<a class='nav-link'><b>Size:</b> {{formatBytes(dataset.numBytes)}}</a>
-			<a v-if="allowImport && !importPending && isDatamartProvenance(dataset.provenance)">
+			<a v-if="allowImport && !importPending && datamartProvenance(dataset.provenance)">
 				<b-button class="dataset-preview-button" variant="danger" @click.stop='importDataset()'>
 					<div class="row justify-content-center pl-3 pr-3">
 						<i class="fa fa-cloud-download mr-2"></i>
@@ -19,7 +19,7 @@
 					striped
 					:animated="true"></b-progress>
 			</a>
-			<a v-if="allowJoin && !isDatamartProvenance(dataset.provenance)">
+			<a v-if="allowJoin && !datamartProvenance(dataset.provenance)">
 				<b-button class="dataset-preview-button" variant="primary" @click.stop='joinDataset()'>
 					<div class="row justify-content-center pl-3 pr-3">
 						<i class="fa fa-compress mr-2"></i>
@@ -172,6 +172,9 @@ export default Vue.extend({
 		},
 		joinDataset() {
 			this.$emit('join-dataset', this.dataset.id);
+		},
+		datamartProvenance(provenance: string): boolean {
+			return isDatamartProvenance(provenance);
 		}
 
 	}
