@@ -5,10 +5,6 @@ export const NUMERICAL_SUMMARY = 'numerical';
 
 export const D3M_INDEX_FIELD = 'd3mIndex';
 
-export const DATAMART_PROVENANCE = 'datamart';
-export const ELASTIC_PROVENANCE = 'elastic';
-export const FILE_PROVENANCE = 'file';
-
 
 export interface SuggestedType {
 	probability: number;

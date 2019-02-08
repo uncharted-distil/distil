@@ -5,7 +5,7 @@
 			<a class='nav-link'><b>Features:</b> {{dataset.variables.length}}</a>
 			<a class='nav-link'><b>Rows:</b> {{dataset.numRows}}</a>
 			<a class='nav-link'><b>Size:</b> {{formatBytes(dataset.numBytes)}}</a>
-			<a v-if="allowImport && !importPending && dataset.provenance===DATAMART_PROVENANCE">
+			<a v-if="allowImport && !importPending && isDatamartProvenance(dataset.provenance)">
 				<b-button class="dataset-preview-button" variant="danger" @click.stop='importDataset()'>
 					<div class="row justify-content-center pl-3 pr-3">
 						<i class="fa fa-cloud-download mr-2"></i>
@@ -19,7 +19,7 @@
 					striped
 					:animated="true"></b-progress>
 			</a>
-			<a v-if="allowJoin && dataset.provenance!==DATAMART_PROVENANCE">
+			<a v-if="allowJoin && !isDatamartProvenance(dataset.provenance)">
 				<b-button class="dataset-preview-button" variant="primary" @click.stop='joinDataset()'>
 					<div class="row justify-content-center pl-3 pr-3">
 						<i class="fa fa-compress mr-2"></i>
@@ -83,9 +83,9 @@ import Vue from 'vue';
 import ErrorModal from '../components/ErrorModal.vue';
 import { createRouteEntry } from '../util/routes';
 import { formatBytes } from '../util/bytes';
-import { sortVariablesByImportance } from '../util/data';
+import { sortVariablesByImportance, isDatamartProvenance } from '../util/data';
 import { getters as routeGetters } from '../store/route/module';
-import { Dataset, Variable, DATAMART_PROVENANCE } from '../store/dataset/index';
+import { Dataset, Variable } from '../store/dataset/index';
 import { actions as datasetActions } from '../store/dataset/module';
 import { SELECT_TARGET_ROUTE } from '../store/route/index';
 import localStorage from 'store';
@@ -114,9 +114,6 @@ export default Vue.extend({
 		},
 		percentComplete(): number {
 			return 100;
-		},
-		DATAMART_PROVENANCE(): string {
-			return DATAMART_PROVENANCE;
 		}
 	},
 
