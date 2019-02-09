@@ -57,7 +57,20 @@ export default Vue.extend({
 			return this.variable ? this.variable.colOriginalType : '';
 		},
 		suggestedTypes(): SuggestedType[] {
-			return this.variable ? this.variable.suggestedTypes : [];
+			const suggestedType = this.variable ? this.variable.suggestedTypes : [];
+			return _.orderBy(suggestedType, 'probability' , 'desc')
+		},
+		sggestedNonSchemaTypes(): SuggestedType[] {
+			const nonSchemaTypes = _.filter(this.suggestedTypes, t => {
+				return t.provenance !== 'schema';
+			});
+			return nonSchemaTypes;
+		}, 
+		topNonSchemaType(): SuggestedType {
+			return this.sggestedNonSchemaTypes.length > 0 ? this.sggestedNonSchemaTypes[0] : undefined;
+		},
+		suggestedTypeLabels(): string[] {
+			return this.sggestedNonSchemaTypes.map((suggested) => getLabelFromType(suggested.type))
 		},
 		dataset(): string {
 			return routeGetters.getRouteDataset(this.$store);
@@ -84,15 +97,6 @@ export default Vue.extend({
 				return t.provenance === 'schema';
 			});
 		},
-		topNonSchemaType(): SuggestedType {
-			const nonSchemaTypes = _.filter(this.suggestedTypes, t => {
-				return t.provenance !== 'schema';
-			});
-			nonSchemaTypes.sort((a: any, b: any) => {
-				return b.probability - a.probability;
-			});
-			return nonSchemaTypes.length > 0 ? nonSchemaTypes[0] : undefined;
-		},
 		isUnsure(): boolean {
 			return (this.type === this.originalType && // we haven't changed the type
 				this.hasSchemaType && this.hasNonSchemaTypes &&
@@ -113,7 +117,13 @@ export default Vue.extend({
 				return _.map(BASIC_SUGGESTIONS, t => getLabelFromType(t));
 			}
 			const type = getTypeFromLabel(this.label);
-			return _.map(addTypeSuggestions(type, this.values), t => getLabelFromType(t));
+			const missingSuggestions = _.map(addTypeSuggestions(type, this.values), t => getLabelFromType(t));
+			const suggestions = [
+				// ...this.sggestedNonSchemaTypes.map((suggested) => getLabelFromType(suggested.type)),
+				...this.suggestedTypes.map((suggested) => getLabelFromType(suggested.type)),
+				...missingSuggestions
+			]
+			return _.uniq(suggestions);
 		},
 		onTypeChange(suggested) {
 			const type = getTypeFromLabel(suggested);
