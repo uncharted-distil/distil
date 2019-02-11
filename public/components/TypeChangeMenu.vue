@@ -11,7 +11,7 @@
 				:key="suggested.type">
 				<i v-if="suggested.isSelected" class="fa fa-check" aria-hidden="true"></i>
 				{{suggested.label}}
-				<i v-if="suggested.isRecommended" class="fa fa-star-o recommended-icon" aria-hidden="true"></i>
+				<img v-if="suggested.isRecommended" src="/images/recommended.svg" class="recommended-icon"/>
 			</b-dropdown-item>
 		</b-dropdown>
 		<i v-if="isUnsure" class="unsure-type-icon fa fa-circle"></i>
@@ -25,6 +25,7 @@
 
 import _ from 'lodash';
 import Vue from 'vue';
+import '../assets/images/recommended.svg'
 import { SuggestedType, Variable } from '../store/dataset/index';
 import { HighlightRoot } from '../store/highlights/index';
 import { actions as datasetActions, getters as datasetGetters } from '../store/dataset/module';
