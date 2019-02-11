@@ -4,12 +4,9 @@ import (
 	"bufio"
 	"context"
 	"fmt"
-	"io"
 	"net/http"
 	"os"
 	"path"
-	"path/filepath"
-	"strings"
 	"time"
 
 	"github.com/pkg/errors"
@@ -166,7 +163,7 @@ func IngestDataset(metaCtor api.MetadataStorageCtor, index string, dataset strin
 	if err != nil {
 		return errors.Wrap(err, "unable to ingest ranked data")
 	}
-	log.Infof("finished ingestig the dataset")
+	log.Infof("finished ingesting the dataset")
 
 	return nil
 }
@@ -326,18 +323,6 @@ func Ingest(originalSchemaFile string, schemaFile string, storage api.MetadataSt
 	return nil
 }
 
-func fixDatasetIDName(meta *model.Metadata) {
-	// Train dataset ID & name need to be adjusted to fit the expected format.
-	// The ID MUST end in _dataset, and the name should be representative.
-	if isTrainDataset(meta) {
-		meta.ID = strings.TrimSuffix(meta.ID, "_TRAIN")
-	}
-}
-
-func isTrainDataset(meta *model.Metadata) bool {
-	return strings.HasSuffix(meta.ID, "_TRAIN")
-}
-
 func matchDataset(storage api.MetadataStorage, meta *model.Metadata, index string) (string, error) {
 	// load the datasets from ES.
 	datasets, err := storage.FetchDatasets(true, true)
@@ -375,50 +360,6 @@ func deleteDataset(name string, index string, pg *postgres.Database, es *elastic
 
 	if success {
 		pg.DeleteDataset(name)
-	}
-
-	return nil
-}
-
-func copyFileContents(source string, destination string) error {
-	in, err := os.Open(source)
-	if err != nil {
-		return errors.Wrap(err, "unable to open source")
-	}
-	defer in.Close()
-	out, err := os.Create(destination)
-	if err != nil {
-		return errors.Wrap(err, "unable to open destination")
-	}
-	defer func() {
-		cerr := out.Close()
-		if err == nil {
-			err = cerr
-		}
-	}()
-
-	if _, err = io.Copy(out, in); err != nil {
-		return errors.Wrap(err, "unable to copy data")
-	}
-	err = out.Sync()
-	if err != nil {
-		return errors.Wrap(err, "unable to finalize copy")
-	}
-
-	return nil
-}
-
-func translateSchemaRelativeToAbsoluteFilename(schemalFilename string, dataFilename string) string {
-	return path.Join(path.Dir(schemalFilename), dataFilename)
-}
-
-func createContainingDirs(filePath string) error {
-	dirToCreate := filepath.Dir(filePath)
-	if dirToCreate != "/" && dirToCreate != "." {
-		err := os.MkdirAll(dirToCreate, os.ModePerm)
-		if err != nil {
-			return errors.Wrap(err, "unable to create containing directory")
-		}
 	}
 
 	return nil
