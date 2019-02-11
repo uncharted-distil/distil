@@ -171,7 +171,7 @@ func IngestDataset(metaCtor api.MetadataStorageCtor, index string, dataset strin
 // Ingest the metadata to ES and the data to Postgres.
 func Ingest(originalSchemaFile string, schemaFile string, storage api.MetadataStorage, index string, dataset string, source metadata.DatasetSource, config *IngestTaskConfig) error {
 	datasetDir := path.Dir(schemaFile)
-	meta, err := metadata.LoadMetadataFromClassification(schemaFile, path.Join(datasetDir, config.ClassificationOutputPathRelative))
+	meta, err := metadata.LoadMetadataFromClassification(schemaFile, path.Join(datasetDir, config.ClassificationOutputPathRelative), true)
 	if err != nil {
 		return errors.Wrap(err, "unable to load original schema file")
 	}
