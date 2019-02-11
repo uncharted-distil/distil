@@ -1,7 +1,8 @@
 import { Variable, VariableSummary } from '../dataset/index';
 import { HighlightRoot, RowSelection } from '../highlights/index';
-import { JOINED_VARS_INSTANCE_PAGE, AVAILABLE_TRAINING_VARS_INSTANCE_PAGE,
-	TRAINING_VARS_INSTANCE_PAGE, RESULT_TRAINING_VARS_INSTANCE_PAGE } from '../route/index';
+import { JOINED_VARS_INSTANCE_PAGE, AVAILABLE_TARGET_VARS_INSTANCE_PAGE,
+	AVAILABLE_TRAINING_VARS_INSTANCE_PAGE, TRAINING_VARS_INSTANCE_PAGE,
+	RESULT_TRAINING_VARS_INSTANCE_PAGE } from '../route/index';
 import { decodeFilters, Filter, FilterParams } from '../../util/filters';
 import { decodeHighlights } from '../../util/highlights';
 import { decodeRowSelection } from '../../util/row';
@@ -115,6 +116,11 @@ export const getters = {
 
 	getRouteJoinDatasetsVarsParge(state: Route): number {
 		const pageVar = JOINED_VARS_INSTANCE_PAGE;
+		return state.query[pageVar] ? _.toNumber(state.query[pageVar]) : 1;
+	},
+
+	getRouteAvailableTargetVarsPage(state: Route): number {
+		const pageVar = AVAILABLE_TARGET_VARS_INSTANCE_PAGE;
 		return state.query[pageVar] ? _.toNumber(state.query[pageVar]) : 1;
 	},
 
