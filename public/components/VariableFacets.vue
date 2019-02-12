@@ -261,7 +261,7 @@ button {
 .variable-facets-container .facets-root-container .facets-group-container .facets-group .group-header {
 	padding: 4px 8px 6px 8px;
 }
-.variable-facets-container .facets-root-container .facets-group-container .facets-group .group-header .enable-type-change-menu {
+.variable-facets-container .facets-root-container .facets-group-container .facets-group .group-header .type-change-menu {
 	float: right;
 	margin-top: -4px;
 	margin-right: -8px;

@@ -830,6 +830,7 @@ export default Vue.extend({
 					{
 						store: this.$store,
 						propsData: {
+							dataset: group.dataset,
 							field: group.key,
 							values: this.getGroupSampleValues(group)
 						}

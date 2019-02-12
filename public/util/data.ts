@@ -192,5 +192,5 @@ export function getTableDataFields(data: TableData) {
 }
 
 export function isDatamartProvenance(provenance: string): boolean {
-	return provenance===DATAMART_PROVENANCE_NYU || provenance===DATAMART_PROVENANCE_ISI;
+	return provenance === DATAMART_PROVENANCE_NYU || provenance === DATAMART_PROVENANCE_ISI;
 }
