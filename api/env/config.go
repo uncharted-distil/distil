@@ -24,7 +24,8 @@ type Config struct {
 	AugmentedSubFolder                 string  `env:"AUGMENTED_SUBFOLDER" envDefault:"augmented"`
 	D3MInputDir                        string  `env:"D3MINPUTDIR" envDefault:""`
 	D3MInputDirRoot                    string  `env:"D3MINPUTDIR_ROOT" envDefault:"datasets"`
-	DatamartURI                        string  `env:"DATAMART_URI" envDefault:"https://datamart.d3m.vida-nyu.org"`
+	DatamartURIISI                     string  `env:"DATAMART_URI_ISI" envDefault:"https://dsbox02.isi.edu:9000"`
+	DatamartURINYU                     string  `env:"DATAMART_URI_NYU" envDefault:"https://datamart.d3m.vida-nyu.org"`
 	DatamartImportFolder               string  `env:"DATAMART_IMPORT_FOLDER" envDefault:"/data/datamart"`
 	SolutionComputeTrace               bool    `env:"SOLUTION_COMPUTE_TRACE" envDefault:"false"`
 	D3MOutputDir                       string  `env:"D3MOUTPUTDIR" envDefault:"outputs"`
@@ -68,8 +69,6 @@ type Config struct {
 	IngestHardFail                     bool    `env:"INGEST_HARD_FAIL" envDefault:"false"`
 	ServiceRetryCount                  int     `env:"SERVICE_RETRY_COUNT" envDefault:"10"`
 	VerboseError                       bool    `env:"VERBOSE_ERROR" envDefault:"false"`
-	RootResourceDirectory              string  `env:"ROOT_RESOURCE_DIRECTORY" envDefault:"http://localhost:8001"`
-	ResourceProxy                      string  `env:"RESOURCE_PROXY" envDefault:"d_22_hy_dataset_TRAIN,d_66_cn_dataset_TRAIN"`
 	IsTask1                            bool    `env:"TASK1" envDefault:"false"`
 	IsTask2                            bool    `env:"TASK2" envDefault:"false"`
 	SkipPreprocessing                  bool    `env:"SKIP_PREPROCESSING" envDefault:"false"`

@@ -117,7 +117,7 @@ export const actions = {
 			});
 	},
 
-	importDataset(context: DatasetContext, args: { datasetID: string, source: string, terms: string }): Promise<void>  {
+	importDataset(context: DatasetContext, args: { datasetID: string, source: string, provenance: string, terms: string }): Promise<void>  {
 		if (!args.datasetID) {
 			console.warn('`datasetID` argument is missing');
 			return null;
@@ -127,7 +127,7 @@ export const actions = {
 			return null;
 
 		}
-		return axios.post(`/distil/import/${args.datasetID}/${args.source}`, {})
+		return axios.post(`/distil/import/${args.datasetID}/${args.source}/${args.provenance}`, {})
 			.then(response => {
 				return context.dispatch('searchDatasets', args.terms);
 			});
@@ -284,6 +284,7 @@ export const actions = {
 			if (type === IMAGE_TYPE) {
 				return context.dispatch('fetchImage', {
 					dataset: args.dataset,
+					source: 'seed',
 					url: url
 				});
 			}
@@ -307,7 +308,7 @@ export const actions = {
 		}));
 	},
 
-	fetchImage(context: DatasetContext, args: { dataset: string, url: string }) {
+	fetchImage(context: DatasetContext, args: { dataset: string, source: string, url: string }) {
 		if (!args.url) {
 			console.warn('`url` argument is missing');
 			return null;
@@ -316,7 +317,7 @@ export const actions = {
 			console.warn('`dataset` argument is missing');
 			return null;
 		}
-		return loadImage(`distil/image/${args.dataset}/${args.url}`)
+		return loadImage(`distil/image/${args.dataset}/${args.source}/${args.url}`)
 			.then(response => {
 				mutations.updateFile(context, { url: args.url, file: response });
 			})

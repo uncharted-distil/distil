@@ -4,25 +4,18 @@ import (
 	"bytes"
 	"io"
 	"net/http"
-	"os"
-	"path"
 
 	"github.com/pkg/errors"
+	log "github.com/unchartedsoftware/plog"
 	"goji.io/pat"
 
-	"github.com/unchartedsoftware/distil-compute/model"
-	"github.com/unchartedsoftware/distil-compute/primitive/compute"
-
-	"github.com/unchartedsoftware/distil-ingest/metadata"
 	"github.com/unchartedsoftware/distil/api/task"
-	"github.com/unchartedsoftware/distil/api/util"
 )
 
 // UploadHandler uploads a file to the local file system and then imports it.
 func UploadHandler(outputPath string, config *task.IngestTaskConfig) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		dataset := pat.Param(r, "dataset")
-		outputDatasetPath := path.Join(outputPath, dataset)
 
 		// read the file from the request
 		bytes, err := receiveFile(r)
@@ -31,51 +24,13 @@ func UploadHandler(outputPath string, config *task.IngestTaskConfig) func(http.R
 			return
 		}
 
-		// save the csv file in the file system datasets folder
-		dataFilePath := path.Join(compute.D3MDataFolder, compute.D3MLearningData)
-		dataPath := path.Join(outputDatasetPath, dataFilePath)
-		err = util.WriteFileWithDirs(dataPath, bytes, os.ModePerm)
-		if err != nil {
-			handleError(w, errors.Wrap(err, "unable to write raw data file"))
-			return
-		}
-
 		// create the raw dataset schema doc
-		datasetID := model.NormalizeDatasetID(dataset)
-		meta := model.NewMetadata(dataset, dataset, "", datasetID)
-		dr := model.NewDataResource("0", model.ResTypeRaw, []string{compute.D3MResourceFormat})
-		dr.ResPath = dataFilePath
-		meta.DataResources = []*model.DataResource{dr}
-
-		schemaPath := path.Join(outputDatasetPath, compute.D3MDataSchema)
-		err = metadata.WriteSchema(meta, schemaPath)
+		formattedPath, err := task.CreateDataset(dataset, bytes, outputPath, config)
 		if err != nil {
-			handleError(w, errors.Wrap(err, "unable to output schema"))
+			handleError(w, errors.Wrap(err, "unable to create dataset"))
 			return
 		}
-
-		// format the dataset into a D3M format
-		formattedPath, err := task.Format(schemaPath, config)
-		if err != nil {
-			handleError(w, errors.Wrap(err, "unable to format datamart dataset"))
-			return
-		}
-
-		// copy to the original output location for consistency
-		if formattedPath != outputDatasetPath {
-			err = os.RemoveAll(outputDatasetPath)
-			if err != nil {
-				handleError(w, errors.Wrap(err, "unable to delete raw upload dataset"))
-				return
-			}
-
-			err = util.Copy(formattedPath, path.Dir(schemaPath))
-			if err != nil {
-				handleError(w, errors.Wrap(err, "unable to copy formatted datamart dataset"))
-				return
-			}
-		}
-
+		log.Infof("uploaded new dataset %s at %s", dataset, formattedPath)
 		// marshal data and sent the response back
 		err = handleJSON(w, map[string]interface{}{"result": "uploaded"})
 		if err != nil {

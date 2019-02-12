@@ -154,6 +154,7 @@ export default Vue.extend({
 			this.hasRequested = true;
 			datasetActions.fetchImage(this.$store, {
 				dataset: this.dataset,
+				source: 'seed',
 				url: this.imageUrl
 			}).then(() => {
 				if (this.isVisible) {

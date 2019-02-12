@@ -104,7 +104,8 @@ export default Vue.extend({
 			datasetActions.importDataset(this.$store, {
 				datasetID: this.joinedDatasetID,
 				terms: this.terms,
-				source: 'augmented'
+				source: 'augmented',
+				provenance: 'local'
 			}).then(() => {
 				this.$emit('success', this.joinedDatasetID);
 				this.pending = false;

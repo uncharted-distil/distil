@@ -216,8 +216,10 @@ func main() {
 	sourceFolder := config.DataFolderPath
 
 	// instantiate the metadata storage (using datamart).
-	datamartClientCtor := rest.NewClient(config.DatamartURI)
-	datamartMetadataStorageCtor := dm.NewMetadataStorage(config.DatamartImportFolder, ingestConfig, datamartClientCtor)
+	nyuDatamartClientCtor := rest.NewClient(config.DatamartURINYU)
+	isiDatamartClientCtor := rest.NewClient(config.DatamartURIISI)
+	nyuDatamartMetadataStorageCtor := dm.NewNYUMetadataStorage(config.DatamartImportFolder, ingestConfig, nyuDatamartClientCtor)
+	isiDatamartMetadataStorageCtor := dm.NewISIMetadataStorage(config.DatamartImportFolder, ingestConfig, isiDatamartClientCtor)
 
 	// Ingest the data specified by the environment
 	if config.InitialDataset != "" && !config.SkipIngest {
@@ -230,7 +232,6 @@ func main() {
 		}
 		sourceFolder = path.Dir(ingestConfig.GetTmpAbsolutePath(ingestConfig.GeocodingOutputSchemaRelative))
 	}
-	datasetsToProxy := parseResourceProxy(config.ResourceProxy)
 
 	// register routes
 	mux := goji.NewMux()
@@ -240,7 +241,7 @@ func main() {
 	routes.SetVerboseError(config.VerboseError)
 
 	// GET
-	registerRoute(mux, "/distil/datasets", routes.DatasetsHandler([]model.MetadataStorageCtor{esMetadataStorageCtor, datamartMetadataStorageCtor}))
+	registerRoute(mux, "/distil/datasets", routes.DatasetsHandler([]model.MetadataStorageCtor{esMetadataStorageCtor, nyuDatamartMetadataStorageCtor, isiDatamartMetadataStorageCtor}))
 	registerRoute(mux, "/distil/datasets/:dataset", routes.DatasetHandler(esMetadataStorageCtor))
 	registerRoute(mux, "/distil/solutions/:dataset/:target/:solution-id", routes.SolutionHandler(pgSolutionStorageCtor))
 	registerRoute(mux, "/distil/variables/:dataset", routes.VariablesHandler(esMetadataStorageCtor))
@@ -255,7 +256,7 @@ func main() {
 	registerRoutePost(mux, "/distil/variables/:dataset", routes.VariableTypeHandler(pgDataStorageCtor, esMetadataStorageCtor))
 	registerRoutePost(mux, "/distil/discovery/:dataset/:target", routes.ProblemDiscoveryHandler(pgDataStorageCtor, esMetadataStorageCtor, config.UserProblemPath, userAgent, config.SkipPreprocessing))
 	registerRoutePost(mux, "/distil/data/:dataset/:invert", routes.DataHandler(pgDataStorageCtor, esMetadataStorageCtor))
-	registerRoutePost(mux, "/distil/import/:datasetID/:source", routes.ImportHandler(datamartMetadataStorageCtor, fileMetadataStorageCtor, esMetadataStorageCtor, ingestConfig))
+	registerRoutePost(mux, "/distil/import/:datasetID/:source/:provenance", routes.ImportHandler(nyuDatamartMetadataStorageCtor, isiDatamartMetadataStorageCtor, fileMetadataStorageCtor, esMetadataStorageCtor, ingestConfig))
 	registerRoutePost(mux, "/distil/results/:dataset/:solution-id", routes.ResultsHandler(pgSolutionStorageCtor, pgDataStorageCtor))
 	registerRoutePost(mux, "/distil/variable-summary/:dataset/:variable", routes.VariableSummaryHandler(pgDataStorageCtor))
 	registerRoutePost(mux, "/distil/training-summary/:dataset/:variable/:results-uuid", routes.TrainingSummaryHandler(pgSolutionStorageCtor, pgDataStorageCtor))
@@ -268,9 +269,9 @@ func main() {
 	registerRoutePost(mux, "/distil/join/:dataset-left/:column-left/:source-left/:dataset-right/:column-right/:source-right", routes.JoinHandler(esMetadataStorageCtor))
 
 	// static
-	registerRoute(mux, "/distil/image/:dataset/:file", routes.ImageHandler(config.DataFolderPath, config.RootResourceDirectory, datasetsToProxy))
-	registerRoute(mux, "/distil/timeseries/:dataset/:source/:file", routes.TimeseriesHandler(esMetadataStorageCtor, config.DataFolderPath, config.RootResourceDirectory, datasetsToProxy, &config))
-	registerRoute(mux, "/distil/graphs/:dataset/:file", routes.GraphsHandler(config.DataFolderPath, config.RootResourceDirectory, datasetsToProxy))
+	registerRoute(mux, "/distil/image/:dataset/:source/:file", routes.ImageHandler(esMetadataStorageCtor, &config))
+	registerRoute(mux, "/distil/timeseries/:dataset/:source/:file", routes.TimeseriesHandler(esMetadataStorageCtor, config.DataFolderPath, &config))
+	registerRoute(mux, "/distil/graphs/:dataset/:file", routes.GraphsHandler(config.DataFolderPath))
 	registerRoute(mux, "/*", routes.FileHandler("./dist"))
 
 	// catch kill signals for graceful shutdown

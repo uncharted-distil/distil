@@ -12,7 +12,10 @@
 						{{target.toUpperCase()}} is being modeled as a
 					</div>
 					<div class="pl-2">
-						<type-change-menu :field="target" :values="targetSampleValues"></type-change-menu>
+						<type-change-menu
+							:dataset="dataset"
+							:field="target"
+							:values="targetSampleValues"></type-change-menu>
 					</div>
 				</div>
 				<div class="row col-12 pl-4">
@@ -78,6 +81,9 @@ export default Vue.extend({
 	},
 
 	computed: {
+		dataset(): string {
+			return routeGetters.getRouteDataset(this.$store);
+		},
 		training(): string {
 			return routeGetters.getRouteTrainingVariables(this.$store);
 		},

@@ -14,6 +14,11 @@ export const ERROR_SUFFIX = '_error';
 
 export const NUM_PER_PAGE = 10;
 
+export const DATAMART_PROVENANCE_NYU = 'datamartNYU';
+export const DATAMART_PROVENANCE_ISI = 'datamartISI';
+export const ELASTIC_PROVENANCE = 'elastic';
+export const FILE_PROVENANCE = 'file';
+
 export function updateSummaries(summary: VariableSummary, summaries: VariableSummary[]) {
 	const index = _.findIndex(summaries, s => {
 		return s.dataset === summary.dataset && s.key === summary.key;
@@ -184,4 +189,8 @@ export function getTableDataFields(data: TableData) {
 		return result;
 	}
 	return {};
+}
+
+export function isDatamartProvenance(provenance: string): boolean {
+	return provenance === DATAMART_PROVENANCE_NYU || provenance === DATAMART_PROVENANCE_ISI;
 }

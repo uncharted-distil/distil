@@ -1,5 +1,5 @@
 <template>
-	<div class="enable-type-change-menu">
+	<div class="type-change-menu">
 		<b-dropdown variant="secondary" class="var-type-button"
 			id="type-change-dropdown"
 			:text="label"
@@ -36,9 +36,10 @@ import { hasFilterInRoute } from '../util/filters';
 const PROBABILITY_THRESHOLD = 0.8;
 
 export default Vue.extend({
-	name: 'enable-type-change-menu',
+	name: 'type-change-menu',
 
 	props: {
+		dataset: String as () => string,
 		field: String as () => string,
 		values: Array as () => any[],
 	},
@@ -75,9 +76,6 @@ export default Vue.extend({
 		},
 		topNonSchemaType(): SuggestedType {
 			return this.sggestedNonSchemaTypes.length > 0 ? this.sggestedNonSchemaTypes[0] : undefined;
-		},
-		dataset(): string {
-			return routeGetters.getRouteDataset(this.$store);
 		},
 		target(): string {
 			return routeGetters.getRouteTargetVariable(this.$store);
@@ -189,7 +187,7 @@ export default Vue.extend({
 	border-color: #424242;
 	box-shadow: none;
 }
-.enable-type-change-menu .dropdown-item {
+.type-change-menu .dropdown-item {
 	font-size: 0.867rem;
 	text-transform: none;
 	position: relative;

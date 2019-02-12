@@ -1,18 +1,10 @@
 package datamart
 
 import (
-	"encoding/json"
-	"fmt"
-	"os"
-	"path"
 	"strings"
 
 	"github.com/pkg/errors"
-	"github.com/unchartedsoftware/distil-compute/model"
-	"github.com/unchartedsoftware/distil-compute/primitive/compute"
 	api "github.com/unchartedsoftware/distil/api/model"
-	"github.com/unchartedsoftware/distil/api/task"
-	"github.com/unchartedsoftware/distil/api/util"
 )
 
 const (
@@ -20,10 +12,11 @@ const (
 	// elasticsearch.
 	metadataType     = "metadata"
 	datasetsListSize = 1000
-	// Provenance for datamart
-	Provenance         = "datamart"
-	searchRESTFunction = "search"
-	getRESTFunction    = "download"
+	// ProvenanceNYU for NYU datamart
+	ProvenanceNYU = "datamartNYU"
+	// ProvenanceISI for ISI datamart
+	ProvenanceISI   = "datamartISI"
+	getRESTFunction = "download"
 )
 
 // SearchQuery contains the basic properties to query.
@@ -39,84 +32,10 @@ type SearchQueryDatasetProperties struct {
 	Keywords    []string `json:"keywords,omitempty"`
 }
 
-// SearchResults is the basic search result container.
-type SearchResults struct {
-	Results []*SearchResult `json:"results"`
-}
-
-// SearchResult contains the basic dataset info.
-type SearchResult struct {
-	ID         string                `json:"id"`
-	Score      float64               `json:"score"`
-	Discoverer string                `json:"discoverer"`
-	Metadata   *SearchResultMetadata `json:"metadata"`
-}
-
-// SearchResultMetadata represents the dataset metadata.
-type SearchResultMetadata struct {
-	Name        string                `json:"name"`
-	Description string                `json:"description"`
-	Size        float64               `json:"size"`
-	NumRows     float64               `json:"nb_rows"`
-	Columns     []*SearchResultColumn `json:"columns"`
-	Date        string                `json:"date"`
-}
-
-// SearchResultColumn has information on a dataset column.
-type SearchResultColumn struct {
-	Name           string `json:"name"`
-	StructuralType string `json:"structural_type"`
-}
-
 // ImportDataset makes the dataset available for ingest and returns
 // the URI to use for ingest.
 func (s *Storage) ImportDataset(id string, uri string) (string, error) {
-	//TODO: MAKE THIS WORK ON APIs OTHER THAN NYU!
-	name := path.Base(uri)
-	// get the compressed dataset
-	requestURI := fmt.Sprintf("%s/%s", getRESTFunction, id)
-	params := map[string]string{
-		"format": "d3m",
-	}
-	data, err := s.client.Get(requestURI, params)
-	if err != nil {
-		return "", err
-	}
-
-	// write the compressed dataset to disk
-	zipFilename := path.Join(s.outputPath, fmt.Sprintf("%s.zip", name))
-	err = util.WriteFileWithDirs(zipFilename, data, os.ModePerm)
-	if err != nil {
-		return "", errors.Wrap(err, "unable to store dataset from datamart")
-	}
-
-	// expand the archive into a dataset folder
-	extractedArchivePath := path.Join(s.outputPath, name)
-	err = util.Unzip(zipFilename, extractedArchivePath)
-	if err != nil {
-		return "", errors.Wrap(err, "unable to extract datamart archive")
-	}
-
-	// format the dataset
-	extractedSchema := path.Join(extractedArchivePath, compute.D3MDataSchema)
-	formattedPath, err := task.Format(extractedSchema, s.config)
-	if err != nil {
-		return "", errors.Wrap(err, "unable to format datamart dataset")
-	}
-
-	// copy the formatted output to the datamart output path (delete existing copy)
-	err = util.RemoveContents(s.outputPath)
-	if err != nil {
-		return "", errors.Wrap(err, "unable to delete raw datamart dataset")
-	}
-
-	err = util.Copy(formattedPath, extractedArchivePath)
-	if err != nil {
-		return "", errors.Wrap(err, "unable to copy formatted datamart dataset")
-	}
-
-	// return the location of the expanded dataset folder
-	return formattedPath, nil
+	return s.download(s, id, uri)
 }
 
 // FetchDatasets returns all datasets in the provided index.
@@ -133,12 +52,10 @@ func (s *Storage) FetchDataset(datasetName string, includeIndex bool, includeMet
 // SearchDatasets returns the datasets that match the search criteria in the
 // provided index.
 func (s *Storage) SearchDatasets(terms string, includeIndex bool, includeMeta bool) ([]*api.Dataset, error) {
-	rawSets, err := s.searchREST(terms)
-	if err != nil {
-		return nil, err
+	if terms == "" {
+		return make([]*api.Dataset, 0), nil
 	}
-
-	return s.parseDatasets(rawSets)
+	return s.searchREST(terms)
 }
 
 // SetDataType is not supported by the datamart.
@@ -156,32 +73,7 @@ func (s *Storage) DeleteVariable(dataset string, varName string) error {
 	return errors.Errorf("Not supported")
 }
 
-func (s *Storage) parseDatasets(raw *SearchResults) ([]*api.Dataset, error) {
-	datasets := make([]*api.Dataset, 0)
-
-	for _, res := range raw.Results {
-		vars := make([]*model.Variable, 0)
-		for _, c := range res.Metadata.Columns {
-			vars = append(vars, &model.Variable{
-				Name:        c.Name,
-				DisplayName: c.Name,
-			})
-		}
-		datasets = append(datasets, &api.Dataset{
-			ID:          res.ID,
-			Name:        res.Metadata.Name,
-			Description: res.Metadata.Description,
-			NumRows:     int64(res.Metadata.NumRows),
-			NumBytes:    int64(res.Metadata.Size),
-			Variables:   vars,
-			Provenance:  Provenance,
-		})
-	}
-
-	return datasets, nil
-}
-
-func (s *Storage) searchREST(searchText string) (*SearchResults, error) {
+func (s *Storage) searchREST(searchText string) ([]*api.Dataset, error) {
 	terms := strings.Fields(searchText)
 
 	// get complete URI for the endpoint
@@ -193,22 +85,16 @@ func (s *Storage) searchREST(searchText string) (*SearchResults, error) {
 			//Keywords:    terms,
 		},
 	}
-	queryJSON, err := json.Marshal(query)
-	if err != nil {
-		return nil, errors.Wrap(err, "unable to marshal datamart query")
-	}
 
-	responseRaw, err := s.client.PostJSON(searchRESTFunction, queryJSON)
+	responseRaw, err := s.search(s, query)
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to post datamart search request")
 	}
 
-	// parse result
-	var dmResult SearchResults
-	err = json.Unmarshal(responseRaw, &dmResult)
+	datasets, err := s.parse(responseRaw)
 	if err != nil {
-		return nil, errors.Wrap(err, "unable to parse datamart search request")
+		return nil, errors.Wrap(err, "unable to parse datamart search response")
 	}
 
-	return &dmResult, nil
+	return datasets, nil
 }
