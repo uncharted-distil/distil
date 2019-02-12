@@ -23,12 +23,26 @@
 import Vue from 'vue';
 import AvailableTargetVariables from '../components/AvailableTargetVariables.vue';
 import { actions as viewActions } from '../store/view/module';
+import { getters as routeGetters } from '../store/route/module';
 
 export default Vue.extend({
 	name: 'select-view',
 
 	components: {
 		AvailableTargetVariables
+	},
+
+	computed: {
+
+		availableTargetVarsPage(): number {
+			return routeGetters.getRouteAvailableTargetVarsPage(this.$store);
+		},
+	},
+
+	watch: {
+		availableTargetVarsPage() {
+			viewActions.fetchSelectTargetData(this.$store);
+		}
 	},
 
 	beforeMount() {
