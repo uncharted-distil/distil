@@ -41,8 +41,6 @@ import { NUM_PER_PAGE } from '../util/data';
 import { overlayRouteEntry } from '../util/routes';
 import { removeFiltersByName } from '../util/filters';
 
-import 'font-awesome/css/font-awesome.css';
-
 export default Vue.extend({
 	name: 'training-variables',
 

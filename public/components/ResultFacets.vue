@@ -46,9 +46,6 @@ import { getters as resultsGetters } from '../store/results/module';
 import { getters as routeGetters } from '../store/route/module';
 import { getters as solutionGetters, actions as solutionActions } from '../store/solutions/module';
 
-import 'font-awesome/css/font-awesome.css';
-import '../styles/spinner.css';
-
 interface SummaryGroup {
 	requestId: string;
 	solutionId: string;

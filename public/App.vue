@@ -19,6 +19,7 @@ import { getters as appGetters, actions as appActions } from './store/app/module
 import { HOME_ROUTE, SELECT_TARGET_ROUTE, SELECT_TRAINING_ROUTE } from './store/route';
 import { createRouteEntry } from './util/routes';
 
+import 'font-awesome/css/font-awesome.css';
 import 'bootstrap-vue/dist/bootstrap-vue.css';
 import './styles/bootstrap-v4beta2-custom.css';
 import './styles/main.css';

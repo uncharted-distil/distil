@@ -44,7 +44,6 @@ import { getters as resultsGetters } from '../store/results/module';
 import { getters as routeGetters } from '../store/route/module';
 import vueSlider from 'vue-slider-component';
 import Vue from 'vue';
-import 'font-awesome/css/font-awesome.css';
 
 const DEFAULT_PERCENTILE = 0.25;
 const NUM_STEPS = 100;

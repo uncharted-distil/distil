@@ -13,7 +13,7 @@
 			</div>
 		</div>
 		<div class="row flex-10 justify-content-center pb-3">
-			<div class="col-12 col-md-10 d-flex">
+			<div class="search-container col-12 col-md-10 d-flex">
 				<search-results class="search-search-results"
 					:is-pending="isPending"
 					v-on:join-dataset="onJoin">
@@ -173,6 +173,9 @@ export default Vue.extend({
 .search-search-bar {
 	width: 100%;
 	box-shadow: 0 1px 2px 0 rgba(0,0,0,0.10);
+}
+.search-container {
+	height: 100%;
 }
 .close-join-button {
 	position: absolute;
