@@ -8,7 +8,7 @@
 			</div>
 			<div v-if="enableTitle" class="row flex-1 align-items-center">
 				<div class="col-12 flex-column d-flex">
-					<p>Select one of the following feature summaries (sorted by interestingness) showing count of records by feature value.</p>
+					<p><b>Select Feature to Predict</b> Select from potential features of interest below. Each feature tile shown summarizes count of records by value.</p>
 				</div>
 			</div>
 			<div class="pl-1 pr-1">
