@@ -63,7 +63,7 @@ export default Vue.extend({
 					variant: null
 				};
 
-				const isFieldSelected = this.selectedColumn && field.key === this.selectedColumn.key; 
+				const isFieldSelected = this.selectedColumn && field.key === this.selectedColumn.key;
 				const isFieldJoinable = this.otherSelectedColumn && isJoinable(field.type, this.otherSelectedColumn.type);
 
 				if (isFieldSelected) {

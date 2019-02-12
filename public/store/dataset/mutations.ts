@@ -62,7 +62,18 @@ export const mutations = {
 	},
 
 	setVariables(state: DatasetState, variables: Variable[]) {
-		state.variables = variables;
+		const typeChangedVariables = state.variables.filter(variable => variable.isColTypeChanged);
+		const newVariables = variables.map(variable => {
+			const isVarTypeChanged = typeChangedVariables.find(typeChangedVar => {
+					return typeChangedVar.datasetName === variable.datasetName
+						&& typeChangedVar.colName === variable.colName;
+				});
+			if (isVarTypeChanged) {
+				variable.isColTypeChanged = true;
+			}
+			return variable;
+		});
+		state.variables = newVariables;
 	},
 
 	updateVariableType(state: DatasetState, update) {
@@ -70,6 +81,7 @@ export const mutations = {
 			return v.colName === update.field;
 		});
 		state.variables[index].colType = update.type;
+		state.variables[index].isColTypeChanged = update.isTypeChanged;
 	},
 
 	updateVariableSummaries(state: DatasetState, summary: VariableSummary) {
