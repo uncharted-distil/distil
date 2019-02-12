@@ -192,7 +192,7 @@ export default Vue.extend({
 	text-transform: none;
 	position: relative;
 }
-.enable-type-change-menu .dropdown-item.selected {
+.type-change-menu .dropdown-item.selected {
 	font-size: 0.867rem;
 	text-transform: none;
 	padding-left: 0;
