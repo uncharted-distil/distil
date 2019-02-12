@@ -270,9 +270,9 @@ func main() {
 	registerRoutePost(mux, "/distil/join/:dataset-left/:column-left/:source-left/:dataset-right/:column-right/:source-right", routes.JoinHandler(esMetadataStorageCtor))
 
 	// static
-	registerRoute(mux, "/distil/image/:dataset/:file", routes.ImageHandler(config.DataFolderPath, config.RootResourceDirectory, datasetsToProxy))
-	registerRoute(mux, "/distil/timeseries/:dataset/:source/:file", routes.TimeseriesHandler(esMetadataStorageCtor, config.DataFolderPath, config.RootResourceDirectory, datasetsToProxy, &config))
-	registerRoute(mux, "/distil/graphs/:dataset/:file", routes.GraphsHandler(config.DataFolderPath, config.RootResourceDirectory, datasetsToProxy))
+	registerRoute(mux, "/distil/image/:dataset/:file", routes.ImageHandler(config.DataFolderPath))
+	registerRoute(mux, "/distil/timeseries/:dataset/:source/:file", routes.TimeseriesHandler(esMetadataStorageCtor, config.DataFolderPath, &config))
+	registerRoute(mux, "/distil/graphs/:dataset/:file", routes.GraphsHandler(config.DataFolderPath))
 	registerRoute(mux, "/*", routes.FileHandler("./dist"))
 
 	// catch kill signals for graceful shutdown

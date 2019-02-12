@@ -69,8 +69,6 @@ type Config struct {
 	IngestHardFail                     bool    `env:"INGEST_HARD_FAIL" envDefault:"false"`
 	ServiceRetryCount                  int     `env:"SERVICE_RETRY_COUNT" envDefault:"10"`
 	VerboseError                       bool    `env:"VERBOSE_ERROR" envDefault:"false"`
-	RootResourceDirectory              string  `env:"ROOT_RESOURCE_DIRECTORY" envDefault:"http://localhost:8001"`
-	ResourceProxy                      string  `env:"RESOURCE_PROXY" envDefault:"d_22_hy_dataset_TRAIN,d_66_cn_dataset_TRAIN"`
 	IsTask1                            bool    `env:"TASK1" envDefault:"false"`
 	IsTask2                            bool    `env:"TASK2" envDefault:"false"`
 	SkipPreprocessing                  bool    `env:"SKIP_PREPROCESSING" envDefault:"false"`
