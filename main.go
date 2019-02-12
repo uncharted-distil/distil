@@ -232,7 +232,6 @@ func main() {
 		}
 		sourceFolder = path.Dir(ingestConfig.GetTmpAbsolutePath(ingestConfig.GeocodingOutputSchemaRelative))
 	}
-	datasetsToProxy := parseResourceProxy(config.ResourceProxy)
 
 	// register routes
 	mux := goji.NewMux()
