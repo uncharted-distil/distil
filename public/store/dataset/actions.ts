@@ -276,6 +276,7 @@ export const actions = {
 			if (type === IMAGE_TYPE) {
 				return context.dispatch('fetchImage', {
 					dataset: args.dataset,
+					source: 'seed',
 					url: url
 				});
 			}
@@ -299,7 +300,7 @@ export const actions = {
 		}));
 	},
 
-	fetchImage(context: DatasetContext, args: { dataset: string, url: string }) {
+	fetchImage(context: DatasetContext, args: { dataset: string, source: string, url: string }) {
 		if (!args.url) {
 			console.warn('`url` argument is missing');
 			return null;
@@ -308,7 +309,7 @@ export const actions = {
 			console.warn('`dataset` argument is missing');
 			return null;
 		}
-		return loadImage(`distil/image/${args.dataset}/${args.url}`)
+		return loadImage(`distil/image/${args.dataset}/${args.source}/${args.url}`)
 			.then(response => {
 				mutations.updateFile(context, { url: args.url, file: response });
 			})
