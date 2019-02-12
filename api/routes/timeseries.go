@@ -28,7 +28,7 @@ type TimeseriesResult struct {
 }
 
 // TimeseriesHandler provides a static file lookup route using simple directory mapping.
-func TimeseriesHandler(ctor model.MetadataStorageCtor, resourceDir string, proxyServer string, proxy map[string]bool, config *env.Config) func(http.ResponseWriter, *http.Request) {
+func TimeseriesHandler(ctor model.MetadataStorageCtor, resourceDir string, config *env.Config) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// resources can either be local or remote
 		dataset := pat.Param(r, "dataset")
@@ -51,7 +51,7 @@ func TimeseriesHandler(ctor model.MetadataStorageCtor, resourceDir string, proxy
 
 		resolver := createResolverForResource(api.DatasetSource(source), res.Folder, config)
 
-		bytes, err := fetchResourceBytes(resolver.ResolveInputAbsolute(""), proxyServer, proxy, dataset, path)
+		bytes, err := fetchResourceBytes(resolver.ResolveInputAbsolute(""), dataset, path)
 		if err != nil {
 			handleError(w, err)
 			return
