@@ -55,8 +55,6 @@ import { getters as routeGetters } from '../store/route/module';
 import { ROUTE_PAGE_SUFFIX } from '../store/route/index';
 import { Group } from '../util/facets';
 import { updateHighlightRoot, getHighlights, clearHighlightRoot } from '../util/highlights';
-import 'font-awesome/css/font-awesome.css';
-import '../styles/spinner.css';
 import Vue from 'vue';
 
 export default Vue.extend({

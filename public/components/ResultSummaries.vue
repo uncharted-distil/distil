@@ -44,7 +44,6 @@ import { EXPORT_SUCCESS_ROUTE } from '../store/route/index';
 import { Variable } from '../store/dataset/index';
 import vueSlider from 'vue-slider-component';
 import Vue from 'vue';
-import 'font-awesome/css/font-awesome.css';
 import { Solution } from '../store/solutions/index';
 
 export default Vue.extend({

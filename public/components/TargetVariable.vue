@@ -20,8 +20,6 @@ import { Variable, VariableSummary } from '../store/dataset/index';
 import { getHighlights, updateHighlightRoot } from '../util/highlights';
 import { isNumericType } from '../util/types';
 
-import 'font-awesome/css/font-awesome.css';
-
 export default Vue.extend({
 	name: 'target-variable',
 
