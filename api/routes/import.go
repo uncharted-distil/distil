@@ -51,7 +51,7 @@ func ImportHandler(nyuDatamartMetaCtor model.MetadataStorageCtor, isiDatamartMet
 		}
 
 		// ingest the imported dataset
-		err = task.IngestDataset(esMetaCtor, cfg.ESDatasetsIndex, datasetID, source, &ingestConfig)
+		err = task.IngestDataset(source, esMetaCtor, cfg.ESDatasetsIndex, datasetID, &ingestConfig)
 		if err != nil {
 			handleError(w, err)
 			return

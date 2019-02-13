@@ -19,8 +19,8 @@ const (
 )
 
 // Cluster will cluster the dataset fields using a primitive.
-func Cluster(schemaFile string, index string, dataset string, config *IngestTaskConfig) (string, error) {
-	outputPath, err := initializeDatasetCopy(schemaFile, dataset, config.ClusteringOutputSchemaRelative, config.ClusteringOutputDataRelative, config)
+func Cluster(datasetSource metadata.DatasetSource, schemaFile string, index string, dataset string, config *IngestTaskConfig) (string, error) {
+	outputPath, err := initializeDatasetCopy(datasetSource, schemaFile, dataset, config.ClusteringOutputSchemaRelative, config.ClusteringOutputDataRelative)
 	if err != nil {
 		return "", errors.Wrap(err, "unable to copy source data folder")
 	}

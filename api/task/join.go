@@ -171,8 +171,10 @@ func createDatasetFromCSV(config *env.Config, csvFile *os.File, datasetName stri
 
 	metadata.DataResources = []*model.DataResource{dataResource}
 
-	outputResolver := createResolver(ingestMetadata.Contrib, config)
-	outputPath := outputResolver.ResolveOutputAbsolute(datasetName)
+	outputPath, err := env.ResolvePath(ingestMetadata.Contrib, datasetName)
+	if err != nil {
+		return nil, errors.Wrapf(err, "unabled to resolve path")
+	}
 
 	// create dest csv file
 	csvDestFolder := path.Join(outputPath, compute.D3MDataFolder)

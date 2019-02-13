@@ -36,7 +36,7 @@ func CreateDataset(dataset string, csvData []byte, outputPath string, config *In
 	}
 
 	// format the dataset into a D3M format
-	formattedPath, err := Format(schemaPath, config)
+	formattedPath, err := Format(metadata.Contrib, schemaPath, config)
 	if err != nil {
 		return "", err
 	}

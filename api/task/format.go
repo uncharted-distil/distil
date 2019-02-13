@@ -15,7 +15,7 @@ import (
 )
 
 // Format will format a dataset to have the required structures for D3M.
-func Format(schemaFile string, config *IngestTaskConfig) (string, error) {
+func Format(datasetSource metadata.DatasetSource, schemaFile string, config *IngestTaskConfig) (string, error) {
 	meta, err := metadata.LoadMetadataFromOriginalSchema(schemaFile)
 	if err != nil {
 		return "", errors.Wrap(err, "unable to load original schema file")
@@ -28,7 +28,7 @@ func Format(schemaFile string, config *IngestTaskConfig) (string, error) {
 	dr := meta.DataResources[0]
 
 	// copy the data to a new directory
-	outputPath, err := initializeDatasetCopy(schemaFile, path.Base(path.Dir(schemaFile)), config.FormatOutputSchemaRelative, config.FormatOutputDataRelative, config)
+	outputPath, err := initializeDatasetCopy(datasetSource, schemaFile, path.Base(path.Dir(schemaFile)), config.FormatOutputSchemaRelative, config.FormatOutputDataRelative)
 	if err != nil {
 		return "", errors.Wrap(err, "unable to copy source data folder")
 	}

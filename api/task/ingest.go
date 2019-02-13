@@ -75,7 +75,7 @@ func (c *IngestTaskConfig) GetTmpAbsolutePath(relativePath string) string {
 }
 
 // IngestDataset executes the complete ingest process for the specified dataset.
-func IngestDataset(metaCtor api.MetadataStorageCtor, index string, dataset string, source metadata.DatasetSource, config *IngestTaskConfig) error {
+func IngestDataset(datasetSource metadata.DatasetSource, metaCtor api.MetadataStorageCtor, index string, dataset string, config *IngestTaskConfig) error {
 	// Set the probability threshold
 	metadata.SetTypeProbabilityThreshold(config.ClassificationProbabilityThreshold)
 
@@ -87,14 +87,14 @@ func IngestDataset(metaCtor api.MetadataStorageCtor, index string, dataset strin
 	originalSchemaFile := config.GetAbsolutePath(config.SchemaPathRelative)
 	latestSchemaOutput := originalSchemaFile
 
-	output, err := Merge(latestSchemaOutput, index, dataset, config)
+	output, err := Merge(datasetSource, latestSchemaOutput, index, dataset, config)
 	if err != nil {
 		return errors.Wrap(err, "unable to merge all data into a single file")
 	}
 	latestSchemaOutput = output
 	log.Infof("finished merging the dataset")
 
-	output, err = Clean(latestSchemaOutput, index, dataset, config)
+	output, err = Clean(datasetSource, latestSchemaOutput, index, dataset, config)
 	if err != nil {
 		return errors.Wrap(err, "unable to clean all data")
 	}
@@ -102,7 +102,7 @@ func IngestDataset(metaCtor api.MetadataStorageCtor, index string, dataset strin
 	log.Infof("finished cleaning the dataset")
 
 	if config.ClusteringEnabled {
-		output, err = Cluster(latestSchemaOutput, index, dataset, config)
+		output, err = Cluster(datasetSource, latestSchemaOutput, index, dataset, config)
 		if err != nil {
 			if config.HardFail {
 				return errors.Wrap(err, "unable to cluster all data")
@@ -114,7 +114,7 @@ func IngestDataset(metaCtor api.MetadataStorageCtor, index string, dataset strin
 		log.Infof("finished clustering the dataset")
 	}
 
-	output, err = Featurize(latestSchemaOutput, index, dataset, config)
+	output, err = Featurize(datasetSource, latestSchemaOutput, index, dataset, config)
 	if err != nil {
 		if config.HardFail {
 			return errors.Wrap(err, "unable to featurize all data")
@@ -151,7 +151,7 @@ func IngestDataset(metaCtor api.MetadataStorageCtor, index string, dataset strin
 	}
 
 	if config.GeocodingEnabled {
-		output, err = GeocodeForwardDataset(latestSchemaOutput, index, dataset, config)
+		output, err = GeocodeForwardDataset(datasetSource, latestSchemaOutput, index, dataset, config)
 		if err != nil {
 			return errors.Wrap(err, "unable to geocode all data")
 		}
@@ -159,7 +159,7 @@ func IngestDataset(metaCtor api.MetadataStorageCtor, index string, dataset strin
 		log.Infof("finished geocoding the dataset")
 	}
 
-	err = Ingest(originalSchemaFile, latestSchemaOutput, storage, index, dataset, source, config)
+	err = Ingest(originalSchemaFile, latestSchemaOutput, storage, index, dataset, datasetSource, config)
 	if err != nil {
 		return errors.Wrap(err, "unable to ingest ranked data")
 	}
