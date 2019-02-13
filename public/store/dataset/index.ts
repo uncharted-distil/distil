@@ -13,6 +13,7 @@ export interface SuggestedType {
 }
 
 export interface Variable {
+	datasetName: string;
 	colDisplayName: string;
 	colName: string;
 	colType: string;
@@ -21,6 +22,7 @@ export interface Variable {
 	novelty: number;
 	colOriginalType: string;
 	suggestedTypes: SuggestedType[];
+	isColTypeChanged: boolean;
 }
 
 export interface Dataset {

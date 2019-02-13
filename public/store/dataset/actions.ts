@@ -12,6 +12,14 @@ import { addHighlightToFilterParams } from '../../util/highlights';
 import { loadImage } from '../../util/image';
 import { getVarType, IMAGE_TYPE, TIMESERIES_TYPE, GEOCODED_LON_PREFIX, GEOCODED_LAT_PREFIX } from '../../util/types';
 
+// fetches variables and add dataset name to each variable
+function getVariables(dataset: string): Promise<Variable[]> {
+	return axios.get(`/distil/variables/${dataset}`).then(response => {
+		// extend variable with datasetName and isColTypeChanged property to track type changes in client state
+		return response.data.variables.map(variable => ({ ...variable, datasetName: dataset, isColTypeChanged: false }));
+	});
+}
+
 export type DatasetContext = ActionContext<DatasetState, DistilState>;
 
 export const actions = {
@@ -47,9 +55,9 @@ export const actions = {
 			console.warn('`dataset` argument is missing');
 			return null;
 		}
-		return axios.get(`/distil/variables/${args.dataset}`)
-			.then(response => {
-				mutations.setVariables(context, response.data.variables);
+		return getVariables(args.dataset)
+			.then(variables => {
+				mutations.setVariables(context, variables);
 			})
 			.catch(error => {
 				console.error(error);
@@ -64,11 +72,11 @@ export const actions = {
 			return null;
 		}
 		return Promise.all([
-			axios.get(`/distil/variables/${args.datasets[0]}`),
-			axios.get(`/distil/variables/${args.datasets[1]}`)
+			getVariables(args.datasets[0]),
+			getVariables(args.datasets[1])
 		]).then(res => {
-			const varsA = res[0].data.variables;
-			const varsB = res[1].data.variables;
+			const varsA = res[0];
+			const varsB = res[1];
 			mutations.setVariables(context, varsA.concat(varsB));
 		})
 		.catch(error => {
@@ -156,7 +164,7 @@ export const actions = {
 			});
 	},
 
-	setVariableType(context: DatasetContext, args: { dataset: string, field: string, type: string }): Promise<void>  {
+	setVariableType(context: DatasetContext, args: { dataset: string, field: string, type: string, isTypeChanged: boolean }): Promise<void>  {
 		if (!args.dataset) {
 			console.warn('`dataset` argument is missing');
 			return null;

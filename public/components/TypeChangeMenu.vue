@@ -1,17 +1,20 @@
 <template>
 	<div class="type-change-menu">
-		<i v-if="isUnsure" class="unsure-type-icon fa fa-exclamation"></i>
 		<b-dropdown variant="secondary" class="var-type-button"
 			id="type-change-dropdown"
 			:text="label"
 			:disabled="isDisabled">
 			<b-dropdown-item
-				v-for="suggested in addMissingSuggestions()"
-				@click.stop="onTypeChange(suggested)"
-				:key="suggested">
-				{{suggested}}
+				v-for="suggested in getSuggestedList()"
+				v-bind:class="{ selected: suggested.isSelected, recommended: suggested.isRecommended }"
+				@click.stop="onTypeChange(suggested.type)"
+				:key="suggested.type">
+				<i v-if="suggested.isSelected" class="fa fa-check" aria-hidden="true"></i>
+				{{suggested.label}}
+				<img v-if="suggested.isRecommended" src="/images/recommended.svg" class="recommended-icon"/>
 			</b-dropdown-item>
 		</b-dropdown>
+		<i v-if="isUnsure" class="unsure-type-icon fa fa-circle"></i>
 		<b-tooltip :delay="delay" :disabled="!isDisabled" target="type-change-dropdown">
 			Cannot change type when actively filtering
 		</b-tooltip>
@@ -22,6 +25,7 @@
 
 import _ from 'lodash';
 import Vue from 'vue';
+import '../assets/images/recommended.svg';
 import { SuggestedType, Variable } from '../store/dataset/index';
 import { HighlightRoot } from '../store/highlights/index';
 import { actions as datasetActions, getters as datasetGetters } from '../store/dataset/module';
@@ -51,6 +55,9 @@ export default Vue.extend({
 		type(): string {
 			return this.variable ? this.variable.colType : '';
 		},
+		isColTypeChanged(): boolean {
+			return this.variable ? this.variable.isColTypeChanged : false;
+		},
 		label(): string {
 			return this.type !== '' ? getLabelFromType(this.type) : '';
 		},
@@ -58,7 +65,17 @@ export default Vue.extend({
 			return this.variable ? this.variable.colOriginalType : '';
 		},
 		suggestedTypes(): SuggestedType[] {
-			return this.variable ? this.variable.suggestedTypes : [];
+			const suggestedType = this.variable ? this.variable.suggestedTypes : [];
+			return _.orderBy(suggestedType, 'probability' , 'desc');
+		},
+		sggestedNonSchemaTypes(): SuggestedType[] {
+			const nonSchemaTypes = _.filter(this.suggestedTypes, t => {
+				return t.provenance !== 'schema';
+			});
+			return nonSchemaTypes;
+		},
+		topNonSchemaType(): SuggestedType {
+			return this.sggestedNonSchemaTypes.length > 0 ? this.sggestedNonSchemaTypes[0] : undefined;
 		},
 		target(): string {
 			return routeGetters.getRouteTargetVariable(this.$store);
@@ -82,17 +99,9 @@ export default Vue.extend({
 				return t.provenance === 'schema';
 			});
 		},
-		topNonSchemaType(): SuggestedType {
-			const nonSchemaTypes = _.filter(this.suggestedTypes, t => {
-				return t.provenance !== 'schema';
-			});
-			nonSchemaTypes.sort((a: any, b: any) => {
-				return b.probability - a.probability;
-			});
-			return nonSchemaTypes.length > 0 ? nonSchemaTypes[0] : undefined;
-		},
 		isUnsure(): boolean {
-			return (this.type === this.originalType && // we haven't changed the type
+			return (this.type === this.originalType && // we haven't changed the type (check from server)
+				!this.isColTypeChanged && // check if user ever changed the col type (client)
 				this.hasSchemaType && this.hasNonSchemaTypes &&
 				this.topNonSchemaType.probability >= PROBABILITY_THRESHOLD && // it has both schema and ML types
 				!isEquivalentType(this.schemaType.type, this.topNonSchemaType.type)); // they don't agree
@@ -106,21 +115,36 @@ export default Vue.extend({
 	},
 
 	methods: {
-		addMissingSuggestions(): string[] {
-			if (this.label === '' || this.values.length === 0) {
-				return _.map(BASIC_SUGGESTIONS, t => getLabelFromType(t));
+		addMissingSuggestions() {
+			if (this.sggestedNonSchemaTypes.length === 0 && (this.label === '' || this.values.length === 0)) {
+				return BASIC_SUGGESTIONS;
 			}
-			const type = getTypeFromLabel(this.label);
-			return _.map(addTypeSuggestions(type, this.values), t => getLabelFromType(t));
+			const missingSuggestions = addTypeSuggestions(this.type, this.values);
+			const suggestions = [
+				...this.sggestedNonSchemaTypes.map(suggested => suggested.type),
+				...missingSuggestions
+			];
+			return _.uniq(suggestions);
 		},
-		onTypeChange(suggested) {
-			const type = getTypeFromLabel(suggested);
+		getSuggestedList() {
+			return this.addMissingSuggestions().map(type => {
+				return {
+					type,
+					label: getLabelFromType(type),
+					isRecommended: this.topNonSchemaType.type === type,
+					isSelected: this.type === type,
+				};
+			});
+		},
+		onTypeChange(suggestedType) {
+			const type = suggestedType;
 			const dataset = this.dataset;
 			const field = this.field;
 			datasetActions.setVariableType(this.$store, {
 				dataset: dataset,
 				field: field,
-				type: type
+				type: type,
+				isTypeChanged: true,
 			}).then(() => {
 				if (this.target) {
 					datasetActions.fetchVariableRankings(this.$store, {
@@ -166,8 +190,24 @@ export default Vue.extend({
 .type-change-menu .dropdown-item {
 	font-size: 0.867rem;
 	text-transform: none;
+	position: relative;
+}
+.type-change-menu .dropdown-item.selected {
+	font-size: 0.867rem;
+	text-transform: none;
+	padding-left: 0;
+}
+.recommended-icon {
+	position: absolute;
+    right: 10px;
+    bottom: 7px;
 }
 .unsure-type-icon {
-	color: #dc3545;
+	position: absolute;
+    color: #dc3545;
+    top: -5px;
+    right: -5px;
+    z-index: 2;
+
 }
 </style>
