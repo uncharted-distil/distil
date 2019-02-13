@@ -62,6 +62,8 @@ func TestJoin(t *testing.T) {
 
 	cfg.TmpDataPath = "test_data"
 	cfg.D3MInputDir = "test_data"
+	cfg.DatamartImportFolder = "test_data"
+	env.Initialize(&cfg)
 
 	leftJoin := &JoinSpec{
 		Column:        "alpha",
@@ -90,7 +92,7 @@ func TestJoin(t *testing.T) {
 		{"3", "4.0", "d"},
 	}
 
-	csvFile, err := os.Open("test_data/augmented/test_1-test_2/tables/learningData.csv")
+	csvFile, err := os.Open("test_data/test_1-test_2/tables/learningData.csv")
 	assert.NoError(t, err)
 	defer csvFile.Close()
 

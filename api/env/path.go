@@ -16,6 +16,7 @@ var (
 	augmentedPath = ""
 )
 
+// Initialize the path resolution.
 func Initialize(config *Config) {
 	seedPath = config.D3MInputDir
 	seedSubPath = path.Join("TRAIN", "dataset_TRAIN")
@@ -24,6 +25,7 @@ func Initialize(config *Config) {
 	augmentedPath = path.Join(config.TmpDataPath, config.AugmentedSubFolder)
 }
 
+// ResolvePath returns an absolute path based on the dataset source.
 func ResolvePath(datasetSource metadata.DatasetSource, relativePath string) (string, error) {
 	switch datasetSource {
 	case metadata.Seed:

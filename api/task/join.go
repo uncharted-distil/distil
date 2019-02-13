@@ -55,10 +55,14 @@ func join(joinLeft *JoinSpec, joinRight *JoinSpec, varsLeft []*model.Variable, v
 		return nil, errors.Wrap(err, "unable to create join pipeline")
 	}
 
-	leftResolver := createResolver(joinLeft.DatasetSource, config)
-	rightResolver := createResolver(joinRight.DatasetSource, config)
-	datasetLeftURI := leftResolver.ResolveInputAbsoluteFromRoot(joinLeft.DatasetFolder)
-	datasetRightURI := rightResolver.ResolveInputAbsoluteFromRoot(joinRight.DatasetFolder)
+	datasetLeftURI, err := env.ResolvePath(joinLeft.DatasetSource, joinLeft.DatasetFolder)
+	if err != nil {
+		return nil, errors.Wrap(err, "unable to resolve left path")
+	}
+	datasetRightURI, err := env.ResolvePath(joinRight.DatasetSource, joinRight.DatasetFolder)
+	if err != nil {
+		return nil, errors.Wrap(err, "unable to resolve right path")
+	}
 
 	// returns a URI pointing to the merged CSV file
 	resultURI, err := submitter.submit([]string{datasetLeftURI, datasetRightURI}, pipelineDesc)
