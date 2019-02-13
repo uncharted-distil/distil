@@ -2,17 +2,17 @@
 	<div class="container-fluid d-flex flex-column h-100 join-view">
 		<div class="row flex-0-nav"></div>
 
-		<div class="row flex-1 align-items-center justify-content-center bg-white">
+		<div class="row flex-shrink-0 align-items-center justify-content-center bg-white">
 			<div class="col-12 col-md-10">
 				<h5 class="header-label">Select Features To Join {{joinDatasets[0].toUpperCase()}} with {{joinDatasets[1].toUpperCase()}}</h5>
 			</div>
 		</div>
 
-		<div class="row flex-10 pb-3">
-			<div class="col-12 col-md-3 d-flex flex-column">
-				<div class="row flex-12">
+		<div class="row flex-grow-1 pb-3">
+			<div class="col-12 col-md-3 d-flex flex-column h-100">
+				<div class="row flex-grow-1">
 					<variable-facets
-						class="col-12 d-flex"
+						class="col-12 d-flex h-100"
 							enable-search
 							enable-type-change
 							enable-highlighting
@@ -22,11 +22,11 @@
 					</variable-facets>
 				</div>
 			</div>
-			<div class="col-12 col-md-9 d-flex flex-column">
-				<div class="row flex-12">
-					<div class="col-12 d-flex flex-column">
-						<div class="row responsive-flex pb-3">
-							<join-data-slot class="col-12 d-flex flex-column pt-2"
+			<div class="col-12 col-md-9 d-flex flex-column h-100">
+				<div class="row flex-grow-1">
+					<div class="col-12 d-flex flex-column h-100">
+						<div class="row responsive-flex pb-3 h-100">
+							<join-data-slot class="col-12 d-flex flex-column pt-2 h-100"
 								:dataset="topDataset"
 								:items="topDatasetItems"
 								:fields="topDatasetFields"
@@ -37,8 +37,8 @@
 								instance-name="join-dataset-top"
 								@col-clicked="onTopColumnClicked"></join-data-slot>
 						</div>
-						<div class="row responsive-flex pb-3">
-							<join-data-slot class="col-12 d-flex flex-column pt-2"
+						<div class="row responsive-flex pb-3 h-100">
+							<join-data-slot class="col-12 d-flex flex-column pt-2 h-100"
 								:dataset="bottomDataset"
 								:items="bottomDatasetItems"
 								:fields="bottomDatasetFields"

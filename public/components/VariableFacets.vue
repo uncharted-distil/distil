@@ -1,12 +1,12 @@
 <template>
 	<div class='row h-100 variable-facets'>
-		<div class="col-12 flex-column d-flex">
-			<div v-if="enableSearch" class="row flex-1 align-items-center facet-filters">
+		<div class="col-12 flex-column d-flex h-100">
+			<div v-if="enableSearch" class="row align-items-center facet-filters">
 				<div class="col-12 flex-column d-flex">
 					<b-form-input size="sm" v-model="filter" placeholder="Search" />
 				</div>
 			</div>
-			<div v-if="enableTitle" class="row flex-1 align-items-center">
+			<div v-if="enableTitle" class="row align-items-center">
 				<div class="col-12 flex-column d-flex">
 					<p>Select one of the following feature summaries (sorted by interestingness) showing count of records by feature value.</p>
 				</div>
@@ -15,8 +15,8 @@
 				<!-- injectable slot -->
 				<slot></slot>
 			</div>
-			<div class="row flex-11">
-				<facets class="col-12 flex-column d-flex variable-facets-container"
+			<div class="row flex-grow-1 h-100">
+				<facets class="col-12 flex-column d-flex variable-facets-container h-100"
 					:groups="paginatedGroups"
 					:highlights="highlights"
 					:row-selection="rowSelection"
@@ -32,7 +32,7 @@
 					@facet-click="onFacetClick">
 				</facets>
 			</div>
-			<div v-if="numRows > rowsPerPage" class="row flex-1 align-items-center variable-page-nav">
+			<div v-if="numRows > rowsPerPage" class="row align-items-center variable-page-nav">
 				<div class="col-12 flex-column">
 					<b-pagination size="sm" align="center" :total-rows="numRows" :per-page="rowsPerPage" v-model="currentPage" class="mb-0"/>
 				</div>
