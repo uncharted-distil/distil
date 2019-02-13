@@ -68,14 +68,14 @@ export default Vue.extend({
 			const suggestedType = this.variable ? this.variable.suggestedTypes : [];
 			return _.orderBy(suggestedType, 'probability' , 'desc');
 		},
-		sggestedNonSchemaTypes(): SuggestedType[] {
+		suggestedNonSchemaTypes(): SuggestedType[] {
 			const nonSchemaTypes = _.filter(this.suggestedTypes, t => {
 				return t.provenance !== 'schema';
 			});
 			return nonSchemaTypes;
 		},
 		topNonSchemaType(): SuggestedType {
-			return this.sggestedNonSchemaTypes.length > 0 ? this.sggestedNonSchemaTypes[0] : undefined;
+			return this.suggestedNonSchemaTypes.length > 0 ? this.suggestedNonSchemaTypes[0] : undefined;
 		},
 		target(): string {
 			return routeGetters.getRouteTargetVariable(this.$store);
@@ -116,12 +116,12 @@ export default Vue.extend({
 
 	methods: {
 		addMissingSuggestions() {
-			if (this.sggestedNonSchemaTypes.length === 0 && (this.label === '' || this.values.length === 0)) {
+			if (this.suggestedNonSchemaTypes.length === 0 && (this.label === '' || this.values.length === 0)) {
 				return BASIC_SUGGESTIONS;
 			}
 			const missingSuggestions = addTypeSuggestions(this.type, this.values);
 			const suggestions = [
-				...this.sggestedNonSchemaTypes.map(suggested => suggested.type),
+				...this.suggestedNonSchemaTypes.map(suggested => suggested.type),
 				...missingSuggestions
 			];
 			return _.uniq(suggestions);
