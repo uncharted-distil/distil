@@ -20,7 +20,7 @@
 				</div>
 				<div class="row col-12 pl-4">
 					<p>
-						Use interactive feature highlighting to analyze relationships or to exclude samples from the model. Features are sorted by a measure of interestingness.
+						<b>Select Features That May Predict {{target.toUpperCase()}}</b> Use interactive feature highlighting to analyze relationships or to exclude samples from the model. Features which appear to have stronger relation are listed first.
 					</p>
 				</div>
 			</div>
