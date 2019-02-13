@@ -23,9 +23,7 @@ import { filterSummariesByDataset } from '../util/data';
 import VariableFacets from '../components/VariableFacets.vue';
 import { AVAILABLE_TARGET_VARS_INSTANCE, SELECT_TRAINING_ROUTE } from '../store/route/index';
 import { Group, createGroups } from '../util/facets';
-import 'font-awesome/css/font-awesome.css';
 import Vue from 'vue';
-
 
 // 9 so it makes a nice clean grid
 const NUM_TARGET_PER_PAGE = 9;

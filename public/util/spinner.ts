@@ -1,4 +1,6 @@
 
+import '../styles/spinner.css';
+
 export function spinnerHTML(): string {
 	return [
 		'<div class="bounce1"></div>',

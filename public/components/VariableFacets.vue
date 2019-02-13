@@ -8,7 +8,7 @@
 			</div>
 			<div v-if="enableTitle" class="row flex-1 align-items-center">
 				<div class="col-12 flex-column d-flex">
-					<p>Select one of the following feature summaries (sorted by interestingness) showing count of records by feature value.</p>
+					<p><b>Select Feature to Predict</b> Select from potential features of interest below. Each feature tile shown summarizes count of records by value.</p>
 				</div>
 			</div>
 			<div class="pl-1 pr-1">
@@ -55,8 +55,6 @@ import { getters as routeGetters } from '../store/route/module';
 import { ROUTE_PAGE_SUFFIX } from '../store/route/index';
 import { Group } from '../util/facets';
 import { updateHighlightRoot, getHighlights, clearHighlightRoot } from '../util/highlights';
-import 'font-awesome/css/font-awesome.css';
-import '../styles/spinner.css';
 import Vue from 'vue';
 
 export default Vue.extend({

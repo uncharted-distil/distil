@@ -34,8 +34,6 @@ import { AVAILABLE_TRAINING_VARS_INSTANCE } from '../store/route/index';
 import { Group, createGroups } from '../util/facets';
 import VariableFacets from '../components/VariableFacets.vue';
 
-import 'font-awesome/css/font-awesome.css';
-
 export default Vue.extend({
 	name: 'available-training-variables',
 
