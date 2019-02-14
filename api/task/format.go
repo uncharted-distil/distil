@@ -28,7 +28,7 @@ func Format(datasetSource metadata.DatasetSource, schemaFile string, config *Ing
 	dr := meta.DataResources[0]
 
 	// copy the data to a new directory
-	outputPath, err := initializeDatasetCopy(datasetSource, schemaFile, path.Base(path.Dir(schemaFile)), config.FormatOutputSchemaRelative, config.FormatOutputDataRelative)
+	outputPath, err := initializeDatasetCopy(schemaFile, path.Base(path.Dir(schemaFile)), config.FormatOutputSchemaRelative, config.FormatOutputDataRelative)
 	if err != nil {
 		return "", errors.Wrap(err, "unable to copy source data folder")
 	}

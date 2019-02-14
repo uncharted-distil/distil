@@ -15,7 +15,6 @@ import (
 	"github.com/unchartedsoftware/distil-compute/primitive/compute"
 	"github.com/unchartedsoftware/distil-compute/primitive/compute/description"
 	"github.com/unchartedsoftware/distil-compute/primitive/compute/result"
-	"github.com/unchartedsoftware/distil-ingest/metadata"
 	log "github.com/unchartedsoftware/plog"
 
 	"github.com/unchartedsoftware/distil/api/env"
@@ -362,12 +361,9 @@ func getRelativePath(rootPath string, filePath string) string {
 	return relativePath
 }
 
-func initializeDatasetCopy(datasetSource metadata.DatasetSource, schemaFile string, dataset string, schemaPathRelative string, dataPathRelative string) (*datasetCopyPath, error) {
-	basePath, err := env.ResolvePath(datasetSource, dataset)
-	if err != nil {
-		return nil, errors.Wrap(err, "unable to resolve path")
-	}
-
+func initializeDatasetCopy(schemaFile string, dataset string, schemaPathRelative string, dataPathRelative string) (*datasetCopyPath, error) {
+	// all work done in the temp folder
+	basePath := path.Join(env.GetTmpPath(), dataset)
 	sourceFolder := path.Dir(schemaFile)
 	outputSchemaPath := path.Join(basePath, schemaPathRelative)
 	outputDataPath := path.Join(basePath, dataPathRelative)
@@ -375,7 +371,7 @@ func initializeDatasetCopy(datasetSource metadata.DatasetSource, schemaFile stri
 
 	// copy the source folder to have all the linked files for merging
 	log.Infof("COPYING FROM %s to %s", sourceFolder, outputFolder)
-	err = util.Copy(sourceFolder, outputFolder)
+	err := util.Copy(sourceFolder, outputFolder)
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to copy source data")
 	}

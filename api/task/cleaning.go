@@ -16,7 +16,7 @@ import (
 // Clean will clean bad data for further processing.
 func Clean(datasetSource metadata.DatasetSource, schemaFile string, index string, dataset string, config *IngestTaskConfig) (string, error) {
 	// copy the data to a new directory
-	outputPath, err := initializeDatasetCopy(datasetSource, schemaFile, dataset, config.CleanOutputSchemaRelative, config.CleanOutputDataRelative)
+	outputPath, err := initializeDatasetCopy(schemaFile, dataset, config.CleanOutputSchemaRelative, config.CleanOutputDataRelative)
 	if err != nil {
 		return "", errors.Wrap(err, "unable to copy source data folder")
 	}

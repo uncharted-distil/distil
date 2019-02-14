@@ -11,6 +11,7 @@ import (
 var (
 	seedPath    = ""
 	contribPath = ""
+	tmpPath     = ""
 
 	seedSubPath   = ""
 	augmentedPath = ""
@@ -20,9 +21,14 @@ var (
 func Initialize(config *Config) {
 	seedPath = config.D3MInputDir
 	seedSubPath = path.Join("TRAIN", "dataset_TRAIN")
+	tmpPath = config.TmpDataPath
 
 	contribPath = config.DatamartImportFolder
 	augmentedPath = path.Join(config.TmpDataPath, config.AugmentedSubFolder)
+}
+
+func GetTmpPath() string {
+	return tmpPath
 }
 
 // ResolvePath returns an absolute path based on the dataset source.

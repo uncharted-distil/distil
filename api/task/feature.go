@@ -22,7 +22,7 @@ var (
 
 // Featurize will featurize the dataset fields using a primitive.
 func Featurize(datasetSource metadata.DatasetSource, schemaFile string, index string, dataset string, config *IngestTaskConfig) (string, error) {
-	outputPath, err := initializeDatasetCopy(datasetSource, schemaFile, dataset, config.FeaturizationOutputSchemaRelative, config.FeaturizationOutputDataRelative)
+	outputPath, err := initializeDatasetCopy(schemaFile, dataset, config.FeaturizationOutputSchemaRelative, config.FeaturizationOutputDataRelative)
 	if err != nil {
 		return "", errors.Wrap(err, "unable to copy source data folder")
 	}
