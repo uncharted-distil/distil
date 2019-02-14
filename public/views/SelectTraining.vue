@@ -30,12 +30,12 @@
 			</div>
 		</div>
 
-		<div class="row flex-1 pb-3 h-100">
+		<div class="row flex-1 pb-3">
 			<available-training-variables class="col-12 col-md-3 d-flex h-100"></available-training-variables>
 			<training-variables class="col-12 col-md-3 nopadding d-flex h-100"></training-variables>
 
 			<div class="col-12 col-md-6 d-flex flex-column h-100">
-				<select-data-slot class="d-flex flex-column responsive-flex pb-3 pt-2 h-100"></select-data-slot>
+				<select-data-slot class="flex-1 d-flex flex-column pb-3 pt-2"></select-data-slot>
 				<create-solutions-form class="select-create-solutions"></create-solutions-form>
 			</div>
 		</div>
@@ -134,12 +134,8 @@ export default Vue.extend({
 	padding: 1rem 0 0.5rem 0;
 	font-weight: bold;
 }
-.select-view .responsive-flex {
-	flex:4;
-}
-@media (min-width: 1200px) {
-	.select-view .responsive-flex {
-		flex:6;
-	}
+.select-data-container {
+	flex: 1;
+	z-index: 1; /* to show the scroll bar */
 }
 </style>

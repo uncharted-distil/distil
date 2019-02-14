@@ -28,6 +28,7 @@
 			<div class='variable-summaries col-12 col-md-3 border-gray-right results-variable-summaries'>
 				<p class="nav-link font-weight-bold">Feature Summaries</p>
 				<variable-facets
+					class="h-100"
 					enable-search
 					enable-highlighting
 					instance-name="resultTrainingVars"

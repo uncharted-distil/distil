@@ -1,5 +1,5 @@
 <template>
-	<div class='row h-100 variable-facets'>
+	<div class='variable-facets row'>
 		<div class="col-12 flex-column d-flex h-100">
 			<div v-if="enableSearch" class="row align-items-center facet-filters">
 				<div class="col-12 flex-column d-flex">
@@ -15,7 +15,7 @@
 				<!-- injectable slot -->
 				<slot></slot>
 			</div>
-			<div class="row flex-1 h-100">
+			<div class="row flex-1">
 				<facets class="col-12 flex-column d-flex variable-facets-container h-100"
 					:groups="paginatedGroups"
 					:highlights="highlights"

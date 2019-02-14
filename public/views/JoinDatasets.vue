@@ -20,7 +20,7 @@
 			</variable-facets>
 			<div class="col-12 col-md-9 d-flex flex-column h-100">
 				<div class="row flex-1 pb-3">
-					<join-data-slot class="col-12 d-flex flex-column pt-2 h-100"
+					<join-data-slot class="col-12 pt-2 h-100"
 						:dataset="topDataset"
 						:items="topDatasetItems"
 						:fields="topDatasetFields"
@@ -32,7 +32,7 @@
 						@col-clicked="onTopColumnClicked"></join-data-slot>
 				</div>
 				<div class="row flex-1 pb-3">
-					<join-data-slot class="col-12 d-flex flex-column pt-2 h-100"
+					<join-data-slot class="col-12 pt-2 h-100"
 						:dataset="bottomDataset"
 						:items="bottomDatasetItems"
 						:fields="bottomDatasetFields"
@@ -57,8 +57,8 @@
 							@callback="onJoinAccuracyChanged"/>
 					</div>
 				</div>
-				<div class="row align-items-center">
-					<div class="col-12 d-flex flex-column">
+				<div class="row">
+					<div class="col-12">
 						<join-datasets-form class="select-create-solutions"
 							:dataset-a="topDataset"
 							:dataset-b="bottomDataset"
