@@ -24,11 +24,11 @@
 			</div>
 		</div>
 
-		<div class="row flex-12 pb-3">
-
+		<div class="row flex-1 pb-3">
 			<div class='variable-summaries col-12 col-md-3 border-gray-right results-variable-summaries'>
 				<p class="nav-link font-weight-bold">Feature Summaries</p>
 				<variable-facets
+					class="h-100"
 					enable-search
 					enable-highlighting
 					instance-name="resultTrainingVars"
@@ -136,5 +136,19 @@ export default Vue.extend({
 }
 .result-facets {
 	margin-bottom: 12px;
+}
+.results-variable-summaries,
+.results-result-comparison,
+.results-result-summaries
+{
+	height: 100%;
+}
+@media (max-width: 767px) {
+	.results-variable-summaries,
+	.results-result-comparison,
+	.results-result-summaries
+	{
+		height: unset;
+	}
 }
 </style>

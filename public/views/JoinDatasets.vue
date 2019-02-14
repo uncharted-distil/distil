@@ -2,77 +2,69 @@
 	<div class="container-fluid d-flex flex-column h-100 join-view">
 		<div class="row flex-0-nav"></div>
 
-		<div class="row flex-1 align-items-center justify-content-center bg-white">
+		<div class="row align-items-center justify-content-center bg-white">
 			<div class="col-12 col-md-10">
 				<h5 class="header-label">Select Features To Join {{joinDatasets[0].toUpperCase()}} with {{joinDatasets[1].toUpperCase()}}</h5>
 			</div>
 		</div>
 
-		<div class="row flex-10 pb-3">
-			<div class="col-12 col-md-3 d-flex flex-column">
-				<div class="row flex-12">
-					<variable-facets
-						class="col-12 d-flex"
-							enable-search
-							enable-type-change
-							enable-highlighting
-							:instance-name="instanceName"
-							:rows-per-page="numRowsPerPage"
-							:groups="groups">
-					</variable-facets>
+		<div class="row flex-1 pb-3 h-100">
+			<variable-facets
+				class="col-12 col-md-3 d-flex h-100 pt-2"
+					enable-search
+					enable-type-change
+					enable-highlighting
+					:instance-name="instanceName"
+					:rows-per-page="numRowsPerPage"
+					:groups="groups">
+			</variable-facets>
+			<div class="col-12 col-md-9 d-flex flex-column h-100">
+				<div class="row flex-1 pb-3">
+					<join-data-slot class="col-12 pt-2 h-100"
+						:dataset="topDataset"
+						:items="topDatasetItems"
+						:fields="topDatasetFields"
+						:numRows="topDatasetNumRows"
+						:hasData="topDatasetHasData"
+						:selected-column="topColumn"
+						:other-selected-column="bottomColumn"
+						instance-name="join-dataset-top"
+						@col-clicked="onTopColumnClicked"></join-data-slot>
 				</div>
-			</div>
-			<div class="col-12 col-md-9 d-flex flex-column">
-				<div class="row flex-12">
-					<div class="col-12 d-flex flex-column">
-						<div class="row responsive-flex pb-3">
-							<join-data-slot class="col-12 d-flex flex-column pt-2"
-								:dataset="topDataset"
-								:items="topDatasetItems"
-								:fields="topDatasetFields"
-								:numRows="topDatasetNumRows"
-								:hasData="topDatasetHasData"
-								:selected-column="topColumn"
-								:other-selected-column="bottomColumn"
-								instance-name="join-dataset-top"
-								@col-clicked="onTopColumnClicked"></join-data-slot>
-						</div>
-						<div class="row responsive-flex pb-3">
-							<join-data-slot class="col-12 d-flex flex-column pt-2"
-								:dataset="bottomDataset"
-								:items="bottomDatasetItems"
-								:fields="bottomDatasetFields"
-								:numRows="bottomDatasetNumRows"
-								:hasData="bottomDatasetHasData"
-								:selected-column="bottomColumn"
-								:other-selected-column="topColumn"
-								instance-name="join-dataset-bottom"
-								@col-clicked="onBottomColumnClicked"></join-data-slot>
-						</div>
-						<div class="row pb-5">
-							<div class="join-accuracy-slider col-12 d-flex flex-column align-items-center">
-								<div class="join-accuracy-label">Join Accuracy</div>
-								<vue-slider
-									:min="0"
-									:max="1"
-									:interval="0.01"
-									:value="joinAccuracy"
-									:lazy="true"
-									width="100px"
-									tooltip-dir="bottom"
-									@callback="onJoinAccuracyChanged"/>
-							</div>
-						</div>
-						<div class="row align-items-center">
-							<div class="col-12 d-flex flex-column">
-								<join-datasets-form class="select-create-solutions"
-									:dataset-a="topDataset"
-									:dataset-b="bottomDataset"
-									:dataset-a-column="topColumn"
-									:dataset-b-column="bottomColumn"
-									:join-accuracy="joinAccuracy"></join-datasets-form>
-							</div>
-						</div>
+				<div class="row flex-1 pb-3">
+					<join-data-slot class="col-12 pt-2 h-100"
+						:dataset="bottomDataset"
+						:items="bottomDatasetItems"
+						:fields="bottomDatasetFields"
+						:numRows="bottomDatasetNumRows"
+						:hasData="bottomDatasetHasData"
+						:selected-column="bottomColumn"
+						:other-selected-column="topColumn"
+						instance-name="join-dataset-bottom"
+						@col-clicked="onBottomColumnClicked"></join-data-slot>
+				</div>
+				<div class="row pb-5">
+					<div class="join-accuracy-slider col-12 d-flex flex-column align-items-center">
+						<div class="join-accuracy-label">Join Accuracy</div>
+						<vue-slider
+							:min="0"
+							:max="1"
+							:interval="0.01"
+							:value="joinAccuracy"
+							:lazy="true"
+							width="100px"
+							tooltip-dir="bottom"
+							@callback="onJoinAccuracyChanged"/>
+					</div>
+				</div>
+				<div class="row">
+					<div class="col-12">
+						<join-datasets-form class="select-create-solutions"
+							:dataset-a="topDataset"
+							:dataset-b="bottomDataset"
+							:dataset-a-column="topColumn"
+							:dataset-b-column="bottomColumn"
+							:join-accuracy="joinAccuracy"></join-datasets-form>
 					</div>
 				</div>
 			</div>
@@ -230,13 +222,5 @@ export default Vue.extend({
 .header-label {
 	padding: 1rem 0 0.5rem 0;
 	font-weight: bold;
-}
-.join-view .responsive-flex {
-	flex:4;
-}
-@media (min-width: 1200px) {
-	.join-view .responsive-flex {
-		flex:6;
-	}
 }
 </style>

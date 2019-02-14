@@ -1,7 +1,7 @@
 <template>
 	<div class="results-data-table">
-		<p v-if="hasResults"><small v-html="title"></small></p>
-		<div class="results-data-table-container">
+		<p class="result-data-table-summary" v-if="hasResults"><small v-html="title"></small></p>
+		<div class="results-data-table-container flex-1">
 			<div class="results-data-no-results" v-if="isPending">
 				<div v-html="spinnerHTML"></div>
 			</div>
@@ -262,6 +262,10 @@ export default Vue.extend({
 
 <style>
 
+.result-data-table-summary {
+	margin: 0;
+	flex-shrink: 0;
+}
 .results-data-table {
 	display: flex;
 	flex-direction: column;

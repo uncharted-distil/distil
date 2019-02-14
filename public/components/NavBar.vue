@@ -169,6 +169,10 @@ export default Vue.extend({
 	text-align: center;
 	border-radius: 50%;
 }
+.nav-item {
+	white-space: nowrap;
+	overflow: hidden;
+}
 .nav-item .nav-link {
 	padding: 2px;
 }
@@ -232,6 +236,8 @@ export default Vue.extend({
 	color: #cf3835;
 }
 .abort-button {
+	white-space: nowrap;
+	overflow: hidden;
 	margin-left: 20px;
 }
 .session-label {
