@@ -8,7 +8,7 @@
 
 		<join-data-preview-slot
 			:items="joinDataPreviewItems"
-			:fields="joinDataPreviewFields"
+			:fields="emphasizedFields"
 			:numRows="joinDataPreviewNumRows"
 			:hasData="joinDataPreviewHasData"
 			instance-name="join-dataset-bottom"></join-data-preview-slot>
@@ -61,6 +61,7 @@ export default Vue.extend({
 	props: {
 		datasetA: String as () => string,
 		datasetB: String as () => string,
+		joinedColumn: String as () => string,
 		previewTableData: Object as () => TableData
 	},
 
@@ -94,7 +95,27 @@ export default Vue.extend({
 		},
 		joinDataPreviewHasData(): boolean {
 			return !!this.previewTableData;
-		}
+		},
+		emphasizedFields(): Dictionary<TableColumn> {
+			const emphasized = {};
+			_.forIn(this.joinDataPreviewFields, field => {
+				const emph = {
+					label: field.label,
+					key: field.key,
+					type: field.type,
+					sortable: field.sortable,
+					variant: null
+				};
+
+				const isFieldSelected = field.key === this.joinedColumn;
+
+				if (isFieldSelected) {
+					emph.variant = 'primary';
+				}
+				emphasized[field.key] = emph;
+			});
+			return emphasized;
+		},
 	},
 
 	methods: {
