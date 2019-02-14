@@ -263,7 +263,8 @@ export default Vue.extend({
 <style>
 
 .result-data-table-summary {
-	margin: 0
+	margin: 0;
+	flex-shrink: 0;
 }
 .results-data-table {
 	display: flex;
