@@ -54,7 +54,7 @@
 			<small class="row-number-label" v-html="tableTitle"></small>
 		</p>
 
-		<div class="select-data-container">
+		<div class="select-data-container" v-bind:style="{ overflow: isSlotScrollable ? 'auto' : 'hidden' }">
 			<div class="select-data-no-results" v-if="!hasData">
 				<div v-html="spinnerHTML"></div>
 			</div>
@@ -151,6 +151,10 @@ export default Vue.extend({
 
 		numItems(): number {
 			return this.items ? this.items.length : 0;
+		},
+
+		isSlotScrollable(): boolean {
+			return this.viewType === TABLE_VIEW;
 		},
 
 		activeFilter(): Filter {
@@ -253,7 +257,6 @@ export default Vue.extend({
 .select-data-container {
 	display: flex;
 	background-color: white;
-	overflow: auto;
 	flex-flow: wrap;
 	height: 100%;
 	width: 100%;
@@ -307,4 +310,8 @@ table tr {
 .view-button {
 	cursor: pointer;
 }
+.view-button input[type=radio]{	
+    display:none;
+}
+
 </style>
