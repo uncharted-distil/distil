@@ -30,26 +30,13 @@
 			</div>
 		</div>
 
-		<div class="row flex-1 pb-3">
-			<div class="col-12 col-md-6 d-flex flex-column">
-				<div class="row flex-12">
-					<available-training-variables class="col-12 col-md-6 d-flex"></available-training-variables>
-					<training-variables class="col-12 col-md-6 nopadding d-flex"></training-variables>
-				</div>
-			</div>
-			<div class="col-12 col-md-6 d-flex flex-column">
-				<div class="row flex-12">
-					<div class="col-12 d-flex flex-column">
-						<div class="row responsive-flex pb-3">
-							<select-data-slot class="col-12 d-flex flex-column pt-2"></select-data-slot>
-						</div>
-						<div class="row align-items-center">
-							<div class="col-12 d-flex flex-column">
-								<create-solutions-form class="select-create-solutions"></create-solutions-form>
-							</div>
-						</div>
-					</div>
-				</div>
+		<div class="row flex-1 pb-3 h-100">
+			<available-training-variables class="col-12 col-md-3 d-flex h-100"></available-training-variables>
+			<training-variables class="col-12 col-md-3 nopadding d-flex h-100"></training-variables>
+
+			<div class="col-12 col-md-6 d-flex flex-column h-100">
+				<select-data-slot class="d-flex flex-column responsive-flex pb-3 pt-2 h-100"></select-data-slot>
+				<create-solutions-form class="select-create-solutions"></create-solutions-form>
 			</div>
 		</div>
 

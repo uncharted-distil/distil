@@ -8,7 +8,7 @@
 				<h5 class="header-label">Select Feature to Predict</h5>
 			</div>
 		</div>
-		<div class="row justify-content-center pb-3">
+		<div class="row justify-content-center pb-3 h-100">
 			<div class="col-12 col-md-10 flex-column d-flex h-100">
 				<available-target-variables>
 				</available-target-variables>

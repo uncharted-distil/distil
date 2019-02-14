@@ -15,7 +15,7 @@
 				<!-- injectable slot -->
 				<slot></slot>
 			</div>
-			<div class="row flex-grow-1 h-100">
+			<div class="row flex-1 h-100">
 				<facets class="col-12 flex-column d-flex variable-facets-container h-100"
 					:groups="paginatedGroups"
 					:highlights="highlights"
@@ -32,7 +32,7 @@
 					@facet-click="onFacetClick">
 				</facets>
 			</div>
-			<div v-if="numRows > rowsPerPage" class="row flex-shrink-0 align-items-center variable-page-nav">
+			<div v-if="numRows > rowsPerPage" class="row align-items-center variable-page-nav">
 				<div class="col-12 flex-column">
 					<b-pagination size="sm" align="center" :total-rows="numRows" :per-page="rowsPerPage" v-model="currentPage" class="mb-0"/>
 				</div>

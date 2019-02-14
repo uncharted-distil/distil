@@ -8,9 +8,9 @@
 			</div>
 		</div>
 
-		<div class="row flex-grow-1 pb-3">
+		<div class="row flex-grow-1 pb-3 h-100">
 			<div class="col-12 col-md-3 d-flex flex-column h-100">
-				<div class="row flex-grow-1">
+				<div class="row flex-grow-1 h-100">
 					<variable-facets
 						class="col-12 d-flex h-100"
 							enable-search
@@ -23,7 +23,7 @@
 				</div>
 			</div>
 			<div class="col-12 col-md-9 d-flex flex-column h-100">
-				<div class="row flex-grow-1">
+				<div class="row flex-grow-1 h-100">
 					<div class="col-12 d-flex flex-column h-100">
 						<div class="row responsive-flex pb-3 h-100">
 							<join-data-slot class="col-12 d-flex flex-column pt-2 h-100"
