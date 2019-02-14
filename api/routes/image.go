@@ -37,9 +37,13 @@ func ImageHandler(ctor model.MetadataStorageCtor, config *env.Config) func(http.
 			return
 		}
 
-		resolver := createResolverForResource(api.DatasetSource(source), res.Folder, config)
+		sourcePath, err := env.ResolvePath(api.DatasetSource(source), res.Folder)
+		if err != nil {
+			handleError(w, err)
+			return
+		}
 
-		bytes, err := fetchResourceBytes(resolver.ResolveInputAbsolute(""), dataset, path)
+		bytes, err := fetchResourceBytes(sourcePath, dataset, path)
 		if err != nil {
 			handleError(w, err)
 			return

@@ -17,8 +17,8 @@ import (
 	log "github.com/unchartedsoftware/plog"
 	elastic "gopkg.in/olivere/elastic.v5"
 
+	"github.com/unchartedsoftware/distil/api/env"
 	api "github.com/unchartedsoftware/distil/api/model"
-	"github.com/unchartedsoftware/distil/api/util"
 )
 
 const (
@@ -28,7 +28,6 @@ const (
 
 // IngestTaskConfig captures the necessary configuration for an data ingest.
 type IngestTaskConfig struct {
-	Resolver                           *util.PathResolver
 	HasHeader                          bool
 	ClusteringOutputDataRelative       string
 	ClusteringOutputSchemaRelative     string
@@ -64,16 +63,6 @@ type IngestTaskConfig struct {
 	HardFail                           bool
 }
 
-// GetAbsolutePath builds the absolute input path.
-func (c *IngestTaskConfig) GetAbsolutePath(relativePath string) string {
-	return c.Resolver.ResolveInputAbsolute(relativePath)
-}
-
-// GetTmpAbsolutePath builds the absolute tmp path.
-func (c *IngestTaskConfig) GetTmpAbsolutePath(relativePath string) string {
-	return c.Resolver.ResolveOutputAbsolute(relativePath)
-}
-
 // IngestDataset executes the complete ingest process for the specified dataset.
 func IngestDataset(datasetSource metadata.DatasetSource, metaCtor api.MetadataStorageCtor, index string, dataset string, config *IngestTaskConfig) error {
 	// Set the probability threshold
@@ -84,7 +73,12 @@ func IngestDataset(datasetSource metadata.DatasetSource, metaCtor api.MetadataSt
 		return errors.Wrap(err, "unable to initialize metadata storage")
 	}
 
-	originalSchemaFile := config.GetAbsolutePath(config.SchemaPathRelative)
+	sourceFolder, err := env.ResolvePath(datasetSource, dataset)
+	if err != nil {
+		return errors.Wrap(err, "unable to resolve source folder")
+	}
+
+	originalSchemaFile := path.Join(sourceFolder, config.SchemaPathRelative)
 	latestSchemaOutput := originalSchemaFile
 
 	output, err := Merge(datasetSource, latestSchemaOutput, index, dataset, config)

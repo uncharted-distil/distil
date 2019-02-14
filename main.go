@@ -173,13 +173,7 @@ func main() {
 	task.SetClient(solutionClient)
 
 	// build the ingest configuration.
-	resolver := util.NewPathResolver(&util.PathConfig{
-		InputFolder:     config.DataFolderPath,
-		InputSubFolders: path.Join("TRAIN", "dataset_TRAIN"),
-		OutputFolder:    config.TmpDataPath,
-	})
 	ingestConfig := &task.IngestTaskConfig{
-		Resolver:                           resolver,
 		HasHeader:                          true,
 		ClusteringOutputDataRelative:       config.ClusteringOutputDataRelative,
 		ClusteringOutputSchemaRelative:     config.ClusteringOutputSchemaRelative,
@@ -231,7 +225,13 @@ func main() {
 			log.Errorf("%+v", err)
 			os.Exit(1)
 		}
-		sourceFolder = path.Dir(ingestConfig.GetTmpAbsolutePath(ingestConfig.GeocodingOutputSchemaRelative))
+
+		sourceFolder, err = env.ResolvePath(metadata.Seed, ingestConfig.GeocodingOutputSchemaRelative)
+		if err != nil {
+			log.Errorf("%+v", err)
+			os.Exit(1)
+		}
+		sourceFolder = path.Dir(sourceFolder)
 	}
 
 	// register routes

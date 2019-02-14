@@ -41,7 +41,7 @@ func Cluster(datasetSource metadata.DatasetSource, schemaFile string, index stri
 	d3mIndexField := getD3MIndexField(mainDR)
 
 	// open the input file
-	dataPath := config.GetAbsolutePath(mainDR.ResPath)
+	dataPath := path.Join(outputPath.sourceFolder, mainDR.ResPath)
 	lines, err := ReadCSVFile(dataPath, config.HasHeader)
 	if err != nil {
 		return "", errors.Wrap(err, "error reading raw data")

@@ -16,7 +16,6 @@ import (
 	ingestMetadata "github.com/unchartedsoftware/distil-ingest/metadata"
 	"github.com/unchartedsoftware/distil/api/env"
 	apiModel "github.com/unchartedsoftware/distil/api/model"
-	"github.com/unchartedsoftware/distil/api/util"
 	log "github.com/unchartedsoftware/plog"
 )
 
@@ -92,33 +91,6 @@ func join(joinLeft *JoinSpec, joinRight *JoinSpec, varsLeft []*model.Variable, v
 	}
 
 	return data, nil
-}
-
-func createResolver(datasetSource ingestMetadata.DatasetSource, config *env.Config) *util.PathResolver {
-	if datasetSource == ingestMetadata.Contrib {
-		return util.NewPathResolver(&util.PathConfig{
-			InputFolder:  config.DatamartImportFolder,
-			OutputFolder: path.Join(config.TmpDataPath, config.AugmentedSubFolder),
-		})
-	}
-	if datasetSource == ingestMetadata.Seed {
-		return util.NewPathResolver(&util.PathConfig{
-			InputFolder:     config.D3MInputDir,
-			InputSubFolders: "/TRAIN/dataset_TRAIN",
-			OutputFolder:    path.Join(config.TmpDataPath, config.AugmentedSubFolder),
-		})
-	}
-	if datasetSource == ingestMetadata.Augmented {
-		return util.NewPathResolver(&util.PathConfig{
-			InputFolder:  path.Join(config.TmpDataPath, config.AugmentedSubFolder),
-			OutputFolder: path.Join(config.TmpDataPath, config.AugmentedSubFolder),
-		})
-	}
-	return util.NewPathResolver(&util.PathConfig{
-		InputFolder:     config.D3MInputDir,
-		InputSubFolders: "TRAIN/dataset_TRAIN",
-		OutputFolder:    path.Join(config.TmpDataPath, config.AugmentedSubFolder),
-	})
 }
 
 type defaultSubmitter struct{}

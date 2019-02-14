@@ -27,6 +27,7 @@ func Initialize(config *Config) {
 	augmentedPath = path.Join(config.TmpDataPath, config.AugmentedSubFolder)
 }
 
+// GetTmpPath returns the tmp path as initialized.
 func GetTmpPath() string {
 	return tmpPath
 }
