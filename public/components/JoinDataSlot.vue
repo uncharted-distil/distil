@@ -1,5 +1,5 @@
 <template>
-	<div class="join-data-slot">
+	<div class="join-data-slot d-flex flex-column">
 
 		<div class="fake-search-input">
 			<div class="filter-badges">
@@ -10,7 +10,7 @@
 			</div>
 		</div>
 
-		<div class="join-data-container">
+		<div class="join-data-container flex-1">
 			<div class="join-data-no-results" v-if="!hasData">
 				<div v-html="spinnerHTML"></div>
 			</div>

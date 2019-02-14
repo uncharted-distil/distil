@@ -10,7 +10,7 @@
 
 		<div class="row flex-1 pb-3 h-100">
 			<variable-facets
-				class="col-12 col-md-3 d-flex h-100"
+				class="col-12 col-md-3 d-flex h-100 pt-2"
 					enable-search
 					enable-type-change
 					enable-highlighting
