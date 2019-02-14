@@ -54,14 +54,8 @@ func join(joinLeft *JoinSpec, joinRight *JoinSpec, varsLeft []*model.Variable, v
 		return nil, errors.Wrap(err, "unable to create join pipeline")
 	}
 
-	datasetLeftURI, err := env.ResolvePath(joinLeft.DatasetSource, joinLeft.DatasetFolder)
-	if err != nil {
-		return nil, errors.Wrap(err, "unable to resolve left path")
-	}
-	datasetRightURI, err := env.ResolvePath(joinRight.DatasetSource, joinRight.DatasetFolder)
-	if err != nil {
-		return nil, errors.Wrap(err, "unable to resolve right path")
-	}
+	datasetLeftURI := env.ResolvePath(joinLeft.DatasetSource, joinLeft.DatasetFolder)
+	datasetRightURI := env.ResolvePath(joinRight.DatasetSource, joinRight.DatasetFolder)
 
 	// returns a URI pointing to the merged CSV file
 	resultURI, err := submitter.submit([]string{datasetLeftURI, datasetRightURI}, pipelineDesc)
@@ -147,10 +141,7 @@ func createDatasetFromCSV(config *env.Config, csvFile *os.File, datasetName stri
 
 	metadata.DataResources = []*model.DataResource{dataResource}
 
-	outputPath, err := env.ResolvePath(ingestMetadata.Contrib, datasetName)
-	if err != nil {
-		return nil, errors.Wrapf(err, "unabled to resolve path")
-	}
+	outputPath := env.ResolvePath(ingestMetadata.Contrib, datasetName)
 
 	// create dest csv file
 	csvDestFolder := path.Join(outputPath, compute.D3MDataFolder)

@@ -35,11 +35,7 @@ func ImportHandler(nyuDatamartMetaCtor model.MetadataStorageCtor, isiDatamartMet
 		}
 
 		// import the dataset to the local filesystem.
-		uri, err := env.ResolvePath(source, datasetID)
-		if err != nil {
-			handleError(w, err)
-			return
-		}
+		uri := env.ResolvePath(source, datasetID)
 
 		ingestConfig := *config
 		ingestConfig.SummaryEnabled = false

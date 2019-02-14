@@ -3,8 +3,6 @@ package env
 import (
 	"path"
 
-	"github.com/pkg/errors"
-
 	"github.com/unchartedsoftware/distil-ingest/metadata"
 )
 
@@ -33,16 +31,16 @@ func GetTmpPath() string {
 }
 
 // ResolvePath returns an absolute path based on the dataset source.
-func ResolvePath(datasetSource metadata.DatasetSource, relativePath string) (string, error) {
+func ResolvePath(datasetSource metadata.DatasetSource, relativePath string) string {
 	switch datasetSource {
 	case metadata.Seed:
-		return resolveSeedPath(relativePath), nil
+		return resolveSeedPath(relativePath)
 	case metadata.Contrib:
-		return resolveContribPath(relativePath), nil
+		return resolveContribPath(relativePath)
 	case metadata.Augmented:
-		return resolveAugmentedPath(relativePath), nil
+		return resolveAugmentedPath(relativePath)
 	}
-	return "", errors.Errorf("source %v cannot be resolved", datasetSource)
+	return resolveTmpPath(relativePath)
 }
 
 func resolveSeedPath(relativePath string) string {
@@ -55,4 +53,8 @@ func resolveContribPath(relativePath string) string {
 
 func resolveAugmentedPath(relativePath string) string {
 	return path.Join(augmentedPath, relativePath)
+}
+
+func resolveTmpPath(relativePath string) string {
+	return path.Join(tmpPath, relativePath)
 }

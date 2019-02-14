@@ -73,10 +73,7 @@ func IngestDataset(datasetSource metadata.DatasetSource, metaCtor api.MetadataSt
 		return errors.Wrap(err, "unable to initialize metadata storage")
 	}
 
-	sourceFolder, err := env.ResolvePath(datasetSource, dataset)
-	if err != nil {
-		return errors.Wrap(err, "unable to resolve source folder")
-	}
+	sourceFolder := env.ResolvePath(datasetSource, dataset)
 
 	originalSchemaFile := path.Join(sourceFolder, config.SchemaPathRelative)
 	latestSchemaOutput := originalSchemaFile

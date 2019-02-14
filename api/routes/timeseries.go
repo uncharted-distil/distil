@@ -48,11 +48,7 @@ func TimeseriesHandler(ctor model.MetadataStorageCtor, resourceDir string, confi
 			return
 		}
 
-		sourcePath, err := env.ResolvePath(api.DatasetSource(source), res.Folder)
-		if err != nil {
-			handleError(w, err)
-			return
-		}
+		sourcePath := env.ResolvePath(api.DatasetSource(source), res.Folder)
 
 		bytes, err := fetchResourceBytes(sourcePath, dataset, path)
 		if err != nil {

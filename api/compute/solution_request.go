@@ -521,7 +521,7 @@ func (s *SolutionRequest) PersistAndDispatch(client *compute.Client, solutionSto
 	columnIndex := getColumnIndex(targetVariable, s.Filters.Variables)
 
 	// add dataset name to path
-	datasetInputDir, err := env.ResolvePath(dataset.Metadata.Source, dataset.Metadata.Folder)
+	datasetInputDir := env.ResolvePath(dataset.Metadata.Source, dataset.Metadata.Folder)
 
 	// perist the datasets and get URI
 	datasetPathTrain, datasetPathTest, err := PersistOriginalData(s.Dataset, compute.D3MDataSchema, datasetInputDir, datasetDir)
