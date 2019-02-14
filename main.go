@@ -219,14 +219,18 @@ func main() {
 	// Ingest the data specified by the environment
 	if config.InitialDataset != "" && !config.SkipIngest {
 		log.Infof("Loading initial dataset '%s'", config.InitialDataset)
-		util.Copy(config.InitialDataset, path.Join(config.D3MOutputDir, "initial"))
-		err = task.IngestDataset(metadata.Seed, esMetadataStorageCtor, config.ESDatasetsIndex, "initial", ingestConfig)
+		err = util.Copy(path.Join(config.InitialDataset, "TRAIN", "dataset_TRAIN"), path.Join(config.DatamartImportFolder, "initial"))
+		if err != nil {
+			log.Errorf("%+v", err)
+			os.Exit(1)
+		}
+		err = task.IngestDataset(metadata.Contrib, esMetadataStorageCtor, config.ESDatasetsIndex, "initial", ingestConfig)
 		if err != nil {
 			log.Errorf("%+v", err)
 			os.Exit(1)
 		}
 
-		sourceFolder = env.ResolvePath(metadata.Seed, ingestConfig.GeocodingOutputSchemaRelative)
+		sourceFolder = env.ResolvePath(metadata.Contrib, ingestConfig.GeocodingOutputSchemaRelative)
 		sourceFolder = path.Dir(sourceFolder)
 	}
 
