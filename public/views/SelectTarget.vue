@@ -57,6 +57,9 @@ export default Vue.extend({
 	border-bottom: 1px solid #E0E0E0;
 	color: rgba(0,0,0,.87);
 }
+.select-view .variable-facets {
+	height: 100%;
+}
 .select-view .nav-tabs .nav-item a {
 	padding-left: 0.5rem;
 	padding-right: 0.5rem;
