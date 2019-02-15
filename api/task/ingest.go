@@ -17,8 +17,8 @@ import (
 	log "github.com/unchartedsoftware/plog"
 	elastic "gopkg.in/olivere/elastic.v5"
 
+	"github.com/unchartedsoftware/distil/api/env"
 	api "github.com/unchartedsoftware/distil/api/model"
-	"github.com/unchartedsoftware/distil/api/util"
 )
 
 const (
@@ -28,7 +28,6 @@ const (
 
 // IngestTaskConfig captures the necessary configuration for an data ingest.
 type IngestTaskConfig struct {
-	Resolver                           *util.PathResolver
 	HasHeader                          bool
 	ClusteringOutputDataRelative       string
 	ClusteringOutputSchemaRelative     string
@@ -64,18 +63,8 @@ type IngestTaskConfig struct {
 	HardFail                           bool
 }
 
-// GetAbsolutePath builds the absolute input path.
-func (c *IngestTaskConfig) GetAbsolutePath(relativePath string) string {
-	return c.Resolver.ResolveInputAbsolute(relativePath)
-}
-
-// GetTmpAbsolutePath builds the absolute tmp path.
-func (c *IngestTaskConfig) GetTmpAbsolutePath(relativePath string) string {
-	return c.Resolver.ResolveOutputAbsolute(relativePath)
-}
-
 // IngestDataset executes the complete ingest process for the specified dataset.
-func IngestDataset(metaCtor api.MetadataStorageCtor, index string, dataset string, source metadata.DatasetSource, config *IngestTaskConfig) error {
+func IngestDataset(datasetSource metadata.DatasetSource, metaCtor api.MetadataStorageCtor, index string, dataset string, config *IngestTaskConfig) error {
 	// Set the probability threshold
 	metadata.SetTypeProbabilityThreshold(config.ClassificationProbabilityThreshold)
 
@@ -84,17 +73,19 @@ func IngestDataset(metaCtor api.MetadataStorageCtor, index string, dataset strin
 		return errors.Wrap(err, "unable to initialize metadata storage")
 	}
 
-	originalSchemaFile := config.GetAbsolutePath(config.SchemaPathRelative)
+	sourceFolder := env.ResolvePath(datasetSource, dataset)
+
+	originalSchemaFile := path.Join(sourceFolder, config.SchemaPathRelative)
 	latestSchemaOutput := originalSchemaFile
 
-	output, err := Merge(latestSchemaOutput, index, dataset, config)
+	output, err := Merge(datasetSource, latestSchemaOutput, index, dataset, config)
 	if err != nil {
 		return errors.Wrap(err, "unable to merge all data into a single file")
 	}
 	latestSchemaOutput = output
 	log.Infof("finished merging the dataset")
 
-	output, err = Clean(latestSchemaOutput, index, dataset, config)
+	output, err = Clean(datasetSource, latestSchemaOutput, index, dataset, config)
 	if err != nil {
 		return errors.Wrap(err, "unable to clean all data")
 	}
@@ -102,7 +93,7 @@ func IngestDataset(metaCtor api.MetadataStorageCtor, index string, dataset strin
 	log.Infof("finished cleaning the dataset")
 
 	if config.ClusteringEnabled {
-		output, err = Cluster(latestSchemaOutput, index, dataset, config)
+		output, err = Cluster(datasetSource, latestSchemaOutput, index, dataset, config)
 		if err != nil {
 			if config.HardFail {
 				return errors.Wrap(err, "unable to cluster all data")
@@ -114,7 +105,7 @@ func IngestDataset(metaCtor api.MetadataStorageCtor, index string, dataset strin
 		log.Infof("finished clustering the dataset")
 	}
 
-	output, err = Featurize(latestSchemaOutput, index, dataset, config)
+	output, err = Featurize(datasetSource, latestSchemaOutput, index, dataset, config)
 	if err != nil {
 		if config.HardFail {
 			return errors.Wrap(err, "unable to featurize all data")
@@ -151,7 +142,7 @@ func IngestDataset(metaCtor api.MetadataStorageCtor, index string, dataset strin
 	}
 
 	if config.GeocodingEnabled {
-		output, err = GeocodeForwardDataset(latestSchemaOutput, index, dataset, config)
+		output, err = GeocodeForwardDataset(datasetSource, latestSchemaOutput, index, dataset, config)
 		if err != nil {
 			return errors.Wrap(err, "unable to geocode all data")
 		}
@@ -159,7 +150,7 @@ func IngestDataset(metaCtor api.MetadataStorageCtor, index string, dataset strin
 		log.Infof("finished geocoding the dataset")
 	}
 
-	err = Ingest(originalSchemaFile, latestSchemaOutput, storage, index, dataset, source, config)
+	err = Ingest(originalSchemaFile, latestSchemaOutput, storage, index, dataset, datasetSource, config)
 	if err != nil {
 		return errors.Wrap(err, "unable to ingest ranked data")
 	}

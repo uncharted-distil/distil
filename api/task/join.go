@@ -16,7 +16,6 @@ import (
 	ingestMetadata "github.com/unchartedsoftware/distil-ingest/metadata"
 	"github.com/unchartedsoftware/distil/api/env"
 	apiModel "github.com/unchartedsoftware/distil/api/model"
-	"github.com/unchartedsoftware/distil/api/util"
 	log "github.com/unchartedsoftware/plog"
 )
 
@@ -55,10 +54,8 @@ func join(joinLeft *JoinSpec, joinRight *JoinSpec, varsLeft []*model.Variable, v
 		return nil, errors.Wrap(err, "unable to create join pipeline")
 	}
 
-	leftResolver := createResolver(joinLeft.DatasetSource, config)
-	rightResolver := createResolver(joinRight.DatasetSource, config)
-	datasetLeftURI := leftResolver.ResolveInputAbsoluteFromRoot(joinLeft.DatasetFolder)
-	datasetRightURI := rightResolver.ResolveInputAbsoluteFromRoot(joinRight.DatasetFolder)
+	datasetLeftURI := env.ResolvePath(joinLeft.DatasetSource, joinLeft.DatasetFolder)
+	datasetRightURI := env.ResolvePath(joinRight.DatasetSource, joinRight.DatasetFolder)
 
 	// returns a URI pointing to the merged CSV file
 	resultURI, err := submitter.submit([]string{datasetLeftURI, datasetRightURI}, pipelineDesc)
@@ -88,33 +85,6 @@ func join(joinLeft *JoinSpec, joinRight *JoinSpec, varsLeft []*model.Variable, v
 	}
 
 	return data, nil
-}
-
-func createResolver(datasetSource ingestMetadata.DatasetSource, config *env.Config) *util.PathResolver {
-	if datasetSource == ingestMetadata.Contrib {
-		return util.NewPathResolver(&util.PathConfig{
-			InputFolder:  config.DatamartImportFolder,
-			OutputFolder: path.Join(config.TmpDataPath, config.AugmentedSubFolder),
-		})
-	}
-	if datasetSource == ingestMetadata.Seed {
-		return util.NewPathResolver(&util.PathConfig{
-			InputFolder:     config.D3MInputDir,
-			InputSubFolders: "/TRAIN/dataset_TRAIN",
-			OutputFolder:    path.Join(config.TmpDataPath, config.AugmentedSubFolder),
-		})
-	}
-	if datasetSource == ingestMetadata.Augmented {
-		return util.NewPathResolver(&util.PathConfig{
-			InputFolder:  path.Join(config.TmpDataPath, config.AugmentedSubFolder),
-			OutputFolder: path.Join(config.TmpDataPath, config.AugmentedSubFolder),
-		})
-	}
-	return util.NewPathResolver(&util.PathConfig{
-		InputFolder:     config.D3MInputDir,
-		InputSubFolders: "TRAIN/dataset_TRAIN",
-		OutputFolder:    path.Join(config.TmpDataPath, config.AugmentedSubFolder),
-	})
 }
 
 type defaultSubmitter struct{}
@@ -171,8 +141,7 @@ func createDatasetFromCSV(config *env.Config, csvFile *os.File, datasetName stri
 
 	metadata.DataResources = []*model.DataResource{dataResource}
 
-	outputResolver := createResolver(ingestMetadata.Contrib, config)
-	outputPath := outputResolver.ResolveOutputAbsolute(datasetName)
+	outputPath := env.ResolvePath(ingestMetadata.Contrib, datasetName)
 
 	// create dest csv file
 	csvDestFolder := path.Join(outputPath, compute.D3MDataFolder)

@@ -4,10 +4,12 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"path"
 
 	"github.com/mitchellh/hashstructure"
 	"github.com/pkg/errors"
 	"github.com/unchartedsoftware/distil-compute/model"
+	"github.com/unchartedsoftware/distil/api/env"
 	api "github.com/unchartedsoftware/distil/api/model"
 	"github.com/unchartedsoftware/distil/api/task"
 	"github.com/unchartedsoftware/distil/api/util"
@@ -80,7 +82,7 @@ func isiSearch(datamart *Storage, query *SearchQuery) ([]byte, error) {
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to hash datamart query")
 	}
-	filepath := datamart.config.GetTmpAbsolutePath(fmt.Sprintf("%v.json", hash))
+	filepath := path.Join(env.GetTmpPath(), fmt.Sprintf("%v.json", hash))
 
 	err = util.WriteFileWithDirs(filepath, queryJSON, os.ModePerm)
 	if err != nil {

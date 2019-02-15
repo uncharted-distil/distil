@@ -68,6 +68,12 @@ func main() {
 	}
 	log.Infof("%+v", spew.Sdump(config))
 
+	err = env.Initialize(&config)
+	if err != nil {
+		log.Errorf("%+v", err)
+		os.Exit(1)
+	}
+
 	// set dataset directory
 	api.SetDatasetDir(config.TmpDataPath)
 	api.SetInputDir(config.D3MInputDirRoot)
@@ -172,13 +178,7 @@ func main() {
 	task.SetClient(solutionClient)
 
 	// build the ingest configuration.
-	resolver := util.NewPathResolver(&util.PathConfig{
-		InputFolder:     config.DataFolderPath,
-		InputSubFolders: path.Join("TRAIN", "dataset_TRAIN"),
-		OutputFolder:    config.TmpDataPath,
-	})
 	ingestConfig := &task.IngestTaskConfig{
-		Resolver:                           resolver,
 		HasHeader:                          true,
 		ClusteringOutputDataRelative:       config.ClusteringOutputDataRelative,
 		ClusteringOutputSchemaRelative:     config.ClusteringOutputSchemaRelative,
@@ -224,13 +224,19 @@ func main() {
 	// Ingest the data specified by the environment
 	if config.InitialDataset != "" && !config.SkipIngest {
 		log.Infof("Loading initial dataset '%s'", config.InitialDataset)
-		util.Copy(config.InitialDataset, path.Join(config.D3MOutputDir, "initial"))
-		err = task.IngestDataset(esMetadataStorageCtor, config.ESDatasetsIndex, "initial", metadata.Contrib, ingestConfig)
+		err = util.Copy(path.Join(config.InitialDataset, "TRAIN", "dataset_TRAIN"), path.Join(config.DatamartImportFolder, "initial"))
 		if err != nil {
 			log.Errorf("%+v", err)
 			os.Exit(1)
 		}
-		sourceFolder = path.Dir(ingestConfig.GetTmpAbsolutePath(ingestConfig.GeocodingOutputSchemaRelative))
+		err = task.IngestDataset(metadata.Contrib, esMetadataStorageCtor, config.ESDatasetsIndex, "initial", ingestConfig)
+		if err != nil {
+			log.Errorf("%+v", err)
+			os.Exit(1)
+		}
+
+		sourceFolder = env.ResolvePath(metadata.Contrib, ingestConfig.GeocodingOutputSchemaRelative)
+		sourceFolder = path.Dir(sourceFolder)
 	}
 
 	// register routes

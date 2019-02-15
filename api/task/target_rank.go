@@ -21,13 +21,7 @@ func TargetRank(dataset string, target string, features []*model.Variable, sourc
 		return nil, errors.Wrap(err, "unable to create ranking pipeline")
 	}
 
-	// create a reference to the original data path
-	config, err := env.LoadConfig()
-	if err != nil {
-		return nil, errors.Wrap(err, "unable to load config")
-	}
-	resolver := createResolver(source, &config)
-	datasetInputDir := resolver.ResolveInputAbsoluteFromRoot(dataset)
+	datasetInputDir := env.ResolvePath(source, dataset)
 
 	datasetURI, err := submitPipeline([]string{datasetInputDir}, pip)
 	if err != nil {

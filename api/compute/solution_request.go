@@ -17,9 +17,8 @@ import (
 	"github.com/unchartedsoftware/distil-compute/primitive/compute"
 	"github.com/unchartedsoftware/distil-compute/primitive/compute/description"
 
-	"github.com/unchartedsoftware/distil-ingest/metadata"
+	"github.com/unchartedsoftware/distil/api/env"
 	api "github.com/unchartedsoftware/distil/api/model"
-	"github.com/unchartedsoftware/distil/api/util"
 )
 
 const (
@@ -522,13 +521,7 @@ func (s *SolutionRequest) PersistAndDispatch(client *compute.Client, solutionSto
 	columnIndex := getColumnIndex(targetVariable, s.Filters.Variables)
 
 	// add dataset name to path
-	resolver := createPathResolver(dataset.Metadata.Source, inputDir, augmentDir)
-	var datasetInputDir string
-	if util.IsDatasetDir(inputDir) {
-		datasetInputDir = resolver.ResolveInputFromDataset()
-	} else {
-		datasetInputDir = resolver.ResolveInputAbsoluteFromRoot(dataset.Metadata.Folder)
-	}
+	datasetInputDir := env.ResolvePath(dataset.Metadata.Source, dataset.Metadata.Folder)
 
 	// perist the datasets and get URI
 	datasetPathTrain, datasetPathTest, err := PersistOriginalData(s.Dataset, compute.D3MDataSchema, datasetInputDir, datasetDir)
@@ -660,19 +653,4 @@ func getColumnIndex(variable *model.Variable, selectedVariables []string) int {
 	}
 
 	return colIndex
-}
-
-func createPathResolver(datasetSource metadata.DatasetSource, inputDir string, augmentDir string) *util.PathResolver {
-	if datasetSource == metadata.Augmented {
-		return util.NewPathResolver(&util.PathConfig{
-			InputFolder:  augmentDir,
-			OutputFolder: augmentDir,
-		})
-	}
-
-	return util.NewPathResolver(&util.PathConfig{
-		InputFolder:     inputDir,
-		InputSubFolders: "TRAIN/dataset_TRAIN",
-		OutputFolder:    augmentDir,
-	})
 }

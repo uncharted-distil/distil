@@ -15,7 +15,6 @@ import (
 	api "github.com/unchartedsoftware/distil-ingest/metadata"
 	"github.com/unchartedsoftware/distil/api/env"
 	"github.com/unchartedsoftware/distil/api/model"
-	"github.com/unchartedsoftware/distil/api/util"
 )
 
 const (
@@ -49,9 +48,9 @@ func TimeseriesHandler(ctor model.MetadataStorageCtor, resourceDir string, confi
 			return
 		}
 
-		resolver := createResolverForResource(api.DatasetSource(source), res.Folder, config)
+		sourcePath := env.ResolvePath(api.DatasetSource(source), res.Folder)
 
-		bytes, err := fetchResourceBytes(resolver.ResolveInputAbsolute(""), dataset, path)
+		bytes, err := fetchResourceBytes(sourcePath, dataset, path)
 		if err != nil {
 			handleError(w, err)
 			return
@@ -103,31 +102,4 @@ func TimeseriesHandler(ctor model.MetadataStorageCtor, resourceDir string, confi
 			return
 		}
 	}
-}
-
-func createResolverForResource(datasetSource api.DatasetSource, datasetFolder string, config *env.Config) *util.PathResolver {
-	if datasetSource == api.Contrib {
-		return util.NewPathResolver(&util.PathConfig{
-			InputFolder:  path.Join(config.DatamartImportFolder, datasetFolder),
-			OutputFolder: path.Join(config.DatamartImportFolder, datasetFolder),
-		})
-	}
-	if datasetSource == api.Seed {
-		return util.NewPathResolver(&util.PathConfig{
-			InputFolder:     path.Join(config.D3MInputDir, datasetFolder),
-			InputSubFolders: "TRAIN/dataset_TRAIN",
-			OutputFolder:    config.D3MInputDir,
-		})
-	}
-	if datasetSource == api.Augmented {
-		return util.NewPathResolver(&util.PathConfig{
-			InputFolder:  path.Join(config.TmpDataPath, config.AugmentedSubFolder, datasetFolder),
-			OutputFolder: path.Join(config.TmpDataPath, config.AugmentedSubFolder, datasetFolder),
-		})
-	}
-	return util.NewPathResolver(&util.PathConfig{
-		InputFolder:     config.D3MInputDir,
-		InputSubFolders: "TRAIN/dataset_TRAIN",
-		OutputFolder:    config.D3MInputDir,
-	})
 }

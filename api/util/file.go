@@ -12,47 +12,6 @@ import (
 	"github.com/pkg/errors"
 )
 
-// PathConfig contains basic configuration for path resolving.
-type PathConfig struct {
-	InputFolder     string
-	InputSubFolders string
-	OutputFolder    string
-}
-
-// PathResolver resolves a path given a basic configuration.
-type PathResolver struct {
-	Config *PathConfig
-}
-
-// NewPathResolver creates a new path resolver.
-func NewPathResolver(config *PathConfig) *PathResolver {
-	return &PathResolver{
-		Config: config,
-	}
-}
-
-// ResolveInputAbsolute creates the input path as an absolute.
-func (r *PathResolver) ResolveInputAbsolute(relativePath string) string {
-	return path.Join(r.Config.InputFolder, r.Config.InputSubFolders, relativePath)
-}
-
-// ResolveInputAbsoluteFromRoot creates the input path as an absolute= from the
-// root datasets dir.
-func (r *PathResolver) ResolveInputAbsoluteFromRoot(relativePath string) string {
-	return path.Join(r.Config.InputFolder, relativePath, r.Config.InputSubFolders)
-}
-
-// ResolveOutputAbsolute creates the output path as an absolute.
-func (r *PathResolver) ResolveOutputAbsolute(relativePath string) string {
-	return path.Join(r.Config.OutputFolder, relativePath)
-}
-
-// ResolveInputFromDataset creates the input path as an absolute where the path is fully
-// specified.
-func (r *PathResolver) ResolveInputFromDataset() string {
-	return path.Join(r.Config.InputFolder, r.Config.InputSubFolders)
-}
-
 // WriteFileWithDirs writes the file and creates any missing directories along
 // the way.
 func WriteFileWithDirs(filename string, data []byte, perm os.FileMode) error {

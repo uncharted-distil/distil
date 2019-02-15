@@ -3,7 +3,6 @@ package routes
 import (
 	"fmt"
 	"net/http"
-	"path"
 
 	"github.com/pkg/errors"
 	"goji.io/pat"
@@ -13,7 +12,6 @@ import (
 	"github.com/unchartedsoftware/distil/api/model"
 	"github.com/unchartedsoftware/distil/api/model/storage/datamart"
 	"github.com/unchartedsoftware/distil/api/task"
-	"github.com/unchartedsoftware/distil/api/util"
 )
 
 // ImportHandler imports a dataset to the local file system and then ingests it.
@@ -37,11 +35,9 @@ func ImportHandler(nyuDatamartMetaCtor model.MetadataStorageCtor, isiDatamartMet
 		}
 
 		// import the dataset to the local filesystem.
-		resolver := createResolverForSource(source, datasetID, &cfg, config)
-		uri := resolver.ResolveInputAbsolute(datasetID)
+		uri := env.ResolvePath(source, datasetID)
 
 		ingestConfig := *config
-		ingestConfig.Resolver = resolver
 		ingestConfig.SummaryEnabled = false
 
 		_, err = meta.ImportDataset(datasetID, uri)
@@ -51,7 +47,7 @@ func ImportHandler(nyuDatamartMetaCtor model.MetadataStorageCtor, isiDatamartMet
 		}
 
 		// ingest the imported dataset
-		err = task.IngestDataset(esMetaCtor, cfg.ESDatasetsIndex, datasetID, source, &ingestConfig)
+		err = task.IngestDataset(source, esMetaCtor, cfg.ESDatasetsIndex, datasetID, &ingestConfig)
 		if err != nil {
 			handleError(w, err)
 			return
@@ -83,31 +79,4 @@ func createMetadataStorageForSource(datasetSource metadata.DatasetSource, proven
 		return fileMetaCtor()
 	}
 	return nil, fmt.Errorf("unrecognized source `%v`", datasetSource)
-}
-
-func createResolverForSource(datasetSource metadata.DatasetSource, datasetID string, config *env.Config, taskConfig *task.IngestTaskConfig) *util.PathResolver {
-	if datasetSource == metadata.Contrib {
-		return util.NewPathResolver(&util.PathConfig{
-			InputFolder:  path.Join(config.DatamartImportFolder, datasetID),
-			OutputFolder: taskConfig.Resolver.Config.OutputFolder,
-		})
-	}
-	if datasetSource == metadata.Seed {
-		return util.NewPathResolver(&util.PathConfig{
-			InputFolder:     config.D3MInputDir,
-			InputSubFolders: "TRAIN/dataset_TRAIN",
-			OutputFolder:    taskConfig.Resolver.Config.OutputFolder,
-		})
-	}
-	if datasetSource == metadata.Augmented {
-		return util.NewPathResolver(&util.PathConfig{
-			InputFolder:  path.Join(config.TmpDataPath, config.AugmentedSubFolder, datasetID),
-			OutputFolder: taskConfig.Resolver.Config.OutputFolder,
-		})
-	}
-	return util.NewPathResolver(&util.PathConfig{
-		InputFolder:     config.D3MInputDir,
-		InputSubFolders: "TRAIN/dataset_TRAIN",
-		OutputFolder:    taskConfig.Resolver.Config.OutputFolder,
-	})
 }
