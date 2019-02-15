@@ -70,20 +70,23 @@ export function getRouteFacetPage(key: string, route: Route): number {
 function validateQueryArgs(args: RouteArgs): RouteArgs {
 	const query: RouteArgs = {};
 
-	if (args.dataset) { query.dataset = args.dataset; }
-	if (args.terms) { query.terms = args.terms; }
-	if (args.target) { query.target = args.target; }
-	if (args.solutionId) { query.solutionId = args.solutionId; }
+	// If `undefined` or empty array do not add property. This is to allow args
+	// of `''` and `null` to overwrite existing values.
+
+	if (!_.isUndefined(args.dataset)) { query.dataset = args.dataset; }
+	if (!_.isUndefined(args.terms)) { query.terms = args.terms; }
+	if (!_.isUndefined(args.target)) { query.target = args.target; }
+	if (!_.isUndefined(args.solutionId)) { query.solutionId = args.solutionId; }
 	if (!_.isEmpty(args.filters)) { query.filters = args.filters; }
 	if (!_.isEmpty(args.training)) { query.training = args.training; }
-	if (args.residualThresholdMin) { query.residualThresholdMin = args.residualThresholdMin; }
-	if (args.residualThresholdMax) { query.residualThresholdMax = args.residualThresholdMax; }
+	if (!_.isUndefined(args.residualThresholdMin)) { query.residualThresholdMin = args.residualThresholdMin; }
+	if (!_.isUndefined(args.residualThresholdMax)) { query.residualThresholdMax = args.residualThresholdMax; }
 	if (!_.isEmpty(args.highlights)) { query.highlights = args.highlights; }
-	if (args.geo) { query.geo = args.geo; }
-	if (args.joinDatasets) { query.joinDatasets = args.joinDatasets; }
-	if (args.joinColumnA) { query.joinColumnA = args.joinColumnA; }
-	if (args.joinColumnB) { query.joinColumnB = args.joinColumnB; }
-	if (args.joinAccuracy) { query.joinAccuracy = args.joinAccuracy; }
+	if (!_.isUndefined(args.geo)) { query.geo = args.geo; }
+	if (!_.isUndefined(args.joinDatasets)) { query.joinDatasets = args.joinDatasets; }
+	if (!_.isUndefined(args.joinColumnA)) { query.joinColumnA = args.joinColumnA; }
+	if (!_.isUndefined(args.joinColumnB)) { query.joinColumnB = args.joinColumnB; }
+	if (!_.isUndefined(args.joinAccuracy)) { query.joinAccuracy = args.joinAccuracy; }
 
 	if (args[JOINED_VARS_INSTANCE_PAGE]) { query[JOINED_VARS_INSTANCE_PAGE] = args[JOINED_VARS_INSTANCE_PAGE]; }
 	if (args[AVAILABLE_TARGET_VARS_INSTANCE_PAGE]) { query[AVAILABLE_TARGET_VARS_INSTANCE_PAGE] = args[AVAILABLE_TARGET_VARS_INSTANCE_PAGE]; }

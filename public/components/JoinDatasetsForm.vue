@@ -11,6 +11,7 @@
 				:preview-table-data="previewTableData"
 				:dataset-a="datasetA"
 				:dataset-b="datasetB"
+				:joined-column="joinedColumn"
 				@success="onJoinCommitSuccess"
 				@failure="onJoinCommitFailure"
 				@close="showJoinSuccess = !showJoinSuccess;">
@@ -128,6 +129,11 @@ export default Vue.extend({
 		},
 		joinDataPreviewHasData(): boolean {
 			return !!this.previewTableData;
+		},
+		joinedColumn(): string {
+			const a =  this.datasetAColumn ? this.datasetAColumn.key : '';
+			const b =  this.datasetBColumn ? this.datasetBColumn.key : '';
+			return  `${a}-${b}`;
 		}
 	},
 
