@@ -131,7 +131,7 @@ export default Vue.extend({
 				return {
 					type,
 					label: getLabelFromType(type),
-					isRecommended: this.topNonSchemaType.type === type,
+					isRecommended: this.topNonSchemaType && this.topNonSchemaType.type === type,
 					isSelected: this.type === type,
 				};
 			});
