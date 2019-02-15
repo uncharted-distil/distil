@@ -40,9 +40,8 @@ export default Vue.extend({
 				left: 16
 			})
 		},
-		timeseriesUrl: {
-			type: String as () => string
-		}
+		timeseriesUrl: String as () => string,
+		timeseriesColName:  String as () => string
 	},
 	data() {
 		return {
@@ -163,8 +162,10 @@ export default Vue.extend({
 			this.hasRequested = true;
 			datasetActions.fetchTimeseries(this.$store, {
 				dataset: this.dataset,
-				source: 'seed',
-				url: this.timeseriesUrl
+				xColName: 'x', // TODO: FIX THIS
+				yColName: 'y',  // TODO: FIX THIS
+				timeseriesColName: this.timeseriesColName,
+				timeseriesURL: this.timeseriesUrl
 			}).then(() => {
 				if (this.isVisible) {
 					this.injectTimeseries();

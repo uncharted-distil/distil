@@ -12,7 +12,7 @@
 		</template>
 
 		<template v-for="timeseriesField in timeseriesFields" :slot="timeseriesField" slot-scope="data">
-			<sparkline-preview :key="timeseriesField" :timeseries-url="data.item[timeseriesField]"></sparkline-preview>
+			<sparkline-preview :key="timeseriesField" :timeseries-url="data.item[timeseriesField]" :timeseries-col-name="timeseriesField"></sparkline-preview>
 		</template>
 
 	</b-table>

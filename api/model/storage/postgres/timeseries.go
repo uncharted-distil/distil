@@ -11,6 +11,50 @@ import (
 	api "github.com/unchartedsoftware/distil/api/model"
 )
 
+func (s *Storage) parseTimeseries(rows *pgx.Rows) ([][]float64, error) {
+	var points [][]float64
+	if rows != nil {
+		for rows.Next() {
+			var x float64
+			var y float64
+			err := rows.Scan(&x, &y)
+			if err != nil {
+				return nil, err
+			}
+			points = append(points, []float64{x, y})
+		}
+	}
+	return points, nil
+}
+
+// FetchTimeseries fetches a timeseries.
+func (s *Storage) FetchTimeseries(dataset string, storageName string, timeseriesColName string, xColName string, yColName string, timeseriesURI string, filterParams *api.FilterParams) ([][]float64, error) {
+	// create the filter for the query.
+	wheres := make([]string, 0)
+	params := make([]interface{}, 0)
+
+	wheres = append(wheres, fmt.Sprintf("\"%s\" = $1", timeseriesColName))
+	params = append(params, timeseriesURI)
+
+	wheres, params = s.buildFilteredQueryWhere(wheres, params, filterParams.Filters)
+	where := fmt.Sprintf("WHERE %s", strings.Join(wheres, " AND "))
+
+	// Get count by category.
+	query := fmt.Sprintf("SELECT \"%s\", \"%s\" FROM %s %s",
+		xColName, yColName, storageName, where)
+
+	// execute the postgres query
+	res, err := s.client.Query(query, params...)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to fetch timeseries from postgres")
+	}
+	if res != nil {
+		defer res.Close()
+	}
+
+	return s.parseTimeseries(res)
+}
+
 // TimeSeriesField defines behaviour for the timeseries field type.
 type TimeSeriesField struct {
 	Storage     *Storage

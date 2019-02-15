@@ -326,18 +326,36 @@ export const actions = {
 			});
 	},
 
-	fetchTimeseries(context: DatasetContext, args: { dataset: string, source: string, url: string }) {
-		if (!args.url) {
-			console.warn('`url` argument is missing');
-			return null;
-		}
+	fetchTimeseries(context: DatasetContext, args: { dataset: string, xColName: string, yColName: string, timeseriesColName: string, timeseriesURL: string }) {
+
 		if (!args.dataset) {
 			console.warn('`dataset` argument is missing');
 			return null;
 		}
-		return axios.get(`distil/timeseries/${args.dataset}/${args.source}/${args.url}`)
+		if (!args.xColName) {
+			console.warn('`xColName` argument is missing');
+			return null;
+		}
+		if (!args.yColName) {
+			console.warn('`yColName` argument is missing');
+			return null;
+		}
+		if (!args.timeseriesColName) {
+			console.warn('`timeseriesColName` argument is missing');
+			return null;
+		}
+		if (!args.timeseriesURL) {
+			console.warn('`timeseriesURL` argument is missing');
+			return null;
+		}
+
+		return axios.post(`distil/timeseries/${args.dataset}/${args.timeseriesColName}/${args.xColName}/${args.yColName}/${args.timeseriesURL}`, {})
 			.then(response => {
-				mutations.updateTimeseriesFile(context, { dataset: args.dataset, url: args.url, file: response.data.timeseries });
+				mutations.updateTimeseriesFile(context, {
+					dataset: args.dataset,
+					url: args.timeseriesURL,
+					file: response.data.timeseries
+				});
 			})
 			.catch(error => {
 				console.error(error);
@@ -442,7 +460,7 @@ export const actions = {
 			return null;
 		}
 		if (!args.filterParams) {
-			console.warn('`filters` argument is missing');
+			console.warn('`filterParams` argument is missing');
 			return null;
 		}
 
@@ -466,7 +484,7 @@ export const actions = {
 			return null;
 		}
 		if (!args.filterParams) {
-			console.warn('`filters` argument is missing');
+			console.warn('`filterParams` argument is missing');
 			return null;
 		}
 

@@ -44,7 +44,8 @@ export default Vue.extend({
 		},
 		timeseriesExtrema: {
 			type: Object as () => TimeseriesExtrema
-		}
+		},
+		timeseriesColName:  String as () => string
 	},
 	data() {
 		return {
@@ -214,8 +215,10 @@ export default Vue.extend({
 			this.hasRequested = true;
 			datasetActions.fetchTimeseries(this.$store, {
 				dataset: this.dataset,
-				source: 'seed',
-				url: this.timeseriesUrl
+				xColName: 'x', // TODO: FIX THIS
+				yColName: 'y',  // TODO: FIX THIS
+				timeseriesColName: this.timeseriesColName,
+				timeseriesURL: this.timeseriesUrl
 			}).then(() => {
 				if (this.isVisible) {
 					Vue.nextTick(() => {

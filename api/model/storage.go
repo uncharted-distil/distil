@@ -24,7 +24,7 @@ type DataStorage interface {
 	FetchResidualsSummary(dataset string, storageName string, resultURI string, filterParams *FilterParams, extrema *Extrema) (*Histogram, error)
 	FetchResidualsExtremaByURI(dataset string, storageName string, resultURI string) (*Extrema, error)
 	FetchExtremaByURI(dataset string, storageName string, resultURI string, variable string) (*Extrema, error)
-
+	FetchTimeseries(dataset string, storageName string, timeseriesColName string, xColName string, yColName string, timeseriesURI string, filterParams *FilterParams) ([][]float64, error)
 	// Dataset manipulation
 	SetDataType(dataset string, storageName string, varName string, varType string) error
 	AddVariable(dataset string, storageName string, varName string, varType string) error

@@ -15,6 +15,7 @@
 			<div v-for="item in items">
 				<sparkline-row
 					:timeseries-url="item[timeseriesField]"
+					:timeseries-col-name="timeseriesField"
 					:timeseries-extrema="microExtrema"
 					:margin="margin"
 					:highlight-pixel-x="highlightPixelX">
