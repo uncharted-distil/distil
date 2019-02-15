@@ -3,6 +3,7 @@ package env
 import (
 	"path"
 
+	"github.com/pkg/errors"
 	"github.com/unchartedsoftware/distil-ingest/metadata"
 )
 
@@ -13,16 +14,26 @@ var (
 
 	seedSubPath   = ""
 	augmentedPath = ""
+
+	initialized = false
 )
 
 // Initialize the path resolution.
-func Initialize(config *Config) {
+func Initialize(config *Config) error {
+	if initialized {
+		return errors.Errorf("path resolution already initialized")
+	}
+
 	seedPath = config.D3MInputDir
 	seedSubPath = path.Join("TRAIN", "dataset_TRAIN")
 	tmpPath = config.TmpDataPath
 
 	contribPath = config.DatamartImportFolder
 	augmentedPath = path.Join(config.TmpDataPath, config.AugmentedSubFolder)
+
+	initialized = true
+
+	return nil
 }
 
 // GetTmpPath returns the tmp path as initialized.

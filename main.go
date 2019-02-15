@@ -67,7 +67,12 @@ func main() {
 		os.Exit(1)
 	}
 	log.Infof("%+v", spew.Sdump(config))
-	env.Initialize(&config)
+
+	err = env.Initialize(&config)
+	if err != nil {
+		log.Errorf("%+v", err)
+		os.Exit(1)
+	}
 
 	// set dataset directory
 	api.SetDatasetDir(config.TmpDataPath)
