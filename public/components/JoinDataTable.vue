@@ -1,23 +1,24 @@
 <template>
+	<div class="table-holder h-100" @scroll="handleScroll">
+	<!-- <div class="h-100" @scroll="handleScroll"> -->
+		<b-table
+			bordered
+			hover
+			small
+			:items="items"
+			:fields="emphasizedFields"
+			@head-clicked="onColumnClicked">
 
-	<b-table
-		bordered
-		hover
-		small
-		:items="items"
-		:fields="emphasizedFields"
-		@head-clicked="onColumnClicked">
+			<template v-for="imageField in imageFields" :slot="imageField" slot-scope="data">
+				<image-preview :key="imageField" :image-url="data.item[imageField]"></image-preview>
+			</template>
 
-		<template v-for="imageField in imageFields" :slot="imageField" slot-scope="data">
-			<image-preview :key="imageField" :image-url="data.item[imageField]"></image-preview>
-		</template>
+			<template v-for="timeseriesField in timeseriesFields" :slot="timeseriesField" slot-scope="data">
+				<sparkline-preview :key="timeseriesField" :timeseries-url="data.item[timeseriesField]"></sparkline-preview>
+			</template>
 
-		<template v-for="timeseriesField in timeseriesFields" :slot="timeseriesField" slot-scope="data">
-			<sparkline-preview :key="timeseriesField" :timeseries-url="data.item[timeseriesField]"></sparkline-preview>
-		</template>
-
-	</b-table>
-
+		</b-table>
+	</div>
 </template>
 
 <script lang="ts">
@@ -115,7 +116,32 @@ export default Vue.extend({
 			} else {
 				this.$emit('col-clicked', field);
 			}
+		},
+		resizeTableColumns() {
+			const theadCells = this.$el.querySelectorAll('thead tr')[0]
+				.querySelectorAll('th');
+			const firstRow = this.$el.querySelectorAll('tbody tr')[0];
+			const tbodyCells = firstRow.querySelectorAll('td');
+			for (let i = 0; i < theadCells.length; i++) {
+				const headCellWidth = theadCells[i].offsetWidth;
+				const bodyCellWidth = tbodyCells[i].offsetWidth;
+				const targetCell = headCellWidth > bodyCellWidth
+					? tbodyCells[i]
+					: theadCells[i];
+				targetCell.style.width = Math.max(headCellWidth, bodyCellWidth) + 'px';
+				targetCell.style['min-width'] = targetCell.style.width;
+			}
 		}
+	},
+	mounted: function () {
+		this.resizeTableColumns();
+		console.log('mounted: ');
+	},
+	beforeUpdate: () => {
+		console.log('before Update');
+	},
+	updated: () => {
+		console.log('updated');
 	}
 });
 </script>
@@ -132,4 +158,36 @@ table.b-table>thead>tr>th.sorting:after {
 table tr {
 	cursor: pointer;
 }
+.table-holder {
+	overflow-x: auto;
+	height: 100%;
+	width: 100%;
+}
+.table-holder table {
+	table-layout: fixed;
+	height: 100%;
+	margin: 0;
+
+	display: flex;
+	flex-direction: column;
+	align-items: flex-start;
+}
+.table-holder thead {
+	width: 100%
+}
+.table-holder thead tr {
+	display: flex;
+}
+.table-holder thead th {
+	flex-shrink: 0;
+	flex-grow: 1;
+}
+.table-holder tbody {
+	overflow-y: auto;
+	flex: 1;
+}
+.table-holder tbody td {
+	overflow-wrap: break-word;
+}
+
 </style>
