@@ -1,5 +1,6 @@
 <template>
-	<div class="table-holder h-100" @scroll="handleScroll">
+	<div class="table-holder h-100">
+		<object class="resize-observer"></object>
 	<!-- <div class="h-100" @scroll="handleScroll"> -->
 		<b-table
 			bordered
@@ -117,32 +118,54 @@ export default Vue.extend({
 				this.$emit('col-clicked', field);
 			}
 		},
-		resizeTableColumns() {
+		resizeTableCells() {
 			const theadCells = this.$el.querySelectorAll('thead tr')[0]
 				.querySelectorAll('th');
 			const firstRow = this.$el.querySelectorAll('tbody tr')[0];
 			const tbodyCells = firstRow.querySelectorAll('td');
+			const headTargetCells = [];
+
+			// reset element style so that table renders with initial layout set by css
+			for (let i = 0; i < theadCells.length; i++) {
+				tbodyCells[i].removeAttribute('style');
+				theadCells[i].removeAttribute('style');
+			}
+			// get new adjusted header cell width based on the corresponding data cell width
 			for (let i = 0; i < theadCells.length; i++) {
 				const headCellWidth = theadCells[i].offsetWidth;
 				const bodyCellWidth = tbodyCells[i].offsetWidth;
-				const targetCell = headCellWidth > bodyCellWidth
-					? tbodyCells[i]
-					: theadCells[i];
-				targetCell.style.width = Math.max(headCellWidth, bodyCellWidth) + 'px';
-				targetCell.style['min-width'] = targetCell.style.width;
+				if (headCellWidth < bodyCellWidth) {
+					headTargetCells.push({ elem: theadCells[i], width: bodyCellWidth });
+				}
 			}
+			const setCellWidth = cell => {
+				cell.elem.style['max-width'] = cell.width + 'px';
+				cell.elem.style['min-width'] = cell.width + 'px';
+			};
+			headTargetCells.forEach(setCellWidth);
+
+			// get body cell width from computed table header cell width
+			const bodyCells = [];
+			for (let i = 0; i < theadCells.length; i++) {
+				const headCellWidth = theadCells[i].offsetWidth;
+				bodyCells.push({ elem: tbodyCells[i], width: headCellWidth });
+			}
+			// set new body cell width
+			bodyCells.forEach(setCellWidth);
 		}
 	},
 	mounted: function () {
-		this.resizeTableColumns();
+		const resizeObserver = this.$el.querySelector('object');
+
+		window.addEventListener('resize', () => {
+			this.resizeTableCells();
+		});
+		this.resizeTableCells();
 		console.log('mounted: ');
 	},
-	beforeUpdate: () => {
-		console.log('before Update');
-	},
-	updated: () => {
-		console.log('updated');
-	}
+	// beforeDestroy: function () {
+	// 	// this.$el.querySelector('object').removeEventListener('resize', () => {});
+	// },
 });
 </script>
 
@@ -158,10 +181,12 @@ table.b-table>thead>tr>th.sorting:after {
 table tr {
 	cursor: pointer;
 }
+
 .table-holder {
 	overflow-x: auto;
 	height: 100%;
 	width: 100%;
+	position: relative;
 }
 .table-holder table {
 	table-layout: fixed;
