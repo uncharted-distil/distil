@@ -1,5 +1,5 @@
 <template>
-	<div class="fixed-header-table h-100">
+	<div class="fixed-header-table">
 		<!-- slot for html table -->
         <slot></slot>
 	</div>
@@ -63,8 +63,8 @@ export default Vue.extend({
 <style>
 .fixed-header-table {
 	overflow-x: auto;
-	height: 100%;
-	width: 100%;
+	height: inherit;
+	width: inherit;
 	position: relative;
 }
 .fixed-header-table table {
