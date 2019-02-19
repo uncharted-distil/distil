@@ -4,6 +4,7 @@
 		<b-modal
 			v-model="showJoinSuccess"
 			class="join-preview-modal"
+			@shown="onSuccessModalShwon"
 			cancel-disabled
 			hide-header
 			hide-footer>
@@ -185,7 +186,12 @@ export default Vue.extend({
 		},
 		onJoinCommitFailure() {
 			this.showJoinFailure = true;
-		}
+		},
+		onSuccessModalShwon() {
+			// trigger window resize event to notify modal content dimension has changed
+			// (fixed-header-table component will listen to this event to resize itself)
+			window.dispatchEvent(new Event('resize'));
+		},
 	}
 });
 </script>

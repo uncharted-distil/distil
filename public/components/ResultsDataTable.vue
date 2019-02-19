@@ -8,48 +8,50 @@
 			<div class="results-data-no-results" v-if="hasNoResults">
 				No results available
 			</div>
-			<b-table v-if="hasResults"
-				bordered
-				hover
-				small
-				:ref="refName"
-				:items="items"
-				:fields="fields"
-				:sort-by="errorCol"
-				:sort-compare="sortingByResidualError ? sortingByErrorFunction : undefined"
-				@row-clicked="onRowClick"
-				@sort-changed="onSortChanged">
+			<fixed-header-table v-if="hasResults">
+				<b-table
+					bordered
+					hover
+					small
+					:ref="refName"
+					:items="items"
+					:fields="fields"
+					:sort-by="errorCol"
+					:sort-compare="sortingByResidualError ? sortingByErrorFunction : undefined"
+					@row-clicked="onRowClick"
+					@sort-changed="onSortChanged">
 
-				<template :slot="predictedCol" slot-scope="data">
-					{{target}}<sup>{{solutionIndex}}</sup>
-				</template>
+					<template :slot="predictedCol" slot-scope="data">
+						{{target}}<sup>{{solutionIndex}}</sup>
+					</template>
 
-				<template v-for="imageField in imageFields" :slot="imageField" slot-scope="data">
-					<image-preview :key="imageField" :image-url="data.item[imageField]"></image-preview>
-				</template>
+					<template v-for="imageField in imageFields" :slot="imageField" slot-scope="data">
+						<image-preview :key="imageField" :image-url="data.item[imageField]"></image-preview>
+					</template>
 
-				<template v-for="timeseriesField in timeseriesFields" :slot="timeseriesField" slot-scope="data">
-					<sparkline-preview :key="timeseriesField" :timeseries-url="data.item[timeseriesField]"></sparkline-preview>
-				</template>
+					<template v-for="timeseriesField in timeseriesFields" :slot="timeseriesField" slot-scope="data">
+						<sparkline-preview :key="timeseriesField" :timeseries-url="data.item[timeseriesField]"></sparkline-preview>
+					</template>
 
-				<template :slot="errorCol" slot-scope="data">
-					<!-- residual error -->
-					<div class="error-bar-container" v-if="isTargetNumerical">
-						<div class="error-bar" v-bind:style="{ 'background-color': errorBarColor(data.item[errorCol]), width: errorBarWidth(data.item[errorCol]), left: errorBarLeft(data.item[errorCol]) }"></div>
-						<div class="error-bar-center"></div>
-					</div>
-
-					<!-- correctness error -->
-					<div v-if="isTargetCategorical">
-						<div v-if="data.item[predictedCol]==data.item[this.target]">
-							Correct
+					<template :slot="errorCol" slot-scope="data">
+						<!-- residual error -->
+						<div class="error-bar-container" v-if="isTargetNumerical">
+							<div class="error-bar" v-bind:style="{ 'background-color': errorBarColor(data.item[errorCol]), width: errorBarWidth(data.item[errorCol]), left: errorBarLeft(data.item[errorCol]) }"></div>
+							<div class="error-bar-center"></div>
 						</div>
-						<div v-if="data.item[predictedCol]!=data.item[this.target]">
-							Incorrect
+
+						<!-- correctness error -->
+						<div v-if="isTargetCategorical">
+							<div v-if="data.item[predictedCol]==data.item[this.target]">
+								Correct
+							</div>
+							<div v-if="data.item[predictedCol]!=data.item[this.target]">
+								Incorrect
+							</div>
 						</div>
-					</div>
-				</template>
-			</b-table>
+					</template>
+				</b-table>
+			</fixed-header-table>
 		</div>
 
 	</div>
@@ -58,6 +60,7 @@
 <script lang="ts">
 
 import _ from 'lodash';
+import FixedHeaderTable from './FixedHeaderTable'
 import SparklinePreview from './SparklinePreview';
 import ImagePreview from './ImagePreview';
 import { spinnerHTML } from '../util/spinner';
@@ -77,7 +80,8 @@ export default Vue.extend({
 
 	components: {
 		ImagePreview,
-		SparklinePreview
+		SparklinePreview,
+		FixedHeaderTable,
 	},
 
 	data() {
