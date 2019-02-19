@@ -1,5 +1,6 @@
 <template>
-	<div class="table-holder h-100">
+	<div class="fixed-header-table h-100">
+		<!-- slot for html table -->
         <slot></slot>
 	</div>
 </template>
@@ -60,13 +61,13 @@ export default Vue.extend({
 
 
 <style>
-.table-holder {
+.fixed-header-table {
 	overflow-x: auto;
 	height: 100%;
 	width: 100%;
 	position: relative;
 }
-.table-holder table {
+.fixed-header-table table {
 	table-layout: fixed;
 	height: 100%;
 	margin: 0;
@@ -75,21 +76,21 @@ export default Vue.extend({
 	flex-direction: column;
 	align-items: flex-start;
 }
-.table-holder thead {
+.fixed-header-table thead {
 	width: 100%
 }
-.table-holder thead tr {
+.fixed-header-table thead tr {
 	display: flex;
 }
-.table-holder thead th {
+.fixed-header-table thead th {
 	flex-shrink: 0;
 	flex-grow: 1;
 }
-.table-holder tbody {
+.fixed-header-table tbody {
 	overflow-y: auto;
 	flex: 1;
 }
-.table-holder tbody td {
+.fixed-header-table tbody td {
 	overflow-wrap: break-word;
 }
 </style>
