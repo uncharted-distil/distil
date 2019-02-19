@@ -60,7 +60,7 @@
 <script lang="ts">
 
 import _ from 'lodash';
-import FixedHeaderTable from './FixedHeaderTable'
+import FixedHeaderTable from './FixedHeaderTable';
 import SparklinePreview from './SparklinePreview';
 import ImagePreview from './ImagePreview';
 import { spinnerHTML } from '../util/spinner';
