@@ -81,7 +81,8 @@ function validateQueryArgs(args: RouteArgs): RouteArgs {
 	if (!_.isEmpty(args.training)) { query.training = args.training; }
 	if (!_.isUndefined(args.residualThresholdMin)) { query.residualThresholdMin = args.residualThresholdMin; }
 	if (!_.isUndefined(args.residualThresholdMax)) { query.residualThresholdMax = args.residualThresholdMax; }
-	if (!_.isEmpty(args.highlights)) { query.highlights = args.highlights; }
+	if (!_.isUndefined(args.highlights)) { console.log('highlights: ', query.highlights); query.highlights = args.highlights; }
+	if (!_.isUndefined(args.row)) { query.row = args.row; }
 	if (!_.isUndefined(args.geo)) { query.geo = args.geo; }
 	if (!_.isUndefined(args.joinDatasets)) { query.joinDatasets = args.joinDatasets; }
 	if (!_.isUndefined(args.joinColumnA)) { query.joinColumnA = args.joinColumnA; }

@@ -170,7 +170,8 @@ export function addRowSelection(router: VueRouter, context: string, selection: R
 	}
 	selection.d3mIndices.push(d3mIndex);
 	const entry = overlayRouteEntry(routeGetters.getRoute(store), {
-		row: encodeRowSelection(selection),
+		row: encodeRowSelection(selection)
+
 	});
 	router.push(entry);
 }
@@ -183,7 +184,7 @@ export function removeRowSelection(router: VueRouter, context: string, selection
 		selection = null;
 	}
 	const entry = overlayRouteEntry(routeGetters.getRoute(store), {
-		row: encodeRowSelection(selection),
+		row: encodeRowSelection(selection)
 	});
 	router.push(entry);
 }
