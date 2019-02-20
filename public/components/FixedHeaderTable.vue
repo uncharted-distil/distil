@@ -72,12 +72,13 @@ export default Vue.extend({
 	height: inherit;
 	width: inherit;
 	position: relative;
+	border: 1px solid rgb(245, 245, 245);
 }
 .fixed-header-table table {
 	table-layout: fixed;
 	height: 100%;
 	margin: 0;
-
+	border: none;
 	display: flex;
 	flex-direction: column;
 	align-items: flex-start;
