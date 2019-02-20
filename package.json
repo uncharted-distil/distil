@@ -34,7 +34,6 @@
     "vuex-typescript": "^3.0.2"
   },
   "devDependencies": {
-    "chai": "^4.2.0",
     "cssnano": "^4.1.9",
     "copy-webpack-plugin": "^4.5.4",
     "css-loader": "^2.1.0",

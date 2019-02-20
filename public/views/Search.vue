@@ -2,11 +2,12 @@
 	<div class="container-fluid d-flex flex-column h-100 search-view">
 		<div class="row flex-0-nav"></div>
 
-		<div class="row flex-1 align-items-center justify-content-center bg-white">
+		<div class="row align-items-center justify-content-center bg-white">
 			<div class="col-12 col-md-10">
 				<h5 class="header-label">Select a Dataset</h5>
 			</div>
 		</div>
+
 		<div class="row flex-2 align-items-center justify-content-center">
 			<div class="col-12 col-md-6">
 				<search-bar class="search-search-bar"></search-bar>
