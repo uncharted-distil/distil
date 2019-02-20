@@ -8,15 +8,21 @@
 <script lang="ts">
 
 import Vue from 'vue';
+import _ from 'lodash';
 
 export default Vue.extend({
 	name: 'fixed-header-table',
 	methods: {
 		resizeTableCells() {
-			const theadCells = this.$el.querySelectorAll('thead tr')[0]
-				.querySelectorAll('th');
-			const firstRow = this.$el.querySelectorAll('tbody tr')[0];
-			const tbodyCells = firstRow.querySelectorAll('td');
+			const thead = this.$el.querySelector('thead');
+			const theadCells = thead && thead.querySelectorAll('th');
+			const firstRow = this.$el.querySelector('tbody tr');
+			const tbodyCells = firstRow && firstRow.querySelectorAll('td');
+
+			if (_.isEmpty(theadCells) || _.isEmpty(tbodyCells)) {
+				return;
+			}
+
 			const headTargetCells = [];
 
 			// reset element style so that table renders with initial layout set by css

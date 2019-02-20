@@ -1,5 +1,5 @@
 <template>
-	<fixed-header-table>
+	<fixed-header-table ref="fixedHeaderTable">
 		<b-table
 			bordered
 			hover
@@ -98,7 +98,9 @@ export default Vue.extend({
 			return routeGetters.getDecodedRowSelection(this.$store);
 		}
 	},
-
+	updated() {
+		this.$refs.fixedHeaderTable.resizeTableCells();
+	},
 	methods: {
 		onRowClick(row: TableRow) {
 			if (!isRowSelected(this.rowSelection, row[D3M_INDEX_FIELD])) {
@@ -110,7 +112,7 @@ export default Vue.extend({
 		invertFilters(filters: Filter[]): Filter[] {
 			// TODO: invert filters
 			return filters;
-		}
+		},
 	}
 });
 </script>
