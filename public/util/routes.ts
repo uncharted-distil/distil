@@ -77,11 +77,11 @@ function validateQueryArgs(args: RouteArgs): RouteArgs {
 	if (!_.isUndefined(args.terms)) { query.terms = args.terms; }
 	if (!_.isUndefined(args.target)) { query.target = args.target; }
 	if (!_.isUndefined(args.solutionId)) { query.solutionId = args.solutionId; }
-	if (!_.isEmpty(args.filters)) { query.filters = args.filters; }
-	if (!_.isEmpty(args.training)) { query.training = args.training; }
+	if (!_.isUndefined(args.filters)) { query.filters = args.filters; }
+	if (!_.isUndefined(args.training)) { query.training = args.training; }
 	if (!_.isUndefined(args.residualThresholdMin)) { query.residualThresholdMin = args.residualThresholdMin; }
 	if (!_.isUndefined(args.residualThresholdMax)) { query.residualThresholdMax = args.residualThresholdMax; }
-	if (!_.isUndefined(args.highlights)) { console.log('highlights: ', query.highlights); query.highlights = args.highlights; }
+	if (!_.isUndefined(args.highlights)) { query.highlights = args.highlights; }
 	if (!_.isUndefined(args.row)) { query.row = args.row; }
 	if (!_.isUndefined(args.geo)) { query.geo = args.geo; }
 	if (!_.isUndefined(args.joinDatasets)) { query.joinDatasets = args.joinDatasets; }

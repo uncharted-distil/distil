@@ -460,7 +460,7 @@ export const actions = {
 	},
 
 	// update filtered data based on the  current filter state
-	fetchExcludedTableData(context: DatasetContext, args: { dataset: string, filterParams: FilterParams }) {
+	fetchExcludedTableData(context: DatasetContext, args: { dataset: string, filterParams: FilterParams, highlightRoot: HighlightRoot }) {
 		if (!args.dataset) {
 			console.warn('`dataset` argument is missing');
 			return null;
@@ -470,7 +470,10 @@ export const actions = {
 			return null;
 		}
 
-		return axios.post(`distil/data/${args.dataset}/true`, args.filterParams)
+		// NOTE: we use an `INCLUDE_FILTER` here because we are inverting all the filters in the REST param
+		const filterParams = addHighlightToFilterParams(args.filterParams, args.highlightRoot, INCLUDE_FILTER);
+
+		return axios.post(`distil/data/${args.dataset}/true`, filterParams)
 			.then(response => {
 				mutations.setExcludedTableData(context, response.data);
 			})
