@@ -50,7 +50,9 @@ export default Vue.extend({
 	},
 	mounted: function () {
 		window.addEventListener('resize', this.resizeTableCells);
-		this.resizeTableCells();
+		Vue.nextTick(() => {
+			this.resizeTableCells();
+		});
 	},
 	beforeDestroy: function () {
 		window.removeEventListener('resize', this.resizeTableCells);
