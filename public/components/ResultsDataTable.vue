@@ -60,7 +60,7 @@
 <script lang="ts">
 
 import _ from 'lodash';
-import FixedHeaderTable from './FixedHeaderTable'
+import FixedHeaderTable from './FixedHeaderTable';
 import SparklinePreview from './SparklinePreview';
 import ImagePreview from './ImagePreview';
 import { spinnerHTML } from '../util/spinner';
@@ -310,4 +310,13 @@ table tr {
 	background-color: #666;
 }
 
+.table-selected-row {
+	border-left: 4px solid #ff0067;
+	background-color: rgba(255, 0, 103, 0.2);
+}
+
+.table-hover tbody .table-selected-row:hover {
+	border-left: 4px solid #ff0067;
+	background-color: rgba(255, 0, 103, 0.4);
+}
 </style>

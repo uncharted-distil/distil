@@ -128,4 +128,13 @@ table tr {
 	cursor: pointer;
 }
 
+.table-selected-row {
+	border-left: 4px solid #ff0067;
+	background-color: rgba(255, 0, 103, 0.2);
+}
+
+.table-hover tbody .table-selected-row:hover {
+	border-left: 4px solid #ff0067;
+	background-color: rgba(255, 0, 103, 0.4);
+}
 </style>

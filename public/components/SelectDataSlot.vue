@@ -137,7 +137,7 @@ export default Vue.extend({
 		},
 
 		numRows(): number {
-			return datasetGetters.getIncludedTableDataNumRows(this.$store);
+			return  this.includedActive ? datasetGetters.getIncludedTableDataNumRows(this.$store) : datasetGetters.getExcludedTableDataNumRows(this.$store);
 		},
 
 		hasData(): boolean {
@@ -306,7 +306,7 @@ table tr {
 .view-button {
 	cursor: pointer;
 }
-.view-button input[type=radio]{	
+.view-button input[type=radio]{
     display:none;
 }
 
