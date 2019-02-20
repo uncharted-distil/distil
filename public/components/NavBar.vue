@@ -1,5 +1,5 @@
 <template>
-	<b-navbar toggleable="md" type="dark"  class="fixed-top bottom-shadowed">
+	<b-navbar toggleable="md" type="dark"  class="nav-bar-fixed-top bottom-shadowed">
 
 		<b-nav-toggle target="nav-collapse"></b-nav-toggle>
 
@@ -157,6 +157,11 @@ export default Vue.extend({
 }
 .navbar {
 	background-color: #424242;
+}
+.nav-bar-fixed-top {
+	position: fixed;
+	right: 0;
+	left: 0;
 }
 .nav-arrow {
 	color: rgba(255,255,255,1);
