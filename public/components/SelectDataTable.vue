@@ -99,7 +99,8 @@ export default Vue.extend({
 		}
 	},
 	updated() {
-		this.$refs.fixedHeaderTable.resizeTableCells();
+		const fixedHeaderTable = this.$refs.fixedHeaderTable as any;
+		fixedHeaderTable.resizeTableCells();
 	},
 	methods: {
 		onRowClick(row: TableRow) {
