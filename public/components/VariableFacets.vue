@@ -179,7 +179,6 @@ export default Vue.extend({
 		onFacetClick(context: string, key: string, value: string, dataset: string) {
 			if (this.enableHighlighting) {
 				if (key && value) {
-					// extract the var name from the key
 					updateHighlightRoot(this.$router, {
 						context: context,
 						dataset: dataset,
