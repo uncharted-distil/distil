@@ -8,6 +8,11 @@
 import _ from 'lodash';
 import $ from 'jquery';
 import Vue from 'vue';
+
+import IconBase from './icons/IconBase.vue';
+import IconFork from './icons/IconFork.vue';
+import IconBookmark from './icons/IconBookmark.vue'
+
 import { Group, CategoricalFacet, isCategoricalFacet, getCategoricalChunkSize, isNumericalFacet } from '../util/facets';
 import { Highlight, RowSelection, Row } from '../store/highlights/index';
 import { VariableSummary } from '../store/dataset/index';
@@ -17,7 +22,7 @@ import Facets from '@uncharted.software/stories-facets';
 import ImagePreview from '../components/ImagePreview.vue';
 import TypeChangeMenu from '../components/TypeChangeMenu.vue';
 import { circleSpinnerHTML } from '../util/spinner';
-import { getVarType, isClusterType, isFeatureType, addClusterPrefix, addFeaturePrefix } from '../util/types';
+import { getVarType, isClusterType, isFeatureType, addClusterPrefix, addFeaturePrefix, hasComputedVarPrefix } from '../util/types';
 
 import '@uncharted.software/stories-facets/dist/facets.css';
 
@@ -807,6 +812,15 @@ export default Vue.extend({
 				const $icon = $(`<i class="${typeicon}"></i>`);
 				$elem.find('.group-header').append($icon);
 			}
+			if (hasComputedVarPrefix(group.key)) {
+				const iconBase = new IconBase();
+				const b = new IconBookmark._Ctor[0]();
+				const forkIcon = new IconFork._Ctor[0]();
+
+				// iconBase.$slots.default = [forkIcon.$el];
+				// iconBase.$mount();
+				// $elem.find('.group-header').append(iconBase.$el);
+			}
 		},
 
 		getGroupSampleValues(group: Group): any[] {
@@ -924,6 +938,10 @@ export default Vue.extend({
 	color: rgba(0,0,0,.54);
 }
 .facets-group .group-header i {
+	margin-left: 5px;
+}
+.facets-group .group-header img {
+	height: 0.867rem;
 	margin-left: 5px;
 }
 .facets-facet-horizontal .select-highlight,
