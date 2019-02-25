@@ -65,7 +65,14 @@ export default Vue.extend({
 		const component = this as any;
 		return {
 			facets: {} as any,
-			debouncedInjection: _.debounce(component.injectHighlights, INJECT_DEBOUNCE),
+			debouncedInjection: _.debounce((highlights: Highlight, selection: RowSelection, deemphasis: any) => {
+				// we need to guard here because this debounced call can execute
+				// after this component is destroyed
+				if (!component.facets) {
+					return;
+				}
+				component.injectHighlights(highlights, selection, deemphasis);
+			}, INJECT_DEBOUNCE),
 			numToDisplay: {} as Dictionary<number>,
 			numAddedToDisplay: {} as Dictionary<number>
 		};
@@ -158,7 +165,7 @@ export default Vue.extend({
 			};
 			if (this.isHighlightedValue(this.highlights, key, range)) {
 				// clear current selection
-				component.$emit('histogram-click', this.instanceName, facet.dataset);
+				component.$emit('histogram-click', this.instanceName, null, null, facet.dataset);
 			} else {
 				// set selection
 				component.$emit('histogram-click', this.instanceName, key, range, facet.dataset);
@@ -169,7 +176,7 @@ export default Vue.extend({
 			// User clicked on the value that is currently the highlight root
 			if (this.isHighlightedValue(this.highlights, key, value)) {
 				// clear current selection
-				component.$emit('facet-click', this.instanceName, facet.dataset);
+				component.$emit('facet-click', this.instanceName, null, null, facet.dataset);
 			} else {
 				// set selection
 				component.$emit('facet-click', this.instanceName, key, value, facet.dataset);
@@ -283,9 +290,9 @@ export default Vue.extend({
 							from: _.toNumber(first.label),
 							to: _.toNumber(last.toLabel)
 						};
-						this.$emit('numerical-click', this.instanceName, group.key, range);
+						this.$emit('numerical-click', this.instanceName, group.key, range, group.dataset);
 					} else if (isCategoricalFacet(facet)) {
-						this.$emit('categorical-click', this.instanceName, group.key);
+						this.$emit('categorical-click', this.instanceName, group.key, null, group.dataset);
 					}
 				}
 			});
@@ -301,7 +308,7 @@ export default Vue.extend({
 							from: _.toNumber(first.label),
 							to: _.toNumber(last.toLabel)
 						};
-						this.$emit('numerical-click', this.instanceName, group.key, range);
+						this.$emit('numerical-click', this.instanceName, group.key, range, group.dataset);
 					}
 				}
 			});
@@ -583,6 +590,20 @@ export default Vue.extend({
 			group._element.find('.facets-group').append($spinner);
 		},
 
+		injectHighlightDatasetDeemphasis(group: any, highlights: Highlight) {
+
+			// if the dataset of the highlight does not match the dataset of this
+			// facet, deemphasis the group
+
+			if (!highlights || !highlights.root || highlights.root.dataset === group.dataset) {
+				group._element.removeClass('deemphasis');
+				return;
+			}
+			if (highlights.root.dataset !== group.dataset) {
+				group._element.addClass('deemphasis');
+			}
+		},
+
 		injectHighlightsIntoGroup(group: any, highlights: Highlight) {
 
 			if (this.ignoreHighlights) {
@@ -646,6 +667,7 @@ export default Vue.extend({
 						}
 					}
 
+
 					facet.select({
 						selection: selection
 					});
@@ -699,6 +721,7 @@ export default Vue.extend({
 					return;
 				}
 				this.injectHighlightsIntoGroup(group, highlights);
+				this.injectHighlightDatasetDeemphasis(group, highlights);
 				this.injectSelectedRowIntoGroup(group, selection);
 				this.injectDeemphasis(group, deemphasis);
 			});
@@ -757,6 +780,7 @@ export default Vue.extend({
 					this.augmentGroup(group, this.facets.getGroup(group.key));
 					this.injectHTML(group, this.facets.getGroup(group.key)._element);
 					this.injectHighlightsIntoGroup(this.facets.getGroup(group.key), this.highlights);
+					this.injectHighlightDatasetDeemphasis(this.facets.getGroup(group.key), this.highlights);
 					this.injectSelectedRowIntoGroup(this.facets.getGroup(group.key), this.rowSelection);
 					this.injectDeemphasis(this.facets.getGroup(group.key), this.deemphasis);
 				} else {
@@ -777,6 +801,7 @@ export default Vue.extend({
 					this.augmentGroup(groupSpec, this.facets.getGroup(groupSpec.key));
 					this.injectHTML(groupSpec, this.facets.getGroup(groupSpec.key)._element);
 					this.injectHighlightsIntoGroup(this.facets.getGroup(groupSpec.key), this.highlights);
+					this.injectHighlightDatasetDeemphasis(this.facets.getGroup(groupSpec.key), this.highlights);
 					this.injectSelectedRowIntoGroup(this.facets.getGroup(groupSpec.key), this.rowSelection);
 					this.injectDeemphasis(this.facets.getGroup(groupSpec.key), this.deemphasis);
 				});
@@ -881,6 +906,10 @@ export default Vue.extend({
 	bottom: 0;
 	margin-right: 8px;
 	margin-bottom: 6px;
+}
+
+.facets-group-container.deemphasis {
+	opacity: 0.5;
 }
 
 .facets-root.highlighting-enabled {
