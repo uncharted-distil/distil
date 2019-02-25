@@ -21,8 +21,9 @@ type NumericalField struct {
 
 // NumericalStats contains summary information on a numerical fields.
 type NumericalStats struct {
-	StdDev float64
-	Mean   float64
+	StdDev          float64
+	Mean            float64
+	NoDataAvailable bool
 }
 
 // NewNumericalField creates a new field for numerical types.
@@ -521,18 +522,20 @@ func (f *NumericalField) parseStats(row *pgx.Rows) (*NumericalStats, error) {
 			return nil, errors.Wrap(err, "no stats found")
 		}
 
-		if stddev == nil {
-			return nil, fmt.Errorf("no stddev found")
+		stats = &NumericalStats{}
+
+		if stddev != nil {
+			stats.StdDev = *stddev
 		}
 
-		if mean == nil {
-			return nil, fmt.Errorf("no mean found")
+		if mean != nil {
+			stats.Mean = *mean
 		}
 
-		stats = &NumericalStats{
-			StdDev: *stddev,
-			Mean:   *mean,
+		if mean == nil && stddev == nil {
+			stats.NoDataAvailable = true
 		}
+
 	} else {
 		return nil, errors.Errorf("no stats found")
 	}
