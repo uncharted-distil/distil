@@ -10,8 +10,7 @@ import $ from 'jquery';
 import Vue from 'vue';
 
 import IconBase from './icons/IconBase.vue';
-import IconFork from './icons/IconFork.vue';
-import IconBookmark from './icons/IconBookmark.vue'
+import IconForkVue from './icons/IconFork.vue';
 
 import { Group, CategoricalFacet, isCategoricalFacet, getCategoricalChunkSize, isNumericalFacet } from '../util/facets';
 import { Highlight, RowSelection, Row } from '../store/highlights/index';
@@ -27,6 +26,9 @@ import { getVarType, isClusterType, isFeatureType, addClusterPrefix, addFeatureP
 import '@uncharted.software/stories-facets/dist/facets.css';
 
 const INJECT_DEBOUNCE = 200;
+
+// Make IconFork component a constructor so that it can be called and initialized
+const IconFork = Vue.extend(IconForkVue);
 
 /*
 In 1989 the japanese-american animated musical film `Little Nemo: Adventures in
@@ -814,12 +816,11 @@ export default Vue.extend({
 			}
 			if (hasComputedVarPrefix(group.key)) {
 				const iconBase = new IconBase();
-				const b = new IconBookmark._Ctor[0]();
-				const forkIcon = new IconFork._Ctor[0]();
-
-				// iconBase.$slots.default = [forkIcon.$el];
-				// iconBase.$mount();
-				// $elem.find('.group-header').append(iconBase.$el);
+				const forkIcon = new IconFork();
+				iconBase.$slots.default = [iconBase.$createElement('icon-fork')]
+				iconBase.$mount();
+				forkIcon.$mount(iconBase.$el.querySelector('icon-fork'))
+				$elem.find('.group-header').append(iconBase.$el);
 			}
 		},
 
@@ -940,9 +941,9 @@ export default Vue.extend({
 .facets-group .group-header i {
 	margin-left: 5px;
 }
-.facets-group .group-header img {
-	height: 0.867rem;
-	margin-left: 5px;
+.facets-group .group-header .svg-icon {
+	height: 14px;
+	margin-left: 2px;
 }
 .facets-facet-horizontal .select-highlight,
 .facets-facet-horizontal .facet-histogram-bar-highlighted.select-highlight {
