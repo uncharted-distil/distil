@@ -817,9 +817,9 @@ export default Vue.extend({
 			if (hasComputedVarPrefix(group.key)) {
 				const iconBase = new IconBase();
 				const forkIcon = new IconFork();
-				iconBase.$slots.default = [iconBase.$createElement('icon-fork')]
+				iconBase.$slots.default = [iconBase.$createElement('icon-fork')];
 				iconBase.$mount();
-				forkIcon.$mount(iconBase.$el.querySelector('icon-fork'))
+				forkIcon.$mount(iconBase.$el.querySelector('icon-fork'));
 				$elem.find('.group-header').append(iconBase.$el);
 			}
 		},

@@ -8,7 +8,7 @@
 			:fields="fields"
 			@row-clicked="onRowClick">
 
-			<template v-for="computedField in computedFields" :slot="'HEAD_' + computedField" scope="data">
+			<template v-for="computedField in computedFields" :slot="'HEAD_' + computedField" slot-scope="data">
 				{{ data.label }} <icon-base :key="computedField" icon-name="fork" class="icon-fork" width=14 height=14> <icon-fork /></icon-base>	
 			</template>
 
