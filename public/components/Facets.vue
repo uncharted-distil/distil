@@ -8,6 +8,10 @@
 import _ from 'lodash';
 import $ from 'jquery';
 import Vue from 'vue';
+
+import IconBase from './icons/IconBase.vue';
+import IconForkVue from './icons/IconFork.vue';
+
 import { Group, CategoricalFacet, isCategoricalFacet, getCategoricalChunkSize, isNumericalFacet } from '../util/facets';
 import { Highlight, RowSelection, Row } from '../store/highlights/index';
 import { VariableSummary } from '../store/dataset/index';
@@ -17,11 +21,14 @@ import Facets from '@uncharted.software/stories-facets';
 import ImagePreview from '../components/ImagePreview.vue';
 import TypeChangeMenu from '../components/TypeChangeMenu.vue';
 import { circleSpinnerHTML } from '../util/spinner';
-import { getVarType, isClusterType, isFeatureType, addClusterPrefix, addFeaturePrefix } from '../util/types';
+import { getVarType, isClusterType, isFeatureType, addClusterPrefix, addFeaturePrefix, hasComputedVarPrefix } from '../util/types';
 
 import '@uncharted.software/stories-facets/dist/facets.css';
 
 const INJECT_DEBOUNCE = 200;
+
+// Make IconFork component a constructor so that it can be called and initialized
+const IconFork = Vue.extend(IconForkVue);
 
 /*
 In 1989 the japanese-american animated musical film `Little Nemo: Adventures in
@@ -832,6 +839,14 @@ export default Vue.extend({
 				const $icon = $(`<i class="${typeicon}"></i>`);
 				$elem.find('.group-header').append($icon);
 			}
+			if (hasComputedVarPrefix(group.key)) {
+				const iconBase = new IconBase();
+				const forkIcon = new IconFork();
+				iconBase.$slots.default = [iconBase.$createElement('icon-fork')];
+				iconBase.$mount();
+				forkIcon.$mount(iconBase.$el.querySelector('icon-fork'));
+				$elem.find('.group-header').append(iconBase.$el);
+			}
 		},
 
 		getGroupSampleValues(group: Group): any[] {
@@ -954,6 +969,10 @@ export default Vue.extend({
 }
 .facets-group .group-header i {
 	margin-left: 5px;
+}
+.facets-group .group-header .svg-icon {
+	height: 14px;
+	margin-left: 2px;
 }
 .facets-facet-horizontal .select-highlight,
 .facets-facet-horizontal .facet-histogram-bar-highlighted.select-highlight {

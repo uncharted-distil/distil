@@ -21,6 +21,10 @@
 					@row-clicked="onRowClick"
 					@sort-changed="onSortChanged">
 
+					<template v-for="computedField in computedFields" :slot="'HEAD_' + computedField" slot-scope="data">
+						{{ data.label }} <icon-base :key="computedField" icon-name="fork" class="icon-fork" width=14 height=14> <icon-fork /></icon-base>	
+					</template>
+
 					<template :slot="predictedCol" slot-scope="data">
 						{{target}}<sup>{{solutionIndex}}</sup>
 					</template>
@@ -60,6 +64,8 @@
 <script lang="ts">
 
 import _ from 'lodash';
+import IconBase from './icons/IconBase.vue';
+import IconFork from './icons/IconFork.vue';
 import FixedHeaderTable from './FixedHeaderTable';
 import SparklinePreview from './SparklinePreview';
 import ImagePreview from './ImagePreview';
@@ -71,7 +77,7 @@ import { getters as routeGetters } from '../store/route/module';
 import { getters as solutionGetters } from '../store/solutions/module';
 import { Solution, SOLUTION_ERRORED } from '../store/solutions/index';
 import { Dictionary } from '../util/dict';
-import { getVarType, isTextType, IMAGE_TYPE, TIMESERIES_TYPE } from '../util/types';
+import { getVarType, isTextType, IMAGE_TYPE, TIMESERIES_TYPE, hasComputedVarPrefix } from '../util/types';
 import { addRowSelection, removeRowSelection, isRowSelected, updateTableRowSelection } from '../util/row';
 import Vue from 'vue';
 
@@ -82,6 +88,8 @@ export default Vue.extend({
 		ImagePreview,
 		SparklinePreview,
 		FixedHeaderTable,
+		IconBase,
+		IconFork,
 	},
 
 	data() {
@@ -180,6 +188,12 @@ export default Vue.extend({
 
 		residualThresholdMax(): number {
 			return _.toNumber(routeGetters.getRouteResidualThresholdMax(this.$store));
+		},
+
+		computedFields(): string[] {
+			return Object.keys(this.fields).filter(key => {
+				return hasComputedVarPrefix(key);
+			});
 		},
 
 		imageFields(): string[] {

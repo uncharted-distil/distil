@@ -73,6 +73,13 @@ const INTEGER_TYPES = [
 	INTEGER_TYPE
 ];
 
+const COMPUTED_VAR_PREFIXES = [
+	FEATURE_PREFIX,
+	CLUSTER_PREFIX,
+	GEOCODED_LAT_PREFIX,
+	GEOCODED_LON_PREFIX,
+];
+
 const FLOATING_POINT_TYPES = [
 	REAL_TYPE,
 	REAL_VECTOR_TYPE,
@@ -325,6 +332,10 @@ export function isFeatureType(type: string): boolean {
 
 export function addFeaturePrefix(varName: string): string {
 	return `${FEATURE_PREFIX}${varName}`;
+}
+
+export function hasComputedVarPrefix(varName: string): boolean {
+	return Boolean(COMPUTED_VAR_PREFIXES.find(prefix => varName.indexOf(prefix) === 0));
 }
 
 export function removeFeaturePrefix(varName: string): string {

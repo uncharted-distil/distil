@@ -8,6 +8,10 @@
 			:fields="fields"
 			@row-clicked="onRowClick">
 
+			<template v-for="computedField in computedFields" :slot="'HEAD_' + computedField" slot-scope="data">
+				{{ data.label }} <icon-base :key="computedField" icon-name="fork" class="icon-fork" width=14 height=14> <icon-fork /></icon-base>	
+			</template>
+
 			<template v-for="imageField in imageFields" :slot="imageField" slot-scope="data">
 				<image-preview :key="imageField" :image-url="data.item[imageField]"></image-preview>
 			</template>
@@ -25,6 +29,8 @@
 
 import _ from 'lodash';
 import Vue from 'vue';
+import IconBase from './icons/IconBase.vue';
+import IconFork from './icons/IconFork.vue';
 import FixedHeaderTable from './FixedHeaderTable';
 import SparklinePreview from './SparklinePreview';
 import ImagePreview from './ImagePreview';
@@ -34,7 +40,7 @@ import { Filter } from '../util/filters';
 import { TableColumn, TableRow, D3M_INDEX_FIELD } from '../store/dataset/index';
 import { RowSelection } from '../store/highlights/index';
 import { getters as routeGetters } from '../store/route/module';
-import { IMAGE_TYPE, TIMESERIES_TYPE } from '../util/types';
+import { IMAGE_TYPE, TIMESERIES_TYPE, hasComputedVarPrefix } from '../util/types';
 import { addRowSelection, removeRowSelection, isRowSelected, updateTableRowSelection } from '../util/row';
 
 export default Vue.extend({
@@ -44,6 +50,8 @@ export default Vue.extend({
 		ImagePreview,
 		SparklinePreview,
 		FixedHeaderTable,
+		IconBase,
+		IconFork,
 	},
 
 	props: {
@@ -85,6 +93,12 @@ export default Vue.extend({
 			})
 			.filter(field => field.type === TIMESERIES_TYPE)
 			.map(field => field.key);
+		},
+
+		computedFields(): string[] {
+			return Object.keys(this.fields).filter(key => {
+				return hasComputedVarPrefix(key);
+			});
 		},
 
 		filters(): Filter[] {
