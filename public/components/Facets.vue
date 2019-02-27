@@ -8,6 +8,10 @@
 import _ from 'lodash';
 import $ from 'jquery';
 import Vue from 'vue';
+
+import IconBase from './icons/IconBase.vue';
+import IconForkVue from './icons/IconFork.vue';
+
 import { Group, CategoricalFacet, isCategoricalFacet, getCategoricalChunkSize, isNumericalFacet } from '../util/facets';
 import { Highlight, RowSelection, Row } from '../store/highlights/index';
 import { VariableSummary } from '../store/dataset/index';
@@ -17,11 +21,14 @@ import Facets from '@uncharted.software/stories-facets';
 import ImagePreview from '../components/ImagePreview.vue';
 import TypeChangeMenu from '../components/TypeChangeMenu.vue';
 import { circleSpinnerHTML } from '../util/spinner';
-import { getVarType, isClusterType, isFeatureType, addClusterPrefix, addFeaturePrefix } from '../util/types';
+import { getVarType, isClusterType, isFeatureType, addClusterPrefix, addFeaturePrefix, hasComputedVarPrefix } from '../util/types';
 
 import '@uncharted.software/stories-facets/dist/facets.css';
 
 const INJECT_DEBOUNCE = 200;
+
+// Make IconFork component a constructor so that it can be called and initialized
+const IconFork = Vue.extend(IconForkVue);
 
 /*
 In 1989 the japanese-american animated musical film `Little Nemo: Adventures in
@@ -65,7 +72,14 @@ export default Vue.extend({
 		const component = this as any;
 		return {
 			facets: {} as any,
-			debouncedInjection: _.debounce(component.injectHighlights, INJECT_DEBOUNCE),
+			debouncedInjection: _.debounce((highlights: Highlight, selection: RowSelection, deemphasis: any) => {
+				// we need to guard here because this debounced call can execute
+				// after this component is destroyed
+				if (!component.facets) {
+					return;
+				}
+				component.injectHighlights(highlights, selection, deemphasis);
+			}, INJECT_DEBOUNCE),
 			numToDisplay: {} as Dictionary<number>,
 			numAddedToDisplay: {} as Dictionary<number>
 		};
@@ -158,7 +172,7 @@ export default Vue.extend({
 			};
 			if (this.isHighlightedValue(this.highlights, key, range)) {
 				// clear current selection
-				component.$emit('histogram-click', this.instanceName, facet.dataset);
+				component.$emit('histogram-click', this.instanceName, null, null, facet.dataset);
 			} else {
 				// set selection
 				component.$emit('histogram-click', this.instanceName, key, range, facet.dataset);
@@ -169,7 +183,7 @@ export default Vue.extend({
 			// User clicked on the value that is currently the highlight root
 			if (this.isHighlightedValue(this.highlights, key, value)) {
 				// clear current selection
-				component.$emit('facet-click', this.instanceName, facet.dataset);
+				component.$emit('facet-click', this.instanceName, null, null, facet.dataset);
 			} else {
 				// set selection
 				component.$emit('facet-click', this.instanceName, key, value, facet.dataset);
@@ -283,9 +297,9 @@ export default Vue.extend({
 							from: _.toNumber(first.label),
 							to: _.toNumber(last.toLabel)
 						};
-						this.$emit('numerical-click', this.instanceName, group.key, range);
+						this.$emit('numerical-click', this.instanceName, group.key, range, group.dataset);
 					} else if (isCategoricalFacet(facet)) {
-						this.$emit('categorical-click', this.instanceName, group.key);
+						this.$emit('categorical-click', this.instanceName, group.key, null, group.dataset);
 					}
 				}
 			});
@@ -301,7 +315,7 @@ export default Vue.extend({
 							from: _.toNumber(first.label),
 							to: _.toNumber(last.toLabel)
 						};
-						this.$emit('numerical-click', this.instanceName, group.key, range);
+						this.$emit('numerical-click', this.instanceName, group.key, range, group.dataset);
 					}
 				}
 			});
@@ -583,6 +597,20 @@ export default Vue.extend({
 			group._element.find('.facets-group').append($spinner);
 		},
 
+		injectHighlightDatasetDeemphasis(group: any, highlights: Highlight) {
+
+			// if the dataset of the highlight does not match the dataset of this
+			// facet, deemphasis the group
+
+			if (!highlights || !highlights.root || highlights.root.dataset === group.dataset) {
+				group._element.removeClass('deemphasis');
+				return;
+			}
+			if (highlights.root.dataset !== group.dataset) {
+				group._element.addClass('deemphasis');
+			}
+		},
+
 		injectHighlightsIntoGroup(group: any, highlights: Highlight) {
 
 			if (this.ignoreHighlights) {
@@ -646,6 +674,7 @@ export default Vue.extend({
 						}
 					}
 
+
 					facet.select({
 						selection: selection
 					});
@@ -699,6 +728,7 @@ export default Vue.extend({
 					return;
 				}
 				this.injectHighlightsIntoGroup(group, highlights);
+				this.injectHighlightDatasetDeemphasis(group, highlights);
 				this.injectSelectedRowIntoGroup(group, selection);
 				this.injectDeemphasis(group, deemphasis);
 			});
@@ -757,6 +787,7 @@ export default Vue.extend({
 					this.augmentGroup(group, this.facets.getGroup(group.key));
 					this.injectHTML(group, this.facets.getGroup(group.key)._element);
 					this.injectHighlightsIntoGroup(this.facets.getGroup(group.key), this.highlights);
+					this.injectHighlightDatasetDeemphasis(this.facets.getGroup(group.key), this.highlights);
 					this.injectSelectedRowIntoGroup(this.facets.getGroup(group.key), this.rowSelection);
 					this.injectDeemphasis(this.facets.getGroup(group.key), this.deemphasis);
 				} else {
@@ -777,6 +808,7 @@ export default Vue.extend({
 					this.augmentGroup(groupSpec, this.facets.getGroup(groupSpec.key));
 					this.injectHTML(groupSpec, this.facets.getGroup(groupSpec.key)._element);
 					this.injectHighlightsIntoGroup(this.facets.getGroup(groupSpec.key), this.highlights);
+					this.injectHighlightDatasetDeemphasis(this.facets.getGroup(groupSpec.key), this.highlights);
 					this.injectSelectedRowIntoGroup(this.facets.getGroup(groupSpec.key), this.rowSelection);
 					this.injectDeemphasis(this.facets.getGroup(groupSpec.key), this.deemphasis);
 				});
@@ -806,6 +838,14 @@ export default Vue.extend({
 				const typeicon = facetSpecs[0].icon.class;
 				const $icon = $(`<i class="${typeicon}"></i>`);
 				$elem.find('.group-header').append($icon);
+			}
+			if (hasComputedVarPrefix(group.key)) {
+				const iconBase = new IconBase();
+				const forkIcon = new IconFork();
+				iconBase.$slots.default = [iconBase.$createElement('icon-fork')];
+				iconBase.$mount();
+				forkIcon.$mount(iconBase.$el.querySelector('icon-fork'));
+				$elem.find('.group-header').append(iconBase.$el);
 			}
 		},
 
@@ -883,6 +923,10 @@ export default Vue.extend({
 	margin-bottom: 6px;
 }
 
+.facets-group-container.deemphasis {
+	opacity: 0.5;
+}
+
 .facets-root.highlighting-enabled {
 	padding-left: 32px;
 }
@@ -925,6 +969,10 @@ export default Vue.extend({
 }
 .facets-group .group-header i {
 	margin-left: 5px;
+}
+.facets-group .group-header .svg-icon {
+	height: 14px;
+	margin-left: 2px;
 }
 .facets-facet-horizontal .select-highlight,
 .facets-facet-horizontal .facet-histogram-bar-highlighted.select-highlight {

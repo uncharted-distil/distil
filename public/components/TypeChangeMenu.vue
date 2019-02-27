@@ -1,20 +1,22 @@
 <template>
 	<div class="type-change-menu">
-		<b-dropdown variant="secondary" class="var-type-button"
-			id="type-change-dropdown"
-			:text="label"
-			:disabled="isDisabled">
-			<b-dropdown-item
-				v-for="suggested in getSuggestedList()"
-				v-bind:class="{ selected: suggested.isSelected, recommended: suggested.isRecommended }"
-				@click.stop="onTypeChange(suggested.type)"
-				:key="suggested.type">
-				<i v-if="suggested.isSelected" class="fa fa-check" aria-hidden="true"></i>
-				{{suggested.label}}
-				<img v-if="suggested.isRecommended" src="/images/recommended.svg" class="recommended-icon"/>
-			</b-dropdown-item>
-		</b-dropdown>
-		<i v-if="isUnsure" class="unsure-type-icon fa fa-circle"></i>
+		<div class="type-change-dropdown-wrapper">
+			<b-dropdown variant="secondary" class="var-type-button"
+				id="type-change-dropdown"
+				:text="label"
+				:disabled="isDisabled">
+				<b-dropdown-item
+					v-for="suggested in getSuggestedList()"
+					v-bind:class="{ selected: suggested.isSelected, recommended: suggested.isRecommended }"
+					@click.stop="onTypeChange(suggested.type)"
+					:key="suggested.type">
+					<i v-if="suggested.isSelected" class="fa fa-check" aria-hidden="true"></i>
+					{{suggested.label}}
+					<icon-base v-if="suggested.isRecommended" icon-name="bookmark" class="recommended-icon"><icon-bookmark /></icon-base>
+				</b-dropdown-item>
+			</b-dropdown>
+			<i v-if="isUnsure" class="unsure-type-icon fa fa-circle"></i>
+		</div>
 		<b-tooltip :delay="delay" :disabled="!isDisabled" target="type-change-dropdown">
 			Cannot change type when actively filtering
 		</b-tooltip>
@@ -25,7 +27,8 @@
 
 import _ from 'lodash';
 import Vue from 'vue';
-import '../assets/images/recommended.svg';
+import IconBase from './icons/IconBase.vue';
+import IconBookmark from './icons/IconBookmark.vue';
 import { SuggestedType, Variable } from '../store/dataset/index';
 import { HighlightRoot } from '../store/highlights/index';
 import { actions as datasetActions, getters as datasetGetters } from '../store/dataset/module';
@@ -38,6 +41,10 @@ const PROBABILITY_THRESHOLD = 0.8;
 export default Vue.extend({
 	name: 'type-change-menu',
 
+	components: {
+		IconBase,
+		IconBookmark,
+	},
 	props: {
 		dataset: String as () => string,
 		field: String as () => string,
@@ -200,7 +207,7 @@ export default Vue.extend({
 .recommended-icon {
 	position: absolute;
     right: 10px;
-    bottom: 7px;
+    bottom: 5px;
 }
 .unsure-type-icon {
 	position: absolute;
@@ -208,6 +215,8 @@ export default Vue.extend({
     top: -5px;
     right: -5px;
     z-index: 2;
-
+}
+.type-change-dropdown-wrapper {
+	position: relative;
 }
 </style>

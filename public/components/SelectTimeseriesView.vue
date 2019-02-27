@@ -422,6 +422,7 @@ svg.axis {
 .select-timeseries-view {
 	position: relative;
 	flex: 1;
+	height: inherit;
 }
 .timeseries-row-header {
 	position: relative;

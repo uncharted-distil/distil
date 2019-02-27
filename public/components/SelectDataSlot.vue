@@ -2,8 +2,8 @@
 	<div class="select-data-slot">
 		<p>
 			<b-nav tabs>
-				<b-nav-item class="font-weight-bold" @click="includedActive=true" :active="includedActive">Samples to Model From</b-nav-item>
-				<b-nav-item class="font-weight-bold" @click="includedActive=false" :active="!includedActive">Excluded Samples</b-nav-item>
+				<b-nav-item class="font-weight-bold" @click="setIncludedActive" :active="includedActive">Samples to Model From</b-nav-item>
+				<b-nav-item class="font-weight-bold" @click="setExcludedActive" :active="!includedActive">Excluded Samples</b-nav-item>
 
 				<b-form-group class="view-button ml-auto">
 					<b-form-radio-group buttons v-model="viewType" button-variant="outline-secondary">
@@ -137,7 +137,7 @@ export default Vue.extend({
 		},
 
 		numRows(): number {
-			return datasetGetters.getIncludedTableDataNumRows(this.$store);
+			return  this.includedActive ? datasetGetters.getIncludedTableDataNumRows(this.$store) : datasetGetters.getExcludedTableDataNumRows(this.$store);
 		},
 
 		hasData(): boolean {
@@ -243,6 +243,14 @@ export default Vue.extend({
 		invertFilters(filters: Filter[]): Filter[] {
 			// TODO: invert filters
 			return filters;
+		},
+		setIncludedActive() {
+			this.includedActive = true;
+			clearRowSelection(this.$router);
+		},
+		setExcludedActive() {
+			this.includedActive = false;
+			clearRowSelection(this.$router);
 		}
 	}
 });
@@ -306,7 +314,7 @@ table tr {
 .view-button {
 	cursor: pointer;
 }
-.view-button input[type=radio]{	
+.view-button input[type=radio]{
     display:none;
 }
 

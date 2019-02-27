@@ -76,13 +76,14 @@ export const actions = {
 		const paginatedVariables = context.getters.getJoinDatasetsPaginatedVariables;
 
 		const datasets = context.getters.getDatasets;
+
 		const joinDatasets = datasets.filter(d => {
 			return d.id === datasetIDs[0] || d.id === datasetIDs[1];
 		});
 
 		return Promise.all([
 			context.dispatch('fetchJoinDatasetsHighlightValues', {
-				datasets: datasets,
+				datasets: joinDatasets,
 				variables: paginatedVariables,
 				highlightRoot: highlightRoot,
 				filterParams: filterParams
