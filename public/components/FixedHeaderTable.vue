@@ -96,7 +96,7 @@ export default Vue.extend({
 <style>
 .fixed-header-table {
 	height: inherit;
-	width: inherit;
+	width: 100%;
 	position: relative;
 	border: 1px solid rgb(245, 245, 245);
 }
@@ -124,7 +124,6 @@ export default Vue.extend({
 .fixed-header-table tbody {
 	width: 100%;
 	overflow: auto;
-	overflow: overlay;
 	flex: 1;
 }
 .fixed-header-table tbody td {
