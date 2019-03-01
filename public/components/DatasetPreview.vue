@@ -80,7 +80,7 @@
 
 import _ from 'lodash';
 import Vue from 'vue';
-import ErrorModal from '../components/ErrorModal.vue';
+import ErrorModal from '../components/ErrorModal';
 import { createRouteEntry } from '../util/routes';
 import { formatBytes } from '../util/bytes';
 import { sortVariablesByImportance, isDatamartProvenance } from '../util/data';

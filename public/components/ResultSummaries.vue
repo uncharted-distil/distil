@@ -32,9 +32,9 @@
 
 <script lang="ts">
 
-import ResultFacets from '../components/ResultFacets.vue';
-import Facets from '../components/Facets.vue';
-import ErrorThresholdSlider from '../components/ErrorThresholdSlider.vue';
+import ResultFacets from '../components/ResultFacets';
+import Facets from '../components/Facets';
+import ErrorThresholdSlider from '../components/ErrorThresholdSlider';
 import { getSolutionById } from '../util/solutions';
 import { getters as datasetGetters } from '../store/dataset/module';
 import { getters as routeGetters } from '../store/route/module';

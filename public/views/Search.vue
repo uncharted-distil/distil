@@ -52,9 +52,9 @@
 
 import _ from 'lodash';
 import Vue from 'vue';
-import DatasetPreviewCard from '../components/DatasetPreviewCard.vue';
-import SearchBar from '../components/SearchBar.vue';
-import SearchResults from '../components/SearchResults.vue';
+import DatasetPreviewCard from '../components/DatasetPreviewCard';
+import SearchBar from '../components/SearchBar';
+import SearchResults from '../components/SearchResults';
 import { Dataset } from '../store/dataset/index';
 import { createRouteEntry, overlayRouteEntry } from '../util/routes';
 import { getters as routeGetters } from '../store/route/module';

@@ -17,7 +17,7 @@
 import * as d3 from 'd3';
 import _ from 'lodash';
 import Vue from 'vue';
-import SparklineChart from '../components/SparklineChart.vue';
+import SparklineChart from '../components/SparklineChart';
 import { Dictionary } from '../util/dict';
 import { circleSpinnerHTML } from '../util/spinner';
 import { getters as routeGetters } from '../store/route/module';

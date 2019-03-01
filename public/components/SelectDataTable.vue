@@ -9,7 +9,7 @@
 			@row-clicked="onRowClick">
 
 			<template v-for="computedField in computedFields" :slot="'HEAD_' + computedField" slot-scope="data">
-				{{ data.label }} <icon-base :key="computedField" icon-name="fork" class="icon-fork" width=14 height=14> <icon-fork /></icon-base>	
+				{{ data.label }} <icon-base :key="computedField" icon-name="fork" class="icon-fork" width=14 height=14> <icon-fork /></icon-base>
 			</template>
 
 			<template v-for="imageField in imageFields" :slot="imageField" slot-scope="data">
@@ -29,8 +29,8 @@
 
 import _ from 'lodash';
 import Vue from 'vue';
-import IconBase from './icons/IconBase.vue';
-import IconFork from './icons/IconFork.vue';
+import IconBase from './icons/IconBase';
+import IconFork from './icons/IconFork';
 import FixedHeaderTable from './FixedHeaderTable';
 import SparklinePreview from './SparklinePreview';
 import ImagePreview from './ImagePreview';

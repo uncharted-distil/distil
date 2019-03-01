@@ -8,7 +8,9 @@
 			<div class="results-data-no-results" v-if="hasNoResults">
 				No results available
 			</div>
-			<fixed-header-table v-if="hasResults">
+
+
+			<fixed-header-table ref="fixedHeaderTable">
 				<b-table
 					bordered
 					hover
@@ -22,7 +24,7 @@
 					@sort-changed="onSortChanged">
 
 					<template v-for="computedField in computedFields" :slot="'HEAD_' + computedField" slot-scope="data">
-						{{ data.label }} <icon-base :key="computedField" icon-name="fork" class="icon-fork" width=14 height=14> <icon-fork /></icon-base>	
+						{{ data.label }} <icon-base :key="computedField" icon-name="fork" class="icon-fork" width=14 height=14> <icon-fork /></icon-base>
 					</template>
 
 					<template :slot="predictedCol" slot-scope="data">
@@ -64,8 +66,8 @@
 <script lang="ts">
 
 import _ from 'lodash';
-import IconBase from './icons/IconBase.vue';
-import IconFork from './icons/IconFork.vue';
+import IconBase from './icons/IconBase';
+import IconFork from './icons/IconFork';
 import FixedHeaderTable from './FixedHeaderTable';
 import SparklinePreview from './SparklinePreview';
 import ImagePreview from './ImagePreview';
@@ -228,6 +230,11 @@ export default Vue.extend({
 			}
 			return false;
 		}
+	},
+
+	updated() {
+		const fixedHeaderTable = this.$refs.fixedHeaderTable as any;
+		fixedHeaderTable.resizeTableCells();
 	},
 
 	methods: {

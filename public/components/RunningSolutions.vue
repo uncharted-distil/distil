@@ -9,7 +9,7 @@
 
 <script lang="ts">
 
-import SolutionPreview from '../components/SolutionPreview.vue';
+import SolutionPreview from '../components/SolutionPreview';
 import { getters } from '../store/solutions/module';
 import { Solution } from '../store/solutions/index';
 import Vue from 'vue';

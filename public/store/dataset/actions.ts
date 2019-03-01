@@ -288,13 +288,6 @@ export const actions = {
 					url: url
 				});
 			}
-			if (type === TIMESERIES_TYPE) {
-				return context.dispatch('fetchTimeseries', {
-					dataset: args.dataset,
-					source: 'seed',
-					url: url
-				});
-			}
 			if (type === 'graph') {
 				return context.dispatch('fetchGraph', {
 					dataset: args.dataset,

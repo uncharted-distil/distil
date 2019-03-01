@@ -32,7 +32,7 @@
 
 import _ from 'lodash';
 import Vue from 'vue';
-import ResultsDataTable from '../components/ResultsDataTable.vue';
+import ResultsDataTable from '../components/ResultsDataTable';
 import { Dictionary } from '../util/dict';
 import { getters as datasetGetters } from '../store/dataset/module';
 import { getters as resultsGetters } from '../store/results/module';

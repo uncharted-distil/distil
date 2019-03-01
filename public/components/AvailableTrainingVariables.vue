@@ -32,7 +32,7 @@ import { getters as routeGetters } from '../store/route/module';
 import { filterSummariesByDataset, NUM_PER_PAGE } from '../util/data';
 import { AVAILABLE_TRAINING_VARS_INSTANCE } from '../store/route/index';
 import { Group, createGroups } from '../util/facets';
-import VariableFacets from '../components/VariableFacets.vue';
+import VariableFacets from '../components/VariableFacets';
 
 export default Vue.extend({
 	name: 'available-training-variables',

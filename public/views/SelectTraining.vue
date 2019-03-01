@@ -46,12 +46,12 @@
 <script lang="ts">
 
 import Vue from 'vue';
-import CreateSolutionsForm from '../components/CreateSolutionsForm.vue';
-import SelectDataSlot from '../components/SelectDataSlot.vue';
-import AvailableTrainingVariables from '../components/AvailableTrainingVariables.vue';
-import TrainingVariables from '../components/TrainingVariables.vue';
-import TargetVariable from '../components/TargetVariable.vue';
-import TypeChangeMenu from '../components/TypeChangeMenu.vue';
+import CreateSolutionsForm from '../components/CreateSolutionsForm';
+import SelectDataSlot from '../components/SelectDataSlot';
+import AvailableTrainingVariables from '../components/AvailableTrainingVariables';
+import TrainingVariables from '../components/TrainingVariables';
+import TargetVariable from '../components/TargetVariable';
+import TypeChangeMenu from '../components/TypeChangeMenu';
 import { actions as viewActions } from '../store/view/module';
 import { getters as routeGetters } from '../store/route/module';
 

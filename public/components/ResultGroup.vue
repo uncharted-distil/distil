@@ -84,7 +84,7 @@
 // of prediction-truth residuals, and scoring information.
 
 import Vue from 'vue';
-import Facets from '../components/Facets.vue';
+import Facets from '../components/Facets';
 import { createGroups, Group } from '../util/facets';
 import { Extrema, VariableSummary } from '../store/dataset/index';
 import { Highlight, RowSelection } from '../store/highlights/index';

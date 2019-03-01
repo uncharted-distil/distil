@@ -90,38 +90,6 @@ func (f *TimeSeriesField) clusterVarName(varName string) string {
 	return fmt.Sprintf("%s%s", model.ClusterVarPrefix, varName)
 }
 
-func (f *TimeSeriesField) fetchRepresentationTimeSeries(categoryBuckets []*api.Bucket) ([]string, error) {
-
-	var timeseriesFiles []string
-
-	for _, bucket := range categoryBuckets {
-
-		prefixedVarName := f.clusterVarName(f.Variable.Name)
-
-		// pull sample row containing bucket
-		query := fmt.Sprintf("SELECT \"%s\" FROM %s WHERE \"%s\" = $1 LIMIT 1;",
-			f.Variable.Name, f.StorageName, prefixedVarName)
-
-		// execute the postgres query
-		rows, err := f.Storage.client.Query(query, bucket.Key)
-		if err != nil {
-			return nil, errors.Wrap(err, "failed to fetch histograms for variable summaries from postgres")
-		}
-
-		if rows.Next() {
-			var timeseriesFile string
-			err = rows.Scan(&timeseriesFile)
-			if err != nil {
-				return nil, errors.Wrap(err, "Unable to parse solution from Postgres")
-			}
-			timeseriesFiles = append(timeseriesFiles, timeseriesFile)
-		}
-		rows.Close()
-	}
-
-	return timeseriesFiles, nil
-}
-
 func (f *TimeSeriesField) fetchHistogram(filterParams *api.FilterParams) (*api.Histogram, error) {
 	// create the filter for the query.
 	wheres := make([]string, 0)
@@ -148,17 +116,7 @@ func (f *TimeSeriesField) fetchHistogram(filterParams *api.FilterParams) (*api.H
 		defer res.Close()
 	}
 
-	histogram, err := f.parseHistogram(res)
-	if err != nil {
-		return nil, err
-	}
-
-	files, err := f.fetchRepresentationTimeSeries(histogram.Buckets)
-	if err != nil {
-		return nil, err
-	}
-	histogram.Files = files
-	return histogram, nil
+	return f.parseHistogram(res)
 }
 
 func (f *TimeSeriesField) fetchHistogramByResult(resultURI string, filterParams *api.FilterParams) (*api.Histogram, error) {
@@ -198,17 +156,7 @@ func (f *TimeSeriesField) fetchHistogramByResult(resultURI string, filterParams 
 		defer res.Close()
 	}
 
-	histogram, err := f.parseHistogram(res)
-	if err != nil {
-		return nil, err
-	}
-
-	files, err := f.fetchRepresentationTimeSeries(histogram.Buckets)
-	if err != nil {
-		return nil, err
-	}
-	histogram.Files = files
-	return histogram, nil
+	return f.parseHistogram(res)
 }
 
 func (f *TimeSeriesField) parseHistogram(rows *pgx.Rows) (*api.Histogram, error) {
@@ -286,15 +234,5 @@ func (f *TimeSeriesField) FetchPredictedSummaryData(resultURI string, datasetRes
 	}
 	defer res.Close()
 
-	histogram, err := f.parseHistogram(res)
-	if err != nil {
-		return nil, err
-	}
-
-	files, err := f.fetchRepresentationTimeSeries(histogram.Buckets)
-	if err != nil {
-		return nil, err
-	}
-	histogram.Files = files
-	return histogram, nil
+	return f.parseHistogram(res)
 }

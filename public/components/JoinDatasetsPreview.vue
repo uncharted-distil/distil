@@ -43,7 +43,7 @@
 
 import _ from 'lodash';
 import Vue from 'vue';
-import JoinDataPreviewSlot from '../components/JoinDataPreviewSlot.vue';
+import JoinDataPreviewSlot from '../components/JoinDataPreviewSlot';
 import { createRouteEntry } from '../util/routes';
 import { Dictionary } from '../util/dict';
 import { getters as routeGetters } from '../store/route/module';
