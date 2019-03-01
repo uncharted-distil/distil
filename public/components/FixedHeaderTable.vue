@@ -124,9 +124,10 @@ export default Vue.extend({
 .fixed-header-table thead {
 	overflow-x: hidden;
 
-	/* Subtract 1px from table header width. 
-	   This this resolves the issue that table row overflows table width 
-	   by ~1px and creates horizontal scrollbar when it's not needed. 
+	/* 
+	  Subtract 1px from table header width. 
+	  This resolves the issue that table row overflows table width 
+	  by < 1px and creates horizontal scrollbar when it's not needed. 
 	*/
 	width: calc(100% - 1px);
     margin-right: 1px;
