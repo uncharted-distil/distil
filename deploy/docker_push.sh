@@ -1,3 +1,5 @@
 #!/bin/bash
 
-docker push docker.uncharted.software/distil:jan_eval_patch
+source ./config.sh
+
+docker push $DOCKER_REPO/$DOCKER_IMAGE_NAME:latest
