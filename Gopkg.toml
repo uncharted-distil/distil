@@ -34,10 +34,6 @@
   version = "1.1.1"
 
 [[constraint]]
-  name = "github.com/golang/mock"
-  version = "1.1.1"
-
-[[constraint]]
   name = "github.com/golang/protobuf"
   version = "1.2.0"
 
@@ -90,11 +86,11 @@
   version = "1.2.2"
 
 [[constraint]]
-  name = "github.com/unchartedsoftware/distil-compute"
+  name = "github.com/uncharted-distil/distil-compute"
   branch = "master"
 
 [[constraint]]
-  name = "github.com/unchartedsoftware/distil-ingest"
+  name = "github.com/uncharted-distil/distil-ingest"
   branch = "master"
 
 [[constraint]]

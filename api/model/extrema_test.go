@@ -6,7 +6,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/unchartedsoftware/distil-compute/model"
+	"github.com/uncharted-distil/distil-compute/model"
 )
 
 const (

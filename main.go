@@ -10,13 +10,13 @@ import (
 	"time"
 
 	"github.com/davecgh/go-spew/spew"
-	"github.com/unchartedsoftware/distil-ingest/metadata"
+	"github.com/uncharted-distil/distil-ingest/metadata"
 	log "github.com/unchartedsoftware/plog"
 	"github.com/zenazn/goji/graceful"
 	goji "goji.io"
 	"goji.io/pat"
 
-	"github.com/unchartedsoftware/distil-compute/primitive/compute"
+	"github.com/uncharted-distil/distil-compute/primitive/compute"
 	api "github.com/unchartedsoftware/distil/api/compute"
 	"github.com/unchartedsoftware/distil/api/elastic"
 	"github.com/unchartedsoftware/distil/api/env"

@@ -6,7 +6,7 @@ import (
 	"github.com/pkg/errors"
 	"gopkg.in/olivere/elastic.v5"
 
-	"github.com/unchartedsoftware/distil-compute/model"
+	"github.com/uncharted-distil/distil-compute/model"
 	"github.com/unchartedsoftware/distil/api/util/json"
 )
 

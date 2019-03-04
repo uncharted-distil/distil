@@ -3,7 +3,7 @@ package model
 import (
 	"time"
 
-	"github.com/unchartedsoftware/distil-compute/model"
+	"github.com/uncharted-distil/distil-compute/model"
 )
 
 // DataStorageCtor represents a client constructor to instantiate a data

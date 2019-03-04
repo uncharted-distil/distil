@@ -7,8 +7,8 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/unchartedsoftware/distil-compute/model"
-	"github.com/unchartedsoftware/distil-compute/pipeline"
+	"github.com/uncharted-distil/distil-compute/model"
+	"github.com/uncharted-distil/distil-compute/pipeline"
 	"github.com/unchartedsoftware/distil/api/env"
 	apiModel "github.com/unchartedsoftware/distil/api/model"
 )

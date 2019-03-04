@@ -5,7 +5,7 @@ import (
 	"strings"
 
 	"github.com/pkg/errors"
-	"github.com/unchartedsoftware/distil-compute/model"
+	"github.com/uncharted-distil/distil-compute/model"
 )
 
 const (

@@ -10,7 +10,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/unchartedsoftware/plog"
 
-	"github.com/unchartedsoftware/distil-compute/primitive/compute"
+	"github.com/uncharted-distil/distil-compute/primitive/compute"
 	api "github.com/unchartedsoftware/distil/api/compute"
 	"github.com/unchartedsoftware/distil/api/env"
 	"github.com/unchartedsoftware/distil/api/model"

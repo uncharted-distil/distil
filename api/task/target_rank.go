@@ -5,10 +5,10 @@ import (
 	"strconv"
 
 	"github.com/pkg/errors"
-	"github.com/unchartedsoftware/distil-compute/model"
-	"github.com/unchartedsoftware/distil-compute/primitive/compute/description"
-	"github.com/unchartedsoftware/distil-compute/primitive/compute/result"
-	"github.com/unchartedsoftware/distil-ingest/metadata"
+	"github.com/uncharted-distil/distil-compute/model"
+	"github.com/uncharted-distil/distil-compute/primitive/compute/description"
+	"github.com/uncharted-distil/distil-compute/primitive/compute/result"
+	"github.com/uncharted-distil/distil-ingest/metadata"
 	"github.com/unchartedsoftware/distil/api/env"
 )
 

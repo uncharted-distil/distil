@@ -4,7 +4,7 @@ import (
 	"context"
 	"encoding/json"
 
-	"github.com/unchartedsoftware/distil-compute/primitive/compute"
+	"github.com/uncharted-distil/distil-compute/primitive/compute"
 )
 
 // StopSolutionSearchRequest represents a request to stop any pending siolution searches.

@@ -7,7 +7,7 @@ import (
 	"github.com/pkg/errors"
 	"goji.io/pat"
 
-	"github.com/unchartedsoftware/distil-ingest/metadata"
+	"github.com/uncharted-distil/distil-ingest/metadata"
 	"github.com/unchartedsoftware/distil/api/env"
 	"github.com/unchartedsoftware/distil/api/model"
 	"github.com/unchartedsoftware/distil/api/model/storage/datamart"

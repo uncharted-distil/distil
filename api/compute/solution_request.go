@@ -12,10 +12,10 @@ import (
 
 	"github.com/pkg/errors"
 	uuid "github.com/satori/go.uuid"
-	"github.com/unchartedsoftware/distil-compute/model"
-	"github.com/unchartedsoftware/distil-compute/pipeline"
-	"github.com/unchartedsoftware/distil-compute/primitive/compute"
-	"github.com/unchartedsoftware/distil-compute/primitive/compute/description"
+	"github.com/uncharted-distil/distil-compute/model"
+	"github.com/uncharted-distil/distil-compute/pipeline"
+	"github.com/uncharted-distil/distil-compute/primitive/compute"
+	"github.com/uncharted-distil/distil-compute/primitive/compute/description"
 
 	"github.com/unchartedsoftware/distil/api/env"
 	api "github.com/unchartedsoftware/distil/api/model"

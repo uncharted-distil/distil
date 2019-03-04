@@ -10,7 +10,7 @@ import (
 	"github.com/unchartedsoftware/plog"
 	"goji.io/pat"
 
-	"github.com/unchartedsoftware/distil-compute/model"
+	"github.com/uncharted-distil/distil-compute/model"
 	"github.com/unchartedsoftware/distil/api/compute"
 	api "github.com/unchartedsoftware/distil/api/model"
 	"github.com/unchartedsoftware/distil/api/util"

@@ -4,10 +4,10 @@ import (
 	"os"
 	"path"
 
-	"github.com/unchartedsoftware/distil-compute/model"
-	"github.com/unchartedsoftware/distil-compute/primitive/compute"
+	"github.com/uncharted-distil/distil-compute/model"
+	"github.com/uncharted-distil/distil-compute/primitive/compute"
 
-	"github.com/unchartedsoftware/distil-ingest/metadata"
+	"github.com/uncharted-distil/distil-ingest/metadata"
 	"github.com/unchartedsoftware/distil/api/util"
 )
 

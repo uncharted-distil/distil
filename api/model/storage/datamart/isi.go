@@ -8,7 +8,7 @@ import (
 
 	"github.com/mitchellh/hashstructure"
 	"github.com/pkg/errors"
-	"github.com/unchartedsoftware/distil-compute/model"
+	"github.com/uncharted-distil/distil-compute/model"
 	"github.com/unchartedsoftware/distil/api/env"
 	api "github.com/unchartedsoftware/distil/api/model"
 	"github.com/unchartedsoftware/distil/api/task"

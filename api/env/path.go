@@ -4,7 +4,7 @@ import (
 	"path"
 
 	"github.com/pkg/errors"
-	"github.com/unchartedsoftware/distil-ingest/metadata"
+	"github.com/uncharted-distil/distil-ingest/metadata"
 )
 
 var (

@@ -5,7 +5,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/unchartedsoftware/distil-compute/model"
+	"github.com/uncharted-distil/distil-compute/model"
 )
 
 var (

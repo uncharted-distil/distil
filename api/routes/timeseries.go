@@ -12,7 +12,7 @@ import (
 	"github.com/pkg/errors"
 	"goji.io/pat"
 
-	api "github.com/unchartedsoftware/distil-ingest/metadata"
+	api "github.com/uncharted-distil/distil-ingest/metadata"
 	"github.com/unchartedsoftware/distil/api/env"
 	"github.com/unchartedsoftware/distil/api/model"
 )

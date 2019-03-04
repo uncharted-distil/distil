@@ -17,8 +17,8 @@ import (
 	"github.com/pkg/errors"
 	"github.com/unchartedsoftware/plog"
 
-	"github.com/unchartedsoftware/distil-compute/model"
-	"github.com/unchartedsoftware/distil-ingest/metadata"
+	"github.com/uncharted-distil/distil-compute/model"
+	"github.com/uncharted-distil/distil-ingest/metadata"
 	api "github.com/unchartedsoftware/distil/api/model"
 	"github.com/unchartedsoftware/distil/api/util"
 )
