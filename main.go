@@ -1,3 +1,18 @@
+//
+//   Copyright © 2019 Uncharted Software Inc.
+//
+//   Licensed under the Apache License, Version 2.0 (the "License");
+//   you may not use this file except in compliance with the License.
+//   You may obtain a copy of the License at
+//
+//       http://www.apache.org/licenses/LICENSE-2.0
+//
+//   Unless required by applicable law or agreed to in writing, software
+//   distributed under the License is distributed on an "AS IS" BASIS,
+//   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+//   See the License for the specific language governing permissions and
+//   limitations under the License.
+
 package main
 
 import (
@@ -10,29 +25,29 @@ import (
 	"time"
 
 	"github.com/davecgh/go-spew/spew"
-	"github.com/unchartedsoftware/distil-ingest/metadata"
+	"github.com/uncharted-distil/distil-ingest/metadata"
 	log "github.com/unchartedsoftware/plog"
 	"github.com/zenazn/goji/graceful"
 	goji "goji.io"
 	"goji.io/pat"
 
-	"github.com/unchartedsoftware/distil-compute/primitive/compute"
-	api "github.com/unchartedsoftware/distil/api/compute"
-	"github.com/unchartedsoftware/distil/api/elastic"
-	"github.com/unchartedsoftware/distil/api/env"
-	"github.com/unchartedsoftware/distil/api/middleware"
-	"github.com/unchartedsoftware/distil/api/model"
-	dm "github.com/unchartedsoftware/distil/api/model/storage/datamart"
-	es "github.com/unchartedsoftware/distil/api/model/storage/elastic"
-	"github.com/unchartedsoftware/distil/api/model/storage/file"
-	pg "github.com/unchartedsoftware/distil/api/model/storage/postgres"
-	"github.com/unchartedsoftware/distil/api/postgres"
-	"github.com/unchartedsoftware/distil/api/rest"
-	"github.com/unchartedsoftware/distil/api/routes"
-	"github.com/unchartedsoftware/distil/api/service"
-	"github.com/unchartedsoftware/distil/api/task"
-	"github.com/unchartedsoftware/distil/api/util"
-	"github.com/unchartedsoftware/distil/api/ws"
+	"github.com/uncharted-distil/distil-compute/primitive/compute"
+	api "github.com/uncharted-distil/distil/api/compute"
+	"github.com/uncharted-distil/distil/api/elastic"
+	"github.com/uncharted-distil/distil/api/env"
+	"github.com/uncharted-distil/distil/api/middleware"
+	"github.com/uncharted-distil/distil/api/model"
+	dm "github.com/uncharted-distil/distil/api/model/storage/datamart"
+	es "github.com/uncharted-distil/distil/api/model/storage/elastic"
+	"github.com/uncharted-distil/distil/api/model/storage/file"
+	pg "github.com/uncharted-distil/distil/api/model/storage/postgres"
+	"github.com/uncharted-distil/distil/api/postgres"
+	"github.com/uncharted-distil/distil/api/rest"
+	"github.com/uncharted-distil/distil/api/routes"
+	"github.com/uncharted-distil/distil/api/service"
+	"github.com/uncharted-distil/distil/api/task"
+	"github.com/uncharted-distil/distil/api/util"
+	"github.com/uncharted-distil/distil/api/ws"
 )
 
 var (

@@ -86,11 +86,11 @@
   version = "1.2.2"
 
 [[constraint]]
-  name = "github.com/unchartedsoftware/distil-compute"
+  name = "github.com/uncharted-distil/distil-compute"
   branch = "master"
 
 [[constraint]]
-  name = "github.com/unchartedsoftware/distil-ingest"
+  name = "github.com/uncharted-distil/distil-ingest"
   branch = "master"
 
 [[constraint]]

@@ -1,6 +1,6 @@
 # distil
 
-[![CircleCI](https://circleci.com/gh/unchartedsoftware/distil/tree/master.svg?style=svg&&circle-token=ff61c235865dd699cc8b923035a80e6e8d39c63a)](https://circleci.com/gh/unchartedsoftware/distil/tree/master)
+[![CircleCI](https://circleci.com/gh/uncharted-distil/distil/tree/master.svg?style=svg&&circle-token=ff61c235865dd699cc8b923035a80e6e8d39c63a)](https://circleci.com/gh/unchartedsoftware/distil/tree/master)
 
 ## Dependencies
 
@@ -14,8 +14,8 @@
 #### Clone the repository:
 
 ```bash
-mkdir -p $GOPATH/src/github.com/unchartedsoftware
-cd $GOPATH/src/github.com/unchartedsoftware
+mkdir -p $GOPATH/src/github.com/uncharted-distil
+cd $GOPATH/src/github.com/uncharted-distil
 git clone git@github.com:unchartedsoftware/distil.git
 cd distil
 ```
