@@ -11,7 +11,7 @@ import (
 	"github.com/uncharted-distil/distil-compute/model"
 	"github.com/uncharted-distil/distil-ingest/metadata"
 
-	"github.com/unchartedsoftware/distil/api/util"
+	"github.com/uncharted-distil/distil/api/util"
 )
 
 // Format will format a dataset to have the required structures for D3M.

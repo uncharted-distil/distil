@@ -14,8 +14,8 @@
 #### Clone the repository:
 
 ```bash
-mkdir -p $GOPATH/src/github.com/unchartedsoftware
-cd $GOPATH/src/github.com/unchartedsoftware
+mkdir -p $GOPATH/src/github.com/uncharted-distil
+cd $GOPATH/src/github.com/uncharted-distil
 git clone git@github.com:unchartedsoftware/distil.git
 cd distil
 ```

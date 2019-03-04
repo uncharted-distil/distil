@@ -1,7 +1,7 @@
 package file
 
 import (
-	"github.com/unchartedsoftware/distil/api/model"
+	"github.com/uncharted-distil/distil/api/model"
 )
 
 // Storage accesses the underlying datamart instance.

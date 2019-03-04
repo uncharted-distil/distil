@@ -12,7 +12,7 @@ import (
 
 	"github.com/uncharted-distil/distil-compute/primitive/compute/description"
 	"github.com/uncharted-distil/distil-compute/primitive/compute/result"
-	"github.com/unchartedsoftware/distil/api/util"
+	"github.com/uncharted-distil/distil/api/util"
 )
 
 // Rank will rank the dataset using a primitive.

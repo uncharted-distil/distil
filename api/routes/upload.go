@@ -9,7 +9,7 @@ import (
 	log "github.com/unchartedsoftware/plog"
 	"goji.io/pat"
 
-	"github.com/unchartedsoftware/distil/api/task"
+	"github.com/uncharted-distil/distil/api/task"
 )
 
 // UploadHandler uploads a file to the local file system and then imports it.

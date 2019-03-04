@@ -5,8 +5,8 @@ import (
 
 	"github.com/pkg/errors"
 	"github.com/uncharted-distil/distil-compute/model"
-	api "github.com/unchartedsoftware/distil/api/model"
-	"github.com/unchartedsoftware/distil/api/util/json"
+	api "github.com/uncharted-distil/distil/api/model"
+	"github.com/uncharted-distil/distil/api/util/json"
 	"goji.io/pat"
 )
 

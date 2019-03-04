@@ -1,9 +1,9 @@
 package datamart
 
 import (
-	"github.com/unchartedsoftware/distil/api/model"
-	"github.com/unchartedsoftware/distil/api/rest"
-	"github.com/unchartedsoftware/distil/api/task"
+	"github.com/uncharted-distil/distil/api/model"
+	"github.com/uncharted-distil/distil/api/rest"
+	"github.com/uncharted-distil/distil/api/task"
 )
 
 const (

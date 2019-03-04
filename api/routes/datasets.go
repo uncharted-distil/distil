@@ -10,8 +10,8 @@ import (
 	log "github.com/unchartedsoftware/plog"
 	"goji.io/pat"
 
-	"github.com/unchartedsoftware/distil/api/model"
-	"github.com/unchartedsoftware/distil/api/model/storage/datamart"
+	"github.com/uncharted-distil/distil/api/model"
+	"github.com/uncharted-distil/distil/api/model/storage/datamart"
 )
 
 // DatasetResult represents the result of a dataset response.

@@ -17,8 +17,8 @@ import (
 	"github.com/uncharted-distil/distil-compute/primitive/compute"
 	"github.com/uncharted-distil/distil-compute/primitive/compute/description"
 
-	"github.com/unchartedsoftware/distil/api/env"
-	api "github.com/unchartedsoftware/distil/api/model"
+	"github.com/uncharted-distil/distil/api/env"
+	api "github.com/uncharted-distil/distil/api/model"
 )
 
 const (

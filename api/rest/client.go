@@ -12,7 +12,7 @@ import (
 	"os"
 
 	"github.com/pkg/errors"
-	"github.com/unchartedsoftware/distil/api/middleware"
+	"github.com/uncharted-distil/distil/api/middleware"
 )
 
 // ClientCtor repressents a client constructor to instantiate a rest client.

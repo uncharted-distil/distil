@@ -1,8 +1,8 @@
 package postgres
 
 import (
-	"github.com/unchartedsoftware/distil/api/model"
-	"github.com/unchartedsoftware/distil/api/postgres"
+	"github.com/uncharted-distil/distil/api/model"
+	"github.com/uncharted-distil/distil/api/postgres"
 )
 
 const (

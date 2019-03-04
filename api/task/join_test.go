@@ -9,8 +9,8 @@ import (
 
 	"github.com/uncharted-distil/distil-compute/model"
 	"github.com/uncharted-distil/distil-compute/pipeline"
-	"github.com/unchartedsoftware/distil/api/env"
-	apiModel "github.com/unchartedsoftware/distil/api/model"
+	"github.com/uncharted-distil/distil/api/env"
+	apiModel "github.com/uncharted-distil/distil/api/model"
 )
 
 type testSubmitter struct{}

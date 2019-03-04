@@ -9,10 +9,10 @@ import (
 	"github.com/mitchellh/hashstructure"
 	"github.com/pkg/errors"
 	"github.com/uncharted-distil/distil-compute/model"
-	"github.com/unchartedsoftware/distil/api/env"
-	api "github.com/unchartedsoftware/distil/api/model"
-	"github.com/unchartedsoftware/distil/api/task"
-	"github.com/unchartedsoftware/distil/api/util"
+	"github.com/uncharted-distil/distil/api/env"
+	api "github.com/uncharted-distil/distil/api/model"
+	"github.com/uncharted-distil/distil/api/task"
+	"github.com/uncharted-distil/distil/api/util"
 	log "github.com/unchartedsoftware/plog"
 )
 

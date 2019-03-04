@@ -8,7 +8,7 @@ import (
 	"github.com/uncharted-distil/distil-compute/primitive/compute"
 
 	"github.com/uncharted-distil/distil-ingest/metadata"
-	"github.com/unchartedsoftware/distil/api/util"
+	"github.com/uncharted-distil/distil/api/util"
 )
 
 // CreateDataset structures a raw csv file into a valid D3M dataset.

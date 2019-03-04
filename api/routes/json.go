@@ -3,7 +3,7 @@ package routes
 import (
 	"net/http"
 
-	"github.com/unchartedsoftware/distil/api/util/json"
+	"github.com/uncharted-distil/distil/api/util/json"
 )
 
 func handleJSON(w http.ResponseWriter, data interface{}) error {

@@ -1,7 +1,7 @@
 package postgres
 
 import (
-	"github.com/unchartedsoftware/distil/api/model"
+	"github.com/uncharted-distil/distil/api/model"
 )
 
 // Field defines behaviour for a database field type.

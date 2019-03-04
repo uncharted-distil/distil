@@ -9,8 +9,8 @@ import (
 	"goji.io/pat"
 
 	"github.com/uncharted-distil/distil-compute/model"
-	api "github.com/unchartedsoftware/distil/api/model"
-	"github.com/unchartedsoftware/distil/api/task"
+	api "github.com/uncharted-distil/distil/api/model"
+	"github.com/uncharted-distil/distil/api/task"
 )
 
 // GeocodingResult represents a geocoding response for a variable.

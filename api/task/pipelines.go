@@ -17,8 +17,8 @@ import (
 	"github.com/uncharted-distil/distil-compute/primitive/compute/result"
 	log "github.com/unchartedsoftware/plog"
 
-	"github.com/unchartedsoftware/distil/api/env"
-	"github.com/unchartedsoftware/distil/api/util"
+	"github.com/uncharted-distil/distil/api/env"
+	"github.com/uncharted-distil/distil/api/util"
 )
 
 const (

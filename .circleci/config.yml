@@ -6,7 +6,7 @@ jobs:
         auth:
           username: $UNCHARTED_DOCKER_USERNAME
           password: $UNCHARTED_DOCKER_PW
-    working_directory: /go/src/github.com/unchartedsoftware/distil
+    working_directory: /go/src/github.com/uncharted-distil/distil
     steps:
       - add_ssh_keys:
           fingerprints:

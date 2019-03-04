@@ -5,8 +5,8 @@ import (
 
 	"github.com/pkg/errors"
 
-	"github.com/unchartedsoftware/distil/api/compute"
-	"github.com/unchartedsoftware/distil/api/env"
+	"github.com/uncharted-distil/distil/api/compute"
+	"github.com/uncharted-distil/distil/api/env"
 )
 
 // ConfigHandler returns the compiled version number, timestamp and initial config.

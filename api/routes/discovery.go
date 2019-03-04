@@ -11,10 +11,10 @@ import (
 	"goji.io/pat"
 
 	"github.com/uncharted-distil/distil-compute/model"
-	"github.com/unchartedsoftware/distil/api/compute"
-	api "github.com/unchartedsoftware/distil/api/model"
-	"github.com/unchartedsoftware/distil/api/util"
-	"github.com/unchartedsoftware/distil/api/util/json"
+	"github.com/uncharted-distil/distil/api/compute"
+	api "github.com/uncharted-distil/distil/api/model"
+	"github.com/uncharted-distil/distil/api/util"
+	"github.com/uncharted-distil/distil/api/util/json"
 )
 
 const (

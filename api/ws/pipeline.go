@@ -11,10 +11,10 @@ import (
 	"github.com/unchartedsoftware/plog"
 
 	"github.com/uncharted-distil/distil-compute/primitive/compute"
-	api "github.com/unchartedsoftware/distil/api/compute"
-	"github.com/unchartedsoftware/distil/api/env"
-	"github.com/unchartedsoftware/distil/api/model"
-	jutil "github.com/unchartedsoftware/distil/api/util/json"
+	api "github.com/uncharted-distil/distil/api/compute"
+	"github.com/uncharted-distil/distil/api/env"
+	"github.com/uncharted-distil/distil/api/model"
+	jutil "github.com/uncharted-distil/distil/api/util/json"
 )
 
 const (

@@ -8,10 +8,10 @@ import (
 	"goji.io/pat"
 
 	"github.com/uncharted-distil/distil-ingest/metadata"
-	"github.com/unchartedsoftware/distil/api/env"
-	"github.com/unchartedsoftware/distil/api/model"
-	"github.com/unchartedsoftware/distil/api/model/storage/datamart"
-	"github.com/unchartedsoftware/distil/api/task"
+	"github.com/uncharted-distil/distil/api/env"
+	"github.com/uncharted-distil/distil/api/model"
+	"github.com/uncharted-distil/distil/api/model/storage/datamart"
+	"github.com/uncharted-distil/distil/api/task"
 )
 
 // ImportHandler imports a dataset to the local file system and then ingests it.

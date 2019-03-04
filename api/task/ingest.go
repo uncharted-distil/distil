@@ -17,8 +17,8 @@ import (
 	log "github.com/unchartedsoftware/plog"
 	elastic "gopkg.in/olivere/elastic.v5"
 
-	"github.com/unchartedsoftware/distil/api/env"
-	api "github.com/unchartedsoftware/distil/api/model"
+	"github.com/uncharted-distil/distil/api/env"
+	api "github.com/uncharted-distil/distil/api/model"
 )
 
 const (

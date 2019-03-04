@@ -6,7 +6,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/unchartedsoftware/plog"
 
-	"github.com/unchartedsoftware/distil/api/env"
+	"github.com/uncharted-distil/distil/api/env"
 )
 
 // Heartbeat of a service.

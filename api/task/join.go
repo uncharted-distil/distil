@@ -14,8 +14,8 @@ import (
 	"github.com/uncharted-distil/distil-compute/primitive/compute"
 	"github.com/uncharted-distil/distil-compute/primitive/compute/description"
 	ingestMetadata "github.com/uncharted-distil/distil-ingest/metadata"
-	"github.com/unchartedsoftware/distil/api/env"
-	apiModel "github.com/unchartedsoftware/distil/api/model"
+	"github.com/uncharted-distil/distil/api/env"
+	apiModel "github.com/uncharted-distil/distil/api/model"
 	log "github.com/unchartedsoftware/plog"
 )
 

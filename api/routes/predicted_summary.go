@@ -9,7 +9,7 @@ import (
 	"goji.io/pat"
 
 	"github.com/uncharted-distil/distil-compute/model"
-	api "github.com/unchartedsoftware/distil/api/model"
+	api "github.com/uncharted-distil/distil/api/model"
 )
 
 // PredictedSummary contains a fetch result histogram.

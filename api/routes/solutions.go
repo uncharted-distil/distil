@@ -7,7 +7,7 @@ import (
 	"github.com/pkg/errors"
 	"goji.io/pat"
 
-	"github.com/unchartedsoftware/distil/api/model"
+	"github.com/uncharted-distil/distil/api/model"
 )
 
 // Solution represents a pipeline solution.

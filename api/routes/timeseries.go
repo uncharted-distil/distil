@@ -13,8 +13,8 @@ import (
 	"goji.io/pat"
 
 	api "github.com/uncharted-distil/distil-ingest/metadata"
-	"github.com/unchartedsoftware/distil/api/env"
-	"github.com/unchartedsoftware/distil/api/model"
+	"github.com/uncharted-distil/distil/api/env"
+	"github.com/uncharted-distil/distil/api/model"
 )
 
 const (

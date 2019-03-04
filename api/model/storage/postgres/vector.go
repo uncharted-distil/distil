@@ -6,7 +6,7 @@ import (
 
 	"github.com/pkg/errors"
 	"github.com/uncharted-distil/distil-compute/model"
-	api "github.com/unchartedsoftware/distil/api/model"
+	api "github.com/uncharted-distil/distil/api/model"
 )
 
 const (

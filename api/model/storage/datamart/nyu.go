@@ -10,9 +10,9 @@ import (
 	"github.com/uncharted-distil/distil-compute/model"
 	"github.com/uncharted-distil/distil-compute/primitive/compute"
 	"github.com/uncharted-distil/distil-ingest/metadata"
-	api "github.com/unchartedsoftware/distil/api/model"
-	"github.com/unchartedsoftware/distil/api/task"
-	"github.com/unchartedsoftware/distil/api/util"
+	api "github.com/uncharted-distil/distil/api/model"
+	"github.com/uncharted-distil/distil/api/task"
+	"github.com/uncharted-distil/distil/api/util"
 )
 
 // SearchResults is the basic search result container.

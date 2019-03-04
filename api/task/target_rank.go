@@ -9,7 +9,7 @@ import (
 	"github.com/uncharted-distil/distil-compute/primitive/compute/description"
 	"github.com/uncharted-distil/distil-compute/primitive/compute/result"
 	"github.com/uncharted-distil/distil-ingest/metadata"
-	"github.com/unchartedsoftware/distil/api/env"
+	"github.com/uncharted-distil/distil/api/env"
 )
 
 // TargetRank will rank the dataset relative to a target variable using

@@ -7,7 +7,7 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/uncharted-distil/distil-compute/model"
-	"github.com/unchartedsoftware/distil/api/util/json"
+	"github.com/uncharted-distil/distil/api/util/json"
 )
 
 // FilterParams defines the set of numeric range and categorical filters. Variables

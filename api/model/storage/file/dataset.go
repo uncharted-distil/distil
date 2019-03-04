@@ -9,7 +9,7 @@ import (
 	"github.com/uncharted-distil/distil-compute/model"
 	"github.com/uncharted-distil/distil-compute/primitive/compute"
 	"github.com/uncharted-distil/distil-ingest/metadata"
-	api "github.com/unchartedsoftware/distil/api/model"
+	api "github.com/uncharted-distil/distil/api/model"
 )
 
 const (

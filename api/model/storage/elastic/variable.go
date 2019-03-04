@@ -7,7 +7,7 @@ import (
 	"gopkg.in/olivere/elastic.v5"
 
 	"github.com/uncharted-distil/distil-compute/model"
-	"github.com/unchartedsoftware/distil/api/util/json"
+	"github.com/uncharted-distil/distil/api/util/json"
 )
 
 func (s *Storage) parseRawVariable(child map[string]interface{}) (*model.Variable, error) {

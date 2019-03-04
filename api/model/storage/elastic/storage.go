@@ -1,8 +1,8 @@
 package elastic
 
 import (
-	es "github.com/unchartedsoftware/distil/api/elastic"
-	"github.com/unchartedsoftware/distil/api/model"
+	es "github.com/uncharted-distil/distil/api/elastic"
+	"github.com/uncharted-distil/distil/api/model"
 	elastic "gopkg.in/olivere/elastic.v5"
 )
 

@@ -4,7 +4,7 @@ import (
 	"strings"
 
 	"github.com/pkg/errors"
-	api "github.com/unchartedsoftware/distil/api/model"
+	api "github.com/uncharted-distil/distil/api/model"
 )
 
 const (
