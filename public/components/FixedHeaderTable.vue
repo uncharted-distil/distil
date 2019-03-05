@@ -16,11 +16,11 @@ export default Vue.extend({
 	methods: {
 
 		checkScrollBar() {
-			// Check if there is fixed vertical scrollbar (when using mouse) in the table body 
+			// Check if there is fixed vertical scrollbar (when using mouse) in the table body
 			// and give some space to the table header so that they align.
 			const scrollbarWidth = this.tbody.offsetWidth - this.tbody.clientWidth;
 			if (scrollbarWidth) {
-				this.thead.style['width'] = `calc(100% - ${scrollbarWidth + 1}px)`;
+				this.thead.style.width = `calc(100% - ${scrollbarWidth + 1}px)`;
 				this.thead.style['margin-right'] = `${scrollbarWidth + 1}px`;
 			}
 		},
@@ -77,10 +77,12 @@ export default Vue.extend({
 		}
 	},
 
-	data: {
-		tbody: {} as HTMLTableSectionElement,
-		thead: {} as HTMLTableSectionElement,
-		tableHeaderRow: {} as HTMLTableRowElement,
+	data() {
+		return {
+			tbody: {} as HTMLTableSectionElement,
+			thead: {} as HTMLTableSectionElement,
+			tableHeaderRow: {} as HTMLTableRowElement,
+		};
 	},
 
 	mounted: function () {
@@ -124,10 +126,10 @@ export default Vue.extend({
 .fixed-header-table thead {
 	overflow-x: hidden;
 
-	/* 
-	  Subtract 1px from table header width. 
-	  This resolves the issue that table row overflows table width 
-	  by < 1px and creates horizontal scrollbar when it's not needed. 
+	/*
+	  Subtract 1px from table header width.
+	  This resolves the issue that table row overflows table width
+	  by < 1px and creates horizontal scrollbar when it's not needed.
 	*/
 	width: calc(100% - 1px);
     margin-right: 1px;

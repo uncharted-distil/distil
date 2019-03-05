@@ -10,6 +10,7 @@ import { FilterParams, INCLUDE_FILTER } from '../../util/filters';
 import { createPendingSummary, createErrorSummary, createEmptyTableData } from '../../util/data';
 import { addHighlightToFilterParams } from '../../util/highlights';
 import { loadImage } from '../../util/image';
+import { Grouping } from '../../util/groupings';
 import { getVarType, IMAGE_TYPE, TIMESERIES_TYPE, GEOCODED_LON_PREFIX, GEOCODED_LAT_PREFIX } from '../../util/types';
 
 // fetches variables and add dataset name to each variable
@@ -240,12 +241,12 @@ export const actions = {
 			.then(response => {
 
 				const histogram = response.data.histogram;
-				if (histogram.files) {
+				if (histogram.exemplars) {
 					// if there a linked files, fetch those before resolving
 					return context.dispatch('fetchFiles', {
 						dataset: args.dataset,
 						variable: args.variable,
-						urls: histogram.files
+						urls: histogram.exemplars
 					}).then(() => {
 						mutations.updateVariableSummaries(context, histogram);
 					});
@@ -258,6 +259,83 @@ export const actions = {
 				console.error(error);
 				const key = args.variable;
 				const label = args.variable;
+				const dataset = args.dataset;
+				mutations.updateVariableSummaries(context,  createErrorSummary(key, label, dataset, error));
+			});
+	},
+
+	fetchGroupingSummaries(context: DatasetContext, args: { dataset: string, groupings: Grouping[] }): Promise<void[]>  {
+		if (!args.dataset) {
+			console.warn('`dataset` argument is missing');
+			return null;
+		}
+		if (!args.groupings) {
+			console.warn('`groupings` argument is missing');
+			return null;
+		}
+		// commit empty place holders, if there is no data
+		const promises = [];
+		args.groupings.forEach(grouping => {
+			const colHash = `grouping-${grouping.idCol}`;
+			const exists = _.find(context.state.variableSummaries, v => {
+				return v.dataset === args.dataset && v.key === colHash;
+			});
+			if (!exists) {
+				// add placeholder
+				const key = colHash;
+				const label = `${grouping.idCol} Grouping`;
+				const dataset = args.dataset;
+				mutations.updateVariableSummaries(context, createPendingSummary(key, label, dataset));
+				// fetch summary
+				promises.push(context.dispatch('fetchGroupingSummary', {
+					dataset: args.dataset,
+					grouping: grouping
+				}));
+			}
+		});
+		// fill them in asynchronously
+		return Promise.all(promises);
+	},
+
+	fetchGroupingSummary(context: DatasetContext, args: { dataset: string, grouping: Grouping }): Promise<void>  {
+		if (!args.dataset) {
+			console.warn('`dataset` argument is missing');
+			return null;
+		}
+		if (!args.grouping) {
+			console.warn('`grouping` argument is missing');
+			return null;
+		}
+
+		const colHash = `grouping-${args.grouping.idCol}`;
+
+		return axios.post(`/distil/grouping-summary/${args.dataset}`, args.grouping)
+			.then(response => {
+
+				const histogram = response.data.histogram;
+				histogram.key = colHash;
+				if (histogram.exemplars) {
+					// if there a linked exemplars, fetch those before resolving
+					return histogram.exemplars.map(exemplar => {
+						return context.dispatch('fetchTimeseries', {
+							dataset: args.dataset,
+							timeseriesColName: args.grouping.idCol,
+							xColName: args.grouping.properties.xCol,
+							yColName: args.grouping.properties.yCol,
+							timeseriesURL: exemplar,
+						}).then(() => {
+							mutations.updateVariableSummaries(context, histogram);
+						});
+					});
+				} else {
+					mutations.updateVariableSummaries(context, histogram);
+				}
+
+			})
+			.catch(error => {
+				console.error(error);
+				const key = colHash;
+				const label = colHash;
 				const dataset = args.dataset;
 				mutations.updateVariableSummaries(context,  createErrorSummary(key, label, dataset, error));
 			});
@@ -344,10 +422,10 @@ export const actions = {
 
 		return axios.post(`distil/timeseries/${args.dataset}/${args.timeseriesColName}/${args.xColName}/${args.yColName}/${args.timeseriesURL}`, {})
 			.then(response => {
-				mutations.updateTimeseriesFile(context, {
+				mutations.updateTimeseries(context, {
 					dataset: args.dataset,
-					url: args.timeseriesURL,
-					file: response.data.timeseries
+					id: args.timeseriesURL,
+					timeseries: response.data.timeseries
 				});
 			})
 			.catch(error => {

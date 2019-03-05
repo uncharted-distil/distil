@@ -558,7 +558,7 @@ func (s *Storage) FetchResultsExtremaByURI(dataset string, storageName string, r
 		Type: model.TextType,
 	}
 
-	field := NewNumericalField(s, storageName, targetVariable)
+	field := NewNumericalField(s, storageName, targetVariable.Name, targetVariable.DisplayName, targetVariable.Type)
 	return field.fetchResultsExtrema(resultURI, storageNameResult, resultVariable)
 }
 
@@ -580,11 +580,11 @@ func (s *Storage) FetchPredictedSummary(dataset string, storageName string, resu
 	var field Field
 	var histogram *api.Histogram
 	if model.IsNumerical(variable.Type) {
-		field = NewNumericalField(s, storageName, variable)
+		field = NewNumericalField(s, storageName, variable.Name, variable.DisplayName, variable.Type)
 	} else if model.IsCategorical(variable.Type) {
-		field = NewCategoricalField(s, storageName, variable)
+		field = NewCategoricalField(s, storageName, variable.Name, variable.DisplayName, variable.Type)
 	} else if model.IsVector(variable.Type) {
-		field = NewVectorField(s, storageName, variable)
+		field = NewVectorField(s, storageName, variable.Name, variable.DisplayName, variable.Type)
 	} else {
 		return nil, errors.Errorf("variable %s of type %s does not support summary", variable.Name, variable.Type)
 	}

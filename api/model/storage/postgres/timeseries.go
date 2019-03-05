@@ -18,6 +18,7 @@ package postgres
 import (
 	"fmt"
 	"math"
+	"strconv"
 	"strings"
 
 	"github.com/jackc/pgx"
@@ -25,6 +26,28 @@ import (
 	"github.com/uncharted-distil/distil-compute/model"
 	api "github.com/uncharted-distil/distil/api/model"
 )
+
+// TimeSeriesField defines behaviour for the timeseries field type.
+type TimeSeriesField struct {
+	Storage     *Storage
+	StorageName string
+	Key         string
+	Label       string
+	Type        string
+}
+
+// NewTimeSeriesField creates a new field for timeseries types.
+func NewTimeSeriesField(storage *Storage, storageName string, key string, label string, typ string) *TimeSeriesField {
+	field := &TimeSeriesField{
+		Storage:     storage,
+		StorageName: storageName,
+		Key:         key,
+		Label:       label,
+		Type:        typ,
+	}
+
+	return field
+}
 
 func (s *Storage) parseTimeseries(rows *pgx.Rows) ([][]float64, error) {
 	var points [][]float64
@@ -40,6 +63,42 @@ func (s *Storage) parseTimeseries(rows *pgx.Rows) ([][]float64, error) {
 		}
 	}
 	return points, nil
+}
+
+func (f *TimeSeriesField) fetchRepresentationTimeSeries(categoryBuckets []*api.Bucket) ([]string, error) {
+
+	var timeseriesExemplars []string
+
+	for _, bucket := range categoryBuckets {
+
+		prefixedVarName := f.clusterVarName(f.Key)
+
+		// pull sample row containing bucket
+		query := fmt.Sprintf("SELECT \"%s\" FROM %s WHERE \"%s\" = $1 LIMIT 1;",
+			"series_id" /*f.Key*/, f.StorageName, prefixedVarName)
+
+		// execute the postgres query
+		rows, err := f.Storage.client.Query(query, bucket.Key)
+		if err != nil {
+			return nil, errors.Wrap(err, "failed to fetch histograms for variable summaries from postgres")
+		}
+
+		if rows.Next() {
+			var timeseriesExemplar int
+			err = rows.Scan(&timeseriesExemplar)
+			if err != nil {
+				return nil, errors.Wrap(err, "Unable to parse solution from Postgres")
+			}
+			timeseriesExemplars = append(timeseriesExemplars, strconv.FormatInt(int64(timeseriesExemplar), 10))
+		}
+		rows.Close()
+	}
+
+	if len(timeseriesExemplars) == 0 {
+		return nil, fmt.Errorf("No exemplars found for timeseries data")
+	}
+
+	return timeseriesExemplars, nil
 }
 
 // FetchTimeseries fetches a timeseries.
@@ -70,24 +129,6 @@ func (s *Storage) FetchTimeseries(dataset string, storageName string, timeseries
 	return s.parseTimeseries(res)
 }
 
-// TimeSeriesField defines behaviour for the timeseries field type.
-type TimeSeriesField struct {
-	Storage     *Storage
-	StorageName string
-	Variable    *model.Variable
-}
-
-// NewTimeSeriesField creates a new field for timeseries types.
-func NewTimeSeriesField(storage *Storage, storageName string, variable *model.Variable) *TimeSeriesField {
-	field := &TimeSeriesField{
-		Storage:     storage,
-		StorageName: storageName,
-		Variable:    variable,
-	}
-
-	return field
-}
-
 // FetchSummaryData pulls summary data from the database and builds a histogram.
 func (f *TimeSeriesField) FetchSummaryData(resultURI string, filterParams *api.FilterParams, extrema *api.Extrema) (*api.Histogram, error) {
 	var histogram *api.Histogram
@@ -111,7 +152,7 @@ func (f *TimeSeriesField) fetchHistogram(filterParams *api.FilterParams) (*api.H
 	params := make([]interface{}, 0)
 	wheres, params = f.Storage.buildFilteredQueryWhere(wheres, params, filterParams.Filters)
 
-	prefixedVarName := f.clusterVarName(f.Variable.Name)
+	prefixedVarName := f.clusterVarName(f.Key)
 
 	where := ""
 	if len(wheres) > 0 {
@@ -131,7 +172,17 @@ func (f *TimeSeriesField) fetchHistogram(filterParams *api.FilterParams) (*api.H
 		defer res.Close()
 	}
 
-	return f.parseHistogram(res)
+	histogram, err := f.parseHistogram(res)
+	if err != nil {
+		return nil, err
+	}
+
+	files, err := f.fetchRepresentationTimeSeries(histogram.Buckets)
+	if err != nil {
+		return nil, err
+	}
+	histogram.Exemplars = files
+	return histogram, nil
 }
 
 func (f *TimeSeriesField) fetchHistogramByResult(resultURI string, filterParams *api.FilterParams) (*api.Histogram, error) {
@@ -149,7 +200,7 @@ func (f *TimeSeriesField) fetchHistogramByResult(resultURI string, filterParams 
 		where = fmt.Sprintf("AND %s", strings.Join(wheres, " AND "))
 	}
 
-	prefixedVarName := f.clusterVarName(f.Variable.Name)
+	prefixedVarName := f.clusterVarName(f.Key)
 
 	// Get count by category.
 	query := fmt.Sprintf(
@@ -171,11 +222,21 @@ func (f *TimeSeriesField) fetchHistogramByResult(resultURI string, filterParams 
 		defer res.Close()
 	}
 
-	return f.parseHistogram(res)
+	histogram, err := f.parseHistogram(res)
+	if err != nil {
+		return nil, err
+	}
+
+	files, err := f.fetchRepresentationTimeSeries(histogram.Buckets)
+	if err != nil {
+		return nil, err
+	}
+	histogram.Exemplars = files
+	return histogram, nil
 }
 
 func (f *TimeSeriesField) parseHistogram(rows *pgx.Rows) (*api.Histogram, error) {
-	prefixedVarName := f.clusterVarName(f.Variable.Name)
+	prefixedVarName := f.clusterVarName(f.Key)
 
 	termsAggName := api.TermsAggPrefix + prefixedVarName
 
@@ -208,10 +269,10 @@ func (f *TimeSeriesField) parseHistogram(rows *pgx.Rows) (*api.Histogram, error)
 
 	// assign histogram attributes
 	return &api.Histogram{
-		Key:     f.Variable.Name,
-		Label:   f.Variable.DisplayName,
+		Key:     f.Key,
+		Label:   f.Label,
 		Type:    model.CategoricalType,
-		VarType: f.Variable.Type,
+		VarType: f.Type,
 		Buckets: buckets,
 		Extrema: &api.Extrema{
 			Min: float64(min),
@@ -223,7 +284,7 @@ func (f *TimeSeriesField) parseHistogram(rows *pgx.Rows) (*api.Histogram, error)
 // FetchPredictedSummaryData pulls predicted data from the result table and builds
 // the timeseries histogram for the field.
 func (f *TimeSeriesField) FetchPredictedSummaryData(resultURI string, datasetResult string, filterParams *api.FilterParams, extrema *api.Extrema) (*api.Histogram, error) {
-	targetName := f.clusterVarName(f.Variable.Name)
+	targetName := f.clusterVarName(f.Key)
 
 	// get filter where / params
 	wheres, params, err := f.Storage.buildResultQueryFilters(f.StorageName, resultURI, filterParams)
@@ -249,5 +310,15 @@ func (f *TimeSeriesField) FetchPredictedSummaryData(resultURI string, datasetRes
 	}
 	defer res.Close()
 
-	return f.parseHistogram(res)
+	histogram, err := f.parseHistogram(res)
+	if err != nil {
+		return nil, err
+	}
+
+	files, err := f.fetchRepresentationTimeSeries(histogram.Buckets)
+	if err != nil {
+		return nil, err
+	}
+	histogram.Exemplars = files
+	return histogram, nil
 }

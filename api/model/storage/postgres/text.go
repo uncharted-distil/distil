@@ -30,15 +30,19 @@ import (
 type TextField struct {
 	Storage     *Storage
 	StorageName string
-	Variable    *model.Variable
+	Key         string
+	Label       string
+	Type        string
 }
 
 // NewTextField creates a new field for text types.
-func NewTextField(storage *Storage, storageName string, variable *model.Variable) *TextField {
+func NewTextField(storage *Storage, storageName string, key string, label string, typ string) *TextField {
 	field := &TextField{
 		Storage:     storage,
 		StorageName: storageName,
-		Variable:    variable,
+		Key:         key,
+		Label:       label,
+		Type:        typ,
 	}
 
 	return field
@@ -73,7 +77,7 @@ func (f *TextField) fetchHistogram(filterParams *api.FilterParams) (*api.Histogr
 		"FROM (SELECT unnest(tsvector_to_array(to_tsvector(\"%s\"))) as stem FROM %s %s) as r "+
 		"INNER JOIN %s as w on r.stem = w.stem "+
 		"GROUP BY w.word ORDER BY count desc, w.word LIMIT %d;",
-		f.Variable.Name, f.Variable.Name, f.StorageName, where, wordStemTableName, catResultLimit)
+		f.Key, f.Key, f.StorageName, where, wordStemTableName, catResultLimit)
 
 	// execute the postgres query
 	res, err := f.Storage.client.Query(query, params...)
@@ -108,7 +112,7 @@ func (f *TextField) fetchHistogramByResult(resultURI string, filterParams *api.F
 		"FROM %s data INNER JOIN %s result ON data.\"%s\" = result.index WHERE result.result_id = $%d %s) as r "+
 		"INNER JOIN %s as w on r.stem = w.stem "+
 		"GROUP BY w.word ORDER BY count desc, w.word LIMIT %d;",
-		f.Variable.Name, f.Variable.Name, f.StorageName, f.Storage.getResultTable(f.StorageName),
+		f.Key, f.Key, f.StorageName, f.Storage.getResultTable(f.StorageName),
 		model.D3MIndexFieldName, len(params), where, wordStemTableName, catResultLimit)
 
 	// execute the postgres query
@@ -124,7 +128,7 @@ func (f *TextField) fetchHistogramByResult(resultURI string, filterParams *api.F
 }
 
 func (f *TextField) parseHistogram(rows *pgx.Rows) (*api.Histogram, error) {
-	termsAggName := api.TermsAggPrefix + f.Variable.Name
+	termsAggName := api.TermsAggPrefix + f.Key
 
 	buckets := make([]*api.Bucket, 0)
 	min := int64(math.MaxInt32)
@@ -154,10 +158,10 @@ func (f *TextField) parseHistogram(rows *pgx.Rows) (*api.Histogram, error) {
 
 	// assign histogram attributes
 	return &api.Histogram{
-		Label:   f.Variable.DisplayName,
-		Key:     f.Variable.Name,
+		Label:   f.Label,
+		Key:     f.Key,
 		Type:    model.CategoricalType,
-		VarType: f.Variable.Type,
+		VarType: f.Type,
 		Buckets: buckets,
 		Extrema: &api.Extrema{
 			Min: float64(min),
@@ -169,7 +173,7 @@ func (f *TextField) parseHistogram(rows *pgx.Rows) (*api.Histogram, error) {
 // FetchPredictedSummaryData pulls data from the result table and builds
 // the categorical histogram for the field.
 func (f *TextField) FetchPredictedSummaryData(resultURI string, datasetResult string, filterParams *api.FilterParams, extrema *api.Extrema) (*api.Histogram, error) {
-	targetName := f.Variable.Name
+	targetName := f.Key
 
 	// get filter where / params
 	wheres, params, err := f.Storage.buildResultQueryFilters(f.StorageName, resultURI, filterParams)

@@ -130,19 +130,19 @@ func (s *Storage) fetchSummaryData(dataset string, storageName string, varName s
 
 	var field Field
 	if model.IsNumerical(variable.Type) {
-		field = NewNumericalField(s, storageName, variable)
+		field = NewNumericalField(s, storageName, variable.Name, variable.DisplayName, variable.Type)
 	} else if model.IsCategorical(variable.Type) {
-		field = NewCategoricalField(s, storageName, variable)
+		field = NewCategoricalField(s, storageName, variable.Name, variable.DisplayName, variable.Type)
 	} else if model.IsVector(variable.Type) {
-		field = NewVectorField(s, storageName, variable)
+		field = NewVectorField(s, storageName, variable.Name, variable.DisplayName, variable.Type)
 	} else if model.IsText(variable.Type) {
-		field = NewTextField(s, storageName, variable)
+		field = NewTextField(s, storageName, variable.Name, variable.DisplayName, variable.Type)
 	} else if model.IsImage(variable.Type) {
-		field = NewImageField(s, storageName, variable)
+		field = NewImageField(s, storageName, variable.Name, variable.DisplayName, variable.Type)
 	} else if model.IsDateTime(variable.Type) {
-		field = NewDateTimeField(s, storageName, variable)
+		field = NewDateTimeField(s, storageName, variable.Name, variable.DisplayName, variable.Type)
 	} else if model.IsTimeSeries(variable.Type) {
-		field = NewTimeSeriesField(s, storageName, variable)
+		field = NewTimeSeriesField(s, storageName, variable.Name, variable.DisplayName, variable.Type)
 	} else {
 		return nil, errors.Errorf("variable `%s` of type `%s` does not support summary", variable.Name, variable.Type)
 	}
@@ -174,4 +174,44 @@ func (s *Storage) FetchSummary(dataset string, storageName string, varName strin
 // and variable for data that is part of the result set.
 func (s *Storage) FetchSummaryByResult(dataset string, storageName string, varName string, resultURI string, filterParams *api.FilterParams, extrema *api.Extrema) (*api.Histogram, error) {
 	return s.fetchSummaryData(dataset, storageName, varName, resultURI, filterParams, extrema)
+}
+
+func (s *Storage) fetchGroupSummaryData(dataset string, storageName string, groupCol string, groupType string) (*api.Histogram, error) {
+	// need description of the variables to request aggregation against.
+	variable, err := s.metadata.FetchVariable(dataset, groupCol)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to fetch variable description for summary")
+	}
+
+	// get the histogram by using the variable type.
+
+	var field Field
+	if model.IsTimeSeries(groupType) {
+		field = NewTimeSeriesField(s, storageName, groupCol, groupCol+" Grouping", groupType)
+	} else {
+		return nil, errors.Errorf("variable `%s` of type `%s` does not support summary", variable.Name, variable.Type)
+	}
+
+	emptyParams := &api.FilterParams{}
+	histogram, err := field.FetchSummaryData("", emptyParams, nil)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to fetch summary data")
+	}
+
+	// get number of rows
+	numRows, err := s.FetchNumRows(storageName, nil)
+	if err != nil {
+		return nil, err
+	}
+	histogram.NumRows = numRows
+
+	// add dataset
+	histogram.Dataset = dataset
+
+	return histogram, err
+}
+
+// FetchGroup returns the summary for the provided dataset and group.
+func (s *Storage) FetchGroup(dataset string, storageName string, groupCol string, groupType string) (*api.Histogram, error) {
+	return s.fetchGroupSummaryData(dataset, storageName, groupCol, groupType)
 }

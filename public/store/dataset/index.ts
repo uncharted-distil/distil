@@ -1,4 +1,5 @@
 import { Dictionary } from '../../util/dict';
+import { Grouping } from '../../util/groupings';
 
 export const CATEGORICAL_SUMMARY = 'categorical';
 export const NUMERICAL_SUMMARY = 'numerical';
@@ -23,6 +24,7 @@ export interface Variable {
 	colOriginalType: string;
 	suggestedTypes: SuggestedType[];
 	isColTypeChanged: boolean;
+	isGrouping: boolean;
 }
 
 export interface Dataset {
@@ -58,7 +60,7 @@ export interface VariableSummary {
 	buckets: Bucket[];
 	extrema: Extrema;
 	numRows: number;
-	files?: string[];
+	exemplars?: string[];
 	solutionId?: string;
 	resultId?: string;
 	type?: string;
@@ -99,7 +101,9 @@ export interface DatasetState {
 	filteredDatasets: Dataset[];
 	variables: Variable[];
 	variableSummaries: VariableSummary[];
+	groupingSummaries: VariableSummary[];
 	files: Dictionary<any>;
+	timeseries: Dictionary<Dictionary<number[][]>>;
 	timeseriesExtrema: Dictionary<TimeseriesExtrema>;
 	joinTableData: Dictionary<TableData>;
 	includedTableData: TableData;
@@ -116,10 +120,12 @@ export const state: DatasetState = {
 
 	// variable summary data for the active dataset
 	variableSummaries: [],
+	groupingSummaries: [],
 
 	// linked files
 	files: {},
 
+	timeseries: {},
 	timeseriesExtrema: {},
 
 	// joined data table data

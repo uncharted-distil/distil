@@ -22,11 +22,13 @@ export const getters = {
 	getFilteredDatasets: read(moduleGetters.getFilteredDatasets),
 	// variables
 	getVariables: read(moduleGetters.getVariables),
+	getGroupings: read(moduleGetters.getVariables),
 	getVariablesMap: read(moduleGetters.getVariablesMap),
 	getVariableTypesMap: read(moduleGetters.getVariableTypesMap),
 	getVariableSummaries: read(moduleGetters.getVariableSummaries),
 	// files
 	getFiles: read(moduleGetters.getFiles),
+	getTimeseries: read(moduleGetters.getTimeseries),
 	getTimeseriesExtrema: read(moduleGetters.getTimeseriesExtrema),
 	// join data
 	getJoinDatasetsTableData: read(moduleGetters.getJoinDatasetsTableData),
@@ -57,6 +59,8 @@ export const actions = {
 	setVariableType: dispatch(moduleActions.setVariableType),
 	fetchVariableSummary: dispatch(moduleActions.fetchVariableSummary),
 	fetchVariableSummaries: dispatch(moduleActions.fetchVariableSummaries),
+	fetchGroupingSummary: dispatch(moduleActions.fetchGroupingSummary),
+	fetchGroupingSummaries: dispatch(moduleActions.fetchGroupingSummaries),
 	// ranking
 	fetchVariableRankings: dispatch(moduleActions.fetchVariableRankings),
 	// files
@@ -86,7 +90,7 @@ export const mutations = {
 	updateVariableRankings: commit(moduleMutations.updateVariableRankings),
 	// files
 	updateFile: commit(moduleMutations.updateFile),
-	updateTimeseriesFile: commit(moduleMutations.updateTimeseriesFile),
+	updateTimeseries: commit(moduleMutations.updateTimeseries),
 	// included / excluded table data
 	setJoinDatasetsTableData: commit(moduleMutations.setJoinDatasetsTableData),
 	clearJoinDatasetsTableData: commit(moduleMutations.clearJoinDatasetsTableData),

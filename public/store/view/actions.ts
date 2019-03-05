@@ -107,10 +107,17 @@ export const actions = {
 			dataset: dataset
 		}).then(() => {
 			const variables = context.getters.getVariables;
-			return context.dispatch('fetchVariableSummaries', {
-				dataset: dataset,
-				variables: variables
-			});
+			const groupings = context.getters.getGroupings;
+			return Promise.all([
+				context.dispatch('fetchVariableSummaries', {
+					dataset: dataset,
+					variables: variables
+				}),
+				context.dispatch('fetchGroupingSummaries', {
+					dataset: dataset,
+					groupings: groupings
+				})
+			]);
 		});
 	},
 

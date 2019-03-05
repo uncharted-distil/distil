@@ -7,7 +7,7 @@
 			<div class="col-4 offset-md-1">
 				<h5 class="header-label">Select Feature to Predict</h5>
 			</div>
-			<div class="col-2 offset-md-5">
+			<div class="col-2 offset-md-4">
 				<b-button class="grouping-button" variant="primary" @click="showGroupingModal = !showGroupingModal">
 					Create Variable Grouping
 				</b-button>
@@ -21,7 +21,6 @@
 		</div>
 		<grouping-modal
 			:show="showGroupingModal"
-			title="Export Failed"
 			@close="showGroupingModal = !showGroupingModal">
 		</grouping-modal>
 	</div>
