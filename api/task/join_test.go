@@ -107,7 +107,7 @@ func TestJoin(t *testing.T) {
 		{"3", "4.0", "d"},
 	}
 
-	csvFile, err := os.Open("test_data/test_1-test_2/tables/learningData.csv")
+	csvFile, err := os.Open("test_data/augmented/test_1-test_2/tables/learningData.csv")
 	assert.NoError(t, err)
 	defer csvFile.Close()
 
