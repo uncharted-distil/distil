@@ -35,6 +35,7 @@ export default Vue.extend({
 			}
 
 			const headTargetCells = [];
+			const bodyTargetCells = [];
 
 			// reset element style so that table renders with initial layout set by css
 			for (let i = 0; i < theadCells.length; i++) {
@@ -48,12 +49,14 @@ export default Vue.extend({
 				if (headCellWidth < bodyCellWidth) {
 					headTargetCells.push({ elem: theadCells[i], width: bodyCellWidth });
 				}
+
 			}
 			const setCellWidth = cell => {
 				cell.elem.style['max-width'] = cell.width + 'px';
 				cell.elem.style['min-width'] = cell.width + 'px';
 			};
 			headTargetCells.forEach(setCellWidth);
+			bodyTargetCells.forEach(setCellWidth);
 
 			// get body and header cell width again from computed table header cells
 			const bodyCells = [];
