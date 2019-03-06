@@ -533,7 +533,7 @@ func (s *SolutionRequest) PersistAndDispatch(client *compute.Client, solutionSto
 		return err
 	}
 
-	columnIndex := getColumnIndex(targetVariable, s.Filters.Variables)
+	columnIndex := getColumnIndex(targetVariable, dataset.Filters.Variables)
 
 	// add dataset name to path
 	datasetInputDir := env.ResolvePath(dataset.Metadata.Source, dataset.Metadata.Folder)
