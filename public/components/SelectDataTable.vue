@@ -6,6 +6,7 @@
 			small
 			:items="items"
 			:fields="fields"
+			@sort-changed="onSortChanged"
 			@row-clicked="onRowClick">
 
 			<template v-for="computedField in computedFields" :slot="'HEAD_' + computedField" slot-scope="data">
@@ -117,6 +118,13 @@ export default Vue.extend({
 		fixedHeaderTable.resizeTableCells();
 	},
 	methods: {
+		onSortChanged() {
+			// need a `nextTick` otherwise the cells get immediately overwritten
+			Vue.nextTick(() => {
+				const fixedHeaderTable = this.$refs.fixedHeaderTable as any;
+				fixedHeaderTable.resizeTableCells();
+			});
+		},
 		onRowClick(row: TableRow) {
 			if (!isRowSelected(this.rowSelection, row[D3M_INDEX_FIELD])) {
 				addRowSelection(this.$router, this.instanceName, this.rowSelection, row[D3M_INDEX_FIELD]);

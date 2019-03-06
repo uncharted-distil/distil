@@ -272,6 +272,11 @@ export default Vue.extend({
 
 		onSortChanged(event) {
 			this.sortingBy = event.sortBy;
+			// need a `nextTick` otherwise the cells get immediately overwritten
+			Vue.nextTick(() => {
+				const fixedHeaderTable = this.$refs.fixedHeaderTable as any;
+				fixedHeaderTable.resizeTableCells();
+			});
 		}
 	}
 

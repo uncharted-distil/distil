@@ -5,7 +5,8 @@
 			hover
 			small
 			:items="items"
-			:fields="fields">
+			:fields="fields"
+			@sort-changed="onSortChanged">
 
 			<template v-for="imageField in imageFields" :slot="imageField" slot-scope="data">
 				<image-preview :key="imageField" :image-url="data.item[imageField]"></image-preview>
@@ -69,6 +70,16 @@ export default Vue.extend({
 			})
 			.filter(field => field.type === TIMESERIES_TYPE)
 			.map(field => field.key);
+		}
+	},
+
+	methods: {
+		onSortChanged() {
+			// need a `nextTick` otherwise the cells get immediately overwritten
+			Vue.nextTick(() => {
+				const fixedHeaderTable = this.$refs.fixedHeaderTable as any;
+				fixedHeaderTable.resizeTableCells();
+			});
 		}
 	}
 });
