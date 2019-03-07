@@ -156,7 +156,7 @@ func createDatasetFromCSV(config *env.Config, csvFile *os.File, datasetName stri
 
 	metadata.DataResources = []*model.DataResource{dataResource}
 
-	outputPath := env.ResolvePath(ingestMetadata.Contrib, datasetName)
+	outputPath := env.ResolvePath(ingestMetadata.Augmented, datasetName)
 
 	// create dest csv file
 	csvDestFolder := path.Join(outputPath, compute.D3MDataFolder)

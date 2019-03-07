@@ -6,6 +6,7 @@
 			small
 			:items="items"
 			:fields="emphasizedFields"
+			@sort-changed="onSortChanged"
 			@head-clicked="onColumnClicked">
 
 			<template v-for="imageField in imageFields" :slot="imageField" slot-scope="data">
@@ -111,6 +112,13 @@ export default Vue.extend({
 	},
 
 	methods: {
+		onSortChanged() {
+			// need a `nextTick` otherwise the cells get immediately overwritten
+			Vue.nextTick(() => {
+				const fixedHeaderTable = this.$refs.fixedHeaderTable as any;
+				fixedHeaderTable.resizeTableCells();
+			});
+		},
 		onColumnClicked(key, field) {
 			if (this.selectedColumn && this.selectedColumn.key === key) {
 				this.$emit('col-clicked', null);

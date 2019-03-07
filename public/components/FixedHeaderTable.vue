@@ -48,6 +48,7 @@ export default Vue.extend({
 				if (headCellWidth < bodyCellWidth) {
 					headTargetCells.push({ elem: theadCells[i], width: bodyCellWidth });
 				}
+
 			}
 			const setCellWidth = cell => {
 				cell.elem.style['max-width'] = cell.width + 'px';
