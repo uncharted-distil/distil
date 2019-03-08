@@ -106,8 +106,8 @@ func GeocodingHandler(metaCtor api.MetadataStorageCtor, dataCtor api.DataStorage
 		latData := make(map[string]string)
 		lonData := make(map[string]string)
 		for _, point := range geocoded {
-			latData[point.D3MIndex] = fmt.Sprintf("%f", point.Latitude)
-			lonData[point.D3MIndex] = fmt.Sprintf("%f", point.Longitude)
+			latData[point.D3MIndex] = fmt.Sprintf("%s", point.Latitude)
+			lonData[point.D3MIndex] = fmt.Sprintf("%s", point.Longitude)
 		}
 
 		// update the batches
