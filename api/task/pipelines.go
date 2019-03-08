@@ -407,3 +407,13 @@ func createFriendlyLabel(label string) string {
 	// label is a char between 1 and cluster max
 	return fmt.Sprintf("Pattern %s", string('A'-'0'+label[0]))
 }
+
+func getFieldIndex(header []string, fieldName string) int {
+	for i, f := range header {
+		if f == fieldName {
+			return i
+		}
+	}
+
+	return -1
+}
