@@ -95,4 +95,5 @@ type MetadataStorage interface {
 	SetDataType(dataset string, varName string, varType string) error
 	AddVariable(dataset string, varName string, varType string, varDistilRole string) error
 	DeleteVariable(dataset string, varName string) error
+	CopyDatasetMetadata(datasetName string, userHash string) error
 }

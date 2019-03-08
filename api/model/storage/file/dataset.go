@@ -80,6 +80,11 @@ func (s *Storage) DeleteVariable(dataset string, varName string) error {
 	return errors.Errorf("Not supported")
 }
 
+// CopyDatasetMetadata copies the default dataset to a user specific hash
+func (s *Storage) CopyDatasetMetadata(datasetName string, userHash string) error {
+	return errors.Errorf("Not supported")
+}
+
 func (s *Storage) parseDatasets(raw []*model.Metadata) ([]*api.Dataset, error) {
 	datasets := make([]*api.Dataset, 0)
 

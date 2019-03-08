@@ -88,6 +88,11 @@ func (s *Storage) DeleteVariable(dataset string, varName string) error {
 	return errors.Errorf("Not supported")
 }
 
+// CopyDatasetMetadata copies the default dataset to a user specific hash
+func (s *Storage) CopyDatasetMetadata(datasetName string, userHash string) error {
+	return errors.Errorf("Not supported")
+}
+
 func (s *Storage) searchREST(searchText string) ([]*api.Dataset, error) {
 	terms := strings.Fields(searchText)
 

@@ -17,6 +17,7 @@ package elastic
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/pkg/errors"
 	"github.com/uncharted-distil/distil-compute/model"
@@ -270,4 +271,44 @@ func (s *Storage) DeleteVariable(dataset string, varName string) error {
 	}
 
 	return s.updateVariables(dataset, vars)
+}
+
+// CopyDatasetMetadata copies the default dataset to a user specific hash
+func (s *Storage) CopyDatasetMetadata(datasetName string, userHash string) error {
+
+	query := elastic.NewMatchQuery("_id", datasetName)
+	// execute the ES query
+	res, err := s.client.Search().
+		Query(query).
+		Index(s.index).
+		FetchSource(true).
+		Size(datasetsListSize).
+		Do(context.Background())
+	if err != nil {
+		return errors.Wrap(err, "elasticsearch dataset fetch query failed")
+	}
+
+	if len(res.Hits.Hits) != 1 {
+		return fmt.Errorf("default dataset meta not found")
+	}
+	hit := res.Hits.Hits[0]
+
+	// parse hit into JSON
+	source, err := json.Unmarshal(*hit.Source)
+	if err != nil {
+		return errors.Wrap(err, "elasticsearch dataset unmarshal failed")
+	}
+
+	// push the document into the metadata index
+	_, err = s.client.Index().
+		Index(s.index).
+		Type(metadataType).
+		Id(datasetName + "_" + userHash).
+		BodyJson(source).
+		Do(context.Background())
+	if err != nil {
+		return errors.Wrapf(err, "failed to add document to index `%s`", s.index)
+	}
+
+	return nil
 }
