@@ -18,6 +18,7 @@ package routes
 import (
 	"net/http"
 	"net/url"
+	"time"
 
 	"github.com/microcosm-cc/bluemonday"
 	"github.com/pkg/errors"
@@ -27,6 +28,10 @@ import (
 
 	"github.com/uncharted-distil/distil/api/model"
 	"github.com/uncharted-distil/distil/api/model/storage/datamart"
+)
+
+const (
+	searchTimeout = 10
 )
 
 // DatasetResult represents the result of a dataset response.
@@ -87,25 +92,31 @@ func DatasetsHandler(metaCtors map[string]model.MetadataStorageCtor) func(http.R
 			handleError(w, errors.Wrap(err, "Malformed datasets query"))
 			return
 		}
-		for _, ctor := range metaCtors {
+		for provenance, ctor := range metaCtors {
 			// get metadata client
 			storage, err := ctor()
 			if err != nil {
 				handleError(w, err)
 				return
 			}
-			// if its present, forward a search, otherwise fetch all datasets
+
+			// use a timeout in case the search hangs
+			results := make(chan []*model.Dataset, 1)
+			errors := make(chan error, 1)
 			var datasetsPart []*model.Dataset
-			if terms != "" {
-				datasetsPart, err = storage.SearchDatasets(terms, false, false)
-			} else {
-				datasetsPart, err = storage.FetchDatasets(false, false)
-			}
-			if err != nil {
+			go loadDatasets(storage, terms, results, errors)
+			select {
+			case res := <-results:
+				datasetsPart = res
+			case err = <-errors:
 				//handleError(w, err)
 				log.Warnf("error querying dataset: %v", err)
 				continue
+			case <-time.After(searchTimeout * time.Second):
+				log.Warnf("timeout querying dataset from %s", provenance)
+				datasetsPart = make([]*model.Dataset, 0)
 			}
+
 			// render dataset description as HTML
 			for _, dataset := range datasetsPart {
 				dataset.Description = renderMarkdown(dataset.Description)
@@ -142,6 +153,23 @@ func DatasetsHandler(metaCtors map[string]model.MetadataStorageCtor) func(http.R
 			handleError(w, errors.Wrap(err, "unable marshal dataset result into JSON"))
 			return
 		}
+	}
+}
+
+func loadDatasets(storage model.MetadataStorage, terms string, results chan []*model.Dataset, errors chan error) {
+	// if its present, forward a search, otherwise fetch all datasets
+	var datasetsPart []*model.Dataset
+	var err error
+	if terms != "" {
+		datasetsPart, err = storage.SearchDatasets(terms, false, false)
+	} else {
+		datasetsPart, err = storage.FetchDatasets(false, false)
+	}
+
+	if err != nil {
+		errors <- err
+	} else {
+		results <- datasetsPart
 	}
 }
 
