@@ -78,7 +78,7 @@ func DatasetHandler(ctor model.MetadataStorageCtor) func(http.ResponseWriter, *h
 // it contains the search terms if set, and if unset, flags that a list of all
 // datasets should be returned.  The full list will be contain names only,
 // descriptions and variable lists will not be included.
-func DatasetsHandler(metaCtors []model.MetadataStorageCtor) func(http.ResponseWriter, *http.Request) {
+func DatasetsHandler(metaCtors map[string]model.MetadataStorageCtor) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var datasets []*model.Dataset
 		// check for search terms
