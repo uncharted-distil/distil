@@ -15,8 +15,12 @@ import { getVarType, IMAGE_TYPE, TIMESERIES_TYPE, GEOCODED_LON_PREFIX, GEOCODED_
 // fetches variables and add dataset name to each variable
 function getVariables(dataset: string): Promise<Variable[]> {
 	return axios.get(`/distil/variables/${dataset}`).then(response => {
-		// extend variable with datasetName and isColTypeChanged property to track type changes in client state
-		return response.data.variables.map(variable => ({ ...variable, datasetName: dataset, isColTypeChanged: false }));
+		// extend variable with datasetName and isColTypeReviewed property to track type reviewed state in the client state
+		return response.data.variables.map(variable => ({
+			...variable,
+			datasetName: dataset,
+			isColTypeReviewed: false,
+		}));
 	});
 }
 
@@ -164,7 +168,7 @@ export const actions = {
 			});
 	},
 
-	setVariableType(context: DatasetContext, args: { dataset: string, field: string, type: string, isTypeChanged: boolean }): Promise<void>  {
+	setVariableType(context: DatasetContext, args: { dataset: string, field: string, type: string }): Promise<void>  {
 		if (!args.dataset) {
 			console.warn('`dataset` argument is missing');
 			return null;
@@ -192,6 +196,10 @@ export const actions = {
 			.catch(error => {
 				console.error(error);
 			});
+	},
+
+	reviewVariableType(context: DatasetContext, args: { dataset: string, field: string, isColTypeReviewed: boolean }) {
+		mutations.reviewVariableType(context, args);
 	},
 
 	// fetches variable summary data for the given dataset and variables

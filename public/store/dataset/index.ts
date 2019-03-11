@@ -22,7 +22,7 @@ export interface Variable {
 	novelty: number;
 	colOriginalType: string;
 	suggestedTypes: SuggestedType[];
-	isColTypeChanged: boolean;
+	isColTypeReviewed: boolean;
 }
 
 export interface Dataset {
