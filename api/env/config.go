@@ -41,6 +41,8 @@ type Config struct {
 	D3MInputDirRoot                    string  `env:"D3MINPUTDIR_ROOT" envDefault:"datasets"`
 	DatamartURIISI                     string  `env:"DATAMART_URI_ISI" envDefault:"https://dsbox02.isi.edu:9000"`
 	DatamartURINYU                     string  `env:"DATAMART_URI_NYU" envDefault:"https://datamart.d3m.vida-nyu.org"`
+	DatamartISIEnabled                 bool    `env:"DATAMART_ISI_ENABLED" envDefault:"true"`
+	DatamartNYUEnabled                 bool    `env:"DATAMART_NYU_ENABLED" envDefault:"true"`
 	DatamartImportFolder               string  `env:"DATAMART_IMPORT_FOLDER" envDefault:"/data/datamart"`
 	SolutionComputeTrace               bool    `env:"SOLUTION_COMPUTE_TRACE" envDefault:"false"`
 	D3MOutputDir                       string  `env:"D3MOUTPUTDIR" envDefault:"outputs"`

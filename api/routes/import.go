@@ -25,12 +25,11 @@ import (
 	"github.com/uncharted-distil/distil-ingest/metadata"
 	"github.com/uncharted-distil/distil/api/env"
 	"github.com/uncharted-distil/distil/api/model"
-	"github.com/uncharted-distil/distil/api/model/storage/datamart"
 	"github.com/uncharted-distil/distil/api/task"
 )
 
 // ImportHandler imports a dataset to the local file system and then ingests it.
-func ImportHandler(nyuDatamartMetaCtor model.MetadataStorageCtor, isiDatamartMetaCtor model.MetadataStorageCtor, fileMetaCtor model.MetadataStorageCtor, esMetaCtor model.MetadataStorageCtor, config *task.IngestTaskConfig) func(http.ResponseWriter, *http.Request) {
+func ImportHandler(datamartCtors map[string]model.MetadataStorageCtor, fileMetaCtor model.MetadataStorageCtor, esMetaCtor model.MetadataStorageCtor, config *task.IngestTaskConfig) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		datasetID := pat.Param(r, "datasetID")
 		source := metadata.DatasetSource(pat.Param(r, "source"))
@@ -43,7 +42,7 @@ func ImportHandler(nyuDatamartMetaCtor model.MetadataStorageCtor, isiDatamartMet
 			return
 		}
 
-		meta, err := createMetadataStorageForSource(source, provenance, nyuDatamartMetaCtor, isiDatamartMetaCtor, fileMetaCtor, esMetaCtor)
+		meta, err := createMetadataStorageForSource(source, provenance, datamartCtors, fileMetaCtor, esMetaCtor)
 		if err != nil {
 			handleError(w, err)
 			return
@@ -78,14 +77,10 @@ func ImportHandler(nyuDatamartMetaCtor model.MetadataStorageCtor, isiDatamartMet
 }
 
 func createMetadataStorageForSource(datasetSource metadata.DatasetSource, provenance string,
-	nyuDatamartMetaCtor model.MetadataStorageCtor, isiDatamartMetaCtor model.MetadataStorageCtor,
+	datamartCtors map[string]model.MetadataStorageCtor,
 	fileMetaCtor model.MetadataStorageCtor, esMetaCtor model.MetadataStorageCtor) (model.MetadataStorage, error) {
 	if datasetSource == metadata.Contrib {
-		if provenance == datamart.ProvenanceNYU {
-			return nyuDatamartMetaCtor()
-		} else if provenance == datamart.ProvenanceISI {
-			return isiDatamartMetaCtor()
-		}
+		return datamartCtors[provenance]()
 	}
 	if datasetSource == metadata.Seed {
 		return esMetaCtor()
