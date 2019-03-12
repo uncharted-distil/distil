@@ -19,6 +19,7 @@ import (
 	"strings"
 
 	"github.com/pkg/errors"
+	"github.com/uncharted-distil/distil-compute/model"
 	api "github.com/uncharted-distil/distil/api/model"
 )
 
@@ -88,8 +89,8 @@ func (s *Storage) DeleteVariable(dataset string, varName string) error {
 	return errors.Errorf("Not supported")
 }
 
-// CopyDatasetMetadata copies the default dataset to a user specific hash
-func (s *Storage) CopyDatasetMetadata(datasetName string, userHash string) error {
+// AddGrouping adds a variable grouping.
+func (s *Storage) AddGrouping(datasetName string, grouping model.Grouping) error {
 	return errors.Errorf("Not supported")
 }
 

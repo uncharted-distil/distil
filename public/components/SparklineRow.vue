@@ -1,6 +1,6 @@
 <template>
 	<div class="sparkline-row" v-observe-visibility="visibilityChanged" v-bind:class="{'is-hidden': !isVisible}">
-		<div class="timeseries-var-col">{{timeseriesUrl}}</div>
+		<div class="timeseries-var-col">{{timeseriesId}}</div>
 		<div class="timeseries-min-col">{{min.toFixed(2)}}</div>
 		<div class="timeseries-max-col">{{max.toFixed(2)}}</div>
 		<div class="timeseries-chart-col">
@@ -39,13 +39,13 @@ export default Vue.extend({
 		highlightPixelX: {
 			type: Number as () => number
 		},
-		timeseriesUrl: {
-			type: String as () => string
-		},
+		xCol: String as () => string,
+		yCol: String as () => string,
+		timeseriesCol: String as () => string,
+		timeseriesId: String as () => string,
 		timeseriesExtrema: {
 			type: Object as () => TimeseriesExtrema
-		},
-		timeseriesColName:  String as () => string
+		}
 	},
 	data() {
 		return {
@@ -64,14 +64,11 @@ export default Vue.extend({
 		dataset(): string {
 			return routeGetters.getRouteDataset(this.$store);
 		},
-		files(): Dictionary<any> {
-			return datasetGetters.getFiles(this.$store);
-		},
 		isLoaded(): boolean {
-			return !!this.files[this.timeseriesUrl];
+			return !!datasetGetters.getTimeseries(this.$store)[this.dataset][this.timeseriesId];
 		},
 		timeseries(): number[][] {
-			return this.files[this.timeseriesUrl];
+			return datasetGetters.getTimeseries(this.$store)[this.dataset][this.timeseriesId];
 		},
 		spinnerHTML(): string {
 			return circleSpinnerHTML();
@@ -215,10 +212,10 @@ export default Vue.extend({
 			this.hasRequested = true;
 			datasetActions.fetchTimeseries(this.$store, {
 				dataset: this.dataset,
-				xColName: 'x', // TODO: FIX THIS
-				yColName: 'y',  // TODO: FIX THIS
-				timeseriesColName: this.timeseriesColName,
-				timeseriesURL: this.timeseriesUrl
+				xColName: this.xCol,
+				yColName: this.yCol,
+				timeseriesColName: this.timeseriesCol,
+				timeseriesID: this.timeseriesId
 			}).then(() => {
 				if (this.isVisible) {
 					Vue.nextTick(() => {

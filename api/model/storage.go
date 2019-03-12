@@ -30,7 +30,6 @@ type DataStorage interface {
 	FetchNumRows(storageName string, filters map[string]interface{}) (int, error)
 	FetchData(dataset string, storageName string, filterParams *FilterParams, invert bool) (*FilteredData, error)
 	FetchSummary(dataset string, storageName string, varName string, filterParams *FilterParams) (*Histogram, error)
-	FetchGroup(dataset string, storageName string, groupCol string, groupType string) (*Histogram, error)
 	FetchSummaryByResult(dataset string, storageName string, varName string, resultURI string, filterParams *FilterParams, extrema *Extrema) (*Histogram, error)
 	PersistResult(dataset string, storageName string, resultURI string, target string) error
 	FetchResults(dataset string, storageName string, resultURI string, solutionID string, filterParams *FilterParams) (*FilteredData, error)
@@ -95,5 +94,5 @@ type MetadataStorage interface {
 	SetDataType(dataset string, varName string, varType string) error
 	AddVariable(dataset string, varName string, varType string, varDistilRole string) error
 	DeleteVariable(dataset string, varName string) error
-	CopyDatasetMetadata(datasetName string, userHash string) error
+	AddGrouping(datasetName string, grouping model.Grouping) error
 }

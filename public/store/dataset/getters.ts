@@ -1,7 +1,6 @@
 import { Variable, TimeseriesExtrema, DatasetState, Dataset, VariableSummary, TableData, TableRow, TableColumn } from './index';
 import { Dictionary } from '../../util/dict';
 import { getTableDataItems, getTableDataFields } from '../../util/data';
-import { Grouping, getGroupings } from '../../util/groupings';
 
 export const getters = {
 
@@ -14,16 +13,7 @@ export const getters = {
 	},
 
 	getVariables(state: DatasetState): Variable[] {
-		const groupings = getGroupings();
-		return state.variables.filter(v => {
-			// not hidden by a grouping
-			return groupings.filter(grouping => grouping.hidden[v.colName]).length === 0;
-		});
-		// return state.variables;
-	},
-
-	getGroupings(state: DatasetState): Grouping[] {
-		return getGroupings();
+		return state.variables;
 	},
 
 	getVariablesMap(state: DatasetState): Dictionary<Variable> {

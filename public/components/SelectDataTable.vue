@@ -17,8 +17,15 @@
 				<image-preview :key="imageField" :image-url="data.item[imageField]"></image-preview>
 			</template>
 
-			<template v-for="timeseriesField in timeseriesFields" :slot="timeseriesField" slot-scope="data">
-				<sparkline-preview :key="timeseriesField" :timeseries-url="data.item[timeseriesField]" :timeseries-col-name="timeseriesField"></sparkline-preview>
+			<template v-for="timeseriesGrouping in timeseriesGroupings" :slot="timeseriesGrouping.idCol" slot-scope="data">
+
+				<sparkline-preview :key="timeseriesGrouping.idCol"
+					:x-col="timeseriesGrouping.properties.xCol"
+					:y-col="timeseriesGrouping.properties.yCol"
+					:timeseries-col="timeseriesGrouping.idCol"
+					:timeseries-id="data.item[timeseriesGrouping.idCol]">
+				</sparkline-preview>
+
 			</template>
 
 		</b-table>
@@ -38,11 +45,12 @@ import ImagePreview from './ImagePreview';
 import { getters as datasetGetters } from '../store/dataset/module';
 import { Dictionary } from '../util/dict';
 import { Filter } from '../util/filters';
-import { TableColumn, TableRow, D3M_INDEX_FIELD } from '../store/dataset/index';
+import { TableColumn, TableRow, Grouping, Variable, D3M_INDEX_FIELD } from '../store/dataset/index';
 import { RowSelection } from '../store/highlights/index';
 import { getters as routeGetters } from '../store/route/module';
 import { IMAGE_TYPE, TIMESERIES_TYPE, hasComputedVarPrefix } from '../util/types';
 import { addRowSelection, removeRowSelection, isRowSelected, updateTableRowSelection } from '../util/row';
+import { getTimeseriesGroupingsFromFields } from '../util/data';
 
 export default Vue.extend({
 	name: 'selected-data-table',
@@ -65,6 +73,10 @@ export default Vue.extend({
 			return routeGetters.getRouteDataset(this.$store);
 		},
 
+		variables(): Variable[] {
+			return datasetGetters.getVariables(this.$store);
+		},
+
 		items(): TableRow[] {
 			const items = this.includedActive ? datasetGetters.getIncludedTableDataItems(this.$store) : datasetGetters.getExcludedTableDataItems(this.$store);
 			return updateTableRowSelection(items, this.rowSelection, this.instanceName);
@@ -85,15 +97,8 @@ export default Vue.extend({
 			.map(field => field.key);
 		},
 
-		timeseriesFields(): string[] {
-			return _.map(this.fields, (field, key) => {
-				return {
-					key: key,
-					type: field.type
-				};
-			})
-			.filter(field => field.type === TIMESERIES_TYPE)
-			.map(field => field.key);
+		timeseriesGroupings(): Grouping[] {
+			return getTimeseriesGroupingsFromFields(this.variables, this.fields);
 		},
 
 		computedFields(): string[] {

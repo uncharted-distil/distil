@@ -108,13 +108,13 @@
 
 <script lang="ts">
 
+import _ from 'lodash';
 import Vue from 'vue';
 import { Variable } from '../store/dataset/index';
-import { getters as datasetGetters } from '../store/dataset/module';
+import { getters as datasetGetters, actions as datasetActions } from '../store/dataset/module';
 import { getters as routeGetters } from '../store/route/module';
 import { INTEGER_TYPE, TEXT_TYPE, ORDINAL_TYPE, CATEGORICAL_TYPE,
 	DATE_TIME_TYPE, REAL_TYPE } from '../util/types';
-import { createGrouping } from '../util/groupings';
 
 export default Vue.extend({
 	name: 'group-model',
@@ -264,16 +264,20 @@ export default Vue.extend({
 				[this.yCol]: this.hideYCol,
 				[this.clusterCol]: this.hideClusterCol
 			};
-			createGrouping({
+			const grouping =  {
 				type: this.groupingType,
 				dataset: this.dataset,
 				idCol: this.idCol,
-				hidden: hidden,
+				hidden: Object.keys(hidden).filter(v => hidden[v]),
 				properties: {
 					xCol: this.xCol,
 					yCol: this.yCol,
 					clusterCol: this.clusterCol
 				}
+			};
+			datasetActions.setGrouping(this.$store, {
+				dataset: this.dataset,
+				grouping: grouping
 			});
 			this.$emit('close');
 		},

@@ -53,14 +53,13 @@ export const actions = {
 	searchDatasets: dispatch(moduleActions.searchDatasets),
 	geocodeVariable: dispatch(moduleActions.geocodeVariable),
 	importDataset: dispatch(moduleActions.importDataset),
+	setGrouping: dispatch(moduleActions.setGrouping),
 	// variables
 	fetchVariables: dispatch(moduleActions.fetchVariables),
 	fetchJoinDatasetsVariables: dispatch(moduleActions.fetchJoinDatasetsVariables),
 	setVariableType: dispatch(moduleActions.setVariableType),
 	fetchVariableSummary: dispatch(moduleActions.fetchVariableSummary),
 	fetchVariableSummaries: dispatch(moduleActions.fetchVariableSummaries),
-	fetchGroupingSummary: dispatch(moduleActions.fetchGroupingSummary),
-	fetchGroupingSummaries: dispatch(moduleActions.fetchGroupingSummaries),
 	// ranking
 	fetchVariableRankings: dispatch(moduleActions.fetchVariableRankings),
 	// files

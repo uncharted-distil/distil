@@ -273,8 +273,8 @@ func (s *Storage) DeleteVariable(dataset string, varName string) error {
 	return s.updateVariables(dataset, vars)
 }
 
-// CopyDatasetMetadata copies the default dataset to a user specific hash
-func (s *Storage) CopyDatasetMetadata(datasetName string, userHash string) error {
+// AddGrouping adds a grouping to the metadata.
+func (s *Storage) AddGrouping(datasetName string, grouping model.Grouping) error {
 
 	query := elastic.NewMatchQuery("_id", datasetName)
 	// execute the ES query
@@ -299,11 +299,28 @@ func (s *Storage) CopyDatasetMetadata(datasetName string, userHash string) error
 		return errors.Wrap(err, "elasticsearch dataset unmarshal failed")
 	}
 
+	variables, ok := json.Array(source, "variables")
+	if !ok {
+		return errors.Wrap(err, "variables unmarshal failed")
+	}
+
+	found := false
+	for _, variable := range variables {
+		name, ok := json.String(variable, "colName")
+		if ok && name == grouping.IDCol {
+			variable["grouping"] = json.StructToMap(grouping)
+			found = true
+		}
+	}
+	if !found {
+		return fmt.Errorf("no variable match found for grouping")
+	}
+
 	// push the document into the metadata index
 	_, err = s.client.Index().
 		Index(s.index).
 		Type(metadataType).
-		Id(datasetName + "_" + userHash).
+		Id(datasetName).
 		BodyJson(source).
 		Do(context.Background())
 	if err != nil {

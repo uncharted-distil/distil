@@ -1,5 +1,4 @@
 import { Dictionary } from '../../util/dict';
-import { Grouping } from '../../util/groupings';
 
 export const CATEGORICAL_SUMMARY = 'categorical';
 export const NUMERICAL_SUMMARY = 'numerical';
@@ -11,6 +10,20 @@ export interface SuggestedType {
 	probability: number;
 	provenance: string;
 	type: string;
+}
+
+export interface GroupingProperties {
+	xCol: string;
+	yCol: string;
+	clusterCol: string;
+}
+
+export interface Grouping {
+	dataset: string;
+	idCol: string;
+	type: string;
+	hidden: string[];
+	properties?: GroupingProperties;
 }
 
 export interface Variable {
@@ -25,6 +38,7 @@ export interface Variable {
 	suggestedTypes: SuggestedType[];
 	isColTypeChanged: boolean;
 	isGrouping: boolean;
+	grouping?: Grouping;
 }
 
 export interface Dataset {

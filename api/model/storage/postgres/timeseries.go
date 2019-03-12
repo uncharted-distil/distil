@@ -31,17 +31,19 @@ import (
 type TimeSeriesField struct {
 	Storage     *Storage
 	StorageName string
-	Key         string
+	ClusterCol  string
+	IDCol       string
 	Label       string
 	Type        string
 }
 
 // NewTimeSeriesField creates a new field for timeseries types.
-func NewTimeSeriesField(storage *Storage, storageName string, key string, label string, typ string) *TimeSeriesField {
+func NewTimeSeriesField(storage *Storage, storageName string, clusterCol string, idCol string, label string, typ string) *TimeSeriesField {
 	field := &TimeSeriesField{
 		Storage:     storage,
 		StorageName: storageName,
-		Key:         key,
+		IDCol:       idCol,
+		ClusterCol:  clusterCol,
 		Label:       label,
 		Type:        typ,
 	}
@@ -71,11 +73,11 @@ func (f *TimeSeriesField) fetchRepresentationTimeSeries(categoryBuckets []*api.B
 
 	for _, bucket := range categoryBuckets {
 
-		prefixedVarName := f.clusterVarName(f.Key)
+		prefixedVarName := f.clusterVarName(f.ClusterCol)
 
 		// pull sample row containing bucket
 		query := fmt.Sprintf("SELECT \"%s\" FROM %s WHERE \"%s\" = $1 LIMIT 1;",
-			"series_id" /*f.Key*/, f.StorageName, prefixedVarName)
+			"series_id" /*f.ClusterCol*/, f.StorageName, prefixedVarName)
 
 		// execute the postgres query
 		rows, err := f.Storage.client.Query(query, bucket.Key)
@@ -152,7 +154,7 @@ func (f *TimeSeriesField) fetchHistogram(filterParams *api.FilterParams) (*api.H
 	params := make([]interface{}, 0)
 	wheres, params = f.Storage.buildFilteredQueryWhere(wheres, params, filterParams.Filters)
 
-	prefixedVarName := f.clusterVarName(f.Key)
+	prefixedVarName := f.clusterVarName(f.ClusterCol)
 
 	where := ""
 	if len(wheres) > 0 {
@@ -200,7 +202,7 @@ func (f *TimeSeriesField) fetchHistogramByResult(resultURI string, filterParams 
 		where = fmt.Sprintf("AND %s", strings.Join(wheres, " AND "))
 	}
 
-	prefixedVarName := f.clusterVarName(f.Key)
+	prefixedVarName := f.clusterVarName(f.ClusterCol)
 
 	// Get count by category.
 	query := fmt.Sprintf(
@@ -236,7 +238,7 @@ func (f *TimeSeriesField) fetchHistogramByResult(resultURI string, filterParams 
 }
 
 func (f *TimeSeriesField) parseHistogram(rows *pgx.Rows) (*api.Histogram, error) {
-	prefixedVarName := f.clusterVarName(f.Key)
+	prefixedVarName := f.clusterVarName(f.ClusterCol)
 
 	termsAggName := api.TermsAggPrefix + prefixedVarName
 
@@ -269,7 +271,7 @@ func (f *TimeSeriesField) parseHistogram(rows *pgx.Rows) (*api.Histogram, error)
 
 	// assign histogram attributes
 	return &api.Histogram{
-		Key:     f.Key,
+		Key:     f.IDCol,
 		Label:   f.Label,
 		Type:    model.CategoricalType,
 		VarType: f.Type,
@@ -284,7 +286,7 @@ func (f *TimeSeriesField) parseHistogram(rows *pgx.Rows) (*api.Histogram, error)
 // FetchPredictedSummaryData pulls predicted data from the result table and builds
 // the timeseries histogram for the field.
 func (f *TimeSeriesField) FetchPredictedSummaryData(resultURI string, datasetResult string, filterParams *api.FilterParams, extrema *api.Extrema) (*api.Histogram, error) {
-	targetName := f.clusterVarName(f.Key)
+	targetName := f.clusterVarName(f.ClusterCol)
 
 	// get filter where / params
 	wheres, params, err := f.Storage.buildResultQueryFilters(f.StorageName, resultURI, filterParams)

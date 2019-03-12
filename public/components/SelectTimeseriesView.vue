@@ -14,8 +14,10 @@
 		<div class="timeseries-rows">
 			<div v-for="item in items">
 				<sparkline-row
-					:timeseries-url="item[timeseriesField]"
-					:timeseries-col-name="timeseriesField"
+					:x-col="timeseriesGrouping.properties.xCol"
+					:y-col="timeseriesGrouping.properties.yCol"
+					:timeseries-col="timeseriesGrouping.idCol"
+					:timeseries-id="item[timeseriesGrouping.idCol]"
 					:timeseries-extrema="microExtrema"
 					:margin="margin"
 					:highlight-pixel-x="highlightPixelX">
@@ -37,11 +39,11 @@ import SparklineRow from './SparklineRow';
 import { Dictionary } from '../util/dict';
 import { Filter } from '../util/filters';
 import { RowSelection, HighlightRoot } from '../store/highlights/index';
-import { TableRow, TableColumn, TimeseriesExtrema } from '../store/dataset/index';
+import { TableRow, TableColumn, TimeseriesExtrema, Variable, Grouping } from '../store/dataset/index';
 import { getters as routeGetters } from '../store/route/module';
 import { getters as datasetGetters } from '../store/dataset/module';
 import { updateHighlightRoot } from '../util/highlights';
-import { TIMESERIES_TYPE } from '../util/types';
+import { getTimeseriesGroupingsFromFields } from '../util/data';
 
 const TICK_SIZE = 8;
 const SELECTED_TICK_SIZE = 18;
@@ -84,6 +86,10 @@ export default Vue.extend({
 			return routeGetters.getRouteDataset(this.$store);
 		},
 
+		variables(): Variable[] {
+			return datasetGetters.getVariables(this.$store);
+		},
+
 		items(): TableRow[] {
 			return this.includedActive ? datasetGetters.getIncludedTableDataItems(this.$store) : datasetGetters.getExcludedTableDataItems(this.$store);
 		},
@@ -92,16 +98,8 @@ export default Vue.extend({
 			return this.includedActive ? datasetGetters.getIncludedTableDataFields(this.$store) : datasetGetters.getExcludedTableDataFields(this.$store);
 		},
 
-		timeseriesField(): string {
-			const fields = _.map(this.fields, (field, key) => {
-					return {
-						key: key,
-						type: field.type
-					};
-				})
-				.filter(field => field.type === TIMESERIES_TYPE)
-				.map(field => field.key);
-			return fields[0];
+		timeseriesGrouping(): Grouping {
+			return getTimeseriesGroupingsFromFields(this.variables, this.fields)[0];
 		},
 
 		filters(): Filter[] {
@@ -157,7 +155,7 @@ export default Vue.extend({
 		isTimeseriesViewHighlight(): boolean {
 			// ignore any highlights unless they are range highlights
 			return this.highlightRoot &&
-				this.highlightRoot.key === this.timeseriesField &&
+				this.highlightRoot.key === this.timeseriesGrouping.properties.clusterCol &&
 				this.highlightRoot.value.from !== undefined &&
 				this.highlightRoot.value.to !== undefined;
 		},
@@ -328,7 +326,7 @@ export default Vue.extend({
 				updateHighlightRoot(this.$router, {
 					context: this.instanceName,
 					dataset: this.dataset,
-					key: this.timeseriesField,
+					key: this.timeseriesGrouping.properties.clusterCol,
 					value: {
 						from: this.microMin,
 						to: this.microMax
@@ -377,7 +375,7 @@ export default Vue.extend({
 				updateHighlightRoot(this.$router, {
 					context: this.instanceName,
 					dataset: this.dataset,
-					key: this.timeseriesField,
+					key: this.timeseriesGrouping.properties.clusterCol,
 					value: {
 						from: this.microMin,
 						to: this.microMax

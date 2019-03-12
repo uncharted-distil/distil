@@ -3,7 +3,7 @@
 		<svg v-if="isLoaded" ref="svg" class="line-chart"></svg>
 		<i class="fa fa-plus zoom-sparkline-icon" @click.stop="onClick"></i>
 		<div v-if="!isLoaded" v-html="spinnerHTML"></div>
-		<b-modal id="sparkline-zoom-modal" :title="timeseriesUrl"
+		<b-modal id="sparkline-zoom-modal" :title="timeseriesId"
 			@hide="hideModal"
 			:visible="zoomSparkline"
 			hide-footer>
@@ -40,8 +40,10 @@ export default Vue.extend({
 				left: 16
 			})
 		},
-		timeseriesUrl: String as () => string,
-		timeseriesColName:  String as () => string
+		xCol: String as () => string,
+		yCol: String as () => string,
+		timeseriesCol: String as () => string,
+		timeseriesId: String as () => string,
 	},
 	data() {
 		return {
@@ -60,14 +62,11 @@ export default Vue.extend({
 		dataset(): string {
 			return routeGetters.getRouteDataset(this.$store);
 		},
-		files(): Dictionary<any> {
-			return datasetGetters.getFiles(this.$store);
-		},
 		isLoaded(): boolean {
-			return this.files[this.timeseriesUrl];
+			return !!datasetGetters.getTimeseries(this.$store)[this.dataset][this.timeseriesId];
 		},
 		timeseries(): number[][] {
-			return this.files[this.timeseriesUrl];
+			return datasetGetters.getTimeseries(this.$store)[this.dataset][this.timeseriesId];
 		},
 		spinnerHTML(): string {
 			return circleSpinnerHTML();
@@ -162,10 +161,10 @@ export default Vue.extend({
 			this.hasRequested = true;
 			datasetActions.fetchTimeseries(this.$store, {
 				dataset: this.dataset,
-				xColName: 'x', // TODO: FIX THIS
-				yColName: 'y',  // TODO: FIX THIS
-				timeseriesColName: this.timeseriesColName,
-				timeseriesURL: this.timeseriesUrl
+				xColName: this.xCol,
+				yColName: this.yCol,
+				timeseriesColName: this.timeseriesCol,
+				timeseriesID: this.timeseriesId
 			}).then(() => {
 				if (this.isVisible) {
 					this.injectTimeseries();
