@@ -338,12 +338,14 @@ func matchDataset(storage api.MetadataStorage, meta *model.Metadata, index strin
 
 	// See if any of the loaded datasets match.
 	for _, dataset := range datasets {
+		if dataset.ID == meta.ID {
+			return dataset.Name, nil
+		}
 		variables := make([]string, 0)
 		for _, v := range dataset.Variables {
 			variables = append(variables, v.Name)
 		}
 		if metadata.DatasetMatches(meta, variables) {
-			// Return the name of the matching set.
 			return dataset.Name, nil
 		}
 	}
