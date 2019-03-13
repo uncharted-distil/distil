@@ -2,6 +2,7 @@ import { Highlight, HighlightRoot } from '../store/highlights/index';
 import { Filter, FilterParams, CATEGORICAL_FILTER, NUMERICAL_FILTER,
 	BIVARIATE_FILTER, FEATURE_FILTER, TIMESERIES_FILTER } from '../util/filters';
 import { getters as routeGetters } from '../store/route/module';
+import { getters as datasetGetters } from '../store/dataset/module';
 import { getters as highlightGetters } from '../store/highlights/module';
 import { overlayRouteEntry } from '../util/routes';
 import { getVarType, isFeatureType, addFeaturePrefix, isClusterType, addClusterPrefix } from '../util/types';
@@ -27,10 +28,26 @@ export function createFilterFromHighlightRoot(highlightRoot: HighlightRoot, mode
 	if (!highlightRoot || highlightRoot.value === null) {
 		return null;
 	}
+
 	// inject metadata prefix for metadata vars
 	let key = highlightRoot.key;
 
+	const variables = datasetGetters.getVariables(store);
+
+	const variable = variables.find(v => v.colName === key);
+	if (!variable) {
+		return null;
+	}
+
+	if (variable.grouping) {
+		if (variable.grouping.type === 'timeseries') {
+			key = variable.grouping.properties.clusterCol;
+			key = addClusterPrefix(key);
+		}
+	}
+
 	const type = getVarType(key);
+
 	if (isFeatureType(type)) {
 		key = addFeaturePrefix(key);
 		return {
@@ -39,9 +56,6 @@ export function createFilterFromHighlightRoot(highlightRoot: HighlightRoot, mode
 			mode: mode,
 			categories: [highlightRoot.value]
 		};
-	}
-	if (isClusterType(type)) {
-		key = addClusterPrefix(key);
 	}
 
 	if (_.isString(highlightRoot.value)) {

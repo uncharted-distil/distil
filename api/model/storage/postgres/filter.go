@@ -229,19 +229,27 @@ func (s *Storage) buildFilteredQueryWhere(wheres []string, params []interface{},
 }
 
 func (s *Storage) buildFilteredQueryField(variables []*model.Variable, filterVariables []string) (string, error) {
+
+	distincts := make([]string, 0)
 	fields := make([]string, 0)
 	indexIncluded := false
 	for _, variable := range api.GetFilterVariables(filterVariables, variables) {
+
+		if variable.Grouping != nil {
+			distincts = append(distincts, fmt.Sprintf("DISTINCT ON (\"%s\")", variable.Name))
+		}
+
 		fields = append(fields, fmt.Sprintf("\"%s\"", variable.Name))
 		if variable.Name == model.D3MIndexFieldName {
 			indexIncluded = true
 		}
+
 	}
 	// if the index is not already in the field list, then append it
 	if !indexIncluded {
 		fields = append(fields, fmt.Sprintf("\"%s\"", model.D3MIndexFieldName))
 	}
-	return strings.Join(fields, ","), nil
+	return strings.Join(distincts, ",") + " " + strings.Join(fields, ","), nil
 }
 
 func (s *Storage) buildFilteredResultQueryField(variables []*model.Variable, targetVariable *model.Variable, filterVariables []string) (string, error) {
@@ -440,8 +448,26 @@ func (s *Storage) FetchData(dataset string, storageName string, filterParams *ap
 		}
 	}
 
+	// match order by for distinct
+	var groupings []string
+	for _, v := range variables {
+		if v.Grouping != nil {
+			groupings = append(groupings, v.Grouping.IDCol)
+		}
+	}
+	orderBy := ""
+	if len(groupings) > 0 {
+		for i, g := range groupings {
+			orderBy += g
+			if len(groupings)-1 > i {
+				orderBy += ", "
+			}
+		}
+		orderBy += ", "
+	}
+
 	// order & limit the filtered data.
-	query = fmt.Sprintf("%s ORDER BY \"%s\"", query, model.D3MIndexFieldName)
+	query = fmt.Sprintf("%s ORDER BY %s\"%s\"", query, orderBy, model.D3MIndexFieldName)
 	if filterParams.Size > 0 {
 		query = fmt.Sprintf("%s LIMIT %d", query, filterParams.Size)
 	}

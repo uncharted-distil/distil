@@ -73,11 +73,13 @@ func (f *TimeSeriesField) fetchRepresentationTimeSeries(categoryBuckets []*api.B
 
 	for _, bucket := range categoryBuckets {
 
+		timeseriesIDField := "series_id"
+
 		prefixedVarName := f.clusterVarName(f.ClusterCol)
 
 		// pull sample row containing bucket
 		query := fmt.Sprintf("SELECT \"%s\" FROM %s WHERE \"%s\" = $1 LIMIT 1;",
-			"series_id" /*f.ClusterCol*/, f.StorageName, prefixedVarName)
+			timeseriesIDField, f.StorageName, prefixedVarName)
 
 		// execute the postgres query
 		rows, err := f.Storage.client.Query(query, bucket.Key)
@@ -96,9 +98,9 @@ func (f *TimeSeriesField) fetchRepresentationTimeSeries(categoryBuckets []*api.B
 		rows.Close()
 	}
 
-	if len(timeseriesExemplars) == 0 {
-		return nil, fmt.Errorf("No exemplars found for timeseries data")
-	}
+	// if len(timeseriesExemplars) == 0 {
+	// 	return nil, fmt.Errorf("No exemplars found for timeseries data")
+	// }
 
 	return timeseriesExemplars, nil
 }
