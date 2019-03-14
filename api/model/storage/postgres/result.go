@@ -503,7 +503,7 @@ func (s *Storage) FetchResults(dataset string, storageName string, resultURI str
 	countFilter := map[string]interface{}{
 		"result_id": resultURI,
 	}
-	numRows, err := s.FetchNumRows(storageNameResult, countFilter)
+	numRows, err := s.FetchNumRows(storageNameResult, variables, countFilter)
 	if err != nil {
 		return nil, errors.Wrap(err, "Could not pull num rows")
 	}
@@ -600,7 +600,7 @@ func (s *Storage) FetchPredictedSummary(dataset string, storageName string, resu
 	}
 
 	// get number of rows
-	numRows, err := s.FetchNumRows(storageNameResult, filter)
+	numRows, err := s.FetchNumRows(storageNameResult, []*model.Variable{variable}, filter)
 	if err != nil {
 		return nil, err
 	}

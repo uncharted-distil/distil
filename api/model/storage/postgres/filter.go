@@ -375,8 +375,28 @@ func (s *Storage) splitFilters(filterParams *api.FilterParams) *filters {
 }
 
 // FetchNumRows pulls the number of rows in the table.
-func (s *Storage) FetchNumRows(storageName string, filters map[string]interface{}) (int, error) {
-	query := fmt.Sprintf("SELECT count(*) FROM %s", storageName)
+func (s *Storage) FetchNumRows(storageName string, variables []*model.Variable, filters map[string]interface{}) (int, error) {
+
+	countTarget := "*"
+
+	// match order by for distinct
+	var groupings []string
+	for _, v := range variables {
+		if v.Grouping != nil {
+			groupings = append(groupings, v.Grouping.IDCol)
+		}
+	}
+	if len(groupings) > 0 {
+		countTarget = "DISTINCT "
+		for i, g := range groupings {
+			countTarget += g
+			if len(groupings)-1 > i {
+				countTarget += ", "
+			}
+		}
+	}
+
+	query := fmt.Sprintf("SELECT count(%s) FROM %s", countTarget, storageName)
 	params := make([]interface{}, 0)
 	if filters != nil && len(filters) > 0 {
 		clauses := make([]string, 0)
@@ -413,7 +433,7 @@ func (s *Storage) FetchData(dataset string, storageName string, filterParams *ap
 		return nil, errors.Wrap(err, "Could not pull variables from ES")
 	}
 
-	numRows, err := s.FetchNumRows(storageName, nil)
+	numRows, err := s.FetchNumRows(storageName, variables, nil)
 	if err != nil {
 		return nil, errors.Wrap(err, "Could not pull num rows")
 	}

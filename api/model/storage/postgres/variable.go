@@ -164,7 +164,7 @@ func (s *Storage) fetchSummaryData(dataset string, storageName string, varName s
 	}
 
 	// get number of rows
-	numRows, err := s.FetchNumRows(storageName, nil)
+	numRows, err := s.FetchNumRows(storageName, []*model.Variable{variable}, nil)
 	if err != nil {
 		return nil, err
 	}
