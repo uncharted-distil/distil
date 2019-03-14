@@ -153,11 +153,11 @@ export default Vue.extend({
 		},
 
 		predictedCol(): string {
-			return `HEAD_${this.solution.predictedKey}`;
+			return this.solution ? `HEAD_${this.solution.predictedKey}` : '';
 		},
 
 		errorCol(): string {
-			return this.solution.errorKey;
+			return this.solution ? this.solution.errorKey : '';
 		},
 
 		residualExtrema(): Extrema {
