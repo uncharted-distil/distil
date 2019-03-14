@@ -11,6 +11,7 @@
 		<div class="row flex-2 align-items-center justify-content-center">
 			<div class="col-12 col-md-6">
 				<search-bar class="search-search-bar"></search-bar>
+				<file-uploader></file-uploader>
 			</div>
 		</div>
 		<div class="row flex-10 justify-content-center pb-3">
@@ -52,6 +53,7 @@
 
 import _ from 'lodash';
 import Vue from 'vue';
+import FileUploader from '../components/FileUploader.vue';
 import DatasetPreviewCard from '../components/DatasetPreviewCard.vue';
 import SearchBar from '../components/SearchBar.vue';
 import SearchResults from '../components/SearchResults.vue';
@@ -68,7 +70,8 @@ export default Vue.extend({
 	components: {
 		SearchBar,
 		SearchResults,
-		DatasetPreviewCard
+		DatasetPreviewCard,
+		FileUploader,
 	},
 
 	data() {
