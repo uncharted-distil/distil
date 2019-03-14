@@ -98,9 +98,9 @@ func (f *TimeSeriesField) fetchRepresentationTimeSeries(categoryBuckets []*api.B
 		rows.Close()
 	}
 
-	// if len(timeseriesExemplars) == 0 {
-	// 	return nil, fmt.Errorf("No exemplars found for timeseries data")
-	// }
+	if len(timeseriesExemplars) == 0 {
+		return nil, fmt.Errorf("No exemplars found for timeseries data")
+	}
 
 	return timeseriesExemplars, nil
 }

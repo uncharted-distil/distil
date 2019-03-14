@@ -40,6 +40,7 @@ export default Vue.extend({
 				left: 16
 			})
 		},
+		dataset: String as () => string,
 		xCol: String as () => string,
 		yCol: String as () => string,
 		timeseriesCol: String as () => string,
@@ -59,9 +60,6 @@ export default Vue.extend({
 		};
 	},
 	computed: {
-		dataset(): string {
-			return routeGetters.getRouteDataset(this.$store);
-		},
 		isLoaded(): boolean {
 			return !!datasetGetters.getTimeseries(this.$store)[this.dataset][this.timeseriesId];
 		},

@@ -85,6 +85,7 @@ export const mutations = {
 	setVariables: commit(moduleMutations.setVariables),
 	updateVariableType: commit(moduleMutations.updateVariableType),
 	updateVariableSummaries: commit(moduleMutations.updateVariableSummaries),
+	clearVariableSummaries: commit(moduleMutations.clearVariableSummaries),
 	// ranking
 	updateVariableRankings: commit(moduleMutations.updateVariableRankings),
 	// files

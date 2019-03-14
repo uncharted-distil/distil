@@ -389,7 +389,7 @@ func (s *Storage) FetchNumRows(storageName string, variables []*model.Variable, 
 	if len(groupings) > 0 {
 		countTarget = "DISTINCT "
 		for i, g := range groupings {
-			countTarget += g
+			countTarget += "\"" + g + "\""
 			if len(groupings)-1 > i {
 				countTarget += ", "
 			}

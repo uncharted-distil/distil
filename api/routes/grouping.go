@@ -17,6 +17,7 @@ package routes
 
 import (
 	"net/http"
+	"time"
 
 	"github.com/pkg/errors"
 	"goji.io/pat"
@@ -27,7 +28,7 @@ import (
 )
 
 // GroupingHandler generates a route handler that adds a grouping.
-func GroupingHandler(ctor api.MetadataStorageCtor) func(http.ResponseWriter, *http.Request) {
+func GroupingHandler(dataCtor api.DataStorageCtor, metaCtor api.MetadataStorageCtor) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 
 		// extract route parameters
@@ -53,18 +54,59 @@ func GroupingHandler(ctor api.MetadataStorageCtor) func(http.ResponseWriter, *ht
 			return
 		}
 
-		// get metadata client
-		storage, err := ctor()
+		data, err := dataCtor()
+		if err != nil {
+			handleError(w, err)
+			return
+		}
+		meta, err := metaCtor()
 		if err != nil {
 			handleError(w, err)
 			return
 		}
 
-		err = storage.AddGrouping(dataset, grouping)
+		if grouping.Type == "timeseries" {
+			// ensure properties are typed correctly
+
+			storageName := model.NormalizeDatasetID(dataset)
+
+			// ensure id is int
+			err = meta.SetDataType(dataset, grouping.IDCol, model.IntegerType)
+			if err != nil {
+				handleError(w, errors.Wrap(err, "unable to update the data type in storage"))
+				return
+			}
+
+			// ensure cluster is categorical
+			err = meta.SetDataType(dataset, grouping.Properties.ClusterCol, model.CategoricalType)
+			if err != nil {
+				handleError(w, errors.Wrap(err, "unable to update the data type in storage"))
+				return
+			}
+
+			// ensure id is int
+			err = data.SetDataType(dataset, storageName, grouping.IDCol, model.IntegerType)
+			if err != nil {
+				handleError(w, errors.Wrap(err, "unable to update the data type in storage"))
+				return
+			}
+
+			// ensure cluster is categorical
+			err = data.SetDataType(dataset, storageName, grouping.Properties.ClusterCol, model.CategoricalType)
+			if err != nil {
+				handleError(w, errors.Wrap(err, "unable to update the data type in storage"))
+				return
+			}
+		}
+
+		err = meta.AddGrouping(dataset, grouping)
 		if err != nil {
 			handleError(w, err)
 			return
 		}
+
+		// sleep for es
+		time.Sleep(time.Second)
 
 		// marshal data
 		err = handleJSON(w, map[string]interface{}{

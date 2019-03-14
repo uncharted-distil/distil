@@ -6,6 +6,8 @@ import { Solution, SOLUTION_COMPLETED } from '../store/solutions/index';
 import { Dictionary } from './dict';
 import { Group } from './facets';
 import { FilterParams } from './filters';
+import store from '../store/store';
+import { getters as datasetGetters, actions as datasetActions } from '../store/dataset/module';
 import { formatValue, TIMESERIES_TYPE } from '../util/types';
 
 // Postfixes for special variable names
@@ -29,6 +31,40 @@ export function getTimeseriesGroupingsFromFields(variables: Variable[], fields: 
 			const v = variables.find(v => v.colName === key);
 			return v.grouping;
 		});
+}
+
+export function fetchHistogramExemplars(datasetName: string, variableName: string, histogram: VariableSummary) {
+
+	const variables = datasetGetters.getVariables(store);
+	const variable = variables.find(v => v.colName === variableName);
+
+	if (histogram.exemplars) {
+		if (variable.grouping) {
+			if (variable.grouping.type === 'timeseries') {
+
+				// if there a linked exemplars, fetch those before resolving
+				return Promise.all(histogram.exemplars.map(exemplar => {
+					return datasetActions.fetchTimeseries(store, {
+						dataset: datasetName,
+						timeseriesColName: variable.grouping.idCol,
+						xColName: variable.grouping.properties.xCol,
+						yColName: variable.grouping.properties.yCol,
+						timeseriesID: exemplar,
+					});
+				}));
+			}
+
+		} else {
+			// if there a linked files, fetch those before resolving
+			return datasetActions.fetchFiles(store, {
+				dataset: datasetName,
+				variable: variableName,
+				urls: histogram.exemplars
+			});
+		}
+	}
+
+	return new Promise(res => res());
 }
 
 export function updateSummaries(summary: VariableSummary, summaries: VariableSummary[]) {

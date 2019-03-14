@@ -193,6 +193,7 @@ func (s *Storage) updateVariables(dataset string, variables []*model.Variable) e
 			model.VarDisplayVariableField:  v.DisplayName,
 			model.VarDistilRole:            v.DistilRole,
 			model.VarDeleted:               v.Deleted,
+			model.VarGroupingField:         v.Grouping,
 		})
 	}
 
@@ -308,7 +309,7 @@ func (s *Storage) AddGrouping(datasetName string, grouping model.Grouping) error
 	for _, variable := range variables {
 		name, ok := json.String(variable, "colName")
 		if ok && name == grouping.IDCol {
-			variable["grouping"] = json.StructToMap(grouping)
+			variable[model.VarGroupingField] = json.StructToMap(grouping)
 			found = true
 		}
 	}

@@ -33,6 +33,29 @@ type FilterParams struct {
 	Variables []string        `json:"variables"`
 }
 
+// Clone returns a deep copy of the filter params.
+func (f *FilterParams) Clone() *FilterParams {
+	clone := &FilterParams{}
+	for _, f := range f.Filters {
+		c := *f
+		clone.Filters = append(clone.Filters, &c)
+	}
+	for _, v := range f.Variables {
+		clone.Variables = append(clone.Variables, v)
+	}
+	return clone
+}
+
+// AddVariable adds a variable, preventing duplicates
+func (f *FilterParams) AddVariable(nv string) {
+	for _, v := range f.Variables {
+		if v == nv {
+			return
+		}
+	}
+	f.Variables = append(f.Variables, nv)
+}
+
 // Merge merges another set of filter params into this set, expanding all
 // properties.
 func (f *FilterParams) Merge(other *FilterParams) {
@@ -97,9 +120,15 @@ func GetFilterVariables(filterVariables []string, variables []*model.Variable) [
 
 	filtered := make([]*model.Variable, 0)
 	for _, variable := range filterVariables {
-		filtered = append(filtered, variableLookup[variable])
+
+		v := variableLookup[variable]
+		if v == nil {
+			continue
+		}
+
+		filtered = append(filtered, v)
 		// check for feature var type
-		if model.HasFeatureVar(variableLookup[variable].Type) {
+		if model.HasFeatureVar(v.Type) {
 			featureVarName := fmt.Sprintf("%s%s", model.FeatureVarPrefix, variable)
 			featureVar, ok := variableLookup[featureVarName]
 			if ok {
@@ -107,7 +136,7 @@ func GetFilterVariables(filterVariables []string, variables []*model.Variable) [
 			}
 		}
 		// check for cluster var type
-		if model.HasClusterVar(variableLookup[variable].Type) {
+		if model.HasClusterVar(v.Type) {
 			clusterVarName := fmt.Sprintf("%s%s", model.ClusterVarPrefix, variable)
 			clusterVar, ok := variableLookup[clusterVarName]
 			if ok {

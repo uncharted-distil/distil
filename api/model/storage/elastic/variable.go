@@ -72,7 +72,7 @@ func (s *Storage) parseRawVariable(child map[string]interface{}) (*model.Variabl
 	}
 
 	grouping := &model.Grouping{}
-	ok = json.Struct(child, &grouping, "grouping")
+	ok = json.Struct(child, &grouping, model.VarGroupingField)
 	if !ok {
 		grouping = nil
 	}

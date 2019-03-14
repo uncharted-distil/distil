@@ -20,6 +20,7 @@
 			<template v-for="timeseriesGrouping in timeseriesGroupings" :slot="timeseriesGrouping.idCol" slot-scope="data">
 
 				<sparkline-preview :key="timeseriesGrouping.idCol"
+					:dataset="dataset"
 					:x-col="timeseriesGrouping.properties.xCol"
 					:y-col="timeseriesGrouping.properties.yCol"
 					:timeseries-col="timeseriesGrouping.idCol"

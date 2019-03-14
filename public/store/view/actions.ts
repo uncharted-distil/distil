@@ -20,7 +20,9 @@ export const actions = {
 		const datasetIDs = context.getters.getRouteJoinDatasets;
 
 		const promises = datasetIDs.map((id: string) => {
-			return context.dispatch('fetchDataset', id);
+			return context.dispatch('fetchDataset', {
+				dataset: id
+			});
 		});
 		promises.push(context.dispatch('searchDatasets', terms));
 
@@ -35,8 +37,12 @@ export const actions = {
 		const datasetIDA = datasetIDs[0];
 		const datasetIDB = datasetIDs[1];
 		Promise.all([
-				context.dispatch('fetchDataset', datasetIDA),
-				context.dispatch('fetchDataset', datasetIDB),
+				context.dispatch('fetchDataset', {
+					dataset: datasetIDA
+				}),
+				context.dispatch('fetchDataset', {
+					dataset: datasetIDB
+				}),
 				context.dispatch('fetchJoinDatasetsVariables', {
 					datasets: datasetIDs
 				})

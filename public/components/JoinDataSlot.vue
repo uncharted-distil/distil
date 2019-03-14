@@ -16,6 +16,7 @@
 			</div>
 			<template v-if="hasData">
 				<join-data-table
+					:dataset="dataset"
 					:items="items"
 					:fields="fields"
 					:numRows="numRows"

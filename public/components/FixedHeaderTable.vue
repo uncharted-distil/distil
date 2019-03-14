@@ -93,10 +93,9 @@ export default Vue.extend({
 		this.tbody.addEventListener('scroll', this.onScroll);
 
 		window.addEventListener('resize', this.resizeTableCells);
-		Vue.nextTick(() => {
-			this.checkScrollBar();
-			this.resizeTableCells();
-		});
+
+		this.checkScrollBar();
+		this.resizeTableCells();
 	},
 
 	beforeDestroy: function () {

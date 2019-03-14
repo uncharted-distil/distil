@@ -475,7 +475,7 @@ func (s *Storage) FetchResults(dataset string, storageName string, resultURI str
 	}
 
 	query := fmt.Sprintf(
-		"SELECT value as \"%s\", "+
+		"SELECT predicted.value as \"%s\", "+
 			"\"%s\" as \"%s\", "+
 			"%s "+
 			"%s "+

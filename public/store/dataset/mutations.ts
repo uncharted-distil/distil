@@ -88,6 +88,10 @@ export const mutations = {
 		updateSummaries(summary, state.variableSummaries);
 	},
 
+	clearVariableSummaries(state: DatasetState) {
+		state.variableSummaries = [];
+	},
+
 	updateVariableRankings(state: DatasetState, rankings: Dictionary<number>) {
 		// add rank property if ranking data returned, otherwise don't include it
 		if (!_.isEmpty(rankings)) {

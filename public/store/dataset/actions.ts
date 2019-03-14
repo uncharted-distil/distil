@@ -7,7 +7,7 @@ import { mutations } from './module';
 import { DistilState } from '../store';
 import { HighlightRoot } from '../highlights/index';
 import { FilterParams, INCLUDE_FILTER } from '../../util/filters';
-import { createPendingSummary, createErrorSummary, createEmptyTableData } from '../../util/data';
+import { createPendingSummary, createErrorSummary, createEmptyTableData, fetchHistogramExemplars } from '../../util/data';
 import { addHighlightToFilterParams } from '../../util/highlights';
 import { loadImage } from '../../util/image';
 import { getVarType, IMAGE_TYPE, TIMESERIES_TYPE, GEOCODED_LON_PREFIX, GEOCODED_LAT_PREFIX } from '../../util/types';
@@ -25,8 +25,12 @@ export type DatasetContext = ActionContext<DatasetState, DistilState>;
 export const actions = {
 
 	// fetches a dataset description.
-	fetchDataset(context: DatasetContext, dataset: string): Promise<void> {
-		return axios.get(`/distil/datasets/${dataset}`)
+	fetchDataset(context: DatasetContext, args: { dataset: string }): Promise<void> {
+		if (!args.dataset) {
+			console.warn('`dataset` argument is missing');
+			return null;
+		}
+		return axios.get(`/distil/datasets/${args.dataset}`)
 			.then(response => {
 				mutations.setDataset(context, response.data.dataset);
 			})
@@ -98,7 +102,9 @@ export const actions = {
 			.then(() => {
 				// upon success pull the updated dataset, vars, and summaries
 				return Promise.all([
-					context.dispatch('fetchDataset', args.dataset),
+					context.dispatch('fetchDataset', {
+						dataset: args.dataset
+					}),
 					context.dispatch('fetchVariables', {
 						dataset: args.dataset
 					}),
@@ -164,7 +170,7 @@ export const actions = {
 			});
 	},
 
-	setGrouping(context: DatasetContext, args: { dataset: string, grouping: Grouping }): Promise<void>  {
+	setGrouping(context: DatasetContext, args: { dataset: string, grouping: Grouping }): Promise<any>  {
 		if (!args.dataset) {
 			console.warn('`dataset` argument is missing');
 			return null;
@@ -178,7 +184,21 @@ export const actions = {
 			})
 			.then(() => {
 				// update dataset
-				return context.dispatch('fetchDataset', args.dataset);
+				return Promise.all([
+					context.dispatch('fetchDataset', {
+						dataset: args.dataset
+					}),
+					context.dispatch('fetchVariables', {
+						dataset: args.dataset
+					}),
+				]).then(() => {
+					mutations.clearVariableSummaries(context);
+					const variables = context.getters.getVariables;
+					return context.dispatch('fetchVariableSummaries', {
+						dataset: args.dataset,
+						variables: variables
+					});
+				});
 			})
 			.catch(error => {
 				console.error(error);
@@ -263,45 +283,10 @@ export const actions = {
 			.then(response => {
 
 				const histogram = response.data.histogram;
-				if (histogram.exemplars) {
-
-					const variables = context.getters.getVariables;
-					const variable = variables.find(v => v.colName === args.variable);
-
-					if (variable.grouping) {
-
-						if (variable.grouping.type === 'timeseries') {
-
-							// if there a linked exemplars, fetch those before resolving
-							return histogram.exemplars.map(exemplar => {
-								return context.dispatch('fetchTimeseries', {
-									dataset: args.dataset,
-									timeseriesColName: variable.grouping.idCol,
-									xColName: variable.grouping.properties.xCol,
-									yColName: variable.grouping.properties.yCol,
-									timeseriesID: exemplar,
-								}).then(() => {
-									mutations.updateVariableSummaries(context, histogram);
-								});
-							});
-						}
-
-					} else {
-
-						// if there a linked files, fetch those before resolving
-						return context.dispatch('fetchFiles', {
-							dataset: args.dataset,
-							variable: args.variable,
-							urls: histogram.exemplars
-						}).then(() => {
-							mutations.updateVariableSummaries(context, histogram);
-						});
-
-					}
-
-				} else {
-					mutations.updateVariableSummaries(context, histogram);
-				}
+				return fetchHistogramExemplars(args.dataset, args.variable, histogram)
+					.then(() => {
+						mutations.updateVariableSummaries(context, histogram);
+					});
 
 			})
 			.catch(error => {

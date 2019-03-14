@@ -35,8 +35,16 @@
 						<image-preview :key="imageField" :image-url="data.item[imageField]"></image-preview>
 					</template>
 
-					<template v-for="timeseriesField in timeseriesFields" :slot="timeseriesField" slot-scope="data">
-						<sparkline-preview :key="timeseriesField" :timeseries-url="data.item[timeseriesField]" :timeseries-col-name="timeseriesField"></sparkline-preview>
+					<template v-for="timeseriesGrouping in timeseriesGroupings" :slot="timeseriesGrouping.idCol" slot-scope="data">
+
+						<sparkline-preview :key="timeseriesGrouping.idCol"
+							:dataset="dataset"
+							:x-col="timeseriesGrouping.properties.xCol"
+							:y-col="timeseriesGrouping.properties.yCol"
+							:timeseries-col="timeseriesGrouping.idCol"
+							:timeseries-id="data.item[timeseriesGrouping.idCol]">
+						</sparkline-preview>
+
 					</template>
 
 					<template :slot="errorCol" slot-scope="data">
@@ -72,8 +80,9 @@ import FixedHeaderTable from './FixedHeaderTable';
 import SparklinePreview from './SparklinePreview';
 import ImagePreview from './ImagePreview';
 import { spinnerHTML } from '../util/spinner';
-import { Extrema, TableRow, TableColumn, D3M_INDEX_FIELD } from '../store/dataset/index';
+import { Extrema, TableRow, TableColumn, D3M_INDEX_FIELD, Grouping, Variable } from '../store/dataset/index';
 import { RowSelection } from '../store/highlights/index';
+import { getters as datasetGetters } from '../store/dataset/module';
 import { getters as resultsGetters } from '../store/results/module';
 import { getters as routeGetters } from '../store/route/module';
 import { getters as solutionGetters } from '../store/solutions/module';
@@ -82,6 +91,7 @@ import { Dictionary } from '../util/dict';
 import { getVarType, isTextType, IMAGE_TYPE, TIMESERIES_TYPE, hasComputedVarPrefix } from '../util/types';
 import { addRowSelection, removeRowSelection, isRowSelected, updateTableRowSelection } from '../util/row';
 import Vue from 'vue';
+import { getTimeseriesGroupingsFromFields } from '../util/data';
 
 export default Vue.extend({
 	name: 'results-data-table',
@@ -112,6 +122,15 @@ export default Vue.extend({
 	},
 
 	computed: {
+
+		dataset(): string {
+			return routeGetters.getRouteDataset(this.$store);
+		},
+
+		variables(): Variable[] {
+			return datasetGetters.getVariables(this.$store);
+		},
+
 		solutionId(): string {
 			return routeGetters.getRouteSolutionId(this.$store);
 		},
@@ -209,15 +228,8 @@ export default Vue.extend({
 			.map(field => field.key);
 		},
 
-		timeseriesFields(): string[] {
-			return _.map(this.fields, (field, key) => {
-				return {
-					key: key,
-					type: field.type
-				};
-			})
-			.filter(field => field.type === TIMESERIES_TYPE)
-			.map(field => field.key);
+		timeseriesGroupings(): Grouping[] {
+			return getTimeseriesGroupingsFromFields(this.variables, this.fields);
 		},
 
 		isRegression(): boolean {
