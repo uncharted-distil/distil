@@ -37,7 +37,7 @@ const (
 	stopSolutions     = "STOP_SOLUTIONS"
 	categoricalType   = "categorical"
 	numericalType     = "numerical"
-	defaultResourceID = "0"
+	defaultResourceID = "learningData"
 	datasetSizeLimit  = 10000
 )
 

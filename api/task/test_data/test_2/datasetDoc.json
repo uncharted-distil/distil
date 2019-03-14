@@ -9,7 +9,7 @@
         "datasetVersion": "1.0"
     },
     "dataResources": [{
-        "resID": "0",
+        "resID": "learningData",
         "resPath": "tables/learningData.csv",
         "resType": "table",
         "resFormat": [
