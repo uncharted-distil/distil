@@ -1,11 +1,11 @@
 <template>
 	<div class='card card-result'>
-		<div class='dataset-header hover card-header'  variant="dark" @click.stop='setActiveDataset()' v-bind:class='{collapsed: !expanded}'>
+		<div class='dataset-header hover card-header' variant="dark" @click.stop='setActiveDataset()' v-bind:class='{collapsed: !expanded, disabled: isImportReady || importPending}'>
 			<a class='nav-link'><b>Name:</b> {{dataset.name}}</a>
 			<a class='nav-link'><b>Features:</b> {{dataset.variables.length}}</a>
 			<a class='nav-link'><b>Rows:</b> {{dataset.numRows}}</a>
 			<a class='nav-link'><b>Size:</b> {{formatBytes(dataset.numBytes)}}</a>
-			<a v-if="allowImport && !importPending && datamartProvenance(dataset.provenance)">
+			<a v-if="isImportReady">
 				<b-button class="dataset-preview-button" variant="danger" @click.stop='importDataset()'>
 					<div class="row justify-content-center pl-3 pr-3">
 						<i class="fa fa-cloud-download mr-2"></i>
@@ -109,6 +109,9 @@ export default Vue.extend({
 		terms(): string {
 			return routeGetters.getRouteTerms(this.$store);
 		},
+		isImportReady(): boolean {
+			return this.allowImport && !this.importPending && this.datamartProvenance(this.dataset.provenance);
+		},
 		topVariables(): Variable[] {
 			return sortVariablesByImportance(this.dataset.variables.slice(0)).slice(0, NUM_TOP_FEATURES);
 		},
@@ -130,6 +133,9 @@ export default Vue.extend({
 			return formatBytes(n);
 		},
 		setActiveDataset() {
+			if (this.isImportReady || this.importPending) {
+				return;
+			}
 			const entry = createRouteEntry(SELECT_TARGET_ROUTE, {
 				dataset: this.dataset.id
 			});
