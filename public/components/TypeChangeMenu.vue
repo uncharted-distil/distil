@@ -62,8 +62,8 @@ export default Vue.extend({
 		type(): string {
 			return this.variable ? this.variable.colType : '';
 		},
-		isColTypeChanged(): boolean {
-			return this.variable ? this.variable.isColTypeChanged : false;
+		isColTypeReviewed(): boolean {
+			return this.variable ? this.variable.isColTypeReviewed : false;
 		},
 		label(): string {
 			return this.type !== '' ? getLabelFromType(this.type) : '';
@@ -108,7 +108,7 @@ export default Vue.extend({
 		},
 		isUnsure(): boolean {
 			return (this.type === this.originalType && // we haven't changed the type (check from server)
-				!this.isColTypeChanged && // check if user ever changed the col type (client)
+				!this.isColTypeReviewed && // check if user ever reviewed the col type (client)
 				this.hasSchemaType && this.hasNonSchemaTypes &&
 				this.topNonSchemaType.probability >= PROBABILITY_THRESHOLD && // it has both schema and ML types
 				!isEquivalentType(this.schemaType.type, this.topNonSchemaType.type)); // they don't agree
@@ -150,8 +150,7 @@ export default Vue.extend({
 			datasetActions.setVariableType(this.$store, {
 				dataset: dataset,
 				field: field,
-				type: type,
-				isTypeChanged: true,
+				type: type
 			}).then(() => {
 				if (this.target) {
 					datasetActions.fetchVariableRankings(this.$store, {
@@ -167,7 +166,19 @@ export default Vue.extend({
 				}
 			});
 		},
-	}
+	},
+
+	mounted() {
+		this.$root.$on('bv::dropdown::show', () => {
+			const dataset = this.dataset;
+			const field = this.field;
+			datasetActions.reviewVariableType(this.$store, {
+				dataset: dataset,
+				field: field,
+				isColTypeReviewed: true,
+			});
+		});
+	},
 });
 </script>
 

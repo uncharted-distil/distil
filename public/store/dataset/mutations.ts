@@ -62,14 +62,14 @@ export const mutations = {
 	},
 
 	setVariables(state: DatasetState, variables: Variable[]) {
-		const typeChangedVariables = state.variables.filter(variable => variable.isColTypeChanged);
+		const typeReviewedVariables = state.variables.filter(variable => variable.isColTypeReviewed);
 		const newVariables = variables.map(variable => {
-			const isVarTypeChanged = typeChangedVariables.find(typeChangedVar => {
+			const isVarTypeReviewed = typeReviewedVariables.find(typeChangedVar => {
 					return typeChangedVar.datasetName === variable.datasetName
 						&& typeChangedVar.colName === variable.colName;
 				});
-			if (isVarTypeChanged) {
-				variable.isColTypeChanged = true;
+			if (isVarTypeReviewed) {
+				variable.isColTypeReviewed = true;
 			}
 			return variable;
 		});
@@ -81,7 +81,13 @@ export const mutations = {
 			return v.colName === update.field;
 		});
 		state.variables[index].colType = update.type;
-		state.variables[index].isColTypeChanged = update.isTypeChanged;
+	},
+
+	reviewVariableType(state: DatasetState, update) {
+		const index = _.findIndex(state.variables, v => {
+			return v.colName === update.field;
+		});
+		state.variables[index].isColTypeReviewed = update.isColTypeReviewed;
 	},
 
 	updateVariableSummaries(state: DatasetState, summary: VariableSummary) {
