@@ -18,7 +18,6 @@ package routes
 import (
 	"fmt"
 	"net/http"
-	"path"
 
 	"github.com/pkg/errors"
 	"goji.io/pat"
@@ -96,21 +95,8 @@ func GeocodingHandler(metaCtor api.MetadataStorageCtor, dataCtor api.DataStorage
 			}
 		}
 
-		// build the row index since geocoding does not return the d3m index
-		lines, err := task.ReadCSVFile(path.Join(sourceFolder, "tables", "learningData.csv"), true)
-		if err != nil {
-			handleError(w, err)
-			return
-		}
-
-		d3mIndex, _ := metaStorage.FetchVariable(dataset, model.D3MIndexName)
-		rowIndex := make(map[int]string)
-		for i, line := range lines {
-			rowIndex[i] = line[d3mIndex.Index]
-		}
-
 		// geocode data
-		geocoded, err := task.GeocodeForward(sourceFolder, dataset, variable, rowIndex)
+		geocoded, err := task.GeocodeForward(sourceFolder, dataset, variable)
 		if err != nil {
 			handleError(w, err)
 			return
@@ -120,8 +106,8 @@ func GeocodingHandler(metaCtor api.MetadataStorageCtor, dataCtor api.DataStorage
 		latData := make(map[string]string)
 		lonData := make(map[string]string)
 		for _, point := range geocoded {
-			latData[point.D3MIndex] = fmt.Sprintf("%f", point.Latitude)
-			lonData[point.D3MIndex] = fmt.Sprintf("%f", point.Longitude)
+			latData[point.D3MIndex] = fmt.Sprintf("%s", point.Latitude)
+			lonData[point.D3MIndex] = fmt.Sprintf("%s", point.Longitude)
 		}
 
 		// update the batches

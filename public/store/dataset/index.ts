@@ -39,6 +39,7 @@ export interface Variable {
 	isColTypeChanged: boolean;
 	isGrouping: boolean;
 	grouping?: Grouping;
+	isColTypeReviewed: boolean;
 }
 
 export interface Dataset {

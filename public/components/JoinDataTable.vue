@@ -1,5 +1,5 @@
 <template>
-	<fixed-header-table>
+	<fixed-header-table ref="fixedHeaderTable">
 		<b-table
 			bordered
 			hover

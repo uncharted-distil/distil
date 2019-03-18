@@ -8,9 +8,7 @@
 			<div class="results-data-no-results" v-if="hasNoResults">
 				No results available
 			</div>
-
-
-			<fixed-header-table ref="fixedHeaderTable">
+			<fixed-header-table v-if="hasResults" ref="fixedHeaderTable">
 				<b-table
 					bordered
 					hover
