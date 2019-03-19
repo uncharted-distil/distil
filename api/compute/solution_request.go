@@ -226,12 +226,12 @@ func createSearchSolutionsRequest(columnIndex int, preprocessing *pipeline.Pipel
 }
 
 // createPreprocessingPipeline creates pipeline to enfore user feature selection and typing
-func (s *SolutionRequest) createPreprocessingPipeline(featureVariables []*model.Variable, targetVariable string, variables []string, isTimeseries bool) (*pipeline.PipelineDescription, error) {
+func (s *SolutionRequest) createPreprocessingPipeline(featureVariables []*model.Variable, targetVariable string, variables []string) (*pipeline.PipelineDescription, error) {
 	uuid := uuid.NewV4()
 	name := fmt.Sprintf("preprocessing-%s-%s", s.Dataset, uuid.String())
 	desc := fmt.Sprintf("Preprocessing pipeline capturing user feature selection and type information. Dataset: `%s` ID: `%s`", s.Dataset, uuid.String())
 
-	preprocessingPipeline, err := description.CreateUserDatasetPipeline(name, desc, featureVariables, targetVariable, variables, s.Filters.Filters, isTimeseries)
+	preprocessingPipeline, err := description.CreateUserDatasetPipeline(name, desc, featureVariables, targetVariable, variables, s.Filters.Filters)
 	if err != nil {
 		return nil, err
 	}
@@ -559,7 +559,7 @@ func (s *SolutionRequest) PersistAndDispatch(client *compute.Client, solutionSto
 	// generate the pre-processing pipeline to enforce feature selection and semantic type changes
 	var preprocessing *pipeline.PipelineDescription
 	if !client.SkipPreprocessing {
-		preprocessing, err = s.createPreprocessingPipeline(dataVariables, s.TargetFeature, s.Filters.Variables, false)
+		preprocessing, err = s.createPreprocessingPipeline(dataVariables, s.TargetFeature, s.Filters.Variables)
 		if err != nil {
 			return err
 		}
@@ -620,7 +620,7 @@ func (s *SolutionRequest) PersistAndDispatch(client *compute.Client, solutionSto
 // the pipeline steps required to process the data.
 func CreateSearchSolutionRequest(allFeatures []*model.Variable,
 	selectedFeatures []string, target string, sourceURI string, dataset string,
-	userAgent string, skipPreprocessing bool, isTimeseries bool) (*pipeline.SearchSolutionsRequest, error) {
+	userAgent string, skipPreprocessing bool) (*pipeline.SearchSolutionsRequest, error) {
 	uuid := uuid.NewV4()
 	name := fmt.Sprintf("preprocessing-%s-%s", dataset, uuid.String())
 	desc := fmt.Sprintf("Preprocessing pipeline capturing user feature selection and type information. Dataset: `%s` ID: `%s`", dataset, uuid.String())
@@ -628,7 +628,7 @@ func CreateSearchSolutionRequest(allFeatures []*model.Variable,
 	var err error
 	var preprocessingPipeline *pipeline.PipelineDescription
 	if !skipPreprocessing {
-		preprocessingPipeline, err = description.CreateUserDatasetPipeline(name, desc, allFeatures, target, selectedFeatures, nil, isTimeseries)
+		preprocessingPipeline, err = description.CreateUserDatasetPipeline(name, desc, allFeatures, target, selectedFeatures, nil)
 		if err != nil {
 			return nil, errors.Wrap(err, "unable to create preprocessing pipeline")
 		}

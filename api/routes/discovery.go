@@ -122,7 +122,7 @@ func ProblemDiscoveryHandler(ctorData api.DataStorageCtor, ctorMeta api.Metadata
 
 		// store the search solution request for this problem
 		// TODO: NEED TO FIGURE OUT IF THE PROBLEM IS TIME SERIES!!!
-		request, err := compute.CreateSearchSolutionRequest(ds.Metadata.Variables, filterParams.Variables, target, problemDir, dataset, userAgent, skipPrepends, false)
+		request, err := compute.CreateSearchSolutionRequest(ds.Metadata.Variables, filterParams.Variables, target, problemDir, dataset, userAgent, skipPrepends)
 		if err != nil {
 			handleError(w, err)
 			return
