@@ -80,7 +80,7 @@ func Merge(datasetSource metadata.DatasetSource, schemaFile string, index string
 	}
 
 	outputMeta := model.NewMetadata(meta.ID, meta.Name, meta.Description, meta.StorageName)
-	outputMeta.DataResources = append(outputMeta.DataResources, model.NewDataResource("0", mainDR.ResType, mainDR.ResFormat))
+	outputMeta.DataResources = append(outputMeta.DataResources, model.NewDataResource(mainDR.ResID, mainDR.ResType, mainDR.ResFormat))
 	header := csvData[0][1:]
 	for i, field := range header {
 		v := vars[field]

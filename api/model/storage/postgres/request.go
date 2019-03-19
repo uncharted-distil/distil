@@ -32,7 +32,7 @@ func (s *Storage) PersistRequest(requestID string, dataset string, progress stri
 
 	_, err := s.client.Exec(sql, requestID, dataset, progress, createdTime)
 
-	return err
+	return errors.Wrapf(err, "failed to persist request to PostGres")
 }
 
 // UpdateRequest updates a request in Postgres.
@@ -41,7 +41,7 @@ func (s *Storage) UpdateRequest(requestID string, progress string, updatedTime t
 
 	_, err := s.client.Exec(sql, progress, updatedTime, requestID)
 
-	return err
+	return errors.Wrapf(err, "failed to update request in PostGres")
 }
 
 // PersistRequestFeature persists request feature information to Postgres.
@@ -50,34 +50,41 @@ func (s *Storage) PersistRequestFeature(requestID string, featureName string, fe
 
 	_, err := s.client.Exec(sql, requestID, featureName, featureType)
 
-	return err
+	return errors.Wrapf(err, "failed to persist request freature in PostGres")
+}
+
+type filterError struct {
+	err    error
+	filter *model.Filter
 }
 
 // PersistRequestFilters persists request filters information to Postgres.
 func (s *Storage) PersistRequestFilters(requestID string, filters *api.FilterParams) error {
-	sql := fmt.Sprintf("INSERT INTO %s (request_id, feature_name, filter_type, filter_mode, filter_min, filter_max, filter_min_x, filter_max_x, filter_min_y, filter_max_y, filter_categories, filter_indices) VALUES ($1, $2, $3, $4, $5, $6, $7, $8);", filterTableName)
+	sql := fmt.Sprintf(
+		"INSERT INTO %s (request_id, feature_name, filter_type, filter_mode, filter_min, filter_max, filter_min_x, filter_max_x, filter_min_y, filter_max_y, filter_categories, filter_indices) "+
+			"VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12);", filterTableName)
 
 	for _, filter := range filters.Filters {
 		switch filter.Type {
 		case model.NumericalFilter:
 			_, err := s.client.Exec(sql, requestID, filter.Key, model.NumericalFilter, filter.Mode, filter.Min, filter.Max, 0, 0, 0, 0, "", "")
 			if err != nil {
-				return err
+				return errors.Wrap(err, "failed to persist numerical filter")
 			}
 		case model.BivariateFilter:
 			_, err := s.client.Exec(sql, requestID, filter.Key, model.BivariateFilter, filter.Mode, 0, 0, filter.Bounds.MinX, filter.Bounds.MaxX, filter.Bounds.MinY, filter.Bounds.MaxY, "", "")
 			if err != nil {
-				return err
+				return errors.Wrap(err, "failed to persist bivariate filter")
 			}
 		case model.CategoricalFilter, model.FeatureFilter, model.TextFilter:
 			_, err := s.client.Exec(sql, requestID, filter.Key, filter.Type, filter.Mode, 0, 0, 0, 0, 0, 0, strings.Join(filter.Categories, ","), "")
 			if err != nil {
-				return err
+				return errors.Wrap(err, "failed to persist categorical filter")
 			}
 		case model.RowFilter:
 			_, err := s.client.Exec(sql, requestID, "", model.RowFilter, filter.Mode, 0, 0, 0, 0, 0, 0, "", strings.Join(filter.D3mIndices, ","))
 			if err != nil {
-				return err
+				return errors.Wrap(err, "failed to persist row filter")
 			}
 		}
 	}

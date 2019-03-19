@@ -56,6 +56,7 @@ export const actions = {
 	fetchVariables: dispatch(moduleActions.fetchVariables),
 	fetchJoinDatasetsVariables: dispatch(moduleActions.fetchJoinDatasetsVariables),
 	setVariableType: dispatch(moduleActions.setVariableType),
+	reviewVariableType: dispatch(moduleActions.reviewVariableType),
 	fetchVariableSummary: dispatch(moduleActions.fetchVariableSummary),
 	fetchVariableSummaries: dispatch(moduleActions.fetchVariableSummaries),
 	// ranking
@@ -82,6 +83,7 @@ export const mutations = {
 	// variables
 	setVariables: commit(moduleMutations.setVariables),
 	updateVariableType: commit(moduleMutations.updateVariableType),
+	reviewVariableType: commit(moduleMutations.reviewVariableType),
 	updateVariableSummaries: commit(moduleMutations.updateVariableSummaries),
 	// ranking
 	updateVariableRankings: commit(moduleMutations.updateVariableRankings),
