@@ -5,10 +5,10 @@
 			Importing <b>{{ filename }}</b> as <b>{{ datasetID }}</b>... 
 		</b-alert>
 		<b-alert :show="status === 'success'" dismissible variant="success">
-			<b>{{ filename }}</b> has been imported as <b>{{ datasetID }}</b>
+			<i class="fa fa-check-circle-o" aria-hidden="true"></i> Imported <b>{{ filename }}</b> as <b>{{ datasetID }}</b>
 		</b-alert>
 		<b-alert :show="status === 'error'" dismissible variant="danger">
-			An unexpected error has happened while importing <b>{{ filename }}</b>
+			<i class="fa fa-times-circle-o" aria-hidden="true"></i> An unexpected error has happened while importing <b>{{ filename }}</b>
 		</b-alert>
 </div>
 

@@ -16,10 +16,12 @@
 		</div>
 		<div class="row flex-2 align-items-center justify-content-center">
 			<div class="col-12 col-md-6 justify-content-center">
-				<search-bar class="home-search-bar"></search-bar>
-				<file-uploader
-					@uploadstart="onUploadStart"
-					@uploadfinish="onUploadFinish"></file-uploader>
+				<div class="d-flex">
+					<search-bar class="home-search-bar"></search-bar>
+					<file-uploader class="file-uploader"
+						@uploadstart="onUploadStart"
+						@uploadfinish="onUploadFinish"></file-uploader>
+				</div>
 			</div>
 		</div>
 		<div class="row flex-10 justify-content-center pb-3">
@@ -110,6 +112,10 @@ export default Vue.extend({
 .home-version-text {
 	margin: 0 auto;
 	font-size: 0.8rem;
+}
+.home-view .file-uploader {
+	flex-shrink: 0;
+    margin-left: 20px;
 }
 .home-view .file-uploader-status {
 	padding: 0;

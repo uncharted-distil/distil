@@ -1,12 +1,13 @@
 <template>
 
 <div>
-	<b-button block variant="primary" v-b-modal.upload-modal>Import Local File</b-button>
+	<b-button block variant="primary" v-b-modal.upload-modal>Import File</b-button>
 	
 	<!-- Modal Component -->
 	<b-modal
 		id="upload-modal"
 		title="Import local file"
+		:ok-disabled="!Boolean(file)"
 		@hide="clearFile()"
 		@ok="handleOk()">
 		<p>Select a csv file to import</p>
