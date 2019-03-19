@@ -26,7 +26,7 @@ export function getTimeseriesGroupingsFromFields(variables: Variable[], fields: 
 	return _.map(fields, (field, key) => key)
 		.filter(key => {
 			const v = variables.find(v => v.colName === key);
-			return (v.grouping && v.grouping.type === TIMESERIES_TYPE);
+			return (v && v.grouping && v.grouping.type === TIMESERIES_TYPE);
 		}).map(key => {
 			const v = variables.find(v => v.colName === key);
 			return v.grouping;

@@ -243,8 +243,10 @@ export default Vue.extend({
 	},
 
 	updated() {
-		const fixedHeaderTable = this.$refs.fixedHeaderTable as any;
-		fixedHeaderTable.resizeTableCells();
+		if (this.hasResults) {
+			const fixedHeaderTable = this.$refs.fixedHeaderTable as any;
+			fixedHeaderTable.resizeTableCells();
+		}
 	},
 
 	methods: {

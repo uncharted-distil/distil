@@ -252,15 +252,23 @@ func (s *Storage) buildFilteredQueryField(variables []*model.Variable, filterVar
 	return strings.Join(distincts, ",") + " " + strings.Join(fields, ","), nil
 }
 
-func (s *Storage) buildFilteredResultQueryField(variables []*model.Variable, targetVariable *model.Variable, filterVariables []string) (string, error) {
+func (s *Storage) buildFilteredResultQueryField(variables []*model.Variable, targetVariable *model.Variable, filterVariables []string) (string, string, error) {
+
+	distincts := make([]string, 0)
 	fields := make([]string, 0)
 	for _, variable := range api.GetFilterVariables(filterVariables, variables) {
+
 		if strings.Compare(targetVariable.Name, variable.Name) != 0 {
+
+			if variable.Grouping != nil {
+				distincts = append(distincts, fmt.Sprintf("DISTINCT ON (\"%s\")", variable.Name))
+			}
+
 			fields = append(fields, fmt.Sprintf("\"%s\"", variable.Name))
 		}
 	}
 	fields = append(fields, fmt.Sprintf("\"%s\"", model.D3MIndexFieldName))
-	return strings.Join(fields, ","), nil
+	return strings.Join(distincts, ","), strings.Join(fields, ","), nil
 }
 
 func (s *Storage) buildCorrectnessResultWhere(wheres []string, params []interface{}, storageName string, resultURI string, resultFilter *model.Filter) ([]string, []interface{}, error) {
@@ -381,11 +389,14 @@ func (s *Storage) FetchNumRows(storageName string, variables []*model.Variable, 
 
 	// match order by for distinct
 	var groupings []string
-	for _, v := range variables {
-		if v.Grouping != nil {
-			groupings = append(groupings, v.Grouping.IDCol)
+	if variables != nil {
+		for _, v := range variables {
+			if v.Grouping != nil {
+				groupings = append(groupings, v.Grouping.IDCol)
+			}
 		}
 	}
+
 	if len(groupings) > 0 {
 		countTarget = "DISTINCT "
 		for i, g := range groupings {

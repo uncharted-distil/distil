@@ -60,11 +60,21 @@ export default Vue.extend({
 		};
 	},
 	computed: {
+		timeseriesForDataset(): Dictionary<number[][]> {
+			const timeseries = datasetGetters.getTimeseries(this.$store);
+			return timeseries[this.dataset];
+		},
 		isLoaded(): boolean {
-			return !!datasetGetters.getTimeseries(this.$store)[this.dataset][this.timeseriesId];
+			if (!this.timeseriesForDataset) {
+				return false;
+			}
+			return !!this.timeseriesForDataset[this.timeseriesId];
 		},
 		timeseries(): number[][] {
-			return datasetGetters.getTimeseries(this.$store)[this.dataset][this.timeseriesId];
+			if (!this.timeseriesForDataset) {
+				return null;
+			}
+			return this.timeseriesForDataset[this.timeseriesId];
 		},
 		spinnerHTML(): string {
 			return circleSpinnerHTML();

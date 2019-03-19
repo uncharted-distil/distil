@@ -406,7 +406,7 @@ func (s *Storage) FetchResults(dataset string, storageName string, resultURI str
 	}
 
 	// generate variable list for inclusion in query select
-	fields, err := s.buildFilteredResultQueryField(variables, variable, filterParams.Variables)
+	distincts, fields, err := s.buildFilteredResultQueryField(variables, variable, filterParams.Variables)
 	if err != nil {
 		return nil, errors.Wrap(err, "Could not build field list")
 	}
@@ -475,13 +475,13 @@ func (s *Storage) FetchResults(dataset string, storageName string, resultURI str
 	}
 
 	query := fmt.Sprintf(
-		"SELECT predicted.value as \"%s\", "+
+		"SELECT %s predicted.value as \"%s\", "+
 			"\"%s\" as \"%s\", "+
 			"%s "+
 			"%s "+
 			"FROM %s as predicted inner join %s as data on data.\"%s\" = predicted.index "+
 			"WHERE result_id = $%d AND target = $%d",
-		predictedCol, targetName, targetCol, errorExpr, fields, storageNameResult, storageName,
+		distincts, predictedCol, targetName, targetCol, errorExpr, fields, storageNameResult, storageName,
 		model.D3MIndexFieldName, len(params)+1, len(params)+2)
 
 	params = append(params, resultURI)
@@ -503,7 +503,7 @@ func (s *Storage) FetchResults(dataset string, storageName string, resultURI str
 	countFilter := map[string]interface{}{
 		"result_id": resultURI,
 	}
-	numRows, err := s.FetchNumRows(storageNameResult, variables, countFilter)
+	numRows, err := s.FetchNumRows(storageNameResult, nil, countFilter)
 	if err != nil {
 		return nil, errors.Wrap(err, "Could not pull num rows")
 	}
