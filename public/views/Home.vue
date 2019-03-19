@@ -7,9 +7,21 @@
 				<h5 class="header-label">Recent Activity</h5>
 			</div>
 		</div>
+		<div class="row">
+			<file-uploader-status class="file-uploader-status col-12"
+				:status="uploadStatus"
+				:filename="uploadData.filename"
+				:datasetID="uploadData.datasetID"/>
+
+		</div>
 		<div class="row flex-2 align-items-center justify-content-center">
 			<div class="col-12 col-md-6 justify-content-center">
-				<search-bar class="home-search-bar"></search-bar>
+				<div class="d-flex">
+					<search-bar class="home-search-bar"></search-bar>
+					<file-uploader class="file-uploader"
+						@uploadstart="onUploadStart"
+						@uploadfinish="onUploadFinish"></file-uploader>
+				</div>
 			</div>
 		</div>
 		<div class="row flex-10 justify-content-center pb-3">
@@ -31,6 +43,8 @@
 </template>
 
 <script lang="ts">
+import FileUploader from '../components/FileUploader.vue';
+import FileUploaderStatus from '../components/FileUploaderStatus.vue';
 import RecentDatasets from '../components/RecentDatasets';
 import RecentSolutions from '../components/RecentSolutions';
 import RunningSolutions from '../components/RunningSolutions';
@@ -46,7 +60,15 @@ export default Vue.extend({
 		RecentDatasets,
 		RecentSolutions,
 		RunningSolutions,
-		SearchBar
+		SearchBar,
+		FileUploader,
+		FileUploaderStatus,
+	},
+	data() {
+		return {
+			uploadData: {},
+			uploadStatus: '',
+		};
 	},
 
 	computed: {
@@ -57,6 +79,15 @@ export default Vue.extend({
 
 	beforeMount() {
 		viewActions.fetchHomeData(this.$store);
+	},
+	methods: {
+		onUploadStart(uploadData) {
+			this.uploadData = uploadData;
+			this.uploadStatus = 'started';
+		},
+		onUploadFinish(err) {
+			this.uploadStatus = err ? 'error' : 'success';
+		},
 	}
 
 });
@@ -81,6 +112,13 @@ export default Vue.extend({
 .home-version-text {
 	margin: 0 auto;
 	font-size: 0.8rem;
+}
+.home-view .file-uploader {
+	flex-shrink: 0;
+    margin-left: 20px;
+}
+.home-view .file-uploader-status {
+	padding: 0;
 }
 
 </style>
