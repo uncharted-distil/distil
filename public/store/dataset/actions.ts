@@ -121,6 +121,29 @@ export const actions = {
 			});
 	},
 
+	uploadDataFile(context: DatasetContext, args: { datasetID: string, file: File }) {
+		if (!args.datasetID) {
+			console.warn('`datasetID` argument is missing');
+			return null;
+		}
+		if (!args.file) {
+			console.warn('`file` argument is missing');
+			return null;
+		}
+		const data = new FormData();
+		data.append('file', args.file);
+		return axios.post(`/distil/upload/${args.datasetID}`, data, {
+			headers: { 'Content-Type': 'multipart/form-data' },
+		}).then(response => {
+			return context.dispatch('importDataset', {
+				datasetID: args.datasetID,
+				source: 'augmented',
+				provenance: 'local',
+				terms: args.datasetID
+			});
+		});
+	},
+
 	importDataset(context: DatasetContext, args: { datasetID: string, source: string, provenance: string, terms: string }): Promise<void>  {
 		if (!args.datasetID) {
 			console.warn('`datasetID` argument is missing');

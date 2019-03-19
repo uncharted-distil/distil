@@ -51,6 +51,7 @@ export const actions = {
 	searchDatasets: dispatch(moduleActions.searchDatasets),
 	geocodeVariable: dispatch(moduleActions.geocodeVariable),
 	importDataset: dispatch(moduleActions.importDataset),
+	uploadDataFile: dispatch(moduleActions.uploadDataFile),
 	// variables
 	fetchVariables: dispatch(moduleActions.fetchVariables),
 	fetchJoinDatasetsVariables: dispatch(moduleActions.fetchJoinDatasetsVariables),
