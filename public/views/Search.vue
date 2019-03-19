@@ -7,11 +7,19 @@
 				<h5 class="header-label">Select a Dataset</h5>
 			</div>
 		</div>
+		<div class="row">
+			<file-uploader-status class="file-uploader-status col-12"
+				:status="uploadStatus"
+				:filename="uploadData.filename"
+				:datasetID="uploadData.datasetID"/>
 
+		</div>
 		<div class="row flex-2 align-items-center justify-content-center">
 			<div class="col-12 col-md-6">
 				<search-bar class="search-search-bar"></search-bar>
-				<file-uploader></file-uploader>
+				<file-uploader
+					@uploadstart="onUploadStart"
+					@uploadfinish="onUploadFinish"></file-uploader>
 			</div>
 		</div>
 		<div class="row flex-10 justify-content-center pb-3">
@@ -54,6 +62,7 @@
 import _ from 'lodash';
 import Vue from 'vue';
 import FileUploader from '../components/FileUploader.vue';
+import FileUploaderStatus from '../components/FileUploaderStatus.vue';
 import DatasetPreviewCard from '../components/DatasetPreviewCard.vue';
 import SearchBar from '../components/SearchBar.vue';
 import SearchResults from '../components/SearchResults.vue';
@@ -72,11 +81,14 @@ export default Vue.extend({
 		SearchResults,
 		DatasetPreviewCard,
 		FileUploader,
+		FileUploaderStatus,
 	},
 
 	data() {
 		return {
-			isPending: false
+			isPending: false,
+			uploadData: {},
+			uploadStatus: '',
 		};
 	},
 
@@ -163,8 +175,14 @@ export default Vue.extend({
 				joinDatasets: joinDatasetIDs.join(','),
 			});
 			this.$router.push(entry);
-		}
-
+		},
+		onUploadStart(uploadData) {
+			this.uploadData = uploadData;
+			this.uploadStatus = 'started';
+		},
+		onUploadFinish(err) {
+			this.uploadStatus = err ? 'error' : 'success';
+		},
 	}
 });
 </script>
@@ -173,6 +191,9 @@ export default Vue.extend({
 .header-label {
 	padding: 1rem 0 0.5rem 0;
 	font-weight: bold;
+}
+.row .file-uploader-status {
+	padding: 0;
 }
 .search-search-bar {
 	width: 100%;
