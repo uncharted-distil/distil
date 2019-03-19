@@ -210,7 +210,7 @@ export const actions = {
 	},
 
 
-	setVariableType(context: DatasetContext, args: { dataset: string, field: string, type: string, isTypeChanged: boolean }): Promise<void>  {
+	setVariableType(context: DatasetContext, args: { dataset: string, field: string, type: string }): Promise<void>  {
 		if (!args.dataset) {
 			console.warn('`dataset` argument is missing');
 			return null;
