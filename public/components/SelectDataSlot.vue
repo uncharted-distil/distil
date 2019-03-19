@@ -92,6 +92,7 @@ const TABLE_VIEW = 'table';
 const IMAGE_VIEW = 'image';
 const GRAPH_VIEW = 'graph';
 const GEO_VIEW = 'geo';
+const TIMESERIES_VIEW = 'timeseries';
 
 export default Vue.extend({
 	name: 'select-data-slot',
@@ -114,7 +115,7 @@ export default Vue.extend({
 			IMAGE_VIEW: IMAGE_VIEW,
 			GRAPH_VIEW: GRAPH_VIEW,
 			GEO_VIEW: GEO_VIEW,
-			TIMESERIES_VIEW: 'timeseries'
+			TIMESERIES_VIEW: TIMESERIES_VIEW
 		};
 	},
 

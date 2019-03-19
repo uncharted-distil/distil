@@ -1,94 +1,80 @@
 <template>
-	<div class="results-data-table">
-		<p class="result-data-table-summary" v-if="hasResults"><small v-html="title"></small></p>
-		<div class="results-data-table-container flex-1">
-			<div class="results-data-no-results" v-if="isPending">
-				<div v-html="spinnerHTML"></div>
-			</div>
-			<div class="results-data-no-results" v-if="hasNoResults">
-				No results available
-			</div>
-			<fixed-header-table v-if="hasResults" ref="fixedHeaderTable">
-				<b-table
-					bordered
-					hover
-					small
-					:ref="refName"
-					:items="items"
-					:fields="fields"
-					:sort-by="errorCol"
-					:sort-compare="sortingByResidualError ? sortingByErrorFunction : undefined"
-					@row-clicked="onRowClick"
-					@sort-changed="onSortChanged">
+	<fixed-header-table ref="fixedHeaderTable">
+		<b-table
+			bordered
+			hover
+			small
+			:items="items"
+			:fields="fields"
+			:sort-by="errorCol"
+			:sort-compare="sortingByResidualError ? sortingByErrorFunction : undefined"
+			@row-clicked="onRowClick"
+			@sort-changed="onSortChanged">
 
-					<template v-for="computedField in computedFields" :slot="'HEAD_' + computedField" slot-scope="data">
-						{{ data.label }} <icon-base :key="computedField" icon-name="fork" class="icon-fork" width=14 height=14> <icon-fork /></icon-base>
-					</template>
+			<template v-for="computedField in computedFields" :slot="'HEAD_' + computedField" slot-scope="data">
+				{{ data.label }} <icon-base :key="computedField" icon-name="fork" class="icon-fork" width=14 height=14> <icon-fork /></icon-base>
+			</template>
 
-					<template :slot="predictedCol" slot-scope="data">
-						{{target}}<sup>{{solutionIndex}}</sup>
-					</template>
+			<template :slot="predictedCol" slot-scope="data">
+				{{target}}<sup>{{solutionIndex}}</sup>
+			</template>
 
-					<template v-for="imageField in imageFields" :slot="imageField" slot-scope="data">
-						<image-preview :key="imageField" :image-url="data.item[imageField]"></image-preview>
-					</template>
+			<template v-for="imageField in imageFields" :slot="imageField" slot-scope="data">
+				<image-preview :key="imageField" :image-url="data.item[imageField]"></image-preview>
+			</template>
 
-					<template v-for="timeseriesGrouping in timeseriesGroupings" :slot="timeseriesGrouping.idCol" slot-scope="data">
+			<template v-for="timeseriesGrouping in timeseriesGroupings" :slot="timeseriesGrouping.idCol" slot-scope="data">
 
-						<sparkline-preview :key="timeseriesGrouping.idCol"
-							:dataset="dataset"
-							:x-col="timeseriesGrouping.properties.xCol"
-							:y-col="timeseriesGrouping.properties.yCol"
-							:timeseries-col="timeseriesGrouping.idCol"
-							:timeseries-id="data.item[timeseriesGrouping.idCol]">
-						</sparkline-preview>
+				<sparkline-preview :key="timeseriesGrouping.idCol"
+					:dataset="dataset"
+					:x-col="timeseriesGrouping.properties.xCol"
+					:y-col="timeseriesGrouping.properties.yCol"
+					:timeseries-col="timeseriesGrouping.idCol"
+					:timeseries-id="data.item[timeseriesGrouping.idCol]">
+				</sparkline-preview>
 
-					</template>
+			</template>
 
-					<template :slot="errorCol" slot-scope="data">
-						<!-- residual error -->
-						<div class="error-bar-container" v-if="isTargetNumerical">
-							<div class="error-bar" v-bind:style="{ 'background-color': errorBarColor(data.item[errorCol]), width: errorBarWidth(data.item[errorCol]), left: errorBarLeft(data.item[errorCol]) }"></div>
-							<div class="error-bar-center"></div>
-						</div>
+			<template :slot="errorCol" slot-scope="data">
+				<!-- residual error -->
+				<div class="error-bar-container" v-if="isTargetNumerical">
+					<div class="error-bar" v-bind:style="{ 'background-color': errorBarColor(data.item[errorCol]), width: errorBarWidth(data.item[errorCol]), left: errorBarLeft(data.item[errorCol]) }"></div>
+					<div class="error-bar-center"></div>
+				</div>
 
-						<!-- correctness error -->
-						<div v-if="isTargetCategorical">
-							<div v-if="data.item[predictedCol]==data.item[this.target]">
-								Correct
-							</div>
-							<div v-if="data.item[predictedCol]!=data.item[this.target]">
-								Incorrect
-							</div>
-						</div>
-					</template>
-				</b-table>
-			</fixed-header-table>
-		</div>
-
-	</div>
+				<!-- correctness error -->
+				<div v-if="isTargetCategorical">
+					<div v-if="data.item[predictedCol]==data.item[this.target]">
+						Correct
+					</div>
+					<div v-if="data.item[predictedCol]!=data.item[this.target]">
+						Incorrect
+					</div>
+				</div>
+			</template>
+		</b-table>
+	</fixed-header-table>
 </template>
 
 <script lang="ts">
 
+import Vue from 'vue';
 import _ from 'lodash';
 import IconBase from './icons/IconBase';
 import IconFork from './icons/IconFork';
 import FixedHeaderTable from './FixedHeaderTable';
 import SparklinePreview from './SparklinePreview';
 import ImagePreview from './ImagePreview';
-import { spinnerHTML } from '../util/spinner';
 import { Extrema, TableRow, TableColumn, D3M_INDEX_FIELD, Grouping, Variable } from '../store/dataset/index';
 import { RowSelection } from '../store/highlights/index';
 import { getters as datasetGetters } from '../store/dataset/module';
 import { getters as resultsGetters } from '../store/results/module';
 import { getters as routeGetters } from '../store/route/module';
 import { getters as solutionGetters } from '../store/solutions/module';
-import { Solution, SOLUTION_ERRORED } from '../store/solutions/index';
+import { Solution } from '../store/solutions/index';
 import { Dictionary } from '../util/dict';
-import { getVarType, isTextType, IMAGE_TYPE, TIMESERIES_TYPE, hasComputedVarPrefix } from '../util/types';
+import { getVarType, isTextType, IMAGE_TYPE, hasComputedVarPrefix } from '../util/types';
 import { addRowSelection, removeRowSelection, isRowSelected, updateTableRowSelection } from '../util/row';
-import Vue from 'vue';
 import { getTimeseriesGroupingsFromFields } from '../util/data';
 
 export default Vue.extend({
@@ -109,14 +95,9 @@ export default Vue.extend({
 	},
 
 	props: {
-		title: String as () => string,
-		refName: String as () => string,
 		dataItems: Array as () => any[],
 		dataFields: Object as () => Dictionary<TableColumn>,
-		instanceName: {
-			type: String as () => string,
-			default: 'results-table-table'
-		}
+		instanceName: String as () => string
 	},
 
 	computed: {
@@ -129,28 +110,12 @@ export default Vue.extend({
 			return datasetGetters.getVariables(this.$store);
 		},
 
-		solutionId(): string {
-			return routeGetters.getRouteSolutionId(this.$store);
-		},
-
 		solution(): Solution {
 			return solutionGetters.getActiveSolution(this.$store);
 		},
 
 		solutionIndex(): number {
 			return routeGetters.getActiveSolutionIndex(this.$store);
-		},
-
-		solutionHasErrored(): boolean {
-			return this.solution ? this.solution.progress === SOLUTION_ERRORED : false;
-		},
-
-		isPending(): boolean {
-			return !this.hasData && !this.solutionHasErrored;
-		},
-
-		hasNoResults(): boolean {
-			return this.solutionHasErrored || (this.hasData && this.items.length === 0);
 		},
 
 		hasResults(): boolean {
@@ -195,10 +160,6 @@ export default Vue.extend({
 
 		rowSelection(): RowSelection {
 			return routeGetters.getDecodedRowSelection(this.$store);
-		},
-
-		spinnerHTML(): string {
-			return spinnerHTML();
 		},
 
 		residualThresholdMin(): number {
@@ -304,25 +265,6 @@ export default Vue.extend({
 
 <style>
 
-.result-data-table-summary {
-	margin: 0;
-	flex-shrink: 0;
-}
-.results-data-table {
-	display: flex;
-	flex-direction: column;
-}
-.results-data-table-container {
-	display: flex;
-	overflow: auto;
-	background-color: white;
-}
-.results-data-no-results {
-	width: 100%;
-	background-color: #eee;
-	padding: 8px;
-	text-align: center;
-}
 table tr {
 	cursor: pointer;
 }
