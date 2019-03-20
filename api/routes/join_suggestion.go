@@ -20,9 +20,7 @@ import (
 	"net/url"
 	"time"
 
-	"github.com/microcosm-cc/bluemonday"
 	"github.com/pkg/errors"
-	"github.com/russross/blackfriday"
 	log "github.com/unchartedsoftware/plog"
 	"goji.io/pat"
 
@@ -30,68 +28,37 @@ import (
 	"github.com/uncharted-distil/distil/api/model/storage/datamart"
 )
 
-const (
-	searchTimeout = 10
-)
-
-// DatasetResult represents the result of a dataset response.
-type DatasetResult struct {
-	Dataset *model.Dataset `json:"dataset"`
-}
-
-// DatasetsResult represents the result of a datasets response.
-type DatasetsResult struct {
-	Datasets []*model.Dataset `json:"datasets"`
-}
-
-// DatasetHandler generates a route handler that returns a specified dataset
-// summary.
-func DatasetHandler(ctor model.MetadataStorageCtor) func(http.ResponseWriter, *http.Request) {
-	return func(w http.ResponseWriter, r *http.Request) {
-
-		// get dataset name
-		dataset := pat.Param(r, "dataset")
-
-		// get metadata client
-		storage, err := ctor()
-		if err != nil {
-			handleError(w, err)
-			return
-		}
-
-		// get dataset summary
-		res, err := storage.FetchDataset(dataset, false, false)
-		if err != nil {
-			handleError(w, err)
-			return
-		}
-
-		// marshal data
-		err = handleJSON(w, DatasetResult{
-			Dataset: res,
-		})
-		if err != nil {
-			handleError(w, errors.Wrap(err, "unable marshal dataset result into JSON"))
-			return
-		}
-	}
-}
-
-// DatasetsHandler generates a route handler that facilitates a search of
-// dataset descriptions and variable names, returning a name, description and
-// variable list for any dataset that matches. The search parameter is optional
+// JoinSuggestionHandler generates a route handler that facilitates a search of
+// dataset join suggestions. The search parameter is optional
 // it contains the search terms if set, and if unset, flags that a list of all
 // datasets should be returned.  The full list will be contain names only,
 // descriptions and variable lists will not be included.
-func DatasetsHandler(metaCtors map[string]model.MetadataStorageCtor) func(http.ResponseWriter, *http.Request) {
+func JoinSuggestionHandler(esCtor model.MetadataStorageCtor, metaCtors map[string]model.MetadataStorageCtor) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var datasets []*model.Dataset
+		// get dataset name
+		dataset := pat.Param(r, "dataset")
+
 		// check for search terms
 		terms, err := url.QueryUnescape(r.URL.Query().Get("search"))
 		if err != nil {
 			handleError(w, errors.Wrap(err, "Malformed datasets query"))
 			return
 		}
+
+		// pull the dataset info for matching
+		storage, err := esCtor()
+		if err != nil {
+			handleError(w, err)
+			return
+		}
+
+		res, err := storage.FetchDataset(dataset, false, false)
+		if err != nil {
+			handleError(w, err)
+			return
+		}
+
 		for provenance, ctor := range metaCtors {
 			// get metadata client
 			storage, err := ctor()
@@ -104,7 +71,7 @@ func DatasetsHandler(metaCtors map[string]model.MetadataStorageCtor) func(http.R
 			results := make(chan []*model.Dataset, 1)
 			errors := make(chan error, 1)
 			var datasetsPart []*model.Dataset
-			go loadDatasets(storage, terms, nil, results, errors)
+			go loadDatasets(storage, terms, res, results, errors)
 			select {
 			case res := <-results:
 				datasetsPart = res
@@ -154,28 +121,4 @@ func DatasetsHandler(metaCtors map[string]model.MetadataStorageCtor) func(http.R
 			return
 		}
 	}
-}
-
-func loadDatasets(storage model.MetadataStorage, terms string, baseDataset *model.Dataset, results chan []*model.Dataset, errors chan error) {
-	// if its present, forward a search, otherwise fetch all datasets
-	var datasetsPart []*model.Dataset
-	var err error
-	if terms != "" {
-		datasetsPart, err = storage.SearchDatasets(terms, baseDataset, false, false)
-	} else {
-		datasetsPart, err = storage.FetchDatasets(false, false)
-	}
-
-	if err != nil {
-		errors <- err
-	} else {
-		results <- datasetsPart
-	}
-}
-
-func renderMarkdown(markdown string) string {
-	// process the markdown into HTML
-	unsafe := blackfriday.Run([]byte(markdown))
-	// just to be safe, sanatize the HTML
-	return string(bluemonday.UGCPolicy().SanitizeBytes(unsafe))
 }
