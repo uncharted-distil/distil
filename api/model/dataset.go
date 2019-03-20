@@ -53,7 +53,7 @@ type QueriedDataset struct {
 
 // JoinSuggestion specifies potential joins between datasets.
 type JoinSuggestion struct {
-	BaseDataset *Dataset `json:"baseDataset"`
+	BaseDataset string   `json:"baseDataset"`
 	BaseColumns []string `json:"baseColumns"`
 	JoinColumns []string `json:"joinColumns"`
 }

@@ -95,6 +95,10 @@ func JoinSuggestionHandler(esCtor model.MetadataStorageCtor, metaCtors map[strin
 		// imported datasets override non-imported datasets
 		exists := make(map[string]*model.Dataset)
 		for _, dataset := range datasets {
+			if !hasSuggestions(dataset) {
+				continue
+			}
+
 			existing, ok := exists[dataset.ID]
 			if !ok {
 				// we don't have it, add it
@@ -121,4 +125,8 @@ func JoinSuggestionHandler(esCtor model.MetadataStorageCtor, metaCtors map[strin
 			return
 		}
 	}
+}
+
+func hasSuggestions(dataset *model.Dataset) bool {
+	return dataset.JoinSuggestions != nil && len(dataset.JoinSuggestions) > 0
 }

@@ -95,7 +95,7 @@ func parseNYUSearchResult(responseRaw []byte, baseDataset *api.Dataset) ([]*api.
 		joins := make([]*api.JoinSuggestion, 0)
 		for _, c := range res.Join {
 			joins = append(joins, &api.JoinSuggestion{
-				BaseDataset: baseDataset,
+				BaseDataset: baseDataset.ID,
 				BaseColumns: []string{c[0]},
 				JoinColumns: []string{c[1]},
 			})
