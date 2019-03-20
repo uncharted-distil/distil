@@ -159,7 +159,7 @@ func (s *Storage) FetchDataset(datasetName string, includeIndex bool, includeMet
 
 // SearchDatasets returns the datasets that match the search criteria in the
 // provided index.
-func (s *Storage) SearchDatasets(terms string, includeIndex bool, includeMeta bool) ([]*api.Dataset, error) {
+func (s *Storage) SearchDatasets(terms string, baseDataset *api.Dataset, includeIndex bool, includeMeta bool) ([]*api.Dataset, error) {
 	query := elastic.NewMultiMatchQuery(terms, "_id", "datasetFolder", "datasetID", "datasetName", "variables.colName", "description", "summaryMachine").
 		Analyzer("standard")
 	// execute the ES query

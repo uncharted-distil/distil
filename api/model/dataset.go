@@ -28,18 +28,19 @@ const (
 
 // Dataset represents a decsription of a dataset.
 type Dataset struct {
-	ID          string                 `json:"id"`
-	Name        string                 `json:"name"`
-	StorageName string                 `json:"storageName"`
-	Folder      string                 `json:"folder"`
-	Description string                 `json:"description"`
-	Summary     string                 `json:"summary"`
-	SummaryML   string                 `json:"summaryML"`
-	Variables   []*model.Variable      `json:"variables"`
-	NumRows     int64                  `json:"numRows"`
-	NumBytes    int64                  `json:"numBytes"`
-	Provenance  string                 `json:"provenance"`
-	Source      metadata.DatasetSource `json:"source"`
+	ID              string                 `json:"id"`
+	Name            string                 `json:"name"`
+	StorageName     string                 `json:"storageName"`
+	Folder          string                 `json:"folder"`
+	Description     string                 `json:"description"`
+	Summary         string                 `json:"summary"`
+	SummaryML       string                 `json:"summaryML"`
+	Variables       []*model.Variable      `json:"variables"`
+	NumRows         int64                  `json:"numRows"`
+	NumBytes        int64                  `json:"numBytes"`
+	Provenance      string                 `json:"provenance"`
+	Source          metadata.DatasetSource `json:"source"`
+	JoinSuggestions []*JoinSuggestion      `json:"joinSuggestion"`
 }
 
 // QueriedDataset wraps dataset querying components into a single entity.
@@ -48,6 +49,13 @@ type QueriedDataset struct {
 	Data     *FilteredData
 	Filters  *FilterParams
 	IsTrain  bool
+}
+
+// JoinSuggestion specifies potential joins between datasets.
+type JoinSuggestion struct {
+	BaseDataset string   `json:"baseDataset"`
+	BaseColumns []string `json:"baseColumns"`
+	JoinColumns []string `json:"joinColumns"`
 }
 
 // FetchDataset builds a QueriedDataset from the needed parameters.

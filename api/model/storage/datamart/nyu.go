@@ -41,6 +41,7 @@ type SearchResult struct {
 	Score      float64               `json:"score"`
 	Discoverer string                `json:"discoverer"`
 	Metadata   *SearchResultMetadata `json:"metadata"`
+	Join       [][]string            `json:"join_columns,omitempty"`
 }
 
 // SearchResultMetadata represents the dataset metadata.
@@ -59,13 +60,18 @@ type SearchResultColumn struct {
 	StructuralType string `json:"structural_type"`
 }
 
-func nyuSearch(datamart *Storage, query *SearchQuery) ([]byte, error) {
+func nyuSearch(datamart *Storage, query *SearchQuery, baseDataPath string) ([]byte, error) {
 	queryJSON, err := json.Marshal(query)
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to marshal datamart query")
 	}
 
-	responseRaw, err := datamart.client.PostRequest(nyuSearchFunction, map[string]string{"query": string(queryJSON)})
+	var responseRaw []byte
+	if baseDataPath != "" {
+		responseRaw, err = datamart.client.PostFile(nyuSearchFunction, "data", baseDataPath, map[string]string{"query": string(queryJSON)})
+	} else {
+		responseRaw, err = datamart.client.PostRequest(nyuSearchFunction, map[string]string{"query": string(queryJSON)})
+	}
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to post to NYU datamart search request")
 	}
@@ -73,7 +79,7 @@ func nyuSearch(datamart *Storage, query *SearchQuery) ([]byte, error) {
 	return responseRaw, nil
 }
 
-func parseNYUSearchResult(responseRaw []byte) ([]*api.Dataset, error) {
+func parseNYUSearchResult(responseRaw []byte, baseDataset *api.Dataset) ([]*api.Dataset, error) {
 	var dmResult SearchResults
 	err := json.Unmarshal(responseRaw, &dmResult)
 	if err != nil {
@@ -90,14 +96,25 @@ func parseNYUSearchResult(responseRaw []byte) ([]*api.Dataset, error) {
 				DisplayName: c.Name,
 			})
 		}
+
+		joins := make([]*api.JoinSuggestion, 0)
+		for _, c := range res.Join {
+			joins = append(joins, &api.JoinSuggestion{
+				BaseDataset: baseDataset.ID,
+				BaseColumns: []string{c[0]},
+				JoinColumns: []string{c[1]},
+			})
+		}
+
 		datasets = append(datasets, &api.Dataset{
-			ID:          res.ID,
-			Name:        res.Metadata.Name,
-			Description: res.Metadata.Description,
-			NumRows:     int64(res.Metadata.NumRows),
-			NumBytes:    int64(res.Metadata.Size),
-			Variables:   vars,
-			Provenance:  ProvenanceNYU,
+			ID:              res.ID,
+			Name:            res.Metadata.Name,
+			Description:     res.Metadata.Description,
+			NumRows:         int64(res.Metadata.NumRows),
+			NumBytes:        int64(res.Metadata.Size),
+			Variables:       vars,
+			Provenance:      ProvenanceNYU,
+			JoinSuggestions: joins,
 		})
 	}
 

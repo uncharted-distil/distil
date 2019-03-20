@@ -28,8 +28,8 @@ const (
 	isiGetFunction    = "new/materialize_data"
 )
 
-type searchQuery func(datamart *Storage, query *SearchQuery) ([]byte, error)
-type parseSearchResult func(responseRaw []byte) ([]*model.Dataset, error)
+type searchQuery func(datamart *Storage, query *SearchQuery, baseDataPath string) ([]byte, error)
+type parseSearchResult func(responseRaw []byte, baseDataset *model.Dataset) ([]*model.Dataset, error)
 type downloadDataset func(datamart *Storage, id string, uri string) (string, error)
 
 // Storage accesses the underlying datamart instance.
