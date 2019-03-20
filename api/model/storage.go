@@ -87,7 +87,7 @@ type MetadataStorage interface {
 	FetchVariableDisplay(dataset string, varName string) (*model.Variable, error)
 	FetchDataset(dataset string, includeIndex bool, includeMeta bool) (*Dataset, error)
 	FetchDatasets(includeIndex bool, includeMeta bool) ([]*Dataset, error)
-	SearchDatasets(terms string, includeIndex bool, includeMeta bool) ([]*Dataset, error)
+	SearchDatasets(terms string, baseDataset *Dataset, includeIndex bool, includeMeta bool) ([]*Dataset, error)
 	ImportDataset(id string, uri string) (string, error)
 
 	// Dataset manipulation

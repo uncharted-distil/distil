@@ -161,7 +161,7 @@ func loadDatasets(storage model.MetadataStorage, terms string, results chan []*m
 	var datasetsPart []*model.Dataset
 	var err error
 	if terms != "" {
-		datasetsPart, err = storage.SearchDatasets(terms, false, false)
+		datasetsPart, err = storage.SearchDatasets(terms, nil, false, false)
 	} else {
 		datasetsPart, err = storage.FetchDatasets(false, false)
 	}

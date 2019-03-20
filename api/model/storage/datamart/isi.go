@@ -85,7 +85,7 @@ type ISIMaterializedDataset struct {
 	Data    string `json:"data"`
 }
 
-func isiSearch(datamart *Storage, query *SearchQuery) ([]byte, error) {
+func isiSearch(datamart *Storage, query *SearchQuery, baseDataPath string) ([]byte, error) {
 	log.Infof("querying ISI datamart")
 	queryJSON, err := json.Marshal(query)
 	if err != nil {
@@ -113,7 +113,7 @@ func isiSearch(datamart *Storage, query *SearchQuery) ([]byte, error) {
 	return responseRaw, nil
 }
 
-func parseISISearchResult(responseRaw []byte) ([]*api.Dataset, error) {
+func parseISISearchResult(responseRaw []byte, baseDataset *api.Dataset) ([]*api.Dataset, error) {
 	var dmResult ISISearchResults
 	err := json.Unmarshal(responseRaw, &dmResult)
 	if err != nil {

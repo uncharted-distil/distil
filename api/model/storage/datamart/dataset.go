@@ -16,9 +16,13 @@
 package datamart
 
 import (
+	"path"
 	"strings"
 
 	"github.com/pkg/errors"
+	"github.com/uncharted-distil/distil-ingest/metadata"
+
+	"github.com/uncharted-distil/distil/api/env"
 	api "github.com/uncharted-distil/distil/api/model"
 )
 
@@ -56,7 +60,7 @@ func (s *Storage) ImportDataset(id string, uri string) (string, error) {
 // FetchDatasets returns all datasets in the provided index.
 func (s *Storage) FetchDatasets(includeIndex bool, includeMeta bool) ([]*api.Dataset, error) {
 	// use default string in search to get complete list
-	return s.SearchDatasets("", includeIndex, includeMeta)
+	return s.SearchDatasets("", nil, includeIndex, includeMeta)
 }
 
 // FetchDataset returns a dataset in the provided index.
@@ -66,11 +70,11 @@ func (s *Storage) FetchDataset(datasetName string, includeIndex bool, includeMet
 
 // SearchDatasets returns the datasets that match the search criteria in the
 // provided index.
-func (s *Storage) SearchDatasets(terms string, includeIndex bool, includeMeta bool) ([]*api.Dataset, error) {
+func (s *Storage) SearchDatasets(terms string, baseDataset *api.Dataset, includeIndex bool, includeMeta bool) ([]*api.Dataset, error) {
 	if terms == "" {
 		return make([]*api.Dataset, 0), nil
 	}
-	return s.searchREST(terms)
+	return s.searchREST(terms, baseDataset)
 }
 
 // SetDataType is not supported by the datamart.
@@ -88,7 +92,7 @@ func (s *Storage) DeleteVariable(dataset string, varName string) error {
 	return errors.Errorf("Not supported")
 }
 
-func (s *Storage) searchREST(searchText string) ([]*api.Dataset, error) {
+func (s *Storage) searchREST(searchText string, baseDataset *api.Dataset) ([]*api.Dataset, error) {
 	terms := strings.Fields(searchText)
 
 	// get complete URI for the endpoint
@@ -101,12 +105,25 @@ func (s *Storage) searchREST(searchText string) ([]*api.Dataset, error) {
 		},
 	}
 
-	responseRaw, err := s.search(s, query)
+	// figure out the data path if a dataset is provided
+	dataPath := ""
+	if baseDataset != nil {
+		datasetPath := env.ResolvePath(baseDataset.Source, baseDataset.Folder)
+		meta, err := metadata.LoadMetadataFromOriginalSchema(path.Join(datasetPath, "datasetDoc.json"))
+		if err != nil {
+			return nil, errors.Wrap(err, "unable to load metadatat")
+		}
+
+		dr := meta.GetMainDataResource()
+		dataPath = path.Join(datasetPath, dr.ResPath)
+	}
+
+	responseRaw, err := s.search(s, query, dataPath)
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to post datamart search request")
 	}
 
-	datasets, err := s.parse(responseRaw)
+	datasets, err := s.parse(responseRaw, baseDataset)
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to parse datamart search response")
 	}

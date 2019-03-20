@@ -46,7 +46,7 @@ func (s *Storage) ImportDataset(id string, uri string) (string, error) {
 // FetchDatasets returns all datasets in the provided index.
 func (s *Storage) FetchDatasets(includeIndex bool, includeMeta bool) ([]*api.Dataset, error) {
 	// use default string in search to get complete list
-	return s.SearchDatasets("", includeIndex, includeMeta)
+	return s.SearchDatasets("", nil, includeIndex, includeMeta)
 }
 
 // FetchDataset returns a dataset in the provided index.
@@ -56,7 +56,7 @@ func (s *Storage) FetchDataset(datasetName string, includeIndex bool, includeMet
 
 // SearchDatasets returns the datasets that match the search criteria in the
 // provided index.
-func (s *Storage) SearchDatasets(terms string, includeIndex bool, includeMeta bool) ([]*api.Dataset, error) {
+func (s *Storage) SearchDatasets(terms string, baseDataset *api.Dataset, includeIndex bool, includeMeta bool) ([]*api.Dataset, error) {
 	rawSets, err := s.searchFolders(strings.Fields(terms))
 	if err != nil {
 		return nil, err
