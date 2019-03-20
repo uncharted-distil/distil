@@ -66,7 +66,12 @@ func nyuSearch(datamart *Storage, query *SearchQuery, baseDataPath string) ([]by
 		return nil, errors.Wrap(err, "unable to marshal datamart query")
 	}
 
-	responseRaw, err := datamart.client.PostFile(nyuSearchFunction, "data", baseDataPath, map[string]string{"query": string(queryJSON)})
+	var responseRaw []byte
+	if baseDataPath != "" {
+		responseRaw, err = datamart.client.PostFile(nyuSearchFunction, "data", baseDataPath, map[string]string{"query": string(queryJSON)})
+	} else {
+		responseRaw, err = datamart.client.PostRequest(nyuSearchFunction, map[string]string{"query": string(queryJSON)})
+	}
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to post to NYU datamart search request")
 	}
