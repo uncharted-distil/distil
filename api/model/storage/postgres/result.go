@@ -250,14 +250,14 @@ func addIncludePredictedFilterToWhere(wheres []string, params []interface{}, pre
 	switch predictedFilter.Type {
 	case model.NumericalFilter:
 		// numerical range-based filter
-		where = fmt.Sprintf("cast(value AS double precision) >= $%d AND cast(value AS double precision) <= $%d", len(params)+1, len(params)+2)
+		where = fmt.Sprintf("cast(predicted.value AS double precision) >= $%d AND cast(predicted.value AS double precision) <= $%d", len(params)+1, len(params)+2)
 		params = append(params, *predictedFilter.Min)
 		params = append(params, *predictedFilter.Max)
 
 	case model.BivariateFilter:
 		// cast to double precision in case of string based representation
 		// hardcode [lat, lon] format for now
-		where := fmt.Sprintf("value[2] >= $%d AND value[2] <= $%d value[1] >= $%d AND value[1] <= $%d", len(params)+1, len(params)+2, len(params)+3, len(params)+4)
+		where := fmt.Sprintf("predicted.value[2] >= $%d AND predicted.value[2] <= $%d predicted.value[1] >= $%d AND predicted.value[1] <= $%d", len(params)+1, len(params)+2, len(params)+3, len(params)+4)
 		wheres = append(wheres, where)
 		params = append(params, predictedFilter.Bounds.MinX)
 		params = append(params, predictedFilter.Bounds.MaxX)
@@ -277,7 +277,7 @@ func addIncludePredictedFilterToWhere(wheres []string, params []interface{}, pre
 		}
 
 		if len(categories) >= 1 {
-			where = fmt.Sprintf("value IN (%s)", strings.Join(categories, ", "))
+			where = fmt.Sprintf("predicted.value IN (%s)", strings.Join(categories, ", "))
 		}
 
 	case model.RowFilter:
@@ -290,7 +290,7 @@ func addIncludePredictedFilterToWhere(wheres []string, params []interface{}, pre
 
 		}
 		if len(indices) >= 1 {
-			where = fmt.Sprintf("value IN (%s)", strings.Join(indices, ", "))
+			where = fmt.Sprintf("predicted.value IN (%s)", strings.Join(indices, ", "))
 		}
 
 	default:
@@ -308,7 +308,7 @@ func addExcludePredictedFilterToWhere(wheres []string, params []interface{}, pre
 	switch predictedFilter.Type {
 	case model.NumericalFilter:
 		// numerical range-based filter
-		where = fmt.Sprintf("(cast(value AS double precision) < $%d OR cast(value AS double precision) > $%d)", len(params)+1, len(params)+2)
+		where = fmt.Sprintf("(cast(predicted.value AS double precision) < $%d OR cast(predicted.value AS double precision) > $%d)", len(params)+1, len(params)+2)
 		params = append(params, *predictedFilter.Min)
 		params = append(params, *predictedFilter.Max)
 
@@ -316,7 +316,7 @@ func addExcludePredictedFilterToWhere(wheres []string, params []interface{}, pre
 		// bivariate
 		// cast to double precision in case of string based representation
 		// hardcode [lat, lon] format for now
-		where := fmt.Sprintf("(value[2] < $%d OR value[2] > $%d) OR (value[1] < $%d OR value[1] > $%d)", len(params)+1, len(params)+2, len(params)+3, len(params)+4)
+		where := fmt.Sprintf("(predicted.value[2] < $%d OR predicted.value[2] > $%d) OR (predicted.value[1] < $%d OR predicted.value[1] > $%d)", len(params)+1, len(params)+2, len(params)+3, len(params)+4)
 		wheres = append(wheres, where)
 		params = append(params, predictedFilter.Bounds.MinX)
 		params = append(params, predictedFilter.Bounds.MaxX)
@@ -336,7 +336,7 @@ func addExcludePredictedFilterToWhere(wheres []string, params []interface{}, pre
 		}
 
 		if len(categories) >= 1 {
-			where = fmt.Sprintf("value NOT IN (%s)", strings.Join(categories, ", "))
+			where = fmt.Sprintf("predicted.value NOT IN (%s)", strings.Join(categories, ", "))
 		}
 
 	case model.RowFilter:
@@ -349,7 +349,7 @@ func addExcludePredictedFilterToWhere(wheres []string, params []interface{}, pre
 
 		}
 		if len(indices) >= 1 {
-			where = fmt.Sprintf("value NOT IN (%s)", strings.Join(indices, ", "))
+			where = fmt.Sprintf("predicted.value NOT IN (%s)", strings.Join(indices, ", "))
 		}
 
 	default:

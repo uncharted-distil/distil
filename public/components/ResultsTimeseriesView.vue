@@ -1,6 +1,6 @@
 <template>
 
-	<div class="results-timeseries-view" @mousemove="mouseMove" @wheel="scroll">
+	<div class="results-timeseries-view" @mousemove="mouseMove" @mouseleave="mouseLeave" @wheel="scroll">
 		<div class="timeseries-row-header">
 			<div class="timeseries-var-col pad-top"><b>VARIABLES</b></div>
 			<div class="timeseries-min-col pad-top"><b>MIN</b></div>
@@ -12,7 +12,7 @@
 			</div>
 		</div>
 		<div class="timeseries-rows">
-			<div v-for="item in items">
+			<div class="prediction-row" v-for="item in items">
 				<sparkline-row
 					:x-col="timeseriesGrouping.properties.xCol"
 					:y-col="timeseriesGrouping.properties.yCol"
@@ -22,6 +22,9 @@
 					:margin="margin"
 					:highlight-pixel-x="highlightPixelX">
 				</sparkline-row>
+				<div class="prediction-result" v-bind:class="{ 'correct-prediction': isCorrect(item), 'incorrect-prediction': !isCorrect(item)}">
+					<b>{{item[predictedCol]}}</b>
+				</div>
 			</div>
 		</div>
 		<div class="vertical-line"></div>
@@ -42,6 +45,8 @@ import { RowSelection, HighlightRoot } from '../store/highlights/index';
 import { TableRow, TableColumn, TimeseriesExtrema, Variable, Grouping } from '../store/dataset/index';
 import { getters as routeGetters } from '../store/route/module';
 import { getters as datasetGetters } from '../store/dataset/module';
+import { getters as solutionGetters } from '../store/solutions/module';
+import { Solution } from '../store/solutions/index';
 import { updateHighlightRoot } from '../util/highlights';
 import { getTimeseriesGroupingsFromFields } from '../util/data';
 
@@ -88,6 +93,10 @@ export default Vue.extend({
 			return routeGetters.getRouteDataset(this.$store);
 		},
 
+		target(): string {
+			return routeGetters.getRouteTargetVariable(this.$store);
+		},
+
 		variables(): Variable[] {
 			return datasetGetters.getVariables(this.$store);
 		},
@@ -114,6 +123,14 @@ export default Vue.extend({
 
 		highlightRoot(): HighlightRoot {
 			return routeGetters.getDecodedHighlightRoot(this.$store);
+		},
+
+		solution(): Solution {
+			return solutionGetters.getActiveSolution(this.$store);
+		},
+
+		predictedCol(): string {
+			return this.solution ? this.solution.predictedKey : '';
 		},
 
 		microExtrema(): TimeseriesExtrema {
@@ -149,7 +166,7 @@ export default Vue.extend({
 		isTimeseriesViewHighlight(): boolean {
 			// ignore any highlights unless they are range highlights
 			return this.highlightRoot &&
-				this.highlightRoot.key === this.timeseriesGrouping.properties.clusterCol &&
+				this.highlightRoot.key === this.timeseriesGrouping.idCol &&
 				this.highlightRoot.value.from !== undefined &&
 				this.highlightRoot.value.to !== undefined;
 		},
@@ -186,6 +203,13 @@ export default Vue.extend({
 			// TODO: invert filters
 			return filters;
 		},
+		isCorrect(item: TableRow): boolean {
+			return item[this.predictedCol] === item[this.target];
+		},
+		mouseLeave() {
+			$('.vertical-line').hide();
+			this.highlightPixelX = null;
+		},
 		mouseMove(event) {
 			const parentOffset = $('.results-timeseries-view').offset();
 			const chartBounds = $('.timeseries-chart-axis').offset();
@@ -193,8 +217,8 @@ export default Vue.extend({
 			const chartScroll = $('.results-timeseries-view').parent().scrollTop();
 
 			const relX = event.pageX - parentOffset.left;
-
 			const chartLeft = chartBounds.left - parentOffset.left;
+
 			if (relX >= chartLeft && relX <= chartLeft + chartWidth) {
 				$('.vertical-line').show();
 				$('.vertical-line').css({
@@ -320,7 +344,7 @@ export default Vue.extend({
 				updateHighlightRoot(this.$router, {
 					context: this.instanceName,
 					dataset: this.dataset,
-					key: this.timeseriesGrouping.properties.clusterCol,
+					key: this.timeseriesGrouping.idCol,
 					value: {
 						from: this.microMin,
 						to: this.microMax
@@ -369,7 +393,7 @@ export default Vue.extend({
 				updateHighlightRoot(this.$router, {
 					context: this.instanceName,
 					dataset: this.dataset,
-					key: this.timeseriesGrouping.properties.clusterCol,
+					key: this.timeseriesGrouping.idCol,
 					value: {
 						from: this.microMin,
 						to: this.microMax
@@ -411,6 +435,20 @@ svg.axis {
 	max-height: 64px;
 	width: 100%;
 }
+.prediction-row {
+	position: relative;
+}
+.prediction-result {
+	position: absolute;
+	top: 4px;
+	right: 4px;
+}
+.correct-prediction {
+	color: #00c6e1;
+}
+.incorrect-prediction {
+	color: #e05353;
+}
 .results-timeseries-view {
 	position: relative;
 	flex: 1;
@@ -429,7 +467,8 @@ svg.axis {
 	position: relative;
 	height: calc(100% - 64px);
 	z-index: 0;
-	overflow: scroll;
+	overflow-x: hidden;
+	overflow-y: auto;
 }
 .timeseries-var-col {
 	float: left;

@@ -1,30 +1,7 @@
 <template>
 	<div class="results-data-slot">
 		<p class="results-data-slot-summary" v-if="hasResults">
-			<b-nav tabs>
-				<b-nav-item>
-					<small v-html="title"></small>
-				</b-nav-item>
-				<b-form-group class="view-button ml-auto">
-					<b-form-radio-group buttons v-model="viewType" button-variant="outline-secondary">
-						<b-form-radio :value="IMAGE_VIEW" v-if="isImageDataset" class="view-button">
-							<i class="fa fa-image"></i>
-						</b-form-radio >
-						<b-form-radio :value="TABLE_VIEW" class="view-button">
-							<i class="fa fa-columns"></i>
-						</b-form-radio >
-						<b-form-radio :value="GRAPH_VIEW" class="view-button">
-							<i class="fa fa-share-alt"></i>
-						</b-form-radio >
-						<b-form-radio :value="GEO_VIEW" class="view-button">
-							<i class="fa fa-globe"></i>
-						</b-form-radio >
-						<b-form-radio :value="TIMESERIES_VIEW" class="view-button">
-							<i class="fa fa-line-chart"></i>
-						</b-form-radio >
-					</b-form-radio-group>
-				</b-form-group>
-			</b-nav>
+			<small v-html="title"></small>
 		</p>
 
 		<div class="results-data-slot-container flex-1">
@@ -80,9 +57,16 @@ export default Vue.extend({
 		ResultsTimeseriesView
 	},
 
+	props: {
+		title: String as () => string,
+		dataItems: Array as () => any[],
+		dataFields: Object as () => Dictionary<TableColumn>,
+		instanceName: String as () => string,
+		viewType: String as () => string
+	},
+
 	data() {
 		return {
-			viewType: TABLE_VIEW,
 			includedActive: true,
 			TABLE_VIEW: TABLE_VIEW,
 			IMAGE_VIEW: IMAGE_VIEW,
@@ -90,13 +74,6 @@ export default Vue.extend({
 			GEO_VIEW: GEO_VIEW,
 			TIMESERIES_VIEW: TIMESERIES_VIEW
 		};
-	},
-
-	props: {
-		title: String as () => string,
-		dataItems: Array as () => any[],
-		dataFields: Object as () => Dictionary<TableColumn>,
-		instanceName: String as () => string
 	},
 
 	computed: {
@@ -143,10 +120,6 @@ export default Vue.extend({
 
 		spinnerHTML(): string {
 			return spinnerHTML();
-		},
-
-		isImageDataset(): boolean {
-			return this.variables.filter(v => v.colType === 'image').length  > 0;
 		}
 	}
 

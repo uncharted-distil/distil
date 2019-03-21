@@ -44,7 +44,7 @@ export default Vue.extend({
 		xCol: String as () => string,
 		yCol: String as () => string,
 		timeseriesCol: String as () => string,
-		timeseriesId: String as () => string,
+		timeseriesId: String as () => string
 	},
 	data() {
 		return {

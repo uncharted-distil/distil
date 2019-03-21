@@ -1,6 +1,6 @@
 <template>
 
-	<div class="select-timeseries-view" @mousemove="mouseMove" @wheel="scroll">
+	<div class="select-timeseries-view" @mousemove="mouseMove" @mouseleave="mouseLeave" @wheel="scroll">
 		<div class="timeseries-row-header">
 			<div class="timeseries-var-col pad-top"><b>VARIABLES</b></div>
 			<div class="timeseries-min-col pad-top"><b>MIN</b></div>
@@ -155,7 +155,7 @@ export default Vue.extend({
 		isTimeseriesViewHighlight(): boolean {
 			// ignore any highlights unless they are range highlights
 			return this.highlightRoot &&
-				this.highlightRoot.key === this.timeseriesGrouping.properties.clusterCol &&
+				this.highlightRoot.key === this.timeseriesGrouping.idCol &&
 				this.highlightRoot.value.from !== undefined &&
 				this.highlightRoot.value.to !== undefined;
 		},
@@ -191,6 +191,10 @@ export default Vue.extend({
 		invertFilters(filters: Filter[]): Filter[] {
 			// TODO: invert filters
 			return filters;
+		},
+		mouseLeave() {
+			$('.vertical-line').hide();
+			this.highlightPixelX = null;
 		},
 		mouseMove(event) {
 			const parentOffset = $('.select-timeseries-view').offset();
@@ -326,7 +330,7 @@ export default Vue.extend({
 				updateHighlightRoot(this.$router, {
 					context: this.instanceName,
 					dataset: this.dataset,
-					key: this.timeseriesGrouping.properties.clusterCol,
+					key: this.timeseriesGrouping.idCol,
 					value: {
 						from: this.microMin,
 						to: this.microMax
@@ -375,7 +379,7 @@ export default Vue.extend({
 				updateHighlightRoot(this.$router, {
 					context: this.instanceName,
 					dataset: this.dataset,
-					key: this.timeseriesGrouping.properties.clusterCol,
+					key: this.timeseriesGrouping.idCol,
 					value: {
 						from: this.microMin,
 						to: this.microMax
@@ -435,7 +439,8 @@ svg.axis {
 	position: relative;
 	height: calc(100% - 64px);
 	z-index: 0;
-	overflow: scroll;
+	overflow-x: hidden;
+	overflow-y: auto;
 }
 .timeseries-var-col {
 	float: left;

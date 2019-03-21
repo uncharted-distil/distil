@@ -1,23 +1,48 @@
 <template>
 	<div class="results-slots" v-bind:class="{ 'one-slot': !hasHighlights, 'two-slots': hasHighlights }">
+		<p class="nav-link font-weight-bold">
+			<b-nav>
+				Samples Modeled
+				<b-form-group class="view-button ml-auto">
+					<b-form-radio-group buttons v-model="viewType" button-variant="outline-secondary">
+						<b-form-radio :value="TABLE_VIEW" class="view-button">
+							<i class="fa fa-columns"></i>
+						</b-form-radio >
+						<b-form-radio :value="IMAGE_VIEW" class="view-button">
+							<i class="fa fa-image"></i>
+						</b-form-radio >
+						<b-form-radio :value="GRAPH_VIEW" class="view-button">
+							<i class="fa fa-share-alt"></i>
+						</b-form-radio >
+						<b-form-radio :value="GEO_VIEW" class="view-button">
+							<i class="fa fa-globe"></i>
+						</b-form-radio >
+						<b-form-radio :value="TIMESERIES_VIEW" class="view-button">
+							<i class="fa fa-line-chart"></i>
+						</b-form-radio >
+					</b-form-radio-group>
+				</b-form-group>
+			</b-nav>
+		</p>
 		<template v-if="hasHighlights">
-			<p class="nav-link font-weight-bold">Samples Modeled</p>
 			<results-data-slot
 				:title="topSlotTitle"
 				:data-fields="includedResultTableDataFields"
-				:data-items="includedResultTableDataItems"></results-data-slot>
+				:data-items="includedResultTableDataItems"
+				:view-type="viewType"></results-data-slot>
 			<br>
 			<results-data-slot
 				:title="bottomSlotTitle"
 				:data-fields="excludedResultTableDataFields"
-				:data-items="excludedResultTableDataItems"></results-data-slot>
+				:data-items="excludedResultTableDataItems"
+				:view-type="viewType"></results-data-slot>
 		</template>
 		<template v-if="!hasHighlights">
-			<p class="nav-link font-weight-bold">Samples Modeled</p>
 			<results-data-slot
 				:title="singleSlotTitle"
 				:data-fields="includedResultTableDataFields"
-				:data-items="includedResultTableDataItems"></results-data-slot>
+				:data-items="includedResultTableDataItems"
+				:view-type="viewType"></results-data-slot>
 		</template>
 	</div>
 </template>
@@ -36,11 +61,28 @@ import { Solution } from '../store/solutions/index';
 import { Variable, TableRow, TableColumn } from '../store/dataset/index';
 import { getHighlights } from '../util/highlights';
 
+const TABLE_VIEW = 'table';
+const IMAGE_VIEW = 'image';
+const GRAPH_VIEW = 'graph';
+const GEO_VIEW = 'geo';
+const TIMESERIES_VIEW = 'timeseries';
+
 export default Vue.extend({
 	name: 'results-comparison',
 
 	components: {
 		ResultsDataSlot,
+	},
+
+	data() {
+		return {
+			viewType: TABLE_VIEW,
+			TABLE_VIEW: TABLE_VIEW,
+			IMAGE_VIEW: IMAGE_VIEW,
+			GRAPH_VIEW: GRAPH_VIEW,
+			GEO_VIEW: GEO_VIEW,
+			TIMESERIES_VIEW: TIMESERIES_VIEW
+		};
 	},
 
 	computed: {
@@ -173,5 +215,11 @@ export default Vue.extend({
 }
 .erroneous-color {
 	color: #e05353;
+}
+.view-button {
+	cursor: pointer;
+}
+.view-button input[type=radio]{
+    display:none;
 }
 </style>

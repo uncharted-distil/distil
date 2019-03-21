@@ -35,15 +35,13 @@ export function createFilterFromHighlightRoot(highlightRoot: HighlightRoot, mode
 	const variables = datasetGetters.getVariables(store);
 
 	const variable = variables.find(v => v.colName === key);
-	if (!variable) {
-		return null;
-	}
-
-	if (variable.grouping) {
+	let grouping = null;
+	if (variable && variable.grouping) {
 		if (variable.grouping.type === 'timeseries') {
 			key = variable.grouping.properties.clusterCol;
 			key = addClusterPrefix(key);
 		}
+		grouping = variable.grouping;
 	}
 
 	const type = getVarType(key);
@@ -71,7 +69,7 @@ export function createFilterFromHighlightRoot(highlightRoot: HighlightRoot, mode
 
 		// TODO: we currently have no support for filter timeseries data by
 		// ranges and handle it in the client.
-		if (type === TIMESERIES_FILTER) {
+		if (grouping && grouping.type === TIMESERIES_FILTER) {
 			return null;
 		}
 

@@ -7,11 +7,11 @@
 
 				<b-form-group class="view-button ml-auto">
 					<b-form-radio-group buttons v-model="viewType" button-variant="outline-secondary">
-						<b-form-radio :value="IMAGE_VIEW" v-if="isImageDataset" class="view-button">
-							<i class="fa fa-image"></i>
-						</b-form-radio >
 						<b-form-radio :value="TABLE_VIEW" class="view-button">
 							<i class="fa fa-columns"></i>
+						</b-form-radio >
+						<b-form-radio :value="IMAGE_VIEW" class="view-button">
+							<i class="fa fa-image"></i>
 						</b-form-radio >
 						<b-form-radio :value="GRAPH_VIEW" class="view-button">
 							<i class="fa fa-share-alt"></i>
@@ -201,10 +201,6 @@ export default Vue.extend({
 
 		isFilteringSelection(): boolean {
 			return !!this.rowSelection;
-		},
-
-		isImageDataset(): boolean {
-			return this.variables.filter(v => v.colType === 'image').length  > 0;
 		}
 	},
 
