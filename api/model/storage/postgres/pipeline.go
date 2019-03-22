@@ -79,7 +79,7 @@ func (s *Storage) isBadSolution(solution *api.Solution) (bool, error) {
 	if !model.IsNumerical(variable.Type) {
 		return false, nil
 	}
-	f := NewNumericalField(s, storageName, variable)
+	f := NewNumericalField(s, storageName, variable.Name, variable.DisplayName, variable.Type)
 
 	// predicted extrema
 	predictedExtrema, err := s.FetchResultsExtremaByURI(dataset, storageName, solution.Result.ResultURI)

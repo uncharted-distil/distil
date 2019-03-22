@@ -47,10 +47,10 @@
 <script lang="ts">
 
 import Vue from 'vue';
-import VariableFacets from '../components/VariableFacets.vue';
-import ResultsComparison from '../components/ResultsComparison.vue';
-import ResultSummaries from '../components/ResultSummaries.vue';
-import ResultTargetVariable from '../components/ResultTargetVariable.vue';
+import VariableFacets from '../components/VariableFacets';
+import ResultsComparison from '../components/ResultsComparison';
+import ResultSummaries from '../components/ResultSummaries';
+import ResultTargetVariable from '../components/ResultTargetVariable';
 import { actions as viewActions } from '../store/view/module';
 import { getters as datasetGetters } from '../store/dataset/module';
 import { getters as resultGetters } from '../store/results/module';

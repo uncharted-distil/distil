@@ -27,7 +27,7 @@ type DataStorageCtor func() (DataStorage, error)
 
 // DataStorage defines the functions available to query the underlying data storage.
 type DataStorage interface {
-	FetchNumRows(storageName string, filters map[string]interface{}) (int, error)
+	FetchNumRows(storageName string, variables []*model.Variable, filters map[string]interface{}) (int, error)
 	FetchData(dataset string, storageName string, filterParams *FilterParams, invert bool) (*FilteredData, error)
 	FetchSummary(dataset string, storageName string, varName string, filterParams *FilterParams) (*Histogram, error)
 	FetchSummaryByResult(dataset string, storageName string, varName string, resultURI string, filterParams *FilterParams, extrema *Extrema) (*Histogram, error)
@@ -39,7 +39,7 @@ type DataStorage interface {
 	FetchResidualsSummary(dataset string, storageName string, resultURI string, filterParams *FilterParams, extrema *Extrema) (*Histogram, error)
 	FetchResidualsExtremaByURI(dataset string, storageName string, resultURI string) (*Extrema, error)
 	FetchExtremaByURI(dataset string, storageName string, resultURI string, variable string) (*Extrema, error)
-
+	FetchTimeseries(dataset string, storageName string, timeseriesColName string, xColName string, yColName string, timeseriesURI string, filterParams *FilterParams) ([][]float64, error)
 	// Dataset manipulation
 	SetDataType(dataset string, storageName string, varName string, varType string) error
 	AddVariable(dataset string, storageName string, varName string, varType string) error
@@ -94,4 +94,5 @@ type MetadataStorage interface {
 	SetDataType(dataset string, varName string, varType string) error
 	AddVariable(dataset string, varName string, varType string, varDistilRole string) error
 	DeleteVariable(dataset string, varName string) error
+	AddGrouping(datasetName string, grouping model.Grouping) error
 }

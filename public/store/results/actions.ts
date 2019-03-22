@@ -8,7 +8,7 @@ import { HighlightRoot } from '../highlights/index';
 import { mutations } from './module';
 import { ResultsState } from './index';
 import { addHighlightToFilterParams } from '../../util/highlights';
-import { getSummary, createPendingSummary, createErrorSummary, createEmptyTableData } from '../../util/data';
+import { getSummary, createPendingSummary, createErrorSummary, createEmptyTableData, fetchHistogramExemplars } from '../../util/data';
 
 export type ResultsContext = ActionContext<ResultsState, DistilState>;
 
@@ -45,7 +45,11 @@ export const actions = {
 
 			return axios.post(`/distil/training-summary/${dataset}/${key}/${solution.resultId}`, {})
 				.then(response => {
-					mutations.updateTrainingSummary(context, response.data.histogram);
+					const histogram = response.data.histogram;
+					return fetchHistogramExemplars(args.dataset, variable.colName, histogram)
+						.then(() => {
+							mutations.updateTrainingSummary(context, histogram);
+						});
 				})
 				.catch(error => {
 					console.error(error);
@@ -81,7 +85,11 @@ export const actions = {
 
 		return axios.post(`/distil/target-summary/${args.dataset}/${args.target}/${solution.resultId}`, {})
 			.then(response => {
-				mutations.updateTargetSummary(context, response.data.histogram);
+				const histogram = response.data.histogram;
+				return fetchHistogramExemplars(args.dataset, args.target, histogram)
+					.then(() => {
+						mutations.updateTargetSummary(context, histogram);
+					});
 			})
 			.catch(error => {
 				console.error(error);

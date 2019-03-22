@@ -30,7 +30,7 @@
 <script lang="ts">
 
 import Vue from 'vue';
-import VariableFacets from '../components/VariableFacets.vue';
+import VariableFacets from '../components/VariableFacets';
 import { VariableSummary } from '../store/dataset/index';
 import { Highlight } from '../store/highlights/index';
 import { getters as routeGetters } from '../store/route/module';

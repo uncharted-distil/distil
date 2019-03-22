@@ -22,11 +22,13 @@ export const getters = {
 	getFilteredDatasets: read(moduleGetters.getFilteredDatasets),
 	// variables
 	getVariables: read(moduleGetters.getVariables),
+	getGroupings: read(moduleGetters.getVariables),
 	getVariablesMap: read(moduleGetters.getVariablesMap),
 	getVariableTypesMap: read(moduleGetters.getVariableTypesMap),
 	getVariableSummaries: read(moduleGetters.getVariableSummaries),
 	// files
 	getFiles: read(moduleGetters.getFiles),
+	getTimeseries: read(moduleGetters.getTimeseries),
 	getTimeseriesExtrema: read(moduleGetters.getTimeseriesExtrema),
 	// join data
 	getJoinDatasetsTableData: read(moduleGetters.getJoinDatasetsTableData),
@@ -51,6 +53,7 @@ export const actions = {
 	searchDatasets: dispatch(moduleActions.searchDatasets),
 	geocodeVariable: dispatch(moduleActions.geocodeVariable),
 	importDataset: dispatch(moduleActions.importDataset),
+	setGrouping: dispatch(moduleActions.setGrouping),
 	uploadDataFile: dispatch(moduleActions.uploadDataFile),
 	// variables
 	fetchVariables: dispatch(moduleActions.fetchVariables),
@@ -85,11 +88,12 @@ export const mutations = {
 	updateVariableType: commit(moduleMutations.updateVariableType),
 	reviewVariableType: commit(moduleMutations.reviewVariableType),
 	updateVariableSummaries: commit(moduleMutations.updateVariableSummaries),
+	clearVariableSummaries: commit(moduleMutations.clearVariableSummaries),
 	// ranking
 	updateVariableRankings: commit(moduleMutations.updateVariableRankings),
 	// files
 	updateFile: commit(moduleMutations.updateFile),
-	updateTimeseriesFile: commit(moduleMutations.updateTimeseriesFile),
+	updateTimeseries: commit(moduleMutations.updateTimeseries),
 	// included / excluded table data
 	setJoinDatasetsTableData: commit(moduleMutations.setJoinDatasetsTableData),
 	clearJoinDatasetsTableData: commit(moduleMutations.clearJoinDatasetsTableData),

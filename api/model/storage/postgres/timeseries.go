@@ -18,6 +18,7 @@ package postgres
 import (
 	"fmt"
 	"math"
+	"strconv"
 	"strings"
 
 	"github.com/jackc/pgx"
@@ -30,18 +31,106 @@ import (
 type TimeSeriesField struct {
 	Storage     *Storage
 	StorageName string
-	Variable    *model.Variable
+	ClusterCol  string
+	IDCol       string
+	Label       string
+	Type        string
 }
 
 // NewTimeSeriesField creates a new field for timeseries types.
-func NewTimeSeriesField(storage *Storage, storageName string, variable *model.Variable) *TimeSeriesField {
+func NewTimeSeriesField(storage *Storage, storageName string, clusterCol string, idCol string, label string, typ string) *TimeSeriesField {
 	field := &TimeSeriesField{
 		Storage:     storage,
 		StorageName: storageName,
-		Variable:    variable,
+		IDCol:       idCol,
+		ClusterCol:  clusterCol,
+		Label:       label,
+		Type:        typ,
 	}
 
 	return field
+}
+
+func (s *Storage) parseTimeseries(rows *pgx.Rows) ([][]float64, error) {
+	var points [][]float64
+	if rows != nil {
+		for rows.Next() {
+			var x float64
+			var y float64
+			err := rows.Scan(&x, &y)
+			if err != nil {
+				return nil, err
+			}
+			points = append(points, []float64{x, y})
+		}
+	}
+	return points, nil
+}
+
+func (f *TimeSeriesField) fetchRepresentationTimeSeries(categoryBuckets []*api.Bucket) ([]string, error) {
+
+	var timeseriesExemplars []string
+
+	for _, bucket := range categoryBuckets {
+
+		timeseriesIDField := "series_id"
+
+		prefixedVarName := f.clusterVarName(f.ClusterCol)
+
+		// pull sample row containing bucket
+		query := fmt.Sprintf("SELECT \"%s\" FROM %s WHERE \"%s\" = $1 LIMIT 1;",
+			timeseriesIDField, f.StorageName, prefixedVarName)
+
+		// execute the postgres query
+		rows, err := f.Storage.client.Query(query, bucket.Key)
+		if err != nil {
+			return nil, errors.Wrap(err, "failed to fetch histograms for variable summaries from postgres")
+		}
+
+		if rows.Next() {
+			var timeseriesExemplar int
+			err = rows.Scan(&timeseriesExemplar)
+			if err != nil {
+				return nil, errors.Wrap(err, "Unable to parse solution from Postgres")
+			}
+			timeseriesExemplars = append(timeseriesExemplars, strconv.FormatInt(int64(timeseriesExemplar), 10))
+		}
+		rows.Close()
+	}
+
+	if len(timeseriesExemplars) == 0 {
+		return nil, fmt.Errorf("No exemplars found for timeseries data")
+	}
+
+	return timeseriesExemplars, nil
+}
+
+// FetchTimeseries fetches a timeseries.
+func (s *Storage) FetchTimeseries(dataset string, storageName string, timeseriesColName string, xColName string, yColName string, timeseriesURI string, filterParams *api.FilterParams) ([][]float64, error) {
+	// create the filter for the query.
+	wheres := make([]string, 0)
+	params := make([]interface{}, 0)
+
+	wheres = append(wheres, fmt.Sprintf("\"%s\" = $1", timeseriesColName))
+	params = append(params, timeseriesURI)
+
+	wheres, params = s.buildFilteredQueryWhere(wheres, params, filterParams.Filters)
+	where := fmt.Sprintf("WHERE %s", strings.Join(wheres, " AND "))
+
+	// Get count by category.
+	query := fmt.Sprintf("SELECT \"%s\", \"%s\" FROM %s %s",
+		xColName, yColName, storageName, where)
+
+	// execute the postgres query
+	res, err := s.client.Query(query, params...)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to fetch timeseries from postgres")
+	}
+	if res != nil {
+		defer res.Close()
+	}
+
+	return s.parseTimeseries(res)
 }
 
 // FetchSummaryData pulls summary data from the database and builds a histogram.
@@ -61,45 +150,13 @@ func (f *TimeSeriesField) clusterVarName(varName string) string {
 	return fmt.Sprintf("%s%s", model.ClusterVarPrefix, varName)
 }
 
-func (f *TimeSeriesField) fetchRepresentationTimeSeries(categoryBuckets []*api.Bucket) ([]string, error) {
-
-	var timeseriesFiles []string
-
-	for _, bucket := range categoryBuckets {
-
-		prefixedVarName := f.clusterVarName(f.Variable.Name)
-
-		// pull sample row containing bucket
-		query := fmt.Sprintf("SELECT \"%s\" FROM %s WHERE \"%s\" = $1 LIMIT 1;",
-			f.Variable.Name, f.StorageName, prefixedVarName)
-
-		// execute the postgres query
-		rows, err := f.Storage.client.Query(query, bucket.Key)
-		if err != nil {
-			return nil, errors.Wrap(err, "failed to fetch histograms for variable summaries from postgres")
-		}
-
-		if rows.Next() {
-			var timeseriesFile string
-			err = rows.Scan(&timeseriesFile)
-			if err != nil {
-				return nil, errors.Wrap(err, "Unable to parse solution from Postgres")
-			}
-			timeseriesFiles = append(timeseriesFiles, timeseriesFile)
-		}
-		rows.Close()
-	}
-
-	return timeseriesFiles, nil
-}
-
 func (f *TimeSeriesField) fetchHistogram(filterParams *api.FilterParams) (*api.Histogram, error) {
 	// create the filter for the query.
 	wheres := make([]string, 0)
 	params := make([]interface{}, 0)
 	wheres, params = f.Storage.buildFilteredQueryWhere(wheres, params, filterParams.Filters)
 
-	prefixedVarName := f.clusterVarName(f.Variable.Name)
+	prefixedVarName := f.clusterVarName(f.ClusterCol)
 
 	where := ""
 	if len(wheres) > 0 {
@@ -128,7 +185,7 @@ func (f *TimeSeriesField) fetchHistogram(filterParams *api.FilterParams) (*api.H
 	if err != nil {
 		return nil, err
 	}
-	histogram.Files = files
+	histogram.Exemplars = files
 	return histogram, nil
 }
 
@@ -147,7 +204,7 @@ func (f *TimeSeriesField) fetchHistogramByResult(resultURI string, filterParams 
 		where = fmt.Sprintf("AND %s", strings.Join(wheres, " AND "))
 	}
 
-	prefixedVarName := f.clusterVarName(f.Variable.Name)
+	prefixedVarName := f.clusterVarName(f.ClusterCol)
 
 	// Get count by category.
 	query := fmt.Sprintf(
@@ -178,12 +235,12 @@ func (f *TimeSeriesField) fetchHistogramByResult(resultURI string, filterParams 
 	if err != nil {
 		return nil, err
 	}
-	histogram.Files = files
+	histogram.Exemplars = files
 	return histogram, nil
 }
 
 func (f *TimeSeriesField) parseHistogram(rows *pgx.Rows) (*api.Histogram, error) {
-	prefixedVarName := f.clusterVarName(f.Variable.Name)
+	prefixedVarName := f.clusterVarName(f.ClusterCol)
 
 	termsAggName := api.TermsAggPrefix + prefixedVarName
 
@@ -216,10 +273,10 @@ func (f *TimeSeriesField) parseHistogram(rows *pgx.Rows) (*api.Histogram, error)
 
 	// assign histogram attributes
 	return &api.Histogram{
-		Key:     f.Variable.Name,
-		Label:   f.Variable.DisplayName,
+		Key:     f.IDCol,
+		Label:   f.Label,
 		Type:    model.CategoricalType,
-		VarType: f.Variable.Type,
+		VarType: f.Type,
 		Buckets: buckets,
 		Extrema: &api.Extrema{
 			Min: float64(min),
@@ -231,7 +288,7 @@ func (f *TimeSeriesField) parseHistogram(rows *pgx.Rows) (*api.Histogram, error)
 // FetchPredictedSummaryData pulls predicted data from the result table and builds
 // the timeseries histogram for the field.
 func (f *TimeSeriesField) FetchPredictedSummaryData(resultURI string, datasetResult string, filterParams *api.FilterParams, extrema *api.Extrema) (*api.Histogram, error) {
-	targetName := f.clusterVarName(f.Variable.Name)
+	targetName := f.clusterVarName(f.ClusterCol)
 
 	// get filter where / params
 	wheres, params, err := f.Storage.buildResultQueryFilters(f.StorageName, resultURI, filterParams)
@@ -266,6 +323,6 @@ func (f *TimeSeriesField) FetchPredictedSummaryData(resultURI string, datasetRes
 	if err != nil {
 		return nil, err
 	}
-	histogram.Files = files
+	histogram.Exemplars = files
 	return histogram, nil
 }

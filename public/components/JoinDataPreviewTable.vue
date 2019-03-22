@@ -12,8 +12,16 @@
 				<image-preview :key="imageField" :image-url="data.item[imageField]"></image-preview>
 			</template>
 
-			<template v-for="timeseriesField in timeseriesFields" :slot="timeseriesField" slot-scope="data">
-				<sparkline-preview :key="timeseriesField" :timeseries-url="data.item[timeseriesField]"></sparkline-preview>
+			<template v-for="timeseriesGrouping in timeseriesGroupings" :slot="timeseriesGrouping.idCol" slot-scope="data">
+
+				<sparkline-preview :key="timeseriesGrouping.idCol"
+					:dataset="dataset"
+					:x-col="timeseriesGrouping.properties.xCol"
+					:y-col="timeseriesGrouping.properties.yCol"
+					:timeseries-col="timeseriesGrouping.idCol"
+					:timeseries-id="data.item[timeseriesGrouping.idCol]">
+				</sparkline-preview>
+
 			</template>
 
 		</b-table>
@@ -29,9 +37,11 @@ import FixedHeaderTable from './FixedHeaderTable';
 import SparklinePreview from './SparklinePreview';
 import ImagePreview from './ImagePreview';
 import { Dictionary } from '../util/dict';
-import { TableColumn, TableRow, D3M_INDEX_FIELD } from '../store/dataset/index';
+import { TableColumn, TableRow, D3M_INDEX_FIELD, Grouping, Variable } from '../store/dataset/index';
+import { getters as datasetGetters } from '../store/dataset/module';
 import { getters as routeGetters } from '../store/route/module';
 import { IMAGE_TYPE, TIMESERIES_TYPE } from '../util/types';
+import { getTimeseriesGroupingsFromFields } from '../util/data';
 
 export default Vue.extend({
 	name: 'join-data-preview-table',
@@ -50,6 +60,10 @@ export default Vue.extend({
 
 	computed: {
 
+		variables(): Variable[] {
+			return datasetGetters.getVariables(this.$store);
+		},
+
 		imageFields(): string[] {
 			return _.map(this.fields, (field, key) => {
 				return {
@@ -61,16 +75,9 @@ export default Vue.extend({
 			.map(field => field.key);
 		},
 
-		timeseriesFields(): string[] {
-			return _.map(this.fields, (field, key) => {
-				return {
-					key: key,
-					type: field.type
-				};
-			})
-			.filter(field => field.type === TIMESERIES_TYPE)
-			.map(field => field.key);
-		}
+		timeseriesGroupings(): Grouping[] {
+			return getTimeseriesGroupingsFromFields(this.variables, this.fields);
+		},
 	},
 
 	methods: {

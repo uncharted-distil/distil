@@ -54,8 +54,8 @@
 import _ from 'lodash';
 import Vue from 'vue';
 import localStorage from 'store';
-import JoinDatasetsPreview from '../components/JoinDatasetsPreview.vue';
-import ErrorModal from '../components/ErrorModal.vue';
+import JoinDatasetsPreview from '../components/JoinDatasetsPreview';
+import ErrorModal from '../components/ErrorModal';
 import { createRouteEntry } from '../util/routes';
 import { Dictionary } from '../util/dict';
 import { getters as routeGetters } from '../store/route/module';
@@ -207,12 +207,6 @@ export default Vue.extend({
 	position: relative;
 	max-width: 80% !important;
 	max-height: 90%;
-}
-
-.join-modal-button {
-	margin: 0 8px;
-	width: 25% !important;
-	line-height: 32px !important;
 }
 
 .join-progress {

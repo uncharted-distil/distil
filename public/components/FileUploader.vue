@@ -2,7 +2,7 @@
 
 <div>
 	<b-button block variant="primary" v-b-modal.upload-modal>Import File</b-button>
-	
+
 	<!-- Modal Component -->
 	<b-modal
 		id="upload-modal"
@@ -23,25 +23,26 @@
 
 </template>
 
-<script>
+<script lang="ts">
 
-import Vue from 'vue'
+import Vue from 'vue';
 import { actions as datasetActions } from '../store/dataset/module';
 import { filterSummariesByDataset } from '../util/data';
 
 export default Vue.extend({
 	name: 'file-uploader',
+
 	data() {
 		return {
 			file: null,
-		}
+		};
 	},
 
 	computed: {
-		filename() {
+		filename(): string {
 			return this.file ? this.file.name : '';
 		},
-		datasetID() {
+		datasetID(): string {
 			if (this.filename) {
 				const fileNameTokens = this.filename.split('.');
 				const fname = fileNameTokens.length > 1
@@ -57,7 +58,8 @@ export default Vue.extend({
 	methods: {
 		clearFile() {
 			this.file = null;
-			this.$refs.fileinput.reset();
+			const $refs = this.$refs as any;
+			$refs.fileinput.reset();
 		},
 		handleOk() {
 			if (!this.file) {
@@ -68,13 +70,13 @@ export default Vue.extend({
 				filename: this.filename,
 				datasetID: this.datasetID,
 			});
-			let uploadError = undefined;
+			let uploadError;
 			datasetActions
 				.uploadDataFile(this.$store, { datasetID: this.datasetID, file: this.file})
 				.catch((err) => {
 					uploadError = err;
 				})
-				.finally(() => {
+				.then(() => {
 					this.$emit('uploadfinish', uploadError);
 				});
 		}

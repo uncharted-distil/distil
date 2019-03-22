@@ -13,10 +13,9 @@
 	</svg>
 </template>
 
-<script>
+<script lang="ts">
 
-/* Reference: https://vuejs.org/v2/cookbook/editable-svg-icons.html */
-import Vue from 'vue'
+import Vue from 'vue';
 
 export default Vue.extend({
 	name: 'icon-base',
@@ -43,8 +42,8 @@ export default Vue.extend({
 
 <style scoped>
 svg {
-		display: inline-block;
-		vertical-align: baseline;
-		margin-bottom: -2px; /* yes, I'm that particular about formatting */
-	}
+	display: inline-block;
+	vertical-align: baseline;
+	margin-bottom: -2px; /* yes, I'm that particular about formatting */
+}
 </style>

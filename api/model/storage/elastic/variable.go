@@ -70,6 +70,13 @@ func (s *Storage) parseRawVariable(child map[string]interface{}) (*model.Variabl
 	if !ok {
 		deleted = false
 	}
+
+	grouping := &model.Grouping{}
+	ok = json.Struct(child, &grouping, model.VarGroupingField)
+	if !ok {
+		grouping = nil
+	}
+
 	suggestedTypes, ok := json.Array(child, model.VarSuggestedTypesField)
 	suggestedTypesParsed := make([]*model.SuggestedType, 0)
 	if ok {
@@ -100,6 +107,7 @@ func (s *Storage) parseRawVariable(child map[string]interface{}) (*model.Variabl
 		DisplayName:      displayVariable,
 		DistilRole:       distilRole,
 		Deleted:          deleted,
+		Grouping:         grouping,
 	}, nil
 }
 
@@ -163,6 +171,9 @@ func (s *Storage) parseVariables(searchHit *elastic.SearchHit, includeIndex bool
 	}
 	// for each variable, extract the `colName` and `colType`
 	var variables []*model.Variable
+
+	hidden := make(map[string]bool)
+
 	for _, child := range children {
 		variable, err := s.parseRawVariable(child)
 		if err != nil {
@@ -176,9 +187,24 @@ func (s *Storage) parseVariables(searchHit *elastic.SearchHit, includeIndex bool
 		}
 		if variable != nil {
 			variables = append(variables, variable)
+
+			if variable.Grouping != nil {
+				for _, h := range variable.Grouping.Hidden {
+					hidden[h] = true
+				}
+			}
 		}
 	}
-	return variables, nil
+
+	// hide hidden variables
+	var filtered []*model.Variable
+	for _, v := range variables {
+		_, isHidden := hidden[v.Name]
+		if v.Grouping != nil || !isHidden {
+			filtered = append(filtered, v)
+		}
+	}
+	return filtered, nil
 }
 
 // DoesVariableExist returns whether or not a variable exists.

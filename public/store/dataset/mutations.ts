@@ -94,6 +94,10 @@ export const mutations = {
 		updateSummaries(summary, state.variableSummaries);
 	},
 
+	clearVariableSummaries(state: DatasetState) {
+		state.variableSummaries = [];
+	},
+
 	updateVariableRankings(state: DatasetState, rankings: Dictionary<number>) {
 		// add rank property if ranking data returned, otherwise don't include it
 		if (!_.isEmpty(rankings)) {
@@ -113,14 +117,17 @@ export const mutations = {
 		Vue.set(state.files, args.url, args.file);
 	},
 
-	updateTimeseriesFile(state: DatasetState, args: { dataset: string, url: string, file: number[][] }) {
+	updateTimeseries(state: DatasetState, args: { dataset: string, id: string, timeseries: number[][] }) {
 
-		Vue.set(state.files, args.url, args.file);
+		if (!state.timeseries[args.dataset]) {
+			Vue.set(state.timeseries, args.dataset, {});
+		}
+		Vue.set(state.timeseries[args.dataset], args.id, args.timeseries);
 
-		const minX = _.minBy(args.file, d => d[0])[0];
-		const maxX = _.maxBy(args.file, d => d[0])[0];
-		const minY = _.minBy(args.file, d => d[1])[1];
-		const maxY = _.maxBy(args.file, d => d[1])[1];
+		const minX = _.minBy(args.timeseries, d => d[0])[0];
+		const maxX = _.maxBy(args.timeseries, d => d[0])[0];
+		const minY = _.minBy(args.timeseries, d => d[1])[1];
+		const maxY = _.maxBy(args.timeseries, d => d[1])[1];
 
 		if (!state.timeseriesExtrema[args.dataset]) {
 			Vue.set(state.timeseriesExtrema, args.dataset, {

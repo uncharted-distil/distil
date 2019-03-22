@@ -229,30 +229,46 @@ func (s *Storage) buildFilteredQueryWhere(wheres []string, params []interface{},
 }
 
 func (s *Storage) buildFilteredQueryField(variables []*model.Variable, filterVariables []string) (string, error) {
+
+	distincts := make([]string, 0)
 	fields := make([]string, 0)
 	indexIncluded := false
 	for _, variable := range api.GetFilterVariables(filterVariables, variables) {
+
+		if variable.Grouping != nil {
+			distincts = append(distincts, fmt.Sprintf("DISTINCT ON (\"%s\")", variable.Name))
+		}
+
 		fields = append(fields, fmt.Sprintf("\"%s\"", variable.Name))
 		if variable.Name == model.D3MIndexFieldName {
 			indexIncluded = true
 		}
+
 	}
 	// if the index is not already in the field list, then append it
 	if !indexIncluded {
 		fields = append(fields, fmt.Sprintf("\"%s\"", model.D3MIndexFieldName))
 	}
-	return strings.Join(fields, ","), nil
+	return strings.Join(distincts, ",") + " " + strings.Join(fields, ","), nil
 }
 
-func (s *Storage) buildFilteredResultQueryField(variables []*model.Variable, targetVariable *model.Variable, filterVariables []string) (string, error) {
+func (s *Storage) buildFilteredResultQueryField(variables []*model.Variable, targetVariable *model.Variable, filterVariables []string) (string, string, error) {
+
+	distincts := make([]string, 0)
 	fields := make([]string, 0)
 	for _, variable := range api.GetFilterVariables(filterVariables, variables) {
+
 		if strings.Compare(targetVariable.Name, variable.Name) != 0 {
+
+			if variable.Grouping != nil {
+				distincts = append(distincts, fmt.Sprintf("DISTINCT ON (\"%s\")", variable.Name))
+			}
+
 			fields = append(fields, fmt.Sprintf("\"%s\"", variable.Name))
 		}
 	}
 	fields = append(fields, fmt.Sprintf("\"%s\"", model.D3MIndexFieldName))
-	return strings.Join(fields, ","), nil
+	return strings.Join(distincts, ","), strings.Join(fields, ","), nil
 }
 
 func (s *Storage) buildCorrectnessResultWhere(wheres []string, params []interface{}, storageName string, resultURI string, resultFilter *model.Filter) ([]string, []interface{}, error) {
@@ -367,8 +383,31 @@ func (s *Storage) splitFilters(filterParams *api.FilterParams) *filters {
 }
 
 // FetchNumRows pulls the number of rows in the table.
-func (s *Storage) FetchNumRows(storageName string, filters map[string]interface{}) (int, error) {
-	query := fmt.Sprintf("SELECT count(*) FROM %s", storageName)
+func (s *Storage) FetchNumRows(storageName string, variables []*model.Variable, filters map[string]interface{}) (int, error) {
+
+	countTarget := "*"
+
+	// match order by for distinct
+	var groupings []string
+	if variables != nil {
+		for _, v := range variables {
+			if v.Grouping != nil {
+				groupings = append(groupings, v.Grouping.IDCol)
+			}
+		}
+	}
+
+	if len(groupings) > 0 {
+		countTarget = "DISTINCT "
+		for i, g := range groupings {
+			countTarget += "\"" + g + "\""
+			if len(groupings)-1 > i {
+				countTarget += ", "
+			}
+		}
+	}
+
+	query := fmt.Sprintf("SELECT count(%s) FROM %s", countTarget, storageName)
 	params := make([]interface{}, 0)
 	if filters != nil && len(filters) > 0 {
 		clauses := make([]string, 0)
@@ -405,7 +444,7 @@ func (s *Storage) FetchData(dataset string, storageName string, filterParams *ap
 		return nil, errors.Wrap(err, "Could not pull variables from ES")
 	}
 
-	numRows, err := s.FetchNumRows(storageName, nil)
+	numRows, err := s.FetchNumRows(storageName, variables, nil)
 	if err != nil {
 		return nil, errors.Wrap(err, "Could not pull num rows")
 	}
@@ -440,8 +479,26 @@ func (s *Storage) FetchData(dataset string, storageName string, filterParams *ap
 		}
 	}
 
+	// match order by for distinct
+	var groupings []string
+	for _, v := range variables {
+		if v.Grouping != nil {
+			groupings = append(groupings, v.Grouping.IDCol)
+		}
+	}
+	orderBy := ""
+	if len(groupings) > 0 {
+		for i, g := range groupings {
+			orderBy += g
+			if len(groupings)-1 > i {
+				orderBy += ", "
+			}
+		}
+		orderBy += ", "
+	}
+
 	// order & limit the filtered data.
-	query = fmt.Sprintf("%s ORDER BY \"%s\"", query, model.D3MIndexFieldName)
+	query = fmt.Sprintf("%s ORDER BY %s\"%s\"", query, orderBy, model.D3MIndexFieldName)
 	if filterParams.Size > 0 {
 		query = fmt.Sprintf("%s LIMIT %d", query, filterParams.Size)
 	}

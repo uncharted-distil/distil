@@ -1,29 +1,29 @@
 <template>
-	<div class="results-tables" v-bind:class="{ 'one-table': !hasHighlights, 'two-tables': hasHighlights }">
+	<div class="results-slots" v-bind:class="{ 'one-slot': !hasHighlights, 'two-slots': hasHighlights }">
+
+		<view-type-toggle v-model="viewType" :variables="variables">
+			Samples Modeled
+		</view-type-toggle>
+
 		<template v-if="hasHighlights">
-			<p class="nav-link font-weight-bold">Samples Modeled</p>
-			<results-data-table
-				refName="topTable"
-				:title="topTableTitle"
+			<results-data-slot
+				:title="topSlotTitle"
 				:data-fields="includedResultTableDataFields"
 				:data-items="includedResultTableDataItems"
-				:showError="regressionEnabled"></results-data-table>
+				:view-type="viewType"></results-data-slot>
 			<br>
-			<results-data-table
-				refName="bottomTable"
-				:title="bottomTableTitle"
+			<results-data-slot
+				:title="bottomSlotTitle"
 				:data-fields="excludedResultTableDataFields"
 				:data-items="excludedResultTableDataItems"
-				:showError="regressionEnabled"></results-data-table>
+				:view-type="viewType"></results-data-slot>
 		</template>
 		<template v-if="!hasHighlights">
-			<p class="nav-link font-weight-bold">Samples Modeled</p>
-			<results-data-table
-				refName="singleTable"
-				:title="singleTableTitle"
+			<results-data-slot
+				:title="singleSlotTitle"
 				:data-fields="includedResultTableDataFields"
 				:data-items="includedResultTableDataItems"
-				:showError="regressionEnabled"></results-data-table>
+				:view-type="viewType"></results-data-slot>
 		</template>
 	</div>
 </template>
@@ -32,7 +32,8 @@
 
 import _ from 'lodash';
 import Vue from 'vue';
-import ResultsDataTable from '../components/ResultsDataTable.vue';
+import ResultsDataSlot from '../components/ResultsDataSlot';
+import ViewTypeToggle from '../components/ViewTypeToggle';
 import { Dictionary } from '../util/dict';
 import { getters as datasetGetters } from '../store/dataset/module';
 import { getters as resultsGetters } from '../store/results/module';
@@ -46,7 +47,14 @@ export default Vue.extend({
 	name: 'results-comparison',
 
 	components: {
-		ResultsDataTable,
+		ResultsDataSlot,
+		ViewTypeToggle
+	},
+
+	data() {
+		return {
+			viewType: 'table'
+		};
 	},
 
 	computed: {
@@ -144,15 +152,15 @@ export default Vue.extend({
 			return resultsGetters.getResultDataNumRows(this.$store);
 		},
 
-		topTableTitle(): string {
+		topSlotTitle(): string {
 			return `${this.numIncludedResultItems} <b class="matching-color">matching</b> samples of ${this.numRows}, including ${this.numIncludedResultErrors} <b class="erroneous-color">erroneous</b> predictions`;
 		},
 
-		bottomTableTitle(): string {
+		bottomSlotTitle(): string {
 			return `${this.numExcludedResultItems} <b class="other-color">other</b> samples of ${this.numRows}, including ${this.numExcludedResultErrors} <b class="erroneous-color">erroneous</b> predictions`;
 		},
 
-		singleTableTitle(): string {
+		singleSlotTitle(): string {
 			return `Displaying ${this.numExcludedResultItems} of ${this.numRows}, including ${this.numExcludedResultErrors} <b>erroneous</b> predictions`;
 		}
 	}
@@ -160,15 +168,15 @@ export default Vue.extend({
 </script>
 
 <style>
-.results-tables {
+.results-slots {
 	display: flex;
 	flex-direction: column;
 	flex: none;
 }
-.two-tables .results-data-table {
+.two-slots .results-data-slot {
 	max-height: 50%;
 }
-.one-table .results-data-table {
+.one-slot .results-data-slot {
 	height: 100%;
 }
 .matching-color {

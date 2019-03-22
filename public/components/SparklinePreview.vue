@@ -3,7 +3,7 @@
 		<svg v-if="isLoaded" ref="svg" class="line-chart"></svg>
 		<i class="fa fa-plus zoom-sparkline-icon" @click.stop="onClick"></i>
 		<div v-if="!isLoaded" v-html="spinnerHTML"></div>
-		<b-modal id="sparkline-zoom-modal" :title="timeseriesUrl"
+		<b-modal id="sparkline-zoom-modal" :title="timeseriesId"
 			@hide="hideModal"
 			:visible="zoomSparkline"
 			hide-footer>
@@ -17,7 +17,7 @@
 import * as d3 from 'd3';
 import _ from 'lodash';
 import Vue from 'vue';
-import SparklineChart from '../components/SparklineChart.vue';
+import SparklineChart from '../components/SparklineChart';
 import { Dictionary } from '../util/dict';
 import { circleSpinnerHTML } from '../util/spinner';
 import { getters as routeGetters } from '../store/route/module';
@@ -40,9 +40,11 @@ export default Vue.extend({
 				left: 16
 			})
 		},
-		timeseriesUrl: {
-			type: String as () => string
-		}
+		dataset: String as () => string,
+		xCol: String as () => string,
+		yCol: String as () => string,
+		timeseriesCol: String as () => string,
+		timeseriesId: String as () => string
 	},
 	data() {
 		return {
@@ -58,33 +60,37 @@ export default Vue.extend({
 		};
 	},
 	computed: {
-		dataset(): string {
-			return routeGetters.getRouteDataset(this.$store);
-		},
-		files(): Dictionary<any> {
-			return datasetGetters.getFiles(this.$store);
+		timeseriesForDataset(): Dictionary<number[][]> {
+			const timeseries = datasetGetters.getTimeseries(this.$store);
+			return timeseries[this.dataset];
 		},
 		isLoaded(): boolean {
-			return this.files[this.timeseriesUrl];
+			if (!this.timeseriesForDataset) {
+				return false;
+			}
+			return !!this.timeseriesForDataset[this.timeseriesId];
 		},
 		timeseries(): number[][] {
-			return this.files[this.timeseriesUrl];
+			if (!this.timeseriesForDataset) {
+				return null;
+			}
+			return this.timeseriesForDataset[this.timeseriesId];
 		},
 		spinnerHTML(): string {
 			return circleSpinnerHTML();
 		},
 		svg(): d3.Selection<SVGElement, {}, HTMLElement, any> {
-			const $svg = this.$refs.svg as any;
-			return  d3.select($svg);
+			return  d3.select(this.$svg);
+		},
+		$svg(): any {
+			return this.$refs.svg as any;
 		},
 		width(): number {
-			const $svg = this.$refs.svg as any;
-			const dims = $svg.getBoundingClientRect();
+			const dims = this.$svg.getBoundingClientRect();
 			return dims.width - this.margin.left - this.margin.right;
 		},
 		height(): number {
-			const $svg = this.$refs.svg as any;
-			const dims = $svg.getBoundingClientRect();
+			const dims = this.$svg.getBoundingClientRect();
 			return dims.height - this.margin.top - this.margin.bottom;
 		}
 	},
@@ -109,6 +115,10 @@ export default Vue.extend({
 			this.svg.selectAll('*').remove();
 		},
 		injectSparkline() {
+			if (!this.$svg) {
+				return;
+			}
+
 			const timeseries = this.timeseries;
 
 			this.xScale = d3.scalePoint()
@@ -163,8 +173,10 @@ export default Vue.extend({
 			this.hasRequested = true;
 			datasetActions.fetchTimeseries(this.$store, {
 				dataset: this.dataset,
-				source: 'seed',
-				url: this.timeseriesUrl
+				xColName: this.xCol,
+				yColName: this.yCol,
+				timeseriesColName: this.timeseriesCol,
+				timeseriesID: this.timeseriesId
 			}).then(() => {
 				if (this.isVisible) {
 					this.injectTimeseries();

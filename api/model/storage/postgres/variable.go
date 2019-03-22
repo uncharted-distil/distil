@@ -129,22 +129,33 @@ func (s *Storage) fetchSummaryData(dataset string, storageName string, varName s
 	// get the histogram by using the variable type.
 
 	var field Field
-	if model.IsNumerical(variable.Type) {
-		field = NewNumericalField(s, storageName, variable)
-	} else if model.IsCategorical(variable.Type) {
-		field = NewCategoricalField(s, storageName, variable)
-	} else if model.IsVector(variable.Type) {
-		field = NewVectorField(s, storageName, variable)
-	} else if model.IsText(variable.Type) {
-		field = NewTextField(s, storageName, variable)
-	} else if model.IsImage(variable.Type) {
-		field = NewImageField(s, storageName, variable)
-	} else if model.IsDateTime(variable.Type) {
-		field = NewDateTimeField(s, storageName, variable)
-	} else if model.IsTimeSeries(variable.Type) {
-		field = NewTimeSeriesField(s, storageName, variable)
+
+	if variable.Grouping != nil {
+
+		if model.IsTimeSeries(variable.Grouping.Type) {
+			field = NewTimeSeriesField(s, storageName, variable.Grouping.Properties.ClusterCol, variable.Grouping.IDCol, variable.Grouping.IDCol, variable.Grouping.Type)
+		} else {
+			return nil, errors.Errorf("variable grouping `%s` of type `%s` does not support summary", variable.Grouping.IDCol, variable.Grouping.Type)
+		}
+
 	} else {
-		return nil, errors.Errorf("variable `%s` of type `%s` does not support summary", variable.Name, variable.Type)
+
+		if model.IsNumerical(variable.Type) {
+			field = NewNumericalField(s, storageName, variable.Name, variable.DisplayName, variable.Type)
+		} else if model.IsCategorical(variable.Type) {
+			field = NewCategoricalField(s, storageName, variable.Name, variable.DisplayName, variable.Type)
+		} else if model.IsVector(variable.Type) {
+			field = NewVectorField(s, storageName, variable.Name, variable.DisplayName, variable.Type)
+		} else if model.IsText(variable.Type) {
+			field = NewTextField(s, storageName, variable.Name, variable.DisplayName, variable.Type)
+		} else if model.IsImage(variable.Type) {
+			field = NewImageField(s, storageName, variable.Name, variable.DisplayName, variable.Type)
+		} else if model.IsDateTime(variable.Type) {
+			field = NewDateTimeField(s, storageName, variable.Name, variable.DisplayName, variable.Type)
+		} else {
+			return nil, errors.Errorf("variable `%s` of type `%s` does not support summary", variable.Name, variable.Type)
+		}
+
 	}
 
 	histogram, err := field.FetchSummaryData(resultURI, filterParams, extrema)
@@ -153,7 +164,7 @@ func (s *Storage) fetchSummaryData(dataset string, storageName string, varName s
 	}
 
 	// get number of rows
-	numRows, err := s.FetchNumRows(storageName, nil)
+	numRows, err := s.FetchNumRows(storageName, []*model.Variable{variable}, nil)
 	if err != nil {
 		return nil, err
 	}

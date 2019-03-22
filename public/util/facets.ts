@@ -209,7 +209,7 @@ function createCategoricalSummaryFacet(summary: VariableSummary): Group {
 			selected: selected,
 			segments: segments,
 			filterable: false,
-			file: summary.files ? summary.files[index] : null
+			file: summary.exemplars ? summary.exemplars[index] : null
 		};
 		total += b.count;
 		return facet;
@@ -246,9 +246,10 @@ function createCategoricalSummaryFacet(summary: VariableSummary): Group {
 
 function createTimeseriesSummaryFacet(summary: VariableSummary): Group {
 	const group = createCategoricalSummaryFacet(summary);
-	const files = datasetGetters.getFiles(store);
+	const timeseries = datasetGetters.getTimeseries(store);
+
 	group.facets.forEach((facet: CategoricalFacet) => {
-		facet.timeseries = files[facet.file];
+		facet.timeseries = timeseries[group.dataset][facet.file];
 	});
 	return group;
 }

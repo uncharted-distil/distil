@@ -31,16 +31,20 @@ import (
 type DateTimeField struct {
 	Storage     *Storage
 	StorageName string
-	Variable    *model.Variable
+	Key         string
+	Label       string
+	Type        string
 	subSelect   func() string
 }
 
 // NewDateTimeField creates a new field for numerical types.
-func NewDateTimeField(storage *Storage, storageName string, variable *model.Variable) *DateTimeField {
+func NewDateTimeField(storage *Storage, storageName string, key string, label string, typ string) *DateTimeField {
 	field := &DateTimeField{
 		Storage:     storage,
 		StorageName: storageName,
-		Variable:    variable,
+		Key:         key,
+		Label:       label,
+		Type:        typ,
 	}
 
 	return field
@@ -48,11 +52,13 @@ func NewDateTimeField(storage *Storage, storageName string, variable *model.Vari
 
 // NewDateTimeFieldSubSelect creates a new field for numerical types
 // and specifies a sub select query to pull the raw data.
-func NewDateTimeFieldSubSelect(storage *Storage, storageName string, variable *model.Variable, fieldSubSelect func() string) *DateTimeField {
+func NewDateTimeFieldSubSelect(storage *Storage, storageName string, key string, label string, typ string, fieldSubSelect func() string) *DateTimeField {
 	field := &DateTimeField{
 		Storage:     storage,
 		StorageName: storageName,
-		Variable:    variable,
+		Key:         key,
+		Label:       label,
+		Type:        typ,
 		subSelect:   fieldSubSelect,
 	}
 
@@ -139,8 +145,8 @@ func (f *DateTimeField) fetchHistogramByResult(resultURI string, filterParams *a
 			return nil, errors.Wrap(err, "failed to fetch variable extrema for summary")
 		}
 	} else {
-		extrema.Key = f.Variable.Name
-		extrema.Type = f.Variable.Type
+		extrema.Key = f.Key
+		extrema.Type = f.Type
 	}
 	// for each returned aggregation, create a histogram aggregation. Bucket
 	// size is derived from the min/max and desired bucket count.
@@ -276,10 +282,10 @@ func (f *DateTimeField) parseHistogram(rows *pgx.Rows, extrema *api.Extrema) (*a
 
 	// assign histogram attributes
 	return &api.Histogram{
-		Label:   f.Variable.DisplayName,
-		Key:     f.Variable.Name,
+		Label:   f.Label,
+		Key:     f.Key,
 		Type:    model.NumericalType,
-		VarType: f.Variable.Type,
+		VarType: f.Type,
 		Extrema: rounded,
 		Buckets: buckets,
 	}, nil
@@ -305,8 +311,8 @@ func (f *DateTimeField) parseExtrema(rows *pgx.Rows) (*api.Extrema, error) {
 	}
 	// assign attributes
 	return &api.Extrema{
-		Key:  f.Variable.Name,
-		Type: f.Variable.Type,
+		Key:  f.Key,
+		Type: f.Type,
 		Min:  float64(minValue.Unix()),
 		Max:  float64(maxValue.Unix()),
 	}, nil
@@ -314,12 +320,12 @@ func (f *DateTimeField) parseExtrema(rows *pgx.Rows) (*api.Extrema, error) {
 
 func (f *DateTimeField) getMinMaxAggsQuery() string {
 	// get min / max agg names
-	minAggName := api.MinAggPrefix + f.Variable.Name
-	maxAggName := api.MaxAggPrefix + f.Variable.Name
+	minAggName := api.MinAggPrefix + f.Key
+	maxAggName := api.MaxAggPrefix + f.Key
 
 	// create aggregations
 	queryPart := fmt.Sprintf("MIN(\"%s\") AS \"%s\", MAX(\"%s\") AS \"%s\"",
-		f.Variable.Name, minAggName, f.Variable.Name, maxAggName)
+		f.Key, minAggName, f.Key, maxAggName)
 	// add aggregations
 	return queryPart
 }
@@ -364,8 +370,8 @@ func (f *DateTimeField) FetchPredictedSummaryData(resultURI string, datasetResul
 			return nil, errors.Wrap(err, "failed to fetch result variable extrema for summary")
 		}
 	} else {
-		extrema.Key = f.Variable.Name
-		extrema.Type = f.Variable.Type
+		extrema.Key = f.Key
+		extrema.Type = f.Type
 	}
 	// for each returned aggregation, create a histogram aggregation. Bucket
 	// size is derived from the min/max and desired bucket count.
@@ -378,7 +384,7 @@ func (f *DateTimeField) FetchPredictedSummaryData(resultURI string, datasetResul
 	}
 
 	wheres = append(wheres, fmt.Sprintf("result.result_id = $%d AND result.target = $%d ", len(params)+1, len(params)+2))
-	params = append(params, resultURI, f.Variable.Name)
+	params = append(params, resultURI, f.Key)
 
 	// Create the complete query string.
 	query := fmt.Sprintf(`
@@ -447,7 +453,7 @@ func (f *DateTimeField) fetchResultsExtrema(resultURI string, dataset string, re
 	queryString := fmt.Sprintf("SELECT %s FROM %s WHERE result_id = $1 AND target = $2;", aggQuery, dataset)
 
 	// execute the postgres query
-	res, err := f.Storage.client.Query(queryString, resultURI, f.Variable.Name)
+	res, err := f.Storage.client.Query(queryString, resultURI, f.Key)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to fetch extrema for result from postgres")
 	}

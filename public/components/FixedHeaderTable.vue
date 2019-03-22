@@ -78,10 +78,12 @@ export default Vue.extend({
 		}
 	},
 
-	data: {
-		tbody: {} as HTMLTableSectionElement,
-		thead: {} as HTMLTableSectionElement,
-		tableHeaderRow: {} as HTMLTableRowElement,
+	data() {
+		return {
+			tbody: {} as HTMLTableSectionElement,
+			thead: {} as HTMLTableSectionElement,
+			tableHeaderRow: {} as HTMLTableRowElement,
+		};
 	},
 
 	mounted: function () {
@@ -91,10 +93,9 @@ export default Vue.extend({
 		this.tbody.addEventListener('scroll', this.onScroll);
 
 		window.addEventListener('resize', this.resizeTableCells);
-		Vue.nextTick(() => {
-			this.checkScrollBar();
-			this.resizeTableCells();
-		});
+
+		this.checkScrollBar();
+		this.resizeTableCells();
 	},
 
 	beforeDestroy: function () {

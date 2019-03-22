@@ -499,7 +499,8 @@ func (s *SolutionRequest) dispatchRequest(client *compute.Client, solutionStorag
 func (s *SolutionRequest) PersistAndDispatch(client *compute.Client, solutionStorage api.SolutionStorage, metaStorage api.MetadataStorage, dataStorage api.DataStorage) error {
 
 	// NOTE: D3M index field is needed in the persisted data.
-	s.Filters.Variables = append(s.Filters.Variables, model.D3MIndexFieldName)
+	s.Filters.AddVariable(model.D3MIndexFieldName)
+
 	// fetch the full set of variables associated with the dataset
 	variables, err := metaStorage.FetchVariables(s.Dataset, true, true)
 	if err != nil {
@@ -514,21 +515,23 @@ func (s *SolutionRequest) PersistAndDispatch(client *compute.Client, solutionSto
 		}
 	}
 
-	// make sure that we include all non-generated variables in our persisted dataset - the column removal
-	// preprocessing step will mark them for removal by ta2
-	allVarFilters := *s.Filters
+	// make sure that we include all non-generated variables in our persisted
+	// dataset - the column removal preprocessing step will mark them for
+	// removal by ta2
+	allVarFilters := s.Filters.Clone()
 	allVarFilters.Variables = []string{}
 	var targetVariable *model.Variable
 	for _, variable := range dataVariables {
-		// Exclude cluster/feature generated columns
-		allVarFilters.Variables = append(allVarFilters.Variables, variable.Name)
+
+		// exclude cluster/feature generated columns
+		allVarFilters.AddVariable(variable.Name)
 		if variable.Name == s.TargetFeature {
 			targetVariable = variable
 		}
 	}
 
 	// fetch the queried dataset
-	dataset, err := api.FetchDataset(s.Dataset, true, true, &allVarFilters, metaStorage, dataStorage)
+	dataset, err := api.FetchDataset(s.Dataset, true, true, allVarFilters, metaStorage, dataStorage)
 	if err != nil {
 		return err
 	}

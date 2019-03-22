@@ -16,20 +16,13 @@
 package routes
 
 import (
-	"encoding/csv"
-	"fmt"
-	"io"
 	"net/http"
-	"path"
-	"strconv"
-	"strings"
 
 	"github.com/pkg/errors"
 	"goji.io/pat"
 
-	api "github.com/uncharted-distil/distil-ingest/metadata"
-	"github.com/uncharted-distil/distil/api/env"
-	"github.com/uncharted-distil/distil/api/model"
+	"github.com/uncharted-distil/distil-compute/model"
+	api "github.com/uncharted-distil/distil/api/model"
 )
 
 const (
@@ -41,76 +34,47 @@ type TimeseriesResult struct {
 	Timeseries [][]float64 `json:"timeseries"`
 }
 
-// TimeseriesHandler provides a static file lookup route using simple directory mapping.
-func TimeseriesHandler(ctor model.MetadataStorageCtor, resourceDir string, config *env.Config) func(http.ResponseWriter, *http.Request) {
+// TimeseriesHandler returns timeseries data.
+func TimeseriesHandler(ctorStorage api.DataStorageCtor) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
-		// resources can either be local or remote
+
 		dataset := pat.Param(r, "dataset")
-		source := pat.Param(r, "source")
-		file := pat.Param(r, "file")
-		path := path.Join(timeseriesFolder, file)
+		timeseriesColName := pat.Param(r, "timeseriesColName")
+		xColName := pat.Param(r, "xColName")
+		yColName := pat.Param(r, "yColName")
+		timeseriesURI := pat.Param(r, "timeseriesURI")
+		storageName := model.NormalizeDatasetID(dataset)
 
-		// get metadata client
-		storage, err := ctor()
+		// parse POST params
+		params, err := getPostParameters(r)
+		if err != nil {
+			handleError(w, errors.Wrap(err, "Unable to parse post parameters"))
+			return
+		}
+
+		// get variable names and ranges out of the params
+		filterParams, err := api.ParseFilterParamsFromJSON(params)
 		if err != nil {
 			handleError(w, err)
 			return
 		}
 
-		res, err := storage.FetchDataset(dataset, false, false)
+		// get storage client
+		storage, err := ctorStorage()
 		if err != nil {
 			handleError(w, err)
 			return
 		}
 
-		sourcePath := env.ResolvePath(api.DatasetSource(source), res.Folder)
-
-		bytes, err := fetchResourceBytes(sourcePath, dataset, path)
+		// fetch timeseries
+		timeseries, err := storage.FetchTimeseries(dataset, storageName, timeseriesColName, xColName, yColName, timeseriesURI, filterParams)
 		if err != nil {
 			handleError(w, err)
 			return
-		}
-
-		timeseriesCSV := string(bytes)
-
-		reader := csv.NewReader(strings.NewReader(timeseriesCSV))
-
-		// discard header
-		if _, err := reader.Read(); err != nil {
-			handleError(w, err)
-			return
-		}
-
-		var points [][]float64
-
-		for {
-			record, err := reader.Read()
-			if err == io.EOF {
-				break
-			}
-			if err != nil {
-				handleError(w, err)
-				return
-			}
-			if len(record) != 2 {
-				handleError(w, fmt.Errorf("bad line in timeseries csv file %v", record))
-				return
-			}
-			x, err := strconv.ParseFloat(record[0], 64)
-			if err != nil {
-				handleError(w, err)
-				return
-			}
-			y, err := strconv.ParseFloat(record[1], 64)
-			if err != nil {
-				handleError(w, err)
-				return
-			}
-			points = append(points, []float64{x, y})
 		}
 
 		err = handleJSON(w, TimeseriesResult{
-			Timeseries: points,
+			Timeseries: timeseries,
 		})
 		if err != nil {
 			handleError(w, errors.Wrap(err, "unable marshal dataset result into JSON"))

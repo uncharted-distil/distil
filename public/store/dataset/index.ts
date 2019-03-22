@@ -12,6 +12,20 @@ export interface SuggestedType {
 	type: string;
 }
 
+export interface GroupingProperties {
+	xCol: string;
+	yCol: string;
+	clusterCol: string;
+}
+
+export interface Grouping {
+	dataset: string;
+	idCol: string;
+	type: string;
+	hidden: string[];
+	properties?: GroupingProperties;
+}
+
 export interface Variable {
 	datasetName: string;
 	colDisplayName: string;
@@ -22,6 +36,9 @@ export interface Variable {
 	novelty: number;
 	colOriginalType: string;
 	suggestedTypes: SuggestedType[];
+	isColTypeChanged: boolean;
+	isGrouping: boolean;
+	grouping?: Grouping;
 	isColTypeReviewed: boolean;
 }
 
@@ -58,7 +75,7 @@ export interface VariableSummary {
 	buckets: Bucket[];
 	extrema: Extrema;
 	numRows: number;
-	files?: string[];
+	exemplars?: string[];
 	solutionId?: string;
 	resultId?: string;
 	type?: string;
@@ -99,7 +116,9 @@ export interface DatasetState {
 	filteredDatasets: Dataset[];
 	variables: Variable[];
 	variableSummaries: VariableSummary[];
+	groupingSummaries: VariableSummary[];
 	files: Dictionary<any>;
+	timeseries: Dictionary<Dictionary<number[][]>>;
 	timeseriesExtrema: Dictionary<TimeseriesExtrema>;
 	joinTableData: Dictionary<TableData>;
 	includedTableData: TableData;
@@ -116,10 +135,12 @@ export const state: DatasetState = {
 
 	// variable summary data for the active dataset
 	variableSummaries: [],
+	groupingSummaries: [],
 
 	// linked files
 	files: {},
 
+	timeseries: {},
 	timeseriesExtrema: {},
 
 	// joined data table data

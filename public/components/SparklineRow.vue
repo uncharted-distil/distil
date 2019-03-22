@@ -1,6 +1,6 @@
 <template>
 	<div class="sparkline-row" v-observe-visibility="visibilityChanged" v-bind:class="{'is-hidden': !isVisible}">
-		<div class="timeseries-var-col">{{timeseriesUrl}}</div>
+		<div class="timeseries-var-col">{{timeseriesId}}</div>
 		<div class="timeseries-min-col">{{min.toFixed(2)}}</div>
 		<div class="timeseries-max-col">{{max.toFixed(2)}}</div>
 		<div class="timeseries-chart-col">
@@ -39,9 +39,10 @@ export default Vue.extend({
 		highlightPixelX: {
 			type: Number as () => number
 		},
-		timeseriesUrl: {
-			type: String as () => string
-		},
+		xCol: String as () => string,
+		yCol: String as () => string,
+		timeseriesCol: String as () => string,
+		timeseriesId: String as () => string,
 		timeseriesExtrema: {
 			type: Object as () => TimeseriesExtrema
 		}
@@ -63,30 +64,27 @@ export default Vue.extend({
 		dataset(): string {
 			return routeGetters.getRouteDataset(this.$store);
 		},
-		files(): Dictionary<any> {
-			return datasetGetters.getFiles(this.$store);
-		},
 		isLoaded(): boolean {
-			return !!this.files[this.timeseriesUrl];
+			return !!datasetGetters.getTimeseries(this.$store)[this.dataset][this.timeseriesId];
 		},
 		timeseries(): number[][] {
-			return this.files[this.timeseriesUrl];
+			return datasetGetters.getTimeseries(this.$store)[this.dataset][this.timeseriesId];
 		},
 		spinnerHTML(): string {
 			return circleSpinnerHTML();
 		},
 		svg(): d3.Selection<SVGElement, {}, HTMLElement, any> {
-			const $svg = this.$refs.svg as any;
-			return  d3.select($svg);
+			return  d3.select(this.$svg);
+		},
+		$svg(): any {
+			return this.$refs.svg as any;
 		},
 		width(): number {
-			const $svg = this.$refs.svg as any;
-			const dims = $svg.getBoundingClientRect();
+			const dims = this.$svg.getBoundingClientRect();
 			return dims.width - this.margin.left - this.margin.right;
 		},
 		height(): number {
-			const $svg = this.$refs.svg as any;
-			const dims = $svg.getBoundingClientRect();
+			const dims = this.$svg.getBoundingClientRect();
 			return dims.height - this.margin.top - this.margin.bottom;
 		},
 		min(): number {
@@ -162,6 +160,10 @@ export default Vue.extend({
 		},
 		injectSparkline() {
 
+			if (!this.$svg) {
+				return;
+			}
+
 			const minX = this.timeseriesExtrema.x.min;
 			const maxX = this.timeseriesExtrema.x.max;
 			const minY = this.timeseriesExtrema.y.min;
@@ -214,8 +216,10 @@ export default Vue.extend({
 			this.hasRequested = true;
 			datasetActions.fetchTimeseries(this.$store, {
 				dataset: this.dataset,
-				source: 'seed',
-				url: this.timeseriesUrl
+				xColName: this.xCol,
+				yColName: this.yCol,
+				timeseriesColName: this.timeseriesCol,
+				timeseriesID: this.timeseriesId
 			}).then(() => {
 				if (this.isVisible) {
 					Vue.nextTick(() => {

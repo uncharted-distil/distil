@@ -69,7 +69,7 @@
 
 import _ from 'lodash';
 import { createRouteEntry } from '../util/routes';
-import ErrorModal from '../components/ErrorModal.vue';
+import ErrorModal from '../components/ErrorModal';
 import { actions as appActions, getters as appGetters } from '../store/app/module';
 import { getters as datasetGetters } from '../store/dataset/module';
 import { getters as routeGetters } from '../store/route/module';
@@ -107,7 +107,7 @@ export default Vue.extend({
 			return datasetGetters.getVariables(this.$store);
 		},
 		filterParams(): FilterParams {
-			return routeGetters.getDecodedFilterParams(this.$store);
+			return routeGetters.getDecodedSolutionRequestFilterParams(this.$store);
 		},
 		metrics(): string[] {
 			if (this.isTask2) {

@@ -2,12 +2,12 @@ import _ from 'lodash';
 import axios from 'axios';
 import { Dictionary } from '../../util/dict';
 import { ActionContext } from 'vuex';
-import { Dataset, DatasetState, Variable, VariableSummary } from './index';
+import { Dataset, DatasetState, Variable, VariableSummary, Grouping } from './index';
 import { mutations } from './module';
 import { DistilState } from '../store';
 import { HighlightRoot } from '../highlights/index';
 import { FilterParams, INCLUDE_FILTER } from '../../util/filters';
-import { createPendingSummary, createErrorSummary, createEmptyTableData } from '../../util/data';
+import { createPendingSummary, createErrorSummary, createEmptyTableData, fetchHistogramExemplars } from '../../util/data';
 import { addHighlightToFilterParams } from '../../util/highlights';
 import { loadImage } from '../../util/image';
 import { getVarType, IMAGE_TYPE, TIMESERIES_TYPE, GEOCODED_LON_PREFIX, GEOCODED_LAT_PREFIX } from '../../util/types';
@@ -29,8 +29,12 @@ export type DatasetContext = ActionContext<DatasetState, DistilState>;
 export const actions = {
 
 	// fetches a dataset description.
-	fetchDataset(context: DatasetContext, dataset: string): Promise<void> {
-		return axios.get(`/distil/datasets/${dataset}`)
+	fetchDataset(context: DatasetContext, args: { dataset: string }): Promise<void> {
+		if (!args.dataset) {
+			console.warn('`dataset` argument is missing');
+			return null;
+		}
+		return axios.get(`/distil/datasets/${args.dataset}`)
 			.then(response => {
 				mutations.setDataset(context, response.data.dataset);
 			})
@@ -102,7 +106,9 @@ export const actions = {
 			.then(() => {
 				// upon success pull the updated dataset, vars, and summaries
 				return Promise.all([
-					context.dispatch('fetchDataset', args.dataset),
+					context.dispatch('fetchDataset', {
+						dataset: args.dataset
+					}),
 					context.dispatch('fetchVariables', {
 						dataset: args.dataset
 					}),
@@ -191,6 +197,42 @@ export const actions = {
 			});
 	},
 
+	setGrouping(context: DatasetContext, args: { dataset: string, grouping: Grouping }): Promise<any>  {
+		if (!args.dataset) {
+			console.warn('`dataset` argument is missing');
+			return null;
+		}
+		if (!args.grouping) {
+			console.warn('`grouping` argument is missing');
+			return null;
+		}
+		return axios.post(`/distil/grouping/${args.dataset}`, {
+				grouping: args.grouping
+			})
+			.then(() => {
+				// update dataset
+				return Promise.all([
+					context.dispatch('fetchDataset', {
+						dataset: args.dataset
+					}),
+					context.dispatch('fetchVariables', {
+						dataset: args.dataset
+					}),
+				]).then(() => {
+					mutations.clearVariableSummaries(context);
+					const variables = context.getters.getVariables;
+					return context.dispatch('fetchVariableSummaries', {
+						dataset: args.dataset,
+						variables: variables
+					});
+				});
+			})
+			.catch(error => {
+				console.error(error);
+			});
+	},
+
+
 	setVariableType(context: DatasetContext, args: { dataset: string, field: string, type: string }): Promise<void>  {
 		if (!args.dataset) {
 			console.warn('`dataset` argument is missing');
@@ -267,22 +309,15 @@ export const actions = {
 			console.warn('`variable` argument is missing');
 			return null;
 		}
+
 		return axios.post(`/distil/variable-summary/${args.dataset}/${args.variable}`, {})
 			.then(response => {
 
 				const histogram = response.data.histogram;
-				if (histogram.files) {
-					// if there a linked files, fetch those before resolving
-					return context.dispatch('fetchFiles', {
-						dataset: args.dataset,
-						variable: args.variable,
-						urls: histogram.files
-					}).then(() => {
+				return fetchHistogramExemplars(args.dataset, args.variable, histogram)
+					.then(() => {
 						mutations.updateVariableSummaries(context, histogram);
 					});
-				} else {
-					mutations.updateVariableSummaries(context, histogram);
-				}
 
 			})
 			.catch(error => {
@@ -319,13 +354,6 @@ export const actions = {
 					url: url
 				});
 			}
-			if (type === TIMESERIES_TYPE) {
-				return context.dispatch('fetchTimeseries', {
-					dataset: args.dataset,
-					source: 'seed',
-					url: url
-				});
-			}
 			if (type === 'graph') {
 				return context.dispatch('fetchGraph', {
 					dataset: args.dataset,
@@ -357,18 +385,36 @@ export const actions = {
 			});
 	},
 
-	fetchTimeseries(context: DatasetContext, args: { dataset: string, source: string, url: string }) {
-		if (!args.url) {
-			console.warn('`url` argument is missing');
-			return null;
-		}
+	fetchTimeseries(context: DatasetContext, args: { dataset: string, xColName: string, yColName: string, timeseriesColName: string, timeseriesID: any }) {
+
 		if (!args.dataset) {
 			console.warn('`dataset` argument is missing');
 			return null;
 		}
-		return axios.get(`distil/timeseries/${args.dataset}/${args.source}/${args.url}`)
+		if (!args.xColName) {
+			console.warn('`xColName` argument is missing');
+			return null;
+		}
+		if (!args.yColName) {
+			console.warn('`yColName` argument is missing');
+			return null;
+		}
+		if (!args.timeseriesColName) {
+			console.warn('`timeseriesColName` argument is missing');
+			return null;
+		}
+		if (!args.timeseriesID) {
+			console.warn('`timeseriesID` argument is missing');
+			return null;
+		}
+
+		return axios.post(`distil/timeseries/${args.dataset}/${args.timeseriesColName}/${args.xColName}/${args.yColName}/${args.timeseriesID}`, {})
 			.then(response => {
-				mutations.updateTimeseriesFile(context, { dataset: args.dataset, url: args.url, file: response.data.timeseries });
+				mutations.updateTimeseries(context, {
+					dataset: args.dataset,
+					id: args.timeseriesID,
+					timeseries: response.data.timeseries
+				});
 			})
 			.catch(error => {
 				console.error(error);
@@ -473,7 +519,7 @@ export const actions = {
 			return null;
 		}
 		if (!args.filterParams) {
-			console.warn('`filters` argument is missing');
+			console.warn('`filterParams` argument is missing');
 			return null;
 		}
 
@@ -497,7 +543,7 @@ export const actions = {
 			return null;
 		}
 		if (!args.filterParams) {
-			console.warn('`filters` argument is missing');
+			console.warn('`filterParams` argument is missing');
 			return null;
 		}
 

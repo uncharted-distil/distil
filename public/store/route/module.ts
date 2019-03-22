@@ -37,7 +37,7 @@ export const getters = {
 	getRouteResidualThresholdMin: read(moduleGetters.getRouteResidualThresholdMin),
 	getRouteResidualThresholdMax: read(moduleGetters.getRouteResidualThresholdMax),
 	getDecodedFilters: read(moduleGetters.getDecodedFilters),
-	getDecodedFilterParams: read(moduleGetters.getDecodedFilterParams),
+	getDecodedSolutionRequestFilterParams: read(moduleGetters.getDecodedSolutionRequestFilterParams),
 	getTrainingVariables: read(moduleGetters.getTrainingVariables),
 	getTrainingVariableSummaries: read(moduleGetters.getTrainingVariableSummaries),
 	getTargetVariable: read(moduleGetters.getTargetVariable),

@@ -27,8 +27,8 @@
 
 import _ from 'lodash';
 import Vue from 'vue';
-import IconBase from './icons/IconBase.vue';
-import IconBookmark from './icons/IconBookmark.vue';
+import IconBase from './icons/IconBase';
+import IconBookmark from './icons/IconBookmark';
 import { SuggestedType, Variable } from '../store/dataset/index';
 import { HighlightRoot } from '../store/highlights/index';
 import { actions as datasetActions, getters as datasetGetters } from '../store/dataset/module';

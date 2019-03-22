@@ -1,12 +1,14 @@
 import _ from 'lodash';
 import axios from 'axios';
 import Vue from 'vue';
-import { Variable, VariableSummary, TableData, TableRow, D3M_INDEX_FIELD } from '../store/dataset/index';
+import { Variable, VariableSummary, TableData, TableRow, TableColumn, Grouping, D3M_INDEX_FIELD } from '../store/dataset/index';
 import { Solution, SOLUTION_COMPLETED } from '../store/solutions/index';
 import { Dictionary } from './dict';
 import { Group } from './facets';
 import { FilterParams } from './filters';
-import { formatValue } from '../util/types';
+import store from '../store/store';
+import { getters as datasetGetters, actions as datasetActions } from '../store/dataset/module';
+import { formatValue, TIMESERIES_TYPE } from '../util/types';
 
 // Postfixes for special variable names
 export const PREDICTED_SUFFIX = '_predicted';
@@ -18,6 +20,52 @@ export const DATAMART_PROVENANCE_NYU = 'datamartNYU';
 export const DATAMART_PROVENANCE_ISI = 'datamartISI';
 export const ELASTIC_PROVENANCE = 'elastic';
 export const FILE_PROVENANCE = 'file';
+
+
+export function getTimeseriesGroupingsFromFields(variables: Variable[], fields: Dictionary<TableColumn>): Grouping[] {
+	return _.map(fields, (field, key) => key)
+		.filter(key => {
+			const v = variables.find(v => v.colName === key);
+			return (v && v.grouping && v.grouping.type === TIMESERIES_TYPE);
+		}).map(key => {
+			const v = variables.find(v => v.colName === key);
+			return v.grouping;
+		});
+}
+
+export function fetchHistogramExemplars(datasetName: string, variableName: string, histogram: VariableSummary) {
+
+	const variables = datasetGetters.getVariables(store);
+	const variable = variables.find(v => v.colName === variableName);
+
+	if (histogram.exemplars) {
+		if (variable.grouping) {
+			if (variable.grouping.type === 'timeseries') {
+
+				// if there a linked exemplars, fetch those before resolving
+				return Promise.all(histogram.exemplars.map(exemplar => {
+					return datasetActions.fetchTimeseries(store, {
+						dataset: datasetName,
+						timeseriesColName: variable.grouping.idCol,
+						xColName: variable.grouping.properties.xCol,
+						yColName: variable.grouping.properties.yCol,
+						timeseriesID: exemplar,
+					});
+				}));
+			}
+
+		} else {
+			// if there a linked files, fetch those before resolving
+			return datasetActions.fetchFiles(store, {
+				dataset: datasetName,
+				variable: variableName,
+				urls: histogram.exemplars
+			});
+		}
+	}
+
+	return new Promise(res => res());
+}
 
 export function updateSummaries(summary: VariableSummary, summaries: VariableSummary[]) {
 	const index = _.findIndex(summaries, s => {
