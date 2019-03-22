@@ -17,6 +17,7 @@ package elastic
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/pkg/errors"
 	"github.com/uncharted-distil/distil-compute/model"
@@ -192,6 +193,7 @@ func (s *Storage) updateVariables(dataset string, variables []*model.Variable) e
 			model.VarDisplayVariableField:  v.DisplayName,
 			model.VarDistilRole:            v.DistilRole,
 			model.VarDeleted:               v.Deleted,
+			model.VarGroupingField:         v.Grouping,
 		})
 	}
 
@@ -270,4 +272,61 @@ func (s *Storage) DeleteVariable(dataset string, varName string) error {
 	}
 
 	return s.updateVariables(dataset, vars)
+}
+
+// AddGrouping adds a grouping to the metadata.
+func (s *Storage) AddGrouping(datasetName string, grouping model.Grouping) error {
+
+	query := elastic.NewMatchQuery("_id", datasetName)
+	// execute the ES query
+	res, err := s.client.Search().
+		Query(query).
+		Index(s.index).
+		FetchSource(true).
+		Size(datasetsListSize).
+		Do(context.Background())
+	if err != nil {
+		return errors.Wrap(err, "elasticsearch dataset fetch query failed")
+	}
+
+	if len(res.Hits.Hits) != 1 {
+		return fmt.Errorf("default dataset meta not found")
+	}
+	hit := res.Hits.Hits[0]
+
+	// parse hit into JSON
+	source, err := json.Unmarshal(*hit.Source)
+	if err != nil {
+		return errors.Wrap(err, "elasticsearch dataset unmarshal failed")
+	}
+
+	variables, ok := json.Array(source, "variables")
+	if !ok {
+		return errors.Wrap(err, "variables unmarshal failed")
+	}
+
+	found := false
+	for _, variable := range variables {
+		name, ok := json.String(variable, "colName")
+		if ok && name == grouping.IDCol {
+			variable[model.VarGroupingField] = json.StructToMap(grouping)
+			found = true
+		}
+	}
+	if !found {
+		return fmt.Errorf("no variable match found for grouping")
+	}
+
+	// push the document into the metadata index
+	_, err = s.client.Index().
+		Index(s.index).
+		Type(metadataType).
+		Id(datasetName).
+		BodyJson(source).
+		Do(context.Background())
+	if err != nil {
+		return errors.Wrapf(err, "failed to add document to index `%s`", s.index)
+	}
+
+	return nil
 }

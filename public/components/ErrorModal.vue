@@ -10,7 +10,7 @@
 				<div><b>{{title}}:</b> {{error}}</div>
 			</div>
 			<div class="row justify-content-center">
-				<b-btn class="mt-3 join-modal-button" variant="outline-secondary" block @click="onClose">OK</b-btn>
+				<b-btn class="mt-3 close-modal-button" variant="outline-secondary" block @click="onClose">OK</b-btn>
 			</div>
 		</b-modal>
 	</div>
@@ -21,19 +21,9 @@
 
 import _ from 'lodash';
 import Vue from 'vue';
-import { createRouteEntry } from '../util/routes';
-import { formatBytes } from '../util/bytes';
-import { sortVariablesByImportance } from '../util/data';
-import { getters as routeGetters } from '../store/route/module';
-import { Dataset, Variable } from '../store/dataset/index';
-import { actions as datasetActions } from '../store/dataset/module';
-import { SELECT_TARGET_ROUTE } from '../store/route/index';
-import localStorage from 'store';
-
-const NUM_TOP_FEATURES = 5;
 
 export default Vue.extend({
-	name: 'dataset-preview',
+	name: 'error-model',
 
 	props: {
 		title: {
@@ -57,4 +47,11 @@ export default Vue.extend({
 </script>
 
 <style>
+
+.close-modal-button {
+	margin: 0 8px;
+	width: 25% !important;
+	line-height: 32px !important;
+}
+
 </style>

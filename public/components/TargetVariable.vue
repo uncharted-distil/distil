@@ -11,7 +11,7 @@
 
 import _ from 'lodash';
 import Vue from 'vue';
-import VariableFacets from '../components/VariableFacets.vue';
+import VariableFacets from '../components/VariableFacets';
 import { getters as routeGetters } from '../store/route/module';
 import { Group, createGroups, getNumericalFacetValue, getCategoricalFacetValue, TOP_RANGE_HIGHLIGHT } from '../util/facets';
 import { TARGET_VAR_INSTANCE } from '../store/route/index';

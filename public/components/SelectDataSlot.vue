@@ -1,31 +1,10 @@
 <template>
 	<div class="select-data-slot">
-		<p>
-			<b-nav tabs>
-				<b-nav-item class="font-weight-bold" @click="setIncludedActive" :active="includedActive">Samples to Model From</b-nav-item>
-				<b-nav-item class="font-weight-bold" @click="setExcludedActive" :active="!includedActive">Excluded Samples</b-nav-item>
 
-				<b-form-group class="view-button ml-auto">
-					<b-form-radio-group buttons v-model="viewType" button-variant="outline-secondary">
-						<b-form-radio :value="IMAGE_VIEW" v-if="isImageDataset" class="view-button">
-							<i class="fa fa-image"></i>
-						</b-form-radio >
-						<b-form-radio :value="TABLE_VIEW" class="view-button">
-							<i class="fa fa-columns"></i>
-						</b-form-radio >
-						<b-form-radio :value="GRAPH_VIEW" class="view-button">
-							<i class="fa fa-share-alt"></i>
-						</b-form-radio >
-						<b-form-radio :value="GEO_VIEW" class="view-button">
-							<i class="fa fa-globe"></i>
-						</b-form-radio >
-						<b-form-radio :value="TIMESERIES_VIEW" class="view-button">
-							<i class="fa fa-line-chart"></i>
-						</b-form-radio >
-					</b-form-radio-group>
-				</b-form-group>
-			</b-nav>
-		</p>
+		<view-type-toggle v-model="viewType" has-tabs :variables="variables">
+			<b-nav-item class="font-weight-bold" @click="setIncludedActive" :active="includedActive">Samples to Model From</b-nav-item>
+			<b-nav-item class="font-weight-bold" @click="setExcludedActive" :active="!includedActive">Excluded Samples</b-nav-item>
+		</view-type-toggle>
 
 		<div class="fake-search-input">
 			<div class="filter-badges">
@@ -80,6 +59,7 @@ import SelectTimeseriesView from './SelectTimeseriesView';
 import SelectGeoPlot from './SelectGeoPlot';
 import SelectGraphView from './SelectGraphView';
 import FilterBadge from './FilterBadge';
+import ViewTypeToggle from './ViewTypeToggle';
 import { getters as datasetGetters } from '../store/dataset/module';
 import { TableRow, D3M_INDEX_FIELD, Variable } from '../store/dataset/index';
 import { Highlight, RowSelection } from '../store/highlights/index';
@@ -92,6 +72,7 @@ const TABLE_VIEW = 'table';
 const IMAGE_VIEW = 'image';
 const GRAPH_VIEW = 'graph';
 const GEO_VIEW = 'geo';
+const TIMESERIES_VIEW = 'timeseries';
 
 export default Vue.extend({
 	name: 'select-data-slot',
@@ -102,19 +83,20 @@ export default Vue.extend({
 		SelectImageMosaic,
 		SelectGraphView,
 		SelectGeoPlot,
-		SelectTimeseriesView
+		SelectTimeseriesView,
+		ViewTypeToggle
 	},
 
 	data() {
 		return {
 			instanceName: 'select-data',
-			viewType: TABLE_VIEW,
+			viewType: 'table',
 			includedActive: true,
 			TABLE_VIEW: TABLE_VIEW,
 			IMAGE_VIEW: IMAGE_VIEW,
 			GRAPH_VIEW: GRAPH_VIEW,
 			GEO_VIEW: GEO_VIEW,
-			TIMESERIES_VIEW: 'timeseries'
+			TIMESERIES_VIEW: TIMESERIES_VIEW
 		};
 	},
 
@@ -200,10 +182,6 @@ export default Vue.extend({
 
 		isFilteringSelection(): boolean {
 			return !!this.rowSelection;
-		},
-
-		isImageDataset(): boolean {
-			return this.variables.filter(v => v.colType === 'image').length  > 0;
 		}
 	},
 
@@ -310,12 +288,6 @@ table tr {
 }
 .selected-color {
 	color: #ff0067;
-}
-.view-button {
-	cursor: pointer;
-}
-.view-button input[type=radio]{
-    display:none;
 }
 
 </style>

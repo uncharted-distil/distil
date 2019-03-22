@@ -1,6 +1,6 @@
 <template>
 
-	<div class="select-timeseries-view" ref="timeseries"
+	<div class="results-timeseries-view" ref="timeseries"
 		@mousemove="mouseMove"
 		@mouseleave="mouseLeave"
 		@wheel="scroll">
@@ -15,7 +15,7 @@
 			</div>
 		</div>
 		<div class="timeseries-rows">
-			<div v-for="item in items">
+			<div class="prediction-row" v-for="item in items">
 				<sparkline-row
 					:x-col="timeseriesGrouping.properties.xCol"
 					:y-col="timeseriesGrouping.properties.yCol"
@@ -25,6 +25,9 @@
 					:margin="margin"
 					:highlight-pixel-x="highlightPixelX">
 				</sparkline-row>
+				<div class="prediction-result" v-bind:class="{ 'correct-prediction': isCorrect(item), 'incorrect-prediction': !isCorrect(item)}">
+					<b>{{item[predictedCol]}}</b>
+				</div>
 			</div>
 		</div>
 		<div class="vertical-line"></div>
@@ -45,6 +48,8 @@ import { RowSelection, HighlightRoot } from '../store/highlights/index';
 import { TableRow, TableColumn, TimeseriesExtrema, Variable, Grouping } from '../store/dataset/index';
 import { getters as routeGetters } from '../store/route/module';
 import { getters as datasetGetters } from '../store/dataset/module';
+import { getters as solutionGetters } from '../store/solutions/module';
+import { Solution } from '../store/solutions/index';
 import { updateHighlightRoot } from '../util/highlights';
 import { getTimeseriesGroupingsFromFields } from '../util/data';
 
@@ -53,13 +58,15 @@ const SELECTED_TICK_SIZE = 18;
 const MIN_PIXEL_WIDTH = 32;
 
 export default Vue.extend({
-	name: 'select-timeseries-view',
+	name: 'results-timeseries-view',
 
 	components: {
 		SparklineRow
 	},
 
 	props: {
+		items: Array as () => any[],
+		fields: Object as () => Dictionary<TableColumn>,
 		margin: {
 			type: Object as () => any,
 			default: () => ({
@@ -89,16 +96,12 @@ export default Vue.extend({
 			return routeGetters.getRouteDataset(this.$store);
 		},
 
+		target(): string {
+			return routeGetters.getRouteTargetVariable(this.$store);
+		},
+
 		variables(): Variable[] {
 			return datasetGetters.getVariables(this.$store);
-		},
-
-		items(): TableRow[] {
-			return this.includedActive ? datasetGetters.getIncludedTableDataItems(this.$store) : datasetGetters.getExcludedTableDataItems(this.$store);
-		},
-
-		fields(): Dictionary<TableColumn> {
-			return this.includedActive ? datasetGetters.getIncludedTableDataFields(this.$store) : datasetGetters.getExcludedTableDataFields(this.$store);
 		},
 
 		timeseriesGrouping(): Grouping {
@@ -123,6 +126,14 @@ export default Vue.extend({
 
 		highlightRoot(): HighlightRoot {
 			return routeGetters.getDecodedHighlightRoot(this.$store);
+		},
+
+		solution(): Solution {
+			return solutionGetters.getActiveSolution(this.$store);
+		},
+
+		predictedCol(): string {
+			return this.solution ? this.solution.predictedKey : '';
 		},
 
 		microExtrema(): TimeseriesExtrema {
@@ -207,6 +218,9 @@ export default Vue.extend({
 		invertFilters(filters: Filter[]): Filter[] {
 			// TODO: invert filters
 			return filters;
+		},
+		isCorrect(item: TableRow): boolean {
+			return item[this.predictedCol] === item[this.target];
 		},
 		mouseLeave() {
 			this.$line.hide();
@@ -437,9 +451,24 @@ svg.axis {
 	max-height: 64px;
 	width: 100%;
 }
-.select-timeseries-view {
+.prediction-row {
+	position: relative;
+}
+.prediction-result {
+	position: absolute;
+	top: 4px;
+	right: 4px;
+}
+.correct-prediction {
+	color: #00c6e1;
+}
+.incorrect-prediction {
+	color: #e05353;
+}
+.results-timeseries-view {
 	position: relative;
 	flex: 1;
+	z-index: 1;
 	height: inherit;
 }
 .timeseries-row-header {
@@ -498,6 +527,7 @@ svg.axis {
 }
 .vertical-line {
 	position: absolute;
+	z-index: 2;
 	display: none;
 	top: 0;
 	left: 0;

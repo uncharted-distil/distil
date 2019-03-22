@@ -184,7 +184,7 @@ export const getters = {
 		return decodeFilters(state.query.filters as string);
 	},
 
-	getDecodedFilterParams(state: Route, getters: any): FilterParams {
+	getDecodedSolutionRequestFilterParams(state: Route, getters: any): FilterParams {
 		const filters = getters.getDecodedFilters;
 		const filterParams = _.cloneDeep({
 			filters: filters,

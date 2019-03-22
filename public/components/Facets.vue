@@ -9,8 +9,8 @@ import _ from 'lodash';
 import $ from 'jquery';
 import Vue from 'vue';
 
-import IconBase from './icons/IconBase.vue';
-import IconForkVue from './icons/IconFork.vue';
+import IconBase from './icons/IconBase';
+import IconForkVue from './icons/IconFork';
 
 import { Group, CategoricalFacet, isCategoricalFacet, getCategoricalChunkSize, isNumericalFacet } from '../util/facets';
 import { Highlight, RowSelection, Row } from '../store/highlights/index';
@@ -18,8 +18,8 @@ import { VariableSummary } from '../store/dataset/index';
 import { Dictionary } from '../util/dict';
 import { getSelectedRows } from '../util/row';
 import Facets from '@uncharted.software/stories-facets';
-import ImagePreview from '../components/ImagePreview.vue';
-import TypeChangeMenu from '../components/TypeChangeMenu.vue';
+import ImagePreview from '../components/ImagePreview';
+import TypeChangeMenu from '../components/TypeChangeMenu';
 import { circleSpinnerHTML } from '../util/spinner';
 import { getVarType, isClusterType, isFeatureType, addClusterPrefix, addFeaturePrefix, hasComputedVarPrefix } from '../util/types';
 

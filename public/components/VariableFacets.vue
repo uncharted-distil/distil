@@ -6,6 +6,7 @@
 					<b-form-input size="sm" v-model="filter" placeholder="Search" />
 				</div>
 			</div>
+			<!-- TODO: this should be passed in as title HTML -->
 			<div v-if="enableTitle" class="row align-items-center">
 				<div class="col-12 flex-column d-flex">
 					<p><b>Select Feature to Predict</b> Select from potential features of interest below. Each feature tile shown summarizes count of records by value.</p>
@@ -44,7 +45,7 @@
 <script lang="ts">
 
 import _ from 'lodash';
-import Facets from '../components/Facets.vue';
+import Facets from '../components/Facets';
 import { overlayRouteEntry, getRouteFacetPage } from '../util/routes';
 import { Dictionary } from '../util/dict';
 import { sortGroupsByImportance, filterVariablesByPage, getVariableImportance } from '../util/data';

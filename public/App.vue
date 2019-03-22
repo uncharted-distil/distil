@@ -11,7 +11,7 @@ import Vue from 'vue';
 import VueRouterSync from 'vuex-router-sync';
 import VueObserveVisibility from 'vue-observe-visibility';
 import BootstrapVue from 'bootstrap-vue';
-import Navigation from './views/Navigation.vue';
+import Navigation from './views/Navigation';
 import store from './store/store';
 import router from './router/router';
 import { getters as routeGetters } from './store/route/module';

@@ -12,7 +12,7 @@
 <script lang="ts">
 
 import _ from 'lodash';
-import DatasetPreview from '../components/DatasetPreview.vue';
+import DatasetPreview from '../components/DatasetPreview';
 import { getters as datasetGetters } from '../store/dataset/module';
 import { Dataset } from '../store/dataset/index';
 import Vue from 'vue';

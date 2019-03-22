@@ -77,10 +77,10 @@
 
 import Vue from 'vue';
 import vueSlider from 'vue-slider-component';
-import JoinDatasetsForm from '../components/JoinDatasetsForm.vue';
-import JoinDataSlot from '../components/JoinDataSlot.vue';
-import VariableFacets from '../components/VariableFacets.vue';
-import TypeChangeMenu from '../components/TypeChangeMenu.vue';
+import JoinDatasetsForm from '../components/JoinDatasetsForm';
+import JoinDataSlot from '../components/JoinDataSlot';
+import VariableFacets from '../components/VariableFacets';
+import TypeChangeMenu from '../components/TypeChangeMenu';
 import { overlayRouteEntry } from '../util/routes';
 import { Dictionary } from '../util/dict';
 import { VariableSummary, TableData, TableColumn, TableRow } from '../store/dataset/index';

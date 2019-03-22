@@ -30,15 +30,19 @@ import (
 type ImageField struct {
 	Storage     *Storage
 	StorageName string
-	Variable    *model.Variable
+	Key         string
+	Label       string
+	Type        string
 }
 
 // NewImageField creates a new field for image types.
-func NewImageField(storage *Storage, storageName string, variable *model.Variable) *ImageField {
+func NewImageField(storage *Storage, storageName string, key string, label string, typ string) *ImageField {
 	field := &ImageField{
 		Storage:     storage,
 		StorageName: storageName,
-		Variable:    variable,
+		Key:         key,
+		Label:       label,
+		Type:        typ,
 	}
 
 	return field
@@ -67,11 +71,11 @@ func (f *ImageField) fetchRepresentationImages(categoryBuckets []*api.Bucket) ([
 
 	for _, bucket := range categoryBuckets {
 
-		prefixedVarName := f.featureVarName(f.Variable.Name)
+		prefixedVarName := f.featureVarName(f.Key)
 
 		// pull sample row containing bucket
 		query := fmt.Sprintf("SELECT \"%s\" FROM %s WHERE \"%s\" ~ $1 LIMIT 1;",
-			f.Variable.Name, f.StorageName, prefixedVarName)
+			f.Key, f.StorageName, prefixedVarName)
 
 		// execute the postgres query
 		rows, err := f.Storage.client.Query(query, bucket.Key)
@@ -98,7 +102,7 @@ func (f *ImageField) fetchHistogram(filterParams *api.FilterParams) (*api.Histog
 	params := make([]interface{}, 0)
 	wheres, params = f.Storage.buildFilteredQueryWhere(wheres, params, filterParams.Filters)
 
-	prefixedVarName := f.featureVarName(f.Variable.Name)
+	prefixedVarName := f.featureVarName(f.Key)
 	fieldSelect := fmt.Sprintf("unnest(string_to_array(\"%s\", ','))", prefixedVarName)
 
 	where := ""
@@ -128,7 +132,7 @@ func (f *ImageField) fetchHistogram(filterParams *api.FilterParams) (*api.Histog
 	if err != nil {
 		return nil, err
 	}
-	histogram.Files = files
+	histogram.Exemplars = files
 	return histogram, nil
 }
 
@@ -147,7 +151,7 @@ func (f *ImageField) fetchHistogramByResult(resultURI string, filterParams *api.
 		where = fmt.Sprintf("AND %s", strings.Join(wheres, " AND "))
 	}
 
-	prefixedVarName := f.featureVarName(f.Variable.Name)
+	prefixedVarName := f.featureVarName(f.Key)
 
 	// Get count by category.
 	query := fmt.Sprintf(
@@ -178,12 +182,12 @@ func (f *ImageField) fetchHistogramByResult(resultURI string, filterParams *api.
 	if err != nil {
 		return nil, err
 	}
-	histogram.Files = files
+	histogram.Exemplars = files
 	return histogram, nil
 }
 
 func (f *ImageField) parseHistogram(rows *pgx.Rows) (*api.Histogram, error) {
-	prefixedVarName := f.featureVarName(f.Variable.Name)
+	prefixedVarName := f.featureVarName(f.Key)
 
 	termsAggName := api.TermsAggPrefix + prefixedVarName
 
@@ -215,10 +219,10 @@ func (f *ImageField) parseHistogram(rows *pgx.Rows) (*api.Histogram, error) {
 
 	// assign histogram attributes
 	return &api.Histogram{
-		Label:   f.Variable.DisplayName,
-		Key:     f.Variable.Name,
+		Label:   f.Label,
+		Key:     f.Key,
 		Type:    model.CategoricalType,
-		VarType: f.Variable.Type,
+		VarType: f.Type,
 		Buckets: buckets,
 		Extrema: &api.Extrema{
 			Min: float64(min),
@@ -230,7 +234,7 @@ func (f *ImageField) parseHistogram(rows *pgx.Rows) (*api.Histogram, error) {
 // FetchPredictedSummaryData pulls predicted data from the result table and builds
 // the image histogram for the field.
 func (f *ImageField) FetchPredictedSummaryData(resultURI string, datasetResult string, filterParams *api.FilterParams, extrema *api.Extrema) (*api.Histogram, error) {
-	targetName := f.featureVarName(f.Variable.Name)
+	targetName := f.featureVarName(f.Key)
 
 	// get filter where / params
 	wheres, params, err := f.Storage.buildResultQueryFilters(f.StorageName, resultURI, filterParams)
@@ -265,6 +269,6 @@ func (f *ImageField) FetchPredictedSummaryData(resultURI string, datasetResult s
 	if err != nil {
 		return nil, err
 	}
-	histogram.Files = files
+	histogram.Exemplars = files
 	return histogram, nil
 }

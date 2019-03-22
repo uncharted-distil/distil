@@ -46,7 +46,7 @@ type Histogram struct {
 	NumRows    int       `json:"numRows"`
 	Extrema    *Extrema  `json:"extrema,omitempty"`
 	Buckets    []*Bucket `json:"buckets"`
-	Files      []string  `json:"files"`
+	Exemplars  []string  `json:"exemplars"`
 	SolutionID string    `json:"solutionId,omitempty"`
 	StdDev     float64   `json:"stddev"`
 	Mean       float64   `json:"mean"`

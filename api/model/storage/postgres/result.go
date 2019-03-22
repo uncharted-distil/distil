@@ -250,14 +250,14 @@ func addIncludePredictedFilterToWhere(wheres []string, params []interface{}, pre
 	switch predictedFilter.Type {
 	case model.NumericalFilter:
 		// numerical range-based filter
-		where = fmt.Sprintf("cast(value AS double precision) >= $%d AND cast(value AS double precision) <= $%d", len(params)+1, len(params)+2)
+		where = fmt.Sprintf("cast(predicted.value AS double precision) >= $%d AND cast(predicted.value AS double precision) <= $%d", len(params)+1, len(params)+2)
 		params = append(params, *predictedFilter.Min)
 		params = append(params, *predictedFilter.Max)
 
 	case model.BivariateFilter:
 		// cast to double precision in case of string based representation
 		// hardcode [lat, lon] format for now
-		where := fmt.Sprintf("value[2] >= $%d AND value[2] <= $%d value[1] >= $%d AND value[1] <= $%d", len(params)+1, len(params)+2, len(params)+3, len(params)+4)
+		where := fmt.Sprintf("predicted.value[2] >= $%d AND predicted.value[2] <= $%d predicted.value[1] >= $%d AND predicted.value[1] <= $%d", len(params)+1, len(params)+2, len(params)+3, len(params)+4)
 		wheres = append(wheres, where)
 		params = append(params, predictedFilter.Bounds.MinX)
 		params = append(params, predictedFilter.Bounds.MaxX)
@@ -277,7 +277,7 @@ func addIncludePredictedFilterToWhere(wheres []string, params []interface{}, pre
 		}
 
 		if len(categories) >= 1 {
-			where = fmt.Sprintf("value IN (%s)", strings.Join(categories, ", "))
+			where = fmt.Sprintf("predicted.value IN (%s)", strings.Join(categories, ", "))
 		}
 
 	case model.RowFilter:
@@ -290,7 +290,7 @@ func addIncludePredictedFilterToWhere(wheres []string, params []interface{}, pre
 
 		}
 		if len(indices) >= 1 {
-			where = fmt.Sprintf("value IN (%s)", strings.Join(indices, ", "))
+			where = fmt.Sprintf("predicted.value IN (%s)", strings.Join(indices, ", "))
 		}
 
 	default:
@@ -308,7 +308,7 @@ func addExcludePredictedFilterToWhere(wheres []string, params []interface{}, pre
 	switch predictedFilter.Type {
 	case model.NumericalFilter:
 		// numerical range-based filter
-		where = fmt.Sprintf("(cast(value AS double precision) < $%d OR cast(value AS double precision) > $%d)", len(params)+1, len(params)+2)
+		where = fmt.Sprintf("(cast(predicted.value AS double precision) < $%d OR cast(predicted.value AS double precision) > $%d)", len(params)+1, len(params)+2)
 		params = append(params, *predictedFilter.Min)
 		params = append(params, *predictedFilter.Max)
 
@@ -316,7 +316,7 @@ func addExcludePredictedFilterToWhere(wheres []string, params []interface{}, pre
 		// bivariate
 		// cast to double precision in case of string based representation
 		// hardcode [lat, lon] format for now
-		where := fmt.Sprintf("(value[2] < $%d OR value[2] > $%d) OR (value[1] < $%d OR value[1] > $%d)", len(params)+1, len(params)+2, len(params)+3, len(params)+4)
+		where := fmt.Sprintf("(predicted.value[2] < $%d OR predicted.value[2] > $%d) OR (predicted.value[1] < $%d OR predicted.value[1] > $%d)", len(params)+1, len(params)+2, len(params)+3, len(params)+4)
 		wheres = append(wheres, where)
 		params = append(params, predictedFilter.Bounds.MinX)
 		params = append(params, predictedFilter.Bounds.MaxX)
@@ -336,7 +336,7 @@ func addExcludePredictedFilterToWhere(wheres []string, params []interface{}, pre
 		}
 
 		if len(categories) >= 1 {
-			where = fmt.Sprintf("value NOT IN (%s)", strings.Join(categories, ", "))
+			where = fmt.Sprintf("predicted.value NOT IN (%s)", strings.Join(categories, ", "))
 		}
 
 	case model.RowFilter:
@@ -349,7 +349,7 @@ func addExcludePredictedFilterToWhere(wheres []string, params []interface{}, pre
 
 		}
 		if len(indices) >= 1 {
-			where = fmt.Sprintf("value NOT IN (%s)", strings.Join(indices, ", "))
+			where = fmt.Sprintf("predicted.value NOT IN (%s)", strings.Join(indices, ", "))
 		}
 
 	default:
@@ -406,7 +406,7 @@ func (s *Storage) FetchResults(dataset string, storageName string, resultURI str
 	}
 
 	// generate variable list for inclusion in query select
-	fields, err := s.buildFilteredResultQueryField(variables, variable, filterParams.Variables)
+	distincts, fields, err := s.buildFilteredResultQueryField(variables, variable, filterParams.Variables)
 	if err != nil {
 		return nil, errors.Wrap(err, "Could not build field list")
 	}
@@ -475,13 +475,13 @@ func (s *Storage) FetchResults(dataset string, storageName string, resultURI str
 	}
 
 	query := fmt.Sprintf(
-		"SELECT value as \"%s\", "+
+		"SELECT %s predicted.value as \"%s\", "+
 			"\"%s\" as \"%s\", "+
 			"%s "+
 			"%s "+
 			"FROM %s as predicted inner join %s as data on data.\"%s\" = predicted.index "+
 			"WHERE result_id = $%d AND target = $%d",
-		predictedCol, targetName, targetCol, errorExpr, fields, storageNameResult, storageName,
+		distincts, predictedCol, targetName, targetCol, errorExpr, fields, storageNameResult, storageName,
 		model.D3MIndexFieldName, len(params)+1, len(params)+2)
 
 	params = append(params, resultURI)
@@ -503,7 +503,7 @@ func (s *Storage) FetchResults(dataset string, storageName string, resultURI str
 	countFilter := map[string]interface{}{
 		"result_id": resultURI,
 	}
-	numRows, err := s.FetchNumRows(storageNameResult, countFilter)
+	numRows, err := s.FetchNumRows(storageNameResult, nil, countFilter)
 	if err != nil {
 		return nil, errors.Wrap(err, "Could not pull num rows")
 	}
@@ -558,7 +558,7 @@ func (s *Storage) FetchResultsExtremaByURI(dataset string, storageName string, r
 		Type: model.TextType,
 	}
 
-	field := NewNumericalField(s, storageName, targetVariable)
+	field := NewNumericalField(s, storageName, targetVariable.Name, targetVariable.DisplayName, targetVariable.Type)
 	return field.fetchResultsExtrema(resultURI, storageNameResult, resultVariable)
 }
 
@@ -580,11 +580,11 @@ func (s *Storage) FetchPredictedSummary(dataset string, storageName string, resu
 	var field Field
 	var histogram *api.Histogram
 	if model.IsNumerical(variable.Type) {
-		field = NewNumericalField(s, storageName, variable)
+		field = NewNumericalField(s, storageName, variable.Name, variable.DisplayName, variable.Type)
 	} else if model.IsCategorical(variable.Type) {
-		field = NewCategoricalField(s, storageName, variable)
+		field = NewCategoricalField(s, storageName, variable.Name, variable.DisplayName, variable.Type)
 	} else if model.IsVector(variable.Type) {
-		field = NewVectorField(s, storageName, variable)
+		field = NewVectorField(s, storageName, variable.Name, variable.DisplayName, variable.Type)
 	} else {
 		return nil, errors.Errorf("variable %s of type %s does not support summary", variable.Name, variable.Type)
 	}
@@ -600,7 +600,7 @@ func (s *Storage) FetchPredictedSummary(dataset string, storageName string, resu
 	}
 
 	// get number of rows
-	numRows, err := s.FetchNumRows(storageNameResult, filter)
+	numRows, err := s.FetchNumRows(storageNameResult, []*model.Variable{variable}, filter)
 	if err != nil {
 		return nil, err
 	}

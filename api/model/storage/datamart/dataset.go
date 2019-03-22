@@ -20,8 +20,8 @@ import (
 	"strings"
 
 	"github.com/pkg/errors"
+	"github.com/uncharted-distil/distil-compute/model"
 	"github.com/uncharted-distil/distil-ingest/metadata"
-
 	"github.com/uncharted-distil/distil/api/env"
 	api "github.com/uncharted-distil/distil/api/model"
 )
@@ -89,6 +89,11 @@ func (s *Storage) AddVariable(dataset string, varName string, varType string, va
 
 // DeleteVariable is not supported by the datamart.
 func (s *Storage) DeleteVariable(dataset string, varName string) error {
+	return errors.Errorf("Not supported")
+}
+
+// AddGrouping adds a variable grouping.
+func (s *Storage) AddGrouping(datasetName string, grouping model.Grouping) error {
 	return errors.Errorf("Not supported")
 }
 

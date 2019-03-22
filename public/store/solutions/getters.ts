@@ -110,7 +110,7 @@ export const getters = {
 			return [];
 		}
 		const variables = getters.getVariablesMap;
-		return activeSolution.features.filter(f => f.featureType === 'train').map(f => variables[f.featureName]);
+		return activeSolution.features.filter(f => f.featureType === 'train').map(f => variables[f.featureName]).filter(v => !!v);
 	},
 
 	getActiveSolutionTargetVariable(state: SolutionState, getters: any): Variable[] {

@@ -10,7 +10,7 @@
 <script lang="ts">
 
 import Vue from 'vue';
-import VariableFacets from '../components/VariableFacets.vue';
+import VariableFacets from '../components/VariableFacets';
 import { getters as routeGetters } from '../store/route/module';
 import { getters as resultsGetters } from '../store/results/module';
 import { Group, createGroups, getNumericalFacetValue, getCategoricalFacetValue, TOP_RANGE_HIGHLIGHT } from '../util/facets';

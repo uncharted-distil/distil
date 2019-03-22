@@ -63,13 +63,30 @@ func array(json map[string]interface{}, path ...string) ([]interface{}, bool) {
 func Get(json map[string]interface{}, path ...string) (map[string]interface{}, bool) {
 	v, ok := get(json, path...)
 	if !ok {
-		return nil, ok
+		return nil, false
 	}
 	val, ok := v.(map[string]interface{})
 	if !ok {
-		return nil, ok
+		return nil, false
 	}
 	return val, true
+}
+
+// Struct fills a struct under the given path.
+func Struct(j map[string]interface{}, arg interface{}, path ...string) bool {
+	v, ok := get(j, path...)
+	if !ok {
+		return false
+	}
+	bs, err := Marshal(v)
+	if nil != err {
+		return false
+	}
+	err = json.Unmarshal(bs, &arg)
+	if err != nil {
+		return false
+	}
+	return true
 }
 
 // Exists returns true if something exists under the provided path.
@@ -268,7 +285,16 @@ func Marshal(j interface{}) ([]byte, error) {
 	return json.Marshal(j)
 }
 
-// StructToMap covnerts a struct to its map[string]interface{} equivalent.
+// MapToStruct converts a map[string]interface{} to its struct equivalent.
+func MapToStruct(res interface{}, arg map[string]interface{}) error {
+	bs, err := Marshal(arg)
+	if nil != err {
+		return nil
+	}
+	return json.Unmarshal(bs, &res)
+}
+
+// StructToMap converts a struct to its map[string]interface{} equivalent.
 func StructToMap(arg interface{}) map[string]interface{} {
 	bs, err := Marshal(arg)
 	if nil != err {
