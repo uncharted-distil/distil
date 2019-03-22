@@ -157,7 +157,7 @@ export const actions = {
 
 		const dataset = context.getters.getRouteDataset;
 		const highlightRoot = context.getters.getDecodedHighlightRoot;
-		const filterParams = context.getters.getDecodedFilterParams;
+		const filterParams = context.getters.getDecodedSolutionRequestFilterParams;
 		const paginatedVariables = context.getters.getSelectTrainingPaginatedVariables;
 
 		return Promise.all([

@@ -74,17 +74,17 @@ export default Vue.extend({
 			return circleSpinnerHTML();
 		},
 		svg(): d3.Selection<SVGElement, {}, HTMLElement, any> {
-			const $svg = this.$refs.svg as any;
-			return  d3.select($svg);
+			return  d3.select(this.$svg);
+		},
+		$svg(): any {
+			return this.$refs.svg as any;
 		},
 		width(): number {
-			const $svg = this.$refs.svg as any;
-			const dims = $svg.getBoundingClientRect();
+			const dims = this.$svg.getBoundingClientRect();
 			return dims.width - this.margin.left - this.margin.right;
 		},
 		height(): number {
-			const $svg = this.$refs.svg as any;
-			const dims = $svg.getBoundingClientRect();
+			const dims = this.$svg.getBoundingClientRect();
 			return dims.height - this.margin.top - this.margin.bottom;
 		},
 		min(): number {
@@ -159,6 +159,10 @@ export default Vue.extend({
 			this.svg.selectAll('*').remove();
 		},
 		injectSparkline() {
+
+			if (!this.$svg) {
+				return;
+			}
 
 			const minX = this.timeseriesExtrema.x.min;
 			const maxX = this.timeseriesExtrema.x.max;

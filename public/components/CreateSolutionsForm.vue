@@ -107,7 +107,7 @@ export default Vue.extend({
 			return datasetGetters.getVariables(this.$store);
 		},
 		filterParams(): FilterParams {
-			return routeGetters.getDecodedFilterParams(this.$store);
+			return routeGetters.getDecodedSolutionRequestFilterParams(this.$store);
 		},
 		metrics(): string[] {
 			if (this.isTask2) {

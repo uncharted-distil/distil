@@ -1,6 +1,9 @@
 <template>
 
-	<div class="select-timeseries-view" @mousemove="mouseMove" @mouseleave="mouseLeave" @wheel="scroll">
+	<div class="select-timeseries-view" ref="timeseries"
+		@mousemove="mouseMove"
+		@mouseleave="mouseLeave"
+		@wheel="scroll">
 		<div class="timeseries-row-header">
 			<div class="timeseries-var-col pad-top"><b>VARIABLES</b></div>
 			<div class="timeseries-min-col pad-top"><b>MIN</b></div>
@@ -184,6 +187,19 @@ export default Vue.extend({
 				return this.timeseriesExtrema.x.max;
 			}
 			return 1;
+		},
+
+		$timeseries(): any {
+			const timeseries = this.$refs.timeseries as any;
+			return $(timeseries);
+		},
+
+		$line(): any {
+			return this.$timeseries.find('.vertical-line');
+		},
+
+		$axis(): any {
+			return this.$timeseries.find('.timeseries-chart-axis');
 		}
 	},
 
@@ -193,33 +209,33 @@ export default Vue.extend({
 			return filters;
 		},
 		mouseLeave() {
-			$('.vertical-line').hide();
+			this.$line.hide();
 			this.highlightPixelX = null;
 		},
 		mouseMove(event) {
-			const parentOffset = $('.select-timeseries-view').offset();
-			const chartBounds = $('.timeseries-chart-axis').offset();
-			const chartWidth = $('.timeseries-chart-axis').width();
-			const chartScroll = $('.select-timeseries-view').parent().scrollTop();
+			const parentOffset = this.$timeseries.offset();
+			const chartBounds = this.$axis.offset();
+			const chartWidth = this.$axis.width();
+			const chartScroll = this.$timeseries.parent().scrollTop();
 
 			const relX = event.pageX - parentOffset.left;
-
 			const chartLeft = chartBounds.left - parentOffset.left;
+
 			if (relX >= chartLeft && relX <= chartLeft + chartWidth) {
-				$('.vertical-line').show();
-				$('.vertical-line').css({
+				this.$line.show();
+				this.$line.css({
 					left: relX,
 					top: chartScroll
 				});
 				this.highlightPixelX = relX - chartLeft - this.margin.left;
 			} else {
-				$('.vertical-line').hide();
+				this.$line.hide();
 				this.highlightPixelX = null;
 			}
 		},
 		scroll(event) {
-			const chartScroll = $('.select-timeseries-view').parent().scrollTop();
-			$('.vertical-line').css('top', chartScroll);
+			const chartScroll = this.$timeseries.parent().scrollTop();
+			this.$line.css('top', chartScroll);
 		},
 		injectMicroAxis() {
 
