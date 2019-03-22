@@ -76,10 +76,8 @@ func handleSolutionMessage(client *compute.Client, metadataCtor model.MetadataSt
 		// parse the message
 		msg, err := NewMessage(bytes)
 		if err != nil {
-			// parsing error, send back a failure response
-			err := fmt.Errorf("unable to parse solution request message: %s", string(bytes))
 			// send error response
-			handleErr(conn, nil, err)
+			handleErr(conn, nil, errors.Wrap(err, fmt.Sprintf("unable to parse solution request message: %s", string(bytes))))
 			return
 		}
 		// handle message
@@ -116,34 +114,34 @@ func handleCreateSolutions(conn *Connection, client *compute.Client, metadataCto
 	// unmarshal request
 	request, err := api.NewSolutionRequest(msg.Raw)
 	if err != nil {
-		handleErr(conn, msg, err)
+		handleErr(conn, msg, errors.Wrap(err, "unable to unmarshal create solutions request"))
 		return
 	}
 
 	// initialize the storage
 	dataStorage, err := dataCtor()
 	if err != nil {
-		handleErr(conn, msg, err)
+		handleErr(conn, msg, errors.Wrap(err, "unable to initialize data storage"))
 		return
 	}
 
 	// initialize metadata storage
 	metaStorage, err := metadataCtor()
 	if err != nil {
-		handleErr(conn, msg, err)
+		handleErr(conn, msg, errors.Wrap(err, "unable to initialize meta storage"))
 		return
 	}
 
 	// initialize solution storage
 	solutionStorage, err := solutionCtor()
 	if err != nil {
-		handleErr(conn, msg, err)
+		handleErr(conn, msg, errors.Wrap(err, "unable to initialize solution storage"))
 		return
 	}
 
 	targetVar, err := metaStorage.FetchVariable(request.Dataset, request.TargetFeature)
 	if err != nil {
-		handleErr(conn, msg, err)
+		handleErr(conn, msg, errors.Wrap(err, "unable to fetch target variable definition"))
 		return
 	}
 
@@ -169,7 +167,7 @@ func handleCreateSolutions(conn *Connection, client *compute.Client, metadataCto
 	// persist the request information and dispatch the request
 	err = request.PersistAndDispatch(client, solutionStorage, metaStorage, dataStorage)
 	if err != nil {
-		handleErr(conn, msg, err)
+		handleErr(conn, msg, errors.Wrap(err, "unable to dispatch solution request to TA2"))
 		return
 	}
 
@@ -177,14 +175,14 @@ func handleCreateSolutions(conn *Connection, client *compute.Client, metadataCto
 	err = request.Listen(func(status api.SolutionStatus) {
 		// check for error
 		if status.Error != nil {
-			handleErr(conn, msg, status.Error)
+			handleErr(conn, msg, errors.Wrap(status.Error, "received error from TA2 system"))
 			return
 		}
 		// send status to client
 		handleSuccess(conn, msg, jutil.StructToMap(status))
 	})
 	if err != nil {
-		handleErr(conn, msg, err)
+		handleErr(conn, msg, errors.Wrap(err, "received error from TA2 system"))
 		return
 	}
 
@@ -196,14 +194,14 @@ func handleStopSolutions(conn *Connection, client *compute.Client, msg *Message)
 	// unmarshal request
 	request, err := api.NewStopSolutionSearchRequest(msg.Raw)
 	if err != nil {
-		handleErr(conn, msg, err)
+		handleErr(conn, msg, errors.Wrap(err, "unable to unmarshal stop solutions request"))
 		return
 	}
 
 	// dispatch request
 	err = request.Dispatch(client)
 	if err != nil {
-		handleErr(conn, msg, err)
+		handleErr(conn, msg, errors.Wrap(err, "received error from TA2 system"))
 		return
 	}
 	return

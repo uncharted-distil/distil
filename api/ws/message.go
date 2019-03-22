@@ -24,7 +24,6 @@ import (
 type Message struct {
 	Type      string    `json:"type"`
 	ID        string    `json:"id"`
-	Session   string    `json:"session"`
 	Timestamp time.Time `json:"-"`
 	Raw       []byte    `json:"-"`
 }
