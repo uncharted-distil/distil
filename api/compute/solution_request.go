@@ -513,22 +513,6 @@ func (s *SolutionRequest) PersistAndDispatch(client *compute.Client, solutionSto
 		if variable.DistilRole != "metadata" {
 			dataVariables = append(dataVariables, variable)
 		}
-
-		// if variable.Grouping != nil {
-		//
-		// 	grouping := variable.Grouping
-		//
-		// 	s.Filters.AddVariable(grouping.IDCol)
-		// 	dataVariables = append(dataVariables, grouping.IDCol)
-		// 	if variable.Grouping.Type == "timeseries" {
-		// 		s.Filters.AddVariable(grouping.Properties.XCol)
-		// 		dataVariables = append(dataVariables, grouping.Properties.XCol)
-		// 		s.Filters.AddVariable(grouping.Properties.YCol)
-		// 		dataVariables = append(dataVariables, grouping.Properties.YCol)
-		// 		s.Filters.AddVariable(grouping.Properties.ClusterCol)
-		// 		dataVariables = append(dataVariables, grouping.Properties.ClusterCol)
-		// 	}
-		// }
 	}
 
 	// make sure that we include all non-generated variables in our persisted
