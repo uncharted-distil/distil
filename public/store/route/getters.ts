@@ -36,6 +36,10 @@ export const getters = {
 		return state.query.joinDatasets as string;
 	},
 
+	getRouteTimeseriesAnalysis(state: Route): string {
+		return state.query.timeseriesAnalysis as string;
+	},
+
 	getJoinDatasetsVariables(state: Route, getters: any): Variable[] {
 		const datasetIDs = getters.getRouteJoinDatasets;
 		if (datasetIDs.length !== 2) {

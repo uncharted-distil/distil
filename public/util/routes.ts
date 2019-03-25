@@ -21,6 +21,7 @@ export interface RouteArgs {
 	joinColumnA?: string;
 	joinColumnB?: string;
 	joinAccuracy?: string;
+	timeseriesAnalysis?: string;
 
 	// we currently don't have a way to add these to the interface
 	//
@@ -88,6 +89,7 @@ function validateQueryArgs(args: RouteArgs): RouteArgs {
 	if (!_.isUndefined(args.joinColumnA)) { query.joinColumnA = args.joinColumnA; }
 	if (!_.isUndefined(args.joinColumnB)) { query.joinColumnB = args.joinColumnB; }
 	if (!_.isUndefined(args.joinAccuracy)) { query.joinAccuracy = args.joinAccuracy; }
+	if (!_.isUndefined(args.timeseriesAnalysis)) { query.timeseriesAnalysis = args.timeseriesAnalysis; }
 
 	if (args[JOINED_VARS_INSTANCE_PAGE]) { query[JOINED_VARS_INSTANCE_PAGE] = args[JOINED_VARS_INSTANCE_PAGE]; }
 	if (args[AVAILABLE_TARGET_VARS_INSTANCE_PAGE]) { query[AVAILABLE_TARGET_VARS_INSTANCE_PAGE] = args[AVAILABLE_TARGET_VARS_INSTANCE_PAGE]; }

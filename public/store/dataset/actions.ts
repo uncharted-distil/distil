@@ -310,6 +310,20 @@ export const actions = {
 			return null;
 		}
 
+		const timeseries = context.getters.getRouteTimeseriesAnalysis;
+
+		if (timeseries) {
+			return axios.post(`distil/timeseries-summary/${args.dataset}/${timeseries}/${args.variable}`, {})
+				.then(response => {
+					const timeseries = response.data.timeseries;
+					console.log(args.variable, timeseries);
+					mutations.updateVariableSummaries(context, timeseries);
+				})
+				.catch(error => {
+					console.error(error);
+				});
+		}
+
 		return axios.post(`/distil/variable-summary/${args.dataset}/${args.variable}`, {})
 			.then(response => {
 

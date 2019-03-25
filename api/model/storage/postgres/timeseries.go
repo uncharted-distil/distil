@@ -133,6 +133,35 @@ func (s *Storage) FetchTimeseries(dataset string, storageName string, timeseries
 	return s.parseTimeseries(res)
 }
 
+// FetchTimeseriesSummary fetches a timeseries.
+func (s *Storage) FetchTimeseriesSummary(dataset string, storageName string, xColName string, yColName string, filterParams *api.FilterParams) ([][]float64, error) {
+	// create the filter for the query.
+	wheres := make([]string, 0)
+	params := make([]interface{}, 0)
+
+	wheres, params = s.buildFilteredQueryWhere(wheres, params, filterParams.Filters)
+
+	where := ""
+	if len(wheres) > 0 {
+		where = fmt.Sprintf("WHERE %s", strings.Join(wheres, " AND "))
+	}
+
+	// Get count by category.
+	query := fmt.Sprintf("SELECT CAST(\"%s\" AS INTEGER), CAST(\"%s\" AS INTEGER) FROM %s %s",
+		xColName, yColName, storageName, where)
+
+	// execute the postgres query
+	res, err := s.client.Query(query, params...)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to fetch timeseries from postgres")
+	}
+	if res != nil {
+		defer res.Close()
+	}
+
+	return s.parseTimeseries(res)
+}
+
 // FetchSummaryData pulls summary data from the database and builds a histogram.
 func (f *TimeSeriesField) FetchSummaryData(resultURI string, filterParams *api.FilterParams, extrema *api.Extrema) (*api.Histogram, error) {
 	var histogram *api.Histogram
