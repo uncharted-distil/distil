@@ -16,11 +16,13 @@
 package postgres
 
 import (
+	api "github.com/uncharted-distil/distil-compute/model"
 	"github.com/uncharted-distil/distil/api/model"
 )
 
 // Field defines behaviour for a database field type.
 type Field interface {
 	FetchSummaryData(resultURI string, filterParams *model.FilterParams, extrema *model.Extrema) (*model.Histogram, error)
+	FetchTimeseriesSummaryData(timeVar *api.Variable, resultURI string, filterParams *model.FilterParams, extrema *model.Extrema) (*model.Timeseries, error)
 	FetchPredictedSummaryData(resultURI string, datasetResult string, filterParams *model.FilterParams, extrema *model.Extrema) (*model.Histogram, error)
 }

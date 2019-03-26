@@ -106,7 +106,7 @@ func (f *TimeSeriesField) fetchRepresentationTimeSeries(categoryBuckets []*api.B
 }
 
 // FetchTimeseries fetches a timeseries.
-func (s *Storage) FetchTimeseries(dataset string, storageName string, timeseriesColName string, xColName string, yColName string, timeseriesURI string, filterParams *api.FilterParams) ([][]float64, error) {
+func (s *Storage) FetchTimeseries(dataset string, storageName string, timeseriesColName string, xColName string, yColName string, timeseriesURI string, filterParams *api.FilterParams) (*api.Timeseries, error) {
 	// create the filter for the query.
 	wheres := make([]string, 0)
 	params := make([]interface{}, 0)
@@ -130,36 +130,25 @@ func (s *Storage) FetchTimeseries(dataset string, storageName string, timeseries
 		defer res.Close()
 	}
 
-	return s.parseTimeseries(res)
+	values, err := s.parseTimeseries(res)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to parse timeseries from postgres")
+	}
+
+	timeseries := &api.Timeseries{}
+	timeseries.Key = yColName
+	timeseries.Label = yColName
+	timeseries.VarType = ""
+	timeseries.Values = values
+	timeseries.Dataset = dataset
+	timeseries.NumRows = 0
+
+	return timeseries, nil
 }
 
-// FetchTimeseriesSummary fetches a timeseries.
-func (s *Storage) FetchTimeseriesSummary(dataset string, storageName string, xColName string, yColName string, filterParams *api.FilterParams) ([][]float64, error) {
-	// create the filter for the query.
-	wheres := make([]string, 0)
-	params := make([]interface{}, 0)
-
-	wheres, params = s.buildFilteredQueryWhere(wheres, params, filterParams.Filters)
-
-	where := ""
-	if len(wheres) > 0 {
-		where = fmt.Sprintf("WHERE %s", strings.Join(wheres, " AND "))
-	}
-
-	// Get count by category.
-	query := fmt.Sprintf("SELECT CAST(\"%s\" AS INTEGER), CAST(\"%s\" AS INTEGER) FROM %s %s",
-		xColName, yColName, storageName, where)
-
-	// execute the postgres query
-	res, err := s.client.Query(query, params...)
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to fetch timeseries from postgres")
-	}
-	if res != nil {
-		defer res.Close()
-	}
-
-	return s.parseTimeseries(res)
+// FetchTimeseriesSummaryData pulls summary data from the database and builds a histogram.
+func (f *TimeSeriesField) FetchTimeseriesSummaryData(timeVar *model.Variable, resultURI string, filterParams *api.FilterParams, extrema *api.Extrema) (*api.Timeseries, error) {
+	return nil, fmt.Errorf("not implemented")
 }
 
 // FetchSummaryData pulls summary data from the database and builds a histogram.

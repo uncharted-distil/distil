@@ -101,6 +101,72 @@ func (f *NumericalField) FetchSummaryData(resultURI string, filterParams *api.Fi
 	return histogram, nil
 }
 
+func (f *NumericalField) parseTimeseries(rows *pgx.Rows) ([][]float64, error) {
+	var points [][]float64
+	if rows != nil {
+		for rows.Next() {
+			var x int64
+			var y float64
+			err := rows.Scan(&x, &y)
+			if err != nil {
+				return nil, err
+			}
+			points = append(points, []float64{float64(x), y})
+		}
+	}
+	return points, nil
+}
+
+// FetchTimeseriesSummaryData pulls summary data from the database and builds a histogram.
+func (f *NumericalField) FetchTimeseriesSummaryData(timeVar *model.Variable, resultURI string, filterParams *api.FilterParams, extrema *api.Extrema) (*api.Timeseries, error) {
+
+	timeSelect := fmt.Sprintf("CAST(\"%s\" AS INTEGER", timeVar.Name)
+	if timeVar.Type == model.DateTimeType {
+		timeSelect = fmt.Sprintf("CAST(extract(epoch from \"%s\") AS INTEGER)", timeVar.Name)
+	}
+
+	if resultURI == "" {
+
+		// create the filter for the query.
+		wheres := make([]string, 0)
+		params := make([]interface{}, 0)
+
+		wheres, params = f.Storage.buildFilteredQueryWhere(wheres, params, filterParams.Filters)
+
+		where := ""
+		if len(wheres) > 0 {
+			where = fmt.Sprintf("WHERE %s", strings.Join(wheres, " AND "))
+		}
+
+		// Get count by category.
+		query := fmt.Sprintf("SELECT %s, \"%s\" FROM %s %s",
+			timeSelect, f.Key, f.StorageName, where)
+
+		// execute the postgres query
+		res, err := f.Storage.client.Query(query, params...)
+		if err != nil {
+			return nil, errors.Wrap(err, "failed to fetch timeseries from postgres")
+		}
+		if res != nil {
+			defer res.Close()
+		}
+
+		values, err := f.parseTimeseries(res)
+		if err != nil {
+			return nil, errors.Wrap(err, "failed to parse timeseries from postgres")
+		}
+
+		timeseries := &api.Timeseries{}
+		timeseries.Values = values
+		timeseries.Key = f.Key
+		timeseries.Label = f.Label
+		timeseries.VarType = f.Type
+		return timeseries, nil
+	}
+
+	return nil, fmt.Errorf("not implemented")
+}
+
 func (f *NumericalField) fetchHistogram(filterParams *api.FilterParams) (*api.Histogram, error) {
 	fromClause := f.getFromClause(true)
 

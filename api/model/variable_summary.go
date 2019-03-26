@@ -51,3 +51,14 @@ type Histogram struct {
 	StdDev     float64   `json:"stddev"`
 	Mean       float64   `json:"mean"`
 }
+
+// Timeseries represents a single variable timeseries.
+type Timeseries struct {
+	Label   string      `json:"label"`
+	Key     string      `json:"key"`
+	Type    string      `json:"type"`
+	Dataset string      `json:"dataset"`
+	VarType string      `json:"varType"`
+	Values  [][]float64 `json:"values"`
+	NumRows int         `json:"numRows"`
+}

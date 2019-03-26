@@ -1,7 +1,7 @@
 import _ from 'lodash';
 import Vue from 'vue';
 import { Dictionary } from '../../util/dict';
-import { DatasetState, Variable, Dataset, VariableSummary, TableData } from './index';
+import { DatasetState, Variable, Dataset, VariableSummary, TimeseriesSummary, TableData } from './index';
 import { updateSummaries, isDatamartProvenance } from '../../util/data';
 
 function sortDatasets(a: Dataset, b: Dataset) {
@@ -90,7 +90,7 @@ export const mutations = {
 		state.variables[index].isColTypeReviewed = update.isColTypeReviewed;
 	},
 
-	updateVariableSummaries(state: DatasetState, summary: VariableSummary) {
+	updateVariableSummaries(state: DatasetState, summary: VariableSummary|TimeseriesSummary) {
 		updateSummaries(summary, state.variableSummaries);
 	},
 

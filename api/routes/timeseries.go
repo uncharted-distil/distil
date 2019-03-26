@@ -31,7 +31,7 @@ const (
 
 // TimeseriesResult represents the result of a timeseries request.
 type TimeseriesResult struct {
-	Timeseries [][]float64 `json:"timeseries"`
+	Timeseries *api.Timeseries `json:"timeseries"`
 }
 
 // TimeseriesHandler returns timeseries data.

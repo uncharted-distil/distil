@@ -61,6 +61,11 @@ func (f *TextField) FetchSummaryData(resultURI string, filterParams *api.FilterP
 	return histogram, err
 }
 
+// FetchTimeseriesSummaryData pulls summary data from the database and builds a histogram.
+func (f *TextField) FetchTimeseriesSummaryData(timeVar *model.Variable, resultURI string, filterParams *api.FilterParams, extrema *api.Extrema) (*api.Timeseries, error) {
+	return nil, fmt.Errorf("not implemented")
+}
+
 func (f *TextField) fetchHistogram(filterParams *api.FilterParams) (*api.Histogram, error) {
 	// create the filter for the query.
 	wheres := make([]string, 0)

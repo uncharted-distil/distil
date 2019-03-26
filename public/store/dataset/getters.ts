@@ -1,4 +1,4 @@
-import { Variable, TimeseriesExtrema, DatasetState, Dataset, VariableSummary, TableData, TableRow, TableColumn } from './index';
+import { Variable, TimeseriesExtrema, DatasetState, Dataset, VariableSummary, TimeseriesSummary, TableData, TableRow, TableColumn } from './index';
 import { Dictionary } from '../../util/dict';
 import { getTableDataItems, getTableDataFields } from '../../util/data';
 
@@ -34,7 +34,7 @@ export const getters = {
 		return map;
 	},
 
-	getVariableSummaries(state: DatasetState): VariableSummary[] {
+	getVariableSummaries(state: DatasetState): (VariableSummary|TimeseriesSummary)[] {
 		return state.variableSummaries;
 	},
 

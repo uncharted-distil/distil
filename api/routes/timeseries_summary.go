@@ -27,7 +27,7 @@ import (
 
 // TimeseriesSummaryResult represents a summary response for a variable.
 type TimeseriesSummaryResult struct {
-	Timeseries [][]float64 `json:"timeseries"`
+	Timeseries *api.Timeseries `json:"timeseries"`
 }
 
 // TimeseriesSummaryHandler generates a route handler that facilitates the

@@ -316,7 +316,6 @@ export const actions = {
 			return axios.post(`distil/timeseries-summary/${args.dataset}/${timeseries}/${args.variable}`, {})
 				.then(response => {
 					const timeseries = response.data.timeseries;
-					console.log(args.variable, timeseries);
 					mutations.updateVariableSummaries(context, timeseries);
 				})
 				.catch(error => {
@@ -427,7 +426,7 @@ export const actions = {
 				mutations.updateTimeseries(context, {
 					dataset: args.dataset,
 					id: args.timeseriesID,
-					timeseries: response.data.timeseries
+					timeseries: response.data.timeseries.values
 				});
 			})
 			.catch(error => {

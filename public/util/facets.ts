@@ -4,7 +4,7 @@ import { spinnerHTML } from '../util/spinner';
 import { formatValue, TIMESERIES_TYPE, CATEGORICAL_TYPE, ORDINAL_TYPE,
 	BOOL_TYPE, ADDRESS_TYPE, CITY_TYPE, STATE_TYPE, COUNTRY_TYPE, EMAIL_TYPE,
 	POSTAL_CODE_TYPE, PHONE_TYPE, URI_TYPE, DATE_TIME_TYPE, IMAGE_TYPE } from '../util/types';
-import { VariableSummary, CATEGORICAL_SUMMARY, NUMERICAL_SUMMARY } from '../store/dataset/index';
+import { VariableSummary, TimeseriesSummary, CATEGORICAL_SUMMARY, NUMERICAL_SUMMARY, TIMESERIES_SUMMMARY } from '../store/dataset/index';
 import store from '../store/store';
 import { getters as datasetGetters } from '../store/dataset/module';
 
@@ -80,7 +80,7 @@ export interface Group {
 }
 
 // creates the set of facets from the supplied summary data
-export function createGroups(summaries: VariableSummary[]): Group[] {
+export function createGroups(summaries: (VariableSummary|TimeseriesSummary)[]): Group[] {
 	return summaries.map(summary => {
 		if (summary.err) {
 			// create error facet
@@ -99,7 +99,7 @@ export function createGroups(summaries: VariableSummary[]): Group[] {
 }
 
 // creates a facet to display a data fetch error
-export function createErrorFacet(summary: VariableSummary): Group {
+export function createErrorFacet(summary: VariableSummary|TimeseriesSummary): Group {
 	return {
 		dataset: summary.dataset,
 		label: summary.label,
@@ -117,7 +117,7 @@ export function createErrorFacet(summary: VariableSummary): Group {
 }
 
 // creates a place holder facet to dispay a spinner
-export function createPendingFacet(summary: VariableSummary): Group {
+export function createPendingFacet(summary: VariableSummary|TimeseriesSummary): Group {
 	return {
 		dataset: summary.dataset,
 		label: summary.label,
@@ -135,16 +135,19 @@ export function createPendingFacet(summary: VariableSummary): Group {
 }
 
 // creates categorical or numerical summary facets based on the input summary type
-export function createSummaryFacet(summary: VariableSummary): Group {
+export function createSummaryFacet(summary: VariableSummary|TimeseriesSummary): Group {
 	switch (summary.type) {
 		case CATEGORICAL_SUMMARY:
 			if (summary.varType === TIMESERIES_TYPE) {
-				return createTimeseriesSummaryFacet(summary);
+				return createTimeseriesSummaryFacet(summary as VariableSummary);
 			} else {
-				return createCategoricalSummaryFacet(summary);
+				return createCategoricalSummaryFacet(summary as VariableSummary);
 			}
 		case NUMERICAL_SUMMARY:
-			return createNumericalSummaryFacet(summary);
+			return createNumericalSummaryFacet(summary as VariableSummary);
+		case TIMESERIES_SUMMMARY:
+			console.log('not implemented');
+			return null;
 	}
 	console.warn('unrecognized summary type', summary.type);
 	return null;
@@ -252,6 +255,10 @@ function createTimeseriesSummaryFacet(summary: VariableSummary): Group {
 		facet.timeseries = timeseries[group.dataset][facet.file];
 	});
 	return group;
+}
+
+function createDataOverTimeFacet(summary: TimeseriesSummary): Group {
+	return null;
 }
 
 function getHistogramSlices(summary: VariableSummary) {

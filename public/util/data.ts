@@ -1,7 +1,7 @@
 import _ from 'lodash';
 import axios from 'axios';
 import Vue from 'vue';
-import { Variable, VariableSummary, TableData, TableRow, TableColumn, Grouping, D3M_INDEX_FIELD } from '../store/dataset/index';
+import { Variable, VariableSummary, TimeseriesSummary, TableData, TableRow, TableColumn, Grouping, D3M_INDEX_FIELD } from '../store/dataset/index';
 import { Solution, SOLUTION_COMPLETED } from '../store/solutions/index';
 import { Dictionary } from './dict';
 import { Group } from './facets';
@@ -67,7 +67,7 @@ export function fetchHistogramExemplars(datasetName: string, variableName: strin
 	return new Promise(res => res());
 }
 
-export function updateSummaries(summary: VariableSummary, summaries: VariableSummary[]) {
+export function updateSummaries(summary: VariableSummary|TimeseriesSummary, summaries: (VariableSummary|TimeseriesSummary)[]) {
 	const index = _.findIndex(summaries, s => {
 		return s.dataset === summary.dataset && s.key === summary.key;
 	});
@@ -78,7 +78,7 @@ export function updateSummaries(summary: VariableSummary, summaries: VariableSum
 	}
 }
 
-export function filterSummariesByDataset(summaries: VariableSummary[], dataset: string): VariableSummary[] {
+export function filterSummariesByDataset(summaries: (VariableSummary|TimeseriesSummary)[], dataset: string): (VariableSummary|TimeseriesSummary)[] {
 	return summaries.filter(summary => {
 		return summary.dataset === dataset;
 	});
