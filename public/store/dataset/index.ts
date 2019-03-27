@@ -127,7 +127,7 @@ export interface DatasetState {
 	datasets: Dataset[];
 	filteredDatasets: Dataset[];
 	variables: Variable[];
-	variableSummaries: (VariableSummary|TimeseriesSummary)[];
+	variableSummaries: VariableSummary[];
 	groupingSummaries: VariableSummary[];
 	files: Dictionary<any>;
 	timeseries: Dictionary<Dictionary<number[][]>>;

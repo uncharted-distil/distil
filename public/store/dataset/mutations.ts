@@ -90,7 +90,7 @@ export const mutations = {
 		state.variables[index].isColTypeReviewed = update.isColTypeReviewed;
 	},
 
-	updateVariableSummaries(state: DatasetState, summary: VariableSummary|TimeseriesSummary) {
+	updateVariableSummaries(state: DatasetState, summary: VariableSummary) {
 		updateSummaries(summary, state.variableSummaries);
 	},
 

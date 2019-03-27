@@ -80,7 +80,7 @@ export interface Group {
 }
 
 // creates the set of facets from the supplied summary data
-export function createGroups(summaries: (VariableSummary|TimeseriesSummary)[]): Group[] {
+export function createGroups(summaries: VariableSummary[]): Group[] {
 	return summaries.map(summary => {
 		if (summary.err) {
 			// create error facet
@@ -99,7 +99,7 @@ export function createGroups(summaries: (VariableSummary|TimeseriesSummary)[]): 
 }
 
 // creates a facet to display a data fetch error
-export function createErrorFacet(summary: VariableSummary|TimeseriesSummary): Group {
+export function createErrorFacet(summary: VariableSummary): Group {
 	return {
 		dataset: summary.dataset,
 		label: summary.label,
@@ -117,7 +117,7 @@ export function createErrorFacet(summary: VariableSummary|TimeseriesSummary): Gr
 }
 
 // creates a place holder facet to dispay a spinner
-export function createPendingFacet(summary: VariableSummary|TimeseriesSummary): Group {
+export function createPendingFacet(summary: VariableSummary): Group {
 	return {
 		dataset: summary.dataset,
 		label: summary.label,
@@ -135,19 +135,19 @@ export function createPendingFacet(summary: VariableSummary|TimeseriesSummary): 
 }
 
 // creates categorical or numerical summary facets based on the input summary type
-export function createSummaryFacet(summary: VariableSummary|TimeseriesSummary): Group {
+export function createSummaryFacet(summary: VariableSummary): Group {
 	switch (summary.type) {
 		case CATEGORICAL_SUMMARY:
 			if (summary.varType === TIMESERIES_TYPE) {
-				return createTimeseriesSummaryFacet(summary as VariableSummary);
+				return createTimeseriesSummaryFacet(summary);
 			} else {
-				return createCategoricalSummaryFacet(summary as VariableSummary);
+				return createCategoricalSummaryFacet(summary);
 			}
 		case NUMERICAL_SUMMARY:
-			return createNumericalSummaryFacet(summary as VariableSummary);
+			return createNumericalSummaryFacet(summary);
 		case TIMESERIES_SUMMMARY:
-			console.log('not implemented');
-			return null;
+			console.log(summary);
+			return createNumericalSummaryFacet(summary);
 	}
 	console.warn('unrecognized summary type', summary.type);
 	return null;

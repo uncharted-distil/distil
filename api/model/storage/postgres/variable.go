@@ -187,7 +187,7 @@ func (s *Storage) FetchSummaryByResult(dataset string, storageName string, varNa
 	return s.fetchSummaryData(dataset, storageName, varName, resultURI, filterParams, extrema)
 }
 
-func (s *Storage) fetchTimeseriesSummary(dataset string, storageName string, xColName string, yColName string, resultURI string, filterParams *api.FilterParams, extrema *api.Extrema) (*api.Timeseries, error) {
+func (s *Storage) fetchTimeseriesSummary(dataset string, storageName string, xColName string, yColName string, resultURI string, filterParams *api.FilterParams, extrema *api.Extrema) (*api.Histogram, error) {
 
 	// need description of the variables to request aggregation against.
 	timeColVar, err := s.metadata.FetchVariable(dataset, xColName)
@@ -242,6 +242,6 @@ func (s *Storage) fetchTimeseriesSummary(dataset string, storageName string, xCo
 }
 
 // FetchTimeseriesSummary fetches a timeseries.
-func (s *Storage) FetchTimeseriesSummary(dataset string, storageName string, xColName string, yColName string, filterParams *api.FilterParams) (*api.Timeseries, error) {
+func (s *Storage) FetchTimeseriesSummary(dataset string, storageName string, xColName string, yColName string, filterParams *api.FilterParams) (*api.Histogram, error) {
 	return s.fetchTimeseriesSummary(dataset, storageName, xColName, yColName, "", filterParams, nil)
 }

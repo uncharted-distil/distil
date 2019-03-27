@@ -102,9 +102,12 @@ export const actions = {
 		]);
 	},
 
-	fetchSelectTargetData(context: ViewContext) {
+	fetchSelectTargetData(context: ViewContext, clearSummaries: boolean) {
 		// clear previous state
 		context.commit('clearHighlightSummaries');
+		if (clearSummaries) {
+			context.commit('clearVariableSummaries');
+		}
 
 		// fetch new state
 		const dataset = context.getters.getRouteDataset;

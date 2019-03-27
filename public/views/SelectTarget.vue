@@ -79,7 +79,10 @@ export default Vue.extend({
 
 	watch: {
 		availableTargetVarsPage() {
-			viewActions.fetchSelectTargetData(this.$store);
+			viewActions.fetchSelectTargetData(this.$store, false);
+		},
+		timeseriesAnalysis() {
+			viewActions.fetchSelectTargetData(this.$store, true);
 		},
 		variables() {
 			if (this.variables.length > 0 && !this.timeseriesAnalysis && !this.haveVariablesLoaded) {
@@ -92,7 +95,7 @@ export default Vue.extend({
 	},
 
 	beforeMount() {
-		viewActions.fetchSelectTargetData(this.$store);
+		viewActions.fetchSelectTargetData(this.$store, false);
 	},
 
 	methods: {

@@ -34,7 +34,7 @@ export const getters = {
 		return map;
 	},
 
-	getVariableSummaries(state: DatasetState): (VariableSummary|TimeseriesSummary)[] {
+	getVariableSummaries(state: DatasetState): VariableSummary[] {
 		return state.variableSummaries;
 	},
 

@@ -67,7 +67,7 @@ export function fetchHistogramExemplars(datasetName: string, variableName: strin
 	return new Promise(res => res());
 }
 
-export function updateSummaries(summary: VariableSummary|TimeseriesSummary, summaries: (VariableSummary|TimeseriesSummary)[]) {
+export function updateSummaries(summary: VariableSummary, summaries: VariableSummary[]) {
 	const index = _.findIndex(summaries, s => {
 		return s.dataset === summary.dataset && s.key === summary.key;
 	});
@@ -78,7 +78,7 @@ export function updateSummaries(summary: VariableSummary|TimeseriesSummary, summ
 	}
 }
 
-export function filterSummariesByDataset(summaries: (VariableSummary|TimeseriesSummary)[], dataset: string): (VariableSummary|TimeseriesSummary)[] {
+export function filterSummariesByDataset(summaries: VariableSummary[], dataset: string): VariableSummary[] {
 	return summaries.filter(summary => {
 		return summary.dataset === dataset;
 	});
