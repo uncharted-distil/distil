@@ -1,7 +1,7 @@
 import _ from 'lodash';
 import Vue from 'vue';
 import { Dictionary } from '../../util/dict';
-import { DatasetState, Variable, Dataset, VariableSummary, TableData } from './index';
+import { DatasetState, Variable, Dataset, VariableSummary, TableData, DatasetPendingUpdateData, DatasetPendingUpdate } from './index';
 import { updateSummaries, isDatamartProvenance } from '../../util/data';
 
 function sortDatasets(a: Dataset, b: Dataset) {
@@ -111,6 +111,16 @@ export const mutations = {
 		} else {
 			state.variables.forEach(v => Vue.delete(v, 'ranking'));
 		}
+	},
+
+	updatePendingUpdates(state: DatasetState, pendingUpdate: DatasetPendingUpdate<DatasetPendingUpdateData>) {
+		const index = state.pendingUpdates.findIndex(item => pendingUpdate.type === item.type);
+		if (index >= 0) {
+			state.pendingUpdates[index] = pendingUpdate;
+		} else {
+			state.pendingUpdates.push(pendingUpdate);
+		}
+		console.log(state.pendingUpdates);
 	},
 
 	updateFile(state: DatasetState, args: { url: string, file: any }) {

@@ -91,6 +91,8 @@ export const mutations = {
 	clearVariableSummaries: commit(moduleMutations.clearVariableSummaries),
 	// ranking
 	updateVariableRankings: commit(moduleMutations.updateVariableRankings),
+	// pending update
+	updatePendingUpdates: commit(moduleMutations.updatePendingUpdates),
 	// files
 	updateFile: commit(moduleMutations.updateFile),
 	updateTimeseries: commit(moduleMutations.updateTimeseries),

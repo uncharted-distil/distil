@@ -2,7 +2,7 @@ import _ from 'lodash';
 import axios from 'axios';
 import { Dictionary } from '../../util/dict';
 import { ActionContext } from 'vuex';
-import { Dataset, DatasetState, Variable, VariableSummary, Grouping } from './index';
+import { Dataset, DatasetState, Variable, VariableSummary, Grouping, DatasetPendingUpdateType, VariableRankingUpdateData, GeocodingUpdateData } from './index';
 import { mutations } from './module';
 import { DistilState } from '../store';
 import { HighlightRoot } from '../highlights/index';
@@ -104,23 +104,30 @@ export const actions = {
 		}
 		return axios.post(`/distil/geocode/${args.dataset}/${args.field}`, {})
 			.then(() => {
-				// upon success pull the updated dataset, vars, and summaries
-				return Promise.all([
-					context.dispatch('fetchDataset', {
-						dataset: args.dataset
-					}),
-					context.dispatch('fetchVariables', {
-						dataset: args.dataset
-					}),
-					context.dispatch('fetchVariableSummary', {
+				return mutations.updatePendingUpdates(context, {
+					type: DatasetPendingUpdateType.GeocodingUpdate,
+					data: <GeocodingUpdateData>{
 						dataset: args.dataset,
-						variable: GEOCODED_LON_PREFIX + args.field
-					}),
-					context.dispatch('fetchVariableSummary', {
-						dataset: args.dataset,
-						variable: GEOCODED_LAT_PREFIX + args.field
-					})
-				]);
+						field: args.field,
+					}
+				});
+				// // upon success pull the updated dataset, vars, and summaries
+				// return Promise.all([
+				// 	context.dispatch('fetchDataset', {
+				// 		dataset: args.dataset
+				// 	}),
+				// 	context.dispatch('fetchVariables', {
+				// 		dataset: args.dataset
+				// 	}),
+				// 	context.dispatch('fetchVariableSummary', {
+				// 		dataset: args.dataset,
+				// 		variable: GEOCODED_LON_PREFIX + args.field
+				// 	}),
+				// 	context.dispatch('fetchVariableSummary', {
+				// 		dataset: args.dataset,
+				// 		variable: GEOCODED_LAT_PREFIX + args.field
+				// 	})
+				// ]);
 			})
 			.catch(error => {
 				console.error(error);
@@ -332,7 +339,15 @@ export const actions = {
 	fetchVariableRankings(context: DatasetContext, args: { dataset: string, target: string }) {
 		return axios.get(`/distil/variable-rankings/${args.dataset}/${args.target}`)
 			.then(response => {
-				mutations.updateVariableRankings(context, response.data.rankings);
+				mutations.updatePendingUpdates(context, {
+					type: DatasetPendingUpdateType.VariableRankingUpdate,
+					data: <VariableRankingUpdateData>{
+						dataset: args.dataset,
+						rankings: response.data.rankings,
+						target: args.target,
+					}
+				});
+				// mutations.updateVariableRankings(context, response.data.rankings);
 			})
 			.catch(error => {
 				console.error(error);

@@ -123,6 +123,35 @@ export interface DatasetState {
 	joinTableData: Dictionary<TableData>;
 	includedTableData: TableData;
 	excludedTableData: TableData;
+	pendingUpdates: DatasetPendingUpdate<DatasetPendingUpdateData>[];
+}
+
+export enum DatasetPendingUpdateType {
+	VariableRankingUpdate,
+	GeocodingUpdate,
+	JoinSuggestionUpdate,
+}
+
+export interface DatasetPendingUpdateData {
+	dataset: string;
+}
+
+export interface VariableRankingUpdateData extends DatasetPendingUpdateData {
+	rankings: Dictionary<number>;
+	target: string;
+}
+
+export interface GeocodingUpdateData extends DatasetPendingUpdateData {
+	field: string;
+}
+
+export interface JoinSuggestionUpdateData extends DatasetPendingUpdateData {
+	result: string;
+}
+
+export interface DatasetPendingUpdate<DatasetPendingUpdateData> {
+	type: DatasetPendingUpdateType;
+	data: DatasetPendingUpdateData;
 }
 
 export const state: DatasetState = {
@@ -150,5 +179,7 @@ export const state: DatasetState = {
 	includedTableData: null,
 
 	// excluded data entries for the active dataset
-	excludedTableData: null
+	excludedTableData: null,
+
+	pendingUpdates: [],
 };
