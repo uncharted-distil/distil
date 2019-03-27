@@ -1,6 +1,6 @@
 <template>
 
-<div class="notification-panel">
+<div class="status-panel">
 
 </div>
     
@@ -11,14 +11,14 @@
 import Vue from 'vue';
 
 export default Vue.extend({
-	name: 'notification-panel',
+	name: 'status-panel',
 });
 
 </script>
 
 <style>
 
-.notification-panel {
+.status-panel {
 	box-shadow: 0 4px 5px 0 rgba(0,0,0,0.14), 0 1px 10px 0 rgba(0,0,0,0.12), 0 2px 4px -1px rgba(0,0,0,0.2);
 	display: block;
 	position: fixed;
@@ -29,6 +29,7 @@ export default Vue.extend({
 	width: 300px;
 	height: 100%;
 	background: #fff;
+	display: none;
 }
 
 </style>

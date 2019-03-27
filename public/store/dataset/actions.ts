@@ -2,7 +2,7 @@ import _ from 'lodash';
 import axios from 'axios';
 import { Dictionary } from '../../util/dict';
 import { ActionContext } from 'vuex';
-import { Dataset, DatasetState, Variable, VariableSummary, Grouping, DatasetPendingUpdateType, VariableRankingUpdateData, GeocodingUpdateData } from './index';
+import { Dataset, DatasetState, Variable, VariableSummary, Grouping, DatasetPendingUpdateType, DatasetPendingUpdate, VariableRankingPendingUpdate, GeocodingPendingUpdate } from './index';
 import { mutations } from './module';
 import { DistilState } from '../store';
 import { HighlightRoot } from '../highlights/index';
@@ -104,13 +104,12 @@ export const actions = {
 		}
 		return axios.post(`/distil/geocode/${args.dataset}/${args.field}`, {})
 			.then(() => {
-				return mutations.updatePendingUpdates(context, {
-					type: DatasetPendingUpdateType.GeocodingUpdate,
-					data: <GeocodingUpdateData>{
-						dataset: args.dataset,
-						field: args.field,
-					}
-				});
+				const update: GeocodingPendingUpdate = {
+					dataset: args.dataset,
+					type: DatasetPendingUpdateType.GEOCODING,
+					field: args.field,
+				};
+				return mutations.updatePendingUpdates(context, update);
 				// // upon success pull the updated dataset, vars, and summaries
 				// return Promise.all([
 				// 	context.dispatch('fetchDataset', {
@@ -337,16 +336,20 @@ export const actions = {
 	},
 
 	fetchVariableRankings(context: DatasetContext, args: { dataset: string, target: string }) {
+		const id = _.uniqueId();
+		const update: VariableRankingPendingUpdate = {
+			id,
+			dataset: args.dataset,
+			type: DatasetPendingUpdateType.VARIABLE_RANKING,
+			status: 'pending',
+			rankings: null,
+			target: args.target,
+		};
+		mutations.updatePendingUpdates(context, update);
 		return axios.get(`/distil/variable-rankings/${args.dataset}/${args.target}`)
 			.then(response => {
-				mutations.updatePendingUpdates(context, {
-					type: DatasetPendingUpdateType.VariableRankingUpdate,
-					data: <VariableRankingUpdateData>{
-						dataset: args.dataset,
-						rankings: response.data.rankings,
-						target: args.target,
-					}
-				});
+				console.log('done');
+				return mutations.updatePendingUpdates(context, { ...update, rankings: response.data.rankings, status: 'done' });
 				// mutations.updateVariableRankings(context, response.data.rankings);
 			})
 			.catch(error => {

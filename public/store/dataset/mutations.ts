@@ -1,7 +1,7 @@
 import _ from 'lodash';
 import Vue from 'vue';
 import { Dictionary } from '../../util/dict';
-import { DatasetState, Variable, Dataset, VariableSummary, TableData, DatasetPendingUpdateData, DatasetPendingUpdate } from './index';
+import { DatasetState, Variable, Dataset, VariableSummary, TableData, DatasetPendingUpdate, VariableRankingPendingUpdate, GeocodingPendingUpdate } from './index';
 import { updateSummaries, isDatamartProvenance } from '../../util/data';
 
 function sortDatasets(a: Dataset, b: Dataset) {
@@ -113,14 +113,21 @@ export const mutations = {
 		}
 	},
 
-	updatePendingUpdates(state: DatasetState, pendingUpdate: DatasetPendingUpdate<DatasetPendingUpdateData>) {
-		const index = state.pendingUpdates.findIndex(item => pendingUpdate.type === item.type);
-		if (index >= 0) {
-			state.pendingUpdates[index] = pendingUpdate;
+	updatePendingUpdates(state: DatasetState, pendingUpdate: DatasetPendingUpdate) {
+		const sameIdindex = state.pendingUpdates.findIndex(item => pendingUpdate.id === item.id);
+		const smaeTypeindex = state.pendingUpdates.findIndex(item => pendingUpdate.type === item.type);
+		// make sure there exist only single update object for each type in the pendingUpdates list
+		if (sameIdindex >= 0) {
+			Vue.set(state.pendingUpdates, sameIdindex, pendingUpdate);
+		} else if (smaeTypeindex >= 0) {
+			Vue.set(state.pendingUpdates, smaeTypeindex, pendingUpdate);
 		} else {
 			state.pendingUpdates.push(pendingUpdate);
 		}
-		console.log(state.pendingUpdates);
+	},
+
+	clearPendingUpdates(state: DatasetState) {
+		state.pendingUpdates = [];
 	},
 
 	updateFile(state: DatasetState, args: { url: string, file: any }) {

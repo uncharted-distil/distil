@@ -20,6 +20,7 @@ export const getters = {
 	// dataset
 	getDatasets: read(moduleGetters.getDatasets),
 	getFilteredDatasets: read(moduleGetters.getFilteredDatasets),
+	getPendingUpdates: read(moduleGetters.getPendingUpdates),
 	// variables
 	getVariables: read(moduleGetters.getVariables),
 	getGroupings: read(moduleGetters.getVariables),
@@ -93,6 +94,7 @@ export const mutations = {
 	updateVariableRankings: commit(moduleMutations.updateVariableRankings),
 	// pending update
 	updatePendingUpdates: commit(moduleMutations.updatePendingUpdates),
+	clearPendingUpdates: commit(moduleMutations.clearPendingUpdates),
 	// files
 	updateFile: commit(moduleMutations.updateFile),
 	updateTimeseries: commit(moduleMutations.updateTimeseries),

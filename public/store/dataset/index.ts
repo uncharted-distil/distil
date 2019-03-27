@@ -123,36 +123,44 @@ export interface DatasetState {
 	joinTableData: Dictionary<TableData>;
 	includedTableData: TableData;
 	excludedTableData: TableData;
-	pendingUpdates: DatasetPendingUpdate<DatasetPendingUpdateData>[];
+	pendingUpdates: DatasetPendingUpdate[];
 }
 
 export enum DatasetPendingUpdateType {
-	VariableRankingUpdate,
-	GeocodingUpdate,
-	JoinSuggestionUpdate,
+	VARIABLE_RANKING,
+	GEOCODING,
+	JOIN_SUGGESTION,
 }
 
-export interface DatasetPendingUpdateData {
+export interface VariableRankingPendingUpdate {
+	id: string;
+	status: 'pending' | 'done' | 'error';
+	type: DatasetPendingUpdateType.VARIABLE_RANKING;
 	dataset: string;
-}
-
-export interface VariableRankingUpdateData extends DatasetPendingUpdateData {
-	rankings: Dictionary<number>;
 	target: string;
+	rankings: Dictionary<number>;
 }
 
-export interface GeocodingUpdateData extends DatasetPendingUpdateData {
+export interface GeocodingPendingUpdate {
+	id: string;
+	status: 'pending' | 'done' | 'error';
+	type: DatasetPendingUpdateType.GEOCODING;
+	dataset: string;
 	field: string;
 }
 
-export interface JoinSuggestionUpdateData extends DatasetPendingUpdateData {
+export interface JoinSuggestionPendingUpdate {
+	id: string;
+	status: 'pending' | 'done' | 'error';
+	type: DatasetPendingUpdateType.JOIN_SUGGESTION;
+	dataset: string;
 	result: string;
 }
 
-export interface DatasetPendingUpdate<DatasetPendingUpdateData> {
-	type: DatasetPendingUpdateType;
-	data: DatasetPendingUpdateData;
-}
+export type DatasetPendingUpdate =
+		VariableRankingPendingUpdate
+	| GeocodingPendingUpdate
+	| JoinSuggestionPendingUpdate;
 
 export const state: DatasetState = {
 	// datasets and filtered datasets
@@ -181,5 +189,6 @@ export const state: DatasetState = {
 	// excluded data entries for the active dataset
 	excludedTableData: null,
 
+	// variable list for the active dataset
 	pendingUpdates: [],
 };

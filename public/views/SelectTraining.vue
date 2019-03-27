@@ -1,9 +1,9 @@
 <template>
 	<div class="select-training-view d-flex h-100">
-		<notification-panel></notification-panel>
+		<status-panel></status-panel>
 		<div class="sidebar-container d-flex flex-column h-100">
 			<div class="padding-nav"></div>
-			<notification-sidebar></notification-sidebar>
+			<status-sidebar></status-sidebar>
 		</div>
 		<div class="container-fluid d-flex flex-column h-100 select-view">
 			<div class="row flex-0-nav"></div>
@@ -53,8 +53,8 @@
 <script lang="ts">
 
 import Vue from 'vue';
-import NotificationPanel from '../components/NotificationPanel';
-import NotificationSidebar from '../components/NotificationSidebar';
+import StatusPanel from '../components/StatusPanel';
+import StatusSidebar from '../components/StatusSidebar';
 import CreateSolutionsForm from '../components/CreateSolutionsForm';
 import SelectDataSlot from '../components/SelectDataSlot';
 import AvailableTrainingVariables from '../components/AvailableTrainingVariables';
@@ -74,8 +74,8 @@ export default Vue.extend({
 		TrainingVariables,
 		TargetVariable,
 		TypeChangeMenu,
-		NotificationPanel,
-		NotificationSidebar,
+		StatusPanel,
+		StatusSidebar,
 	},
 
 	computed: {
