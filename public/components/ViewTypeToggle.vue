@@ -16,7 +16,7 @@
 					<b-form-radio :value="GEO_VIEW" v-if="hasGeoVariables" class="view-button">
 						<i class="fa fa-globe"></i>
 					</b-form-radio >
-					<b-form-radio :value="TIMESERIES_VIEW" v-if="hasTimeseriesVariables" class="view-button">
+					<b-form-radio :value="TIMESERIES_VIEW" v-if="isTimeseriesAnalysis || hasTimeseriesVariables" class="view-button">
 						<i class="fa fa-line-chart"></i>
 					</b-form-radio >
 				</b-form-radio-group>
@@ -29,6 +29,7 @@
 
 import Vue from 'vue';
 import { Variable } from '../store/dataset/index';
+import { getters as routeGetters } from '../store/route/module';
 import { TIMESERIES_TYPE, IMAGE_TYPE, LONGITUDE_TYPE, LATITUDE_TYPE } from '../util/types';
 
 const TABLE_VIEW = 'table';
@@ -69,6 +70,9 @@ export default Vue.extend({
 				this.internalVal = value;
 				this.$emit('input', this.internalVal);
 			}
+		},
+		isTimeseriesAnalysis(): boolean {
+			return !!routeGetters.getRouteTimeseriesAnalysis(this.$store);
 		},
 		hasImageVariables(): boolean {
 			return this.variables.filter(v => v.colType ===  IMAGE_TYPE).length  > 0;

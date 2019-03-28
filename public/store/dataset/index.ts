@@ -73,7 +73,8 @@ export interface VariableSummary {
 	key: string;
 	feature: string;
 	dataset: string;
-	buckets: Bucket[];
+	buckets?: Bucket[];
+	categoryBuckets?: Dictionary<Bucket[]>;
 	extrema: Extrema;
 	numRows: number;
 	exemplars?: string[];

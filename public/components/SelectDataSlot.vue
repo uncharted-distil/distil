@@ -90,7 +90,7 @@ export default Vue.extend({
 	data() {
 		return {
 			instanceName: 'select-data',
-			viewType: 'table',
+			viewType: TABLE_VIEW,
 			includedActive: true,
 			TABLE_VIEW: TABLE_VIEW,
 			IMAGE_VIEW: IMAGE_VIEW,
@@ -116,6 +116,10 @@ export default Vue.extend({
 
 		highlights(): Highlight {
 			return getHighlights();
+		},
+
+		isTimeseriesAnalysis(): boolean {
+			return !!routeGetters.getRouteTimeseriesAnalysis(this.$store);
 		},
 
 		numRows(): number {

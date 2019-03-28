@@ -191,6 +191,7 @@ export default Vue.extend({
 				const entry = createRouteEntry(RESULTS_ROUTE, {
 					dataset: routeGetters.getRouteDataset(this.$store),
 					target: routeGetters.getRouteTargetVariable(this.$store),
+					timeseriesAnalysis: routeGetters.getRouteTimeseriesAnalysis(this.$store),
 					solutionId: res.solutionId
 				});
 				this.$router.push(entry);

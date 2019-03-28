@@ -69,6 +69,7 @@ export default Vue.extend({
 						target: group.key,
 						dataset: routeGetters.getRouteDataset(this.$store),
 						filters: routeGetters.getRouteFilters(this.$store),
+						timeseriesAnalysis: routeGetters.getRouteTimeseriesAnalysis(this.$store),
 						training: training.join(',')
 					});
 					this.$router.push(entry);

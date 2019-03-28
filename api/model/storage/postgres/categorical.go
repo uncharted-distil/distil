@@ -201,10 +201,10 @@ func (f *CategoricalField) parseTimeHistogram(rows *pgx.Rows, extrema *api.Extre
 	// Parse bucket results.
 	interval := extrema.GetBucketInterval()
 
-	buckets := make([]*api.Bucket, extrema.GetBucketCount())
+	keys := make([]string, extrema.GetBucketCount())
 	rounded := extrema.GetBucketMinMax()
 	key := rounded.Min
-	for i := 0; i < len(buckets); i++ {
+	for i := 0; i < len(keys); i++ {
 		keyString := ""
 		if model.IsFloatingPoint(extrema.Type) {
 			keyString = fmt.Sprintf("%f", key)
@@ -212,13 +212,12 @@ func (f *CategoricalField) parseTimeHistogram(rows *pgx.Rows, extrema *api.Extre
 			keyString = strconv.Itoa(int(key))
 		}
 
-		buckets[i] = &api.Bucket{
-			Key:   keyString,
-			Count: 0,
-		}
+		keys[i] = keyString
 
 		key = key + interval
 	}
+
+	categoryBuckets := make(map[string][]*api.Bucket)
 
 	for rows.Next() {
 		var bucketValue float64
@@ -228,6 +227,18 @@ func (f *CategoricalField) parseTimeHistogram(rows *pgx.Rows, extrema *api.Extre
 		err := rows.Scan(&bucket, &bucketValue, &category, &bucketCount)
 		if err != nil {
 			return nil, errors.Wrap(err, fmt.Sprintf("no %s histogram aggregation found", histogramAggName))
+		}
+
+		buckets, ok := categoryBuckets[category]
+		if !ok {
+			buckets = make([]*api.Bucket, extrema.GetBucketCount())
+			for i := range buckets {
+				buckets[i] = &api.Bucket{
+					Count: 0,
+					Key:   keys[i],
+				}
+			}
+			categoryBuckets[category] = buckets
 		}
 
 		if bucket < 0 {
@@ -244,12 +255,12 @@ func (f *CategoricalField) parseTimeHistogram(rows *pgx.Rows, extrema *api.Extre
 	}
 	// assign histogram attributes
 	return &api.Histogram{
-		Label:   f.Label,
-		Key:     f.Key,
-		Type:    model.NumericalType,
-		VarType: f.Type,
-		Extrema: rounded,
-		Buckets: buckets,
+		Label:           f.Label,
+		Key:             f.Key,
+		Type:            model.NumericalType,
+		VarType:         f.Type,
+		Extrema:         rounded,
+		CategoryBuckets: categoryBuckets,
 	}, nil
 }
 
