@@ -127,9 +127,9 @@ export interface DatasetState {
 }
 
 export enum DatasetPendingUpdateType {
-	VARIABLE_RANKING,
-	GEOCODING,
-	JOIN_SUGGESTION,
+	VARIABLE_RANKING = 'VARIABLE_RANKING',
+	GEOCODING = 'GEOCODING',
+	JOIN_SUGGESTION = 'JOIN_SUGGESTION',
 }
 
 export interface VariableRankingPendingUpdate {

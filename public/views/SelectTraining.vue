@@ -1,9 +1,12 @@
 <template>
 	<div class="select-training-view d-flex h-100">
-		<status-panel></status-panel>
+		<status-panel v-if="statusPanel.isOpen" 
+			@close="statusPanel.isOpen = false"
+			:statusType="statusPanel.type">
+		</status-panel>
 		<div class="sidebar-container d-flex flex-column h-100">
 			<div class="padding-nav"></div>
-			<status-sidebar></status-sidebar>
+			<status-sidebar @statusIconClick="openStatusPanel"></status-sidebar>
 		</div>
 		<div class="container-fluid d-flex flex-column h-100 select-view">
 			<div class="row flex-0-nav"></div>
@@ -63,10 +66,19 @@ import TargetVariable from '../components/TargetVariable';
 import TypeChangeMenu from '../components/TypeChangeMenu';
 import { actions as viewActions } from '../store/view/module';
 import { getters as routeGetters } from '../store/route/module';
+import { DatasetPendingUpdate, DatasetPendingUpdateType } from '../store/dataset/index';
 
 export default Vue.extend({
 	name: 'select-view',
 
+	data() {
+		return {
+			statusPanel: {
+				isOpen: false,
+				type: undefined as DatasetPendingUpdateType
+			},
+		};
+	},
 	components: {
 		CreateSolutionsForm,
 		SelectDataSlot,
@@ -126,6 +138,13 @@ export default Vue.extend({
 		trainingVarsPage() {
 			viewActions.updateSelectTrainingData(this.$store);
 		}
+	},
+
+	methods: {
+		openStatusPanel(statusType: DatasetPendingUpdateType) {
+			this.statusPanel.isOpen = true;
+			this.statusPanel.type = statusType;
+		},
 	},
 
 	beforeMount() {

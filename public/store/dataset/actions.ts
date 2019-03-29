@@ -102,14 +102,17 @@ export const actions = {
 			console.warn('`field` argument is missing');
 			return null;
 		}
+		const update: GeocodingPendingUpdate = {
+			id: _.uniqueId(),
+			dataset: args.dataset,
+			type: DatasetPendingUpdateType.GEOCODING,
+			field: args.field,
+			status: 'pending',
+		};
+		mutations.updatePendingUpdates(context, update);
 		return axios.post(`/distil/geocode/${args.dataset}/${args.field}`, {})
 			.then(() => {
-				const update: GeocodingPendingUpdate = {
-					dataset: args.dataset,
-					type: DatasetPendingUpdateType.GEOCODING,
-					field: args.field,
-				};
-				return mutations.updatePendingUpdates(context, update);
+				return mutations.updatePendingUpdates(context, {...update, status: 'done'});
 				// // upon success pull the updated dataset, vars, and summaries
 				// return Promise.all([
 				// 	context.dispatch('fetchDataset', {

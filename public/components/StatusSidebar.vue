@@ -1,18 +1,20 @@
 <template>
 <div class="status-sidebar">
     <div class="status-icons">
-        <div class="event-icon-wrapper">
-            <i class="event-icon fa fa-2x fa-info" aria-hidden="true"></i>
+        <div class="status-icon-wrapper" @click="onStatusIconClick(0)">
+            <i class="status-icon fa fa-2x fa-info" aria-hidden="true"></i>
 			<i v-if="variableRankingStatus === 'done'" class="new-update-notification fa fa-refresh fa-circle"></i>
 			<i v-if="variableRankingStatus === 'pending'" class="new-update-notification fa fa-refresh fa-spin"></i>
         </div>
-        <div class="event-icon-wrapper">
-            <i class="event-icon fa fa-2x fa-location-arrow" aria-hidden="true"></i>
-			<i v-if="hasNewGeocodingUpdate" class="new-update-notification fa fa-circle"></i>
+        <div class="status-icon-wrapper" @click="onStatusIconClick(1)">
+            <i class="status-icon fa fa-2x fa-location-arrow" aria-hidden="true"></i>
+			<i v-if="geocodingStatus === 'done'" class="new-update-notification fa fa-circle"></i>
+			<i v-if="geocodingStatus === 'pending'" class="new-update-notification fa-refresh fa-spin"></i>
         </div>
-        <div class="event-icon-wrapper">
-            <i class="event-icon fa fa-2x fa-long-arrow-right" aria-hidden="true"></i>
-			<i v-if="hasNewJoinSuggestionUpdate" class="new-update-notification fa fa-circle"></i>
+        <div class="status-icon-wrapper" @click="onStatusIconClick(2)">
+            <i class="status-icon fa fa-2x fa-long-arrow-right" aria-hidden="true"></i>
+			<i v-if="joinSuggestionStatus === 'done'" class="new-update-notification fa fa-circle"></i>
+			<i v-if="joinSuggestionStatus === 'pending'" class="new-update-notification fa-refresh fa-spin"></i>
         </div>
     </div>
 </div>
@@ -37,10 +39,7 @@ export default Vue.extend({
 			return updates;
 		},
 		variableRankingUpdate: function () {
-			const up = this.pendingUpdates.find(item =>  item.type === DatasetPendingUpdateType.VARIABLE_RANKING); 
-			console.log('var ranking update');
-			console.log(up);
-			return <VariableRankingPendingUpdate>up;
+			return this.pendingUpdates.find(item =>  item.type === DatasetPendingUpdateType.VARIABLE_RANKING);
 		},
 		geocodingUpdate: function () {
 			return this.pendingUpdates.find(item => item.type === DatasetPendingUpdateType.GEOCODING);
@@ -51,22 +50,25 @@ export default Vue.extend({
 		variableRankingStatus: function () {
 			return this.variableRankingUpdate && this.variableRankingUpdate.status;
 		},
-		hasNewRankingUpdate: function () {
-			return Boolean(this.variableRankingUpdate);
+		geocodingStatus: function () {
+			return this.geocodingUpdate && this.geocodingUpdate.status;
 		},
-		isPending: function () {
-			console.log('status update');
-			return this.variableRankingUpdate && (this.variableRankingUpdate.status === 'pending');
-		},
-		hasNewGeocodingUpdate: function () {
-			return Boolean(this.geocodingUpdate);
-		},
-		hasNewJoinSuggestionUpdate: function () {
-			return Boolean(this.joinSuggestionUpdate);
+		joinSuggestionStatus: function () {
+			return this.joinSuggestionUpdate && this.joinSuggestionUpdate.status;
 		},
 	},
 	mounted() {
 		console.log('mounted with this dataset', this.dataset);
+	},
+	methods: {
+		onStatusIconClick(iconIndex) {
+			const statusTypes = [
+				DatasetPendingUpdateType.VARIABLE_RANKING,
+				DatasetPendingUpdateType.GEOCODING,
+				DatasetPendingUpdateType.JOIN_SUGGESTION,
+			];
+			this.$emit('statusIconClick', statusTypes[iconIndex]);
+		},
 	},
 });
 
@@ -82,13 +84,13 @@ export default Vue.extend({
 	display: flex;
 	flex-direction: column;
 }
-.status-sidebar .event-icon-wrapper {
+.status-sidebar .status-icon-wrapper {
 	padding-top: 15px;
 	padding-bottom: 15px;
 	text-align: center;
 	position: relative;
 }
-.status-sidebar .event-icon {
+.status-sidebar .status-icon {
 	height: 30px;
 	width: 30px;
 	cursor: pointer;
