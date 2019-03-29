@@ -21,6 +21,16 @@ export const DATAMART_PROVENANCE_ISI = 'datamartISI';
 export const ELASTIC_PROVENANCE = 'elastic';
 export const FILE_PROVENANCE = 'file';
 
+export function getTimeseriesSummaryTopCategories(summary: VariableSummary): string[] {
+	return _.map(summary.categoryBuckets, (buckets, category) => {
+			return {
+				category: category,
+				count: _.sumBy(buckets, b => b.count)
+			};
+		})
+		.sort((a, b) => b.count - a.count)
+		.map(c => c.category);
+}
 
 export function getTimeseriesGroupingsFromFields(variables: Variable[], fields: Dictionary<TableColumn>): Grouping[] {
 	return _.map(fields, (field, key) => key)

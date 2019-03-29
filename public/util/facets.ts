@@ -4,6 +4,7 @@ import { spinnerHTML } from '../util/spinner';
 import { formatValue, TIMESERIES_TYPE, CATEGORICAL_TYPE, ORDINAL_TYPE,
 	BOOL_TYPE, ADDRESS_TYPE, CITY_TYPE, STATE_TYPE, COUNTRY_TYPE, EMAIL_TYPE,
 	POSTAL_CODE_TYPE, PHONE_TYPE, URI_TYPE, DATE_TIME_TYPE, IMAGE_TYPE } from '../util/types';
+	import { getTimeseriesSummaryTopCategories } from '../util/data';
 import { VariableSummary, TimeseriesSummary, CATEGORICAL_SUMMARY, NUMERICAL_SUMMARY, TIMESERIES_SUMMMARY } from '../store/dataset/index';
 import store from '../store/store';
 import { getters as datasetGetters } from '../store/dataset/module';
@@ -383,8 +384,7 @@ export function isPlaceHolderFacet(facet: PlaceHolderFacet | CategoricalFacet | 
 }
 
 export function getCategoricalFacetValue(summary: VariableSummary): string {
-	// TODO: get top category.
-	return summary.categoryBuckets ? Object.keys(summary.categoryBuckets)[0] : summary.buckets[0].key;
+	return summary.categoryBuckets ? getTimeseriesSummaryTopCategories(summary)[0] : summary.buckets[0].key;
 }
 
 export function getNumericalFacetValue(summary: VariableSummary, group: Group, type: string): {from: number, to: number} {

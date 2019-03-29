@@ -89,6 +89,10 @@ export default Vue.extend({
 			return routeGetters.getRouteDataset(this.$store);
 		},
 
+		isTimeseriesAnalysis(): boolean {
+			return !!routeGetters.getRouteTimeseriesAnalysis(this.$store);
+		},
+
 		variables(): Variable[] {
 			return datasetGetters.getVariables(this.$store);
 		},
@@ -318,7 +322,7 @@ export default Vue.extend({
 		attachScalingHandlers() {
 			const dragstarted = (d, index, elem) => {
 				this.highlightPixelX = null;
-				$('.vertical-line').hide();
+				this.$line.hide();
 			};
 
 			const dragged = (d, index, elem) => {
@@ -363,6 +367,11 @@ export default Vue.extend({
 		},
 		attachTranslationHandlers() {
 
+			const dragstarted = (d, index, elem) => {
+				this.highlightPixelX = null;
+				this.$line.hide();
+			};
+
 			const dragged = (d, index, elem) => {
 
 				if (this.selectedMicroMin === null) {
@@ -405,6 +414,7 @@ export default Vue.extend({
 
 			this.svg.selectAll('.axis-selection-rect')
 				.call(d3.drag()
+					.on('start', dragstarted)
 					.on('drag', dragged)
 					.on('end', dragended));
 		},
@@ -478,13 +488,6 @@ svg.axis {
 	line-height: 32px;
 	height: 32px;
 	width: 48px;
-}
-.timeseries-chart-col {
-	float: left;
-	position: relative;
-	line-height: 32px;
-	height: 32px;
-	width: calc(100% - 276px);
 }
 .timeseries-chart-axis {
 	float: left;
