@@ -52,9 +52,6 @@ export default Vue.extend({
 		dataset(): string {
 			return routeGetters.getRouteDataset(this.$store);
 		},
-		isLoaded(): boolean {
-			return !!this.timeseries;
-		},
 		timeseries(): number[][] {
 			return datasetGetters.getTimeseries(this.$store)[this.dataset][this.timeseriesId];
 		},

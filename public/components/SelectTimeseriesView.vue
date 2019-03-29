@@ -15,16 +15,28 @@
 			</div>
 		</div>
 		<div class="timeseries-rows">
-			<div v-for="item in items">
-				<sparkline-row
-					:x-col="timeseriesGrouping.properties.xCol"
-					:y-col="timeseriesGrouping.properties.yCol"
-					:timeseries-col="timeseriesGrouping.idCol"
-					:timeseries-id="item[timeseriesGrouping.idCol]"
-					:timeseries-extrema="microExtrema"
-					:margin="margin"
-					:highlight-pixel-x="highlightPixelX">
-				</sparkline-row>
+			<div v-if="isTimeseriesAnalysis">
+				<div v-for="timeseries in timeseriesVars">
+					<sparkline-variable
+						:label="timeseries.label"
+						:timeseries="timeseries.timeseries"
+						:timeseries-extrema="microExtrema"
+						:highlight-pixel-x="highlightPixelX">
+					</sparkline-variable>
+				</div>
+			</div>
+
+			<div v-if="!isTimeseriesAnalysis">
+				<div v-for="item in items">
+					<sparkline-row
+						:x-col="timeseriesGrouping.properties.xCol"
+						:y-col="timeseriesGrouping.properties.yCol"
+						:timeseries-col="timeseriesGrouping.idCol"
+						:timeseries-id="item[timeseriesGrouping.idCol]"
+						:timeseries-extrema="microExtrema"
+						:highlight-pixel-x="highlightPixelX">
+					</sparkline-row>
+				</div>
 			</div>
 		</div>
 		<div class="vertical-line"></div>
@@ -39,10 +51,11 @@ import _ from 'lodash';
 import $ from 'jquery';
 import Vue from 'vue';
 import SparklineRow from './SparklineRow';
+import SparklineVariable from './SparklineVariable';
 import { Dictionary } from '../util/dict';
 import { Filter } from '../util/filters';
 import { RowSelection, HighlightRoot } from '../store/highlights/index';
-import { TableRow, TableColumn, TimeseriesExtrema, Variable, Grouping } from '../store/dataset/index';
+import { TableRow, TableColumn, TimeseriesExtrema, Variable, VariableSummary, Grouping } from '../store/dataset/index';
 import { getters as routeGetters } from '../store/route/module';
 import { getters as datasetGetters } from '../store/dataset/module';
 import { updateHighlightRoot } from '../util/highlights';
@@ -56,25 +69,23 @@ export default Vue.extend({
 	name: 'select-timeseries-view',
 
 	components: {
-		SparklineRow
+		SparklineRow,
+		SparklineVariable,
 	},
 
 	props: {
-		margin: {
-			type: Object as () => any,
-			default: () => ({
-				top: 2,
-				right: 16,
-				bottom: 2,
-				left: 16
-			})
-		},
 		instanceName: String as () => string,
 		includedActive: Boolean as () => boolean
 	},
 
 	data() {
 		return {
+			margin: {
+				top: 2,
+				right: 16,
+				bottom: 2,
+				left: 16
+			},
 			macroScale: null,
 			microScale: null,
 			microRangeSelection: null,
@@ -97,6 +108,12 @@ export default Vue.extend({
 			return datasetGetters.getVariables(this.$store);
 		},
 
+		variableSummaries(): VariableSummary[] {
+			const training = routeGetters.getTrainingVariableSummaries(this.$store);
+			const target = routeGetters.getTargetVariableSummaries(this.$store);
+			return training.concat(target);
+		},
+
 		items(): TableRow[] {
 			return this.includedActive ? datasetGetters.getIncludedTableDataItems(this.$store) : datasetGetters.getExcludedTableDataItems(this.$store);
 		},
@@ -107,6 +124,52 @@ export default Vue.extend({
 
 		timeseriesGrouping(): Grouping {
 			return getTimeseriesGroupingsFromFields(this.variables, this.fields)[0];
+		},
+
+		timeseriesVars(): any[] {
+			const timeseries = [];
+			this.variableSummaries.forEach(v => {
+				if (v.categoryBuckets) {
+					_.forIn(v.categoryBuckets, (buckets, category) => {
+						timeseries.push({
+							label: `${v.label} - ${category}`,
+							timeseries: buckets.map(b => [ _.parseInt(b.key), b.count ])
+						});
+					});
+				} else {
+					timeseries.push({
+						label: v.label,
+						timeseries: v.buckets.map(b => [ _.parseInt(b.key), b.count ])
+					});
+				}
+			});
+			return timeseries;
+		},
+
+		timeseriesVarsExterma(): TimeseriesExtrema {
+			if (this.timeseriesVars.length === 0) {
+				return null;
+			}
+			let xMin = Infinity;
+			let xMax = -Infinity;
+			let yMin = Infinity;
+			let yMax = -Infinity;
+			this.timeseriesVars.forEach(v => {
+				xMin = Math.min(xMin, d3.min(v.timeseries, d => d[0]));
+				xMax = Math.max(xMax, d3.max(v.timeseries, d => d[0]));
+				yMin = Math.min(yMin, d3.min(v.timeseries, d => d[1]));
+				yMax = Math.max(yMax, d3.max(v.timeseries, d => d[1]));
+			});
+			return {
+				x: {
+					min: xMin,
+					max: xMax
+				},
+				y: {
+					min: yMin,
+					max: yMax
+				}
+			};
 		},
 
 		filters(): Filter[] {
@@ -121,6 +184,9 @@ export default Vue.extend({
 		},
 
 		timeseriesExtrema(): TimeseriesExtrema {
+			if (this.isTimeseriesAnalysis) {
+				return this.timeseriesVarsExterma;
+			}
 			const extrema = datasetGetters.getTimeseriesExtrema(this.$store);
 			return extrema[this.dataset];
 		},
@@ -162,7 +228,7 @@ export default Vue.extend({
 		isTimeseriesViewHighlight(): boolean {
 			// ignore any highlights unless they are range highlights
 			return this.highlightRoot &&
-				this.highlightRoot.key === this.timeseriesGrouping.idCol &&
+				(this.isTimeseriesAnalysis || this.highlightRoot.key === this.timeseriesGrouping.idCol) &&
 				this.highlightRoot.value.from !== undefined &&
 				this.highlightRoot.value.to !== undefined;
 		},
@@ -474,6 +540,9 @@ svg.axis {
 	line-height: 32px;
 	height: 32px;
 	width: 156px;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
 }
 .timeseries-min-col {
 	float: left;
@@ -497,7 +566,7 @@ svg.axis {
 	width: calc(100% - 276px);
 }
 .pad-top {
-	padding-top: 32px;
+	margin-top: 32px;
 }
 .vertical-line {
 	position: absolute;

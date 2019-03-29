@@ -53,9 +53,6 @@ export default Vue.extend({
 			const timeseries = datasetGetters.getTimeseries(this.$store);
 			return timeseries[this.dataset];
 		},
-		isLoaded(): boolean {
-			return !!this.timeseries;
-		},
 		timeseries(): number[][] {
 			if (!this.timeseriesForDataset) {
 				return null;

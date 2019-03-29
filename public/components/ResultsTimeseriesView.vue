@@ -522,7 +522,7 @@ svg.axis {
 	width: calc(100% - 276px);
 }
 .pad-top {
-	padding-top: 32px;
+	margin-top: 32px;
 }
 .vertical-line {
 	position: absolute;
