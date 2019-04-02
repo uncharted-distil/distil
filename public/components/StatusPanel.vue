@@ -23,7 +23,7 @@
 import Vue from 'vue';
 import { DatasetPendingRequest, DatasetPendingRequestType } from '../store/dataset/index';
 import { actions as datasetActions, getters as datasetGetters } from '../store/dataset/module';
-import { actions as appActions, getters as appGetters } from '../store/app/module'
+import { actions as appActions, getters as appGetters } from '../store/app/module';
 import { getters as routeGetters } from '../store/route/module';
 import { StatusPanelState, StatusPanelContentType } from '../store/app';
 
@@ -54,7 +54,7 @@ export default Vue.extend({
 			resolvedMsg?: string,
 			defaultMsg?: string,
 		} {
-			switch(this.statusType) {
+			switch (this.statusType) {
 				case DatasetPendingRequestType.VARIABLE_RANKING:
 					return {
 						title: 'Variable Ranking',

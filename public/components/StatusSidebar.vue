@@ -66,7 +66,7 @@ export default Vue.extend({
 	},
 	methods: {
 		onStatusIconClick(iconIndex) {
-			const statusType = STATUS_TYPES[iconIndex]; 
+			const statusType = STATUS_TYPES[iconIndex];
 			const request = this.pendingRequests.find(item => item.type === statusType);
 			appActions.openStatusPanelWithContentType(this.$store, statusType);
 
