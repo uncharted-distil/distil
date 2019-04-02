@@ -26,12 +26,12 @@
 import Vue from 'vue';
 import { actions as datasetActions, getters as datasetGetters } from '../store/dataset/module';
 import { getters as routeGetters } from '../store/route/module';
-import { DatasetPendingUpdateType, DatasetPendingUpdate, VariableRankingPendingUpdate } from '../store/dataset/index';
+import { DatasetPendingRequestType, DatasetPendingRequest, VariableRankingPendingRequest } from '../store/dataset/index';
 
 const STATUS_TYPES = [
-	DatasetPendingUpdateType.VARIABLE_RANKING,
-	DatasetPendingUpdateType.GEOCODING,
-	DatasetPendingUpdateType.JOIN_SUGGESTION,
+	DatasetPendingRequestType.VARIABLE_RANKING,
+	DatasetPendingRequestType.GEOCODING,
+	DatasetPendingRequestType.JOIN_SUGGESTION,
 ];
 
 export default Vue.extend({
@@ -40,27 +40,27 @@ export default Vue.extend({
 		dataset(): string {
 			return routeGetters.getRouteDataset(this.$store);
 		},
-		pendingUpdates: function () {
-			const updates = datasetGetters.getPendingUpdates(this.$store).filter(update => update.dataset === this.dataset);
+		pendingRequests: function () {
+			const updates = datasetGetters.getPendingRequests(this.$store).filter(update => update.dataset === this.dataset);
 			return updates;
 		},
-		variableRankingUpdate: function () {
-			return this.pendingUpdates.find(item =>  item.type === DatasetPendingUpdateType.VARIABLE_RANKING);
+		variableRankingRequestData: function () {
+			return this.pendingRequests.find(item =>  item.type === DatasetPendingRequestType.VARIABLE_RANKING);
 		},
-		geocodingUpdate: function () {
-			return this.pendingUpdates.find(item => item.type === DatasetPendingUpdateType.GEOCODING);
+		geocodingRequestData: function () {
+			return this.pendingRequests.find(item => item.type === DatasetPendingRequestType.GEOCODING);
 		},
-		joinSuggestionUpdate: function () {
-			return this.pendingUpdates.find(item => item.type === DatasetPendingUpdateType.JOIN_SUGGESTION);
+		joinSuggestionRequestData: function () {
+			return this.pendingRequests.find(item => item.type === DatasetPendingRequestType.JOIN_SUGGESTION);
 		},
 		variableRankingStatus: function () {
-			return this.variableRankingUpdate && this.variableRankingUpdate.status;
+			return this.variableRankingRequestData && this.variableRankingRequestData.status;
 		},
 		geocodingStatus: function () {
-			return this.geocodingUpdate && this.geocodingUpdate.status;
+			return this.geocodingRequestData && this.geocodingRequestData.status;
 		},
 		joinSuggestionStatus: function () {
-			return this.joinSuggestionUpdate && this.joinSuggestionUpdate.status;
+			return this.joinSuggestionRequestData && this.joinSuggestionRequestData.status;
 		},
 	},
 	mounted() {
@@ -68,11 +68,11 @@ export default Vue.extend({
 	},
 	methods: {
 		onStatusIconClick(iconIndex) {
-			const update = this.pendingUpdates.find(item => item.type === STATUS_TYPES[iconIndex]);
-			if (update) {
-				datasetActions.updatePendingUpdateStatus(this.$store, {
-					id: update.id,
-					status: update.status === 'pending' ? update.status : 'reviewed',
+			const request = this.pendingRequests.find(item => item.type === STATUS_TYPES[iconIndex]);
+			if (request) {
+				datasetActions.updatePendingRequestStatus(this.$store, {
+					id: request.id,
+					status: request.status === 'pending' ? request.status : 'reviewed',
 				});
 			}
 			this.$emit('statusIconClick', STATUS_TYPES[iconIndex]);

@@ -2,7 +2,7 @@ import _ from 'lodash';
 import axios from 'axios';
 import { Dictionary } from '../../util/dict';
 import { ActionContext } from 'vuex';
-import { Dataset, DatasetState, Variable, VariableSummary, Grouping, DatasetPendingUpdateType, DatasetPendingUpdateStatus, DatasetPendingUpdate, VariableRankingPendingUpdate, GeocodingPendingUpdate } from './index';
+import { Dataset, DatasetState, Variable, VariableSummary, Grouping, DatasetPendingRequestType, DatasetPendingRequestStatus, DatasetPendingRequest, VariableRankingPendingRequest, GeocodingPendingRequest } from './index';
 import { mutations } from './module';
 import { DistilState } from '../store';
 import { HighlightRoot } from '../highlights/index';
@@ -102,17 +102,17 @@ export const actions = {
 			console.warn('`field` argument is missing');
 			return null;
 		}
-		const update: GeocodingPendingUpdate = {
+		const update: GeocodingPendingRequest = {
 			id: _.uniqueId(),
 			dataset: args.dataset,
-			type: DatasetPendingUpdateType.GEOCODING,
+			type: DatasetPendingRequestType.GEOCODING,
 			field: args.field,
 			status: 'pending',
 		};
-		mutations.updatePendingUpdates(context, update);
+		mutations.updatePendingRequests(context, update);
 		return axios.post(`/distil/geocode/${args.dataset}/${args.field}`, {})
 			.then(() => {
-				context.dispatch('updatePendingUpdateStatus', { id: update.id, status: 'resolved'});
+				context.dispatch('updatePendingRequestStatus', { id: update.id, status: 'resolved'});
 				// // upon success pull the updated dataset, vars, and summaries
 				// return Promise.all([
 				// 	context.dispatch('fetchDataset', {
@@ -340,18 +340,18 @@ export const actions = {
 
 	fetchVariableRankings(context: DatasetContext, args: { dataset: string, target: string }) {
 		const id = _.uniqueId();
-		const update: VariableRankingPendingUpdate = {
+		const update: VariableRankingPendingRequest = {
 			id,
 			dataset: args.dataset,
-			type: DatasetPendingUpdateType.VARIABLE_RANKING,
+			type: DatasetPendingRequestType.VARIABLE_RANKING,
 			status: 'pending',
 			rankings: null,
 			target: args.target,
 		};
-		mutations.updatePendingUpdates(context, update);
+		mutations.updatePendingRequests(context, update);
 		return axios.get(`/distil/variable-rankings/${args.dataset}/${args.target}`)
 			.then(response => {
-				context.dispatch('updatePendingUpdateStatus', { id, status: 'resolved'});
+				context.dispatch('updatePendingRequestStatus', { id, status: 'resolved'});
 				// mutations.updateVariableRankings(context, response.data.rankings);
 			})
 			.catch(error => {
@@ -359,10 +359,10 @@ export const actions = {
 			});
 	},
 
-	updatePendingUpdateStatus(context: DatasetContext, args: { id: string, status: DatasetPendingUpdateStatus }) {
-		const update = context.getters.getPendingUpdates.find(item => item.id === args.id);
+	updatePendingRequestStatus(context: DatasetContext, args: { id: string, status: DatasetPendingRequestStatus }) {
+		const update = context.getters.getPendingRequests.find(item => item.id === args.id);
 		if (update) {
-			return mutations.updatePendingUpdates(context, { ...update, status: args.status });
+			return mutations.updatePendingRequests(context, { ...update, status: args.status });
 		}
 	},
 

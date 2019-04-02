@@ -16,8 +16,8 @@ export const getters = {
 		return state.variables;
 	},
 
-	getPendingUpdates(state: DatasetState) {
-		return state.pendingUpdates;
+	getPendingRequests(state: DatasetState) {
+		return state.pendingRequests;
 	},
 
 	getVariablesMap(state: DatasetState): Dictionary<Variable> {

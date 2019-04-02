@@ -3,7 +3,7 @@
 <div class="status-panel">
 	<div @click="$emit('close')">
 		{{ statusType }}
-		{{ updateData }}
+		{{ requestData }}
 	</div>
 </div>
     
@@ -12,7 +12,7 @@
 <script lang="ts">
 
 import Vue from 'vue';
-import { DatasetPendingUpdate } from '../store/dataset/index';
+import { DatasetPendingRequest } from '../store/dataset/index';
 import { actions as datasetActions, getters as datasetGetters } from '../store/dataset/module';
 import { getters as routeGetters } from '../store/route/module';
 
@@ -28,19 +28,19 @@ export default Vue.extend({
 		dataset(): string {
 			return routeGetters.getRouteDataset(this.$store);
 		},
-		updateData: function () {
-			const update = datasetGetters
-				.getPendingUpdates(this.$store)
-				.find(update => update.dataset === this.dataset && update.type === this.statusType);
-			return update;
+		requestData: function () {
+			const request = datasetGetters
+				.getPendingRequests(this.$store)
+				.find(request => request.dataset === this.dataset && request.type === this.statusType);
+			return request;
 		},
 	},
 	watch: {
-		updateData: function (data) {
+		requestData: function (data) {
 			// when pending get resolved, change the status to reviewed
 			if (data && (data.status === 'resolved' || data.status === 'error')) {
 				const { status } = data;
-				datasetActions.updatePendingUpdateStatus(this.$store, {
+				datasetActions.updatePendingRequestStatus(this.$store, {
 					id: data.id,
 					status: 'reviewed',
 				})

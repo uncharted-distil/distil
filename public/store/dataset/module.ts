@@ -20,7 +20,7 @@ export const getters = {
 	// dataset
 	getDatasets: read(moduleGetters.getDatasets),
 	getFilteredDatasets: read(moduleGetters.getFilteredDatasets),
-	getPendingUpdates: read(moduleGetters.getPendingUpdates),
+	getPendingRequests: read(moduleGetters.getPendingRequests),
 	// variables
 	getVariables: read(moduleGetters.getVariables),
 	getGroupings: read(moduleGetters.getVariables),
@@ -66,7 +66,7 @@ export const actions = {
 	// ranking
 	fetchVariableRankings: dispatch(moduleActions.fetchVariableRankings),
 	// pending update
-	updatePendingUpdateStatus: dispatch(moduleActions.updatePendingUpdateStatus),
+	updatePendingRequestStatus: dispatch(moduleActions.updatePendingRequestStatus),
 	// files
 	fetchFiles: dispatch(moduleActions.fetchFiles),
 	fetchImage: dispatch(moduleActions.fetchImage),
@@ -95,8 +95,8 @@ export const mutations = {
 	// ranking
 	updateVariableRankings: commit(moduleMutations.updateVariableRankings),
 	// pending update
-	updatePendingUpdates: commit(moduleMutations.updatePendingUpdates),
-	clearPendingUpdates: commit(moduleMutations.clearPendingUpdates),
+	updatePendingRequests: commit(moduleMutations.updatePendingRequests),
+	clearPendingRequests: commit(moduleMutations.clearPendingRequests),
 	// files
 	updateFile: commit(moduleMutations.updateFile),
 	updateTimeseries: commit(moduleMutations.updateTimeseries),
@@ -105,5 +105,4 @@ export const mutations = {
 	clearJoinDatasetsTableData: commit(moduleMutations.clearJoinDatasetsTableData),
 	setIncludedTableData: commit(moduleMutations.setIncludedTableData),
 	setExcludedTableData: commit(moduleMutations.setExcludedTableData),
-
 };

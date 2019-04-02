@@ -66,7 +66,7 @@ import TargetVariable from '../components/TargetVariable';
 import TypeChangeMenu from '../components/TypeChangeMenu';
 import { actions as viewActions } from '../store/view/module';
 import { getters as routeGetters } from '../store/route/module';
-import { DatasetPendingUpdate, DatasetPendingUpdateType } from '../store/dataset/index';
+import { DatasetPendingRequest, DatasetPendingRequestType } from '../store/dataset/index';
 
 export default Vue.extend({
 	name: 'select-view',
@@ -75,7 +75,7 @@ export default Vue.extend({
 		return {
 			statusPanel: {
 				isOpen: false,
-				type: undefined as DatasetPendingUpdateType
+				type: undefined as DatasetPendingRequestType
 			},
 		};
 	},
@@ -141,7 +141,7 @@ export default Vue.extend({
 	},
 
 	methods: {
-		openStatusPanel(statusType: DatasetPendingUpdateType) {
+		openStatusPanel(statusType: DatasetPendingRequestType) {
 			this.statusPanel.isOpen = true;
 			this.statusPanel.type = statusType;
 		},

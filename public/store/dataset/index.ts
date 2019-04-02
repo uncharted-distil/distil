@@ -123,46 +123,46 @@ export interface DatasetState {
 	joinTableData: Dictionary<TableData>;
 	includedTableData: TableData;
 	excludedTableData: TableData;
-	pendingUpdates: DatasetPendingUpdate[];
+	pendingRequests: DatasetPendingRequest[];
 }
 
-export enum DatasetPendingUpdateType {
+export enum DatasetPendingRequestType {
 	VARIABLE_RANKING = 'VARIABLE_RANKING',
 	GEOCODING = 'GEOCODING',
 	JOIN_SUGGESTION = 'JOIN_SUGGESTION',
 }
 
-export type DatasetPendingUpdateStatus = 'pending' | 'resolved' | 'reviewed' | 'error';
+export type DatasetPendingRequestStatus = 'pending' | 'resolved' | 'reviewed' | 'error';
 
-export interface VariableRankingPendingUpdate {
+export interface VariableRankingPendingRequest {
 	id: string;
-	status: DatasetPendingUpdateStatus;
-	type: DatasetPendingUpdateType.VARIABLE_RANKING;
+	status: DatasetPendingRequestStatus;
+	type: DatasetPendingRequestType.VARIABLE_RANKING;
 	dataset: string;
 	target: string;
 	rankings: Dictionary<number>;
 }
 
-export interface GeocodingPendingUpdate {
+export interface GeocodingPendingRequest {
 	id: string;
-	status: DatasetPendingUpdateStatus;
-	type: DatasetPendingUpdateType.GEOCODING;
+	status: DatasetPendingRequestStatus;
+	type: DatasetPendingRequestType.GEOCODING;
 	dataset: string;
 	field: string;
 }
 
-export interface JoinSuggestionPendingUpdate {
+export interface JoinSuggestionPendingRequest {
 	id: string;
-	status: DatasetPendingUpdateStatus;
-	type: DatasetPendingUpdateType.JOIN_SUGGESTION;
+	status: DatasetPendingRequestStatus;
+	type: DatasetPendingRequestType.JOIN_SUGGESTION;
 	dataset: string;
 	result: string;
 }
 
-export type DatasetPendingUpdate =
-		VariableRankingPendingUpdate
-	| GeocodingPendingUpdate
-	| JoinSuggestionPendingUpdate;
+export type DatasetPendingRequest =
+		VariableRankingPendingRequest
+	| GeocodingPendingRequest
+	| JoinSuggestionPendingRequest;
 
 export const state: DatasetState = {
 	// datasets and filtered datasets
@@ -191,6 +191,6 @@ export const state: DatasetState = {
 	// excluded data entries for the active dataset
 	excludedTableData: null,
 
-	// variable list for the active dataset
-	pendingUpdates: [],
+	// pending requests for the active dataset
+	pendingRequests: [],
 };
