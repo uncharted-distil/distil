@@ -25,6 +25,7 @@
 
 import Vue from 'vue';
 import { actions as datasetActions, getters as datasetGetters } from '../store/dataset/module';
+import { actions as appActions } from '../store/app/module';
 import { getters as routeGetters } from '../store/route/module';
 import { DatasetPendingRequestType, DatasetPendingRequest, VariableRankingPendingRequest } from '../store/dataset/index';
 
@@ -63,20 +64,18 @@ export default Vue.extend({
 			return this.joinSuggestionRequestData && this.joinSuggestionRequestData.status;
 		},
 	},
-	mounted() {
-		console.log('mounted with this dataset', this.dataset);
-	},
 	methods: {
 		onStatusIconClick(iconIndex) {
-			const request = this.pendingRequests.find(item => item.type === STATUS_TYPES[iconIndex]);
+			const statusType = STATUS_TYPES[iconIndex]; 
+			const request = this.pendingRequests.find(item => item.type === statusType);
+			appActions.openStatusPanelWithContentType(this.$store, statusType);
+
 			if (request) {
 				datasetActions.updatePendingRequestStatus(this.$store, {
 					id: request.id,
 					status: request.status === 'pending' ? request.status : 'reviewed',
 				});
 			}
-			this.$emit('statusIconClick', STATUS_TYPES[iconIndex]);
-
 		},
 	},
 });

@@ -1,4 +1,4 @@
-import { AppState } from './index';
+import { AppState, StatusPanelState } from './index';
 
 export const getters = {
 
@@ -40,5 +40,9 @@ export const getters = {
 
 	getProblemMetrics(state: AppState): string[] {
 		return state.problemMetrics;
+	},
+
+	getStatusPanelState(state: AppState): StatusPanelState {
+		return state.statusPanelState;
 	}
 };

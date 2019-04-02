@@ -1,4 +1,5 @@
-import { AppState } from './index';
+import { AppState, StatusPanelContentType } from './index';
+import Vue from 'vue';
 
 export const mutations = {
 
@@ -41,4 +42,16 @@ export const mutations = {
 	setProblemMetrics(state: AppState, metrics: string[]) {
 		state.problemMetrics = metrics;
 	},
+
+	setStatusPanelContentType(state: AppState, contentType: StatusPanelContentType) {
+		Vue.set(state.statusPanelState, 'contentType', contentType);
+	},
+
+	openStatusPanel(state: AppState) {
+		Vue.set(state.statusPanelState, 'isOpen', true);
+	},
+
+	closeStatusPanel(state: AppState) {
+		Vue.set(state.statusPanelState, 'isOpen', false);
+	}
 };

@@ -114,13 +114,13 @@ export const mutations = {
 	},
 
 	updatePendingRequests(state: DatasetState, PendingRequest: DatasetPendingRequest) {
-		const sameIdindex = state.pendingRequests.findIndex(item => PendingRequest.id === item.id);
-		const smaeTypeindex = state.pendingRequests.findIndex(item => PendingRequest.type === item.type);
-		// make sure there exist only single update object for each type in the pendingRequests list
-		if (sameIdindex >= 0) {
-			Vue.set(state.pendingRequests, sameIdindex, PendingRequest);
-		} else if (smaeTypeindex >= 0) {
-			Vue.set(state.pendingRequests, smaeTypeindex, PendingRequest);
+		const sameIdIndex = state.pendingRequests.findIndex(item => PendingRequest.id === item.id);
+		const sameTypeIndex = state.pendingRequests.findIndex(item => PendingRequest.type === item.type);
+		if (sameIdIndex >= 0) {
+			Vue.set(state.pendingRequests, sameIdIndex, PendingRequest);
+		// only keep latest single request object for each type in the pendingRequests list
+		} else if (sameTypeIndex >= 0) {
+			Vue.set(state.pendingRequests, sameTypeIndex, PendingRequest);
 		} else {
 			state.pendingRequests.push(PendingRequest);
 		}
