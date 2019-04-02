@@ -312,7 +312,7 @@ func (f *TextField) FetchTimeseriesSummaryData(timeVar *model.Variable, resultUR
 		params := make([]interface{}, 0)
 		wheres, params = f.Storage.buildFilteredQueryWhere(wheres, params, filterParams.Filters)
 
-		categoryWhere := fmt.Sprintf("\"%s\" in (", f.Key)
+		categoryWhere := "w.stem in ("
 		for index, category := range categories {
 			categoryWhere += fmt.Sprintf("$%d", len(params)+1)
 			if index < len(categories)-1 {
@@ -326,11 +326,11 @@ func (f *TextField) FetchTimeseriesSummaryData(timeVar *model.Variable, resultUR
 		where := fmt.Sprintf("WHERE %s", strings.Join(wheres, " AND "))
 
 		// TODO: fix this
-		from := fmt.Sprintf("((SELECT unnest(tsvector_to_array(to_tsvector(\"%s\"))) as stem FROM %s WHERE \"%s\" IN ($1)) as r INNER JOIN word_stem as w on r.stem = w.stem)", f.Key, f.StorageName, timeVar.Name)
+		from := fmt.Sprintf("(SELECT unnest(tsvector_to_array(to_tsvector(\"%s\"))) as stem, \"%s\" FROM %s) as r INNER JOIN word_stem as w on r.stem = w.stem", f.Key, timeVar.Name, f.StorageName)
 
 		// Create the complete query string.
-		query := fmt.Sprintf("SELECT %s as bucket, CAST(%s as double precision) AS %s, \"%s\" as field, Count(*) AS count FROM %s %s GROUP BY %s, \"%s\" ORDER BY %s;",
-			bucketQuery, histogramQuery, histogramName, f.Key, from, where, bucketQuery, f.Key, histogramName)
+		query := fmt.Sprintf("SELECT %s as bucket, CAST(%s as double precision) AS %s, w.stem as field, Count(*) AS count FROM %s %s GROUP BY %s, w.stem ORDER BY %s;",
+			bucketQuery, histogramQuery, histogramName, from, where, bucketQuery, histogramName)
 
 		// execute the postgres query
 		res, err := f.Storage.client.Query(query, params...)
