@@ -65,6 +65,8 @@ export const actions = {
 	fetchVariableSummaries: dispatch(moduleActions.fetchVariableSummaries),
 	// ranking
 	fetchVariableRankings: dispatch(moduleActions.fetchVariableRankings),
+	// pending update
+	updatePendingUpdateStatus: dispatch(moduleActions.updatePendingUpdateStatus),
 	// files
 	fetchFiles: dispatch(moduleActions.fetchFiles),
 	fetchImage: dispatch(moduleActions.fetchImage),

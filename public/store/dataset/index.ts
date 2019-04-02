@@ -132,9 +132,11 @@ export enum DatasetPendingUpdateType {
 	JOIN_SUGGESTION = 'JOIN_SUGGESTION',
 }
 
+export type DatasetPendingUpdateStatus = 'pending' | 'resolved' | 'reviewed' | 'error';
+
 export interface VariableRankingPendingUpdate {
 	id: string;
-	status: 'pending' | 'done' | 'error';
+	status: DatasetPendingUpdateStatus;
 	type: DatasetPendingUpdateType.VARIABLE_RANKING;
 	dataset: string;
 	target: string;
@@ -143,7 +145,7 @@ export interface VariableRankingPendingUpdate {
 
 export interface GeocodingPendingUpdate {
 	id: string;
-	status: 'pending' | 'done' | 'error';
+	status: DatasetPendingUpdateStatus;
 	type: DatasetPendingUpdateType.GEOCODING;
 	dataset: string;
 	field: string;
@@ -151,7 +153,7 @@ export interface GeocodingPendingUpdate {
 
 export interface JoinSuggestionPendingUpdate {
 	id: string;
-	status: 'pending' | 'done' | 'error';
+	status: DatasetPendingUpdateStatus;
 	type: DatasetPendingUpdateType.JOIN_SUGGESTION;
 	dataset: string;
 	result: string;

@@ -2,7 +2,7 @@ import _ from 'lodash';
 import axios from 'axios';
 import { Dictionary } from '../../util/dict';
 import { ActionContext } from 'vuex';
-import { Dataset, DatasetState, Variable, VariableSummary, Grouping, DatasetPendingUpdateType, DatasetPendingUpdate, VariableRankingPendingUpdate, GeocodingPendingUpdate } from './index';
+import { Dataset, DatasetState, Variable, VariableSummary, Grouping, DatasetPendingUpdateType, DatasetPendingUpdateStatus, DatasetPendingUpdate, VariableRankingPendingUpdate, GeocodingPendingUpdate } from './index';
 import { mutations } from './module';
 import { DistilState } from '../store';
 import { HighlightRoot } from '../highlights/index';
@@ -112,7 +112,7 @@ export const actions = {
 		mutations.updatePendingUpdates(context, update);
 		return axios.post(`/distil/geocode/${args.dataset}/${args.field}`, {})
 			.then(() => {
-				return mutations.updatePendingUpdates(context, {...update, status: 'done'});
+				context.dispatch('updatePendingUpdateStatus', { id: update.id, status: 'resolved'});
 				// // upon success pull the updated dataset, vars, and summaries
 				// return Promise.all([
 				// 	context.dispatch('fetchDataset', {
@@ -351,13 +351,19 @@ export const actions = {
 		mutations.updatePendingUpdates(context, update);
 		return axios.get(`/distil/variable-rankings/${args.dataset}/${args.target}`)
 			.then(response => {
-				console.log('done');
-				return mutations.updatePendingUpdates(context, { ...update, rankings: response.data.rankings, status: 'done' });
+				context.dispatch('updatePendingUpdateStatus', { id, status: 'resolved'});
 				// mutations.updateVariableRankings(context, response.data.rankings);
 			})
 			.catch(error => {
 				console.error(error);
 			});
+	},
+
+	updatePendingUpdateStatus(context: DatasetContext, args: { id: string, status: DatasetPendingUpdateStatus }) {
+		const update = context.getters.getPendingUpdates.find(item => item.id === args.id);
+		if (update) {
+			return mutations.updatePendingUpdates(context, { ...update, status: args.status });
+		}
 	},
 
 	// update filtered data based on the current filter state

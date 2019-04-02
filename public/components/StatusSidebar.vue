@@ -3,17 +3,17 @@
     <div class="status-icons">
         <div class="status-icon-wrapper" @click="onStatusIconClick(0)">
             <i class="status-icon fa fa-2x fa-info" aria-hidden="true"></i>
-			<i v-if="variableRankingStatus === 'done'" class="new-update-notification fa fa-refresh fa-circle"></i>
+			<i v-if="variableRankingStatus === 'resolved'" class="new-update-notification fa fa-refresh fa-circle"></i>
 			<i v-if="variableRankingStatus === 'pending'" class="new-update-notification fa fa-refresh fa-spin"></i>
         </div>
         <div class="status-icon-wrapper" @click="onStatusIconClick(1)">
             <i class="status-icon fa fa-2x fa-location-arrow" aria-hidden="true"></i>
-			<i v-if="geocodingStatus === 'done'" class="new-update-notification fa fa-circle"></i>
+			<i v-if="geocodingStatus === 'resolved'" class="new-update-notification fa fa-circle"></i>
 			<i v-if="geocodingStatus === 'pending'" class="new-update-notification fa-refresh fa-spin"></i>
         </div>
         <div class="status-icon-wrapper" @click="onStatusIconClick(2)">
             <i class="status-icon fa fa-2x fa-long-arrow-right" aria-hidden="true"></i>
-			<i v-if="joinSuggestionStatus === 'done'" class="new-update-notification fa fa-circle"></i>
+			<i v-if="joinSuggestionStatus === 'resolved'" class="new-update-notification fa fa-circle"></i>
 			<i v-if="joinSuggestionStatus === 'pending'" class="new-update-notification fa-refresh fa-spin"></i>
         </div>
     </div>
@@ -27,6 +27,12 @@ import Vue from 'vue';
 import { actions as datasetActions, getters as datasetGetters } from '../store/dataset/module';
 import { getters as routeGetters } from '../store/route/module';
 import { DatasetPendingUpdateType, DatasetPendingUpdate, VariableRankingPendingUpdate } from '../store/dataset/index';
+
+const STATUS_TYPES = [
+	DatasetPendingUpdateType.VARIABLE_RANKING,
+	DatasetPendingUpdateType.GEOCODING,
+	DatasetPendingUpdateType.JOIN_SUGGESTION,
+];
 
 export default Vue.extend({
 	name: 'status-sidebar',
@@ -62,12 +68,15 @@ export default Vue.extend({
 	},
 	methods: {
 		onStatusIconClick(iconIndex) {
-			const statusTypes = [
-				DatasetPendingUpdateType.VARIABLE_RANKING,
-				DatasetPendingUpdateType.GEOCODING,
-				DatasetPendingUpdateType.JOIN_SUGGESTION,
-			];
-			this.$emit('statusIconClick', statusTypes[iconIndex]);
+			const update = this.pendingUpdates.find(item => item.type === STATUS_TYPES[iconIndex]);
+			if (update) {
+				datasetActions.updatePendingUpdateStatus(this.$store, {
+					id: update.id,
+					status: update.status === 'pending' ? update.status : 'reviewed',
+				});
+			}
+			this.$emit('statusIconClick', STATUS_TYPES[iconIndex]);
+
 		},
 	},
 });

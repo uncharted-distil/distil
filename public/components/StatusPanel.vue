@@ -34,8 +34,19 @@ export default Vue.extend({
 				.find(update => update.dataset === this.dataset && update.type === this.statusType);
 			return update;
 		},
-
-	}
+	},
+	watch: {
+		updateData: function (data) {
+			// when pending get resolved, change the status to reviewed
+			if (data && (data.status === 'resolved' || data.status === 'error')) {
+				const { status } = data;
+				datasetActions.updatePendingUpdateStatus(this.$store, {
+					id: data.id,
+					status: 'reviewed',
+				})
+			}
+		}
+	},
 });
 
 </script>
