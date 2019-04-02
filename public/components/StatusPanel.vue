@@ -43,7 +43,7 @@ export default Vue.extend({
 				datasetActions.updatePendingRequestStatus(this.$store, {
 					id: data.id,
 					status: 'reviewed',
-				})
+				});
 			}
 		}
 	},
