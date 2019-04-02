@@ -9,18 +9,18 @@
 			<div class="timeseries-min-col pad-top"><b>MIN</b></div>
 			<div class="timeseries-max-col pad-top"><b>MAX</b></div>
 			<div class="timeseries-chart-axis">
-				<template v-if="!!timeseriesExtrema">
+				<template v-if="hasData">
 					<svg ref="svg" class="axis"></svg>
 				</template>
 			</div>
 		</div>
 		<div class="timeseries-rows">
 			<div v-if="isTimeseriesAnalysis">
-				<div v-for="timeseries in timeseriesVars">
+				<div v-for="timeseries in timeseriesVariableSummaries">
 					<sparkline-variable
 						:label="timeseries.label"
 						:timeseries="timeseries.timeseries"
-						:timeseries-extrema="microExtrema"
+						:timeseries-extrema="timeseriesVariableExtrema(timeseries.key)"
 						:highlight-pixel-x="highlightPixelX">
 					</sparkline-variable>
 				</div>
@@ -33,7 +33,7 @@
 						:y-col="timeseriesGrouping.properties.yCol"
 						:timeseries-col="timeseriesGrouping.idCol"
 						:timeseries-id="item[timeseriesGrouping.idCol]"
-						:timeseries-extrema="microExtrema"
+						:timeseries-extrema="timeseriesRowExtrema"
 						:highlight-pixel-x="highlightPixelX">
 					</sparkline-row>
 				</div>
@@ -60,6 +60,7 @@ import { getters as routeGetters } from '../store/route/module';
 import { getters as datasetGetters } from '../store/dataset/module';
 import { updateHighlightRoot } from '../util/highlights';
 import { getTimeseriesGroupingsFromFields } from '../util/data';
+import { isTimeType } from '../util/types';
 
 const TICK_SIZE = 8;
 const SELECTED_TICK_SIZE = 18;
@@ -104,6 +105,10 @@ export default Vue.extend({
 			return !!routeGetters.getRouteTimeseriesAnalysis(this.$store);
 		},
 
+		timeseriesAnalysisVar(): string {
+			return routeGetters.getRouteTimeseriesAnalysis(this.$store);
+		},
+
 		variables(): Variable[] {
 			return datasetGetters.getVariables(this.$store);
 		},
@@ -126,50 +131,97 @@ export default Vue.extend({
 			return getTimeseriesGroupingsFromFields(this.variables, this.fields)[0];
 		},
 
-		timeseriesVars(): any[] {
-			const timeseries = [];
+		hasData(): boolean {
+			if (this.isTimeseriesAnalysis && this.variableSummaries.length > 0) {
+				return true;
+			}
+			const extrema = datasetGetters.getTimeseriesExtrema(this.$store);
+			return !!extrema[this.dataset];
+		},
+
+		isDateScale(): boolean {
+			let timeVar = null;
+			if (this.isTimeseriesAnalysis) {
+				timeVar = this.variables.find(v => v.colName === this.timeseriesAnalysisVar);
+			} else {
+			const grouping = this.timeseriesGrouping;
+				timeVar = this.variables.find(v => v.colName === grouping.properties.xCol);
+			}
+			return (timeVar && isTimeType(timeVar.colType));
+		},
+
+		timeseriesVariableSummaries(): any[] {
+			let timeseries = [];
 			this.variableSummaries.forEach(v => {
 				if (v.categoryBuckets) {
+					const categories = [];
 					_.forIn(v.categoryBuckets, (buckets, category) => {
-						timeseries.push({
+						categories.push({
 							label: `${v.label} - ${category}`,
-							timeseries: buckets.map(b => [ _.parseInt(b.key), b.count ])
+							key: v.key,
+							timeseries: buckets.map(b => [ _.parseInt(b.key), b.count ]),
+							xMin: v.extrema.min,
+							xMax: v.extrema.max,
+							yMin: _.minBy(buckets, d => d.count).count,
+							yMax: _.maxBy(buckets, d => d.count).count,
+							sum: _.sumBy(buckets, d => d.count)
 						});
 					});
+					// highest sum first
+					categories.sort((a, b) => { return b.sum - a.sum; });
+					timeseries = timeseries.concat(categories);
 				} else {
 					timeseries.push({
 						label: v.label,
-						timeseries: v.buckets.map(b => [ _.parseInt(b.key), b.count ])
+						key: v.key,
+						timeseries: v.buckets.map(b => [ _.parseInt(b.key), b.count ]),
+						xMin: v.extrema.min,
+						xMax: v.extrema.max,
+						yMin: _.minBy(v.buckets, d => d.count).count,
+						yMax: _.maxBy(v.buckets, d => d.count).count,
+						sum: _.sumBy(v.buckets, d => d.count)
 					});
 				}
 			});
 			return timeseries;
 		},
 
-		timeseriesVarsExterma(): TimeseriesExtrema {
-			if (this.timeseriesVars.length === 0) {
+		timeseriesVarsMinX(): number {
+			if (this.timeseriesVariableSummaries.length === 0) {
 				return null;
 			}
-			let xMin = Infinity;
-			let xMax = -Infinity;
-			let yMin = Infinity;
-			let yMax = -Infinity;
-			this.timeseriesVars.forEach(v => {
-				xMin = Math.min(xMin, d3.min(v.timeseries, d => d[0]));
-				xMax = Math.max(xMax, d3.max(v.timeseries, d => d[0]));
-				yMin = Math.min(yMin, d3.min(v.timeseries, d => d[1]));
-				yMax = Math.max(yMax, d3.max(v.timeseries, d => d[1]));
-			});
-			return {
-				x: {
-					min: xMin,
-					max: xMax
-				},
-				y: {
-					min: yMin,
-					max: yMax
-				}
-			};
+			// take first, all vars share same x axis
+			return this.timeseriesVariableSummaries[0].xMin;
+		},
+
+		timeseriesVarsMaxX(): number {
+			if (this.timeseriesVariableSummaries.length === 0) {
+				return null;
+			}
+			// take first, all vars share same x axis
+			return this.timeseriesVariableSummaries[0].xMax;
+		},
+
+		timeseriesMinX(): number {
+			if (this.isTimeseriesAnalysis) {
+				return this.timeseriesVarsMinX;
+			}
+			const extrema = datasetGetters.getTimeseriesExtrema(this.$store);
+			if (extrema[this.dataset]) {
+				return extrema[this.dataset].x.min;
+			}
+			return 0;
+		},
+
+		timeseriesMaxX(): number {
+			if (this.isTimeseriesAnalysis) {
+				return this.timeseriesVarsMaxX;
+			}
+			const extrema = datasetGetters.getTimeseriesExtrema(this.$store);
+			if (extrema[this.dataset]) {
+				return extrema[this.dataset].x.max;
+			}
+			return 1;
 		},
 
 		filters(): Filter[] {
@@ -183,27 +235,20 @@ export default Vue.extend({
 			return routeGetters.getDecodedRowSelection(this.$store);
 		},
 
-		timeseriesExtrema(): TimeseriesExtrema {
-			if (this.isTimeseriesAnalysis) {
-				return this.timeseriesVarsExterma;
-			}
-			const extrema = datasetGetters.getTimeseriesExtrema(this.$store);
-			return extrema[this.dataset];
-		},
-
 		highlightRoot(): HighlightRoot {
 			return routeGetters.getDecodedHighlightRoot(this.$store);
 		},
 
-		microExtrema(): TimeseriesExtrema {
+		timeseriesRowExtrema(): TimeseriesExtrema {
+			const extrema = datasetGetters.getTimeseriesExtrema(this.$store)[this.dataset];
 			return {
 				x: {
 					min: this.microMin,
 					max: this.microMax
 				},
 				y: {
-					min: this.timeseriesExtrema ? this.timeseriesExtrema.y.min : 0,
-					max: this.timeseriesExtrema ? this.timeseriesExtrema.y.max : 1
+					min: extrema ? extrema.y.min : 0,
+					max: extrema ? extrema.y.max : 1
 				}
 			};
 		},
@@ -240,10 +285,7 @@ export default Vue.extend({
 			if (this.isTimeseriesViewHighlight) {
 				return this.highlightRoot.value.from;
 			}
-			if (this.timeseriesExtrema) {
-				return this.timeseriesExtrema.x.min;
-			}
-			return 0;
+			return this.timeseriesMinX;
 		},
 
 		microMax(): number {
@@ -253,10 +295,7 @@ export default Vue.extend({
 			if (this.isTimeseriesViewHighlight) {
 				return this.highlightRoot.value.to;
 			}
-			if (this.timeseriesExtrema) {
-				return this.timeseriesExtrema.x.max;
-			}
-			return 1;
+			return this.timeseriesMaxX;
 		},
 
 		$timeseries(): any {
@@ -274,6 +313,28 @@ export default Vue.extend({
 	},
 
 	methods: {
+
+		timeseriesVariableExtrema(variableKey: string): TimeseriesExtrema {
+			let yMin = Infinity;
+			let yMax = -Infinity;
+			this.timeseriesVariableSummaries.forEach(v => {
+				if (v.key === variableKey) {
+					yMin = Math.min(yMin, v.yMin);
+					yMax = Math.max(yMax, v.yMax);
+				}
+			});
+			return {
+				x: {
+					min: this.microMin,
+					max: this.microMax
+				},
+				y: {
+					min: yMin,
+					max: yMax
+				}
+			};
+		},
+
 		invertFilters(filters: Filter[]): Filter[] {
 			// TODO: invert filters
 			return filters;
@@ -312,9 +373,16 @@ export default Vue.extend({
 			this.svg.select('.micro-axis').remove();
 			this.svg.select('.axis-selection-rect').remove();
 
-			this.microScale = d3.scaleLinear()
-				.domain([this.microMin, this.microMax])
-				.range([0, this.width]);
+			// if (this.isDateScale) {
+			// 	this.microScale = d3.scaleTime()
+			// 		.domain([new Date(this.microMin * 1000), new Date(this.microMax * 1000)])
+			// 		.range([0, this.width]);
+			//
+			// } else {
+				this.microScale = d3.scaleLinear()
+					.domain([this.microMin, this.microMax])
+					.range([0, this.width]);
+			// }
 
 			this.svg.append('g')
 				.attr('class', 'micro-axis')
@@ -334,15 +402,22 @@ export default Vue.extend({
 		},
 		injectSVG() {
 
-			if (!this.timeseriesExtrema) {
+			if (!this.hasData) {
 				return;
 			}
 
 			this.clearSVG();
 
-			this.macroScale = d3.scaleLinear()
-				.domain([this.timeseriesExtrema.x.min, this.timeseriesExtrema.x.max])
-				.range([0, this.width]);
+			// if (this.isDateScale) {
+			// 	this.macroScale = d3.scaleTime()
+			// 		.domain([new Date(this.timeseriesMinX * 1000), new Date(this.timeseriesMaxX * 1000)])
+			// 		.range([0, this.width]);
+			//
+			// } else {
+				this.macroScale = d3.scaleLinear()
+					.domain([this.timeseriesMinX, this.timeseriesMaxX])
+					.range([0, this.width]);
+			// }
 
 			this.svg.append('g')
 				.attr('class', 'macro-axis')
@@ -395,7 +470,8 @@ export default Vue.extend({
 				const minX = 0;
 				const maxX = this.width;
 
-				const px = _.clamp(d3.event.x, minX, maxX);
+				const x = d3.event.x;
+				const px = _.clamp(x, minX, maxX);
 
 				if (index === 0) {
 					const maxPx = this.macroScale(this.microMax);
@@ -416,7 +492,7 @@ export default Vue.extend({
 				updateHighlightRoot(this.$router, {
 					context: this.instanceName,
 					dataset: this.dataset,
-					key: this.timeseriesGrouping.idCol,
+					key: this.isTimeseriesAnalysis ? this.timeseriesAnalysisVar : this.timeseriesGrouping.idCol,
 					value: {
 						from: this.microMin,
 						to: this.microMax
@@ -447,8 +523,8 @@ export default Vue.extend({
 					this.selectedMicroMax = this.microMax;
 				}
 
-				const maxDelta = this.timeseriesExtrema.x.max - this.selectedMicroMax;
-				const minDelta = this.timeseriesExtrema.x.min - this.selectedMicroMin;
+				const maxDelta = this.timeseriesMaxX - this.selectedMicroMax;
+				const minDelta = this.timeseriesMinX - this.selectedMicroMin;
 
 				const delta = this.macroScale.invert(d3.event.dx);
 				const clampedDelta = _.clamp(delta, minDelta, maxDelta);
@@ -470,7 +546,7 @@ export default Vue.extend({
 				updateHighlightRoot(this.$router, {
 					context: this.instanceName,
 					dataset: this.dataset,
-					key: this.timeseriesGrouping.idCol,
+					key: this.isTimeseriesAnalysis ? this.timeseriesAnalysisVar : this.timeseriesGrouping.idCol,
 					value: {
 						from: this.microMin,
 						to: this.microMax
@@ -490,7 +566,15 @@ export default Vue.extend({
 	},
 
 	watch: {
-		timeseriesExtrema: {
+		timeseriesVariableSummaries: {
+			handler() {
+				Vue.nextTick(() => {
+					this.injectSVG();
+				});
+			},
+			deep: true
+		},
+		timeseriesRowExtrema: {
 			handler() {
 				Vue.nextTick(() => {
 					this.injectSVG();
