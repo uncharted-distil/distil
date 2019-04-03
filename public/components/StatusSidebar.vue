@@ -66,7 +66,7 @@ export default Vue.extend({
 	},
 	methods: {
 		isNew(status) {
-			return (status === DatasetPendingRequestStatus.RESOLVED) || (status === DatasetPendingRequestStatus.ERROR)
+			return (status === DatasetPendingRequestStatus.RESOLVED) || (status === DatasetPendingRequestStatus.ERROR);
 		},
 		isPending(status) {
 			return DatasetPendingRequestStatus.PENDING === status;

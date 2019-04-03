@@ -68,15 +68,15 @@ export default Vue.extend({
 			return request;
 		},
 		isPending: function () {
-			return this.requestData.status === DatasetPendingRequestStatus.PENDING; 
+			return this.requestData.status === DatasetPendingRequestStatus.PENDING;
 		},
 		isResolved: function () {
 			return this.requestData.status === DatasetPendingRequestStatus.RESOLVED
-				|| this.requestData.status === DatasetPendingRequestStatus.REVIEWED; 
+				|| this.requestData.status === DatasetPendingRequestStatus.REVIEWED;
 		},
 		isError: function () {
 			return this.requestData.status === DatasetPendingRequestStatus.ERROR
-				|| this.requestData.status === DatasetPendingRequestStatus.ERROR_REVIEWED; 
+				|| this.requestData.status === DatasetPendingRequestStatus.ERROR_REVIEWED;
 		},
 		contentData(): {
 			title: string,
@@ -120,7 +120,7 @@ export default Vue.extend({
 				datasetActions.updatePendingRequestStatus(this.$store, {
 					id: this.requestData.id,
 					status: this.requestData.status === DatasetPendingRequestStatus.ERROR
-						? DatasetPendingRequestStatus.ERROR_REVIEWED 
+						? DatasetPendingRequestStatus.ERROR_REVIEWED
 						: DatasetPendingRequestStatus.REVIEWED,
 				});
 			}
@@ -129,12 +129,12 @@ export default Vue.extend({
 		applyChange() {
 			switch (this.statusType) {
 				case DatasetPendingRequestType.VARIABLE_RANKING:
-					const variableReqeust = <VariableRankingPendingRequest>this.requestData; 
+					const variableReqeust = <VariableRankingPendingRequest>this.requestData;
 					datasetActions.updateVariableRankings(this.$store, variableReqeust.rankings);
 					this.clearData();
 					break;
 				case DatasetPendingRequestType.GEOCODING:
-					const geoRequest = <GeocodingPendingRequest>this.requestData; 
+					const geoRequest = <GeocodingPendingRequest>this.requestData;
 					datasetActions.fetchDatasetAndVariables(this.$store, { dataset: geoRequest.dataset, field: geoRequest.field }).then(() => {
 						this.clearData();
 					});
@@ -146,7 +146,7 @@ export default Vue.extend({
 		},
 		clearData() {
 			if (this.requestData) {
-				datasetActions.removePendingRequest(this.$store, this.requestData.id)
+				datasetActions.removePendingRequest(this.$store, this.requestData.id);
 			}
 		}
 	}
