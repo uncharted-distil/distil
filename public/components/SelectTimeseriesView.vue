@@ -310,16 +310,6 @@ export default Vue.extend({
 
 		$axis(): any {
 			return this.$timeseries.find('.timeseries-chart-axis');
-		},
-
-		microMinValue(): any {
-			return this.microMin;
-			// return this.isDateScale ? new Date(this.microMin * 1000) : this.microMin;
-		},
-
-		microMaxValue(): any {
-			return this.microMax;
-			// return this.isDateScale ? new Date(this.microMax * 1000) : this.microMax;
 		}
 	},
 
@@ -384,16 +374,9 @@ export default Vue.extend({
 			this.svg.select('.micro-axis').remove();
 			this.svg.select('.axis-selection-rect').remove();
 
-			// if (this.isDateScale) {
-			// 	this.microScale = d3.scaleTime()
-			// 		.domain([this.microMinValue, this.microMaxValue])
-			// 		.range([0, this.width]);
-			//
-			// } else {
-				this.microScale = d3.scaleLinear()
-					.domain([this.microMinValue, this.microMaxValue])
-					.range([0, this.width]);
-			// }
+			this.microScale = d3.scaleLinear()
+				.domain([this.microMin, this.microMax])
+				.range([0, this.width]);
 
 			this.svg.append('g')
 				.attr('class', 'micro-axis')
@@ -402,9 +385,9 @@ export default Vue.extend({
 
 			this.svg.append('rect')
 				.attr('class', 'axis-selection-rect')
-				.attr('x', this.macroScale(this.microMinValue) + this.margin.left)
+				.attr('x', this.macroScale(this.microMin) + this.margin.left)
 				.attr('y', this.margin.top + TICK_SIZE * 2)
-				.attr('width', this.macroScale(this.microMaxValue) - this.macroScale(this.microMinValue))
+				.attr('width', this.macroScale(this.microMax) - this.macroScale(this.microMin))
 				.attr('height', SELECTED_TICK_SIZE);
 
 			this.svg.select('.axis-selection').raise();
@@ -419,16 +402,9 @@ export default Vue.extend({
 
 			this.clearSVG();
 
-			// if (this.isDateScale) {
-			// 	this.macroScale = d3.scaleTime()
-			// 		.domain([new Date(this.timeseriesMinX * 1000), new Date(this.timeseriesMaxX * 1000)])
-			// 		.range([0, this.width]);
-			//
-			// } else {
-				this.macroScale = d3.scaleLinear()
-					.domain([this.timeseriesMinX, this.timeseriesMaxX])
-					.range([0, this.width]);
-			// }
+			this.macroScale = d3.scaleLinear()
+				.domain([this.timeseriesMinX, this.timeseriesMaxX])
+				.range([0, this.width]);
 
 			this.svg.append('g')
 				.attr('class', 'macro-axis')
@@ -438,8 +414,8 @@ export default Vue.extend({
 			this.microRangeSelection = d3.axisTop(this.macroScale)
 				.tickSize(SELECTED_TICK_SIZE)
 				.tickValues([
-					this.microMinValue,
-					this.microMaxValue
+					this.microMin,
+					this.microMax
 				])
 				.tickFormat(this.axisFormat());
 
@@ -486,12 +462,12 @@ export default Vue.extend({
 				const px = _.clamp(x, minX, maxX);
 
 				if (index === 0) {
-					const maxPx = this.macroScale(this.microMaxValue);
+					const maxPx = this.macroScale(this.microMax);
 					const clampedPx = Math.min(px, maxPx - MIN_PIXEL_WIDTH);
 					this.selectedMicroMin = this.macroScale.invert(clampedPx);
 					this.repositionMicroMin(this.selectedMicroMin);
 				} else {
-					const minPx = this.macroScale(this.microMinValue);
+					const minPx = this.macroScale(this.microMin);
 					const clampedPx = Math.max(px, minPx + MIN_PIXEL_WIDTH);
 					this.selectedMicroMax = this.macroScale.invert(clampedPx);
 					this.repositionMicroMax(this.selectedMicroMax);
@@ -529,16 +505,16 @@ export default Vue.extend({
 			const dragged = (d, index, elem) => {
 
 				if (this.selectedMicroMin === null) {
-					this.selectedMicroMin = this.microMinValue;
+					this.selectedMicroMin = this.microMin;
 				}
 				if (this.selectedMicroMax === null) {
-					this.selectedMicroMax = this.microMaxValue;
+					this.selectedMicroMax = this.microMax;
 				}
 
 				const maxDelta = this.timeseriesMaxX - this.selectedMicroMax;
 				const minDelta = this.timeseriesMinX - this.selectedMicroMin;
 
-				const delta = this.macroScale.invert(d3.event.dx);
+				const delta = this.macroScale.invert(d3.event.dx) - this.timeseriesMinX;
 				const clampedDelta = _.clamp(delta, minDelta, maxDelta);
 
 				this.selectedMicroMin += clampedDelta;
