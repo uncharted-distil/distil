@@ -49,6 +49,7 @@
 import * as d3 from 'd3';
 import _ from 'lodash';
 import $ from 'jquery';
+import moment from 'moment';
 import Vue from 'vue';
 import SparklineRow from './SparklineRow';
 import SparklineVariable from './SparklineVariable';
@@ -135,8 +136,7 @@ export default Vue.extend({
 			if (this.isTimeseriesAnalysis && this.variableSummaries.length > 0) {
 				return true;
 			}
-			const extrema = datasetGetters.getTimeseriesExtrema(this.$store);
-			return !!extrema[this.dataset];
+			return !!this.timeseriesExtrema;
 		},
 
 		isDateScale(): boolean {
@@ -202,13 +202,16 @@ export default Vue.extend({
 			return this.timeseriesVariableSummaries[0].xMax;
 		},
 
+		timeseriesExtrema(): TimeseriesExtrema {
+			return datasetGetters.getTimeseriesExtrema(this.$store)[this.dataset];
+		},
+
 		timeseriesMinX(): number {
 			if (this.isTimeseriesAnalysis) {
 				return this.timeseriesVarsMinX;
 			}
-			const extrema = datasetGetters.getTimeseriesExtrema(this.$store);
-			if (extrema[this.dataset]) {
-				return extrema[this.dataset].x.min;
+			if (this.timeseriesExtrema) {
+				return this.timeseriesExtrema.x.min;
 			}
 			return 0;
 		},
@@ -217,9 +220,8 @@ export default Vue.extend({
 			if (this.isTimeseriesAnalysis) {
 				return this.timeseriesVarsMaxX;
 			}
-			const extrema = datasetGetters.getTimeseriesExtrema(this.$store);
-			if (extrema[this.dataset]) {
-				return extrema[this.dataset].x.max;
+			if (this.timeseriesExtrema) {
+				return this.timeseriesExtrema.x.max;
 			}
 			return 1;
 		},
@@ -240,15 +242,14 @@ export default Vue.extend({
 		},
 
 		timeseriesRowExtrema(): TimeseriesExtrema {
-			const extrema = datasetGetters.getTimeseriesExtrema(this.$store)[this.dataset];
 			return {
 				x: {
 					min: this.microMin,
 					max: this.microMax
 				},
 				y: {
-					min: extrema ? extrema.y.min : 0,
-					max: extrema ? extrema.y.max : 1
+					min: this.timeseriesExtrema ? this.timeseriesExtrema.y.min : 0,
+					max: this.timeseriesExtrema ? this.timeseriesExtrema.y.max : 1
 				}
 			};
 		},
@@ -309,6 +310,16 @@ export default Vue.extend({
 
 		$axis(): any {
 			return this.$timeseries.find('.timeseries-chart-axis');
+		},
+
+		microMinValue(): any {
+			return this.microMin;
+			// return this.isDateScale ? new Date(this.microMin * 1000) : this.microMin;
+		},
+
+		microMaxValue(): any {
+			return this.microMax;
+			// return this.isDateScale ? new Date(this.microMax * 1000) : this.microMax;
 		}
 	},
 
@@ -375,25 +386,25 @@ export default Vue.extend({
 
 			// if (this.isDateScale) {
 			// 	this.microScale = d3.scaleTime()
-			// 		.domain([new Date(this.microMin * 1000), new Date(this.microMax * 1000)])
+			// 		.domain([this.microMinValue, this.microMaxValue])
 			// 		.range([0, this.width]);
 			//
 			// } else {
 				this.microScale = d3.scaleLinear()
-					.domain([this.microMin, this.microMax])
+					.domain([this.microMinValue, this.microMaxValue])
 					.range([0, this.width]);
 			// }
 
 			this.svg.append('g')
 				.attr('class', 'micro-axis')
 				.attr('transform', `translate(${this.margin.left}, ${-this.margin.bottom + this.height - TICK_SIZE * 2})`)
-				.call(d3.axisBottom(this.microScale));
+				.call(d3.axisBottom(this.microScale).tickFormat(this.axisFormat()));
 
 			this.svg.append('rect')
 				.attr('class', 'axis-selection-rect')
-				.attr('x', this.macroScale(this.microMin) + this.margin.left)
+				.attr('x', this.macroScale(this.microMinValue) + this.margin.left)
 				.attr('y', this.margin.top + TICK_SIZE * 2)
-				.attr('width', this.macroScale(this.microMax) - this.macroScale(this.microMin))
+				.attr('width', this.macroScale(this.microMaxValue) - this.macroScale(this.microMinValue))
 				.attr('height', SELECTED_TICK_SIZE);
 
 			this.svg.select('.axis-selection').raise();
@@ -422,14 +433,15 @@ export default Vue.extend({
 			this.svg.append('g')
 				.attr('class', 'macro-axis')
 				.attr('transform', `translate(${this.margin.left}, ${this.margin.top + SELECTED_TICK_SIZE + TICK_SIZE * 2})`)
-				.call(d3.axisTop(this.macroScale));
+				.call(d3.axisTop(this.macroScale).tickFormat(this.axisFormat()));
 
 			this.microRangeSelection = d3.axisTop(this.macroScale)
 				.tickSize(SELECTED_TICK_SIZE)
 				.tickValues([
-					this.microMin,
-					this.microMax
-				]);
+					this.microMinValue,
+					this.microMaxValue
+				])
+				.tickFormat(this.axisFormat());
 
 			this.svg.append('g')
 				.attr('class', 'axis-selection')
@@ -440,19 +452,19 @@ export default Vue.extend({
 
 			this.attachScalingHandlers();
 		},
-		repositionMicroMin(xVal: number) {
+		repositionMicroMin(xVal: any) {
 			const px = this.macroScale(xVal);
 			const $lower = this.svg.select('.axis-selection .tick');
 			$lower.attr('transform', `translate(${px}, 0)`);
-			$lower.select('text').text(xVal.toFixed(2));
+			$lower.select('text').text(this.axisFormat()(xVal));
 		},
-		repositionMicroMax(xVal: number) {
+		repositionMicroMax(xVal: any) {
 			const px = this.macroScale(xVal);
 			const $upper = this.svg.select('.axis-selection .tick:last-child');
 			$upper.attr('transform', `translate(${px}, 0)`);
-			$upper.select('text').text(xVal.toFixed(2));
+			$upper.select('text').text(this.axisFormat()(xVal));
 		},
-		repositionMicroRange(xMin: number, xMax: number) {
+		repositionMicroRange(xMin: any, xMax: any) {
 			const minPx = this.macroScale(xMin);
 			const maxPx = this.macroScale(xMax);
 			const widthPx = maxPx - minPx;
@@ -474,12 +486,12 @@ export default Vue.extend({
 				const px = _.clamp(x, minX, maxX);
 
 				if (index === 0) {
-					const maxPx = this.macroScale(this.microMax);
+					const maxPx = this.macroScale(this.microMaxValue);
 					const clampedPx = Math.min(px, maxPx - MIN_PIXEL_WIDTH);
 					this.selectedMicroMin = this.macroScale.invert(clampedPx);
 					this.repositionMicroMin(this.selectedMicroMin);
 				} else {
-					const minPx = this.macroScale(this.microMin);
+					const minPx = this.macroScale(this.microMinValue);
 					const clampedPx = Math.max(px, minPx + MIN_PIXEL_WIDTH);
 					this.selectedMicroMax = this.macroScale.invert(clampedPx);
 					this.repositionMicroMax(this.selectedMicroMax);
@@ -517,10 +529,10 @@ export default Vue.extend({
 			const dragged = (d, index, elem) => {
 
 				if (this.selectedMicroMin === null) {
-					this.selectedMicroMin = this.microMin;
+					this.selectedMicroMin = this.microMinValue;
 				}
 				if (this.selectedMicroMax === null) {
-					this.selectedMicroMax = this.microMax;
+					this.selectedMicroMax = this.microMaxValue;
 				}
 
 				const maxDelta = this.timeseriesMaxX - this.selectedMicroMax;
@@ -562,7 +574,23 @@ export default Vue.extend({
 		},
 		clearSVG() {
 			this.svg.selectAll('*').remove();
+		},
+		axisFormat() {
+			return (v) => {
+				if (this.isDateScale) {
+					let m = null;
+					if (_.isString(v)) {
+						m = moment(v);
+					} else {
+						m = moment.unix(v);
+					}
+					// TODO: format based on total span
+					return m.format('MMM D');
+				}
+				return v.toFixed(2);
+			};
 		}
+
 	},
 
 	watch: {
@@ -574,7 +602,7 @@ export default Vue.extend({
 			},
 			deep: true
 		},
-		timeseriesRowExtrema: {
+		timeseriesExtrema: {
 			handler() {
 				Vue.nextTick(() => {
 					this.injectSVG();
