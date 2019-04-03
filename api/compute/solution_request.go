@@ -61,25 +61,11 @@ const (
 var (
 	// folder for dataset data exchanged with TA2
 	datasetDir string
-	// folder containing the input dataset
-	inputDir string
-	// folder containing the augmented datasets
-	augmentDir string
 )
 
 // SetDatasetDir sets the output data dir
 func SetDatasetDir(dir string) {
 	datasetDir = dir
-}
-
-// SetInputDir sets the input data dir
-func SetInputDir(dir string) {
-	inputDir = dir
-}
-
-// SetAugmentDir sets the augment data dir
-func SetAugmentDir(dir string) {
-	augmentDir = dir
 }
 
 func newStatusChannel() chan SolutionStatus {
