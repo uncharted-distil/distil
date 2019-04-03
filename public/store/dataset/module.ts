@@ -63,10 +63,13 @@ export const actions = {
 	reviewVariableType: dispatch(moduleActions.reviewVariableType),
 	fetchVariableSummary: dispatch(moduleActions.fetchVariableSummary),
 	fetchVariableSummaries: dispatch(moduleActions.fetchVariableSummaries),
+	fetchDatasetAndVariables: dispatch(moduleActions.fetchDatasetAndVariables),
 	// ranking
 	fetchVariableRankings: dispatch(moduleActions.fetchVariableRankings),
-	// pending update
+	updateVariableRankings: dispatch(moduleActions.updateVariableRankings),
+	// pending request
 	updatePendingRequestStatus: dispatch(moduleActions.updatePendingRequestStatus),
+	removePendingRequest: dispatch(moduleActions.removePendingRequest),
 	// files
 	fetchFiles: dispatch(moduleActions.fetchFiles),
 	fetchImage: dispatch(moduleActions.fetchImage),
@@ -96,7 +99,7 @@ export const mutations = {
 	updateVariableRankings: commit(moduleMutations.updateVariableRankings),
 	// pending update
 	updatePendingRequests: commit(moduleMutations.updatePendingRequests),
-	clearPendingRequests: commit(moduleMutations.clearPendingRequests),
+	removePendingRequest: commit(moduleMutations.removePendingRequest),
 	// files
 	updateFile: commit(moduleMutations.updateFile),
 	updateTimeseries: commit(moduleMutations.updateTimeseries),

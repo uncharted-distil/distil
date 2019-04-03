@@ -126,8 +126,8 @@ export const mutations = {
 		}
 	},
 
-	clearPendingRequests(state: DatasetState) {
-		state.pendingRequests = [];
+	removePendingRequest(state: DatasetState, id: string) {
+		state.pendingRequests = state.pendingRequests.filter(item => item.id !== id);
 	},
 
 	updateFile(state: DatasetState, args: { url: string, file: any }) {

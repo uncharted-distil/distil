@@ -132,7 +132,15 @@ export enum DatasetPendingRequestType {
 	JOIN_SUGGESTION = 'JOIN_SUGGESTION',
 }
 
-export type DatasetPendingRequestStatus = 'pending' | 'resolved' | 'reviewed' | 'error';
+export enum DatasetPendingRequestStatus {
+	PENDING = 'PENDING',
+	RESOLVED = 'RESOLVED',
+	ERROR = 'ERROR',
+	REVIEWED = 'REVIEWED',
+	ERROR_REVIEWED = 'ERROR_REVIEWED',
+}
+
+// export type DatasetPendingRequestStatus = 'pending' | 'resolved' | 'error' | 'resolved.reviewed' | 'error.reviewed';
 
 export interface VariableRankingPendingRequest {
 	id: string;

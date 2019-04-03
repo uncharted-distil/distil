@@ -107,33 +107,37 @@ export const actions = {
 			dataset: args.dataset,
 			type: DatasetPendingRequestType.GEOCODING,
 			field: args.field,
-			status: 'pending',
+			status: DatasetPendingRequestStatus.ERROR_REVIEWED,
 		};
 		mutations.updatePendingRequests(context, update);
 		return axios.post(`/distil/geocode/${args.dataset}/${args.field}`, {})
 			.then(() => {
-				context.dispatch('updatePendingRequestStatus', { id: update.id, status: 'resolved'});
-				// // upon success pull the updated dataset, vars, and summaries
-				// return Promise.all([
-				// 	context.dispatch('fetchDataset', {
-				// 		dataset: args.dataset
-				// 	}),
-				// 	context.dispatch('fetchVariables', {
-				// 		dataset: args.dataset
-				// 	}),
-				// 	context.dispatch('fetchVariableSummary', {
-				// 		dataset: args.dataset,
-				// 		variable: GEOCODED_LON_PREFIX + args.field
-				// 	}),
-				// 	context.dispatch('fetchVariableSummary', {
-				// 		dataset: args.dataset,
-				// 		variable: GEOCODED_LAT_PREFIX + args.field
-				// 	})
-				// ]);
+			mutations.updatePendingRequests(context, { ...update, status: DatasetPendingRequestStatus.RESOLVED });
 			})
 			.catch(error => {
+				mutations.updatePendingRequests(context, { ...update, status: DatasetPendingRequestStatus.ERROR });
 				console.error(error);
 			});
+	},
+
+	fetchDatasetAndVariables(context: DatasetContext, args: { dataset: string, field: string }) {
+		// pull the updated dataset, vars, and summaries
+		return Promise.all([
+			context.dispatch('fetchDataset', {
+				dataset: args.dataset
+			}),
+			context.dispatch('fetchVariables', {
+				dataset: args.dataset
+			}),
+			context.dispatch('fetchVariableSummary', {
+				dataset: args.dataset,
+				variable: GEOCODED_LON_PREFIX + args.field
+			}),
+			context.dispatch('fetchVariableSummary', {
+				dataset: args.dataset,
+				variable: GEOCODED_LAT_PREFIX + args.field
+			})
+		]);
 	},
 
 	uploadDataFile(context: DatasetContext, args: { datasetID: string, file: File }) {
@@ -344,26 +348,35 @@ export const actions = {
 			id,
 			dataset: args.dataset,
 			type: DatasetPendingRequestType.VARIABLE_RANKING,
-			status: 'pending',
+			status: DatasetPendingRequestStatus.PENDING,
 			rankings: null,
 			target: args.target,
 		};
 		mutations.updatePendingRequests(context, update);
 		return axios.get(`/distil/variable-rankings/${args.dataset}/${args.target}`)
 			.then(response => {
-				context.dispatch('updatePendingRequestStatus', { id, status: 'resolved'});
-				// mutations.updateVariableRankings(context, response.data.rankings);
+				console.log(response.data.rankings);
+				mutations.updatePendingRequests(context, { ...update, status: DatasetPendingRequestStatus.RESOLVED, rankings: response.data.rankings});
 			})
 			.catch(error => {
+				mutations.updatePendingRequests(context, { ...update, status: DatasetPendingRequestStatus.ERROR });
 				console.error(error);
 			});
 	},
 
-	updatePendingRequestStatus(context: DatasetContext, args: { id: string, status: DatasetPendingRequestStatus }) {
+	updateVariableRankings(context: DatasetContext, rankings: Dictionary<number>) {
+		mutations.updateVariableRankings(context, rankings);
+	},
+
+	updatePendingRequestStatus(context: DatasetContext, args: { id: string, status: DatasetPendingRequestStatus}) {
 		const update = context.getters.getPendingRequests.find(item => item.id === args.id);
 		if (update) {
-			return mutations.updatePendingRequests(context, { ...update, status: args.status });
+			mutations.updatePendingRequests(context, { ...update, status: args.status });
 		}
+	},
+
+	removePendingRequest(context: DatasetContext, id: string) {
+		mutations.removePendingRequest(context, id);
 	},
 
 	// update filtered data based on the current filter state

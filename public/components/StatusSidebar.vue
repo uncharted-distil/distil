@@ -3,18 +3,18 @@
     <div class="status-icons">
         <div class="status-icon-wrapper" @click="onStatusIconClick(0)">
             <i class="status-icon fa fa-2x fa-info" aria-hidden="true"></i>
-			<i v-if="variableRankingStatus === 'resolved'" class="new-update-notification fa fa-refresh fa-circle"></i>
-			<i v-if="variableRankingStatus === 'pending'" class="new-update-notification fa fa-refresh fa-spin"></i>
+			<i v-if="isNew(variableRankingStatus)" class="new-update-notification fa fa-refresh fa-circle"></i>
+			<i v-if="isPending(variableRankingStatus)" class="new-update-notification fa fa-refresh fa-spin"></i>
         </div>
         <div class="status-icon-wrapper" @click="onStatusIconClick(1)">
             <i class="status-icon fa fa-2x fa-location-arrow" aria-hidden="true"></i>
-			<i v-if="geocodingStatus === 'resolved'" class="new-update-notification fa fa-circle"></i>
-			<i v-if="geocodingStatus === 'pending'" class="new-update-notification fa-refresh fa-spin"></i>
+			<i v-if="isNew(geocodingStatus)" class="new-update-notification fa fa-circle"></i>
+			<i v-if="isPending(geocodingStatus)" class="new-update-notification fa fa-refresh fa-spin"></i>
         </div>
         <div class="status-icon-wrapper" @click="onStatusIconClick(2)">
-            <i class="status-icon fa fa-2x fa-long-arrow-right" aria-hidden="true"></i>
-			<i v-if="joinSuggestionStatus === 'resolved'" class="new-update-notification fa fa-circle"></i>
-			<i v-if="joinSuggestionStatus === 'pending'" class="new-update-notification fa-refresh fa-spin"></i>
+            <i class="status-icon fa fa-2x fa-code-fork" aria-hidden="true"></i>
+			<i v-if="isNew(joinSuggestionStatus)" class="new-update-notification fa fa-circle"></i>
+			<i v-if="isPending(joinSuggestionStatus)" class="new-update-notification fa fa-refresh fa-spin"></i>
         </div>
     </div>
 </div>
@@ -27,7 +27,7 @@ import Vue from 'vue';
 import { actions as datasetActions, getters as datasetGetters } from '../store/dataset/module';
 import { actions as appActions } from '../store/app/module';
 import { getters as routeGetters } from '../store/route/module';
-import { DatasetPendingRequestType, DatasetPendingRequest, VariableRankingPendingRequest } from '../store/dataset/index';
+import { DatasetPendingRequestType, DatasetPendingRequest, VariableRankingPendingRequest, DatasetPendingRequestStatus } from '../store/dataset/index';
 
 const STATUS_TYPES = [
 	DatasetPendingRequestType.VARIABLE_RANKING,
@@ -65,17 +65,15 @@ export default Vue.extend({
 		},
 	},
 	methods: {
+		isNew(status) {
+			return (status === DatasetPendingRequestStatus.RESOLVED) || (status === DatasetPendingRequestStatus.ERROR)
+		},
+		isPending(status) {
+			return DatasetPendingRequestStatus.PENDING === status;
+		},
 		onStatusIconClick(iconIndex) {
 			const statusType = STATUS_TYPES[iconIndex];
-			const request = this.pendingRequests.find(item => item.type === statusType);
 			appActions.openStatusPanelWithContentType(this.$store, statusType);
-
-			if (request) {
-				datasetActions.updatePendingRequestStatus(this.$store, {
-					id: request.id,
-					status: request.status === 'pending' ? request.status : 'reviewed',
-				});
-			}
 		},
 	},
 });
