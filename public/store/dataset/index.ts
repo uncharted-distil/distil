@@ -140,8 +140,6 @@ export enum DatasetPendingRequestStatus {
 	ERROR_REVIEWED = 'ERROR_REVIEWED',
 }
 
-// export type DatasetPendingRequestStatus = 'pending' | 'resolved' | 'error' | 'resolved.reviewed' | 'error.reviewed';
-
 export interface VariableRankingPendingRequest {
 	id: string;
 	status: DatasetPendingRequestStatus;
