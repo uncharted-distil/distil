@@ -10,9 +10,8 @@
 		</div>
 		<div class="content">
 			<div v-if="!requestData">There is no new update.</div>
-			<div v-else-if="isPending">
-				<i class="fa fa-2x fa-refresh fa-spin"></i>
-				Processing...
+			<div v-else-if="isPending" class="spinner">
+				<div class="circle-spinner"></div>
 			</div>
 			<div v-else-if="isResolved">
 				<div>
@@ -185,6 +184,12 @@ export default Vue.extend({
 .status-panel .title {
 	margin: 0;
 	flex-grow: 1;
+}
+
+.status-panel .spinner {
+	display: flex;
+	justify-content: center;
+	padding-top: 10px;
 }
 
 .status-panel .close-button {

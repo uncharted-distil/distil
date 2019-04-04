@@ -11,11 +11,12 @@
 			<i v-if="isNew(geocodingStatus)" class="new-update-notification fa fa-circle"></i>
 			<i v-if="isPending(geocodingStatus)" class="new-update-notification fa fa-refresh fa-spin"></i>
         </div>
-        <div class="status-icon-wrapper" @click="onStatusIconClick(2)">
+		<!-- Join sugestions NYI -->
+        <!-- <div class="status-icon-wrapper" @click="onStatusIconClick(2)">
             <i class="status-icon fa fa-2x fa-code-fork" aria-hidden="true"></i>
 			<i v-if="isNew(joinSuggestionStatus)" class="new-update-notification fa fa-circle"></i>
 			<i v-if="isPending(joinSuggestionStatus)" class="new-update-notification fa fa-refresh fa-spin"></i>
-        </div>
+        </div> -->
     </div>
 </div>
     
