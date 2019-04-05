@@ -28,7 +28,7 @@
 import Vue from 'vue';
 import { overlayRouteEntry } from '../util/routes';
 import { Variable, VariableSummary } from '../store/dataset/index';
-import { getters as datasetGetters } from '../store/dataset/module'
+import { getters as datasetGetters } from '../store/dataset/module';
 import { getters as routeGetters } from '../store/route/module';
 import { filterSummariesByDataset, NUM_PER_PAGE, getVariableImportance } from '../util/data';
 import { AVAILABLE_TRAINING_VARS_INSTANCE } from '../store/route/index';
