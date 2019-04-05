@@ -107,7 +107,7 @@ export const actions = {
 			dataset: args.dataset,
 			type: DatasetPendingRequestType.GEOCODING,
 			field: args.field,
-			status: DatasetPendingRequestStatus.ERROR_REVIEWED,
+			status: DatasetPendingRequestStatus.PENDING,
 		};
 		mutations.updatePendingRequests(context, update);
 		return axios.post(`/distil/geocode/${args.dataset}/${args.field}`, {})
@@ -120,7 +120,7 @@ export const actions = {
 			});
 	},
 
-	fetchDatasetAndVariables(context: DatasetContext, args: { dataset: string, field: string }) {
+	fetchGeocodingResults(context: DatasetContext, args: { dataset: string, field: string }) {
 		// pull the updated dataset, vars, and summaries
 		return Promise.all([
 			context.dispatch('fetchDataset', {

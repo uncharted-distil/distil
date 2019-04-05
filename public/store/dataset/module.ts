@@ -63,7 +63,7 @@ export const actions = {
 	reviewVariableType: dispatch(moduleActions.reviewVariableType),
 	fetchVariableSummary: dispatch(moduleActions.fetchVariableSummary),
 	fetchVariableSummaries: dispatch(moduleActions.fetchVariableSummaries),
-	fetchDatasetAndVariables: dispatch(moduleActions.fetchDatasetAndVariables),
+	fetchGeocodingResults: dispatch(moduleActions.fetchGeocodingResults),
 	// ranking
 	fetchVariableRankings: dispatch(moduleActions.fetchVariableRankings),
 	updateVariableRankings: dispatch(moduleActions.updateVariableRankings),

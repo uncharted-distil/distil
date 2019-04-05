@@ -113,16 +113,16 @@ export const mutations = {
 		}
 	},
 
-	updatePendingRequests(state: DatasetState, PendingRequest: DatasetPendingRequest) {
-		const sameIdIndex = state.pendingRequests.findIndex(item => PendingRequest.id === item.id);
-		const sameTypeIndex = state.pendingRequests.findIndex(item => PendingRequest.type === item.type);
+	updatePendingRequests(state: DatasetState, pendingRequest: DatasetPendingRequest) {
+		const sameIdIndex = state.pendingRequests.findIndex(item => pendingRequest.id === item.id);
+		const sameTypeIndex = state.pendingRequests.findIndex(item => pendingRequest.type === item.type);
 		if (sameIdIndex >= 0) {
-			Vue.set(state.pendingRequests, sameIdIndex, PendingRequest);
+			Vue.set(state.pendingRequests, sameIdIndex, pendingRequest);
 		// only keep latest single request object for each type in the pendingRequests list
 		} else if (sameTypeIndex >= 0) {
-			Vue.set(state.pendingRequests, sameTypeIndex, PendingRequest);
+			Vue.set(state.pendingRequests, sameTypeIndex, pendingRequest);
 		} else {
-			state.pendingRequests.push(PendingRequest);
+			state.pendingRequests.push(pendingRequest);
 		}
 	},
 

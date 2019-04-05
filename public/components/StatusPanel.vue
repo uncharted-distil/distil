@@ -134,7 +134,7 @@ export default Vue.extend({
 					break;
 				case DatasetPendingRequestType.GEOCODING:
 					const geoRequest = <GeocodingPendingRequest>this.requestData;
-					datasetActions.fetchDatasetAndVariables(this.$store, { dataset: geoRequest.dataset, field: geoRequest.field }).then(() => {
+					datasetActions.fetchGeocodingResults(this.$store, { dataset: geoRequest.dataset, field: geoRequest.field }).then(() => {
 						this.clearData();
 					});
 					break;
