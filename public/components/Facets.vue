@@ -815,6 +815,14 @@ export default Vue.extend({
 			}
 			// sort alphabetically
 			this.facets.sort(this.sort);
+
+			// enable group to display the dom elements with 'injected' class
+			// to allow conditional styling for the injected html
+			currGroups.forEach((group: Group) => {
+				const $group = this.facets.getGroup(group.key)._element;
+				$group.toggleClass('enable-injected', group.enableInjectedClass);
+			});
+
 			// return unchanged groups
 			return unchanged;
 		},
@@ -925,6 +933,14 @@ export default Vue.extend({
 
 .facets-group-container.deemphasis {
 	opacity: 0.5;
+}
+
+.facets-group-container .injected {
+	display: none;
+}
+
+.facets-group-container.enable-injected .injected {
+	display: block
 }
 
 .facets-root.highlighting-enabled {

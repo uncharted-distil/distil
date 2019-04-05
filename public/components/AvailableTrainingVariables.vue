@@ -27,12 +27,14 @@
 
 import Vue from 'vue';
 import { overlayRouteEntry } from '../util/routes';
-import { VariableSummary } from '../store/dataset/index';
+import { Variable, VariableSummary } from '../store/dataset/index';
+import { getters as datasetGetters } from '../store/dataset/module'
 import { getters as routeGetters } from '../store/route/module';
-import { filterSummariesByDataset, NUM_PER_PAGE } from '../util/data';
+import { filterSummariesByDataset, NUM_PER_PAGE, getVariableImportance } from '../util/data';
 import { AVAILABLE_TRAINING_VARS_INSTANCE } from '../store/route/index';
 import { Group, createGroups } from '../util/facets';
 import VariableFacets from '../components/VariableFacets';
+import { Dictionary } from 'vue-router/types/router';
 
 export default Vue.extend({
 	name: 'available-training-variables',
@@ -48,9 +50,26 @@ export default Vue.extend({
 		availableVariableSummaries(): VariableSummary[] {
 			return routeGetters.getAvailableVariableSummaries(this.$store);
 		},
+		variables(): Variable[] {
+			return datasetGetters.getVariables(this.$store);
+		},
+		variableByKey(): { [key: string ]: Variable} {
+			const variableByKey = {};
+			this.variables.forEach(variable => {
+				variableByKey[variable.colName] = variable;
+			});
+			console.log(variableByKey);
+			return variableByKey;
+		},
 		groups(): Group[] {
 			const filtered = filterSummariesByDataset(this.availableVariableSummaries, this.dataset);
-			return createGroups(filtered);
+			const groups = createGroups(filtered);
+			// add imprtance and ranking to each group
+			return groups.map(group => {
+				const { importance, ranking } = this.variableByKey[group.key];
+				group.enableInjectedClass = ranking > 0.2;
+				return group;
+			});
 		},
 		subtitle(): string {
 			return `${this.groups.length} features available`;
@@ -75,7 +94,12 @@ export default Vue.extend({
 					});
 					this.$router.push(entry);
 				});
+				const importantBadge = document.createElement('div');
+				importantBadge.innerHTML = 'important!';
+				importantBadge.classList.add('injected');
+
 				container.appendChild(trainingElem);
+				container.appendChild(importantBadge);
 				return container;
 			};
 		}

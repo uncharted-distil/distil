@@ -77,6 +77,7 @@ export interface Group {
 	total?: number;
 	less?: number;
 	all?: (PlaceHolderFacet | CategoricalFacet | NumericalFacet)[];
+	enableInjectedClass?: boolean;
 }
 
 // creates the set of facets from the supplied summary data
