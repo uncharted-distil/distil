@@ -8,11 +8,12 @@
 			<div class="timeseries-var-col pad-top"><b>VARIABLES</b></div>
 			<div class="timeseries-min-col pad-top"><b>MIN</b></div>
 			<div class="timeseries-max-col pad-top"><b>MAX</b></div>
-			<div class="timeseries-chart-axis">
+			<div class="timeseries-chart-axis" v-bind:class="{'has-prediction': hasPredictedCol}">
 				<template v-if="hasData">
 					<svg ref="svg" class="axis"></svg>
 				</template>
 			</div>
+			<div v-if="hasPredictedCol" class="timeseries-prediction-col pad-top"><b>PREDICTION</b></div>
 		</div>
 		<div class="timeseries-rows" v-if="hasData">
 			<div v-if="isTimeseriesAnalysis">
@@ -33,11 +34,12 @@
 						:timeseries-col="timeseriesGrouping.idCol"
 						:timeseries-id="item[timeseriesGrouping.idCol]"
 						:timeseries-extrema="timeseriesRowExtrema"
-						:highlight-pixel-x="highlightPixelX">
+						:highlight-pixel-x="highlightPixelX"
+						:prediction="getPrediction(item)">
 					</sparkline-row>
-					<div v-if="hasPredictedCol" class="sparkline-prediction" v-bind:class="{ 'correct-prediction': isCorrect(item), 'incorrect-prediction': !isCorrect(item)}">
+					<!-- <div v-if="hasPredictedCol" class="sparkline-prediction" v-bind:class="{ 'correct-prediction': isCorrect(item), 'incorrect-prediction': !isCorrect(item)}">
 						<b>{{item[predictedCol]}}</b>
-					</div>
+					</div> -->
 				</div>
 			</div>
 		</div>
@@ -126,7 +128,7 @@ export default Vue.extend({
 		},
 
 		hasPredictedCol(): boolean {
-			return this.predictedCol !== '';
+			return !!this.predictedCol;
 		},
 
 		timeseriesGrouping(): Grouping {
@@ -336,6 +338,16 @@ export default Vue.extend({
 					min: yMin,
 					max: yMax
 				}
+			};
+		},
+
+		getPrediction(row: TableRow): any {
+			if (!this.hasPredictedCol) {
+				return null;
+			}
+			return {
+				value: row[this.predictedCol],
+				isCorrect: row[this.predictedCol] === row[this.target]
 			};
 		},
 
@@ -663,6 +675,17 @@ svg.axis {
 	height: 64px;
 	width: calc(100% - 276px);
 }
+.timeseries-chart-axis.has-prediction {
+	width: calc(100% - 372px);
+}
+.timeseries-prediction-col {
+	float: left;
+	position: relative;
+	line-height: 32px;
+	height: 32px;
+	width: 96px;
+	text-align: center;
+}
 .pad-top {
 	margin-top: 32px;
 }
@@ -702,11 +725,5 @@ svg.axis {
 	position: absolute;
 	top: 4px;
 	right: 4px;
-}
-.correct-prediction {
-	color: #00c6e1;
-}
-.incorrect-prediction {
-	color: #e05353;
 }
 </style>

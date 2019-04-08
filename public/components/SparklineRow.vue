@@ -4,11 +4,14 @@
 		<div class="timeseries-var-col">{{timeseriesId}}</div>
 		<div class="timeseries-min-col">{{min.toFixed(2)}}</div>
 		<div class="timeseries-max-col">{{max.toFixed(2)}}</div>
-		<sparkline-svg class="sparkline-row-chart"
+		<sparkline-svg class="sparkline-row-chart" v-bind:class="{'has-prediction': !!prediction}"
 			:highlight-pixel-x="highlightPixelX"
 			:timeseries-extrema="timeseriesExtrema"
 			:timeseries="timeseries">
 		</sparkline-svg>
+		<div v-if="prediction"
+			class="timeseries-prediction-col"
+			v-bind:class="{ 'correct-prediction': prediction.isCorrect, 'incorrect-prediction': !prediction.isCorrect}">{{prediction.value}}</div>
 	</div>
 
 </template>
@@ -40,7 +43,8 @@ export default Vue.extend({
 		timeseriesId: String as () => string,
 		timeseriesExtrema: {
 			type: Object as () => TimeseriesExtrema
-		}
+		},
+		prediction: Object as () => any
 	},
 	data() {
 		return {
@@ -103,5 +107,14 @@ export default Vue.extend({
 	line-height: 32px;
 	height: 32px;
 	width: calc(100% - 276px);
+}
+.sparkline-row-chart.has-prediction {
+	width: calc(100% - 372px);
+}
+.correct-prediction {
+	color: #00c6e1;
+}
+.incorrect-prediction {
+	color: #e05353;
 }
 </style>
