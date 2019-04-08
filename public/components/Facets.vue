@@ -9,10 +9,10 @@ import _ from 'lodash';
 import $ from 'jquery';
 import Vue from 'vue';
 
-import IconBase from './icons/IconBase';
-import IconForkVue from './icons/IconFork';
+import IconFork from './icons/IconFork';
 import IconBookmark from './icons/IconBookmark';
 
+import { createIcon } from '../util/icon';
 import { Group, CategoricalFacet, isCategoricalFacet, getCategoricalChunkSize, isNumericalFacet } from '../util/facets';
 import { Highlight, RowSelection, Row } from '../store/highlights/index';
 import { VariableSummary } from '../store/dataset/index';
@@ -27,9 +27,6 @@ import { getVarType, isClusterType, isFeatureType, addClusterPrefix, addFeatureP
 import '@uncharted.software/stories-facets/dist/facets.css';
 
 const INJECT_DEBOUNCE = 200;
-
-// Make IconFork component a constructor so that it can be called and initialized
-const IconFork = Vue.extend(IconForkVue);
 
 /*
 In 1989 the japanese-american animated musical film `Little Nemo: Adventures in
@@ -817,7 +814,7 @@ export default Vue.extend({
 			// sort alphabetically
 			this.facets.sort(this.sort);
 
-			// update importantance
+			// update 'important' class
 			currGroups.forEach((group: Group) => {
 				const $group = this.facets.getGroup(group.key)._element;
 				$group.toggleClass('important', Boolean(group.isImportant));
@@ -848,12 +845,8 @@ export default Vue.extend({
 				$elem.find('.group-header').append($icon);
 			}
 			if (hasComputedVarPrefix(group.key)) {
-				const iconBase = new IconBase();
-				const forkIcon = new IconFork();
-				iconBase.$slots.default = [iconBase.$createElement('icon-fork')];
-				iconBase.$mount();
-				forkIcon.$mount(iconBase.$el.querySelector('icon-fork'));
-				$elem.find('.group-header').append(iconBase.$el);
+				const $forkIcon = createIcon(IconFork);
+				$elem.find('.group-header').append($forkIcon);
 			}
 		},
 
@@ -912,13 +905,8 @@ export default Vue.extend({
 			const $groupFooter = $elem.find('.group-footer');
 			const importantBadge = document.createElement('div');
 			importantBadge.className += 'important-badge';
-			// Create bookmark icon
-			const iconBase = new IconBase();
-			const bookmarkIcon = new IconBookmark();
-			iconBase.$slots.default = [iconBase.$createElement('icon-bookmark')];
-			iconBase.$mount();
-			bookmarkIcon.$mount(iconBase.$el.querySelector('icon-bookmark'));
-			importantBadge.append(iconBase.$el);
+			const $bookMarkIcon = createIcon(IconBookmark);
+			importantBadge.append($bookMarkIcon);
 			$groupFooter.append(importantBadge);
 		},
 	},
