@@ -118,23 +118,23 @@ func (f *NumericalField) parseTimeseries(rows *pgx.Rows) ([][]float64, error) {
 }
 
 func (f *NumericalField) getTimeseriesAggQuery(extrema *api.Extrema) (string, string, string) {
-	interval := extrema.GetBucketInterval()
 
 	// get histogram agg name & query string.
 	histogramAggName := fmt.Sprintf("\"%s%s\"", api.HistogramAggPrefix, extrema.Key)
-	rounded := extrema.GetBucketMinMax()
+
+	binning := extrema.GetTimeseriesBinningArgs(timeBucketInterval)
 
 	bucketQueryString := ""
 	// if only a single value, then return a simple count.
-	if rounded.Max == rounded.Min {
+	if binning.Rounded.Max == binning.Rounded.Min {
 		// want to return the count under bucket 0.
 		bucketQueryString = fmt.Sprintf("(\"%s\" - \"%s\")", extrema.Key, extrema.Key)
 	} else {
 		bucketQueryString = fmt.Sprintf("width_bucket(\"%s\", %g, %g, %d) - 1",
-			extrema.Key, rounded.Min, rounded.Max, extrema.GetBucketCount())
+			extrema.Key, binning.Rounded.Min, binning.Rounded.Max, binning.Count)
 	}
 
-	histogramQueryString := fmt.Sprintf("(%s) * %g + %g", bucketQueryString, interval, rounded.Min)
+	histogramQueryString := fmt.Sprintf("(%s) * %g + %g", bucketQueryString, binning.Interval, binning.Rounded.Min)
 
 	return histogramAggName, bucketQueryString, histogramQueryString
 }
@@ -207,11 +207,11 @@ func (f *NumericalField) parseTimeExtrema(timeVar *model.Variable, rows *pgx.Row
 }
 
 func (f *NumericalField) getTimeseriesHistogramAggQuery(extrema *api.Extrema) (string, string, string) {
-	interval := extrema.GetBucketInterval()
 
 	// get histogram agg name & query string.
 	histogramAggName := fmt.Sprintf("\"%s%s\"", api.HistogramAggPrefix, extrema.Key)
-	rounded := extrema.GetBucketMinMax()
+
+	binning := extrema.GetTimeseriesBinningArgs(timeBucketInterval)
 
 	timeSelect := fmt.Sprintf("CAST(\"%s\" AS INTEGER", extrema.Key)
 	if extrema.Type == model.DateTimeType {
@@ -220,15 +220,15 @@ func (f *NumericalField) getTimeseriesHistogramAggQuery(extrema *api.Extrema) (s
 
 	bucketQueryString := ""
 	// if only a single value, then return a simple count.
-	if rounded.Max == rounded.Min {
+	if binning.Rounded.Max == binning.Rounded.Min {
 		// want to return the count under bucket 0.
 		bucketQueryString = fmt.Sprintf("(%s - %s)", timeSelect, timeSelect)
 	} else {
 		bucketQueryString = fmt.Sprintf("width_bucket(%s, %g, %g, %d) - 1",
-			timeSelect, rounded.Min, rounded.Max, extrema.GetBucketCount())
+			timeSelect, binning.Rounded.Min, binning.Rounded.Max, binning.Count)
 	}
 
-	histogramQueryString := fmt.Sprintf("(%s) * %g + %g", bucketQueryString, interval, rounded.Min)
+	histogramQueryString := fmt.Sprintf("(%s) * %g + %g", bucketQueryString, binning.Interval, binning.Rounded.Min)
 
 	return histogramAggName, bucketQueryString, histogramQueryString
 }
@@ -238,11 +238,10 @@ func (f *NumericalField) parseTimeHistogram(rows *pgx.Rows, extrema *api.Extrema
 	histogramAggName := api.HistogramAggPrefix + extrema.Key
 
 	// Parse bucket results.
-	interval := extrema.GetBucketInterval()
+	binning := extrema.GetTimeseriesBinningArgs(timeBucketInterval)
 
-	buckets := make([]*api.Bucket, extrema.GetBucketCount())
-	rounded := extrema.GetBucketMinMax()
-	key := rounded.Min
+	buckets := make([]*api.Bucket, binning.Count)
+	key := binning.Rounded.Min
 	for i := 0; i < len(buckets); i++ {
 		keyString := ""
 		if model.IsFloatingPoint(extrema.Type) {
@@ -256,7 +255,7 @@ func (f *NumericalField) parseTimeHistogram(rows *pgx.Rows, extrema *api.Extrema
 			Count: 0,
 		}
 
-		key = key + interval
+		key = key + binning.Interval
 	}
 
 	for rows.Next() {
@@ -287,7 +286,7 @@ func (f *NumericalField) parseTimeHistogram(rows *pgx.Rows, extrema *api.Extrema
 		Key:     f.Key,
 		Type:    model.NumericalType,
 		VarType: f.Type,
-		Extrema: rounded,
+		Extrema: binning.Rounded,
 		Buckets: buckets,
 	}, nil
 }

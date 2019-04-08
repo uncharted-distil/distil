@@ -27,6 +27,10 @@ import (
 	api "github.com/uncharted-distil/distil/api/model"
 )
 
+const (
+	timeBucketInterval = api.DayInterval
+)
+
 // CategoricalField defines behaviour for the categorical field type.
 type CategoricalField struct {
 	Storage     *Storage
@@ -79,23 +83,23 @@ func (f *CategoricalField) FetchSummaryData(resultURI string, filterParams *api.
 }
 
 func (f *CategoricalField) getTimeseriesAggQuery(extrema *api.Extrema) (string, string, string) {
-	interval := extrema.GetBucketInterval()
 
 	// get histogram agg name & query string.
 	histogramAggName := fmt.Sprintf("\"%s%s\"", api.HistogramAggPrefix, extrema.Key)
-	rounded := extrema.GetBucketMinMax()
+
+	binning := extrema.GetTimeseriesBinningArgs(timeBucketInterval)
 
 	bucketQueryString := ""
 	// if only a single value, then return a simple count.
-	if rounded.Max == rounded.Min {
+	if binning.Rounded.Max == binning.Rounded.Min {
 		// want to return the count under bucket 0.
 		bucketQueryString = fmt.Sprintf("(\"%s\" - \"%s\")", extrema.Key, extrema.Key)
 	} else {
 		bucketQueryString = fmt.Sprintf("width_bucket(\"%s\", %g, %g, %d) - 1",
-			extrema.Key, rounded.Min, rounded.Max, extrema.GetBucketCount())
+			extrema.Key, binning.Rounded.Min, binning.Rounded.Max, binning.Count)
 	}
 
-	histogramQueryString := fmt.Sprintf("(%s) * %g + %g", bucketQueryString, interval, rounded.Min)
+	histogramQueryString := fmt.Sprintf("(%s) * %g + %g", bucketQueryString, binning.Interval, binning.Rounded.Min)
 
 	return histogramAggName, bucketQueryString, histogramQueryString
 }
@@ -168,12 +172,11 @@ func (f *CategoricalField) parseTimeExtrema(timeVar *model.Variable, rows *pgx.R
 }
 
 func (f *CategoricalField) getTimeseriesHistogramAggQuery(extrema *api.Extrema) (string, string, string) {
-	interval := extrema.GetBucketInterval()
 
 	// get histogram agg name & query string.
 	histogramAggName := fmt.Sprintf("\"%s%s\"", api.HistogramAggPrefix, extrema.Key)
-	rounded := extrema.GetBucketMinMax()
 
+	binning := extrema.GetTimeseriesBinningArgs(timeBucketInterval)
 	timeSelect := fmt.Sprintf("CAST(\"%s\" AS INTEGER", extrema.Key)
 	if extrema.Type == model.DateTimeType {
 		timeSelect = fmt.Sprintf("CAST(extract(epoch from \"%s\") AS INTEGER)", extrema.Key)
@@ -181,15 +184,15 @@ func (f *CategoricalField) getTimeseriesHistogramAggQuery(extrema *api.Extrema) 
 
 	bucketQueryString := ""
 	// if only a single value, then return a simple count.
-	if rounded.Max == rounded.Min {
+	if binning.Rounded.Max == binning.Rounded.Min {
 		// want to return the count under bucket 0.
 		bucketQueryString = fmt.Sprintf("(%s - %s)", timeSelect, timeSelect)
 	} else {
 		bucketQueryString = fmt.Sprintf("width_bucket(%s, %g, %g, %d) - 1",
-			timeSelect, rounded.Min, rounded.Max, extrema.GetBucketCount())
+			timeSelect, binning.Rounded.Min, binning.Rounded.Max, binning.Count)
 	}
 
-	histogramQueryString := fmt.Sprintf("(%s) * %g + %g", bucketQueryString, interval, rounded.Min)
+	histogramQueryString := fmt.Sprintf("(%s) * %g + %g", bucketQueryString, binning.Interval, binning.Rounded.Min)
 
 	return histogramAggName, bucketQueryString, histogramQueryString
 }
@@ -198,12 +201,10 @@ func (f *CategoricalField) parseTimeHistogram(rows *pgx.Rows, extrema *api.Extre
 	// get histogram agg name
 	histogramAggName := api.HistogramAggPrefix + extrema.Key
 
-	// Parse bucket results.
-	interval := extrema.GetBucketInterval()
+	binning := extrema.GetTimeseriesBinningArgs(timeBucketInterval)
 
-	keys := make([]string, extrema.GetBucketCount())
-	rounded := extrema.GetBucketMinMax()
-	key := rounded.Min
+	keys := make([]string, binning.Count)
+	key := binning.Rounded.Min
 	for i := 0; i < len(keys); i++ {
 		keyString := ""
 		if model.IsFloatingPoint(extrema.Type) {
@@ -214,7 +215,7 @@ func (f *CategoricalField) parseTimeHistogram(rows *pgx.Rows, extrema *api.Extre
 
 		keys[i] = keyString
 
-		key = key + interval
+		key = key + binning.Interval
 	}
 
 	categoryBuckets := make(map[string][]*api.Bucket)
@@ -231,7 +232,7 @@ func (f *CategoricalField) parseTimeHistogram(rows *pgx.Rows, extrema *api.Extre
 
 		buckets, ok := categoryBuckets[category]
 		if !ok {
-			buckets = make([]*api.Bucket, extrema.GetBucketCount())
+			buckets = make([]*api.Bucket, binning.Count)
 			for i := range buckets {
 				buckets[i] = &api.Bucket{
 					Count: 0,
@@ -259,7 +260,7 @@ func (f *CategoricalField) parseTimeHistogram(rows *pgx.Rows, extrema *api.Extre
 		Key:             f.Key,
 		Type:            model.NumericalType,
 		VarType:         f.Type,
-		Extrema:         rounded,
+		Extrema:         binning.Rounded,
 		CategoryBuckets: categoryBuckets,
 	}, nil
 }
