@@ -987,7 +987,7 @@ export default Vue.extend({
 }
 .facets-group .group-footer .important-badge {
 	align-self: center;
-    padding-bottom: 5px;
+	padding-bottom: 5px;
 	display: none;
 }
 .facets-group-container.important .group-footer .important-badge {
