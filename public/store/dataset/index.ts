@@ -123,7 +123,52 @@ export interface DatasetState {
 	joinTableData: Dictionary<TableData>;
 	includedTableData: TableData;
 	excludedTableData: TableData;
+	pendingRequests: DatasetPendingRequest[];
 }
+
+export enum DatasetPendingRequestType {
+	VARIABLE_RANKING = 'VARIABLE_RANKING',
+	GEOCODING = 'GEOCODING',
+	JOIN_SUGGESTION = 'JOIN_SUGGESTION',
+}
+
+export enum DatasetPendingRequestStatus {
+	PENDING = 'PENDING',
+	RESOLVED = 'RESOLVED',
+	ERROR = 'ERROR',
+	REVIEWED = 'REVIEWED',
+	ERROR_REVIEWED = 'ERROR_REVIEWED',
+}
+
+export interface VariableRankingPendingRequest {
+	id: string;
+	status: DatasetPendingRequestStatus;
+	type: DatasetPendingRequestType.VARIABLE_RANKING;
+	dataset: string;
+	target: string;
+	rankings: Dictionary<number>;
+}
+
+export interface GeocodingPendingRequest {
+	id: string;
+	status: DatasetPendingRequestStatus;
+	type: DatasetPendingRequestType.GEOCODING;
+	dataset: string;
+	field: string;
+}
+
+export interface JoinSuggestionPendingRequest {
+	id: string;
+	status: DatasetPendingRequestStatus;
+	type: DatasetPendingRequestType.JOIN_SUGGESTION;
+	dataset: string;
+	result: string;
+}
+
+export type DatasetPendingRequest =
+		VariableRankingPendingRequest
+	| GeocodingPendingRequest
+	| JoinSuggestionPendingRequest;
 
 export const state: DatasetState = {
 	// datasets and filtered datasets
@@ -150,5 +195,8 @@ export const state: DatasetState = {
 	includedTableData: null,
 
 	// excluded data entries for the active dataset
-	excludedTableData: null
+	excludedTableData: null,
+
+	// pending requests for the active dataset
+	pendingRequests: [],
 };

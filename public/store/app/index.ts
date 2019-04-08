@@ -1,3 +1,4 @@
+import { DatasetPendingRequestType } from '../dataset/index';
 
 export interface AppState {
 	isAborted: boolean;
@@ -10,6 +11,12 @@ export interface AppState {
 	problemTaskType: string;
 	problemTaskSubType: string;
 	problemMetrics: string[];
+	statusPanelState: StatusPanelState;
+}
+
+export interface StatusPanelState {
+	isOpen: boolean;
+	contentType: StatusPanelContentType;
 }
 
 // shared data model
@@ -23,5 +30,11 @@ export const state: AppState = {
 	problemTarget: 'unknown',
 	problemTaskType: 'unknown',
 	problemTaskSubType: 'unknown',
-	problemMetrics: []
+	problemMetrics: [],
+	statusPanelState: {
+		contentType: undefined,
+		isOpen: false,
+	},
 };
+
+export type StatusPanelContentType = DatasetPendingRequestType;

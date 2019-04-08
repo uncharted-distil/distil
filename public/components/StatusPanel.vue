@@ -1,0 +1,199 @@
+<template>
+
+<div class="status-panel" v-if="isOpen">
+	<div>
+		<div class="heading">
+			<h4 class="title">{{ contentData.title }}</h4>
+			<div class="close-button" @click="close()">
+				<i class="fa fa-2x fa-times" aria-hidden="true"></i>
+			</div>
+		</div>
+		<div class="content">
+			<div v-if="!requestData">There is no new update.</div>
+			<div v-else-if="isPending" class="spinner">
+				<div class="circle-spinner"></div>
+			</div>
+			<div v-else-if="isResolved">
+				<div>
+					<p>
+						{{ contentData.resolvedMsg }}
+					</p>
+				</div>
+				<b-button variant="primary" @click="applyChange">Apply</b-button>
+				<b-button variant="secondary" @click="clearData">Discard</b-button>
+			</div>
+			<div v-else-if="isError">
+				<div>
+					<p>
+						{{ contentData.errorMsg }}
+					</p>
+				</div>
+				<b-button variant="secondary" @click="clearData">Ok</b-button>
+			</div>
+		</div>
+	</div>
+</div>
+    
+</template>
+
+<script lang="ts">
+
+import Vue from 'vue';
+import { DatasetPendingRequest, DatasetPendingRequestType, VariableRankingPendingRequest, DatasetPendingRequestStatus, GeocodingPendingRequest } from '../store/dataset/index';
+import { actions as datasetActions, getters as datasetGetters } from '../store/dataset/module';
+import { actions as appActions, getters as appGetters } from '../store/app/module';
+import { getters as routeGetters } from '../store/route/module';
+import { StatusPanelState, StatusPanelContentType } from '../store/app';
+
+export default Vue.extend({
+	name: 'status-panel',
+	computed: {
+		dataset(): string {
+			return routeGetters.getRouteDataset(this.$store);
+		},
+		statusPanelState(): StatusPanelState {
+			return appGetters.getStatusPanelState(this.$store);
+		},
+		isOpen(): boolean {
+			return this.statusPanelState.isOpen;
+		},
+		statusType(): StatusPanelContentType {
+			return this.statusPanelState.contentType;
+		},
+		requestData: function () {
+			const request = datasetGetters
+				.getPendingRequests(this.$store)
+				.find(request => request.dataset === this.dataset && request.type === this.statusType);
+			return request;
+		},
+		isPending: function () {
+			return this.requestData.status === DatasetPendingRequestStatus.PENDING;
+		},
+		isResolved: function () {
+			return this.requestData.status === DatasetPendingRequestStatus.RESOLVED
+				|| this.requestData.status === DatasetPendingRequestStatus.REVIEWED;
+		},
+		isError: function () {
+			return this.requestData.status === DatasetPendingRequestStatus.ERROR
+				|| this.requestData.status === DatasetPendingRequestStatus.ERROR_REVIEWED;
+		},
+		contentData(): {
+			title: string,
+			pendingMsg?: string,
+			resolvedMsg?: string,
+			defaultMsg?: string,
+			errorMsg?: string,
+		} {
+			switch (this.statusType) {
+				case DatasetPendingRequestType.VARIABLE_RANKING:
+					return {
+						title: 'Variable Ranking',
+						pendingMsg: '',
+						resolvedMsg: 'Variable ranking has been updated. Would you like to apply the changes to the feature list?',
+						errorMsg: 'Unexpected error has happened while calculating variable rankings',
+					};
+				case DatasetPendingRequestType.GEOCODING:
+					return {
+						title: 'Geo Coding',
+						pendingMsg: '',
+						resolvedMsg: 'Geocoding has been processed. Would you like to apply the change to the feature list?',
+						errorMsg: 'Unexpected error has happened while geocoding',
+					};
+				case DatasetPendingRequestType.JOIN_SUGGESTION:
+					return {
+						title: 'Join Suggestion',
+						pendingMsg: '',
+						resolvedMsg: '',
+						errorMsg: '',
+					};
+				default:
+					return {
+						title: '',
+					};
+			}
+		},
+	},
+	methods: {
+		close() {
+			if (this.requestData && this.requestData.status !== DatasetPendingRequestStatus.PENDING) {
+				datasetActions.updatePendingRequestStatus(this.$store, {
+					id: this.requestData.id,
+					status: this.requestData.status === DatasetPendingRequestStatus.ERROR
+						? DatasetPendingRequestStatus.ERROR_REVIEWED
+						: DatasetPendingRequestStatus.REVIEWED,
+				});
+			}
+			appActions.closeStatusPanel(this.$store);
+		},
+		applyChange() {
+			switch (this.statusType) {
+				case DatasetPendingRequestType.VARIABLE_RANKING:
+					const variableReqeust = <VariableRankingPendingRequest>this.requestData;
+					datasetActions.updateVariableRankings(this.$store, variableReqeust.rankings);
+					this.clearData();
+					break;
+				case DatasetPendingRequestType.GEOCODING:
+					const geoRequest = <GeocodingPendingRequest>this.requestData;
+					datasetActions.fetchGeocodingResults(this.$store, { dataset: geoRequest.dataset, field: geoRequest.field }).then(() => {
+						this.clearData();
+					});
+					break;
+				case DatasetPendingRequestType.JOIN_SUGGESTION:
+					break;
+				default:
+			}
+		},
+		clearData() {
+			if (this.requestData) {
+				datasetActions.removePendingRequest(this.$store, this.requestData.id);
+			}
+		}
+	}
+});
+
+</script>
+
+<style>
+
+.status-panel {
+	box-shadow: 0 4px 5px 0 rgba(0,0,0,0.14), 0 1px 10px 0 rgba(0,0,0,0.12), 0 2px 4px -1px rgba(0,0,0,0.2);
+	display: block;
+	position: fixed;
+	right: 0;
+	top: 0;
+	bottom: 0;
+	z-index: 100;
+	width: 300px;
+	height: 100%;
+	background: #fff;
+}
+
+.status-panel .heading {
+	height: 58px;
+	border-bottom: 1px solid #f1f3f4;
+	display: flex;
+	align-items: center;
+	padding-right: 10px;
+	padding-left: 10px;
+}
+
+.status-panel .content {
+	padding: 10px;
+}
+
+.status-panel .title {
+	margin: 0;
+	flex-grow: 1;
+}
+
+.status-panel .spinner {
+	display: flex;
+	justify-content: center;
+	padding-top: 10px;
+}
+
+.status-panel .close-button {
+	cursor: pointer;
+}
+
+</style>
