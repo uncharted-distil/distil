@@ -21,6 +21,8 @@ export const DATAMART_PROVENANCE_ISI = 'datamartISI';
 export const ELASTIC_PROVENANCE = 'elastic';
 export const FILE_PROVENANCE = 'file';
 
+export const IMPORTANT_VARIABLE_RANKING_THRESHOLD = 0.5;
+
 
 export function getTimeseriesGroupingsFromFields(variables: Variable[], fields: Dictionary<TableColumn>): Grouping[] {
 	return _.map(fields, (field, key) => key)

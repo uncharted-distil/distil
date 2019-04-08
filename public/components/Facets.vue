@@ -11,6 +11,7 @@ import Vue from 'vue';
 
 import IconBase from './icons/IconBase';
 import IconForkVue from './icons/IconFork';
+import IconBookmark from './icons/IconBookmark';
 
 import { Group, CategoricalFacet, isCategoricalFacet, getCategoricalChunkSize, isNumericalFacet } from '../util/facets';
 import { Highlight, RowSelection, Row } from '../store/highlights/index';
@@ -286,6 +287,7 @@ export default Vue.extend({
 
 	methods: {
 		injectHTML(group: Group, $elem: JQuery) {
+			const $groupFooter = $('<div class="group-footer"></div>').appendTo($elem.find('.facets-group'));
 			$elem.click(event => {
 				if (group.facets.length >= 1) {
 					const facet = group.facets[0];
@@ -329,15 +331,14 @@ export default Vue.extend({
 			// inject image preview if image type
 			this.injectImagePreview(group, $elem);
 
-			if (!this.html) {
-				return;
+			if (this.html) {
+				if (_.isFunction(this.html)) {
+					$groupFooter.append(this.html(group));
+				} else {
+					$groupFooter.append(this.html);
+				}
 			}
-			const $group = $elem.find('.facets-group');
-			if (_.isFunction(this.html)) {
-				$group.append(this.html(group));
-			} else {
-				$group.append(this.html);
-			}
+			this.injectImportantBadge(group, $elem);
 		},
 
 		addHighlightArrow(highlights: Highlight) {
@@ -816,11 +817,10 @@ export default Vue.extend({
 			// sort alphabetically
 			this.facets.sort(this.sort);
 
-			// enable group to display the dom elements with 'injected' class
-			// to allow conditional styling for the injected html
+			// update importantance
 			currGroups.forEach((group: Group) => {
 				const $group = this.facets.getGroup(group.key)._element;
-				$group.toggleClass('enable-injected', group.enableInjectedClass);
+				$group.toggleClass('important', Boolean(group.isImportant));
 			});
 
 			// return unchanged groups
@@ -907,7 +907,20 @@ export default Vue.extend({
 					preview.$mount($slot[0]);
 				});
 			}
-		}
+		},
+		injectImportantBadge(group: Group, $elem: JQuery) {
+			const $groupFooter = $elem.find('.group-footer');
+			const importantBadge = document.createElement('div');
+			importantBadge.className += 'important-badge';
+			// Create bookmark icon
+			const iconBase = new IconBase();
+			const bookmarkIcon = new IconBookmark();
+			iconBase.$slots.default = [iconBase.$createElement('icon-bookmark')];
+			iconBase.$mount();
+			bookmarkIcon.$mount(iconBase.$el.querySelector('icon-bookmark'));
+			importantBadge.append(iconBase.$el);
+			$groupFooter.append(importantBadge);
+		},
 	},
 
 	destroyed: function() {
@@ -934,15 +947,6 @@ export default Vue.extend({
 .facets-group-container.deemphasis {
 	opacity: 0.5;
 }
-
-.facets-group-container .injected {
-	display: none;
-}
-
-.facets-group-container.enable-injected .injected {
-	display: block
-}
-
 .facets-root.highlighting-enabled {
 	padding-left: 32px;
 }
@@ -990,6 +994,18 @@ export default Vue.extend({
 	height: 14px;
 	margin-left: 2px;
 }
+.facets-group .group-footer {
+	display: flex;
+}
+.facets-group .group-footer .important-badge {
+	align-self: center;
+    padding-bottom: 5px;
+	display: none;
+}
+.facets-group-container.important .group-footer .important-badge {
+	display: block;
+}
+
 .facets-facet-horizontal .select-highlight,
 .facets-facet-horizontal .facet-histogram-bar-highlighted.select-highlight {
 	fill: #007bff;
