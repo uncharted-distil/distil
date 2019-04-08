@@ -118,3 +118,56 @@ func GroupingHandler(dataCtor api.DataStorageCtor, metaCtor api.MetadataStorageC
 		}
 	}
 }
+
+// RemoveGroupingHandler generates a route handler that removes a grouping.
+func RemoveGroupingHandler(dataCtor api.DataStorageCtor, metaCtor api.MetadataStorageCtor) func(http.ResponseWriter, *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request) {
+
+		// extract route parameters
+		dataset := pat.Param(r, "dataset")
+
+		// parse POST params
+		params, err := getPostParameters(r)
+		if err != nil {
+			handleError(w, errors.Wrap(err, "Unable to parse post parameters"))
+			return
+		}
+
+		g, ok := json.Get(params, "grouping")
+		if !ok {
+			handleError(w, errors.Wrap(err, "Unable to parse grouping parameter"))
+			return
+		}
+
+		grouping := model.Grouping{}
+		err = json.MapToStruct(&grouping, g)
+		if err != nil {
+			handleError(w, errors.Wrap(err, "Unable to parse grouping parameter"))
+			return
+		}
+
+		meta, err := metaCtor()
+		if err != nil {
+			handleError(w, err)
+			return
+		}
+
+		err = meta.RemoveGrouping(dataset, grouping)
+		if err != nil {
+			handleError(w, err)
+			return
+		}
+
+		// sleep for es
+		time.Sleep(time.Second)
+
+		// marshal data
+		err = handleJSON(w, map[string]interface{}{
+			"success": true,
+		})
+		if err != nil {
+			handleError(w, errors.Wrap(err, "unable marshal response into JSON"))
+			return
+		}
+	}
+}

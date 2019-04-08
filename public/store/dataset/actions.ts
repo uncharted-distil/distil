@@ -232,6 +232,40 @@ export const actions = {
 			});
 	},
 
+	removeGrouping(context: DatasetContext, args: { dataset: string, grouping: Grouping }): Promise<any>  {
+		if (!args.dataset) {
+			console.warn('`dataset` argument is missing');
+			return null;
+		}
+		if (!args.grouping) {
+			console.warn('`grouping` argument is missing');
+			return null;
+		}
+		return axios.post(`/distil/remove-grouping/${args.dataset}`, {
+				grouping: args.grouping
+			})
+			.then(() => {
+				// update dataset
+				return Promise.all([
+					context.dispatch('fetchDataset', {
+						dataset: args.dataset
+					}),
+					context.dispatch('fetchVariables', {
+						dataset: args.dataset
+					}),
+				]).then(() => {
+					mutations.clearVariableSummaries(context);
+					const variables = context.getters.getVariables;
+					return context.dispatch('fetchVariableSummaries', {
+						dataset: args.dataset,
+						variables: variables
+					});
+				});
+			})
+			.catch(error => {
+				console.error(error);
+			});
+	},
 
 	setVariableType(context: DatasetContext, args: { dataset: string, field: string, type: string }): Promise<void>  {
 		if (!args.dataset) {

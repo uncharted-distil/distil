@@ -96,4 +96,5 @@ type MetadataStorage interface {
 	AddVariable(dataset string, varName string, varType string, varDistilRole string) error
 	DeleteVariable(dataset string, varName string) error
 	AddGrouping(datasetName string, grouping model.Grouping) error
+	RemoveGrouping(datasetName string, grouping model.Grouping) error
 }

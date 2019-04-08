@@ -16,11 +16,12 @@
 <script lang="ts">
 
 import 'jquery';
-import { getters as datasetGetters } from '../store/dataset/module';
+import { getters as datasetGetters, actions as datasetActions } from '../store/dataset/module';
 import { getters as routeGetters } from '../store/route/module';
 import { createRouteEntry } from '../util/routes';
 import { filterSummariesByDataset } from '../util/data';
 import VariableFacets from '../components/VariableFacets';
+import { Grouping, Variable } from '../store/dataset/index';
 import { AVAILABLE_TARGET_VARS_INSTANCE, SELECT_TRAINING_ROUTE } from '../store/route/index';
 import { Group, createGroups } from '../util/facets';
 import Vue from 'vue';
@@ -50,6 +51,9 @@ export default Vue.extend({
 		instanceName(): string {
 			return AVAILABLE_TARGET_VARS_INSTANCE;
 		},
+		variables(): Variable[] {
+			return datasetGetters.getVariables(this.$store);
+		},
 		html(): (group: { key: string }) => HTMLDivElement {
 			return (group: { key: string }) => {
 				const container = document.createElement('div');
@@ -75,6 +79,23 @@ export default Vue.extend({
 					this.$router.push(entry);
 				});
 				container.appendChild(targetElem);
+
+				const v = this.variables.find(v => {
+					return v.colName === group.key;
+				});
+				if (v.grouping) {
+					const groupingElem = document.createElement('button');
+					groupingElem.className += 'btn btn-sm btn-primary ml-2 mr-2 mb-2 float-right';
+					groupingElem.innerHTML = 'Remove Grouping';
+					groupingElem.addEventListener('click', () => {
+						datasetActions.removeGrouping(this.$store, {
+							dataset: this.dataset,
+							grouping: v.grouping
+						});
+					});
+					container.appendChild(groupingElem);
+				}
+
 				return container;
 			};
 		}
