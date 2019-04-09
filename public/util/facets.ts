@@ -4,9 +4,10 @@ import { spinnerHTML } from '../util/spinner';
 import { formatValue, TIMESERIES_TYPE, CATEGORICAL_TYPE, ORDINAL_TYPE,
 	BOOL_TYPE, ADDRESS_TYPE, CITY_TYPE, STATE_TYPE, COUNTRY_TYPE, EMAIL_TYPE,
 	POSTAL_CODE_TYPE, PHONE_TYPE, URI_TYPE, DATE_TIME_TYPE, IMAGE_TYPE } from '../util/types';
-	import { getTimeseriesSummaryTopCategories } from '../util/data';
+import { getTimeseriesSummaryTopCategories } from '../util/data';
 import { VariableSummary, TimeseriesSummary, CATEGORICAL_SUMMARY, NUMERICAL_SUMMARY, TIMESERIES_SUMMMARY } from '../store/dataset/index';
 import store from '../store/store';
+import { IMPORTANT_VARIABLE_RANKING_THRESHOLD } from './data';
 import { getters as datasetGetters } from '../store/dataset/module';
 
 export const CATEGORICAL_CHUNK_SIZE = 10;
@@ -78,6 +79,7 @@ export interface Group {
 	total?: number;
 	less?: number;
 	all?: (PlaceHolderFacet | CategoricalFacet | NumericalFacet)[];
+	isImportant?: boolean;
 }
 
 // creates the set of facets from the supplied summary data
@@ -97,6 +99,19 @@ export function createGroups(summaries: VariableSummary[]): Group[] {
 		// remove null groups
 		return group;
 	});
+}
+
+export function updateImportance(groups: Group[], variables: Variable[]) {
+	const variableByKey = {};
+	variables.forEach(variable => {
+		variableByKey[variable.colName] = variable;
+	});
+	groups.map(group => {
+		const {ranking } = variableByKey[group.key];
+		group.isImportant = ranking > IMPORTANT_VARIABLE_RANKING_THRESHOLD;
+		return group;
+	});
+	return groups;
 }
 
 // creates a facet to display a data fetch error

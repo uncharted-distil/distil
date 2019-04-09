@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { AppState } from './index';
+import { AppState, StatusPanelContentType } from './index';
 import { DistilState } from '../store';
 import { ActionContext } from 'vuex';
 import { mutations } from './module';
@@ -78,5 +78,15 @@ export const actions = {
 			.catch((err: string) => {
 				console.warn(err);
 			});
-	}
+	},
+
+	openStatusPanelWithContentType(context: AppContext, contentType: StatusPanelContentType) {
+		mutations.openStatusPanel(context);
+		mutations.setStatusPanelContentType(context, contentType);
+	},
+
+	closeStatusPanel(context: AppContext) {
+		mutations.setStatusPanelContentType(context, undefined);
+		mutations.closeStatusPanel(context);
+	},
 };

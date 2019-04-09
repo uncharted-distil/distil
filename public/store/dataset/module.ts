@@ -20,6 +20,7 @@ export const getters = {
 	// dataset
 	getDatasets: read(moduleGetters.getDatasets),
 	getFilteredDatasets: read(moduleGetters.getFilteredDatasets),
+	getPendingRequests: read(moduleGetters.getPendingRequests),
 	// variables
 	getVariables: read(moduleGetters.getVariables),
 	getGroupings: read(moduleGetters.getVariables),
@@ -63,8 +64,13 @@ export const actions = {
 	reviewVariableType: dispatch(moduleActions.reviewVariableType),
 	fetchVariableSummary: dispatch(moduleActions.fetchVariableSummary),
 	fetchVariableSummaries: dispatch(moduleActions.fetchVariableSummaries),
+	fetchGeocodingResults: dispatch(moduleActions.fetchGeocodingResults),
 	// ranking
 	fetchVariableRankings: dispatch(moduleActions.fetchVariableRankings),
+	updateVariableRankings: dispatch(moduleActions.updateVariableRankings),
+	// pending request
+	updatePendingRequestStatus: dispatch(moduleActions.updatePendingRequestStatus),
+	removePendingRequest: dispatch(moduleActions.removePendingRequest),
 	// files
 	fetchFiles: dispatch(moduleActions.fetchFiles),
 	fetchImage: dispatch(moduleActions.fetchImage),
@@ -92,6 +98,9 @@ export const mutations = {
 	clearVariableSummaries: commit(moduleMutations.clearVariableSummaries),
 	// ranking
 	updateVariableRankings: commit(moduleMutations.updateVariableRankings),
+	// pending update
+	updatePendingRequests: commit(moduleMutations.updatePendingRequests),
+	removePendingRequest: commit(moduleMutations.removePendingRequest),
 	// files
 	updateFile: commit(moduleMutations.updateFile),
 	updateTimeseries: commit(moduleMutations.updateTimeseries),
@@ -100,5 +109,4 @@ export const mutations = {
 	clearJoinDatasetsTableData: commit(moduleMutations.clearJoinDatasetsTableData),
 	setIncludedTableData: commit(moduleMutations.setIncludedTableData),
 	setExcludedTableData: commit(moduleMutations.setExcludedTableData),
-
 };

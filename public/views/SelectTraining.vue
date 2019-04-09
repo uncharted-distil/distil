@@ -1,42 +1,49 @@
 <template>
-	<div class="container-fluid d-flex flex-column h-100 select-view">
-		<div class="row flex-0-nav"></div>
-
-		<div class="row align-items-center justify-content-center bg-white">
-
-			<div class="col-12 col-md-6 d-flex flex-column">
-				<h5 class="header-label">Select Features That May Predict {{target.toUpperCase()}}</h5>
-
-				<div class="row col-12 pl-4">
-					<div>
-						{{target.toUpperCase()}} is being modeled as a
-					</div>
-					<div class="pl-2">
-						<type-change-menu
-							:dataset="dataset"
-							:field="target"
-							:values="targetSampleValues"></type-change-menu>
-					</div>
-				</div>
-				<div class="row col-12 pl-4">
-					<p>
-						<b>Select Features That May Predict {{target.toUpperCase()}}</b> Use interactive feature highlighting to analyze relationships or to exclude samples from the model. Features which appear to have stronger relation are listed first.
-					</p>
-				</div>
-			</div>
-
-			<div class="col-12 col-md-6 d-flex flex-column">
-				<target-variable class="col-12 d-flex flex-column select-target-variables"></target-variable>
-			</div>
+	<div class="select-training-view d-flex h-100">
+		<status-panel></status-panel>
+		<div class="sidebar-container d-flex flex-column h-100">
+			<div class="padding-nav"></div>
+			<status-sidebar></status-sidebar>
 		</div>
+		<div class="container-fluid d-flex flex-column h-100 select-view">
+			<div class="row flex-0-nav"></div>
 
-		<div class="row flex-1 pb-3">
-			<available-training-variables class="col-12 col-md-3 d-flex h-100"></available-training-variables>
-			<training-variables class="col-12 col-md-3 nopadding d-flex h-100"></training-variables>
+			<div class="row align-items-center justify-content-center bg-white">
 
-			<div class="col-12 col-md-6 d-flex flex-column h-100">
-				<select-data-slot class="flex-1 d-flex flex-column pb-3 pt-2"></select-data-slot>
-				<create-solutions-form class="select-create-solutions"></create-solutions-form>
+				<div class="col-12 col-md-6 d-flex flex-column">
+					<h5 class="header-label">Select Features That May Predict {{target.toUpperCase()}}</h5>
+
+					<div class="row col-12 pl-4">
+						<div>
+							{{target.toUpperCase()}} is being modeled as a
+						</div>
+						<div class="pl-2">
+							<type-change-menu
+								:dataset="dataset"
+								:field="target"
+								:values="targetSampleValues"></type-change-menu>
+						</div>
+					</div>
+					<div class="row col-12 pl-4">
+						<p>
+							<b>Select Features That May Predict {{target.toUpperCase()}}</b> Use interactive feature highlighting to analyze relationships or to exclude samples from the model. Features which appear to have stronger relation are listed first.
+						</p>
+					</div>
+				</div>
+
+				<div class="col-12 col-md-6 d-flex flex-column">
+					<target-variable class="col-12 d-flex flex-column select-target-variables"></target-variable>
+				</div>
+			</div>
+
+			<div class="row flex-1 pb-3">
+				<available-training-variables class="col-12 col-md-3 d-flex h-100"></available-training-variables>
+				<training-variables class="col-12 col-md-3 nopadding d-flex h-100"></training-variables>
+
+				<div class="col-12 col-md-6 d-flex flex-column h-100">
+					<select-data-slot class="flex-1 d-flex flex-column pb-3 pt-2"></select-data-slot>
+					<create-solutions-form class="select-create-solutions"></create-solutions-form>
+				</div>
 			</div>
 		</div>
 
@@ -46,6 +53,8 @@
 <script lang="ts">
 
 import Vue from 'vue';
+import StatusPanel from '../components/StatusPanel';
+import StatusSidebar from '../components/StatusSidebar';
 import CreateSolutionsForm from '../components/CreateSolutionsForm';
 import SelectDataSlot from '../components/SelectDataSlot';
 import AvailableTrainingVariables from '../components/AvailableTrainingVariables';
@@ -57,14 +66,15 @@ import { getters as routeGetters } from '../store/route/module';
 
 export default Vue.extend({
 	name: 'select-view',
-
 	components: {
 		CreateSolutionsForm,
 		SelectDataSlot,
 		AvailableTrainingVariables,
 		TrainingVariables,
 		TargetVariable,
-		TypeChangeMenu
+		TypeChangeMenu,
+		StatusPanel,
+		StatusSidebar,
 	},
 
 	computed: {
@@ -125,6 +135,10 @@ export default Vue.extend({
 </script>
 
 <style>
+.select-training-view {
+	flex-direction: row-reverse;
+}
+
 .select-view .nav-link {
 	padding: 1rem 0 0.25rem 0;
 	border-bottom: 1px solid #E0E0E0;

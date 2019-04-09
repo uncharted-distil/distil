@@ -27,12 +27,14 @@
 
 import Vue from 'vue';
 import { overlayRouteEntry } from '../util/routes';
-import { VariableSummary } from '../store/dataset/index';
+import { Variable, VariableSummary } from '../store/dataset/index';
+import { getters as datasetGetters } from '../store/dataset/module';
 import { getters as routeGetters } from '../store/route/module';
 import { filterSummariesByDataset, NUM_PER_PAGE } from '../util/data';
 import { AVAILABLE_TRAINING_VARS_INSTANCE } from '../store/route/index';
-import { Group, createGroups } from '../util/facets';
+import { Group, createGroups, updateImportance } from '../util/facets';
 import VariableFacets from '../components/VariableFacets';
+import { Dictionary } from 'vue-router/types/router';
 
 export default Vue.extend({
 	name: 'available-training-variables',
@@ -48,9 +50,13 @@ export default Vue.extend({
 		availableVariableSummaries(): VariableSummary[] {
 			return routeGetters.getAvailableVariableSummaries(this.$store);
 		},
+		variables(): Variable[] {
+			return datasetGetters.getVariables(this.$store);
+		},
 		groups(): Group[] {
 			const filtered = filterSummariesByDataset(this.availableVariableSummaries, this.dataset);
-			return createGroups(filtered);
+			const groups = createGroups(filtered);
+			return updateImportance(groups, this.variables);
 		},
 		subtitle(): string {
 			return `${this.groups.length} features available`;
@@ -65,7 +71,7 @@ export default Vue.extend({
 			return (group: { key: string }) => {
 				const container = document.createElement('div');
 				const trainingElem = document.createElement('button');
-				trainingElem.className += 'btn btn-sm btn-outline-secondary ml-2 mr-2 mb-2';
+				trainingElem.className += 'btn btn-sm btn-outline-secondary ml-2 mr-1 mb-2';
 				trainingElem.innerHTML = 'Add';
 				trainingElem.addEventListener('click', () => {
 					const training = routeGetters.getRouteTrainingVariables(this.$store);

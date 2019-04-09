@@ -31,11 +31,12 @@
 
 import Vue from 'vue';
 import VariableFacets from '../components/VariableFacets';
-import { VariableSummary } from '../store/dataset/index';
+import { Variable, VariableSummary } from '../store/dataset/index';
 import { Highlight } from '../store/highlights/index';
 import { getters as routeGetters } from '../store/route/module';
+import { getters as datasetGetters } from '../store/dataset/module';
 import { TRAINING_VARS_INSTANCE } from '../store/route/index';
-import { Group, createGroups } from '../util/facets';
+import { Group, createGroups, updateImportance } from '../util/facets';
 import { getHighlights } from '../util/highlights';
 import { NUM_PER_PAGE } from '../util/data';
 import { overlayRouteEntry } from '../util/routes';
@@ -61,8 +62,12 @@ export default Vue.extend({
 		trainingVariableSummaries(): VariableSummary[] {
 			return routeGetters.getTrainingVariableSummaries(this.$store);
 		},
+		variables(): Variable[] {
+			return datasetGetters.getVariables(this.$store);
+		},
 		groups(): Group[] {
-			return createGroups(this.trainingVariableSummaries);
+			const groups = createGroups(this.trainingVariableSummaries);
+			return updateImportance(groups, this.variables);
 		},
 		subtitle(): string {
 			return `${this.groups.length} features selected`;
@@ -74,7 +79,7 @@ export default Vue.extend({
 			return (group: Group) => {
 				const container = document.createElement('div');
 				const remove = document.createElement('button');
-				remove.className += 'btn btn-sm btn-outline-secondary ml-2 mr-2 mb-2';
+				remove.className += 'btn btn-sm btn-outline-secondary ml-2 mr-1 mb-2';
 				remove.innerHTML = 'Remove';
 				remove.addEventListener('click', () => {
 					const training = routeGetters.getRouteTrainingVariables(this.$store).split(',');

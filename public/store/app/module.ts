@@ -26,7 +26,8 @@ export const getters = {
 	getProblemTarget: read(moduleGetters.getProblemTarget),
 	getProblemTaskType: read(moduleGetters.getProblemTaskType),
 	getProblemTaskSubType: read(moduleGetters.getProblemTaskSubType),
-	getProblemMetrics: read(moduleGetters.getProblemMetrics)
+	getProblemMetrics: read(moduleGetters.getProblemMetrics),
+	getStatusPanelState: read(moduleGetters.getStatusPanelState)
 };
 
 // typed actions
@@ -34,7 +35,9 @@ export const actions = {
 	abort: dispatch(moduleActions.abort),
 	exportSolution: dispatch(moduleActions.exportSolution),
 	exportProblem: dispatch(moduleActions.exportProblem),
-	fetchConfig: dispatch(moduleActions.fetchConfig)
+	fetchConfig: dispatch(moduleActions.fetchConfig),
+	openStatusPanelWithContentType: dispatch(moduleActions.openStatusPanelWithContentType),
+	closeStatusPanel: dispatch(moduleActions.closeStatusPanel),
 };
 
 // type mutators
@@ -48,5 +51,8 @@ export const mutations = {
 	setProblemTarget: commit(moduleMutations.setProblemTarget),
 	setProblemTaskType: commit(moduleMutations.setProblemTaskType),
 	setProblemTaskSubType: commit(moduleMutations.setProblemTaskSubType),
-	setProblemMetrics: commit(moduleMutations.setProblemMetrics)
+	setProblemMetrics: commit(moduleMutations.setProblemMetrics),
+	setStatusPanelContentType: commit(moduleMutations.setStatusPanelContentType),
+	openStatusPanel: commit(moduleMutations.openStatusPanel),
+	closeStatusPanel: commit(moduleMutations.closeStatusPanel),
 };

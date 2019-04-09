@@ -21,6 +21,8 @@ export const DATAMART_PROVENANCE_ISI = 'datamartISI';
 export const ELASTIC_PROVENANCE = 'elastic';
 export const FILE_PROVENANCE = 'file';
 
+export const IMPORTANT_VARIABLE_RANKING_THRESHOLD = 0.5;
+
 export function getTimeseriesSummaryTopCategories(summary: VariableSummary): string[] {
 	return _.map(summary.categoryBuckets, (buckets, category) => {
 			return {

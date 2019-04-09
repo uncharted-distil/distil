@@ -20,7 +20,18 @@ import Vue from 'vue';
 
 export default Vue.extend({
 	name: 'file-uploader-status',
-	props: ['status', 'filename', 'datasetID']
+	props: {
+		status: {
+			type: String,
+			required: true,
+		},
+		filename: {
+			type: String,
+		},
+		datasetID: {
+			type: String,
+		}
+	}
 });
 
 </script>
