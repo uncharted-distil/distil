@@ -287,7 +287,7 @@ func main() {
 	registerRoutePost(mux, "/distil/import/:datasetID/:source/:provenance", routes.ImportHandler(datamartCtors, fileMetadataStorageCtor, esMetadataStorageCtor, ingestConfig))
 	registerRoutePost(mux, "/distil/results/:dataset/:solution-id", routes.ResultsHandler(pgSolutionStorageCtor, pgDataStorageCtor))
 	registerRoutePost(mux, "/distil/variable-summary/:dataset/:variable", routes.VariableSummaryHandler(pgDataStorageCtor))
-	registerRoutePost(mux, "/distil/timeseries-summary/:dataset/:xColName/:yColName", routes.TimeseriesSummaryHandler(pgDataStorageCtor))
+	registerRoutePost(mux, "/distil/timeseries-summary/:dataset/:xColName/:yColName/:binningInterval", routes.TimeseriesSummaryHandler(pgDataStorageCtor))
 	registerRoutePost(mux, "/distil/training-summary/:dataset/:variable/:results-uuid", routes.TrainingSummaryHandler(pgSolutionStorageCtor, pgDataStorageCtor))
 	registerRoutePost(mux, "/distil/target-summary/:dataset/:target/:results-uuid", routes.TargetSummaryHandler(esMetadataStorageCtor, pgSolutionStorageCtor, pgDataStorageCtor))
 	registerRoutePost(mux, "/distil/residuals-summary/:dataset/:target/:results-uuid", routes.ResidualsSummaryHandler(esMetadataStorageCtor, pgSolutionStorageCtor, pgDataStorageCtor))

@@ -117,28 +117,6 @@ func (f *NumericalField) parseTimeseries(rows *pgx.Rows) ([][]float64, error) {
 	return points, nil
 }
 
-func (f *NumericalField) getTimeseriesAggQuery(extrema *api.Extrema) (string, string, string) {
-
-	// get histogram agg name & query string.
-	histogramAggName := fmt.Sprintf("\"%s%s\"", api.HistogramAggPrefix, extrema.Key)
-
-	binning := extrema.GetTimeseriesBinningArgs(timeBucketInterval)
-
-	bucketQueryString := ""
-	// if only a single value, then return a simple count.
-	if binning.Rounded.Max == binning.Rounded.Min {
-		// want to return the count under bucket 0.
-		bucketQueryString = fmt.Sprintf("(\"%s\" - \"%s\")", extrema.Key, extrema.Key)
-	} else {
-		bucketQueryString = fmt.Sprintf("width_bucket(\"%s\", %g, %g, %d) - 1",
-			extrema.Key, binning.Rounded.Min, binning.Rounded.Max, binning.Count)
-	}
-
-	histogramQueryString := fmt.Sprintf("(%s) * %g + %g", bucketQueryString, binning.Interval, binning.Rounded.Min)
-
-	return histogramAggName, bucketQueryString, histogramQueryString
-}
-
 func (f *NumericalField) getTimeMinMaxAggsQuery(timeVar *model.Variable) string {
 	// get min / max agg names
 	minAggName := api.MinAggPrefix + timeVar.Name
@@ -206,12 +184,12 @@ func (f *NumericalField) parseTimeExtrema(timeVar *model.Variable, rows *pgx.Row
 	}, nil
 }
 
-func (f *NumericalField) getTimeseriesHistogramAggQuery(extrema *api.Extrema) (string, string, string) {
+func (f *NumericalField) getTimeseriesHistogramAggQuery(extrema *api.Extrema, interval int) (string, string, string) {
 
 	// get histogram agg name & query string.
 	histogramAggName := fmt.Sprintf("\"%s%s\"", api.HistogramAggPrefix, extrema.Key)
 
-	binning := extrema.GetTimeseriesBinningArgs(timeBucketInterval)
+	binning := extrema.GetTimeseriesBinningArgs(interval)
 
 	timeSelect := fmt.Sprintf("CAST(\"%s\" AS INTEGER", extrema.Key)
 	if extrema.Type == model.DateTimeType {
@@ -233,12 +211,12 @@ func (f *NumericalField) getTimeseriesHistogramAggQuery(extrema *api.Extrema) (s
 	return histogramAggName, bucketQueryString, histogramQueryString
 }
 
-func (f *NumericalField) parseTimeHistogram(rows *pgx.Rows, extrema *api.Extrema) (*api.Histogram, error) {
+func (f *NumericalField) parseTimeHistogram(rows *pgx.Rows, extrema *api.Extrema, interval int) (*api.Histogram, error) {
 	// get histogram agg name
 	histogramAggName := api.HistogramAggPrefix + extrema.Key
 
 	// Parse bucket results.
-	binning := extrema.GetTimeseriesBinningArgs(timeBucketInterval)
+	binning := extrema.GetTimeseriesBinningArgs(interval)
 
 	buckets := make([]*api.Bucket, binning.Count)
 	key := binning.Rounded.Min
@@ -292,7 +270,7 @@ func (f *NumericalField) parseTimeHistogram(rows *pgx.Rows, extrema *api.Extrema
 }
 
 // FetchTimeseriesSummaryData pulls summary data from the database and builds a histogram.
-func (f *NumericalField) FetchTimeseriesSummaryData(timeVar *model.Variable, resultURI string, filterParams *api.FilterParams, extrema *api.Extrema) (*api.Histogram, error) {
+func (f *NumericalField) FetchTimeseriesSummaryData(timeVar *model.Variable, interval int, resultURI string, filterParams *api.FilterParams, extrema *api.Extrema) (*api.Histogram, error) {
 
 	if resultURI == "" {
 
@@ -301,7 +279,7 @@ func (f *NumericalField) FetchTimeseriesSummaryData(timeVar *model.Variable, res
 			return nil, errors.Wrap(err, "failed to fetch extrema from postgres")
 		}
 
-		histogramName, bucketQuery, histogramQuery := f.getTimeseriesHistogramAggQuery(extrema)
+		histogramName, bucketQuery, histogramQuery := f.getTimeseriesHistogramAggQuery(extrema, interval)
 
 		// create the filter for the query.
 		wheres := make([]string, 0)
@@ -328,7 +306,7 @@ func (f *NumericalField) FetchTimeseriesSummaryData(timeVar *model.Variable, res
 			defer res.Close()
 		}
 
-		return f.parseTimeHistogram(res, extrema)
+		return f.parseTimeHistogram(res, extrema, interval)
 	}
 
 	return nil, fmt.Errorf("not implemented")

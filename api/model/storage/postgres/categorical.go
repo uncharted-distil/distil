@@ -27,10 +27,6 @@ import (
 	api "github.com/uncharted-distil/distil/api/model"
 )
 
-const (
-	timeBucketInterval = api.DayInterval
-)
-
 // CategoricalField defines behaviour for the categorical field type.
 type CategoricalField struct {
 	Storage     *Storage
@@ -80,28 +76,6 @@ func (f *CategoricalField) FetchSummaryData(resultURI string, filterParams *api.
 	}
 
 	return histogram, err
-}
-
-func (f *CategoricalField) getTimeseriesAggQuery(extrema *api.Extrema) (string, string, string) {
-
-	// get histogram agg name & query string.
-	histogramAggName := fmt.Sprintf("\"%s%s\"", api.HistogramAggPrefix, extrema.Key)
-
-	binning := extrema.GetTimeseriesBinningArgs(timeBucketInterval)
-
-	bucketQueryString := ""
-	// if only a single value, then return a simple count.
-	if binning.Rounded.Max == binning.Rounded.Min {
-		// want to return the count under bucket 0.
-		bucketQueryString = fmt.Sprintf("(\"%s\" - \"%s\")", extrema.Key, extrema.Key)
-	} else {
-		bucketQueryString = fmt.Sprintf("width_bucket(\"%s\", %g, %g, %d) - 1",
-			extrema.Key, binning.Rounded.Min, binning.Rounded.Max, binning.Count)
-	}
-
-	histogramQueryString := fmt.Sprintf("(%s) * %g + %g", bucketQueryString, binning.Interval, binning.Rounded.Min)
-
-	return histogramAggName, bucketQueryString, histogramQueryString
 }
 
 func (f *CategoricalField) getTimeMinMaxAggsQuery(timeVar *model.Variable) string {
@@ -171,12 +145,12 @@ func (f *CategoricalField) parseTimeExtrema(timeVar *model.Variable, rows *pgx.R
 	}, nil
 }
 
-func (f *CategoricalField) getTimeseriesHistogramAggQuery(extrema *api.Extrema) (string, string, string) {
+func (f *CategoricalField) getTimeseriesHistogramAggQuery(extrema *api.Extrema, interval int) (string, string, string) {
 
 	// get histogram agg name & query string.
 	histogramAggName := fmt.Sprintf("\"%s%s\"", api.HistogramAggPrefix, extrema.Key)
 
-	binning := extrema.GetTimeseriesBinningArgs(timeBucketInterval)
+	binning := extrema.GetTimeseriesBinningArgs(interval)
 	timeSelect := fmt.Sprintf("CAST(\"%s\" AS INTEGER", extrema.Key)
 	if extrema.Type == model.DateTimeType {
 		timeSelect = fmt.Sprintf("CAST(extract(epoch from \"%s\") AS INTEGER)", extrema.Key)
@@ -197,11 +171,11 @@ func (f *CategoricalField) getTimeseriesHistogramAggQuery(extrema *api.Extrema) 
 	return histogramAggName, bucketQueryString, histogramQueryString
 }
 
-func (f *CategoricalField) parseTimeHistogram(rows *pgx.Rows, extrema *api.Extrema) (*api.Histogram, error) {
+func (f *CategoricalField) parseTimeHistogram(rows *pgx.Rows, extrema *api.Extrema, interval int) (*api.Histogram, error) {
 	// get histogram agg name
 	histogramAggName := api.HistogramAggPrefix + extrema.Key
 
-	binning := extrema.GetTimeseriesBinningArgs(timeBucketInterval)
+	binning := extrema.GetTimeseriesBinningArgs(interval)
 
 	keys := make([]string, binning.Count)
 	key := binning.Rounded.Min
@@ -307,7 +281,7 @@ func (f *CategoricalField) getTopCategories(filterParams *api.FilterParams) ([]s
 }
 
 // FetchTimeseriesSummaryData pulls summary data from the database and builds a histogram.
-func (f *CategoricalField) FetchTimeseriesSummaryData(timeVar *model.Variable, resultURI string, filterParams *api.FilterParams, extrema *api.Extrema) (*api.Histogram, error) {
+func (f *CategoricalField) FetchTimeseriesSummaryData(timeVar *model.Variable, interval int, resultURI string, filterParams *api.FilterParams, extrema *api.Extrema) (*api.Histogram, error) {
 
 	if resultURI == "" {
 
@@ -321,7 +295,7 @@ func (f *CategoricalField) FetchTimeseriesSummaryData(timeVar *model.Variable, r
 			return nil, errors.Wrap(err, "failed to fetch extrema from postgres")
 		}
 
-		histogramName, bucketQuery, histogramQuery := f.getTimeseriesHistogramAggQuery(extrema)
+		histogramName, bucketQuery, histogramQuery := f.getTimeseriesHistogramAggQuery(extrema, interval)
 
 		// create the filter for the query.
 		wheres := make([]string, 0)
@@ -356,7 +330,7 @@ func (f *CategoricalField) FetchTimeseriesSummaryData(timeVar *model.Variable, r
 			defer res.Close()
 		}
 
-		return f.parseTimeHistogram(res, extrema)
+		return f.parseTimeHistogram(res, extrema, interval)
 	}
 
 	return nil, fmt.Errorf("not implemented")

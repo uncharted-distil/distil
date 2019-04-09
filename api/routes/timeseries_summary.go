@@ -17,6 +17,7 @@ package routes
 
 import (
 	"net/http"
+	"strconv"
 
 	"github.com/pkg/errors"
 	"goji.io/pat"
@@ -38,7 +39,14 @@ func TimeseriesSummaryHandler(ctorStorage api.DataStorageCtor) func(http.Respons
 		dataset := pat.Param(r, "dataset")
 		xColName := pat.Param(r, "xColName")
 		yColName := pat.Param(r, "yColName")
+		binningInterval := pat.Param(r, "binningInterval")
 		storageName := model.NormalizeDatasetID(dataset)
+
+		interval, err := strconv.ParseInt(binningInterval, 10, 64)
+		if err != nil {
+			handleError(w, errors.Wrap(err, "Unable to parse post parameters"))
+			return
+		}
 
 		// parse POST params
 		params, err := getPostParameters(r)
@@ -62,7 +70,7 @@ func TimeseriesSummaryHandler(ctorStorage api.DataStorageCtor) func(http.Respons
 		}
 
 		// fetch summary histogram
-		histogram, err := storage.FetchTimeseriesSummary(dataset, storageName, xColName, yColName, filterParams)
+		histogram, err := storage.FetchTimeseriesSummary(dataset, storageName, xColName, yColName, int(interval), filterParams)
 		if err != nil {
 			handleError(w, err)
 			return

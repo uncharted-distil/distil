@@ -358,9 +358,10 @@ export const actions = {
 		}
 
 		const timeseries = context.getters.getRouteTimeseriesAnalysis;
+		const interval = context.getters.getRouteTimeseriesBinningInterval;
 
 		if (timeseries) {
-			return axios.post(`distil/timeseries-summary/${args.dataset}/${timeseries}/${args.variable}`, {})
+			return axios.post(`distil/timeseries-summary/${args.dataset}/${timeseries}/${args.variable}/${interval}`, {})
 				.then(response => {
 					const histogram = response.data.histogram;
 					mutations.updateVariableSummaries(context, histogram);
@@ -402,7 +403,6 @@ export const actions = {
 		mutations.updatePendingRequests(context, update);
 		return axios.get(`/distil/variable-rankings/${args.dataset}/${args.target}`)
 			.then(response => {
-				console.log(response.data.rankings);
 				mutations.updatePendingRequests(context, { ...update, status: DatasetPendingRequestStatus.RESOLVED, rankings: response.data.rankings});
 			})
 			.catch(error => {

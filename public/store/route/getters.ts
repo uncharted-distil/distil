@@ -40,6 +40,10 @@ export const getters = {
 		return state.query.timeseriesAnalysis as string;
 	},
 
+	getRouteTimeseriesBinningInterval(state: Route): string {
+		return state.query.timeseriesBinningInterval as string;
+	},
+
 	getJoinDatasetsVariables(state: Route, getters: any): Variable[] {
 		const datasetIDs = getters.getRouteJoinDatasets;
 		if (datasetIDs.length !== 2) {

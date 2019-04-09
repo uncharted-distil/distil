@@ -187,7 +187,7 @@ func (s *Storage) FetchSummaryByResult(dataset string, storageName string, varNa
 	return s.fetchSummaryData(dataset, storageName, varName, resultURI, filterParams, extrema)
 }
 
-func (s *Storage) fetchTimeseriesSummary(dataset string, storageName string, xColName string, yColName string, resultURI string, filterParams *api.FilterParams, extrema *api.Extrema) (*api.Histogram, error) {
+func (s *Storage) fetchTimeseriesSummary(dataset string, storageName string, xColName string, yColName string, resultURI string, interval int, filterParams *api.FilterParams, extrema *api.Extrema) (*api.Histogram, error) {
 
 	// need description of the variables to request aggregation against.
 	timeColVar, err := s.metadata.FetchVariable(dataset, xColName)
@@ -222,7 +222,7 @@ func (s *Storage) fetchTimeseriesSummary(dataset string, storageName string, xCo
 		return nil, errors.Errorf("variable `%s` of type `%s` does not support summary", variable.Name, variable.Type)
 	}
 
-	timeseries, err := field.FetchTimeseriesSummaryData(timeColVar, resultURI, filterParams, extrema)
+	timeseries, err := field.FetchTimeseriesSummaryData(timeColVar, interval, resultURI, filterParams, extrema)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to fetch summary data")
 	}
@@ -242,6 +242,6 @@ func (s *Storage) fetchTimeseriesSummary(dataset string, storageName string, xCo
 }
 
 // FetchTimeseriesSummary fetches a timeseries.
-func (s *Storage) FetchTimeseriesSummary(dataset string, storageName string, xColName string, yColName string, filterParams *api.FilterParams) (*api.Histogram, error) {
-	return s.fetchTimeseriesSummary(dataset, storageName, xColName, yColName, "", filterParams, nil)
+func (s *Storage) FetchTimeseriesSummary(dataset string, storageName string, xColName string, yColName string, interval int, filterParams *api.FilterParams) (*api.Histogram, error) {
+	return s.fetchTimeseriesSummary(dataset, storageName, xColName, yColName, "", interval, filterParams, nil)
 }

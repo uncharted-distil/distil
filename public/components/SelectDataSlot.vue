@@ -1,7 +1,7 @@
 <template>
 	<div class="select-data-slot">
 
-		<view-type-toggle v-model="viewType" has-tabs :variables="variables">
+		<view-type-toggle v-model="viewTypeModel" has-tabs :variables="variables">
 			<b-nav-item class="font-weight-bold" @click="setIncludedActive" :active="includedActive">Samples to Model From</b-nav-item>
 			<b-nav-item class="font-weight-bold" @click="setExcludedActive" :active="!includedActive">Excluded Samples</b-nav-item>
 		</view-type-toggle>
@@ -42,7 +42,7 @@
 				<select-image-mosaic v-if="viewType===IMAGE_VIEW" :included-active="includedActive" :instance-name="instanceName"></select-image-mosaic>
 				<select-graph-view v-if="viewType===GRAPH_VIEW" :included-active="includedActive" :instance-name="instanceName"></select-graph-view>
 				<select-geo-plot v-if="viewType===GEO_VIEW" :included-active="includedActive" :instance-name="instanceName"></select-geo-plot>
-				<select-timeseries-view v-if="viewType===TIMESERIES_VIEW" :included-active="includedActive" :instance-name="instanceName"></select-timeseries-view>
+				<select-timeseries-view v-if="isTimeseriesAnalysis || viewType===TIMESERIES_VIEW" :included-active="includedActive" :instance-name="instanceName"></select-timeseries-view>
 			</template>
 		</div>
 
@@ -90,7 +90,7 @@ export default Vue.extend({
 	data() {
 		return {
 			instanceName: 'select-data',
-			viewType: TABLE_VIEW,
+			viewTypeModel: TABLE_VIEW,
 			includedActive: true,
 			TABLE_VIEW: TABLE_VIEW,
 			IMAGE_VIEW: IMAGE_VIEW,
@@ -186,6 +186,13 @@ export default Vue.extend({
 
 		isFilteringSelection(): boolean {
 			return !!this.rowSelection;
+		},
+
+		viewType(): string {
+			if (this.isTimeseriesAnalysis) {
+				return TIMESERIES_VIEW;
+			}
+			return this.viewTypeModel;
 		}
 	},
 

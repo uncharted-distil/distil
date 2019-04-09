@@ -29,6 +29,9 @@
 							<b>Select Features That May Predict {{target.toUpperCase()}}</b> Use interactive feature highlighting to analyze relationships or to exclude samples from the model. Features which appear to have stronger relation are listed first.
 						</p>
 					</div>
+					<div v-if="isTimeseriesAnalysis">
+						<b-form-select @change="onBinningChange" v-model="binningIntervalModel" :options="binningOptions"/>
+					</div>
 				</div>
 
 				<div class="col-12 col-md-6 d-flex flex-column">
@@ -61,6 +64,7 @@ import AvailableTrainingVariables from '../components/AvailableTrainingVariables
 import TrainingVariables from '../components/TrainingVariables';
 import TargetVariable from '../components/TargetVariable';
 import TypeChangeMenu from '../components/TypeChangeMenu';
+import { overlayRouteEntry } from '../util/routes';
 import { actions as viewActions } from '../store/view/module';
 import { getters as routeGetters } from '../store/route/module';
 
@@ -75,6 +79,12 @@ export default Vue.extend({
 		TypeChangeMenu,
 		StatusPanel,
 		StatusSidebar,
+	},
+
+	data() {
+		return {
+			binningIntervalModel: null
+		};
 	},
 
 	computed: {
@@ -106,6 +116,29 @@ export default Vue.extend({
 		},
 		trainingVarsPage(): number {
 			return routeGetters.getRouteTrainingVarsPage(this.$store);
+		},
+		isTimeseriesAnalysis(): boolean {
+			return !!routeGetters.getRouteTimeseriesAnalysis(this.$store);
+		},
+		timeseriesBinningInterval(): string {
+			return routeGetters.getRouteTimeseriesBinningInterval(this.$store);
+		},
+		binningOptions(): Object[] {
+			const options =  [
+				{ value: null, text: 'Choose binning interval', disabled: true },
+				{ value: 'hourly', text: 'Hourly' },
+				{ value: 'daily', text: 'Daily' },
+				{ value: 'weekly', text: 'Weekly' },
+				{ value: 'monthly', text: 'Monthly' },
+			];
+
+			if (!this.timeseriesBinningInterval) {
+				this.binningIntervalModel = 'daily';
+			} else {
+				this.binningIntervalModel = this.intervalAsString(parseInt(this.timeseriesBinningInterval));
+			}
+
+			return options;
 		}
 	},
 
@@ -124,11 +157,55 @@ export default Vue.extend({
 		},
 		trainingVarsPage() {
 			viewActions.updateSelectTrainingData(this.$store);
+		},
+		binningIntervalModel() {
+			viewActions.fetchSelectTrainingData(this.$store, true);
 		}
 	},
 
 	beforeMount() {
-		viewActions.fetchSelectTrainingData(this.$store);
+		viewActions.fetchSelectTrainingData(this.$store, false);
+	},
+
+	methods: {
+		onBinningChange() {
+			const entry = overlayRouteEntry(this.$route, {
+				timeseriesBinningInterval: `${this.intervalAsNumber(this.binningIntervalModel)}`
+			});
+			this.$router.push(entry);
+		},
+		intervalAsNumber(interval: string): number {
+			const HOUR = 60 * 60;
+			const DAY = HOUR * 24;
+			const WEEK = DAY * 7;
+			const MONTH = WEEK * 4;
+			switch (interval) {
+				case 'hourly':
+					return HOUR;
+				case 'daily':
+					return DAY;
+				case 'weekly':
+					return WEEK;
+				case 'monthly':
+					return MONTH;
+			}
+		},
+		intervalAsString(interval: number): string {
+			const HOUR = 60 * 60;
+			const DAY = HOUR * 24;
+			const WEEK = DAY * 7;
+			const MONTH = WEEK * 4;
+			switch (interval) {
+				case HOUR:
+					return 'hourly';
+				case DAY:
+					return 'daily';
+				case WEEK:
+					return 'weekly';
+				case MONTH:
+					return 'monthly';
+			}
+		}
 	}
 });
 
