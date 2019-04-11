@@ -55,23 +55,55 @@ func (s *Storage) parseExtrema(row *pgx.Rows, variable *model.Variable) (*api.Ex
 	}, nil
 }
 
+func (s *Storage) parseDateExtrema(row *pgx.Rows, variable *model.Variable) (*api.Extrema, error) {
+	var minValue *int64
+	var maxValue *int64
+	if row != nil {
+		// Expect one row of data.
+		exists := row.Next()
+		if !exists {
+			return nil, fmt.Errorf("no row found")
+		}
+		err := row.Scan(&minValue, &maxValue)
+		if err != nil {
+			return nil, errors.Wrap(err, "no min / max aggregation found")
+		}
+	}
+	// check values exist
+	if minValue == nil || maxValue == nil {
+		return nil, errors.Errorf("no min / max aggregation values found")
+	}
+	// assign attributes
+	return &api.Extrema{
+		Key:  variable.Name,
+		Type: variable.Type,
+		Min:  float64(*minValue),
+		Max:  float64(*maxValue),
+	}, nil
+}
+
 func (s *Storage) getMinMaxAggsQuery(variable *model.Variable) string {
 	// get min / max agg names
 	minAggName := api.MinAggPrefix + variable.Name
 	maxAggName := api.MaxAggPrefix + variable.Name
 
+	vName := fmt.Sprintf("\"%s\"", variable.Name)
+	if variable.Type == model.DateTimeType {
+		vName = fmt.Sprintf("CAST(extract(epoch from \"%s\") AS INTEGER)", variable.Name)
+	}
+
 	// create aggregations
-	queryPart := fmt.Sprintf("MIN(\"%s\") AS \"%s\", MAX(\"%s\") AS \"%s\"", variable.Name, minAggName, variable.Name, maxAggName)
+	queryPart := fmt.Sprintf("MIN(%s) AS \"%s\", MAX(%s) AS \"%s\"", vName, minAggName, vName, maxAggName)
 	// add aggregations
 	return queryPart
 }
 
-func (s *Storage) fetchExtrema(dataset string, variable *model.Variable) (*api.Extrema, error) {
+func (s *Storage) fetchExtrema(storageName string, variable *model.Variable) (*api.Extrema, error) {
 	// add min / max aggregation
 	aggQuery := s.getMinMaxAggsQuery(variable)
 
 	// create a query that does min and max aggregations for each variable
-	queryString := fmt.Sprintf("SELECT %s FROM %s;", aggQuery, dataset)
+	queryString := fmt.Sprintf("SELECT %s FROM %s", aggQuery, storageName)
 
 	// execute the postgres query
 	// NOTE: We may want to use the regular Query operation since QueryRow
@@ -84,7 +116,15 @@ func (s *Storage) fetchExtrema(dataset string, variable *model.Variable) (*api.E
 		defer res.Close()
 	}
 
+	if variable.Type == model.DateTimeType {
+		return s.parseDateExtrema(res, variable)
+	}
 	return s.parseExtrema(res, variable)
+}
+
+// FetchExtrema return extrema of a variable in a result set.
+func (s *Storage) FetchExtrema(storageName string, variable *model.Variable) (*api.Extrema, error) {
+	return s.fetchExtrema(storageName, variable)
 }
 
 func (s *Storage) fetchExtremaByURI(storageName string, resultURI string, variable *model.Variable) (*api.Extrema, error) {

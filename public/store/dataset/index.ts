@@ -41,6 +41,8 @@ export interface Variable {
 	isGrouping: boolean;
 	grouping?: Grouping;
 	isColTypeReviewed: boolean;
+	min: number;
+	max: number;
 }
 
 export interface Dataset {

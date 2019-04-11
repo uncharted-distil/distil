@@ -144,10 +144,14 @@ export default Vue.extend({
 			return this.timeseriesGrouping && !!this.timeseriesExtrema;
 		},
 
+		timeAnalysisVariable(): Variable {
+			return datasetGetters.getTimeseriesAnalysisVariable(this.$store);
+		},
+
 		isDateScale(): boolean {
 			let timeVar = null;
 			if (this.isTimeseriesAnalysis) {
-				timeVar = this.variables.find(v => v.colName === this.timeseriesAnalysisVar);
+				timeVar = datasetGetters.getTimeseriesAnalysisVariable(this.$store);
 			} else {
 				const grouping = this.timeseriesGrouping;
 				timeVar = this.variables.find(v => v.colName === grouping.properties.xCol);

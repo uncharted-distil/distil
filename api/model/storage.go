@@ -38,6 +38,7 @@ type DataStorage interface {
 	FetchCorrectnessSummary(dataset string, storageName string, resultURI string, filterParams *FilterParams) (*Histogram, error)
 	FetchResidualsSummary(dataset string, storageName string, resultURI string, filterParams *FilterParams, extrema *Extrema) (*Histogram, error)
 	FetchResidualsExtremaByURI(dataset string, storageName string, resultURI string) (*Extrema, error)
+	FetchExtrema(storageName string, variable *model.Variable) (*Extrema, error)
 	FetchExtremaByURI(dataset string, storageName string, resultURI string, variable string) (*Extrema, error)
 	FetchTimeseries(dataset string, storageName string, timeseriesColName string, xColName string, yColName string, timeseriesURI string, filterParams *FilterParams) ([][]float64, error)
 	FetchTimeseriesSummary(dataset string, storageName string, xColName string, yColName string, interval int, filterParams *FilterParams) (*Histogram, error)

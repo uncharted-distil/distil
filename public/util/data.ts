@@ -8,7 +8,7 @@ import { Group } from './facets';
 import { FilterParams } from './filters';
 import store from '../store/store';
 import { getters as datasetGetters, actions as datasetActions } from '../store/dataset/module';
-import { formatValue, TIMESERIES_TYPE } from '../util/types';
+import { formatValue, TIMESERIES_TYPE, isTimeType, isIntegerType } from '../util/types';
 
 // Postfixes for special variable names
 export const PREDICTED_SUFFIX = '_predicted';
@@ -43,6 +43,77 @@ export function getTimeseriesGroupingsFromFields(variables: Variable[], fields: 
 			const v = variables.find(v => v.colName === key);
 			return v.grouping;
 		});
+}
+
+export function getTimeseriesAnalysisIntervals(timeVar: Variable, range: number): any[] {
+	const SECONDS_VALUE = 1;
+	const MINUTES_VALUE = SECONDS_VALUE * 60;
+	const HOURS_VALUE = MINUTES_VALUE * 60;
+	const DAYS_VALUE = HOURS_VALUE * 24;
+	const WEEKS_VALUE = DAYS_VALUE * 7;
+	const MONTHS_VALUE = WEEKS_VALUE * 4;
+	const YEARS_VALUE = MONTHS_VALUE * 12;
+	const SECONDS_LABEL = 'Seconds';
+	const MINUTES_LABEL = 'Minutes';
+	const HOURS_LABEL = 'Hours';
+	const DAYS_LABEL = 'Days';
+	const WEEKS_LABEL = 'Weeks';
+	const MONTHS_LABEL = 'Months';
+	const YEARS_LABEL = 'Years';
+
+	if (isTimeType(timeVar.colType)) {
+		if (range < DAYS_VALUE) {
+			return [
+				{ value: SECONDS_VALUE, text: SECONDS_LABEL },
+				{ value: MINUTES_VALUE, text: MINUTES_LABEL },
+				{ value: HOURS_VALUE, text: HOURS_LABEL },
+			];
+		} else if (range < 2 * WEEKS_VALUE) {
+			return [
+				{ value: HOURS_VALUE, text: HOURS_LABEL },
+				{ value: DAYS_VALUE, text: DAYS_LABEL },
+				{ value: WEEKS_VALUE, text: WEEKS_LABEL },
+			];
+		} else if (range < MONTHS_VALUE) {
+			return [
+				{ value: HOURS_VALUE, text: HOURS_LABEL },
+				{ value: DAYS_VALUE, text: DAYS_LABEL },
+				{ value: WEEKS_VALUE, text: WEEKS_LABEL },
+			];
+		} else if (range < 4 * MONTHS_VALUE) {
+			return [
+				{ value: DAYS_VALUE, text: DAYS_LABEL },
+				{ value: WEEKS_VALUE, text: WEEKS_LABEL },
+				{ value: MONTHS_VALUE, text: MONTHS_LABEL }
+			];
+		} else if (range < YEARS_VALUE) {
+			return [
+				{ value: WEEKS_VALUE, text: WEEKS_LABEL },
+				{ value: MONTHS_VALUE, text: MONTHS_LABEL }
+			];
+		} else {
+			return [
+				{ value: MONTHS_VALUE, text: MONTHS_LABEL },
+				{ value: YEARS_VALUE, text: YEARS_LABEL }
+			];
+		}
+	}
+
+	let small, med, large = 0;
+	if (isIntegerType(timeVar.colType)) {
+		small = Math.floor(range / 10);
+		med = Math.floor(range / 20);
+		large = Math.floor(range / 40);
+	} else {
+		small = range / 10.0;
+		med = range / 20.0;
+		large = range / 40.0;
+	}
+	return [
+		{ value: small, text: `${small}` },
+		{ value: med, text: `${med}` },
+		{ value: large, text: `${large}` },
+	];
 }
 
 export function fetchHistogramExemplars(datasetName: string, variableName: string, histogram: VariableSummary) {

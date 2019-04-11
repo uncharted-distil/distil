@@ -67,6 +67,9 @@ import TypeChangeMenu from '../components/TypeChangeMenu';
 import { overlayRouteEntry } from '../util/routes';
 import { actions as viewActions } from '../store/view/module';
 import { getters as routeGetters } from '../store/route/module';
+import { getters as datasetGetters } from '../store/dataset/module';
+import { Variable } from '../store/dataset/index';
+import { getTimeseriesAnalysisIntervals } from '../util/data';
 
 export default Vue.extend({
 	name: 'select-view',
@@ -120,25 +123,39 @@ export default Vue.extend({
 		isTimeseriesAnalysis(): boolean {
 			return !!routeGetters.getRouteTimeseriesAnalysis(this.$store);
 		},
+		timeseriesAnalysisRange(): number {
+			return datasetGetters.getTimeseriesAnalysisRange(this.$store);
+		},
+		timeseriesAnalysisVariable(): Variable {
+			return datasetGetters.getTimeseriesAnalysisVariable(this.$store);
+		},
+		binningSuggestions(): any[] {
+			if (!this.timeseriesAnalysisVariable) {
+				return [];
+			}
+			return getTimeseriesAnalysisIntervals(this.timeseriesAnalysisVariable, this.timeseriesAnalysisRange);
+		},
 		timeseriesBinningInterval(): string {
 			return routeGetters.getRouteTimeseriesBinningInterval(this.$store);
 		},
 		binningOptions(): Object[] {
-			const options =  [
-				{ value: null, text: 'Choose binning interval', disabled: true },
-				{ value: 'hourly', text: 'Hourly' },
-				{ value: 'daily', text: 'Daily' },
-				{ value: 'weekly', text: 'Weekly' },
-				{ value: 'monthly', text: 'Monthly' },
-			];
-
-			if (!this.timeseriesBinningInterval) {
-				this.binningIntervalModel = 'daily';
-			} else {
-				this.binningIntervalModel = this.intervalAsString(parseInt(this.timeseriesBinningInterval));
+			if (!this.timeseriesAnalysisVariable) {
+				return [];
 			}
 
-			return options;
+			const options = [
+				{ value: null, text: 'Choose binning interval', disabled: true }
+			];
+
+			const suggestions = this.binningSuggestions;
+
+			if (!this.timeseriesBinningInterval && suggestions.length > 0) {
+				this.binningIntervalModel = suggestions[0].value;
+			} else {
+				this.binningIntervalModel = parseInt(this.timeseriesBinningInterval);
+			}
+
+			return options.concat(suggestions);
 		}
 	},
 
@@ -170,41 +187,9 @@ export default Vue.extend({
 	methods: {
 		onBinningChange() {
 			const entry = overlayRouteEntry(this.$route, {
-				timeseriesBinningInterval: `${this.intervalAsNumber(this.binningIntervalModel)}`
+				timeseriesBinningInterval: `${this.binningIntervalModel}`
 			});
 			this.$router.push(entry);
-		},
-		intervalAsNumber(interval: string): number {
-			const HOUR = 60 * 60;
-			const DAY = HOUR * 24;
-			const WEEK = DAY * 7;
-			const MONTH = WEEK * 4;
-			switch (interval) {
-				case 'hourly':
-					return HOUR;
-				case 'daily':
-					return DAY;
-				case 'weekly':
-					return WEEK;
-				case 'monthly':
-					return MONTH;
-			}
-		},
-		intervalAsString(interval: number): string {
-			const HOUR = 60 * 60;
-			const DAY = HOUR * 24;
-			const WEEK = DAY * 7;
-			const MONTH = WEEK * 4;
-			switch (interval) {
-				case HOUR:
-					return 'hourly';
-				case DAY:
-					return 'daily';
-				case WEEK:
-					return 'weekly';
-				case MONTH:
-					return 'monthly';
-			}
 		}
 	}
 });

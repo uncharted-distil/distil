@@ -270,7 +270,7 @@ func main() {
 	registerRoute(mux, "/distil/datasets/:dataset", routes.DatasetHandler(esMetadataStorageCtor))
 	registerRoute(mux, "/distil/join-suggestions/:dataset", routes.JoinSuggestionHandler(esMetadataStorageCtor, datamartCtors))
 	registerRoute(mux, "/distil/solutions/:dataset/:target/:solution-id", routes.SolutionHandler(pgSolutionStorageCtor))
-	registerRoute(mux, "/distil/variables/:dataset", routes.VariablesHandler(esMetadataStorageCtor))
+	registerRoute(mux, "/distil/variables/:dataset", routes.VariablesHandler(esMetadataStorageCtor, pgDataStorageCtor))
 	registerRoute(mux, "/distil/variable-rankings/:dataset/:target", routes.VariableRankingHandler(esMetadataStorageCtor))
 	registerRoute(mux, "/distil/residuals-extrema/:dataset/:target", routes.ResidualsExtremaHandler(esMetadataStorageCtor, pgSolutionStorageCtor, pgDataStorageCtor))
 	registerRoute(mux, "/distil/abort", routes.AbortHandler())

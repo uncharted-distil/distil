@@ -67,29 +67,21 @@ func NewExtrema(min float64, max float64) (*Extrema, error) {
 }
 
 // GetTimeseriesBinningArgs returns the histogram binning args
-func (e *Extrema) GetTimeseriesBinningArgs(intervalInSeconds int) BinningArgs {
-	if model.IsDateTime(e.Type) {
-		return BinningArgs{
-			Rounded:  e.GetTimeBucketMinMax(intervalInSeconds),
-			Interval: float64(intervalInSeconds),
-			Count:    e.GetTimeBucketCount(intervalInSeconds),
-		}
-	}
+func (e *Extrema) GetTimeseriesBinningArgs(interval int) BinningArgs {
 	return BinningArgs{
-		Rounded:  e.GetBucketMinMax(),
-		Interval: e.GetBucketInterval(),
-		Count:    e.GetBucketCount(),
+		Rounded:  e.GetTimeBucketMinMax(interval),
+		Interval: float64(interval),
+		Count:    e.GetTimeBucketCount(interval),
 	}
 }
 
 // GetTimeBucketCount calculates the number of buckets for the extrema.
-func (e *Extrema) GetTimeBucketCount(intervalInSeconds int) int {
-	interval := float64(intervalInSeconds)
-	rounded := e.GetTimeBucketMinMax(intervalInSeconds)
+func (e *Extrema) GetTimeBucketCount(interval int) int {
+	rounded := e.GetTimeBucketMinMax(interval)
 	rang := rounded.Max - rounded.Min
 
 	// rounding issues could lead to negative numbers
-	count := int(round(rang / interval))
+	count := int(round(rang / float64(interval)))
 	if count <= 0 {
 		count = 1
 	}
@@ -97,11 +89,11 @@ func (e *Extrema) GetTimeBucketCount(intervalInSeconds int) int {
 }
 
 // GetTimeBucketMinMax calculates the bucket min and max for the extrema.
-func (e *Extrema) GetTimeBucketMinMax(intervalInSeconds int) *Extrema {
-	interval := float64(intervalInSeconds)
+func (e *Extrema) GetTimeBucketMinMax(interval int) *Extrema {
+	finterval := float64(interval)
 
-	roundedMin := floorByUnit(e.Min, interval)
-	roundedMax := ceilByUnit(e.Max, interval)
+	roundedMin := floorByUnit(e.Min, finterval)
+	roundedMax := ceilByUnit(e.Max, finterval)
 
 	// if interval does not straddle 0, return it
 	if roundedMin > 0 || roundedMin < 0 {
@@ -112,7 +104,7 @@ func (e *Extrema) GetTimeBucketMinMax(intervalInSeconds int) *Extrema {
 	}
 
 	// if the interval boundary falls on 0, return it
-	if math.Mod(-roundedMin/interval, 1) == 0 {
+	if math.Mod(-roundedMin/finterval, 1) == 0 {
 		return &Extrema{
 			Min: roundedMin,
 			Max: roundedMax,
@@ -121,17 +113,17 @@ func (e *Extrema) GetTimeBucketMinMax(intervalInSeconds int) *Extrema {
 
 	// NOTE: prevent infinite loop, simply return unrounded extrema. This
 	// shouldn't ever actually happen, but we know how that usually turns out...
-	if math.IsNaN(interval) ||
+	if math.IsNaN(finterval) ||
 		math.IsNaN(roundedMin) ||
 		math.IsNaN(roundedMax) ||
-		interval <= 0 {
+		finterval <= 0 {
 		return e
 	}
 
 	// build new min from zero
 	newMin := 0.0
 	for {
-		newMin = newMin - interval
+		newMin = newMin - finterval
 		if newMin <= roundedMin {
 			break
 		}
@@ -140,7 +132,7 @@ func (e *Extrema) GetTimeBucketMinMax(intervalInSeconds int) *Extrema {
 	// build new max from zero
 	newMax := 0.0
 	for {
-		newMax = newMax + interval
+		newMax = newMax + finterval
 		if newMax >= roundedMax {
 			break
 		}

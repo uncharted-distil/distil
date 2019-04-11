@@ -7,7 +7,7 @@ import { mutations } from './module';
 import { DistilState } from '../store';
 import { HighlightRoot } from '../highlights/index';
 import { FilterParams, INCLUDE_FILTER } from '../../util/filters';
-import { createPendingSummary, createErrorSummary, createEmptyTableData, fetchHistogramExemplars } from '../../util/data';
+import { createPendingSummary, createErrorSummary, createEmptyTableData, fetchHistogramExemplars, getTimeseriesAnalysisIntervals } from '../../util/data';
 import { addHighlightToFilterParams } from '../../util/highlights';
 import { loadImage } from '../../util/image';
 import { getVarType, IMAGE_TYPE, TIMESERIES_TYPE, GEOCODED_LON_PREFIX, GEOCODED_LAT_PREFIX } from '../../util/types';
@@ -358,9 +358,17 @@ export const actions = {
 		}
 
 		const timeseries = context.getters.getRouteTimeseriesAnalysis;
-		const interval = context.getters.getRouteTimeseriesBinningInterval;
+		let interval = context.getters.getRouteTimeseriesBinningInterval;
 
 		if (timeseries) {
+
+			if (!interval) {
+				const timeVar = context.getters.getTimeseriesAnalysisVariable;
+				const range = context.getters.getTimeseriesAnalysisRange;
+				const intervals = getTimeseriesAnalysisIntervals(timeVar, range);
+				interval = intervals[0].value;
+			}
+
 			return axios.post(`distil/timeseries-summary/${args.dataset}/${timeseries}/${args.variable}/${interval}`, {})
 				.then(response => {
 					const histogram = response.data.histogram;
