@@ -20,6 +20,7 @@ import (
 
 	"github.com/pkg/errors"
 	"github.com/uncharted-distil/distil-ingest/metadata"
+	log "github.com/unchartedsoftware/plog"
 
 	"github.com/uncharted-distil/distil/api/util"
 )
@@ -41,6 +42,7 @@ var (
 
 // Initialize the path resolution.
 func Initialize(config *Config) error {
+	log.Infof("initializing path values")
 	if initialized {
 		return errors.Errorf("path resolution already initialized")
 	}
@@ -56,6 +58,12 @@ func Initialize(config *Config) error {
 
 	contribPath = config.DatamartImportFolder
 	augmentedPath = path.Join(config.TmpDataPath, config.AugmentedSubFolder)
+
+	log.Infof("using '%s' as seed path", seedPath)
+	log.Infof("using '%s' as seed sub path", seedSubPath)
+	log.Infof("using '%s' as tmp path", tmpPath)
+	log.Infof("using '%s' as contrib path", contribPath)
+	log.Infof("using '%s' as augmented path", augmentedPath)
 
 	initialized = true
 
