@@ -14,10 +14,31 @@
 				<div class="circle-spinner"></div>
 			</div>
 			<div v-else-if="isResolved">
-				<div>
-					<p>
-						{{ contentData.resolvedMsg }}
-					</p>
+				<div v-if="this.statusType === 'JOIN_SUGGESTION'">
+					<div v-for="dataset in requestData.result.datasets" :key="dataset.id">
+						<p>
+							{{dataset.id}}
+						</p>
+						<p>
+							name: {{dataset.name}}
+						</p>
+						<p>
+							{{dataset.description}}
+						</p>
+						<p>
+							rows: {{dataset.numRows}}
+						</p>
+						<p>
+							size: {{dataset.numBytes}}
+						</p>
+					</div>
+				</div>
+				<div v-esle>
+					<div>
+						<p>
+							{{ contentData.resolvedMsg }}
+						</p>
+					</div>
 				</div>
 				<b-button variant="primary" @click="applyChange">Apply</b-button>
 				<b-button variant="secondary" @click="clearData">Discard</b-button>
@@ -64,6 +85,7 @@ export default Vue.extend({
 			const request = datasetGetters
 				.getPendingRequests(this.$store)
 				.find(request => request.dataset === this.dataset && request.type === this.statusType);
+			console.log(request);
 			return request;
 		},
 		isPending: function () {
@@ -103,7 +125,7 @@ export default Vue.extend({
 					return {
 						title: 'Join Suggestion',
 						pendingMsg: '',
-						resolvedMsg: '',
+						resolvedMsg: 'Suggested data sets for join',
 						errorMsg: '',
 					};
 				default:

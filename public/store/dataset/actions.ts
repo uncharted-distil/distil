@@ -2,7 +2,7 @@ import _ from 'lodash';
 import axios from 'axios';
 import { Dictionary } from '../../util/dict';
 import { ActionContext } from 'vuex';
-import { Dataset, DatasetState, Variable, VariableSummary, Grouping, DatasetPendingRequestType, DatasetPendingRequestStatus, DatasetPendingRequest, VariableRankingPendingRequest, GeocodingPendingRequest } from './index';
+import { Dataset, DatasetState, Variable, VariableSummary, Grouping, DatasetPendingRequestType, DatasetPendingRequestStatus, DatasetPendingRequest, VariableRankingPendingRequest, GeocodingPendingRequest, JoinSuggestionPendingRequest } from './index';
 import { mutations } from './module';
 import { DistilState } from '../store';
 import { HighlightRoot } from '../highlights/index';
@@ -138,6 +138,29 @@ export const actions = {
 				variable: GEOCODED_LAT_PREFIX + args.field
 			})
 		]);
+	},
+
+	fetchJoinSuggestions(context: DatasetContext, args: { dataset: string }) {
+		if (!args.dataset) {
+			console.warn('`dataset` argument is missing');
+			return null;
+		}
+		const request: JoinSuggestionPendingRequest = {
+			id: _.uniqueId(),
+			dataset: args.dataset,
+			type: DatasetPendingRequestType.JOIN_SUGGESTION,
+			status: DatasetPendingRequestStatus.PENDING,
+			result: undefined,
+		};
+		mutations.updatePendingRequests(context, request);
+		return axios.get(`/distil/join-suggestions/${args.dataset}`, { params: { search: 'weather' } })
+			.then((response) => {
+				mutations.updatePendingRequests(context, { ...request, status: DatasetPendingRequestStatus.RESOLVED, result: response.data });
+			})
+			.catch(error => {
+				mutations.updatePendingRequests(context, { ...request, status: DatasetPendingRequestStatus.ERROR });
+				console.error(error);
+			});
 	},
 
 	uploadDataFile(context: DatasetContext, args: { datasetID: string, file: File }) {

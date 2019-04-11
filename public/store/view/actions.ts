@@ -129,6 +129,8 @@ export const actions = {
 		// fetch new state
 		const dataset = context.getters.getRouteDataset;
 
+		context.dispatch('fetchJoinSuggestions', { dataset });
+
 		return context.dispatch('fetchVariables', {
 			dataset: dataset
 		}).then(() => {
