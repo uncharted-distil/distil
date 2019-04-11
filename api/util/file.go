@@ -134,9 +134,26 @@ func RemoveContents(dir string) error {
 	return nil
 }
 
-// IsDatasetDir indicate whether or not a directory contains a single d3m dataset
+// IsDatasetDir indicate whether or not a directory contains a single d3m dataset.
 func IsDatasetDir(dir string) bool {
 	datasetPath := path.Join(dir, "TRAIN", "dataset_TRAIN")
 	_, err := os.Stat(datasetPath)
 	return !os.IsNotExist(err)
+}
+
+// GetDirectories returns a list of directories found using the supplied path.
+func GetDirectories(inputPath string) ([]string, error) {
+	files, err := ioutil.ReadDir(inputPath)
+	if err != nil {
+		return nil, errors.Wrap(err, "unable to list directory content")
+	}
+
+	dirs := make([]string, 0)
+	for _, f := range files {
+		if f.IsDir() {
+			dirs = append(dirs, path.Join(inputPath, f.Name()))
+		}
+	}
+
+	return dirs, nil
 }
