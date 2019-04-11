@@ -20,6 +20,12 @@ import (
 
 	"github.com/pkg/errors"
 	"github.com/uncharted-distil/distil-ingest/metadata"
+
+	"github.com/uncharted-distil/distil/api/util"
+)
+
+const (
+	seedFolderName = "seed_datasets_current"
 )
 
 var (
@@ -39,7 +45,12 @@ func Initialize(config *Config) error {
 		return errors.Errorf("path resolution already initialized")
 	}
 
-	seedPath = config.D3MInputDir
+	updatedInputPath, err := determineSeedPath(config.D3MInputDir)
+	if err != nil {
+		return err
+	}
+
+	seedPath = updatedInputPath
 	seedSubPath = path.Join("TRAIN", "dataset_TRAIN")
 	tmpPath = config.TmpDataPath
 
@@ -49,6 +60,63 @@ func Initialize(config *Config) error {
 	initialized = true
 
 	return nil
+}
+
+func determineSeedPath(inputPath string) (string, error) {
+	// the input can be either:
+	//   1. a dataset folder
+	//   2. a folder containing dataset folders
+	//   3. a parent folder of the seed dataset folder ('seed_datasets_current')
+	if util.IsDatasetDir(inputPath) {
+		return inputPath, nil
+	}
+
+	// get the list of folders
+	dirs, err := util.GetDirectories(inputPath)
+	if err != nil {
+		return "", err
+	}
+
+	// empty folder
+	if len(dirs) == 0 {
+		return inputPath, nil
+	}
+
+	// if one folder is a dataset, then assume they all are
+	if util.IsDatasetDir(dirs[0]) {
+		return inputPath, nil
+	}
+
+	// find the seed dataset subfolder
+	return findSeedDatasetDirectory(inputPath)
+}
+
+func findSeedDatasetDirectory(inputPath string) (string, error) {
+	dirs, err := util.GetDirectories(inputPath)
+	if err != nil {
+		return "", err
+	}
+
+	// look for the seed dataset folder
+	for _, d := range dirs {
+		if path.Base(d) == seedFolderName {
+			return d, nil
+		}
+	}
+
+	// look in the subfolders
+	for _, d := range dirs {
+		dir, err := findSeedDatasetDirectory(d)
+		if err != nil {
+			return "", err
+		}
+		if dir != "" {
+			return dir, nil
+		}
+	}
+
+	// not found
+	return "", nil
 }
 
 // GetTmpPath returns the tmp path as initialized.
