@@ -1,7 +1,9 @@
 <template>
 	<div id="distil-app">
 		<navigation></navigation>
-		<router-view class="view"></router-view>
+		<keep-alive include="select-view">
+			<router-view class="view"></router-view>
+		</keep-alive>
 	</div>
 </template>
 

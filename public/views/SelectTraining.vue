@@ -76,7 +76,12 @@ export default Vue.extend({
 		StatusPanel,
 		StatusSidebar,
 	},
-
+	data() {
+		return {
+			currentDataset: undefined,
+			currentTarget: undefined,
+		};
+	},
 	computed: {
 		dataset(): string {
 			return routeGetters.getRouteDataset(this.$store);
@@ -106,7 +111,7 @@ export default Vue.extend({
 		},
 		trainingVarsPage(): number {
 			return routeGetters.getRouteTrainingVarsPage(this.$store);
-		}
+		},
 	},
 
 	watch: {
@@ -124,12 +129,15 @@ export default Vue.extend({
 		},
 		trainingVarsPage() {
 			viewActions.updateSelectTrainingData(this.$store);
-		}
+		},
 	},
-
-	beforeMount() {
-		viewActions.fetchSelectTrainingData(this.$store);
-	}
+	activated() {
+		if (this.currentDataset !== this.dataset || this.currentTarget !== this.target) {
+			viewActions.fetchSelectTrainingData(this.$store);
+		}
+		this.currentDataset = this.dataset;
+		this.currentTarget = this.target;
+	},
 });
 
 </script>
