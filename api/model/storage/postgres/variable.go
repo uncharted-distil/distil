@@ -98,7 +98,8 @@ func (s *Storage) getMinMaxAggsQuery(variable *model.Variable) string {
 	return queryPart
 }
 
-func (s *Storage) fetchExtrema(storageName string, variable *model.Variable) (*api.Extrema, error) {
+// FetchExtrema return extrema of a variable in a result set.
+func (s *Storage) FetchExtrema(storageName string, variable *model.Variable) (*api.Extrema, error) {
 	// add min / max aggregation
 	aggQuery := s.getMinMaxAggsQuery(variable)
 
@@ -120,11 +121,6 @@ func (s *Storage) fetchExtrema(storageName string, variable *model.Variable) (*a
 		return s.parseDateExtrema(res, variable)
 	}
 	return s.parseExtrema(res, variable)
-}
-
-// FetchExtrema return extrema of a variable in a result set.
-func (s *Storage) FetchExtrema(storageName string, variable *model.Variable) (*api.Extrema, error) {
-	return s.fetchExtrema(storageName, variable)
 }
 
 func (s *Storage) fetchExtremaByURI(storageName string, resultURI string, variable *model.Variable) (*api.Extrema, error) {

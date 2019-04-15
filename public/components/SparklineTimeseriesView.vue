@@ -162,7 +162,8 @@ export default Vue.extend({
 		timeseriesVariableSummaries(): any[] {
 			let timeseries = [];
 			this.variableSummaries.forEach(v => {
-				if (v.categoryBuckets) {
+				if (this.isTimeseriesAnalysis && v.categoryBuckets) {
+					// timeseries analysis view
 					const categories = [];
 					_.forIn(v.categoryBuckets, (buckets, category) => {
 						categories.push({
@@ -179,7 +180,8 @@ export default Vue.extend({
 					// highest sum first
 					categories.sort((a, b) => { return b.sum - a.sum; });
 					timeseries = timeseries.concat(categories);
-				} else {
+				} else if (!this.isTimeseriesAnalysis && v.buckets) {
+					// regular timeseries variable
 					timeseries.push({
 						label: v.label,
 						key: v.key,
@@ -415,7 +417,7 @@ export default Vue.extend({
 		},
 		injectSVG() {
 
-			if (!this.hasData) {
+			if (!this.hasData || !this.$refs.svg) {
 				return;
 			}
 

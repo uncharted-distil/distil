@@ -183,7 +183,7 @@ export default Vue.extend({
 				.attr('d', line);
 		},
 		injectTimeseries() {
-			if (_.isEmpty(this.timeseries)) {
+			if (_.isEmpty(this.timeseries) || !this.$refs.svg) {
 				return;
 			}
 

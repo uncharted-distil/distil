@@ -83,7 +83,7 @@ export default Vue.extend({
 				const v = this.variables.find(v => {
 					return v.colName === group.key;
 				});
-				if (v.grouping) {
+				if (v && v.grouping) {
 					const groupingElem = document.createElement('button');
 					groupingElem.className += 'btn btn-sm btn-primary ml-2 mr-2 mb-2 float-right';
 					groupingElem.innerHTML = 'Remove Grouping';
