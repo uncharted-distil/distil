@@ -99,6 +99,7 @@ func (d *Dataset) GetD3MIndexVariable() *model.Variable {
 	return nil
 }
 
+// UpdateExtremas updates the variable extremas based on the data stored.
 func UpdateExtremas(dataset string, varName string, storageMeta MetadataStorage, storageData DataStorage) error {
 	// get the metadata and then query the data storage for the latest values
 	d, err := storageMeta.FetchDataset(dataset, false, false)
@@ -122,8 +123,10 @@ func UpdateExtremas(dataset string, varName string, storageMeta MetadataStorage,
 	}
 
 	// store the extrema to ES
-	v.Min = extrema.Min
-	v.Max = extrema.Max
+	err = storageMeta.SetExtrema(dataset, varName, extrema)
+	if err != nil {
+		return err
+	}
 
 	return nil
 }

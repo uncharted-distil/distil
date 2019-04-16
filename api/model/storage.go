@@ -94,6 +94,7 @@ type MetadataStorage interface {
 
 	// Dataset manipulation
 	SetDataType(dataset string, varName string, varType string) error
+	SetExtrema(dataset string, varName string, extrema *Extrema) error
 	AddVariable(dataset string, varName string, varType string, varDistilRole string) error
 	DeleteVariable(dataset string, varName string) error
 	AddGrouping(datasetName string, grouping model.Grouping) error
