@@ -25,6 +25,7 @@ export const REAL_TYPE = 'real';
 export const REAL_VECTOR_TYPE = 'realVector';
 export const BOOL_TYPE = 'boolean';
 export const DATE_TIME_TYPE = 'dateTime';
+export const TIMESTAMP_TYPE = 'timestmap';
 export const ORDINAL_TYPE = 'ordinal';
 export const CATEGORICAL_TYPE = 'categorical';
 export const TEXT_TYPE = 'text';
@@ -123,6 +124,11 @@ const LOCATION_TYPES = [
 	COUNTRY_TYPE,
 	COUNTRY_CODE_TYPE,
 	POSTAL_CODE_TYPE
+];
+
+const TIME_TYPES = [
+	DATE_TIME_TYPE,
+	TIMESTAMP_TYPE
 ];
 
 const TEXT_SIMPLE_TYPES = [
@@ -316,6 +322,10 @@ export function isIntegerType(type: string): boolean {
 
 export function isTextType(type: string): boolean {
 	return TEXT_TYPES.indexOf(type) !== -1;
+}
+
+export function isTimeType(type: string): boolean {
+	return TIME_TYPES.indexOf(type) !== -1;
 }
 
 export function isLocationType(type: string): boolean {

@@ -102,9 +102,12 @@ export const actions = {
 		]);
 	},
 
-	fetchSelectTargetData(context: ViewContext) {
+	fetchSelectTargetData(context: ViewContext, clearSummaries: boolean) {
 		// clear previous state
 		context.commit('clearHighlightSummaries');
+		if (clearSummaries) {
+			context.commit('clearVariableSummaries');
+		}
 
 		// fetch new state
 		const dataset = context.getters.getRouteDataset;
@@ -120,11 +123,14 @@ export const actions = {
 		});
 	},
 
-	fetchSelectTrainingData(context: ViewContext) {
+	fetchSelectTrainingData(context: ViewContext, clearSummaries: boolean) {
 		// clear any previous state
 		context.commit('clearHighlightSummaries');
 		context.commit('setIncludedTableData', null);
 		context.commit('setExcludedTableData', null);
+		if (clearSummaries) {
+			context.commit('clearVariableSummaries');
+		}
 
 		// fetch new state
 		const dataset = context.getters.getRouteDataset;

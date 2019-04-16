@@ -23,7 +23,7 @@ export const getters = {
 		const availableTrainingVars = filterVariablesByPage(availableTrainingVarsPage, NUM_PER_PAGE, sortVariablesByImportance(availableVariables));
 		const trainingVars = filterVariablesByPage(trainingVarsPage, NUM_PER_PAGE, sortVariablesByImportance(trainingVariables));
 		const targetVar = routeGetters.getTargetVariable(store);
-		return availableTrainingVars.concat(trainingVars).concat([ targetVar ]);
+		return availableTrainingVars.concat(trainingVars).concat(targetVar ? [ targetVar ] : []);
 	},
 
 	getResultsPaginatedVariables(state: ViewState): Variable[] {

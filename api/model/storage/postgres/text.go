@@ -18,6 +18,7 @@ package postgres
 import (
 	"fmt"
 	"math"
+	"strconv"
 	"strings"
 
 	"github.com/jackc/pgx"
@@ -59,6 +60,268 @@ func (f *TextField) FetchSummaryData(resultURI string, filterParams *api.FilterP
 	}
 
 	return histogram, err
+}
+
+func (f *TextField) getTimeMinMaxAggsQuery(timeVar *model.Variable) string {
+	// get min / max agg names
+	minAggName := api.MinAggPrefix + timeVar.Name
+	maxAggName := api.MaxAggPrefix + timeVar.Name
+
+	timeSelect := fmt.Sprintf("CAST(\"%s\" AS INTEGER", timeVar.Name)
+	if timeVar.Type == model.DateTimeType {
+		timeSelect = fmt.Sprintf("CAST(extract(epoch from \"%s\") AS INTEGER)", timeVar.Name)
+	}
+
+	// create aggregations
+	queryPart := fmt.Sprintf("MIN(%s) AS \"%s\", MAX(%s) AS \"%s\"",
+		timeSelect, minAggName, timeSelect, maxAggName)
+	// add aggregations
+	return queryPart
+}
+
+func (f *TextField) fetchTimeExtrema(timeVar *model.Variable) (*api.Extrema, error) {
+
+	// add min / max aggregation
+	aggQuery := f.getTimeMinMaxAggsQuery(timeVar)
+
+	// create a query that does min and max aggregations for each variable
+	queryString := fmt.Sprintf("SELECT %s FROM %s;", aggQuery, f.StorageName)
+
+	// execute the postgres query
+	// NOTE: We may want to use the regular Query operation since QueryRow
+	// hides db exceptions.
+	res, err := f.Storage.client.Query(queryString)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to fetch extrema for variable summaries from postgres")
+	}
+	if res != nil {
+		defer res.Close()
+	}
+
+	return f.parseTimeExtrema(timeVar, res)
+}
+
+func (f *TextField) parseTimeExtrema(timeVar *model.Variable, rows *pgx.Rows) (*api.Extrema, error) {
+	var minValue *int64
+	var maxValue *int64
+	if rows != nil {
+		// Expect one row of data.
+		exists := rows.Next()
+		if !exists {
+			return nil, fmt.Errorf("no rows in extrema query result")
+		}
+		err := rows.Scan(&minValue, &maxValue)
+		if err != nil {
+			return nil, errors.Wrap(err, "no min / max aggregation found")
+		}
+	}
+	// check values exist
+	if minValue == nil || maxValue == nil {
+		return nil, errors.Errorf("no min / max aggregation values found")
+	}
+	// assign attributes
+	return &api.Extrema{
+		Key:  timeVar.Name,
+		Type: timeVar.Type,
+		Min:  float64(*minValue),
+		Max:  float64(*maxValue),
+	}, nil
+}
+
+func (f *TextField) getTimeseriesHistogramAggQuery(extrema *api.Extrema, interval int) (string, string, string) {
+
+	// get histogram agg name & query string.
+	histogramAggName := fmt.Sprintf("\"%s%s\"", api.HistogramAggPrefix, extrema.Key)
+
+	binning := extrema.GetTimeseriesBinningArgs(interval)
+
+	timeSelect := fmt.Sprintf("CAST(\"%s\" AS INTEGER", extrema.Key)
+	if extrema.Type == model.DateTimeType {
+		timeSelect = fmt.Sprintf("CAST(extract(epoch from \"%s\") AS INTEGER)", extrema.Key)
+	}
+
+	bucketQueryString := ""
+	// if only a single value, then return a simple count.
+	if binning.Rounded.Max == binning.Rounded.Min {
+		// want to return the count under bucket 0.
+		bucketQueryString = fmt.Sprintf("(%s - %s)", timeSelect, timeSelect)
+	} else {
+		bucketQueryString = fmt.Sprintf("width_bucket(%s, %g, %g, %d) - 1",
+			timeSelect, binning.Rounded.Min, binning.Rounded.Max, binning.Count)
+	}
+
+	histogramQueryString := fmt.Sprintf("(%s) * %g + %g", bucketQueryString, binning.Interval, binning.Rounded.Min)
+
+	return histogramAggName, bucketQueryString, histogramQueryString
+}
+
+func (f *TextField) parseTimeHistogram(rows *pgx.Rows, extrema *api.Extrema, interval int) (*api.Histogram, error) {
+	// get histogram agg name
+	histogramAggName := api.HistogramAggPrefix + extrema.Key
+
+	// Parse bucket results
+	binning := extrema.GetTimeseriesBinningArgs(interval)
+
+	keys := make([]string, binning.Count)
+	key := binning.Rounded.Min
+	for i := 0; i < len(keys); i++ {
+		keyString := ""
+		if model.IsFloatingPoint(extrema.Type) {
+			keyString = fmt.Sprintf("%f", key)
+		} else {
+			keyString = strconv.Itoa(int(key))
+		}
+
+		keys[i] = keyString
+
+		key = key + binning.Interval
+	}
+
+	categoryBuckets := make(map[string][]*api.Bucket)
+
+	for rows.Next() {
+		var bucketValue float64
+		var bucketCount int64
+		var bucket int64
+		var category string
+		err := rows.Scan(&bucket, &bucketValue, &category, &bucketCount)
+		if err != nil {
+			return nil, errors.Wrap(err, fmt.Sprintf("no %s histogram aggregation found", histogramAggName))
+		}
+
+		buckets, ok := categoryBuckets[category]
+		if !ok {
+			buckets = make([]*api.Bucket, binning.Count)
+			for i := range buckets {
+				buckets[i] = &api.Bucket{
+					Count: 0,
+					Key:   keys[i],
+				}
+			}
+			categoryBuckets[category] = buckets
+		}
+
+		if bucket < 0 {
+			// Due to float representation, sometimes the lowest value <
+			// first bucket interval and so ends up in bucket -1.
+			buckets[0].Count = bucketCount
+		} else if bucket < int64(len(buckets)) {
+			buckets[bucket].Count = bucketCount
+		} else {
+			// Since the max can match the limit, an extra bucket may exist.
+			// Add the value to the second to last bucket.
+			buckets[len(buckets)-1].Count += bucketCount
+		}
+	}
+	// assign histogram attributes
+	return &api.Histogram{
+		Label:           f.Label,
+		Key:             f.Key,
+		Type:            model.NumericalType,
+		VarType:         f.Type,
+		Extrema:         binning.Rounded,
+		CategoryBuckets: categoryBuckets,
+	}, nil
+}
+
+func (f *TextField) getTopCategories(filterParams *api.FilterParams) ([]string, error) {
+
+	// create the filter for the query.
+	wheres := make([]string, 0)
+	params := make([]interface{}, 0)
+	wheres, params = f.Storage.buildFilteredQueryWhere(wheres, params, filterParams.Filters)
+
+	where := ""
+	if len(wheres) > 0 {
+		where = fmt.Sprintf("WHERE %s", strings.Join(wheres, " AND "))
+	}
+
+	// Get count by category.
+	query := fmt.Sprintf("SELECT w.word as %s, COUNT(*) as count "+
+		"FROM (SELECT unnest(tsvector_to_array(to_tsvector(\"%s\"))) as stem FROM %s %s) as r "+
+		"INNER JOIN %s as w on r.stem = w.stem "+
+		"GROUP BY w.word ORDER BY count desc, w.word LIMIT %d;",
+		f.Key, f.Key, f.StorageName, where, wordStemTableName, 5)
+
+	// execute the postgres query
+	rows, err := f.Storage.client.Query(query, params...)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to fetch text histogram for variable summaries from postgres")
+	}
+	if rows != nil {
+		defer rows.Close()
+	}
+
+	var categories []string
+	if rows != nil {
+		for rows.Next() {
+			var category string
+			var count int64
+			err := rows.Scan(&category, &count)
+			if err != nil {
+				return nil, err
+			}
+			categories = append(categories, category)
+		}
+	}
+	return categories, nil
+}
+
+// FetchTimeseriesSummaryData pulls summary data from the database and builds a histogram.
+func (f *TextField) FetchTimeseriesSummaryData(timeVar *model.Variable, interval int, resultURI string, filterParams *api.FilterParams, extrema *api.Extrema) (*api.Histogram, error) {
+
+	if resultURI == "" {
+
+		categories, err := f.getTopCategories(filterParams)
+		if err != nil {
+			return nil, errors.Wrap(err, "failed to fetch top categories")
+		}
+
+		extrema, err := f.fetchTimeExtrema(timeVar)
+		if err != nil {
+			return nil, errors.Wrap(err, "failed to fetch extrema from postgres")
+		}
+
+		histogramName, bucketQuery, histogramQuery := f.getTimeseriesHistogramAggQuery(extrema, interval)
+
+		// create the filter for the query.
+		wheres := make([]string, 0)
+		params := make([]interface{}, 0)
+		wheres, params = f.Storage.buildFilteredQueryWhere(wheres, params, filterParams.Filters)
+
+		categoryWhere := "w.stem in ("
+		for index, category := range categories {
+			categoryWhere += fmt.Sprintf("$%d", len(params)+1)
+			if index < len(categories)-1 {
+				categoryWhere += ","
+			}
+			params = append(params, category)
+		}
+		categoryWhere += ")"
+
+		wheres = append(wheres, categoryWhere)
+		where := fmt.Sprintf("WHERE %s", strings.Join(wheres, " AND "))
+
+		// TODO: fix this
+		from := fmt.Sprintf("(SELECT unnest(tsvector_to_array(to_tsvector(\"%s\"))) as stem, \"%s\" FROM %s) as r INNER JOIN word_stem as w on r.stem = w.stem", f.Key, timeVar.Name, f.StorageName)
+
+		// Create the complete query string.
+		query := fmt.Sprintf("SELECT %s as bucket, CAST(%s as double precision) AS %s, w.stem as field, Count(*) AS count FROM %s %s GROUP BY %s, w.stem ORDER BY %s;",
+			bucketQuery, histogramQuery, histogramName, from, where, bucketQuery, histogramName)
+
+		// execute the postgres query
+		res, err := f.Storage.client.Query(query, params...)
+		if err != nil {
+			return nil, errors.Wrap(err, "failed to fetch histograms for variable summaries from postgres")
+		}
+		if res != nil {
+			defer res.Close()
+		}
+
+		return f.parseTimeHistogram(res, extrema, interval)
+	}
+
+	return nil, fmt.Errorf("not implemented")
 }
 
 func (f *TextField) fetchHistogram(filterParams *api.FilterParams) (*api.Histogram, error) {

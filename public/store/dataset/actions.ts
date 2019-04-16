@@ -7,7 +7,7 @@ import { mutations } from './module';
 import { DistilState } from '../store';
 import { HighlightRoot } from '../highlights/index';
 import { FilterParams, INCLUDE_FILTER } from '../../util/filters';
-import { createPendingSummary, createErrorSummary, createEmptyTableData, fetchHistogramExemplars } from '../../util/data';
+import { createPendingSummary, createErrorSummary, createEmptyTableData, fetchHistogramExemplars, getTimeseriesAnalysisIntervals } from '../../util/data';
 import { addHighlightToFilterParams } from '../../util/highlights';
 import { loadImage } from '../../util/image';
 import { getVarType, IMAGE_TYPE, TIMESERIES_TYPE, GEOCODED_LON_PREFIX, GEOCODED_LAT_PREFIX } from '../../util/types';
@@ -245,6 +245,40 @@ export const actions = {
 			});
 	},
 
+	removeGrouping(context: DatasetContext, args: { dataset: string, grouping: Grouping }): Promise<any>  {
+		if (!args.dataset) {
+			console.warn('`dataset` argument is missing');
+			return null;
+		}
+		if (!args.grouping) {
+			console.warn('`grouping` argument is missing');
+			return null;
+		}
+		return axios.post(`/distil/remove-grouping/${args.dataset}`, {
+				grouping: args.grouping
+			})
+			.then(() => {
+				// update dataset
+				return Promise.all([
+					context.dispatch('fetchDataset', {
+						dataset: args.dataset
+					}),
+					context.dispatch('fetchVariables', {
+						dataset: args.dataset
+					}),
+				]).then(() => {
+					mutations.clearVariableSummaries(context);
+					const variables = context.getters.getVariables;
+					return context.dispatch('fetchVariableSummaries', {
+						dataset: args.dataset,
+						variables: variables
+					});
+				});
+			})
+			.catch(error => {
+				console.error(error);
+			});
+	},
 
 	setVariableType(context: DatasetContext, args: { dataset: string, field: string, type: string }): Promise<void>  {
 		if (!args.dataset) {
@@ -323,6 +357,28 @@ export const actions = {
 			return null;
 		}
 
+		const timeseries = context.getters.getRouteTimeseriesAnalysis;
+		let interval = context.getters.getRouteTimeseriesBinningInterval;
+
+		if (timeseries) {
+
+			if (!interval) {
+				const timeVar = context.getters.getTimeseriesAnalysisVariable;
+				const range = context.getters.getTimeseriesAnalysisRange;
+				const intervals = getTimeseriesAnalysisIntervals(timeVar, range);
+				interval = intervals[0].value;
+			}
+
+			return axios.post(`distil/timeseries-summary/${args.dataset}/${timeseries}/${args.variable}/${interval}`, {})
+				.then(response => {
+					const histogram = response.data.histogram;
+					mutations.updateVariableSummaries(context, histogram);
+				})
+				.catch(error => {
+					console.error(error);
+				});
+		}
+
 		return axios.post(`/distil/variable-summary/${args.dataset}/${args.variable}`, {})
 			.then(response => {
 
@@ -355,7 +411,6 @@ export const actions = {
 		mutations.updatePendingRequests(context, update);
 		return axios.get(`/distil/variable-rankings/${args.dataset}/${args.target}`)
 			.then(response => {
-				console.log(response.data.rankings);
 				mutations.updatePendingRequests(context, { ...update, status: DatasetPendingRequestStatus.RESOLVED, rankings: response.data.rankings});
 			})
 			.catch(error => {

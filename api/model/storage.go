@@ -29,7 +29,6 @@ type DataStorageCtor func() (DataStorage, error)
 type DataStorage interface {
 	FetchNumRows(storageName string, variables []*model.Variable, filters map[string]interface{}) (int, error)
 	FetchData(dataset string, storageName string, filterParams *FilterParams, invert bool) (*FilteredData, error)
-	FetchExtrema(storageName string, variable *model.Variable) (*Extrema, error)
 	FetchSummary(dataset string, storageName string, varName string, filterParams *FilterParams) (*Histogram, error)
 	FetchSummaryByResult(dataset string, storageName string, varName string, resultURI string, filterParams *FilterParams, extrema *Extrema) (*Histogram, error)
 	PersistResult(dataset string, storageName string, resultURI string, target string) error
@@ -39,8 +38,10 @@ type DataStorage interface {
 	FetchCorrectnessSummary(dataset string, storageName string, resultURI string, filterParams *FilterParams) (*Histogram, error)
 	FetchResidualsSummary(dataset string, storageName string, resultURI string, filterParams *FilterParams, extrema *Extrema) (*Histogram, error)
 	FetchResidualsExtremaByURI(dataset string, storageName string, resultURI string) (*Extrema, error)
+	FetchExtrema(storageName string, variable *model.Variable) (*Extrema, error)
 	FetchExtremaByURI(dataset string, storageName string, resultURI string, variable string) (*Extrema, error)
 	FetchTimeseries(dataset string, storageName string, timeseriesColName string, xColName string, yColName string, timeseriesURI string, filterParams *FilterParams) ([][]float64, error)
+	FetchTimeseriesSummary(dataset string, storageName string, xColName string, yColName string, interval int, filterParams *FilterParams) (*Histogram, error)
 	// Dataset manipulation
 	SetDataType(dataset string, storageName string, varName string, varType string) error
 	AddVariable(dataset string, storageName string, varName string, varType string) error
@@ -96,4 +97,5 @@ type MetadataStorage interface {
 	AddVariable(dataset string, varName string, varType string, varDistilRole string) error
 	DeleteVariable(dataset string, varName string) error
 	AddGrouping(datasetName string, grouping model.Grouping) error
+	RemoveGrouping(datasetName string, grouping model.Grouping) error
 }
