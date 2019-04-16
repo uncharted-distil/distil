@@ -36,7 +36,7 @@ import { actions as viewActions } from '../store/view/module';
 import { getters as routeGetters } from '../store/route/module';
 
 export default Vue.extend({
-	name: 'select-view',
+	name: 'select-target-view',
 
 	data() {
 		return {
@@ -62,7 +62,7 @@ export default Vue.extend({
 		}
 	},
 
-	beforeMount() {
+	activated() {
 		viewActions.fetchSelectTargetData(this.$store);
 	}
 });

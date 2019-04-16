@@ -2,6 +2,86 @@ import _ from 'lodash';
 import { ViewState } from './index';
 import { ActionContext } from 'vuex';
 import { DistilState } from '../store';
+import { mutations } from './module';
+
+function updateViewState(context: ViewContext) {
+	const routeDataset = context.getters.getRouteDataset;
+	const currentViewDataset = context.getters.getViewActiveDataset;
+
+	const routeTarget = context.getters.getRouteTargetVariable;
+	const currentViewTarget = context.getters.getViewSelectedTarget;
+
+	const viewStateChangeResult = {
+		dataset: routeDataset,
+		isDatasetUpdated: false,
+		target: routeTarget,
+		isTargetUpdated: false,
+	};
+
+	if (routeDataset && (routeDataset !== currentViewDataset)) {
+		mutations.setViewActiveDataset(context, routeDataset);
+		viewStateChangeResult.isDatasetUpdated = true;
+		viewStateChangeResult.isTargetUpdated = true;
+	}
+
+	if (routeTarget && (routeTarget !== currentViewTarget)) {
+		mutations.setViewSelectedTarget(context, routeTarget);
+		viewStateChangeResult.isTargetUpdated = true;
+	}
+	return viewStateChangeResult;
+}
+
+const cache = {
+	fetchVariables: '',
+	fetchVariableSummaries: '',
+	fetchVariableRankings: '',
+	fetchSolutionRequests: '',
+};
+
+function updateVariables(context: ViewContext, dataset: string) {
+
+	const result = { dataset, variables: context.getters.getVariables };
+
+	console.log(cache);
+	if (cache.fetchVariables !== dataset) {
+		cache.fetchVariables = dataset;
+		console.log('fetchVariables');
+		return context.dispatch('fetchVariables', { dataset }).then(() => {
+			result.variables = context.getters.getVariables;
+			return result;
+		});
+	}
+	return Promise.resolve(result);
+}
+
+function updateVariableSummaries(context: ViewContext, dataset: string) {
+	if (cache.fetchVariableSummaries !== dataset) {
+		cache.fetchVariableSummaries = dataset;
+		return updateVariables(context, dataset).then(result => {
+		console.log('fetchVariablesSummaries');
+			context.dispatch('fetchVariableSummaries', { dataset: result.dataset, variables: result.variables });
+		});
+	}
+	return Promise.resolve();
+}
+
+function updateVariableRankings(context: ViewContext, dataset: string, target: string) {
+	const cacheParams = `${dataset}:${target}`;
+	if (cache.fetchVariableRankings !== cacheParams) {
+		cache.fetchVariableRankings = cacheParams;
+		console.log('fetchVariableRankings');
+		context.dispatch('fetchVariableRankings', { dataset: dataset, target });
+	}
+}
+
+function updateSolutionRequests(context: ViewContext, dataset: string, target: string) {
+	const cacheParams = `${dataset}:${target}`;
+	if (cache.fetchSolutionRequests !== cacheParams) {
+		cache.fetchSolutionRequests = cacheParams;
+		console.log('fetchSolutionRequests');
+		return context.dispatch('fetchSolutionRequests', { dataset, target, });
+	}
+}
 
 export type ViewContext = ActionContext<ViewState, DistilState>;
 
@@ -106,17 +186,10 @@ export const actions = {
 		// clear previous state
 		context.commit('clearHighlightSummaries');
 
-		// fetch new state
-		const dataset = context.getters.getRouteDataset;
+		const {dataset} = updateViewState(context);
 
-		return context.dispatch('fetchVariables', {
-			dataset: dataset
-		}).then(() => {
-			const variables = context.getters.getVariables;
-			return context.dispatch('fetchVariableSummaries', {
-				dataset: dataset,
-				variables: variables
-			});
+		return updateVariables(context, dataset).then(result => {
+			return updateVariableSummaries(context, dataset);
 		});
 	},
 
@@ -126,26 +199,13 @@ export const actions = {
 		context.commit('setIncludedTableData', null);
 		context.commit('setExcludedTableData', null);
 
+		const {isTargetUpdated, target, dataset} = updateViewState(context);
 		// fetch new state
-		const dataset = context.getters.getRouteDataset;
-
-		return context.dispatch('fetchVariables', {
-			dataset: dataset
+		return updateVariables(context, dataset).then(result => {
+			updateVariableRankings(context, dataset, target);
+			return updateVariableSummaries(context, dataset);
 		}).then(() => {
-			const variables = context.getters.getVariables;
-			const target = context.getters.getRouteTargetVariable;
-			return Promise.all([
-				context.dispatch('fetchVariableSummaries', {
-					dataset: dataset,
-					variables: variables
-				}),
-				context.dispatch('fetchVariableRankings', {
-					dataset: dataset,
-					target: target
-				})
-			]).then(() => {
-				return context.dispatch('updateSelectTrainingData');
-			});
+			return context.dispatch('updateSelectTrainingData');
 		});
 	},
 
@@ -189,26 +249,13 @@ export const actions = {
 		context.commit('setIncludedResultTableData', null);
 		context.commit('setExcludedResultTableData', null);
 
+		const {target, dataset} = updateViewState(context);
 		// fetch new state
-		const dataset = context.getters.getRouteDataset;
-
-		return context.dispatch('fetchVariables', {
-			dataset: dataset
+		return updateVariables(context, dataset).then(() => {
+			updateVariableRankings(context, dataset, target);
+			return updateSolutionRequests(context, dataset, target);
 		}).then(() => {
-
-			const target = context.getters.getRouteTargetVariable;
-
-			context.dispatch('fetchVariableRankings', {
-				dataset: dataset,
-				target: target
-			});
-
-			context.dispatch('fetchSolutionRequests', {
-				dataset: dataset,
-				target: target
-			}).then(() => {
-				return context.dispatch('updateResultsSolution');
-			});
+			return context.dispatch('updateResultsSolution');
 		});
 	},
 

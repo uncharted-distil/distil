@@ -9,6 +9,14 @@ import { getters as solutionGetters } from '../solutions/module';
 
 export const getters = {
 
+	getViewActiveDataset(state: ViewState): string {
+		return state.viewActiveDataset;
+	},
+
+	getViewSelectedTarget(state: ViewState): string {
+		return state.viewSelectedTarget;
+	},
+
 	getJoinDatasetsPaginatedVariables(state: ViewState): Variable[] {
 		const joinDatasetsVarsPage = routeGetters.getRouteJoinDatasetsVarsParge(store);
 		const joinDatasetsVariables = routeGetters.getJoinDatasetsVariables(store);

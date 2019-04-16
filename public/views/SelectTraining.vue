@@ -61,11 +61,11 @@ import AvailableTrainingVariables from '../components/AvailableTrainingVariables
 import TrainingVariables from '../components/TrainingVariables';
 import TargetVariable from '../components/TargetVariable';
 import TypeChangeMenu from '../components/TypeChangeMenu';
-import { actions as viewActions } from '../store/view/module';
+import { actions as viewActions, getters as viewGetters } from '../store/view/module';
 import { getters as routeGetters } from '../store/route/module';
 
 export default Vue.extend({
-	name: 'select-view',
+	name: 'select-training-view',
 	components: {
 		CreateSolutionsForm,
 		SelectDataSlot,
@@ -75,12 +75,6 @@ export default Vue.extend({
 		TypeChangeMenu,
 		StatusPanel,
 		StatusSidebar,
-	},
-	data() {
-		return {
-			currentDataset: undefined,
-			currentTarget: undefined,
-		};
 	},
 	computed: {
 		dataset(): string {
@@ -131,12 +125,8 @@ export default Vue.extend({
 			viewActions.updateSelectTrainingData(this.$store);
 		},
 	},
-	activated() {
-		if (this.currentDataset !== this.dataset || this.currentTarget !== this.target) {
-			viewActions.fetchSelectTrainingData(this.$store);
-		}
-		this.currentDataset = this.dataset;
-		this.currentTarget = this.target;
+	activated () {
+		viewActions.fetchSelectTrainingData(this.$store);
 	},
 });
 
