@@ -83,6 +83,11 @@ func (f *DateTimeField) FetchSummaryData(resultURI string, filterParams *api.Fil
 	return histogram, nil
 }
 
+// FetchTimeseriesSummaryData pulls summary data from the database and builds a histogram.
+func (f *DateTimeField) FetchTimeseriesSummaryData(timeVar *model.Variable, interval int, resultURI string, filterParams *api.FilterParams, extrema *api.Extrema) (*api.Histogram, error) {
+	return nil, fmt.Errorf("not implemented")
+}
+
 func (f *DateTimeField) fetchHistogram(filterParams *api.FilterParams) (*api.Histogram, error) {
 	fromClause := f.getFromClause(true)
 

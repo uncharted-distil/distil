@@ -5,7 +5,7 @@ import { getters as routeGetters } from '../store/route/module';
 import { getters as datasetGetters } from '../store/dataset/module';
 import { getters as highlightGetters } from '../store/highlights/module';
 import { overlayRouteEntry } from '../util/routes';
-import { getVarType, isFeatureType, addFeaturePrefix, isClusterType, addClusterPrefix } from '../util/types';
+import { getVarType, isFeatureType, addFeaturePrefix, isClusterType, addClusterPrefix, isTimeType } from '../util/types';
 import _ from 'lodash';
 import store from '../store/store';
 import VueRouter from 'vue-router';
@@ -64,6 +64,13 @@ export function createFilterFromHighlightRoot(highlightRoot: HighlightRoot, mode
 			categories: [highlightRoot.value]
 		};
 	}
+
+	const isTimeseriesAnalysis = !!routeGetters.getRouteTimeseriesAnalysis(store);
+	if (isTimeType(type) && isTimeseriesAnalysis) {
+		// TODO: fix this later
+		return null;
+	}
+
 	if (highlightRoot.value.from !== undefined &&
 		highlightRoot.value.to !== undefined) {
 

@@ -4,7 +4,8 @@ import { spinnerHTML } from '../util/spinner';
 import { formatValue, TIMESERIES_TYPE, CATEGORICAL_TYPE, ORDINAL_TYPE,
 	BOOL_TYPE, ADDRESS_TYPE, CITY_TYPE, STATE_TYPE, COUNTRY_TYPE, EMAIL_TYPE,
 	POSTAL_CODE_TYPE, PHONE_TYPE, URI_TYPE, DATE_TIME_TYPE, IMAGE_TYPE } from '../util/types';
-import { Variable, VariableSummary, CATEGORICAL_SUMMARY, NUMERICAL_SUMMARY } from '../store/dataset/index';
+import { getTimeseriesSummaryTopCategories } from '../util/data';
+import { Variable, VariableSummary, TimeseriesSummary, CATEGORICAL_SUMMARY, NUMERICAL_SUMMARY, TIMESERIES_SUMMMARY } from '../store/dataset/index';
 import store from '../store/store';
 import { IMPORTANT_VARIABLE_RANKING_THRESHOLD } from './data';
 import { getters as datasetGetters } from '../store/dataset/module';
@@ -160,6 +161,12 @@ export function createSummaryFacet(summary: VariableSummary): Group {
 			}
 		case NUMERICAL_SUMMARY:
 			return createNumericalSummaryFacet(summary);
+		case TIMESERIES_SUMMMARY:
+			if (summary.categoryBuckets) {
+				return createCategoricalTimeseriesSummaryFacet(summary);
+			} else {
+				return createNumericalSummaryFacet(summary);
+			}
 	}
 	console.warn('unrecognized summary type', summary.type);
 	return null;
@@ -259,6 +266,65 @@ function createCategoricalSummaryFacet(summary: VariableSummary): Group {
 	};
 }
 
+
+function createCategoricalTimeseriesSummaryFacet(summary: VariableSummary): Group {
+	let total = 0;
+	const facets =  _.map(summary.categoryBuckets, (buckets, category) => {
+		const segments = [];
+		const count = _.sumBy(buckets, b => b.count);
+		const selected = {
+			count: count
+		};
+		const countLabel = count.toString();
+
+		const timeseries = buckets.map(b => [ _.parseInt(b.key), b.count ]);
+
+		const facet: CategoricalFacet = {
+			icon : {
+				class : getGroupIcon(summary)
+			},
+			value: category,
+			countLabel: countLabel,
+			count: count,
+			selected: selected,
+			segments: segments,
+			filterable: false,
+			timeseries: timeseries,
+			file: null
+		};
+		total += count;
+		return facet;
+	});
+
+	facets.sort((a, b) => {
+		return b.count - a.count;
+	});
+
+	const chunkSize = getCategoricalChunkSize(summary.varType);
+	const top = facets.slice(0, chunkSize);
+	const remaining = (facets.length > chunkSize) ? facets.slice(chunkSize) : [];
+	let remainingTotal = 0;
+	remaining.forEach(facet => {
+		remainingTotal += facet.count;
+	});
+
+	// Generate a facet group
+	return {
+		dataset: summary.dataset,
+		label: summary.label,
+		key: summary.key,
+		type: summary.varType,
+		collapsible: false,
+		collapsed: false,
+		facets: top,
+		total: total,
+		numRows: summary.numRows,
+		more: remaining.length,
+		moreTotal: remainingTotal,
+		all: facets
+	};
+}
+
 function createTimeseriesSummaryFacet(summary: VariableSummary): Group {
 	const group = createCategoricalSummaryFacet(summary);
 	const timeseries = datasetGetters.getTimeseries(store);
@@ -267,6 +333,10 @@ function createTimeseriesSummaryFacet(summary: VariableSummary): Group {
 		facet.timeseries = timeseries[group.dataset][facet.file];
 	});
 	return group;
+}
+
+function createDataOverTimeFacet(summary: TimeseriesSummary): Group {
+	return null;
 }
 
 function getHistogramSlices(summary: VariableSummary) {
@@ -329,7 +399,7 @@ export function isPlaceHolderFacet(facet: PlaceHolderFacet | CategoricalFacet | 
 }
 
 export function getCategoricalFacetValue(summary: VariableSummary): string {
-	return summary.buckets[0].key;
+	return summary.categoryBuckets ? getTimeseriesSummaryTopCategories(summary)[0] : summary.buckets[0].key;
 }
 
 export function getNumericalFacetValue(summary: VariableSummary, group: Group, type: string): {from: number, to: number} {

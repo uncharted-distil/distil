@@ -85,6 +85,11 @@ func (s *Storage) AddGrouping(datasetName string, grouping model.Grouping) error
 	return errors.Errorf("Not supported")
 }
 
+// RemoveGrouping removes a variable grouping.
+func (s *Storage) RemoveGrouping(datasetName string, grouping model.Grouping) error {
+	return errors.Errorf("Not supported")
+}
+
 func (s *Storage) parseDatasets(raw []*model.Metadata) ([]*api.Dataset, error) {
 	datasets := make([]*api.Dataset, 0)
 

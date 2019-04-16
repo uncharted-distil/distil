@@ -33,12 +33,18 @@ type VariablesResult struct {
 // VariablesHandler generates a route handler that facilitates a search of
 // variable names and descriptions, returning a variable list for the specified
 // dataset.
-func VariablesHandler(metaCtor api.MetadataStorageCtor) func(http.ResponseWriter, *http.Request) {
+func VariablesHandler(metaCtor api.MetadataStorageCtor, dataCtor api.DataStorageCtor) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// get dataset name
 		dataset := pat.Param(r, "dataset")
+		storageName := model.NormalizeDatasetID(dataset)
 		// get elasticsearch client
 		meta, err := metaCtor()
+		if err != nil {
+			handleError(w, err)
+			return
+		}
+		data, err := dataCtor()
 		if err != nil {
 			handleError(w, err)
 			return
@@ -48,6 +54,17 @@ func VariablesHandler(metaCtor api.MetadataStorageCtor) func(http.ResponseWriter
 		if err != nil {
 			handleError(w, err)
 			return
+		}
+		for _, v := range variables {
+			if model.IsNumerical(v.Type) || model.IsDateTime(v.Type) {
+				extrema, err := data.FetchExtrema(storageName, v)
+				if err != nil {
+					handleError(w, err)
+					return
+				}
+				v.Min = extrema.Min
+				v.Max = extrema.Max
+			}
 		}
 		// marshal data
 		err = handleJSON(w, VariablesResult{

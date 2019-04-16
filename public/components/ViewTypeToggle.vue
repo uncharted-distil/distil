@@ -2,25 +2,27 @@
 	<p class="font-weight-bold" v-bind:class="{'nav-link': !hasTabs }">
 		<b-nav :tabs="hasTabs">
 			<slot></slot>
-			<b-form-group class="view-button ml-auto">
-				<b-form-radio-group buttons v-model="content" button-variant="outline-secondary">
-					<b-form-radio :value="TABLE_VIEW" class="view-button">
-						<i class="fa fa-columns"></i>
-					</b-form-radio >
-					<b-form-radio :value="IMAGE_VIEW" v-if="hasImageVariables" class="view-button">
-						<i class="fa fa-image"></i>
-					</b-form-radio >
-					<b-form-radio :value="GRAPH_VIEW" v-if="hasGraphVariables" class="view-button">
-						<i class="fa fa-share-alt"></i>
-					</b-form-radio >
-					<b-form-radio :value="GEO_VIEW" v-if="hasGeoVariables" class="view-button">
-						<i class="fa fa-globe"></i>
-					</b-form-radio >
-					<b-form-radio :value="TIMESERIES_VIEW" v-if="hasTimeseriesVariables" class="view-button">
-						<i class="fa fa-line-chart"></i>
-					</b-form-radio >
-				</b-form-radio-group>
-			</b-form-group>
+			<template v-if="showToggleButtons">
+				<b-form-group class="view-button ml-auto">
+					<b-form-radio-group buttons v-model="content" button-variant="outline-secondary">
+						<b-form-radio :value="TABLE_VIEW" class="view-button">
+							<i class="fa fa-columns"></i>
+						</b-form-radio >
+						<b-form-radio :value="IMAGE_VIEW" v-if="hasImageVariables" class="view-button">
+							<i class="fa fa-image"></i>
+						</b-form-radio >
+						<b-form-radio :value="GRAPH_VIEW" v-if="hasGraphVariables" class="view-button">
+							<i class="fa fa-share-alt"></i>
+						</b-form-radio >
+						<b-form-radio :value="GEO_VIEW" v-if="hasGeoVariables" class="view-button">
+							<i class="fa fa-globe"></i>
+						</b-form-radio >
+						<b-form-radio :value="TIMESERIES_VIEW" v-if="hasTimeseriesVariables" class="view-button">
+							<i class="fa fa-line-chart"></i>
+						</b-form-radio >
+					</b-form-radio-group>
+				</b-form-group>
+			</template>
 		</b-nav>
 	</p>
 </template>
@@ -29,6 +31,7 @@
 
 import Vue from 'vue';
 import { Variable } from '../store/dataset/index';
+import { getters as routeGetters } from '../store/route/module';
 import { TIMESERIES_TYPE, IMAGE_TYPE, LONGITUDE_TYPE, LATITUDE_TYPE } from '../util/types';
 
 const TABLE_VIEW = 'table';
@@ -70,6 +73,9 @@ export default Vue.extend({
 				this.$emit('input', this.internalVal);
 			}
 		},
+		isTimeseriesAnalysis(): boolean {
+			return !!routeGetters.getRouteTimeseriesAnalysis(this.$store);
+		},
 		hasImageVariables(): boolean {
 			return this.variables.filter(v => v.colType ===  IMAGE_TYPE).length  > 0;
 		},
@@ -84,6 +90,9 @@ export default Vue.extend({
 			const hasLat = this.variables.filter(v => v.grouping && v.grouping.type === LONGITUDE_TYPE).length  > 0;
 			const hasLon = this.variables.filter(v => v.grouping && v.grouping.type === LATITUDE_TYPE).length  > 0;
 			return hasLat && hasLon;
+		},
+		showToggleButtons(): boolean {
+			return !this.isTimeseriesAnalysis;
 		}
 	}
 

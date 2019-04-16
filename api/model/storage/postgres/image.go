@@ -61,6 +61,11 @@ func (f *ImageField) FetchSummaryData(resultURI string, filterParams *api.Filter
 	return histogram, err
 }
 
+// FetchTimeseriesSummaryData pulls summary data from the database and builds a histogram.
+func (f *ImageField) FetchTimeseriesSummaryData(timeVar *model.Variable, interval int, resultURI string, filterParams *api.FilterParams, extrema *api.Extrema) (*api.Histogram, error) {
+	return nil, fmt.Errorf("not implemented")
+}
+
 func (f *ImageField) featureVarName(varName string) string {
 	return fmt.Sprintf("%s%s", model.FeatureVarPrefix, varName)
 }
