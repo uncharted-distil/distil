@@ -186,3 +186,44 @@ func (s *Storage) FetchSummary(dataset string, storageName string, varName strin
 func (s *Storage) FetchSummaryByResult(dataset string, storageName string, varName string, resultURI string, filterParams *api.FilterParams, extrema *api.Extrema) (*api.Histogram, error) {
 	return s.fetchSummaryData(dataset, storageName, varName, resultURI, filterParams, extrema)
 }
+
+func (s *Storage) getMinMaxAggsQuery(variable *model.Variable) string {
+	// get min / max agg names
+	minAggName := api.MinAggPrefix + variable.Name
+	maxAggName := api.MaxAggPrefix + variable.Name
+
+	vName := fmt.Sprintf("\"%s\"", variable.Name)
+	if variable.Type == model.DateTimeType {
+		vName = fmt.Sprintf("CAST(extract(epoch from \"%s\") AS INTEGER)", variable.Name)
+	}
+
+	// create aggregations
+	queryPart := fmt.Sprintf("MIN(%s) AS \"%s\", MAX(%s) AS \"%s\"", vName, minAggName, vName, maxAggName)
+	// add aggregations
+	return queryPart
+}
+
+// FetchExtrema return extrema of a variable in a result set.
+func (s *Storage) FetchExtrema(storageName string, variable *model.Variable) (*api.Extrema, error) {
+	// add min / max aggregation
+	aggQuery := s.getMinMaxAggsQuery(variable)
+
+	// create a query that does min and max aggregations for each variable
+	queryString := fmt.Sprintf("SELECT %s FROM %s", aggQuery, storageName)
+
+	// execute the postgres query
+	// NOTE: We may want to use the regular Query operation since QueryRow
+	// hides db exceptions.
+	res, err := s.client.Query(queryString)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to fetch extrema for variable summaries from postgres")
+	}
+	if res != nil {
+		defer res.Close()
+	}
+
+	if variable.Type == model.DateTimeType {
+		return s.parseDateExtrema(res, variable)
+	}
+	return s.parseExtrema(res, variable)
+}

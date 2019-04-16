@@ -29,6 +29,7 @@ type DataStorageCtor func() (DataStorage, error)
 type DataStorage interface {
 	FetchNumRows(storageName string, variables []*model.Variable, filters map[string]interface{}) (int, error)
 	FetchData(dataset string, storageName string, filterParams *FilterParams, invert bool) (*FilteredData, error)
+	FetchExtrema(storageName string, variable *model.Variable) (*Extrema, error)
 	FetchSummary(dataset string, storageName string, varName string, filterParams *FilterParams) (*Histogram, error)
 	FetchSummaryByResult(dataset string, storageName string, varName string, resultURI string, filterParams *FilterParams, extrema *Extrema) (*Histogram, error)
 	PersistResult(dataset string, storageName string, resultURI string, target string) error

@@ -23,6 +23,7 @@ import (
 	"github.com/uncharted-distil/distil-compute/primitive/compute"
 
 	"github.com/uncharted-distil/distil-ingest/metadata"
+	api "github.com/uncharted-distil/distil/api/model"
 	"github.com/uncharted-distil/distil/api/util"
 )
 
@@ -70,4 +71,21 @@ func CreateDataset(dataset string, csvData []byte, outputPath string, config *In
 	}
 
 	return formattedPath, nil
+}
+
+// UpdateExtremas will update every field's extremas in the specified dataset.
+func UpdateExtremas(dataset string, metaStorage api.MetadataStorage, dataStorage api.DataStorage) error {
+	d, err := metaStorage.FetchDataset(dataset, false, false)
+	if err != nil {
+		return err
+	}
+
+	for _, v := range d.Variables {
+		err = api.UpdateExtremas(dataset, v.Name, metaStorage, dataStorage)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
 }

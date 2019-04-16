@@ -98,3 +98,32 @@ func (d *Dataset) GetD3MIndexVariable() *model.Variable {
 
 	return nil
 }
+
+func UpdateExtremas(dataset string, varName string, storageMeta MetadataStorage, storageData DataStorage) error {
+	// get the metadata and then query the data storage for the latest values
+	d, err := storageMeta.FetchDataset(dataset, false, false)
+	if err != nil {
+		return err
+	}
+
+	// find the variable
+	var v *model.Variable
+	for _, variable := range d.Variables {
+		if variable.Name == varName {
+			v = variable
+			break
+		}
+	}
+
+	// get the extrema
+	extrema, err := storageData.FetchExtrema(d.StorageName, v)
+	if err != nil {
+		return err
+	}
+
+	// store the extrema to ES
+	v.Min = extrema.Min
+	v.Max = extrema.Max
+
+	return nil
+}

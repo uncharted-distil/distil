@@ -240,6 +240,25 @@ func main() {
 	}
 	datamartCtors[es.Provenance] = esMetadataStorageCtor
 
+	// set extremas
+	esStorage, err := esMetadataStorageCtor()
+	if err != nil {
+		log.Errorf("%+v", err)
+		os.Exit(1)
+	}
+
+	pgStorage, err := pgDataStorageCtor()
+	if err != nil {
+		log.Errorf("%+v", err)
+		os.Exit(1)
+	}
+
+	err = updateExtremas(esStorage, pgStorage)
+	if err != nil {
+		log.Errorf("%+v", err)
+		os.Exit(1)
+	}
+
 	// Ingest the data specified by the environment
 	if config.InitialDataset != "" && !config.SkipIngest {
 		log.Infof("Loading initial dataset '%s'", config.InitialDataset)
@@ -344,4 +363,20 @@ func parseResourceProxy(datasets string) map[string]bool {
 	}
 
 	return toProxy
+}
+
+func updateExtremas(metaStorage api.MetadataStorage, dataStorage api.DataStorage) error {
+	datasets, err := metaStorage.FetchDatasets(false, false)
+	if err != nil {
+		return err
+	}
+
+	for _, d := range datasets {
+		err = task.UpdateExtremas(d.Name, metaStorage, dataStorage)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
