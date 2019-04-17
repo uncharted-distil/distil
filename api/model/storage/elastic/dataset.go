@@ -194,6 +194,8 @@ func (s *Storage) updateVariables(dataset string, variables []*model.Variable) e
 			model.VarDistilRole:            v.DistilRole,
 			model.VarDeleted:               v.Deleted,
 			model.VarGroupingField:         v.Grouping,
+			model.VarMinField:              v.Min,
+			model.VarMaxField:              v.Max,
 		})
 	}
 
