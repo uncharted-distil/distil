@@ -116,16 +116,19 @@ func UpdateExtremas(dataset string, varName string, storageMeta MetadataStorage,
 		}
 	}
 
-	// get the extrema
-	extrema, err := storageData.FetchExtrema(d.StorageName, v)
-	if err != nil {
-		return err
-	}
+	// only care about datetime and numerical
+	if model.IsDateTime(v.Type) || model.IsNumerical(v.Type) {
+		// get the extrema
+		extrema, err := storageData.FetchExtrema(d.StorageName, v)
+		if err != nil {
+			return err
+		}
 
-	// store the extrema to ES
-	err = storageMeta.SetExtrema(dataset, varName, extrema)
-	if err != nil {
-		return err
+		// store the extrema to ES
+		err = storageMeta.SetExtrema(dataset, varName, extrema)
+		if err != nil {
+			return err
+		}
 	}
 
 	return nil

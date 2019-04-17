@@ -376,7 +376,7 @@ func updateExtremas(metaStorage model.MetadataStorage, dataStorage model.DataSto
 
 	for _, d := range datasets {
 		log.Infof("updating extremas for dataset %s", d.Name)
-		err = task.UpdateExtremas(d.Name, metaStorage, dataStorage)
+		err = task.UpdateExtremas(d.ID, metaStorage, dataStorage)
 		if err != nil {
 			return err
 		}
