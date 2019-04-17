@@ -368,17 +368,22 @@ func parseResourceProxy(datasets string) map[string]bool {
 }
 
 func updateExtremas(metaStorage model.MetadataStorage, dataStorage model.DataStorage) error {
+	log.Infof("updating extremas on startup")
 	datasets, err := metaStorage.FetchDatasets(false, false)
 	if err != nil {
 		return err
 	}
 
 	for _, d := range datasets {
+		log.Infof("updating extremas for dataset %s", d.Name)
 		err = task.UpdateExtremas(d.Name, metaStorage, dataStorage)
 		if err != nil {
 			return err
 		}
+		log.Infof("done updating extremas for %s", d.Name)
 	}
+
+	log.Infof("done updating all extremas")
 
 	return nil
 }
