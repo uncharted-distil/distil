@@ -4,34 +4,7 @@ import { ActionContext } from 'vuex';
 import { DistilState } from '../store';
 import { mutations } from './module';
 
-function updateViewState(context: ViewContext) {
-	const routeDataset = context.getters.getRouteDataset;
-	const currentViewDataset = context.getters.getViewActiveDataset;
-
-	const routeTarget = context.getters.getRouteTargetVariable;
-	const currentViewTarget = context.getters.getViewSelectedTarget;
-
-	const viewStateChangeResult = {
-		dataset: routeDataset,
-		isDatasetUpdated: false,
-		target: routeTarget,
-		isTargetUpdated: false,
-	};
-
-	if (routeDataset && (routeDataset !== currentViewDataset)) {
-		mutations.setViewActiveDataset(context, routeDataset);
-		viewStateChangeResult.isDatasetUpdated = true;
-		viewStateChangeResult.isTargetUpdated = true;
-	}
-
-	if (routeTarget && (routeTarget !== currentViewTarget)) {
-		mutations.setViewSelectedTarget(context, routeTarget);
-		viewStateChangeResult.isTargetUpdated = true;
-	}
-	return viewStateChangeResult;
-}
-
-const cache = {
+const cachedParams = {
 	fetchVariables: '',
 	fetchVariableSummaries: '',
 	fetchVariableRankings: '',
@@ -42,9 +15,9 @@ function updateVariables(context: ViewContext, dataset: string) {
 
 	const result = { dataset, variables: context.getters.getVariables };
 
-	console.log(cache);
-	if (cache.fetchVariables !== dataset) {
-		cache.fetchVariables = dataset;
+	console.log(cachedParams);
+	if (cachedParams.fetchVariables !== dataset) {
+		cachedParams.fetchVariables = dataset;
 		console.log('fetchVariables');
 		return context.dispatch('fetchVariables', { dataset }).then(() => {
 			result.variables = context.getters.getVariables;
@@ -55,8 +28,8 @@ function updateVariables(context: ViewContext, dataset: string) {
 }
 
 function updateVariableSummaries(context: ViewContext, dataset: string) {
-	if (cache.fetchVariableSummaries !== dataset) {
-		cache.fetchVariableSummaries = dataset;
+	if (cachedParams.fetchVariableSummaries !== dataset) {
+		cachedParams.fetchVariableSummaries = dataset;
 		return updateVariables(context, dataset).then(result => {
 		console.log('fetchVariablesSummaries');
 			context.dispatch('fetchVariableSummaries', { dataset: result.dataset, variables: result.variables });
@@ -67,8 +40,8 @@ function updateVariableSummaries(context: ViewContext, dataset: string) {
 
 function updateVariableRankings(context: ViewContext, dataset: string, target: string) {
 	const cacheParams = `${dataset}:${target}`;
-	if (cache.fetchVariableRankings !== cacheParams) {
-		cache.fetchVariableRankings = cacheParams;
+	if (cachedParams.fetchVariableRankings !== cacheParams) {
+		cachedParams.fetchVariableRankings = cacheParams;
 		console.log('fetchVariableRankings');
 		context.dispatch('fetchVariableRankings', { dataset: dataset, target });
 	}
@@ -76,8 +49,8 @@ function updateVariableRankings(context: ViewContext, dataset: string, target: s
 
 function updateSolutionRequests(context: ViewContext, dataset: string, target: string) {
 	const cacheParams = `${dataset}:${target}`;
-	if (cache.fetchSolutionRequests !== cacheParams) {
-		cache.fetchSolutionRequests = cacheParams;
+	if (cachedParams.fetchSolutionRequests !== cacheParams) {
+		cachedParams.fetchSolutionRequests = cacheParams;
 		console.log('fetchSolutionRequests');
 		return context.dispatch('fetchSolutionRequests', { dataset, target, });
 	}
@@ -186,7 +159,7 @@ export const actions = {
 		// clear previous state
 		context.commit('clearHighlightSummaries');
 
-		const {dataset} = updateViewState(context);
+		const dataset = context.getters.getRouteDataset;
 
 		return updateVariables(context, dataset).then(result => {
 			return updateVariableSummaries(context, dataset);
@@ -199,7 +172,8 @@ export const actions = {
 		context.commit('setIncludedTableData', null);
 		context.commit('setExcludedTableData', null);
 
-		const {isTargetUpdated, target, dataset} = updateViewState(context);
+		const dataset = context.getters.getRouteDataset;
+		const target = context.getters.getRouteTargetVariable;
 		// fetch new state
 		return updateVariables(context, dataset).then(result => {
 			updateVariableRankings(context, dataset, target);
@@ -249,7 +223,8 @@ export const actions = {
 		context.commit('setIncludedResultTableData', null);
 		context.commit('setExcludedResultTableData', null);
 
-		const {target, dataset} = updateViewState(context);
+		const dataset = context.getters.getRouteDataset;
+		const target = context.getters.getRouteTargetVariable;
 		// fetch new state
 		return updateVariables(context, dataset).then(() => {
 			updateVariableRankings(context, dataset, target);

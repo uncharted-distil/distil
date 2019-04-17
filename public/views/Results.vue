@@ -96,7 +96,7 @@ export default Vue.extend({
 		}
 	},
 
-	activated() {
+	beforeMount() {
 		viewActions.fetchResultsData(this.$store);
 	},
 

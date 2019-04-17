@@ -125,7 +125,7 @@ export default Vue.extend({
 			viewActions.updateSelectTrainingData(this.$store);
 		},
 	},
-	activated () {
+	beforeMount() {
 		viewActions.fetchSelectTrainingData(this.$store);
 	},
 });
