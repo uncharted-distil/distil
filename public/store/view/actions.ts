@@ -42,7 +42,10 @@ function updateVariableRankings(context: ViewContext, dataset: string, target: s
 	const cacheParams = `${dataset}:${target}`;
 	if (cachedParams.fetchVariableRankings !== cacheParams) {
 		cachedParams.fetchVariableRankings = cacheParams;
-		console.log('fetchVariableRankings');
+
+		// if target or dataset has changed, clear previous rankings before re-fetch
+		// this is needed because since user decides variable rankings to be updated, re-fetching doesn't always replace the previous data
+		context.dispatch('updateVariableRankings', undefined);
 		context.dispatch('fetchVariableRankings', { dataset: dataset, target });
 	}
 }

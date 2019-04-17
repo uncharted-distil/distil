@@ -16,15 +16,11 @@ export const viewModule: Module<ViewState, DistilState> = {
 const { commit, read, dispatch } = getStoreAccessors<ViewState, DistilState>(null);
 
 export const getters = {
-	getViewActiveDataset: read(moduleGetters.getViewActiveDataset),
-	getViewSelectedTarget: read(moduleGetters.getViewSelectedTarget),
 	getSelectTrainingPaginatedVariables: read(moduleGetters.getSelectTrainingPaginatedVariables),
 	getResultsPaginatedVariables: read(moduleGetters.getResultsPaginatedVariables)
 };
 
 export const mutations = {
-	setViewActiveDataset: commit(moduleMutations.setViewActiveDataset),
-	setViewSelectedTarget: commit(moduleMutations.setViewSelectedTarget),
 };
 
 export const actions = {

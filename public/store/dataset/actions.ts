@@ -355,7 +355,6 @@ export const actions = {
 		mutations.updatePendingRequests(context, update);
 		return axios.get(`/distil/variable-rankings/${args.dataset}/${args.target}`)
 			.then(response => {
-				console.log(response.data.rankings);
 				mutations.updatePendingRequests(context, { ...update, status: DatasetPendingRequestStatus.RESOLVED, rankings: response.data.rankings});
 			})
 			.catch(error => {
