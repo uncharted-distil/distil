@@ -267,7 +267,7 @@ func main() {
 			log.Errorf("%+v", err)
 			os.Exit(1)
 		}
-		err = task.IngestDataset(metadata.Contrib, esMetadataStorageCtor, config.ESDatasetsIndex, "initial", ingestConfig)
+		err = task.IngestDataset(metadata.Contrib, pgDataStorageCtor, esMetadataStorageCtor, config.ESDatasetsIndex, "initial", ingestConfig)
 		if err != nil {
 			log.Errorf("%+v", err)
 			os.Exit(1)
@@ -303,7 +303,7 @@ func main() {
 	registerRoutePost(mux, "/distil/variables/:dataset", routes.VariableTypeHandler(pgDataStorageCtor, esMetadataStorageCtor))
 	registerRoutePost(mux, "/distil/discovery/:dataset/:target", routes.ProblemDiscoveryHandler(pgDataStorageCtor, esMetadataStorageCtor, config.UserProblemPath, userAgent, config.SkipPreprocessing))
 	registerRoutePost(mux, "/distil/data/:dataset/:invert", routes.DataHandler(pgDataStorageCtor, esMetadataStorageCtor))
-	registerRoutePost(mux, "/distil/import/:datasetID/:source/:provenance", routes.ImportHandler(datamartCtors, fileMetadataStorageCtor, esMetadataStorageCtor, ingestConfig))
+	registerRoutePost(mux, "/distil/import/:datasetID/:source/:provenance", routes.ImportHandler(pgDataStorageCtor, datamartCtors, fileMetadataStorageCtor, esMetadataStorageCtor, ingestConfig))
 	registerRoutePost(mux, "/distil/results/:dataset/:solution-id", routes.ResultsHandler(pgSolutionStorageCtor, pgDataStorageCtor))
 	registerRoutePost(mux, "/distil/variable-summary/:dataset/:variable", routes.VariableSummaryHandler(pgDataStorageCtor))
 	registerRoutePost(mux, "/distil/timeseries-summary/:dataset/:xColName/:yColName/:binningInterval", routes.TimeseriesSummaryHandler(pgDataStorageCtor))

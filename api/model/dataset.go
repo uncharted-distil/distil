@@ -16,6 +16,8 @@
 package model
 
 import (
+	"time"
+
 	"github.com/pkg/errors"
 
 	"github.com/uncharted-distil/distil-compute/model"
@@ -129,6 +131,9 @@ func UpdateExtremas(dataset string, varName string, storageMeta MetadataStorage,
 		if err != nil {
 			return err
 		}
+
+		// TODO: fix this, this shouldn't be necessary
+		time.Sleep(time.Second)
 	}
 
 	return nil

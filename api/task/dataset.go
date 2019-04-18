@@ -18,7 +18,6 @@ package task
 import (
 	"os"
 	"path"
-	"time"
 
 	"github.com/uncharted-distil/distil-compute/model"
 	"github.com/uncharted-distil/distil-compute/primitive/compute"
@@ -86,9 +85,6 @@ func UpdateExtremas(dataset string, metaStorage api.MetadataStorage, dataStorage
 		if err != nil {
 			return err
 		}
-
-		// TODO: fix this, this shouldn't be necessary
-		time.Sleep(time.Second)
 	}
 
 	return nil

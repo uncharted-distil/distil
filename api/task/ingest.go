@@ -79,13 +79,18 @@ type IngestTaskConfig struct {
 }
 
 // IngestDataset executes the complete ingest process for the specified dataset.
-func IngestDataset(datasetSource metadata.DatasetSource, metaCtor api.MetadataStorageCtor, index string, dataset string, config *IngestTaskConfig) error {
+func IngestDataset(datasetSource metadata.DatasetSource, dataCtor api.DataStorageCtor, metaCtor api.MetadataStorageCtor, index string, dataset string, config *IngestTaskConfig) error {
 	// Set the probability threshold
 	metadata.SetTypeProbabilityThreshold(config.ClassificationProbabilityThreshold)
 
-	storage, err := metaCtor()
+	metaStorage, err := metaCtor()
 	if err != nil {
 		return errors.Wrap(err, "unable to initialize metadata storage")
+	}
+
+	dataStorage, err := dataCtor()
+	if err != nil {
+		return errors.Wrap(err, "unable to initialize data storage")
 	}
 
 	sourceFolder := env.ResolvePath(datasetSource, dataset)
@@ -165,11 +170,17 @@ func IngestDataset(datasetSource metadata.DatasetSource, metaCtor api.MetadataSt
 		log.Infof("finished geocoding the dataset")
 	}
 
-	err = Ingest(originalSchemaFile, latestSchemaOutput, storage, index, dataset, datasetSource, config)
+	err = Ingest(originalSchemaFile, latestSchemaOutput, metaStorage, index, dataset, datasetSource, config)
 	if err != nil {
 		return errors.Wrap(err, "unable to ingest ranked data")
 	}
 	log.Infof("finished ingesting the dataset")
+
+	err = UpdateExtremas(dataset, metaStorage, dataStorage)
+	if err != nil {
+		return errors.Wrap(err, "unable to update extremas ranked data")
+	}
+	log.Infof("finished updating extremas")
 
 	return nil
 }
