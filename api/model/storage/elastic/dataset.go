@@ -194,6 +194,8 @@ func (s *Storage) updateVariables(dataset string, variables []*model.Variable) e
 			model.VarDistilRole:            v.DistilRole,
 			model.VarDeleted:               v.Deleted,
 			model.VarGroupingField:         v.Grouping,
+			model.VarMinField:              v.Min,
+			model.VarMaxField:              v.Max,
 		})
 	}
 
@@ -227,6 +229,25 @@ func (s *Storage) SetDataType(dataset string, varName string, varType string) er
 	for _, v := range vars {
 		if v.Name == varName {
 			v.Type = varType
+		}
+	}
+
+	return s.updateVariables(dataset, vars)
+}
+
+// SetExtrema updates the min & max values of a field in ES.
+func (s *Storage) SetExtrema(dataset string, varName string, extrema *api.Extrema) error {
+	// Fetch all existing variables
+	vars, err := s.FetchVariables(dataset, true, true)
+	if err != nil {
+		return errors.Wrapf(err, "failed to fetch existing variable")
+	}
+
+	// Update only the variable we care about
+	for _, v := range vars {
+		if v.Name == varName {
+			v.Min = extrema.Min
+			v.Max = extrema.Max
 		}
 	}
 
