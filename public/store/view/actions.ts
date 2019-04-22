@@ -3,6 +3,7 @@ import { ViewState } from './index';
 import { ActionContext } from 'vuex';
 import { DistilState } from '../store';
 import { mutations } from './module';
+import { Dictionary } from '../../util/dict';
 
 enum ParamCacheKey {
 	VARIABLES = 'VARIABLES',
@@ -11,8 +12,8 @@ enum ParamCacheKey {
 	SOLUTION_REQUESTS = 'SOLUTION_REQUESTS',
 }
 
-function createCacheable(key: ParamCacheKey, func: (context: ViewContext, args: {[key: string]: string}) => any) {
-	return (context: ViewContext, args: {[key: string]: string}) => {
+function createCacheable(key: ParamCacheKey, func: (context: ViewContext, args: Dictionary<string>) => any) {
+	return (context: ViewContext, args: Dictionary<string>) => {
 		// execute provided function if params are not cached already or changed
 		const params = _.values(args).join(':');
 		const cachedParams = context.getters.getFetchParamsCache[key];
@@ -36,7 +37,7 @@ const fetchVariableSummaries = createCacheable(ParamCacheKey.VARIABLE_SUMMARIES,
 	});
 });
 
-const fetchVaraibleRankings = createCacheable(ParamCacheKey.VARIABLE_RANKINGS, (context, args) => {
+const fetchVariableRankings = createCacheable(ParamCacheKey.VARIABLE_RANKINGS, (context, args) => {
 	// if target or dataset has changed, clear previous rankings before re-fetch
 	// this is needed because since user decides variable rankings to be updated, re-fetching doesn't always replace the previous data
 	context.dispatch('updateVariableRankings', undefined);
@@ -177,7 +178,7 @@ export const actions = {
 		const target = context.getters.getRouteTargetVariable;
 		// fetch new state
 		return fetchVariables(context, { dataset }).then(() => {
-			fetchVaraibleRankings(context, { dataset, target });
+			fetchVariableRankings(context, { dataset, target });
 			return fetchVariableSummaries(context, { dataset });
 		}).then(() => {
 			return context.dispatch('updateSelectTrainingData');
@@ -228,7 +229,7 @@ export const actions = {
 		const target = context.getters.getRouteTargetVariable;
 		// fetch new state
 		return fetchVariables(context, { dataset }).then(() => {
-			fetchVaraibleRankings(context, { dataset, target });
+			fetchVariableRankings(context, { dataset, target });
 			return fetchSolutionRequests(context, { dataset, target });
 		}).then(() => {
 			return context.dispatch('updateResultsSolution');
