@@ -23,6 +23,10 @@
 			:show="showGroupingModal"
 			@close="showGroupingModal = !showGroupingModal">
 		</grouping-modal>
+		<timeseries-analysis-modal
+			:show="showTimeseriesChoice"
+			@close="onTimeseriesChoice">
+		</timeseries-analysis-modal>
 	</div>
 
 </template>
@@ -30,23 +34,31 @@
 <script lang="ts">
 
 import Vue from 'vue';
+import { Variable } from '../store/dataset/index';
+import TimeseriesAnalysisModal from '../components/TimeseriesAnalysisModal';
 import GroupingModal from '../components/GroupingModal';
 import AvailableTargetVariables from '../components/AvailableTargetVariables';
 import { actions as viewActions } from '../store/view/module';
+import { getters as datasetGetters } from '../store/dataset/module';
 import { getters as routeGetters } from '../store/route/module';
+import { isTimeType } from '../util/types';
+import { overlayRouteEntry } from '../util/routes';
 
 export default Vue.extend({
 	name: 'select-target-view',
 
 	data() {
 		return {
-			showGroupingModal: false
+			showGroupingModal: false,
+			showTimeseriesChoice: false,
+			haveVariablesLoaded: false
 		};
 	},
 
 	components: {
 		AvailableTargetVariables,
-		GroupingModal
+		GroupingModal,
+		TimeseriesAnalysisModal
 	},
 
 	computed: {
@@ -54,16 +66,48 @@ export default Vue.extend({
 		availableTargetVarsPage(): number {
 			return routeGetters.getRouteAvailableTargetVarsPage(this.$store);
 		},
+		variables(): Variable[] {
+			return datasetGetters.getVariables(this.$store);
+		},
+		timeseriesAnalysis(): string {
+			return routeGetters.getRouteTimeseriesAnalysis(this.$store);
+		},
+		hasTimeVariable(): boolean {
+			return this.variables.filter(v => isTimeType(v.colType)).length  > 0;
+		}
 	},
 
 	watch: {
 		availableTargetVarsPage() {
-			viewActions.fetchSelectTargetData(this.$store);
+			viewActions.fetchSelectTargetData(this.$store, false);
+		},
+		timeseriesAnalysis() {
+			viewActions.fetchSelectTargetData(this.$store, true);
+		},
+		variables() {
+			if (this.variables.length > 0 && !this.timeseriesAnalysis && !this.haveVariablesLoaded) {
+				if (this.hasTimeVariable) {
+					this.showTimeseriesChoice = true;
+				}
+				this.haveVariablesLoaded = true;
+			}
 		}
 	},
 
 	beforeMount() {
-		viewActions.fetchSelectTargetData(this.$store);
+		viewActions.fetchSelectTargetData(this.$store, false);
+	},
+
+	methods: {
+		onTimeseriesChoice(event: any) {
+			if (event) {
+				const entry = overlayRouteEntry(routeGetters.getRoute(this.$store), {
+					timeseriesAnalysis: event.col
+				});
+				this.$router.push(entry);
+			}
+			this.showTimeseriesChoice = false;
+		}
 	}
 });
 </script>

@@ -29,6 +29,9 @@
 							<b>Select Features That May Predict {{target.toUpperCase()}}</b> Use interactive feature highlighting to analyze relationships or to exclude samples from the model. Features which appear to have stronger relation are listed first.
 						</p>
 					</div>
+					<div v-if="isTimeseriesAnalysis">
+						<b-form-select @change="onBinningChange" v-model="binningIntervalModel" :options="binningOptions"/>
+					</div>
 				</div>
 
 				<div class="col-12 col-md-6 d-flex flex-column">
@@ -61,8 +64,12 @@ import AvailableTrainingVariables from '../components/AvailableTrainingVariables
 import TrainingVariables from '../components/TrainingVariables';
 import TargetVariable from '../components/TargetVariable';
 import TypeChangeMenu from '../components/TypeChangeMenu';
-import { actions as viewActions, getters as viewGetters } from '../store/view/module';
+import { overlayRouteEntry } from '../util/routes';
+import { actions as viewActions } from '../store/view/module';
 import { getters as routeGetters } from '../store/route/module';
+import { getters as datasetGetters } from '../store/dataset/module';
+import { Variable } from '../store/dataset/index';
+import { getTimeseriesAnalysisIntervals } from '../util/data';
 
 export default Vue.extend({
 	name: 'select-training-view',
@@ -76,6 +83,13 @@ export default Vue.extend({
 		StatusPanel,
 		StatusSidebar,
 	},
+
+	data() {
+		return {
+			binningIntervalModel: null
+		};
+	},
+
 	computed: {
 		dataset(): string {
 			return routeGetters.getRouteDataset(this.$store);
@@ -106,6 +120,43 @@ export default Vue.extend({
 		trainingVarsPage(): number {
 			return routeGetters.getRouteTrainingVarsPage(this.$store);
 		},
+		isTimeseriesAnalysis(): boolean {
+			return !!routeGetters.getRouteTimeseriesAnalysis(this.$store);
+		},
+		timeseriesAnalysisRange(): number {
+			return datasetGetters.getTimeseriesAnalysisRange(this.$store);
+		},
+		timeseriesAnalysisVariable(): Variable {
+			return datasetGetters.getTimeseriesAnalysisVariable(this.$store);
+		},
+		binningSuggestions(): any[] {
+			if (!this.timeseriesAnalysisVariable) {
+				return [];
+			}
+			return getTimeseriesAnalysisIntervals(this.timeseriesAnalysisVariable, this.timeseriesAnalysisRange);
+		},
+		timeseriesBinningInterval(): string {
+			return routeGetters.getRouteTimeseriesBinningInterval(this.$store);
+		},
+		binningOptions(): Object[] {
+			if (!this.timeseriesAnalysisVariable) {
+				return [];
+			}
+
+			const options = [
+				{ value: null, text: 'Choose binning interval', disabled: true }
+			];
+
+			const suggestions = this.binningSuggestions;
+
+			if (!this.timeseriesBinningInterval && suggestions.length > 0) {
+				this.binningIntervalModel = suggestions[0].value;
+			} else {
+				this.binningIntervalModel = parseInt(this.timeseriesBinningInterval);
+			}
+
+			return options.concat(suggestions);
+		}
 	},
 
 	watch: {
@@ -124,10 +175,22 @@ export default Vue.extend({
 		trainingVarsPage() {
 			viewActions.updateSelectTrainingData(this.$store);
 		},
+		binningIntervalModel() {
+			viewActions.fetchSelectTrainingData(this.$store, true);
+		}
 	},
 	beforeMount() {
-		viewActions.fetchSelectTrainingData(this.$store);
+		viewActions.fetchSelectTrainingData(this.$store, false);
 	},
+
+	methods: {
+		onBinningChange() {
+			const entry = overlayRouteEntry(this.$route, {
+				timeseriesBinningInterval: `${this.binningIntervalModel}`
+			});
+			this.$router.push(entry);
+		}
+	}
 });
 
 </script>

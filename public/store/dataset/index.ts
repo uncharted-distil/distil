@@ -2,6 +2,7 @@ import { Dictionary } from '../../util/dict';
 
 export const CATEGORICAL_SUMMARY = 'categorical';
 export const NUMERICAL_SUMMARY = 'numerical';
+export const TIMESERIES_SUMMMARY = 'timeseries';
 
 export const D3M_INDEX_FIELD = 'd3mIndex';
 
@@ -40,6 +41,8 @@ export interface Variable {
 	isGrouping: boolean;
 	grouping?: Grouping;
 	isColTypeReviewed: boolean;
+	min: number;
+	max: number;
 }
 
 export interface Dataset {
@@ -72,7 +75,8 @@ export interface VariableSummary {
 	key: string;
 	feature: string;
 	dataset: string;
-	buckets: Bucket[];
+	buckets?: Bucket[];
+	categoryBuckets?: Dictionary<Bucket[]>;
 	extrema: Extrema;
 	numRows: number;
 	exemplars?: string[];
@@ -84,6 +88,17 @@ export interface VariableSummary {
 	pending?: boolean;
 	stddev?: number;
 	mean?: number;
+}
+
+export interface TimeseriesSummary {
+	label: string;
+	key: string;
+	dataset: string;
+	numRows: number;
+	type?: string;
+	varType?: string;
+	err?: string;
+	pending?: boolean;
 }
 
 export interface TableData {

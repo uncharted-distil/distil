@@ -1,4 +1,4 @@
-import { Variable, TimeseriesExtrema, DatasetState, Dataset, VariableSummary, TableData, TableRow, TableColumn } from './index';
+import { Variable, Extrema, TimeseriesExtrema, DatasetState, Dataset, VariableSummary, TimeseriesSummary, TableData, TableRow, TableColumn } from './index';
 import { Dictionary } from '../../util/dict';
 import { getTableDataItems, getTableDataFields } from '../../util/data';
 
@@ -12,7 +12,12 @@ export const getters = {
 		return state.filteredDatasets;
 	},
 
-	getVariables(state: DatasetState): Variable[] {
+	getVariables(state: DatasetState, getters: any): Variable[] {
+		const timeseriesAnalysis = getters.getRouteTimeseriesAnalysis;
+		if (timeseriesAnalysis) {
+			// don't return the time var
+			return state.variables.filter(v => v.colName !== timeseriesAnalysis);
+		}
 		return state.variables;
 	},
 
@@ -40,6 +45,33 @@ export const getters = {
 
 	getVariableSummaries(state: DatasetState): VariableSummary[] {
 		return state.variableSummaries;
+	},
+
+	getTimeseriesAnalysisVariable(state: DatasetState, getters: any): Variable {
+		const timeseriesAnalysis = getters.getRouteTimeseriesAnalysis;
+		if (timeseriesAnalysis) {
+			return getters.getVariablesMap[timeseriesAnalysis];
+		}
+		return null;
+	},
+
+	getTimeseriesAnalysisExtrema(state: DatasetState, getters: any): Extrema {
+		const v = getters.getTimeseriesAnalysisVariable;
+		if (v) {
+			return {
+				min: v.min,
+				max: v.max
+			};
+		}
+		return null;
+	},
+
+	getTimeseriesAnalysisRange(state: DatasetState, getters: any): number {
+		const extrema = getters.getTimeseriesAnalysisExtrema;
+		if (!extrema) {
+			return undefined;
+		}
+		return extrema.max - extrema.min;
 	},
 
 	getFiles(state: DatasetState): Dictionary<any> {

@@ -70,6 +70,14 @@ func (s *Storage) parseRawVariable(child map[string]interface{}) (*model.Variabl
 	if !ok {
 		deleted = false
 	}
+	min, ok := json.Float(child, model.VarMinField)
+	if !ok {
+		min = 0
+	}
+	max, ok := json.Float(child, model.VarMaxField)
+	if !ok {
+		max = 0
+	}
 
 	grouping := &model.Grouping{}
 	ok = json.Struct(child, &grouping, model.VarGroupingField)
@@ -108,6 +116,8 @@ func (s *Storage) parseRawVariable(child map[string]interface{}) (*model.Variabl
 		DistilRole:       distilRole,
 		Deleted:          deleted,
 		Grouping:         grouping,
+		Min:              min,
+		Max:              max,
 	}, nil
 }
 

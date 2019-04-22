@@ -4,24 +4,31 @@ import { ActionContext } from 'vuex';
 import { DistilState } from '../store';
 import { mutations } from './module';
 
-function createCacheable(cacheKey: string, func: (context: ViewContext, args: {[key: string]: string}) => any) {
+enum ParamCacheKey {
+	VARIABLES = 'VARIABLES',
+	VARIABLE_SUMMARIES = 'VARIABLE_SUMMARIES',
+	VARIABLE_RANKINGS = 'VARIABLE_RANKINGS',
+	SOLUTION_REQUESTS = 'SOLUTION_REQUESTS',
+}
+
+function createCacheable(key: ParamCacheKey, func: (context: ViewContext, args: {[key: string]: string}) => any) {
 	return (context: ViewContext, args: {[key: string]: string}) => {
 		// execute provided function if params are not cached already or changed
 		const params = _.values(args).join(':');
-		const cachedParams = context.getters.getFetchParamsCache[cacheKey];
+		const cachedParams = context.getters.getFetchParamsCache[key];
 		if (cachedParams !== params) {
-			mutations.setFetchParamsCache(context, { key: cacheKey, value: params});
+			mutations.setFetchParamsCache(context, { key, value: params});
 			return Promise.resolve(func(context, args));
 		}
 		return Promise.resolve();
 	};
 }
 
-const fetchVariables = createCacheable('variables', (context, args) => {
+const fetchVariables = createCacheable(ParamCacheKey.VARIABLES, (context, args) => {
 	return context.dispatch('fetchVariables', args);
 });
 
-const fetchVariableSummaries = createCacheable('variableSummaries', (context, args) => {
+const fetchVariableSummaries = createCacheable(ParamCacheKey.VARIABLE_SUMMARIES, (context, args) => {
 	return fetchVariables(context, args).then(() => {
 		const dataset = args.dataset;
 		const variables = context.getters.getVariables;
@@ -29,14 +36,14 @@ const fetchVariableSummaries = createCacheable('variableSummaries', (context, ar
 	});
 });
 
-const fetchVaraibleRankings = createCacheable('variableRankings', (context, args) => {
+const fetchVaraibleRankings = createCacheable(ParamCacheKey.VARIABLE_RANKINGS, (context, args) => {
 	// if target or dataset has changed, clear previous rankings before re-fetch
 	// this is needed because since user decides variable rankings to be updated, re-fetching doesn't always replace the previous data
 	context.dispatch('updateVariableRankings', undefined);
 	context.dispatch('fetchVariableRankings', args);
 });
 
-const fetchSolutionRequests = createCacheable('solutionRequests', (context, args) => {
+const fetchSolutionRequests = createCacheable(ParamCacheKey.SOLUTION_REQUESTS, (context, args) => {
 	return context.dispatch('fetchSolutionRequests', args);
 });
 
@@ -139,10 +146,15 @@ export const actions = {
 		]);
 	},
 
-	fetchSelectTargetData(context: ViewContext) {
+	fetchSelectTargetData(context: ViewContext, clearSummaries: boolean) {
 		// clear previous state
 		context.commit('clearHighlightSummaries');
-		console.log('fetchSelectTargetData');
+		if (clearSummaries) {
+			context.commit('clearVariableSummaries');
+			mutations.setFetchParamsCache(context, { key: ParamCacheKey.VARIABLE_SUMMARIES, value: undefined });
+		}
+
+		// fetch new state
 		const dataset = context.getters.getRouteDataset;
 		const args = { dataset };
 
@@ -151,11 +163,15 @@ export const actions = {
 		});
 	},
 
-	fetchSelectTrainingData(context: ViewContext) {
+	fetchSelectTrainingData(context: ViewContext, clearSummaries: boolean) {
 		// clear any previous state
 		context.commit('clearHighlightSummaries');
 		context.commit('setIncludedTableData', null);
 		context.commit('setExcludedTableData', null);
+		if (clearSummaries) {
+			context.commit('clearVariableSummaries');
+			mutations.setFetchParamsCache(context, { key: ParamCacheKey.VARIABLE_SUMMARIES, value: undefined });
+		}
 
 		const dataset = context.getters.getRouteDataset;
 		const target = context.getters.getRouteTargetVariable;

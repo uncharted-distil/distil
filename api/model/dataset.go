@@ -16,6 +16,8 @@
 package model
 
 import (
+	"time"
+
 	"github.com/pkg/errors"
 
 	"github.com/uncharted-distil/distil-compute/model"
@@ -94,6 +96,44 @@ func (d *Dataset) GetD3MIndexVariable() *model.Variable {
 		if v.Name == model.D3MIndexName {
 			return v
 		}
+	}
+
+	return nil
+}
+
+// UpdateExtremas updates the variable extremas based on the data stored.
+func UpdateExtremas(dataset string, varName string, storageMeta MetadataStorage, storageData DataStorage) error {
+	// get the metadata and then query the data storage for the latest values
+	d, err := storageMeta.FetchDataset(dataset, false, false)
+	if err != nil {
+		return err
+	}
+
+	// find the variable
+	var v *model.Variable
+	for _, variable := range d.Variables {
+		if variable.Name == varName {
+			v = variable
+			break
+		}
+	}
+
+	// only care about datetime and numerical
+	if model.IsDateTime(v.Type) || model.IsNumerical(v.Type) {
+		// get the extrema
+		extrema, err := storageData.FetchExtrema(d.StorageName, v)
+		if err != nil {
+			return err
+		}
+
+		// store the extrema to ES
+		err = storageMeta.SetExtrema(dataset, varName, extrema)
+		if err != nil {
+			return err
+		}
+
+		// TODO: fix this, this shouldn't be necessary
+		time.Sleep(time.Second)
 	}
 
 	return nil

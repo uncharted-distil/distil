@@ -55,23 +55,56 @@ func (s *Storage) parseExtrema(row *pgx.Rows, variable *model.Variable) (*api.Ex
 	}, nil
 }
 
+func (s *Storage) parseDateExtrema(row *pgx.Rows, variable *model.Variable) (*api.Extrema, error) {
+	var minValue *int64
+	var maxValue *int64
+	if row != nil {
+		// Expect one row of data.
+		exists := row.Next()
+		if !exists {
+			return nil, fmt.Errorf("no row found")
+		}
+		err := row.Scan(&minValue, &maxValue)
+		if err != nil {
+			return nil, errors.Wrap(err, "no min / max aggregation found")
+		}
+	}
+	// check values exist
+	if minValue == nil || maxValue == nil {
+		return nil, errors.Errorf("no min / max aggregation values found")
+	}
+	// assign attributes
+	return &api.Extrema{
+		Key:  variable.Name,
+		Type: variable.Type,
+		Min:  float64(*minValue),
+		Max:  float64(*maxValue),
+	}, nil
+}
+
 func (s *Storage) getMinMaxAggsQuery(variable *model.Variable) string {
 	// get min / max agg names
 	minAggName := api.MinAggPrefix + variable.Name
 	maxAggName := api.MaxAggPrefix + variable.Name
 
+	vName := fmt.Sprintf("\"%s\"", variable.Name)
+	if variable.Type == model.DateTimeType {
+		vName = fmt.Sprintf("CAST(extract(epoch from \"%s\") AS INTEGER)", variable.Name)
+	}
+
 	// create aggregations
-	queryPart := fmt.Sprintf("MIN(\"%s\") AS \"%s\", MAX(\"%s\") AS \"%s\"", variable.Name, minAggName, variable.Name, maxAggName)
+	queryPart := fmt.Sprintf("MIN(%s) AS \"%s\", MAX(%s) AS \"%s\"", vName, minAggName, vName, maxAggName)
 	// add aggregations
 	return queryPart
 }
 
-func (s *Storage) fetchExtrema(dataset string, variable *model.Variable) (*api.Extrema, error) {
+// FetchExtrema return extrema of a variable in a result set.
+func (s *Storage) FetchExtrema(storageName string, variable *model.Variable) (*api.Extrema, error) {
 	// add min / max aggregation
 	aggQuery := s.getMinMaxAggsQuery(variable)
 
 	// create a query that does min and max aggregations for each variable
-	queryString := fmt.Sprintf("SELECT %s FROM %s;", aggQuery, dataset)
+	queryString := fmt.Sprintf("SELECT %s FROM %s", aggQuery, storageName)
 
 	// execute the postgres query
 	// NOTE: We may want to use the regular Query operation since QueryRow
@@ -84,6 +117,9 @@ func (s *Storage) fetchExtrema(dataset string, variable *model.Variable) (*api.E
 		defer res.Close()
 	}
 
+	if variable.Type == model.DateTimeType {
+		return s.parseDateExtrema(res, variable)
+	}
 	return s.parseExtrema(res, variable)
 }
 
@@ -185,4 +221,63 @@ func (s *Storage) FetchSummary(dataset string, storageName string, varName strin
 // and variable for data that is part of the result set.
 func (s *Storage) FetchSummaryByResult(dataset string, storageName string, varName string, resultURI string, filterParams *api.FilterParams, extrema *api.Extrema) (*api.Histogram, error) {
 	return s.fetchSummaryData(dataset, storageName, varName, resultURI, filterParams, extrema)
+}
+
+func (s *Storage) fetchTimeseriesSummary(dataset string, storageName string, xColName string, yColName string, resultURI string, interval int, filterParams *api.FilterParams, extrema *api.Extrema) (*api.Histogram, error) {
+
+	// need description of the variables to request aggregation against.
+	timeColVar, err := s.metadata.FetchVariable(dataset, xColName)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to fetch variable description for summary")
+	}
+	variable, err := s.metadata.FetchVariable(dataset, yColName)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to fetch variable description for summary")
+	}
+
+	// get the histogram by using the variable type.
+	var field Field
+
+	if variable.Grouping != nil {
+		return nil, errors.Errorf("not implemented")
+	}
+
+	if model.IsNumerical(variable.Type) {
+		field = NewNumericalField(s, storageName, variable.Name, variable.DisplayName, variable.Type)
+	} else if model.IsCategorical(variable.Type) {
+		field = NewCategoricalField(s, storageName, variable.Name, variable.DisplayName, variable.Type)
+	} else if model.IsVector(variable.Type) {
+		field = NewVectorField(s, storageName, variable.Name, variable.DisplayName, variable.Type)
+	} else if model.IsText(variable.Type) {
+		field = NewTextField(s, storageName, variable.Name, variable.DisplayName, variable.Type)
+	} else if model.IsImage(variable.Type) {
+		field = NewImageField(s, storageName, variable.Name, variable.DisplayName, variable.Type)
+	} else if model.IsDateTime(variable.Type) {
+		field = NewDateTimeField(s, storageName, variable.Name, variable.DisplayName, variable.Type)
+	} else {
+		return nil, errors.Errorf("variable `%s` of type `%s` does not support summary", variable.Name, variable.Type)
+	}
+
+	timeseries, err := field.FetchTimeseriesSummaryData(timeColVar, interval, resultURI, filterParams, extrema)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to fetch summary data")
+	}
+
+	// get number of rows
+	numRows, err := s.FetchNumRows(storageName, []*model.Variable{variable}, nil)
+	if err != nil {
+		return nil, err
+	}
+	timeseries.Type = "timeseries"
+	timeseries.NumRows = numRows
+
+	// add dataset
+	timeseries.Dataset = dataset
+
+	return timeseries, err
+}
+
+// FetchTimeseriesSummary fetches a timeseries.
+func (s *Storage) FetchTimeseriesSummary(dataset string, storageName string, xColName string, yColName string, interval int, filterParams *api.FilterParams) (*api.Histogram, error) {
+	return s.fetchTimeseriesSummary(dataset, storageName, xColName, yColName, "", interval, filterParams, nil)
 }
