@@ -45,7 +45,7 @@ import { isTimeType } from '../util/types';
 import { overlayRouteEntry } from '../util/routes';
 
 export default Vue.extend({
-	name: 'select-view',
+	name: 'select-target-view',
 
 	data() {
 		return {

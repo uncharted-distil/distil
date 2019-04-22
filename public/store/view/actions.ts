@@ -2,6 +2,51 @@ import _ from 'lodash';
 import { ViewState } from './index';
 import { ActionContext } from 'vuex';
 import { DistilState } from '../store';
+import { mutations } from './module';
+import { Dictionary } from '../../util/dict';
+
+enum ParamCacheKey {
+	VARIABLES = 'VARIABLES',
+	VARIABLE_SUMMARIES = 'VARIABLE_SUMMARIES',
+	VARIABLE_RANKINGS = 'VARIABLE_RANKINGS',
+	SOLUTION_REQUESTS = 'SOLUTION_REQUESTS',
+}
+
+function createCacheable(key: ParamCacheKey, func: (context: ViewContext, args: Dictionary<string>) => any) {
+	return (context: ViewContext, args: Dictionary<string>) => {
+		// execute provided function if params are not cached already or changed
+		const params = _.values(args).join(':');
+		const cachedParams = context.getters.getFetchParamsCache[key];
+		if (cachedParams !== params) {
+			mutations.setFetchParamsCache(context, { key, value: params});
+			return Promise.resolve(func(context, args));
+		}
+		return Promise.resolve();
+	};
+}
+
+const fetchVariables = createCacheable(ParamCacheKey.VARIABLES, (context, args) => {
+	return context.dispatch('fetchVariables', args);
+});
+
+const fetchVariableSummaries = createCacheable(ParamCacheKey.VARIABLE_SUMMARIES, (context, args) => {
+	return fetchVariables(context, args).then(() => {
+		const dataset = args.dataset;
+		const variables = context.getters.getVariables;
+		context.dispatch('fetchVariableSummaries', { dataset, variables });
+	});
+});
+
+const fetchVariableRankings = createCacheable(ParamCacheKey.VARIABLE_RANKINGS, (context, args) => {
+	// if target or dataset has changed, clear previous rankings before re-fetch
+	// this is needed because since user decides variable rankings to be updated, re-fetching doesn't always replace the previous data
+	context.dispatch('updateVariableRankings', undefined);
+	context.dispatch('fetchVariableRankings', args);
+});
+
+const fetchSolutionRequests = createCacheable(ParamCacheKey.SOLUTION_REQUESTS, (context, args) => {
+	return context.dispatch('fetchSolutionRequests', args);
+});
 
 export type ViewContext = ActionContext<ViewState, DistilState>;
 
@@ -107,19 +152,15 @@ export const actions = {
 		context.commit('clearHighlightSummaries');
 		if (clearSummaries) {
 			context.commit('clearVariableSummaries');
+			mutations.setFetchParamsCache(context, { key: ParamCacheKey.VARIABLE_SUMMARIES, value: undefined });
 		}
 
 		// fetch new state
 		const dataset = context.getters.getRouteDataset;
+		const args = { dataset };
 
-		return context.dispatch('fetchVariables', {
-			dataset: dataset
-		}).then(() => {
-			const variables = context.getters.getVariables;
-			return context.dispatch('fetchVariableSummaries', {
-				dataset: dataset,
-				variables: variables
-			});
+		return fetchVariables(context, args).then(() => {
+			return fetchVariableSummaries(context, args);
 		});
 	},
 
@@ -130,28 +171,17 @@ export const actions = {
 		context.commit('setExcludedTableData', null);
 		if (clearSummaries) {
 			context.commit('clearVariableSummaries');
+			mutations.setFetchParamsCache(context, { key: ParamCacheKey.VARIABLE_SUMMARIES, value: undefined });
 		}
 
-		// fetch new state
 		const dataset = context.getters.getRouteDataset;
-
-		return context.dispatch('fetchVariables', {
-			dataset: dataset
+		const target = context.getters.getRouteTargetVariable;
+		// fetch new state
+		return fetchVariables(context, { dataset }).then(() => {
+			fetchVariableRankings(context, { dataset, target });
+			return fetchVariableSummaries(context, { dataset });
 		}).then(() => {
-			const variables = context.getters.getVariables;
-			const target = context.getters.getRouteTargetVariable;
-			return Promise.all([
-				context.dispatch('fetchVariableSummaries', {
-					dataset: dataset,
-					variables: variables
-				}),
-				context.dispatch('fetchVariableRankings', {
-					dataset: dataset,
-					target: target
-				})
-			]).then(() => {
-				return context.dispatch('updateSelectTrainingData');
-			});
+			return context.dispatch('updateSelectTrainingData');
 		});
 	},
 
@@ -195,26 +225,14 @@ export const actions = {
 		context.commit('setIncludedResultTableData', null);
 		context.commit('setExcludedResultTableData', null);
 
-		// fetch new state
 		const dataset = context.getters.getRouteDataset;
-
-		return context.dispatch('fetchVariables', {
-			dataset: dataset
+		const target = context.getters.getRouteTargetVariable;
+		// fetch new state
+		return fetchVariables(context, { dataset }).then(() => {
+			fetchVariableRankings(context, { dataset, target });
+			return fetchSolutionRequests(context, { dataset, target });
 		}).then(() => {
-
-			const target = context.getters.getRouteTargetVariable;
-
-			context.dispatch('fetchVariableRankings', {
-				dataset: dataset,
-				target: target
-			});
-
-			context.dispatch('fetchSolutionRequests', {
-				dataset: dataset,
-				target: target
-			}).then(() => {
-				return context.dispatch('updateResultsSolution');
-			});
+			return context.dispatch('updateResultsSolution');
 		});
 	},
 

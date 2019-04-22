@@ -72,7 +72,7 @@ import { Variable } from '../store/dataset/index';
 import { getTimeseriesAnalysisIntervals } from '../util/data';
 
 export default Vue.extend({
-	name: 'select-view',
+	name: 'select-training-view',
 	components: {
 		CreateSolutionsForm,
 		SelectDataSlot,
@@ -179,7 +179,6 @@ export default Vue.extend({
 			viewActions.fetchSelectTrainingData(this.$store, true);
 		}
 	},
-
 	beforeMount() {
 		viewActions.fetchSelectTrainingData(this.$store, false);
 	},
