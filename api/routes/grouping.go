@@ -17,7 +17,6 @@ package routes
 
 import (
 	"net/http"
-	"time"
 
 	"github.com/pkg/errors"
 	"goji.io/pat"
@@ -105,9 +104,6 @@ func GroupingHandler(dataCtor api.DataStorageCtor, metaCtor api.MetadataStorageC
 			return
 		}
 
-		// sleep for es
-		time.Sleep(time.Second)
-
 		// marshal data
 		err = handleJSON(w, map[string]interface{}{
 			"success": true,
@@ -157,9 +153,6 @@ func RemoveGroupingHandler(dataCtor api.DataStorageCtor, metaCtor api.MetadataSt
 			handleError(w, err)
 			return
 		}
-
-		// sleep for es
-		time.Sleep(time.Second)
 
 		// marshal data
 		err = handleJSON(w, map[string]interface{}{

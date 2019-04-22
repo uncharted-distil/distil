@@ -209,6 +209,7 @@ func (s *Storage) updateVariables(dataset string, variables []*model.Variable) e
 		Type(metadataType).
 		Id(dataset).
 		Doc(source).
+		Refresh("true").
 		Do(context.Background())
 	if err != nil {
 		return errors.Wrapf(err, "failed to add document to index `%s`", s.index)
@@ -344,6 +345,7 @@ func (s *Storage) AddGrouping(datasetName string, grouping model.Grouping) error
 		Type(metadataType).
 		Id(datasetName).
 		BodyJson(source).
+		Refresh("true").
 		Do(context.Background())
 	if err != nil {
 		return errors.Wrapf(err, "failed to add document to index `%s`", s.index)
@@ -401,6 +403,7 @@ func (s *Storage) RemoveGrouping(datasetName string, grouping model.Grouping) er
 		Type(metadataType).
 		Id(datasetName).
 		BodyJson(source).
+		Refresh("true").
 		Do(context.Background())
 	if err != nil {
 		return errors.Wrapf(err, "failed to add document to index `%s`", s.index)
