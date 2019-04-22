@@ -17,26 +17,26 @@ function createCacheable(cacheKey: string, func: (context: ViewContext, args: {[
 	};
 }
 
-const updateVariables = createCacheable('fetchVariables', (context, args) => {
+const fetchVariables = createCacheable('variables', (context, args) => {
 	return context.dispatch('fetchVariables', args);
 });
 
-const updateVariableSummaries = createCacheable('fetchSummaries', (context, args) => {
-	return updateVariables(context, args).then(() => {
+const fetchVariableSummaries = createCacheable('variableSummaries', (context, args) => {
+	return fetchVariables(context, args).then(() => {
 		const dataset = args.dataset;
 		const variables = context.getters.getVariables;
 		context.dispatch('fetchVariableSummaries', { dataset, variables });
 	});
 });
 
-const updateVariableRankings = createCacheable('fetchVariableRankings', (context, args) => {
+const fetchVaraibleRankings = createCacheable('variableRankings', (context, args) => {
 	// if target or dataset has changed, clear previous rankings before re-fetch
 	// this is needed because since user decides variable rankings to be updated, re-fetching doesn't always replace the previous data
 	context.dispatch('updateVariableRankings', undefined);
 	context.dispatch('fetchVariableRankings', args);
 });
 
-const updateSolutionRequests = createCacheable('fetchSolutionRequests', (context, args) => {
+const fetchSolutionRequests = createCacheable('solutionRequests', (context, args) => {
 	return context.dispatch('fetchSolutionRequests', args);
 });
 
@@ -146,8 +146,8 @@ export const actions = {
 		const dataset = context.getters.getRouteDataset;
 		const args = { dataset };
 
-		return updateVariables(context, args).then(() => {
-			return updateVariableSummaries(context, args);
+		return fetchVariables(context, args).then(() => {
+			return fetchVariableSummaries(context, args);
 		});
 	},
 
@@ -160,9 +160,9 @@ export const actions = {
 		const dataset = context.getters.getRouteDataset;
 		const target = context.getters.getRouteTargetVariable;
 		// fetch new state
-		return updateVariables(context, { dataset }).then(() => {
-			updateVariableRankings(context, { dataset, target });
-			return updateVariableSummaries(context, { dataset });
+		return fetchVariables(context, { dataset }).then(() => {
+			fetchVaraibleRankings(context, { dataset, target });
+			return fetchVariableSummaries(context, { dataset });
 		}).then(() => {
 			return context.dispatch('updateSelectTrainingData');
 		});
@@ -211,9 +211,9 @@ export const actions = {
 		const dataset = context.getters.getRouteDataset;
 		const target = context.getters.getRouteTargetVariable;
 		// fetch new state
-		return updateVariables(context, { dataset }).then(() => {
-			updateVariableRankings(context, { dataset, target });
-			return updateSolutionRequests(context, { dataset, target });
+		return fetchVariables(context, { dataset }).then(() => {
+			fetchVaraibleRankings(context, { dataset, target });
+			return fetchSolutionRequests(context, { dataset, target });
 		}).then(() => {
 			return context.dispatch('updateResultsSolution');
 		});
