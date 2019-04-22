@@ -82,6 +82,11 @@ func (s *Storage) SetDataType(dataset string, varName string, varType string) er
 	return errors.Errorf("Not supported")
 }
 
+// SetExtrema is not supported by the datamart.
+func (s *Storage) SetExtrema(dataset string, varName string, extrema *api.Extrema) error {
+	return errors.Errorf("Not supported")
+}
+
 // AddVariable is not supported by the datamart.
 func (s *Storage) AddVariable(dataset string, varName string, varType string, varRole string) error {
 	return errors.Errorf("Not supported")
@@ -94,6 +99,11 @@ func (s *Storage) DeleteVariable(dataset string, varName string) error {
 
 // AddGrouping adds a variable grouping.
 func (s *Storage) AddGrouping(datasetName string, grouping model.Grouping) error {
+	return errors.Errorf("Not supported")
+}
+
+// RemoveGrouping removes a variable grouping.
+func (s *Storage) RemoveGrouping(datasetName string, grouping model.Grouping) error {
 	return errors.Errorf("Not supported")
 }
 

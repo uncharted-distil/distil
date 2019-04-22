@@ -31,6 +31,10 @@ export const getters = {
 	getFiles: read(moduleGetters.getFiles),
 	getTimeseries: read(moduleGetters.getTimeseries),
 	getTimeseriesExtrema: read(moduleGetters.getTimeseriesExtrema),
+	// timeseries analysis
+	getTimeseriesAnalysisVariable: read(moduleGetters.getTimeseriesAnalysisVariable),
+	getTimeseriesAnalysisExtrema: read(moduleGetters.getTimeseriesAnalysisExtrema),
+	getTimeseriesAnalysisRange: read(moduleGetters.getTimeseriesAnalysisRange),
 	// join data
 	getJoinDatasetsTableData: read(moduleGetters.getJoinDatasetsTableData),
 	// included data
@@ -55,6 +59,7 @@ export const actions = {
 	geocodeVariable: dispatch(moduleActions.geocodeVariable),
 	importDataset: dispatch(moduleActions.importDataset),
 	setGrouping: dispatch(moduleActions.setGrouping),
+	removeGrouping: dispatch(moduleActions.removeGrouping),
 	uploadDataFile: dispatch(moduleActions.uploadDataFile),
 	// variables
 	fetchVariables: dispatch(moduleActions.fetchVariables),

@@ -19,7 +19,6 @@ import (
 	"encoding/json"
 	"io/ioutil"
 	"net/http"
-	"time"
 
 	"github.com/pkg/errors"
 	"goji.io/pat"
@@ -68,8 +67,12 @@ func VariableTypeHandler(storageCtor api.DataStorageCtor, metaCtor api.MetadataS
 			return
 		}
 
-		// TODO: fix this, this shouldn't be necessary
-		time.Sleep(time.Second)
+		// update the extremas stored in ES
+		err = api.UpdateExtremas(dataset, field, meta, storage)
+		if err != nil {
+			handleError(w, errors.Wrap(err, "unable to update the extremas in metadata"))
+			return
+		}
 
 		// marshal data
 		err = handleJSON(w, map[string]interface{}{

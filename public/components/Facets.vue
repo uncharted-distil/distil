@@ -96,6 +96,7 @@ export default Vue.extend({
 		this.processedGroups.forEach(group => {
 			this.augmentGroup(group, this.facets.getGroup(group.key));
 			this.injectHTML(group, this.facets.getGroup(group.key)._element);
+			this.updateImportantBadge(group);
 		});
 
 		// proxy events
@@ -813,15 +814,16 @@ export default Vue.extend({
 			}
 			// sort alphabetically
 			this.facets.sort(this.sort);
-
-			// update 'important' class
-			currGroups.forEach((group: Group) => {
-				const $group = this.facets.getGroup(group.key)._element;
-				$group.toggleClass('important', Boolean(group.isImportant));
-			});
+			currGroups.forEach(this.updateImportantBadge);
 
 			// return unchanged groups
 			return unchanged;
+		},
+
+		updateImportantBadge(group: Group) {
+			// update 'important' class
+			const $group = this.facets.getGroup(group.key)._element;
+			$group.toggleClass('important', Boolean(group.isImportant));
 		},
 
 		updateCollapsed(unchangedGroups) {

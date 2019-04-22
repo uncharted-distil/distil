@@ -51,6 +51,11 @@ export const actions = {
 
 		const datasetA = args.datasets[0];
 		const datasetB = args.datasets[1];
+
+		if (!datasetA || !datasetB) {
+			return null;
+		}
+
 		const datasetALookup = buildLookup(datasetA.variables.map(v => v.colName));
 		const datasetBLookup = buildLookup(datasetB.variables.map(v => v.colName));
 		const datasetAVariables = args.variables.filter(v => datasetALookup[v.colName]);

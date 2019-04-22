@@ -133,6 +133,11 @@ func (s *Storage) FetchTimeseries(dataset string, storageName string, timeseries
 	return s.parseTimeseries(res)
 }
 
+// FetchTimeseriesSummaryData pulls summary data from the database and builds a histogram.
+func (f *TimeSeriesField) FetchTimeseriesSummaryData(timeVar *model.Variable, interval int, resultURI string, filterParams *api.FilterParams, extrema *api.Extrema) (*api.Histogram, error) {
+	return nil, fmt.Errorf("not implemented")
+}
+
 // FetchSummaryData pulls summary data from the database and builds a histogram.
 func (f *TimeSeriesField) FetchSummaryData(resultURI string, filterParams *api.FilterParams, extrema *api.Extrema) (*api.Histogram, error) {
 	var histogram *api.Histogram
