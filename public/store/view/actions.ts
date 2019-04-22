@@ -4,60 +4,41 @@ import { ActionContext } from 'vuex';
 import { DistilState } from '../store';
 import { mutations } from './module';
 
-const cachedParams = {
-	fetchVariables: '',
-	fetchVariableSummaries: '',
-	fetchVariableRankings: '',
-	fetchSolutionRequests: '',
-};
-
-function updateVariables(context: ViewContext, dataset: string) {
-
-	const result = { dataset, variables: context.getters.getVariables };
-
-	console.log(cachedParams);
-	if (cachedParams.fetchVariables !== dataset) {
-		cachedParams.fetchVariables = dataset;
-		console.log('fetchVariables');
-		return context.dispatch('fetchVariables', { dataset }).then(() => {
-			result.variables = context.getters.getVariables;
-			return result;
-		});
-	}
-	return Promise.resolve(result);
+function createCacheable(cacheKey: string, func: (context: ViewContext, args: {[key: string]: string}) => any) {
+	return (context: ViewContext, args: {[key: string]: string}) => {
+		// execute provided function if params are not cached already or changed
+		const params = _.values(args).join(':');
+		const cachedParams = context.getters.getFetchParamsCache[cacheKey];
+		if (cachedParams !== params) {
+			mutations.setFetchParamsCache(context, { key: cacheKey, value: params});
+			return Promise.resolve(func(context, args));
+		}
+		return Promise.resolve();
+	};
 }
 
-function updateVariableSummaries(context: ViewContext, dataset: string) {
-	if (cachedParams.fetchVariableSummaries !== dataset) {
-		cachedParams.fetchVariableSummaries = dataset;
-		return updateVariables(context, dataset).then(result => {
-		console.log('fetchVariablesSummaries');
-			context.dispatch('fetchVariableSummaries', { dataset: result.dataset, variables: result.variables });
-		});
-	}
-	return Promise.resolve();
-}
+const updateVariables = createCacheable('fetchVariables', (context, args) => {
+	return context.dispatch('fetchVariables', args);
+});
 
-function updateVariableRankings(context: ViewContext, dataset: string, target: string) {
-	const cacheParams = `${dataset}:${target}`;
-	if (cachedParams.fetchVariableRankings !== cacheParams) {
-		cachedParams.fetchVariableRankings = cacheParams;
+const updateVariableSummaries = createCacheable('fetchSummaries', (context, args) => {
+	return updateVariables(context, args).then(() => {
+		const dataset = args.dataset;
+		const variables = context.getters.getVariables;
+		context.dispatch('fetchVariableSummaries', { dataset, variables });
+	});
+});
 
-		// if target or dataset has changed, clear previous rankings before re-fetch
-		// this is needed because since user decides variable rankings to be updated, re-fetching doesn't always replace the previous data
-		context.dispatch('updateVariableRankings', undefined);
-		context.dispatch('fetchVariableRankings', { dataset: dataset, target });
-	}
-}
+const updateVariableRankings = createCacheable('fetchVariableRankings', (context, args) => {
+	// if target or dataset has changed, clear previous rankings before re-fetch
+	// this is needed because since user decides variable rankings to be updated, re-fetching doesn't always replace the previous data
+	context.dispatch('updateVariableRankings', undefined);
+	context.dispatch('fetchVariableRankings', args);
+});
 
-function updateSolutionRequests(context: ViewContext, dataset: string, target: string) {
-	const cacheParams = `${dataset}:${target}`;
-	if (cachedParams.fetchSolutionRequests !== cacheParams) {
-		cachedParams.fetchSolutionRequests = cacheParams;
-		console.log('fetchSolutionRequests');
-		return context.dispatch('fetchSolutionRequests', { dataset, target, });
-	}
-}
+const updateSolutionRequests = createCacheable('fetchSolutionRequests', (context, args) => {
+	return context.dispatch('fetchSolutionRequests', args);
+});
 
 export type ViewContext = ActionContext<ViewState, DistilState>;
 
@@ -161,11 +142,12 @@ export const actions = {
 	fetchSelectTargetData(context: ViewContext) {
 		// clear previous state
 		context.commit('clearHighlightSummaries');
-
+		console.log('fetchSelectTargetData');
 		const dataset = context.getters.getRouteDataset;
+		const args = { dataset };
 
-		return updateVariables(context, dataset).then(result => {
-			return updateVariableSummaries(context, dataset);
+		return updateVariables(context, args).then(() => {
+			return updateVariableSummaries(context, args);
 		});
 	},
 
@@ -178,9 +160,9 @@ export const actions = {
 		const dataset = context.getters.getRouteDataset;
 		const target = context.getters.getRouteTargetVariable;
 		// fetch new state
-		return updateVariables(context, dataset).then(result => {
-			updateVariableRankings(context, dataset, target);
-			return updateVariableSummaries(context, dataset);
+		return updateVariables(context, { dataset }).then(() => {
+			updateVariableRankings(context, { dataset, target });
+			return updateVariableSummaries(context, { dataset });
 		}).then(() => {
 			return context.dispatch('updateSelectTrainingData');
 		});
@@ -229,9 +211,9 @@ export const actions = {
 		const dataset = context.getters.getRouteDataset;
 		const target = context.getters.getRouteTargetVariable;
 		// fetch new state
-		return updateVariables(context, dataset).then(() => {
-			updateVariableRankings(context, dataset, target);
-			return updateSolutionRequests(context, dataset, target);
+		return updateVariables(context, { dataset }).then(() => {
+			updateVariableRankings(context, { dataset, target });
+			return updateSolutionRequests(context, { dataset, target });
 		}).then(() => {
 			return context.dispatch('updateResultsSolution');
 		});

@@ -8,6 +8,11 @@ import { getters as routeGetters } from '../route/module';
 import { getters as solutionGetters } from '../solutions/module';
 
 export const getters = {
+
+	getFetchParamsCache(state: ViewState) {
+		return state.fetchParamsCache;
+	},
+
 	getJoinDatasetsPaginatedVariables(state: ViewState): Variable[] {
 		const joinDatasetsVarsPage = routeGetters.getRouteJoinDatasetsVarsParge(store);
 		const joinDatasetsVariables = routeGetters.getJoinDatasetsVariables(store);

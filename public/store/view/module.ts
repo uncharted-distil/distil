@@ -17,10 +17,12 @@ const { commit, read, dispatch } = getStoreAccessors<ViewState, DistilState>(nul
 
 export const getters = {
 	getSelectTrainingPaginatedVariables: read(moduleGetters.getSelectTrainingPaginatedVariables),
-	getResultsPaginatedVariables: read(moduleGetters.getResultsPaginatedVariables)
+	getResultsPaginatedVariables: read(moduleGetters.getResultsPaginatedVariables),
+	getFetchParamsCache: read(moduleGetters.getFetchParamsCache),
 };
 
 export const mutations = {
+	setFetchParamsCache: commit(moduleMutations.setFetchParamsCache),
 };
 
 export const actions = {
