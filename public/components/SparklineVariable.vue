@@ -7,7 +7,8 @@
 		<sparkline-svg class="sparkline-variable-chart"
 			:highlight-pixel-x="highlightPixelX"
 			:timeseries-extrema="timeseriesExtrema"
-			:timeseries="timeseries">
+			:timeseries="timeseries"
+			:forecast="forecast">
 		</sparkline-svg>
 	</div>
 
@@ -31,6 +32,7 @@ export default Vue.extend({
 	props: {
 		label: String as () => string,
 		timeseries: Array as () => number[][],
+		forecast: Array as () => number[][],
 		highlightPixelX: {
 			type: Number as () => number
 		},

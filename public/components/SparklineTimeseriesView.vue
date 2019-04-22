@@ -21,6 +21,7 @@
 					<sparkline-variable
 						:label="timeseries.label"
 						:timeseries="timeseries.timeseries"
+						:forecast="timeseries.forecast"
 						:timeseries-extrema="timeseriesVariableExtrema(timeseries.key)"
 						:highlight-pixel-x="highlightPixelX">
 					</sparkline-variable>
@@ -160,37 +161,107 @@ export default Vue.extend({
 		},
 
 		timeseriesVariableSummaries(): any[] {
+
+			function getStatsFromData(points: number[][], forecast: number[][]) {
+				const stats = {
+					xMin: Infinity,
+					xMax: -Infinity,
+					yMin: Infinity,
+					yMax: -Infinity,
+					sum: 0
+				};
+				for (let i = 0; i < points.length; i++) {
+					stats.xMin = Math.min(stats.xMin, Math.min(points[i][0]));
+					stats.xMax = Math.max(stats.xMax, Math.max(points[i][0]));
+					stats.yMin = Math.min(stats.yMin, Math.min(points[i][1]));
+					stats.yMax = Math.max(stats.yMax, Math.max(points[i][1]));
+					stats.sum += points[i][1];
+				}
+				if (forecast) {
+					for (let i = 0; i < forecast.length; i++) {
+						stats.xMin = Math.min(stats.xMin, Math.min(forecast[i][0]));
+						stats.xMax = Math.max(stats.xMax, Math.max(forecast[i][0]));
+						stats.yMin = Math.min(stats.yMin, Math.min(forecast[i][1]));
+						stats.yMax = Math.max(stats.yMax, Math.max(forecast[i][1]));
+					}
+				}
+				return stats;
+			}
+
+			function DEBUG_forecastData(points: number[][]) {
+				const START_X = 0.8;
+				const FORECAST_LENGTH = 0.8;
+
+				const startIndex = Math.floor(points.length * START_X);
+
+				const startX = points[startIndex][0];
+				const startY = points[startIndex][1];
+
+				const firstX = points[0][0];
+				const lastX = points[points.length - 1][0];
+				const range = lastX - firstX;
+				const stopX = lastX + (range * FORECAST_LENGTH);
+				const interval = range / points.length;
+				const numPoints = (stopX - startX) / interval;
+
+				const res = [];
+				for (let i = 0; i < numPoints; i++) {
+					res.push([startX + (i * interval), startY * Math.random() * 3]);
+				}
+				console.log('forecast', res);
+				return res;
+			}
+
 			let timeseries = [];
 			this.variableSummaries.forEach(v => {
 				if (this.isTimeseriesAnalysis && v.categoryBuckets) {
 					// timeseries analysis view
 					const categories = [];
 					_.forIn(v.categoryBuckets, (buckets, category) => {
+
+						const points = buckets.map(b => [ _.parseInt(b.key), b.count ]);
+
+						// DEBUG: TEMPORARY DATA
+						const forecast = DEBUG_forecastData(points);
+
+						const stats = getStatsFromData(points, forecast);
+
 						categories.push({
 							label: `${v.label} - ${category}`,
 							key: v.key,
-							timeseries: buckets.map(b => [ _.parseInt(b.key), b.count ]),
-							xMin: v.extrema.min,
-							xMax: v.extrema.max,
-							yMin: _.minBy(buckets, d => d.count).count,
-							yMax: _.maxBy(buckets, d => d.count).count,
-							sum: _.sumBy(buckets, d => d.count)
+							timeseries: points,
+							forecast: forecast,
+							xMin: stats.xMin,
+							xMax: stats.xMax,
+							yMin: stats.yMin,
+							yMax: stats.yMax,
+							sum: stats.sum
 						});
 					});
 					// highest sum first
 					categories.sort((a, b) => { return b.sum - a.sum; });
 					timeseries = timeseries.concat(categories);
+
 				} else if (!this.isTimeseriesAnalysis && v.buckets) {
+
+					const points = v.buckets.map(b => [ _.parseInt(b.key), b.count ]);
+
+					// DEBUG: TEMPORARY DATA
+					const forecast = DEBUG_forecastData(points);
+
+					const stats = getStatsFromData(points, forecast);
+
 					// regular timeseries variable
 					timeseries.push({
 						label: v.label,
 						key: v.key,
-						timeseries: v.buckets.map(b => [ _.parseInt(b.key), b.count ]),
-						xMin: v.extrema.min,
-						xMax: v.extrema.max,
-						yMin: _.minBy(v.buckets, d => d.count).count,
-						yMax: _.maxBy(v.buckets, d => d.count).count,
-						sum: _.sumBy(v.buckets, d => d.count)
+						timeseries: points,
+						forecast: forecast,
+						xMin: stats.xMin,
+						xMax: stats.xMax,
+						yMin: stats.yMin,
+						yMax: stats.yMax,
+						sum: stats.sum
 					});
 				}
 			});

@@ -34,6 +34,7 @@ export default Vue.extend({
 			type: Number as () => number
 		},
 		timeseries: Array as () => number[][],
+		forecast: Array as () => number[][],
 		timeseriesExtrema: {
 			type: Object as () => TimeseriesExtrema
 		}
@@ -182,6 +183,29 @@ export default Vue.extend({
 				.attr('class', 'line')
 				.attr('d', line);
 		},
+		injectPrediction() {
+
+			if (!this.$svg || !this.forecast) {
+				return;
+			}
+
+			const line = d3.line()
+			.x(d => this.xScale(d[0]))
+			.y(d => this.yScale(d[1]))
+			.curve(d3.curveLinear);
+
+			const g = this.svg.append('g')
+			.attr('transform', `translate(${this.margin.left}, ${this.margin.top})`);
+
+			g.datum(this.forecast);
+
+			g.append('path')
+			.attr('fill', 'none')
+			.attr('class', 'line')
+			.attr('stroke', '#00c6e1')
+			.attr('d', line);
+
+		},
 		injectTimeseries() {
 			if (_.isEmpty(this.timeseries) || !this.$refs.svg) {
 				return;
@@ -199,6 +223,7 @@ export default Vue.extend({
 
 			this.clearSVG();
 			this.injectSparkline();
+			this.injectPrediction();
 
 			this.hasRendered = true;
 		}
