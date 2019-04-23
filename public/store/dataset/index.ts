@@ -57,6 +57,13 @@ export interface Dataset {
 	numRows: number;
 	provenance: string;
 	source: string;
+	joinSuggestion?: JoinSuggestion[];
+}
+
+export interface JoinSuggestion {
+	baseDataset: string;
+	baseColumns: string[];
+	joinColumns: string[];
 }
 
 export interface Extrema {
@@ -177,7 +184,7 @@ export interface JoinSuggestionPendingRequest {
 	status: DatasetPendingRequestStatus;
 	type: DatasetPendingRequestType.JOIN_SUGGESTION;
 	dataset: string;
-	result: string;
+	suggestions: Dataset[];
 }
 
 export type DatasetPendingRequest =

@@ -150,12 +150,13 @@ export const actions = {
 			dataset: args.dataset,
 			type: DatasetPendingRequestType.JOIN_SUGGESTION,
 			status: DatasetPendingRequestStatus.PENDING,
-			result: undefined,
+			suggestions: undefined,
 		};
 		mutations.updatePendingRequests(context, request);
 		return axios.get(`/distil/join-suggestions/${args.dataset}`, { params: { search: 'weather' } })
 			.then((response) => {
-				mutations.updatePendingRequests(context, { ...request, status: DatasetPendingRequestStatus.RESOLVED, result: response.data });
+				const suggestions = response.data && response.data.datasets;
+				mutations.updatePendingRequests(context, { ...request, status: DatasetPendingRequestStatus.RESOLVED, suggestions });
 			})
 			.catch(error => {
 				mutations.updatePendingRequests(context, { ...request, status: DatasetPendingRequestStatus.ERROR });

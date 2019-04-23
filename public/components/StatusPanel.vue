@@ -1,7 +1,7 @@
 <template>
 
 <div class="status-panel" v-if="isOpen">
-	<div>
+	<div class="d-flex flex-column h-100">
 		<div class="heading">
 			<h4 class="title">{{ contentData.title }}</h4>
 			<div class="close-button" @click="close()">
@@ -15,33 +15,17 @@
 			</div>
 			<div v-else-if="isResolved">
 				<div v-if="this.statusType === 'JOIN_SUGGESTION'">
-					<div v-for="dataset in requestData.result.datasets" :key="dataset.id">
-						<p>
-							{{dataset.id}}
-						</p>
-						<p>
-							name: {{dataset.name}}
-						</p>
-						<p>
-							{{dataset.description}}
-						</p>
-						<p>
-							rows: {{dataset.numRows}}
-						</p>
-						<p>
-							size: {{dataset.numBytes}}
-						</p>
-					</div>
+					<status-panel-join></status-panel-join>
 				</div>
-				<div v-esle>
+				<div v-else>
 					<div>
 						<p>
 							{{ contentData.resolvedMsg }}
 						</p>
 					</div>
+					<b-button variant="primary" @click="applyChange">Apply</b-button>
+					<b-button variant="secondary" @click="clearData">Discard</b-button>
 				</div>
-				<b-button variant="primary" @click="applyChange">Apply</b-button>
-				<b-button variant="secondary" @click="clearData">Discard</b-button>
 			</div>
 			<div v-else-if="isError">
 				<div>
@@ -60,6 +44,8 @@
 <script lang="ts">
 
 import Vue from 'vue';
+import axios from 'axios';
+import StatusPanelJoin from '../components/StatusPanelJoin';
 import { DatasetPendingRequest, DatasetPendingRequestType, VariableRankingPendingRequest, DatasetPendingRequestStatus, GeocodingPendingRequest } from '../store/dataset/index';
 import { actions as datasetActions, getters as datasetGetters } from '../store/dataset/module';
 import { actions as appActions, getters as appGetters } from '../store/app/module';
@@ -68,6 +54,9 @@ import { StatusPanelState, StatusPanelContentType } from '../store/app';
 
 export default Vue.extend({
 	name: 'status-panel',
+	components: {
+		StatusPanelJoin,
+	},
 	computed: {
 		dataset(): string {
 			return routeGetters.getRouteDataset(this.$store);
@@ -79,6 +68,7 @@ export default Vue.extend({
 			return this.statusPanelState.isOpen;
 		},
 		statusType(): StatusPanelContentType {
+			console.log(this.statusPanelState.contentType);
 			return this.statusPanelState.contentType;
 		},
 		requestData: function () {
@@ -125,8 +115,7 @@ export default Vue.extend({
 					return {
 						title: 'Join Suggestion',
 						pendingMsg: '',
-						resolvedMsg: 'Suggested data sets for join',
-						errorMsg: '',
+						errorMsg: 'Unexpected error has happened while retreving join suggestions',
 					};
 				default:
 					return {
@@ -169,7 +158,7 @@ export default Vue.extend({
 			if (this.requestData) {
 				datasetActions.removePendingRequest(this.$store, this.requestData.id);
 			}
-		}
+		},
 	}
 });
 
@@ -201,6 +190,7 @@ export default Vue.extend({
 
 .status-panel .content {
 	padding: 10px;
+	overflow: auto;
 }
 
 .status-panel .title {
