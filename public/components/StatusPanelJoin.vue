@@ -59,7 +59,6 @@ import { actions as datasetActions, getters as datasetGetters } from '../store/d
 import { actions as appActions, getters as appGetters } from '../store/app/module';
 import { getters as routeGetters } from '../store/route/module';
 import { StatusPanelState, StatusPanelContentType } from '../store/app';
-import { Promise, async } from 'q';
 
 interface JoinSuggestionItem {
 	dataset: Dataset;
@@ -145,7 +144,8 @@ export default Vue.extend({
 			const selected = this.suggestionItems[this.selectedIndex];
 			if (selected.isAvailable === undefined) { return; }
 			if (selected.isAvailable === false) {
-				this.$refs['import-ask-modal'].show();
+				const importAskModal: any = this.$refs['import-ask-modal'];
+				importAskModal.show();
 			}
 		},
 		checkDatasetExist(datasetId) {
@@ -160,7 +160,7 @@ export default Vue.extend({
 			if (!this.isImporting) {
 				datasetActions.importJoinDataset(this.$store, {datasetID: id, source: 'contrib', provenance, time: 20000}).then(() => {
 					this.importedItem.isAvailable = true;
-				})
+				});
 			}
 		},
 	},
@@ -173,7 +173,7 @@ export default Vue.extend({
 		this.updateSuggestionItems();
 	},
 	beforeDestroy() {
-		const importRequest = this.joinDatasetImportRequestData; 
+		const importRequest = this.joinDatasetImportRequestData;
 		if (importRequest && importRequest.status !== DatasetPendingRequestStatus.PENDING) {
 			datasetActions.updatePendingRequestStatus(this.$store, {
 				id: importRequest.id,
