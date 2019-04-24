@@ -20,7 +20,27 @@
 				</p>
 			</div>
         </div>
-        <b-button :disabled="!selectedItem || !selectedItem.isAvailable" variant="primary" @click="join">Join</b-button>
+		<div class="status-message">
+			<div v-if="isImporting && importedDataset">
+				Importing dataset, <b>{{ importedDataset.name }}</b> ...
+			</div>
+			<div v-else-if="isImportRequestResolved">
+				dataset, <b>{{ importedDataset.name }}</b> imported successfully
+			</div>
+			<div v-else-if="isImportRequestError">
+				Error has occured while importing dataset, <b>{{ importedDataset.name }}</b>
+			</div>
+		</div>
+        <b-button :disabled="!isJoinReady" variant="primary" @click="join">Join</b-button>
+		<b-modal
+			v-if="selectedDataset"
+			id="join-import-modal"
+			ref="import-ask-modal"
+			title="JoinSuggestionImport"
+			@ok="importDataset"
+		>
+			<p class="">Dataset, <b>{{ selectedDataset.name }}</b> is not available in the system. Would you like to import the dataset?</p>
+		</b-modal>
     </div>
 </template>
 
@@ -31,12 +51,15 @@ import axios from 'axios';
 import {
 	Dataset,
 	DatasetPendingRequestType,
-	JoinSuggestionPendingRequest
+	DatasetPendingRequestStatus,
+	JoinSuggestionPendingRequest,
+	JoinDatasetImportPendingRequest,
 } from '../store/dataset/index';
 import { actions as datasetActions, getters as datasetGetters } from '../store/dataset/module';
 import { actions as appActions, getters as appGetters } from '../store/app/module';
 import { getters as routeGetters } from '../store/route/module';
 import { StatusPanelState, StatusPanelContentType } from '../store/app';
+import { Promise, async } from 'q';
 
 interface JoinSuggestionItem {
 	dataset: Dataset;
@@ -66,12 +89,41 @@ export default Vue.extend({
 			return <JoinSuggestionPendingRequest>request;
 		},
 		joinSuggestoins(): Dataset[] {
-			const joinSuggestions = this.joinSuggestionRequestData.suggestions;
-			return joinSuggestions;
+			const joinSuggestions = this.joinSuggestionRequestData && this.joinSuggestionRequestData.suggestions;
+			return joinSuggestions || [];
+		},
+		joinDatasetImportRequestData(): JoinDatasetImportPendingRequest {
+			// get importing request for a dataset that is in the suggestion list.
+			const request = datasetGetters.getPendingRequests(this.$store)
+				.find(request => request.type === DatasetPendingRequestType.JOIN_DATASET_IMPORT);
+			const isInSuggestionList = Boolean(this.joinSuggestoins.find(item => item.id === (request && request.dataset)));
+			return isInSuggestionList ? <JoinDatasetImportPendingRequest>request : undefined;
+		},
+		isImporting(): boolean {
+			const requestStatus = this.joinDatasetImportRequestData && this.joinDatasetImportRequestData.status;
+			return requestStatus === DatasetPendingRequestStatus.PENDING;
+		},
+		importedItem(): JoinSuggestionItem {
+			return this.suggestionItems.find(item => item.dataset.id === this.joinDatasetImportRequestData.dataset);
+		},
+		importedDataset(): Dataset {
+			return this.importedItem && this.importedItem.dataset;
+		},
+		isImportRequestResolved(): boolean {
+			return this.joinDatasetImportRequestData && (this.joinDatasetImportRequestData.status === DatasetPendingRequestStatus.RESOLVED);
+		},
+		isImportRequestError(): boolean {
+			return this.joinDatasetImportRequestData && (this.joinDatasetImportRequestData.status === DatasetPendingRequestStatus.ERROR);
 		},
 		selectedItem(): JoinSuggestionItem {
 			return this.suggestionItems[this.selectedIndex];
 		},
+		selectedDataset(): Dataset {
+			return this.selectedItem && this.selectedItem.dataset;
+		},
+		isJoinReady(): boolean {
+			return this.selectedItem && this.selectedItem.isAvailable !== undefined && !this.isImporting;
+		}
 	},
 	methods: {
 		updateSuggestionItems() {
@@ -80,20 +132,21 @@ export default Vue.extend({
 				dataset: suggestion,
 				isAvailable: undefined
 			}));
-			console.log(this.suggestionItems);
 		},
 		selectItem(index) {
+			if (this.isImporting) { return; }
 			this.selectedIndex = index;
 			const selected = this.suggestionItems[this.selectedIndex];
 			if (selected.isAvailable === undefined) {
 				this.checkDatasetExist(selected.dataset.id).then(exist => selected.isAvailable = exist);
 			}
-			setTimeout(() => {
-				selected.isAvailable = true;
-			}, 4000);
 		},
 		join() {
 			const selected = this.suggestionItems[this.selectedIndex];
+			if (selected.isAvailable === undefined) { return; }
+			if (selected.isAvailable === false) {
+				this.$refs['import-ask-modal'].show();
+			}
 		},
 		checkDatasetExist(datasetId) {
 			return axios.get(`/distil/datasets/${datasetId}`).then(result => {
@@ -103,8 +156,13 @@ export default Vue.extend({
 			});
 		},
 		importDataset(args: {datasetID: string, source: string, provenance: string}) {
-			// return axios.post(`/distil/import/${args.datasetID}/${args.source}/${args.provenance}`, {})
-		}
+			const { id, provenance } = this.selectedDataset;
+			if (!this.isImporting) {
+				datasetActions.importJoinDataset(this.$store, {datasetID: id, source: 'contrib', provenance, time: 20000}).then(() => {
+					this.importedItem.isAvailable = true;
+				})
+			}
+		},
 	},
 	watch: {
 		joinSuggestions(suggestions) {
@@ -114,14 +172,22 @@ export default Vue.extend({
 	created() {
 		this.updateSuggestionItems();
 	},
+	beforeDestroy() {
+		const importRequest = this.joinDatasetImportRequestData; 
+		if (importRequest && importRequest.status !== DatasetPendingRequestStatus.PENDING) {
+			datasetActions.updatePendingRequestStatus(this.$store, {
+				id: importRequest.id,
+				status: importRequest.status === DatasetPendingRequestStatus.ERROR
+					? DatasetPendingRequestStatus.ERROR_REVIEWED
+					: DatasetPendingRequestStatus.REVIEWED,
+			});
+		}
+	},
 });
 
 </script>
 
 <style>
-.status-panel-join .selected {
-	background-color: bisque;
-}
 
 .status-panel-join .available {
 	background-color: aqua;
@@ -129,6 +195,10 @@ export default Vue.extend({
 
 .status-panel-join .noavail {
 	background-color: brown;
+}
+
+.status-panel-join .selected {
+	background-color: bisque;
 }
 
 </style>

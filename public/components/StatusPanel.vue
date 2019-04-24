@@ -75,7 +75,6 @@ export default Vue.extend({
 			const request = datasetGetters
 				.getPendingRequests(this.$store)
 				.find(request => request.dataset === this.dataset && request.type === this.statusType);
-			console.log(request);
 			return request;
 		},
 		isPending: function () {

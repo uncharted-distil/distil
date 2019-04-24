@@ -152,6 +152,7 @@ export enum DatasetPendingRequestType {
 	VARIABLE_RANKING = 'VARIABLE_RANKING',
 	GEOCODING = 'GEOCODING',
 	JOIN_SUGGESTION = 'JOIN_SUGGESTION',
+	JOIN_DATASET_IMPORT = 'JOIN_DATASET_IMPORT',
 }
 
 export enum DatasetPendingRequestStatus {
@@ -187,10 +188,18 @@ export interface JoinSuggestionPendingRequest {
 	suggestions: Dataset[];
 }
 
+export interface JoinDatasetImportPendingRequest {
+	id: string;
+	status: DatasetPendingRequestStatus;
+	type: DatasetPendingRequestType.JOIN_DATASET_IMPORT;
+	dataset: string;
+}
+
 export type DatasetPendingRequest =
 		VariableRankingPendingRequest
 	| GeocodingPendingRequest
-	| JoinSuggestionPendingRequest;
+	| JoinSuggestionPendingRequest
+	| JoinDatasetImportPendingRequest;
 
 export const state: DatasetState = {
 	// datasets and filtered datasets

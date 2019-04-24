@@ -2,7 +2,18 @@ import _ from 'lodash';
 import axios from 'axios';
 import { Dictionary } from '../../util/dict';
 import { ActionContext } from 'vuex';
-import { Dataset, DatasetState, Variable, VariableSummary, Grouping, DatasetPendingRequestType, DatasetPendingRequestStatus, DatasetPendingRequest, VariableRankingPendingRequest, GeocodingPendingRequest, JoinSuggestionPendingRequest } from './index';
+import {
+	Dataset,
+	DatasetState,
+	Variable,
+	Grouping,
+	DatasetPendingRequestType,
+	DatasetPendingRequestStatus,
+	VariableRankingPendingRequest,
+	GeocodingPendingRequest,
+	JoinSuggestionPendingRequest,
+	JoinDatasetImportPendingRequest,
+} from './index';
 import { mutations } from './module';
 import { DistilState } from '../store';
 import { HighlightRoot } from '../highlights/index';
@@ -150,7 +161,7 @@ export const actions = {
 			dataset: args.dataset,
 			type: DatasetPendingRequestType.JOIN_SUGGESTION,
 			status: DatasetPendingRequestStatus.PENDING,
-			suggestions: undefined,
+			suggestions: [],
 		};
 		mutations.updatePendingRequests(context, request);
 		return axios.get(`/distil/join-suggestions/${args.dataset}`, { params: { search: 'weather' } })
@@ -200,6 +211,39 @@ export const actions = {
 		return axios.post(`/distil/import/${args.datasetID}/${args.source}/${args.provenance}`, {})
 			.then(response => {
 				return context.dispatch('searchDatasets', args.terms);
+			});
+	},
+
+	importJoinDataset(context: DatasetContext, args: { datasetID: string, source: string, provenance: string, time: number }): Promise<void>  {
+		if (!args.datasetID) {
+			console.warn('`datasetID` argument is missing');
+			return null;
+
+		}
+		const mockImport = () => {
+			return new Promise((resolve, reject) => {
+				setTimeout(() => {
+					resolve('done');
+				}, args.time || 3000);
+			});
+		};
+
+		const id = _.uniqueId();
+		const update: JoinDatasetImportPendingRequest = {
+			id,
+			dataset: args.datasetID,
+			type: DatasetPendingRequestType.JOIN_DATASET_IMPORT,
+			status: DatasetPendingRequestStatus.PENDING,
+		};
+		mutations.updatePendingRequests(context, update);
+		// return axios.post(`/distil/import/${args.datasetID}/${args.source}/${args.provenance}`, {})
+		return mockImport()
+			.then(response => {
+				mutations.updatePendingRequests(context, { ...update, status: DatasetPendingRequestStatus.RESOLVED });
+			})
+			.catch(error => {
+				mutations.updatePendingRequests(context, { ...update, status: DatasetPendingRequestStatus.ERROR });
+				console.error(error);
 			});
 	},
 
