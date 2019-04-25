@@ -38,9 +38,6 @@
 						:highlight-pixel-x="highlightPixelX"
 						:prediction="getPrediction(item)">
 					</sparkline-row>
-					<!-- <div v-if="hasPredictedCol" class="sparkline-prediction" v-bind:class="{ 'correct-prediction': isCorrect(item), 'incorrect-prediction': !isCorrect(item)}">
-						<b>{{item[predictedCol]}}</b>
-					</div> -->
 				</div>
 			</div>
 		</div>
@@ -208,13 +205,12 @@ export default Vue.extend({
 				for (let i = 0; i < numPoints; i++) {
 					res.push([startX + (i * interval), startY * Math.random() * 3]);
 				}
-				console.log('forecast', res);
 				return res;
 			}
 
 			let timeseries = [];
 			this.variableSummaries.forEach(v => {
-				if (this.isTimeseriesAnalysis && v.categoryBuckets) {
+				if (v.categoryBuckets) {
 					// timeseries analysis view
 					const categories = [];
 					_.forIn(v.categoryBuckets, (buckets, category) => {
@@ -242,7 +238,7 @@ export default Vue.extend({
 					categories.sort((a, b) => { return b.sum - a.sum; });
 					timeseries = timeseries.concat(categories);
 
-				} else if (!this.isTimeseriesAnalysis && v.buckets) {
+				} else if (v.buckets) {
 
 					const points = v.buckets.map(b => [ _.parseInt(b.key), b.count ]);
 

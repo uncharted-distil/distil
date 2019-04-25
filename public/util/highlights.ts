@@ -66,7 +66,7 @@ export function createFilterFromHighlightRoot(highlightRoot: HighlightRoot, mode
 	}
 
 	const isTimeseriesAnalysis = !!routeGetters.getRouteTimeseriesAnalysis(store);
-	if (isTimeType(type) && isTimeseriesAnalysis) {
+	if (isTimeseriesAnalysis) {
 		// TODO: fix this later
 		return null;
 	}
@@ -115,6 +115,7 @@ export function addHighlightToFilterParams(filterParams: FilterParams, highlight
 }
 
 export function updateHighlightRoot(router: VueRouter, highlightRoot: HighlightRoot) {
+	console.log('updateHighlightRoot', JSON.stringify(highlightRoot));
 	const entry = overlayRouteEntry(routeGetters.getRoute(store), {
 		highlights: encodeHighlights(highlightRoot),
 		row: null // clear row
