@@ -9,7 +9,7 @@
 				<p>
 					name: {{item.dataset.name}}
 				</p>
-				<p>
+				<p v-html="item.dataset.description">
 					{{item.dataset.description}}
 				</p>
 				<p>

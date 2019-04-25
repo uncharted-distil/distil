@@ -164,9 +164,9 @@ export const actions = {
 			suggestions: [],
 		};
 		mutations.updatePendingRequests(context, request);
-		return axios.get(`/distil/join-suggestions/${args.dataset}`, { params: { search: 'weather' } })
+		return axios.get(`/distil/join-suggestions/${args.dataset}`, { params: { search: 'country' } })
 			.then((response) => {
-				const suggestions = response.data && response.data.datasets;
+				const suggestions = (response.data && response.data.datasets) || [];
 				mutations.updatePendingRequests(context, { ...request, status: DatasetPendingRequestStatus.RESOLVED, suggestions });
 			})
 			.catch(error => {
