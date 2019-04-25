@@ -190,7 +190,10 @@ func createSearchSolutionsRequest(columnIndex int, preprocessing *pipeline.Pipel
 		Version:   compute.GetAPIVersion(),
 
 		// Requested max time for solution search - not guaranteed to be honoured
-		TimeBound: float64(maxTime),
+		TimeBoundSearch: float64(maxTime),
+
+		// Requested max time for pipeline run - not guaranteed to be honoured
+		TimeBoundRun: float64(maxTime),
 
 		// we accept dataset and csv uris as return types
 		AllowedValueTypes: []pipeline.ValueType{
