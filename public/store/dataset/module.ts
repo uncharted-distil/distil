@@ -75,6 +75,9 @@ export const actions = {
 	// pending request
 	updatePendingRequestStatus: dispatch(moduleActions.updatePendingRequestStatus),
 	removePendingRequest: dispatch(moduleActions.removePendingRequest),
+	// join suggestions
+	fetchJoinSuggestions: dispatch(moduleActions.fetchJoinSuggestions),
+	importJoinDataset: dispatch(moduleActions.importJoinDataset),
 	// files
 	fetchFiles: dispatch(moduleActions.fetchFiles),
 	fetchImage: dispatch(moduleActions.fetchImage),
