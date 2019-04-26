@@ -8,7 +8,7 @@
 				Successfully imported <b>{{ importedDataset.name }}</b>
 			</b-alert>
 			<b-alert v-else-if="isImportRequestError" :show="showStatusMessage" variant="danger" dismissible  @dismissed="reviewImportingRequest">
-				Error has occured while importing <b>{{ importedDataset.name }}</b>
+				Unexpected error has occured while importing <b>{{ importedDataset.name }}</b>
 			</b-alert>
 		</div>
 		<div class="suggestion-heading">

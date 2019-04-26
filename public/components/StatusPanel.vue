@@ -178,6 +178,7 @@ export default Vue.extend({
 
 .status-panel .heading {
 	height: 58px;
+	flex-shrink: 0;
 	border-bottom: 1px solid #f1f3f4;
 	display: flex;
 	align-items: center;
