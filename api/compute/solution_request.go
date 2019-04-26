@@ -85,6 +85,7 @@ type SolutionRequest struct {
 	MaxTime          int64             `json:"maxTime"`
 	Filters          *api.FilterParams `json:"filters"`
 	Metrics          []string          `json:"metrics"`
+	ProblemType      string            `json:"problemType"`
 	mu               *sync.Mutex
 	wg               *sync.WaitGroup
 	requestChannel   chan SolutionStatus
@@ -632,7 +633,7 @@ func CreateSearchSolutionRequest(allFeatures []*model.Variable,
 		return nil, errors.Errorf("unable to find target variable '%s'", target)
 	}
 	columnIndex := getColumnIndex(targetVariable, selectedFeatures)
-	task := DefaultTaskType(targetVariable.Type)
+	task := DefaultTaskType(targetVariable.Type, "")
 	taskSubType := DefaultTaskSubType(targetVariable.Type)
 	metrics := DefaultMetrics(targetVariable.Type)
 
