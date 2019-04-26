@@ -2,13 +2,13 @@
     <div class="status-panel-join">
 		<div class="status-message">
 			<b-alert v-if="isImporting && importedDataset" :show="showStatusMessage" variant="info">
-				Importing dataset, <b>{{ importedDataset.name }}</b>...
+				Importing <b>{{ importedDataset.name }}</b>...
 			</b-alert>
 			<b-alert v-else-if="isImportRequestResolved" :show="showStatusMessage" variant="success" dismissible @dismissed="reviewImportingRequest">
 				Successfully imported <b>{{ importedDataset.name }}</b>
 			</b-alert>
-			<b-alert v-else-if="isImportRequestError" :show="showStatusMessage" variant="error" dismissible  @dismissed="reviewImportingRequest">
-				Error has occured while importing dataset, <b>{{ importedDataset.name }}</b>
+			<b-alert v-else-if="isImportRequestError" :show="showStatusMessage" variant="danger" dismissible  @dismissed="reviewImportingRequest">
+				Error has occured while importing <b>{{ importedDataset.name }}</b>
 			</b-alert>
 		</div>
 		<div class="suggestion-heading">
@@ -30,7 +30,7 @@
 						</p>
 						<div>
 							<span>
-								<small v-if="item.isAvailable === false" class="text-info">Requires Import</small>
+								<small v-if="item.isAvailable === false" class="text-info">Requires import</small>
 								<small v-if="item.isAvailable" class="text-success">Ready for join</small>
 							</span>
 							<span class="float-right">
@@ -72,11 +72,13 @@ import { actions as datasetActions, getters as datasetGetters } from '../store/d
 import { actions as appActions, getters as appGetters } from '../store/app/module';
 import { getters as routeGetters } from '../store/route/module';
 import { StatusPanelState, StatusPanelContentType } from '../store/app';
+import { createRouteEntry } from '../util/routes'
 import { formatBytes } from '../util/bytes';
+import { JOIN_DATASETS_ROUTE } from '../store/route/index';
 
 interface JoinSuggestionItem {
 	dataset: Dataset;
-	isAvailable: boolean; // tell if dataset is available in the system for join
+	isAvailable: boolean; // tell if dataset is available in the system for join. (note. undefined implies that check hasn't made yet)
 	selected: boolean;
 }
 
@@ -170,8 +172,13 @@ export default Vue.extend({
 			if (selected.isAvailable === undefined) { return; }
 			if (selected.isAvailable === false) {
 				const importAskModal: any = this.$refs['import-ask-modal'];
-				importAskModal.show();
+				return importAskModal.show();
 			}
+			// navigate to join
+			const entry = createRouteEntry(JOIN_DATASETS_ROUTE, {
+				joinDatasets: `${this.dataset},${selected.dataset.id}`
+			});
+			this.$router.push(entry);
 		},
 		checkDatasetExist(datasetId) {
 			return axios.get(`/distil/datasets/${datasetId}`).then(result => {
@@ -184,7 +191,7 @@ export default Vue.extend({
 			const { id, provenance } = this.selectedDataset;
 			this.showStatusMessage = true;
 			if (!this.isImporting) {
-				datasetActions.importJoinDataset(this.$store, {datasetID: id, source: 'contrib', provenance, time: 3000}).then(res => {
+				datasetActions.importJoinDataset(this.$store, {datasetID: id, source: 'contrib', provenance}).then(res => {
 					if (res && (res.result === 'ingested')) {
 						this.importedItem.isAvailable = true;
 					}

@@ -164,7 +164,12 @@ export const actions = {
 			suggestions: [],
 		};
 		mutations.updatePendingRequests(context, request);
-		return axios.get(`/distil/join-suggestions/${args.dataset}`, { params: { search: 'country' } })
+		return axios.get(`/distil/datasets/${args.dataset}`)
+			.then(res => {
+				const dataset = res.data.dataset;
+				const search = dataset.summaryML || dataset.summary || '';
+				return axios.get(`/distil/join-suggestions/${args.dataset}`, { params: { search } });
+			})
 			.then((response) => {
 				const suggestions = (response.data && response.data.datasets) || [];
 				mutations.updatePendingRequests(context, { ...request, status: DatasetPendingRequestStatus.RESOLVED, suggestions });
@@ -214,17 +219,18 @@ export const actions = {
 			});
 	},
 
-	importJoinDataset(context: DatasetContext, args: { datasetID: string, source: string, provenance: string, time: number }): Promise<any>  {
+	importJoinDataset(context: DatasetContext, args: { datasetID: string, source: string, provenance: string }): Promise<any>  {
 		if (!args.datasetID) {
 			console.warn('`datasetID` argument is missing');
 			return null;
 
 		}
-		const mockImport = () => {
+		/// fake import for quick testing. it will be removed later
+		const fakeImport = () => {
 			return new Promise((resolve, reject) => {
 				setTimeout(() => {
 					resolve({ result: 'ingested' });
-				}, args.time || 3000);
+				}, 3000);
 			});
 		};
 
@@ -236,8 +242,8 @@ export const actions = {
 			status: DatasetPendingRequestStatus.PENDING,
 		};
 		mutations.updatePendingRequests(context, update);
-		// return axios.post(`/distil/import/${args.datasetID}/${args.source}/${args.provenance}`, {})
-		return mockImport()
+		return axios.post(`/distil/import/${args.datasetID}/${args.source}/${args.provenance}`, {})
+		// return fakeImport()
 			.then(response => {
 				mutations.updatePendingRequests(context, { ...update, status: DatasetPendingRequestStatus.RESOLVED });
 				return response;
