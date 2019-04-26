@@ -15,6 +15,9 @@
 			<h6>Select a dataset to join with: </h6>
 		</div>
 		<div class="suggstion-list">
+			<div v-if="suggestionItems.length === 0">
+				No datasets are found
+			</div>
 			<b-list-group>
 				<b-list-group-item
 					v-for="item in suggestionItems"
