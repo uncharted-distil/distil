@@ -1,37 +1,50 @@
 <template>
     <div class="status-panel-join">
-		<p>Select a dataset to join with</p>
-        <div v-for="(item, index) in suggestionItems" :key="item.id">
-			<div @click="selectItem(index)" v-bind:class="{ selected: index === selectedIndex, available: item.isAvailable, noavail: item.isAvailable === false }">
-				<p>
-					{{item.dataset.id}}
-				</p>
-				<p>
-					name: {{item.dataset.name}}
-				</p>
-				<p v-html="item.dataset.description">
-					{{item.dataset.description}}
-				</p>
-				<p>
-					rows: {{item.dataset.numRows}}
-				</p>
-				<p>
-					size: {{item.dataset.numBytes}}
-				</p>
-			</div>
-        </div>
 		<div class="status-message">
-			<div v-if="isImporting && importedDataset">
-				Importing dataset, <b>{{ importedDataset.name }}</b> ...
-			</div>
-			<div v-else-if="isImportRequestResolved">
-				dataset, <b>{{ importedDataset.name }}</b> imported successfully
-			</div>
-			<div v-else-if="isImportRequestError">
+			<b-alert v-if="isImporting && importedDataset" :show="showStatusMessage" variant="info">
+				Importing dataset, <b>{{ importedDataset.name }}</b>...
+			</b-alert>
+			<b-alert v-else-if="isImportRequestResolved" :show="showStatusMessage" variant="success" dismissible @dismissed="reviewImportingRequest">
+				Successfully imported <b>{{ importedDataset.name }}</b>
+			</b-alert>
+			<b-alert v-else-if="isImportRequestError" :show="showStatusMessage" variant="error" dismissible  @dismissed="reviewImportingRequest">
 				Error has occured while importing dataset, <b>{{ importedDataset.name }}</b>
-			</div>
+			</b-alert>
 		</div>
-        <b-button :disabled="!isJoinReady" variant="primary" @click="join">Join</b-button>
+		<div class="suggestion-heading">
+			<h6>Select a dataset to join with: </h6>
+		</div>
+		<div class="suggstion-list">
+			<b-list-group>
+				<b-list-group-item
+					v-for="item in suggestionItems"
+					:key="item.dataset.id" 
+					href="#"
+					v-bind:class="{ selected: item.selected }"
+					:disabled="isImporting"
+				>
+					<div @click="selectItem(item)">
+						<p> <b>{{item.dataset.name}}</b> </p>
+						<p v-html="item.dataset.description">
+							{{item.dataset.description}}
+						</p>
+						<div>
+							<span>
+								<small v-if="item.isAvailable === false" class="text-info">Requires Import</small>
+								<small v-if="item.isAvailable" class="text-success">Ready for join</small>
+							</span>
+							<span class="float-right">
+								<small class="text-muted">{{formatNumber(item.dataset.numRows)}} rows</small>
+								<small class="text-muted">{{formatBytes(item.dataset.numBytes)}}</small>
+							</span>
+						</div>
+					</div>
+				</b-list-group-item>
+			</b-list-group>
+		</div>
+		<div class="join-button-container">
+        	<b-button :disabled="!isJoinReady" variant="primary" @click="join">Join</b-button>
+		</div>
 		<b-modal
 			v-if="selectedDataset"
 			id="join-import-modal"
@@ -59,22 +72,24 @@ import { actions as datasetActions, getters as datasetGetters } from '../store/d
 import { actions as appActions, getters as appGetters } from '../store/app/module';
 import { getters as routeGetters } from '../store/route/module';
 import { StatusPanelState, StatusPanelContentType } from '../store/app';
+import { formatBytes } from '../util/bytes';
 
 interface JoinSuggestionItem {
 	dataset: Dataset;
 	isAvailable: boolean; // tell if dataset is available in the system for join
+	selected: boolean;
 }
 
 interface StatusPanelJoinState {
-	selectedIndex: number;
 	suggestionItems: JoinSuggestionItem[];
+	showStatusMessage: boolean;
 }
 
 export default Vue.extend({
 	name: 'status-panel-join',
 	data(): StatusPanelJoinState {
 		return {
-			selectedIndex: -1,
+			showStatusMessage: true,
 			suggestionItems: [],
 		};
 	},
@@ -115,7 +130,7 @@ export default Vue.extend({
 			return this.joinDatasetImportRequestData && (this.joinDatasetImportRequestData.status === DatasetPendingRequestStatus.ERROR);
 		},
 		selectedItem(): JoinSuggestionItem {
-			return this.suggestionItems[this.selectedIndex];
+			return this.suggestionItems.find(item => item.selected);
 		},
 		selectedDataset(): Dataset {
 			return this.selectedItem && this.selectedItem.dataset;
@@ -125,23 +140,33 @@ export default Vue.extend({
 		}
 	},
 	methods: {
-		updateSuggestionItems() {
+		initSuggestionItems() {
 			const items = this.joinSuggestoins || [];
-			this.suggestionItems = items.map(suggestion => ({
-				dataset: suggestion,
-				isAvailable: undefined
-			}));
+			const isImporting = this.isImporting || this.isImportRequestResolved;
+			this.suggestionItems = items.map(suggestion => {
+				const isSameDataset = suggestion.id === (this.joinDatasetImportRequestData && this.joinDatasetImportRequestData.dataset);
+				const isAvailable = this.isImportRequestResolved && isSameDataset ? true : undefined;
+				const selected = isImporting && isSameDataset;
+				return {
+					dataset: suggestion,
+					isAvailable,
+					selected,
+				};
+			});
 		},
-		selectItem(index) {
+		selectItem(item) {
 			if (this.isImporting) { return; }
-			this.selectedIndex = index;
-			const selected = this.suggestionItems[this.selectedIndex];
-			if (selected.isAvailable === undefined) {
-				this.checkDatasetExist(selected.dataset.id).then(exist => selected.isAvailable = exist);
+			if (this.selectedItem) {
+				this.selectedItem.selected = false;
+			}
+			const selectedItem = item;
+			selectedItem.selected = true;
+			if (selectedItem.isAvailable === undefined) {
+				this.checkDatasetExist(selectedItem.dataset.id).then(exist => selectedItem.isAvailable = exist);
 			}
 		},
 		join() {
-			const selected = this.suggestionItems[this.selectedIndex];
+			const selected = this.selectedItem;
 			if (selected.isAvailable === undefined) { return; }
 			if (selected.isAvailable === false) {
 				const importAskModal: any = this.$refs['import-ask-modal'];
@@ -157,31 +182,47 @@ export default Vue.extend({
 		},
 		importDataset(args: {datasetID: string, source: string, provenance: string}) {
 			const { id, provenance } = this.selectedDataset;
+			this.showStatusMessage = true;
 			if (!this.isImporting) {
-				datasetActions.importJoinDataset(this.$store, {datasetID: id, source: 'contrib', provenance, time: 20000}).then(() => {
-					this.importedItem.isAvailable = true;
+				datasetActions.importJoinDataset(this.$store, {datasetID: id, source: 'contrib', provenance, time: 3000}).then(res => {
+					if (res && (res.result === 'ingested')) {
+						this.importedItem.isAvailable = true;
+					}
 				});
 			}
 		},
-	},
-	watch: {
-		joinSuggestions(suggestions) {
-			this.updateSuggestionItems();
+		formatBytes(n: number): string {
+			return formatBytes(n);
 		},
+		formatNumber(num: number): string {
+			if (num >= 1000000000) {
+				return (num / 1000000000).toFixed(1).replace(/\.0$/, '') + 'B';
+			}
+			if (num >= 1000000) {
+				return (num / 1000000).toFixed(1).replace(/\.0$/, '') + 'M';
+			}
+			if (num >= 1000) {
+				return (num / 1000).toFixed(1).replace(/\.0$/, '') + 'K';
+			}
+			return String(num);
+		},
+		reviewImportingRequest() {
+			const importRequest = this.joinDatasetImportRequestData;
+			if (importRequest && importRequest.status !== DatasetPendingRequestStatus.PENDING) {
+				datasetActions.updatePendingRequestStatus(this.$store, {
+					id: importRequest.id,
+					status: importRequest.status === DatasetPendingRequestStatus.ERROR
+						? DatasetPendingRequestStatus.ERROR_REVIEWED
+						: DatasetPendingRequestStatus.REVIEWED,
+				});
+			}
+		}
 	},
 	created() {
-		this.updateSuggestionItems();
+		this.initSuggestionItems();
 	},
 	beforeDestroy() {
-		const importRequest = this.joinDatasetImportRequestData;
-		if (importRequest && importRequest.status !== DatasetPendingRequestStatus.PENDING) {
-			datasetActions.updatePendingRequestStatus(this.$store, {
-				id: importRequest.id,
-				status: importRequest.status === DatasetPendingRequestStatus.ERROR
-					? DatasetPendingRequestStatus.ERROR_REVIEWED
-					: DatasetPendingRequestStatus.REVIEWED,
-			});
-		}
+		this.reviewImportingRequest();
 	},
 });
 
@@ -189,16 +230,36 @@ export default Vue.extend({
 
 <style>
 
-.status-panel-join .available {
-	background-color: aqua;
+.status-panel-join {
+	height: 100%;
+	display: flex;
+	flex-direction: column;
 }
-
-.status-panel-join .noavail {
-	background-color: brown;
+.status-panel-join .suggestion-heading {
+	height: 2em;
+	flex-shrink: 0;
 }
-
-.status-panel-join .selected {
-	background-color: bisque;
+.status-panel-join .suggestion-heading h6{
+	margin: 0;
+}
+.status-panel-join .suggstion-list {
+	overflow: auto;
+}
+.status-panel-join .list-group-item.selected{
+	background-color: #00c5e114
+}
+.status-panel-join .status-message {
+	min-height: 0;
+	flex-shrink: 0;
+	margin-top: 5px;
+}
+.status-panel-join .join-button-container {
+	min-height: 0;
+	padding: 5px 0;
+	flex-shrink: 0;
+}
+.status-panel-join .join-button-container button {
+	width: 100%;
 }
 
 </style>

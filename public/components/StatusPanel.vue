@@ -13,10 +13,8 @@
 			<div v-else-if="isPending" class="spinner">
 				<div class="circle-spinner"></div>
 			</div>
-			<div v-else-if="isResolved">
-				<div v-if="this.statusType === 'JOIN_SUGGESTION'">
-					<status-panel-join></status-panel-join>
-				</div>
+			<div v-else-if="isResolved" class="h-100">
+				<status-panel-join v-if="this.statusType === 'JOIN_SUGGESTION'"></status-panel-join>
 				<div v-else>
 					<div>
 						<p>
@@ -189,7 +187,6 @@ export default Vue.extend({
 
 .status-panel .content {
 	padding: 10px;
-	overflow: auto;
 }
 
 .status-panel .title {

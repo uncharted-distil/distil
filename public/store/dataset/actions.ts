@@ -214,7 +214,7 @@ export const actions = {
 			});
 	},
 
-	importJoinDataset(context: DatasetContext, args: { datasetID: string, source: string, provenance: string, time: number }): Promise<void>  {
+	importJoinDataset(context: DatasetContext, args: { datasetID: string, source: string, provenance: string, time: number }): Promise<any>  {
 		if (!args.datasetID) {
 			console.warn('`datasetID` argument is missing');
 			return null;
@@ -223,7 +223,7 @@ export const actions = {
 		const mockImport = () => {
 			return new Promise((resolve, reject) => {
 				setTimeout(() => {
-					resolve('done');
+					resolve({ result: 'ingested' });
 				}, args.time || 3000);
 			});
 		};
@@ -240,6 +240,7 @@ export const actions = {
 		return mockImport()
 			.then(response => {
 				mutations.updatePendingRequests(context, { ...update, status: DatasetPendingRequestStatus.RESOLVED });
+				return response;
 			})
 			.catch(error => {
 				mutations.updatePendingRequests(context, { ...update, status: DatasetPendingRequestStatus.ERROR });
