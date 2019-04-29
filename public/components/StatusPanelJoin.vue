@@ -25,22 +25,21 @@
 					href="#"
 					v-bind:class="{ selected: item.selected }"
 					:disabled="isImporting"
+					@click="selectItem(item)"
 				>
-					<div @click="selectItem(item)">
-						<p> <b>{{item.dataset.name}}</b> </p>
-						<p v-html="item.dataset.description">
-							{{item.dataset.description}}
-						</p>
-						<div>
-							<span>
-								<small v-if="item.isAvailable === false" class="text-info">Requires import</small>
-								<small v-if="item.isAvailable" class="text-success">Ready for join</small>
-							</span>
-							<span class="float-right">
-								<small class="text-muted">{{formatNumber(item.dataset.numRows)}} rows</small>
-								<small class="text-muted">{{formatBytes(item.dataset.numBytes)}}</small>
-							</span>
-						</div>
+					<p> <b>{{item.dataset.name}}</b> </p>
+					<div v-html="item.dataset.description">
+						{{item.dataset.description}}
+					</div>
+					<div>
+						<span>
+							<small v-if="item.isAvailable === false" class="text-info">Requires import</small>
+							<small v-if="item.isAvailable" class="text-success">Ready for join</small>
+						</span>
+						<span class="float-right">
+							<small class="text-muted">{{formatNumber(item.dataset.numRows)}} rows</small>
+							<small class="text-muted">{{formatBytes(item.dataset.numBytes)}}</small>
+						</span>
 					</div>
 				</b-list-group-item>
 			</b-list-group>
