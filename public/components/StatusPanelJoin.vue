@@ -75,7 +75,7 @@ import { actions as datasetActions, getters as datasetGetters } from '../store/d
 import { actions as appActions, getters as appGetters } from '../store/app/module';
 import { getters as routeGetters } from '../store/route/module';
 import { StatusPanelState, StatusPanelContentType } from '../store/app';
-import { createRouteEntry } from '../util/routes'
+import { createRouteEntry } from '../util/routes';
 import { formatBytes } from '../util/bytes';
 import { JOIN_DATASETS_ROUTE } from '../store/route/index';
 
@@ -183,7 +183,7 @@ export default Vue.extend({
 			// navigate to join
 			const entry = createRouteEntry(JOIN_DATASETS_ROUTE, {
 				joinDatasets: `${this.dataset},${selected.dataset.id}`,
-				target: this.target, 
+				target: this.target,
 			});
 			this.$router.push(entry);
 		},
