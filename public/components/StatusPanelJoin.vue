@@ -102,6 +102,9 @@ export default Vue.extend({
 		dataset(): string {
 			return routeGetters.getRouteDataset(this.$store);
 		},
+		target(): string {
+			return routeGetters.getRouteTargetVariable(this.$store);
+		},
 		joinSuggestionRequestData(): JoinSuggestionPendingRequest {
 			const request = datasetGetters.getPendingRequests(this.$store)
 				.find(request => request.dataset === this.dataset && request.type === DatasetPendingRequestType.JOIN_SUGGESTION);
@@ -179,7 +182,8 @@ export default Vue.extend({
 			}
 			// navigate to join
 			const entry = createRouteEntry(JOIN_DATASETS_ROUTE, {
-				joinDatasets: `${this.dataset},${selected.dataset.id}`
+				joinDatasets: `${this.dataset},${selected.dataset.id}`,
+				target: this.target, 
 			});
 			this.$router.push(entry);
 		},

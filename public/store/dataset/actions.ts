@@ -225,14 +225,6 @@ export const actions = {
 			return null;
 
 		}
-		/// fake import for quick testing. it will be removed later
-		const fakeImport = () => {
-			return new Promise((resolve, reject) => {
-				setTimeout(() => {
-					resolve({ result: 'ingested' });
-				}, 3000);
-			});
-		};
 
 		const id = _.uniqueId();
 		const update: JoinDatasetImportPendingRequest = {
@@ -243,10 +235,9 @@ export const actions = {
 		};
 		mutations.updatePendingRequests(context, update);
 		return axios.post(`/distil/import/${args.datasetID}/${args.source}/${args.provenance}`, {})
-		// return fakeImport()
 			.then(response => {
 				mutations.updatePendingRequests(context, { ...update, status: DatasetPendingRequestStatus.RESOLVED });
-				return response;
+				return response && response.data;
 			})
 			.catch(error => {
 				mutations.updatePendingRequests(context, { ...update, status: DatasetPendingRequestStatus.ERROR });
