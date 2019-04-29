@@ -11,12 +11,13 @@
 			<i v-if="isNew(geocodingStatus)" class="new-update-notification fa fa-circle"></i>
 			<i v-if="isPending(geocodingStatus)" class="new-update-notification fa fa-refresh fa-spin"></i>
         </div>
-		<!-- Join sugestions NYI -->
-        <!-- <div class="status-icon-wrapper" @click="onStatusIconClick(2)">
-            <i class="status-icon fa fa-2x fa-code-fork" aria-hidden="true"></i>
+        <div class="status-icon-wrapper" @click="onStatusIconClick(2)">
+            <i class="status-icon fa fa-2x fa-table" aria-hidden="true"></i>
 			<i v-if="isNew(joinSuggestionStatus)" class="new-update-notification fa fa-circle"></i>
 			<i v-if="isPending(joinSuggestionStatus)" class="new-update-notification fa fa-refresh fa-spin"></i>
-        </div> -->
+			<i v-if="isReviewd(joinSuggestionStatus) && isNew(joinDataImportStatus)" class="new-update-notification fa fa-circle"></i>
+			<i v-if="isReviewd(joinSuggestionStatus) && isPending(joinDataImportStatus)" class="new-update-notification fa fa-refresh fa-spin"></i>
+        </div>
     </div>
 </div>
     
@@ -28,7 +29,15 @@ import Vue from 'vue';
 import { actions as datasetActions, getters as datasetGetters } from '../store/dataset/module';
 import { actions as appActions } from '../store/app/module';
 import { getters as routeGetters } from '../store/route/module';
-import { DatasetPendingRequestType, DatasetPendingRequest, VariableRankingPendingRequest, DatasetPendingRequestStatus } from '../store/dataset/index';
+import {
+	DatasetPendingRequestType,
+	DatasetPendingRequest,
+	VariableRankingPendingRequest,
+	DatasetPendingRequestStatus,
+	GeocodingPendingRequest,
+	JoinSuggestionPendingRequest,
+	JoinDatasetImportPendingRequest,
+} from '../store/dataset/index';
 
 const STATUS_TYPES = [
 	DatasetPendingRequestType.VARIABLE_RANKING,
@@ -42,27 +51,38 @@ export default Vue.extend({
 		dataset(): string {
 			return routeGetters.getRouteDataset(this.$store);
 		},
-		pendingRequests: function () {
+		pendingRequests(): DatasetPendingRequest[] {
+			// pending requests for given dataset
 			const updates = datasetGetters.getPendingRequests(this.$store).filter(update => update.dataset === this.dataset);
 			return updates;
 		},
-		variableRankingRequestData: function () {
-			return this.pendingRequests.find(item =>  item.type === DatasetPendingRequestType.VARIABLE_RANKING);
+		variableRankingRequestData(): VariableRankingPendingRequest {
+			return <VariableRankingPendingRequest>this.pendingRequests.find(item => item.type === DatasetPendingRequestType.VARIABLE_RANKING);
 		},
-		geocodingRequestData: function () {
-			return this.pendingRequests.find(item => item.type === DatasetPendingRequestType.GEOCODING);
+		geocodingRequestData(): GeocodingPendingRequest {
+			return <GeocodingPendingRequest>this.pendingRequests.find(item => item.type === DatasetPendingRequestType.GEOCODING);
 		},
-		joinSuggestionRequestData: function () {
-			return this.pendingRequests.find(item => item.type === DatasetPendingRequestType.JOIN_SUGGESTION);
+		joinSuggestionRequestData(): JoinSuggestionPendingRequest {
+			return <JoinSuggestionPendingRequest>this.pendingRequests.find(item => item.type === DatasetPendingRequestType.JOIN_SUGGESTION);
 		},
-		variableRankingStatus: function () {
+		joinDataImportRequestData(): JoinDatasetImportPendingRequest {
+			const pendingRequests = datasetGetters.getPendingRequests(this.$store);
+			const joinSuggestions = this.joinSuggestionRequestData.suggestions;
+			const importRequest = <JoinDatasetImportPendingRequest>pendingRequests.find(item => item.type === DatasetPendingRequestType.JOIN_DATASET_IMPORT);
+			const matchingDataset = joinSuggestions.find(dataset => dataset.id === (importRequest && importRequest.dataset));
+			return matchingDataset && importRequest;
+		},
+		variableRankingStatus(): DatasetPendingRequestStatus {
 			return this.variableRankingRequestData && this.variableRankingRequestData.status;
 		},
-		geocodingStatus: function () {
+		geocodingStatus(): DatasetPendingRequestStatus {
 			return this.geocodingRequestData && this.geocodingRequestData.status;
 		},
-		joinSuggestionStatus: function () {
+		joinSuggestionStatus(): DatasetPendingRequestStatus {
 			return this.joinSuggestionRequestData && this.joinSuggestionRequestData.status;
+		},
+		joinDataImportStatus(): DatasetPendingRequestStatus {
+			return this.joinDataImportRequestData && this.joinDataImportRequestData.status;
 		},
 	},
 	methods: {
@@ -71,6 +91,9 @@ export default Vue.extend({
 		},
 		isPending(status) {
 			return DatasetPendingRequestStatus.PENDING === status;
+		},
+		isReviewd(status) {
+			return status === DatasetPendingRequestStatus.REVIEWED;
 		},
 		onStatusIconClick(iconIndex) {
 			const statusType = STATUS_TYPES[iconIndex];

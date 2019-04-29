@@ -10,6 +10,7 @@ enum ParamCacheKey {
 	VARIABLE_SUMMARIES = 'VARIABLE_SUMMARIES',
 	VARIABLE_RANKINGS = 'VARIABLE_RANKINGS',
 	SOLUTION_REQUESTS = 'SOLUTION_REQUESTS',
+	JOIN_SUGGESTIONS = 'JOIN_SUGGESTIONS',
 }
 
 function createCacheable(key: ParamCacheKey, func: (context: ViewContext, args: Dictionary<string>) => any) {
@@ -24,6 +25,10 @@ function createCacheable(key: ParamCacheKey, func: (context: ViewContext, args: 
 		return Promise.resolve();
 	};
 }
+
+const fetchJoinSuggestions = createCacheable(ParamCacheKey.JOIN_SUGGESTIONS, (context, args) => {
+	context.dispatch('fetchJoinSuggestions', args);
+});
 
 const fetchVariables = createCacheable(ParamCacheKey.VARIABLES, (context, args) => {
 	return context.dispatch('fetchVariables', args);
@@ -176,7 +181,9 @@ export const actions = {
 
 		const dataset = context.getters.getRouteDataset;
 		const target = context.getters.getRouteTargetVariable;
-		// fetch new state
+
+		fetchJoinSuggestions(context, { dataset });
+
 		return fetchVariables(context, { dataset }).then(() => {
 			fetchVariableRankings(context, { dataset, target });
 			return fetchVariableSummaries(context, { dataset });
