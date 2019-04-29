@@ -28,32 +28,8 @@
 			<div class="search-container col-12 col-md-10 d-flex">
 				<search-results class="search-search-results"
 					:is-pending="isPending"
-					v-on:join-dataset="onJoin">
+				>
 				</search-results>
-			</div>
-		</div>
-		<div v-if="numJoiningDatasets !== 0">
-			<div class="row flex-1 align-items-center justify-content-center bg-white">
-				<div class="col-12 col-md-10">
-					<h5 class="header-label">Join Datasets</h5>
-					<b-button size="sm" variant="secondary" class="close-join-button" @click="closeJoin"><i class="fa fa-times"></i></b-button>
-				</div>
-			</div>
-			<div class="row flex-1 align-items-center justify-content-center">
-				<div class="col-4 mb-3" v-for="dataset in joinDatasets">
-					<dataset-preview-card
-						:dataset="dataset"
-						@remove-from-join="onRemoveFromJoin">
-					</dataset-preview-card>
-				</div>
-				<div class="join-button col-2 mb-3">
-					<b-button size="lg" large variant="primary" :disabled="numJoiningDatasets !== 2" @click="onJoinDatasets">
-						<div class="row justify-content-center join-datasets-button pl-4 pr-4">
-							<i class="fa fa-compress mr-2"></i>
-							<b>Join Datasets</b>
-						</div>
-					</b-button>
-				</div>
 			</div>
 		</div>
 	</div>
@@ -101,21 +77,6 @@ export default Vue.extend({
 		datasets(): Dataset[] {
 			return datasetGetters.getDatasets(this.$store);
 		},
-		joinDatasetIDs(): string[] {
-			return routeGetters.getRouteJoinDatasets(this.$store);
-		},
-		joinDatasets(): Dataset[] {
-			const lookup = {};
-			this.joinDatasetIDs.forEach(id => {
-				lookup[id] = true;
-			});
-			return this.datasets.filter(d => {
-				return lookup[d.id];
-			});
-		},
-		numJoiningDatasets(): number {
-			return this.joinDatasetIDs.length;
-		}
 	},
 
 	beforeMount() {
@@ -135,48 +96,6 @@ export default Vue.extend({
 				.then(() => {
 					this.isPending = false;
 				});
-		},
-		onJoin(id) {
-			// check if already exists
-			const exists = _.find(this.joinDatasetIDs, datasetID => {
-				return datasetID === id;
-			});
-			if (exists) {
-				return;
-			}
-
-			// otherwise add
-			const joinDatasetIDs = this.joinDatasetIDs;
-			if (joinDatasetIDs.length !== 2) {
-				joinDatasetIDs.push(id);
-				const entry = overlayRouteEntry(this.$route, {
-					joinDatasets: joinDatasetIDs.join(','),
-				});
-				this.$router.push(entry);
-			}
-		},
-		closeJoin() {
-			const entry = createRouteEntry(SEARCH_ROUTE, {
-				terms: this.terms
-			});
-			this.$router.push(entry);
-		},
-		onJoinDatasets() {
-			if (this.numJoiningDatasets === 2) {
-				const entry = createRouteEntry(JOIN_DATASETS_ROUTE, {
-					joinDatasets: this.joinDatasetIDs.join(',')
-				});
-				this.$router.push(entry);
-			}
-		},
-		onRemoveFromJoin(datasetID) {
-			const joinDatasetIDs = this.joinDatasetIDs.filter(id => {
-				return id !== datasetID;
-			});
-			const entry = overlayRouteEntry(this.$route, {
-				joinDatasets: joinDatasetIDs.join(','),
-			});
-			this.$router.push(entry);
 		},
 		onUploadStart(uploadData) {
 			this.uploadData = uploadData;
