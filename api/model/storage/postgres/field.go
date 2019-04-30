@@ -23,6 +23,6 @@ import (
 // Field defines behaviour for a database field type.
 type Field interface {
 	FetchSummaryData(resultURI string, filterParams *model.FilterParams, extrema *model.Extrema) (*model.Histogram, error)
-	FetchTimeseriesSummaryData(timeVar *api.Variable, interval int, resultURI string, filterParams *model.FilterParams, extrema *model.Extrema) (*model.Histogram, error)
+	FetchTimeseriesSummaryData(timeVar *api.Variable, interval int, resultURI string, filterParams *model.FilterParams) (*model.Histogram, error)
 	FetchPredictedSummaryData(resultURI string, datasetResult string, filterParams *model.FilterParams, extrema *model.Extrema) (*model.Histogram, error)
 }

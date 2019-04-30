@@ -14,6 +14,8 @@ export interface ResultsState {
 	residualsExtrema: Extrema;
 	// correctness summary (correct vs. incorrect) for predicted categorical data
 	correctnessSummaries: VariableSummary[];
+	// forecasting
+	forecastingSummaries: VariableSummary[];
 }
 
 export const state: ResultsState = {
@@ -30,4 +32,6 @@ export const state: ResultsState = {
 	residualsExtrema: { min: null, max: null },
 	// correctness summary (correct vs. incorrect) for predicted categorical data
 	correctnessSummaries: [],
+	// forecasting
+	forecastingSummaries: []
 };

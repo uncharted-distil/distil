@@ -8,7 +8,7 @@ import { HighlightRoot } from '../highlights/index';
 import { mutations } from './module';
 import { ResultsState } from './index';
 import { addHighlightToFilterParams } from '../../util/highlights';
-import { getSummary, createPendingSummary, createErrorSummary, createEmptyTableData, fetchHistogramExemplars } from '../../util/data';
+import { getSummary, createPendingSummary, createErrorSummary, createEmptyTableData, fetchHistogramExemplars, getTimeseriesAnalysisIntervals } from '../../util/data';
 
 export type ResultsContext = ActionContext<ResultsState, DistilState>;
 
@@ -37,25 +37,71 @@ export const actions = {
 		const dataset = args.dataset;
 		const solutionId = args.solutionId;
 
-		return Promise.all(args.training.map(variable => {
+		const promises = [];
+		args.training.forEach(variable => {
 			const key = variable.colName;
 			const label = variable.colDisplayName;
-
+			// add placeholder
 			mutations.updateTrainingSummary(context, createPendingSummary(key, label, dataset, solutionId));
+			// fetch summary
+			promises.push(context.dispatch('fetchTrainingSummary', {
+				dataset: dataset,
+				variable: variable,
+				resultID: solution.resultId
+			}));
+		});
+		return Promise.all(promises);
+	},
 
-			return axios.post(`/distil/training-summary/${dataset}/${key}/${solution.resultId}`, {})
+	fetchTrainingSummary(context: ResultsContext, args: { dataset: string, variable: Variable, resultID: string }): Promise<void>  {
+		if (!args.dataset) {
+			console.warn('`dataset` argument is missing');
+			return null;
+		}
+		if (!args.variable) {
+			console.warn('`variable` argument is missing');
+			return null;
+		}
+		if (!args.resultID) {
+			console.warn('`resultID` argument is missing');
+			return null;
+		}
+
+		const timeseries = context.getters.getRouteTimeseriesAnalysis;
+		let interval = context.getters.getRouteTimeseriesBinningInterval;
+
+		if (timeseries) {
+
+			if (!interval) {
+				const timeVar = context.getters.getTimeseriesAnalysisVariable;
+				const range = context.getters.getTimeseriesAnalysisRange;
+				const intervals = getTimeseriesAnalysisIntervals(timeVar, range);
+				interval = intervals[0].value;
+			}
+
+			return axios.post(`distil/training-timeseries-summary/${args.dataset}/${timeseries}/${args.variable.colName}/${interval}/${args.resultID}`, {})
 				.then(response => {
 					const histogram = response.data.histogram;
-					return fetchHistogramExemplars(args.dataset, variable.colName, histogram)
-						.then(() => {
-							mutations.updateTrainingSummary(context, histogram);
-						});
+					mutations.updateTrainingSummary(context, histogram);
 				})
 				.catch(error => {
 					console.error(error);
-					mutations.updateTrainingSummary(context,  createErrorSummary(key, label, dataset, error));
+					mutations.updateTrainingSummary(context, createErrorSummary(args.variable.colName, args.variable.colDisplayName, args.dataset, error));
 				});
-		}));
+		}
+
+		return axios.post(`/distil/training-summary/${args.dataset}/${args.variable.colName}/${args.resultID}`, {})
+			.then(response => {
+				const histogram = response.data.histogram;
+				return fetchHistogramExemplars(args.dataset, args.variable.colName, histogram)
+					.then(() => {
+						mutations.updateTrainingSummary(context, histogram);
+					});
+			})
+			.catch(error => {
+				console.error(error);
+				mutations.updateTrainingSummary(context, createErrorSummary(args.variable.colName, args.variable.colDisplayName, args.dataset, error));
+			});
 	},
 
 	fetchTargetSummary(context: ResultsContext, args: { dataset: string, target: string, solutionId: string }) {
@@ -82,6 +128,30 @@ export const actions = {
 		const dataset = args.dataset;
 
 		mutations.updateTargetSummary(context, createPendingSummary(key, label, dataset, args.solutionId));
+
+		const timeseries = context.getters.getRouteTimeseriesAnalysis;
+		let interval = context.getters.getRouteTimeseriesBinningInterval;
+
+		if (timeseries) {
+
+			if (!interval) {
+				const timeVar = context.getters.getTimeseriesAnalysisVariable;
+				const range = context.getters.getTimeseriesAnalysisRange;
+				const intervals = getTimeseriesAnalysisIntervals(timeVar, range);
+				interval = intervals[0].value;
+			}
+
+			return axios.post(`distil/target-timeseries-summary/${args.dataset}/${timeseries}/${args.target}/${interval}/${solution.resultId}`, {})
+				.then(response => {
+					const histogram = response.data.histogram;
+					mutations.updateTargetSummary(context, histogram);
+				})
+				.catch(error => {
+					console.error(error);
+					mutations.updateTargetSummary(context,  createErrorSummary(key, label, dataset, error));
+				});
+		}
+
 
 		return axios.post(`/distil/target-summary/${args.dataset}/${args.target}/${solution.resultId}`, {})
 			.then(response => {
@@ -301,6 +371,44 @@ export const actions = {
 		const solutions = getSolutionsByRequestIds(context.rootState.solutionModule, args.requestIds);
 		return Promise.all(solutions.map(solution => {
 			return context.dispatch('fetchCorrectnessSummary', {
+				dataset: args.dataset,
+				solutionId: solution.solutionId,
+			});
+		}));
+	},
+
+	// fetches result summary for a given pipeline id.
+	fetchForecastingSummary(context: ResultsContext, args: { dataset: string, solutionId: string}) {
+		if (!args.dataset) {
+			console.warn('`dataset` argument is missing');
+			return null;
+		}
+		if (!args.solutionId) {
+			console.warn('`pipelineId` argument is missing');
+			return null;
+		}
+
+		const solution = getSolutionById(context.rootState.solutionModule, args.solutionId);
+		if (!solution.resultId) {
+			// no results ready to pull
+			return null;
+		}
+
+		const endPoint = `/distil/forecasting-summary/${args.dataset}`;
+		const key = solution.errorKey;
+		const label = 'Error';
+		getSummary(context, endPoint, solution, key, label, mutations.updateCorrectnessSummaries, null);
+	},
+
+	// fetches result summaries for a given pipeline create request
+	fetchForecastingSummaries(context: ResultsContext, args: { dataset: string, requestIds: string[]}) {
+		if (!args.requestIds) {
+			console.warn('`requestIds` argument is missing');
+			return null;
+		}
+		const solutions = getSolutionsByRequestIds(context.rootState.solutionModule, args.requestIds);
+		return Promise.all(solutions.map(solution => {
+			return context.dispatch('fetchForecastingSummary', {
 				dataset: args.dataset,
 				solutionId: solution.solutionId,
 			});

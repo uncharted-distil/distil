@@ -301,25 +301,25 @@ func (f *CategoricalField) getTopCategories(filterParams *api.FilterParams) ([]s
 }
 
 // FetchTimeseriesSummaryData pulls summary data from the database and builds a histogram.
-func (f *CategoricalField) FetchTimeseriesSummaryData(timeVar *model.Variable, interval int, resultURI string, filterParams *api.FilterParams, extrema *api.Extrema) (*api.Histogram, error) {
+func (f *CategoricalField) FetchTimeseriesSummaryData(timeVar *model.Variable, interval int, resultURI string, filterParams *api.FilterParams) (*api.Histogram, error) {
 	var histogram *api.Histogram
 	var err error
 	if resultURI == "" {
-		histogram, err = f.fetchTimeseriesHistogram(timeVar, interval, filterParams, extrema)
+		histogram, err = f.fetchTimeseriesHistogram(timeVar, interval, filterParams)
 	} else {
-		histogram, err = f.fetchTimeseriesHistogramByResultURI(timeVar, interval, resultURI, filterParams, extrema)
+		histogram, err = f.fetchTimeseriesHistogramByResultURI(timeVar, interval, resultURI, filterParams)
 	}
 
 	return histogram, err
 }
 
-func (f *CategoricalField) fetchTimeseriesHistogramByResultURI(timeVar *model.Variable, interval int, resultURI string, filterParams *api.FilterParams, extrema *api.Extrema) (*api.Histogram, error) {
+func (f *CategoricalField) fetchTimeseriesHistogramByResultURI(timeVar *model.Variable, interval int, resultURI string, filterParams *api.FilterParams) (*api.Histogram, error) {
 	categories, err := f.getTopCategories(filterParams)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to fetch top categories")
 	}
 
-	extrema, err = f.fetchTimeExtremaByResultURI(timeVar, resultURI)
+	extrema, err := f.fetchTimeExtremaByResultURI(timeVar, resultURI)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to fetch extrema from postgres")
 	}
@@ -349,14 +349,15 @@ func (f *CategoricalField) fetchTimeseriesHistogramByResultURI(timeVar *model.Va
 
 	// Create the complete query string.
 	query := fmt.Sprintf(`
-			SELECT %s as bucket, CAST(%s as double precision) AS %s, \"%s\" as field, Count(*) AS count
+			SELECT %s as bucket, CAST(%s as double precision) AS %s, "%s" as field, Count(*) AS count
 			FROM %s data INNER JOIN %s result ON data."%s" = result.index
-			WHERE result.result_id = $%d %s
-			GROUP BY %s, \"%s\"
+			%s AND result.result_id = $%d
+			GROUP BY %s, "%s"
 			ORDER BY %s;`,
 		bucketQuery, histogramQuery, histogramName, f.Key, fromClause,
-		f.Storage.getResultTable(f.StorageName), model.D3MIndexFieldName, len(params),
-		where, bucketQuery, f.Key, histogramName)
+		f.Storage.getResultTable(f.StorageName), model.D3MIndexFieldName,
+		where, len(params),
+		bucketQuery, f.Key, histogramName)
 
 	// execute the postgres query
 	res, err := f.Storage.client.Query(query, params...)
@@ -371,13 +372,13 @@ func (f *CategoricalField) fetchTimeseriesHistogramByResultURI(timeVar *model.Va
 }
 
 // FetchTimeseriesSummaryData pulls summary data from the database and builds a histogram.
-func (f *CategoricalField) fetchTimeseriesHistogram(timeVar *model.Variable, interval int, filterParams *api.FilterParams, extrema *api.Extrema) (*api.Histogram, error) {
+func (f *CategoricalField) fetchTimeseriesHistogram(timeVar *model.Variable, interval int, filterParams *api.FilterParams) (*api.Histogram, error) {
 	categories, err := f.getTopCategories(filterParams)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to fetch top categories")
 	}
 
-	extrema, err = f.fetchTimeExtrema(timeVar)
+	extrema, err := f.fetchTimeExtrema(timeVar)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to fetch extrema from postgres")
 	}

@@ -65,7 +65,7 @@ export function getTask(varType: string): Task {
 	return _.get(TASKS_BY_VARIABLES, lowerType);
 }
 
-// CLASSIFICATION_TASK task info
+// classification task info
 export const CLASSIFICATION_TASK: Task = {
 	displayName: 'Classification',
 	schemaName: 'classification'

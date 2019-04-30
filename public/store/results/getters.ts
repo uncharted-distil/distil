@@ -71,5 +71,11 @@ export const getters = {
 
 	getCorrectnessSummaries(state: ResultsState): VariableSummary[] {
 		return state.correctnessSummaries;
+	},
+
+	// forecasting
+
+	getForecastingSummaries(state: ResultsState): VariableSummary[] {
+		return state.forecastingSummaries;
 	}
 };

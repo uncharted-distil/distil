@@ -36,6 +36,8 @@ export const getters = {
 	getResidualsExtrema: read(moduleGetters.getResidualsExtrema),
 	// correctness
 	getCorrectnessSummaries: read(moduleGetters.getCorrectnessSummaries),
+	// forecasting
+	getForecastingSummaries: read(moduleGetters.getForecastingSummaries),
 	// result table data
 	getResultDataNumRows: read(moduleGetters.getResultDataNumRows)
 };
@@ -55,7 +57,9 @@ export const actions = {
 	fetchResidualsSummaries: dispatch(moduleActions.fetchResidualsSummaries),
 	fetchResidualsExtrema: dispatch(moduleActions.fetchResidualsExtrema),
 	// correctness
-	fetchCorrectnessSummaries: dispatch(moduleActions.fetchCorrectnessSummaries)
+	fetchCorrectnessSummaries: dispatch(moduleActions.fetchCorrectnessSummaries),
+	// forecasting
+	fetchForecastingSummaries: dispatch(moduleActions.fetchForecastingSummaries)
 };
 
 // Typed mutations

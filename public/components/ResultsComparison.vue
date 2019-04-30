@@ -1,7 +1,7 @@
 <template>
 	<div class="results-slots" v-bind:class="{ 'one-slot': !hasHighlights, 'two-slots': hasHighlights }">
 
-		<view-type-toggle v-model="viewType" :variables="variables">
+		<view-type-toggle v-model="viewTypeModel" :variables="variables">
 			Samples Modeled
 		</view-type-toggle>
 
@@ -43,6 +43,9 @@ import { Solution } from '../store/solutions/index';
 import { Variable, TableRow, TableColumn } from '../store/dataset/index';
 import { getHighlights } from '../util/highlights';
 
+const TABLE_VIEW = 'table';
+const TIMESERIES_VIEW = 'timeseries';
+
 export default Vue.extend({
 	name: 'results-comparison',
 
@@ -53,7 +56,7 @@ export default Vue.extend({
 
 	data() {
 		return {
-			viewType: 'table'
+			viewTypeModel: TABLE_VIEW
 		};
 	},
 
@@ -77,6 +80,17 @@ export default Vue.extend({
 
 		variables(): Variable[] {
 			return datasetGetters.getVariables(this.$store);
+		},
+
+		isTimeseriesAnalysis(): boolean {
+			return !!routeGetters.getRouteTimeseriesAnalysis(this.$store);
+		},
+
+		viewType(): string {
+			if (this.isTimeseriesAnalysis) {
+				return TIMESERIES_VIEW;
+			}
+			return this.viewTypeModel;
 		},
 
 		hasHighlights(): boolean {

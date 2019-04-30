@@ -287,26 +287,26 @@ func (f *TextField) getTopCategories(filterParams *api.FilterParams) ([]string, 
 }
 
 // FetchTimeseriesSummaryData pulls summary data from the database and builds a histogram.
-func (f *TextField) FetchTimeseriesSummaryData(timeVar *model.Variable, interval int, resultURI string, filterParams *api.FilterParams, extrema *api.Extrema) (*api.Histogram, error) {
+func (f *TextField) FetchTimeseriesSummaryData(timeVar *model.Variable, interval int, resultURI string, filterParams *api.FilterParams) (*api.Histogram, error) {
 	var histogram *api.Histogram
 	var err error
 	if resultURI == "" {
-		histogram, err = f.fetchTimeseriesHistogram(timeVar, interval, filterParams, extrema)
+		histogram, err = f.fetchTimeseriesHistogram(timeVar, interval, filterParams)
 	} else {
-		histogram, err = f.fetchTimeseriesHistogramByResultURI(timeVar, interval, resultURI, filterParams, extrema)
+		histogram, err = f.fetchTimeseriesHistogramByResultURI(timeVar, interval, resultURI, filterParams)
 	}
 
 	return histogram, err
 }
 
 // FetchTimeseriesSummaryData pulls summary data from the database and builds a histogram.
-func (f *TextField) fetchTimeseriesHistogram(timeVar *model.Variable, interval int, filterParams *api.FilterParams, extrema *api.Extrema) (*api.Histogram, error) {
+func (f *TextField) fetchTimeseriesHistogram(timeVar *model.Variable, interval int, filterParams *api.FilterParams) (*api.Histogram, error) {
 	categories, err := f.getTopCategories(filterParams)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to fetch top categories")
 	}
 
-	extrema, err = f.fetchTimeExtrema(timeVar)
+	extrema, err := f.fetchTimeExtrema(timeVar)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to fetch extrema from postgres")
 	}
@@ -350,13 +350,13 @@ func (f *TextField) fetchTimeseriesHistogram(timeVar *model.Variable, interval i
 	return f.parseTimeHistogram(res, extrema, interval)
 }
 
-func (f *TextField) fetchTimeseriesHistogramByResultURI(timeVar *model.Variable, interval int, resultURI string, filterParams *api.FilterParams, extrema *api.Extrema) (*api.Histogram, error) {
+func (f *TextField) fetchTimeseriesHistogramByResultURI(timeVar *model.Variable, interval int, resultURI string, filterParams *api.FilterParams) (*api.Histogram, error) {
 	categories, err := f.getTopCategories(filterParams)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to fetch top categories")
 	}
 
-	extrema, err = f.fetchTimeExtremaByResultURI(timeVar, resultURI)
+	extrema, err := f.fetchTimeExtremaByResultURI(timeVar, resultURI)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to fetch extrema from postgres")
 	}
@@ -381,18 +381,29 @@ func (f *TextField) fetchTimeseriesHistogramByResultURI(timeVar *model.Variable,
 	wheres = append(wheres, categoryWhere)
 	where := fmt.Sprintf("WHERE %s", strings.Join(wheres, " AND "))
 
-	// TODO: fix this (or dont)
 	params = append(params, resultURI)
-	from := fmt.Sprintf("(SELECT unnest("+
-		"tsvector_to_array(to_tsvector(\"%s\"))) as stem, \"%s\" "+
-		"FROM %s data INNER JOIN %s result ON data.\"%s\" = result.index WHERE result.result_id = $%d %s"+
-		") as r INNER JOIN word_stem as w on r.stem = w.stem",
-		f.Key, timeVar.Name, f.StorageName, f.Storage.getResultTable(f.StorageName),
-		model.D3MIndexFieldName, len(params), where)
+
+	///
+	from := fmt.Sprintf("(SELECT unnest(tsvector_to_array(to_tsvector(\"%s\"))) as stem, \"%s\" FROM %s) as r INNER JOIN word_stem as w on r.stem = w.stem", f.Key, timeVar.Name, f.StorageName)
 
 	// Create the complete query string.
-	query := fmt.Sprintf("SELECT %s as bucket, CAST(%s as double precision) AS %s, w.stem as field, Count(*) AS count FROM %s %s GROUP BY %s, w.stem ORDER BY %s;",
-		bucketQuery, histogramQuery, histogramName, from, where, bucketQuery, histogramName)
+	query := fmt.Sprintf(`
+		SELECT %s as bucket, CAST(%s as double precision) AS %s, w.stem as field, Count(*) AS count
+		FROM %s INNER JOIN %s result ON w."%s" = result.index %s AND result.result_id = $%d GROUP BY %s, w.stem ORDER BY %s;`,
+		bucketQuery, histogramQuery, histogramName, from, f.Storage.getResultTable(f.StorageName), model.D3MIndexFieldName, where, len(params), bucketQuery, histogramName)
+
+	///
+
+	// TODO: fix this (or dont)
+	// from := fmt.Sprintf(`(SELECT unnest(tsvector_to_array(to_tsvector("%s"))) as stem,
+	// 	"%s" FROM %s data INNER JOIN %s result ON data."%s" = result.index
+	// 	%s AND result.result_id = $%d) as r INNER JOIN word_stem as w ON r.stem = w.stem`,
+	// 	f.Key, timeVar.Name, f.StorageName, f.Storage.getResultTable(f.StorageName),
+	// 	model.D3MIndexFieldName, where, len(params))
+	//
+	// // Create the complete query string.
+	// query := fmt.Sprintf("SELECT %s as bucket, CAST(%s as double precision) AS %s, w.stem as field, Count(*) AS count FROM %s %s GROUP BY %s, w.stem ORDER BY %s;",
+	// 	bucketQuery, histogramQuery, histogramName, from, where, bucketQuery, histogramName)
 
 	// execute the postgres query
 	res, err := f.Storage.client.Query(query, params...)

@@ -257,6 +257,7 @@ export const actions = {
 		const target = context.getters.getRouteTargetVariable;
 		const isRegression = context.getters.isRegression;
 		const isClassification = context.getters.isClassification;
+		const isForecasting = context.getters.isForecasting;
 		const requestIds = context.getters.getRelevantSolutionRequestIds;
 		const solutionId = context.getters.getRouteSolutionId;
 		const paginatedVariables = context.getters.getResultsPaginatedVariables;
@@ -304,6 +305,11 @@ export const actions = {
 				dataset: dataset,
 				target: target,
 				requestIds: requestIds,
+			});
+		} else if (isForecasting) {
+			context.dispatch('fetchForecastingSummaries', {
+				dataset: dataset,
+				requestIds: requestIds
 			});
 		} else if (isClassification) {
 			context.dispatch('fetchCorrectnessSummaries', {

@@ -290,19 +290,19 @@ func (f *NumericalField) parseTimeHistogram(rows *pgx.Rows, extrema *api.Extrema
 }
 
 // FetchTimeseriesSummaryData pulls summary data from the database and builds a histogram.
-func (f *NumericalField) FetchTimeseriesSummaryData(timeVar *model.Variable, interval int, resultURI string, filterParams *api.FilterParams, extrema *api.Extrema) (*api.Histogram, error) {
+func (f *NumericalField) FetchTimeseriesSummaryData(timeVar *model.Variable, interval int, resultURI string, filterParams *api.FilterParams) (*api.Histogram, error) {
 	var histogram *api.Histogram
 	var err error
 	if resultURI == "" {
-		histogram, err = f.fetchTimeseriesHistogram(timeVar, interval, filterParams, extrema)
+		histogram, err = f.fetchTimeseriesHistogram(timeVar, interval, filterParams)
 	} else {
-		histogram, err = f.fetchTimeseriesHistogramByResultURI(timeVar, interval, resultURI, filterParams, extrema)
+		histogram, err = f.fetchTimeseriesHistogramByResultURI(timeVar, interval, resultURI, filterParams)
 	}
 
 	return histogram, err
 }
 
-func (f *NumericalField) fetchTimeseriesHistogram(timeVar *model.Variable, interval int, filterParams *api.FilterParams, extrema *api.Extrema) (*api.Histogram, error) {
+func (f *NumericalField) fetchTimeseriesHistogram(timeVar *model.Variable, interval int, filterParams *api.FilterParams) (*api.Histogram, error) {
 	extrema, err := f.fetchTimeExtrema(timeVar)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to fetch extrema from postgres")
@@ -338,7 +338,7 @@ func (f *NumericalField) fetchTimeseriesHistogram(timeVar *model.Variable, inter
 	return f.parseTimeHistogram(res, extrema, interval)
 }
 
-func (f *NumericalField) fetchTimeseriesHistogramByResultURI(timeVar *model.Variable, interval int, resultURI string, filterParams *api.FilterParams, extrema *api.Extrema) (*api.Histogram, error) {
+func (f *NumericalField) fetchTimeseriesHistogramByResultURI(timeVar *model.Variable, interval int, resultURI string, filterParams *api.FilterParams) (*api.Histogram, error) {
 	extrema, err := f.fetchTimeExtremaByResultURI(timeVar, resultURI)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to fetch time extrema by result URI from postgres")
@@ -361,14 +361,16 @@ func (f *NumericalField) fetchTimeseriesHistogramByResultURI(timeVar *model.Vari
 
 	// Create the complete query string.
 	query := fmt.Sprintf(`
-		SELECT %s as bucket, CAST(%s as double precision) AS %s, SUM(\"%s\") AS count
+		SELECT %s as bucket, CAST(%s as double precision) AS %s, SUM("%s") AS count
 		FROM %s data INNER JOIN %s result ON data."%s" = result.index
-		WHERE result.result_id = $%d %s
+		%s AND result.result_id = $%d
 		GROUP BY %s
 		ORDER BY %s;`,
-		bucketQuery, histogramQuery, histogramName, f.Key, fromClause,
-		f.Storage.getResultTable(f.StorageName), model.D3MIndexFieldName, len(params),
-		where, bucketQuery, histogramName)
+		bucketQuery, histogramQuery, histogramName, f.Key,
+		fromClause, f.Storage.getResultTable(f.StorageName), model.D3MIndexFieldName,
+		where, len(params),
+		bucketQuery,
+		histogramName)
 
 	// execute the postgres query
 	res, err := f.Storage.client.Query(query, params...)
