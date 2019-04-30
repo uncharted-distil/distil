@@ -79,7 +79,7 @@ func JoinSuggestionHandler(esCtor model.MetadataStorageCtor, metaCtors map[strin
 				//handleError(w, err)
 				log.Warnf("error querying dataset: %v", err)
 				continue
-			case <-time.After(searchTimeout * time.Second):
+			case <-time.After(joinSuggestionSearchTimeout * time.Second):
 				log.Warnf("timeout querying dataset from %s", provenance)
 				datasetsPart = make([]*model.Dataset, 0)
 			}

@@ -25,22 +25,21 @@
 					href="#"
 					v-bind:class="{ selected: item.selected }"
 					:disabled="isImporting"
+					@click="selectItem(item)"
 				>
-					<div @click="selectItem(item)">
-						<p> <b>{{item.dataset.name}}</b> </p>
-						<p v-html="item.dataset.description">
-							{{item.dataset.description}}
-						</p>
-						<div>
-							<span>
-								<small v-if="item.isAvailable === false" class="text-info">Requires import</small>
-								<small v-if="item.isAvailable" class="text-success">Ready for join</small>
-							</span>
-							<span class="float-right">
-								<small class="text-muted">{{formatNumber(item.dataset.numRows)}} rows</small>
-								<small class="text-muted">{{formatBytes(item.dataset.numBytes)}}</small>
-							</span>
-						</div>
+					<p> <b>{{item.dataset.name}}</b> </p>
+					<div class="description" v-html="item.dataset.description">
+						{{item.dataset.description}}
+					</div>
+					<div>
+						<span>
+							<small v-if="item.isAvailable === false" class="text-info">Requires import</small>
+							<small v-if="item.isAvailable" class="text-success">Ready for join</small>
+						</span>
+						<span class="float-right">
+							<small class="text-muted">{{formatNumber(item.dataset.numRows)}} rows</small>
+							<small class="text-muted">{{formatBytes(item.dataset.numBytes)}}</small>
+						</span>
 					</div>
 				</b-list-group-item>
 			</b-list-group>
@@ -101,6 +100,9 @@ export default Vue.extend({
 	computed: {
 		dataset(): string {
 			return routeGetters.getRouteDataset(this.$store);
+		},
+		target(): string {
+			return routeGetters.getRouteTargetVariable(this.$store);
 		},
 		joinSuggestionRequestData(): JoinSuggestionPendingRequest {
 			const request = datasetGetters.getPendingRequests(this.$store)
@@ -179,7 +181,8 @@ export default Vue.extend({
 			}
 			// navigate to join
 			const entry = createRouteEntry(JOIN_DATASETS_ROUTE, {
-				joinDatasets: `${this.dataset},${selected.dataset.id}`
+				joinDatasets: `${this.dataset},${selected.dataset.id}`,
+				target: this.target,
 			});
 			this.$router.push(entry);
 		},
@@ -254,10 +257,18 @@ export default Vue.extend({
 }
 .status-panel-join .suggstion-list {
 	overflow: auto;
+	overflow-wrap: break-word;
 }
+
 .status-panel-join .list-group-item.selected{
 	background-color: #00c5e114
 }
+
+.status-panel-join .list-group-item .description a:hover{
+	color: #007bff;
+	text-decoration: inherit;
+}
+
 .status-panel-join .status-message {
 	min-height: 0;
 	flex-shrink: 0;

@@ -62,7 +62,7 @@ import { getters as routeGetters } from '../store/route/module';
 import { Dataset, TableData, TableColumn, TableRow } from '../store/dataset/index';
 import { getters as datasetGetters, actions as datasetActions } from '../store/dataset/module';
 import { getTableDataItems, getTableDataFields } from '../util/data';
-import { SELECT_TARGET_ROUTE } from '../store/route';
+import { SELECT_TRAINING_ROUTE } from '../store/route';
 import { isJoinable } from '../util/types';
 
 export default Vue.extend({
@@ -95,6 +95,9 @@ export default Vue.extend({
 	computed: {
 		datasets(): Dataset[] {
 			return datasetGetters.getDatasets(this.$store);
+		},
+		target(): string {
+			return routeGetters.getRouteTargetVariable(this.$store);
 		},
 		columnsSelected(): boolean {
 			return !!this.datasetAColumn && !!this.datasetBColumn;
@@ -178,8 +181,9 @@ export default Vue.extend({
 			});
 		},
 		onJoinCommitSuccess(datasetID: string) {
-			const entry = createRouteEntry(SELECT_TARGET_ROUTE, {
-				dataset: datasetID
+			const entry = createRouteEntry(SELECT_TRAINING_ROUTE, {
+				dataset: datasetID,
+				target: this.target,
 			});
 			this.$router.push(entry);
 			this.addRecentDataset(datasetID);

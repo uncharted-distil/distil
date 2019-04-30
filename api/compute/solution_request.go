@@ -635,7 +635,7 @@ func CreateSearchSolutionRequest(allFeatures []*model.Variable,
 	columnIndex := getColumnIndex(targetVariable, selectedFeatures)
 	task := DefaultTaskType(targetVariable.Type, "")
 	taskSubType := DefaultTaskSubType(targetVariable.Type)
-	metrics := DefaultMetrics(targetVariable.Type)
+	metrics := DefaultMetrics(task)
 
 	// create search solutions request
 	searchRequest, err := createSearchSolutionsRequest(columnIndex, preprocessingPipeline, sourceURI, userAgent, target, dataset, metrics, task, taskSubType, 600)

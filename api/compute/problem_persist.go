@@ -26,8 +26,9 @@ import (
 
 	"github.com/pkg/errors"
 	"github.com/uncharted-distil/distil-compute/model"
+	"github.com/uncharted-distil/distil-compute/primitive/compute"
 	api "github.com/uncharted-distil/distil/api/model"
-	"github.com/unchartedsoftware/plog"
+	log "github.com/unchartedsoftware/plog"
 )
 
 const (
@@ -122,12 +123,9 @@ func fileExists(filename string) bool {
 	return true
 }
 
-// DefaultMetrics returns default metrics.
-func DefaultMetrics(targetType string) []string {
-	if model.IsCategorical(targetType) {
-		return []string{defaultCategoricalMetric}
-	}
-	return []string{defaultNumericalMetric}
+// DefaultMetrics returns default metric for a given task.
+func DefaultMetrics(taskType string) []string {
+	return []string{compute.GetDefaultTaskMetricTA3(taskType)}
 }
 
 // DefaultTaskType returns a default task.
@@ -141,11 +139,8 @@ func DefaultTaskType(targetType string, problemType string) string {
 }
 
 // DefaultTaskSubType returns a default sub task.
-func DefaultTaskSubType(targetType string) string {
-	if model.IsCategorical(targetType) {
-		return defaultTaskSubTypeCategorical
-	}
-	return defaultTaskSubTypeNumerical
+func DefaultTaskSubType(taskType string) string {
+	return compute.GetDefaultTaskSubTypeTA3(taskType)
 }
 
 // CreateProblemSchema captures the problem information in the required D3M
@@ -167,7 +162,9 @@ func CreateProblemSchema(datasetDir string, dataset string, targetVar *model.Var
 		return nil, pPath, nil
 	}
 
-	metrics := DefaultMetrics(targetVar.Type)
+	taskType := DefaultTaskType(targetVar.Type)
+	taskSubType := DefaultTaskSubType(taskType)
+	metrics := DefaultMetrics(taskType)
 
 	targetIdx := -1
 
@@ -198,8 +195,8 @@ func CreateProblemSchema(datasetDir string, dataset string, targetVar *model.Var
 		ProblemID:            problemID,
 		ProblemVersion:       problemVersion,
 		ProblemSchemaVersion: problemSchemaVersion,
-		TaskType:             DefaultTaskType(targetVar.Type, ""),
-		TaskSubType:          DefaultTaskSubType(targetVar.Type),
+		TaskType:             taskType,
+		TaskSubType:          taskSubType,
 	}
 
 	problem := &ProblemPersist{
