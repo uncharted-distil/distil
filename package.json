@@ -12,7 +12,7 @@
     "@types/jquery": "^3.3.2",
     "@types/lodash": "^4.14.120",
     "@types/store": "^2.0.1",
-    "@uncharted.software/stories-facets": "https://github.com/unchartedsoftware/stories-facets#sparkline-horizontal-facets",
+    "@uncharted.software/stories-facets:": "2.12.12",
     "axios": "^0.18.0",
     "bootstrap": "^4.3.0",
     "bootstrap-vue": "^2.0.0-rc.13",
