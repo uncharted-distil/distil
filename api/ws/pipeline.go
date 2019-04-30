@@ -148,7 +148,7 @@ func handleCreateSolutions(conn *Connection, client *compute.Client, metadataCto
 	// load defaults
 	config, _ := env.LoadConfig()
 	if request.Task == "" {
-		request.Task = api.DefaultTaskType(targetVar.Type)
+		request.Task = api.DefaultTaskType(targetVar.Type, request.ProblemType)
 		log.Infof("Defaulting task type to `%s`", request.Task)
 	}
 	if request.SubTask == "" {

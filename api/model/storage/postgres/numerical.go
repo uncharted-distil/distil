@@ -144,9 +144,29 @@ func (f *NumericalField) fetchTimeExtrema(timeVar *model.Variable) (*api.Extrema
 	queryString := fmt.Sprintf("SELECT %s FROM %s;", aggQuery, fromClause)
 
 	// execute the postgres query
-	// NOTE: We may want to use the regular Query operation since QueryRow
-	// hides db exceptions.
 	res, err := f.Storage.client.Query(queryString)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to fetch extrema for variable summaries from postgres")
+	}
+	if res != nil {
+		defer res.Close()
+	}
+
+	return f.parseTimeExtrema(timeVar, res)
+}
+
+func (f *NumericalField) fetchTimeExtremaByResultURI(timeVar *model.Variable, resultURI string) (*api.Extrema, error) {
+	fromClause := f.getFromClause(false)
+
+	// add min / max aggregation
+	aggQuery := f.getTimeMinMaxAggsQuery(timeVar)
+
+	// create a query that does min and max aggregations for each variable
+	queryString := fmt.Sprintf("SELECT %s FROM %s data INNER JOIN %s result ON data.\"%s\" = result.index WHERE result.result_id = $1;",
+		aggQuery, fromClause, f.Storage.getResultTable(f.StorageName), model.D3MIndexFieldName)
+
+	// execute the postgres query
+	res, err := f.Storage.client.Query(queryString, resultURI)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to fetch extrema for variable summaries from postgres")
 	}
@@ -271,45 +291,95 @@ func (f *NumericalField) parseTimeHistogram(rows *pgx.Rows, extrema *api.Extrema
 
 // FetchTimeseriesSummaryData pulls summary data from the database and builds a histogram.
 func (f *NumericalField) FetchTimeseriesSummaryData(timeVar *model.Variable, interval int, resultURI string, filterParams *api.FilterParams, extrema *api.Extrema) (*api.Histogram, error) {
-
+	var histogram *api.Histogram
+	var err error
 	if resultURI == "" {
-
-		extrema, err := f.fetchTimeExtrema(timeVar)
-		if err != nil {
-			return nil, errors.Wrap(err, "failed to fetch extrema from postgres")
-		}
-
-		histogramName, bucketQuery, histogramQuery := f.getTimeseriesHistogramAggQuery(extrema, interval)
-
-		// create the filter for the query.
-		wheres := make([]string, 0)
-		params := make([]interface{}, 0)
-		wheres, params = f.Storage.buildFilteredQueryWhere(wheres, params, filterParams.Filters)
-
-		where := ""
-		if len(wheres) > 0 {
-			where = fmt.Sprintf("WHERE %s", strings.Join(wheres, " AND "))
-		}
-
-		fromClause := f.getFromClause(true)
-
-		// Create the complete query string.
-		query := fmt.Sprintf("SELECT %s as bucket, CAST(%s as double precision) AS %s, SUM(\"%s\") AS count FROM %s %s GROUP BY %s ORDER BY %s;",
-			bucketQuery, histogramQuery, histogramName, f.Key, fromClause, where, bucketQuery, histogramName)
-
-		// execute the postgres query
-		res, err := f.Storage.client.Query(query, params...)
-		if err != nil {
-			return nil, errors.Wrap(err, "failed to fetch histograms for variable summaries from postgres")
-		}
-		if res != nil {
-			defer res.Close()
-		}
-
-		return f.parseTimeHistogram(res, extrema, interval)
+		histogram, err = f.fetchTimeseriesHistogram(timeVar, interval, filterParams, extrema)
+	} else {
+		histogram, err = f.fetchTimeseriesHistogramByResultURI(timeVar, interval, resultURI, filterParams, extrema)
 	}
 
-	return nil, fmt.Errorf("not implemented")
+	return histogram, err
+}
+
+func (f *NumericalField) fetchTimeseriesHistogram(timeVar *model.Variable, interval int, filterParams *api.FilterParams, extrema *api.Extrema) (*api.Histogram, error) {
+	extrema, err := f.fetchTimeExtrema(timeVar)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to fetch extrema from postgres")
+	}
+
+	histogramName, bucketQuery, histogramQuery := f.getTimeseriesHistogramAggQuery(extrema, interval)
+
+	// create the filter for the query.
+	wheres := make([]string, 0)
+	params := make([]interface{}, 0)
+	wheres, params = f.Storage.buildFilteredQueryWhere(wheres, params, filterParams.Filters)
+
+	where := ""
+	if len(wheres) > 0 {
+		where = fmt.Sprintf("WHERE %s", strings.Join(wheres, " AND "))
+	}
+
+	fromClause := f.getFromClause(true)
+
+	// Create the complete query string.
+	query := fmt.Sprintf("SELECT %s as bucket, CAST(%s as double precision) AS %s, SUM(\"%s\") AS count FROM %s %s GROUP BY %s ORDER BY %s;",
+		bucketQuery, histogramQuery, histogramName, f.Key, fromClause, where, bucketQuery, histogramName)
+
+	// execute the postgres query
+	res, err := f.Storage.client.Query(query, params...)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to fetch histograms for variable summaries from postgres")
+	}
+	if res != nil {
+		defer res.Close()
+	}
+
+	return f.parseTimeHistogram(res, extrema, interval)
+}
+
+func (f *NumericalField) fetchTimeseriesHistogramByResultURI(timeVar *model.Variable, interval int, resultURI string, filterParams *api.FilterParams, extrema *api.Extrema) (*api.Histogram, error) {
+	extrema, err := f.fetchTimeExtremaByResultURI(timeVar, resultURI)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to fetch time extrema by result URI from postgres")
+	}
+
+	histogramName, bucketQuery, histogramQuery := f.getTimeseriesHistogramAggQuery(extrema, interval)
+
+	// create the filter for the query.
+	wheres := make([]string, 0)
+	params := make([]interface{}, 0)
+	wheres, params = f.Storage.buildFilteredQueryWhere(wheres, params, filterParams.Filters)
+
+	where := ""
+	if len(wheres) > 0 {
+		where = fmt.Sprintf("WHERE %s", strings.Join(wheres, " AND "))
+	}
+
+	fromClause := f.getFromClause(false)
+	params = append(params, resultURI)
+
+	// Create the complete query string.
+	query := fmt.Sprintf(`
+		SELECT %s as bucket, CAST(%s as double precision) AS %s, SUM(\"%s\") AS count
+		FROM %s data INNER JOIN %s result ON data."%s" = result.index
+		WHERE result.result_id = $%d %s
+		GROUP BY %s
+		ORDER BY %s;`,
+		bucketQuery, histogramQuery, histogramName, f.Key, fromClause,
+		f.Storage.getResultTable(f.StorageName), model.D3MIndexFieldName, len(params),
+		where, bucketQuery, histogramName)
+
+	// execute the postgres query
+	res, err := f.Storage.client.Query(query, params...)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to fetch histograms for variable time summariesby resut URI from postgres")
+	}
+	if res != nil {
+		defer res.Close()
+	}
+
+	return f.parseTimeHistogram(res, extrema, interval)
 }
 
 func (f *NumericalField) fetchHistogram(filterParams *api.FilterParams) (*api.Histogram, error) {

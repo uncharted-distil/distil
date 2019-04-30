@@ -37,11 +37,14 @@ const (
 	problemVersion       = "1.0"
 	problemSchemaVersion = "3.0"
 
+	problemTypeForecasting = "forecasting"
+
 	defaultNumericalMetric   = "rSquared"
 	defaultCategoricalMetric = "f1Micro"
 
 	defaultTaskTypeNumerical   = "regression"
 	defaultTaskTypeCategorical = "classification"
+	defaultTaskTypeForecasting = "time_series_forecasting"
 
 	defaultTaskSubTypeNumerical   = "univariate"
 	defaultTaskSubTypeCategorical = "multiClass"
@@ -128,8 +131,10 @@ func DefaultMetrics(targetType string) []string {
 }
 
 // DefaultTaskType returns a default task.
-func DefaultTaskType(targetType string) string {
-	if model.IsCategorical(targetType) {
+func DefaultTaskType(targetType string, problemType string) string {
+	if problemType == problemTypeForecasting {
+		return defaultTaskTypeForecasting
+	} else if model.IsCategorical(targetType) {
 		return defaultTaskTypeCategorical
 	}
 	return defaultTaskTypeNumerical
@@ -193,7 +198,7 @@ func CreateProblemSchema(datasetDir string, dataset string, targetVar *model.Var
 		ProblemID:            problemID,
 		ProblemVersion:       problemVersion,
 		ProblemSchemaVersion: problemSchemaVersion,
-		TaskType:             DefaultTaskType(targetVar.Type),
+		TaskType:             DefaultTaskType(targetVar.Type, ""),
 		TaskSubType:          DefaultTaskSubType(targetVar.Type),
 	}
 

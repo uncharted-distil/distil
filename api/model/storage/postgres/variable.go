@@ -281,3 +281,8 @@ func (s *Storage) fetchTimeseriesSummary(dataset string, storageName string, xCo
 func (s *Storage) FetchTimeseriesSummary(dataset string, storageName string, xColName string, yColName string, interval int, filterParams *api.FilterParams) (*api.Histogram, error) {
 	return s.fetchTimeseriesSummary(dataset, storageName, xColName, yColName, "", interval, filterParams, nil)
 }
+
+// FetchTimeseriesSummaryByResult fetches a timeseries for a given result.
+func (s *Storage) FetchTimeseriesSummaryByResult(dataset string, storageName string, xColName string, yColName string, interval int, resultURI string, filterParams *api.FilterParams, extrema *api.Extrema) (*api.Histogram, error) {
+	return s.fetchTimeseriesSummary(dataset, storageName, xColName, yColName, resultURI, interval, filterParams, nil)
+}
