@@ -9,7 +9,7 @@
 					:dataset="dataset"
 					allow-join
 					allow-import
-					v-on:join-dataset="onJoin">
+				>
 				</dataset-preview>
 			</div>
 			<div class="row justify-content-center" v-if="!isPending && (!filteredDatasets || filteredDatasets.length === 0)">
@@ -46,12 +46,6 @@ export default Vue.extend({
 		},
 		spinnerHTML(): string {
 			return spinnerHTML();
-		}
-	},
-
-	methods: {
-		onJoin(arg) {
-			this.$emit('join-dataset', arg);
 		}
 	},
 

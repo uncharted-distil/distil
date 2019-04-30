@@ -19,14 +19,6 @@
 					striped
 					:animated="true"></b-progress>
 			</a>
-			<a v-if="allowJoin && !datamartProvenance(dataset.provenance)">
-				<b-button class="dataset-preview-button" variant="primary" @click.stop='joinDataset()'>
-					<div class="row justify-content-center pl-3 pr-3">
-						<i class="fa fa-compress mr-2"></i>
-						<b>Join</b>
-					</div>
-				</b-button>
-			</a>
 		</div>
 		<div class='card-body'>
 			<div class='row'>
@@ -102,7 +94,6 @@ export default Vue.extend({
 	props: {
 		dataset: Object as () => Dataset,
 		allowImport: Boolean as () => boolean,
-		allowJoin: Boolean as () => boolean,
 	},
 
 	computed: {
@@ -175,9 +166,6 @@ export default Vue.extend({
 				this.showImportFailure = true;
 				this.importPending = false;
 			});
-		},
-		joinDataset() {
-			this.$emit('join-dataset', this.dataset.id);
 		},
 		datamartProvenance(provenance: string): boolean {
 			return isDatamartProvenance(provenance);

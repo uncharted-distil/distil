@@ -17,11 +17,6 @@
 					<i class="fa fa-file-text-o nav-icon"></i>
 					<b-nav-text>Select Data</b-nav-text>
 				</b-nav-item>
-				<b-nav-item @click="onJoinDatasets" v-if="isJoinDatasets" :active="isActive(JOIN_DATASETS_ROUTE)" v-bind:class="{ active: isActive(JOIN_DATASETS_ROUTE) }">
-					<i class="fa fa-angle-right nav-arrow"></i>
-					<i class="fa fa-database nav-icon"></i>
-					<b-nav-text>Join Datasets</b-nav-text>
-				</b-nav-item>
 				<b-nav-item @click="onSelectTarget" v-if="!isTask2" :active="isActive(SELECT_TARGET_ROUTE)" :disabled="!hasSelectTargetView()" v-bind:class="{ active: isActive(SELECT_TARGET_ROUTE) }">
 					<i class="fa fa-angle-right nav-arrow"></i>
 					<i class="fa fa-dot-circle-o  nav-icon"></i>
@@ -31,6 +26,11 @@
 					<i class="fa fa-angle-right nav-arrow"></i>
 					<i class="fa fa-code-fork  nav-icon"></i>
 					<b-nav-text>Create Models</b-nav-text>
+				</b-nav-item>
+				<b-nav-item @click="onJoinDatasets" v-if="isJoinDatasets && isActive(JOIN_DATASETS_ROUTE)" :active="isActive(JOIN_DATASETS_ROUTE)" v-bind:class="{ active: isActive(JOIN_DATASETS_ROUTE) }">
+					<i class="fa fa-angle-right nav-arrow"></i>
+					<i class="fa fa-database nav-icon"></i>
+					<b-nav-text>Join Datasets</b-nav-text>
 				</b-nav-item>
 				<b-nav-item @click="onResults" :active="isActive(RESULTS_ROUTE)" :disabled="!hasResultView()" v-bind:class="{ active: isActive(RESULTS_ROUTE) }">
 					<i class="fa fa-angle-right nav-arrow"></i>
