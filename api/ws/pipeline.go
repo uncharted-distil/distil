@@ -23,7 +23,7 @@ import (
 	"time"
 
 	"github.com/pkg/errors"
-	"github.com/unchartedsoftware/plog"
+	log "github.com/unchartedsoftware/plog"
 
 	"github.com/uncharted-distil/distil-compute/primitive/compute"
 	api "github.com/uncharted-distil/distil/api/compute"
@@ -152,11 +152,11 @@ func handleCreateSolutions(conn *Connection, client *compute.Client, metadataCto
 		log.Infof("Defaulting task type to `%s`", request.Task)
 	}
 	if request.SubTask == "" {
-		request.SubTask = api.DefaultTaskSubType(targetVar.Type)
+		request.SubTask = api.DefaultTaskSubType(request.Task)
 		log.Infof("Defaulting task sub type to `%s`", request.SubTask)
 	}
 	if len(request.Metrics) == 0 {
-		request.Metrics = api.DefaultMetrics(targetVar.Type)
+		request.Metrics = api.DefaultMetrics(request.Task)
 		log.Infof("Defaulting metrics to `%s`", strings.Join(request.Metrics, ","))
 	}
 	if request.MaxTime == 0 {

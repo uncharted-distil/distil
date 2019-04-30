@@ -77,6 +77,11 @@ export const REGRESSION_TASK: Task = {
 	schemaName: 'regression'
 };
 
+export const TIMESERIES_FORECASTING_TASK: Task = {
+	displayName: 'Time Series Forecasting',
+	schemaName: 'timeSeriesForecasting'
+};
+
 // variable type to task mappings
 const TASKS_BY_VARIABLES: Dictionary<Task> = {
 	float:  REGRESSION_TASK,
