@@ -28,7 +28,7 @@
 					@click="selectItem(item)"
 				>
 					<p> <b>{{item.dataset.name}}</b> </p>
-					<div v-html="item.dataset.description">
+					<div class="description" v-html="item.dataset.description">
 						{{item.dataset.description}}
 					</div>
 					<div>
@@ -257,10 +257,18 @@ export default Vue.extend({
 }
 .status-panel-join .suggstion-list {
 	overflow: auto;
+	overflow-wrap: break-word;
 }
+
 .status-panel-join .list-group-item.selected{
 	background-color: #00c5e114
 }
+
+.status-panel-join .list-group-item .description a:hover{
+	color: #007bff;
+	text-decoration: inherit;
+}
+
 .status-panel-join .status-message {
 	min-height: 0;
 	flex-shrink: 0;
