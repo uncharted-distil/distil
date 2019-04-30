@@ -162,7 +162,7 @@ func CreateProblemSchema(datasetDir string, dataset string, targetVar *model.Var
 		return nil, pPath, nil
 	}
 
-	taskType := DefaultTaskType(targetVar.Type)
+	taskType := DefaultTaskType(targetVar.Type, "")
 	taskSubType := DefaultTaskSubType(taskType)
 	metrics := DefaultMetrics(taskType)
 
