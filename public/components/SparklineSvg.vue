@@ -151,7 +151,7 @@ export default Vue.extend({
 		},
 		injectSparkline() {
 
-			if (!this.$svg) {
+			if (!this.$svg || !this.timeseries || this.timeseries.length === 0) {
 				return;
 			}
 
@@ -185,7 +185,7 @@ export default Vue.extend({
 		},
 		injectPrediction() {
 
-			if (!this.$svg || !this.forecast) {
+			if (!this.$svg || !this.forecast || this.forecast.length === 0) {
 				return;
 			}
 

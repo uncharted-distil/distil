@@ -42,10 +42,12 @@ export default Vue.extend({
 	},
 	computed: {
 		min(): number {
-			return d3.min(this.timeseries, d => d[1]);
+			const min = d3.min(this.timeseries, d => d[1]);
+			return min !== undefined ? min : 0;
 		},
 		max(): number {
-			return d3.max(this.timeseries, d => d[1]);
+			const max = d3.max(this.timeseries, d => d[1]);
+			return max !== undefined ? max : 0;
 		}
 	}
 

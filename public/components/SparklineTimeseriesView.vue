@@ -191,6 +191,10 @@ export default Vue.extend({
 
 				const startIndex = Math.floor(points.length * START_X);
 
+				if (!points || points.length === 0) {
+					return [];
+				}
+
 				const startX = points[startIndex][0];
 				const startY = points[startIndex][1];
 
