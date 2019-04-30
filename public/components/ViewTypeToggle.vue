@@ -87,8 +87,11 @@ export default Vue.extend({
 			return false;
 		},
 		hasGeoVariables(): boolean {
-			const hasLat = this.variables.filter(v => v.grouping && v.grouping.type === LONGITUDE_TYPE).length  > 0;
-			const hasLon = this.variables.filter(v => v.grouping && v.grouping.type === LATITUDE_TYPE).length  > 0;
+			// TODO: impl groupings for lon / lat
+			// const hasLat = this.variables.filter(v => v.grouping && v.grouping.type === LONGITUDE_TYPE).length  > 0;
+			// const hasLon = this.variables.filter(v => v.grouping && v.grouping.type === LATITUDE_TYPE).length  > 0;
+			const hasLat = this.variables.filter(v => v.colType === LONGITUDE_TYPE).length  > 0;
+			const hasLon = this.variables.filter(v => v.colType === LATITUDE_TYPE).length  > 0;
 			return hasLat && hasLon;
 		},
 		showToggleButtons(): boolean {
