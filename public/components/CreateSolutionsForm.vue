@@ -78,6 +78,7 @@ import { actions as solutionActions } from '../store/solutions/module';
 import { Solution, NUM_SOLUTIONS } from '../store/solutions/index';
 import { Variable } from '../store/dataset/index';
 import { FilterParams } from '../util/filters';
+import { TIMESERIES_FORECASTING_TASK } from '../util/solutions';
 import Vue from 'vue';
 
 export default Vue.extend({
@@ -118,6 +119,8 @@ export default Vue.extend({
 		taskType(): string {
 			if (this.isTask2) {
 				return appGetters.getProblemTaskType(this.$store);
+			} else if (!!routeGetters.getRouteTimeseriesAnalysis(this.$store)) {
+				return TIMESERIES_FORECASTING_TASK.schemaName;
 			}
 			return null;
 		},
