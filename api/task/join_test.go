@@ -61,9 +61,10 @@ func TestJoin(t *testing.T) {
 			Type:        model.IntegerType,
 		},
 		{
-			Name:        "charlie",
-			DisplayName: "Charlie",
-			Type:        model.CategoricalType,
+			Name:         "charlie",
+			DisplayName:  "Charlie",
+			Type:         model.CountryType,
+			OriginalType: model.CategoricalFilter,
 		},
 		{
 			Name:        "delta",

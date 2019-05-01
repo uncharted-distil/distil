@@ -130,6 +130,13 @@ func createMergedVariables(varNames []string, varsLeft []*model.Variable, varsRi
 				return nil, errors.Errorf("can't find data for result var \"%s\"", varName)
 			}
 		}
+
+		// map any distil types (country, city, etc.) back to LL schema types since we are
+		// persisting as an LL dataset
+		if v.OriginalType != "" {
+			v.Type = v.OriginalType
+		}
+
 		v.Index = i
 		mergedVariables = append(mergedVariables, v)
 	}
