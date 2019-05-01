@@ -115,7 +115,6 @@ export function addHighlightToFilterParams(filterParams: FilterParams, highlight
 }
 
 export function updateHighlightRoot(router: VueRouter, highlightRoot: HighlightRoot) {
-	console.log('updateHighlightRoot', JSON.stringify(highlightRoot));
 	const entry = overlayRouteEntry(routeGetters.getRoute(store), {
 		highlights: encodeHighlights(highlightRoot),
 		row: null // clear row

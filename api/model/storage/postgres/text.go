@@ -557,3 +557,9 @@ func (f *TextField) FetchPredictedSummaryData(resultURI string, datasetResult st
 
 	return f.parseHistogram(res)
 }
+
+// FetchForecastingSummaryData pulls data from the result table and builds the
+// forecasting histogram for the field.
+func (f *TextField) FetchForecastingSummaryData(timeVar *model.Variable, interval int, resultURI string, filterParams *api.FilterParams) (*api.Histogram, error) {
+	return nil, fmt.Errorf("not implemented")
+}

@@ -277,3 +277,9 @@ func (f *ImageField) FetchPredictedSummaryData(resultURI string, datasetResult s
 	histogram.Exemplars = files
 	return histogram, nil
 }
+
+// FetchForecastingSummaryData pulls data from the result table and builds the
+// forecasting histogram for the field.
+func (f *ImageField) FetchForecastingSummaryData(timeVar *model.Variable, interval int, resultURI string, filterParams *api.FilterParams) (*api.Histogram, error) {
+	return nil, fmt.Errorf("not implemented")
+}

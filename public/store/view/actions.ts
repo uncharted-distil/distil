@@ -306,11 +306,6 @@ export const actions = {
 				target: target,
 				requestIds: requestIds,
 			});
-		} else if (isForecasting) {
-			context.dispatch('fetchForecastingSummaries', {
-				dataset: dataset,
-				requestIds: requestIds
-			});
 		} else if (isClassification) {
 			context.dispatch('fetchCorrectnessSummaries', {
 				dataset: dataset,

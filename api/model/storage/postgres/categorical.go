@@ -576,3 +576,9 @@ func (f *CategoricalField) getFromClause(alias bool) string {
 
 	return fromClause
 }
+
+// FetchForecastingSummaryData pulls data from the result table and builds the
+// forecasting histogram for the field.
+func (f *CategoricalField) FetchForecastingSummaryData(timeVar *model.Variable, interval int, resultURI string, filterParams *api.FilterParams) (*api.Histogram, error) {
+	return nil, fmt.Errorf("not implemented")
+}

@@ -152,7 +152,6 @@ export const actions = {
 				});
 		}
 
-
 		return axios.post(`/distil/target-summary/${args.dataset}/${args.target}/${solution.resultId}`, {})
 			.then(response => {
 				const histogram = response.data.histogram;
@@ -274,10 +273,28 @@ export const actions = {
 			return null;
 		}
 
+		const timeseries = context.getters.getRouteTimeseriesAnalysis;
+		let interval = context.getters.getRouteTimeseriesBinningInterval;
+
+		if (timeseries) {
+
+			if (!interval) {
+				const timeVar = context.getters.getTimeseriesAnalysisVariable;
+				const range = context.getters.getTimeseriesAnalysisRange;
+				const intervals = getTimeseriesAnalysisIntervals(timeVar, range);
+				interval = intervals[0].value;
+			}
+
+			const endPoint = `distil/forecasting-summary/${args.dataset}/${timeseries}/${args.target}/${interval}`;
+			const key = solution.predictedKey;
+			const label = 'Forecasted';
+			return getSummary(context, endPoint, solution, key, label, mutations.updatePredictedSummaries, null);
+		}
+
 		const endpoint = `/distil/predicted-summary/${args.dataset}/${args.target}`;
 		const key = solution.predictedKey;
 		const label = 'Predicted';
-		getSummary(context, endpoint, solution, key, label, mutations.updatePredictedSummaries, null);
+		return getSummary(context, endpoint, solution, key, label, mutations.updatePredictedSummaries, null);
 	},
 
 	// fetches result summaries for a given solution create request
@@ -320,7 +337,7 @@ export const actions = {
 		const endPoint = `/distil/residuals-summary/${args.dataset}/${args.target}`;
 		const key = solution.errorKey;
 		const label = 'Error';
-		getSummary(context, endPoint, solution, key, label, mutations.updateResidualsSummaries, null);
+		return getSummary(context, endPoint, solution, key, label, mutations.updateResidualsSummaries, null);
 	},
 
 	// fetches result summaries for a given solution create request
@@ -359,7 +376,7 @@ export const actions = {
 		const endPoint = `/distil/correctness-summary/${args.dataset}`;
 		const key = solution.errorKey;
 		const label = 'Error';
-		getSummary(context, endPoint, solution, key, label, mutations.updateCorrectnessSummaries, null);
+		return getSummary(context, endPoint, solution, key, label, mutations.updateCorrectnessSummaries, null);
 	},
 
 	// fetches result summaries for a given pipeline create request
@@ -371,44 +388,6 @@ export const actions = {
 		const solutions = getSolutionsByRequestIds(context.rootState.solutionModule, args.requestIds);
 		return Promise.all(solutions.map(solution => {
 			return context.dispatch('fetchCorrectnessSummary', {
-				dataset: args.dataset,
-				solutionId: solution.solutionId,
-			});
-		}));
-	},
-
-	// fetches result summary for a given pipeline id.
-	fetchForecastingSummary(context: ResultsContext, args: { dataset: string, solutionId: string}) {
-		if (!args.dataset) {
-			console.warn('`dataset` argument is missing');
-			return null;
-		}
-		if (!args.solutionId) {
-			console.warn('`pipelineId` argument is missing');
-			return null;
-		}
-
-		const solution = getSolutionById(context.rootState.solutionModule, args.solutionId);
-		if (!solution.resultId) {
-			// no results ready to pull
-			return null;
-		}
-
-		const endPoint = `/distil/forecasting-summary/${args.dataset}`;
-		const key = solution.errorKey;
-		const label = 'Error';
-		getSummary(context, endPoint, solution, key, label, mutations.updateCorrectnessSummaries, null);
-	},
-
-	// fetches result summaries for a given pipeline create request
-	fetchForecastingSummaries(context: ResultsContext, args: { dataset: string, requestIds: string[]}) {
-		if (!args.requestIds) {
-			console.warn('`requestIds` argument is missing');
-			return null;
-		}
-		const solutions = getSolutionsByRequestIds(context.rootState.solutionModule, args.requestIds);
-		return Promise.all(solutions.map(solution => {
-			return context.dispatch('fetchForecastingSummary', {
 				dataset: args.dataset,
 				solutionId: solution.solutionId,
 			});

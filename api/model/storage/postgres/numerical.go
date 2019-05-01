@@ -351,24 +351,26 @@ func (f *NumericalField) fetchTimeseriesHistogramByResultURI(timeVar *model.Vari
 	params := make([]interface{}, 0)
 	wheres, params = f.Storage.buildFilteredQueryWhere(wheres, params, filterParams.Filters)
 
+	params = append(params, resultURI)
+	wheres = append(wheres, fmt.Sprintf("result.result_id = $%d", len(params)))
+
 	where := ""
 	if len(wheres) > 0 {
 		where = fmt.Sprintf("WHERE %s", strings.Join(wheres, " AND "))
 	}
 
 	fromClause := f.getFromClause(false)
-	params = append(params, resultURI)
 
 	// Create the complete query string.
 	query := fmt.Sprintf(`
 		SELECT %s as bucket, CAST(%s as double precision) AS %s, SUM("%s") AS count
 		FROM %s data INNER JOIN %s result ON data."%s" = result.index
-		%s AND result.result_id = $%d
+		%s
 		GROUP BY %s
 		ORDER BY %s;`,
 		bucketQuery, histogramQuery, histogramName, f.Key,
 		fromClause, f.Storage.getResultTable(f.StorageName), model.D3MIndexFieldName,
-		where, len(params),
+		where,
 		bucketQuery,
 		histogramName)
 
@@ -856,4 +858,59 @@ func (f *NumericalField) getFromClause(alias bool) string {
 	}
 
 	return fromClause
+}
+
+// FetchForecastingSummaryData pulls data from the result table and builds
+// the numerical histogram for the field.
+func (f *NumericalField) FetchForecastingSummaryData(timeVar *model.Variable, interval int, resultURI string, filterParams *api.FilterParams) (*api.Histogram, error) {
+	resultVariable := &model.Variable{
+		Name: "value",
+		Type: model.TextType,
+	}
+
+	extrema, err := f.fetchTimeExtremaByResultURI(timeVar, resultURI)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to fetch time extrema by result URI from postgres")
+	}
+
+	histogramName, bucketQuery, histogramQuery := f.getTimeseriesHistogramAggQuery(extrema, interval)
+
+	// create the filter for the query.
+	wheres := make([]string, 0)
+	params := make([]interface{}, 0)
+	wheres, params = f.Storage.buildFilteredQueryWhere(wheres, params, filterParams.Filters)
+
+	params = append(params, resultURI)
+	wheres = append(wheres, fmt.Sprintf("result.result_id = $%d", len(params)))
+
+	where := ""
+	if len(wheres) > 0 {
+		where = fmt.Sprintf("WHERE %s", strings.Join(wheres, " AND "))
+	}
+
+	fromClause := f.getFromClause(false)
+
+	// Create the complete query string.
+	query := fmt.Sprintf(`
+		SELECT %s as bucket, CAST(%s as double precision) AS %s, SUM(CAST("%s" as double precision)) AS count
+		FROM %s data INNER JOIN %s result ON data."%s" = result.index
+		%s
+		GROUP BY %s
+		ORDER BY %s;`,
+		bucketQuery, histogramQuery, histogramName, resultVariable.Name,
+		fromClause, f.Storage.getResultTable(f.StorageName), model.D3MIndexFieldName,
+		where,
+		bucketQuery,
+		histogramName)
+
+	// execute the postgres query
+	res, err := f.Storage.client.Query(query, params...)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to fetch histograms for variable time summariesby resut URI from postgres")
+	}
+	if res != nil {
+		defer res.Close()
+	}
+
+	return f.parseTimeHistogram(res, extrema, interval)
 }

@@ -310,6 +310,7 @@ func main() {
 	registerRoutePost(mux, "/distil/training-summary/:dataset/:variable/:results-uuid", routes.TrainingSummaryHandler(pgSolutionStorageCtor, pgDataStorageCtor))
 	registerRoutePost(mux, "/distil/training-timeseries-summary/:dataset/:xColName/:yColName/:binningInterval/:results-uuid", routes.TrainingTimeseriesSummaryHandler(pgSolutionStorageCtor, pgDataStorageCtor))
 	registerRoutePost(mux, "/distil/target-timeseries-summary/:dataset/:xColName/:yColName/:binningInterval/:results-uuid", routes.TargetTimeseriesSummaryHandler(pgSolutionStorageCtor, pgDataStorageCtor))
+	registerRoutePost(mux, "/distil/forecasting-summary/:dataset/:xColName/:yColName/:binningInterval/:results-uuid", routes.ForecastingSummaryHandler(pgSolutionStorageCtor, pgDataStorageCtor))
 	registerRoutePost(mux, "/distil/target-summary/:dataset/:target/:results-uuid", routes.TargetSummaryHandler(esMetadataStorageCtor, pgSolutionStorageCtor, pgDataStorageCtor))
 	registerRoutePost(mux, "/distil/residuals-summary/:dataset/:target/:results-uuid", routes.ResidualsSummaryHandler(esMetadataStorageCtor, pgSolutionStorageCtor, pgDataStorageCtor))
 	registerRoutePost(mux, "/distil/correctness-summary/:dataset/:results-uuid", routes.CorrectnessSummaryHandler(pgSolutionStorageCtor, pgDataStorageCtor))

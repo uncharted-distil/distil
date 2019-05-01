@@ -331,3 +331,9 @@ func (f *TimeSeriesField) FetchPredictedSummaryData(resultURI string, datasetRes
 	histogram.Exemplars = files
 	return histogram, nil
 }
+
+// FetchForecastingSummaryData pulls data from the result table and builds the
+// forecasting histogram for the field.
+func (f *TimeSeriesField) FetchForecastingSummaryData(timeVar *model.Variable, interval int, resultURI string, filterParams *api.FilterParams) (*api.Histogram, error) {
+	return nil, fmt.Errorf("not implemented")
+}
