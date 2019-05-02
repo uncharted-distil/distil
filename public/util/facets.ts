@@ -274,7 +274,6 @@ function createCategoricalSummaryFacet(summary: VariableSummary): Group {
 	};
 }
 
-
 function createCategoricalTimeseriesSummaryFacet(summary: VariableSummary, exemplar?: VariableSummary): Group {
 	let total = 0;
 	const facets =  _.map(summary.categoryBuckets, (buckets, category) => {
@@ -316,7 +315,6 @@ function createCategoricalTimeseriesSummaryFacet(summary: VariableSummary, exemp
 		remainingTotal += facet.count;
 	});
 
-	// Generate a facet group
 	return {
 		dataset: summary.dataset,
 		label: summary.label,
@@ -397,8 +395,14 @@ function createNumericalSummaryFacet(summary: VariableSummary): Group {
 function createNumericalTimeseriesFacet(summary: VariableSummary, exemplar?: VariableSummary): Group {
 	const slices = getHistogramSlices(summary);
 
-	const timeseries = summary.buckets.map(b => [ _.parseInt(b.key), b.count ]);
-	const forecasted = exemplar ? exemplar.buckets.map(b => [ _.parseInt(b.key), b.count ]) : null;
+	let timeseries: number[][];
+	let forecasted: number[][];
+	if (exemplar) {
+		timeseries = exemplar.buckets.map(b => [ _.parseInt(b.key), b.count ]);
+		forecasted = summary.buckets.map(b => [ _.parseInt(b.key), b.count ]);
+	} else {
+		timeseries = summary.buckets.map(b => [ _.parseInt(b.key), b.count ]);
+	}
 
 	return {
 		dataset: summary.dataset,
@@ -419,6 +423,7 @@ function createNumericalTimeseriesFacet(summary: VariableSummary, exemplar?: Var
 		numRows: summary.numRows
 	};
 }
+
 export function isCategoricalFacet(facet: PlaceHolderFacet | CategoricalFacet | NumericalFacet | SparklineFacet): facet is CategoricalFacet {
 	return (<CategoricalFacet>facet).value !== undefined;
 }

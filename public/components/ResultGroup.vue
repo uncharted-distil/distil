@@ -91,7 +91,7 @@ import { Highlight, RowSelection } from '../store/highlights/index';
 import { SOLUTION_COMPLETED, SOLUTION_ERRORED } from '../store/solutions/index';
 import { getters as routeGetters } from '../store/route/module';
 import { getters as solutionGetters } from '../store/solutions/module';
-import { getSolutionById, isTopSolutionByScore } from '../util/solutions';
+import { getSolutionIndex, getSolutionById, isTopSolutionByScore } from '../util/solutions';
 import { overlayRouteEntry } from '../util/routes';
 import { getHighlights, updateHighlightRoot, clearHighlightRoot } from '../util/highlights';
 import _ from 'lodash';
@@ -163,10 +163,7 @@ export default Vue.extend({
 		},
 
 		solutionIndex(): number {
-			const solutions = solutionGetters.getRelevantSolutions(this.$store);
-			return _.findIndex(solutions, solution => {
-				return solution.solutionId === this.solutionId;
-			});
+			return getSolutionIndex(this.solutionId);
 		},
 
 		predictedGroups(): Group[] {

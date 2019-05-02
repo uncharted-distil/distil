@@ -93,19 +93,9 @@ func ForecastingSummaryHandler(solutionCtor api.SolutionStorageCtor, dataCtor ap
 			handleError(w, err)
 			return
 		}
-		histogram.Key = api.GetPredictedKey(histogram.Key, res.SolutionID)
 		histogram.Label = "Predicted"
+		histogram.Key = api.GetPredictedKey(histogram.Key, res.SolutionID)
 		histogram.SolutionID = res.SolutionID
-
-		// // fetch summary histogram
-		// histogram, err := data.FetchTimeseriesSummaryByResult(dataset, storageName, xColName, yColName, int(interval), res.ResultURI, filterParams)
-		// if err != nil {
-		// 	handleError(w, err)
-		// 	return
-		// }
-		// histogram.Key = api.GetPredictedKey(histogram.Key, res.SolutionID)
-		// histogram.Label = "Predicted"
-		// histogram.SolutionID = res.SolutionID
 
 		// marshal data and sent the response back
 		err = handleJSON(w, ForecastingSummary{

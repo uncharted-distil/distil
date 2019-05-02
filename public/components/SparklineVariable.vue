@@ -1,7 +1,7 @@
 <template>
 
 	<div class="sparkline-variable">
-		<div class="timeseries-var-col">{{label}}</div>
+		<div class="timeseries-var-col" v-html="label"></div>
 		<div class="timeseries-min-col">{{min.toFixed(2)}}</div>
 		<div class="timeseries-max-col">{{max.toFixed(2)}}</div>
 		<sparkline-svg class="sparkline-variable-chart"

@@ -8,12 +8,12 @@
 			<div class="timeseries-var-col pad-top"><b>VARIABLES</b></div>
 			<div class="timeseries-min-col pad-top"><b>MIN</b></div>
 			<div class="timeseries-max-col pad-top"><b>MAX</b></div>
-			<div class="timeseries-chart-axis" v-bind:class="{'has-prediction': hasPredictedCol}">
+			<div class="timeseries-chart-axis" v-bind:class="{'has-prediction': showPredicted}">
 				<template v-if="hasData">
 					<svg ref="svg" class="axis"></svg>
 				</template>
 			</div>
-			<div v-if="hasPredictedCol" class="timeseries-prediction-col pad-top"><b>PREDICTION</b></div>
+			<div v-if="showPredicted" class="timeseries-prediction-col pad-top"><b>PREDICTION</b></div>
 		</div>
 		<div class="timeseries-rows" v-if="hasData">
 			<div v-if="isTimeseriesAnalysis">
@@ -61,13 +61,37 @@ import { RowSelection, HighlightRoot } from '../store/highlights/index';
 import { TableRow, TableColumn, TimeseriesExtrema, Variable, VariableSummary, Grouping } from '../store/dataset/index';
 import { getters as routeGetters } from '../store/route/module';
 import { getters as datasetGetters } from '../store/dataset/module';
+import { getters as resultsGetters } from '../store/results/module';
+import { getters as solutionGetters } from '../store/solutions/module';
 import { updateHighlightRoot } from '../util/highlights';
 import { getTimeseriesGroupingsFromFields } from '../util/data';
 import { isTimeType } from '../util/types';
+import { getSolutionIndex } from '../util/solutions';
 
 const TICK_SIZE = 8;
 const SELECTED_TICK_SIZE = 18;
 const MIN_PIXEL_WIDTH = 32;
+
+interface TimeseriesStats {
+	xMin: number;
+	xMax: number;
+	yMin: number;
+	yMax: number;
+	sum: number;
+}
+
+interface TimeseriesSummary {
+	label: string;
+	key: string;
+	category?: string;
+	timeseries: number[][];
+	forecast: number[][];
+	xMin: number;
+	xMax: number;
+	yMin: number;
+	yMax: number;
+	sum: number;
+}
 
 export default Vue.extend({
 	name: 'sparkline-timeseries-view',
@@ -129,6 +153,10 @@ export default Vue.extend({
 			return !!this.predictedCol;
 		},
 
+		showPredicted(): boolean {
+			return this.hasPredictedCol && !this.isTimeseriesAnalysis;
+		},
+
 		timeseriesGrouping(): Grouping {
 			// TODO: support more than one grouping
 			const groupings = getTimeseriesGroupingsFromFields(this.variables, this.fields);
@@ -157,113 +185,35 @@ export default Vue.extend({
 			return (timeVar && isTimeType(timeVar.colType));
 		},
 
+		resultTargetSummary(): VariableSummary {
+			return resultsGetters.getTargetSummary(this.$store);
+		},
+
+		predictedSummaries(): VariableSummary[] {
+			const summaries = resultsGetters.getPredictedSummaries(this.$store);
+			const solutions = solutionGetters.getRelevantSolutions(this.$store);
+			return solutions.map(solution => {
+				return _.find(summaries, summary => {
+					return summary.solutionId === solution.solutionId;
+				});
+			}).filter(summary => !!summary); // remove errors
+		},
+
 		timeseriesVariableSummaries(): any[] {
 
-			function getStatsFromData(points: number[][], forecast: number[][]) {
-				const stats = {
-					xMin: Infinity,
-					xMax: -Infinity,
-					yMin: Infinity,
-					yMax: -Infinity,
-					sum: 0
-				};
-				for (let i = 0; i < points.length; i++) {
-					stats.xMin = Math.min(stats.xMin, Math.min(points[i][0]));
-					stats.xMax = Math.max(stats.xMax, Math.max(points[i][0]));
-					stats.yMin = Math.min(stats.yMin, Math.min(points[i][1]));
-					stats.yMax = Math.max(stats.yMax, Math.max(points[i][1]));
-					stats.sum += points[i][1];
-				}
-				if (forecast) {
-					for (let i = 0; i < forecast.length; i++) {
-						stats.xMin = Math.min(stats.xMin, Math.min(forecast[i][0]));
-						stats.xMax = Math.max(stats.xMax, Math.max(forecast[i][0]));
-						stats.yMin = Math.min(stats.yMin, Math.min(forecast[i][1]));
-						stats.yMax = Math.max(stats.yMax, Math.max(forecast[i][1]));
-					}
-				}
-				return stats;
-			}
-
-			function DEBUG_forecastData(points: number[][]) {
-				const START_X = 0.8;
-				const FORECAST_LENGTH = 0.8;
-
-				const startIndex = Math.floor(points.length * START_X);
-
-				if (!points || points.length === 0) {
-					return [];
-				}
-
-				const startX = points[startIndex][0];
-				const startY = points[startIndex][1];
-
-				const firstX = points[0][0];
-				const lastX = points[points.length - 1][0];
-				const range = lastX - firstX;
-				const stopX = lastX + (range * FORECAST_LENGTH);
-				const interval = range / points.length;
-				const numPoints = (stopX - startX) / interval;
-
-				const res = [];
-				for (let i = 0; i < numPoints; i++) {
-					res.push([startX + (i * interval), startY * Math.random() * 3]);
-				}
-				return res;
-			}
-
+			// if we have a predicted summary, create exemplar from it
 			let timeseries = [];
-			this.variableSummaries.forEach(v => {
-				if (v.categoryBuckets) {
-					// timeseries analysis view
-					const categories = [];
-					_.forIn(v.categoryBuckets, (buckets, category) => {
+			if (this.hasPredictedCol) {
+				const exemplars = this.variableSummaryToTimeseries(this.resultTargetSummary, null);
+				this.predictedSummaries.forEach(summary => {
+					const index = getSolutionIndex(summary.solutionId);
+					timeseries = timeseries.concat(this.variableSummaryToTimeseries(summary, exemplars, index));
+				});
+			}
 
-						const points = buckets.map(b => [ _.parseInt(b.key), b.count ]);
-
-						// DEBUG: TEMPORARY DATA
-						const forecast = DEBUG_forecastData(points);
-
-						const stats = getStatsFromData(points, forecast);
-
-						categories.push({
-							label: `${v.label} - ${category}`,
-							key: v.key,
-							timeseries: points,
-							forecast: forecast,
-							xMin: stats.xMin,
-							xMax: stats.xMax,
-							yMin: stats.yMin,
-							yMax: stats.yMax,
-							sum: stats.sum
-						});
-					});
-					// highest sum first
-					categories.sort((a, b) => { return b.sum - a.sum; });
-					timeseries = timeseries.concat(categories);
-
-				} else if (v.buckets) {
-
-					const points = v.buckets.map(b => [ _.parseInt(b.key), b.count ]);
-
-					// DEBUG: TEMPORARY DATA
-					const forecast = DEBUG_forecastData(points);
-
-					const stats = getStatsFromData(points, forecast);
-
-					// regular timeseries variable
-					timeseries.push({
-						label: v.label,
-						key: v.key,
-						timeseries: points,
-						forecast: forecast,
-						xMin: stats.xMin,
-						xMax: stats.xMax,
-						yMin: stats.yMin,
-						yMax: stats.yMax,
-						sum: stats.sum
-					});
-				}
+			// add training variables
+			this.variableSummaries.forEach(summary => {
+				timeseries = timeseries.concat(this.variableSummaryToTimeseries(summary, null));
 			});
 			return timeseries;
 		},
@@ -399,6 +349,101 @@ export default Vue.extend({
 
 	methods: {
 
+		getStatsFromData(points: number[][], forecast: number[][]): TimeseriesStats {
+			const stats = {
+				xMin: Infinity,
+				xMax: -Infinity,
+				yMin: Infinity,
+				yMax: -Infinity,
+				sum: 0
+			};
+			for (let i = 0; i < points.length; i++) {
+				stats.xMin = Math.min(stats.xMin, Math.min(points[i][0]));
+				stats.xMax = Math.max(stats.xMax, Math.max(points[i][0]));
+				stats.yMin = Math.min(stats.yMin, Math.min(points[i][1]));
+				stats.yMax = Math.max(stats.yMax, Math.max(points[i][1]));
+				stats.sum += points[i][1];
+			}
+			if (forecast) {
+				for (let i = 0; i < forecast.length; i++) {
+					stats.xMin = Math.min(stats.xMin, Math.min(forecast[i][0]));
+					stats.xMax = Math.max(stats.xMax, Math.max(forecast[i][0]));
+					stats.yMin = Math.min(stats.yMin, Math.min(forecast[i][1]));
+					stats.yMax = Math.max(stats.yMax, Math.max(forecast[i][1]));
+				}
+			}
+			return stats;
+		},
+
+		variableSummaryToTimeseries(summary: VariableSummary, exemplars?: TimeseriesSummary[], solutionIndex?: number): TimeseriesSummary[] {
+			if (summary.categoryBuckets) {
+
+				const categories = [];
+				_.forIn(summary.categoryBuckets, (buckets, category) => {
+
+					let timeseries: number[][];
+					let forecasted: number[][];
+					let label = '';
+					if (exemplars && exemplars.length > 0) {
+						const exemplar = exemplars.find(ex => ex.category === category);
+						forecasted = buckets.map(b => [ _.parseInt(b.key), b.count ]);
+						timeseries = exemplar.timeseries;
+						label = `${exemplar.key}<sup>${solutionIndex}</sup> - ${category}`;
+					} else {
+						timeseries = buckets.map(b => [ _.parseInt(b.key), b.count ]);
+						label = `${summary.label} - ${category}`;
+					}
+
+					const stats = this.getStatsFromData(timeseries, forecasted);
+
+					categories.push({
+						label: label,
+						key: summary.key,
+						category: category,
+						timeseries: timeseries,
+						forecast: forecasted,
+						xMin: stats.xMin,
+						xMax: stats.xMax,
+						yMin: stats.yMin,
+						yMax: stats.yMax,
+						sum: stats.sum
+					});
+				});
+				// highest sum first
+				categories.sort((a, b) => { return b.sum - a.sum; });
+
+				return categories;
+			}
+
+			let timeseries: number[][];
+			let forecasted: number[][];
+			let label = '';
+			if (exemplars && exemplars.length > 0) {
+				const exemplar = exemplars.length > 0 ? exemplars[0] : null;
+				forecasted = summary.buckets.map(b => [ _.parseInt(b.key), b.count ]);
+				timeseries = exemplar.timeseries;
+				label = `${exemplar.key}<sup>${solutionIndex}</sup>`;
+			} else {
+				timeseries = summary.buckets.map(b => [ _.parseInt(b.key), b.count ]);
+				label = summary.label;
+			}
+
+			const stats = this.getStatsFromData(timeseries, forecasted);
+
+			// regular timeseries variable
+			return [{
+				label: label,
+				key: summary.key,
+				timeseries: timeseries,
+				forecast: forecasted,
+				xMin: stats.xMin,
+				xMax: stats.xMax,
+				yMin: stats.yMin,
+				yMax: stats.yMax,
+				sum: stats.sum
+			}];
+		},
+
 		timeseriesVariableExtrema(variableKey: string): TimeseriesExtrema {
 			let yMin = Infinity;
 			let yMax = -Infinity;
@@ -421,7 +466,7 @@ export default Vue.extend({
 		},
 
 		getPrediction(row: TableRow): any {
-			if (!this.hasPredictedCol) {
+			if (!this.showPredicted) {
 				return null;
 			}
 			return {

@@ -1,7 +1,9 @@
 import _ from 'lodash';
 import { Dictionary } from './dict';
 import { sortSolutionsByScore } from '../store/solutions/getters';
+import { getters as solutionGetters } from '../store/solutions/module';
 import { SolutionState, Solution } from '../store/solutions/index';
+import store from '../store/store';
 
 export interface NameInfo {
 	displayName: string;
@@ -11,6 +13,22 @@ export interface NameInfo {
 export interface Task {
 	displayName: string;
 	schemaName: string;
+}
+
+export function getSolutionIndex(solutionId: string) {
+	const solutions = solutionGetters.getRelevantSolutions(store);
+	const index = _.findIndex(solutions, solution => {
+		return solution.solutionId === solutionId;
+	});
+	return solutions.length - index - 1;
+}
+
+export function getRequestIndex(requestId: string) {
+	const requests = solutionGetters.getRelevantSolutionRequests(store);
+	const index = _.findIndex(requests, req => {
+		return req.requestId === requestId;
+	});
+	return requests.length - index - 1;
 }
 
 // Utility function to return all solution results associated with a given request ID
