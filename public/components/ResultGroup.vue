@@ -105,6 +105,7 @@ export default Vue.extend({
 		requestId: String as () => string,
 		solutionId: String as () => string,
 		scores: Array as () => number[],
+		targetSummary: Object as () => VariableSummary,
 		predictedSummary: Object as () => VariableSummary,
 		residualsSummary: Object as () => VariableSummary,
 		correctnessSummary: Object as () => VariableSummary,
@@ -169,7 +170,7 @@ export default Vue.extend({
 		},
 
 		predictedGroups(): Group[] {
-			return this.getAndActivateGroups(this.predictedSummary, this.predictedInstanceName);
+			return this.getAndActivateGroups(this.predictedSummary, this.predictedInstanceName, this.targetSummary);
 		},
 
 		correctnessGroups(): Group[] {
@@ -320,9 +321,9 @@ export default Vue.extend({
 			}
 		},
 
-		getAndActivateGroups(summary: VariableSummary, contextName: string): Group[] {
+		getAndActivateGroups(summary: VariableSummary, contextName: string, exemplar?: VariableSummary): Group[] {
 			if (summary) {
-				const groups = createGroups([ summary ]);
+				const groups = createGroups([ summary ], exemplar);
 				if (this.highlights.root && this.highlights.root.context === contextName) {
 					const group = groups[0];
 					if (group.key === this.highlights.root.key) {

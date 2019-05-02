@@ -22,6 +22,7 @@
 				:request-id="group.requestId"
 				:solution-id="group.solutionId"
 				:scores="group.scores"
+				:target-summary="group.targetSummary"
 				:predicted-summary="group.predictedSummary"
 				:residuals-summary="group.residualsSummary"
 				:correctness-summary="group.correctnessSummary"
@@ -95,6 +96,10 @@ export default Vue.extend({
 			return !this.regression ? resultsGetters.getCorrectnessSummaries(this.$store) : [];
 		},
 
+		resultTargetSummary(): VariableSummary {
+			return resultsGetters.getTargetSummary(this.$store);
+		},
+
 		requestGroups(): RequestGroup[] {
 			const requests = solutionGetters.getRelevantSolutionRequests(this.$store);
 			const predictedSummaries = this.predictedSummaries;
@@ -116,6 +121,7 @@ export default Vue.extend({
 							groupName: solution.feature,
 							timestamp: moment(solution.timestamp).format('YYYY/MM/DD'),
 							scores: solution.scores,
+							targetSummary: this.resultTargetSummary,
 							predictedSummary: predictedSummary,
 							residualsSummary: residualSummary,
 							correctnessSummary: correctnessSummary

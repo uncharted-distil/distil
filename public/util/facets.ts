@@ -91,7 +91,7 @@ export interface Group {
 }
 
 // creates the set of facets from the supplied summary data
-export function createGroups(summaries: VariableSummary[]): Group[] {
+export function createGroups(summaries: VariableSummary[], exemplar?: VariableSummary): Group[] {
 	return summaries.map(summary => {
 		if (summary.err) {
 			// create error facet
@@ -102,7 +102,7 @@ export function createGroups(summaries: VariableSummary[]): Group[] {
 			return createPendingFacet(summary);
 		}
 		// create facet
-		return createSummaryFacet(summary);
+		return createSummaryFacet(summary, exemplar);
 	}).filter(group => {
 		// remove null groups
 		return group;
@@ -159,7 +159,7 @@ export function createPendingFacet(summary: VariableSummary): Group {
 }
 
 // creates categorical or numerical summary facets based on the input summary type
-export function createSummaryFacet(summary: VariableSummary): Group {
+export function createSummaryFacet(summary: VariableSummary, exemplar?: VariableSummary): Group {
 	switch (summary.type) {
 		case CATEGORICAL_SUMMARY:
 			if (summary.varType === TIMESERIES_TYPE) {
@@ -171,9 +171,9 @@ export function createSummaryFacet(summary: VariableSummary): Group {
 			return createNumericalSummaryFacet(summary);
 		case TIMESERIES_SUMMMARY:
 			if (summary.categoryBuckets) {
-				return createCategoricalTimeseriesSummaryFacet(summary);
+				return createCategoricalTimeseriesSummaryFacet(summary, exemplar);
 			} else {
-				return createNumericalTimeseriesFacet(summary);
+				return createNumericalTimeseriesFacet(summary, exemplar);
 			}
 	}
 	console.warn('unrecognized summary type', summary.type);
@@ -275,7 +275,7 @@ function createCategoricalSummaryFacet(summary: VariableSummary): Group {
 }
 
 
-function createCategoricalTimeseriesSummaryFacet(summary: VariableSummary): Group {
+function createCategoricalTimeseriesSummaryFacet(summary: VariableSummary, exemplar?: VariableSummary): Group {
 	let total = 0;
 	const facets =  _.map(summary.categoryBuckets, (buckets, category) => {
 		const segments = [];
@@ -394,17 +394,11 @@ function createNumericalSummaryFacet(summary: VariableSummary): Group {
 	};
 }
 
-function createNumericalTimeseriesFacet(summary: VariableSummary): Group {
+function createNumericalTimeseriesFacet(summary: VariableSummary, exemplar?: VariableSummary): Group {
 	const slices = getHistogramSlices(summary);
 
-
 	const timeseries = summary.buckets.map(b => [ _.parseInt(b.key), b.count ]);
-
-	// DEBUG:
-	const debugged = [
-		timeseries,
-		timeseries.map(t => [t[0], t[1] * Math.random() * 2])
-	];
+	const forecasted = exemplar ? exemplar.buckets.map(b => [ _.parseInt(b.key), b.count ]) : null;
 
 	return {
 		dataset: summary.dataset,
@@ -415,8 +409,8 @@ function createNumericalTimeseriesFacet(summary: VariableSummary): Group {
 		collapsed: false,
 		facets: [
 			{
-				timeseries: debugged,
-				hasMultipleSeries: _.isArray(debugged[0][0]),
+				timeseries: forecasted ? [ timeseries, forecasted ] : timeseries,
+				hasMultipleSeries: !!forecasted,
 				colors: [ '#000', '#00c6e1' ],
 				filterable: false,
 				selection: {} as any

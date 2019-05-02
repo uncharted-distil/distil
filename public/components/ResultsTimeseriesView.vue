@@ -49,7 +49,14 @@ export default Vue.extend({
 			return solutionGetters.getActiveSolution(this.$store);
 		},
 
+		isTimeseriesAnalysis(): boolean {
+			return !!routeGetters.getRouteTimeseriesAnalysis(this.$store);
+		},
+
 		predictedCol(): string {
+			if (this.isTimeseriesAnalysis) {
+				return undefined;
+			}
 			return this.solution ? this.solution.predictedKey : '';
 		}
 	}

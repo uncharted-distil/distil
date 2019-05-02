@@ -273,7 +273,8 @@ export default Vue.extend({
 				return null;
 			}
 			// take first, all vars share same x axis
-			return this.timeseriesVariableSummaries[0].xMin;
+			const summary = this.timeseriesVariableSummaries.find(summary => isFinite(summary.xMin));
+			return summary ? summary.xMin : null;
 		},
 
 		timeseriesVarsMaxX(): number {
@@ -281,7 +282,8 @@ export default Vue.extend({
 				return null;
 			}
 			// take first, all vars share same x axis
-			return this.timeseriesVariableSummaries[0].xMax;
+			const summary =  this.timeseriesVariableSummaries.find(summary => isFinite(summary.xMax));
+			return summary ? summary.xMax : null;
 		},
 
 		timeseriesExtrema(): TimeseriesExtrema {
