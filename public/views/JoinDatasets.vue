@@ -189,6 +189,11 @@ export default Vue.extend({
 		viewActions.fetchJoinDatasetsData(this.$store);
 	},
 
+	beforeDestroy() {
+		// Entering join view mutates variables and variable sumaries data. Clear them when exiting
+		viewActions.clearJoinDatasetsData(this.$store);
+	},
+
 	methods: {
 		onTopColumnClicked(column) {
 			const entry = overlayRouteEntry(this.$route, {

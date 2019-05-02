@@ -62,14 +62,24 @@ export const mutations = {
 	},
 
 	setVariables(state: DatasetState, variables: Variable[]) {
-		const typeReviewedVariables = state.variables.filter(variable => variable.isColTypeReviewed);
+
+		const oldVariables = new Map();
+
+		state.variables.forEach(variable => {
+			const {datasetName, colName} = variable;
+			oldVariables.set(`${datasetName}:${colName}`, variable);
+		});
+
 		const newVariables = variables.map(variable => {
-			const isVarTypeReviewed = typeReviewedVariables.find(typeChangedVar => {
-					return typeChangedVar.datasetName === variable.datasetName
-						&& typeChangedVar.colName === variable.colName;
-				});
-			if (isVarTypeReviewed) {
-				variable.isColTypeReviewed = true;
+			const {datasetName, colName} = variable;
+			const variableKey = `${datasetName}:${colName}`;
+			const oldVariable = oldVariables.get(variableKey);
+
+			if (oldVariable) {
+				// keep previous column type reviewed state
+				variable.isColTypeReviewed = oldVariable.isColTypeReviewed;
+				// keep previous variable rankings
+				variable.ranking = oldVariable.ranking;
 			}
 			return variable;
 		});

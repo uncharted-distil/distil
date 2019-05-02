@@ -66,7 +66,6 @@ export default Vue.extend({
 			return this.statusPanelState.isOpen;
 		},
 		statusType(): StatusPanelContentType {
-			console.log(this.statusPanelState.contentType);
 			return this.statusPanelState.contentType;
 		},
 		requestData: function () {

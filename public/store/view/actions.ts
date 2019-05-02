@@ -53,6 +53,16 @@ const fetchSolutionRequests = createCacheable(ParamCacheKey.SOLUTION_REQUESTS, (
 	return context.dispatch('fetchSolutionRequests', args);
 });
 
+function clearVariablesParamCache(context: ViewContext) {
+		// clear variable param cache to allow re-fetching variables
+		mutations.setFetchParamsCache(context, { key: ParamCacheKey.VARIABLES, value: undefined });
+}
+
+function clearVariableSummaries(context: ViewContext) {
+		context.commit('clearVariableSummaries');
+		mutations.setFetchParamsCache(context, { key: ParamCacheKey.VARIABLE_SUMMARIES, value: undefined });
+}
+
 export type ViewContext = ActionContext<ViewState, DistilState>;
 
 export const actions = {
@@ -156,8 +166,7 @@ export const actions = {
 		// clear previous state
 		context.commit('clearHighlightSummaries');
 		if (clearSummaries) {
-			context.commit('clearVariableSummaries');
-			mutations.setFetchParamsCache(context, { key: ParamCacheKey.VARIABLE_SUMMARIES, value: undefined });
+			clearVariableSummaries(context);
 		}
 
 		// fetch new state
@@ -169,14 +178,18 @@ export const actions = {
 		});
 	},
 
+	clearJoinDatasetsData(context) {
+		clearVariablesParamCache(context);
+		clearVariableSummaries(context);
+	},
+
 	fetchSelectTrainingData(context: ViewContext, clearSummaries: boolean) {
 		// clear any previous state
 		context.commit('clearHighlightSummaries');
 		context.commit('setIncludedTableData', null);
 		context.commit('setExcludedTableData', null);
 		if (clearSummaries) {
-			context.commit('clearVariableSummaries');
-			mutations.setFetchParamsCache(context, { key: ParamCacheKey.VARIABLE_SUMMARIES, value: undefined });
+			clearVariableSummaries(context);
 		}
 
 		const dataset = context.getters.getRouteDataset;
