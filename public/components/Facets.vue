@@ -302,7 +302,7 @@ export default Vue.extend({
 
 					} else if (isSparklineFacet(facet)) {
 
-						const points = facet.hasMultipleSeries ? facet.timeseries[0] : facet.timeseries;
+						const points = facet.sparklines ? facet.sparklines[0] : facet.sparkline;
 						const first = points[0][0];
 						const last = points[points.length - 1][0];
 						const range = {
@@ -334,7 +334,7 @@ export default Vue.extend({
 
 					} else if (isSparklineFacet(facet)) {
 
-						const points = facet.hasMultipleSeries ? facet.timeseries[0] : facet.timeseries;
+						const points = facet.sparklines ? facet.sparklines[0] : facet.sparkline;
 						const first = points[0][0];
 						const last = points[points.length - 1][0];
 						const range = {
@@ -519,7 +519,7 @@ export default Vue.extend({
 					}
 				});
 			} else if (facet._sparkline) {
-				// TODO: timeseries
+				// TODO: sparkline
 			} else {
 				facet._sparklineContainer.parent().css('box-shadow', 'inset 0 0 0 1000px rgba(255,0,103,.2)');
 				facet._barForeground.css('box-shadow', 'inset 0 0 0 1000px #ff0067');
@@ -534,7 +534,7 @@ export default Vue.extend({
 					bar._element.removeClass('row-selected');
 				});
 			} else if (facet._sparkline) {
-				// TODO: timeseries
+				// TODO: sparkline
 			} else {
 				facet._barForeground.css('box-shadow', '');
 				facet._sparklineContainer.parent().css('box-shadow', '');
@@ -585,7 +585,7 @@ export default Vue.extend({
 
 					} else if (facet._sparkline) {
 
-						// TODO: timeseries
+						// TODO: sparkline
 
 					} else {
 
@@ -658,7 +658,7 @@ export default Vue.extend({
 
 				} else if (facet._sparkline) {
 
-					// TODO: timeseries
+					// TODO: sparkline
 
 				} else {
 					this.selectCategoricalFacet(facet);
@@ -934,10 +934,10 @@ export default Vue.extend({
 				if (isNumericalFacet(facet)) {
 					values = facet.histogram.slices.slice(0, 10).map(b => _.toNumber(b.label));
 				} else if (isSparklineFacet(facet)) {
-					// if (facet.hasMultipleSeries) {
-					// 	values = facet.timeseries[0].slice(0, 10).map(p => p[1]);
+					// if (facet.sparklines) {
+					// 	values = facet.sparkline[0].slice(0, 10).map(p => p[1]);
 					// } else {
-					// 	values = facet.timeseries.slice(0, 10).map(p => p[1]);
+					// 	values = facet.sparkline.slice(0, 10).map(p => p[1]);
 					// }
 				} else if (isCategoricalFacet(facet)) {
 					values.push(facet.value);

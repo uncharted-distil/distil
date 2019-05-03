@@ -66,8 +66,8 @@ export interface NumericalFacet {
 }
 
 export interface SparklineFacet {
-	timeseries: number[][] | number[][][];
-	hasMultipleSeries: boolean;
+	sparkline?: number[][];
+	sparklines?: number[][][];
 	colors: string[];
 	filterable: boolean;
 	selection: Selection;
@@ -413,8 +413,8 @@ function createNumericalTimeseriesFacet(summary: VariableSummary, exemplar?: Var
 		collapsed: false,
 		facets: [
 			{
-				timeseries: forecasted ? [ timeseries, forecasted ] : timeseries,
-				hasMultipleSeries: !!forecasted,
+				sparkline: !forecasted ? timeseries : undefined,
+				sparklines: forecasted ? [ timeseries, forecasted ] : undefined,
 				colors: [ '#000', '#00c6e1' ],
 				filterable: false,
 				selection: {} as any
@@ -433,7 +433,7 @@ export function isNumericalFacet(facet: PlaceHolderFacet | CategoricalFacet | Nu
 }
 
 export function isSparklineFacet(facet: PlaceHolderFacet | CategoricalFacet | NumericalFacet | SparklineFacet): facet is SparklineFacet {
-	return (<SparklineFacet>facet).timeseries !== undefined;
+	return (<SparklineFacet>facet).sparkline !== undefined;
 }
 
 export function isPlaceHolderFacet(facet: PlaceHolderFacet | CategoricalFacet | NumericalFacet | SparklineFacet): facet is PlaceHolderFacet {
