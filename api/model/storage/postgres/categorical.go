@@ -580,5 +580,65 @@ func (f *CategoricalField) getFromClause(alias bool) string {
 // FetchForecastingSummaryData pulls data from the result table and builds the
 // forecasting histogram for the field.
 func (f *CategoricalField) FetchForecastingSummaryData(timeVar *model.Variable, interval int, resultURI string, filterParams *api.FilterParams) (*api.Histogram, error) {
-	return nil, fmt.Errorf("not implemented")
+
+	resultVariable := &model.Variable{
+		Name: "value",
+		Type: model.TextType,
+	}
+
+	categories, err := f.getTopCategories(filterParams)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to fetch top categories")
+	}
+
+	extrema, err := f.fetchTimeExtremaByResultURI(timeVar, resultURI)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to fetch extrema from postgres")
+	}
+
+	histogramName, bucketQuery, histogramQuery := f.getTimeseriesHistogramAggQuery(extrema, interval)
+
+	// create the filter for the query.
+	wheres := make([]string, 0)
+	params := make([]interface{}, 0)
+	wheres, params = f.Storage.buildFilteredQueryWhere(wheres, params, filterParams.Filters)
+
+	categoryWhere := fmt.Sprintf("\"%s\" in (", resultVariable.Name)
+	for index, category := range categories {
+		categoryWhere += fmt.Sprintf("$%d", len(params)+1)
+		if index < len(categories)-1 {
+			categoryWhere += ","
+		}
+		params = append(params, category)
+	}
+	categoryWhere += ")"
+
+	wheres = append(wheres, categoryWhere)
+	where := fmt.Sprintf("WHERE %s", strings.Join(wheres, " AND "))
+
+	fromClause := f.getFromClause(false)
+	params = append(params, resultURI)
+
+	// Create the complete query string.
+	query := fmt.Sprintf(`
+			SELECT %s as bucket, CAST(%s as double precision) AS %s, "%s" as field, Count(*) AS count
+			FROM %s data INNER JOIN %s result ON data."%s" = result.index
+			%s AND result.result_id = $%d
+			GROUP BY %s, "%s"
+			ORDER BY %s;`,
+		bucketQuery, histogramQuery, histogramName, resultVariable.Name, fromClause,
+		f.Storage.getResultTable(f.StorageName), model.D3MIndexFieldName,
+		where, len(params),
+		bucketQuery, resultVariable.Name, histogramName)
+
+	// execute the postgres query
+	res, err := f.Storage.client.Query(query, params...)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to fetch histograms for variable summaries from postgres")
+	}
+	if res != nil {
+		defer res.Close()
+	}
+
+	return f.parseTimeHistogram(res, extrema, interval)
 }
