@@ -934,11 +934,11 @@ export default Vue.extend({
 				if (isNumericalFacet(facet)) {
 					values = facet.histogram.slices.slice(0, 10).map(b => _.toNumber(b.label));
 				} else if (isSparklineFacet(facet)) {
-					// if (facet.sparklines) {
-					// 	values = facet.sparkline[0].slice(0, 10).map(p => p[1]);
-					// } else {
-					// 	values = facet.sparkline.slice(0, 10).map(p => p[1]);
-					// }
+					if (facet.sparklines) {
+						values = facet.sparkline[0].slice(0, 10).map(p => _.isArray(p) ? p[1] : p);
+					} else {
+						values = facet.sparkline.slice(0, 10).map(p => _.isArray(p) ? p[1] : p);
+					}
 				} else if (isCategoricalFacet(facet)) {
 					values.push(facet.value);
 				}
