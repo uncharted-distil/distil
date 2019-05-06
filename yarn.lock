@@ -220,9 +220,9 @@
   version "2.0.1"
   resolved "https://registry.yarnpkg.com/@types/store/-/store-2.0.1.tgz#7307dce59365b14b8030b0dadc0f7e584749da44"
 
-"@uncharted.software/stories-facets@^2.12.14":
-  version "2.12.14"
-  resolved "https://registry.yarnpkg.com/@uncharted.software/stories-facets/-/stories-facets-2.12.14.tgz#2c79da3237af9d70a929941362a44fa8f96d943b"
+"@uncharted.software/stories-facets@^2.12.15":
+  version "2.12.15"
+  resolved "https://registry.yarnpkg.com/@uncharted.software/stories-facets/-/stories-facets-2.12.15.tgz#23c61e982836ad0dc0cede96c24e9ecf915cd89c"
 
 "@vue/component-compiler-utils@^2.5.1":
   version "2.5.2"
