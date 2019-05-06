@@ -29,6 +29,7 @@ export const actions = {
 	fetchHomeData: dispatch(moduleActions.fetchHomeData),
 	fetchSearchData: dispatch(moduleActions.fetchSearchData),
 	fetchJoinDatasetsData: dispatch(moduleActions.fetchJoinDatasetsData),
+	clearJoinDatasetsData: dispatch(moduleActions.clearJoinDatasetsData),
 	updateJoinDatasetsData: dispatch(moduleActions.updateJoinDatasetsData),
 	fetchSelectTargetData: dispatch(moduleActions.fetchSelectTargetData),
 	fetchSelectTrainingData: dispatch(moduleActions.fetchSelectTrainingData),
