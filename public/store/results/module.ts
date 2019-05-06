@@ -55,7 +55,7 @@ export const actions = {
 	fetchResidualsSummaries: dispatch(moduleActions.fetchResidualsSummaries),
 	fetchResidualsExtrema: dispatch(moduleActions.fetchResidualsExtrema),
 	// correctness
-	fetchCorrectnessSummaries: dispatch(moduleActions.fetchCorrectnessSummaries)
+	fetchCorrectnessSummaries: dispatch(moduleActions.fetchCorrectnessSummaries),
 };
 
 // Typed mutations

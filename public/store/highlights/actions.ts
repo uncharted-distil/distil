@@ -100,6 +100,12 @@ export const actions = {
 			return null;
 		}
 
+		const timeseries = context.getters.getRouteTimeseriesAnalysis;
+		if (timeseries) {
+			// TODO: highlights?
+			return;
+		}
+
 		const solution = getSolutionById(context.rootState.solutionModule, args.solutionId);
 		if (!solution.resultId) {
 			// no results ready to pull
@@ -137,6 +143,12 @@ export const actions = {
 			return null;
 		}
 
+		const timeseries = context.getters.getRouteTimeseriesAnalysis;
+		if (timeseries) {
+			// TODO: highlights?
+			return;
+		}
+
 		const solution = getSolutionById(context.rootState.solutionModule, args.solutionId);
 		if (!solution.resultId) {
 			// no results ready to pull
@@ -170,6 +182,12 @@ export const actions = {
 		if (!args.requestIds) {
 			console.warn('`requestIds` argument is missing');
 			return null;
+		}
+
+		const timeseries = context.getters.getRouteTimeseriesAnalysis;
+		if (timeseries) {
+			// TODO: highlights?
+			return;
 		}
 
 		let filterParams = {

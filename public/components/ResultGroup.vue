@@ -91,7 +91,7 @@ import { Highlight, RowSelection } from '../store/highlights/index';
 import { SOLUTION_COMPLETED, SOLUTION_ERRORED } from '../store/solutions/index';
 import { getters as routeGetters } from '../store/route/module';
 import { getters as solutionGetters } from '../store/solutions/module';
-import { getSolutionById, isTopSolutionByScore } from '../util/solutions';
+import { getSolutionIndex, getSolutionById, isTopSolutionByScore } from '../util/solutions';
 import { overlayRouteEntry } from '../util/routes';
 import { getHighlights, updateHighlightRoot, clearHighlightRoot } from '../util/highlights';
 import _ from 'lodash';
@@ -105,6 +105,7 @@ export default Vue.extend({
 		requestId: String as () => string,
 		solutionId: String as () => string,
 		scores: Array as () => number[],
+		targetSummary: Object as () => VariableSummary,
 		predictedSummary: Object as () => VariableSummary,
 		residualsSummary: Object as () => VariableSummary,
 		correctnessSummary: Object as () => VariableSummary,
@@ -162,14 +163,11 @@ export default Vue.extend({
 		},
 
 		solutionIndex(): number {
-			const solutions = solutionGetters.getRelevantSolutions(this.$store);
-			return _.findIndex(solutions, solution => {
-				return solution.solutionId === this.solutionId;
-			});
+			return getSolutionIndex(this.solutionId);
 		},
 
 		predictedGroups(): Group[] {
-			return this.getAndActivateGroups(this.predictedSummary, this.predictedInstanceName);
+			return this.getAndActivateGroups(this.predictedSummary, this.predictedInstanceName, this.targetSummary);
 		},
 
 		correctnessGroups(): Group[] {
@@ -320,9 +318,9 @@ export default Vue.extend({
 			}
 		},
 
-		getAndActivateGroups(summary: VariableSummary, contextName: string): Group[] {
+		getAndActivateGroups(summary: VariableSummary, contextName: string, exemplar?: VariableSummary): Group[] {
 			if (summary) {
-				const groups = createGroups([ summary ]);
+				const groups = createGroups([ summary ], exemplar);
 				if (this.highlights.root && this.highlights.root.context === contextName) {
 					const group = groups[0];
 					if (group.key === this.highlights.root.key) {

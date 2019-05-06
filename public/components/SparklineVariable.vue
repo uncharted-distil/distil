@@ -1,13 +1,14 @@
 <template>
 
 	<div class="sparkline-variable">
-		<div class="timeseries-var-col">{{label}}</div>
+		<div class="timeseries-var-col" v-html="label"></div>
 		<div class="timeseries-min-col">{{min.toFixed(2)}}</div>
 		<div class="timeseries-max-col">{{max.toFixed(2)}}</div>
 		<sparkline-svg class="sparkline-variable-chart"
 			:highlight-pixel-x="highlightPixelX"
 			:timeseries-extrema="timeseriesExtrema"
-			:timeseries="timeseries">
+			:timeseries="timeseries"
+			:forecast="forecast">
 		</sparkline-svg>
 	</div>
 
@@ -31,6 +32,7 @@ export default Vue.extend({
 	props: {
 		label: String as () => string,
 		timeseries: Array as () => number[][],
+		forecast: Array as () => number[][],
 		highlightPixelX: {
 			type: Number as () => number
 		},
@@ -40,10 +42,12 @@ export default Vue.extend({
 	},
 	computed: {
 		min(): number {
-			return d3.min(this.timeseries, d => d[1]);
+			const min = d3.min(this.timeseries, d => d[1]);
+			return min !== undefined ? min : 0;
 		},
 		max(): number {
-			return d3.max(this.timeseries, d => d[1]);
+			const max = d3.max(this.timeseries, d => d[1]);
+			return max !== undefined ? max : 0;
 		}
 	}
 
