@@ -53,11 +53,14 @@ export default Vue.extend({
 
 	computed: {
 		variable(): Variable {
-			const vars = datasetGetters.getVariablesMap(this.$store);
-			if (!vars || !vars[this.field.toLowerCase()]) {
+			const vars = datasetGetters.getVariables(this.$store);
+			if (!vars) {
 				return null;
 			}
-			return vars[this.field.toLowerCase()];
+			return vars.find(v => {
+				return v.colName.toLowerCase() === this.field.toLowerCase() &&
+					v.datasetName === this.dataset;
+			});
 		},
 		type(): string {
 			return this.variable ? this.variable.colType : '';

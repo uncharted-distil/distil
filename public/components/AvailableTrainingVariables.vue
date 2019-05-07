@@ -67,8 +67,8 @@ export default Vue.extend({
 		instanceName(): string {
 			return AVAILABLE_TRAINING_VARS_INSTANCE;
 		},
-		html(): (group: { key: string }) => HTMLDivElement {
-			return (group: { key: string }) => {
+		html(): (group: Group) => HTMLDivElement {
+			return (group: Group) => {
 				const container = document.createElement('div');
 				const trainingElem = document.createElement('button');
 				trainingElem.className += 'btn btn-sm btn-outline-secondary ml-2 mr-1 mb-2';
@@ -77,7 +77,7 @@ export default Vue.extend({
 					const training = routeGetters.getRouteTrainingVariables(this.$store);
 					const trainingArray = training ? training.split(',') : [];
 					const entry = overlayRouteEntry(routeGetters.getRoute(this.$store), {
-						training: trainingArray.concat([ group.key ]).join(',')
+						training: trainingArray.concat([ group.colName ]).join(',')
 					});
 					this.$router.push(entry);
 				});
@@ -93,6 +93,7 @@ export default Vue.extend({
 			const training = routeGetters.getRouteTrainingVariables(this.$store);
 			const trainingArray = training ? training.split(',') : [];
 			facets.availableVariables().forEach(variable => {
+				console.log(variable);
 				trainingArray.push(variable);
 			});
 			const entry = overlayRouteEntry(routeGetters.getRoute(this.$store), {

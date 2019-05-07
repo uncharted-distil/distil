@@ -86,11 +86,13 @@ export const mutations = {
 		state.variables = newVariables;
 	},
 
-	updateVariableType(state: DatasetState, update) {
+	updateVariableType(state: DatasetState, args: { dataset: string, field: string, type: string }) {
 		const index = _.findIndex(state.variables, v => {
-			return v.colName === update.field;
+			return v.colName === args.field && v.datasetName === args.dataset;
 		});
-		state.variables[index].colType = update.type;
+		if (index !== -1) {
+			state.variables[index].colType = args.type;
+		}
 	},
 
 	reviewVariableType(state: DatasetState, update) {

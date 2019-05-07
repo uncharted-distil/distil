@@ -58,19 +58,30 @@ export const getters = {
 		});
 		let variables = [];
 		if (datasetA) {
+			datasetA.variables.forEach(v => {
+				v.datasetName = datasetIDs[0];
+			});
 			variables = variables.concat(datasetA.variables);
 		}
 		if (datasetB) {
+			datasetB.variables.forEach(v => {
+				v.datasetName = datasetIDs[1];
+			});
 			variables = variables.concat(datasetB.variables);
 		}
 		return variables;
 	},
 
 	getJoinDatasetsVariableSummaries(state: Route, getters: any): VariableSummary[] {
+
+		function hashSummary(datasetName: string, colName: string) {
+			return `${datasetName}:${colName}`.toLowerCase();
+		}
+
 		const variables = getters.getJoinDatasetsVariables;
-		const lookup = buildLookup(variables.map(v => v.colName));
+		const lookup = buildLookup(variables.map(v => hashSummary(v.datasetName, v.colName)));
 		const summaries = getters.getVariableSummaries;
-		return summaries.filter(summary => lookup[summary.key.toLowerCase()]);
+		return summaries.filter(summary => lookup[hashSummary(summary.dataset, summary.key)]);
 	},
 
 	getJoinDatasetColumnA(state: Route, getters: any): string {

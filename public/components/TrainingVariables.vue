@@ -83,12 +83,12 @@ export default Vue.extend({
 				remove.innerHTML = 'Remove';
 				remove.addEventListener('click', () => {
 					const training = routeGetters.getRouteTrainingVariables(this.$store).split(',');
-					training.splice(training.indexOf(group.key), 1);
+					training.splice(training.indexOf(group.colName), 1);
 					const entry = overlayRouteEntry(routeGetters.getRoute(this.$store), {
 						training: training.join(',')
 					});
 					this.$router.push(entry);
-					removeFiltersByName(this.$router, group.key);
+					removeFiltersByName(this.$router, group.colName);
 				});
 				container.appendChild(remove);
 				return container;
@@ -101,7 +101,7 @@ export default Vue.extend({
 			const facets = this.$refs.facets as any;
 			const training = routeGetters.getRouteTrainingVariables(this.$store);
 			const trainingArray = training ? training.split(',') : [];
-			(facets.availableVariables() as string[]).forEach(variable => {
+			facets.availableVariables().forEach(variable => {
 				trainingArray.splice(trainingArray.indexOf(variable), 1);
 			});
 			const entry = overlayRouteEntry(routeGetters.getRoute(this.$store), {

@@ -323,7 +323,7 @@ export default Vue.extend({
 				const groups = createGroups([ summary ], exemplar);
 				if (this.highlights.root && this.highlights.root.context === contextName) {
 					const group = groups[0];
-					if (group.key === this.highlights.root.key) {
+					if (group.colName === this.highlights.root.key) {
 						group.facets.forEach(facet => {
 							facet.filterable = true;
 						});

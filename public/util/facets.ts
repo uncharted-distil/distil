@@ -75,6 +75,7 @@ export interface SparklineFacet {
 
 export interface Group {
 	dataset: string;
+	colName: string;
 	label: string;
 	key: string;
 	type: string;
@@ -115,7 +116,7 @@ export function updateImportance(groups: Group[], variables: Variable[]) {
 		variableByKey[variable.colName] = variable;
 	});
 	groups.map(group => {
-		const {ranking } = variableByKey[group.key];
+		const {ranking } = variableByKey[group.colName];
 		group.isImportant = ranking > IMPORTANT_VARIABLE_RANKING_THRESHOLD;
 		return group;
 	});
@@ -126,8 +127,9 @@ export function updateImportance(groups: Group[], variables: Variable[]) {
 export function createErrorFacet(summary: VariableSummary): Group {
 	return {
 		dataset: summary.dataset,
+		colName: summary.key,
 		label: summary.label,
-		key: summary.key,
+		key: `${summary.dataset}:${summary.key}`,
 		type: summary.varType,
 		collapsible: false,
 		collapsed: false,
@@ -144,8 +146,9 @@ export function createErrorFacet(summary: VariableSummary): Group {
 export function createPendingFacet(summary: VariableSummary): Group {
 	return {
 		dataset: summary.dataset,
+		colName: summary.key,
 		label: summary.label,
-		key: summary.key,
+		key: `${summary.dataset}:${summary.key}`,
 		type: summary.varType,
 		collapsible: false,
 		collapsed: false,
@@ -257,11 +260,14 @@ function createCategoricalSummaryFacet(summary: VariableSummary): Group {
 		remainingTotal += facet.count;
 	});
 
+	console.log(summary.key);
+
 	// Generate a facet group
 	return {
 		dataset: summary.dataset,
+		colName: summary.key,
 		label: summary.label,
-		key: summary.key,
+		key: `${summary.dataset}:${summary.key}`,
 		type: summary.varType,
 		collapsible: false,
 		collapsed: false,
@@ -317,8 +323,9 @@ function createCategoricalTimeseriesSummaryFacet(summary: VariableSummary, exemp
 
 	return {
 		dataset: summary.dataset,
+		colName: summary.key,
 		label: summary.label,
-		key: summary.key,
+		key: `${summary.dataset}:${summary.key}`,
 		type: summary.varType,
 		collapsible: false,
 		collapsed: false,
@@ -374,8 +381,9 @@ function createNumericalSummaryFacet(summary: VariableSummary): Group {
 	const slices = getHistogramSlices(summary);
 	return {
 		dataset: summary.dataset,
+		colName: summary.key,
 		label: summary.label,
-		key: summary.key,
+		key: `${summary.dataset}:${summary.key}`,
 		type: summary.varType,
 		collapsible: false,
 		collapsed: false,
@@ -406,8 +414,9 @@ function createNumericalTimeseriesFacet(summary: VariableSummary, exemplar?: Var
 
 	return {
 		dataset: summary.dataset,
+		colName: summary.key,
 		label: summary.label,
-		key: summary.key,
+		key: `${summary.dataset}:${summary.key}`,
 		type: summary.varType,
 		collapsible: false,
 		collapsed: false,
