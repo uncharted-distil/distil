@@ -138,6 +138,7 @@ export interface DatasetState {
 	filteredDatasets: Dataset[];
 	variables: Variable[];
 	variableSummaries: VariableSummary[];
+	variableRankings: Dictionary<Dictionary<number>>;
 	groupingSummaries: VariableSummary[];
 	files: Dictionary<any>;
 	timeseries: Dictionary<Dictionary<number[][]>>;
@@ -212,6 +213,9 @@ export const state: DatasetState = {
 	// variable summary data for the active dataset
 	variableSummaries: [],
 	groupingSummaries: [],
+
+	// variable rankings per dataset
+	variableRankings: {},
 
 	// linked files
 	files: {},

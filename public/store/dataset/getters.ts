@@ -43,6 +43,10 @@ export const getters = {
 		return map;
 	},
 
+	getVariableRankings(state: DatasetState): Dictionary<Dictionary<number>> {
+		return state.variableRankings;
+	},
+
 	getVariableSummaries(state: DatasetState): VariableSummary[] {
 		return state.variableSummaries;
 	},

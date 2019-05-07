@@ -27,6 +27,7 @@ export const getters = {
 	getVariablesMap: read(moduleGetters.getVariablesMap),
 	getVariableTypesMap: read(moduleGetters.getVariableTypesMap),
 	getVariableSummaries: read(moduleGetters.getVariableSummaries),
+	getVariableRankings: read(moduleGetters.getVariableRankings),
 	// files
 	getFiles: read(moduleGetters.getFiles),
 	getTimeseries: read(moduleGetters.getTimeseries),
@@ -104,6 +105,7 @@ export const mutations = {
 	updateVariableSummaries: commit(moduleMutations.updateVariableSummaries),
 	clearVariableSummaries: commit(moduleMutations.clearVariableSummaries),
 	// ranking
+	setVariableRankings: commit(moduleMutations.setVariableRankings),
 	updateVariableRankings: commit(moduleMutations.updateVariableRankings),
 	// pending update
 	updatePendingRequests: commit(moduleMutations.updatePendingRequests),
