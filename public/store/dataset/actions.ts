@@ -170,7 +170,7 @@ export const actions = {
 				const dataset = res.data.dataset;
 				const search = dataset.summaryML || dataset.summary || '';
 				return Promise.all([
-					axios.get(`/distil/join-suggestions/${args.dataset}`, { params: { search } }),
+					axios.get(`/distil/join-suggestions/${args.dataset}`, { params: { search } }).catch(e => ({data: undefined})),
 					axios.get(`/distil/datasets`, { params: { search: 'employment' } }),
 				]);
 			})
