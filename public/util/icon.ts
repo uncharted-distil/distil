@@ -3,7 +3,7 @@ import IconBase from '../components/icons/IconBase.vue';
 import { ThisTypedComponentOptionsWithArrayProps } from 'vue/types/options';
 
 export interface IconBaseProps {
-	iconName?: string;
+	title?: string;
 	width?: number | string;
 	height?: number | string;
 	iconColor?: string;

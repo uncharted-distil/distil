@@ -4,9 +4,8 @@
 		:width="width"
 		:height="height"
 		viewBox="0 0 18 18"
-		:aria-labelledby="iconName"
 	 	role="presentation">
-		<title :id="iconName" lang="en">{{iconName}} icon</title>
+		<title v-if="title" lang="en">{{ title }}</title>
 		<g :fill="iconColor">
 			<slot />
 		</g>
@@ -20,9 +19,9 @@ import Vue from 'vue';
 export default Vue.extend({
 	name: 'icon-base',
 	props: {
-		iconName: {
+		title: {
 			type: String,
-			default: 'box'
+			default: '',
 		},
 		width: {
 			type: [Number, String],
