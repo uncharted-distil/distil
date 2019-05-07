@@ -13,7 +13,7 @@ import _ from 'lodash';
 import Vue from 'vue';
 import VariableFacets from '../components/VariableFacets';
 import { getters as routeGetters } from '../store/route/module';
-import { Group, createGroups, getNumericalFacetValue, getCategoricalFacetValue, TOP_RANGE_HIGHLIGHT } from '../util/facets';
+import { Group, createGroups, getNumericalFacetValue, getCategoricalFacetValue, getTimeseriesFacetValue, TOP_RANGE_HIGHLIGHT } from '../util/facets';
 import { TARGET_VAR_INSTANCE } from '../store/route/index';
 import { Highlight } from '../store/highlights/index';
 import { Variable, VariableSummary } from '../store/dataset/index';
@@ -63,6 +63,10 @@ export default Vue.extend({
 
 		defaultHighlightType(): string {
 			return TOP_RANGE_HIGHLIGHT;
+		},
+
+		isTimeseriesAnalysis(): boolean {
+			return !!routeGetters.getRouteTimeseriesAnalysis(this.$store);
 		}
 	},
 
@@ -109,12 +113,26 @@ export default Vue.extend({
 		},
 
 		selectDefaultNumerical() {
-			updateHighlightRoot(this.$router, {
-				context: this.instanceName,
-				dataset: this.dataset,
-				key: this.target,
-				value: getNumericalFacetValue(this.targetSummaries[0], this.groups[0], this.defaultHighlightType)
-			});
+
+			if (this.isTimeseriesAnalysis) {
+
+				updateHighlightRoot(this.$router, {
+					context: this.instanceName,
+					dataset: this.dataset,
+					key: this.target,
+					value: getTimeseriesFacetValue(this.targetSummaries[0], this.groups[0], this.defaultHighlightType)
+				});
+
+			} else {
+
+				updateHighlightRoot(this.$router, {
+					context: this.instanceName,
+					dataset: this.dataset,
+					key: this.target,
+					value: getNumericalFacetValue(this.targetSummaries[0], this.groups[0], this.defaultHighlightType)
+				});
+			}
+
 		},
 
 		selectDefaultCategorical() {

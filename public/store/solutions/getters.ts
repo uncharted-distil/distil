@@ -131,7 +131,7 @@ export const getters = {
 			console.error('NULL task for regression task type check - defaulting to FALSE.  This should not happen.');
 			return false;
 		}
-		return task.schemaName === REGRESSION_TASK.schemaName;
+		return !getters.isForecasting && task.schemaName === REGRESSION_TASK.schemaName;
 	},
 
 	isClassification(state: SolutionState, getters: any): boolean {
@@ -146,7 +146,11 @@ export const getters = {
 			console.error('NULL task for classification task type check - defaulting to FALSE.  This should not happen.');
 			return false;
 		}
-		return task.schemaName === CLASSIFICATION_TASK.schemaName;
+		return !getters.isForecasting && task.schemaName === CLASSIFICATION_TASK.schemaName;
+	},
+
+	isForecasting(state: SolutionState, getters: any): boolean {
+		return !!getters.getRouteTimeseriesAnalysis;
 	},
 
 	getRequestStreams(state: SolutionState, getters: any): Dictionary<Stream> {

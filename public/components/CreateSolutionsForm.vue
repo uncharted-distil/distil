@@ -108,7 +108,14 @@ export default Vue.extend({
 			return datasetGetters.getVariables(this.$store);
 		},
 		filterParams(): FilterParams {
-			return routeGetters.getDecodedSolutionRequestFilterParams(this.$store);
+			const filters = routeGetters.getDecodedSolutionRequestFilterParams(this.$store);
+
+			// if this is a timeseries task, we want to include the selected time column in the data
+			const timeSeries = routeGetters.getRouteTimeseriesAnalysis(this.$store);
+			if (!!timeSeries) {
+				filters.variables.push(timeSeries);
+			}
+			return filters;
 		},
 		metrics(): string[] {
 			if (this.isTask2) {

@@ -3,7 +3,7 @@
 		<div class="request-group-container" :key="request.requestId" v-for="(request, index) in requestGroups">
 
 			<p class="nav-link font-weight-bold">
-				Search <sup>{{requestGroups.length - index - 1}}</sup>
+				Search <sup>{{getRequestIndex(request.requestId)}}</sup>
 
 				<div v-if="isPending(request.progress)">
 					<b-badge variant="info">{{request.progress}}</b-badge>
@@ -22,6 +22,7 @@
 				:request-id="group.requestId"
 				:solution-id="group.solutionId"
 				:scores="group.scores"
+				:target-summary="group.targetSummary"
 				:predicted-summary="group.predictedSummary"
 				:residuals-summary="group.residualsSummary"
 				:correctness-summary="group.correctnessSummary"
@@ -45,6 +46,7 @@ import { REQUEST_COMPLETED, REQUEST_ERRORED } from '../store/solutions/index';
 import { getters as resultsGetters } from '../store/results/module';
 import { getters as routeGetters } from '../store/route/module';
 import { getters as solutionGetters, actions as solutionActions } from '../store/solutions/module';
+import { getRequestIndex } from '../util/solutions';
 
 interface SummaryGroup {
 	requestId: string;
@@ -95,6 +97,10 @@ export default Vue.extend({
 			return !this.regression ? resultsGetters.getCorrectnessSummaries(this.$store) : [];
 		},
 
+		resultTargetSummary(): VariableSummary {
+			return resultsGetters.getTargetSummary(this.$store);
+		},
+
 		requestGroups(): RequestGroup[] {
 			const requests = solutionGetters.getRelevantSolutionRequests(this.$store);
 			const predictedSummaries = this.predictedSummaries;
@@ -116,6 +122,7 @@ export default Vue.extend({
 							groupName: solution.feature,
 							timestamp: moment(solution.timestamp).format('YYYY/MM/DD'),
 							scores: solution.scores,
+							targetSummary: this.resultTargetSummary,
 							predictedSummary: predictedSummary,
 							residualsSummary: residualSummary,
 							correctnessSummary: correctnessSummary
@@ -142,6 +149,10 @@ export default Vue.extend({
 
 		stopRequest(requestId: string) {
 			solutionActions.stopSolutionRequest(this.$store, { requestId: requestId });
+		},
+
+		getRequestIndex(requestId: string) {
+			return getRequestIndex(requestId);
 		}
 	}
 });

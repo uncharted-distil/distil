@@ -120,6 +120,7 @@ export default Vue.extend({
 	flex-direction: column;
 }
 .variable-summaries .facets-group {
+	/* for the spinners, this isn't needed on other views because of the buttoms that create the space */
 	padding-bottom: 20px;
 }
 .results-view .nav-link {

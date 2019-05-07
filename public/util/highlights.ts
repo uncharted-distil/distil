@@ -66,7 +66,7 @@ export function createFilterFromHighlightRoot(highlightRoot: HighlightRoot, mode
 	}
 
 	const isTimeseriesAnalysis = !!routeGetters.getRouteTimeseriesAnalysis(store);
-	if (isTimeType(type) && isTimeseriesAnalysis) {
+	if (isTimeseriesAnalysis) {
 		// TODO: fix this later
 		return null;
 	}

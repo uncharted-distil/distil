@@ -134,7 +134,7 @@ func (s *Storage) FetchTimeseries(dataset string, storageName string, timeseries
 }
 
 // FetchTimeseriesSummaryData pulls summary data from the database and builds a histogram.
-func (f *TimeSeriesField) FetchTimeseriesSummaryData(timeVar *model.Variable, interval int, resultURI string, filterParams *api.FilterParams, extrema *api.Extrema) (*api.Histogram, error) {
+func (f *TimeSeriesField) FetchTimeseriesSummaryData(timeVar *model.Variable, interval int, resultURI string, filterParams *api.FilterParams) (*api.Histogram, error) {
 	return nil, fmt.Errorf("not implemented")
 }
 
@@ -330,4 +330,10 @@ func (f *TimeSeriesField) FetchPredictedSummaryData(resultURI string, datasetRes
 	}
 	histogram.Exemplars = files
 	return histogram, nil
+}
+
+// FetchForecastingSummaryData pulls data from the result table and builds the
+// forecasting histogram for the field.
+func (f *TimeSeriesField) FetchForecastingSummaryData(timeVar *model.Variable, interval int, resultURI string, filterParams *api.FilterParams) (*api.Histogram, error) {
+	return nil, fmt.Errorf("not implemented")
 }

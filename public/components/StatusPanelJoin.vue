@@ -21,7 +21,7 @@
 			<b-list-group>
 				<b-list-group-item
 					v-for="item in suggestionItems"
-					:key="item.dataset.id" 
+					:key="item.dataset.id"
 					href="#"
 					v-bind:class="{ selected: item.selected }"
 					:disabled="isImporting"

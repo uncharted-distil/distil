@@ -13,7 +13,7 @@ import IconFork from './icons/IconFork';
 import IconBookmark from './icons/IconBookmark';
 
 import { createIcon } from '../util/icon';
-import { Group, CategoricalFacet, isCategoricalFacet, getCategoricalChunkSize, isNumericalFacet } from '../util/facets';
+import { Group, CategoricalFacet, isCategoricalFacet, getCategoricalChunkSize, isNumericalFacet, isSparklineFacet } from '../util/facets';
 import { Highlight, RowSelection, Row } from '../store/highlights/index';
 import { VariableSummary } from '../store/dataset/index';
 import { Dictionary } from '../util/dict';
@@ -290,6 +290,7 @@ export default Vue.extend({
 				if (group.facets.length >= 1) {
 					const facet = group.facets[0];
 					if (isNumericalFacet(facet)) {
+
 						const slices = facet.histogram.slices;
 						const first = slices[0];
 						const last = slices[slices.length - 1];
@@ -298,6 +299,18 @@ export default Vue.extend({
 							to: _.toNumber(last.toLabel)
 						};
 						this.$emit('numerical-click', this.instanceName, group.key, range, group.dataset);
+
+					} else if (isSparklineFacet(facet)) {
+
+						const points = facet.sparklines ? facet.sparklines[0] : facet.sparkline;
+						const first = points[0][0];
+						const last = points[points.length - 1][0];
+						const range = {
+							from: _.toNumber(first),
+							to: _.toNumber(last)
+						};
+						this.$emit('numerical-click', this.instanceName, group.key, range, group.dataset);
+
 					} else if (isCategoricalFacet(facet)) {
 						this.$emit('categorical-click', this.instanceName, group.key, null, group.dataset);
 					}
@@ -307,7 +320,9 @@ export default Vue.extend({
 			$elem.find('.facet-histogram g').click(event => {
 				if (group.facets.length >= 1) {
 					const facet = group.facets[0];
+
 					if (isNumericalFacet(facet)) {
+
 						const slices = facet.histogram.slices;
 						const first = slices[0];
 						const last = slices[slices.length - 1];
@@ -316,6 +331,18 @@ export default Vue.extend({
 							to: _.toNumber(last.toLabel)
 						};
 						this.$emit('numerical-click', this.instanceName, group.key, range, group.dataset);
+
+					} else if (isSparklineFacet(facet)) {
+
+						const points = facet.sparklines ? facet.sparklines[0] : facet.sparkline;
+						const first = points[0][0];
+						const last = points[points.length - 1][0];
+						const range = {
+							from: _.toNumber(first),
+							to: _.toNumber(last)
+						};
+						this.$emit('numerical-click', this.instanceName, group.key, range, group.dataset);
+
 					}
 				}
 			});
@@ -438,36 +465,32 @@ export default Vue.extend({
 			for (const facet of group.facets) {
 
 				// only emphasize histograms
-				if (!facet._histogram) {
-					continue;
+				if (facet._histogram) {
+					facet._histogram.bars.forEach(bar => {
+						if (!bar._element.hasClass('row-selected'))  {
+							// NOTE: don't trample row selections
+							bar._element.css('fill', '');
+						}
+					});
 				}
-
-				facet._histogram.bars.forEach(bar => {
-					if (!bar._element.hasClass('row-selected'))  {
-						// NOTE: don't trample row selections
-						bar._element.css('fill', '');
-					}
-				});
 			}
 
 			// de-emphasis within range
 			for (const facet of group.facets) {
 
 				// only emphasize histograms
-				if (!facet._histogram) {
-					continue;
-				}
-
-				facet._histogram.bars.forEach(bar => {
-					const entry: any = _.last(bar.metadata);
-					if (_.toNumber(entry.label) >= deemphasis.min &&
-						_.toNumber(entry.toLabel) < deemphasis.max) {
-						if (!bar._element.hasClass('row-selected'))  {
-							// NOTE: don't trample row selections
-							bar._element.css('fill', '#ddd');
+				if (facet._histogram) {
+					facet._histogram.bars.forEach(bar => {
+						const entry: any = _.last(bar.metadata);
+						if (_.toNumber(entry.label) >= deemphasis.min &&
+							_.toNumber(entry.toLabel) < deemphasis.max) {
+							if (!bar._element.hasClass('row-selected'))  {
+								// NOTE: don't trample row selections
+								bar._element.css('fill', '#ddd');
+							}
 						}
-					}
-				});
+					});
+				}
 			}
 		},
 
@@ -495,6 +518,8 @@ export default Vue.extend({
 						bar._element.addClass('row-selected');
 					}
 				});
+			} else if (facet._sparkline) {
+				// TODO: sparkline
 			} else {
 				facet._sparklineContainer.parent().css('box-shadow', 'inset 0 0 0 1000px rgba(255,0,103,.2)');
 				facet._barForeground.css('box-shadow', 'inset 0 0 0 1000px #ff0067');
@@ -508,6 +533,8 @@ export default Vue.extend({
 					bar._element.css('fill', '');
 					bar._element.removeClass('row-selected');
 				});
+			} else if (facet._sparkline) {
+				// TODO: sparkline
 			} else {
 				facet._barForeground.css('box-shadow', '');
 				facet._sparklineContainer.parent().css('box-shadow', '');
@@ -555,6 +582,10 @@ export default Vue.extend({
 					if (facet._histogram) {
 
 						this.addRowSelectionToFacet(facet, col);
+
+					} else if (facet._sparkline) {
+
+						// TODO: sparkline
 
 					} else {
 
@@ -622,7 +653,13 @@ export default Vue.extend({
 					return;
 				}
 				if (facet._histogram) {
+
 					facet.deselect();
+
+				} else if (facet._sparkline) {
+
+					// TODO: sparkline
+
 				} else {
 					this.selectCategoricalFacet(facet);
 				}
@@ -673,6 +710,45 @@ export default Vue.extend({
 						}
 					}
 
+					facet.select({
+						selection: selection
+					});
+
+				} else if (facet._sparkline) {
+
+					const selection = {} as any;
+
+					// if this is the highlighted group, create filter selection
+					if (this.isHighlightedGroup(highlights, group.key)) {
+
+						// NOTE: the `from` / `to` values MUST be strings.
+						selection.range = {
+							from: `${highlightRootValue.from}`,
+							to: `${highlightRootValue.to}`
+						};
+
+					} else {
+
+						// TODO: impl highlighting
+
+						// const points = facet._sparkline.points;
+						// if (highlightSummary && highlightSummary.buckets.length === points.length) {
+						// 	this.removeSpinnerFromGroup(group);
+						//
+						// 	const slices = {};
+						//
+						// 	highlightSummary.buckets.forEach((bucket, index) => {
+						// 		const entry: any = _.last(points[index].metadata);
+						// 		slices[entry.label] = bucket.count;
+						// 	});
+						//
+						// 	selection.slices = slices;
+						// } else {
+						// 	if (highlightRootValue) {
+						// 		this.addSpinnerForGroup(group);
+						// 	}
+						// }
+					}
 
 					facet.select({
 						selection: selection
@@ -857,6 +933,12 @@ export default Vue.extend({
 			group.facets.forEach(facet => {
 				if (isNumericalFacet(facet)) {
 					values = facet.histogram.slices.slice(0, 10).map(b => _.toNumber(b.label));
+				} else if (isSparklineFacet(facet)) {
+					if (facet.sparklines) {
+						values = facet.sparkline[0].slice(0, 10).map(p => _.isArray(p) ? p[1] : p);
+					} else {
+						values = facet.sparkline.slice(0, 10).map(p => _.isArray(p) ? p[1] : p);
+					}
 				} else if (isCategoricalFacet(facet)) {
 					values.push(facet.value);
 				}
