@@ -4,7 +4,7 @@
 
 		<div class="row align-items-center justify-content-center bg-white">
 			<div class="col-12 col-md-10">
-				<h5 class="header-label">Select Features To Join {{joinDatasets[0].toUpperCase()}} with {{joinDatasets[1].toUpperCase()}}</h5>
+				<h5 class="header-label">Select Features To Join {{ topDatasetName }} with {{ bottomDatasetName }}</h5>
 			</div>
 		</div>
 
@@ -83,7 +83,7 @@ import VariableFacets from '../components/VariableFacets';
 import TypeChangeMenu from '../components/TypeChangeMenu';
 import { overlayRouteEntry } from '../util/routes';
 import { Dictionary } from '../util/dict';
-import { VariableSummary, TableData, TableColumn, TableRow } from '../store/dataset/index';
+import { VariableSummary, TableData, TableColumn, TableRow, Dataset } from '../store/dataset/index';
 import { filterSummariesByDataset, NUM_PER_PAGE,
 	getTableDataItems, getTableDataFields } from '../util/data';
 import { createGroups, Group } from '../util/facets';
@@ -137,6 +137,13 @@ export default Vue.extend({
 		topDataset(): string {
 			return this.joinDatasets.length >= 1 ? this.joinDatasets[0] : null;
 		},
+		topDatasetItem(): Dataset {
+			const datasets = datasetGetters.getDatasets(this.$store);
+			return datasets.find(item => item.id === this.topDataset);
+		},
+		topDatasetName(): string {
+			return this.topDatasetItem ? this.topDatasetItem.name.toUpperCase() : '';
+		},
 		topDatasetTableData(): TableData {
 			return this.topDataset ? this.joinDatasetsTableData[this.topDataset] : null;
 		},
@@ -158,6 +165,13 @@ export default Vue.extend({
 		},
 		bottomDataset(): string {
 			return this.joinDatasets.length >= 2 ? this.joinDatasets[1] : null;
+		},
+		bottomDatasetItem(): Dataset {
+			const datasets = datasetGetters.getDatasets(this.$store);
+			return datasets.find(item => item.id === this.bottomDataset);
+		},
+		bottomDatasetName(): string {
+			return this.bottomDatasetItem ? this.bottomDatasetItem.name.toUpperCase() : '';
 		},
 		bottomDatasetTableData(): TableData {
 			return this.bottomDataset ? this.joinDatasetsTableData[this.bottomDataset] : null;
