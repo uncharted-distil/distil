@@ -992,6 +992,10 @@ export default Vue.extend({
 	padding-bottom: 5px;
 	display: none;
 }
+.facets-group .group-facet-container {
+	max-height: 240px;
+	overflow-y: auto;
+}
 .facets-group-container.important .group-footer .important-badge {
 	display: block;
 }
