@@ -57,7 +57,7 @@ export default Vue.extend({
 		highlightArrows: Boolean as () => boolean,
 		solutionId: String as () => string,
 		sort: {
-			default: (a: { key: string }, b: { key: string }) => {
+			default: (a: Group, b: Group) => {
 				const textA = a.key.toLowerCase();
 				const textB = b.key.toLowerCase();
 				return (textA < textB) ? -1 : (textA > textB) ? 1 : 0;
@@ -287,12 +287,31 @@ export default Vue.extend({
 			this.debouncedInjection(this.highlights, this.rowSelection, currDemphasis);
 		},
 
-		sort(currSort) {
-			this.facets.sort(currSort);
+		sort() {
+			this.sortFacets();
 		}
 	},
 
 	methods: {
+
+		sortFacets() {
+			// NOTE: the facets lib sorts on the facet instances themselves, we
+			// sort on the group spec objects, so we need to map the order
+			// between the two here.
+
+			const sort = this.sort as (a: Group, b: Group) => number;
+
+			this.groups.sort(sort);
+			const order = {};
+			this.groups.forEach((group, index) => {
+				order[group.key] = index;
+			});
+
+			this.facets.sort((a, b) => {
+				return order[a.key] - order[b.key];
+			});
+		},
+
 		injectHTML(group: Group, $elem: JQuery) {
 			const $groupFooter = $('<div class="group-footer"></div>').appendTo($elem.find('.facets-group'));
 			$elem.click(event => {
@@ -569,12 +588,14 @@ export default Vue.extend({
 				return;
 			}
 
+			const groupSpec = this.groups.find(g => g.key === group.key);
+
 			const rows = getSelectedRows(selection);
 			rows.forEach(row => {
 
 				// get col
 				const col = _.find(row.cols, c => {
-					return c.key === group.colName;
+					return c.key === groupSpec.colName;
 				});
 
 				// no matching col, exit early
@@ -599,7 +620,6 @@ export default Vue.extend({
 
 					} else {
 
-						console.log('facet key: ', facet.key);
 						const type = getVarType(facet.key);
 
 						if (isClusterType(type)) {
@@ -676,10 +696,10 @@ export default Vue.extend({
 				}
 			});
 
-			const highlightRootValue = this.getHighlightRootValue(highlights);
-			const highlightSummary = this.getHighlightSummary(highlights, group.colName);
 
-			// TODO: we need the distil groups, not facet groups
+			const groupSpec = this.groups.find(g => g.key === group.key);
+			const highlightRootValue = this.getHighlightRootValue(highlights);
+			const highlightSummary = this.getHighlightSummary(highlights, groupSpec.colName);
 
 			for (const facet of group.facets) {
 
@@ -693,7 +713,7 @@ export default Vue.extend({
 					const selection = {} as any;
 
 					// if this is the highlighted group, create filter selection
-					if (this.isHighlightedGroup(highlights, group.colName)) {
+					if (this.isHighlightedGroup(highlights, groupSpec.colName)) {
 
 						// NOTE: the `from` / `to` values MUST be strings.
 						selection.range = {
@@ -732,7 +752,7 @@ export default Vue.extend({
 					const selection = {} as any;
 
 					// if this is the highlighted group, create filter selection
-					if (this.isHighlightedGroup(highlights, group.colName)) {
+					if (this.isHighlightedGroup(highlights, groupSpec.colName)) {
 
 						// NOTE: the `from` / `to` values MUST be strings.
 						selection.range = {
@@ -769,7 +789,7 @@ export default Vue.extend({
 
 				} else {
 
-					if (this.isHighlightedGroup(highlights, group.colName)) {
+					if (this.isHighlightedGroup(highlights, groupSpec.colName)) {
 
 						const highlightValue = this.getHighlightRootValue(highlights);
 						if (highlightValue.toLowerCase() === facet.value.toLowerCase()) {
@@ -901,8 +921,8 @@ export default Vue.extend({
 					this.injectDeemphasis(this.facets.getGroup(groupSpec.key), this.deemphasis);
 				});
 			}
-			// sort alphabetically
-			this.facets.sort(this.sort);
+			// sort
+			this.sortFacets();
 			currGroups.forEach(this.updateImportantBadge);
 
 			// return unchanged groups

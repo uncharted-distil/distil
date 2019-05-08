@@ -260,8 +260,6 @@ function createCategoricalSummaryFacet(summary: VariableSummary): Group {
 		remainingTotal += facet.count;
 	});
 
-	console.log(summary.key);
-
 	// Generate a facet group
 	return {
 		dataset: summary.dataset,

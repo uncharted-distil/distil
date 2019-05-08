@@ -276,7 +276,7 @@ export function sortGroupsByImportance(groups: Group[], variables: Variable[]): 
 	});
 	// sort by importance
 	groups.sort((a, b) => {
-		return importance[b.key] - importance[a.key];
+		return importance[b.colName] - importance[a.colName];
 	});
 	return groups;
 }

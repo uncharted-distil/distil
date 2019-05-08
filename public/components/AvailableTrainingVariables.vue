@@ -93,7 +93,6 @@ export default Vue.extend({
 			const training = routeGetters.getRouteTrainingVariables(this.$store);
 			const trainingArray = training ? training.split(',') : [];
 			facets.availableVariables().forEach(variable => {
-				console.log(variable);
 				trainingArray.push(variable);
 			});
 			const entry = overlayRouteEntry(routeGetters.getRoute(this.$store), {

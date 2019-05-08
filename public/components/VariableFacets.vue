@@ -156,9 +156,9 @@ export default Vue.extend({
 	},
 
 	methods: {
-		importanceDesc(a: { key: string }, b: { key: string }): number {
+		importanceDesc(a: Group, b: Group): number {
 			const importance = this.importance;
-			return importance[b.key] - importance[a.key];
+			return importance[b.colName] - importance[a.colName];
 		},
 
 		// creates a facet key for the route from the instance-name component arg
