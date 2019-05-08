@@ -75,7 +75,23 @@ export default Vue.extend({
 			if (!_.isNil(scrollLeft) && tableHeaderRow) {
 				tableHeaderRow.style['margin-left'] = scrollLeft ? `-${this.tbody.scrollLeft}px` : 0;
 			}
-		}
+		},
+
+		onMouseOverTableCell(event) {
+			const target = event.target;
+			if (!target) { return; }
+
+			const isTd = target.tagName === 'TD';
+			const isLeafNode = target.childElementCount === 0;
+			const text = target.innerText;
+			const title = target.getAttribute('title');
+
+			if (isTd && isLeafNode && text && !title) {
+				// set title for displaying full text on hover
+				target.setAttribute('title', text);
+			}
+
+		},
 	},
 
 	data() {
@@ -91,6 +107,7 @@ export default Vue.extend({
 		this.tbody = this.$el.querySelector('tbody');
 
 		this.tbody.addEventListener('scroll', this.onScroll);
+		this.tbody.addEventListener('mouseover', this.onMouseOverTableCell);
 
 		window.addEventListener('resize', this.resizeTableCells);
 
@@ -132,7 +149,7 @@ export default Vue.extend({
 	  by < 1px and creates horizontal scrollbar when it's not needed.
 	*/
 	width: calc(100% - 1px);
-    margin-right: 1px;
+	margin-right: 1px;
 }
 .fixed-header-table thead tr {
 	display: flex;
@@ -148,6 +165,9 @@ export default Vue.extend({
 	flex: 1;
 }
 .fixed-header-table tbody td {
-	overflow-wrap: break-word;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	max-width: 300px
 }
 </style>
