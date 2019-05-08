@@ -57,7 +57,7 @@ export default Vue.extend({
 		highlightArrows: Boolean as () => boolean,
 		solutionId: String as () => string,
 		sort: {
-			default: (a: { key: string }, b: { key: string }) => {
+			default: (a: Group, b: Group) => {
 				const textA = a.key.toLowerCase();
 				const textB = b.key.toLowerCase();
 				return (textA < textB) ? -1 : (textA > textB) ? 1 : 0;
@@ -102,37 +102,44 @@ export default Vue.extend({
 		// proxy events
 
 		this.facets.on('facet-group:expand', (event: Event, key: string) => {
-			component.$emit('expand', key);
+			const group = this.groups.find(group => group.key === key);
+			component.$emit('expand', group.colName);
 		});
 
 		this.facets.on('facet-group:collapse', (event: Event, key: string) => {
-			component.$emit('collapse', key);
+			const group = this.groups.find(group => group.key === key);
+			component.$emit('collapse', group.colName);
 		});
 
 		this.facets.on('facet-histogram:rangechangeduser', (event: Event, key: string, value: any, facet: any) => {
+			const group = this.groups.find(group => group.key === key);
 			const range = {
 				from: _.toNumber(value.from.label[0]),
 				to: _.toNumber(value.to.label[0])
 			};
-			component.$emit('range-change', this.instanceName, key, range, facet.dataset);
+			component.$emit('range-change', this.instanceName, group.colName, range, facet.dataset);
 		});
 
 		// hover over events
 
 		this.facets.on('facet-histogram:mouseenter', (event: Event, key: string, value: any) => {
-			component.$emit('histogram-mouse-enter', key, value);
+			const group = this.groups.find(group => group.key === key);
+			component.$emit('histogram-mouse-enter', group.colName, value);
 		});
 
 		this.facets.on('facet-histogram:mouseleave', (event: Event, key: string) => {
-			component.$emit('histogram-mouse-leave', key);
+			const group = this.groups.find(group => group.key === key);
+			component.$emit('histogram-mouse-leave', group.colName);
 		});
 
 		this.facets.on('facet:mouseenter', (event: Event, key: string, value: number) => {
-			component.$emit('facet-mouse-enter', key, value);
+			const group = this.groups.find(group => group.key === key);
+			component.$emit('facet-mouse-enter', group.colName, value);
 		});
 
 		this.facets.on('facet:mouseleave', (event: Event, key: string) => {
-			component.$emit('facet-mouse-leave', key);
+			const group = this.groups.find(group => group.key === key);
+			component.$emit('facet-mouse-leave', group.colName);
 		});
 
 		// more events
@@ -165,27 +172,29 @@ export default Vue.extend({
 
 		this.facets.on('facet-histogram:click', (event: Event, key: string, value: any, facet: any) => {
 			// if this is a click on value previously used as highlight root, clear
+			const group = this.groups.find(group => group.key === key);
 			const range = {
 				from: _.toNumber(value.label),
 				to: _.toNumber(value.toLabel)
 			};
-			if (this.isHighlightedValue(this.highlights, key, range)) {
+			if (this.isHighlightedValue(this.highlights, group.colName, range)) {
 				// clear current selection
 				component.$emit('histogram-click', this.instanceName, null, null, facet.dataset);
 			} else {
 				// set selection
-				component.$emit('histogram-click', this.instanceName, key, range, facet.dataset);
+				component.$emit('histogram-click', this.instanceName, group.colName, range, facet.dataset);
 			}
 		});
 
 		this.facets.on('facet:click', (event: Event, key: string, value: string, count: number, facet: any) => {
 			// User clicked on the value that is currently the highlight root
-			if (this.isHighlightedValue(this.highlights, key, value)) {
+			const group = this.groups.find(group => group.key === key);
+			if (this.isHighlightedValue(this.highlights, group.colName, value)) {
 				// clear current selection
 				component.$emit('facet-click', this.instanceName, null, null, facet.dataset);
 			} else {
 				// set selection
-				component.$emit('facet-click', this.instanceName, key, value, facet.dataset);
+				component.$emit('facet-click', this.instanceName, group.colName, value, facet.dataset);
 			}
 		});
 
@@ -278,12 +287,31 @@ export default Vue.extend({
 			this.debouncedInjection(this.highlights, this.rowSelection, currDemphasis);
 		},
 
-		sort(currSort) {
-			this.facets.sort(currSort);
+		sort() {
+			this.sortFacets();
 		}
 	},
 
 	methods: {
+
+		sortFacets() {
+			// NOTE: the facets lib sorts on the facet instances themselves, we
+			// sort on the group spec objects, so we need to map the order
+			// between the two here.
+
+			const sort = this.sort as (a: Group, b: Group) => number;
+
+			this.groups.sort(sort);
+			const order = {};
+			this.groups.forEach((group, index) => {
+				order[group.key] = index;
+			});
+
+			this.facets.sort((a, b) => {
+				return order[a.key] - order[b.key];
+			});
+		},
+
 		injectHTML(group: Group, $elem: JQuery) {
 			const $groupFooter = $('<div class="group-footer"></div>').appendTo($elem.find('.facets-group'));
 			$elem.click(event => {
@@ -298,7 +326,7 @@ export default Vue.extend({
 							from: _.toNumber(first.label),
 							to: _.toNumber(last.toLabel)
 						};
-						this.$emit('numerical-click', this.instanceName, group.key, range, group.dataset);
+						this.$emit('numerical-click', this.instanceName, group.colName, range, group.dataset);
 
 					} else if (isSparklineFacet(facet)) {
 
@@ -309,10 +337,10 @@ export default Vue.extend({
 							from: _.toNumber(first),
 							to: _.toNumber(last)
 						};
-						this.$emit('numerical-click', this.instanceName, group.key, range, group.dataset);
+						this.$emit('numerical-click', this.instanceName, group.colName, range, group.dataset);
 
 					} else if (isCategoricalFacet(facet)) {
-						this.$emit('categorical-click', this.instanceName, group.key, null, group.dataset);
+						this.$emit('categorical-click', this.instanceName, group.colName, null, group.dataset);
 					}
 				}
 			});
@@ -330,7 +358,7 @@ export default Vue.extend({
 							from: _.toNumber(first.label),
 							to: _.toNumber(last.toLabel)
 						};
-						this.$emit('numerical-click', this.instanceName, group.key, range, group.dataset);
+						this.$emit('numerical-click', this.instanceName, group.colName, range, group.dataset);
 
 					} else if (isSparklineFacet(facet)) {
 
@@ -341,7 +369,7 @@ export default Vue.extend({
 							from: _.toNumber(first),
 							to: _.toNumber(last)
 						};
-						this.$emit('numerical-click', this.instanceName, group.key, range, group.dataset);
+						this.$emit('numerical-click', this.instanceName, group.colName, range, group.dataset);
 
 					}
 				}
@@ -378,7 +406,7 @@ export default Vue.extend({
 			const $groups = $elem.find('.facets-group');
 			this.groups.forEach((group, index) => {
 				// add highlight arrow
-				if (this.isHighlightedGroup(highlights, group.key)) {
+				if (this.isHighlightedGroup(highlights, group.colName)) {
 					const $group = $($groups.get(index + QUERY_OFFSET));
 					$group.append('<div class="highlight-arrow"><i class="fa fa-arrow-circle-right fa-2x"></i></div>');
 				}
@@ -389,14 +417,15 @@ export default Vue.extend({
 			return _.get(highlights, 'root.context') === this.instanceName;
 		},
 
-		isHighlightedGroup(highlights: Highlight, key: string): boolean {
+		isHighlightedGroup(highlights: Highlight, colName: string): boolean {
 			return this.isHighlightedInstance(highlights) &&
-				_.get(highlights, 'root.key') === key;
+				_.get(highlights, 'root.key') === colName;
+				// _.get(highlights, 'root.dataset') === dataset;
 		},
 
-		isHighlightedValue(highlights: Highlight, key: string, value: any): boolean {
+		isHighlightedValue(highlights: Highlight, colName: string, value: any): boolean {
 			// if not instance, return false
-			if (!this.isHighlightedGroup(highlights, key)) {
+			if (!this.isHighlightedGroup(highlights, colName)) {
 				return false;
 			}
 			if (_.isArray(highlights.root.value)) {
@@ -559,12 +588,14 @@ export default Vue.extend({
 				return;
 			}
 
+			const groupSpec = this.groups.find(g => g.key === group.key);
+
 			const rows = getSelectedRows(selection);
 			rows.forEach(row => {
 
 				// get col
 				const col = _.find(row.cols, c => {
-					return c.key === group.key;
+					return c.key === groupSpec.colName;
 				});
 
 				// no matching col, exit early
@@ -665,8 +696,10 @@ export default Vue.extend({
 				}
 			});
 
+
+			const groupSpec = this.groups.find(g => g.key === group.key);
 			const highlightRootValue = this.getHighlightRootValue(highlights);
-			const highlightSummary = this.getHighlightSummary(highlights, group.key);
+			const highlightSummary = this.getHighlightSummary(highlights, groupSpec.colName);
 
 			for (const facet of group.facets) {
 
@@ -680,7 +713,7 @@ export default Vue.extend({
 					const selection = {} as any;
 
 					// if this is the highlighted group, create filter selection
-					if (this.isHighlightedGroup(highlights, group.key)) {
+					if (this.isHighlightedGroup(highlights, groupSpec.colName)) {
 
 						// NOTE: the `from` / `to` values MUST be strings.
 						selection.range = {
@@ -719,7 +752,7 @@ export default Vue.extend({
 					const selection = {} as any;
 
 					// if this is the highlighted group, create filter selection
-					if (this.isHighlightedGroup(highlights, group.key)) {
+					if (this.isHighlightedGroup(highlights, groupSpec.colName)) {
 
 						// NOTE: the `from` / `to` values MUST be strings.
 						selection.range = {
@@ -756,7 +789,7 @@ export default Vue.extend({
 
 				} else {
 
-					if (this.isHighlightedGroup(highlights, group.key)) {
+					if (this.isHighlightedGroup(highlights, groupSpec.colName)) {
 
 						const highlightValue = this.getHighlightRootValue(highlights);
 						if (highlightValue.toLowerCase() === facet.value.toLowerCase()) {
@@ -888,8 +921,8 @@ export default Vue.extend({
 					this.injectDeemphasis(this.facets.getGroup(groupSpec.key), this.deemphasis);
 				});
 			}
-			// sort alphabetically
-			this.facets.sort(this.sort);
+			// sort
+			this.sortFacets();
 			currGroups.forEach(this.updateImportantBadge);
 
 			// return unchanged groups
@@ -922,7 +955,7 @@ export default Vue.extend({
 				const $icon = $(`<i class="${typeicon}"></i>`);
 				$elem.find('.group-header').append($icon);
 			}
-			if (hasComputedVarPrefix(group.key)) {
+			if (hasComputedVarPrefix(group.colName)) {
 				const $forkIcon = createIcon(IconFork);
 				$elem.find('.group-header').append($forkIcon);
 			}
@@ -956,7 +989,7 @@ export default Vue.extend({
 						store: this.$store,
 						propsData: {
 							dataset: group.dataset,
-							field: group.key,
+							field: group.colName,
 							values: this.getGroupSampleValues(group)
 						}
 					});

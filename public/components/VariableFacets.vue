@@ -104,7 +104,7 @@ export default Vue.extend({
 
 		filteredGroups(): Group[] {
 			return this.groups.filter(group => {
-				return this.filter === '' || group.key.toLowerCase().includes(this.filter.toLowerCase());
+				return this.filter === '' || group.colName.toLowerCase().includes(this.filter.toLowerCase());
 			});
 		},
 
@@ -126,7 +126,7 @@ export default Vue.extend({
 			if (this.enableHighlighting && this.highlights.root) {
 				cloned.forEach(group => {
 					if (group) {
-						if (group.key === this.highlights.root.key) {
+						if (group.colName === this.highlights.root.key) {
 							group.facets.forEach(facet => {
 								facet.filterable = true;
 							});
@@ -156,9 +156,9 @@ export default Vue.extend({
 	},
 
 	methods: {
-		importanceDesc(a: { key: string }, b: { key: string }): number {
+		importanceDesc(a: Group, b: Group): number {
 			const importance = this.importance;
-			return importance[b.key] - importance[a.key];
+			return importance[b.colName] - importance[a.colName];
 		},
 
 		// creates a facet key for the route from the instance-name component arg
@@ -216,9 +216,9 @@ export default Vue.extend({
 
 			// filter by search
 			const searchFiltered = this.groups.filter(group => {
-				return this.filter === '' || group.key.toLowerCase().includes(this.filter.toLowerCase());
+				return this.filter === '' || group.colName.toLowerCase().includes(this.filter.toLowerCase());
 			});
-			return searchFiltered.map(v => v.key);
+			return searchFiltered.map(v => v.colName);
 		}
 	}
 });

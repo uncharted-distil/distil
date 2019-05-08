@@ -25,6 +25,7 @@ export const REAL_TYPE = 'real';
 export const REAL_VECTOR_TYPE = 'realVector';
 export const BOOL_TYPE = 'boolean';
 export const DATE_TIME_TYPE = 'dateTime';
+export const DATE_TIME_LOWER_TYPE = 'datetime';
 export const TIMESTAMP_TYPE = 'timestmap';
 export const ORDINAL_TYPE = 'ordinal';
 export const CATEGORICAL_TYPE = 'categorical';
@@ -62,6 +63,7 @@ const TYPES_TO_LABELS: Dictionary<string> = {
 	[COUNTRY_CODE_TYPE]: 'Country Code',
 	[URI_TYPE]: 'URI',
 	[DATE_TIME_TYPE]: 'Date/Time',
+	[DATE_TIME_LOWER_TYPE]: `Date/Time`,
 	[BOOL_TYPE]: 'Boolean',
 	[IMAGE_TYPE]: 'Image',
 	[TIMESERIES_TYPE]: 'Timeseries',

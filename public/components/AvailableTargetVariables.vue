@@ -54,14 +54,14 @@ export default Vue.extend({
 		variables(): Variable[] {
 			return datasetGetters.getVariables(this.$store);
 		},
-		html(): (group: { key: string }) => HTMLDivElement {
-			return (group: { key: string }) => {
+		html(): (group: Group) => HTMLDivElement {
+			return (group: Group) => {
 				const container = document.createElement('div');
 				const targetElem = document.createElement('button');
 				targetElem.className += 'btn btn-sm btn-success ml-2 mr-2 mb-2';
 				targetElem.innerHTML = 'Select Target';
 				targetElem.addEventListener('click', () => {
-					const target = group.key;
+					const target = group.colName;
 					// remove from training
 					const trainingStr = routeGetters.getRouteTrainingVariables(this.$store);
 					const training = trainingStr ? trainingStr.split(',') : [];
@@ -70,7 +70,7 @@ export default Vue.extend({
 						training.splice(index, 1);
 					}
 					const entry = createRouteEntry(SELECT_TRAINING_ROUTE, {
-						target: group.key,
+						target: group.colName,
 						dataset: routeGetters.getRouteDataset(this.$store),
 						filters: routeGetters.getRouteFilters(this.$store),
 						timeseriesAnalysis: routeGetters.getRouteTimeseriesAnalysis(this.$store),
@@ -81,7 +81,7 @@ export default Vue.extend({
 				container.appendChild(targetElem);
 
 				const v = this.variables.find(v => {
-					return v.colName === group.key;
+					return v.colName === group.colName;
 				});
 				if (v && v.grouping) {
 					const groupingElem = document.createElement('button');
