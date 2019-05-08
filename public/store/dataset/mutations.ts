@@ -87,11 +87,49 @@ export const mutations = {
 	},
 
 	updateVariableType(state: DatasetState, args: { dataset: string, field: string, type: string }) {
-		const index = _.findIndex(state.variables, v => {
+
+		// TODO: fix this, this is hacky and error prone manually changing the
+		// type across the app state.
+		// Ideally we have it only in one state, or instead refresh all the
+		// relevant store data.
+
+		// update dataset variables
+		const dataset = state.datasets.find(d => d.name === args.dataset);
+		if (dataset) {
+			const variable = dataset.variables.find(v => v.colName === args.field);
+			if (variable) {
+				variable.colType = args.type;
+			}
+		}
+
+		// update variables
+		const variable = state.variables.find(v => {
 			return v.colName === args.field && v.datasetName === args.dataset;
 		});
-		if (index !== -1) {
-			state.variables[index].colType = args.type;
+		if (variable) {
+			variable.colType = args.type;
+		}
+
+		// update table data
+		if (state.includedTableData) {
+			const col = state.includedTableData.columns.find(c => c.key === args.field);
+			if (col) {
+				col.type = args.type;
+			}
+		}
+		if (state.includedTableData) {
+			const col = state.excludedTableData.columns.find(c => c.key === args.field);
+			if (col) {
+				col.type = args.type;
+			}
+		}
+
+		const joined = state.joinTableData[args.dataset];
+		if (joined) {
+			const col = joined.columns.find(c => c.key === args.field);
+			if (col) {
+				col.type = args.type;
+			}
 		}
 	},
 
