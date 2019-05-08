@@ -89,9 +89,6 @@ export default Vue.extend({
 				} else if (isFieldJoinable) {
 					// show matching column types
 					emph.variant = 'success';
-				} else if (!isFieldJoinable) {
-					// show unmatched column types
-					emph.variant = 'warning';
 				}
 
 				if (this.otherSelectedColumn && isFieldSelected && !isFieldJoinable) {
