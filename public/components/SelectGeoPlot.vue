@@ -477,6 +477,13 @@ path.selected {
 	fill-opacity: 0.4;
 }
 
+.leaflet-tooltip {
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	max-width: 300px !important;
+}
+
 .geo-close-button {
 	position: absolute;
 	width: 24px;
