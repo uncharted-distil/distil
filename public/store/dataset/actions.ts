@@ -17,7 +17,7 @@ import {
 import { mutations } from './module';
 import { DistilState } from '../store';
 import { HighlightRoot } from '../highlights/index';
-import { FilterParams, INCLUDE_FILTER } from '../../util/filters';
+import { FilterParams, INCLUDE_FILTER, EXCLUDE_FILTER } from '../../util/filters';
 import { createPendingSummary, createErrorSummary, createEmptyTableData, fetchHistogramExemplars, getTimeseriesAnalysisIntervals } from '../../util/data';
 import { addHighlightToFilterParams } from '../../util/highlights';
 import { loadImage } from '../../util/image';
@@ -504,8 +504,9 @@ export const actions = {
 			});
 	},
 
-	updateVariableRankings(context: DatasetContext, rankings: Dictionary<number>) {
-		mutations.updateVariableRankings(context, rankings);
+	updateVariableRankings(context: DatasetContext, args: { dataset: string, rankings: Dictionary<number> }) {
+		mutations.setVariableRankings(context, { dataset: args.dataset, rankings: args.rankings });
+		mutations.updateVariableRankings(context, args.rankings);
 	},
 
 	updatePendingRequestStatus(context: DatasetContext, args: { id: string, status: DatasetPendingRequestStatus}) {

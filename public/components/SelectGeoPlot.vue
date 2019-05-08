@@ -9,6 +9,7 @@
 
 <script lang="ts">
 
+import _ from 'lodash';
 import $ from 'jquery';
 import leaflet from 'leaflet';
 import Vue from 'vue';
@@ -39,6 +40,7 @@ interface GeoField {
 interface LatLng {
 	lat: number;
 	lng: number;
+	row: TableRow;
 }
 
 interface PointGroup {
@@ -66,6 +68,126 @@ export default Vue.extend({
 			currentRect: null,
 			selectedRect: null
 		};
+	},
+
+
+	computed: {
+
+		dataset(): string {
+			return routeGetters.getRouteDataset(this.$store);
+		},
+
+		target(): string {
+			return routeGetters.getRouteTargetVariable(this.$store);
+		},
+
+		fields(): Dictionary<TableColumn> {
+			return this.includedActive ? datasetGetters.getIncludedTableDataFields(this.$store) : datasetGetters.getExcludedTableDataFields(this.$store);
+		},
+
+		items(): TableRow[] {
+			return this.includedActive ? datasetGetters.getIncludedTableDataItems(this.$store) : datasetGetters.getExcludedTableDataItems(this.$store);
+		},
+
+		getTopVariables(): string[] {
+			const rankings = datasetGetters.getVariableRankings(this.$store)[this.dataset];
+			if (!rankings) {
+				return [];
+			}
+			return _.map(rankings, (ranking, variable) => {
+					return {
+						variable: variable,
+						ranking: ranking
+					};
+				})
+				.sort((a, b) => {
+					return b.ranking - a.ranking;
+				})
+				.map(r => r.variable);
+		},
+
+		fieldSpecs(): GeoField[] {
+
+			const variables = datasetGetters.getVariables(this.$store);
+
+			const matches = variables.filter(v => {
+				return v.colType === LONGITUDE_TYPE ||
+					v.colType === LATITUDE_TYPE ||
+					v.colType === 'vector';
+			});
+
+			let lng = null;
+			let lat = null;
+			const fields = [];
+			matches.forEach(match => {
+				if (match.colType === LONGITUDE_TYPE) {
+					lng = match.colName;
+				}
+				if (match.colType === LATITUDE_TYPE) {
+					lat = match.colName;
+				}
+				if (match.colType === 'vector') {
+					fields.push({
+						type: SINGLE_FIELD,
+						field: match.colName
+					});
+				}
+				// TODO: currently we pair any two random lat / lngs
+				if (lng && lat) {
+					fields.push({
+						type: SPLIT_FIELD,
+						lngField: lng,
+						latField: lat
+					});
+					lng = null;
+					lat = null;
+				}
+			});
+
+			return fields;
+		},
+
+		pointGroups(): PointGroup[] {
+			const groups = [];
+
+			if (!this.items) {
+				return groups;
+			}
+
+			this.fieldSpecs.forEach(fieldSpec => {
+				const group = {
+					field: fieldSpec,
+					points: []
+				};
+				group.points = this.items.map(item => {
+					const lat = this.latValue(fieldSpec, item);
+					const lng = this.lngValue(fieldSpec, item);
+					if (lat !== undefined && lng !== undefined) {
+						return {
+							lng: lng,
+							lat: lat,
+							row: item
+						};
+					}
+					return null;
+				}).filter(p => !!p);
+				groups.push(group);
+			});
+
+			return groups;
+		},
+
+		highlightRoot(): HighlightRoot {
+			return routeGetters.getDecodedHighlightRoot(this.$store);
+		},
+
+		mapCenter(): number[] {
+			return routeGetters.getGeoCenter(this.$store);
+		},
+
+		mapZoom(): number {
+			return routeGetters.getGeoZoom(this.$store);
+		}
 	},
 
 	methods: {
@@ -296,7 +418,28 @@ export default Vue.extend({
 				const hash = this.fieldHash(group.field);
 				const layer = leaflet.layerGroup([]);
 				group.points.forEach(p => {
-					layer.addLayer(leaflet.marker(p));
+					const marker =  leaflet.marker(p);
+					marker.bindTooltip(() => {
+						const target = p.row[this.target];
+						const values = [];
+						const MAX_VALUES = 5;
+						this.getTopVariables.forEach(v => {
+							if (p.row[v] && values.length <= MAX_VALUES) {
+								values.push(`<b>${_.capitalize(v)}:</b> ${p.row[v]}`);
+							}
+						});
+						return [ `<b>${_.capitalize(target)}</b>` ].concat(values).join('<br>');
+					});
+
+					marker.on('mouseover', (e) => {
+						$(marker._icon).css('filter', 'brightness(1.2)');
+					});
+
+					marker.on('mouseout', () => {
+						$(marker._icon).css('filter', '');
+					});
+
+					layer.addLayer(marker);
 				});
 				layer.addTo(this.map);
 				this.markers[hash] = layer;
@@ -316,99 +459,7 @@ export default Vue.extend({
 		includedActive() {
 			this.paint();
 		}
-	},
-
-	computed: {
-
-		dataset(): string {
-			return routeGetters.getRouteDataset(this.$store);
-		},
-
-		fields(): Dictionary<TableColumn> {
-			return this.includedActive ? datasetGetters.getIncludedTableDataFields(this.$store) : datasetGetters.getExcludedTableDataFields(this.$store);
-		},
-
-		items(): TableRow[] {
-			return this.includedActive ? datasetGetters.getIncludedTableDataItems(this.$store) : datasetGetters.getExcludedTableDataItems(this.$store);
-		},
-
-		fieldSpecs(): GeoField[] {
-
-			const variables = datasetGetters.getVariables(this.$store);
-
-			const matches = variables.filter(v => {
-				return v.colType === LONGITUDE_TYPE ||
-					v.colType === LATITUDE_TYPE ||
-					v.colType === 'vector';
-			});
-
-			let lng = null;
-			let lat = null;
-			const fields = [];
-			matches.forEach(match => {
-				if (match.colType === LONGITUDE_TYPE) {
-					lng = match.colName;
-				}
-				if (match.colType === LATITUDE_TYPE) {
-					lat = match.colName;
-				}
-				if (match.colType === 'vector') {
-					fields.push({
-						type: SINGLE_FIELD,
-						field: match.colName
-					});
-				}
-				// TODO: currently we pair any two random lat / lngs
-				if (lng && lat) {
-					fields.push({
-						type: SPLIT_FIELD,
-						lngField: lng,
-						latField: lat
-					});
-					lng = null;
-					lat = null;
-				}
-			});
-
-			return fields;
-		},
-
-		pointGroups(): PointGroup[] {
-			const groups = [];
-
-			if (!this.items) {
-				return groups;
-			}
-
-			this.fieldSpecs.forEach(fieldSpec => {
-				const group = {
-					field: fieldSpec,
-					points: []
-				};
-				group.points = this.items.map(item => {
-					return {
-						lng: this.lngValue(fieldSpec, item),
-						lat: this.latValue(fieldSpec, item)
-					};
-				});
-				groups.push(group);
-			});
-
-			return groups;
-		},
-
-		highlightRoot(): HighlightRoot {
-			return routeGetters.getDecodedHighlightRoot(this.$store);
-		},
-
-		mapCenter(): number[] {
-			return routeGetters.getGeoCenter(this.$store);
-		},
-
-		mapZoom(): number {
-			return routeGetters.getGeoZoom(this.$store);
-		}
-	},
+	}
 });
 
 </script>

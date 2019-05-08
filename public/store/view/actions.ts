@@ -38,19 +38,31 @@ const fetchVariableSummaries = createCacheable(ParamCacheKey.VARIABLE_SUMMARIES,
 	return fetchVariables(context, args).then(() => {
 		const dataset = args.dataset;
 		const variables = context.getters.getVariables;
-		context.dispatch('fetchVariableSummaries', { dataset, variables });
+		context.dispatch('fetchVariableSummaries', {
+			dataset: dataset,
+			variables: variables
+		});
 	});
 });
 
 const fetchVariableRankings = createCacheable(ParamCacheKey.VARIABLE_RANKINGS, (context, args) => {
 	// if target or dataset has changed, clear previous rankings before re-fetch
 	// this is needed because since user decides variable rankings to be updated, re-fetching doesn't always replace the previous data
-	context.dispatch('updateVariableRankings', undefined);
-	context.dispatch('fetchVariableRankings', args);
+	context.dispatch('updateVariableRankings', {
+		dataset: args.dataset,
+		rankings: {},
+	});
+	context.dispatch('fetchVariableRankings', {
+		dataset: args.dataset,
+		target: args.target
+	});
 });
 
 const fetchSolutionRequests = createCacheable(ParamCacheKey.SOLUTION_REQUESTS, (context, args) => {
-	return context.dispatch('fetchSolutionRequests', args);
+	return context.dispatch('fetchSolutionRequests', {
+		dataset: args.dataset,
+		target: args.target
+	});
 });
 
 function clearVariablesParamCache(context: ViewContext) {

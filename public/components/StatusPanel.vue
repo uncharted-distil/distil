@@ -135,8 +135,11 @@ export default Vue.extend({
 		applyChange() {
 			switch (this.statusType) {
 				case DatasetPendingRequestType.VARIABLE_RANKING:
-					const variableReqeust = <VariableRankingPendingRequest>this.requestData;
-					datasetActions.updateVariableRankings(this.$store, variableReqeust.rankings);
+					const variableRequest = <VariableRankingPendingRequest>this.requestData;
+					datasetActions.updateVariableRankings(this.$store, {
+						dataset: variableRequest.dataset,
+						rankings: variableRequest.rankings
+					});
 					this.clearData();
 					break;
 				case DatasetPendingRequestType.GEOCODING:

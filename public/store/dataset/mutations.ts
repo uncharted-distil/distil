@@ -108,6 +108,10 @@ export const mutations = {
 		state.variableSummaries = [];
 	},
 
+	setVariableRankings(state: DatasetState, args: { dataset: string, rankings: Dictionary<number>  }) {
+		Vue.set(state.variableRankings, args.dataset, args.rankings);
+	},
+
 	updateVariableRankings(state: DatasetState, rankings: Dictionary<number>) {
 		// add rank property if ranking data returned, otherwise don't include it
 		if (!_.isEmpty(rankings)) {
