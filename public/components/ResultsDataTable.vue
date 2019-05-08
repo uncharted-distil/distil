@@ -253,9 +253,11 @@ export default Vue.extend({
 		onSortChanged(event) {
 			this.sortingBy = event.sortBy;
 			// need a `nextTick` otherwise the cells get immediately overwritten
+			const currentScrollLeft = this.$el.querySelector('tbody').scrollLeft;
 			Vue.nextTick(() => {
 				const fixedHeaderTable = this.$refs.fixedHeaderTable as any;
 				fixedHeaderTable.resizeTableCells();
+				fixedHeaderTable.setScrollLeft(currentScrollLeft);
 			});
 		}
 	}

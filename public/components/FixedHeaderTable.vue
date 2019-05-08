@@ -77,6 +77,10 @@ export default Vue.extend({
 			}
 		},
 
+		setScrollLeft(scrollLeft: number) {
+			this.tbody.scrollLeft = scrollLeft;
+		},
+
 		onMouseOverTableCell(event) {
 			const target = event.target;
 			if (!target) { return; }
