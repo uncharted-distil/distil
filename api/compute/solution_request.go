@@ -200,6 +200,7 @@ func createSearchSolutionsRequest(columnIndex int, preprocessing *pipeline.Pipel
 		AllowedValueTypes: []pipeline.ValueType{
 			pipeline.ValueType_DATASET_URI,
 			pipeline.ValueType_CSV_URI,
+			pipeline.ValueType_RAW,
 		},
 
 		// URI of the input dataset
