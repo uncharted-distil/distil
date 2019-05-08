@@ -1108,8 +1108,10 @@ export default Vue.extend({
 	display: none;
 }
 .facets-group .group-facet-container {
+    width: 100%;
 	max-height: 240px;
 	overflow-y: auto;
+    overflow-x: hidden;
 }
 .facets-group-container.important .group-footer .important-badge {
 	display: block;
