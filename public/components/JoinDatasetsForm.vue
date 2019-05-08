@@ -135,9 +135,10 @@ export default Vue.extend({
 			return !!this.previewTableData;
 		},
 		joinedColumn(): string {
-			const a =  this.datasetAColumn ? this.datasetAColumn.key : '';
-			const b =  this.datasetBColumn ? this.datasetBColumn.key : '';
-			return  `${a}-${b}`;
+			const a = this.datasetAColumn ? this.datasetAColumn.key : '';
+			const b = this.datasetBColumn ? this.datasetBColumn.key : '';
+			// Note: It looks like joined column name is set to same as left column (a) name
+			return  a;
 		}
 	},
 

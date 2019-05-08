@@ -89,9 +89,6 @@ export default Vue.extend({
 				} else if (isFieldJoinable) {
 					// show matching column types
 					emph.variant = 'success';
-				} else if (!isFieldJoinable) {
-					// show unmatched column types
-					emph.variant = 'warning';
 				}
 
 				if (this.otherSelectedColumn && isFieldSelected && !isFieldJoinable) {
@@ -122,9 +119,11 @@ export default Vue.extend({
 	methods: {
 		onSortChanged() {
 			// need a `nextTick` otherwise the cells get immediately overwritten
+			const currentScrollLeft = this.$el.querySelector('tbody').scrollLeft;
 			Vue.nextTick(() => {
 				const fixedHeaderTable = this.$refs.fixedHeaderTable as any;
 				fixedHeaderTable.resizeTableCells();
+				fixedHeaderTable.setScrollLeft(currentScrollLeft);
 			});
 		},
 		onColumnClicked(key, field) {
