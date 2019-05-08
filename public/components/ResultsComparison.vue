@@ -7,12 +7,14 @@
 
 		<template v-if="hasHighlights">
 			<results-data-slot
+				instance-name="results-slot-top"
 				:title="topSlotTitle"
 				:data-fields="includedResultTableDataFields"
 				:data-items="includedResultTableDataItems"
 				:view-type="viewType"></results-data-slot>
 			<br>
 			<results-data-slot
+				instance-name="results-slot-bottom"
 				:title="bottomSlotTitle"
 				:data-fields="excludedResultTableDataFields"
 				:data-items="excludedResultTableDataItems"
@@ -21,6 +23,7 @@
 		<template v-if="!hasHighlights">
 			<results-data-slot
 				:title="singleSlotTitle"
+				instance-name="results-slot"
 				:data-fields="includedResultTableDataFields"
 				:data-items="includedResultTableDataItems"
 				:view-type="viewType"></results-data-slot>
