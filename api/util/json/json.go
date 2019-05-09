@@ -113,6 +113,16 @@ func String(json map[string]interface{}, path ...string) (string, bool) {
 	return val, true
 }
 
+// StringDefault returns a string property under the given key, if it doesn't
+// exist, it will return the provided default.
+func StringDefault(json map[string]interface{}, def string, path ...string) string {
+	v, ok := String(json, path...)
+	if ok {
+		return v
+	}
+	return def
+}
+
 // Bool returns a bool property under the given key.
 func Bool(json map[string]interface{}, path ...string) (bool, bool) {
 	v, ok := get(json, path...)

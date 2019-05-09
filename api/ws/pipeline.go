@@ -160,7 +160,7 @@ func handleCreateSolutions(conn *Connection, client *compute.Client, metadataCto
 		log.Infof("Defaulting metrics to `%s`", strings.Join(request.Metrics, ","))
 	}
 	if request.MaxTime == 0 {
-		request.MaxTime = int64(config.SolutionSearchMaxTime)
+		request.MaxTime = config.SolutionSearchMaxTime
 		log.Infof("Defaulting max search time to `%d`", request.MaxTime)
 	}
 
