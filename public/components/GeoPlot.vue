@@ -455,7 +455,7 @@ export default Vue.extend({
 		dataItems() {
 			this.paint();
 		}
-	}
+	},
 
 	mounted() {
 		this.paint();
