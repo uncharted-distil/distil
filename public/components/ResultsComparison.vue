@@ -189,9 +189,6 @@ export default Vue.extend({
 	flex-direction: column;
 	flex: none;
 }
-.results-data-slot-container {
-	flex-grow: 1;
-}
 .two-slots .results-data-slot {
 	padding-top: 10px;
 	height: 50%;
