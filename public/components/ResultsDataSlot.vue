@@ -142,6 +142,7 @@ export default Vue.extend({
 
 .results-data-slot-container {
 	display: flex;
+	flex-grow: 1;
 	overflow: auto;
 	background-color: white;
 }
