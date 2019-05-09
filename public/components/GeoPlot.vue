@@ -451,6 +451,12 @@ export default Vue.extend({
 
 	},
 
+	watch: {
+		dataItems() {
+			this.paint();
+		}
+	}
+
 	mounted() {
 		this.paint();
 	}
