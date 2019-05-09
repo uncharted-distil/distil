@@ -1,5 +1,5 @@
 <template>
-	<p class="font-weight-bold" v-bind:class="{'nav-link': !hasTabs }">
+	<div class="font-weight-bold" v-bind:class="{'nav-link': !hasTabs }">
 		<b-nav :tabs="hasTabs">
 			<slot></slot>
 			<template v-if="showToggleButtons">
@@ -24,7 +24,7 @@
 				</b-form-group>
 			</template>
 		</b-nav>
-	</p>
+	</div>
 </template>
 
 <script lang="ts">
