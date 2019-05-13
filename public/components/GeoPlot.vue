@@ -349,15 +349,6 @@ export default Vue.extend({
 		drawFilters() {
 			// TODO: impl this
 		},
-		updateRoute() {
-			const center = this.map.getCenter();
-			const zoom  = this.map.getZoom();
-			const arg = `${center.lng},${center.lat},${zoom}`;
-			const entry = overlayRouteEntry(this.$route, {
-				geo: arg,
-			});
-			this.$router.push(entry);
-		},
 
 		lngValue(fieldSpec: GeoField, row: TableRow): number {
 			if (fieldSpec.type === SINGLE_FIELD) {
@@ -401,24 +392,19 @@ export default Vue.extend({
 				}, {animate: false});
 			}
 
-			this.map.on('moveend', event => {
-				this.updateRoute();
-			});
-			this.map.on('zoomend', event => {
-				this.updateRoute();
-			});
-
 			// this.map.on('click', this.clearSelection);
 
 			this.layer = leaflet.tileLayer('http://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png');
 			this.layer.addTo(this.map);
 
 			this.markers = {};
+			const bounds = leaflet.latLngBounds();
 			this.pointGroups.forEach(group => {
 				const hash = this.fieldHash(group.field);
 				const layer = leaflet.layerGroup([]);
 				group.points.forEach(p => {
 					const marker =  leaflet.marker(p);
+					bounds.extend([p.lat, p.lng]);
 					marker.bindTooltip(() => {
 						const target = p.row[this.target];
 						const values = [];
@@ -444,6 +430,10 @@ export default Vue.extend({
 				layer.addTo(this.map);
 				this.markers[hash] = layer;
 			});
+
+			if (bounds.isValid()) {
+				this.map.fitBounds(bounds);
+			}
 
 			this.drawHighlight();
 			this.drawFilters();

@@ -12,7 +12,7 @@
 				No results available
 			</div>
 
-			<template v-if="hasData">
+			<template v-if="hasData && !hasNoResults">
 				<results-data-table v-if="viewType===TABLE_VIEW" :data-fields="dataFields" :data-items="dataItems" :instance-name="instanceName"></results-data-table>
 				<results-timeseries-view v-if="viewType===TIMESERIES_VIEW" :fields="dataFields" :items="dataItems" :instance-name="instanceName"></results-timeseries-view>
 				<results-geo-plot v-if="viewType===GEO_VIEW" :data-fields="dataFields" :data-items="dataItems"  :instance-name="instanceName"></results-geo-plot>
