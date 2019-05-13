@@ -18,7 +18,6 @@ package compute
 import (
 	"context"
 	"crypto/sha1"
-	"encoding/json"
 	"fmt"
 	"path/filepath"
 	"strings"
@@ -31,6 +30,7 @@ import (
 	"github.com/uncharted-distil/distil-compute/pipeline"
 	"github.com/uncharted-distil/distil-compute/primitive/compute"
 	"github.com/uncharted-distil/distil-compute/primitive/compute/description"
+	"github.com/uncharted-distil/distil/api/util/json"
 
 	"github.com/uncharted-distil/distil/api/env"
 	api "github.com/uncharted-distil/distil/api/model"
@@ -76,16 +76,16 @@ func newStatusChannel() chan SolutionStatus {
 
 // SolutionRequest represents a solution search request.
 type SolutionRequest struct {
-	Dataset          string            `json:"dataset"`
-	Index            string            `json:"index"`
-	TargetFeature    string            `json:"target"`
-	Task             string            `json:"task"`
-	SubTask          string            `json:"subTask"`
-	MaxSolutions     int32             `json:"maxSolutions"`
-	MaxTime          int64             `json:"maxTime"`
-	Filters          *api.FilterParams `json:"filters"`
-	Metrics          []string          `json:"metrics"`
-	ProblemType      string            `json:"problemType"`
+	Dataset       string
+	TargetFeature string
+	Task          string
+	SubTask       string
+	MaxSolutions  int
+	MaxTime       int
+	ProblemType   string
+	Metrics       []string
+	Filters       *api.FilterParams
+
 	mu               *sync.Mutex
 	wg               *sync.WaitGroup
 	requestChannel   chan SolutionStatus
@@ -102,10 +102,39 @@ func NewSolutionRequest(data []byte) (*SolutionRequest, error) {
 		finished:       make(chan error),
 		requestChannel: newStatusChannel(),
 	}
-	err := json.Unmarshal(data, &req)
+
+	j, err := json.Unmarshal(data)
 	if err != nil {
 		return nil, err
 	}
+
+	var ok bool
+
+	req.Dataset, ok = json.String(j, "dataset")
+	if !ok {
+		return nil, fmt.Errorf("no `dataset` in solution request")
+	}
+
+	req.TargetFeature, ok = json.String(j, "target")
+	if !ok {
+		return nil, fmt.Errorf("no `target` in solution request")
+	}
+
+	req.Task = json.StringDefault(j, "", "task")
+	req.SubTask = json.StringDefault(j, "", "subTask")
+	req.MaxSolutions = json.IntDefault(j, 5, "maxSolutions")
+	req.MaxTime = json.IntDefault(j, 0, "maxTime")
+	req.ProblemType = json.StringDefault(j, "", "problemType")
+	req.Metrics, _ = json.StringArray(j, "metrics")
+
+	filters, ok := json.Get(j, "filters")
+	if ok {
+		req.Filters, err = api.ParseFilterParamsFromJSON(filters)
+		if err != nil {
+			return nil, err
+		}
+	}
+
 	return req, nil
 }
 
@@ -165,7 +194,7 @@ func (s *SolutionRequest) Listen(listener SolutionStatusListener) error {
 
 func (s *SolutionRequest) createSearchSolutionsRequest(columnIndex int, preprocessing *pipeline.PipelineDescription,
 	datasetURI string, userAgent string) (*pipeline.SearchSolutionsRequest, error) {
-	return createSearchSolutionsRequest(columnIndex, preprocessing, datasetURI, userAgent, s.TargetFeature, s.Dataset, s.Metrics, s.Task, s.SubTask, s.MaxTime)
+	return createSearchSolutionsRequest(columnIndex, preprocessing, datasetURI, userAgent, s.TargetFeature, s.Dataset, s.Metrics, s.Task, s.SubTask, int64(s.MaxTime))
 }
 
 func createSearchSolutionsRequest(columnIndex int, preprocessing *pipeline.PipelineDescription,
@@ -504,6 +533,7 @@ func (s *SolutionRequest) PersistAndDispatch(client *compute.Client, solutionSto
 	// make sure that we include all non-generated variables in our persisted
 	// dataset - the column removal preprocessing step will mark them for
 	// removal by ta2
+
 	allVarFilters := s.Filters.Clone()
 	allVarFilters.Variables = []string{}
 	var targetVariable *model.Variable

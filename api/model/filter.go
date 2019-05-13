@@ -43,6 +43,7 @@ func (f *FilterParams) Clone() *FilterParams {
 	for _, v := range f.Variables {
 		clone.Variables = append(clone.Variables, v)
 	}
+	clone.Size = f.Size
 	return clone
 }
 
@@ -211,6 +212,7 @@ func ParseFilterParamsFromJSON(params map[string]interface{}) (*FilterParams, er
 				if !ok {
 					return nil, errors.Errorf("no `maxY` provided for filter")
 				}
+				fmt.Println("NOW BOUNDS FILTER")
 				filterParams.Filters = append(filterParams.Filters, model.NewBivariateFilter(key, mode, minX, maxX, minY, maxY))
 			}
 
