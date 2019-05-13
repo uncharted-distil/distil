@@ -1,26 +1,28 @@
 <template>
 	<div class="results-slots" v-bind:class="{ 'one-slot': !hasHighlights, 'two-slots': hasHighlights }">
 
-		<view-type-toggle v-model="viewTypeModel" :variables="variables">
+		<view-type-toggle class="flex-shrink-0" v-model="viewTypeModel" :variables="variables">
 			Samples Modeled
 		</view-type-toggle>
 
-		<template v-if="hasHighlights">
+		<div v-if="hasHighlights" class="flex-grow-1">
 			<results-data-slot
+				instance-name="results-slot-top"
 				:title="topSlotTitle"
 				:data-fields="includedResultTableDataFields"
 				:data-items="includedResultTableDataItems"
 				:view-type="viewType"></results-data-slot>
-			<br>
 			<results-data-slot
+				instance-name="results-slot-bottom"
 				:title="bottomSlotTitle"
 				:data-fields="excludedResultTableDataFields"
 				:data-items="excludedResultTableDataItems"
 				:view-type="viewType"></results-data-slot>
-		</template>
+		</div>
 		<template v-if="!hasHighlights">
 			<results-data-slot
 				:title="singleSlotTitle"
+				instance-name="results-slot"
 				:data-fields="includedResultTableDataFields"
 				:data-items="includedResultTableDataItems"
 				:view-type="viewType"></results-data-slot>
@@ -188,7 +190,8 @@ export default Vue.extend({
 	flex: none;
 }
 .two-slots .results-data-slot {
-	max-height: 50%;
+	padding-top: 10px;
+	height: 50%;
 }
 .one-slot .results-data-slot {
 	height: 100%;

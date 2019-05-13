@@ -4,7 +4,7 @@
 			<small v-html="title"></small>
 		</p>
 
-		<div class="results-data-slot-container flex-1">
+		<div class="results-data-slot-container">
 			<div class="results-data-no-results" v-if="isPending">
 				<div v-html="spinnerHTML"></div>
 			</div>
@@ -15,10 +15,11 @@
 			<template v-if="hasData">
 				<results-data-table v-if="viewType===TABLE_VIEW" :data-fields="dataFields" :data-items="dataItems" :instance-name="instanceName"></results-data-table>
 				<results-timeseries-view v-if="viewType===TIMESERIES_VIEW" :fields="dataFields" :items="dataItems" :instance-name="instanceName"></results-timeseries-view>
+				<results-geo-plot v-if="viewType===GEO_VIEW" :data-fields="dataFields" :data-items="dataItems"  :instance-name="instanceName"></results-geo-plot>
+
 				<!--
 				<select-image-mosaic v-if="viewType===IMAGE_VIEW" :included-active="includedActive" :instance-name="instanceName"></select-image-mosaic>
 				<select-graph-view v-if="viewType===GRAPH_VIEW" :included-active="includedActive" :instance-name="instanceName"></select-graph-view>
-				<select-geo-plot v-if="viewType===GEO_VIEW" :included-active="includedActive" :instance-name="instanceName"></select-geo-plot>
 				<select-timeseries-view v-if="viewType===TIMESERIES_VIEW" :included-active="includedActive" :instance-name="instanceName"></select-timeseries-view>
 				-->
 			</template>
@@ -32,6 +33,7 @@ import Vue from 'vue';
 import _ from 'lodash';
 import ResultsDataTable from './ResultsDataTable';
 import ResultsTimeseriesView from './ResultsTimeseriesView';
+import ResultsGeoPlot from './ResultsGeoPlot';
 import { spinnerHTML } from '../util/spinner';
 import { TableRow, TableColumn, Variable } from '../store/dataset/index';
 import { RowSelection } from '../store/highlights/index';
@@ -53,7 +55,8 @@ export default Vue.extend({
 
 	components: {
 		ResultsDataTable,
-		ResultsTimeseriesView
+		ResultsTimeseriesView,
+		ResultsGeoPlot
 	},
 
 	props: {
@@ -139,6 +142,7 @@ export default Vue.extend({
 
 .results-data-slot-container {
 	display: flex;
+	flex-grow: 1;
 	overflow: auto;
 	background-color: white;
 }
