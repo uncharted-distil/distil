@@ -84,19 +84,13 @@ export default Vue.extend({
 		},
 
 		getTopVariables(): string[] {
-			const rankings = datasetGetters.getVariableRankings(this.$store)[this.dataset];
-			if (!rankings) {
-				return [];
-			}
-			return _.map(rankings, (ranking, variable) => {
-					return {
-						variable: variable,
-						ranking: ranking
-					};
-				})
-				.sort((a, b) => {
-					return b.ranking - a.ranking;
-				})
+			const variables = datasetGetters.getVariables(this.$store).filter(v => (v.datasetName === this.dataset));
+			return variables
+				.map(variable => ({
+					variable: variable.colName,
+					order: _.isNumber(variable.ranking) ? variable.ranking : variable.importance
+				}))
+				.sort((a, b) => b.order - a.order)
 				.map(r => r.variable);
 		},
 
