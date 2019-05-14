@@ -1,10 +1,20 @@
 <template>
-	<div class="geo-plot" v-bind:id="mapID"
-		v-on:mousedown="onMouseDown"
-		v-on:mouseup="onMouseUp"
-		v-on:mousemove="onMouseMove"
-		v-on:keydown="onKeyDown"
-		v-on:keyup="onKeyUp"></div>
+	<div class="geo-plot-container" v-bind:class="{ 'selection-mode': isSelectionMode }">
+		<div class="geo-plot" 
+			v-bind:id="mapID"
+			v-on:mousedown="onMouseDown"
+			v-on:mouseup="onMouseUp"
+			v-on:mousemove="onMouseMove"
+		></div>
+
+	<div
+		class="selection-toggle"
+		v-bind:class="{ active: isSelectionMode }"
+		v-on:click="isSelectionMode = !isSelectionMode"
+	>
+		selection Toggle
+	</div>
+	</div>
 </template>
 
 <script lang="ts">
@@ -65,10 +75,10 @@ export default Vue.extend({
 			markers: null,
 			rect: null,
 			closeButton: null,
-			ctrlDown: false,
 			startingLatLng: null,
 			currentRect: null,
-			selectedRect: null
+			selectedRect: null,
+			isSelectionMode: false,
 		};
 	},
 
@@ -186,7 +196,7 @@ export default Vue.extend({
 
 	methods: {
 		onMouseDown(event: MouseEvent) {
-			if (this.ctrlDown) {
+			if (this.isSelectionMode) {
 
 				if (this.selectedRect) {
 					this.selectedRect.remove();
@@ -245,18 +255,6 @@ export default Vue.extend({
 					latLng
 				];
 				this.currentRect.setBounds(bounds);
-			}
-		},
-		onKeyDown(event: KeyboardEvent) {
-			const CTRL = 17;
-			if (event.keyCode === CTRL) {
-				this.ctrlDown = true;
-			}
-		},
-		onKeyUp(event: KeyboardEvent) {
-			const CTRL = 17;
-			if (event.keyCode === CTRL) {
-				this.ctrlDown = false;
 			}
 		},
 		setSelection(rect) {
@@ -450,10 +448,26 @@ export default Vue.extend({
 
 <style>
 
-.geo-plot {
+.geo-plot-container, .geo-plot {
 	position: relative;
 	height: 100%;
 	width: 100%;
+}
+
+.geo-plot-container .selection-toggle {
+	position: absolute;
+	top: 10px;
+	left: 50px;
+	z-index: 999;
+}
+
+.geo-plot-container .selection-toggle.active {
+	position: absolute;
+	color: blue;
+}
+
+.geo-plot-container.selection-mode .geo-plot{
+	cursor: crosshair;
 }
 
 path.selected {
