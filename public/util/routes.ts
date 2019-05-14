@@ -16,7 +16,6 @@ export interface RouteArgs {
 	row?: string;
 	residualThresholdMin?: string;
 	residualThresholdMax?: string;
-	geo?: string;
 	joinDatasets?: string;
 	joinColumnA?: string;
 	joinColumnB?: string;
@@ -85,7 +84,6 @@ function validateQueryArgs(args: RouteArgs): RouteArgs {
 	if (!_.isUndefined(args.residualThresholdMax)) { query.residualThresholdMax = args.residualThresholdMax; }
 	if (!_.isUndefined(args.highlights)) { query.highlights = args.highlights; }
 	if (!_.isUndefined(args.row)) { query.row = args.row; }
-	if (!_.isUndefined(args.geo)) { query.geo = args.geo; }
 	if (!_.isUndefined(args.joinDatasets)) { query.joinDatasets = args.joinDatasets; }
 	if (!_.isUndefined(args.joinColumnA)) { query.joinColumnA = args.joinColumnA; }
 	if (!_.isUndefined(args.joinColumnB)) { query.joinColumnB = args.joinColumnB; }
