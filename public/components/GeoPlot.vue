@@ -1,6 +1,6 @@
 <template>
 	<div class="geo-plot-container" v-bind:class="{ 'selection-mode': isSelectionMode }">
-		<div class="geo-plot" 
+		<div class="geo-plot"
 			v-bind:id="mapID"
 			v-on:mousedown="onMouseDown"
 			v-on:mouseup="onMouseUp"
@@ -412,7 +412,6 @@ export default Vue.extend({
 				markerLayer.removeFrom(this.map);
 			});
 			this.markers = {};
-			this.ctrlDown = false;
 			this.startingLatLng = null;
 		},
 
