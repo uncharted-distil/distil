@@ -31,7 +31,6 @@
 
 		</b-table>
 	</fixed-header-table>
-
 </template>
 
 <script lang="ts">

@@ -4,7 +4,7 @@
 		<div class="timeseries-var-col" v-html="label"></div>
 		<div class="timeseries-min-col">{{min.toFixed(2)}}</div>
 		<div class="timeseries-max-col">{{max.toFixed(2)}}</div>
-		<sparkline-svg class="sparkline-variable-chart"
+		<sparkline-svg class="sparkline-variable-chart" v-if="timeseries"
 			:highlight-pixel-x="highlightPixelX"
 			:timeseries-extrema="timeseriesExtrema"
 			:timeseries="timeseries"
