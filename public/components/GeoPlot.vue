@@ -5,6 +5,7 @@
 			v-on:mousedown="onMouseDown"
 			v-on:mouseup="onMouseUp"
 			v-on:mousemove="onMouseMove"
+			v-on:keydown.esc="onEsc"
 		></div>
 
 	<div
@@ -12,7 +13,13 @@
 		v-bind:class="{ active: isSelectionMode }"
 		v-on:click="isSelectionMode = !isSelectionMode"
 	>
-		selection Toggle
+		<a href="#"
+			class="selection-toggle-control"
+			title="Select area"
+			aria-label="Select area"
+		>
+			<icon-base width="100%" height="100%"> <icon-crop-free /> </icon-base>
+		</a>
 	</div>
 	</div>
 </template>
@@ -23,6 +30,8 @@ import _ from 'lodash';
 import $ from 'jquery';
 import leaflet from 'leaflet';
 import Vue from 'vue';
+import IconBase from './icons/IconBase';
+import IconCropFree from './icons/IconCropFree';
 import { getters as datasetGetters } from '../store/dataset/module';
 import { getters as routeGetters } from '../store/route/module';
 import { Dictionary } from '../util/dict';
@@ -60,6 +69,11 @@ interface PointGroup {
 
 export default Vue.extend({
 	name: 'geo-plot',
+
+	components: {
+		IconBase,
+		IconCropFree,
+	},
 
 	props: {
 		instanceName: String as () => string,
@@ -195,21 +209,24 @@ export default Vue.extend({
 	},
 
 	methods: {
+		clearSelectionRect() {
+			if (this.selectedRect) {
+				this.selectedRect.remove();
+				this.selectedRect = null;
+			}
+			if (this.currentRect) {
+				this.currentRect.remove();
+				this.currentRect = null;
+			}
+			if (this.closeButton) {
+				this.closeButton.remove();
+				this.closeButton = null;
+			}
+		},
 		onMouseDown(event: MouseEvent) {
 			if (this.isSelectionMode) {
 
-				if (this.selectedRect) {
-					this.selectedRect.remove();
-					this.selectedRect = null;
-				}
-				if (this.currentRect) {
-					this.currentRect.remove();
-					this.currentRect = null;
-				}
-				if (this.closeButton) {
-					this.closeButton.remove();
-					this.closeButton = null;
-				}
+				this.clearSelectionRect();
 
 				const offset = $(this.map.getContainer()).offset();
 				this.startingLatLng = this.map.containerPointToLatLng({
@@ -256,6 +273,12 @@ export default Vue.extend({
 				];
 				this.currentRect.setBounds(bounds);
 			}
+		},
+		onEsc() {
+				this.clearSelectionRect();
+				// disable drawing mode
+				this.map.dragging.enable();
+
 		},
 		setSelection(rect) {
 
@@ -453,17 +476,37 @@ export default Vue.extend({
 	height: 100%;
 	width: 100%;
 }
-
 .geo-plot-container .selection-toggle {
 	position: absolute;
-	top: 10px;
-	left: 50px;
 	z-index: 999;
+	top: 80px;
+	left: 10px;
+	width: 34px;
+    height: 34px;
+    background-color: #fff;
+    border: 2px solid rgba(0,0,0,.2);
+    background-clip: padding-box;
+	text-align: center;
+	border-radius: 4px;
+}
+.geo-plot-container .selection-toggle:hover {
+	background-color: #f4f4f4;
+}
+.geo-plot-container .selection-toggle-control {
+	text-decoration: none;
+	color: black;
+}
+.geo-plot-container .selection-toggle-control:hover {
+	text-decoration: none;
+	color: black;
 }
 
 .geo-plot-container .selection-toggle.active {
 	position: absolute;
-	color: blue;
+}
+
+.geo-plot-container .selection-toggle.active .selection-toggle-control {
+	color: #26B8D1
 }
 
 .geo-plot-container.selection-mode .geo-plot{
