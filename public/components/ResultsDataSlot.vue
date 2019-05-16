@@ -4,7 +4,7 @@
 			<small v-html="title"></small>
 		</p>
 
-		<div class="results-data-slot-container">
+		<div class="results-data-slot-container" v-bind:class="{ pending: !hasData }">
 			<div class="results-data-no-results" v-if="isPending">
 				<div v-html="spinnerHTML"></div>
 			</div>
@@ -12,16 +12,10 @@
 				No results available
 			</div>
 
-			<template v-if="hasData && !hasNoResults">
+			<template>
 				<results-data-table v-if="viewType===TABLE_VIEW" :data-fields="dataFields" :data-items="dataItems" :instance-name="instanceName"></results-data-table>
 				<results-timeseries-view v-if="viewType===TIMESERIES_VIEW" :fields="dataFields" :items="dataItems" :instance-name="instanceName"></results-timeseries-view>
 				<results-geo-plot v-if="viewType===GEO_VIEW" :data-fields="dataFields" :data-items="dataItems"  :instance-name="instanceName"></results-geo-plot>
-
-				<!--
-				<select-image-mosaic v-if="viewType===IMAGE_VIEW" :included-active="includedActive" :instance-name="instanceName"></select-image-mosaic>
-				<select-graph-view v-if="viewType===GRAPH_VIEW" :included-active="includedActive" :instance-name="instanceName"></select-graph-view>
-				<select-timeseries-view v-if="viewType===TIMESERIES_VIEW" :included-active="includedActive" :instance-name="instanceName"></select-timeseries-view>
-				-->
 			</template>
 		</div>
 	</div>
@@ -141,6 +135,7 @@ export default Vue.extend({
 }
 
 .results-data-slot-container {
+	position: relative;
 	display: flex;
 	flex-grow: 1;
 	overflow: auto;
@@ -148,10 +143,19 @@ export default Vue.extend({
 }
 
 .results-data-no-results {
+	position: absolute;
+	display: block;
+	top: 0;
+	height: 100%;
 	width: 100%;
-	background-color: #eee;
-	padding: 8px;
+	padding: 32px;
 	text-align: center;
+	opacity: 1;
+	z-index: 1;
+}
+
+.pending {
+	opacity: 0.5;
 }
 
 </style>

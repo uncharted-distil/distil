@@ -33,11 +33,11 @@
 			<small class="row-number-label" v-html="tableTitle"></small>
 		</p>
 
-		<div class="select-data-container">
+		<div class="select-data-container" v-bind:class="{ pending: !hasData }">
 			<div class="select-data-no-results" v-if="!hasData">
 				<div v-html="spinnerHTML"></div>
 			</div>
-			<template v-if="hasData">
+			<template>
 				<select-data-table v-if="viewType===TABLE_VIEW" :included-active="includedActive" :instance-name="instanceName"></select-data-table>
 				<select-image-mosaic v-if="viewType===IMAGE_VIEW" :included-active="includedActive" :instance-name="instanceName"></select-image-mosaic>
 				<select-graph-view v-if="viewType===GRAPH_VIEW" :included-active="includedActive" :instance-name="instanceName"></select-graph-view>
@@ -248,6 +248,7 @@ export default Vue.extend({
 <style>
 
 .select-data-container {
+	position: relative;
 	display: flex;
 	background-color: white;
 	flex-flow: wrap;
@@ -255,10 +256,15 @@ export default Vue.extend({
 	width: 100%;
 }
 .select-data-no-results {
+	position: absolute;
+	display: block;
+	top: 0;
+	height: 100%;
 	width: 100%;
-	background-color: #eee;
-	padding: 8px;
+	padding: 32px;
 	text-align: center;
+	opacity: 1;
+	z-index: 1;
 }
 table.b-table>tfoot>tr>th.sorting:before,
 table.b-table>thead>tr>th.sorting:before,
@@ -296,6 +302,9 @@ table tr {
 	background-color: #eee;
 	border: 1px solid #ccc;
 	border-radius: 0.2rem;
+}
+.pending {
+	opacity: 0.5;
 }
 .selected-color {
 	color: #ff0067;

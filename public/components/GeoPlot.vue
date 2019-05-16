@@ -1,6 +1,6 @@
 <template>
 	<div class="geo-plot-container" v-bind:class="{ 'selection-mode': isSelectionMode }">
-		<div class="geo-plot" 
+		<div class="geo-plot"
 			v-bind:id="mapID"
 			v-on:mousedown="onMouseDown"
 			v-on:mouseup="onMouseUp"
@@ -38,7 +38,6 @@ import { Dictionary } from '../util/dict';
 import { TableColumn, TableRow } from '../store/dataset/index';
 import { HighlightRoot } from '../store/highlights/index';
 import { updateHighlightRoot, clearHighlightRoot } from '../util/highlights';
-import { overlayRouteEntry } from '../util/routes';
 import { LATITUDE_TYPE, LONGITUDE_TYPE, REAL_VECTOR_TYPE } from '../util/types';
 
 import 'leaflet/dist/leaflet.css';
@@ -85,9 +84,8 @@ export default Vue.extend({
 	data() {
 		return {
 			map: null,
-			layer: null,
+			baseLayer: null,
 			markers: null,
-			rect: null,
 			closeButton: null,
 			startingLatLng: null,
 			currentRect: null,
@@ -323,9 +321,20 @@ export default Vue.extend({
 			}
 		},
 		createHighlight(value: { minX: number, maxX: number, minY: number, maxY: number }) {
+
+			if (this.highlightRoot &&
+				this.highlightRoot.value.minX === value.minX &&
+				this.highlightRoot.value.maxX === value.maxX &&
+				this.highlightRoot.value.minY === value.minY &&
+				this.highlightRoot.value.maxY === value.maxY) {
+				// dont push existing highlight
+				return;
+			}
+
 			// TODO: support filtering multiple vars?
 			const fieldSpec = this.fieldSpecs[0];
 			const key = fieldSpec.type === SINGLE_FIELD ? fieldSpec.field : this.fieldHash(fieldSpec);
+
 			updateHighlightRoot(this.$router, {
 				context: this.instanceName,
 				dataset: this.dataset,
@@ -386,33 +395,49 @@ export default Vue.extend({
 			return fieldSpec.lngField + ':' + fieldSpec.latField;
 		},
 
-		paint() {
-			if (this.map) {
-				this.map.remove();
-				this.map = null;
+		clear() {
+			if (this.selectedRect) {
+				this.selectedRect.remove();
+				this.selectedRect = null;
 			}
-
-			// NOTE: this component re-mounts on any change, so do everything in here
-			this.map = leaflet.map(this.mapID, {
-				center: [30, 0],
-				zoom: 2,
+			if (this.currentRect) {
+				this.currentRect.remove();
+				this.currentRect = null;
+			}
+			if (this.closeButton) {
+				this.closeButton.remove();
+				this.closeButton = null;
+			}
+			_.forIn(this.markers, markerLayer => {
+				markerLayer.removeFrom(this.map);
 			});
-			if (this.mapZoom) {
-				this.map.setZoom(this.mapZoom, {animate: false});
-			}
-			if (this.mapCenter) {
-				this.map.panTo({
-					lat: this.mapCenter[1],
-					lng: this.mapCenter[0]
-				}, {animate: false});
-			}
-
-			// this.map.on('click', this.clearSelection);
-
-			this.layer = leaflet.tileLayer('http://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png');
-			this.layer.addTo(this.map);
-
 			this.markers = {};
+			this.startingLatLng = null;
+		},
+
+		paint() {
+			if (!this.map) {
+				// NOTE: this component re-mounts on any change, so do everything in here
+				this.map = leaflet.map(this.mapID, {
+					center: [30, 0],
+					zoom: 2,
+				});
+				if (this.mapZoom) {
+					this.map.setZoom(this.mapZoom, { animate: true });
+				}
+				if (this.mapCenter) {
+					this.map.panTo({
+						lat: this.mapCenter[1],
+						lng: this.mapCenter[0]
+					}, { animate: true });
+				}
+				this.baseLayer = leaflet.tileLayer('http://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png');
+				this.baseLayer.addTo(this.map);
+				// this.map.on('click', this.clearSelection);
+			}
+
+			this.clear();
+
 			const bounds = leaflet.latLngBounds();
 			this.pointGroups.forEach(group => {
 				const hash = this.fieldHash(group.field);
@@ -473,6 +498,7 @@ export default Vue.extend({
 
 .geo-plot-container, .geo-plot {
 	position: relative;
+	z-index: 0;
 	height: 100%;
 	width: 100%;
 }
