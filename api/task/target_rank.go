@@ -52,11 +52,11 @@ func TargetRank(dataset string, target string, features []*model.Variable, sourc
 	ranks := make(map[string]float64)
 	for i, v := range res {
 		if i > 0 {
-			key, ok := v[2].(string)
+			key, ok := v[1].(string)
 			if !ok {
 				return nil, fmt.Errorf("unable to parse rank key")
 			}
-			rank, err := strconv.ParseFloat(v[3].(string), 64)
+			rank, err := strconv.ParseFloat(v[2].(string), 64)
 			if err != nil {
 				return nil, errors.Wrap(err, "unable to parse rank value")
 			}
