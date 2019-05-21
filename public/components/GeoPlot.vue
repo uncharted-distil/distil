@@ -36,10 +36,9 @@ import { getters as datasetGetters } from '../store/dataset/module';
 import { getters as routeGetters } from '../store/route/module';
 import { Dictionary } from '../util/dict';
 import { TableColumn, TableRow, D3M_INDEX_FIELD } from '../store/dataset/index';
-import { HighlightRoot } from '../store/highlights/index';
+import { HighlightRoot, RowSelection } from '../store/highlights/index';
 import { updateHighlightRoot, clearHighlightRoot } from '../util/highlights';
 import { isRowSelected } from '../util/row';
-import { RowSelection } from '../store/highlights/index'
 import { LATITUDE_TYPE, LONGITUDE_TYPE, REAL_VECTOR_TYPE } from '../util/types';
 
 import 'leaflet/dist/leaflet.css';
@@ -469,7 +468,7 @@ export default Vue.extend({
 
 					marker.on('add', () => {
 						if (this.selection) {
-							// restore selection 
+							// restore selection
 							const markerIcon = marker.getElement();
 							const isSelected = isRowSelected(this.selection, p.row[D3M_INDEX_FIELD]);
 							markerIcon.classList.toggle(selectedClass, isSelected);

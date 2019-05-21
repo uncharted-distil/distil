@@ -17,7 +17,7 @@ import { Dictionary } from '../util/dict';
 import { getters as routeGetters } from '../store/route/module';
 import { TableColumn, TableRow, D3M_INDEX_FIELD } from '../store/dataset/index';
 import { addRowSelection, removeRowSelection, isRowSelected, updateTableRowSelection } from '../util/row';
-import { RowSelection } from '../store/highlights/index'
+import { RowSelection } from '../store/highlights/index';
 
 export default Vue.extend({
 	name: 'select-geo-plot',
