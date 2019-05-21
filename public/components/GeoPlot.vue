@@ -35,9 +35,11 @@ import IconCropFree from './icons/IconCropFree';
 import { getters as datasetGetters } from '../store/dataset/module';
 import { getters as routeGetters } from '../store/route/module';
 import { Dictionary } from '../util/dict';
-import { TableColumn, TableRow } from '../store/dataset/index';
+import { TableColumn, TableRow, D3M_INDEX_FIELD } from '../store/dataset/index';
 import { HighlightRoot } from '../store/highlights/index';
 import { updateHighlightRoot, clearHighlightRoot } from '../util/highlights';
+import { isRowSelected } from '../util/row';
+import { RowSelection } from '../store/highlights/index'
 import { LATITUDE_TYPE, LONGITUDE_TYPE, REAL_VECTOR_TYPE } from '../util/types';
 
 import 'leaflet/dist/leaflet.css';
@@ -77,6 +79,7 @@ export default Vue.extend({
 	props: {
 		instanceName: String as () => string,
 		dataItems: Array as () => any[],
+		selection: Object as () => RowSelection,
 		dataFields: Object as () => Dictionary<TableColumn>,
 
 	},
@@ -439,6 +442,7 @@ export default Vue.extend({
 			this.clear();
 
 			const bounds = leaflet.latLngBounds();
+			const selectedClass = 'selected';
 			this.pointGroups.forEach(group => {
 				const hash = this.fieldHash(group.field);
 				const layer = leaflet.layerGroup([]);
@@ -457,14 +461,20 @@ export default Vue.extend({
 						return [ `<b>${_.capitalize(target)}</b>` ].concat(values).join('<br>');
 					});
 
-					marker.on('mouseover', (e) => {
-						$(marker._icon).css('filter', 'brightness(1.2)');
+					marker.on('click', (event) => {
+						const markerIcon = marker.getElement();
+						const isSelected = markerIcon.classList.toggle(selectedClass);
+						this.$emit('selectmarker', { point: p, isSelected: isSelected });
 					});
 
-					marker.on('mouseout', () => {
-						$(marker._icon).css('filter', '');
+					marker.on('add', () => {
+						if (this.selection) {
+							// restore selection 
+							const markerIcon = marker.getElement();
+							const isSelected = isRowSelected(this.selection, p.row[D3M_INDEX_FIELD]);
+							markerIcon.classList.toggle(selectedClass, isSelected);
+						}
 					});
-
 					layer.addLayer(marker);
 				});
 				layer.addTo(this.map);
@@ -542,6 +552,14 @@ export default Vue.extend({
 path.selected {
 	stroke-width: 2;
 	fill-opacity: 0.4;
+}
+
+.geo-plot .leaflet-marker-icon:hover {
+	filter: brightness(1.2);
+}
+
+.geo-plot .leaflet-marker-icon.selected {
+	filter: hue-rotate(150deg);
 }
 
 .leaflet-tooltip {

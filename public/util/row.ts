@@ -177,6 +177,7 @@ export function addRowSelection(router: VueRouter, context: string, selection: R
 }
 
 export function removeRowSelection(router: VueRouter, context: string, selection: RowSelection, d3mIndex: number) {
+	if (!selection) { return; }
 	_.remove(selection.d3mIndices, r => {
 		return r === d3mIndex;
 	});
