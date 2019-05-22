@@ -78,9 +78,7 @@ export default Vue.extend({
 	props: {
 		instanceName: String as () => string,
 		dataItems: Array as () => any[],
-		selection: Object as () => RowSelection,
 		dataFields: Object as () => Dictionary<TableColumn>,
-
 	},
 
 	data() {
@@ -463,7 +461,6 @@ export default Vue.extend({
 			this.clear();
 
 			const bounds = leaflet.latLngBounds();
-			const selectedClass = 'selected';
 			this.pointGroups.forEach(group => {
 				const hash = this.fieldHash(group.field);
 				const layer = leaflet.layerGroup([]);
@@ -487,7 +484,7 @@ export default Vue.extend({
 					layer.addLayer(marker);
 				});
 				this.markers[hash] = layer;
-				layer.on('add', event => this.updateMarkerSelection(layer.getLayers()));
+				layer.on('add', () => this.updateMarkerSelection(layer.getLayers()));
 				layer.addTo(this.map);
 
 			});

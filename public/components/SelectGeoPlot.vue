@@ -2,8 +2,7 @@
 	<geo-plot
 		:instance-name="instanceName"
 		:data-fields="fields"
-		:data-items="items"
-	>
+		:data-items="items">
 	</geo-plot>
 </template>
 
@@ -36,7 +35,6 @@ export default Vue.extend({
 		items(): TableRow[] {
 			return this.includedActive ? datasetGetters.getIncludedTableDataItems(this.$store) : datasetGetters.getExcludedTableDataItems(this.$store);
 		},
-
 	},
 });
 
