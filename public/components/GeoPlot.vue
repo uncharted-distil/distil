@@ -420,23 +420,23 @@ export default Vue.extend({
 			this.startingLatLng = null;
 		},
 
-		toggleSelection(marker, point) {
-			const row = point.row;
-			const markerElem = marker.getElement();
-			const isSelected = markerElem.classList.toggle('selected');
-
-			if (isSelected) {
+		toggleSelection(event) {
+			const marker = event.target;
+			const row = marker.options.row;
+			if (!isRowSelected(this.rowSelection, row[D3M_INDEX_FIELD])) {
 				addRowSelection(this.$router, this.instanceName, this.rowSelection, row[D3M_INDEX_FIELD]);
 			} else {
 				removeRowSelection(this.$router, this.instanceName, this.rowSelection, row[D3M_INDEX_FIELD]);
 			}
 		},
 
-		restoreSelection(marker, point) {
-			if (!this.rowSelection) { return; }
-			const markerElem = marker.getElement();
-			const isSelected = isRowSelected(this.rowSelection, point.row[D3M_INDEX_FIELD]);
-			markerElem.classList.toggle('selected', isSelected);
+		updateMarkerSelection(markers) {
+			markers.forEach(marker => {
+				const row = marker.options.row;
+				const markerElem = marker.getElement();
+				const isSelected = isRowSelected(this.rowSelection, row[D3M_INDEX_FIELD]);
+				markerElem.classList.toggle('selected', isSelected);
+			});
 		},
 
 		paint() {
@@ -468,7 +468,7 @@ export default Vue.extend({
 				const hash = this.fieldHash(group.field);
 				const layer = leaflet.layerGroup([]);
 				group.points.forEach(p => {
-					const marker =  leaflet.marker(p);
+					const marker =  leaflet.marker(p, { row: p.row });
 					bounds.extend([p.lat, p.lng]);
 					marker.bindTooltip(() => {
 						const target = p.row[this.target];
@@ -482,13 +482,14 @@ export default Vue.extend({
 						return [ `<b>${_.capitalize(target)}</b>` ].concat(values).join('<br>');
 					});
 
-					marker.on('add', event => this.restoreSelection(marker, p));
-					marker.on('click', event => this.toggleSelection(marker, p));
+					marker.on('click', this.toggleSelection);
 
 					layer.addLayer(marker);
 				});
-				layer.addTo(this.map);
 				this.markers[hash] = layer;
+				layer.on('add', event => this.updateMarkerSelection(layer.getLayers()));
+				layer.addTo(this.map);
+
 			});
 
 			if (bounds.isValid()) {
@@ -504,6 +505,12 @@ export default Vue.extend({
 	watch: {
 		dataItems() {
 			this.paint();
+		},
+		rowSelection() {
+			const markers = _
+				.map(this.markers, markerLayer => markerLayer.getLayers())
+				.reduce((prev, cur) => [...prev, ...cur] ,[]);
+			this.updateMarkerSelection(markers);
 		}
 	},
 
