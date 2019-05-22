@@ -509,7 +509,7 @@ export default Vue.extend({
 		rowSelection() {
 			const markers = _
 				.map(this.markers, markerLayer => markerLayer.getLayers())
-				.reduce((prev, cur) => [...prev, ...cur] ,[]);
+				.reduce((prev, cur) => [...prev, ...cur], []);
 			this.updateMarkerSelection(markers);
 		}
 	},
