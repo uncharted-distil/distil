@@ -38,7 +38,7 @@ import { Dictionary } from '../util/dict';
 import { TableColumn, TableRow, D3M_INDEX_FIELD } from '../store/dataset/index';
 import { HighlightRoot, RowSelection } from '../store/highlights/index';
 import { updateHighlightRoot, clearHighlightRoot } from '../util/highlights';
-import { isRowSelected } from '../util/row';
+import { addRowSelection, removeRowSelection, isRowSelected } from '../util/row';
 import { LATITUDE_TYPE, LONGITUDE_TYPE, REAL_VECTOR_TYPE } from '../util/types';
 
 import 'leaflet/dist/leaflet.css';
@@ -205,7 +205,10 @@ export default Vue.extend({
 
 		mapZoom(): number {
 			return routeGetters.getGeoZoom(this.$store);
-		}
+		},
+		rowSelection(): RowSelection {
+			return routeGetters.getDecodedRowSelection(this.$store);
+		},
 	},
 
 	methods: {
@@ -417,6 +420,25 @@ export default Vue.extend({
 			this.startingLatLng = null;
 		},
 
+		toggleSelection(marker, point) {
+			const row = point.row;
+			const markerElem = marker.getElement();
+			const isSelected = markerElem.classList.toggle('selected');
+
+			if (isSelected) {
+				addRowSelection(this.$router, this.instanceName, this.rowSelection, row[D3M_INDEX_FIELD]);
+			} else {
+				removeRowSelection(this.$router, this.instanceName, this.rowSelection, row[D3M_INDEX_FIELD]);
+			}
+		},
+
+		restoreSelection(marker, point) {
+			if (!this.rowSelection) { return; }
+			const markerElem = marker.getElement();
+			const isSelected = isRowSelected(this.rowSelection, point.row[D3M_INDEX_FIELD]);
+			markerElem.classList.toggle('selected', isSelected);
+		},
+
 		paint() {
 			if (!this.map) {
 				// NOTE: this component re-mounts on any change, so do everything in here
@@ -460,20 +482,9 @@ export default Vue.extend({
 						return [ `<b>${_.capitalize(target)}</b>` ].concat(values).join('<br>');
 					});
 
-					marker.on('click', (event) => {
-						const markerIcon = marker.getElement();
-						const isSelected = markerIcon.classList.toggle(selectedClass);
-						this.$emit('selectmarker', { point: p, isSelected: isSelected });
-					});
+					marker.on('add', event => this.restoreSelection(marker, p));
+					marker.on('click', event => this.toggleSelection(marker, p));
 
-					marker.on('add', () => {
-						if (this.selection) {
-							// restore selection
-							const markerIcon = marker.getElement();
-							const isSelected = isRowSelected(this.selection, p.row[D3M_INDEX_FIELD]);
-							markerIcon.classList.toggle(selectedClass, isSelected);
-						}
-					});
 					layer.addLayer(marker);
 				});
 				layer.addTo(this.map);
