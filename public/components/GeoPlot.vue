@@ -35,9 +35,10 @@ import IconCropFree from './icons/IconCropFree';
 import { getters as datasetGetters } from '../store/dataset/module';
 import { getters as routeGetters } from '../store/route/module';
 import { Dictionary } from '../util/dict';
-import { TableColumn, TableRow } from '../store/dataset/index';
-import { HighlightRoot } from '../store/highlights/index';
+import { TableColumn, TableRow, D3M_INDEX_FIELD } from '../store/dataset/index';
+import { HighlightRoot, RowSelection } from '../store/highlights/index';
 import { updateHighlightRoot, clearHighlightRoot } from '../util/highlights';
+import { addRowSelection, removeRowSelection, isRowSelected } from '../util/row';
 import { LATITUDE_TYPE, LONGITUDE_TYPE, REAL_VECTOR_TYPE } from '../util/types';
 
 import 'leaflet/dist/leaflet.css';
@@ -78,7 +79,6 @@ export default Vue.extend({
 		instanceName: String as () => string,
 		dataItems: Array as () => any[],
 		dataFields: Object as () => Dictionary<TableColumn>,
-
 	},
 
 	data() {
@@ -203,7 +203,10 @@ export default Vue.extend({
 
 		mapZoom(): number {
 			return routeGetters.getGeoZoom(this.$store);
-		}
+		},
+		rowSelection(): RowSelection {
+			return routeGetters.getDecodedRowSelection(this.$store);
+		},
 	},
 
 	methods: {
@@ -415,6 +418,25 @@ export default Vue.extend({
 			this.startingLatLng = null;
 		},
 
+		toggleSelection(event) {
+			const marker = event.target;
+			const row = marker.options.row;
+			if (!isRowSelected(this.rowSelection, row[D3M_INDEX_FIELD])) {
+				addRowSelection(this.$router, this.instanceName, this.rowSelection, row[D3M_INDEX_FIELD]);
+			} else {
+				removeRowSelection(this.$router, this.instanceName, this.rowSelection, row[D3M_INDEX_FIELD]);
+			}
+		},
+
+		updateMarkerSelection(markers) {
+			markers.forEach(marker => {
+				const row = marker.options.row;
+				const markerElem = marker.getElement();
+				const isSelected = isRowSelected(this.rowSelection, row[D3M_INDEX_FIELD]);
+				markerElem.classList.toggle('selected', isSelected);
+			});
+		},
+
 		paint() {
 			if (!this.map) {
 				// NOTE: this component re-mounts on any change, so do everything in here
@@ -443,7 +465,7 @@ export default Vue.extend({
 				const hash = this.fieldHash(group.field);
 				const layer = leaflet.layerGroup([]);
 				group.points.forEach(p => {
-					const marker =  leaflet.marker(p);
+					const marker =  leaflet.marker(p, { row: p.row });
 					bounds.extend([p.lat, p.lng]);
 					marker.bindTooltip(() => {
 						const target = p.row[this.target];
@@ -457,18 +479,14 @@ export default Vue.extend({
 						return [ `<b>${_.capitalize(target)}</b>` ].concat(values).join('<br>');
 					});
 
-					marker.on('mouseover', (e) => {
-						$(marker._icon).css('filter', 'brightness(1.2)');
-					});
-
-					marker.on('mouseout', () => {
-						$(marker._icon).css('filter', '');
-					});
+					marker.on('click', this.toggleSelection);
 
 					layer.addLayer(marker);
 				});
-				layer.addTo(this.map);
 				this.markers[hash] = layer;
+				layer.on('add', () => this.updateMarkerSelection(layer.getLayers()));
+				layer.addTo(this.map);
+
 			});
 
 			if (bounds.isValid()) {
@@ -484,6 +502,12 @@ export default Vue.extend({
 	watch: {
 		dataItems() {
 			this.paint();
+		},
+		rowSelection() {
+			const markers = _
+				.map(this.markers, markerLayer => markerLayer.getLayers())
+				.reduce((prev, cur) => [...prev, ...cur], []);
+			this.updateMarkerSelection(markers);
 		}
 	},
 
@@ -542,6 +566,14 @@ export default Vue.extend({
 path.selected {
 	stroke-width: 2;
 	fill-opacity: 0.4;
+}
+
+.geo-plot .leaflet-marker-icon:hover {
+	filter: brightness(1.2);
+}
+
+.geo-plot .leaflet-marker-icon.selected {
+	filter: hue-rotate(150deg);
 }
 
 .leaflet-tooltip {

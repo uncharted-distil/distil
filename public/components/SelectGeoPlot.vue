@@ -34,9 +34,8 @@ export default Vue.extend({
 
 		items(): TableRow[] {
 			return this.includedActive ? datasetGetters.getIncludedTableDataItems(this.$store) : datasetGetters.getExcludedTableDataItems(this.$store);
-		}
-	}
-
+		},
+	},
 });
 
 </script>
