@@ -93,38 +93,31 @@ func Classify(schemaPath string, index string, dataset string, config *IngestTas
 		return errors.Wrap(err, "unable to parse Simon pipeline result")
 	}
 
-	// First row is header, then all other rows are col index, types, probabilities.
+	// First row is header, then all other rows are types, probabilities.
 	probabilities := make([][]float64, len(res)-1)
 	labels := make([][]string, len(res)-1)
 	for i, v := range res {
 		if i > 0 {
-			colIndexString, ok := v[0].(string)
-			if !ok {
-				return fmt.Errorf("first column returned is not of expected type `string`, %v", v[0])
-			}
 
-			typesArray, ok := v[1].([]interface{})
+			typesArray, ok := v[0].([]interface{})
 			if !ok {
-				vs, ok := v[1].(interface{})
+				vs, ok := v[0].(interface{})
 				if !ok {
-					return fmt.Errorf("second column returned is not of type `[]interface{}` %v", v[1])
+					return fmt.Errorf("second column returned is not of type `[]interface{}` %v", v[0])
 				}
 				typesArray = []interface{}{vs}
 			}
 
-			probabilitiesArray, ok := v[2].([]interface{})
+			probabilitiesArray, ok := v[1].([]interface{})
 			if !ok {
-				vs, ok := v[2].(interface{})
+				vs, ok := v[1].(interface{})
 				if !ok {
-					return fmt.Errorf("third column returned is not of type `[]interface{}` %v", v[2])
+					return fmt.Errorf("third column returned is not of type `[]interface{}` %v", v[1])
 				}
 				probabilitiesArray = []interface{}{vs}
 			}
 
-			colIndex, err := strconv.ParseInt(colIndexString, 10, 64)
-			if err != nil {
-				return err
-			}
+			colIndex := i - 1
 
 			fieldLabels, err := castTypeArray(typesArray)
 			if err != nil {
