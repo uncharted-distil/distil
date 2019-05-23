@@ -77,9 +77,9 @@ func Clean(datasetSource metadata.DatasetSource, schemaFile string, index string
 		return "", errors.Wrap(err, "unable to parse clean result")
 	}
 
-	// need to remove the first column of the output (row index)
+	// output the data
 	for _, res := range csvData {
-		err = writer.Write(res[1:])
+		err = writer.Write(res)
 		if err != nil {
 			return "", errors.Wrap(err, "error storing clean data")
 		}
