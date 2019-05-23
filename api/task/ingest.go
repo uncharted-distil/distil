@@ -219,6 +219,12 @@ func Ingest(originalSchemaFile string, schemaFile string, storage api.MetadataSt
 		log.Errorf("unable to load machine summary: %v", err)
 	}
 
+	// check and fix metadata issues
+	err = metadata.VerifyAndUpdate(meta, dataDir)
+	if err != nil {
+		return "", errors.Wrap(err, "unable to fix metadata")
+	}
+
 	// create elasticsearch client
 	elasticClient, err := elastic.NewClient(
 		elastic.SetURL(config.ESEndpoint),

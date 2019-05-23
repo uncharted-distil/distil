@@ -66,7 +66,6 @@ func Merge(datasetSource metadata.DatasetSource, schemaFile string, index string
 
 	// parse primitive response (raw data from the input dataset)
 	// first row of the data is the header
-	// first column of the data is the dataframe index
 	csvData, err := ReadCSVFile(datasetURI, false)
 	if err != nil {
 		return "", errors.Wrap(err, "unable to parse denormalize result")
@@ -81,7 +80,7 @@ func Merge(datasetSource metadata.DatasetSource, schemaFile string, index string
 
 	outputMeta := model.NewMetadata(meta.ID, meta.Name, meta.Description, meta.StorageName)
 	outputMeta.DataResources = append(outputMeta.DataResources, model.NewDataResource(mainDR.ResID, mainDR.ResType, mainDR.ResFormat))
-	header := csvData[0][1:]
+	header := csvData[0]
 	for i, field := range header {
 		v := vars[field]
 		if v == nil {
@@ -103,10 +102,10 @@ func Merge(datasetSource metadata.DatasetSource, schemaFile string, index string
 	}
 	writer.Write(headerMetadata[0])
 
-	// rewrite the output without the first column
+	// rewrite the output
 	csvData = csvData[1:]
 	for _, line := range csvData {
-		writer.Write(line[1:])
+		writer.Write(line)
 	}
 
 	// output the data
