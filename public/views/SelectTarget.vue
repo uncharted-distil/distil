@@ -23,10 +23,10 @@
 			:show="showGroupingModal"
 			@close="showGroupingModal = !showGroupingModal">
 		</grouping-modal>
-		<timeseries-analysis-modal
+		<!-- <timeseries-analysis-modal
 			:show="showTimeseriesChoice"
 			@close="onTimeseriesChoice">
-		</timeseries-analysis-modal>
+		</timeseries-analysis-modal> -->
 	</div>
 
 </template>
