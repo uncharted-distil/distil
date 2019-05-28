@@ -164,39 +164,19 @@ export const actions = {
 			suggestions: [],
 		};
 		mutations.updatePendingRequests(context, request);
-		// Hack: force to include datamart.upload.fc0ceee28cb74bad83e4f8872979b111 to the result since that data set does not appear on the suggestion list.
+
 		return axios.get(`/distil/datasets/${args.dataset}`)
 			.then(res => {
-				const dataset = res.data.dataset;
-				const search = dataset.summaryML || dataset.summary || '';
-				return Promise.all([
-					axios.get(`/distil/join-suggestions/${args.dataset}`, { params: { search } }).catch(e => ({data: undefined})),
-					axios.get(`/distil/datasets`, { params: { search: 'employment' } }),
-				]);
+				return axios.get(`/distil/join-suggestions/${args.dataset}`);
 			})
 			.then((response) => {
-				const suggestions = (response[0].data && response[0].data.datasets) || [];
-				const employmentData = ((response[1].data && response[1].data.datasets) || []).filter(dataset => dataset.id === 'datamart.upload.fc0ceee28cb74bad83e4f8872979b111');
-				mutations.updatePendingRequests(context, { ...request, status: DatasetPendingRequestStatus.RESOLVED, suggestions: [...employmentData, ...suggestions] });
+				const suggestions = (response.data && response.data.datasets) || [];
+				mutations.updatePendingRequests(context, { ...request, status: DatasetPendingRequestStatus.RESOLVED, suggestions });
 			})
 			.catch(error => {
 				mutations.updatePendingRequests(context, { ...request, status: DatasetPendingRequestStatus.ERROR });
 				console.error(error);
 			});
-		// return axios.get(`/distil/datasets/${args.dataset}`)
-		// 	.then(res => {
-		// 		const dataset = res.data.dataset;
-		// 		const search = dataset.summaryML || dataset.summary || '';
-		// 		return axios.get(`/distil/join-suggestions/${args.dataset}`, { params: { search } });
-		// 	})
-		// 	.then((response) => {
-		// 		const suggestions = (response.data && response.data.datasets) || [];
-		// 		mutations.updatePendingRequests(context, { ...request, status: DatasetPendingRequestStatus.RESOLVED, suggestions });
-		// 	})
-		// 	.catch(error => {
-		// 		mutations.updatePendingRequests(context, { ...request, status: DatasetPendingRequestStatus.ERROR });
-		// 		console.error(error);
-		// 	});
 	},
 
 	uploadDataFile(context: DatasetContext, args: { datasetID: string, file: File }) {

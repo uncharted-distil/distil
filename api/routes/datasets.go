@@ -161,7 +161,8 @@ func loadDatasets(storage model.MetadataStorage, terms string, baseDataset *mode
 	// if its present, forward a search, otherwise fetch all datasets
 	var datasetsPart []*model.Dataset
 	var err error
-	if terms != "" {
+
+	if terms != "" || baseDataset != nil {
 		datasetsPart, err = storage.SearchDatasets(terms, baseDataset, false, false)
 	} else {
 		datasetsPart, err = storage.FetchDatasets(false, false)

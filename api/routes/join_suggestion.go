@@ -71,7 +71,13 @@ func JoinSuggestionHandler(esCtor model.MetadataStorageCtor, metaCtors map[strin
 			results := make(chan []*model.Dataset, 1)
 			errors := make(chan error, 1)
 			var datasetsPart []*model.Dataset
-			go loadDatasets(storage, terms, res, results, errors)
+			var baseDataset *model.Dataset
+			// provide base dataset for ISI and NYU datamart
+			if provenance == datamart.ProvenanceISI || provenance == datamart.ProvenanceNYU {
+				baseDataset = res
+			}
+
+			go loadDatasets(storage, terms, baseDataset, results, errors)
 			select {
 			case res := <-results:
 				datasetsPart = res
