@@ -45,7 +45,7 @@ func Summarize(schemaPath string, index string, dataset string, config *IngestTa
 		return errors.Wrap(err, "unable to run Duke pipeline")
 	}
 
-	// parse primitive response (row,token,probability)
+	// parse primitive response (token,probability)
 	res, err := result.ParseResultCSV(datasetURI)
 	if err != nil {
 		return errors.Wrap(err, "unable to parse Duke pipeline result")
@@ -55,7 +55,7 @@ func Summarize(schemaPath string, index string, dataset string, config *IngestTa
 	for i, v := range res {
 		// skip the header
 		if i > 0 {
-			token, ok := v[1].(string)
+			token, ok := v[0].(string)
 			if !ok {
 				return errors.Wrap(err, "unable to parse Duke token")
 			}
