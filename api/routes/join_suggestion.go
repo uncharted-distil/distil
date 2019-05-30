@@ -36,6 +36,7 @@ import (
 func JoinSuggestionHandler(esCtor model.MetadataStorageCtor, metaCtors map[string]model.MetadataStorageCtor) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var datasets []*model.Dataset
+		datasetsMap := make(map[string][]*model.Dataset)
 		// get dataset name
 		dataset := pat.Param(r, "dataset")
 
@@ -73,10 +74,10 @@ func JoinSuggestionHandler(esCtor model.MetadataStorageCtor, metaCtors map[strin
 			var datasetsPart []*model.Dataset
 			var baseDataset *model.Dataset
 			// provide base dataset for ISI and NYU datamart
-			if provenance == datamart.ProvenanceISI || provenance == datamart.ProvenanceNYU {
+			isDatamart := provenance == datamart.ProvenanceISI || provenance == datamart.ProvenanceNYU
+			if isDatamart {
 				baseDataset = res
 			}
-
 			go loadDatasets(storage, terms, baseDataset, results, errors)
 			select {
 			case res := <-results:
@@ -94,38 +95,33 @@ func JoinSuggestionHandler(esCtor model.MetadataStorageCtor, metaCtors map[strin
 			for _, dataset := range datasetsPart {
 				dataset.Description = renderMarkdown(dataset.Description)
 			}
-
-			datasets = append(datasets, datasetsPart...)
+			datasetsMap[provenance] = datasetsPart
 		}
+		datasets = append(datasetsMap[datamart.ProvenanceISI], datasetsMap[datamart.ProvenanceNYU]...)
 
-		// imported datasets override non-imported datasets
-		exists := make(map[string]*model.Dataset)
-		for _, dataset := range datasets {
-			if !hasSuggestions(dataset) {
+		localDatasets := make(map[string]*model.Dataset)
+		for provenance, datasets := range datasetsMap {
+			if provenance == datamart.ProvenanceISI || provenance == datamart.ProvenanceNYU {
 				continue
 			}
-
-			existing, ok := exists[dataset.ID]
-			if !ok {
-				// we don't have it, add it
-				exists[dataset.ID] = dataset
-			} else {
-				// we already have it, if it is `dataset`, replace it
-				if existing.Provenance == datamart.ProvenanceNYU || existing.Provenance == datamart.ProvenanceISI {
-					exists[dataset.ID] = dataset
-				}
+			for _, dataset := range datasets {
+				localDatasets[dataset.ID] = dataset
 			}
 		}
 
-		var deconflicted []*model.Dataset
-		for _, dataset := range exists {
-			deconflicted = append(deconflicted, dataset)
+		// If a dataset already exists in the local, use the local dataset augmented with join suggestions from the corresponding datamart dataset
+		for i := 0; i < len(datasets); i++ {
+			dataset := datasets[i]
+			if localDataset, ok := localDatasets[dataset.ID]; ok {
+				localDataset.JoinSuggestions = datasets[i].JoinSuggestions
+				datasets[i] = localDataset
+			}
 		}
 
-		// marshal data
 		err = handleJSON(w, DatasetsResult{
-			Datasets: deconflicted,
+			Datasets: datasets,
 		})
+
 		if err != nil {
 			handleError(w, errors.Wrap(err, "unable marshal dataset result into JSON"))
 			return
