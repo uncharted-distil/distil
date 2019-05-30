@@ -241,23 +241,23 @@ func main() {
 	datamartCtors[es.Provenance] = esMetadataStorageCtor
 
 	// set extremas
-	esStorage, err := esMetadataStorageCtor()
-	if err != nil {
-		log.Errorf("%+v", err)
-		os.Exit(1)
-	}
+	//esStorage, err := esMetadataStorageCtor()
+	//if err != nil {
+	//	log.Errorf("%+v", err)
+	//	os.Exit(1)
+	//}
 
-	pgStorage, err := pgDataStorageCtor()
-	if err != nil {
-		log.Errorf("%+v", err)
-		os.Exit(1)
-	}
+	//pgStorage, err := pgDataStorageCtor()
+	//if err != nil {
+	//	log.Errorf("%+v", err)
+	//	os.Exit(1)
+	//}
 
-	err = updateExtremas(esStorage, pgStorage)
-	if err != nil {
-		log.Errorf("%+v", err)
-		os.Exit(1)
-	}
+	//err = updateExtremas(esStorage, pgStorage)
+	//if err != nil {
+	//	log.Errorf("%+v", err)
+	//	os.Exit(1)
+	//}
 
 	// Ingest the data specified by the environment
 	if config.InitialDataset != "" && !config.SkipIngest {
