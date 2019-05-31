@@ -18,6 +18,7 @@ package routes
 import (
 	"net/http"
 	"net/url"
+	"sort"
 	"time"
 
 	"github.com/pkg/errors"
@@ -116,6 +117,7 @@ func JoinSuggestionHandler(esCtor model.MetadataStorageCtor, metaCtors map[strin
 			dataset := datasets[i]
 			if localDataset, ok := localDatasets[dataset.ID]; ok {
 				localDataset.JoinSuggestions = datasets[i].JoinSuggestions
+				localDataset.JoinScore = datasets[i].JoinScore
 				// Some imported local datasets are missing description. In that case, add a description
 				// (I guess this happens because a downloaded dataset from datamart which is being imported and ingested to the local system,
 				// sometimes comes with datasetDoc.json file with no description in it)
@@ -125,6 +127,9 @@ func JoinSuggestionHandler(esCtor model.MetadataStorageCtor, metaCtors map[strin
 				datasets[i] = localDataset
 			}
 		}
+
+		// sort by join score
+		sort.Slice(datasets, func(i, j int) bool { return datasets[i].JoinScore > datasets[j].JoinScore })
 
 		err = handleJSON(w, DatasetsResult{
 			Datasets: datasets,
