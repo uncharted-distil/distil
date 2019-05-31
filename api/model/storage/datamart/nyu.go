@@ -116,6 +116,7 @@ func parseNYUSearchResult(responseRaw []byte, baseDataset *api.Dataset) ([]*api.
 			Variables:       vars,
 			Provenance:      ProvenanceNYU,
 			JoinSuggestions: joins,
+			JoinScore:       res.Score,
 		})
 	}
 

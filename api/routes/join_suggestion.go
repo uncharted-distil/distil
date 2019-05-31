@@ -97,7 +97,9 @@ func JoinSuggestionHandler(esCtor model.MetadataStorageCtor, metaCtors map[strin
 			}
 			datasetsMap[provenance] = datasetsPart
 		}
-		datasets = append(datasetsMap[datamart.ProvenanceISI], datasetsMap[datamart.ProvenanceNYU]...)
+
+		datamartDatasets := append(datasetsMap[datamart.ProvenanceISI], datasetsMap[datamart.ProvenanceNYU]...)
+		datasets = filterDatasets(datamartDatasets, hasSuggestions)
 
 		localDatasets := make(map[string]*model.Dataset)
 		for provenance, datasets := range datasetsMap {
@@ -114,6 +116,12 @@ func JoinSuggestionHandler(esCtor model.MetadataStorageCtor, metaCtors map[strin
 			dataset := datasets[i]
 			if localDataset, ok := localDatasets[dataset.ID]; ok {
 				localDataset.JoinSuggestions = datasets[i].JoinSuggestions
+				// Some imported local datasets are missing description. In that case, add a description
+				// (I guess this happens because a downloaded dataset from datamart which is being imported and ingested to the local system,
+				// sometimes comes with datasetDoc.json file with no description in it)
+				if localDataset.Description == "" {
+					localDataset.Description = datasets[i].Description
+				}
 				datasets[i] = localDataset
 			}
 		}
@@ -127,6 +135,16 @@ func JoinSuggestionHandler(esCtor model.MetadataStorageCtor, metaCtors map[strin
 			return
 		}
 	}
+}
+
+func filterDatasets(datasets []*model.Dataset, predicate func(dataset *model.Dataset) bool) []*model.Dataset {
+	result := []*model.Dataset{}
+	for _, dataset := range datasets {
+		if predicate(dataset) {
+			result = append(result, dataset)
+		}
+	}
+	return result
 }
 
 func hasSuggestions(dataset *model.Dataset) bool {
