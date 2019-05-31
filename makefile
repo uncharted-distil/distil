@@ -43,7 +43,7 @@ test: build
 install:
 	@npm install -g yarn
 	@yarn install
-	@go get -u github.com/golang/lint/golint
+	@go get -u golang.org/x/lint/golint
 	@go get -u github.com/golang/dep/cmd/dep
 	@go get -u github.com/unchartedsoftware/witch
 	@dep ensure
