@@ -63,7 +63,6 @@ const TYPES_TO_LABELS: Dictionary<string> = {
 	[COUNTRY_CODE_TYPE]: 'Country Code',
 	[URI_TYPE]: 'URI',
 	[DATE_TIME_TYPE]: 'Date/Time',
-	[DATE_TIME_LOWER_TYPE]: `Date/Time`,
 	[BOOL_TYPE]: 'Boolean',
 	[IMAGE_TYPE]: 'Image',
 	[TIMESERIES_TYPE]: 'Timeseries',
@@ -130,6 +129,7 @@ const LOCATION_TYPES = [
 
 const TIME_TYPES = [
 	DATE_TIME_TYPE,
+	DATE_TIME_LOWER_TYPE,
 	TIMESTAMP_TYPE
 ];
 
@@ -165,6 +165,13 @@ const EMAIL_SUGGESTIONS = [
 const URI_SUGGESTIONS = [
 	TEXT_TYPE,
 	URI_TYPE,
+	UNKNOWN_TYPE
+];
+
+const TIME_SUGGESTIONS = [
+	DATE_TIME_TYPE,
+	TEXT_TYPE,
+	CATEGORICAL_TYPE,
 	UNKNOWN_TYPE
 ];
 
@@ -244,6 +251,7 @@ const EQUIV_TYPES = {
 	[POSTAL_CODE_TYPE]: [ POSTAL_CODE_TYPE ],
 	[URI_TYPE]: [ URI_TYPE ],
 	[DATE_TIME_TYPE]: [ DATE_TIME_TYPE ],
+	[DATE_TIME_LOWER_TYPE]: [ DATE_TIME_TYPE ],
 	[BOOL_TYPE]: [ BOOL_TYPE ],
 	[IMAGE_TYPE]: [ IMAGE_TYPE ],
 	[TIMESERIES_TYPE]: [ TIMESERIES_TYPE ],
@@ -251,7 +259,6 @@ const EQUIV_TYPES = {
 };
 
 export function isEquivalentType(a: string, b: string): boolean {
-
 	const equiv = EQUIV_TYPES[a];
 	if (!equiv) {
 		console.warn(`Unable to find equivalent types for type '${a}', type unrecognized`);
@@ -261,6 +268,14 @@ export function isEquivalentType(a: string, b: string): boolean {
 		return type === b;
 	});
 	return matches.length > 0;
+}
+
+export function normalizedEquivalentType (rawType: string): string {
+	const normalizedType = EQUIV_TYPES[rawType];
+	if (!normalizedType) {
+		return rawType;
+	}
+	return normalizedType[0];
 }
 
 export function getVarType(varname: string): string {
@@ -450,6 +465,9 @@ export function guessTypeByValue(value: any): string[] {
 	}
 	if (IMAGE_REGEX.test(value)) {
 		return IMAGE_SUGGESTIONS;
+	}
+	if (Date.parse(value)) {
+		return TIME_SUGGESTIONS;
 	}
 	return TEXT_SUGGESTIONS;
 }
