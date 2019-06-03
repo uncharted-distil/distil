@@ -225,6 +225,12 @@ export default Vue.extend({
 			}
 		},
 		onMouseDown(event: MouseEvent) {
+
+			if (this.closeButton) {
+				this.clearSelectionRect();
+				return;
+			}
+
 			if (this.isSelectionMode) {
 
 				this.clearSelectionRect();
@@ -300,13 +306,6 @@ export default Vue.extend({
 				icon: icon
 			});
 			this.closeButton.addTo(this.map);
-			this.closeButton.on('click', () => {
-				this.clearSelection();
-				this.selectedRect.remove();
-				this.selectedRect = null;
-				this.closeButton.remove();
-				this.closeButton = null;
-			});
 			this.createHighlight({
 				minX: sw.lng,
 				maxX: ne.lng,
