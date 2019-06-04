@@ -33,7 +33,7 @@ import { SuggestedType, Variable } from '../store/dataset/index';
 import { HighlightRoot } from '../store/highlights/index';
 import { actions as datasetActions, getters as datasetGetters } from '../store/dataset/module';
 import { getters as routeGetters } from '../store/route/module';
-import { addTypeSuggestions, getLabelFromType, getTypeFromLabel, isEquivalentType, isLocationType, BASIC_SUGGESTIONS } from '../util/types';
+import { addTypeSuggestions, getLabelFromType, getTypeFromLabel, isEquivalentType, isLocationType, normalizedEquivalentType, BASIC_SUGGESTIONS } from '../util/types';
 import { hasFilterInRoute } from '../util/filters';
 
 const PROBABILITY_THRESHOLD = 0.8;
@@ -126,23 +126,27 @@ export default Vue.extend({
 
 	methods: {
 		addMissingSuggestions() {
+			const currentNormalizedType = normalizedEquivalentType(this.type);
 			if (this.suggestedNonSchemaTypes.length === 0 && (this.label === '' || this.values.length === 0)) {
 				return BASIC_SUGGESTIONS;
 			}
-			const missingSuggestions = addTypeSuggestions(this.type, this.values);
+			const missingSuggestions = addTypeSuggestions(currentNormalizedType, this.values);
+			const nonSchemaSuggestions = this.suggestedNonSchemaTypes.map(suggested => normalizedEquivalentType(suggested.type));
 			const suggestions = [
-				...this.suggestedNonSchemaTypes.map(suggested => suggested.type),
+				...nonSchemaSuggestions,
 				...missingSuggestions
 			];
 			return _.uniq(suggestions);
 		},
 		getSuggestedList() {
+			const currentNormalizedType = normalizedEquivalentType(this.type);
 			return this.addMissingSuggestions().map(type => {
+				const normalizedType = normalizedEquivalentType(type);
 				return {
-					type,
-					label: getLabelFromType(type),
-					isRecommended: this.topNonSchemaType && this.topNonSchemaType.type === type,
-					isSelected: this.type === type,
+					type: normalizedType,
+					label: getLabelFromType(normalizedType),
+					isRecommended: this.topNonSchemaType && this.topNonSchemaType.type.toLowerCase() === type.toLowerCase(),
+					isSelected: currentNormalizedType === normalizedType,
 				};
 			});
 		},
