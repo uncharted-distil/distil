@@ -50,11 +50,11 @@ func NewTextField(storage *Storage, storageName string, key string, label string
 }
 
 // FetchSummaryData pulls summary data from the database and builds a histogram.
-func (f *TextField) FetchSummaryData(resultURI string, filterParams *api.FilterParams, extrema *api.Extrema) (*api.Histogram, error) {
+func (f *TextField) FetchSummaryData(resultURI string, filterParams *api.FilterParams, extrema *api.Extrema, invert bool) (*api.Histogram, error) {
 	var histogram *api.Histogram
 	var err error
 	if resultURI == "" {
-		histogram, err = f.fetchHistogram(filterParams)
+		histogram, err = f.fetchHistogram(filterParams, invert)
 	} else {
 		histogram, err = f.fetchHistogramByResult(resultURI, filterParams)
 	}
@@ -243,12 +243,12 @@ func (f *TextField) parseTimeHistogram(rows *pgx.Rows, extrema *api.Extrema, int
 	}, nil
 }
 
-func (f *TextField) getTopCategories(filterParams *api.FilterParams) ([]string, error) {
+func (f *TextField) getTopCategories(filterParams *api.FilterParams, invert bool) ([]string, error) {
 
 	// create the filter for the query.
 	wheres := make([]string, 0)
 	params := make([]interface{}, 0)
-	wheres, params = f.Storage.buildFilteredQueryWhere(wheres, params, filterParams.Filters)
+	wheres, params = f.Storage.buildFilteredQueryWhere(wheres, params, filterParams.Filters, invert)
 
 	where := ""
 	if len(wheres) > 0 {
@@ -287,11 +287,11 @@ func (f *TextField) getTopCategories(filterParams *api.FilterParams) ([]string, 
 }
 
 // FetchTimeseriesSummaryData pulls summary data from the database and builds a histogram.
-func (f *TextField) FetchTimeseriesSummaryData(timeVar *model.Variable, interval int, resultURI string, filterParams *api.FilterParams) (*api.Histogram, error) {
+func (f *TextField) FetchTimeseriesSummaryData(timeVar *model.Variable, interval int, resultURI string, filterParams *api.FilterParams, invert bool) (*api.Histogram, error) {
 	var histogram *api.Histogram
 	var err error
 	if resultURI == "" {
-		histogram, err = f.fetchTimeseriesHistogram(timeVar, interval, filterParams)
+		histogram, err = f.fetchTimeseriesHistogram(timeVar, interval, filterParams, invert)
 	} else {
 		histogram, err = f.fetchTimeseriesHistogramByResultURI(timeVar, interval, resultURI, filterParams)
 	}
@@ -300,8 +300,8 @@ func (f *TextField) FetchTimeseriesSummaryData(timeVar *model.Variable, interval
 }
 
 // FetchTimeseriesSummaryData pulls summary data from the database and builds a histogram.
-func (f *TextField) fetchTimeseriesHistogram(timeVar *model.Variable, interval int, filterParams *api.FilterParams) (*api.Histogram, error) {
-	categories, err := f.getTopCategories(filterParams)
+func (f *TextField) fetchTimeseriesHistogram(timeVar *model.Variable, interval int, filterParams *api.FilterParams, invert bool) (*api.Histogram, error) {
+	categories, err := f.getTopCategories(filterParams, invert)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to fetch top categories")
 	}
@@ -316,7 +316,7 @@ func (f *TextField) fetchTimeseriesHistogram(timeVar *model.Variable, interval i
 	// create the filter for the query.
 	wheres := make([]string, 0)
 	params := make([]interface{}, 0)
-	wheres, params = f.Storage.buildFilteredQueryWhere(wheres, params, filterParams.Filters)
+	wheres, params = f.Storage.buildFilteredQueryWhere(wheres, params, filterParams.Filters, invert)
 
 	categoryWhere := "w.stem in ("
 	for index, category := range categories {
@@ -351,7 +351,7 @@ func (f *TextField) fetchTimeseriesHistogram(timeVar *model.Variable, interval i
 }
 
 func (f *TextField) fetchTimeseriesHistogramByResultURI(timeVar *model.Variable, interval int, resultURI string, filterParams *api.FilterParams) (*api.Histogram, error) {
-	categories, err := f.getTopCategories(filterParams)
+	categories, err := f.getTopCategories(filterParams, false)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to fetch top categories")
 	}
@@ -366,7 +366,7 @@ func (f *TextField) fetchTimeseriesHistogramByResultURI(timeVar *model.Variable,
 	// create the filter for the query.
 	wheres := make([]string, 0)
 	params := make([]interface{}, 0)
-	wheres, params = f.Storage.buildFilteredQueryWhere(wheres, params, filterParams.Filters)
+	wheres, params = f.Storage.buildFilteredQueryWhere(wheres, params, filterParams.Filters, false)
 
 	categoryWhere := "w.stem in ("
 	for index, category := range categories {
@@ -417,11 +417,11 @@ func (f *TextField) fetchTimeseriesHistogramByResultURI(timeVar *model.Variable,
 	return f.parseTimeHistogram(res, extrema, interval)
 }
 
-func (f *TextField) fetchHistogram(filterParams *api.FilterParams) (*api.Histogram, error) {
+func (f *TextField) fetchHistogram(filterParams *api.FilterParams, invert bool) (*api.Histogram, error) {
 	// create the filter for the query.
 	wheres := make([]string, 0)
 	params := make([]interface{}, 0)
-	wheres, params = f.Storage.buildFilteredQueryWhere(wheres, params, filterParams.Filters)
+	wheres, params = f.Storage.buildFilteredQueryWhere(wheres, params, filterParams.Filters, invert)
 
 	where := ""
 	if len(wheres) > 0 {

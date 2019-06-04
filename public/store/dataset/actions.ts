@@ -454,7 +454,7 @@ export const actions = {
 				interval = intervals[0].value;
 			}
 
-			return axios.post(`distil/timeseries-summary/${args.dataset}/${timeseries}/${args.variable}/${interval}`, {})
+			return axios.post(`distil/timeseries-summary/${args.dataset}/${timeseries}/${args.variable}/${interval}/false`, {})
 				.then(response => {
 					const histogram = response.data.histogram;
 					mutations.updateVariableSummaries(context, histogram);
@@ -464,7 +464,7 @@ export const actions = {
 				});
 		}
 
-		return axios.post(`/distil/variable-summary/${args.dataset}/${args.variable}`, {})
+		return axios.post(`/distil/variable-summary/${args.dataset}/${args.variable}/false`, {})
 			.then(response => {
 
 				const histogram = response.data.histogram;
@@ -589,7 +589,7 @@ export const actions = {
 			return null;
 		}
 
-		return axios.post(`distil/timeseries/${args.dataset}/${args.timeseriesColName}/${args.xColName}/${args.yColName}/${args.timeseriesID}`, {})
+		return axios.post(`distil/timeseries/${args.dataset}/${args.timeseriesColName}/${args.xColName}/${args.yColName}/${args.timeseriesID}/false`, {})
 			.then(response => {
 				mutations.updateTimeseries(context, {
 					dataset: args.dataset,

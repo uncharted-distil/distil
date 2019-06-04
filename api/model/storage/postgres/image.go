@@ -49,11 +49,11 @@ func NewImageField(storage *Storage, storageName string, key string, label strin
 }
 
 // FetchSummaryData pulls summary data from the database and builds a histogram.
-func (f *ImageField) FetchSummaryData(resultURI string, filterParams *api.FilterParams, extrema *api.Extrema) (*api.Histogram, error) {
+func (f *ImageField) FetchSummaryData(resultURI string, filterParams *api.FilterParams, extrema *api.Extrema, invert bool) (*api.Histogram, error) {
 	var histogram *api.Histogram
 	var err error
 	if resultURI == "" {
-		histogram, err = f.fetchHistogram(filterParams)
+		histogram, err = f.fetchHistogram(filterParams, invert)
 	} else {
 		histogram, err = f.fetchHistogramByResult(resultURI, filterParams)
 	}
@@ -62,7 +62,7 @@ func (f *ImageField) FetchSummaryData(resultURI string, filterParams *api.Filter
 }
 
 // FetchTimeseriesSummaryData pulls summary data from the database and builds a histogram.
-func (f *ImageField) FetchTimeseriesSummaryData(timeVar *model.Variable, interval int, resultURI string, filterParams *api.FilterParams) (*api.Histogram, error) {
+func (f *ImageField) FetchTimeseriesSummaryData(timeVar *model.Variable, interval int, resultURI string, filterParams *api.FilterParams, invert bool) (*api.Histogram, error) {
 	return nil, fmt.Errorf("not implemented")
 }
 
@@ -101,11 +101,11 @@ func (f *ImageField) fetchRepresentationImages(categoryBuckets []*api.Bucket) ([
 	return imageFiles, nil
 }
 
-func (f *ImageField) fetchHistogram(filterParams *api.FilterParams) (*api.Histogram, error) {
+func (f *ImageField) fetchHistogram(filterParams *api.FilterParams, invert bool) (*api.Histogram, error) {
 	// create the filter for the query.
 	wheres := make([]string, 0)
 	params := make([]interface{}, 0)
-	wheres, params = f.Storage.buildFilteredQueryWhere(wheres, params, filterParams.Filters)
+	wheres, params = f.Storage.buildFilteredQueryWhere(wheres, params, filterParams.Filters, invert)
 
 	prefixedVarName := f.featureVarName(f.Key)
 	fieldSelect := fmt.Sprintf("unnest(string_to_array(\"%s\", ','))", prefixedVarName)

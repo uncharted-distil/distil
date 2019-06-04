@@ -66,11 +66,11 @@ func NewCategoricalFieldSubSelect(storage *Storage, storageName string, key stri
 }
 
 // FetchSummaryData pulls summary data from the database and builds a histogram.
-func (f *CategoricalField) FetchSummaryData(resultURI string, filterParams *api.FilterParams, extrema *api.Extrema) (*api.Histogram, error) {
+func (f *CategoricalField) FetchSummaryData(resultURI string, filterParams *api.FilterParams, extrema *api.Extrema, invert bool) (*api.Histogram, error) {
 	var histogram *api.Histogram
 	var err error
 	if resultURI == "" {
-		histogram, err = f.fetchHistogram(filterParams)
+		histogram, err = f.fetchHistogram(filterParams, invert)
 	} else {
 		histogram, err = f.fetchHistogramByResult(resultURI, filterParams)
 	}
@@ -259,14 +259,14 @@ func (f *CategoricalField) parseTimeHistogram(rows *pgx.Rows, extrema *api.Extre
 	}, nil
 }
 
-func (f *CategoricalField) getTopCategories(filterParams *api.FilterParams) ([]string, error) {
+func (f *CategoricalField) getTopCategories(filterParams *api.FilterParams, invert bool) ([]string, error) {
 
 	fromClause := f.getFromClause(true)
 
 	// create the filter for the query
 	wheres := make([]string, 0)
 	params := make([]interface{}, 0)
-	wheres, params = f.Storage.buildFilteredQueryWhere(wheres, params, filterParams.Filters)
+	wheres, params = f.Storage.buildFilteredQueryWhere(wheres, params, filterParams.Filters, invert)
 
 	where := ""
 	if len(wheres) > 0 {
@@ -301,11 +301,11 @@ func (f *CategoricalField) getTopCategories(filterParams *api.FilterParams) ([]s
 }
 
 // FetchTimeseriesSummaryData pulls summary data from the database and builds a histogram.
-func (f *CategoricalField) FetchTimeseriesSummaryData(timeVar *model.Variable, interval int, resultURI string, filterParams *api.FilterParams) (*api.Histogram, error) {
+func (f *CategoricalField) FetchTimeseriesSummaryData(timeVar *model.Variable, interval int, resultURI string, filterParams *api.FilterParams, invert bool) (*api.Histogram, error) {
 	var histogram *api.Histogram
 	var err error
 	if resultURI == "" {
-		histogram, err = f.fetchTimeseriesHistogram(timeVar, interval, filterParams)
+		histogram, err = f.fetchTimeseriesHistogram(timeVar, interval, filterParams, invert)
 	} else {
 		histogram, err = f.fetchTimeseriesHistogramByResultURI(timeVar, interval, resultURI, filterParams)
 	}
@@ -314,7 +314,7 @@ func (f *CategoricalField) FetchTimeseriesSummaryData(timeVar *model.Variable, i
 }
 
 func (f *CategoricalField) fetchTimeseriesHistogramByResultURI(timeVar *model.Variable, interval int, resultURI string, filterParams *api.FilterParams) (*api.Histogram, error) {
-	categories, err := f.getTopCategories(filterParams)
+	categories, err := f.getTopCategories(filterParams, false)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to fetch top categories")
 	}
@@ -329,7 +329,7 @@ func (f *CategoricalField) fetchTimeseriesHistogramByResultURI(timeVar *model.Va
 	// create the filter for the query.
 	wheres := make([]string, 0)
 	params := make([]interface{}, 0)
-	wheres, params = f.Storage.buildFilteredQueryWhere(wheres, params, filterParams.Filters)
+	wheres, params = f.Storage.buildFilteredQueryWhere(wheres, params, filterParams.Filters, false)
 
 	categoryWhere := fmt.Sprintf("\"%s\" in (", f.Key)
 	for index, category := range categories {
@@ -372,8 +372,8 @@ func (f *CategoricalField) fetchTimeseriesHistogramByResultURI(timeVar *model.Va
 }
 
 // FetchTimeseriesSummaryData pulls summary data from the database and builds a histogram.
-func (f *CategoricalField) fetchTimeseriesHistogram(timeVar *model.Variable, interval int, filterParams *api.FilterParams) (*api.Histogram, error) {
-	categories, err := f.getTopCategories(filterParams)
+func (f *CategoricalField) fetchTimeseriesHistogram(timeVar *model.Variable, interval int, filterParams *api.FilterParams, invert bool) (*api.Histogram, error) {
+	categories, err := f.getTopCategories(filterParams, invert)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to fetch top categories")
 	}
@@ -388,7 +388,7 @@ func (f *CategoricalField) fetchTimeseriesHistogram(timeVar *model.Variable, int
 	// create the filter for the query.
 	wheres := make([]string, 0)
 	params := make([]interface{}, 0)
-	wheres, params = f.Storage.buildFilteredQueryWhere(wheres, params, filterParams.Filters)
+	wheres, params = f.Storage.buildFilteredQueryWhere(wheres, params, filterParams.Filters, invert)
 
 	categoryWhere := fmt.Sprintf("\"%s\" in (", f.Key)
 	for index, category := range categories {
@@ -421,13 +421,13 @@ func (f *CategoricalField) fetchTimeseriesHistogram(timeVar *model.Variable, int
 	return f.parseTimeHistogram(res, extrema, interval)
 }
 
-func (f *CategoricalField) fetchHistogram(filterParams *api.FilterParams) (*api.Histogram, error) {
+func (f *CategoricalField) fetchHistogram(filterParams *api.FilterParams, invert bool) (*api.Histogram, error) {
 	fromClause := f.getFromClause(true)
 
 	// create the filter for the query
 	wheres := make([]string, 0)
 	params := make([]interface{}, 0)
-	wheres, params = f.Storage.buildFilteredQueryWhere(wheres, params, filterParams.Filters)
+	wheres, params = f.Storage.buildFilteredQueryWhere(wheres, params, filterParams.Filters, invert)
 
 	where := ""
 	if len(wheres) > 0 {
@@ -586,7 +586,7 @@ func (f *CategoricalField) FetchForecastingSummaryData(timeVar *model.Variable, 
 		Type: model.TextType,
 	}
 
-	categories, err := f.getTopCategories(filterParams)
+	categories, err := f.getTopCategories(filterParams, false)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to fetch top categories")
 	}
@@ -601,7 +601,7 @@ func (f *CategoricalField) FetchForecastingSummaryData(timeVar *model.Variable, 
 	// create the filter for the query.
 	wheres := make([]string, 0)
 	params := make([]interface{}, 0)
-	wheres, params = f.Storage.buildFilteredQueryWhere(wheres, params, filterParams.Filters)
+	wheres, params = f.Storage.buildFilteredQueryWhere(wheres, params, filterParams.Filters, false)
 
 	categoryWhere := fmt.Sprintf("\"%s\" in (", resultVariable.Name)
 	for index, category := range categories {

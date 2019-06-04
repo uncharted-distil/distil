@@ -29,7 +29,7 @@ type DataStorageCtor func() (DataStorage, error)
 type DataStorage interface {
 	FetchNumRows(storageName string, variables []*model.Variable, filters map[string]interface{}) (int, error)
 	FetchData(dataset string, storageName string, filterParams *FilterParams, invert bool) (*FilteredData, error)
-	FetchSummary(dataset string, storageName string, varName string, filterParams *FilterParams) (*Histogram, error)
+	FetchSummary(dataset string, storageName string, varName string, filterParams *FilterParams, invert bool) (*Histogram, error)
 	FetchSummaryByResult(dataset string, storageName string, varName string, resultURI string, filterParams *FilterParams, extrema *Extrema) (*Histogram, error)
 	PersistResult(dataset string, storageName string, resultURI string, target string) error
 	FetchResults(dataset string, storageName string, resultURI string, solutionID string, filterParams *FilterParams) (*FilteredData, error)
@@ -40,8 +40,8 @@ type DataStorage interface {
 	FetchResidualsExtremaByURI(dataset string, storageName string, resultURI string) (*Extrema, error)
 	FetchExtrema(storageName string, variable *model.Variable) (*Extrema, error)
 	FetchExtremaByURI(dataset string, storageName string, resultURI string, variable string) (*Extrema, error)
-	FetchTimeseries(dataset string, storageName string, timeseriesColName string, xColName string, yColName string, timeseriesURI string, filterParams *FilterParams) ([][]float64, error)
-	FetchTimeseriesSummary(dataset string, storageName string, xColName string, yColName string, interval int, filterParams *FilterParams) (*Histogram, error)
+	FetchTimeseries(dataset string, storageName string, timeseriesColName string, xColName string, yColName string, timeseriesURI string, filterParams *FilterParams, invert bool) ([][]float64, error)
+	FetchTimeseriesSummary(dataset string, storageName string, xColName string, yColName string, interval int, filterParams *FilterParams, invert bool) (*Histogram, error)
 	FetchTimeseriesSummaryByResult(dataset string, storageName string, xColName string, yColName string, interval int, resultURI string, filterParams *FilterParams) (*Histogram, error)
 	FetchForecastingSummary(dataset string, storageName string, xColName string, yColName string, interval int, resultURI string, filterParams *FilterParams) (*Histogram, error)
 	// Dataset manipulation

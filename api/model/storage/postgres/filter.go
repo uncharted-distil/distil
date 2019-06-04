@@ -216,14 +216,24 @@ func (s *Storage) buildExcludeFilter(wheres []string, params []interface{}, filt
 	return wheres, params
 }
 
-func (s *Storage) buildFilteredQueryWhere(wheres []string, params []interface{}, filters []*model.Filter) ([]string, []interface{}) {
+func (s *Storage) buildFilteredQueryWhere(wheres []string, params []interface{}, filters []*model.Filter, invert bool) ([]string, []interface{}) {
+	var filterWheres []string
 	for _, filter := range filters {
 		switch filter.Mode {
 		case model.IncludeFilter:
-			wheres, params = s.buildIncludeFilter(wheres, params, filter)
+			filterWheres, params = s.buildIncludeFilter(filterWheres, params, filter)
 		case model.ExcludeFilter:
-			wheres, params = s.buildExcludeFilter(wheres, params, filter)
+			filterWheres, params = s.buildExcludeFilter(filterWheres, params, filter)
 		}
+	}
+	if len(filterWheres) > 0 {
+		where := ""
+		if invert {
+			where = fmt.Sprintf("NOT(%s)", strings.Join(filterWheres, " AND "))
+		} else {
+			where = strings.Join(filterWheres, " AND ")
+		}
+		wheres = append(wheres, where)
 	}
 	return wheres, params
 }
@@ -314,7 +324,7 @@ func (s *Storage) buildErrorResultWhere(wheres []string, params []interface{}, r
 
 func (s *Storage) buildPredictedResultWhere(wheres []string, params []interface{}, resultURI string, resultFilter *model.Filter) ([]string, []interface{}, error) {
 	// handle the general category case
-	wheres, params = s.buildFilteredQueryWhere(wheres, params, []*model.Filter{resultFilter})
+	wheres, params = s.buildFilteredQueryWhere(wheres, params, []*model.Filter{resultFilter}, false)
 	return wheres, params, nil
 }
 
@@ -325,7 +335,7 @@ func (s *Storage) buildResultQueryFilters(storageName string, resultURI string, 
 	// create the filter for the query
 	wheres := make([]string, 0)
 	params := make([]interface{}, 0)
-	wheres, params = s.buildFilteredQueryWhere(wheres, params, filters.genericFilters)
+	wheres, params = s.buildFilteredQueryWhere(wheres, params, filters.genericFilters, false)
 
 	// assemble split filters
 	var err error
@@ -459,14 +469,10 @@ func (s *Storage) FetchData(dataset string, storageName string, filterParams *ap
 
 	wheres := make([]string, 0)
 	params := make([]interface{}, 0)
-	wheres, params = s.buildFilteredQueryWhere(wheres, params, filterParams.Filters)
+	wheres, params = s.buildFilteredQueryWhere(wheres, params, filterParams.Filters, invert)
 
 	if len(wheres) > 0 {
-		if invert {
-			query = fmt.Sprintf("%s WHERE NOT(%s)", query, strings.Join(wheres, " AND "))
-		} else {
-			query = fmt.Sprintf("%s WHERE %s", query, strings.Join(wheres, " AND "))
-		}
+		query = fmt.Sprintf("%s WHERE %s", query, strings.Join(wheres, " AND "))
 	} else {
 		// if there are not WHERE's and we are inverting, that means we expect
 		// no results.

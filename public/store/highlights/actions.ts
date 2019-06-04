@@ -29,7 +29,7 @@ export const actions = {
 
 		// commit empty place holders, if there is no data
 		return Promise.all(args.variables.map(variable => {
-			return axios.post(`/distil/variable-summary/${args.dataset}/${variable.colName}`, filterParams)
+			return axios.post(`/distil/variable-summary/${args.dataset}/${variable.colName}/false`, filterParams)
 				.then(response => {
 					mutations.updateHighlightSummaries(context, response.data.histogram);
 				})

@@ -72,15 +72,15 @@ func NewNumericalFieldSubSelect(storage *Storage, storageName string, key string
 }
 
 // FetchSummaryData pulls summary data from the database and builds a histogram.
-func (f *NumericalField) FetchSummaryData(resultURI string, filterParams *api.FilterParams, extrema *api.Extrema) (*api.Histogram, error) {
+func (f *NumericalField) FetchSummaryData(resultURI string, filterParams *api.FilterParams, extrema *api.Extrema, invert bool) (*api.Histogram, error) {
 	var histogram *api.Histogram
 	var err error
 	if resultURI == "" {
-		histogram, err = f.fetchHistogram(filterParams)
+		histogram, err = f.fetchHistogram(filterParams, invert)
 		if err != nil {
 			return nil, err
 		}
-		stats, err := f.FetchNumericalStats(filterParams)
+		stats, err := f.FetchNumericalStats(filterParams, invert)
 		if err != nil {
 			return nil, err
 		}
@@ -290,11 +290,11 @@ func (f *NumericalField) parseTimeHistogram(rows *pgx.Rows, extrema *api.Extrema
 }
 
 // FetchTimeseriesSummaryData pulls summary data from the database and builds a histogram.
-func (f *NumericalField) FetchTimeseriesSummaryData(timeVar *model.Variable, interval int, resultURI string, filterParams *api.FilterParams) (*api.Histogram, error) {
+func (f *NumericalField) FetchTimeseriesSummaryData(timeVar *model.Variable, interval int, resultURI string, filterParams *api.FilterParams, invert bool) (*api.Histogram, error) {
 	var histogram *api.Histogram
 	var err error
 	if resultURI == "" {
-		histogram, err = f.fetchTimeseriesHistogram(timeVar, interval, filterParams)
+		histogram, err = f.fetchTimeseriesHistogram(timeVar, interval, filterParams, invert)
 	} else {
 		histogram, err = f.fetchTimeseriesHistogramByResultURI(timeVar, interval, resultURI, filterParams)
 	}
@@ -302,7 +302,7 @@ func (f *NumericalField) FetchTimeseriesSummaryData(timeVar *model.Variable, int
 	return histogram, err
 }
 
-func (f *NumericalField) fetchTimeseriesHistogram(timeVar *model.Variable, interval int, filterParams *api.FilterParams) (*api.Histogram, error) {
+func (f *NumericalField) fetchTimeseriesHistogram(timeVar *model.Variable, interval int, filterParams *api.FilterParams, invert bool) (*api.Histogram, error) {
 	extrema, err := f.fetchTimeExtrema(timeVar)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to fetch extrema from postgres")
@@ -313,7 +313,7 @@ func (f *NumericalField) fetchTimeseriesHistogram(timeVar *model.Variable, inter
 	// create the filter for the query.
 	wheres := make([]string, 0)
 	params := make([]interface{}, 0)
-	wheres, params = f.Storage.buildFilteredQueryWhere(wheres, params, filterParams.Filters)
+	wheres, params = f.Storage.buildFilteredQueryWhere(wheres, params, filterParams.Filters, invert)
 
 	where := ""
 	if len(wheres) > 0 {
@@ -349,7 +349,7 @@ func (f *NumericalField) fetchTimeseriesHistogramByResultURI(timeVar *model.Vari
 	// create the filter for the query.
 	wheres := make([]string, 0)
 	params := make([]interface{}, 0)
-	wheres, params = f.Storage.buildFilteredQueryWhere(wheres, params, filterParams.Filters)
+	wheres, params = f.Storage.buildFilteredQueryWhere(wheres, params, filterParams.Filters, false)
 
 	params = append(params, resultURI)
 	wheres = append(wheres, fmt.Sprintf("result.result_id = $%d", len(params)))
@@ -386,13 +386,13 @@ func (f *NumericalField) fetchTimeseriesHistogramByResultURI(timeVar *model.Vari
 	return f.parseTimeHistogram(res, extrema, interval)
 }
 
-func (f *NumericalField) fetchHistogram(filterParams *api.FilterParams) (*api.Histogram, error) {
+func (f *NumericalField) fetchHistogram(filterParams *api.FilterParams, invert bool) (*api.Histogram, error) {
 	fromClause := f.getFromClause(true)
 
 	// create the filter for the query.
 	wheres := make([]string, 0)
 	params := make([]interface{}, 0)
-	wheres, params = f.Storage.buildFilteredQueryWhere(wheres, params, filterParams.Filters)
+	wheres, params = f.Storage.buildFilteredQueryWhere(wheres, params, filterParams.Filters, invert)
 
 	// need the extrema to calculate the histogram interval
 	extrema, err := f.fetchExtrema()
@@ -751,13 +751,13 @@ func (f *NumericalField) fetchResultsExtrema(resultURI string, dataset string, r
 }
 
 // FetchNumericalStats gets the variable's numerical summary info (mean, stddev).
-func (f *NumericalField) FetchNumericalStats(filterParams *api.FilterParams) (*NumericalStats, error) {
+func (f *NumericalField) FetchNumericalStats(filterParams *api.FilterParams, invert bool) (*NumericalStats, error) {
 	fromClause := f.getFromClause(true)
 
 	// create the filter for the query.
 	wheres := make([]string, 0)
 	params := make([]interface{}, 0)
-	wheres, params = f.Storage.buildFilteredQueryWhere(wheres, params, filterParams.Filters)
+	wheres, params = f.Storage.buildFilteredQueryWhere(wheres, params, filterParams.Filters, invert)
 
 	where := ""
 	if len(wheres) > 0 {
@@ -878,7 +878,7 @@ func (f *NumericalField) FetchForecastingSummaryData(timeVar *model.Variable, in
 	// create the filter for the query.
 	wheres := make([]string, 0)
 	params := make([]interface{}, 0)
-	wheres, params = f.Storage.buildFilteredQueryWhere(wheres, params, filterParams.Filters)
+	wheres, params = f.Storage.buildFilteredQueryWhere(wheres, params, filterParams.Filters, false)
 
 	params = append(params, resultURI)
 	wheres = append(wheres, fmt.Sprintf("result.result_id = $%d", len(params)))

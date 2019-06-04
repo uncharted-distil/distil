@@ -66,7 +66,7 @@ func NewDateTimeFieldSubSelect(storage *Storage, storageName string, key string,
 }
 
 // FetchSummaryData pulls summary data from the database and builds a histogram.
-func (f *DateTimeField) FetchSummaryData(resultURI string, filterParams *api.FilterParams, extrema *api.Extrema) (*api.Histogram, error) {
+func (f *DateTimeField) FetchSummaryData(resultURI string, filterParams *api.FilterParams, extrema *api.Extrema, invert bool) (*api.Histogram, error) {
 	var histogram *api.Histogram
 	var err error
 	if resultURI == "" {
@@ -84,7 +84,7 @@ func (f *DateTimeField) FetchSummaryData(resultURI string, filterParams *api.Fil
 }
 
 // FetchTimeseriesSummaryData pulls summary data from the database and builds a histogram.
-func (f *DateTimeField) FetchTimeseriesSummaryData(timeVar *model.Variable, interval int, resultURI string, filterParams *api.FilterParams) (*api.Histogram, error) {
+func (f *DateTimeField) FetchTimeseriesSummaryData(timeVar *model.Variable, interval int, resultURI string, filterParams *api.FilterParams, invert bool) (*api.Histogram, error) {
 	return nil, fmt.Errorf("not implemented")
 }
 
@@ -94,7 +94,7 @@ func (f *DateTimeField) fetchHistogram(filterParams *api.FilterParams) (*api.His
 	// create the filter for the query.
 	wheres := make([]string, 0)
 	params := make([]interface{}, 0)
-	wheres, params = f.Storage.buildFilteredQueryWhere(wheres, params, filterParams.Filters)
+	wheres, params = f.Storage.buildFilteredQueryWhere(wheres, params, filterParams.Filters, false)
 
 	// need the extrema to calculate the histogram interval
 	extrema, err := f.fetchExtrema()
