@@ -230,7 +230,7 @@ export default Vue.extend({
 			const mapEventTarget = event.target as HTMLElement;
 			
 			//check if mapEventTarget is the close button or icon
-			if (mapEventTarget.classList.contains(CLOSE_BUTTON_CLASS) ||  mapEventTarget.classList.contains('fa')) {
+			if (mapEventTarget.classList.contains(CLOSE_BUTTON_CLASS) ||  mapEventTarget.classList.contains('fa-times')) {
 				this.removeSelection();
 				return;
 			}
