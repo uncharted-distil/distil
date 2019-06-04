@@ -48,6 +48,7 @@ import 'leaflet/dist/images/marker-shadow.png';
 
 const SINGLE_FIELD = 1;
 const SPLIT_FIELD = 2;
+const CLOSE_BUTTON_CLASS = 'geo-close-button';
 
 interface GeoField {
 	type: number;
@@ -225,9 +226,12 @@ export default Vue.extend({
 			}
 		},
 		onMouseDown(event: MouseEvent) {
-
-			if (this.closeButton) {
-				this.clearSelectionRect();
+			
+			const mapEventTarget = event.target as HTMLElement;
+			
+			//check if mapEventTarget is the close button or icon
+			if (mapEventTarget.classList.contains(CLOSE_BUTTON_CLASS) ||  mapEventTarget.classList.contains('fa')) {
+				this.removeSelection();
 				return;
 			}
 
@@ -282,10 +286,12 @@ export default Vue.extend({
 			}
 		},
 		onEsc() {
+			this.removeSelection();
+		},
+		removeSelection() {
 				this.clearSelectionRect();
 				// disable drawing mode
 				this.map.dragging.enable();
-
 		},
 		setSelection(rect) {
 
@@ -298,7 +304,7 @@ export default Vue.extend({
 			const ne = rect.getBounds().getNorthEast();
 			const sw = rect.getBounds().getSouthWest();
 			const icon = leaflet.divIcon({
-				className: 'geo-close-button',
+				className: CLOSE_BUTTON_CLASS,
 				iconSize: null,
 				html: '<i class="fa fa-times"></i>'
 			});
