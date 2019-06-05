@@ -983,9 +983,10 @@ export default Vue.extend({
 		// inject type headers
 		injectTypeChangeHeaders(group: Group, $elem: JQuery) {
 			if (this.enableTypeChange) {
+				const facetId = `${group.dataset}:${group.colName}`;
 				// if we have a menu for this already, destroy it to replace it
-				if (this.menus[group.colName]) {
-					this.menus[group.colName].$destroy();
+				if (this.menus[facetId]) {
+					this.menus[facetId].$destroy();
 				}
 				const $slot = $('<span/>');
 				$elem.find('.group-header').append($slot);
@@ -999,7 +1000,7 @@ export default Vue.extend({
 						}
 					});
 				menu.$mount($slot[0]);
-				this.menus[group.colName] = menu;
+				this.menus[facetId] = menu;
 			}
 		},
 
