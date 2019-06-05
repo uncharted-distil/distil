@@ -232,6 +232,10 @@ export default Vue.extend({
 			// check if mapEventTarget is the close button or icon
 			if (mapEventTarget.classList.contains(CLOSE_BUTTON_CLASS) ||  mapEventTarget.classList.contains(CLOSE_ICON_CLASS)) {
 				this.clearSelection();
+				this.selectedRect.remove();
+				this.selectedRect = null;
+				this.closeButton.remove();
+				this.closeButton = null;
 				return;
 			}
 
