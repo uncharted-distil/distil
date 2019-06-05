@@ -145,7 +145,23 @@ export default Vue.extend({
 		},
 		isJoinReady(): boolean {
 			return this.selectedItem && this.selectedItem.isAvailable !== undefined && !this.isImporting;
-		}
+		},
+		baseColumnSuggestions(): string[] {
+			if (!this.selectedDataset) {
+				return [];
+			}
+			return this.selectedDataset.joinSuggestion.map(data => {
+				return data.baseColumns[0];
+			});
+		},
+		joinColumnSuggestions(): string[] {
+			if (!this.selectedDataset) {
+				return [];
+			}
+			return this.selectedDataset.joinSuggestion.map(data => {
+				return data.joinColumns[0];
+			});
+		},
 	},
 	methods: {
 		initSuggestionItems() {
@@ -183,6 +199,8 @@ export default Vue.extend({
 			const entry = createRouteEntry(JOIN_DATASETS_ROUTE, {
 				joinDatasets: `${this.dataset},${selected.dataset.id}`,
 				target: this.target,
+				baseColumns: this.baseColumnSuggestions.join(','),
+				joinColumns: this.joinColumnSuggestions.join(','),
 			});
 			this.$router.push(entry);
 		},

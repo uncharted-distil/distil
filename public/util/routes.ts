@@ -20,6 +20,8 @@ export interface RouteArgs {
 	joinColumnA?: string;
 	joinColumnB?: string;
 	joinAccuracy?: string;
+	baseColumns?: string; // suggested base join columns
+	joinColumns?: string; // suggested target join columns
 	timeseriesAnalysis?: string;
 	timeseriesBinningInterval?: string;
 
