@@ -13,10 +13,9 @@
 		v-bind:class="{ active: isSelectionMode }"
 		v-on:click="isSelectionMode = !isSelectionMode"
 	>
-		<a href="#"
+		<a
 			class="selection-toggle-control"
 			title="Select area"
-			@click.prevent="isSelectionMode = !isSelectionMode"
 			aria-label="Select area"
 		>
 			<icon-base width="100%" height="100%"> <icon-crop-free /> </icon-base>
@@ -287,9 +286,11 @@ export default Vue.extend({
 			}
 		},
 		onEsc() {
-			this.clearSelectionRect();
-			// disable drawing mode
-			this.map.dragging.enable();
+			if (this.currentRect) {
+				this.clearSelectionRect();
+				// disable drawing mode
+				this.map.dragging.enable();
+			}
 		},
 		setSelection(rect) {
 
@@ -548,6 +549,7 @@ export default Vue.extend({
 .geo-plot-container .selection-toggle-control {
 	text-decoration: none;
 	color: black;
+	cursor: pointer;
 }
 .geo-plot-container .selection-toggle-control:hover {
 	text-decoration: none;
