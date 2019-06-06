@@ -1041,9 +1041,7 @@ export default Vue.extend({
 
 		// specifically destroy menus so because we injected them
 		// and so we have to take manual action to destroy them
-		_.forIn(this.menus, function(menu){
-			menu.$destroy();
-		})
+		_.forIn(this.menus, menu => menu.$destroy());
 		this.menus = null;
 	},
 });
