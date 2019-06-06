@@ -42,7 +42,7 @@ func (s *Storage) FetchResidualsExtremaByURI(dataset string, storageName string,
 }
 
 // FetchResidualsSummary fetches a histogram of the residuals associated with a set of numerical predictions.
-func (s *Storage) FetchResidualsSummary(dataset string, storageName string, resultURI string, filterParams *api.FilterParams, extrema *api.Extrema) (*api.Histogram, error) {
+func (s *Storage) FetchResidualsSummary(dataset string, storageName string, resultURI string, filterParams *api.FilterParams, extrema *api.Extrema) (*api.VariableSummary, error) {
 	storageNameResult := s.getResultTable(storageName)
 	targetName, err := s.getResultTargetName(storageNameResult, resultURI)
 	if err != nil {
@@ -53,6 +53,31 @@ func (s *Storage) FetchResidualsSummary(dataset string, storageName string, resu
 	if err != nil {
 		return nil, err
 	}
+
+	var baseline *api.Histogram
+	var filtered *api.Histogram
+	baseline, err = s.fetchResidualsSummary(dataset, storageName, variable, resultURI, nil, extrema)
+	if err != nil {
+		return nil, err
+	}
+	if filterParams.Filters != nil {
+		filtered, err = s.fetchResidualsSummary(dataset, storageName, variable, resultURI, filterParams, extrema)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	return &api.VariableSummary{
+		Label:    variable.DisplayName,
+		Key:      variable.Name,
+		Type:     model.CategoricalType,
+		VarType:  variable.Type,
+		Baseline: baseline,
+		Filtered: filtered,
+	}, nil
+}
+
+func (s *Storage) fetchResidualsSummary(dataset string, storageName string, variable *model.Variable, resultURI string, filterParams *api.FilterParams, extrema *api.Extrema) (*api.Histogram, error) {
 
 	// Just return a nil in the case where we were asked to return residuals for a non-numeric variable.
 	if model.IsNumerical(variable.Type) {

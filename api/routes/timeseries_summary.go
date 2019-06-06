@@ -28,7 +28,7 @@ import (
 
 // TimeseriesSummaryResult represents a summary response for a variable.
 type TimeseriesSummaryResult struct {
-	Histogram *api.Histogram `json:"histogram"`
+	Summary *api.VariableSummary `json:"summary"`
 }
 
 // TimeseriesSummaryHandler generates a route handler that facilitates the
@@ -75,7 +75,7 @@ func TimeseriesSummaryHandler(ctorStorage api.DataStorageCtor) func(http.Respons
 		}
 
 		// fetch summary histogram
-		histogram, err := storage.FetchTimeseriesSummary(dataset, storageName, xColName, yColName, int(interval), filterParams, invertBool)
+		summary, err := storage.FetchTimeseriesSummary(dataset, storageName, xColName, yColName, int(interval), filterParams, invertBool)
 		if err != nil {
 			handleError(w, err)
 			return
@@ -83,7 +83,7 @@ func TimeseriesSummaryHandler(ctorStorage api.DataStorageCtor) func(http.Respons
 
 		// marshal output into JSON
 		err = handleJSON(w, TimeseriesSummaryResult{
-			Histogram: histogram,
+			Summary: summary,
 		})
 		if err != nil {
 			handleError(w, errors.Wrap(err, "unable marshal summary result into JSON"))

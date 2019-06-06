@@ -564,7 +564,7 @@ func (s *Storage) FetchResultsExtremaByURI(dataset string, storageName string, r
 
 // FetchPredictedSummary gets the summary data about a target variable from the
 // results table.
-func (s *Storage) FetchPredictedSummary(dataset string, storageName string, resultURI string, filterParams *api.FilterParams, extrema *api.Extrema) (*api.Histogram, error) {
+func (s *Storage) FetchPredictedSummary(dataset string, storageName string, resultURI string, filterParams *api.FilterParams, extrema *api.Extrema) (*api.VariableSummary, error) {
 	storageNameResult := s.getResultTable(storageName)
 	targetName, err := s.getResultTargetName(storageNameResult, resultURI)
 	if err != nil {
@@ -578,7 +578,7 @@ func (s *Storage) FetchPredictedSummary(dataset string, storageName string, resu
 
 	// use the variable type to guide the summary creation.
 	var field Field
-	var histogram *api.Histogram
+	var summary *api.VariableSummary
 	if model.IsNumerical(variable.Type) {
 		field = NewNumericalField(s, storageName, variable.Name, variable.DisplayName, variable.Type)
 	} else if model.IsCategorical(variable.Type) {
@@ -589,27 +589,15 @@ func (s *Storage) FetchPredictedSummary(dataset string, storageName string, resu
 		return nil, errors.Errorf("variable %s of type %s does not support summary", variable.Name, variable.Type)
 	}
 
-	histogram, err = field.FetchPredictedSummaryData(resultURI, storageNameResult, filterParams, extrema)
+	summary, err = field.FetchPredictedSummaryData(resultURI, storageNameResult, filterParams, extrema)
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to fetch result summary")
 	}
 
-	// add filter if results
-	filter := map[string]interface{}{
-		"result_id": resultURI,
-	}
-
-	// get number of rows
-	numRows, err := s.FetchNumRows(storageNameResult, []*model.Variable{variable}, filter)
-	if err != nil {
-		return nil, err
-	}
-	histogram.NumRows = numRows
-
 	// add dataset
-	histogram.Dataset = dataset
+	summary.Dataset = dataset
 
-	return histogram, nil
+	return summary, nil
 }
 
 func (s *Storage) getDisplayName(dataset string, columnName string) (string, error) {
@@ -629,7 +617,7 @@ func (s *Storage) getDisplayName(dataset string, columnName string) (string, err
 }
 
 // FetchForecastingSummary fetches a timeseries for a given result.
-func (s *Storage) FetchForecastingSummary(dataset string, storageName string, xColName string, yColName string, interval int, resultURI string, filterParams *api.FilterParams) (*api.Histogram, error) {
+func (s *Storage) FetchForecastingSummary(dataset string, storageName string, xColName string, yColName string, interval int, resultURI string, filterParams *api.FilterParams) (*api.VariableSummary, error) {
 
 	// need description of the variables to request aggregation against.
 	timeColVar, err := s.metadata.FetchVariable(dataset, xColName)
@@ -669,13 +657,7 @@ func (s *Storage) FetchForecastingSummary(dataset string, storageName string, xC
 		return nil, errors.Wrap(err, "failed to fetch summary data")
 	}
 
-	// get number of rows
-	numRows, err := s.FetchNumRows(storageName, []*model.Variable{variable}, nil)
-	if err != nil {
-		return nil, err
-	}
 	timeseries.Type = "timeseries"
-	timeseries.NumRows = numRows
 
 	// add dataset
 	timeseries.Dataset = dataset

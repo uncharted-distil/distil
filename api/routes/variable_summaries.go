@@ -27,7 +27,7 @@ import (
 
 // SummaryResult represents a summary response for a variable.
 type SummaryResult struct {
-	Histogram *api.Histogram `json:"histogram"`
+	Summary *api.VariableSummary `json:"summary"`
 }
 
 // VariableSummaryHandler generates a route handler that facilitates the
@@ -67,7 +67,7 @@ func VariableSummaryHandler(ctorStorage api.DataStorageCtor) func(http.ResponseW
 		}
 
 		// fetch summary histogram
-		histogram, err := storage.FetchSummary(dataset, storageName, variable, filterParams, invertBool)
+		summary, err := storage.FetchSummary(dataset, storageName, variable, filterParams, invertBool)
 		if err != nil {
 			handleError(w, err)
 			return
@@ -75,7 +75,7 @@ func VariableSummaryHandler(ctorStorage api.DataStorageCtor) func(http.ResponseW
 
 		// marshal output into JSON
 		err = handleJSON(w, SummaryResult{
-			Histogram: histogram,
+			Summary: summary,
 		})
 		if err != nil {
 			handleError(w, errors.Wrap(err, "unable marshal summary result into JSON"))

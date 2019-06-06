@@ -72,33 +72,39 @@ func NewNumericalFieldSubSelect(storage *Storage, storageName string, key string
 }
 
 // FetchSummaryData pulls summary data from the database and builds a histogram.
-func (f *NumericalField) FetchSummaryData(resultURI string, filterParams *api.FilterParams, extrema *api.Extrema, invert bool) (*api.Histogram, error) {
-	var histogram *api.Histogram
+func (f *NumericalField) FetchSummaryData(resultURI string, filterParams *api.FilterParams, extrema *api.Extrema, invert bool) (*api.VariableSummary, error) {
+
+	var baseline *api.Histogram
+	var filtered *api.Histogram
 	var err error
 	if resultURI == "" {
-		histogram, err = f.fetchHistogram(filterParams, invert)
+		baseline, err = f.fetchHistogram(nil, invert)
 		if err != nil {
 			return nil, err
 		}
-		stats, err := f.FetchNumericalStats(filterParams, invert)
-		if err != nil {
-			return nil, err
+		if filterParams.Filters != nil {
+			filtered, err = f.fetchHistogram(filterParams, invert)
+			if err != nil {
+				return nil, err
+			}
 		}
-		histogram.StdDev = stats.StdDev
-		histogram.Mean = stats.Mean
 	} else {
-		histogram, err = f.fetchHistogramByResult(resultURI, filterParams, extrema)
-		if err != nil {
-			return nil, err
+		baseline, err = f.fetchHistogramByResult(resultURI, nil, extrema)
+		if filterParams.Filters != nil {
+			filtered, err = f.fetchHistogramByResult(resultURI, filterParams, extrema)
+			if err != nil {
+				return nil, err
+			}
 		}
-		stats, err := f.FetchNumericalStatsByResult(resultURI, filterParams)
-		if err != nil {
-			return nil, err
-		}
-		histogram.StdDev = stats.StdDev
-		histogram.Mean = stats.Mean
 	}
-	return histogram, nil
+	return &api.VariableSummary{
+		Label:    f.Label,
+		Key:      f.Key,
+		Type:     model.NumericalType,
+		VarType:  f.Type,
+		Baseline: baseline,
+		Filtered: filtered,
+	}, nil
 }
 
 func (f *NumericalField) parseTimeseries(rows *pgx.Rows) ([][]float64, error) {
@@ -280,26 +286,48 @@ func (f *NumericalField) parseTimeHistogram(rows *pgx.Rows, extrema *api.Extrema
 	}
 	// assign histogram attributes
 	return &api.Histogram{
-		Label:   f.Label,
-		Key:     f.Key,
-		Type:    model.NumericalType,
-		VarType: f.Type,
 		Extrema: binning.Rounded,
 		Buckets: buckets,
 	}, nil
 }
 
 // FetchTimeseriesSummaryData pulls summary data from the database and builds a histogram.
-func (f *NumericalField) FetchTimeseriesSummaryData(timeVar *model.Variable, interval int, resultURI string, filterParams *api.FilterParams, invert bool) (*api.Histogram, error) {
-	var histogram *api.Histogram
+func (f *NumericalField) FetchTimeseriesSummaryData(timeVar *model.Variable, interval int, resultURI string, filterParams *api.FilterParams, invert bool) (*api.VariableSummary, error) {
+	var baseline *api.Histogram
+	var filtered *api.Histogram
 	var err error
 	if resultURI == "" {
-		histogram, err = f.fetchTimeseriesHistogram(timeVar, interval, filterParams, invert)
+		baseline, err = f.fetchTimeseriesHistogram(timeVar, interval, nil, invert)
+		if err != nil {
+			return nil, err
+		}
+		if filterParams.Filters != nil {
+			filtered, err = f.fetchTimeseriesHistogram(timeVar, interval, filterParams, invert)
+			if err != nil {
+				return nil, err
+			}
+		}
 	} else {
-		histogram, err = f.fetchTimeseriesHistogramByResultURI(timeVar, interval, resultURI, filterParams)
+		baseline, err = f.fetchTimeseriesHistogramByResultURI(timeVar, interval, resultURI, nil)
+		if err != nil {
+			return nil, err
+		}
+		if filterParams.Filters != nil {
+			filtered, err = f.fetchTimeseriesHistogramByResultURI(timeVar, interval, resultURI, filterParams)
+			if err != nil {
+				return nil, err
+			}
+		}
 	}
 
-	return histogram, err
+	return &api.VariableSummary{
+		Label:    f.Label,
+		Key:      f.Key,
+		Type:     model.NumericalType,
+		VarType:  f.Type,
+		Baseline: baseline,
+		Filtered: filtered,
+	}, nil
 }
 
 func (f *NumericalField) fetchTimeseriesHistogram(timeVar *model.Variable, interval int, filterParams *api.FilterParams, invert bool) (*api.Histogram, error) {
@@ -422,7 +450,19 @@ func (f *NumericalField) fetchHistogram(filterParams *api.FilterParams, invert b
 		defer res.Close()
 	}
 
-	return f.parseHistogram(res, extrema)
+	histogram, err := f.parseHistogram(res, extrema)
+	if err != nil {
+		return nil, err
+	}
+
+	stats, err := f.FetchNumericalStats(filterParams, invert)
+	if err != nil {
+		return nil, err
+	}
+	histogram.StdDev = stats.StdDev
+	histogram.Mean = stats.Mean
+
+	return histogram, nil
 }
 
 func (f *NumericalField) fetchHistogramByResult(resultURI string, filterParams *api.FilterParams, extrema *api.Extrema) (*api.Histogram, error) {
@@ -474,7 +514,19 @@ func (f *NumericalField) fetchHistogramByResult(resultURI string, filterParams *
 		defer res.Close()
 	}
 
-	return f.parseHistogram(res, extrema)
+	histogram, err := f.parseHistogram(res, extrema)
+	if err != nil {
+		return nil, err
+	}
+
+	stats, err := f.FetchNumericalStats(filterParams, false)
+	if err != nil {
+		return nil, err
+	}
+	histogram.StdDev = stats.StdDev
+	histogram.Mean = stats.Mean
+
+	return histogram, nil
 }
 
 func (f *NumericalField) fetchExtrema() (*api.Extrema, error) {
@@ -570,10 +622,6 @@ func (f *NumericalField) parseHistogram(rows *pgx.Rows, extrema *api.Extrema) (*
 	}
 	// assign histogram attributes
 	return &api.Histogram{
-		Label:   f.Label,
-		Key:     f.Key,
-		Type:    model.NumericalType,
-		VarType: f.Type,
 		Extrema: rounded,
 		Buckets: buckets,
 	}, nil
@@ -644,7 +692,32 @@ func (f *NumericalField) fetchExtremaByURI(resultURI string) (*api.Extrema, erro
 
 // FetchPredictedSummaryData pulls data from the result table and builds
 // the numerical histogram for the field.
-func (f *NumericalField) FetchPredictedSummaryData(resultURI string, datasetResult string, filterParams *api.FilterParams, extrema *api.Extrema) (*api.Histogram, error) {
+func (f *NumericalField) FetchPredictedSummaryData(resultURI string, datasetResult string, filterParams *api.FilterParams, extrema *api.Extrema) (*api.VariableSummary, error) {
+	var baseline *api.Histogram
+	var filtered *api.Histogram
+	var err error
+
+	baseline, err = f.fetchPredictedSummaryData(resultURI, datasetResult, nil, extrema)
+	if err != nil {
+		return nil, err
+	}
+	if filterParams.Filters != nil {
+		filtered, err = f.fetchPredictedSummaryData(resultURI, datasetResult, filterParams, extrema)
+		if err != nil {
+			return nil, err
+		}
+	}
+	return &api.VariableSummary{
+		Label:    f.Label,
+		Key:      f.Key,
+		Type:     model.NumericalType,
+		VarType:  f.Type,
+		Baseline: baseline,
+		Filtered: filtered,
+	}, nil
+}
+
+func (f *NumericalField) fetchPredictedSummaryData(resultURI string, datasetResult string, filterParams *api.FilterParams, extrema *api.Extrema) (*api.Histogram, error) {
 	resultVariable := &model.Variable{
 		Name: "value",
 		Type: model.TextType,
@@ -862,7 +935,32 @@ func (f *NumericalField) getFromClause(alias bool) string {
 
 // FetchForecastingSummaryData pulls data from the result table and builds
 // the numerical histogram for the field.
-func (f *NumericalField) FetchForecastingSummaryData(timeVar *model.Variable, interval int, resultURI string, filterParams *api.FilterParams) (*api.Histogram, error) {
+func (f *NumericalField) FetchForecastingSummaryData(timeVar *model.Variable, interval int, resultURI string, filterParams *api.FilterParams) (*api.VariableSummary, error) {
+	var baseline *api.Histogram
+	var filtered *api.Histogram
+	var err error
+
+	baseline, err = f.fetchForecastingSummaryData(timeVar, interval, resultURI, nil)
+	if err != nil {
+		return nil, err
+	}
+	if filterParams.Filters != nil {
+		filtered, err = f.fetchForecastingSummaryData(timeVar, interval, resultURI, filterParams)
+		if err != nil {
+			return nil, err
+		}
+	}
+	return &api.VariableSummary{
+		Label:    f.Label,
+		Key:      f.Key,
+		Type:     model.CategoricalType,
+		VarType:  f.Type,
+		Baseline: baseline,
+		Filtered: filtered,
+	}, nil
+}
+
+func (f *NumericalField) fetchForecastingSummaryData(timeVar *model.Variable, interval int, resultURI string, filterParams *api.FilterParams) (*api.Histogram, error) {
 	resultVariable := &model.Variable{
 		Name: "value",
 		Type: model.TextType,
