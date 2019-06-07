@@ -20,8 +20,8 @@ export interface RouteArgs {
 	joinColumnA?: string;
 	joinColumnB?: string;
 	joinAccuracy?: string;
-	baseColumns?: string; // suggested base join columns
-	joinColumns?: string; // suggested target join columns
+	baseColumnSuggestions?: string; // suggested base join columns
+	joinColumnSuggestions?: string; // suggested target join columns
 	timeseriesAnalysis?: string;
 	timeseriesBinningInterval?: string;
 
@@ -89,6 +89,8 @@ function validateQueryArgs(args: RouteArgs): RouteArgs {
 	if (!_.isUndefined(args.joinDatasets)) { query.joinDatasets = args.joinDatasets; }
 	if (!_.isUndefined(args.joinColumnA)) { query.joinColumnA = args.joinColumnA; }
 	if (!_.isUndefined(args.joinColumnB)) { query.joinColumnB = args.joinColumnB; }
+	if (!_.isUndefined(args.baseColumnSuggestions)) { query.baseColumnSuggestions = args.baseColumnSuggestions; }
+	if (!_.isUndefined(args.joinColumnSuggestions)) { query.joinColumnSuggestions = args.joinColumnSuggestions; }
 	if (!_.isUndefined(args.joinAccuracy)) { query.joinAccuracy = args.joinAccuracy; }
 	if (!_.isUndefined(args.timeseriesAnalysis)) { query.timeseriesAnalysis = args.timeseriesAnalysis; }
 	if (!_.isUndefined(args.timeseriesBinningInterval)) { query.timeseriesBinningInterval = args.timeseriesBinningInterval; }
