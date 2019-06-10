@@ -8,7 +8,7 @@ import { Group } from './facets';
 import { FilterParams } from './filters';
 import store from '../store/store';
 import { getters as datasetGetters, actions as datasetActions } from '../store/dataset/module';
-import { formatValue, TIMESERIES_TYPE, isTimeType, isIntegerType } from '../util/types';
+import { formatValue, TIMESERIES_TYPE, isTimeType, isIntegerType, GEOCODED_LON_PREFIX } from '../util/types';
 
 // Postfixes for special variable names
 export const PREDICTED_SUFFIX = '_predicted';
@@ -82,9 +82,12 @@ export function getTimeseriesAnalysisIntervals(timeVar: Variable, range: number)
 			];
 		} else if (range < 4 * MONTHS_VALUE) {
 			return [
+				{ value: MINUTES_VALUE, text: MINUTES_LABEL },
+				{ value: HOURS_VALUE, text: HOURS_LABEL },
 				{ value: DAYS_VALUE, text: DAYS_LABEL },
 				{ value: WEEKS_VALUE, text: WEEKS_LABEL },
-				{ value: MONTHS_VALUE, text: MONTHS_LABEL }
+				{ value: MONTHS_VALUE, text: MONTHS_LABEL },
+				{ value: YEARS_VALUE, text: YEARS_LABEL }
 			];
 		} else if (range < YEARS_VALUE) {
 			return [
