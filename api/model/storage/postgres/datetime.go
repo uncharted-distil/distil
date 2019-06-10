@@ -116,7 +116,7 @@ func (f *DateTimeField) fetchHistogram(filterParams *api.FilterParams, invert bo
 	// create the filter for the query.
 	wheres := make([]string, 0)
 	params := make([]interface{}, 0)
-	wheres, params = f.Storage.buildFilteredQueryWhere(wheres, params, filterParams.Filters, invert)
+	wheres, params = f.Storage.buildFilteredQueryWhere(wheres, params, filterParams, invert)
 
 	// need the extrema to calculate the histogram interval
 	extrema, err := f.fetchExtrema()

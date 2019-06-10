@@ -14,14 +14,12 @@ import IconBookmark from './icons/IconBookmark';
 
 import { createIcon } from '../util/icon';
 import { Group, CategoricalFacet, isCategoricalFacet, getCategoricalChunkSize, isNumericalFacet, isSparklineFacet } from '../util/facets';
-import { Highlight, RowSelection, Row } from '../store/highlights/index';
-import { VariableSummary } from '../store/dataset/index';
+import { VariableSummary, Highlight, RowSelection, Row } from '../store/dataset/index';
 import { Dictionary } from '../util/dict';
 import { getSelectedRows } from '../util/row';
 import Facets from '@uncharted.software/stories-facets';
 import ImagePreview from '../components/ImagePreview';
 import TypeChangeMenu from '../components/TypeChangeMenu';
-import { circleSpinnerHTML } from '../util/spinner';
 import { getVarType, isClusterType, isFeatureType, addClusterPrefix, addFeaturePrefix, hasComputedVarPrefix } from '../util/types';
 
 import '@uncharted.software/stories-facets/dist/facets.css';
@@ -46,7 +44,7 @@ export default Vue.extend({
 
 	props: {
 		groups: Array as () => Group[],
-		highlights: Object as () => Highlight,
+		highlight: Object as () => Highlight,
 		rowSelection: Object as () => RowSelection,
 		deemphasis: Object as () => any,
 		enableTypeChange: Boolean as () => boolean,
@@ -70,13 +68,13 @@ export default Vue.extend({
 		const component = this as any;
 		return {
 			facets: {} as any,
-			debouncedInjection: _.debounce((highlights: Highlight, selection: RowSelection, deemphasis: any) => {
+			debouncedInjection: _.debounce((highlight: Highlight, selection: RowSelection, deemphasis: any) => {
 				// we need to guard here because this debounced call can execute
 				// after this component is destroyed
 				if (!component.facets) {
 					return;
 				}
-				component.injectHighlights(highlights, selection, deemphasis);
+				component.injectHighlights(highlight, selection, deemphasis);
 			}, INJECT_DEBOUNCE),
 			numToDisplay: {} as Dictionary<number>,
 			numAddedToDisplay: {} as Dictionary<number>
@@ -177,7 +175,7 @@ export default Vue.extend({
 				from: _.toNumber(value.label),
 				to: _.toNumber(value.toLabel)
 			};
-			if (this.isHighlightedValue(this.highlights, group.colName, range)) {
+			if (this.isHighlightedValue(this.highlight, group.colName, range)) {
 				// clear current selection
 				component.$emit('histogram-click', this.instanceName, null, null, facet.dataset);
 			} else {
@@ -189,7 +187,7 @@ export default Vue.extend({
 		this.facets.on('facet:click', (event: Event, key: string, value: string, count: number, facet: any) => {
 			// User clicked on the value that is currently the highlight root
 			const group = this.groups.find(group => group.key === key);
-			if (this.isHighlightedValue(this.highlights, group.colName, value)) {
+			if (this.isHighlightedValue(this.highlight, group.colName, value)) {
 				// clear current selection
 				component.$emit('facet-click', this.instanceName, null, null, facet.dataset);
 			} else {
@@ -271,7 +269,7 @@ export default Vue.extend({
 		},
 
 		// handle external highlight changes by updating internal facet select states
-		highlights(currHighlights: Highlight) {
+		highlight(currHighlights: Highlight) {
 			this.debouncedInjection(currHighlights, this.rowSelection, this.deemphasis);
 			if (this.enableHighlighting) {
 				this.addHighlightArrow(currHighlights);
@@ -280,11 +278,11 @@ export default Vue.extend({
 
 		// handle external highlight changes by updating internal facet select states
 		rowSelection(currSelection: RowSelection) {
-			this.debouncedInjection(this.highlights, currSelection, this.deemphasis);
+			this.debouncedInjection(this.highlight, currSelection, this.deemphasis);
 		},
 
 		deemphasis(currDemphasis: any) {
-			this.debouncedInjection(this.highlights, this.rowSelection, currDemphasis);
+			this.debouncedInjection(this.highlight, this.rowSelection, currDemphasis);
 		},
 
 		sort() {
@@ -394,7 +392,7 @@ export default Vue.extend({
 			this.injectImportantBadge(group, $elem);
 		},
 
-		addHighlightArrow(highlights: Highlight) {
+		addHighlightArrow(highlight: Highlight) {
 			const $elem = $(this.$el);
 			// remove previous
 			$elem.find('.highlight-arrow').remove();
@@ -406,59 +404,43 @@ export default Vue.extend({
 			const $groups = $elem.find('.facets-group');
 			this.groups.forEach((group, index) => {
 				// add highlight arrow
-				if (this.isHighlightedGroup(highlights, group.colName)) {
+				if (this.isHighlightedGroup(highlight, group.colName)) {
 					const $group = $($groups.get(index + QUERY_OFFSET));
 					$group.append('<div class="highlight-arrow"><i class="fa fa-arrow-circle-right fa-2x"></i></div>');
 				}
 			});
 		},
 
-		isHighlightedInstance(highlights: Highlight): boolean {
-			return _.get(highlights, 'root.context') === this.instanceName;
+		isHighlightedInstance(highlight: Highlight): boolean {
+			return highlight.context === this.instanceName;
 		},
 
-		isHighlightedGroup(highlights: Highlight, colName: string): boolean {
-			return this.isHighlightedInstance(highlights) &&
-				_.get(highlights, 'root.key') === colName;
-				// _.get(highlights, 'root.dataset') === dataset;
+		isHighlightedGroup(highlight: Highlight, colName: string): boolean {
+			return this.isHighlightedInstance(highlight) && highlight.key === colName;
 		},
 
-		isHighlightedValue(highlights: Highlight, colName: string, value: any): boolean {
+		isHighlightedValue(highlight: Highlight, colName: string, value: any): boolean {
 			// if not instance, return false
-			if (!this.isHighlightedGroup(highlights, colName)) {
+			if (!this.isHighlightedGroup(highlight, colName)) {
 				return false;
 			}
-			if (_.isArray(highlights.root.value)) {
+			if (_.isArray(highlight.value)) {
 				return false;
 			}
 			// if string, check for match
-			if (_.isString(highlights.root.value)) {
-				return highlights.root.value === value;
+			if (_.isString(highlight.value)) {
+				return highlight.value === value;
 			}
 			// otherwise, check range
-			return highlights.root.value.from === value.from &&
-				highlights.root.value.to === value.to;
+			return highlight.value.from === value.from &&
+				highlight.value.to === value.to;
 		},
 
-		getHighlightRootValue(highlights: Highlight): any {
-			if (highlights.root && highlights.root.value) {
-				return highlights.root.value;
+		getHighlightValue(highlight: Highlight): any {
+			if (highlight && highlight.value) {
+				return highlight.value;
 			}
 			return null;
-		},
-
-		getHighlightSummaries(highlights: Highlight): VariableSummary[] {
-			if (highlights.values) {
-				return highlights.values.summaries;
-			}
-			return null;
-		},
-
-		getHighlightSummary(highlights: Highlight, key: string): VariableSummary {
-			const highlightSummaries = this.getHighlightSummaries(highlights);
-			return _.find(highlightSummaries, s => {
-				return s.key === key;
-			});
 		},
 
 		selectCategoricalFacet(facet: any, count?: number) {
@@ -648,31 +630,21 @@ export default Vue.extend({
 			});
 		},
 
-		removeSpinnerFromGroup(group: any) {
-			group._element.find('.facet-highlight-spinner').remove();
-		},
-
-		addSpinnerForGroup(group: any) {
-			this.removeSpinnerFromGroup(group);
-			const $spinner = $(`<div class="facet-highlight-spinner">${circleSpinnerHTML()}</div>`);
-			group._element.find('.facets-group').append($spinner);
-		},
-
-		injectHighlightDatasetDeemphasis(group: any, highlights: Highlight) {
+		injectHighlightDatasetDeemphasis(group: any, highlight: Highlight) {
 
 			// if the dataset of the highlight does not match the dataset of this
 			// facet, deemphasis the group
 
-			if (!highlights || !highlights.root || highlights.root.dataset === group.dataset) {
+			if (!highlight || !highlight || highlight.dataset === group.dataset) {
 				group._element.removeClass('deemphasis');
 				return;
 			}
-			if (highlights.root.dataset !== group.dataset) {
+			if (highlight.dataset !== group.dataset) {
 				group._element.addClass('deemphasis');
 			}
 		},
 
-		injectHighlightsIntoGroup(group: any, highlights: Highlight) {
+		injectHighlightsIntoGroup(group: any, highlight: Highlight) {
 
 			if (this.ignoreHighlights) {
 				return;
@@ -698,8 +670,8 @@ export default Vue.extend({
 
 
 			const groupSpec = this.groups.find(g => g.key === group.key);
-			const highlightRootValue = this.getHighlightRootValue(highlights);
-			const highlightSummary = this.getHighlightSummary(highlights, groupSpec.colName);
+			const highlightRootValue = this.getHighlightValue(highlight);
+			const highlightSummary = groupSpec.summary ? groupSpec.summary.filtered : null;
 
 			for (const facet of group.facets) {
 
@@ -713,7 +685,7 @@ export default Vue.extend({
 					const selection = {} as any;
 
 					// if this is the highlighted group, create filter selection
-					if (this.isHighlightedGroup(highlights, groupSpec.colName)) {
+					if (this.isHighlightedGroup(highlight, groupSpec.colName)) {
 
 						// NOTE: the `from` / `to` values MUST be strings.
 						selection.range = {
@@ -726,7 +698,6 @@ export default Vue.extend({
 						const bars = facet._histogram.bars;
 
 						if (highlightSummary && highlightSummary.buckets.length === bars.length) {
-							this.removeSpinnerFromGroup(group);
 
 							const slices = {};
 
@@ -736,10 +707,6 @@ export default Vue.extend({
 							});
 
 							selection.slices = slices;
-						} else {
-							if (highlightRootValue) {
-								this.addSpinnerForGroup(group);
-							}
 						}
 					}
 
@@ -752,7 +719,7 @@ export default Vue.extend({
 					const selection = {} as any;
 
 					// if this is the highlighted group, create filter selection
-					if (this.isHighlightedGroup(highlights, groupSpec.colName)) {
+					if (this.isHighlightedGroup(highlight, groupSpec.colName)) {
 
 						// NOTE: the `from` / `to` values MUST be strings.
 						selection.range = {
@@ -766,7 +733,6 @@ export default Vue.extend({
 
 						// const points = facet._sparkline.points;
 						// if (highlightSummary && highlightSummary.buckets.length === points.length) {
-						// 	this.removeSpinnerFromGroup(group);
 						//
 						// 	const slices = {};
 						//
@@ -776,10 +742,6 @@ export default Vue.extend({
 						// 	});
 						//
 						// 	selection.slices = slices;
-						// } else {
-						// 	if (highlightRootValue) {
-						// 		this.addSpinnerForGroup(group);
-						// 	}
 						// }
 					}
 
@@ -789,9 +751,9 @@ export default Vue.extend({
 
 				} else {
 
-					if (this.isHighlightedGroup(highlights, groupSpec.colName)) {
+					if (this.isHighlightedGroup(highlight, groupSpec.colName)) {
 
-						const highlightValue = this.getHighlightRootValue(highlights);
+						const highlightValue = this.getHighlightValue(highlight);
 						if (highlightValue.toLowerCase() === facet.value.toLowerCase()) {
 							this.selectCategoricalFacet(facet);
 							this.selectTimeseriesFacet(facet);
@@ -803,7 +765,6 @@ export default Vue.extend({
 					} else {
 
 						if (highlightSummary) {
-							this.removeSpinnerFromGroup(group);
 
 							const bucket = _.find(highlightSummary.buckets, b => {
 								return b.key === facet.value;
@@ -815,28 +776,24 @@ export default Vue.extend({
 								this.deselectCategoricalFacet(facet);
 							}
 
-						} else {
-							if (highlightRootValue) {
-								this.addSpinnerForGroup(group);
-							}
 						}
 					}
 				}
 			}
 		},
 
-		injectHighlights(highlights: Highlight, selection: RowSelection, deemphasis: any) {
+		injectHighlights(highlight: Highlight, selection: RowSelection, deemphasis: any) {
 			// Clear highlight state incase it was set via a click on on another
 			// component
 			$(this.$el).find('.select-highlight').removeClass('select-highlight');
-			/// Update highlights
+			/// Update highlight
 			this.processedGroups.forEach(g => {
 				const group = this.facets.getGroup(g.key);
 				if (!group) {
 					return;
 				}
-				this.injectHighlightsIntoGroup(group, highlights);
-				this.injectHighlightDatasetDeemphasis(group, highlights);
+				this.injectHighlightsIntoGroup(group, highlight);
+				this.injectHighlightDatasetDeemphasis(group, highlight);
 				this.injectSelectedRowIntoGroup(group, selection);
 				this.injectDeemphasis(group, deemphasis);
 			});
@@ -894,8 +851,8 @@ export default Vue.extend({
 					this.facets.replaceGroup(_.cloneDeep(group));
 					this.augmentGroup(group, this.facets.getGroup(group.key));
 					this.injectHTML(group, this.facets.getGroup(group.key)._element);
-					this.injectHighlightsIntoGroup(this.facets.getGroup(group.key), this.highlights);
-					this.injectHighlightDatasetDeemphasis(this.facets.getGroup(group.key), this.highlights);
+					this.injectHighlightsIntoGroup(this.facets.getGroup(group.key), this.highlight);
+					this.injectHighlightDatasetDeemphasis(this.facets.getGroup(group.key), this.highlight);
 					this.injectSelectedRowIntoGroup(this.facets.getGroup(group.key), this.rowSelection);
 					this.injectDeemphasis(this.facets.getGroup(group.key), this.deemphasis);
 				} else {
@@ -915,8 +872,8 @@ export default Vue.extend({
 				toAdd.forEach(groupSpec => {
 					this.augmentGroup(groupSpec, this.facets.getGroup(groupSpec.key));
 					this.injectHTML(groupSpec, this.facets.getGroup(groupSpec.key)._element);
-					this.injectHighlightsIntoGroup(this.facets.getGroup(groupSpec.key), this.highlights);
-					this.injectHighlightDatasetDeemphasis(this.facets.getGroup(groupSpec.key), this.highlights);
+					this.injectHighlightsIntoGroup(this.facets.getGroup(groupSpec.key), this.highlight);
+					this.injectHighlightDatasetDeemphasis(this.facets.getGroup(groupSpec.key), this.highlight);
 					this.injectSelectedRowIntoGroup(this.facets.getGroup(groupSpec.key), this.rowSelection);
 					this.injectDeemphasis(this.facets.getGroup(groupSpec.key), this.deemphasis);
 				});

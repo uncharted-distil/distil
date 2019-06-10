@@ -16,7 +16,7 @@ enum ParamCacheKey {
 function createCacheable(key: ParamCacheKey, func: (context: ViewContext, args: Dictionary<string>) => any) {
 	return (context: ViewContext, args: Dictionary<string>) => {
 		// execute provided function if params are not cached already or changed
-		const params = _.values(args).join(':');
+		const params = JSON.stringify(args);
 		const cachedParams = context.getters.getFetchParamsCache[key];
 		if (cachedParams !== params) {
 			mutations.setFetchParamsCache(context, { key, value: params});
@@ -38,9 +38,13 @@ const fetchVariableSummaries = createCacheable(ParamCacheKey.VARIABLE_SUMMARIES,
 	return fetchVariables(context, args).then(() => {
 		const dataset = args.dataset;
 		const variables = context.getters.getVariables;
+		const filterParams = context.getters.getDecodedSolutionRequestFilterParams;
+		const highlight = context.getters.getDecodedHighlight;
 		context.dispatch('fetchVariableSummaries', {
 			dataset: dataset,
-			variables: variables
+			variables: variables,
+			filterParams: filterParams,
+			highlight: highlight
 		});
 	});
 });
@@ -103,7 +107,6 @@ export const actions = {
 
 	fetchJoinDatasetsData(context: ViewContext) {
 		// clear previous state
-		context.commit('clearHighlightSummaries');
 
 		const datasetIDs = context.getters.getRouteJoinDatasets;
 		const datasetIDA = datasetIDs[0];
@@ -128,14 +131,22 @@ export const actions = {
 				const datasetB = _.find(datasets, d => {
 					return d.id === datasetIDB;
 				});
+
+				const filterParams = context.getters.getDecodedSolutionRequestFilterParams;
+				const highlight = context.getters.getDecodedHighlight;
+
 				return Promise.all([
 					context.dispatch('fetchVariableSummaries', {
 						dataset: datasetA.id,
-						variables: datasetA.variables
+						variables: datasetA.variables,
+						filterParams:  filterParams,
+						highlight: highlight
 					}),
 					context.dispatch('fetchVariableSummaries', {
 						dataset: datasetB.id,
-						variables: datasetB.variables
+						variables: datasetB.variables,
+						filterParams:  filterParams,
+						highlight: highlight
 					})
 				]).then(() => {
 					return context.dispatch('updateJoinDatasetsData');
@@ -145,11 +156,10 @@ export const actions = {
 
 	updateJoinDatasetsData(context: ViewContext) {
 		// clear any previous state
-		context.commit('clearHighlightSummaries');
 		context.commit('clearJoinDatasetsTableData');
 
 		const datasetIDs = context.getters.getRouteJoinDatasets;
-		const highlightRoot = context.getters.getDecodedHighlightRoot;
+		const highlight = context.getters.getDecodedHighlight;
 		const filterParams = context.getters.getDecodedJoinDatasetsFilterParams;
 		const paginatedVariables = context.getters.getJoinDatasetsPaginatedVariables;
 
@@ -163,28 +173,28 @@ export const actions = {
 			context.dispatch('fetchJoinDatasetsHighlightValues', {
 				datasets: joinDatasets,
 				variables: paginatedVariables,
-				highlightRoot: highlightRoot,
+				highlight: highlight,
 				filterParams: filterParams
 			}),
 			context.dispatch('fetchJoinDatasetsTableData', {
 				datasets: datasetIDs,
 				filterParams: filterParams,
-				highlightRoot: highlightRoot
+				highlight: highlight
 			}),
 		]);
 	},
 
 	fetchSelectTargetData(context: ViewContext, clearSummaries: boolean) {
 		// clear previous state
-		context.commit('clearHighlightSummaries');
 		if (clearSummaries) {
 			clearVariableSummaries(context);
 		}
 
 		// fetch new state
 		const dataset = context.getters.getRouteDataset;
-		const args = { dataset };
-
+		const args = {
+			dataset: dataset
+		};
 		return fetchVariables(context, args).then(() => {
 			return fetchVariableSummaries(context, args);
 		});
@@ -197,9 +207,9 @@ export const actions = {
 
 	fetchSelectTrainingData(context: ViewContext, clearSummaries: boolean) {
 		// clear any previous state
-		context.commit('clearHighlightSummaries');
 		context.commit('setIncludedTableData', null);
 		context.commit('setExcludedTableData', null);
+
 		if (clearSummaries) {
 			clearVariableSummaries(context);
 		}
@@ -211,39 +221,34 @@ export const actions = {
 
 		return fetchVariables(context, { dataset }).then(() => {
 			fetchVariableRankings(context, { dataset, target });
-			return fetchVariableSummaries(context, { dataset });
-		}).then(() => {
 			return context.dispatch('updateSelectTrainingData');
 		});
 	},
 
 	updateSelectTrainingData(context: ViewContext) {
 		// clear any previous state
-		context.commit('clearHighlightSummaries');
 		context.commit('setIncludedTableData', null);
 		context.commit('setExcludedTableData', null);
 
 		const dataset = context.getters.getRouteDataset;
-		const highlightRoot = context.getters.getDecodedHighlightRoot;
+		const highlight = context.getters.getDecodedHighlight;
 		const filterParams = context.getters.getDecodedSolutionRequestFilterParams;
 		const paginatedVariables = context.getters.getSelectTrainingPaginatedVariables;
-
 		return Promise.all([
-			context.dispatch('fetchDataHighlightValues', {
+			fetchVariableSummaries(context, {
 				dataset: dataset,
-				variables: paginatedVariables,
-				highlightRoot: highlightRoot,
-				filterParams: filterParams
+				filterParams: filterParams,
+				highlight: highlight
 			}),
 			context.dispatch('fetchIncludedTableData', {
 				dataset: dataset,
 				filterParams: filterParams,
-				highlightRoot: highlightRoot
+				highlight: highlight
 			}),
 			context.dispatch('fetchExcludedTableData', {
 				dataset: dataset,
 				filterParams: filterParams,
-				highlightRoot: highlightRoot
+				highlight: highlight
 			})
 		]);
 	},
@@ -252,7 +257,6 @@ export const actions = {
 		// clear previous state
 		context.commit('clearTargetSummary');
 		context.commit('clearTrainingSummaries');
-		context.commit('clearHighlightSummaries');
 		context.commit('clearResidualsExtrema');
 		context.commit('setIncludedResultTableData', null);
 		context.commit('setExcludedResultTableData', null);
@@ -272,7 +276,6 @@ export const actions = {
 		// clear previous state
 		context.commit('clearTargetSummary');
 		context.commit('clearTrainingSummaries');
-		context.commit('clearHighlightSummaries');
 		context.commit('clearResidualsExtrema', null);
 		context.commit('setIncludedResultTableData', null);
 		context.commit('setExcludedResultTableData', null);
@@ -287,12 +290,12 @@ export const actions = {
 		const solutionId = context.getters.getRouteSolutionId;
 		const paginatedVariables = context.getters.getResultsPaginatedVariables;
 		const trainingVariables = context.getters.getActiveSolutionTrainingVariables;
-		const highlightRoot = context.getters.getDecodedHighlightRoot;
+		const highlight = context.getters.getDecodedHighlight;
 
 		context.dispatch('fetchResultTableData', {
 			dataset: dataset,
 			solutionId: solutionId,
-			highlightRoot: highlightRoot
+			highlight: highlight
 		});
 		context.dispatch('fetchTargetSummary', {
 			dataset: dataset,
@@ -313,7 +316,7 @@ export const actions = {
 			dataset: dataset,
 			target: target,
 			training: paginatedVariables,
-			highlightRoot: highlightRoot,
+			highlight: highlight,
 			solutionId: solutionId,
 			requestIds: requestIds,
 			includeCorrectness: isClassification,
@@ -341,7 +344,6 @@ export const actions = {
 
 	updateResultsHighlights(context: ViewContext) {
 		// clear previous state
-		context.commit('clearHighlightSummaries');
 		context.commit('setIncludedResultTableData', null);
 		context.commit('setExcludedResultTableData', null);
 
@@ -352,14 +354,14 @@ export const actions = {
 		const isClassification = context.getters.isClassification;
 		const isRegression = context.getters.isRegression;
 		const paginatedVariables = context.getters.getResultsPaginatedVariables;
-		const highlightRoot = context.getters.getDecodedHighlightRoot;
+		const highlight = context.getters.getDecodedHighlight;
 
 		return Promise.all([
 			context.dispatch('fetchResultHighlightValues', {
 				dataset: dataset,
 				target: target,
 				training: paginatedVariables,
-				highlightRoot: highlightRoot,
+				highlight: highlight,
 				solutionId: solutionId,
 				requestIds: requestIds,
 				includeCorrectness: isClassification,
@@ -368,7 +370,7 @@ export const actions = {
 			context.dispatch('fetchResultTableData', {
 				dataset: dataset,
 				solutionId: solutionId,
-				highlightRoot: highlightRoot
+				highlight: highlight
 			})
 		]);
 	}

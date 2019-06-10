@@ -82,13 +82,13 @@ export interface Group {
 	collapsible: boolean;
 	collapsed: boolean;
 	facets: (PlaceHolderFacet | CategoricalFacet | NumericalFacet | SparklineFacet)[];
-	numRows: number;
 	more?: number;
 	moreTotal?: number;
 	total?: number;
 	less?: number;
 	all?: (PlaceHolderFacet | CategoricalFacet | NumericalFacet | SparklineFacet)[];
 	isImportant?: boolean;
+	summary: VariableSummary;
 }
 
 // creates the set of facets from the supplied summary data
@@ -138,7 +138,7 @@ export function createErrorFacet(summary: VariableSummary): Group {
 			html: `<div>${summary.err}</div>`,
 			filterable: false
 		}],
-		numRows: 0
+		summary: null
 	};
 }
 
@@ -157,7 +157,7 @@ export function createPendingFacet(summary: VariableSummary): Group {
 			html: spinnerHTML(),
 			filterable: false
 		}],
-		numRows: 0
+		summary: null
 	};
 }
 
@@ -173,7 +173,7 @@ export function createSummaryFacet(summary: VariableSummary, exemplar?: Variable
 		case NUMERICAL_SUMMARY:
 			return createNumericalSummaryFacet(summary);
 		case TIMESERIES_SUMMMARY:
-			if (summary.categoryBuckets) {
+			if (summary.baseline.categoryBuckets) {
 				return createCategoricalTimeseriesSummaryFacet(summary, exemplar);
 			} else {
 				return createNumericalTimeseriesFacet(summary, exemplar);
@@ -225,7 +225,7 @@ export function getCategoricalChunkSize(type: string): number {
 // creates a categorical facet
 function createCategoricalSummaryFacet(summary: VariableSummary): Group {
 	let total = 0;
-	const facets =  summary.buckets.map((b, index) => {
+	const facets =  summary.baseline.buckets.map((b, index) => {
 		const segments = [];
 		const selected = {
 			count: b.count
@@ -242,7 +242,7 @@ function createCategoricalSummaryFacet(summary: VariableSummary): Group {
 			selected: selected,
 			segments: segments,
 			filterable: false,
-			file: summary.exemplars ? summary.exemplars[index] : null
+			file: summary.baseline.exemplars ? summary.baseline.exemplars[index] : null
 		};
 		total += b.count;
 		return facet;
@@ -271,16 +271,16 @@ function createCategoricalSummaryFacet(summary: VariableSummary): Group {
 		collapsed: false,
 		facets: top,
 		total: total,
-		numRows: summary.numRows,
 		more: remaining.length,
 		moreTotal: remainingTotal,
-		all: facets
+		all: facets,
+		summary: summary
 	};
 }
 
 function createCategoricalTimeseriesSummaryFacet(summary: VariableSummary, exemplar?: VariableSummary): Group {
 	let total = 0;
-	const facets =  _.map(summary.categoryBuckets, (buckets, category) => {
+	const facets =  _.map(summary.baseline.categoryBuckets, (buckets, category) => {
 		const segments = [];
 		const count = _.sumBy(buckets, b => b.count);
 		const selected = {
@@ -329,10 +329,10 @@ function createCategoricalTimeseriesSummaryFacet(summary: VariableSummary, exemp
 		collapsed: false,
 		facets: top,
 		total: total,
-		numRows: summary.numRows,
 		more: remaining.length,
 		moreTotal: remainingTotal,
-		all: facets
+		all: facets,
+		summary: summary
 	};
 }
 
@@ -351,8 +351,8 @@ function createDataOverTimeFacet(summary: TimeseriesSummary): Group {
 }
 
 function getHistogramSlices(summary: VariableSummary) {
-	const buckets = summary.buckets;
-	const extrema = summary.extrema;
+	const buckets = summary.baseline.buckets;
+	const extrema = summary.baseline.extrema;
 	const slices = new Array(buckets.length);
 	for (let i = 0; i < buckets.length; i++) {
 		const bucket = buckets[i];
@@ -394,7 +394,7 @@ function createNumericalSummaryFacet(summary: VariableSummary): Group {
 				selection: {} as any
 			}
 		],
-		numRows: summary.numRows
+		summary: summary
 	};
 }
 
@@ -404,10 +404,10 @@ function createNumericalTimeseriesFacet(summary: VariableSummary, exemplar?: Var
 	let timeseries: number[][];
 	let forecasted: number[][];
 	if (exemplar) {
-		timeseries = exemplar.buckets.map(b => [ _.parseInt(b.key), b.count ]);
-		forecasted = summary.buckets.map(b => [ _.parseInt(b.key), b.count ]);
+		timeseries = exemplar.baseline.buckets.map(b => [ _.parseInt(b.key), b.count ]);
+		forecasted = summary.baseline.buckets.map(b => [ _.parseInt(b.key), b.count ]);
 	} else {
-		timeseries = summary.buckets.map(b => [ _.parseInt(b.key), b.count ]);
+		timeseries = summary.baseline.buckets.map(b => [ _.parseInt(b.key), b.count ]);
 	}
 
 	return {
@@ -427,7 +427,7 @@ function createNumericalTimeseriesFacet(summary: VariableSummary, exemplar?: Var
 				selection: {} as any
 			}
 		],
-		numRows: summary.numRows
+		summary: summary
 	};
 }
 
@@ -448,7 +448,7 @@ export function isPlaceHolderFacet(facet: PlaceHolderFacet | CategoricalFacet | 
 }
 
 export function getCategoricalFacetValue(summary: VariableSummary): string {
-	return summary.categoryBuckets ? getTimeseriesSummaryTopCategories(summary)[0] : summary.buckets[0].key;
+	return summary.baseline.categoryBuckets ? getTimeseriesSummaryTopCategories(summary)[0] : summary.baseline.buckets[0].key;
 }
 
 export function getNumericalFacetValue(summary: VariableSummary, group: Group, type: string): {from: number, to: number} {
@@ -456,23 +456,23 @@ export function getNumericalFacetValue(summary: VariableSummary, group: Group, t
 	// facet library is incapable of selecting a range that isnt exactly
 	// on a bin boundary, so we need to iterate through and find it
 	// manually.
-	const extrema = summary.extrema;
+	const extrema = summary.baseline.extrema;
 
 	let from = extrema.min;
 	let to = extrema.max;
-	if (summary.mean !== undefined && summary.stddev !== undefined) {
+	if (summary.baseline.mean !== undefined && summary.baseline.stddev !== undefined) {
 		switch (type) {
 			case TOP_RANGE_HIGHLIGHT:
-				from = summary.mean + (summary.stddev * DEFAULT_HIGHLIGHT_PERCENTILE);
+				from = summary.baseline.mean + (summary.baseline.stddev * DEFAULT_HIGHLIGHT_PERCENTILE);
 				break;
 
 			case BOTTOM_RANGE_HIGHLIGHT:
-				to = summary.mean - (summary.stddev * DEFAULT_HIGHLIGHT_PERCENTILE);
+				to = summary.baseline.mean - (summary.baseline.stddev * DEFAULT_HIGHLIGHT_PERCENTILE);
 				break;
 
 			case MID_RANGE_HIGHLIGHT:
-				from = summary.mean - (summary.stddev * DEFAULT_HIGHLIGHT_PERCENTILE);
-				to = summary.mean + (summary.stddev * DEFAULT_HIGHLIGHT_PERCENTILE);
+				from = summary.baseline.mean - (summary.baseline.stddev * DEFAULT_HIGHLIGHT_PERCENTILE);
+				to = summary.baseline.mean + (summary.baseline.stddev * DEFAULT_HIGHLIGHT_PERCENTILE);
 				break;
 		}
 	} else {
@@ -521,7 +521,7 @@ export function getNumericalFacetValue(summary: VariableSummary, group: Group, t
 
 export function getTimeseriesFacetValue(summary: VariableSummary, group: Group, type: string): {from: number, to: number} {
 	return {
-		from: _.toNumber(_.minBy(summary.buckets, b => _.toNumber(b.key)).key),
-		to: _.toNumber(_.maxBy(summary.buckets, b => _.toNumber(b.key)).key),
+		from: _.toNumber(_.minBy(summary.baseline.buckets, b => _.toNumber(b.key)).key),
+		to: _.toNumber(_.maxBy(summary.baseline.buckets, b => _.toNumber(b.key)).key),
 	};
 }

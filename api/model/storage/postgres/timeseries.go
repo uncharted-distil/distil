@@ -114,7 +114,7 @@ func (s *Storage) FetchTimeseries(dataset string, storageName string, timeseries
 	wheres = append(wheres, fmt.Sprintf("\"%s\" = $1", timeseriesColName))
 	params = append(params, timeseriesURI)
 
-	wheres, params = s.buildFilteredQueryWhere(wheres, params, filterParams.Filters, invert)
+	wheres, params = s.buildFilteredQueryWhere(wheres, params, filterParams, invert)
 	where := fmt.Sprintf("WHERE %s", strings.Join(wheres, " AND "))
 
 	// Get count by category.
@@ -185,7 +185,7 @@ func (f *TimeSeriesField) fetchHistogram(filterParams *api.FilterParams, invert 
 	// create the filter for the query.
 	wheres := make([]string, 0)
 	params := make([]interface{}, 0)
-	wheres, params = f.Storage.buildFilteredQueryWhere(wheres, params, filterParams.Filters, false)
+	wheres, params = f.Storage.buildFilteredQueryWhere(wheres, params, filterParams, false)
 
 	prefixedVarName := f.clusterVarName(f.ClusterCol)
 

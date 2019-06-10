@@ -17,6 +17,8 @@ import Vue from 'vue';
 import { circleSpinnerHTML } from '../util/spinner';
 import { TimeseriesExtrema } from '../store/dataset/index';
 
+const INJECT_DEBOUNCE = 200;
+
 export default Vue.extend({
 	name: 'sparkline-svg',
 
@@ -40,12 +42,18 @@ export default Vue.extend({
 		}
 	},
 	data() {
+		const component = this as any;
 		return {
 			zoomSparkline: false,
 			isVisible: false,
 			hasRendered: false,
 			xScale: null,
-			yScale: null
+			yScale: null,
+			debouncedInjection: _.debounce(() => {
+				Vue.nextTick(() => {
+					component.injectTimeseries();
+				});
+			}, INJECT_DEBOUNCE),
 		};
 	},
 	computed: {
@@ -86,24 +94,29 @@ export default Vue.extend({
 
 	watch: {
 		timeseries() {
+			console.log('watch timeseries');
 			if (this.isVisible && !this.hasRendered) {
-				Vue.nextTick(() => {
-					this.injectTimeseries();
-				});
+				this.debouncedInjection();
 			}
 		},
 		timeseriesExtrema: {
-			handler() {
+			handler(newExtrema, oldExtrema) {
+				console.log('watch timeseriesExtrema');
 				if (this.isVisible && this.isLoaded) {
 					// only redraw if it is currently visible, the data has
 					// loaded
 					// NOTE: there is a race condition in which `isLoaded`
 					// returns true, but the svg element using `v-if="isLoaded"`
-					// has not yet rendered use this to ensure the DOM updates
+					// has not yet rendered. Use this to ensure the DOM updates
 					// before attempting to inject
-					Vue.nextTick(() => {
-						this.injectTimeseries();
-					});
+
+					if (newExtrema.x.min === oldExtrema.x.min &&
+						newExtrema.x.max === oldExtrema.x.max &&
+						newExtrema.y.min === oldExtrema.y.min &&
+						newExtrema.y.max === oldExtrema.y.max) {
+						return;
+					}
+					this.debouncedInjection();
 				} else {
 					// ensure it re-renders once it comes back into view
 					this.hasRendered = false;
@@ -135,9 +148,7 @@ export default Vue.extend({
 		visibilityChanged(isVisible: boolean) {
 			this.isVisible = isVisible;
 			if (this.isVisible && !this.hasRendered) {
-				Vue.nextTick(() => {
-					this.injectTimeseries();
-				});
+				this.debouncedInjection();
 			}
 		},
 		onClick() {

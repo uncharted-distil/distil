@@ -22,7 +22,7 @@
 						:label="timeseries.label"
 						:timeseries="timeseries.timeseries"
 						:forecast="timeseries.forecast"
-						:timeseries-extrema="timeseriesVariableExtrema(timeseries.key)"
+						:timeseries-extrema="timeseriesVariableExtrema[timeseries.key]"
 						:highlight-pixel-x="highlightPixelX">
 					</sparkline-variable>
 				</div>
@@ -57,13 +57,12 @@ import SparklineRow from './SparklineRow';
 import SparklineVariable from './SparklineVariable';
 import { Dictionary } from '../util/dict';
 import { Filter } from '../util/filters';
-import { RowSelection, HighlightRoot } from '../store/highlights/index';
-import { TableRow, TableColumn, TimeseriesExtrema, Variable, VariableSummary, Grouping } from '../store/dataset/index';
+import { TableRow, TableColumn, TimeseriesExtrema, Variable, Histogram, Bucket, VariableSummary, Grouping, RowSelection, Highlight } from '../store/dataset/index';
 import { getters as routeGetters } from '../store/route/module';
 import { getters as datasetGetters } from '../store/dataset/module';
 import { getters as resultsGetters } from '../store/results/module';
 import { getters as solutionGetters } from '../store/solutions/module';
-import { updateHighlightRoot } from '../util/highlights';
+import { updateHighlight } from '../util/highlights';
 import { getTimeseriesGroupingsFromFields } from '../util/data';
 import { isTimeType } from '../util/types';
 import { getSolutionIndex } from '../util/solutions';
@@ -204,18 +203,81 @@ export default Vue.extend({
 			// if we have a predicted summary, create exemplar from it
 			let timeseries = [];
 			if (this.hasPredictedCol) {
-				const exemplars = this.variableSummaryToTimeseries(this.resultTargetSummary, null);
+				const key = this.resultTargetSummary.key;
+				const label = this.resultTargetSummary.label;
+				let histogram = null;
+				if (this.resultTargetSummary.filtered) {
+					histogram = this.resultTargetSummary.filtered;
+				} else {
+					if (this.resultTargetSummary.baseline) {
+						histogram = this.resultTargetSummary.baseline;
+					}
+				}
+				let exemplars = null;
+				if (histogram) {
+					exemplars = this.variableSummaryToTimeseries(key, label, histogram, null, null);
+				}
 				this.predictedSummaries.forEach(summary => {
 					const index = getSolutionIndex(summary.solutionId);
-					timeseries = timeseries.concat(this.variableSummaryToTimeseries(summary, exemplars, index));
+					const key = summary.key;
+					const label = summary.label;
+					let histogram = null;
+					if (summary.filtered) {
+						histogram = summary.filtered;
+					} else {
+						if (summary.baseline) {
+							histogram = summary.baseline;
+						}
+					}
+					if (histogram) {
+						timeseries = timeseries.concat(this.variableSummaryToTimeseries(key, label, histogram, exemplars, index));
+					}
 				});
 			}
 
 			// add training variables
 			this.variableSummaries.forEach(summary => {
-				timeseries = timeseries.concat(this.variableSummaryToTimeseries(summary, null));
+				const key = summary.key;
+				const label = summary.label;
+				let histogram = null;
+				if (summary.filtered) {
+					histogram = summary.filtered;
+				} else {
+					if (summary.baseline) {
+						histogram = summary.baseline;
+					}
+				}
+				if (histogram) {
+					timeseries = timeseries.concat(this.variableSummaryToTimeseries(key, label, histogram, null, null));
+				}
 			});
 			return timeseries;
+		},
+
+		timeseriesVariableExtrema(): Dictionary<TimeseriesExtrema> {
+
+			const extrema = {};
+
+			this.timeseriesVariableSummaries.forEach(v => {
+				const key = v.key;
+				if (!extrema[key]) {
+					extrema[key] = {
+						x: {
+							min: this.microMin,
+							max: this.microMax
+						},
+						y: {
+							min: Infinity,
+							max: -Infinity
+						}
+					};
+				}
+
+				extrema[key].y.min = Math.min(extrema[key].y.min, v.yMin);
+				extrema[key].y.max = Math.max(extrema[key].y.max, v.yMax);
+			});
+
+			return extrema;
 		},
 
 		timeseriesVarsMinX(): number {
@@ -271,8 +333,8 @@ export default Vue.extend({
 			return routeGetters.getDecodedRowSelection(this.$store);
 		},
 
-		highlightRoot(): HighlightRoot {
-			return routeGetters.getDecodedHighlightRoot(this.$store);
+		highlight(): Highlight {
+			return routeGetters.getDecodedHighlight(this.$store);
 		},
 
 		timeseriesRowExtrema(): TimeseriesExtrema {
@@ -307,10 +369,10 @@ export default Vue.extend({
 
 		isTimeseriesViewHighlight(): boolean {
 			// ignore any highlights unless they are range highlights
-			return this.highlightRoot &&
-				(this.isTimeseriesAnalysis || this.highlightRoot.key === this.timeseriesGrouping.idCol) &&
-				this.highlightRoot.value.from !== undefined &&
-				this.highlightRoot.value.to !== undefined;
+			return this.highlight &&
+				(this.isTimeseriesAnalysis || this.highlight.key === this.timeseriesGrouping.idCol) &&
+				this.highlight.value.from !== undefined &&
+				this.highlight.value.to !== undefined;
 		},
 
 		microMin(): number {
@@ -318,7 +380,7 @@ export default Vue.extend({
 				return this.selectedMicroMin;
 			}
 			if (this.isTimeseriesViewHighlight) {
-				return this.highlightRoot.value.from;
+				return this.highlight.value.from;
 			}
 			return this.timeseriesMinX;
 		},
@@ -328,7 +390,7 @@ export default Vue.extend({
 				return this.selectedMicroMax;
 			}
 			if (this.isTimeseriesViewHighlight) {
-				return this.highlightRoot.value.to;
+				return this.highlight.value.to;
 			}
 			return this.timeseriesMaxX;
 		},
@@ -375,65 +437,26 @@ export default Vue.extend({
 			return stats;
 		},
 
-		variableSummaryToTimeseries(summary: VariableSummary, exemplars?: TimeseriesSummary[], solutionIndex?: number): TimeseriesSummary[] {
-			if (summary.categoryBuckets) {
-
-				const categories = [];
-				_.forIn(summary.categoryBuckets, (buckets, category) => {
-
-					let timeseries: number[][];
-					let forecasted: number[][];
-					let label = '';
-					if (exemplars && exemplars.length > 0) {
-						const exemplar = exemplars.find(ex => ex.category === category);
-						forecasted = buckets.map(b => [ _.parseInt(b.key), b.count ]);
-						timeseries = exemplar.timeseries;
-						label = `${exemplar.key}<sup>${solutionIndex}</sup> - ${category}`;
-					} else {
-						timeseries = buckets.map(b => [ _.parseInt(b.key), b.count ]);
-						label = `${summary.label} - ${category}`;
-					}
-
-					const stats = this.getStatsFromData(timeseries, forecasted);
-
-					categories.push({
-						label: label,
-						key: summary.key,
-						category: category,
-						timeseries: timeseries,
-						forecast: forecasted,
-						xMin: stats.xMin,
-						xMax: stats.xMax,
-						yMin: stats.yMin,
-						yMax: stats.yMax,
-						sum: stats.sum
-					});
-				});
-				// highest sum first
-				categories.sort((a, b) => { return b.sum - a.sum; });
-
-				return categories;
-			}
-
+		numericBucketsToTimeseries(key: string, label: string, baseline: Bucket[], exemplars?: TimeseriesSummary[], solutionIndex?: number): TimeseriesSummary[] {
 			let timeseries: number[][];
 			let forecasted: number[][];
-			let label = '';
+			let l = '';
 			if (exemplars && exemplars.length > 0) {
 				const exemplar = exemplars.length > 0 ? exemplars[0] : null;
-				forecasted = summary.buckets.map(b => [ _.parseInt(b.key), b.count ]);
+				forecasted = baseline.map(b => [ _.parseInt(b.key), b.count ]);
 				timeseries = exemplar.timeseries;
-				label = `${exemplar.key}<sup>${solutionIndex}</sup>`;
+				l = `${exemplar.key}<sup>${solutionIndex}</sup>`;
 			} else {
-				timeseries = summary.buckets.map(b => [ _.parseInt(b.key), b.count ]);
-				label = summary.label;
+				timeseries = baseline.map(b => [ _.parseInt(b.key), b.count ]);
+				l = label;
 			}
 
 			const stats = this.getStatsFromData(timeseries, forecasted);
 
 			// regular timeseries variable
 			return [{
-				label: label,
-				key: summary.key,
+				label: l,
+				key: key,
 				timeseries: timeseries,
 				forecast: forecasted,
 				xMin: stats.xMin,
@@ -444,25 +467,51 @@ export default Vue.extend({
 			}];
 		},
 
-		timeseriesVariableExtrema(variableKey: string): TimeseriesExtrema {
-			let yMin = Infinity;
-			let yMax = -Infinity;
-			this.timeseriesVariableSummaries.forEach(v => {
-				if (v.key === variableKey) {
-					yMin = Math.min(yMin, v.yMin);
-					yMax = Math.max(yMax, v.yMax);
+		categoryBucketsToTimeseries(key: string, label: string, baseline: Dictionary<Bucket[]>, exemplars?: TimeseriesSummary[], solutionIndex?: number): TimeseriesSummary[] {
+			const categories = [];
+			_.forIn(baseline, (buckets, category) => {
+
+				let timeseries: number[][];
+				let forecasted: number[][];
+				let l = '';
+				if (exemplars && exemplars.length > 0) {
+					const exemplar = exemplars.find(ex => ex.category === category);
+					forecasted = buckets.map(b => [ _.parseInt(b.key), b.count ]);
+					timeseries = exemplar.timeseries;
+					l = `${exemplar.key}<sup>${solutionIndex}</sup> - ${category}`;
+				} else {
+					timeseries = buckets.map(b => [ _.parseInt(b.key), b.count ]);
+					l = `${label} - ${category}`;
 				}
+
+				const stats = this.getStatsFromData(timeseries, forecasted);
+
+				categories.push({
+					label: l,
+					key: key,
+					category: category,
+					timeseries: timeseries,
+					forecast: forecasted,
+					xMin: stats.xMin,
+					xMax: stats.xMax,
+					yMin: stats.yMin,
+					yMax: stats.yMax,
+					sum: stats.sum
+				});
 			});
-			return {
-				x: {
-					min: this.microMin,
-					max: this.microMax
-				},
-				y: {
-					min: yMin,
-					max: yMax
-				}
-			};
+			// highest sum first
+			categories.sort((a, b) => { return b.sum - a.sum; });
+
+			return categories;
+		},
+
+		variableSummaryToTimeseries(key: string, label: string, histogram: Histogram, exemplars?: TimeseriesSummary[], solutionIndex?: number): TimeseriesSummary[] {
+			if (histogram.categoryBuckets) {
+
+				return this.categoryBucketsToTimeseries(key, label, histogram.categoryBuckets, exemplars, solutionIndex);
+			}
+
+			return this.numericBucketsToTimeseries(key, label, histogram.buckets, exemplars, solutionIndex);
 		},
 
 		getPrediction(row: TableRow): any {
@@ -620,7 +669,7 @@ export default Vue.extend({
 			};
 
 			const dragended = (d, index, elem) => {
-				updateHighlightRoot(this.$router, {
+				updateHighlight(this.$router, {
 					context: this.instanceName,
 					dataset: this.dataset,
 					key: this.isTimeseriesAnalysis ? this.timeseriesAnalysisVar : this.timeseriesGrouping.idCol,
@@ -674,7 +723,7 @@ export default Vue.extend({
 			};
 
 			const dragended = (d, index, elem) => {
-				updateHighlightRoot(this.$router, {
+				updateHighlight(this.$router, {
 					context: this.instanceName,
 					dataset: this.dataset,
 					key: this.isTimeseriesAnalysis ? this.timeseriesAnalysisVar : this.timeseriesGrouping.idCol,

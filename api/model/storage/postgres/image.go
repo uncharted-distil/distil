@@ -131,7 +131,7 @@ func (f *ImageField) fetchHistogram(filterParams *api.FilterParams, invert bool)
 	// create the filter for the query.
 	wheres := make([]string, 0)
 	params := make([]interface{}, 0)
-	wheres, params = f.Storage.buildFilteredQueryWhere(wheres, params, filterParams.Filters, invert)
+	wheres, params = f.Storage.buildFilteredQueryWhere(wheres, params, filterParams, invert)
 
 	prefixedVarName := f.featureVarName(f.Key)
 	fieldSelect := fmt.Sprintf("unnest(string_to_array(\"%s\", ','))", prefixedVarName)

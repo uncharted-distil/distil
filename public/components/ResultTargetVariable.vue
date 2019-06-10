@@ -14,10 +14,9 @@ import VariableFacets from '../components/VariableFacets';
 import { getters as routeGetters } from '../store/route/module';
 import { getters as resultsGetters } from '../store/results/module';
 import { Group, createGroups, getNumericalFacetValue, getCategoricalFacetValue, TOP_RANGE_HIGHLIGHT } from '../util/facets';
-import { getHighlights, updateHighlightRoot, clearHighlightRoot } from '../util/highlights';
+import { updateHighlight, clearHighlight } from '../util/highlights';
 import { RESULT_TARGET_VAR_INSTANCE } from '../store/route/index';
-import { Variable, VariableSummary } from '../store/dataset/index';
-import { Highlight, RowSelection } from '../store/highlights/index';
+import { Variable, VariableSummary, Highlight, RowSelection } from '../store/dataset/index';
 import { isNumericType } from '../util/types';
 
 export default Vue.extend({
@@ -48,9 +47,9 @@ export default Vue.extend({
 		groups(): Group[] {
 			if (this.resultTargetSummary) {
 				const target = createGroups([ this.resultTargetSummary ]);
-				if (this.highlights.root) {
+				if (this.highlight) {
 					const group = target[0];
-					if (group.colName === this.highlights.root.key) {
+					if (group.colName === this.highlight.key) {
 						group.facets.forEach(facet => {
 							facet.filterable = true;
 						});
@@ -61,8 +60,8 @@ export default Vue.extend({
 			return [];
 		},
 
-		highlights(): Highlight {
-			return getHighlights();
+		highlight(): Highlight {
+			return routeGetters.getDecodedHighlight(this.$store);
 		},
 
 		hasFilters(): boolean {
@@ -106,7 +105,7 @@ export default Vue.extend({
 			}
 
 			// if we have no current highlight, and no filters, highlight default range
-			if (this.highlights.root || this.hasFilters || this.hasDefaultedAlready) {
+			if (this.highlight || this.hasFilters || this.hasDefaultedAlready) {
 				return;
 			}
 
@@ -121,7 +120,7 @@ export default Vue.extend({
 		},
 
 		selectDefaultNumerical() {
-			updateHighlightRoot(this.$router, {
+			updateHighlight(this.$router, {
 				context: this.instanceName,
 				dataset: this.dataset,
 				key: this.target,
@@ -130,7 +129,7 @@ export default Vue.extend({
 		},
 
 		selectDefaultCategorical() {
-			updateHighlightRoot(this.$router, {
+			updateHighlight(this.$router, {
 				context: this.instanceName,
 				dataset: this.dataset,
 				key: this.target,

@@ -31,13 +31,11 @@
 
 import Vue from 'vue';
 import VariableFacets from '../components/VariableFacets';
-import { Variable, VariableSummary } from '../store/dataset/index';
-import { Highlight } from '../store/highlights/index';
+import { Variable, VariableSummary, Highlight } from '../store/dataset/index';
 import { getters as routeGetters } from '../store/route/module';
 import { getters as datasetGetters } from '../store/dataset/module';
 import { TRAINING_VARS_INSTANCE } from '../store/route/index';
 import { Group, createGroups, updateImportance } from '../util/facets';
-import { getHighlights } from '../util/highlights';
 import { NUM_PER_PAGE } from '../util/data';
 import { overlayRouteEntry } from '../util/routes';
 import { removeFiltersByName } from '../util/filters';
@@ -56,8 +54,8 @@ export default Vue.extend({
 		numRowsPerPage(): number {
 			return NUM_PER_PAGE;
 		},
-		highlights(): Highlight {
-			return getHighlights();
+		highlight(): Highlight {
+			return routeGetters.getDecodedHighlight(this.$store);
 		},
 		trainingVariableSummaries(): VariableSummary[] {
 			return routeGetters.getTrainingVariableSummaries(this.$store);

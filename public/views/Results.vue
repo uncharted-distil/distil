@@ -88,8 +88,8 @@ export default Vue.extend({
 		solutionId(): string {
 			return routeGetters.getRouteSolutionId(this.$store);
 		},
-		highlightRootStr(): string {
-			return routeGetters.getRouteHighlightRoot(this.$store);
+		highlightString(): string {
+			return routeGetters.getRouteHighlight(this.$store);
 		},
 		resultTrainingVarsPage(): number {
 			return routeGetters.getRouteResultTrainingVarsPage(this.$store);
@@ -101,7 +101,7 @@ export default Vue.extend({
 	},
 
 	watch: {
-		highlightRootStr() {
+		highlightString() {
 			viewActions.updateResultsHighlights(this.$store);
 		},
 		solutionId() {

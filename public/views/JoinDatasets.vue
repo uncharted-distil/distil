@@ -118,8 +118,8 @@ export default Vue.extend({
 		instanceName(): string {
 			return JOINED_VARS_INSTANCE;
 		},
-		highlightRootStr(): string {
-			return routeGetters.getRouteHighlightRoot(this.$store);
+		highlightString(): string {
+			return routeGetters.getRouteHighlight(this.$store);
 		},
 		joinedVarsPage(): number {
 			return routeGetters.getRouteJoinDatasetsVarsParge(this.$store);
@@ -191,7 +191,7 @@ export default Vue.extend({
 	},
 
 	watch: {
-		highlightRootStr() {
+		highlightString() {
 			viewActions.updateJoinDatasetsData(this.$store);
 		},
 		joinedVarsPage() {

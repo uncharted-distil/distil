@@ -289,7 +289,7 @@ func (f *CategoricalField) getTopCategories(filterParams *api.FilterParams, inve
 	// create the filter for the query
 	wheres := make([]string, 0)
 	params := make([]interface{}, 0)
-	wheres, params = f.Storage.buildFilteredQueryWhere(wheres, params, filterParams.Filters, invert)
+	wheres, params = f.Storage.buildFilteredQueryWhere(wheres, params, filterParams, invert)
 
 	where := ""
 	if len(wheres) > 0 {
@@ -378,7 +378,7 @@ func (f *CategoricalField) fetchTimeseriesHistogramByResultURI(timeVar *model.Va
 	// create the filter for the query.
 	wheres := make([]string, 0)
 	params := make([]interface{}, 0)
-	wheres, params = f.Storage.buildFilteredQueryWhere(wheres, params, filterParams.Filters, false)
+	wheres, params = f.Storage.buildFilteredQueryWhere(wheres, params, filterParams, false)
 
 	categoryWhere := fmt.Sprintf("\"%s\" in (", f.Key)
 	for index, category := range categories {
@@ -437,7 +437,7 @@ func (f *CategoricalField) fetchTimeseriesHistogram(timeVar *model.Variable, int
 	// create the filter for the query.
 	wheres := make([]string, 0)
 	params := make([]interface{}, 0)
-	wheres, params = f.Storage.buildFilteredQueryWhere(wheres, params, filterParams.Filters, invert)
+	wheres, params = f.Storage.buildFilteredQueryWhere(wheres, params, filterParams, invert)
 
 	categoryWhere := fmt.Sprintf("\"%s\" in (", f.Key)
 	for index, category := range categories {
@@ -476,7 +476,7 @@ func (f *CategoricalField) fetchHistogram(filterParams *api.FilterParams, invert
 	// create the filter for the query
 	wheres := make([]string, 0)
 	params := make([]interface{}, 0)
-	wheres, params = f.Storage.buildFilteredQueryWhere(wheres, params, filterParams.Filters, invert)
+	wheres, params = f.Storage.buildFilteredQueryWhere(wheres, params, filterParams, invert)
 
 	where := ""
 	if len(wheres) > 0 {
@@ -696,7 +696,7 @@ func (f *CategoricalField) fetchForecastingSummaryData(timeVar *model.Variable, 
 	// create the filter for the query.
 	wheres := make([]string, 0)
 	params := make([]interface{}, 0)
-	wheres, params = f.Storage.buildFilteredQueryWhere(wheres, params, filterParams.Filters, false)
+	wheres, params = f.Storage.buildFilteredQueryWhere(wheres, params, filterParams, false)
 
 	categoryWhere := fmt.Sprintf("\"%s\" in (", resultVariable.Name)
 	for index, category := range categories {

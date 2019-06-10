@@ -341,7 +341,7 @@ func (f *NumericalField) fetchTimeseriesHistogram(timeVar *model.Variable, inter
 	// create the filter for the query.
 	wheres := make([]string, 0)
 	params := make([]interface{}, 0)
-	wheres, params = f.Storage.buildFilteredQueryWhere(wheres, params, filterParams.Filters, invert)
+	wheres, params = f.Storage.buildFilteredQueryWhere(wheres, params, filterParams, invert)
 
 	where := ""
 	if len(wheres) > 0 {
@@ -377,7 +377,7 @@ func (f *NumericalField) fetchTimeseriesHistogramByResultURI(timeVar *model.Vari
 	// create the filter for the query.
 	wheres := make([]string, 0)
 	params := make([]interface{}, 0)
-	wheres, params = f.Storage.buildFilteredQueryWhere(wheres, params, filterParams.Filters, false)
+	wheres, params = f.Storage.buildFilteredQueryWhere(wheres, params, filterParams, false)
 
 	params = append(params, resultURI)
 	wheres = append(wheres, fmt.Sprintf("result.result_id = $%d", len(params)))
@@ -420,7 +420,7 @@ func (f *NumericalField) fetchHistogram(filterParams *api.FilterParams, invert b
 	// create the filter for the query.
 	wheres := make([]string, 0)
 	params := make([]interface{}, 0)
-	wheres, params = f.Storage.buildFilteredQueryWhere(wheres, params, filterParams.Filters, invert)
+	wheres, params = f.Storage.buildFilteredQueryWhere(wheres, params, filterParams, invert)
 
 	// need the extrema to calculate the histogram interval
 	extrema, err := f.fetchExtrema()
@@ -830,7 +830,7 @@ func (f *NumericalField) FetchNumericalStats(filterParams *api.FilterParams, inv
 	// create the filter for the query.
 	wheres := make([]string, 0)
 	params := make([]interface{}, 0)
-	wheres, params = f.Storage.buildFilteredQueryWhere(wheres, params, filterParams.Filters, invert)
+	wheres, params = f.Storage.buildFilteredQueryWhere(wheres, params, filterParams, invert)
 
 	where := ""
 	if len(wheres) > 0 {
@@ -976,7 +976,7 @@ func (f *NumericalField) fetchForecastingSummaryData(timeVar *model.Variable, in
 	// create the filter for the query.
 	wheres := make([]string, 0)
 	params := make([]interface{}, 0)
-	wheres, params = f.Storage.buildFilteredQueryWhere(wheres, params, filterParams.Filters, false)
+	wheres, params = f.Storage.buildFilteredQueryWhere(wheres, params, filterParams, false)
 
 	params = append(params, resultURI)
 	wheres = append(wheres, fmt.Sprintf("result.result_id = $%d", len(params)))

@@ -39,7 +39,7 @@
 					@range-change="onResultRangeChange"
 					:solution-id="solutionId"
 					:groups="predictedGroups"
-					:highlights="highlights"
+					:highlight="highlight"
 					:instanceName="predictedInstanceName"
 					:row-selection="rowSelection"
 					:html="residualHtml">
@@ -50,7 +50,7 @@
 						@range-change="onResidualRangeChange"
 						:solution-id="solutionId"
 						:groups="residualGroups"
-						:highlights="highlights"
+						:highlight="highlight"
 						:deemphasis="residualThreshold"
 						:instanceName="residualInstanceName"
 						:row-selection="rowSelection"
@@ -61,7 +61,7 @@
 					@facet-click="onCorrectnessCategoricalClick"
 					:solution-id="solutionId"
 					:groups="correctnessGroups"
-					:highlights="highlights"
+					:highlight="highlight"
 					:instanceName="correctnessInstanceName"
 					:row-selection="rowSelection"
 					:html="residualHtml">
@@ -86,14 +86,13 @@
 import Vue from 'vue';
 import Facets from '../components/Facets';
 import { createGroups, Group } from '../util/facets';
-import { Extrema, VariableSummary } from '../store/dataset/index';
-import { Highlight, RowSelection } from '../store/highlights/index';
+import { Extrema, VariableSummary, RowSelection, Highlight } from '../store/dataset/index';
 import { SOLUTION_COMPLETED, SOLUTION_ERRORED } from '../store/solutions/index';
 import { getters as routeGetters } from '../store/route/module';
 import { getters as solutionGetters } from '../store/solutions/module';
 import { getSolutionIndex, getSolutionById, isTopSolutionByScore } from '../util/solutions';
 import { overlayRouteEntry } from '../util/routes';
-import { getHighlights, updateHighlightRoot, clearHighlightRoot } from '../util/highlights';
+import { updateHighlight, clearHighlight } from '../util/highlights';
 import _ from 'lodash';
 
 export default Vue.extend({
@@ -186,8 +185,8 @@ export default Vue.extend({
 			return groups;
 		},
 
-		highlights(): Highlight {
-			return getHighlights();
+		highlight(): Highlight {
+			return routeGetters.getDecodedHighlight(this.$store);
 		},
 
 		currentClass(): string {
@@ -241,34 +240,34 @@ export default Vue.extend({
 		onResultCategoricalClick(context: string, key: string, value: string, dataset: string) {
 			if (key && value) {
 				// extract the var name from the key
-				updateHighlightRoot(this.$router, {
+				updateHighlight(this.$router, {
 					context: context,
 					dataset: dataset,
 					key: key,
 					value: value
 				});
 			} else {
-				clearHighlightRoot(this.$router);
+				clearHighlight(this.$router);
 			}
 		},
 
 		onCorrectnessCategoricalClick(context: string, key: string, value: string, dataset: string) {
 			if (key && value) {
 				// extract the var name from the key
-				updateHighlightRoot(this.$router, {
+				updateHighlight(this.$router, {
 					context: context,
 					dataset: dataset,
 					key: key,
 					value: value
 				});
 			} else {
-				clearHighlightRoot(this.$router);
+				clearHighlight(this.$router);
 			}
 		},
 
 		onResultNumericalClick(context: string, key: string, value: { from: number, to: number }, dataset: string) {
-			if (!this.highlights.root || this.highlights.root.key !== key) {
-				updateHighlightRoot(this.$router, {
+			if (!this.highlight || this.highlight.key !== key) {
+				updateHighlight(this.$router, {
 					context: context,
 					dataset: dataset,
 					key: key,
@@ -278,7 +277,7 @@ export default Vue.extend({
 		},
 
 		onResultRangeChange(context: string, key: string, value: { from: { label: string[] }, to: { label: string[] } }, dataset: string) {
-			updateHighlightRoot(this.$router, {
+			updateHighlight(this.$router, {
 				context: context,
 				dataset: dataset,
 				key: key,
@@ -288,8 +287,8 @@ export default Vue.extend({
 		},
 
 		onResidualNumericalClick(context: string, key: string, value: { from: number, to: number }, dataset: string) {
-			if (!this.highlights.root || this.highlights.root.key !== key) {
-				updateHighlightRoot(this.$router, {
+			if (!this.highlight || this.highlight.key !== key) {
+				updateHighlight(this.$router, {
 					context: context,
 					dataset: dataset,
 					key: key,
@@ -299,7 +298,7 @@ export default Vue.extend({
 		},
 
 		onResidualRangeChange(context: string, key: string, value: { from: number, to: number }, dataset: string) {
-			updateHighlightRoot(this.$router, {
+			updateHighlight(this.$router, {
 				context: context,
 				dataset: dataset,
 				key: key,
@@ -321,9 +320,9 @@ export default Vue.extend({
 		getAndActivateGroups(summary: VariableSummary, contextName: string, exemplar?: VariableSummary): Group[] {
 			if (summary) {
 				const groups = createGroups([ summary ], exemplar);
-				if (this.highlights.root && this.highlights.root.context === contextName) {
+				if (this.highlight && this.highlight.context === contextName) {
 					const group = groups[0];
-					if (group.colName === this.highlights.root.key) {
+					if (group.colName === this.highlight.key) {
 						group.facets.forEach(facet => {
 							facet.filterable = true;
 						});

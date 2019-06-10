@@ -16,9 +16,9 @@ import {
 } from './index';
 import { mutations } from './module';
 import { DistilState } from '../store';
-import { HighlightRoot } from '../highlights/index';
+import { Highlight } from '../dataset/index';
 import { FilterParams, INCLUDE_FILTER, EXCLUDE_FILTER } from '../../util/filters';
-import { createPendingSummary, createErrorSummary, createEmptyTableData, fetchHistogramExemplars, getTimeseriesAnalysisIntervals } from '../../util/data';
+import { createPendingSummary, createErrorSummary, createEmptyTableData, fetchSummaryExemplars, getTimeseriesAnalysisIntervals } from '../../util/data';
 import { addHighlightToFilterParams } from '../../util/highlights';
 import { loadImage } from '../../util/image';
 import { getVarType, IMAGE_TYPE, TIMESERIES_TYPE, GEOCODED_LON_PREFIX, GEOCODED_LAT_PREFIX } from '../../util/types';
@@ -319,9 +319,13 @@ export const actions = {
 				]).then(() => {
 					mutations.clearVariableSummaries(context);
 					const variables = context.getters.getVariables;
+					const filterParams = context.getters.getDecodedSolutionRequestFilterParams;
+					const highlight = context.getters.getDecodedHighlight;
 					return context.dispatch('fetchVariableSummaries', {
 						dataset: args.dataset,
-						variables: variables
+						variables: variables,
+						filterParams:  filterParams,
+						highlight: highlight
 					});
 				});
 			})
@@ -354,9 +358,13 @@ export const actions = {
 				]).then(() => {
 					mutations.clearVariableSummaries(context);
 					const variables = context.getters.getVariables;
+					const filterParams = context.getters.getDecodedSolutionRequestFilterParams;
+					const highlight = context.getters.getDecodedHighlight;
 					return context.dispatch('fetchVariableSummaries', {
 						dataset: args.dataset,
-						variables: variables
+						variables: variables,
+						filterParams:  filterParams,
+						highlight: highlight
 					});
 				});
 			})
@@ -400,7 +408,7 @@ export const actions = {
 	},
 
 	// fetches variable summary data for the given dataset and variables
-	fetchVariableSummaries(context: DatasetContext, args: { dataset: string, variables: Variable[] }): Promise<void[]>  {
+	fetchVariableSummaries(context: DatasetContext, args: { dataset: string, variables: Variable[], highlight: Highlight, filterParams: FilterParams }): Promise<void[]>  {
 		if (!args.dataset) {
 			console.warn('`dataset` argument is missing');
 			return null;
@@ -415,24 +423,28 @@ export const actions = {
 			const exists = _.find(context.state.variableSummaries, v => {
 				return v.dataset === args.dataset && v.key === variable.colName;
 			});
+
 			if (!exists) {
-				// add placeholder
+				// add placeholder if it doesn't exist
 				const key = variable.colName;
 				const label = variable.colDisplayName;
 				const dataset = args.dataset;
 				mutations.updateVariableSummaries(context, createPendingSummary(key, label, dataset));
-				// fetch summary
-				promises.push(context.dispatch('fetchVariableSummary', {
-					dataset: args.dataset,
-					variable: variable.colName
-				}));
 			}
+
+			// fetch summary
+			promises.push(context.dispatch('fetchVariableSummary', {
+				dataset: args.dataset,
+				variable: variable.colName,
+				filterParams: args.filterParams,
+				highlight: args.highlight
+			}));
 		});
 		// fill them in asynchronously
 		return Promise.all(promises);
 	},
 
-	fetchVariableSummary(context: DatasetContext, args: { dataset: string, variable: string }): Promise<void>  {
+	fetchVariableSummary(context: DatasetContext, args: { dataset: string, variable: string, highlight: Highlight, filterParams: FilterParams }): Promise<void>  {
 		if (!args.dataset) {
 			console.warn('`dataset` argument is missing');
 			return null;
@@ -441,6 +453,8 @@ export const actions = {
 			console.warn('`variable` argument is missing');
 			return null;
 		}
+
+		const filterParams = addHighlightToFilterParams(args.filterParams, args.highlight, INCLUDE_FILTER);
 
 		const timeseries = context.getters.getRouteTimeseriesAnalysis;
 		let interval = context.getters.getRouteTimeseriesBinningInterval;
@@ -454,23 +468,23 @@ export const actions = {
 				interval = intervals[0].value;
 			}
 
-			return axios.post(`distil/timeseries-summary/${args.dataset}/${timeseries}/${args.variable}/${interval}/false`, {})
+			return axios.post(`distil/timeseries-summary/${args.dataset}/${timeseries}/${args.variable}/${interval}/false`, filterParams)
 				.then(response => {
-					const histogram = response.data.histogram;
-					mutations.updateVariableSummaries(context, histogram);
+					const summary = response.data.summary;
+					mutations.updateVariableSummaries(context, summary);
 				})
 				.catch(error => {
 					console.error(error);
 				});
 		}
 
-		return axios.post(`/distil/variable-summary/${args.dataset}/${args.variable}/false`, {})
+		return axios.post(`/distil/variable-summary/${args.dataset}/${args.variable}/false`, filterParams)
 			.then(response => {
 
-				const histogram = response.data.histogram;
-				return fetchHistogramExemplars(args.dataset, args.variable, histogram)
+				const summary = response.data.summary;
+				return fetchSummaryExemplars(args.dataset, args.variable, summary)
 					.then(() => {
-						mutations.updateVariableSummaries(context, histogram);
+						mutations.updateVariableSummaries(context, summary);
 					});
 
 			})
@@ -662,7 +676,7 @@ export const actions = {
 	},
 
 	// update filtered data based on the current filter state
-	fetchJoinDatasetsTableData(context: DatasetContext, args: { datasets: string[], filterParams: Dictionary<FilterParams>, highlightRoot: HighlightRoot }) {
+	fetchJoinDatasetsTableData(context: DatasetContext, args: { datasets: string[], filterParams: Dictionary<FilterParams>, highlight: Highlight }) {
 		if (!args.datasets) {
 			console.warn('`datasets` argument is missing');
 			return null;
@@ -673,8 +687,8 @@ export const actions = {
 		}
 		return Promise.all(args.datasets.map(dataset => {
 
-			const highlightRoot = (args.highlightRoot && args.highlightRoot.dataset) === dataset ? args.highlightRoot : null;
-			const filterParams = addHighlightToFilterParams(args.filterParams[dataset], highlightRoot, INCLUDE_FILTER);
+			const highlight = (args.highlight && args.highlight.dataset) === dataset ? args.highlight : null;
+			const filterParams = addHighlightToFilterParams(args.filterParams[dataset], highlight, INCLUDE_FILTER);
 
 			return axios.post(`distil/data/${dataset}/false`, filterParams)
 				.then(response => {
@@ -694,7 +708,7 @@ export const actions = {
 	},
 
 	// update filtered data based on the current filter state
-	fetchIncludedTableData(context: DatasetContext, args: { dataset: string, filterParams: FilterParams, highlightRoot: HighlightRoot }) {
+	fetchIncludedTableData(context: DatasetContext, args: { dataset: string, filterParams: FilterParams, highlight: Highlight }) {
 		if (!args.dataset) {
 			console.warn('`dataset` argument is missing');
 			return null;
@@ -704,7 +718,7 @@ export const actions = {
 			return null;
 		}
 
-		const filterParams = addHighlightToFilterParams(args.filterParams, args.highlightRoot, INCLUDE_FILTER);
+		const filterParams = addHighlightToFilterParams(args.filterParams, args.highlight, INCLUDE_FILTER);
 
 		// request filtered data from server - no data is valid given filter settings
 		return axios.post(`distil/data/${args.dataset}/false`, filterParams)
@@ -718,7 +732,7 @@ export const actions = {
 	},
 
 	// update filtered data based on the  current filter state
-	fetchExcludedTableData(context: DatasetContext, args: { dataset: string, filterParams: FilterParams, highlightRoot: HighlightRoot }) {
+	fetchExcludedTableData(context: DatasetContext, args: { dataset: string, filterParams: FilterParams, highlight: Highlight }) {
 		if (!args.dataset) {
 			console.warn('`dataset` argument is missing');
 			return null;
@@ -729,7 +743,7 @@ export const actions = {
 		}
 
 		// NOTE: we use an `INCLUDE_FILTER` here because we are inverting all the filters in the REST param
-		const filterParams = addHighlightToFilterParams(args.filterParams, args.highlightRoot, INCLUDE_FILTER);
+		const filterParams = addHighlightToFilterParams(args.filterParams, args.highlight, INCLUDE_FILTER);
 
 		return axios.post(`distil/data/${args.dataset}/true`, filterParams)
 			.then(response => {

@@ -1,5 +1,4 @@
-import { Variable, VariableSummary } from '../dataset/index';
-import { HighlightRoot, RowSelection } from '../highlights/index';
+import { Variable, VariableSummary, Highlight, RowSelection } from '../dataset/index';
 import { JOINED_VARS_INSTANCE_PAGE, AVAILABLE_TARGET_VARS_INSTANCE_PAGE,
 	AVAILABLE_TRAINING_VARS_INSTANCE_PAGE, TRAINING_VARS_INSTANCE_PAGE,
 	RESULT_TRAINING_VARS_INSTANCE_PAGE } from '../route/index';
@@ -174,7 +173,7 @@ export const getters = {
 		return state.query.filters ? state.query.filters  as string : null;
 	},
 
-	getRouteHighlightRoot(state: Route): string {
+	getRouteHighlight(state: Route): string {
 		return state.query.highlights ? state.query.highlights  as string : null;
 	},
 
@@ -220,7 +219,7 @@ export const getters = {
 		return filterParams;
 	},
 
-	getDecodedHighlightRoot(state: Route): HighlightRoot {
+	getDecodedHighlight(state: Route): Highlight {
 		return decodeHighlights(state.query.highlights as string);
 	},
 
