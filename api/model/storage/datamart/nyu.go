@@ -156,7 +156,7 @@ func materializeNYUDataset(datamart *Storage, id string, uri string) (string, er
 	}
 
 	// copy the formatted output to the datamart output path (delete existing copy)
-	err = util.RemoveContents(datamart.outputPath)
+	err = util.RemoveContents(extractedArchivePath)
 	if err != nil {
 		return "", errors.Wrap(err, "unable to delete raw datamart dataset")
 	}

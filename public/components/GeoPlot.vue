@@ -13,7 +13,7 @@
 		v-bind:class="{ active: isSelectionMode }"
 		v-on:click="isSelectionMode = !isSelectionMode"
 	>
-		<a href="#"
+		<a
 			class="selection-toggle-control"
 			title="Select area"
 			aria-label="Select area"
@@ -47,6 +47,8 @@ import 'leaflet/dist/images/marker-shadow.png';
 
 const SINGLE_FIELD = 1;
 const SPLIT_FIELD = 2;
+const CLOSE_BUTTON_CLASS = 'geo-close-button';
+const CLOSE_ICON_CLASS = 'fa-times';
 
 interface GeoField {
 	type: number;
@@ -224,6 +226,18 @@ export default Vue.extend({
 			}
 		},
 		onMouseDown(event: MouseEvent) {
+			const mapEventTarget = event.target as HTMLElement;
+
+			// check if mapEventTarget is the close button or icon
+			if (mapEventTarget.classList.contains(CLOSE_BUTTON_CLASS) ||  mapEventTarget.classList.contains(CLOSE_ICON_CLASS)) {
+				this.clearSelection();
+				this.selectedRect.remove();
+				this.selectedRect = null;
+				this.closeButton.remove();
+				this.closeButton = null;
+				return;
+			}
+
 			if (this.isSelectionMode) {
 
 				this.clearSelectionRect();
@@ -275,10 +289,11 @@ export default Vue.extend({
 			}
 		},
 		onEsc() {
+			if (this.currentRect) {
 				this.clearSelectionRect();
 				// disable drawing mode
 				this.map.dragging.enable();
-
+			}
 		},
 		setSelection(rect) {
 
@@ -291,21 +306,14 @@ export default Vue.extend({
 			const ne = rect.getBounds().getNorthEast();
 			const sw = rect.getBounds().getSouthWest();
 			const icon = leaflet.divIcon({
-				className: 'geo-close-button',
+				className: CLOSE_BUTTON_CLASS,
 				iconSize: null,
-				html: '<i class="fa fa-times"></i>'
+				html: `<i class="fa ${CLOSE_ICON_CLASS}"></i>`
 			});
 			this.closeButton = leaflet.marker([ ne.lat, ne.lng ], {
 				icon: icon
 			});
 			this.closeButton.addTo(this.map);
-			this.closeButton.on('click', () => {
-				this.clearSelection();
-				this.selectedRect.remove();
-				this.selectedRect = null;
-				this.closeButton.remove();
-				this.closeButton = null;
-			});
 			this.createHighlight({
 				minX: sw.lng,
 				maxX: ne.lng,
@@ -544,6 +552,7 @@ export default Vue.extend({
 .geo-plot-container .selection-toggle-control {
 	text-decoration: none;
 	color: black;
+	cursor: pointer;
 }
 .geo-plot-container .selection-toggle-control:hover {
 	text-decoration: none;
