@@ -162,6 +162,7 @@ export interface TableRow {
 export interface TimeseriesExtrema {
 	x: Extrema;
 	y: Extrema;
+	sum?: number;
 }
 
 export enum DatasetPendingRequestType {

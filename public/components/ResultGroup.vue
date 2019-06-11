@@ -84,7 +84,6 @@
 // of prediction-truth residuals, and scoring information.
 
 import Vue from 'vue';
-import Facets from '../components/Facets';
 import { createGroups, Group } from '../util/facets';
 import { Extrema, VariableSummary, RowSelection, Highlight } from '../store/dataset/index';
 import { SOLUTION_COMPLETED, SOLUTION_ERRORED } from '../store/solutions/index';
@@ -117,10 +116,6 @@ export default Vue.extend({
 			minimized: null,
 			openDeleteModal: false
 		};
-	},
-
-	components: {
-		Facets
 	},
 
 	computed: {

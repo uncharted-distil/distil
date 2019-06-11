@@ -17,7 +17,7 @@
 		</div>
 		<div class="timeseries-rows" v-if="hasData">
 			<div v-if="isTimeseriesAnalysis">
-				<div v-for="timeseries in timeseriesVariableSummaries">
+				<!-- <div v-for="timeseries in predictedTimeseriesVariableSummaries">
 					<sparkline-variable
 						:label="timeseries.label"
 						:timeseries="timeseries.timeseries"
@@ -25,7 +25,17 @@
 						:timeseries-extrema="timeseriesVariableExtrema[timeseries.key]"
 						:highlight-pixel-x="highlightPixelX">
 					</sparkline-variable>
+				</div> -->
+
+				<div v-for="summary in variableSummaries" :key="summary.key">
+					<sparkline-variable
+						:summary="summary"
+						:highlight-pixel-x="highlightPixelX"
+						:min-x="microMin"
+						:max-x="microMax">
+					</sparkline-variable>
 				</div>
+
 			</div>
 			<div v-if="!isTimeseriesAnalysis">
 				<div class="sparkline-row-container" v-for="item in items">
@@ -70,27 +80,6 @@ import { getSolutionIndex } from '../util/solutions';
 const TICK_SIZE = 8;
 const SELECTED_TICK_SIZE = 18;
 const MIN_PIXEL_WIDTH = 32;
-
-interface TimeseriesStats {
-	xMin: number;
-	xMax: number;
-	yMin: number;
-	yMax: number;
-	sum: number;
-}
-
-interface TimeseriesSummary {
-	label: string;
-	key: string;
-	category?: string;
-	timeseries: number[][];
-	forecast: number[][];
-	xMin: number;
-	xMax: number;
-	yMin: number;
-	yMax: number;
-	sum: number;
-}
 
 export default Vue.extend({
 	name: 'sparkline-timeseries-view',
@@ -169,7 +158,7 @@ export default Vue.extend({
 			return this.timeseriesGrouping && !!this.timeseriesExtrema;
 		},
 
-		timeAnalysisVariable(): Variable {
+		timeseriesAnalysisVariable(): Variable {
 			return datasetGetters.getTimeseriesAnalysisVariable(this.$store);
 		},
 
@@ -184,118 +173,32 @@ export default Vue.extend({
 			return (timeVar && isTimeType(timeVar.colType));
 		},
 
-		resultTargetSummary(): VariableSummary {
-			return resultsGetters.getTargetSummary(this.$store);
-		},
-
-		predictedSummaries(): VariableSummary[] {
-			const summaries = resultsGetters.getPredictedSummaries(this.$store);
-			const solutions = solutionGetters.getRelevantSolutions(this.$store);
-			return solutions.map(solution => {
-				return _.find(summaries, summary => {
-					return summary.solutionId === solution.solutionId;
-				});
-			}).filter(summary => !!summary); // remove errors
-		},
-
-		timeseriesVariableSummaries(): any[] {
-
-			// if we have a predicted summary, create exemplar from it
-			let timeseries = [];
-			if (this.hasPredictedCol) {
-				const key = this.resultTargetSummary.key;
-				const label = this.resultTargetSummary.label;
-				let histogram = null;
-				if (this.resultTargetSummary.filtered) {
-					histogram = this.resultTargetSummary.filtered;
-				} else {
-					if (this.resultTargetSummary.baseline) {
-						histogram = this.resultTargetSummary.baseline;
-					}
-				}
-				let exemplars = null;
-				if (histogram) {
-					exemplars = this.variableSummaryToTimeseries(key, label, histogram, null, null);
-				}
-				this.predictedSummaries.forEach(summary => {
-					const index = getSolutionIndex(summary.solutionId);
-					const key = summary.key;
-					const label = summary.label;
-					let histogram = null;
-					if (summary.filtered) {
-						histogram = summary.filtered;
-					} else {
-						if (summary.baseline) {
-							histogram = summary.baseline;
-						}
-					}
-					if (histogram) {
-						timeseries = timeseries.concat(this.variableSummaryToTimeseries(key, label, histogram, exemplars, index));
-					}
-				});
-			}
-
-			// add training variables
-			this.variableSummaries.forEach(summary => {
-				const key = summary.key;
-				const label = summary.label;
-				let histogram = null;
-				if (summary.filtered) {
-					histogram = summary.filtered;
-				} else {
-					if (summary.baseline) {
-						histogram = summary.baseline;
-					}
-				}
-				if (histogram) {
-					timeseries = timeseries.concat(this.variableSummaryToTimeseries(key, label, histogram, null, null));
-				}
-			});
-			return timeseries;
-		},
-
-		timeseriesVariableExtrema(): Dictionary<TimeseriesExtrema> {
-
-			const extrema = {};
-
-			this.timeseriesVariableSummaries.forEach(v => {
-				const key = v.key;
-				if (!extrema[key]) {
-					extrema[key] = {
-						x: {
-							min: this.microMin,
-							max: this.microMax
-						},
-						y: {
-							min: Infinity,
-							max: -Infinity
-						}
-					};
-				}
-
-				extrema[key].y.min = Math.min(extrema[key].y.min, v.yMin);
-				extrema[key].y.max = Math.max(extrema[key].y.max, v.yMax);
-			});
-
-			return extrema;
-		},
+		// resultTargetSummary(): VariableSummary {
+		// 	return resultsGetters.getTargetSummary(this.$store);
+		// },
+		//
+		// predictedSummaries(): VariableSummary[] {
+		// 	const summaries = resultsGetters.getPredictedSummaries(this.$store);
+		// 	const solutions = solutionGetters.getRelevantSolutions(this.$store);
+		// 	return solutions.map(solution => {
+		// 		return _.find(summaries, summary => {
+		// 			return summary.solutionId === solution.solutionId;
+		// 		});
+		// 	}).filter(summary => !!summary); // remove errors
+		// },
 
 		timeseriesVarsMinX(): number {
-			if (this.timeseriesVariableSummaries.length === 0) {
+			if (!this.timeseriesAnalysisVariable) {
 				return null;
 			}
-			// take first, all vars share same x axis
-			const summary = this.timeseriesVariableSummaries.find(summary => isFinite(summary.xMin));
-			return summary ? summary.xMin : null;
+			return this.timeseriesAnalysisVariable.min;
 		},
 
 		timeseriesVarsMaxX(): number {
-			if (this.timeseriesVariableSummaries.length === 0) {
+			if (!this.timeseriesAnalysisVariable) {
 				return null;
 			}
-			// take first, all vars share same x axis
-			const summary =  this.timeseriesVariableSummaries.find(summary => isFinite(summary.xMax));
-			return summary ? summary.xMax : null;
+			return this.timeseriesAnalysisVariable.max;
 		},
 
 		timeseriesExtrema(): TimeseriesExtrema {
@@ -411,109 +314,6 @@ export default Vue.extend({
 
 	methods: {
 
-		getStatsFromData(points: number[][], forecast: number[][]): TimeseriesStats {
-			const stats = {
-				xMin: Infinity,
-				xMax: -Infinity,
-				yMin: Infinity,
-				yMax: -Infinity,
-				sum: 0
-			};
-			for (let i = 0; i < points.length; i++) {
-				stats.xMin = Math.min(stats.xMin, Math.min(points[i][0]));
-				stats.xMax = Math.max(stats.xMax, Math.max(points[i][0]));
-				stats.yMin = Math.min(stats.yMin, Math.min(points[i][1]));
-				stats.yMax = Math.max(stats.yMax, Math.max(points[i][1]));
-				stats.sum += points[i][1];
-			}
-			if (forecast) {
-				for (let i = 0; i < forecast.length; i++) {
-					stats.xMin = Math.min(stats.xMin, Math.min(forecast[i][0]));
-					stats.xMax = Math.max(stats.xMax, Math.max(forecast[i][0]));
-					stats.yMin = Math.min(stats.yMin, Math.min(forecast[i][1]));
-					stats.yMax = Math.max(stats.yMax, Math.max(forecast[i][1]));
-				}
-			}
-			return stats;
-		},
-
-		numericBucketsToTimeseries(key: string, label: string, baseline: Bucket[], exemplars?: TimeseriesSummary[], solutionIndex?: number): TimeseriesSummary[] {
-			let timeseries: number[][];
-			let forecasted: number[][];
-			let l = '';
-			if (exemplars && exemplars.length > 0) {
-				const exemplar = exemplars.length > 0 ? exemplars[0] : null;
-				forecasted = baseline.map(b => [ _.parseInt(b.key), b.count ]);
-				timeseries = exemplar.timeseries;
-				l = `${exemplar.key}<sup>${solutionIndex}</sup>`;
-			} else {
-				timeseries = baseline.map(b => [ _.parseInt(b.key), b.count ]);
-				l = label;
-			}
-
-			const stats = this.getStatsFromData(timeseries, forecasted);
-
-			// regular timeseries variable
-			return [{
-				label: l,
-				key: key,
-				timeseries: timeseries,
-				forecast: forecasted,
-				xMin: stats.xMin,
-				xMax: stats.xMax,
-				yMin: stats.yMin,
-				yMax: stats.yMax,
-				sum: stats.sum
-			}];
-		},
-
-		categoryBucketsToTimeseries(key: string, label: string, baseline: Dictionary<Bucket[]>, exemplars?: TimeseriesSummary[], solutionIndex?: number): TimeseriesSummary[] {
-			const categories = [];
-			_.forIn(baseline, (buckets, category) => {
-
-				let timeseries: number[][];
-				let forecasted: number[][];
-				let l = '';
-				if (exemplars && exemplars.length > 0) {
-					const exemplar = exemplars.find(ex => ex.category === category);
-					forecasted = buckets.map(b => [ _.parseInt(b.key), b.count ]);
-					timeseries = exemplar.timeseries;
-					l = `${exemplar.key}<sup>${solutionIndex}</sup> - ${category}`;
-				} else {
-					timeseries = buckets.map(b => [ _.parseInt(b.key), b.count ]);
-					l = `${label} - ${category}`;
-				}
-
-				const stats = this.getStatsFromData(timeseries, forecasted);
-
-				categories.push({
-					label: l,
-					key: key,
-					category: category,
-					timeseries: timeseries,
-					forecast: forecasted,
-					xMin: stats.xMin,
-					xMax: stats.xMax,
-					yMin: stats.yMin,
-					yMax: stats.yMax,
-					sum: stats.sum
-				});
-			});
-			// highest sum first
-			categories.sort((a, b) => { return b.sum - a.sum; });
-
-			return categories;
-		},
-
-		variableSummaryToTimeseries(key: string, label: string, histogram: Histogram, exemplars?: TimeseriesSummary[], solutionIndex?: number): TimeseriesSummary[] {
-			if (histogram.categoryBuckets) {
-
-				return this.categoryBucketsToTimeseries(key, label, histogram.categoryBuckets, exemplars, solutionIndex);
-			}
-
-			return this.numericBucketsToTimeseries(key, label, histogram.buckets, exemplars, solutionIndex);
-		},
-
 		getPrediction(row: TableRow): any {
 			if (!this.showPredicted) {
 				return null;
@@ -528,10 +328,12 @@ export default Vue.extend({
 			// TODO: invert filters
 			return filters;
 		},
+
 		mouseLeave() {
 			this.$line.hide();
 			this.highlightPixelX = null;
 		},
+
 		mouseMove(event) {
 			const parentOffset = this.$timeseries.offset();
 			const chartBounds = this.$axis.offset();
@@ -553,10 +355,12 @@ export default Vue.extend({
 				this.highlightPixelX = null;
 			}
 		},
+
 		scroll(event) {
 			const chartScroll = this.$timeseries.parent().scrollTop();
 			this.$line.css('top', chartScroll);
 		},
+
 		injectMicroAxis() {
 
 			this.svg.select('.micro-axis').remove();
@@ -582,6 +386,7 @@ export default Vue.extend({
 
 			this.attachTranslationHandlers();
 		},
+
 		injectSVG() {
 
 			if (!this.hasData || !this.$refs.svg) {

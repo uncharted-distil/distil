@@ -235,9 +235,10 @@ export const getters = {
 	},
 
 	getTrainingVariableSummaries(state: Route, getters: any): VariableSummary[] {
+		// console.log('getTrainingVariableSummaries');
 		const training = getters.getDecodedTrainingVariableNames;
-		const lookup = buildLookup(training);
 		const summaries = getters.getVariableSummaries;
+		const lookup = buildLookup(training);
 		return summaries.filter(summary => lookup[summary.key.toLowerCase()]);
 	},
 
@@ -254,6 +255,7 @@ export const getters = {
 	},
 
 	getTargetVariableSummaries(state: Route, getters: any): VariableSummary[] {
+		// console.log('getTargetVariableSummaries');
 		const target = getters.getRouteTargetVariable;
 		if (target) {
 			const summaries = getters.getVariableSummaries;
@@ -265,8 +267,8 @@ export const getters = {
 	getAvailableVariables(state: Route, getters: any): Variable[] {
 		const training = getters.getDecodedTrainingVariableNames;
 		const target = getters.getRouteTargetVariable;
-		const lookup = buildLookup(training.concat([ target ]));
 		const variables = getters.getVariables;
+		const lookup = buildLookup(training.concat([ target ]));
 		return variables.filter(variable => !lookup[variable.colName.toLowerCase()]);
 	},
 

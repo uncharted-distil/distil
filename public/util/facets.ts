@@ -91,19 +91,23 @@ export interface Group {
 	summary: VariableSummary;
 }
 
+export function createGroup(summary: VariableSummary): Group {
+	if (summary.err) {
+		// create error facet
+		return createErrorFacet(summary);
+	}
+	if (summary.pending) {
+		// create pending facet
+		return createPendingFacet(summary);
+	}
+	// create facet
+	return createSummaryFacet(summary);
+}
+
 // creates the set of facets from the supplied summary data
 export function createGroups(summaries: VariableSummary[], exemplar?: VariableSummary): Group[] {
 	return summaries.map(summary => {
-		if (summary.err) {
-			// create error facet
-			return createErrorFacet(summary);
-		}
-		if (summary.pending) {
-			// create pending facet
-			return createPendingFacet(summary);
-		}
-		// create facet
-		return createSummaryFacet(summary, exemplar);
+		return createGroup(summary);
 	}).filter(group => {
 		// remove null groups
 		return group;
@@ -451,7 +455,7 @@ export function getCategoricalFacetValue(summary: VariableSummary): string {
 	return summary.baseline.categoryBuckets ? getTimeseriesSummaryTopCategories(summary)[0] : summary.baseline.buckets[0].key;
 }
 
-export function getNumericalFacetValue(summary: VariableSummary, group: Group, type: string): {from: number, to: number} {
+export function getNumericalFacetValue(summary: VariableSummary, type: string): {from: number, to: number} {
 
 	// facet library is incapable of selecting a range that isnt exactly
 	// on a bin boundary, so we need to iterate through and find it
@@ -493,21 +497,20 @@ export function getNumericalFacetValue(summary: VariableSummary, group: Group, t
 				break;
 		}
 	}
-	const facet = group.facets[0] as NumericalFacet;
-	const slices = facet.histogram.slices;
+	const buckets = summary.baseline.buckets;
 	// case case set to full range
-	let fromSlice = _.toNumber(slices[0].label);
-	let toSlice = _.toNumber(slices[slices.length - 1].toLabel);
+	let fromSlice = _.toNumber(buckets[0].key);
+	let toSlice = _.toNumber(buckets[buckets.length - 1].key);
 	// try to narrow into percentile
-	for (let i = 0; i < slices.length; i++) {
-		const slice = _.toNumber(slices[i].label);
+	for (let i = 0; i < buckets.length; i++) {
+		const slice = _.toNumber(buckets[i].key);
 		if (from <= slice) {
 			fromSlice = slice;
 			break;
 		}
 	}
-	for (let i = slices.length - 1;  i >= 0; i--) {
-		const slice = _.toNumber(slices[i].toLabel);
+	for (let i = buckets.length - 1;  i >= 0; i--) {
+		const slice = _.toNumber(buckets[i].key);
 		if (to >= slice) {
 			toSlice = slice;
 			break;
@@ -519,7 +522,7 @@ export function getNumericalFacetValue(summary: VariableSummary, group: Group, t
 	};
 }
 
-export function getTimeseriesFacetValue(summary: VariableSummary, group: Group, type: string): {from: number, to: number} {
+export function getTimeseriesFacetValue(summary: VariableSummary, type: string): {from: number, to: number} {
 	return {
 		from: _.toNumber(_.minBy(summary.baseline.buckets, b => _.toNumber(b.key)).key),
 		to: _.toNumber(_.maxBy(summary.baseline.buckets, b => _.toNumber(b.key)).key),

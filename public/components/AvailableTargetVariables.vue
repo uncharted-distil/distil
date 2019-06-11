@@ -7,7 +7,7 @@
 			ignore-highlights
 			:instance-name="instanceName"
 			:rows-per-page="numRowsPerPage"
-			:groups="groups"
+			:summaries="summaries"
 			:html="html">
 		</variable-facets>
 	</div>
@@ -21,7 +21,7 @@ import { getters as routeGetters } from '../store/route/module';
 import { createRouteEntry } from '../util/routes';
 import { filterSummariesByDataset } from '../util/data';
 import VariableFacets from '../components/VariableFacets';
-import { Grouping, Variable } from '../store/dataset/index';
+import { Grouping, Variable, VariableSummary } from '../store/dataset/index';
 import { AVAILABLE_TARGET_VARS_INSTANCE, SELECT_TRAINING_ROUTE } from '../store/route/index';
 import { Group, createGroups } from '../util/facets';
 import Vue from 'vue';
@@ -40,10 +40,9 @@ export default Vue.extend({
 		dataset(): string {
 			return routeGetters.getRouteDataset(this.$store);
 		},
-		groups(): Group[] {
+		summaries(): VariableSummary[] {
 			const summaries = datasetGetters.getVariableSummaries(this.$store);
-			const filtered = filterSummariesByDataset(summaries, this.dataset);
-			return createGroups(filtered);
+			return filterSummariesByDataset(summaries, this.dataset);
 		},
 		numRowsPerPage(): number {
 			return NUM_TARGET_PER_PAGE;

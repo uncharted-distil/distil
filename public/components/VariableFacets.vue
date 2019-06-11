@@ -17,25 +17,26 @@
 				<slot></slot>
 			</div>
 			<div class="row flex-1">
-				<facets class="col-12 flex-column d-flex variable-facets-container h-100"
-					:groups="paginatedGroups"
-					:highlight="highlight"
-					:row-selection="rowSelection"
-					:html="html"
-					:sort="importanceDesc"
-					:enable-type-change="enableTypeChange"
-					:enable-highlighting="enableHighlighting"
-					:ignore-highlights="ignoreHighlights"
-					:instanceName="instanceName"
-					@numerical-click="onNumericalClick"
-					@categorical-click="onCategoricalClick"
-					@range-change="onRangeChange"
-					@facet-click="onFacetClick">
-				</facets>
+				<div class="col-12 flex-column variable-facets-container h-100">
+					<facet-entry v-for="summary in paginatedSummaries" :key="summary.key"
+						:summary="summary"
+						:highlight="highlight"
+						:row-selection="rowSelection"
+						:html="html"
+						:enable-type-change="enableTypeChange"
+						:enable-highlighting="enableHighlighting"
+						:ignore-highlights="ignoreHighlights"
+						:instanceName="instanceName"
+						@numerical-click="onNumericalClick"
+						@categorical-click="onCategoricalClick"
+						@range-change="onRangeChange"
+						@facet-click="onFacetClick">
+					</facet-entry>
+				</div>
 			</div>
-			<div v-if="numRows > rowsPerPage" class="row align-items-center variable-page-nav">
+			<div v-if="numSummaries > rowsPerPage" class="row align-items-center variable-page-nav">
 				<div class="col-12 flex-column">
-					<b-pagination size="sm" align="center" :total-rows="numRows" :per-page="rowsPerPage" v-model="currentPage" class="mb-0"/>
+					<b-pagination size="sm" align="center" :total-rows="numSummaries" :per-page="rowsPerPage" v-model="currentPage" class="mb-0"/>
 				</div>
 			</div>
 		</div>
@@ -45,11 +46,11 @@
 <script lang="ts">
 
 import _ from 'lodash';
-import Facets from '../components/Facets';
+import FacetEntry from '../components/FacetEntry';
 import { overlayRouteEntry, getRouteFacetPage } from '../util/routes';
 import { Dictionary } from '../util/dict';
-import { sortGroupsByImportance, filterVariablesByPage, getVariableImportance } from '../util/data';
-import { Highlight, RowSelection, Variable } from '../store/dataset/index';
+import { sortSummariesByImportance, filterVariablesByPage, getVariableImportance } from '../util/data';
+import { Highlight, RowSelection, Variable, VariableSummary } from '../store/dataset/index';
 import { getters as datasetGetters } from '../store/dataset/module';
 import { getters as routeGetters } from '../store/route/module';
 import { ROUTE_PAGE_SUFFIX } from '../store/route/index';
@@ -61,7 +62,7 @@ export default Vue.extend({
 	name: 'variable-facets',
 
 	components: {
-		Facets
+		FacetEntry
 	},
 
 	props: {
@@ -70,7 +71,7 @@ export default Vue.extend({
 		enableTypeChange: Boolean as () => boolean,
 		enableHighlighting: Boolean as () => boolean,
 		ignoreHighlights: Boolean as () => boolean,
-		groups: Array as () => Group[],
+		summaries: Array as () => VariableSummary[],
 		subtitle: String as () => string,
 		html: [ String as () => string, Object as () => any, Function as () => Function ],
 		instanceName: { type: String as () => string, default: 'variableFacets' },
@@ -101,40 +102,22 @@ export default Vue.extend({
 			return datasetGetters.getVariables(this.$store);
 		},
 
-		filteredGroups(): Group[] {
-			return this.groups.filter(group => {
-				return this.filter === '' || group.colName.toLowerCase().includes(this.filter.toLowerCase());
+		filteredSummaries(): VariableSummary[] {
+			return this.summaries.filter(summary => {
+				return this.filter === '' || summary.key.toLowerCase().includes(this.filter.toLowerCase());
 			});
 		},
 
-		numRows(): number {
-			return this.filteredGroups.length;
+		sortedFilteredSummaries(): VariableSummary[] {
+			return sortSummariesByImportance(this.filteredSummaries, this.variables);
 		},
 
-		sortedFilteredGroups(): Group[] {
-			return sortGroupsByImportance(this.filteredGroups, this.variables);
+		paginatedSummaries(): VariableSummary[] {
+			return filterVariablesByPage(this.currentPage, this.rowsPerPage, this.sortedFilteredSummaries);
 		},
 
-		paginatedGroups(): Group[] {
-			const paginated = filterVariablesByPage(this.currentPage, this.rowsPerPage, this.sortedFilteredGroups);
-
-			// TODO: fix this at the Facets component level
-			const cloned = _.cloneDeep(paginated);
-
-			// highlight
-			if (this.enableHighlighting && this.highlight) {
-				cloned.forEach(group => {
-					if (group) {
-						if (group.colName === this.highlight.key) {
-							group.facets.forEach(facet => {
-								facet.filterable = true;
-							});
-						}
-					}
-				});
-			}
-
-			return cloned;
+		numSummaries(): number {
+			return this.filteredSummaries.length;
 		},
 
 		highlight(): Highlight {
@@ -155,10 +138,6 @@ export default Vue.extend({
 	},
 
 	methods: {
-		importanceDesc(a: Group, b: Group): number {
-			const importance = this.importance;
-			return importance[b.colName] - importance[a.colName];
-		},
 
 		// creates a facet key for the route from the instance-name component arg
 		// or uses a default if unset
@@ -214,10 +193,10 @@ export default Vue.extend({
 			// NOTE: used externally, not internally by the component
 
 			// filter by search
-			const searchFiltered = this.groups.filter(group => {
-				return this.filter === '' || group.colName.toLowerCase().includes(this.filter.toLowerCase());
+			const searchFiltered = this.summaries.filter(summary => {
+				return this.filter === '' || summary.key.toLowerCase().includes(this.filter.toLowerCase());
 			});
-			return searchFiltered.map(v => v.colName);
+			return searchFiltered.map(v => v.key);
 		}
 	}
 });

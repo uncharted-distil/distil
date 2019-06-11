@@ -261,17 +261,17 @@ export function sortVariablesByImportance(variables: Variable[]): Variable[] {
 	return variables;
 }
 
-export function sortGroupsByImportance(groups: Group[], variables: Variable[]): Group[] {
+export function sortSummariesByImportance(summaries: VariableSummary[], variables: Variable[]): VariableSummary[] {
 	// create importance lookup map
 	const importance: Dictionary<number> = {};
 	variables.forEach(variable => {
 		importance[variable.colName] = getVariableImportance(variable);
 	});
 	// sort by importance
-	groups.sort((a, b) => {
-		return importance[b.colName] - importance[a.colName];
+	summaries.sort((a, b) => {
+		return importance[b.key] - importance[a.key];
 	});
-	return groups;
+	return summaries;
 }
 
 export function validateData(data: TableData) {

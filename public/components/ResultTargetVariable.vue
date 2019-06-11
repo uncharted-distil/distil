@@ -124,7 +124,7 @@ export default Vue.extend({
 				context: this.instanceName,
 				dataset: this.dataset,
 				key: this.target,
-				value: getNumericalFacetValue(this.resultTargetSummary, this.groups[0], this.defaultHighlightType)
+				value: getNumericalFacetValue(this.resultTargetSummary, this.defaultHighlightType)
 			});
 		},
 

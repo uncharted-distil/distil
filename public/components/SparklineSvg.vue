@@ -1,7 +1,5 @@
 <template>
-	<div
-		v-observe-visibility="visibilityChanged"
-		v-bind:class="{'is-hidden': !isVisible}">
+	<div v-observe-visibility="visibilityChanged">
 		<svg v-if="isLoaded" ref="svg" class="line-chart-row" @click.stop="onClick"></svg>
 		<div v-if="!isLoaded" v-html="spinnerHTML"></div>
 		<div class="highlight-tooltip" ref="tooltip"></div>
@@ -16,8 +14,6 @@ import $ from 'jquery';
 import Vue from 'vue';
 import { circleSpinnerHTML } from '../util/spinner';
 import { TimeseriesExtrema } from '../store/dataset/index';
-
-const INJECT_DEBOUNCE = 200;
 
 export default Vue.extend({
 	name: 'sparkline-svg',
@@ -42,18 +38,12 @@ export default Vue.extend({
 		}
 	},
 	data() {
-		const component = this as any;
 		return {
 			zoomSparkline: false,
 			isVisible: false,
 			hasRendered: false,
 			xScale: null,
 			yScale: null,
-			debouncedInjection: _.debounce(() => {
-				Vue.nextTick(() => {
-					component.injectTimeseries();
-				});
-			}, INJECT_DEBOUNCE),
 		};
 	},
 	computed: {
@@ -92,16 +82,25 @@ export default Vue.extend({
 		}
 	},
 
+	mounted() {
+		Vue.nextTick(() => {
+			this.injectTimeseries();
+		});
+	},
+
 	watch: {
-		timeseries() {
-			console.log('watch timeseries');
-			if (this.isVisible && !this.hasRendered) {
-				this.debouncedInjection();
-			}
+		timeseries: {
+			handler() {
+				if (this.isVisible && !this.hasRendered) {
+					Vue.nextTick(() => {
+						this.injectTimeseries();
+					});
+				}
+			},
+			deep: true
 		},
 		timeseriesExtrema: {
 			handler(newExtrema, oldExtrema) {
-				console.log('watch timeseriesExtrema');
 				if (this.isVisible && this.isLoaded) {
 					// only redraw if it is currently visible, the data has
 					// loaded
@@ -114,9 +113,12 @@ export default Vue.extend({
 						newExtrema.x.max === oldExtrema.x.max &&
 						newExtrema.y.min === oldExtrema.y.min &&
 						newExtrema.y.max === oldExtrema.y.max) {
+						console.log('same extrema?');
 						return;
 					}
-					this.debouncedInjection();
+					Vue.nextTick(() => {
+						this.injectTimeseries();
+					});
 				} else {
 					// ensure it re-renders once it comes back into view
 					this.hasRendered = false;
@@ -148,7 +150,9 @@ export default Vue.extend({
 		visibilityChanged(isVisible: boolean) {
 			this.isVisible = isVisible;
 			if (this.isVisible && !this.hasRendered) {
-				this.debouncedInjection();
+				Vue.nextTick(() => {
+					this.injectTimeseries();
+				});
 			}
 		},
 		onClick() {
@@ -163,6 +167,7 @@ export default Vue.extend({
 		injectSparkline() {
 
 			if (!this.$svg || !this.timeseries || this.timeseries.length === 0) {
+				console.log('bail on render');
 				return;
 			}
 
@@ -218,6 +223,7 @@ export default Vue.extend({
 
 		},
 		injectTimeseries() {
+
 			if (_.isEmpty(this.timeseries) || !this.$refs.svg) {
 				return;
 			}
@@ -254,10 +260,6 @@ svg.line-chart-row {
 svg.line-chart-row g {
 	stroke: #666;
 	stroke-width: 2px;
-}
-
-.is-hidden {
-	visibility: hidden;
 }
 
 .highlight-tooltip {
