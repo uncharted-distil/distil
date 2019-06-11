@@ -69,6 +69,7 @@ export default Vue.extend({
 	data() {
 		const component = this as any;
 		return {
+			menus: {} as any,
 			facets: {} as any,
 			debouncedInjection: _.debounce((highlights: Highlight, selection: RowSelection, deemphasis: any) => {
 				// we need to guard here because this debounced call can execute
@@ -982,6 +983,11 @@ export default Vue.extend({
 		// inject type headers
 		injectTypeChangeHeaders(group: Group, $elem: JQuery) {
 			if (this.enableTypeChange) {
+				const facetId = `${group.dataset}:${group.colName}`;
+				// if we have a menu for this already, destroy it to replace it
+				if (this.menus[facetId]) {
+					this.menus[facetId].$destroy();
+				}
 				const $slot = $('<span/>');
 				$elem.find('.group-header').append($slot);
 				const menu = new TypeChangeMenu(
@@ -994,6 +1000,7 @@ export default Vue.extend({
 						}
 					});
 				menu.$mount($slot[0]);
+				this.menus[facetId] = menu;
 			}
 		},
 
@@ -1031,6 +1038,11 @@ export default Vue.extend({
 	destroyed: function() {
 		this.facets.destroy();
 		this.facets = null;
+
+		// specifically destroy menus so because we injected them
+		// and so we have to take manual action to destroy them
+		_.forIn(this.menus, menu => menu.$destroy());
+		this.menus = null;
 	},
 });
 </script>
