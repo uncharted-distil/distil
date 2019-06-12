@@ -16,8 +16,6 @@ export const viewModule: Module<ViewState, DistilState> = {
 const { commit, read, dispatch } = getStoreAccessors<ViewState, DistilState>(null);
 
 export const getters = {
-	getSelectTrainingPaginatedVariables: read(moduleGetters.getSelectTrainingPaginatedVariables),
-	getResultsPaginatedVariables: read(moduleGetters.getResultsPaginatedVariables),
 	getFetchParamsCache: read(moduleGetters.getFetchParamsCache),
 };
 

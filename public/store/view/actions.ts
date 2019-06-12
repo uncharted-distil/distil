@@ -123,34 +123,7 @@ export const actions = {
 				})
 			])
 			.then(() => {
-				// fetch new state
-				const datasets = context.getters.getDatasets;
-				const datasetA = _.find(datasets, d => {
-					return d.id === datasetIDA;
-				});
-				const datasetB = _.find(datasets, d => {
-					return d.id === datasetIDB;
-				});
-
-				const filterParams = context.getters.getDecodedSolutionRequestFilterParams;
-				const highlight = context.getters.getDecodedHighlight;
-
-				return Promise.all([
-					context.dispatch('fetchVariableSummaries', {
-						dataset: datasetA.id,
-						variables: datasetA.variables,
-						filterParams:  filterParams,
-						highlight: highlight
-					}),
-					context.dispatch('fetchVariableSummaries', {
-						dataset: datasetB.id,
-						variables: datasetB.variables,
-						filterParams:  filterParams,
-						highlight: highlight
-					})
-				]).then(() => {
-					return context.dispatch('updateJoinDatasetsData');
-				});
+				return context.dispatch('updateJoinDatasetsData');
 			});
 	},
 
@@ -161,20 +134,30 @@ export const actions = {
 		const datasetIDs = context.getters.getRouteJoinDatasets;
 		const highlight = context.getters.getDecodedHighlight;
 		const filterParams = context.getters.getDecodedJoinDatasetsFilterParams;
-		const paginatedVariables = context.getters.getJoinDatasetsPaginatedVariables;
-
 		const datasets = context.getters.getDatasets;
+		const datasetIDA = datasetIDs[0];
+		const datasetIDB = datasetIDs[1];
 
-		const joinDatasets = datasets.filter(d => {
-			return d.id === datasetIDs[0] || d.id === datasetIDs[1];
+		// fetch new state
+		const datasetA = _.find(datasets, d => {
+			return d.id === datasetIDA;
+		});
+		const datasetB = _.find(datasets, d => {
+			return d.id === datasetIDB;
 		});
 
 		return Promise.all([
-			context.dispatch('fetchJoinDatasetsHighlightValues', {
-				datasets: joinDatasets,
-				variables: paginatedVariables,
-				highlight: highlight,
-				filterParams: filterParams
+			context.dispatch('fetchVariableSummaries', {
+				dataset: datasetA.id,
+				variables: datasetA.variables,
+				filterParams:  filterParams,
+				highlight: highlight
+			}),
+			context.dispatch('fetchVariableSummaries', {
+				dataset: datasetB.id,
+				variables: datasetB.variables,
+				filterParams:  filterParams,
+				highlight: highlight
 			}),
 			context.dispatch('fetchJoinDatasetsTableData', {
 				datasets: datasetIDs,
@@ -217,9 +200,13 @@ export const actions = {
 		const dataset = context.getters.getRouteDataset;
 		const target = context.getters.getRouteTargetVariable;
 
-		fetchJoinSuggestions(context, { dataset });
+		fetchJoinSuggestions(context, {
+			dataset: dataset
+		});
 
-		return fetchVariables(context, { dataset }).then(() => {
+		return fetchVariables(context, {
+			dataset: dataset
+		}).then(() => {
 			fetchVariableRankings(context, { dataset, target });
 			return context.dispatch('updateSelectTrainingData');
 		});
@@ -231,7 +218,7 @@ export const actions = {
 		const dataset = context.getters.getRouteDataset;
 		const highlight = context.getters.getDecodedHighlight;
 		const filterParams = context.getters.getDecodedSolutionRequestFilterParams;
-		const paginatedVariables = context.getters.getSelectTrainingPaginatedVariables;
+
 		return Promise.all([
 			fetchVariableSummaries(context, {
 				dataset: dataset,
@@ -262,9 +249,17 @@ export const actions = {
 		const dataset = context.getters.getRouteDataset;
 		const target = context.getters.getRouteTargetVariable;
 		// fetch new state
-		return fetchVariables(context, { dataset }).then(() => {
-			fetchVariableRankings(context, { dataset, target });
-			return fetchSolutionRequests(context, { dataset, target });
+		return fetchVariables(context, {
+			dataset: dataset
+		}).then(() => {
+			fetchVariableRankings(context, {
+				dataset: dataset,
+				target: target
+			});
+			return fetchSolutionRequests(context, {
+				dataset: dataset,
+				target: target
+			});
 		}).then(() => {
 			return context.dispatch('updateResultsSolution');
 		});
@@ -281,10 +276,8 @@ export const actions = {
 		const target = context.getters.getRouteTargetVariable;
 		const isRegression = context.getters.isRegression;
 		const isClassification = context.getters.isClassification;
-		const isForecasting = context.getters.isForecasting;
 		const requestIds = context.getters.getRelevantSolutionRequestIds;
 		const solutionId = context.getters.getRouteSolutionId;
-		const paginatedVariables = context.getters.getResultsPaginatedVariables;
 		const trainingVariables = context.getters.getActiveSolutionTrainingVariables;
 		const highlight = context.getters.getDecodedHighlight;
 
