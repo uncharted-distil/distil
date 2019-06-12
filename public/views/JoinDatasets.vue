@@ -214,7 +214,7 @@ export default Vue.extend({
 				// clear top and bottom column
 				joinColumnA: null,
 				joinColumnB: null,
-			}
+			};
 			if (column) {
 				route.joinColumnA = column.key;
 			}

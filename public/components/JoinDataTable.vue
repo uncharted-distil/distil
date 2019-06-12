@@ -80,14 +80,14 @@ export default Vue.extend({
 			return columns;
 		},
 		selectedSuggestedBaseColumn(): string {
-			return this.baseColumnSuggestions.find(col => col === (this.selectedBaseColumn && this.selectedBaseColumn.key))
+			return this.baseColumnSuggestions.find(col => col === (this.selectedBaseColumn && this.selectedBaseColumn.key));
 		},
 		joinColumnSuggestions(): string[] {
 			const columns = routeGetters.getJoinColumnSuggestions(this.$store).split(',');
 			return columns;
 		},
 		selectedSuggestedJoinColumn(): string {
-			return this.joinColumnSuggestions.find(col => col === (this.selectedJoinColumn && this.selectedJoinColumn.key))
+			return this.joinColumnSuggestions.find(col => col === (this.selectedJoinColumn && this.selectedJoinColumn.key));
 		},
 
 		emphasizedBaseTableFields(): Dictionary<TableColumn> {
@@ -100,13 +100,13 @@ export default Vue.extend({
 					sortable: field.sortable,
 					variant: null
 				};
-				const isFieldSuggested = Boolean(this.baseColumnSuggestions.find(col => col === field.key))
+				const isFieldSuggested = Boolean(this.baseColumnSuggestions.find(col => col === field.key));
 				const isFieldSelected = this.selectedBaseColumn && field.key === this.selectedBaseColumn.key;
 				if (isFieldSuggested) {
-					emph.variant = 'success'
+					emph.variant = 'success';
 				}
 				if (isFieldSelected) {
-					emph.variant = 'primary'
+					emph.variant = 'primary';
 				}
 				emphasized[field.key] = emph;
 			});
@@ -123,15 +123,15 @@ export default Vue.extend({
 					sortable: field.sortable,
 					variant: null
 				};
-				const isFieldSuggested = Boolean(this.joinColumnSuggestions.find(col => col === field.label))
+				const isFieldSuggested = Boolean(this.joinColumnSuggestions.find(col => col === field.label));
 				const isFieldSelected = this.selectedJoinColumn && field.label === this.selectedJoinColumn.label;
 				// if a suggested base column is selected, highlgiht the corresponding suggested join column
 				if (this.selectedBaseColumn) {
 					if (this.selectedSuggestedBaseColumn !== undefined && isFieldSuggested) {
-						emph.variant = 'success'
+						emph.variant = 'success';
 					}
 					if (isFieldSelected) {
-						emph.variant = 'primary'
+						emph.variant = 'primary';
 					}
 					if (isFieldSelected && !isJoinable(field.type, this.selectedBaseColumn.type)) {
 						emph.variant = 'danger';
