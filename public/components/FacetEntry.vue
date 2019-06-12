@@ -21,21 +21,10 @@ import Facets from '@uncharted.software/stories-facets';
 import ImagePreview from '../components/ImagePreview';
 import TypeChangeMenu from '../components/TypeChangeMenu';
 import { getVarType, isClusterType, isFeatureType, addClusterPrefix, addFeaturePrefix, hasComputedVarPrefix } from '../util/types';
+import { IMPORTANT_VARIABLE_RANKING_THRESHOLD } from '../util/data';
+import { getters as datasetGetters } from '../store/dataset/module';
 
 import '@uncharted.software/stories-facets/dist/facets.css';
-
-/*
-In 1989 the japanese-american animated musical film `Little Nemo: Adventures in
-Slumberland` was released in North America. In the film a young boy named Nemo
-is summoned to Slumberland by King Morpheus to become his heir to the throne.
-Morpheus gives Nemo a golden key that opens every door in the kingdom, and warns
-him of a door with a dragon insignia that must never be opened as it contains
-the dreaded Nightmare King.
-
-This file is the door with the dragon insignia. The facets component is the
-Nightmare King. We must keep its evil contained within this file and it must
-never be allowed to escape lest the Kingdom of Slumberland fall to darkness.
-*/
 
 export default Vue.extend({
 	name: 'facet-entry',
@@ -47,6 +36,7 @@ export default Vue.extend({
 		deemphasis: Object as () => any,
 		enableTypeChange: Boolean as () => boolean,
 		enableHighlighting: Boolean as () => boolean,
+		showOrigin: Boolean as () => boolean,
 		ignoreHighlights: Boolean as () => boolean,
 		instanceName: String as () => string,
 		html: [ String as () => string, Object as () => any, Function as () => Function ],
@@ -192,6 +182,14 @@ export default Vue.extend({
 	},
 
 	computed: {
+		ranking(): number {
+			const variables = datasetGetters.getVariables(this.$store);
+			const v = variables.find(v => v.colName === this.summary.key);
+			if (v && v.ranking !== undefined) {
+				return v.ranking;
+			}
+			return 0;
+		},
 		groupSpec(): Group {
 
 			const group = createGroup(this.summary);
@@ -217,6 +215,8 @@ export default Vue.extend({
 				}
 			}
 
+			// TODO: move this reference to highlights, as it forces a refresh
+
 			if (this.enableHighlighting &&
 				this.highlight &&
 				this.highlight.context === this.instanceName) {
@@ -225,6 +225,14 @@ export default Vue.extend({
 						facet.filterable = true;
 					});
 				}
+			}
+
+			if (this.showOrigin) {
+				group.facets.forEach((facet: any) => {
+					if (facet.histogram) {
+						facet.histogram.showOrigin = true;
+					}
+				});
 			}
 
 			return group;
@@ -734,7 +742,6 @@ export default Vue.extend({
 		injectHighlights(highlight: Highlight, selection: RowSelection, deemphasis: any) {
 			// Clear highlight state incase it was set via a click on on another
 			// component
-			console.log('injectHighlights');
 			$(this.$el).find('.select-highlight').removeClass('select-highlight');
 			// Update highlight
 			const group = this.facets.getGroup(this.groupSpec.key);
@@ -807,7 +814,8 @@ export default Vue.extend({
 		updateImportantBadge(group: Group) {
 			// update 'important' class
 			const $group = this.facets.getGroup(group.key)._element;
-			$group.toggleClass('important', Boolean(group.isImportant));
+			const isImportant = this.ranking > IMPORTANT_VARIABLE_RANKING_THRESHOLD;
+			$group.toggleClass('important', Boolean(isImportant));
 		},
 
 		// inject type icon
@@ -911,10 +919,10 @@ export default Vue.extend({
 
 <style>
 
-.facets-root {
+/* .facets-root {
 	position: relative;
 	display: block;
-}
+} */
 
 .group-facet-container {
 	position: relative;

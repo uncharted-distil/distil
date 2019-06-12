@@ -227,8 +227,6 @@ export const actions = {
 
 	updateSelectTrainingData(context: ViewContext) {
 		// clear any previous state
-		context.commit('setIncludedTableData', null);
-		context.commit('setExcludedTableData', null);
 
 		const dataset = context.getters.getRouteDataset;
 		const highlight = context.getters.getDecodedHighlight;
@@ -274,8 +272,6 @@ export const actions = {
 
 	updateResultsSolution(context: ViewContext) {
 		// clear previous state
-		context.commit('clearTargetSummary');
-		context.commit('clearTrainingSummaries');
 		context.commit('clearResidualsExtrema', null);
 		context.commit('setIncludedResultTableData', null);
 		context.commit('setExcludedResultTableData', null);
@@ -300,27 +296,20 @@ export const actions = {
 		context.dispatch('fetchTargetSummary', {
 			dataset: dataset,
 			target: target,
-			solutionId: solutionId
+			solutionId: solutionId,
+			highlight: highlight
 		});
 		context.dispatch('fetchTrainingSummaries', {
 			dataset: dataset,
 			training: trainingVariables,
-			solutionId: solutionId
+			solutionId: solutionId,
+			highlight: highlight
 		});
 		context.dispatch('fetchPredictedSummaries', {
 			dataset: dataset,
 			target: target,
-			requestIds: requestIds
-		});
-		context.dispatch('fetchResultHighlightValues', {
-			dataset: dataset,
-			target: target,
-			training: paginatedVariables,
-			highlight: highlight,
-			solutionId: solutionId,
 			requestIds: requestIds,
-			includeCorrectness: isClassification,
-			includeResidual: isRegression
+			highlight: highlight
 		});
 
 		if (isRegression) {
@@ -333,45 +322,14 @@ export const actions = {
 				dataset: dataset,
 				target: target,
 				requestIds: requestIds,
+				highlight: highlight
 			});
 		} else if (isClassification) {
 			context.dispatch('fetchCorrectnessSummaries', {
 				dataset: dataset,
-				requestIds: requestIds
+				requestIds: requestIds,
+				highlight: highlight
 			});
 		}
-	},
-
-	updateResultsHighlights(context: ViewContext) {
-		// clear previous state
-		context.commit('setIncludedResultTableData', null);
-		context.commit('setExcludedResultTableData', null);
-
-		const dataset = context.getters.getRouteDataset;
-		const target = context.getters.getRouteTargetVariable;
-		const requestIds = context.getters.getRelevantSolutionRequestIds;
-		const solutionId = context.getters.getRouteSolutionId;
-		const isClassification = context.getters.isClassification;
-		const isRegression = context.getters.isRegression;
-		const paginatedVariables = context.getters.getResultsPaginatedVariables;
-		const highlight = context.getters.getDecodedHighlight;
-
-		return Promise.all([
-			context.dispatch('fetchResultHighlightValues', {
-				dataset: dataset,
-				target: target,
-				training: paginatedVariables,
-				highlight: highlight,
-				solutionId: solutionId,
-				requestIds: requestIds,
-				includeCorrectness: isClassification,
-				includeResidual: isRegression
-			}),
-			context.dispatch('fetchResultTableData', {
-				dataset: dataset,
-				solutionId: solutionId,
-				highlight: highlight
-			})
-		]);
 	}
 };

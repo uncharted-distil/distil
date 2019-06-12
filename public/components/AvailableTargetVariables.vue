@@ -23,7 +23,7 @@ import { filterSummariesByDataset } from '../util/data';
 import VariableFacets from '../components/VariableFacets';
 import { Grouping, Variable, VariableSummary } from '../store/dataset/index';
 import { AVAILABLE_TARGET_VARS_INSTANCE, SELECT_TRAINING_ROUTE } from '../store/route/index';
-import { Group, createGroups } from '../util/facets';
+import { Group } from '../util/facets';
 import Vue from 'vue';
 
 // 9 so it makes a nice clean grid

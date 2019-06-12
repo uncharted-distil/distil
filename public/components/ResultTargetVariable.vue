@@ -2,7 +2,7 @@
 	<div>
 		<variable-facets class="result-target-summary"
 			enable-highlighting
-			:groups="groups"
+			:summaries="summaries"
 			:instance-name="instanceName"></variable-facets>
 	</div>
 </template>
@@ -13,7 +13,7 @@ import Vue from 'vue';
 import VariableFacets from '../components/VariableFacets';
 import { getters as routeGetters } from '../store/route/module';
 import { getters as resultsGetters } from '../store/results/module';
-import { Group, createGroups, getNumericalFacetValue, getCategoricalFacetValue, TOP_RANGE_HIGHLIGHT } from '../util/facets';
+import { getNumericalFacetValue, getCategoricalFacetValue, TOP_RANGE_HIGHLIGHT } from '../util/facets';
 import { updateHighlight, clearHighlight } from '../util/highlights';
 import { RESULT_TARGET_VAR_INSTANCE } from '../store/route/index';
 import { Variable, VariableSummary, Highlight, RowSelection } from '../store/dataset/index';
@@ -44,20 +44,8 @@ export default Vue.extend({
 			return resultsGetters.getTargetSummary(this.$store);
 		},
 
-		groups(): Group[] {
-			if (this.resultTargetSummary) {
-				const target = createGroups([ this.resultTargetSummary ]);
-				if (this.highlight) {
-					const group = target[0];
-					if (group.colName === this.highlight.key) {
-						group.facets.forEach(facet => {
-							facet.filterable = true;
-						});
-					}
-				}
-				return target;
-			}
-			return [];
+		summaries(): VariableSummary[] {
+			return this.resultTargetSummary ? [ this.resultTargetSummary ] : [];
 		},
 
 		highlight(): Highlight {

@@ -35,7 +35,7 @@ import { Variable, VariableSummary, Highlight } from '../store/dataset/index';
 import { getters as routeGetters } from '../store/route/module';
 import { getters as datasetGetters } from '../store/dataset/module';
 import { TRAINING_VARS_INSTANCE } from '../store/route/index';
-import { Group, createGroups, updateImportance } from '../util/facets';
+import { Group } from '../util/facets';
 import { NUM_PER_PAGE } from '../util/data';
 import { overlayRouteEntry } from '../util/routes';
 import { removeFiltersByName } from '../util/filters';
@@ -58,7 +58,6 @@ export default Vue.extend({
 			return routeGetters.getDecodedHighlight(this.$store);
 		},
 		trainingVariableSummaries(): VariableSummary[] {
-			// return updateImportance(groups, this.variables);
 			return routeGetters.getTrainingVariableSummaries(this.$store);
 		},
 		variables(): Variable[] {

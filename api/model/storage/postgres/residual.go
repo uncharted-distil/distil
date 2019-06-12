@@ -70,7 +70,7 @@ func (s *Storage) FetchResidualsSummary(dataset string, storageName string, resu
 	return &api.VariableSummary{
 		Label:    variable.DisplayName,
 		Key:      variable.Name,
-		Type:     model.CategoricalType,
+		Type:     model.NumericalType,
 		VarType:  variable.Type,
 		Baseline: baseline,
 		Filtered: filtered,

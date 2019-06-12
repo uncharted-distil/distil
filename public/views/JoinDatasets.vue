@@ -16,7 +16,7 @@
 					enable-highlighting
 					:instance-name="instanceName"
 					:rows-per-page="numRowsPerPage"
-					:groups="groups">
+					:summaries="variableSummaries">
 			</variable-facets>
 			<div class="col-12 col-md-9 d-flex flex-column h-100">
 				<div class="row flex-1 pb-3">
@@ -86,7 +86,6 @@ import { Dictionary } from '../util/dict';
 import { VariableSummary, TableData, TableColumn, TableRow, Dataset } from '../store/dataset/index';
 import { filterSummariesByDataset, NUM_PER_PAGE,
 	getTableDataItems, getTableDataFields } from '../util/data';
-import { createGroups, Group } from '../util/facets';
 import { JOINED_VARS_INSTANCE } from '../store/route/index';
 import { actions as viewActions } from '../store/view/module';
 import { getters as routeGetters } from '../store/route/module';
@@ -106,11 +105,8 @@ export default Vue.extend({
 		joinDatasets(): string[] {
 			return routeGetters.getRouteJoinDatasets(this.$store);
 		},
-		getVariableSummaries(): VariableSummary[] {
+		variableSummaries(): VariableSummary[] {
 			return routeGetters.getJoinDatasetsVariableSummaries(this.$store);
-		},
-		groups(): Group[] {
-			return createGroups(this.getVariableSummaries);
 		},
 		numRowsPerPage(): number {
 			return NUM_PER_PAGE;

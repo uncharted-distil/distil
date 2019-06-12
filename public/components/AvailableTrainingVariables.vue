@@ -32,7 +32,7 @@ import { getters as datasetGetters } from '../store/dataset/module';
 import { getters as routeGetters } from '../store/route/module';
 import { filterSummariesByDataset, NUM_PER_PAGE } from '../util/data';
 import { AVAILABLE_TRAINING_VARS_INSTANCE } from '../store/route/index';
-import { Group, createGroups, updateImportance } from '../util/facets';
+import { Group } from '../util/facets';
 import VariableFacets from '../components/VariableFacets';
 import { Dictionary } from 'vue-router/types/router';
 
@@ -49,7 +49,6 @@ export default Vue.extend({
 		},
 		availableVariableSummaries(): VariableSummary[] {
 			const summaries = routeGetters.getAvailableVariableSummaries(this.$store);
-			// updateImportance(groups, this.variables);
 			return filterSummariesByDataset(summaries, this.dataset);
 		},
 		variables(): Variable[] {

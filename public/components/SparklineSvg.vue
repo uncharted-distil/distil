@@ -113,7 +113,6 @@ export default Vue.extend({
 						newExtrema.x.max === oldExtrema.x.max &&
 						newExtrema.y.min === oldExtrema.y.min &&
 						newExtrema.y.max === oldExtrema.y.max) {
-						console.log('same extrema?');
 						return;
 					}
 					Vue.nextTick(() => {
@@ -167,7 +166,6 @@ export default Vue.extend({
 		injectSparkline() {
 
 			if (!this.$svg || !this.timeseries || this.timeseries.length === 0) {
-				console.log('bail on render');
 				return;
 			}
 

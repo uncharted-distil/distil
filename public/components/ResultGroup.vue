@@ -33,7 +33,42 @@
 		</div>
 		<div class="result-group-body" v-if="isMaximized">
 			<template v-if="isCompleted">
-				<facets v-if="predictedGroups.length" class="result-container"
+				<facet-entry v-for="summary in predictedSummaries" :key="summary.key"
+					:summary="summary"
+					:highlight="highlight"
+					:row-selection="rowSelection"
+					:html="residualHtml"
+					:instanceName="predictedInstanceName"
+					@numerical-click="onResultNumericalClick"
+					@range-change="onResultRangeChange"
+					@facet-click="onResultCategoricalClick">
+				</facet-entry>
+
+				<div class="residual-group-container">
+					<facet-entry v-for="summary in residualSummaries" :key="summary.key" class="residual-container"
+						show-origin
+						:summary="summary"
+						:highlight="highlight"
+						:row-selection="rowSelection"
+						:html="resultHtml"
+						:instanceName="residualInstanceName"
+						:deemphasis="residualThreshold"
+						@numerical-click="onResidualNumericalClick"
+						@range-change="onResidualRangeChange"
+						@facet-click="onResultCategoricalClick">
+					</facet-entry>
+				</div>
+
+				<facet-entry v-for="summary in correctnessSummaries" :key="summary.key"
+					:summary="summary"
+					:highlight="highlight"
+					:row-selection="rowSelection"
+					:html="residualHtml"
+					:instanceName="correctnessInstanceName"
+					@facet-click="onCorrectnessCategoricalClick">
+				</facet-entry>
+
+				<!-- <facets v-if="predictedGroups.length" class="result-container"
 					@facet-click="onResultCategoricalClick"
 					@numerical-click="onResultNumericalClick"
 					@range-change="onResultRangeChange"
@@ -65,7 +100,7 @@
 					:instanceName="correctnessInstanceName"
 					:row-selection="rowSelection"
 					:html="residualHtml">
-				</facets>
+				</facets> -->
 			</template>
 		</div>
 		<b-modal v-model="openDeleteModal" hide-footer hide-header>
@@ -84,7 +119,7 @@
 // of prediction-truth residuals, and scoring information.
 
 import Vue from 'vue';
-import { createGroups, Group } from '../util/facets';
+import FacetEntry from '../components/FacetEntry';
 import { Extrema, VariableSummary, RowSelection, Highlight } from '../store/dataset/index';
 import { SOLUTION_COMPLETED, SOLUTION_ERRORED } from '../store/solutions/index';
 import { getters as routeGetters } from '../store/route/module';
@@ -96,6 +131,10 @@ import _ from 'lodash';
 
 export default Vue.extend({
 	name: 'result-group',
+
+	components: {
+		FacetEntry
+	},
 
 	props: {
 		name: String as () => string,
@@ -160,24 +199,24 @@ export default Vue.extend({
 			return getSolutionIndex(this.solutionId);
 		},
 
-		predictedGroups(): Group[] {
-			return this.getAndActivateGroups(this.predictedSummary, this.predictedInstanceName, this.targetSummary);
+		predictedSummaries(): VariableSummary[] {
+			return this.predictedSummary ? [ this.predictedSummary ] : [];
 		},
 
-		correctnessGroups(): Group[] {
-			return this.getAndActivateGroups(this.correctnessSummary, this.correctnessInstanceName);
+		correctnessSummaries(): VariableSummary[] {
+			return this.correctnessSummary ? [ this.correctnessSummary ] : [];
 		},
 
-		residualGroups(): Group[] {
-			const groups = this.getAndActivateGroups(this.residualsSummary, this.residualInstanceName);
-			groups.forEach(group => {
-				group.facets.forEach((facet: any) => {
-					if (facet.histogram) {
-						facet.histogram.showOrigin = true;
-					}
-				});
-			});
-			return groups;
+		residualSummaries(): VariableSummary[] {
+			return this.residualsSummary ? [ this.residualsSummary ] : [];
+			// groups.forEach(group => {
+			// 	group.facets.forEach((facet: any) => {
+			// 		if (facet.histogram) {
+			// 			facet.histogram.showOrigin = true;
+			// 		}
+			// 	});
+			// });
+			// return groups;
 		},
 
 		highlight(): Highlight {
@@ -310,22 +349,6 @@ export default Vue.extend({
 				});
 				this.$router.push(routeEntry);
 			}
-		},
-
-		getAndActivateGroups(summary: VariableSummary, contextName: string, exemplar?: VariableSummary): Group[] {
-			if (summary) {
-				const groups = createGroups([ summary ], exemplar);
-				if (this.highlight && this.highlight.context === contextName) {
-					const group = groups[0];
-					if (group.colName === this.highlight.key) {
-						group.facets.forEach(facet => {
-							facet.filterable = true;
-						});
-					}
-				}
-				return groups;
-			}
-			return [];
 		},
 
 		onDelete() {

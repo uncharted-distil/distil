@@ -60,23 +60,12 @@ function updateCurrentSolutionResults(context: SolutionContext, req: CreateSolut
 		solutionId: res.solutionId,
 		highlight: context.getters.getDecodedHighlight
 	});
-	// context.dispatch('fetchResultHighlightValues', {
-	// 	dataset: req.dataset,
-	// 	target: req.target,
-	// 	training: context.getters.getResultsPaginatedVariables,
-	// 	highlight: context.getters.getDecodedHighlight,
-	// 	solutionId: res.solutionId,
-	// 	requestIds: context.getters.getRelevantSolutionRequestIds,
-	// 	includeCorrectness: isClassification,
-	// 	includeResidual: isRegression
-	// });
 
 	if (isRegression) {
 		context.dispatch('fetchResidualsExtrema', {
 			dataset: req.dataset,
 			target: req.target,
-			solutionId: res.solutionId,
-			highlight: context.getters.getDecodedHighlight
+			solutionId: res.solutionId
 		});
 		context.dispatch('fetchResidualsSummary', {
 			dataset: req.dataset,
@@ -101,17 +90,8 @@ function updateSolutionResults(context: SolutionContext, req: CreateSolutionRequ
 	context.dispatch('fetchPredictedSummary', {
 		dataset: req.dataset,
 		target: req.target,
-		solutionId: res.solutionId
-	});
-	context.dispatch('fetchResultHighlightValues', {
-		dataset: req.dataset,
-		target: req.target,
-		training: context.getters.getResultsPaginatedVariables,
-		highlight: context.getters.getDecodedHighlight,
 		solutionId: res.solutionId,
-		requestIds: context.getters.getRelevantSolutionRequestIds,
-		includeCorrectness: isClassification,
-		includeResidual: isRegression
+		highlight: context.getters.getDecodedHighlight
 	});
 
 	if (isRegression) {
@@ -123,12 +103,14 @@ function updateSolutionResults(context: SolutionContext, req: CreateSolutionRequ
 		context.dispatch('fetchResidualsSummary', {
 			dataset: req.dataset,
 			target: req.target,
-			solutionId: res.solutionId
+			solutionId: res.solutionId,
+			highlight: context.getters.getDecodedHighlight
 		});
 	} else if (isClassification) {
 		context.dispatch('fetchCorrectnessSummary', {
 			dataset: req.dataset,
-			solutionId: res.solutionId
+			solutionId: res.solutionId,
+			highlight: context.getters.getDecodedHighlight
 		});
 	}
 }

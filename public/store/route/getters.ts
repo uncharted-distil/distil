@@ -235,7 +235,6 @@ export const getters = {
 	},
 
 	getTrainingVariableSummaries(state: Route, getters: any): VariableSummary[] {
-		// console.log('getTrainingVariableSummaries');
 		const training = getters.getDecodedTrainingVariableNames;
 		const summaries = getters.getVariableSummaries;
 		const lookup = buildLookup(training);
@@ -255,7 +254,6 @@ export const getters = {
 	},
 
 	getTargetVariableSummaries(state: Route, getters: any): VariableSummary[] {
-		// console.log('getTargetVariableSummaries');
 		const target = getters.getRouteTargetVariable;
 		if (target) {
 			const summaries = getters.getVariableSummaries;

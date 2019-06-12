@@ -17,15 +17,15 @@
 		</div>
 		<div class="timeseries-rows" v-if="hasData">
 			<div v-if="isTimeseriesAnalysis">
-				<!-- <div v-for="timeseries in predictedTimeseriesVariableSummaries">
+				
+				<div v-for="summary in predictedSummaries" :key="summary.key">
 					<sparkline-variable
-						:label="timeseries.label"
-						:timeseries="timeseries.timeseries"
-						:forecast="timeseries.forecast"
-						:timeseries-extrema="timeseriesVariableExtrema[timeseries.key]"
-						:highlight-pixel-x="highlightPixelX">
+						:summary="summary"
+						:highlight-pixel-x="highlightPixelX"
+						:min-x="microMin"
+						:max-x="microMax">
 					</sparkline-variable>
-				</div> -->
+				</div>
 
 				<div v-for="summary in variableSummaries" :key="summary.key">
 					<sparkline-variable
@@ -173,19 +173,19 @@ export default Vue.extend({
 			return (timeVar && isTimeType(timeVar.colType));
 		},
 
-		// resultTargetSummary(): VariableSummary {
-		// 	return resultsGetters.getTargetSummary(this.$store);
-		// },
-		//
-		// predictedSummaries(): VariableSummary[] {
-		// 	const summaries = resultsGetters.getPredictedSummaries(this.$store);
-		// 	const solutions = solutionGetters.getRelevantSolutions(this.$store);
-		// 	return solutions.map(solution => {
-		// 		return _.find(summaries, summary => {
-		// 			return summary.solutionId === solution.solutionId;
-		// 		});
-		// 	}).filter(summary => !!summary); // remove errors
-		// },
+		resultTargetSummary(): VariableSummary {
+			return resultsGetters.getTargetSummary(this.$store);
+		},
+
+		predictedSummaries(): VariableSummary[] {
+			const summaries = resultsGetters.getPredictedSummaries(this.$store);
+			const solutions = solutionGetters.getRelevantSolutions(this.$store);
+			return solutions.map(solution => {
+				return _.find(summaries, summary => {
+					return summary.solutionId === solution.solutionId;
+				});
+			}).filter(summary => !!summary); // remove errors
+		},
 
 		timeseriesVarsMinX(): number {
 			if (!this.timeseriesAnalysisVariable) {
@@ -570,7 +570,7 @@ export default Vue.extend({
 	},
 
 	watch: {
-		timeseriesVariableSummaries: {
+		variableSummaries: {
 			handler() {
 				Vue.nextTick(() => {
 					this.injectSVG();

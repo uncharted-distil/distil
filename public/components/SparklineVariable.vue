@@ -5,13 +5,12 @@
 			<div class="timeseries-var-col" v-html="summary.label"></div>
 			<div class="timeseries-min-col">{{min(summary.timeseries).toFixed(2)}}</div>
 			<div class="timeseries-max-col">{{max(summary.timeseries).toFixed(2)}}</div>
-			<sparkline-svg class="sparkline-variable-chart" v-if="summary.timeseries"
+			<sparkline-svg class="sparkline-variable-chart"
 				:highlight-pixel-x="highlightPixelX"
 				:timeseries-extrema="timeseriesExtrema"
 				:timeseries="summary.timeseries">
 			</sparkline-svg>
 		</div>
-
 	</div>
 
 </template>

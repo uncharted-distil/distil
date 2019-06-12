@@ -1,4 +1,5 @@
 import axios from 'axios';
+import _ from 'lodash';
 import { ActionContext } from 'vuex';
 import { DistilState } from '../store';
 import { INCLUDE_FILTER, EXCLUDE_FILTER } from '../../util/filters';
@@ -40,8 +41,13 @@ export const actions = {
 		args.training.forEach(variable => {
 			const key = variable.colName;
 			const label = variable.colDisplayName;
-			// add placeholder
-			mutations.updateTrainingSummary(context, createPendingSummary(key, label, dataset, solutionId));
+			const exists = _.find(context.state.trainingSummaries, v => {
+				return v.dataset === args.dataset && v.key === variable.colName;
+			});
+			if (!exists) {
+				// add placeholder
+				mutations.updateTrainingSummary(context, createPendingSummary(key, label, dataset, solutionId));
+			}
 			// fetch summary
 			promises.push(context.dispatch('fetchTrainingSummary', {
 				dataset: dataset,
@@ -96,7 +102,7 @@ export const actions = {
 				});
 		}
 
-		return axios.post(`/distil/training-summary/${args.dataset}/${args.variable.colName}/${args.resultID}`, {})
+		return axios.post(`/distil/training-summary/${args.dataset}/${args.variable.colName}/${args.resultID}`, filterParams)
 			.then(response => {
 				const summary = response.data.summary;
 				return fetchSummaryExemplars(args.dataset, args.variable.colName, summary)
@@ -133,7 +139,9 @@ export const actions = {
 		const label = args.target;
 		const dataset = args.dataset;
 
-		mutations.updateTargetSummary(context, createPendingSummary(key, label, dataset, args.solutionId));
+		if (!context.state.targetSummary) {
+			mutations.updateTargetSummary(context, createPendingSummary(key, label, dataset, args.solutionId));
+		}
 
 		const timeseries = context.getters.getRouteTimeseriesAnalysis;
 		let interval = context.getters.getRouteTimeseriesBinningInterval;
@@ -164,7 +172,7 @@ export const actions = {
 				});
 		}
 
-		return axios.post(`/distil/target-summary/${args.dataset}/${args.target}/${solution.resultId}`, {})
+		return axios.post(`/distil/target-summary/${args.dataset}/${args.target}/${solution.resultId}`, filterParams)
 			.then(response => {
 				const summary = response.data.summary;
 				return fetchSummaryExemplars(args.dataset, args.target, summary)

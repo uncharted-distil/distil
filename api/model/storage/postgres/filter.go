@@ -385,6 +385,11 @@ func (s *Storage) splitFilters(filterParams *api.FilterParams) *filters {
 	var residualFilter *model.Filter
 	var correctnessFilter *model.Filter
 	var remaining []*model.Filter
+
+	if filterParams == nil {
+		return &filters{}
+	}
+
 	for _, filter := range filterParams.Filters {
 		if api.IsPredictedKey(filter.Key) {
 			predictedFilter = filter

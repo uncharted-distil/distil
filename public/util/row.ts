@@ -74,6 +74,11 @@ export function isRowSelected(selection: RowSelection, d3mIndex: number): boolea
 }
 
 export function updateTableRowSelection(items: any, selection: RowSelection, context: string) {
+
+	if (!items) {
+		return null;
+	}
+
 	// clear selections
 	_.forEach(items, (row) => {
 		row._rowVariant = null;

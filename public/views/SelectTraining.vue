@@ -163,15 +163,12 @@ export default Vue.extend({
 
 	watch: {
 		highlightString() {
-			console.log('highlightString');
 			viewActions.updateSelectTrainingData(this.$store);
 		},
 		training() {
-			console.log('training');
 			viewActions.updateSelectTrainingData(this.$store);
 		},
 		filtersStr() {
-			console.log('filtersStr');
 			viewActions.updateSelectTrainingData(this.$store);
 		},
 		availableTrainingVarsPage() {
