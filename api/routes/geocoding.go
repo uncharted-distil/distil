@@ -96,12 +96,13 @@ func GeocodingHandler(metaCtor api.MetadataStorageCtor, dataCtor api.DataStorage
 			}
 		}
 
+		// get the source dataset folder
 		datasetMeta, err := metaStorage.FetchDataset(dataset, false, false)
 		if err != nil {
 			handleError(w, err)
 			return
 		}
-		sourceFolder := env.ResolvePath(datasetMeta.Source, dataset)
+		sourceFolder := env.ResolvePath(datasetMeta.Source, datasetMeta.Folder)
 
 		// geocode data
 		geocoded, err := task.GeocodeForward(sourceFolder, dataset, variable)
