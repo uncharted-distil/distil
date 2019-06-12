@@ -11,7 +11,6 @@ import Vue from 'vue';
 
 import IconFork from './icons/IconFork';
 import IconBookmark from './icons/IconBookmark';
-
 import { createIcon } from '../util/icon';
 import { createGroup, Group, CategoricalFacet, isCategoricalFacet, getCategoricalChunkSize, isNumericalFacet, isSparklineFacet } from '../util/facets';
 import { VariableSummary, Highlight, RowSelection, Row } from '../store/dataset/index';
@@ -918,11 +917,6 @@ export default Vue.extend({
 </script>
 
 <style>
-
-/* .facets-root {
-	position: relative;
-	display: block;
-} */
 
 .group-facet-container {
 	position: relative;

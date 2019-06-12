@@ -10,7 +10,7 @@ import store from '../store/store';
 import { IMPORTANT_VARIABLE_RANKING_THRESHOLD } from './data';
 import { getters as datasetGetters } from '../store/dataset/module';
 
-export const CATEGORICAL_CHUNK_SIZE = 10;
+export const CATEGORICAL_CHUNK_SIZE = 5;
 export const IMAGE_CHUNK_SIZE = 5;
 
 export const MID_RANGE_HIGHLIGHT = 'bell';

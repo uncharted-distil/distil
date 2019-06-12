@@ -104,8 +104,15 @@ export default Vue.extend({
 </script>
 
 <style>
+
 .available-target-variables {
 	height: 100%;
+}
+
+.available-target-variables .variable-facets-container {
+	justify-content: center;
+	flex-wrap: wrap;
+	flex-direction: row;
 }
 
 .available-target-variables .facets-group .facets-facet-horizontal .facet-range {
@@ -118,14 +125,10 @@ export default Vue.extend({
 .available-target-variables .facet-filters {
 	padding: 2rem;
 }
-.available-target-variables .facets-root-container {
-	display: flex;
-	flex-wrap: wrap;
-	justify-content: center;
-}
 
-.available-target-variables .facets-group-container {
+.available-target-variables .facets-root {
 	flex-grow: 1;
+	display: inline-block;
 	width: 30%;
 	max-width: 30%;
 	margin: 5px;
