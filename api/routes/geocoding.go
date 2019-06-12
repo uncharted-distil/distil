@@ -23,6 +23,7 @@ import (
 	"goji.io/pat"
 
 	"github.com/uncharted-distil/distil-compute/model"
+	"github.com/uncharted-distil/distil/api/env"
 	api "github.com/uncharted-distil/distil/api/model"
 	"github.com/uncharted-distil/distil/api/task"
 )
@@ -35,7 +36,7 @@ type GeocodingResult struct {
 
 // GeocodingHandler generates a route handler that enables geocoding
 // of a variable and the creation of two new columns to hold the lat and lon.
-func GeocodingHandler(metaCtor api.MetadataStorageCtor, dataCtor api.DataStorageCtor, sourceFolder string) func(http.ResponseWriter, *http.Request) {
+func GeocodingHandler(metaCtor api.MetadataStorageCtor, dataCtor api.DataStorageCtor) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// get dataset name
 		dataset := pat.Param(r, "dataset")
@@ -94,6 +95,14 @@ func GeocodingHandler(metaCtor api.MetadataStorageCtor, dataCtor api.DataStorage
 				return
 			}
 		}
+
+		// get the source dataset folder
+		datasetMeta, err := metaStorage.FetchDataset(dataset, false, false)
+		if err != nil {
+			handleError(w, err)
+			return
+		}
+		sourceFolder := env.ResolvePath(datasetMeta.Source, datasetMeta.Folder)
 
 		// geocode data
 		geocoded, err := task.GeocodeForward(sourceFolder, dataset, variable)
