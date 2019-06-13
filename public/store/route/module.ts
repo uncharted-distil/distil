@@ -20,6 +20,8 @@ export const getters = {
 	getRouteTimeseriesBinningInterval: read(moduleGetters.getRouteTimeseriesBinningInterval),
 	getJoinDatasetColumnA: read(moduleGetters.getJoinDatasetColumnA),
 	getJoinDatasetColumnB: read(moduleGetters.getJoinDatasetColumnB),
+	getBaseColumnSuggestions: read(moduleGetters.getBaseColumnSuggestions),
+	getJoinColumnSuggestions: read(moduleGetters.getJoinColumnSuggestions),
 	getJoinAccuracy: read(moduleGetters.getJoinAccuracy),
 	getDecodedJoinDatasetsFilterParams: read(moduleGetters.getDecodedJoinDatasetsFilterParams),
 	getRouteJoinDatasetsHash: read(moduleGetters.getRouteJoinDatasetsHash),

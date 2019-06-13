@@ -210,12 +210,19 @@ export default Vue.extend({
 
 	methods: {
 		onTopColumnClicked(column) {
-			const entry = overlayRouteEntry(this.$route, {
-				joinColumnA: column ? column.key : null
-			});
+			const route = {
+				// clear top and bottom column
+				joinColumnA: null,
+				joinColumnB: null,
+			};
+			if (column) {
+				route.joinColumnA = column.key;
+			}
+			const entry = overlayRouteEntry(this.$route, route);
 			this.$router.push(entry);
 		},
 		onBottomColumnClicked(column) {
+			if (!this.topColumn) { return; }
 			const entry = overlayRouteEntry(this.$route, {
 				joinColumnB: column ? column.key : null
 			});

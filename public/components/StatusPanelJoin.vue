@@ -189,12 +189,13 @@ export default Vue.extend({
 				const importAskModal: any = this.$refs['import-ask-modal'];
 				return importAskModal.show();
 			}
+			const replaceComma = str => str.replace(/, /g, '+');
 			// navigate to join
 			const entry = createRouteEntry(JOIN_DATASETS_ROUTE, {
 				joinDatasets: `${this.dataset},${selected.dataset.id}`,
 				target: this.target,
-				baseColumnSuggestions: this.baseColumnSuggestions.join(','),
-				joinColumnSuggestions: this.joinColumnSuggestions.join(','),
+				baseColumnSuggestions: this.baseColumnSuggestions.map(replaceComma).join(','),
+				joinColumnSuggestions: this.joinColumnSuggestions.map(replaceComma).join(','),
 			});
 			this.$router.push(entry);
 		},
