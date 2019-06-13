@@ -109,9 +109,9 @@ func (s *Storage) createView(storageName string, fields map[string]*model.Variab
 	return err
 }
 
-// VerifyDataType checks to see if a specified type is valid for a variable.
+// IsValidDataType checks to see if a specified type is valid for a variable.
 // Multiple simultaneous calls to the function can result in inaccurate.
-func (s *Storage) VerifyDataType(dataset string, storageName string, varName string, varType string) (bool, error) {
+func (s *Storage) IsValidDataType(dataset string, storageName string, varName string, varType string) (bool, error) {
 	// get all existing fields to rebuild the view.
 	fields, err := s.getExistingFields(dataset)
 	if err != nil {

@@ -45,7 +45,7 @@ type DataStorage interface {
 	FetchTimeseriesSummaryByResult(dataset string, storageName string, xColName string, yColName string, interval int, resultURI string, filterParams *FilterParams) (*Histogram, error)
 	FetchForecastingSummary(dataset string, storageName string, xColName string, yColName string, interval int, resultURI string, filterParams *FilterParams) (*Histogram, error)
 	// Dataset manipulation
-	VerifyDataType(dataset string, storageName string, varName string, varType string) (bool, error)
+	IsValidDataType(dataset string, storageName string, varName string, varType string) (bool, error)
 	SetDataType(dataset string, storageName string, varName string, varType string) error
 	AddVariable(dataset string, storageName string, varName string, varType string) error
 	DeleteVariable(dataset string, storageName string, varName string) error
