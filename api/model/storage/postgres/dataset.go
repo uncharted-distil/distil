@@ -78,7 +78,7 @@ func (s *Storage) getExistingFields(dataset string) (map[string]*model.Variable,
 	return fields, nil
 }
 
-func (s *Storage) createView(storageName string, fields map[string]*model.Variable) error {
+func (s *Storage) createView(storageName string, fields map[string]*model.Variable, overwrite bool) error {
 	// CREATE OR REPLACE VIEW requires the same column names and order (with additions at the end being allowed).
 	sql := "CREATE VIEW %s_tmp AS SELECT %s FROM %s_base;"
 
@@ -95,16 +95,51 @@ func (s *Storage) createView(storageName string, fields map[string]*model.Variab
 		return errors.Wrap(err, "Unable to create new temp view")
 	}
 
-	// Drop the existing view.
-	_, err = s.client.Exec(fmt.Sprintf("DROP VIEW %s;", storageName))
-	if err != nil {
-		return errors.Wrap(err, "Unable to drop existing view")
+	if overwrite {
+		// Drop the existing view.
+		_, err = s.client.Exec(fmt.Sprintf("DROP VIEW %s;", storageName))
+		if err != nil {
+			return errors.Wrap(err, "Unable to drop existing view")
+		}
+
+		// Rename the temporary view to the actual view name.
+		_, err = s.client.Exec(fmt.Sprintf("ALTER VIEW %s_tmp RENAME TO %s;", storageName, storageName))
 	}
 
-	// Rename the temporary view to the actual view name.
-	_, err = s.client.Exec(fmt.Sprintf("ALTER VIEW %s_tmp RENAME TO %s;", storageName, storageName))
-
 	return err
+}
+
+// VerifyDataType checks to see if a specified type is valid for a variable.
+// Multiple simultaneous calls to the function can result in inaccurate.
+func (s *Storage) VerifyDataType(dataset string, storageName string, varName string, varType string) (bool, error) {
+	// get all existing fields to rebuild the view.
+	fields, err := s.getExistingFields(dataset)
+	if err != nil {
+		return false, errors.Wrap(err, "Unable to read existing fields")
+	}
+
+	// update field type in lookup.
+	if fields[varName] == nil {
+		return false, fmt.Errorf("field '%s' not found in existing fields", varName)
+	}
+	fields[varName].Type = varType
+
+	// create view based on field lookup.
+	err = s.createView(storageName, fields, false)
+	if err != nil {
+		return false, errors.Wrap(err, "Unable to create the new view")
+	}
+
+	// check if the new field type works with the data
+	// a count on the field with the updated type should error if invalid
+	verificationSQL := fmt.Sprintf("SELECT COUNT(\"%s\") FROM %s_tmp;", varName, storageName)
+	_, err = s.client.Exec(verificationSQL)
+	s.client.Exec(fmt.Sprintf("DROP VIEW %s_tmp;", storageName))
+	if err != nil {
+		return false, nil
+	}
+
+	return true, nil
 }
 
 // SetDataType updates the data type of the specified variable.
@@ -123,7 +158,7 @@ func (s *Storage) SetDataType(dataset string, storageName string, varName string
 	fields[varName].Type = varType
 
 	// create view based on field lookup.
-	err = s.createView(storageName, fields)
+	err = s.createView(storageName, fields, true)
 	if err != nil {
 		return errors.Wrap(err, "Unable to create the new view")
 	}
@@ -143,7 +178,7 @@ func (s *Storage) createViewFromMetadataFields(storageName string, fields map[st
 		}
 	}
 
-	err := s.createView(storageName, dbFields)
+	err := s.createView(storageName, dbFields, true)
 	if err != nil {
 		return errors.Wrap(err, "Unable to create the new view")
 	}
