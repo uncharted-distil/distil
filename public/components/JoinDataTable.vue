@@ -43,6 +43,14 @@ import { getters as datasetGetters } from '../store/dataset/module';
 import { IMAGE_TYPE, TIMESERIES_TYPE, isJoinable } from '../util/types';
 import { getTimeseriesGroupingsFromFields } from '../util/data';
 
+function findSuggestionIndex(columnSuggestions: string[], colName: string): number {
+	return columnSuggestions.findIndex(col => {
+		// col can be something like "lat+lng" for multi column suggestions
+		const colNames = col.split('+');
+		return Boolean(colNames.find(c => c === colName));
+	});
+}
+
 export default Vue.extend({
 	name: 'join-data-table',
 
@@ -100,7 +108,7 @@ export default Vue.extend({
 					sortable: field.sortable,
 					variant: null
 				};
-				const isFieldSuggested = Boolean(this.baseColumnSuggestions.find(col => col === field.key));
+				const isFieldSuggested = findSuggestionIndex(this.baseColumnSuggestions, field.key) >= 0;
 				const isFieldSelected = this.selectedBaseColumn && field.key === this.selectedBaseColumn.key;
 				if (isFieldSuggested) {
 					emph.variant = 'success';
@@ -123,10 +131,11 @@ export default Vue.extend({
 					sortable: field.sortable,
 					variant: null
 				};
-				const isFieldSuggested = Boolean(this.joinColumnSuggestions.find(col => col === field.label));
-				const isFieldSelected = this.selectedJoinColumn && field.label === this.selectedJoinColumn.label;
+				const isFieldSelected = this.selectedJoinColumn && field.key === this.selectedJoinColumn.key;
 				// if a suggested base column is selected, highlgiht the corresponding suggested join column
 				if (this.selectedBaseColumn) {
+					const isFieldSuggested = findSuggestionIndex(this.baseColumnSuggestions, this.selectedBaseColumn.key)
+						=== findSuggestionIndex(this.joinColumnSuggestions, field.key);
 					if (this.selectedSuggestedBaseColumn !== undefined && isFieldSuggested) {
 						emph.variant = 'success';
 					}

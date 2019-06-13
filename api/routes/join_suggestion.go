@@ -19,6 +19,7 @@ import (
 	"net/http"
 	"net/url"
 	"sort"
+	"strings"
 	"time"
 
 	"github.com/pkg/errors"
@@ -116,8 +117,23 @@ func JoinSuggestionHandler(esCtor model.MetadataStorageCtor, metaCtors map[strin
 		for i := 0; i < len(datasets); i++ {
 			dataset := datasets[i]
 			if localDataset, ok := localDatasets[dataset.ID]; ok {
-				localDataset.JoinSuggestions = datasets[i].JoinSuggestions
 				localDataset.JoinScore = datasets[i].JoinScore
+				localDataset.JoinSuggestions = datasets[i].JoinSuggestions
+
+				// Often the column names of the ingested dataset have empty spaces replaced with underscore, _
+				// So we replace the spaces in join column names from the coressponding datamart dataset with _ to match
+				// with the ones in the local datset
+				for _, suggestion := range localDataset.JoinSuggestions {
+					for j, colName := range suggestion.JoinColumns {
+						colNameTokens := strings.Split(colName, ", ")
+						var newColNameTokens []string
+						for _, token := range colNameTokens {
+							newColNameTokens = append(newColNameTokens, strings.Replace(token, " ", "_", -1))
+						}
+						newColName := strings.Join(newColNameTokens, ", ")
+						suggestion.JoinColumns[j] = newColName
+					}
+				}
 				// Some imported local datasets are missing description. In that case, add a description
 				// (I guess this happens because a downloaded dataset from datamart which is being imported and ingested to the local system,
 				// sometimes comes with datasetDoc.json file with no description in it)
