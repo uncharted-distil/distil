@@ -1,5 +1,4 @@
-import { Variable, VariableSummary } from '../dataset/index';
-import { HighlightRoot, RowSelection } from '../highlights/index';
+import { Variable, VariableSummary, Highlight, RowSelection } from '../dataset/index';
 import { JOINED_VARS_INSTANCE_PAGE, AVAILABLE_TARGET_VARS_INSTANCE_PAGE,
 	AVAILABLE_TRAINING_VARS_INSTANCE_PAGE, TRAINING_VARS_INSTANCE_PAGE,
 	RESULT_TRAINING_VARS_INSTANCE_PAGE } from '../route/index';
@@ -183,7 +182,7 @@ export const getters = {
 		return state.query.filters ? state.query.filters  as string : null;
 	},
 
-	getRouteHighlightRoot(state: Route): string {
+	getRouteHighlight(state: Route): string {
 		return state.query.highlights ? state.query.highlights  as string : null;
 	},
 
@@ -229,7 +228,7 @@ export const getters = {
 		return filterParams;
 	},
 
-	getDecodedHighlightRoot(state: Route): HighlightRoot {
+	getDecodedHighlight(state: Route): Highlight {
 		return decodeHighlights(state.query.highlights as string);
 	},
 
@@ -246,8 +245,8 @@ export const getters = {
 
 	getTrainingVariableSummaries(state: Route, getters: any): VariableSummary[] {
 		const training = getters.getDecodedTrainingVariableNames;
-		const lookup = buildLookup(training);
 		const summaries = getters.getVariableSummaries;
+		const lookup = buildLookup(training);
 		return summaries.filter(summary => lookup[summary.key.toLowerCase()]);
 	},
 
@@ -275,8 +274,8 @@ export const getters = {
 	getAvailableVariables(state: Route, getters: any): Variable[] {
 		const training = getters.getDecodedTrainingVariableNames;
 		const target = getters.getRouteTargetVariable;
-		const lookup = buildLookup(training.concat([ target ]));
 		const variables = getters.getVariables;
+		const lookup = buildLookup(training.concat([ target ]));
 		return variables.filter(variable => !lookup[variable.colName.toLowerCase()]);
 	},
 

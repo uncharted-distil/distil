@@ -32,7 +32,7 @@
 					enable-search
 					enable-highlighting
 					instance-name="resultTrainingVars"
-					:groups="trainingGroups">
+					:summaries="trainingSummaries">
 				</variable-facets>
 			</div>
 
@@ -51,11 +51,11 @@ import VariableFacets from '../components/VariableFacets';
 import ResultsComparison from '../components/ResultsComparison';
 import ResultSummaries from '../components/ResultSummaries';
 import ResultTargetVariable from '../components/ResultTargetVariable';
+import { VariableSummary } from '../store/dataset/index';
 import { actions as viewActions } from '../store/view/module';
 import { getters as datasetGetters } from '../store/dataset/module';
 import { getters as resultGetters } from '../store/results/module';
 import { getters as routeGetters } from '../store/route/module';
-import { Group, createGroups } from '../util/facets';
 
 export default Vue.extend({
 	name: 'results-view',
@@ -81,15 +81,14 @@ export default Vue.extend({
 			}
 			return '';
 		},
-		trainingGroups(): Group[] {
-			const summaries = resultGetters.getTrainingSummaries(this.$store);
-			return createGroups(summaries);
+		trainingSummaries(): VariableSummary[] {
+			return resultGetters.getTrainingSummaries(this.$store);
 		},
 		solutionId(): string {
 			return routeGetters.getRouteSolutionId(this.$store);
 		},
-		highlightRootStr(): string {
-			return routeGetters.getRouteHighlightRoot(this.$store);
+		highlightString(): string {
+			return routeGetters.getRouteHighlight(this.$store);
 		},
 		resultTrainingVarsPage(): number {
 			return routeGetters.getRouteResultTrainingVarsPage(this.$store);
@@ -101,14 +100,14 @@ export default Vue.extend({
 	},
 
 	watch: {
-		highlightRootStr() {
-			viewActions.updateResultsHighlights(this.$store);
+		highlightString() {
+			viewActions.updateResultsSolution(this.$store);
 		},
 		solutionId() {
 			viewActions.updateResultsSolution(this.$store);
 		},
 		resultTrainingVarsPage() {
-			viewActions.updateResultsHighlights(this.$store);
+			viewActions.updateResultsSolution(this.$store);
 		}
 	}
 });

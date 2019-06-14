@@ -91,7 +91,7 @@ func TargetSummaryHandler(metaCtor api.MetadataStorageCtor, solutionCtor api.Sol
 		}
 
 		// fetch summary histogram
-		histogram, err := data.FetchSummaryByResult(dataset, storageName, target, result.ResultURI, filterParams, extrema)
+		summary, err := data.FetchSummaryByResult(dataset, storageName, target, result.ResultURI, filterParams, extrema)
 		if err != nil {
 			handleError(w, err)
 			return
@@ -99,7 +99,7 @@ func TargetSummaryHandler(metaCtor api.MetadataStorageCtor, solutionCtor api.Sol
 
 		// marshal output into JSON
 		err = handleJSON(w, SummaryResult{
-			Histogram: histogram,
+			Summary: summary,
 		})
 		if err != nil {
 			handleError(w, errors.Wrap(err, "unable marshal result variable summary into JSON"))

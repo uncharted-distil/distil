@@ -53,6 +53,20 @@ func VariableTypeHandler(storageCtor api.DataStorageCtor, metaCtor api.MetadataS
 			return
 		}
 
+		// check the variable type to make sure it is valid
+		isValid, err := storage.IsValidDataType(dataset, storageName, field, typ)
+		if err != nil {
+			handleError(w, errors.Wrap(err, "unable to verify the data type in storage"))
+			return
+		}
+		if !isValid {
+			handleErrorType(
+				w,
+				errors.Wrap(err, "unable to verify the data type in storage"),
+				http.StatusBadRequest)
+			return
+		}
+
 		// update the variable type in the storage
 		err = storage.SetDataType(dataset, storageName, field, typ)
 		if err != nil {

@@ -28,7 +28,7 @@ import (
 
 // ResidualsSummary contains a fetch result histogram.
 type ResidualsSummary struct {
-	ResidualsSummary *api.Histogram `json:"histogram"`
+	ResidualsSummary *api.VariableSummary `json:"summary"`
 }
 
 // ResidualsSummaryHandler bins predicted result data for consumption in a downstream summary view.
@@ -92,18 +92,18 @@ func ResidualsSummaryHandler(metaCtor api.MetadataStorageCtor, solutionCtor api.
 		}
 
 		// fetch summary histogram
-		histogram, err := data.FetchResidualsSummary(dataset, storageName, res.ResultURI, filterParams, extrema)
+		summary, err := data.FetchResidualsSummary(dataset, storageName, res.ResultURI, filterParams, extrema)
 		if err != nil {
 			handleError(w, err)
 			return
 		}
-		histogram.Key = api.GetErrorKey(histogram.Key, res.SolutionID)
-		histogram.Label = "Error"
-		histogram.SolutionID = res.SolutionID
+		summary.Key = api.GetErrorKey(summary.Key, res.SolutionID)
+		summary.Label = "Error"
+		summary.SolutionID = res.SolutionID
 
 		// marshal data and sent the response back
 		err = handleJSON(w, PredictedSummary{
-			PredictedSummary: histogram,
+			PredictedSummary: summary,
 		})
 		if err != nil {
 			handleError(w, errors.Wrap(err, "unable marshal result histogram into JSON"))

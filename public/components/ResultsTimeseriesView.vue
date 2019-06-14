@@ -42,7 +42,7 @@ export default Vue.extend({
 		variableSummaries(): VariableSummary[] {
 			const training = resultsGetters.getTrainingSummaries(this.$store);
 			const target = resultsGetters.getTargetSummary(this.$store);
-			return training.concat(target);
+			return target ? training.concat(target) : training;
 		},
 
 		solution(): Solution {

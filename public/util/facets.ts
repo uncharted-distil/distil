@@ -10,7 +10,7 @@ import store from '../store/store';
 import { IMPORTANT_VARIABLE_RANKING_THRESHOLD } from './data';
 import { getters as datasetGetters } from '../store/dataset/module';
 
-export const CATEGORICAL_CHUNK_SIZE = 10;
+export const CATEGORICAL_CHUNK_SIZE = 5;
 export const IMAGE_CHUNK_SIZE = 5;
 
 export const MID_RANGE_HIGHLIGHT = 'bell';
@@ -82,45 +82,26 @@ export interface Group {
 	collapsible: boolean;
 	collapsed: boolean;
 	facets: (PlaceHolderFacet | CategoricalFacet | NumericalFacet | SparklineFacet)[];
-	numRows: number;
 	more?: number;
 	moreTotal?: number;
 	total?: number;
 	less?: number;
 	all?: (PlaceHolderFacet | CategoricalFacet | NumericalFacet | SparklineFacet)[];
 	isImportant?: boolean;
+	summary: VariableSummary;
 }
 
-// creates the set of facets from the supplied summary data
-export function createGroups(summaries: VariableSummary[], exemplar?: VariableSummary): Group[] {
-	return summaries.map(summary => {
-		if (summary.err) {
-			// create error facet
-			return createErrorFacet(summary);
-		}
-		if (summary.pending) {
-			// create pending facet
-			return createPendingFacet(summary);
-		}
-		// create facet
-		return createSummaryFacet(summary, exemplar);
-	}).filter(group => {
-		// remove null groups
-		return group;
-	});
-}
-
-export function updateImportance(groups: Group[], variables: Variable[]) {
-	const variableByKey = {};
-	variables.forEach(variable => {
-		variableByKey[variable.colName] = variable;
-	});
-	groups.map(group => {
-		const {ranking } = variableByKey[group.colName];
-		group.isImportant = ranking > IMPORTANT_VARIABLE_RANKING_THRESHOLD;
-		return group;
-	});
-	return groups;
+export function createGroup(summary: VariableSummary): Group {
+	if (summary.err) {
+		// create error facet
+		return createErrorFacet(summary);
+	}
+	if (summary.pending) {
+		// create pending facet
+		return createPendingFacet(summary);
+	}
+	// create facet
+	return createSummaryFacet(summary);
 }
 
 // creates a facet to display a data fetch error
@@ -138,7 +119,7 @@ export function createErrorFacet(summary: VariableSummary): Group {
 			html: `<div>${summary.err}</div>`,
 			filterable: false
 		}],
-		numRows: 0
+		summary: null
 	};
 }
 
@@ -157,12 +138,12 @@ export function createPendingFacet(summary: VariableSummary): Group {
 			html: spinnerHTML(),
 			filterable: false
 		}],
-		numRows: 0
+		summary: null
 	};
 }
 
 // creates categorical or numerical summary facets based on the input summary type
-export function createSummaryFacet(summary: VariableSummary, exemplar?: VariableSummary): Group {
+export function createSummaryFacet(summary: VariableSummary): Group {
 	switch (summary.type) {
 		case CATEGORICAL_SUMMARY:
 			if (summary.varType === TIMESERIES_TYPE) {
@@ -173,10 +154,10 @@ export function createSummaryFacet(summary: VariableSummary, exemplar?: Variable
 		case NUMERICAL_SUMMARY:
 			return createNumericalSummaryFacet(summary);
 		case TIMESERIES_SUMMMARY:
-			if (summary.categoryBuckets) {
-				return createCategoricalTimeseriesSummaryFacet(summary, exemplar);
+			if (summary.baseline.categoryBuckets) {
+				return createCategoricalTimeseriesSummaryFacet(summary);
 			} else {
-				return createNumericalTimeseriesFacet(summary, exemplar);
+				return createNumericalTimeseriesFacet(summary);
 			}
 	}
 	console.warn('unrecognized summary type', summary.type);
@@ -225,7 +206,7 @@ export function getCategoricalChunkSize(type: string): number {
 // creates a categorical facet
 function createCategoricalSummaryFacet(summary: VariableSummary): Group {
 	let total = 0;
-	const facets =  summary.buckets.map((b, index) => {
+	const facets =  summary.baseline.buckets.map((b, index) => {
 		const segments = [];
 		const selected = {
 			count: b.count
@@ -242,7 +223,7 @@ function createCategoricalSummaryFacet(summary: VariableSummary): Group {
 			selected: selected,
 			segments: segments,
 			filterable: false,
-			file: summary.exemplars ? summary.exemplars[index] : null
+			file: summary.baseline.exemplars ? summary.baseline.exemplars[index] : null
 		};
 		total += b.count;
 		return facet;
@@ -271,16 +252,16 @@ function createCategoricalSummaryFacet(summary: VariableSummary): Group {
 		collapsed: false,
 		facets: top,
 		total: total,
-		numRows: summary.numRows,
 		more: remaining.length,
 		moreTotal: remainingTotal,
-		all: facets
+		all: facets,
+		summary: summary
 	};
 }
 
-function createCategoricalTimeseriesSummaryFacet(summary: VariableSummary, exemplar?: VariableSummary): Group {
+function createCategoricalTimeseriesSummaryFacet(summary: VariableSummary): Group {
 	let total = 0;
-	const facets =  _.map(summary.categoryBuckets, (buckets, category) => {
+	const facets =  _.map(summary.baseline.categoryBuckets, (buckets, category) => {
 		const segments = [];
 		const count = _.sumBy(buckets, b => b.count);
 		const selected = {
@@ -329,10 +310,10 @@ function createCategoricalTimeseriesSummaryFacet(summary: VariableSummary, exemp
 		collapsed: false,
 		facets: top,
 		total: total,
-		numRows: summary.numRows,
 		more: remaining.length,
 		moreTotal: remainingTotal,
-		all: facets
+		all: facets,
+		summary: summary
 	};
 }
 
@@ -351,8 +332,8 @@ function createDataOverTimeFacet(summary: TimeseriesSummary): Group {
 }
 
 function getHistogramSlices(summary: VariableSummary) {
-	const buckets = summary.buckets;
-	const extrema = summary.extrema;
+	const buckets = summary.baseline.buckets;
+	const extrema = summary.baseline.extrema;
 	const slices = new Array(buckets.length);
 	for (let i = 0; i < buckets.length; i++) {
 		const bucket = buckets[i];
@@ -394,21 +375,14 @@ function createNumericalSummaryFacet(summary: VariableSummary): Group {
 				selection: {} as any
 			}
 		],
-		numRows: summary.numRows
+		summary: summary
 	};
 }
 
-function createNumericalTimeseriesFacet(summary: VariableSummary, exemplar?: VariableSummary): Group {
+function createNumericalTimeseriesFacet(summary: VariableSummary): Group {
 	const slices = getHistogramSlices(summary);
 
-	let timeseries: number[][];
-	let forecasted: number[][];
-	if (exemplar) {
-		timeseries = exemplar.buckets.map(b => [ _.parseInt(b.key), b.count ]);
-		forecasted = summary.buckets.map(b => [ _.parseInt(b.key), b.count ]);
-	} else {
-		timeseries = summary.buckets.map(b => [ _.parseInt(b.key), b.count ]);
-	}
+	const timeseries = summary.baseline.buckets.map(b => [ _.parseInt(b.key), b.count ]);
 
 	return {
 		dataset: summary.dataset,
@@ -420,14 +394,14 @@ function createNumericalTimeseriesFacet(summary: VariableSummary, exemplar?: Var
 		collapsed: false,
 		facets: [
 			{
-				sparkline: !forecasted ? timeseries : undefined,
-				sparklines: forecasted ? [ timeseries, forecasted ] : undefined,
+				sparkline: timeseries,
+				// sparklines: timeseries.concat([ forecast ])
 				colors: [ '#000', '#00c6e1' ],
 				filterable: false,
 				selection: {} as any
 			}
 		],
-		numRows: summary.numRows
+		summary: summary
 	};
 }
 
@@ -448,31 +422,31 @@ export function isPlaceHolderFacet(facet: PlaceHolderFacet | CategoricalFacet | 
 }
 
 export function getCategoricalFacetValue(summary: VariableSummary): string {
-	return summary.categoryBuckets ? getTimeseriesSummaryTopCategories(summary)[0] : summary.buckets[0].key;
+	return summary.baseline.categoryBuckets ? getTimeseriesSummaryTopCategories(summary)[0] : summary.baseline.buckets[0].key;
 }
 
-export function getNumericalFacetValue(summary: VariableSummary, group: Group, type: string): {from: number, to: number} {
+export function getNumericalFacetValue(summary: VariableSummary, type: string): {from: number, to: number} {
 
 	// facet library is incapable of selecting a range that isnt exactly
 	// on a bin boundary, so we need to iterate through and find it
 	// manually.
-	const extrema = summary.extrema;
+	const extrema = summary.baseline.extrema;
 
 	let from = extrema.min;
 	let to = extrema.max;
-	if (summary.mean !== undefined && summary.stddev !== undefined) {
+	if (summary.baseline.mean !== undefined && summary.baseline.stddev !== undefined) {
 		switch (type) {
 			case TOP_RANGE_HIGHLIGHT:
-				from = summary.mean + (summary.stddev * DEFAULT_HIGHLIGHT_PERCENTILE);
+				from = summary.baseline.mean + (summary.baseline.stddev * DEFAULT_HIGHLIGHT_PERCENTILE);
 				break;
 
 			case BOTTOM_RANGE_HIGHLIGHT:
-				to = summary.mean - (summary.stddev * DEFAULT_HIGHLIGHT_PERCENTILE);
+				to = summary.baseline.mean - (summary.baseline.stddev * DEFAULT_HIGHLIGHT_PERCENTILE);
 				break;
 
 			case MID_RANGE_HIGHLIGHT:
-				from = summary.mean - (summary.stddev * DEFAULT_HIGHLIGHT_PERCENTILE);
-				to = summary.mean + (summary.stddev * DEFAULT_HIGHLIGHT_PERCENTILE);
+				from = summary.baseline.mean - (summary.baseline.stddev * DEFAULT_HIGHLIGHT_PERCENTILE);
+				to = summary.baseline.mean + (summary.baseline.stddev * DEFAULT_HIGHLIGHT_PERCENTILE);
 				break;
 		}
 	} else {
@@ -493,21 +467,20 @@ export function getNumericalFacetValue(summary: VariableSummary, group: Group, t
 				break;
 		}
 	}
-	const facet = group.facets[0] as NumericalFacet;
-	const slices = facet.histogram.slices;
+	const buckets = summary.baseline.buckets;
 	// case case set to full range
-	let fromSlice = _.toNumber(slices[0].label);
-	let toSlice = _.toNumber(slices[slices.length - 1].toLabel);
+	let fromSlice = _.toNumber(buckets[0].key);
+	let toSlice = _.toNumber(buckets[buckets.length - 1].key);
 	// try to narrow into percentile
-	for (let i = 0; i < slices.length; i++) {
-		const slice = _.toNumber(slices[i].label);
+	for (let i = 0; i < buckets.length; i++) {
+		const slice = _.toNumber(buckets[i].key);
 		if (from <= slice) {
 			fromSlice = slice;
 			break;
 		}
 	}
-	for (let i = slices.length - 1;  i >= 0; i--) {
-		const slice = _.toNumber(slices[i].toLabel);
+	for (let i = buckets.length - 1;  i >= 0; i--) {
+		const slice = _.toNumber(buckets[i].key);
 		if (to >= slice) {
 			toSlice = slice;
 			break;
@@ -519,9 +492,9 @@ export function getNumericalFacetValue(summary: VariableSummary, group: Group, t
 	};
 }
 
-export function getTimeseriesFacetValue(summary: VariableSummary, group: Group, type: string): {from: number, to: number} {
+export function getTimeseriesFacetValue(summary: VariableSummary, type: string): {from: number, to: number} {
 	return {
-		from: _.toNumber(_.minBy(summary.buckets, b => _.toNumber(b.key)).key),
-		to: _.toNumber(_.maxBy(summary.buckets, b => _.toNumber(b.key)).key),
+		from: _.toNumber(_.minBy(summary.baseline.buckets, b => _.toNumber(b.key)).key),
+		to: _.toNumber(_.maxBy(summary.baseline.buckets, b => _.toNumber(b.key)).key),
 	};
 }
