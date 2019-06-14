@@ -90,7 +90,7 @@ export default Vue.extend({
 	data() {
 		return {
 			instanceName: 'select-data',
-			viewTypeModel: TABLE_VIEW,
+			viewTypeModel: null,
 			includedActive: true,
 			TABLE_VIEW: TABLE_VIEW,
 			IMAGE_VIEW: IMAGE_VIEW,
@@ -98,6 +98,10 @@ export default Vue.extend({
 			GEO_VIEW: GEO_VIEW,
 			TIMESERIES_VIEW: TIMESERIES_VIEW
 		};
+	},
+
+	created() {
+		this.viewTypeModel =  this.isTimeseriesAnalysis ? TIMESERIES_VIEW : TABLE_VIEW;
 	},
 
 	computed: {
@@ -189,9 +193,6 @@ export default Vue.extend({
 		},
 
 		viewType(): string {
-			if (this.isTimeseriesAnalysis) {
-				return TIMESERIES_VIEW;
-			}
 			return this.viewTypeModel;
 		}
 	},
