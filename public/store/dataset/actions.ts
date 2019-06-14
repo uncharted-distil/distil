@@ -455,7 +455,8 @@ export const actions = {
 				const key = args.field;
 				const label = args.field;
 				const dataset = args.dataset;
-				mutations.updateVariableSummaries(context,  createErrorSummary(key, label, dataset, error));
+				mutations.updateIncludedVariableSummaries(context, createErrorSummary(key, label, dataset, error));
+				mutations.updateExcludedVariableSummaries(context, createErrorSummary(key, label, dataset, error));
 			});
 	},
 
