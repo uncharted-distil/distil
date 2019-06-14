@@ -133,6 +133,8 @@ export const actions = {
 
 	fetchGeocodingResults(context: DatasetContext, args: { dataset: string, field: string }) {
 		// pull the updated dataset, vars, and summaries
+		const filterParams = context.getters.getDecodedSolutionRequestFilterParams;
+		const highlight = context.getters.getDecodedHighlight;
 		return Promise.all([
 			context.dispatch('fetchDataset', {
 				dataset: args.dataset
@@ -142,11 +144,15 @@ export const actions = {
 			}),
 			context.dispatch('fetchVariableSummary', {
 				dataset: args.dataset,
-				variable: GEOCODED_LON_PREFIX + args.field
+				variable: GEOCODED_LON_PREFIX + args.field,
+				highlight: highlight,
+				filterParams: filterParams
 			}),
 			context.dispatch('fetchVariableSummary', {
 				dataset: args.dataset,
-				variable: GEOCODED_LAT_PREFIX + args.field
+				variable: GEOCODED_LAT_PREFIX + args.field,
+				highlight: highlight,
+				filterParams: filterParams
 			})
 		]);
 	},
@@ -393,9 +399,13 @@ export const actions = {
 			.then(() => {
 				mutations.updateVariableType(context, args);
 				// update variable summary
+				const filterParams = context.getters.getDecodedSolutionRequestFilterParams;
+				const highlight = context.getters.getDecodedHighlight;
 				return context.dispatch('fetchVariableSummary', {
 					dataset: args.dataset,
-					variable: args.field
+					variable: args.field,
+					filterParams: filterParams,
+					highlight: highlight
 				});
 			})
 			.catch(error => {
@@ -406,6 +416,8 @@ export const actions = {
 	reviewVariableType(context: DatasetContext, args: { dataset: string, field: string, isColTypeReviewed: boolean }) {
 		mutations.reviewVariableType(context, args);
 	},
+
+
 
 	// fetches variable summary data for the given dataset and variables
 	fetchVariableSummaries(context: DatasetContext, args: { dataset: string, variables: Variable[], highlight: Highlight, filterParams: FilterParams }): Promise<void[]>  {
@@ -444,7 +456,7 @@ export const actions = {
 		return Promise.all(promises);
 	},
 
-	fetchVariableSummary(context: DatasetContext, args: { dataset: string, variable: string, highlight: Highlight, filterParams: FilterParams }): Promise<void>  {
+	fetchVariableSummary(context: DatasetContext, args: { dataset: string, variable: string, highlight: Highlight, filterParams: FilterParams, include: boolean }): Promise<void>  {
 		if (!args.dataset) {
 			console.warn('`dataset` argument is missing');
 			return null;
