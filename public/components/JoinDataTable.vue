@@ -88,14 +88,16 @@ export default Vue.extend({
 			return columns;
 		},
 		selectedSuggestedBaseColumn(): string {
-			return this.baseColumnSuggestions.find(col => col === (this.selectedBaseColumn && this.selectedBaseColumn.key));
+			const index = findSuggestionIndex(this.baseColumnSuggestions, this.selectedBaseColumn.key);
+			return index >= 0 ? this.selectedBaseColumn.key : undefined;
 		},
 		joinColumnSuggestions(): string[] {
 			const columns = routeGetters.getJoinColumnSuggestions(this.$store).split(',');
 			return columns;
 		},
 		selectedSuggestedJoinColumn(): string {
-			return this.joinColumnSuggestions.find(col => col === (this.selectedJoinColumn && this.selectedJoinColumn.key));
+			const index = findSuggestionIndex(this.baseColumnSuggestions, this.selectedJoinColumn.key);
+			return index >= 0 ? this.selectedJoinColumn.key : undefined;
 		},
 
 		emphasizedBaseTableFields(): Dictionary<TableColumn> {

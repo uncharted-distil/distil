@@ -26,6 +26,7 @@ import (
 	log "github.com/unchartedsoftware/plog"
 	"goji.io/pat"
 
+	compute "github.com/uncharted-distil/distil-compute/model"
 	"github.com/uncharted-distil/distil/api/model"
 	"github.com/uncharted-distil/distil/api/model/storage/datamart"
 )
@@ -120,18 +121,19 @@ func JoinSuggestionHandler(esCtor model.MetadataStorageCtor, metaCtors map[strin
 				localDataset.JoinScore = datasets[i].JoinScore
 				localDataset.JoinSuggestions = datasets[i].JoinSuggestions
 
-				// Often the column names of the ingested dataset have empty spaces replaced with underscore, _
-				// So we replace the spaces in join column names from the coressponding datamart dataset with _ to match
-				// with the ones in the local datset
+				// Column names are normalized while dataset is being ingest
+				// So we retreive normalized column names from the local dataset
+				// using original names from the datamart dataset
 				for _, suggestion := range localDataset.JoinSuggestions {
 					for j, colName := range suggestion.JoinColumns {
 						colNameTokens := strings.Split(colName, ", ")
-						var newColNameTokens []string
+						var localColNameTokens []string
 						for _, token := range colNameTokens {
-							newColNameTokens = append(newColNameTokens, strings.Replace(token, " ", "_", -1))
+							// displayName holds the column name of the original datamart dataset
+							localColNameTokens = append(localColNameTokens, getColNameByDisplayName(localDataset, token))
 						}
-						newColName := strings.Join(newColNameTokens, ", ")
-						suggestion.JoinColumns[j] = newColName
+						localColName := strings.Join(localColNameTokens, ", ")
+						suggestion.JoinColumns[j] = localColName
 					}
 				}
 				// Some imported local datasets are missing description. In that case, add a description
@@ -156,6 +158,15 @@ func JoinSuggestionHandler(esCtor model.MetadataStorageCtor, metaCtors map[strin
 			return
 		}
 	}
+}
+
+func getColNameByDisplayName(dataset *model.Dataset, colDisplayName string) string {
+	for _, variable := range dataset.Variables {
+		if variable.DisplayName == colDisplayName {
+			return variable.Name
+		}
+	}
+	return compute.NormalizeVariableName(colDisplayName) // fallback
 }
 
 func filterDatasets(datasets []*model.Dataset, predicate func(dataset *model.Dataset) bool) []*model.Dataset {

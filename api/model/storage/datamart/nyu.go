@@ -45,6 +45,7 @@ type SearchResult struct {
 	Augmentation *SearchResultAugmentation `json:"augmentation,omitempty"`
 }
 
+// SearchResultAugmentation contains data augmentation info.
 type SearchResultAugmentation struct {
 	Type             string   `json:"type"`
 	LeftColumns      [][]int  `json:"left_columns"`

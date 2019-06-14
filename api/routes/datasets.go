@@ -32,7 +32,7 @@ import (
 
 const (
 	searchTimeout               = 10
-	joinSuggestionSearchTimeout = 300
+	joinSuggestionSearchTimeout = 600
 )
 
 // DatasetResult represents the result of a dataset response.
