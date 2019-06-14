@@ -33,13 +33,48 @@
 		</div>
 		<div class="result-group-body" v-if="isMaximized">
 			<template v-if="isCompleted">
-				<facets v-if="predictedGroups.length" class="result-container"
+				<facet-entry v-for="summary in predictedSummaries" :key="summary.key"
+					:summary="summary"
+					:highlight="highlight"
+					:row-selection="rowSelection"
+					:html="residualHtml"
+					:instanceName="predictedInstanceName"
+					@numerical-click="onResultNumericalClick"
+					@range-change="onResultRangeChange"
+					@facet-click="onResultCategoricalClick">
+				</facet-entry>
+
+				<div class="residual-group-container">
+					<facet-entry v-for="summary in residualSummaries" :key="summary.key" class="residual-container"
+						show-origin
+						:summary="summary"
+						:highlight="highlight"
+						:row-selection="rowSelection"
+						:html="resultHtml"
+						:instanceName="residualInstanceName"
+						:deemphasis="residualThreshold"
+						@numerical-click="onResidualNumericalClick"
+						@range-change="onResidualRangeChange"
+						@facet-click="onResultCategoricalClick">
+					</facet-entry>
+				</div>
+
+				<facet-entry v-for="summary in correctnessSummaries" :key="summary.key"
+					:summary="summary"
+					:highlight="highlight"
+					:row-selection="rowSelection"
+					:html="residualHtml"
+					:instanceName="correctnessInstanceName"
+					@facet-click="onCorrectnessCategoricalClick">
+				</facet-entry>
+
+				<!-- <facets v-if="predictedGroups.length" class="result-container"
 					@facet-click="onResultCategoricalClick"
 					@numerical-click="onResultNumericalClick"
 					@range-change="onResultRangeChange"
 					:solution-id="solutionId"
 					:groups="predictedGroups"
-					:highlights="highlights"
+					:highlight="highlight"
 					:instanceName="predictedInstanceName"
 					:row-selection="rowSelection"
 					:html="residualHtml">
@@ -50,7 +85,7 @@
 						@range-change="onResidualRangeChange"
 						:solution-id="solutionId"
 						:groups="residualGroups"
-						:highlights="highlights"
+						:highlight="highlight"
 						:deemphasis="residualThreshold"
 						:instanceName="residualInstanceName"
 						:row-selection="rowSelection"
@@ -61,11 +96,11 @@
 					@facet-click="onCorrectnessCategoricalClick"
 					:solution-id="solutionId"
 					:groups="correctnessGroups"
-					:highlights="highlights"
+					:highlight="highlight"
 					:instanceName="correctnessInstanceName"
 					:row-selection="rowSelection"
 					:html="residualHtml">
-				</facets>
+				</facets> -->
 			</template>
 		</div>
 		<b-modal v-model="openDeleteModal" hide-footer hide-header>
@@ -84,20 +119,22 @@
 // of prediction-truth residuals, and scoring information.
 
 import Vue from 'vue';
-import Facets from '../components/Facets';
-import { createGroups, Group } from '../util/facets';
-import { Extrema, VariableSummary } from '../store/dataset/index';
-import { Highlight, RowSelection } from '../store/highlights/index';
+import FacetEntry from '../components/FacetEntry';
+import { Extrema, VariableSummary, RowSelection, Highlight } from '../store/dataset/index';
 import { SOLUTION_COMPLETED, SOLUTION_ERRORED } from '../store/solutions/index';
 import { getters as routeGetters } from '../store/route/module';
 import { getters as solutionGetters } from '../store/solutions/module';
 import { getSolutionIndex, getSolutionById, isTopSolutionByScore } from '../util/solutions';
 import { overlayRouteEntry } from '../util/routes';
-import { getHighlights, updateHighlightRoot, clearHighlightRoot } from '../util/highlights';
+import { updateHighlight, clearHighlight } from '../util/highlights';
 import _ from 'lodash';
 
 export default Vue.extend({
 	name: 'result-group',
+
+	components: {
+		FacetEntry
+	},
 
 	props: {
 		name: String as () => string,
@@ -118,10 +155,6 @@ export default Vue.extend({
 			minimized: null,
 			openDeleteModal: false
 		};
-	},
-
-	components: {
-		Facets
 	},
 
 	computed: {
@@ -166,28 +199,28 @@ export default Vue.extend({
 			return getSolutionIndex(this.solutionId);
 		},
 
-		predictedGroups(): Group[] {
-			return this.getAndActivateGroups(this.predictedSummary, this.predictedInstanceName, this.targetSummary);
+		predictedSummaries(): VariableSummary[] {
+			return this.predictedSummary ? [ this.predictedSummary ] : [];
 		},
 
-		correctnessGroups(): Group[] {
-			return this.getAndActivateGroups(this.correctnessSummary, this.correctnessInstanceName);
+		correctnessSummaries(): VariableSummary[] {
+			return this.correctnessSummary ? [ this.correctnessSummary ] : [];
 		},
 
-		residualGroups(): Group[] {
-			const groups = this.getAndActivateGroups(this.residualsSummary, this.residualInstanceName);
-			groups.forEach(group => {
-				group.facets.forEach((facet: any) => {
-					if (facet.histogram) {
-						facet.histogram.showOrigin = true;
-					}
-				});
-			});
-			return groups;
+		residualSummaries(): VariableSummary[] {
+			return this.residualsSummary ? [ this.residualsSummary ] : [];
+			// groups.forEach(group => {
+			// 	group.facets.forEach((facet: any) => {
+			// 		if (facet.histogram) {
+			// 			facet.histogram.showOrigin = true;
+			// 		}
+			// 	});
+			// });
+			// return groups;
 		},
 
-		highlights(): Highlight {
-			return getHighlights();
+		highlight(): Highlight {
+			return routeGetters.getDecodedHighlight(this.$store);
 		},
 
 		currentClass(): string {
@@ -241,34 +274,34 @@ export default Vue.extend({
 		onResultCategoricalClick(context: string, key: string, value: string, dataset: string) {
 			if (key && value) {
 				// extract the var name from the key
-				updateHighlightRoot(this.$router, {
+				updateHighlight(this.$router, {
 					context: context,
 					dataset: dataset,
 					key: key,
 					value: value
 				});
 			} else {
-				clearHighlightRoot(this.$router);
+				clearHighlight(this.$router);
 			}
 		},
 
 		onCorrectnessCategoricalClick(context: string, key: string, value: string, dataset: string) {
 			if (key && value) {
 				// extract the var name from the key
-				updateHighlightRoot(this.$router, {
+				updateHighlight(this.$router, {
 					context: context,
 					dataset: dataset,
 					key: key,
 					value: value
 				});
 			} else {
-				clearHighlightRoot(this.$router);
+				clearHighlight(this.$router);
 			}
 		},
 
 		onResultNumericalClick(context: string, key: string, value: { from: number, to: number }, dataset: string) {
-			if (!this.highlights.root || this.highlights.root.key !== key) {
-				updateHighlightRoot(this.$router, {
+			if (!this.highlight || this.highlight.key !== key) {
+				updateHighlight(this.$router, {
 					context: context,
 					dataset: dataset,
 					key: key,
@@ -278,7 +311,7 @@ export default Vue.extend({
 		},
 
 		onResultRangeChange(context: string, key: string, value: { from: { label: string[] }, to: { label: string[] } }, dataset: string) {
-			updateHighlightRoot(this.$router, {
+			updateHighlight(this.$router, {
 				context: context,
 				dataset: dataset,
 				key: key,
@@ -288,8 +321,8 @@ export default Vue.extend({
 		},
 
 		onResidualNumericalClick(context: string, key: string, value: { from: number, to: number }, dataset: string) {
-			if (!this.highlights.root || this.highlights.root.key !== key) {
-				updateHighlightRoot(this.$router, {
+			if (!this.highlight || this.highlight.key !== key) {
+				updateHighlight(this.$router, {
 					context: context,
 					dataset: dataset,
 					key: key,
@@ -299,7 +332,7 @@ export default Vue.extend({
 		},
 
 		onResidualRangeChange(context: string, key: string, value: { from: number, to: number }, dataset: string) {
-			updateHighlightRoot(this.$router, {
+			updateHighlight(this.$router, {
 				context: context,
 				dataset: dataset,
 				key: key,
@@ -316,22 +349,6 @@ export default Vue.extend({
 				});
 				this.$router.push(routeEntry);
 			}
-		},
-
-		getAndActivateGroups(summary: VariableSummary, contextName: string, exemplar?: VariableSummary): Group[] {
-			if (summary) {
-				const groups = createGroups([ summary ], exemplar);
-				if (this.highlights.root && this.highlights.root.context === contextName) {
-					const group = groups[0];
-					if (group.colName === this.highlights.root.key) {
-						group.facets.forEach(facet => {
-							facet.filterable = true;
-						});
-					}
-				}
-				return groups;
-			}
-			return [];
 		},
 
 		onDelete() {

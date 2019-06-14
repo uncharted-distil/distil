@@ -88,7 +88,7 @@ func (s *Storage) isBadSolution(solution *api.Solution) (bool, error) {
 	}
 
 	// result mean and stddev
-	stats, err := f.FetchNumericalStats(&api.FilterParams{})
+	stats, err := f.FetchNumericalStats(&api.FilterParams{}, false)
 	if err != nil {
 		return false, err
 	}

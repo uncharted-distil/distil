@@ -24,7 +24,7 @@ export const FILE_PROVENANCE = 'file';
 export const IMPORTANT_VARIABLE_RANKING_THRESHOLD = 0.5;
 
 export function getTimeseriesSummaryTopCategories(summary: VariableSummary): string[] {
-	return _.map(summary.categoryBuckets, (buckets, category) => {
+	return _.map(summary.baseline.categoryBuckets, (buckets, category) => {
 			return {
 				category: category,
 				count: _.sumBy(buckets, b => b.count)
@@ -99,7 +99,9 @@ export function getTimeseriesAnalysisIntervals(timeVar: Variable, range: number)
 		}
 	}
 
-	let small, med, large = 0;
+	let small = 0;
+	let med = 0;
+	let large = 0;
 	if (isIntegerType(timeVar.colType)) {
 		small = Math.floor(range / 10);
 		med = Math.floor(range / 20);
@@ -116,17 +118,21 @@ export function getTimeseriesAnalysisIntervals(timeVar: Variable, range: number)
 	];
 }
 
-export function fetchHistogramExemplars(datasetName: string, variableName: string, histogram: VariableSummary) {
+export function fetchSummaryExemplars(datasetName: string, variableName: string, summary: VariableSummary) {
 
 	const variables = datasetGetters.getVariables(store);
 	const variable = variables.find(v => v.colName === variableName);
 
-	if (histogram.exemplars) {
+	const baselineExemplars = summary.baseline.exemplars;
+	const filteredExemplars = summary.filtered ? summary.filtered.exemplars : [];
+	const exemplars = baselineExemplars ? baselineExemplars.concat(filteredExemplars) : filteredExemplars;
+
+	if (exemplars) {
 		if (variable.grouping) {
 			if (variable.grouping.type === 'timeseries') {
 
 				// if there a linked exemplars, fetch those before resolving
-				return Promise.all(histogram.exemplars.map(exemplar => {
+				return Promise.all(exemplars.map(exemplar => {
 					return datasetActions.fetchTimeseries(store, {
 						dataset: datasetName,
 						timeseriesColName: variable.grouping.idCol,
@@ -142,7 +148,7 @@ export function fetchHistogramExemplars(datasetName: string, variableName: strin
 			return datasetActions.fetchFiles(store, {
 				dataset: datasetName,
 				variable: variableName,
-				urls: histogram.exemplars
+				urls: exemplars
 			});
 		}
 	}
@@ -180,14 +186,9 @@ export function createPendingSummary(key: string, label: string, dataset: string
 		key: key,
 		label: label,
 		dataset: dataset,
-		feature: '',
 		pending: true,
-		buckets: [],
-		extrema: {
-			min: null,
-			max: null
-		},
-		numRows: 0,
+		baseline: null,
+		filtered: null,
 		solutionId: solutionId
 	};
 }
@@ -197,14 +198,9 @@ export function createErrorSummary(key: string, label: string, dataset: string, 
 		key: key,
 		label: label,
 		dataset: dataset,
-		feature: '',
-		buckets: [],
-		extrema: {
-			min: null,
-			max: null
-		},
-		err: error.response ? error.response.data : error,
-		numRows: 0
+		baseline: null,
+		filtered: null,
+		err: error.response ? error.response.data : error
 	};
 }
 
@@ -217,7 +213,6 @@ export function getSummary(
 	updateFunction: (arg: any, summary: VariableSummary) => void,
 	filterParams: FilterParams): Promise<any> {
 
-	const feature = solution.feature;
 	const dataset = solution.dataset;
 	const solutionId = solution.solutionId;
 	const resultId = solution.resultId;
@@ -235,12 +230,10 @@ export function getSummary(
 	return axios.post(`${endpoint}/${resultId}`, filterParams ? filterParams : {})
 		.then(response => {
 			// save the histogram data
-			const histogram = response.data.histogram;
-			histogram.feature = feature;
-			histogram.solutionId = solutionId;
-			histogram.resultId = resultId;
-			histogram.dataset = dataset;
-			updateFunction(context, histogram);
+			const summary = response.data.summary;
+			summary.solutionId = solutionId;
+			summary.dataset = dataset;
+			updateFunction(context, summary);
 		})
 		.catch(error => {
 			console.error(error);
@@ -268,17 +261,17 @@ export function sortVariablesByImportance(variables: Variable[]): Variable[] {
 	return variables;
 }
 
-export function sortGroupsByImportance(groups: Group[], variables: Variable[]): Group[] {
+export function sortSummariesByImportance(summaries: VariableSummary[], variables: Variable[]): VariableSummary[] {
 	// create importance lookup map
 	const importance: Dictionary<number> = {};
 	variables.forEach(variable => {
 		importance[variable.colName] = getVariableImportance(variable);
 	});
 	// sort by importance
-	groups.sort((a, b) => {
-		return importance[b.colName] - importance[a.colName];
+	summaries.sort((a, b) => {
+		return importance[b.key] - importance[a.key];
 	});
-	return groups;
+	return summaries;
 }
 
 export function validateData(data: TableData) {

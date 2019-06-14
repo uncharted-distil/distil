@@ -54,7 +54,7 @@ func NewVectorField(storage *Storage, storageName string, key string, label stri
 }
 
 // FetchSummaryData pulls summary data from the database and builds a histogram.
-func (f *VectorField) FetchSummaryData(resultURI string, filterParams *api.FilterParams, extrema *api.Extrema) (*api.Histogram, error) {
+func (f *VectorField) FetchSummaryData(resultURI string, filterParams *api.FilterParams, extrema *api.Extrema, invert bool) (*api.VariableSummary, error) {
 	var underlyingField Field
 	if f.isNumerical() {
 		underlyingField = NewNumericalFieldSubSelect(f.Storage, f.StorageName, f.Key, f.Label, f.Type, f.subSelect)
@@ -62,7 +62,7 @@ func (f *VectorField) FetchSummaryData(resultURI string, filterParams *api.Filte
 		underlyingField = NewCategoricalFieldSubSelect(f.Storage, f.StorageName, f.Key, f.Label, f.Type, f.subSelect)
 	}
 
-	histo, err := underlyingField.FetchSummaryData(resultURI, filterParams, extrema)
+	histo, err := underlyingField.FetchSummaryData(resultURI, filterParams, extrema, invert)
 	if err != nil {
 		return nil, err
 	}
@@ -71,12 +71,12 @@ func (f *VectorField) FetchSummaryData(resultURI string, filterParams *api.Filte
 }
 
 // FetchTimeseriesSummaryData pulls summary data from the database and builds a histogram.
-func (f *VectorField) FetchTimeseriesSummaryData(timeVar *model.Variable, interval int, resultURI string, filterParams *api.FilterParams) (*api.Histogram, error) {
+func (f *VectorField) FetchTimeseriesSummaryData(timeVar *model.Variable, interval int, resultURI string, filterParams *api.FilterParams, invert bool) (*api.VariableSummary, error) {
 	return nil, fmt.Errorf("not implemented")
 }
 
 // FetchNumericalStats gets the variable's numerical summary info (mean, stddev).
-func (f *VectorField) FetchNumericalStats(filterParams *api.FilterParams) (*NumericalStats, error) {
+func (f *VectorField) FetchNumericalStats(filterParams *api.FilterParams, invert bool) (*NumericalStats, error) {
 	// confirm that the underlying type is numerical
 	if !f.isNumerical() {
 		return nil, errors.Errorf("field '%s' is not a numerical vector", f.Key)
@@ -85,7 +85,7 @@ func (f *VectorField) FetchNumericalStats(filterParams *api.FilterParams) (*Nume
 	// use the underlying numerical field implementation
 	field := NewNumericalFieldSubSelect(f.Storage, f.StorageName, f.Key, f.Label, f.Type, f.subSelect)
 
-	return field.FetchNumericalStats(filterParams)
+	return field.FetchNumericalStats(filterParams, invert)
 }
 
 // FetchNumericalStatsByResult gets the variable's numerical summary info (mean, stddev) for a result set.
@@ -103,7 +103,7 @@ func (f *VectorField) FetchNumericalStatsByResult(resultURI string, filterParams
 
 // FetchPredictedSummaryData pulls predicted data from the result table and builds
 // the categorical histogram for the field.
-func (f *VectorField) FetchPredictedSummaryData(resultURI string, datasetResult string, filterParams *api.FilterParams, extrema *api.Extrema) (*api.Histogram, error) {
+func (f *VectorField) FetchPredictedSummaryData(resultURI string, datasetResult string, filterParams *api.FilterParams, extrema *api.Extrema) (*api.VariableSummary, error) {
 	return nil, errors.Errorf("vector field cannot be a target so no result will be pulled")
 }
 
@@ -118,6 +118,6 @@ func (f *VectorField) subSelect() string {
 
 // FetchForecastingSummaryData pulls data from the result table and builds the
 // forecasting histogram for the field.
-func (f *VectorField) FetchForecastingSummaryData(timeVar *model.Variable, interval int, resultURI string, filterParams *api.FilterParams) (*api.Histogram, error) {
+func (f *VectorField) FetchForecastingSummaryData(timeVar *model.Variable, interval int, resultURI string, filterParams *api.FilterParams) (*api.VariableSummary, error) {
 	return nil, fmt.Errorf("not implemented")
 }

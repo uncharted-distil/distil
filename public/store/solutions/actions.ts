@@ -40,32 +40,25 @@ function updateCurrentSolutionResults(context: SolutionContext, req: CreateSolut
 	context.dispatch('fetchResultTableData', {
 		dataset: req.dataset,
 		solutionId: res.solutionId,
-		highlightRoot: context.getters.getDecodedHighlightRoot
+		highlight: context.getters.getDecodedHighlight
 	});
 	context.dispatch('fetchPredictedSummary', {
 		dataset: req.dataset,
 		target: req.target,
-		solutionId: res.solutionId
+		solutionId: res.solutionId,
+		highlight: context.getters.getDecodedHighlight
 	});
 	context.dispatch('fetchTrainingSummaries', {
 		dataset: req.dataset,
 		training: context.getters.getActiveSolutionTrainingVariables,
 		solutionId: res.solutionId,
+		highlight: context.getters.getDecodedHighlight
 	});
 	context.dispatch('fetchTargetSummary', {
 		dataset: req.dataset,
 		target: req.target,
-		solutionId: res.solutionId
-	});
-	context.dispatch('fetchResultHighlightValues', {
-		dataset: req.dataset,
-		target: req.target,
-		training: context.getters.getResultsPaginatedVariables,
-		highlightRoot: context.getters.getDecodedHighlightRoot,
 		solutionId: res.solutionId,
-		requestIds: context.getters.getRelevantSolutionRequestIds,
-		includeCorrectness: isClassification,
-		includeResidual: isRegression
+		highlight: context.getters.getDecodedHighlight
 	});
 
 	if (isRegression) {
@@ -77,12 +70,14 @@ function updateCurrentSolutionResults(context: SolutionContext, req: CreateSolut
 		context.dispatch('fetchResidualsSummary', {
 			dataset: req.dataset,
 			target: req.target,
-			solutionId: res.solutionId
+			solutionId: res.solutionId,
+			highlight: context.getters.getDecodedHighlight
 		});
 	} else if (isClassification) {
 		context.dispatch('fetchCorrectnessSummary', {
 			dataset: req.dataset,
-			solutionId: res.solutionId
+			solutionId: res.solutionId,
+			highlight: context.getters.getDecodedHighlight
 		});
 	}
 }
@@ -95,17 +90,8 @@ function updateSolutionResults(context: SolutionContext, req: CreateSolutionRequ
 	context.dispatch('fetchPredictedSummary', {
 		dataset: req.dataset,
 		target: req.target,
-		solutionId: res.solutionId
-	});
-	context.dispatch('fetchResultHighlightValues', {
-		dataset: req.dataset,
-		target: req.target,
-		training: context.getters.getResultsPaginatedVariables,
-		highlightRoot: context.getters.getDecodedHighlightRoot,
 		solutionId: res.solutionId,
-		requestIds: context.getters.getRelevantSolutionRequestIds,
-		includeCorrectness: isClassification,
-		includeResidual: isRegression
+		highlight: context.getters.getDecodedHighlight
 	});
 
 	if (isRegression) {
@@ -117,12 +103,14 @@ function updateSolutionResults(context: SolutionContext, req: CreateSolutionRequ
 		context.dispatch('fetchResidualsSummary', {
 			dataset: req.dataset,
 			target: req.target,
-			solutionId: res.solutionId
+			solutionId: res.solutionId,
+			highlight: context.getters.getDecodedHighlight
 		});
 	} else if (isClassification) {
 		context.dispatch('fetchCorrectnessSummary', {
 			dataset: req.dataset,
-			solutionId: res.solutionId
+			solutionId: res.solutionId,
+			highlight: context.getters.getDecodedHighlight
 		});
 	}
 }

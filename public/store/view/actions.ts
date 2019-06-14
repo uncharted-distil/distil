@@ -16,7 +16,7 @@ enum ParamCacheKey {
 function createCacheable(key: ParamCacheKey, func: (context: ViewContext, args: Dictionary<string>) => any) {
 	return (context: ViewContext, args: Dictionary<string>) => {
 		// execute provided function if params are not cached already or changed
-		const params = _.values(args).join(':');
+		const params = JSON.stringify(args);
 		const cachedParams = context.getters.getFetchParamsCache[key];
 		if (cachedParams !== params) {
 			mutations.setFetchParamsCache(context, { key, value: params});
@@ -38,9 +38,13 @@ const fetchVariableSummaries = createCacheable(ParamCacheKey.VARIABLE_SUMMARIES,
 	return fetchVariables(context, args).then(() => {
 		const dataset = args.dataset;
 		const variables = context.getters.getVariables;
+		const filterParams = context.getters.getDecodedSolutionRequestFilterParams;
+		const highlight = context.getters.getDecodedHighlight;
 		context.dispatch('fetchVariableSummaries', {
 			dataset: dataset,
-			variables: variables
+			variables: variables,
+			filterParams: filterParams,
+			highlight: highlight
 		});
 	});
 });
@@ -103,7 +107,6 @@ export const actions = {
 
 	fetchJoinDatasetsData(context: ViewContext) {
 		// clear previous state
-		context.commit('clearHighlightSummaries');
 
 		const datasetIDs = context.getters.getRouteJoinDatasets;
 		const datasetIDA = datasetIDs[0];
@@ -120,71 +123,61 @@ export const actions = {
 				})
 			])
 			.then(() => {
-				// fetch new state
-				const datasets = context.getters.getDatasets;
-				const datasetA = _.find(datasets, d => {
-					return d.id === datasetIDA;
-				});
-				const datasetB = _.find(datasets, d => {
-					return d.id === datasetIDB;
-				});
-				return Promise.all([
-					context.dispatch('fetchVariableSummaries', {
-						dataset: datasetA.id,
-						variables: datasetA.variables
-					}),
-					context.dispatch('fetchVariableSummaries', {
-						dataset: datasetB.id,
-						variables: datasetB.variables
-					})
-				]).then(() => {
-					return context.dispatch('updateJoinDatasetsData');
-				});
+				return context.dispatch('updateJoinDatasetsData');
 			});
 	},
 
 	updateJoinDatasetsData(context: ViewContext) {
 		// clear any previous state
-		context.commit('clearHighlightSummaries');
 		context.commit('clearJoinDatasetsTableData');
 
 		const datasetIDs = context.getters.getRouteJoinDatasets;
-		const highlightRoot = context.getters.getDecodedHighlightRoot;
+		const highlight = context.getters.getDecodedHighlight;
 		const filterParams = context.getters.getDecodedJoinDatasetsFilterParams;
-		const paginatedVariables = context.getters.getJoinDatasetsPaginatedVariables;
-
 		const datasets = context.getters.getDatasets;
+		const datasetIDA = datasetIDs[0];
+		const datasetIDB = datasetIDs[1];
 
-		const joinDatasets = datasets.filter(d => {
-			return d.id === datasetIDs[0] || d.id === datasetIDs[1];
+		// fetch new state
+		const datasetA = _.find(datasets, d => {
+			return d.id === datasetIDA;
+		});
+		const datasetB = _.find(datasets, d => {
+			return d.id === datasetIDB;
 		});
 
 		return Promise.all([
-			context.dispatch('fetchJoinDatasetsHighlightValues', {
-				datasets: joinDatasets,
-				variables: paginatedVariables,
-				highlightRoot: highlightRoot,
-				filterParams: filterParams
+			context.dispatch('fetchVariableSummaries', {
+				dataset: datasetA.id,
+				variables: datasetA.variables,
+				filterParams:  filterParams,
+				highlight: highlight
+			}),
+			context.dispatch('fetchVariableSummaries', {
+				dataset: datasetB.id,
+				variables: datasetB.variables,
+				filterParams:  filterParams,
+				highlight: highlight
 			}),
 			context.dispatch('fetchJoinDatasetsTableData', {
 				datasets: datasetIDs,
 				filterParams: filterParams,
-				highlightRoot: highlightRoot
+				highlight: highlight
 			}),
 		]);
 	},
 
 	fetchSelectTargetData(context: ViewContext, clearSummaries: boolean) {
 		// clear previous state
-		context.commit('clearHighlightSummaries');
 		if (clearSummaries) {
 			clearVariableSummaries(context);
 		}
 
 		// fetch new state
 		const dataset = context.getters.getRouteDataset;
-		const args = { dataset };
-
+		const args = {
+			dataset: dataset
+		};
 		return fetchVariables(context, args).then(() => {
 			return fetchVariableSummaries(context, args);
 		});
@@ -197,9 +190,9 @@ export const actions = {
 
 	fetchSelectTrainingData(context: ViewContext, clearSummaries: boolean) {
 		// clear any previous state
-		context.commit('clearHighlightSummaries');
 		context.commit('setIncludedTableData', null);
 		context.commit('setExcludedTableData', null);
+
 		if (clearSummaries) {
 			clearVariableSummaries(context);
 		}
@@ -207,43 +200,40 @@ export const actions = {
 		const dataset = context.getters.getRouteDataset;
 		const target = context.getters.getRouteTargetVariable;
 
-		fetchJoinSuggestions(context, { dataset });
+		fetchJoinSuggestions(context, {
+			dataset: dataset
+		});
 
-		return fetchVariables(context, { dataset }).then(() => {
-			fetchVariableRankings(context, { dataset, target });
-			return fetchVariableSummaries(context, { dataset });
+		return fetchVariables(context, {
+			dataset: dataset
 		}).then(() => {
+			fetchVariableRankings(context, { dataset, target });
 			return context.dispatch('updateSelectTrainingData');
 		});
 	},
 
 	updateSelectTrainingData(context: ViewContext) {
 		// clear any previous state
-		context.commit('clearHighlightSummaries');
-		context.commit('setIncludedTableData', null);
-		context.commit('setExcludedTableData', null);
 
 		const dataset = context.getters.getRouteDataset;
-		const highlightRoot = context.getters.getDecodedHighlightRoot;
+		const highlight = context.getters.getDecodedHighlight;
 		const filterParams = context.getters.getDecodedSolutionRequestFilterParams;
-		const paginatedVariables = context.getters.getSelectTrainingPaginatedVariables;
 
 		return Promise.all([
-			context.dispatch('fetchDataHighlightValues', {
+			fetchVariableSummaries(context, {
 				dataset: dataset,
-				variables: paginatedVariables,
-				highlightRoot: highlightRoot,
-				filterParams: filterParams
+				filterParams: filterParams,
+				highlight: highlight
 			}),
 			context.dispatch('fetchIncludedTableData', {
 				dataset: dataset,
 				filterParams: filterParams,
-				highlightRoot: highlightRoot
+				highlight: highlight
 			}),
 			context.dispatch('fetchExcludedTableData', {
 				dataset: dataset,
 				filterParams: filterParams,
-				highlightRoot: highlightRoot
+				highlight: highlight
 			})
 		]);
 	},
@@ -252,7 +242,6 @@ export const actions = {
 		// clear previous state
 		context.commit('clearTargetSummary');
 		context.commit('clearTrainingSummaries');
-		context.commit('clearHighlightSummaries');
 		context.commit('clearResidualsExtrema');
 		context.commit('setIncludedResultTableData', null);
 		context.commit('setExcludedResultTableData', null);
@@ -260,9 +249,17 @@ export const actions = {
 		const dataset = context.getters.getRouteDataset;
 		const target = context.getters.getRouteTargetVariable;
 		// fetch new state
-		return fetchVariables(context, { dataset }).then(() => {
-			fetchVariableRankings(context, { dataset, target });
-			return fetchSolutionRequests(context, { dataset, target });
+		return fetchVariables(context, {
+			dataset: dataset
+		}).then(() => {
+			fetchVariableRankings(context, {
+				dataset: dataset,
+				target: target
+			});
+			return fetchSolutionRequests(context, {
+				dataset: dataset,
+				target: target
+			});
 		}).then(() => {
 			return context.dispatch('updateResultsSolution');
 		});
@@ -270,9 +267,6 @@ export const actions = {
 
 	updateResultsSolution(context: ViewContext) {
 		// clear previous state
-		context.commit('clearTargetSummary');
-		context.commit('clearTrainingSummaries');
-		context.commit('clearHighlightSummaries');
 		context.commit('clearResidualsExtrema', null);
 		context.commit('setIncludedResultTableData', null);
 		context.commit('setExcludedResultTableData', null);
@@ -282,42 +276,33 @@ export const actions = {
 		const target = context.getters.getRouteTargetVariable;
 		const isRegression = context.getters.isRegression;
 		const isClassification = context.getters.isClassification;
-		const isForecasting = context.getters.isForecasting;
 		const requestIds = context.getters.getRelevantSolutionRequestIds;
 		const solutionId = context.getters.getRouteSolutionId;
-		const paginatedVariables = context.getters.getResultsPaginatedVariables;
 		const trainingVariables = context.getters.getActiveSolutionTrainingVariables;
-		const highlightRoot = context.getters.getDecodedHighlightRoot;
+		const highlight = context.getters.getDecodedHighlight;
 
 		context.dispatch('fetchResultTableData', {
 			dataset: dataset,
 			solutionId: solutionId,
-			highlightRoot: highlightRoot
+			highlight: highlight
 		});
 		context.dispatch('fetchTargetSummary', {
 			dataset: dataset,
 			target: target,
-			solutionId: solutionId
+			solutionId: solutionId,
+			highlight: highlight
 		});
 		context.dispatch('fetchTrainingSummaries', {
 			dataset: dataset,
 			training: trainingVariables,
-			solutionId: solutionId
+			solutionId: solutionId,
+			highlight: highlight
 		});
 		context.dispatch('fetchPredictedSummaries', {
 			dataset: dataset,
 			target: target,
-			requestIds: requestIds
-		});
-		context.dispatch('fetchResultHighlightValues', {
-			dataset: dataset,
-			target: target,
-			training: paginatedVariables,
-			highlightRoot: highlightRoot,
-			solutionId: solutionId,
 			requestIds: requestIds,
-			includeCorrectness: isClassification,
-			includeResidual: isRegression
+			highlight: highlight
 		});
 
 		if (isRegression) {
@@ -330,46 +315,14 @@ export const actions = {
 				dataset: dataset,
 				target: target,
 				requestIds: requestIds,
+				highlight: highlight
 			});
 		} else if (isClassification) {
 			context.dispatch('fetchCorrectnessSummaries', {
 				dataset: dataset,
-				requestIds: requestIds
+				requestIds: requestIds,
+				highlight: highlight
 			});
 		}
-	},
-
-	updateResultsHighlights(context: ViewContext) {
-		// clear previous state
-		context.commit('clearHighlightSummaries');
-		context.commit('setIncludedResultTableData', null);
-		context.commit('setExcludedResultTableData', null);
-
-		const dataset = context.getters.getRouteDataset;
-		const target = context.getters.getRouteTargetVariable;
-		const requestIds = context.getters.getRelevantSolutionRequestIds;
-		const solutionId = context.getters.getRouteSolutionId;
-		const isClassification = context.getters.isClassification;
-		const isRegression = context.getters.isRegression;
-		const paginatedVariables = context.getters.getResultsPaginatedVariables;
-		const highlightRoot = context.getters.getDecodedHighlightRoot;
-
-		return Promise.all([
-			context.dispatch('fetchResultHighlightValues', {
-				dataset: dataset,
-				target: target,
-				training: paginatedVariables,
-				highlightRoot: highlightRoot,
-				solutionId: solutionId,
-				requestIds: requestIds,
-				includeCorrectness: isClassification,
-				includeResidual: isRegression
-			}),
-			context.dispatch('fetchResultTableData', {
-				dataset: dataset,
-				solutionId: solutionId,
-				highlightRoot: highlightRoot
-			})
-		]);
 	}
 };

@@ -21,7 +21,7 @@
 
 import Vue from 'vue';
 import { removeFilterFromRoute, Filter, NUMERICAL_FILTER, BIVARIATE_FILTER, CATEGORICAL_FILTER, FEATURE_FILTER, CLUSTER_FILTER } from '../util/filters';
-import { clearHighlightRoot } from '../util/highlights';
+import { clearHighlight } from '../util/highlights';
 import { getVarType, isFeatureType, removeFeaturePrefix, isClusterType, removeClusterPrefix } from '../util/types';
 
 export default Vue.extend({
@@ -65,7 +65,7 @@ export default Vue.extend({
 			if (!this.activeFilter) {
 				removeFilterFromRoute(this.$router, this.filter);
 			} else {
-				clearHighlightRoot(this.$router);
+				clearHighlight(this.$router);
 			}
 		}
 	}

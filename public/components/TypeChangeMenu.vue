@@ -29,8 +29,7 @@ import _ from 'lodash';
 import Vue from 'vue';
 import IconBase from './icons/IconBase';
 import IconBookmark from './icons/IconBookmark';
-import { SuggestedType, Variable } from '../store/dataset/index';
-import { HighlightRoot } from '../store/highlights/index';
+import { SuggestedType, Variable, Highlight } from '../store/dataset/index';
 import { actions as datasetActions, getters as datasetGetters } from '../store/dataset/module';
 import { getters as routeGetters } from '../store/route/module';
 import { addTypeSuggestions, getLabelFromType, getTypeFromLabel, isEquivalentType, isLocationType, normalizedEquivalentType, BASIC_SUGGESTIONS } from '../util/types';
@@ -90,11 +89,11 @@ export default Vue.extend({
 		target(): string {
 			return routeGetters.getRouteTargetVariable(this.$store);
 		},
-		highlightRoot(): HighlightRoot {
-			return routeGetters.getDecodedHighlightRoot(this.$store);
+		highlight(): Highlight {
+			return routeGetters.getDecodedHighlight(this.$store);
 		},
 		isDisabled(): boolean {
-			return hasFilterInRoute(this.field) || (this.highlightRoot && this.highlightRoot.key === this.field);
+			return hasFilterInRoute(this.field) || (this.highlight && this.highlight.key === this.field);
 		},
 		hasSchemaType(): boolean {
 			return !!this.schemaType;

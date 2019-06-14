@@ -30,10 +30,9 @@ import _ from 'lodash';
 import Vue from 'vue';
 import ImagePreview from './ImagePreview';
 import { getters as datasetGetters } from '../store/dataset/module';
-import { RowSelection } from '../store/highlights/index';
+import { RowSelection, TableColumn, TableRow, D3M_INDEX_FIELD } from '../store/dataset/index';
 import { getters as routeGetters } from '../store/route/module';
 import { Dictionary } from '../util/dict';
-import { TableColumn, TableRow, D3M_INDEX_FIELD } from '../store/dataset/index';
 import { addRowSelection, removeRowSelection, isRowSelected, updateTableRowSelection } from '../util/row';
 import { IMAGE_TYPE } from '../util/types';
 

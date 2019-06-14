@@ -28,7 +28,7 @@ import (
 
 // CorrectnessSummary contains a fetch result histogram.
 type CorrectnessSummary struct {
-	CorrectnessSummary *api.Histogram `json:"histogram"`
+	CorrectnessSummary *api.VariableSummary `json:"summary"`
 }
 
 // CorrectnessSummaryHandler bins predicted result data for consumption in a downstream summary view.
@@ -78,18 +78,18 @@ func CorrectnessSummaryHandler(solutionCtor api.SolutionStorageCtor, dataCtor ap
 		}
 
 		// fetch summary histogram
-		histogram, err := data.FetchCorrectnessSummary(dataset, storageName, res.ResultURI, filterParams)
+		summary, err := data.FetchCorrectnessSummary(dataset, storageName, res.ResultURI, filterParams)
 		if err != nil {
 			handleError(w, err)
 			return
 		}
-		histogram.Key = api.GetErrorKey(histogram.Key, res.SolutionID)
-		histogram.Label = "Error"
-		histogram.SolutionID = res.SolutionID
+		summary.Key = api.GetErrorKey(summary.Key, res.SolutionID)
+		summary.Label = "Error"
+		summary.SolutionID = res.SolutionID
 
 		// marshal data and sent the response back
 		err = handleJSON(w, CorrectnessSummary{
-			CorrectnessSummary: histogram,
+			CorrectnessSummary: summary,
 		})
 		if err != nil {
 			handleError(w, errors.Wrap(err, "unable marshal result histogram into JSON"))
