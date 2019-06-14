@@ -115,9 +115,12 @@ func JoinSuggestionHandler(esCtor model.MetadataStorageCtor, metaCtors map[strin
 		}
 
 		// If a dataset already exists in the local, use the local dataset augmented with join suggestions from the corresponding datamart dataset
+		// Note: there could be multiple nyu datamart result with same dataset id with diffrent join suggestions/score
 		for i := 0; i < len(datasets); i++ {
 			dataset := datasets[i]
-			if localDataset, ok := localDatasets[dataset.ID]; ok {
+			if locDataset, ok := localDatasets[dataset.ID]; ok {
+				// make a copy of local dataset
+				localDataset := *locDataset
 				localDataset.JoinScore = datasets[i].JoinScore
 				localDataset.JoinSuggestions = datasets[i].JoinSuggestions
 
@@ -142,12 +145,14 @@ func JoinSuggestionHandler(esCtor model.MetadataStorageCtor, metaCtors map[strin
 				if localDataset.Description == "" {
 					localDataset.Description = datasets[i].Description
 				}
-				datasets[i] = localDataset
+				datasets[i] = &localDataset
 			}
 		}
 
-		// sort by join score
-		sort.Slice(datasets, func(i, j int) bool { return datasets[i].JoinScore > datasets[j].JoinScore })
+		// sort by join score and name
+		sort.Slice(datasets, func(i, j int) bool {
+			return datasets[i].JoinScore > datasets[j].JoinScore || datasets[i].Name < datasets[j].Name
+		})
 
 		err = handleJSON(w, DatasetsResult{
 			Datasets: datasets,
@@ -160,7 +165,7 @@ func JoinSuggestionHandler(esCtor model.MetadataStorageCtor, metaCtors map[strin
 	}
 }
 
-func getColNameByDisplayName(dataset *model.Dataset, colDisplayName string) string {
+func getColNameByDisplayName(dataset model.Dataset, colDisplayName string) string {
 	for _, variable := range dataset.Variables {
 		if variable.DisplayName == colDisplayName {
 			return variable.Name

@@ -21,7 +21,7 @@
 			<b-list-group>
 				<b-list-group-item
 					v-for="item in suggestionItems"
-					:key="item.dataset.id"
+					:key="item.key"
 					href="#"
 					v-bind:class="{ selected: item.selected }"
 					:disabled="isImporting"
@@ -81,6 +81,7 @@ import { JOIN_DATASETS_ROUTE } from '../store/route/index';
 
 interface JoinSuggestionItem {
 	dataset: Dataset;
+	key: string;
 	isAvailable: boolean; // tell if dataset is available in the system for join. (note. undefined implies that check hasn't made yet)
 	selected: boolean;
 }
@@ -170,6 +171,14 @@ export default Vue.extend({
 				const selected = isImporting && isImportingDataset;
 				return {
 					dataset: suggestion,
+					// There could be multiple item with same dataset id with diffrent join suggestions.
+					// So item key must be a combination of id and the join suggestions to be unique
+					key: suggestion.id +
+						`${
+							suggestion.joinSuggestion[0].baseColumns
+							.concat(suggestion.joinSuggestion[0].joinColumns)
+							.join('-')
+						}`,
 					isAvailable,
 					selected,
 				};
