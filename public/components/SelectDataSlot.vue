@@ -8,11 +8,11 @@
 
 		<div class="fake-search-input">
 			<div class="filter-badges">
-				<filter-badge v-if="activeFilter && includedActive"
+				<filter-badge v-if="activeFilter"
 					active-filter
 					:filter="activeFilter">
-				</filter-badge>
-				<filter-badge v-if="!includedActive && filter.type !== 'row'" v-for="filter in filters" :key="filter.key" :filter="filter">
+				</filter-badge><!--
+				--><filter-badge v-if="filter.type !== 'row'" v-for="filter in filters" :key="filter.key" :filter="filter">
 				</filter-badge>
 			</div>
 		</div>
@@ -119,7 +119,6 @@ export default Vue.extend({
 
 		includedActive(): boolean {
 			return routeGetters.getRouteInclude(this.$store);
-
 		},
 
 		highlight(): Highlight {
@@ -159,9 +158,6 @@ export default Vue.extend({
 		},
 
 		filters(): Filter[] {
-			if (this.includedActive) {
-				return this.invertFilters(routeGetters.getDecodedFilters(this.$store));
-			}
 			return routeGetters.getDecodedFilters(this.$store);
 		},
 
@@ -232,10 +228,6 @@ export default Vue.extend({
 			} else {
 				clearRowSelection(this.$router);
 			}
-		},
-		invertFilters(filters: Filter[]): Filter[] {
-			// TODO: invert filters
-			return filters;
 		},
 		setIncludedActive() {
 			const entry = overlayRouteEntry(this.$route, {

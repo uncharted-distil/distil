@@ -1003,6 +1003,12 @@ export default Vue.extend({
 	fill: #007bff;
 }
 
+.excluded .facet-range-filter {
+	box-shadow: inset 0 0 0 1000px rgba(220, 53, 0, 0.15) !important;
+}
+.excluded .facets-facet-horizontal .facet-histogram-bar-highlighted {
+	fill: #333 !important;
+}
 .facet-histogram {
 	cursor: pointer !important;
 }
