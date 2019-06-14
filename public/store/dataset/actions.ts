@@ -452,6 +452,10 @@ export const actions = {
 			})
 			.catch(error => {
 				console.error(error);
+				const key = args.field;
+				const label = args.field;
+				const dataset = args.dataset;
+				mutations.updateVariableSummaries(context,  createErrorSummary(key, label, dataset, error));
 			});
 	},
 

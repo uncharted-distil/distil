@@ -32,10 +32,14 @@ func SetVerboseError(verbose bool) {
 }
 
 func handleError(w http.ResponseWriter, err error) {
-	log.Errorf("%+v", err)
+	handleErrorType(w, err, http.StatusInternalServerError)
+}
+
+func handleErrorType(w http.ResponseWriter, err error, code int) {
+	log.Errorf("code %d:%+v", code, err)
 	errMessage := "An error occured on the server while processing the request"
 	if verboseError {
 		errMessage = err.Error()
 	}
-	http.Error(w, errMessage, http.StatusInternalServerError)
+	http.Error(w, errMessage, code)
 }
