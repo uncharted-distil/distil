@@ -60,6 +60,7 @@ import SelectGeoPlot from './SelectGeoPlot';
 import SelectGraphView from './SelectGraphView';
 import FilterBadge from './FilterBadge';
 import ViewTypeToggle from './ViewTypeToggle';
+import { overlayRouteEntry } from '../util/routes';
 import { getters as datasetGetters } from '../store/dataset/module';
 import { TableRow, D3M_INDEX_FIELD, Variable, Highlight, RowSelection } from '../store/dataset/index';
 import { getters as routeGetters } from '../store/route/module';
@@ -90,7 +91,6 @@ export default Vue.extend({
 		return {
 			instanceName: 'select-data',
 			viewTypeModel: null,
-			includedActive: true,
 			TABLE_VIEW: TABLE_VIEW,
 			IMAGE_VIEW: IMAGE_VIEW,
 			GRAPH_VIEW: GRAPH_VIEW,
@@ -115,6 +115,11 @@ export default Vue.extend({
 
 		variables(): Variable[] {
 			return datasetGetters.getVariables(this.$store);
+		},
+
+		includedActive(): boolean {
+			return routeGetters.getRouteInclude(this.$store);
+
 		},
 
 		highlight(): Highlight {
@@ -233,11 +238,19 @@ export default Vue.extend({
 			return filters;
 		},
 		setIncludedActive() {
-			this.includedActive = true;
+			const entry = overlayRouteEntry(this.$route, {
+				include: 'true',
+			});
+			this.$router.push(entry);
+
 			clearRowSelection(this.$router);
 		},
 		setExcludedActive() {
-			this.includedActive = false;
+			const entry = overlayRouteEntry(this.$route, {
+				include: 'false',
+			});
+			this.$router.push(entry);
+
 			clearRowSelection(this.$router);
 		}
 	}

@@ -27,6 +27,13 @@ export const getters = {
 		return state.query.dataset as string;
 	},
 
+	getRouteInclude(state: Route): boolean {
+		if (state.query.include === 'false') {
+			return false;
+		}
+		return true;
+	},
+
 	getRouteJoinDatasets(state: Route): string[] {
 		return state.query.joinDatasets ? (state.query.joinDatasets as string).split(',') : [];
 	},
@@ -236,7 +243,8 @@ export const getters = {
 
 	getTrainingVariableSummaries(state: Route, getters: any): VariableSummary[] {
 		const training = getters.getDecodedTrainingVariableNames;
-		const summaries = getters.getVariableSummaries;
+		const include = getters.getRouteInclude;
+		const summaries = include ? getters.getIncludedVariableSummaries : getters.getExcludedVariableSummaries;
 		const lookup = buildLookup(training);
 		return summaries.filter(summary => lookup[summary.key.toLowerCase()]);
 	},
@@ -256,7 +264,8 @@ export const getters = {
 	getTargetVariableSummaries(state: Route, getters: any): VariableSummary[] {
 		const target = getters.getRouteTargetVariable;
 		if (target) {
-			const summaries = getters.getVariableSummaries;
+			const include = getters.getRouteInclude;
+			const summaries = include ? getters.getIncludedVariableSummaries : getters.getExcludedVariableSummaries;
 			return summaries.filter(summary => target.toLowerCase() === summary.key.toLowerCase());
 		}
 		return [];
@@ -273,8 +282,9 @@ export const getters = {
 	getAvailableVariableSummaries(state: Route, getters: any): VariableSummary[] {
 		const training = getters.getDecodedTrainingVariableNames;
 		const target = getters.getRouteTargetVariable;
+		const include = getters.getRouteInclude;
 		const lookup = buildLookup(training.concat([ target ]));
-		const summaries = getters.getVariableSummaries;
+		const summaries = include ? getters.getIncludedVariableSummaries : getters.getExcludedVariableSummaries;
 		return summaries.filter(summary => !lookup[summary.key.toLowerCase()]);
 	},
 

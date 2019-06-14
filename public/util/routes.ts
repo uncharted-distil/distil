@@ -11,6 +11,7 @@ export interface RouteArgs {
 	filters?: string;
 	training?: string;
 	target?: string;
+	include?: string;
 	solutionId?: string;
 	highlights?: string;
 	row?: string;
@@ -77,6 +78,7 @@ function validateQueryArgs(args: RouteArgs): RouteArgs {
 	if (!_.isUndefined(args.dataset)) { query.dataset = args.dataset; }
 	if (!_.isUndefined(args.terms)) { query.terms = args.terms; }
 	if (!_.isUndefined(args.target)) { query.target = args.target; }
+	if (!_.isUndefined(args.include)) { query.include = args.include; }
 	if (!_.isUndefined(args.solutionId)) { query.solutionId = args.solutionId; }
 	if (!_.isUndefined(args.filters)) { query.filters = args.filters; }
 	if (!_.isUndefined(args.training)) { query.training = args.training; }

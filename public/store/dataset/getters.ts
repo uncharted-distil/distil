@@ -48,7 +48,15 @@ export const getters = {
 	},
 
 	getVariableSummaries(state: DatasetState): VariableSummary[] {
-		return state.variableSummaries;
+		return state.includedSet.variableSummaries;
+	},
+
+	getIncludedVariableSummaries(state: DatasetState): VariableSummary[] {
+		return state.includedSet.variableSummaries;
+	},
+
+	getExcludedVariableSummaries(state: DatasetState): VariableSummary[] {
+		return state.excludedSet.variableSummaries;
 	},
 
 	getTimeseriesAnalysisVariable(state: DatasetState, getters: any): Variable {
@@ -95,42 +103,42 @@ export const getters = {
 	},
 
 	hasIncludedTableData(state: DatasetState): boolean {
-		return !!state.includedTableData;
+		return !!state.includedSet.tableData;
 	},
 
 	getIncludedTableData(state: DatasetState): TableData {
-		return state.includedTableData;
+		return state.includedSet.tableData;
 	},
 
 	getIncludedTableDataNumRows(state: DatasetState): number {
-		return state.includedTableData ? state.includedTableData.numRows : 0;
+		return state.includedSet.tableData ? state.includedSet.tableData.numRows : 0;
 	},
 
 	getIncludedTableDataItems(state: DatasetState, getters: any): TableRow[] {
-		return getTableDataItems(state.includedTableData);
+		return getTableDataItems(state.includedSet.tableData);
 	},
 
 	getIncludedTableDataFields(state: DatasetState, getters: any): Dictionary<TableColumn> {
-		return getTableDataFields(state.includedTableData);
+		return getTableDataFields(state.includedSet.tableData);
 	},
 
 	hasExcludedTableData(state: DatasetState): boolean {
-		return !!state.excludedTableData;
+		return !!state.excludedSet.tableData;
 	},
 
 	getExcludedTableData(state: DatasetState): TableData {
-		return state.excludedTableData;
+		return state.excludedSet.tableData;
 	},
 
 	getExcludedTableDataNumRows(state: DatasetState): number {
-		return state.excludedTableData ? state.excludedTableData.numRows : 0;
+		return state.excludedSet.tableData ? state.excludedSet.tableData.numRows : 0;
 	},
 
 	getExcludedTableDataItems(state: DatasetState, getters: any): TableRow[] {
-		return getTableDataItems(state.excludedTableData);
+		return getTableDataItems(state.excludedSet.tableData);
 	},
 
 	getExcludedTableDataFields(state: DatasetState, getters: any): Dictionary<TableColumn> {
-		return getTableDataFields(state.excludedTableData);
+		return getTableDataFields(state.excludedSet.tableData);
 	}
 };

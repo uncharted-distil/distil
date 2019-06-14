@@ -50,11 +50,14 @@ export const actions = {
 	fetchExcludedResultTableData: dispatch(moduleActions.fetchExcludedResultTableData),
 	fetchResultTableData: dispatch(moduleActions.fetchExcludedResultTableData),
 	// predicted
+	fetchPredictedSummary: dispatch(moduleActions.fetchPredictedSummary),
 	fetchPredictedSummaries: dispatch(moduleActions.fetchPredictedSummaries),
 	// residuals
+	fetchResidualsSummary: dispatch(moduleActions.fetchResidualsSummary),
 	fetchResidualsSummaries: dispatch(moduleActions.fetchResidualsSummaries),
 	fetchResidualsExtrema: dispatch(moduleActions.fetchResidualsExtrema),
 	// correctness
+	fetchCorrectnessSummary: dispatch(moduleActions.fetchCorrectnessSummary),
 	fetchCorrectnessSummaries: dispatch(moduleActions.fetchCorrectnessSummaries),
 };
 
