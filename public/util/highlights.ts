@@ -1,36 +1,35 @@
-import { Highlight, HighlightRoot } from '../store/highlights/index';
+import { Highlight } from '../store/dataset/index';
 import { Filter, FilterParams, CATEGORICAL_FILTER, NUMERICAL_FILTER,
 	BIVARIATE_FILTER, FEATURE_FILTER, TIMESERIES_FILTER } from '../util/filters';
 import { getters as routeGetters } from '../store/route/module';
 import { getters as datasetGetters } from '../store/dataset/module';
-import { getters as highlightGetters } from '../store/highlights/module';
 import { overlayRouteEntry } from '../util/routes';
 import { getVarType, isFeatureType, addFeaturePrefix, isClusterType, addClusterPrefix, isTimeType } from '../util/types';
 import _ from 'lodash';
 import store from '../store/store';
 import VueRouter from 'vue-router';
 
-export function encodeHighlights(highlightRoot: HighlightRoot): string {
-	if (_.isEmpty(highlightRoot)) {
+export function encodeHighlights(highlight: Highlight): string {
+	if (_.isEmpty(highlight)) {
 		return null;
 	}
-	return btoa(JSON.stringify(highlightRoot));
+	return btoa(JSON.stringify(highlight));
 }
 
-export function decodeHighlights(highlightRoot: string): HighlightRoot {
-	if (_.isEmpty(highlightRoot)) {
+export function decodeHighlights(highlight: string): Highlight {
+	if (_.isEmpty(highlight)) {
 		return null;
 	}
-	return JSON.parse(atob(highlightRoot)) as HighlightRoot;
+	return JSON.parse(atob(highlight)) as Highlight;
 }
 
-export function createFilterFromHighlightRoot(highlightRoot: HighlightRoot, mode: string): Filter {
-	if (!highlightRoot || highlightRoot.value === null) {
+export function createFilterFromHighlight(highlight: Highlight, mode: string): Filter {
+	if (!highlight || highlight.value === null) {
 		return null;
 	}
 
 	// inject metadata prefix for metadata vars
-	let key = highlightRoot.key;
+	let key = highlight.key;
 
 	const variables = datasetGetters.getVariables(store);
 
@@ -52,16 +51,16 @@ export function createFilterFromHighlightRoot(highlightRoot: HighlightRoot, mode
 			key: key,
 			type: FEATURE_FILTER,
 			mode: mode,
-			categories: [highlightRoot.value]
+			categories: [highlight.value]
 		};
 	}
 
-	if (_.isString(highlightRoot.value)) {
+	if (_.isString(highlight.value)) {
 		return {
 			key: key,
 			type: CATEGORICAL_FILTER,
 			mode: mode,
-			categories: [highlightRoot.value]
+			categories: [highlight.value]
 		};
 	}
 
@@ -71,8 +70,8 @@ export function createFilterFromHighlightRoot(highlightRoot: HighlightRoot, mode
 		return null;
 	}
 
-	if (highlightRoot.value.from !== undefined &&
-		highlightRoot.value.to !== undefined) {
+	if (highlight.value.from !== undefined &&
+		highlight.value.to !== undefined) {
 
 		// TODO: we currently have no support for filter timeseries data by
 		// ranges and handle it in the client.
@@ -84,57 +83,48 @@ export function createFilterFromHighlightRoot(highlightRoot: HighlightRoot, mode
 			key: key,
 			type: NUMERICAL_FILTER,
 			mode: mode,
-			min: highlightRoot.value.from,
-			max: highlightRoot.value.to
+			min: highlight.value.from,
+			max: highlight.value.to
 		};
 	}
-	if (highlightRoot.value.minX !== undefined &&
-		highlightRoot.value.maxX !== undefined &&
-		highlightRoot.value.minY !== undefined &&
-		highlightRoot.value.maxY !== undefined) {
+	if (highlight.value.minX !== undefined &&
+		highlight.value.maxX !== undefined &&
+		highlight.value.minY !== undefined &&
+		highlight.value.maxY !== undefined) {
 		return {
 			key: key,
 			type: BIVARIATE_FILTER,
 			mode: mode,
-			minX: highlightRoot.value.minX,
-			maxX: highlightRoot.value.maxX,
-			minY: highlightRoot.value.minY,
-			maxY: highlightRoot.value.maxY,
+			minX: highlight.value.minX,
+			maxX: highlight.value.maxX,
+			minY: highlight.value.minY,
+			maxY: highlight.value.maxY,
 		};
 	}
 	return null;
 }
 
-export function addHighlightToFilterParams(filterParams: FilterParams, highlightRoot: HighlightRoot, mode: string): FilterParams {
+export function addHighlightToFilterParams(filterParams: FilterParams, highlight: Highlight, mode: string): FilterParams {
 	const params = _.cloneDeep(filterParams);
-	const highlightFilter = createFilterFromHighlightRoot(highlightRoot, mode);
+	const highlightFilter = createFilterFromHighlight(highlight, mode);
 	if (highlightFilter) {
 		params.filters.push(highlightFilter);
 	}
 	return params;
 }
 
-export function updateHighlightRoot(router: VueRouter, highlightRoot: HighlightRoot) {
+export function updateHighlight(router: VueRouter, highlight: Highlight) {
 	const entry = overlayRouteEntry(routeGetters.getRoute(store), {
-		highlights: encodeHighlights(highlightRoot),
+		highlights: encodeHighlights(highlight),
 		row: null // clear row
 	});
 	router.push(entry);
 }
 
-export function clearHighlightRoot(router: VueRouter) {
+export function clearHighlight(router: VueRouter) {
 	const entry = overlayRouteEntry(routeGetters.getRoute(store), {
 		highlights: null,
 		row: null // clear row
 	});
 	router.push(entry);
-}
-
-export function getHighlights(): Highlight {
-	return {
-		root: routeGetters.getDecodedHighlightRoot(store),
-		values: {
-			summaries: highlightGetters.getHighlightedSummaries(store)
-		}
-	};
 }

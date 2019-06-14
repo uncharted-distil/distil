@@ -7,7 +7,7 @@
 			ignore-highlights
 			:instance-name="instanceName"
 			:rows-per-page="numRowsPerPage"
-			:groups="groups"
+			:summaries="summaries"
 			:html="html">
 		</variable-facets>
 	</div>
@@ -21,9 +21,9 @@ import { getters as routeGetters } from '../store/route/module';
 import { createRouteEntry } from '../util/routes';
 import { filterSummariesByDataset } from '../util/data';
 import VariableFacets from '../components/VariableFacets';
-import { Grouping, Variable } from '../store/dataset/index';
+import { Grouping, Variable, VariableSummary } from '../store/dataset/index';
 import { AVAILABLE_TARGET_VARS_INSTANCE, SELECT_TRAINING_ROUTE } from '../store/route/index';
-import { Group, createGroups } from '../util/facets';
+import { Group } from '../util/facets';
 import Vue from 'vue';
 
 // 9 so it makes a nice clean grid
@@ -40,10 +40,9 @@ export default Vue.extend({
 		dataset(): string {
 			return routeGetters.getRouteDataset(this.$store);
 		},
-		groups(): Group[] {
+		summaries(): VariableSummary[] {
 			const summaries = datasetGetters.getVariableSummaries(this.$store);
-			const filtered = filterSummariesByDataset(summaries, this.dataset);
-			return createGroups(filtered);
+			return filterSummariesByDataset(summaries, this.dataset);
 		},
 		numRowsPerPage(): number {
 			return NUM_TARGET_PER_PAGE;
@@ -105,8 +104,15 @@ export default Vue.extend({
 </script>
 
 <style>
+
 .available-target-variables {
 	height: 100%;
+}
+
+.available-target-variables .variable-facets-container {
+	justify-content: center;
+	flex-wrap: wrap;
+	flex-direction: row;
 }
 
 .available-target-variables .facets-group .facets-facet-horizontal .facet-range {
@@ -119,14 +125,10 @@ export default Vue.extend({
 .available-target-variables .facet-filters {
 	padding: 2rem;
 }
-.available-target-variables .facets-root-container {
-	display: flex;
-	flex-wrap: wrap;
-	justify-content: center;
-}
 
-.available-target-variables .facets-group-container {
+.available-target-variables .facets-root {
 	flex-grow: 1;
+	display: inline-block;
 	width: 30%;
 	max-width: 30%;
 	margin: 5px;

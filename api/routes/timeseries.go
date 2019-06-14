@@ -44,6 +44,11 @@ func TimeseriesHandler(ctorStorage api.DataStorageCtor) func(http.ResponseWriter
 		yColName := pat.Param(r, "yColName")
 		timeseriesURI := pat.Param(r, "timeseriesURI")
 		storageName := model.NormalizeDatasetID(dataset)
+		invert := pat.Param(r, "invert")
+		invertBool := false
+		if invert == "true" {
+			invertBool = true
+		}
 
 		// parse POST params
 		params, err := getPostParameters(r)
@@ -67,7 +72,7 @@ func TimeseriesHandler(ctorStorage api.DataStorageCtor) func(http.ResponseWriter
 		}
 
 		// fetch timeseries
-		timeseries, err := storage.FetchTimeseries(dataset, storageName, timeseriesColName, xColName, yColName, timeseriesURI, filterParams)
+		timeseries, err := storage.FetchTimeseries(dataset, storageName, timeseriesColName, xColName, yColName, timeseriesURI, filterParams, invertBool)
 		if err != nil {
 			handleError(w, err)
 			return

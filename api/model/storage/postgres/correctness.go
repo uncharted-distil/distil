@@ -27,7 +27,8 @@ import (
 )
 
 // FetchCorrectnessSummary fetches a histogram of the residuals associated with a set of numerical predictions.
-func (s *Storage) FetchCorrectnessSummary(dataset string, storageName string, resultURI string, filterParams *api.FilterParams) (*api.Histogram, error) {
+func (s *Storage) FetchCorrectnessSummary(dataset string, storageName string, resultURI string, filterParams *api.FilterParams) (*api.VariableSummary, error) {
+
 	storageNameResult := s.getResultTable(storageName)
 	targetName, err := s.getResultTargetName(storageNameResult, resultURI)
 	if err != nil {
@@ -38,6 +39,32 @@ func (s *Storage) FetchCorrectnessSummary(dataset string, storageName string, re
 	if err != nil {
 		return nil, err
 	}
+
+	var baseline *api.Histogram
+	var filtered *api.Histogram
+	baseline, err = s.fetchHistogram(dataset, storageName, variable, targetName, resultURI, nil)
+	if err != nil {
+		return nil, err
+	}
+	if filterParams.Filters != nil {
+		filtered, err = s.fetchHistogram(dataset, storageName, variable, targetName, resultURI, filterParams)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	return &api.VariableSummary{
+		Label:    variable.DisplayName,
+		Key:      variable.Name,
+		Type:     model.CategoricalType,
+		VarType:  variable.Type,
+		Baseline: baseline,
+		Filtered: filtered,
+	}, nil
+}
+
+func (s *Storage) fetchHistogram(dataset string, storageName string, variable *model.Variable, targetName string, resultURI string, filterParams *api.FilterParams) (*api.Histogram, error) {
+	storageNameResult := s.getResultTable(storageName)
 
 	// get filter where / params
 	wheres, params, err := s.buildResultQueryFilters(storageName, resultURI, filterParams)
@@ -117,10 +144,6 @@ func (s *Storage) parseHistogram(rows *pgx.Rows, variable *model.Variable) (*api
 
 	// assign histogram attributes
 	return &api.Histogram{
-		Label:   variable.DisplayName,
-		Key:     variable.Name,
-		VarType: variable.Type,
-		Type:    model.CategoricalType,
 		Buckets: []*api.Bucket{
 			correctBucket,
 			incorrectBucket,

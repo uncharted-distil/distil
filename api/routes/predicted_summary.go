@@ -29,7 +29,7 @@ import (
 
 // PredictedSummary contains a fetch result histogram.
 type PredictedSummary struct {
-	PredictedSummary *api.Histogram `json:"histogram"`
+	PredictedSummary *api.VariableSummary `json:"summary"`
 }
 
 func fetchSolutionPredictedExtrema(meta api.MetadataStorage, data api.DataStorage, solution api.SolutionStorage, dataset string, storageName string, target string, solutionID string) (*api.Extrema, error) {
@@ -138,18 +138,18 @@ func PredictedSummaryHandler(metaCtor api.MetadataStorageCtor, solutionCtor api.
 		}
 
 		// fetch summary histogram
-		histogram, err := data.FetchPredictedSummary(dataset, storageName, res.ResultURI, filterParams, extrema)
+		summary, err := data.FetchPredictedSummary(dataset, storageName, res.ResultURI, filterParams, extrema)
 		if err != nil {
 			handleError(w, err)
 			return
 		}
-		histogram.Key = api.GetPredictedKey(histogram.Key, res.SolutionID)
-		histogram.Label = "Predicted"
-		histogram.SolutionID = res.SolutionID
+		summary.Key = api.GetPredictedKey(summary.Key, res.SolutionID)
+		summary.Label = "Predicted"
+		summary.SolutionID = res.SolutionID
 
 		// marshal data and sent the response back
 		err = handleJSON(w, PredictedSummary{
-			PredictedSummary: histogram,
+			PredictedSummary: summary,
 		})
 		if err != nil {
 			handleError(w, errors.Wrap(err, "unable marshal result histogram into JSON"))

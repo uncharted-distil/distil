@@ -35,9 +35,8 @@ import IconCropFree from './icons/IconCropFree';
 import { getters as datasetGetters } from '../store/dataset/module';
 import { getters as routeGetters } from '../store/route/module';
 import { Dictionary } from '../util/dict';
-import { TableColumn, TableRow, D3M_INDEX_FIELD } from '../store/dataset/index';
-import { HighlightRoot, RowSelection } from '../store/highlights/index';
-import { updateHighlightRoot, clearHighlightRoot } from '../util/highlights';
+import { TableColumn, TableRow, D3M_INDEX_FIELD, Highlight, RowSelection } from '../store/dataset/index';
+import { updateHighlight, clearHighlight } from '../util/highlights';
 import { addRowSelection, removeRowSelection, isRowSelected } from '../util/row';
 import { LATITUDE_TYPE, LONGITUDE_TYPE, REAL_VECTOR_TYPE } from '../util/types';
 
@@ -195,8 +194,8 @@ export default Vue.extend({
 			return groups;
 		},
 
-		highlightRoot(): HighlightRoot {
-			return routeGetters.getDecodedHighlightRoot(this.$store);
+		highlight(): Highlight {
+			return routeGetters.getDecodedHighlight(this.$store);
 		},
 
 		mapCenter(): number[] {
@@ -325,7 +324,7 @@ export default Vue.extend({
 		clearSelection() {
 			if (this.selectedRect) {
 				$(this.selectedRect._path).removeClass('selected');
-				clearHighlightRoot(this.$router);
+				clearHighlight(this.$router);
 			}
 			if (this.closeButton) {
 				this.closeButton.remove();
@@ -333,11 +332,11 @@ export default Vue.extend({
 		},
 		createHighlight(value: { minX: number, maxX: number, minY: number, maxY: number }) {
 
-			if (this.highlightRoot &&
-				this.highlightRoot.value.minX === value.minX &&
-				this.highlightRoot.value.maxX === value.maxX &&
-				this.highlightRoot.value.minY === value.minY &&
-				this.highlightRoot.value.maxY === value.maxY) {
+			if (this.highlight &&
+				this.highlight.value.minX === value.minX &&
+				this.highlight.value.maxX === value.maxX &&
+				this.highlight.value.minY === value.minY &&
+				this.highlight.value.maxY === value.maxY) {
 				// dont push existing highlight
 				return;
 			}
@@ -346,7 +345,7 @@ export default Vue.extend({
 			const fieldSpec = this.fieldSpecs[0];
 			const key = fieldSpec.type === SINGLE_FIELD ? fieldSpec.field : this.fieldHash(fieldSpec);
 
-			updateHighlightRoot(this.$router, {
+			updateHighlight(this.$router, {
 				context: this.instanceName,
 				dataset: this.dataset,
 				key: key,
@@ -354,20 +353,20 @@ export default Vue.extend({
 			});
 		},
 		drawHighlight() {
-			if (this.highlightRoot &&
-				this.highlightRoot.value.minX !== undefined &&
-				this.highlightRoot.value.maxX !== undefined &&
-				this.highlightRoot.value.minY !== undefined &&
-				this.highlightRoot.value.maxY !== undefined) {
+			if (this.highlight &&
+				this.highlight.value.minX !== undefined &&
+				this.highlight.value.maxX !== undefined &&
+				this.highlight.value.minY !== undefined &&
+				this.highlight.value.maxY !== undefined) {
 
 				const rect = leaflet.rectangle([
 					[
-						this.highlightRoot.value.minY,
-						this.highlightRoot.value.minX
+						this.highlight.value.minY,
+						this.highlight.value.minX
 					],
 					[
-						this.highlightRoot.value.maxY,
-						this.highlightRoot.value.maxX
+						this.highlight.value.maxY,
+						this.highlight.value.maxX
 					]], {
 					color: '#00c6e1',
 					weight: 1,

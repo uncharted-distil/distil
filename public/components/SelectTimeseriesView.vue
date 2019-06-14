@@ -36,7 +36,7 @@ export default Vue.extend({
 		variableSummaries(): VariableSummary[] {
 			const training = routeGetters.getTrainingVariableSummaries(this.$store);
 			const target = routeGetters.getTargetVariableSummaries(this.$store);
-			return training.concat(target);
+			return target ? training.concat(target) : training;
 		},
 
 		items(): TableRow[] {

@@ -1,7 +1,5 @@
 <template>
-	<div
-		v-observe-visibility="visibilityChanged"
-		v-bind:class="{'is-hidden': !isVisible}">
+	<div v-observe-visibility="visibilityChanged">
 		<svg v-if="isLoaded" ref="svg" class="line-chart-row" @click.stop="onClick"></svg>
 		<div v-if="!isLoaded" v-html="spinnerHTML"></div>
 		<div class="highlight-tooltip" ref="tooltip"></div>
@@ -45,7 +43,7 @@ export default Vue.extend({
 			isVisible: false,
 			hasRendered: false,
 			xScale: null,
-			yScale: null
+			yScale: null,
 		};
 	},
 	computed: {
@@ -84,23 +82,39 @@ export default Vue.extend({
 		}
 	},
 
+	mounted() {
+		Vue.nextTick(() => {
+			this.injectTimeseries();
+		});
+	},
+
 	watch: {
-		timeseries() {
-			if (this.isVisible && !this.hasRendered) {
-				Vue.nextTick(() => {
-					this.injectTimeseries();
-				});
-			}
+		timeseries: {
+			handler() {
+				if (this.isVisible && !this.hasRendered) {
+					Vue.nextTick(() => {
+						this.injectTimeseries();
+					});
+				}
+			},
+			deep: true
 		},
 		timeseriesExtrema: {
-			handler() {
+			handler(newExtrema, oldExtrema) {
 				if (this.isVisible && this.isLoaded) {
 					// only redraw if it is currently visible, the data has
 					// loaded
 					// NOTE: there is a race condition in which `isLoaded`
 					// returns true, but the svg element using `v-if="isLoaded"`
-					// has not yet rendered use this to ensure the DOM updates
+					// has not yet rendered. Use this to ensure the DOM updates
 					// before attempting to inject
+
+					if (newExtrema.x.min === oldExtrema.x.min &&
+						newExtrema.x.max === oldExtrema.x.max &&
+						newExtrema.y.min === oldExtrema.y.min &&
+						newExtrema.y.max === oldExtrema.y.max) {
+						return;
+					}
 					Vue.nextTick(() => {
 						this.injectTimeseries();
 					});
@@ -207,6 +221,7 @@ export default Vue.extend({
 
 		},
 		injectTimeseries() {
+
 			if (_.isEmpty(this.timeseries) || !this.$refs.svg) {
 				return;
 			}
@@ -243,10 +258,6 @@ svg.line-chart-row {
 svg.line-chart-row g {
 	stroke: #666;
 	stroke-width: 2px;
-}
-
-.is-hidden {
-	visibility: hidden;
 }
 
 .highlight-tooltip {

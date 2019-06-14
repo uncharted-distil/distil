@@ -9,13 +9,13 @@
 			enable-type-change
 			:instance-name="instanceName"
 			:rows-per-page="numRowsPerPage"
-			:groups="groups"
+			:summaries="availableVariableSummaries"
 			:html="html">
 			<div class="available-variables-menu">
 				<div>
 					{{subtitle}}
 				</div>
-				<div v-if="groups.length > 0">
+				<div v-if="availableVariableSummaries.length > 0">
 					<b-button size="sm" variant="outline-secondary" @click="addAll">Add All</b-button>
 				</div>
 			</div>
@@ -32,7 +32,7 @@ import { getters as datasetGetters } from '../store/dataset/module';
 import { getters as routeGetters } from '../store/route/module';
 import { filterSummariesByDataset, NUM_PER_PAGE } from '../util/data';
 import { AVAILABLE_TRAINING_VARS_INSTANCE } from '../store/route/index';
-import { Group, createGroups, updateImportance } from '../util/facets';
+import { Group } from '../util/facets';
 import VariableFacets from '../components/VariableFacets';
 import { Dictionary } from 'vue-router/types/router';
 
@@ -48,18 +48,14 @@ export default Vue.extend({
 			return routeGetters.getRouteDataset(this.$store);
 		},
 		availableVariableSummaries(): VariableSummary[] {
-			return routeGetters.getAvailableVariableSummaries(this.$store);
+			const summaries = routeGetters.getAvailableVariableSummaries(this.$store);
+			return filterSummariesByDataset(summaries, this.dataset);
 		},
 		variables(): Variable[] {
 			return datasetGetters.getVariables(this.$store);
 		},
-		groups(): Group[] {
-			const filtered = filterSummariesByDataset(this.availableVariableSummaries, this.dataset);
-			const groups = createGroups(filtered);
-			return updateImportance(groups, this.variables);
-		},
 		subtitle(): string {
-			return `${this.groups.length} features available`;
+			return `${this.availableVariableSummaries.length} features available`;
 		},
 		numRowsPerPage(): number {
 			return NUM_PER_PAGE;

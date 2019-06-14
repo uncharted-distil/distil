@@ -39,7 +39,6 @@
 import Vue from 'vue';
 import _ from 'lodash';
 import moment from 'moment';
-import Facets from '../components/Facets';
 import ResultGroup from '../components/ResultGroup';
 import { VariableSummary } from '../store/dataset/index';
 import { REQUEST_COMPLETED, REQUEST_ERRORED } from '../store/solutions/index';
@@ -66,7 +65,6 @@ export default Vue.extend({
 	name: 'result-facets',
 
 	components: {
-		Facets,
 		ResultGroup
 	},
 

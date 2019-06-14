@@ -61,11 +61,10 @@ import SelectGraphView from './SelectGraphView';
 import FilterBadge from './FilterBadge';
 import ViewTypeToggle from './ViewTypeToggle';
 import { getters as datasetGetters } from '../store/dataset/module';
-import { TableRow, D3M_INDEX_FIELD, Variable } from '../store/dataset/index';
-import { Highlight, RowSelection } from '../store/highlights/index';
+import { TableRow, D3M_INDEX_FIELD, Variable, Highlight, RowSelection } from '../store/dataset/index';
 import { getters as routeGetters } from '../store/route/module';
 import { Filter, addFilterToRoute, EXCLUDE_FILTER, INCLUDE_FILTER } from '../util/filters';
-import { getHighlights, clearHighlightRoot, createFilterFromHighlightRoot } from '../util/highlights';
+import { clearHighlight, createFilterFromHighlight } from '../util/highlights';
 import { addRowSelection, removeRowSelection, clearRowSelection, isRowSelected, getNumIncludedRows, getNumExcludedRows, createFilterFromRowSelection } from '../util/row';
 
 const TABLE_VIEW = 'table';
@@ -118,8 +117,8 @@ export default Vue.extend({
 			return datasetGetters.getVariables(this.$store);
 		},
 
-		highlights(): Highlight {
-			return getHighlights();
+		highlight(): Highlight {
+			return routeGetters.getDecodedHighlight(this.$store);
 		},
 
 		isTimeseriesAnalysis(): boolean {
@@ -144,15 +143,14 @@ export default Vue.extend({
 		},
 
 		activeFilter(): Filter {
-			if (!this.highlights ||
-				!this.highlights.root ||
-				!this.highlights.root.value) {
+			if (!this.highlight ||
+				!this.highlight.value) {
 				return null;
 			}
 			if (this.includedActive) {
-				return createFilterFromHighlightRoot(this.highlights.root, INCLUDE_FILTER);
+				return createFilterFromHighlight(this.highlight, INCLUDE_FILTER);
 			}
-			return createFilterFromHighlightRoot(this.highlights.root, EXCLUDE_FILTER);
+			return createFilterFromHighlight(this.highlight, EXCLUDE_FILTER);
 		},
 
 		filters(): Filter[] {
@@ -185,7 +183,7 @@ export default Vue.extend({
 		},
 
 		isFilteringHighlights(): boolean {
-			return !this.isFilteringSelection && !!this.highlights.root;
+			return !this.isFilteringSelection && !!this.highlight;
 		},
 
 		isFilteringSelection(): boolean {
@@ -201,7 +199,7 @@ export default Vue.extend({
 		onExcludeClick() {
 			let filter = null;
 			if (this.isFilteringHighlights) {
-				filter = createFilterFromHighlightRoot(this.highlights.root, EXCLUDE_FILTER);
+				filter = createFilterFromHighlight(this.highlight, EXCLUDE_FILTER);
 			} else {
 				filter = createFilterFromRowSelection(this.rowSelection, EXCLUDE_FILTER);
 			}
@@ -209,7 +207,7 @@ export default Vue.extend({
 			addFilterToRoute(this.$router, filter);
 
 			if (this.isFilteringHighlights) {
-				clearHighlightRoot(this.$router);
+				clearHighlight(this.$router);
 			} else {
 				clearRowSelection(this.$router);
 			}
@@ -217,7 +215,7 @@ export default Vue.extend({
 		onReincludeClick() {
 			let filter = null;
 			if (this.isFilteringHighlights) {
-				filter = createFilterFromHighlightRoot(this.highlights.root, INCLUDE_FILTER);
+				filter = createFilterFromHighlight(this.highlight, INCLUDE_FILTER);
 			} else {
 				filter = createFilterFromRowSelection(this.rowSelection, INCLUDE_FILTER);
 			}
@@ -225,7 +223,7 @@ export default Vue.extend({
 			addFilterToRoute(this.$router, filter);
 
 			if (this.isFilteringHighlights) {
-				clearHighlightRoot(this.$router);
+				clearHighlight(this.$router);
 			} else {
 				clearRowSelection(this.$router);
 			}

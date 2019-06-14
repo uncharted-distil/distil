@@ -1,5 +1,4 @@
-import { RowSelection, Row } from '../store/highlights/index';
-import { D3M_INDEX_FIELD } from '../store/dataset/index';
+import { RowSelection, Row, D3M_INDEX_FIELD } from '../store/dataset/index';
 import { getters as routeGetters } from '../store/route/module';
 import { getters as dataGetters } from '../store/dataset/module';
 import { getters as resultsGetters } from '../store/results/module';
@@ -75,6 +74,11 @@ export function isRowSelected(selection: RowSelection, d3mIndex: number): boolea
 }
 
 export function updateTableRowSelection(items: any, selection: RowSelection, context: string) {
+
+	if (!items) {
+		return null;
+	}
+
 	// clear selections
 	_.forEach(items, (row) => {
 		row._rowVariant = null;
