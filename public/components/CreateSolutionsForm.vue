@@ -191,6 +191,7 @@ export default Vue.extend({
 				target: routeGetters.getRouteTargetVariable(this.$store),
 				task: this.taskType,
 				subTask: this.taskSubType,
+				timestampField: routeGetters.getRouteTimeseriesAnalysis(this.$store),
 				metrics: this.metrics,
 				maxSolutions: NUM_SOLUTIONS,
 				// intentionally nulled for now - should be made user settable in the future

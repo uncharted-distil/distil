@@ -16,6 +16,7 @@ interface CreateSolutionRequest {
 	target: string;
 	task?: string;
 	subTask?: string;
+	timestampField?: string;
 	metrics: string[];
 	maxSolutions: number;
 	maxTime: number;

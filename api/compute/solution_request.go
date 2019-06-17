@@ -76,15 +76,16 @@ func newStatusChannel() chan SolutionStatus {
 
 // SolutionRequest represents a solution search request.
 type SolutionRequest struct {
-	Dataset       string
-	TargetFeature string
-	Task          string
-	SubTask       string
-	MaxSolutions  int
-	MaxTime       int
-	ProblemType   string
-	Metrics       []string
-	Filters       *api.FilterParams
+	Dataset        string
+	TargetFeature  string
+	Task           string
+	SubTask        string
+	TimestampField string
+	MaxSolutions   int
+	MaxTime        int
+	ProblemType    string
+	Metrics        []string
+	Filters        *api.FilterParams
 
 	mu               *sync.Mutex
 	wg               *sync.WaitGroup
@@ -122,6 +123,7 @@ func NewSolutionRequest(data []byte) (*SolutionRequest, error) {
 
 	req.Task = json.StringDefault(j, "", "task")
 	req.SubTask = json.StringDefault(j, "", "subTask")
+	req.TimestampField = json.StringDefault(j, "", "timestampField")
 	req.MaxSolutions = json.IntDefault(j, 5, "maxSolutions")
 	req.MaxTime = json.IntDefault(j, 0, "maxTime")
 	req.ProblemType = json.StringDefault(j, "", "problemType")
@@ -537,12 +539,15 @@ func (s *SolutionRequest) PersistAndDispatch(client *compute.Client, solutionSto
 	allVarFilters := s.Filters.Clone()
 	allVarFilters.Variables = []string{}
 	var targetVariable *model.Variable
+	var timeseriesField *model.Variable
 	for _, variable := range dataVariables {
 
 		// exclude cluster/feature generated columns
 		allVarFilters.AddVariable(variable.Name)
 		if variable.Name == s.TargetFeature {
 			targetVariable = variable
+		} else if variable.Name == s.TimestampField {
+			timeseriesField = variable
 		}
 	}
 
@@ -553,12 +558,13 @@ func (s *SolutionRequest) PersistAndDispatch(client *compute.Client, solutionSto
 	}
 
 	columnIndex := getColumnIndex(targetVariable, dataset.Filters.Variables)
+	timeseriesColumnIndex := getColumnIndex(timeseriesField, dataset.Filters.Variables)
 
 	// add dataset name to path
 	datasetInputDir := env.ResolvePath(dataset.Metadata.Source, dataset.Metadata.Folder)
 
 	// perist the datasets and get URI
-	datasetPathTrain, datasetPathTest, err := PersistOriginalData(s.Dataset, compute.D3MDataSchema, datasetInputDir, datasetDir)
+	datasetPathTrain, datasetPathTest, err := PersistOriginalData(s.Dataset, compute.D3MDataSchema, datasetInputDir, datasetDir, s.Task, timeseriesColumnIndex)
 	if err != nil {
 		return err
 	}
