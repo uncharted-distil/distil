@@ -45,8 +45,8 @@ type SearchQuery struct {
 
 // SearchQueryDatasetProperties represents queryin on metadata.
 type SearchQueryDatasetProperties struct {
-	About       string   `json:"about"`
-	Description []string `json:"description"`
+	About       string   `json:"about,omitempty"`
+	Description []string `json:"description,omitempty"`
 	Name        []string `json:"name,omitempty"`
 	Keywords    []string `json:"keywords,omitempty"`
 }
@@ -71,7 +71,7 @@ func (s *Storage) FetchDataset(datasetName string, includeIndex bool, includeMet
 // SearchDatasets returns the datasets that match the search criteria in the
 // provided index.
 func (s *Storage) SearchDatasets(terms string, baseDataset *api.Dataset, includeIndex bool, includeMeta bool) ([]*api.Dataset, error) {
-	if terms == "" {
+	if terms == "" && baseDataset == nil {
 		return make([]*api.Dataset, 0), nil
 	}
 	return s.searchREST(terms, baseDataset)
@@ -110,14 +110,18 @@ func (s *Storage) RemoveGrouping(datasetName string, grouping model.Grouping) er
 func (s *Storage) searchREST(searchText string, baseDataset *api.Dataset) ([]*api.Dataset, error) {
 	terms := strings.Fields(searchText)
 
-	// get complete URI for the endpoint
-	query := &SearchQuery{
-		Dataset: &SearchQueryDatasetProperties{
+	searchQueryDatasetProperties := &SearchQueryDatasetProperties{}
+	if len(terms) > 0 {
+		searchQueryDatasetProperties = &SearchQueryDatasetProperties{
 			About: searchText,
 			//Name:        terms,
 			Description: terms,
 			//Keywords:    terms,
-		},
+		}
+	}
+	// get complete URI for the endpoint
+	query := &SearchQuery{
+		Dataset: searchQueryDatasetProperties,
 	}
 
 	// figure out the data path if a dataset is provided

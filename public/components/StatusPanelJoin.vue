@@ -21,7 +21,7 @@
 			<b-list-group>
 				<b-list-group-item
 					v-for="item in suggestionItems"
-					:key="item.dataset.id"
+					:key="item.key"
 					href="#"
 					v-bind:class="{ selected: item.selected }"
 					:disabled="isImporting"
@@ -33,7 +33,7 @@
 					</div>
 					<div>
 						<span>
-							<small v-if="item.isAvailable === false" class="text-info">Requires import</small>
+							<small v-if="!item.isAvailable" class="text-info">Requires import</small>
 							<small v-if="item.isAvailable" class="text-success">Ready for join</small>
 						</span>
 						<span class="float-right">
@@ -76,10 +76,12 @@ import { getters as routeGetters } from '../store/route/module';
 import { StatusPanelState, StatusPanelContentType } from '../store/app';
 import { createRouteEntry } from '../util/routes';
 import { formatBytes } from '../util/bytes';
+import { isDatamartProvenance } from '../util/data';
 import { JOIN_DATASETS_ROUTE } from '../store/route/index';
 
 interface JoinSuggestionItem {
 	dataset: Dataset;
+	key: string;
 	isAvailable: boolean; // tell if dataset is available in the system for join. (note. undefined implies that check hasn't made yet)
 	selected: boolean;
 }
@@ -144,18 +146,39 @@ export default Vue.extend({
 		},
 		isJoinReady(): boolean {
 			return this.selectedItem && this.selectedItem.isAvailable !== undefined && !this.isImporting;
-		}
+		},
+		baseColumnSuggestions(): string[] {
+			return this.selectedDataset && this.selectedDataset.joinSuggestion[0]
+				? this.selectedDataset.joinSuggestion[0].baseColumns
+				: [];
+		},
+		joinColumnSuggestions(): string[] {
+			return this.selectedDataset && this.selectedDataset.joinSuggestion[0]
+				? this.selectedDataset.joinSuggestion[0].joinColumns
+				: [];
+		},
 	},
 	methods: {
 		initSuggestionItems() {
 			const items = this.joinSuggestoins || [];
+			// resolve join availablity of the importing dataset
 			const isImporting = this.isImporting || this.isImportRequestResolved;
 			this.suggestionItems = items.map(suggestion => {
-				const isSameDataset = suggestion.id === (this.joinDatasetImportRequestData && this.joinDatasetImportRequestData.dataset);
-				const isAvailable = this.isImportRequestResolved && isSameDataset ? true : undefined;
-				const selected = isImporting && isSameDataset;
+				const isImportingDataset = suggestion.id === (this.joinDatasetImportRequestData && this.joinDatasetImportRequestData.dataset);
+				const isAvailable = isImportingDataset
+					? this.isImportRequestResolved
+					: !isDatamartProvenance(suggestion.provenance);
+				const selected = isImporting && isImportingDataset;
 				return {
 					dataset: suggestion,
+					// There could be multiple item with same dataset id with diffrent join suggestions.
+					// So item key must be a combination of id and the join suggestions to be unique
+					key: suggestion.id +
+						`${
+							suggestion.joinSuggestion[0].baseColumns
+							.concat(suggestion.joinSuggestion[0].joinColumns)
+							.join('-')
+						}`,
 					isAvailable,
 					selected,
 				};
@@ -168,30 +191,22 @@ export default Vue.extend({
 			}
 			const selectedItem = item;
 			selectedItem.selected = true;
-			if (selectedItem.isAvailable === undefined) {
-				this.checkDatasetExist(selectedItem.dataset.id).then(exist => selectedItem.isAvailable = exist);
-			}
 		},
 		join() {
 			const selected = this.selectedItem;
-			if (selected.isAvailable === undefined) { return; }
 			if (selected.isAvailable === false) {
 				const importAskModal: any = this.$refs['import-ask-modal'];
 				return importAskModal.show();
 			}
+			const replaceComma = str => str.replace(/, /g, '+');
 			// navigate to join
 			const entry = createRouteEntry(JOIN_DATASETS_ROUTE, {
 				joinDatasets: `${this.dataset},${selected.dataset.id}`,
 				target: this.target,
+				baseColumnSuggestions: this.baseColumnSuggestions.map(replaceComma).join(','),
+				joinColumnSuggestions: this.joinColumnSuggestions.map(replaceComma).join(','),
 			});
 			this.$router.push(entry);
-		},
-		checkDatasetExist(datasetId) {
-			return axios.get(`/distil/datasets/${datasetId}`).then(result => {
-				return result ? true : false;
-			}).catch(e => {
-				return false;
-			});
 		},
 		importDataset(args: {datasetID: string, source: string, provenance: string}) {
 			const { id, provenance } = this.selectedDataset;

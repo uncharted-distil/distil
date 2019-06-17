@@ -43,6 +43,14 @@ import { getters as datasetGetters } from '../store/dataset/module';
 import { IMAGE_TYPE, TIMESERIES_TYPE, isJoinable } from '../util/types';
 import { getTimeseriesGroupingsFromFields } from '../util/data';
 
+function findSuggestionIndex(columnSuggestions: string[], colName: string): number {
+	return columnSuggestions.findIndex(col => {
+		// col can be something like "lat+lng" for multi column suggestions
+		const colNames = col.split('+');
+		return Boolean(colNames.find(c => c === colName));
+	});
+}
+
 export default Vue.extend({
 	name: 'join-data-table',
 
@@ -66,11 +74,33 @@ export default Vue.extend({
 		variables(): Variable[] {
 			return datasetGetters.getVariables(this.$store);
 		},
+		isBaseJoinTable(): boolean {
+			return this.instanceName === 'join-dataset-top';
+		},
+		selectedBaseColumn(): TableColumn {
+			return this.isBaseJoinTable ? this.selectedColumn : this.otherSelectedColumn;
+		},
+		selectedJoinColumn(): TableColumn {
+			return this.isBaseJoinTable ? this.otherSelectedColumn : this.selectedColumn;
+		},
+		baseColumnSuggestions(): string[] {
+			const columns = routeGetters.getBaseColumnSuggestions(this.$store).split(',');
+			return columns;
+		},
+		selectedSuggestedBaseColumn(): string {
+			const index = findSuggestionIndex(this.baseColumnSuggestions, this.selectedBaseColumn.key);
+			return index >= 0 ? this.selectedBaseColumn.key : undefined;
+		},
+		joinColumnSuggestions(): string[] {
+			const columns = routeGetters.getJoinColumnSuggestions(this.$store).split(',');
+			return columns;
+		},
+		selectedSuggestedJoinColumn(): string {
+			const index = findSuggestionIndex(this.baseColumnSuggestions, this.selectedJoinColumn.key);
+			return index >= 0 ? this.selectedJoinColumn.key : undefined;
+		},
 
-		emphasizedFields(): Dictionary<TableColumn> {
-			if (!this.selectedColumn && !this.otherSelectedColumn) {
-				return this.fields;
-			}
+		emphasizedBaseTableFields(): Dictionary<TableColumn> {
 			const emphasized = {};
 			_.forIn(this.fields, field => {
 				const emph = {
@@ -80,24 +110,51 @@ export default Vue.extend({
 					sortable: field.sortable,
 					variant: null
 				};
-
-				const isFieldSelected = this.selectedColumn && field.key === this.selectedColumn.key;
-				const isFieldJoinable = this.otherSelectedColumn && isJoinable(field.type, this.otherSelectedColumn.type);
-
-				if (isFieldSelected) {
-					emph.variant = 'primary';
-				} else if (isFieldJoinable) {
-					// show matching column types
+				const isFieldSuggested = findSuggestionIndex(this.baseColumnSuggestions, field.key) >= 0;
+				const isFieldSelected = this.selectedBaseColumn && field.key === this.selectedBaseColumn.key;
+				if (isFieldSuggested) {
 					emph.variant = 'success';
 				}
-
-				if (this.otherSelectedColumn && isFieldSelected && !isFieldJoinable) {
-					// flag bad selection
-					emph.variant = 'danger';
+				if (isFieldSelected) {
+					emph.variant = 'primary';
 				}
 				emphasized[field.key] = emph;
 			});
 			return emphasized;
+		},
+
+		emphasizedJoinTableFields(): Dictionary<TableColumn> {
+			const emphasized = {};
+			_.forIn(this.fields, field => {
+				const emph = {
+					label: field.label,
+					key: field.key,
+					type: field.type,
+					sortable: field.sortable,
+					variant: null
+				};
+				const isFieldSelected = this.selectedJoinColumn && field.key === this.selectedJoinColumn.key;
+				// if a suggested base column is selected, highlgiht the corresponding suggested join column
+				if (this.selectedBaseColumn) {
+					const isFieldSuggested = findSuggestionIndex(this.baseColumnSuggestions, this.selectedBaseColumn.key)
+						=== findSuggestionIndex(this.joinColumnSuggestions, field.key);
+					if (this.selectedSuggestedBaseColumn !== undefined && isFieldSuggested) {
+						emph.variant = 'success';
+					}
+					if (isFieldSelected) {
+						emph.variant = 'primary';
+					}
+					if (isFieldSelected && !isJoinable(field.type, this.selectedBaseColumn.type)) {
+						emph.variant = 'danger';
+					}
+				}
+				emphasized[field.key] = emph;
+			});
+			return emphasized;
+		},
+
+		emphasizedFields(): Dictionary<TableColumn> {
+			return this.isBaseJoinTable ? this.emphasizedBaseTableFields : this.emphasizedJoinTableFields;
 		},
 
 		imageFields(): string[] {
