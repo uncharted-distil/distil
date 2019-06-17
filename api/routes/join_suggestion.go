@@ -151,7 +151,10 @@ func JoinSuggestionHandler(esCtor model.MetadataStorageCtor, metaCtors map[strin
 
 		// sort by join score and name
 		sort.Slice(datasets, func(i, j int) bool {
-			return datasets[i].JoinScore > datasets[j].JoinScore || datasets[i].Name < datasets[j].Name
+			if datasets[i].JoinScore == datasets[j].JoinScore {
+				return datasets[i].Name < datasets[j].Name
+			}
+			return datasets[i].JoinScore > datasets[j].JoinScore
 		})
 
 		err = handleJSON(w, DatasetsResult{
