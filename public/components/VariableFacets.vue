@@ -18,20 +18,22 @@
 			</div>
 			<div class="row flex-1">
 				<div class="col-12 flex-column variable-facets-container h-100">
-					<facet-entry v-for="summary in paginatedSummaries" :key="summary.key"
-						:summary="summary"
-						:highlight="highlight"
-						:row-selection="rowSelection"
-						:html="html"
-						:enable-type-change="enableTypeChange"
-						:enable-highlighting="enableHighlighting"
-						:ignore-highlights="ignoreHighlights"
-						:instanceName="instanceName"
-						@numerical-click="onNumericalClick"
-						@categorical-click="onCategoricalClick"
-						@range-change="onRangeChange"
-						@facet-click="onFacetClick">
-					</facet-entry>
+					<div class="variable-facets-item" v-for="summary in paginatedSummaries" :key="summary.key">
+						<facet-entry
+							:summary="summary"
+							:highlight="highlight"
+							:row-selection="rowSelection"
+							:html="html"
+							:enable-type-change="enableTypeChange"
+							:enable-highlighting="enableHighlighting"
+							:ignore-highlights="ignoreHighlights"
+							:instanceName="instanceName"
+							@numerical-click="onNumericalClick"
+							@categorical-click="onCategoricalClick"
+							@range-change="onRangeChange"
+							@facet-click="onFacetClick">
+						</facet-entry>
+					</div>
 				</div>
 			</div>
 			<div v-if="numSummaries > rowsPerPage" class="row align-items-center variable-page-nav">
@@ -220,15 +222,14 @@ button {
 	overflow-x: hidden;
 	overflow-y: auto;
 }
-.variable-facets-container .facets-root-container{
-	margin: 2px;
+.variable-facets-container .variable-facets-item {
+	margin: 2px 2px 4px 2px;
 }
 .variable-facets-container .facets-root-container .facets-group-container{
 	background-color: inherit;
 }
 .variable-facets-container .facets-root-container .facets-group-container .facets-group {
 	background: white;
-	margin: 2px 2px 4px 2px;
 	font-size: 0.867rem;
 	color: rgba(0,0,0,0.87);
 	box-shadow: 0 1px 2px 0 rgba(0,0,0,0.10);
