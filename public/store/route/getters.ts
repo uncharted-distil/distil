@@ -212,6 +212,7 @@ export const getters = {
 	getDecodedSolutionRequestFilterParams(state: Route, getters: any): FilterParams {
 		const filters = getters.getDecodedFilters;
 		const filterParams = _.cloneDeep({
+			highlight: null,
 			filters: filters,
 			variables: []
 		});

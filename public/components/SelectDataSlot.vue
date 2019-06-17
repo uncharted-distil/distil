@@ -12,7 +12,7 @@
 					active-filter
 					:filter="activeFilter">
 				</filter-badge><!--
-				--><filter-badge v-if="filter.type !== 'row'" v-for="filter in filters" :key="filter.key" :filter="filter">
+				--><filter-badge v-if="filter.type !== 'row'" v-for="filter in filters" :key="filterHash(filter)" :filter="filter">
 				</filter-badge>
 			</div>
 		</div>
@@ -197,6 +197,9 @@ export default Vue.extend({
 	},
 
 	methods: {
+		filterHash(filter: Filter) {
+			return JSON.stringify(filter);
+		},
 		onExcludeClick() {
 			let filter = null;
 			if (this.isFilteringHighlights) {

@@ -74,10 +74,11 @@ export const actions = {
 		}
 
 		let filterParams = {
+			highlight: null,
 			variables: [],
 			filters: []
 		};
-		filterParams = addHighlightToFilterParams(filterParams, args.highlight, INCLUDE_FILTER);
+		filterParams = addHighlightToFilterParams(filterParams, args.highlight);
 
 		const timeseries = context.getters.getRouteTimeseriesAnalysis;
 		if (timeseries) {
@@ -144,10 +145,11 @@ export const actions = {
 
 
 		let filterParams = {
+			highlight: null,
 			variables: [],
 			filters: []
 		};
-		filterParams = addHighlightToFilterParams(filterParams, args.highlight, INCLUDE_FILTER);
+		filterParams = addHighlightToFilterParams(filterParams, args.highlight);
 
 		const timeseries = context.getters.getRouteTimeseriesAnalysis;
 		if (timeseries) {
@@ -193,10 +195,11 @@ export const actions = {
 		}
 
 		let filterParams = {
+			highlight: null,
 			variables: [],
 			filters: []
 		};
-		filterParams = addHighlightToFilterParams(filterParams, args.highlight, INCLUDE_FILTER);
+		filterParams = addHighlightToFilterParams(filterParams, args.highlight);
 
 		return axios.post(`/distil/results/${args.dataset}/${encodeURIComponent(args.solutionId)}`, filterParams)
 			.then(response => {
@@ -216,6 +219,7 @@ export const actions = {
 		}
 
 		let filterParams = {
+			highlight: null,
 			variables: [],
 			filters: []
 		};
@@ -293,10 +297,11 @@ export const actions = {
 		}
 
 		let filterParams = {
+			highlight: null,
 			variables: [],
 			filters: []
 		};
-		filterParams = addHighlightToFilterParams(filterParams, args.highlight, INCLUDE_FILTER);
+		filterParams = addHighlightToFilterParams(filterParams, args.highlight);
 
 		const timeseries = context.getters.getRouteTimeseriesAnalysis;
 		if (timeseries) {
@@ -360,10 +365,11 @@ export const actions = {
 		}
 
 		let filterParams = {
+			highlight: null,
 			variables: [],
 			filters: []
 		};
-		filterParams = addHighlightToFilterParams(filterParams, args.highlight, INCLUDE_FILTER);
+		filterParams = addHighlightToFilterParams(filterParams, args.highlight);
 
 		const endPoint = `/distil/residuals-summary/${args.dataset}/${args.target}`;
 		const key = solution.errorKey;
@@ -406,10 +412,11 @@ export const actions = {
 		}
 
 		let filterParams = {
+			highlight: null,
 			variables: [],
 			filters: []
 		};
-		filterParams = addHighlightToFilterParams(filterParams, args.highlight, INCLUDE_FILTER);
+		filterParams = addHighlightToFilterParams(filterParams, args.highlight);
 
 		const endPoint = `/distil/correctness-summary/${args.dataset}`;
 		const key = solution.errorKey;

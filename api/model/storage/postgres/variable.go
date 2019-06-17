@@ -163,7 +163,6 @@ func (s *Storage) fetchSummaryData(dataset string, storageName string, varName s
 	}
 
 	// get the histogram by using the variable type.
-
 	var field Field
 
 	if variable.Grouping != nil {

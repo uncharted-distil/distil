@@ -535,7 +535,7 @@ export const actions = {
 			return null;
 		}
 
-		const filterParams = addHighlightToFilterParams(args.filterParams, args.highlight, INCLUDE_FILTER);
+		const filterParams = addHighlightToFilterParams(args.filterParams, args.highlight);
 
 		const mutator = args.include ? mutations.updateIncludedVariableSummaries : mutations.updateExcludedVariableSummaries;
 
@@ -769,7 +769,7 @@ export const actions = {
 		return Promise.all(args.datasets.map(dataset => {
 
 			const highlight = (args.highlight && args.highlight.dataset) === dataset ? args.highlight : null;
-			const filterParams = addHighlightToFilterParams(args.filterParams[dataset], highlight, INCLUDE_FILTER);
+			const filterParams = addHighlightToFilterParams(args.filterParams[dataset], highlight);
 
 			return axios.post(`distil/data/${dataset}/false`, filterParams)
 				.then(response => {
@@ -818,7 +818,7 @@ export const actions = {
 
 		const mutator = args.include ? mutations.setIncludedTableData : mutations.setExcludedTableData;
 
-		const filterParams = addHighlightToFilterParams(args.filterParams, args.highlight, INCLUDE_FILTER);
+		const filterParams = addHighlightToFilterParams(args.filterParams, args.highlight);
 
 		return axios.post(`distil/data/${args.dataset}/${!args.include}`, filterParams)
 			.then(response => {

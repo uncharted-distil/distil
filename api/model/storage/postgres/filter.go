@@ -222,6 +222,16 @@ func (s *Storage) buildFilteredQueryWhere(wheres []string, params []interface{},
 		return wheres, params
 	}
 
+	highlight := filterParams.Highlight
+	if highlight != nil {
+		switch highlight.Mode {
+		case model.IncludeFilter:
+			wheres, params = s.buildIncludeFilter(wheres, params, highlight)
+		case model.ExcludeFilter:
+			wheres, params = s.buildExcludeFilter(wheres, params, highlight)
+		}
+	}
+
 	var filterWheres []string
 	for _, filter := range filterParams.Filters {
 		switch filter.Mode {
