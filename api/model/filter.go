@@ -34,11 +34,18 @@ type FilterParams struct {
 	Variables []string        `json:"variables"`
 }
 
+// Empty returns if the filter set is empty.
+func (f *FilterParams) Empty() bool {
+	return f.Filters == nil && f.Highlight == nil
+}
+
 // Clone returns a deep copy of the filter params.
 func (f *FilterParams) Clone() *FilterParams {
 	clone := &FilterParams{}
-	c := *f.Highlight
-	clone.Highlight = &c
+	if f.Highlight != nil {
+		c := *f.Highlight
+		clone.Highlight = &c
+	}
 	for _, f := range f.Filters {
 		c := *f
 		clone.Filters = append(clone.Filters, &c)

@@ -418,6 +418,10 @@ func (s *Storage) FetchResults(dataset string, storageName string, resultURI str
 		Filters: filters.genericFilters,
 	}
 
+	// if filterParams != nil {
+	// 	genericFilterParams.Highlight = filterParams.Highlight
+	// }
+
 	// Create the filter portion of the where clause.
 	wheres := make([]string, 0)
 	params := make([]interface{}, 0)

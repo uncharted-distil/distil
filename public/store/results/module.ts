@@ -48,7 +48,7 @@ export const actions = {
 	// result
 	fetchIncludedResultTableData: dispatch(moduleActions.fetchIncludedResultTableData),
 	fetchExcludedResultTableData: dispatch(moduleActions.fetchExcludedResultTableData),
-	fetchResultTableData: dispatch(moduleActions.fetchExcludedResultTableData),
+	fetchResultTableData: dispatch(moduleActions.fetchResultTableData),
 	// predicted
 	fetchPredictedSummary: dispatch(moduleActions.fetchPredictedSummary),
 	fetchPredictedSummaries: dispatch(moduleActions.fetchPredictedSummaries),

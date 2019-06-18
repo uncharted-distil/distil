@@ -1009,6 +1009,9 @@ export default Vue.extend({
 .excluded .facets-facet-horizontal .facet-histogram-bar-highlighted {
 	fill: #333;
 }
+.excluded .facet-bar-base.facet-bar-selected {
+	box-shadow: inset 0 0 0 1000px #333;
+}
 .facet-histogram {
 	cursor: pointer !important;
 }
