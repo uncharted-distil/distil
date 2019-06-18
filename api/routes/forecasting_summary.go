@@ -29,7 +29,7 @@ import (
 
 // ForecastingSummary contains a fetch result histogram.
 type ForecastingSummary struct {
-	Histogram *api.Histogram `json:"histogram"`
+	ForecastingSummary *api.VariableSummary `json:"summary"`
 }
 
 // ForecastingSummaryHandler bins forecasted result data for consumption in a downstream summary view.
@@ -88,18 +88,18 @@ func ForecastingSummaryHandler(solutionCtor api.SolutionStorageCtor, dataCtor ap
 		}
 
 		// fetch forecasted histogram
-		histogram, err := data.FetchForecastingSummary(dataset, storageName, xColName, yColName, int(interval), res.ResultURI, filterParams)
+		summary, err := data.FetchForecastingSummary(dataset, storageName, xColName, yColName, int(interval), res.ResultURI, filterParams)
 		if err != nil {
 			handleError(w, err)
 			return
 		}
-		histogram.Label = "Predicted"
-		histogram.Key = api.GetPredictedKey(histogram.Key, res.SolutionID)
-		histogram.SolutionID = res.SolutionID
+		summary.Label = "Predicted"
+		summary.Key = api.GetPredictedKey(summary.Key, res.SolutionID)
+		summary.SolutionID = res.SolutionID
 
 		// marshal data and sent the response back
 		err = handleJSON(w, ForecastingSummary{
-			Histogram: histogram,
+			ForecastingSummary: summary,
 		})
 		if err != nil {
 			handleError(w, errors.Wrap(err, "unable marshal result histogram into JSON"))

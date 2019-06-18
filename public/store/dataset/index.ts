@@ -6,6 +6,36 @@ export const TIMESERIES_SUMMMARY = 'timeseries';
 
 export const D3M_INDEX_FIELD = 'd3mIndex';
 
+export interface Highlight {
+	context: string;
+	dataset: string;
+	key: string;
+	value: any;
+}
+
+export interface Highlight {
+	context: string;
+	dataset: string;
+	key: string;
+	value: any;
+}
+
+export interface Column {
+	key: string;
+	value: any;
+}
+
+export interface Row {
+	index: number;
+	d3mIndex: number;
+	cols: Column[];
+	included: boolean;
+}
+
+export interface RowSelection {
+	context: string;
+	d3mIndices: number[];
+}
 
 export interface SuggestedType {
 	probability: number;
@@ -58,6 +88,7 @@ export interface Dataset {
 	provenance: string;
 	source: string;
 	joinSuggestion?: JoinSuggestion[];
+	joinScore?: number;
 }
 
 export interface JoinSuggestion {
@@ -77,31 +108,32 @@ export interface Bucket {
 	buckets?: Bucket[];
 }
 
-export interface VariableSummary {
-	label: string;
-	key: string;
-	feature: string;
-	dataset: string;
+export interface Histogram {
 	buckets?: Bucket[];
 	categoryBuckets?: Dictionary<Bucket[]>;
 	extrema: Extrema;
-	numRows: number;
 	exemplars?: string[];
-	solutionId?: string;
-	resultId?: string;
-	type?: string;
-	varType?: string;
-	err?: string;
-	pending?: boolean;
 	stddev?: number;
 	mean?: number;
+}
+
+export interface VariableSummary {
+	label: string;
+	key: string;
+	dataset: string;
+	type?: string;
+	varType?: string;
+	solutionId?: string;
+	baseline: Histogram;
+	filtered?: Histogram;
+	err?: string;
+	pending?: boolean;
 }
 
 export interface TimeseriesSummary {
 	label: string;
 	key: string;
 	dataset: string;
-	numRows: number;
 	type?: string;
 	varType?: string;
 	err?: string;
@@ -131,22 +163,7 @@ export interface TableRow {
 export interface TimeseriesExtrema {
 	x: Extrema;
 	y: Extrema;
-}
-
-export interface DatasetState {
-	datasets: Dataset[];
-	filteredDatasets: Dataset[];
-	variables: Variable[];
-	variableSummaries: VariableSummary[];
-	variableRankings: Dictionary<Dictionary<number>>;
-	groupingSummaries: VariableSummary[];
-	files: Dictionary<any>;
-	timeseries: Dictionary<Dictionary<number[][]>>;
-	timeseriesExtrema: Dictionary<TimeseriesExtrema>;
-	joinTableData: Dictionary<TableData>;
-	includedTableData: TableData;
-	excludedTableData: TableData;
-	pendingRequests: DatasetPendingRequest[];
+	sum?: number;
 }
 
 export enum DatasetPendingRequestType {
@@ -202,6 +219,22 @@ export type DatasetPendingRequest =
 	| JoinSuggestionPendingRequest
 	| JoinDatasetImportPendingRequest;
 
+export interface DatasetState {
+	datasets: Dataset[];
+	filteredDatasets: Dataset[];
+	variables: Variable[];
+	variableSummaries: VariableSummary[];
+	variableRankings: Dictionary<Dictionary<number>>;
+	files: Dictionary<any>;
+	timeseries: Dictionary<Dictionary<number[][]>>;
+	timeseriesExtrema: Dictionary<TimeseriesExtrema>;
+	joinTableData: Dictionary<TableData>;
+	includedTableData: TableData;
+	excludedTableData: TableData;
+	pendingRequests: DatasetPendingRequest[];
+}
+
+
 export const state: DatasetState = {
 	// datasets and filtered datasets
 	datasets: [],
@@ -212,7 +245,6 @@ export const state: DatasetState = {
 
 	// variable summary data for the active dataset
 	variableSummaries: [],
-	groupingSummaries: [],
 
 	// variable rankings per dataset
 	variableRankings: {},

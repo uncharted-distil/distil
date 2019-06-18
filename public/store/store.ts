@@ -4,8 +4,6 @@ import { routeModule } from './route/module';
 import { Route } from 'vue-router';
 import { datasetModule } from './dataset/module';
 import { DatasetState } from './dataset/index';
-import { highlightsModule } from './highlights/module';
-import { HighlightState } from './highlights/index';
 import { resultsModule } from './results/module';
 import { ResultsState } from './results/index';
 import { solutionModule } from './solutions/module';
@@ -20,7 +18,6 @@ Vue.use(Vuex);
 export interface DistilState {
 	routeModule: Route;
 	datasetModule: DatasetState;
-	highlightsModule: HighlightState;
 	solutionModule: SolutionState;
 	resultsModule: ResultsState;
 	viewModule: ViewState;
@@ -31,7 +28,6 @@ const store = new Store<DistilState>({
 	modules:  {
 		routeModule,
 		datasetModule,
-		highlightsModule,
 		solutionModule,
 		resultsModule,
 		viewModule,
@@ -41,16 +37,3 @@ const store = new Store<DistilState>({
 });
 
 export default store;
-
-// export default new Store<DistilState>({
-// 	modules:  {
-// 		routeModule,
-// 		datasetModule,
-// 		highlightsModule,
-// 		solutionModule,
-// 		resultsModule,
-// 		viewModule,
-// 		appModule
-// 	},
-// 	strict: true
-// });

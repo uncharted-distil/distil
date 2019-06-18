@@ -10,17 +10,17 @@
 			enable-type-change
 			:instance-name="instanceName"
 			:rows-per-page="numRowsPerPage"
-			:groups="groups"
+			:summaries="trainingVariableSummaries"
 			:html="html">
 			<div class="available-variables-menu">
 				<div>
 					{{subtitle}}
 				</div>
-				<div v-if="groups.length > 0">
+				<div v-if="trainingVariableSummaries.length > 0">
 					<b-button size="sm" variant="outline-secondary" @click="removeAll">Remove All</b-button>
 				</div>
 			</div>
-			<div v-if="groups.length === 0">
+			<div v-if="trainingVariableSummaries.length === 0">
 				<i class="no-selections-icon fa fa-arrow-circle-left"></i>
 			</div>
 		</variable-facets>
@@ -31,13 +31,11 @@
 
 import Vue from 'vue';
 import VariableFacets from '../components/VariableFacets';
-import { Variable, VariableSummary } from '../store/dataset/index';
-import { Highlight } from '../store/highlights/index';
+import { Variable, VariableSummary, Highlight } from '../store/dataset/index';
 import { getters as routeGetters } from '../store/route/module';
 import { getters as datasetGetters } from '../store/dataset/module';
 import { TRAINING_VARS_INSTANCE } from '../store/route/index';
-import { Group, createGroups, updateImportance } from '../util/facets';
-import { getHighlights } from '../util/highlights';
+import { Group } from '../util/facets';
 import { NUM_PER_PAGE } from '../util/data';
 import { overlayRouteEntry } from '../util/routes';
 import { removeFiltersByName } from '../util/filters';
@@ -56,8 +54,8 @@ export default Vue.extend({
 		numRowsPerPage(): number {
 			return NUM_PER_PAGE;
 		},
-		highlights(): Highlight {
-			return getHighlights();
+		highlight(): Highlight {
+			return routeGetters.getDecodedHighlight(this.$store);
 		},
 		trainingVariableSummaries(): VariableSummary[] {
 			return routeGetters.getTrainingVariableSummaries(this.$store);
@@ -65,12 +63,8 @@ export default Vue.extend({
 		variables(): Variable[] {
 			return datasetGetters.getVariables(this.$store);
 		},
-		groups(): Group[] {
-			const groups = createGroups(this.trainingVariableSummaries);
-			return updateImportance(groups, this.variables);
-		},
 		subtitle(): string {
-			return `${this.groups.length} features selected`;
+			return `${this.trainingVariableSummaries.length} features selected`;
 		},
 		instanceName(): string {
 			return TRAINING_VARS_INSTANCE;

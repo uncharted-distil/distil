@@ -43,7 +43,6 @@ import { getters as routeGetters } from '../store/route/module';
 import { getters as solutionGetters } from '../store/solutions/module';
 import { Solution } from '../store/solutions/index';
 import { Variable, TableRow, TableColumn } from '../store/dataset/index';
-import { getHighlights } from '../util/highlights';
 
 const TABLE_VIEW = 'table';
 const TIMESERIES_VIEW = 'timeseries';
@@ -96,8 +95,8 @@ export default Vue.extend({
 		},
 
 		hasHighlights(): boolean {
-			const highlights = getHighlights();
-			return highlights && highlights.root && highlights.root.value;
+			const highlight = routeGetters.getDecodedHighlight(this.$store);
+			return highlight && highlight.value;
 		},
 
 		includedResultTableDataItems(): TableRow[] {

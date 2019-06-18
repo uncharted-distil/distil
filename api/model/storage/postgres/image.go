@@ -49,20 +49,46 @@ func NewImageField(storage *Storage, storageName string, key string, label strin
 }
 
 // FetchSummaryData pulls summary data from the database and builds a histogram.
-func (f *ImageField) FetchSummaryData(resultURI string, filterParams *api.FilterParams, extrema *api.Extrema) (*api.Histogram, error) {
-	var histogram *api.Histogram
+func (f *ImageField) FetchSummaryData(resultURI string, filterParams *api.FilterParams, extrema *api.Extrema, invert bool) (*api.VariableSummary, error) {
+	var baseline *api.Histogram
+	var filtered *api.Histogram
 	var err error
 	if resultURI == "" {
-		histogram, err = f.fetchHistogram(filterParams)
+		baseline, err = f.fetchHistogram(nil, invert)
+		if err != nil {
+			return nil, err
+		}
+		if filterParams.Filters != nil {
+			filtered, err = f.fetchHistogram(filterParams, invert)
+			if err != nil {
+				return nil, err
+			}
+		}
 	} else {
-		histogram, err = f.fetchHistogramByResult(resultURI, filterParams)
+		baseline, err = f.fetchHistogramByResult(resultURI, nil)
+		if err != nil {
+			return nil, err
+		}
+		if filterParams.Filters != nil {
+			filtered, err = f.fetchHistogramByResult(resultURI, filterParams)
+			if err != nil {
+				return nil, err
+			}
+		}
 	}
 
-	return histogram, err
+	return &api.VariableSummary{
+		Label:    f.Label,
+		Key:      f.Key,
+		Type:     model.CategoricalType,
+		VarType:  f.Type,
+		Baseline: baseline,
+		Filtered: filtered,
+	}, nil
 }
 
 // FetchTimeseriesSummaryData pulls summary data from the database and builds a histogram.
-func (f *ImageField) FetchTimeseriesSummaryData(timeVar *model.Variable, interval int, resultURI string, filterParams *api.FilterParams) (*api.Histogram, error) {
+func (f *ImageField) FetchTimeseriesSummaryData(timeVar *model.Variable, interval int, resultURI string, filterParams *api.FilterParams, invert bool) (*api.VariableSummary, error) {
 	return nil, fmt.Errorf("not implemented")
 }
 
@@ -101,11 +127,11 @@ func (f *ImageField) fetchRepresentationImages(categoryBuckets []*api.Bucket) ([
 	return imageFiles, nil
 }
 
-func (f *ImageField) fetchHistogram(filterParams *api.FilterParams) (*api.Histogram, error) {
+func (f *ImageField) fetchHistogram(filterParams *api.FilterParams, invert bool) (*api.Histogram, error) {
 	// create the filter for the query.
 	wheres := make([]string, 0)
 	params := make([]interface{}, 0)
-	wheres, params = f.Storage.buildFilteredQueryWhere(wheres, params, filterParams.Filters)
+	wheres, params = f.Storage.buildFilteredQueryWhere(wheres, params, filterParams, invert)
 
 	prefixedVarName := f.featureVarName(f.Key)
 	fieldSelect := fmt.Sprintf("unnest(string_to_array(\"%s\", ','))", prefixedVarName)
@@ -224,10 +250,6 @@ func (f *ImageField) parseHistogram(rows *pgx.Rows) (*api.Histogram, error) {
 
 	// assign histogram attributes
 	return &api.Histogram{
-		Label:   f.Label,
-		Key:     f.Key,
-		Type:    model.CategoricalType,
-		VarType: f.Type,
 		Buckets: buckets,
 		Extrema: &api.Extrema{
 			Min: float64(min),
@@ -238,7 +260,32 @@ func (f *ImageField) parseHistogram(rows *pgx.Rows) (*api.Histogram, error) {
 
 // FetchPredictedSummaryData pulls predicted data from the result table and builds
 // the image histogram for the field.
-func (f *ImageField) FetchPredictedSummaryData(resultURI string, datasetResult string, filterParams *api.FilterParams, extrema *api.Extrema) (*api.Histogram, error) {
+func (f *ImageField) FetchPredictedSummaryData(resultURI string, datasetResult string, filterParams *api.FilterParams, extrema *api.Extrema) (*api.VariableSummary, error) {
+	var baseline *api.Histogram
+	var filtered *api.Histogram
+	var err error
+
+	baseline, err = f.fetchPredictedSummaryData(resultURI, datasetResult, nil, extrema)
+	if err != nil {
+		return nil, err
+	}
+	if filterParams.Filters != nil {
+		filtered, err = f.fetchPredictedSummaryData(resultURI, datasetResult, filterParams, extrema)
+		if err != nil {
+			return nil, err
+		}
+	}
+	return &api.VariableSummary{
+		Label:    f.Label,
+		Key:      f.Key,
+		Type:     model.CategoricalType,
+		VarType:  f.Type,
+		Baseline: baseline,
+		Filtered: filtered,
+	}, nil
+}
+
+func (f *ImageField) fetchPredictedSummaryData(resultURI string, datasetResult string, filterParams *api.FilterParams, extrema *api.Extrema) (*api.Histogram, error) {
 	targetName := f.featureVarName(f.Key)
 
 	// get filter where / params
@@ -280,6 +327,6 @@ func (f *ImageField) FetchPredictedSummaryData(resultURI string, datasetResult s
 
 // FetchForecastingSummaryData pulls data from the result table and builds the
 // forecasting histogram for the field.
-func (f *ImageField) FetchForecastingSummaryData(timeVar *model.Variable, interval int, resultURI string, filterParams *api.FilterParams) (*api.Histogram, error) {
+func (f *ImageField) FetchForecastingSummaryData(timeVar *model.Variable, interval int, resultURI string, filterParams *api.FilterParams) (*api.VariableSummary, error) {
 	return nil, fmt.Errorf("not implemented")
 }

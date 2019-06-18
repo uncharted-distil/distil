@@ -155,6 +155,10 @@ func ParseFilterParamsFromJSON(params map[string]interface{}) (*FilterParams, er
 		Size: json.IntDefault(params, model.DefaultFilterSize, "size"),
 	}
 
+	if params == nil {
+		return filterParams, nil
+	}
+
 	filters, ok := json.Array(params, "filters")
 	if ok {
 		for _, filter := range filters {

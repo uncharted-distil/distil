@@ -103,14 +103,16 @@ export default Vue.extend({
 		filtersStr(): string {
 			return routeGetters.getRouteFilters(this.$store);
 		},
-		highlightRootStr(): string {
-			return routeGetters.getRouteHighlightRoot(this.$store);
+		highlightString(): string {
+			return routeGetters.getRouteHighlight(this.$store);
 		},
 		targetSampleValues(): any[] {
 			const summaries = routeGetters.getTargetVariableSummaries(this.$store);
 			if (summaries.length > 0) {
 				const summary = summaries[0];
-				return summary.buckets;
+				if (summary.baseline) {
+					return summary.baseline.buckets;
+				}
 			}
 			return [];
 		},
@@ -160,7 +162,7 @@ export default Vue.extend({
 	},
 
 	watch: {
-		highlightRootStr() {
+		highlightString() {
 			viewActions.updateSelectTrainingData(this.$store);
 		},
 		training() {

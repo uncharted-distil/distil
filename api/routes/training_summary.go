@@ -79,7 +79,7 @@ func TrainingSummaryHandler(solutionCtor api.SolutionStorageCtor, dataCtor api.D
 			return
 		}
 		// fetch summary histogram
-		histogram, err := data.FetchSummaryByResult(dataset, storageName, variable, result.ResultURI, filterParams, nil)
+		summary, err := data.FetchSummaryByResult(dataset, storageName, variable, result.ResultURI, filterParams, nil)
 		if err != nil {
 			handleError(w, err)
 			return
@@ -87,7 +87,7 @@ func TrainingSummaryHandler(solutionCtor api.SolutionStorageCtor, dataCtor api.D
 
 		// marshal output into JSON
 		err = handleJSON(w, SummaryResult{
-			Histogram: histogram,
+			Summary: summary,
 		})
 		if err != nil {
 			handleError(w, errors.Wrap(err, "unable marshal result variable summary into JSON"))

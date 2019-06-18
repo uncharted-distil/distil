@@ -17,15 +17,25 @@
 		</div>
 		<div class="timeseries-rows" v-if="hasData">
 			<div v-if="isTimeseriesAnalysis">
-				<div v-for="timeseries in timeseriesVariableSummaries">
+				
+				<div v-for="summary in predictedSummaries" :key="summary.key">
 					<sparkline-variable
-						:label="timeseries.label"
-						:timeseries="timeseries.timeseries"
-						:forecast="timeseries.forecast"
-						:timeseries-extrema="timeseriesVariableExtrema(timeseries.key)"
-						:highlight-pixel-x="highlightPixelX">
+						:summary="summary"
+						:highlight-pixel-x="highlightPixelX"
+						:min-x="microMin"
+						:max-x="microMax">
 					</sparkline-variable>
 				</div>
+
+				<div v-for="summary in variableSummaries" :key="summary.key">
+					<sparkline-variable
+						:summary="summary"
+						:highlight-pixel-x="highlightPixelX"
+						:min-x="microMin"
+						:max-x="microMax">
+					</sparkline-variable>
+				</div>
+
 			</div>
 			<div v-if="!isTimeseriesAnalysis">
 				<div class="sparkline-row-container" v-for="item in items">
@@ -57,13 +67,12 @@ import SparklineRow from './SparklineRow';
 import SparklineVariable from './SparklineVariable';
 import { Dictionary } from '../util/dict';
 import { Filter } from '../util/filters';
-import { RowSelection, HighlightRoot } from '../store/highlights/index';
-import { TableRow, TableColumn, TimeseriesExtrema, Variable, VariableSummary, Grouping } from '../store/dataset/index';
+import { TableRow, TableColumn, TimeseriesExtrema, Variable, Histogram, Bucket, VariableSummary, Grouping, RowSelection, Highlight } from '../store/dataset/index';
 import { getters as routeGetters } from '../store/route/module';
 import { getters as datasetGetters } from '../store/dataset/module';
 import { getters as resultsGetters } from '../store/results/module';
 import { getters as solutionGetters } from '../store/solutions/module';
-import { updateHighlightRoot } from '../util/highlights';
+import { updateHighlight } from '../util/highlights';
 import { getTimeseriesGroupingsFromFields } from '../util/data';
 import { isTimeType } from '../util/types';
 import { getSolutionIndex } from '../util/solutions';
@@ -71,27 +80,6 @@ import { getSolutionIndex } from '../util/solutions';
 const TICK_SIZE = 8;
 const SELECTED_TICK_SIZE = 18;
 const MIN_PIXEL_WIDTH = 32;
-
-interface TimeseriesStats {
-	xMin: number;
-	xMax: number;
-	yMin: number;
-	yMax: number;
-	sum: number;
-}
-
-interface TimeseriesSummary {
-	label: string;
-	key: string;
-	category?: string;
-	timeseries: number[][];
-	forecast: number[][];
-	xMin: number;
-	xMax: number;
-	yMin: number;
-	yMax: number;
-	sum: number;
-}
 
 export default Vue.extend({
 	name: 'sparkline-timeseries-view',
@@ -170,7 +158,7 @@ export default Vue.extend({
 			return this.timeseriesGrouping && !!this.timeseriesExtrema;
 		},
 
-		timeAnalysisVariable(): Variable {
+		timeseriesAnalysisVariable(): Variable {
 			return datasetGetters.getTimeseriesAnalysisVariable(this.$store);
 		},
 
@@ -199,41 +187,18 @@ export default Vue.extend({
 			}).filter(summary => !!summary); // remove errors
 		},
 
-		timeseriesVariableSummaries(): any[] {
-
-			// if we have a predicted summary, create exemplar from it
-			let timeseries = [];
-			if (this.hasPredictedCol) {
-				const exemplars = this.variableSummaryToTimeseries(this.resultTargetSummary, null);
-				this.predictedSummaries.forEach(summary => {
-					const index = getSolutionIndex(summary.solutionId);
-					timeseries = timeseries.concat(this.variableSummaryToTimeseries(summary, exemplars, index));
-				});
-			}
-
-			// add training variables
-			this.variableSummaries.forEach(summary => {
-				timeseries = timeseries.concat(this.variableSummaryToTimeseries(summary, null));
-			});
-			return timeseries;
-		},
-
 		timeseriesVarsMinX(): number {
-			if (this.timeseriesVariableSummaries.length === 0) {
+			if (!this.timeseriesAnalysisVariable) {
 				return null;
 			}
-			// take first, all vars share same x axis
-			const summary = this.timeseriesVariableSummaries.find(summary => isFinite(summary.xMin));
-			return summary ? summary.xMin : null;
+			return this.timeseriesAnalysisVariable.min;
 		},
 
 		timeseriesVarsMaxX(): number {
-			if (this.timeseriesVariableSummaries.length === 0) {
+			if (!this.timeseriesAnalysisVariable) {
 				return null;
 			}
-			// take first, all vars share same x axis
-			const summary =  this.timeseriesVariableSummaries.find(summary => isFinite(summary.xMax));
-			return summary ? summary.xMax : null;
+			return this.timeseriesAnalysisVariable.max;
 		},
 
 		timeseriesExtrema(): TimeseriesExtrema {
@@ -271,8 +236,8 @@ export default Vue.extend({
 			return routeGetters.getDecodedRowSelection(this.$store);
 		},
 
-		highlightRoot(): HighlightRoot {
-			return routeGetters.getDecodedHighlightRoot(this.$store);
+		highlight(): Highlight {
+			return routeGetters.getDecodedHighlight(this.$store);
 		},
 
 		timeseriesRowExtrema(): TimeseriesExtrema {
@@ -307,10 +272,10 @@ export default Vue.extend({
 
 		isTimeseriesViewHighlight(): boolean {
 			// ignore any highlights unless they are range highlights
-			return this.highlightRoot &&
-				(this.isTimeseriesAnalysis || this.highlightRoot.key === this.timeseriesGrouping.idCol) &&
-				this.highlightRoot.value.from !== undefined &&
-				this.highlightRoot.value.to !== undefined;
+			return this.highlight &&
+				(this.isTimeseriesAnalysis || this.highlight.key === this.timeseriesGrouping.idCol) &&
+				this.highlight.value.from !== undefined &&
+				this.highlight.value.to !== undefined;
 		},
 
 		microMin(): number {
@@ -318,7 +283,7 @@ export default Vue.extend({
 				return this.selectedMicroMin;
 			}
 			if (this.isTimeseriesViewHighlight) {
-				return this.highlightRoot.value.from;
+				return this.highlight.value.from;
 			}
 			return this.timeseriesMinX;
 		},
@@ -328,7 +293,7 @@ export default Vue.extend({
 				return this.selectedMicroMax;
 			}
 			if (this.isTimeseriesViewHighlight) {
-				return this.highlightRoot.value.to;
+				return this.highlight.value.to;
 			}
 			return this.timeseriesMaxX;
 		},
@@ -349,122 +314,6 @@ export default Vue.extend({
 
 	methods: {
 
-		getStatsFromData(points: number[][], forecast: number[][]): TimeseriesStats {
-			const stats = {
-				xMin: Infinity,
-				xMax: -Infinity,
-				yMin: Infinity,
-				yMax: -Infinity,
-				sum: 0
-			};
-			for (let i = 0; i < points.length; i++) {
-				stats.xMin = Math.min(stats.xMin, Math.min(points[i][0]));
-				stats.xMax = Math.max(stats.xMax, Math.max(points[i][0]));
-				stats.yMin = Math.min(stats.yMin, Math.min(points[i][1]));
-				stats.yMax = Math.max(stats.yMax, Math.max(points[i][1]));
-				stats.sum += points[i][1];
-			}
-			if (forecast) {
-				for (let i = 0; i < forecast.length; i++) {
-					stats.xMin = Math.min(stats.xMin, Math.min(forecast[i][0]));
-					stats.xMax = Math.max(stats.xMax, Math.max(forecast[i][0]));
-					stats.yMin = Math.min(stats.yMin, Math.min(forecast[i][1]));
-					stats.yMax = Math.max(stats.yMax, Math.max(forecast[i][1]));
-				}
-			}
-			return stats;
-		},
-
-		variableSummaryToTimeseries(summary: VariableSummary, exemplars?: TimeseriesSummary[], solutionIndex?: number): TimeseriesSummary[] {
-			if (summary.categoryBuckets) {
-
-				const categories = [];
-				_.forIn(summary.categoryBuckets, (buckets, category) => {
-
-					let timeseries: number[][];
-					let forecasted: number[][];
-					let label = '';
-					if (exemplars && exemplars.length > 0) {
-						const exemplar = exemplars.find(ex => ex.category === category);
-						forecasted = buckets.map(b => [ _.parseInt(b.key), b.count ]);
-						timeseries = exemplar.timeseries;
-						label = `${exemplar.key}<sup>${solutionIndex}</sup> - ${category}`;
-					} else {
-						timeseries = buckets.map(b => [ _.parseInt(b.key), b.count ]);
-						label = `${summary.label} - ${category}`;
-					}
-
-					const stats = this.getStatsFromData(timeseries, forecasted);
-
-					categories.push({
-						label: label,
-						key: summary.key,
-						category: category,
-						timeseries: timeseries,
-						forecast: forecasted,
-						xMin: stats.xMin,
-						xMax: stats.xMax,
-						yMin: stats.yMin,
-						yMax: stats.yMax,
-						sum: stats.sum
-					});
-				});
-				// highest sum first
-				categories.sort((a, b) => { return b.sum - a.sum; });
-
-				return categories;
-			}
-
-			let timeseries: number[][];
-			let forecasted: number[][];
-			let label = '';
-			if (exemplars && exemplars.length > 0) {
-				const exemplar = exemplars.length > 0 ? exemplars[0] : null;
-				forecasted = summary.buckets.map(b => [ _.parseInt(b.key), b.count ]);
-				timeseries = exemplar.timeseries;
-				label = `${exemplar.key}<sup>${solutionIndex}</sup>`;
-			} else {
-				timeseries = summary.buckets.map(b => [ _.parseInt(b.key), b.count ]);
-				label = summary.label;
-			}
-
-			const stats = this.getStatsFromData(timeseries, forecasted);
-
-			// regular timeseries variable
-			return [{
-				label: label,
-				key: summary.key,
-				timeseries: timeseries,
-				forecast: forecasted,
-				xMin: stats.xMin,
-				xMax: stats.xMax,
-				yMin: stats.yMin,
-				yMax: stats.yMax,
-				sum: stats.sum
-			}];
-		},
-
-		timeseriesVariableExtrema(variableKey: string): TimeseriesExtrema {
-			let yMin = Infinity;
-			let yMax = -Infinity;
-			this.timeseriesVariableSummaries.forEach(v => {
-				if (v.key === variableKey) {
-					yMin = Math.min(yMin, v.yMin);
-					yMax = Math.max(yMax, v.yMax);
-				}
-			});
-			return {
-				x: {
-					min: this.microMin,
-					max: this.microMax
-				},
-				y: {
-					min: yMin,
-					max: yMax
-				}
-			};
-		},
-
 		getPrediction(row: TableRow): any {
 			if (!this.showPredicted) {
 				return null;
@@ -479,10 +328,12 @@ export default Vue.extend({
 			// TODO: invert filters
 			return filters;
 		},
+
 		mouseLeave() {
 			this.$line.hide();
 			this.highlightPixelX = null;
 		},
+
 		mouseMove(event) {
 			const parentOffset = this.$timeseries.offset();
 			const chartBounds = this.$axis.offset();
@@ -504,10 +355,12 @@ export default Vue.extend({
 				this.highlightPixelX = null;
 			}
 		},
+
 		scroll(event) {
 			const chartScroll = this.$timeseries.parent().scrollTop();
 			this.$line.css('top', chartScroll);
 		},
+
 		injectMicroAxis() {
 
 			this.svg.select('.micro-axis').remove();
@@ -533,6 +386,7 @@ export default Vue.extend({
 
 			this.attachTranslationHandlers();
 		},
+
 		injectSVG() {
 
 			if (!this.hasData || !this.$refs.svg) {
@@ -620,7 +474,7 @@ export default Vue.extend({
 			};
 
 			const dragended = (d, index, elem) => {
-				updateHighlightRoot(this.$router, {
+				updateHighlight(this.$router, {
 					context: this.instanceName,
 					dataset: this.dataset,
 					key: this.isTimeseriesAnalysis ? this.timeseriesAnalysisVar : this.timeseriesGrouping.idCol,
@@ -674,7 +528,7 @@ export default Vue.extend({
 			};
 
 			const dragended = (d, index, elem) => {
-				updateHighlightRoot(this.$router, {
+				updateHighlight(this.$router, {
 					context: this.instanceName,
 					dataset: this.dataset,
 					key: this.isTimeseriesAnalysis ? this.timeseriesAnalysisVar : this.timeseriesGrouping.idCol,
@@ -716,7 +570,7 @@ export default Vue.extend({
 	},
 
 	watch: {
-		timeseriesVariableSummaries: {
+		variableSummaries: {
 			handler() {
 				Vue.nextTick(() => {
 					this.injectSVG();

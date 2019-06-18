@@ -37,10 +37,10 @@ import Vue from 'vue';
 import { spinnerHTML } from '../util/spinner';
 import { Dictionary } from '../util/dict';
 import JoinDataTable from './JoinDataTable';
+import { getters as routeGetters } from '../store/route/module';
 import FilterBadge from './FilterBadge';
-import { TableRow, TableColumn } from '../store/dataset/index';
-import { Highlight } from '../store/highlights/index';
-import { getHighlights, createFilterFromHighlightRoot } from '../util/highlights';
+import { TableRow, TableColumn, Highlight } from '../store/dataset/index';
+import { createFilterFromHighlight } from '../util/highlights';
 import { Filter, INCLUDE_FILTER  } from '../util/filters';
 
 export default Vue.extend({
@@ -67,20 +67,19 @@ export default Vue.extend({
 			return spinnerHTML();
 		},
 
-		highlights(): Highlight {
-			return getHighlights();
+		highlight(): Highlight {
+			return routeGetters.getDecodedHighlight(this.$store);
 		},
 
 		activeFilter(): Filter {
-			if (!this.highlights ||
-				!this.highlights.root ||
-				!this.highlights.root.value) {
+			if (!this.highlight ||
+				!this.highlight.value) {
 				return null;
 			}
-			if (this.highlights.root.dataset !== this.dataset) {
+			if (this.highlight.dataset !== this.dataset) {
 				return null;
 			}
-			return createFilterFromHighlightRoot(this.highlights.root, INCLUDE_FILTER);
+			return createFilterFromHighlight(this.highlight, INCLUDE_FILTER);
 		}
 	},
 

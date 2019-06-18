@@ -66,35 +66,57 @@ func NewDateTimeFieldSubSelect(storage *Storage, storageName string, key string,
 }
 
 // FetchSummaryData pulls summary data from the database and builds a histogram.
-func (f *DateTimeField) FetchSummaryData(resultURI string, filterParams *api.FilterParams, extrema *api.Extrema) (*api.Histogram, error) {
-	var histogram *api.Histogram
+func (f *DateTimeField) FetchSummaryData(resultURI string, filterParams *api.FilterParams, extrema *api.Extrema, invert bool) (*api.VariableSummary, error) {
+
+	var baseline *api.Histogram
+	var filtered *api.Histogram
 	var err error
 	if resultURI == "" {
-		histogram, err = f.fetchHistogram(filterParams)
+		baseline, err = f.fetchHistogram(nil, invert)
 		if err != nil {
 			return nil, err
+		}
+		if filterParams.Filters != nil {
+			filtered, err = f.fetchHistogram(filterParams, invert)
+			if err != nil {
+				return nil, err
+			}
 		}
 	} else {
-		histogram, err = f.fetchHistogramByResult(resultURI, filterParams, extrema)
+		baseline, err = f.fetchHistogramByResult(resultURI, nil, extrema)
 		if err != nil {
 			return nil, err
 		}
+		if filterParams.Filters != nil {
+			filtered, err = f.fetchHistogramByResult(resultURI, filterParams, extrema)
+			if err != nil {
+				return nil, err
+			}
+		}
 	}
-	return histogram, nil
+
+	return &api.VariableSummary{
+		Label:    f.Label,
+		Key:      f.Key,
+		Type:     model.NumericalType,
+		VarType:  f.Type,
+		Baseline: baseline,
+		Filtered: filtered,
+	}, nil
 }
 
 // FetchTimeseriesSummaryData pulls summary data from the database and builds a histogram.
-func (f *DateTimeField) FetchTimeseriesSummaryData(timeVar *model.Variable, interval int, resultURI string, filterParams *api.FilterParams) (*api.Histogram, error) {
+func (f *DateTimeField) FetchTimeseriesSummaryData(timeVar *model.Variable, interval int, resultURI string, filterParams *api.FilterParams, invert bool) (*api.VariableSummary, error) {
 	return nil, fmt.Errorf("not implemented")
 }
 
-func (f *DateTimeField) fetchHistogram(filterParams *api.FilterParams) (*api.Histogram, error) {
+func (f *DateTimeField) fetchHistogram(filterParams *api.FilterParams, invert bool) (*api.Histogram, error) {
 	fromClause := f.getFromClause(true)
 
 	// create the filter for the query.
 	wheres := make([]string, 0)
 	params := make([]interface{}, 0)
-	wheres, params = f.Storage.buildFilteredQueryWhere(wheres, params, filterParams.Filters)
+	wheres, params = f.Storage.buildFilteredQueryWhere(wheres, params, filterParams, invert)
 
 	// need the extrema to calculate the histogram interval
 	extrema, err := f.fetchExtrema()
@@ -214,11 +236,11 @@ func (f *DateTimeField) getHistogramAggQuery(extrema *api.Extrema) (string, stri
 		// want to return the count under bucket 0.
 		bucketQueryString = fmt.Sprintf("(\"%s\" - \"%s\")", extrema.Key, extrema.Key)
 	} else {
-		bucketQueryString = fmt.Sprintf("width_bucket(cast(extract(epoch from \"%s\") as integer), %g, %g, %d) - 1",
-			extrema.Key, rounded.Min, rounded.Max, extrema.GetBucketCount())
+		bucketQueryString = fmt.Sprintf("width_bucket(cast(extract(epoch from \"%s\") as integer), %d, %d, %d) - 1",
+			extrema.Key, int(rounded.Min), int(rounded.Max), extrema.GetBucketCount())
 	}
 
-	histogramQueryString := fmt.Sprintf("(%s) * %g + %g", bucketQueryString, interval, rounded.Min)
+	histogramQueryString := fmt.Sprintf("(%s) * %d + %d", bucketQueryString, int(interval), int(rounded.Min))
 
 	return histogramAggName, bucketQueryString, histogramQueryString
 }
@@ -287,10 +309,6 @@ func (f *DateTimeField) parseHistogram(rows *pgx.Rows, extrema *api.Extrema) (*a
 
 	// assign histogram attributes
 	return &api.Histogram{
-		Label:   f.Label,
-		Key:     f.Key,
-		Type:    model.NumericalType,
-		VarType: f.Type,
 		Extrema: rounded,
 		Buckets: buckets,
 	}, nil
@@ -361,7 +379,32 @@ func (f *DateTimeField) fetchExtremaByURI(resultURI string) (*api.Extrema, error
 
 // FetchPredictedSummaryData pulls data from the result table and builds
 // the numerical histogram for the field.
-func (f *DateTimeField) FetchPredictedSummaryData(resultURI string, datasetResult string, filterParams *api.FilterParams, extrema *api.Extrema) (*api.Histogram, error) {
+func (f *DateTimeField) FetchPredictedSummaryData(resultURI string, datasetResult string, filterParams *api.FilterParams, extrema *api.Extrema) (*api.VariableSummary, error) {
+	var baseline *api.Histogram
+	var filtered *api.Histogram
+	var err error
+
+	baseline, err = f.fetchPredictedSummaryData(resultURI, datasetResult, nil, extrema)
+	if err != nil {
+		return nil, err
+	}
+	if filterParams.Filters != nil {
+		filtered, err = f.fetchPredictedSummaryData(resultURI, datasetResult, filterParams, extrema)
+		if err != nil {
+			return nil, err
+		}
+	}
+	return &api.VariableSummary{
+		Label:    f.Label,
+		Key:      f.Key,
+		Type:     model.NumericalType,
+		VarType:  f.Type,
+		Baseline: baseline,
+		Filtered: filtered,
+	}, nil
+}
+
+func (f *DateTimeField) fetchPredictedSummaryData(resultURI string, datasetResult string, filterParams *api.FilterParams, extrema *api.Extrema) (*api.Histogram, error) {
 	resultVariable := &model.Variable{
 		Name: "value",
 		Type: model.TextType,
@@ -442,10 +485,10 @@ func (f *DateTimeField) getResultHistogramAggQuery(extrema *api.Extrema, resultV
 		// want to return the count under bucket 0.
 		bucketQueryString = fmt.Sprintf("(\"%s\" - \"%s\")", fieldTyped, fieldTyped)
 	} else {
-		bucketQueryString = fmt.Sprintf("width_bucket(%s, %g, %g, %d) - 1",
-			fieldTyped, rounded.Min, rounded.Max, extrema.GetBucketCount())
+		bucketQueryString = fmt.Sprintf("width_bucket(%s, %d, %d, %d) - 1",
+			fieldTyped, int(rounded.Min), int(rounded.Max), extrema.GetBucketCount())
 	}
-	histogramQueryString := fmt.Sprintf("(%s) * %g + %g", bucketQueryString, interval, rounded.Min)
+	histogramQueryString := fmt.Sprintf("(%s) * %d + %d", bucketQueryString, int(interval), int(rounded.Min))
 
 	return histogramAggName, bucketQueryString, histogramQueryString
 }
@@ -482,6 +525,6 @@ func (f *DateTimeField) getFromClause(alias bool) string {
 
 // FetchForecastingSummaryData pulls data from the result table and builds the
 // forecasting histogram for the field.
-func (f *DateTimeField) FetchForecastingSummaryData(timeVar *model.Variable, interval int, resultURI string, filterParams *api.FilterParams) (*api.Histogram, error) {
+func (f *DateTimeField) FetchForecastingSummaryData(timeVar *model.Variable, interval int, resultURI string, filterParams *api.FilterParams) (*api.VariableSummary, error) {
 	return nil, fmt.Errorf("not implemented")
 }

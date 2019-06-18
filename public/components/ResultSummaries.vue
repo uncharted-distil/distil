@@ -33,7 +33,6 @@
 <script lang="ts">
 
 import ResultFacets from '../components/ResultFacets';
-import Facets from '../components/Facets';
 import ErrorThresholdSlider from '../components/ErrorThresholdSlider';
 import { getSolutionById } from '../util/solutions';
 import { getters as datasetGetters } from '../store/dataset/module';
@@ -51,7 +50,6 @@ export default Vue.extend({
 
 	components: {
 		ResultFacets,
-		Facets,
 		ErrorThresholdSlider,
 		vueSlider,
 	},

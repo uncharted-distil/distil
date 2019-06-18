@@ -21,8 +21,7 @@ import Vue from 'vue';
 import { getters as datasetGetters, actions as datasetActions } from '../store/dataset/module';
 import { getters as routeGetters } from '../store/route/module';
 import { circleSpinnerHTML } from '../util/spinner';
-import { D3M_INDEX_FIELD, TableRow } from '../store/dataset/index';
-import { RowSelection } from '../store/highlights/index';
+import { D3M_INDEX_FIELD, TableRow, RowSelection } from '../store/dataset/index';
 import { isRowSelected } from '../util/row';
 import { Dictionary } from '../util/dict';
 
