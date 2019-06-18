@@ -209,11 +209,11 @@ func (f *CategoricalField) getTimeseriesHistogramAggQuery(extrema *api.Extrema, 
 		// want to return the count under bucket 0.
 		bucketQueryString = fmt.Sprintf("(%s - %s)", timeSelect, timeSelect)
 	} else {
-		bucketQueryString = fmt.Sprintf("width_bucket(%s, %g, %g, %d) - 1",
-			timeSelect, binning.Rounded.Min, binning.Rounded.Max, binning.Count)
+		bucketQueryString = fmt.Sprintf("width_bucket(%s, %d, %d, %d) - 1",
+			timeSelect, int(binning.Rounded.Min), int(binning.Rounded.Max), binning.Count)
 	}
 
-	histogramQueryString := fmt.Sprintf("(%s) * %g + %g", bucketQueryString, binning.Interval, binning.Rounded.Min)
+	histogramQueryString := fmt.Sprintf("(%s) * %d + %d", bucketQueryString, int(binning.Interval), int(binning.Rounded.Min))
 
 	return histogramAggName, bucketQueryString, histogramQueryString
 }
