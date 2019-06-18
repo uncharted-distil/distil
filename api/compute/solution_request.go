@@ -558,7 +558,10 @@ func (s *SolutionRequest) PersistAndDispatch(client *compute.Client, solutionSto
 	}
 
 	columnIndex := getColumnIndex(targetVariable, dataset.Filters.Variables)
-	timeseriesColumnIndex := getColumnIndex(timeseriesField, dataset.Filters.Variables)
+	timeseriesColumnIndex := -1
+	if timeseriesField != nil {
+		timeseriesColumnIndex = getColumnIndex(timeseriesField, dataset.Filters.Variables)
+	}
 
 	// add dataset name to path
 	datasetInputDir := env.ResolvePath(dataset.Metadata.Source, dataset.Metadata.Folder)
