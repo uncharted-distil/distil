@@ -133,7 +133,7 @@ export default Vue.extend({
 			const nonSchemaSuggestions = this.suggestedNonSchemaTypes.map(suggested => normalizedEquivalentType(suggested.type));
 			const suggestions = [
 				...nonSchemaSuggestions,
-				...missingSuggestions
+				...missingSuggestions,
 			];
 			return _.uniq(suggestions);
 		},

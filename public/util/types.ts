@@ -203,6 +203,7 @@ const INTEGER_SUGGESTIONS = [
 	LONGITUDE_TYPE,
 	CATEGORICAL_TYPE,
 	ORDINAL_TYPE,
+	TIMESERIES_TYPE,
 	UNKNOWN_TYPE
 ];
 
@@ -212,6 +213,7 @@ const DECIMAL_SUGGESTIONS = [
 	REAL_VECTOR_TYPE,
 	LATITUDE_TYPE,
 	LONGITUDE_TYPE,
+	TIMESERIES_TYPE,
 	UNKNOWN_TYPE
 ];
 
@@ -436,19 +438,27 @@ function combineSampledTypes(types: string[][]): string[] {
 	return combineTypeWithUnion(types);
 }
 
+function checkBooleanValues(values: any) {
+	if (values.length === 2) {
+		const boolTest = values.filter(val => BOOL_REGEX.test(val));
+		if (boolTest[0] && boolTest[1]) {
+			return true;
+		}
+	}
+	return false;
+}
+
 export function guessTypeByValue(value: any): string[] {
 	if (value === undefined) {
 		return TEXT_SUGGESTIONS;
 	}
 	if (_.isArray(value)) {
 		const types = [];
-		value.forEach(val => {
-			types.push(guessTypeByValue(val));
-		});
+		const uniqValues = _.uniq(value);
+		checkBooleanValues(uniqValues)
+			? types.push(BOOL_SUGGESTIONS)
+			: value.forEach(val => types.push(guessTypeByValue(val)));
 		return combineSampledTypes(types);
-	}
-	if (BOOL_REGEX.test(value)) {
-		return BOOL_SUGGESTIONS;
 	}
 	if (_.isNumber(value) || !_.isNaN(_.toNumber(value))) {
 		const num = _.toNumber(value);
