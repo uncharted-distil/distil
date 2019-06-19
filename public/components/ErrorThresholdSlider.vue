@@ -22,10 +22,10 @@
 			<div class="error-center-line"></div>
 			<div class="error-center-label">0</div>
 			<vue-slider ref="slider"
-				:min="residualExtrema.min"
-				:max="residualExtrema.max"
-				:interval="interval"
-				:value="value"
+				:min="sliderMin"
+				:max="sliderMax"
+				:interval="sliderInterval"
+				:value="sliderValue"
 				:formatter="formatter"
 				:lazy="true"
 				width=100%
@@ -58,9 +58,6 @@ export default Vue.extend({
 
 	data() {
 		return {
-			formatter(arg) {
-				return arg ? arg.toFixed(2) : '';
-			},
 			symmetricSlider: true,
 			min: null,
 			max: null,
@@ -69,6 +66,25 @@ export default Vue.extend({
 	},
 
 	computed: {
+
+		sliderValue(): number[] {
+			return [
+				Math.ceil(this.normalize(this.thresholdMin)),
+				Math.floor(this.normalize(this.thresholdMax))
+			];
+		},
+
+		sliderMin(): number {
+			return 0;
+		},
+
+		sliderMax(): number {
+			return NUM_STEPS;
+		},
+
+		sliderInterval(): number {
+			return 1;
+		},
 
 		residualExtrema(): Extrema {
 			const extrema = resultsGetters.getResidualsExtrema(this.$store);
@@ -79,8 +95,8 @@ export default Vue.extend({
 				};
 			}
 			return {
-				min: _.round(extrema.min, ERROR_DECIMALS),
-				max: _.round(extrema.max, ERROR_DECIMALS)
+				min: extrema.min,
+				max: extrema.max
 			};
 		},
 
@@ -94,21 +110,6 @@ export default Vue.extend({
 			return max !== undefined ? _.toNumber(max) : null;
 		},
 
-		value(): number[] {
-			return [
-				_.toNumber(this.thresholdMin),
-				_.toNumber(this.thresholdMax)
-			];
-		},
-
-		range(): number {
-			return this.residualExtrema.max - this.residualExtrema.min;
-		},
-
-		interval(): number {
-			return this.range / NUM_STEPS;
-		},
-
 		hasThreshold(): boolean {
 			return this.thresholdMin !== null && this.thresholdMax !== null;
 		},
@@ -119,6 +120,20 @@ export default Vue.extend({
 	},
 
 	methods: {
+
+		formatter(arg) {
+			return arg ? this.denormalize(arg).toFixed(2) : '';
+		},
+
+		normalize(value: number): number {
+			const range = this.residualExtrema.max - this.residualExtrema.min;
+			return ((value - this.residualExtrema.min) / range) * NUM_STEPS;
+		},
+
+		denormalize(value: number): number {
+			const range = this.residualExtrema.max - this.residualExtrema.min;
+			return this.residualExtrema.min + (value / NUM_STEPS) * range;
+		},
 
 		enableAsymmetric() {
 			this.symmetricSlider = false;
@@ -133,13 +148,19 @@ export default Vue.extend({
 		forceSymmetric(value: number[]): number[] {
 			const newValues = [ value[0], value[1] ];
 			if (this.symmetricSlider) {
+
+				const origin = (NUM_STEPS / 2);
 				if (value[0] !== this.min) {
-					// min changed
-					newValues[1] = -value[0];
+					// min changed, force max
+					const dist = Math.abs(origin - value[0]);
+					newValues[0] = origin - dist;
+					newValues[1] = origin + dist;
 				}
 				if (value[1] !== this.max) {
-					// max changed
-					newValues[0] = -value[1];
+					// max changed, force min
+					const dist = Math.abs(origin - value[1]);
+					newValues[0] = origin - dist;
+					newValues[1] = origin + dist;
 				}
 				const $slider = <any>this.$refs.slider;
 				$slider.setValue(newValues, true);
@@ -151,8 +172,8 @@ export default Vue.extend({
 			this.min = min;
 			this.max = max;
 			const entry = overlayRouteEntry(this.$route, {
-				residualThresholdMin: `${min}`,
-				residualThresholdMax: `${max}`
+				residualThresholdMin: `${this.denormalize(min)}`,
+				residualThresholdMax: `${this.denormalize(max)}`
 			});
 			this.$router.push(entry);
 		},
@@ -171,8 +192,10 @@ export default Vue.extend({
 			if ((this.hasExtrema && !this.hasThreshold) ||
 				(this.hasExtrema && !this.hasModified)) {
 				// set the route
-				const defaultMin = (-this.range / 2) * DEFAULT_PERCENTILE;
-				const defaultMax = (this.range / 2) * DEFAULT_PERCENTILE;
+				const ORIGIN = (NUM_STEPS / 2);
+				const DEVIATION = NUM_STEPS * DEFAULT_PERCENTILE;
+				const defaultMin = Math.ceil(ORIGIN - DEVIATION);
+				const defaultMax = Math.floor(ORIGIN + DEVIATION);
 				this.updateThreshold(defaultMin, defaultMax);
 			}
 		}
