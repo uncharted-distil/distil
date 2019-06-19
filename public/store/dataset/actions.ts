@@ -540,7 +540,7 @@ export const actions = {
 					const key = args.variable;
 					const label = args.variable;
 					const dataset = args.dataset;
-					mutations.updateVariableSummaries(context,  createErrorSummary(key, label, dataset, error));
+					mutator(context,  createErrorSummary(key, label, dataset, error));
 				});
 		}
 
