@@ -83,6 +83,7 @@ export interface Filter {
 }
 
 export interface FilterParams {
+	highlight: Filter;
 	filters: Filter[];
 	variables: string[];
 	size?: number;
@@ -122,14 +123,14 @@ export function encodeFilters(filters: Filter[]): string {
  */
 function dedupeRowFilters(filters: Filter[]): Filter[] {
 
-	const selections = filters.filter(filter => filter.type === ROW_FILTER);
+	const rowFilters = filters.filter(filter => filter.type === ROW_FILTER);
 	const remaining = filters.filter(filter => filter.type !== ROW_FILTER);
 
 	const included = {};
 	const excluded = {};
 	const d3mIndices = {};
 
-	selections.forEach((filter, filterIndex) => {
+	rowFilters.forEach((filter, filterIndex) => {
 		filter.d3mIndices.forEach(d3mIndex => {
 			if (filter.mode === INCLUDE_FILTER) {
 				included[d3mIndex] = filterIndex;

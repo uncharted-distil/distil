@@ -107,9 +107,6 @@ export default Vue.extend({
 		},
 
 		filters(): Filter[] {
-			if (this.includedActive) {
-				return this.invertFilters(routeGetters.getDecodedFilters(this.$store));
-			}
 			return routeGetters.getDecodedFilters(this.$store);
 		},
 
@@ -137,11 +134,7 @@ export default Vue.extend({
 			} else {
 				removeRowSelection(this.$router, this.instanceName, this.rowSelection, row[D3M_INDEX_FIELD]);
 			}
-		},
-		invertFilters(filters: Filter[]): Filter[] {
-			// TODO: invert filters
-			return filters;
-		},
+		}
 	}
 });
 </script>

@@ -1,5 +1,5 @@
 <template>
-	<div class="available-training-variables">
+	<div class="available-training-variables" v-bind:class='{"included": includedActive, "excluded": !includedActive }'>
 		<p class="nav-link font-weight-bold">Available Features
 			<i class="float-right fa fa-angle-right fa-lg"></i>
 		</p>
@@ -46,6 +46,9 @@ export default Vue.extend({
 	computed: {
 		dataset(): string {
 			return routeGetters.getRouteDataset(this.$store);
+		},
+		includedActive(): boolean {
+			return routeGetters.getRouteInclude(this.$store);
 		},
 		availableVariableSummaries(): VariableSummary[] {
 			const summaries = routeGetters.getAvailableVariableSummaries(this.$store);

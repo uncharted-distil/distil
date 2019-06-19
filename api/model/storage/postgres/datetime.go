@@ -76,7 +76,7 @@ func (f *DateTimeField) FetchSummaryData(resultURI string, filterParams *api.Fil
 		if err != nil {
 			return nil, err
 		}
-		if filterParams.Filters != nil {
+		if !filterParams.Empty() {
 			filtered, err = f.fetchHistogram(filterParams, invert)
 			if err != nil {
 				return nil, err
@@ -87,7 +87,7 @@ func (f *DateTimeField) FetchSummaryData(resultURI string, filterParams *api.Fil
 		if err != nil {
 			return nil, err
 		}
-		if filterParams.Filters != nil {
+		if !filterParams.Empty() {
 			filtered, err = f.fetchHistogramByResult(resultURI, filterParams, extrema)
 			if err != nil {
 				return nil, err
@@ -388,7 +388,7 @@ func (f *DateTimeField) FetchPredictedSummaryData(resultURI string, datasetResul
 	if err != nil {
 		return nil, err
 	}
-	if filterParams.Filters != nil {
+	if !filterParams.Empty() {
 		filtered, err = f.fetchPredictedSummaryData(resultURI, datasetResult, filterParams, extrema)
 		if err != nil {
 			return nil, err

@@ -17,7 +17,7 @@
 		</div>
 		<div class="timeseries-rows" v-if="hasData">
 			<div v-if="isTimeseriesAnalysis">
-				
+
 				<div v-for="summary in predictedSummaries" :key="summary.key">
 					<sparkline-variable
 						:summary="summary"
@@ -226,9 +226,6 @@ export default Vue.extend({
 		},
 
 		filters(): Filter[] {
-			if (this.includedActive) {
-				return this.invertFilters(routeGetters.getDecodedFilters(this.$store));
-			}
 			return routeGetters.getDecodedFilters(this.$store);
 		},
 
@@ -322,11 +319,6 @@ export default Vue.extend({
 				value: row[this.predictedCol],
 				isCorrect: row[this.predictedCol] === row[this.target]
 			};
-		},
-
-		invertFilters(filters: Filter[]): Filter[] {
-			// TODO: invert filters
-			return filters;
 		},
 
 		mouseLeave() {

@@ -1,9 +1,12 @@
 import _ from 'lodash';
 import { ViewState } from './index';
 import { ActionContext } from 'vuex';
-import { DistilState } from '../store';
-import { mutations } from './module';
+import store, { DistilState } from '../store';
+import { mutations as viewMutations } from './module';
 import { Dictionary } from '../../util/dict';
+import { actions as datasetActions, mutations as datasetMutations } from '../dataset/module';
+import { actions as solutionActions, mutations as solutionMutations } from '../solutions/module';
+import { actions as resultActions, mutations as resultMutations } from '../results/module';
 
 enum ParamCacheKey {
 	VARIABLES = 'VARIABLES',
@@ -19,7 +22,10 @@ function createCacheable(key: ParamCacheKey, func: (context: ViewContext, args: 
 		const params = JSON.stringify(args);
 		const cachedParams = context.getters.getFetchParamsCache[key];
 		if (cachedParams !== params) {
-			mutations.setFetchParamsCache(context, { key, value: params});
+			viewMutations.setFetchParamsCache(context, {
+				key: key,
+				value: params
+			});
 			return Promise.resolve(func(context, args));
 		}
 		return Promise.resolve();
@@ -27,11 +33,15 @@ function createCacheable(key: ParamCacheKey, func: (context: ViewContext, args: 
 }
 
 const fetchJoinSuggestions = createCacheable(ParamCacheKey.JOIN_SUGGESTIONS, (context, args) => {
-	context.dispatch('fetchJoinSuggestions', args);
+	return datasetActions.fetchJoinSuggestions(store, {
+		dataset: args.dataset
+	});
 });
 
 const fetchVariables = createCacheable(ParamCacheKey.VARIABLES, (context, args) => {
-	return context.dispatch('fetchVariables', args);
+	return datasetActions.fetchVariables(store, {
+		dataset: args.dataset
+	});
 });
 
 const fetchVariableSummaries = createCacheable(ParamCacheKey.VARIABLE_SUMMARIES, (context, args) => {
@@ -40,30 +50,39 @@ const fetchVariableSummaries = createCacheable(ParamCacheKey.VARIABLE_SUMMARIES,
 		const variables = context.getters.getVariables;
 		const filterParams = context.getters.getDecodedSolutionRequestFilterParams;
 		const highlight = context.getters.getDecodedHighlight;
-		context.dispatch('fetchVariableSummaries', {
-			dataset: dataset,
-			variables: variables,
-			filterParams: filterParams,
-			highlight: highlight
-		});
+
+		return Promise.all([
+			datasetActions.fetchIncludedVariableSummaries(store, {
+				dataset: dataset,
+				variables: variables,
+				filterParams: filterParams,
+				highlight: highlight
+			}),
+			datasetActions.fetchExcludedVariableSummaries(store, {
+				dataset: dataset,
+				variables: variables,
+				filterParams: filterParams,
+				highlight: highlight
+			})
+		]);
 	});
 });
 
 const fetchVariableRankings = createCacheable(ParamCacheKey.VARIABLE_RANKINGS, (context, args) => {
 	// if target or dataset has changed, clear previous rankings before re-fetch
 	// this is needed because since user decides variable rankings to be updated, re-fetching doesn't always replace the previous data
-	context.dispatch('updateVariableRankings', {
+	datasetActions.updateVariableRankings(store, {
 		dataset: args.dataset,
 		rankings: {},
 	});
-	context.dispatch('fetchVariableRankings', {
+	datasetActions.fetchVariableRankings(store, {
 		dataset: args.dataset,
 		target: args.target
 	});
 });
 
 const fetchSolutionRequests = createCacheable(ParamCacheKey.SOLUTION_REQUESTS, (context, args) => {
-	return context.dispatch('fetchSolutionRequests', {
+	return solutionActions.fetchSolutionRequests(store, {
 		dataset: args.dataset,
 		target: args.target
 	});
@@ -71,12 +90,13 @@ const fetchSolutionRequests = createCacheable(ParamCacheKey.SOLUTION_REQUESTS, (
 
 function clearVariablesParamCache(context: ViewContext) {
 		// clear variable param cache to allow re-fetching variables
-		mutations.setFetchParamsCache(context, { key: ParamCacheKey.VARIABLES, value: undefined });
+		viewMutations.setFetchParamsCache(context, { key: ParamCacheKey.VARIABLES, value: undefined });
 }
 
 function clearVariableSummaries(context: ViewContext) {
-		context.commit('clearVariableSummaries');
-		mutations.setFetchParamsCache(context, { key: ParamCacheKey.VARIABLE_SUMMARIES, value: undefined });
+		datasetMutations.clearVariableSummaries(store);
+
+		viewMutations.setFetchParamsCache(context, { key: ParamCacheKey.VARIABLE_SUMMARIES, value: undefined });
 }
 
 export type ViewContext = ActionContext<ViewState, DistilState>;
@@ -85,10 +105,10 @@ export const actions = {
 
 	fetchHomeData(context: ViewContext) {
 		// clear any previous state
-		context.commit('clearSolutionRequests');
+		solutionMutations.clearSolutionRequests(store);
 
 		// fetch new state
-		return context.dispatch('fetchSolutionRequests', {});
+		return solutionActions.fetchSolutionRequests(store, {});
 	},
 
 	fetchSearchData(context: ViewContext) {
@@ -96,11 +116,11 @@ export const actions = {
 		const datasetIDs = context.getters.getRouteJoinDatasets;
 
 		const promises = datasetIDs.map((id: string) => {
-			return context.dispatch('fetchDataset', {
+			return datasetActions.fetchDataset(store, {
 				dataset: id
 			});
 		});
-		promises.push(context.dispatch('searchDatasets', terms));
+		promises.push(datasetActions.searchDatasets(store, terms));
 
 		return Promise.all(promises);
 	},
@@ -112,24 +132,24 @@ export const actions = {
 		const datasetIDA = datasetIDs[0];
 		const datasetIDB = datasetIDs[1];
 		Promise.all([
-				context.dispatch('fetchDataset', {
+				datasetActions.fetchDataset(store, {
 					dataset: datasetIDA
 				}),
-				context.dispatch('fetchDataset', {
+				datasetActions.fetchDataset(store, {
 					dataset: datasetIDB
 				}),
-				context.dispatch('fetchJoinDatasetsVariables', {
+				datasetActions.fetchJoinDatasetsVariables(store, {
 					datasets: datasetIDs
 				})
 			])
 			.then(() => {
-				return context.dispatch('updateJoinDatasetsData');
+				return actions.updateJoinDatasetsData(context);
 			});
 	},
 
 	updateJoinDatasetsData(context: ViewContext) {
 		// clear any previous state
-		context.commit('clearJoinDatasetsTableData');
+		datasetMutations.clearJoinDatasetsTableData(store);
 
 		const datasetIDs = context.getters.getRouteJoinDatasets;
 		const highlight = context.getters.getDecodedHighlight;
@@ -147,19 +167,19 @@ export const actions = {
 		});
 
 		return Promise.all([
-			context.dispatch('fetchVariableSummaries', {
+			datasetActions.fetchIncludedVariableSummaries(store, {
 				dataset: datasetA.id,
 				variables: datasetA.variables,
 				filterParams:  filterParams,
 				highlight: highlight
 			}),
-			context.dispatch('fetchVariableSummaries', {
+			datasetActions.fetchIncludedVariableSummaries(store, {
 				dataset: datasetB.id,
 				variables: datasetB.variables,
 				filterParams:  filterParams,
 				highlight: highlight
 			}),
-			context.dispatch('fetchJoinDatasetsTableData', {
+			datasetActions.fetchJoinDatasetsTableData(store, {
 				datasets: datasetIDs,
 				filterParams: filterParams,
 				highlight: highlight
@@ -190,8 +210,8 @@ export const actions = {
 
 	fetchSelectTrainingData(context: ViewContext, clearSummaries: boolean) {
 		// clear any previous state
-		context.commit('setIncludedTableData', null);
-		context.commit('setExcludedTableData', null);
+		datasetMutations.setIncludedTableData(store, null);
+		datasetMutations.setExcludedTableData(store, null);
 
 		if (clearSummaries) {
 			clearVariableSummaries(context);
@@ -208,7 +228,8 @@ export const actions = {
 			dataset: dataset
 		}).then(() => {
 			fetchVariableRankings(context, { dataset, target });
-			return context.dispatch('updateSelectTrainingData');
+
+			return actions.updateSelectTrainingData(context);
 		});
 	},
 
@@ -225,12 +246,12 @@ export const actions = {
 				filterParams: filterParams,
 				highlight: highlight
 			}),
-			context.dispatch('fetchIncludedTableData', {
+			datasetActions.fetchIncludedTableData(store, {
 				dataset: dataset,
 				filterParams: filterParams,
 				highlight: highlight
 			}),
-			context.dispatch('fetchExcludedTableData', {
+			datasetActions.fetchExcludedTableData(store, {
 				dataset: dataset,
 				filterParams: filterParams,
 				highlight: highlight
@@ -240,11 +261,11 @@ export const actions = {
 
 	fetchResultsData(context: ViewContext) {
 		// clear previous state
-		context.commit('clearTargetSummary');
-		context.commit('clearTrainingSummaries');
-		context.commit('clearResidualsExtrema');
-		context.commit('setIncludedResultTableData', null);
-		context.commit('setExcludedResultTableData', null);
+		resultMutations.clearTargetSummary(store);
+		resultMutations.clearTrainingSummaries(store);
+		resultMutations.clearResidualsExtrema(store);
+		resultMutations.setIncludedResultTableData(store, null);
+		resultMutations.setExcludedResultTableData(store, null);
 
 		const dataset = context.getters.getRouteDataset;
 		const target = context.getters.getRouteTargetVariable;
@@ -261,15 +282,15 @@ export const actions = {
 				target: target
 			});
 		}).then(() => {
-			return context.dispatch('updateResultsSolution');
+			return actions.updateResultsSolution(context);
 		});
 	},
 
 	updateResultsSolution(context: ViewContext) {
 		// clear previous state
-		context.commit('clearResidualsExtrema', null);
-		context.commit('setIncludedResultTableData', null);
-		context.commit('setExcludedResultTableData', null);
+		resultMutations.clearResidualsExtrema(store);
+		resultMutations.setIncludedResultTableData(store, null);
+		resultMutations.setExcludedResultTableData(store, null);
 
 		// fetch new state
 		const dataset = context.getters.getRouteDataset;
@@ -281,24 +302,24 @@ export const actions = {
 		const trainingVariables = context.getters.getActiveSolutionTrainingVariables;
 		const highlight = context.getters.getDecodedHighlight;
 
-		context.dispatch('fetchResultTableData', {
+		resultActions.fetchResultTableData(store, {
 			dataset: dataset,
 			solutionId: solutionId,
 			highlight: highlight
 		});
-		context.dispatch('fetchTargetSummary', {
+		resultActions.fetchTargetSummary(store, {
 			dataset: dataset,
 			target: target,
 			solutionId: solutionId,
 			highlight: highlight
 		});
-		context.dispatch('fetchTrainingSummaries', {
+		resultActions.fetchTrainingSummaries(store, {
 			dataset: dataset,
 			training: trainingVariables,
 			solutionId: solutionId,
 			highlight: highlight
 		});
-		context.dispatch('fetchPredictedSummaries', {
+		resultActions.fetchPredictedSummaries(store, {
 			dataset: dataset,
 			target: target,
 			requestIds: requestIds,
@@ -306,19 +327,19 @@ export const actions = {
 		});
 
 		if (isRegression) {
-			context.dispatch('fetchResidualsExtrema', {
+			resultActions.fetchResidualsExtrema(store, {
 				dataset: dataset,
 				target: target,
 				solutionId: solutionId
 			});
-			context.dispatch('fetchResidualsSummaries', {
+			resultActions.fetchResidualsSummaries(store, {
 				dataset: dataset,
 				target: target,
 				requestIds: requestIds,
 				highlight: highlight
 			});
 		} else if (isClassification) {
-			context.dispatch('fetchCorrectnessSummaries', {
+			resultActions.fetchCorrectnessSummaries(store, {
 				dataset: dataset,
 				requestIds: requestIds,
 				highlight: highlight

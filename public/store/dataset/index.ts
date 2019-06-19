@@ -223,46 +223,47 @@ export interface DatasetState {
 	datasets: Dataset[];
 	filteredDatasets: Dataset[];
 	variables: Variable[];
-	variableSummaries: VariableSummary[];
 	variableRankings: Dictionary<Dictionary<number>>;
 	files: Dictionary<any>;
 	timeseries: Dictionary<Dictionary<number[][]>>;
 	timeseriesExtrema: Dictionary<TimeseriesExtrema>;
 	joinTableData: Dictionary<TableData>;
-	includedTableData: TableData;
-	excludedTableData: TableData;
+	includedSet: WorkingSet;
+	excludedSet: WorkingSet;
 	pendingRequests: DatasetPendingRequest[];
 }
 
+export interface WorkingSet {
+	variableSummaries: VariableSummary[];
+	tableData: TableData;
+}
 
 export const state: DatasetState = {
 	// datasets and filtered datasets
 	datasets: [],
 	filteredDatasets: [],
 
-	// variable list for the active dataset
+	// variable list and rankings for the active dataset
 	variables: [],
-
-	// variable summary data for the active dataset
-	variableSummaries: [],
-
-	// variable rankings per dataset
 	variableRankings: {},
 
-	// linked files
-	files: {},
+	// working set of data
+	includedSet: {
+		variableSummaries: [],
+		tableData: null
+	},
+	excludedSet: {
+		variableSummaries: [],
+		tableData: null
+	},
 
+	// linked files / representation data
+	files: {},
 	timeseries: {},
 	timeseriesExtrema: {},
 
 	// joined data table data
 	joinTableData: {},
-
-	// selected data entries for the active dataset
-	includedTableData: null,
-
-	// excluded data entries for the active dataset
-	excludedTableData: null,
 
 	// pending requests for the active dataset
 	pendingRequests: [],

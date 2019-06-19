@@ -49,7 +49,7 @@ export const actions = {
 				mutations.updateTrainingSummary(context, createPendingSummary(key, label, dataset, solutionId));
 			}
 			// fetch summary
-			promises.push(context.dispatch('fetchTrainingSummary', {
+			promises.push(actions.fetchTrainingSummary(context, {
 				dataset: dataset,
 				variable: variable,
 				resultID: solution.resultId,
@@ -73,17 +73,17 @@ export const actions = {
 			return null;
 		}
 
-		const timeseries = context.getters.getRouteTimeseriesAnalysis;
-		let interval = context.getters.getRouteTimeseriesBinningInterval;
-
 		let filterParams = {
+			highlight: null,
 			variables: [],
 			filters: []
 		};
-		filterParams = addHighlightToFilterParams(filterParams, args.highlight, INCLUDE_FILTER);
+		filterParams = addHighlightToFilterParams(filterParams, args.highlight);
 
+		const timeseries = context.getters.getRouteTimeseriesAnalysis;
 		if (timeseries) {
 
+			let interval = context.getters.getRouteTimeseriesBinningInterval;
 			if (!interval) {
 				const timeVar = context.getters.getTimeseriesAnalysisVariable;
 				const range = context.getters.getTimeseriesAnalysisRange;
@@ -143,17 +143,18 @@ export const actions = {
 			mutations.updateTargetSummary(context, createPendingSummary(key, label, dataset, args.solutionId));
 		}
 
-		const timeseries = context.getters.getRouteTimeseriesAnalysis;
-		let interval = context.getters.getRouteTimeseriesBinningInterval;
 
 		let filterParams = {
+			highlight: null,
 			variables: [],
 			filters: []
 		};
-		filterParams = addHighlightToFilterParams(filterParams, args.highlight, INCLUDE_FILTER);
+		filterParams = addHighlightToFilterParams(filterParams, args.highlight);
 
+		const timeseries = context.getters.getRouteTimeseriesAnalysis;
 		if (timeseries) {
 
+			let interval = context.getters.getRouteTimeseriesBinningInterval;
 			if (!interval) {
 				const timeVar = context.getters.getTimeseriesAnalysisVariable;
 				const range = context.getters.getTimeseriesAnalysisRange;
@@ -194,10 +195,11 @@ export const actions = {
 		}
 
 		let filterParams = {
+			highlight: null,
 			variables: [],
 			filters: []
 		};
-		filterParams = addHighlightToFilterParams(filterParams, args.highlight, INCLUDE_FILTER);
+		filterParams = addHighlightToFilterParams(filterParams, args.highlight);
 
 		return axios.post(`/distil/results/${args.dataset}/${encodeURIComponent(args.solutionId)}`, filterParams)
 			.then(response => {
@@ -217,6 +219,7 @@ export const actions = {
 		}
 
 		let filterParams = {
+			highlight: null,
 			variables: [],
 			filters: []
 		};
@@ -234,12 +237,12 @@ export const actions = {
 
 	fetchResultTableData(context: ResultsContext, args: { solutionId: string, dataset: string, highlight: Highlight}) {
 		return Promise.all([
-			context.dispatch('fetchIncludedResultTableData', {
+			actions.fetchIncludedResultTableData(context, {
 				dataset: args.dataset,
 				solutionId: args.solutionId,
 				highlight: args.highlight
 			}),
-			context.dispatch('fetchExcludedResultTableData', {
+			actions.fetchExcludedResultTableData(context, {
 				dataset: args.dataset,
 				solutionId: args.solutionId,
 				highlight: args.highlight
@@ -293,17 +296,17 @@ export const actions = {
 			return null;
 		}
 
-		const timeseries = context.getters.getRouteTimeseriesAnalysis;
-		let interval = context.getters.getRouteTimeseriesBinningInterval;
-
 		let filterParams = {
+			highlight: null,
 			variables: [],
 			filters: []
 		};
-		filterParams = addHighlightToFilterParams(filterParams, args.highlight, INCLUDE_FILTER);
+		filterParams = addHighlightToFilterParams(filterParams, args.highlight);
 
+		const timeseries = context.getters.getRouteTimeseriesAnalysis;
 		if (timeseries) {
 
+			let interval = context.getters.getRouteTimeseriesBinningInterval;
 			if (!interval) {
 				const timeVar = context.getters.getTimeseriesAnalysisVariable;
 				const range = context.getters.getTimeseriesAnalysisRange;
@@ -331,7 +334,7 @@ export const actions = {
 		}
 		const solutions = getSolutionsByRequestIds(context.rootState.solutionModule, args.requestIds);
 		return Promise.all(solutions.map(solution => {
-			return context.dispatch('fetchPredictedSummary', {
+			return actions.fetchPredictedSummary(context, {
 				dataset: args.dataset,
 				target: args.target,
 				solutionId: solution.solutionId,
@@ -362,10 +365,11 @@ export const actions = {
 		}
 
 		let filterParams = {
+			highlight: null,
 			variables: [],
 			filters: []
 		};
-		filterParams = addHighlightToFilterParams(filterParams, args.highlight, INCLUDE_FILTER);
+		filterParams = addHighlightToFilterParams(filterParams, args.highlight);
 
 		const endPoint = `/distil/residuals-summary/${args.dataset}/${args.target}`;
 		const key = solution.errorKey;
@@ -381,7 +385,7 @@ export const actions = {
 		}
 		const solutions = getSolutionsByRequestIds(context.rootState.solutionModule, args.requestIds);
 		return Promise.all(solutions.map(solution => {
-			return context.dispatch('fetchResidualsSummary', {
+			return actions.fetchResidualsSummary(context, {
 				dataset: args.dataset,
 				target: args.target,
 				solutionId: solution.solutionId,
@@ -408,10 +412,11 @@ export const actions = {
 		}
 
 		let filterParams = {
+			highlight: null,
 			variables: [],
 			filters: []
 		};
-		filterParams = addHighlightToFilterParams(filterParams, args.highlight, INCLUDE_FILTER);
+		filterParams = addHighlightToFilterParams(filterParams, args.highlight);
 
 		const endPoint = `/distil/correctness-summary/${args.dataset}`;
 		const key = solution.errorKey;
@@ -427,7 +432,7 @@ export const actions = {
 		}
 		const solutions = getSolutionsByRequestIds(context.rootState.solutionModule, args.requestIds);
 		return Promise.all(solutions.map(solution => {
-			return context.dispatch('fetchCorrectnessSummary', {
+			return actions.fetchCorrectnessSummary(context, {
 				dataset: args.dataset,
 				solutionId: solution.solutionId,
 				highlight: args.highlight

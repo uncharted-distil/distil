@@ -79,9 +79,9 @@ export default Vue.extend({
 	display: inline-block;
 	color: #fff;
 	padding-left: 8px;
-	margin: 2px 4px;
+	margin: 2px 4px 2px 0;
 	border-radius: 4px;
-	background-color: #00c6e1;
+	background-color: #333;
 }
 
 .filter-badge.active {

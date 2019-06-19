@@ -48,13 +48,16 @@ export const actions = {
 	// result
 	fetchIncludedResultTableData: dispatch(moduleActions.fetchIncludedResultTableData),
 	fetchExcludedResultTableData: dispatch(moduleActions.fetchExcludedResultTableData),
-	fetchResultTableData: dispatch(moduleActions.fetchExcludedResultTableData),
+	fetchResultTableData: dispatch(moduleActions.fetchResultTableData),
 	// predicted
+	fetchPredictedSummary: dispatch(moduleActions.fetchPredictedSummary),
 	fetchPredictedSummaries: dispatch(moduleActions.fetchPredictedSummaries),
 	// residuals
+	fetchResidualsSummary: dispatch(moduleActions.fetchResidualsSummary),
 	fetchResidualsSummaries: dispatch(moduleActions.fetchResidualsSummaries),
 	fetchResidualsExtrema: dispatch(moduleActions.fetchResidualsExtrema),
 	// correctness
+	fetchCorrectnessSummary: dispatch(moduleActions.fetchCorrectnessSummary),
 	fetchCorrectnessSummaries: dispatch(moduleActions.fetchCorrectnessSummaries),
 };
 
