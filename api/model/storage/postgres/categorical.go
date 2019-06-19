@@ -110,7 +110,7 @@ func (f *CategoricalField) getTimeMinMaxAggsQuery(timeVar *model.Variable) strin
 	minAggName := api.MinAggPrefix + timeVar.Name
 	maxAggName := api.MaxAggPrefix + timeVar.Name
 
-	timeSelect := fmt.Sprintf("CAST(\"%s\" AS INTEGER", timeVar.Name)
+	timeSelect := fmt.Sprintf("CAST(\"%s\" AS INTEGER)", timeVar.Name)
 	if timeVar.Type == model.DateTimeType {
 		timeSelect = fmt.Sprintf("CAST(extract(epoch from \"%s\") AS INTEGER)", timeVar.Name)
 	}
@@ -198,7 +198,7 @@ func (f *CategoricalField) getTimeseriesHistogramAggQuery(extrema *api.Extrema, 
 	histogramAggName := fmt.Sprintf("\"%s%s\"", api.HistogramAggPrefix, extrema.Key)
 
 	binning := extrema.GetTimeseriesBinningArgs(interval)
-	timeSelect := fmt.Sprintf("CAST(\"%s\" AS INTEGER", extrema.Key)
+	timeSelect := fmt.Sprintf("CAST(\"%s\" AS INTEGER)", extrema.Key)
 	if extrema.Type == model.DateTimeType {
 		timeSelect = fmt.Sprintf("CAST(extract(epoch from \"%s\") AS INTEGER)", extrema.Key)
 	}

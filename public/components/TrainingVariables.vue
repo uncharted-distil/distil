@@ -79,7 +79,7 @@ export default Vue.extend({
 				remove.className += 'btn btn-sm btn-outline-secondary ml-2 mr-1 mb-2';
 				remove.innerHTML = 'Remove';
 				remove.addEventListener('click', () => {
-					const training = routeGetters.getRouteTrainingVariables(this.$store).split(',');
+					const training = routeGetters.getDecodedTrainingVariableNames(this.$store);
 					training.splice(training.indexOf(group.colName), 1);
 					const entry = overlayRouteEntry(routeGetters.getRoute(this.$store), {
 						training: training.join(',')
@@ -96,13 +96,12 @@ export default Vue.extend({
 	methods: {
 		removeAll() {
 			const facets = this.$refs.facets as any;
-			const training = routeGetters.getRouteTrainingVariables(this.$store);
-			const trainingArray = training ? training.split(',') : [];
+			const training = routeGetters.getDecodedTrainingVariableNames(this.$store);
 			facets.availableVariables().forEach(variable => {
-				trainingArray.splice(trainingArray.indexOf(variable), 1);
+				training.splice(training.indexOf(variable), 1);
 			});
 			const entry = overlayRouteEntry(routeGetters.getRoute(this.$store), {
-				training: trainingArray.join(',')
+				training: training.join(',')
 			});
 			this.$router.push(entry);
 		}
