@@ -125,21 +125,18 @@ export default Vue.extend({
 
 	methods: {
 		addMissingSuggestions() {
-			const currentNormalizedType = normalizedEquivalentType(this.type);
-			if (this.suggestedNonSchemaTypes.length === 0 && (this.label === '' || this.values.length === 0)) {
-				return BASIC_SUGGESTIONS;
-			}
-			const missingSuggestions = addTypeSuggestions(currentNormalizedType, this.values);
+			const flatSuggestedTypes = this.suggestedTypes.map(st => st.type);
+			const missingSuggestions = addTypeSuggestions(flatSuggestedTypes);
 			const nonSchemaSuggestions = this.suggestedNonSchemaTypes.map(suggested => normalizedEquivalentType(suggested.type));
-			const suggestions = [
+			const menuSuggestions = _.uniq([
 				...nonSchemaSuggestions,
 				...missingSuggestions
-			];
-			return _.uniq(suggestions);
+			]);
+			return menuSuggestions;
 		},
 		getSuggestedList() {
 			const currentNormalizedType = normalizedEquivalentType(this.type);
-			return this.addMissingSuggestions().map(type => {
+			const combinedSuggestions = this.addMissingSuggestions().map(type => {
 				const normalizedType = normalizedEquivalentType(type);
 				return {
 					type: normalizedType,
@@ -148,6 +145,7 @@ export default Vue.extend({
 					isSelected: currentNormalizedType === normalizedType,
 				};
 			});
+			return combinedSuggestions;
 		},
 		onTypeChange(suggestedType) {
 			const type = suggestedType;
