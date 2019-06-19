@@ -98,6 +98,15 @@ export const getters = {
 		return state.query.joinColumnB as string;
 	},
 
+	getBaseColumnSuggestions(state: Route, getters: any): string {
+		return state.query.baseColumnSuggestions as string;
+	},
+
+	getJoinColumnSuggestions(state: Route, getters: any): string {
+		return state.query.joinColumnSuggestions as string;
+	},
+
+
 	getJoinAccuracy(state: Route, getters: any): number {
 		const accuracy = state.query.joinAccuracy;
 		return accuracy ? _.toNumber(accuracy) : 1;

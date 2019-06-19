@@ -20,6 +20,7 @@ import (
 	"fmt"
 	"os"
 	"path"
+	"strings"
 
 	"github.com/pkg/errors"
 	"github.com/uncharted-distil/distil-compute/model"
@@ -37,11 +38,19 @@ type SearchResults struct {
 
 // SearchResult contains the basic dataset info.
 type SearchResult struct {
-	ID         string                `json:"id"`
-	Score      float64               `json:"score"`
-	Discoverer string                `json:"discoverer"`
-	Metadata   *SearchResultMetadata `json:"metadata"`
-	Join       [][]string            `json:"join_columns,omitempty"`
+	ID           string                    `json:"id"`
+	Score        float64                   `json:"score"`
+	Discoverer   string                    `json:"discoverer"`
+	Metadata     *SearchResultMetadata     `json:"metadata"`
+	Augmentation *SearchResultAugmentation `json:"augmentation,omitempty"`
+}
+
+// SearchResultAugmentation contains data augmentation info.
+type SearchResultAugmentation struct {
+	Type             string   `json:"type"`
+	LeftColumns      [][]int  `json:"left_columns"`
+	RightColumns     [][]int  `json:"right_columns"`
+	LeftColumnsNames []string `json:"left_columns_names"`
 }
 
 // SearchResultMetadata represents the dataset metadata.
@@ -65,18 +74,39 @@ func nyuSearch(datamart *Storage, query *SearchQuery, baseDataPath string) ([]by
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to marshal datamart query")
 	}
+	params := map[string]string{"query": string(queryJSON)}
 
 	var responseRaw []byte
 	if baseDataPath != "" {
-		responseRaw, err = datamart.client.PostFile(nyuSearchFunction, "data", baseDataPath, map[string]string{"query": string(queryJSON)})
+		responseRaw, err = datamart.client.PostFile(nyuSearchFunction, "data", baseDataPath, params)
 	} else {
-		responseRaw, err = datamart.client.PostRequest(nyuSearchFunction, map[string]string{"query": string(queryJSON)})
+		responseRaw, err = datamart.client.PostRequest(nyuSearchFunction, params)
 	}
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to post to NYU datamart search request")
 	}
 
 	return responseRaw, nil
+}
+
+func parseJoinSuggestion(result *SearchResult, baseDataset *api.Dataset) []*api.JoinSuggestion {
+	joins := make([]*api.JoinSuggestion, 0)
+	if result.Augmentation != nil && result.Augmentation.Type == "join" {
+		rightColumnNames := []string{}
+		for _, joinColumns := range result.Augmentation.RightColumns {
+			colNames := []string{}
+			for _, colIndex := range joinColumns {
+				colNames = append(colNames, result.Metadata.Columns[colIndex].Name)
+			}
+			rightColumnNames = append(rightColumnNames, strings.Join(colNames[:], ", "))
+		}
+		joins = append(joins, &api.JoinSuggestion{
+			BaseDataset: baseDataset.ID,
+			BaseColumns: result.Augmentation.LeftColumnsNames,
+			JoinColumns: rightColumnNames,
+		})
+	}
+	return joins
 }
 
 func parseNYUSearchResult(responseRaw []byte, baseDataset *api.Dataset) ([]*api.Dataset, error) {
@@ -97,15 +127,6 @@ func parseNYUSearchResult(responseRaw []byte, baseDataset *api.Dataset) ([]*api.
 			})
 		}
 
-		joins := make([]*api.JoinSuggestion, 0)
-		for _, c := range res.Join {
-			joins = append(joins, &api.JoinSuggestion{
-				BaseDataset: baseDataset.ID,
-				BaseColumns: []string{c[0]},
-				JoinColumns: []string{c[1]},
-			})
-		}
-
 		datasets = append(datasets, &api.Dataset{
 			ID:              res.ID,
 			Name:            res.Metadata.Name,
@@ -114,7 +135,8 @@ func parseNYUSearchResult(responseRaw []byte, baseDataset *api.Dataset) ([]*api.
 			NumBytes:        int64(res.Metadata.Size),
 			Variables:       vars,
 			Provenance:      ProvenanceNYU,
-			JoinSuggestions: joins,
+			JoinSuggestions: parseJoinSuggestion(res, baseDataset),
+			JoinScore:       res.Score,
 		})
 	}
 
