@@ -144,6 +144,10 @@ export const mutations = {
 		updateSummaries(summary, state.variableSummaries);
 	},
 
+	updateTimeVariableSummaries(state: DatasetState, summary: VariableSummary) {
+		updateSummaries(summary, state.timeVariableSummaries);
+	},
+
 	clearVariableSummaries(state: DatasetState) {
 		state.variableSummaries = [];
 	},

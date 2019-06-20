@@ -225,6 +225,7 @@ export interface DatasetState {
 	variables: Variable[];
 	variableSummaries: VariableSummary[];
 	variableRankings: Dictionary<Dictionary<number>>;
+	timeVariableSummaries: VariableSummary[];
 	files: Dictionary<any>;
 	timeseries: Dictionary<Dictionary<number[][]>>;
 	timeseriesExtrema: Dictionary<TimeseriesExtrema>;
@@ -245,6 +246,9 @@ export const state: DatasetState = {
 
 	// variable summary data for the active dataset
 	variableSummaries: [],
+
+	// variable summary data for the variable used for time series analysis
+	timeVariableSummaries: [],
 
 	// variable rankings per dataset
 	variableRankings: {},

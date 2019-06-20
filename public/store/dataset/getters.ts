@@ -21,6 +21,14 @@ export const getters = {
 		return state.variables;
 	},
 
+	getTimeVariables(state: DatasetState, getters: any): Variable[] {
+		const timeseriesAnalysis = getters.getRouteTimeseriesAnalysis;
+		if (timeseriesAnalysis) {
+			return state.variables.filter(v => v.colName === timeseriesAnalysis);
+		}
+		return [];
+	},
+
 	getPendingRequests(state: DatasetState) {
 		return state.pendingRequests;
 	},

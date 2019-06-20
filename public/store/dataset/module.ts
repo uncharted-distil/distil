@@ -23,6 +23,7 @@ export const getters = {
 	getPendingRequests: read(moduleGetters.getPendingRequests),
 	// variables
 	getVariables: read(moduleGetters.getVariables),
+	getTimeVariables: read(moduleGetters.getTimeVariables),
 	getGroupings: read(moduleGetters.getVariables),
 	getVariablesMap: read(moduleGetters.getVariablesMap),
 	getVariableTypesMap: read(moduleGetters.getVariableTypesMap),
@@ -103,6 +104,7 @@ export const mutations = {
 	updateVariableType: commit(moduleMutations.updateVariableType),
 	reviewVariableType: commit(moduleMutations.reviewVariableType),
 	updateVariableSummaries: commit(moduleMutations.updateVariableSummaries),
+	updateTimeVariableSummaries: commit(moduleMutations.updateTimeVariableSummaries),
 	clearVariableSummaries: commit(moduleMutations.clearVariableSummaries),
 	// ranking
 	setVariableRankings: commit(moduleMutations.setVariableRankings),
