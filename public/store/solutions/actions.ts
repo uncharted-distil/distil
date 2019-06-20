@@ -264,6 +264,7 @@ export const actions = {
 				dataset: request.dataset,
 				target: request.target,
 				task: request.task,
+				timestampField: request.timestampField,
 				subTask: request.subTask,
 				metrics: request.metrics,
 				maxSolutions: request.maxSolutions,

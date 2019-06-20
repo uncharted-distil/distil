@@ -29,9 +29,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/araddon/dateparse"
 	"github.com/mitchellh/hashstructure"
 	"github.com/otiai10/copy"
+	"github.com/phorne-uncharted/dateparse"
 	"github.com/pkg/errors"
 	"github.com/unchartedsoftware/plog"
 
@@ -202,6 +202,16 @@ func splitTrainTestTimeseries(sourceFile string, trainFile string, testFile stri
 	}
 	writerTrain.Flush()
 	writerTest.Flush()
+
+	err = util.WriteFileWithDirs(trainFile, outputTrain.Bytes(), os.ModePerm)
+	if err != nil {
+		return errors.Wrap(err, "unable to output train data")
+	}
+
+	err = util.WriteFileWithDirs(testFile, outputTest.Bytes(), os.ModePerm)
+	if err != nil {
+		return errors.Wrap(err, "unable to output test data")
+	}
 
 	return nil
 }
