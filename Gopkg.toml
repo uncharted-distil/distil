@@ -50,6 +50,10 @@
   version = "=0.0.2"
 
 [[constraint]]
+  name = "github.com/phorne-uncharted/dateparse"
+  branch = "master"
+
+[[constraint]]
   name = "github.com/mgutz/ansi"
   revision = "9520e82c474b0a04dd04f8a40959027271bab992"
 
