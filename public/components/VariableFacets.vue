@@ -22,6 +22,7 @@
 						<template v-if="summary.type === 'timeseries'">
 							<facet-timeseries
 								:summary="summary"
+								:summaryHistogram="timeseriesAnalysisVariableSummary"
 								:highlight="highlight"
 								:row-selection="rowSelection"
 								:html="html"
@@ -29,6 +30,7 @@
 								:enable-highlighting="enableHighlighting"
 								:ignore-highlights="ignoreHighlights"
 								:instanceName="instanceName"
+								:expanded="true"
 								@numerical-click="onNumericalClick"
 								@categorical-click="onCategoricalClick"
 								@range-change="onRangeChange"
@@ -124,12 +126,8 @@ export default Vue.extend({
 			return datasetGetters.getVariables(this.$store);
 		},
 
-		timeVariable(): Variable[] {
-			const timeVar = datasetActions.fetchVariableSummary(this.$store, {
-				dataset: 'acled_clean',
-				variable: 'Event_Date',
-			});
-			return timeVar;
+		timeseriesAnalysisVariableSummary(): VariableSummary {
+			return datasetGetters.getTimeseriesAnalysisVariableSummary(this.$store);
 		},
 
 		filteredSummaries(): VariableSummary[] {

@@ -46,7 +46,7 @@ const fetchVariableSummaries = createCacheable(ParamCacheKey.VARIABLE_SUMMARIES,
 			filterParams: filterParams,
 			highlight: highlight
 		});
-		context.dispatch('fetchTimeVariableSummaries', {
+		context.dispatch('fetchTimeseriesAnalysisVariableSummaries', {
 			dataset: dataset,
 			filterParams: filterParams,
 			highlight: highlight

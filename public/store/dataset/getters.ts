@@ -21,14 +21,6 @@ export const getters = {
 		return state.variables;
 	},
 
-	getTimeVariables(state: DatasetState, getters: any): Variable[] {
-		const timeseriesAnalysis = getters.getRouteTimeseriesAnalysis;
-		if (timeseriesAnalysis) {
-			return state.variables.filter(v => v.colName === timeseriesAnalysis);
-		}
-		return [];
-	},
-
 	getPendingRequests(state: DatasetState) {
 		return state.pendingRequests;
 	},
@@ -65,6 +57,15 @@ export const getters = {
 			return getters.getVariablesMap[timeseriesAnalysis];
 		}
 		return null;
+	},
+
+	getTimeseriesAnalysisVariableSummary(state: DatasetState, getters: any): VariableSummary {
+		const timeseriesAnalysisVariable = getters.getTimeseriesAnalysisVariable;
+		return state.timeseriesAnalysisVariableSummaries
+			.find(summary =>
+				timeseriesAnalysisVariable
+				&& summary.dataset === timeseriesAnalysisVariable.datasetName
+				&& summary.key === timeseriesAnalysisVariable.colName);
 	},
 
 	getTimeseriesAnalysisExtrema(state: DatasetState, getters: any): Extrema {

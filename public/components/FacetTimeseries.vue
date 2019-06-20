@@ -4,16 +4,18 @@
             :summary="summary"
             :highlight="highlight"
             :row-selection="rowSelection"
-            :enable-type-change="enableTypeChange"
+			:enable-type-change="enableTypeChange"
             :enable-highlighting="enableHighlighting"
             :ignore-highlights="ignoreHighlights"
             :instanceName="instanceName"
             @numerical-click="onNumericalClick"
             @categorical-click="onCategoricalClick"
+            @range-change="onRangeChange"
         >
         </facet-entry>
         <facet-entry
-            :summary="summary"
+			v-if="expanded"
+            :summary="summaryHistogram"
             :row-selection="rowSelection"
             :html="html"
             :enable-highlighting="enableHighlighting"
@@ -41,15 +43,13 @@ export default Vue.extend({
 	},
 
 	props: {
-        summary: Object as () => VariableSummary,
-        summaryHistogram: Object as () => VariableSummary,
-        showExtension: Object as () => boolean,
+		summary: Object as () => VariableSummary,
+		summaryHistogram: Object as () => VariableSummary,
+		expanded: Object as () => boolean,
 		highlight: Object as () => Highlight,
 		rowSelection: Object as () => RowSelection,
-		deemphasis: Object as () => any,
 		enableTypeChange: Boolean as () => boolean,
 		enableHighlighting: Boolean as () => boolean,
-		showOrigin: Boolean as () => boolean,
 		ignoreHighlights: Boolean as () => boolean,
 		instanceName: String as () => string,
 		html: [ String as () => string, Object as () => any, Function as () => Function ],
@@ -67,7 +67,6 @@ export default Vue.extend({
 		onCategoricalClick(context: string, ...rest) {
 			this.$emit('categorical-click', ...rest);
 		},
-
 		onNumericalClick(context: string, ...rest) {
 			this.$emit('numerical-click', ...rest);
 		},
@@ -80,5 +79,9 @@ export default Vue.extend({
 </script>
 
 <style>
+
+.facet-timeseries .facets-root:first-child {
+	margin-bottom: 1px;
+}
 
 </style>

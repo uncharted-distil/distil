@@ -23,7 +23,6 @@ export const getters = {
 	getPendingRequests: read(moduleGetters.getPendingRequests),
 	// variables
 	getVariables: read(moduleGetters.getVariables),
-	getTimeVariables: read(moduleGetters.getTimeVariables),
 	getGroupings: read(moduleGetters.getVariables),
 	getVariablesMap: read(moduleGetters.getVariablesMap),
 	getVariableTypesMap: read(moduleGetters.getVariableTypesMap),
@@ -35,6 +34,7 @@ export const getters = {
 	getTimeseriesExtrema: read(moduleGetters.getTimeseriesExtrema),
 	// timeseries analysis
 	getTimeseriesAnalysisVariable: read(moduleGetters.getTimeseriesAnalysisVariable),
+	getTimeseriesAnalysisVariableSummary: read(moduleGetters.getTimeseriesAnalysisVariableSummary),
 	getTimeseriesAnalysisExtrema: read(moduleGetters.getTimeseriesAnalysisExtrema),
 	getTimeseriesAnalysisRange: read(moduleGetters.getTimeseriesAnalysisRange),
 	// join data
@@ -104,7 +104,7 @@ export const mutations = {
 	updateVariableType: commit(moduleMutations.updateVariableType),
 	reviewVariableType: commit(moduleMutations.reviewVariableType),
 	updateVariableSummaries: commit(moduleMutations.updateVariableSummaries),
-	updateTimeVariableSummaries: commit(moduleMutations.updateTimeVariableSummaries),
+	updateTimeseriesAnalysisVariableSummaries: commit(moduleMutations.updateTimeseriesAnalysisVariableSummaries),
 	clearVariableSummaries: commit(moduleMutations.clearVariableSummaries),
 	// ranking
 	setVariableRankings: commit(moduleMutations.setVariableRankings),

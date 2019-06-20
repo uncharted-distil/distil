@@ -225,10 +225,10 @@ export interface DatasetState {
 	variables: Variable[];
 	variableSummaries: VariableSummary[];
 	variableRankings: Dictionary<Dictionary<number>>;
-	timeVariableSummaries: VariableSummary[];
 	files: Dictionary<any>;
 	timeseries: Dictionary<Dictionary<number[][]>>;
 	timeseriesExtrema: Dictionary<TimeseriesExtrema>;
+	timeseriesAnalysisVariableSummaries: VariableSummary[];
 	joinTableData: Dictionary<TableData>;
 	includedTableData: TableData;
 	excludedTableData: TableData;
@@ -248,7 +248,7 @@ export const state: DatasetState = {
 	variableSummaries: [],
 
 	// variable summary data for the variable used for time series analysis
-	timeVariableSummaries: [],
+	timeseriesAnalysisVariableSummaries: [],
 
 	// variable rankings per dataset
 	variableRankings: {},

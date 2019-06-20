@@ -397,29 +397,29 @@ export const actions = {
 			});
 	},
 
-	fetchTimeVariableSummaries(context: DatasetContext, args: { dataset: string, highlight: Highlight, filterParams: FilterParams }): Promise<void[]>  {
+	fetchTimeseriesAnalysisVariableSummaries(context: DatasetContext, args: { dataset: string, highlight: Highlight, filterParams: FilterParams }): Promise<any[]>  {
 		// update variable summary
-		const timeVariables = context.getters.getTimeVariables;
+		const timeVariables = [context.getters.getTimeseriesAnalysisVariable];
 		const filterParams = addHighlightToFilterParams(args.filterParams, args.highlight, INCLUDE_FILTER);
 
 		const promises = timeVariables.map(timeVar => {
 			const key = timeVar.colName;
 			const label = timeVar.colDisplayName;
 			const dataset = args.dataset;
-			mutations.updateTimeVariableSummaries(context, createPendingSummary(key, label, dataset));
+			mutations.updateTimeseriesAnalysisVariableSummaries(context, createPendingSummary(key, label, dataset));
 			return axios.post(`/distil/variable-summary/${args.dataset}/${timeVar.colName}/false`, filterParams)
 			.then(response => {
 
 				const summary = response.data.summary;
 				return fetchSummaryExemplars(args.dataset, timeVar.colName, summary, true)
 					.then(() => {
-						mutations.updateTimeVariableSummaries(context, summary);
+						mutations.updateTimeseriesAnalysisVariableSummaries(context, summary);
 					});
 
 			})
 			.catch(error => {
 				console.error(error);
-				mutations.updateTimeVariableSummaries(context,  createErrorSummary(key, label, dataset, error));
+				mutations.updateTimeseriesAnalysisVariableSummaries(context,  createErrorSummary(key, label, dataset, error));
 			});
 		});
 		return Promise.all(promises);
@@ -428,8 +428,6 @@ export const actions = {
 	reviewVariableType(context: DatasetContext, args: { dataset: string, field: string, isColTypeReviewed: boolean }) {
 		mutations.reviewVariableType(context, args);
 	},
-
-
 
 	// fetches variable summary data for the given dataset and variables
 	fetchVariableSummaries(context: DatasetContext, args: { dataset: string, variables: Variable[], highlight: Highlight, filterParams: FilterParams }): Promise<void[]>  {
