@@ -261,7 +261,8 @@ function createCategoricalSummaryFacet(summary: VariableSummary): Group {
 
 function createCategoricalTimeseriesSummaryFacet(summary: VariableSummary): Group {
 	let total = 0;
-	const facets =  _.map(summary.baseline.categoryBuckets, (buckets, category) => {
+	const histogram = summary.filtered ? summary.filtered : summary.baseline;
+	const facets =  _.map(histogram.categoryBuckets, (buckets, category) => {
 		const segments = [];
 		const count = _.sumBy(buckets, b => b.count);
 		const selected = {
@@ -382,7 +383,8 @@ function createNumericalSummaryFacet(summary: VariableSummary): Group {
 function createNumericalTimeseriesFacet(summary: VariableSummary): Group {
 	const slices = getHistogramSlices(summary);
 
-	const timeseries = summary.baseline.buckets.map(b => [ _.parseInt(b.key), b.count ]);
+	const histogram = summary.filtered ? summary.filtered : summary.baseline;
+	const timeseries = histogram.buckets.map(b => [ _.parseInt(b.key), b.count ]);
 
 	return {
 		dataset: summary.dataset,

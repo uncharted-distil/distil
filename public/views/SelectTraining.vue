@@ -94,7 +94,7 @@ export default Vue.extend({
 		dataset(): string {
 			return routeGetters.getRouteDataset(this.$store);
 		},
-		training(): string {
+		trainingStr(): string {
 			return routeGetters.getRouteTrainingVariables(this.$store);
 		},
 		target(): string {
@@ -165,7 +165,7 @@ export default Vue.extend({
 		highlightString() {
 			viewActions.updateSelectTrainingData(this.$store);
 		},
-		training() {
+		trainingStr() {
 			viewActions.updateSelectTrainingData(this.$store);
 		},
 		filtersStr() {

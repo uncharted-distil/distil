@@ -175,7 +175,7 @@ func (s *Storage) fetchSummaryData(dataset string, storageName string, varName s
 
 	} else {
 
-		if model.IsNumerical(variable.Type) {
+		if model.IsNumerical(variable.Type) || model.IsTimestamp(variable.Type) {
 			field = NewNumericalField(s, storageName, variable.Name, variable.DisplayName, variable.Type)
 		} else if model.IsCategorical(variable.Type) {
 			field = NewCategoricalField(s, storageName, variable.Name, variable.DisplayName, variable.Type)
