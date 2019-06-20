@@ -76,7 +76,7 @@ func (f *DateTimeField) FetchSummaryData(resultURI string, filterParams *api.Fil
 		if err != nil {
 			return nil, err
 		}
-		if filterParams.Filters != nil {
+		if !filterParams.Empty() {
 			filtered, err = f.fetchHistogram(filterParams, invert)
 			if err != nil {
 				return nil, err
@@ -87,7 +87,7 @@ func (f *DateTimeField) FetchSummaryData(resultURI string, filterParams *api.Fil
 		if err != nil {
 			return nil, err
 		}
-		if filterParams.Filters != nil {
+		if !filterParams.Empty() {
 			filtered, err = f.fetchHistogramByResult(resultURI, filterParams, extrema)
 			if err != nil {
 				return nil, err
@@ -236,11 +236,11 @@ func (f *DateTimeField) getHistogramAggQuery(extrema *api.Extrema) (string, stri
 		// want to return the count under bucket 0.
 		bucketQueryString = fmt.Sprintf("(\"%s\" - \"%s\")", extrema.Key, extrema.Key)
 	} else {
-		bucketQueryString = fmt.Sprintf("width_bucket(cast(extract(epoch from \"%s\") as integer), %g, %g, %d) - 1",
-			extrema.Key, rounded.Min, rounded.Max, extrema.GetBucketCount())
+		bucketQueryString = fmt.Sprintf("width_bucket(cast(extract(epoch from \"%s\") as integer), %d, %d, %d) - 1",
+			extrema.Key, int(rounded.Min), int(rounded.Max), extrema.GetBucketCount())
 	}
 
-	histogramQueryString := fmt.Sprintf("(%s) * %g + %g", bucketQueryString, interval, rounded.Min)
+	histogramQueryString := fmt.Sprintf("(%s) * %d + %d", bucketQueryString, int(interval), int(rounded.Min))
 
 	return histogramAggName, bucketQueryString, histogramQueryString
 }
@@ -388,7 +388,7 @@ func (f *DateTimeField) FetchPredictedSummaryData(resultURI string, datasetResul
 	if err != nil {
 		return nil, err
 	}
-	if filterParams.Filters != nil {
+	if !filterParams.Empty() {
 		filtered, err = f.fetchPredictedSummaryData(resultURI, datasetResult, filterParams, extrema)
 		if err != nil {
 			return nil, err
@@ -485,10 +485,10 @@ func (f *DateTimeField) getResultHistogramAggQuery(extrema *api.Extrema, resultV
 		// want to return the count under bucket 0.
 		bucketQueryString = fmt.Sprintf("(\"%s\" - \"%s\")", fieldTyped, fieldTyped)
 	} else {
-		bucketQueryString = fmt.Sprintf("width_bucket(%s, %g, %g, %d) - 1",
-			fieldTyped, rounded.Min, rounded.Max, extrema.GetBucketCount())
+		bucketQueryString = fmt.Sprintf("width_bucket(%s, %d, %d, %d) - 1",
+			fieldTyped, int(rounded.Min), int(rounded.Max), extrema.GetBucketCount())
 	}
-	histogramQueryString := fmt.Sprintf("(%s) * %g + %g", bucketQueryString, interval, rounded.Min)
+	histogramQueryString := fmt.Sprintf("(%s) * %d + %d", bucketQueryString, int(interval), int(rounded.Min))
 
 	return histogramAggName, bucketQueryString, histogramQueryString
 }

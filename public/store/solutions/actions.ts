@@ -3,10 +3,11 @@ import { SolutionState,
 	SOLUTION_PENDING, SOLUTION_RUNNING, SOLUTION_COMPLETED, SOLUTION_ERRORED,
 	REQUEST_PENDING, REQUEST_RUNNING, REQUEST_COMPLETED, REQUEST_ERRORED } from './index';
 import { ActionContext } from 'vuex';
-import { DistilState } from '../store';
+import store, { DistilState } from '../store';
 import { mutations } from './module';
 import { getWebSocketConnection } from '../../util/ws';
 import { FilterParams } from '../../util/filters';
+import { actions as resultsActions } from '../results/module';
 
 const CREATE_SOLUTIONS = 'CREATE_SOLUTIONS';
 const STOP_SOLUTIONS = 'STOP_SOLUTIONS';
@@ -37,24 +38,24 @@ function updateCurrentSolutionResults(context: SolutionContext, req: CreateSolut
 	const isRegression = context.getters.isRegression;
 	const isClassification = context.getters.isClassification;
 
-	context.dispatch('fetchResultTableData', {
+	resultsActions.fetchResultTableData(store, {
 		dataset: req.dataset,
 		solutionId: res.solutionId,
 		highlight: context.getters.getDecodedHighlight
 	});
-	context.dispatch('fetchPredictedSummary', {
+	resultsActions.fetchPredictedSummary(store, {
 		dataset: req.dataset,
 		target: req.target,
 		solutionId: res.solutionId,
 		highlight: context.getters.getDecodedHighlight
 	});
-	context.dispatch('fetchTrainingSummaries', {
+	resultsActions.fetchTrainingSummaries(store, {
 		dataset: req.dataset,
 		training: context.getters.getActiveSolutionTrainingVariables,
 		solutionId: res.solutionId,
 		highlight: context.getters.getDecodedHighlight
 	});
-	context.dispatch('fetchTargetSummary', {
+	resultsActions.fetchTargetSummary(store, {
 		dataset: req.dataset,
 		target: req.target,
 		solutionId: res.solutionId,
@@ -62,19 +63,19 @@ function updateCurrentSolutionResults(context: SolutionContext, req: CreateSolut
 	});
 
 	if (isRegression) {
-		context.dispatch('fetchResidualsExtrema', {
+		resultsActions.fetchResidualsExtrema(store, {
 			dataset: req.dataset,
 			target: req.target,
 			solutionId: res.solutionId
 		});
-		context.dispatch('fetchResidualsSummary', {
+		resultsActions.fetchResidualsSummary(store, {
 			dataset: req.dataset,
 			target: req.target,
 			solutionId: res.solutionId,
 			highlight: context.getters.getDecodedHighlight
 		});
 	} else if (isClassification) {
-		context.dispatch('fetchCorrectnessSummary', {
+		resultsActions.fetchCorrectnessSummary(store, {
 			dataset: req.dataset,
 			solutionId: res.solutionId,
 			highlight: context.getters.getDecodedHighlight
@@ -87,7 +88,7 @@ function updateSolutionResults(context: SolutionContext, req: CreateSolutionRequ
 	const isClassification = context.getters.isClassification;
 
 	// if current solutionId, pull result summaries
-	context.dispatch('fetchPredictedSummary', {
+	resultsActions.fetchPredictedSummary(store, {
 		dataset: req.dataset,
 		target: req.target,
 		solutionId: res.solutionId,
@@ -95,19 +96,19 @@ function updateSolutionResults(context: SolutionContext, req: CreateSolutionRequ
 	});
 
 	if (isRegression) {
-		context.dispatch('fetchResidualsExtrema', {
+		resultsActions.fetchResidualsExtrema(store, {
 			dataset: req.dataset,
 			target: req.target,
 			solutionId: res.solutionId
 		});
-		context.dispatch('fetchResidualsSummary', {
+		resultsActions.fetchResidualsSummary(store, {
 			dataset: req.dataset,
 			target: req.target,
 			solutionId: res.solutionId,
 			highlight: context.getters.getDecodedHighlight
 		});
 	} else if (isClassification) {
-		context.dispatch('fetchCorrectnessSummary', {
+		resultsActions.fetchCorrectnessSummary(store, {
 			dataset: req.dataset,
 			solutionId: res.solutionId,
 			highlight: context.getters.getDecodedHighlight
@@ -161,7 +162,7 @@ function handleProgress(context: SolutionContext, request: CreateSolutionRequest
 		console.log(`Progress for solution ${response.solutionId} updated to ${response.progress}`);
 	}
 
-	context.dispatch('fetchSolutionRequests', {
+	actions.fetchSolutionRequests(context, {
 		dataset: request.dataset,
 		target: request.target,
 		solutionId: response.solutionId,

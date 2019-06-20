@@ -59,7 +59,7 @@ func (f *TextField) FetchSummaryData(resultURI string, filterParams *api.FilterP
 		if err != nil {
 			return nil, err
 		}
-		if filterParams.Filters != nil {
+		if !filterParams.Empty() {
 			filtered, err = f.fetchHistogram(filterParams, invert)
 			if err != nil {
 				return nil, err
@@ -70,7 +70,7 @@ func (f *TextField) FetchSummaryData(resultURI string, filterParams *api.FilterP
 		if err != nil {
 			return nil, err
 		}
-		if filterParams.Filters != nil {
+		if !filterParams.Empty() {
 			filtered, err = f.fetchHistogramByResult(resultURI, filterParams)
 			if err != nil {
 				return nil, err
@@ -191,11 +191,11 @@ func (f *TextField) getTimeseriesHistogramAggQuery(extrema *api.Extrema, interva
 		// want to return the count under bucket 0.
 		bucketQueryString = fmt.Sprintf("(%s - %s)", timeSelect, timeSelect)
 	} else {
-		bucketQueryString = fmt.Sprintf("width_bucket(%s, %g, %g, %d) - 1",
-			timeSelect, binning.Rounded.Min, binning.Rounded.Max, binning.Count)
+		bucketQueryString = fmt.Sprintf("width_bucket(%s, %d, %d, %d) - 1",
+			timeSelect, int(binning.Rounded.Min), int(binning.Rounded.Max), binning.Count)
 	}
 
-	histogramQueryString := fmt.Sprintf("(%s) * %g + %g", bucketQueryString, binning.Interval, binning.Rounded.Min)
+	histogramQueryString := fmt.Sprintf("(%s) * %d + %d", bucketQueryString, int(binning.Interval), int(binning.Rounded.Min))
 
 	return histogramAggName, bucketQueryString, histogramQueryString
 }
@@ -318,7 +318,7 @@ func (f *TextField) FetchTimeseriesSummaryData(timeVar *model.Variable, interval
 		if err != nil {
 			return nil, err
 		}
-		if filterParams.Filters != nil {
+		if !filterParams.Empty() {
 			filtered, err = f.fetchTimeseriesHistogram(timeVar, interval, filterParams, invert)
 			if err != nil {
 				return nil, err
@@ -329,7 +329,7 @@ func (f *TextField) FetchTimeseriesSummaryData(timeVar *model.Variable, interval
 		if err != nil {
 			return nil, err
 		}
-		if filterParams.Filters != nil {
+		if !filterParams.Empty() {
 			filtered, err = f.fetchTimeseriesHistogramByResultURI(timeVar, interval, resultURI, filterParams)
 			if err != nil {
 				return nil, err
@@ -581,7 +581,7 @@ func (f *TextField) FetchPredictedSummaryData(resultURI string, datasetResult st
 	if err != nil {
 		return nil, err
 	}
-	if filterParams.Filters != nil {
+	if !filterParams.Empty() {
 		filtered, err = f.fetchPredictedSummaryData(resultURI, datasetResult, filterParams, extrema)
 		if err != nil {
 			return nil, err

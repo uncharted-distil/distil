@@ -29,13 +29,23 @@ import (
 // with no range or category filters are also allowed.
 type FilterParams struct {
 	Size      int             `json:"size"`
+	Highlight *model.Filter   `json:"highlight"`
 	Filters   []*model.Filter `json:"filters"`
 	Variables []string        `json:"variables"`
+}
+
+// Empty returns if the filter set is empty.
+func (f *FilterParams) Empty() bool {
+	return f.Filters == nil && f.Highlight == nil
 }
 
 // Clone returns a deep copy of the filter params.
 func (f *FilterParams) Clone() *FilterParams {
 	clone := &FilterParams{}
+	if f.Highlight != nil {
+		c := *f.Highlight
+		clone.Highlight = &c
+	}
 	for _, f := range f.Filters {
 		c := *f
 		clone.Filters = append(clone.Filters, &c)
@@ -64,6 +74,10 @@ func (f *FilterParams) Merge(other *FilterParams) {
 	if other.Size > f.Size {
 		f.Size = other.Size
 	}
+	if other.Highlight != nil && f.Highlight == nil {
+		f.Highlight = other.Highlight
+	}
+
 	for _, filter := range other.Filters {
 		found := false
 		for _, currentFilter := range f.Filters {
@@ -149,6 +163,115 @@ func GetFilterVariables(filterVariables []string, variables []*model.Variable) [
 	return filtered
 }
 
+func parseFilter(filter map[string]interface{}) (*model.Filter, error) {
+
+	// type
+	typ, ok := json.String(filter, "type")
+	if !ok {
+		return nil, errors.Errorf("no `type` provided for filter")
+	}
+
+	// mode
+	mode, ok := json.String(filter, "mode")
+	if !ok {
+		return nil, errors.Errorf("no `mode` provided for filter")
+	}
+
+	// TODO: update to a switch statement with a default to error
+
+	// numeric
+	if typ == model.NumericalFilter {
+		key, ok := json.String(filter, "key")
+		if !ok {
+			return nil, errors.Errorf("no `key` provided for filter")
+		}
+		min, ok := json.Float(filter, "min")
+		if !ok {
+			return nil, errors.Errorf("no `min` provided for filter")
+		}
+		max, ok := json.Float(filter, "max")
+		if !ok {
+			return nil, errors.Errorf("no `max` provided for filter")
+		}
+		return model.NewNumericalFilter(key, mode, min, max), nil
+	}
+
+	// bivariate
+	if typ == model.BivariateFilter {
+		key, ok := json.String(filter, "key")
+		if !ok {
+			return nil, errors.Errorf("no `key` provided for filter")
+		}
+		minX, ok := json.Float(filter, "minX")
+		if !ok {
+			return nil, errors.Errorf("no `minX` provided for filter")
+		}
+		maxX, ok := json.Float(filter, "maxX")
+		if !ok {
+			return nil, errors.Errorf("no `maxX` provided for filter")
+		}
+		minY, ok := json.Float(filter, "minY")
+		if !ok {
+			return nil, errors.Errorf("no `minY` provided for filter")
+		}
+		maxY, ok := json.Float(filter, "maxY")
+		if !ok {
+			return nil, errors.Errorf("no `maxY` provided for filter")
+		}
+		return model.NewBivariateFilter(key, mode, minX, maxX, minY, maxY), nil
+	}
+
+	// categorical
+	if typ == model.CategoricalFilter {
+		key, ok := json.String(filter, "key")
+		if !ok {
+			return nil, errors.Errorf("no `key` provided for filter")
+		}
+		categories, ok := json.StringArray(filter, "categories")
+		if !ok {
+			return nil, errors.Errorf("no `categories` provided for filter")
+		}
+		return model.NewCategoricalFilter(key, mode, categories), nil
+	}
+
+	// feature
+	if typ == model.FeatureFilter {
+		key, ok := json.String(filter, "key")
+		if !ok {
+			return nil, errors.Errorf("no `key` provided for filter")
+		}
+		categories, ok := json.StringArray(filter, "categories")
+		if !ok {
+			return nil, errors.Errorf("no `categories` provided for filter")
+		}
+		return model.NewFeatureFilter(key, mode, categories), nil
+	}
+
+	// text
+	if typ == model.TextFilter {
+		key, ok := json.String(filter, "key")
+		if !ok {
+			return nil, errors.Errorf("no `key` provided for filter")
+		}
+		categories, ok := json.StringArray(filter, "categories")
+		if !ok {
+			return nil, errors.Errorf("no `categories` provided for filter")
+		}
+		return model.NewTextFilter(key, mode, categories), nil
+	}
+
+	// row
+	if typ == model.RowFilter {
+		indices, ok := json.StringArray(filter, "d3mIndices")
+		if !ok {
+			return nil, errors.Errorf("no `d3mIndices` provided for filter")
+		}
+		return model.NewRowFilter(mode, indices), nil
+	}
+
+	return nil, fmt.Errorf("filter not recognized")
+}
+
 // ParseFilterParamsFromJSON parses filter parameters out of a map[string]interface{}
 func ParseFilterParamsFromJSON(params map[string]interface{}) (*FilterParams, error) {
 	filterParams := &FilterParams{
@@ -159,113 +282,23 @@ func ParseFilterParamsFromJSON(params map[string]interface{}) (*FilterParams, er
 		return filterParams, nil
 	}
 
+	highlight, ok := json.Get(params, "highlight")
+	if ok {
+		h, err := parseFilter(highlight)
+		if err != nil {
+			return nil, err
+		}
+		filterParams.Highlight = h
+	}
+
 	filters, ok := json.Array(params, "filters")
 	if ok {
 		for _, filter := range filters {
-
-			// type
-			typ, ok := json.String(filter, "type")
-			if !ok {
-				return nil, errors.Errorf("no `type` provided for filter")
+			f, err := parseFilter(filter)
+			if err != nil {
+				return nil, err
 			}
-
-			// mode
-			mode, ok := json.String(filter, "mode")
-			if !ok {
-				return nil, errors.Errorf("no `mode` provided for filter")
-			}
-
-			// TODO: update to a switch statement with a default to error
-
-			// numeric
-			if typ == model.NumericalFilter {
-				key, ok := json.String(filter, "key")
-				if !ok {
-					return nil, errors.Errorf("no `key` provided for filter")
-				}
-				min, ok := json.Float(filter, "min")
-				if !ok {
-					return nil, errors.Errorf("no `min` provided for filter")
-				}
-				max, ok := json.Float(filter, "max")
-				if !ok {
-					return nil, errors.Errorf("no `max` provided for filter")
-				}
-				filterParams.Filters = append(filterParams.Filters, model.NewNumericalFilter(key, mode, min, max))
-			}
-
-			// bivariate
-			if typ == model.BivariateFilter {
-				key, ok := json.String(filter, "key")
-				if !ok {
-					return nil, errors.Errorf("no `key` provided for filter")
-				}
-				minX, ok := json.Float(filter, "minX")
-				if !ok {
-					return nil, errors.Errorf("no `minX` provided for filter")
-				}
-				maxX, ok := json.Float(filter, "maxX")
-				if !ok {
-					return nil, errors.Errorf("no `maxX` provided for filter")
-				}
-				minY, ok := json.Float(filter, "minY")
-				if !ok {
-					return nil, errors.Errorf("no `minY` provided for filter")
-				}
-				maxY, ok := json.Float(filter, "maxY")
-				if !ok {
-					return nil, errors.Errorf("no `maxY` provided for filter")
-				}
-				filterParams.Filters = append(filterParams.Filters, model.NewBivariateFilter(key, mode, minX, maxX, minY, maxY))
-			}
-
-			// categorical
-			if typ == model.CategoricalFilter {
-				key, ok := json.String(filter, "key")
-				if !ok {
-					return nil, errors.Errorf("no `key` provided for filter")
-				}
-				categories, ok := json.StringArray(filter, "categories")
-				if !ok {
-					return nil, errors.Errorf("no `categories` provided for filter")
-				}
-				filterParams.Filters = append(filterParams.Filters, model.NewCategoricalFilter(key, mode, categories))
-			}
-
-			// feature
-			if typ == model.FeatureFilter {
-				key, ok := json.String(filter, "key")
-				if !ok {
-					return nil, errors.Errorf("no `key` provided for filter")
-				}
-				categories, ok := json.StringArray(filter, "categories")
-				if !ok {
-					return nil, errors.Errorf("no `categories` provided for filter")
-				}
-				filterParams.Filters = append(filterParams.Filters, model.NewFeatureFilter(key, mode, categories))
-			}
-
-			// text
-			if typ == model.TextFilter {
-				key, ok := json.String(filter, "key")
-				if !ok {
-					return nil, errors.Errorf("no `key` provided for filter")
-				}
-				categories, ok := json.StringArray(filter, "categories")
-				if !ok {
-					return nil, errors.Errorf("no `categories` provided for filter")
-				}
-				filterParams.Filters = append(filterParams.Filters, model.NewTextFilter(key, mode, categories))
-			}
-
-			// row
-			if typ == model.RowFilter {
-				indices, ok := json.StringArray(filter, "d3mIndices")
-				if !ok {
-					return nil, errors.Errorf("no `d3mIndices` provided for filter")
-				}
-				filterParams.Filters = append(filterParams.Filters, model.NewRowFilter(mode, indices))
-			}
+			filterParams.Filters = append(filterParams.Filters, f)
 		}
 	}
 

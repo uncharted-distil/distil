@@ -27,6 +27,8 @@ export const getters = {
 	getVariablesMap: read(moduleGetters.getVariablesMap),
 	getVariableTypesMap: read(moduleGetters.getVariableTypesMap),
 	getVariableSummaries: read(moduleGetters.getVariableSummaries),
+	getIncludedVariableSummaries: read(moduleGetters.getIncludedVariableSummaries),
+	getExcludedVariableSummaries: read(moduleGetters.getExcludedVariableSummaries),
 	getVariableRankings: read(moduleGetters.getVariableRankings),
 	// files
 	getFiles: read(moduleGetters.getFiles),
@@ -68,8 +70,9 @@ export const actions = {
 	fetchJoinDatasetsVariables: dispatch(moduleActions.fetchJoinDatasetsVariables),
 	setVariableType: dispatch(moduleActions.setVariableType),
 	reviewVariableType: dispatch(moduleActions.reviewVariableType),
-	fetchVariableSummary: dispatch(moduleActions.fetchVariableSummary),
-	fetchVariableSummaries: dispatch(moduleActions.fetchVariableSummaries),
+	fetchIncludedVariableSummaries: dispatch(moduleActions.fetchIncludedVariableSummaries),
+	fetchExcludedVariableSummaries: dispatch(moduleActions.fetchExcludedVariableSummaries),
+	fetchTimeseriesAnalysisVariableSummaries: dispatch(moduleActions.fetchTimeseriesAnalysisVariableSummaries),
 	fetchGeocodingResults: dispatch(moduleActions.fetchGeocodingResults),
 	// ranking
 	fetchVariableRankings: dispatch(moduleActions.fetchVariableRankings),
@@ -103,7 +106,8 @@ export const mutations = {
 	setVariables: commit(moduleMutations.setVariables),
 	updateVariableType: commit(moduleMutations.updateVariableType),
 	reviewVariableType: commit(moduleMutations.reviewVariableType),
-	updateVariableSummaries: commit(moduleMutations.updateVariableSummaries),
+	updateIncludedVariableSummaries: commit(moduleMutations.updateIncludedVariableSummaries),
+	updateExcludedVariableSummaries: commit(moduleMutations.updateExcludedVariableSummaries),
 	updateTimeseriesAnalysisVariableSummaries: commit(moduleMutations.updateTimeseriesAnalysisVariableSummaries),
 	clearVariableSummaries: commit(moduleMutations.clearVariableSummaries),
 	// ranking

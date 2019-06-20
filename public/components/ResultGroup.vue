@@ -34,6 +34,7 @@
 		<div class="result-group-body" v-if="isMaximized">
 			<template v-if="isCompleted">
 				<facet-entry v-for="summary in predictedSummaries" :key="summary.key"
+					enable-highlighting
 					:summary="summary"
 					:highlight="highlight"
 					:row-selection="rowSelection"
@@ -47,6 +48,7 @@
 				<div class="residual-group-container">
 					<facet-entry v-for="summary in residualSummaries" :key="summary.key" class="residual-container"
 						show-origin
+						enable-highlighting
 						:summary="summary"
 						:highlight="highlight"
 						:row-selection="rowSelection"
@@ -60,6 +62,7 @@
 				</div>
 
 				<facet-entry v-for="summary in correctnessSummaries" :key="summary.key"
+					enable-highlighting
 					:summary="summary"
 					:highlight="highlight"
 					:row-selection="rowSelection"

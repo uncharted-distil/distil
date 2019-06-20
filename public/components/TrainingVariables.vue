@@ -1,5 +1,5 @@
 <template>
-	<div class="training-variables">
+	<div class="training-variables" v-bind:class='{"included": includedActive, "excluded": !includedActive }'>
 		<p class="nav-link font-weight-bold">Features to Model
 			<i class="float-right fa fa-angle-right fa-lg"></i>
 		</p>
@@ -53,6 +53,9 @@ export default Vue.extend({
 		},
 		numRowsPerPage(): number {
 			return NUM_PER_PAGE;
+		},
+		includedActive(): boolean {
+			return routeGetters.getRouteInclude(this.$store);
 		},
 		highlight(): Highlight {
 			return routeGetters.getDecodedHighlight(this.$store);

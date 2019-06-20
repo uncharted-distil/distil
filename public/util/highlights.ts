@@ -1,6 +1,6 @@
 import { Highlight } from '../store/dataset/index';
 import { Filter, FilterParams, CATEGORICAL_FILTER, NUMERICAL_FILTER,
-	BIVARIATE_FILTER, FEATURE_FILTER, TIMESERIES_FILTER } from '../util/filters';
+	BIVARIATE_FILTER, FEATURE_FILTER, TIMESERIES_FILTER, INCLUDE_FILTER } from '../util/filters';
 import { getters as routeGetters } from '../store/route/module';
 import { getters as datasetGetters } from '../store/dataset/module';
 import { overlayRouteEntry } from '../util/routes';
@@ -104,11 +104,11 @@ export function createFilterFromHighlight(highlight: Highlight, mode: string): F
 	return null;
 }
 
-export function addHighlightToFilterParams(filterParams: FilterParams, highlight: Highlight, mode: string): FilterParams {
+export function addHighlightToFilterParams(filterParams: FilterParams, highlight: Highlight, mode: string = INCLUDE_FILTER): FilterParams {
 	const params = _.cloneDeep(filterParams);
 	const highlightFilter = createFilterFromHighlight(highlight, mode);
 	if (highlightFilter) {
-		params.filters.push(highlightFilter);
+		params.highlight = highlightFilter;
 	}
 	return params;
 }

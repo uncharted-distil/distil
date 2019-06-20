@@ -222,6 +222,16 @@ func (s *Storage) buildFilteredQueryWhere(wheres []string, params []interface{},
 		return wheres, params
 	}
 
+	highlight := filterParams.Highlight
+	if highlight != nil {
+		switch highlight.Mode {
+		case model.IncludeFilter:
+			wheres, params = s.buildIncludeFilter(wheres, params, highlight)
+		case model.ExcludeFilter:
+			wheres, params = s.buildExcludeFilter(wheres, params, highlight)
+		}
+	}
+
 	var filterWheres []string
 	for _, filter := range filterParams.Filters {
 		switch filter.Mode {
@@ -346,6 +356,10 @@ func (s *Storage) buildResultQueryFilters(storageName string, resultURI string, 
 		Filters: filters.genericFilters,
 	}
 
+	// if filterParams != nil {
+	// 	genericFilterParams.Highlight = filterParams.Highlight
+	// }
+
 	// create the filter for the query
 	wheres := make([]string, 0)
 	params := make([]interface{}, 0)
@@ -390,6 +404,21 @@ func (s *Storage) splitFilters(filterParams *api.FilterParams) *filters {
 		return &filters{}
 	}
 
+	if filterParams.Highlight != nil {
+		highlight := filterParams.Highlight
+		if api.IsPredictedKey(highlight.Key) {
+			predictedFilter = highlight
+		} else if api.IsErrorKey(highlight.Key) {
+			if highlight.Type == model.NumericalFilter {
+				residualFilter = highlight
+			} else if highlight.Type == model.CategoricalFilter {
+				correctnessFilter = highlight
+			}
+		} else {
+			remaining = append(remaining, highlight)
+		}
+	}
+
 	for _, filter := range filterParams.Filters {
 		if api.IsPredictedKey(filter.Key) {
 			predictedFilter = filter
@@ -403,6 +432,7 @@ func (s *Storage) splitFilters(filterParams *api.FilterParams) *filters {
 			remaining = append(remaining, filter)
 		}
 	}
+
 	return &filters{
 		genericFilters:    remaining,
 		predictedFilter:   predictedFilter,
@@ -468,6 +498,7 @@ func (s *Storage) filterIncludesIndex(filterParams *api.FilterParams) bool {
 // results to a user selected set of fields, with rows further filtered based on allowed ranges and
 // categories.
 func (s *Storage) FetchData(dataset string, storageName string, filterParams *api.FilterParams, invert bool) (*api.FilteredData, error) {
+
 	variables, err := s.metadata.FetchVariables(dataset, true, true)
 	if err != nil {
 		return nil, errors.Wrap(err, "Could not pull variables from ES")
@@ -476,6 +507,16 @@ func (s *Storage) FetchData(dataset string, storageName string, filterParams *ap
 	numRows, err := s.FetchNumRows(storageName, variables, nil)
 	if err != nil {
 		return nil, errors.Wrap(err, "Could not pull num rows")
+	}
+
+	// if there are no filters, and we are returning the exclude set, we expect
+	// no results in the filtered set
+	if invert && filterParams.Filters == nil {
+		return &api.FilteredData{
+			NumRows: numRows,
+			Columns: make([]api.Column, 0),
+			Values:  make([][]interface{}, 0),
+		}, nil
 	}
 
 	fields, err := s.buildFilteredQueryField(variables, filterParams.Variables)
@@ -492,16 +533,6 @@ func (s *Storage) FetchData(dataset string, storageName string, filterParams *ap
 
 	if len(wheres) > 0 {
 		query = fmt.Sprintf("%s WHERE %s", query, strings.Join(wheres, " AND "))
-	} else {
-		// if there are not WHERE's and we are inverting, that means we expect
-		// no results.
-		if invert {
-			return &api.FilteredData{
-				NumRows: numRows,
-				Columns: make([]api.Column, 0),
-				Values:  make([][]interface{}, 0),
-			}, nil
-		}
 	}
 
 	// match order by for distinct

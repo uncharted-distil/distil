@@ -1,5 +1,5 @@
 <template>
-	<div>
+	<div v-bind:class='{"included": includedActive, "excluded": !includedActive }'>
 		<variable-facets class="target-summary"
 			enable-highlighting
 			:summaries="targetSummaries"
@@ -34,6 +34,10 @@ export default Vue.extend({
 
 		target(): string {
 			return routeGetters.getRouteTargetVariable(this.$store);
+		},
+
+		includedActive(): boolean {
+			return routeGetters.getRouteInclude(this.$store);
 		},
 
 		targetVariable(): Variable {
