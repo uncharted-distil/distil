@@ -259,6 +259,7 @@ export const state: DatasetState = {
 	},
 
 	// variable summary data for the variable used for time series analysis
+	// TODO: split this into included and excluded summaries
 	timeseriesAnalysisVariableSummaries: [],
 
 	// linked files / representation data

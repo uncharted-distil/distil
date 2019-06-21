@@ -27,13 +27,16 @@
 								:row-selection="rowSelection"
 								:html="html"
 								:enable-type-change="enableTypeChange"
-								:enable-highlighting="enableHighlighting"
-								:ignore-highlights="ignoreHighlights"
+								:enable-highlighting="[enableHighlighting, enableHighlighting]"
+								:ignore-highlights="[ignoreHighlights, ignoreHighlights]"
 								:instanceName="instanceName"
-								:expanded="true"
+								:expanded="timeseriesExpandedFacets === summary.key.toLowerCase()"
 								@numerical-click="onNumericalClick"
 								@categorical-click="onCategoricalClick"
 								@range-change="onRangeChange"
+								@histogram-numerical-click="onNumericalClick"
+								@histogram-categorical-click="onCategoricalClick"
+								@histogram-range-change="onRangeChange"
 							>
 							</facet-timeseries>
 						</template>
@@ -141,8 +144,7 @@ export default Vue.extend({
 		},
 
 		paginatedSummaries(): VariableSummary[] {
-			const ps = filterVariablesByPage(this.currentPage, this.rowsPerPage, this.sortedFilteredSummaries);
-			return ps;
+			return filterVariablesByPage(this.currentPage, this.rowsPerPage, this.sortedFilteredSummaries);
 		},
 
 		numSummaries(): number {
@@ -155,6 +157,10 @@ export default Vue.extend({
 
 		rowSelection(): RowSelection {
 			return routeGetters.getDecodedRowSelection(this.$store);
+		},
+
+		timeseriesExpandedFacets(): string {
+			return (routeGetters.getTimeseriesExpandedFacet(this.$store) || '').toLowerCase();
 		},
 
 		importance(): Dictionary<number> {

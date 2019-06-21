@@ -5,9 +5,11 @@
             :highlight="highlight"
             :row-selection="rowSelection"
 			:enable-type-change="enableTypeChange"
-            :enable-highlighting="enableHighlighting"
-            :ignore-highlights="ignoreHighlights"
+            :enable-highlighting="Boolean(enableHighlighting) && enableHighlighting[0]"
+            :ignore-highlights="Boolean(ignoreHighlights) && ignoreHighlights[0]"
             :instanceName="instanceName"
+            :html="customHtml"
+			@html-appended="onHtmlAppend"
             @numerical-click="onNumericalClick"
             @categorical-click="onCategoricalClick"
             @range-change="onRangeChange"
@@ -16,14 +18,15 @@
         <facet-entry
 			v-if="expanded"
             :summary="summaryHistogram"
+            :highlight="highlight"
             :row-selection="rowSelection"
-            :html="html"
-            :enable-highlighting="enableHighlighting"
-            :ignore-highlights="ignoreHighlights"
             :instanceName="instanceName"
-            @numerical-click="onNumericalClick"
-            @categorical-click="onCategoricalClick"
-            @range-change="onRangeChange"
+            :enable-highlighting="Boolean(enableHighlighting) && enableHighlighting[1]"
+            :ignore-highlights="Boolean(ignoreHighlights) && ignoreHighlights[1]"
+			:html="footerHtml"
+            @numerical-click="onHistogramNumericalClick"
+            @categorical-click="onHistogramCategoricalClick"
+            @range-change="onHistogramRangeChange"
         >
         </facet-entry>
     </div>
@@ -45,33 +48,57 @@ export default Vue.extend({
 	props: {
 		summary: Object as () => VariableSummary,
 		summaryHistogram: Object as () => VariableSummary,
-		expanded: Object as () => boolean,
+		expanded: Boolean as () => boolean,
 		highlight: Object as () => Highlight,
 		rowSelection: Object as () => RowSelection,
-		enableTypeChange: Boolean as () => boolean,
-		enableHighlighting: Boolean as () => boolean,
-		ignoreHighlights: Boolean as () => boolean,
 		instanceName: String as () => string,
+		enableTypeChange: Boolean as () => boolean,
+		enableHighlighting: Array as () => boolean[],
+		ignoreHighlights: Array as () => boolean[],
 		html: [ String as () => string, Object as () => any, Function as () => Function ],
 	},
 
 	data() {
 		return {
+			customHtml: this.html,
+			footerHtml: undefined
 		};
 	},
 
 	computed: {
 	},
 
+	watch: {
+		expanded(newExpanded: boolean) {
+			if (!newExpanded) {
+				// new function that returns the result of this.html
+				this.customHtml = (...args) => this.html(...args);
+			}
+		},
+	},
 	methods: {
-		onCategoricalClick(context: string, ...rest) {
-			this.$emit('categorical-click', ...rest);
+		onCategoricalClick(...args) {
+			this.$emit('categorical-click', ...args);
 		},
-		onNumericalClick(context: string, ...rest) {
-			this.$emit('numerical-click', ...rest);
+		onNumericalClick(...args) {
+			this.$emit('numerical-click', ...args);
 		},
-		onRangeChange(context: string, ...rest) {
-			this.$emit('range-change', ...rest);
+		onRangeChange(...args) {
+			this.$emit('range-change', ...args);
+		},
+		onHistogramCategoricalClick(...args) {
+			this.$emit('histogram-categorical-click', ...args);
+		},
+		onHistogramNumericalClick(...args) {
+			this.$emit('histogram-numerical-click', ...args);
+		},
+		onHistogramRangeChange(...args) {
+			this.$emit('histogram-range-change', ...args);
+		},
+		onHtmlAppend(html: HTMLDivElement) {
+			// Once html is rendered in top facets, move the element to the bottom facets
+			// So that custom html are rendered at the bottom of the coumpound facets
+			this.footerHtml = () => html;
 		},
 	}
 });

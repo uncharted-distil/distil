@@ -449,7 +449,13 @@ export const actions = {
 			const key = timeVar.colName;
 			const label = timeVar.colDisplayName;
 			const dataset = args.dataset;
-			mutations.updateTimeseriesAnalysisVariableSummaries(context, createPendingSummary(key, label, dataset));
+
+			const exists = _.find(context.getters.getTimeseriesAnalysisVariableSummary , summary => {
+				return summary.dataset === dataset && summary.key === key;
+			});
+			if (!exists) {
+				mutations.updateTimeseriesAnalysisVariableSummaries(context, createPendingSummary(key, label, dataset));
+			}
 			return axios.post(`/distil/variable-summary/${args.dataset}/${timeVar.colName}/false`, filterParams)
 			.then(response => {
 

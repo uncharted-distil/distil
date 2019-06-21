@@ -32,7 +32,7 @@ import IconBookmark from './icons/IconBookmark';
 import { SuggestedType, Variable, Highlight } from '../store/dataset/index';
 import { actions as datasetActions, getters as datasetGetters } from '../store/dataset/module';
 import { getters as routeGetters } from '../store/route/module';
-import { addTypeSuggestions, getLabelFromType, getTypeFromLabel, isEquivalentType, isLocationType, normalizedEquivalentType, BASIC_SUGGESTIONS, TIMESERIES_TYPE } from '../util/types';
+import { addTypeSuggestions, getLabelFromType, getTypeFromLabel, isEquivalentType, isLocationType, normalizedEquivalentType, BASIC_SUGGESTIONS } from '../util/types';
 import { hasFilterInRoute } from '../util/filters';
 
 const PROBABILITY_THRESHOLD = 0.8;
