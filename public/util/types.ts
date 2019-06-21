@@ -20,7 +20,7 @@ export const REAL_VECTOR_TYPE = 'realVector';
 export const BOOL_TYPE = 'boolean';
 export const DATE_TIME_TYPE = 'dateTime';
 export const DATE_TIME_LOWER_TYPE = 'datetime';
-export const TIMESTAMP_TYPE = 'timestmap';
+export const TIMESTAMP_TYPE = 'timestamp';
 export const ORDINAL_TYPE = 'ordinal';
 export const CATEGORICAL_TYPE = 'categorical';
 export const TEXT_TYPE = 'text';
@@ -56,6 +56,7 @@ const TYPES_TO_LABELS: Dictionary<string> = {
 	[POSTAL_CODE_TYPE]: 'Postal Code',
 	[COUNTRY_CODE_TYPE]: 'Country Code',
 	[URI_TYPE]: 'URI',
+	[TIMESTAMP_TYPE]: 'Timestamp',
 	[DATE_TIME_TYPE]: 'Date/Time',
 	[BOOL_TYPE]: 'Boolean',
 	[IMAGE_TYPE]: 'Image',
@@ -190,7 +191,8 @@ const INTEGER_SUGGESTIONS = [
 	LATITUDE_TYPE,
 	LONGITUDE_TYPE,
 	CATEGORICAL_TYPE,
-	ORDINAL_TYPE
+	ORDINAL_TYPE,
+	TIMESTAMP_TYPE
 ];
 
 const DECIMAL_SUGGESTIONS = [
@@ -225,6 +227,7 @@ export const BASIC_SUGGESTIONS = [
 	TEXT_TYPE,
 	IMAGE_TYPE,
 	DATE_TIME_TYPE,
+	TIMESTAMP_TYPE,
 	TIMESERIES_TYPE,
 	UNKNOWN_TYPE
 ];

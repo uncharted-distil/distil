@@ -25,14 +25,18 @@ import (
 	"math/rand"
 	"os"
 	"path"
+	"sort"
 	"strings"
+	"time"
 
 	"github.com/mitchellh/hashstructure"
 	"github.com/otiai10/copy"
+	"github.com/phorne-uncharted/dateparse"
 	"github.com/pkg/errors"
 	"github.com/unchartedsoftware/plog"
 
 	"github.com/uncharted-distil/distil-compute/model"
+	"github.com/uncharted-distil/distil-compute/primitive/compute"
 	"github.com/uncharted-distil/distil-ingest/metadata"
 	api "github.com/uncharted-distil/distil/api/model"
 	"github.com/uncharted-distil/distil/api/util"
@@ -108,20 +112,7 @@ func updateSchemaReferenceFile(schema string, prevReferenceFile string, newRefer
 	return strings.Replace(schema, fmt.Sprintf("\"resPath\": \"%s\"", prevReferenceFile), fmt.Sprintf("\"resPath\": \"%s\"", newReferenceFile), 1)
 }
 
-func splitTrainTest(sourceFile string, trainFile string, testFile string, hasHeader bool) error {
-	// create the writers
-	outputTrain := &bytes.Buffer{}
-	writerTrain := csv.NewWriter(outputTrain)
-	outputTest := &bytes.Buffer{}
-	writerTest := csv.NewWriter(outputTest)
-
-	// open the file
-	file, err := os.Open(sourceFile)
-	if err != nil {
-		return errors.Wrap(err, "failed to open source file")
-	}
-	reader := csv.NewReader(file)
-
+func splitTrainTestHeader(reader *csv.Reader, writerTrain *csv.Writer, writerTest *csv.Writer, hasHeader bool) error {
 	// write header to both outputs
 	if hasHeader {
 		header, err := reader.Read()
@@ -136,6 +127,113 @@ func splitTrainTest(sourceFile string, trainFile string, testFile string, hasHea
 		if err != nil {
 			return errors.Wrap(err, "unable to write header to test output")
 		}
+	}
+
+	return nil
+}
+
+func splitTrainTestTimeseries(sourceFile string, trainFile string, testFile string, hasHeader bool, timeseriesCol int) error {
+	// create the writers
+	outputTrain := &bytes.Buffer{}
+	writerTrain := csv.NewWriter(outputTrain)
+	outputTest := &bytes.Buffer{}
+	writerTest := csv.NewWriter(outputTest)
+
+	// open the file
+	file, err := os.Open(sourceFile)
+	if err != nil {
+		return errors.Wrap(err, "failed to open source file")
+	}
+	reader := csv.NewReader(file)
+
+	// handle the header
+	err = splitTrainTestHeader(reader, writerTrain, writerTest, hasHeader)
+	if err != nil {
+		return errors.Wrap(err, "failed to open source file")
+	}
+
+	// find the desired timeseries threshold
+	// load the parsed timestamp into a list and read all raw data in memory
+	timestamps := make([]time.Time, 0)
+	data := make([][]string, 0)
+	for {
+		line, err := reader.Read()
+		if err == io.EOF {
+			break
+		} else if err != nil {
+			return errors.Wrap(err, "failed to read line from file")
+		}
+		data = append(data, line)
+		t, err := dateparse.ParseAny(line[timeseriesCol])
+		if err != nil {
+			return errors.Wrap(err, "failed to parse timeseries column")
+		}
+		timestamps = append(timestamps, t)
+	}
+
+	// find the time threshold by sorting and taking the value that gives
+	// the right split (ie value where we would send roughly 90% of
+	// the data to train and 10% to test)
+	sort.Slice(timestamps, func(i int, j int) bool {
+		return timestamps[i].Before(timestamps[j])
+	})
+	thresholdIndex := int(trainTestSplitThreshold * float64(len(timestamps)-1))
+	threshold := timestamps[thresholdIndex]
+
+	// output the values based on if before threshold or after threshold
+	for _, line := range data {
+		// since we parsed it above, then the parsing here should succeed
+		// TODO: the timestamps list is already sorted but we really should
+		// reuse it to not double parse things
+		t, _ := dateparse.ParseAny(line[timeseriesCol])
+
+		// !After == Before || Equal
+		if !t.After(threshold) {
+			err = writerTrain.Write(line)
+			if err != nil {
+				return errors.Wrap(err, "unable to write data to train output")
+			}
+		} else {
+			err = writerTest.Write(line)
+			if err != nil {
+				return errors.Wrap(err, "unable to write data to test output")
+			}
+		}
+	}
+	writerTrain.Flush()
+	writerTest.Flush()
+
+	err = util.WriteFileWithDirs(trainFile, outputTrain.Bytes(), os.ModePerm)
+	if err != nil {
+		return errors.Wrap(err, "unable to output train data")
+	}
+
+	err = util.WriteFileWithDirs(testFile, outputTest.Bytes(), os.ModePerm)
+	if err != nil {
+		return errors.Wrap(err, "unable to output test data")
+	}
+
+	return nil
+}
+
+func splitTrainTest(sourceFile string, trainFile string, testFile string, hasHeader bool) error {
+	// create the writers
+	outputTrain := &bytes.Buffer{}
+	writerTrain := csv.NewWriter(outputTrain)
+	outputTest := &bytes.Buffer{}
+	writerTest := csv.NewWriter(outputTest)
+
+	// open the file
+	file, err := os.Open(sourceFile)
+	if err != nil {
+		return errors.Wrap(err, "failed to open source file")
+	}
+	reader := csv.NewReader(file)
+
+	// handle the header
+	err = splitTrainTestHeader(reader, writerTrain, writerTest, hasHeader)
+	if err != nil {
+		return errors.Wrap(err, "failed to open source file")
 	}
 
 	// randomly assign rows to either train or test
@@ -176,7 +274,7 @@ func splitTrainTest(sourceFile string, trainFile string, testFile string, hasHea
 
 // PersistOriginalData copies the original data and splits it into a train &
 // test subset to be used as needed.
-func PersistOriginalData(datasetName string, schemaFile string, sourceDataFolder string, tmpDataFolder string) (string, string, error) {
+func PersistOriginalData(datasetName string, schemaFile string, sourceDataFolder string, tmpDataFolder string, taskType string, timeseriesFieldIndex int) (string, string, error) {
 	// The complete data is copied into separate train & test folders.
 	// The main data is then split randomly.
 	trainFolder := path.Join(tmpDataFolder, datasetName, trainFilenamePrefix)
@@ -230,7 +328,11 @@ func PersistOriginalData(datasetName string, schemaFile string, sourceDataFolder
 	dataPath := path.Join(sourceDataFolder, mainDR.ResPath)
 	trainDataFile := path.Join(trainFolder, mainDR.ResPath)
 	testDataFile := path.Join(testFolder, mainDR.ResPath)
-	err = splitTrainTest(dataPath, trainDataFile, testDataFile, true)
+	if taskType == compute.TaskTypeTimeseries {
+		err = splitTrainTestTimeseries(dataPath, trainDataFile, testDataFile, true, timeseriesFieldIndex)
+	} else {
+		err = splitTrainTest(dataPath, trainDataFile, testDataFile, true)
+	}
 	if err != nil {
 		return "", "", err
 	}
