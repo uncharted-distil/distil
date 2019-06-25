@@ -56,51 +56,58 @@ func ComposeHandler(dataCtor api.DataStorageCtor, esMetaCtor api.MetadataStorage
 			return
 		}
 
-		// create the new field
-		err = metaStorage.AddVariable(dataset, varName, model.TextType, "grouping")
-		if err != nil {
-			handleError(w, err)
-			return
-		}
-		err = dataStorage.AddVariable(dataset, storageName, varName, model.TextType)
+		// check if the compose var exists already
+		composeExists, err := metaStorage.DoesVariableExist(dataset, varName)
 		if err != nil {
 			handleError(w, err)
 			return
 		}
 
-		// map fields for the hash building
-		fields := make([]*model.Variable, 0)
-		for i := 0; i < len(variables); i++ {
-			v, err := metaStorage.FetchVariable(dataset, variables[i])
+		if !composeExists {
+			// create the new field
+			err = metaStorage.AddVariable(dataset, varName, model.TextType, "grouping")
 			if err != nil {
 				handleError(w, err)
 				return
 			}
-			fields = append(fields, v)
+			err = dataStorage.AddVariable(dataset, storageName, varName, model.TextType)
+			if err != nil {
+				handleError(w, err)
+				return
+			}
 		}
-		d3mIndexField, err := metaStorage.FetchVariable(dataset, model.D3MIndexName)
+
+		// read the data from storage
+		filter := &api.FilterParams{
+			Variables: variables,
+		}
+		rawData, err := dataStorage.FetchData(dataset, storageName, filter, false)
 		if err != nil {
 			handleError(w, err)
 			return
 		}
 
-		// read the data from storage
-		rawData, err := dataStorage.FetchData(dataset, storageName, &api.FilterParams{}, false)
-		if err != nil {
-			handleError(w, err)
-			return
+		// map fields
+		d3mIndexFieldindex := -1
+		mappedFields := make(map[string]int)
+		for i, c := range rawData.Columns {
+			if c.Label == model.D3MIndexName {
+				d3mIndexFieldindex = i
+			} else {
+				mappedFields[c.Label] = i
+			}
 		}
 
 		// cycle through all the data
 		hashData := make(map[string]string)
 		for _, r := range rawData.Values {
 			// create the hash from the specified columns
-			hash, err := createFieldHash(r, fields)
+			hash, err := createFieldHash(r, variables, mappedFields)
 			if err != nil {
 				handleError(w, err)
 				return
 			}
-			hashData[r[d3mIndexField.Index].(string)] = hash
+			hashData[fmt.Sprintf("%v", r[d3mIndexFieldindex])] = hash
 		}
 
 		// save the new column
@@ -112,11 +119,12 @@ func ComposeHandler(dataCtor api.DataStorageCtor, esMetaCtor api.MetadataStorage
 	}
 }
 
-func createFieldHash(data []interface{}, fields []*model.Variable) (string, error) {
+func createFieldHash(data []interface{}, fields []string, mappedFields map[string]int) (string, error) {
 	// pull the fields to hash
 	dataToHash := make([]interface{}, 0)
 	for i := 0; i < len(fields); i++ {
-		dataToHash = append(dataToHash, data[i])
+		fieldIndex := mappedFields[fields[i]]
+		dataToHash = append(dataToHash, data[fieldIndex])
 	}
 
 	// hash the desired fields
