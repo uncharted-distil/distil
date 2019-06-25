@@ -31,6 +31,9 @@
 					<div class="description" v-html="item.dataset.description">
 						{{item.dataset.description}}
 					</div>
+					<div class="suggested-columns">
+						<b>Suggested Join Columns: </b>{{item.dataset.joinSuggestion[0].joinColumns[0]}}
+					</div>
 					<div>
 						<span>
 							<small v-if="!item.isAvailable" class="text-info">Requires import</small>
@@ -263,6 +266,7 @@ export default Vue.extend({
 	display: flex;
 	flex-direction: column;
 }
+
 .status-panel-join .suggestion-heading {
 	height: 2em;
 	flex-shrink: 0;
@@ -273,6 +277,10 @@ export default Vue.extend({
 .status-panel-join .suggstion-list {
 	overflow: auto;
 	overflow-wrap: break-word;
+}
+
+.status-panel-join .suggstion-list .suggested-columns {
+	font-size: .75rem;
 }
 
 .status-panel-join .list-group-item.selected{
